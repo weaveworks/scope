@@ -1,0 +1,12 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "homepage": "https://github.com/alicebob/cello",
+  "authors": [
+    "David Kaltschmidt <david.kaltschmidt@gmail.com>"
+  ],
+  "private": true,
+  "dependencies": {
+    "bootstrap-material-design": "~0.1.5"
+  }
+}
