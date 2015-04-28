@@ -1,0 +1,435 @@
+
+@cello: #D65906;
+@background: lighten(@cello, 55%);
+@cello-background: lighten(@cello, 50%);
+@cello-link: lighten(@cello, 25%);
+@blue-primary: #428BCA;
+@blue-background: darken(@blue-primary, 25%); // #1f496e
+@blue-terminal-background: darken(@blue-primary, 30%);
+@blue-terminal-border: darken(@blue-primary, 25%);
+@blue-terminal-text: lighten(@blue-primary, 20%);
+@blue-background-light: lighten(@blue-primary, 40%);
+
+@blue-medium: lighten(@blue-primary, 10%);
+@blue-bright: darken(@blue-primary, 10%);
+@blue-pale: lighten(@blue-primary, 35%);
+@gray-base: #C0C0BF;
+@white-off: lighten(@gray-base, 20%);
+@gray-light: lighten(@gray-base, 5%);
+@gray-medium: darken(@gray-base, 15%);
+@gray-dark: darken(@gray-base, 25%);
+@orange: #f98841;
+
+.transition(@transition) {
+  -webkit-transition: @transition;
+          transition: @transition;
+}
+
+body {
+  background: @background;
+  font-family: "Lato", Helvetica, sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    color: #555;
+
+    -webkit-font-smoothing: antialiased;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Titles */
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Nunito", Helvetica, sans-serif;
+    font-weight: 300;
+    color: #333;
+}
+
+
+/* Paragraph & Typographic */
+p {
+    line-height: 28px;
+    margin-bottom: 25px;
+}
+
+/* Links */
+a {
+    color: @cello;
+    word-wrap: break-word;
+
+    -webkit-transition: color 0.1s ease-in, background 0.1s ease-in;
+    -moz-transition: color 0.1s ease-in, background 0.1s ease-in;
+    -ms-transition: color 0.1s ease-in, background 0.1s ease-in;
+    -o-transition: color 0.1s ease-in, background 0.1s ease-in;
+    transition: color 0.1s ease-in, background 0.1s ease-in;
+}
+
+a:hover,
+a:focus {
+    color: #c0392b;
+    text-decoration: none;
+    outline: 0;
+}
+
+a:before,
+a:after {
+    -webkit-transition: color 0.1s ease-in, background 0.1s ease-in;
+    -moz-transition: color 0.1s ease-in, background 0.1s ease-in;
+    -ms-transition: color 0.1s ease-in, background 0.1s ease-in;
+    -o-transition: color 0.1s ease-in, background 0.1s ease-in;
+    transition: color 0.1s ease-in, background 0.1s ease-in;
+}
+
+ hr {
+    display: block;
+    height: 1px;
+    border: 0;
+    border-top: 1px solid #ccc;
+    margin-top: 2em;
+    padding: 0;
+}
+
+pre {
+    color: @blue-terminal-text;
+    background-color: @blue-terminal-background;
+    border-color: @blue-terminal-border;
+}
+
+.navbar-default {
+    background-color: inherit;
+
+    .container {
+      position: relative;
+    }
+
+    .navbar-nav{
+       > .active {
+        a, a:hover, a:focus {
+          background-color: @blue-background-light;
+        }
+      }
+
+      > .docs {
+        a {
+          font-weight: bold;
+          color: @cello-link;
+          &:hover {
+            color: @cello;
+            background-color: @cello-background;
+          }
+        }
+      }
+    }
+}
+
+.centered {
+    text-align: center;
+}
+
+#host-detail {
+    margin-top: 1em;
+}
+
+g {
+  .transition(opacity .15s ease-out);
+  opacity: 1.0;
+  &.faded {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.cello {
+  color: @cello;
+}
+
+.logo {
+
+  .cello-l {
+    .transition(color 0.5s ease-out);
+  }
+
+  .cello-dot {
+    position: relative;
+    top: 0px;
+    .transition(top 0.5s ease-out);
+  }
+
+  .cello-e {
+    position: relative;
+    top: 0px;
+    .transition(top 0.125s ease-out);
+  }
+
+  .cello-o {
+    position: relative;
+    top: 0px;
+    .transition(top 0.25s ease-out);
+  }
+
+  &:hover{
+    .cello-l {
+        color: @cello;
+    }
+
+    .cello-e {
+        top: -7px;
+    }
+
+    .cello-o {
+        top: -7px;
+    }
+
+    .cello-dot {
+        top: -18px;
+    }
+  }
+}
+
+.twitter {
+    position: absolute;
+    right: 0;
+    top: 15px;
+    iframe, a {
+      .transition(opacity 0.5s ease-out);
+      opacity: 0.75;
+      margin-left: 0.5em;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
+
+
+/* ==========================================================================
+   Wrap Sections
+   ========================================================================== */
+
+#headerwrap {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAKklEQVQIW2OU98z7zwAF//8zPGeECYA5jAySYAEYB6SQUc4j7xlIBqYNAIfdED63kdz3AAAAAElFTkSuQmCC) repeat;
+	padding-top: 130px;
+  min-height: 450px;
+  position: relative;
+
+  .btn {
+    .transition(opacity 0.5s ease-out);
+    opacity: 0.8;
+    margin: 0.25em 1em;
+    font-weight: bold;
+    background-color: lighten(@cello, 10%);
+    border-color: lighten(@cello, 5%);
+    color: @background;
+    padding: 1em 2em;
+    small {
+      font-size: 70%;
+      letter-spacing: 1px;
+    }
+    &:hover {
+      opacity: 1;
+    }
+  }
+  .install {
+    margin-top: -1em;
+  }
+}
+
+#headerwrap h1 {
+  font-weight: 700;
+  margin-top: -30px;
+	color: white;
+	font-size: 70px;
+  text-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+
+#headerwrap h3 {
+	color: white;
+	font-size: 30px;
+  margin-bottom: 1em;
+  text-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+
+#headerwrap h5 {
+  font-weight: 700;
+	color: white;
+	text-align: left;
+    text-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+
+#headerwrap p {
+	text-align: left;
+	color: white
+}
+
+/* intro Wrap */
+
+#intro {
+  padding-top: 2em;
+	border-top: #bdc3c7 solid 5px;
+  padding-bottom: 2em;
+}
+
+#featureswrap {
+  color: white;
+  display: block;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAKklEQVQIW2OU98z7zwAF//8zPGeECYA5jAySYAEYB6SQUc4j7xlIBqYNAIfdED63kdz3AAAAAElFTkSuQmCC) repeat;
+  padding-top: 2em;
+
+  h1, h3, h4, h5 {
+    color: white;
+  }
+  .row {
+    margin: 4em 0;
+  }
+  img {
+    margin-top: 20px;
+  }
+  .ac a {
+    font-size: 20px;
+  }
+}
+
+/* Showcase Wrap */
+
+#showcasewrap {
+	display: block;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAKklEQVQIW2OU98z7zwAF//8zPGeECYA5jAySYAEYB6SQUc4j7xlIBqYNAIfdED63kdz3AAAAAElFTkSuQmCC) repeat;
+
+  .carousel-indicators {
+      bottom: -50px;
+  }
+
+  .carousel-inner {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+  }
+
+}
+
+#showcasewrap h1 {
+	color: white;
+  padding: 1em 0;
+}
+
+#footerwrap {
+	background-color: #2f2f2f;
+	color: white;
+	padding-top: 40px;
+	padding-bottom: 60px;
+	text-align: left;
+
+  .btn {
+    font-weight: bold;
+    font-size: 125%;
+  }
+}
+
+#footerwrap h3 {
+	font-size: 28px;
+	color: white;
+}
+
+#footerwrap p {
+	color: white;
+  font-size: 90%;
+}
+
+/* Copyright Wrap */
+
+#c {
+	background: #222222;
+	padding-top: 15px;
+}
+
+#c p {
+	color: white
+}
+
+/* Topology */
+
+#graph {
+    position: relative;
+}
+
+.bottom {
+    margin-top: 700px;
+}
+
+svg {
+    height: 1050px;
+    position: absolute;
+    top: -260px;
+    left: 0;
+    z-index: 100;
+}
+
+text {
+  font: 10px sans-serif;
+  pointer-events: none;
+  fill: @gray-dark;
+  text-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+
+path.thin-link {
+  fill: none;
+  stroke: @gray-dark;
+  stroke-width: 1px;
+  stroke-opacity: 0.2;
+  pointer-events: none;
+}
+
+path.shadow-link {
+  fill: none;
+  stroke: @blue-medium;
+  stroke-width: 9px;
+  stroke-opacity: 0;
+  pointer-events: none;
+}
+
+g.active path.shadow-link, g.highlight path.thin-link {
+  stroke-opacity: 0.8;
+}
+
+g.active path.thin-link, g.connected path.thin-link {
+  stroke: @blue-bright;
+  stroke-opacity: 0.8;
+}
+
+g.host {
+  cursor: pointer;
+
+  circle.host-shadow {
+    fill: @white-off;
+    stroke: white;
+    stroke-width: 4px;
+    fill-opacity: 0.8;
+  }
+  circle.host {
+    fill: @gray-dark;
+  }
+  text.hostname {
+    fill: @gray-medium;
+    font-size: 16px;
+  }
+  &.active, &:hover {
+    circle.host {
+      fill: @blue-bright;
+    }
+    circle.host-shadow {
+      fill: @blue-pale;
+    }
+  }
+  &#host-theinternet {
+    text {
+      fill: @gray-medium;
+      font-size: 16px;
+    }
+    .internet-symbol {
+      fill: @gray-dark;
+    }
+    &.active, &.connected {
+      text.internet-symbol {
+       fill: @blue-bright;
+      }
+    }
+  }
+}
+
