@@ -1,7 +1,7 @@
 {
   "name": "client",
   "version": "1.0.0",
-  "homepage": "https://github.com/alicebob/cello",
+  "homepage": "https://github.com/weaveworks/scope/scope",
   "authors": [
     "David Kaltschmidt <david.kaltschmidt@gmail.com>"
   ],

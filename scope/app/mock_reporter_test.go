@@ -3,7 +3,7 @@ package main
 import (
 	"net"
 
-	"github.com/alicebob/cello/report"
+	"github.com/weaveworks/scope/scope/report"
 )
 
 // StaticReport is used as know test data in api tests.

@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/alicebob/cello/report"
+	"github.com/weaveworks/scope/scope/report"
 )
 
 func init() {

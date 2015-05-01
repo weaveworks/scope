@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/alicebob/cello/report"
+	"github.com/weaveworks/scope/scope/report"
 )
 
 // Publisher provides a way to send reports upstream.

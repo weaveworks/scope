@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/alicebob/cello/report"
+	"github.com/weaveworks/scope/scope/report"
 )
 
 // APITopologyDesc is returned in a list by the /api/topology handler.
