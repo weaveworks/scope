@@ -75,10 +75,13 @@ tests:
 	echo "mode: count" > profile.cov
 	fail=0 ;                                                                              \
 	for dir in $$(find . -type f -name '*_test.go' | xargs -n1 dirname | sort -u); do     \
+	    if [ -e "$$dir/ignore_tests" ]; then                                              \
+	      continue;                                                                       \
+	    fi;                                                                               \
 	    output=$$(mktemp cover.XXXXXXXXXX) ;                                              \
 	    if ! go test -tags netgo -covermode=count -coverprofile=$$output $$dir ; then     \
-            fail=1 ;                                                                          \
-        fi ;                                                                                  \
+	      fail=1 ;                                                                        \
+	    fi ;                                                                              \
 	    if [ -f $$output ]; then                                                          \
 	        tail -n +2 <$$output >>profile.cov;                                           \
 	        rm $$output;                                                                  \
