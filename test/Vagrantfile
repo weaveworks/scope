@@ -1,0 +1,60 @@
+VAGRANTFILE_API_VERSION = "2"
+
+# Necessary because the switch disabling unwanted insecure key
+# replacement in Vagrant 1.7+ is not accepted by earlier versions
+Vagrant.require_version ">= 1.7.0"
+
+# these ought to match what is in config.sh
+n_machines = 2
+ip_prefix = "192.168.48"
+ip_suffix_base = 10
+
+def configure_docker(host, hostname, ip)
+  pkgs = "lxc-docker ethtool"
+
+  host.vm.box = "ubuntu/ubuntu-14.10-amd64"
+  host.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/utopic/current/utopic-server-cloudimg-amd64-vagrant-disk1.box"
+
+  host.vm.hostname = hostname
+  host.vm.network "private_network", ip: ip
+
+  host.vm.synced_folder ".", "/vagrant", disabled: true
+
+  host.vm.provision :shell, :inline => "sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9"
+  host.vm.provision :shell, :inline => "echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list"
+
+  pkg_cmd = "apt-get update -qq; " \
+  "apt-get install -q -y --force-yes --no-install-recommends "
+  pkg_cmd << pkgs
+  host.vm.provision :shell, :inline => pkg_cmd
+  host.vm.provision :shell, :inline => "usermod -a -G docker vagrant; "
+
+  # Listen on the remote API
+  host.vm.provision :shell, :inline => "echo 'DOCKER_OPTS=\"-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375\"' >> /etc/default/docker"
+  host.vm.provision :shell, :inline => "service docker restart"
+end
+
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  config.vm.provider :virtualbox do |vb|
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "off"]
+    vb.customize ["modifyvm", :id, "--natdnsproxy1", "off"]
+  end
+
+  # Disable Vagrant 1.7 per host insecure key replacement
+  config.ssh.insert_key = false
+
+  (1..n_machines).each do |i|
+    config.vm.define "host#{i}" do |host|
+      ip_suffix = ip_suffix_base + i
+      configure_docker(host, "host#{i}", "#{ip_prefix}.#{ip_suffix}")
+    end
+  end
+
+end
+
+begin
+  load 'Vagrantfile.local'
+rescue LoadError
+end
