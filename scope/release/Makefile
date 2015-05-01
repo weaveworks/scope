@@ -1,4 +1,4 @@
-base   = github.com/alicebob/cello
+base   = github.com/weaveworks/scope/scope
 parts  = app bridge probe
 rev    = $(shell git rev-parse --short HEAD)
 os     = darwin linux

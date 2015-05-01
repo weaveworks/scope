@@ -7,7 +7,7 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/alicebob/cello/report"
+	"github.com/weaveworks/scope/scope/report"
 	"github.com/alicebob/procspy"
 )
 
