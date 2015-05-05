@@ -28,14 +28,6 @@ module.exports = {
 		WebapiUtils.getNodesDelta(AppStore.getUrlForTopology(AppStore.getCurrentTopology()));
 	},
 
-	clickView: function(viewId) {
-		AppDispatcher.dispatch({
-			type: ActionTypes.CLICK_VIEW,
-			viewId: viewId
-		});
-		RouterUtils.updateRoute();
-	},
-
 	hitEsc: function() {
 		AppDispatcher.dispatch({
 			type: ActionTypes.HIT_ESC_KEY

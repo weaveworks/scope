@@ -37,7 +37,7 @@ var DetailViews = React.createClass({
 				id: 'prometheus'
 		}];
 
-		if (this.props.details) {
+		if (this.props.details && this.props.details.third_party) {
 			views = views.concat(this.props.details.third_party);
 		}
 
