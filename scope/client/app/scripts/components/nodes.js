@@ -14,7 +14,7 @@ var Nodes = React.createClass({
 
 	getInitialState: function() {
 		return {
-			layout: 'circle',
+			layout: 'layered',
 			width: window.innerWidth,
 			height: window.innerHeight - navbarHeight - marginTop
 		};

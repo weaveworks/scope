@@ -4,7 +4,7 @@ var NodesLayouts = React.createClass({
 
 	getInitialState: function() {
 		return {
-			active: 'circle' 
+			active: 'layered'
 		};
 	},
 
