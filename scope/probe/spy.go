@@ -1,14 +1,14 @@
 package main
 
 import (
-	"time"
 	"fmt"
 	"log"
 	"net"
 	"strconv"
+	"time"
 
-	"github.com/weaveworks/scope/scope/report"
 	"github.com/alicebob/procspy"
+	"github.com/weaveworks/scope/scope/report"
 )
 
 // spy invokes procspy.Connections to generate a report.Report that contains

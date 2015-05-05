@@ -4,8 +4,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/weaveworks/scope/scope/report"
 	"github.com/gorilla/mux"
+	"github.com/weaveworks/scope/scope/report"
 )
 
 // Router gives of the HTTP dispatcher. It will always use the embedded HTML
