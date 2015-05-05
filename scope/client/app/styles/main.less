@@ -143,35 +143,33 @@ body {
     padding: 2px 24px;
 }
 
-.navbar-views,
 .navbar-view-options,
 .navbar-topology {
     float: left;
     position: relative;
-    width: 160px;
     text-align: center;    
 
     .nav-preview {
         margin-top: 16px;
         margin-bottom: 12px;
+        margin-left: 12px;
+        margin-right: 12px;
         cursor: pointer;
+        display: inline-block;
+        width: 120px;
 
         .nav-label {
             color: @text-secondary-color;
             font-size: 16px;
-            margin-top: 8px;
+            padding-top: 4px;
+            margin-top: 4px;
+            border-top: 2px solid @text-secondary-color;
         }
-    }
 
-}
-
-.navbar-views {
-
-    .nav-item-label {
-        padding-top: 24px;
-    }
-
-    .nav-item-preview {
+        &.nav-active .nav-label {
+            color: @text-color;
+            border-top: 2px solid @primary-color;
+        }
     }
 
 }
@@ -186,7 +184,6 @@ body {
             display: inline-block;
             padding-top: 12px;
             color: @text-secondary-color;
-            border-bottom: 1px solid @text-secondary-color;
         }
     }
 
@@ -209,7 +206,6 @@ body {
             width: 64px;
             height: 64px;
             padding-top: 4px;
-            border-bottom: 1px solid @text-secondary-color;
         }
 
         &-nodes,
