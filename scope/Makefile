@@ -1,4 +1,4 @@
-.PHONY: default get all build test release clean
+.PHONY: default get all build release clean
 
 default: all
 
@@ -16,7 +16,6 @@ all:
 	$(MAKE) -C genreport
 	$(MAKE) -C probe
 	$(MAKE) -C integration
-	$(MAKE) -C web
 
 build:
 	$(MAKE) -C report build
@@ -34,14 +33,13 @@ release:
 	$(MAKE) -C release
 
 clean:
+	$(MAKE) -C report clean
+	$(MAKE) -C xfer clean
 	$(MAKE) -C app clean
 	$(MAKE) -C bridge clean
 	$(MAKE) -C demoprobe clean
 	$(MAKE) -C oneshot clean
 	$(MAKE) -C fixprobe clean
 	$(MAKE) -C genreport clean
-	$(MAKE) -C integration clean
 	$(MAKE) -C probe clean
-	$(MAKE) -C report clean
-	$(MAKE) -C web clean
-	$(MAKE) -C xfer clean
+	$(MAKE) -C integration clean
