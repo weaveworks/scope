@@ -15,7 +15,6 @@ var currentTopology = 'processname';
 var currentTopologyMode = 'individual';
 var detailsView = false;
 var explorerExpandedNodes = [];
-var currentView = 'nodes';
 var nodeDetails = null;
 var topologies = [];
 
@@ -30,8 +29,7 @@ var AppStore = assign({}, EventEmitter.prototype, {
 			currentTopology: this.getCurrentTopology(),
 			currentTopologyMode: this.getCurrentTopologyMode(),
 			detailsView: this.getDetailsView(),
-			explorerExpandedNodes: this.getExplorerExpandedNodes(),
-			currentView: this.getCurrentView()
+			explorerExpandedNodes: this.getExplorerExpandedNodes()
 		};
 	},
 
@@ -41,10 +39,6 @@ var AppStore = assign({}, EventEmitter.prototype, {
 
 	getCurrentTopologyMode: function() {
 		return currentTopologyMode;
-	},
-
-	getCurrentView: function() {
-		return currentView;
 	},
 
 	getDetailsView: function() {
@@ -107,11 +101,6 @@ AppStore.dispatchToken = AppDispatcher.register(function(payload) {
 		case ActionTypes.CLICK_TOPOLOGY_MODE:
 			currentTopologyMode = payload.mode;
 			AppDispatcher.waitFor([TopologyStore.dispatchToken]);
-			AppStore.emit(AppStore.CHANGE_EVENT);
-			break;
-
-		case ActionTypes.CLICK_VIEW:
-			currentView = payload.viewId;
 			AppStore.emit(AppStore.CHANGE_EVENT);
 			break;
 

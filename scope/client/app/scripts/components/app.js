@@ -4,17 +4,13 @@ var React = require('react');
 var _ = require('lodash');
 
 var Logo = require('./logo');
-var Adjacency = require('./adjacency.js');
 var SearchBar = require('./search-bar.js');
 var AppStore = require('../stores/app-store');
 var Topologies = require('./topologies.js');
-var Views = require('./views.js');
 var TopologyStore = require('../stores/topology-store');
 var WebapiUtils = require('../utils/web-api-utils');
 var AppActions = require('../actions/app-actions');
 var Details = require('./details');
-var Chord = require('./chord');
-var Matrix = require('./matrix');
 var Nodes = require('./nodes');
 var ViewOptions = require('./view-options');
 var RouterUtils = require('../utils/router-utils');
@@ -26,15 +22,11 @@ function getStateFromStores() {
 	return {
 		detailsView: AppStore.getDetailsView(),
 		explorerExpandedNodes: AppStore.getExplorerExpandedNodes(),
-		highlightedAdjacents: TopologyStore.getHighlightedAdjacents(),
 		nodeDetails: AppStore.getNodeDetails(),
 		nodes: TopologyStore.getNodes(),
 		topologies: AppStore.getTopologies(),
-		filterAdjacent: TopologyStore.getFilterAdjacent(),
-		filterText: TopologyStore.getFilterText(),
 		activeTopology: AppStore.getCurrentTopology(),
-		activeTopologyMode: AppStore.getCurrentTopologyMode(),
-		currentView: AppStore.getCurrentView()
+		activeTopologyMode: AppStore.getCurrentTopologyMode()
 	}
 }
 
@@ -65,10 +57,6 @@ var App = React.createClass({
 	},
 
 	render: function() {
-		var showingAdjacency = this.state.currentView === 'adjacency';
-		var showingMatrix = this.state.currentView === 'matrix';
-		var showingChord = this.state.currentView === 'chord';
-		var showingNodes = this.state.currentView === 'nodes';
 		var showingDetails = this.state.detailsView;
 
 		return (
@@ -86,17 +74,10 @@ var App = React.createClass({
 						</div>
         		    </div>
 					<Topologies topologies={this.state.topologies} active={this.state.activeTopology} />
-					<Views nodes={this.state.nodes} active={this.state.currentView} />
 					<ViewOptions active={this.state.activeTopologyMode}/>
 				</div>
 
-				{showingChord && <Chord nodes={this.state.nodes} />}
-				{showingMatrix && <Matrix nodes={this.state.nodes} />}
-				{showingNodes && <Nodes nodes={this.state.nodes} />}
-				{showingAdjacency && <SearchBar nodes={this.state.nodes} filterText={this.state.filterText}
-					filterAdjacent={this.state.filterAdjacent} />}
-				{showingAdjacency && <Adjacency nodes={this.state.nodes} highlightedAdjacents={this.state.highlightedAdjacents}
-					filterText={this.state.filterText} filterAdjacent={this.state.filterAdjacent} /> }
+				<Nodes nodes={this.state.nodes} />
 			</div>
 		);
 	}

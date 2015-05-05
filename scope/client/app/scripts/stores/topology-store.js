@@ -11,26 +11,12 @@ var ActionTypes = require('../constants/action-types');
 
 var nodes = {};
 var mouseOverNode = null;
-var filterText = '';
-var filterAdjacent = false;
 
 // Store API
 
 var TopologyStore = assign({}, EventEmitter.prototype, {
 
 	CHANGE_EVENT: 'change',
-
-	getFilterAdjacent: function() {
-		return filterAdjacent;
-	},
-
-	getHighlightedAdjacents: function() {
-		return nodes[mouseOverNode] && nodes[mouseOverNode].adjacency;
-	},
-
-	getFilterText: function() {
-		return filterText;
-	},
 
 	getNodes: function() {
 		return nodes;
@@ -43,11 +29,6 @@ var TopologyStore = assign({}, EventEmitter.prototype, {
 
 TopologyStore.dispatchToken = AppDispatcher.register(function(payload) {
 	switch (payload.type) {
-		case ActionTypes.CHECK_FILTER_ADJACENT:
-			filterAdjacent = payload.value;
-			TopologyStore.emit(TopologyStore.CHANGE_EVENT);
-			break;
-
 		case ActionTypes.CLICK_TOPOLOGY:
 			nodes = {};
 			TopologyStore.emit(TopologyStore.CHANGE_EVENT);
@@ -60,11 +41,6 @@ TopologyStore.dispatchToken = AppDispatcher.register(function(payload) {
 
 		case ActionTypes.ENTER_NODE:
 			mouseOverNode = payload.nodeId;
-			TopologyStore.emit(TopologyStore.CHANGE_EVENT);
-			break;
-
-		case ActionTypes.INPUT_FILTER_TEXT:
-			filterText = payload.text;
 			TopologyStore.emit(TopologyStore.CHANGE_EVENT);
 			break;
 
