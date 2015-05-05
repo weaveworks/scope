@@ -25,7 +25,7 @@ func main() {
 		publishInterval    = flag.Duration("publish.interval", 1*time.Second, "publish (output) interval")
 		spyInterval        = flag.Duration("spy.interval", 100*time.Millisecond, "spy (scan) interval")
 		listen             = flag.String("listen", ":"+strconv.Itoa(xfer.ProbePort), "listen address")
-		prometheusEndpoint = flag.String("prometheus.endpoint", "/metrics", "Prometheus metrics exposition endpoint (requires -profile.listen)")
+		prometheusEndpoint = flag.String("prometheus.endpoint", "/metrics", "Prometheus metrics exposition endpoint (requires -http.listen)")
 		spyProcs           = flag.Bool("processes", true, "report processes (needs root)")
 		cgroupsRoot        = flag.String("cgroups.root", "", "if provided, enrich -processes with cgroup names from this root (e.g. /mnt/cgroups)")
 		cgroupsUpdate      = flag.Duration("cgroups.update", 10*time.Second, "how often to update cgroup names")
