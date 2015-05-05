@@ -26,9 +26,9 @@ WEAVEEXEC_DOCKER_VERSION=1.3.1
 DOCKER_DISTRIB=weaveexec/docker-$(WEAVEEXEC_DOCKER_VERSION).tgz
 DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(WEAVEEXEC_DOCKER_VERSION).tgz
 
-all: $(WEAVER_EXPORT) $(WEAVEDNS_EXPORT) $(WEAVEEXEC_EXPORT) scope-deps
+all: $(WEAVER_EXPORT) $(WEAVEDNS_EXPORT) $(WEAVEEXEC_EXPORT) $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE)
 
-travis: $(WEAVER_EXE) $(WEAVEDNS_EXE)
+travis: $(WEAVER_EXE) $(WEAVEDNS_EXE) $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE)
 
 update:
 	go get -u -f -v -tags -netgo ./$(dir $(WEAVER_EXE)) ./$(dir $(WEAVEDNS_EXE))
@@ -54,11 +54,8 @@ $(SIGPROXY_EXE): sigproxy/main.go
 	go build -o $@ ./$(@D)
 
 $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE): scope/app/*.go scope/probe/*.go
+	go get -tags netgo ./$(@D)
 	go build -o $@ ./$(@D)
-
-# TODO until we put togeth the scope exes, just someone to record the deps
-scope-deps:
-	go get -tags netgo ./scope/app ./scope/bridge ./scope/integration ./scope/probe
 
 $(WEAVER_EXPORT): weaver/Dockerfile $(WEAVER_EXE)
 	$(SUDO) docker build -t $(WEAVER_IMAGE) weaver
