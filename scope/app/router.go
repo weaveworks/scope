@@ -4,7 +4,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/alicebob/cello/report"
+	"github.com/weaveworks/scope/scope/report"
 	"github.com/gorilla/mux"
 )
 

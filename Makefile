@@ -22,7 +22,7 @@ WEAVEEXEC_DOCKER_VERSION=1.3.1
 DOCKER_DISTRIB=weaveexec/docker-$(WEAVEEXEC_DOCKER_VERSION).tgz
 DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(WEAVEEXEC_DOCKER_VERSION).tgz
 
-all: $(WEAVER_EXPORT) $(WEAVEDNS_EXPORT) $(WEAVEEXEC_EXPORT)
+all: $(WEAVER_EXPORT) $(WEAVEDNS_EXPORT) $(WEAVEEXEC_EXPORT) scope-deps
 
 travis: $(WEAVER_EXE) $(WEAVEDNS_EXE)
 
@@ -49,6 +49,10 @@ $(WEAVEDNS_EXE): nameserver/*.go weavedns/main.go
 $(SIGPROXY_EXE): sigproxy/main.go
 	go build -o $@ ./$(@D)
 
+# TODO until we put togeth the scope exes, just someone to record the deps
+scope-deps:
+	go get -tags netgo ./scope/app ./scope/bridge ./scope/integration ./scope/probe
+
 $(WEAVER_EXPORT): weaver/Dockerfile $(WEAVER_EXE)
 	$(SUDO) docker build -t $(WEAVER_IMAGE) weaver
 	$(SUDO) docker save $(WEAVER_IMAGE):latest > $@
@@ -71,10 +75,13 @@ tests:
 	echo "mode: count" > profile.cov
 	fail=0 ;                                                                              \
 	for dir in $$(find . -type f -name '*_test.go' | xargs -n1 dirname | sort -u); do     \
+	    if [ -e "$$dir/ignore_tests" ]; then                                              \
+	      continue;                                                                       \
+	    fi;                                                                               \
 	    output=$$(mktemp cover.XXXXXXXXXX) ;                                              \
 	    if ! go test -tags netgo -covermode=count -coverprofile=$$output $$dir ; then     \
-            fail=1 ;                                                                          \
-        fi ;                                                                                  \
+	      fail=1 ;                                                                        \
+	    fi ;                                                                              \
 	    if [ -f $$output ]; then                                                          \
 	        tail -n +2 <$$output >>profile.cov;                                           \
 	        rm $$output;                                                                  \

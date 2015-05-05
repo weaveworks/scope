@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/alicebob/cello/report"
+	"github.com/weaveworks/scope/scope/report"
 )
 
 // Test /api/topology/processpid

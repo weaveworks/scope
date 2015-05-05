@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/alicebob/cello/report"
+	"github.com/weaveworks/scope/scope/report"
 )
 
 // Reporter is something which generates a single 'current' report over a

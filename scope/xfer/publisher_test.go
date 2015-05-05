@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alicebob/cello/report"
-	"github.com/alicebob/cello/xfer"
+	"github.com/weaveworks/scope/scope/report"
+	"github.com/weaveworks/scope/scope/xfer"
 )
 
 func TestTCPPublisher(t *testing.T) {

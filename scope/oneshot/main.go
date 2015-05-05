@@ -11,8 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alicebob/cello/report"
-	"github.com/alicebob/cello/xfer"
+	"github.com/weaveworks/scope/scope/report"
+	"github.com/weaveworks/scope/scope/xfer"
 )
 
 func main() {

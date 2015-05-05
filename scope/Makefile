@@ -30,19 +30,6 @@ build:
 	$(MAKE) -C genreport build
 	$(MAKE) -C integration build
 
-test:
-	$(MAKE) -C report test
-	$(MAKE) -C xfer test
-	$(MAKE) -C app test
-	$(MAKE) -C bridge test
-	$(MAKE) -C demoprobe test
-	$(MAKE) -C oneshot test
-	$(MAKE) -C fixprobe test
-	$(MAKE) -C genreport test
-	$(MAKE) -C integration test
-	$(MAKE) -C probe test
-	$(MAKE) -C web test
-
 release:
 	$(MAKE) -C release
 
