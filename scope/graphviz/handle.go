@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"github.com/weaveworks/scope/scope/report"
@@ -56,8 +57,14 @@ func dot(w io.Writer, m map[string]report.DetailedRenderableNode) {
 	fmt.Fprintf(w, "\toutputorder=edgesfirst;\n")
 	fmt.Fprintf(w, "\n")
 
+	// Sorting the nodes seems to stop jumpiness.
+	nodes := make(sort.StringSlice, 0, len(m))
 	for _, node := range m {
-		fmt.Fprintf(w, "\t\"%s\" [label=\"%s\n%s\"];\n", node.ID, node.LabelMajor, node.LabelMinor)
+		nodes = append(nodes, fmt.Sprintf("\t\"%s\" [label=\"%s\n%s\"];\n", node.ID, node.LabelMajor, node.LabelMinor))
+	}
+	sort.Sort(nodes)
+	for _, s := range nodes {
+		fmt.Fprint(w, s)
 	}
 	fmt.Fprintf(w, "\n")
 
