@@ -58,7 +58,7 @@ func dot(w io.Writer, m map[string]report.DetailedRenderableNode) {
 	fmt.Fprintf(w, "\n")
 
 	// Sorting the nodes seems to stop jumpiness.
-	nodes := sort.StringSlice{}
+	nodes := make(sort.StringSlice, 0, len(m))
 	for _, node := range m {
 		nodes = append(nodes, fmt.Sprintf("\t\"%s\" [label=\"%s\n%s\"];\n", node.ID, node.LabelMajor, node.LabelMinor))
 	}
