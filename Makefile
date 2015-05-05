@@ -11,12 +11,16 @@ WEAVE_VERSION=git-$(shell git rev-parse --short=12 HEAD)
 WEAVER_EXE=weaver/weaver
 WEAVEDNS_EXE=weavedns/weavedns
 SIGPROXY_EXE=sigproxy/sigproxy
+SCOPEAPP_EXE=scope/app/app
+SCOPEPROBE_EXE=scope/probe/probe
 WEAVER_IMAGE=$(DOCKERHUB_USER)/weave
 WEAVEDNS_IMAGE=$(DOCKERHUB_USER)/weavedns
 WEAVEEXEC_IMAGE=$(DOCKERHUB_USER)/weaveexec
+SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 WEAVER_EXPORT=weave.tar
 WEAVEDNS_EXPORT=weavedns.tar
 WEAVEEXEC_EXPORT=weaveexec.tar
+SCOPE_EXPORT=scope.tar
 
 WEAVEEXEC_DOCKER_VERSION=1.3.1
 DOCKER_DISTRIB=weaveexec/docker-$(WEAVEEXEC_DOCKER_VERSION).tgz
@@ -49,6 +53,9 @@ $(WEAVEDNS_EXE): nameserver/*.go weavedns/main.go
 $(SIGPROXY_EXE): sigproxy/main.go
 	go build -o $@ ./$(@D)
 
+$(SCOPEAPP_EXE) $(SCOPEPROBE_EXE): scope/app/*.go scope/probe/*.go
+	go build -o $@ ./$(@D)
+
 # TODO until we put togeth the scope exes, just someone to record the deps
 scope-deps:
 	go get -tags netgo ./scope/app ./scope/bridge ./scope/integration ./scope/probe
@@ -67,6 +74,10 @@ $(WEAVEEXEC_EXPORT): weaveexec/Dockerfile $(DOCKER_DISTRIB) weave $(SIGPROXY_EXE
 	cp $(DOCKER_DISTRIB) weaveexec/docker.tgz
 	$(SUDO) docker build -t $(WEAVEEXEC_IMAGE) weaveexec
 	$(SUDO) docker save $(WEAVEEXEC_IMAGE):latest > $@
+
+$(SCOPE_EXPORT): scope/Dockerfile $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE)
+	$(SUDO) docker build -t $(SCOPE_IMAGE) scope
+	$(SUDO) docker save $(SCOPE_IMAGE):latest > $@
 
 $(DOCKER_DISTRIB):
 	curl -o $(DOCKER_DISTRIB) $(DOCKER_DISTRIB_URL)

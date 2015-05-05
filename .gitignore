@@ -46,6 +46,7 @@ weaveexec/weave
 weaveexec/sigproxy
 weaveexec/docker*.tgz
 Vagrantfile.local
+scope.tar
 scope/probe/probe
 scope/bridge/bridge
 scope/app/app
