@@ -13,7 +13,7 @@ import (
 func handleTXT(r Reporter) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		dot(w, r.Report().Process.RenderBy(mapFunc(req), classView(req)))
+		dot(w, r.Report().Process.RenderBy(mapFunc(req), classView(req), report.ThirdPartyTemplates{}))
 	}
 }
 
@@ -29,7 +29,7 @@ func handleSVG(r Reporter) http.HandlerFunc {
 
 		cmd.Stdout = w
 
-		dot(wc, r.Report().Process.RenderBy(mapFunc(req), classView(req)))
+		dot(wc, r.Report().Process.RenderBy(mapFunc(req), classView(req), report.ThirdPartyTemplates{}))
 		wc.Close()
 
 		w.Header().Set("Content-Type", "image/svg+xml")
@@ -49,7 +49,7 @@ func handleHTML(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "</body></html>\n")
 }
 
-func dot(w io.Writer, m map[string]report.RenderableNode) {
+func dot(w io.Writer, m map[string]report.DetailedRenderableNode) {
 	fmt.Fprintf(w, "digraph G {\n")
 	fmt.Fprintf(w, "\tgraph [ overlap=false ];\n")
 	fmt.Fprintf(w, "\tnode [ shape=circle, style=filled ];\n")
