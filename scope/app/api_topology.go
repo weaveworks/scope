@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/weaveworks/scope/scope/report"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/weaveworks/scope/scope/report"
 )
 
 const (

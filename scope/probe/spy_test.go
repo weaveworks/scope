@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/weaveworks/scope/scope/report"
 	"github.com/alicebob/procspy"
+	"github.com/weaveworks/scope/scope/report"
 )
 
 func TestScopedIP(t *testing.T) {
