@@ -26,9 +26,9 @@ WEAVEEXEC_DOCKER_VERSION=1.3.1
 DOCKER_DISTRIB=weaveexec/docker-$(WEAVEEXEC_DOCKER_VERSION).tgz
 DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(WEAVEEXEC_DOCKER_VERSION).tgz
 
-all: $(WEAVER_EXPORT) $(WEAVEDNS_EXPORT) $(WEAVEEXEC_EXPORT) $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE)
+all: $(WEAVER_EXPORT) $(WEAVEDNS_EXPORT) $(WEAVEEXEC_EXPORT) $(SCOPE_EXPORT)
 
-travis: $(WEAVER_EXE) $(WEAVEDNS_EXE) $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE)
+travis: $(WEAVER_EXE) $(WEAVEDNS_EXE) $(WEAVEEXEC_EXE) $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE)
 
 update:
 	go get -u -f -v -tags -netgo ./$(dir $(WEAVER_EXE)) ./$(dir $(WEAVEDNS_EXE))
@@ -47,13 +47,13 @@ $(WEAVER_EXE) $(WEAVEDNS_EXE): common/*.go
 
 $(WEAVER_EXE): router/*.go weaver/main.go
 $(WEAVEDNS_EXE): nameserver/*.go weavedns/main.go
-
-# Sigproxy needs separate rule as it fails the netgo check in the main
-# build stanza due to not importing net package
 $(SIGPROXY_EXE): sigproxy/main.go
-	go build -o $@ ./$(@D)
+$(SCOPEAPP_EXE): scope/app/*.go
+$(SCOPEPROBE_EXE): scope/probe/*.go
 
-$(SCOPEAPP_EXE) $(SCOPEPROBE_EXE): scope/app/*.go scope/probe/*.go
+# Sigproxy etc needs separate rule as it fails the netgo check in the main
+# build stanza due to not importing net package
+$(SIGPROXY_EXE) $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE):
 	go get -tags netgo ./$(@D)
 	go build -o $@ ./$(@D)
 
@@ -106,8 +106,9 @@ $(PUBLISH): publish_%:
 publish: $(PUBLISH)
 
 clean:
-	-$(SUDO) docker rmi $(WEAVER_IMAGE) $(WEAVEDNS_IMAGE) $(WEAVEEXEC_IMAGE)
-	rm -f $(WEAVER_EXE) $(WEAVEDNS_EXE) $(SIGPROXY_EXE) $(WEAVER_EXPORT) $(WEAVEDNS_EXPORT) $(WEAVEEXEC_EXPORT)
+	-$(SUDO) docker rmi $(WEAVER_IMAGE) $(WEAVEDNS_IMAGE) $(WEAVEEXEC_IMAGE) $(SCOPE_IMAGE)
+	rm -f $(WEAVER_EXE) $(WEAVEDNS_EXE) $(SIGPROXY_EXE) $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE)
+	rm -f $(WEAVER_EXPORT) $(WEAVEDNS_EXPORT) $(WEAVEEXEC_EXPORT) $(SCOPE_EXPORT)
 
 build:
 	$(SUDO) go clean -i net
