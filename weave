@@ -571,6 +571,11 @@ dns_args() {
     DNS_ARGS="$DNS_ARG $DNS_SEARCH_ARG"
 }
 
+dns_running() {
+    status=$(docker inspect --format='{{.State.Running}}' $DNS_CONTAINER_NAME 2>/dev/null) && [ "$status" = "true" ]
+    return $?
+}
+
 # Perform operation $1 on local DNS database, for container ID $2
 # with an FQDN obtained from the container's configured hostname and
 # domain, at addresses $3, $4 ...
@@ -590,7 +595,7 @@ tell_dns_fqdn() {
     CONTAINER_ID="$2"
     CONTAINER_FQDN="$3"
     shift 3
-    if ! status=$(docker inspect --format='{{.State.Running}}' $DNS_CONTAINER_NAME 2>/dev/null) || [ "$status" != "true" ] ; then
+    if ! dns_running; then
         # weavedns not running - silently return
         return
     fi
@@ -741,17 +746,6 @@ case "$COMMAND" in
         wait_for_status $CONTAINER $HTTP_PORT
         echo $CONTAINER
         ;;
-    launch-scope)
-        [ $# -eq 0 ] || usage
-        check_not_running $SCOPE_CONTAINER_NAME $BASE_SCOPE_IMAGE
-        # Set WEAVEDNS_DOCKER_ARGS in the environment in order to supply
-        # additional parameters, such as resource limits, to docker
-        # when launching the weave container.
-        SCOPE_CONTAINER=$(docker run --privileged -d --name=$SCOPE_CONTAINER_NAME \
-            --net=host -v /proc:/hostproc -v /var/run/docker.sock:/var/run/docker.sock \
-            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE "$@")
-        echo $SCOPE_CONTAINER
-        ;;
     launch-dns)
         [ $# -gt 0 ] || usage
         CIDR=$1
@@ -769,6 +763,27 @@ case "$COMMAND" in
         with_container_netns $DNS_CONTAINER attach $CIDR >/dev/null
         populate_dns
         echo $DNS_CONTAINER
+        ;;
+    launch-scope)
+        [ $# -eq 0 ] || usage
+        check_not_running $SCOPE_CONTAINER_NAME $BASE_SCOPE_IMAGE
+
+        # If DNS is running, we want to automatically tell the scope
+        # image to use weave dns.  We can't use --dns or --hostname
+        # with --net=host, so we have to hack it.
+        if dns_running; then
+            docker_bridge_ip
+            WEAVESCOPE_DNS_ARGS="--dns $DOCKER_BRIDGE_IP --hostname scope --searchpath weave.local"
+        fi
+
+        # Set WEAVESCOPE_DOCKER_ARGS in the environment in order to supply
+        # additional parameters, such as resource limits, to docker
+        # when launching the weave scope container.
+        SCOPE_CONTAINER=$(docker run $DNS_ARGS --privileged -d --name=$SCOPE_CONTAINER_NAME \
+            --net=host -v /proc:/hostproc -v /var/run/docker.sock:/var/run/docker.sock \
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS "$@")
+
+        echo $SCOPE_CONTAINER
         ;;
     connect)
         [ $# -eq 1 ] || usage
