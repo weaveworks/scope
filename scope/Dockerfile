@@ -7,5 +7,6 @@ ADD supervisord.conf /etc/
 ADD ./app/thirdparty.conf /home/weave/
 ADD ./app/app /home/weave/
 ADD ./probe/probe /home/weave/
+ADD ./entrypoint.sh /home/weave/
 EXPOSE 4040
-ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+ENTRYPOINT ["/home/weave/entrypoint.sh"]

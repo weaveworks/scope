@@ -72,7 +72,7 @@ $(WEAVEEXEC_EXPORT): weaveexec/Dockerfile $(DOCKER_DISTRIB) weave $(SIGPROXY_EXE
 	$(SUDO) docker build -t $(WEAVEEXEC_IMAGE) weaveexec
 	$(SUDO) docker save $(WEAVEEXEC_IMAGE):latest > $@
 
-$(SCOPE_EXPORT): scope/Dockerfile $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE)
+$(SCOPE_EXPORT): scope/Dockerfile $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE) scope/entrypoint.sh scope/supervisord.conf
 	$(SUDO) docker build -t $(SCOPE_IMAGE) scope
 	$(SUDO) docker save $(SCOPE_IMAGE):latest > $@
 
