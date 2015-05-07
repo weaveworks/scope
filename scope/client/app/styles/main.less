@@ -37,11 +37,10 @@ body {
 }
 
 #logo {
-    margin: 0 0 0 72px;
+    margin: 0 64px 0 64px;
     height: 64px;
     width: 64px;
     float: left;
-    margin-right: 64px;
 
     .logo {
         path {
@@ -68,12 +67,14 @@ body {
 .topologies {
     float: left;
     position: relative;
-    text-align: center;
+    margin-top: 4px;
 
     &-icon {
         font-size: 12px;
         color: @text-secondary-color;
         margin-right: 16px;
+        position: relative;
+        top: -1px;
     }
 
     .topologies-item {
@@ -103,7 +104,6 @@ body {
         &-label {
             color: @text-secondary-color;
             font-size: 16px;
-            margin-top: 4px;
             text-transform: uppercase;
         }
 

@@ -6,15 +6,19 @@ var MAX_NODES = 100;
 
 var doLayout = function(nodes, edges, width, height, scale) {
     var offsetX = 0;
-    var offsetY = 0;
-    var g = new dagre.graphlib.Graph();
+    var offsetY = 80;
+    var g = new dagre.graphlib.Graph({
+    });
 
     var line = d3.svg.line()
         .interpolate("cardinal")
         .x(function(d) { return d.x; })
         .y(function(d) { return d.y; });
 
-    g.setGraph({});
+    g.setGraph({
+        nodesep: scale(0.75),
+        ranksep: scale(0.75)
+    });
 
     _.each(nodes, function(node) {
         g.setNode(node.id, {id: node.id, width: scale(0.75), height: scale(0.75)});
