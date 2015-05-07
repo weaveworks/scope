@@ -4,7 +4,6 @@ WORKDIR /home/weave
 RUN apk add --update supervisor
 RUN ["sh", "-c", "rm -rf /var/cache/apk/*"]
 ADD supervisord.conf /etc/
-ADD ./app/thirdparty.conf /home/weave/
 ADD ./app/app /home/weave/
 ADD ./probe/probe /home/weave/
 ADD ./entrypoint.sh /home/weave/
