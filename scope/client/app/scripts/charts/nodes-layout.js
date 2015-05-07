@@ -17,8 +17,7 @@ var doLayout = function(nodes, edges, width, height, scale) {
     g.setGraph({});
 
     _.each(nodes, function(node) {
-        g.setNode(node.id, {id: node.id, width: scale(0.75), height: scale(0.5)});
-        delete node.angle;
+        g.setNode(node.id, {id: node.id, width: scale(0.75), height: scale(0.75)});
     });
 
     _.each(edges, function(edge) {

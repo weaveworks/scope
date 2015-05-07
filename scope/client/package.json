@@ -1,20 +1,20 @@
 {
-  "name": "cello-webapp",
-  "version": "0.1.0",
+  "name": "scope-webapp",
+  "version": "0.2.0",
   "dependencies": {
-    "bootstrap": "^3.3.2",
     "d3": "^3.5.3",
     "dagre": "^0.7.1",
     "flux": "^2.0.1",
+    "font-awesome": "^4.3.0",
     "keymirror": "^0.1.1",
     "lodash": "~3.0.1",
+    "material-ui": "^0.7.5",
     "object-assign": "^2.0.0",
     "page": "^1.6.0",
-    "react": "~0.12.2",
+    "react": "^0.13.2",
     "reqwest": "~1.1.5"
   },
   "devDependencies": {
-    "bower": "^1.3.12",
     "browserify": "^8.1.3",
     "connect": "^3.3.4",
     "del": "^1.1.1",
@@ -39,15 +39,14 @@
     "gulp-useref": "^1.1.1",
     "gulp-util": "^3.0.3",
     "jshint-stylish": "^1.0.0",
-    "main-bower-files": "^2.5.0",
     "opn": "^1.0.1",
     "proxy-middleware": "^0.11.0",
-    "reactify": "^1.0.0",
+    "reactify": "^1.1.0",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.0.0"
   },
   "scripts": {
-    "start": "npm install && ./node_modules/bower/bin/bower install && gulp serve"
+    "start": "npm install && gulp serve"
   },
   "engines": {
     "node": ">=0.10.0"

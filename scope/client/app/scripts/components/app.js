@@ -67,14 +67,11 @@ var App = React.createClass({
 					details={this.state.nodeDetails}
 					topology={this.state.activeTopology} /> }
 
-				<div className="navbar">
-					<div className="navbar-brand">
-						<div id="logo">
-							<Logo />
-						</div>
-        		    </div>
+				<div className="header">
+					<div id="logo">
+						<Logo />
+					</div>
 					<Topologies topologies={this.state.topologies} active={this.state.activeTopology} />
-					<ViewOptions active={this.state.activeTopologyMode}/>
 				</div>
 
 				<Nodes nodes={this.state.nodes} />

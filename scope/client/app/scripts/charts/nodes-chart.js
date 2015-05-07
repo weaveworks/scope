@@ -1,5 +1,4 @@
 var _ = require('lodash');
-var EventEmitter = require('events').EventEmitter;
 var React = require('react');
 
 var NodesLayout = require('./nodes-layout');
@@ -155,7 +154,7 @@ var NodesChart = React.createClass({
         var edgeElements = this.getEdges(this.state.edges, scale);
 
         return (
-            <svg width={this.props.width} height={this.props.height}>
+            <svg width="100%" height="100%">
                 <g className="canvas">
                     <g className="edges">
                         {edgeElements}

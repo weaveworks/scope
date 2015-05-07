@@ -15,7 +15,7 @@ var Topologies = React.createClass({
 	},
 
 	renderTopology: function(topology, active) {
-		var className = AppStore.isUrlForTopology(topology.url, active) ? "nav-preview nav-active" : "nav-preview",
+		var className = AppStore.isUrlForTopology(topology.url, active) ? "topologies-item topologies-item-active" : "topologies-item",
 			topologyId = AppStore.getTopologyForUrl(topology.url),
 			title = ['Topology: ' + topology.name,
 			'Nodes: ' + topology.stats.node_count,
@@ -24,12 +24,7 @@ var Topologies = React.createClass({
 		return (
 			<div className={className} key={topologyId} rel={topologyId} onClick={this.onTopologyClick}>
 				<div title={title}>
-					<div className="nav-topology-frame">
-						<span className="nav-topology-nodes">{topology.stats.node_count}</span>
-						<span className="nav-topology-divider" />
-						<span className="nav-topology-edges">{topology.stats.edge_count}</span>
-					</div>
-					<div className="nav-label">
+					<div className="topologies-item-label">
 						{topology.name}
 					</div>
 				</div>
@@ -44,7 +39,8 @@ var Topologies = React.createClass({
 			});
 
 		return (
-			<div className="navbar-topology">
+			<div className="topologies">
+				<span className="topologies-icon fa fa-sitemap" />
 				{topologies.map(function(topology) {
 					return this.renderTopology(topology, activeTopologyId);
 				}, this)}

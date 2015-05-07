@@ -7,7 +7,6 @@ var del = require('del');
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
 var reactify = require('reactify');
-var mainBowerFiles = require('main-bower-files');
 
 // load plugins
 var $ = require('gulp-load-plugins')();
@@ -61,7 +60,7 @@ gulp.task('images', function () {
 });
 
 gulp.task('fonts', function () {
-    return gulp.src('node_modules/bootstrap/fonts/*')
+    return gulp.src('node_modules/font-awesome/fonts/*')
         .pipe($.filter('**/*.{eot,svg,ttf,woff}'))
         .pipe($.flatten())
         .pipe($.if(isDev, gulp.dest('.tmp/fonts')))
