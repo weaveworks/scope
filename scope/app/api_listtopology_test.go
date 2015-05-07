@@ -6,9 +6,8 @@ import (
 	"testing"
 )
 
-// Test /api/topology
 func TestAPITopology(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}, nil))
+	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
 	body := getRawJSON(t, ts, "/api/topology")

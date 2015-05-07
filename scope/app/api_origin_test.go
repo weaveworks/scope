@@ -7,7 +7,7 @@ import (
 )
 
 func TestAPIOrigin(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}, nil))
+	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
 	is404(t, ts, "/api/origin/foobar")

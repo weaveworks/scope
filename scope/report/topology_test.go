@@ -201,7 +201,7 @@ func TestTopologyProc(t *testing.T) {
 				},
 				Aggregate: RenderableMetadata{},
 			},
-		}, report.Process.RenderBy(ProcessName, false, nil); !reflect.DeepEqual(want, have) {
+		}, report.Process.RenderBy(ProcessName, false); !reflect.DeepEqual(want, have) {
 			t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
 		}
 	}
@@ -283,7 +283,7 @@ func TestTopologyProcClass(t *testing.T) {
 				},
 				Aggregate: RenderableMetadata{},
 			},
-		}, report.Process.RenderBy(ProcessName, true, nil); !reflect.DeepEqual(want, have) {
+		}, report.Process.RenderBy(ProcessName, true); !reflect.DeepEqual(want, have) {
 			t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
 		}
 	}
@@ -363,7 +363,7 @@ func TestTopologyHost(t *testing.T) {
 			},
 		}
 
-		have := report.Network.RenderBy(NetworkHostname, false, nil)
+		have := report.Network.RenderBy(NetworkHostname, false)
 
 		sort.Strings(have["net:host-a"].Adjacency)
 
@@ -448,7 +448,7 @@ func TestTopologyIP(t *testing.T) {
 				Aggregate: RenderableMetadata{},
 			},
 		}
-		have := report.Network.RenderBy(NetworkIP, false, nil)
+		have := report.Network.RenderBy(NetworkIP, false)
 		sort.Strings(have["pseudo:;192.168.1.1"].Adjacency)
 		if !reflect.DeepEqual(want, have) {
 			t.Errorf("want\n\t%#v, have\n\t%#v", want, have)

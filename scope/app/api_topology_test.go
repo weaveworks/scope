@@ -11,9 +11,8 @@ import (
 	"github.com/weaveworks/scope/scope/report"
 )
 
-// Test /api/topology/processpid
 func TestAPITopologyProcesspid(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}, nil))
+	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
 	is404(t, ts, "/api/topology/processpid/foobar")
@@ -70,9 +69,8 @@ func TestAPITopologyProcesspid(t *testing.T) {
 	}
 }
 
-// Test /api/topology/processname
 func TestAPITopologyProcessname(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}, nil))
+	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
 	is404(t, ts, "/api/topology/processname/foobar")
@@ -124,9 +122,8 @@ func TestAPITopologyProcessname(t *testing.T) {
 	}
 }
 
-// Test /api/topology/networkip
 func TestAPITopologyIP(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}, nil))
+	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
 	is404(t, ts, "/api/topology/networkip/foobar")
@@ -196,18 +193,8 @@ func TestAPITopologyIP(t *testing.T) {
 	}
 }
 
-// Test /api/topology/networkhost
 func TestAPITopologyNetwork(t *testing.T) {
-	tpl, err := report.ThirdParty{
-		Topology: "networkhost",
-		Label:    "Exhibit A",
-		URL:      "http://local.dev/showme.cgi?id={{ .Major }}",
-	}.Compile("template_1")
-	ok(t, err)
-	ts := httptest.NewServer(
-		Router(StaticReport{},
-			report.ThirdPartyTemplates{tpl},
-		))
+	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
 	is404(t, ts, "/api/topology/networkhost/foobar")
@@ -239,17 +226,7 @@ func TestAPITopologyNetwork(t *testing.T) {
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
-		equals(t,
-			report.NewIDList("host:host-a"),
-			node.Node.Adjacency,
-		)
-		equals(t,
-			[]report.ThirdParty{
-				{Topology: "",
-					Label: "Exhibit A",
-					URL:   "http://local.dev/showme.cgi?id=host-b"},
-			},
-			node.Node.ThirdParty)
+		equals(t, report.NewIDList("host:host-a"), node.Node.Adjacency)
 	}
 
 	{
@@ -272,7 +249,7 @@ func TestAPITopologyNetwork(t *testing.T) {
 
 // Basic websocket test
 func TestAPITopologyWebsocket(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}, nil))
+	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
 	url := "/api/topology/processpid/ws"

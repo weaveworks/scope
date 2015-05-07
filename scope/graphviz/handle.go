@@ -14,7 +14,7 @@ import (
 func handleTXT(r Reporter) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		dot(w, r.Report().Process.RenderBy(mapFunc(req), classView(req), report.ThirdPartyTemplates{}))
+		dot(w, r.Report().Process.RenderBy(mapFunc(req), classView(req)))
 	}
 }
 
@@ -30,7 +30,7 @@ func handleSVG(r Reporter) http.HandlerFunc {
 
 		cmd.Stdout = w
 
-		dot(wc, r.Report().Process.RenderBy(mapFunc(req), classView(req), report.ThirdPartyTemplates{}))
+		dot(wc, r.Report().Process.RenderBy(mapFunc(req), classView(req)))
 		wc.Close()
 
 		w.Header().Set("Content-Type", "image/svg+xml")

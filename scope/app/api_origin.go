@@ -5,20 +5,17 @@ package main
 import (
 	"net/http"
 
-	"github.com/weaveworks/scope/scope/report"
-
 	"github.com/gorilla/mux"
 )
 
 // Origin is returned by the /api/origin/* handler.
 type Origin struct {
-	Hostname    string              `json:"hostname"`
-	OS          string              `json:"os"`
-	Addresses   []string            `json:"addresses"`
-	LoadOne     float64             `json:"load_one"`
-	LoadFive    float64             `json:"load_five"`
-	LoadFifteen float64             `json:"load_fifteen"`
-	ThirdParty  []report.ThirdParty `json:"third_party"`
+	Hostname    string   `json:"hostname"`
+	OS          string   `json:"os"`
+	Addresses   []string `json:"addresses"`
+	LoadOne     float64  `json:"load_one"`
+	LoadFive    float64  `json:"load_five"`
+	LoadFifteen float64  `json:"load_fifteen"`
 }
 
 // makeOriginHandler makes the /api/origin/* handler.
