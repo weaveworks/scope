@@ -2,9 +2,10 @@
 
 var React = require('react');
 var _ = require('lodash');
+var mui = require('material-ui');
+var Paper = mui.Paper;
 
-var DetailViews = require('./detail-views');
-var Explorer = require('./explorer');
+var NodeDetails = require('./node-details');
 var WebapiUtils = require('../utils/web-api-utils');
 
 var Details = React.createClass({
@@ -22,9 +23,9 @@ var Details = React.createClass({
 	render: function() {
 		return (
 			<div id="details">
-				<DetailViews active={this.props.view} details={this.props.details} />
-				<Explorer nodes={this.props.nodes} details={this.props.details}
-					expandedNodes={this.props.explorerExpandedNodes} />
+				<Paper>
+					<NodeDetails details={this.props.details} />
+				</Paper>
 			</div>
 		);
 	}

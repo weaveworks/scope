@@ -163,6 +163,7 @@ body {
       stroke: @text-secondary-color;
       stroke-width: 1.5px;
       fill: none;
+      opacity: 0.5;
     }
 
     circle.border {
@@ -187,14 +188,15 @@ body {
 }
 
 #details {
-    position: fixed;
+    position: absolute;
     z-index: 1024;
     display: block;
     right: 36px;
     top: 24px;
     bottom: 48px;
-    left: 36px;
+    width: 32em;
     background-color: #fff;
+    pointer-events: none;
 
     .graph {
         height: 100%;
@@ -220,4 +222,6 @@ body {
     position: absolute;
     top: 24px;
     left: 24px;
+    width: 100%;
+    height: 100%;
 }

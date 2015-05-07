@@ -21,7 +21,7 @@ var NodeDetails = React.createClass({
 		var node = this.props.details;
 
 		if (!node) {
-			return <div />;
+			return <div id="node-details" />;
 		}
 
 		var metrics = this.getMetrics(node.aggregate);
