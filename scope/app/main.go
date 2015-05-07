@@ -29,22 +29,11 @@ func main() {
 		pidfile       = flag.String("pidfile", "", "write PID file")
 		thirdParty    = flag.String("thirdparty", "thirdparty.conf", "third-party links config file")
 		listen        = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
-		version       = flag.Bool("version", false, "print version number and exit")
 	)
 	flag.Parse()
 	if len(flag.Args()) != 0 {
 		flag.Usage()
 		os.Exit(1)
-	}
-
-	if *version {
-		//fmt.Printf("%s\n", probe.Version)
-		return
-	}
-
-	if time.Now().After(time.Date(2015, time.June, 1, 0, 0, 0, 0, time.UTC)) {
-		fmt.Printf("The Cello binaries are too old. Please update.\n")
-		os.Exit(42)
 	}
 
 	switch *logfile {
