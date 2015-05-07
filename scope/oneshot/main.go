@@ -28,7 +28,8 @@ func main() {
 
 	// Collector deals with the probes, and generates merged reports.
 	xfer.MaxBackoff = 1 * time.Second
-	c := xfer.NewCollector(strings.Split(*probes, ","), 1*time.Second)
+	c := xfer.NewCollector(1 * time.Second)
+	c.AddAddresses(strings.Split(*probes, ","))
 	defer c.Stop()
 
 	report := report.NewReport()

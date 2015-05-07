@@ -31,7 +31,7 @@ type Collector struct {
 }
 
 // NewCollector starts the report collector.
-func NewCollector(ips []string, batchTime time.Duration) *Collector {
+func NewCollector(batchTime time.Duration) *Collector {
 	c := &Collector{
 		in:     make(chan report.Report),
 		out:    make(chan report.Report),
@@ -40,12 +40,12 @@ func NewCollector(ips []string, batchTime time.Duration) *Collector {
 		quit:   make(chan chan struct{}),
 	}
 
-	go c.loop(ips, batchTime)
+	go c.loop(batchTime)
 
 	return c
 }
 
-func (c *Collector) loop(ips []string, batchTime time.Duration) {
+func (c *Collector) loop(batchTime time.Duration) {
 	var (
 		tick    = time.Tick(batchTime)
 		current = report.NewReport()
@@ -76,10 +76,6 @@ func (c *Collector) loop(ips []string, batchTime time.Duration) {
 
 		close(q)
 		delete(addrs, ip)
-	}
-
-	for _, ip := range ips {
-		add(ip)
 	}
 
 	for {
@@ -119,6 +115,14 @@ func (c *Collector) Stop() {
 // collect reports from the remote Publisher.
 func (c *Collector) AddAddress(ip string) {
 	c.add <- ip
+}
+
+// AddAddresses adds the passed IPs to the collector, and starts (trying to)
+// collect reports from the remote Publisher.
+func (c *Collector) AddAddresses(ips []string) {
+	for _, addr := range ips {
+		c.AddAddress(addr)
+	}
 }
 
 // RemoveAddress removes the passed IP from the collector, and stops

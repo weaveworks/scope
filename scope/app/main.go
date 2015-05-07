@@ -20,19 +20,15 @@ import (
 
 func main() {
 	var (
-		defaultProbes = fmt.Sprintf("localhost:%d", xfer.ProbePort)
+		defaultProbes = []string{fmt.Sprintf("localhost:%d", xfer.ProbePort), fmt.Sprintf("scope.weave.local:%d", xfer.ProbePort)}
 		logfile       = flag.String("log", "stderr", "stderr, syslog, or filename")
-		probes        = flag.String("probes", defaultProbes, "list of probe endpoints, comma separated")
+		probes        = flag.String("probes", strings.Join(defaultProbes, ","), "list of probe endpoints, comma separated")
 		batch         = flag.Duration("batch", 1*time.Second, "batch interval")
 		window        = flag.Duration("window", 15*time.Second, "window")
 		pidfile       = flag.String("pidfile", "", "write PID file")
 		listen        = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
 	)
 	flag.Parse()
-	if len(flag.Args()) != 0 {
-		flag.Usage()
-		os.Exit(1)
-	}
 
 	switch *logfile {
 	case "stderr":
@@ -71,8 +67,12 @@ func main() {
 
 	// Collector deals with the probes, and generates merged reports.
 	xfer.MaxBackoff = 10 * time.Second
-	c := xfer.NewCollector(strings.Split(*probes, ","), *batch)
+	c := xfer.NewCollector(*batch)
 	defer c.Stop()
+
+	r := NewResolver(strings.Split(*probes, ","), c.AddAddress)
+	defer r.Stop()
+
 	lifo := NewReportLIFO(c, *window)
 	defer lifo.Stop()
 
