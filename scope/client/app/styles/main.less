@@ -1,5 +1,8 @@
-@import "../../node_modules/bootstrap/less/bootstrap";
-@import "../../bower_components/bootstrap-material-design/less/material.less";
+@import "../../node_modules/material-ui/src/less/scaffolding";
+@import "../../node_modules/material-ui/src/less/components";
+@import "../../node_modules/font-awesome/less/font-awesome.less";
+
+@import url(http://fonts.googleapis.com/css?family=Roboto:300,400);
 
 .browsehappy {
     margin: 0.2em 0;
@@ -17,6 +20,7 @@
 @text-darker-color: darken(@primary-color, 33%);
 @lighter-color: lighten(@primary-color, 10%);
 @cello-orange: #D65906;
+@white: #E7E7E7;
 
 html, body {
 }
@@ -27,180 +31,59 @@ html, body {
 
 /* Space out content a bit */
 body {
-    background-color: @background-color;
+    background: @background-color url(../images/whitepaper.jpg) no-repeat;
     color: @text-color;
     line-height: 150%;
 }
 
-@media (min-width: 1400px) {
-    .container {
-        width: 1340px;
-    }
-}
-
-@media (min-width: 1600px) {
-    .container {
-        width: 1510px;
-    }
-}
-
-@media (min-width: 2000px) {
-    .container {
-        width: 1820px;
-    }
-}
-
-@media (min-width: 2400px) {
-    .container {
-        width: 2160px;
-    }
-}
-
-.btn:hover:not(.btn-link):not(.btn-flat) {
-    .shadow-z-2();
-}
-
-
 #logo {
-    margin: 16px 0 0 32px;
-    height: 71px;
-    width: 71px;
+    margin: 0 0 0 72px;
+    height: 64px;
+    width: 64px;
+    float: left;
+    margin-right: 64px;
 
     .logo {
         path {
-            fill: @text-secondary-color;
+            stroke-width: 2px;
+            stroke: @text-secondary-color;
+            fill: none;
         }
     }
 
-}
-
-#view-options {
-    position: absolute;
-    top: 93px;
-    left: 32px;
-
-    .btn {
-        padding: 4px 16px;
-        color: @text-secondary-color;
-
-        &.selected {
-            color: @text-color;
-        }
-    }
 }
 
 #app {
-    position: relative;
 }
 
-.navbar {
-    .shadow-z-1();
-    background-color: @background-secondary-color;
-
-    .navbar-nav {
-        width: 100%;
-        z-index: 100;
-        .shadow-z-3();
-        position: absolute;
-        top: 112px;
-        left: 0;
-        background-color: @background-secondary-color;
-        margin-left: -40px;
-        margin-right: -40px;
-        width: 240px;
-
-        > li {
-            float: none;
-
-            > a {
-                padding-top: 12px;
-                padding-bottom: 12px;
-                padding-left: 0;
-                padding-right: 0;
-                margin-left: 0;
-                margin-right: 0;
-            }
-
-            &.active, &:hover {
-                .nav-item-label {
-                    color: @text-color;
-                }
-
-            }
-        }
-    }
-
-    .nav-item-label {
-        padding-top: 8px;
-        font-size: 16px;
-        text-align: left;
-        color: @text-secondary-color;
-    }
-
+.header {
+    position: absolute;
+    top: 32px;
+    // border-bottom: 1px solid @text-pale-color;
+    width: 100%;
+    height: 80px;
+    z-index: 20;
 }
 
-.navbar-brand {
-    padding: 2px 24px;
-}
-
-.navbar-view-options,
-.navbar-topology {
+.topologies {
     float: left;
     position: relative;
-    text-align: center;    
+    text-align: center;
 
-    .nav-preview {
+    &-icon {
+        font-size: 12px;
+        color: @text-secondary-color;
+        margin-right: 16px;
+    }
+
+    .topologies-item {
         margin-top: 16px;
-        margin-bottom: 12px;
-        margin-left: 12px;
-        margin-right: 12px;
+        margin-bottom: 16px;
+        margin-left: 16px;
+        margin-right: 16px;
         cursor: pointer;
         display: inline-block;
-        width: 120px;
 
-        .nav-label {
-            color: @text-secondary-color;
-            font-size: 16px;
-            padding-top: 4px;
-            margin-top: 4px;
-            border-top: 2px solid @text-secondary-color;
-        }
-
-        &.nav-active .nav-label {
-            color: @text-color;
-            border-top: 2px solid @primary-color;
-        }
-    }
-
-}
-
-.navbar-view-options {
-
-    .nav-preview {
-        .nav-icon {
-            font-size: 36px;
-            height: 64px;
-            width: 64px;
-            display: inline-block;
-            padding-top: 12px;
-            color: @text-secondary-color;
-        }
-    }
-
-    .nav-item-label {
-        padding-top: 8px;
-    }
-
-    .nav-item-preview {
-        font-size: 36px;
-        color: @text-secondary-color;
-    }
-
-}
-
-.navbar-topology {
-
-    .nav-topology {
         &-frame {
             display: inline-block;
             width: 64px;
@@ -217,35 +100,25 @@ body {
             color: @text-secondary-color;
         }
 
-    }
-
-    .nav-item-topology {
-
-        > a {
-            .row();
-            padding: 8px 0;
-        }
-
-        &-frame {
-            // display: inline-block;
-            text-align: right;
-            padding-top: 4px;
-        }
-
-        &-nodes,
-        &-edges,
-        &-divider {
-            display: block;
-            line-height: 16px;
-            font-size: 12px;
+        &-label {
             color: @text-secondary-color;
+            font-size: 16px;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        &-active, &:hover {
+            .topologies-item-label {
+                color: @text-color;
+                //border-bottom: 2px solid @primary-color;
+            }
         }
     }
 
 }
 
+
 #stats {
-    .row;
 
     .stat-value {
         text-align: center;
@@ -265,147 +138,21 @@ body {
     }
 }
 
-#search-bar {
-    .shadow-z-1();
-    margin-top: -64px;
-    margin-bottom: 32px;
-    padding: 96px 24px 16px 24px;
-
-    .checkbox {
-        margin-top: 0;
-    }
-
-    .form-group .material-input:before {
-        background-color: @cello-orange;
-    }
-}
-
-.adjacency {
-    > table > tbody > tr > td {
-        border-top: none;
-    }
-
-    > table > thead > tr > th {
-        padding: 16px 20px;
-        font-size: 12px;
-        font-weight: normal;
-        color: @text-secondary-color;
-        border-bottom: none;
-    }
-
-    tr.adjacency-group-first-row {
-        border-top: 2px solid @text-secondary-color;
-    }
-
-
-    .node {
-        display: inline-block;
-        cursor: pointer;
-        padding: 4px 8px;
-        text-transform: none;
-        margin: 4px;
-
-        .major {
-        }
-        .minor {
-            margin-left: 0.5em;
-            font-size: 85%;
-            color: @text-secondary-color;
-        }
-
-        &.non-adjacent {
-            opacity: 0.3;
-            .major {
-            }
-            .minor {
-            }
-        }
-
-        &:hover {
-            opacity: 1.0;
-            .major {
-                color: @text-darker-color;
-            }
-            .minor {
-                color: @text-color;
-            }
-        }
-    }
-
-}
-
-
-.adjacent-nodes {
-}
-
-.adjacent-nodes, .adjacent-node {
-    display: inline-block;
-}
-
-.highlight-filter {
-    border: 1px solid @text-color;
-    border-radius: 3px;
-}
-
-.checkbox label span {
-    position: static;
-    display: inline;
-}
-
-
-#adjacency-preview,
-#nodes-preview,
-#chord-preview,
-#matrix-preview {
-    .circle circle {
-        fill: none;
-        pointer-events: all;
-    }
-    .background {
-        fill: #eee;
-    }
-    .graph {
-        width: 64px;
-        height: 64px;
-        border: 1px solid @text-secondary-color;
-        margin: 0 auto;
-    }
-}
-
-#chord {
-    text-align: center;
-
-    text {
-        font: 12px sans-serif;
-        fill: @text-color;
-    }
-
-    .circle circle {
-        fill: none;
-        pointer-events: all;
-    }
-
-    .group path {
-        fill-opacity: .5;
-    }
-
-    path.chord {
-        stroke: #000;
-        stroke-width: .25px;
-    }
-
-    .circle:hover path.fade {
-        display: none;
-    }    
-}
 
 #explorer,
 #nodes {
-    position: relative;
+
+    svg {
+        position: absolute;
+        top: 0px;
+    }
 
     text {
-        font: 12px sans-serif;
-        fill: @text-color;
+        font-side: 12px;
+        font-family: Roboto;
+        fill: @text-secondary-color;
+        text-transform: uppercase;
+        text-shadow: 0 1px 0 @white, 1px 0 0 @white, 0 -1px 0 @white, -1px 0 0 @white;
     }
 
     g.node {
@@ -419,9 +166,8 @@ body {
     }
 
     circle.border {
-        stroke: @text-pale-color;
-        stroke-width: 1px;
-        fill: white;
+        stroke-width: 3px;
+        fill: @white;
     }
 
     circle.shadow {
@@ -440,72 +186,6 @@ body {
     }
 }
 
-#nodes-preview {
-    text,
-    circle.border,
-    circle.shadow,
-    .link {
-        display: none;
-    }
-    circle.node {
-      fill: @text-color;
-    }
-}
-
-#nodes-layouts {
-    position: absolute;
-    left: 24px;
-    top: 24px;
-
-    .btn.active {
-        background-color: @background-secondary-color;
-    }
-}
-
-#matrix {
-    text-align: center;
-    margin-top: 24px;
-
-    .graph {
-        margin: 0 auto;
-        padding-top: 56px;
-        padding-left: 216px;
-    }
-
-    svg {
-        overflow: visible;
-    }
-
-    .matrix-grid {
-        stroke: #fff;
-    }
-
-    .matrix-label-line {
-        stroke: @text-secondary-color;
-    }
-
-    text {
-        font: 10px sans-serif;
-
-        .major {
-            fill: @text-color;
-        }
-
-        .minor {
-            fill: @text-secondary-color;
-        }
-
-        .direction {
-            text-transform: uppercase;
-            fill: @text-pale-color;
-        }
-    }
-
-    .background {
-        fill: #eee;
-    }
-}
-
 #details {
     position: fixed;
     z-index: 1024;
@@ -514,7 +194,6 @@ body {
     top: 24px;
     bottom: 48px;
     left: 36px;
-    .shadow-z-4();
     background-color: #fff;
 
     .graph {

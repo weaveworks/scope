@@ -44,15 +44,13 @@ var Nodes = React.createClass({
 	render: function() {
 		return (
 			<div id="nodes">
-				<div className="graph">
-					<NodesChart
-						onNodeClick={this.onNodeClick}
-						nodes={this.props.nodes}
-						width={this.state.width}
-						height={this.state.height}
-						context="view"
-					/>
-				</div>
+				<NodesChart
+					onNodeClick={this.onNodeClick}
+					nodes={this.props.nodes}
+					width={this.state.width}
+					height={this.state.height}
+					context="view"
+				/>
 			</div>
 		);
 	}
