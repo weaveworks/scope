@@ -40,20 +40,14 @@ type HostMetadata struct {
 // RenderableNode is the data type that's yielded to the JavaScript layer, as
 // an element of a topology. It's also returned directly by a node handler.
 type RenderableNode struct {
-	ID         string `json:"id"`
-	LabelMajor string `json:"label_major"`           // e.g. "process", human-readable
-	LabelMinor string `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
-	Rank       string `json:"rank"`
-	Pseudo     bool   `json:"pseudo"`              //
-	Adjacency  IDList `json:"adjacency,omitempty"` // Node IDs
-	Origin     IDList `json:"origin,omitempty"`    // Origin IDs
-}
-
-// DetailedRenderableNode is returned by /api/:topology/:id handlers.
-type DetailedRenderableNode struct {
-	RenderableNode
-	// Edges map[string]RenderableMetadata `json:"edges"` // edge ID (from->to): metadata // TODO
-	Aggregate RenderableMetadata `json:"aggregate"`
+	ID         string             `json:"id"`                    //
+	LabelMajor string             `json:"label_major"`           // e.g. "process", human-readable
+	LabelMinor string             `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
+	Rank       string             `json:"rank"`                  // to help with the layout engine
+	Pseudo     bool               `json:"pseudo"`                // sort-of a placeholder node, for rendering purposes
+	Adjacency  IDList             `json:"adjacency,omitempty"`   // Node IDs
+	Origin     IDList             `json:"origin,omitempty"`      // Origin IDs
+	Aggregate  RenderableMetadata `json:"metadata"`              //
 }
 
 // NewReport makes a clean report, ready to Merge() other reports into.
@@ -66,7 +60,7 @@ func NewReport() Report {
 	}
 }
 
-// SquashRemote folds all remote nodes into a special supernode.  It uses the
+// SquashRemote folds all remote nodes into a special supernode. It uses the
 // LocalNets of the hosts in HostMetadata to determine which addresses are
 // local.
 func (r Report) SquashRemote() Report {

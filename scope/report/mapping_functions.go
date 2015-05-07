@@ -16,7 +16,7 @@ type MappedNode struct {
 // MapFunc is anything which can take an arbitrary NodeMetadata, which is
 // always one-to-one with nodes in a topology, and return a specific
 // representation of the referenced node, in the form of a node ID and a
-// human-readable major- and minor-labels.
+// human-readable major and minor labels.
 //
 // A single NodeMetadata can yield arbitrary many representations, including
 // representations that reduce the cardinality of the set of nodes.
@@ -66,12 +66,11 @@ func ProcessCgroup(id string, m NodeMetadata, grouped bool) (MappedNode, bool) {
 	}
 
 	return MappedNode{
-			ID:    fmt.Sprintf("cgroup:%s:%s", domain, cgroup),
-			Major: cgroup,
-			Minor: domain,
-			Rank:  cgroup,
-		},
-		cgroup != ""
+		ID:    fmt.Sprintf("cgroup:%s:%s", domain, cgroup),
+		Major: cgroup,
+		Minor: domain,
+		Rank:  cgroup,
+	}, cgroup != ""
 }
 
 // ProcessName takes a node NodeMetadata from a Process topology, and returns
@@ -95,9 +94,9 @@ func ProcessName(id string, m NodeMetadata, grouped bool) (MappedNode, bool) {
 }
 
 // NetworkHostname takes a node NodeMetadata from a Network topology, and
-// returns a representation based on the hostname.
-// Major label is the hostname, the minor label is the domain, if any.
-func NetworkHostname(id string, m NodeMetadata, grouped bool) (MappedNode, bool) {
+// returns a representation based on the hostname. Major label is the
+// hostname, the minor label is the domain, if any.
+func NetworkHostname(id string, m NodeMetadata, _ bool) (MappedNode, bool) {
 	var (
 		name   = m["name"]
 		domain = ""
@@ -118,10 +117,10 @@ func NetworkHostname(id string, m NodeMetadata, grouped bool) (MappedNode, bool)
 	}, name != ""
 }
 
-// NetworkIP takes a node NodeMetadata from a Network topology, and
-// returns a representation based on the (scoped) IP.
-// Major label is the IP, the Minor label is the hostname.
-func NetworkIP(id string, m NodeMetadata, grouped bool) (MappedNode, bool) {
+// NetworkIP takes a node NodeMetadata from a Network topology, and returns a
+// representation based on the (scoped) IP. Major label is the IP, the Minor
+// label is the hostname.
+func NetworkIP(id string, m NodeMetadata, _ bool) (MappedNode, bool) {
 	var (
 		name = m["name"]
 		ip   = strings.SplitN(id, ScopeDelim, 2)[1]

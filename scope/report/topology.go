@@ -40,9 +40,10 @@ type NodeMetadatas map[string]NodeMetadata
 // conceivably (and usefully) collect about an edge between two nodes in any
 // topology.
 type EdgeMetadata struct {
-	WithBytes        bool
-	BytesIngress     uint
-	BytesEgress      uint
+	WithBytes    bool
+	BytesIngress uint // dst -> src
+	BytesEgress  uint // src -> dst
+
 	WithConnCountTCP bool
 	MaxConnCountTCP  uint
 }
@@ -67,8 +68,8 @@ func NewTopology() Topology {
 //
 // If the result will be given to an /api/topology/:name, it should first
 // be Downcast to map[string]RenderableNode.
-func (t Topology) RenderBy(f MapFunc, classView bool) map[string]DetailedRenderableNode {
-	nodes := map[string]DetailedRenderableNode{}
+func (t Topology) RenderBy(f MapFunc, classView bool) map[string]RenderableNode {
+	nodes := map[string]RenderableNode{}
 
 	// Build RenderableNodes for all non-pseudo probes, and an addressID to
 	// nodeID lookup map. Multiple addressIDs can map to the same
@@ -81,15 +82,13 @@ func (t Topology) RenderBy(f MapFunc, classView bool) map[string]DetailedRendera
 		}
 
 		// ID needs not be unique.
-		nodes[mapped.ID] = DetailedRenderableNode{
-			RenderableNode: RenderableNode{
-				ID:         mapped.ID,
-				LabelMajor: mapped.Major,
-				LabelMinor: mapped.Minor,
-				Rank:       mapped.Rank,
-				Pseudo:     false,
-			},
-			Aggregate: RenderableMetadata{},
+		nodes[mapped.ID] = RenderableNode{
+			ID:         mapped.ID,
+			LabelMajor: mapped.Major,
+			LabelMinor: mapped.Minor,
+			Rank:       mapped.Rank,
+			Pseudo:     false,
+			Aggregate:  RenderableMetadata{},
 		}
 
 		nodeAddresses[addressID] = mapped.ID
@@ -116,34 +115,28 @@ func (t Topology) RenderBy(f MapFunc, classView bool) map[string]DetailedRendera
 					}
 				}
 				if classView {
-					nodes[remoteID] = DetailedRenderableNode{
-						RenderableNode: RenderableNode{
-							ID:         remoteID,
-							LabelMajor: "",
-							LabelMinor: "",
-							Pseudo:     true,
-						},
-						Aggregate: RenderableMetadata{},
-						// no Third Party for pseudo nodes
+					nodes[remoteID] = RenderableNode{
+						ID:         remoteID,
+						LabelMajor: "",
+						LabelMinor: "",
+						Pseudo:     true,
+						Aggregate:  RenderableMetadata{},
 					}
 				} else {
 					remoteLabelMajor, remoteLabelMinor := formatLabel(remoteAddress)
-					nodes[remoteID] = DetailedRenderableNode{
-						RenderableNode: RenderableNode{
-							ID:         remoteID,
-							LabelMajor: remoteLabelMajor,
-							LabelMinor: remoteLabelMinor,
-							// No rank for pseudo nodes.
-							Pseudo: true,
-						},
+					nodes[remoteID] = RenderableNode{
+						ID:         remoteID,
+						LabelMajor: remoteLabelMajor,
+						LabelMinor: remoteLabelMinor,
+						// No rank for pseudo nodes.
+						Pseudo:    true,
 						Aggregate: RenderableMetadata{},
-						// no Third Party for pseudo nodes
 					}
 				}
 				nodeAddresses[remoteAddress] = remoteID
 			}
-			localNode.RenderableNode.Origin = localNode.RenderableNode.Origin.Add(origin)
-			localNode.RenderableNode.Adjacency = localNode.RenderableNode.Adjacency.Add(remoteID)
+			localNode.Origin = localNode.Origin.Add(origin)
+			localNode.Adjacency = localNode.Adjacency.Add(remoteID)
 
 			edgeID := localAddress + IDDelim + remoteAddress
 			if md, ok := t.EdgeMetadatas[edgeID]; ok {
@@ -155,17 +148,6 @@ func (t Topology) RenderBy(f MapFunc, classView bool) map[string]DetailedRendera
 	}
 
 	return nodes
-}
-
-// Downcast converts a map[string]DetailedRenderableNode (the output of
-// RenderBy) to a map[string]RenderableNode, which is what should be returned
-// by a plain /api/topology/:name handler.
-func Downcast(in map[string]DetailedRenderableNode) map[string]RenderableNode {
-	out := make(map[string]RenderableNode, len(in))
-	for k, v := range in {
-		out[k] = v.RenderableNode
-	}
-	return out
 }
 
 // EdgeMetadata gives the metadata of an edge from the perspective of the
@@ -216,13 +198,13 @@ func formatLabel(s string) (string, string) {
 // Diff is returned by TopoDiff. It represents the changes between two
 // RenderableNode maps.
 type Diff struct {
-	Add    []DetailedRenderableNode `json:"add"`
-	Update []DetailedRenderableNode `json:"update"`
-	Remove []string                 `json:"remove"`
+	Add    []RenderableNode `json:"add"`
+	Update []RenderableNode `json:"update"`
+	Remove []string         `json:"remove"`
 }
 
 // TopoDiff gives you the diff to get from A to B.
-func TopoDiff(a, b map[string]DetailedRenderableNode) Diff {
+func TopoDiff(a, b map[string]RenderableNode) Diff {
 	diff := Diff{}
 
 	notSeen := map[string]struct{}{}
@@ -249,9 +231,9 @@ func TopoDiff(a, b map[string]DetailedRenderableNode) Diff {
 	return diff
 }
 
-// ByID is a sort interface for a DetailedRenderableNode slice.
-type ByID []DetailedRenderableNode
+// ByID is a sort interface for a RenderableNode slice.
+type ByID []RenderableNode
 
 func (r ByID) Len() int           { return len(r) }
 func (r ByID) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
-func (r ByID) Less(i, j int) bool { return r[i].RenderableNode.ID < r[j].RenderableNode.ID }
+func (r ByID) Less(i, j int) bool { return r[i].ID < r[j].ID }

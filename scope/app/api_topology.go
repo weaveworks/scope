@@ -21,7 +21,7 @@ type APITopology struct {
 
 // APINode is returned by the /api/topology/*/* handlers.
 type APINode struct {
-	Node report.DetailedRenderableNode `json:"node"`
+	Node report.RenderableNode `json:"node"`
 }
 
 // APIEdge is returned by the /api/topology/*/*/* handlers.
@@ -54,7 +54,7 @@ func makeTopologyHandlers(
 		rpt := rep.Report()
 		rendered := topo(rpt).RenderBy(mapping, grouped)
 		t := APITopology{
-			Nodes: report.Downcast(rendered),
+			Nodes: rendered,
 		}
 		respondWith(w, http.StatusOK, t)
 	})
@@ -139,7 +139,7 @@ func handleWebsocket(
 		}
 	}(conn)
 
-	var previousTopo map[string]report.DetailedRenderableNode
+	var previousTopo map[string]report.RenderableNode
 	for {
 		newTopo := topo(rep.Report()).RenderBy(mapping, grouped)
 		diff := report.TopoDiff(previousTopo, newTopo)
