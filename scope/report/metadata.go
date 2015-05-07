@@ -2,6 +2,10 @@ package report
 
 // RenderableMetadata is the per-second version of a EdgeMetadata. Rates,
 // rather than counts. Only keys which are known are set, but they may be 0.
+//
+// Even though we base it on EdgeMetadata, we can apply it to nodes, by
+// summing up (merging) all of the {ingress, egress} metadatas of the
+// {incoming, outgoing} edges to the node.
 type RenderableMetadata map[string]int
 
 const (

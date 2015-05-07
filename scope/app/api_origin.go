@@ -1,14 +1,13 @@
 package main
 
-// /api/origin/*
-
 import (
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-// Origin is returned by the /api/origin/* handler.
+// Origin is returned by the /api/origin/* handler. It represents a machine
+// that runs a probe, i.e. the origin of some data in the system.
 type Origin struct {
 	Hostname    string   `json:"hostname"`
 	OS          string   `json:"os"`

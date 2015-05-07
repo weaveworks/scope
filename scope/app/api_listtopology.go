@@ -51,7 +51,7 @@ func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func stats(r map[string]report.DetailedRenderableNode) topologyStats {
+func stats(r map[string]report.RenderableNode) topologyStats {
 	var (
 		nodes     int
 		realNodes int
@@ -63,7 +63,7 @@ func stats(r map[string]report.DetailedRenderableNode) topologyStats {
 		if !n.Pseudo {
 			realNodes++
 		}
-		edges += len(n.RenderableNode.Adjacency)
+		edges += len(n.Adjacency)
 	}
 
 	return topologyStats{
