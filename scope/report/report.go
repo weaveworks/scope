@@ -53,7 +53,7 @@ type RenderableNode struct {
 type DetailedRenderableNode struct {
 	RenderableNode
 	// Edges map[string]RenderableMetadata `json:"edges"` // edge ID (from->to): metadata // TODO
-	Aggregate  RenderableMetadata `json:"aggregate"`
+	Aggregate RenderableMetadata `json:"aggregate"`
 }
 
 // NewReport makes a clean report, ready to Merge() other reports into.
