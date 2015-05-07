@@ -15,7 +15,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/weaveworks/scope/scope/report"
 	"github.com/weaveworks/scope/scope/xfer"
 )
 
@@ -27,7 +26,6 @@ func main() {
 		batch         = flag.Duration("batch", 1*time.Second, "batch interval")
 		window        = flag.Duration("window", 15*time.Second, "window")
 		pidfile       = flag.String("pidfile", "", "write PID file")
-		thirdParty    = flag.String("thirdparty", "thirdparty.conf", "third-party links config file")
 		listen        = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
 	)
 	flag.Parse()
@@ -69,11 +67,6 @@ func main() {
 		defer os.Remove(*pidfile)
 	}
 
-	tps, err := report.ReadThirdPartyConf(*thirdParty)
-	if err != nil {
-		log.Fatalf("error reading %s: %s", *thirdParty, err)
-	}
-
 	log.Printf("starting")
 
 	// Collector deals with the probes, and generates merged reports.
@@ -83,7 +76,7 @@ func main() {
 	lifo := NewReportLIFO(c, *window)
 	defer lifo.Stop()
 
-	http.Handle("/", Router(lifo, tps))
+	http.Handle("/", Router(lifo))
 	irq := interrupt()
 	go func() {
 		log.Printf("listening on %s", *listen)

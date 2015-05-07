@@ -48,12 +48,11 @@ func makeTopologyHandlers(
 	grouped bool,
 	get *mux.Router,
 	base string,
-	tps report.ThirdPartyTemplates,
 ) {
 	// Full topology:
 	get.HandleFunc(base, func(w http.ResponseWriter, r *http.Request) {
 		rpt := rep.Report()
-		rendered := topo(rpt).RenderBy(mapping, grouped, nil)
+		rendered := topo(rpt).RenderBy(mapping, grouped)
 		t := APITopology{
 			Nodes: report.Downcast(rendered),
 		}
@@ -81,7 +80,7 @@ func makeTopologyHandlers(
 			vars     = mux.Vars(r)
 			nodeID   = vars["id"]
 			rpt      = rep.Report()
-			rendered = topo(rpt).RenderBy(mapping, grouped, tps)
+			rendered = topo(rpt).RenderBy(mapping, grouped)
 			node, ok = rendered[nodeID]
 		)
 		if !ok {
@@ -142,7 +141,7 @@ func handleWebsocket(
 
 	var previousTopo map[string]report.DetailedRenderableNode
 	for {
-		newTopo := topo(rep.Report()).RenderBy(mapping, grouped, nil)
+		newTopo := topo(rep.Report()).RenderBy(mapping, grouped)
 		diff := report.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

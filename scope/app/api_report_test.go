@@ -8,9 +8,8 @@ import (
 	"github.com/weaveworks/scope/scope/report"
 )
 
-// Test /api/report
 func TestAPIReport(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}, nil))
+	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
 	is404(t, ts, "/api/report/foobar")

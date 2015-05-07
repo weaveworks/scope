@@ -8,7 +8,7 @@ import (
 
 // Test site
 func TestSite(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}, nil))
+	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
 	is200(t, ts, "/")

@@ -1,7 +1,6 @@
 package report
 
 import (
-	"log"
 	"net"
 	"reflect"
 	"strings"
@@ -68,11 +67,7 @@ func NewTopology() Topology {
 //
 // If the result will be given to an /api/topology/:name, it should first
 // be Downcast to map[string]RenderableNode.
-func (t Topology) RenderBy(
-	f MapFunc,
-	classView bool,
-	tps ThirdPartyTemplates,
-) map[string]DetailedRenderableNode {
+func (t Topology) RenderBy(f MapFunc, classView bool) map[string]DetailedRenderableNode {
 	nodes := map[string]DetailedRenderableNode{}
 
 	// Build RenderableNodes for all non-pseudo probes, and an addressID to
@@ -85,10 +80,6 @@ func (t Topology) RenderBy(
 			continue
 		}
 
-		tp, err := tps.Execute(mapped)
-		if err != nil {
-			log.Printf("thirdparty template error: %s", err)
-		}
 		// ID needs not be unique.
 		nodes[mapped.ID] = DetailedRenderableNode{
 			RenderableNode: RenderableNode{
@@ -98,8 +89,7 @@ func (t Topology) RenderBy(
 				Rank:       mapped.Rank,
 				Pseudo:     false,
 			},
-			Aggregate:  RenderableMetadata{},
-			ThirdParty: tp,
+			Aggregate: RenderableMetadata{},
 		}
 
 		nodeAddresses[addressID] = mapped.ID

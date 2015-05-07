@@ -1,7 +1,7 @@
 package report
 
-// RenderableMetadata is the per-second version of a EdgeMetadata. Only keys
-// which are known are set, but they may be 0.
+// RenderableMetadata is the per-second version of a EdgeMetadata. Rates,
+// rather than counts. Only keys which are known are set, but they may be 0.
 type RenderableMetadata map[string]int
 
 const (

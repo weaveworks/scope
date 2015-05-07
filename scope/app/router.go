@@ -10,7 +10,7 @@ import (
 
 // Router gives of the HTTP dispatcher. It will always use the embedded HTML
 // resources.
-func Router(c Reporter, tps report.ThirdPartyTemplates) *mux.Router {
+func Router(c Reporter) *mux.Router {
 	router := mux.NewRouter()
 	get := router.Methods("GET").Subrouter()
 	get.HandleFunc("/api/topology", makeTopologyList(c))
@@ -22,7 +22,6 @@ func Router(c Reporter, tps report.ThirdPartyTemplates) *mux.Router {
 			false, // not grouped
 			get,
 			"/api/topology/"+name,
-			tps.For(name),
 		)
 		if def.hasGrouped {
 			makeTopologyHandlers(
@@ -32,7 +31,6 @@ func Router(c Reporter, tps report.ThirdPartyTemplates) *mux.Router {
 				true, // grouped
 				get,
 				"/api/topology/"+name+"grouped",
-				tps.For(name),
 			)
 		}
 	}
