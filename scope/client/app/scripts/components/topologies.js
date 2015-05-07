@@ -5,7 +5,6 @@ var _ = require('lodash');
 
 var AppActions = require('../actions/app-actions');
 var AppStore = require('../stores/app-store');
-var NavItemTopology = require('./nav-item-topology.js');
 
 var Topologies = React.createClass({
 
