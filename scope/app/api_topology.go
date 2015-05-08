@@ -124,7 +124,7 @@ func makeDetailed(n report.RenderableNode) report.DetailedNode {
 			}},
 			{"Origin", []report.Row{
 				{"Hostname", "foo.bar.com", ""},
-				{"Load", "3.3, 2.1, 1.0", ""},
+				{"Load", "3.30 2.11 0.92", ""},
 				{"OS", "Linux", ""},
 			}},
 		},
