@@ -12,6 +12,7 @@
     "object-assign": "^2.0.0",
     "page": "^1.6.0",
     "react": "^0.13.2",
+    "react-tween-state": "0.0.5",
     "reqwest": "~1.1.5"
   },
   "devDependencies": {

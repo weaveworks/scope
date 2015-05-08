@@ -1,6 +1,7 @@
 var _ = require('lodash');
 var React = require('react');
 var d3 = require('d3');
+var tweenState = require('react-tween-state');
 
 var colors = d3.scale.category20();
 
@@ -9,8 +10,39 @@ var internetLabel = "the Internet";
 colors(internetLabel);
 
 var Node = React.createClass({
+    mixins: [tweenState.Mixin],
+
+    getInitialState: function() {
+        return {
+            x: 0,
+            y: 0
+        };
+    },
+
+    componentWillMount: function() {
+        // initial node position when rendered the first time
+        this.setState({
+            x: this.props.dx,
+            y: this.props.dy
+        });
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        // animate node transition to next position
+        this.tweenState('x', {
+            easing: tweenState.easingTypes.easeInOutQuad,
+            duration: 500,
+            endValue: this.props.dx
+        });
+        this.tweenState('y', {
+            easing: tweenState.easingTypes.easeInOutQuad,
+            duration: 500,
+            endValue: this.props.dy
+        });
+    },
+
     render: function() {
-        var transform = "translate(" + this.props.dx + "," + this.props.dy + ")";
+        var transform = "translate(" + this.getTweeningValue('x') + "," + this.getTweeningValue('y') + ")";
         var scale = this.props.scale;
         var textOffsetX = 0;
         var textOffsetY = scale(0.5) + 18;
