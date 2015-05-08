@@ -64,16 +64,17 @@ func NewTopology() Topology {
 	}
 }
 
-// RenderBy translates a given Topology into something consumable by the
-// JavaScript layer and renderable to a user. It takes as an argument a
-// MapFunc, which defines how to group and label nodes in the output.
+// RenderBy transforms a given Topology into a set of RenderableNodes, which
+// the UI will render collectively as a graph. It takes a a MapFunc, which
+// defines how to group and label nodes. If grouped is true, nodes that belong
+// to the same "class" will be merged into a single RenderableNode.
 func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 	nodes := map[string]RenderableNode{}
 
 	// Build a set of RenderableNodes for all non-pseudo probes, and an
 	// addressID to nodeID lookup map. Multiple addressIDs can map to the same
 	// RenderableNodes.
-	nodeAddresses := map[string]string{}
+	address2mapped := map[string]string{}
 	for addressID, meta := range t.NodeMetadatas {
 		mapped, ok := f(addressID, meta, grouped)
 		if !ok {
@@ -88,56 +89,47 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 			Rank:       mapped.Rank,
 			Pseudo:     false,
 			Metadata:   AggregateMetadata{}, // can only fill in later
-			Tables:     []Table{},           // can only fill in later
 		}
 
-		nodeAddresses[addressID] = mapped.ID
+		address2mapped[addressID] = mapped.ID
 	}
 
 	// Walk the graph and make connections.
 	for local, remotes := range t.Adjacency {
 		var (
 			fields       = strings.SplitN(local, IDDelim, 2) // "<host>|<address>"
-			origin       = fields[0]
+			originID     = fields[0]
 			localAddress = fields[1]
-			localID      = nodeAddresses[localAddress] // must exist
-			localNode    = nodes[localID]              // must exist
+			localID      = address2mapped[localAddress] // must exist
+			localNode    = nodes[localID]               // must exist
 		)
 
 		for _, remoteAddress := range remotes {
-			remoteID, ok := nodeAddresses[remoteAddress]
+			remoteID, ok := address2mapped[remoteAddress]
 			if !ok {
 				// We don't have a node for this target address. So we'll make
-				// a pseudonode for it instead.
-				remoteID = remoteAddress
-				if remoteID != TheInternet {
-					remoteID = "pseudo:" + remoteID
-					if grouped {
-						remoteID = localUnknown
-					}
-				}
-				if grouped {
-					nodes[remoteID] = RenderableNode{
-						ID:         remoteID,
-						LabelMajor: "",
-						LabelMinor: "",
-						Pseudo:     true,
-						Metadata:   AggregateMetadata{},
-					}
+				// a pseudonode for it, instead.
+				var maj, min string
+				if remoteAddress == TheInternet {
+					remoteID = remoteAddress
+					maj, min = formatLabel(remoteAddress)
+				} else if grouped {
+					remoteID = localUnknown
+					maj, min = "", ""
 				} else {
-					remoteLabelMajor, remoteLabelMinor := formatLabel(remoteAddress)
-					nodes[remoteID] = RenderableNode{
-						ID:         remoteID,
-						LabelMajor: remoteLabelMajor,
-						LabelMinor: remoteLabelMinor,
-						// No rank for pseudo nodes.
-						Pseudo:   true,
-						Metadata: AggregateMetadata{},
-					}
+					remoteID = "pseudo:" + remoteAddress
+					maj, min = formatLabel(remoteAddress)
 				}
-				nodeAddresses[remoteAddress] = remoteID
+				nodes[remoteID] = RenderableNode{
+					ID:         remoteID,
+					LabelMajor: maj,
+					LabelMinor: min,
+					Pseudo:     true,
+					Metadata:   AggregateMetadata{}, // populated below
+				}
+				address2mapped[remoteAddress] = remoteID
 			}
-			localNode.Origin = localNode.Origin.Add(origin)
+			localNode.Origin = localNode.Origin.Add(originID)
 			localNode.Adjacency = localNode.Adjacency.Add(remoteID)
 
 			edgeID := localAddress + IDDelim + remoteAddress

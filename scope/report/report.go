@@ -37,8 +37,9 @@ type HostMetadata struct {
 	LoadOne, LoadFive, LoadFifteen float64
 }
 
-// RenderableNode is the data type that's yielded to the JavaScript layer, as
-// an element of a topology. It's also returned directly by a node handler.
+// RenderableNode is the data type that's yielded to the JavaScript layer as
+// an element of a topology. It should contain information that's relevant
+// to rendering a node when there are many nodes visible at once.
 type RenderableNode struct {
 	ID         string            `json:"id"`                    //
 	LabelMajor string            `json:"label_major"`           // e.g. "process", human-readable
@@ -48,7 +49,16 @@ type RenderableNode struct {
 	Adjacency  IDList            `json:"adjacency,omitempty"`   // Node IDs
 	Origin     IDList            `json:"origin,omitempty"`      // Origin IDs
 	Metadata   AggregateMetadata `json:"metadata"`              // sums
-	Tables     []Table           `json:"tables,omitempty"`      // for the detail panel
+}
+
+// DetailedNode is the data type that's yielded to the JavaScript layer when
+// we want deep information about an individual node.
+type DetailedNode struct {
+	ID         string  `json:"id"`
+	LabelMajor string  `json:"label_major"`
+	LabelMinor string  `json:"label_minor,omitempty"`
+	Pseudo     bool    `json:"pseudo,omitempty"`
+	Tables     []Table `json:"tables"`
 }
 
 // Table is a dataset associated with a node. It will be displayed in the
@@ -61,7 +71,7 @@ type Table struct {
 // Row is a single entry in a Table dataset.
 type Row struct {
 	Key        string `json:"key"`                   // e.g. Ingress
-	Value      string `json:"value"`                 // e.g. 25
+	ValueMajor string `json:"value_major"`           // e.g. 25
 	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
 }
 
