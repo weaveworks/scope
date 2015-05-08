@@ -4,6 +4,10 @@ var d3 = require('d3');
 
 var colors = d3.scale.category20();
 
+// make sure the internet always gets the same color
+var internetLabel = "the Internet";
+colors(internetLabel);
+
 var Node = React.createClass({
     render: function() {
         var transform = "translate(" + this.props.dx + "," + this.props.dy + ")";
