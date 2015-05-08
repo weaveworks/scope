@@ -16,6 +16,7 @@ install:
   - go install -tags netgo std
   - pip install --user --upgrade gcloud gsutil
   - bin/setup-ci-secrets $encrypted_5ba036e89377_key $encrypted_5ba036e89377_iv
+  - cd ..; git clone ssh://git@github.com/weaveworks/procspy.git; cd scope
   - make travis
 
 script:
