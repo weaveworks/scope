@@ -26,7 +26,7 @@ type APINode struct {
 
 // APIEdge is returned by the /api/topology/*/*/* handlers.
 type APIEdge struct {
-	Metadata report.RenderableMetadata `json:"metadata"`
+	Metadata report.AggregateMetadata `json:"metadata"`
 }
 
 // topologySelecter selects a single topology from a report.
@@ -88,9 +88,7 @@ func makeTopologyHandlers(
 			return
 		}
 
-		respondWith(w, http.StatusOK, APINode{
-			Node: node,
-		})
+		respondWith(w, http.StatusOK, APINode{Node: node})
 	})
 
 	// Individual edges:
@@ -102,9 +100,7 @@ func makeTopologyHandlers(
 			rpt      = rep.Report()
 			metadata = topo(rpt).EdgeMetadata(mapping, grouped, localID, remoteID).Render()
 		)
-		respondWith(w, http.StatusOK, APIEdge{
-			Metadata: metadata,
-		})
+		respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})
 	})
 }
 

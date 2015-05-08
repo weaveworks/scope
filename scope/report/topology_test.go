@@ -123,7 +123,6 @@ var report = Report{
 func TestTopologyProc(t *testing.T) {
 	// Process topology with by-processname mapping
 	{
-
 		if want, have := map[string]RenderableNode{
 			"proc:node-b.local:apache": {
 				ID:         "proc:node-b.local:apache",
@@ -133,7 +132,7 @@ func TestTopologyProc(t *testing.T) {
 				Pseudo:     false,
 				Adjacency:  NewIDList("proc:node-a.local:curl"),
 				Origin:     NewIDList("hostB"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  0,
 					"ingress_bytes": 12,
 				},
@@ -146,7 +145,7 @@ func TestTopologyProc(t *testing.T) {
 				Pseudo:     false,
 				Adjacency:  NewIDList("proc:node-b.local:apache"),
 				Origin:     NewIDList("hostA"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  24,
 					"ingress_bytes": 0,
 				},
@@ -159,7 +158,7 @@ func TestTopologyProc(t *testing.T) {
 				Pseudo:     false,
 				Adjacency:  NewIDList("pseudo:;1.2.3.4;22"),
 				Origin:     NewIDList("hostA"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  200,
 					"ingress_bytes": 0,
 				},
@@ -172,7 +171,7 @@ func TestTopologyProc(t *testing.T) {
 				Pseudo:     false,
 				Adjacency:  NewIDList("pseudo:;1.2.3.5;22"),
 				Origin:     NewIDList("hostB"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  200,
 					"ingress_bytes": 12,
 				},
@@ -181,13 +180,13 @@ func TestTopologyProc(t *testing.T) {
 				ID:         "pseudo:;1.2.3.4;22",
 				LabelMajor: "1.2.3.4:22",
 				Pseudo:     true,
-				Aggregate:  RenderableMetadata{},
+				Metadata:   AggregateMetadata{},
 			},
 			"pseudo:;1.2.3.5;22": {
 				ID:         "pseudo:;1.2.3.5;22",
 				LabelMajor: "1.2.3.5:22",
 				Pseudo:     true,
-				Aggregate:  RenderableMetadata{},
+				Metadata:   AggregateMetadata{},
 			},
 		}, report.Process.RenderBy(ProcessName, false); !reflect.DeepEqual(want, have) {
 			t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
@@ -225,7 +224,7 @@ func TestTopologyProcClass(t *testing.T) {
 				Pseudo:     false,
 				Adjacency:  NewIDList("proc::curl"),
 				Origin:     NewIDList("hostB"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  0,
 					"ingress_bytes": 12,
 				},
@@ -238,7 +237,7 @@ func TestTopologyProcClass(t *testing.T) {
 				Pseudo:     false,
 				Adjacency:  NewIDList("proc::apache"),
 				Origin:     NewIDList("hostA"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  24,
 					"ingress_bytes": 0,
 				},
@@ -249,19 +248,19 @@ func TestTopologyProcClass(t *testing.T) {
 				LabelMinor: "",
 				Rank:       "ssh",
 				Pseudo:     false,
-				Adjacency:  NewIDList("localunknown"),
+				Adjacency:  NewIDList(localUnknown),
 				Origin:     NewIDList("hostA", "hostB"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  400,
 					"ingress_bytes": 12,
 				},
 			},
-			"localunknown": {
-				ID:         "localunknown",
+			localUnknown: {
+				ID:         localUnknown,
 				LabelMajor: "",
 				LabelMinor: "",
 				Pseudo:     true,
-				Aggregate:  RenderableMetadata{},
+				Metadata:   AggregateMetadata{},
 			},
 		}, report.Process.RenderBy(ProcessName, true); !reflect.DeepEqual(want, have) {
 			t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
@@ -301,7 +300,7 @@ func TestTopologyHost(t *testing.T) {
 					"host:host-b",
 				),
 				Origin: NewIDList("hostA"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  212,
 					"ingress_bytes": 0,
 				},
@@ -316,7 +315,7 @@ func TestTopologyHost(t *testing.T) {
 					"pseudo:;1.2.3.5",
 				),
 				Origin: NewIDList("hostB"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  200,
 					"ingress_bytes": 24,
 				},
@@ -325,13 +324,13 @@ func TestTopologyHost(t *testing.T) {
 				ID:         "pseudo:;1.2.3.4",
 				LabelMajor: "1.2.3.4",
 				Pseudo:     true,
-				Aggregate:  RenderableMetadata{},
+				Metadata:   AggregateMetadata{},
 			},
 			"pseudo:;1.2.3.5": {
 				ID:         "pseudo:;1.2.3.5",
 				LabelMajor: "1.2.3.5",
 				Pseudo:     true,
-				Aggregate:  RenderableMetadata{},
+				Metadata:   AggregateMetadata{},
 			},
 		}
 
@@ -378,7 +377,7 @@ func TestTopologyIP(t *testing.T) {
 					"addr:;192.168.1.2",
 				),
 				Origin: NewIDList("hostA"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  212,
 					"ingress_bytes": 0,
 				},
@@ -394,7 +393,7 @@ func TestTopologyIP(t *testing.T) {
 					"addr:;192.168.1.1",
 				),
 				Origin: NewIDList("hostB"),
-				Aggregate: RenderableMetadata{
+				Metadata: AggregateMetadata{
 					"egress_bytes":  200,
 					"ingress_bytes": 24,
 				},
@@ -403,13 +402,13 @@ func TestTopologyIP(t *testing.T) {
 				ID:         "pseudo:;1.2.3.4",
 				LabelMajor: "1.2.3.4",
 				Pseudo:     true,
-				Aggregate:  RenderableMetadata{},
+				Metadata:   AggregateMetadata{},
 			},
 			"pseudo:;1.2.3.5": {
 				ID:         "pseudo:;1.2.3.5",
 				LabelMajor: "1.2.3.5",
 				Pseudo:     true,
-				Aggregate:  RenderableMetadata{},
+				Metadata:   AggregateMetadata{},
 			},
 		}
 		have := report.Network.RenderBy(NetworkIP, false)

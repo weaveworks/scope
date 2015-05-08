@@ -40,14 +40,29 @@ type HostMetadata struct {
 // RenderableNode is the data type that's yielded to the JavaScript layer, as
 // an element of a topology. It's also returned directly by a node handler.
 type RenderableNode struct {
-	ID         string             `json:"id"`                    //
-	LabelMajor string             `json:"label_major"`           // e.g. "process", human-readable
-	LabelMinor string             `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
-	Rank       string             `json:"rank"`                  // to help with the layout engine
-	Pseudo     bool               `json:"pseudo"`                // sort-of a placeholder node, for rendering purposes
-	Adjacency  IDList             `json:"adjacency,omitempty"`   // Node IDs
-	Origin     IDList             `json:"origin,omitempty"`      // Origin IDs
-	Aggregate  RenderableMetadata `json:"metadata"`              //
+	ID         string            `json:"id"`                    //
+	LabelMajor string            `json:"label_major"`           // e.g. "process", human-readable
+	LabelMinor string            `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
+	Rank       string            `json:"rank"`                  // to help with the layout engine
+	Pseudo     bool              `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
+	Adjacency  IDList            `json:"adjacency,omitempty"`   // Node IDs
+	Origin     IDList            `json:"origin,omitempty"`      // Origin IDs
+	Metadata   AggregateMetadata `json:"metadata"`              // sums
+	Tables     []Table           `json:"tables,omitempty"`      // for the detail panel
+}
+
+// Table is a dataset associated with a node. It will be displayed in the
+// detail panel when a user clicks on a node.
+type Table struct {
+	Title string `json:"title"` // e.g. Bandwidth
+	Rows  []Row  `json:"rows"`
+}
+
+// Row is a single entry in a Table dataset.
+type Row struct {
+	Key        string `json:"key"`                   // e.g. Ingress
+	Value      string `json:"value"`                 // e.g. 25
+	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
 }
 
 // NewReport makes a clean report, ready to Merge() other reports into.
