@@ -17,8 +17,8 @@ var doLayout = function(nodes, edges, width, height, scale) {
         .y(function(d) { return d.y; });
 
     g.setGraph({
-        nodesep: scale(1.75),
-        ranksep: scale(1.5)
+        nodesep: scale(2),
+        ranksep: scale(2.5)
     });
 
     _.each(nodes, function(node) {
@@ -26,7 +26,8 @@ var doLayout = function(nodes, edges, width, height, scale) {
     });
 
     _.each(edges, function(edge) {
-        g.setEdge(edge.source.id, edge.target.id, {id: edge.id});
+        var virtualNodes = edge.source.id === edge.target.id ? 1 : 0;
+        g.setEdge(edge.source.id, edge.target.id, {id: edge.id, minlen: virtualNodes});
     });
 
     dagre.layout(g);
