@@ -9,7 +9,7 @@ var Node = React.createClass({
         var transform = "translate(" + this.props.dx + "," + this.props.dy + ")";
         var scale = this.props.scale;
         var textOffsetX = 0;
-        var textOffsetY = scale(0.5) + 16; 
+        var textOffsetY = scale(0.5) + 18;
         var textAngle = _.isUndefined(this.props.angle) ? 0 : -1 * (this.props.angle * 180 / Math.PI - 90);
         var className = this.props.highlighted ? "node highlighted" : "node";
 
@@ -18,7 +18,8 @@ var Node = React.createClass({
                 <circle r={scale(0.5)} className="border" stroke={colors(this.props.label)}></circle>
                 <circle r={scale(0.45)} className="shadow"></circle>
                 <circle r={Math.max(2, scale(0.125))} className="node"></circle>
-                <text textAnchor="middle" x={textOffsetX} y={textOffsetY}>{this.props.label}</text>
+                <text className="node-label" textAnchor="middle" x={textOffsetX} y={textOffsetY}>{this.props.label}</text>
+                <text className="node-sublabel" textAnchor="middle" x={textOffsetX} y={textOffsetY + 17}>{this.props.subLabel}</text>
             </g>
         );
     }

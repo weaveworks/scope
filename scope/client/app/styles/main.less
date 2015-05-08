@@ -138,8 +138,6 @@ body {
     }
 }
 
-
-#explorer,
 #nodes {
 
     svg {
@@ -148,11 +146,20 @@ body {
     }
 
     text {
-        font-side: 12px;
+        font-size: 14px;
         font-family: Roboto;
         fill: @text-secondary-color;
-        text-transform: uppercase;
         text-shadow: 0 1px 0 @white, 1px 0 0 @white, 0 -1px 0 @white, -1px 0 0 @white;
+
+        &.node-label {
+            fill: @text-color;
+        }
+
+        &.node-sublabel {
+            font-size: 12px;
+            fill: @text-secondary-color;
+            text-transform: uppercase;
+        }
     }
 
     g.node {

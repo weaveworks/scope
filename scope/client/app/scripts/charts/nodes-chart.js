@@ -30,6 +30,7 @@ var NodesChart = React.createClass({
             _.assign(nodes[id], {
                 id: id,
                 label: node.label_major,
+                subLabel: node.label_minor,
                 degree: _.size(node.adjacency)
             });
         }, this);
@@ -75,9 +76,8 @@ var NodesChart = React.createClass({
                     onClick={this.props.onNodeClick}
                     key={node.id}
                     id={node.id}
-                    angle={node.angle}
-                    textAnchor={node.textAnchor}
                     label={node.label}
+                    subLabel={node.subLabel}
                     scale={scale}
                     dx={node.x}
                     dy={node.y}

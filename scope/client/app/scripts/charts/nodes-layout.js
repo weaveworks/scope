@@ -16,8 +16,8 @@ var doLayout = function(nodes, edges, width, height, scale) {
         .y(function(d) { return d.y; });
 
     g.setGraph({
-        nodesep: scale(0.75),
-        ranksep: scale(0.75)
+        nodesep: scale(1.75),
+        ranksep: scale(1.5)
     });
 
     _.each(nodes, function(node) {
