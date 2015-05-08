@@ -48,8 +48,8 @@ $(WEAVER_EXE) $(WEAVEDNS_EXE): common/*.go
 $(WEAVER_EXE): router/*.go weaver/main.go
 $(WEAVEDNS_EXE): nameserver/*.go weavedns/main.go
 $(SIGPROXY_EXE): sigproxy/main.go
-$(SCOPEAPP_EXE): scope/app/*.go
-$(SCOPEPROBE_EXE): scope/probe/*.go
+$(SCOPEAPP_EXE): scope/app/*.go scope/xfer/*.go scope/report/*.go
+$(SCOPEPROBE_EXE): scope/probe/*.go scope/xfer/*.go scope/report/*.go
 
 # Sigproxy etc needs separate rule as it fails the netgo check in the main
 # build stanza due to not importing net package

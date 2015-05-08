@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/alicebob/procspy"
+	"github.com/weaveworks/procspy"
 	"github.com/weaveworks/scope/scope/report"
 )
 
