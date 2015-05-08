@@ -20,8 +20,7 @@ var ESC_KEY_CODE = 27;
 
 function getStateFromStores() {
 	return {
-		detailsView: AppStore.getDetailsView(),
-		explorerExpandedNodes: AppStore.getExplorerExpandedNodes(),
+		selectedNodeId: AppStore.getSelectedNodeId(),
 		nodeDetails: AppStore.getNodeDetails(),
 		nodes: TopologyStore.getNodes(),
 		topologies: AppStore.getTopologies(),
@@ -57,13 +56,12 @@ var App = React.createClass({
 	},
 
 	render: function() {
-		var showingDetails = this.state.detailsView;
+		var showingDetails = this.state.selectedNodeId;
 
 		return (
 			<div>
 				{showingDetails && <Details nodes={this.state.nodes}
-					explorerExpandedNodes={this.state.explorerExpandedNodes}
-					view={this.state.detailsView}
+					nodeId={this.state.selectedNodeId}
 					details={this.state.nodeDetails}
 					topology={this.state.activeTopology} /> }
 

@@ -17,16 +17,6 @@ var Details = React.createClass({
 		AppActions.clickCloseDetails();
 	},
 
-	getNodeDetails: function(nodes, nodeId) {
-		var node = nodes[nodeId];
-
-		WebapiUtils.getNodeDetails(this.props.topology, nodeId);
-	},
-
-	componentDidMount: function() {
-		this.getNodeDetails(this.props.nodes, this.props.explorerExpandedNodes[0]);
-	},
-
 	render: function() {
 		return (
 			<div id="details">

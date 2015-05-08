@@ -15,6 +15,7 @@ module.exports = {
 			nodeId: nodeId
 		});
 		RouterUtils.updateRoute();
+		WebapiUtils.getNodeDetails(AppStore.getUrlForTopology(AppStore.getCurrentTopology()), AppStore.getSelectedNodeId());
 	},
 
 	clickTopology: function(topologyId) {
@@ -55,6 +56,7 @@ module.exports = {
 			topologies: topologies
 		});
 		WebapiUtils.getNodesDelta(AppStore.getUrlForTopology(AppStore.getCurrentTopology()));
+		WebapiUtils.getNodeDetails(AppStore.getUrlForTopology(AppStore.getCurrentTopology()), AppStore.getSelectedNodeId());
 	},
 
 	route: function(state) {
@@ -63,6 +65,7 @@ module.exports = {
 			type: ActionTypes.ROUTE_TOPOLOGY
 		});
 		WebapiUtils.getNodesDelta(AppStore.getUrlForTopology(AppStore.getCurrentTopology()));
+		WebapiUtils.getNodeDetails(AppStore.getUrlForTopology(AppStore.getCurrentTopology()), AppStore.getSelectedNodeId());
 	}
 };
 
