@@ -82,6 +82,12 @@ var AppStore = assign({}, EventEmitter.prototype, {
 
 AppStore.dispatchToken = AppDispatcher.register(function(payload) {
 	switch (payload.type) {
+		case ActionTypes.CLICK_CLOSE_DETAILS:
+			detailsView = false;
+			explorerExpandedNodes = [];
+			AppStore.emit(AppStore.CHANGE_EVENT);
+			break;
+
 		case ActionTypes.CLICK_NODE:
 			detailsView = 'explorer';
 			if (!_.contains(explorerExpandedNodes, payload.nodeId)) {

@@ -202,12 +202,29 @@ body {
     top: 24px;
     bottom: 48px;
     width: 32em;
-    background-color: #fff;
-    pointer-events: none;
 
-    .graph {
-        height: 100%;
+    .details-tools {
+        float: right;
+        padding: 8px;
+        color: @text-secondary-color;
+
+        span {
+            cursor: pointer;
+            &:hover {
+                color: @text-color;
+            }
+        }
     }
+}
+
+.mui-paper, .mui-paper-container {
+    height: 100%;
+}
+
+#node-details {
+    padding: 24px;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.86);
 
     .node-details-metrics {
         margin-top: 24px;
@@ -222,13 +239,5 @@ body {
             margin-left: 0.5em;
         }
     }
-
 }
 
-#node-details {
-    position: absolute;
-    top: 24px;
-    left: 24px;
-    width: 100%;
-    height: 100%;
-}

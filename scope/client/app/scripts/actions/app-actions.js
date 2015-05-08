@@ -2,6 +2,13 @@ var AppDispatcher = require('../dispatcher/app-dispatcher');
 var ActionTypes = require('../constants/action-types');
 
 module.exports = {
+	clickCloseDetails: function() {
+		AppDispatcher.dispatch({
+			type: ActionTypes.CLICK_CLOSE_DETAILS
+		});
+		RouterUtils.updateRoute();
+	},
+
 	clickNode: function(nodeId) {
 		AppDispatcher.dispatch({
 			type: ActionTypes.CLICK_NODE,
