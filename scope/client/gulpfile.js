@@ -2,6 +2,7 @@
 
 var gulp = require('gulp');
 var connect = require('gulp-connect');
+var livereload = require('gulp-livereload');
 var browserify = require('browserify');
 var del = require('del');
 var source = require('vinyl-source-stream');
@@ -24,7 +25,7 @@ gulp.task('styles', function () {
         .pipe($.if(isProd, $.csso()))
         .pipe($.if(isProd, gulp.dest('dist/styles')))
         .pipe($.size())
-        .pipe(connect.reload());
+        .pipe(livereload());
 });
 
 gulp.task('scripts', function() {
@@ -39,7 +40,7 @@ gulp.task('scripts', function() {
         .pipe($.if(isProd, buffer()))
         .pipe($.if(isProd, $.uglify()))
         .pipe($.if(isProd, gulp.dest('dist/scripts')))
-        .pipe(connect.reload())
+        .pipe(livereload())
         .on('error', $.util.log);
 });
 
@@ -50,7 +51,7 @@ gulp.task('html', ['styles', 'scripts'], function () {
         //.pipe($.useref())
         .pipe(gulp.dest('dist'))
         .pipe($.size())
-        .pipe(connect.reload());
+        .pipe(livereload());
 });
 
 gulp.task('images', function () {
@@ -102,7 +103,7 @@ gulp.task('connect', function () {
                 return proxy(options);
             })()];
         },
-        livereload: true
+        livereload: false
     });
 });
 
@@ -111,6 +112,7 @@ gulp.task('serve', ['connect', 'styles', 'scripts', 'fonts'], function () {
 });
 
 gulp.task('watch', ['serve'], function () {
+    livereload.listen();
     gulp.watch('app/styles/**/*.less', ['styles']);
     gulp.watch('app/scripts/**/*.js', ['scripts']);
     gulp.watch('app/images/**/*', ['images']);
