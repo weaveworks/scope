@@ -16,7 +16,7 @@ Please see our [gulpfile.js](gulpfile.js) for up to date information on what we 
 
 ## Getting Started
 
-- Install: `npm install && bower install`
+- Install: `npm install`
 - Run `gulp` for building to the `dist` directory and `gulp serve` for preview
 
 
