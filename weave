@@ -166,6 +166,9 @@ DOCKER_BRIDGE=${DOCKER_BRIDGE:-docker0}
 CONTAINER_NAME=${WEAVE_CONTAINER_NAME:-weave}
 DNS_CONTAINER_NAME=weavedns
 SCOPE_CONTAINER_NAME=weavescope
+SCOPE_HOSTNAME=scope
+SCOPE_DOMAINNAME=weave.local
+SCOPE_FQDN=$SCOPE_HOSTNAME.$SCOPE_DOMAINNAME
 BRIDGE=weave
 CONTAINER_IFNAME=ethwe
 MTU=65535
@@ -746,7 +749,7 @@ case "$COMMAND" in
         # with --net=host, so we have to hack it.
         if dns_running; then
             docker_bridge_ip
-            WEAVESCOPE_DNS_ARGS="--dns $DOCKER_BRIDGE_IP --hostname scope --searchpath weave.local"
+            WEAVESCOPE_DNS_ARGS="--dns $DOCKER_BRIDGE_IP --hostname $SCOPE_HOSTNAME --searchpath $SCOPE_DOMAINNAME"
         fi
 
         # Set WEAVESCOPE_DOCKER_ARGS in the environment in order to supply
@@ -755,6 +758,12 @@ case "$COMMAND" in
         SCOPE_CONTAINER=$(docker run $DNS_ARGS --privileged -d --name=$SCOPE_CONTAINER_NAME \
             --net=host -v /proc:/hostproc -v /var/run/docker.sock:/var/run/docker.sock \
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS "$@")
+
+        if dns_running; then
+            IP_ADDRS=$(find /sys/class/net -name eth* | xargs -n1 basename | xargs -n1 ip addr show |
+                grep inet | awk '{ print $2 }' | grep -oE "$IP_REGEXP" | xargs echo)
+            tell_dns_fqdn PUT $SCOPE_CONTAINER $SCOPE_FQDN $IP_ADDRS
+        fi
 
         echo $SCOPE_CONTAINER
         ;;
