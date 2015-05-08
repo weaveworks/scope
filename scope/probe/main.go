@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/weaveworks/procspy"
 	"github.com/weaveworks/scope/scope/report"
 	"github.com/weaveworks/scope/scope/xfer"
 )
@@ -29,6 +30,7 @@ func main() {
 		spyProcs           = flag.Bool("processes", true, "report processes (needs root)")
 		cgroupsRoot        = flag.String("cgroups.root", "", "if provided, enrich -processes with cgroup names from this root (e.g. /mnt/cgroups)")
 		cgroupsUpdate      = flag.Duration("cgroups.update", 10*time.Second, "how often to update cgroup names")
+		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
 	)
 	flag.Parse()
 
@@ -42,6 +44,8 @@ func main() {
 		fmt.Printf("unstable\n")
 		return
 	}
+
+	procspy.SetProcRoot(*procRoot)
 
 	if *httpListen != "" {
 		log.Printf("profiling data being exported to %s", *httpListen)
