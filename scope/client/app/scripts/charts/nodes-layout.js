@@ -5,8 +5,9 @@ var _ = require('lodash');
 var MAX_NODES = 100;
 
 var doLayout = function(nodes, edges, width, height, scale) {
+    var topMargin = 80;
     var offsetX = 0;
-    var offsetY = 80;
+    var offsetY = 0 + topMargin;
     var g = new dagre.graphlib.Graph({
     });
 
@@ -35,7 +36,7 @@ var doLayout = function(nodes, edges, width, height, scale) {
         offsetX = (width - graph.width) / 2;
     }
     if (graph.height < height) {
-        offsetY = (height - graph.height) / 2;
+        offsetY = (height - graph.height) / 2 + topMargin;
     }
 
     g.nodes().forEach(function(id) {
