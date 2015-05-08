@@ -8,7 +8,7 @@ var Node = React.createClass({
         NodeColorMixin
     ],
     render: function() {
-        var transform = "translate(" + this.props.dx + "," + this.props.dy + ")";
+        var transform = "translate(" + this.getTweeningValue('x') + "," + this.getTweeningValue('y') + ")";
         var scale = this.props.scale;
         var textOffsetX = 0;
         var textOffsetY = scale(0.5) + 18;
