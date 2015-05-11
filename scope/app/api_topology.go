@@ -14,19 +14,19 @@ const (
 	websocketTimeout = 10 * time.Second
 )
 
-// APITopology is returned by the /api/topology/* handlers.
+// APITopology is returned by the /api/topology/{name} handler.
 type APITopology struct {
 	Nodes map[string]report.RenderableNode `json:"nodes"`
 }
 
-// APINode is returned by the /api/topology/*/* handlers.
+// APINode is returned by the /api/topology/{name}/{id} handler.
 type APINode struct {
-	Node report.RenderableNode `json:"node"`
+	Node report.DetailedNode `json:"node"`
 }
 
 // APIEdge is returned by the /api/topology/*/*/* handlers.
 type APIEdge struct {
-	Metadata report.RenderableMetadata `json:"metadata"`
+	Metadata report.AggregateMetadata `json:"metadata"`
 }
 
 // topologySelecter selects a single topology from a report.
@@ -49,7 +49,7 @@ func makeTopologyHandlers(
 	get *mux.Router,
 	base string,
 ) {
-	// Full topology:
+	// Full topology.
 	get.HandleFunc(base, func(w http.ResponseWriter, r *http.Request) {
 		rpt := rep.Report()
 		rendered := topo(rpt).RenderBy(mapping, grouped)
@@ -59,8 +59,7 @@ func makeTopologyHandlers(
 		respondWith(w, http.StatusOK, t)
 	})
 
-	// Websocket for the full topology:
-	// This route overlaps with the next one.
+	// Websocket for the full topology. This route overlaps with the next.
 	get.HandleFunc(base+"/ws", func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		loop := websocketLoop
@@ -74,26 +73,22 @@ func makeTopologyHandlers(
 		handleWebsocket(w, r, rep, topo, mapping, grouped, loop)
 	})
 
-	// Individual nodes:
+	// Individual nodes.
 	get.HandleFunc(base+"/{id}", func(w http.ResponseWriter, r *http.Request) {
 		var (
 			vars     = mux.Vars(r)
 			nodeID   = vars["id"]
 			rpt      = rep.Report()
-			rendered = topo(rpt).RenderBy(mapping, grouped)
-			node, ok = rendered[nodeID]
+			node, ok = topo(rpt).RenderBy(mapping, grouped)[nodeID]
 		)
 		if !ok {
 			http.NotFound(w, r)
 			return
 		}
-
-		respondWith(w, http.StatusOK, APINode{
-			Node: node,
-		})
+		respondWith(w, http.StatusOK, APINode{Node: makeDetailed(node)})
 	})
 
-	// Individual edges:
+	// Individual edges.
 	get.HandleFunc(base+"/{local}/{remote}", func(w http.ResponseWriter, r *http.Request) {
 		var (
 			vars     = mux.Vars(r)
@@ -102,10 +97,38 @@ func makeTopologyHandlers(
 			rpt      = rep.Report()
 			metadata = topo(rpt).EdgeMetadata(mapping, grouped, localID, remoteID).Render()
 		)
-		respondWith(w, http.StatusOK, APIEdge{
-			Metadata: metadata,
-		})
+		respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})
 	})
+}
+
+// TODO(pb): temporary hack
+func makeDetailed(n report.RenderableNode) report.DetailedNode {
+	return report.DetailedNode{
+		ID:         n.ID,
+		LabelMajor: n.LabelMajor,
+		LabelMinor: n.LabelMinor,
+		Pseudo:     n.Pseudo,
+		Tables: []report.Table{
+			{"Bandwidth", true, []report.Row{
+				{"Ingress", "25", "KB/s"},
+				{"Egress", "44", "KB/s"},
+			}},
+			{"Ingress", true, []report.Row{
+				{"10.11.12.13", "20", "KB/s"},
+				{"172.16.121.199", "3", "KB/s"},
+				{"99.85.101.122", "1", "KB/s"},
+			}},
+			{"Egress", true, []report.Row{
+				{"10.11.12.13", "43", "KB/s"},
+				{"172.16.121.199", "1", "KB/s"},
+			}},
+			{"Origin", false, []report.Row{
+				{"Hostname", "foo.bar.com", ""},
+				{"Load", "3.30 2.11 0.92", ""},
+				{"OS", "Linux", ""},
+			}},
+		},
+	}
 }
 
 var upgrader = websocket.Upgrader{

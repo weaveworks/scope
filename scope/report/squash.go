@@ -12,53 +12,48 @@ const (
 )
 
 // Squash takes a Topology, and folds all remote nodes into a supernode.
-func Squash(t Topology, c IDAddresser, localNets []*net.IPNet) Topology {
-	nt := NewTopology()
-	for id, a := range t.Adjacency {
-		var newAdj IDList
+func Squash(t Topology, f IDAddresser, localNets []*net.IPNet) Topology {
+	newTopo := NewTopology()
+	isRemote := func(ip net.IP) bool { return !netsContain(localNets, ip) }
 
-		for _, addrID := range a {
-			ip := c(addrID)
-
-			local := false
-			for _, localNet := range localNets {
-				if localNet.Contains(ip) {
-					local = true
-					break
-				}
+	// If any node ID on the right-hand (destination) side of an adjacency
+	// list is remote, rename it to TheInternet. (We'll never have remote
+	// nodes on the left-hand (source) side of an adjacency list, by
+	// definition.)
+	for nodeID, adjacent := range t.Adjacency {
+		var newAdjacency IDList
+		for _, adjacentID := range adjacent {
+			if isRemote(f(adjacentID)) {
+				adjacentID = TheInternet
 			}
-
-			if !local {
-				addrID = TheInternet
-			}
-
-			newAdj = newAdj.Add(addrID)
+			newAdjacency = newAdjacency.Add(adjacentID)
 		}
-
-		nt.Adjacency[id] = newAdj
+		newTopo.Adjacency[nodeID] = newAdjacency
 	}
 
-	for key, md := range t.EdgeMetadatas {
+	// Edge metadata keys are "<src node ID>|<dst node ID>". If the dst node
+	// ID is remote, rename it to TheInternet.
+	for key, metadata := range t.EdgeMetadatas {
 		parts := strings.SplitN(key, IDDelim, 2)
-		if ip := c(parts[1]); ip != nil {
-			local := false
-			for _, localNet := range localNets {
-				if localNet.Contains(ip) {
-					local = true
-					break
-				}
-			}
-			if !local {
-				key = parts[0] + IDDelim + TheInternet
-			}
+		if ip := f(parts[1]); ip != nil && isRemote(ip) {
+			key = parts[0] + IDDelim + TheInternet
 		}
 
 		// Could be we're merging two keys into one now.
-		summedMeta := nt.EdgeMetadatas[key]
-		summedMeta.Flatten(md)
-		nt.EdgeMetadatas[key] = summedMeta
+		summedMetadata := newTopo.EdgeMetadatas[key]
+		summedMetadata.Flatten(metadata)
+		newTopo.EdgeMetadatas[key] = summedMetadata
 	}
 
-	nt.NodeMetadatas = t.NodeMetadatas
-	return nt
+	newTopo.NodeMetadatas = t.NodeMetadatas
+	return newTopo
+}
+
+func netsContain(nets []*net.IPNet, ip net.IP) bool {
+	for _, net := range nets {
+		if net.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
