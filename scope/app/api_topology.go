@@ -109,20 +109,20 @@ func makeDetailed(n report.RenderableNode) report.DetailedNode {
 		LabelMinor: n.LabelMinor,
 		Pseudo:     n.Pseudo,
 		Tables: []report.Table{
-			{"Bandwidth", []report.Row{
+			{"Bandwidth", true, []report.Row{
 				{"Ingress", "25", "KB/s"},
 				{"Egress", "44", "KB/s"},
 			}},
-			{"Ingress", []report.Row{
+			{"Ingress", true, []report.Row{
 				{"10.11.12.13", "20", "KB/s"},
 				{"172.16.121.199", "3", "KB/s"},
 				{"99.85.101.122", "1", "KB/s"},
 			}},
-			{"Egress", []report.Row{
+			{"Egress", true, []report.Row{
 				{"10.11.12.13", "43", "KB/s"},
 				{"172.16.121.199", "1", "KB/s"},
 			}},
-			{"Origin", []report.Row{
+			{"Origin", false, []report.Row{
 				{"Hostname", "foo.bar.com", ""},
 				{"Load", "3.30 2.11 0.92", ""},
 				{"OS", "Linux", ""},

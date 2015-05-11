@@ -64,8 +64,9 @@ type DetailedNode struct {
 // Table is a dataset associated with a node. It will be displayed in the
 // detail panel when a user clicks on a node.
 type Table struct {
-	Title string `json:"title"` // e.g. Bandwidth
-	Rows  []Row  `json:"rows"`
+	Title   string `json:"title"`   // e.g. Bandwidth
+	Numeric bool   `json:"numeric"` // should the major column be right-aligned?
+	Rows    []Row  `json:"rows"`
 }
 
 // Row is a single entry in a Table dataset.
