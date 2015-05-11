@@ -58,4 +58,7 @@ scope/web/docs/*.html
 scope/*sublime-project
 scope/*sublime-workspace
 scope/*npm-debug.log
-
+site/scope/docs/concepts.html
+site/scope/docs/eula.html
+site/scope/docs/install.html
+site/scope/docs/rules.html
