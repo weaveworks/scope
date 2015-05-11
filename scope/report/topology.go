@@ -65,9 +65,11 @@ func NewTopology() Topology {
 }
 
 // RenderBy transforms a given Topology into a set of RenderableNodes, which
-// the UI will render collectively as a graph. It takes a a MapFunc, which
-// defines how to group and label nodes. If grouped is true, nodes that belong
-// to the same "class" will be merged into a single RenderableNode.
+// the UI will render collectively as a graph. Note that a RenderableNode will
+// always be rendered with other nodes, and therefore contains limited detail.
+//
+// RenderBy takes a a MapFunc, which defines how to group and label nodes. If
+// grouped is true, nodes that belong to the same "class" will be merged.
 func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 	nodes := map[string]RenderableNode{}
 
@@ -75,13 +77,15 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 	// addressID to nodeID lookup map. Multiple addressIDs can map to the same
 	// RenderableNodes.
 	address2mapped := map[string]string{}
-	for addressID, meta := range t.NodeMetadatas {
-		mapped, ok := f(addressID, meta, grouped)
+	for addressID, metadata := range t.NodeMetadatas {
+		mapped, ok := f(addressID, metadata, grouped)
 		if !ok {
 			continue
 		}
 
-		// ID needs not be unique.
+		// mapped.ID needs not be unique over all addressIDs. If not, we just overwrite
+		// the existing data, on the assumption that the MapFunc returns the same
+		// data.
 		nodes[mapped.ID] = RenderableNode{
 			ID:         mapped.ID,
 			LabelMajor: mapped.Major,
@@ -90,79 +94,78 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 			Pseudo:     false,
 			Metadata:   AggregateMetadata{}, // can only fill in later
 		}
-
 		address2mapped[addressID] = mapped.ID
 	}
 
 	// Walk the graph and make connections.
-	for local, remotes := range t.Adjacency {
+	for src, dsts := range t.Adjacency {
 		var (
-			fields       = strings.SplitN(local, IDDelim, 2) // "<host>|<address>"
-			originID     = fields[0]
-			localAddress = fields[1]
-			localID      = address2mapped[localAddress] // must exist
-			localNode    = nodes[localID]               // must exist
+			fields            = strings.SplitN(src, IDDelim, 2) // "<host>|<address>"
+			srcNodeID         = fields[0]
+			srcNodeAddress    = fields[1]
+			srcRenderableID   = address2mapped[srcNodeAddress] // must exist
+			srcRenderableNode = nodes[srcRenderableID]         // must exist
 		)
 
-		for _, remoteAddress := range remotes {
-			remoteID, ok := address2mapped[remoteAddress]
+		for _, dstNodeAddress := range dsts {
+			dstRenderableID, ok := address2mapped[dstNodeAddress]
 			if !ok {
 				// We don't have a node for this target address. So we'll make
 				// a pseudonode for it, instead.
 				var maj, min string
-				if remoteAddress == TheInternet {
-					remoteID = remoteAddress
-					maj, min = formatLabel(remoteAddress)
+				if dstNodeAddress == TheInternet {
+					dstRenderableID = dstNodeAddress
+					maj, min = formatLabel(dstNodeAddress)
 				} else if grouped {
-					remoteID = localUnknown
+					dstRenderableID = localUnknown
 					maj, min = "", ""
 				} else {
-					remoteID = "pseudo:" + remoteAddress
-					maj, min = formatLabel(remoteAddress)
+					dstRenderableID = "pseudo:" + dstNodeAddress
+					maj, min = formatLabel(dstNodeAddress)
 				}
-				nodes[remoteID] = RenderableNode{
-					ID:         remoteID,
+				nodes[dstRenderableID] = RenderableNode{
+					ID:         dstRenderableID,
 					LabelMajor: maj,
 					LabelMinor: min,
 					Pseudo:     true,
 					Metadata:   AggregateMetadata{}, // populated below
 				}
-				address2mapped[remoteAddress] = remoteID
+				address2mapped[dstNodeAddress] = dstRenderableID
 			}
-			localNode.Origin = localNode.Origin.Add(originID)
-			localNode.Adjacency = localNode.Adjacency.Add(remoteID)
 
-			edgeID := localAddress + IDDelim + remoteAddress
+			srcRenderableNode.Origin = srcRenderableNode.Origin.Add(srcNodeID)
+			srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
+			edgeID := srcNodeAddress + IDDelim + dstNodeAddress
 			if md, ok := t.EdgeMetadatas[edgeID]; ok {
-				localNode.Metadata.Merge(md.Render())
+				srcRenderableNode.Metadata.Merge(md.Render())
 			}
 		}
 
-		nodes[localID] = localNode
+		nodes[srcRenderableID] = srcRenderableNode
 	}
 
 	return nodes
 }
 
 // EdgeMetadata gives the metadata of an edge from the perspective of the
-// localMappedID. Since an edgeID can have multiple edges on the address
-// level, it uses the supplied mapping function to translate addressIDs to
-// mappedIDs.
-func (t Topology) EdgeMetadata(f MapFunc, grouped bool, localMappedID, remoteMappedID string) EdgeMetadata {
+// srcRenderableID. Since an edgeID can have multiple edges on the address
+// level, it uses the supplied mapping function to translate address IDs to
+// renderable node (mapped) IDs.
+func (t Topology) EdgeMetadata(f MapFunc, grouped bool, srcRenderableID, dstRenderableID string) EdgeMetadata {
 	metadata := EdgeMetadata{}
 	for edgeID, edgeMeta := range t.EdgeMetadatas {
 		edgeParts := strings.SplitN(edgeID, IDDelim, 2)
-		localID := edgeParts[0]
-		if localID != TheInternet {
-			mapped, _ := f(localID, t.NodeMetadatas[localID], grouped)
-			localID = mapped.ID
+		src := edgeParts[0]
+		if src != TheInternet {
+			mapped, _ := f(src, t.NodeMetadatas[src], grouped)
+			src = mapped.ID
 		}
-		remoteID := edgeParts[1]
-		if remoteID != TheInternet {
-			mapped, _ := f(remoteID, t.NodeMetadatas[remoteID], grouped)
-			remoteID = mapped.ID
+		dst := edgeParts[1]
+		if dst != TheInternet {
+			mapped, _ := f(dst, t.NodeMetadatas[dst], grouped)
+			dst = mapped.ID
 		}
-		if localID == localMappedID && remoteID == remoteMappedID {
+		if src == srcRenderableID && dst == dstRenderableID {
 			metadata.Flatten(edgeMeta)
 		}
 	}
@@ -171,7 +174,7 @@ func (t Topology) EdgeMetadata(f MapFunc, grouped bool, localMappedID, remoteMap
 
 // formatLabel is an opportunistic helper to format any addressID into
 // something we can show on screen.
-func formatLabel(s string) (string, string) {
+func formatLabel(s string) (major, minor string) {
 	if s == TheInternet {
 		return "the Internet", ""
 	}
@@ -209,10 +212,8 @@ func TopoDiff(a, b map[string]RenderableNode) Diff {
 	for k, node := range b {
 		if _, ok := a[k]; !ok {
 			diff.Add = append(diff.Add, node)
-		} else {
-			if !reflect.DeepEqual(node, a[k]) {
-				diff.Update = append(diff.Update, node)
-			}
+		} else if !reflect.DeepEqual(node, a[k]) {
+			diff.Update = append(diff.Update, node)
 		}
 		delete(notSeen, k)
 	}
