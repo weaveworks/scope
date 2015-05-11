@@ -4,10 +4,8 @@ var React = require('react');
 var _ = require('lodash');
 
 var StatValue = require('./stat-value.js');
-var Renderer = require('./../mixins/renderer.js');
 
 var Stats = React.createClass({
-	mixins: [Renderer],
 
 	render: function() {
 		var nodeCount = _.size(this.props.nodes),

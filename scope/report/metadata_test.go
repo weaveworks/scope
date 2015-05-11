@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestRenderableMetadata(t *testing.T) {
-	for from, want := range map[EdgeMetadata]RenderableMetadata{
+func TestAggregateMetadata(t *testing.T) {
+	for from, want := range map[EdgeMetadata]AggregateMetadata{
 
 		// Simple connection count
 		EdgeMetadata{
@@ -62,16 +62,16 @@ func TestRenderableMetadata(t *testing.T) {
 	}
 }
 
-func TestRenderableMetadataSum(t *testing.T) {
+func TestAggregateMetadataSum(t *testing.T) {
 	var (
-		this = RenderableMetadata{
+		this = AggregateMetadata{
 			"ingress_bytes": 3,
 		}
-		other = RenderableMetadata{
+		other = AggregateMetadata{
 			"ingress_bytes": 333,
 			"egress_bytes":  3,
 		}
-		want = RenderableMetadata{
+		want = AggregateMetadata{
 			"ingress_bytes": 336,
 			"egress_bytes":  3,
 		}
