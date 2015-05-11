@@ -21,7 +21,7 @@ var NodeDetails = React.createClass({
 				</h2>
 
 				{this.props.details.tables.map(function(table) {
-					return <NodeDetailsTable title={table.title} rows={table.rows} />;
+					return <NodeDetailsTable title={table.title} rows={table.rows} isNumeric={table.numeric} />;
 				})}
         	</div>
 		);
