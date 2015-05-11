@@ -158,7 +158,6 @@ body {
         &.node-sublabel {
             font-size: 12px;
             fill: @text-secondary-color;
-            text-transform: uppercase;
         }
     }
 
@@ -221,23 +220,50 @@ body {
     height: 100%;
 }
 
-#node-details {
-    padding: 24px;
+.node-details {
+    padding: 24px 36px 0 36px;
     height: 100%;
     background-color: rgba(255, 255, 255, 0.86);
 
-    .node-details-metrics {
-        margin-top: 24px;
+    &-label-minor {
+        font-size: 66%;
+        color: @text-secondary-color;
     }
 
-    .node-details-metric-label {
-        margin-right: 0.5em;
-    }
+    &-table {
 
-    .node-detail-view-label {
-        .glyphicon {
-            margin-left: 0.5em;
+        margin-bottom: 8px;
+
+        &-title {
+            text-transform: uppercase;
+            margin-bottom: 0;
+            color: @text-secondary-color;
+            font-size: 100%;
         }
+
+        &-row {
+            > div {
+                display: inline-block;
+            }
+
+            &-key {
+                width: 9em;
+            }
+
+            &-value-major {
+                width: 2em;
+                text-align: right;
+                margin-right: 0.5em;
+            }
+
+            &-value-minor {
+                font-size: 95%;
+                color: @text-secondary-color;
+            }
+
+        }
+
     }
+
 }
 

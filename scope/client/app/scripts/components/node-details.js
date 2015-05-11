@@ -3,36 +3,26 @@
 var React = require('react');
 var _ = require('lodash');
 
+var NodeDetailsTable = require('./node-details-table');
 
 var NodeDetails = React.createClass({
-
-	getMetrics: function(metrics) {
-		return _.map(metrics, function(value, label) {
-			return (
-				<div className="node-details-metric">
-					<span className="node-details-metric-label">{label}:</span>
-					<span className="node-details-metric-value">{value}</span>
-				</div>
-			);
-		});
-	},
 
 	render: function() {
 		var node = this.props.details;
 
 		if (!node) {
-			return <div id="node-details" />;
+			return <div className="node-details" />;
 		}
 
-		var metrics = this.getMetrics(node.aggregate);
-
 		return (
-			<div id="node-details">
-				<h2>
-					{node.label_major} <small>{node.label_minor}</small>
+			<div className="node-details">
+				<h2 className="node-details-label">
+					{node.label_major} <span className="node-details-label-minor">{node.label_minor}</span>
 				</h2>
-				{metrics.length && <h4 className="node-details-metrics">Metrics</h4>}
-				{metrics}
+
+				{this.props.details.tables.map(function(table) {
+					return <NodeDetailsTable title={table.title} rows={table.rows} />;
+				})}
         	</div>
 		);
 	}
