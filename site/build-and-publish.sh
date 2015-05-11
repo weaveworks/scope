@@ -15,6 +15,7 @@ fi
 
 export BRANCH COMMIT OUTPUT
 
+make -C scope
 bundle install --path=.bundle
 bundle exec jekyll build --verbose
 
