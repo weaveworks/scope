@@ -54,19 +54,19 @@ func (r Response) Equal(r2 *Response) bool {
 	return true
 }
 
-func (i Response) String() string {
+func (r Response) String() string {
 	var buf bytes.Buffer
-	if i.err != nil {
-		fmt.Fprintf(&buf, "%s", i.err)
+	if r.err != nil {
+		fmt.Fprintf(&buf, "%s", r.err)
 	} else {
-		if len(i.Name()) > 0 {
-			fmt.Fprintf(&buf, "%s", i.Name())
+		if len(r.Name()) > 0 {
+			fmt.Fprintf(&buf, "%s", r.Name())
 		}
-		if !i.IP().IsUnspecified() {
-			fmt.Fprintf(&buf, "[%s]", i.IP())
+		if !r.IP().IsUnspecified() {
+			fmt.Fprintf(&buf, "[%s]", r.IP())
 		}
-		if i.ttl > 0 {
-			fmt.Fprintf(&buf, "(TTL:%d)", i.TTL())
+		if r.ttl > 0 {
+			fmt.Fprintf(&buf, "(TTL:%d)", r.TTL())
 		}
 	}
 	return buf.String()
@@ -214,7 +214,7 @@ func (c *MDNSClient) ResponseCallback(r *dns.Msg) {
 			}
 
 			if query, found := c.inflight[name]; found {
-				newResponseInfos := make([]*responseInfo, 0)
+				var newResponseInfos []*responseInfo
 				for _, resp := range query.responseInfos {
 					resp.ch <- res
 					// insistent queries are not removed on the first reply, but on the timeout
