@@ -1,12 +1,12 @@
 package report
 
-// RenderableMetadata is the per-second version of a EdgeMetadata. Rates,
+// AggregateMetadata is the per-second version of a EdgeMetadata. Rates,
 // rather than counts. Only keys which are known are set, but they may be 0.
 //
 // Even though we base it on EdgeMetadata, we can apply it to nodes, by
 // summing up (merging) all of the {ingress, egress} metadatas of the
 // {incoming, outgoing} edges to the node.
-type RenderableMetadata map[string]int
+type AggregateMetadata map[string]int
 
 const (
 	keyBytesIngress    = "ingress_bytes"
@@ -14,9 +14,9 @@ const (
 	keyMaxConnCountTCP = "max_conn_count_tcp"
 )
 
-// Render calculates a RenderableMetadata from an EdgeMetadata.
-func (md EdgeMetadata) Render() RenderableMetadata {
-	m := RenderableMetadata{}
+// Render calculates a AggregateMetadata from an EdgeMetadata.
+func (md EdgeMetadata) Render() AggregateMetadata {
+	m := AggregateMetadata{}
 
 	if md.WithBytes {
 		m[keyBytesIngress] = int(md.BytesIngress)
@@ -31,8 +31,8 @@ func (md EdgeMetadata) Render() RenderableMetadata {
 	return m
 }
 
-// Merge adds the fields from RenderableMetadata to r. r must be initialized.
-func (r *RenderableMetadata) Merge(other RenderableMetadata) {
+// Merge adds the fields from AggregateMetadata to r. r must be initialized.
+func (r *AggregateMetadata) Merge(other AggregateMetadata) {
 	for k, v := range other {
 		(*r)[k] += v
 	}

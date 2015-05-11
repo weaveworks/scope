@@ -158,7 +158,6 @@ body {
         &.node-sublabel {
             font-size: 12px;
             fill: @text-secondary-color;
-            text-transform: uppercase;
         }
     }
 
@@ -175,12 +174,12 @@ body {
 
     circle.border {
         stroke-width: 3px;
-        fill: @white;
+        fill: none;
     }
 
     circle.shadow {
+        stroke: none;
         fill: @background-secondary-color;
-        fill-opacity: 0.8;
     }
 
     circle.node {
@@ -205,13 +204,13 @@ body {
 
     .details-tools {
         float: right;
-        padding: 8px;
-        color: @text-secondary-color;
+        padding: 16px 24px;
+        color: @white;
 
         span {
             cursor: pointer;
             &:hover {
-                color: @text-color;
+                color: white;
             }
         }
     }
@@ -221,23 +220,70 @@ body {
     height: 100%;
 }
 
-#node-details {
-    padding: 24px;
+.node-details {
     height: 100%;
     background-color: rgba(255, 255, 255, 0.86);
 
-    .node-details-metrics {
-        margin-top: 24px;
-    }
+    &-header {
 
-    .node-details-metric-label {
-        margin-right: 0.5em;
-    }
+        padding: 24px 36px 24px 36px;
 
-    .node-detail-view-label {
-        .glyphicon {
-            margin-left: 0.5em;
+        &-label {
+            color: white;
+            margin-bottom: 0;
+
+            &-minor {
+                font-size: 120%;
+                color: @white;
+            }
+
         }
+
     }
+
+    &-content {
+        padding: 0 36px 0 36px;
+    }
+
+    &-table {
+
+        margin-bottom: 8px;
+
+        &-title {
+            text-transform: uppercase;
+            margin-bottom: 0;
+            color: @text-secondary-color;
+            font-size: 100%;
+        }
+
+        &-row {
+            > div {
+                display: inline-block;
+            }
+
+            &-key {
+                width: 9em;
+            }
+
+            &-value-major {
+                margin-right: 0.5em;
+            }
+
+            &-value-scalar {
+                width: 2em;
+                text-align: right;
+                margin-right: 0.5em;
+            }
+
+            &-value-minor,
+            &-value-unit {
+                font-size: 95%;
+                color: @text-secondary-color;
+            }
+
+        }
+
+    }
+
 }
 
