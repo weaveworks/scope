@@ -20,7 +20,7 @@ var Details = React.createClass({
 	render: function() {
 		return (
 			<div id="details">
-				<Paper>
+				<Paper zDepth={3}>
 					<div className="details-tools">
 						<span className="fa fa-close" onClick={this.handleClickClose} />
 					</div>
