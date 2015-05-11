@@ -1,12 +1,44 @@
 var _ = require('lodash');
 var React = require('react');
+var tweenState = require('react-tween-state');
 
 var NodeColorMixin = require('../mixins/node-color-mixin');
 
 var Node = React.createClass({
     mixins: [
-        NodeColorMixin
+        NodeColorMixin,
+        tweenState.Mixin
     ],
+
+    getInitialState: function() {
+        return {
+            x: 0,
+            y: 0
+        };
+    },
+
+    componentWillMount: function() {
+        // initial node position when rendered the first time
+        this.setState({
+            x: this.props.dx,
+            y: this.props.dy
+        });
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        // animate node transition to next position
+        this.tweenState('x', {
+            easing: tweenState.easingTypes.easeInOutQuad,
+            duration: 500,
+            endValue: nextProps.dx
+        });
+        this.tweenState('y', {
+            easing: tweenState.easingTypes.easeInOutQuad,
+            duration: 500,
+            endValue: nextProps.dy
+        });
+    },
+
     render: function() {
         var transform = "translate(" + this.getTweeningValue('x') + "," + this.getTweeningValue('y') + ")";
         var scale = this.props.scale;
