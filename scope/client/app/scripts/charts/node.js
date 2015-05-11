@@ -32,12 +32,12 @@ var Node = React.createClass({
         this.tweenState('x', {
             easing: tweenState.easingTypes.easeInOutQuad,
             duration: 500,
-            endValue: this.props.dx
+            endValue: nextProps.dx
         });
         this.tweenState('y', {
             easing: tweenState.easingTypes.easeInOutQuad,
             duration: 500,
-            endValue: this.props.dy
+            endValue: nextProps.dy
         });
     },
 

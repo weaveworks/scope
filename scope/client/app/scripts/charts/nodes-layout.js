@@ -1,4 +1,3 @@
-var d3 = require('d3');
 var dagre = require('dagre');
 var _ = require('lodash');
 
@@ -10,11 +9,6 @@ var doLayout = function(nodes, edges, width, height, scale) {
     var offsetY = 0 + topMargin;
     var g = new dagre.graphlib.Graph({
     });
-
-    var line = d3.svg.line()
-        .interpolate("cardinal")
-        .x(function(d) { return d.x; })
-        .y(function(d) { return d.y; });
 
     g.setGraph({
         nodesep: scale(2),
@@ -54,7 +48,7 @@ var doLayout = function(nodes, edges, width, height, scale) {
             point.x += offsetX;
             point.y += offsetY;
         });
-        edge.path = line(graphEdge.points);
+        edge.points = graphEdge.points;
     });
 };
 

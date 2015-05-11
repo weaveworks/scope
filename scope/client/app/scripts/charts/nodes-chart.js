@@ -1,10 +1,16 @@
 var _ = require('lodash');
+var d3 = require('d3');
 var React = require('react');
 
 var NodesLayout = require('./nodes-layout');
 var Node = require('./node');
 
 var MAX_NODES = 100;
+var line = d3.svg.line()
+    .interpolate("cardinal")
+    .x(function(d) { return d.x; })
+    .y(function(d) { return d.y; });
+
 
 var NodesChart = React.createClass({
 
@@ -89,7 +95,7 @@ var NodesChart = React.createClass({
     getEdges: function(edges, scale) {
         return _.map(edges, function(edge) {
             return (
-                <path className="link" d={edge.path} key={edge.id} />
+                <path className="link" d={line(edge.points)} key={edge.id} />
             );
         });
     },
