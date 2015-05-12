@@ -31,17 +31,14 @@ coverage.html
 
 # Project specific
 scope.tar
-probe/probe
-bridge/bridge
 app/app
-demoprobe/demoprobe
-fixprobe/fixprobe
-genreport/genreport
-graphviz/graphviz
-oneshot/oneshot
-web/assets/videos/*.mp4
-release/*.tar.gz
-web/docs/*.html
+probe/probe
+experimental/bridge/bridge
+experimental/demoprobe/demoprobe
+experimental/fixprobe/fixprobe
+experimental/genreport/genreport
+experimental/graphviz/graphviz
+experimental/oneshot/oneshot
 *sublime-project
 *sublime-workspace
 *npm-debug.log
