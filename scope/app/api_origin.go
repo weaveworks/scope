@@ -23,27 +23,33 @@ func makeOriginHandler(rep Reporter) func(http.ResponseWriter, *http.Request) {
 		var (
 			vars   = mux.Vars(r)
 			nodeID = vars["id"]
-			rpt    = rep.Report()
 		)
-
-		host, ok := rpt.HostMetadatas[nodeID]
+		origin, ok := getOrigin(rep, nodeID)
 		if !ok {
 			http.NotFound(w, r)
 			return
 		}
-
-		var addrs []string
-		for _, l := range host.LocalNets {
-			addrs = append(addrs, l.String())
-		}
-
-		respondWith(w, http.StatusOK, Origin{
-			Hostname:    host.Hostname,
-			OS:          host.OS,
-			Addresses:   addrs,
-			LoadOne:     host.LoadOne,
-			LoadFive:    host.LoadFive,
-			LoadFifteen: host.LoadFifteen,
-		})
+		respondWith(w, http.StatusOK, origin)
 	}
+}
+
+func getOrigin(rep Reporter, nodeID string) (Origin, bool) {
+	host, ok := rep.Report().HostMetadatas[nodeID]
+	if !ok {
+		return Origin{}, false
+	}
+
+	var addrs []string
+	for _, l := range host.LocalNets {
+		addrs = append(addrs, l.String())
+	}
+
+	return Origin{
+		Hostname:    host.Hostname,
+		OS:          host.OS,
+		Addresses:   addrs,
+		LoadOne:     host.LoadOne,
+		LoadFive:    host.LoadFive,
+		LoadFifteen: host.LoadFifteen,
+	}, true
 }

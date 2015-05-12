@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+
 	"github.com/weaveworks/scope/scope/report"
 )
 
@@ -85,7 +88,8 @@ func makeTopologyHandlers(
 			http.NotFound(w, r)
 			return
 		}
-		respondWith(w, http.StatusOK, APINode{Node: makeDetailed(node)})
+		of := func(nodeID string) (Origin, bool) { return getOrigin(rep, nodeID) }
+		respondWith(w, http.StatusOK, APINode{Node: makeDetailed(node, of)})
 	})
 
 	// Individual edges.
@@ -95,39 +99,51 @@ func makeTopologyHandlers(
 			localID  = vars["local"]
 			remoteID = vars["remote"]
 			rpt      = rep.Report()
-			metadata = topo(rpt).EdgeMetadata(mapping, grouped, localID, remoteID).Render()
+			metadata = topo(rpt).EdgeMetadata(mapping, grouped, localID, remoteID).Transform()
 		)
 		respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})
 	})
 }
 
 // TODO(pb): temporary hack
-func makeDetailed(n report.RenderableNode) report.DetailedNode {
+func makeDetailed(n report.RenderableNode, of func(string) (Origin, bool)) report.DetailedNode {
+	// A RenderableNode may be the result of merge operation(s), and so may
+	// have multiple origins.
+	origins := []report.Table{}
+	for _, originID := range n.Origin {
+		origin, ok := of(originID)
+		if !ok {
+			origin = unknownOrigin
+		}
+		origins = append(origins, report.Table{
+			Title:   "Origin",
+			Numeric: false,
+			Rows: []report.Row{
+				{"Hostname", origin.Hostname, ""},
+				{"Load", fmt.Sprintf("%.2f %.2f %.2f", origin.LoadOne, origin.LoadFive, origin.LoadFifteen), ""},
+				{"OS", origin.OS, ""},
+				//{"Addresses", strings.Join(origin.Addresses, ", "), ""},
+				{"ID", originID, ""},
+			},
+		})
+	}
+
+	tables := []report.Table{}
+	tables = append(tables, report.Table{
+		Title:   "Connections",
+		Numeric: true,
+		Rows: []report.Row{
+			{"TCP (max)", strconv.FormatInt(int64(n.Metadata[report.KeyMaxConnCountTCP]), 10), ""},
+		},
+	})
+	tables = append(tables, origins...)
+
 	return report.DetailedNode{
 		ID:         n.ID,
 		LabelMajor: n.LabelMajor,
 		LabelMinor: n.LabelMinor,
 		Pseudo:     n.Pseudo,
-		Tables: []report.Table{
-			{"Bandwidth", true, []report.Row{
-				{"Ingress", "25", "KB/s"},
-				{"Egress", "44", "KB/s"},
-			}},
-			{"Ingress", true, []report.Row{
-				{"10.11.12.13", "20", "KB/s"},
-				{"172.16.121.199", "3", "KB/s"},
-				{"99.85.101.122", "1", "KB/s"},
-			}},
-			{"Egress", true, []report.Row{
-				{"10.11.12.13", "43", "KB/s"},
-				{"172.16.121.199", "1", "KB/s"},
-			}},
-			{"Origin", false, []report.Row{
-				{"Hostname", "foo.bar.com", ""},
-				{"Load", "3.30 2.11 0.92", ""},
-				{"OS", "Linux", ""},
-			}},
-		},
+		Tables:     tables,
 	}
 }
 
@@ -179,4 +195,13 @@ func handleWebsocket(
 		case <-time.After(loop):
 		}
 	}
+}
+
+var unknownOrigin = Origin{
+	Hostname:    "unknown",
+	OS:          "unknown",
+	Addresses:   []string{},
+	LoadOne:     0.0,
+	LoadFive:    0.0,
+	LoadFifteen: 0.0,
 }

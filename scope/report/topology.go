@@ -42,12 +42,12 @@ type NodeMetadatas map[string]NodeMetadata
 // conceivably (and usefully) collect about an edge between two nodes in any
 // topology.
 type EdgeMetadata struct {
-	WithBytes    bool
-	BytesIngress uint // dst -> src
-	BytesEgress  uint // src -> dst
+	WithBytes    bool `json:"with_bytes,omitempty"`
+	BytesIngress uint `json:"bytes_ingress,omitempty"` // dst -> src
+	BytesEgress  uint `json:"bytes_egress,omitempty"`  // src -> dst
 
-	WithConnCountTCP bool
-	MaxConnCountTCP  uint
+	WithConnCountTCP bool `json:"with_conn_count_tcp,omitempty"`
+	MaxConnCountTCP  uint `json:"max_conn_count_tcp,omitempty"`
 }
 
 // NodeMetadata describes a superset of the metadata that probes can collect
@@ -137,7 +137,7 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 			srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
 			edgeID := srcNodeAddress + IDDelim + dstNodeAddress
 			if md, ok := t.EdgeMetadatas[edgeID]; ok {
-				srcRenderableNode.Metadata.Merge(md.Render())
+				srcRenderableNode.Metadata.Merge(md.Transform())
 			}
 		}
 

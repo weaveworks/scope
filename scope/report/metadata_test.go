@@ -13,7 +13,7 @@ func TestAggregateMetadata(t *testing.T) {
 			WithConnCountTCP: true,
 			MaxConnCountTCP:  400,
 		}: {
-			keyMaxConnCountTCP: 400,
+			KeyMaxConnCountTCP: 400,
 		},
 
 		// Connection count rounding
@@ -21,7 +21,7 @@ func TestAggregateMetadata(t *testing.T) {
 			WithConnCountTCP: true,
 			MaxConnCountTCP:  4,
 		}: {
-			keyMaxConnCountTCP: 4,
+			KeyMaxConnCountTCP: 4,
 		},
 
 		// 0 connections.
@@ -29,7 +29,7 @@ func TestAggregateMetadata(t *testing.T) {
 			WithConnCountTCP: true,
 			MaxConnCountTCP:  0,
 		}: {
-			keyMaxConnCountTCP: 0,
+			KeyMaxConnCountTCP: 0,
 		},
 
 		// Egress
@@ -38,8 +38,8 @@ func TestAggregateMetadata(t *testing.T) {
 			BytesEgress:  24,
 			BytesIngress: 0,
 		}: {
-			keyBytesEgress:  24,
-			keyBytesIngress: 0,
+			KeyBytesEgress:  24,
+			KeyBytesIngress: 0,
 		},
 
 		// Ingress
@@ -48,14 +48,14 @@ func TestAggregateMetadata(t *testing.T) {
 			BytesEgress:  0,
 			BytesIngress: 1200,
 		}: {
-			keyBytesEgress:  0,
-			keyBytesIngress: 1200,
+			KeyBytesEgress:  0,
+			KeyBytesIngress: 1200,
 		},
 
 		// Nothing there.
 		EdgeMetadata{}: {},
 	} {
-		if have := from.Render(); !reflect.DeepEqual(have, want) {
+		if have := from.Transform(); !reflect.DeepEqual(have, want) {
 			t.Errorf("have: %#v, want %#v", have, want)
 		}
 
