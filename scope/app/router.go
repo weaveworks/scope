@@ -47,9 +47,6 @@ var topologyRegistry = map[string]struct {
 	hasGrouped bool
 	typ        string
 }{
-	"processpid":    {"Process ID", selectProcess, report.ProcessPID, true, "Process"},
-	"processname":   {"Process name", selectProcess, report.ProcessName, true, "Process"},
-	"processcgroup": {"Process cgroup", selectProcess, report.ProcessCgroup, true, "Process"},
-	"networkip":     {"Network IP", selectNetwork, report.NetworkIP, false, "Network"},
-	"networkhost":   {"Network Host", selectNetwork, report.NetworkHostname, false, "Network"},
+	"applications": {"Applications", selectProcess, report.ProcessName, true, "Process"},
+	"hosts":        {"Hosts", selectNetwork, report.NetworkHostname, false, "Network"},
 }

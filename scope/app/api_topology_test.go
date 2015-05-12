@@ -11,67 +11,14 @@ import (
 	"github.com/weaveworks/scope/scope/report"
 )
 
-func TestAPITopologyProcesspid(t *testing.T) {
+func TestAPITopologyApplications(t *testing.T) {
 	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
-	is404(t, ts, "/api/topology/processpid/foobar")
+	is404(t, ts, "/api/topology/applications/foobar")
 
 	{
-		body := getRawJSON(t, ts, "/api/topology/processpid")
-		var topo APITopology
-		if err := json.Unmarshal(body, &topo); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
-		}
-		equals(t, 4, len(topo.Nodes))
-		node, ok := topo.Nodes["pid:node-a.local:23128"]
-		if !ok {
-			t.Errorf("missing PID 23128 node")
-		}
-		equals(t, report.NewIDList("pid:node-b.local:215"), node.Adjacency)
-		equals(t, report.NewIDList("hostA"), node.Origin)
-		equals(t, "23128", node.LabelMajor)
-		equals(t, "node-a.local (curl)", node.LabelMinor)
-		equals(t, "23128", node.Rank)
-		equals(t, false, node.Pseudo)
-	}
-
-	{
-		// Node detail
-		body := getRawJSON(t, ts, "/api/topology/processpid/pid:node-a.local:23128")
-		var node APINode
-		if err := json.Unmarshal(body, &node); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
-		}
-		// TODO(pb): replace
-	}
-
-	{
-		// Edge detail
-		body := getRawJSON(t, ts, "/api/topology/processpid/pid:node-a.local:23128/pid:node-b.local:215")
-		var edge APIEdge
-		if err := json.Unmarshal(body, &edge); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
-		}
-		want := report.AggregateMetadata{
-			"egress_bytes":       24,
-			"ingress_bytes":      0,
-			"max_conn_count_tcp": 401,
-		}
-		if have := edge.Metadata; !reflect.DeepEqual(want, have) {
-			t.Errorf("Edge metadata error. Want %#v, have %#v", want, have)
-		}
-	}
-}
-
-func TestAPITopologyProcessname(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
-	defer ts.Close()
-
-	is404(t, ts, "/api/topology/processname/foobar")
-
-	{
-		body := getRawJSON(t, ts, "/api/topology/processname")
+		body := getRawJSON(t, ts, "/api/topology/applications")
 		var topo APITopology
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
@@ -91,7 +38,7 @@ func TestAPITopologyProcessname(t *testing.T) {
 
 	{
 		// Node detail
-		body := getRawJSON(t, ts, "/api/topology/processname/proc:node-a.local:curl")
+		body := getRawJSON(t, ts, "/api/topology/applications/proc:node-a.local:curl")
 		var node APINode
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
@@ -101,7 +48,7 @@ func TestAPITopologyProcessname(t *testing.T) {
 
 	{
 		// Edge detail
-		body := getRawJSON(t, ts, "/api/topology/processname/proc:node-a.local:curl/proc:node-b.local:apache")
+		body := getRawJSON(t, ts, "/api/topology/applications/proc:node-a.local:curl/proc:node-b.local:apache")
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
@@ -117,85 +64,14 @@ func TestAPITopologyProcessname(t *testing.T) {
 	}
 }
 
-func TestAPITopologyIP(t *testing.T) {
+func TestAPITopologyHosts(t *testing.T) {
 	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
-	is404(t, ts, "/api/topology/networkip/foobar")
+	is404(t, ts, "/api/topology/hosts/foobar")
 
 	{
-		body := getRawJSON(t, ts, "/api/topology/networkip")
-		var topo APITopology
-		if err := json.Unmarshal(body, &topo); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
-		}
-
-		equals(t, 3, len(topo.Nodes))
-		node, ok := topo.Nodes["addr:;192.168.1.2"]
-		if !ok {
-			t.Errorf("missing 192.168.1.2 node")
-		}
-		equals(t, report.NewIDList("addr:;192.168.1.1"), node.Adjacency)
-		equals(t, report.NewIDList("hostB"), node.Origin)
-		equals(t, "192.168.1.2", node.LabelMajor)
-		equals(t, "host-b", node.LabelMinor)
-		equals(t, "192.168.1.2", node.Rank)
-		equals(t, false, node.Pseudo)
-	}
-
-	{
-		// Node detail
-		body := getRawJSON(t, ts, "/api/topology/networkip/addr:;192.168.1.2")
-		var node APINode
-		if err := json.Unmarshal(body, &node); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
-		}
-		// TODO(pb): replace
-	}
-
-	{
-		// Edge detail
-		body := getRawJSON(t, ts, "/api/topology/networkip/addr:;192.168.1.2/addr:;192.168.1.1")
-		var edge APIEdge
-		if err := json.Unmarshal(body, &edge); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
-		}
-		want := report.AggregateMetadata{
-			"egress_bytes":       0,
-			"ingress_bytes":      12,
-			"max_conn_count_tcp": 16,
-		}
-		if !reflect.DeepEqual(want, edge.Metadata) {
-			t.Errorf("Edge metadata error. Want %v, have %v", want, edge)
-		}
-	}
-
-	{
-		// Edge detail for the internet.
-		body := getRawJSON(t, ts, "/api/topology/networkip/addr:;192.168.1.1/theinternet")
-		var edge APIEdge
-		if err := json.Unmarshal(body, &edge); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
-		}
-		want := report.AggregateMetadata{
-			"egress_bytes":       200,
-			"ingress_bytes":      0,
-			"max_conn_count_tcp": 15,
-		}
-		if !reflect.DeepEqual(want, edge.Metadata) {
-			t.Errorf("Edge metadata error. Want %v, have %v", want, edge)
-		}
-	}
-}
-
-func TestAPITopologyNetwork(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
-	defer ts.Close()
-
-	is404(t, ts, "/api/topology/networkhost/foobar")
-
-	{
-		body := getRawJSON(t, ts, "/api/topology/networkhost")
+		body := getRawJSON(t, ts, "/api/topology/hosts")
 		var topo APITopology
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
@@ -216,7 +92,7 @@ func TestAPITopologyNetwork(t *testing.T) {
 
 	{
 		// Node detail
-		body := getRawJSON(t, ts, "/api/topology/networkhost/host:host-b")
+		body := getRawJSON(t, ts, "/api/topology/hosts/host:host-b")
 		var node APINode
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
@@ -226,7 +102,7 @@ func TestAPITopologyNetwork(t *testing.T) {
 
 	{
 		// Edge detail
-		body := getRawJSON(t, ts, "/api/topology/networkhost/host:host-b/host:host-a")
+		body := getRawJSON(t, ts, "/api/topology/hosts/host:host-b/host:host-a")
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
@@ -247,7 +123,7 @@ func TestAPITopologyWebsocket(t *testing.T) {
 	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
 
-	url := "/api/topology/processpid/ws"
+	url := "/api/topology/applications/ws"
 
 	// Not a websocket request:
 	res, _ := checkGet(t, ts, url)

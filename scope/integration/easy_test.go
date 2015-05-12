@@ -27,19 +27,12 @@ func TestComponentsAreAvailable(t *testing.T) {
 	}
 }
 
-func TestProcessPID(t *testing.T) {
+func TestApplications(t *testing.T) {
 	withContext(t, oneProbe, func() {
-		topo := parseTopology(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/processpid", appPort)))
-		assertAdjacent(t, topo["pid:node-1.2.3.4:4000"], "theinternet", "pid:node-192.168.1.1:4000")
-	})
-}
-
-func TestProcessName(t *testing.T) {
-	withContext(t, oneProbe, func() {
-		topo := parseTopology(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/processname", appPort)))
+		topo := parseTopology(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/applications", appPort)))
 		assertAdjacent(t, topo["proc:node-1.2.3.4:apache"], "theinternet", "proc:node-192.168.1.1:wget")
 
-		have := parseEdge(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/processname/%s/%s", appPort, "proc:node-192.168.1.1:wget", "theinternet")))
+		have := parseEdge(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/applications/%s/%s", appPort, "proc:node-192.168.1.1:wget", "theinternet")))
 		want := map[string]interface{}{
 			"max_conn_count_tcp": float64(19),
 		}
@@ -49,19 +42,12 @@ func TestProcessName(t *testing.T) {
 	})
 }
 
-func TestNetworkIP(t *testing.T) {
+func TestHosts(t *testing.T) {
 	withContext(t, oneProbe, func() {
-		topo := parseTopology(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/networkip", appPort)))
-		assertAdjacent(t, topo["addr:;1.2.3.4"], "theinternet", "addr:;192.168.1.1")
-	})
-}
-
-func TestNetworkHost(t *testing.T) {
-	withContext(t, oneProbe, func() {
-		topo := parseTopology(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/networkhost", appPort)))
+		topo := parseTopology(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/hosts", appPort)))
 		assertAdjacent(t, topo["host:1_2_3_4"], "theinternet", "host:192_168_1_1")
 
-		have := parseEdge(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/networkhost/%s/%s", appPort, "host:192_168_1_1", "theinternet")))
+		have := parseEdge(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/hosts/%s/%s", appPort, "host:192_168_1_1", "theinternet")))
 		want := map[string]interface{}{
 			// "window":             "15s",
 			"max_conn_count_tcp": float64(12),
@@ -74,7 +60,7 @@ func TestNetworkHost(t *testing.T) {
 
 func TestMultipleProbes(t *testing.T) {
 	withContext(t, twoProbes, func() {
-		topo := parseTopology(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/processname", appPort)))
+		topo := parseTopology(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/applications", appPort)))
 		assertAdjacent(t, topo["proc:node-1.2.3.4:apache"], "theinternet", "proc:node-192.168.1.1:wget", "proc:node-192.168.1.1:curl")
 	})
 }
