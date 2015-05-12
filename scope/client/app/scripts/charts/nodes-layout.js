@@ -3,9 +3,9 @@ var _ = require('lodash');
 
 var MAX_NODES = 100;
 
-var doLayout = function(nodes, edges, width, height, scale, topMargin) {
-    var offsetX = 0;
-    var offsetY = 0 + topMargin;
+var doLayout = function(nodes, edges, width, height, scale, margins) {
+    var offsetX = 0 + margins.left;
+    var offsetY = 0 + margins.top;
     var g = new dagre.graphlib.Graph({});
 
     if (_.size(nodes) > MAX_NODES) {
@@ -38,10 +38,10 @@ var doLayout = function(nodes, edges, width, height, scale, topMargin) {
     // shifting graph coordinates to center
 
     if (graph.width < width) {
-        offsetX = (width - graph.width) / 2;
+        offsetX = (width - graph.width) / 2 + margins.left;
     }
     if (graph.height < height) {
-        offsetY = (height - graph.height) / 2 + topMargin;
+        offsetY = (height - graph.height) / 2 + margins.top;
     }
 
     // apply coordinates to nodes and edges

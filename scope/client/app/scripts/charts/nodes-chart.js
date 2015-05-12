@@ -6,7 +6,12 @@ var NodesLayout = require('./nodes-layout');
 var Node = require('./node');
 
 var MAX_NODES = 100;
-var TOP_MARGIN = 100;
+var MARGINS = {
+    top: 120,
+    left: 40,
+    right: 40,
+    bottom: 0
+};
 
 var line = d3.svg.line()
     .interpolate("cardinal")
@@ -135,14 +140,14 @@ var NodesChart = React.createClass({
             props.width,
             props.height,
             nodeScale,
-            TOP_MARGIN
+            MARGINS
         );
         console.timeEnd(layoutId);
 
         // adjust layout based on viewport
 
-        var xFactor = props.width / graph.width;
-        var yFactor = (props.height - TOP_MARGIN) / graph.height;
+        var xFactor = (props.width - MARGINS.left - MARGINS.right) / graph.width;
+        var yFactor = props.height / graph.height;
         var zoomFactor = Math.min(xFactor, yFactor);
         var zoomScale = this.state.scale;
 
