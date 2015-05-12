@@ -3,8 +3,7 @@ var _ = require('lodash');
 
 var MAX_NODES = 100;
 
-var doLayout = function(nodes, edges, width, height, scale) {
-    var topMargin = 80;
+var doLayout = function(nodes, edges, width, height, scale, topMargin) {
     var offsetX = 0;
     var offsetY = 0 + topMargin;
     var g = new dagre.graphlib.Graph({});

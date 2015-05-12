@@ -6,6 +6,7 @@ var NodesLayout = require('./nodes-layout');
 var Node = require('./node');
 
 var MAX_NODES = 100;
+var TOP_MARGIN = 100;
 
 var line = d3.svg.line()
     .interpolate("cardinal")
@@ -18,8 +19,10 @@ var NodesChart = React.createClass({
         return {
             nodes: {},
             edges: {},
+            nodeScale: 1,
             translate: "0,0",
-            scale: 1
+            scale: 1,
+            hasZoomed: false
         };
     },
 
@@ -119,9 +122,41 @@ var NodesChart = React.createClass({
         var nodes = this.initNodes(props.nodes, this.state.nodes);
         var edges = this.initEdges(props.nodes, nodes);
 
+        var expanse = Math.min(props.height, props.width);
+        var nodeSize = expanse / 2;
+        var n = _.size(props.nodes);
+        var nodeScale = d3.scale.linear().range([0, nodeSize/Math.pow(n, 0.7)]);
+
+        var layoutId = 'layered node chart';
+        console.time(layoutId);
+        var graph = NodesLayout.doLayout(
+            nodes,
+            edges,
+            props.width,
+            props.height,
+            nodeScale,
+            TOP_MARGIN
+        );
+        console.timeEnd(layoutId);
+
+        // adjust layout based on viewport
+
+        var xFactor = props.width / graph.width;
+        var yFactor = (props.height - TOP_MARGIN) / graph.height;
+        var zoomFactor = Math.min(xFactor, yFactor);
+        var zoomScale = this.state.scale;
+
+        if(this.zoom && !this.state.hasZoomed && zoomFactor < 1) {
+            zoomScale = zoomFactor;
+            // saving in d3's behavior cache
+            this.zoom.scale(zoomFactor);
+        }
+
         this.setState({
             nodes: nodes,
-            edges: edges 
+            edges: edges,
+            nodeScale: nodeScale,
+            scale: zoomScale
         });
     },
 
@@ -130,12 +165,12 @@ var NodesChart = React.createClass({
     },
 
     componentDidMount: function() {
-        var zoom = d3.behavior.zoom()
+        this.zoom = d3.behavior.zoom()
             .scaleExtent([0.1, 2])
             .on('zoom', this.zoomed);
 
         d3.select('.nodes-chart')
-            .call(zoom);
+            .call(this.zoom);
     },
 
     componentWillUnmount: function() {
@@ -163,33 +198,17 @@ var NodesChart = React.createClass({
 
     zoomed: function() {
         this.setState({
+            hasZoomed: true,
             translate: d3.event.translate,
             scale: d3.event.scale
         });
     },
 
     render: function() {
-        var expanse = Math.min(this.props.height, this.props.width);
-        var nodeSize = expanse / 2;
-        var n = _.size(this.props.nodes);
-        var nodeScale = d3.scale.linear().range([0, nodeSize/Math.pow(n, 0.7)]);
+        var nodeElements = this.getNodes(this.state.nodes, this.state.nodeScale);
+        var edgeElements = this.getEdges(this.state.edges, this.state.nodeScale);
         var transform = 'translate(' + this.state.translate + ')' +
             ' scale(' + this.state.scale + ')';
-
-        var layoutId = 'layered node chart';
-        console.time(layoutId);
-        var graph = NodesLayout.doLayout(
-            this.state.nodes,
-            this.state.edges,
-            this.props.width,
-            this.props.height,
-            nodeScale,
-            this.props.highlightedNodes
-        );
-        console.timeEnd(layoutId);
-
-        var nodeElements = this.getNodes(this.state.nodes, nodeScale);
-        var edgeElements = this.getEdges(this.state.edges, nodeScale);
 
         return (
             <svg width="100%" height="100%" className="nodes-chart">
