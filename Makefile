@@ -1,116 +1,45 @@
-PUBLISH=publish_weave publish_weavedns publish_weaveexec
+.PHONY: default get all build release clean
 
-.DEFAULT: all
-.PHONY: all update tests publish $(PUBLISH) clean prerequisites build travis
+default: all
 
-# If you can use docker without being root, you can do "make SUDO="
-SUDO=sudo
+get:
+	cd app && go get
 
-DOCKERHUB_USER=weaveworks
-WEAVE_VERSION=git-$(shell git rev-parse --short=12 HEAD)
-WEAVER_EXE=weaver/weaver
-WEAVEDNS_EXE=weavedns/weavedns
-SIGPROXY_EXE=sigproxy/sigproxy
-SCOPEAPP_EXE=scope/app/app
-SCOPEPROBE_EXE=scope/probe/probe
-WEAVER_IMAGE=$(DOCKERHUB_USER)/weave
-WEAVEDNS_IMAGE=$(DOCKERHUB_USER)/weavedns
-WEAVEEXEC_IMAGE=$(DOCKERHUB_USER)/weaveexec
-SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
-WEAVER_EXPORT=weave.tar
-WEAVEDNS_EXPORT=weavedns.tar
-WEAVEEXEC_EXPORT=weaveexec.tar
-SCOPE_EXPORT=scope.tar
-
-WEAVEEXEC_DOCKER_VERSION=1.3.1
-DOCKER_DISTRIB=weaveexec/docker-$(WEAVEEXEC_DOCKER_VERSION).tgz
-DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(WEAVEEXEC_DOCKER_VERSION).tgz
-
-all: $(WEAVER_EXPORT) $(WEAVEDNS_EXPORT) $(WEAVEEXEC_EXPORT) $(SCOPE_EXPORT)
-
-travis: $(WEAVER_EXE) $(WEAVEDNS_EXE) $(WEAVEEXEC_EXE) $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE)
-
-update:
-	go get -u -f -v -tags -netgo ./$(dir $(WEAVER_EXE)) ./$(dir $(WEAVEDNS_EXE))
-
-$(WEAVER_EXE) $(WEAVEDNS_EXE): common/*.go
-	go get -tags netgo ./$(@D)
-	go build -ldflags "-extldflags \"-static\" -X main.version $(WEAVE_VERSION)" -tags netgo -o $@ ./$(@D)
-	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
-		rm $@; \
-		echo "\nYour go standard library was built without the 'netgo' build tag."; \
-		echo "To fix that, run"; \
-		echo "    sudo go clean -i net"; \
-		echo "    sudo go install -tags netgo std"; \
-		false; \
-	}
-
-$(WEAVER_EXE): router/*.go weaver/main.go
-$(WEAVEDNS_EXE): nameserver/*.go weavedns/main.go
-$(SIGPROXY_EXE): sigproxy/main.go
-$(SCOPEAPP_EXE): scope/app/*.go scope/xfer/*.go scope/report/*.go
-$(SCOPEPROBE_EXE): scope/probe/*.go scope/xfer/*.go scope/report/*.go
-
-# Sigproxy etc needs separate rule as it fails the netgo check in the main
-# build stanza due to not importing net package
-$(SIGPROXY_EXE) $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE):
-	go get -tags netgo ./$(@D)
-	go build -o $@ ./$(@D)
-
-$(WEAVER_EXPORT): weaver/Dockerfile $(WEAVER_EXE)
-	$(SUDO) docker build -t $(WEAVER_IMAGE) weaver
-	$(SUDO) docker save $(WEAVER_IMAGE):latest > $@
-
-$(WEAVEDNS_EXPORT): weavedns/Dockerfile $(WEAVEDNS_EXE)
-	$(SUDO) docker build -t $(WEAVEDNS_IMAGE) weavedns
-	$(SUDO) docker save $(WEAVEDNS_IMAGE):latest > $@
-
-$(WEAVEEXEC_EXPORT): weaveexec/Dockerfile $(DOCKER_DISTRIB) weave $(SIGPROXY_EXE)
-	cp weave weaveexec/weave
-	cp sigproxy/sigproxy weaveexec/sigproxy
-	cp $(DOCKER_DISTRIB) weaveexec/docker.tgz
-	$(SUDO) docker build -t $(WEAVEEXEC_IMAGE) weaveexec
-	$(SUDO) docker save $(WEAVEEXEC_IMAGE):latest > $@
-
-$(SCOPE_EXPORT): scope/Dockerfile $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE) scope/entrypoint.sh scope/supervisord.conf
-	$(SUDO) docker build -t $(SCOPE_IMAGE) scope
-	$(SUDO) docker save $(SCOPE_IMAGE):latest > $@
-
-$(DOCKER_DISTRIB):
-	curl -o $(DOCKER_DISTRIB) $(DOCKER_DISTRIB_URL)
-
-tests:
-	echo "mode: count" > profile.cov
-	fail=0 ;                                                                              \
-	for dir in $$(find . -type f -name '*_test.go' | xargs -n1 dirname | sort -u); do     \
-	    if [ -e "$$dir/ignore_tests" ]; then                                              \
-	      continue;                                                                       \
-	    fi;                                                                               \
-	    output=$$(mktemp cover.XXXXXXXXXX) ;                                              \
-	    if ! go test -tags netgo -covermode=count -coverprofile=$$output $$dir ; then     \
-	      fail=1 ;                                                                        \
-	    fi ;                                                                              \
-	    if [ -f $$output ]; then                                                          \
-	        tail -n +2 <$$output >>profile.cov;                                           \
-	        rm $$output;                                                                  \
-	    fi                                                                                \
-	done ;                                                                                \
-	exit $$fail
-	go tool cover -html=profile.cov -o=coverage.html
-
-$(PUBLISH): publish_%:
-	$(SUDO) docker tag -f $(DOCKERHUB_USER)/$* $(DOCKERHUB_USER)/$*:$(WEAVE_VERSION)
-	$(SUDO) docker push   $(DOCKERHUB_USER)/$*:$(WEAVE_VERSION)
-	$(SUDO) docker push   $(DOCKERHUB_USER)/$*:latest
-
-publish: $(PUBLISH)
-
-clean:
-	-$(SUDO) docker rmi $(WEAVER_IMAGE) $(WEAVEDNS_IMAGE) $(WEAVEEXEC_IMAGE) $(SCOPE_IMAGE)
-	rm -f $(WEAVER_EXE) $(WEAVEDNS_EXE) $(SIGPROXY_EXE) $(SCOPEAPP_EXE) $(SCOPEPROBE_EXE)
-	rm -f $(WEAVER_EXPORT) $(WEAVEDNS_EXPORT) $(WEAVEEXEC_EXPORT) $(SCOPE_EXPORT)
+all:
+	$(MAKE) -C report
+	$(MAKE) -C xfer
+	$(MAKE) -C app
+	$(MAKE) -C bridge
+	$(MAKE) -C demoprobe
+	$(MAKE) -C oneshot
+	$(MAKE) -C fixprobe
+	$(MAKE) -C genreport
+	$(MAKE) -C probe
+	$(MAKE) -C integration
 
 build:
-	$(SUDO) go clean -i net
-	$(SUDO) go install -tags netgo std
-	$(MAKE)
+	$(MAKE) -C report build
+	$(MAKE) -C xfer build
+	$(MAKE) -C app build
+	$(MAKE) -C bridge build
+	$(MAKE) -C demoprobe build
+	$(MAKE) -C oneshot build
+	$(MAKE) -C fixprobe build
+	$(MAKE) -C probe build
+	$(MAKE) -C genreport build
+	$(MAKE) -C integration build
+
+release:
+	$(MAKE) -C release
+
+clean:
+	$(MAKE) -C report clean
+	$(MAKE) -C xfer clean
+	$(MAKE) -C app clean
+	$(MAKE) -C bridge clean
+	$(MAKE) -C demoprobe clean
+	$(MAKE) -C oneshot clean
+	$(MAKE) -C fixprobe clean
+	$(MAKE) -C genreport clean
+	$(MAKE) -C probe clean
+	$(MAKE) -C integration clean
