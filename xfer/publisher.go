@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/weaveworks/scope/scope/report"
+	"github.com/weaveworks/scope/report"
 )
 
 // Publisher provides a way to send reports upstream.
