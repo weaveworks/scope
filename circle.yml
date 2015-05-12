@@ -29,6 +29,8 @@ dependencies:
     - bin/setup-circleci-secrets "$SECRET_PASSWORD"
     - mkdir -p $(dirname $SRCDIR)
     - cp -r $(pwd)/ $SRCDIR
+    - cd $(dirname $SRCDIR); ln -s weave scope
+    - cd $(dirname $SRCDIR); git clone ssh://git@github.com/weaveworks/procspy.git
 
 test:
   override:
