@@ -6,18 +6,20 @@ var NodesLayout = require('./nodes-layout');
 var Node = require('./node');
 
 var MAX_NODES = 100;
+
 var line = d3.svg.line()
     .interpolate("cardinal")
     .x(function(d) { return d.x; })
     .y(function(d) { return d.y; });
-
 
 var NodesChart = React.createClass({
 
     getInitialState: function() {
         return {
             nodes: {},
-            edges: {}
+            edges: {},
+            translate: "0,0",
+            scale: 1
         };
     },
 
@@ -127,6 +129,27 @@ var NodesChart = React.createClass({
         this.updateGraphState(this.props);
     },
 
+    componentDidMount: function() {
+        var zoom = d3.behavior.zoom()
+            .scaleExtent([0.1, 2])
+            .on('zoom', this.zoomed);
+
+        d3.select('.nodes-chart')
+            .call(zoom);
+    },
+
+    componentWillUnmount: function() {
+
+        // undoing .call(zoom)
+
+        d3.select('.nodes-chart')
+            .on("mousedown.zoom", null)
+            .on("onwheel", null)
+            .on("onmousewheel", null)
+            .on("dblclick.zoom", null)
+            .on("touchstart.zoom", null);
+    },
+
     componentWillReceiveProps: function(nextProps) {
         if (this.getTopologyFingerprint(nextProps.nodes) !== this.getTopologyFingerprint(this.props.nodes)) {
             this.setState({
@@ -138,30 +161,39 @@ var NodesChart = React.createClass({
         this.updateGraphState(nextProps);
     },
 
+    zoomed: function() {
+        this.setState({
+            translate: d3.event.translate,
+            scale: d3.event.scale
+        });
+    },
+
     render: function() {
         var expanse = Math.min(this.props.height, this.props.width);
         var nodeSize = expanse / 2;
         var n = _.size(this.props.nodes);
-        var scale = d3.scale.linear().range([0, nodeSize/Math.pow(n, 0.7)]);
+        var nodeScale = d3.scale.linear().range([0, nodeSize/Math.pow(n, 0.7)]);
+        var transform = 'translate(' + this.state.translate + ')' +
+            ' scale(' + this.state.scale + ')';
 
         var layoutId = 'layered node chart';
         console.time(layoutId);
-        NodesLayout.doLayout(
+        var graph = NodesLayout.doLayout(
             this.state.nodes,
             this.state.edges,
             this.props.width,
             this.props.height,
-            scale,
+            nodeScale,
             this.props.highlightedNodes
         );
         console.timeEnd(layoutId);
 
-        var nodeElements = this.getNodes(this.state.nodes, scale);
-        var edgeElements = this.getEdges(this.state.edges, scale);
+        var nodeElements = this.getNodes(this.state.nodes, nodeScale);
+        var edgeElements = this.getEdges(this.state.edges, nodeScale);
 
         return (
-            <svg width="100%" height="100%">
-                <g className="canvas">
+            <svg width="100%" height="100%" className="nodes-chart">
+                <g className="canvas" transform={transform}>
                     <g className="edges">
                         {edgeElements}
                     </g>
