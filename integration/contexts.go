@@ -31,22 +31,22 @@ func withContext(t *testing.T, c context, tests ...func()) {
 
 	switch c {
 	case oneProbe:
-		probe := start(t, fmt.Sprintf(`fixprobe -listen=:%d -publish.interval=%s %s/test_single_report.json`, probePort1, publish, cwd()))
+		probe := start(t, fmt.Sprintf(`experimental/fixprobe/fixprobe -listen=:%d -publish.interval=%s %s/test_single_report.json`, probePort1, publish, cwd()))
 		defer stop(t, probe)
 
 		time.Sleep(10 * time.Millisecond)
-		app := start(t, fmt.Sprintf(`app -http.address=:%d -probes=localhost:%d -batch=%s`, appPort, probePort1, batch))
+		app := start(t, fmt.Sprintf(`app/app -http.address=:%d -probes=localhost:%d -batch=%s`, appPort, probePort1, batch))
 		defer stop(t, app)
 
 	case twoProbes:
-		probe1 := start(t, fmt.Sprintf(`fixprobe -listen=:%d -publish.interval=%s %s/test_single_report.json`, probePort1, publish, cwd()))
+		probe1 := start(t, fmt.Sprintf(`experimental/fixprobe/fixprobe -listen=:%d -publish.interval=%s %s/test_single_report.json`, probePort1, publish, cwd()))
 		defer stop(t, probe1)
 
-		probe2 := start(t, fmt.Sprintf(`fixprobe -listen=:%d -publish.interval=%s %s/test_extra_report.json`, probePort2, publish, cwd()))
+		probe2 := start(t, fmt.Sprintf(`experimental/fixprobe/fixprobe -listen=:%d -publish.interval=%s %s/test_extra_report.json`, probePort2, publish, cwd()))
 		defer stop(t, probe2)
 
 		time.Sleep(10 * time.Millisecond)
-		app := start(t, fmt.Sprintf(`app -http.address=:%d -probes=localhost:%d,localhost:%d -batch=%s`, appPort, probePort1, probePort2, batch))
+		app := start(t, fmt.Sprintf(`app/app -http.address=:%d -probes=localhost:%d,localhost:%d -batch=%s`, appPort, probePort1, probePort2, batch))
 		defer stop(t, app)
 
 	default:
