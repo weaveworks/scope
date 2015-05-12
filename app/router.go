@@ -1,11 +1,11 @@
-// HTTP server routing table
 package main
 
 import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/weaveworks/scope/scope/report"
+
+	"github.com/weaveworks/scope/report"
 )
 
 // Router gives of the HTTP dispatcher. It will always use the embedded HTML

@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/weaveworks/scope/scope/report"
+	"github.com/weaveworks/scope/report"
 )
 
 func handleTXT(r Reporter) http.HandlerFunc {

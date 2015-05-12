@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/weaveworks/scope/scope/report"
+	"github.com/weaveworks/scope/report"
 )
 
 func TestAPITopologyApplications(t *testing.T) {

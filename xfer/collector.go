@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/weaveworks/scope/scope/report"
+	"github.com/weaveworks/scope/report"
 )
 
 const (

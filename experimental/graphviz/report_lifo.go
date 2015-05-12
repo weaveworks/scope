@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/weaveworks/scope/scope/report"
+	"github.com/weaveworks/scope/report"
 )
 
 // Copy/paste from app/report_lifo.go
