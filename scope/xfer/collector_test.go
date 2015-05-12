@@ -48,7 +48,8 @@ func TestCollector(t *testing.T) {
 
 	// Start a collector
 	batchTime := 10 * time.Millisecond
-	c := xfer.NewCollector([]string{"127.0.0.1" + port}, batchTime)
+	c := xfer.NewCollector(batchTime)
+	c.AddAddress("127.0.0.1" + port)
 	gate := make(chan struct{})
 	go func() { <-c.Reports(); c.Stop(); close(gate) }()
 

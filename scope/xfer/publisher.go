@@ -53,8 +53,8 @@ func (p *TCPPublisher) Publish(msg report.Report) {
 }
 
 func (p *TCPPublisher) loop(incoming <-chan net.Conn) {
-	var encoder *gob.Encoder
-	var activeConn net.Conn
+	var activeConns = make(map[net.Conn]*gob.Encoder)
+
 	for {
 		select {
 		case conn, ok := <-incoming:
@@ -62,30 +62,25 @@ func (p *TCPPublisher) loop(incoming <-chan net.Conn) {
 				return // someone closed our connection chan -- weird?
 			}
 
-			if activeConn != nil {
-				conn.Close() // only 1 connection at a time
-				continue
-			}
-
 			log.Printf("connection initiated: %s", conn.RemoteAddr())
-			activeConn = conn
-			encoder = gob.NewEncoder(conn)
+			activeConns[conn] = gob.NewEncoder(conn)
 
 		case msg, ok := <-p.msg:
 			if !ok {
 				return // someone closed our msg chan, so we're done
 			}
 
-			if activeConn == nil {
-				continue // nobody is listening
+			var teminatedConns []net.Conn
+			for conn, encoder := range activeConns {
+				if err := encoder.Encode(msg); err != nil {
+					log.Printf("connection terminated: %v", err)
+					teminatedConns = append(teminatedConns, conn)
+					conn.Close()
+				}
 			}
 
-			if err := encoder.Encode(msg); err != nil {
-				log.Printf("connection terminated: %v", err)
-				activeConn.Close()
-				activeConn = nil
-				encoder = nil
-				continue
+			for _, conn := range teminatedConns {
+				delete(activeConns, conn)
 			}
 		}
 	}

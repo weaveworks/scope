@@ -49,7 +49,8 @@ func main() {
 
 	// Collector deals with the probes, and generates a single merged report
 	// every second.
-	c := xfer.NewCollector(fixedAddresses, *batch)
+	c := xfer.NewCollector(*batch)
+	c.AddAddresses(fixedAddresses)
 	defer c.Stop()
 
 	publisher, err := xfer.NewTCPPublisher(*listen)
