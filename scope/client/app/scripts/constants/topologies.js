@@ -1,28 +1,13 @@
 
 module.exports = [
 	{
-		url: '/api/topology/processcgroup',
-		name: 'Process cgroup',
+		url: '/api/topology/applications',
+		name: 'Applications',
 		stats: {}
 	},
 	{
-		url: '/api/topology/processpid',
-		name: 'Process ID',
-		stats: {}
-	},
-	{
-		url: '/api/topology/processname',
-		name: 'Process Name',
-		stats: {}
-	},
-	{
-		url: '/api/topology/networkip',
-		name: 'Network IP',
-		stats: {}
-	},
-	{
-		url: '/api/topology/networkhost',
-		name: 'Network Host',
+		url: '/api/topology/hosts',
+		name: 'Hosts',
 		stats: {}
 	}
 ];

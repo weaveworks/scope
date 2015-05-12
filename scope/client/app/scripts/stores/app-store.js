@@ -11,7 +11,7 @@ var TopologyStore = require('./topology-store');
 
 // Initial values
 
-var currentTopology = 'processname';
+var currentTopology = 'applications';
 var currentTopologyMode = 'individual';
 var nodeDetails = null;
 var selectedNodeId = null;
