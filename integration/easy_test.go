@@ -12,13 +12,12 @@ import (
 )
 
 func TestComponentsAreAvailable(t *testing.T) {
-	var pause = 1 * time.Millisecond
-
+	pause := time.Millisecond
 	for _, c := range []string{
-		fmt.Sprintf(`app -http.address=:%d`, appPort),
-		fmt.Sprintf(`bridge -listen=:%d`, bridgePort),
-		fmt.Sprintf(`fixprobe -listen=:%d`, probePort1),
-		fmt.Sprintf(`demoprobe -listen=:%d`, probePort1),
+		fmt.Sprintf(`app/app -http.address=:%d`, appPort),
+		fmt.Sprintf(`experimental/bridge/bridge -listen=:%d`, bridgePort),
+		fmt.Sprintf(`experimental/fixprobe/fixprobe -listen=:%d`, probePort1),
+		fmt.Sprintf(`experimental/demoprobe/demoprobe -listen=:%d`, probePort1),
 	} {
 		cmd := start(t, c)
 		time.Sleep(pause)

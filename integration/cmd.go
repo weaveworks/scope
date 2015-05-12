@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// cmdline is e.g. `fixprobe -publish.interval=10ms fixture.json`
+// cmdline is e.g. `experimental/fixprobe/fixprobe -publish.interval=10ms fixture.json`
 func start(t *testing.T, cmdline string) *exec.Cmd {
 	toks := strings.Split(cmdline, " ")
 	if len(toks) <= 0 {
@@ -19,7 +19,7 @@ func start(t *testing.T, cmdline string) *exec.Cmd {
 
 	component, args := toks[0], toks[1:]
 
-	relpath := fmt.Sprintf("../%s/%s", component, component)
+	relpath := fmt.Sprintf("../%s", component)
 
 	if _, err := os.Stat(relpath); err != nil {
 		t.Fatalf("%s: %s", component, err)
