@@ -3,17 +3,24 @@ var _ = require('lodash');
 
 var MAX_NODES = 100;
 
-var doLayout = function(nodes, edges, width, height, scale) {
-    var topMargin = 80;
-    var offsetX = 0;
-    var offsetY = 0 + topMargin;
-    var g = new dagre.graphlib.Graph({
-    });
+var doLayout = function(nodes, edges, width, height, scale, margins) {
+    var offsetX = 0 + margins.left;
+    var offsetY = 0 + margins.top;
+    var g = new dagre.graphlib.Graph({});
+
+    if (_.size(nodes) > MAX_NODES) {
+        console.error('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
+        return;
+    }
+
+    // configure node margins
 
     g.setGraph({
-        nodesep: scale(2),
+        nodesep: scale(2.5),
         ranksep: scale(2.5)
     });
+
+    // add nodes and edges to layout engine
 
     _.each(nodes, function(node) {
         g.setNode(node.id, {id: node.id, width: scale(0.75), height: scale(0.75)});
@@ -27,12 +34,17 @@ var doLayout = function(nodes, edges, width, height, scale) {
     dagre.layout(g);
 
     var graph = g.graph();
+
+    // shifting graph coordinates to center
+
     if (graph.width < width) {
-        offsetX = (width - graph.width) / 2;
+        offsetX = (width - graph.width) / 2 + margins.left;
     }
     if (graph.height < height) {
-        offsetY = (height - graph.height) / 2 + topMargin;
+        offsetY = (height - graph.height) / 2 + margins.top;
     }
+
+    // apply coordinates to nodes and edges
 
     g.nodes().forEach(function(id) {
         var node = nodes[id];
@@ -50,6 +62,10 @@ var doLayout = function(nodes, edges, width, height, scale) {
         });
         edge.points = graphEdge.points;
     });
+
+    // return object with width and height of layout
+
+    return graph;
 };
 
 module.exports = {
