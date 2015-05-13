@@ -2,13 +2,18 @@
 
 ## Overview
 
-TODO
+Weave Scope automatically generates a map of your containers, enabling you to
+intuitively understand, monitor, and control your applications.
 
-## Developing
+Please note that the code, and especially the building and running story, is in
+a **pre-alpha** state. Please take a look, but don't be surprised if you hit
+bugs or missing pieces.
 
-### Building
+## Building
 
-To build everything in-place,
+### In-place
+
+To build the binaries in-place,
 
 ```
 make build
@@ -29,4 +34,24 @@ Or, as a shortcut,
 ```
 make dist
 ```
+
+### Docker container
+
+To build a Docker container,
+
+```
+make docker
+```
+
+## Running
+
+### Manually
+
+1. Launch a probe process on each physical host you intend to monitor, via `sudo probe`
+2. Launch an app process, and configure it to talk to probes, via `app -probes="probe-host-1:4030,probe-host-2:4030"`.
+3. Load the user interface, via **http://app-host:4040**
+
+### As a Docker container
+
+TODO
 
