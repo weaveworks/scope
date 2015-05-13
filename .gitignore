@@ -30,32 +30,16 @@ coverage.html
 *~
 
 # Project specific
-weaver/weaver
-weavedns/weavedns
-sigproxy/sigproxy
-tools/bin
-tools/build
-releases
-weave.tar
-weavedns.tar
-weaveexec.tar
-weaveexec/weave
-weaveexec/sigproxy
-weaveexec/docker*.tgz
-Vagrantfile.local
 scope.tar
-scope/probe/probe
-scope/bridge/bridge
-scope/app/app
-scope/demoprobe/demoprobe
-scope/fixprobe/fixprobe
-scope/genreport/genreport
-scope/graphviz/graphviz
-scope/oneshot/oneshot
-scope/web/assets/videos/*.mp4
-scope/release/*.tar.gz
-scope/web/docs/*.html
-scope/*sublime-project
-scope/*sublime-workspace
-scope/*npm-debug.log
+app/app
+probe/probe
+experimental/bridge/bridge
+experimental/demoprobe/demoprobe
+experimental/fixprobe/fixprobe
+experimental/genreport/genreport
+experimental/graphviz/graphviz
+experimental/oneshot/oneshot
+*sublime-project
+*sublime-workspace
+*npm-debug.log
 
