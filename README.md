@@ -1,5 +1,7 @@
 # Scope
 
+![Weave Scope Screenshot](http://weave.works/scope/assets/img/feature-1.png)
+
 ## Overview
 
 Weave Scope automatically generates a map of your containers, enabling you to
