@@ -1,0 +1,3 @@
+#!/bin/sh
+
+while true; do echo "foo" | nc qotd 4446; sleep 1; done
