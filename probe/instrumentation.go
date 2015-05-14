@@ -10,7 +10,7 @@ import (
 var (
 	publishTicks = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Namespace: "cello",
+			Namespace: "scope",
 			Subsystem: "probe",
 			Name:      "publish_ticks",
 			Help:      "Number of publish ticks observed.",
@@ -19,7 +19,7 @@ var (
 	)
 	spyDuration = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Namespace: "cello",
+			Namespace: "scope",
 			Subsystem: "probe",
 			Name:      "spy_time_nanoseconds",
 			Help:      "Total time spent spying on active connections.",
