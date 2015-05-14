@@ -35,7 +35,7 @@ func TestCgroupMapper(t *testing.T) {
 }
 
 func setupTmpFS(t *testing.T, fs map[string]string) string {
-	tmp, err := ioutil.TempDir(os.TempDir(), "cello-probe-test-cgroup-mapper")
+	tmp, err := ioutil.TempDir(os.TempDir(), "scope-probe-test-cgroup-mapper")
 	if err != nil {
 		t.Fatal(err)
 	}

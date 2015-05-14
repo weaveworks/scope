@@ -35,7 +35,7 @@ func main() {
 		break // by default
 
 	case "syslog":
-		w, err := syslog.New(syslog.LOG_INFO, "cello-app")
+		w, err := syslog.New(syslog.LOG_INFO, "scope-app")
 		if err != nil {
 			log.Print(err)
 			return
