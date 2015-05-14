@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -eu
+
+usage() {
+    echo "$0"
+}
+
+PORT=6060
+CONTAINER_NAME=weavetracer
+
+[ $# -gt 0 ] || usage
+COMMAND=$1
+shift 1
+
+case "$COMMAND" in
+
+    launch)
+        docker run --privileged --net=host --pid=host -d -v /var/run/docker.sock:/var/run/docker.sock \
+            --name $CONTAINER_NAME weaveworks/tracer
+        for ip in $(hostname -I); do
+            echo http://$ip:6060
+        done
+        ;;
+
+    stop)
+        docker stop $CONTAINER_NAME || true
+        docker rm $CONTAINER_NAME >/dev/null || true
+        ;;
+
+    attach)
+        PID=$1
+        if [ -z "${PID##*[!0-9]*}" ]; then
+            PID=$(pgrep $PID)
+        fi
+        curl -X POST http://localhost:$PORT/pid/$PID
+        ;;
+
+    detach)
+        PID=$1
+        if [ -z "${PID##*[!0-9]*}" ]; then
+            PID=$(pgrep $PID)
+        fi
+        curl -X DELETE http://localhost:$PORT/pid/$PID
+        ;;
+
+    traces)
+        curl http://localhost:$PORT/trace
+        ;;
+esac

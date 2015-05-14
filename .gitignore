@@ -50,6 +50,8 @@ experimental/genreport/genreport
 experimental/graphviz/graphviz
 experimental/oneshot/oneshot
 experimental/_integration/_integration
+experimental/tracer/main/main
+experimental/tracer/tracer.tar
 *sublime-project
 *sublime-workspace
 *npm-debug.log
