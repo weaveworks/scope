@@ -39,6 +39,7 @@ experimental/fixprobe/fixprobe
 experimental/genreport/genreport
 experimental/graphviz/graphviz
 experimental/oneshot/oneshot
+experimental/example/qotd/qotd
 *sublime-project
 *sublime-workspace
 *npm-debug.log
