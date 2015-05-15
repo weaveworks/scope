@@ -66,9 +66,7 @@ var App = React.createClass({
 					topology={this.state.activeTopology} /> }
 
 				<div className="header">
-					<div id="logo">
-						<Logo />
-					</div>
+					<Logo />
 					<Topologies topologies={this.state.topologies} active={this.state.activeTopology} />
 				</div>
 
