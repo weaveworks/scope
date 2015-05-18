@@ -1,0 +1,25 @@
+general:
+  branches:
+    ignore:
+      - gh-pages
+
+machine:
+  services:
+    - docker
+  environment:
+    GOPATH: /home/ubuntu:$GOPATH
+    SRCDIR: /home/ubuntu/src/github.com/weaveworks/scope
+    PATH: $PATH:$HOME/.local/bin
+
+dependencies:
+  post:
+    - go get github.com/mattn/goveralls
+    - mkdir -p $(dirname $SRCDIR)
+    - cp -r $(pwd)/ $SRCDIR
+
+test:
+  override:
+    - cd $SRCDIR; make
+    - cd $SRCDIR; ./bin/test
+  post:
+    - goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci
