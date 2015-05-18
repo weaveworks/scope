@@ -10,7 +10,7 @@ FIXPROBE_EXE=experimental/fixprobe/fixprobe
 SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 SCOPE_EXPORT=scope.tar
 
-all: $(APP_EXE) $(PROBE_EXE)
+all: $(SCOPE_EXPORT)
 dist: client static $(APP_EXE) $(PROBE_EXE)
 
 client:
@@ -34,15 +34,10 @@ $(APP_EXE) $(PROBE_EXE):
 $(FIXPROBE_EXE):
 	cd experimental/fixprobe && go build
 
-$(SCOPE_EXPORT): Dockerfile $(APP_EXE) $(PROBE_EXE) entrypoint.sh supervisord.conf
-	$(SUDO) docker build -t $(SCOPE_IMAGE) .
+$(SCOPE_EXPORT):  $(APP_EXE) $(PROBE_EXE) docker/Dockerfile docker/entrypoint.sh docker/supervisord.conf
+	cp $(APP_EXE) $(PROBE_EXE) docker/
+	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker save $(SCOPE_IMAGE):latest > $@
-
-docker: $(SCOPE_EXPORT)
-	docker run --privileged -d --name=scope --net=host \
-		-v /proc:/hostproc \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		$(SCOPE_IMAGE)
 
 clean:
 	go clean ./...
