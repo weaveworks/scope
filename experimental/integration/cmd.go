@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +8,13 @@ import (
 	"testing"
 	"time"
 )
+
+var components = map[string]string{
+	"app":       "../../app/app",
+	"bridge":    "../bridge/bridge",
+	"fixprobe":  "../fixprobe/fixprobe",
+	"demoprobe": "../demoprobe/demoprobe",
+}
 
 // cmdline is e.g. `experimental/fixprobe/fixprobe -publish.interval=10ms fixture.json`
 func start(t *testing.T, cmdline string) *exec.Cmd {
@@ -18,9 +24,10 @@ func start(t *testing.T, cmdline string) *exec.Cmd {
 	}
 
 	component, args := toks[0], toks[1:]
-
-	relpath := fmt.Sprintf("../%s", component)
-
+	relpath, ok := components[component]
+	if !ok {
+		t.Fatalf("%s: unknown", component)
+	}
 	if _, err := os.Stat(relpath); err != nil {
 		t.Fatalf("%s: %s", component, err)
 	}

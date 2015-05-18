@@ -14,10 +14,10 @@ import (
 func TestComponentsAreAvailable(t *testing.T) {
 	pause := time.Millisecond
 	for _, c := range []string{
-		fmt.Sprintf(`app/app -http.address=:%d`, appPort),
-		fmt.Sprintf(`experimental/bridge/bridge -listen=:%d`, bridgePort),
-		fmt.Sprintf(`experimental/fixprobe/fixprobe -listen=:%d`, probePort1),
-		fmt.Sprintf(`experimental/demoprobe/demoprobe -listen=:%d`, probePort1),
+		fmt.Sprintf(`app -http.address=:%d`, appPort),
+		fmt.Sprintf(`bridge -listen=:%d`, bridgePort),
+		fmt.Sprintf(`fixprobe -listen=:%d`, probePort1),
+		fmt.Sprintf(`demoprobe -listen=:%d`, probePort1),
 	} {
 		cmd := start(t, c)
 		time.Sleep(pause)
@@ -30,11 +30,8 @@ func TestApplications(t *testing.T) {
 	withContext(t, oneProbe, func() {
 		topo := parseTopology(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/applications", appPort)))
 		assertAdjacent(t, topo["proc:node-1.2.3.4:apache"], "theinternet", "proc:node-192.168.1.1:wget")
-
+		want := map[string]interface{}{"max_conn_count_tcp": float64(19)}
 		have := parseEdge(t, httpGet(t, fmt.Sprintf("http://localhost:%d/api/topology/applications/%s/%s", appPort, "proc:node-192.168.1.1:wget", "theinternet")))
-		want := map[string]interface{}{
-			"max_conn_count_tcp": float64(19),
-		}
 		if !reflect.DeepEqual(have, want) {
 			t.Errorf("have: %#v, want %#v", have, want)
 		}
