@@ -6,6 +6,7 @@ var _ = require('lodash');
 var Logo = require('./logo');
 var SearchBar = require('./search-bar.js');
 var AppStore = require('../stores/app-store');
+var Groupings = require('./groupings.js');
 var Topologies = require('./topologies.js');
 var TopologyStore = require('../stores/topology-store');
 var WebapiUtils = require('../utils/web-api-utils');
@@ -20,12 +21,12 @@ var ESC_KEY_CODE = 27;
 
 function getStateFromStores() {
 	return {
+		activeTopology: AppStore.getCurrentTopology(),
+		currentGrouping: AppStore.getCurrentGrouping(),
 		selectedNodeId: AppStore.getSelectedNodeId(),
 		nodeDetails: AppStore.getNodeDetails(),
 		nodes: TopologyStore.getNodes(),
-		topologies: AppStore.getTopologies(),
-		activeTopology: AppStore.getCurrentTopology(),
-		activeTopologyMode: AppStore.getCurrentTopologyMode()
+		topologies: AppStore.getTopologies()
 	}
 }
 
@@ -68,6 +69,7 @@ var App = React.createClass({
 				<div className="header">
 					<Logo />
 					<Topologies topologies={this.state.topologies} active={this.state.activeTopology} />
+					<Groupings active={this.state.currentGrouping} />
 				</div>
 
 				<Nodes nodes={this.state.nodes} />
