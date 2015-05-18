@@ -39,7 +39,6 @@ var Topologies = React.createClass({
 
 		return (
 			<div className="topologies">
-				<span className="topologies-icon fa fa-sitemap" />
 				{topologies.map(function(topology) {
 					return this.renderTopology(topology, activeTopologyId);
 				}, this)}

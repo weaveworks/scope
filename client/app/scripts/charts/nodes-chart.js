@@ -7,7 +7,7 @@ var Node = require('./node');
 
 var MAX_NODES = 100;
 var MARGINS = {
-    top: 120,
+    top: 130,
     left: 40,
     right: 40,
     bottom: 0
@@ -151,7 +151,7 @@ var NodesChart = React.createClass({
         var zoomFactor = Math.min(xFactor, yFactor);
         var zoomScale = this.state.scale;
 
-        if(this.zoom && !this.state.hasZoomed && zoomFactor < 1) {
+        if(this.zoom && !this.state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
             zoomScale = zoomFactor;
             // saving in d3's behavior cache
             this.zoom.scale(zoomFactor);
