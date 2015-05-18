@@ -49,10 +49,12 @@ function getTopologies() {
 }
 
 function getNodeDetails(topology, nodeId) {
-	var url = [AppStore.getUrlForTopology(topology), nodeId].join('/');
-	reqwest(url, function(res) {
-		AppActions.receiveNodeDetails(res.node);
-	});
+	if (nodeId) {
+		var url = [AppStore.getUrlForTopology(topology), nodeId].join('/');
+		reqwest(url, function(res) {
+			AppActions.receiveNodeDetails(res.node);
+		});
+	}
 }
 
 module.exports = {
@@ -61,7 +63,7 @@ module.exports = {
 	getTopologies: getTopologies,
 
 	getNodesDelta: function(topologyUrl) {
-		if (topologyUrl) {
+		if (topologyUrl && topologyUrl !== currentUrl) {
 			createWebsocket(topologyUrl);
 		}
 	}
