@@ -11,16 +11,20 @@
     padding: 0.2em 0;
 }
 
-@primary-color: #445566;
-@background-color: white;
-@background-secondary-color: lighten(@primary-color, 60%);
-@text-color: @primary-color;
+/* weave company colours */
+@weave-gray-blue: rgb(85,105,145);
+@weave-blue: rgb(0,210,255);
+@weave-orange: rgb(255,75,25);
+@weave-charcoal-blue: rgb(50,50,75); // #32324B
+
+@primary-color: @weave-charcoal-blue;
+@background-color: lighten(@primary-color, 66%);
+@background-secondary-color: lighten(@background-color, 8%);
+@text-color: lighten(@primary-color, 10%);
 @text-secondary-color: lighten(@primary-color, 33%);
 @text-pale-color: lighten(@primary-color, 50%);
-@text-darker-color: darken(@primary-color, 33%);
-@lighter-color: lighten(@primary-color, 10%);
-@cello-orange: #D65906;
-@white: #E7E7E7;
+@text-darker-color: @primary-color;
+@white: @background-secondary-color;
 
 html, body {
 }
@@ -31,25 +35,9 @@ html, body {
 
 /* Space out content a bit */
 body {
-    background: linear-gradient(30deg, #DDD 0%, #F2F2F2 100%);
+    background: linear-gradient(30deg, @background-color 0%, @background-secondary-color 100%);
     color: @text-color;
     line-height: 150%;
-}
-
-#logo {
-    margin: 0 64px 0 64px;
-    height: 64px;
-    width: 64px;
-    float: left;
-
-    .logo {
-        path {
-            stroke-width: 2px;
-            stroke: @text-secondary-color;
-            fill: none;
-        }
-    }
-
 }
 
 #app {
@@ -64,10 +52,18 @@ body {
     z-index: 20;
 }
 
+.logo {
+    margin: 0 64px 0 64px;
+    height: 64px;
+    width: 250px;
+    float: left;
+}
+
 .topologies {
     float: left;
     position: relative;
-    margin-top: 4px;
+    margin-top: 7px;
+    margin-left: 64px;
 
     &-icon {
         font-size: 12px;
@@ -149,7 +145,7 @@ body {
         font-size: 14px;
         font-family: Roboto;
         fill: @text-secondary-color;
-        text-shadow: 0 1px 0 @white, 1px 0 0 @white, 0 -1px 0 @white, -1px 0 0 @white;
+        text-shadow: 0 2px 0 @white, 2px 0 0 @white, 0 -2px 0 @white, -2px 0 0 @white;
 
         &.node-label {
             fill: @text-color;
@@ -184,12 +180,6 @@ body {
 
     circle.node {
       fill: @text-color;
-    }
-
-    g.node.highlighted {
-        circle.border {
-            stroke: @cello-orange;
-        }
     }
 }
 
