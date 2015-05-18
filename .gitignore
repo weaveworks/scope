@@ -33,6 +33,8 @@ coverage.html
 scope.tar
 app/app
 probe/probe
+docker/app
+docker/probe
 experimental/bridge/bridge
 experimental/demoprobe/demoprobe
 experimental/fixprobe/fixprobe
