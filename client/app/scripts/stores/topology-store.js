@@ -29,12 +29,12 @@ var TopologyStore = assign({}, EventEmitter.prototype, {
 
 TopologyStore.dispatchToken = AppDispatcher.register(function(payload) {
 	switch (payload.type) {
-		case ActionTypes.CLICK_TOPOLOGY:
+		case ActionTypes.CLICK_GROUPING:
 			nodes = {};
 			TopologyStore.emit(TopologyStore.CHANGE_EVENT);
 			break;
 
-		case ActionTypes.CLICK_TOPOLOGY_MODE:
+		case ActionTypes.CLICK_TOPOLOGY:
 			nodes = {};
 			TopologyStore.emit(TopologyStore.CHANGE_EVENT);
 			break;
