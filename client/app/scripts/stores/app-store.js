@@ -11,8 +11,8 @@ var TopologyStore = require('./topology-store');
 
 // Initial values
 
+var currentGrouping = 'none';
 var currentTopology = 'applications';
-var currentTopologyMode = 'individual';
 var nodeDetails = null;
 var selectedNodeId = null;
 var topologies = [];
@@ -26,7 +26,7 @@ var AppStore = assign({}, EventEmitter.prototype, {
 	getAppState: function() {
 		return {
 			currentTopology: this.getCurrentTopology(),
-			currentTopologyMode: this.getCurrentTopologyMode(),
+			currentGrouping: this.getCurrentGrouping(),
 			selectedNodeId: this.getSelectedNodeId()
 		};
 	},
@@ -35,8 +35,8 @@ var AppStore = assign({}, EventEmitter.prototype, {
 		return currentTopology;
 	},
 
-	getCurrentTopologyMode: function() {
-		return currentTopologyMode;
+	getCurrentGrouping: function() {
+		return currentGrouping;
 	},
 
 	getNodeDetails: function() {
@@ -61,7 +61,7 @@ var AppStore = assign({}, EventEmitter.prototype, {
 		}, this);
 
 		if (topology) {
-			return topology.grouped_url && currentTopologyMode == 'class' ? topology.grouped_url : topology.url;
+			return topology.grouped_url && currentGrouping == 'grouped' ? topology.grouped_url : topology.url;
 		}
 	},
 
@@ -81,6 +81,12 @@ AppStore.dispatchToken = AppDispatcher.register(function(payload) {
 			AppStore.emit(AppStore.CHANGE_EVENT);
 			break;
 
+		case ActionTypes.CLICK_GROUPING:
+			currentGrouping = payload.grouping;
+			AppDispatcher.waitFor([TopologyStore.dispatchToken]);
+			AppStore.emit(AppStore.CHANGE_EVENT);
+			break;
+
 		case ActionTypes.CLICK_NODE:
 			selectedNodeId = payload.nodeId;
 			AppStore.emit(AppStore.CHANGE_EVENT);
@@ -88,12 +94,6 @@ AppStore.dispatchToken = AppDispatcher.register(function(payload) {
 
 		case ActionTypes.CLICK_TOPOLOGY:
 			currentTopology = payload.topologyId;
-			AppDispatcher.waitFor([TopologyStore.dispatchToken]);
-			AppStore.emit(AppStore.CHANGE_EVENT);
-			break;
-
-		case ActionTypes.CLICK_TOPOLOGY_MODE:
-			currentTopologyMode = payload.mode;
 			AppDispatcher.waitFor([TopologyStore.dispatchToken]);
 			AppStore.emit(AppStore.CHANGE_EVENT);
 			break;
@@ -116,7 +116,7 @@ AppStore.dispatchToken = AppDispatcher.register(function(payload) {
 
 		case ActionTypes.ROUTE_TOPOLOGY:
 			currentTopology = payload.state.currentTopology;
-			currentTopologyMode = payload.state.currentTopologyMode;
+			currentGrouping = payload.state.currentGrouping;
 			selectedNodeId = payload.state.selectedNodeId;
 			AppDispatcher.waitFor([TopologyStore.dispatchToken]);
 			AppStore.emit(AppStore.CHANGE_EVENT);

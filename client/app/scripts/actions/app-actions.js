@@ -9,6 +9,15 @@ module.exports = {
 		RouterUtils.updateRoute();
 	},
 
+	clickGrouping: function(grouping) {
+		AppDispatcher.dispatch({
+			type: ActionTypes.CLICK_GROUPING,
+			grouping: grouping
+		});
+		RouterUtils.updateRoute();
+		WebapiUtils.getNodesDelta(AppStore.getUrlForTopology(AppStore.getCurrentTopology()));
+	},
+
 	clickNode: function(nodeId) {
 		AppDispatcher.dispatch({
 			type: ActionTypes.CLICK_NODE,
@@ -22,15 +31,6 @@ module.exports = {
 		AppDispatcher.dispatch({
 			type: ActionTypes.CLICK_TOPOLOGY,
 			topologyId: topologyId
-		});
-		RouterUtils.updateRoute();
-		WebapiUtils.getNodesDelta(AppStore.getUrlForTopology(AppStore.getCurrentTopology()));
-	},
-
-	clickTopologyMode: function(mode) {
-		AppDispatcher.dispatch({
-			type: ActionTypes.CLICK_TOPOLOGY_MODE,
-			mode: mode
 		});
 		RouterUtils.updateRoute();
 		WebapiUtils.getNodesDelta(AppStore.getUrlForTopology(AppStore.getCurrentTopology()));
