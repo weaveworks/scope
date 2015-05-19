@@ -14,8 +14,9 @@ var Topologies = React.createClass({
 	},
 
 	renderTopology: function(topology, active) {
-		var className = AppStore.isUrlForTopology(topology.url, active) ? "topologies-item topologies-item-active" : "topologies-item",
-			topologyId = AppStore.getTopologyForUrl(topology.url),
+		var isActive = topology.name === this.props.currentTopology.name,
+			className = isActive ? "topologies-item topologies-item-active" : "topologies-item",
+			topologyId = AppStore.getTopologyIdForUrl(topology.url),
 			title = ['Topology: ' + topology.name,
 			'Nodes: ' + topology.stats.node_count,
 			'Connections: ' + topology.stats.node_count].join('\n');
@@ -32,15 +33,14 @@ var Topologies = React.createClass({
 	},
 
 	render: function() {
-		var activeTopologyId = this.props.active,
-			topologies = _.sortBy(this.props.topologies, function(topology) {
+		var topologies = _.sortBy(this.props.topologies, function(topology) {
 				return topology.name;
 			});
 
 		return (
 			<div className="topologies">
-				{topologies.map(function(topology) {
-					return this.renderTopology(topology, activeTopologyId);
+				{this.props.currentTopology && topologies.map(function(topology) {
+					return this.renderTopology(topology);
 				}, this)}
 			</div>
 		);

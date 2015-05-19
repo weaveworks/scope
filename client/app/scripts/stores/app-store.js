@@ -5,15 +5,15 @@ var assign = require('object-assign');
 
 var AppDispatcher = require('../dispatcher/app-dispatcher');
 var ActionTypes = require('../constants/action-types');
-var TopologyStore = require('./topology-store');
-// var topologies = require('../constants/topologies');
 
 
 // Initial values
 
 var connectionState = 'disconnected';
 var currentGrouping = 'none';
-var currentTopology = 'applications';
+var currentTopologyId = 'applications';
+var mouseOverNode = null;
+var nodes = {};
 var nodeDetails = null;
 var selectedNodeId = null;
 var topologies = [];
@@ -26,8 +26,8 @@ var AppStore = assign({}, EventEmitter.prototype, {
 
 	getAppState: function() {
 		return {
-			currentTopology: this.getCurrentTopology(),
-			currentGrouping: this.getCurrentGrouping(),
+			topologyId: currentTopologyId,
+			grouping: this.getCurrentGrouping(),
 			selectedNodeId: this.getSelectedNodeId()
 		};
 	},
@@ -37,7 +37,17 @@ var AppStore = assign({}, EventEmitter.prototype, {
 	},
 
 	getCurrentTopology: function() {
-		return currentTopology;
+		return _.find(topologies, function(topology) {
+			return isUrlForTopologyId(topology.url, currentTopologyId);
+		});
+	},
+
+	getCurrentTopologyUrl: function() {
+		var topology = this.getCurrentTopology();
+
+		if (topology) {
+			return topology.grouped_url && currentGrouping == 'grouped' ? topology.grouped_url : topology.url;
+		}
 	},
 
 	getCurrentGrouping: function() {
@@ -48,6 +58,10 @@ var AppStore = assign({}, EventEmitter.prototype, {
 		return nodeDetails;
 	},
 
+	getNodes: function() {
+		return nodes;
+	},
+
 	getSelectedNodeId: function() {
 		return selectedNodeId;
 	},
@@ -56,40 +70,35 @@ var AppStore = assign({}, EventEmitter.prototype, {
 		return topologies;
 	},
 
-	getTopologyForUrl: function(url) {
+	getTopologyIdForUrl: function(url) {
 		return url.split('/').pop();
-	},
-
-	getUrlForTopology: function(topologyId) {
-		var topology =  _.find(topologies, function(topology) {
-			return this.isUrlForTopology(topology.url, topologyId);
-		}, this);
-
-		if (topology) {
-			return topology.grouped_url && currentGrouping == 'grouped' ? topology.grouped_url : topology.url;
-		}
-	},
-
-	isUrlForTopology: function(url, topologyId) {
-		return _.endsWith(url, topologyId);
 	}
-
 });
+
+
+// Helpers
+
+function isUrlForTopologyId(url, topologyId) {
+	return _.endsWith(url, topologyId);
+}
 
 
 // Store Dispatch Hooks
 
-AppStore.dispatchToken = AppDispatcher.register(function(payload) {
+AppStore.registeredCallback = function(payload) {
 	switch (payload.type) {
+
 		case ActionTypes.CLICK_CLOSE_DETAILS:
 			selectedNodeId = null;
 			AppStore.emit(AppStore.CHANGE_EVENT);
 			break;
 
 		case ActionTypes.CLICK_GROUPING:
-			currentGrouping = payload.grouping;
-			AppDispatcher.waitFor([TopologyStore.dispatchToken]);
-			AppStore.emit(AppStore.CHANGE_EVENT);
+			if (payload.grouping !== currentGrouping) {
+				currentGrouping = payload.grouping;
+				nodes = {};
+				AppStore.emit(AppStore.CHANGE_EVENT);
+			}
 			break;
 
 		case ActionTypes.CLICK_NODE:
@@ -98,8 +107,15 @@ AppStore.dispatchToken = AppDispatcher.register(function(payload) {
 			break;
 
 		case ActionTypes.CLICK_TOPOLOGY:
-			currentTopology = payload.topologyId;
-			AppDispatcher.waitFor([TopologyStore.dispatchToken]);
+			if (payload.topologyId !== currentTopologyId) {
+				currentTopologyId = payload.topologyId;
+				nodes = {};
+			}
+			AppStore.emit(AppStore.CHANGE_EVENT);
+			break;
+
+		case ActionTypes.ENTER_NODE:
+			mouseOverNode = payload.nodeId;
 			AppStore.emit(AppStore.CHANGE_EVENT);
 			break;
 
@@ -109,14 +125,43 @@ AppStore.dispatchToken = AppDispatcher.register(function(payload) {
 			AppStore.emit(AppStore.CHANGE_EVENT);
 			break;
 
+		case ActionTypes.LEAVE_NODE:
+			mouseOverNode = null;
+			AppStore.emit(AppStore.CHANGE_EVENT);
+			break;
+
 		case ActionTypes.RECEIVE_NODE_DETAILS:
 			nodeDetails = payload.details;
 			AppStore.emit(AppStore.CHANGE_EVENT);
 			break;
 
 		case ActionTypes.RECEIVE_NODES_DELTA:
+			console.log('RECEIVE_NODES_DELTA',
+				'remove', _.size(payload.delta.remove),
+				'update', _.size(payload.delta.update),
+				'add', _.size(payload.delta.add));
+
 			connectionState = "connected";
-			AppDispatcher.waitFor([TopologyStore.dispatchToken]);
+
+			// nodes that no longer exist
+			_.each(payload.delta.remove, function(nodeId) {
+				// in case node disappears before mouseleave event
+				if (mouseOverNode === nodeId) {
+					mouseOverNode = null;
+				}
+				delete nodes[nodeId];
+			});
+
+			// update existing nodes
+			_.each(payload.delta.update, function(node) {
+				nodes[node.id] = node;
+			});
+
+			// add new nodes
+			_.each(payload.delta.add, function(node) {
+				nodes[node.id] = node;
+			});
+
 			AppStore.emit(AppStore.CHANGE_EVENT);
 			break;
 
@@ -126,10 +171,10 @@ AppStore.dispatchToken = AppDispatcher.register(function(payload) {
 			break;
 
 		case ActionTypes.ROUTE_TOPOLOGY:
-			currentTopology = payload.state.currentTopology;
-			currentGrouping = payload.state.currentGrouping;
+			nodes = {};
+			currentTopologyId = payload.state.topologyId;
+			currentGrouping = payload.state.grouping;
 			selectedNodeId = payload.state.selectedNodeId;
-			AppDispatcher.waitFor([TopologyStore.dispatchToken]);
 			AppStore.emit(AppStore.CHANGE_EVENT);
 			break;
 
@@ -137,6 +182,8 @@ AppStore.dispatchToken = AppDispatcher.register(function(payload) {
 			break;
 
 	}
-});
+};
+
+AppStore.dispatchToken = AppDispatcher.register(AppStore.registeredCallback);
 
 module.exports = AppStore;

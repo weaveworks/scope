@@ -1,8 +1,6 @@
 var reqwest = require('reqwest');
 
-var TopologyActions = require('../actions/topology-actions');
 var AppActions = require('../actions/app-actions');
-var AppStore = require('../stores/app-store');
 
 var WS_URL = window.WS_URL || 'ws://' + location.host;
 
@@ -33,7 +31,7 @@ function createWebsocket(topologyUrl) {
 		socket.onmessage = function(event) {
 			var msg = JSON.parse(event.data);
 			if (msg.add || msg.remove || msg.update) {
-				TopologyActions.receiveNodesDelta(msg);
+				AppActions.receiveNodesDelta(msg);
 			}
 		};
 
@@ -48,9 +46,9 @@ function getTopologies() {
 	});
 }
 
-function getNodeDetails(topology, nodeId) {
-	if (nodeId) {
-		var url = [AppStore.getUrlForTopology(topology), nodeId].join('/');
+function getNodeDetails(topologyUrl, nodeId) {
+	if (topologyUrl && nodeId) {
+		var url = [topologyUrl, nodeId].join('/');
 		reqwest(url, function(res) {
 			AppActions.receiveNodeDetails(res.node);
 		});

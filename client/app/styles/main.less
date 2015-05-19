@@ -101,7 +101,13 @@ body {
         display: inline-block;
         color: @text-tertiary-color;
 
-        &-active, &:hover {
+        &-disabled {
+            color: @text-tertiary-color;
+            cursor: default;
+        }
+
+        &-default:hover,
+        &-active {
             color: @text-color;
         }
     }

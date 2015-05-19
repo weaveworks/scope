@@ -8,7 +8,6 @@ var IconButton = mui.IconButton;
 
 var AppActions = require('../actions/app-actions');
 var NodeDetails = require('./node-details');
-var WebapiUtils = require('../utils/web-api-utils');
 
 var Details = React.createClass({
 

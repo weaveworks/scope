@@ -38,15 +38,25 @@
     "gulp-size": "^1.2.1",
     "gulp-sourcemaps": "^1.5.2",
     "gulp-uglify": "^1.2.0",
+    "gulp-useref": "^1.1.1",
     "gulp-util": "^3.0.4",
+    "jasmine-core": "^2.3.4",
     "jshint-stylish": "^1.0.2",
+    "karma": "^0.12.32",
+    "karma-browserify": "^4.2.1",
+    "karma-cli": "0.0.4",
+    "karma-jasmine": "^0.3.5",
+    "karma-phantomjs-launcher": "^0.1.4",
+    "opn": "^1.0.1",
     "proxy-middleware": "^0.11.1",
+    "react-tools": "^0.13.3",
     "reactify": "^1.1.1",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0"
   },
   "scripts": {
-    "start": "gulp"
+    "start": "gulp",
+    "test": "karma start test/karma.conf.js --single-run"
   },
   "engines": {
     "node": ">=0.10.0"

@@ -15,7 +15,7 @@ module.exports = {
 			grouping: grouping
 		});
 		RouterUtils.updateRoute();
-		WebapiUtils.getNodesDelta(AppStore.getUrlForTopology(AppStore.getCurrentTopology()));
+		WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
 	},
 
 	clickNode: function(nodeId) {
@@ -24,7 +24,7 @@ module.exports = {
 			nodeId: nodeId
 		});
 		RouterUtils.updateRoute();
-		WebapiUtils.getNodeDetails(AppStore.getUrlForTopology(AppStore.getCurrentTopology()), AppStore.getSelectedNodeId());
+		WebapiUtils.getNodeDetails(AppStore.getCurrentTopologyUrl(), AppStore.getSelectedNodeId());
 	},
 
 	clickTopology: function(topologyId) {
@@ -33,7 +33,14 @@ module.exports = {
 			topologyId: topologyId
 		});
 		RouterUtils.updateRoute();
-		WebapiUtils.getNodesDelta(AppStore.getUrlForTopology(AppStore.getCurrentTopology()));
+		WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
+	},
+
+	enterNode: function(nodeId) {
+		AppDispatcher.dispatch({
+			type: ActionTypes.ENTER_NODE,
+			nodeId: nodeId
+		});
 	},
 
 	hitEsc: function() {
@@ -43,10 +50,24 @@ module.exports = {
 		RouterUtils.updateRoute();
 	},
 
+	leaveNode: function(nodeId) {
+		AppDispatcher.dispatch({
+			type: ActionTypes.LEAVE_NODE,
+			nodeId: nodeId
+		});
+	},
+
 	receiveNodeDetails: function(details) {
 		AppDispatcher.dispatch({
 			type: ActionTypes.RECEIVE_NODE_DETAILS,
 			details: details
+		});
+	},
+
+	receiveNodesDelta: function(delta) {
+		AppDispatcher.dispatch({
+			type: ActionTypes.RECEIVE_NODES_DELTA,
+			delta: delta
 		});
 	},
 
@@ -55,8 +76,8 @@ module.exports = {
 			type: ActionTypes.RECEIVE_TOPOLOGIES,
 			topologies: topologies
 		});
-		WebapiUtils.getNodesDelta(AppStore.getUrlForTopology(AppStore.getCurrentTopology()));
-		WebapiUtils.getNodeDetails(AppStore.getUrlForTopology(AppStore.getCurrentTopology()), AppStore.getSelectedNodeId());
+		WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
+		WebapiUtils.getNodeDetails(AppStore.getCurrentTopologyUrl(), AppStore.getSelectedNodeId());
 	},
 
 	route: function(state) {
@@ -64,8 +85,8 @@ module.exports = {
 			state: state,
 			type: ActionTypes.ROUTE_TOPOLOGY
 		});
-		WebapiUtils.getNodesDelta(AppStore.getUrlForTopology(AppStore.getCurrentTopology()));
-		WebapiUtils.getNodeDetails(AppStore.getUrlForTopology(AppStore.getCurrentTopology()), AppStore.getSelectedNodeId());
+		WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
+		WebapiUtils.getNodeDetails(AppStore.getCurrentTopologyUrl(), AppStore.getSelectedNodeId());
 	}
 };
 
