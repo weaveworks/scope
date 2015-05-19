@@ -7,6 +7,7 @@ var Logo = require('./logo');
 var SearchBar = require('./search-bar.js');
 var AppStore = require('../stores/app-store');
 var Groupings = require('./groupings.js');
+var Status = require('./status.js');
 var Topologies = require('./topologies.js');
 var TopologyStore = require('../stores/topology-store');
 var WebapiUtils = require('../utils/web-api-utils');
@@ -22,6 +23,7 @@ var ESC_KEY_CODE = 27;
 function getStateFromStores() {
 	return {
 		activeTopology: AppStore.getCurrentTopology(),
+		connectionState: AppStore.getConnectionState(),
 		currentGrouping: AppStore.getCurrentGrouping(),
 		selectedNodeId: AppStore.getSelectedNodeId(),
 		nodeDetails: AppStore.getNodeDetails(),
@@ -70,6 +72,7 @@ var App = React.createClass({
 					<Logo />
 					<Topologies topologies={this.state.topologies} active={this.state.activeTopology} />
 					<Groupings active={this.state.currentGrouping} />
+					<Status connectionState={this.state.connectionState} />
 				</div>
 
 				<Nodes nodes={this.state.nodes} />
