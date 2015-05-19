@@ -53,6 +53,11 @@ func (p *TCPPublisher) Publish(msg report.Report) {
 }
 
 func (p *TCPPublisher) loop(incoming <-chan net.Conn) {
+	type connEncoder struct {
+		net.Conn
+		*gob.Encoder
+	}
+
 	activeConns := map[string]connEncoder{} // host: connEncoder
 
 	for {
@@ -92,11 +97,6 @@ func (p *TCPPublisher) loop(incoming <-chan net.Conn) {
 			}
 		}
 	}
-}
-
-type connEncoder struct {
-	net.Conn
-	*gob.Encoder
 }
 
 func fwd(ln net.Listener) chan net.Conn {
