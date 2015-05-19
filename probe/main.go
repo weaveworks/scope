@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -22,7 +21,6 @@ import (
 func main() {
 	var (
 		httpListen         = flag.String("http.listen", "", "listen address for HTTP profiling and instrumentation server")
-		version            = flag.Bool("version", false, "print version number and exit")
 		publishInterval    = flag.Duration("publish.interval", 1*time.Second, "publish (output) interval")
 		spyInterval        = flag.Duration("spy.interval", 100*time.Millisecond, "spy (scan) interval")
 		listen             = flag.String("listen", ":"+strconv.Itoa(xfer.ProbePort), "listen address")
@@ -37,12 +35,6 @@ func main() {
 	if len(flag.Args()) != 0 {
 		flag.Usage()
 		os.Exit(1)
-	}
-
-	// -version flag:
-	if *version {
-		fmt.Printf("unstable\n")
-		return
 	}
 
 	procspy.SetProcRoot(*procRoot)
