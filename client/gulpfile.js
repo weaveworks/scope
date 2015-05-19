@@ -62,7 +62,7 @@ gulp.task('images', function () {
 
 gulp.task('fonts', function () {
     return gulp.src('node_modules/font-awesome/fonts/*')
-        .pipe($.filter('**/*.{eot,svg,ttf,woff}'))
+        .pipe($.filter('**/*.{eot,svg,ttf,woff,woff2}'))
         .pipe($.flatten())
         .pipe($.if(isDev, gulp.dest('.tmp/fonts')))
         .pipe($.if(isProd, gulp.dest('dist/fonts')))
