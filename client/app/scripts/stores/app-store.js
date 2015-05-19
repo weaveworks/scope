@@ -11,6 +11,7 @@ var TopologyStore = require('./topology-store');
 
 // Initial values
 
+var connectionState = 'disconnected';
 var currentGrouping = 'none';
 var currentTopology = 'applications';
 var nodeDetails = null;
@@ -29,6 +30,10 @@ var AppStore = assign({}, EventEmitter.prototype, {
 			currentGrouping: this.getCurrentGrouping(),
 			selectedNodeId: this.getSelectedNodeId()
 		};
+	},
+
+	getConnectionState: function() {
+		return connectionState;
 	},
 
 	getCurrentTopology: function() {
@@ -106,6 +111,12 @@ AppStore.dispatchToken = AppDispatcher.register(function(payload) {
 
 		case ActionTypes.RECEIVE_NODE_DETAILS:
 			nodeDetails = payload.details;
+			AppStore.emit(AppStore.CHANGE_EVENT);
+			break;
+
+		case ActionTypes.RECEIVE_NODES_DELTA:
+			connectionState = "connected";
+			AppDispatcher.waitFor([TopologyStore.dispatchToken]);
 			AppStore.emit(AppStore.CHANGE_EVENT);
 			break;
 
