@@ -41,4 +41,4 @@ if [ -n "$HOSTNAME" ]; then
     hostname -F /etc/hostname
 fi
 
-/usr/bin/supervisord -c /etc/supervisord.conf
+exec /sbin/runsvdir /etc/service
