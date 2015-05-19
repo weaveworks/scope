@@ -4,7 +4,6 @@ var React = require('react');
 var _ = require('lodash');
 
 var Logo = require('./logo');
-var SearchBar = require('./search-bar.js');
 var AppStore = require('../stores/app-store');
 var Groupings = require('./groupings.js');
 var Status = require('./status.js');
@@ -14,7 +13,6 @@ var WebapiUtils = require('../utils/web-api-utils');
 var AppActions = require('../actions/app-actions');
 var Details = require('./details');
 var Nodes = require('./nodes');
-var ViewOptions = require('./view-options');
 var RouterUtils = require('../utils/router-utils');
 
 
