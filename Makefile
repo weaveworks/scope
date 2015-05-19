@@ -16,15 +16,15 @@ dist: client static $(APP_EXE) $(PROBE_EXE)
 client:
 	cd client && make build && rm -f dist/.htaccess
 
-static:
+app/static.go:
 	go get github.com/mjibson/esc
-	cd app && esc -o static.go -prefix ../client/dist ../client/dist
+	esc -o app/static.go -prefix client/dist client/dist
 
 test: $(APP_EXE) $(FIXPROBE_EXE)
 	# app and fixprobe needed for integration tests
 	go test ./...
 
-$(APP_EXE): app/*.go report/*.go xfer/*.go
+$(APP_EXE): app/*.go app/static.go report/*.go xfer/*.go
 $(PROBE_EXE): probe/*.go report/*.go xfer/*.go
 
 $(APP_EXE) $(PROBE_EXE):
@@ -41,4 +41,4 @@ $(SCOPE_EXPORT):  $(APP_EXE) $(PROBE_EXE) docker/Dockerfile docker/entrypoint.sh
 
 clean:
 	go clean ./...
-	rm -f $(SCOPE_EXPORT)
+	rm -f $(SCOPE_EXPORT) app/static.go

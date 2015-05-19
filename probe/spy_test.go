@@ -38,14 +38,14 @@ var (
 	fixProcessPIDB   = uint(4243)
 
 	fixConnections = []procspy.Connection{
-		procspy.Connection{
+		{
 			Transport:     "tcp",
 			LocalAddress:  fixLocalAddress,
 			LocalPort:     fixLocalPort,
 			RemoteAddress: fixRemoteAddress,
 			RemotePort:    fixRemotePort,
 		},
-		procspy.Connection{
+		{
 			Transport:     "tcp",
 			LocalAddress:  fixLocalAddress,
 			LocalPort:     fixLocalPort,
@@ -55,7 +55,7 @@ var (
 	}
 
 	fixConnectionsWithProcesses = []procspy.Connection{
-		procspy.Connection{
+		{
 			Transport:     "tcp",
 			LocalAddress:  fixLocalAddress,
 			LocalPort:     fixLocalPort,
@@ -66,7 +66,7 @@ var (
 				Name: fixProcessName,
 			},
 		},
-		procspy.Connection{
+		{
 			Transport:     "tcp",
 			LocalAddress:  fixLocalAddress,
 			LocalPort:     fixLocalPort,

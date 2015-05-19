@@ -46,7 +46,7 @@ func main() {
 
 	log.Printf("listening on %s", *listenAddress)
 
-	for _ = range time.Tick(*publishInterval) {
+	for range time.Tick(*publishInterval) {
 		publisher.Publish(fixedReport)
 	}
 }

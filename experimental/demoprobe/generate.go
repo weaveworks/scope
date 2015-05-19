@@ -20,7 +20,7 @@ func DemoReport(nodeCount int) report.Report {
 	// Make up some plausible IPv4 numbers
 	hosts := []string{}
 	ip := [4]int{192, 168, 1, 1}
-	for _ = range make([]struct{}, nodeCount) {
+	for range make([]struct{}, nodeCount) {
 		hosts = append(hosts, fmt.Sprintf("%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]))
 		ip[3]++
 		if ip[3] > 200 {

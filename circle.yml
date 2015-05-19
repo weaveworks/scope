@@ -13,12 +13,15 @@ machine:
 
 dependencies:
   post:
+    - go get github.com/golang/lint/golint
+    - go get github.com/fzipp/gocyclo
     - go get github.com/mattn/goveralls
     - mkdir -p $(dirname $SRCDIR)
     - cp -r $(pwd)/ $SRCDIR
 
 test:
   override:
+    - cd $SRCDIR; ./bin/lint .
     - cd $SRCDIR; make
     - cd $SRCDIR; ./bin/test
   post:

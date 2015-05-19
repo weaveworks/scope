@@ -57,7 +57,7 @@ func (m *cgroupMapper) Map(pid uint) (string, error) {
 }
 
 func (m *cgroupMapper) loop(d time.Duration) {
-	for _ = range time.Tick(d) {
+	for range time.Tick(d) {
 		m.update()
 	}
 }
