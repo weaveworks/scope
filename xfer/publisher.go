@@ -53,7 +53,12 @@ func (p *TCPPublisher) Publish(msg report.Report) {
 }
 
 func (p *TCPPublisher) loop(incoming <-chan net.Conn) {
-	var activeConns = make(map[net.Conn]*gob.Encoder)
+	type connEncoder struct {
+		net.Conn
+		*gob.Encoder
+	}
+
+	activeConns := map[string]connEncoder{} // host: connEncoder
 
 	for {
 		select {
@@ -62,25 +67,33 @@ func (p *TCPPublisher) loop(incoming <-chan net.Conn) {
 				return // someone closed our connection chan -- weird?
 			}
 
+			// Don't allow multiple connections from the same remote host.
+			host, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+			if err != nil {
+				log.Printf("incoming connection: %s: %v (dropped)", conn.RemoteAddr(), err)
+				conn.Close()
+				continue
+			}
+			if _, ok := activeConns[host]; ok {
+				log.Printf("duplicate connection: %s (dropped)", conn.RemoteAddr())
+				conn.Close()
+				continue
+			}
+
 			log.Printf("connection initiated: %s", conn.RemoteAddr())
-			activeConns[conn] = gob.NewEncoder(conn)
+			activeConns[host] = connEncoder{conn, gob.NewEncoder(conn)}
 
 		case msg, ok := <-p.msg:
 			if !ok {
 				return // someone closed our msg chan, so we're done
 			}
 
-			var teminatedConns []net.Conn
-			for conn, encoder := range activeConns {
-				if err := encoder.Encode(msg); err != nil {
-					log.Printf("connection terminated: %v", err)
-					teminatedConns = append(teminatedConns, conn)
-					conn.Close()
+			for host, connEncoder := range activeConns {
+				if err := connEncoder.Encoder.Encode(msg); err != nil {
+					log.Printf("connection terminated: %s: %v", connEncoder.Conn.RemoteAddr(), err)
+					connEncoder.Conn.Close()
+					delete(activeConns, host)
 				}
-			}
-
-			for _, conn := range teminatedConns {
-				delete(activeConns, conn)
 			}
 		}
 	}
