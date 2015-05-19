@@ -34,7 +34,7 @@ $(APP_EXE) $(PROBE_EXE):
 $(FIXPROBE_EXE):
 	cd experimental/fixprobe && go build
 
-$(SCOPE_EXPORT):  $(APP_EXE) $(PROBE_EXE) docker/Dockerfile docker/entrypoint.sh docker/supervisord.conf
+$(SCOPE_EXPORT):  $(APP_EXE) $(PROBE_EXE) docker/Dockerfile docker/entrypoint.sh
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker save $(SCOPE_IMAGE):latest > $@
