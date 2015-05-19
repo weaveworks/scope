@@ -1,4 +1,4 @@
-.PHONY: all build client static dist test clean
+.PHONY: all static test clean
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo
@@ -9,22 +9,29 @@ PROBE_EXE=probe/probe
 FIXPROBE_EXE=experimental/fixprobe/fixprobe
 SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 SCOPE_EXPORT=scope.tar
+SCOPE_UI_BUILD_EXPORT=scope_ui_build.tar
+SCOPE_UI_BUILD_IMAGE=weave/scope-ui-build
 
 all: $(SCOPE_EXPORT)
-dist: client static $(APP_EXE) $(PROBE_EXE)
 
-client:
-	cd client && make build && rm -f dist/.htaccess
+$(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/gulpfile.js client/package.json
+	docker build -t $(SCOPE_UI_BUILD_IMAGE) client
+	docker save $(SCOPE_UI_BUILD_IMAGE):latest > $@
 
-app/static.go:
-	go get github.com/mjibson/esc
+client/dist/scripts/bundle.js: client/app/scripts/*
+	mkdir -p client/dist
+	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
+		-v $(shell pwd)/client/dist:/home/weave/dist \
+		$(SCOPE_UI_BUILD_IMAGE)
+
+static: client/dist/scripts/bundle.js
 	esc -o app/static.go -prefix client/dist client/dist
 
 test: $(APP_EXE) $(FIXPROBE_EXE)
 	# app and fixprobe needed for integration tests
 	go test ./...
 
-$(APP_EXE): app/*.go app/static.go report/*.go xfer/*.go
+$(APP_EXE): app/*.go report/*.go xfer/*.go
 $(PROBE_EXE): probe/*.go report/*.go xfer/*.go
 
 $(APP_EXE) $(PROBE_EXE):
@@ -41,4 +48,4 @@ $(SCOPE_EXPORT):  $(APP_EXE) $(PROBE_EXE) docker/Dockerfile docker/entrypoint.sh
 
 clean:
 	go clean ./...
-	rm -f $(SCOPE_EXPORT) app/static.go
+	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) client/dist

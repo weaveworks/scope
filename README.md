@@ -47,6 +47,15 @@ To build a Docker container,
 make docker
 ```
 
+### The UI
+
+This repository contains a copy of the compiled UI.  To build a fresh UI, run:
+
+```
+make scope_ui_build.tar
+make static
+```
+
 ## Running
 
 ### Manually
