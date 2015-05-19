@@ -1,0 +1,61 @@
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Folders
+_obj
+_test
+.vagrant
+
+# Architecture specific extensions/prefixes
+*.[568vq]
+[568vq].out
+
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+
+_testmain.go
+
+*.exe
+*.test
+*.prof
+profile.cov
+coverage.html
+
+# Emacs backup files
+*~
+
+# Project specific
+weaver/weaver
+weavedns/weavedns
+sigproxy/sigproxy
+tools/bin
+tools/build
+releases
+weave.tar
+weavedns.tar
+weaveexec.tar
+weaveexec/weave
+weaveexec/sigproxy
+weaveexec/docker*.tgz
+Vagrantfile.local
+scope.tar
+scope/probe/probe
+scope/bridge/bridge
+scope/app/app
+scope/demoprobe/demoprobe
+scope/fixprobe/fixprobe
+scope/genreport/genreport
+scope/graphviz/graphviz
+scope/oneshot/oneshot
+scope/web/assets/videos/*.mp4
+scope/release/*.tar.gz
+scope/web/docs/*.html
+scope/*sublime-project
+scope/*sublime-workspace
+scope/*npm-debug.log
+

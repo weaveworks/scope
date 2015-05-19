@@ -1,0 +1,55 @@
+{
+  "name": "scope-webapp",
+  "version": "0.2.0",
+  "dependencies": {
+    "d3": "^3.5.3",
+    "dagre": "^0.7.1",
+    "flux": "^2.0.1",
+    "font-awesome": "^4.3.0",
+    "keymirror": "^0.1.1",
+    "lodash": "~3.0.1",
+    "material-ui": "^0.7.5",
+    "object-assign": "^2.0.0",
+    "page": "^1.6.0",
+    "react": "^0.13.2",
+    "react-tween-state": "0.0.5",
+    "reqwest": "~1.1.5"
+  },
+  "devDependencies": {
+    "browserify": "^8.1.3",
+    "connect": "^3.3.4",
+    "del": "^1.1.1",
+    "gulp": "^3.8.10",
+    "gulp-autoprefixer": "^2.1.0",
+    "gulp-cache": "^0.2.4",
+    "gulp-clean": "^0.3.1",
+    "gulp-connect": "^2.2.0",
+    "gulp-csso": "^1.0.0",
+    "gulp-filter": "^2.0.0",
+    "gulp-flatten": "^0.0.4",
+    "gulp-if": "^1.2.5",
+    "gulp-imagemin": "^2.1.0",
+    "gulp-jshint": "^1.9.2",
+    "gulp-less": "^3.0.3",
+    "gulp-livereload": "^3.8.0",
+    "gulp-load-plugins": "^0.8.0",
+    "gulp-preprocess": "^1.2.0",
+    "gulp-size": "^1.2.0",
+    "gulp-sourcemaps": "^1.3.0",
+    "gulp-uglify": "^1.1.0",
+    "gulp-useref": "^1.1.1",
+    "gulp-util": "^3.0.3",
+    "jshint-stylish": "^1.0.0",
+    "opn": "^1.0.1",
+    "proxy-middleware": "^0.11.0",
+    "reactify": "^1.1.0",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.0.0"
+  },
+  "scripts": {
+    "start": "npm install && gulp serve"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  }
+}

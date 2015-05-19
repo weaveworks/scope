@@ -1,0 +1,289 @@
+@import "../../node_modules/material-ui/src/less/scaffolding";
+@import "../../node_modules/material-ui/src/less/components";
+@import "../../node_modules/font-awesome/less/font-awesome.less";
+
+@import url(http://fonts.googleapis.com/css?family=Roboto:300,400);
+
+.browsehappy {
+    margin: 0.2em 0;
+    background: #ccc;
+    color: #000;
+    padding: 0.2em 0;
+}
+
+@primary-color: #445566;
+@background-color: white;
+@background-secondary-color: lighten(@primary-color, 60%);
+@text-color: @primary-color;
+@text-secondary-color: lighten(@primary-color, 33%);
+@text-pale-color: lighten(@primary-color, 50%);
+@text-darker-color: darken(@primary-color, 33%);
+@lighter-color: lighten(@primary-color, 10%);
+@cello-orange: #D65906;
+@white: #E7E7E7;
+
+html, body {
+}
+
+.wrap {
+}
+
+
+/* Space out content a bit */
+body {
+    background: linear-gradient(30deg, #DDD 0%, #F2F2F2 100%);
+    color: @text-color;
+    line-height: 150%;
+}
+
+#logo {
+    margin: 0 64px 0 64px;
+    height: 64px;
+    width: 64px;
+    float: left;
+
+    .logo {
+        path {
+            stroke-width: 2px;
+            stroke: @text-secondary-color;
+            fill: none;
+        }
+    }
+
+}
+
+#app {
+}
+
+.header {
+    position: absolute;
+    top: 32px;
+    // border-bottom: 1px solid @text-pale-color;
+    width: 100%;
+    height: 80px;
+    z-index: 20;
+}
+
+.topologies {
+    float: left;
+    position: relative;
+    margin-top: 4px;
+
+    &-icon {
+        font-size: 12px;
+        color: @text-secondary-color;
+        margin-right: 16px;
+        position: relative;
+        top: -1px;
+    }
+
+    .topologies-item {
+        margin-top: 16px;
+        margin-bottom: 16px;
+        margin-left: 16px;
+        margin-right: 16px;
+        cursor: pointer;
+        display: inline-block;
+
+        &-frame {
+            display: inline-block;
+            width: 64px;
+            height: 64px;
+            padding-top: 4px;
+        }
+
+        &-nodes,
+        &-edges,
+        &-divider {
+            display: block;
+            line-height: 28px;
+            font-size: 24px;
+            color: @text-secondary-color;
+        }
+
+        &-label {
+            color: @text-secondary-color;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        &-active, &:hover {
+            .topologies-item-label {
+                color: @text-color;
+                //border-bottom: 2px solid @primary-color;
+            }
+        }
+    }
+
+}
+
+
+#stats {
+
+    .stat-value {
+        text-align: center;
+        padding-top: 15px;
+    }
+
+    .value {
+        font-size: 36px;
+        display: block;
+    }
+    .stat-label {
+        position: relative;
+        top: 4px;
+        color: @text-secondary-color;
+        text-transform: uppercase;
+        font-weight: normal;
+    }
+}
+
+#nodes {
+
+    svg {
+        position: absolute;
+        top: 0px;
+    }
+
+    text {
+        font-size: 14px;
+        font-family: Roboto;
+        fill: @text-secondary-color;
+        text-shadow: 0 1px 0 @white, 1px 0 0 @white, 0 -1px 0 @white, -1px 0 0 @white;
+
+        &.node-label {
+            fill: @text-color;
+        }
+
+        &.node-sublabel {
+            font-size: 12px;
+            fill: @text-secondary-color;
+        }
+    }
+
+    g.node {
+        cursor: pointer;
+    }
+
+    .link {
+      stroke: @text-secondary-color;
+      stroke-width: 1.5px;
+      fill: none;
+      opacity: 0.5;
+    }
+
+    circle.border {
+        stroke-width: 3px;
+        fill: none;
+    }
+
+    circle.shadow {
+        stroke: none;
+        fill: @background-secondary-color;
+    }
+
+    circle.node {
+      fill: @text-color;
+    }
+
+    g.node.highlighted {
+        circle.border {
+            stroke: @cello-orange;
+        }
+    }
+}
+
+#details {
+    position: absolute;
+    z-index: 1024;
+    display: block;
+    right: 36px;
+    top: 24px;
+    bottom: 48px;
+    width: 32em;
+
+    .details-tools {
+        float: right;
+        padding: 16px 24px;
+        color: @white;
+
+        span {
+            cursor: pointer;
+            &:hover {
+                color: white;
+            }
+        }
+    }
+}
+
+.mui-paper, .mui-paper-container {
+    height: 100%;
+}
+
+.node-details {
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.86);
+
+    &-header {
+
+        padding: 24px 36px 24px 36px;
+
+        &-label {
+            color: white;
+            margin-bottom: 0;
+
+            &-minor {
+                font-size: 120%;
+                color: @white;
+            }
+
+        }
+
+    }
+
+    &-content {
+        padding: 0 36px 0 36px;
+    }
+
+    &-table {
+
+        margin-bottom: 8px;
+
+        &-title {
+            text-transform: uppercase;
+            margin-bottom: 0;
+            color: @text-secondary-color;
+            font-size: 100%;
+        }
+
+        &-row {
+            > div {
+                display: inline-block;
+            }
+
+            &-key {
+                width: 9em;
+            }
+
+            &-value-major {
+                margin-right: 0.5em;
+            }
+
+            &-value-scalar {
+                width: 2em;
+                text-align: right;
+                margin-right: 0.5em;
+            }
+
+            &-value-minor,
+            &-value-unit {
+                font-size: 95%;
+                color: @text-secondary-color;
+            }
+
+        }
+
+    }
+
+}
+
