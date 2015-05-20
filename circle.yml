@@ -45,6 +45,7 @@ test:
 deployment:
   hub:
     branch: master
+    owner: weaveworks
     commands:
-      - if [ "$CIRCLE_PROJECT_USERNAME" = "weaveworks" ]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS; fi
-      - if [ "$CIRCLE_PROJECT_USERNAME" = "weaveworks" ]; then docker push weaveworks/scope; fi
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker push weaveworks/scope
