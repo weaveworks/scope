@@ -87,7 +87,6 @@ func addConnection(
 			for _, pm := range pms {
 				v, err := pm.Map(c.PID)
 				if err != nil {
-					log.Printf("spy processes: %s", err)
 					continue
 				}
 				md[pm.Key()] = v
