@@ -47,6 +47,6 @@ var topologyRegistry = map[string]struct {
 	hasGrouped bool
 	typ        string
 }{
-	"applications": {"Applications", selectProcess, report.ProcessName, true, "Process"},
+	"applications": {"Applications", selectProcess, report.ProcessPID, true, "Process"},
 	"hosts":        {"Hosts", selectNetwork, report.NetworkHostname, false, "Network"},
 }

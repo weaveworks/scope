@@ -26,13 +26,14 @@ type MappedNode struct {
 type MapFunc func(string, NodeMetadata, bool) (MappedNode, bool)
 
 // ProcessPID takes a node NodeMetadata from a Process topology, and returns a
-// representation based on the process PID.
+// representation with the ID based on the process PID and the labels based
+// on the process name.
 func ProcessPID(id string, m NodeMetadata, grouped bool) (MappedNode, bool) {
 	var (
 		domain = m["domain"]
 		pid    = m["pid"]
 		name   = m["name"]
-		minor  = fmt.Sprintf("%s (%s)", domain, name)
+		minor  = fmt.Sprintf("%s (%s)", domain, pid)
 	)
 
 	if grouped {
@@ -42,7 +43,7 @@ func ProcessPID(id string, m NodeMetadata, grouped bool) (MappedNode, bool) {
 
 	return MappedNode{
 		ID:    fmt.Sprintf("pid:%s:%s", domain, pid),
-		Major: pid,
+		Major: name,
 		Minor: minor,
 		Rank:  pid,
 	}, pid != ""
