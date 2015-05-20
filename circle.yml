@@ -41,3 +41,10 @@ test:
     - goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true
     - cd $SRCDIR; cp coverage.html $CIRCLE_ARTIFACTS
     - cd $SRCDIR; cp scope.tar $CIRCLE_ARTIFACTS
+
+deployment:
+  hub:
+    branch: master
+    commands:
+      - if [ "$CIRCLE_PROJECT_USERNAME" = "weaveworks" ]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS; fi
+      - if [ "$CIRCLE_PROJECT_USERNAME" = "weaveworks" ]; then docker push weaveworks/scope; fi
