@@ -21,9 +21,6 @@ func TestAPITopology(t *testing.T) {
 		if topo.GroupedURL != "" {
 			is200(t, ts, topo.GroupedURL)
 		}
-		if have := topo.Type; have == "" {
-			t.Errorf("Type isn't empty: %q", have)
-		}
 		if have := topo.Stats.EdgeCount; have <= 0 {
 			t.Errorf("EdgeCount isn't positive: %d", have)
 		}

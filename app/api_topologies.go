@@ -12,7 +12,6 @@ type APITopologyDesc struct {
 	Name       string        `json:"name"`
 	URL        string        `json:"url"`
 	GroupedURL string        `json:"grouped_url,omitempty"`
-	Type       string        `json:"type"`
 	Stats      topologyStats `json:"stats"`
 }
 
@@ -43,7 +42,6 @@ func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request)
 				Name:       def.human,
 				URL:        url,
 				GroupedURL: groupedURL,
-				Type:       def.typ,
 				Stats:      stats(def.topologySelecter(rpt).RenderBy(def.MapFunc, false)),
 			})
 		}
