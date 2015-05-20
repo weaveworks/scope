@@ -24,21 +24,22 @@ func TestAPITopologyApplications(t *testing.T) {
 			t.Fatalf("JSON parse error: %s", err)
 		}
 		equals(t, 4, len(topo.Nodes))
-		node, ok := topo.Nodes["proc:node-a.local:curl"]
+		node, ok := topo.Nodes["pid:node-a.local:23128"]
 		if !ok {
 			t.Errorf("missing curl node")
 		}
-		equals(t, report.NewIDList("proc:node-b.local:apache"), node.Adjacency)
+		equals(t, 1, len(node.Adjacency))
+		equals(t, report.NewIDList("pid:node-b.local:215"), node.Adjacency)
 		equals(t, report.NewIDList("hostA"), node.Origin)
 		equals(t, "curl", node.LabelMajor)
-		equals(t, "node-a.local", node.LabelMinor)
-		equals(t, "curl", node.Rank)
+		equals(t, "node-a.local (23128)", node.LabelMinor)
+		equals(t, "23128", node.Rank)
 		equals(t, false, node.Pseudo)
 	}
 
 	{
 		// Node detail
-		body := getRawJSON(t, ts, "/api/topology/applications/proc:node-a.local:curl")
+		body := getRawJSON(t, ts, "/api/topology/applications/pid:node-a.local:23128")
 		var node APINode
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
@@ -48,7 +49,7 @@ func TestAPITopologyApplications(t *testing.T) {
 
 	{
 		// Edge detail
-		body := getRawJSON(t, ts, "/api/topology/applications/proc:node-a.local:curl/proc:node-b.local:apache")
+		body := getRawJSON(t, ts, "/api/topology/applications/pid:node-a.local:23128/pid:node-b.local:215")
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
