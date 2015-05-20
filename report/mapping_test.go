@@ -73,8 +73,8 @@ func TestMapping(t *testing.T) {
 			},
 			wantOK:    true,
 			wantID:    "pid:hosta:42",
-			wantMajor: "42",
-			wantMinor: "hosta (curl)",
+			wantMajor: "curl",
+			wantMinor: "hosta (42)",
 			wantRank:  "42",
 		},
 		{
