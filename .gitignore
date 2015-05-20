@@ -31,6 +31,7 @@ coverage.html
 
 # Project specific
 scope.tar
+scope_ui_build.tar
 app/app
 probe/probe
 docker/app
