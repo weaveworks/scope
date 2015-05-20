@@ -26,3 +26,5 @@ test:
     - cd $SRCDIR; ./bin/test
   post:
     - goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true
+    - cd $SRCDIR; cp coverage.html $CIRCLE_ARTIFACTS
+    - cd $SRCDIR; cp scope.tar $CIRCLE_ARTIFACTS
