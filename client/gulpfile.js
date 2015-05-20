@@ -47,8 +47,6 @@ gulp.task('scripts', function() {
 gulp.task('html', ['styles', 'scripts'], function () {
     return gulp.src('app/*.html')
         .pipe($.preprocess())
-        //.pipe($.useref.assets({searchPath: 'dist'}))
-        //.pipe($.useref())
         .pipe(gulp.dest('dist'))
         .pipe($.size())
         .pipe(livereload());
@@ -107,9 +105,7 @@ gulp.task('connect', function () {
     });
 });
 
-gulp.task('serve', ['connect', 'styles', 'scripts', 'fonts'], function () {
-    //require('opn')('http://localhost:9000');
-});
+gulp.task('serve', ['connect', 'styles', 'scripts', 'fonts']);
 
 gulp.task('watch', ['serve'], function () {
     livereload.listen();

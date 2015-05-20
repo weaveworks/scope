@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net"
 	"strconv"
 	"testing"
@@ -89,8 +88,8 @@ func TestSpyNetwork(t *testing.T) {
 	)
 
 	r := spy(nodeID, nodeName, false, []processMapper{})
-	buf, _ := json.MarshalIndent(r, "", "    ")
-	t.Logf("\n%s\n", buf)
+	//buf, _ := json.MarshalIndent(r, "", "    ")
+	//t.Logf("\n%s\n", buf)
 
 	// No process nodes, please
 	if want, have := 0, len(r.Process.Adjacency); want != have {
@@ -173,6 +172,4 @@ func TestSpyProcessDataSource(t *testing.T) {
 	if want, have := v, r.Process.NodeMetadatas[scopedLocal][k]; want != have {
 		t.Fatalf("%s: want %q, have %q", k, want, have)
 	}
-
-	t.Logf("%s: %q OK", k, v)
 }

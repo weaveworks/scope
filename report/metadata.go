@@ -1,7 +1,7 @@
 package report
 
 // AggregateMetadata is a composable version of an EdgeMetadata. It's used
-// when we want to merge nodes/edges for any reason, or
+// when we want to merge nodes/edges for any reason.
 //
 // Even though we base it on EdgeMetadata, we can apply it to nodes, by
 // summing up (merging) all of the {ingress, egress} metadatas of the

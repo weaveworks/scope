@@ -34,7 +34,7 @@ func Router(c Reporter) *mux.Router {
 			)
 		}
 	}
-	get.HandleFunc("/api/origin/{id}", makeOriginHandler(c))
+	get.HandleFunc("/api/origin/host/{id}", makeOriginHostHandler(c))
 	get.HandleFunc("/api/report", makeRawReportHandler(c))
 	get.PathPrefix("/").Handler(http.FileServer(FS(false))) // everything else is static
 	return router

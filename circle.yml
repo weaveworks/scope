@@ -10,19 +10,42 @@ machine:
     GOPATH: /home/ubuntu:$GOPATH
     SRCDIR: /home/ubuntu/src/github.com/weaveworks/scope
     PATH: $PATH:$HOME/.local/bin
+    SCOPE_UI_BUILD: $HOME/docker/scope_ui_build.tar
 
 dependencies:
+  cache_directories:
+    - "~/docker"
+  override:
+    - sudo apt-get --only-upgrade install tar
+    - if [[ -e "$SCOPE_UI_BUILD" ]]; then
+        docker load -i $SCOPE_UI_BUILD;
+      else
+        make scope_ui_build.tar;
+        mkdir -p $(dirname "$SCOPE_UI_BUILD");
+        mv scope_ui_build.tar $(dirname "$SCOPE_UI_BUILD");
+      fi
   post:
-    - go get github.com/golang/lint/golint
-    - go get github.com/fzipp/gocyclo
-    - go get github.com/mattn/goveralls
+    - go clean -i net
+    - go install -tags netgo std
+    - make deps
     - mkdir -p $(dirname $SRCDIR)
     - cp -r $(pwd)/ $SRCDIR
 
 test:
   override:
     - cd $SRCDIR; ./bin/lint .
+    - cd $SRCDIR; make static
     - cd $SRCDIR; make
     - cd $SRCDIR; ./bin/test
   post:
-    - goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci
+    - goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true
+    - cd $SRCDIR; cp coverage.html $CIRCLE_ARTIFACTS
+    - cd $SRCDIR; cp scope.tar $CIRCLE_ARTIFACTS
+
+deployment:
+  hub:
+    branch: master
+    owner: weaveworks
+    commands:
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker push weaveworks/scope

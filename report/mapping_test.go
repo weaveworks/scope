@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestMapping(t *testing.T) {
+func TestUngroupedMapping(t *testing.T) {
 	for i, c := range []struct {
 		f                                      MapFunc
 		id                                     string
@@ -38,32 +38,6 @@ func TestMapping(t *testing.T) {
 			wantRank:  "localhost",
 		},
 		{
-			f:  NetworkIP,
-			id: ScopeDelim + "1.2.3.4",
-			meta: NodeMetadata{
-				"name": "my.host",
-			},
-			wantOK:    true,
-			wantID:    "addr:" + ScopeDelim + "1.2.3.4",
-			wantMajor: "1.2.3.4",
-			wantMinor: "my.host",
-			wantRank:  "1.2.3.4",
-		},
-		{
-			f:  ProcessName,
-			id: "not-used-alpha",
-			meta: NodeMetadata{
-				"pid":    "42",
-				"name":   "curl",
-				"domain": "hosta",
-			},
-			wantOK:    true,
-			wantID:    "proc:hosta:curl",
-			wantMajor: "curl",
-			wantMinor: "hosta",
-			wantRank:  "curl",
-		},
-		{
 			f:  ProcessPID,
 			id: "not-used-beta",
 			meta: NodeMetadata{
@@ -76,65 +50,6 @@ func TestMapping(t *testing.T) {
 			wantMajor: "curl",
 			wantMinor: "hosta (42)",
 			wantRank:  "42",
-		},
-		{
-			f:  ProcessCgroup,
-			id: "not-used-delta",
-			meta: NodeMetadata{
-				"pid":    "42",
-				"name":   "curl",
-				"domain": "hosta",
-				"cgroup": "systemd",
-			},
-			wantOK:    true,
-			wantID:    "cgroup:hosta:systemd",
-			wantMajor: "systemd",
-			wantMinor: "hosta",
-			wantRank:  "systemd",
-		},
-		{
-			f:  ProcessCgroup,
-			id: "not-used-kappa",
-			meta: NodeMetadata{
-				"pid":    "42536",
-				"domain": "hosta",
-				"cgroup": "", // missing cgroup, and
-				"name":   "", // missing name
-			},
-			wantOK:    false,
-			wantID:    "cgroup:hosta:",
-			wantMajor: "",
-			wantMinor: "hosta",
-			wantRank:  "",
-		},
-		{
-			f:  ProcessCgroup,
-			id: "not-used-gamma",
-			meta: NodeMetadata{
-				"pid":    "42536",
-				"domain": "hosta",
-				"cgroup": "",              // missing cgroup, but
-				"name":   "elasticsearch", // having name
-			},
-			wantOK:    true,
-			wantID:    "cgroup:hosta:elasticsearch",
-			wantMajor: "elasticsearch",
-			wantMinor: "hosta",
-			wantRank:  "elasticsearch",
-		},
-		{
-			f:  ProcessName,
-			id: "not-used-iota",
-			meta: NodeMetadata{
-				"pid":    "42",
-				"domain": "hosta",
-				"name":   "", // missing name
-			},
-			wantOK:    false,
-			wantID:    "proc:hosta:",
-			wantMajor: "",
-			wantMinor: "hosta",
-			wantRank:  "",
 		},
 	} {
 		identity := fmt.Sprintf("(%d %s %v)", i, c.id, c.meta)
@@ -156,4 +71,8 @@ func TestMapping(t *testing.T) {
 			t.Errorf("%s: map rank: want %#v, have %#v", identity, want, have)
 		}
 	}
+}
+
+func TestGroupedMapping(t *testing.T) {
+	t.Skipf("not yet implemented") // TODO
 }

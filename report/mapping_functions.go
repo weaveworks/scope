@@ -28,76 +28,30 @@ type MapFunc func(string, NodeMetadata, bool) (MappedNode, bool)
 // ProcessPID takes a node NodeMetadata from a Process topology, and returns a
 // representation with the ID based on the process PID and the labels based
 // on the process name.
-func ProcessPID(id string, m NodeMetadata, grouped bool) (MappedNode, bool) {
+func ProcessPID(_ string, m NodeMetadata, grouped bool) (MappedNode, bool) {
 	var (
-		domain = m["domain"]
-		pid    = m["pid"]
-		name   = m["name"]
-		minor  = fmt.Sprintf("%s (%s)", domain, pid)
+		identifier = fmt.Sprintf("%s:%s:%s", "pid", m["domain"], m["pid"])
+		minor      = fmt.Sprintf("%s (%s)", m["domain"], m["pid"])
+		show       = m["pid"] != "" && m["name"] != ""
 	)
 
 	if grouped {
-		domain = ""
-		minor = ""
+		identifier = m["name"] // flatten
+		minor = ""             // nothing meaningful to put here?
 	}
 
 	return MappedNode{
-		ID:    fmt.Sprintf("pid:%s:%s", domain, pid),
-		Major: name,
+		ID:    identifier,
+		Major: m["name"],
 		Minor: minor,
-		Rank:  pid,
-	}, pid != ""
-}
-
-// ProcessCgroup takes a node NodeMetadata from a Process topology, augmented
-// with cgroup fields, and returns a representation based on the cgroup. If
-// the cgroup is not present, it falls back to process name.
-func ProcessCgroup(id string, m NodeMetadata, grouped bool) (MappedNode, bool) {
-	var (
-		domain = m["domain"]
-		cgroup = m["cgroup"]
-	)
-
-	if cgroup == "" {
-		cgroup = m["name"]
-	}
-
-	if grouped {
-		domain = ""
-	}
-
-	return MappedNode{
-		ID:    fmt.Sprintf("cgroup:%s:%s", domain, cgroup),
-		Major: cgroup,
-		Minor: domain,
-		Rank:  cgroup,
-	}, cgroup != ""
-}
-
-// ProcessName takes a node NodeMetadata from a Process topology, and returns
-// a representation based on the process name.
-func ProcessName(id string, m NodeMetadata, grouped bool) (MappedNode, bool) {
-	var (
-		name   = m["name"]
-		domain = m["domain"]
-	)
-
-	if grouped {
-		domain = ""
-	}
-
-	return MappedNode{
-		ID:    fmt.Sprintf("proc:%s:%s", domain, name),
-		Major: name,
-		Minor: domain,
-		Rank:  name,
-	}, name != ""
+		Rank:  m["pid"],
+	}, show
 }
 
 // NetworkHostname takes a node NodeMetadata from a Network topology, and
 // returns a representation based on the hostname. Major label is the
 // hostname, the minor label is the domain, if any.
-func NetworkHostname(id string, m NodeMetadata, _ bool) (MappedNode, bool) {
+func NetworkHostname(_ string, m NodeMetadata, _ bool) (MappedNode, bool) {
 	var (
 		name   = m["name"]
 		domain = ""
@@ -108,40 +62,10 @@ func NetworkHostname(id string, m NodeMetadata, _ bool) (MappedNode, bool) {
 		domain = parts[1]
 	}
 
-	// Note: no grouped special case.
-
 	return MappedNode{
 		ID:    fmt.Sprintf("host:%s", name),
 		Major: parts[0],
 		Minor: domain,
 		Rank:  parts[0],
 	}, name != ""
-}
-
-// NetworkIP takes a node NodeMetadata from a Network topology, and returns a
-// representation based on the (scoped) IP. Major label is the IP, the Minor
-// label is the hostname.
-func NetworkIP(id string, m NodeMetadata, _ bool) (MappedNode, bool) {
-	var (
-		name = m["name"]
-		ip   = strings.SplitN(id, ScopeDelim, 2)[1]
-	)
-
-	// Note: no grouped special case.
-
-	return MappedNode{
-		ID:    fmt.Sprintf("addr:%s", id),
-		Major: ip,
-		Minor: name,
-		Rank:  ip,
-	}, id != ""
-}
-
-// MapFuncRegistry maps a string to a MapFunc.
-var MapFuncRegistry = map[string]MapFunc{
-	"processpid":      ProcessPID,
-	"processcgroup":   ProcessCgroup,
-	"processname":     ProcessName,
-	"networkhostname": NetworkHostname,
-	"networkip":       NetworkIP,
 }

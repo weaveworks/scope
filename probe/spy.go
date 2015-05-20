@@ -16,7 +16,7 @@ import (
 // of host and port. It optionally enriches that topology with process (PID)
 // information.
 func spy(
-	nodeID, nodeName string,
+	hostID, hostName string,
 	includeProcesses bool,
 	pms []processMapper,
 ) report.Report {
@@ -33,7 +33,7 @@ func spy(
 	}
 
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
-		addConnection(&r, conn, nodeID, nodeName, pms)
+		addConnection(&r, conn, hostID, hostName, pms)
 	}
 
 	return r
@@ -42,13 +42,13 @@ func spy(
 func addConnection(
 	r *report.Report,
 	c *procspy.Connection,
-	nodeID, nodeName string,
+	hostID, hostName string,
 	pms []processMapper,
 ) {
 	var (
-		scopedLocal  = scopedIP(nodeID, c.LocalAddress)
-		scopedRemote = scopedIP(nodeID, c.RemoteAddress)
-		key          = nodeID + report.IDDelim + scopedLocal
+		scopedLocal  = scopedIP(hostID, c.LocalAddress)
+		scopedRemote = scopedIP(hostID, c.RemoteAddress)
+		key          = hostID + report.IDDelim + scopedLocal
 		edgeKey      = scopedLocal + report.IDDelim + scopedRemote
 	)
 
@@ -56,7 +56,7 @@ func addConnection(
 
 	if _, ok := r.Network.NodeMetadatas[scopedLocal]; !ok {
 		r.Network.NodeMetadatas[scopedLocal] = report.NodeMetadata{
-			"name": nodeName,
+			"name": hostName,
 		}
 	}
 
@@ -68,9 +68,9 @@ func addConnection(
 
 	if c.Proc.PID > 0 {
 		var (
-			scopedLocal  = scopedIPPort(nodeID, c.LocalAddress, c.LocalPort)
-			scopedRemote = scopedIPPort(nodeID, c.RemoteAddress, c.RemotePort)
-			key          = nodeID + report.IDDelim + scopedLocal
+			scopedLocal  = scopedIPPort(hostID, c.LocalAddress, c.LocalPort)
+			scopedRemote = scopedIPPort(hostID, c.RemoteAddress, c.RemotePort)
+			key          = hostID + report.IDDelim + scopedLocal
 			edgeKey      = scopedLocal + report.IDDelim + scopedRemote
 		)
 
@@ -81,13 +81,12 @@ func addConnection(
 			md := report.NodeMetadata{
 				"pid":    fmt.Sprintf("%d", c.Proc.PID),
 				"name":   c.Proc.Name,
-				"domain": nodeID,
+				"domain": hostID,
 			}
 
 			for _, pm := range pms {
 				v, err := pm.Map(c.PID)
 				if err != nil {
-					log.Printf("spy processes: %s", err)
 					continue
 				}
 				md[pm.Key()] = v

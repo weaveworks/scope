@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+var (
+	tick     = time.Tick
+	lookupIP = net.LookupIP
+)
+
 // Resolver periodically tries to resolve the IP addresses for a given
 // set of hostnames.
 type Resolver struct {
@@ -25,22 +30,21 @@ type peer struct {
 // resolve to multiple IPs; it will repeatedly call
 // add with the same IP, expecting the target to dedupe.
 func NewResolver(peers []string, add func(string)) Resolver {
-	resolver := Resolver{
+	r := Resolver{
 		quit:  make(chan struct{}),
 		add:   add,
 		peers: prepareNames(peers),
 	}
-
-	go resolver.loop()
-	return resolver
+	go r.loop()
+	return r
 }
 
-func prepareNames(peers []string) []peer {
+func prepareNames(strs []string) []peer {
 	var results []peer
-	for _, p := range peers {
-		hostname, port, err := net.SplitHostPort(p)
+	for _, s := range strs {
+		hostname, port, err := net.SplitHostPort(s)
 		if err != nil {
-			log.Printf("invalid address %s: %v", p, err)
+			log.Printf("invalid address %s: %v", s, err)
 			continue
 		}
 		results = append(results, peer{hostname, port})
@@ -50,10 +54,10 @@ func prepareNames(peers []string) []peer {
 
 func (r Resolver) loop() {
 	r.resolveHosts()
+	t := tick(time.Minute)
 	for {
-		tick := time.Tick(1 * time.Minute)
 		select {
-		case <-tick:
+		case <-t:
 			r.resolveHosts()
 		case <-r.quit:
 			return
@@ -63,7 +67,7 @@ func (r Resolver) loop() {
 
 func (r Resolver) resolveHosts() {
 	for _, peer := range r.peers {
-		addrs, err := net.LookupIP(peer.hostname)
+		addrs, err := lookupIP(peer.hostname)
 		if err != nil {
 			log.Printf("lookup %s: %v", peer.hostname, err)
 			continue
@@ -74,13 +78,12 @@ func (r Resolver) resolveHosts() {
 			if addr.To4() == nil {
 				continue
 			}
-
 			r.add(net.JoinHostPort(addr.String(), peer.port))
 		}
 	}
 }
 
-// Stop this resolver.
+// Stop this Resolver.
 func (r Resolver) Stop() {
-	r.quit <- struct{}{}
+	close(r.quit)
 }

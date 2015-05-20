@@ -14,10 +14,12 @@ void *thread_func(void *sock) {
 
   printf("I'm thread %d\n", syscall(SYS_gettid));
 
-  if (read(sockfd, buffer, sizeof(buffer), 0) < 0) {
+  if (read(sockfd, buffer, sizeof(buffer)) < 0) {
     perror("ERROR reading from socket");
     return;
   }
+
+  sleep(1);
 
   clientfd = socket(AF_INET, SOCK_STREAM, 0);
   if (clientfd < 0) {

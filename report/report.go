@@ -41,14 +41,15 @@ type HostMetadata struct {
 // an element of a topology. It should contain information that's relevant
 // to rendering a node when there are many nodes visible at once.
 type RenderableNode struct {
-	ID         string            `json:"id"`                    //
-	LabelMajor string            `json:"label_major"`           // e.g. "process", human-readable
-	LabelMinor string            `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
-	Rank       string            `json:"rank"`                  // to help with the layout engine
-	Pseudo     bool              `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
-	Adjacency  IDList            `json:"adjacency,omitempty"`   // Node IDs
-	Origin     IDList            `json:"origin,omitempty"`      // Origin IDs
-	Metadata   AggregateMetadata `json:"metadata"`              // sums
+	ID          string            `json:"id"`                     //
+	LabelMajor  string            `json:"label_major"`            // e.g. "process", human-readable
+	LabelMinor  string            `json:"label_minor,omitempty"`  // e.g. "hostname", human-readable, optional
+	Rank        string            `json:"rank"`                   // to help the layout engine
+	Pseudo      bool              `json:"pseudo,omitempty"`       // sort-of a placeholder node, for rendering purposes
+	Adjacency   IDList            `json:"adjacency,omitempty"`    // Node IDs (in the same topology domain)
+	OriginHosts IDList            `json:"origin_hosts,omitempty"` // Which hosts contributed information to this node
+	OriginNodes IDList            `json:"origin_nodes,omitempty"` // Which origin nodes (depends on topology) contributed
+	Metadata    AggregateMetadata `json:"metadata"`               // Numeric sums
 }
 
 // DetailedNode is the data type that's yielded to the JavaScript layer when

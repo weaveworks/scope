@@ -87,12 +87,15 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 		// the existing data, on the assumption that the MapFunc returns the same
 		// data.
 		nodes[mapped.ID] = RenderableNode{
-			ID:         mapped.ID,
-			LabelMajor: mapped.Major,
-			LabelMinor: mapped.Minor,
-			Rank:       mapped.Rank,
-			Pseudo:     false,
-			Metadata:   AggregateMetadata{}, // can only fill in later
+			ID:          mapped.ID,
+			LabelMajor:  mapped.Major,
+			LabelMinor:  mapped.Minor,
+			Rank:        mapped.Rank,
+			Pseudo:      false,
+			Adjacency:   IDList{},            // later
+			OriginHosts: IDList{},            // later
+			OriginNodes: IDList{},            // later
+			Metadata:    AggregateMetadata{}, // later
 		}
 		address2mapped[addressID] = mapped.ID
 	}
@@ -101,7 +104,7 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 	for src, dsts := range t.Adjacency {
 		var (
 			fields            = strings.SplitN(src, IDDelim, 2) // "<host>|<address>"
-			srcNodeID         = fields[0]
+			srcOriginHostID   = fields[0]
 			srcNodeAddress    = fields[1]
 			srcRenderableID   = address2mapped[srcNodeAddress] // must exist
 			srcRenderableNode = nodes[srcRenderableID]         // must exist
@@ -133,8 +136,9 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 				address2mapped[dstNodeAddress] = dstRenderableID
 			}
 
-			srcRenderableNode.Origin = srcRenderableNode.Origin.Add(srcNodeID)
 			srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
+			srcRenderableNode.OriginHosts = srcRenderableNode.OriginHosts.Add(srcOriginHostID)
+			srcRenderableNode.OriginNodes = srcRenderableNode.OriginNodes.Add(srcNodeAddress)
 			edgeID := srcNodeAddress + IDDelim + dstNodeAddress
 			if md, ok := t.EdgeMetadatas[edgeID]; ok {
 				srcRenderableNode.Metadata.Merge(md.Transform())

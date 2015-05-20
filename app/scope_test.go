@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,26 +16,23 @@ import (
 func assert(tb testing.TB, condition bool, msg string, v ...interface{}) {
 	if !condition {
 		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("%s:%d: "+msg+"\n", append([]interface{}{filepath.Base(file), line}, v...)...)
-		tb.FailNow()
+		tb.Fatalf("%s:%d: "+msg, append([]interface{}{filepath.Base(file), line}, v...)...)
 	}
 }
 
-// ok fails the test if an err is not nil.
+// ok errors the test if an err is not nil.
 func ok(tb testing.TB, err error) {
 	if err != nil {
 		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("%s:%d: unexpected error: %s\n", filepath.Base(file), line, err.Error())
-		tb.FailNow()
+		tb.Errorf("%s:%d: unexpected error: %v", filepath.Base(file), line, err)
 	}
 }
 
-// equals fails the test if exp is not equal to act.
-func equals(tb testing.TB, exp, act interface{}) {
-	if !reflect.DeepEqual(exp, act) {
+// equals errors the test if want is not equal to have.
+func equals(tb testing.TB, want, have interface{}) {
+	if !reflect.DeepEqual(want, have) {
 		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("%s:%d: expected: %#v got: %#v\n", filepath.Base(file), line, exp, act)
-		tb.FailNow()
+		tb.Errorf("%s:%d: want %#v, have %#v", filepath.Base(file), line, want, have)
 	}
 }
 

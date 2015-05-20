@@ -39,7 +39,7 @@ func setupTmpFS(t *testing.T, fs map[string]string) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("using TempDir %s", tmp)
+	//t.Logf("using TempDir %s", tmp)
 
 	for file, content := range fs {
 		dir := path.Dir(file)

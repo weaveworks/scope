@@ -15,13 +15,11 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
-	"time"
 )
 
 func main() {
 	var (
 		addr = flag.String("addr", ":8080", "HTTP listen address")
-		rate = flag.Duration("rate", 3*time.Second, "request rate")
 	)
 	flag.Parse()
 
@@ -45,7 +43,9 @@ func main() {
 
 	var reads uint64
 
-	http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Handling %v", r)
+		read(targets, &reads)
 		fmt.Fprintf(w, "%s %d", hostname, atomic.LoadUint64(&reads))
 	})
 
@@ -57,30 +57,23 @@ func main() {
 	}()
 
 	go func() {
-		errc <- read(targets, *rate, &reads)
-	}()
-
-	go func() {
 		errc <- interrupt()
 	}()
 
-	log.Printf("%s", <-errc)
+	log.Printf("%v", <-errc)
 }
 
-func read(targets []string, rate time.Duration, reads *uint64) error {
-	for range time.Tick(rate) {
-		var wg sync.WaitGroup
-		wg.Add(len(targets))
-		for _, target := range targets {
-			go func(target string) {
-				get(target)
-				atomic.AddUint64(reads, 1)
-				wg.Done()
-			}(target)
-		}
-		wg.Wait()
+func read(targets []string, reads *uint64) {
+	var wg sync.WaitGroup
+	wg.Add(len(targets))
+	for _, target := range targets {
+		go func(target string) {
+			get(target)
+			atomic.AddUint64(reads, 1)
+			wg.Done()
+		}(target)
 	}
-	return nil
+	wg.Wait()
 }
 
 func get(target string) {
