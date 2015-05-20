@@ -25,4 +25,4 @@ test:
     - cd $SRCDIR; make
     - cd $SRCDIR; ./bin/test
   post:
-    - goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci
+    - goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true
