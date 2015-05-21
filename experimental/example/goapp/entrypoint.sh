@@ -1,3 +1,2 @@
 #!/bin/sh
-
-/home/weave/app $elasticsearch
+/home/weave/app elasticsearch
