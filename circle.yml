@@ -24,6 +24,8 @@ dependencies:
         mv scope_ui_build.tar $(dirname "$SCOPE_UI_BUILD");
       fi
   post:
+    - go clean -i net
+    - go install -tags netgo std
     - go get github.com/golang/lint/golint
     - go get github.com/fzipp/gocyclo
     - go get github.com/mattn/goveralls

@@ -25,7 +25,7 @@ $(PROBE_EXE): probe/*.go report/*.go xfer/*.go
 
 $(APP_EXE) $(PROBE_EXE):
 	go get -tags netgo ./$(@D)
-	go build -o $@ ./$(@D)
+	go build -ldflags "-extldflags \"-static\"" -tags netgo -o $@ ./$(@D)
 
 static: client/dist/scripts/bundle.js
 	esc -o app/static.go -prefix client/dist client/dist
