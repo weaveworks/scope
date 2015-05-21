@@ -1,70 +1,55 @@
 # Scope
 
-[![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master) [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope)
+[![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master) [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope) [![Sourcegraph](https://sourcegraph.com/api/repos/github.com/weaveworks/scope/.badges/status.svg)](https://sourcegraph.com/github.com/weaveworks/scope)
 
 ![Weave Scope Screenshot](http://weave.works/scope/assets/img/feature-1.png)
+
 
 ## Overview
 
 Weave Scope automatically generates a map of your containers, enabling you to
 intuitively understand, monitor, and control your applications.
 
-Please note that the code, and especially the building and running story, is in
-a **pre-alpha** state. Please take a look, but don't be surprised if you hit
-bugs or missing pieces.
+Please note that the code, and especially the building and running story, is
+in a **prerelease** state. Please take a look, but don't be surprised if you
+hit bugs or missing pieces.
 
-## Building
 
-### In-place
-
-To build the binaries in-place,
+## Getting started
 
 ```
-make build
+sudo wget -O /usr/local/bin/scope \
+  https://github.com/weaveworks/scope/releases/download/latest_release/scope
+sudo chmod a+x /usr/local/bin/scope
+sudo scope launch
 ```
 
-Note that this doesn't build or include the latest version of the user
-interface. The UI is decoupled, living in `client` and following a node/gulp
-workflow. To build that and include it in the application binary,
+This script will download and run a recent Scope image from the Docker Hub.
+Now, open your web browser to **http://localhost:4040**. (If you're using
+boot2docker, replace localhost with the output of `boot2docker ip`.)
+
+
+## Build
 
 ```
-make client
-make static
-make build
+make
 ```
 
-Or, as a shortcut,
+This will produce a Docker container called **weaveworks/scope**.
 
-```
-make dist
-```
-
-### Docker container
-
-To build a Docker container,
-
-```
-make docker
-```
-
-### The UI
-
-This repository contains a copy of the compiled UI.  To build a fresh UI, run:
+Note that the repository contains a copy of the compiled UI. To build a fresh
+UI from the source in the client subdirectory, and re-build the Docker
+container,
 
 ```
 make scope_ui_build.tar
 make static
+make
 ```
 
-## Running
 
-### Manually
+## Run
 
-1. Launch a probe process on each physical host you intend to monitor, via `sudo probe`
-2. Launch an app process, and configure it to talk to probes, via `app -probes="probe-host-1:4030,probe-host-2:4030"`.
-3. Load the user interface, via **http://app-host:4040**
-
-### As a Docker container
-
-TODO
-
+```
+./scope launch
+```
