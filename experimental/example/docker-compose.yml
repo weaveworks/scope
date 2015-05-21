@@ -18,9 +18,17 @@ redis:
 goapp:
   build: goapp
   links:
-    - elasticsearch
-elasticsearch:
+    - elasticsearch1
+    - elasticsearch2
+elasticsearch1:
   image: elasticsearch
   expose:
     - "9200"
     - "9300"
+elasticsearch2:
+  image: elasticsearch
+  expose:
+    - "9200"
+    - "9300"
+  links:
+    - elasticsearch1
