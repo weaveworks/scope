@@ -16,6 +16,7 @@ dependencies:
   cache_directories:
     - "~/docker"
   override:
+    - sudo apt-get --only-upgrade install tar
     - if [[ -e "$SCOPE_UI_BUILD" ]]; then
         docker load -i $SCOPE_UI_BUILD;
       else
@@ -26,10 +27,7 @@ dependencies:
   post:
     - go clean -i net
     - go install -tags netgo std
-    - go get github.com/golang/lint/golint
-    - go get github.com/fzipp/gocyclo
-    - go get github.com/mattn/goveralls
-    - go get github.com/mjibson/esc
+    - make deps
     - mkdir -p $(dirname $SRCDIR)
     - cp -r $(pwd)/ $SRCDIR
 
