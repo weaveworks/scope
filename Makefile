@@ -45,8 +45,11 @@ clean:
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) client/dist
 
 deps:
-	go get github.com/jwilder/docker-squash \
+	go get \
+		github.com/jwilder/docker-squash \
 		github.com/golang/lint/golint \
 		github.com/fzipp/gocyclo \
 		github.com/mattn/goveralls \
-		github.com/mjibson/esc
+		github.com/mjibson/esc \
+		github.com/davecgh/go-spew/spew \
+		github.com/pmezard/go-difflib/difflib
