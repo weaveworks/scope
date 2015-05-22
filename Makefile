@@ -14,12 +14,12 @@ SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
 
 all: $(SCOPE_EXPORT)
 
-$(SCOPE_EXPORT):  $(APP_EXE) $(PROBE_EXE) docker/*
+$(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) docker/*
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker save $(SCOPE_IMAGE):latest | $(SUDO) $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
 
-$(APP_EXE): app/*.go app/static.go report/*.go xfer/*.go
+$(APP_EXE): app/*.go report/*.go xfer/*.go
 
 $(PROBE_EXE): probe/*.go report/*.go xfer/*.go
 
