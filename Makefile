@@ -35,7 +35,12 @@ client/dist/scripts/bundle.js: client/app/scripts/*
 	mkdir -p client/dist
 	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/dist:/home/weave/dist \
-		$(SCOPE_UI_BUILD_IMAGE)
+		$(SCOPE_UI_BUILD_IMAGE) gulp build
+
+client-test: client/test/*
+	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
+		-v $(shell pwd)/client/test:/home/weave/test \
+		$(SCOPE_UI_BUILD_IMAGE) npm test
 
 $(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/gulpfile.js client/package.json
 	docker build -t $(SCOPE_UI_BUILD_IMAGE) client

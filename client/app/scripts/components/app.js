@@ -8,7 +8,6 @@ var AppStore = require('../stores/app-store');
 var Groupings = require('./groupings.js');
 var Status = require('./status.js');
 var Topologies = require('./topologies.js');
-var TopologyStore = require('../stores/topology-store');
 var WebapiUtils = require('../utils/web-api-utils');
 var AppActions = require('../actions/app-actions');
 var Details = require('./details');
@@ -20,12 +19,12 @@ var ESC_KEY_CODE = 27;
 
 function getStateFromStores() {
 	return {
-		activeTopology: AppStore.getCurrentTopology(),
+		currentTopology: AppStore.getCurrentTopology(),
 		connectionState: AppStore.getConnectionState(),
 		currentGrouping: AppStore.getCurrentGrouping(),
 		selectedNodeId: AppStore.getSelectedNodeId(),
 		nodeDetails: AppStore.getNodeDetails(),
-		nodes: TopologyStore.getNodes(),
+		nodes: AppStore.getNodes(),
 		topologies: AppStore.getTopologies()
 	}
 }
@@ -38,7 +37,6 @@ var App = React.createClass({
 	},
 
 	componentDidMount: function() {
-		TopologyStore.on(TopologyStore.CHANGE_EVENT, this.onChange);
 		AppStore.on(AppStore.CHANGE_EVENT, this.onChange);
 		window.addEventListener('keyup', this.onKeyPress);
 
@@ -63,13 +61,12 @@ var App = React.createClass({
 			<div>
 				{showingDetails && <Details nodes={this.state.nodes}
 					nodeId={this.state.selectedNodeId}
-					details={this.state.nodeDetails}
-					topology={this.state.activeTopology} /> }
+					details={this.state.nodeDetails} /> }
 
 				<div className="header">
 					<Logo />
-					<Topologies topologies={this.state.topologies} active={this.state.activeTopology} />
-					<Groupings active={this.state.currentGrouping} />
+					<Topologies topologies={this.state.topologies} currentTopology={this.state.currentTopology} />
+					<Groupings active={this.state.currentGrouping} currentTopology={this.state.currentTopology} />
 					<Status connectionState={this.state.connectionState} />
 				</div>
 
