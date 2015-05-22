@@ -8,16 +8,21 @@ import (
 )
 
 type mockDockerClient struct {
-	containers    []docker.APIContainers
-	containerInfo map[string]*docker.Container
+	apiContainers []docker.APIContainers
+	containers    map[string]*docker.Container
+	apiImages     []docker.APIImages
 }
 
 func (m mockDockerClient) ListContainers(options docker.ListContainersOptions) ([]docker.APIContainers, error) {
-	return m.containers, nil
+	return m.apiContainers, nil
 }
 
 func (m mockDockerClient) InspectContainer(id string) (*docker.Container, error) {
-	return m.containerInfo[id], nil
+	return m.containers[id], nil
+}
+
+func (m mockDockerClient) ListImages(options docker.ListImagesOptions) ([]docker.APIImages, error) {
+	return m.apiImages, nil
 }
 
 func TestDockerProcessMapper(t *testing.T) {
@@ -41,24 +46,28 @@ func TestDockerProcessMapper(t *testing.T) {
 
 	newDockerClient = func(endpoint string) (dockerClient, error) {
 		return mockDockerClient{
-			containers: []docker.APIContainers{{ID: "foo"}},
-			containerInfo: map[string]*docker.Container{
+			apiContainers: []docker.APIContainers{{ID: "foo"}},
+			containers: map[string]*docker.Container{
 				"foo": {
 					ID:    "foo",
 					Name:  "bar",
+					Image: "baz",
 					State: docker.State{Pid: 1, Running: true},
 				},
 			},
+			apiImages: []docker.APIImages{{ID: "baz", RepoTags: []string{"tag"}}},
 		}, nil
 	}
 
 	dockerMapper := newDockerMapper("/proc", 10*time.Second)
-	dockerIDMapper := dockerIDMapper{dockerMapper}
-	dockerNameMapper := dockerNameMapper{dockerMapper}
+	dockerIDMapper := dockerMapper.idMapper()
+	dockerNameMapper := dockerMapper.nameMapper()
+	dockerImageIDMapper := dockerMapper.imageIDMapper()
+	dockerImageNameMapper := dockerMapper.imageNameMapper()
 
-	for pid, want := range map[uint]struct{ id, name string }{
-		1: {"foo", "bar"},
-		2: {"foo", "bar"},
+	for pid, want := range map[uint]struct{ id, name, imageID, imageName string }{
+		1: {"foo", "bar", "baz", "tag"},
+		2: {"foo", "bar", "baz", "tag"},
 	} {
 		haveID, err := dockerIDMapper.Map(pid)
 		if err != nil || want.id != haveID {
@@ -67,6 +76,14 @@ func TestDockerProcessMapper(t *testing.T) {
 		haveName, err := dockerNameMapper.Map(pid)
 		if err != nil || want.name != haveName {
 			t.Errorf("%d: want %q, have %q (%v)", pid, want.name, haveName, err)
+		}
+		haveImageID, err := dockerImageIDMapper.Map(pid)
+		if err != nil || want.imageID != haveImageID {
+			t.Errorf("%d: want %q, have %q (%v)", pid, want.imageID, haveImageID, err)
+		}
+		haveImageName, err := dockerImageNameMapper.Map(pid)
+		if err != nil || want.imageName != haveImageName {
+			t.Errorf("%d: want %q, have %q (%v)", pid, want.imageName, haveImageName, err)
 		}
 	}
 }

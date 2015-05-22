@@ -36,6 +36,8 @@ func originNodeForProcess(node report.NodeMetadata) OriginNode {
 	for _, tuple := range []struct{ key, human string }{
 		{"docker_id", "Container ID"},
 		{"docker_name", "Container name"},
+		{"docker_image_id", "Container image ID"},
+		{"docker_image_name", "Container image name"},
 		{"cgroup", "cgroup"},
 	} {
 		if val, ok := node[tuple.key]; ok {
