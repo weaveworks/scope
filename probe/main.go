@@ -18,6 +18,9 @@ import (
 	"github.com/weaveworks/scope/xfer"
 )
 
+// Set during buildtime.
+var version = "unknown"
+
 func main() {
 	var (
 		httpListen         = flag.String("http.listen", "", "listen address for HTTP profiling and instrumentation server")
@@ -38,6 +41,8 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+
+	log.Printf("probe starting, version %s", version)
 
 	procspy.SetProcRoot(*procRoot)
 
