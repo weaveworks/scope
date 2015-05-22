@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -54,12 +52,9 @@ func makeTopologyHandlers(
 ) {
 	// Full topology.
 	get.HandleFunc(base, func(w http.ResponseWriter, r *http.Request) {
-		rpt := rep.Report()
-		rendered := topo(rpt).RenderBy(mapping, grouped)
-		t := APITopology{
-			Nodes: rendered,
-		}
-		respondWith(w, http.StatusOK, t)
+		respondWith(w, http.StatusOK, APITopology{
+			Nodes: topo(rep.Report()).RenderBy(mapping, grouped),
+		})
 	})
 
 	// Websocket for the full topology. This route overlaps with the next.
@@ -88,8 +83,9 @@ func makeTopologyHandlers(
 			http.NotFound(w, r)
 			return
 		}
-		of := func(nodeID string) (Origin, bool) { return getOrigin(rep, nodeID) }
-		respondWith(w, http.StatusOK, APINode{Node: makeDetailed(node, of)})
+		originHostFunc := func(id string) (OriginHost, bool) { return getOriginHost(rpt.HostMetadatas, id) }
+		originNodeFunc := func(id string) (OriginNode, bool) { return getOriginNode(topo(rpt), id) }
+		respondWith(w, http.StatusOK, APINode{Node: makeDetailed(node, originHostFunc, originNodeFunc)})
 	})
 
 	// Individual edges.
@@ -103,48 +99,6 @@ func makeTopologyHandlers(
 		)
 		respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})
 	})
-}
-
-// TODO(pb): temporary hack
-func makeDetailed(n report.RenderableNode, of func(string) (Origin, bool)) report.DetailedNode {
-	// A RenderableNode may be the result of merge operation(s), and so may
-	// have multiple origins.
-	origins := []report.Table{}
-	for _, originID := range n.Origin {
-		origin, ok := of(originID)
-		if !ok {
-			origin = unknownOrigin
-		}
-		origins = append(origins, report.Table{
-			Title:   "Origin",
-			Numeric: false,
-			Rows: []report.Row{
-				{"Hostname", origin.Hostname, ""},
-				{"Load", fmt.Sprintf("%.2f %.2f %.2f", origin.LoadOne, origin.LoadFive, origin.LoadFifteen), ""},
-				{"OS", origin.OS, ""},
-				//{"Addresses", strings.Join(origin.Addresses, ", "), ""},
-				{"ID", originID, ""},
-			},
-		})
-	}
-
-	tables := []report.Table{}
-	tables = append(tables, report.Table{
-		Title:   "Connections",
-		Numeric: true,
-		Rows: []report.Row{
-			{"TCP (max)", strconv.FormatInt(int64(n.Metadata[report.KeyMaxConnCountTCP]), 10), ""},
-		},
-	})
-	tables = append(tables, origins...)
-
-	return report.DetailedNode{
-		ID:         n.ID,
-		LabelMajor: n.LabelMajor,
-		LabelMinor: n.LabelMinor,
-		Pseudo:     n.Pseudo,
-		Tables:     tables,
-	}
 }
 
 var upgrader = websocket.Upgrader{
@@ -169,8 +123,7 @@ func handleWebsocket(
 
 	quit := make(chan struct{})
 	go func(c *websocket.Conn) {
-		// Discard all the browser sends us.
-		for {
+		for { // just discard everything the browser sends
 			if _, _, err := c.NextReader(); err != nil {
 				close(quit)
 				break
@@ -178,7 +131,10 @@ func handleWebsocket(
 		}
 	}(conn)
 
-	var previousTopo map[string]report.RenderableNode
+	var (
+		previousTopo map[string]report.RenderableNode
+		tick         = time.Tick(loop)
+	)
 	for {
 		newTopo := topo(rep.Report()).RenderBy(mapping, grouped)
 		diff := report.TopoDiff(previousTopo, newTopo)
@@ -192,16 +148,7 @@ func handleWebsocket(
 		select {
 		case <-quit:
 			return
-		case <-time.After(loop):
+		case <-tick:
 		}
 	}
-}
-
-var unknownOrigin = Origin{
-	Hostname:    "unknown",
-	OS:          "unknown",
-	Addresses:   []string{},
-	LoadOne:     0.0,
-	LoadFive:    0.0,
-	LoadFifteen: 0.0,
 }

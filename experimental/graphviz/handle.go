@@ -97,11 +97,11 @@ func engine(r *http.Request) string {
 }
 
 func mapFunc(r *http.Request) report.MapFunc {
-	f, ok := report.MapFuncRegistry[strings.ToLower(r.FormValue("map_func"))]
-	if !ok {
-		f = report.ProcessName
+	switch strings.ToLower(r.FormValue("map_func")) {
+	case "hosts", "networkhost", "networkhostname":
+		return report.NetworkHostname
 	}
-	return f
+	return report.ProcessPID
 }
 
 func classView(r *http.Request) bool {

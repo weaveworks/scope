@@ -4,441 +4,251 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/pmezard/go-difflib/difflib"
 )
 
-var report = Report{
-	Process: Topology{
-		Adjacency: Adjacency{
-			"hostA|;192.168.1.1;12345": NewIDList(";192.168.1.2;80"),
-			"hostA|;192.168.1.1;12346": NewIDList(";192.168.1.2;80"),
-			"hostA|;192.168.1.1;8888":  NewIDList(";1.2.3.4;22"),
-			"hostB|;192.168.1.2;80":    NewIDList(";192.168.1.1;12345"),
-			"hostB|;192.168.1.2;43201": NewIDList(";1.2.3.5;22"),
-		},
-		EdgeMetadatas: EdgeMetadatas{
-			";192.168.1.1;12345|;192.168.1.2;80": EdgeMetadata{
-				WithBytes:    true,
-				BytesEgress:  12,
-				BytesIngress: 0,
-			},
-			";192.168.1.1;12346|;192.168.1.2;80": EdgeMetadata{
-				WithBytes:    true,
-				BytesEgress:  12,
-				BytesIngress: 0,
-			},
-			";192.168.1.1;8888|;1.2.3.4;22": EdgeMetadata{
-				WithBytes:    true,
-				BytesEgress:  200,
-				BytesIngress: 0,
-			},
-			";192.168.1.2;80|;192.168.1.1;12345": EdgeMetadata{
-				WithBytes:    true,
-				BytesEgress:  0,
-				BytesIngress: 12,
-			},
-			";192.168.1.2;43201|;1.2.3.5;22": EdgeMetadata{
-				WithBytes:    true,
-				BytesEgress:  200,
-				BytesIngress: 12,
-			},
-		},
-		NodeMetadatas: NodeMetadatas{
-			";192.168.1.1;12345": NodeMetadata{
-				"pid":    "23128",
-				"name":   "curl",
-				"domain": "node-a.local",
-			},
-			";192.168.1.1;12346": NodeMetadata{ // <-- same as :12345
-				"pid":    "23128",
-				"name":   "curl",
-				"domain": "node-a.local",
-			},
-			";192.168.1.1;8888": NodeMetadata{
-				"pid":    "55100",
-				"name":   "ssh",
-				"domain": "node-a.local",
-			},
-			";192.168.1.2;80": NodeMetadata{
-				"pid":    "215",
-				"name":   "apache",
-				"domain": "node-b.local",
-			},
-			";192.168.1.2;43201": NodeMetadata{
-				"pid":    "8765",
-				"name":   "ssh",
-				"domain": "node-b.local",
-			},
-		},
-	},
-
-	Network: Topology{
-		Adjacency: Adjacency{
-			"hostA|;192.168.1.1": NewIDList(";192.168.1.2", ";1.2.3.4"),
-			"hostB|;192.168.1.2": NewIDList(";192.168.1.1", ";1.2.3.5"),
-		},
-		EdgeMetadatas: EdgeMetadatas{
-			";192.168.1.1|;192.168.1.2": EdgeMetadata{
-				WithBytes:    true,
-				BytesEgress:  12,
-				BytesIngress: 0,
-			},
-			";192.168.1.1|;1.2.3.4": EdgeMetadata{
-				WithBytes:    true,
-				BytesEgress:  200,
-				BytesIngress: 0,
-			},
-			";192.168.1.2|;192.168.1.1": EdgeMetadata{
-				WithBytes:    true,
-				BytesEgress:  0,
-				BytesIngress: 12,
-			},
-			";192.168.1.2|;1.2.3.5": EdgeMetadata{
-				WithBytes:    true,
-				BytesEgress:  200,
-				BytesIngress: 12,
-			},
-		},
-		NodeMetadatas: NodeMetadatas{
-			";192.168.1.1": NodeMetadata{
-				"name": "host-a",
-			},
-			";192.168.1.2": NodeMetadata{
-				"name": "host-b",
-			},
-		},
-	},
-
-	HostMetadatas: HostMetadatas{
-		"hostA": HostMetadata{
-			Hostname: "node-a.local",
-			OS:       "Linux",
-		},
-		"hostB": HostMetadata{
-			Hostname: "node-b.local",
-			OS:       "Linux",
-		},
-	},
+func init() {
+	spew.Config.SortKeys = true // :\
 }
 
-func TestTopologyProc(t *testing.T) {
-	// Process topology with by-processname mapping
-	{
-		if want, have := map[string]RenderableNode{
-			"proc:node-b.local:apache": {
-				ID:         "proc:node-b.local:apache",
-				LabelMajor: "apache",
-				LabelMinor: "node-b.local",
-				Rank:       "apache",
-				Pseudo:     false,
-				Adjacency:  NewIDList("proc:node-a.local:curl"),
-				Origin:     NewIDList("hostB"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  0,
-					"ingress_bytes": 12,
-				},
-			},
-			"proc:node-a.local:curl": {
-				ID:         "proc:node-a.local:curl",
-				LabelMajor: "curl",
-				LabelMinor: "node-a.local",
-				Rank:       "curl",
-				Pseudo:     false,
-				Adjacency:  NewIDList("proc:node-b.local:apache"),
-				Origin:     NewIDList("hostA"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  24,
-					"ingress_bytes": 0,
-				},
-			},
-			"proc:node-a.local:ssh": {
-				ID:         "proc:node-a.local:ssh",
-				LabelMajor: "ssh",
-				LabelMinor: "node-a.local",
-				Rank:       "ssh",
-				Pseudo:     false,
-				Adjacency:  NewIDList("pseudo:;1.2.3.4;22"),
-				Origin:     NewIDList("hostA"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  200,
-					"ingress_bytes": 0,
-				},
-			},
-			"proc:node-b.local:ssh": {
-				ID:         "proc:node-b.local:ssh",
-				LabelMajor: "ssh",
-				LabelMinor: "node-b.local",
-				Rank:       "ssh",
-				Pseudo:     false,
-				Adjacency:  NewIDList("pseudo:;1.2.3.5;22"),
-				Origin:     NewIDList("hostB"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  200,
-					"ingress_bytes": 12,
-				},
-			},
-			"pseudo:;1.2.3.4;22": {
-				ID:         "pseudo:;1.2.3.4;22",
-				LabelMajor: "1.2.3.4:22",
-				Pseudo:     true,
-				Metadata:   AggregateMetadata{},
-			},
-			"pseudo:;1.2.3.5;22": {
-				ID:         "pseudo:;1.2.3.5;22",
-				LabelMajor: "1.2.3.5:22",
-				Pseudo:     true,
-				Metadata:   AggregateMetadata{},
-			},
-		}, report.Process.RenderBy(ProcessName, false); !reflect.DeepEqual(want, have) {
-			t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
-		}
-	}
+const (
+	client54001 = ScopeDelim + "10.10.10.20" + ScopeDelim + "54001" // curl (1)
+	client54002 = ScopeDelim + "10.10.10.20" + ScopeDelim + "54002" // curl (2)
+	server80    = ScopeDelim + "192.168.1.1" + ScopeDelim + "80"    // apache
 
-	// check EdgeMetadata
-	{
-		want := EdgeMetadata{
-			WithBytes:    true,
-			BytesEgress:  0,
-			BytesIngress: 12,
-		}
-		have := report.Process.EdgeMetadata(
-			ProcessName,
-			false,
-			"proc:node-b.local:apache",
-			"proc:node-a.local:curl",
-		)
-		if want != have {
-			t.Errorf("Topology error. Want:\n%#v\nHave:\n%#v\n", want, have)
-		}
+	clientIP = ScopeDelim + "10.10.10.20"
+	serverIP = ScopeDelim + "192.168.1.1"
+	randomIP = ScopeDelim + "172.16.11.9" // only in Network topology
+)
+
+var (
+	report = Report{
+		Process: Topology{
+			Adjacency: Adjacency{
+				"client.hostname.com" + IDDelim + client54001: NewIDList(server80),
+				"client.hostname.com" + IDDelim + client54002: NewIDList(server80),
+				"server.hostname.com" + IDDelim + server80:    NewIDList(client54001, client54002),
+			},
+			NodeMetadatas: NodeMetadatas{
+				// NodeMetadata is arbitrary. We're free to put only precisely what we
+				// care to test into the fixture. Just be sure to include the bits
+				// that the mapping funcs extract :)
+				client54001: NodeMetadata{
+					"name":   "curl",
+					"domain": "client-54001-domain",
+					"pid":    "10001",
+				},
+				client54002: NodeMetadata{
+					"name":   "curl",                // should be same as above!
+					"domain": "client-54002-domain", // may be different than above
+					"pid":    "10001",               // should be same as above!
+				},
+				server80: NodeMetadata{
+					"name":   "apache",
+					"domain": "server-80-domain",
+					"pid":    "215",
+				},
+			},
+			EdgeMetadatas: EdgeMetadatas{
+				client54001 + IDDelim + server80: EdgeMetadata{
+					WithBytes:    true,
+					BytesIngress: 100,
+					BytesEgress:  10,
+				},
+				client54002 + IDDelim + server80: EdgeMetadata{
+					WithBytes:    true,
+					BytesIngress: 200,
+					BytesEgress:  20,
+				},
+				server80 + IDDelim + client54001: EdgeMetadata{
+					WithBytes:    true,
+					BytesIngress: 10,
+					BytesEgress:  100,
+				},
+				server80 + IDDelim + client54002: EdgeMetadata{
+					WithBytes:    true,
+					BytesIngress: 20,
+					BytesEgress:  200,
+				},
+			},
+		},
+		Network: Topology{
+			Adjacency: Adjacency{
+				"client.hostname.com" + IDDelim + clientIP: NewIDList(serverIP),
+				"random.hostname.com" + IDDelim + randomIP: NewIDList(serverIP),
+				"server.hostname.com" + IDDelim + serverIP: NewIDList(clientIP), // no backlink to random
+			},
+			NodeMetadatas: NodeMetadatas{
+				clientIP: NodeMetadata{
+					"name": "client.hostname.com", // hostname
+				},
+				randomIP: NodeMetadata{
+					"name": "random.hostname.com", // hostname
+				},
+				serverIP: NodeMetadata{
+					"name": "server.hostname.com", // hostname
+				},
+			},
+			EdgeMetadatas: EdgeMetadatas{
+				clientIP + IDDelim + serverIP: EdgeMetadata{
+					WithConnCountTCP: true,
+					MaxConnCountTCP:  3,
+				},
+				randomIP + IDDelim + serverIP: EdgeMetadata{
+					WithConnCountTCP: true,
+					MaxConnCountTCP:  20, // dangling connections, weird but possible
+				},
+				serverIP + IDDelim + clientIP: EdgeMetadata{
+					WithConnCountTCP: true,
+					MaxConnCountTCP:  3,
+				},
+			},
+		},
+	}
+)
+
+func TestRenderByProcessPID(t *testing.T) {
+	want := map[string]RenderableNode{
+		"pid:client-54001-domain:10001": {
+			ID:          "pid:client-54001-domain:10001",
+			LabelMajor:  "curl",
+			LabelMinor:  "client-54001-domain (10001)",
+			Rank:        "10001",
+			Pseudo:      false,
+			Adjacency:   NewIDList("pid:server-80-domain:215"),
+			OriginHosts: NewIDList("client.hostname.com"),
+			OriginNodes: NewIDList(";10.10.10.20;54001"),
+			Metadata: AggregateMetadata{
+				KeyBytesIngress: 100,
+				KeyBytesEgress:  10,
+			},
+		},
+		"pid:client-54002-domain:10001": {
+			ID:          "pid:client-54002-domain:10001",
+			LabelMajor:  "curl",
+			LabelMinor:  "client-54002-domain (10001)",
+			Rank:        "10001", // same process
+			Pseudo:      false,
+			Adjacency:   NewIDList("pid:server-80-domain:215"),
+			OriginHosts: NewIDList("client.hostname.com"),
+			OriginNodes: NewIDList(";10.10.10.20;54002"),
+			Metadata: AggregateMetadata{
+				KeyBytesIngress: 200,
+				KeyBytesEgress:  20,
+			},
+		},
+		"pid:server-80-domain:215": {
+			ID:          "pid:server-80-domain:215",
+			LabelMajor:  "apache",
+			LabelMinor:  "server-80-domain (215)",
+			Rank:        "215",
+			Pseudo:      false,
+			Adjacency:   NewIDList("pid:client-54001-domain:10001", "pid:client-54002-domain:10001"),
+			OriginHosts: NewIDList("server.hostname.com"),
+			OriginNodes: NewIDList(";192.168.1.1;80"),
+			Metadata: AggregateMetadata{
+				KeyBytesIngress: 30,
+				KeyBytesEgress:  300,
+			},
+		},
+	}
+	have := report.Process.RenderBy(ProcessPID, false)
+	if !reflect.DeepEqual(want, have) {
+		t.Error("\n" + diff(want, have))
 	}
 }
 
-func TestTopologyProcClass(t *testing.T) {
-	// Process name classes.
-	{
-		if want, have := map[string]RenderableNode{
-			"proc::apache": {
-				ID:         "proc::apache",
-				LabelMajor: "apache",
-				LabelMinor: "",
-				Rank:       "apache",
-				Pseudo:     false,
-				Adjacency:  NewIDList("proc::curl"),
-				Origin:     NewIDList("hostB"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  0,
-					"ingress_bytes": 12,
-				},
+func TestRenderByProcessPIDGrouped(t *testing.T) {
+	// For grouped, I've somewhat arbitrarily chosen to squash together all
+	// processes with the same name by removing the PID and domain (host)
+	// dimensions from the ID. That could be changed.
+	want := map[string]RenderableNode{
+		"curl": {
+			ID:          "curl",
+			LabelMajor:  "curl",
+			LabelMinor:  "",
+			Rank:        "10001",
+			Pseudo:      false,
+			Adjacency:   NewIDList("apache"),
+			OriginHosts: NewIDList("client.hostname.com"),
+			OriginNodes: NewIDList(";10.10.10.20;54001", ";10.10.10.20;54002"),
+			Metadata: AggregateMetadata{
+				KeyBytesIngress: 300,
+				KeyBytesEgress:  30,
 			},
-			"proc::curl": {
-				ID:         "proc::curl",
-				LabelMajor: "curl",
-				LabelMinor: "",
-				Rank:       "curl",
-				Pseudo:     false,
-				Adjacency:  NewIDList("proc::apache"),
-				Origin:     NewIDList("hostA"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  24,
-					"ingress_bytes": 0,
-				},
+		},
+		"apache": {
+			ID:          "apache",
+			LabelMajor:  "apache",
+			LabelMinor:  "",
+			Rank:        "215",
+			Pseudo:      false,
+			Adjacency:   NewIDList("curl"),
+			OriginHosts: NewIDList("server.hostname.com"),
+			OriginNodes: NewIDList(";192.168.1.1;80"),
+			Metadata: AggregateMetadata{
+				KeyBytesIngress: 30,
+				KeyBytesEgress:  300,
 			},
-			"proc::ssh": {
-				ID:         "proc::ssh",
-				LabelMajor: "ssh",
-				LabelMinor: "",
-				Rank:       "ssh",
-				Pseudo:     false,
-				Adjacency:  NewIDList(localUnknown),
-				Origin:     NewIDList("hostA", "hostB"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  400,
-					"ingress_bytes": 12,
-				},
-			},
-			localUnknown: {
-				ID:         localUnknown,
-				LabelMajor: "",
-				LabelMinor: "",
-				Pseudo:     true,
-				Metadata:   AggregateMetadata{},
-			},
-		}, report.Process.RenderBy(ProcessName, true); !reflect.DeepEqual(want, have) {
-			t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
-		}
+		},
 	}
-
-	// check EdgeMetadata
-	{
-		want := EdgeMetadata{
-			WithBytes:    true,
-			BytesEgress:  0,
-			BytesIngress: 12,
-		}
-		have := report.Process.EdgeMetadata(
-			ProcessName,
-			true, // class view
-			"proc::apache",
-			"proc::curl",
-		)
-		if want != have {
-			t.Errorf("Topology error. Want:\n%#v\nHave:\n%#v\n", want, have)
-		}
+	have := report.Process.RenderBy(ProcessPID, true)
+	if !reflect.DeepEqual(want, have) {
+		t.Error("\n" + diff(want, have))
 	}
 }
 
-func TestTopologyHost(t *testing.T) {
-	// Network topology with by-hostname mapping
-	{
-		want := map[string]RenderableNode{
-			"host:host-a": {
-				ID:         "host:host-a",
-				LabelMajor: "host-a",
-				Rank:       "host-a",
-				Pseudo:     false,
-				Adjacency: NewIDList(
-					"pseudo:;1.2.3.4",
-					"host:host-b",
-				),
-				Origin: NewIDList("hostA"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  212,
-					"ingress_bytes": 0,
-				},
+func TestRenderByNetworkHostname(t *testing.T) {
+	want := map[string]RenderableNode{
+		"host:client.hostname.com": {
+			ID:          "host:client.hostname.com",
+			LabelMajor:  "client",       // before first .
+			LabelMinor:  "hostname.com", // after first .
+			Rank:        "client",
+			Pseudo:      false,
+			Adjacency:   NewIDList("host:server.hostname.com"),
+			OriginHosts: NewIDList("client.hostname.com"),
+			OriginNodes: NewIDList(";10.10.10.20"),
+			Metadata: AggregateMetadata{
+				KeyMaxConnCountTCP: 3,
 			},
-			"host:host-b": {
-				ID:         "host:host-b",
-				LabelMajor: "host-b",
-				Rank:       "host-b",
-				Pseudo:     false,
-				Adjacency: NewIDList(
-					"host:host-a",
-					"pseudo:;1.2.3.5",
-				),
-				Origin: NewIDList("hostB"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  200,
-					"ingress_bytes": 24,
-				},
+		},
+		"host:random.hostname.com": {
+			ID:          "host:random.hostname.com",
+			LabelMajor:  "random",       // before first .
+			LabelMinor:  "hostname.com", // after first .
+			Rank:        "random",
+			Pseudo:      false,
+			Adjacency:   NewIDList("host:server.hostname.com"),
+			OriginHosts: NewIDList("random.hostname.com"),
+			OriginNodes: NewIDList(";172.16.11.9"),
+			Metadata: AggregateMetadata{
+				KeyMaxConnCountTCP: 20,
 			},
-			"pseudo:;1.2.3.4": {
-				ID:         "pseudo:;1.2.3.4",
-				LabelMajor: "1.2.3.4",
-				Pseudo:     true,
-				Metadata:   AggregateMetadata{},
+		},
+		"host:server.hostname.com": {
+			ID:          "host:server.hostname.com",
+			LabelMajor:  "server",       // before first .
+			LabelMinor:  "hostname.com", // after first .
+			Rank:        "server",
+			Pseudo:      false,
+			Adjacency:   NewIDList("host:client.hostname.com"),
+			OriginHosts: NewIDList("server.hostname.com"),
+			OriginNodes: NewIDList(";192.168.1.1"),
+			Metadata: AggregateMetadata{
+				KeyMaxConnCountTCP: 3,
 			},
-			"pseudo:;1.2.3.5": {
-				ID:         "pseudo:;1.2.3.5",
-				LabelMajor: "1.2.3.5",
-				Pseudo:     true,
-				Metadata:   AggregateMetadata{},
-			},
-		}
-
-		have := report.Network.RenderBy(NetworkHostname, false)
-
-		sort.Strings(have["net:host-a"].Adjacency)
-
-		if !reflect.DeepEqual(want, have) {
-			t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
-		}
+		},
 	}
-
-	// check EdgeMetadata
-	{
-		want := EdgeMetadata{
-			WithBytes:    true,
-			BytesEgress:  0,
-			BytesIngress: 12,
-		}
-		have := report.Network.EdgeMetadata(
-			NetworkHostname,
-			false,
-			"host:host-b",
-			"host:host-a",
-		)
-		if want != have {
-			t.Errorf("Topology error. Want:\n%#v\nHave:\n%#v\n", want, have)
-		}
+	have := report.Network.RenderBy(NetworkHostname, true)
+	if !reflect.DeepEqual(want, have) {
+		t.Error("\n" + diff(want, have))
 	}
 }
 
-func TestTopologyIP(t *testing.T) {
-	// Network topology with by-IP mapping
-	{
-		want := map[string]RenderableNode{
-			"addr:;192.168.1.1": {
-				ID:         "addr:;192.168.1.1",
-				LabelMajor: "192.168.1.1",
-				LabelMinor: "host-a",
-				Rank:       "192.168.1.1",
-				Pseudo:     false,
-				Adjacency: NewIDList(
-					"pseudo:;1.2.3.4",
-					"addr:;192.168.1.2",
-				),
-				Origin: NewIDList("hostA"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  212,
-					"ingress_bytes": 0,
-				},
-			},
-			"addr:;192.168.1.2": {
-				ID:         "addr:;192.168.1.2",
-				LabelMajor: "192.168.1.2",
-				LabelMinor: "host-b",
-				Rank:       "192.168.1.2",
-				Pseudo:     false,
-				Adjacency: NewIDList(
-					"pseudo:;1.2.3.5",
-					"addr:;192.168.1.1",
-				),
-				Origin: NewIDList("hostB"),
-				Metadata: AggregateMetadata{
-					"egress_bytes":  200,
-					"ingress_bytes": 24,
-				},
-			},
-			"pseudo:;1.2.3.4": {
-				ID:         "pseudo:;1.2.3.4",
-				LabelMajor: "1.2.3.4",
-				Pseudo:     true,
-				Metadata:   AggregateMetadata{},
-			},
-			"pseudo:;1.2.3.5": {
-				ID:         "pseudo:;1.2.3.5",
-				LabelMajor: "1.2.3.5",
-				Pseudo:     true,
-				Metadata:   AggregateMetadata{},
-			},
-		}
-		have := report.Network.RenderBy(NetworkIP, false)
-		sort.Strings(have["pseudo:;192.168.1.1"].Adjacency)
-		if !reflect.DeepEqual(want, have) {
-			t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
-		}
-	}
-
-	// check EdgeMetadata
-	{
-		want := EdgeMetadata{
-			WithBytes:    true,
-			BytesEgress:  12,
-			BytesIngress: 0,
-		}
-		have := report.Network.EdgeMetadata(
-			NetworkIP,
-			false,
-			"addr:;192.168.1.1",
-			"addr:;192.168.1.2",
-		)
-		if want != have {
-			t.Errorf("Topology error. Want:\n%#v\nHave:\n%#v\n", want, have)
-		}
-	}
-}
-
-func TestTopologyDiff(t *testing.T) {
-	// Diff renderable nodes.
+func TestTopoDiff(t *testing.T) {
 	nodea := RenderableNode{
 		ID:         "nodea",
 		LabelMajor: "Node A",
@@ -451,7 +261,7 @@ func TestTopologyDiff(t *testing.T) {
 	nodeap := nodea
 	nodeap.Adjacency = []string{
 		"nodeb",
-		"nodeq", // not the same anymore.
+		"nodeq", // not the same anymore
 	}
 	nodeb := RenderableNode{
 		ID:         "nodeb",
@@ -467,39 +277,40 @@ func TestTopologyDiff(t *testing.T) {
 		return r
 	}
 
-	for i, c := range []struct {
+	for _, c := range []struct {
+		label      string
 		have, want Diff
 	}{
 		{
-			// basecase: empty -> something
-			have: TopoDiff(nodes(), nodes(nodea, nodeb)),
+			label: "basecase: empty -> something",
+			have:  TopoDiff(nodes(), nodes(nodea, nodeb)),
 			want: Diff{
 				Add: []RenderableNode{nodea, nodeb},
 			},
 		},
 		{
-			// basecase: something -> empty
-			have: TopoDiff(nodes(nodea, nodeb), nodes()),
+			label: "basecase: something -> empty",
+			have:  TopoDiff(nodes(nodea, nodeb), nodes()),
 			want: Diff{
 				Remove: []string{"nodea", "nodeb"},
 			},
 		},
 		{
-			// add and remove
-			have: TopoDiff(nodes(nodea), nodes(nodeb)),
+			label: "add and remove",
+			have:  TopoDiff(nodes(nodea), nodes(nodeb)),
 			want: Diff{
 				Add:    []RenderableNode{nodeb},
 				Remove: []string{"nodea"},
 			},
 		},
 		{
-			// no change.
-			have: TopoDiff(nodes(nodea), nodes(nodea)),
-			want: Diff{},
+			label: "no change",
+			have:  TopoDiff(nodes(nodea), nodes(nodea)),
+			want:  Diff{},
 		},
 		{
-			// change a single node
-			have: TopoDiff(nodes(nodea), nodes(nodeap)),
+			label: "change a single node",
+			have:  TopoDiff(nodes(nodea), nodes(nodeap)),
 			want: Diff{
 				Update: []RenderableNode{nodeap},
 			},
@@ -509,7 +320,18 @@ func TestTopologyDiff(t *testing.T) {
 		sort.Sort(ByID(c.have.Add))
 		sort.Sort(ByID(c.have.Update))
 		if !reflect.DeepEqual(c.want, c.have) {
-			t.Errorf("case %d: want\n\t%#v, have\n\t%#v", i, c.want, c.have)
+			t.Errorf("%s\n%s", c.label, diff(c.want, c.have))
 		}
 	}
+}
+
+func diff(want, have interface{}) string {
+	text, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+		A:        difflib.SplitLines(spew.Sdump(want)),
+		B:        difflib.SplitLines(spew.Sdump(have)),
+		FromFile: "want",
+		ToFile:   "have",
+		Context:  3,
+	})
+	return text
 }

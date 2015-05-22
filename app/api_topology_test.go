@@ -14,14 +14,12 @@ import (
 func TestAPITopologyApplications(t *testing.T) {
 	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
-
 	is404(t, ts, "/api/topology/applications/foobar")
-
 	{
 		body := getRawJSON(t, ts, "/api/topology/applications")
 		var topo APITopology
 		if err := json.Unmarshal(body, &topo); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
+			t.Fatal(err)
 		}
 		equals(t, 4, len(topo.Nodes))
 		node, ok := topo.Nodes["pid:node-a.local:23128"]
@@ -30,25 +28,25 @@ func TestAPITopologyApplications(t *testing.T) {
 		}
 		equals(t, 1, len(node.Adjacency))
 		equals(t, report.NewIDList("pid:node-b.local:215"), node.Adjacency)
-		equals(t, report.NewIDList("hostA"), node.Origin)
+		equals(t, report.NewIDList("hostA"), node.OriginHosts)
 		equals(t, "curl", node.LabelMajor)
 		equals(t, "node-a.local (23128)", node.LabelMinor)
 		equals(t, "23128", node.Rank)
 		equals(t, false, node.Pseudo)
 	}
-
 	{
-		// Node detail
 		body := getRawJSON(t, ts, "/api/topology/applications/pid:node-a.local:23128")
 		var node APINode
 		if err := json.Unmarshal(body, &node); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
+			t.Fatal(err)
 		}
-		// TODO(pb): replace
+		equals(t, "pid:node-a.local:23128", node.Node.ID)
+		equals(t, "curl", node.Node.LabelMajor)
+		equals(t, "node-a.local (23128)", node.Node.LabelMinor)
+		equals(t, false, node.Node.Pseudo)
+		// Let's not unit-test the specific content of the detail tables
 	}
-
 	{
-		// Edge detail
 		body := getRawJSON(t, ts, "/api/topology/applications/pid:node-a.local:23128/pid:node-b.local:215")
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
@@ -68,41 +66,38 @@ func TestAPITopologyApplications(t *testing.T) {
 func TestAPITopologyHosts(t *testing.T) {
 	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
-
 	is404(t, ts, "/api/topology/hosts/foobar")
-
 	{
 		body := getRawJSON(t, ts, "/api/topology/hosts")
 		var topo APITopology
 		if err := json.Unmarshal(body, &topo); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
+			t.Fatal(err)
 		}
-
 		equals(t, 3, len(topo.Nodes))
 		node, ok := topo.Nodes["host:host-b"]
 		if !ok {
 			t.Errorf("missing host:host-b node")
 		}
 		equals(t, report.NewIDList("host:host-a"), node.Adjacency)
-		equals(t, report.NewIDList("hostB"), node.Origin)
+		equals(t, report.NewIDList("hostB"), node.OriginHosts)
 		equals(t, "host-b", node.LabelMajor)
 		equals(t, "", node.LabelMinor)
 		equals(t, "host-b", node.Rank)
 		equals(t, false, node.Pseudo)
 	}
-
 	{
-		// Node detail
 		body := getRawJSON(t, ts, "/api/topology/hosts/host:host-b")
 		var node APINode
 		if err := json.Unmarshal(body, &node); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
+			t.Fatal(err)
 		}
-		// TODO(pb): replace
+		equals(t, "host:host-b", node.Node.ID)
+		equals(t, "host-b", node.Node.LabelMajor)
+		equals(t, "", node.Node.LabelMinor)
+		equals(t, false, node.Node.Pseudo)
+		// Let's not unit-test the specific content of the detail tables
 	}
-
 	{
-		// Edge detail
 		body := getRawJSON(t, ts, "/api/topology/hosts/host:host-b/host:host-a")
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
@@ -123,24 +118,23 @@ func TestAPITopologyHosts(t *testing.T) {
 func TestAPITopologyWebsocket(t *testing.T) {
 	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
-
 	url := "/api/topology/applications/ws"
 
-	// Not a websocket request:
+	// Not a websocket request
 	res, _ := checkGet(t, ts, url)
 	if have := res.StatusCode; have != 400 {
 		t.Fatalf("Expected status %d, got %d.", 400, have)
 	}
 
-	// Proper websocket request:
+	// Proper websocket request
 	ts.URL = "ws" + ts.URL[len("http"):]
 	dialer := &websocket.Dialer{}
 	ws, res, err := dialer.Dial(ts.URL+url, nil)
 	ok(t, err)
 	defer ws.Close()
 
-	if have := res.StatusCode; have != 101 {
-		t.Fatalf("Expected status %d, got %d.", 101, have)
+	if want, have := 101, res.StatusCode; want != have {
+		t.Fatalf("want %d, have %d", want, have)
 	}
 
 	_, p, err := ws.ReadMessage()

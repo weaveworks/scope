@@ -14,7 +14,7 @@ SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
 
 all: $(SCOPE_EXPORT)
 
-$(SCOPE_EXPORT):  $(APP_EXE) $(PROBE_EXE) docker/*
+$(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) docker/*
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker save $(SCOPE_IMAGE):latest | $(SUDO) $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
@@ -45,8 +45,11 @@ clean:
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) client/dist
 
 deps:
-	go get github.com/jwilder/docker-squash \
+	go get \
+		github.com/jwilder/docker-squash \
 		github.com/golang/lint/golint \
 		github.com/fzipp/gocyclo \
 		github.com/mattn/goveralls \
-		github.com/mjibson/esc
+		github.com/mjibson/esc \
+		github.com/davecgh/go-spew/spew \
+		github.com/pmezard/go-difflib/difflib
