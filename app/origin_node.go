@@ -33,14 +33,14 @@ func originNodeForProcess(node report.NodeMetadata) OriginNode {
 		{Key: "PID", ValueMajor: node["pid"], ValueMinor: ""},
 		{Key: "Process name", ValueMajor: node["name"], ValueMinor: ""},
 	}
-	if val, ok := node["docker_id"]; ok {
-		rows = append(rows, report.Row{Key: "Container ID", ValueMajor: val, ValueMinor: ""})
-	}
-	if val, ok := node["docker_name"]; ok {
-		rows = append(rows, report.Row{Key: "Container name", ValueMajor: val, ValueMinor: ""})
-	}
-	if val, ok := node["cgroup"]; ok {
-		rows = append(rows, report.Row{Key: "cgroup", ValueMajor: val, ValueMinor: ""})
+	for key, human := range map[string]string{
+		"docker_id":   "Container ID",
+		"docker_name": "Container name",
+		"cgroup":      "cgroup",
+	} {
+		if val, ok := node[key]; ok {
+			rows = append(rows, report.Row{Key: human, ValueMajor: val, ValueMinor: ""})
+		}
 	}
 	return OriginNode{
 		Table: report.Table{
