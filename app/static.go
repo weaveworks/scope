@@ -11,15 +11,15 @@ import (
 	"time"
 )
 
-type _esc_localFS struct{}
+type _escLocalFS struct{}
 
-var _esc_local _esc_localFS
+var _escLocal _escLocalFS
 
-type _esc_staticFS struct{}
+type _escStaticFS struct{}
 
-var _esc_static _esc_staticFS
+var _escStatic _escStaticFS
 
-type _esc_file struct {
+type _escFile struct {
 	compressed string
 	size       int64
 	local      string
@@ -30,16 +30,16 @@ type _esc_file struct {
 	name string
 }
 
-func (_esc_localFS) Open(name string) (http.File, error) {
-	f, present := _esc_data[path.Clean(name)]
+func (_escLocalFS) Open(name string) (http.File, error) {
+	f, present := _escData[path.Clean(name)]
 	if !present {
 		return nil, os.ErrNotExist
 	}
 	return os.Open(f.local)
 }
 
-func (_esc_staticFS) prepare(name string) (*_esc_file, error) {
-	f, present := _esc_data[path.Clean(name)]
+func (_escStaticFS) prepare(name string) (*_escFile, error) {
+	f, present := _escData[path.Clean(name)]
 	if !present {
 		return nil, os.ErrNotExist
 	}
@@ -62,7 +62,7 @@ func (_esc_staticFS) prepare(name string) (*_esc_file, error) {
 	return f, nil
 }
 
-func (fs _esc_staticFS) Open(name string) (http.File, error) {
+func (fs _escStaticFS) Open(name string) (http.File, error) {
 	f, err := fs.prepare(name)
 	if err != nil {
 		return nil, err
@@ -70,50 +70,50 @@ func (fs _esc_staticFS) Open(name string) (http.File, error) {
 	return f.File()
 }
 
-func (f *_esc_file) File() (http.File, error) {
+func (f *_escFile) File() (http.File, error) {
 	type httpFile struct {
 		*bytes.Reader
-		*_esc_file
+		*_escFile
 	}
 	return &httpFile{
-		Reader:    bytes.NewReader(f.data),
-		_esc_file: f,
+		Reader:   bytes.NewReader(f.data),
+		_escFile: f,
 	}, nil
 }
 
-func (f *_esc_file) Close() error {
+func (f *_escFile) Close() error {
 	return nil
 }
 
-func (f *_esc_file) Readdir(count int) ([]os.FileInfo, error) {
+func (f *_escFile) Readdir(count int) ([]os.FileInfo, error) {
 	return nil, nil
 }
 
-func (f *_esc_file) Stat() (os.FileInfo, error) {
+func (f *_escFile) Stat() (os.FileInfo, error) {
 	return f, nil
 }
 
-func (f *_esc_file) Name() string {
+func (f *_escFile) Name() string {
 	return f.name
 }
 
-func (f *_esc_file) Size() int64 {
+func (f *_escFile) Size() int64 {
 	return f.size
 }
 
-func (f *_esc_file) Mode() os.FileMode {
+func (f *_escFile) Mode() os.FileMode {
 	return 0
 }
 
-func (f *_esc_file) ModTime() time.Time {
+func (f *_escFile) ModTime() time.Time {
 	return time.Time{}
 }
 
-func (f *_esc_file) IsDir() bool {
+func (f *_escFile) IsDir() bool {
 	return f.isDir
 }
 
-func (f *_esc_file) Sys() interface{} {
+func (f *_escFile) Sys() interface{} {
 	return f
 }
 
@@ -121,22 +121,22 @@ func (f *_esc_file) Sys() interface{} {
 // the filesystem's contents are instead used.
 func FS(useLocal bool) http.FileSystem {
 	if useLocal {
-		return _esc_local
+		return _escLocal
 	}
-	return _esc_static
+	return _escStatic
 }
 
 // FSByte returns the named file from the embedded assets. If useLocal is
 // true, the filesystem's contents are instead used.
 func FSByte(useLocal bool, name string) ([]byte, error) {
 	if useLocal {
-		f, err := _esc_local.Open(name)
+		f, err := _escLocal.Open(name)
 		if err != nil {
 			return nil, err
 		}
 		return ioutil.ReadAll(f)
 	}
-	f, err := _esc_static.prepare(name)
+	f, err := _escStatic.prepare(name)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func FSMustString(useLocal bool, name string) string {
 	return string(FSMustByte(useLocal, name))
 }
 
-var _esc_data = map[string]*_esc_file{
+var _escData = map[string]*_escFile{
 
 	"/.htaccess": {
 		local: "client/dist/.htaccess",
