@@ -18,6 +18,9 @@ import (
 	"github.com/weaveworks/scope/xfer"
 )
 
+// Set during buildtime.
+var version = "unknown"
+
 func main() {
 	var (
 		defaultProbes = []string{fmt.Sprintf("localhost:%d", xfer.ProbePort), fmt.Sprintf("scope.weave.local:%d", xfer.ProbePort)}
@@ -63,7 +66,7 @@ func main() {
 		defer os.Remove(*pidfile)
 	}
 
-	log.Printf("starting")
+	log.Printf("app starting, version %s", version)
 
 	// Collector deals with the probes, and generates merged reports.
 	xfer.MaxBackoff = 10 * time.Second
