@@ -45,8 +45,7 @@ var topologyRegistry = map[string]struct {
 	topologySelecter
 	report.MapFunc
 	hasGrouped bool
-	typ        string
 }{
-	"applications": {"Applications", selectProcess, report.ProcessPID, true, "Process"},
-	"hosts":        {"Hosts", selectNetwork, report.NetworkHostname, false, "Network"},
+	"applications": {"Applications", selectProcess, report.ProcessPID, true},
+	"hosts":        {"Hosts", selectNetwork, report.NetworkHostname, false},
 }
