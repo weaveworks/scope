@@ -122,11 +122,10 @@ case "$COMMAND" in
 		check_not_running $CONTAINER_NAME $IMAGE
 
 		# If WeaveDNS is running, we want to automatically tell the scope
-		# image to use weave dns.  We can't use --dns or --hostname
-		# with --net=host, so we have to hack it.
+		# image to use weave dns.  We can't use --dns with --net=host, so we have to hack it.
 		if dns_running; then
 			docker_bridge_ip
-			WEAVESCOPE_DNS_ARGS="--dns $DOCKER_BRIDGE_IP --hostname $HOSTNAME --searchpath $DOMAINNAME"
+			WEAVESCOPE_DNS_ARGS="--dns $DOCKER_BRIDGE_IP --searchpath $DOMAINNAME"
 		fi
 
 		CONTAINER=$(docker run --privileged -d --name=$CONTAINER_NAME --net=host \

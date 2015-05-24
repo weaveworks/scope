@@ -14,11 +14,6 @@ while true; do
             DNS_SERVER="$2"
             shift 2
             ;;
-        --hostname)
-            [ $# -gt 1 ] || usage
-            HOSTNAME="$2"
-            shift 2
-            ;;
         --searchpath)
             [ $# -gt 1 ] || usage
             SEARCHPATH="$2"
@@ -34,11 +29,6 @@ if [ -n "$DNS_SERVER" -a -n "$SEARCHPATH" ]; then
     echo "domain $SEARCHPATH" >/etc/resolv.conf
     echo "search $SEARCHPATH" >>/etc/resolv.conf
     echo "nameserver $DNS_SERVER" >>/etc/resolv.conf
-fi
-
-if [ -n "$HOSTNAME" ]; then
-    echo "$HOSTNAME" >/etc/hostname
-    hostname -F /etc/hostname
 fi
 
 exec /sbin/runsvdir /etc/service
