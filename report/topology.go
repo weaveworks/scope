@@ -123,15 +123,21 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 					dstRenderableID = localUnknown
 					maj, min = "", ""
 				} else {
-					dstRenderableID = "pseudo:" + dstNodeAddress
-					maj, min = formatLabel(dstNodeAddress)
+					// Rule for non-internet psuedo nodes; emit 1 new node for each
+					// dstNodeAddr, srcNodeAddr, srcNodePort.
+					srcNodeAddr, srcNodePort := trySplitAddr(srcNodeAddress)
+					dstNodeAddr, _ := trySplitAddr(dstNodeAddress)
+
+					// We don't care about <s>dst</s> remote port, just <s>src</s> local.
+					dstRenderableID = strings.Join([]string{"pseudo:", dstNodeAddr, srcNodeAddr, srcNodePort}, ScopeDelim)
+					maj, min = dstNodeAddr, ""
 				}
 				nodes[dstRenderableID] = RenderableNode{
 					ID:         dstRenderableID,
 					LabelMajor: maj,
 					LabelMinor: min,
 					Pseudo:     true,
-					Metadata:   AggregateMetadata{}, // populated below
+					Metadata:   AggregateMetadata{}, // populated below - or not?
 				}
 				address2mapped[dstNodeAddress] = dstRenderableID
 			}
@@ -149,6 +155,14 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 	}
 
 	return nodes
+}
+
+func trySplitAddr(addr string) (string, string) {
+	fields := strings.SplitN(addr, ScopeDelim, 3)
+	if len(fields) == 3 {
+		return fields[1], fields[2]
+	}
+	return fields[1], ""
 }
 
 // EdgeMetadata gives the metadata of an edge from the perspective of the
