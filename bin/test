@@ -4,10 +4,16 @@ echo "mode: count" > profile.cov
 fail=0
 for dir in $(find . -type f -name '*_test.go' | grep -v '^./experimental/' | xargs -n1 dirname | sort -u); do
   go get -t $dir
+
+  if ! errcheck -ignore 'Close' $dir ; then
+    fail=1
+  fi
+
   output=$(mktemp cover.XXXXXXXXXX)
   if ! go test -tags netgo -covermode=count -coverprofile=$output $dir ; then
     fail=1
   fi
+
   if [ -f $output ]; then
     tail -n +2 <$output >>profile.cov
     rm $output

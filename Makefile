@@ -65,4 +65,5 @@ deps:
 		github.com/golang/lint/golint \
 		github.com/fzipp/gocyclo \
 		github.com/mattn/goveralls \
-		github.com/mjibson/esc
+		github.com/mjibson/esc \
+		github.com/kisielk/errcheck
