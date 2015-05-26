@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"log/syslog"
 	"net/http"
@@ -28,7 +27,6 @@ func main() {
 		probes        = flag.String("probes", strings.Join(defaultProbes, ","), "list of probe endpoints, comma separated")
 		batch         = flag.Duration("batch", 1*time.Second, "batch interval")
 		window        = flag.Duration("window", 15*time.Second, "window")
-		pidfile       = flag.String("pidfile", "", "write PID file")
 		listen        = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
 	)
 	flag.Parse()
@@ -55,15 +53,6 @@ func main() {
 		}
 		defer f.Close()
 		log.SetOutput(f)
-	}
-
-	if *pidfile != "" {
-		err := ioutil.WriteFile(*pidfile, []byte(fmt.Sprint(os.Getpid())), 0644)
-		if err != nil {
-			log.Print(err)
-			return
-		}
-		defer os.Remove(*pidfile)
 	}
 
 	log.Printf("app starting, version %s", version)
