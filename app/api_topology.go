@@ -59,7 +59,10 @@ func makeTopologyHandlers(
 
 	// Websocket for the full topology. This route overlaps with the next.
 	get.HandleFunc(base+"/ws", func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
+		if err := r.ParseForm(); err != nil {
+			respondWith(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 		loop := websocketLoop
 		if t := r.Form.Get("t"); t != "" {
 			var err error
@@ -140,7 +143,9 @@ func handleWebsocket(
 		diff := report.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
-		conn.SetWriteDeadline(time.Now().Add(websocketTimeout))
+		if err := conn.SetWriteDeadline(time.Now().Add(websocketTimeout)); err != nil {
+			return
+		}
 		if err := conn.WriteJSON(diff); err != nil {
 			return
 		}

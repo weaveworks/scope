@@ -17,7 +17,7 @@ func TestCgroupMapper(t *testing.T) {
 		"/netscape/notify_on_release": "0\n",
 		"/weirdfile":                  "",
 	})
-	defer os.RemoveAll(tmp)
+	defer removeAll(t, tmp)
 
 	m := newCgroupMapper(tmp, 1*time.Second)
 	for pid, want := range map[uint]string{
@@ -44,14 +44,20 @@ func setupTmpFS(t *testing.T, fs map[string]string) string {
 	for file, content := range fs {
 		dir := path.Dir(file)
 		if err := os.MkdirAll(filepath.Join(tmp, dir), 0777); err != nil {
-			os.RemoveAll(tmp)
+			removeAll(t, tmp)
 			t.Fatalf("MkdirAll: %v", err)
 		}
 
 		if err := ioutil.WriteFile(filepath.Join(tmp, file), []byte(content), 0655); err != nil {
-			os.RemoveAll(tmp)
+			removeAll(t, tmp)
 			t.Fatalf("WriteFile: %v", err)
 		}
 	}
 	return tmp
+}
+
+func removeAll(t *testing.T, path string) {
+	if err := os.RemoveAll(path); err != nil {
+		t.Error(err)
+	}
 }

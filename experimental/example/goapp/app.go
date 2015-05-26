@@ -82,9 +82,12 @@ func get(target string) {
 		log.Printf("%s: %v", target, err)
 		return
 	}
+	defer resp.Body.Close()
 	log.Printf("%s: %s", target, resp.Status)
-	io.Copy(ioutil.Discard, resp.Body)
-	resp.Body.Close()
+	if _, err := io.Copy(ioutil.Discard, resp.Body); err != nil {
+		log.Printf("%s: %v", target, err)
+		return
+	}
 }
 
 func interrupt() error {

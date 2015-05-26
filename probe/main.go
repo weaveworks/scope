@@ -53,7 +53,7 @@ func main() {
 			log.Printf("exposing Prometheus endpoint at %s%s", *httpListen, *prometheusEndpoint)
 			http.Handle(*prometheusEndpoint, makePrometheusHandler())
 		}
-		go http.ListenAndServe(*httpListen, nil)
+		go func(err error) { log.Print(err) }(http.ListenAndServe(*httpListen, nil))
 	}
 
 	if *spyProcs && os.Getegid() != 0 {
