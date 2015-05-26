@@ -10,20 +10,30 @@ pyapp:
   links:
     - qotd
     - redis
-    - goapp
+    - goapp1
+    - goapp2
 qotd:
   build: qotd
   expose:
     - "4446"
 redis:
   image: redis
-goapp:
+goapp1:
   build: goapp
   ports:
     - "8080"
   links:
     - elasticsearch1
     - elasticsearch2
+    - elasticsearch3
+goapp2:
+  build: goapp
+  ports:
+    - "8080"
+  links:
+    - elasticsearch1
+    - elasticsearch2
+    - elasticsearch3
 elasticsearch1:
   image: elasticsearch
   expose:
@@ -36,3 +46,11 @@ elasticsearch2:
     - "9300"
   links:
     - elasticsearch1
+elasticsearch3:
+  image: elasticsearch
+  expose:
+    - "9200"
+    - "9300"
+  links:
+    - elasticsearch1
+    - elasticsearch2
