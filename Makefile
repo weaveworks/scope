@@ -56,6 +56,4 @@ deps:
 		github.com/golang/lint/golint \
 		github.com/fzipp/gocyclo \
 		github.com/mattn/goveralls \
-		github.com/mjibson/esc \
-		github.com/davecgh/go-spew/spew \
-		github.com/pmezard/go-difflib/difflib
+		github.com/mjibson/esc

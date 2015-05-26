@@ -79,7 +79,12 @@ func main() {
 
 	if *dockerMapper {
 		docker := newDockerMapper(*procRoot, *dockerInterval)
-		pms = append(pms, &dockerIDMapper{docker}, &dockerNameMapper{docker})
+		pms = append(pms,
+			docker.idMapper(),
+			docker.nameMapper(),
+			docker.imageIDMapper(),
+			docker.imageNameMapper(),
+		)
 	}
 
 	log.Printf("listening on %s", *listen)
