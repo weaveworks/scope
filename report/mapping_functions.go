@@ -48,6 +48,37 @@ func ProcessPID(_ string, m NodeMetadata, grouped bool) (MappedNode, bool) {
 	}, show
 }
 
+// ProcessContainer maps Process topology nodes to the containers they run in.
+// We consider container and image IDs to be globally unique, and so don't
+// scope them further by e.g. host. If no container metadata is found, nodes
+// are grouped into the Uncontained node. If grouped is true, nodes with the
+// same container image ID are merged together.
+func ProcessContainer(_ string, m NodeMetadata, grouped bool) (MappedNode, bool) {
+	var (
+		containerID   = m["docker_id"]
+		containerName = m["docker_name"]
+		imageID       = m["docker_image_id"]
+		imageName     = m["docker_image_name"]
+		domain        = m["domain"]
+	)
+
+	var id, major, minor, rank string
+	if containerID == "" {
+		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
+	} else if grouped {
+		id, major, minor, rank = imageID, imageName, "", imageID
+	} else {
+		id, major, minor, rank = containerID, containerName, domain, imageID
+	}
+
+	return MappedNode{
+		ID:    id,
+		Major: major,
+		Minor: minor,
+		Rank:  rank,
+	}, true
+}
+
 // NetworkHostname takes a node NodeMetadata from a Network topology, and
 // returns a representation based on the hostname. Major label is the
 // hostname, the minor label is the domain, if any.

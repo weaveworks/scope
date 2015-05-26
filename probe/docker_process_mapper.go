@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -135,7 +136,7 @@ func (m *dockerMapper) idMapper() processMapper {
 
 func (m *dockerMapper) nameMapper() processMapper {
 	return &dockerProcessMapper{m, "docker_name", func(c *docker.Container) string {
-		return c.Name
+		return strings.TrimPrefix(c.Name, "/")
 	}}
 }
 
