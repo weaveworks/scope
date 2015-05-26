@@ -16,9 +16,18 @@ GIT_REVISION=$(shell git rev-parse HEAD)
 all: $(SCOPE_EXPORT)
 
 $(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) docker/*
+	@if [ -z '$(DOCKER_SQUASH)' ]; then echo "Please install docker-squash by running 'make dep'." && exit 1; fi
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
-	$(SUDO) docker save $(SCOPE_IMAGE):latest | $(SUDO) $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
+	$(SUDO) docker save $(SCOPE_IMAGE):latest | sudo $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
+	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
+	        rm $@; \
+	        echo "\nYour go standard library was built without the 'netgo' build tag."; \
+	        echo "To fix that, run"; \
+	        echo "    sudo go clean -i net"; \
+	        echo "    sudo go install -tags netgo std"; \
+	        false; \
+	    }
 
 $(APP_EXE): app/*.go report/*.go xfer/*.go
 
