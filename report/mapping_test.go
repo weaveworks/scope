@@ -51,6 +51,38 @@ func TestUngroupedMapping(t *testing.T) {
 			wantMinor: "hosta (42)",
 			wantRank:  "42",
 		},
+		{
+			f:  ProcessContainer,
+			id: "foo-id",
+			meta: NodeMetadata{
+				"pid":    "42",
+				"name":   "curl",
+				"domain": "hosta",
+			},
+			wantOK:    true,
+			wantID:    "uncontained",
+			wantMajor: "Uncontained",
+			wantMinor: "",
+			wantRank:  "uncontained",
+		},
+		{
+			f:  ProcessContainer,
+			id: "bar-id",
+			meta: NodeMetadata{
+				"pid":               "42",
+				"name":              "curl",
+				"domain":            "hosta",
+				"docker_id":         "d321fe0",
+				"docker_name":       "walking_sparrow",
+				"docker_image_id":   "1101fff",
+				"docker_image_name": "org/app:latest",
+			},
+			wantOK:    true,
+			wantID:    "d321fe0",
+			wantMajor: "walking_sparrow",
+			wantMinor: "hosta",
+			wantRank:  "1101fff",
+		},
 	} {
 		identity := fmt.Sprintf("(%d %s %v)", i, c.id, c.meta)
 

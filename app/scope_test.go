@@ -69,7 +69,6 @@ func checkRequest(t *testing.T, ts *httptest.Server, method, path string, body [
 
 // getRawJSON GETs a file, checks it is JSON, and returns the non-parsed body
 func getRawJSON(t *testing.T, ts *httptest.Server, path string) []byte {
-
 	res, body := checkGet(t, ts, path)
 
 	if res.StatusCode != 200 {
