@@ -69,7 +69,7 @@ func NewTopology() Topology {
 //
 // RenderBy takes a a MapFunc, which defines how to group and label nodes. If
 // grouped is true, nodes that belong to the same "class" will be merged.
-func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
+func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc, grouped bool) map[string]RenderableNode {
 	nodes := map[string]RenderableNode{}
 
 	// Build a set of RenderableNodes for all non-pseudo probes, and an
@@ -77,7 +77,7 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 	// RenderableNodes.
 	address2mapped := map[string]string{}
 	for addressID, metadata := range t.NodeMetadatas {
-		mapped, ok := f(addressID, metadata, grouped)
+		mapped, ok := mapFunc(addressID, metadata, grouped)
 		if !ok {
 			continue
 		}
@@ -112,31 +112,15 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 		for _, dstNodeAddress := range dsts {
 			dstRenderableID, ok := address2mapped[dstNodeAddress]
 			if !ok {
-				// We don't have a node for this target address. So we'll make
-				// a pseudonode for it, instead.
-				var maj, min string
-				if dstNodeAddress == TheInternet {
-					dstRenderableID = dstNodeAddress
-					maj, min = "the Internet", ""
-				} else if grouped {
-					// When grouping, emit one pseudo node per (srcNodeAddress, dstNodeAddr)
-					dstNodeAddr, _ := trySplitAddr(dstNodeAddress)
-					dstRenderableID = strings.Join([]string{"pseudo:", dstNodeAddr, srcRenderableID}, ScopeDelim)
-					maj, min = dstNodeAddr, ""
-				} else {
-					// Rule for non-internet psuedo nodes; emit 1 new node for each
-					// dstNodeAddr, srcNodeAddr, srcNodePort.
-					srcNodeAddr, srcNodePort := trySplitAddr(srcNodeAddress)
-					dstNodeAddr, _ := trySplitAddr(dstNodeAddress)
-
-					// We don't care about <s>dst</s> remote port, just <s>src</s> local.
-					dstRenderableID = strings.Join([]string{"pseudo:", dstNodeAddr, srcNodeAddr, srcNodePort}, ScopeDelim)
-					maj, min = dstNodeAddr, ""
+				pseudoNode, ok := pseudoFunc(srcNodeAddress, srcRenderableNode, dstNodeAddress, grouped)
+				if !ok {
+					continue
 				}
+				dstRenderableID = pseudoNode.ID
 				nodes[dstRenderableID] = RenderableNode{
-					ID:         dstRenderableID,
-					LabelMajor: maj,
-					LabelMinor: min,
+					ID:         pseudoNode.ID,
+					LabelMajor: pseudoNode.Major,
+					LabelMinor: pseudoNode.Minor,
 					Pseudo:     true,
 					Metadata:   AggregateMetadata{}, // populated below - or not?
 				}
@@ -158,30 +142,22 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 	return nodes
 }
 
-func trySplitAddr(addr string) (string, string) {
-	fields := strings.SplitN(addr, ScopeDelim, 3)
-	if len(fields) == 3 {
-		return fields[1], fields[2]
-	}
-	return fields[1], ""
-}
-
 // EdgeMetadata gives the metadata of an edge from the perspective of the
 // srcRenderableID. Since an edgeID can have multiple edges on the address
 // level, it uses the supplied mapping function to translate address IDs to
 // renderable node (mapped) IDs.
-func (t Topology) EdgeMetadata(f MapFunc, grouped bool, srcRenderableID, dstRenderableID string) EdgeMetadata {
+func (t Topology) EdgeMetadata(mapFunc MapFunc, grouped bool, srcRenderableID, dstRenderableID string) EdgeMetadata {
 	metadata := EdgeMetadata{}
 	for edgeID, edgeMeta := range t.EdgeMetadatas {
 		edgeParts := strings.SplitN(edgeID, IDDelim, 2)
 		src := edgeParts[0]
 		if src != TheInternet {
-			mapped, _ := f(src, t.NodeMetadatas[src], grouped)
+			mapped, _ := mapFunc(src, t.NodeMetadatas[src], grouped)
 			src = mapped.ID
 		}
 		dst := edgeParts[1]
 		if dst != TheInternet {
-			mapped, _ := f(dst, t.NodeMetadatas[dst], grouped)
+			mapped, _ := mapFunc(dst, t.NodeMetadatas[dst], grouped)
 			dst = mapped.ID
 		}
 		if src == srcRenderableID && dst == dstRenderableID {

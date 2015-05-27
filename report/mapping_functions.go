@@ -25,6 +25,12 @@ type MappedNode struct {
 // rendered topology.
 type MapFunc func(string, NodeMetadata, bool) (MappedNode, bool)
 
+// PseudoFunc creates MappedNode representing pseudo nodes given the dstNodeID.
+// The srcNode renderable node is essentially from MapFunc, representing one of
+// the rendered nodes this pseudo node refers to. srcNodeID and dstNodeID are
+// node IDs prior to mapping.
+type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string, grouped bool) (MappedNode, bool)
+
 // ProcessPID takes a node NodeMetadata from a Process topology, and returns a
 // representation with the ID based on the process PID and the labels based
 // on the process name.
@@ -99,4 +105,43 @@ func NetworkHostname(_ string, m NodeMetadata, _ bool) (MappedNode, bool) {
 		Minor: domain,
 		Rank:  parts[0],
 	}, name != ""
+}
+
+// GenericPseudoNode contains heuristics for building sensible pseudo nodes.
+// It should go away.
+func GenericPseudoNode(src string, srcMapped RenderableNode, dst string, grouped bool) (MappedNode, bool) {
+	var maj, min, outputID string
+
+	if dst == TheInternet {
+		outputID = dst
+		maj, min = "the Internet", ""
+	} else if grouped {
+		// When grouping, emit one pseudo node per (srcNodeAddress, dstNodeAddr)
+		dstNodeAddr, _ := trySplitAddr(dst)
+
+		outputID = strings.Join([]string{"pseudo:", dstNodeAddr, srcMapped.ID}, ScopeDelim)
+		maj, min = dstNodeAddr, ""
+	} else {
+		// Rule for non-internet psuedo nodes; emit 1 new node for each
+		// dstNodeAddr, srcNodeAddr, srcNodePort.
+		srcNodeAddr, srcNodePort := trySplitAddr(src)
+		dstNodeAddr, _ := trySplitAddr(dst)
+
+		outputID = strings.Join([]string{"pseudo:", dstNodeAddr, srcNodeAddr, srcNodePort}, ScopeDelim)
+		maj, min = dstNodeAddr, ""
+	}
+
+	return MappedNode{
+		ID:    outputID,
+		Major: maj,
+		Minor: min,
+	}, true
+}
+
+func trySplitAddr(addr string) (string, string) {
+	fields := strings.SplitN(addr, ScopeDelim, 3)
+	if len(fields) == 3 {
+		return fields[1], fields[2]
+	}
+	return fields[1], ""
 }
