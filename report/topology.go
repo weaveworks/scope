@@ -1,7 +1,6 @@
 package report
 
 import (
-	"net"
 	"reflect"
 	"strings"
 )
@@ -118,7 +117,7 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 				var maj, min string
 				if dstNodeAddress == TheInternet {
 					dstRenderableID = dstNodeAddress
-					maj, min = formatLabel(dstNodeAddress)
+					maj, min = "the Internet", ""
 				} else if grouped {
 					dstRenderableID = localUnknown
 					maj, min = "", ""
@@ -188,26 +187,6 @@ func (t Topology) EdgeMetadata(f MapFunc, grouped bool, srcRenderableID, dstRend
 		}
 	}
 	return metadata
-}
-
-// formatLabel is an opportunistic helper to format any addressID into
-// something we can show on screen.
-func formatLabel(s string) (major, minor string) {
-	if s == TheInternet {
-		return "the Internet", ""
-	}
-
-	// Format is either "scope;ip;port", "scope;ip", or some process id.
-	parts := strings.SplitN(s, ScopeDelim, 3)
-	if len(parts) < 2 {
-		return s, ""
-	}
-
-	if len(parts) == 2 {
-		return parts[1], ""
-	}
-
-	return net.JoinHostPort(parts[1], parts[2]), ""
 }
 
 // Diff is returned by TopoDiff. It represents the changes between two
