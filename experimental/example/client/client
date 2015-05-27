@@ -1,6 +1,0 @@
-#!/bin/sh
-
-while true; do
-	curl http://pyapp:5000/
-	sleep 1
-done

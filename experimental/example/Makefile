@@ -14,3 +14,9 @@ goapp/app: goapp/app.go
 
 clean:
 	rm -f qotd/*.o qotd/qotd goapp/app
+
+run: all
+	docker-compose kill  || true
+	docker-compose rm -f || true
+	docker-compose build
+	docker-compose up -d

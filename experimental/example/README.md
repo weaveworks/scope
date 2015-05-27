@@ -3,8 +3,7 @@
 To run,
 
 ```
-make
-docker-compose up -d
+make run
 ```
 
 # "architecture"
