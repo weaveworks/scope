@@ -14,42 +14,39 @@ func Router(c Reporter) *mux.Router {
 	router := mux.NewRouter()
 	get := router.Methods("GET").Subrouter()
 	get.HandleFunc("/api/topology", makeTopologyList(c))
-	for name, def := range topologyRegistry {
-		makeTopologyHandlers(
-			c,
-			def.topologySelecter,
-			def.MapFunc,
-			def.PseudoFunc,
-			false, // not grouped
-			get,
-			"/api/topology/"+name,
-		)
-		if def.hasGrouped {
-			makeTopologyHandlers(
-				c,
-				def.topologySelecter,
-				def.MapFunc,
-				def.PseudoFunc,
-				true, // grouped
-				get,
-				"/api/topology/"+name+"grouped",
-			)
-		}
-	}
+	get.HandleFunc("/api/topology/{topology}", captureTopology(c, handleTopology))
+	get.HandleFunc("/api/topology/{topology}/ws", captureTopology(c, handleWs))
+	get.HandleFunc("/api/topology/{topology}/{id}", captureTopology(c, handleNode))
+	get.HandleFunc("/api/topology/{topology}/{local}/{remote}", captureTopology(c, handleEdge))
 	get.HandleFunc("/api/origin/host/{id}", makeOriginHostHandler(c))
 	get.HandleFunc("/api/report", makeRawReportHandler(c))
 	get.PathPrefix("/").Handler(http.FileServer(FS(false))) // everything else is static
 	return router
 }
 
-var topologyRegistry = map[string]struct {
-	human string
-	topologySelecter
-	report.MapFunc
-	report.PseudoFunc
-	hasGrouped bool
-}{
-	"applications": {"Applications", selectProcess, report.ProcessPID, report.GenericPseudoNode, true},
-	"containers":   {"Containers", selectProcess, report.ProcessContainer, report.NoPseudoNode, true},
-	"hosts":        {"Hosts", selectNetwork, report.NetworkHostname, report.GenericPseudoNode, false},
+func captureTopology(rep Reporter, f func(Reporter, topologyView, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		topology, ok := topologyRegistry[mux.Vars(r)["topology"]]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		f(rep, topology, w, r)
+	}
+}
+
+type topologyView struct {
+	human           string
+	selector        topologySelecter
+	mapper          report.MapFunc
+	pseudo          report.PseudoFunc
+	groupedTopology string
+}
+
+var topologyRegistry = map[string]topologyView{
+	"applications":         {"Applications", selectProcess, report.ProcessPID, report.GenericPseudoNode, "applications-grouped"},
+	"applications-grouped": {"Applications", selectProcess, report.ProcessName, report.GenericGroupedPseudoNode, ""},
+	"containers":           {"Containers", selectProcess, report.ProcessContainer, report.NoPseudoNode, "containers-grouped"},
+	"containers-grouped":   {"Containers", selectProcess, report.ProcessContainerImage, report.NoPseudoNode, ""},
+	"hosts":                {"Hosts", selectNetwork, report.NetworkHostname, report.GenericPseudoNode, ""},
 }

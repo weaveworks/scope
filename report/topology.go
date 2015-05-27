@@ -67,9 +67,9 @@ func NewTopology() Topology {
 // the UI will render collectively as a graph. Note that a RenderableNode will
 // always be rendered with other nodes, and therefore contains limited detail.
 //
-// RenderBy takes a a MapFunc, which defines how to group and label nodes. If
-// grouped is true, nodes that belong to the same "class" will be merged.
-func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc, grouped bool) map[string]RenderableNode {
+// RenderBy takes a a MapFunc, which defines how to group and label nodes. Npdes
+// with the same mapped IDs will be merged.
+func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) map[string]RenderableNode {
 	nodes := map[string]RenderableNode{}
 
 	// Build a set of RenderableNodes for all non-pseudo probes, and an
@@ -77,7 +77,7 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc, grouped bool)
 	// RenderableNodes.
 	address2mapped := map[string]string{}
 	for addressID, metadata := range t.NodeMetadatas {
-		mapped, ok := mapFunc(addressID, metadata, grouped)
+		mapped, ok := mapFunc(addressID, metadata)
 		if !ok {
 			continue
 		}
@@ -112,7 +112,7 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc, grouped bool)
 		for _, dstNodeAddress := range dsts {
 			dstRenderableID, ok := address2mapped[dstNodeAddress]
 			if !ok {
-				pseudoNode, ok := pseudoFunc(srcNodeAddress, srcRenderableNode, dstNodeAddress, grouped)
+				pseudoNode, ok := pseudoFunc(srcNodeAddress, srcRenderableNode, dstNodeAddress)
 				if !ok {
 					continue
 				}
@@ -146,18 +146,18 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc, grouped bool)
 // srcRenderableID. Since an edgeID can have multiple edges on the address
 // level, it uses the supplied mapping function to translate address IDs to
 // renderable node (mapped) IDs.
-func (t Topology) EdgeMetadata(mapFunc MapFunc, grouped bool, srcRenderableID, dstRenderableID string) EdgeMetadata {
+func (t Topology) EdgeMetadata(mapFunc MapFunc, srcRenderableID, dstRenderableID string) EdgeMetadata {
 	metadata := EdgeMetadata{}
 	for edgeID, edgeMeta := range t.EdgeMetadatas {
 		edgeParts := strings.SplitN(edgeID, IDDelim, 2)
 		src := edgeParts[0]
 		if src != TheInternet {
-			mapped, _ := mapFunc(src, t.NodeMetadatas[src], grouped)
+			mapped, _ := mapFunc(src, t.NodeMetadatas[src])
 			src = mapped.ID
 		}
 		dst := edgeParts[1]
 		if dst != TheInternet {
-			mapped, _ := mapFunc(dst, t.NodeMetadatas[dst], grouped)
+			mapped, _ := mapFunc(dst, t.NodeMetadatas[dst])
 			dst = mapped.ID
 		}
 		if src == srcRenderableID && dst == dstRenderableID {
