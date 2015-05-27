@@ -5,7 +5,7 @@ client:
     - pyapp
 pyapp:
   build: pyapp
-  ports:
+  expose:
     - "5000"
   links:
     - qotd
@@ -20,7 +20,7 @@ redis:
   image: redis
 goapp1:
   build: goapp
-  ports:
+  expose:
     - "8080"
   links:
     - elasticsearch1
@@ -28,7 +28,7 @@ goapp1:
     - elasticsearch3
 goapp2:
   build: goapp
-  ports:
+  expose:
     - "8080"
   links:
     - elasticsearch1

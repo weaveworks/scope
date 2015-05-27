@@ -2,6 +2,7 @@ import os
 import socket
 import requests
 import random
+import threading
 
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask
@@ -10,6 +11,7 @@ from redis import Redis
 app = Flask(__name__)
 redis = Redis(host='redis', port=6379)
 pool = ThreadPoolExecutor(max_workers=10)
+sessions = threading.local()
 
 goapps = ['http://goapp1:8080/', 'http://goapp2:8080/']
 
@@ -27,9 +29,10 @@ def do_qotd():
     s.close()
 
 def do_search():
-  r = requests.get(random.choice(goapps))
+  if getattr(sessions, 'session', None) == None:
+    sessions.session = requests.Session()
+  r = sessions.session.get(random.choice(goapps))
   return r.text
-
 
 @app.route('/')
 def hello():
