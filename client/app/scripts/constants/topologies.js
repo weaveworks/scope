@@ -1,4 +1,3 @@
-
 module.exports = [
   {
     url: '/api/topology/applications',

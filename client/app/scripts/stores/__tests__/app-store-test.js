@@ -1,4 +1,3 @@
-
 describe('AppStore', function() {
 
   var ActionTypes = require('../../constants/action-types');

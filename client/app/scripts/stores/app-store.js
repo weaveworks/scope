@@ -1,4 +1,3 @@
-
 var EventEmitter = require('events').EventEmitter;
 var _ = require('lodash');
 var assign = require('object-assign');

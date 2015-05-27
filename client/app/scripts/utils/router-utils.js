@@ -1,4 +1,3 @@
-
 var page = require('page');
 
 var AppActions = require('../actions/app-actions');

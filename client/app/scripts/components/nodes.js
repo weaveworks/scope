@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 var React = require('react');
 
 var NodesChart = require('../charts/nodes-chart');
