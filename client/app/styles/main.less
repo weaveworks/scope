@@ -208,6 +208,7 @@ body {
 
 .node-details {
     height: 100%;
+    width: 100%;
     background-color: rgba(255, 255, 255, 0.86);
 
     &-header {
@@ -228,7 +229,12 @@ body {
     }
 
     &-content {
+        position: absolute;
+        top: 115px;
+        bottom: 0;
+        width: 100%;
         padding: 0 36px 0 36px;
+        overflow-y: scroll;
     }
 
     &-table {
@@ -243,16 +249,19 @@ body {
         }
 
         &-row {
-            > div {
-                display: inline-block;
-            }
+            white-space: nowrap;
+            clear: left;
 
             &-key {
+                float: left;
                 width: 9em;
             }
 
             &-value-major {
                 margin-right: 0.5em;
+
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             &-value-scalar {
