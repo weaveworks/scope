@@ -11,23 +11,23 @@ var NodeDetails = require('./node-details');
 
 var Details = React.createClass({
 
-	handleClickClose: function(ev) {
-		ev.preventDefault();
-		AppActions.clickCloseDetails();
-	},
+  handleClickClose: function(ev) {
+    ev.preventDefault();
+    AppActions.clickCloseDetails();
+  },
 
-	render: function() {
-		return (
-			<div id="details">
-				<Paper zDepth={3}>
-					<div className="details-tools">
-						<span className="fa fa-close" onClick={this.handleClickClose} />
-					</div>
-					<NodeDetails details={this.props.details} />
-				</Paper>
-			</div>
-		);
-	}
+  render: function() {
+    return (
+      <div id="details">
+        <Paper zDepth={3}>
+          <div className="details-tools">
+            <span className="fa fa-close" onClick={this.handleClickClose} />
+          </div>
+          <NodeDetails details={this.props.details} />
+        </Paper>
+      </div>
+    );
+  }
 
 });
 

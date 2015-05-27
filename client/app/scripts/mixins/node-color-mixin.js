@@ -8,20 +8,20 @@ colors(internetLabel);
 
 
 var NodeColorMixin = {
-	getNodeColor: function(text) {
-		return colors(text);
-	},
-	getNodeColorDark: function(text) {
-		var color = d3.rgb(colors(text));
-		var hsl = color.hsl();
+  getNodeColor: function(text) {
+    return colors(text);
+  },
+  getNodeColorDark: function(text) {
+    var color = d3.rgb(colors(text));
+    var hsl = color.hsl();
 
-		// ensure darkness
-		// if (hsl.l > 0.5) {
-			hsl = hsl.darker();
-		// }
+    // ensure darkness
+    // if (hsl.l > 0.5) {
+      hsl = hsl.darker();
+    // }
 
-		return hsl.toString();
-	}
+    return hsl.toString();
+  }
 };
 
 module.exports = NodeColorMixin;

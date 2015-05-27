@@ -11,49 +11,49 @@ var marginLeft = 0;
 
 var Nodes = React.createClass({
 
-	getInitialState: function() {
-		return {
-			width: window.innerWidth,
-			height: window.innerHeight - navbarHeight - marginTop
-		};
-	},
+  getInitialState: function() {
+    return {
+      width: window.innerWidth,
+      height: window.innerHeight - navbarHeight - marginTop
+    };
+  },
 
-	onNodeClick: function(ev) {
-		AppActions.clickNode(ev.currentTarget.id);
-	},
+  onNodeClick: function(ev) {
+    AppActions.clickNode(ev.currentTarget.id);
+  },
 
-	componentDidMount: function() {
-		window.addEventListener('resize', this.handleResize);
-	},
+  componentDidMount: function() {
+    window.addEventListener('resize', this.handleResize);
+  },
 
-	componentWillUnmount: function() {
-		window.removeEventListener('resize', this.handleResize);
-	},
+  componentWillUnmount: function() {
+    window.removeEventListener('resize', this.handleResize);
+  },
 
-	setDimensions: function() {
-		this.setState({
-			height: window.innerHeight - navbarHeight - marginTop,
-			width: window.innerWidth
-		});
-	},
+  setDimensions: function() {
+    this.setState({
+      height: window.innerHeight - navbarHeight - marginTop,
+      width: window.innerWidth
+    });
+  },
 
-	handleResize: function() {
-		this.setDimensions();
-	},
+  handleResize: function() {
+    this.setDimensions();
+  },
 
-	render: function() {
-		return (
-			<div id="nodes">
-				<NodesChart
-					onNodeClick={this.onNodeClick}
-					nodes={this.props.nodes}
-					width={this.state.width}
-					height={this.state.height}
-					context="view"
-				/>
-			</div>
-		);
-	}
+  render: function() {
+    return (
+      <div id="nodes">
+        <NodesChart
+          onNodeClick={this.onNodeClick}
+          nodes={this.props.nodes}
+          width={this.state.width}
+          height={this.state.height}
+          context="view"
+        />
+      </div>
+    );
+  }
 
 });
 

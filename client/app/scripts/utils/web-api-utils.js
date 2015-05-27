@@ -12,57 +12,57 @@ var updateFrequency = '5s';
 var topologyTimer = 0;
 
 function createWebsocket(topologyUrl) {
-		if (socket) {
-			socket.onclose = null;
-			socket.close();
-		}
+  if (socket) {
+    socket.onclose = null;
+    socket.close();
+  }
 
-		socket = new WebSocket(WS_URL + topologyUrl + '/ws?t=' + updateFrequency);
+  socket = new WebSocket(WS_URL + topologyUrl + '/ws?t=' + updateFrequency);
 
-		socket.onclose = function() {
-			clearTimeout(reconnectTimer);
-			socket = null;
+  socket.onclose = function() {
+    clearTimeout(reconnectTimer);
+    socket = null;
 
-			reconnectTimer = setTimeout(function() {
-				createWebsocket(topologyUrl);
-			}, 5000);
-		}
+    reconnectTimer = setTimeout(function() {
+      createWebsocket(topologyUrl);
+    }, 5000);
+  }
 
-		socket.onmessage = function(event) {
-			var msg = JSON.parse(event.data);
-			if (msg.add || msg.remove || msg.update) {
-				AppActions.receiveNodesDelta(msg);
-			}
-		};
+  socket.onmessage = function(event) {
+    var msg = JSON.parse(event.data);
+    if (msg.add || msg.remove || msg.update) {
+      AppActions.receiveNodesDelta(msg);
+    }
+  };
 
-		currentUrl = topologyUrl;
+  currentUrl = topologyUrl;
 }
 
 function getTopologies() {
-	clearTimeout(topologyTimer);
-	reqwest('/api/topology', function(res) {
-		AppActions.receiveTopologies(res);
-		topologyTimer = setTimeout(getTopologies, 10000);
-	});
+  clearTimeout(topologyTimer);
+  reqwest('/api/topology', function(res) {
+    AppActions.receiveTopologies(res);
+    topologyTimer = setTimeout(getTopologies, 10000);
+  });
 }
 
 function getNodeDetails(topologyUrl, nodeId) {
-	if (topologyUrl && nodeId) {
-		var url = [topologyUrl, nodeId].join('/');
-		reqwest(url, function(res) {
-			AppActions.receiveNodeDetails(res.node);
-		});
-	}
+  if (topologyUrl && nodeId) {
+    var url = [topologyUrl, nodeId].join('/');
+    reqwest(url, function(res) {
+      AppActions.receiveNodeDetails(res.node);
+    });
+  }
 }
 
 module.exports = {
-	getNodeDetails: getNodeDetails,
+  getNodeDetails: getNodeDetails,
 
-	getTopologies: getTopologies,
+  getTopologies: getTopologies,
 
-	getNodesDelta: function(topologyUrl) {
-		if (topologyUrl && topologyUrl !== currentUrl) {
-			createWebsocket(topologyUrl);
-		}
-	}
+  getNodesDelta: function(topologyUrl) {
+    if (topologyUrl && topologyUrl !== currentUrl) {
+      createWebsocket(topologyUrl);
+    }
+  }
 }
