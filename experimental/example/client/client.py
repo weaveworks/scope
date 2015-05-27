@@ -4,7 +4,7 @@ import threading
 import logging
 import sys
 
-pyapps = ['http://pyapp:5000/']
+pyapps = ['http://pyapp1:5000/', 'http://pyapp2:5000/']
 concurrency = 5
 
 def do_requests():

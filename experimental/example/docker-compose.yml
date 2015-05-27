@@ -2,8 +2,18 @@ client:
   build: client
   links:
     - qotd
-    - pyapp
-pyapp:
+    - pyapp1
+    - pyapp2
+pyapp1:
+  build: pyapp
+  expose:
+    - "5000"
+  links:
+    - qotd
+    - redis
+    - goapp1
+    - goapp2
+pyapp2:
   build: pyapp
   expose:
     - "5000"
