@@ -46,7 +46,7 @@ type topologyView struct {
 var topologyRegistry = map[string]topologyView{
 	"applications":         {"Applications", selectProcess, report.ProcessPID, report.GenericPseudoNode, "applications-grouped"},
 	"applications-grouped": {"Applications", selectProcess, report.ProcessName, report.GenericGroupedPseudoNode, ""},
-	"containers":           {"Containers", selectProcess, report.ProcessContainer, report.NoPseudoNode, "containers-grouped"},
-	"containers-grouped":   {"Containers", selectProcess, report.ProcessContainerImage, report.NoPseudoNode, ""},
+	"containers":           {"Containers", selectProcess, report.ProcessContainer, report.InternetOnlyPseudoNode, "containers-grouped"},
+	"containers-grouped":   {"Containers", selectProcess, report.ProcessContainerImage, report.InternetOnlyPseudoNode, ""},
 	"hosts":                {"Hosts", selectNetwork, report.NetworkHostname, report.GenericPseudoNode, ""},
 }
