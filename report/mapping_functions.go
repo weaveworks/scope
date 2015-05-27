@@ -138,6 +138,11 @@ func GenericPseudoNode(src string, srcMapped RenderableNode, dst string, grouped
 	}, true
 }
 
+// NoPseudoNode never creates a pseudo node.
+func NoPseudoNode(string, RenderableNode, string, bool) (MappedNode, bool) {
+	return MappedNode{}, false
+}
+
 func trySplitAddr(addr string) (string, string) {
 	fields := strings.SplitN(addr, ScopeDelim, 3)
 	if len(fields) == 3 {
