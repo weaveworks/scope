@@ -8,9 +8,10 @@ pyapps = ['http://pyapp:5000/']
 concurrency = 5
 
 def do_requests():
+  s = requests.Session()
   while True:
     try:
-      requests.get(random.choice(pyapps))
+      s.get(random.choice(pyapps))
     except:
       logging.error("Error doing request", exc_info=sys.exc_info())
     logging.info("Did request")
