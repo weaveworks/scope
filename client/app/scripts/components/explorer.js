@@ -1,15 +1,15 @@
-var React = require('react');
-var _ = require('lodash');
+const React = require('react');
+const _ = require('lodash');
 
-var NodesChart = require('../charts/nodes-chart');
-var NodeDetails = require('./node-details');
+const NodesChart = require('../charts/nodes-chart');
+const NodeDetails = require('./node-details');
 
-var marginBottom = 64;
-var marginTop = 64;
-var marginLeft = 36;
-var marginRight = 36;
+const marginBottom = 64;
+const marginTop = 64;
+const marginLeft = 36;
+const marginRight = 36;
 
-var Explorer = React.createClass({
+const Explorer = React.createClass({
 
   getInitialState: function() {
     return {
@@ -27,27 +27,16 @@ var Explorer = React.createClass({
     window.removeEventListener('resize', this.handleResize);
   },
 
-  setDimensions: function() {
-    this.setState({
-      height: window.innerHeight - marginBottom - marginTop,
-      width: window.innerWidth - marginLeft - marginRight
-    });
-  },
-
-  handleResize: function() {
-    this.setDimensions();
-  },
-
   getSubTopology: function(topology) {
-    var subTopology = {};
-    var nodeSet = [];
+    const subTopology = {};
+    const nodeSet = [];
 
     _.each(this.props.expandedNodes, function(nodeId) {
       if (topology[nodeId]) {
         subTopology[nodeId] = topology[nodeId];
         nodeSet = _.union(subTopology[nodeId].adjacency, nodeSet);
         _.each(subTopology[nodeId].adjacency, function(adjacentId) {
-          var node = _.assign({}, topology[adjacentId]);
+          const node = _.assign({}, topology[adjacentId]);
 
           subTopology[adjacentId] = node;
         });
@@ -62,20 +51,14 @@ var Explorer = React.createClass({
     return subTopology;
   },
 
-  onNodeClick: function(ev) {
-    var nodeId = ev.currentTarget.id;
-    AppActions.clickNode(nodeId);
-  },
-
   render: function() {
-    var subTopology = this.getSubTopology(this.props.nodes);
+    const subTopology = this.getSubTopology(this.props.nodes);
 
     return (
       <div id="explorer">
         <NodeDetails details={this.props.details} />
         <div className="graph">
           <NodesChart
-            onNodeClick={this.onNodeClick}
             layout={this.state.layout}
             nodes={subTopology}
             highlightedNodes={this.props.expandedNodes}
@@ -86,6 +69,17 @@ var Explorer = React.createClass({
         </div>
       </div>
     );
+  },
+
+  setDimensions: function() {
+    this.setState({
+      height: window.innerHeight - marginBottom - marginTop,
+      width: window.innerWidth - marginLeft - marginRight
+    });
+  },
+
+  handleResize: function() {
+    this.setDimensions();
   }
 
 });

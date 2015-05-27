@@ -1,18 +1,11 @@
-var React = require('react');
-var _ = require('lodash');
-var mui = require('material-ui');
-var Paper = mui.Paper;
-var IconButton = mui.IconButton;
+const React = require('react');
+const mui = require('material-ui');
+const Paper = mui.Paper;
 
-var AppActions = require('../actions/app-actions');
-var NodeDetails = require('./node-details');
+const AppActions = require('../actions/app-actions');
+const NodeDetails = require('./node-details');
 
-var Details = React.createClass({
-
-  handleClickClose: function(ev) {
-    ev.preventDefault();
-    AppActions.clickCloseDetails();
-  },
+const Details = React.createClass({
 
   render: function() {
     return (
@@ -25,7 +18,13 @@ var Details = React.createClass({
         </Paper>
       </div>
     );
+  },
+
+  handleClickClose: function(ev) {
+    ev.preventDefault();
+    AppActions.clickCloseDetails();
   }
+
 
 });
 

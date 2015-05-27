@@ -1,15 +1,15 @@
-var reqwest = require('reqwest');
+const reqwest = require('reqwest');
 
-var AppActions = require('../actions/app-actions');
+const AppActions = require('../actions/app-actions');
 
-var WS_URL = window.WS_URL || 'ws://' + location.host;
+const WS_URL = window.WS_URL || 'ws://' + location.host;
 
 
-var socket;
-var reconnectTimer = 0;
-var currentUrl = null;
-var updateFrequency = '5s';
-var topologyTimer = 0;
+let socket;
+let reconnectTimer = 0;
+let currentUrl = null;
+let updateFrequency = '5s';
+let topologyTimer = 0;
 
 function createWebsocket(topologyUrl) {
   if (socket) {
@@ -26,10 +26,10 @@ function createWebsocket(topologyUrl) {
     reconnectTimer = setTimeout(function() {
       createWebsocket(topologyUrl);
     }, 5000);
-  }
+  };
 
   socket.onmessage = function(event) {
-    var msg = JSON.parse(event.data);
+    const msg = JSON.parse(event.data);
     if (msg.add || msg.remove || msg.update) {
       AppActions.receiveNodesDelta(msg);
     }
@@ -48,7 +48,7 @@ function getTopologies() {
 
 function getNodeDetails(topologyUrl, nodeId) {
   if (topologyUrl && nodeId) {
-    var url = [topologyUrl, nodeId].join('/');
+    const url = [topologyUrl, nodeId].join('/');
     reqwest(url, function(res) {
       AppActions.receiveNodeDetails(res.node);
     });
@@ -65,4 +65,5 @@ module.exports = {
       createWebsocket(topologyUrl);
     }
   }
-}
+};
+

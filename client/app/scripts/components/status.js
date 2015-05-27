@@ -1,6 +1,6 @@
-var React = require('react');
+const React = require('react');
 
-var Status = React.createClass({
+const Status = React.createClass({
 
   renderConnectionState: function() {
     return (
@@ -12,7 +12,7 @@ var Status = React.createClass({
   },
 
   render: function() {
-    var isDisconnected = this.props.connectionState === 'disconnected';
+    const isDisconnected = this.props.connectionState === 'disconnected';
 
     return (
       <div className="status">

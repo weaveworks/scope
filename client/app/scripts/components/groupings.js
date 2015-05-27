@@ -1,10 +1,9 @@
-var React = require('react');
-var _ = require('lodash');
+const React = require('react');
+const _ = require('lodash');
 
-var AppActions = require('../actions/app-actions');
-var AppStore = require('../stores/app-store');
+const AppActions = require('../actions/app-actions');
 
-var GROUPINGS = [{
+const GROUPINGS = [{
   id: 'none',
   iconClass: 'fa fa-th',
   needsTopology: false
@@ -14,15 +13,11 @@ var GROUPINGS = [{
   needsTopology: 'grouped_url'
 }];
 
-var Groupings = React.createClass({
+const Groupings = React.createClass({
 
   onGroupingClick: function(ev) {
     ev.preventDefault();
     AppActions.clickGrouping(ev.currentTarget.getAttribute('rel'));
-  },
-
-  isGroupingSupportedByTopology: function(topology, grouping) {
-    return !grouping.needsTopology || topology && topology[grouping.needsTopology];
   },
 
   getGroupingsSupportedByTopology: function(topology) {
@@ -30,15 +25,15 @@ var Groupings = React.createClass({
   },
 
   renderGrouping: function(grouping, activeGroupingId) {
-    var className = "groupings-item",
-      isSupportedByTopology = this.isGroupingSupportedByTopology(this.props.currentTopology, grouping);
+    let className = 'groupings-item';
+    const isSupportedByTopology = this.isGroupingSupportedByTopology(this.props.currentTopology, grouping);
 
     if (grouping.id === activeGroupingId) {
-      className += " groupings-item-active";
+      className += ' groupings-item-active';
     } else if (!isSupportedByTopology) {
-      className += " groupings-item-disabled";
+      className += ' groupings-item-disabled';
     } else {
-      className += " groupings-item-default";
+      className += ' groupings-item-default';
     }
 
     return (
@@ -49,8 +44,8 @@ var Groupings = React.createClass({
   },
 
   render: function() {
-    var activeGrouping = this.props.active,
-      isGroupingSupported = _.size(this.getGroupingsSupportedByTopology(this.props.currentTopology)) > 1;
+    const activeGrouping = this.props.active;
+    const isGroupingSupported = _.size(this.getGroupingsSupportedByTopology(this.props.currentTopology)) > 1;
 
     return (
       <div className="groupings">
@@ -59,6 +54,10 @@ var Groupings = React.createClass({
         }, this)}
       </div>
     );
+  },
+
+  isGroupingSupportedByTopology: function(topology, grouping) {
+    return !grouping.needsTopology || topology && topology[grouping.needsTopology];
   }
 
 });

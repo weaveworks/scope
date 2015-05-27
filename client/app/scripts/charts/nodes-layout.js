@@ -1,16 +1,16 @@
-var dagre = require('dagre');
-var _ = require('lodash');
+const dagre = require('dagre');
+const _ = require('lodash');
 
-var MAX_NODES = 100;
+const MAX_NODES = 100;
 
-var doLayout = function(nodes, edges, width, height, scale, margins) {
-  var offsetX = 0 + margins.left;
-  var offsetY = 0 + margins.top;
-  var g = new dagre.graphlib.Graph({});
+const doLayout = function(nodes, edges, width, height, scale, margins) {
+  let offsetX = 0 + margins.left;
+  let offsetY = 0 + margins.top;
+  const g = new dagre.graphlib.Graph({});
 
   if (_.size(nodes) > MAX_NODES) {
     console.error('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
-    return;
+    return null;
   }
 
   // configure node margins
@@ -27,13 +27,13 @@ var doLayout = function(nodes, edges, width, height, scale, margins) {
   });
 
   _.each(edges, function(edge) {
-    var virtualNodes = edge.source.id === edge.target.id ? 1 : 0;
+    const virtualNodes = edge.source.id === edge.target.id ? 1 : 0;
     g.setEdge(edge.source.id, edge.target.id, {id: edge.id, minlen: virtualNodes});
   });
 
   dagre.layout(g);
 
-  var graph = g.graph();
+  const graph = g.graph();
 
   // shifting graph coordinates to center
 
@@ -47,15 +47,15 @@ var doLayout = function(nodes, edges, width, height, scale, margins) {
   // apply coordinates to nodes and edges
 
   g.nodes().forEach(function(id) {
-    var node = nodes[id];
-    var graphNode = g.node(id);
+    const node = nodes[id];
+    const graphNode = g.node(id);
     node.x = graphNode.x + offsetX;
     node.y = graphNode.y + offsetY;
   });
 
   g.edges().forEach(function(id) {
-    var graphEdge = g.edge(id);
-    var edge = edges[graphEdge.id];
+    const graphEdge = g.edge(id);
+    const edge = edges[graphEdge.id];
     _.each(graphEdge.points, function(point) {
       point.x += offsetX;
       point.y += offsetY;

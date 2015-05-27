@@ -1,24 +1,23 @@
-var React = require('react');
-var _ = require('lodash');
+const React = require('react');
 
-var NodeDetailsTable = require('./node-details-table');
-var NodeColorMixin = require('../mixins/node-color-mixin');
+const NodeDetailsTable = require('./node-details-table');
+const NodeColorMixin = require('../mixins/node-color-mixin');
 
-var NodeDetails = React.createClass({
+const NodeDetails = React.createClass({
 
   mixins: [
     NodeColorMixin
   ],
 
   render: function() {
-    var node = this.props.details;
+    const node = this.props.details;
 
     if (!node) {
       return <div className="node-details" />;
     }
 
-    var style = {
-      "background-color": this.getNodeColorDark(node.label_major)
+    const style = {
+      'background-color': this.getNodeColorDark(node.label_major)
     };
 
     return (

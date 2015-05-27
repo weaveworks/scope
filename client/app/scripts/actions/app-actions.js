@@ -1,5 +1,8 @@
-var AppDispatcher = require('../dispatcher/app-dispatcher');
-var ActionTypes = require('../constants/action-types');
+let ActionTypes;
+let AppDispatcher;
+let AppStore;
+let RouterUtils;
+let WebapiUtils;
 
 module.exports = {
   clickCloseDetails: function() {
@@ -90,8 +93,11 @@ module.exports = {
   }
 };
 
-// breaking circular deps
+// require below export to break circular dep
 
-var RouterUtils = require('../utils/router-utils');
-var WebapiUtils = require('../utils/web-api-utils');
-var AppStore = require('../stores/app-store');
+AppDispatcher = require('../dispatcher/app-dispatcher');
+ActionTypes = require('../constants/action-types');
+
+RouterUtils = require('../utils/router-utils');
+WebapiUtils = require('../utils/web-api-utils');
+AppStore = require('../stores/app-store');

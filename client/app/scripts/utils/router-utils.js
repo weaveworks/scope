@@ -1,25 +1,24 @@
-var page = require('page');
+const page = require('page');
 
-var AppActions = require('../actions/app-actions');
-var AppStore = require('../stores/app-store');
-
-page('/', function(ctx) {
-  updateRoute();
-});
-
-page('/state/:state', function(ctx) {
-  var state = JSON.parse(ctx.params.state);
-  AppActions.route(state);
-});
+const AppActions = require('../actions/app-actions');
+const AppStore = require('../stores/app-store');
 
 function updateRoute() {
-  var state = AppStore.getAppState();
-  var stateUrl = JSON.stringify(state);
-  var dispatch = false;
+  const state = AppStore.getAppState();
+  const stateUrl = JSON.stringify(state);
+  const dispatch = false;
 
   page.show('/state/' + stateUrl, state, dispatch);
 }
 
+page('/', function() {
+  updateRoute();
+});
+
+page('/state/:state', function(ctx) {
+  const state = JSON.parse(ctx.params.state);
+  AppActions.route(state);
+});
 
 module.exports = {
   getRouter: function() {

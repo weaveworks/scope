@@ -1,4 +1,4 @@
-var keymirror = require('keymirror');
+const keymirror = require('keymirror');
 
 module.exports = keymirror({
   CLICK_CLOSE_DETAILS: null,

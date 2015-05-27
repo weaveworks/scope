@@ -1,23 +1,23 @@
-var d3 = require('d3');
+const d3 = require('d3');
 
-var colors = d3.scale.category20();
+const colors = d3.scale.category20();
 
 // make sure the internet always gets the same color
-var internetLabel = "the Internet";
+const internetLabel = 'the Internet';
 colors(internetLabel);
 
 
-var NodeColorMixin = {
+const NodeColorMixin = {
   getNodeColor: function(text) {
     return colors(text);
   },
   getNodeColorDark: function(text) {
-    var color = d3.rgb(colors(text));
-    var hsl = color.hsl();
+    const color = d3.rgb(colors(text));
+    let hsl = color.hsl();
 
     // ensure darkness
     // if (hsl.l > 0.5) {
-      hsl = hsl.darker();
+    hsl = hsl.darker();
     // }
 
     return hsl.toString();

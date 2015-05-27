@@ -1,23 +1,18 @@
-var React = require('react');
+const React = require('react');
 
-var NodesChart = require('../charts/nodes-chart');
-var AppActions = require('../actions/app-actions');
+const NodesChart = require('../charts/nodes-chart');
+const AppActions = require('../actions/app-actions');
 
-var navbarHeight = 160;
-var marginTop = 0;
-var marginLeft = 0;
+const navbarHeight = 160;
+const marginTop = 0;
 
-var Nodes = React.createClass({
+const Nodes = React.createClass({
 
   getInitialState: function() {
     return {
       width: window.innerWidth,
       height: window.innerHeight - navbarHeight - marginTop
     };
-  },
-
-  onNodeClick: function(ev) {
-    AppActions.clickNode(ev.currentTarget.id);
   },
 
   componentDidMount: function() {
@@ -28,15 +23,8 @@ var Nodes = React.createClass({
     window.removeEventListener('resize', this.handleResize);
   },
 
-  setDimensions: function() {
-    this.setState({
-      height: window.innerHeight - navbarHeight - marginTop,
-      width: window.innerWidth
-    });
-  },
-
-  handleResize: function() {
-    this.setDimensions();
+  onNodeClick: function(ev) {
+    AppActions.clickNode(ev.currentTarget.id);
   },
 
   render: function() {
@@ -51,6 +39,17 @@ var Nodes = React.createClass({
         />
       </div>
     );
+  },
+
+  handleResize: function() {
+    this.setDimensions();
+  },
+
+  setDimensions: function() {
+    this.setState({
+      height: window.innerHeight - navbarHeight - marginTop,
+      width: window.innerWidth
+    });
   }
 
 });

@@ -1,19 +1,18 @@
-var React = require('react');
-var _ = require('lodash');
+const React = require('react');
 
-var Logo = require('./logo');
-var AppStore = require('../stores/app-store');
-var Groupings = require('./groupings.js');
-var Status = require('./status.js');
-var Topologies = require('./topologies.js');
-var WebapiUtils = require('../utils/web-api-utils');
-var AppActions = require('../actions/app-actions');
-var Details = require('./details');
-var Nodes = require('./nodes');
-var RouterUtils = require('../utils/router-utils');
+const Logo = require('./logo');
+const AppStore = require('../stores/app-store');
+const Groupings = require('./groupings.js');
+const Status = require('./status.js');
+const Topologies = require('./topologies.js');
+const WebapiUtils = require('../utils/web-api-utils');
+const AppActions = require('../actions/app-actions');
+const Details = require('./details');
+const Nodes = require('./nodes');
+const RouterUtils = require('../utils/router-utils');
 
 
-var ESC_KEY_CODE = 27;
+const ESC_KEY_CODE = 27;
 
 function getStateFromStores() {
   return {
@@ -24,11 +23,11 @@ function getStateFromStores() {
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     topologies: AppStore.getTopologies()
-  }
+  };
 }
 
 
-var App = React.createClass({
+const App = React.createClass({
 
   getInitialState: function() {
     return getStateFromStores();
@@ -53,7 +52,7 @@ var App = React.createClass({
   },
 
   render: function() {
-    var showingDetails = this.state.selectedNodeId;
+    const showingDetails = this.state.selectedNodeId;
 
     return (
       <div>

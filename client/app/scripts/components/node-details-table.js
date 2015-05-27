@@ -1,10 +1,9 @@
-var React = require('react');
-var _ = require('lodash');
+const React = require('react');
 
-var NodeDetailsTable = React.createClass({
+const NodeDetailsTable = React.createClass({
 
   render: function() {
-    var isNumeric = this.props.isNumeric;
+    const isNumeric = this.props.isNumeric;
 
     return (
       <div className="node-details-table">

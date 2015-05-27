@@ -1,6 +1,6 @@
-var React = require('react');
+const React = require('react');
 
-var App = require('./components/app.js');
+const App = require('./components/app.js');
 
 React.render(
   <App/>,

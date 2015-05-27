@@ -1,25 +1,30 @@
-var EventEmitter = require('events').EventEmitter;
-var _ = require('lodash');
-var assign = require('object-assign');
+const EventEmitter = require('events').EventEmitter;
+const _ = require('lodash');
+const assign = require('object-assign');
 
-var AppDispatcher = require('../dispatcher/app-dispatcher');
-var ActionTypes = require('../constants/action-types');
+const AppDispatcher = require('../dispatcher/app-dispatcher');
+const ActionTypes = require('../constants/action-types');
 
+// Helpers
+
+function isUrlForTopologyId(url, topologyId) {
+  return _.endsWith(url, topologyId);
+}
 
 // Initial values
 
-var connectionState = 'disconnected';
-var currentGrouping = 'none';
-var currentTopologyId = 'applications';
-var mouseOverNode = null;
-var nodes = {};
-var nodeDetails = null;
-var selectedNodeId = null;
-var topologies = [];
+let connectionState = 'disconnected';
+let currentGrouping = 'none';
+let currentTopologyId = 'applications';
+let mouseOverNode = null;
+let nodes = {};
+let nodeDetails = null;
+let selectedNodeId = null;
+let topologies = [];
 
 // Store API
 
-var AppStore = assign({}, EventEmitter.prototype, {
+const AppStore = assign({}, EventEmitter.prototype, {
 
   CHANGE_EVENT: 'change',
 
@@ -42,10 +47,10 @@ var AppStore = assign({}, EventEmitter.prototype, {
   },
 
   getCurrentTopologyUrl: function() {
-    var topology = this.getCurrentTopology();
+    const topology = this.getCurrentTopology();
 
     if (topology) {
-      return topology.grouped_url && currentGrouping == 'grouped' ? topology.grouped_url : topology.url;
+      return topology.grouped_url && currentGrouping === 'grouped' ? topology.grouped_url : topology.url;
     }
   },
 
@@ -73,14 +78,6 @@ var AppStore = assign({}, EventEmitter.prototype, {
     return url.split('/').pop();
   }
 });
-
-
-// Helpers
-
-function isUrlForTopologyId(url, topologyId) {
-  return _.endsWith(url, topologyId);
-}
-
 
 // Store Dispatch Hooks
 
@@ -140,7 +137,7 @@ AppStore.registeredCallback = function(payload) {
         'update', _.size(payload.delta.update),
         'add', _.size(payload.delta.add));
 
-      connectionState = "connected";
+      connectionState = 'connected';
 
       // nodes that no longer exist
       _.each(payload.delta.remove, function(nodeId) {

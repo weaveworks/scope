@@ -1,21 +1,23 @@
-describe('AppStore', function() {
 
-  var ActionTypes = require('../../constants/action-types');
-  var AppStore, registeredCallback;
+
+describe('AppStore', function() {
+  const ActionTypes = require('../../constants/action-types');
+  let AppStore;
+  let registeredCallback;
 
   // actions
 
-  var ClickTopologyAction = {
+  const ClickTopologyAction = {
     type: ActionTypes.CLICK_TOPOLOGY,
     topologyId: 'topo1'
   };
 
-  var ClickGroupingAction = {
+  const ClickGroupingAction = {
     type: ActionTypes.CLICK_GROUPING,
     grouping: 'grouped'
   };
 
-  var ReceiveTopologiesAction = {
+  const ReceiveTopologiesAction = {
     type: ActionTypes.RECEIVE_TOPOLOGIES,
     topologies: [{
       url: '/topo1',
@@ -32,7 +34,7 @@ describe('AppStore', function() {
   // topology tests
 
   it('init with no topologies', function() {
-    var topos = AppStore.getTopologies();
+    const topos = AppStore.getTopologies();
     expect(topos.length).toBe(0);
     expect(AppStore.getCurrentTopology()).toBeUndefined();
   });
@@ -55,6 +57,5 @@ describe('AppStore', function() {
     expect(AppStore.getCurrentTopology().name).toBe('Topo1');
     expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1grouped');
   });
-
 
 });

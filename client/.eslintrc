@@ -1,7 +1,8 @@
 {
   "parser": "babel-eslint",
   "plugins": [
-    "react"
+    "react",
+    "jasmine"
   ],
   "env": {
     "browser": true,
@@ -138,7 +139,7 @@
     }],
     "comma-style": [2, "last"],      // http://eslint.org/docs/rules/comma-style
     "eol-last": 2,                   // http://eslint.org/docs/rules/eol-last
-    "func-names": 1,                 // http://eslint.org/docs/rules/func-names
+    "func-names": 0,                 // http://eslint.org/docs/rules/func-names
     "key-spacing": [2, {             // http://eslint.org/docs/rules/key-spacing
         "beforeColon": false,
         "afterColon": true
@@ -184,7 +185,7 @@
     "react/no-did-update-set-state": 2,
     "react/no-multi-comp": 2,
     "react/no-unknown-property": 2,
-    "react/prop-types": 2,
+    "react/prop-types": 0,
     "react/react-in-jsx-scope": 2,
     "react/self-closing-comp": 2,
     "react/wrap-multilines": 2,

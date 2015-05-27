@@ -1,21 +1,21 @@
-var React = require('react');
-var _ = require('lodash');
+const React = require('react');
+const _ = require('lodash');
 
-var AppActions = require('../actions/app-actions');
-var AppStore = require('../stores/app-store');
+const AppActions = require('../actions/app-actions');
+const AppStore = require('../stores/app-store');
 
-var Topologies = React.createClass({
+const Topologies = React.createClass({
 
   onTopologyClick: function(ev) {
     ev.preventDefault();
     AppActions.clickTopology(ev.currentTarget.getAttribute('rel'));
   },
 
-  renderTopology: function(topology, active) {
-    var isActive = topology.name === this.props.currentTopology.name,
-      className = isActive ? "topologies-item topologies-item-active" : "topologies-item",
-      topologyId = AppStore.getTopologyIdForUrl(topology.url),
-      title = ['Topology: ' + topology.name,
+  renderTopology: function(topology) {
+    const isActive = topology.name === this.props.currentTopology.name;
+    const className = isActive ? 'topologies-item topologies-item-active' : 'topologies-item';
+    const topologyId = AppStore.getTopologyIdForUrl(topology.url);
+    const title = ['Topology: ' + topology.name,
       'Nodes: ' + topology.stats.node_count,
       'Connections: ' + topology.stats.node_count].join('\n');
 
@@ -31,7 +31,7 @@ var Topologies = React.createClass({
   },
 
   render: function() {
-    var topologies = _.sortBy(this.props.topologies, function(topology) {
+    const topologies = _.sortBy(this.props.topologies, function(topology) {
         return topology.name;
       });
 
