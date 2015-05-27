@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const humanTheInternet = "the Internet"
+
 // MappedNode is returned by the MapFuncs.
 type MappedNode struct {
 	ID    string
@@ -129,7 +131,7 @@ func GenericPseudoNode(src string, srcMapped RenderableNode, dst string) (Mapped
 
 	if dst == TheInternet {
 		outputID = dst
-		maj, min = "the Internet", ""
+		maj, min = humanTheInternet, ""
 	} else {
 		// Rule for non-internet psuedo nodes; emit 1 new node for each
 		// dstNodeAddr, srcNodeAddr, srcNodePort.
@@ -154,7 +156,7 @@ func GenericGroupedPseudoNode(src string, srcMapped RenderableNode, dst string) 
 
 	if dst == TheInternet {
 		outputID = dst
-		maj, min = "the Internet", ""
+		maj, min = humanTheInternet, ""
 	} else {
 		// When grouping, emit one pseudo node per (srcNodeAddress, dstNodeAddr)
 		dstNodeAddr, _ := trySplitAddr(dst)
@@ -170,8 +172,11 @@ func GenericGroupedPseudoNode(src string, srcMapped RenderableNode, dst string) 
 	}, true
 }
 
-// NoPseudoNode never creates a pseudo node.
-func NoPseudoNode(string, RenderableNode, string) (MappedNode, bool) {
+// InternetOnlyPseudoNode never creates a pseudo node, unless it's the Internet.
+func InternetOnlyPseudoNode(_ string, _ RenderableNode, dst string) (MappedNode, bool) {
+	if dst == TheInternet {
+		return MappedNode{ID: TheInternet, Major: humanTheInternet}, true
+	}
 	return MappedNode{}, false
 }
 
