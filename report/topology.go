@@ -119,8 +119,10 @@ func (t Topology) RenderBy(f MapFunc, grouped bool) map[string]RenderableNode {
 					dstRenderableID = dstNodeAddress
 					maj, min = "the Internet", ""
 				} else if grouped {
-					dstRenderableID = localUnknown
-					maj, min = "", ""
+					// When grouping, emit one pseudo node per (srcNodeAddress, dstNodeAddr)
+					dstNodeAddr, _ := trySplitAddr(dstNodeAddress)
+					dstRenderableID = strings.Join([]string{"pseudo:", dstNodeAddr, srcRenderableID}, ScopeDelim)
+					maj, min = dstNodeAddr, ""
 				} else {
 					// Rule for non-internet psuedo nodes; emit 1 new node for each
 					// dstNodeAddr, srcNodeAddr, srcNodePort.
