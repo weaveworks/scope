@@ -19,6 +19,7 @@ func Router(c Reporter) *mux.Router {
 			c,
 			def.topologySelecter,
 			def.MapFunc,
+			def.PseudoFunc,
 			false, // not grouped
 			get,
 			"/api/topology/"+name,
@@ -28,6 +29,7 @@ func Router(c Reporter) *mux.Router {
 				c,
 				def.topologySelecter,
 				def.MapFunc,
+				def.PseudoFunc,
 				true, // grouped
 				get,
 				"/api/topology/"+name+"grouped",
@@ -44,9 +46,10 @@ var topologyRegistry = map[string]struct {
 	human string
 	topologySelecter
 	report.MapFunc
+	report.PseudoFunc
 	hasGrouped bool
 }{
-	"applications": {"Applications", selectProcess, report.ProcessPID, true},
-	"containers":   {"Containers", selectProcess, report.ProcessContainer, true},
-	"hosts":        {"Hosts", selectNetwork, report.NetworkHostname, false},
+	"applications": {"Applications", selectProcess, report.ProcessPID, report.GenericPseudoNode, true},
+	"containers":   {"Containers", selectProcess, report.ProcessContainer, report.NoPseudoNode, true},
+	"hosts":        {"Hosts", selectNetwork, report.NetworkHostname, report.GenericPseudoNode, false},
 }

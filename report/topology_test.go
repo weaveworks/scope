@@ -183,29 +183,19 @@ func TestRenderByProcessPID(t *testing.T) {
 			},
 		},
 		"pseudo:;10.10.10.10;192.168.1.1;80": {
-			ID:          "pseudo:;10.10.10.10;192.168.1.1;80",
-			LabelMajor:  "10.10.10.10",
-			LabelMinor:  "",
-			Rank:        "",
-			Pseudo:      true,
-			Adjacency:   nil,
-			OriginHosts: nil,
-			OriginNodes: nil,
-			Metadata:    AggregateMetadata{},
+			ID:         "pseudo:;10.10.10.10;192.168.1.1;80",
+			LabelMajor: "10.10.10.10",
+			Pseudo:     true,
+			Metadata:   AggregateMetadata{},
 		},
 		"pseudo:;10.10.10.11;192.168.1.1;80": {
-			ID:          "pseudo:;10.10.10.11;192.168.1.1;80",
-			LabelMajor:  "10.10.10.11",
-			LabelMinor:  "",
-			Rank:        "",
-			Pseudo:      true,
-			Adjacency:   nil,
-			OriginHosts: nil,
-			OriginNodes: nil,
-			Metadata:    AggregateMetadata{},
+			ID:         "pseudo:;10.10.10.11;192.168.1.1;80",
+			LabelMajor: "10.10.10.11",
+			Pseudo:     true,
+			Metadata:   AggregateMetadata{},
 		},
 	}
-	have := report.Process.RenderBy(ProcessPID, false)
+	have := report.Process.RenderBy(ProcessPID, GenericPseudoNode, false)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
@@ -231,12 +221,16 @@ func TestRenderByProcessPIDGrouped(t *testing.T) {
 			},
 		},
 		"apache": {
-			ID:          "apache",
-			LabelMajor:  "apache",
-			LabelMinor:  "",
-			Rank:        "215",
-			Pseudo:      false,
-			Adjacency:   NewIDList("curl", "localUnknown"),
+			ID:         "apache",
+			LabelMajor: "apache",
+			LabelMinor: "",
+			Rank:       "215",
+			Pseudo:     false,
+			Adjacency: NewIDList(
+				"curl",
+				"pseudo:;10.10.10.10;apache",
+				"pseudo:;10.10.10.11;apache",
+			),
 			OriginHosts: NewIDList("server.hostname.com"),
 			OriginNodes: NewIDList(";192.168.1.1;80"),
 			Metadata: AggregateMetadata{
@@ -244,19 +238,20 @@ func TestRenderByProcessPIDGrouped(t *testing.T) {
 				KeyBytesEgress:  1500,
 			},
 		},
-		"localUnknown": {
-			ID:          "localUnknown",
-			LabelMajor:  "",
-			LabelMinor:  "",
-			Rank:        "",
-			Pseudo:      true,
-			Adjacency:   nil,
-			OriginHosts: nil,
-			OriginNodes: nil,
-			Metadata:    AggregateMetadata{},
+		"pseudo:;10.10.10.10;apache": {
+			ID:         "pseudo:;10.10.10.10;apache",
+			LabelMajor: "10.10.10.10",
+			Pseudo:     true,
+			Metadata:   AggregateMetadata{},
+		},
+		"pseudo:;10.10.10.11;apache": {
+			ID:         "pseudo:;10.10.10.11;apache",
+			LabelMajor: "10.10.10.11",
+			Pseudo:     true,
+			Metadata:   AggregateMetadata{},
 		},
 	}
-	have := report.Process.RenderBy(ProcessPID, true)
+	have := report.Process.RenderBy(ProcessPID, GenericPseudoNode, true)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
@@ -315,7 +310,7 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Metadata:    AggregateMetadata{},
 		},
 	}
-	have := report.Network.RenderBy(NetworkHostname, false)
+	have := report.Network.RenderBy(NetworkHostname, GenericPseudoNode, false)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}

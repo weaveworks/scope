@@ -46,6 +46,7 @@ func makeTopologyHandlers(
 	rep Reporter,
 	topo topologySelecter,
 	mapping report.MapFunc,
+	pseudo report.PseudoFunc,
 	grouped bool,
 	get *mux.Router,
 	base string,
@@ -53,7 +54,7 @@ func makeTopologyHandlers(
 	// Full topology.
 	get.HandleFunc(base, func(w http.ResponseWriter, r *http.Request) {
 		respondWith(w, http.StatusOK, APITopology{
-			Nodes: topo(rep.Report()).RenderBy(mapping, grouped),
+			Nodes: topo(rep.Report()).RenderBy(mapping, pseudo, grouped),
 		})
 	})
 
@@ -71,7 +72,7 @@ func makeTopologyHandlers(
 				return
 			}
 		}
-		handleWebsocket(w, r, rep, topo, mapping, grouped, loop)
+		handleWebsocket(w, r, rep, topo, mapping, pseudo, grouped, loop)
 	})
 
 	// Individual nodes.
@@ -80,7 +81,7 @@ func makeTopologyHandlers(
 			vars     = mux.Vars(r)
 			nodeID   = vars["id"]
 			rpt      = rep.Report()
-			node, ok = topo(rpt).RenderBy(mapping, grouped)[nodeID]
+			node, ok = topo(rpt).RenderBy(mapping, pseudo, grouped)[nodeID]
 		)
 		if !ok {
 			http.NotFound(w, r)
@@ -114,6 +115,7 @@ func handleWebsocket(
 	rep Reporter,
 	topo topologySelecter,
 	mapping report.MapFunc,
+	psuedo report.PseudoFunc,
 	grouped bool,
 	loop time.Duration,
 ) {
@@ -139,7 +141,7 @@ func handleWebsocket(
 		tick         = time.Tick(loop)
 	)
 	for {
-		newTopo := topo(rep.Report()).RenderBy(mapping, grouped)
+		newTopo := topo(rep.Report()).RenderBy(mapping, psuedo, grouped)
 		diff := report.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

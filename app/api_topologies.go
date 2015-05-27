@@ -42,7 +42,7 @@ func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request)
 				Name:       def.human,
 				URL:        url,
 				GroupedURL: groupedURL,
-				Stats:      stats(def.topologySelecter(rpt).RenderBy(def.MapFunc, false)),
+				Stats:      stats(def.topologySelecter(rpt).RenderBy(def.MapFunc, def.PseudoFunc, false)),
 			})
 		}
 		respondWith(w, http.StatusOK, a)
