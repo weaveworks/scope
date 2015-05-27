@@ -34,15 +34,15 @@ func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request)
 
 			url := "/api/topology/" + name
 			var groupedURL string
-			if def.hasGrouped {
-				groupedURL = url + "grouped"
+			if def.groupedTopology != "" {
+				groupedURL = "/api/topology/" + def.groupedTopology
 			}
 
 			a = append(a, APITopologyDesc{
 				Name:       def.human,
 				URL:        url,
 				GroupedURL: groupedURL,
-				Stats:      stats(def.topologySelecter(rpt).RenderBy(def.MapFunc, def.PseudoFunc, false)),
+				Stats:      stats(def.selector(rpt).RenderBy(def.mapper, def.pseudo)),
 			})
 		}
 		respondWith(w, http.StatusOK, a)

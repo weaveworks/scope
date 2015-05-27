@@ -86,7 +86,7 @@ func TestUngroupedMapping(t *testing.T) {
 	} {
 		identity := fmt.Sprintf("(%d %s %v)", i, c.id, c.meta)
 
-		m, haveOK := c.f(c.id, c.meta, false)
+		m, haveOK := c.f(c.id, c.meta)
 		if want, have := c.wantOK, haveOK; want != have {
 			t.Errorf("%s: map OK error: want %v, have %v", identity, want, have)
 		}

@@ -195,7 +195,7 @@ func TestRenderByProcessPID(t *testing.T) {
 			Metadata:   AggregateMetadata{},
 		},
 	}
-	have := report.Process.RenderBy(ProcessPID, GenericPseudoNode, false)
+	have := report.Process.RenderBy(ProcessPID, GenericPseudoNode)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
@@ -210,7 +210,7 @@ func TestRenderByProcessPIDGrouped(t *testing.T) {
 			ID:          "curl",
 			LabelMajor:  "curl",
 			LabelMinor:  "",
-			Rank:        "10001",
+			Rank:        "curl",
 			Pseudo:      false,
 			Adjacency:   NewIDList("apache"),
 			OriginHosts: NewIDList("client.hostname.com"),
@@ -224,7 +224,7 @@ func TestRenderByProcessPIDGrouped(t *testing.T) {
 			ID:         "apache",
 			LabelMajor: "apache",
 			LabelMinor: "",
-			Rank:       "215",
+			Rank:       "apache",
 			Pseudo:     false,
 			Adjacency: NewIDList(
 				"curl",
@@ -251,7 +251,7 @@ func TestRenderByProcessPIDGrouped(t *testing.T) {
 			Metadata:   AggregateMetadata{},
 		},
 	}
-	have := report.Process.RenderBy(ProcessPID, GenericPseudoNode, true)
+	have := report.Process.RenderBy(ProcessName, GenericGroupedPseudoNode)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
@@ -310,7 +310,7 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Metadata:    AggregateMetadata{},
 		},
 	}
-	have := report.Network.RenderBy(NetworkHostname, GenericPseudoNode, false)
+	have := report.Network.RenderBy(NetworkHostname, GenericPseudoNode)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}

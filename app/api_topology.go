@@ -41,68 +41,57 @@ func selectNetwork(r report.Report) report.Topology {
 	return r.Network
 }
 
-// makeTopologyHandlers make /api/topology/* handlers.
-func makeTopologyHandlers(
-	rep Reporter,
-	topo topologySelecter,
-	mapping report.MapFunc,
-	pseudo report.PseudoFunc,
-	grouped bool,
-	get *mux.Router,
-	base string,
-) {
-	// Full topology.
-	get.HandleFunc(base, func(w http.ResponseWriter, r *http.Request) {
-		respondWith(w, http.StatusOK, APITopology{
-			Nodes: topo(rep.Report()).RenderBy(mapping, pseudo, grouped),
-		})
+// Full topology.
+func handleTopology(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
+	respondWith(w, http.StatusOK, APITopology{
+		Nodes: t.selector(rep.Report()).RenderBy(t.mapper, t.pseudo),
 	})
+}
 
-	// Websocket for the full topology. This route overlaps with the next.
-	get.HandleFunc(base+"/ws", func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseForm(); err != nil {
-			respondWith(w, http.StatusInternalServerError, err.Error())
+// Websocket for the full topology. This route overlaps with the next.
+func handleWs(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		respondWith(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	loop := websocketLoop
+	if t := r.Form.Get("t"); t != "" {
+		var err error
+		if loop, err = time.ParseDuration(t); err != nil {
+			respondWith(w, http.StatusBadRequest, t)
 			return
 		}
-		loop := websocketLoop
-		if t := r.Form.Get("t"); t != "" {
-			var err error
-			if loop, err = time.ParseDuration(t); err != nil {
-				respondWith(w, http.StatusBadRequest, t)
-				return
-			}
-		}
-		handleWebsocket(w, r, rep, topo, mapping, pseudo, grouped, loop)
-	})
+	}
+	handleWebsocket(w, r, rep, t, loop)
+}
 
-	// Individual nodes.
-	get.HandleFunc(base+"/{id}", func(w http.ResponseWriter, r *http.Request) {
-		var (
-			vars     = mux.Vars(r)
-			nodeID   = vars["id"]
-			rpt      = rep.Report()
-			node, ok = topo(rpt).RenderBy(mapping, pseudo, grouped)[nodeID]
-		)
-		if !ok {
-			http.NotFound(w, r)
-			return
-		}
-		originHostFunc := func(id string) (OriginHost, bool) { return getOriginHost(rpt.HostMetadatas, id) }
-		originNodeFunc := func(id string) (OriginNode, bool) { return getOriginNode(topo(rpt), id) }
-		respondWith(w, http.StatusOK, APINode{Node: makeDetailed(node, originHostFunc, originNodeFunc)})
-	})
+// Individual nodes.
+func handleNode(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
+	var (
+		vars     = mux.Vars(r)
+		nodeID   = vars["id"]
+		rpt      = rep.Report()
+		node, ok = t.selector(rpt).RenderBy(t.mapper, t.pseudo)[nodeID]
+	)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	originHostFunc := func(id string) (OriginHost, bool) { return getOriginHost(rpt.HostMetadatas, id) }
+	originNodeFunc := func(id string) (OriginNode, bool) { return getOriginNode(t.selector(rpt), id) }
+	respondWith(w, http.StatusOK, APINode{Node: makeDetailed(node, originHostFunc, originNodeFunc)})
+}
 
-	// Individual edges.
-	get.HandleFunc(base+"/{local}/{remote}", func(w http.ResponseWriter, r *http.Request) {
-		var (
-			vars     = mux.Vars(r)
-			localID  = vars["local"]
-			remoteID = vars["remote"]
-			rpt      = rep.Report()
-			metadata = topo(rpt).EdgeMetadata(mapping, grouped, localID, remoteID).Transform()
-		)
-		respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})
-	})
+// Individual edges.
+func handleEdge(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
+	var (
+		vars     = mux.Vars(r)
+		localID  = vars["local"]
+		remoteID = vars["remote"]
+		rpt      = rep.Report()
+		metadata = t.selector(rpt).EdgeMetadata(t.mapper, localID, remoteID).Transform()
+	)
+	respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})
 }
 
 var upgrader = websocket.Upgrader{
@@ -113,10 +102,7 @@ func handleWebsocket(
 	w http.ResponseWriter,
 	r *http.Request,
 	rep Reporter,
-	topo topologySelecter,
-	mapping report.MapFunc,
-	psuedo report.PseudoFunc,
-	grouped bool,
+	t topologyView,
 	loop time.Duration,
 ) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -141,7 +127,7 @@ func handleWebsocket(
 		tick         = time.Tick(loop)
 	)
 	for {
-		newTopo := topo(rep.Report()).RenderBy(mapping, psuedo, grouped)
+		newTopo := t.selector(rep.Report()).RenderBy(t.mapper, t.pseudo)
 		diff := report.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
