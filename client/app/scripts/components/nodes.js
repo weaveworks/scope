@@ -1,59 +1,56 @@
-/** @jsx React.DOM */
+const React = require('react');
 
-var React = require('react');
+const NodesChart = require('../charts/nodes-chart');
+const AppActions = require('../actions/app-actions');
 
-var NodesChart = require('../charts/nodes-chart');
-var AppActions = require('../actions/app-actions');
+const navbarHeight = 160;
+const marginTop = 0;
 
-var navbarHeight = 160;
-var marginTop = 0;
-var marginLeft = 0;
+const Nodes = React.createClass({
 
-var Nodes = React.createClass({
+  getInitialState: function() {
+    return {
+      width: window.innerWidth,
+      height: window.innerHeight - navbarHeight - marginTop
+    };
+  },
 
-	getInitialState: function() {
-		return {
-			width: window.innerWidth,
-			height: window.innerHeight - navbarHeight - marginTop
-		};
-	},
+  componentDidMount: function() {
+    window.addEventListener('resize', this.handleResize);
+  },
 
-	onNodeClick: function(ev) {
-		AppActions.clickNode(ev.currentTarget.id);
-	},
+  componentWillUnmount: function() {
+    window.removeEventListener('resize', this.handleResize);
+  },
 
-	componentDidMount: function() {
-		window.addEventListener('resize', this.handleResize);
-	},
+  onNodeClick: function(ev) {
+    AppActions.clickNode(ev.currentTarget.id);
+  },
 
-	componentWillUnmount: function() {
-		window.removeEventListener('resize', this.handleResize);
-	},
+  render: function() {
+    return (
+      <div id="nodes">
+        <NodesChart
+          onNodeClick={this.onNodeClick}
+          nodes={this.props.nodes}
+          width={this.state.width}
+          height={this.state.height}
+          context="view"
+        />
+      </div>
+    );
+  },
 
-	setDimensions: function() {
-		this.setState({
-			height: window.innerHeight - navbarHeight - marginTop,
-			width: window.innerWidth
-		});
-	},
+  handleResize: function() {
+    this.setDimensions();
+  },
 
-	handleResize: function() {
-		this.setDimensions();
-	},
-
-	render: function() {
-		return (
-			<div id="nodes">
-				<NodesChart
-					onNodeClick={this.onNodeClick}
-					nodes={this.props.nodes}
-					width={this.state.width}
-					height={this.state.height}
-					context="view"
-				/>
-			</div>
-		);
-	}
+  setDimensions: function() {
+    this.setState({
+      height: window.innerHeight - navbarHeight - marginTop,
+      width: window.innerWidth
+    });
+  }
 
 });
 

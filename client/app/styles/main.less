@@ -5,10 +5,10 @@
 @import url(http://fonts.googleapis.com/css?family=Roboto:300,400);
 
 .browsehappy {
-    margin: 0.2em 0;
-    background: #ccc;
-    color: #000;
-    padding: 0.2em 0;
+  margin: 0.2em 0;
+  background: #ccc;
+  color: #000;
+  padding: 0.2em 0;
 }
 
 /* weave company colours */
@@ -35,250 +35,248 @@ html, body {
 
 /* Space out content a bit */
 body {
-    background: linear-gradient(30deg, @background-color 0%, @background-secondary-color 100%);
-    color: @text-color;
-    line-height: 150%;
+  background: linear-gradient(30deg, @background-color 0%, @background-secondary-color 100%);
+  color: @text-color;
+  line-height: 150%;
 }
 
 #app {
 }
 
 .header {
-    position: absolute;
-    top: 32px;
-    width: 100%;
-    height: 80px;
-    z-index: 20;
+  position: absolute;
+  top: 32px;
+  width: 100%;
+  height: 80px;
+  z-index: 20;
 }
 
 .logo {
-    margin: -8px 0 0 64px;
-    height: 64px;
-    width: 250px;
-    float: left;
+  margin: -8px 0 0 64px;
+  height: 64px;
+  width: 250px;
+  float: left;
 }
 
 .topologies,
 .groupings {
-    float: left;
-    margin-top: 7px;
-    margin-left: 48px;
+  float: left;
+  margin-top: 7px;
+  margin-left: 48px;
 }
 
 .topologies {
-    &-icon {
-        font-size: 12px;
-        color: @text-secondary-color;
-        margin-right: 16px;
-        position: relative;
-        top: -1px;
+  &-icon {
+    font-size: 12px;
+    color: @text-secondary-color;
+    margin-right: 16px;
+    position: relative;
+    top: -1px;
+  }
+
+  .topologies-item {
+    margin: 8px 16px 6px 0;
+    cursor: pointer;
+    display: inline-block;
+
+    &-label {
+      color: @text-secondary-color;
+      font-size: 15px;
+      text-transform: uppercase;
     }
 
-    .topologies-item {
-        margin: 8px 16px 6px 0;
-        cursor: pointer;
-        display: inline-block;
-
-        &-label {
-            color: @text-secondary-color;
-            font-size: 15px;
-            text-transform: uppercase;
-        }
-
-        &-active, &:hover {
-            .topologies-item-label {
-                color: @text-color;
-            }
-        }
+    &-active, &:hover {
+      .topologies-item-label {
+        color: @text-color;
+      }
     }
+  }
 }
 
 .groupings {
-    &-item {
-        font-size: 15px;
-        margin: 8px 12px 6px 0;
-        cursor: pointer;
-        display: inline-block;
-        color: @text-tertiary-color;
+  &-item {
+    font-size: 15px;
+    margin: 8px 12px 6px 0;
+    cursor: pointer;
+    display: inline-block;
+    color: @text-tertiary-color;
 
-        &-disabled {
-            color: @text-tertiary-color;
-            cursor: default;
-        }
-
-        &-default:hover,
-        &-active {
-            color: @text-color;
-        }
+    &-disabled {
+      color: @text-tertiary-color;
+      cursor: default;
     }
+
+    &-default:hover,
+    &-active {
+      color: @text-color;
+    }
+  }
 }
 
 .status {
-    float: right;
-    margin-top: 14px;
-    margin-right: 64px;
+  float: right;
+  margin-top: 14px;
+  margin-right: 64px;
 
-    &-icon {
-        font-size: 16px;
-        position: relative;
-        top: 1px;
-        color: @text-secondary-color;
-    }
+  &-icon {
+    font-size: 16px;
+    position: relative;
+    top: 1px;
+    color: @text-secondary-color;
+  }
 
-    &-label {
-        margin-left: 0.5em;
-    }
+  &-label {
+    margin-left: 0.5em;
+  }
 }
 
 #nodes {
 
-    svg {
-        position: absolute;
-        top: 0px;
-    }
+  svg {
+    position: absolute;
+    top: 0px;
+  }
 
-    text {
-        font-size: 14px;
-        font-family: Roboto;
-        fill: @text-secondary-color;
-        text-shadow: 0 2px 0 @white, 2px 0 0 @white, 0 -2px 0 @white, -2px 0 0 @white;
+  text {
+    font-size: 14px;
+    font-family: Roboto;
+    fill: @text-secondary-color;
+    text-shadow: 0 2px 0 @white, 2px 0 0 @white, 0 -2px 0 @white, -2px 0 0 @white;
 
-        &.node-label {
-            fill: @text-color;
-        }
-
-        &.node-sublabel {
-            font-size: 12px;
-            fill: @text-secondary-color;
-        }
-    }
-
-    g.node {
-        cursor: pointer;
-    }
-
-    .link {
-      stroke: @text-secondary-color;
-      stroke-width: 1.5px;
-      fill: none;
-      opacity: 0.5;
-    }
-
-    circle.border {
-        stroke-width: 3px;
-        fill: none;
-    }
-
-    circle.shadow {
-        stroke: none;
-        fill: @background-secondary-color;
-    }
-
-    circle.node {
+    &.node-label {
       fill: @text-color;
     }
+
+    &.node-sublabel {
+      font-size: 12px;
+      fill: @text-secondary-color;
+    }
+  }
+
+  g.node {
+    cursor: pointer;
+  }
+
+  .link {
+    stroke: @text-secondary-color;
+    stroke-width: 1.5px;
+    fill: none;
+    opacity: 0.5;
+  }
+
+  circle.border {
+    stroke-width: 3px;
+    fill: none;
+  }
+
+  circle.shadow {
+    stroke: none;
+    fill: @background-secondary-color;
+  }
+
+  circle.node {
+    fill: @text-color;
+  }
 }
 
 #details {
-    position: absolute;
-    z-index: 1024;
-    display: block;
-    right: 36px;
-    top: 24px;
-    bottom: 48px;
-    width: 32em;
+  position: absolute;
+  z-index: 1024;
+  display: block;
+  right: 36px;
+  top: 24px;
+  bottom: 48px;
+  width: 32em;
 
-    .details-tools {
-        float: right;
-        padding: 16px 24px;
-        color: @white;
+  .details-tools {
+    float: right;
+    padding: 16px 24px;
+    color: @white;
 
-        span {
-            cursor: pointer;
-            &:hover {
-                color: white;
-            }
-        }
+    span {
+      cursor: pointer;
+      &:hover {
+        color: white;
+      }
     }
+  }
 }
 
 .mui-paper, .mui-paper-container {
-    height: 100%;
+  height: 100%;
 }
 
 .node-details {
-    height: 100%;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.86);
+
+  &-header {
+
+    padding: 24px 36px 24px 36px;
+
+    &-label {
+      color: white;
+      margin-bottom: 0;
+
+      &-minor {
+        font-size: 120%;
+        color: @white;
+      }
+
+    }
+  }
+
+  &-content {
+    position: absolute;
+    top: 115px;
+    bottom: 0;
     width: 100%;
-    background-color: rgba(255, 255, 255, 0.86);
+    padding: 0 36px 0 36px;
+    overflow-y: scroll;
+  }
 
-    &-header {
+  &-table {
 
-        padding: 24px 36px 24px 36px;
+    margin-bottom: 8px;
 
-        &-label {
-            color: white;
-            margin-bottom: 0;
+    &-title {
+      text-transform: uppercase;
+      margin-bottom: 0;
+      color: @text-secondary-color;
+      font-size: 100%;
+    }
 
-            &-minor {
-                font-size: 120%;
-                color: @white;
-            }
+    &-row {
+      white-space: nowrap;
+      clear: left;
 
-        }
+      &-key {
+        width: 9em;
+        float: left;
+      }
+
+      &-value-major {
+        margin-right: 0.5em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      &-value-scalar {
+        width: 2em;
+        text-align: right;
+        margin-right: 0.5em;
+      }
+
+      &-value-minor,
+      &-value-unit {
+        font-size: 95%;
+        color: @text-secondary-color;
+      }
 
     }
 
-    &-content {
-        position: absolute;
-        top: 115px;
-        bottom: 0;
-        width: 100%;
-        padding: 0 36px 0 36px;
-        overflow-y: scroll;
-    }
-
-    &-table {
-
-        margin-bottom: 8px;
-
-        &-title {
-            text-transform: uppercase;
-            margin-bottom: 0;
-            color: @text-secondary-color;
-            font-size: 100%;
-        }
-
-        &-row {
-            white-space: nowrap;
-            clear: left;
-
-            &-key {
-                float: left;
-                width: 9em;
-            }
-
-            &-value-major {
-                margin-right: 0.5em;
-
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            &-value-scalar {
-                width: 2em;
-                text-align: right;
-                margin-right: 0.5em;
-            }
-
-            &-value-minor,
-            &-value-unit {
-                font-size: 95%;
-                color: @text-secondary-color;
-            }
-
-        }
-
-    }
+  }
 
 }
 

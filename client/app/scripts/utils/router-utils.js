@@ -1,31 +1,29 @@
+const page = require('page');
 
-var page = require('page');
+const AppActions = require('../actions/app-actions');
+const AppStore = require('../stores/app-store');
 
-var AppActions = require('../actions/app-actions');
-var AppStore = require('../stores/app-store');
+function updateRoute() {
+  const state = AppStore.getAppState();
+  const stateUrl = JSON.stringify(state);
+  const dispatch = false;
 
-page('/', function(ctx) {
-	updateRoute();
+  page.show('/state/' + stateUrl, state, dispatch);
+}
+
+page('/', function() {
+  updateRoute();
 });
 
 page('/state/:state', function(ctx) {
-	var state = JSON.parse(ctx.params.state);
-	AppActions.route(state);
+  const state = JSON.parse(ctx.params.state);
+  AppActions.route(state);
 });
 
-function updateRoute() {
-	var state = AppStore.getAppState();
-	var stateUrl = JSON.stringify(state);
-	var dispatch = false;
-
-	page.show('/state/' + stateUrl, state, dispatch);
-}
-
-
 module.exports = {
-	getRouter: function() {
-		return page;
-	},
+  getRouter: function() {
+    return page;
+  },
 
-	updateRoute: updateRoute
+  updateRoute: updateRoute
 };

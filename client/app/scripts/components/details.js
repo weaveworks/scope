@@ -1,33 +1,30 @@
-/** @jsx React.DOM */
+const React = require('react');
+const mui = require('material-ui');
+const Paper = mui.Paper;
 
-var React = require('react');
-var _ = require('lodash');
-var mui = require('material-ui');
-var Paper = mui.Paper;
-var IconButton = mui.IconButton;
+const AppActions = require('../actions/app-actions');
+const NodeDetails = require('./node-details');
 
-var AppActions = require('../actions/app-actions');
-var NodeDetails = require('./node-details');
+const Details = React.createClass({
 
-var Details = React.createClass({
+  render: function() {
+    return (
+      <div id="details">
+        <Paper zDepth={3}>
+          <div className="details-tools">
+            <span className="fa fa-close" onClick={this.handleClickClose} />
+          </div>
+          <NodeDetails details={this.props.details} />
+        </Paper>
+      </div>
+    );
+  },
 
-	handleClickClose: function(ev) {
-		ev.preventDefault();
-		AppActions.clickCloseDetails();
-	},
+  handleClickClose: function(ev) {
+    ev.preventDefault();
+    AppActions.clickCloseDetails();
+  }
 
-	render: function() {
-		return (
-			<div id="details">
-				<Paper zDepth={3}>
-					<div className="details-tools">
-						<span className="fa fa-close" onClick={this.handleClickClose} />
-					</div>
-					<NodeDetails details={this.props.details} />
-				</Paper>
-			</div>
-		);
-	}
 
 });
 

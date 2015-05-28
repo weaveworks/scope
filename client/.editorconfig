@@ -9,7 +9,7 @@ root = true
 
 # Change these settings to your own preference
 indent_style = space
-indent_size = 4
+indent_size = 2
 
 # We recommend you to keep these unchanged
 end_of_line = lf
@@ -20,10 +20,3 @@ insert_final_newline = true
 [*.md]
 trim_trailing_whitespace = false
 
-[package.json]
-indent_style = space
-indent_size = 2
-
-[bower.json]
-indent_style = space
-indent_size = 2

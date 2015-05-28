@@ -1,45 +1,42 @@
-/** @jsx React.DOM */
+const React = require('react');
 
-var React = require('react');
-var _ = require('lodash');
+const NodeDetailsTable = require('./node-details-table');
+const NodeColorMixin = require('../mixins/node-color-mixin');
 
-var NodeDetailsTable = require('./node-details-table');
-var NodeColorMixin = require('../mixins/node-color-mixin');
+const NodeDetails = React.createClass({
 
-var NodeDetails = React.createClass({
+  mixins: [
+    NodeColorMixin
+  ],
 
-    mixins: [
-        NodeColorMixin
-    ],
+  render: function() {
+    const node = this.props.details;
 
-	render: function() {
-		var node = this.props.details;
+    if (!node) {
+      return <div className="node-details" />;
+    }
 
-		if (!node) {
-			return <div className="node-details" />;
-		}
+    const style = {
+      'background-color': this.getNodeColorDark(node.label_major)
+    };
 
-		var style = {
-			"background-color": this.getNodeColorDark(node.label_major)
-		};
+    return (
+      <div className="node-details">
+        <div className="node-details-header" style={style}>
+          <h2 className="node-details-header-label">
+            {node.label_major}
+          </h2>
+          <div className="node-details-header-label-minor">{node.label_minor}</div>
+        </div>
 
-		return (
-			<div className="node-details">
-				<div className="node-details-header" style={style}>
-					<h2 className="node-details-header-label">
-						{node.label_major}
-					</h2>
-					<div className="node-details-header-label-minor">{node.label_minor}</div>
-				</div>
-
-				<div className="node-details-content">
-					{this.props.details.tables.map(function(table) {
-						return <NodeDetailsTable title={table.title} rows={table.rows} isNumeric={table.numeric} />;
-					})}
-				</div>
-        	</div>
-		);
-	}
+        <div className="node-details-content">
+          {this.props.details.tables.map(function(table) {
+            return <NodeDetailsTable title={table.title} rows={table.rows} isNumeric={table.numeric} />;
+          })}
+        </div>
+      </div>
+    );
+  }
 
 });
 

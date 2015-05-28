@@ -1,27 +1,25 @@
-/** @jsx React.DOM */
+const React = require('react');
 
-var React = require('react');
+const Status = React.createClass({
 
-var Status = React.createClass({
+  renderConnectionState: function() {
+    return (
+      <div className="status-connection">
+        <span className="status-icon fa fa-exclamation-circle" />
+        <span className="status-label">Scope is disconnected</span>
+      </div>
+    );
+  },
 
-	renderConnectionState: function() {
-		return (
-			<div className="status-connection">
-				<span className="status-icon fa fa-exclamation-circle" />
-				<span className="status-label">Scope is disconnected</span>
-			</div>
-		);
-	},
+  render: function() {
+    const isDisconnected = this.props.connectionState === 'disconnected';
 
-	render: function() {
-		var isDisconnected = this.props.connectionState === 'disconnected';
-
-		return (
-			<div className="status">
-				{isDisconnected && this.renderConnectionState()}
-			</div>
-		);
-	}
+    return (
+      <div className="status">
+        {isDisconnected && this.renderConnectionState()}
+      </div>
+    );
+  }
 
 });
 
