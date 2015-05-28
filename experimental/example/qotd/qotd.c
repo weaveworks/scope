@@ -19,8 +19,6 @@ void *thread_func(void *sock) {
     return;
   }
 
-  sleep(1);
-
   clientfd = socket(AF_INET, SOCK_STREAM, 0);
   if (clientfd < 0) {
     perror("ERROR opening socket");
