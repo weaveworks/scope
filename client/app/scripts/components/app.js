@@ -19,6 +19,8 @@ function getStateFromStores() {
     currentTopology: AppStore.getCurrentTopology(),
     connectionState: AppStore.getConnectionState(),
     currentGrouping: AppStore.getCurrentGrouping(),
+    highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
+    highlightedNodeIds: AppStore.getHighlightedNodeIds(),
     selectedNodeId: AppStore.getSelectedNodeId(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
@@ -67,7 +69,8 @@ const App = React.createClass({
           <Status connectionState={this.state.connectionState} />
         </div>
 
-        <Nodes nodes={this.state.nodes} />
+        <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
+          highlightedEdgeIds={this.state.highlightedEdgeIds} />
       </div>
     );
   }
