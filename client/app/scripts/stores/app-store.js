@@ -160,7 +160,6 @@ AppStore.registeredCallback = function(payload) {
 
     case ActionTypes.LEAVE_EDGE:
       mouseOverEdgeId = null;
-      console.log('leave');
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
