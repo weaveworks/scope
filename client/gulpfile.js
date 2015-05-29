@@ -1,3 +1,6 @@
+/*
+ * Gulpfile based on https://github.com/kriasoft/react-starter-kit
+ */
 
 'use strict';
 
