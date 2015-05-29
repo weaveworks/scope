@@ -11,8 +11,10 @@ const Details = React.createClass({
     return (
       <div id="details">
         <Paper zDepth={3}>
-          <div className="details-tools">
-            <span className="fa fa-close" onClick={this.handleClickClose} />
+          <div className="details-tools-wrapper">
+            <div className="details-tools">
+              <span className="fa fa-close" onClick={this.handleClickClose} />
+            </div>
           </div>
           <NodeDetails details={this.props.details} />
         </Paper>
