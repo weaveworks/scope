@@ -1,83 +1,154 @@
+/*
+ * Gulpfile based on https://github.com/kriasoft/react-starter-kit
+ */
 
-const gulp = require('gulp');
-const connect = require('gulp-connect');
-const livereload = require('gulp-livereload');
-const babelify = require('babelify');
-const browserify = require('browserify');
-const del = require('del');
-const source = require('vinyl-source-stream');
-const vbuffer = require('vinyl-buffer');
-const reactify = require('reactify');
+'use strict';
 
-// load plugins
-const $ = require('gulp-load-plugins')();
+var gulp = require('gulp');
+var $ = require('gulp-load-plugins')();
+var del = require('del');
+var path = require('path');
+var runSequence = require('run-sequence');
+var webpack = require('webpack');
+var argv = require('minimist')(process.argv.slice(2));
 
-var isDev = true;
-var isProd = false;
+var watch = false;
+var browserSync;
 
-gulp.task('styles', function() {
-  return gulp.src('app/styles/main.less')
-    .pipe($.if(isDev, $.sourcemaps.init()))
-    .pipe($.less())
-    .pipe($.autoprefixer('last 1 version'))
-    .pipe($.if(isDev, $.sourcemaps.write()))
-    .pipe($.if(isDev, gulp.dest('.tmp/styles')))
-    .pipe($.if(isProd, $.csso()))
-    .pipe($.if(isProd, gulp.dest('dist/styles')))
-    .pipe($.size())
-    .pipe(livereload());
-});
+// The default task
+gulp.task('default', ['build']);
 
-gulp.task('scripts', function() {
-  const bundler = browserify('./app/scripts/main.js', {debug: isDev});
-  bundler.transform(reactify);
-  bundler.transform(babelify);
+// Clean output directory
+gulp.task('clean', del.bind(
+  null, ['.tmp', 'build/*'], {dot: true}
+));
 
-  const stream = bundler.bundle();
-
-  return stream
-    .pipe(source('bundle.js'))
-    .pipe($.if(isDev, gulp.dest('.tmp/scripts')))
-    .pipe($.if(isProd, vbuffer()))
-    .pipe($.if(isProd, $.uglify()))
-    .on('error', $.util.log)
-    .pipe($.if(isProd, gulp.dest('dist/scripts')))
-    .pipe(livereload());
-});
-
-gulp.task('html', ['styles', 'scripts'], function() {
-  return gulp.src('app/*.html')
-    .pipe($.preprocess())
-    .pipe(gulp.dest('dist'))
-    .pipe($.size())
-    .pipe(livereload());
-});
-
-gulp.task('images', function() {
-  return gulp.src('app/images/**/*')
-    .pipe(gulp.dest('dist/images'))
-    .pipe($.size());
-});
-
-gulp.task('fonts', function() {
-  return gulp.src('node_modules/font-awesome/fonts/*')
+// 3rd party libraries
+gulp.task('vendor', function() {
+  return gulp.src('node_modules/font-awesome/fonts/**')
     .pipe($.filter('**/*.{eot,svg,ttf,woff,woff2}'))
-    .pipe($.flatten())
-    .pipe($.if(isDev, gulp.dest('.tmp/fonts')))
-    .pipe($.if(isProd, gulp.dest('dist/fonts')))
-    .pipe($.size());
+    .pipe(gulp.dest('build/fonts'));
 });
 
-gulp.task('extras', function() {
-  return gulp.src(['app/*.*', '!app/*.html'], { dot: true })
-    .pipe(gulp.dest('dist'));
-});
-
-gulp.task('clean', function() {
-  return del(['.tmp', 'dist']);
+// Favicon
+gulp.task('favicon', function() {
+  return gulp.src(['app/favicon.ico'])
+    .pipe(gulp.dest('build'));
 });
 
 
+// Static files
+gulp.task('html', function() {
+  var release = !!argv.release;
+
+  return gulp.src('app/*.html')
+    .pipe($.changed('build'))
+    .pipe($.if(release, $.preprocess()))
+    .pipe(gulp.dest('build'))
+    .pipe($.size({title: 'html'}));
+});
+
+// Bundle
+gulp.task('bundle', function(cb) {
+  var started = false;
+  var config = require('./webpack.config.js');
+  var bundler = webpack(config);
+  var verbose = !!argv.verbose;
+
+  function bundle(err, stats) {
+    if (err) {
+      throw new $.util.PluginError('webpack', err);
+    }
+
+    console.log(stats.toString({
+      colors: $.util.colors.supportsColor,
+      hash: verbose,
+      version: verbose,
+      timings: verbose,
+      chunks: verbose,
+      chunkModules: verbose,
+      cached: verbose,
+      cachedAssets: verbose
+    }));
+
+    if (!started) {
+      started = true;
+      return cb();
+    }
+  }
+
+  if (watch) {
+    bundler.watch(200, bundle);
+  } else {
+    bundler.run(bundle);
+  }
+});
+
+// Build the app from source code
+gulp.task('build', ['clean'], function(cb) {
+  runSequence(['vendor', 'html', 'favicon', 'bundle'], cb);
+});
+
+// Build and start watching for modifications
+gulp.task('build:watch', function(cb) {
+  watch = true;
+  runSequence('build', function() {
+    gulp.watch('app/*.html', ['html']);
+    cb();
+  });
+});
+
+// Launch a Node.js/Express server
+gulp.task('serve', ['build:watch'], function() {
+  $.connect.server({
+    root: ['build'],
+    port: 4041,
+    middleware: function() {
+      return [(function() {
+        var url = require('url');
+        var proxy = require('proxy-middleware');
+        var options = url.parse('http://localhost:4040/api');
+        options.route = '/api';
+        return proxy(options);
+      })()];
+    },
+    livereload: false
+  });
+});
+
+// Launch BrowserSync development server
+gulp.task('sync', ['serve'], function(cb) {
+  browserSync = require('browser-sync');
+
+  browserSync({
+    logPrefix: 'RSK',
+    // Stop the browser from automatically opening
+    open: false,
+    notify: false,
+    // Run as an https by setting 'https: true'
+    // Note: this uses an unsigned certificate which on first access
+    //       will present a certificate warning in the browser.
+    https: false,
+    // Informs browser-sync to proxy our Express app which would run
+    // at the following location
+    proxy: 'localhost:4041'
+  }, cb);
+
+  process.on('exit', function() {
+    browserSync.exit();
+  });
+
+  gulp.watch('build/**/*.*', browserSync.reload);
+
+  // FIX this part to only reload styles parts that changed
+  // gulp.watch(['build/**/*.*'].concat(
+  //   src.server.map(function(file) { return '!' + file; })
+  // ), function(file) {
+  //   browserSync.reload(path.relative(__dirname, file.path));
+  // });
+});
+
+// Lint
 gulp.task('lint', function() {
   return gulp.src(['app/**/*.js'])
     // eslint() attaches the lint output to the eslint property
@@ -89,55 +160,4 @@ gulp.task('lint', function() {
     // To have the process exit with an error code (1) on
     // lint error, return the stream and pipe to failOnError last.
     .pipe($.eslint.failOnError());
-});
-
-gulp.task('production', ['html', 'images', 'fonts', 'extras']);
-
-gulp.task('build', function() {
-  isDev = false;
-  isProd = true;
-  gulp.start('production');
-});
-
-gulp.task('default', ['clean'], function() {
-  gulp.start('build');
-});
-
-gulp.task('connect', function() {
-  const root = isProd ? ['dist'] : ['.tmp', 'app'];
-  connect.server({
-    root: root,
-    port: 4041,
-    middleware: function() {
-      return [(function() {
-        const url = require('url');
-        const proxy = require('proxy-middleware');
-        const options = url.parse('http://localhost:4040/api');
-        options.route = '/api';
-        return proxy(options);
-      })()];
-    },
-    livereload: false
-  });
-});
-
-gulp.task('serve', ['connect', 'styles', 'scripts', 'fonts']);
-
-gulp.task('serve-build', function() {
-  isDev = false;
-  isProd = true;
-
-  // use local WS api
-  gulp.src('app/*.html')
-    .pipe($.preprocess({context: {DEBUG: true} }))
-    .pipe(gulp.dest('dist'));
-
-  gulp.start('connect');
-});
-
-gulp.task('watch', ['serve'], function() {
-  livereload.listen();
-  gulp.watch('app/styles/**/*.less', ['styles']);
-  gulp.watch('app/scripts/**/*.js', ['scripts']);
-  gulp.watch('app/images/**/*', ['images']);
 });

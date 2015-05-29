@@ -14,6 +14,6 @@ RUN npm install -g gulp
 ADD package.json /home/weave/
 RUN npm install
 
-ADD gulpfile.js /home/weave/
+ADD gulpfile.js webpack.config.js .eslintrc /home/weave/
 
 # For instructions on running this container, consult the toplevel Makefile
