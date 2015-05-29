@@ -31,6 +31,12 @@ html, body {
 .wrap {
 }
 
+/* add this class to truncate text with ellipsis, container needs width */
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Space out content a bit */
 body {
@@ -185,11 +191,16 @@ body {
   right: 36px;
   top: 24px;
   bottom: 48px;
-  width: 32em;
+  width: 420px;
+
+  .details-tools-wrapper {
+    position: relative;
+  }
 
   .details-tools {
-    float: right;
-    padding: 16px 24px;
+    position: absolute;
+    top: 16px;
+    right: 24px;
     color: @white;
 
     span {
@@ -217,8 +228,10 @@ body {
     &-label {
       color: white;
       margin-bottom: 0;
+      width: 348px;
 
       &-minor {
+        width: 348px;
         font-size: 120%;
         color: @white;
       }
@@ -251,14 +264,12 @@ body {
       clear: left;
 
       &-key {
-        width: 9em;
+        width: 11em;
         float: left;
       }
 
       &-value-major {
         margin-right: 0.5em;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
 
       &-value-scalar {

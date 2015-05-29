@@ -23,10 +23,10 @@ const NodeDetails = React.createClass({
     return (
       <div className="node-details">
         <div className="node-details-header" style={style}>
-          <h2 className="node-details-header-label">
+          <h2 className="node-details-header-label truncate">
             {node.label_major}
           </h2>
-          <div className="node-details-header-label-minor">{node.label_minor}</div>
+          <div className="node-details-header-label-minor truncate">{node.label_minor}</div>
         </div>
 
         <div className="node-details-content">

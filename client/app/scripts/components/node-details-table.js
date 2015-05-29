@@ -17,8 +17,8 @@ const NodeDetailsTable = React.createClass({
               <div className="node-details-table-row-key">{row.key}</div>
               {isNumeric && <div className="node-details-table-row-value-scalar">{row.value_major}</div>}
               {isNumeric && <div className="node-details-table-row-value-unit">{row.value_minor}</div>}
-              {!isNumeric && <div className="node-details-table-row-value-major">{row.value_major}</div>}
-              {!isNumeric && row.value_minor && <div className="node-details-table-row-value-minor">{row.value_minor}</div>}
+              {!isNumeric && <div className="node-details-table-row-value-major truncate">{row.value_major}</div>}
+              {!isNumeric && row.value_minor && <div className="node-details-table-row-value-minor truncate">{row.value_minor}</div>}
             </div>
           );
         })}
