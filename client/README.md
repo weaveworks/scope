@@ -2,7 +2,14 @@
 
 ## Getting Started
 
-- Install: `npm install`
-- Run `gulp` for building to the `dist` directory or `gulp serve` to serve the UI via a webserver
-- Develop using `gulp watch` for automatic code reload
+- Setup: `npm install`
+- Build: `gulp build --release`, output will be in `build/`
+- Develop: `gulp sync` and then open `http://localhost:3000/`
+
+To see a topology, `../app/app` needs to be running, as well as a probe.
+
+## Coding
+
+This directory has a `.eslintrc`, make sure your editor supports linter hints.
+To run a linter, you also run `gulp lint`.
 
