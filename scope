@@ -9,7 +9,14 @@ usage() {
     exit 1
 }
 
-SCOPE_IMAGE=weaveworks/scope
+SCRIPT_VERSION="(unreleased version)"
+if [ "$SCRIPT_VERSION" = "(unreleased version)" ] ; then
+    IMAGE_VERSION=latest
+else
+    IMAGE_VERSION=$SCRIPT_VERSION
+fi
+IMAGE_VERSION=${VERSION:-$IMAGE_VERSION}
+SCOPE_IMAGE=weaveworks/scope:$IMAGE_VERSION
 CONTAINER_NAME=weavescope
 DNS_CONTAINER_NAME=weavedns
 DNS_HTTP_PORT=6785

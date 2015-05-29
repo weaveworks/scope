@@ -26,9 +26,15 @@ func main() {
 		batch         = flag.Duration("batch", 1*time.Second, "batch interval")
 		window        = flag.Duration("window", 15*time.Second, "window")
 		listen        = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
+		printVersion  = flag.Bool("version", false, "print version number and exit")
 	)
 	flag.Parse()
 	probes := append(defaultProbes, flag.Args()...)
+
+	if *printVersion {
+		fmt.Println(version)
+		return
+	}
 
 	switch *logfile {
 	case "stderr":
