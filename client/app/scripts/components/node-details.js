@@ -2,12 +2,21 @@ const React = require('react');
 
 const NodeDetailsTable = require('./node-details-table');
 const NodeColorMixin = require('../mixins/node-color-mixin');
+const TitleUtils = require('../utils/title-utils');
 
 const NodeDetails = React.createClass({
 
   mixins: [
     NodeColorMixin
   ],
+
+  componentDidMount: function() {
+    this.updateTitle();
+  },
+
+  componentWillUnmount: function() {
+    TitleUtils.resetTitle();
+  },
 
   render: function() {
     const node = this.props.details;
@@ -36,6 +45,14 @@ const NodeDetails = React.createClass({
         </div>
       </div>
     );
+  },
+
+  componentDidUpdate: function() {
+    this.updateTitle();
+  },
+
+  updateTitle: function() {
+    TitleUtils.setTitle(this.props.details && this.props.details.label_major);
   }
 
 });
