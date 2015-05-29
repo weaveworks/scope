@@ -19,7 +19,8 @@ function getStateFromStores() {
     currentTopology: AppStore.getCurrentTopology(),
     connectionState: AppStore.getConnectionState(),
     currentGrouping: AppStore.getCurrentGrouping(),
-    mouseOverNodeId: AppStore.getMouseOverNodeId(),
+    highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
+    highlightedNodeIds: AppStore.getHighlightedNodeIds(),
     selectedNodeId: AppStore.getSelectedNodeId(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
@@ -68,7 +69,8 @@ const App = React.createClass({
           <Status connectionState={this.state.connectionState} />
         </div>
 
-        <Nodes nodes={this.state.nodes} mouseOverNodeId={this.state.mouseOverNodeId} />
+        <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
+          highlightedEdgeIds={this.state.highlightedEdgeIds} />
       </div>
     );
   }

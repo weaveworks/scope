@@ -39,6 +39,13 @@ module.exports = {
     WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
   },
 
+  enterEdge: function(edgeId) {
+    AppDispatcher.dispatch({
+      type: ActionTypes.ENTER_EDGE,
+      edgeId: edgeId
+    });
+  },
+
   enterNode: function(nodeId) {
     AppDispatcher.dispatch({
       type: ActionTypes.ENTER_NODE,
@@ -51,6 +58,13 @@ module.exports = {
       type: ActionTypes.HIT_ESC_KEY
     });
     RouterUtils.updateRoute();
+  },
+
+  leaveEdge: function(edgeId) {
+    AppDispatcher.dispatch({
+      type: ActionTypes.LEAVE_EDGE,
+      edgeId: edgeId
+    });
   },
 
   leaveNode: function(nodeId) {

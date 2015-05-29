@@ -4,6 +4,7 @@ const assign = require('object-assign');
 
 const AppDispatcher = require('../dispatcher/app-dispatcher');
 const ActionTypes = require('../constants/action-types');
+const Naming = require('../constants/naming');
 
 // Helpers
 
@@ -16,6 +17,7 @@ function isUrlForTopologyId(url, topologyId) {
 let connectionState = 'disconnected';
 let currentGrouping = 'none';
 let currentTopologyId = 'applications';
+let mouseOverEdgeId = null;
 let mouseOverNodeId = null;
 let nodes = {};
 let nodeDetails = null;
@@ -58,8 +60,34 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return currentGrouping;
   },
 
-  getMouseOverNodeId: function() {
-    return mouseOverNodeId;
+  getHighlightedEdgeIds: function() {
+    if (mouseOverNodeId) {
+      // all neighbour combinations because we dont know which direction exists
+      const node = nodes[mouseOverNodeId];
+      return _.flatten(
+        _.map(node.adjacency, function(nodeId) {
+          return [
+            [nodeId, mouseOverNodeId].join(Naming.EDGE_ID_SEPARATOR),
+            [mouseOverNodeId, nodeId].join(Naming.EDGE_ID_SEPARATOR)
+          ];
+        })
+      );
+    }
+    if (mouseOverEdgeId) {
+      return mouseOverEdgeId;
+    }
+    return null;
+  },
+
+  getHighlightedNodeIds: function() {
+    if (mouseOverNodeId) {
+      const node = nodes[mouseOverNodeId];
+      return _.union(node.adjacency, [mouseOverNodeId]);
+    }
+    if (mouseOverEdgeId) {
+      return mouseOverEdgeId.split(Naming.EDGE_ID_SEPARATOR);
+    }
+    return null;
   },
 
   getNodeDetails: function() {
@@ -114,6 +142,11 @@ AppStore.registeredCallback = function(payload) {
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
+    case ActionTypes.ENTER_EDGE:
+      mouseOverEdgeId = payload.edgeId;
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
     case ActionTypes.ENTER_NODE:
       mouseOverNodeId = payload.nodeId;
       AppStore.emit(AppStore.CHANGE_EVENT);
@@ -122,6 +155,12 @@ AppStore.registeredCallback = function(payload) {
     case ActionTypes.HIT_ESC_KEY:
       nodeDetails = null;
       selectedNodeId = null;
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
+    case ActionTypes.LEAVE_EDGE:
+      mouseOverEdgeId = null;
+      console.log('leave');
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
@@ -148,6 +187,9 @@ AppStore.registeredCallback = function(payload) {
         // in case node disappears before mouseleave event
         if (mouseOverNodeId === nodeId) {
           mouseOverNodeId = null;
+        }
+        if (nodes[nodeId] && _.contains(mouseOverEdgeId, nodeId)) {
+          mouseOverEdgeId = null;
         }
         delete nodes[nodeId];
       });

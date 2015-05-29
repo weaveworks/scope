@@ -2,6 +2,8 @@ const _ = require('lodash');
 const d3 = require('d3');
 const React = require('react');
 
+const Edge = require('./edge');
+const Naming = require('../constants/naming');
 const NodesLayout = require('./nodes-layout');
 const Node = require('./node');
 
@@ -11,11 +13,6 @@ const MARGINS = {
   right: 40,
   bottom: 0
 };
-
-const line = d3.svg.line()
-  .interpolate('basis')
-  .x(function(d) { return d.x; })
-  .y(function(d) { return d.y; });
 
 const NodesChart = React.createClass({
 
@@ -77,9 +74,9 @@ const NodesChart = React.createClass({
     return fingerprint.join(';');
   },
 
-  getGraphNodes: function(nodes, scale) {
+  renderGraphNodes: function(nodes, scale) {
     return _.map(nodes, function(node) {
-      const highlighted = node.id === this.props.mouseOverNodeId || _.includes(node.adjacency, this.props.mouseOverNodeId);
+      const highlighted = _.includes(this.props.highlightedNodeIds, node.id);
       return (
         <Node
           highlighted={highlighted}
@@ -96,17 +93,18 @@ const NodesChart = React.createClass({
     }, this);
   },
 
-  getGraphEdges: function(edges) {
+  renderGraphEdges: function(edges) {
     return _.map(edges, function(edge) {
+      const highlighted = _.includes(this.props.highlightedEdgeIds, edge.id);
       return (
-        <path className="link" d={line(edge.points)} key={edge.id} />
+        <Edge key={edge.id} id={edge.id} points={edge.points} highlighted={highlighted} />
       );
-    });
+    }, this);
   },
 
   render: function() {
-    const nodeElements = this.getGraphNodes(this.state.nodes, this.state.nodeScale);
-    const edgeElements = this.getGraphEdges(this.state.edges, this.state.nodeScale);
+    const nodeElements = this.renderGraphNodes(this.state.nodes, this.state.nodeScale);
+    const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
     const transform = 'translate(' + this.state.translate + ')' +
       ' scale(' + this.state.scale + ')';
 
@@ -158,7 +156,7 @@ const NodesChart = React.createClass({
     _.each(topology, function(node) {
       _.each(node.adjacency, function(adjacent) {
         const edge = [node.id, adjacent];
-        const edgeId = edge.join('-');
+        const edgeId = edge.join(Naming.EDGE_ID_SEPARATOR);
 
         if (!edges[edgeId]) {
           const source = nodes[edge[0]];

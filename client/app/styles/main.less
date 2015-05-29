@@ -162,12 +162,26 @@ body {
     cursor: pointer;
   }
 
-  .link {
-    stroke: @text-secondary-color;
-    stroke-width: 1.5px;
-    fill: none;
-    opacity: 0.5;
+  .edge {
+    .link {
+      stroke: @text-secondary-color;
+      stroke-width: 1.5px;
+      fill: none;
+      stroke-opacity: 0.5;
+    }
+    .shadow {
+      stroke: @weave-blue;
+      stroke-width: 10px;
+      fill: none;
+      stroke-opacity: 0;
+    }
+    &.highlighted {
+      .shadow {
+        stroke-opacity: 0.1;
+      }
+    }
   }
+
 
   circle.border {
     stroke-width: 3px;
