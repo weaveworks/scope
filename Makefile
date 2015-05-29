@@ -37,14 +37,14 @@ $(APP_EXE) $(PROBE_EXE):
 	go get -tags netgo ./$(@D)
 	go build -ldflags "-extldflags \"-static\" -X main.version $(GIT_REVISION)" -tags netgo -o $@ ./$(@D)
 
-static: client/dist/scripts/bundle.js
-	esc -o app/static.go -prefix client/dist client/dist
+static: client/build/app.js
+	esc -o app/static.go -prefix client/build client/build
 
-client/dist/scripts/bundle.js: client/app/scripts/*
-	mkdir -p client/dist
+client/build/app.js: client/app/scripts/*
+	mkdir -p client/build
 	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
-		-v $(shell pwd)/client/dist:/home/weave/dist \
-		$(SCOPE_UI_BUILD_IMAGE) gulp build
+		-v $(shell pwd)/client/build:/home/weave/build \
+		$(SCOPE_UI_BUILD_IMAGE) gulp build --release
 
 client-test: client/test/*
 	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
@@ -62,7 +62,7 @@ $(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/gulpfile.js client/package.js
 
 clean:
 	go clean ./...
-	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) client/dist
+	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) client/build
 
 deps:
 	go get \

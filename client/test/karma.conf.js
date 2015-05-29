@@ -4,20 +4,34 @@ module.exports = function(config) {
       'PhantomJS'
     ],
     files: [
-      '../app/**/__tests__/*.js'
+      {
+        pattern: 'tests.webpack.js',
+        watched: false
+      }
     ],
     frameworks: [
-      'jasmine', 'browserify'
+      'jasmine'
     ],
     preprocessors: {
-      '../app/**/__tests__/*.js': ['browserify']
-    },
-    browserify: {
-      debug: true,
-      transform: ['reactify', 'babelify']
+      'tests.webpack.js': ['webpack']
     },
     reporters: [
       'dots'
-    ]
+    ],
+    webpack: {
+      module: {
+        loaders: [
+          {
+            test: /\.js?$/,
+            exclude: /node_modules/,
+            loader: 'babel-loader'
+          }
+        ]
+      },
+      watch: true
+    },
+    webpackServer: {
+      noInfo: true
+    }
   });
 };
