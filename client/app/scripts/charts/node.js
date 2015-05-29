@@ -1,6 +1,7 @@
 const React = require('react');
 const tweenState = require('react-tween-state');
 
+const AppActions = require('../actions/app-actions');
 const NodeColorMixin = require('../mixins/node-color-mixin');
 
 const Node = React.createClass({
@@ -47,7 +48,9 @@ const Node = React.createClass({
     const className = this.props.highlighted ? 'node highlighted' : 'node';
 
     return (
-      <g className={className} transform={transform} onClick={this.props.onClick} id={this.props.id}>
+      <g className={className} transform={transform} id={this.props.id}
+        onClick={this.props.onClick} onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+        {this.props.highlighted && <circle r={scale(0.7)} className="highlighted"></circle>}
         <circle r={scale(0.5)} className="border" stroke={color}></circle>
         <circle r={scale(0.45)} className="shadow"></circle>
         <circle r={Math.max(2, scale(0.125))} className="node"></circle>
@@ -55,7 +58,16 @@ const Node = React.createClass({
         <text className="node-sublabel" textAnchor="middle" x={textOffsetX} y={textOffsetY + 17}>{this.props.subLabel}</text>
       </g>
     );
+  },
+
+  handleMouseEnter: function(ev) {
+    AppActions.enterNode(ev.currentTarget.id);
+  },
+
+  handleMouseLeave: function(ev) {
+    AppActions.leaveNode(ev.currentTarget.id);
   }
+
 });
 
 module.exports = Node;

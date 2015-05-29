@@ -16,7 +16,7 @@ function isUrlForTopologyId(url, topologyId) {
 let connectionState = 'disconnected';
 let currentGrouping = 'none';
 let currentTopologyId = 'applications';
-let mouseOverNode = null;
+let mouseOverNodeId = null;
 let nodes = {};
 let nodeDetails = null;
 let selectedNodeId = null;
@@ -56,6 +56,10 @@ const AppStore = assign({}, EventEmitter.prototype, {
 
   getCurrentGrouping: function() {
     return currentGrouping;
+  },
+
+  getMouseOverNodeId: function() {
+    return mouseOverNodeId;
   },
 
   getNodeDetails: function() {
@@ -111,7 +115,7 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.ENTER_NODE:
-      mouseOverNode = payload.nodeId;
+      mouseOverNodeId = payload.nodeId;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
@@ -122,7 +126,7 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.LEAVE_NODE:
-      mouseOverNode = null;
+      mouseOverNodeId = null;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
@@ -142,8 +146,8 @@ AppStore.registeredCallback = function(payload) {
       // nodes that no longer exist
       _.each(payload.delta.remove, function(nodeId) {
         // in case node disappears before mouseleave event
-        if (mouseOverNode === nodeId) {
-          mouseOverNode = null;
+        if (mouseOverNodeId === nodeId) {
+          mouseOverNodeId = null;
         }
         delete nodes[nodeId];
       });

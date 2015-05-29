@@ -31,8 +31,9 @@ const Nodes = React.createClass({
     return (
       <div id="nodes">
         <NodesChart
-          onNodeClick={this.onNodeClick}
+          mouseOverNodeId={this.props.mouseOverNodeId}
           nodes={this.props.nodes}
+          onNodeClick={this.onNodeClick}
           width={this.state.width}
           height={this.state.height}
           context="view"

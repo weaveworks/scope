@@ -79,7 +79,7 @@ const NodesChart = React.createClass({
 
   getGraphNodes: function(nodes, scale) {
     return _.map(nodes, function(node) {
-      const highlighted = _.includes(this.props.highlightedNodes, node.id);
+      const highlighted = node.id === this.props.mouseOverNodeId || _.includes(node.adjacency, this.props.mouseOverNodeId);
       return (
         <Node
           highlighted={highlighted}
@@ -131,12 +131,17 @@ const NodesChart = React.createClass({
 
     _.each(topology, function(node, id) {
       nodes[id] = prevNodes[id] || {};
+
+      // initialize position for new nodes
       _.defaults(nodes[id], {
         x: centerX,
         y: centerY,
         textAnchor: 'start'
       });
+
+      // copy relevant fields to state nodes
       _.assign(nodes[id], {
+        adjacency: node.adjacency,
         id: id,
         label: node.label_major,
         subLabel: node.label_minor,
