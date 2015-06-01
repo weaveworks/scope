@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -24,12 +23,12 @@ func main() {
 	var (
 		defaultProbes = []string{fmt.Sprintf("localhost:%d", xfer.ProbePort), fmt.Sprintf("scope.weave.local:%d", xfer.ProbePort)}
 		logfile       = flag.String("log", "stderr", "stderr, syslog, or filename")
-		probes        = flag.String("probes", strings.Join(defaultProbes, ","), "list of probe endpoints, comma separated")
 		batch         = flag.Duration("batch", 1*time.Second, "batch interval")
 		window        = flag.Duration("window", 15*time.Second, "window")
 		listen        = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
 	)
 	flag.Parse()
+	probes := append(defaultProbes, flag.Args()...)
 
 	switch *logfile {
 	case "stderr":
@@ -62,7 +61,7 @@ func main() {
 	c := xfer.NewCollector(*batch)
 	defer c.Stop()
 
-	r := NewResolver(strings.Split(*probes, ","), c.AddAddress)
+	r := NewResolver(probes, c.AddAddress)
 	defer r.Stop()
 
 	lifo := NewReportLIFO(c, *window)

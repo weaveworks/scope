@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/weaveworks/scope/xfer"
 )
 
 func TestResolver(t *testing.T) {
@@ -15,20 +18,21 @@ func TestResolver(t *testing.T) {
 
 	oldLookupIP := lookupIP
 	defer func() { lookupIP = oldLookupIP }()
-	ips := []net.IP{}
-	lookupIP = func(host string) ([]net.IP, error) { return ips, nil }
+	ips := map[string][]net.IP{}
+	lookupIP = func(host string) ([]net.IP, error) {
+		addrs, ok := ips[host]
+		if !ok {
+			return nil, fmt.Errorf("Not found")
+		}
+		return addrs, nil
+	}
 
 	port := ":80"
+	ip1 := "192.168.0.1"
+	ip2 := "192.168.0.10"
 	adds := make(chan string)
 	add := func(s string) { adds <- s }
-	r := NewResolver([]string{"symbolic.name" + port}, add)
-
-	c <- time.Now() // trigger initial resolve, with no endpoints
-	select {
-	case <-time.After(time.Millisecond):
-	case s := <-adds:
-		t.Errorf("got unexpected add: %q", s)
-	}
+	r := NewResolver([]string{"symbolic.name" + port, "namewithnoport", ip1 + port, ip2}, add)
 
 	assertAdd := func(want string) {
 		select {
@@ -42,16 +46,30 @@ func TestResolver(t *testing.T) {
 		}
 	}
 
-	ip1 := "1.2.3.4"
-	ips = makeIPs(ip1)
-	c <- time.Now()       // trigger a resolve
-	assertAdd(ip1 + port) // we want 1 add
+	// Initial resolve should just give us IPs
+	assertAdd(ip1 + port)
+	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.ProbePort))
 
-	ip2 := "10.10.10.10"
-	ips = makeIPs(ip1, ip2)
+	// Trigger another resolve with a tick; again,
+	// just want ips.
+	c <- time.Now()
+	assertAdd(ip1 + port)
+	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.ProbePort))
+
+	ip3 := "1.2.3.4"
+	ips = map[string][]net.IP{"symbolic.name": makeIPs(ip3)}
+	c <- time.Now()       // trigger a resolve
+	assertAdd(ip3 + port) // we want 1 add
+	assertAdd(ip1 + port)
+	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.ProbePort))
+
+	ip4 := "10.10.10.10"
+	ips = map[string][]net.IP{"symbolic.name": makeIPs(ip3, ip4)}
 	c <- time.Now()       // trigger another resolve, this time with 2 adds
-	assertAdd(ip1 + port) // first add
-	assertAdd(ip2 + port) // second add
+	assertAdd(ip3 + port) // first add
+	assertAdd(ip4 + port) // second add
+	assertAdd(ip1 + port)
+	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.ProbePort))
 
 	done := make(chan struct{})
 	go func() { r.Stop(); close(done) }()
