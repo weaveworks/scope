@@ -11,7 +11,7 @@ SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 SCOPE_EXPORT=scope.tar
 SCOPE_UI_BUILD_EXPORT=scope_ui_build.tar
 SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
-GIT_REVISION=$(shell git rev-parse HEAD)
+SCOPE_VERSION=$(shell git rev-parse HEAD)
 
 all: $(SCOPE_EXPORT)
 
@@ -35,7 +35,7 @@ $(PROBE_EXE): probe/*.go report/*.go xfer/*.go
 
 $(APP_EXE) $(PROBE_EXE):
 	go get -tags netgo ./$(@D)
-	go build -ldflags "-extldflags \"-static\" -X main.version $(GIT_REVISION)" -tags netgo -o $@ ./$(@D)
+	go build -ldflags "-extldflags \"-static\" -X main.version $(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
 
 static: client/build/app.js
 	esc -o app/static.go -prefix client/build client/build
@@ -71,4 +71,5 @@ deps:
 		github.com/fzipp/gocyclo \
 		github.com/mattn/goveralls \
 		github.com/mjibson/esc \
-		github.com/kisielk/errcheck
+		github.com/kisielk/errcheck \
+		github.com/aktau/github-release
