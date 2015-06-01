@@ -2,7 +2,7 @@
 
 [![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master) [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope) [![Sourcegraph](https://sourcegraph.com/api/repos/github.com/weaveworks/scope/.badges/status.svg)](https://sourcegraph.com/github.com/weaveworks/scope)
 
-![Weave Scope Screenshot](http://weave.works/scope/assets/img/feature-1.png)
+![Weave Scope Screenshot](http://weave.works/img/header-image-left.png)
 
 
 ## Overview
