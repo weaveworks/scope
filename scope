@@ -133,8 +133,11 @@ case "$COMMAND" in
 			$WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS "$@")
 
 		if dns_running; then
-			IP_ADDRS=$(find /sys/class/net -name eth* | xargs -n1 basename | xargs -n1 ip addr show |
-				grep inet | awk '{ print $2 }' | grep -oE "$IP_REGEXP" | xargs echo)
+			IP_ADDRS=$(hostname -I)
+			if [ -z "$IP_ADDRS" ]; then
+				echo "Could not determine local IP address; Weave DNS integration will not work correctly."
+				exit 1
+			fi
 			tell_dns_fqdn PUT $CONTAINER $FQDN $IP_ADDRS
 		fi
 
