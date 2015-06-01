@@ -3,7 +3,11 @@ package main
 import (
 	"log"
 	"net"
+	"strconv"
+	"strings"
 	"time"
+
+	"github.com/weaveworks/scope/xfer"
 )
 
 var (
@@ -42,11 +46,22 @@ func NewResolver(peers []string, add func(string)) Resolver {
 func prepareNames(strs []string) []peer {
 	var results []peer
 	for _, s := range strs {
-		hostname, port, err := net.SplitHostPort(s)
-		if err != nil {
-			log.Printf("invalid address %s: %v", s, err)
-			continue
+		var (
+			hostname string
+			port     string
+		)
+
+		if strings.Contains(s, ":") {
+			var err error
+			hostname, port, err = net.SplitHostPort(s)
+			if err != nil {
+				log.Printf("invalid address %s: %v", s, err)
+				continue
+			}
+		} else {
+			hostname, port = s, strconv.Itoa(xfer.ProbePort)
 		}
+
 		results = append(results, peer{hostname, port})
 	}
 	return results
@@ -67,10 +82,16 @@ func (r Resolver) loop() {
 
 func (r Resolver) resolveHosts() {
 	for _, peer := range r.peers {
-		addrs, err := lookupIP(peer.hostname)
-		if err != nil {
-			log.Printf("lookup %s: %v", peer.hostname, err)
-			continue
+		var addrs []net.IP
+		if addr := net.ParseIP(peer.hostname); addr != nil {
+			addrs = []net.IP{addr}
+		} else {
+			var err error
+			addrs, err = lookupIP(peer.hostname)
+			if err != nil {
+				log.Printf("lookup %s: %v", peer.hostname, err)
+				continue
+			}
 		}
 
 		for _, addr := range addrs {

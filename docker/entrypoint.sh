@@ -31,4 +31,12 @@ if [ -n "$DNS_SERVER" -a -n "$SEARCHPATH" ]; then
     echo "nameserver $DNS_SERVER" >>/etc/resolv.conf
 fi
 
+# End of the command line can optionally be some
+# addresses of probes to connect to, for people not
+# using Weave DNS.  We stick these in /etc/weave/probes
+# for the run-app script to pick up.
+MANUAL_PROBES=$@
+mkdir -p /etc/weave
+echo "$MANUAL_PROBES" >/etc/weave/probes
+
 exec /sbin/runsvdir /etc/service

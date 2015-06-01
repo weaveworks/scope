@@ -1,7 +1,12 @@
 #!/bin/bash
 
 usage() {
-    echo "$0 (launch|stop)"
+    echo "Usage:"
+    echo "scope launch [<peer> ...]"
+    echo "scope stop"
+    echo
+    echo "scope <peer>    is of the form <ip_address_or_fqdn>[:<port>]"
+    exit 1
 }
 
 SCOPE_IMAGE=weaveworks/scope
@@ -118,7 +123,6 @@ container_ip() {
 case "$COMMAND" in
 
 	launch)
-		[ $# -eq 0 ] || usage
 		check_not_running $CONTAINER_NAME $IMAGE
 
 		# If WeaveDNS is running, we want to automatically tell the scope
