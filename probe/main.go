@@ -78,7 +78,11 @@ func main() {
 	}
 
 	if *dockerMapper {
-		docker := newDockerMapper(*procRoot, *dockerInterval)
+		docker, err := newDockerMapper(*procRoot, *dockerInterval)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		pms = append(pms,
 			docker.idMapper(),
 			docker.nameMapper(),
