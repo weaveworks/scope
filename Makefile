@@ -16,7 +16,7 @@ SCOPE_VERSION=$(shell git rev-parse HEAD)
 all: $(SCOPE_EXPORT)
 
 $(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) docker/*
-	@if [ -z '$(DOCKER_SQUASH)' ]; then echo "Please install docker-squash by running 'make dep'." && exit 1; fi
+	@if [ -z '$(DOCKER_SQUASH)' ]; then echo "Please install docker-squash by running 'make deps'." && exit 1; fi
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker save $(SCOPE_IMAGE):latest | sudo $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
