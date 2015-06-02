@@ -89,7 +89,6 @@ func (r Resolver) resolveHosts() {
 			var err error
 			addrs, err = lookupIP(peer.hostname)
 			if err != nil {
-				log.Printf("lookup %s: %v", peer.hostname, err)
 				continue
 			}
 		}
