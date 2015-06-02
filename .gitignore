@@ -7,6 +7,7 @@
 _obj
 _test
 .vagrant
+releases
 
 # Architecture specific extensions/prefixes
 *.[568vq]
