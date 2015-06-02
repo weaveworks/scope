@@ -153,6 +153,11 @@ case "$COMMAND" in
 		fi
 
 		echo $CONTAINER
+
+		echo "Weave Scope is reachable at the following URL(s):" >&2
+		for ip in $(hostname -I); do
+			echo "  * http://$ip:4040/" >&2
+		done
 		;;
 
 	stop)
