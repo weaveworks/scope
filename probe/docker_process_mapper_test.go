@@ -1,6 +1,7 @@
 package main
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
@@ -23,6 +24,14 @@ func (m mockDockerClient) InspectContainer(id string) (*docker.Container, error)
 
 func (m mockDockerClient) ListImages(options docker.ListImagesOptions) ([]docker.APIImages, error) {
 	return m.apiImages, nil
+}
+
+func (m mockDockerClient) AddEventListener(events chan<- *docker.APIEvents) error {
+	return nil
+}
+
+func (m mockDockerClient) RemoveEventListener(events chan *docker.APIEvents) error {
+	return nil
 }
 
 func TestDockerProcessMapper(t *testing.T) {
@@ -59,11 +68,13 @@ func TestDockerProcessMapper(t *testing.T) {
 		}, nil
 	}
 
-	dockerMapper := newDockerMapper("/proc", 10*time.Second)
+	dockerMapper, _ := newDockerMapper("/proc", 10*time.Second)
 	dockerIDMapper := dockerMapper.idMapper()
 	dockerNameMapper := dockerMapper.nameMapper()
 	dockerImageIDMapper := dockerMapper.imageIDMapper()
 	dockerImageNameMapper := dockerMapper.imageNameMapper()
+
+	runtime.Gosched()
 
 	for pid, want := range map[uint]struct{ id, name, imageID, imageName string }{
 		1: {"foo", "bar", "baz", "tag"},
