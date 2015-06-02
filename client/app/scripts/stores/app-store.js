@@ -16,7 +16,7 @@ function isUrlForTopologyId(url, topologyId) {
 
 let connectionState = 'disconnected';
 let currentGrouping = 'none';
-let currentTopologyId = 'applications';
+let currentTopologyId = 'containers';
 let mouseOverEdgeId = null;
 let mouseOverNodeId = null;
 let nodes = {};
