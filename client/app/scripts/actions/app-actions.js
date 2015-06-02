@@ -97,6 +97,13 @@ module.exports = {
     WebapiUtils.getNodeDetails(AppStore.getCurrentTopologyUrl(), AppStore.getSelectedNodeId());
   },
 
+  receiveApiDetails: function(apiDetails) {
+    AppDispatcher.dispatch({
+        type: ActionTypes.RECEIVE_API_DETAILS,
+        version: apiDetails.version
+    });
+  },
+
   route: function(state) {
     AppDispatcher.dispatch({
       state: state,

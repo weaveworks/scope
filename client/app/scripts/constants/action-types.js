@@ -14,5 +14,6 @@ module.exports = keymirror({
   RECEIVE_NODES: null,
   RECEIVE_NODES_DELTA: null,
   RECEIVE_TOPOLOGIES: null,
+  RECEIVE_API_DETAILS: null,
   ROUTE_TOPOLOGY: null
 });

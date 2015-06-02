@@ -11,7 +11,6 @@ const Details = require('./details');
 const Nodes = require('./nodes');
 const RouterUtils = require('../utils/router-utils');
 
-
 const ESC_KEY_CODE = 27;
 
 function getStateFromStores() {
@@ -24,7 +23,8 @@ function getStateFromStores() {
     selectedNodeId: AppStore.getSelectedNodeId(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
-    topologies: AppStore.getTopologies()
+    topologies: AppStore.getTopologies(),
+    version: AppStore.getVersion()
   };
 }
 
@@ -41,6 +41,7 @@ const App = React.createClass({
 
     RouterUtils.getRouter().start({hashbang: true});
     WebapiUtils.getTopologies();
+    WebapiUtils.getApiDetails();
   },
 
   onChange: function() {
@@ -55,6 +56,7 @@ const App = React.createClass({
 
   render: function() {
     const showingDetails = this.state.selectedNodeId;
+    const versionString = this.state.version ? 'Version ' + this.state.version : '';
 
     return (
       <div>
@@ -71,6 +73,8 @@ const App = React.createClass({
 
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
           highlightedEdgeIds={this.state.highlightedEdgeIds} />
+
+        <div className="footer">{versionString}</div>
       </div>
     );
   }

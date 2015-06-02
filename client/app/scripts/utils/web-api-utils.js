@@ -10,6 +10,7 @@ let reconnectTimer = 0;
 let currentUrl = null;
 let updateFrequency = '5s';
 let topologyTimer = 0;
+let apiDetailsTimer = 0;
 
 function createWebsocket(topologyUrl) {
   if (socket) {
@@ -55,10 +56,20 @@ function getNodeDetails(topologyUrl, nodeId) {
   }
 }
 
+function getApiDetails() {
+  clearTimeout(apiDetailsTimer);
+  reqwest('/api', function(res) {
+    AppActions.receiveApiDetails(res);
+    apiDetailsTimer = setTimeout(getApiDetails, 10000);
+  });
+}
+
 module.exports = {
   getNodeDetails: getNodeDetails,
 
   getTopologies: getTopologies,
+
+  getApiDetails: getApiDetails,
 
   getNodesDelta: function(topologyUrl) {
     if (topologyUrl && topologyUrl !== currentUrl) {
