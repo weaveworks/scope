@@ -1,33 +1,21 @@
 package main
 
 import (
+	"fmt"
 	"os/exec"
-	"strconv"
-	"strings"
+	"regexp"
 )
 
-func getLoads() (float64, float64, float64) {
+var loadRe = regexp.MustCompile(`load average\: ([0-9\.]+), ([0-9\.]+), ([0-9\.]+)`)
+
+func getLoad() string {
 	out, err := exec.Command("w").CombinedOutput()
 	if err != nil {
-		return -1, -1, -1
+		return "unknown"
 	}
-	noCommas := strings.NewReplacer(",", "")
-	firstLine := strings.Split(string(out), "\n")[0]
-	toks := strings.Fields(firstLine)
-	if len(toks) < 5 {
-		return -1, -1, -1
+	matches := loadRe.FindAllStringSubmatch(string(out), -1)
+	if matches == nil || len(matches) < 1 || len(matches[0]) < 4 {
+		return "unknown"
 	}
-	one, err := strconv.ParseFloat(noCommas.Replace(toks[len(toks)-3]), 64)
-	if err != nil {
-		return -1, -1, -1
-	}
-	five, err := strconv.ParseFloat(noCommas.Replace(toks[len(toks)-2]), 64)
-	if err != nil {
-		return -1, -1, -1
-	}
-	fifteen, err := strconv.ParseFloat(noCommas.Replace(toks[len(toks)-1]), 64)
-	if err != nil {
-		return -1, -1, -1
-	}
-	return one, five, fifteen
+	return fmt.Sprintf("%s %s %s", matches[0][1], matches[0][2], matches[0][3])
 }

@@ -15,9 +15,11 @@ var (
 	lookupIP = net.LookupIP
 )
 
-// Resolver periodically tries to resolve the IP addresses for a given
-// set of hostnames.
-type Resolver struct {
+type resolver interface {
+	Stop()
+}
+
+type staticResolver struct {
 	quit  chan struct{}
 	add   func(string)
 	peers []peer
@@ -33,8 +35,8 @@ type peer struct {
 // resolved IPs.  It explictiy supports hostnames which
 // resolve to multiple IPs; it will repeatedly call
 // add with the same IP, expecting the target to dedupe.
-func NewResolver(peers []string, add func(string)) Resolver {
-	r := Resolver{
+func newStaticResolver(peers []string, add func(string)) resolver {
+	r := staticResolver{
 		quit:  make(chan struct{}),
 		add:   add,
 		peers: prepareNames(peers),
@@ -67,20 +69,21 @@ func prepareNames(strs []string) []peer {
 	return results
 }
 
-func (r Resolver) loop() {
+func (r staticResolver) loop() {
 	r.resolveHosts()
 	t := tick(time.Minute)
 	for {
 		select {
 		case <-t:
 			r.resolveHosts()
+
 		case <-r.quit:
 			return
 		}
 	}
 }
 
-func (r Resolver) resolveHosts() {
+func (r staticResolver) resolveHosts() {
 	for _, peer := range r.peers {
 		var addrs []net.IP
 		if addr := net.ParseIP(peer.hostname); addr != nil {
@@ -103,7 +106,6 @@ func (r Resolver) resolveHosts() {
 	}
 }
 
-// Stop this Resolver.
-func (r Resolver) Stop() {
+func (r staticResolver) Stop() {
 	close(r.quit)
 }

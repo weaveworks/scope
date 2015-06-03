@@ -1,27 +1,82 @@
 package main
 
 import (
+	"fmt"
 	"net"
-	"strconv"
 	"testing"
 
 	"github.com/weaveworks/procspy"
 	"github.com/weaveworks/scope/report"
 )
 
-func TestScopedIP(t *testing.T) {
-	const scope = "my-scope"
+func TestSpyNetwork(t *testing.T) {
+	procspy.SetFixtures(fixConnections)
+	const (
+		hostID   = "heinz-tomato-ketchup"
+		hostName = "frenchs-since-1904"
+	)
+	r := spy(hostID, hostName, false)
+	//buf, _ := json.MarshalIndent(r, "", "    ")
+	//t.Logf("\n%s\n", buf)
 
-	for ip, want := range map[string]string{
-		"1.2.3.4":     report.ScopeDelim + "1.2.3.4",
-		"192.168.1.2": report.ScopeDelim + "192.168.1.2",
-		"127.0.0.1":   scope + report.ScopeDelim + "127.0.0.1", // loopback
-		"::1":         scope + report.ScopeDelim + "::1",       // loopback
-		"fd00::451b:b714:85da:489e": report.ScopeDelim + "fd00::451b:b714:85da:489e", // global address
-		"fe80::82ee:73ff:fe83:588f": report.ScopeDelim + "fe80::82ee:73ff:fe83:588f", // link-local address
+	// We passed fixConnections without processes. Make sure we don't get
+	// process nodes.
+	if want, have := 0, len(r.Process.NodeMetadatas); want != have {
+		t.Errorf("want %d, have %d", want, have)
+	}
+
+	var (
+		localAddressNodeID  = report.MakeAddressNodeID(hostID, fixLocalAddress.String())
+		remoteAddressNodeID = report.MakeAddressNodeID(hostID, fixRemoteAddress.String())
+		adjacencyID         = report.MakeAdjacencyID(hostID, localAddressNodeID)
+	)
+	if want, have := 1, len(r.Address.Adjacency[adjacencyID]); want != have {
+		t.Fatalf("want %d, have %d", want, have)
+	}
+	if want, have := remoteAddressNodeID, r.Address.Adjacency[adjacencyID][0]; want != have {
+		t.Fatalf("want %q, have %q", want, have)
+	}
+	if want, have := hostName, r.Address.NodeMetadatas[localAddressNodeID]["host_name"]; want != have {
+		t.Fatalf("want %q, have %q", want, have)
+	}
+}
+
+func TestSpyProcess(t *testing.T) {
+	procspy.SetFixtures(fixConnectionsWithProcesses)
+	const (
+		hostID   = "nikon"
+		hostName = "fishermans-friend"
+	)
+	r := spy(hostID, hostName, true)
+	//buf, _ := json.MarshalIndent(r, "", "    ")
+	//t.Logf("\n%s\n", buf)
+
+	var (
+		processNodeID        = report.MakeProcessNodeID(hostID, fmt.Sprint(fixProcessPIDB))
+		localEndpointNodeID  = report.MakeEndpointNodeID(hostID, fixLocalAddress.String(), fmt.Sprint(fixLocalPort))
+		remoteEndpointNodeID = report.MakeEndpointNodeID(hostID, fixRemoteAddress.String(), fmt.Sprint(fixRemotePort))
+		adjacencyID          = report.MakeAdjacencyID(hostID, localEndpointNodeID)
+	)
+	if want, have := 1, len(r.Endpoint.Adjacency[adjacencyID]); want != have {
+		t.Fatalf("want %d, have %d", want, have)
+	}
+	if want, have := remoteEndpointNodeID, r.Endpoint.Adjacency[adjacencyID][0]; want != have {
+		t.Fatalf("want %q, have %q", want, have)
+	}
+	for key, want := range map[string]string{
+		"host_id":         hostID,
+		"process_node_id": processNodeID,
 	} {
-		if have := scopedIP(scope, net.ParseIP(ip)); have != want {
-			t.Errorf("%q: have %q, want %q", ip, have, want)
+		if have := r.Endpoint.NodeMetadatas[localEndpointNodeID][key]; want != have {
+			t.Errorf("Endpoint.NodeMetadatas[%q][%q]: want %q, have %q", localEndpointNodeID, key, want, have)
+		}
+	}
+	for key, want := range map[string]string{
+		"pid":          fmt.Sprint(fixProcessPIDB),
+		"process_name": fixProcessName,
+	} {
+		if have := r.Process.NodeMetadatas[processNodeID][key]; want != have {
+			t.Errorf("Process.NodeMetadatas[%q][%q]: want %q, have %q", processNodeID, key, want, have)
 		}
 	}
 }
@@ -78,98 +133,3 @@ var (
 		},
 	}
 )
-
-func TestSpyNetwork(t *testing.T) {
-	procspy.SetFixtures(fixConnections)
-
-	const (
-		nodeID   = "heinz-tomato-ketchup"
-		nodeName = "frenchs-since-1904"
-	)
-
-	r := spy(nodeID, nodeName, false, []processMapper{})
-	//buf, _ := json.MarshalIndent(r, "", "    ")
-	//t.Logf("\n%s\n", buf)
-
-	// No process nodes, please
-	if want, have := 0, len(r.Process.Adjacency); want != have {
-		t.Fatalf("want %d, have %d", want, have)
-	}
-
-	var (
-		scopedLocal  = scopedIP(nodeID, fixLocalAddress)
-		scopedRemote = scopedIP(nodeID, fixRemoteAddress)
-		localKey     = nodeID + report.IDDelim + scopedLocal
-	)
-
-	if want, have := 1, len(r.Network.Adjacency[localKey]); want != have {
-		t.Fatalf("want %d, have %d", want, have)
-	}
-
-	if want, have := scopedRemote, r.Network.Adjacency[localKey][0]; want != have {
-		t.Fatalf("want %q, have %q", want, have)
-	}
-
-	if want, have := nodeName, r.Network.NodeMetadatas[scopedLocal]["name"]; want != have {
-		t.Fatalf("want %q, have %q", want, have)
-	}
-}
-
-func TestSpyProcess(t *testing.T) {
-	procspy.SetFixtures(fixConnectionsWithProcesses)
-
-	const (
-		nodeID   = "nikon"
-		nodeName = "fishermans-friend"
-	)
-
-	r := spy(nodeID, nodeName, true, []processMapper{})
-	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
-
-	var (
-		scopedLocal  = scopedIPPort(nodeID, fixLocalAddress, fixLocalPort)
-		scopedRemote = scopedIPPort(nodeID, fixRemoteAddress, fixRemotePort)
-		localKey     = nodeID + report.IDDelim + scopedLocal
-	)
-
-	if want, have := 1, len(r.Process.Adjacency[localKey]); want != have {
-		t.Fatalf("want %d, have %d", want, have)
-	}
-
-	if want, have := scopedRemote, r.Process.Adjacency[localKey][0]; want != have {
-		t.Fatalf("want %q, have %q", want, have)
-	}
-
-	for key, want := range map[string]string{
-		"domain": nodeID,
-		"name":   fixProcessName,
-		"pid":    strconv.FormatUint(uint64(fixProcessPID), 10),
-	} {
-		if have := r.Process.NodeMetadatas[scopedLocal][key]; want != have {
-			t.Errorf("Process.NodeMetadatas[%q][%q]: want %q, have %q", scopedLocal, key, want, have)
-		}
-	}
-}
-
-func TestSpyProcessDataSource(t *testing.T) {
-	procspy.SetFixtures(fixConnectionsWithProcesses)
-
-	const (
-		nodeID   = "chianti"
-		nodeName = "harmonisch"
-	)
-
-	m := identityMapper{}
-	r := spy(nodeID, nodeName, true, []processMapper{m})
-	scopedLocal := scopedIPPort(nodeID, fixLocalAddress, fixLocalPort)
-
-	k := m.Key()
-	v, err := m.Map(fixProcessPID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if want, have := v, r.Process.NodeMetadatas[scopedLocal][k]; want != have {
-		t.Fatalf("%s: want %q, have %q", k, want, have)
-	}
-}

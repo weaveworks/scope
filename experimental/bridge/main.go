@@ -50,7 +50,9 @@ func main() {
 	// Collector deals with the probes, and generates a single merged report
 	// every second.
 	c := xfer.NewCollector(*batch)
-	c.AddAddresses(fixedAddresses)
+	for _, addr := range fixedAddresses {
+		c.Add(addr)
+	}
 	defer c.Stop()
 
 	publisher, err := xfer.NewTCPPublisher(*listen)
@@ -81,8 +83,8 @@ func interrupt() chan os.Signal {
 
 type collector interface {
 	Reports() <-chan report.Report
-	RemoveAddress(string)
-	AddAddress(string)
+	Remove(string)
+	Add(string)
 }
 
 type publisher xfer.Publisher
@@ -99,8 +101,8 @@ func makeAvoid(fixed []string) map[string]struct{} {
 	}
 
 	// Don't go Ouroboros.
-	if localNets, err := net.InterfaceAddrs(); err == nil {
-		for _, n := range localNets {
+	if localNetworks, err := net.InterfaceAddrs(); err == nil {
+		for _, n := range localNetworks {
 			if net, ok := n.(*net.IPNet); ok {
 				avoid[net.IP.String()] = struct{}{}
 			}
@@ -124,13 +126,13 @@ func discover(c collector, p publisher, fixed []string) {
 		p.Publish(r)
 
 		var (
-			now       = time.Now()
-			localNets = r.LocalNets()
+			now           = time.Now()
+			localNetworks = r.LocalNetworks()
 		)
 
-		for _, adjacent := range r.Network.Adjacency {
+		for _, adjacent := range r.Address.Adjacency {
 			for _, a := range adjacent {
-				ip := report.AddressIP(a) // address id -> IP
+				ip := report.AddressIDAddresser(a) // address node ID -> IP
 				if ip == nil {
 					continue
 				}
@@ -141,9 +143,9 @@ func discover(c collector, p publisher, fixed []string) {
 				}
 				// log.Printf("potential address: %v (via %s)", addr, src)
 				if _, ok := lastSeen[addr]; !ok {
-					if interestingAddress(localNets, addr) {
+					if interestingAddress(localNetworks, addr) {
 						log.Printf("discovery %v: potential probe address", addr)
-						c.AddAddress(addressToDial(addr))
+						c.Add(addressToDial(addr))
 					} else {
 						log.Printf("discovery %v: non-probe address", addr)
 					}
@@ -164,7 +166,7 @@ func discover(c collector, p publisher, fixed []string) {
 				// anything.
 				log.Printf("discovery %v: traffic timeout", addr)
 				delete(lastSeen, addr)
-				c.RemoveAddress(addressToDial(addr))
+				c.Remove(addressToDial(addr))
 			}
 		}
 	}
@@ -172,7 +174,7 @@ func discover(c collector, p publisher, fixed []string) {
 
 // interestingAddress tells whether the address is a local and normal address,
 // which we want to try to connect to.
-func interestingAddress(localNets []*net.IPNet, addr string) bool {
+func interestingAddress(localNetworks []*net.IPNet, addr string) bool {
 	if addr == "" {
 		return false
 	}
@@ -189,7 +191,7 @@ func interestingAddress(localNets []*net.IPNet, addr string) bool {
 	}
 
 	// Only connect to addresses we know are localnet.
-	for _, n := range localNets {
+	for _, n := range localNetworks {
 		if n.Contains(ip) {
 			return true
 		}
