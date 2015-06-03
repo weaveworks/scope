@@ -28,16 +28,22 @@ type cgroupMapper struct {
 	sync.RWMutex
 	root string
 	d    map[uint]string
+	quit chan struct{}
 }
 
 func newCgroupMapper(root string, interval time.Duration) *cgroupMapper {
 	m := cgroupMapper{
 		root: root,
 		d:    map[uint]string{},
+		quit: make(chan struct{}),
 	}
 	m.update()
 	go m.loop(interval)
 	return &m
+}
+
+func (m *cgroupMapper) Stop() {
+	close(m.quit)
 }
 
 func (m *cgroupMapper) Key() string { return "cgroup" }
@@ -57,8 +63,14 @@ func (m *cgroupMapper) Map(pid uint) (string, error) {
 }
 
 func (m *cgroupMapper) loop(d time.Duration) {
-	for range time.Tick(d) {
-		m.update()
+	ticker := time.Tick(d)
+	for {
+		select {
+		case <-ticker:
+			m.update()
+		case <-m.quit:
+			return
+		}
 	}
 }
 

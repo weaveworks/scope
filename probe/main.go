@@ -71,7 +71,9 @@ func main() {
 	if *cgroupsRoot != "" {
 		if fi, err := os.Stat(*cgroupsRoot); err == nil && fi.IsDir() {
 			log.Printf("enriching -processes with cgroup names from %s", *cgroupsRoot)
-			pms = append(pms, newCgroupMapper(*cgroupsRoot, *cgroupsInterval))
+			cgroupMapper := newCgroupMapper(*cgroupsRoot, *cgroupsInterval)
+			defer cgroupMapper.Stop()
+			pms = append(pms, cgroupMapper)
 		} else {
 			log.Printf("-cgroups.root=%s: %v", *cgroupsRoot, err)
 		}
@@ -82,6 +84,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer docker.Stop()
 
 		pms = append(pms,
 			docker.idMapper(),
@@ -93,6 +96,8 @@ func main() {
 
 	log.Printf("listening on %s", *listen)
 
+	quit := make(chan struct{})
+	defer close(quit)
 	go func() {
 		var (
 			hostname = hostname()
@@ -113,6 +118,9 @@ func main() {
 			case <-spyTick:
 				r.Merge(spy(hostname, hostname, *spyProcs, pms))
 				// log.Printf("merged report:\n%#v\n", r)
+
+			case <-quit:
+				return
 			}
 		}
 	}()
