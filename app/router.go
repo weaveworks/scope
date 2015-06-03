@@ -13,6 +13,7 @@ import (
 func Router(c Reporter) *mux.Router {
 	router := mux.NewRouter()
 	get := router.Methods("GET").Subrouter()
+	get.HandleFunc("/api", apiHandler)
 	get.HandleFunc("/api/topology", makeTopologyList(c))
 	get.HandleFunc("/api/topology/{topology}", captureTopology(c, handleTopology))
 	get.HandleFunc("/api/topology/{topology}/ws", captureTopology(c, handleWs))
@@ -33,6 +34,15 @@ func captureTopology(rep Reporter, f func(Reporter, topologyView, http.ResponseW
 		}
 		f(rep, topology, w, r)
 	}
+}
+
+// APIDetails are some generic details that can be fetched from /api
+type APIDetails struct {
+	Version string `json:"version"`
+}
+
+func apiHandler(w http.ResponseWriter, r *http.Request) {
+	respondWith(w, http.StatusOK, APIDetails{Version: version})
 }
 
 type topologyView struct {

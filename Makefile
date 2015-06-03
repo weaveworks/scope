@@ -1,4 +1,4 @@
-.PHONY: all deps static clean
+.PHONY: all deps static clean client-lint client-sync
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo
@@ -11,7 +11,7 @@ SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 SCOPE_EXPORT=scope.tar
 SCOPE_UI_BUILD_EXPORT=scope_ui_build.tar
 SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
-SCOPE_VERSION=$(shell git rev-parse HEAD)
+SCOPE_VERSION=$(shell git rev-parse --short HEAD)
 
 all: $(SCOPE_EXPORT)
 
@@ -55,6 +55,11 @@ client-lint:
 	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm run lint
+
+client-sync:
+	docker run -ti --net=host -v $(shell pwd)/client/app:/home/weave/app \
+		-v $(shell pwd)/client/build:/home/weave/build \
+		$(SCOPE_UI_BUILD_IMAGE) gulp sync
 
 $(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/gulpfile.js client/package.json
 	docker build -t $(SCOPE_UI_BUILD_IMAGE) client

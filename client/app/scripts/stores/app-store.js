@@ -17,6 +17,7 @@ function isUrlForTopologyId(url, topologyId) {
 let connectionState = 'disconnected';
 let currentGrouping = 'none';
 let currentTopologyId = 'containers';
+let version = '';
 let mouseOverEdgeId = null;
 let mouseOverNodeId = null;
 let nodes = {};
@@ -108,6 +109,10 @@ const AppStore = assign({}, EventEmitter.prototype, {
 
   getTopologyIdForUrl: function(url) {
     return url.split('/').pop();
+  },
+
+  getVersion: function() {
+    return version;
   }
 });
 
@@ -208,6 +213,11 @@ AppStore.registeredCallback = function(payload) {
 
     case ActionTypes.RECEIVE_TOPOLOGIES:
       topologies = payload.topologies;
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
+    case ActionTypes.RECEIVE_API_DETAILS:
+      version = payload.version;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
