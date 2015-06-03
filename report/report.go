@@ -1,149 +1,211 @@
 package report
 
 import (
-	"encoding/json"
+	"fmt"
 	"net"
-	"time"
+	"strings"
 )
 
-// Report is the internal structure produced and emitted by the probe, and
-// operated-on (e.g. merged) by intermediaries and the app. The probe may fill
-// in as many topologies as it's capable of producing, including none.
-//
-// Process, [Transport,] and Network topologies are distinct because the data
-// sources are distinct. That is, the Process topology can only be populated
-// by extant connections between processes, but the Network topology may be
-// populated from e.g. system-level data sources.
-//
-// Since the data sources are fundamentally different for each topology, it
-// might make sense to make them more distinct in the user interface.
+// Report is the core data type. It's produced by probes, and consumed and
+// stored by apps. It's composed of multiple topologies, each representing
+// a different (related, but not equivalent) view of the network.
 type Report struct {
-	Process Topology
-	// Transport Topology
-	Network Topology
-	HostMetadatas
+	Endpoint Topology
+	Address  Topology
+	Process  Topology
+	Host     Topology
 }
 
-// HostMetadatas contains metadata about the host(s) represented in the Report.
-type HostMetadatas map[string]HostMetadata
-
-// HostMetadata describes metadata that probes can collect about the host that
-// they run on. It has a timestamp when the measurement was made.
-type HostMetadata struct {
-	Timestamp                      time.Time
-	Hostname                       string
-	LocalNets                      []*net.IPNet
-	OS                             string
-	LoadOne, LoadFive, LoadFifteen float64
-}
-
-// RenderableNode is the data type that's yielded to the JavaScript layer as
-// an element of a topology. It should contain information that's relevant
-// to rendering a node when there are many nodes visible at once.
-type RenderableNode struct {
-	ID          string            `json:"id"`                     //
-	LabelMajor  string            `json:"label_major"`            // e.g. "process", human-readable
-	LabelMinor  string            `json:"label_minor,omitempty"`  // e.g. "hostname", human-readable, optional
-	Rank        string            `json:"rank"`                   // to help the layout engine
-	Pseudo      bool              `json:"pseudo,omitempty"`       // sort-of a placeholder node, for rendering purposes
-	Adjacency   IDList            `json:"adjacency,omitempty"`    // Node IDs (in the same topology domain)
-	OriginHosts IDList            `json:"origin_hosts,omitempty"` // Which hosts contributed information to this node
-	OriginNodes IDList            `json:"origin_nodes,omitempty"` // Which origin nodes (depends on topology) contributed
-	Metadata    AggregateMetadata `json:"metadata"`               // Numeric sums
-}
-
-// DetailedNode is the data type that's yielded to the JavaScript layer when
-// we want deep information about an individual node.
-type DetailedNode struct {
-	ID         string  `json:"id"`
-	LabelMajor string  `json:"label_major"`
-	LabelMinor string  `json:"label_minor,omitempty"`
-	Pseudo     bool    `json:"pseudo,omitempty"`
-	Tables     []Table `json:"tables"`
-}
-
-// Table is a dataset associated with a node. It will be displayed in the
-// detail panel when a user clicks on a node.
-type Table struct {
-	Title   string `json:"title"`   // e.g. Bandwidth
-	Numeric bool   `json:"numeric"` // should the major column be right-aligned?
-	Rows    []Row  `json:"rows"`
-}
-
-// Row is a single entry in a Table dataset.
-type Row struct {
-	Key        string `json:"key"`                   // e.g. Ingress
-	ValueMajor string `json:"value_major"`           // e.g. 25
-	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
-}
-
-// NewReport makes a clean report, ready to Merge() other reports into.
-func NewReport() Report {
+// MakeReport produces a new report, ready for use. It's the only correct way
+// to produce reports for general use, so please use it.
+func MakeReport() Report {
 	return Report{
-		Process: NewTopology(),
-		// Transport Topology
-		Network:       NewTopology(),
-		HostMetadatas: map[string]HostMetadata{},
+		Endpoint: MakeTopology(),
+		Address:  MakeTopology(),
+		Process:  MakeTopology(),
+		Host:     MakeTopology(),
 	}
 }
 
-// SquashRemote folds all remote nodes into a special supernode. It uses the
-// LocalNets of the hosts in HostMetadata to determine which addresses are
-// local.
-func (r Report) SquashRemote() Report {
-	localNets := r.HostMetadatas.LocalNets()
+// Copy returns a value copy, useful for tests.
+func (r Report) Copy() Report {
 	return Report{
-		Process:       Squash(r.Process, AddressIPPort, localNets),
-		Network:       Squash(r.Network, AddressIP, localNets),
-		HostMetadatas: r.HostMetadatas,
+		Endpoint: r.Endpoint.Copy(),
+		Address:  r.Address.Copy(),
+		Process:  r.Process.Copy(),
+		Host:     r.Host.Copy(),
 	}
 }
 
-// LocalNets gives the union of all local network IPNets for all hosts
-// represented in the HostMetadatas.
-func (m HostMetadatas) LocalNets() []*net.IPNet {
-	var nets []*net.IPNet
-	for _, node := range m {
-	OUTER:
-		for _, local := range node.LocalNets {
-			for _, existing := range nets {
-				if existing == local {
-					continue OUTER
+// Merge merges two reports together, returning the result. Always reassign
+// the result of merge to the destination report. Merge is defined on report
+// as a value-type, but report contains reference fields, so if you want to
+// maintain immutable reports, use copy.
+func (r Report) Merge(other Report) Report {
+	r.Endpoint = r.Endpoint.Merge(other.Endpoint)
+	r.Address = r.Address.Merge(other.Address)
+	r.Process = r.Process.Merge(other.Process)
+	r.Host = r.Host.Merge(other.Host)
+	return r
+}
+
+// Squash squashes all non-local nodes in the report to a super-node called
+// the Internet.
+func (r Report) Squash() Report {
+	localNetworks := r.LocalNetworks()
+	r.Endpoint = r.Endpoint.Squash(EndpointIDAddresser, localNetworks)
+	r.Address = r.Address.Squash(AddressIDAddresser, localNetworks)
+	r.Process = r.Process.Squash(PanicIDAddresser, localNetworks)
+	r.Host = r.Host.Squash(PanicIDAddresser, localNetworks)
+	return r
+}
+
+// LocalNetworks returns a superset of the networks (think: CIDR) that are
+// "local" from the perspective of each host represented in the report. It's
+// used to determine which nodes in the report are "remote", i.e. outside of
+// our domain of awareness.
+func (r Report) LocalNetworks() []*net.IPNet {
+	var ipNets []*net.IPNet
+	for _, md := range r.Host.NodeMetadatas {
+		val, ok := md["local_networks"]
+		if !ok {
+			continue
+		}
+	outer:
+		for _, s := range strings.Fields(val) {
+			_, ipNet, err := net.ParseCIDR(s)
+			if err != nil {
+				continue
+			}
+			for _, existing := range ipNets {
+				if ipNet.String() == existing.String() {
+					continue outer
 				}
 			}
-			nets = append(nets, local)
+			ipNets = append(ipNets, ipNet)
 		}
 	}
-	return nets
+	return ipNets
 }
 
-// UnmarshalJSON is a custom JSON deserializer for HostMetadata to deal with
-// the Localnets.
-func (m *HostMetadata) UnmarshalJSON(data []byte) error {
-	type netmask struct {
-		IP   net.IP
-		Mask []byte
+// EdgeMetadata gives the metadata of an edge from the perspective of the
+// srcMappedID. Since an edgeID can have multiple edges on the address level,
+// it uses the supplied mapping function to translate core node IDs to
+// renderable mapped IDs.
+func (r Report) EdgeMetadata(ts TopologySelector, mapper MapFunc, srcMappedID, dstMappedID string) EdgeMetadata {
+	t := ts(r)
+	result := EdgeMetadata{}
+	for edgeID, edgeMetadata := range t.EdgeMetadatas {
+		srcNodeID, dstNodeID, ok := ParseEdgeID(edgeID)
+		if !ok {
+			panic(fmt.Sprintf("invalid edge ID %q", edgeID))
+		}
+		src, showSrc := mapper(r, ts, srcNodeID) // TODO srcNodeID == TheInternet checking?
+		dst, showDst := mapper(r, ts, dstNodeID) // TODO dstNodeID == TheInternet checking?
+		if showSrc && showDst && src.ID == srcMappedID && dst.ID == dstMappedID {
+			result = result.Flatten(edgeMetadata)
+		}
 	}
-	tmpHMD := struct {
-		Timestamp                      time.Time
-		Hostname                       string
-		LocalNets                      []*netmask
-		OS                             string
-		LoadOne, LoadFive, LoadFifteen float64
-	}{}
-	err := json.Unmarshal(data, &tmpHMD)
-	if err != nil {
-		return err
-	}
+	return result
+}
 
-	m.Timestamp = tmpHMD.Timestamp
-	m.Hostname = tmpHMD.Hostname
-	m.OS = tmpHMD.OS
-	m.LoadOne = tmpHMD.LoadOne
-	m.LoadFive = tmpHMD.LoadFive
-	m.LoadFifteen = tmpHMD.LoadFifteen
-	for _, ln := range tmpHMD.LocalNets {
-		m.LocalNets = append(m.LocalNets, &net.IPNet{IP: ln.IP, Mask: ln.Mask})
+// OriginTable produces a table (to be consumed directly by the UI) based on
+// an origin ID, which is (optimistically) a node ID in one of our topologies.
+func (r Report) OriginTable(originID string) (Table, bool) {
+	for nodeID, nodeMetadata := range r.Endpoint.NodeMetadatas {
+		if originID == nodeID {
+			return endpointOriginTable(nodeMetadata)
+		}
 	}
-	return nil
+	for nodeID, nodeMetadata := range r.Address.NodeMetadatas {
+		if originID == nodeID {
+			return addressOriginTable(nodeMetadata)
+		}
+	}
+	for nodeID, nodeMetadata := range r.Process.NodeMetadatas {
+		if originID == nodeID {
+			return processOriginTable(nodeMetadata)
+		}
+	}
+	for nodeID, nodeMetadata := range r.Host.NodeMetadatas {
+		if originID == nodeID {
+			return hostOriginTable(nodeMetadata)
+		}
+	}
+	return Table{}, false
+}
+
+func endpointOriginTable(nmd NodeMetadata) (Table, bool) {
+	rows := []Row{}
+	if val, ok := nmd["endpoint"]; ok {
+		rows = append(rows, Row{"Endpoint", val, ""})
+	}
+	if val, ok := nmd["host_name"]; ok {
+		rows = append(rows, Row{"Host name", val, ""})
+	}
+	return Table{
+		Title:   "Origin Endpoint",
+		Numeric: false,
+		Rows:    rows,
+	}, len(rows) > 0
+}
+
+func addressOriginTable(nmd NodeMetadata) (Table, bool) {
+	rows := []Row{}
+	if val, ok := nmd["address"]; ok {
+		rows = append(rows, Row{"Address", val, ""})
+	}
+	if val, ok := nmd["host_name"]; ok {
+		rows = append(rows, Row{"Host name", val, ""})
+	}
+	return Table{
+		Title:   "Origin Address",
+		Numeric: false,
+		Rows:    rows,
+	}, len(rows) > 0
+}
+
+func processOriginTable(nmd NodeMetadata) (Table, bool) {
+	rows := []Row{}
+	if val, ok := nmd["process_name"]; ok {
+		rows = append(rows, Row{"Process name", val, ""})
+	}
+	if val, ok := nmd["pid"]; ok {
+		rows = append(rows, Row{"PID", val, ""})
+	}
+	if val, ok := nmd["docker_id"]; ok {
+		rows = append(rows, Row{"Docker container ID", val, ""})
+	}
+	if val, ok := nmd["docker_name"]; ok {
+		rows = append(rows, Row{"Docker container name", val, ""})
+	}
+	if val, ok := nmd["docker_image_id"]; ok {
+		rows = append(rows, Row{"Docker image ID", val, ""})
+	}
+	if val, ok := nmd["docker_image_name"]; ok {
+		rows = append(rows, Row{"Docker image name", val, ""})
+	}
+	return Table{
+		Title:   "Origin Process",
+		Numeric: false,
+		Rows:    rows,
+	}, len(rows) > 0
+}
+
+func hostOriginTable(nmd NodeMetadata) (Table, bool) {
+	rows := []Row{}
+	if val, ok := nmd["host_name"]; ok {
+		rows = append(rows, Row{"Host name", val, ""})
+	}
+	if val, ok := nmd["load"]; ok {
+		rows = append(rows, Row{"Load", val, ""})
+	}
+	if val, ok := nmd["os"]; ok {
+		rows = append(rows, Row{"Operating system", val, ""})
+	}
+	return Table{
+		Title:   "Origin Host",
+		Numeric: false,
+		Rows:    rows,
+	}, len(rows) > 0
 }

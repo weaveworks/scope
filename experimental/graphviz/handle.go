@@ -14,7 +14,7 @@ import (
 func handleTXT(r Reporter) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		dot(w, r.Report().Process.RenderBy(mapFunc(req), classView(req)))
+		dot(w, report.Render(r.Report(), report.SelectEndpoint, mapFunc(req), report.NoPseudoNode))
 	}
 }
 
@@ -30,7 +30,7 @@ func handleSVG(r Reporter) http.HandlerFunc {
 
 		cmd.Stdout = w
 
-		dot(wc, r.Report().Process.RenderBy(mapFunc(req), classView(req)))
+		dot(wc, report.Render(r.Report(), report.SelectEndpoint, mapFunc(req), report.NoPseudoNode))
 		wc.Close()
 
 		w.Header().Set("Content-Type", "image/svg+xml")
@@ -98,12 +98,15 @@ func engine(r *http.Request) string {
 
 func mapFunc(r *http.Request) report.MapFunc {
 	switch strings.ToLower(r.FormValue("map_func")) {
-	case "hosts", "networkhost", "networkhostname":
-		return report.NetworkHostname
+	case "addresshostname":
+		return report.AddressHostname
+	case "processname":
+		return report.ProcessName
+	case "processcontainer":
+		return report.ProcessContainer
+	case "processcontainerimage":
+		return report.ProcessContainerImage
+	default:
+		return report.ProcessPID
 	}
-	return report.ProcessPID
-}
-
-func classView(r *http.Request) bool {
-	return r.FormValue("class_view") == "true"
 }

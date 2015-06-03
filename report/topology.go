@@ -1,209 +1,289 @@
 package report
 
-import (
-	"reflect"
-	"strings"
-)
+import "net"
 
-const (
-	// ScopeDelim separates the scope portion of an address from the address
-	// string itself.
-	ScopeDelim = ";"
-
-	// IDDelim separates fields in a node ID.
-	IDDelim = "|"
-
-	localUnknown = "localUnknown"
-)
-
-// Topology describes a specific view of a network. It consists of nodes and
-// edges, represented by Adjacency, and metadata about those nodes and edges,
-// represented by EdgeMetadatas and NodeMetadatas respectively.
+// Topology represents a directed graph of nodes and edges. This is the core
+// data type, made of directly observed (via the probe) nodes, and their
+// connections. Not to be confused with an API topology, which is made of
+// renderable nodes, and produced by passing a report (i.e. multiple
+// topologies) through a rendering transformation.
 type Topology struct {
 	Adjacency
-	EdgeMetadatas
 	NodeMetadatas
+	EdgeMetadatas
 }
 
-// Adjacency is an adjacency-list encoding of the topology. Keys are node IDs,
-// as produced by the relevant MappingFunc for the topology.
+// MakeTopology produces a new topology, ready for use. It's the only correct
+// way to produce topologies for general use, so please use it.
+func MakeTopology() Topology {
+	return Topology{
+		Adjacency:     Adjacency{},
+		NodeMetadatas: NodeMetadatas{},
+		EdgeMetadatas: EdgeMetadatas{},
+	}
+}
+
+// Copy returns a value copy, useful for tests.
+func (t Topology) Copy() Topology {
+	return Topology{
+		Adjacency:     t.Adjacency.Copy(),
+		NodeMetadatas: t.NodeMetadatas.Copy(),
+		EdgeMetadatas: t.EdgeMetadatas.Copy(),
+	}
+}
+
+// Merge merges two topologies together, returning the result. Always reassign
+// the result of merge to the destination. Merge is defined on topology as a
+// value-type, but topology contains reference fields, so if you want to
+// maintain immutability, use copy.
+func (t Topology) Merge(other Topology) Topology {
+	t.Adjacency = t.Adjacency.Merge(other.Adjacency)
+	t.NodeMetadatas = t.NodeMetadatas.Merge(other.NodeMetadatas)
+	t.EdgeMetadatas = t.EdgeMetadatas.Merge(other.EdgeMetadatas)
+	return t
+}
+
+// Squash squashes all non-local nodes in the topology to a super-node called
+// the Internet.
+func (t Topology) Squash(f IDAddresser, localNets []*net.IPNet) Topology {
+	isRemote := func(ip net.IP) bool { return !netsContain(localNets, ip) }
+	for srcID, dstIDs := range t.Adjacency {
+		newDstIDs := make(IDList, 0, len(dstIDs))
+		for _, dstID := range dstIDs {
+			if ip := f(dstID); ip != nil && isRemote(ip) {
+				dstID = TheInternet
+			}
+			newDstIDs = newDstIDs.Add(dstID)
+		}
+		t.Adjacency[srcID] = newDstIDs
+	}
+	return t
+}
+
+func netsContain(nets []*net.IPNet, ip net.IP) bool {
+	for _, net := range nets {
+		if net.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+// Adjacency represents an adjacency list.
 type Adjacency map[string]IDList
 
-// EdgeMetadatas collect metadata about each edge in a topology. Keys are a
-// concatenation of node IDs.
-type EdgeMetadatas map[string]EdgeMetadata
+// Copy returns a value copy, useful for tests.
+func (a Adjacency) Copy() Adjacency {
+	cp := make(Adjacency, len(a))
+	for id, idList := range a {
+		cp[id] = idList.Copy()
+	}
+	return cp
+}
 
-// NodeMetadatas collect metadata about each node in a topology. Keys are node
-// IDs.
+// Merge merges two adjacencies together, returning the union set of IDs.
+// Always reassign the result of merge to the destination. Merge is defined
+// on adjacency as a value-type, but adjacency is itself a reference type, so
+// if you want to maintain immutability, use copy.
+func (a Adjacency) Merge(other Adjacency) Adjacency {
+	for id, idList := range other {
+		a[id] = a[id].Add(idList...)
+	}
+	return a
+}
+
+// NodeMetadatas represents multiple node metadatas, keyed by node ID.
 type NodeMetadatas map[string]NodeMetadata
 
-// EdgeMetadata describes a superset of the metadata that probes can
-// conceivably (and usefully) collect about an edge between two nodes in any
-// topology.
+// Copy returns a value copy, useful for tests.
+func (nms NodeMetadatas) Copy() NodeMetadatas {
+	cp := make(NodeMetadatas, len(nms))
+	for id, nm := range nms {
+		cp[id] = nm.Copy()
+	}
+	return cp
+}
+
+// Merge merges two node metadata collections together, returning a semantic
+// union set of metadatas. In the cases where keys conflict within an
+// individual node metadata map, the other (right-hand) side wins. Always
+// reassign the result of merge to the destination. Merge is defined on the
+// value-type, but node metadata collection is itself a reference type, so if
+// you want to maintain immutability, use copy.
+func (nms NodeMetadatas) Merge(other NodeMetadatas) NodeMetadatas {
+	for id, md := range other {
+		if _, ok := nms[id]; !ok {
+			nms[id] = NodeMetadata{}
+		}
+		nms[id] = nms[id].Merge(md)
+	}
+	return nms
+}
+
+// EdgeMetadatas represents multiple edge metadatas, keyed by edge ID.
+type EdgeMetadatas map[string]EdgeMetadata
+
+// Copy returns a value copy, useful for tests.
+func (ems EdgeMetadatas) Copy() EdgeMetadatas {
+	cp := make(EdgeMetadatas, len(ems))
+	for id, em := range ems {
+		cp[id] = em.Copy()
+	}
+	return cp
+}
+
+// Merge merges two edge metadata collections together, returning a logical
+// union set of metadatas. Always reassign the result of merge to the
+// destination. Merge is defined on the value-type, but edge metadata
+// collection is itself a reference type, so if you want to maintain
+// immutability, use copy.
+func (ems EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
+	for id, md := range other {
+		if _, ok := ems[id]; !ok {
+			ems[id] = EdgeMetadata{}
+		}
+		ems[id] = ems[id].Merge(md)
+	}
+	return ems
+}
+
+// NodeMetadata is a simple string-to-string map.
+type NodeMetadata map[string]string
+
+// Copy returns a value copy, useful for tests.
+func (nm NodeMetadata) Copy() NodeMetadata {
+	cp := make(NodeMetadata, len(nm))
+	for k, v := range nm {
+		cp[k] = v
+	}
+	return cp
+}
+
+// Merge merges two node metadata maps together. In case of conflict, the
+// other (right-hand) side wins. Always reassign the result of merge to the
+// destination. Merge is defined on the value-type, but node metadata map is
+// itself a reference type, so if you want to maintain immutability, use copy.
+func (nm NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
+	for k, v := range other {
+		nm[k] = v // other takes precedence
+	}
+	return nm
+}
+
+// GetDefault returns the value for key, or def if key is not defined.
+func (nm NodeMetadata) GetDefault(key, def string) string {
+	val, ok := nm[key]
+	if !ok {
+		return def
+	}
+	return val
+}
+
+// EdgeMetadata represents aggregatable information about a specific edge
+// between two nodes. EdgeMetadata is frequently merged; be careful to think
+// about merge semantics when modifying this structure.
 type EdgeMetadata struct {
 	WithBytes    bool `json:"with_bytes,omitempty"`
-	BytesIngress uint `json:"bytes_ingress,omitempty"` // dst -> src
 	BytesEgress  uint `json:"bytes_egress,omitempty"`  // src -> dst
+	BytesIngress uint `json:"bytes_ingress,omitempty"` // src <- dst
 
 	WithConnCountTCP bool `json:"with_conn_count_tcp,omitempty"`
 	MaxConnCountTCP  uint `json:"max_conn_count_tcp,omitempty"`
 }
 
-// NodeMetadata describes a superset of the metadata that probes can collect
-// about a given node in a given topology. Right now it's a weakly-typed map,
-// which should probably change (see comment on type MapFunc).
-type NodeMetadata map[string]string
-
-// NewTopology gives you a Topology.
-func NewTopology() Topology {
-	return Topology{
-		Adjacency:     map[string]IDList{},
-		EdgeMetadatas: map[string]EdgeMetadata{},
-		NodeMetadatas: map[string]NodeMetadata{},
-	}
+// Copy returns a value copy, useful for tests. It actually doesn't do
+// anything here, since EdgeMetadata has no reference fields. But we keep it,
+// for API consistency.
+func (em EdgeMetadata) Copy() EdgeMetadata {
+	return em
 }
 
-// RenderBy transforms a given Topology into a set of RenderableNodes, which
-// the UI will render collectively as a graph. Note that a RenderableNode will
-// always be rendered with other nodes, and therefore contains limited detail.
+// Merge merges two edge metadata structs together. This is an important
+// operation, so please think carefully when adding things here. Always
+// reassign the result of merge to the destination, as merge is defined on a
+// value-type, and there are no reference types here.
+func (em EdgeMetadata) Merge(other EdgeMetadata) EdgeMetadata {
+	if other.WithBytes {
+		em.WithBytes = true
+		em.BytesIngress += other.BytesIngress
+		em.BytesEgress += other.BytesEgress
+	}
+	if other.WithConnCountTCP {
+		em.WithConnCountTCP = true
+		if other.MaxConnCountTCP > em.MaxConnCountTCP {
+			em.MaxConnCountTCP = other.MaxConnCountTCP
+		}
+	}
+	return em
+}
+
+// Flatten sums two EdgeMetadatas. They must represent the same window of
+// time, i.e. both EdgeMetadatas should be from the same report.
+func (em EdgeMetadata) Flatten(other EdgeMetadata) EdgeMetadata {
+	if other.WithBytes {
+		em.WithBytes = true
+		em.BytesIngress += other.BytesIngress
+		em.BytesEgress += other.BytesEgress
+	}
+	if other.WithConnCountTCP {
+		em.WithConnCountTCP = true
+		// Note that summing of two maximums doesn't always give the true
+		// maximum. But it's our Best-Effort effort.
+		em.MaxConnCountTCP += other.MaxConnCountTCP
+	}
+	return em
+}
+
+// Export transforms an EdgeMetadata to an AggregateMetadata.
+func (em EdgeMetadata) Export() AggregateMetadata {
+	amd := AggregateMetadata{}
+	if em.WithBytes {
+		amd[KeyBytesIngress] = int(em.BytesIngress)
+		amd[KeyBytesEgress] = int(em.BytesEgress)
+	}
+	if em.WithConnCountTCP {
+		// The maximum is the maximum. No need to calculate anything.
+		amd[KeyMaxConnCountTCP] = int(em.MaxConnCountTCP)
+	}
+	return amd
+}
+
+// AggregateMetadata is a composable version of an EdgeMetadata. It's used
+// when we want to merge nodes/edges for any reason.
 //
-// RenderBy takes a a MapFunc, which defines how to group and label nodes. Npdes
-// with the same mapped IDs will be merged.
-func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) map[string]RenderableNode {
-	nodes := map[string]RenderableNode{}
+// It takes its data from EdgeMetadatas, but we can apply it to nodes, by
+// summing up (flattening) all of the {ingress, egress} metadatas of the
+// {incoming, outgoing} edges to the node.
+type AggregateMetadata map[string]int
 
-	// Build a set of RenderableNodes for all non-pseudo probes, and an
-	// addressID to nodeID lookup map. Multiple addressIDs can map to the same
-	// RenderableNodes.
-	address2mapped := map[string]string{}
-	for addressID, metadata := range t.NodeMetadatas {
-		mapped, ok := mapFunc(addressID, metadata)
-		if !ok {
-			continue
-		}
+const (
+	// KeyBytesIngress is the aggregate metadata key for the total count of
+	// ingress bytes.
+	KeyBytesIngress = "ingress_bytes"
+	// KeyBytesEgress is the aggregate metadata key for the total count of
+	// egress bytes.
+	KeyBytesEgress = "egress_bytes"
+	// KeyMaxConnCountTCP is the aggregate metadata key for the maximum number
+	// of simultaneous observed TCP connections in the window.
+	KeyMaxConnCountTCP = "max_conn_count_tcp"
+)
 
-		// mapped.ID needs not be unique over all addressIDs. If not, we just overwrite
-		// the existing data, on the assumption that the MapFunc returns the same
-		// data.
-		nodes[mapped.ID] = RenderableNode{
-			ID:          mapped.ID,
-			LabelMajor:  mapped.Major,
-			LabelMinor:  mapped.Minor,
-			Rank:        mapped.Rank,
-			Pseudo:      false,
-			Adjacency:   IDList{},            // later
-			OriginHosts: IDList{},            // later
-			OriginNodes: IDList{},            // later
-			Metadata:    AggregateMetadata{}, // later
-		}
-		address2mapped[addressID] = mapped.ID
+// Copy returns a value copy, useful for tests.
+func (amd AggregateMetadata) Copy() AggregateMetadata {
+	cp := make(AggregateMetadata, len(amd))
+	for k, v := range amd {
+		cp[k] = v
 	}
-
-	// Walk the graph and make connections.
-	for src, dsts := range t.Adjacency {
-		var (
-			fields            = strings.SplitN(src, IDDelim, 2) // "<host>|<address>"
-			srcOriginHostID   = fields[0]
-			srcNodeAddress    = fields[1]
-			srcRenderableID   = address2mapped[srcNodeAddress] // must exist
-			srcRenderableNode = nodes[srcRenderableID]         // must exist
-		)
-
-		for _, dstNodeAddress := range dsts {
-			dstRenderableID, ok := address2mapped[dstNodeAddress]
-			if !ok {
-				pseudoNode, ok := pseudoFunc(srcNodeAddress, srcRenderableNode, dstNodeAddress)
-				if !ok {
-					continue
-				}
-				dstRenderableID = pseudoNode.ID
-				nodes[dstRenderableID] = RenderableNode{
-					ID:         pseudoNode.ID,
-					LabelMajor: pseudoNode.Major,
-					LabelMinor: pseudoNode.Minor,
-					Pseudo:     true,
-					Metadata:   AggregateMetadata{}, // populated below - or not?
-				}
-				address2mapped[dstNodeAddress] = dstRenderableID
-			}
-
-			srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
-			srcRenderableNode.OriginHosts = srcRenderableNode.OriginHosts.Add(srcOriginHostID)
-			srcRenderableNode.OriginNodes = srcRenderableNode.OriginNodes.Add(srcNodeAddress)
-			edgeID := srcNodeAddress + IDDelim + dstNodeAddress
-			if md, ok := t.EdgeMetadatas[edgeID]; ok {
-				srcRenderableNode.Metadata.Merge(md.Transform())
-			}
-		}
-
-		nodes[srcRenderableID] = srcRenderableNode
-	}
-
-	return nodes
+	return cp
 }
 
-// EdgeMetadata gives the metadata of an edge from the perspective of the
-// srcRenderableID. Since an edgeID can have multiple edges on the address
-// level, it uses the supplied mapping function to translate address IDs to
-// renderable node (mapped) IDs.
-func (t Topology) EdgeMetadata(mapFunc MapFunc, srcRenderableID, dstRenderableID string) EdgeMetadata {
-	metadata := EdgeMetadata{}
-	for edgeID, edgeMeta := range t.EdgeMetadatas {
-		edgeParts := strings.SplitN(edgeID, IDDelim, 2)
-		src := edgeParts[0]
-		if src != TheInternet {
-			mapped, _ := mapFunc(src, t.NodeMetadatas[src])
-			src = mapped.ID
-		}
-		dst := edgeParts[1]
-		if dst != TheInternet {
-			mapped, _ := mapFunc(dst, t.NodeMetadatas[dst])
-			dst = mapped.ID
-		}
-		if src == srcRenderableID && dst == dstRenderableID {
-			metadata.Flatten(edgeMeta)
-		}
+// Merge merges two aggregate metadatas together. Always reassign the result
+// of merge to the destination. Merge is defined on the value-type, but
+// aggregate metadata is itself a reference type, so if you want to maintain
+// immutability, use copy.
+func (amd AggregateMetadata) Merge(other AggregateMetadata) AggregateMetadata {
+	for k, v := range other {
+		amd[k] += v
 	}
-	return metadata
+	return amd
 }
-
-// Diff is returned by TopoDiff. It represents the changes between two
-// RenderableNode maps.
-type Diff struct {
-	Add    []RenderableNode `json:"add"`
-	Update []RenderableNode `json:"update"`
-	Remove []string         `json:"remove"`
-}
-
-// TopoDiff gives you the diff to get from A to B.
-func TopoDiff(a, b map[string]RenderableNode) Diff {
-	diff := Diff{}
-
-	notSeen := map[string]struct{}{}
-	for k := range a {
-		notSeen[k] = struct{}{}
-	}
-
-	for k, node := range b {
-		if _, ok := a[k]; !ok {
-			diff.Add = append(diff.Add, node)
-		} else if !reflect.DeepEqual(node, a[k]) {
-			diff.Update = append(diff.Update, node)
-		}
-		delete(notSeen, k)
-	}
-
-	// leftover keys
-	for k := range notSeen {
-		diff.Remove = append(diff.Remove, k)
-	}
-
-	return diff
-}
-
-// ByID is a sort interface for a RenderableNode slice.
-type ByID []RenderableNode
-
-func (r ByID) Len() int           { return len(r) }
-func (r ByID) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
-func (r ByID) Less(i, j int) bool { return r[i].ID < r[j].ID }

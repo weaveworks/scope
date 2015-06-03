@@ -41,7 +41,7 @@ func NewReportLIFO(r reporter, maxAge time.Duration) *ReportLIFO {
 		for {
 			select {
 			case report := <-r.Reports():
-				report = report.SquashRemote()
+				report = report.Squash()
 				tr := timedReport{
 					Timestamp: time.Now(),
 					Report:    report,
@@ -50,7 +50,7 @@ func NewReportLIFO(r reporter, maxAge time.Duration) *ReportLIFO {
 				l.reports = cleanOld(l.reports, time.Now().Add(-maxAge))
 
 			case req := <-l.requests:
-				report := report.NewReport()
+				report := report.MakeReport()
 				for _, r := range l.reports {
 					report.Merge(r.Report)
 				}
