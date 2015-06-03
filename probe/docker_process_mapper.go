@@ -17,6 +17,8 @@ const (
 
 type dockerMapper struct {
 	sync.RWMutex
+	quit     chan struct{}
+	interval time.Duration
 
 	containers      map[string]*docker.Container
 	containersByPID map[int]*docker.Container
@@ -24,8 +26,6 @@ type dockerMapper struct {
 
 	procRoot string
 	pidTree  *pidTree
-
-	interval time.Duration
 }
 
 func newDockerMapper(procRoot string, interval time.Duration) (*dockerMapper, error) {
@@ -43,16 +43,33 @@ func newDockerMapper(procRoot string, interval time.Duration) (*dockerMapper, er
 		pidTree:  pidTree,
 
 		interval: interval,
+		quit:     make(chan struct{}),
 	}
 
 	go m.loop()
 	return &m, nil
 }
 
+func (m *dockerMapper) Stop() {
+	close(m.quit)
+}
+
 func (m *dockerMapper) loop() {
-	m.update()
-	for range time.Tick(m.interval) {
-		m.update()
+	if !m.update() {
+		return
+	}
+
+	ticker := time.Tick(m.interval)
+	for {
+		select {
+		case <-ticker:
+			if !m.update() {
+				return
+			}
+
+		case <-m.quit:
+			return
+		}
 	}
 }
 
@@ -74,18 +91,19 @@ var (
 	newPIDTreeStub  = newPIDTree
 )
 
-func (m *dockerMapper) update() {
+// returns false when stopping.
+func (m *dockerMapper) update() bool {
 	endpoint := "unix:///var/run/docker.sock"
 	client, err := newDockerClient(endpoint)
 	if err != nil {
 		log.Printf("docker mapper: %s", err)
-		return
+		return true
 	}
 
 	events := make(chan *docker.APIEvents)
 	if err := client.AddEventListener(events); err != nil {
 		log.Printf("docker mapper: %s", err)
-		return
+		return true
 	}
 	defer func() {
 		if err := client.RemoveEventListener(events); err != nil {
@@ -95,12 +113,12 @@ func (m *dockerMapper) update() {
 
 	if err := m.updateContainers(client); err != nil {
 		log.Printf("docker mapper: %s", err)
-		return
+		return true
 	}
 
 	if err := m.updateImages(client); err != nil {
 		log.Printf("docker mapper: %s", err)
-		return
+		return true
 	}
 
 	otherUpdates := time.Tick(m.interval)
@@ -119,6 +137,9 @@ func (m *dockerMapper) update() {
 				log.Printf("docker mapper: %s", err)
 				continue
 			}
+
+		case <-m.quit:
+			return false
 		}
 	}
 }
