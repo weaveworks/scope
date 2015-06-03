@@ -20,14 +20,6 @@ $(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) docker/*
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker save $(SCOPE_IMAGE):latest | sudo $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
-	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
-	        rm $@; \
-	        echo "\nYour go standard library was built without the 'netgo' build tag."; \
-	        echo "To fix that, run"; \
-	        echo "    sudo go clean -i net"; \
-	        echo "    sudo go install -tags netgo std"; \
-	        false; \
-	    }
 
 $(APP_EXE): app/*.go report/*.go xfer/*.go
 
@@ -36,6 +28,14 @@ $(PROBE_EXE): probe/*.go report/*.go xfer/*.go
 $(APP_EXE) $(PROBE_EXE):
 	go get -tags netgo ./$(@D)
 	go build -ldflags "-extldflags \"-static\" -X main.version $(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
+	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
+	        rm $@; \
+	        echo "\nYour go standard library was built without the 'netgo' build tag."; \
+	        echo "To fix that, run"; \
+	        echo "    sudo go clean -i net"; \
+	        echo "    sudo go install -tags netgo std"; \
+	        false; \
+	    }
 
 static: client/build/app.js
 	esc -o app/static.go -prefix client/build client/build
