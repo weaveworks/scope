@@ -17,51 +17,62 @@ const (
 
 var (
 	// MaxBackoff is the maximum time between connect retries.
-	MaxBackoff = 2 * time.Minute // externally configurable.
+	// It's exported so it's externally configurable.
+	MaxBackoff = 2 * time.Minute
+
+	// This is extracted out for mocking.
+	tick = time.Tick
 )
 
-// Collector connects to probes over TCP and merges reports published by those
-// probes into a single one.
-type Collector struct {
-	in     chan report.Report
-	out    chan report.Report
-	add    chan string
-	remove chan string
-	quit   chan chan struct{}
+// Collector describes anything that can have addresses added and removed, and
+// which produces reports that represent aggregate reports from all collected
+// addresses.
+type Collector interface {
+	Add(string)
+	Remove(string)
+	Reports() <-chan report.Report
+	Stop()
 }
 
-// NewCollector starts the report collector.
-func NewCollector(batchTime time.Duration) *Collector {
-	c := &Collector{
+// realCollector connects to probes over TCP and merges reports published by those
+// probes into a single one.
+type realCollector struct {
+	in     chan report.Report
+	out    chan report.Report
+	peekc  chan chan report.Report
+	add    chan string
+	remove chan string
+	quit   chan struct{}
+}
+
+// NewCollector produces and returns a report collector.
+func NewCollector(batchTime time.Duration) Collector {
+	c := &realCollector{
 		in:     make(chan report.Report),
 		out:    make(chan report.Report),
+		peekc:  make(chan chan report.Report),
 		add:    make(chan string),
 		remove: make(chan string),
-		quit:   make(chan chan struct{}),
+		quit:   make(chan struct{}),
 	}
-
 	go c.loop(batchTime)
-
 	return c
 }
 
-func (c *Collector) loop(batchTime time.Duration) {
+func (c *realCollector) loop(batchTime time.Duration) {
 	var (
-		tick    = time.Tick(batchTime)
+		tick    = tick(batchTime)
 		current = report.NewReport()
 		addrs   = map[string]chan struct{}{}
-		wg      = &sync.WaitGroup{} // individual collector goroutines
+		wg      = &sync.WaitGroup{} // per-address goroutines
 	)
 
 	add := func(ip string) {
 		if _, ok := addrs[ip]; ok {
 			return
 		}
-
 		addrs[ip] = make(chan struct{})
-
 		wg.Add(1)
-
 		go func(quit chan struct{}) {
 			defer wg.Done()
 			reportCollector(ip, c.in, quit)
@@ -73,7 +84,6 @@ func (c *Collector) loop(batchTime time.Duration) {
 		if !ok {
 			return // hmm
 		}
-
 		close(q)
 		delete(addrs, ip)
 	}
@@ -84,6 +94,9 @@ func (c *Collector) loop(batchTime time.Duration) {
 			c.out <- current
 			current = report.NewReport()
 
+		case pc := <-c.peekc:
+			pc <- current
+
 		case r := <-c.in:
 			current.Merge(r)
 
@@ -93,47 +106,41 @@ func (c *Collector) loop(batchTime time.Duration) {
 		case ip := <-c.remove:
 			remove(ip)
 
-		case q := <-c.quit:
+		case <-c.quit:
 			for _, q := range addrs {
 				close(q)
 			}
 			wg.Wait()
-			close(q)
 			return
 		}
 	}
 }
 
-// Stop shuts down a collector and all connections to probes.
-func (c *Collector) Stop() {
-	q := make(chan struct{})
-	c.quit <- q
-	<-q
+// Add adds an address to be collected from.
+func (c *realCollector) Add(addr string) {
+	c.add <- addr
 }
 
-// AddAddress adds the passed IP to the collector, and starts (trying to)
-// collect reports from the remote Publisher.
-func (c *Collector) AddAddress(ip string) {
-	c.add <- ip
+// Remove removes a previously-added address.
+func (c *realCollector) Remove(addr string) {
+	c.remove <- addr
 }
 
-// AddAddresses adds the passed IPs to the collector, and starts (trying to)
-// collect reports from the remote Publisher.
-func (c *Collector) AddAddresses(ips []string) {
-	for _, addr := range ips {
-		c.AddAddress(addr)
-	}
-}
-
-// RemoveAddress removes the passed IP from the collector, and stops
-// collecting reports from the remote Publisher.
-func (c *Collector) RemoveAddress(ip string) {
-	c.remove <- ip
-}
-
-// Reports returns the channel where aggregate reports are sent.
-func (c *Collector) Reports() <-chan report.Report {
+// Reports returns the report chan. It must be consumed by the client, or the
+// collector will break.
+func (c *realCollector) Reports() <-chan report.Report {
 	return c.out
+}
+
+func (c *realCollector) peek() report.Report {
+	pc := make(chan report.Report)
+	c.peekc <- pc
+	return <-pc
+}
+
+// Stop terminates the collector.
+func (c *realCollector) Stop() {
+	close(c.quit)
 }
 
 // reportCollector is the loop to connect to a single Probe. It'll keep
@@ -188,7 +195,7 @@ func reportCollector(ip string, col chan<- report.Report, quit <-chan struct{}) 
 				log.Printf("decode error: %v", err)
 				break
 			}
-			//log.Printf("collector: got a report from %v", ip)
+			log.Printf("collector: got a report from %v", ip)
 
 			select {
 			case col <- report:

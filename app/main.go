@@ -67,7 +67,7 @@ func main() {
 	c := xfer.NewCollector(*batch)
 	defer c.Stop()
 
-	r := NewResolver(probes, c.AddAddress)
+	r := NewResolver(probes, c.Add)
 	defer r.Stop()
 
 	lifo := NewReportLIFO(c, *window)
