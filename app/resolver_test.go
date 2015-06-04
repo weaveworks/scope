@@ -32,17 +32,18 @@ func TestResolver(t *testing.T) {
 	ip2 := "192.168.0.10"
 	adds := make(chan string)
 	add := func(s string) { adds <- s }
-	r := NewResolver([]string{"symbolic.name" + port, "namewithnoport", ip1 + port, ip2}, add)
+
+	r := newStaticResolver([]string{"symbolic.name" + port, "namewithnoport", ip1 + port, ip2}, add)
 
 	assertAdd := func(want string) {
+		_, _, line, _ := runtime.Caller(1)
 		select {
 		case have := <-adds:
 			if want != have {
-				_, _, line, _ := runtime.Caller(1)
 				t.Errorf("line %d: want %q, have %q", line, want, have)
 			}
 		case <-time.After(time.Millisecond):
-			t.Fatal("didn't get add in time")
+			t.Fatalf("line %d: didn't get add in time", line)
 		}
 	}
 
