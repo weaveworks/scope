@@ -62,6 +62,14 @@ func newRealPIDTree(procRoot string) (*pidTree, error) {
 	return &pt, nil
 }
 
+func (pt *pidTree) getParent(pid int) (int, error) {
+	proc, ok := pt.processes[pid]
+	if !ok {
+		return -1, fmt.Errorf("PID %d not found", pid)
+	}
+	return proc.ppid, nil
+}
+
 // allChildren returns a flat list of child PIDs, including the given PID.
 func (pt *pidTree) allChildren(pid int) ([]int, error) {
 	proc, ok := pt.processes[pid]

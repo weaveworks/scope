@@ -2,6 +2,7 @@ package tag
 
 import (
 	"reflect"
+	"runtime"
 	"testing"
 	"time"
 
@@ -40,10 +41,12 @@ func TestDockerTagger(t *testing.T) {
 	}
 
 	var (
-		endpoint1NodeID     = "somehost.com;192.168.1.1;12345"
-		endpoint2NodeID     = "somehost.com;192.168.1.1;67890"
-		process1NodeID      = "somehost.com;1"
-		process2NodeID      = "somehost.com;2"
+		hostID              = "somehost.com"
+		ipAddress           = "192.168.1.1"
+		endpoint1NodeID     = report.MakeEndpointNodeID(hostID, ipAddress, "12345")
+		endpoint2NodeID     = report.MakeEndpointNodeID(hostID, ipAddress, "67890")
+		process1NodeID      = report.MakeProcessNodeID(hostID, "1")
+		process2NodeID      = report.MakeProcessNodeID(hostID, "2")
 		processNodeMetadata = report.NodeMetadata{
 			"docker_container_id":   "foo",
 			"docker_container_name": "bar",
@@ -58,7 +61,13 @@ func TestDockerTagger(t *testing.T) {
 	r.Process.NodeMetadatas[process1NodeID] = processNodeMetadata.Copy().Merge(report.NodeMetadata{"pid": "1"})
 	r.Process.NodeMetadatas[process2NodeID] = processNodeMetadata.Copy().Merge(report.NodeMetadata{"pid": "2"})
 
-	dockerTagger := NewDockerTagger("/irrelevant", 10*time.Second)
+	dockerTagger, err := NewDockerTagger("/irrelevant", 10*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	runtime.Gosched()
+
 	for _, endpointNodeID := range []string{endpoint1NodeID, endpoint2NodeID} {
 		want := processNodeMetadata.Copy()
 		have := dockerTagger.Tag(r, report.SelectEndpoint, endpointNodeID).Copy()
@@ -84,4 +93,12 @@ func (m mockDockerClient) InspectContainer(id string) (*docker.Container, error)
 
 func (m mockDockerClient) ListImages(docker.ListImagesOptions) ([]docker.APIImages, error) {
 	return m.apiImages, nil
+}
+
+func (m mockDockerClient) AddEventListener(chan<- *docker.APIEvents) error {
+	return nil
+}
+
+func (m mockDockerClient) RemoveEventListener(chan *docker.APIEvents) error {
+	return nil
 }
