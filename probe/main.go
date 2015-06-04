@@ -66,7 +66,10 @@ func main() {
 
 	taggers := []tag.Tagger{tag.NewTopologyTagger()}
 	if *dockerTagger {
-		t := tag.NewDockerTagger(*procRoot, *dockerInterval)
+		t, err := tag.NewDockerTagger(*procRoot, *dockerInterval)
+		if err != nil {
+			log.Fatal(err)
+		}
 		defer t.Stop()
 		taggers = append(taggers, t)
 	}
