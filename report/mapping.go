@@ -112,7 +112,7 @@ func ProcessContainer(r Report, ts TopologySelector, nodeID string) (MappedNode,
 	if !ok {
 		return MappedNode{}, false // programmer error
 	}
-	dockerID, ok := md["docker_id"]
+	dockerContainerID, ok := md["docker_container_id"]
 	if !ok {
 		return MappedNode{
 			ID:    "uncontained",
@@ -122,13 +122,13 @@ func ProcessContainer(r Report, ts TopologySelector, nodeID string) (MappedNode,
 		}, true
 	}
 	var (
-		dockerName    = md.GetDefault("docker_name", "(unknown)")
-		hostName      = md.GetDefault("host_name", "(unknown)")
-		dockerImageID = md.GetDefault("docker_image_id", "unknown")
+		dockerContainerName = md.GetDefault("docker_container_name", "(unknown)")
+		hostName            = md.GetDefault("host_name", "(unknown)")
+		dockerImageID       = md.GetDefault("docker_image_id", "unknown")
 	)
 	return MappedNode{
-		ID:    dockerID,
-		Major: dockerName,
+		ID:    dockerContainerID,
+		Major: dockerContainerName,
 		Minor: hostName,
 		Rank:  dockerImageID,
 	}, true
@@ -151,7 +151,7 @@ func ProcessContainerImage(r Report, ts TopologySelector, nodeID string) (Mapped
 	if !ok {
 		return MappedNode{}, false // programmer error
 	}
-	if _, ok := md["docker_id"]; !ok {
+	if _, ok := md["docker_container_id"]; !ok {
 		return MappedNode{
 			ID:    "uncontained",
 			Major: "Uncontained",

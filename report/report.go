@@ -173,10 +173,10 @@ func processOriginTable(nmd NodeMetadata) (Table, bool) {
 	if val, ok := nmd["pid"]; ok {
 		rows = append(rows, Row{"PID", val, ""})
 	}
-	if val, ok := nmd["docker_id"]; ok {
+	if val, ok := nmd["docker_container_id"]; ok {
 		rows = append(rows, Row{"Docker container ID", val, ""})
 	}
-	if val, ok := nmd["docker_name"]; ok {
+	if val, ok := nmd["docker_container_name"]; ok {
 		rows = append(rows, Row{"Docker container name", val, ""})
 	}
 	if val, ok := nmd["docker_image_id"]; ok {
