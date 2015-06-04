@@ -32,8 +32,8 @@ func TestMerge(t *testing.T) {
 
 	batchTime := 100 * time.Millisecond
 	c := xfer.NewCollector(batchTime)
-	c.AddAddress(p1Addr)
-	c.AddAddress(p2Addr)
+	c.Add(p1Addr)
+	c.Add(p2Addr)
 	defer c.Stop()
 	time.Sleep(batchTime / 10) // connect
 
