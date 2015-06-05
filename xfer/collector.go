@@ -62,7 +62,7 @@ func NewCollector(batchTime time.Duration) Collector {
 func (c *realCollector) loop(batchTime time.Duration) {
 	var (
 		tick    = tick(batchTime)
-		current = report.NewReport()
+		current = report.MakeReport()
 		addrs   = map[string]chan struct{}{}
 		wg      = &sync.WaitGroup{} // per-address goroutines
 	)
@@ -92,7 +92,7 @@ func (c *realCollector) loop(batchTime time.Duration) {
 		select {
 		case <-tick:
 			c.out <- current
-			current = report.NewReport()
+			current = report.MakeReport()
 
 		case pc := <-c.peekc:
 			pc <- current

@@ -51,7 +51,7 @@ func NewReportLIFO(r reporter, maxAge time.Duration) *ReportLIFO {
 
 			case req := <-l.requests:
 				// Request for the current report.
-				report := report.NewReport()
+				report := report.MakeReport()
 				for _, r := range l.reports {
 					report.Merge(r.Report)
 				}

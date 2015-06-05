@@ -38,12 +38,12 @@ func TestMerge(t *testing.T) {
 	time.Sleep(batchTime / 10) // connect
 
 	{
-		r := report.NewReport()
+		r := report.MakeReport()
 		r.HostMetadatas["p1"] = report.HostMetadata{Hostname: "test1"}
 		p1.Publish(r)
 	}
 	{
-		r := report.NewReport()
+		r := report.MakeReport()
 		r.HostMetadatas["p2"] = report.HostMetadata{Hostname: "test2"}
 		p2.Publish(r)
 	}

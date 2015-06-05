@@ -15,7 +15,7 @@ func init() {
 
 // DemoReport makes up a report.
 func DemoReport(nodeCount int) report.Report {
-	r := report.NewReport()
+	r := report.MakeReport()
 
 	// Make up some plausible IPv4 numbers
 	hosts := []string{}
