@@ -50,7 +50,9 @@ func main() {
 	// Collector deals with the probes, and generates a single merged report
 	// every second.
 	c := xfer.NewCollector(*batch)
-	c.AddAddresses(fixedAddresses)
+	for _, addr := range fixedAddresses {
+		c.Add(addr)
+	}
 	defer c.Stop()
 
 	publisher, err := xfer.NewTCPPublisher(*listen)
@@ -81,8 +83,8 @@ func interrupt() chan os.Signal {
 
 type collector interface {
 	Reports() <-chan report.Report
-	RemoveAddress(string)
-	AddAddress(string)
+	Remove(string)
+	Add(string)
 }
 
 type publisher xfer.Publisher
@@ -143,7 +145,7 @@ func discover(c collector, p publisher, fixed []string) {
 				if _, ok := lastSeen[addr]; !ok {
 					if interestingAddress(localNets, addr) {
 						log.Printf("discovery %v: potential probe address", addr)
-						c.AddAddress(addressToDial(addr))
+						c.Add(addressToDial(addr))
 					} else {
 						log.Printf("discovery %v: non-probe address", addr)
 					}
@@ -164,7 +166,7 @@ func discover(c collector, p publisher, fixed []string) {
 				// anything.
 				log.Printf("discovery %v: traffic timeout", addr)
 				delete(lastSeen, addr)
-				c.RemoveAddress(addressToDial(addr))
+				c.Remove(addressToDial(addr))
 			}
 		}
 	}

@@ -27,7 +27,9 @@ func main() {
 
 	xfer.MaxBackoff = 10 * time.Second
 	c := xfer.NewCollector(*batch)
-	c.AddAddresses(strings.Split(*probes, ","))
+	for _, addr := range strings.Split(*probes, ",") {
+		c.Add(addr)
+	}
 	defer c.Stop()
 	lifo := NewReportLIFO(c, *window)
 	defer lifo.Stop()
