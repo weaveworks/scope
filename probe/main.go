@@ -79,7 +79,7 @@ func main() {
 		}
 	}
 
-	if *dockerMapper {
+	if *dockerMapper && runtime.GOOS == "Linux" {
 		docker, err := newDockerMapper(*procRoot, *dockerInterval)
 		if err != nil {
 			log.Fatal(err)
