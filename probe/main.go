@@ -104,7 +104,7 @@ func main() {
 			nodeID   = hostname // TODO: we should sanitize the hostname
 			pubTick  = time.Tick(*publishInterval)
 			spyTick  = time.Tick(*spyInterval)
-			r        = report.NewReport()
+			r        = report.MakeReport()
 		)
 
 		for {
@@ -113,7 +113,7 @@ func main() {
 				publishTicks.WithLabelValues().Add(1)
 				r.HostMetadatas[nodeID] = hostMetadata(hostname)
 				publisher.Publish(r)
-				r = report.NewReport()
+				r = report.MakeReport()
 
 			case <-spyTick:
 				r.Merge(spy(hostname, hostname, *spyProcs, pms))

@@ -77,8 +77,8 @@ type Row struct {
 	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
 }
 
-// NewReport makes a clean report, ready to Merge() other reports into.
-func NewReport() Report {
+// MakeReport makes a clean report, ready to Merge() other reports into.
+func MakeReport() Report {
 	return Report{
 		Process: NewTopology(),
 		// Transport Topology

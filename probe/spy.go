@@ -24,7 +24,7 @@ func spy(
 		spyDuration.WithLabelValues().Observe(float64(time.Since(begin)))
 	}(time.Now())
 
-	r := report.NewReport()
+	r := report.MakeReport()
 
 	conns, err := procspy.Connections(includeProcesses)
 	if err != nil {

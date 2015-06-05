@@ -34,7 +34,7 @@ func main() {
 	}
 	defer c.Stop()
 
-	report := report.NewReport()
+	report := report.MakeReport()
 	irq := interrupt()
 OUTER:
 	for {
