@@ -4,13 +4,17 @@ CFLAGS=-g -lpthread
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-all: qotd/qotd goapp/app
+all: qotd/qotd goapp/app shout/shout
 
 qotd/qotd: qotd/qotd.o
 	gcc -o $@ $< $(CFLAGS)
 
 goapp/app: goapp/app.go
-	go build -ldflags "-extldflags \"-static\"" -tags netgo -o goapp/app ./goapp
+shout/shout: shout/shout.go
+
+shout/shout goapp/app:
+	go get -tags netgo ./$(@D)
+	go build -ldflags "-extldflags \"-static\"" -tags netgo -o $@ ./$(@D)
 
 clean:
 	rm -f qotd/*.o qotd/qotd goapp/app

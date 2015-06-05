@@ -44,8 +44,6 @@ experimental/genreport/genreport
 experimental/graphviz/graphviz
 experimental/oneshot/oneshot
 experimental/_integration/_integration
-experimental/example/qotd/qotd
-experimental/example/goapp/app
 *sublime-project
 *sublime-workspace
 *npm-debug.log
