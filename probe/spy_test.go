@@ -87,7 +87,7 @@ func TestSpyNetwork(t *testing.T) {
 		nodeName = "frenchs-since-1904"
 	)
 
-	r := spy(nodeID, nodeName, false, []processMapper{})
+	r := spy(nodeID, nodeName, false)
 	//buf, _ := json.MarshalIndent(r, "", "    ")
 	//t.Logf("\n%s\n", buf)
 
@@ -123,7 +123,7 @@ func TestSpyProcess(t *testing.T) {
 		nodeName = "fishermans-friend"
 	)
 
-	r := spy(nodeID, nodeName, true, []processMapper{})
+	r := spy(nodeID, nodeName, true)
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
 
 	var (
@@ -148,28 +148,5 @@ func TestSpyProcess(t *testing.T) {
 		if have := r.Process.NodeMetadatas[scopedLocal][key]; want != have {
 			t.Errorf("Process.NodeMetadatas[%q][%q]: want %q, have %q", scopedLocal, key, want, have)
 		}
-	}
-}
-
-func TestSpyProcessDataSource(t *testing.T) {
-	procspy.SetFixtures(fixConnectionsWithProcesses)
-
-	const (
-		nodeID   = "chianti"
-		nodeName = "harmonisch"
-	)
-
-	m := identityMapper{}
-	r := spy(nodeID, nodeName, true, []processMapper{m})
-	scopedLocal := scopedIPPort(nodeID, fixLocalAddress, fixLocalPort)
-
-	k := m.Key()
-	v, err := m.Map(fixProcessPID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if want, have := v, r.Process.NodeMetadatas[scopedLocal][k]; want != have {
-		t.Fatalf("%s: want %q, have %q", k, want, have)
 	}
 }
