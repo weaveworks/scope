@@ -25,6 +25,8 @@ DOMAINNAME=weave.local
 FQDN=$HOSTNAME.$DOMAINNAME
 DOCKER_BRIDGE=${DOCKER_BRIDGE:-docker0}
 IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
+IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
+    xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
 
 [ $# -gt 0 ] || usage
 COMMAND=$1
@@ -143,8 +145,8 @@ case "$COMMAND" in
 			-v /var/run/docker.sock:/var/run/docker.sock \
 			$WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS "$@")
 
+		IP_ADDRS=$(docker run --net=host gliderlabs/alpine /bin/sh -c "$IP_ADDR_CMD")
 		if dns_running; then
-			IP_ADDRS=$(hostname -I)
 			if [ -z "$IP_ADDRS" ]; then
 				echo "Could not determine local IP address; Weave DNS integration will not work correctly."
 				exit 1
@@ -155,7 +157,7 @@ case "$COMMAND" in
 		echo $CONTAINER
 
 		echo "Weave Scope is reachable at the following URL(s):" >&2
-		for ip in $(hostname -I); do
+		for ip in $IP_ADDRS; do
 			echo "  * http://$ip:4040/" >&2
 		done
 		;;
