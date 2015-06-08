@@ -240,6 +240,19 @@ func (t *DockerTagger) updatePIDTree() error {
 	return nil
 }
 
+// Containers returns the Containers the DockerTagger knows about.
+func (t *DockerTagger) Containers() []*docker.Container {
+	containers := []*docker.Container{}
+
+	t.RLock()
+	for _, container := range t.containers {
+		containers = append(containers, container)
+	}
+	t.RUnlock()
+
+	return containers
+}
+
 // Tag implements Tagger.
 func (t *DockerTagger) Tag(r report.Report) report.Report {
 	for nodeID, nodeMetadata := range r.Process.NodeMetadatas {
