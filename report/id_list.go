@@ -1,15 +1,12 @@
 package report
 
-import (
-	"sort"
-)
+import "sort"
 
-// IDList is a list of string IDs, which are always sorted and
-// without duplicates.
+// IDList is a list of string IDs, which are always sorted and unique.
 type IDList []string
 
-// NewIDList makes a new IDList.
-func NewIDList(ids ...string) IDList {
+// MakeIDList makes a new IDList.
+func MakeIDList(ids ...string) IDList {
 	sort.Strings(ids)
 	return IDList(ids)
 }
