@@ -95,7 +95,9 @@ func (c *realCollector) loop(batchTime time.Duration) {
 			current = report.MakeReport()
 
 		case pc := <-c.peekc:
-			pc <- current
+			copy := report.MakeReport()
+			copy.Merge(current)
+			pc <- copy
 
 		case r := <-c.in:
 			current.Merge(r)
