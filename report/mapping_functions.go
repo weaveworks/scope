@@ -151,7 +151,7 @@ func GenericPseudoNode(src string, srcMapped RenderableNode, dst string) (Mapped
 		srcNodeAddr, srcNodePort := trySplitAddr(src)
 		dstNodeAddr, _ := trySplitAddr(dst)
 
-		outputID = strings.Join([]string{"pseudo:", dstNodeAddr, srcNodeAddr, srcNodePort}, ScopeDelim)
+		outputID = MakePseudoNodeID(dstNodeAddr, srcNodeAddr, srcNodePort)
 		maj, min = dstNodeAddr, ""
 	}
 
@@ -174,7 +174,7 @@ func GenericGroupedPseudoNode(src string, srcMapped RenderableNode, dst string) 
 		// When grouping, emit one pseudo node per (srcNodeAddress, dstNodeAddr)
 		dstNodeAddr, _ := trySplitAddr(dst)
 
-		outputID = strings.Join([]string{"pseudo:", dstNodeAddr, srcMapped.ID}, ScopeDelim)
+		outputID = MakePseudoNodeID(dstNodeAddr, srcMapped.ID)
 		maj, min = dstNodeAddr, ""
 	}
 
@@ -193,6 +193,12 @@ func InternetOnlyPseudoNode(_ string, _ RenderableNode, dst string) (MappedNode,
 	return MappedNode{}, false
 }
 
+// trySplitAddr is basically ParseArbitraryNodeID, since its callsites
+// (pseudo funcs) just have opaque node IDs and don't know what topology they
+// come from. Without changing how pseudo funcs work, we can't make it much
+// smarter.
+//
+// TODO change how pseudofuncs work, and eliminate this helper.
 func trySplitAddr(addr string) (string, string) {
 	fields := strings.SplitN(addr, ScopeDelim, 3)
 	if len(fields) == 3 {

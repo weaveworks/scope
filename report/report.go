@@ -93,8 +93,8 @@ func MakeReport() Report {
 func (r Report) SquashRemote() Report {
 	localNets := r.HostMetadatas.LocalNets()
 	return Report{
-		Process:       Squash(r.Process, AddressIPPort, localNets),
-		Network:       Squash(r.Network, AddressIP, localNets),
+		Process:       Squash(r.Process, EndpointIDAddresser, localNets),
+		Network:       Squash(r.Network, AddressIDAddresser, localNets),
 		HostMetadatas: r.HostMetadatas,
 	}
 }

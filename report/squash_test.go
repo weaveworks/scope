@@ -166,7 +166,7 @@ func TestSquashTopology(t *testing.T) {
 		NodeMetadatas: reportToSquash().Process.NodeMetadatas,
 	}
 
-	have := Squash(reportToSquash().Process, AddressIPPort, reportToSquash().HostMetadatas.LocalNets())
+	have := Squash(reportToSquash().Process, EndpointIDAddresser, reportToSquash().HostMetadatas.LocalNets())
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
 	}

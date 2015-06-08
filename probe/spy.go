@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
 	"strconv"
 	"time"
 
@@ -44,10 +43,10 @@ func addConnection(
 	hostID, hostName string,
 ) {
 	var (
-		scopedLocal  = scopedIP(hostID, c.LocalAddress)
-		scopedRemote = scopedIP(hostID, c.RemoteAddress)
-		key          = hostID + report.IDDelim + scopedLocal
-		edgeKey      = scopedLocal + report.IDDelim + scopedRemote
+		scopedLocal  = report.MakeAddressNodeID(hostID, c.LocalAddress.String())
+		scopedRemote = report.MakeAddressNodeID(hostID, c.RemoteAddress.String())
+		key          = report.MakeAdjacencyID(hostID, scopedLocal)
+		edgeKey      = report.MakeEdgeID(scopedLocal, scopedRemote)
 	)
 
 	r.Network.Adjacency[key] = r.Network.Adjacency[key].Add(scopedRemote)
@@ -66,10 +65,10 @@ func addConnection(
 
 	if c.Proc.PID > 0 {
 		var (
-			scopedLocal  = scopedIPPort(hostID, c.LocalAddress, c.LocalPort)
-			scopedRemote = scopedIPPort(hostID, c.RemoteAddress, c.RemotePort)
-			key          = hostID + report.IDDelim + scopedLocal
-			edgeKey      = scopedLocal + report.IDDelim + scopedRemote
+			scopedLocal  = report.MakeEndpointNodeID(hostID, c.LocalAddress.String(), strconv.Itoa(int(c.LocalPort)))
+			scopedRemote = report.MakeEndpointNodeID(hostID, c.RemoteAddress.String(), strconv.Itoa(int(c.RemotePort)))
+			key          = report.MakeAdjacencyID(hostID, scopedLocal)
+			edgeKey      = report.MakeEdgeID(scopedLocal, scopedRemote)
 		)
 
 		r.Process.Adjacency[key] = r.Process.Adjacency[key].Add(scopedRemote)
@@ -90,17 +89,4 @@ func addConnection(
 		edgeMeta.MaxConnCountTCP++
 		r.Process.EdgeMetadatas[edgeKey] = edgeMeta
 	}
-}
-
-// scopedIP makes an IP unique over multiple networks.
-func scopedIP(scope string, ip net.IP) string {
-	if ip.IsLoopback() {
-		return scope + report.ScopeDelim + ip.String()
-	}
-	return report.ScopeDelim + ip.String()
-}
-
-// scopedIPPort makes an IP+port tuple unique over multiple networks.
-func scopedIPPort(scope string, ip net.IP, port uint16) string {
-	return scopedIP(scope, ip) + report.ScopeDelim + strconv.FormatUint(uint64(port), 10)
 }

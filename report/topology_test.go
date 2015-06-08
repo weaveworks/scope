@@ -13,27 +13,32 @@ func init() {
 	spew.Config.SortKeys = true // :\
 }
 
-const (
-	client54001    = ScopeDelim + "10.10.10.20" + ScopeDelim + "54001" // curl (1)
-	client54002    = ScopeDelim + "10.10.10.20" + ScopeDelim + "54002" // curl (2)
-	unknownClient1 = ScopeDelim + "10.10.10.10" + ScopeDelim + "54010" // we want to ensure two unknown clients, connnected
-	unknownClient2 = ScopeDelim + "10.10.10.10" + ScopeDelim + "54020" // to the same server, are deduped.
-	unknownClient3 = ScopeDelim + "10.10.10.11" + ScopeDelim + "54020" // Check this one isn't deduped
-	server80       = ScopeDelim + "192.168.1.1" + ScopeDelim + "80"    // apache
+var (
+	clientHostID  = "client.hostname.com"
+	serverHostID  = "server.hostname.com"
+	randomHostID  = "random.hostname.com"
+	unknownHostID = ""
 
-	clientIP  = ScopeDelim + "10.10.10.20"
-	serverIP  = ScopeDelim + "192.168.1.1"
-	randomIP  = ScopeDelim + "172.16.11.9" // only in Network topology
-	unknownIP = ScopeDelim + "10.10.10.10"
+	client54001    = MakeEndpointNodeID(clientHostID, "10.10.10.20", "54001") // curl (1)
+	client54002    = MakeEndpointNodeID(clientHostID, "10.10.10.20", "54002") // curl (2)
+	unknownClient1 = MakeEndpointNodeID(serverHostID, "10.10.10.10", "54010") // we want to ensure two unknown clients, connnected
+	unknownClient2 = MakeEndpointNodeID(serverHostID, "10.10.10.10", "54020") // to the same server, are deduped.
+	unknownClient3 = MakeEndpointNodeID(serverHostID, "10.10.10.11", "54020") // Check this one isn't deduped
+	server80       = MakeEndpointNodeID(serverHostID, "192.168.1.1", "80")    // apache
+
+	clientIP  = MakeAddressNodeID(clientHostID, "10.10.10.20")
+	serverIP  = MakeAddressNodeID(serverHostID, "192.168.1.1")
+	randomIP  = MakeAddressNodeID(randomHostID, "172.16.11.9") // only in Network topology
+	unknownIP = MakeAddressNodeID(unknownHostID, "10.10.10.10")
 )
 
 var (
 	report = Report{
 		Process: Topology{
 			Adjacency: Adjacency{
-				"client.hostname.com" + IDDelim + client54001: NewIDList(server80),
-				"client.hostname.com" + IDDelim + client54002: NewIDList(server80),
-				"server.hostname.com" + IDDelim + server80:    NewIDList(client54001, client54002, unknownClient1, unknownClient2, unknownClient3),
+				MakeAdjacencyID("client.hostname.com", client54001): NewIDList(server80),
+				MakeAdjacencyID("client.hostname.com", client54002): NewIDList(server80),
+				MakeAdjacencyID("server.hostname.com", server80):    NewIDList(client54001, client54002, unknownClient1, unknownClient2, unknownClient3),
 			},
 			NodeMetadatas: NodeMetadatas{
 				// NodeMetadata is arbitrary. We're free to put only precisely what we
@@ -56,38 +61,38 @@ var (
 				},
 			},
 			EdgeMetadatas: EdgeMetadatas{
-				client54001 + IDDelim + server80: EdgeMetadata{
+				MakeEdgeID(client54001, server80): EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 100,
 					BytesEgress:  10,
 				},
-				client54002 + IDDelim + server80: EdgeMetadata{
+				MakeEdgeID(client54002, server80): EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 200,
 					BytesEgress:  20,
 				},
 
-				server80 + IDDelim + client54001: EdgeMetadata{
+				MakeEdgeID(server80, client54001): EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 10,
 					BytesEgress:  100,
 				},
-				server80 + IDDelim + client54002: EdgeMetadata{
+				MakeEdgeID(server80, client54002): EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 20,
 					BytesEgress:  200,
 				},
-				server80 + IDDelim + unknownClient1: EdgeMetadata{
+				MakeEdgeID(server80, unknownClient1): EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 30,
 					BytesEgress:  300,
 				},
-				server80 + IDDelim + unknownClient2: EdgeMetadata{
+				MakeEdgeID(server80, unknownClient2): EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 40,
 					BytesEgress:  400,
 				},
-				server80 + IDDelim + unknownClient3: EdgeMetadata{
+				MakeEdgeID(server80, unknownClient3): EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 50,
 					BytesEgress:  500,
@@ -96,9 +101,9 @@ var (
 		},
 		Network: Topology{
 			Adjacency: Adjacency{
-				"client.hostname.com" + IDDelim + clientIP: NewIDList(serverIP),
-				"random.hostname.com" + IDDelim + randomIP: NewIDList(serverIP),
-				"server.hostname.com" + IDDelim + serverIP: NewIDList(clientIP, unknownIP), // no backlink to random
+				MakeAdjacencyID("client.hostname.com", clientIP): NewIDList(serverIP),
+				MakeAdjacencyID("random.hostname.com", randomIP): NewIDList(serverIP),
+				MakeAdjacencyID("server.hostname.com", serverIP): NewIDList(clientIP, unknownIP), // no backlink to random
 			},
 			NodeMetadatas: NodeMetadatas{
 				clientIP: NodeMetadata{
@@ -112,19 +117,19 @@ var (
 				},
 			},
 			EdgeMetadatas: EdgeMetadatas{
-				clientIP + IDDelim + serverIP: EdgeMetadata{
+				MakeEdgeID(clientIP, serverIP): EdgeMetadata{
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  3,
 				},
-				randomIP + IDDelim + serverIP: EdgeMetadata{
+				MakeEdgeID(randomIP, serverIP): EdgeMetadata{
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  20, // dangling connections, weird but possible
 				},
-				serverIP + IDDelim + clientIP: EdgeMetadata{
+				MakeEdgeID(serverIP, clientIP): EdgeMetadata{
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  3,
 				},
-				serverIP + IDDelim + unknownIP: EdgeMetadata{
+				MakeEdgeID(serverIP, unknownIP): EdgeMetadata{
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  7,
 				},
@@ -143,7 +148,7 @@ func TestRenderByProcessPID(t *testing.T) {
 			Pseudo:      false,
 			Adjacency:   NewIDList("pid:server-80-domain:215"),
 			OriginHosts: NewIDList("client.hostname.com"),
-			OriginNodes: NewIDList(";10.10.10.20;54001"),
+			OriginNodes: NewIDList("client.hostname.com;10.10.10.20;54001"),
 			Metadata: AggregateMetadata{
 				KeyBytesIngress: 100,
 				KeyBytesEgress:  10,
@@ -157,7 +162,7 @@ func TestRenderByProcessPID(t *testing.T) {
 			Pseudo:      false,
 			Adjacency:   NewIDList("pid:server-80-domain:215"),
 			OriginHosts: NewIDList("client.hostname.com"),
-			OriginNodes: NewIDList(";10.10.10.20;54002"),
+			OriginNodes: NewIDList("client.hostname.com;10.10.10.20;54002"),
 			Metadata: AggregateMetadata{
 				KeyBytesIngress: 200,
 				KeyBytesEgress:  20,
@@ -172,24 +177,24 @@ func TestRenderByProcessPID(t *testing.T) {
 			Adjacency: NewIDList(
 				"pid:client-54001-domain:10001",
 				"pid:client-54002-domain:10001",
-				"pseudo:;10.10.10.10;192.168.1.1;80",
-				"pseudo:;10.10.10.11;192.168.1.1;80",
+				"pseudo;10.10.10.10;192.168.1.1;80",
+				"pseudo;10.10.10.11;192.168.1.1;80",
 			),
 			OriginHosts: NewIDList("server.hostname.com"),
-			OriginNodes: NewIDList(";192.168.1.1;80"),
+			OriginNodes: NewIDList("server.hostname.com;192.168.1.1;80"),
 			Metadata: AggregateMetadata{
 				KeyBytesIngress: 150,
 				KeyBytesEgress:  1500,
 			},
 		},
-		"pseudo:;10.10.10.10;192.168.1.1;80": {
-			ID:         "pseudo:;10.10.10.10;192.168.1.1;80",
+		"pseudo;10.10.10.10;192.168.1.1;80": {
+			ID:         "pseudo;10.10.10.10;192.168.1.1;80",
 			LabelMajor: "10.10.10.10",
 			Pseudo:     true,
 			Metadata:   AggregateMetadata{},
 		},
-		"pseudo:;10.10.10.11;192.168.1.1;80": {
-			ID:         "pseudo:;10.10.10.11;192.168.1.1;80",
+		"pseudo;10.10.10.11;192.168.1.1;80": {
+			ID:         "pseudo;10.10.10.11;192.168.1.1;80",
 			LabelMajor: "10.10.10.11",
 			Pseudo:     true,
 			Metadata:   AggregateMetadata{},
@@ -214,7 +219,7 @@ func TestRenderByProcessPIDGrouped(t *testing.T) {
 			Pseudo:      false,
 			Adjacency:   NewIDList("apache"),
 			OriginHosts: NewIDList("client.hostname.com"),
-			OriginNodes: NewIDList(";10.10.10.20;54001", ";10.10.10.20;54002"),
+			OriginNodes: NewIDList("client.hostname.com;10.10.10.20;54001", "client.hostname.com;10.10.10.20;54002"),
 			Metadata: AggregateMetadata{
 				KeyBytesIngress: 300,
 				KeyBytesEgress:  30,
@@ -228,24 +233,24 @@ func TestRenderByProcessPIDGrouped(t *testing.T) {
 			Pseudo:     false,
 			Adjacency: NewIDList(
 				"curl",
-				"pseudo:;10.10.10.10;apache",
-				"pseudo:;10.10.10.11;apache",
+				"pseudo;10.10.10.10;apache",
+				"pseudo;10.10.10.11;apache",
 			),
 			OriginHosts: NewIDList("server.hostname.com"),
-			OriginNodes: NewIDList(";192.168.1.1;80"),
+			OriginNodes: NewIDList("server.hostname.com;192.168.1.1;80"),
 			Metadata: AggregateMetadata{
 				KeyBytesIngress: 150,
 				KeyBytesEgress:  1500,
 			},
 		},
-		"pseudo:;10.10.10.10;apache": {
-			ID:         "pseudo:;10.10.10.10;apache",
+		"pseudo;10.10.10.10;apache": {
+			ID:         "pseudo;10.10.10.10;apache",
 			LabelMajor: "10.10.10.10",
 			Pseudo:     true,
 			Metadata:   AggregateMetadata{},
 		},
-		"pseudo:;10.10.10.11;apache": {
-			ID:         "pseudo:;10.10.10.11;apache",
+		"pseudo;10.10.10.11;apache": {
+			ID:         "pseudo;10.10.10.11;apache",
 			LabelMajor: "10.10.10.11",
 			Pseudo:     true,
 			Metadata:   AggregateMetadata{},
@@ -267,7 +272,7 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Pseudo:      false,
 			Adjacency:   NewIDList("host:server.hostname.com"),
 			OriginHosts: NewIDList("client.hostname.com"),
-			OriginNodes: NewIDList(";10.10.10.20"),
+			OriginNodes: NewIDList("client.hostname.com;10.10.10.20"),
 			Metadata: AggregateMetadata{
 				KeyMaxConnCountTCP: 3,
 			},
@@ -280,7 +285,7 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Pseudo:      false,
 			Adjacency:   NewIDList("host:server.hostname.com"),
 			OriginHosts: NewIDList("random.hostname.com"),
-			OriginNodes: NewIDList(";172.16.11.9"),
+			OriginNodes: NewIDList("random.hostname.com;172.16.11.9"),
 			Metadata: AggregateMetadata{
 				KeyMaxConnCountTCP: 20,
 			},
@@ -291,15 +296,15 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			LabelMinor:  "hostname.com", // after first .
 			Rank:        "server",
 			Pseudo:      false,
-			Adjacency:   NewIDList("host:client.hostname.com", "pseudo:;10.10.10.10;192.168.1.1;"),
+			Adjacency:   NewIDList("host:client.hostname.com", "pseudo;10.10.10.10;192.168.1.1;"),
 			OriginHosts: NewIDList("server.hostname.com"),
-			OriginNodes: NewIDList(";192.168.1.1"),
+			OriginNodes: NewIDList("server.hostname.com;192.168.1.1"),
 			Metadata: AggregateMetadata{
 				KeyMaxConnCountTCP: 10,
 			},
 		},
-		"pseudo:;10.10.10.10;192.168.1.1;": {
-			ID:          "pseudo:;10.10.10.10;192.168.1.1;",
+		"pseudo;10.10.10.10;192.168.1.1;": {
+			ID:          "pseudo;10.10.10.10;192.168.1.1;",
 			LabelMajor:  "10.10.10.10",
 			LabelMinor:  "", // after first .
 			Rank:        "",

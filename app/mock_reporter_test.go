@@ -18,34 +18,34 @@ func (s StaticReport) Report() report.Report {
 	var testReport = report.Report{
 		Process: report.Topology{
 			Adjacency: report.Adjacency{
-				"hostA|;192.168.1.1;12345": []string{";192.168.1.2;80"},
-				"hostA|;192.168.1.1;12346": []string{";192.168.1.2;80"},
-				"hostA|;192.168.1.1;8888":  []string{";1.2.3.4;22"},
-				"hostB|;192.168.1.2;80":    []string{";192.168.1.1;12345"},
+				report.MakeAdjacencyID("hostA", report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345")): report.NewIDList(report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")),
+				report.MakeAdjacencyID("hostA", report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346")): report.NewIDList(report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")),
+				report.MakeAdjacencyID("hostA", report.MakeEndpointNodeID("hostA", "192.168.1.1", "8888")):  report.NewIDList(report.MakeEndpointNodeID("", "1.2.3.4", "22")),
+				report.MakeAdjacencyID("hostB", report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")):    report.NewIDList(report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345")),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
-				";192.168.1.1;12345|;192.168.1.2;80": report.EdgeMetadata{
+				report.MakeEdgeID(report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345"), report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")): report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      12,
 					BytesIngress:     0,
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  200,
 				},
-				";192.168.1.1;12346|;192.168.1.2;80": report.EdgeMetadata{
+				report.MakeEdgeID(report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346"), report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")): report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      12,
 					BytesIngress:     0,
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  201,
 				},
-				";192.168.1.1;8888|;1.2.3.4;80": report.EdgeMetadata{
+				report.MakeEdgeID(report.MakeEndpointNodeID("hostA", "192.168.1.1", "8888"), report.MakeEndpointNodeID("", "1.2.3.4", "80")): report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      200,
 					BytesIngress:     0,
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  202,
 				},
-				";192.168.1.2;80|;192.168.1.1;12345": report.EdgeMetadata{
+				report.MakeEdgeID(report.MakeEndpointNodeID("hostB", "192.168.1.2", "80"), report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345")): report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      0,
 					BytesIngress:     12,
@@ -54,22 +54,22 @@ func (s StaticReport) Report() report.Report {
 				},
 			},
 			NodeMetadatas: report.NodeMetadatas{
-				";192.168.1.1;12345": report.NodeMetadata{
+				report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345"): report.NodeMetadata{
 					"pid":    "23128",
 					"name":   "curl",
 					"domain": "node-a.local",
 				},
-				";192.168.1.1;12346": report.NodeMetadata{ // <-- same as :12345
+				report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346"): report.NodeMetadata{ // <-- same as :12345
 					"pid":    "23128",
 					"name":   "curl",
 					"domain": "node-a.local",
 				},
-				";192.168.1.1;8888": report.NodeMetadata{
+				report.MakeEndpointNodeID("hostA", "192.168.1.1", "8888"): report.NodeMetadata{
 					"pid":    "55100",
 					"name":   "ssh",
 					"domain": "node-a.local",
 				},
-				";192.168.1.2;80": report.NodeMetadata{
+				report.MakeEndpointNodeID("hostB", "192.168.1.2", "80"): report.NodeMetadata{
 					"pid":    "215",
 					"name":   "apache",
 					"domain": "node-b.local",
@@ -79,25 +79,25 @@ func (s StaticReport) Report() report.Report {
 
 		Network: report.Topology{
 			Adjacency: report.Adjacency{
-				"hostA|;192.168.1.1": []string{";192.168.1.2", ";1.2.3.4"},
-				"hostB|;192.168.1.2": []string{";192.168.1.1"},
+				report.MakeAdjacencyID("hostA", report.MakeAddressNodeID("hostA", "192.168.1.1")): report.NewIDList(report.MakeAddressNodeID("hostB", "192.168.1.2"), report.MakeAddressNodeID("", "1.2.3.4")),
+				report.MakeAdjacencyID("hostB", report.MakeAddressNodeID("hostB", "192.168.1.2")): report.NewIDList(report.MakeAddressNodeID("hostA", "192.168.1.1")),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
-				";192.168.1.1|;192.168.1.2": report.EdgeMetadata{
+				report.MakeEdgeID(report.MakeAddressNodeID("hostA", "192.168.1.1"), report.MakeAddressNodeID("hostB", "192.168.1.2")): report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      12,
 					BytesIngress:     0,
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  14,
 				},
-				";192.168.1.1|;1.2.3.4": report.EdgeMetadata{
+				report.MakeEdgeID(report.MakeAddressNodeID("hostA", "192.168.1.1"), report.MakeAddressNodeID("", "1.2.3.4")): report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      200,
 					BytesIngress:     0,
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  15,
 				},
-				";192.168.1.2|;192.168.1.1": report.EdgeMetadata{
+				report.MakeEdgeID(report.MakeAddressNodeID("hostB", "192.168.1.2"), report.MakeAddressNodeID("hostA", "192.168.1.1")): report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      0,
 					BytesIngress:     12,
@@ -106,10 +106,10 @@ func (s StaticReport) Report() report.Report {
 				},
 			},
 			NodeMetadatas: report.NodeMetadatas{
-				";192.168.1.1": report.NodeMetadata{
+				report.MakeAddressNodeID("hostA", "192.168.1.1"): report.NodeMetadata{
 					"name": "host-a",
 				},
-				";192.168.1.2": report.NodeMetadata{
+				report.MakeAddressNodeID("hostB", "192.168.1.2"): report.NodeMetadata{
 					"name": "host-b",
 				},
 			},
