@@ -30,17 +30,6 @@ type APIEdge struct {
 	Metadata report.AggregateMetadata `json:"metadata"`
 }
 
-// topologySelecter selects a single topology from a report.
-type topologySelecter func(r report.Report) report.Topology
-
-func selectProcess(r report.Report) report.Topology {
-	return r.Process
-}
-
-func selectNetwork(r report.Report) report.Topology {
-	return r.Network
-}
-
 // Full topology.
 func handleTopology(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{

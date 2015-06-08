@@ -47,16 +47,16 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 type topologyView struct {
 	human           string
-	selector        topologySelecter
+	selector        report.TopologySelector
 	mapper          report.MapFunc
 	pseudo          report.PseudoFunc
 	groupedTopology string
 }
 
 var topologyRegistry = map[string]topologyView{
-	"applications":         {"Applications", selectProcess, report.ProcessPID, report.GenericPseudoNode, "applications-grouped"},
-	"applications-grouped": {"Applications", selectProcess, report.ProcessName, report.GenericGroupedPseudoNode, ""},
-	"containers":           {"Containers", selectProcess, report.ProcessContainer, report.InternetOnlyPseudoNode, "containers-grouped"},
-	"containers-grouped":   {"Containers", selectProcess, report.ProcessContainerImage, report.InternetOnlyPseudoNode, ""},
-	"hosts":                {"Hosts", selectNetwork, report.NetworkHostname, report.GenericPseudoNode, ""},
+	"applications":         {"Applications", report.SelectProcess, report.ProcessPID, report.GenericPseudoNode, "applications-grouped"},
+	"applications-grouped": {"Applications", report.SelectProcess, report.ProcessName, report.GenericGroupedPseudoNode, ""},
+	"containers":           {"Containers", report.SelectProcess, report.ProcessContainer, report.InternetOnlyPseudoNode, "containers-grouped"},
+	"containers-grouped":   {"Containers", report.SelectProcess, report.ProcessContainerImage, report.InternetOnlyPseudoNode, ""},
+	"hosts":                {"Hosts", report.SelectNetwork, report.NetworkHostname, report.GenericPseudoNode, ""},
 }

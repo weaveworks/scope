@@ -18,7 +18,6 @@ import (
 func spy(
 	hostID, hostName string,
 	includeProcesses bool,
-	pms []processMapper,
 ) report.Report {
 	defer func(begin time.Time) {
 		spyDuration.WithLabelValues().Observe(float64(time.Since(begin)))
@@ -33,7 +32,7 @@ func spy(
 	}
 
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
-		addConnection(&r, conn, hostID, hostName, pms)
+		addConnection(&r, conn, hostID, hostName)
 	}
 
 	return r
@@ -43,7 +42,6 @@ func addConnection(
 	r *report.Report,
 	c *procspy.Connection,
 	hostID, hostName string,
-	pms []processMapper,
 ) {
 	var (
 		scopedLocal  = scopedIP(hostID, c.LocalAddress)
@@ -82,14 +80,6 @@ func addConnection(
 				"pid":    fmt.Sprintf("%d", c.Proc.PID),
 				"name":   c.Proc.Name,
 				"domain": hostID,
-			}
-
-			for _, pm := range pms {
-				v, err := pm.Map(c.PID)
-				if err != nil {
-					continue
-				}
-				md[pm.Key()] = v
 			}
 
 			r.Process.NodeMetadatas[scopedLocal] = md

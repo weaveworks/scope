@@ -33,6 +33,19 @@ type MapFunc func(string, NodeMetadata) (MappedNode, bool)
 // node IDs prior to mapping.
 type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string) (MappedNode, bool)
 
+// TopologySelector selects a single topology from a report.
+type TopologySelector func(r Report) Topology
+
+// SelectProcess selects the process topology.
+func SelectProcess(r Report) Topology {
+	return r.Process
+}
+
+// SelectNetwork selects the network topology.
+func SelectNetwork(r Report) Topology {
+	return r.Network
+}
+
 // ProcessPID takes a node NodeMetadata from a Process topology, and returns a
 // representation with the ID based on the process PID and the labels based
 // on the process name.
@@ -70,10 +83,10 @@ func ProcessName(_ string, m NodeMetadata) (MappedNode, bool) {
 // are grouped into the Uncontained node.
 func ProcessContainer(_ string, m NodeMetadata) (MappedNode, bool) {
 	var id, major, minor, rank string
-	if m["docker_id"] == "" {
+	if m["docker_container_id"] == "" {
 		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
 	} else {
-		id, major, minor, rank = m["docker_id"], m["docker_name"], m["domain"], m["docker_image_id"]
+		id, major, minor, rank = m["docker_container_id"], m["docker_container_name"], m["domain"], m["docker_image_id"]
 	}
 
 	return MappedNode{

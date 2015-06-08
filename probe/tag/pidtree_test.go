@@ -1,4 +1,4 @@
-package main
+package tag
 
 import (
 	"fmt"
@@ -48,7 +48,7 @@ func TestPIDTree(t *testing.T) {
 		return []byte(fmt.Sprintf("%d na R %d", pid, parent)), nil
 	}
 
-	pidtree, err := newPIDTree("/proc")
+	pidtree, err := newPIDTreeStub("/proc")
 	if err != nil {
 		t.Fatalf("newPIDTree error: %v", err)
 	}
