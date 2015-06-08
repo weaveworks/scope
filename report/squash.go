@@ -1,14 +1,8 @@
 package report
 
 import (
+	"log"
 	"net"
-	"strings"
-)
-
-const (
-	// TheInternet is the ID that we assign to the super-node composed of all
-	// remote nodes that have been squashed together.
-	TheInternet = "theinternet"
 )
 
 // Squash takes a Topology, and folds all remote nodes into a supernode.
@@ -34,9 +28,13 @@ func Squash(t Topology, f IDAddresser, localNets []*net.IPNet) Topology {
 	// Edge metadata keys are "<src node ID>|<dst node ID>". If the dst node
 	// ID is remote, rename it to TheInternet.
 	for key, metadata := range t.EdgeMetadatas {
-		parts := strings.SplitN(key, IDDelim, 2)
-		if ip := f(parts[1]); ip != nil && isRemote(ip) {
-			key = parts[0] + IDDelim + TheInternet
+		srcNodeID, dstNodeID, ok := ParseEdgeID(key)
+		if !ok {
+			log.Printf("bad edge ID %q", key)
+			continue
+		}
+		if ip := f(dstNodeID); ip != nil && isRemote(ip) {
+			key = MakeEdgeID(srcNodeID, TheInternet)
 		}
 
 		// Could be we're merging two keys into one now.

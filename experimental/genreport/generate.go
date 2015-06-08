@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/weaveworks/scope/report"
@@ -56,14 +57,14 @@ func DemoReport(nodeCount int) report.Report {
 			src              = hosts[rand.Intn(len(hosts))]
 			dst              = hosts[rand.Intn(len(hosts))]
 			srcPort          = rand.Intn(50000) + 10000
-			srcPortID        = fmt.Sprintf("%s%s%s%d", report.ScopeDelim, src, report.ScopeDelim, srcPort)
-			dstPortID        = fmt.Sprintf("%s%s%s%d", report.ScopeDelim, dst, report.ScopeDelim, c.dstPort)
-			srcID            = "hostX" + report.IDDelim + srcPortID
-			dstID            = "hostX" + report.IDDelim + dstPortID
-			srcAddressID     = fmt.Sprintf("%s%s", report.ScopeDelim, src)
-			dstAddressID     = fmt.Sprintf("%s%s", report.ScopeDelim, dst)
-			nodeSrcAddressID = "hostX" + report.IDDelim + srcAddressID
-			nodeDstAddressID = "hostX" + report.IDDelim + dstAddressID
+			srcPortID        = report.MakeEndpointNodeID("", src, strconv.Itoa(srcPort))
+			dstPortID        = report.MakeEndpointNodeID("", dst, strconv.Itoa(c.dstPort))
+			srcID            = report.MakeAdjacencyID("hostX", srcPortID)
+			dstID            = report.MakeAdjacencyID("hostX", dstPortID)
+			srcAddressID     = report.MakeAddressNodeID("", src)
+			dstAddressID     = report.MakeAddressNodeID("", dst)
+			nodeSrcAddressID = report.MakeAdjacencyID("hostX", srcAddressID)
+			nodeDstAddressID = report.MakeAdjacencyID("hostX", dstAddressID)
 		)
 
 		// Process topology
@@ -84,8 +85,8 @@ func DemoReport(nodeCount int) report.Report {
 		}
 		r.Process.Adjacency[dstID] = r.Process.Adjacency[dstID].Add(srcPortID)
 		var (
-			edgeKeyEgress  = srcPortID + report.IDDelim + dstPortID
-			edgeKeyIngress = dstPortID + report.IDDelim + srcPortID
+			edgeKeyEgress  = report.MakeEdgeID(srcPortID, dstPortID)
+			edgeKeyIngress = report.MakeEdgeID(dstPortID, srcPortID)
 		)
 		r.Process.EdgeMetadatas[edgeKeyEgress] = report.EdgeMetadata{
 			WithConnCountTCP: true,

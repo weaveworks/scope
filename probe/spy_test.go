@@ -9,23 +9,6 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-func TestScopedIP(t *testing.T) {
-	const scope = "my-scope"
-
-	for ip, want := range map[string]string{
-		"1.2.3.4":     report.ScopeDelim + "1.2.3.4",
-		"192.168.1.2": report.ScopeDelim + "192.168.1.2",
-		"127.0.0.1":   scope + report.ScopeDelim + "127.0.0.1", // loopback
-		"::1":         scope + report.ScopeDelim + "::1",       // loopback
-		"fd00::451b:b714:85da:489e": report.ScopeDelim + "fd00::451b:b714:85da:489e", // global address
-		"fe80::82ee:73ff:fe83:588f": report.ScopeDelim + "fe80::82ee:73ff:fe83:588f", // link-local address
-	} {
-		if have := scopedIP(scope, net.ParseIP(ip)); have != want {
-			t.Errorf("%q: have %q, want %q", ip, have, want)
-		}
-	}
-}
-
 var (
 	fixLocalAddress  = net.ParseIP("192.168.1.1")
 	fixLocalPort     = uint16(80)
@@ -83,8 +66,8 @@ func TestSpyNetwork(t *testing.T) {
 	procspy.SetFixtures(fixConnections)
 
 	const (
-		nodeID   = "heinz-tomato-ketchup"
-		nodeName = "frenchs-since-1904"
+		nodeID   = "heinz-tomato-ketchup" // TODO rename to hostID
+		nodeName = "frenchs-since-1904"   // TODO rename to hostNmae
 	)
 
 	r := spy(nodeID, nodeName, false)
@@ -97,9 +80,9 @@ func TestSpyNetwork(t *testing.T) {
 	}
 
 	var (
-		scopedLocal  = scopedIP(nodeID, fixLocalAddress)
-		scopedRemote = scopedIP(nodeID, fixRemoteAddress)
-		localKey     = nodeID + report.IDDelim + scopedLocal
+		scopedLocal  = report.MakeAddressNodeID(nodeID, fixLocalAddress.String())
+		scopedRemote = report.MakeAddressNodeID(nodeID, fixRemoteAddress.String())
+		localKey     = report.MakeAdjacencyID(nodeID, scopedLocal)
 	)
 
 	if want, have := 1, len(r.Network.Adjacency[localKey]); want != have {
@@ -119,17 +102,17 @@ func TestSpyProcess(t *testing.T) {
 	procspy.SetFixtures(fixConnectionsWithProcesses)
 
 	const (
-		nodeID   = "nikon"
-		nodeName = "fishermans-friend"
+		nodeID   = "nikon"             // TODO rename to hostID
+		nodeName = "fishermans-friend" // TODO rename to hostNmae
 	)
 
 	r := spy(nodeID, nodeName, true)
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
 
 	var (
-		scopedLocal  = scopedIPPort(nodeID, fixLocalAddress, fixLocalPort)
-		scopedRemote = scopedIPPort(nodeID, fixRemoteAddress, fixRemotePort)
-		localKey     = nodeID + report.IDDelim + scopedLocal
+		scopedLocal  = report.MakeEndpointNodeID(nodeID, fixLocalAddress.String(), strconv.Itoa(int(fixLocalPort)))
+		scopedRemote = report.MakeEndpointNodeID(nodeID, fixRemoteAddress.String(), strconv.Itoa(int(fixRemotePort)))
+		localKey     = report.MakeAdjacencyID(nodeID, scopedLocal)
 	)
 
 	if want, have := 1, len(r.Process.Adjacency[localKey]); want != have {

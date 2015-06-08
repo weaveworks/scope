@@ -1,20 +1,11 @@
 package report
 
 import (
+	"log"
 	"reflect"
-	"strings"
 )
 
-const (
-	// ScopeDelim separates the scope portion of an address from the address
-	// string itself.
-	ScopeDelim = ";"
-
-	// IDDelim separates fields in a node ID.
-	IDDelim = "|"
-
-	localUnknown = "localUnknown"
-)
+const localUnknown = "localUnknown"
 
 // Topology describes a specific view of a network. It consists of nodes and
 // edges, represented by Adjacency, and metadata about those nodes and edges,
@@ -122,12 +113,14 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) map[string]Re
 	// Walk the graph and make connections.
 	for src, dsts := range t.Adjacency {
 		var (
-			fields            = strings.SplitN(src, IDDelim, 2) // "<host>|<address>"
-			srcOriginHostID   = fields[0]
-			srcNodeAddress    = fields[1]
-			srcRenderableID   = address2mapped[srcNodeAddress] // must exist
-			srcRenderableNode = nodes[srcRenderableID]         // must exist
+			srcOriginHostID, srcNodeAddress, ok = ParseAdjacencyID(src)
+			srcRenderableID                     = address2mapped[srcNodeAddress] // must exist
+			srcRenderableNode                   = nodes[srcRenderableID]         // must exist
 		)
+		if !ok {
+			log.Printf("bad adjacency ID %q", src)
+			continue
+		}
 
 		for _, dstNodeAddress := range dsts {
 			dstRenderableID, ok := address2mapped[dstNodeAddress]
@@ -150,7 +143,7 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) map[string]Re
 			srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
 			srcRenderableNode.OriginHosts = srcRenderableNode.OriginHosts.Add(srcOriginHostID)
 			srcRenderableNode.OriginNodes = srcRenderableNode.OriginNodes.Add(srcNodeAddress)
-			edgeID := srcNodeAddress + IDDelim + dstNodeAddress
+			edgeID := MakeEdgeID(srcNodeAddress, dstNodeAddress)
 			if md, ok := t.EdgeMetadatas[edgeID]; ok {
 				srcRenderableNode.Metadata.Merge(md.Transform())
 			}
@@ -169,13 +162,15 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) map[string]Re
 func (t Topology) EdgeMetadata(mapFunc MapFunc, srcRenderableID, dstRenderableID string) EdgeMetadata {
 	metadata := EdgeMetadata{}
 	for edgeID, edgeMeta := range t.EdgeMetadatas {
-		edgeParts := strings.SplitN(edgeID, IDDelim, 2)
-		src := edgeParts[0]
+		src, dst, ok := ParseEdgeID(edgeID)
+		if !ok {
+			log.Printf("bad edge ID %q", edgeID)
+			continue
+		}
 		if src != TheInternet {
 			mapped, _ := mapFunc(src, t.NodeMetadatas[src])
 			src = mapped.ID
 		}
-		dst := edgeParts[1]
 		if dst != TheInternet {
 			mapped, _ := mapFunc(dst, t.NodeMetadatas[dst])
 			dst = mapped.ID

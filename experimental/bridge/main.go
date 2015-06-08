@@ -132,7 +132,7 @@ func discover(c collector, p publisher, fixed []string) {
 
 		for _, adjacent := range r.Network.Adjacency {
 			for _, a := range adjacent {
-				ip := report.AddressIP(a) // address id -> IP
+				ip := report.AddressIDAddresser(a) // address id -> IP
 				if ip == nil {
 					continue
 				}

@@ -15,7 +15,7 @@ func TestUngroupedMapping(t *testing.T) {
 	}{
 		{
 			f:  NetworkHostname,
-			id: ScopeDelim + "1.2.3.4",
+			id: MakeAddressNodeID("", "1.2.3.4"),
 			meta: NodeMetadata{
 				"name": "my.host",
 			},
@@ -27,7 +27,7 @@ func TestUngroupedMapping(t *testing.T) {
 		},
 		{
 			f:  NetworkHostname,
-			id: ScopeDelim + "1.2.3.4",
+			id: MakeAddressNodeID("", "1.2.3.4"),
 			meta: NodeMetadata{
 				"name": "localhost",
 			},
