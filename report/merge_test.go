@@ -12,53 +12,53 @@ func TestMergeAdjacency(t *testing.T) {
 	}{
 		"Empty b": {
 			a: Adjacency{
-				"hostA|:192.168.1.1:12345": NewIDList(":192.168.1.2:80"),
-				"hostA|:192.168.1.1:8888":  NewIDList(":1.2.3.4:22"),
-				"hostB|:192.168.1.2:80":    NewIDList(":192.168.1.1:12345"),
+				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:80"),
+				"hostA|:192.168.1.1:8888":  MakeIDList(":1.2.3.4:22"),
+				"hostB|:192.168.1.2:80":    MakeIDList(":192.168.1.1:12345"),
 			},
 			b: Adjacency{},
 			want: Adjacency{
-				"hostA|:192.168.1.1:12345": NewIDList(":192.168.1.2:80"),
-				"hostA|:192.168.1.1:8888":  NewIDList(":1.2.3.4:22"),
-				"hostB|:192.168.1.2:80":    NewIDList(":192.168.1.1:12345"),
+				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:80"),
+				"hostA|:192.168.1.1:8888":  MakeIDList(":1.2.3.4:22"),
+				"hostB|:192.168.1.2:80":    MakeIDList(":192.168.1.1:12345"),
 			},
 		},
 		"Empty a": {
 			a: Adjacency{},
 			b: Adjacency{
-				"hostA|:192.168.1.1:12345": NewIDList(":192.168.1.2:80"),
-				"hostA|:192.168.1.1:8888":  NewIDList(":1.2.3.4:22"),
-				"hostB|:192.168.1.2:80":    NewIDList(":192.168.1.1:12345"),
+				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:80"),
+				"hostA|:192.168.1.1:8888":  MakeIDList(":1.2.3.4:22"),
+				"hostB|:192.168.1.2:80":    MakeIDList(":192.168.1.1:12345"),
 			},
 			want: Adjacency{
-				"hostA|:192.168.1.1:12345": NewIDList(":192.168.1.2:80"),
-				"hostA|:192.168.1.1:8888":  NewIDList(":1.2.3.4:22"),
-				"hostB|:192.168.1.2:80":    NewIDList(":192.168.1.1:12345"),
+				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:80"),
+				"hostA|:192.168.1.1:8888":  MakeIDList(":1.2.3.4:22"),
+				"hostB|:192.168.1.2:80":    MakeIDList(":192.168.1.1:12345"),
 			},
 		},
 		"Same address": {
 			a: Adjacency{
-				"hostA|:192.168.1.1:12345": NewIDList(":192.168.1.2:80"),
+				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:80"),
 			},
 			b: Adjacency{
-				"hostA|:192.168.1.1:12345": NewIDList(":192.168.1.2:8080"),
+				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:8080"),
 			},
 			want: Adjacency{
-				"hostA|:192.168.1.1:12345": NewIDList(
+				"hostA|:192.168.1.1:12345": MakeIDList(
 					":192.168.1.2:80", ":192.168.1.2:8080",
 				),
 			},
 		},
 		"No duplicates": {
 			a: Adjacency{
-				"hostA|:192.168.1.1:12345": NewIDList(
+				"hostA|:192.168.1.1:12345": MakeIDList(
 					":192.168.1.2:80",
 					":192.168.1.2:8080",
 					":192.168.1.2:555",
 				),
 			},
 			b: Adjacency{
-				"hostA|:192.168.1.1:12345": NewIDList(
+				"hostA|:192.168.1.1:12345": MakeIDList(
 					":192.168.1.2:8080",
 					":192.168.1.2:80",
 					":192.168.1.2:444",
@@ -75,17 +75,17 @@ func TestMergeAdjacency(t *testing.T) {
 		},
 		"Double keys": {
 			a: Adjacency{
-				"key1": NewIDList("a", "c", "d", "b"),
-				"key2": NewIDList("c", "a"),
+				"key1": MakeIDList("a", "c", "d", "b"),
+				"key2": MakeIDList("c", "a"),
 			},
 			b: Adjacency{
-				"key1": NewIDList("a", "b", "e"),
-				"key3": NewIDList("e", "a", "a", "a", "e"),
+				"key1": MakeIDList("a", "b", "e"),
+				"key3": MakeIDList("e", "a", "a", "a", "e"),
 			},
 			want: Adjacency{
-				"key1": NewIDList("a", "b", "c", "d", "e"),
-				"key2": NewIDList("a", "c"),
-				"key3": NewIDList("a", "e"),
+				"key1": MakeIDList("a", "b", "c", "d", "e"),
+				"key2": MakeIDList("a", "c"),
+				"key3": MakeIDList("a", "e"),
 			},
 		},
 	} {

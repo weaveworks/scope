@@ -86,7 +86,7 @@ func parseEdge(t *testing.T, p []byte) map[string]interface{} {
 }
 
 func assertAdjacent(t *testing.T, n report.RenderableNode, ids ...string) {
-	want := report.NewIDList(ids...)
+	want := report.MakeIDList(ids...)
 
 	if have := n.Adjacency; !reflect.DeepEqual(want, have) {
 		t.Fatalf("want adjacency list %v, have %v", want, have)
