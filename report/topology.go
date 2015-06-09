@@ -2,6 +2,7 @@ package report
 
 import (
 	"log"
+	"net"
 	"reflect"
 )
 
@@ -180,6 +181,32 @@ func (t Topology) EdgeMetadata(mapFunc MapFunc, srcRenderableID, dstRenderableID
 		}
 	}
 	return metadata
+}
+
+// Squash squashes all non-local nodes in the topology to a super-node called
+// the Internet.
+func (t Topology) Squash(f IDAddresser, localNets []*net.IPNet) Topology {
+	isRemote := func(ip net.IP) bool { return !netsContain(localNets, ip) }
+	for srcID, dstIDs := range t.Adjacency {
+		newDstIDs := make(IDList, 0, len(dstIDs))
+		for _, dstID := range dstIDs {
+			if ip := f(dstID); ip != nil && isRemote(ip) {
+				dstID = TheInternet
+			}
+			newDstIDs = newDstIDs.Add(dstID)
+		}
+		t.Adjacency[srcID] = newDstIDs
+	}
+	return t
+}
+
+func netsContain(nets []*net.IPNet, ip net.IP) bool {
+	for _, net := range nets {
+		if net.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
 
 // Diff is returned by TopoDiff. It represents the changes between two

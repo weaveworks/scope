@@ -41,7 +41,7 @@ func NewReportLIFO(r reporter, maxAge time.Duration) *ReportLIFO {
 		for {
 			select {
 			case report := <-r.Reports():
-				report = report.SquashRemote()
+				report = report.Squash()
 				tr := timedReport{
 					Timestamp: time.Now(),
 					Report:    report,

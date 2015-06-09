@@ -74,16 +74,15 @@ func MakeReport() Report {
 	}
 }
 
-// SquashRemote folds all remote nodes into a special supernode. It uses the
-// LocalNets of the hosts in HostMetadata to determine which addresses are
-// local.
-func (r Report) SquashRemote() Report {
+// Squash squashes all non-local nodes in the report to a super-node called
+// the Internet.
+func (r Report) Squash() Report {
 	localNetworks := r.LocalNetworks()
-	return Report{
-		Endpoint: Squash(r.Endpoint, EndpointIDAddresser, localNetworks),
-		Address:  Squash(r.Address, AddressIDAddresser, localNetworks),
-		Host:     Squash(r.Host, PanicIDAddresser, localNetworks),
-	}
+	r.Endpoint = r.Endpoint.Squash(EndpointIDAddresser, localNetworks)
+	r.Address = r.Address.Squash(AddressIDAddresser, localNetworks)
+	//r.Process = r.Process.Squash(PanicIDAddresser, localNetworks)
+	r.Host = r.Host.Squash(PanicIDAddresser, localNetworks)
+	return r
 }
 
 // LocalNetworks returns a superset of the networks (think: CIDRs) that are

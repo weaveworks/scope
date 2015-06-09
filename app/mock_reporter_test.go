@@ -133,5 +133,5 @@ func (s StaticReport) Report() report.Report {
 			},
 		},
 	}
-	return testReport.SquashRemote()
+	return testReport.Squash()
 }

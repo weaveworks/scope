@@ -41,7 +41,7 @@ func NewReportLIFO(r reporter, maxAge time.Duration) *ReportLIFO {
 			select {
 			case report := <-r.Reports():
 				// Incoming report from the collecter.
-				report = report.SquashRemote() // TODO?: make this a CLI argument.
+				report = report.Squash() // TODO?: make this a CLI argument.
 				tr := timedReport{
 					Timestamp: time.Now(),
 					Report:    report,
