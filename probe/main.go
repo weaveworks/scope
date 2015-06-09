@@ -65,7 +65,7 @@ func main() {
 	defer publisher.Close()
 
 	taggers := []tag.Tagger{tag.NewTopologyTagger()}
-	if *dockerTagger && runtime.GOOS == "Linux" {
+	if *dockerTagger && runtime.GOOS == "linux" {
 		t, err := tag.NewDockerTagger(*procRoot, *dockerInterval)
 		if err != nil {
 			log.Fatalf("failed to start docker tagger: %v", err)
