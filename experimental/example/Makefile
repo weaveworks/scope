@@ -1,26 +1,28 @@
 CC=gcc
 CFLAGS=-g -lpthread
 
-%.o: %.c
-	$(CC) -c -o $@ $< $(CFLAGS)
-
-all: qotd/qotd goapp/app shout/shout
+all: qotd.marker app.marker client.marker searchapp.marker shout.marker
 
 qotd/qotd: qotd/qotd.o
 	gcc -o $@ $< $(CFLAGS)
 
-goapp/app: goapp/app.go
-shout/shout: shout/shout.go
+%.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-shout/shout goapp/app:
+searchapp/searchapp: searchapp/app.go
+shout/shout: shout/shout.go
+shout/shout searchapp/searchapp:
 	go get -tags netgo ./$(@D)
 	go build -ldflags "-extldflags \"-static\"" -tags netgo -o $@ ./$(@D)
 
-clean:
-	rm -f qotd/*.o qotd/qotd goapp/app
+qotd.marker: qotd/* qotd/qotd
+app.marker: app/*
+client.marker: client/*
+searchapp.marker: searchapp/* searchapp/searchapp
+shout.marker: shout/* shout/shout
+%.marker:
+	docker build -t $(<D) $(<D)/
+	touch $@
 
-run: all
-	docker-compose kill  || true
-	docker-compose rm -f || true
-	docker-compose build
-	docker-compose up -d
+clean:
+	rm -f qotd/*.o qotd/qotd searchapp/searchapp shout/shout *.marker

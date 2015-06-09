@@ -1,19 +1,22 @@
 import os
 import socket
+import sys
 import requests
 import random
 import threading
+import logging
 
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask
 from redis import Redis
+from werkzeug.serving import WSGIRequestHandler
 
 app = Flask(__name__)
 redis = Redis(host='redis', port=6379)
 pool = ThreadPoolExecutor(max_workers=10)
 sessions = threading.local()
 
-goapps = ['http://goapp1:8080/', 'http://goapp2:8080/']
+searchapps = ['http://searchapp:8080/']
 
 def do_redis():
   redis.incr('hits')
@@ -31,18 +34,27 @@ def do_qotd():
 def do_search():
   if getattr(sessions, 'session', None) == None:
     sessions.session = requests.Session()
-  r = sessions.session.get(random.choice(goapps))
+  r = sessions.session.get(random.choice(searchapps))
   return r.text
+
+def ignore_error(f):
+  try:
+    return str(f())
+  except:
+    logging.error("Error executing function", exc_info=sys.exc_info())
+  return "Error"
 
 @app.route('/')
 def hello():
   counter_future = pool.submit(do_redis)
   search_future = pool.submit(do_search)
   qotd_future = pool.submit(do_qotd)
-  result = 'Hello World! I have been seen %s times.' % counter_future.result()
-  result += search_future.result()
-  result += qotd_future.result()
+  result = 'Hello World! I have been seen %s times.' % ignore_error(counter_future.result)
+  result += ignore_error(search_future.result)
+  result += ignore_error(qotd_future.result)
   return result
 
 if __name__ == "__main__":
+  logging.basicConfig(format='%(asctime)s %(levelname)s %(filename)s:%(lineno)d - %(message)s', level=logging.INFO)
+  WSGIRequestHandler.protocol_version = "HTTP/1.1"
   app.run(host="0.0.0.0", port=5000, debug=True)

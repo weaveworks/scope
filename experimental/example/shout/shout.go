@@ -19,7 +19,7 @@ type requestResponse struct {
 
 func main() {
 	var (
-		addr = flag.String("addr", ":8080", "HTTP listen address")
+		addr = flag.String("addr", ":8090", "HTTP listen address")
 	)
 	flag.Parse()
 
