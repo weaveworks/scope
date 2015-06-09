@@ -80,7 +80,6 @@ func (r Report) Squash() Report {
 	localNetworks := r.LocalNetworks()
 	r.Endpoint = r.Endpoint.Squash(EndpointIDAddresser, localNetworks)
 	r.Address = r.Address.Squash(AddressIDAddresser, localNetworks)
-	//r.Process = r.Process.Squash(PanicIDAddresser, localNetworks)
 	r.Host = r.Host.Squash(PanicIDAddresser, localNetworks)
 	return r
 }
