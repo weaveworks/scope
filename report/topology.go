@@ -184,12 +184,29 @@ func (t Topology) EdgeMetadata(mapFunc MapFunc, srcRenderableID, dstRenderableID
 
 // Squash squashes all non-local nodes in the topology to a super-node called
 // the Internet.
+// We rely on the values in the t.Adjacency lists being valid keys in
+// t.NodeMetadata (or t.Adjacency).
 func (t Topology) Squash(f IDAddresser, localNets []*net.IPNet) Topology {
-	isRemote := func(ip net.IP) bool { return !netsContain(localNets, ip) }
+	isRemote := func(id string) bool {
+		if _, ok := t.NodeMetadatas[id]; ok {
+			return false // it is a node, cannot possibly be remote
+		}
+
+		if _, ok := t.Adjacency[MakeAdjacencyID("", id)]; ok {
+			return false // it is in our adjacency list, cannot possibly be remote
+		}
+
+		if ip := f(id); ip != nil && netsContain(localNets, ip) {
+			return false // it is in our local nets, so it is not remote
+		}
+
+		return true
+	}
+
 	for srcID, dstIDs := range t.Adjacency {
 		newDstIDs := make(IDList, 0, len(dstIDs))
 		for _, dstID := range dstIDs {
-			if ip := f(dstID); ip != nil && isRemote(ip) {
+			if isRemote(dstID) {
 				dstID = TheInternet
 			}
 			newDstIDs = newDstIDs.Add(dstID)
