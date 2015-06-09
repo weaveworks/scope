@@ -67,7 +67,7 @@ func DemoReport(nodeCount int) report.Report {
 			nodeDstAddressID = report.MakeAdjacencyID("hostX", dstAddressID)
 		)
 
-		// Process topology
+		// Endpoint topology
 		if _, ok := r.Endpoint.NodeMetadatas[srcPortID]; !ok {
 			r.Endpoint.NodeMetadatas[srcPortID] = report.NodeMetadata{
 				"pid":    "4000",
@@ -97,7 +97,7 @@ func DemoReport(nodeCount int) report.Report {
 			MaxConnCountTCP:  uint(rand.Intn(100) + 10),
 		}
 
-		// Network topology
+		// Address topology
 		if _, ok := r.Address.NodeMetadatas[srcAddressID]; !ok {
 			r.Address.NodeMetadatas[srcAddressID] = report.NodeMetadata{
 				"name": src,

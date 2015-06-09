@@ -62,7 +62,7 @@ var (
 	}
 )
 
-func TestSpyNetwork(t *testing.T) {
+func TestSpyNoProcesses(t *testing.T) {
 	procspy.SetFixtures(fixConnections)
 
 	const (
@@ -98,7 +98,7 @@ func TestSpyNetwork(t *testing.T) {
 	}
 }
 
-func TestSpyProcess(t *testing.T) {
+func TestSpyWithProcesses(t *testing.T) {
 	procspy.SetFixtures(fixConnectionsWithProcesses)
 
 	const (

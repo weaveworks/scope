@@ -28,7 +28,7 @@ var (
 
 	clientIP  = MakeAddressNodeID(clientHostID, "10.10.10.20")
 	serverIP  = MakeAddressNodeID(serverHostID, "192.168.1.1")
-	randomIP  = MakeAddressNodeID(randomHostID, "172.16.11.9") // only in Network topology
+	randomIP  = MakeAddressNodeID(randomHostID, "172.16.11.9") // only in Address topology
 	unknownIP = MakeAddressNodeID(unknownHostID, "10.10.10.10")
 )
 

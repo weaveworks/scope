@@ -10,8 +10,16 @@ import (
 // stored by apps. It's composed of multiple topologies, each representing
 // a different (related, but not equivalent) view of the network.
 type Report struct {
+	// Endpoint nodes are individual (address, port) tuples on each host.
+	// They come from inspecting active connections and can (theoretically)
+	// be traced back to a process. Edges are present.
 	Endpoint Topology
-	Address  Topology
+
+	// Address nodes are addresses (e.g. ifconfig) on each host. Certain
+	// information may be present in this topology that can't be mapped to
+	// endpoints (e.g. ICMP). Edges are present.
+	Address Topology
+
 	HostMetadatas
 }
 
