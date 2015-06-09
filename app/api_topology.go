@@ -66,9 +66,7 @@ func handleNode(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Req
 		http.NotFound(w, r)
 		return
 	}
-	originHostFunc := func(id string) (OriginHost, bool) { return getOriginHost(rpt.Host, id) }
-	originNodeFunc := func(id string) (OriginNode, bool) { return getOriginNode(t.selector(rpt), id) }
-	respondWith(w, http.StatusOK, APINode{Node: makeDetailed(node, originHostFunc, originNodeFunc)})
+	respondWith(w, http.StatusOK, APINode{Node: report.MakeDetailedNode(rpt, node)})
 }
 
 // Individual edges.

@@ -28,7 +28,12 @@ func TestAPITopologyApplications(t *testing.T) {
 		}
 		equals(t, 1, len(node.Adjacency))
 		equals(t, report.MakeIDList("pid:node-b.local:215"), node.Adjacency)
-		equals(t, report.MakeIDList("hostA"), node.OriginHosts)
+		equals(t, report.MakeIDList(
+			report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345"),
+			report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346"),
+			report.MakeHostNodeID("hostA"),
+		), node.Origins,
+		)
 		equals(t, "curl", node.LabelMajor)
 		equals(t, "node-a.local (23128)", node.LabelMinor)
 		equals(t, "23128", node.Rank)
@@ -79,7 +84,10 @@ func TestAPITopologyHosts(t *testing.T) {
 			t.Errorf("missing host:host-b node")
 		}
 		equals(t, report.MakeIDList("host:host-a"), node.Adjacency)
-		equals(t, report.MakeIDList("hostB"), node.OriginHosts)
+		equals(t, report.MakeIDList(
+			report.MakeAddressNodeID("hostB", "192.168.1.2"),
+			report.MakeHostNodeID("hostB"),
+		), node.Origins)
 		equals(t, "host-b", node.LabelMajor)
 		equals(t, "", node.LabelMinor)
 		equals(t, "host-b", node.Rank)
