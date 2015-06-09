@@ -36,19 +36,19 @@ type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string)
 // TopologySelector selects a single topology from a report.
 type TopologySelector func(r Report) Topology
 
-// SelectProcess selects the process topology.
-func SelectProcess(r Report) Topology {
-	return r.Process
+// SelectEndpoint selects the endpoint topology.
+func SelectEndpoint(r Report) Topology {
+	return r.Endpoint
 }
 
-// SelectNetwork selects the network topology.
-func SelectNetwork(r Report) Topology {
-	return r.Network
+// SelectAddress selects the address topology.
+func SelectAddress(r Report) Topology {
+	return r.Address
 }
 
-// ProcessPID takes a node NodeMetadata from a Process topology, and returns a
-// representation with the ID based on the process PID and the labels based
-// on the process name.
+// ProcessPID takes a node NodeMetadata from topology, and returns a
+// representation with the ID based on the process PID and the labels based on
+// the process name.
 func ProcessPID(_ string, m NodeMetadata) (MappedNode, bool) {
 	var (
 		identifier = fmt.Sprintf("%s:%s:%s", "pid", m["domain"], m["pid"])
@@ -64,9 +64,9 @@ func ProcessPID(_ string, m NodeMetadata) (MappedNode, bool) {
 	}, show
 }
 
-// ProcessName takes a node NodeMetadata from a Process topology, and returns a
-// representation with the ID based on the process name (grouping all processes with
-// the same name together).
+// ProcessName takes a node NodeMetadata from a topology, and returns a
+// representation with the ID based on the process name (grouping all
+// processes with the same name together).
 func ProcessName(_ string, m NodeMetadata) (MappedNode, bool) {
 	show := m["pid"] != "" && m["name"] != ""
 	return MappedNode{
@@ -77,10 +77,10 @@ func ProcessName(_ string, m NodeMetadata) (MappedNode, bool) {
 	}, show
 }
 
-// ProcessContainer maps Process topology nodes to the containers they run in.
-// We consider container and image IDs to be globally unique, and so don't
-// scope them further by e.g. host. If no container metadata is found, nodes
-// are grouped into the Uncontained node.
+// ProcessContainer maps topology nodes to the containers they run in. We
+// consider container and image IDs to be globally unique, and so don't scope
+// them further by e.g. host. If no container metadata is found, nodes are
+// grouped into the Uncontained node.
 func ProcessContainer(_ string, m NodeMetadata) (MappedNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_container_id"] == "" {
@@ -97,8 +97,9 @@ func ProcessContainer(_ string, m NodeMetadata) (MappedNode, bool) {
 	}, true
 }
 
-// ProcessContainerImage maps Process topology nodes to the container images they run on.
-// If no container metadata is found, nodes are grouped into the Uncontained node.
+// ProcessContainerImage maps topology nodes to the container images they run
+// on. If no container metadata is found, nodes are grouped into the
+// Uncontained node.
 func ProcessContainerImage(_ string, m NodeMetadata) (MappedNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_image_id"] == "" {
@@ -115,9 +116,9 @@ func ProcessContainerImage(_ string, m NodeMetadata) (MappedNode, bool) {
 	}, true
 }
 
-// NetworkHostname takes a node NodeMetadata from a Network topology, and
-// returns a representation based on the hostname. Major label is the
-// hostname, the minor label is the domain, if any.
+// NetworkHostname takes a node NodeMetadata and returns a representation
+// based on the hostname. Major label is the hostname, the minor label is the
+// domain, if any.
 func NetworkHostname(_ string, m NodeMetadata) (MappedNode, bool) {
 	var (
 		name   = m["name"]

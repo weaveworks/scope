@@ -78,14 +78,14 @@ func TestDockerTagger(t *testing.T) {
 	)
 
 	r := report.MakeReport()
-	r.Process.NodeMetadatas[endpoint1NodeID] = report.NodeMetadata{"pid": "1"}
-	r.Process.NodeMetadatas[endpoint2NodeID] = report.NodeMetadata{"pid": "2"}
+	r.Endpoint.NodeMetadatas[endpoint1NodeID] = report.NodeMetadata{"pid": "1"}
+	r.Endpoint.NodeMetadatas[endpoint2NodeID] = report.NodeMetadata{"pid": "2"}
 
 	dockerTagger, _ := NewDockerTagger("/irrelevant", 10*time.Second)
 	runtime.Gosched()
 	for _, endpointNodeID := range []string{endpoint1NodeID, endpoint2NodeID} {
 		want := processNodeMetadata.Copy()
-		have := dockerTagger.Tag(r).Process.NodeMetadatas[endpointNodeID].Copy()
+		have := dockerTagger.Tag(r).Endpoint.NodeMetadatas[endpointNodeID].Copy()
 		delete(have, "pid")
 		if !reflect.DeepEqual(want, have) {
 			t.Errorf("%q: want %+v, have %+v", endpointNodeID, want, have)

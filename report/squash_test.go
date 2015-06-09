@@ -13,7 +13,7 @@ var (
 
 func reportToSquash() Report {
 	return Report{
-		Process: Topology{
+		Endpoint: Topology{
 			Adjacency: Adjacency{
 				"hostA|;192.168.1.1;12345": []string{";192.168.1.2;80"},
 				"hostA|;192.168.1.1;8888":  []string{";1.2.3.4;22", ";1.2.3.4;23"},
@@ -71,7 +71,7 @@ func reportToSquash() Report {
 			},
 		},
 
-		Network: Topology{
+		Address: Topology{
 			Adjacency: Adjacency{
 				"hostA|;192.168.1.1": []string{";192.168.1.2", ";1.2.3.4"},
 				"hostB|;192.168.1.2": []string{";192.168.1.1"},
@@ -163,10 +163,10 @@ func TestSquashTopology(t *testing.T) {
 				BytesIngress: 12,
 			},
 		},
-		NodeMetadatas: reportToSquash().Process.NodeMetadatas,
+		NodeMetadatas: reportToSquash().Endpoint.NodeMetadatas,
 	}
 
-	have := Squash(reportToSquash().Process, EndpointIDAddresser, reportToSquash().HostMetadatas.LocalNets())
+	have := Squash(reportToSquash().Endpoint, EndpointIDAddresser, reportToSquash().HostMetadatas.LocalNets())
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
 	}
@@ -175,7 +175,7 @@ func TestSquashTopology(t *testing.T) {
 func TestSquashReport(t *testing.T) {
 	// Tests a full report squash.
 	want := Report{
-		Process: Topology{
+		Endpoint: Topology{
 			Adjacency: Adjacency{
 				"hostA|;192.168.1.1;12345": []string{";192.168.1.2;80"},
 				"hostA|;192.168.1.1;8888":  []string{"theinternet"},
@@ -204,9 +204,9 @@ func TestSquashReport(t *testing.T) {
 					BytesIngress: 12,
 				},
 			},
-			NodeMetadatas: reportToSquash().Process.NodeMetadatas,
+			NodeMetadatas: reportToSquash().Endpoint.NodeMetadatas,
 		},
-		Network: Topology{
+		Address: Topology{
 			Adjacency: Adjacency{
 				"hostA|;192.168.1.1": []string{";192.168.1.2", "theinternet"},
 				"hostB|;192.168.1.2": []string{";192.168.1.1"},

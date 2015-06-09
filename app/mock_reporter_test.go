@@ -16,7 +16,7 @@ func (s StaticReport) Report() report.Report {
 	}
 
 	var testReport = report.Report{
-		Process: report.Topology{
+		Endpoint: report.Topology{
 			Adjacency: report.Adjacency{
 				report.MakeAdjacencyID("hostA", report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345")): report.MakeIDList(report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")),
 				report.MakeAdjacencyID("hostA", report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346")): report.MakeIDList(report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")),
@@ -77,7 +77,7 @@ func (s StaticReport) Report() report.Report {
 			},
 		},
 
-		Network: report.Topology{
+		Address: report.Topology{
 			Adjacency: report.Adjacency{
 				report.MakeAdjacencyID("hostA", report.MakeAddressNodeID("hostA", "192.168.1.1")): report.MakeIDList(report.MakeAddressNodeID("hostB", "192.168.1.2"), report.MakeAddressNodeID("", "1.2.3.4")),
 				report.MakeAdjacencyID("hostB", report.MakeAddressNodeID("hostB", "192.168.1.2")): report.MakeIDList(report.MakeAddressNodeID("hostA", "192.168.1.1")),

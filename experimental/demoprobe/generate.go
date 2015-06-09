@@ -67,49 +67,49 @@ func DemoReport(nodeCount int) report.Report {
 			nodeDstAddressID = report.MakeAdjacencyID("hostX", dstAddressID)
 		)
 
-		// Process topology
-		if _, ok := r.Process.NodeMetadatas[srcPortID]; !ok {
-			r.Process.NodeMetadatas[srcPortID] = report.NodeMetadata{
+		// Endpoint topology
+		if _, ok := r.Endpoint.NodeMetadatas[srcPortID]; !ok {
+			r.Endpoint.NodeMetadatas[srcPortID] = report.NodeMetadata{
 				"pid":    "4000",
 				"name":   c.srcProc,
 				"domain": "node-" + src,
 			}
 		}
-		r.Process.Adjacency[srcID] = r.Process.Adjacency[srcID].Add(dstPortID)
-		if _, ok := r.Process.NodeMetadatas[dstPortID]; !ok {
-			r.Process.NodeMetadatas[dstPortID] = report.NodeMetadata{
+		r.Endpoint.Adjacency[srcID] = r.Endpoint.Adjacency[srcID].Add(dstPortID)
+		if _, ok := r.Endpoint.NodeMetadatas[dstPortID]; !ok {
+			r.Endpoint.NodeMetadatas[dstPortID] = report.NodeMetadata{
 				"pid":    "4000",
 				"name":   c.dstProc,
 				"domain": "node-" + dst,
 			}
 		}
-		r.Process.Adjacency[dstID] = r.Process.Adjacency[dstID].Add(srcPortID)
+		r.Endpoint.Adjacency[dstID] = r.Endpoint.Adjacency[dstID].Add(srcPortID)
 		var (
 			edgeKeyEgress  = report.MakeEdgeID(srcPortID, dstPortID)
 			edgeKeyIngress = report.MakeEdgeID(dstPortID, srcPortID)
 		)
-		r.Process.EdgeMetadatas[edgeKeyEgress] = report.EdgeMetadata{
+		r.Endpoint.EdgeMetadatas[edgeKeyEgress] = report.EdgeMetadata{
 			WithConnCountTCP: true,
 			MaxConnCountTCP:  uint(rand.Intn(100) + 10),
 		}
-		r.Process.EdgeMetadatas[edgeKeyIngress] = report.EdgeMetadata{
+		r.Endpoint.EdgeMetadatas[edgeKeyIngress] = report.EdgeMetadata{
 			WithConnCountTCP: true,
 			MaxConnCountTCP:  uint(rand.Intn(100) + 10),
 		}
 
-		// Network topology
-		if _, ok := r.Network.NodeMetadatas[srcAddressID]; !ok {
-			r.Network.NodeMetadatas[srcAddressID] = report.NodeMetadata{
+		// Address topology
+		if _, ok := r.Address.NodeMetadatas[srcAddressID]; !ok {
+			r.Address.NodeMetadatas[srcAddressID] = report.NodeMetadata{
 				"name": src,
 			}
 		}
-		r.Network.Adjacency[nodeSrcAddressID] = r.Network.Adjacency[nodeSrcAddressID].Add(dstAddressID)
-		if _, ok := r.Network.NodeMetadatas[dstAddressID]; !ok {
-			r.Network.NodeMetadatas[dstAddressID] = report.NodeMetadata{
+		r.Address.Adjacency[nodeSrcAddressID] = r.Address.Adjacency[nodeSrcAddressID].Add(dstAddressID)
+		if _, ok := r.Address.NodeMetadatas[dstAddressID]; !ok {
+			r.Address.NodeMetadatas[dstAddressID] = report.NodeMetadata{
 				"name": dst,
 			}
 		}
-		r.Network.Adjacency[nodeDstAddressID] = r.Network.Adjacency[nodeDstAddressID].Add(srcAddressID)
+		r.Address.Adjacency[nodeDstAddressID] = r.Address.Adjacency[nodeDstAddressID].Add(srcAddressID)
 
 		// Host data
 		r.HostMetadatas["hostX"] = report.HostMetadata{

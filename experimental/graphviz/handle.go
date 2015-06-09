@@ -14,7 +14,7 @@ import (
 func handleTXT(r Reporter) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		dot(w, r.Report().Process.RenderBy(mapFunc(req), nil))
+		dot(w, r.Report().Endpoint.RenderBy(mapFunc(req), nil))
 
 		//report.Render(r.Report(), report.SelectEndpoint, mapFunc(req), report.NoPseudoNode))
 	}
@@ -32,7 +32,7 @@ func handleSVG(r Reporter) http.HandlerFunc {
 
 		cmd.Stdout = w
 
-		dot(wc, r.Report().Process.RenderBy(mapFunc(req), nil))
+		dot(wc, r.Report().Endpoint.RenderBy(mapFunc(req), nil))
 		wc.Close()
 
 		w.Header().Set("Content-Type", "image/svg+xml")

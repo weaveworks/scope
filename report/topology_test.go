@@ -28,13 +28,13 @@ var (
 
 	clientIP  = MakeAddressNodeID(clientHostID, "10.10.10.20")
 	serverIP  = MakeAddressNodeID(serverHostID, "192.168.1.1")
-	randomIP  = MakeAddressNodeID(randomHostID, "172.16.11.9") // only in Network topology
+	randomIP  = MakeAddressNodeID(randomHostID, "172.16.11.9") // only in Address topology
 	unknownIP = MakeAddressNodeID(unknownHostID, "10.10.10.10")
 )
 
 var (
 	report = Report{
-		Process: Topology{
+		Endpoint: Topology{
 			Adjacency: Adjacency{
 				MakeAdjacencyID("client.hostname.com", client54001): MakeIDList(server80),
 				MakeAdjacencyID("client.hostname.com", client54002): MakeIDList(server80),
@@ -99,7 +99,7 @@ var (
 				},
 			},
 		},
-		Network: Topology{
+		Address: Topology{
 			Adjacency: Adjacency{
 				MakeAdjacencyID("client.hostname.com", clientIP): MakeIDList(serverIP),
 				MakeAdjacencyID("random.hostname.com", randomIP): MakeIDList(serverIP),
@@ -138,7 +138,7 @@ var (
 	}
 )
 
-func TestRenderByProcessPID(t *testing.T) {
+func TestRenderByEndpointPID(t *testing.T) {
 	want := map[string]RenderableNode{
 		"pid:client-54001-domain:10001": {
 			ID:          "pid:client-54001-domain:10001",
@@ -200,13 +200,13 @@ func TestRenderByProcessPID(t *testing.T) {
 			Metadata:   AggregateMetadata{},
 		},
 	}
-	have := report.Process.RenderBy(ProcessPID, GenericPseudoNode)
+	have := report.Endpoint.RenderBy(ProcessPID, GenericPseudoNode)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
 }
 
-func TestRenderByProcessPIDGrouped(t *testing.T) {
+func TestRenderByEndpointPIDGrouped(t *testing.T) {
 	// For grouped, I've somewhat arbitrarily chosen to squash together all
 	// processes with the same name by removing the PID and domain (host)
 	// dimensions from the ID. That could be changed.
@@ -256,7 +256,7 @@ func TestRenderByProcessPIDGrouped(t *testing.T) {
 			Metadata:   AggregateMetadata{},
 		},
 	}
-	have := report.Process.RenderBy(ProcessName, GenericGroupedPseudoNode)
+	have := report.Endpoint.RenderBy(ProcessName, GenericGroupedPseudoNode)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
@@ -315,7 +315,7 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Metadata:    AggregateMetadata{},
 		},
 	}
-	have := report.Network.RenderBy(NetworkHostname, GenericPseudoNode)
+	have := report.Address.RenderBy(NetworkHostname, GenericPseudoNode)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
