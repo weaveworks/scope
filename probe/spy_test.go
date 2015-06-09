@@ -75,7 +75,7 @@ func TestSpyNetwork(t *testing.T) {
 	//t.Logf("\n%s\n", buf)
 
 	// No process nodes, please
-	if want, have := 0, len(r.Process.Adjacency); want != have {
+	if want, have := 0, len(r.Endpoint.Adjacency); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
 
@@ -115,11 +115,11 @@ func TestSpyProcess(t *testing.T) {
 		localKey     = report.MakeAdjacencyID(nodeID, scopedLocal)
 	)
 
-	if want, have := 1, len(r.Process.Adjacency[localKey]); want != have {
+	if want, have := 1, len(r.Endpoint.Adjacency[localKey]); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
 
-	if want, have := scopedRemote, r.Process.Adjacency[localKey][0]; want != have {
+	if want, have := scopedRemote, r.Endpoint.Adjacency[localKey][0]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 
@@ -128,7 +128,7 @@ func TestSpyProcess(t *testing.T) {
 		"name":   fixProcessName,
 		"pid":    strconv.FormatUint(uint64(fixProcessPID), 10),
 	} {
-		if have := r.Process.NodeMetadatas[scopedLocal][key]; want != have {
+		if have := r.Endpoint.NodeMetadatas[scopedLocal][key]; want != have {
 			t.Errorf("Process.NodeMetadatas[%q][%q]: want %q, have %q", scopedLocal, key, want, have)
 		}
 	}

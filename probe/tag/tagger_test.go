@@ -17,7 +17,7 @@ func TestApply(t *testing.T) {
 	)
 
 	r := report.MakeReport()
-	r.Process.NodeMetadatas[processNodeID] = processNodeMetadata
+	r.Endpoint.NodeMetadatas[processNodeID] = processNodeMetadata
 	r.Network.NodeMetadatas[networkNodeID] = networkNodeMetadata
 	r = tag.Apply(r, []tag.Tagger{tag.NewTopologyTagger()})
 
@@ -26,7 +26,7 @@ func TestApply(t *testing.T) {
 		from report.Topology
 		via  string
 	}{
-		{copy(processNodeMetadata).Merge(report.NodeMetadata{"topology": "process"}), r.Process, processNodeID},
+		{copy(processNodeMetadata).Merge(report.NodeMetadata{"topology": "endpoint"}), r.Endpoint, processNodeID},
 		{copy(networkNodeMetadata).Merge(report.NodeMetadata{"topology": "network"}), r.Network, networkNodeID},
 	} {
 		if want, have := tuple.want, tuple.from.NodeMetadatas[tuple.via]; !reflect.DeepEqual(want, have) {

@@ -71,9 +71,9 @@ func addConnection(
 			edgeKey      = report.MakeEdgeID(scopedLocal, scopedRemote)
 		)
 
-		r.Process.Adjacency[key] = r.Process.Adjacency[key].Add(scopedRemote)
+		r.Endpoint.Adjacency[key] = r.Endpoint.Adjacency[key].Add(scopedRemote)
 
-		if _, ok := r.Process.NodeMetadatas[scopedLocal]; !ok {
+		if _, ok := r.Endpoint.NodeMetadatas[scopedLocal]; !ok {
 			// First hit establishes NodeMetadata for scoped local address + port
 			md := report.NodeMetadata{
 				"pid":    fmt.Sprintf("%d", c.Proc.PID),
@@ -81,12 +81,12 @@ func addConnection(
 				"domain": hostID,
 			}
 
-			r.Process.NodeMetadatas[scopedLocal] = md
+			r.Endpoint.NodeMetadatas[scopedLocal] = md
 		}
 		// Count the TCP connection.
-		edgeMeta := r.Process.EdgeMetadatas[edgeKey]
+		edgeMeta := r.Endpoint.EdgeMetadatas[edgeKey]
 		edgeMeta.WithConnCountTCP = true
 		edgeMeta.MaxConnCountTCP++
-		r.Process.EdgeMetadatas[edgeKey] = edgeMeta
+		r.Endpoint.EdgeMetadatas[edgeKey] = edgeMeta
 	}
 }

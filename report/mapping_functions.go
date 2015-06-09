@@ -36,9 +36,9 @@ type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string)
 // TopologySelector selects a single topology from a report.
 type TopologySelector func(r Report) Topology
 
-// SelectProcess selects the process topology.
-func SelectProcess(r Report) Topology {
-	return r.Process
+// SelectEndpoint selects the endpoint topology.
+func SelectEndpoint(r Report) Topology {
+	return r.Endpoint
 }
 
 // SelectNetwork selects the network topology.

@@ -6,21 +6,12 @@ import (
 	"time"
 )
 
-// Report is the internal structure produced and emitted by the probe, and
-// operated-on (e.g. merged) by intermediaries and the app. The probe may fill
-// in as many topologies as it's capable of producing, including none.
-//
-// Process, [Transport,] and Network topologies are distinct because the data
-// sources are distinct. That is, the Process topology can only be populated
-// by extant connections between processes, but the Network topology may be
-// populated from e.g. system-level data sources.
-//
-// Since the data sources are fundamentally different for each topology, it
-// might make sense to make them more distinct in the user interface.
+// Report is the core data type. It's produced by probes, and consumed and
+// stored by apps. It's composed of multiple topologies, each representing
+// a different (related, but not equivalent) view of the network.
 type Report struct {
-	Process Topology
-	// Transport Topology
-	Network Topology
+	Endpoint Topology
+	Network  Topology
 	HostMetadatas
 }
 
@@ -80,8 +71,7 @@ type Row struct {
 // MakeReport makes a clean report, ready to Merge() other reports into.
 func MakeReport() Report {
 	return Report{
-		Process: NewTopology(),
-		// Transport Topology
+		Endpoint:      NewTopology(),
 		Network:       NewTopology(),
 		HostMetadatas: map[string]HostMetadata{},
 	}
@@ -93,7 +83,7 @@ func MakeReport() Report {
 func (r Report) SquashRemote() Report {
 	localNets := r.HostMetadatas.LocalNets()
 	return Report{
-		Process:       Squash(r.Process, EndpointIDAddresser, localNets),
+		Endpoint:      Squash(r.Endpoint, EndpointIDAddresser, localNets),
 		Network:       Squash(r.Network, AddressIDAddresser, localNets),
 		HostMetadatas: r.HostMetadatas,
 	}

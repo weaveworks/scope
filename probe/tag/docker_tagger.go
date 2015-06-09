@@ -255,7 +255,7 @@ func (t *DockerTagger) Containers() []*docker.Container {
 
 // Tag implements Tagger.
 func (t *DockerTagger) Tag(r report.Report) report.Report {
-	for nodeID, nodeMetadata := range r.Process.NodeMetadatas {
+	for nodeID, nodeMetadata := range r.Endpoint.NodeMetadatas {
 		pidStr, ok := nodeMetadata["pid"]
 		if !ok {
 			//log.Printf("dockerTagger: %q: no process node ID", id)
@@ -303,7 +303,7 @@ func (t *DockerTagger) Tag(r report.Report) report.Report {
 			md["docker_image_name"] = image.RepoTags[0]
 		}
 
-		r.Process.NodeMetadatas[nodeID].Merge(md)
+		r.Endpoint.NodeMetadatas[nodeID].Merge(md)
 	}
 
 	return r

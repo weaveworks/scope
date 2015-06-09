@@ -6,7 +6,7 @@ package report
 
 // Merge merges another Report into the receiver.
 func (r *Report) Merge(other Report) {
-	r.Process.Merge(other.Process)
+	r.Endpoint.Merge(other.Endpoint)
 	r.Network.Merge(other.Network)
 	r.HostMetadatas.Merge(other.HostMetadatas)
 }
