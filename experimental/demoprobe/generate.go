@@ -98,18 +98,18 @@ func DemoReport(nodeCount int) report.Report {
 		}
 
 		// Network topology
-		if _, ok := r.Network.NodeMetadatas[srcAddressID]; !ok {
-			r.Network.NodeMetadatas[srcAddressID] = report.NodeMetadata{
+		if _, ok := r.Address.NodeMetadatas[srcAddressID]; !ok {
+			r.Address.NodeMetadatas[srcAddressID] = report.NodeMetadata{
 				"name": src,
 			}
 		}
-		r.Network.Adjacency[nodeSrcAddressID] = r.Network.Adjacency[nodeSrcAddressID].Add(dstAddressID)
-		if _, ok := r.Network.NodeMetadatas[dstAddressID]; !ok {
-			r.Network.NodeMetadatas[dstAddressID] = report.NodeMetadata{
+		r.Address.Adjacency[nodeSrcAddressID] = r.Address.Adjacency[nodeSrcAddressID].Add(dstAddressID)
+		if _, ok := r.Address.NodeMetadatas[dstAddressID]; !ok {
+			r.Address.NodeMetadatas[dstAddressID] = report.NodeMetadata{
 				"name": dst,
 			}
 		}
-		r.Network.Adjacency[nodeDstAddressID] = r.Network.Adjacency[nodeDstAddressID].Add(srcAddressID)
+		r.Address.Adjacency[nodeDstAddressID] = r.Address.Adjacency[nodeDstAddressID].Add(srcAddressID)
 
 		// Host data
 		r.HostMetadatas["hostX"] = report.HostMetadata{

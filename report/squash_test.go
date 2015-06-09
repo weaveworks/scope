@@ -71,7 +71,7 @@ func reportToSquash() Report {
 			},
 		},
 
-		Network: Topology{
+		Address: Topology{
 			Adjacency: Adjacency{
 				"hostA|;192.168.1.1": []string{";192.168.1.2", ";1.2.3.4"},
 				"hostB|;192.168.1.2": []string{";192.168.1.1"},
@@ -206,7 +206,7 @@ func TestSquashReport(t *testing.T) {
 			},
 			NodeMetadatas: reportToSquash().Endpoint.NodeMetadatas,
 		},
-		Network: Topology{
+		Address: Topology{
 			Adjacency: Adjacency{
 				"hostA|;192.168.1.1": []string{";192.168.1.2", "theinternet"},
 				"hostB|;192.168.1.2": []string{";192.168.1.1"},

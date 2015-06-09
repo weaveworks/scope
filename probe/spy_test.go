@@ -85,15 +85,15 @@ func TestSpyNetwork(t *testing.T) {
 		localKey     = report.MakeAdjacencyID(nodeID, scopedLocal)
 	)
 
-	if want, have := 1, len(r.Network.Adjacency[localKey]); want != have {
+	if want, have := 1, len(r.Address.Adjacency[localKey]); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
 
-	if want, have := scopedRemote, r.Network.Adjacency[localKey][0]; want != have {
+	if want, have := scopedRemote, r.Address.Adjacency[localKey][0]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 
-	if want, have := nodeName, r.Network.NodeMetadatas[scopedLocal]["name"]; want != have {
+	if want, have := nodeName, r.Address.NodeMetadatas[scopedLocal]["name"]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 }

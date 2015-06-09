@@ -14,7 +14,7 @@ func NewTopologyTagger() Tagger {
 func (topologyTagger) Tag(r report.Report) report.Report {
 	for val, topology := range map[string]*report.Topology{
 		"endpoint": &(r.Endpoint),
-		"network":  &(r.Network),
+		"address":  &(r.Address),
 	} {
 		md := report.NodeMetadata{"topology": val}
 		for nodeID := range topology.NodeMetadatas {

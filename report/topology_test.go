@@ -99,7 +99,7 @@ var (
 				},
 			},
 		},
-		Network: Topology{
+		Address: Topology{
 			Adjacency: Adjacency{
 				MakeAdjacencyID("client.hostname.com", clientIP): MakeIDList(serverIP),
 				MakeAdjacencyID("random.hostname.com", randomIP): MakeIDList(serverIP),
@@ -315,7 +315,7 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Metadata:    AggregateMetadata{},
 		},
 	}
-	have := report.Network.RenderBy(NetworkHostname, GenericPseudoNode)
+	have := report.Address.RenderBy(NetworkHostname, GenericPseudoNode)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}

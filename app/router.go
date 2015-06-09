@@ -58,5 +58,5 @@ var topologyRegistry = map[string]topologyView{
 	"applications-grouped": {"Applications", report.SelectEndpoint, report.ProcessName, report.GenericGroupedPseudoNode, ""},
 	"containers":           {"Containers", report.SelectEndpoint, report.ProcessContainer, report.InternetOnlyPseudoNode, "containers-grouped"},
 	"containers-grouped":   {"Containers", report.SelectEndpoint, report.ProcessContainerImage, report.InternetOnlyPseudoNode, ""},
-	"hosts":                {"Hosts", report.SelectNetwork, report.NetworkHostname, report.GenericPseudoNode, ""},
+	"hosts":                {"Hosts", report.SelectAddress, report.NetworkHostname, report.GenericPseudoNode, ""},
 }

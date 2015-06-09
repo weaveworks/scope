@@ -77,7 +77,7 @@ func (s StaticReport) Report() report.Report {
 			},
 		},
 
-		Network: report.Topology{
+		Address: report.Topology{
 			Adjacency: report.Adjacency{
 				report.MakeAdjacencyID("hostA", report.MakeAddressNodeID("hostA", "192.168.1.1")): report.MakeIDList(report.MakeAddressNodeID("hostB", "192.168.1.2"), report.MakeAddressNodeID("", "1.2.3.4")),
 				report.MakeAdjacencyID("hostB", report.MakeAddressNodeID("hostB", "192.168.1.2")): report.MakeIDList(report.MakeAddressNodeID("hostA", "192.168.1.1")),

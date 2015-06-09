@@ -49,19 +49,19 @@ func addConnection(
 		edgeKey      = report.MakeEdgeID(scopedLocal, scopedRemote)
 	)
 
-	r.Network.Adjacency[key] = r.Network.Adjacency[key].Add(scopedRemote)
+	r.Address.Adjacency[key] = r.Address.Adjacency[key].Add(scopedRemote)
 
-	if _, ok := r.Network.NodeMetadatas[scopedLocal]; !ok {
-		r.Network.NodeMetadatas[scopedLocal] = report.NodeMetadata{
+	if _, ok := r.Address.NodeMetadatas[scopedLocal]; !ok {
+		r.Address.NodeMetadatas[scopedLocal] = report.NodeMetadata{
 			"name": hostName,
 		}
 	}
 
 	// Count the TCP connection.
-	edgeMeta := r.Network.EdgeMetadatas[edgeKey]
+	edgeMeta := r.Address.EdgeMetadatas[edgeKey]
 	edgeMeta.WithConnCountTCP = true
 	edgeMeta.MaxConnCountTCP++
-	r.Network.EdgeMetadatas[edgeKey] = edgeMeta
+	r.Address.EdgeMetadatas[edgeKey] = edgeMeta
 
 	if c.Proc.PID > 0 {
 		var (

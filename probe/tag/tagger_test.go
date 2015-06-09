@@ -10,15 +10,15 @@ import (
 
 func TestApply(t *testing.T) {
 	var (
-		processNodeID       = "c"
-		networkNodeID       = "d"
-		processNodeMetadata = report.NodeMetadata{"5": "6"}
-		networkNodeMetadata = report.NodeMetadata{"7": "8"}
+		endpointNodeID       = "c"
+		addressNodeID        = "d"
+		endpointNodeMetadata = report.NodeMetadata{"5": "6"}
+		addressNodeMetadata  = report.NodeMetadata{"7": "8"}
 	)
 
 	r := report.MakeReport()
-	r.Endpoint.NodeMetadatas[processNodeID] = processNodeMetadata
-	r.Network.NodeMetadatas[networkNodeID] = networkNodeMetadata
+	r.Endpoint.NodeMetadatas[endpointNodeID] = endpointNodeMetadata
+	r.Address.NodeMetadatas[addressNodeID] = addressNodeMetadata
 	r = tag.Apply(r, []tag.Tagger{tag.NewTopologyTagger()})
 
 	for _, tuple := range []struct {
@@ -26,8 +26,8 @@ func TestApply(t *testing.T) {
 		from report.Topology
 		via  string
 	}{
-		{copy(processNodeMetadata).Merge(report.NodeMetadata{"topology": "endpoint"}), r.Endpoint, processNodeID},
-		{copy(networkNodeMetadata).Merge(report.NodeMetadata{"topology": "network"}), r.Network, networkNodeID},
+		{copy(endpointNodeMetadata).Merge(report.NodeMetadata{"topology": "endpoint"}), r.Endpoint, endpointNodeID},
+		{copy(addressNodeMetadata).Merge(report.NodeMetadata{"topology": "address"}), r.Address, addressNodeID},
 	} {
 		if want, have := tuple.want, tuple.from.NodeMetadatas[tuple.via]; !reflect.DeepEqual(want, have) {
 			t.Errorf("want %+v, have %+v", want, have)

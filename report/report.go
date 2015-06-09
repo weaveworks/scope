@@ -11,7 +11,7 @@ import (
 // a different (related, but not equivalent) view of the network.
 type Report struct {
 	Endpoint Topology
-	Network  Topology
+	Address  Topology
 	HostMetadatas
 }
 
@@ -72,7 +72,7 @@ type Row struct {
 func MakeReport() Report {
 	return Report{
 		Endpoint:      NewTopology(),
-		Network:       NewTopology(),
+		Address:       NewTopology(),
 		HostMetadatas: map[string]HostMetadata{},
 	}
 }
@@ -84,7 +84,7 @@ func (r Report) SquashRemote() Report {
 	localNets := r.HostMetadatas.LocalNets()
 	return Report{
 		Endpoint:      Squash(r.Endpoint, EndpointIDAddresser, localNets),
-		Network:       Squash(r.Network, AddressIDAddresser, localNets),
+		Address:       Squash(r.Address, AddressIDAddresser, localNets),
 		HostMetadatas: r.HostMetadatas,
 	}
 }
