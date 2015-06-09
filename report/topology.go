@@ -98,15 +98,14 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) map[string]Re
 		// the existing data, on the assumption that the MapFunc returns the same
 		// data.
 		nodes[mapped.ID] = RenderableNode{
-			ID:          mapped.ID,
-			LabelMajor:  mapped.Major,
-			LabelMinor:  mapped.Minor,
-			Rank:        mapped.Rank,
-			Pseudo:      false,
-			Adjacency:   IDList{},            // later
-			OriginHosts: IDList{},            // later
-			OriginNodes: IDList{},            // later
-			Metadata:    AggregateMetadata{}, // later
+			ID:         mapped.ID,
+			LabelMajor: mapped.Major,
+			LabelMinor: mapped.Minor,
+			Rank:       mapped.Rank,
+			Pseudo:     false,
+			Adjacency:  IDList{},            // later
+			Origins:    IDList{},            // later
+			Metadata:   AggregateMetadata{}, // later
 		}
 		address2mapped[addressID] = mapped.ID
 	}
@@ -142,8 +141,8 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) map[string]Re
 			}
 
 			srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
-			srcRenderableNode.OriginHosts = srcRenderableNode.OriginHosts.Add(srcOriginHostID)
-			srcRenderableNode.OriginNodes = srcRenderableNode.OriginNodes.Add(srcNodeAddress)
+			srcRenderableNode.Origins = srcRenderableNode.Origins.Add(MakeHostNodeID(srcOriginHostID))
+			srcRenderableNode.Origins = srcRenderableNode.Origins.Add(srcNodeAddress)
 			edgeID := MakeEdgeID(srcNodeAddress, dstNodeAddress)
 			if md, ok := t.EdgeMetadatas[edgeID]; ok {
 				srcRenderableNode.Metadata.Merge(md.Transform())

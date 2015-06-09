@@ -141,28 +141,26 @@ var (
 func TestRenderByEndpointPID(t *testing.T) {
 	want := map[string]RenderableNode{
 		"pid:client-54001-domain:10001": {
-			ID:          "pid:client-54001-domain:10001",
-			LabelMajor:  "curl",
-			LabelMinor:  "client-54001-domain (10001)",
-			Rank:        "10001",
-			Pseudo:      false,
-			Adjacency:   MakeIDList("pid:server-80-domain:215"),
-			OriginHosts: MakeIDList("client.hostname.com"),
-			OriginNodes: MakeIDList("client.hostname.com;10.10.10.20;54001"),
+			ID:         "pid:client-54001-domain:10001",
+			LabelMajor: "curl",
+			LabelMinor: "client-54001-domain (10001)",
+			Rank:       "10001",
+			Pseudo:     false,
+			Adjacency:  MakeIDList("pid:server-80-domain:215"),
+			Origins:    MakeIDList(MakeHostNodeID("client.hostname.com"), MakeEndpointNodeID("client.hostname.com", "10.10.10.20", "54001")),
 			Metadata: AggregateMetadata{
 				KeyBytesIngress: 100,
 				KeyBytesEgress:  10,
 			},
 		},
 		"pid:client-54002-domain:10001": {
-			ID:          "pid:client-54002-domain:10001",
-			LabelMajor:  "curl",
-			LabelMinor:  "client-54002-domain (10001)",
-			Rank:        "10001", // same process
-			Pseudo:      false,
-			Adjacency:   MakeIDList("pid:server-80-domain:215"),
-			OriginHosts: MakeIDList("client.hostname.com"),
-			OriginNodes: MakeIDList("client.hostname.com;10.10.10.20;54002"),
+			ID:         "pid:client-54002-domain:10001",
+			LabelMajor: "curl",
+			LabelMinor: "client-54002-domain (10001)",
+			Rank:       "10001", // same process
+			Pseudo:     false,
+			Adjacency:  MakeIDList("pid:server-80-domain:215"),
+			Origins:    MakeIDList(MakeHostNodeID("client.hostname.com"), MakeEndpointNodeID("client.hostname.com", "10.10.10.20", "54002")),
 			Metadata: AggregateMetadata{
 				KeyBytesIngress: 200,
 				KeyBytesEgress:  20,
@@ -180,8 +178,7 @@ func TestRenderByEndpointPID(t *testing.T) {
 				"pseudo;10.10.10.10;192.168.1.1;80",
 				"pseudo;10.10.10.11;192.168.1.1;80",
 			),
-			OriginHosts: MakeIDList("server.hostname.com"),
-			OriginNodes: MakeIDList("server.hostname.com;192.168.1.1;80"),
+			Origins: MakeIDList(MakeHostNodeID("server.hostname.com"), MakeEndpointNodeID("server.hostname.com", "192.168.1.1", "80")),
 			Metadata: AggregateMetadata{
 				KeyBytesIngress: 150,
 				KeyBytesEgress:  1500,
@@ -212,14 +209,13 @@ func TestRenderByEndpointPIDGrouped(t *testing.T) {
 	// dimensions from the ID. That could be changed.
 	want := map[string]RenderableNode{
 		"curl": {
-			ID:          "curl",
-			LabelMajor:  "curl",
-			LabelMinor:  "",
-			Rank:        "curl",
-			Pseudo:      false,
-			Adjacency:   MakeIDList("apache"),
-			OriginHosts: MakeIDList("client.hostname.com"),
-			OriginNodes: MakeIDList("client.hostname.com;10.10.10.20;54001", "client.hostname.com;10.10.10.20;54002"),
+			ID:         "curl",
+			LabelMajor: "curl",
+			LabelMinor: "",
+			Rank:       "curl",
+			Pseudo:     false,
+			Adjacency:  MakeIDList("apache"),
+			Origins:    MakeIDList(MakeHostNodeID("client.hostname.com"), MakeEndpointNodeID("client.hostname.com", "10.10.10.20", "54001"), MakeEndpointNodeID("client.hostname.com", "10.10.10.20", "54002")),
 			Metadata: AggregateMetadata{
 				KeyBytesIngress: 300,
 				KeyBytesEgress:  30,
@@ -236,8 +232,7 @@ func TestRenderByEndpointPIDGrouped(t *testing.T) {
 				"pseudo;10.10.10.10;apache",
 				"pseudo;10.10.10.11;apache",
 			),
-			OriginHosts: MakeIDList("server.hostname.com"),
-			OriginNodes: MakeIDList("server.hostname.com;192.168.1.1;80"),
+			Origins: MakeIDList(MakeHostNodeID("server.hostname.com"), MakeEndpointNodeID("server.hostname.com", "192.168.1.1", "80")),
 			Metadata: AggregateMetadata{
 				KeyBytesIngress: 150,
 				KeyBytesEgress:  1500,
@@ -265,54 +260,50 @@ func TestRenderByEndpointPIDGrouped(t *testing.T) {
 func TestRenderByNetworkHostname(t *testing.T) {
 	want := map[string]RenderableNode{
 		"host:client.hostname.com": {
-			ID:          "host:client.hostname.com",
-			LabelMajor:  "client",       // before first .
-			LabelMinor:  "hostname.com", // after first .
-			Rank:        "client",
-			Pseudo:      false,
-			Adjacency:   MakeIDList("host:server.hostname.com"),
-			OriginHosts: MakeIDList("client.hostname.com"),
-			OriginNodes: MakeIDList("client.hostname.com;10.10.10.20"),
+			ID:         "host:client.hostname.com",
+			LabelMajor: "client",       // before first .
+			LabelMinor: "hostname.com", // after first .
+			Rank:       "client",
+			Pseudo:     false,
+			Adjacency:  MakeIDList("host:server.hostname.com"),
+			Origins:    MakeIDList(MakeHostNodeID("client.hostname.com"), MakeAddressNodeID("client.hostname.com", "10.10.10.20")),
 			Metadata: AggregateMetadata{
 				KeyMaxConnCountTCP: 3,
 			},
 		},
 		"host:random.hostname.com": {
-			ID:          "host:random.hostname.com",
-			LabelMajor:  "random",       // before first .
-			LabelMinor:  "hostname.com", // after first .
-			Rank:        "random",
-			Pseudo:      false,
-			Adjacency:   MakeIDList("host:server.hostname.com"),
-			OriginHosts: MakeIDList("random.hostname.com"),
-			OriginNodes: MakeIDList("random.hostname.com;172.16.11.9"),
+			ID:         "host:random.hostname.com",
+			LabelMajor: "random",       // before first .
+			LabelMinor: "hostname.com", // after first .
+			Rank:       "random",
+			Pseudo:     false,
+			Adjacency:  MakeIDList("host:server.hostname.com"),
+			Origins:    MakeIDList(MakeHostNodeID("random.hostname.com"), MakeAddressNodeID("random.hostname.com", "172.16.11.9")),
 			Metadata: AggregateMetadata{
 				KeyMaxConnCountTCP: 20,
 			},
 		},
 		"host:server.hostname.com": {
-			ID:          "host:server.hostname.com",
-			LabelMajor:  "server",       // before first .
-			LabelMinor:  "hostname.com", // after first .
-			Rank:        "server",
-			Pseudo:      false,
-			Adjacency:   MakeIDList("host:client.hostname.com", "pseudo;10.10.10.10;192.168.1.1;"),
-			OriginHosts: MakeIDList("server.hostname.com"),
-			OriginNodes: MakeIDList("server.hostname.com;192.168.1.1"),
+			ID:         "host:server.hostname.com",
+			LabelMajor: "server",       // before first .
+			LabelMinor: "hostname.com", // after first .
+			Rank:       "server",
+			Pseudo:     false,
+			Adjacency:  MakeIDList("host:client.hostname.com", "pseudo;10.10.10.10;192.168.1.1;"),
+			Origins:    MakeIDList(MakeHostNodeID("server.hostname.com"), MakeAddressNodeID("server.hostname.com", "192.168.1.1")),
 			Metadata: AggregateMetadata{
 				KeyMaxConnCountTCP: 10,
 			},
 		},
 		"pseudo;10.10.10.10;192.168.1.1;": {
-			ID:          "pseudo;10.10.10.10;192.168.1.1;",
-			LabelMajor:  "10.10.10.10",
-			LabelMinor:  "", // after first .
-			Rank:        "",
-			Pseudo:      true,
-			Adjacency:   nil,
-			OriginHosts: nil,
-			OriginNodes: nil,
-			Metadata:    AggregateMetadata{},
+			ID:         "pseudo;10.10.10.10;192.168.1.1;",
+			LabelMajor: "10.10.10.10",
+			LabelMinor: "", // after first .
+			Rank:       "",
+			Pseudo:     true,
+			Adjacency:  nil,
+			Origins:    nil,
+			Metadata:   AggregateMetadata{},
 		},
 	}
 	have := report.Address.RenderBy(NetworkHostname, GenericPseudoNode)
