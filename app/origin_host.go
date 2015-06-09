@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -12,32 +13,23 @@ import (
 // some data in the system. The struct is returned by the /api/origin/{id}
 // handler.
 type OriginHost struct {
-	Hostname    string   `json:"hostname"`
-	OS          string   `json:"os"`
-	Addresses   []string `json:"addresses"`
-	LoadOne     float64  `json:"load_one"`
-	LoadFive    float64  `json:"load_five"`
-	LoadFifteen float64  `json:"load_fifteen"`
+	Hostname string   `json:"hostname"`
+	OS       string   `json:"os"`
+	Networks []string `json:"networks"`
+	Load     string   `json:"load"`
 }
 
-func getOriginHost(mds report.HostMetadatas, nodeID string) (OriginHost, bool) {
-	host, ok := mds[nodeID]
+func getOriginHost(t report.Topology, nodeID string) (OriginHost, bool) {
+	host, ok := t.NodeMetadatas[nodeID]
 	if !ok {
 		return OriginHost{}, false
 	}
 
-	var addrs []string
-	for _, l := range host.LocalNets {
-		addrs = append(addrs, l.String())
-	}
-
 	return OriginHost{
-		Hostname:    host.Hostname,
-		OS:          host.OS,
-		Addresses:   addrs,
-		LoadOne:     host.LoadOne,
-		LoadFive:    host.LoadFive,
-		LoadFifteen: host.LoadFifteen,
+		Hostname: host["host_name"],
+		OS:       host["os"],
+		Networks: strings.Split(host["local_networks"], " "),
+		Load:     host["load"],
 	}, true
 }
 
@@ -48,7 +40,7 @@ func makeOriginHostHandler(rep Reporter) http.HandlerFunc {
 			vars   = mux.Vars(r)
 			nodeID = vars["id"]
 		)
-		origin, ok := getOriginHost(rep.Report().HostMetadatas, nodeID)
+		origin, ok := getOriginHost(rep.Report().Host, nodeID)
 		if !ok {
 			http.NotFound(w, r)
 			return

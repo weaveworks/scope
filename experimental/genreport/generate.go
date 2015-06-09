@@ -112,11 +112,11 @@ func DemoReport(nodeCount int) report.Report {
 		r.Address.Adjacency[nodeDstAddressID] = r.Address.Adjacency[nodeDstAddressID].Add(srcAddressID)
 
 		// Host data
-		r.HostMetadatas["hostX"] = report.HostMetadata{
-			Timestamp: time.Now().UTC(),
-			Hostname:  "host-x",
-			LocalNets: []*net.IPNet{localNet},
-			OS:        "linux",
+		r.Host.NodeMetadatas["hostX"] = report.NodeMetadata{
+			"ts":             time.Now().UTC().Format(time.RFC3339Nano),
+			"host_name":      "host-x",
+			"local_networks": localNet.String(),
+			"os":             "linux",
 		}
 	}
 

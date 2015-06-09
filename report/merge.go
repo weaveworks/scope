@@ -8,7 +8,7 @@ package report
 func (r *Report) Merge(other Report) {
 	r.Endpoint.Merge(other.Endpoint)
 	r.Address.Merge(other.Address)
-	r.HostMetadatas.Merge(other.HostMetadatas)
+	r.Host.Merge(other.Host)
 }
 
 // Merge merges another Topology into the receiver.
@@ -42,20 +42,6 @@ func (e *EdgeMetadatas) Merge(other EdgeMetadatas) {
 		local := (*e)[id]
 		local.Merge(edgemeta)
 		(*e)[id] = local
-	}
-}
-
-// Merge merges another HostMetadata into the receiver.
-// It'll takes the lastest version if there are conflicts.
-func (e *HostMetadatas) Merge(other HostMetadatas) {
-	for hostID, meta := range other {
-		if existing, ok := (*e)[hostID]; ok {
-			// Conflict. Take the newest.
-			if existing.Timestamp.After(meta.Timestamp) {
-				continue
-			}
-		}
-		(*e)[hostID] = meta
 	}
 }
 

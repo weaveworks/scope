@@ -1,31 +1,32 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
 )
 
-func getLoads() (float64, float64, float64) {
+func getLoad() string {
 	buf, err := ioutil.ReadFile("/proc/loadavg")
 	if err != nil {
-		return -1, -1, -1
+		return "unknown"
 	}
 	toks := strings.Fields(string(buf))
 	if len(toks) < 3 {
-		return -1, -1, -1
+		return "unknown"
 	}
 	one, err := strconv.ParseFloat(toks[0], 64)
 	if err != nil {
-		return -1, -1, -1
+		return "unknown"
 	}
 	five, err := strconv.ParseFloat(toks[1], 64)
 	if err != nil {
-		return -1, -1, -1
+		return "unknown"
 	}
 	fifteen, err := strconv.ParseFloat(toks[2], 64)
 	if err != nil {
-		return -1, -1, -1
+		return "unknown"
 	}
-	return one, five, fifteen
+	return fmt.Sprintf("%.2f %.2f %.2f", one, five, fifteen)
 }

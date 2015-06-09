@@ -112,21 +112,25 @@ func reportToSquash() Report {
 			},
 		},
 
-		HostMetadatas: HostMetadatas{
-			"hostA": HostMetadata{
-				Hostname:  "node-a.local",
-				OS:        "Linux",
-				LocalNets: []*net.IPNet{netdot1},
-			},
-			"hostB": HostMetadata{
-				Hostname:  "node-b.local",
-				OS:        "Linux",
-				LocalNets: []*net.IPNet{netdot1},
-			},
-			"hostZ": HostMetadata{
-				Hostname:  "node-z.local",
-				OS:        "Linux",
-				LocalNets: []*net.IPNet{netdot2},
+		Host: Topology{
+			Adjacency:     Adjacency{},
+			EdgeMetadatas: EdgeMetadatas{},
+			NodeMetadatas: NodeMetadatas{
+				MakeHostNodeID("hostA"): NodeMetadata{
+					"host_name":      "node-a.local",
+					"os":             "Linux",
+					"local_networks": netdot1.String(),
+				},
+				MakeHostNodeID("hostB"): NodeMetadata{
+					"host_name":      "node-b.local",
+					"os":             "Linux",
+					"local_networks": netdot1.String(),
+				},
+				MakeHostNodeID("hostZ"): NodeMetadata{
+					"host_name":      "node-z.local",
+					"os":             "Linux",
+					"local_networks": netdot2.String(),
+				},
 			},
 		},
 	}
@@ -166,7 +170,7 @@ func TestSquashTopology(t *testing.T) {
 		NodeMetadatas: reportToSquash().Endpoint.NodeMetadatas,
 	}
 
-	have := Squash(reportToSquash().Endpoint, EndpointIDAddresser, reportToSquash().HostMetadatas.LocalNets())
+	have := Squash(reportToSquash().Endpoint, EndpointIDAddresser, reportToSquash().LocalNetworks())
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
 	}
@@ -246,11 +250,11 @@ func TestSquashReport(t *testing.T) {
 				},
 			},
 		},
-		HostMetadatas: reportToSquash().HostMetadatas,
+		Host: reportToSquash().Host,
 	}
 
 	have := reportToSquash().SquashRemote()
 	if !reflect.DeepEqual(want, have) {
-		t.Errorf("want\n\t%#v, have\n\t%#v", want, have)
+		t.Error(diff(want, have))
 	}
 }

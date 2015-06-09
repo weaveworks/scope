@@ -127,7 +127,7 @@ func discover(c collector, p publisher, fixed []string) {
 
 		var (
 			now       = time.Now()
-			localNets = r.LocalNets()
+			localNets = r.LocalNetworks()
 		)
 
 		for _, adjacent := range r.Address.Adjacency {

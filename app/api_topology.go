@@ -66,7 +66,7 @@ func handleNode(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Req
 		http.NotFound(w, r)
 		return
 	}
-	originHostFunc := func(id string) (OriginHost, bool) { return getOriginHost(rpt.HostMetadatas, id) }
+	originHostFunc := func(id string) (OriginHost, bool) { return getOriginHost(rpt.Host, id) }
 	originNodeFunc := func(id string) (OriginNode, bool) { return getOriginNode(t.selector(rpt), id) }
 	respondWith(w, http.StatusOK, APINode{Node: makeDetailed(node, originHostFunc, originNodeFunc)})
 }

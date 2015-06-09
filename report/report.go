@@ -1,9 +1,8 @@
 package report
 
 import (
-	"encoding/json"
 	"net"
-	"time"
+	"strings"
 )
 
 // Report is the core data type. It's produced by probes, and consumed and
@@ -20,20 +19,10 @@ type Report struct {
 	// endpoints (e.g. ICMP). Edges are present.
 	Address Topology
 
-	HostMetadatas
-}
-
-// HostMetadatas contains metadata about the host(s) represented in the Report.
-type HostMetadatas map[string]HostMetadata
-
-// HostMetadata describes metadata that probes can collect about the host that
-// they run on. It has a timestamp when the measurement was made.
-type HostMetadata struct {
-	Timestamp                      time.Time
-	Hostname                       string
-	LocalNets                      []*net.IPNet
-	OS                             string
-	LoadOne, LoadFive, LoadFifteen float64
+	// Host nodes are physical hosts that run probes. Metadata includes things
+	// like operating system, load, etc. The information is scraped by the
+	// probes with each published report. Edges are not present.
+	Host Topology
 }
 
 // RenderableNode is the data type that's yielded to the JavaScript layer as
@@ -79,9 +68,9 @@ type Row struct {
 // MakeReport makes a clean report, ready to Merge() other reports into.
 func MakeReport() Report {
 	return Report{
-		Endpoint:      NewTopology(),
-		Address:       NewTopology(),
-		HostMetadatas: map[string]HostMetadata{},
+		Endpoint: NewTopology(),
+		Address:  NewTopology(),
+		Host:     NewTopology(),
 	}
 }
 
@@ -89,59 +78,38 @@ func MakeReport() Report {
 // LocalNets of the hosts in HostMetadata to determine which addresses are
 // local.
 func (r Report) SquashRemote() Report {
-	localNets := r.HostMetadatas.LocalNets()
+	localNetworks := r.LocalNetworks()
 	return Report{
-		Endpoint:      Squash(r.Endpoint, EndpointIDAddresser, localNets),
-		Address:       Squash(r.Address, AddressIDAddresser, localNets),
-		HostMetadatas: r.HostMetadatas,
+		Endpoint: Squash(r.Endpoint, EndpointIDAddresser, localNetworks),
+		Address:  Squash(r.Address, AddressIDAddresser, localNetworks),
+		Host:     Squash(r.Host, PanicIDAddresser, localNetworks),
 	}
 }
 
-// LocalNets gives the union of all local network IPNets for all hosts
-// represented in the HostMetadatas.
-func (m HostMetadatas) LocalNets() []*net.IPNet {
-	var nets []*net.IPNet
-	for _, node := range m {
-	OUTER:
-		for _, local := range node.LocalNets {
-			for _, existing := range nets {
-				if existing == local {
-					continue OUTER
+// LocalNetworks returns a superset of the networks (think: CIDRs) that are
+// "local" from the perspective of each host represented in the report. It's
+// used to determine which nodes in the report are "remote", i.e. outside of
+// our infrastructure.
+func (r Report) LocalNetworks() []*net.IPNet {
+	var ipNets []*net.IPNet
+	for _, md := range r.Host.NodeMetadatas {
+		val, ok := md["local_networks"]
+		if !ok {
+			continue
+		}
+	outer:
+		for _, s := range strings.Fields(val) {
+			_, ipNet, err := net.ParseCIDR(s)
+			if err != nil {
+				continue
+			}
+			for _, existing := range ipNets {
+				if ipNet.String() == existing.String() {
+					continue outer
 				}
 			}
-			nets = append(nets, local)
+			ipNets = append(ipNets, ipNet)
 		}
 	}
-	return nets
-}
-
-// UnmarshalJSON is a custom JSON deserializer for HostMetadata to deal with
-// the Localnets.
-func (m *HostMetadata) UnmarshalJSON(data []byte) error {
-	type netmask struct {
-		IP   net.IP
-		Mask []byte
-	}
-	tmpHMD := struct {
-		Timestamp                      time.Time
-		Hostname                       string
-		LocalNets                      []*netmask
-		OS                             string
-		LoadOne, LoadFive, LoadFifteen float64
-	}{}
-	err := json.Unmarshal(data, &tmpHMD)
-	if err != nil {
-		return err
-	}
-
-	m.Timestamp = tmpHMD.Timestamp
-	m.Hostname = tmpHMD.Hostname
-	m.OS = tmpHMD.OS
-	m.LoadOne = tmpHMD.LoadOne
-	m.LoadFive = tmpHMD.LoadFive
-	m.LoadFifteen = tmpHMD.LoadFifteen
-	for _, ln := range tmpHMD.LocalNets {
-		m.LocalNets = append(m.LocalNets, &net.IPNet{IP: ln.IP, Mask: ln.Mask})
-	}
-	return nil
+	return ipNets
 }

@@ -56,9 +56,8 @@ outer:
 			Numeric: false,
 			Rows: []report.Row{
 				{"Hostname", host.Hostname, ""},
-				{"Load", fmt.Sprintf("%.2f %.2f %.2f", host.LoadOne, host.LoadFive, host.LoadFifteen), ""},
+				{"Load", host.Load, ""},
 				{"OS", host.OS, ""},
-				//{"Addresses", strings.Join(host.Addresses, ", "), ""},
 				{"ID", id, ""},
 			},
 		})
@@ -75,12 +74,10 @@ outer:
 
 func unknownOriginHost(id string) OriginHost {
 	return OriginHost{
-		Hostname:    fmt.Sprintf("[%s]", id),
-		OS:          "unknown",
-		Addresses:   []string{},
-		LoadOne:     0.0,
-		LoadFive:    0.0,
-		LoadFifteen: 0.0,
+		Hostname: fmt.Sprintf("[%s]", id),
+		OS:       "unknown",
+		Networks: []string{},
+		Load:     "",
 	}
 }
 
