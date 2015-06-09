@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -79,8 +80,8 @@ func main() {
 	defer close(quit)
 	go func() {
 		var (
-			hostname = hostname()
-			nodeID   = hostname // TODO: we should sanitize the hostname
+			hostName = hostname()
+			hostID   = hostName // TODO: we should sanitize the hostname
 			pubTick  = time.Tick(*publishInterval)
 			spyTick  = time.Tick(*spyInterval)
 			r        = report.MakeReport()
@@ -90,12 +91,12 @@ func main() {
 			select {
 			case <-pubTick:
 				publishTicks.WithLabelValues().Add(1)
-				r.HostMetadatas[nodeID] = hostMetadata(hostname)
+				r.Host = hostTopology(hostID, hostName)
 				publisher.Publish(r)
 				r = report.MakeReport()
 
 			case <-spyTick:
-				r.Merge(spy(hostname, hostname, *spyProcs))
+				r.Merge(spy(hostID, hostName, *spyProcs))
 				r = tag.Apply(r, taggers)
 				// log.Printf("merged report:\n%#v\n", r)
 
@@ -108,34 +109,31 @@ func main() {
 	log.Printf("%s", <-interrupt())
 }
 
+// hostTopology produces a host topology for this host. No need to do this
+// more than once per published report.
+func hostTopology(hostID, hostName string) report.Topology {
+	var localCIDRs []string
+	if localNets, err := net.InterfaceAddrs(); err == nil {
+		// Not all networks are IP networks.
+		for _, localNet := range localNets {
+			if ipNet, ok := localNet.(*net.IPNet); ok {
+				localCIDRs = append(localCIDRs, ipNet.String())
+			}
+		}
+	}
+	t := report.NewTopology()
+	t.NodeMetadatas[report.MakeHostNodeID(hostID)] = report.NodeMetadata{
+		"ts":             time.Now().UTC().Format(time.RFC3339Nano),
+		"host_name":      hostName,
+		"local_networks": strings.Join(localCIDRs, " "),
+		"os":             runtime.GOOS,
+		"load":           getLoad(),
+	}
+	return t
+}
+
 func interrupt() chan os.Signal {
 	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	return c
-}
-
-// hostMetadata produces an instantaneous HostMetadata for this host. No need
-// to do this more than once per published report.
-func hostMetadata(hostname string) report.HostMetadata {
-	loadOne, loadFive, loadFifteen := getLoads()
-
-	host := report.HostMetadata{
-		Timestamp:   time.Now().UTC(),
-		Hostname:    hostname,
-		OS:          runtime.GOOS,
-		LoadOne:     loadOne,
-		LoadFive:    loadFive,
-		LoadFifteen: loadFifteen,
-	}
-
-	if localNets, err := net.InterfaceAddrs(); err == nil {
-		// Not all networks are IP networks.
-		for _, localNet := range localNets {
-			if net, ok := localNet.(*net.IPNet); ok {
-				host.LocalNets = append(host.LocalNets, net)
-			}
-		}
-	}
-
-	return host
 }

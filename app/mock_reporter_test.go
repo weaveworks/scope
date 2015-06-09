@@ -115,21 +115,23 @@ func (s StaticReport) Report() report.Report {
 			},
 		},
 
-		HostMetadatas: report.HostMetadatas{
-			"hostA": report.HostMetadata{
-				Hostname:    "node-a.local",
-				LocalNets:   []*net.IPNet{localNet},
-				OS:          "Linux",
-				LoadOne:     3.1415,
-				LoadFive:    2.7182,
-				LoadFifteen: 1.6180,
-			},
-			"hostB": report.HostMetadata{
-				Hostname:  "node-b.local",
-				LocalNets: []*net.IPNet{localNet},
-				OS:        "Linux",
+		Host: report.Topology{
+			Adjacency:     report.Adjacency{},
+			EdgeMetadatas: report.EdgeMetadatas{},
+			NodeMetadatas: report.NodeMetadatas{
+				report.MakeHostNodeID("hostA"): report.NodeMetadata{
+					"host_name":      "node-a.local",
+					"os":             "Linux",
+					"local_networks": localNet.String(),
+					"load":           "3.14 2.71 1.61",
+				},
+				report.MakeHostNodeID("hostB"): report.NodeMetadata{
+					"host_name":      "node-b.local",
+					"os":             "Linux",
+					"local_networks": localNet.String(),
+				},
 			},
 		},
 	}
-	return testReport.SquashRemote()
+	return testReport.Squash()
 }

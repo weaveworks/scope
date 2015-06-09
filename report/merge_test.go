@@ -3,7 +3,6 @@ package report
 import (
 	"reflect"
 	"testing"
-	"time"
 )
 
 func TestMergeAdjacency(t *testing.T) {
@@ -202,107 +201,6 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 					BytesIngress:     2,
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  9,
-				},
-			},
-		},
-	} {
-		have := c.a
-		have.Merge(c.b)
-
-		if !reflect.DeepEqual(c.want, have) {
-			t.Errorf("%s: want\n\t%#v, have\n\t%#v", name, c.want, have)
-		}
-	}
-}
-
-func TestMergeHostMetadatas(t *testing.T) {
-	now := time.Now()
-
-	for name, c := range map[string]struct {
-		a, b, want HostMetadatas
-	}{
-		"Empty a": {
-			a: HostMetadatas{},
-			b: HostMetadatas{
-				"hostA": HostMetadata{
-					Timestamp: now,
-					Hostname:  "host-a",
-					OS:        "linux",
-				},
-			},
-			want: HostMetadatas{
-				"hostA": HostMetadata{
-					Timestamp: now,
-					Hostname:  "host-a",
-					OS:        "linux",
-				},
-			},
-		},
-		"Empty b": {
-			a: HostMetadatas{
-				"hostA": HostMetadata{
-					Timestamp: now,
-					Hostname:  "host-a",
-					OS:        "linux",
-				},
-			},
-			b: HostMetadatas{},
-			want: HostMetadatas{
-				"hostA": HostMetadata{
-					Timestamp: now,
-					Hostname:  "host-a",
-					OS:        "linux",
-				},
-			},
-		},
-		"Host merge": {
-			a: HostMetadatas{
-				"hostA": HostMetadata{
-					Timestamp: now,
-					Hostname:  "host-a",
-					OS:        "linux",
-				},
-			},
-			b: HostMetadatas{
-				"hostB": HostMetadata{
-					Timestamp: now,
-					Hostname:  "host-b",
-					OS:        "freedos",
-				},
-			},
-			want: HostMetadatas{
-				"hostB": HostMetadata{
-					Timestamp: now,
-					Hostname:  "host-b",
-					OS:        "freedos",
-				},
-				"hostA": HostMetadata{
-					Timestamp: now,
-					Hostname:  "host-a",
-					OS:        "linux",
-				},
-			},
-		},
-		"Host conflict": {
-			a: HostMetadatas{
-				"hostA": HostMetadata{
-					Timestamp: now,
-					Hostname:  "host-a",
-					OS:        "linux1",
-				},
-			},
-			b: HostMetadatas{
-				"hostA": HostMetadata{
-					Timestamp: now.Add(-10 * time.Second),
-					Hostname:  "host-a",
-					OS:        "linux0",
-				},
-			},
-			want: HostMetadatas{
-				"hostA": HostMetadata{
-					Timestamp: now,
-					Hostname:  "host-a",
-					OS:        "linux1",
 				},
 			},
 		},

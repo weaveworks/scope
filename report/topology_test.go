@@ -406,5 +406,5 @@ func diff(want, have interface{}) string {
 		ToFile:   "have",
 		Context:  3,
 	})
-	return text
+	return "\n" + text
 }

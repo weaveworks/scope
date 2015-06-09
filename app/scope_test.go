@@ -71,17 +71,19 @@ func checkRequest(t *testing.T, ts *httptest.Server, method, path string, body [
 func getRawJSON(t *testing.T, ts *httptest.Server, path string) []byte {
 	res, body := checkGet(t, ts, path)
 
+	_, file, line, _ := runtime.Caller(1)
+	file = filepath.Base(file)
 	if res.StatusCode != 200 {
-		t.Fatalf("Expected status %d, got %d. Path: %s", 200, res.StatusCode, path)
+		t.Fatalf("%s:%d: Expected status %d, got %d. Path: %s", file, line, 200, res.StatusCode, path)
 	}
 
 	foundCtype := res.Header.Get("content-type")
 	if foundCtype != "application/json" {
-		t.Errorf("Wrong Content-type for JSON: %s", foundCtype)
+		t.Errorf("%s:%d: Wrong Content-type for JSON: %s", file, line, foundCtype)
 	}
 
 	if len(body) == 0 {
-		t.Errorf("No response body")
+		t.Errorf("%s:%d: No response body", file, line)
 	}
 	// fmt.Printf("Body: %s", body)
 

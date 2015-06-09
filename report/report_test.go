@@ -1,37 +1,55 @@
-package report
+package report_test
 
 import (
-	"encoding/json"
-	"fmt"
 	"net"
+	"reflect"
 	"testing"
-	"time"
+
+	"github.com/weaveworks/scope/report"
 )
 
-func TestHostJSON(t *testing.T) {
-	_, localNet, _ := net.ParseCIDR("192.168.1.2/16")
-	host := HostMetadata{
-		Timestamp: time.Now(),
-		Hostname:  "euclid",
-		LocalNets: []*net.IPNet{localNet},
-		OS:        "linux",
+func TestReportLocalNetworks(t *testing.T) {
+	r := report.MakeReport()
+	r.Merge(report.Report{Host: report.Topology{NodeMetadatas: report.NodeMetadatas{
+		"nonets": {},
+		"foo":    {"local_networks": "10.0.0.1/8 192.168.1.1/24 10.0.0.1/8 badnet/33"},
+	}}})
+	if want, have := []*net.IPNet{
+		mustParseCIDR("10.0.0.1/8"),
+		mustParseCIDR("192.168.1.1/24"),
+	}, r.LocalNetworks(); !reflect.DeepEqual(want, have) {
+		t.Errorf("want %+v, have %+v", want, have)
 	}
-	e, err := json.Marshal(host)
+}
+
+func TestReportSquash(t *testing.T) {
+	{
+		want := report.Adjacency{
+			report.MakeAdjacencyID(clientHostID, client54001EndpointNodeID): report.MakeIDList(server80EndpointNodeID),
+			report.MakeAdjacencyID(clientHostID, client54002EndpointNodeID): report.MakeIDList(server80EndpointNodeID),
+			report.MakeAdjacencyID(serverHostID, server80EndpointNodeID):    report.MakeIDList(client54001EndpointNodeID, client54002EndpointNodeID, report.TheInternet),
+		}
+		have := reportFixture.Squash().Endpoint.Adjacency
+		if !reflect.DeepEqual(want, have) {
+			t.Error(diff(want, have))
+		}
+	}
+	{
+		want := report.Adjacency{
+			report.MakeAdjacencyID(clientHostID, clientAddressNodeID): report.MakeIDList(serverAddressNodeID),
+			report.MakeAdjacencyID(serverHostID, serverAddressNodeID): report.MakeIDList(clientAddressNodeID, report.TheInternet),
+		}
+		have := reportFixture.Squash().Address.Adjacency
+		if !reflect.DeepEqual(want, have) {
+			t.Error(diff(want, have))
+		}
+	}
+}
+
+func mustParseCIDR(s string) *net.IPNet {
+	_, ipNet, err := net.ParseCIDR(s)
 	if err != nil {
-		t.Fatalf("Marshal error: %v", err)
+		panic(err)
 	}
-
-	var hostAgain HostMetadata
-	err = json.Unmarshal(e, &hostAgain)
-	if err != nil {
-		t.Fatalf("Unarshal error: %v", err)
-	}
-
-	// need to compare pointers. No fun.
-	want := fmt.Sprintf("%+v", host)
-	got := fmt.Sprintf("%+v", hostAgain)
-	if want != got {
-		t.Errorf("Host not the same. Want \n%+v, got \n%+v", want, got)
-	}
-
+	return ipNet
 }
