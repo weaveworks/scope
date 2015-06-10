@@ -49,7 +49,7 @@ func main() {
 
 	// Collector deals with the probes, and generates a single merged report
 	// every second.
-	c := xfer.NewCollector(*batch)
+	c := xfer.NewCollector(*batch, "id")
 	for _, addr := range fixedAddresses {
 		c.Add(addr)
 	}

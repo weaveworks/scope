@@ -31,7 +31,7 @@ func TestMerge(t *testing.T) {
 	defer p2.Close()
 
 	batchTime := 100 * time.Millisecond
-	c := xfer.NewCollector(batchTime)
+	c := xfer.NewCollector(batchTime, "id")
 	c.Add(p1Addr)
 	c.Add(p2Addr)
 	defer c.Stop()

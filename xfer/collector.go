@@ -18,7 +18,7 @@ const (
 var (
 	// MaxBackoff is the maximum time between connect retries.
 	// It's exported so it's externally configurable.
-	MaxBackoff = 2 * time.Minute
+	MaxBackoff = 1 * time.Minute
 
 	// This is extracted out for mocking.
 	tick = time.Tick
@@ -43,10 +43,11 @@ type realCollector struct {
 	add    chan string
 	remove chan string
 	quit   chan struct{}
+	id     string
 }
 
 // NewCollector produces and returns a report collector.
-func NewCollector(batchTime time.Duration) Collector {
+func NewCollector(batchTime time.Duration, id string) Collector {
 	c := &realCollector{
 		in:     make(chan report.Report),
 		out:    make(chan report.Report),
@@ -54,6 +55,7 @@ func NewCollector(batchTime time.Duration) Collector {
 		add:    make(chan string),
 		remove: make(chan string),
 		quit:   make(chan struct{}),
+		id:     id,
 	}
 	go c.loop(batchTime)
 	return c
@@ -75,7 +77,7 @@ func (c *realCollector) loop(batchTime time.Duration) {
 		wg.Add(1)
 		go func(quit chan struct{}) {
 			defer wg.Done()
-			reportCollector(ip, c.in, quit)
+			c.reportCollector(ip, quit)
 		}(addrs[ip])
 	}
 
@@ -147,7 +149,7 @@ func (c *realCollector) Stop() {
 
 // reportCollector is the loop to connect to a single Probe. It'll keep
 // running until the quit channel is closed.
-func reportCollector(ip string, col chan<- report.Report, quit <-chan struct{}) {
+func (c *realCollector) reportCollector(ip string, quit <-chan struct{}) {
 	backoff := initialBackoff / 2
 	for {
 		backoff *= 2
@@ -183,6 +185,11 @@ func reportCollector(ip string, col chan<- report.Report, quit <-chan struct{}) 
 		}()
 
 		// Connection accepted.
+		if err := gob.NewEncoder(conn).Encode(HandshakeRequest{ID: c.id}); err != nil {
+			log.Printf("handshake error: %v", err)
+			break
+		}
+
 		dec := gob.NewDecoder(conn)
 		for {
 			var report report.Report
@@ -199,7 +206,7 @@ func reportCollector(ip string, col chan<- report.Report, quit <-chan struct{}) 
 			}
 
 			select {
-			case col <- report:
+			case c.in <- report:
 			case <-quit:
 				return
 			}

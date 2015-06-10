@@ -26,7 +26,7 @@ func main() {
 	flag.Parse()
 
 	xfer.MaxBackoff = 10 * time.Second
-	c := xfer.NewCollector(*batch)
+	c := xfer.NewCollector(*batch, "id")
 	for _, addr := range strings.Split(*probes, ",") {
 		c.Add(addr)
 	}

@@ -21,6 +21,11 @@ type TCPPublisher struct {
 	closer io.Closer
 }
 
+// HandshakeRequest contains the unique ID of the connecting app.
+type HandshakeRequest struct {
+	ID string
+}
+
 // NewTCPPublisher listens for connections on listenAddress. Only one client
 // is accepted at a time; other clients are accepted, but disconnected right
 // away. Reports published via publish() will be written to the connected
@@ -68,20 +73,20 @@ func (p *TCPPublisher) loop(incoming <-chan net.Conn) {
 			}
 
 			// Don't allow multiple connections from the same remote host.
-			host, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+			listenerID, err := getListenerID(conn)
 			if err != nil {
 				log.Printf("incoming connection: %s: %v (dropped)", conn.RemoteAddr(), err)
 				conn.Close()
 				continue
 			}
-			if _, ok := activeConns[host]; ok {
+			if _, ok := activeConns[listenerID]; ok {
 				log.Printf("duplicate connection: %s (dropped)", conn.RemoteAddr())
 				conn.Close()
 				continue
 			}
 
-			log.Printf("connection initiated: %s", conn.RemoteAddr())
-			activeConns[host] = connEncoder{conn, gob.NewEncoder(conn)}
+			log.Printf("connection initiated: %s (%s)", conn.RemoteAddr(), listenerID)
+			activeConns[listenerID] = connEncoder{conn, gob.NewEncoder(conn)}
 
 		case msg, ok := <-p.msg:
 			if !ok {
@@ -97,6 +102,15 @@ func (p *TCPPublisher) loop(incoming <-chan net.Conn) {
 			}
 		}
 	}
+}
+
+func getListenerID(c net.Conn) (string, error) {
+	var req HandshakeRequest
+	if err := gob.NewDecoder(c).Decode(&req); err != nil {
+		return "", err
+	}
+
+	return req.ID, nil
 }
 
 func fwd(ln net.Listener) chan net.Conn {
