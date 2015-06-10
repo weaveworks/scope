@@ -22,26 +22,17 @@ const (
 	EdgeDelim = "|"
 )
 
-// MakeAdjacencyID produces an adjacency ID from composite parts.
-func MakeAdjacencyID(hostID, srcNodeID string) string {
-	// Here we rely on the fact that every possible source node ID has the
-	// host ID as the first scope-delimited field, and therefore don't
-	// duplicate that information.
+// MakeAdjacencyID produces an adjacency ID from a node id.
+func MakeAdjacencyID(srcNodeID string) string {
 	return ">" + srcNodeID
 }
 
-// ParseAdjacencyID splits an adjacency ID to its composite parts.
-func ParseAdjacencyID(adjacencyID string) (hostID, srcNodeID string, ok bool) {
+// ParseAdjacencyID produces a node id from an adjancency id
+func ParseAdjacencyID(adjacencyID string) (string, bool) {
 	if !strings.HasPrefix(adjacencyID, ">") {
-		return "", "", false
+		return "", false
 	}
-	// This relies on every node ID having hostID as its first scoped field.
-	adjacencyID = adjacencyID[1:]
-	fields := strings.SplitN(adjacencyID, ScopeDelim, 2)
-	if len(fields) != 2 {
-		return "", "", false
-	}
-	return fields[0], adjacencyID, true
+	return adjacencyID[1:], true
 }
 
 // MakeEdgeID produces an edge ID from composite parts.
@@ -79,6 +70,15 @@ func MakeHostNodeID(hostID string) string {
 	// But, suffix something to elicit failures if we try to use probe host
 	// IDs directly as node IDs in the host topology.
 	return hostID + ScopeDelim + "<host>"
+}
+
+// ParseNodeID produces the scope and remainder from a node ID
+func ParseNodeID(nodeID string) (string, string, bool) {
+	fields := strings.SplitN(nodeID, ScopeDelim, 2)
+	if len(fields) != 2 {
+		return "", "", false
+	}
+	return fields[0], fields[1], true
 }
 
 // MakePseudoNodeID produces a pseudo node ID from its composite parts.

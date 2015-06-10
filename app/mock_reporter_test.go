@@ -18,10 +18,10 @@ func (s StaticReport) Report() report.Report {
 	var testReport = report.Report{
 		Endpoint: report.Topology{
 			Adjacency: report.Adjacency{
-				report.MakeAdjacencyID("hostA", report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345")): report.MakeIDList(report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")),
-				report.MakeAdjacencyID("hostA", report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346")): report.MakeIDList(report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")),
-				report.MakeAdjacencyID("hostA", report.MakeEndpointNodeID("hostA", "192.168.1.1", "8888")):  report.MakeIDList(report.MakeEndpointNodeID("", "1.2.3.4", "22")),
-				report.MakeAdjacencyID("hostB", report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")):    report.MakeIDList(report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345")),
+				report.MakeAdjacencyID(report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345")): report.MakeIDList(report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")),
+				report.MakeAdjacencyID(report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346")): report.MakeIDList(report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")),
+				report.MakeAdjacencyID(report.MakeEndpointNodeID("hostA", "192.168.1.1", "8888")):  report.MakeIDList(report.MakeEndpointNodeID("", "1.2.3.4", "22")),
+				report.MakeAdjacencyID(report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")):    report.MakeIDList(report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345")),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				report.MakeEdgeID(report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345"), report.MakeEndpointNodeID("hostB", "192.168.1.2", "80")): report.EdgeMetadata{
@@ -79,8 +79,8 @@ func (s StaticReport) Report() report.Report {
 
 		Address: report.Topology{
 			Adjacency: report.Adjacency{
-				report.MakeAdjacencyID("hostA", report.MakeAddressNodeID("hostA", "192.168.1.1")): report.MakeIDList(report.MakeAddressNodeID("hostB", "192.168.1.2"), report.MakeAddressNodeID("", "1.2.3.4")),
-				report.MakeAdjacencyID("hostB", report.MakeAddressNodeID("hostB", "192.168.1.2")): report.MakeIDList(report.MakeAddressNodeID("hostA", "192.168.1.1")),
+				report.MakeAdjacencyID(report.MakeAddressNodeID("hostA", "192.168.1.1")): report.MakeIDList(report.MakeAddressNodeID("hostB", "192.168.1.2"), report.MakeAddressNodeID("", "1.2.3.4")),
+				report.MakeAdjacencyID(report.MakeAddressNodeID("hostB", "192.168.1.2")): report.MakeIDList(report.MakeAddressNodeID("hostA", "192.168.1.1")),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				report.MakeEdgeID(report.MakeAddressNodeID("hostA", "192.168.1.1"), report.MakeAddressNodeID("hostB", "192.168.1.2")): report.EdgeMetadata{

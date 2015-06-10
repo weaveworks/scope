@@ -205,5 +205,8 @@ func trySplitAddr(addr string) (string, string) {
 	if len(fields) == 3 {
 		return fields[1], fields[2]
 	}
-	return fields[1], ""
+	if len(fields) == 2 {
+		return fields[1], ""
+	}
+	panic(addr)
 }

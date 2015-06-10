@@ -59,12 +59,12 @@ func DemoReport(nodeCount int) report.Report {
 			srcPort          = rand.Intn(50000) + 10000
 			srcPortID        = report.MakeEndpointNodeID("", src, strconv.Itoa(srcPort))
 			dstPortID        = report.MakeEndpointNodeID("", dst, strconv.Itoa(c.dstPort))
-			srcID            = report.MakeAdjacencyID("hostX", srcPortID)
-			dstID            = report.MakeAdjacencyID("hostX", dstPortID)
+			srcID            = report.MakeAdjacencyID(srcPortID)
+			dstID            = report.MakeAdjacencyID(dstPortID)
 			srcAddressID     = report.MakeAddressNodeID("", src)
 			dstAddressID     = report.MakeAddressNodeID("", dst)
-			nodeSrcAddressID = report.MakeAdjacencyID("hostX", srcAddressID)
-			nodeDstAddressID = report.MakeAdjacencyID("hostX", dstAddressID)
+			nodeSrcAddressID = report.MakeAdjacencyID(srcAddressID)
+			nodeDstAddressID = report.MakeAdjacencyID(dstAddressID)
 		)
 
 		// Endpoint topology

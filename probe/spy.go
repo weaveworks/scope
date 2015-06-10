@@ -45,7 +45,7 @@ func addConnection(
 	var (
 		scopedLocal  = report.MakeAddressNodeID(hostID, c.LocalAddress.String())
 		scopedRemote = report.MakeAddressNodeID(hostID, c.RemoteAddress.String())
-		key          = report.MakeAdjacencyID(hostID, scopedLocal)
+		key          = report.MakeAdjacencyID(scopedLocal)
 		edgeKey      = report.MakeEdgeID(scopedLocal, scopedRemote)
 	)
 
@@ -67,7 +67,7 @@ func addConnection(
 		var (
 			scopedLocal  = report.MakeEndpointNodeID(hostID, c.LocalAddress.String(), strconv.Itoa(int(c.LocalPort)))
 			scopedRemote = report.MakeEndpointNodeID(hostID, c.RemoteAddress.String(), strconv.Itoa(int(c.RemotePort)))
-			key          = report.MakeAdjacencyID(hostID, scopedLocal)
+			key          = report.MakeAdjacencyID(scopedLocal)
 			edgeKey      = report.MakeEdgeID(scopedLocal, scopedRemote)
 		)
 

@@ -82,7 +82,7 @@ func TestSpyNoProcesses(t *testing.T) {
 	var (
 		scopedLocal  = report.MakeAddressNodeID(nodeID, fixLocalAddress.String())
 		scopedRemote = report.MakeAddressNodeID(nodeID, fixRemoteAddress.String())
-		localKey     = report.MakeAdjacencyID(nodeID, scopedLocal)
+		localKey     = report.MakeAdjacencyID(scopedLocal)
 	)
 
 	if want, have := 1, len(r.Address.Adjacency[localKey]); want != have {
@@ -112,7 +112,7 @@ func TestSpyWithProcesses(t *testing.T) {
 	var (
 		scopedLocal  = report.MakeEndpointNodeID(nodeID, fixLocalAddress.String(), strconv.Itoa(int(fixLocalPort)))
 		scopedRemote = report.MakeEndpointNodeID(nodeID, fixRemoteAddress.String(), strconv.Itoa(int(fixRemotePort)))
-		localKey     = report.MakeAdjacencyID(nodeID, scopedLocal)
+		localKey     = report.MakeAdjacencyID(scopedLocal)
 	)
 
 	if want, have := 1, len(r.Endpoint.Adjacency[localKey]); want != have {
