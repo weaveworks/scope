@@ -18,7 +18,7 @@ const (
 
 var (
 	newDockerClientStub = newDockerClient
-	newPIDTreeStub      = newPIDTree
+	newPIDTreeStub      = NewPIDTree
 )
 
 // DockerTagger is a tagger that tags Docker container information to process
@@ -33,7 +33,7 @@ type DockerTagger struct {
 	images          map[string]*docker.APIImages
 
 	procRoot string
-	pidTree  *pidTree
+	pidTree  *PIDTree
 }
 
 // NewDockerTagger returns a usable DockerTagger. Don't forget to Stop it.

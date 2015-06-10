@@ -101,27 +101,27 @@ var reportFixture = report.Report{
 			},
 		},
 	},
-	//Process: report.Topology{
-	//	Adjacency: report.Adjacency{},
-	//	NodeMetadatas: report.NodeMetadatas{
-	//		report.MakeProcessNodeID(clientHostID, "4242"): report.NodeMetadata{
-	//			"host_name":             "client.host.com",
-	//			"pid":                   "4242",
-	//			"process_name":          "curl",
-	//			"docker_container_id":   "a1b2c3d4e5",
-	//			"docker_container_name": "fixture-container",
-	//			"docker_image_id":       "0000000000",
-	//			"docker_image_name":     "fixture/container:latest",
-	//		},
-	//		report.MakeProcessNodeID(serverHostID, "215"): report.NodeMetadata{
-	//			"pid":          "215",
-	//			"process_name": "apache",
-	//		},
-	//
-	//		"no-container": report.NodeMetadata{},
-	//	},
-	//	EdgeMetadatas: report.EdgeMetadatas{},
-	//},
+	Process: report.Topology{
+		Adjacency: report.Adjacency{},
+		NodeMetadatas: report.NodeMetadatas{
+			report.MakeProcessNodeID(clientHostID, "4242"): report.NodeMetadata{
+				"host_name":             "client.host.com",
+				"pid":                   "4242",
+				"comm":                  "curl",
+				"docker_container_id":   "a1b2c3d4e5",
+				"docker_container_name": "fixture-container",
+				"docker_image_id":       "0000000000",
+				"docker_image_name":     "fixture/container:latest",
+			},
+			report.MakeProcessNodeID(serverHostID, "215"): report.NodeMetadata{
+				"pid":          "215",
+				"process_name": "apache",
+			},
+
+			"no-container": report.NodeMetadata{},
+		},
+		EdgeMetadatas: report.EdgeMetadatas{},
+	},
 	Host: report.Topology{
 		Adjacency: report.Adjacency{},
 		NodeMetadatas: report.NodeMetadatas{

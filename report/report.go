@@ -19,6 +19,9 @@ type Report struct {
 	// endpoints (e.g. ICMP). Edges are present.
 	Address Topology
 
+	// Process nodes are processes on each host. Edges are not present.
+	Process Topology
+
 	// Host nodes are physical hosts that run probes. Metadata includes things
 	// like operating system, load, etc. The information is scraped by the
 	// probes with each published report. Edges are not present.
@@ -69,6 +72,7 @@ func MakeReport() Report {
 	return Report{
 		Endpoint: NewTopology(),
 		Address:  NewTopology(),
+		Process:  NewTopology(),
 		Host:     NewTopology(),
 	}
 }
@@ -79,6 +83,7 @@ func (r Report) Squash() Report {
 	localNetworks := r.LocalNetworks()
 	r.Endpoint = r.Endpoint.Squash(EndpointIDAddresser, localNetworks)
 	r.Address = r.Address.Squash(AddressIDAddresser, localNetworks)
+	r.Process = r.Process.Squash(PanicIDAddresser, localNetworks)
 	r.Host = r.Host.Squash(PanicIDAddresser, localNetworks)
 	return r
 }
