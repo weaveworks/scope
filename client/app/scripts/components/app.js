@@ -74,7 +74,10 @@ const App = React.createClass({
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
           highlightedEdgeIds={this.state.highlightedEdgeIds} />
 
-        <div className="footer">{versionString}</div>
+        <div className="footer">
+          {versionString}&nbsp;&nbsp;
+          <a href="https://gitreports.com/issue/weaveworks/scope" target="_blank">Report an issue</a>
+        </div>
       </div>
     );
   }
