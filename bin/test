@@ -1,16 +1,25 @@
 #!/bin/sh
 
+set -eu
+
+GO_TEST_ARGS="-covermode=count"
+RUN_ERRCHECK=""
+if [ $# -eq 1 ] && [ "$1" = "-slow" ]; then
+    GO_TEST_ARGS="-race -covermode=atomic"
+    RUN_ERRCHECK="yes"
+fi
+
 echo "mode: count" > profile.cov
 fail=0
 for dir in $(find . -type f -name '*_test.go' | grep -v '^./experimental/' | grep -v '^./releases/' | xargs -n1 dirname | sort -u); do
   go get -t $dir
 
-  if ! errcheck -ignore 'Close' $dir ; then
+  if [ "$RUN_ERRCHECK" = "yes" ] && ! errcheck -ignore 'Close' $dir ; then
     fail=1
   fi
 
   output=$(mktemp cover.XXXXXXXXXX)
-  if ! go test -race -tags netgo -covermode=atomic -coverprofile=$output $dir ; then
+  if ! go test $GO_TEST_ARGS -timeout 10s -tags netgo -coverprofile=$output $dir ; then
     fail=1
   fi
 
