@@ -1,6 +1,7 @@
 package report
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"reflect"
@@ -266,3 +267,46 @@ type ByID []RenderableNode
 func (r ByID) Len() int           { return len(r) }
 func (r ByID) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
 func (r ByID) Less(i, j int) bool { return r[i].ID < r[j].ID }
+
+// Validate checks the topology for various inconsistencies.
+func (t Topology) Validate() error {
+	// Check all edge metadata keys must have the appropriate entries in adjacencies & node metadata
+	for edgeID := range t.EdgeMetadatas {
+		srcNodeID, dstNodeID, ok := ParseEdgeID(edgeID)
+		if !ok {
+			return fmt.Errorf("Invalid edge id: %s", edgeID)
+		}
+		if _, ok := t.NodeMetadatas[srcNodeID]; !ok {
+			return fmt.Errorf("Source node missing for edge id: %s", edgeID)
+		}
+
+		adjs, ok := t.Adjacency[MakeAdjacencyID(srcNodeID)]
+		if !ok {
+			return fmt.Errorf("Adjancey entries for missing for node id: %s (from edge %s)", srcNodeID, edgeID)
+		}
+		if !adjs.Contains(dstNodeID) {
+			return fmt.Errorf("Adjancey entry missing for edge id: %s", edgeID)
+		}
+	}
+
+	// Check all adjancency keys has entries in NodeMetadata
+	for adjID := range t.Adjacency {
+		nodeID, ok := ParseAdjacencyID(adjID)
+		if !ok {
+			return fmt.Errorf("Invalid adjacency id: %s", adjID)
+		}
+
+		if _, ok := t.NodeMetadatas[nodeID]; !ok {
+			return fmt.Errorf("Source node missing for adjancency id: %s", adjID)
+		}
+	}
+
+	// Check all node metadata keys are parse-able (ie, contain a scope)
+	for nodeID := range t.NodeMetadatas {
+		if _, _, ok := ParseNodeID(nodeID); !ok {
+			return fmt.Errorf("Invalid node id: %s", nodeID)
+		}
+	}
+
+	return nil
+}

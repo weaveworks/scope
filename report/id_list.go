@@ -24,3 +24,9 @@ func (a IDList) Add(ids ...string) IDList {
 	}
 	return a
 }
+
+// Contains returns true if id is in the list.
+func (a IDList) Contains(id string) bool {
+	i := sort.Search(len(a), func(i int) bool { return a[i] >= id })
+	return i < len(a) && a[i] == id
+}
