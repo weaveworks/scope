@@ -40,12 +40,12 @@ func TestDockerTagger(t *testing.T) {
 	oldPIDTree, oldDockerClient := newPIDTreeStub, newDockerClientStub
 	defer func() { newPIDTreeStub, newDockerClientStub = oldPIDTree, oldDockerClient }()
 
-	newPIDTreeStub = func(procRoot string) (*pidTree, error) {
-		pid1 := &process{pid: 1}
-		pid2 := &process{pid: 2, ppid: 1, parent: pid1}
-		pid1.children = []*process{pid2}
-		return &pidTree{
-			processes: map[int]*process{
+	newPIDTreeStub = func(procRoot string) (*PIDTree, error) {
+		pid1 := &Process{PID: 1}
+		pid2 := &Process{PID: 2, PPID: 1, parent: pid1}
+		pid1.children = []*Process{pid2}
+		return &PIDTree{
+			processes: map[int]*Process{
 				1: pid1, 2: pid2,
 			},
 		}, nil

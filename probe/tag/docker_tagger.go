@@ -18,7 +18,7 @@ const (
 
 var (
 	newDockerClientStub = newDockerClient
-	newPIDTreeStub      = newPIDTree
+	newPIDTreeStub      = NewPIDTree
 )
 
 // DockerTagger is a tagger that tags Docker container information to process
@@ -33,7 +33,7 @@ type DockerTagger struct {
 	images          map[string]*docker.APIImages
 
 	procRoot string
-	pidTree  *pidTree
+	pidTree  *PIDTree
 }
 
 // NewDockerTagger returns a usable DockerTagger. Don't forget to Stop it.
@@ -62,11 +62,6 @@ func NewDockerTagger(procRoot string, interval time.Duration) (*DockerTagger, er
 // Stop stops the Docker tagger's event subscriber.
 func (t *DockerTagger) Stop() {
 	close(t.quit)
-}
-
-// ProcessTopology returns a process topology from the pidtree.
-func (t *DockerTagger) ProcessTopology(hostID string) report.Topology {
-	return t.pidTree.processTopology(hostID)
 }
 
 func (t *DockerTagger) loop() {

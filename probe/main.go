@@ -99,8 +99,10 @@ func main() {
 
 			case <-spyTick:
 				r.Merge(spy(hostID, hostName, *spyProcs))
-				if dockerTagger != nil {
-					r.Process.Merge(dockerTagger.ProcessTopology(hostID))
+				if pidTree, err := tag.NewPIDTree(*procRoot); err == nil {
+					r.Process.Merge(pidTree.ProcessTopology(hostID))
+				} else {
+					log.Print(err)
 				}
 				r = tag.Apply(r, taggers)
 
