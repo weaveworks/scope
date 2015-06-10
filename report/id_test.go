@@ -20,35 +20,30 @@ func TestAdjacencyID(t *testing.T) {
 		unknownAddressNodeID,
 		clientHostNodeID,
 		serverHostNodeID,
-		">1.2.3.4",
-		">",
 		";",
 		"",
 	} {
-		if hostID, srcNodeID, ok := report.ParseAdjacencyID(bad); ok {
-			t.Errorf("%q: expected failure, but got (%q, %q)", bad, hostID, srcNodeID)
+		if srcNodeID, ok := report.ParseAdjacencyID(bad); ok {
+			t.Errorf("%q: expected failure, but got (%q)", bad, srcNodeID)
 		}
 	}
 
-	for input, want := range map[string]struct{ hostID, srcNodeID string }{
-		report.MakeAdjacencyID("a", report.MakeEndpointNodeID("a", "b", "c")): {"a", report.MakeEndpointNodeID("a", "b", "c")},
-		report.MakeAdjacencyID("a", report.MakeAddressNodeID("a", "b")):       {"a", report.MakeAddressNodeID("a", "b")},
-		report.MakeAdjacencyID("a", report.MakeProcessNodeID("a", "b")):       {"a", report.MakeProcessNodeID("a", "b")},
-		report.MakeAdjacencyID("a", report.MakeHostNodeID("a")):               {"a", report.MakeHostNodeID("a")},
-		">host.com;1.2.3.4":                                                   {"host.com", "host.com;1.2.3.4"},
-		">a;b;c":                                                              {"a", "a;b;c"},
-		">a;b":                                                                {"a", "a;b"},
-		">a;":                                                                 {"a", "a;"},
-		">;b":                                                                 {"", ";b"},
-		">;":                                                                  {"", ";"},
+	for input, want := range map[string]struct{ srcNodeID string }{
+		report.MakeAdjacencyID(report.MakeEndpointNodeID("a", "b", "c")): {report.MakeEndpointNodeID("a", "b", "c")},
+		report.MakeAdjacencyID(report.MakeAddressNodeID("a", "b")):       {report.MakeAddressNodeID("a", "b")},
+		report.MakeAdjacencyID(report.MakeProcessNodeID("a", "b")):       {report.MakeProcessNodeID("a", "b")},
+		report.MakeAdjacencyID(report.MakeHostNodeID("a")):               {report.MakeHostNodeID("a")},
+		">host.com;1.2.3.4":                                              {"host.com;1.2.3.4"},
+		">a;b;c":                                                         {"a;b;c"},
+		">a;b":                                                           {"a;b"},
+		">a;":                                                            {"a;"},
+		">;b":                                                            {";b"},
+		">;":                                                             {";"},
 	} {
-		hostID, srcNodeID, ok := report.ParseAdjacencyID(input)
+		srcNodeID, ok := report.ParseAdjacencyID(input)
 		if !ok {
 			t.Errorf("%q: not OK", input)
 			continue
-		}
-		if want, have := want.hostID, hostID; want != have {
-			t.Errorf("%q: want %q, have %q", input, want, have)
 		}
 		if want, have := want.srcNodeID, srcNodeID; want != have {
 			t.Errorf("%q: want %q, have %q", input, want, have)

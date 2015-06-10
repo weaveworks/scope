@@ -25,9 +25,9 @@ func TestReportLocalNetworks(t *testing.T) {
 func TestReportSquash(t *testing.T) {
 	{
 		want := report.Adjacency{
-			report.MakeAdjacencyID(clientHostID, client54001EndpointNodeID): report.MakeIDList(server80EndpointNodeID),
-			report.MakeAdjacencyID(clientHostID, client54002EndpointNodeID): report.MakeIDList(server80EndpointNodeID),
-			report.MakeAdjacencyID(serverHostID, server80EndpointNodeID):    report.MakeIDList(client54001EndpointNodeID, client54002EndpointNodeID, report.TheInternet),
+			report.MakeAdjacencyID(client54001EndpointNodeID): report.MakeIDList(server80EndpointNodeID),
+			report.MakeAdjacencyID(client54002EndpointNodeID): report.MakeIDList(server80EndpointNodeID),
+			report.MakeAdjacencyID(server80EndpointNodeID):    report.MakeIDList(client54001EndpointNodeID, client54002EndpointNodeID, report.TheInternet),
 		}
 		have := reportFixture.Squash().Endpoint.Adjacency
 		if !reflect.DeepEqual(want, have) {
@@ -36,8 +36,8 @@ func TestReportSquash(t *testing.T) {
 	}
 	{
 		want := report.Adjacency{
-			report.MakeAdjacencyID(clientHostID, clientAddressNodeID): report.MakeIDList(serverAddressNodeID),
-			report.MakeAdjacencyID(serverHostID, serverAddressNodeID): report.MakeIDList(clientAddressNodeID, report.TheInternet),
+			report.MakeAdjacencyID(clientAddressNodeID): report.MakeIDList(serverAddressNodeID),
+			report.MakeAdjacencyID(serverAddressNodeID): report.MakeIDList(clientAddressNodeID, report.TheInternet),
 		}
 		have := reportFixture.Squash().Address.Adjacency
 		if !reflect.DeepEqual(want, have) {

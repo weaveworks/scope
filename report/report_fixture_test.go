@@ -7,9 +7,9 @@ import (
 var reportFixture = report.Report{
 	Endpoint: report.Topology{
 		Adjacency: report.Adjacency{
-			report.MakeAdjacencyID(clientHostID, client54001EndpointNodeID): report.MakeIDList(server80EndpointNodeID),
-			report.MakeAdjacencyID(clientHostID, client54002EndpointNodeID): report.MakeIDList(server80EndpointNodeID),
-			report.MakeAdjacencyID(serverHostID, server80EndpointNodeID):    report.MakeIDList(client54001EndpointNodeID, client54002EndpointNodeID, unknown1EndpointNodeID, unknown2EndpointNodeID, unknown3EndpointNodeID),
+			report.MakeAdjacencyID(client54001EndpointNodeID): report.MakeIDList(server80EndpointNodeID),
+			report.MakeAdjacencyID(client54002EndpointNodeID): report.MakeIDList(server80EndpointNodeID),
+			report.MakeAdjacencyID(server80EndpointNodeID):    report.MakeIDList(client54001EndpointNodeID, client54002EndpointNodeID, unknown1EndpointNodeID, unknown2EndpointNodeID, unknown3EndpointNodeID),
 		},
 		NodeMetadatas: report.NodeMetadatas{
 			client54001EndpointNodeID: report.NodeMetadata{
@@ -71,8 +71,8 @@ var reportFixture = report.Report{
 	},
 	Address: report.Topology{
 		Adjacency: report.Adjacency{
-			report.MakeAdjacencyID(clientHostID, clientAddressNodeID): report.MakeIDList(serverAddressNodeID),
-			report.MakeAdjacencyID(serverHostID, serverAddressNodeID): report.MakeIDList(clientAddressNodeID, unknownAddressNodeID),
+			report.MakeAdjacencyID(clientAddressNodeID): report.MakeIDList(serverAddressNodeID),
+			report.MakeAdjacencyID(serverAddressNodeID): report.MakeIDList(clientAddressNodeID, unknownAddressNodeID),
 		},
 		NodeMetadatas: report.NodeMetadatas{
 			clientAddressNodeID: report.NodeMetadata{

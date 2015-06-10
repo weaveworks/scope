@@ -36,9 +36,9 @@ var (
 	report = Report{
 		Endpoint: Topology{
 			Adjacency: Adjacency{
-				MakeAdjacencyID("client.hostname.com", client54001): MakeIDList(server80),
-				MakeAdjacencyID("client.hostname.com", client54002): MakeIDList(server80),
-				MakeAdjacencyID("server.hostname.com", server80):    MakeIDList(client54001, client54002, unknownClient1, unknownClient2, unknownClient3),
+				MakeAdjacencyID(client54001): MakeIDList(server80),
+				MakeAdjacencyID(client54002): MakeIDList(server80),
+				MakeAdjacencyID(server80):    MakeIDList(client54001, client54002, unknownClient1, unknownClient2, unknownClient3),
 			},
 			NodeMetadatas: NodeMetadatas{
 				// NodeMetadata is arbitrary. We're free to put only precisely what we
@@ -101,9 +101,9 @@ var (
 		},
 		Address: Topology{
 			Adjacency: Adjacency{
-				MakeAdjacencyID("client.hostname.com", clientIP): MakeIDList(serverIP),
-				MakeAdjacencyID("random.hostname.com", randomIP): MakeIDList(serverIP),
-				MakeAdjacencyID("server.hostname.com", serverIP): MakeIDList(clientIP, unknownIP), // no backlink to random
+				MakeAdjacencyID(clientIP): MakeIDList(serverIP),
+				MakeAdjacencyID(randomIP): MakeIDList(serverIP),
+				MakeAdjacencyID(serverIP): MakeIDList(clientIP, unknownIP), // no backlink to random
 			},
 			NodeMetadatas: NodeMetadatas{
 				clientIP: NodeMetadata{
