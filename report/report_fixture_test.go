@@ -15,6 +15,7 @@ var reportFixture = report.Report{
 			client54001EndpointNodeID: report.NodeMetadata{
 				"process_node_id": report.MakeProcessNodeID(clientHostID, "4242"),
 				"address_node_id": report.MakeAddressNodeID(clientHostID, clientAddress),
+				"host_name":       clientHostName,
 			},
 			client54002EndpointNodeID: report.NodeMetadata{
 				//"process_node_id": report.MakeProcessNodeID(clientHostID, "4242"), // leave it out, to test a branch in Render
