@@ -22,6 +22,11 @@ type Report struct {
 	// Process nodes are processes on each host. Edges are not present.
 	Process Topology
 
+	// Container nodes represent all Docker containers on hosts running probes.
+	// Metadata includes things like Docker image, name etc.
+	// Edges are not present.
+	Container Topology
+
 	// Host nodes are physical hosts that run probes. Metadata includes things
 	// like operating system, load, etc. The information is scraped by the
 	// probes with each published report. Edges are not present.
@@ -70,10 +75,11 @@ type Row struct {
 // MakeReport makes a clean report, ready to Merge() other reports into.
 func MakeReport() Report {
 	return Report{
-		Endpoint: NewTopology(),
-		Address:  NewTopology(),
-		Process:  NewTopology(),
-		Host:     NewTopology(),
+		Endpoint:  NewTopology(),
+		Address:   NewTopology(),
+		Process:   NewTopology(),
+		Container: NewTopology(),
+		Host:      NewTopology(),
 	}
 }
 
@@ -84,6 +90,7 @@ func (r Report) Squash() Report {
 	r.Endpoint = r.Endpoint.Squash(EndpointIDAddresser, localNetworks)
 	r.Address = r.Address.Squash(AddressIDAddresser, localNetworks)
 	r.Process = r.Process.Squash(PanicIDAddresser, localNetworks)
+	r.Container = r.Container.Squash(PanicIDAddresser, localNetworks)
 	r.Host = r.Host.Squash(PanicIDAddresser, localNetworks)
 	return r
 }

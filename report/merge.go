@@ -9,6 +9,7 @@ func (r *Report) Merge(other Report) {
 	r.Endpoint.Merge(other.Endpoint)
 	r.Address.Merge(other.Address)
 	r.Process.Merge(other.Process)
+	r.Container.Merge(other.Container)
 	r.Host.Merge(other.Host)
 }
 
