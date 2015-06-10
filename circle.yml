@@ -36,7 +36,7 @@ test:
     - cd $SRCDIR; ./bin/lint .
     - cd $SRCDIR; make static
     - cd $SRCDIR; make
-    - cd $SRCDIR; ./bin/test
+    - cd $SRCDIR; ./bin/test -slow
     - cd $SRCDIR; make client-test
     - cd $SRCDIR/experimental; make
   post:
