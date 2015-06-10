@@ -197,7 +197,6 @@ func reportCollector(ip string, col chan<- report.Report, quit <-chan struct{}) 
 				log.Printf("decode error: %v", err)
 				break
 			}
-			log.Printf("collector: got a report from %v", ip)
 
 			select {
 			case col <- report:
