@@ -70,10 +70,10 @@ func TestDockerTagger(t *testing.T) {
 		endpoint1NodeID     = "somehost.com;192.168.1.1;12345"
 		endpoint2NodeID     = "somehost.com;192.168.1.1;67890"
 		processNodeMetadata = report.NodeMetadata{
-			"docker_container_id":   "foo",
-			"docker_container_name": "bar",
-			"docker_image_id":       "baz",
-			"docker_image_name":     "bang",
+			ContainerID:   "foo",
+			ContainerName: "bar",
+			ImageID:       "baz",
+			ImageName:     "bang",
 		}
 	)
 
@@ -90,5 +90,12 @@ func TestDockerTagger(t *testing.T) {
 		if !reflect.DeepEqual(want, have) {
 			t.Errorf("%q: want %+v, have %+v", endpointNodeID, want, have)
 		}
+	}
+
+	wantTopology := report.NewTopology()
+	wantTopology.NodeMetadatas[report.MakeContainerNodeID("", "foo")] = processNodeMetadata
+	haveTopology := dockerTagger.ContainerTopology("")
+	if !reflect.DeepEqual(wantTopology, haveTopology) {
+		t.Errorf("toplog want %+v, have %+v", wantTopology, haveTopology)
 	}
 }

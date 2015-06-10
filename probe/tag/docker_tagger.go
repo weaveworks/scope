@@ -16,6 +16,15 @@ const (
 	start = "start"
 )
 
+// These constants are keys used in node metadata
+// TODO: use these constants in report/{mapping.go, detailed_node.go} - pending some circular references
+const (
+	ContainerID   = "docker_container_id"
+	ContainerName = "docker_container_name"
+	ImageID       = "docker_image_id"
+	ImageName     = "docker_image_name"
+)
+
 var (
 	newDockerClientStub = newDockerClient
 	newPIDTreeStub      = NewPIDTree
@@ -290,9 +299,9 @@ func (t *DockerTagger) Tag(r report.Report) report.Report {
 		}
 
 		md := report.NodeMetadata{
-			"docker_container_id":   container.ID,
-			"docker_container_name": strings.TrimPrefix(container.Name, "/"),
-			"docker_image_id":       container.Image,
+			ContainerID:   container.ID,
+			ContainerName: strings.TrimPrefix(container.Name, "/"),
+			ImageID:       container.Image,
 		}
 
 		t.RLock()
@@ -300,11 +309,35 @@ func (t *DockerTagger) Tag(r report.Report) report.Report {
 		t.RUnlock()
 
 		if ok && len(image.RepoTags) > 0 {
-			md["docker_image_name"] = image.RepoTags[0]
+			md[ImageName] = image.RepoTags[0]
 		}
 
 		r.Endpoint.NodeMetadatas[nodeID].Merge(md)
 	}
 
 	return r
+}
+
+// ContainerTopology produces a Toplogy of Containers
+func (t *DockerTagger) ContainerTopology(scope string) report.Topology {
+	t.RLock()
+	defer t.RUnlock()
+
+	result := report.NewTopology()
+	for _, container := range t.containers {
+		nmd := report.NodeMetadata{
+			ContainerID:   container.ID,
+			ContainerName: strings.TrimPrefix(container.Name, "/"),
+			ImageID:       container.Image,
+		}
+
+		image, ok := t.images[container.Image]
+		if ok && len(image.RepoTags) > 0 {
+			nmd[ImageName] = image.RepoTags[0]
+		}
+
+		nodeID := report.MakeContainerNodeID(scope, container.ID)
+		result.NodeMetadatas[nodeID] = nmd
+	}
+	return result
 }

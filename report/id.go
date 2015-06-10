@@ -72,6 +72,11 @@ func MakeHostNodeID(hostID string) string {
 	return hostID + ScopeDelim + "<host>"
 }
 
+// MakeContainerNodeID produces a container node ID from its composite parts.
+func MakeContainerNodeID(hostID, containerID string) string {
+	return hostID + ScopeDelim + containerID
+}
+
 // ParseNodeID produces the scope and remainder from a node ID
 func ParseNodeID(nodeID string) (string, string, bool) {
 	fields := strings.SplitN(nodeID, ScopeDelim, 2)
