@@ -29,7 +29,7 @@ func main() {
 		listen             = flag.String("listen", ":"+strconv.Itoa(xfer.ProbePort), "listen address")
 		prometheusEndpoint = flag.String("prometheus.endpoint", "/metrics", "Prometheus metrics exposition endpoint (requires -http.listen)")
 		spyProcs           = flag.Bool("processes", true, "report processes (needs root)")
-		dockerTagger       = flag.Bool("docker", true, "collect Docker-related attributes for processes")
+		dockerEnabled      = flag.Bool("docker", true, "collect Docker-related attributes for processes")
 		dockerInterval     = flag.Duration("docker.interval", 10*time.Second, "how often to update Docker attributes")
 		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
 	)
@@ -65,13 +65,15 @@ func main() {
 	defer publisher.Close()
 
 	taggers := []tag.Tagger{tag.NewTopologyTagger()}
-	if *dockerTagger && runtime.GOOS == "linux" {
-		t, err := tag.NewDockerTagger(*procRoot, *dockerInterval)
+	var dockerTagger *tag.DockerTagger
+	if *dockerEnabled && runtime.GOOS == "linux" {
+		var err error
+		dockerTagger, err = tag.NewDockerTagger(*procRoot, *dockerInterval)
 		if err != nil {
 			log.Fatalf("failed to start docker tagger: %v", err)
 		}
-		defer t.Stop()
-		taggers = append(taggers, t)
+		defer dockerTagger.Stop()
+		taggers = append(taggers, dockerTagger)
 	}
 
 	log.Printf("listening on %s", *listen)
@@ -97,8 +99,10 @@ func main() {
 
 			case <-spyTick:
 				r.Merge(spy(hostID, hostName, *spyProcs))
+				if dockerTagger != nil {
+					r.Process.Merge(dockerTagger.ProcessTopology(hostID))
+				}
 				r = tag.Apply(r, taggers)
-				// log.Printf("merged report:\n%#v\n", r)
 
 			case <-quit:
 				return

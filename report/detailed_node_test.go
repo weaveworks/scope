@@ -21,13 +21,6 @@ func TestOriginTable(t *testing.T) {
 			Numeric: false,
 			Rows:    []report.Row{{"Host name", clientHostName, ""}},
 		},
-		//report.MakeProcessNodeID(clientHostID, "4242"): {
-		//	Title:   "Origin Process",
-		//	Numeric: false,
-		//	Rows: []report.Row{
-		//		{"Host name", "client.host.com", ""},
-		//	},
-		//},
 		clientAddressNodeID: {
 			Title:   "Origin Address",
 			Numeric: false,
@@ -35,18 +28,14 @@ func TestOriginTable(t *testing.T) {
 				{"Host name", clientHostName, ""},
 			},
 		},
-		//report.MakeProcessNodeID(clientHostID, "4242"): {
-		//	Title:   "Origin Process",
-		//	Numeric: false,
-		//	Rows: []report.Row{
-		//		{"Process name", "curl", ""},
-		//		{"PID", "4242", ""},
-		//		{"Docker container ID", "a1b2c3d4e5", ""},
-		//		{"Docker container name", "fixture-container", ""},
-		//		{"Docker image ID", "0000000000", ""},
-		//		{"Docker image name", "fixture/container:latest", ""},
-		//	},
-		//},
+		report.MakeProcessNodeID(clientHostID, "4242"): {
+			Title:   "Origin Process",
+			Numeric: false,
+			Rows: []report.Row{
+				{"Name (comm)", "curl", ""},
+				{"PID", "4242", ""},
+			},
+		},
 		serverHostNodeID: {
 			Title:   "Origin Host",
 			Numeric: false,

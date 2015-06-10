@@ -64,6 +64,11 @@ func (t *DockerTagger) Stop() {
 	close(t.quit)
 }
 
+// ProcessTopology returns a process topology from the pidtree.
+func (t *DockerTagger) ProcessTopology(hostID string) report.Topology {
+	return t.pidTree.processTopology(hostID)
+}
+
 func (t *DockerTagger) loop() {
 	if !t.update() {
 		return

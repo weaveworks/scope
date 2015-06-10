@@ -52,6 +52,9 @@ func OriginTable(r Report, originID string) (Table, bool) {
 	if nmd, ok := r.Address.NodeMetadatas[originID]; ok {
 		return addressOriginTable(nmd)
 	}
+	if nmd, ok := r.Process.NodeMetadatas[originID]; ok {
+		return processOriginTable(nmd)
+	}
 	if nmd, ok := r.Host.NodeMetadatas[originID]; ok {
 		return hostOriginTable(nmd)
 	}
@@ -92,6 +95,24 @@ func addressOriginTable(nmd NodeMetadata) (Table, bool) {
 	}
 	return Table{
 		Title:   "Origin Address",
+		Numeric: false,
+		Rows:    rows,
+	}, len(rows) > 0
+}
+
+func processOriginTable(nmd NodeMetadata) (Table, bool) {
+	rows := []Row{}
+	if val, ok := nmd["comm"]; ok {
+		rows = append(rows, Row{"Name (comm)", val, ""})
+	}
+	if val, ok := nmd["pid"]; ok {
+		rows = append(rows, Row{"PID", val, ""})
+	}
+	if val, ok := nmd["ppid"]; ok {
+		rows = append(rows, Row{"Parent PID", val, ""})
+	}
+	return Table{
+		Title:   "Origin Process",
 		Numeric: false,
 		Rows:    rows,
 	}, len(rows) > 0
