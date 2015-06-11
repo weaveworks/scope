@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"log/syslog"
+	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -60,11 +61,11 @@ func main() {
 		log.SetOutput(f)
 	}
 
-	log.Printf("app starting, version %s", version)
+	id := strconv.FormatInt(rand.Int63(), 16)
+	log.Printf("app starting, version %s, id %s", version, id)
 
 	// Collector deals with the probes, and generates merged reports.
-	xfer.MaxBackoff = 10 * time.Second
-	c := xfer.NewCollector(*batch)
+	c := xfer.NewCollector(*batch, id)
 	defer c.Stop()
 
 	r := newStaticResolver(probes, c.Add)

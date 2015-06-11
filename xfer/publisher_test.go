@@ -37,6 +37,11 @@ func TestTCPPublisher(t *testing.T) {
 	defer conn.Close()
 	time.Sleep(time.Millisecond)
 
+	// Send handshake
+	if err := gob.NewEncoder(conn).Encode(xfer.HandshakeRequest{ID: "foo"}); err != nil {
+		t.Fatal(err)
+	}
+
 	// Publish a message
 	p.Publish(report.Report{})
 
@@ -69,11 +74,18 @@ func TestPublisherClosesDuplicateConnections(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer conn.Close()
+	if err := gob.NewEncoder(conn).Encode(xfer.HandshakeRequest{ID: "foo"}); err != nil {
+		t.Fatal(err)
+	}
 	time.Sleep(time.Millisecond)
 
 	// Try to connect the same listener
 	dupconn, err := net.Dial("tcp4", "127.0.0.1"+port)
 	if err != nil {
+		t.Fatal(err)
+	}
+	// Send handshake
+	if err := gob.NewEncoder(dupconn).Encode(xfer.HandshakeRequest{ID: "foo"}); err != nil {
 		t.Fatal(err)
 	}
 	defer dupconn.Close()

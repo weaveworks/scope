@@ -22,7 +22,7 @@ func TestCollector(t *testing.T) {
 	defer func() { tick = oldTick }()
 
 	// Build a collector
-	collector := NewCollector(time.Second)
+	collector := NewCollector(time.Second, "id")
 	defer collector.Stop()
 
 	concreteCollector, ok := collector.(*realCollector)
@@ -54,7 +54,7 @@ func TestCollector(t *testing.T) {
 }
 
 func TestCollectorQuitWithActiveConnections(t *testing.T) {
-	c := NewCollector(time.Second)
+	c := NewCollector(time.Second, "id")
 	c.Add("1.2.3.4:56789")
 	c.Stop()
 }
