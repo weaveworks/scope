@@ -46,6 +46,11 @@ func SelectAddress(r Report) Topology {
 	return r.Address
 }
 
+// SelectContainer selects the container topology.
+func SelectContainer(r Report) Topology {
+	return r.Container
+}
+
 // ProcessPID takes a node NodeMetadata from topology, and returns a
 // representation with the ID based on the process PID and the labels based on
 // the process name.
@@ -77,11 +82,28 @@ func ProcessName(_ string, m NodeMetadata) (MappedNode, bool) {
 	}, show
 }
 
-// ProcessContainer maps topology nodes to the containers they run in. We
-// consider container and image IDs to be globally unique, and so don't scope
-// them further by e.g. host. If no container metadata is found, nodes are
+// MapEndpoint2Container maps endpoint topology nodes to the containers they run
+// in. We consider container and image IDs to be globally unique, and so don't
+// scope them further by e.g. host. If no container metadata is found, nodes are
 // grouped into the Uncontained node.
-func ProcessContainer(_ string, m NodeMetadata) (MappedNode, bool) {
+func MapEndpoint2Container(_ string, m NodeMetadata) (MappedNode, bool) {
+	var id, major, minor, rank string
+	if m["docker_container_id"] == "" {
+		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
+	} else {
+		id, major, minor, rank = m["docker_container_id"], "", m["domain"], ""
+	}
+
+	return MappedNode{
+		ID:    id,
+		Major: major,
+		Minor: minor,
+		Rank:  rank,
+	}, true
+}
+
+// MapContainerIdentity maps container topology node to container mapped nodes.
+func MapContainerIdentity(_ string, m NodeMetadata) (MappedNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_container_id"] == "" {
 		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"

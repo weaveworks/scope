@@ -47,16 +47,23 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 type topologyView struct {
 	human           string
-	selector        report.TopologySelector
-	mapper          report.MapFunc
-	pseudo          report.PseudoFunc
 	groupedTopology string
+	maps            []topologyMapper
+}
+
+type topologyMapper struct {
+	selector report.TopologySelector
+	mapper   report.MapFunc
+	pseudo   report.PseudoFunc
 }
 
 var topologyRegistry = map[string]topologyView{
-	"applications":         {"Applications", report.SelectEndpoint, report.ProcessPID, report.GenericPseudoNode, "applications-grouped"},
-	"applications-grouped": {"Applications", report.SelectEndpoint, report.ProcessName, report.GenericGroupedPseudoNode, ""},
-	"containers":           {"Containers", report.SelectEndpoint, report.ProcessContainer, report.InternetOnlyPseudoNode, "containers-grouped"},
-	"containers-grouped":   {"Containers", report.SelectEndpoint, report.ProcessContainerImage, report.InternetOnlyPseudoNode, ""},
-	"hosts":                {"Hosts", report.SelectAddress, report.NetworkHostname, report.GenericPseudoNode, ""},
+	"applications":         {"Applications", "applications-grouped", []topologyMapper{{report.SelectEndpoint, report.ProcessPID, report.GenericPseudoNode}}},
+	"applications-grouped": {"Applications", "", []topologyMapper{{report.SelectEndpoint, report.ProcessName, report.GenericGroupedPseudoNode}}},
+	"containers": {"Containers", "containers-grouped", []topologyMapper{
+		{report.SelectEndpoint, report.MapEndpoint2Container, report.InternetOnlyPseudoNode},
+		{report.SelectContainer, report.MapContainerIdentity, report.InternetOnlyPseudoNode},
+	}},
+	"containers-grouped": {"Containers", "", []topologyMapper{{report.SelectEndpoint, report.ProcessContainerImage, report.InternetOnlyPseudoNode}}},
+	"hosts":              {"Hosts", "", []topologyMapper{{report.SelectAddress, report.NetworkHostname, report.GenericPseudoNode}}},
 }

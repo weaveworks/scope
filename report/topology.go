@@ -82,15 +82,15 @@ func NewTopology() Topology {
 //
 // RenderBy takes a a MapFunc, which defines how to group and label nodes. Npdes
 // with the same mapped IDs will be merged.
-func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) map[string]RenderableNode {
-	nodes := map[string]RenderableNode{}
+func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) RenderableNodes {
+	nodes := RenderableNodes{}
 
 	// Build a set of RenderableNodes for all non-pseudo probes, and an
 	// addressID to nodeID lookup map. Multiple addressIDs can map to the same
 	// RenderableNodes.
 	address2mapped := map[string]string{}
-	for addressID, metadata := range t.NodeMetadatas {
-		mapped, ok := mapFunc(addressID, metadata)
+	for nodeID, metadata := range t.NodeMetadatas {
+		mapped, ok := mapFunc(nodeID, metadata)
 		if !ok {
 			continue
 		}
@@ -104,11 +104,10 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) map[string]Re
 			LabelMinor: mapped.Minor,
 			Rank:       mapped.Rank,
 			Pseudo:     false,
-			Adjacency:  IDList{},            // later
-			Origins:    IDList{},            // later
+			Origins:    IDList{nodeID},
 			Metadata:   AggregateMetadata{}, // later
 		}
-		address2mapped[addressID] = mapped.ID
+		address2mapped[nodeID] = mapped.ID
 	}
 
 	// Walk the graph and make connections.
@@ -236,7 +235,7 @@ type Diff struct {
 }
 
 // TopoDiff gives you the diff to get from A to B.
-func TopoDiff(a, b map[string]RenderableNode) Diff {
+func TopoDiff(a, b RenderableNodes) Diff {
 	diff := Diff{}
 
 	notSeen := map[string]struct{}{}

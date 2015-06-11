@@ -47,6 +47,9 @@ type RenderableNode struct {
 	Metadata   AggregateMetadata `json:"metadata"`              // Numeric sums
 }
 
+// RenderableNodes is a set of RenderableNodes
+type RenderableNodes map[string]RenderableNode
+
 // DetailedNode is the data type that's yielded to the JavaScript layer when
 // we want deep information about an individual node.
 type DetailedNode struct {

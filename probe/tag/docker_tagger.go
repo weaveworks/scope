@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	stop  = "stop"
+	die   = "die"
 	start = "start"
 )
 
@@ -206,7 +206,7 @@ func (t *DockerTagger) updateImages(client dockerClient) error {
 
 func (t *DockerTagger) handleEvent(event *docker.APIEvents, client dockerClient) {
 	switch event.Status {
-	case stop:
+	case die:
 		containerID := event.ID
 		t.Lock()
 		if container, ok := t.containers[containerID]; ok {

@@ -139,7 +139,7 @@ var (
 )
 
 func TestRenderByEndpointPID(t *testing.T) {
-	want := map[string]RenderableNode{
+	want := RenderableNodes{
 		"pid:client-54001-domain:10001": {
 			ID:         "pid:client-54001-domain:10001",
 			LabelMajor: "curl",
@@ -207,7 +207,7 @@ func TestRenderByEndpointPIDGrouped(t *testing.T) {
 	// For grouped, I've somewhat arbitrarily chosen to squash together all
 	// processes with the same name by removing the PID and domain (host)
 	// dimensions from the ID. That could be changed.
-	want := map[string]RenderableNode{
+	want := RenderableNodes{
 		"curl": {
 			ID:         "curl",
 			LabelMajor: "curl",
@@ -258,7 +258,7 @@ func TestRenderByEndpointPIDGrouped(t *testing.T) {
 }
 
 func TestRenderByNetworkHostname(t *testing.T) {
-	want := map[string]RenderableNode{
+	want := RenderableNodes{
 		"host:client.hostname.com": {
 			ID:         "host:client.hostname.com",
 			LabelMajor: "client",       // before first .
@@ -333,8 +333,8 @@ func TestTopoDiff(t *testing.T) {
 	}
 
 	// Helper to make RenderableNode maps.
-	nodes := func(ns ...RenderableNode) map[string]RenderableNode {
-		r := map[string]RenderableNode{}
+	nodes := func(ns ...RenderableNode) RenderableNodes {
+		r := RenderableNodes{}
 		for _, n := range ns {
 			r[n.ID] = n
 		}

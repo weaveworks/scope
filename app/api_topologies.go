@@ -42,14 +42,14 @@ func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request)
 				Name:       def.human,
 				URL:        url,
 				GroupedURL: groupedURL,
-				Stats:      stats(def.selector(rpt).RenderBy(def.mapper, def.pseudo)),
+				Stats:      stats(render(rpt, def.maps)),
 			})
 		}
 		respondWith(w, http.StatusOK, a)
 	}
 }
 
-func stats(r map[string]report.RenderableNode) topologyStats {
+func stats(r report.RenderableNodes) topologyStats {
 	var (
 		nodes     int
 		realNodes int
