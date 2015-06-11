@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -12,8 +13,9 @@ import (
 )
 
 const (
-	die   = "die"
-	start = "start"
+	start    = "start"
+	die      = "die"
+	endpoint = "unix:///var/run/docker.sock"
 )
 
 // These constants are keys used in node metadata
@@ -36,13 +38,27 @@ type DockerTagger struct {
 	sync.RWMutex
 	quit     chan struct{}
 	interval time.Duration
+	client   dockerClient
 
-	containers      map[string]*docker.Container
-	containersByPID map[int]*docker.Container
+	containers      map[string]*dockerContainer
+	containersByPID map[int]*dockerContainer
 	images          map[string]*docker.APIImages
 
 	procRoot string
 	pidTree  *PIDTree
+}
+
+// Sub-interface for mocking.
+type dockerClient interface {
+	ListContainers(docker.ListContainersOptions) ([]docker.APIContainers, error)
+	InspectContainer(string) (*docker.Container, error)
+	ListImages(docker.ListImagesOptions) ([]docker.APIImages, error)
+	AddEventListener(chan<- *docker.APIEvents) error
+	RemoveEventListener(chan *docker.APIEvents) error
+}
+
+func newDockerClient(endpoint string) (dockerClient, error) {
+	return docker.NewClient(endpoint)
 }
 
 // NewDockerTagger returns a usable DockerTagger. Don't forget to Stop it.
@@ -53,8 +69,8 @@ func NewDockerTagger(procRoot string, interval time.Duration) (*DockerTagger, er
 	}
 
 	t := DockerTagger{
-		containers:      map[string]*docker.Container{},
-		containersByPID: map[int]*docker.Container{},
+		containers:      map[string]*dockerContainer{},
+		containersByPID: map[int]*dockerContainer{},
 		images:          map[string]*docker.APIImages{},
 
 		procRoot: procRoot,
@@ -92,26 +108,13 @@ func (t *DockerTagger) loop() {
 	}
 }
 
-// Sub-interface for mocking.
-type dockerClient interface {
-	ListContainers(docker.ListContainersOptions) ([]docker.APIContainers, error)
-	InspectContainer(string) (*docker.Container, error)
-	ListImages(docker.ListImagesOptions) ([]docker.APIImages, error)
-	AddEventListener(chan<- *docker.APIEvents) error
-	RemoveEventListener(chan *docker.APIEvents) error
-}
-
-func newDockerClient(endpoint string) (dockerClient, error) {
-	return docker.NewClient(endpoint)
-}
-
 func (t *DockerTagger) update() bool {
-	endpoint := "unix:///var/run/docker.sock"
 	client, err := newDockerClientStub(endpoint)
 	if err != nil {
 		log.Printf("docker mapper: %s", err)
 		return true
 	}
+	t.client = client
 
 	events := make(chan *docker.APIEvents)
 	if err := client.AddEventListener(events); err != nil {
@@ -124,12 +127,12 @@ func (t *DockerTagger) update() bool {
 		}
 	}()
 
-	if err := t.updateContainers(client); err != nil {
+	if err := t.updateContainers(); err != nil {
 		log.Printf("docker mapper: %s", err)
 		return true
 	}
 
-	if err := t.updateImages(client); err != nil {
+	if err := t.updateImages(); err != nil {
 		log.Printf("docker mapper: %s", err)
 		return true
 	}
@@ -138,7 +141,7 @@ func (t *DockerTagger) update() bool {
 	for {
 		select {
 		case event := <-events:
-			t.handleEvent(event, client)
+			t.handleEvent(event)
 
 		case <-otherUpdates:
 			if err := t.updatePIDTree(); err != nil {
@@ -146,7 +149,7 @@ func (t *DockerTagger) update() bool {
 				continue
 			}
 
-			if err := t.updateImages(client); err != nil {
+			if err := t.updateImages(); err != nil {
 				log.Printf("docker mapper: %s", err)
 				continue
 			}
@@ -157,39 +160,23 @@ func (t *DockerTagger) update() bool {
 	}
 }
 
-func (t *DockerTagger) updateContainers(client dockerClient) error {
-	apiContainers, err := client.ListContainers(docker.ListContainersOptions{All: true})
+func (t *DockerTagger) updateContainers() error {
+	apiContainers, err := t.client.ListContainers(docker.ListContainersOptions{All: true})
 	if err != nil {
 		return err
 	}
 
-	containers := []*docker.Container{}
 	for _, apiContainer := range apiContainers {
-		container, err := client.InspectContainer(apiContainer.ID)
-		if err != nil {
+		if err := t.addContainer(apiContainer.ID); err != nil {
 			log.Printf("docker mapper: %s", err)
-			continue
 		}
-
-		if !container.State.Running {
-			continue
-		}
-
-		containers = append(containers, container)
 	}
-
-	t.Lock()
-	for _, container := range containers {
-		t.containers[container.ID] = container
-		t.containersByPID[container.State.Pid] = container
-	}
-	t.Unlock()
 
 	return nil
 }
 
-func (t *DockerTagger) updateImages(client dockerClient) error {
-	images, err := client.ListImages(docker.ListImagesOptions{})
+func (t *DockerTagger) updateImages() error {
+	images, err := t.client.ListImages(docker.ListImagesOptions{})
 	if err != nil {
 		return err
 	}
@@ -204,36 +191,17 @@ func (t *DockerTagger) updateImages(client dockerClient) error {
 	return nil
 }
 
-func (t *DockerTagger) handleEvent(event *docker.APIEvents, client dockerClient) {
+func (t *DockerTagger) handleEvent(event *docker.APIEvents) {
 	switch event.Status {
 	case die:
 		containerID := event.ID
-		t.Lock()
-		if container, ok := t.containers[containerID]; ok {
-			delete(t.containers, containerID)
-			delete(t.containersByPID, container.State.Pid)
-		} else {
-			log.Printf("docker mapper: container %s not found", containerID)
-		}
-		t.Unlock()
+		t.removeContainer(containerID)
 
 	case start:
 		containerID := event.ID
-		container, err := client.InspectContainer(containerID)
-		if err != nil {
+		if err := t.addContainer(containerID); err != nil {
 			log.Printf("docker mapper: %s", err)
-			return
 		}
-
-		if !container.State.Running {
-			log.Printf("docker mapper: container %s not running", containerID)
-			return
-		}
-
-		t.Lock()
-		t.containers[containerID] = container
-		t.containersByPID[container.State.Pid] = container
-		t.Unlock()
 	}
 }
 
@@ -249,13 +217,52 @@ func (t *DockerTagger) updatePIDTree() error {
 	return nil
 }
 
+func (t *DockerTagger) addContainer(containerID string) error {
+	container, err := t.client.InspectContainer(containerID)
+	if err != nil {
+		// Don't spam the logs if the container was short lived
+		if _, ok := err.(*docker.NoSuchContainer); !ok {
+			return err
+		}
+		return nil
+	}
+
+	if !container.State.Running {
+		return fmt.Errorf("docker mapper: container %s not running", containerID)
+	}
+
+	t.Lock()
+	defer t.Unlock()
+
+	dockerContainer := &dockerContainer{Container: container}
+
+	t.containers[containerID] = dockerContainer
+	t.containersByPID[container.State.Pid] = dockerContainer
+
+	return dockerContainer.startGatheringStats(containerID)
+}
+
+func (t *DockerTagger) removeContainer(containerID string) {
+	t.Lock()
+	defer t.Unlock()
+
+	container, ok := t.containers[containerID]
+	if !ok {
+		return
+	}
+
+	delete(t.containers, containerID)
+	delete(t.containersByPID, container.State.Pid)
+	container.stopGatheringStats(containerID)
+}
+
 // Containers returns the Containers the DockerTagger knows about.
 func (t *DockerTagger) Containers() []*docker.Container {
 	containers := []*docker.Container{}
 
 	t.RLock()
 	for _, container := range t.containers {
-		containers = append(containers, container)
+		containers = append(containers, container.Container)
 	}
 	t.RUnlock()
 
@@ -277,7 +284,7 @@ func (t *DockerTagger) Tag(r report.Report) report.Report {
 		}
 
 		var (
-			container *docker.Container
+			container *dockerContainer
 			candidate = int(pid)
 		)
 
@@ -334,6 +341,8 @@ func (t *DockerTagger) ContainerTopology(scope string) report.Topology {
 		if ok && len(image.RepoTags) > 0 {
 			nmd[ImageName] = image.RepoTags[0]
 		}
+
+		nmd.Merge(container.getStats())
 
 		nodeID := report.MakeContainerNodeID(scope, container.ID)
 		result.NodeMetadatas[nodeID] = nmd
