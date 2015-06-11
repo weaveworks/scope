@@ -116,7 +116,7 @@ var appConfig = _.merge({}, config, {
   },
   plugins: config.plugins.concat(DEBUG ? [] : [
       new webpack.optimize.DedupePlugin(),
-      new webpack.optimize.UglifyJsPlugin(),
+      new webpack.optimize.UglifyJsPlugin({compress: {warnings: false}}),
       new webpack.optimize.AggressiveMergingPlugin()
     ]
   )
