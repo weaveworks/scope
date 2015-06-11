@@ -222,7 +222,10 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.ROUTE_TOPOLOGY:
-      nodes = {};
+      if (currentTopologyId !== payload.state.topologyId
+        || currentGrouping !== payload.state.grouping) {
+        nodes = {};
+      }
       currentTopologyId = payload.state.topologyId;
       currentGrouping = payload.state.grouping;
       selectedNodeId = payload.state.selectedNodeId;
