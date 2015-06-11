@@ -67,8 +67,13 @@ func TestDockerTagger(t *testing.T) {
 	}
 
 	var (
-		endpoint1NodeID     = "somehost.com;192.168.1.1;12345"
-		endpoint2NodeID     = "somehost.com;192.168.1.1;67890"
+		endpoint1NodeID      = "somehost.com;192.168.1.1;12345"
+		endpoint2NodeID      = "somehost.com;192.168.1.1;67890"
+		endpointNodeMetadata = report.NodeMetadata{
+			ContainerID: "foo",
+			ImageID:     "baz",
+			ImageName:   "bang",
+		}
 		processNodeMetadata = report.NodeMetadata{
 			ContainerID:   "foo",
 			ContainerName: "bar",
@@ -84,7 +89,7 @@ func TestDockerTagger(t *testing.T) {
 	dockerTagger, _ := NewDockerTagger("/irrelevant", 10*time.Second)
 	runtime.Gosched()
 	for _, endpointNodeID := range []string{endpoint1NodeID, endpoint2NodeID} {
-		want := processNodeMetadata.Copy()
+		want := endpointNodeMetadata.Copy()
 		have := dockerTagger.Tag(r).Endpoint.NodeMetadatas[endpointNodeID].Copy()
 		delete(have, "pid")
 		if !reflect.DeepEqual(want, have) {

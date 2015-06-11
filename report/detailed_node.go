@@ -71,10 +71,6 @@ func endpointOriginTable(nmd NodeMetadata) (Table, bool) {
 		{"host_name", "Host name"},
 		{"pid", "PID"},
 		{"name", "Process name"},
-		{"docker_container_id", "Container ID"},
-		{"docker_container_name", "Container name"},
-		{"docker_image_id", "Container image ID"},
-		{"docker_image_name", "Container image name"},
 	} {
 		if val, ok := nmd[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})

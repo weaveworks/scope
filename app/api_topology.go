@@ -17,7 +17,7 @@ const (
 
 // APITopology is returned by the /api/topology/{name} handler.
 type APITopology struct {
-	Nodes map[string]report.RenderableNode `json:"nodes"`
+	Nodes report.RenderableNodes `json:"nodes"`
 }
 
 // APINode is returned by the /api/topology/{name}/{id} handler.
@@ -30,10 +30,19 @@ type APIEdge struct {
 	Metadata report.AggregateMetadata `json:"metadata"`
 }
 
+func render(rpt report.Report, maps []topologyMapper) report.RenderableNodes {
+	result := report.RenderableNodes{}
+	for _, m := range maps {
+		rns := m.selector(rpt).RenderBy(m.mapper, m.pseudo)
+		result.Merge(rns)
+	}
+	return result
+}
+
 // Full topology.
 func handleTopology(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: t.selector(rep.Report()).RenderBy(t.mapper, t.pseudo),
+		Nodes: render(rep.Report(), t.maps),
 	})
 }
 
@@ -60,7 +69,7 @@ func handleNode(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Req
 		vars     = mux.Vars(r)
 		nodeID   = vars["id"]
 		rpt      = rep.Report()
-		node, ok = t.selector(rpt).RenderBy(t.mapper, t.pseudo)[nodeID]
+		node, ok = render(rpt, t.maps)[nodeID]
 	)
 	if !ok {
 		http.NotFound(w, r)
@@ -76,8 +85,13 @@ func handleEdge(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Req
 		localID  = vars["local"]
 		remoteID = vars["remote"]
 		rpt      = rep.Report()
-		metadata = t.selector(rpt).EdgeMetadata(t.mapper, localID, remoteID).Transform()
+		metadata = report.AggregateMetadata{}
 	)
+
+	for _, m := range t.maps {
+		metadata.Merge(m.selector(rpt).EdgeMetadata(m.mapper, localID, remoteID).Transform())
+	}
+
 	respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})
 }
 
@@ -110,11 +124,11 @@ func handleWebsocket(
 	}(conn)
 
 	var (
-		previousTopo map[string]report.RenderableNode
+		previousTopo report.RenderableNodes
 		tick         = time.Tick(loop)
 	)
 	for {
-		newTopo := t.selector(rep.Report()).RenderBy(t.mapper, t.pseudo)
+		newTopo := render(rep.Report(), t.maps)
 		diff := report.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

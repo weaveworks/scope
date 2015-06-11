@@ -52,7 +52,7 @@ func TestUngroupedMapping(t *testing.T) {
 			wantRank:  "42",
 		},
 		{
-			f:  ProcessContainer,
+			f:  MapEndpoint2Container,
 			id: "foo-id",
 			meta: NodeMetadata{
 				"pid":    "42",
@@ -66,7 +66,7 @@ func TestUngroupedMapping(t *testing.T) {
 			wantRank:  "uncontained",
 		},
 		{
-			f:  ProcessContainer,
+			f:  MapEndpoint2Container,
 			id: "bar-id",
 			meta: NodeMetadata{
 				"pid":                   "42",
@@ -79,9 +79,9 @@ func TestUngroupedMapping(t *testing.T) {
 			},
 			wantOK:    true,
 			wantID:    "d321fe0",
-			wantMajor: "walking_sparrow",
+			wantMajor: "",
 			wantMinor: "hosta",
-			wantRank:  "1101fff",
+			wantRank:  "",
 		},
 	} {
 		identity := fmt.Sprintf("(%d %s %v)", i, c.id, c.meta)

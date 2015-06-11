@@ -78,3 +78,39 @@ func (m *EdgeMetadata) Flatten(other EdgeMetadata) {
 		m.MaxConnCountTCP += other.MaxConnCountTCP
 	}
 }
+
+// Merge merges two sets of RenderableNodes
+func (rns RenderableNodes) Merge(other RenderableNodes) {
+	for key, value := range other {
+		if existing, ok := rns[key]; ok {
+			existing.Merge(value)
+			rns[key] = existing
+		} else {
+			rns[key] = value
+		}
+	}
+}
+
+// Merge merges in another RenderableNode
+func (rn *RenderableNode) Merge(other RenderableNode) {
+	if rn.LabelMajor == "" {
+		rn.LabelMajor = other.LabelMajor
+	}
+
+	if rn.LabelMinor == "" {
+		rn.LabelMinor = other.LabelMinor
+	}
+
+	if rn.Rank == "" {
+		rn.Rank = other.Rank
+	}
+
+	if rn.Pseudo != other.Pseudo {
+		panic(rn.ID)
+	}
+
+	rn.Adjacency = rn.Adjacency.Add(other.Adjacency...)
+	rn.Origins = rn.Origins.Add(other.Origins...)
+
+	rn.Metadata.Merge(other.Metadata)
+}
