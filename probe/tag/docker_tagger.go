@@ -299,9 +299,8 @@ func (t *DockerTagger) Tag(r report.Report) report.Report {
 		}
 
 		md := report.NodeMetadata{
-			ContainerID:   container.ID,
-			ContainerName: strings.TrimPrefix(container.Name, "/"),
-			ImageID:       container.Image,
+			ContainerID: container.ID,
+			ImageID:     container.Image,
 		}
 
 		t.RLock()
