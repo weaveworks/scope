@@ -18,28 +18,53 @@ const NodeDetails = React.createClass({
     TitleUtils.resetTitle();
   },
 
-  render: function() {
-    const node = this.props.details;
+  renderLoading: function() {
+    return (
+      <div className="node-details" />
+    );
+  },
 
-    if (!node) {
-      return <div className="node-details" />;
+  renderNotAvailable: function() {
+    return (
+      <div className="node-details">
+        <div className="node-details-header node-details-header-notavailable">
+          <h2 className="node-details-header-label truncate">
+            n/a
+          </h2>
+          <div className="node-details-header-label-minor truncate">
+            Not visible to Scope anymore: {this.props.nodeId}
+          </div>
+        </div>
+      </div>
+    );
+  },
+
+  render: function() {
+    const details = this.props.details;
+    const nodeExists = this.props.nodes[this.props.nodeId];
+
+    if (!details) {
+      if (nodeExists) {
+        return this.renderLoading();
+      }
+      return this.renderNotAvailable();
     }
 
     const style = {
-      'background-color': this.getNodeColorDark(node.label_major)
+      'background-color': this.getNodeColorDark(details.label_major)
     };
 
     return (
       <div className="node-details">
         <div className="node-details-header" style={style}>
           <h2 className="node-details-header-label truncate">
-            {node.label_major}
+            {details.label_major}
           </h2>
-          <div className="node-details-header-label-minor truncate">{node.label_minor}</div>
+          <div className="node-details-header-label-minor truncate">{details.label_minor}</div>
         </div>
 
         <div className="node-details-content">
-          {this.props.details.tables.map(function(table) {
+          {details.tables.map(function(table) {
             return <NodeDetailsTable title={table.title} rows={table.rows} isNumeric={table.numeric} />;
           })}
         </div>

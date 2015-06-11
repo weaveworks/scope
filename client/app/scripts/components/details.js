@@ -16,7 +16,8 @@ const Details = React.createClass({
               <span className="fa fa-close" onClick={this.handleClickClose} />
             </div>
           </div>
-          <NodeDetails details={this.props.details} />
+          <NodeDetails nodeId={this.props.nodeId} details={this.props.details}
+            nodes={this.props.nodes} />
         </Paper>
       </div>
     );
@@ -26,7 +27,6 @@ const Details = React.createClass({
     ev.preventDefault();
     AppActions.clickCloseDetails();
   }
-
 
 });
 
