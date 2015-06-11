@@ -31,6 +31,11 @@ type Report struct {
 	// like operating system, load, etc. The information is scraped by the
 	// probes with each published report. Edges are not present.
 	Host Topology
+
+	// Overlay nodes are active peers in any software-defined network that's
+	// overlaid on the infrastructure. The information is scraped by polling
+	// their status endpoints. Edges could be present, but aren't currently.
+	Overlay Topology
 }
 
 const (
@@ -90,6 +95,7 @@ func MakeReport() Report {
 		Process:   NewTopology(),
 		Container: NewTopology(),
 		Host:      NewTopology(),
+		Overlay:   NewTopology(),
 	}
 }
 
@@ -102,6 +108,7 @@ func (r Report) Squash() Report {
 	r.Process = r.Process.Squash(PanicIDAddresser, localNetworks)
 	r.Container = r.Container.Squash(PanicIDAddresser, localNetworks)
 	r.Host = r.Host.Squash(PanicIDAddresser, localNetworks)
+	r.Overlay = r.Overlay.Squash(PanicIDAddresser, localNetworks)
 	return r
 }
 

@@ -33,6 +33,7 @@ func main() {
 		spyProcs           = flag.Bool("processes", true, "report processes (needs root)")
 		dockerEnabled      = flag.Bool("docker", true, "collect Docker-related attributes for processes")
 		dockerInterval     = flag.Duration("docker.interval", 10*time.Second, "how often to update Docker attributes")
+		weaveRouterAddr    = flag.String("weave.router.addr", "", "IP address or FQDN of the Weave router")
 		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
 	)
 	flag.Parse()
@@ -71,9 +72,11 @@ func main() {
 		hostID   = hostName // TODO: we should sanitize the hostname
 	)
 
+	var (
+		dockerTagger *tag.DockerTagger
+		weaveTagger  *tag.WeaveTagger
+	)
 	taggers := []tag.Tagger{tag.NewTopologyTagger(), tag.NewOriginHostTagger(hostID)}
-
-	var dockerTagger *tag.DockerTagger
 	if *dockerEnabled && runtime.GOOS == linux {
 		var err error
 		dockerTagger, err = tag.NewDockerTagger(*procRoot, *dockerInterval)
@@ -82,6 +85,15 @@ func main() {
 		}
 		defer dockerTagger.Stop()
 		taggers = append(taggers, dockerTagger)
+	}
+
+	if *weaveRouterAddr != "" {
+		var err error
+		weaveTagger, err = tag.NewWeaveTagger(*weaveRouterAddr)
+		if err != nil {
+			log.Fatalf("failed to start Weave tagger: %v", err)
+		}
+		taggers = append(taggers, weaveTagger)
 	}
 
 	log.Printf("listening on %s", *listen)
@@ -118,6 +130,10 @@ func main() {
 
 				if dockerTagger != nil {
 					r.Container.Merge(dockerTagger.ContainerTopology(hostID))
+				}
+
+				if weaveTagger != nil {
+					r.Overlay.Merge(weaveTagger.OverlayTopology())
 				}
 
 				r = tag.Apply(r, taggers)

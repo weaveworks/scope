@@ -11,6 +11,7 @@ func (r *Report) Merge(other Report) {
 	r.Process.Merge(other.Process)
 	r.Container.Merge(other.Container)
 	r.Host.Merge(other.Host)
+	r.Overlay.Merge(other.Overlay)
 }
 
 // Merge merges another Topology into the receiver.
