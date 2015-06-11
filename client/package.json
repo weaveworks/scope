@@ -8,6 +8,7 @@
   "dependencies": {
     "d3": "^3.5.5",
     "dagre": "^0.7.2",
+    "debug": "^2.2.0",
     "flux": "^2.0.3",
     "font-awesome": "^4.3.0",
     "keymirror": "^0.1.1",
@@ -18,7 +19,8 @@
     "react": "^0.13.3",
     "react-tap-event-plugin": "^0.1.7",
     "react-tween-state": "0.0.5",
-    "reqwest": "~1.1.5"
+    "reqwest": "~1.1.5",
+    "timely": "^0.1.0"
   },
   "devDependencies": {
     "autoprefixer-core": "^5.2.0",

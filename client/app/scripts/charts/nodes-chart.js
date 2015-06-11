@@ -1,6 +1,8 @@
 const _ = require('lodash');
 const d3 = require('d3');
+const debug = require('debug')('nodes-chart');
 const React = require('react');
+const timely = require('timely');
 
 const Edge = require('./edge');
 const Naming = require('../constants/naming');
@@ -163,7 +165,7 @@ const NodesChart = React.createClass({
           const target = nodes[edge[1]];
 
           if (!source || !target) {
-            console.error('Missing edge node', edge[0], source, edge[1], target);
+            debug('Missing edge node', edge[0], source, edge[1], target);
           }
 
           edges[edgeId] = {
@@ -188,9 +190,8 @@ const NodesChart = React.createClass({
     const n = _.size(props.nodes);
     const nodeScale = d3.scale.linear().range([0, nodeSize / Math.pow(n, 0.7)]);
 
-    const layoutId = 'layered node chart';
-    console.time(layoutId);
-    const graph = NodesLayout.doLayout(
+    const timedLayouter = timely(NodesLayout.doLayout);
+    const graph = timedLayouter(
       nodes,
       edges,
       props.width,
@@ -198,7 +199,8 @@ const NodesChart = React.createClass({
       nodeScale,
       MARGINS
     );
-    console.timeEnd(layoutId);
+
+    debug('graph layout took ' + timedLayouter.time + 'ms');
 
     // adjust layout based on viewport
 

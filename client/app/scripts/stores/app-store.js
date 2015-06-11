@@ -1,6 +1,7 @@
 const EventEmitter = require('events').EventEmitter;
 const _ = require('lodash');
 const assign = require('object-assign');
+const debug = require('debug')('app-store');
 
 const AppDispatcher = require('../dispatcher/app-dispatcher');
 const ActionTypes = require('../constants/action-types');
@@ -179,7 +180,7 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.RECEIVE_NODES_DELTA:
-      console.log('RECEIVE_NODES_DELTA',
+      debug('RECEIVE_NODES_DELTA',
         'remove', _.size(payload.delta.remove),
         'update', _.size(payload.delta.update),
         'add', _.size(payload.delta.add));
