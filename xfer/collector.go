@@ -102,6 +102,10 @@ func (c *realCollector) loop(batchTime time.Duration) {
 			pc <- copy
 
 		case r := <-c.in:
+			if err := r.Validate(); err != nil {
+				log.Printf("Received invalid report from: %v", err)
+				continue
+			}
 			current.Merge(r)
 
 		case ip := <-c.add:

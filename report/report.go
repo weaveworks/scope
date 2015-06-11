@@ -122,3 +122,18 @@ func (r Report) LocalNetworks() []*net.IPNet {
 	}
 	return ipNets
 }
+
+// Topologies returns a slice of Topologies in this report
+func (r Report) Topologies() []Topology {
+	return []Topology{r.Endpoint, r.Address, r.Process, r.Container, r.Host}
+}
+
+// Validate checks the report for various inconsistencies.
+func (r Report) Validate() error {
+	for _, topology := range r.Topologies() {
+		if err := topology.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}

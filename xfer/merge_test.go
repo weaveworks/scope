@@ -37,14 +37,16 @@ func TestMerge(t *testing.T) {
 	defer c.Stop()
 	time.Sleep(batchTime / 10) // connect
 
+	k1, k2 := report.MakeHostNodeID("p1"), report.MakeHostNodeID("p2")
+
 	{
 		r := report.MakeReport()
-		r.Host.NodeMetadatas["p1"] = report.NodeMetadata{"host_name": "test1"}
+		r.Host.NodeMetadatas[k1] = report.NodeMetadata{"host_name": "test1"}
 		p1.Publish(r)
 	}
 	{
 		r := report.MakeReport()
-		r.Host.NodeMetadatas["p2"] = report.NodeMetadata{"host_name": "test2"}
+		r.Host.NodeMetadatas[k2] = report.NodeMetadata{"host_name": "test2"}
 		p2.Publish(r)
 	}
 
@@ -52,10 +54,10 @@ func TestMerge(t *testing.T) {
 	go func() {
 		defer close(success)
 		for r := range c.Reports() {
-			if r.Host.NodeMetadatas["p1"]["host_name"] != "test1" {
+			if r.Host.NodeMetadatas[k1]["host_name"] != "test1" {
 				continue
 			}
-			if r.Host.NodeMetadatas["p2"]["host_name"] != "test2" {
+			if r.Host.NodeMetadatas[k2]["host_name"] != "test2" {
 				continue
 			}
 			return

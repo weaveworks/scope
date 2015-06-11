@@ -42,7 +42,7 @@ func TestCollector(t *testing.T) {
 	runtime.Gosched()   // make sure it connects
 
 	// Push a report through everything
-	reports <- report.Report{Address: report.Topology{NodeMetadatas: report.NodeMetadatas{"a": report.NodeMetadata{}}}}
+	reports <- report.Report{Address: report.Topology{NodeMetadatas: report.NodeMetadatas{report.MakeAddressNodeID("a", "b"): report.NodeMetadata{}}}}
 	poll(t, 10*time.Millisecond, func() bool { return len(concreteCollector.peek().Address.NodeMetadatas) == 1 }, "missed the report")
 	go func() { publish <- time.Now() }()
 	if want, have := 1, len((<-collector.Reports()).Address.NodeMetadatas); want != have {
