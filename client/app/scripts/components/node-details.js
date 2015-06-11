@@ -32,8 +32,14 @@ const NodeDetails = React.createClass({
             n/a
           </h2>
           <div className="node-details-header-label-minor truncate">
-            Not visible to Scope anymore: {this.props.nodeId}
+            {this.props.nodeId}
           </div>
+        </div>
+        <div className="node-details-content">
+          <p className="node-details-content-info">
+            This node is not visible to Scope anymore.
+            The node will re-appear if it communicates again.
+          </p>
         </div>
       </div>
     );
@@ -43,11 +49,12 @@ const NodeDetails = React.createClass({
     const details = this.props.details;
     const nodeExists = this.props.nodes[this.props.nodeId];
 
-    if (!details) {
-      if (nodeExists) {
-        return this.renderLoading();
-      }
+    if (!nodeExists) {
       return this.renderNotAvailable();
+    }
+
+    if (!details) {
+      return this.renderLoading();
     }
 
     const style = {
