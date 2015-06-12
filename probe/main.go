@@ -21,6 +21,8 @@ import (
 
 var version = "dev" // set at build time
 
+const linux = "linux" // runtime.GOOS
+
 func main() {
 	var (
 		httpListen         = flag.String("http.listen", "", "listen address for HTTP profiling and instrumentation server")
@@ -66,7 +68,7 @@ func main() {
 
 	taggers := []tag.Tagger{tag.NewTopologyTagger()}
 	var dockerTagger *tag.DockerTagger
-	if *dockerEnabled && runtime.GOOS == "linux" {
+	if *dockerEnabled && runtime.GOOS == linux {
 		var err error
 		dockerTagger, err = tag.NewDockerTagger(*procRoot, *dockerInterval)
 		if err != nil {
@@ -100,10 +102,14 @@ func main() {
 			case <-spyTick:
 				r.Merge(spy(hostID, hostName, *spyProcs))
 
-				if pidTree, err := tag.NewPIDTree(*procRoot); err == nil {
-					r.Process.Merge(pidTree.ProcessTopology(hostID))
-				} else {
-					log.Print(err)
+				// TODO abstract PIDTree to a process provider, and provide an
+				// alternate implementation for Darwin.
+				if runtime.GOOS == linux {
+					if pidTree, err := tag.NewPIDTree(*procRoot); err == nil {
+						r.Process.Merge(pidTree.ProcessTopology(hostID))
+					} else {
+						log.Printf("PIDTree: %v", err)
+					}
 				}
 
 				if dockerTagger != nil {
