@@ -18,7 +18,7 @@ import (
 )
 
 // Set during buildtime.
-var version = "unknown"
+var version = "dev"
 
 func main() {
 	var (

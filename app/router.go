@@ -45,25 +45,53 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APIDetails{Version: version})
 }
 
+var topologyRegistry = map[string]topologyView{
+	"applications": {
+		human:  "Applications",
+		parent: "",
+		maps: []topologyMapper{
+			{report.SelectEndpoint, report.ProcessPID, report.GenericPseudoNode},
+		},
+	},
+	"applications-by-name": {
+		human:  "Applications by name",
+		parent: "applications",
+		maps: []topologyMapper{
+			{report.SelectEndpoint, report.ProcessName, report.GenericGroupedPseudoNode},
+		},
+	},
+	"containers": {
+		human:  "Containers",
+		parent: "",
+		maps: []topologyMapper{
+			{report.SelectEndpoint, report.MapEndpoint2Container, report.InternetOnlyPseudoNode},
+			{report.SelectContainer, report.MapContainerIdentity, report.InternetOnlyPseudoNode},
+		},
+	},
+	"containers-by-image": {
+		human:  "Containers by image",
+		parent: "containers",
+		maps: []topologyMapper{
+			{report.SelectEndpoint, report.ProcessContainerImage, report.InternetOnlyPseudoNode},
+		},
+	},
+	"hosts": {
+		human:  "Hosts",
+		parent: "",
+		maps: []topologyMapper{
+			{report.SelectAddress, report.NetworkHostname, report.GenericPseudoNode},
+		},
+	},
+}
+
 type topologyView struct {
-	human           string
-	groupedTopology string
-	maps            []topologyMapper
+	human  string
+	parent string
+	maps   []topologyMapper
 }
 
 type topologyMapper struct {
 	selector report.TopologySelector
 	mapper   report.MapFunc
 	pseudo   report.PseudoFunc
-}
-
-var topologyRegistry = map[string]topologyView{
-	"applications":         {"Applications", "applications-grouped", []topologyMapper{{report.SelectEndpoint, report.ProcessPID, report.GenericPseudoNode}}},
-	"applications-grouped": {"Applications", "", []topologyMapper{{report.SelectEndpoint, report.ProcessName, report.GenericGroupedPseudoNode}}},
-	"containers": {"Containers", "containers-grouped", []topologyMapper{
-		{report.SelectEndpoint, report.MapEndpoint2Container, report.InternetOnlyPseudoNode},
-		{report.SelectContainer, report.MapContainerIdentity, report.InternetOnlyPseudoNode},
-	}},
-	"containers-grouped": {"Containers", "", []topologyMapper{{report.SelectEndpoint, report.ProcessContainerImage, report.InternetOnlyPseudoNode}}},
-	"hosts":              {"Hosts", "", []topologyMapper{{report.SelectAddress, report.NetworkHostname, report.GenericPseudoNode}}},
 }

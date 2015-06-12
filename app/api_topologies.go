@@ -2,17 +2,16 @@ package main
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/weaveworks/scope/report"
 )
 
 // APITopologyDesc is returned in a list by the /api/topology handler.
 type APITopologyDesc struct {
-	Name       string        `json:"name"`
-	URL        string        `json:"url"`
-	GroupedURL string        `json:"grouped_url,omitempty"`
-	Stats      topologyStats `json:"stats"`
+	Name          string            `json:"name"`
+	URL           string            `json:"url"`
+	SubTopologies []APITopologyDesc `json:"sub_topologies,omitempty"`
+	Stats         *topologyStats    `json:"stats,omitempty"`
 }
 
 type topologyStats struct {
@@ -25,31 +24,29 @@ type topologyStats struct {
 func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rpt := rep.Report()
-
-		var a []APITopologyDesc
+		topologies := []APITopologyDesc{}
 		for name, def := range topologyRegistry {
-			if strings.HasSuffix(name, "grouped") {
-				continue
+			subTopologies := []APITopologyDesc{}
+			for subName, subDef := range topologyRegistry {
+				if subDef.parent == name {
+					subTopologies = append(subTopologies, APITopologyDesc{
+						Name: subDef.human,
+						URL:  "/api/topology/" + subName,
+					})
+				}
 			}
-
-			url := "/api/topology/" + name
-			var groupedURL string
-			if def.groupedTopology != "" {
-				groupedURL = "/api/topology/" + def.groupedTopology
-			}
-
-			a = append(a, APITopologyDesc{
-				Name:       def.human,
-				URL:        url,
-				GroupedURL: groupedURL,
-				Stats:      stats(render(rpt, def.maps)),
+			topologies = append(topologies, APITopologyDesc{
+				Name:          def.human,
+				URL:           "/api/topology/" + name,
+				SubTopologies: subTopologies,
+				Stats:         stats(render(rpt, def.maps)),
 			})
 		}
-		respondWith(w, http.StatusOK, a)
+		respondWith(w, http.StatusOK, topologies)
 	}
 }
 
-func stats(r report.RenderableNodes) topologyStats {
+func stats(r report.RenderableNodes) *topologyStats {
 	var (
 		nodes     int
 		realNodes int
@@ -64,7 +61,7 @@ func stats(r report.RenderableNodes) topologyStats {
 		edges += len(n.Adjacency)
 	}
 
-	return topologyStats{
+	return &topologyStats{
 		NodeCount:          nodes,
 		NonpseudoNodeCount: realNodes,
 		EdgeCount:          edges,
