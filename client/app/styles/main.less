@@ -178,6 +178,24 @@ body {
 
   g.node {
     cursor: pointer;
+
+    &.pseudo {
+      opacity: 0.8;
+      cursor: default;
+
+      .node-label {
+        fill: @text-secondary-color;
+      }
+
+      .node-sublabel {
+        fill: @text-tertiary-color;
+      }
+
+      .border {
+        stroke: @text-tertiary-color;
+        stroke-width: 1px;
+      }
+    }
   }
 
   .edge {

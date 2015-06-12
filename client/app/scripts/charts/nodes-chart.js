@@ -86,6 +86,7 @@ const NodesChart = React.createClass({
           key={node.id}
           id={node.id}
           label={node.label}
+          pseudo={node.pseudo}
           subLabel={node.subLabel}
           scale={scale}
           dx={node.x}
@@ -144,6 +145,7 @@ const NodesChart = React.createClass({
         adjacency: node.adjacency,
         id: id,
         label: node.label_major,
+        pseudo: node.pseudo,
         subLabel: node.label_minor,
         degree: _.size(node.adjacency)
       });
