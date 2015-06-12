@@ -1,4 +1,5 @@
 const dagre = require('dagre');
+const debug = require('debug')('nodes-layout');
 const _ = require('lodash');
 
 const MAX_NODES = 100;
@@ -9,7 +10,7 @@ const doLayout = function(nodes, edges, width, height, scale, margins) {
   const g = new dagre.graphlib.Graph({});
 
   if (_.size(nodes) > MAX_NODES) {
-    console.error('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
+    debug('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
     return null;
   }
 
