@@ -16,6 +16,11 @@ describe('AppStore', function() {
     nodeId: 'n1'
   };
 
+  const ClickSubTopologyAction = {
+    type: ActionTypes.CLICK_TOPOLOGY,
+    topologyId: 'topo1-grouped'
+  };
+
   const ClickTopologyAction = {
     type: ActionTypes.CLICK_TOPOLOGY,
     topologyId: 'topo1'
@@ -45,8 +50,11 @@ describe('AppStore', function() {
     type: ActionTypes.RECEIVE_TOPOLOGIES,
     topologies: [{
       url: '/topo1',
-      grouped_url: '/topo1grouped',
-      name: 'Topo1'
+      name: 'Topo1',
+      sub_topologies: [{
+        url: '/topo1-grouped',
+        name: 'topo 1 grouped'
+      }]
     }]
   };
 
@@ -77,14 +85,13 @@ describe('AppStore', function() {
     expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1');
   });
 
-  it('get grouped topology', function() {
-    registeredCallback(ClickTopologyAction);
+  it('get sub-topology', function() {
     registeredCallback(ReceiveTopologiesAction);
-    registeredCallback(ClickGroupingAction);
+    registeredCallback(ClickSubTopologyAction);
 
     expect(AppStore.getTopologies().length).toBe(1);
-    expect(AppStore.getCurrentTopology().name).toBe('Topo1');
-    expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1grouped');
+    expect(AppStore.getCurrentTopology().name).toBe('topo 1 grouped');
+    expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1-grouped');
   });
 
   // browsing
@@ -110,14 +117,14 @@ describe('AppStore', function() {
     registeredCallback(ReceiveNodesDeltaAction);
     // TODO clear AppStore cache
     expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1","grouping":"grouped","selectedNodeId": null});
+      .toEqual({"topologyId":"topo1-grouped","grouping":"none","selectedNodeId": null});
 
     registeredCallback(ClickNodeAction);
     expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1","grouping":"grouped","selectedNodeId": 'n1'});
+      .toEqual({"topologyId":"topo1-grouped","grouping":"none","selectedNodeId": 'n1'});
 
     // go back in browsing
-    RouteAction.state = {"topologyId":"topo1","grouping":"grouped","selectedNodeId": null};
+    RouteAction.state = {"topologyId":"topo1-grouped","grouping":"none","selectedNodeId": null};
     registeredCallback(RouteAction);
     expect(AppStore.getSelectedNodeId()).toBe(null);
     expect(AppStore.getNodes()).toEqual(NODE_SET);

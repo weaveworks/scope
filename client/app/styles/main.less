@@ -81,59 +81,47 @@ body {
   float: left;
 }
 
-.topologies,
-.groupings {
-  float: left;
-  margin-top: 7px;
-  margin-left: 48px;
-}
-
 .topologies {
-  &-icon {
-    font-size: 12px;
-    color: @text-secondary-color;
-    margin-right: 16px;
-    position: relative;
-    top: -1px;
-  }
+  float: left;
+  margin: 4px 64px;
 
   .topologies-item {
-    margin: 8px 16px 6px 0;
-    cursor: pointer;
-    display: inline-block;
+    margin: 0px 16px;
+    float: left;
 
     &-label {
       color: @text-secondary-color;
-      font-size: 15px;
+      font-size: 16px;
       text-transform: uppercase;
     }
 
+  }
+
+  .topologies-sub {
+    margin-top: 4px;
+
+    &-item {
+      &-label {
+        color: @text-secondary-color;
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+    }
+  }
+
+  .topologies-item-main,
+  .topologies-sub-item {
+    cursor: pointer;
+
     &-active, &:hover {
+      .topologies-sub-item-label,
       .topologies-item-label {
         color: @text-color;
       }
     }
+
   }
-}
 
-.groupings {
-  &-item {
-    font-size: 15px;
-    margin: 8px 12px 6px 0;
-    cursor: pointer;
-    display: inline-block;
-    color: @text-tertiary-color;
-
-    &-disabled {
-      color: @text-tertiary-color;
-      cursor: default;
-    }
-
-    &-default:hover,
-    &-active {
-      color: @text-color;
-    }
-  }
 }
 
 .status {

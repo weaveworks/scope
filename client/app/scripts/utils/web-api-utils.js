@@ -39,10 +39,50 @@ function createWebsocket(topologyUrl) {
   currentUrl = topologyUrl;
 }
 
+
+const TOPOLOGIES = [
+  {
+    'name': 'Applications',
+    'url': '/api/topology/applications',
+    'stats': {
+      'node_count': 12,
+      'nonpseudo_node_count': 10,
+      'edge_count': 13
+    },
+    'sub_topologies': [
+      {
+        'name': 'by name',
+        'url': '/api/topology/applications-grouped'
+      }
+    ]
+  },
+  {
+    'name': 'Containers',
+    'url': '/api/topology/containers',
+    'grouped_url': '/api/topology/containers-grouped',
+    'stats': {
+      'node_count': 2,
+      'nonpseudo_node_count': 1,
+      'edge_count': 2
+    }
+  },
+  {
+    'name': 'Hosts',
+    'url': '/api/topology/hosts',
+    'stats': {
+      'node_count': 2,
+      'nonpseudo_node_count': 1,
+      'edge_count': 2
+    }
+  }
+];
+
+
 function getTopologies() {
   clearTimeout(topologyTimer);
-  reqwest('/api/topology', function(res) {
-    AppActions.receiveTopologies(res);
+  reqwest('/api/topology', function() {
+    // injecting static topos
+    AppActions.receiveTopologies(TOPOLOGIES);
     topologyTimer = setTimeout(getTopologies, 10000);
   });
 }
