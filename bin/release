@@ -50,7 +50,7 @@ build() {
 
     ## Inject the version numbers and build the distributables
     ## (library versions?)
-    sed -i "/SCRIPT_VERSION=/ c\SCRIPT_VERSION=\"$VERSION\"" ./scope
+    sed -i -e "s/^SCRIPT_VERSION=.*$/SCRIPT_VERSION=\"$VERSION\"/" ./scope
     make SUDO=$SUDO SCOPE_VERSION=$VERSION DOCKERHUB_USER=$DOCKERHUB_USER
 
     if ./bin/test; then
