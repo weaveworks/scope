@@ -2,7 +2,6 @@ const React = require('react');
 
 const Logo = require('./logo');
 const AppStore = require('../stores/app-store');
-const Groupings = require('./groupings.js');
 const Status = require('./status.js');
 const Topologies = require('./topologies.js');
 const WebapiUtils = require('../utils/web-api-utils');
@@ -67,7 +66,6 @@ const App = React.createClass({
         <div className="header">
           <Logo />
           <Topologies topologies={this.state.topologies} currentTopology={this.state.currentTopology} />
-          <Groupings active={this.state.currentGrouping} currentTopology={this.state.currentTopology} />
           <Status connectionState={this.state.connectionState} />
         </div>
 

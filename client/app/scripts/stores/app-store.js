@@ -9,8 +9,22 @@ const Naming = require('../constants/naming');
 
 // Helpers
 
-function isUrlForTopologyId(url, topologyId) {
-  return _.endsWith(url, topologyId);
+function findCurrentTopology(subTree, topologyId) {
+  let foundTopology;
+
+  _.each(subTree, function(topology) {
+    if (_.endsWith(topology.url, topologyId)) {
+      foundTopology = topology;
+    }
+    if (!foundTopology) {
+      foundTopology = findCurrentTopology(topology.sub_topologies, topologyId);
+    }
+    if (foundTopology) {
+      return false;
+    }
+  });
+
+  return foundTopology;
 }
 
 // Initial values
@@ -45,16 +59,14 @@ const AppStore = assign({}, EventEmitter.prototype, {
   },
 
   getCurrentTopology: function() {
-    return _.find(topologies, function(topology) {
-      return isUrlForTopologyId(topology.url, currentTopologyId);
-    });
+    return findCurrentTopology(topologies, currentTopologyId);
   },
 
   getCurrentTopologyUrl: function() {
     const topology = this.getCurrentTopology();
 
     if (topology) {
-      return topology.grouped_url && currentGrouping === 'grouped' ? topology.grouped_url : topology.url;
+      return topology.url;
     }
   },
 
