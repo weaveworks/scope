@@ -66,7 +66,13 @@ func main() {
 	}
 	defer publisher.Close()
 
-	taggers := []tag.Tagger{tag.NewTopologyTagger()}
+	var (
+		hostName = hostname()
+		hostID   = hostName // TODO: we should sanitize the hostname
+	)
+
+	taggers := []tag.Tagger{tag.NewTopologyTagger(), tag.NewOriginHostTagger(hostID)}
+
 	var dockerTagger *tag.DockerTagger
 	if *dockerEnabled && runtime.GOOS == linux {
 		var err error
@@ -84,11 +90,9 @@ func main() {
 	defer close(quit)
 	go func() {
 		var (
-			hostName = hostname()
-			hostID   = hostName // TODO: we should sanitize the hostname
-			pubTick  = time.Tick(*publishInterval)
-			spyTick  = time.Tick(*spyInterval)
-			r        = report.MakeReport()
+			pubTick = time.Tick(*publishInterval)
+			spyTick = time.Tick(*spyInterval)
+			r       = report.MakeReport()
 		)
 
 		for {

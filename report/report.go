@@ -33,6 +33,13 @@ type Report struct {
 	Host Topology
 }
 
+const (
+	// HostNodeID is a metadata foreign key, linking a node in any topology to
+	// a node in the host topology. That host node is the origin host, where
+	// the node was originally detected.
+	HostNodeID = "host_node_id"
+)
+
 // RenderableNode is the data type that's yielded to the JavaScript layer as
 // an element of a topology. It should contain information that's relevant
 // to rendering a node when there are many nodes visible at once.

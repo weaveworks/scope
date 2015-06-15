@@ -19,6 +19,10 @@ var (
 	randomHostID  = "random.hostname.com"
 	unknownHostID = ""
 
+	clientHostNodeID = MakeHostNodeID(clientHostID)
+	serverHostNodeID = MakeHostNodeID(serverHostID)
+	randomHostNodeID = MakeHostNodeID(randomHostID)
+
 	client54001    = MakeEndpointNodeID(clientHostID, "10.10.10.20", "54001") // curl (1)
 	client54002    = MakeEndpointNodeID(clientHostID, "10.10.10.20", "54002") // curl (2)
 	unknownClient1 = MakeEndpointNodeID(serverHostID, "10.10.10.10", "54010") // we want to ensure two unknown clients, connnected
@@ -45,19 +49,22 @@ var (
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
 				client54001: NodeMetadata{
-					"name":   "curl",
-					"domain": "client-54001-domain",
-					"pid":    "10001",
+					"name":     "curl",
+					"domain":   "client-54001-domain",
+					"pid":      "10001",
+					HostNodeID: clientHostNodeID,
 				},
 				client54002: NodeMetadata{
-					"name":   "curl",                // should be same as above!
-					"domain": "client-54002-domain", // may be different than above
-					"pid":    "10001",               // should be same as above!
+					"name":     "curl",                // should be same as above!
+					"domain":   "client-54002-domain", // may be different than above
+					"pid":      "10001",               // should be same as above!
+					HostNodeID: clientHostNodeID,
 				},
 				server80: NodeMetadata{
-					"name":   "apache",
-					"domain": "server-80-domain",
-					"pid":    "215",
+					"name":     "apache",
+					"domain":   "server-80-domain",
+					"pid":      "215",
+					HostNodeID: serverHostNodeID,
 				},
 			},
 			EdgeMetadatas: EdgeMetadatas{
@@ -107,13 +114,16 @@ var (
 			},
 			NodeMetadatas: NodeMetadatas{
 				clientIP: NodeMetadata{
-					"name": "client.hostname.com", // hostname
+					"name":     "client.hostname.com", // hostname
+					HostNodeID: clientHostNodeID,
 				},
 				randomIP: NodeMetadata{
-					"name": "random.hostname.com", // hostname
+					"name":     "random.hostname.com", // hostname
+					HostNodeID: randomHostNodeID,
 				},
 				serverIP: NodeMetadata{
-					"name": "server.hostname.com", // hostname
+					"name":     "server.hostname.com", // hostname
+					HostNodeID: serverHostNodeID,
 				},
 			},
 			EdgeMetadatas: EdgeMetadatas{
