@@ -82,6 +82,24 @@ type Row struct {
 	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
 }
 
+// TopologySelector selects a single topology from a report.
+type TopologySelector func(r Report) Topology
+
+// SelectEndpoint selects the endpoint topology.
+func SelectEndpoint(r Report) Topology {
+	return r.Endpoint
+}
+
+// SelectAddress selects the address topology.
+func SelectAddress(r Report) Topology {
+	return r.Address
+}
+
+// SelectContainer selects the container topology.
+func SelectContainer(r Report) Topology {
+	return r.Container
+}
+
 // MakeReport makes a clean report, ready to Merge() other reports into.
 func MakeReport() Report {
 	return Report{

@@ -50,30 +50,30 @@ var topologyRegistry = map[string]topologyView{
 	"applications": {
 		human:    "Applications",
 		parent:   "",
-		renderer: render.Map{Selector: report.SelectEndpoint, Mapper: report.ProcessPID, Pseudo: report.GenericPseudoNode},
+		renderer: render.Map{Selector: report.SelectEndpoint, Mapper: render.ProcessPID, Pseudo: render.GenericPseudoNode},
 	},
 	"applications-by-name": {
 		human:    "by name",
 		parent:   "applications",
-		renderer: render.Map{Selector: report.SelectEndpoint, Mapper: report.ProcessName, Pseudo: report.GenericGroupedPseudoNode},
+		renderer: render.Map{Selector: report.SelectEndpoint, Mapper: render.ProcessName, Pseudo: render.GenericGroupedPseudoNode},
 	},
 	"containers": {
 		human:  "Containers",
 		parent: "",
 		renderer: render.Reduce([]render.Renderer{
-			render.Map{Selector: report.SelectEndpoint, Mapper: report.MapEndpoint2Container, Pseudo: report.InternetOnlyPseudoNode},
-			render.Map{Selector: report.SelectContainer, Mapper: report.MapContainerIdentity, Pseudo: report.InternetOnlyPseudoNode},
+			render.Map{Selector: report.SelectEndpoint, Mapper: render.MapEndpoint2Container, Pseudo: render.InternetOnlyPseudoNode},
+			render.Map{Selector: report.SelectContainer, Mapper: render.MapContainerIdentity, Pseudo: render.InternetOnlyPseudoNode},
 		}),
 	},
 	"containers-by-image": {
 		human:    "by image",
 		parent:   "containers",
-		renderer: render.Map{Selector: report.SelectEndpoint, Mapper: report.ProcessContainerImage, Pseudo: report.InternetOnlyPseudoNode},
+		renderer: render.Map{Selector: report.SelectEndpoint, Mapper: render.ProcessContainerImage, Pseudo: render.InternetOnlyPseudoNode},
 	},
 	"hosts": {
 		human:    "Hosts",
 		parent:   "",
-		renderer: render.Map{Selector: report.SelectAddress, Mapper: report.NetworkHostname, Pseudo: report.GenericPseudoNode},
+		renderer: render.Map{Selector: report.SelectAddress, Mapper: render.NetworkHostname, Pseudo: render.GenericPseudoNode},
 	},
 }
 
