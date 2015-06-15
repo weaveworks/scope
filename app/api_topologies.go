@@ -37,7 +37,7 @@ func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request)
 					subTopologies = append(subTopologies, APITopologyDesc{
 						Name:  subDef.human,
 						URL:   "/api/topology/" + subName,
-						Stats: stats(render(rpt, subDef.maps)),
+						Stats: stats(subDef.renderer.Render(rpt)),
 					})
 				}
 			}
@@ -45,7 +45,7 @@ func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request)
 				Name:          def.human,
 				URL:           "/api/topology/" + name,
 				SubTopologies: subTopologies,
-				Stats:         stats(render(rpt, def.maps)),
+				Stats:         stats(def.renderer.Render(rpt)),
 			})
 		}
 		respondWith(w, http.StatusOK, topologies)

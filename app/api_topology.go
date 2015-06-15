@@ -30,19 +30,10 @@ type APIEdge struct {
 	Metadata report.AggregateMetadata `json:"metadata"`
 }
 
-func render(rpt report.Report, maps []topologyMapper) report.RenderableNodes {
-	result := report.RenderableNodes{}
-	for _, m := range maps {
-		rns := m.selector(rpt).RenderBy(m.mapper, m.pseudo)
-		result.Merge(rns)
-	}
-	return result
-}
-
 // Full topology.
 func handleTopology(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: render(rep.Report(), t.maps),
+		Nodes: t.renderer.Render(rep.Report()),
 	})
 }
 
@@ -69,7 +60,7 @@ func handleNode(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Req
 		vars     = mux.Vars(r)
 		nodeID   = vars["id"]
 		rpt      = rep.Report()
-		node, ok = render(rpt, t.maps)[nodeID]
+		node, ok = t.renderer.Render(rep.Report())[nodeID]
 	)
 	if !ok {
 		http.NotFound(w, r)
@@ -85,12 +76,8 @@ func handleEdge(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Req
 		localID  = vars["local"]
 		remoteID = vars["remote"]
 		rpt      = rep.Report()
-		metadata = report.AggregateMetadata{}
+		metadata = t.renderer.AggregateMetadata(rpt, localID, remoteID)
 	)
-
-	for _, m := range t.maps {
-		metadata.Merge(m.selector(rpt).EdgeMetadata(m.mapper, localID, remoteID).Transform())
-	}
 
 	respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})
 }
@@ -128,7 +115,7 @@ func handleWebsocket(
 		tick         = time.Tick(loop)
 	)
 	for {
-		newTopo := render(rep.Report(), t.maps)
+		newTopo := t.renderer.Render(rep.Report())
 		diff := report.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

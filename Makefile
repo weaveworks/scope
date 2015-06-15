@@ -21,7 +21,7 @@ $(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) docker/*
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker save $(SCOPE_IMAGE):latest | sudo $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
 
-$(APP_EXE): app/*.go report/*.go xfer/*.go
+$(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go
 
 $(PROBE_EXE): probe/*.go probe/tag/*.go report/*.go xfer/*.go
 
