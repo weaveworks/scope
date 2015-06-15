@@ -13,16 +13,10 @@ func NewOriginHostTagger(hostID string) Tagger {
 }
 
 func (t originHostTagger) Tag(r report.Report) report.Report {
-	for _, topology := range []*report.Topology{
-		&(r.Endpoint),
-		&(r.Address),
-		&(r.Process),
-		&(r.Container),
-		&(r.Host),
-	} {
+	for _, topology := range r.Topologies() {
 		md := report.NodeMetadata{report.HostNodeID: t.hostNodeID}
 		for nodeID := range topology.NodeMetadatas {
-			(*topology).NodeMetadatas[nodeID].Merge(md)
+			topology.NodeMetadatas[nodeID].Merge(md)
 		}
 	}
 	return r
