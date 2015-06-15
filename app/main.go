@@ -1,11 +1,13 @@
 package main
 
 import (
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"log"
 	"log/syslog"
-	"math/rand"
+	"math"
+	"math/big"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -19,6 +21,15 @@ import (
 
 // Set during buildtime.
 var version = "dev"
+
+func randomID() (string, error) {
+	number, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", number), nil
+}
 
 func main() {
 	var (
@@ -61,7 +72,11 @@ func main() {
 		log.SetOutput(f)
 	}
 
-	id := strconv.FormatInt(rand.Int63(), 16)
+	id, err := randomID()
+	if err != nil {
+		log.Printf("failed to generate random id: %s", err)
+		return
+	}
 	log.Printf("app starting, version %s, id %s", version, id)
 
 	// Collector deals with the probes, and generates merged reports.
