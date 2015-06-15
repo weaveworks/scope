@@ -13,10 +13,6 @@ var DEBUG = !argv.release;
 var STYLE_LOADER = 'style-loader';
 var CSS_LOADER = DEBUG ? 'css-loader' : 'css-loader?minimize';
 var AUTOPREFIXER_LOADER = 'postcss-loader';
-var GLOBALS = {
-  'process.env.NODE_ENV': DEBUG ? '"development"' : '"production"',
-  '__DEV__': DEBUG
-};
 
 //
 // Common configuration chunk to be used for both

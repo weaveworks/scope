@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const d3 = require('d3');
-const debug = require('debug')('nodes-chart');
+const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
 const timely = require('timely');
 

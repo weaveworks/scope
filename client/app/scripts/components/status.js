@@ -2,21 +2,22 @@ const React = require('react');
 
 const Status = React.createClass({
 
-  renderConnectionState: function() {
-    return (
-      <div className="status-connection">
-        <span className="status-icon fa fa-exclamation-circle" />
-        <span className="status-label">Scope is disconnected</span>
-      </div>
-    );
+  renderConnectionState: function(errorUrl) {
+    if (errorUrl) {
+      const title = 'Cannot reach Scope. Make sure the following URL is reachable: ' + errorUrl;
+      return (
+        <div className="status-connection" title={title}>
+          <span className="status-icon fa fa-exclamation-circle" />
+          <span className="status-label">Trying to reconnect...</span>
+        </div>
+      );
+    }
   },
 
   render: function() {
-    const isDisconnected = this.props.connectionState === 'disconnected';
-
     return (
       <div className="status">
-        {isDisconnected && this.renderConnectionState()}
+        {this.renderConnectionState(this.props.errorUrl)}
       </div>
     );
   }

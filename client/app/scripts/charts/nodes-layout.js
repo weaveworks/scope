@@ -1,5 +1,5 @@
 const dagre = require('dagre');
-const debug = require('debug')('nodes-layout');
+const debug = require('debug')('scope:nodes-layout');
 const _ = require('lodash');
 
 const MAX_NODES = 100;
