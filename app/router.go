@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -47,51 +48,37 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 var topologyRegistry = map[string]topologyView{
 	"applications": {
-		human:  "Applications",
-		parent: "",
-		maps: []topologyMapper{
-			{report.SelectEndpoint, report.ProcessPID, report.GenericPseudoNode},
-		},
+		human:    "Applications",
+		parent:   "",
+		renderer: render.Map{Selector: report.SelectEndpoint, Mapper: report.ProcessPID, Pseudo: report.GenericPseudoNode},
 	},
 	"applications-by-name": {
-		human:  "by name",
-		parent: "applications",
-		maps: []topologyMapper{
-			{report.SelectEndpoint, report.ProcessName, report.GenericGroupedPseudoNode},
-		},
+		human:    "by name",
+		parent:   "applications",
+		renderer: render.Map{Selector: report.SelectEndpoint, Mapper: report.ProcessName, Pseudo: report.GenericGroupedPseudoNode},
 	},
 	"containers": {
 		human:  "Containers",
 		parent: "",
-		maps: []topologyMapper{
-			{report.SelectEndpoint, report.MapEndpoint2Container, report.InternetOnlyPseudoNode},
-			{report.SelectContainer, report.MapContainerIdentity, report.InternetOnlyPseudoNode},
+		renderer: render.Reduce{
+			render.Map{Selector: report.SelectEndpoint, Mapper: report.MapEndpoint2Container, Pseudo: report.InternetOnlyPseudoNode},
+			render.Map{Selector: report.SelectContainer, Mapper: report.MapContainerIdentity, Pseudo: report.InternetOnlyPseudoNode},
 		},
 	},
 	"containers-by-image": {
-		human:  "by image",
-		parent: "containers",
-		maps: []topologyMapper{
-			{report.SelectEndpoint, report.ProcessContainerImage, report.InternetOnlyPseudoNode},
-		},
+		human:    "by image",
+		parent:   "containers",
+		renderer: render.Map{Selector: report.SelectEndpoint, Mapper: report.ProcessContainerImage, Pseudo: report.InternetOnlyPseudoNode},
 	},
 	"hosts": {
-		human:  "Hosts",
-		parent: "",
-		maps: []topologyMapper{
-			{report.SelectAddress, report.NetworkHostname, report.GenericPseudoNode},
-		},
+		human:    "Hosts",
+		parent:   "",
+		renderer: render.Map{Selector: report.SelectAddress, Mapper: report.NetworkHostname, Pseudo: report.GenericPseudoNode},
 	},
 }
 
 type topologyView struct {
-	human  string
-	parent string
-	maps   []topologyMapper
-}
-
-type topologyMapper struct {
-	selector report.TopologySelector
-	mapper   report.MapFunc
-	pseudo   report.PseudoFunc
+	human    string
+	parent   string
+	renderer render.Renderer
 }

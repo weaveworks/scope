@@ -25,6 +25,7 @@ dependencies:
         mv scope_ui_build.tar $(dirname "$SCOPE_UI_BUILD");
       fi
   post:
+    - go version
     - go clean -i net
     - go install -tags netgo std
     - make deps
