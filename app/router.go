@@ -54,7 +54,7 @@ var topologyRegistry = map[string]topologyView{
 		},
 	},
 	"applications-by-name": {
-		human:  "Applications by name",
+		human:  "by name",
 		parent: "applications",
 		maps: []topologyMapper{
 			{report.SelectEndpoint, report.ProcessName, report.GenericGroupedPseudoNode},
@@ -69,7 +69,7 @@ var topologyRegistry = map[string]topologyView{
 		},
 	},
 	"containers-by-image": {
-		human:  "Containers by image",
+		human:  "by image",
 		parent: "containers",
 		maps: []topologyMapper{
 			{report.SelectEndpoint, report.ProcessContainerImage, report.InternetOnlyPseudoNode},

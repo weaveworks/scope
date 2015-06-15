@@ -23,15 +23,21 @@ type topologyStats struct {
 // makeTopologyList returns a handler that yields an APITopologyList.
 func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rpt := rep.Report()
-		topologies := []APITopologyDesc{}
+		var (
+			rpt        = rep.Report()
+			topologies = []APITopologyDesc{}
+		)
 		for name, def := range topologyRegistry {
+			if def.parent != "" {
+				continue // subtopology, don't show at top level
+			}
 			subTopologies := []APITopologyDesc{}
 			for subName, subDef := range topologyRegistry {
 				if subDef.parent == name {
 					subTopologies = append(subTopologies, APITopologyDesc{
-						Name: subDef.human,
-						URL:  "/api/topology/" + subName,
+						Name:  subDef.human,
+						URL:   "/api/topology/" + subName,
+						Stats: stats(render(rpt, subDef.maps)),
 					})
 				}
 			}
