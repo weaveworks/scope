@@ -14,10 +14,12 @@ const Topologies = React.createClass({
   renderSubTopology: function(subTopology) {
     const isActive = subTopology.name === this.props.currentTopology.name;
     const topologyId = AppStore.getTopologyIdForUrl(subTopology.url);
+    const title = this.renderTitle(subTopology);
     const className = isActive ? 'topologies-sub-item topologies-sub-item-active' : 'topologies-sub-item';
 
     return (
-      <div className={className} key={topologyId} rel={topologyId} onClick={this.onTopologyClick}>
+      <div className={className} title={title} key={topologyId} rel={topologyId}
+        onClick={this.onTopologyClick}>
         <div className="topologies-sub-item-label">
           {subTopology.name}
         </div>
@@ -25,13 +27,16 @@ const Topologies = React.createClass({
     );
   },
 
+  renderTitle: function(topology) {
+    return ['Nodes: ' + topology.stats.node_count,
+      'Connections: ' + topology.stats.node_count].join('\n');
+  },
+
   renderTopology: function(topology) {
     const isActive = topology.name === this.props.currentTopology.name;
     const className = isActive ? 'topologies-item-main topologies-item-main-active' : 'topologies-item-main';
     const topologyId = AppStore.getTopologyIdForUrl(topology.url);
-    const title = ['Topology: ' + topology.name,
-      'Nodes: ' + topology.stats.node_count,
-      'Connections: ' + topology.stats.node_count].join('\n');
+    const title = this.renderTitle(topology);
 
     return (
       <div className="topologies-item" key={topologyId}>
