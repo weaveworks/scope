@@ -1,6 +1,9 @@
 package report
 
-import "strconv"
+import (
+	"reflect"
+	"strconv"
+)
 
 // MakeDetailedNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
@@ -26,10 +29,15 @@ func MakeDetailedNode(r Report, n RenderableNode) DetailedNode {
 	// multiple origins. The ultimate goal here is to generate tables to view
 	// in the UI, so we skip the intermediate representations, but we could
 	// add them later.
+outer:
 	for _, id := range n.Origins {
 		if table, ok := OriginTable(r, id); ok {
-			// Origin node IDs are unique, so we'll be optimistic, here, and
-			// assume they'll also produce unique tables.
+			// TODO there's a bug that yields duplicate tables. Quick fix.
+			for _, existing := range tables {
+				if reflect.DeepEqual(existing, table) {
+					continue outer
+				}
+			}
 			tables = append(tables, table)
 		}
 	}
