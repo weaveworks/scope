@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -116,7 +117,7 @@ func handleWebsocket(
 	)
 	for {
 		newTopo := t.renderer.Render(rep.Report())
-		diff := report.TopoDiff(previousTopo, newTopo)
+		diff := render.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
 		if err := conn.SetWriteDeadline(time.Now().Add(websocketTimeout)); err != nil {

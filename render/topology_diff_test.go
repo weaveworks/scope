@@ -1,13 +1,22 @@
-package report
+package render
 
 import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/weaveworks/scope/report"
 )
 
+// ByID is a sort interface for a RenderableNode slice.
+type ByID []report.RenderableNode
+
+func (r ByID) Len() int           { return len(r) }
+func (r ByID) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
+func (r ByID) Less(i, j int) bool { return r[i].ID < r[j].ID }
+
 func TestTopoDiff(t *testing.T) {
-	nodea := RenderableNode{
+	nodea := report.RenderableNode{
 		ID:         "nodea",
 		LabelMajor: "Node A",
 		LabelMinor: "'ts an a",
@@ -21,14 +30,14 @@ func TestTopoDiff(t *testing.T) {
 		"nodeb",
 		"nodeq", // not the same anymore
 	}
-	nodeb := RenderableNode{
+	nodeb := report.RenderableNode{
 		ID:         "nodeb",
 		LabelMajor: "Node B",
 	}
 
 	// Helper to make RenderableNode maps.
-	nodes := func(ns ...RenderableNode) RenderableNodes {
-		r := RenderableNodes{}
+	nodes := func(ns ...report.RenderableNode) report.RenderableNodes {
+		r := report.RenderableNodes{}
 		for _, n := range ns {
 			r[n.ID] = n
 		}
@@ -43,7 +52,7 @@ func TestTopoDiff(t *testing.T) {
 			label: "basecase: empty -> something",
 			have:  TopoDiff(nodes(), nodes(nodea, nodeb)),
 			want: Diff{
-				Add: []RenderableNode{nodea, nodeb},
+				Add: []report.RenderableNode{nodea, nodeb},
 			},
 		},
 		{
@@ -57,7 +66,7 @@ func TestTopoDiff(t *testing.T) {
 			label: "add and remove",
 			have:  TopoDiff(nodes(nodea), nodes(nodeb)),
 			want: Diff{
-				Add:    []RenderableNode{nodeb},
+				Add:    []report.RenderableNode{nodeb},
 				Remove: []string{"nodea"},
 			},
 		},
@@ -70,7 +79,7 @@ func TestTopoDiff(t *testing.T) {
 			label: "change a single node",
 			have:  TopoDiff(nodes(nodea), nodes(nodeap)),
 			want: Diff{
-				Update: []RenderableNode{nodeap},
+				Update: []report.RenderableNode{nodeap},
 			},
 		},
 	} {
@@ -78,7 +87,7 @@ func TestTopoDiff(t *testing.T) {
 		sort.Sort(ByID(c.have.Add))
 		sort.Sort(ByID(c.have.Update))
 		if !reflect.DeepEqual(c.want, c.have) {
-			t.Errorf("%s - want:%s have:%s", c.label, c.want, c.have)
+			t.Errorf("%s - %s", c.label, diff(c.want, c.have))
 		}
 	}
 }
