@@ -7,12 +7,26 @@ import (
 
 const humanTheInternet = "the Internet"
 
-// MappedNode is returned by the MapFuncs.
-type MappedNode struct {
-	ID    string
-	Major string
-	Minor string
-	Rank  string
+func newRenderableNode(id, major, minor, rank string) RenderableNode {
+	return RenderableNode{
+		ID:         id,
+		LabelMajor: major,
+		LabelMinor: minor,
+		Rank:       rank,
+		Pseudo:     false,
+		Metadata:   AggregateMetadata{},
+	}
+}
+
+func newPseudoNode(id, major, minor string) RenderableNode {
+	return RenderableNode{
+		ID:         id,
+		LabelMajor: major,
+		LabelMinor: minor,
+		Rank:       "",
+		Pseudo:     true,
+		Metadata:   AggregateMetadata{},
+	}
 }
 
 // MapFunc is anything which can take an arbitrary NodeMetadata, which is
@@ -25,13 +39,13 @@ type MappedNode struct {
 //
 // If the final output parameter is false, the node shall be omitted from the
 // rendered topology.
-type MapFunc func(string, NodeMetadata) (MappedNode, bool)
+type MapFunc func(NodeMetadata) (RenderableNode, bool)
 
-// PseudoFunc creates MappedNode representing pseudo nodes given the dstNodeID.
+// PseudoFunc creates RenderableNode representing pseudo nodes given the dstNodeID.
 // The srcNode renderable node is essentially from MapFunc, representing one of
 // the rendered nodes this pseudo node refers to. srcNodeID and dstNodeID are
 // node IDs prior to mapping.
-type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string) (MappedNode, bool)
+type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string) (RenderableNode, bool)
 
 // TopologySelector selects a single topology from a report.
 type TopologySelector func(r Report) Topology
@@ -54,39 +68,29 @@ func SelectContainer(r Report) Topology {
 // ProcessPID takes a node NodeMetadata from topology, and returns a
 // representation with the ID based on the process PID and the labels based on
 // the process name.
-func ProcessPID(_ string, m NodeMetadata) (MappedNode, bool) {
+func ProcessPID(m NodeMetadata) (RenderableNode, bool) {
 	var (
 		identifier = fmt.Sprintf("%s:%s:%s", "pid", m["domain"], m["pid"])
 		minor      = fmt.Sprintf("%s (%s)", m["domain"], m["pid"])
 		show       = m["pid"] != "" && m["name"] != ""
 	)
 
-	return MappedNode{
-		ID:    identifier,
-		Major: m["name"],
-		Minor: minor,
-		Rank:  m["pid"],
-	}, show
+	return newRenderableNode(identifier, m["name"], minor, m["pid"]), show
 }
 
 // ProcessName takes a node NodeMetadata from a topology, and returns a
 // representation with the ID based on the process name (grouping all
 // processes with the same name together).
-func ProcessName(_ string, m NodeMetadata) (MappedNode, bool) {
+func ProcessName(m NodeMetadata) (RenderableNode, bool) {
 	show := m["pid"] != "" && m["name"] != ""
-	return MappedNode{
-		ID:    m["name"],
-		Major: m["name"],
-		Minor: "",
-		Rank:  m["name"],
-	}, show
+	return newRenderableNode(m["name"], m["name"], "", m["name"]), show
 }
 
 // MapEndpoint2Container maps endpoint topology nodes to the containers they run
 // in. We consider container and image IDs to be globally unique, and so don't
 // scope them further by e.g. host. If no container metadata is found, nodes are
 // grouped into the Uncontained node.
-func MapEndpoint2Container(_ string, m NodeMetadata) (MappedNode, bool) {
+func MapEndpoint2Container(m NodeMetadata) (RenderableNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_container_id"] == "" {
 		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
@@ -94,16 +98,11 @@ func MapEndpoint2Container(_ string, m NodeMetadata) (MappedNode, bool) {
 		id, major, minor, rank = m["docker_container_id"], "", m["domain"], ""
 	}
 
-	return MappedNode{
-		ID:    id,
-		Major: major,
-		Minor: minor,
-		Rank:  rank,
-	}, true
+	return newRenderableNode(id, major, minor, rank), true
 }
 
 // MapContainerIdentity maps container topology node to container mapped nodes.
-func MapContainerIdentity(_ string, m NodeMetadata) (MappedNode, bool) {
+func MapContainerIdentity(m NodeMetadata) (RenderableNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_container_id"] == "" {
 		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
@@ -111,18 +110,13 @@ func MapContainerIdentity(_ string, m NodeMetadata) (MappedNode, bool) {
 		id, major, minor, rank = m["docker_container_id"], m["docker_container_name"], m["domain"], m["docker_image_id"]
 	}
 
-	return MappedNode{
-		ID:    id,
-		Major: major,
-		Minor: minor,
-		Rank:  rank,
-	}, true
+	return newRenderableNode(id, major, minor, rank), true
 }
 
 // ProcessContainerImage maps topology nodes to the container images they run
 // on. If no container metadata is found, nodes are grouped into the
 // Uncontained node.
-func ProcessContainerImage(_ string, m NodeMetadata) (MappedNode, bool) {
+func ProcessContainerImage(m NodeMetadata) (RenderableNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_image_id"] == "" {
 		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
@@ -130,18 +124,13 @@ func ProcessContainerImage(_ string, m NodeMetadata) (MappedNode, bool) {
 		id, major, minor, rank = m["docker_image_id"], m["docker_image_name"], "", m["docker_image_id"]
 	}
 
-	return MappedNode{
-		ID:    id,
-		Major: major,
-		Minor: minor,
-		Rank:  rank,
-	}, true
+	return newRenderableNode(id, major, minor, rank), true
 }
 
 // NetworkHostname takes a node NodeMetadata and returns a representation
 // based on the hostname. Major label is the hostname, the minor label is the
 // domain, if any.
-func NetworkHostname(_ string, m NodeMetadata) (MappedNode, bool) {
+func NetworkHostname(m NodeMetadata) (RenderableNode, bool) {
 	var (
 		name   = m["name"]
 		domain = ""
@@ -152,17 +141,12 @@ func NetworkHostname(_ string, m NodeMetadata) (MappedNode, bool) {
 		domain = parts[1]
 	}
 
-	return MappedNode{
-		ID:    fmt.Sprintf("host:%s", name),
-		Major: parts[0],
-		Minor: domain,
-		Rank:  parts[0],
-	}, name != ""
+	return newRenderableNode(fmt.Sprintf("host:%s", name), parts[0], domain, parts[0]), name != ""
 }
 
 // GenericPseudoNode contains heuristics for building sensible pseudo nodes.
 // It should go away.
-func GenericPseudoNode(src string, srcMapped RenderableNode, dst string) (MappedNode, bool) {
+func GenericPseudoNode(src string, srcMapped RenderableNode, dst string) (RenderableNode, bool) {
 	var maj, min, outputID string
 
 	if dst == TheInternet {
@@ -178,16 +162,12 @@ func GenericPseudoNode(src string, srcMapped RenderableNode, dst string) (Mapped
 		maj, min = dstNodeAddr, ""
 	}
 
-	return MappedNode{
-		ID:    outputID,
-		Major: maj,
-		Minor: min,
-	}, true
+	return newPseudoNode(outputID, maj, min), true
 }
 
 // GenericGroupedPseudoNode contains heuristics for building sensible pseudo nodes.
 // It should go away.
-func GenericGroupedPseudoNode(src string, srcMapped RenderableNode, dst string) (MappedNode, bool) {
+func GenericGroupedPseudoNode(src string, srcMapped RenderableNode, dst string) (RenderableNode, bool) {
 	var maj, min, outputID string
 
 	if dst == TheInternet {
@@ -201,19 +181,15 @@ func GenericGroupedPseudoNode(src string, srcMapped RenderableNode, dst string) 
 		maj, min = dstNodeAddr, ""
 	}
 
-	return MappedNode{
-		ID:    outputID,
-		Major: maj,
-		Minor: min,
-	}, true
+	return newPseudoNode(outputID, maj, min), true
 }
 
 // InternetOnlyPseudoNode never creates a pseudo node, unless it's the Internet.
-func InternetOnlyPseudoNode(_ string, _ RenderableNode, dst string) (MappedNode, bool) {
+func InternetOnlyPseudoNode(_ string, _ RenderableNode, dst string) (RenderableNode, bool) {
 	if dst == TheInternet {
-		return MappedNode{ID: TheInternet, Major: humanTheInternet}, true
+		return newPseudoNode(TheInternet, humanTheInternet, ""), true
 	}
-	return MappedNode{}, false
+	return RenderableNode{}, false
 }
 
 // trySplitAddr is basically ParseArbitraryNodeID, since its callsites
