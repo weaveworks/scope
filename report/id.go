@@ -27,7 +27,7 @@ func MakeAdjacencyID(srcNodeID string) string {
 	return ">" + srcNodeID
 }
 
-// ParseAdjacencyID produces a node id from an adjancency id
+// ParseAdjacencyID produces a node ID from an adjancency ID.
 func ParseAdjacencyID(adjacencyID string) (string, bool) {
 	if !strings.HasPrefix(adjacencyID, ">") {
 		return "", false
@@ -56,6 +56,10 @@ func MakeEndpointNodeID(hostID, address, port string) string {
 
 // MakeAddressNodeID produces an address node ID from its composite parts.
 func MakeAddressNodeID(hostID, address string) string {
+	if !isLoopback(address) {
+		// Only loopback addresses get scoped by hostID.
+		hostID = ""
+	}
 	return hostID + ScopeDelim + address
 }
 
@@ -77,8 +81,9 @@ func MakeContainerNodeID(hostID, containerID string) string {
 	return hostID + ScopeDelim + containerID
 }
 
-// ParseNodeID produces the scope and remainder from a node ID
-func ParseNodeID(nodeID string) (string, string, bool) {
+// ParseNodeID produces the host ID and remainder (typically an address) from
+// a node ID. Note that hostID may be blank.
+func ParseNodeID(nodeID string) (hostID string, remainder string, ok bool) {
 	fields := strings.SplitN(nodeID, ScopeDelim, 2)
 	if len(fields) != 2 {
 		return "", "", false
@@ -119,4 +124,9 @@ func AddressIDAddresser(id string) net.IP {
 // IPs from the node IDs.
 func PanicIDAddresser(id string) net.IP {
 	panic(fmt.Sprintf("PanicIDAddresser called on %q", id))
+}
+
+func isLoopback(address string) bool {
+	ip := net.ParseIP(address)
+	return ip != nil && ip.IsLoopback()
 }

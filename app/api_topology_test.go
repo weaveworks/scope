@@ -32,8 +32,7 @@ func TestAPITopologyApplications(t *testing.T) {
 			report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345"),
 			report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346"),
 			report.MakeHostNodeID("hostA"),
-		), node.Origins,
-		)
+		), node.Origins)
 		equals(t, "curl", node.LabelMajor)
 		equals(t, "node-a.local (23128)", node.LabelMinor)
 		equals(t, "23128", node.Rank)
