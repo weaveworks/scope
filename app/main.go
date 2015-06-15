@@ -61,6 +61,7 @@ func main() {
 		log.SetOutput(f)
 	}
 
+	rand.Seed(time.Now().UnixNano())
 	id := strconv.FormatInt(rand.Int63(), 16)
 	log.Printf("app starting, version %s, id %s", version, id)
 
