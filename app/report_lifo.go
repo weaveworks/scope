@@ -41,7 +41,6 @@ func NewReportLIFO(r reporter, maxAge time.Duration) *ReportLIFO {
 			select {
 			case report := <-r.Reports():
 				// Incoming report from the collecter.
-				report = report.Squash() // TODO?: make this a CLI argument.
 				tr := timedReport{
 					Timestamp: time.Now(),
 					Report:    report,
@@ -55,6 +54,7 @@ func NewReportLIFO(r reporter, maxAge time.Duration) *ReportLIFO {
 				for _, r := range l.reports {
 					report.Merge(r.Report)
 				}
+				report = report.Squash() // TODO?: make this a CLI argument.
 				req <- report
 
 			case q := <-l.quit:
