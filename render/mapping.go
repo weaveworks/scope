@@ -9,8 +9,8 @@ import (
 
 const humanTheInternet = "the Internet"
 
-func newRenderableNode(id, major, minor, rank string) report.RenderableNode {
-	return report.RenderableNode{
+func newRenderableNode(id, major, minor, rank string) RenderableNode {
+	return RenderableNode{
 		ID:         id,
 		LabelMajor: major,
 		LabelMinor: minor,
@@ -20,8 +20,8 @@ func newRenderableNode(id, major, minor, rank string) report.RenderableNode {
 	}
 }
 
-func newPseudoNode(id, major, minor string) report.RenderableNode {
-	return report.RenderableNode{
+func newPseudoNode(id, major, minor string) RenderableNode {
+	return RenderableNode{
 		ID:         id,
 		LabelMajor: major,
 		LabelMinor: minor,
@@ -41,18 +41,18 @@ func newPseudoNode(id, major, minor string) report.RenderableNode {
 //
 // If the final output parameter is false, the node shall be omitted from the
 // rendered topology.
-type MapFunc func(report.NodeMetadata) (report.RenderableNode, bool)
+type MapFunc func(report.NodeMetadata) (RenderableNode, bool)
 
 // PseudoFunc creates RenderableNode representing pseudo nodes given the dstNodeID.
 // The srcNode renderable node is essentially from MapFunc, representing one of
 // the rendered nodes this pseudo node refers to. srcNodeID and dstNodeID are
 // node IDs prior to mapping.
-type PseudoFunc func(srcNodeID string, srcNode report.RenderableNode, dstNodeID string) (report.RenderableNode, bool)
+type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string) (RenderableNode, bool)
 
 // ProcessPID takes a node NodeMetadata from topology, and returns a
 // representation with the ID based on the process PID and the labels based on
 // the process name.
-func ProcessPID(m report.NodeMetadata) (report.RenderableNode, bool) {
+func ProcessPID(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
 		identifier = fmt.Sprintf("%s:%s:%s", "pid", m["domain"], m["pid"])
 		minor      = fmt.Sprintf("%s (%s)", m["domain"], m["pid"])
@@ -65,7 +65,7 @@ func ProcessPID(m report.NodeMetadata) (report.RenderableNode, bool) {
 // ProcessName takes a node NodeMetadata from a topology, and returns a
 // representation with the ID based on the process name (grouping all
 // processes with the same name together).
-func ProcessName(m report.NodeMetadata) (report.RenderableNode, bool) {
+func ProcessName(m report.NodeMetadata) (RenderableNode, bool) {
 	show := m["pid"] != "" && m["name"] != ""
 	return newRenderableNode(m["name"], m["name"], "", m["name"]), show
 }
@@ -74,7 +74,7 @@ func ProcessName(m report.NodeMetadata) (report.RenderableNode, bool) {
 // in. We consider container and image IDs to be globally unique, and so don't
 // scope them further by e.g. host. If no container metadata is found, nodes are
 // grouped into the Uncontained node.
-func MapEndpoint2Container(m report.NodeMetadata) (report.RenderableNode, bool) {
+func MapEndpoint2Container(m report.NodeMetadata) (RenderableNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_container_id"] == "" {
 		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
@@ -86,7 +86,7 @@ func MapEndpoint2Container(m report.NodeMetadata) (report.RenderableNode, bool) 
 }
 
 // MapContainerIdentity maps container topology node to container mapped nodes.
-func MapContainerIdentity(m report.NodeMetadata) (report.RenderableNode, bool) {
+func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_container_id"] == "" {
 		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
@@ -100,7 +100,7 @@ func MapContainerIdentity(m report.NodeMetadata) (report.RenderableNode, bool) {
 // ProcessContainerImage maps topology nodes to the container images they run
 // on. If no container metadata is found, nodes are grouped into the
 // Uncontained node.
-func ProcessContainerImage(m report.NodeMetadata) (report.RenderableNode, bool) {
+func ProcessContainerImage(m report.NodeMetadata) (RenderableNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_image_id"] == "" {
 		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
@@ -114,7 +114,7 @@ func ProcessContainerImage(m report.NodeMetadata) (report.RenderableNode, bool) 
 // NetworkHostname takes a node NodeMetadata and returns a representation
 // based on the hostname. Major label is the hostname, the minor label is the
 // domain, if any.
-func NetworkHostname(m report.NodeMetadata) (report.RenderableNode, bool) {
+func NetworkHostname(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
 		name   = m["name"]
 		domain = ""
@@ -130,7 +130,7 @@ func NetworkHostname(m report.NodeMetadata) (report.RenderableNode, bool) {
 
 // GenericPseudoNode contains heuristics for building sensible pseudo nodes.
 // It should go away.
-func GenericPseudoNode(src string, srcMapped report.RenderableNode, dst string) (report.RenderableNode, bool) {
+func GenericPseudoNode(src string, srcMapped RenderableNode, dst string) (RenderableNode, bool) {
 	var maj, min, outputID string
 
 	if dst == report.TheInternet {
@@ -151,7 +151,7 @@ func GenericPseudoNode(src string, srcMapped report.RenderableNode, dst string) 
 
 // GenericGroupedPseudoNode contains heuristics for building sensible pseudo nodes.
 // It should go away.
-func GenericGroupedPseudoNode(src string, srcMapped report.RenderableNode, dst string) (report.RenderableNode, bool) {
+func GenericGroupedPseudoNode(src string, srcMapped RenderableNode, dst string) (RenderableNode, bool) {
 	var maj, min, outputID string
 
 	if dst == report.TheInternet {
@@ -169,11 +169,11 @@ func GenericGroupedPseudoNode(src string, srcMapped report.RenderableNode, dst s
 }
 
 // InternetOnlyPseudoNode never creates a pseudo node, unless it's the Internet.
-func InternetOnlyPseudoNode(_ string, _ report.RenderableNode, dst string) (report.RenderableNode, bool) {
+func InternetOnlyPseudoNode(_ string, _ RenderableNode, dst string) (RenderableNode, bool) {
 	if dst == report.TheInternet {
 		return newPseudoNode(report.TheInternet, humanTheInternet, ""), true
 	}
-	return report.RenderableNode{}, false
+	return RenderableNode{}, false
 }
 
 // trySplitAddr is basically ParseArbitraryNodeID, since its callsites

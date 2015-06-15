@@ -2,20 +2,18 @@ package render
 
 import (
 	"reflect"
-
-	"github.com/weaveworks/scope/report"
 )
 
 // Diff is returned by TopoDiff. It represents the changes between two
 // RenderableNode maps.
 type Diff struct {
-	Add    []report.RenderableNode `json:"add"`
-	Update []report.RenderableNode `json:"update"`
-	Remove []string                `json:"remove"`
+	Add    []RenderableNode `json:"add"`
+	Update []RenderableNode `json:"update"`
+	Remove []string         `json:"remove"`
 }
 
 // TopoDiff gives you the diff to get from A to B.
-func TopoDiff(a, b report.RenderableNodes) Diff {
+func TopoDiff(a, b RenderableNodes) Diff {
 	diff := Diff{}
 
 	notSeen := map[string]struct{}{}

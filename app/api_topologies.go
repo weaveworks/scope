@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/render"
 )
 
 // APITopologyDesc is returned in a list by the /api/topology handler.
@@ -52,7 +52,7 @@ func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func stats(r report.RenderableNodes) *topologyStats {
+func stats(r render.RenderableNodes) *topologyStats {
 	var (
 		nodes     int
 		realNodes int
