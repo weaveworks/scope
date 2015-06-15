@@ -44,12 +44,24 @@ const Node = React.createClass({
     const scale = this.props.scale;
     const textOffsetX = 0;
     const textOffsetY = scale(0.5) + 18;
-    const color = this.getNodeColor(this.props.label);
-    const className = this.props.highlighted ? 'node highlighted' : 'node';
+    const isPseudo = !!this.props.pseudo;
+    const color = isPseudo ? '' : this.getNodeColor(this.props.label);
+    const onClick = isPseudo ? null : this.props.onClick;
+    const onMouseEnter = isPseudo ? null : this.handleMouseEnter;
+    const onMouseLeave = isPseudo ? null : this.handleMouseLeave;
+    const classNames = ['node'];
+
+    if (this.props.highlighted) {
+      classNames.push('highlighted');
+    }
+
+    if (this.props.pseudo) {
+      classNames.push('pseudo');
+    }
 
     return (
-      <g className={className} transform={transform} id={this.props.id}
-        onClick={this.props.onClick} onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+      <g className={classNames.join(' ')} transform={transform} id={this.props.id}
+        onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
         {this.props.highlighted && <circle r={scale(0.7)} className="highlighted"></circle>}
         <circle r={scale(0.5)} className="border" stroke={color}></circle>
         <circle r={scale(0.45)} className="shadow"></circle>
