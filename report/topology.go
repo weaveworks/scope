@@ -93,23 +93,21 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) RenderableNod
 		source2host   = map[string]string{} // source node ID -> origin host ID
 	)
 	for nodeID, metadata := range t.NodeMetadatas {
-		mapped, ok := mapFunc(nodeID, metadata)
+		mapped, ok := mapFunc(metadata)
 		if !ok {
 			continue
 		}
 
-		// mapped.ID needs not be unique over all addressIDs. If not, we just
-		// overwrite the existing data, on the assumption that the MapFunc
-		// returns the same data.
-		nodes[mapped.ID] = RenderableNode{
-			ID:         mapped.ID,
-			LabelMajor: mapped.Major,
-			LabelMinor: mapped.Minor,
-			Rank:       mapped.Rank,
-			Pseudo:     false,
-			Origins:    IDList{nodeID},
-			Metadata:   AggregateMetadata{}, // later
+		// mapped.ID needs not be unique over all addressIDs. If not, we merge with
+		// the existing data, on the assumption that the MapFunc returns the same
+		// data.
+		existing, ok := nodes[mapped.ID]
+		if ok {
+			mapped.Merge(existing)
 		}
+
+		mapped.Origins = mapped.Origins.Add(nodeID)
+		nodes[mapped.ID] = mapped
 		source2mapped[nodeID] = mapped.ID
 		source2host[nodeID] = metadata[HostNodeID]
 	}
@@ -136,13 +134,7 @@ func (t Topology) RenderBy(mapFunc MapFunc, pseudoFunc PseudoFunc) RenderableNod
 					continue
 				}
 				dstRenderableID = pseudoNode.ID
-				nodes[dstRenderableID] = RenderableNode{
-					ID:         pseudoNode.ID,
-					LabelMajor: pseudoNode.Major,
-					LabelMinor: pseudoNode.Minor,
-					Pseudo:     true,
-					Metadata:   AggregateMetadata{}, // populated below - or not?
-				}
+				nodes[dstRenderableID] = pseudoNode
 				source2mapped[dstNodeID] = dstRenderableID
 			}
 
@@ -174,11 +166,11 @@ func (t Topology) EdgeMetadata(mapFunc MapFunc, srcRenderableID, dstRenderableID
 			continue
 		}
 		if src != TheInternet {
-			mapped, _ := mapFunc(src, t.NodeMetadatas[src])
+			mapped, _ := mapFunc(t.NodeMetadatas[src])
 			src = mapped.ID
 		}
 		if dst != TheInternet {
-			mapped, _ := mapFunc(dst, t.NodeMetadatas[dst])
+			mapped, _ := mapFunc(t.NodeMetadatas[dst])
 			dst = mapped.ID
 		}
 		if src == srcRenderableID && dst == dstRenderableID {
