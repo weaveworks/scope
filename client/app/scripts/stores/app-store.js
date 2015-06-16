@@ -39,6 +39,7 @@ let nodes = {};
 let nodeDetails = null;
 let selectedNodeId = null;
 let topologies = [];
+let websocketClosed = true;
 
 // Store API
 
@@ -162,7 +163,7 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.CLOSE_WEBSOCKET:
-      nodes = {};
+      websocketClosed = true;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
@@ -210,6 +211,12 @@ AppStore.registeredCallback = function(payload) {
         'add', _.size(payload.delta.add));
 
       errorUrl = null;
+
+      // flush nodes cache after re-connect
+      if (websocketClosed) {
+        nodes = {};
+      }
+      websocketClosed = false;
 
       // nodes that no longer exist
       _.each(payload.delta.remove, function(nodeId) {
