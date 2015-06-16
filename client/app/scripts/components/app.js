@@ -15,7 +15,7 @@ const ESC_KEY_CODE = 27;
 function getStateFromStores() {
   return {
     currentTopology: AppStore.getCurrentTopology(),
-    connectionState: AppStore.getConnectionState(),
+    errorUrl: AppStore.getErrorUrl(),
     currentGrouping: AppStore.getCurrentGrouping(),
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
@@ -23,7 +23,8 @@ function getStateFromStores() {
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     topologies: AppStore.getTopologies(),
-    version: AppStore.getVersion()
+    version: AppStore.getVersion(),
+    websocketClosed: AppStore.isWebsocketClosed()
   };
 }
 
@@ -66,7 +67,7 @@ const App = React.createClass({
         <div className="header">
           <Logo />
           <Topologies topologies={this.state.topologies} currentTopology={this.state.currentTopology} />
-          <Status connectionState={this.state.connectionState} />
+          <Status errorUrl={this.state.errorUrl} websocketClosed={this.state.websocketClosed} />
         </div>
 
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}

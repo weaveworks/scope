@@ -31,8 +31,17 @@ describe('AppStore', function() {
     grouping: 'grouped'
   };
 
+  const CloseWebsocketAction = {
+    type: ActionTypes.CLOSE_WEBSOCKET
+  };
+
   const HitEscAction = {
     type: ActionTypes.HIT_ESC_KEY
+  };
+
+  const ReceiveEmptyNodesDeltaAction = {
+    type: ActionTypes.RECEIVE_NODES_DELTA,
+    delta: {}
   };
 
   const ReceiveNodesDeltaAction = {
@@ -64,6 +73,8 @@ describe('AppStore', function() {
   };
 
   beforeEach(function() {
+    // clear AppStore singleton
+    delete require.cache[require.resolve('../app-store')];
     AppStore = require('../app-store');
     registeredCallback = AppStore.registeredCallback;
   });
@@ -114,21 +125,37 @@ describe('AppStore', function() {
   });
 
   it('keeps showing nodes on navigating back after node click', function() {
+    registeredCallback(ReceiveTopologiesAction);
+    registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveNodesDeltaAction);
-    // TODO clear AppStore cache
+
     expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1-grouped","grouping":"none","selectedNodeId": null});
+      .toEqual({"topologyId":"topo1","grouping":"none","selectedNodeId": null});
 
     registeredCallback(ClickNodeAction);
     expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1-grouped","grouping":"none","selectedNodeId": 'n1'});
+      .toEqual({"topologyId":"topo1","grouping":"none","selectedNodeId": 'n1'});
 
     // go back in browsing
-    RouteAction.state = {"topologyId":"topo1-grouped","grouping":"none","selectedNodeId": null};
+    RouteAction.state = {"topologyId":"topo1","grouping":"none","selectedNodeId": null};
     registeredCallback(RouteAction);
     expect(AppStore.getSelectedNodeId()).toBe(null);
     expect(AppStore.getNodes()).toEqual(NODE_SET);
 
+  });
+
+  // connection errors
+
+  it('resets topology on websocket reconnect', function() {
+    registeredCallback(ReceiveNodesDeltaAction);
+    expect(AppStore.getNodes()).toEqual(NODE_SET);
+
+    registeredCallback(CloseWebsocketAction);
+    expect(AppStore.isWebsocketClosed()).toBeTruthy();
+    expect(AppStore.getNodes()).toEqual(NODE_SET);
+
+    registeredCallback(ReceiveEmptyNodesDeltaAction);
+    expect(AppStore.getNodes()).toEqual({});
   });
 
 

@@ -39,6 +39,12 @@ module.exports = {
     WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
   },
 
+  closeWebsocket: function() {
+    AppDispatcher.dispatch({
+      type: ActionTypes.CLOSE_WEBSOCKET
+    });
+  },
+
   enterEdge: function(edgeId) {
     AppDispatcher.dispatch({
       type: ActionTypes.ENTER_EDGE,
@@ -101,6 +107,13 @@ module.exports = {
     AppDispatcher.dispatch({
         type: ActionTypes.RECEIVE_API_DETAILS,
         version: apiDetails.version
+    });
+  },
+
+  receiveError: function(errorUrl) {
+    AppDispatcher.dispatch({
+        errorUrl: errorUrl,
+        type: ActionTypes.RECEIVE_ERROR
     });
   },
 

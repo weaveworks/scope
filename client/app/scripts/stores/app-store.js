@@ -1,7 +1,7 @@
 const EventEmitter = require('events').EventEmitter;
 const _ = require('lodash');
 const assign = require('object-assign');
-const debug = require('debug')('app-store');
+const debug = require('debug')('scope:app-store');
 
 const AppDispatcher = require('../dispatcher/app-dispatcher');
 const ActionTypes = require('../constants/action-types');
@@ -29,9 +29,9 @@ function findCurrentTopology(subTree, topologyId) {
 
 // Initial values
 
-let connectionState = 'disconnected';
 let currentGrouping = 'none';
 let currentTopologyId = 'containers';
+let errorUrl = null;
 let version = '';
 let mouseOverEdgeId = null;
 let mouseOverNodeId = null;
@@ -39,6 +39,7 @@ let nodes = {};
 let nodeDetails = null;
 let selectedNodeId = null;
 let topologies = [];
+let websocketClosed = true;
 
 // Store API
 
@@ -52,10 +53,6 @@ const AppStore = assign({}, EventEmitter.prototype, {
       grouping: this.getCurrentGrouping(),
       selectedNodeId: this.getSelectedNodeId()
     };
-  },
-
-  getConnectionState: function() {
-    return connectionState;
   },
 
   getCurrentTopology: function() {
@@ -72,6 +69,10 @@ const AppStore = assign({}, EventEmitter.prototype, {
 
   getCurrentGrouping: function() {
     return currentGrouping;
+  },
+
+  getErrorUrl: function() {
+    return errorUrl;
   },
 
   getHighlightedEdgeIds: function() {
@@ -126,7 +127,12 @@ const AppStore = assign({}, EventEmitter.prototype, {
 
   getVersion: function() {
     return version;
+  },
+
+  isWebsocketClosed: function() {
+    return websocketClosed;
   }
+
 });
 
 // Store Dispatch Hooks
@@ -160,6 +166,11 @@ AppStore.registeredCallback = function(payload) {
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
+    case ActionTypes.CLOSE_WEBSOCKET:
+      websocketClosed = true;
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
     case ActionTypes.ENTER_EDGE:
       mouseOverEdgeId = payload.edgeId;
       AppStore.emit(AppStore.CHANGE_EVENT);
@@ -186,7 +197,13 @@ AppStore.registeredCallback = function(payload) {
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
+    case ActionTypes.RECEIVE_ERROR:
+      errorUrl = payload.errorUrl;
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
     case ActionTypes.RECEIVE_NODE_DETAILS:
+      errorUrl = null;
       nodeDetails = payload.details;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
@@ -197,7 +214,13 @@ AppStore.registeredCallback = function(payload) {
         'update', _.size(payload.delta.update),
         'add', _.size(payload.delta.add));
 
-      connectionState = 'connected';
+      errorUrl = null;
+
+      // flush nodes cache after re-connect
+      if (websocketClosed) {
+        nodes = {};
+      }
+      websocketClosed = false;
 
       // nodes that no longer exist
       _.each(payload.delta.remove, function(nodeId) {
@@ -225,11 +248,13 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.RECEIVE_TOPOLOGIES:
+      errorUrl = null;
       topologies = payload.topologies;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
     case ActionTypes.RECEIVE_API_DETAILS:
+      errorUrl = null;
       version = payload.version;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
