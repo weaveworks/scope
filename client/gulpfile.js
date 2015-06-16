@@ -129,9 +129,18 @@ gulp.task('sync', ['serve'], function(cb) {
     // Note: this uses an unsigned certificate which on first access
     //       will present a certificate warning in the browser.
     https: false,
+    // Will not attempt to determine your network status, assumes you're OFFLINE
+    online: false,
+    port: 4042,
     // Informs browser-sync to proxy our Express app which would run
     // at the following location
-    proxy: 'localhost:4041'
+    proxy: 'localhost:4041',
+    // dont refresh immediately after successive changes
+    reloadDebounce: 2000,
+    // browserSync webapp
+    ui: {
+      port: 4043
+    }
   }, cb);
 
   process.on('exit', function() {

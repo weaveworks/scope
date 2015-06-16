@@ -4,7 +4,7 @@
 
 - Setup: `npm install`
 - Build: `gulp build --release`, output will be in `build/`
-- Develop: `gulp sync` and then open `http://localhost:3000/`
+- Develop: `gulp sync` and then open `http://localhost:4042/`
 
 To see a topology, `../app/app` needs to be running, as well as a probe.
 
