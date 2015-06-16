@@ -58,12 +58,9 @@ var topologyRegistry = map[string]topologyView{
 		renderer: render.LeafMap{Selector: report.SelectEndpoint, Mapper: render.ProcessName, Pseudo: render.GenericGroupedPseudoNode},
 	},
 	"containers": {
-		human:  "Containers",
-		parent: "",
-		renderer: render.Reduce([]render.Renderer{
-			render.LeafMap{Selector: report.SelectEndpoint, Mapper: render.MapEndpoint2Container, Pseudo: render.InternetOnlyPseudoNode},
-			render.LeafMap{Selector: report.SelectContainer, Mapper: render.MapContainerIdentity, Pseudo: render.InternetOnlyPseudoNode},
-		}),
+		human:    "Containers",
+		parent:   "",
+		renderer: render.ContainerRenderer,
 	},
 	"containers-by-image": {
 		human:    "by image",

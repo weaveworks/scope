@@ -134,7 +134,7 @@ func TestMapEdge(t *testing.T) {
 	}
 
 	identity := func(nmd report.NodeMetadata) (render.RenderableNode, bool) {
-		return render.NewRenderableNode(nmd["id"], "", "", ""), true
+		return render.NewRenderableNode(nmd["id"], "", "", "", nmd), true
 	}
 
 	mapper := render.Map{
@@ -331,6 +331,15 @@ var (
 	}
 )
 
+func trimNodeMetadata(rns render.RenderableNodes) render.RenderableNodes {
+	result := render.RenderableNodes{}
+	for id, rn := range rns {
+		rn.NodeMetadata = nil
+		result[id] = rn
+	}
+	return result
+}
+
 func TestRenderByEndpointPID(t *testing.T) {
 	want := render.RenderableNodes{
 		"pid:client-54001-domain:10001": {
@@ -392,9 +401,10 @@ func TestRenderByEndpointPID(t *testing.T) {
 	}
 	have := render.LeafMap{
 		Selector: report.SelectEndpoint,
-		Mapper: render.ProcessPID,
-		Pseudo: render.GenericPseudoNode,
+		Mapper:   render.ProcessPID,
+		Pseudo:   render.GenericPseudoNode,
 	}.Render(rpt)
+	have = trimNodeMetadata(have)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
@@ -450,9 +460,10 @@ func TestRenderByEndpointPIDGrouped(t *testing.T) {
 	}
 	have := render.LeafMap{
 		Selector: report.SelectEndpoint,
-		Mapper: render.ProcessName,
-		Pseudo: render.GenericGroupedPseudoNode,
+		Mapper:   render.ProcessName,
+		Pseudo:   render.GenericGroupedPseudoNode,
 	}.Render(rpt)
+	have = trimNodeMetadata(have)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
@@ -509,9 +520,10 @@ func TestRenderByNetworkHostname(t *testing.T) {
 	}
 	have := render.LeafMap{
 		Selector: report.SelectAddress,
-		Mapper: render.NetworkHostname,
-		Pseudo: render.GenericPseudoNode,
+		Mapper:   render.NetworkHostname,
+		Pseudo:   render.GenericPseudoNode,
 	}.Render(rpt)
+	have = trimNodeMetadata(have)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}

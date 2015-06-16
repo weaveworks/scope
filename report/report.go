@@ -53,6 +53,11 @@ func SelectEndpoint(r Report) Topology {
 	return r.Endpoint
 }
 
+// SelectProcess selects the process topology.
+func SelectProcess(r Report) Topology {
+	return r.Process
+}
+
 // SelectAddress selects the address topology.
 func SelectAddress(r Report) Topology {
 	return r.Address

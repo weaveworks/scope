@@ -31,6 +31,11 @@ type LeafMap struct {
 	Pseudo   PseudoFunc
 }
 
+// MakeReduce is the only sane way to produce a Reduce Renderer
+func MakeReduce(renderers ...Renderer) Renderer {
+	return Reduce(renderers)
+}
+
 // Render produces a set of RenderableNodes given a Report
 func (r Reduce) Render(rpt report.Report) RenderableNodes {
 	result := RenderableNodes{}

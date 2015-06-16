@@ -76,7 +76,11 @@ func addConnection(
 		if _, ok := r.Endpoint.NodeMetadatas[scopedLocal]; !ok {
 			// First hit establishes NodeMetadata for scoped local address + port
 			md := report.NodeMetadata{
-				"pid":    fmt.Sprintf("%d", c.Proc.PID),
+				"addr": c.LocalAddress.String(),
+				"port": strconv.Itoa(int(c.LocalPort)),
+				"pid":  fmt.Sprintf("%d", c.Proc.PID),
+
+				// TODO: These can go away once we derives process graph from process topology
 				"name":   c.Proc.Name,
 				"domain": hostID,
 			}
