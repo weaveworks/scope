@@ -1,22 +1,24 @@
-package report
+package render
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/weaveworks/scope/report"
 )
 
 func TestUngroupedMapping(t *testing.T) {
 	for i, c := range []struct {
 		f                                      MapFunc
 		id                                     string
-		meta                                   NodeMetadata
+		meta                                   report.NodeMetadata
 		wantOK                                 bool
 		wantID, wantMajor, wantMinor, wantRank string
 	}{
 		{
 			f:  NetworkHostname,
-			id: MakeAddressNodeID("", "1.2.3.4"),
-			meta: NodeMetadata{
+			id: report.MakeAddressNodeID("", "1.2.3.4"),
+			meta: report.NodeMetadata{
 				"name": "my.host",
 			},
 			wantOK:    true,
@@ -27,8 +29,8 @@ func TestUngroupedMapping(t *testing.T) {
 		},
 		{
 			f:  NetworkHostname,
-			id: MakeAddressNodeID("", "1.2.3.4"),
-			meta: NodeMetadata{
+			id: report.MakeAddressNodeID("", "1.2.3.4"),
+			meta: report.NodeMetadata{
 				"name": "localhost",
 			},
 			wantOK:    true,
@@ -40,7 +42,7 @@ func TestUngroupedMapping(t *testing.T) {
 		{
 			f:  ProcessPID,
 			id: "not-used-beta",
-			meta: NodeMetadata{
+			meta: report.NodeMetadata{
 				"pid":    "42",
 				"name":   "curl",
 				"domain": "hosta",
@@ -54,7 +56,7 @@ func TestUngroupedMapping(t *testing.T) {
 		{
 			f:  MapEndpoint2Container,
 			id: "foo-id",
-			meta: NodeMetadata{
+			meta: report.NodeMetadata{
 				"pid":    "42",
 				"name":   "curl",
 				"domain": "hosta",
@@ -68,7 +70,7 @@ func TestUngroupedMapping(t *testing.T) {
 		{
 			f:  MapEndpoint2Container,
 			id: "bar-id",
-			meta: NodeMetadata{
+			meta: report.NodeMetadata{
 				"pid":                   "42",
 				"name":                  "curl",
 				"domain":                "hosta",

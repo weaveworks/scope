@@ -8,13 +8,16 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
 func handleTXT(r Reporter) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		dot(w, r.Report().Endpoint.RenderBy(mapFunc(req), nil))
+
+		renderer := render.Map{Selector: report.SelectEndpoint, Mapper: mapFunc(req), Pseudo: nil}
+		dot(w, renderer.Render(r.Report()))
 
 		//report.Render(r.Report(), report.SelectEndpoint, mapFunc(req), report.NoPseudoNode))
 	}
@@ -32,7 +35,8 @@ func handleSVG(r Reporter) http.HandlerFunc {
 
 		cmd.Stdout = w
 
-		dot(wc, r.Report().Endpoint.RenderBy(mapFunc(req), nil))
+		renderer := render.Map{Selector: report.SelectEndpoint, Mapper: mapFunc(req), Pseudo: nil}
+		dot(wc, renderer.Render(r.Report()))
 		wc.Close()
 
 		w.Header().Set("Content-Type", "image/svg+xml")
@@ -98,12 +102,12 @@ func engine(r *http.Request) string {
 	return engine
 }
 
-func mapFunc(r *http.Request) report.MapFunc {
+func mapFunc(r *http.Request) render.MapFunc {
 	switch strings.ToLower(r.FormValue("map_func")) {
 	case "hosts", "networkhost", "networkhostname":
-		return report.NetworkHostname
+		return render.NetworkHostname
 	}
-	return report.ProcessPID
+	return render.ProcessPID
 }
 
 func classView(r *http.Request) bool {

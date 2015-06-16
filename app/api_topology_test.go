@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -146,7 +147,7 @@ func TestAPITopologyWebsocket(t *testing.T) {
 
 	_, p, err := ws.ReadMessage()
 	ok(t, err)
-	var d report.Diff
+	var d render.Diff
 	if err := json.Unmarshal(p, &d); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
