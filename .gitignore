@@ -40,6 +40,7 @@ docker/probe
 experimental/bridge/bridge
 experimental/demoprobe/demoprobe
 experimental/fixprobe/fixprobe
+experimental/fixprobe/*.json
 experimental/genreport/genreport
 experimental/graphviz/graphviz
 experimental/oneshot/oneshot
