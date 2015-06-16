@@ -151,6 +151,7 @@ describe('AppStore', function() {
     expect(AppStore.getNodes()).toEqual(NODE_SET);
 
     registeredCallback(CloseWebsocketAction);
+    expect(AppStore.isWebsocketClosed()).toBeTruthy();
     expect(AppStore.getNodes()).toEqual(NODE_SET);
 
     registeredCallback(ReceiveEmptyNodesDeltaAction);

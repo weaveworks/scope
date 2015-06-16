@@ -23,7 +23,8 @@ function getStateFromStores() {
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     topologies: AppStore.getTopologies(),
-    version: AppStore.getVersion()
+    version: AppStore.getVersion(),
+    websocketClosed: AppStore.isWebsocketClosed()
   };
 }
 
@@ -66,7 +67,7 @@ const App = React.createClass({
         <div className="header">
           <Logo />
           <Topologies topologies={this.state.topologies} currentTopology={this.state.currentTopology} />
-          <Status errorUrl={this.state.errorUrl} />
+          <Status errorUrl={this.state.errorUrl} websocketClosed={this.state.websocketClosed} />
         </div>
 
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}

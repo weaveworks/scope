@@ -2,9 +2,9 @@ const React = require('react');
 
 const Status = React.createClass({
 
-  renderConnectionState: function(errorUrl) {
-    if (errorUrl) {
-      const title = 'Cannot reach Scope. Make sure the following URL is reachable: ' + errorUrl;
+  renderConnectionState: function(errorUrl, websocketClosed) {
+    if (errorUrl || websocketClosed) {
+      const title = errorUrl ? 'Cannot reach Scope. Make sure the following URL is reachable: ' + errorUrl : '';
       return (
         <div className="status-connection" title={title}>
           <span className="status-icon fa fa-exclamation-circle" />
@@ -17,7 +17,7 @@ const Status = React.createClass({
   render: function() {
     return (
       <div className="status">
-        {this.renderConnectionState(this.props.errorUrl)}
+        {this.renderConnectionState(this.props.errorUrl, this.props.websocketClosed)}
       </div>
     );
   }

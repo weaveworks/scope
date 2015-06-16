@@ -127,6 +127,10 @@ const AppStore = assign({}, EventEmitter.prototype, {
 
   getVersion: function() {
     return version;
+  },
+
+  isWebsocketClosed: function() {
+    return websocketClosed;
   }
 
 });
