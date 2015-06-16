@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"reflect"
+	"strings"
 )
 
 const localUnknown = "localUnknown"
@@ -266,42 +267,53 @@ func (r ByID) Less(i, j int) bool { return r[i].ID < r[j].ID }
 
 // Validate checks the topology for various inconsistencies.
 func (t Topology) Validate() error {
-	// Check all edge metadata keys must have the appropriate entries in adjacencies & node metadata
+	// Check all edge metadata keys must have the appropriate entries in
+	// adjacencies & node metadata.
+	var errs []string
 	for edgeID := range t.EdgeMetadatas {
 		srcNodeID, dstNodeID, ok := ParseEdgeID(edgeID)
 		if !ok {
-			return fmt.Errorf("Invalid edge id: %s", edgeID)
+			errs = append(errs, fmt.Sprintf("invalid edge ID %q", edgeID))
+			continue
 		}
 		if _, ok := t.NodeMetadatas[srcNodeID]; !ok {
-			return fmt.Errorf("Source node missing for edge id: %s", edgeID)
+			errs = append(errs, fmt.Sprintf("node metadata missing for source node ID %q (from edge %q)", srcNodeID, edgeID))
+			continue
 		}
-
-		adjs, ok := t.Adjacency[MakeAdjacencyID(srcNodeID)]
+		dstNodeIDs, ok := t.Adjacency[MakeAdjacencyID(srcNodeID)]
 		if !ok {
-			return fmt.Errorf("Adjancey entries for missing for node id: %s (from edge %s)", srcNodeID, edgeID)
+			errs = append(errs, fmt.Sprintf("adjacency entries missing for source node ID %q (from edge %q)", srcNodeID, edgeID))
+			continue
 		}
-		if !adjs.Contains(dstNodeID) {
-			return fmt.Errorf("Adjancey entry missing for edge id: %s", edgeID)
+		if !dstNodeIDs.Contains(dstNodeID) {
+			errs = append(errs, fmt.Sprintf("adjacency destination missing for destination node ID %q (from edge %q)", dstNodeID, edgeID))
+			continue
 		}
 	}
 
-	// Check all adjancency keys has entries in NodeMetadata
-	for adjID := range t.Adjacency {
-		nodeID, ok := ParseAdjacencyID(adjID)
+	// Check all adjancency keys has entries in NodeMetadata.
+	for adjacencyID := range t.Adjacency {
+		nodeID, ok := ParseAdjacencyID(adjacencyID)
 		if !ok {
-			return fmt.Errorf("Invalid adjacency id: %s", adjID)
+			errs = append(errs, fmt.Sprintf("invalid adjacency ID %q", adjacencyID))
+			continue
 		}
-
 		if _, ok := t.NodeMetadatas[nodeID]; !ok {
-			return fmt.Errorf("Source node missing for adjancency id: %s", adjID)
+			errs = append(errs, fmt.Sprintf("node metadata missing for source node %q (from adjacency %q)", nodeID, adjacencyID))
+			continue
 		}
 	}
 
-	// Check all node metadata keys are parse-able (ie, contain a scope)
+	// Check all node metadata keys are parse-able (i.e. contain a scope)
 	for nodeID := range t.NodeMetadatas {
 		if _, _, ok := ParseNodeID(nodeID); !ok {
-			return fmt.Errorf("Invalid node id: %s", nodeID)
+			errs = append(errs, fmt.Sprintf("invalid node ID %q", nodeID))
+			continue
 		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf(strings.Join(errs, "; "))
 	}
 
 	return nil

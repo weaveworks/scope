@@ -103,7 +103,7 @@ func (c *realCollector) loop(batchTime time.Duration) {
 
 		case r := <-c.in:
 			if err := r.Validate(); err != nil {
-				log.Printf("Received invalid report from: %v", err)
+				log.Printf("Received invalid report: %v", err)
 				continue
 			}
 			current.Merge(r)
