@@ -10,7 +10,7 @@ import (
 
 func TestUngroupedMapping(t *testing.T) {
 	for i, c := range []struct {
-		f                                      render.MapFunc
+		f                                      render.LeafMapFunc
 		id                                     string
 		meta                                   report.NodeMetadata
 		wantOK                                 bool

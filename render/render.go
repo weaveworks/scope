@@ -16,6 +16,21 @@ type Renderer interface {
 // other renderers
 type Reduce []Renderer
 
+// Map is a Renderer which produces a set of RendererNodes from the set of
+// RendererNodes produces by another Renderer
+type Map struct {
+	MapFunc
+	Renderer
+}
+
+// LeafMap is a Renderer which produces a set of RendererNodes from a report.Topology
+// by using a map functions and topology selector.
+type LeafMap struct {
+	Selector report.TopologySelector
+	Mapper   LeafMapFunc
+	Pseudo   PseudoFunc
+}
+
 // Render produces a set of RenderableNodes given a Report
 func (r Reduce) Render(rpt report.Report) RenderableNodes {
 	result := RenderableNodes{}
@@ -34,26 +49,93 @@ func (r Reduce) AggregateMetadata(rpt report.Report, localID, remoteID string) r
 	return metadata
 }
 
-// Map is a Renderer which produces a set of RendererNodes by using a
-// Mapper functions and topology selector.
-type Map struct {
-	Selector report.TopologySelector
-	Mapper   MapFunc
-	Pseudo   PseudoFunc
-}
-
-// Render produces a set of RenderableNodes given a Report
+// Render transforms a set of RendererNodes produces by another Renderer
+// using a map function
 func (m Map) Render(rpt report.Report) RenderableNodes {
-	return Topology(m.Selector(rpt), m.Mapper, m.Pseudo)
+	output, _ := m.render(rpt)
+	return output
 }
 
-// Topology transforms a given Topology into a set of RenderableNodes, which
+func (m Map) render(rpt report.Report) (RenderableNodes, map[string]string) {
+	input := m.Renderer.Render(rpt)
+	output := RenderableNodes{}
+	mapped := map[string]string{}             // input node ID -> output node ID
+	adjacencies := map[string]report.IDList{} // output node ID -> input node Adjacencies
+
+	for _, inRenderable := range input {
+		outRenderable, ok := m.MapFunc(inRenderable)
+		if !ok {
+			continue
+		}
+
+		existing, ok := output[outRenderable.ID]
+		if ok {
+			outRenderable.Merge(existing)
+		}
+
+		output[outRenderable.ID] = outRenderable
+		mapped[inRenderable.ID] = outRenderable.ID
+		adjacencies[outRenderable.ID] = adjacencies[outRenderable.ID].Add(inRenderable.Adjacency...)
+	}
+
+	// Rewrite Adjacency for new node IDs.
+	// NB we don't do pseudo nodes here; we assumer the input graph
+	// we properly-connected, and if the map func dropped a node,
+	// we drop links to it.
+	for outNodeID, inAdjacency := range adjacencies {
+		outAdjacency := report.MakeIDList()
+		for _, inAdjacent := range inAdjacency {
+			outAdjacent, ok := mapped[inAdjacent]
+			if ok {
+				outAdjacency = outAdjacency.Add(outAdjacent)
+			}
+		}
+		outNode := output[outNodeID]
+		outNode.Adjacency = outAdjacency
+		output[outNodeID] = outNode
+	}
+
+	return output, mapped
+}
+
+// AggregateMetadata gives the metadata of an edge from the perspective of the
+// srcRenderableID. Since an edgeID can have multiple edges on the address
+// level, it uses the supplied mapping function to translate address IDs to
+// renderable node (mapped) IDs.
+func (m Map) AggregateMetadata(rpt report.Report, srcRenderableID, dstRenderableID string) report.AggregateMetadata {
+	// First we need to map the ids in this layer into the ids in the underlying layer
+	_, mapped := m.render(rpt)        // this maps from old -> new
+	inverted := map[string][]string{} // this maps from new -> old(s)
+	for k, v := range mapped {
+		existing := inverted[v]
+		existing = append(existing, k)
+		inverted[v] = existing
+	}
+
+	// Now work out a slice of edges this edge is constructed from
+	oldEdges := []struct{ src, dst string }{}
+	for _, oldSrcID := range inverted[srcRenderableID] {
+		for _, oldDstID := range inverted[dstRenderableID] {
+			oldEdges = append(oldEdges, struct{ src, dst string }{oldSrcID, oldDstID})
+		}
+	}
+
+	// Now recurse for each old edge
+	output := report.AggregateMetadata{}
+	for _, edge := range oldEdges {
+		metadata := m.Renderer.AggregateMetadata(rpt, edge.src, edge.dst)
+		output.Merge(metadata)
+	}
+	return output
+}
+
+// Render transforms a given Report into a set of RenderableNodes, which
 // the UI will render collectively as a graph. Note that a RenderableNode will
 // always be rendered with other nodes, and therefore contains limited detail.
 //
-// RenderBy takes a a MapFunc, which defines how to group and label nodes. Npdes
-// with the same mapped IDs will be merged.
-func Topology(t report.Topology, mapFunc MapFunc, pseudoFunc PseudoFunc) RenderableNodes {
+// Nodes with the same mapped IDs will be merged.
+func (m LeafMap) Render(rpt report.Report) RenderableNodes {
+	t := m.Selector(rpt)
 	nodes := RenderableNodes{}
 
 	// Build a set of RenderableNodes for all non-pseudo probes, and an
@@ -64,7 +146,7 @@ func Topology(t report.Topology, mapFunc MapFunc, pseudoFunc PseudoFunc) Rendera
 		source2host   = map[string]string{} // source node ID -> origin host ID
 	)
 	for nodeID, metadata := range t.NodeMetadatas {
-		mapped, ok := mapFunc(metadata)
+		mapped, ok := m.Mapper(metadata)
 		if !ok {
 			continue
 		}
@@ -100,7 +182,7 @@ func Topology(t report.Topology, mapFunc MapFunc, pseudoFunc PseudoFunc) Rendera
 		for _, dstNodeID := range dsts {
 			dstRenderableID, ok := source2mapped[dstNodeID]
 			if !ok {
-				pseudoNode, ok := pseudoFunc(srcNodeID, srcRenderableNode, dstNodeID)
+				pseudoNode, ok := m.Pseudo(srcNodeID, srcRenderableNode, dstNodeID)
 				if !ok {
 					continue
 				}
@@ -124,16 +206,12 @@ func Topology(t report.Topology, mapFunc MapFunc, pseudoFunc PseudoFunc) Rendera
 	return nodes
 }
 
-// AggregateMetadata produces an AggregateMetadata for a given edge
-func (m Map) AggregateMetadata(rpt report.Report, localID, remoteID string) report.AggregateMetadata {
-	return edgeMetadata(m.Selector(rpt), m.Mapper, localID, remoteID).Transform()
-}
-
-// EdgeMetadata gives the metadata of an edge from the perspective of the
+// AggregateMetadata gives the metadata of an edge from the perspective of the
 // srcRenderableID. Since an edgeID can have multiple edges on the address
 // level, it uses the supplied mapping function to translate address IDs to
 // renderable node (mapped) IDs.
-func edgeMetadata(t report.Topology, mapFunc MapFunc, srcRenderableID, dstRenderableID string) report.EdgeMetadata {
+func (m LeafMap) AggregateMetadata(rpt report.Report, srcRenderableID, dstRenderableID string) report.AggregateMetadata {
+	t := m.Selector(rpt)
 	metadata := report.EdgeMetadata{}
 	for edgeID, edgeMeta := range t.EdgeMetadatas {
 		src, dst, ok := report.ParseEdgeID(edgeID)
@@ -142,16 +220,16 @@ func edgeMetadata(t report.Topology, mapFunc MapFunc, srcRenderableID, dstRender
 			continue
 		}
 		if src != report.TheInternet {
-			mapped, _ := mapFunc(t.NodeMetadatas[src])
+			mapped, _ := m.Mapper(t.NodeMetadatas[src])
 			src = mapped.ID
 		}
 		if dst != report.TheInternet {
-			mapped, _ := mapFunc(t.NodeMetadatas[dst])
+			mapped, _ := m.Mapper(t.NodeMetadatas[dst])
 			dst = mapped.ID
 		}
 		if src == srcRenderableID && dst == dstRenderableID {
 			metadata.Flatten(edgeMeta)
 		}
 	}
-	return metadata
+	return metadata.Transform()
 }

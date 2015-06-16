@@ -9,7 +9,8 @@ import (
 
 const humanTheInternet = "the Internet"
 
-func newRenderableNode(id, major, minor, rank string) RenderableNode {
+// NewRenderableNode makes a new RenderableNode
+func NewRenderableNode(id, major, minor, rank string) RenderableNode {
 	return RenderableNode{
 		ID:         id,
 		LabelMajor: major,
@@ -31,7 +32,7 @@ func newPseudoNode(id, major, minor string) RenderableNode {
 	}
 }
 
-// MapFunc is anything which can take an arbitrary NodeMetadata, which is
+// LeafMapFunc is anything which can take an arbitrary NodeMetadata, which is
 // always one-to-one with nodes in a topology, and return a specific
 // representation of the referenced node, in the form of a node ID and a
 // human-readable major and minor labels.
@@ -41,13 +42,17 @@ func newPseudoNode(id, major, minor string) RenderableNode {
 //
 // If the final output parameter is false, the node shall be omitted from the
 // rendered topology.
-type MapFunc func(report.NodeMetadata) (RenderableNode, bool)
+type LeafMapFunc func(report.NodeMetadata) (RenderableNode, bool)
 
 // PseudoFunc creates RenderableNode representing pseudo nodes given the dstNodeID.
 // The srcNode renderable node is essentially from MapFunc, representing one of
 // the rendered nodes this pseudo node refers to. srcNodeID and dstNodeID are
 // node IDs prior to mapping.
 type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string) (RenderableNode, bool)
+
+// MapFunc is anything which can take an arbitrary RenderableNode and
+// return another RenderableNode.
+type MapFunc func(RenderableNode) (RenderableNode, bool)
 
 // ProcessPID takes a node NodeMetadata from topology, and returns a
 // representation with the ID based on the process PID and the labels based on
@@ -59,7 +64,7 @@ func ProcessPID(m report.NodeMetadata) (RenderableNode, bool) {
 		show       = m["pid"] != "" && m["name"] != ""
 	)
 
-	return newRenderableNode(identifier, m["name"], minor, m["pid"]), show
+	return NewRenderableNode(identifier, m["name"], minor, m["pid"]), show
 }
 
 // ProcessName takes a node NodeMetadata from a topology, and returns a
@@ -67,7 +72,7 @@ func ProcessPID(m report.NodeMetadata) (RenderableNode, bool) {
 // processes with the same name together).
 func ProcessName(m report.NodeMetadata) (RenderableNode, bool) {
 	show := m["pid"] != "" && m["name"] != ""
-	return newRenderableNode(m["name"], m["name"], "", m["name"]), show
+	return NewRenderableNode(m["name"], m["name"], "", m["name"]), show
 }
 
 // MapEndpoint2Container maps endpoint topology nodes to the containers they run
@@ -82,7 +87,7 @@ func MapEndpoint2Container(m report.NodeMetadata) (RenderableNode, bool) {
 		id, major, minor, rank = m["docker_container_id"], "", m["domain"], ""
 	}
 
-	return newRenderableNode(id, major, minor, rank), true
+	return NewRenderableNode(id, major, minor, rank), true
 }
 
 // MapContainerIdentity maps container topology node to container mapped nodes.
@@ -94,7 +99,7 @@ func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 		id, major, minor, rank = m["docker_container_id"], m["docker_container_name"], m["domain"], m["docker_image_id"]
 	}
 
-	return newRenderableNode(id, major, minor, rank), true
+	return NewRenderableNode(id, major, minor, rank), true
 }
 
 // ProcessContainerImage maps topology nodes to the container images they run
@@ -108,7 +113,7 @@ func ProcessContainerImage(m report.NodeMetadata) (RenderableNode, bool) {
 		id, major, minor, rank = m["docker_image_id"], m["docker_image_name"], "", m["docker_image_id"]
 	}
 
-	return newRenderableNode(id, major, minor, rank), true
+	return NewRenderableNode(id, major, minor, rank), true
 }
 
 // NetworkHostname takes a node NodeMetadata and returns a representation
@@ -125,7 +130,7 @@ func NetworkHostname(m report.NodeMetadata) (RenderableNode, bool) {
 		domain = parts[1]
 	}
 
-	return newRenderableNode(fmt.Sprintf("host:%s", name), parts[0], domain, parts[0]), name != ""
+	return NewRenderableNode(fmt.Sprintf("host:%s", name), parts[0], domain, parts[0]), name != ""
 }
 
 // GenericPseudoNode contains heuristics for building sensible pseudo nodes.
