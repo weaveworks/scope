@@ -81,6 +81,12 @@ func MakeContainerNodeID(hostID, containerID string) string {
 	return hostID + ScopeDelim + containerID
 }
 
+// MakeOverlayNodeID produces an overlay topology node ID from a router peer's
+// name, which is assumed to be globally unique.
+func MakeOverlayNodeID(peerName string) string {
+	return "#" + peerName
+}
+
 // ParseNodeID produces the host ID and remainder (typically an address) from
 // a node ID. Note that hostID may be blank.
 func ParseNodeID(nodeID string) (hostID string, remainder string, ok bool) {
