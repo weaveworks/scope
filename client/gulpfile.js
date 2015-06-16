@@ -23,13 +23,6 @@ gulp.task('clean', del.bind(
   null, ['.tmp', 'build/*'], {dot: true}
 ));
 
-// 3rd party libraries
-gulp.task('vendor', function() {
-  return gulp.src('node_modules/font-awesome/fonts/**')
-    .pipe($.filter('**/*.{eot,svg,ttf,woff,woff2}'))
-    .pipe(gulp.dest('build/fonts'));
-});
-
 // Favicon
 gulp.task('favicon', function() {
   return gulp.src(['app/favicon.ico'])
@@ -86,7 +79,7 @@ gulp.task('bundle', function(cb) {
 
 // Build the app from source code
 gulp.task('build', ['clean'], function(cb) {
-  runSequence(['vendor', 'html', 'favicon', 'bundle'], cb);
+  runSequence(['html', 'favicon', 'bundle'], cb);
 });
 
 // Build and start watching for modifications
