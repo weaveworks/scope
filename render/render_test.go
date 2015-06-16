@@ -1,9 +1,10 @@
-package render
+package render_test
 
 import (
 	"reflect"
 	"testing"
 
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 
 	"github.com/davecgh/go-spew/spew"
@@ -15,11 +16,11 @@ func init() {
 }
 
 type mockRenderer struct {
-	report.RenderableNodes
+	render.RenderableNodes
 	aggregateMetadata report.AggregateMetadata
 }
 
-func (m mockRenderer) Render(rpt report.Report) report.RenderableNodes {
+func (m mockRenderer) Render(rpt report.Report) render.RenderableNodes {
 	return m.RenderableNodes
 }
 func (m mockRenderer) AggregateMetadata(rpt report.Report, localID, remoteID string) report.AggregateMetadata {
@@ -27,12 +28,12 @@ func (m mockRenderer) AggregateMetadata(rpt report.Report, localID, remoteID str
 }
 
 func TestReduceRender(t *testing.T) {
-	renderer := Reduce([]Renderer{
-		mockRenderer{RenderableNodes: report.RenderableNodes{"foo": {ID: "foo"}}},
-		mockRenderer{RenderableNodes: report.RenderableNodes{"bar": {ID: "bar"}}},
+	renderer := render.Reduce([]render.Renderer{
+		mockRenderer{RenderableNodes: render.RenderableNodes{"foo": {ID: "foo"}}},
+		mockRenderer{RenderableNodes: render.RenderableNodes{"bar": {ID: "bar"}}},
 	})
 
-	want := report.RenderableNodes{"foo": {ID: "foo"}, "bar": {ID: "bar"}}
+	want := render.RenderableNodes{"foo": {ID: "foo"}, "bar": {ID: "bar"}}
 	have := renderer.Render(report.MakeReport())
 
 	if !reflect.DeepEqual(want, have) {
@@ -41,7 +42,7 @@ func TestReduceRender(t *testing.T) {
 }
 
 func TestReduceEdge(t *testing.T) {
-	renderer := Reduce([]Renderer{
+	renderer := render.Reduce([]render.Renderer{
 		mockRenderer{aggregateMetadata: report.AggregateMetadata{"foo": 1}},
 		mockRenderer{aggregateMetadata: report.AggregateMetadata{"bar": 2}},
 	})
@@ -60,42 +61,46 @@ var (
 	randomHostID  = "random.hostname.com"
 	unknownHostID = ""
 
+	clientHostName = clientHostID
+	serverHostName = serverHostID
+
 	clientHostNodeID = report.MakeHostNodeID(clientHostID)
 	serverHostNodeID = report.MakeHostNodeID(serverHostID)
 	randomHostNodeID = report.MakeHostNodeID(randomHostID)
 
-	client54001    = report.MakeEndpointNodeID(clientHostID, "10.10.10.20", "54001") // curl (1)
-	client54002    = report.MakeEndpointNodeID(clientHostID, "10.10.10.20", "54002") // curl (2)
-	unknownClient1 = report.MakeEndpointNodeID(serverHostID, "10.10.10.10", "54010") // we want to ensure two unknown clients, connnected
-	unknownClient2 = report.MakeEndpointNodeID(serverHostID, "10.10.10.10", "54020") // to the same server, are deduped.
-	unknownClient3 = report.MakeEndpointNodeID(serverHostID, "10.10.10.11", "54020") // Check this one isn't deduped
-	server80       = report.MakeEndpointNodeID(serverHostID, "192.168.1.1", "80")    // apache
+	client54001NodeID = report.MakeEndpointNodeID(clientHostID, "10.10.10.20", "54001") // curl (1)
+	client54002NodeID = report.MakeEndpointNodeID(clientHostID, "10.10.10.20", "54002") // curl (2)
+	unknownClient1    = report.MakeEndpointNodeID(serverHostID, "10.10.10.10", "54010") // we want to ensure two unknown clients, connnected
+	unknownClient2    = report.MakeEndpointNodeID(serverHostID, "10.10.10.10", "54020") // to the same server, are deduped.
+	unknownClient3    = report.MakeEndpointNodeID(serverHostID, "10.10.10.11", "54020") // Check this one isn't deduped
+	server80          = report.MakeEndpointNodeID(serverHostID, "192.168.1.1", "80")    // apache
 
-	clientIP  = report.MakeAddressNodeID(clientHostID, "10.10.10.20")
-	serverIP  = report.MakeAddressNodeID(serverHostID, "192.168.1.1")
-	randomIP  = report.MakeAddressNodeID(randomHostID, "172.16.11.9") // only in Address topology
-	unknownIP = report.MakeAddressNodeID(unknownHostID, "10.10.10.10")
+	clientAddressNodeID  = report.MakeAddressNodeID(clientHostID, "10.10.10.20")
+	serverAddressNodeID  = report.MakeAddressNodeID(serverHostID, "192.168.1.1")
+	randomAddressNodeID  = report.MakeAddressNodeID(randomHostID, "172.16.11.9") // only in Address topology
+	unknownAddressNodeID = report.MakeAddressNodeID(unknownHostID, "10.10.10.10")
 )
 
 var (
 	rpt = report.Report{
 		Endpoint: report.Topology{
 			Adjacency: report.Adjacency{
-				report.MakeAdjacencyID(client54001): report.MakeIDList(server80),
-				report.MakeAdjacencyID(client54002): report.MakeIDList(server80),
-				report.MakeAdjacencyID(server80):    report.MakeIDList(client54001, client54002, unknownClient1, unknownClient2, unknownClient3),
+				report.MakeAdjacencyID(client54001NodeID): report.MakeIDList(server80),
+				report.MakeAdjacencyID(client54002NodeID): report.MakeIDList(server80),
+				report.MakeAdjacencyID(server80):          report.MakeIDList(client54001NodeID, client54002NodeID, unknownClient1, unknownClient2, unknownClient3),
 			},
 			NodeMetadatas: report.NodeMetadatas{
 				// NodeMetadata is arbitrary. We're free to put only precisely what we
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
-				client54001: report.NodeMetadata{
+				client54001NodeID: report.NodeMetadata{
 					"name":            "curl",
 					"domain":          "client-54001-domain",
 					"pid":             "10001",
 					report.HostNodeID: clientHostNodeID,
+					"host_name":       clientHostName,
 				},
-				client54002: report.NodeMetadata{
+				client54002NodeID: report.NodeMetadata{
 					"name":            "curl",                // should be same as above!
 					"domain":          "client-54002-domain", // may be different than above
 					"pid":             "10001",               // should be same as above!
@@ -109,23 +114,23 @@ var (
 				},
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
-				report.MakeEdgeID(client54001, server80): report.EdgeMetadata{
+				report.MakeEdgeID(client54001NodeID, server80): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 100,
 					BytesEgress:  10,
 				},
-				report.MakeEdgeID(client54002, server80): report.EdgeMetadata{
+				report.MakeEdgeID(client54002NodeID, server80): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 200,
 					BytesEgress:  20,
 				},
 
-				report.MakeEdgeID(server80, client54001): report.EdgeMetadata{
+				report.MakeEdgeID(server80, client54001NodeID): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 10,
 					BytesEgress:  100,
 				},
-				report.MakeEdgeID(server80, client54002): report.EdgeMetadata{
+				report.MakeEdgeID(server80, client54002NodeID): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 20,
 					BytesEgress:  200,
@@ -147,50 +152,84 @@ var (
 				},
 			},
 		},
+		Process: report.Topology{
+			Adjacency: report.Adjacency{},
+			NodeMetadatas: report.NodeMetadatas{
+				report.MakeProcessNodeID(clientHostID, "4242"): report.NodeMetadata{
+					"host_name":             "client.host.com",
+					"pid":                   "4242",
+					"comm":                  "curl",
+					"docker_container_id":   "a1b2c3d4e5",
+					"docker_container_name": "fixture-container",
+					"docker_image_id":       "0000000000",
+					"docker_image_name":     "fixture/container:latest",
+				},
+				report.MakeProcessNodeID(serverHostID, "215"): report.NodeMetadata{
+					"pid":          "215",
+					"process_name": "apache",
+				},
+
+				"no-container": report.NodeMetadata{},
+			},
+			EdgeMetadatas: report.EdgeMetadatas{},
+		},
 		Address: report.Topology{
 			Adjacency: report.Adjacency{
-				report.MakeAdjacencyID(clientIP): report.MakeIDList(serverIP),
-				report.MakeAdjacencyID(randomIP): report.MakeIDList(serverIP),
-				report.MakeAdjacencyID(serverIP): report.MakeIDList(clientIP, unknownIP), // no backlink to random
+				report.MakeAdjacencyID(clientAddressNodeID): report.MakeIDList(serverAddressNodeID),
+				report.MakeAdjacencyID(randomAddressNodeID): report.MakeIDList(serverAddressNodeID),
+				report.MakeAdjacencyID(serverAddressNodeID): report.MakeIDList(clientAddressNodeID, unknownAddressNodeID), // no backlink to random
 			},
 			NodeMetadatas: report.NodeMetadatas{
-				clientIP: report.NodeMetadata{
+				clientAddressNodeID: report.NodeMetadata{
 					"name":            "client.hostname.com", // hostname
+					"host_name":       "client.hostname.com",
 					report.HostNodeID: clientHostNodeID,
 				},
-				randomIP: report.NodeMetadata{
+				randomAddressNodeID: report.NodeMetadata{
 					"name":            "random.hostname.com", // hostname
 					report.HostNodeID: randomHostNodeID,
 				},
-				serverIP: report.NodeMetadata{
+				serverAddressNodeID: report.NodeMetadata{
 					"name":            "server.hostname.com", // hostname
 					report.HostNodeID: serverHostNodeID,
 				},
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
-				report.MakeEdgeID(clientIP, serverIP): report.EdgeMetadata{
+				report.MakeEdgeID(clientAddressNodeID, serverAddressNodeID): report.EdgeMetadata{
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  3,
 				},
-				report.MakeEdgeID(randomIP, serverIP): report.EdgeMetadata{
+				report.MakeEdgeID(randomAddressNodeID, serverAddressNodeID): report.EdgeMetadata{
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  20, // dangling connections, weird but possible
 				},
-				report.MakeEdgeID(serverIP, clientIP): report.EdgeMetadata{
+				report.MakeEdgeID(serverAddressNodeID, clientAddressNodeID): report.EdgeMetadata{
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  3,
 				},
-				report.MakeEdgeID(serverIP, unknownIP): report.EdgeMetadata{
+				report.MakeEdgeID(serverAddressNodeID, unknownAddressNodeID): report.EdgeMetadata{
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  7,
 				},
 			},
 		},
+		Host: report.Topology{
+			Adjacency: report.Adjacency{},
+			NodeMetadatas: report.NodeMetadatas{
+				serverHostNodeID: report.NodeMetadata{
+					"host_name":      serverHostName,
+					"local_networks": "10.10.10.0/24",
+					"os":             "Linux",
+					"load":           "0.01 0.01 0.01",
+				},
+			},
+			EdgeMetadatas: report.EdgeMetadatas{},
+		},
 	}
 )
 
 func TestRenderByEndpointPID(t *testing.T) {
-	want := report.RenderableNodes{
+	want := render.RenderableNodes{
 		"pid:client-54001-domain:10001": {
 			ID:         "pid:client-54001-domain:10001",
 			LabelMajor: "curl",
@@ -248,7 +287,7 @@ func TestRenderByEndpointPID(t *testing.T) {
 			Metadata:   report.AggregateMetadata{},
 		},
 	}
-	have := renderTopology(rpt.Endpoint, ProcessPID, GenericPseudoNode)
+	have := render.Topology(rpt.Endpoint, render.ProcessPID, render.GenericPseudoNode)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
@@ -258,7 +297,7 @@ func TestRenderByEndpointPIDGrouped(t *testing.T) {
 	// For grouped, I've somewhat arbitrarily chosen to squash together all
 	// processes with the same name by removing the PID and domain (host)
 	// dimensions from the ID. That could be changed.
-	want := report.RenderableNodes{
+	want := render.RenderableNodes{
 		"curl": {
 			ID:         "curl",
 			LabelMajor: "curl",
@@ -302,14 +341,14 @@ func TestRenderByEndpointPIDGrouped(t *testing.T) {
 			Metadata:   report.AggregateMetadata{},
 		},
 	}
-	have := renderTopology(rpt.Endpoint, ProcessName, GenericGroupedPseudoNode)
+	have := render.Topology(rpt.Endpoint, render.ProcessName, render.GenericGroupedPseudoNode)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}
 }
 
 func TestRenderByNetworkHostname(t *testing.T) {
-	want := report.RenderableNodes{
+	want := render.RenderableNodes{
 		"host:client.hostname.com": {
 			ID:         "host:client.hostname.com",
 			LabelMajor: "client",       // before first .
@@ -357,7 +396,7 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Metadata:   report.AggregateMetadata{},
 		},
 	}
-	have := renderTopology(rpt.Address, NetworkHostname, GenericPseudoNode)
+	have := render.Topology(rpt.Address, render.NetworkHostname, render.GenericPseudoNode)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))
 	}

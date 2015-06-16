@@ -1,23 +1,50 @@
-package report
+package render
 
 import (
 	"reflect"
 	"strconv"
+
+	"github.com/weaveworks/scope/report"
 )
+
+// DetailedNode is the data type that's yielded to the JavaScript layer when
+// we want deep information about an individual node.
+type DetailedNode struct {
+	ID         string  `json:"id"`
+	LabelMajor string  `json:"label_major"`
+	LabelMinor string  `json:"label_minor,omitempty"`
+	Pseudo     bool    `json:"pseudo,omitempty"`
+	Tables     []Table `json:"tables"`
+}
+
+// Table is a dataset associated with a node. It will be displayed in the
+// detail panel when a user clicks on a node.
+type Table struct {
+	Title   string `json:"title"`   // e.g. Bandwidth
+	Numeric bool   `json:"numeric"` // should the major column be right-aligned?
+	Rows    []Row  `json:"rows"`
+}
+
+// Row is a single entry in a Table dataset.
+type Row struct {
+	Key        string `json:"key"`                   // e.g. Ingress
+	ValueMajor string `json:"value_major"`           // e.g. 25
+	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
+}
 
 // MakeDetailedNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
-func MakeDetailedNode(r Report, n RenderableNode) DetailedNode {
+func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	tables := []Table{}
 	{
 		rows := []Row{}
-		if val, ok := n.Metadata[KeyMaxConnCountTCP]; ok {
+		if val, ok := n.Metadata[report.KeyMaxConnCountTCP]; ok {
 			rows = append(rows, Row{"TCP connections", strconv.FormatInt(int64(val), 10), ""})
 		}
-		if val, ok := n.Metadata[KeyBytesIngress]; ok {
+		if val, ok := n.Metadata[report.KeyBytesIngress]; ok {
 			rows = append(rows, Row{"Bytes ingress", strconv.FormatInt(int64(val), 10), ""})
 		}
-		if val, ok := n.Metadata[KeyBytesEgress]; ok {
+		if val, ok := n.Metadata[report.KeyBytesEgress]; ok {
 			rows = append(rows, Row{"Bytes egress", strconv.FormatInt(int64(val), 10), ""})
 		}
 		if len(rows) > 0 {
@@ -53,7 +80,7 @@ outer:
 
 // OriginTable produces a table (to be consumed directly by the UI) based on
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
-func OriginTable(r Report, originID string) (Table, bool) {
+func OriginTable(r report.Report, originID string) (Table, bool) {
 	if nmd, ok := r.Endpoint.NodeMetadatas[originID]; ok {
 		return endpointOriginTable(nmd)
 	}
@@ -72,7 +99,7 @@ func OriginTable(r Report, originID string) (Table, bool) {
 	return Table{}, false
 }
 
-func endpointOriginTable(nmd NodeMetadata) (Table, bool) {
+func endpointOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
 		{"endpoint", "Endpoint"},
@@ -91,7 +118,7 @@ func endpointOriginTable(nmd NodeMetadata) (Table, bool) {
 	}, len(rows) > 0
 }
 
-func addressOriginTable(nmd NodeMetadata) (Table, bool) {
+func addressOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	if val, ok := nmd["address"]; ok {
 		rows = append(rows, Row{"Address", val, ""})
@@ -106,7 +133,7 @@ func addressOriginTable(nmd NodeMetadata) (Table, bool) {
 	}, len(rows) > 0
 }
 
-func processOriginTable(nmd NodeMetadata) (Table, bool) {
+func processOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	if val, ok := nmd["comm"]; ok {
 		rows = append(rows, Row{"Name (comm)", val, ""})
@@ -124,7 +151,7 @@ func processOriginTable(nmd NodeMetadata) (Table, bool) {
 	}, len(rows) > 0
 }
 
-func containerOriginTable(nmd NodeMetadata) (Table, bool) {
+func containerOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
 		{"docker_container_id", "Container ID"},
@@ -143,7 +170,7 @@ func containerOriginTable(nmd NodeMetadata) (Table, bool) {
 	}, len(rows) > 0
 }
 
-func hostOriginTable(nmd NodeMetadata) (Table, bool) {
+func hostOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	if val, ok := nmd["host_name"]; ok {
 		rows = append(rows, Row{"Host name", val, ""})

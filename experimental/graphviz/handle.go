@@ -56,7 +56,7 @@ func handleHTML(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "</body></html>\n")
 }
 
-func dot(w io.Writer, m map[string]report.RenderableNode) {
+func dot(w io.Writer, m map[string]render.RenderableNode) {
 	fmt.Fprintf(w, "digraph G {\n")
 	fmt.Fprintf(w, "\tgraph [ overlap=false ];\n")
 	fmt.Fprintf(w, "\tnode [ shape=circle, style=filled ];\n")

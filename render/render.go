@@ -8,7 +8,7 @@ import (
 
 // Renderer is something that can render a report to a set of RenderableNodes
 type Renderer interface {
-	Render(report.Report) report.RenderableNodes
+	Render(report.Report) RenderableNodes
 	AggregateMetadata(rpt report.Report, localID, remoteID string) report.AggregateMetadata
 }
 
@@ -17,8 +17,8 @@ type Renderer interface {
 type Reduce []Renderer
 
 // Render produces a set of RenderableNodes given a Report
-func (r Reduce) Render(rpt report.Report) report.RenderableNodes {
-	result := report.RenderableNodes{}
+func (r Reduce) Render(rpt report.Report) RenderableNodes {
+	result := RenderableNodes{}
 	for _, renderer := range r {
 		result.Merge(renderer.Render(rpt))
 	}
@@ -43,18 +43,18 @@ type Map struct {
 }
 
 // Render produces a set of RenderableNodes given a Report
-func (m Map) Render(rpt report.Report) report.RenderableNodes {
-	return renderTopology(m.Selector(rpt), m.Mapper, m.Pseudo)
+func (m Map) Render(rpt report.Report) RenderableNodes {
+	return Topology(m.Selector(rpt), m.Mapper, m.Pseudo)
 }
 
-// RenderBy transforms a given Topology into a set of RenderableNodes, which
+// Topology transforms a given Topology into a set of RenderableNodes, which
 // the UI will render collectively as a graph. Note that a RenderableNode will
 // always be rendered with other nodes, and therefore contains limited detail.
 //
 // RenderBy takes a a MapFunc, which defines how to group and label nodes. Npdes
 // with the same mapped IDs will be merged.
-func renderTopology(t report.Topology, mapFunc MapFunc, pseudoFunc PseudoFunc) report.RenderableNodes {
-	nodes := report.RenderableNodes{}
+func Topology(t report.Topology, mapFunc MapFunc, pseudoFunc PseudoFunc) RenderableNodes {
+	nodes := RenderableNodes{}
 
 	// Build a set of RenderableNodes for all non-pseudo probes, and an
 	// addressID to nodeID lookup map. Multiple addressIDs can map to the same

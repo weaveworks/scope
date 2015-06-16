@@ -18,12 +18,12 @@ const (
 
 // APITopology is returned by the /api/topology/{name} handler.
 type APITopology struct {
-	Nodes report.RenderableNodes `json:"nodes"`
+	Nodes render.RenderableNodes `json:"nodes"`
 }
 
 // APINode is returned by the /api/topology/{name}/{id} handler.
 type APINode struct {
-	Node report.DetailedNode `json:"node"`
+	Node render.DetailedNode `json:"node"`
 }
 
 // APIEdge is returned by the /api/topology/*/*/* handlers.
@@ -67,7 +67,7 @@ func handleNode(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Req
 		http.NotFound(w, r)
 		return
 	}
-	respondWith(w, http.StatusOK, APINode{Node: report.MakeDetailedNode(rpt, node)})
+	respondWith(w, http.StatusOK, APINode{Node: render.MakeDetailedNode(rpt, node)})
 }
 
 // Individual edges.
@@ -112,7 +112,7 @@ func handleWebsocket(
 	}(conn)
 
 	var (
-		previousTopo report.RenderableNodes
+		previousTopo render.RenderableNodes
 		tick         = time.Tick(loop)
 	)
 	for {

@@ -45,48 +45,6 @@ const (
 	HostNodeID = "host_node_id"
 )
 
-// RenderableNode is the data type that's yielded to the JavaScript layer as
-// an element of a topology. It should contain information that's relevant
-// to rendering a node when there are many nodes visible at once.
-type RenderableNode struct {
-	ID         string            `json:"id"`                    //
-	LabelMajor string            `json:"label_major"`           // e.g. "process", human-readable
-	LabelMinor string            `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
-	Rank       string            `json:"rank"`                  // to help the layout engine
-	Pseudo     bool              `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
-	Adjacency  IDList            `json:"adjacency,omitempty"`   // Node IDs (in the same topology domain)
-	Origins    IDList            `json:"origins,omitempty"`     // Core node IDs that contributed information
-	Metadata   AggregateMetadata `json:"metadata"`              // Numeric sums
-}
-
-// RenderableNodes is a set of RenderableNodes
-type RenderableNodes map[string]RenderableNode
-
-// DetailedNode is the data type that's yielded to the JavaScript layer when
-// we want deep information about an individual node.
-type DetailedNode struct {
-	ID         string  `json:"id"`
-	LabelMajor string  `json:"label_major"`
-	LabelMinor string  `json:"label_minor,omitempty"`
-	Pseudo     bool    `json:"pseudo,omitempty"`
-	Tables     []Table `json:"tables"`
-}
-
-// Table is a dataset associated with a node. It will be displayed in the
-// detail panel when a user clicks on a node.
-type Table struct {
-	Title   string `json:"title"`   // e.g. Bandwidth
-	Numeric bool   `json:"numeric"` // should the major column be right-aligned?
-	Rows    []Row  `json:"rows"`
-}
-
-// Row is a single entry in a Table dataset.
-type Row struct {
-	Key        string `json:"key"`                   // e.g. Ingress
-	ValueMajor string `json:"value_major"`           // e.g. 25
-	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
-}
-
 // TopologySelector selects a single topology from a report.
 type TopologySelector func(r Report) Topology
 
