@@ -16,8 +16,12 @@ module.exports = function(config) {
       'tests.webpack.js': ['webpack']
     },
     reporters: [
-      'dots'
+      'dots',
+      'coverage'
     ],
+    coverageReporter: {
+      type: 'text-summary'
+    },
     webpack: {
       module: {
         loaders: [
@@ -25,6 +29,13 @@ module.exports = function(config) {
             test: /\.js?$/,
             exclude: /node_modules/,
             loader: 'babel-loader'
+          }
+        ],
+        postLoaders: [
+          {
+            test: /\.js$/,
+            exclude: /(test|node_modules|bower_components)\//,
+            loader: 'istanbul-instrumenter'
           }
         ]
       },

@@ -128,7 +128,6 @@ describe('AppStore', function() {
     registeredCallback(RouteAction);
     expect(AppStore.getSelectedNodeId()).toBe(null);
     expect(AppStore.getNodes()).toEqual(NODE_SET);
-
   });
 
 
