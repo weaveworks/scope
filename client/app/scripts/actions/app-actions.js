@@ -12,15 +12,6 @@ module.exports = {
     RouterUtils.updateRoute();
   },
 
-  clickGrouping: function(grouping) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.CLICK_GROUPING,
-      grouping: grouping
-    });
-    RouterUtils.updateRoute();
-    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
-  },
-
   clickNode: function(nodeId) {
     AppDispatcher.dispatch({
       type: ActionTypes.CLICK_NODE,

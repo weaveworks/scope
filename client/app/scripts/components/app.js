@@ -16,7 +16,6 @@ function getStateFromStores() {
   return {
     currentTopology: AppStore.getCurrentTopology(),
     errorUrl: AppStore.getErrorUrl(),
-    currentGrouping: AppStore.getCurrentGrouping(),
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
     selectedNodeId: AppStore.getSelectedNodeId(),
