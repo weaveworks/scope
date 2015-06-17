@@ -82,7 +82,7 @@ func newDerivedNode(id string, node RenderableNode) RenderableNode {
 		Pseudo:            node.Pseudo,
 		AggregateMetadata: node.AggregateMetadata,
 		Origins:           node.Origins,
-		NodeMetadata:      node.NodeMetadata,
+		NodeMetadata:      report.NodeMetadata{},
 	}
 }
 
@@ -107,6 +107,6 @@ func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode 
 		Pseudo:            true,
 		AggregateMetadata: node.AggregateMetadata,
 		Origins:           node.Origins,
-		NodeMetadata:      node.NodeMetadata,
+		NodeMetadata:      report.NodeMetadata{},
 	}
 }
