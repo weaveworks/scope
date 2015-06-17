@@ -97,3 +97,16 @@ func newPseudoNode(id, major, minor string) RenderableNode {
 		NodeMetadata:      report.NodeMetadata{},
 	}
 }
+
+func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode {
+	return RenderableNode{
+		ID:                id,
+		LabelMajor:        major,
+		LabelMinor:        "",
+		Rank:              "",
+		Pseudo:            true,
+		AggregateMetadata: node.AggregateMetadata,
+		Origins:           node.Origins,
+		NodeMetadata:      node.NodeMetadata,
+	}
+}

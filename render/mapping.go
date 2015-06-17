@@ -7,9 +7,10 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
+// Constants are used in the tests.
 const (
-	uncontainedID    = "uncontained"
-	uncontainedMajor = "Uncontained"
+	UncontainedID    = "uncontained"
+	UncontainedMajor = "Uncontained"
 
 	humanTheInternet = "the Internet"
 )
@@ -44,11 +45,17 @@ type MapFunc func(RenderableNode) (RenderableNode, bool)
 // presences of certain keys.
 func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = fmt.Sprintf("endpoint:%s:%s:%s", getHostname(m), m["addr"], m["port"])
-		major = fmt.Sprintf("%s:%s", m["addr"], m["port"])
-		minor = fmt.Sprintf("%s (%s)", getHostname(m), m["pid"])
-		rank  = m["pid"]
+		id      = fmt.Sprintf("endpoint:%s:%s:%s", getHostname(m), m["addr"], m["port"])
+		major   = fmt.Sprintf("%s:%s", m["addr"], m["port"])
+		pid, ok = m["pid"]
+		minor   = getHostname(m)
+		rank    = major
 	)
+
+	if ok {
+		minor = fmt.Sprintf("%s (%s)", getHostname(m), pid)
+	}
+
 	return NewRenderableNode(id, major, minor, rank, m), true
 }
 
@@ -119,8 +126,8 @@ func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
 // must be merged with a container graph to get that info.
 func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
 	id, ok := n.NodeMetadata["docker_container_id"]
-	if !ok {
-		return newPseudoNode(uncontainedID, uncontainedMajor, ""), true
+	if !ok || n.Pseudo {
+		return newDerivedPseudoNode(UncontainedID, UncontainedMajor, n), true
 	}
 
 	return newDerivedNode(id, n), true
@@ -154,21 +161,13 @@ func getHostname(m report.NodeMetadata) string {
 	return hostname
 }
 
-// ProcessName takes a node NodeMetadata from a topology, and returns a
-// representation with the ID based on the process name (grouping all
-// processes with the same name together).
-func ProcessName(m report.NodeMetadata) (RenderableNode, bool) {
-	show := m["pid"] != "" && m["name"] != ""
-	return NewRenderableNode(m["name"], m["name"], "", m["name"], m), show
-}
-
 // ProcessContainerImage maps topology nodes to the container images they run
 // on. If no container metadata is found, nodes are grouped into the
 // Uncontained node.
 func ProcessContainerImage(m report.NodeMetadata) (RenderableNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_image_id"] == "" {
-		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
+		id, major, minor, rank = UncontainedID, UncontainedMajor, "", UncontainedID
 	} else {
 		id, major, minor, rank = m["docker_image_id"], m["docker_image_name"], "", m["docker_image_id"]
 	}

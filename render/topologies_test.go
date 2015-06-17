@@ -54,6 +54,11 @@ var (
 	clientProcessNodeID       = report.MakeProcessNodeID(clientHostID, clientPID)
 	serverProcessNodeID       = report.MakeProcessNodeID(serverHostID, serverPID)
 	nonContainerProcessNodeID = report.MakeProcessNodeID(serverHostID, nonContainerPID)
+
+	clientContainerID     = "a1b2c3d4e5"
+	serverContainerID     = "5e4d3c2b1a"
+	clientContainerNodeID = report.MakeContainerNodeID(clientHostID, clientContainerID)
+	serverContainerNodeID = report.MakeContainerNodeID(serverHostID, serverContainerID)
 )
 
 var (
@@ -132,13 +137,13 @@ var (
 				clientProcessNodeID: report.NodeMetadata{
 					"pid":                 clientPID,
 					"comm":                "curl",
-					"docker_container_id": "a1b2c3d4e5",
+					"docker_container_id": clientContainerID,
 					report.HostNodeID:     clientHostNodeID,
 				},
 				serverProcessNodeID: report.NodeMetadata{
 					"pid":                 serverPID,
 					"comm":                "apache",
-					"docker_container_id": "5e4d3c2b1a",
+					"docker_container_id": serverContainerID,
 					report.HostNodeID:     serverHostNodeID,
 				},
 				nonContainerProcessNodeID: report.NodeMetadata{
@@ -148,6 +153,20 @@ var (
 				},
 			},
 			EdgeMetadatas: report.EdgeMetadatas{},
+		},
+		Container: report.Topology{
+			NodeMetadatas: report.NodeMetadatas{
+				clientContainerNodeID: report.NodeMetadata{
+					"docker_container_id":   clientContainerID,
+					"docker_container_name": "client",
+					report.HostNodeID:       clientHostNodeID,
+				},
+				serverContainerNodeID: report.NodeMetadata{
+					"docker_container_id":   serverContainerID,
+					"docker_container_name": "server",
+					report.HostNodeID:       serverHostNodeID,
+				},
+			},
 		},
 		Address: report.Topology{
 			Adjacency: report.Adjacency{
@@ -345,6 +364,54 @@ func TestProcessNameRenderer(t *testing.T) {
 		},
 	}
 	have := render.ProcessNameRenderer.Render(rpt)
+	have = trimNodeMetadata(have)
+	if !reflect.DeepEqual(want, have) {
+		t.Error("\n" + diff(want, have))
+	}
+}
+
+func TestContainerRenderer(t *testing.T) {
+	// For grouped, I've somewhat arbitrarily chosen to squash together all
+	// processes with the same name by removing the PID and domain (host)
+	// dimensions from the ID. That could be changed.
+	want := render.RenderableNodes{
+		clientContainerID: {
+			ID:         clientContainerID,
+			LabelMajor: "client",
+			LabelMinor: clientHostName,
+			Rank:       "",
+			Pseudo:     false,
+			Adjacency:  report.MakeIDList(serverContainerID),
+			Origins:    report.MakeIDList(clientContainerNodeID, client54001NodeID, client54002NodeID, clientProcessNodeID, clientHostNodeID),
+			AggregateMetadata: report.AggregateMetadata{
+				report.KeyBytesIngress: 300,
+				report.KeyBytesEgress:  30,
+			},
+		},
+		serverContainerID: {
+			ID:         serverContainerID,
+			LabelMajor: "server",
+			LabelMinor: serverHostName,
+			Rank:       "",
+			Pseudo:     false,
+			Adjacency:  report.MakeIDList(clientContainerID, render.UncontainedID),
+			Origins:    report.MakeIDList(serverContainerNodeID, server80NodeID, serverProcessNodeID, serverHostNodeID),
+			AggregateMetadata: report.AggregateMetadata{
+				report.KeyBytesIngress: 150,
+				report.KeyBytesEgress:  1500,
+			},
+		},
+		render.UncontainedID: {
+			ID:                render.UncontainedID,
+			LabelMajor:        render.UncontainedMajor,
+			LabelMinor:        "",
+			Rank:              "",
+			Pseudo:            true,
+			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
+			AggregateMetadata: report.AggregateMetadata{},
+		},
+	}
+	have := render.ContainerRenderer.Render(rpt)
 	have = trimNodeMetadata(have)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + diff(want, have))

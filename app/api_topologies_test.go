@@ -26,15 +26,15 @@ func TestAPITopology(t *testing.T) {
 		}
 
 		if have := topology.Stats.EdgeCount; have <= 0 {
-			t.Errorf("EdgeCount isn't positive: %d", have)
+			t.Errorf("EdgeCount isn't positive for %s: %d", topology.Name, have)
 		}
 
 		if have := topology.Stats.NodeCount; have <= 0 {
-			t.Errorf("NodeCount isn't positive: %d", have)
+			t.Errorf("NodeCount isn't positive for %s: %d", topology.Name, have)
 		}
 
 		if have := topology.Stats.NonpseudoNodeCount; have <= 0 {
-			t.Errorf("NonpseudoNodeCount isn't positive: %d", have)
+			t.Errorf("NonpseudoNodeCount isn't positive for %s: %d", topology.Name, have)
 		}
 	}
 }

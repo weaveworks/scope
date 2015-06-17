@@ -55,28 +55,59 @@ func (s StaticReport) Report() report.Report {
 			},
 			NodeMetadatas: report.NodeMetadatas{
 				report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345"): report.NodeMetadata{
+					"addr":            "192.168.1.1",
+					"port":            "12345",
 					"pid":             "23128",
-					"name":            "curl",
-					"domain":          "node-a.local",
 					report.HostNodeID: report.MakeHostNodeID("hostA"),
 				},
 				report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346"): report.NodeMetadata{ // <-- same as :12345
+					"addr":            "192.168.1.1",
+					"port":            "12346",
 					"pid":             "23128",
-					"name":            "curl",
-					"domain":          "node-a.local",
 					report.HostNodeID: report.MakeHostNodeID("hostA"),
 				},
 				report.MakeEndpointNodeID("hostA", "192.168.1.1", "8888"): report.NodeMetadata{
+					"addr":            "192.168.1.1",
+					"port":            "8888",
 					"pid":             "55100",
-					"name":            "ssh",
-					"domain":          "node-a.local",
 					report.HostNodeID: report.MakeHostNodeID("hostA"),
 				},
 				report.MakeEndpointNodeID("hostB", "192.168.1.2", "80"): report.NodeMetadata{
+					"addr":            "192.168.1.2",
+					"port":            "80",
 					"pid":             "215",
-					"name":            "apache",
-					"domain":          "node-b.local",
 					report.HostNodeID: report.MakeHostNodeID("hostB"),
+				},
+			},
+		},
+
+		Process: report.Topology{
+			NodeMetadatas: report.NodeMetadatas{
+				report.MakeProcessNodeID("hostA", "23128"): report.NodeMetadata{
+					"pid":             "23128",
+					"comm":            "curl",
+					report.HostNodeID: report.MakeHostNodeID("hostA"),
+				},
+				report.MakeProcessNodeID("hostA", "8888"): report.NodeMetadata{
+					"pid":             "8888",
+					"comm":            "ssh",
+					report.HostNodeID: report.MakeHostNodeID("hostA"),
+				},
+				report.MakeProcessNodeID("hostB", "80"): report.NodeMetadata{
+					"pid":                 "80",
+					"comm":                "apache",
+					"docker_container_id": "abcdefg",
+					report.HostNodeID:     report.MakeHostNodeID("hostB"),
+				},
+			},
+		},
+
+		Container: report.Topology{
+			NodeMetadatas: report.NodeMetadatas{
+				report.MakeContainerNodeID("hostB", "abcdefg"): report.NodeMetadata{
+					"docker_container_id":   "abcdefg",
+					"docker_container_name": "server",
+					report.HostNodeID:       report.MakeHostNodeID("hostB"),
 				},
 			},
 		},

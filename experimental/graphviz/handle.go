@@ -107,7 +107,7 @@ func mapFunc(r *http.Request) render.LeafMapFunc {
 	case "hosts", "networkhost", "networkhostname":
 		return render.NetworkHostname
 	}
-	return render.ProcessPID
+	return render.MapProcessIdentity
 }
 
 func classView(r *http.Request) bool {
