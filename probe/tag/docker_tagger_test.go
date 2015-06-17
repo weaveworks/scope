@@ -67,8 +67,8 @@ func TestDockerTagger(t *testing.T) {
 	}
 
 	var (
-		endpoint1NodeID      = "somehost.com;192.168.1.1;12345"
-		endpoint2NodeID      = "somehost.com;192.168.1.1;67890"
+		pid1NodeID           = report.MakeProcessNodeID("somehost.com", "1")
+		pid2NodeID           = report.MakeProcessNodeID("somehost.com", "2")
 		endpointNodeMetadata = report.NodeMetadata{
 			ContainerID: "foo",
 			ImageID:     "baz",
@@ -83,17 +83,17 @@ func TestDockerTagger(t *testing.T) {
 	)
 
 	r := report.MakeReport()
-	r.Endpoint.NodeMetadatas[endpoint1NodeID] = report.NodeMetadata{"pid": "1"}
-	r.Endpoint.NodeMetadatas[endpoint2NodeID] = report.NodeMetadata{"pid": "2"}
+	r.Process.NodeMetadatas[pid1NodeID] = report.NodeMetadata{"pid": "1"}
+	r.Process.NodeMetadatas[pid2NodeID] = report.NodeMetadata{"pid": "2"}
 
 	dockerTagger, _ := NewDockerTagger("/irrelevant", 10*time.Second)
 	runtime.Gosched()
-	for _, endpointNodeID := range []string{endpoint1NodeID, endpoint2NodeID} {
+	for _, nodeID := range []string{pid1NodeID, pid2NodeID} {
 		want := endpointNodeMetadata.Copy()
-		have := dockerTagger.Tag(r).Endpoint.NodeMetadatas[endpointNodeID].Copy()
+		have := dockerTagger.Tag(r).Process.NodeMetadatas[nodeID].Copy()
 		delete(have, "pid")
 		if !reflect.DeepEqual(want, have) {
-			t.Errorf("%q: want %+v, have %+v", endpointNodeID, want, have)
+			t.Errorf("%q: want %+v, have %+v", nodeID, want, have)
 		}
 	}
 
