@@ -151,10 +151,7 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 	// Build a set of RenderableNodes for all non-pseudo probes, and an
 	// addressID to nodeID lookup map. Multiple addressIDs can map to the same
 	// RenderableNodes.
-	var (
-		source2mapped = map[string]string{} // source node ID -> mapped node ID
-		source2host   = map[string]string{} // source node ID -> origin host ID
-	)
+	source2mapped := map[string]string{} // source node ID -> mapped node ID
 	for nodeID, metadata := range t.NodeMetadatas {
 		mapped, ok := m.Mapper(metadata)
 		if !ok {
@@ -169,18 +166,19 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 			mapped.Merge(existing)
 		}
 
-		mapped.Origins = mapped.Origins.Add(nodeID)
+		origins := mapped.Origins
+		origins = origins.Add(nodeID)
+		origins = origins.Add(metadata[report.HostNodeID])
+		mapped.Origins = origins
+
 		nodes[mapped.ID] = mapped
 		source2mapped[nodeID] = mapped.ID
-		source2host[nodeID] = metadata[report.HostNodeID]
 	}
 
 	// Walk the graph and make connections.
 	for src, dsts := range t.Adjacency {
 		var (
-			srcNodeID, ok = report.ParseAdjacencyID(src)
-			//srcOriginHostID, _, ok2 = ParseNodeID(srcNodeID)
-			srcHostNodeID     = source2host[srcNodeID]
+			srcNodeID, ok     = report.ParseAdjacencyID(src)
 			srcRenderableID   = source2mapped[srcNodeID] // must exist
 			srcRenderableNode = nodes[srcRenderableID]   // must exist
 		)
@@ -202,7 +200,6 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 			}
 
 			srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
-			srcRenderableNode.Origins = srcRenderableNode.Origins.Add(srcHostNodeID)
 			srcRenderableNode.Origins = srcRenderableNode.Origins.Add(srcNodeID)
 			edgeID := report.MakeEdgeID(srcNodeID, dstNodeID)
 			if md, ok := t.EdgeMetadatas[edgeID]; ok {

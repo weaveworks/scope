@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
 )
 
 func TestMakeDetailedNode(t *testing.T) {
@@ -21,9 +20,8 @@ func TestOriginTable(t *testing.T) {
 			Title:   "Origin Endpoint",
 			Numeric: false,
 			Rows: []render.Row{
-				{"Host name", clientHostName, ""},
-				{"PID", "10001", ""},
-				{"Process name", "curl", ""},
+				{"Endpoint", clientIP, ""},
+				{"Port", clientPort54001, ""},
 			},
 		},
 		clientAddressNodeID: {
@@ -33,12 +31,12 @@ func TestOriginTable(t *testing.T) {
 				{"Host name", clientHostName, ""},
 			},
 		},
-		report.MakeProcessNodeID(clientHostID, "4242"): {
+		serverProcessNodeID: {
 			Title:   "Origin Process",
 			Numeric: false,
 			Rows: []render.Row{
-				{"Name (comm)", "curl", ""},
-				{"PID", "4242", ""},
+				{"Name (comm)", "apache", ""},
+				{"PID", serverPID, ""},
 			},
 		},
 		serverHostNodeID: {

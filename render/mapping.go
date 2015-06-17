@@ -143,25 +143,15 @@ func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
 		return RenderableNode{}, false
 	}
 
-	return NewRenderableNode(name, name, "", name, n.NodeMetadata), true
+	node := newDerivedNode(name, n)
+	node.LabelMajor = name
+	node.Rank = name
+	return node, true
 }
 
 func getHostname(m report.NodeMetadata) string {
 	hostname, _, _ := report.ParseNodeID(m[report.HostNodeID])
 	return hostname
-}
-
-// ProcessPID takes a node NodeMetadata from topology, and returns a
-// representation with the ID based on the process PID and the labels based on
-// the process name.
-func ProcessPID(m report.NodeMetadata) (RenderableNode, bool) {
-	var (
-		identifier = fmt.Sprintf("%s:%s:%s", "pid", m["domain"], m["pid"])
-		minor      = fmt.Sprintf("%s (%s)", m["domain"], m["pid"])
-		show       = m["pid"] != "" && m["name"] != ""
-	)
-
-	return NewRenderableNode(identifier, m["name"], minor, m["pid"], m), show
 }
 
 // ProcessName takes a node NodeMetadata from a topology, and returns a

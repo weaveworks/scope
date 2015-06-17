@@ -102,10 +102,8 @@ func OriginTable(r report.Report, originID string) (Table, bool) {
 func endpointOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		{"endpoint", "Endpoint"},
-		{"host_name", "Host name"},
-		{"pid", "PID"},
-		{"name", "Process name"},
+		{"addr", "Endpoint"},
+		{"port", "Port"},
 	} {
 		if val, ok := nmd[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})

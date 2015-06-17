@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -21,91 +22,104 @@ var (
 	randomHostID  = "random.hostname.com"
 	unknownHostID = ""
 
+	clientIP        = "10.10.10.20"
+	serverIP        = "192.168.1.1"
+	clientPort54001 = "54001"
+	clientPort54002 = "54002"
+	serverPort      = "80"
+
 	clientHostName = clientHostID
 	serverHostName = serverHostID
+
+	clientPID       = "10001"
+	serverPID       = "215"
+	nonContainerPID = "1234"
 
 	clientHostNodeID = report.MakeHostNodeID(clientHostID)
 	serverHostNodeID = report.MakeHostNodeID(serverHostID)
 	randomHostNodeID = report.MakeHostNodeID(randomHostID)
 
-	client54001NodeID = report.MakeEndpointNodeID(clientHostID, "10.10.10.20", "54001") // curl (1)
-	client54002NodeID = report.MakeEndpointNodeID(clientHostID, "10.10.10.20", "54002") // curl (2)
-	unknownClient1    = report.MakeEndpointNodeID(serverHostID, "10.10.10.10", "54010") // we want to ensure two unknown clients, connnected
-	unknownClient2    = report.MakeEndpointNodeID(serverHostID, "10.10.10.10", "54020") // to the same server, are deduped.
-	unknownClient3    = report.MakeEndpointNodeID(serverHostID, "10.10.10.11", "54020") // Check this one isn't deduped
-	server80          = report.MakeEndpointNodeID(serverHostID, "192.168.1.1", "80")    // apache
+	client54001NodeID    = report.MakeEndpointNodeID(clientHostID, clientIP, clientPort54001) // curl (1)
+	client54002NodeID    = report.MakeEndpointNodeID(clientHostID, clientIP, clientPort54002) // curl (2)
+	unknownClient1NodeID = report.MakeEndpointNodeID(serverHostID, "10.10.10.10", "54010")    // we want to ensure two unknown clients, connnected
+	unknownClient2NodeID = report.MakeEndpointNodeID(serverHostID, "10.10.10.10", "54020")    // to the same server, are deduped.
+	unknownClient3NodeID = report.MakeEndpointNodeID(serverHostID, "10.10.10.11", "54020")    // Check this one isn't deduped
+	server80NodeID       = report.MakeEndpointNodeID(serverHostID, serverIP, serverPort)      // apache
 
 	clientAddressNodeID  = report.MakeAddressNodeID(clientHostID, "10.10.10.20")
 	serverAddressNodeID  = report.MakeAddressNodeID(serverHostID, "192.168.1.1")
 	randomAddressNodeID  = report.MakeAddressNodeID(randomHostID, "172.16.11.9") // only in Address topology
 	unknownAddressNodeID = report.MakeAddressNodeID(unknownHostID, "10.10.10.10")
+
+	clientProcessNodeID       = report.MakeProcessNodeID(clientHostID, clientPID)
+	serverProcessNodeID       = report.MakeProcessNodeID(serverHostID, serverPID)
+	nonContainerProcessNodeID = report.MakeProcessNodeID(serverHostID, nonContainerPID)
 )
 
 var (
 	rpt = report.Report{
 		Endpoint: report.Topology{
 			Adjacency: report.Adjacency{
-				report.MakeAdjacencyID(client54001NodeID): report.MakeIDList(server80),
-				report.MakeAdjacencyID(client54002NodeID): report.MakeIDList(server80),
-				report.MakeAdjacencyID(server80):          report.MakeIDList(client54001NodeID, client54002NodeID, unknownClient1, unknownClient2, unknownClient3),
+				report.MakeAdjacencyID(client54001NodeID): report.MakeIDList(server80NodeID),
+				report.MakeAdjacencyID(client54002NodeID): report.MakeIDList(server80NodeID),
+				report.MakeAdjacencyID(server80NodeID):    report.MakeIDList(client54001NodeID, client54002NodeID, unknownClient1NodeID, unknownClient2NodeID, unknownClient3NodeID),
 			},
 			NodeMetadatas: report.NodeMetadatas{
 				// NodeMetadata is arbitrary. We're free to put only precisely what we
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
 				client54001NodeID: report.NodeMetadata{
-					"name":            "curl",
-					"domain":          "client-54001-domain",
-					"pid":             "10001",
+					"addr":            clientIP,
+					"port":            clientPort54001,
+					"pid":             clientPID,
 					report.HostNodeID: clientHostNodeID,
-					"host_name":       clientHostName,
 				},
 				client54002NodeID: report.NodeMetadata{
-					"name":            "curl",                // should be same as above!
-					"domain":          "client-54002-domain", // may be different than above
-					"pid":             "10001",               // should be same as above!
+					"addr":            clientIP,
+					"port":            clientPort54002,
+					"pid":             clientPID, // should be same as above!
 					report.HostNodeID: clientHostNodeID,
 				},
-				server80: report.NodeMetadata{
-					"name":            "apache",
-					"domain":          "server-80-domain",
-					"pid":             "215",
+				server80NodeID: report.NodeMetadata{
+					"addr":            serverIP,
+					"port":            serverPort,
+					"pid":             serverPID,
 					report.HostNodeID: serverHostNodeID,
 				},
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
-				report.MakeEdgeID(client54001NodeID, server80): report.EdgeMetadata{
+				report.MakeEdgeID(client54001NodeID, server80NodeID): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 100,
 					BytesEgress:  10,
 				},
-				report.MakeEdgeID(client54002NodeID, server80): report.EdgeMetadata{
+				report.MakeEdgeID(client54002NodeID, server80NodeID): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 200,
 					BytesEgress:  20,
 				},
 
-				report.MakeEdgeID(server80, client54001NodeID): report.EdgeMetadata{
+				report.MakeEdgeID(server80NodeID, client54001NodeID): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 10,
 					BytesEgress:  100,
 				},
-				report.MakeEdgeID(server80, client54002NodeID): report.EdgeMetadata{
+				report.MakeEdgeID(server80NodeID, client54002NodeID): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 20,
 					BytesEgress:  200,
 				},
-				report.MakeEdgeID(server80, unknownClient1): report.EdgeMetadata{
+				report.MakeEdgeID(server80NodeID, unknownClient1NodeID): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 30,
 					BytesEgress:  300,
 				},
-				report.MakeEdgeID(server80, unknownClient2): report.EdgeMetadata{
+				report.MakeEdgeID(server80NodeID, unknownClient2NodeID): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 40,
 					BytesEgress:  400,
 				},
-				report.MakeEdgeID(server80, unknownClient3): report.EdgeMetadata{
+				report.MakeEdgeID(server80NodeID, unknownClient3NodeID): report.EdgeMetadata{
 					WithBytes:    true,
 					BytesIngress: 50,
 					BytesEgress:  500,
@@ -115,21 +129,23 @@ var (
 		Process: report.Topology{
 			Adjacency: report.Adjacency{},
 			NodeMetadatas: report.NodeMetadatas{
-				report.MakeProcessNodeID(clientHostID, "4242"): report.NodeMetadata{
-					"host_name":             "client.host.com",
-					"pid":                   "4242",
-					"comm":                  "curl",
-					"docker_container_id":   "a1b2c3d4e5",
-					"docker_container_name": "fixture-container",
-					"docker_image_id":       "0000000000",
-					"docker_image_name":     "fixture/container:latest",
+				clientProcessNodeID: report.NodeMetadata{
+					"pid":                 clientPID,
+					"comm":                "curl",
+					"docker_container_id": "a1b2c3d4e5",
+					report.HostNodeID:     clientHostNodeID,
 				},
-				report.MakeProcessNodeID(serverHostID, "215"): report.NodeMetadata{
-					"pid":          "215",
-					"process_name": "apache",
+				serverProcessNodeID: report.NodeMetadata{
+					"pid":                 serverPID,
+					"comm":                "apache",
+					"docker_container_id": "5e4d3c2b1a",
+					report.HostNodeID:     serverHostNodeID,
 				},
-
-				"no-container": report.NodeMetadata{},
+				nonContainerProcessNodeID: report.NodeMetadata{
+					"pid":             nonContainerPID,
+					"comm":            "bash",
+					report.HostNodeID: serverHostNodeID,
+				},
 			},
 			EdgeMetadatas: report.EdgeMetadatas{},
 		},
@@ -188,6 +204,12 @@ var (
 	}
 )
 
+func init() {
+	if err := rpt.Validate(); err != nil {
+		panic(err)
+	}
+}
+
 func trimNodeMetadata(rns render.RenderableNodes) render.RenderableNodes {
 	result := render.RenderableNodes{}
 	for id, rn := range rns {
@@ -198,50 +220,52 @@ func trimNodeMetadata(rns render.RenderableNodes) render.RenderableNodes {
 }
 
 func TestProcessRenderer(t *testing.T) {
+	var (
+		clientProcessID       = fmt.Sprintf("pid:%s:%s", clientHostID, clientPID)
+		serverProcessID       = fmt.Sprintf("pid:%s:%s", serverHostID, serverPID)
+		nonContainerProcessID = fmt.Sprintf("pid:%s:%s", serverHostID, nonContainerPID)
+	)
+
 	want := render.RenderableNodes{
-		"pid:client-54001-domain:10001": {
-			ID:         "pid:client-54001-domain:10001",
+		clientProcessID: {
+			ID:         clientProcessID,
 			LabelMajor: "curl",
-			LabelMinor: "client-54001-domain (10001)",
-			Rank:       "10001",
+			LabelMinor: fmt.Sprintf("%s (%s)", clientHostID, clientPID),
+			Rank:       clientPID,
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList("pid:server-80-domain:215"),
-			Origins:    report.MakeIDList(report.MakeHostNodeID("client.hostname.com"), report.MakeEndpointNodeID("client.hostname.com", "10.10.10.20", "54001")),
+			Adjacency:  report.MakeIDList(serverProcessID),
+			Origins:    report.MakeIDList(client54001NodeID, client54002NodeID, clientProcessNodeID, clientHostNodeID),
 			AggregateMetadata: report.AggregateMetadata{
-				report.KeyBytesIngress: 100,
-				report.KeyBytesEgress:  10,
+				report.KeyBytesIngress: 300,
+				report.KeyBytesEgress:  30,
 			},
 		},
-		"pid:client-54002-domain:10001": {
-			ID:         "pid:client-54002-domain:10001",
-			LabelMajor: "curl",
-			LabelMinor: "client-54002-domain (10001)",
-			Rank:       "10001", // same process
-			Pseudo:     false,
-			Adjacency:  report.MakeIDList("pid:server-80-domain:215"),
-			Origins:    report.MakeIDList(report.MakeHostNodeID("client.hostname.com"), report.MakeEndpointNodeID("client.hostname.com", "10.10.10.20", "54002")),
-			AggregateMetadata: report.AggregateMetadata{
-				report.KeyBytesIngress: 200,
-				report.KeyBytesEgress:  20,
-			},
-		},
-		"pid:server-80-domain:215": {
-			ID:         "pid:server-80-domain:215",
+		serverProcessID: {
+			ID:         serverProcessID,
 			LabelMajor: "apache",
-			LabelMinor: "server-80-domain (215)",
-			Rank:       "215",
+			LabelMinor: fmt.Sprintf("%s (%s)", serverHostID, serverPID),
+			Rank:       serverPID,
 			Pseudo:     false,
 			Adjacency: report.MakeIDList(
-				"pid:client-54001-domain:10001",
-				"pid:client-54002-domain:10001",
+				clientProcessID,
 				"pseudo;10.10.10.10;192.168.1.1;80",
 				"pseudo;10.10.10.11;192.168.1.1;80",
 			),
-			Origins: report.MakeIDList(report.MakeHostNodeID("server.hostname.com"), report.MakeEndpointNodeID("server.hostname.com", "192.168.1.1", "80")),
+			Origins: report.MakeIDList(server80NodeID, serverProcessNodeID, serverHostNodeID),
 			AggregateMetadata: report.AggregateMetadata{
 				report.KeyBytesIngress: 150,
 				report.KeyBytesEgress:  1500,
 			},
+		},
+		nonContainerProcessID: {
+			ID:                nonContainerProcessID,
+			LabelMajor:        "bash",
+			LabelMinor:        fmt.Sprintf("%s (%s)", serverHostID, nonContainerPID),
+			Rank:              nonContainerPID,
+			Pseudo:            false,
+			Adjacency:         report.MakeIDList(),
+			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
+			AggregateMetadata: report.AggregateMetadata{},
 		},
 		"pseudo;10.10.10.10;192.168.1.1;80": {
 			ID:                "pseudo;10.10.10.10;192.168.1.1;80",
@@ -275,7 +299,7 @@ func TestProcessNameRenderer(t *testing.T) {
 			Rank:       "curl",
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList("apache"),
-			Origins:    report.MakeIDList(report.MakeHostNodeID("client.hostname.com"), report.MakeEndpointNodeID("client.hostname.com", "10.10.10.20", "54001"), report.MakeEndpointNodeID("client.hostname.com", "10.10.10.20", "54002")),
+			Origins:    report.MakeIDList(client54001NodeID, client54002NodeID, clientProcessNodeID, clientHostNodeID),
 			AggregateMetadata: report.AggregateMetadata{
 				report.KeyBytesIngress: 300,
 				report.KeyBytesEgress:  30,
@@ -289,23 +313,32 @@ func TestProcessNameRenderer(t *testing.T) {
 			Pseudo:     false,
 			Adjacency: report.MakeIDList(
 				"curl",
-				"pseudo;10.10.10.10;apache",
-				"pseudo;10.10.10.11;apache",
+				"pseudo;10.10.10.10;192.168.1.1;80",
+				"pseudo;10.10.10.11;192.168.1.1;80",
 			),
-			Origins: report.MakeIDList(report.MakeHostNodeID("server.hostname.com"), report.MakeEndpointNodeID("server.hostname.com", "192.168.1.1", "80")),
+			Origins: report.MakeIDList(server80NodeID, serverProcessNodeID, serverHostNodeID),
 			AggregateMetadata: report.AggregateMetadata{
 				report.KeyBytesIngress: 150,
 				report.KeyBytesEgress:  1500,
 			},
 		},
-		"pseudo;10.10.10.10;apache": {
-			ID:                "pseudo;10.10.10.10;apache",
+		"bash": {
+			ID:                "bash",
+			LabelMajor:        "bash",
+			LabelMinor:        "",
+			Rank:              "bash",
+			Pseudo:            false,
+			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
+			AggregateMetadata: report.AggregateMetadata{},
+		},
+		"pseudo;10.10.10.10;192.168.1.1;80": {
+			ID:                "pseudo;10.10.10.10;192.168.1.1;80",
 			LabelMajor:        "10.10.10.10",
 			Pseudo:            true,
 			AggregateMetadata: report.AggregateMetadata{},
 		},
-		"pseudo;10.10.10.11;apache": {
-			ID:                "pseudo;10.10.10.11;apache",
+		"pseudo;10.10.10.11;192.168.1.1;80": {
+			ID:                "pseudo;10.10.10.11;192.168.1.1;80",
 			LabelMajor:        "10.10.10.11",
 			Pseudo:            true,
 			AggregateMetadata: report.AggregateMetadata{},

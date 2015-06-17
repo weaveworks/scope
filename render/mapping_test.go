@@ -40,20 +40,6 @@ func TestUngroupedMapping(t *testing.T) {
 			wantMinor: "",
 			wantRank:  "localhost",
 		},
-		{
-			f:  render.ProcessPID,
-			id: "not-used-beta",
-			meta: report.NodeMetadata{
-				"pid":    "42",
-				"name":   "curl",
-				"domain": "hosta",
-			},
-			wantOK:    true,
-			wantID:    "pid:hosta:42",
-			wantMajor: "curl",
-			wantMinor: "hosta (42)",
-			wantRank:  "42",
-		},
 	} {
 		identity := fmt.Sprintf("(%d %s %v)", i, c.id, c.meta)
 
