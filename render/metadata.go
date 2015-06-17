@@ -1,4 +1,8 @@
-package report
+package render
+
+import (
+	"github.com/weaveworks/scope/report"
+)
 
 // AggregateMetadata is a composable version of an EdgeMetadata. It's used
 // when we want to merge nodes/edges for any reason.
@@ -20,8 +24,8 @@ const (
 	KeyMaxConnCountTCP = "max_conn_count_tcp"
 )
 
-// Transform calculates a AggregateMetadata from an EdgeMetadata.
-func (md EdgeMetadata) Transform() AggregateMetadata {
+// AggregateMetadataOf calculates a AggregateMetadata from an EdgeMetadata.
+func AggregateMetadataOf(md report.EdgeMetadata) AggregateMetadata {
 	m := AggregateMetadata{}
 	if md.WithBytes {
 		m[KeyBytesIngress] = int(md.BytesIngress)

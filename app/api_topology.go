@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
 )
 
 const (
@@ -28,7 +27,7 @@ type APINode struct {
 
 // APIEdge is returned by the /api/topology/*/*/* handlers.
 type APIEdge struct {
-	Metadata report.AggregateMetadata `json:"metadata"`
+	Metadata render.AggregateMetadata `json:"metadata"`
 }
 
 // Full topology.

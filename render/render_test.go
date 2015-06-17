@@ -10,13 +10,13 @@ import (
 
 type mockRenderer struct {
 	render.RenderableNodes
-	aggregateMetadata report.AggregateMetadata
+	aggregateMetadata render.AggregateMetadata
 }
 
 func (m mockRenderer) Render(rpt report.Report) render.RenderableNodes {
 	return m.RenderableNodes
 }
-func (m mockRenderer) AggregateMetadata(rpt report.Report, localID, remoteID string) report.AggregateMetadata {
+func (m mockRenderer) AggregateMetadata(rpt report.Report, localID, remoteID string) render.AggregateMetadata {
 	return m.aggregateMetadata
 }
 
@@ -36,11 +36,11 @@ func TestReduceRender(t *testing.T) {
 
 func TestReduceEdge(t *testing.T) {
 	renderer := render.Reduce([]render.Renderer{
-		mockRenderer{aggregateMetadata: report.AggregateMetadata{"foo": 1}},
-		mockRenderer{aggregateMetadata: report.AggregateMetadata{"bar": 2}},
+		mockRenderer{aggregateMetadata: render.AggregateMetadata{"foo": 1}},
+		mockRenderer{aggregateMetadata: render.AggregateMetadata{"bar": 2}},
 	})
 
-	want := report.AggregateMetadata{"foo": 1, "bar": 2}
+	want := render.AggregateMetadata{"foo": 1, "bar": 2}
 	have := renderer.AggregateMetadata(report.MakeReport(), "", "")
 
 	if !reflect.DeepEqual(want, have) {
@@ -139,9 +139,9 @@ func TestMapEdge(t *testing.T) {
 		},
 	}
 
-	want := report.AggregateMetadata{
-		report.KeyBytesIngress: 1,
-		report.KeyBytesEgress:  2,
+	want := render.AggregateMetadata{
+		render.KeyBytesIngress: 1,
+		render.KeyBytesEgress:  2,
 	}
 	have := mapper.AggregateMetadata(report.MakeReport(), "_foo", "_bar")
 	if !reflect.DeepEqual(want, have) {
