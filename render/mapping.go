@@ -87,6 +87,19 @@ func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	return NewRenderableNode(id, major, minor, rank, m), true
 }
 
+// MapContainerImageIdentity maps a container image topology node to container
+// image RenderableNode node. As it is only ever run on container image
+// topology nodes, we can safely assume the presences of certain keys.
+func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+	var (
+		id    = m["docker_image_id"]
+		major = m["docker_image_name"]
+		rank  = m["docker_image_id"]
+	)
+
+	return NewRenderableNode(id, major, "", rank, m), true
+}
+
 // MapEndpoint2Process maps endpoint RenderableNodes to process
 // RenderableNodes.
 //
@@ -156,18 +169,24 @@ func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
 	return node, true
 }
 
-// ProcessContainerImage maps topology nodes to the container images they run
-// on. If no container metadata is found, nodes are grouped into the
-// Uncontained node.
-func ProcessContainerImage(m report.NodeMetadata) (RenderableNode, bool) {
-	var id, major, minor, rank string
-	if m["docker_image_id"] == "" {
-		id, major, minor, rank = UncontainedID, UncontainedMajor, "", UncontainedID
-	} else {
-		id, major, minor, rank = m["docker_image_id"], m["docker_image_name"], "", m["docker_image_id"]
+// MapContainer2ContainerImage maps container RenderableNodes to container
+// image RenderableNodes.
+//
+// If this function is given a node without a docker_image_id
+// (including other pseudo nodes), it will produce an "Uncontained"
+// pseudo node.
+//
+// Otherwise, this function will produce a node with the correct ID
+// format for a container, but without any Major or Minor labels.
+// It does not have enough info to do that, and the resulting graph
+// must be merged with a container graph to get that info.
+func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
+	id, ok := n.NodeMetadata["docker_image_id"]
+	if !ok || n.Pseudo {
+		return newDerivedPseudoNode(UncontainedID, UncontainedMajor, n), true
 	}
 
-	return NewRenderableNode(id, major, minor, rank, m), true
+	return newDerivedNode(id, n), true
 }
 
 // NetworkHostname takes a node NodeMetadata and returns a representation

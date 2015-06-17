@@ -45,3 +45,17 @@ var ContainerRenderer = MakeReduce(
 		Pseudo:   GenericPseudoNode,
 	},
 )
+
+// ContainerImageRenderer is a Renderer which produces a renderable container
+// image graph by merging the container graph and the container image topology.
+var ContainerImageRenderer = MakeReduce(
+	Map{
+		MapFunc:  MapContainer2ContainerImage,
+		Renderer: ContainerRenderer,
+	},
+	LeafMap{
+		Selector: report.SelectContainerImage,
+		Mapper:   MapContainerImageIdentity,
+		Pseudo:   GenericPseudoNode,
+	},
+)

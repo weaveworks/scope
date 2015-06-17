@@ -23,9 +23,14 @@ type Report struct {
 	Process Topology
 
 	// Container nodes represent all Docker containers on hosts running probes.
-	// Metadata includes things like Docker image, name etc.
+	// Metadata includes things like containter id, name, image id etc.
 	// Edges are not present.
 	Container Topology
+
+	// ContainerImages nodes represent all Docker containers images on
+	// hosts running probes. Metadata includes things like image id, name etc.
+	// Edges are not present.
+	ContainerImage Topology
 
 	// Host nodes are physical hosts that run probes. Metadata includes things
 	// like operating system, load, etc. The information is scraped by the
@@ -68,15 +73,21 @@ func SelectContainer(r Report) Topology {
 	return r.Container
 }
 
+// SelectContainerImage selects the container image topology.
+func SelectContainerImage(r Report) Topology {
+	return r.ContainerImage
+}
+
 // MakeReport makes a clean report, ready to Merge() other reports into.
 func MakeReport() Report {
 	return Report{
-		Endpoint:  NewTopology(),
-		Address:   NewTopology(),
-		Process:   NewTopology(),
-		Container: NewTopology(),
-		Host:      NewTopology(),
-		Overlay:   NewTopology(),
+		Endpoint:       NewTopology(),
+		Address:        NewTopology(),
+		Process:        NewTopology(),
+		Container:      NewTopology(),
+		ContainerImage: NewTopology(),
+		Host:           NewTopology(),
+		Overlay:        NewTopology(),
 	}
 }
 
@@ -88,6 +99,7 @@ func (r Report) Squash() Report {
 	r.Address = r.Address.Squash(AddressIDAddresser, localNetworks)
 	r.Process = r.Process.Squash(PanicIDAddresser, localNetworks)
 	r.Container = r.Container.Squash(PanicIDAddresser, localNetworks)
+	r.ContainerImage = r.ContainerImage.Squash(PanicIDAddresser, localNetworks)
 	r.Host = r.Host.Squash(PanicIDAddresser, localNetworks)
 	r.Overlay = r.Overlay.Squash(PanicIDAddresser, localNetworks)
 	return r
@@ -123,7 +135,8 @@ func (r Report) LocalNetworks() []*net.IPNet {
 
 // Topologies returns a slice of Topologies in this report
 func (r Report) Topologies() []Topology {
-	return []Topology{r.Endpoint, r.Address, r.Process, r.Container, r.Host}
+	return []Topology{r.Endpoint, r.Address, r.Process, r.Container,
+		r.ContainerImage, r.Host, r.Overlay}
 }
 
 // Validate checks the report for various inconsistencies.

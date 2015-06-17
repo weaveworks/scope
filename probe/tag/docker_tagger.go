@@ -272,7 +272,6 @@ func (t *DockerTagger) Containers() []*docker.Container {
 // Tag implements Tagger.
 func (t *DockerTagger) Tag(r report.Report) report.Report {
 	t.tag(&r.Process)
-	t.tag(&r.Endpoint)
 	return r
 }
 
@@ -313,15 +312,6 @@ func (t *DockerTagger) tag(topology *report.Topology) {
 
 		md := report.NodeMetadata{
 			ContainerID: container.ID,
-			ImageID:     container.Image,
-		}
-
-		t.RLock()
-		image, ok := t.images[container.Image]
-		t.RUnlock()
-
-		if ok && len(image.RepoTags) > 0 {
-			md[ImageName] = image.RepoTags[0]
 		}
 
 		topology.NodeMetadatas[nodeID].Merge(md)
@@ -341,14 +331,33 @@ func (t *DockerTagger) ContainerTopology(scope string) report.Topology {
 			ImageID:       container.Image,
 		}
 
+		nmd.Merge(container.getStats())
+
+		nodeID := report.MakeContainerNodeID(scope, container.ID)
+		result.NodeMetadatas[nodeID] = nmd
+	}
+	return result
+}
+
+// ContainerImageTopology produces a Toplogy of Container Images
+func (t *DockerTagger) ContainerImageTopology(scope string) report.Topology {
+	t.RLock()
+	defer t.RUnlock()
+
+	result := report.NewTopology()
+
+	// Loop over containers so we only emit images for running containers.
+	for _, container := range t.containers {
+		nmd := report.NodeMetadata{
+			ImageID: container.Image,
+		}
+
 		image, ok := t.images[container.Image]
 		if ok && len(image.RepoTags) > 0 {
 			nmd[ImageName] = image.RepoTags[0]
 		}
 
-		nmd.Merge(container.getStats())
-
-		nodeID := report.MakeContainerNodeID(scope, container.ID)
+		nodeID := report.MakeContainerNodeID(scope, container.Image)
 		result.NodeMetadatas[nodeID] = nmd
 	}
 	return result
