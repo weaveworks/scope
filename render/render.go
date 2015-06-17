@@ -206,7 +206,7 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 			srcRenderableNode.Origins = srcRenderableNode.Origins.Add(srcNodeID)
 			edgeID := report.MakeEdgeID(srcNodeID, dstNodeID)
 			if md, ok := t.EdgeMetadatas[edgeID]; ok {
-				srcRenderableNode.Metadata.Merge(md.Transform())
+				srcRenderableNode.AggregateMetadata.Merge(md.Transform())
 			}
 		}
 

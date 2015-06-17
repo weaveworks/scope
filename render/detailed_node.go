@@ -38,13 +38,13 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	tables := []Table{}
 	{
 		rows := []Row{}
-		if val, ok := n.Metadata[report.KeyMaxConnCountTCP]; ok {
+		if val, ok := n.AggregateMetadata[report.KeyMaxConnCountTCP]; ok {
 			rows = append(rows, Row{"TCP connections", strconv.FormatInt(int64(val), 10), ""})
 		}
-		if val, ok := n.Metadata[report.KeyBytesIngress]; ok {
+		if val, ok := n.AggregateMetadata[report.KeyBytesIngress]; ok {
 			rows = append(rows, Row{"Bytes ingress", strconv.FormatInt(int64(val), 10), ""})
 		}
-		if val, ok := n.Metadata[report.KeyBytesEgress]; ok {
+		if val, ok := n.AggregateMetadata[report.KeyBytesEgress]; ok {
 			rows = append(rows, Row{"Bytes egress", strconv.FormatInt(int64(val), 10), ""})
 		}
 		if len(rows) > 0 {

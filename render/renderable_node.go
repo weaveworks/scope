@@ -8,15 +8,16 @@ import (
 // an element of a topology. It should contain information that's relevant
 // to rendering a node when there are many nodes visible at once.
 type RenderableNode struct {
-	ID           string                   `json:"id"`                    //
-	LabelMajor   string                   `json:"label_major"`           // e.g. "process", human-readable
-	LabelMinor   string                   `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
-	Rank         string                   `json:"rank"`                  // to help the layout engine
-	Pseudo       bool                     `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
-	Adjacency    report.IDList            `json:"adjacency,omitempty"`   // Node IDs (in the same topology domain)
-	Origins      report.IDList            `json:"origins,omitempty"`     // Core node IDs that contributed information
-	Metadata     report.AggregateMetadata `json:"metadata"`              // Numeric sums
-	NodeMetadata report.NodeMetadata      `json:"-"`                     // merged NodeMetadata of the nodes used to build this
+	ID         string        `json:"id"`                    //
+	LabelMajor string        `json:"label_major"`           // e.g. "process", human-readable
+	LabelMinor string        `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
+	Rank       string        `json:"rank"`                  // to help the layout engine
+	Pseudo     bool          `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
+	Adjacency  report.IDList `json:"adjacency,omitempty"`   // Node IDs (in the same topology domain)
+	Origins    report.IDList `json:"origins,omitempty"`     // Core node IDs that contributed information
+
+	report.AggregateMetadata `json:"metadata"` // Numeric sums
+	report.NodeMetadata      `json:"-"`        // merged NodeMetadata of the nodes used to build this
 }
 
 // RenderableNodes is a set of RenderableNodes
@@ -55,44 +56,44 @@ func (rn *RenderableNode) Merge(other RenderableNode) {
 	rn.Adjacency = rn.Adjacency.Add(other.Adjacency...)
 	rn.Origins = rn.Origins.Add(other.Origins...)
 
-	rn.Metadata.Merge(other.Metadata)
+	rn.AggregateMetadata.Merge(other.AggregateMetadata)
 	rn.NodeMetadata.Merge(other.NodeMetadata)
 }
 
 // NewRenderableNode makes a new RenderableNode
 func NewRenderableNode(id, major, minor, rank string, nmd report.NodeMetadata) RenderableNode {
 	return RenderableNode{
-		ID:           id,
-		LabelMajor:   major,
-		LabelMinor:   minor,
-		Rank:         rank,
-		Pseudo:       false,
-		Metadata:     report.AggregateMetadata{},
-		NodeMetadata: nmd,
+		ID:                id,
+		LabelMajor:        major,
+		LabelMinor:        minor,
+		Rank:              rank,
+		Pseudo:            false,
+		AggregateMetadata: report.AggregateMetadata{},
+		NodeMetadata:      nmd,
 	}
 }
 
 func newDerivedNode(id string, node RenderableNode) RenderableNode {
 	return RenderableNode{
-		ID:           id,
-		LabelMajor:   "",
-		LabelMinor:   "",
-		Rank:         "",
-		Pseudo:       node.Pseudo,
-		Metadata:     node.Metadata,
-		Origins:      node.Origins,
-		NodeMetadata: node.NodeMetadata,
+		ID:                id,
+		LabelMajor:        "",
+		LabelMinor:        "",
+		Rank:              "",
+		Pseudo:            node.Pseudo,
+		AggregateMetadata: node.AggregateMetadata,
+		Origins:           node.Origins,
+		NodeMetadata:      node.NodeMetadata,
 	}
 }
 
 func newPseudoNode(id, major, minor string) RenderableNode {
 	return RenderableNode{
-		ID:           id,
-		LabelMajor:   major,
-		LabelMinor:   minor,
-		Rank:         "",
-		Pseudo:       true,
-		Metadata:     report.AggregateMetadata{},
-		NodeMetadata: report.NodeMetadata{},
+		ID:                id,
+		LabelMajor:        major,
+		LabelMinor:        minor,
+		Rank:              "",
+		Pseudo:            true,
+		AggregateMetadata: report.AggregateMetadata{},
+		NodeMetadata:      report.NodeMetadata{},
 	}
 }
