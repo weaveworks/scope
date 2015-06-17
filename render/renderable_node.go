@@ -69,7 +69,7 @@ func NewRenderableNode(id, major, minor, rank string, nmd report.NodeMetadata) R
 		Rank:              rank,
 		Pseudo:            false,
 		AggregateMetadata: report.AggregateMetadata{},
-		NodeMetadata:      nmd,
+		NodeMetadata:      nmd.Copy(),
 	}
 }
 
