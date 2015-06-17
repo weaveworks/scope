@@ -16,7 +16,7 @@ func handleTXT(r Reporter) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 
-		renderer := render.Map{Selector: report.SelectEndpoint, Mapper: mapFunc(req), Pseudo: nil}
+		renderer := render.LeafMap{Selector: report.SelectEndpoint, Mapper: mapFunc(req), Pseudo: nil}
 		dot(w, renderer.Render(r.Report()))
 
 		//report.Render(r.Report(), report.SelectEndpoint, mapFunc(req), report.NoPseudoNode))
@@ -35,7 +35,7 @@ func handleSVG(r Reporter) http.HandlerFunc {
 
 		cmd.Stdout = w
 
-		renderer := render.Map{Selector: report.SelectEndpoint, Mapper: mapFunc(req), Pseudo: nil}
+		renderer := render.LeafMap{Selector: report.SelectEndpoint, Mapper: mapFunc(req), Pseudo: nil}
 		dot(wc, renderer.Render(r.Report()))
 		wc.Close()
 
@@ -102,12 +102,12 @@ func engine(r *http.Request) string {
 	return engine
 }
 
-func mapFunc(r *http.Request) render.MapFunc {
+func mapFunc(r *http.Request) render.LeafMapFunc {
 	switch strings.ToLower(r.FormValue("map_func")) {
 	case "hosts", "networkhost", "networkhostname":
 		return render.NetworkHostname
 	}
-	return render.ProcessPID
+	return render.MapProcessIdentity
 }
 
 func classView(r *http.Request) bool {

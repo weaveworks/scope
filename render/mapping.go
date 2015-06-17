@@ -7,31 +7,15 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-const humanTheInternet = "the Internet"
+// Constants are used in the tests.
+const (
+	UncontainedID    = "uncontained"
+	UncontainedMajor = "Uncontained"
 
-func newRenderableNode(id, major, minor, rank string) RenderableNode {
-	return RenderableNode{
-		ID:         id,
-		LabelMajor: major,
-		LabelMinor: minor,
-		Rank:       rank,
-		Pseudo:     false,
-		Metadata:   report.AggregateMetadata{},
-	}
-}
+	humanTheInternet = "the Internet"
+)
 
-func newPseudoNode(id, major, minor string) RenderableNode {
-	return RenderableNode{
-		ID:         id,
-		LabelMajor: major,
-		LabelMinor: minor,
-		Rank:       "",
-		Pseudo:     true,
-		Metadata:   report.AggregateMetadata{},
-	}
-}
-
-// MapFunc is anything which can take an arbitrary NodeMetadata, which is
+// LeafMapFunc is anything which can take an arbitrary NodeMetadata, which is
 // always one-to-one with nodes in a topology, and return a specific
 // representation of the referenced node, in the form of a node ID and a
 // human-readable major and minor labels.
@@ -41,7 +25,7 @@ func newPseudoNode(id, major, minor string) RenderableNode {
 //
 // If the final output parameter is false, the node shall be omitted from the
 // rendered topology.
-type MapFunc func(report.NodeMetadata) (RenderableNode, bool)
+type LeafMapFunc func(report.NodeMetadata) (RenderableNode, bool)
 
 // PseudoFunc creates RenderableNode representing pseudo nodes given the dstNodeID.
 // The srcNode renderable node is essentially from MapFunc, representing one of
@@ -49,52 +33,127 @@ type MapFunc func(report.NodeMetadata) (RenderableNode, bool)
 // node IDs prior to mapping.
 type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string) (RenderableNode, bool)
 
-// ProcessPID takes a node NodeMetadata from topology, and returns a
-// representation with the ID based on the process PID and the labels based on
-// the process name.
-func ProcessPID(m report.NodeMetadata) (RenderableNode, bool) {
+// MapFunc is anything which can take an arbitrary RenderableNode and
+// return another RenderableNode.
+//
+// As with LeafMapFunc, if the final output parameter is false, the node
+// shall be omitted from the rendered topology.
+type MapFunc func(RenderableNode) (RenderableNode, bool)
+
+// MapEndpointIdentity maps a endpoint topology node to endpoint RenderableNode
+// node. As it is only ever run on endpoint topology nodes, we can safely
+// assume the presence of certain keys.
+func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		identifier = fmt.Sprintf("%s:%s:%s", "pid", m["domain"], m["pid"])
-		minor      = fmt.Sprintf("%s (%s)", m["domain"], m["pid"])
-		show       = m["pid"] != "" && m["name"] != ""
+		id      = fmt.Sprintf("endpoint:%s:%s:%s", report.ExtractHostID(m), m["addr"], m["port"])
+		major   = fmt.Sprintf("%s:%s", m["addr"], m["port"])
+		pid, ok = m["pid"]
+		minor   = report.ExtractHostID(m)
+		rank    = major
 	)
 
-	return newRenderableNode(identifier, m["name"], minor, m["pid"]), show
-}
-
-// ProcessName takes a node NodeMetadata from a topology, and returns a
-// representation with the ID based on the process name (grouping all
-// processes with the same name together).
-func ProcessName(m report.NodeMetadata) (RenderableNode, bool) {
-	show := m["pid"] != "" && m["name"] != ""
-	return newRenderableNode(m["name"], m["name"], "", m["name"]), show
-}
-
-// MapEndpoint2Container maps endpoint topology nodes to the containers they run
-// in. We consider container and image IDs to be globally unique, and so don't
-// scope them further by e.g. host. If no container metadata is found, nodes are
-// grouped into the Uncontained node.
-func MapEndpoint2Container(m report.NodeMetadata) (RenderableNode, bool) {
-	var id, major, minor, rank string
-	if m["docker_container_id"] == "" {
-		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
-	} else {
-		id, major, minor, rank = m["docker_container_id"], "", m["domain"], ""
+	if ok {
+		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), pid)
 	}
 
-	return newRenderableNode(id, major, minor, rank), true
+	return NewRenderableNode(id, major, minor, rank, m), true
 }
 
-// MapContainerIdentity maps container topology node to container mapped nodes.
+// MapProcessIdentity maps a process topology node to process RenderableNode node.
+// As it is only ever run on process topology nodes, we can safely assume the
+// presence of certain keys.
+func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+	var (
+		id    = fmt.Sprintf("pid:%s:%s", report.ExtractHostID(m), m["pid"])
+		major = m["comm"]
+		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), m["pid"])
+		rank  = m["pid"]
+	)
+
+	return NewRenderableNode(id, major, minor, rank, m), true
+}
+
+// MapContainerIdentity maps a container topology node to a container
+// RenderableNode node. As it is only ever run on container topology
+// nodes, we can safely assume the presences of certain keys.
 func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
-	var id, major, minor, rank string
-	if m["docker_container_id"] == "" {
-		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
-	} else {
-		id, major, minor, rank = m["docker_container_id"], m["docker_container_name"], m["domain"], m["docker_image_id"]
+	var (
+		id    = m["docker_container_id"]
+		major = m["docker_container_name"]
+		minor = report.ExtractHostID(m)
+		rank  = m["docker_image_id"]
+	)
+
+	return NewRenderableNode(id, major, minor, rank, m), true
+}
+
+// MapEndpoint2Process maps endpoint RenderableNodes to process
+// RenderableNodes.
+//
+// If this function is given a pseudo node, then it will just return it;
+// Pseudo nodes will never have pids in them, and therefore will never
+// be able to be turned into a Process node.
+//
+// Otherwise, this function will produce a node with the correct ID
+// format for a process, but without any Major or Minor labels.
+// It does not have enough info to do that, and the resulting graph
+// must be merged with a process graph to get that info.
+func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
+	if n.Pseudo {
+		return n, true
 	}
 
-	return newRenderableNode(id, major, minor, rank), true
+	pid, ok := n.NodeMetadata["pid"]
+	if !ok {
+		// TODO: Propogate a pseudo node instead of dropping this?
+		return RenderableNode{}, false
+	}
+
+	id := fmt.Sprintf("pid:%s:%s", report.ExtractHostID(n.NodeMetadata), pid)
+	return newDerivedNode(id, n), true
+}
+
+// MapProcess2Container maps process RenderableNodes to container
+// RenderableNodes.
+//
+// If this function is given a node without a docker_container_id
+// (including other pseudo nodes), it will produce an "Uncontained"
+// pseudo node.
+//
+// Otherwise, this function will produce a node with the correct ID
+// format for a container, but without any Major or Minor labels.
+// It does not have enough info to do that, and the resulting graph
+// must be merged with a container graph to get that info.
+func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
+	id, ok := n.NodeMetadata["docker_container_id"]
+	if !ok || n.Pseudo {
+		return newDerivedPseudoNode(UncontainedID, UncontainedMajor, n), true
+	}
+
+	return newDerivedNode(id, n), true
+}
+
+// MapProcess2Name maps process RenderableNodes to RenderableNodes
+// for each process name.
+//
+// This mapper is unlike the other foo2bar mappers as the intention
+// is not to join the information with another topology.  Therefore
+// it outputs a properly-formed node with labels etc.
+func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
+	if n.Pseudo {
+		return n, true
+	}
+
+	name, ok := n.NodeMetadata["comm"]
+	if !ok {
+		// TODO: Propogate a pseudo node instead of dropping this?
+		return RenderableNode{}, false
+	}
+
+	node := newDerivedNode(name, n)
+	node.LabelMajor = name
+	node.Rank = name
+	return node, true
 }
 
 // ProcessContainerImage maps topology nodes to the container images they run
@@ -103,12 +162,12 @@ func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 func ProcessContainerImage(m report.NodeMetadata) (RenderableNode, bool) {
 	var id, major, minor, rank string
 	if m["docker_image_id"] == "" {
-		id, major, minor, rank = "uncontained", "Uncontained", "", "uncontained"
+		id, major, minor, rank = UncontainedID, UncontainedMajor, "", UncontainedID
 	} else {
 		id, major, minor, rank = m["docker_image_id"], m["docker_image_name"], "", m["docker_image_id"]
 	}
 
-	return newRenderableNode(id, major, minor, rank), true
+	return NewRenderableNode(id, major, minor, rank, m), true
 }
 
 // NetworkHostname takes a node NodeMetadata and returns a representation
@@ -125,7 +184,7 @@ func NetworkHostname(m report.NodeMetadata) (RenderableNode, bool) {
 		domain = parts[1]
 	}
 
-	return newRenderableNode(fmt.Sprintf("host:%s", name), parts[0], domain, parts[0]), name != ""
+	return NewRenderableNode(fmt.Sprintf("host:%s", name), parts[0], domain, parts[0], m), name != ""
 }
 
 // GenericPseudoNode contains heuristics for building sensible pseudo nodes.

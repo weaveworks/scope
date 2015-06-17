@@ -124,9 +124,7 @@ func TestSpyWithProcesses(t *testing.T) {
 	}
 
 	for key, want := range map[string]string{
-		"domain": nodeID,
-		"name":   fixProcessName,
-		"pid":    strconv.FormatUint(uint64(fixProcessPID), 10),
+		"pid": strconv.FormatUint(uint64(fixProcessPID), 10),
 	} {
 		if have := r.Endpoint.NodeMetadatas[scopedLocal][key]; want != have {
 			t.Errorf("Process.NodeMetadatas[%q][%q]: want %q, have %q", scopedLocal, key, want, have)
