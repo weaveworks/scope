@@ -2,31 +2,42 @@
 
 set -eu
 
-GO_TEST_ARGS="-covermode=count"
-RUN_ERRCHECK=""
+GO_TEST_ARGS=""
+SLOW=""
 if [ $# -eq 1 ] && [ "$1" = "-slow" ]; then
     GO_TEST_ARGS="-race -covermode=atomic"
-    RUN_ERRCHECK="yes"
+    SLOW="yes"
 fi
 
 echo "mode: count" > profile.cov
 fail=0
-for dir in $(find . -type f -name '*_test.go' | grep -v '^./experimental/' | grep -v '^./releases/' | xargs -n1 dirname | sort -u); do
-  go get -t $dir
+for dir in $(find . -type f -name '*_test.go' | grep -v '^./.git/'  | grep -v '^./experimental/' | grep -v '^./releases/' | xargs -n1 dirname | sort -u); do
 
-  if [ "$RUN_ERRCHECK" = "yes" ] && ! errcheck -ignore 'Close' $dir ; then
+  if [ "$SLOW" = "yes" ]; then
+    go get -t $dir
+
+    if ! errcheck -ignore 'Close' $dir ; then
+      fail=1
+    fi
+
+    output=$(mktemp cover.XXXXXXXXXX)
+    GO_TEST_ARGS_RUN="$GO_TEST_ARGS -coverprofile=$output"
+  else
+    GO_TEST_ARGS_RUN="$GO_TEST_ARGS"
+  fi
+
+  if ! go test $GO_TEST_ARGS_RUN -timeout 10s -tags netgo $dir ; then
     fail=1
   fi
 
-  output=$(mktemp cover.XXXXXXXXXX)
-  if ! go test $GO_TEST_ARGS -timeout 10s -tags netgo -coverprofile=$output $dir ; then
-    fail=1
-  fi
-
-  if [ -f $output ]; then
+  if [ "$SLOW" = "yes" ] && [ -f $output ]; then
     tail -n +2 <$output >>profile.cov
     rm $output
   fi
 done
-go tool cover -html=profile.cov -o=coverage.html
+
+if [ "$SLOW" = "yes" ]; then
+    go tool cover -html=profile.cov -o=coverage.html
+fi
+
 exit $fail
