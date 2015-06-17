@@ -6,25 +6,25 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-// Renderer is something that can render a report to a set of RenderableNodes
+// Renderer is something that can render a report to a set of RenderableNodes.
 type Renderer interface {
 	Render(report.Report) RenderableNodes
 	AggregateMetadata(rpt report.Report, localID, remoteID string) report.AggregateMetadata
 }
 
 // Reduce renderer is a Renderer which merges together the output of several
-// other renderers
+// other renderers.
 type Reduce []Renderer
 
-// Map is a Renderer which produces a set of RendererNodes from the set of
-// RendererNodes produces by another Renderer
+// Map is a Renderer which produces a set of RenderableNodes from the set of
+// RenderableNodes produced by another Renderer.
 type Map struct {
 	MapFunc
 	Renderer
 }
 
-// LeafMap is a Renderer which produces a set of RendererNodes from a report.Topology
-// by using a map functions and topology selector.
+// LeafMap is a Renderer which produces a set of RenderableNodes from a report.Topology
+// by using a map function and topology selector.
 type LeafMap struct {
 	Selector report.TopologySelector
 	Mapper   LeafMapFunc
@@ -36,12 +36,12 @@ type FilterUnconnected struct {
 	Renderer
 }
 
-// MakeReduce is the only sane way to produce a Reduce Renderer
+// MakeReduce is the only sane way to produce a Reduce Renderer.
 func MakeReduce(renderers ...Renderer) Renderer {
 	return Reduce(renderers)
 }
 
-// Render produces a set of RenderableNodes given a Report
+// Render produces a set of RenderableNodes given a Report.
 func (r Reduce) Render(rpt report.Report) RenderableNodes {
 	result := RenderableNodes{}
 	for _, renderer := range r {
@@ -50,7 +50,7 @@ func (r Reduce) Render(rpt report.Report) RenderableNodes {
 	return result
 }
 
-// AggregateMetadata produces an AggregateMetadata for a given edge
+// AggregateMetadata produces an AggregateMetadata for a given edge.
 func (r Reduce) AggregateMetadata(rpt report.Report, localID, remoteID string) report.AggregateMetadata {
 	metadata := report.AggregateMetadata{}
 	for _, renderer := range r {
@@ -59,7 +59,7 @@ func (r Reduce) AggregateMetadata(rpt report.Report, localID, remoteID string) r
 	return metadata
 }
 
-// Render transforms a set of RendererNodes produces by another Renderer
+// Render transforms a set of RenderableNodes produces by another Renderer.
 // using a map function
 func (m Map) Render(rpt report.Report) RenderableNodes {
 	output, _ := m.render(rpt)
@@ -89,14 +89,13 @@ func (m Map) render(rpt report.Report) (RenderableNodes, map[string]string) {
 	}
 
 	// Rewrite Adjacency for new node IDs.
-	// NB we don't do pseudo nodes here; we assumer the input graph
-	// we properly-connected, and if the map func dropped a node,
+	// NB we don't do pseudo nodes here; we assume the input graph
+	// is properly-connected, and if the map func dropped a node,
 	// we drop links to it.
 	for outNodeID, inAdjacency := range adjacencies {
 		outAdjacency := report.MakeIDList()
 		for _, inAdjacent := range inAdjacency {
-			outAdjacent, ok := mapped[inAdjacent]
-			if ok {
+			if outAdjacent, ok := mapped[inAdjacent]; ok {
 				outAdjacency = outAdjacency.Add(outAdjacent)
 			}
 		}

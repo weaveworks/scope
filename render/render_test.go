@@ -48,63 +48,61 @@ func TestReduceEdge(t *testing.T) {
 	}
 }
 
-func TestMapRender(t *testing.T) {
+func TestMapRender1(t *testing.T) {
 	// 1. Check when we return false, the node gets filtered out
-	{
-		mapper := render.Map{
-			MapFunc: func(nodes render.RenderableNode) (render.RenderableNode, bool) {
-				return render.RenderableNode{}, false
-			},
-			Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-				"foo": {ID: "foo"},
-			}},
-		}
-		want := render.RenderableNodes{}
-		have := mapper.Render(report.MakeReport())
-		if !reflect.DeepEqual(want, have) {
-			t.Errorf("want %+v, have %+v", want, have)
-		}
+	mapper := render.Map{
+		MapFunc: func(nodes render.RenderableNode) (render.RenderableNode, bool) {
+			return render.RenderableNode{}, false
+		},
+		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
+			"foo": {ID: "foo"},
+		}},
 	}
+	want := render.RenderableNodes{}
+	have := mapper.Render(report.MakeReport())
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("want %+v, have %+v", want, have)
+	}
+}
 
+func TestMapRender2(t *testing.T) {
 	// 2. Check we can remap two nodes into one
-	{
-		mapper := render.Map{
-			MapFunc: func(nodes render.RenderableNode) (render.RenderableNode, bool) {
-				return render.RenderableNode{ID: "bar"}, true
-			},
-			Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-				"foo": {ID: "foo"},
-				"baz": {ID: "baz"},
-			}},
-		}
-		want := render.RenderableNodes{
-			"bar": render.RenderableNode{ID: "bar"},
-		}
-		have := mapper.Render(report.MakeReport())
-		if !reflect.DeepEqual(want, have) {
-			t.Errorf("want %+v, have %+v", want, have)
-		}
+	mapper := render.Map{
+		MapFunc: func(nodes render.RenderableNode) (render.RenderableNode, bool) {
+			return render.RenderableNode{ID: "bar"}, true
+		},
+		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
+			"foo": {ID: "foo"},
+			"baz": {ID: "baz"},
+		}},
 	}
+	want := render.RenderableNodes{
+		"bar": render.RenderableNode{ID: "bar"},
+	}
+	have := mapper.Render(report.MakeReport())
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("want %+v, have %+v", want, have)
+	}
+}
 
+func TestMapRender3(t *testing.T) {
 	// 3. Check we can remap adjacencies
-	{
-		mapper := render.Map{
-			MapFunc: func(nodes render.RenderableNode) (render.RenderableNode, bool) {
-				return render.RenderableNode{ID: "_" + nodes.ID}, true
-			},
-			Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-				"foo": {ID: "foo", Adjacency: report.MakeIDList("baz")},
-				"baz": {ID: "baz", Adjacency: report.MakeIDList("foo")},
-			}},
-		}
-		want := render.RenderableNodes{
-			"_foo": {ID: "_foo", Adjacency: report.MakeIDList("_baz")},
-			"_baz": {ID: "_baz", Adjacency: report.MakeIDList("_foo")},
-		}
-		have := mapper.Render(report.MakeReport())
-		if !reflect.DeepEqual(want, have) {
-			t.Errorf("want %+v, have %+v", want, have)
-		}
+	mapper := render.Map{
+		MapFunc: func(nodes render.RenderableNode) (render.RenderableNode, bool) {
+			return render.RenderableNode{ID: "_" + nodes.ID}, true
+		},
+		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
+			"foo": {ID: "foo", Adjacency: report.MakeIDList("baz")},
+			"baz": {ID: "baz", Adjacency: report.MakeIDList("foo")},
+		}},
+	}
+	want := render.RenderableNodes{
+		"_foo": {ID: "_foo", Adjacency: report.MakeIDList("_baz")},
+		"_baz": {ID: "_baz", Adjacency: report.MakeIDList("_foo")},
+	}
+	have := mapper.Render(report.MakeReport())
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("want %+v, have %+v", want, have)
 	}
 }
 

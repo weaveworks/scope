@@ -36,24 +36,24 @@ type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string)
 // MapFunc is anything which can take an arbitrary RenderableNode and
 // return another RenderableNode.
 //
-// As with LeadMapFunc, if the final output parameter is false, the node
+// As with LeafMapFunc, if the final output parameter is false, the node
 // shall be omitted from the rendered topology.
 type MapFunc func(RenderableNode) (RenderableNode, bool)
 
-// MapEndpointIdentity maps a endpoint topology node to endpoint RenderableNode node.
-// As it is only ever run on endpoint topology nodes, we can safely assume the
-// presences of certain keys.
+// MapEndpointIdentity maps a endpoint topology node to endpoint RenderableNode
+// node. As it is only ever run on endpoint topology nodes, we can safely
+// assume the presence of certain keys.
 func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id      = fmt.Sprintf("endpoint:%s:%s:%s", getHostname(m), m["addr"], m["port"])
+		id      = fmt.Sprintf("endpoint:%s:%s:%s", report.ExtractHostID(m), m["addr"], m["port"])
 		major   = fmt.Sprintf("%s:%s", m["addr"], m["port"])
 		pid, ok = m["pid"]
-		minor   = getHostname(m)
+		minor   = report.ExtractHostID(m)
 		rank    = major
 	)
 
 	if ok {
-		minor = fmt.Sprintf("%s (%s)", getHostname(m), pid)
+		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), pid)
 	}
 
 	return NewRenderableNode(id, major, minor, rank, m), true
@@ -61,26 +61,26 @@ func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 
 // MapProcessIdentity maps a process topology node to process RenderableNode node.
 // As it is only ever run on process topology nodes, we can safely assume the
-// presences of certain keys.
+// presence of certain keys.
 func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = fmt.Sprintf("pid:%s:%s", getHostname(m), m["pid"])
+		id    = fmt.Sprintf("pid:%s:%s", report.ExtractHostID(m), m["pid"])
 		major = m["comm"]
-		minor = fmt.Sprintf("%s (%s)", getHostname(m), m["pid"])
+		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), m["pid"])
 		rank  = m["pid"]
 	)
 
 	return NewRenderableNode(id, major, minor, rank, m), true
 }
 
-// MapContainerIdentity maps a container topology node to container
+// MapContainerIdentity maps a container topology node to a container
 // RenderableNode node. As it is only ever run on container topology
 // nodes, we can safely assume the presences of certain keys.
 func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
 		id    = m["docker_container_id"]
 		major = m["docker_container_name"]
-		minor = getHostname(m)
+		minor = report.ExtractHostID(m)
 		rank  = m["docker_image_id"]
 	)
 
@@ -109,7 +109,7 @@ func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
 		return RenderableNode{}, false
 	}
 
-	id := fmt.Sprintf("pid:%s:%s", getHostname(n.NodeMetadata), pid)
+	id := fmt.Sprintf("pid:%s:%s", report.ExtractHostID(n.NodeMetadata), pid)
 	return newDerivedNode(id, n), true
 }
 
@@ -154,11 +154,6 @@ func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
 	node.LabelMajor = name
 	node.Rank = name
 	return node, true
-}
-
-func getHostname(m report.NodeMetadata) string {
-	hostname, _, _ := report.ParseNodeID(m[report.HostNodeID])
-	return hostname
 }
 
 // ProcessContainerImage maps topology nodes to the container images they run
