@@ -50,12 +50,12 @@ var topologyRegistry = map[string]topologyView{
 	"applications": {
 		human:    "Applications",
 		parent:   "",
-		renderer: render.LeafMap{Selector: report.SelectEndpoint, Mapper: render.ProcessPID, Pseudo: render.GenericPseudoNode},
+		renderer: render.FilterUnconnected{Renderer: render.ProcessRenderer},
 	},
 	"applications-by-name": {
 		human:    "by name",
 		parent:   "applications",
-		renderer: render.LeafMap{Selector: report.SelectEndpoint, Mapper: render.ProcessName, Pseudo: render.GenericGroupedPseudoNode},
+		renderer: render.FilterUnconnected{Renderer: render.ProcessNameRenderer},
 	},
 	"containers": {
 		human:    "Containers",

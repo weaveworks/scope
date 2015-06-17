@@ -31,6 +31,11 @@ type LeafMap struct {
 	Pseudo   PseudoFunc
 }
 
+// FilterUnconnected is a Renderer which filters out unconnected nodes.
+type FilterUnconnected struct {
+	Renderer
+}
+
 // MakeReduce is the only sane way to produce a Reduce Renderer
 func MakeReduce(renderers ...Renderer) Renderer {
 	return Reduce(renderers)
@@ -237,4 +242,21 @@ func (m LeafMap) AggregateMetadata(rpt report.Report, srcRenderableID, dstRender
 		}
 	}
 	return metadata.Transform()
+}
+
+// Render produces a set of RenderableNodes given a Report
+func (f FilterUnconnected) Render(rpt report.Report) RenderableNodes {
+	input := f.Renderer.Render(rpt)
+	output := RenderableNodes{}
+	for id, node := range input {
+		if len(node.Adjacency) == 0 {
+			continue
+		}
+
+		output[id] = node
+		for _, id := range node.Adjacency {
+			output[id] = input[id]
+		}
+	}
+	return output
 }

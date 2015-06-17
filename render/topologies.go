@@ -25,6 +25,13 @@ var ProcessRenderer = MakeReduce(
 	},
 )
 
+// ProcessRenderer is a Renderer which produces a renderable process
+// name graph by munging the progess graph.
+var ProcessNameRenderer = Map{
+	MapFunc:  MapProcess2Name,
+	Renderer: ProcessRenderer,
+}
+
 // ContainerRenderer is a Renderer which produces a renderable container
 // graph by merging the process graph and the container topology.
 var ContainerRenderer = MakeReduce(

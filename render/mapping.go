@@ -34,6 +34,9 @@ type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string)
 
 // MapFunc is anything which can take an arbitrary RenderableNode and
 // return another RenderableNode.
+//
+// As with LeadMapFunc, if the final output parameter is false, the node
+// shall be omitted from the rendered topology.
 type MapFunc func(RenderableNode) (RenderableNode, bool)
 
 // MapEndpointIdentity maps a endpoint topology node to endpoint RenderableNode node.
@@ -41,9 +44,9 @@ type MapFunc func(RenderableNode) (RenderableNode, bool)
 // presences of certain keys.
 func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = fmt.Sprintf("endpoint:%s:%s:%s", m[report.HostNodeID], m["addr"], m["port"])
+		id    = fmt.Sprintf("endpoint:%s:%s:%s", getHostname(m), m["addr"], m["port"])
 		major = fmt.Sprintf("%s:%s", m["addr"], m["port"])
-		minor = fmt.Sprintf("%s (%s)", m[report.HostNodeID], m["pid"])
+		minor = fmt.Sprintf("%s (%s)", getHostname(m), m["pid"])
 		rank  = m["pid"]
 	)
 	return NewRenderableNode(id, major, minor, rank, m), true
@@ -54,30 +57,31 @@ func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // presences of certain keys.
 func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = fmt.Sprintf("pid:%s:%s", m[report.HostNodeID], m["pid"])
+		id    = fmt.Sprintf("pid:%s:%s", getHostname(m), m["pid"])
 		major = m["comm"]
-		minor = fmt.Sprintf("%s (%s)", m[report.HostNodeID], m["pid"])
+		minor = fmt.Sprintf("%s (%s)", getHostname(m), m["pid"])
 		rank  = m["pid"]
 	)
 
 	return NewRenderableNode(id, major, minor, rank, m), true
 }
 
-// MapContainerIdentity maps a container topology node to container RenderableNode node.
-// As it is only ever run on container topology nodes, we can safely assume the
-// presences of certain keys.
+// MapContainerIdentity maps a container topology node to container
+// RenderableNode node. As it is only ever run on container topology
+// nodes, we can safely assume the presences of certain keys.
 func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
 		id    = m["docker_container_id"]
 		major = m["docker_container_name"]
-		minor = m[report.HostNodeID]
+		minor = getHostname(m)
 		rank  = m["docker_image_id"]
 	)
 
 	return NewRenderableNode(id, major, minor, rank, m), true
 }
 
-// MapEndpoint2Process maps endpoint RenderableNodes to process RenderableNodes.
+// MapEndpoint2Process maps endpoint RenderableNodes to process
+// RenderableNodes.
 //
 // If this function is given a pseudo node, then it will just return it;
 // Pseudo nodes will never have pids in them, and therefore will never
@@ -92,14 +96,22 @@ func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
 		return n, true
 	}
 
-	id := fmt.Sprintf("pid:%s:%s", n.NodeMetadata[report.HostNodeID], n.NodeMetadata["pid"])
+	pid, ok := n.NodeMetadata["pid"]
+	if !ok {
+		// TODO: Propogate a pseudo node instead of dropping this?
+		return RenderableNode{}, false
+	}
+
+	id := fmt.Sprintf("pid:%s:%s", getHostname(n.NodeMetadata), pid)
 	return newDerivedNode(id, n), true
 }
 
-// MapProcess2Container maps process RenderableNodes to container RenderableNodes.
+// MapProcess2Container maps process RenderableNodes to container
+// RenderableNodes.
 //
-// If this function is given a node without a docker_container_id (including other
-// psueod nodes), it will produce an "Uncontained" pseudo node.
+// If this function is given a node without a docker_container_id
+// (including other pseudo nodes), it will produce an "Uncontained"
+// pseudo node.
 //
 // Otherwise, this function will produce a node with the correct ID
 // format for a container, but without any Major or Minor labels.
@@ -112,6 +124,31 @@ func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
 	}
 
 	return newDerivedNode(id, n), true
+}
+
+// MapProcess2Name maps process RenderableNodes to RenderableNodes
+// for each process name.
+//
+// This mapper is unlike the other foo2bar mappers as the intention
+// is not to join the information with another topology.  Therefore
+// it outputs a properly-formed node with labels etc.
+func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
+	if n.Pseudo {
+		return n, true
+	}
+
+	name, ok := n.NodeMetadata["comm"]
+	if !ok {
+		// TODO: Propogate a pseudo node instead of dropping this?
+		return RenderableNode{}, false
+	}
+
+	return NewRenderableNode(name, name, "", name, n.NodeMetadata), true
+}
+
+func getHostname(m report.NodeMetadata) string {
+	hostname, _, _ := report.ParseNodeID(m[report.HostNodeID])
+	return hostname
 }
 
 // ProcessPID takes a node NodeMetadata from topology, and returns a
