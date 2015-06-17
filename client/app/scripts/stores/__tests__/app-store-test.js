@@ -130,14 +130,14 @@ describe('AppStore', function() {
     registeredCallback(ReceiveNodesDeltaAction);
 
     expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1","grouping":"none","selectedNodeId": null});
+      .toEqual({"topologyId":"topo1","selectedNodeId": null});
 
     registeredCallback(ClickNodeAction);
     expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1","grouping":"none","selectedNodeId": 'n1'});
+      .toEqual({"topologyId":"topo1","selectedNodeId": 'n1'});
 
     // go back in browsing
-    RouteAction.state = {"topologyId":"topo1","grouping":"none","selectedNodeId": null};
+    RouteAction.state = {"topologyId":"topo1","selectedNodeId": null};
     registeredCallback(RouteAction);
     expect(AppStore.getSelectedNodeId()).toBe(null);
     expect(AppStore.getNodes()).toEqual(NODE_SET);
