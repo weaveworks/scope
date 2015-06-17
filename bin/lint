@@ -13,16 +13,28 @@
 
 set -eu
 
+function spell_check {
+	filename="$1"
+	local lint_result=0
+
+	if grep -iH --color=always psueod "${filename}"; then
+		echo "${filename}: spelling mistake"
+		lint_result=1
+	fi
+
+	return $lint_result
+}
+
 function lint_go {
 	filename="$1"
-	result=0
+	local lint_result=0
 
 	if [ -n "$(gofmt -s -l "${filename}")" ]; then
-		result=1
+		lint_result=1
 		echo "${filename}: run gofmt -s -w ${filename}!"
 	fi
 
-	go tool vet "${filename}" || result=$?
+	go tool vet "${filename}" || lint_result=$?
 
 	# golint is completely optional.  If you don't like it
 	# don't have it installed.
@@ -30,7 +42,7 @@ function lint_go {
 		# golint doesn't set an exit code it seems
 		lintoutput=$(golint "${filename}")
 		if [ "$lintoutput" != "" ]; then
-			result=1
+			lint_result=1
 			echo "$lintoutput"
 		fi
 	fi
@@ -44,12 +56,13 @@ function lint_go {
 		done
 	fi
 
-	return $result
+	return $lint_result
 }
 
 function lint {
 	filename="$1"
 	ext="${filename##*\.}"
+	local lint_result=0
 
 	# Don't lint deleted files
 	if [ ! -f "$filename" ]; then
@@ -58,18 +71,23 @@ function lint {
 
 	# Don't lint this script or static.go
 	case "${filename}" in
-	bin/lint) return;;
+	./bin/lint) return;;
 	./app/static.go) return;;
+	./coverage.html) return;;
 	esac
 
 	case "$ext" in
-		go) lint_go "${filename}"
+		go) lint_go "${filename}" || lint_result=1
 		;;
 	esac
+
+	spell_check "${filename}" || lint_result=1
+
+	return $lint_result
 }
 
 function lint_files {
-	lint_result=0
+	local lint_result=0
 	while read filename; do
 		lint "${filename}" || lint_result=1
 	done
@@ -78,7 +96,7 @@ function lint_files {
 
 function list_files {
 	if [ $# -gt 0 ]; then
-		find "$@" -type f
+		find "$@" -type f | grep -vE '^\./\.git/'
 	else
 		git diff --cached --name-only
 	fi
