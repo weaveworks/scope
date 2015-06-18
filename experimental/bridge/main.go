@@ -112,6 +112,34 @@ func makeAvoid(fixed []string) map[string]struct{} {
 	return avoid
 }
 
+// LocalNetworks returns a superset of the networks (think: CIDRs) that are
+// "local" from the perspective of each host represented in the report. It's
+// used to determine which nodes in the report are "remote", i.e. outside of
+// our infrastructure.
+func LocalNetworks(r report.Report) []*net.IPNet {
+	var ipNets []*net.IPNet
+	for _, md := range r.Host.NodeMetadatas {
+		val, ok := md["local_networks"]
+		if !ok {
+			continue
+		}
+	outer:
+		for _, s := range strings.Fields(val) {
+			_, ipNet, err := net.ParseCIDR(s)
+			if err != nil {
+				continue
+			}
+			for _, existing := range ipNets {
+				if ipNet.String() == existing.String() {
+					continue outer
+				}
+			}
+			ipNets = append(ipNets, ipNet)
+		}
+	}
+	return ipNets
+}
+
 // discover reads reports from a collector and republishes them on the
 // publisher, while scanning the reports for IPs to connect to. Only addresses
 // in the network topology of the report are considered. IPs listed in fixed
@@ -127,7 +155,7 @@ func discover(c collector, p publisher, fixed []string) {
 
 		var (
 			now       = time.Now()
-			localNets = r.LocalNetworks()
+			localNets = LocalNetworks(r)
 		)
 
 		for _, adjacent := range r.Address.Adjacency {

@@ -170,5 +170,5 @@ func (s StaticReport) Report() report.Report {
 			},
 		},
 	}
-	return testReport.Squash()
+	return testReport
 }

@@ -54,7 +54,6 @@ func NewReportLIFO(r reporter, maxAge time.Duration) *ReportLIFO {
 				for _, r := range l.reports {
 					report.Merge(r.Report)
 				}
-				report = report.Squash() // TODO?: make this a CLI argument.
 				req <- report
 
 			case q := <-l.quit:

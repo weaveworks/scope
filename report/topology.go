@@ -2,7 +2,6 @@ package report
 
 import (
 	"fmt"
-	"net"
 	"strings"
 )
 
@@ -73,49 +72,6 @@ func NewTopology() Topology {
 		EdgeMetadatas: map[string]EdgeMetadata{},
 		NodeMetadatas: map[string]NodeMetadata{},
 	}
-}
-
-// Squash squashes all non-local nodes in the topology to a super-node called
-// the Internet.
-// We rely on the values in the t.Adjacency lists being valid keys in
-// t.NodeMetadata (or t.Adjacency).
-func (t Topology) Squash(f IDAddresser, localNets []*net.IPNet) Topology {
-	isRemote := func(id string) bool {
-		if _, ok := t.NodeMetadatas[id]; ok {
-			return false // it is a node, cannot possibly be remote
-		}
-
-		if _, ok := t.Adjacency[MakeAdjacencyID(id)]; ok {
-			return false // it is in our adjacency list, cannot possibly be remote
-		}
-
-		if ip := f(id); ip != nil && netsContain(localNets, ip) {
-			return false // it is in our local nets, so it is not remote
-		}
-
-		return true
-	}
-
-	for srcID, dstIDs := range t.Adjacency {
-		newDstIDs := make(IDList, 0, len(dstIDs))
-		for _, dstID := range dstIDs {
-			if isRemote(dstID) {
-				dstID = TheInternet
-			}
-			newDstIDs = newDstIDs.Add(dstID)
-		}
-		t.Adjacency[srcID] = newDstIDs
-	}
-	return t
-}
-
-func netsContain(nets []*net.IPNet, ip net.IP) bool {
-	for _, net := range nets {
-		if net.Contains(ip) {
-			return true
-		}
-	}
-	return false
 }
 
 // Validate checks the topology for various inconsistencies.
