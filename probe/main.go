@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/weaveworks/procspy"
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/tag"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
@@ -73,18 +74,21 @@ func main() {
 	)
 
 	var (
-		dockerTagger *tag.DockerTagger
-		weaveTagger  *tag.WeaveTagger
+		weaveTagger *tag.WeaveTagger
 	)
+
 	taggers := []tag.Tagger{tag.NewTopologyTagger(), tag.NewOriginHostTagger(hostID)}
+	reporters := []tag.Reporter{}
+
 	if *dockerEnabled && runtime.GOOS == linux {
-		var err error
-		dockerTagger, err = tag.NewDockerTagger(*procRoot, *dockerInterval)
+		dockerRegistry, err := docker.NewRegistry(*dockerInterval)
 		if err != nil {
-			log.Fatalf("failed to start docker tagger: %v", err)
+			log.Fatalf("failed to start docker registry: %v", err)
 		}
-		defer dockerTagger.Stop()
-		taggers = append(taggers, dockerTagger)
+		defer dockerRegistry.Stop()
+
+		taggers = append(taggers, docker.NewTagger(dockerRegistry, *procRoot))
+		reporters = append(reporters, docker.NewReporter(dockerRegistry, hostID))
 	}
 
 	if *weaveRouterAddr != "" {
@@ -128,9 +132,8 @@ func main() {
 					}
 				}
 
-				if dockerTagger != nil {
-					r.Container.Merge(dockerTagger.ContainerTopology(hostID))
-					r.ContainerImage.Merge(dockerTagger.ContainerImageTopology(hostID))
+				for _, reporter := range reporters {
+					r.Merge(reporter.Report())
 				}
 
 				if weaveTagger != nil {

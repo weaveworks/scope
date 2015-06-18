@@ -41,10 +41,10 @@ func NewWeaveTagger(weaveRouterAddress string) (*WeaveTagger, error) {
 }
 
 // Tag implements Tagger.
-func (t WeaveTagger) Tag(r report.Report) report.Report {
+func (t WeaveTagger) Tag(r report.Report) (report.Report, error) {
 	// The status-json endpoint doesn't return any link information, so
 	// there's nothing to tag, yet.
-	return r
+	return r, nil
 }
 
 // OverlayTopology produces an overlay topology from the Weave router.
