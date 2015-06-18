@@ -9,7 +9,7 @@ import (
 // Renderer is something that can render a report to a set of RenderableNodes.
 type Renderer interface {
 	Render(report.Report) RenderableNodes
-	AggregateMetadata(rpt report.Report, localID, remoteID string) report.AggregateMetadata
+	AggregateMetadata(rpt report.Report, localID, remoteID string) AggregateMetadata
 }
 
 // Reduce renderer is a Renderer which merges together the output of several
@@ -51,8 +51,8 @@ func (r Reduce) Render(rpt report.Report) RenderableNodes {
 }
 
 // AggregateMetadata produces an AggregateMetadata for a given edge.
-func (r Reduce) AggregateMetadata(rpt report.Report, localID, remoteID string) report.AggregateMetadata {
-	metadata := report.AggregateMetadata{}
+func (r Reduce) AggregateMetadata(rpt report.Report, localID, remoteID string) AggregateMetadata {
+	metadata := AggregateMetadata{}
 	for _, renderer := range r {
 		metadata.Merge(renderer.AggregateMetadata(rpt, localID, remoteID))
 	}
@@ -111,7 +111,7 @@ func (m Map) render(rpt report.Report) (RenderableNodes, map[string]string) {
 // srcRenderableID. Since an edgeID can have multiple edges on the address
 // level, it uses the supplied mapping function to translate address IDs to
 // renderable node (mapped) IDs.
-func (m Map) AggregateMetadata(rpt report.Report, srcRenderableID, dstRenderableID string) report.AggregateMetadata {
+func (m Map) AggregateMetadata(rpt report.Report, srcRenderableID, dstRenderableID string) AggregateMetadata {
 	// First we need to map the ids in this layer into the ids in the underlying layer
 	_, mapped := m.render(rpt)        // this maps from old -> new
 	inverted := map[string][]string{} // this maps from new -> old(s)
@@ -130,7 +130,7 @@ func (m Map) AggregateMetadata(rpt report.Report, srcRenderableID, dstRenderable
 	}
 
 	// Now recurse for each old edge
-	output := report.AggregateMetadata{}
+	output := AggregateMetadata{}
 	for _, edge := range oldEdges {
 		metadata := m.Renderer.AggregateMetadata(rpt, edge.src, edge.dst)
 		output.Merge(metadata)
@@ -202,7 +202,7 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 			srcRenderableNode.Origins = srcRenderableNode.Origins.Add(srcNodeID)
 			edgeID := report.MakeEdgeID(srcNodeID, dstNodeID)
 			if md, ok := t.EdgeMetadatas[edgeID]; ok {
-				srcRenderableNode.AggregateMetadata.Merge(md.Transform())
+				srcRenderableNode.AggregateMetadata.Merge(AggregateMetadataOf(md))
 			}
 		}
 
@@ -216,7 +216,7 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 // srcRenderableID. Since an edgeID can have multiple edges on the address
 // level, it uses the supplied mapping function to translate address IDs to
 // renderable node (mapped) IDs.
-func (m LeafMap) AggregateMetadata(rpt report.Report, srcRenderableID, dstRenderableID string) report.AggregateMetadata {
+func (m LeafMap) AggregateMetadata(rpt report.Report, srcRenderableID, dstRenderableID string) AggregateMetadata {
 	t := m.Selector(rpt)
 	metadata := report.EdgeMetadata{}
 	for edgeID, edgeMeta := range t.EdgeMetadatas {
@@ -237,7 +237,7 @@ func (m LeafMap) AggregateMetadata(rpt report.Report, srcRenderableID, dstRender
 			metadata.Flatten(edgeMeta)
 		}
 	}
-	return metadata.Transform()
+	return AggregateMetadataOf(metadata)
 }
 
 // Render produces a set of RenderableNodes given a Report

@@ -254,9 +254,9 @@ func TestProcessRenderer(t *testing.T) {
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(serverProcessID),
 			Origins:    report.MakeIDList(client54001NodeID, client54002NodeID, clientProcessNodeID, clientHostNodeID),
-			AggregateMetadata: report.AggregateMetadata{
-				report.KeyBytesIngress: 300,
-				report.KeyBytesEgress:  30,
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyBytesIngress: 300,
+				render.KeyBytesEgress:  30,
 			},
 		},
 		serverProcessID: {
@@ -271,9 +271,9 @@ func TestProcessRenderer(t *testing.T) {
 				"pseudo;10.10.10.11;192.168.1.1;80",
 			),
 			Origins: report.MakeIDList(server80NodeID, serverProcessNodeID, serverHostNodeID),
-			AggregateMetadata: report.AggregateMetadata{
-				report.KeyBytesIngress: 150,
-				report.KeyBytesEgress:  1500,
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyBytesIngress: 150,
+				render.KeyBytesEgress:  1500,
 			},
 		},
 		nonContainerProcessID: {
@@ -284,19 +284,19 @@ func TestProcessRenderer(t *testing.T) {
 			Pseudo:            false,
 			Adjacency:         report.MakeIDList(),
 			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
-			AggregateMetadata: report.AggregateMetadata{},
+			AggregateMetadata: render.AggregateMetadata{},
 		},
 		"pseudo;10.10.10.10;192.168.1.1;80": {
 			ID:                "pseudo;10.10.10.10;192.168.1.1;80",
 			LabelMajor:        "10.10.10.10",
 			Pseudo:            true,
-			AggregateMetadata: report.AggregateMetadata{},
+			AggregateMetadata: render.AggregateMetadata{},
 		},
 		"pseudo;10.10.10.11;192.168.1.1;80": {
 			ID:                "pseudo;10.10.10.11;192.168.1.1;80",
 			LabelMajor:        "10.10.10.11",
 			Pseudo:            true,
-			AggregateMetadata: report.AggregateMetadata{},
+			AggregateMetadata: render.AggregateMetadata{},
 		},
 	}
 	have := render.ProcessRenderer.Render(rpt)
@@ -319,9 +319,9 @@ func TestProcessNameRenderer(t *testing.T) {
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList("apache"),
 			Origins:    report.MakeIDList(client54001NodeID, client54002NodeID, clientProcessNodeID, clientHostNodeID),
-			AggregateMetadata: report.AggregateMetadata{
-				report.KeyBytesIngress: 300,
-				report.KeyBytesEgress:  30,
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyBytesIngress: 300,
+				render.KeyBytesEgress:  30,
 			},
 		},
 		"apache": {
@@ -336,9 +336,9 @@ func TestProcessNameRenderer(t *testing.T) {
 				"pseudo;10.10.10.11;192.168.1.1;80",
 			),
 			Origins: report.MakeIDList(server80NodeID, serverProcessNodeID, serverHostNodeID),
-			AggregateMetadata: report.AggregateMetadata{
-				report.KeyBytesIngress: 150,
-				report.KeyBytesEgress:  1500,
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyBytesIngress: 150,
+				render.KeyBytesEgress:  1500,
 			},
 		},
 		"bash": {
@@ -348,19 +348,19 @@ func TestProcessNameRenderer(t *testing.T) {
 			Rank:              "bash",
 			Pseudo:            false,
 			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
-			AggregateMetadata: report.AggregateMetadata{},
+			AggregateMetadata: render.AggregateMetadata{},
 		},
 		"pseudo;10.10.10.10;192.168.1.1;80": {
 			ID:                "pseudo;10.10.10.10;192.168.1.1;80",
 			LabelMajor:        "10.10.10.10",
 			Pseudo:            true,
-			AggregateMetadata: report.AggregateMetadata{},
+			AggregateMetadata: render.AggregateMetadata{},
 		},
 		"pseudo;10.10.10.11;192.168.1.1;80": {
 			ID:                "pseudo;10.10.10.11;192.168.1.1;80",
 			LabelMajor:        "10.10.10.11",
 			Pseudo:            true,
-			AggregateMetadata: report.AggregateMetadata{},
+			AggregateMetadata: render.AggregateMetadata{},
 		},
 	}
 	have := render.ProcessNameRenderer.Render(rpt)
@@ -383,9 +383,9 @@ func TestContainerRenderer(t *testing.T) {
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(serverContainerID),
 			Origins:    report.MakeIDList(clientContainerNodeID, client54001NodeID, client54002NodeID, clientProcessNodeID, clientHostNodeID),
-			AggregateMetadata: report.AggregateMetadata{
-				report.KeyBytesIngress: 300,
-				report.KeyBytesEgress:  30,
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyBytesIngress: 300,
+				render.KeyBytesEgress:  30,
 			},
 		},
 		serverContainerID: {
@@ -396,9 +396,9 @@ func TestContainerRenderer(t *testing.T) {
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(clientContainerID, render.UncontainedID),
 			Origins:    report.MakeIDList(serverContainerNodeID, server80NodeID, serverProcessNodeID, serverHostNodeID),
-			AggregateMetadata: report.AggregateMetadata{
-				report.KeyBytesIngress: 150,
-				report.KeyBytesEgress:  1500,
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyBytesIngress: 150,
+				render.KeyBytesEgress:  1500,
 			},
 		},
 		render.UncontainedID: {
@@ -408,7 +408,7 @@ func TestContainerRenderer(t *testing.T) {
 			Rank:              "",
 			Pseudo:            true,
 			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
-			AggregateMetadata: report.AggregateMetadata{},
+			AggregateMetadata: render.AggregateMetadata{},
 		},
 	}
 	have := render.ContainerRenderer.Render(rpt)
@@ -428,8 +428,8 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList("host:server.hostname.com"),
 			Origins:    report.MakeIDList(report.MakeHostNodeID("client.hostname.com"), report.MakeAddressNodeID("client.hostname.com", "10.10.10.20")),
-			AggregateMetadata: report.AggregateMetadata{
-				report.KeyMaxConnCountTCP: 3,
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyMaxConnCountTCP: 3,
 			},
 		},
 		"host:random.hostname.com": {
@@ -440,8 +440,8 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList("host:server.hostname.com"),
 			Origins:    report.MakeIDList(report.MakeHostNodeID("random.hostname.com"), report.MakeAddressNodeID("random.hostname.com", "172.16.11.9")),
-			AggregateMetadata: report.AggregateMetadata{
-				report.KeyMaxConnCountTCP: 20,
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyMaxConnCountTCP: 20,
 			},
 		},
 		"host:server.hostname.com": {
@@ -452,8 +452,8 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList("host:client.hostname.com", "pseudo;10.10.10.10;192.168.1.1;"),
 			Origins:    report.MakeIDList(report.MakeHostNodeID("server.hostname.com"), report.MakeAddressNodeID("server.hostname.com", "192.168.1.1")),
-			AggregateMetadata: report.AggregateMetadata{
-				report.KeyMaxConnCountTCP: 10,
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyMaxConnCountTCP: 10,
 			},
 		},
 		"pseudo;10.10.10.10;192.168.1.1;": {
@@ -464,7 +464,7 @@ func TestRenderByNetworkHostname(t *testing.T) {
 			Pseudo:            true,
 			Adjacency:         nil,
 			Origins:           nil,
-			AggregateMetadata: report.AggregateMetadata{},
+			AggregateMetadata: render.AggregateMetadata{},
 		},
 	}
 	have := render.LeafMap{

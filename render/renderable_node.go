@@ -16,8 +16,8 @@ type RenderableNode struct {
 	Adjacency  report.IDList `json:"adjacency,omitempty"`   // Node IDs (in the same topology domain)
 	Origins    report.IDList `json:"origins,omitempty"`     // Core node IDs that contributed information
 
-	report.AggregateMetadata `json:"metadata"` // Numeric sums
-	report.NodeMetadata      `json:"-"`        // merged NodeMetadata of the nodes used to build this
+	AggregateMetadata   `json:"metadata"` // Numeric sums
+	report.NodeMetadata `json:"-"`        // merged NodeMetadata of the nodes used to build this
 }
 
 // RenderableNodes is a set of RenderableNodes
@@ -68,7 +68,7 @@ func NewRenderableNode(id, major, minor, rank string, nmd report.NodeMetadata) R
 		LabelMinor:        minor,
 		Rank:              rank,
 		Pseudo:            false,
-		AggregateMetadata: report.AggregateMetadata{},
+		AggregateMetadata: AggregateMetadata{},
 		NodeMetadata:      nmd.Copy(),
 	}
 }
@@ -93,7 +93,7 @@ func newPseudoNode(id, major, minor string) RenderableNode {
 		LabelMinor:        minor,
 		Rank:              "",
 		Pseudo:            true,
-		AggregateMetadata: report.AggregateMetadata{},
+		AggregateMetadata: AggregateMetadata{},
 		NodeMetadata:      report.NodeMetadata{},
 	}
 }

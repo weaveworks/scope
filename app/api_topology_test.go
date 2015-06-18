@@ -58,7 +58,7 @@ func TestAPITopologyApplications(t *testing.T) {
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
-		want := report.AggregateMetadata{
+		want := render.AggregateMetadata{
 			"egress_bytes":       24,
 			"ingress_bytes":      0,
 			"max_conn_count_tcp": 401,
@@ -112,7 +112,7 @@ func TestAPITopologyHosts(t *testing.T) {
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
-		want := report.AggregateMetadata{
+		want := render.AggregateMetadata{
 			"egress_bytes":       0,
 			"ingress_bytes":      12,
 			"max_conn_count_tcp": 16,
