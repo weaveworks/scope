@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/test"
 )
 
 func TestOriginTable(t *testing.T) {
@@ -51,7 +52,7 @@ func TestOriginTable(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(want, have) {
-			t.Errorf("%q: %s", originID, diff(want, have))
+			t.Errorf("%q: %s", originID, test.Diff(want, have))
 		}
 	}
 }
@@ -95,6 +96,7 @@ func TestMakeDetailedNode(t *testing.T) {
 				Rows: []render.Row{
 					{"Container ID", "5e4d3c2b1a", ""},
 					{"Container name", "server", ""},
+					{"Container image ID", "imageid456", ""},
 				},
 			},
 			{
@@ -109,6 +111,6 @@ func TestMakeDetailedNode(t *testing.T) {
 		},
 	}
 	if !reflect.DeepEqual(want, have) {
-		t.Errorf("%s", diff(want, have))
+		t.Errorf("%s", test.Diff(want, have))
 	}
 }

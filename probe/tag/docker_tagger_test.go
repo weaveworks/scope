@@ -8,6 +8,7 @@ import (
 
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test"
 )
 
 type mockDockerClient struct {
@@ -67,18 +68,31 @@ func TestDockerTagger(t *testing.T) {
 	}
 
 	var (
-		pid1NodeID           = report.MakeProcessNodeID("somehost.com", "1")
-		pid2NodeID           = report.MakeProcessNodeID("somehost.com", "2")
-		endpointNodeMetadata = report.NodeMetadata{
-			ContainerID: "foo",
-			ImageID:     "baz",
-			ImageName:   "bang",
-		}
+		pid1NodeID          = report.MakeProcessNodeID("somehost.com", "1")
+		pid2NodeID          = report.MakeProcessNodeID("somehost.com", "2")
 		processNodeMetadata = report.NodeMetadata{
-			ContainerID:   "foo",
-			ContainerName: "bar",
-			ImageID:       "baz",
-			ImageName:     "bang",
+			ContainerID: "foo",
+		}
+		wantContainerTopology = report.Topology{
+			Adjacency:     report.Adjacency{},
+			EdgeMetadatas: report.EdgeMetadatas{},
+			NodeMetadatas: report.NodeMetadatas{
+				report.MakeContainerNodeID("", "foo"): report.NodeMetadata{
+					ContainerID:   "foo",
+					ContainerName: "bar",
+					ImageID:       "baz",
+				},
+			},
+		}
+		wantContainerImageTopology = report.Topology{
+			Adjacency:     report.Adjacency{},
+			EdgeMetadatas: report.EdgeMetadatas{},
+			NodeMetadatas: report.NodeMetadatas{
+				report.MakeContainerNodeID("", "baz"): report.NodeMetadata{
+					ImageID:   "baz",
+					ImageName: "bang",
+				},
+			},
 		}
 	)
 
@@ -89,7 +103,7 @@ func TestDockerTagger(t *testing.T) {
 	dockerTagger, _ := NewDockerTagger("/irrelevant", 10*time.Second)
 	runtime.Gosched()
 	for _, nodeID := range []string{pid1NodeID, pid2NodeID} {
-		want := endpointNodeMetadata.Copy()
+		want := processNodeMetadata.Copy()
 		have := dockerTagger.Tag(r).Process.NodeMetadatas[nodeID].Copy()
 		delete(have, "pid")
 		if !reflect.DeepEqual(want, have) {
@@ -97,10 +111,13 @@ func TestDockerTagger(t *testing.T) {
 		}
 	}
 
-	wantTopology := report.NewTopology()
-	wantTopology.NodeMetadatas[report.MakeContainerNodeID("", "foo")] = processNodeMetadata
-	haveTopology := dockerTagger.ContainerTopology("")
-	if !reflect.DeepEqual(wantTopology, haveTopology) {
-		t.Errorf("toplog want %+v, have %+v", wantTopology, haveTopology)
+	haveContainerTopology := dockerTagger.ContainerTopology("")
+	if !reflect.DeepEqual(wantContainerTopology, haveContainerTopology) {
+		t.Errorf("%s", test.Diff(wantContainerTopology, haveContainerTopology))
+	}
+
+	haveContainerImageTopology := dockerTagger.ContainerImageTopology("")
+	if !reflect.DeepEqual(wantContainerImageTopology, haveContainerImageTopology) {
+		t.Errorf("%s", test.Diff(wantContainerImageTopology, haveContainerImageTopology))
 	}
 }

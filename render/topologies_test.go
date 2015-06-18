@@ -5,16 +5,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
-	"github.com/pmezard/go-difflib/difflib"
-
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test"
 )
-
-func init() {
-	spew.Config.SortKeys = true // :\
-}
 
 var (
 	clientHostID  = "client.hostname.com"
@@ -59,6 +53,11 @@ var (
 	serverContainerID     = "5e4d3c2b1a"
 	clientContainerNodeID = report.MakeContainerNodeID(clientHostID, clientContainerID)
 	serverContainerNodeID = report.MakeContainerNodeID(serverHostID, serverContainerID)
+
+	clientContainerImageID     = "imageid123"
+	serverContainerImageID     = "imageid456"
+	clientContainerImageNodeID = report.MakeContainerNodeID(clientHostID, clientContainerImageID)
+	serverContainerImageNodeID = report.MakeContainerNodeID(serverHostID, serverContainerImageID)
 )
 
 var (
@@ -159,12 +158,28 @@ var (
 				clientContainerNodeID: report.NodeMetadata{
 					"docker_container_id":   clientContainerID,
 					"docker_container_name": "client",
+					"docker_image_id":       clientContainerImageID,
 					report.HostNodeID:       clientHostNodeID,
 				},
 				serverContainerNodeID: report.NodeMetadata{
 					"docker_container_id":   serverContainerID,
 					"docker_container_name": "server",
+					"docker_image_id":       serverContainerImageID,
 					report.HostNodeID:       serverHostNodeID,
+				},
+			},
+		},
+		ContainerImage: report.Topology{
+			NodeMetadatas: report.NodeMetadatas{
+				clientContainerImageNodeID: report.NodeMetadata{
+					"docker_image_id":   clientContainerImageID,
+					"docker_image_name": "client_image",
+					report.HostNodeID:   clientHostNodeID,
+				},
+				serverContainerImageNodeID: report.NodeMetadata{
+					"docker_image_id":   serverContainerImageID,
+					"docker_image_name": "server_image",
+					report.HostNodeID:   serverHostNodeID,
 				},
 			},
 		},
@@ -302,7 +317,7 @@ func TestProcessRenderer(t *testing.T) {
 	have := render.ProcessRenderer.Render(rpt)
 	have = trimNodeMetadata(have)
 	if !reflect.DeepEqual(want, have) {
-		t.Error("\n" + diff(want, have))
+		t.Error("\n" + test.Diff(want, have))
 	}
 }
 
@@ -366,20 +381,17 @@ func TestProcessNameRenderer(t *testing.T) {
 	have := render.ProcessNameRenderer.Render(rpt)
 	have = trimNodeMetadata(have)
 	if !reflect.DeepEqual(want, have) {
-		t.Error("\n" + diff(want, have))
+		t.Error("\n" + test.Diff(want, have))
 	}
 }
 
 func TestContainerRenderer(t *testing.T) {
-	// For grouped, I've somewhat arbitrarily chosen to squash together all
-	// processes with the same name by removing the PID and domain (host)
-	// dimensions from the ID. That could be changed.
 	want := render.RenderableNodes{
 		clientContainerID: {
 			ID:         clientContainerID,
 			LabelMajor: "client",
 			LabelMinor: clientHostName,
-			Rank:       "",
+			Rank:       clientContainerImageID,
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(serverContainerID),
 			Origins:    report.MakeIDList(clientContainerNodeID, client54001NodeID, client54002NodeID, clientProcessNodeID, clientHostNodeID),
@@ -392,7 +404,7 @@ func TestContainerRenderer(t *testing.T) {
 			ID:         serverContainerID,
 			LabelMajor: "server",
 			LabelMinor: serverHostName,
-			Rank:       "",
+			Rank:       serverContainerImageID,
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(clientContainerID, render.UncontainedID),
 			Origins:    report.MakeIDList(serverContainerNodeID, server80NodeID, serverProcessNodeID, serverHostNodeID),
@@ -414,7 +426,52 @@ func TestContainerRenderer(t *testing.T) {
 	have := render.ContainerRenderer.Render(rpt)
 	have = trimNodeMetadata(have)
 	if !reflect.DeepEqual(want, have) {
-		t.Error("\n" + diff(want, have))
+		t.Error("\n" + test.Diff(want, have))
+	}
+}
+
+func TestContainerImageRenderer(t *testing.T) {
+	want := render.RenderableNodes{
+		clientContainerImageID: {
+			ID:         clientContainerImageID,
+			LabelMajor: "client_image",
+			LabelMinor: "",
+			Rank:       clientContainerImageID,
+			Pseudo:     false,
+			Adjacency:  report.MakeIDList(serverContainerImageID),
+			Origins:    report.MakeIDList(clientContainerImageNodeID, clientContainerNodeID, client54001NodeID, client54002NodeID, clientProcessNodeID, clientHostNodeID),
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyBytesIngress: 300,
+				render.KeyBytesEgress:  30,
+			},
+		},
+		serverContainerImageID: {
+			ID:         serverContainerImageID,
+			LabelMajor: "server_image",
+			LabelMinor: "",
+			Rank:       serverContainerImageID,
+			Pseudo:     false,
+			Adjacency:  report.MakeIDList(clientContainerImageID, render.UncontainedID),
+			Origins:    report.MakeIDList(serverContainerImageNodeID, serverContainerNodeID, server80NodeID, serverProcessNodeID, serverHostNodeID),
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyBytesIngress: 150,
+				render.KeyBytesEgress:  1500,
+			},
+		},
+		render.UncontainedID: {
+			ID:                render.UncontainedID,
+			LabelMajor:        render.UncontainedMajor,
+			LabelMinor:        "",
+			Rank:              "",
+			Pseudo:            true,
+			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
+			AggregateMetadata: render.AggregateMetadata{},
+		},
+	}
+	have := render.ContainerImageRenderer.Render(rpt)
+	have = trimNodeMetadata(have)
+	if !reflect.DeepEqual(want, have) {
+		t.Error("\n" + test.Diff(want, have))
 	}
 }
 
@@ -474,17 +531,6 @@ func TestRenderByNetworkHostname(t *testing.T) {
 	}.Render(rpt)
 	have = trimNodeMetadata(have)
 	if !reflect.DeepEqual(want, have) {
-		t.Error("\n" + diff(want, have))
+		t.Error("\n" + test.Diff(want, have))
 	}
-}
-
-func diff(want, have interface{}) string {
-	text, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-		A:        difflib.SplitLines(spew.Sdump(want)),
-		B:        difflib.SplitLines(spew.Sdump(have)),
-		FromFile: "want",
-		ToFile:   "have",
-		Context:  3,
-	})
-	return "\n" + text
 }

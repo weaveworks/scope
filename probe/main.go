@@ -130,6 +130,7 @@ func main() {
 
 				if dockerTagger != nil {
 					r.Container.Merge(dockerTagger.ContainerTopology(hostID))
+					r.ContainerImage.Merge(dockerTagger.ContainerImageTopology(hostID))
 				}
 
 				if weaveTagger != nil {

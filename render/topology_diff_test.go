@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/test"
 )
 
 // ByID is a sort interface for a RenderableNode slice.
@@ -87,7 +88,7 @@ func TestTopoDiff(t *testing.T) {
 		sort.Sort(ByID(c.have.Add))
 		sort.Sort(ByID(c.have.Update))
 		if !reflect.DeepEqual(c.want, c.have) {
-			t.Errorf("%s - %s", c.label, diff(c.want, c.have))
+			t.Errorf("%s - %s", c.label, test.Diff(c.want, c.have))
 		}
 	}
 }

@@ -65,7 +65,7 @@ var topologyRegistry = map[string]topologyView{
 	"containers-by-image": {
 		human:    "by image",
 		parent:   "containers",
-		renderer: render.LeafMap{Selector: report.SelectEndpoint, Mapper: render.ProcessContainerImage, Pseudo: render.InternetOnlyPseudoNode},
+		renderer: render.ContainerImageRenderer,
 	},
 	"hosts": {
 		human:    "Hosts",

@@ -93,6 +93,9 @@ func OriginTable(r report.Report, originID string) (Table, bool) {
 	if nmd, ok := r.Container.NodeMetadatas[originID]; ok {
 		return containerOriginTable(nmd)
 	}
+	if nmd, ok := r.ContainerImage.NodeMetadatas[originID]; ok {
+		return containerImageOriginTable(nmd)
+	}
 	if nmd, ok := r.Host.NodeMetadatas[originID]; ok {
 		return hostOriginTable(nmd)
 	}
@@ -155,7 +158,6 @@ func containerOriginTable(nmd report.NodeMetadata) (Table, bool) {
 		{"docker_container_id", "Container ID"},
 		{"docker_container_name", "Container name"},
 		{"docker_image_id", "Container image ID"},
-		{"docker_image_name", "Container image name"},
 	} {
 		if val, ok := nmd[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
@@ -163,6 +165,23 @@ func containerOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	}
 	return Table{
 		Title:   "Origin Container",
+		Numeric: false,
+		Rows:    rows,
+	}, len(rows) > 0
+}
+
+func containerImageOriginTable(nmd report.NodeMetadata) (Table, bool) {
+	rows := []Row{}
+	for _, tuple := range []struct{ key, human string }{
+		{"docker_image_id", "Container image ID"},
+		{"docker_image_name", "Container image name"},
+	} {
+		if val, ok := nmd[tuple.key]; ok {
+			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
+		}
+	}
+	return Table{
+		Title:   "Origin Container Image",
 		Numeric: false,
 		Rows:    rows,
 	}, len(rows) > 0

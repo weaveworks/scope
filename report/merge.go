@@ -10,6 +10,7 @@ func (r *Report) Merge(other Report) {
 	r.Address.Merge(other.Address)
 	r.Process.Merge(other.Process)
 	r.Container.Merge(other.Container)
+	r.ContainerImage.Merge(other.ContainerImage)
 	r.Host.Merge(other.Host)
 	r.Overlay.Merge(other.Overlay)
 }
