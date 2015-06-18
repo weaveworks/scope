@@ -1,6 +1,7 @@
-package tag
+package docker
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,9 +11,12 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 
 	docker "github.com/fsouza/go-dockerclient"
+
+	"github.com/weaveworks/scope/report"
 )
 
 // These constants are keys used in node metadata
@@ -39,51 +43,102 @@ const (
 	CPUSystemCPUUsage    = "cpu_system_cpu_usage"
 )
 
-type dockerContainer struct {
-	sync.RWMutex
-	*docker.Container
+// Exported for testing
+var (
+	DialStub          = net.Dial
+	NewClientConnStub = newClientConn
+)
 
-	statsConn   *httputil.ClientConn
+func newClientConn(c net.Conn, r *bufio.Reader) ClientConn {
+	return httputil.NewClientConn(c, r)
+}
+
+// ClientConn is exported for testing
+type ClientConn interface {
+	Do(req *http.Request) (resp *http.Response, err error)
+	Close() error
+}
+
+// Container represents a docker container
+type Container interface {
+	ID() string
+	Image() string
+	PID() int
+	GetNodeMetadata() report.NodeMetadata
+
+	StartGatheringStats() error
+	StopGatheringStats()
+}
+
+type container struct {
+	sync.RWMutex
+	container   *docker.Container
+	statsConn   ClientConn
 	latestStats *docker.Stats
 }
 
-// called whilst holding t.Lock() for writes
-func (c *dockerContainer) startGatheringStats(containerID string) error {
+// NewContainer creates a new Container
+func NewContainer(c *docker.Container) Container {
+	return &container{container: c}
+}
+
+func (c *container) ID() string {
+	return c.container.ID
+}
+
+func (c *container) Image() string {
+	return c.container.Image
+}
+
+func (c *container) PID() int {
+	return c.container.State.Pid
+}
+
+func (c *container) StartGatheringStats() error {
+	c.Lock()
+	defer c.Unlock()
+
 	if c.statsConn != nil {
-		return fmt.Errorf("already gather stats for container %s", containerID)
+		return fmt.Errorf("already gather stats for container %s", c.container.ID)
 	}
-
-	log.Printf("docker mapper: collecting stats for %s", containerID)
-	req, err := http.NewRequest("GET", fmt.Sprintf("/containers/%s/stats", containerID), nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("User-Agent", "weavescope")
-
-	url, err := url.Parse(endpoint)
-	if err != nil {
-		return err
-	}
-
-	dial, err := net.Dial(url.Scheme, url.Path)
-	if err != nil {
-		return err
-	}
-
-	conn := httputil.NewClientConn(dial, nil)
-	resp, err := conn.Do(req)
-	if err != nil {
-		return err
-	}
-
-	c.statsConn = conn
 
 	go func() {
+		log.Printf("docker container: collecting stats for %s", c.container.ID)
+		req, err := http.NewRequest("GET", fmt.Sprintf("/containers/%s/stats", c.container.ID), nil)
+		if err != nil {
+			log.Printf("docker container: %v", err)
+			return
+		}
+		req.Header.Set("User-Agent", "weavescope")
+
+		url, err := url.Parse(endpoint)
+		if err != nil {
+			log.Printf("docker container: %v", err)
+			return
+		}
+
+		dial, err := net.Dial(url.Scheme, url.Path)
+		if err != nil {
+			log.Printf("docker container: %v", err)
+			return
+		}
+
+		conn := NewClientConnStub(dial, nil)
+		resp, err := conn.Do(req)
+		if err != nil {
+			log.Printf("docker container: %v", err)
+			return
+		}
+
+		c.Lock()
+		c.statsConn = conn
+		c.Unlock()
+
 		defer func() {
 			c.Lock()
 			defer c.Unlock()
 
-			log.Printf("docker mapper: stopped collecting stats for %s", containerID)
+			log.Printf("docker container: stopped collecting stats for %s", c.container.ID)
 			c.statsConn = nil
 			c.latestStats = nil
 		}()
@@ -93,7 +148,7 @@ func (c *dockerContainer) startGatheringStats(containerID string) error {
 
 		for err := decoder.Decode(&stats); err != io.EOF; err = decoder.Decode(&stats) {
 			if err != nil {
-				log.Printf("docker mapper: error reading event %v", err)
+				log.Printf("docker container: error reading event %v", err)
 				return
 			}
 
@@ -109,7 +164,7 @@ func (c *dockerContainer) startGatheringStats(containerID string) error {
 }
 
 // called whilst holding t.Lock()
-func (c *dockerContainer) stopGatheringStats(containerID string) {
+func (c *container) StopGatheringStats() {
 	c.Lock()
 	defer c.Unlock()
 
@@ -124,15 +179,21 @@ func (c *dockerContainer) stopGatheringStats(containerID string) {
 }
 
 // called whilst holding t.RLock()
-func (c *dockerContainer) getStats() map[string]string {
+func (c *container) GetNodeMetadata() report.NodeMetadata {
 	c.RLock()
 	defer c.RUnlock()
 
-	if c.latestStats == nil {
-		return map[string]string{}
+	result := report.NodeMetadata{
+		ContainerID:   c.ID(),
+		ContainerName: strings.TrimPrefix(c.container.Name, "/"),
+		ImageID:       c.container.Image,
 	}
 
-	return map[string]string{
+	if c.latestStats == nil {
+		return result
+	}
+
+	result.Merge(report.NodeMetadata{
 		NetworkRxDropped: strconv.FormatUint(c.latestStats.Network.RxDropped, 10),
 		NetworkRxBytes:   strconv.FormatUint(c.latestStats.Network.RxBytes, 10),
 		NetworkRxErrors:  strconv.FormatUint(c.latestStats.Network.RxErrors, 10),
@@ -152,5 +213,6 @@ func (c *dockerContainer) getStats() map[string]string {
 		CPUTotalUsage:        strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.TotalUsage, 10),
 		CPUUsageInKernelmode: strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.UsageInKernelmode, 10),
 		CPUSystemCPUUsage:    strconv.FormatUint(c.latestStats.CPUStats.SystemCPUUsage, 10),
-	}
+	})
+	return result
 }

@@ -18,7 +18,8 @@ func TestOriginHostTagger(t *testing.T) {
 	r := report.MakeReport()
 	r.Endpoint.NodeMetadatas[endpointNodeID] = nodeMetadata
 	want := nodeMetadata.Merge(report.NodeMetadata{report.HostNodeID: report.MakeHostNodeID(hostID)})
-	have := tag.NewOriginHostTagger(hostID).Tag(r).Endpoint.NodeMetadatas[endpointNodeID].Copy()
+	rpt, _ := tag.NewOriginHostTagger(hostID).Tag(r)
+	have := rpt.Endpoint.NodeMetadatas[endpointNodeID].Copy()
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("\nwant %+v\nhave %+v", want, have)
 	}

@@ -11,7 +11,7 @@ func NewTopologyTagger() Tagger {
 	return &topologyTagger{}
 }
 
-func (topologyTagger) Tag(r report.Report) report.Report {
+func (topologyTagger) Tag(r report.Report) (report.Report, error) {
 	for val, topology := range map[string]*report.Topology{
 		"endpoint":  &(r.Endpoint),
 		"address":   &(r.Address),
@@ -24,5 +24,5 @@ func (topologyTagger) Tag(r report.Report) report.Report {
 			(*topology).NodeMetadatas[nodeID].Merge(md)
 		}
 	}
-	return r
+	return r, nil
 }

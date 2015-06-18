@@ -48,16 +48,16 @@ func TestPIDTree(t *testing.T) {
 		return []byte(fmt.Sprintf("%d na R %d", pid, parent)), nil
 	}
 
-	pidtree, err := newPIDTreeStub("/proc")
+	pidtree, err := NewPIDTree("/proc")
 	if err != nil {
 		t.Fatalf("newPIDTree error: %v", err)
 	}
 
-	for pid, want := range map[int][]int{
-		1: {1, 2, 3, 4},
-		2: {2, 3, 4},
+	for pid, want := range map[int]int{
+		2: 1,
+		3: 2,
 	} {
-		have, err := pidtree.allChildren(pid)
+		have, err := pidtree.GetParent(pid)
 		if err != nil || !reflect.DeepEqual(want, have) {
 			t.Errorf("%d: want %#v, have %#v (%v)", pid, want, have, err)
 		}
