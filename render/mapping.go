@@ -155,7 +155,6 @@ func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
 
 	pid, ok := n.NodeMetadata["pid"]
 	if !ok {
-		// TODO: Propogate a pseudo node instead of dropping this?
 		return RenderableNode{}, false
 	}
 
@@ -180,11 +179,22 @@ func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
 		return n, true
 	}
 
+	// Don't propogate non-internet pseudo nodes
+	if n.Pseudo {
+		return n, false
+	}
+
 	// Otherwise, if the process is not in a container, group it
-	// into an "Uncontained" node
+	// into an per-host "Uncontained" node.  If for whatever reason
+	// this node doesn't have a host id in their nodemetadata, it'll
+	// all get grouped into a single uncontained node.
 	id, ok := n.NodeMetadata[docker.ContainerID]
-	if !ok || n.Pseudo {
-		return newDerivedPseudoNode(UncontainedID, UncontainedMajor, n), true
+	if !ok {
+		hostID := report.ExtractHostID(n.NodeMetadata)
+		id = fmt.Sprintf("%s:%s", UncontainedID, hostID)
+		node := newDerivedPseudoNode(id, UncontainedMajor, n)
+		node.LabelMinor = hostID
+		return node, true
 	}
 
 	return newDerivedNode(id, n), true
@@ -203,7 +213,6 @@ func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
 
 	name, ok := n.NodeMetadata["comm"]
 	if !ok {
-		// TODO: Propogate a pseudo node instead of dropping this?
 		return RenderableNode{}, false
 	}
 
@@ -225,16 +234,16 @@ func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
-	// Propogate the internet pseudo node
-	if n.ID == TheInternetID {
+	// Propogate all pseudo nodes
+	if n.Pseudo {
 		return n, true
 	}
 
-	// Otherwise, if the process is not in a container, group it
-	// into an "Uncontained" node
+	// Otherwise, if some some reason the container doesn't have a image_id
+	// (maybe slightly out of sync reports), just drop it
 	id, ok := n.NodeMetadata[docker.ImageID]
-	if !ok || n.Pseudo {
-		return newDerivedPseudoNode(UncontainedID, UncontainedMajor, n), true
+	if !ok {
+		return n, false
 	}
 
 	return newDerivedNode(id, n), true
