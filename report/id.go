@@ -1,7 +1,6 @@
 package report
 
 import (
-	"fmt"
 	"net"
 	"strings"
 )
@@ -129,13 +128,6 @@ func AddressIDAddresser(id string) net.IP {
 		return nil
 	}
 	return net.ParseIP(fields[1])
-}
-
-// PanicIDAddresser will panic if it's ever called. It's used in topologies
-// where there are never any edges, and so it's nonsensical to try and extract
-// IPs from the node IDs.
-func PanicIDAddresser(id string) net.IP {
-	panic(fmt.Sprintf("PanicIDAddresser called on %q", id))
 }
 
 func isLoopback(address string) bool {

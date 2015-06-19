@@ -144,8 +144,11 @@ func (m Map) AggregateMetadata(rpt report.Report, srcRenderableID, dstRenderable
 //
 // Nodes with the same mapped IDs will be merged.
 func (m LeafMap) Render(rpt report.Report) RenderableNodes {
-	t := m.Selector(rpt)
-	nodes := RenderableNodes{}
+	var (
+		t             = m.Selector(rpt)
+		nodes         = RenderableNodes{}
+		localNetworks = LocalNetworks(rpt)
+	)
 
 	// Build a set of RenderableNodes for all non-pseudo probes, and an
 	// addressID to nodeID lookup map. Multiple addressIDs can map to the same
@@ -189,7 +192,7 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 		for _, dstNodeID := range dsts {
 			dstRenderableID, ok := source2mapped[dstNodeID]
 			if !ok {
-				pseudoNode, ok := m.Pseudo(srcNodeID, srcRenderableNode, dstNodeID)
+				pseudoNode, ok := m.Pseudo(srcNodeID, srcRenderableNode, dstNodeID, localNetworks)
 				if !ok {
 					continue
 				}

@@ -126,17 +126,3 @@ func TestAddressIDAddresser(t *testing.T) {
 		t.Errorf("want %s, have %s", want, have)
 	}
 }
-
-func TestPanicIDAddresser(t *testing.T) {
-	if panicked := func() (recovered bool) {
-		defer func() {
-			if r := recover(); r != nil {
-				recovered = true
-			}
-		}()
-		report.PanicIDAddresser("irrelevant")
-		return false
-	}(); !panicked {
-		t.Errorf("expected panic, didn't get it")
-	}
-}

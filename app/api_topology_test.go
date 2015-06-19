@@ -80,34 +80,35 @@ func TestAPITopologyHosts(t *testing.T) {
 			t.Fatal(err)
 		}
 		equals(t, 3, len(topo.Nodes))
-		node, ok := topo.Nodes["host:host-b"]
+		node, ok := topo.Nodes["host:hostB"]
 		if !ok {
-			t.Errorf("missing host:host-b node")
+			t.Errorf("missing host:hostB node")
+			t.Errorf("%+v", topo)
 		}
-		equals(t, report.MakeIDList("host:host-a"), node.Adjacency)
+		equals(t, report.MakeIDList("host:hostA"), node.Adjacency)
 		equals(t, report.MakeIDList(
 			report.MakeAddressNodeID("hostB", "192.168.1.2"),
 			report.MakeHostNodeID("hostB"),
 		), node.Origins)
-		equals(t, "host-b", node.LabelMajor)
-		equals(t, "", node.LabelMinor)
-		equals(t, "host-b", node.Rank)
+		equals(t, "node-b", node.LabelMajor)
+		equals(t, "local", node.LabelMinor)
+		equals(t, "local", node.Rank)
 		equals(t, false, node.Pseudo)
 	}
 	{
-		body := getRawJSON(t, ts, "/api/topology/hosts/host:host-b")
+		body := getRawJSON(t, ts, "/api/topology/hosts/host:hostB")
 		var node APINode
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatal(err)
 		}
-		equals(t, "host:host-b", node.Node.ID)
-		equals(t, "host-b", node.Node.LabelMajor)
-		equals(t, "", node.Node.LabelMinor)
+		equals(t, "host:hostB", node.Node.ID)
+		equals(t, "node-b", node.Node.LabelMajor)
+		equals(t, "local", node.Node.LabelMinor)
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables
 	}
 	{
-		body := getRawJSON(t, ts, "/api/topology/hosts/host:host-b/host:host-a")
+		body := getRawJSON(t, ts, "/api/topology/hosts/host:hostB/host:hostA")
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)

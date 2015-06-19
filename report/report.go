@@ -58,11 +58,6 @@ func SelectProcess(r Report) Topology {
 	return r.Process
 }
 
-// SelectAddress selects the address topology.
-func SelectAddress(r Report) Topology {
-	return r.Address
-}
-
 // SelectContainer selects the container topology.
 func SelectContainer(r Report) Topology {
 	return r.Container
@@ -71,6 +66,16 @@ func SelectContainer(r Report) Topology {
 // SelectContainerImage selects the container image topology.
 func SelectContainerImage(r Report) Topology {
 	return r.ContainerImage
+}
+
+// SelectAddress selects the address topology.
+func SelectAddress(r Report) Topology {
+	return r.Address
+}
+
+// SelectHost selects the address topology.
+func SelectHost(r Report) Topology {
+	return r.Host
 }
 
 // MakeReport makes a clean report, ready to Merge() other reports into.

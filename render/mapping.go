@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/weaveworks/scope/report"
@@ -12,7 +13,8 @@ const (
 	UncontainedID    = "uncontained"
 	UncontainedMajor = "Uncontained"
 
-	humanTheInternet = "the Internet"
+	TheInternetID    = "theinternet"
+	TheInternetMajor = "The Internet"
 )
 
 // LeafMapFunc is anything which can take an arbitrary NodeMetadata, which is
@@ -31,7 +33,7 @@ type LeafMapFunc func(report.NodeMetadata) (RenderableNode, bool)
 // The srcNode renderable node is essentially from MapFunc, representing one of
 // the rendered nodes this pseudo node refers to. srcNodeID and dstNodeID are
 // node IDs prior to mapping.
-type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string) (RenderableNode, bool)
+type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string, local Networks) (RenderableNode, bool)
 
 // MapFunc is anything which can take an arbitrary RenderableNode and
 // return another RenderableNode.
@@ -100,6 +102,40 @@ func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	return NewRenderableNode(id, major, "", rank, m), true
 }
 
+// MapAddressIdentity maps a address topology node to address RenderableNode
+// node. As it is only ever run on address topology nodes, we can safely
+// assume the presence of certain keys.
+func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+	var (
+		id    = fmt.Sprintf("address:%s:%s", report.ExtractHostID(m), m["addr"])
+		major = m["addr"]
+		minor = report.ExtractHostID(m)
+		rank  = major
+	)
+
+	return NewRenderableNode(id, major, minor, rank, m), true
+}
+
+// MapHostIdentity maps a host topology node to host RenderableNode
+// node. As it is only ever run on host topology nodes, we can safely
+// assume the presence of certain keys.
+func MapHostIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+	var (
+		id                 = fmt.Sprintf("host:%s", report.ExtractHostID(m))
+		hostname           = m["host_name"]
+		parts              = strings.SplitN(hostname, ".", 2)
+		major, minor, rank = "", "", ""
+	)
+
+	if len(parts) == 2 {
+		major, minor, rank = parts[0], parts[1], parts[1]
+	} else {
+		major = hostname
+	}
+
+	return NewRenderableNode(id, major, minor, rank, m), true
+}
+
 // MapEndpoint2Process maps endpoint RenderableNodes to process
 // RenderableNodes.
 //
@@ -138,6 +174,13 @@ func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
+	// Propogate the internet pseudo node
+	if n.ID == TheInternetID {
+		return n, true
+	}
+
+	// Otherwise, if the process is not in a container, group it
+	// into an "Uncontained" node
 	id, ok := n.NodeMetadata["docker_container_id"]
 	if !ok || n.Pseudo {
 		return newDerivedPseudoNode(UncontainedID, UncontainedMajor, n), true
@@ -181,6 +224,13 @@ func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
+	// Propogate the internet pseudo node
+	if n.ID == TheInternetID {
+		return n, true
+	}
+
+	// Otherwise, if the process is not in a container, group it
+	// into an "Uncontained" node
 	id, ok := n.NodeMetadata["docker_image_id"]
 	if !ok || n.Pseudo {
 		return newDerivedPseudoNode(UncontainedID, UncontainedMajor, n), true
@@ -189,69 +239,46 @@ func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
 	return newDerivedNode(id, n), true
 }
 
-// NetworkHostname takes a node NodeMetadata and returns a representation
-// based on the hostname. Major label is the hostname, the minor label is the
-// domain, if any.
-func NetworkHostname(m report.NodeMetadata) (RenderableNode, bool) {
-	var (
-		name   = m["name"]
-		domain = ""
-		parts  = strings.SplitN(name, ".", 2)
-	)
-
-	if len(parts) == 2 {
-		domain = parts[1]
+// MapAddress2Host maps address RenderableNodes to host RenderableNodes.
+//
+// Otherthan pseudo nodes, we can assume all nodes have a HostID
+func MapAddress2Host(n RenderableNode) (RenderableNode, bool) {
+	if n.Pseudo {
+		return n, true
 	}
 
-	return NewRenderableNode(fmt.Sprintf("host:%s", name), parts[0], domain, parts[0], m), name != ""
+	id := fmt.Sprintf("host:%s", report.ExtractHostID(n.NodeMetadata))
+	return newDerivedNode(id, n), true
 }
 
-// GenericPseudoNode contains heuristics for building sensible pseudo nodes.
-// It should go away.
-func GenericPseudoNode(src string, srcMapped RenderableNode, dst string) (RenderableNode, bool) {
-	var maj, min, outputID string
+// GenericPseudoNode makes a PseudoFunc given an addresser.  The returned
+// PseudoFunc will produce Internet pseudo nodes for addresses not in
+// the report's local networks.  Otherwise, the returned function will
+// produce a single pseudo node per (dst address, src address, src port).
+func GenericPseudoNode(addresser func(id string) net.IP) PseudoFunc {
+	return func(src string, srcMapped RenderableNode, dst string, local Networks) (RenderableNode, bool) {
+		// Use the addresser to extract the destination IP
+		dstNodeAddr := addresser(dst)
 
-	if dst == report.TheInternet {
-		outputID = dst
-		maj, min = humanTheInternet, ""
-	} else {
-		// Rule for non-internet psuedo nodes; emit 1 new node for each
+		// If the dstNodeAddr is not in a network local to this report, we emit an
+		// internet node
+		if !local.Contains(dstNodeAddr) {
+			return newPseudoNode(TheInternetID, TheInternetMajor, ""), true
+		}
+
+		// Otherwise, the rule for non-internet psuedo nodes; emit 1 new node for each
 		// dstNodeAddr, srcNodeAddr, srcNodePort.
 		srcNodeAddr, srcNodePort := trySplitAddr(src)
-		dstNodeAddr, _ := trySplitAddr(dst)
 
-		outputID = report.MakePseudoNodeID(dstNodeAddr, srcNodeAddr, srcNodePort)
-		maj, min = dstNodeAddr, ""
+		outputID := report.MakePseudoNodeID(dstNodeAddr.String(), srcNodeAddr, srcNodePort)
+		major := dstNodeAddr.String()
+		return newPseudoNode(outputID, major, ""), true
 	}
-
-	return newPseudoNode(outputID, maj, min), true
 }
 
-// GenericGroupedPseudoNode contains heuristics for building sensible pseudo nodes.
-// It should go away.
-func GenericGroupedPseudoNode(src string, srcMapped RenderableNode, dst string) (RenderableNode, bool) {
-	var maj, min, outputID string
-
-	if dst == report.TheInternet {
-		outputID = dst
-		maj, min = humanTheInternet, ""
-	} else {
-		// When grouping, emit one pseudo node per (srcNodeAddress, dstNodeAddr)
-		dstNodeAddr, _ := trySplitAddr(dst)
-
-		outputID = report.MakePseudoNodeID(dstNodeAddr, srcMapped.ID)
-		maj, min = dstNodeAddr, ""
-	}
-
-	return newPseudoNode(outputID, maj, min), true
-}
-
-// InternetOnlyPseudoNode never creates a pseudo node, unless it's the Internet.
-func InternetOnlyPseudoNode(_ string, _ RenderableNode, dst string) (RenderableNode, bool) {
-	if dst == report.TheInternet {
-		return newPseudoNode(report.TheInternet, humanTheInternet, ""), true
-	}
-	return RenderableNode{}, false
+// PanicPseudoNode just panics; it is for Topologies without edges
+func PanicPseudoNode(src string, srcMapped RenderableNode, dst string, local Networks) (RenderableNode, bool) {
+	panic(dst)
 }
 
 // trySplitAddr is basically ParseArbitraryNodeID, since its callsites

@@ -115,12 +115,14 @@ func main() {
 			select {
 			case <-pubTick:
 				publishTicks.WithLabelValues().Add(1)
-				r.Host = hostTopology(hostID, hostName)
 				publisher.Publish(r)
 				r = report.MakeReport()
 
 			case <-spyTick:
 				r.Merge(spy(hostID, hostName, *spyProcs))
+
+				// Do this every tick so it gets tagged by the OriginHostTagger
+				r.Host = hostTopology(hostID, hostName)
 
 				// TODO abstract PIDTree to a process provider, and provide an
 				// alternate implementation for Darwin.

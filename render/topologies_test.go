@@ -10,10 +10,12 @@ import (
 	"github.com/weaveworks/scope/test"
 )
 
+// This is an example Report:
+//   2 hosts with probes installed - client & server.
+
 var (
 	clientHostID  = "client.hostname.com"
 	serverHostID  = "server.hostname.com"
-	randomHostID  = "random.hostname.com"
 	unknownHostID = ""
 
 	clientIP        = "10.10.10.20"
@@ -31,19 +33,14 @@ var (
 
 	clientHostNodeID = report.MakeHostNodeID(clientHostID)
 	serverHostNodeID = report.MakeHostNodeID(serverHostID)
-	randomHostNodeID = report.MakeHostNodeID(randomHostID)
 
 	client54001NodeID    = report.MakeEndpointNodeID(clientHostID, clientIP, clientPort54001) // curl (1)
 	client54002NodeID    = report.MakeEndpointNodeID(clientHostID, clientIP, clientPort54002) // curl (2)
+	server80NodeID       = report.MakeEndpointNodeID(serverHostID, serverIP, serverPort)      // apache
 	unknownClient1NodeID = report.MakeEndpointNodeID(serverHostID, "10.10.10.10", "54010")    // we want to ensure two unknown clients, connnected
 	unknownClient2NodeID = report.MakeEndpointNodeID(serverHostID, "10.10.10.10", "54020")    // to the same server, are deduped.
 	unknownClient3NodeID = report.MakeEndpointNodeID(serverHostID, "10.10.10.11", "54020")    // Check this one isn't deduped
-	server80NodeID       = report.MakeEndpointNodeID(serverHostID, serverIP, serverPort)      // apache
-
-	clientAddressNodeID  = report.MakeAddressNodeID(clientHostID, "10.10.10.20")
-	serverAddressNodeID  = report.MakeAddressNodeID(serverHostID, "192.168.1.1")
-	randomAddressNodeID  = report.MakeAddressNodeID(randomHostID, "172.16.11.9") // only in Address topology
-	unknownAddressNodeID = report.MakeAddressNodeID(unknownHostID, "10.10.10.10")
+	randomClientNodeID   = report.MakeEndpointNodeID(serverHostID, "51.52.53.54", "12345")    // this should become an internet node
 
 	clientProcessNodeID       = report.MakeProcessNodeID(clientHostID, clientPID)
 	serverProcessNodeID       = report.MakeProcessNodeID(serverHostID, serverPID)
@@ -58,6 +55,33 @@ var (
 	serverContainerImageID     = "imageid456"
 	clientContainerImageNodeID = report.MakeContainerNodeID(clientHostID, clientContainerImageID)
 	serverContainerImageNodeID = report.MakeContainerNodeID(serverHostID, serverContainerImageID)
+
+	clientAddressNodeID   = report.MakeAddressNodeID(clientHostID, "10.10.10.20")
+	serverAddressNodeID   = report.MakeAddressNodeID(serverHostID, "192.168.1.1")
+	unknownAddress1NodeID = report.MakeAddressNodeID(serverHostID, "10.10.10.10")
+	unknownAddress2NodeID = report.MakeAddressNodeID(serverHostID, "10.10.10.11")
+	randomAddressNodeID   = report.MakeAddressNodeID(serverHostID, "51.52.53.54") // this should become an internet node
+
+	unknownPseudoNode1ID = "pseudo;10.10.10.10;192.168.1.1;80"
+	unknownPseudoNode2ID = "pseudo;10.10.10.11;192.168.1.1;80"
+	unknownPseudoNode1   = render.RenderableNode{
+		ID:                unknownPseudoNode1ID,
+		LabelMajor:        "10.10.10.10",
+		Pseudo:            true,
+		AggregateMetadata: render.AggregateMetadata{},
+	}
+	unknownPseudoNode2 = render.RenderableNode{
+		ID:                unknownPseudoNode2ID,
+		LabelMajor:        "10.10.10.11",
+		Pseudo:            true,
+		AggregateMetadata: render.AggregateMetadata{},
+	}
+	theInternetNode = render.RenderableNode{
+		ID:                render.TheInternetID,
+		LabelMajor:        render.TheInternetMajor,
+		Pseudo:            true,
+		AggregateMetadata: render.AggregateMetadata{},
+	}
 )
 
 var (
@@ -66,7 +90,9 @@ var (
 			Adjacency: report.Adjacency{
 				report.MakeAdjacencyID(client54001NodeID): report.MakeIDList(server80NodeID),
 				report.MakeAdjacencyID(client54002NodeID): report.MakeIDList(server80NodeID),
-				report.MakeAdjacencyID(server80NodeID):    report.MakeIDList(client54001NodeID, client54002NodeID, unknownClient1NodeID, unknownClient2NodeID, unknownClient3NodeID),
+				report.MakeAdjacencyID(server80NodeID): report.MakeIDList(
+					client54001NodeID, client54002NodeID, unknownClient1NodeID, unknownClient2NodeID,
+					unknownClient3NodeID, randomClientNodeID),
 			},
 			NodeMetadatas: report.NodeMetadatas{
 				// NodeMetadata is arbitrary. We're free to put only precisely what we
@@ -186,21 +212,16 @@ var (
 		Address: report.Topology{
 			Adjacency: report.Adjacency{
 				report.MakeAdjacencyID(clientAddressNodeID): report.MakeIDList(serverAddressNodeID),
-				report.MakeAdjacencyID(randomAddressNodeID): report.MakeIDList(serverAddressNodeID),
-				report.MakeAdjacencyID(serverAddressNodeID): report.MakeIDList(clientAddressNodeID, unknownAddressNodeID), // no backlink to random
+				report.MakeAdjacencyID(serverAddressNodeID): report.MakeIDList(
+					clientAddressNodeID, unknownAddress1NodeID, unknownAddress2NodeID, randomAddressNodeID), // no backlinks to unknown/random
 			},
 			NodeMetadatas: report.NodeMetadatas{
 				clientAddressNodeID: report.NodeMetadata{
-					"name":            "client.hostname.com", // hostname
-					"host_name":       "client.hostname.com",
+					"addr":            clientIP,
 					report.HostNodeID: clientHostNodeID,
 				},
-				randomAddressNodeID: report.NodeMetadata{
-					"name":            "random.hostname.com", // hostname
-					report.HostNodeID: randomHostNodeID,
-				},
 				serverAddressNodeID: report.NodeMetadata{
-					"name":            "server.hostname.com", // hostname
+					"addr":            serverIP,
 					report.HostNodeID: serverHostNodeID,
 				},
 			},
@@ -209,28 +230,28 @@ var (
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  3,
 				},
-				report.MakeEdgeID(randomAddressNodeID, serverAddressNodeID): report.EdgeMetadata{
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  20, // dangling connections, weird but possible
-				},
 				report.MakeEdgeID(serverAddressNodeID, clientAddressNodeID): report.EdgeMetadata{
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  3,
-				},
-				report.MakeEdgeID(serverAddressNodeID, unknownAddressNodeID): report.EdgeMetadata{
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  7,
 				},
 			},
 		},
 		Host: report.Topology{
 			Adjacency: report.Adjacency{},
 			NodeMetadatas: report.NodeMetadatas{
+				clientHostNodeID: report.NodeMetadata{
+					"host_name":       clientHostName,
+					"local_networks":  "10.10.10.0/24",
+					"os":              "Linux",
+					"load":            "0.01 0.01 0.01",
+					report.HostNodeID: clientHostNodeID,
+				},
 				serverHostNodeID: report.NodeMetadata{
-					"host_name":      serverHostName,
-					"local_networks": "10.10.10.0/24",
-					"os":             "Linux",
-					"load":           "0.01 0.01 0.01",
+					"host_name":       serverHostName,
+					"local_networks":  "10.10.10.0/24",
+					"os":              "Linux",
+					"load":            "0.01 0.01 0.01",
+					report.HostNodeID: serverHostNodeID,
 				},
 			},
 			EdgeMetadatas: report.EdgeMetadatas{},
@@ -282,8 +303,9 @@ func TestProcessRenderer(t *testing.T) {
 			Pseudo:     false,
 			Adjacency: report.MakeIDList(
 				clientProcessID,
-				"pseudo;10.10.10.10;192.168.1.1;80",
-				"pseudo;10.10.10.11;192.168.1.1;80",
+				unknownPseudoNode1ID,
+				unknownPseudoNode2ID,
+				render.TheInternetID,
 			),
 			Origins: report.MakeIDList(server80NodeID, serverProcessNodeID, serverHostNodeID),
 			AggregateMetadata: render.AggregateMetadata{
@@ -301,18 +323,9 @@ func TestProcessRenderer(t *testing.T) {
 			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
 			AggregateMetadata: render.AggregateMetadata{},
 		},
-		"pseudo;10.10.10.10;192.168.1.1;80": {
-			ID:                "pseudo;10.10.10.10;192.168.1.1;80",
-			LabelMajor:        "10.10.10.10",
-			Pseudo:            true,
-			AggregateMetadata: render.AggregateMetadata{},
-		},
-		"pseudo;10.10.10.11;192.168.1.1;80": {
-			ID:                "pseudo;10.10.10.11;192.168.1.1;80",
-			LabelMajor:        "10.10.10.11",
-			Pseudo:            true,
-			AggregateMetadata: render.AggregateMetadata{},
-		},
+		unknownPseudoNode1ID: unknownPseudoNode1,
+		unknownPseudoNode2ID: unknownPseudoNode2,
+		render.TheInternetID: theInternetNode,
 	}
 	have := render.ProcessRenderer.Render(rpt)
 	have = trimNodeMetadata(have)
@@ -347,8 +360,9 @@ func TestProcessNameRenderer(t *testing.T) {
 			Pseudo:     false,
 			Adjacency: report.MakeIDList(
 				"curl",
-				"pseudo;10.10.10.10;192.168.1.1;80",
-				"pseudo;10.10.10.11;192.168.1.1;80",
+				unknownPseudoNode1ID,
+				unknownPseudoNode2ID,
+				render.TheInternetID,
 			),
 			Origins: report.MakeIDList(server80NodeID, serverProcessNodeID, serverHostNodeID),
 			AggregateMetadata: render.AggregateMetadata{
@@ -365,18 +379,9 @@ func TestProcessNameRenderer(t *testing.T) {
 			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
 			AggregateMetadata: render.AggregateMetadata{},
 		},
-		"pseudo;10.10.10.10;192.168.1.1;80": {
-			ID:                "pseudo;10.10.10.10;192.168.1.1;80",
-			LabelMajor:        "10.10.10.10",
-			Pseudo:            true,
-			AggregateMetadata: render.AggregateMetadata{},
-		},
-		"pseudo;10.10.10.11;192.168.1.1;80": {
-			ID:                "pseudo;10.10.10.11;192.168.1.1;80",
-			LabelMajor:        "10.10.10.11",
-			Pseudo:            true,
-			AggregateMetadata: render.AggregateMetadata{},
-		},
+		unknownPseudoNode1ID: unknownPseudoNode1,
+		unknownPseudoNode2ID: unknownPseudoNode2,
+		render.TheInternetID: theInternetNode,
 	}
 	have := render.ProcessNameRenderer.Render(rpt)
 	have = trimNodeMetadata(have)
@@ -406,7 +411,7 @@ func TestContainerRenderer(t *testing.T) {
 			LabelMinor: serverHostName,
 			Rank:       serverContainerImageID,
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList(clientContainerID, render.UncontainedID),
+			Adjacency:  report.MakeIDList(clientContainerID, render.UncontainedID, render.TheInternetID),
 			Origins:    report.MakeIDList(serverContainerNodeID, server80NodeID, serverProcessNodeID, serverHostNodeID),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 150,
@@ -422,6 +427,7 @@ func TestContainerRenderer(t *testing.T) {
 			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
 			AggregateMetadata: render.AggregateMetadata{},
 		},
+		render.TheInternetID: theInternetNode,
 	}
 	have := render.ContainerRenderer.Render(rpt)
 	have = trimNodeMetadata(have)
@@ -451,7 +457,7 @@ func TestContainerImageRenderer(t *testing.T) {
 			LabelMinor: "",
 			Rank:       serverContainerImageID,
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList(clientContainerImageID, render.UncontainedID),
+			Adjacency:  report.MakeIDList(clientContainerImageID, render.UncontainedID, render.TheInternetID),
 			Origins:    report.MakeIDList(serverContainerImageNodeID, serverContainerNodeID, server80NodeID, serverProcessNodeID, serverHostNodeID),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 150,
@@ -467,6 +473,7 @@ func TestContainerImageRenderer(t *testing.T) {
 			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
 			AggregateMetadata: render.AggregateMetadata{},
 		},
+		render.TheInternetID: theInternetNode,
 	}
 	have := render.ContainerImageRenderer.Render(rpt)
 	have = trimNodeMetadata(have)
@@ -475,60 +482,47 @@ func TestContainerImageRenderer(t *testing.T) {
 	}
 }
 
-func TestRenderByNetworkHostname(t *testing.T) {
+func TestHostRenderer(t *testing.T) {
 	want := render.RenderableNodes{
-		"host:client.hostname.com": {
-			ID:         "host:client.hostname.com",
-			LabelMajor: "client",       // before first .
-			LabelMinor: "hostname.com", // after first .
-			Rank:       "client",
-			Pseudo:     false,
-			Adjacency:  report.MakeIDList("host:server.hostname.com"),
-			Origins:    report.MakeIDList(report.MakeHostNodeID("client.hostname.com"), report.MakeAddressNodeID("client.hostname.com", "10.10.10.20")),
-			AggregateMetadata: render.AggregateMetadata{
-				render.KeyMaxConnCountTCP: 3,
-			},
-		},
-		"host:random.hostname.com": {
-			ID:         "host:random.hostname.com",
-			LabelMajor: "random",       // before first .
-			LabelMinor: "hostname.com", // after first .
-			Rank:       "random",
-			Pseudo:     false,
-			Adjacency:  report.MakeIDList("host:server.hostname.com"),
-			Origins:    report.MakeIDList(report.MakeHostNodeID("random.hostname.com"), report.MakeAddressNodeID("random.hostname.com", "172.16.11.9")),
-			AggregateMetadata: render.AggregateMetadata{
-				render.KeyMaxConnCountTCP: 20,
-			},
-		},
 		"host:server.hostname.com": {
 			ID:         "host:server.hostname.com",
 			LabelMajor: "server",       // before first .
 			LabelMinor: "hostname.com", // after first .
-			Rank:       "server",
+			Rank:       "hostname.com",
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList("host:client.hostname.com", "pseudo;10.10.10.10;192.168.1.1;"),
-			Origins:    report.MakeIDList(report.MakeHostNodeID("server.hostname.com"), report.MakeAddressNodeID("server.hostname.com", "192.168.1.1")),
+			Adjacency:  report.MakeIDList("host:client.hostname.com", render.TheInternetID, "pseudo;10.10.10.10;192.168.1.1;", "pseudo;10.10.10.11;192.168.1.1;"),
+			Origins:    report.MakeIDList(serverHostNodeID, serverAddressNodeID),
 			AggregateMetadata: render.AggregateMetadata{
-				render.KeyMaxConnCountTCP: 10,
+				render.KeyMaxConnCountTCP: 3,
+			},
+		},
+		"host:client.hostname.com": {
+			ID:         "host:client.hostname.com",
+			LabelMajor: "client",       // before first .
+			LabelMinor: "hostname.com", // after first .
+			Rank:       "hostname.com",
+			Pseudo:     false,
+			Adjacency:  report.MakeIDList("host:server.hostname.com"),
+			Origins:    report.MakeIDList(clientHostNodeID, clientAddressNodeID),
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyMaxConnCountTCP: 3,
 			},
 		},
 		"pseudo;10.10.10.10;192.168.1.1;": {
 			ID:                "pseudo;10.10.10.10;192.168.1.1;",
 			LabelMajor:        "10.10.10.10",
-			LabelMinor:        "", // after first .
-			Rank:              "",
 			Pseudo:            true,
-			Adjacency:         nil,
-			Origins:           nil,
 			AggregateMetadata: render.AggregateMetadata{},
 		},
+		"pseudo;10.10.10.11;192.168.1.1;": {
+			ID:                "pseudo;10.10.10.11;192.168.1.1;",
+			LabelMajor:        "10.10.10.11",
+			Pseudo:            true,
+			AggregateMetadata: render.AggregateMetadata{},
+		},
+		render.TheInternetID: theInternetNode,
 	}
-	have := render.LeafMap{
-		Selector: report.SelectAddress,
-		Mapper:   render.NetworkHostname,
-		Pseudo:   render.GenericPseudoNode,
-	}.Render(rpt)
+	have := render.HostRenderer.Render(rpt)
 	have = trimNodeMetadata(have)
 	if !reflect.DeepEqual(want, have) {
 		t.Error("\n" + test.Diff(want, have))

@@ -121,11 +121,8 @@ func endpointOriginTable(nmd report.NodeMetadata) (Table, bool) {
 
 func addressOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
-	if val, ok := nmd["address"]; ok {
+	if val, ok := nmd["addr"]; ok {
 		rows = append(rows, Row{"Address", val, ""})
-	}
-	if val, ok := nmd["host_name"]; ok {
-		rows = append(rows, Row{"Host name", val, ""})
 	}
 	return Table{
 		Title:   "Origin Address",

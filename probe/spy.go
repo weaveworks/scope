@@ -54,6 +54,7 @@ func addConnection(
 	if _, ok := r.Address.NodeMetadatas[scopedLocal]; !ok {
 		r.Address.NodeMetadatas[scopedLocal] = report.NodeMetadata{
 			"name": hostName,
+			"addr": c.LocalAddress.String(),
 		}
 	}
 
