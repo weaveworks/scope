@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
 
@@ -20,8 +21,12 @@ import (
 )
 
 // These constants are keys used in node metadata
-// TODO: use these constants in report/{mapping.go, detailed_node.go} - pending some circular references
 const (
+	ContainerName    = "docker_container_name"
+	ContainerCommand = "docker_container_command"
+	ContainerPorts   = "docker_container_ports"
+	ContainerCreated = "docker_container_created"
+
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
 	NetworkRxErrors  = "network_rx_errors"
@@ -59,7 +64,7 @@ type ClientConn interface {
 	Close() error
 }
 
-// Container represents a docker container
+// Container represents a Docker container
 type Container interface {
 	ID() string
 	Image() string
@@ -163,7 +168,6 @@ func (c *container) StartGatheringStats() error {
 	return nil
 }
 
-// called whilst holding t.Lock()
 func (c *container) StopGatheringStats() {
 	c.Lock()
 	defer c.Unlock()
@@ -178,15 +182,36 @@ func (c *container) StopGatheringStats() {
 	return
 }
 
-// called whilst holding t.RLock()
+func (c *container) ports() string {
+	if c.container.NetworkSettings == nil {
+		return ""
+	}
+
+	ports := []string{}
+	for port, bindings := range c.container.NetworkSettings.Ports {
+		if len(bindings) == 0 {
+			ports = append(ports, fmt.Sprintf("%s", port))
+			continue
+		}
+		for _, b := range bindings {
+			ports = append(ports, fmt.Sprintf("%s:%s->%s", b.HostIP, b.HostPort, port))
+		}
+	}
+
+	return strings.Join(ports, ", ")
+}
+
 func (c *container) GetNodeMetadata() report.NodeMetadata {
 	c.RLock()
 	defer c.RUnlock()
 
 	result := report.NodeMetadata{
-		ContainerID:   c.ID(),
-		ContainerName: strings.TrimPrefix(c.container.Name, "/"),
-		ImageID:       c.container.Image,
+		ContainerID:      c.ID(),
+		ContainerName:    strings.TrimPrefix(c.container.Name, "/"),
+		ContainerPorts:   c.ports(),
+		ContainerCreated: c.container.Created.Format(time.RFC822),
+		ContainerCommand: c.container.Path + " " + strings.Join(c.container.Args, " "),
+		ImageID:          c.container.Image,
 	}
 
 	if c.latestStats == nil {

@@ -1,10 +1,16 @@
 package render
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
+)
+
+const (
+	mb = 1 << 20
 )
 
 // DetailedNode is the data type that's yielded to the JavaScript layer when
@@ -152,14 +158,26 @@ func processOriginTable(nmd report.NodeMetadata) (Table, bool) {
 func containerOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		{"docker_container_id", "Container ID"},
-		{"docker_container_name", "Container name"},
-		{"docker_image_id", "Container image ID"},
+		{docker.ContainerID, "ID"},
+		{docker.ContainerName, "Name"},
+		{docker.ImageID, "Image ID"},
+		{docker.ContainerPorts, "Ports"},
+		{docker.ContainerCreated, "Created"},
+		{docker.ContainerCommand, "Command"},
 	} {
 		if val, ok := nmd[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
 		}
 	}
+
+	if val, ok := nmd[docker.MemoryUsage]; ok {
+		memory, err := strconv.ParseFloat(val, 64)
+		if err == nil {
+			memoryStr := fmt.Sprintf("%0.2f", memory/float64(mb))
+			rows = append(rows, Row{Key: "Memory Usage (MB):", ValueMajor: memoryStr, ValueMinor: ""})
+		}
+	}
+
 	return Table{
 		Title:   "Origin Container",
 		Numeric: false,
@@ -170,8 +188,8 @@ func containerOriginTable(nmd report.NodeMetadata) (Table, bool) {
 func containerImageOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		{"docker_image_id", "Container image ID"},
-		{"docker_image_name", "Container image name"},
+		{docker.ImageID, "Image ID"},
+		{docker.ImageName, "Image name"},
 	} {
 		if val, ok := nmd[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})

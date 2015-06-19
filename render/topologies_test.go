@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -160,16 +161,16 @@ var (
 			Adjacency: report.Adjacency{},
 			NodeMetadatas: report.NodeMetadatas{
 				clientProcessNodeID: report.NodeMetadata{
-					"pid":                 clientPID,
-					"comm":                "curl",
-					"docker_container_id": clientContainerID,
-					report.HostNodeID:     clientHostNodeID,
+					"pid":              clientPID,
+					"comm":             "curl",
+					docker.ContainerID: clientContainerID,
+					report.HostNodeID:  clientHostNodeID,
 				},
 				serverProcessNodeID: report.NodeMetadata{
-					"pid":                 serverPID,
-					"comm":                "apache",
-					"docker_container_id": serverContainerID,
-					report.HostNodeID:     serverHostNodeID,
+					"pid":              serverPID,
+					"comm":             "apache",
+					docker.ContainerID: serverContainerID,
+					report.HostNodeID:  serverHostNodeID,
 				},
 				nonContainerProcessNodeID: report.NodeMetadata{
 					"pid":             nonContainerPID,
@@ -182,30 +183,30 @@ var (
 		Container: report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
 				clientContainerNodeID: report.NodeMetadata{
-					"docker_container_id":   clientContainerID,
-					"docker_container_name": "client",
-					"docker_image_id":       clientContainerImageID,
-					report.HostNodeID:       clientHostNodeID,
+					docker.ContainerID:   clientContainerID,
+					docker.ContainerName: "client",
+					docker.ImageID:       clientContainerImageID,
+					report.HostNodeID:    clientHostNodeID,
 				},
 				serverContainerNodeID: report.NodeMetadata{
-					"docker_container_id":   serverContainerID,
-					"docker_container_name": "server",
-					"docker_image_id":       serverContainerImageID,
-					report.HostNodeID:       serverHostNodeID,
+					docker.ContainerID:   serverContainerID,
+					docker.ContainerName: "server",
+					docker.ImageID:       serverContainerImageID,
+					report.HostNodeID:    serverHostNodeID,
 				},
 			},
 		},
 		ContainerImage: report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
 				clientContainerImageNodeID: report.NodeMetadata{
-					"docker_image_id":   clientContainerImageID,
-					"docker_image_name": "client_image",
-					report.HostNodeID:   clientHostNodeID,
+					docker.ImageID:    clientContainerImageID,
+					docker.ImageName:  "client_image",
+					report.HostNodeID: clientHostNodeID,
 				},
 				serverContainerImageNodeID: report.NodeMetadata{
-					"docker_image_id":   serverContainerImageID,
-					"docker_image_name": "server_image",
-					report.HostNodeID:   serverHostNodeID,
+					docker.ImageID:    serverContainerImageID,
+					docker.ImageName:  "server_image",
+					report.HostNodeID: serverHostNodeID,
 				},
 			},
 		},

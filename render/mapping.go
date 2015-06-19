@@ -5,6 +5,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -80,10 +81,10 @@ func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // nodes, we can safely assume the presences of certain keys.
 func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = m["docker_container_id"]
-		major = m["docker_container_name"]
+		id    = m[docker.ContainerID]
+		major = m[docker.ContainerName]
 		minor = report.ExtractHostID(m)
-		rank  = m["docker_image_id"]
+		rank  = m[docker.ImageID]
 	)
 
 	return NewRenderableNode(id, major, minor, rank, m), true
@@ -94,9 +95,9 @@ func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // topology nodes, we can safely assume the presences of certain keys.
 func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = m["docker_image_id"]
-		major = m["docker_image_name"]
-		rank  = m["docker_image_id"]
+		id    = m[docker.ImageID]
+		major = m[docker.ImageName]
+		rank  = m[docker.ImageID]
 	)
 
 	return NewRenderableNode(id, major, "", rank, m), true
@@ -181,7 +182,7 @@ func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
 
 	// Otherwise, if the process is not in a container, group it
 	// into an "Uncontained" node
-	id, ok := n.NodeMetadata["docker_container_id"]
+	id, ok := n.NodeMetadata[docker.ContainerID]
 	if !ok || n.Pseudo {
 		return newDerivedPseudoNode(UncontainedID, UncontainedMajor, n), true
 	}
@@ -231,7 +232,7 @@ func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
 
 	// Otherwise, if the process is not in a container, group it
 	// into an "Uncontained" node
-	id, ok := n.NodeMetadata["docker_image_id"]
+	id, ok := n.NodeMetadata[docker.ImageID]
 	if !ok || n.Pseudo {
 		return newDerivedPseudoNode(UncontainedID, UncontainedMajor, n), true
 	}
