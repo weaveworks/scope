@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
 )
 
 // Router gives of the HTTP dispatcher. It will always use the embedded HTML
@@ -70,7 +69,7 @@ var topologyRegistry = map[string]topologyView{
 	"hosts": {
 		human:    "Hosts",
 		parent:   "",
-		renderer: render.LeafMap{Selector: report.SelectAddress, Mapper: render.NetworkHostname, Pseudo: render.GenericPseudoNode},
+		renderer: render.HostRenderer,
 	},
 }
 

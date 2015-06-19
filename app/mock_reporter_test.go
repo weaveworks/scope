@@ -142,11 +142,11 @@ func (s StaticReport) Report() report.Report {
 			},
 			NodeMetadatas: report.NodeMetadatas{
 				report.MakeAddressNodeID("hostA", "192.168.1.1"): report.NodeMetadata{
-					"name":            "host-a",
+					"addr":            "192.168.1.1",
 					report.HostNodeID: report.MakeHostNodeID("hostA"),
 				},
 				report.MakeAddressNodeID("hostB", "192.168.1.2"): report.NodeMetadata{
-					"name":            "host-b",
+					"addr":            "192.168.1.2",
 					report.HostNodeID: report.MakeHostNodeID("hostB"),
 				},
 			},
@@ -157,18 +157,20 @@ func (s StaticReport) Report() report.Report {
 			EdgeMetadatas: report.EdgeMetadatas{},
 			NodeMetadatas: report.NodeMetadatas{
 				report.MakeHostNodeID("hostA"): report.NodeMetadata{
-					"host_name":      "node-a.local",
-					"os":             "Linux",
-					"local_networks": localNet.String(),
-					"load":           "3.14 2.71 1.61",
+					"host_name":       "node-a.local",
+					"os":              "Linux",
+					"local_networks":  localNet.String(),
+					"load":            "3.14 2.71 1.61",
+					report.HostNodeID: report.MakeHostNodeID("hostA"),
 				},
 				report.MakeHostNodeID("hostB"): report.NodeMetadata{
-					"host_name":      "node-b.local",
-					"os":             "Linux",
-					"local_networks": localNet.String(),
+					"host_name":       "node-b.local",
+					"os":              "Linux",
+					"local_networks":  localNet.String(),
+					report.HostNodeID: report.MakeHostNodeID("hostB"),
 				},
 			},
 		},
 	}
-	return testReport.Squash()
+	return testReport
 }

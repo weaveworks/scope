@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
 )
@@ -127,7 +128,7 @@ func discover(c collector, p publisher, fixed []string) {
 
 		var (
 			now       = time.Now()
-			localNets = r.LocalNetworks()
+			localNets = render.LocalNetworks(r)
 		)
 
 		for _, adjacent := range r.Address.Adjacency {

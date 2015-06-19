@@ -1,10 +1,5 @@
 package report
 
-import (
-	"net"
-	"strings"
-)
-
 // Report is the core data type. It's produced by probes, and consumed and
 // stored by apps. It's composed of multiple topologies, each representing
 // a different (related, but not equivalent) view of the network.
@@ -63,11 +58,6 @@ func SelectProcess(r Report) Topology {
 	return r.Process
 }
 
-// SelectAddress selects the address topology.
-func SelectAddress(r Report) Topology {
-	return r.Address
-}
-
 // SelectContainer selects the container topology.
 func SelectContainer(r Report) Topology {
 	return r.Container
@@ -76,6 +66,16 @@ func SelectContainer(r Report) Topology {
 // SelectContainerImage selects the container image topology.
 func SelectContainerImage(r Report) Topology {
 	return r.ContainerImage
+}
+
+// SelectAddress selects the address topology.
+func SelectAddress(r Report) Topology {
+	return r.Address
+}
+
+// SelectHost selects the address topology.
+func SelectHost(r Report) Topology {
+	return r.Host
 }
 
 // MakeReport makes a clean report, ready to Merge() other reports into.
@@ -89,48 +89,6 @@ func MakeReport() Report {
 		Host:           NewTopology(),
 		Overlay:        NewTopology(),
 	}
-}
-
-// Squash squashes all non-local nodes in the report to a super-node called
-// the Internet.
-func (r Report) Squash() Report {
-	localNetworks := r.LocalNetworks()
-	r.Endpoint = r.Endpoint.Squash(EndpointIDAddresser, localNetworks)
-	r.Address = r.Address.Squash(AddressIDAddresser, localNetworks)
-	r.Process = r.Process.Squash(PanicIDAddresser, localNetworks)
-	r.Container = r.Container.Squash(PanicIDAddresser, localNetworks)
-	r.ContainerImage = r.ContainerImage.Squash(PanicIDAddresser, localNetworks)
-	r.Host = r.Host.Squash(PanicIDAddresser, localNetworks)
-	r.Overlay = r.Overlay.Squash(PanicIDAddresser, localNetworks)
-	return r
-}
-
-// LocalNetworks returns a superset of the networks (think: CIDRs) that are
-// "local" from the perspective of each host represented in the report. It's
-// used to determine which nodes in the report are "remote", i.e. outside of
-// our infrastructure.
-func (r Report) LocalNetworks() []*net.IPNet {
-	var ipNets []*net.IPNet
-	for _, md := range r.Host.NodeMetadatas {
-		val, ok := md["local_networks"]
-		if !ok {
-			continue
-		}
-	outer:
-		for _, s := range strings.Fields(val) {
-			_, ipNet, err := net.ParseCIDR(s)
-			if err != nil {
-				continue
-			}
-			for _, existing := range ipNets {
-				if ipNet.String() == existing.String() {
-					continue outer
-				}
-			}
-			ipNets = append(ipNets, ipNet)
-		}
-	}
-	return ipNets
 }
 
 // Topologies returns a slice of Topologies in this report

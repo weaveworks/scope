@@ -25,7 +25,7 @@ func TestOriginTable(t *testing.T) {
 			Title:   "Origin Address",
 			Numeric: false,
 			Rows: []render.Row{
-				{"Host name", clientHostName, ""},
+				{"Address", clientIP, ""},
 			},
 		},
 		serverProcessNodeID: {

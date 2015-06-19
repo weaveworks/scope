@@ -105,7 +105,7 @@ func engine(r *http.Request) string {
 func mapFunc(r *http.Request) render.LeafMapFunc {
 	switch strings.ToLower(r.FormValue("map_func")) {
 	case "hosts", "networkhost", "networkhostname":
-		return render.NetworkHostname
+		return render.MapAddressIdentity
 	}
 	return render.MapProcessIdentity
 }
