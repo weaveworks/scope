@@ -94,9 +94,9 @@ func TestMakeDetailedNode(t *testing.T) {
 				Title:   "Origin Container",
 				Numeric: false,
 				Rows: []render.Row{
-					{"Container ID", "5e4d3c2b1a", ""},
-					{"Container name", "server", ""},
-					{"Container image ID", "imageid456", ""},
+					{"ID", "5e4d3c2b1a", ""},
+					{"Name", "server", ""},
+					{"Image ID", "imageid456", ""},
 				},
 			},
 			{

@@ -8,9 +8,8 @@ import (
 
 // Keys for use in NodeMetadata
 const (
-	ContainerName = "docker_container_name"
-	ImageID       = "docker_image_id"
-	ImageName     = "docker_image_name"
+	ImageID   = "docker_image_id"
+	ImageName = "docker_image_name"
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
