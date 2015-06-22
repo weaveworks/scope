@@ -34,7 +34,7 @@ type LeafMapFunc func(report.NodeMetadata) (RenderableNode, bool)
 // The srcNode renderable node is essentially from MapFunc, representing one of
 // the rendered nodes this pseudo node refers to. srcNodeID and dstNodeID are
 // node IDs prior to mapping.
-type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string, local Networks) (RenderableNode, bool)
+type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string, local report.Networks) (RenderableNode, bool)
 
 // MapFunc is anything which can take an arbitrary RenderableNode and
 // return another RenderableNode.
@@ -257,7 +257,7 @@ func MapAddress2Host(n RenderableNode) (RenderableNode, bool) {
 // the report's local networks.  Otherwise, the returned function will
 // produce a single pseudo node per (dst address, src address, src port).
 func GenericPseudoNode(addresser func(id string) net.IP) PseudoFunc {
-	return func(src string, srcMapped RenderableNode, dst string, local Networks) (RenderableNode, bool) {
+	return func(src string, srcMapped RenderableNode, dst string, local report.Networks) (RenderableNode, bool) {
 		// Use the addresser to extract the destination IP
 		dstNodeAddr := addresser(dst)
 
@@ -278,7 +278,7 @@ func GenericPseudoNode(addresser func(id string) net.IP) PseudoFunc {
 }
 
 // PanicPseudoNode just panics; it is for Topologies without edges
-func PanicPseudoNode(src string, srcMapped RenderableNode, dst string, local Networks) (RenderableNode, bool) {
+func PanicPseudoNode(src string, srcMapped RenderableNode, dst string, local report.Networks) (RenderableNode, bool) {
 	panic(dst)
 }
 
