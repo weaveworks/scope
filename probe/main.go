@@ -34,6 +34,7 @@ func main() {
 		spyProcs           = flag.Bool("processes", true, "report processes (needs root)")
 		dockerEnabled      = flag.Bool("docker", true, "collect Docker-related attributes for processes")
 		dockerInterval     = flag.Duration("docker.interval", 10*time.Second, "how often to update Docker attributes")
+		dockerBridge       = flag.String("docker.bridge", "docker0", "the docker bridge name")
 		weaveRouterAddr    = flag.String("weave.router.addr", "", "IP address or FQDN of the Weave router")
 		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
 	)
@@ -81,6 +82,10 @@ func main() {
 	reporters := []tag.Reporter{}
 
 	if *dockerEnabled && runtime.GOOS == linux {
+		if err = report.AddLocalBridge(*dockerBridge); err != nil {
+			log.Fatalf("failed to get docker bridge address: %v", err)
+		}
+
 		dockerRegistry, err := docker.NewRegistry(*dockerInterval)
 		if err != nil {
 			log.Fatalf("failed to start docker registry: %v", err)
