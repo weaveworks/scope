@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -139,15 +140,18 @@ func addressOriginTable(nmd report.NodeMetadata) (Table, bool) {
 
 func processOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
-	if val, ok := nmd["comm"]; ok {
-		rows = append(rows, Row{"Name (comm)", val, ""})
+	for _, tuple := range []struct{ key, human string }{
+		{process.Comm, "Name (comm)"},
+		{process.PID, "PID"},
+		{process.PPID, "Parent PID"},
+		{process.Cmdline, "Command"},
+		{process.Threads, "# Threads"},
+	} {
+		if val, ok := nmd[tuple.key]; ok {
+			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
+		}
 	}
-	if val, ok := nmd["pid"]; ok {
-		rows = append(rows, Row{"PID", val, ""})
-	}
-	if val, ok := nmd["ppid"]; ok {
-		rows = append(rows, Row{"Parent PID", val, ""})
-	}
+
 	return Table{
 		Title:   "Origin Process",
 		Numeric: false,

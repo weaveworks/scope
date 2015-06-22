@@ -13,7 +13,7 @@ type Tagger interface {
 
 // Reporter generates Reports.
 type Reporter interface {
-	Report() report.Report
+	Report() (report.Report, error)
 }
 
 // Apply tags the report with all the taggers.
