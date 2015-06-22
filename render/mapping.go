@@ -48,7 +48,7 @@ type MapFunc func(RenderableNode) (RenderableNode, bool)
 // assume the presence of certain keys.
 func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id      = fmt.Sprintf("endpoint:%s:%s:%s", report.ExtractHostID(m), m["addr"], m["port"])
+		id      = MakeEndpointID(report.ExtractHostID(m), m["addr"], m["port"])
 		major   = fmt.Sprintf("%s:%s", m["addr"], m["port"])
 		pid, ok = m["pid"]
 		minor   = report.ExtractHostID(m)
@@ -67,7 +67,7 @@ func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // presence of certain keys.
 func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = fmt.Sprintf("pid:%s:%s", report.ExtractHostID(m), m["pid"])
+		id    = MakeProcessID(report.ExtractHostID(m), m["pid"])
 		major = m["comm"]
 		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), m["pid"])
 		rank  = m["pid"]
@@ -108,7 +108,7 @@ func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // assume the presence of certain keys.
 func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = fmt.Sprintf("address:%s:%s", report.ExtractHostID(m), m["addr"])
+		id    = MakeAddressID(report.ExtractHostID(m), m["addr"])
 		major = m["addr"]
 		minor = report.ExtractHostID(m)
 		rank  = major
@@ -122,7 +122,7 @@ func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // assume the presence of certain keys.
 func MapHostIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id                 = fmt.Sprintf("host:%s", report.ExtractHostID(m))
+		id                 = MakeHostID(report.ExtractHostID(m))
 		hostname           = m["host_name"]
 		parts              = strings.SplitN(hostname, ".", 2)
 		major, minor, rank = "", "", ""
@@ -158,7 +158,7 @@ func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
 		return RenderableNode{}, false
 	}
 
-	id := fmt.Sprintf("pid:%s:%s", report.ExtractHostID(n.NodeMetadata), pid)
+	id := MakeProcessID(report.ExtractHostID(n.NodeMetadata), pid)
 	return newDerivedNode(id, n), true
 }
 
@@ -191,7 +191,7 @@ func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
 	id, ok := n.NodeMetadata[docker.ContainerID]
 	if !ok {
 		hostID := report.ExtractHostID(n.NodeMetadata)
-		id = fmt.Sprintf("%s:%s", UncontainedID, hostID)
+		id = MakePseudoNodeID(UncontainedID, hostID)
 		node := newDerivedPseudoNode(id, UncontainedMajor, n)
 		node.LabelMinor = hostID
 		return node, true
@@ -257,7 +257,7 @@ func MapAddress2Host(n RenderableNode) (RenderableNode, bool) {
 		return n, true
 	}
 
-	id := fmt.Sprintf("host:%s", report.ExtractHostID(n.NodeMetadata))
+	id := MakeHostID(report.ExtractHostID(n.NodeMetadata))
 	return newDerivedNode(id, n), true
 }
 
@@ -280,7 +280,7 @@ func GenericPseudoNode(addresser func(id string) net.IP) PseudoFunc {
 		// dstNodeAddr, srcNodeAddr, srcNodePort.
 		srcNodeAddr, srcNodePort := trySplitAddr(src)
 
-		outputID := report.MakePseudoNodeID(dstNodeAddr.String(), srcNodeAddr, srcNodePort)
+		outputID := MakePseudoNodeID(dstNodeAddr.String(), srcNodeAddr, srcNodePort)
 		major := dstNodeAddr.String()
 		return newPseudoNode(outputID, major, ""), true
 	}

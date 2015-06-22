@@ -51,6 +51,7 @@ var (
 	serverContainerID     = "5e4d3c2b1a"
 	clientContainerNodeID = report.MakeContainerNodeID(clientHostID, clientContainerID)
 	serverContainerNodeID = report.MakeContainerNodeID(serverHostID, serverContainerID)
+	uncontainedServerID   = render.MakePseudoNodeID(render.UncontainedID, serverHostName)
 
 	clientContainerImageID     = "imageid123"
 	serverContainerImageID     = "imageid456"
@@ -63,8 +64,8 @@ var (
 	unknownAddress2NodeID = report.MakeAddressNodeID(serverHostID, "10.10.10.11")
 	randomAddressNodeID   = report.MakeAddressNodeID(serverHostID, "51.52.53.54") // this should become an internet node
 
-	unknownPseudoNode1ID = "pseudo;10.10.10.10;192.168.1.1;80"
-	unknownPseudoNode2ID = "pseudo;10.10.10.11;192.168.1.1;80"
+	unknownPseudoNode1ID = render.MakePseudoNodeID("10.10.10.10", "192.168.1.1", "80")
+	unknownPseudoNode2ID = render.MakePseudoNodeID("10.10.10.11", "192.168.1.1", "80")
 	unknownPseudoNode1   = render.RenderableNode{
 		ID:                unknownPseudoNode1ID,
 		LabelMajor:        "10.10.10.10",
@@ -277,9 +278,9 @@ func trimNodeMetadata(rns render.RenderableNodes) render.RenderableNodes {
 
 func TestProcessRenderer(t *testing.T) {
 	var (
-		clientProcessID       = fmt.Sprintf("pid:%s:%s", clientHostID, clientPID)
-		serverProcessID       = fmt.Sprintf("pid:%s:%s", serverHostID, serverPID)
-		nonContainerProcessID = fmt.Sprintf("pid:%s:%s", serverHostID, nonContainerPID)
+		clientProcessID       = render.MakeProcessID(clientHostID, clientPID)
+		serverProcessID       = render.MakeProcessID(serverHostID, serverPID)
+		nonContainerProcessID = render.MakeProcessID(serverHostID, nonContainerPID)
 	)
 
 	want := render.RenderableNodes{
@@ -336,9 +337,6 @@ func TestProcessRenderer(t *testing.T) {
 }
 
 func TestProcessNameRenderer(t *testing.T) {
-	// For grouped, I've somewhat arbitrarily chosen to squash together all
-	// processes with the same name by removing the PID and domain (host)
-	// dimensions from the ID. That could be changed.
 	want := render.RenderableNodes{
 		"curl": {
 			ID:         "curl",
@@ -419,8 +417,8 @@ func TestContainerRenderer(t *testing.T) {
 				render.KeyBytesEgress:  1500,
 			},
 		},
-		fmt.Sprintf("%s:%s", render.UncontainedID, serverHostName): {
-			ID:                fmt.Sprintf("%s:%s", render.UncontainedID, serverHostName),
+		uncontainedServerID: {
+			ID:                uncontainedServerID,
 			LabelMajor:        render.UncontainedMajor,
 			LabelMinor:        serverHostName,
 			Rank:              "",
@@ -465,8 +463,8 @@ func TestContainerImageRenderer(t *testing.T) {
 				render.KeyBytesEgress:  1500,
 			},
 		},
-		fmt.Sprintf("%s:%s", render.UncontainedID, serverHostName): {
-			ID:                fmt.Sprintf("%s:%s", render.UncontainedID, serverHostName),
+		uncontainedServerID: {
+			ID:                uncontainedServerID,
 			LabelMajor:        render.UncontainedMajor,
 			LabelMinor:        serverHostName,
 			Rank:              "",
@@ -484,39 +482,46 @@ func TestContainerImageRenderer(t *testing.T) {
 }
 
 func TestHostRenderer(t *testing.T) {
+	var (
+		serverHostRenderedID = render.MakeHostID(serverHostID)
+		clientHostRenderedID = render.MakeHostID(clientHostID)
+		pseudoHostID1        = render.MakePseudoNodeID("10.10.10.10", "192.168.1.1", "")
+		pseudoHostID2        = render.MakePseudoNodeID("10.10.10.11", "192.168.1.1", "")
+	)
+
 	want := render.RenderableNodes{
-		"host:server.hostname.com": {
-			ID:         "host:server.hostname.com",
+		serverHostRenderedID: {
+			ID:         serverHostRenderedID,
 			LabelMajor: "server",       // before first .
 			LabelMinor: "hostname.com", // after first .
 			Rank:       "hostname.com",
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList("host:client.hostname.com", render.TheInternetID, "pseudo;10.10.10.10;192.168.1.1;", "pseudo;10.10.10.11;192.168.1.1;"),
+			Adjacency:  report.MakeIDList(clientHostRenderedID, render.TheInternetID, pseudoHostID1, pseudoHostID2),
 			Origins:    report.MakeIDList(serverHostNodeID, serverAddressNodeID),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyMaxConnCountTCP: 3,
 			},
 		},
-		"host:client.hostname.com": {
-			ID:         "host:client.hostname.com",
+		clientHostRenderedID: {
+			ID:         clientHostRenderedID,
 			LabelMajor: "client",       // before first .
 			LabelMinor: "hostname.com", // after first .
 			Rank:       "hostname.com",
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList("host:server.hostname.com"),
+			Adjacency:  report.MakeIDList(serverHostRenderedID),
 			Origins:    report.MakeIDList(clientHostNodeID, clientAddressNodeID),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyMaxConnCountTCP: 3,
 			},
 		},
-		"pseudo;10.10.10.10;192.168.1.1;": {
-			ID:                "pseudo;10.10.10.10;192.168.1.1;",
+		pseudoHostID1: {
+			ID:                pseudoHostID1,
 			LabelMajor:        "10.10.10.10",
 			Pseudo:            true,
 			AggregateMetadata: render.AggregateMetadata{},
 		},
-		"pseudo;10.10.10.11;192.168.1.1;": {
-			ID:                "pseudo;10.10.10.11;192.168.1.1;",
+		pseudoHostID2: {
+			ID:                pseudoHostID2,
 			LabelMajor:        "10.10.10.11",
 			Pseudo:            true,
 			AggregateMetadata: render.AggregateMetadata{},

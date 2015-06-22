@@ -109,11 +109,6 @@ func ExtractHostID(m NodeMetadata) string {
 	return hostid
 }
 
-// MakePseudoNodeID produces a pseudo node ID from its composite parts.
-func MakePseudoNodeID(parts ...string) string {
-	return strings.Join(append([]string{"pseudo"}, parts...), ScopeDelim)
-}
-
 // IDAddresser tries to convert a node ID to a net.IP, if possible.
 type IDAddresser func(string) net.IP
 
