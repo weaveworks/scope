@@ -412,17 +412,17 @@ func TestContainerRenderer(t *testing.T) {
 			LabelMinor: serverHostName,
 			Rank:       serverContainerImageID,
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList(clientContainerID, render.UncontainedID, render.TheInternetID),
+			Adjacency:  report.MakeIDList(clientContainerID, render.TheInternetID),
 			Origins:    report.MakeIDList(serverContainerNodeID, server80NodeID, serverProcessNodeID, serverHostNodeID),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 150,
 				render.KeyBytesEgress:  1500,
 			},
 		},
-		render.UncontainedID: {
-			ID:                render.UncontainedID,
+		fmt.Sprintf("%s:%s", render.UncontainedID, serverHostName): {
+			ID:                fmt.Sprintf("%s:%s", render.UncontainedID, serverHostName),
 			LabelMajor:        render.UncontainedMajor,
-			LabelMinor:        "",
+			LabelMinor:        serverHostName,
 			Rank:              "",
 			Pseudo:            true,
 			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
@@ -458,17 +458,17 @@ func TestContainerImageRenderer(t *testing.T) {
 			LabelMinor: "",
 			Rank:       serverContainerImageID,
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList(clientContainerImageID, render.UncontainedID, render.TheInternetID),
+			Adjacency:  report.MakeIDList(clientContainerImageID, render.TheInternetID),
 			Origins:    report.MakeIDList(serverContainerImageNodeID, serverContainerNodeID, server80NodeID, serverProcessNodeID, serverHostNodeID),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 150,
 				render.KeyBytesEgress:  1500,
 			},
 		},
-		render.UncontainedID: {
-			ID:                render.UncontainedID,
+		fmt.Sprintf("%s:%s", render.UncontainedID, serverHostName): {
+			ID:                fmt.Sprintf("%s:%s", render.UncontainedID, serverHostName),
 			LabelMajor:        render.UncontainedMajor,
-			LabelMinor:        "",
+			LabelMinor:        serverHostName,
 			Rank:              "",
 			Pseudo:            true,
 			Origins:           report.MakeIDList(nonContainerProcessNodeID, serverHostNodeID),
