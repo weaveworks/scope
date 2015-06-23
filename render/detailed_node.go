@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -208,15 +209,18 @@ func containerImageOriginTable(nmd report.NodeMetadata) (Table, bool) {
 
 func hostOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
-	if val, ok := nmd["host_name"]; ok {
-		rows = append(rows, Row{"Host name", val, ""})
+	for _, tuple := range []struct{ key, human string }{
+		{host.HostName, "Host name"},
+		{host.Load, "Load"},
+		{host.OS, "Operating system"},
+		{host.KernelVersion, "Kernel version"},
+		{host.Uptime, "Uptime"},
+	} {
+		if val, ok := nmd[tuple.key]; ok {
+			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
+		}
 	}
-	if val, ok := nmd["load"]; ok {
-		rows = append(rows, Row{"Load", val, ""})
-	}
-	if val, ok := nmd["os"]; ok {
-		rows = append(rows, Row{"Operating system", val, ""})
-	}
+
 	return Table{
 		Title:   "Origin Host",
 		Numeric: false,

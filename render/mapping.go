@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -123,7 +124,7 @@ func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 func MapHostIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
 		id                 = MakeHostID(report.ExtractHostID(m))
-		hostname           = m["host_name"]
+		hostname           = m[host.HostName]
 		parts              = strings.SplitN(hostname, ".", 2)
 		major, minor, rank = "", "", ""
 	)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -20,16 +21,16 @@ type OriginHost struct {
 }
 
 func getOriginHost(t report.Topology, nodeID string) (OriginHost, bool) {
-	host, ok := t.NodeMetadatas[nodeID]
+	h, ok := t.NodeMetadatas[nodeID]
 	if !ok {
 		return OriginHost{}, false
 	}
 
 	return OriginHost{
-		Hostname: host["host_name"],
-		OS:       host["os"],
-		Networks: strings.Split(host["local_networks"], " "),
-		Load:     host["load"],
+		Hostname: h[host.HostName],
+		OS:       h[host.OS],
+		Networks: strings.Split(h[host.LocalNetworks], " "),
+		Load:     h[host.Load],
 	}, true
 }
 
