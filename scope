@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eu
+
 usage() {
     echo "Usage:"
     echo "scope launch [<peer> ...]"
@@ -27,6 +29,9 @@ DOCKER_BRIDGE=${DOCKER_BRIDGE:-docker0}
 IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
 IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
     xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
+
+WEAVESCOPE_DOCKER_ARGS=${WEAVESCOPE_DOCKER_ARGS:-}
+WEAVESCOPE_DNS_ARGS=${WEAVESCOPE_DNS_ARGS:-}
 
 [ $# -gt 0 ] || usage
 COMMAND=$1
@@ -132,13 +137,13 @@ container_ip() {
 case "$COMMAND" in
 
 	launch)
-		check_not_running $CONTAINER_NAME $IMAGE
+		check_not_running $CONTAINER_NAME $SCOPE_IMAGE
 
 		# If WeaveDNS is running, we want to automatically tell the scope
 		# image to use weave dns.  We can't use --dns with --net=host, so we have to hack it.
 		if dns_running; then
 			docker_bridge_ip
-			WEAVESCOPE_DNS_ARGS="--dns $DOCKER_BRIDGE_IP --searchpath $DOMAINNAME"
+			WEAVESCOPE_DNS_ARGS="$WEAVESCOPE_DNS_ARGS --dns $DOCKER_BRIDGE_IP --searchpath $DOMAINNAME"
 		fi
 
 		CONTAINER=$(docker run --privileged -d --name=$CONTAINER_NAME --net=host --pid=host \
