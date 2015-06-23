@@ -29,7 +29,6 @@ function findCurrentTopology(subTree, topologyId) {
 
 // Initial values
 
-let currentGrouping = 'none';
 let currentTopologyId = 'containers';
 let errorUrl = null;
 let version = '';
@@ -50,7 +49,6 @@ const AppStore = assign({}, EventEmitter.prototype, {
   getAppState: function() {
     return {
       topologyId: currentTopologyId,
-      grouping: this.getCurrentGrouping(),
       selectedNodeId: this.getSelectedNodeId()
     };
   },
@@ -65,10 +63,6 @@ const AppStore = assign({}, EventEmitter.prototype, {
     if (topology) {
       return topology.url;
     }
-  },
-
-  getCurrentGrouping: function() {
-    return currentGrouping;
   },
 
   getErrorUrl: function() {
@@ -143,14 +137,6 @@ AppStore.registeredCallback = function(payload) {
     case ActionTypes.CLICK_CLOSE_DETAILS:
       selectedNodeId = null;
       AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.CLICK_GROUPING:
-      if (payload.grouping !== currentGrouping) {
-        currentGrouping = payload.grouping;
-        nodes = {};
-        AppStore.emit(AppStore.CHANGE_EVENT);
-      }
       break;
 
     case ActionTypes.CLICK_NODE:
@@ -260,12 +246,10 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.ROUTE_TOPOLOGY:
-      if (currentTopologyId !== payload.state.topologyId
-        || currentGrouping !== payload.state.grouping) {
+      if (currentTopologyId !== payload.state.topologyId) {
         nodes = {};
       }
       currentTopologyId = payload.state.topologyId;
-      currentGrouping = payload.state.grouping;
       selectedNodeId = payload.state.selectedNodeId;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
