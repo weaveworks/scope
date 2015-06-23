@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"reflect"
 	"testing"
@@ -9,7 +10,8 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/render/expected"
+	"github.com/weaveworks/scope/test"
 )
 
 func TestAPITopologyApplications(t *testing.T) {
@@ -22,49 +24,36 @@ func TestAPITopologyApplications(t *testing.T) {
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatal(err)
 		}
-		equals(t, 4, len(topo.Nodes))
-		node, ok := topo.Nodes["process:hostA:23128"]
-		if !ok {
-			t.Errorf("missing curl node")
+
+		want := render.OnlyConnected(expected.RenderedProcesses)
+		if !reflect.DeepEqual(want, topo.Nodes) {
+			t.Error("\n" + test.Diff(want, topo.Nodes))
 		}
-		equals(t, 1, len(node.Adjacency))
-		equals(t, report.MakeIDList("process:hostB:215"), node.Adjacency)
-		equals(t, report.MakeIDList(
-			report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345"),
-			report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346"),
-			report.MakeProcessNodeID("hostA", "23128"),
-			report.MakeHostNodeID("hostA"),
-		), node.Origins)
-		equals(t, "curl", node.LabelMajor)
-		equals(t, "hostA (23128)", node.LabelMinor)
-		equals(t, "23128", node.Rank)
-		equals(t, false, node.Pseudo)
 	}
 	{
-		body := getRawJSON(t, ts, "/api/topology/applications/process:hostA:23128")
+		body := getRawJSON(t, ts, "/api/topology/applications/"+expected.ServerProcessID)
 		var node APINode
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatal(err)
 		}
-		equals(t, "process:hostA:23128", node.Node.ID)
-		equals(t, "curl", node.Node.LabelMajor)
-		equals(t, "hostA (23128)", node.Node.LabelMinor)
+		equals(t, expected.ServerProcessID, node.Node.ID)
+		equals(t, "apache", node.Node.LabelMajor)
+		equals(t, fmt.Sprintf("%s (%s)", test.ServerHostID, test.ServerPID), node.Node.LabelMinor)
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables
 	}
 	{
-		body := getRawJSON(t, ts, "/api/topology/applications/process:hostA:23128/process:hostB:215")
+		body := getRawJSON(t, ts, fmt.Sprintf("/api/topology/applications/%s/%s", expected.ClientProcessID, expected.ServerProcessID))
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
 		want := render.AggregateMetadata{
-			"egress_bytes":       24,
-			"ingress_bytes":      0,
-			"max_conn_count_tcp": 401,
+			"egress_bytes":  30,
+			"ingress_bytes": 300,
 		}
 		if !reflect.DeepEqual(want, edge.Metadata) {
-			t.Errorf("Edge metadata error. Want %v, have %v", want, edge)
+			t.Error("\n" + test.Diff(want, edge.Metadata))
 		}
 	}
 }
@@ -79,44 +68,31 @@ func TestAPITopologyHosts(t *testing.T) {
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatal(err)
 		}
-		equals(t, 3, len(topo.Nodes))
-		node, ok := topo.Nodes["host:hostB"]
-		if !ok {
-			t.Errorf("missing host:hostB node")
-			t.Errorf("%+v", topo)
+
+		if !reflect.DeepEqual(expected.RenderedHosts, topo.Nodes) {
+			t.Error("\n" + test.Diff(expected.RenderedHosts, topo.Nodes))
 		}
-		equals(t, report.MakeIDList("host:hostA"), node.Adjacency)
-		equals(t, report.MakeIDList(
-			report.MakeAddressNodeID("hostB", "192.168.1.2"),
-			report.MakeHostNodeID("hostB"),
-		), node.Origins)
-		equals(t, "node-b", node.LabelMajor)
-		equals(t, "local", node.LabelMinor)
-		equals(t, "local", node.Rank)
-		equals(t, false, node.Pseudo)
 	}
 	{
-		body := getRawJSON(t, ts, "/api/topology/hosts/host:hostB")
+		body := getRawJSON(t, ts, "/api/topology/hosts/"+expected.ServerHostRenderedID)
 		var node APINode
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatal(err)
 		}
-		equals(t, "host:hostB", node.Node.ID)
-		equals(t, "node-b", node.Node.LabelMajor)
-		equals(t, "local", node.Node.LabelMinor)
+		equals(t, expected.ServerHostRenderedID, node.Node.ID)
+		equals(t, "server", node.Node.LabelMajor)
+		equals(t, "hostname.com", node.Node.LabelMinor)
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables
 	}
 	{
-		body := getRawJSON(t, ts, "/api/topology/hosts/host:hostB/host:hostA")
+		body := getRawJSON(t, ts, fmt.Sprintf("/api/topology/hosts/%s/%s", expected.ServerHostRenderedID, expected.ClientHostRenderedID))
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
 		want := render.AggregateMetadata{
-			"egress_bytes":       0,
-			"ingress_bytes":      12,
-			"max_conn_count_tcp": 16,
+			"max_conn_count_tcp": 3,
 		}
 		if !reflect.DeepEqual(want, edge.Metadata) {
 			t.Errorf("Edge metadata error. Want %v, have %v", want, edge)
@@ -153,7 +129,7 @@ func TestAPITopologyWebsocket(t *testing.T) {
 	if err := json.Unmarshal(p, &d); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
-	equals(t, 4, len(d.Add))
+	equals(t, 5, len(d.Add))
 	equals(t, 0, len(d.Update))
 	equals(t, 0, len(d.Remove))
 }
