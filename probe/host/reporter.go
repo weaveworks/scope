@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/weaveworks/scope/probe/tag"
@@ -36,7 +35,6 @@ var (
 	InterfaceAddrs = net.InterfaceAddrs
 	Now            = func() string { return time.Now().UTC().Format(time.RFC3339Nano) }
 	ReadFile       = ioutil.ReadFile
-	Uname          = syscall.Uname
 )
 
 type reporter struct {
@@ -74,23 +72,10 @@ func getUptime() (time.Duration, error) {
 	return time.Duration(uptime) * time.Second, nil
 }
 
-func charsToString(ca [65]int8) string {
-	s := make([]byte, len(ca))
-	var lens int
-	for ; lens < len(ca); lens++ {
-		if ca[lens] == 0 {
-			break
-		}
-		s[lens] = uint8(ca[lens])
-	}
-	return string(s[0:lens])
-}
-
 func (r *reporter) Report() (report.Report, error) {
 	var (
 		rep        = report.MakeReport()
 		localCIDRs []string
-		utsname    syscall.Utsname
 	)
 
 	localNets, err := InterfaceAddrs()
@@ -104,12 +89,12 @@ func (r *reporter) Report() (report.Report, error) {
 		}
 	}
 
-	if err := Uname(&utsname); err != nil {
+	uptime, err := getUptime()
+	if err != nil {
 		return rep, err
 	}
-	kernel := fmt.Sprintf("%s %s", charsToString(utsname.Release), charsToString(utsname.Version))
 
-	uptime, err := getUptime()
+	kernel, err := getKernelVersion()
 	if err != nil {
 		return rep, err
 	}
