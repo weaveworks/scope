@@ -23,12 +23,12 @@ func TestAPITopologyApplications(t *testing.T) {
 			t.Fatal(err)
 		}
 		equals(t, 4, len(topo.Nodes))
-		node, ok := topo.Nodes["pid:hostA:23128"]
+		node, ok := topo.Nodes["process:hostA:23128"]
 		if !ok {
 			t.Errorf("missing curl node")
 		}
 		equals(t, 1, len(node.Adjacency))
-		equals(t, report.MakeIDList("pid:hostB:215"), node.Adjacency)
+		equals(t, report.MakeIDList("process:hostB:215"), node.Adjacency)
 		equals(t, report.MakeIDList(
 			report.MakeEndpointNodeID("hostA", "192.168.1.1", "12345"),
 			report.MakeEndpointNodeID("hostA", "192.168.1.1", "12346"),
@@ -41,19 +41,19 @@ func TestAPITopologyApplications(t *testing.T) {
 		equals(t, false, node.Pseudo)
 	}
 	{
-		body := getRawJSON(t, ts, "/api/topology/applications/pid:hostA:23128")
+		body := getRawJSON(t, ts, "/api/topology/applications/process:hostA:23128")
 		var node APINode
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatal(err)
 		}
-		equals(t, "pid:hostA:23128", node.Node.ID)
+		equals(t, "process:hostA:23128", node.Node.ID)
 		equals(t, "curl", node.Node.LabelMajor)
 		equals(t, "hostA (23128)", node.Node.LabelMinor)
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables
 	}
 	{
-		body := getRawJSON(t, ts, "/api/topology/applications/pid:hostA:23128/pid:hostB:215")
+		body := getRawJSON(t, ts, "/api/topology/applications/process:hostA:23128/process:hostB:215")
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
