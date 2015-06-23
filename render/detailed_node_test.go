@@ -31,6 +31,7 @@ func TestOriginTable(t *testing.T) {
 		serverProcessNodeID: {
 			Title:   "Origin Process",
 			Numeric: false,
+			Rank:    2,
 			Rows: []render.Row{
 				{"Name (comm)", "apache", ""},
 				{"PID", serverPID, ""},
@@ -39,6 +40,7 @@ func TestOriginTable(t *testing.T) {
 		serverHostNodeID: {
 			Title:   "Origin Host",
 			Numeric: false,
+			Rank:    1,
 			Rows: []render.Row{
 				{"Host name", serverHostName, ""},
 				{"Load", "0.01 0.01 0.01", ""},
@@ -69,9 +71,39 @@ func TestMakeDetailedNode(t *testing.T) {
 			{
 				Title:   "Connections",
 				Numeric: true,
+				Rank:    100,
 				Rows: []render.Row{
 					{"Bytes ingress", "150", ""},
 					{"Bytes egress", "1500", ""},
+				},
+			},
+			{
+				Title:   "Origin Container",
+				Numeric: false,
+				Rank:    3,
+				Rows: []render.Row{
+					{"ID", "5e4d3c2b1a", ""},
+					{"Name", "server", ""},
+					{"Image ID", "imageid456", ""},
+				},
+			},
+			{
+				Title:   "Origin Process",
+				Numeric: false,
+				Rank:    2,
+				Rows: []render.Row{
+					{"Name (comm)", "apache", ""},
+					{"PID", "215", ""},
+				},
+			},
+			{
+				Title:   "Origin Host",
+				Numeric: false,
+				Rank:    1,
+				Rows: []render.Row{
+					{"Host name", "server.hostname.com", ""},
+					{"Load", "0.01 0.01 0.01", ""},
+					{"Operating system", "Linux", ""},
 				},
 			},
 			{
@@ -80,32 +112,6 @@ func TestMakeDetailedNode(t *testing.T) {
 				Rows: []render.Row{
 					{"Endpoint", "192.168.1.1", ""},
 					{"Port", "80", ""},
-				},
-			},
-			{
-				Title:   "Origin Process",
-				Numeric: false,
-				Rows: []render.Row{
-					{"Name (comm)", "apache", ""},
-					{"PID", "215", ""},
-				},
-			},
-			{
-				Title:   "Origin Container",
-				Numeric: false,
-				Rows: []render.Row{
-					{"ID", "5e4d3c2b1a", ""},
-					{"Name", "server", ""},
-					{"Image ID", "imageid456", ""},
-				},
-			},
-			{
-				Title:   "Origin Host",
-				Numeric: false,
-				Rows: []render.Row{
-					{"Host name", "server.hostname.com", ""},
-					{"Load", "0.01 0.01 0.01", ""},
-					{"Operating system", "Linux", ""},
 				},
 			},
 		},
