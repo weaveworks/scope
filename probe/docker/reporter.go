@@ -27,11 +27,11 @@ func NewReporter(registry Registry, scope string) *Reporter {
 }
 
 // Report generates a Report containing Container and ContainerImage topologies
-func (r *Reporter) Report() report.Report {
+func (r *Reporter) Report() (report.Report, error) {
 	result := report.MakeReport()
 	result.Container.Merge(r.containerTopology())
 	result.ContainerImage.Merge(r.containerImageTopology())
-	return result
+	return result, nil
 }
 
 func (r *Reporter) containerTopology() report.Topology {

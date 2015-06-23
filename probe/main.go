@@ -15,6 +15,7 @@ import (
 
 	"github.com/weaveworks/procspy"
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/probe/tag"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
@@ -105,6 +106,11 @@ func main() {
 		taggers = append(taggers, weaveTagger)
 	}
 
+	// TODO provide an alternate implementation for Darwin.
+	if runtime.GOOS == linux {
+		reporters = append(reporters, process.NewReporter(*procRoot, hostID))
+	}
+
 	log.Printf("listening on %s", *listen)
 
 	quit := make(chan struct{})
@@ -129,18 +135,12 @@ func main() {
 				// Do this every tick so it gets tagged by the OriginHostTagger
 				r.Host = hostTopology(hostID, hostName)
 
-				// TODO abstract PIDTree to a process provider, and provide an
-				// alternate implementation for Darwin.
-				if runtime.GOOS == linux {
-					if pidTree, err := tag.NewPIDTree(*procRoot); err == nil {
-						r.Process.Merge(pidTree.ProcessTopology(hostID))
-					} else {
-						log.Printf("PIDTree: %v", err)
-					}
-				}
-
 				for _, reporter := range reporters {
-					r.Merge(reporter.Report())
+					newReport, err := reporter.Report()
+					if err != nil {
+						log.Printf("error generating report: %v", err)
+					}
+					r.Merge(newReport)
 				}
 
 				if weaveTagger != nil {

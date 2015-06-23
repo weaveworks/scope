@@ -6,16 +6,16 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/tag"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
 
-type mockPIDTree struct {
+type mockProcessTree struct {
 	parents map[int]int
 }
 
-func (m *mockPIDTree) GetParent(pid int) (int, error) {
+func (m *mockProcessTree) GetParent(pid int) (int, error) {
 	parent, ok := m.parents[pid]
 	if !ok {
 		return -1, fmt.Errorf("Not found %d", pid)
@@ -23,16 +23,12 @@ func (m *mockPIDTree) GetParent(pid int) (int, error) {
 	return parent, nil
 }
 
-func (m *mockPIDTree) ProcessTopology(hostID string) report.Topology {
-	panic("")
-}
-
 func TestTagger(t *testing.T) {
-	oldPIDTree := docker.NewPIDTreeStub
-	defer func() { docker.NewPIDTreeStub = oldPIDTree }()
+	oldProcessTree := docker.NewProcessTreeStub
+	defer func() { docker.NewProcessTreeStub = oldProcessTree }()
 
-	docker.NewPIDTreeStub = func(procRoot string) (tag.PIDTree, error) {
-		return &mockPIDTree{map[int]int{2: 1}}, nil
+	docker.NewProcessTreeStub = func(procRoot string) (process.Tree, error) {
+		return &mockProcessTree{map[int]int{2: 1}}, nil
 	}
 
 	var (

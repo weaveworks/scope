@@ -72,7 +72,7 @@ func TestReporter(t *testing.T) {
 	}
 
 	reporter := docker.NewReporter(mockRegistryInstance, "")
-	have := reporter.Report()
+	have, _ := reporter.Report()
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
 	}
