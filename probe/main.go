@@ -15,6 +15,7 @@ import (
 
 	"github.com/weaveworks/procspy"
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/probe/tag"
 	"github.com/weaveworks/scope/report"
@@ -80,7 +81,7 @@ func main() {
 	)
 
 	taggers := []tag.Tagger{tag.NewTopologyTagger(), tag.NewOriginHostTagger(hostID)}
-	reporters := []tag.Reporter{}
+	reporters := []tag.Reporter{endpoint.NewReporter(hostID, hostName, *spyProcs)}
 
 	if *dockerEnabled && runtime.GOOS == linux {
 		if err = report.AddLocalBridge(*dockerBridge); err != nil {
@@ -130,8 +131,6 @@ func main() {
 				r = report.MakeReport()
 
 			case <-spyTick:
-				r.Merge(spy(hostID, hostName, *spyProcs))
-
 				// Do this every tick so it gets tagged by the OriginHostTagger
 				r.Host = hostTopology(hostID, hostName)
 

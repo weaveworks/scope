@@ -2,9 +2,10 @@ package main
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/weaveworks/scope/probe/endpoint"
 )
 
 var (
@@ -17,20 +18,10 @@ var (
 		},
 		[]string{},
 	)
-	spyDuration = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Namespace: "scope",
-			Subsystem: "probe",
-			Name:      "spy_time_nanoseconds",
-			Help:      "Total time spent spying on active connections.",
-			MaxAge:    10 * time.Second, // like statsd
-		},
-		[]string{},
-	)
 )
 
 func makePrometheusHandler() http.Handler {
 	prometheus.MustRegister(publishTicks)
-	prometheus.MustRegister(spyDuration)
+	prometheus.MustRegister(endpoint.SpyDuration)
 	return prometheus.Handler()
 }

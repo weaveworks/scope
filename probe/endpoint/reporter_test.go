@@ -1,4 +1,4 @@
-package main
+package endpoint_test
 
 import (
 	"net"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/weaveworks/procspy"
+	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -70,7 +71,8 @@ func TestSpyNoProcesses(t *testing.T) {
 		nodeName = "frenchs-since-1904"   // TODO rename to hostNmae
 	)
 
-	r := spy(nodeID, nodeName, false)
+	reporter := endpoint.NewReporter(nodeID, nodeName, false)
+	r, _ := reporter.Report()
 	//buf, _ := json.MarshalIndent(r, "", "    ")
 	//t.Logf("\n%s\n", buf)
 
@@ -106,7 +108,8 @@ func TestSpyWithProcesses(t *testing.T) {
 		nodeName = "fishermans-friend" // TODO rename to hostNmae
 	)
 
-	r := spy(nodeID, nodeName, true)
+	reporter := endpoint.NewReporter(nodeID, nodeName, false)
+	r, _ := reporter.Report()
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
 
 	var (
