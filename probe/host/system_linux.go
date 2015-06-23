@@ -1,14 +1,13 @@
-package main
+package host
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strconv"
 	"strings"
 )
 
 func getLoad() string {
-	buf, err := ioutil.ReadFile("/proc/loadavg")
+	buf, err := ReadFile(ProcLoad)
 	if err != nil {
 		return "unknown"
 	}

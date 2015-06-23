@@ -4,6 +4,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -18,7 +19,7 @@ func LocalNetworks(r report.Report) report.Networks {
 	)
 
 	for _, md := range r.Host.NodeMetadatas {
-		val, ok := md["local_networks"]
+		val, ok := md[host.LocalNetworks]
 		if !ok {
 			continue
 		}

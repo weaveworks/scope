@@ -3,19 +3,18 @@ package main
 import (
 	"flag"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
 	"github.com/weaveworks/procspy"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/probe/tag"
 	"github.com/weaveworks/scope/report"
@@ -80,8 +79,15 @@ func main() {
 		weaveTagger *tag.WeaveTagger
 	)
 
-	taggers := []tag.Tagger{tag.NewTopologyTagger(), tag.NewOriginHostTagger(hostID)}
-	reporters := []tag.Reporter{endpoint.NewReporter(hostID, hostName, *spyProcs)}
+	taggers := []tag.Tagger{
+		tag.NewTopologyTagger(),
+		tag.NewOriginHostTagger(hostID),
+	}
+
+	reporters := []tag.Reporter{
+		host.NewReporter(hostID, hostName),
+		endpoint.NewReporter(hostID, hostName, *spyProcs),
+	}
 
 	if *dockerEnabled && runtime.GOOS == linux {
 		if err = report.AddLocalBridge(*dockerBridge); err != nil {
@@ -131,9 +137,6 @@ func main() {
 				r = report.MakeReport()
 
 			case <-spyTick:
-				// Do this every tick so it gets tagged by the OriginHostTagger
-				r.Host = hostTopology(hostID, hostName)
-
 				for _, reporter := range reporters {
 					newReport, err := reporter.Report()
 					if err != nil {
@@ -155,29 +158,6 @@ func main() {
 	}()
 
 	log.Printf("%s", <-interrupt())
-}
-
-// hostTopology produces a host topology for this host. No need to do this
-// more than once per published report.
-func hostTopology(hostID, hostName string) report.Topology {
-	var localCIDRs []string
-	if localNets, err := net.InterfaceAddrs(); err == nil {
-		// Not all networks are IP networks.
-		for _, localNet := range localNets {
-			if ipNet, ok := localNet.(*net.IPNet); ok {
-				localCIDRs = append(localCIDRs, ipNet.String())
-			}
-		}
-	}
-	t := report.NewTopology()
-	t.NodeMetadatas[report.MakeHostNodeID(hostID)] = report.NodeMetadata{
-		"ts":             time.Now().UTC().Format(time.RFC3339Nano),
-		"host_name":      hostName,
-		"local_networks": strings.Join(localCIDRs, " "),
-		"os":             runtime.GOOS,
-		"load":           getLoad(),
-	}
-	return t
 }
 
 func interrupt() chan os.Signal {
