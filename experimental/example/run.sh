@@ -18,8 +18,8 @@ start_container() {
 }
 
 start_container elasticsearch
-start_container searchapp
+start_container tomwilkie/searchapp searchapp
 start_container redis
-start_container qotd
-start_container app
-start_container client
+start_container tomwilkie/qotd qotd
+start_container tomwilkie/app app
+start_container tomwilkie/client client

@@ -21,7 +21,7 @@ client.marker: client/*
 searchapp.marker: searchapp/* searchapp/searchapp
 shout.marker: shout/* shout/shout
 %.marker:
-	docker build -t $(<D) $(<D)/
+	docker build -t tomwilkie/$(<D) $(<D)/
 	touch $@
 
 clean:
