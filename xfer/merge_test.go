@@ -66,7 +66,7 @@ func TestMerge(t *testing.T) {
 
 	select {
 	case <-success:
-	case <-time.After(batchTime):
+	case <-time.After(2 * batchTime):
 		t.Errorf("collector didn't capture both reports")
 	}
 }

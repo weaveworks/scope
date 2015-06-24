@@ -5,11 +5,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"reflect"
 	"runtime"
 	"testing"
 	"time"
 
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test"
 )
 
 func TestCollector(t *testing.T) {
@@ -42,11 +44,23 @@ func TestCollector(t *testing.T) {
 	runtime.Gosched()   // make sure it connects
 
 	// Push a report through everything
-	reports <- report.Report{Address: report.Topology{NodeMetadatas: report.NodeMetadatas{report.MakeAddressNodeID("a", "b"): report.NodeMetadata{}}}}
-	poll(t, 10*time.Millisecond, func() bool { return len(concreteCollector.peek().Address.NodeMetadatas) == 1 }, "missed the report")
+	r := report.Report{
+		Address: report.Topology{
+			NodeMetadatas: report.NodeMetadatas{
+				report.MakeAddressNodeID("a", "b"): report.NodeMetadata{},
+			},
+		},
+	}
+
+	reports <- r
+	poll(t, 100*time.Millisecond, func() bool {
+		return len(concreteCollector.peek().Address.NodeMetadatas) == 1
+	}, "missed the report")
+
 	go func() { publish <- time.Now() }()
-	if want, have := 1, len((<-collector.Reports()).Address.NodeMetadatas); want != have {
-		t.Errorf("want %d, have %d", want, have)
+	collected := <-collector.Reports()
+	if reflect.DeepEqual(r, collected) {
+		t.Errorf(test.Diff(r, collected))
 	}
 
 	collector.Remove(addr)
