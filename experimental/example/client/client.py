@@ -6,17 +6,18 @@ import logging
 import sys
 
 app = 'http://app:5000/'
-concurrency = 1
+concurrency = 2
 
 def do_requests():
   s = requests.Session()
   while True:
     try:
-      s.get(app)
+      s.get(app, timeout=1.0)
       logging.info("Did request")
       time.sleep(1)
     except:
       logging.error("Error doing request", exc_info=sys.exc_info())
+      time.sleep(1)
     logging.info("Did request")
 
 def main():
