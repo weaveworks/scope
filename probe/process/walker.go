@@ -62,7 +62,7 @@ var Walk = func(procRoot string, f func(*Process)) error {
 
 		comm := "(unknown)"
 		if commBuf, err := ReadFile(path.Join(procRoot, filename, "comm")); err == nil {
-			comm = string(commBuf)
+			comm = strings.TrimSpace(string(commBuf))
 		}
 
 		f(&Process{

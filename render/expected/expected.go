@@ -32,27 +32,44 @@ var (
 		AggregateMetadata: render.AggregateMetadata{},
 	}
 
-	ClientProcessID       = render.MakeProcessID(test.ClientHostID, test.ClientPID)
+	ClientProcess1ID      = render.MakeProcessID(test.ClientHostID, test.Client1PID)
+	ClientProcess2ID      = render.MakeProcessID(test.ClientHostID, test.Client2PID)
 	ServerProcessID       = render.MakeProcessID(test.ServerHostID, test.ServerPID)
 	nonContainerProcessID = render.MakeProcessID(test.ServerHostID, test.NonContainerPID)
 
 	RenderedProcesses = render.RenderableNodes{
-		ClientProcessID: {
-			ID:         ClientProcessID,
+		ClientProcess1ID: {
+			ID:         ClientProcess1ID,
 			LabelMajor: "curl",
-			LabelMinor: fmt.Sprintf("%s (%s)", test.ClientHostID, test.ClientPID),
-			Rank:       test.ClientPID,
+			LabelMinor: fmt.Sprintf("%s (%s)", test.ClientHostID, test.Client1PID),
+			Rank:       test.Client1PID,
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(ServerProcessID),
 			Origins: report.MakeIDList(
 				test.Client54001NodeID,
-				test.Client54002NodeID,
-				test.ClientProcessNodeID,
+				test.ClientProcess1NodeID,
 				test.ClientHostNodeID,
 			),
 			AggregateMetadata: render.AggregateMetadata{
-				render.KeyBytesIngress: 300,
-				render.KeyBytesEgress:  30,
+				render.KeyBytesIngress: 100,
+				render.KeyBytesEgress:  10,
+			},
+		},
+		ClientProcess2ID: {
+			ID:         ClientProcess2ID,
+			LabelMajor: "curl",
+			LabelMinor: fmt.Sprintf("%s (%s)", test.ClientHostID, test.Client2PID),
+			Rank:       test.Client2PID,
+			Pseudo:     false,
+			Adjacency:  report.MakeIDList(ServerProcessID),
+			Origins: report.MakeIDList(
+				test.Client54002NodeID,
+				test.ClientProcess2NodeID,
+				test.ClientHostNodeID,
+			),
+			AggregateMetadata: render.AggregateMetadata{
+				render.KeyBytesIngress: 200,
+				render.KeyBytesEgress:  20,
 			},
 		},
 		ServerProcessID: {
@@ -62,7 +79,8 @@ var (
 			Rank:       test.ServerPID,
 			Pseudo:     false,
 			Adjacency: report.MakeIDList(
-				ClientProcessID,
+				ClientProcess1ID,
+				ClientProcess2ID,
 				unknownPseudoNode1ID,
 				unknownPseudoNode2ID,
 				render.TheInternetID,
@@ -106,7 +124,8 @@ var (
 			Origins: report.MakeIDList(
 				test.Client54001NodeID,
 				test.Client54002NodeID,
-				test.ClientProcessNodeID,
+				test.ClientProcess1NodeID,
+				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
 			AggregateMetadata: render.AggregateMetadata{
@@ -165,7 +184,8 @@ var (
 				test.ClientContainerNodeID,
 				test.Client54001NodeID,
 				test.Client54002NodeID,
-				test.ClientProcessNodeID,
+				test.ClientProcess1NodeID,
+				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
 			AggregateMetadata: render.AggregateMetadata{
@@ -219,7 +239,8 @@ var (
 				test.ClientContainerNodeID,
 				test.Client54001NodeID,
 				test.Client54002NodeID,
-				test.ClientProcessNodeID,
+				test.ClientProcess1NodeID,
+				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
 			AggregateMetadata: render.AggregateMetadata{
