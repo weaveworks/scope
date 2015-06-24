@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/weaveworks/scope/test"
 )
 
 func TestAPIOriginHost(t *testing.T) {
@@ -15,7 +18,7 @@ func TestAPIOriginHost(t *testing.T) {
 
 	{
 		// Origin
-		body := getRawJSON(t, ts, "/api/origin/host/hostA;<host>") // TODO MakeHostNodeID
+		body := getRawJSON(t, ts, fmt.Sprintf("/api/origin/host/%s", test.ServerHostNodeID))
 		var o OriginHost
 		if err := json.Unmarshal(body, &o); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
@@ -23,7 +26,7 @@ func TestAPIOriginHost(t *testing.T) {
 		if want, have := "Linux", o.OS; want != have {
 			t.Errorf("Origin error. Want %v, have %v", want, have)
 		}
-		if want, have := "3.14 2.71 1.61", o.Load; want != have {
+		if want, have := "0.01 0.01 0.01", o.Load; want != have {
 			t.Errorf("Origin error. Want %v, have %v", want, have)
 		}
 	}

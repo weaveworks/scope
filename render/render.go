@@ -245,7 +245,11 @@ func (m LeafMap) AggregateMetadata(rpt report.Report, srcRenderableID, dstRender
 
 // Render produces a set of RenderableNodes given a Report
 func (f FilterUnconnected) Render(rpt report.Report) RenderableNodes {
-	input := f.Renderer.Render(rpt)
+	return OnlyConnected(f.Renderer.Render(rpt))
+}
+
+// OnlyConnected filters out unconnected RenderedNodes
+func OnlyConnected(input RenderableNodes) RenderableNodes {
 	output := RenderableNodes{}
 	for id, node := range input {
 		if len(node.Adjacency) == 0 {

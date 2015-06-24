@@ -9,46 +9,46 @@ import (
 )
 
 func TestOriginTable(t *testing.T) {
-	if _, ok := render.OriginTable(rpt, "not-found"); ok {
+	if _, ok := render.OriginTable(test.Report, "not-found"); ok {
 		t.Errorf("unknown origin ID gave unexpected success")
 	}
 	for originID, want := range map[string]render.Table{
-		client54001NodeID: {
+		test.Client54001NodeID: {
 			Title:   "Origin Endpoint",
 			Numeric: false,
 			Rows: []render.Row{
-				{"Endpoint", clientIP, ""},
-				{"Port", clientPort54001, ""},
+				{"Endpoint", test.ClientIP, ""},
+				{"Port", test.ClientPort54001, ""},
 			},
 		},
-		clientAddressNodeID: {
+		test.ClientAddressNodeID: {
 			Title:   "Origin Address",
 			Numeric: false,
 			Rows: []render.Row{
-				{"Address", clientIP, ""},
+				{"Address", test.ClientIP, ""},
 			},
 		},
-		serverProcessNodeID: {
+		test.ServerProcessNodeID: {
 			Title:   "Origin Process",
 			Numeric: false,
 			Rank:    2,
 			Rows: []render.Row{
 				{"Name (comm)", "apache", ""},
-				{"PID", serverPID, ""},
+				{"PID", test.ServerPID, ""},
 			},
 		},
-		serverHostNodeID: {
+		test.ServerHostNodeID: {
 			Title:   "Origin Host",
 			Numeric: false,
 			Rank:    1,
 			Rows: []render.Row{
-				{"Host name", serverHostName, ""},
+				{"Host name", test.ServerHostName, ""},
 				{"Load", "0.01 0.01 0.01", ""},
 				{"Operating system", "Linux", ""},
 			},
 		},
 	} {
-		have, ok := render.OriginTable(rpt, originID)
+		have, ok := render.OriginTable(test.Report, originID)
 		if !ok {
 			t.Errorf("%q: not OK", originID)
 			continue
@@ -60,12 +60,12 @@ func TestOriginTable(t *testing.T) {
 }
 
 func TestMakeDetailedNode(t *testing.T) {
-	renderableNode := render.ContainerRenderer.Render(rpt)[serverContainerID]
-	have := render.MakeDetailedNode(rpt, renderableNode)
+	renderableNode := render.ContainerRenderer.Render(test.Report)[test.ServerContainerID]
+	have := render.MakeDetailedNode(test.Report, renderableNode)
 	want := render.DetailedNode{
-		ID:         serverContainerID,
+		ID:         test.ServerContainerID,
 		LabelMajor: "server",
-		LabelMinor: serverHostName,
+		LabelMinor: test.ServerHostName,
 		Pseudo:     false,
 		Tables: []render.Table{
 			{
@@ -82,9 +82,9 @@ func TestMakeDetailedNode(t *testing.T) {
 				Numeric: false,
 				Rank:    3,
 				Rows: []render.Row{
-					{"ID", "5e4d3c2b1a", ""},
+					{"ID", test.ServerContainerID, ""},
 					{"Name", "server", ""},
-					{"Image ID", "imageid456", ""},
+					{"Image ID", test.ServerContainerImageID, ""},
 				},
 			},
 			{
@@ -93,7 +93,7 @@ func TestMakeDetailedNode(t *testing.T) {
 				Rank:    2,
 				Rows: []render.Row{
 					{"Name (comm)", "apache", ""},
-					{"PID", "215", ""},
+					{"PID", test.ServerPID, ""},
 				},
 			},
 			{
@@ -101,7 +101,7 @@ func TestMakeDetailedNode(t *testing.T) {
 				Numeric: false,
 				Rank:    1,
 				Rows: []render.Row{
-					{"Host name", "server.hostname.com", ""},
+					{"Host name", test.ServerHostName, ""},
 					{"Load", "0.01 0.01 0.01", ""},
 					{"Operating system", "Linux", ""},
 				},
@@ -110,8 +110,8 @@ func TestMakeDetailedNode(t *testing.T) {
 				Title:   "Origin Endpoint",
 				Numeric: false,
 				Rows: []render.Row{
-					{"Endpoint", "192.168.1.1", ""},
-					{"Port", "80", ""},
+					{"Endpoint", test.ServerIP, ""},
+					{"Port", test.ServerPort, ""},
 				},
 			},
 		},
