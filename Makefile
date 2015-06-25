@@ -1,4 +1,4 @@
-.PHONY: all deps static clean client-lint client-sync
+.PHONY: all deps static clean client-lint client-test client-sync
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo
