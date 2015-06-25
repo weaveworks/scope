@@ -21,7 +21,8 @@ var (
 	ClientHostName = ClientHostID
 	ServerHostName = ServerHostID
 
-	ClientPID       = "10001"
+	Client1PID      = "10001"
+	Client2PID      = "30020"
 	ServerPID       = "215"
 	NonContainerPID = "1234"
 
@@ -36,7 +37,8 @@ var (
 	UnknownClient3NodeID = report.MakeEndpointNodeID(ServerHostID, "10.10.10.11", "54020")    // Check this one isn't deduped
 	RandomClientNodeID   = report.MakeEndpointNodeID(ServerHostID, "51.52.53.54", "12345")    // this should become an internet node
 
-	ClientProcessNodeID       = report.MakeProcessNodeID(ClientHostID, ClientPID)
+	ClientProcess1NodeID      = report.MakeProcessNodeID(ClientHostID, Client1PID)
+	ClientProcess2NodeID      = report.MakeProcessNodeID(ClientHostID, Client2PID)
 	ServerProcessNodeID       = report.MakeProcessNodeID(ServerHostID, ServerPID)
 	NonContainerProcessNodeID = report.MakeProcessNodeID(ServerHostID, NonContainerPID)
 
@@ -72,13 +74,13 @@ var (
 				Client54001NodeID: report.NodeMetadata{
 					"addr":            ClientIP,
 					"port":            ClientPort54001,
-					"pid":             ClientPID,
+					"pid":             Client1PID,
 					report.HostNodeID: ClientHostNodeID,
 				},
 				Client54002NodeID: report.NodeMetadata{
 					"addr":            ClientIP,
 					"port":            ClientPort54002,
-					"pid":             ClientPID, // should be same as above!
+					"pid":             Client2PID,
 					report.HostNodeID: ClientHostNodeID,
 				},
 				Server80NodeID: report.NodeMetadata{
@@ -130,8 +132,14 @@ var (
 		Process: report.Topology{
 			Adjacency: report.Adjacency{},
 			NodeMetadatas: report.NodeMetadatas{
-				ClientProcessNodeID: report.NodeMetadata{
-					"pid":              ClientPID,
+				ClientProcess1NodeID: report.NodeMetadata{
+					"pid":              Client1PID,
+					"comm":             "curl",
+					docker.ContainerID: ClientContainerID,
+					report.HostNodeID:  ClientHostNodeID,
+				},
+				ClientProcess2NodeID: report.NodeMetadata{
+					"pid":              Client2PID,
 					"comm":             "curl",
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,

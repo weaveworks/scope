@@ -43,14 +43,14 @@ func TestAPITopologyApplications(t *testing.T) {
 		// Let's not unit-test the specific content of the detail tables
 	}
 	{
-		body := getRawJSON(t, ts, fmt.Sprintf("/api/topology/applications/%s/%s", expected.ClientProcessID, expected.ServerProcessID))
+		body := getRawJSON(t, ts, fmt.Sprintf("/api/topology/applications/%s/%s", expected.ClientProcess1ID, expected.ServerProcessID))
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
 		want := render.AggregateMetadata{
-			"egress_bytes":  30,
-			"ingress_bytes": 300,
+			"egress_bytes":  10,
+			"ingress_bytes": 100,
 		}
 		if !reflect.DeepEqual(want, edge.Metadata) {
 			t.Error("\n" + test.Diff(want, edge.Metadata))
@@ -129,7 +129,7 @@ func TestAPITopologyWebsocket(t *testing.T) {
 	if err := json.Unmarshal(p, &d); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
-	equals(t, 5, len(d.Add))
+	equals(t, 6, len(d.Add))
 	equals(t, 0, len(d.Update))
 	equals(t, 0, len(d.Remove))
 }

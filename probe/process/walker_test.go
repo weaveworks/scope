@@ -14,8 +14,7 @@ import (
 )
 
 type mockProcess struct {
-	name    string
-	cmdline string
+	name, comm, cmdline string
 }
 
 func (p mockProcess) Name() string       { return p.name }
@@ -33,11 +32,11 @@ func TestWalker(t *testing.T) {
 	}()
 
 	processes := map[string]mockProcess{
-		"3":       {name: "3", cmdline: "curl\000google.com"},
-		"2":       {name: "2"},
-		"4":       {name: "4"},
+		"3":       {name: "3", comm: "curl\n", cmdline: "curl\000google.com"},
+		"2":       {name: "2", comm: "bash\n"},
+		"4":       {name: "4", comm: "apache\n"},
 		"notapid": {name: "notapid"},
-		"1":       {name: "1"},
+		"1":       {name: "1", comm: "init\n"},
 	}
 
 	process.ReadDir = func(path string) ([]os.FileInfo, error) {
@@ -59,6 +58,8 @@ func TestWalker(t *testing.T) {
 
 		file := splits[len(splits)-1]
 		switch file {
+		case "comm":
+			return []byte(process.comm), nil
 		case "stat":
 			pid, _ := strconv.Atoi(splits[len(splits)-2])
 			parent := pid - 1
@@ -71,10 +72,10 @@ func TestWalker(t *testing.T) {
 	}
 
 	want := map[int]*process.Process{
-		3: {PID: 3, PPID: 2, Comm: "(unknown)", Cmdline: "curl google.com", Threads: 1},
-		2: {PID: 2, PPID: 1, Comm: "(unknown)", Cmdline: "", Threads: 1},
-		4: {PID: 4, PPID: 3, Comm: "(unknown)", Cmdline: "", Threads: 1},
-		1: {PID: 1, PPID: 0, Comm: "(unknown)", Cmdline: "", Threads: 1},
+		3: {PID: 3, PPID: 2, Comm: "curl", Cmdline: "curl google.com", Threads: 1},
+		2: {PID: 2, PPID: 1, Comm: "bash", Cmdline: "", Threads: 1},
+		4: {PID: 4, PPID: 3, Comm: "apache", Cmdline: "", Threads: 1},
+		1: {PID: 1, PPID: 0, Comm: "init", Cmdline: "", Threads: 1},
 	}
 
 	have := map[int]*process.Process{}
