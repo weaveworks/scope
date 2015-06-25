@@ -35,10 +35,10 @@ dependencies:
 test:
   override:
     - cd $SRCDIR; ./bin/lint .
+    - cd $SRCDIR; make client-test
     - cd $SRCDIR; make static
     - cd $SRCDIR; make
     - cd $SRCDIR; ./bin/test -slow
-    - cd $SRCDIR; make client-test
     - cd $SRCDIR/experimental; make
   post:
     - goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true

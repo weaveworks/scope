@@ -26,6 +26,7 @@ var config = {
     sourcePrefix: '  '
   },
 
+  bail: !DEBUG, // fail on first error when building release
   cache: DEBUG,
   debug: DEBUG,
   devtool: DEBUG ? '#inline-source-map' : false,
