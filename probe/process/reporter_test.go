@@ -9,23 +9,28 @@ import (
 	"github.com/weaveworks/scope/test"
 )
 
-func TestReporter(t *testing.T) {
-	oldWalk := process.Walk
-	defer func() { process.Walk = oldWalk }()
+type mockWalker struct {
+	processes []*process.Process
+}
 
-	process.Walk = func(_ string, f func(*process.Process)) error {
-		for _, p := range []*process.Process{
+func (m *mockWalker) Walk(f func(*process.Process)) error {
+	for _, p := range m.processes {
+		f(p)
+	}
+	return nil
+}
+
+func TestReporter(t *testing.T) {
+	walker := &mockWalker{
+		processes: []*process.Process{
 			{PID: 1, PPID: 0, Comm: "init"},
 			{PID: 2, PPID: 1, Comm: "bash"},
 			{PID: 3, PPID: 1, Comm: "apache", Threads: 2},
 			{PID: 4, PPID: 2, Comm: "ping", Cmdline: "ping foo.bar.local"},
-		} {
-			f(p)
-		}
-		return nil
+		},
 	}
 
-	reporter := process.NewReporter("", "")
+	reporter := process.NewReporter(walker, "")
 	want := report.MakeReport()
 	want.Process = report.Topology{
 		Adjacency:     report.Adjacency{},

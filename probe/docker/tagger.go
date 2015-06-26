@@ -21,21 +21,21 @@ var (
 // Tagger is a tagger that tags Docker container information to process
 // nodes that have a PID.
 type Tagger struct {
-	procRoot string
-	registry Registry
+	registry   Registry
+	procWalker process.Walker
 }
 
 // NewTagger returns a usable Tagger.
-func NewTagger(registry Registry, procRoot string) *Tagger {
+func NewTagger(registry Registry, procWalker process.Walker) *Tagger {
 	return &Tagger{
-		registry: registry,
-		procRoot: procRoot,
+		registry:   registry,
+		procWalker: procWalker,
 	}
 }
 
 // Tag implements Tagger.
 func (t *Tagger) Tag(r report.Report) (report.Report, error) {
-	tree, err := NewProcessTreeStub(t.procRoot)
+	tree, err := NewProcessTreeStub(t.procWalker)
 	if err != nil {
 		return report.MakeReport(), err
 	}

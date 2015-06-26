@@ -8,22 +8,16 @@ import (
 )
 
 func TestTree(t *testing.T) {
-	oldWalk := process.Walk
-	defer func() { process.Walk = oldWalk }()
-
-	process.Walk = func(_ string, f func(*process.Process)) error {
-		for _, p := range []*process.Process{
-			{PID: 1, PPID: 0},
-			{PID: 2, PPID: 1},
-			{PID: 3, PPID: 1},
-			{PID: 4, PPID: 2},
-		} {
-			f(p)
-		}
-		return nil
+	walker := &mockWalker{
+		processes: []*process.Process{
+			{PID: 1, PPID: 0, Comm: "init"},
+			{PID: 2, PPID: 1, Comm: "bash"},
+			{PID: 3, PPID: 1, Comm: "apache", Threads: 2},
+			{PID: 4, PPID: 2, Comm: "ping", Cmdline: "ping foo.bar.local"},
+		},
 	}
 
-	tree, err := process.NewTree("foo")
+	tree, err := process.NewTree(walker)
 	if err != nil {
 		t.Fatalf("newProcessTree error: %v", err)
 	}
