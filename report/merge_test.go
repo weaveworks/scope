@@ -1,69 +1,71 @@
-package report
+package report_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/weaveworks/scope/report"
 )
 
 func TestMergeAdjacency(t *testing.T) {
 	for name, c := range map[string]struct {
-		a, b, want Adjacency
+		a, b, want report.Adjacency
 	}{
 		"Empty b": {
-			a: Adjacency{
-				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:80"),
-				"hostA|:192.168.1.1:8888":  MakeIDList(":1.2.3.4:22"),
-				"hostB|:192.168.1.2:80":    MakeIDList(":192.168.1.1:12345"),
+			a: report.Adjacency{
+				"hostA|:192.168.1.1:12345": report.MakeIDList(":192.168.1.2:80"),
+				"hostA|:192.168.1.1:8888":  report.MakeIDList(":1.2.3.4:22"),
+				"hostB|:192.168.1.2:80":    report.MakeIDList(":192.168.1.1:12345"),
 			},
-			b: Adjacency{},
-			want: Adjacency{
-				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:80"),
-				"hostA|:192.168.1.1:8888":  MakeIDList(":1.2.3.4:22"),
-				"hostB|:192.168.1.2:80":    MakeIDList(":192.168.1.1:12345"),
+			b: report.Adjacency{},
+			want: report.Adjacency{
+				"hostA|:192.168.1.1:12345": report.MakeIDList(":192.168.1.2:80"),
+				"hostA|:192.168.1.1:8888":  report.MakeIDList(":1.2.3.4:22"),
+				"hostB|:192.168.1.2:80":    report.MakeIDList(":192.168.1.1:12345"),
 			},
 		},
 		"Empty a": {
-			a: Adjacency{},
-			b: Adjacency{
-				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:80"),
-				"hostA|:192.168.1.1:8888":  MakeIDList(":1.2.3.4:22"),
-				"hostB|:192.168.1.2:80":    MakeIDList(":192.168.1.1:12345"),
+			a: report.Adjacency{},
+			b: report.Adjacency{
+				"hostA|:192.168.1.1:12345": report.MakeIDList(":192.168.1.2:80"),
+				"hostA|:192.168.1.1:8888":  report.MakeIDList(":1.2.3.4:22"),
+				"hostB|:192.168.1.2:80":    report.MakeIDList(":192.168.1.1:12345"),
 			},
-			want: Adjacency{
-				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:80"),
-				"hostA|:192.168.1.1:8888":  MakeIDList(":1.2.3.4:22"),
-				"hostB|:192.168.1.2:80":    MakeIDList(":192.168.1.1:12345"),
+			want: report.Adjacency{
+				"hostA|:192.168.1.1:12345": report.MakeIDList(":192.168.1.2:80"),
+				"hostA|:192.168.1.1:8888":  report.MakeIDList(":1.2.3.4:22"),
+				"hostB|:192.168.1.2:80":    report.MakeIDList(":192.168.1.1:12345"),
 			},
 		},
 		"Same address": {
-			a: Adjacency{
-				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:80"),
+			a: report.Adjacency{
+				"hostA|:192.168.1.1:12345": report.MakeIDList(":192.168.1.2:80"),
 			},
-			b: Adjacency{
-				"hostA|:192.168.1.1:12345": MakeIDList(":192.168.1.2:8080"),
+			b: report.Adjacency{
+				"hostA|:192.168.1.1:12345": report.MakeIDList(":192.168.1.2:8080"),
 			},
-			want: Adjacency{
-				"hostA|:192.168.1.1:12345": MakeIDList(
+			want: report.Adjacency{
+				"hostA|:192.168.1.1:12345": report.MakeIDList(
 					":192.168.1.2:80", ":192.168.1.2:8080",
 				),
 			},
 		},
 		"No duplicates": {
-			a: Adjacency{
-				"hostA|:192.168.1.1:12345": MakeIDList(
+			a: report.Adjacency{
+				"hostA|:192.168.1.1:12345": report.MakeIDList(
 					":192.168.1.2:80",
 					":192.168.1.2:8080",
 					":192.168.1.2:555",
 				),
 			},
-			b: Adjacency{
-				"hostA|:192.168.1.1:12345": MakeIDList(
+			b: report.Adjacency{
+				"hostA|:192.168.1.1:12345": report.MakeIDList(
 					":192.168.1.2:8080",
 					":192.168.1.2:80",
 					":192.168.1.2:444",
 				),
 			},
-			want: Adjacency{
+			want: report.Adjacency{
 				"hostA|:192.168.1.1:12345": []string{
 					":192.168.1.2:444",
 					":192.168.1.2:555",
@@ -73,24 +75,23 @@ func TestMergeAdjacency(t *testing.T) {
 			},
 		},
 		"Double keys": {
-			a: Adjacency{
-				"key1": MakeIDList("a", "c", "d", "b"),
-				"key2": MakeIDList("c", "a"),
+			a: report.Adjacency{
+				"key1": report.MakeIDList("a", "c", "d", "b"),
+				"key2": report.MakeIDList("c", "a"),
 			},
-			b: Adjacency{
-				"key1": MakeIDList("a", "b", "e"),
-				"key3": MakeIDList("e", "a", "a", "a", "e"),
+			b: report.Adjacency{
+				"key1": report.MakeIDList("a", "b", "e"),
+				"key3": report.MakeIDList("e", "a", "a", "a", "e"),
 			},
-			want: Adjacency{
-				"key1": MakeIDList("a", "b", "c", "d", "e"),
-				"key2": MakeIDList("a", "c"),
-				"key3": MakeIDList("a", "e"),
+			want: report.Adjacency{
+				"key1": report.MakeIDList("a", "b", "c", "d", "e"),
+				"key2": report.MakeIDList("a", "c"),
+				"key3": report.MakeIDList("a", "e"),
 			},
 		},
 	} {
 		have := c.a
 		have.Merge(c.b)
-
 		if !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s: want\n\t%#v\nhave\n\t%#v", name, c.want, have)
 		}
@@ -99,12 +100,12 @@ func TestMergeAdjacency(t *testing.T) {
 
 func TestMergeEdgeMetadatas(t *testing.T) {
 	for name, c := range map[string]struct {
-		a, b, want EdgeMetadatas
+		a, b, want report.EdgeMetadatas
 	}{
 		"Empty a": {
-			a: EdgeMetadatas{},
-			b: EdgeMetadatas{
-				"hostA|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+			a: report.EdgeMetadatas{},
+			b: report.EdgeMetadatas{
+				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      12,
 					BytesIngress:     0,
@@ -112,8 +113,8 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 					MaxConnCountTCP:  2,
 				},
 			},
-			want: EdgeMetadatas{
-				"hostA|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+			want: report.EdgeMetadatas{
+				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      12,
 					BytesIngress:     0,
@@ -123,16 +124,16 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 			},
 		},
 		"Empty b": {
-			a: EdgeMetadatas{
-				"hostA|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+			a: report.EdgeMetadatas{
+				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:    true,
 					BytesEgress:  12,
 					BytesIngress: 0,
 				},
 			},
-			b: EdgeMetadatas{},
-			want: EdgeMetadatas{
-				"hostA|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+			b: report.EdgeMetadatas{},
+			want: report.EdgeMetadatas{
+				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:    true,
 					BytesEgress:  12,
 					BytesIngress: 0,
@@ -140,8 +141,8 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 			},
 		},
 		"Host merge": {
-			a: EdgeMetadatas{
-				"hostA|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+			a: report.EdgeMetadatas{
+				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      12,
 					BytesIngress:     0,
@@ -149,8 +150,8 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 					MaxConnCountTCP:  4,
 				},
 			},
-			b: EdgeMetadatas{
-				"hostQ|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+			b: report.EdgeMetadatas{
+				"hostQ|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      1,
 					BytesIngress:     2,
@@ -158,15 +159,15 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 					MaxConnCountTCP:  6,
 				},
 			},
-			want: EdgeMetadatas{
-				"hostA|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+			want: report.EdgeMetadatas{
+				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      12,
 					BytesIngress:     0,
 					WithConnCountTCP: true,
 					MaxConnCountTCP:  4,
 				},
-				"hostQ|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+				"hostQ|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      1,
 					BytesIngress:     2,
@@ -176,8 +177,8 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 			},
 		},
 		"Edge merge": {
-			a: EdgeMetadatas{
-				"hostA|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+			a: report.EdgeMetadatas{
+				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      12,
 					BytesIngress:     0,
@@ -185,8 +186,8 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 					MaxConnCountTCP:  7,
 				},
 			},
-			b: EdgeMetadatas{
-				"hostA|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+			b: report.EdgeMetadatas{
+				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      1,
 					BytesIngress:     2,
@@ -194,8 +195,8 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 					MaxConnCountTCP:  9,
 				},
 			},
-			want: EdgeMetadatas{
-				"hostA|:192.168.1.1:12345|:192.168.1.2:80": EdgeMetadata{
+			want: report.EdgeMetadatas{
+				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
 					WithBytes:        true,
 					BytesEgress:      13,
 					BytesIngress:     2,
@@ -216,19 +217,19 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 
 func TestMergeNodeMetadatas(t *testing.T) {
 	for name, c := range map[string]struct {
-		a, b, want NodeMetadatas
+		a, b, want report.NodeMetadatas
 	}{
 		"Empty a": {
-			a: NodeMetadatas{},
-			b: NodeMetadatas{
-				":192.168.1.1:12345": NodeMetadata{
+			a: report.NodeMetadatas{},
+			b: report.NodeMetadatas{
+				":192.168.1.1:12345": report.NodeMetadata{
 					"pid":    "23128",
 					"name":   "curl",
 					"domain": "node-a.local",
 				},
 			},
-			want: NodeMetadatas{
-				":192.168.1.1:12345": NodeMetadata{
+			want: report.NodeMetadatas{
+				":192.168.1.1:12345": report.NodeMetadata{
 					"pid":    "23128",
 					"name":   "curl",
 					"domain": "node-a.local",
@@ -236,16 +237,16 @@ func TestMergeNodeMetadatas(t *testing.T) {
 			},
 		},
 		"Empty b": {
-			a: NodeMetadatas{
-				":192.168.1.1:12345": NodeMetadata{
+			a: report.NodeMetadatas{
+				":192.168.1.1:12345": report.NodeMetadata{
 					"pid":    "23128",
 					"name":   "curl",
 					"domain": "node-a.local",
 				},
 			},
-			b: NodeMetadatas{},
-			want: NodeMetadatas{
-				":192.168.1.1:12345": NodeMetadata{
+			b: report.NodeMetadatas{},
+			want: report.NodeMetadatas{
+				":192.168.1.1:12345": report.NodeMetadata{
 					"pid":    "23128",
 					"name":   "curl",
 					"domain": "node-a.local",
@@ -253,27 +254,27 @@ func TestMergeNodeMetadatas(t *testing.T) {
 			},
 		},
 		"Simple merge": {
-			a: NodeMetadatas{
-				":192.168.1.1:12345": NodeMetadata{
+			a: report.NodeMetadatas{
+				":192.168.1.1:12345": report.NodeMetadata{
 					"pid":    "23128",
 					"name":   "curl",
 					"domain": "node-a.local",
 				},
 			},
-			b: NodeMetadatas{
-				":192.168.1.2:12345": NodeMetadata{
+			b: report.NodeMetadatas{
+				":192.168.1.2:12345": report.NodeMetadata{
 					"pid":    "42",
 					"name":   "curl",
 					"domain": "node-a.local",
 				},
 			},
-			want: NodeMetadatas{
-				":192.168.1.1:12345": NodeMetadata{
+			want: report.NodeMetadatas{
+				":192.168.1.1:12345": report.NodeMetadata{
 					"pid":    "23128",
 					"name":   "curl",
 					"domain": "node-a.local",
 				},
-				":192.168.1.2:12345": NodeMetadata{
+				":192.168.1.2:12345": report.NodeMetadata{
 					"pid":    "42",
 					"name":   "curl",
 					"domain": "node-a.local",
@@ -281,22 +282,22 @@ func TestMergeNodeMetadatas(t *testing.T) {
 			},
 		},
 		"Merge conflict": {
-			a: NodeMetadatas{
-				":192.168.1.1:12345": NodeMetadata{
+			a: report.NodeMetadatas{
+				":192.168.1.1:12345": report.NodeMetadata{
 					"pid":    "23128",
 					"name":   "curl",
 					"domain": "node-a.local",
 				},
 			},
-			b: NodeMetadatas{
-				":192.168.1.1:12345": NodeMetadata{ // <-- same ID
+			b: report.NodeMetadatas{
+				":192.168.1.1:12345": report.NodeMetadata{ // <-- same ID
 					"pid":    "0",
 					"name":   "curl",
 					"domain": "node-a.local",
 				},
 			},
-			want: NodeMetadatas{
-				":192.168.1.1:12345": NodeMetadata{
+			want: report.NodeMetadatas{
+				":192.168.1.1:12345": report.NodeMetadata{
 					"pid":    "23128",
 					"name":   "curl",
 					"domain": "node-a.local",
