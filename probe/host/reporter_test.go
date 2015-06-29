@@ -4,8 +4,8 @@ import (
 	"net"
 	"reflect"
 	"runtime"
-	"syscall"
 	"testing"
+	"time"
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -13,13 +13,10 @@ import (
 )
 
 const (
-	procLoad   = "0.59 0.36 0.29 1/200 12187"
-	procUptime = "1004143.23 1263220.30"
-	release    = "release"
-	version    = "version"
-
+	release  = "release"
+	version  = "version"
 	network  = "192.168.0.0/16"
-	hostid   = "hostid"
+	hostID   = "hostid"
 	now      = "now"
 	hostname = "hostname"
 	load     = "0.59 0.36 0.29"
@@ -27,48 +24,29 @@ const (
 	kernel   = "release version"
 )
 
-func string2c(s string) [65]int8 {
-	var result [65]int8
-	for i, c := range s {
-		result[i] = int8(c)
-	}
-	return result
-}
-
 func TestReporter(t *testing.T) {
-	oldInterfaceAddrs, oldNow, oldReadFile, oldUname := host.InterfaceAddrs, host.Now, host.ReadFile, host.Uname
+	var (
+		oldGetKernelVersion = host.GetKernelVersion
+		oldGetLoad          = host.GetLoad
+		oldGetUptime        = host.GetUptime
+		oldInterfaceAddrs   = host.InterfaceAddrs
+		oldNow              = host.Now
+	)
 	defer func() {
-		host.InterfaceAddrs, host.Now, host.ReadFile, host.Uname = oldInterfaceAddrs, oldNow, oldReadFile, oldUname
+		host.GetKernelVersion = oldGetKernelVersion
+		host.GetLoad = oldGetLoad
+		host.GetUptime = oldGetUptime
+		host.InterfaceAddrs = oldInterfaceAddrs
+		host.Now = oldNow
 	}()
-
-	host.InterfaceAddrs = func() ([]net.Addr, error) {
-		_, ipnet, _ := net.ParseCIDR(network)
-		return []net.Addr{ipnet}, nil
-	}
-
+	host.GetKernelVersion = func() (string, error) { return release + " " + version, nil }
+	host.GetLoad = func() string { return load }
+	host.GetUptime = func() (time.Duration, error) { return time.ParseDuration(uptime) }
 	host.Now = func() string { return now }
+	host.InterfaceAddrs = func() ([]net.Addr, error) { _, ipnet, _ := net.ParseCIDR(network); return []net.Addr{ipnet}, nil }
 
-	host.ReadFile = func(filename string) ([]byte, error) {
-		switch filename {
-		case host.ProcUptime:
-			return []byte(procUptime), nil
-		case host.ProcLoad:
-			return []byte(procLoad), nil
-		default:
-			panic(filename)
-		}
-	}
-
-	host.Uname = func(uts *syscall.Utsname) error {
-		uts.Release = string2c(release)
-		uts.Version = string2c(version)
-		return nil
-	}
-
-	r := host.NewReporter(hostid, hostname)
-	have, _ := r.Report()
 	want := report.MakeReport()
-	want.Host.NodeMetadatas[report.MakeHostNodeID(hostid)] = report.NodeMetadata{
+	want.Host.NodeMetadatas[report.MakeHostNodeID(hostID)] = report.NodeMetadata{
 		host.Timestamp:     now,
 		host.HostName:      hostname,
 		host.LocalNetworks: network,
@@ -77,7 +55,8 @@ func TestReporter(t *testing.T) {
 		host.Uptime:        uptime,
 		host.KernelVersion: kernel,
 	}
-
+	r := host.NewReporter(hostID, hostname)
+	have, _ := r.Report()
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
 	}

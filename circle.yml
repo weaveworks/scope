@@ -37,7 +37,8 @@ test:
     - cd $SRCDIR; ./bin/lint .
     - cd $SRCDIR; make client-test
     - cd $SRCDIR; make static
-    - cd $SRCDIR; make
+    - cd $SRCDIR; rm -f app/app probe/probe; GOOS=darwin make
+    - cd $SRCDIR; rm -f app/app probe/probe; GOOS=linux make
     - cd $SRCDIR; ./bin/test -slow
     - cd $SRCDIR/experimental; make
   post:
