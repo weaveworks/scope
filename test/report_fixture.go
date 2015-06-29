@@ -12,11 +12,18 @@ var (
 	ServerHostID  = "server.hostname.com"
 	UnknownHostID = ""
 
-	ClientIP        = "10.10.10.20"
-	ServerIP        = "192.168.1.1"
-	ClientPort54001 = "54001"
-	ClientPort54002 = "54002"
-	ServerPort      = "80"
+	ClientIP         = "10.10.10.20"
+	ServerIP         = "192.168.1.1"
+	ClientPort54001  = "54001"
+	ClientPort54010  = "54010"
+	ClientPort54002  = "54002"
+	ClientPort54020  = "54020"
+	ClientPort12345  = "12345"
+	ServerPort       = "80"
+	UnknownClient1IP = "10.10.10.10"
+	UnknownClient2IP = "10.10.10.10"
+	UnknownClient3IP = "10.10.10.11"
+	RandomClientIP   = "51.52.53.54"
 
 	ClientHostName = ClientHostID
 	ServerHostName = ServerHostID
@@ -32,10 +39,10 @@ var (
 	Client54001NodeID    = report.MakeEndpointNodeID(ClientHostID, ClientIP, ClientPort54001) // curl (1)
 	Client54002NodeID    = report.MakeEndpointNodeID(ClientHostID, ClientIP, ClientPort54002) // curl (2)
 	Server80NodeID       = report.MakeEndpointNodeID(ServerHostID, ServerIP, ServerPort)      // apache
-	UnknownClient1NodeID = report.MakeEndpointNodeID(ServerHostID, "10.10.10.10", "54010")    // we want to ensure two unknown clients, connnected
-	UnknownClient2NodeID = report.MakeEndpointNodeID(ServerHostID, "10.10.10.10", "54020")    // to the same server, are deduped.
-	UnknownClient3NodeID = report.MakeEndpointNodeID(ServerHostID, "10.10.10.11", "54020")    // Check this one isn't deduped
-	RandomClientNodeID   = report.MakeEndpointNodeID(ServerHostID, "51.52.53.54", "12345")    // this should become an internet node
+	UnknownClient1NodeID = report.MakeEndpointNodeID(ServerHostID, UnknownClient1IP, "54010") // we want to ensure two unknown clients, connnected
+	UnknownClient2NodeID = report.MakeEndpointNodeID(ServerHostID, UnknownClient2IP, "54020") // to the same server, are deduped.
+	UnknownClient3NodeID = report.MakeEndpointNodeID(ServerHostID, UnknownClient3IP, "54020") // Check this one isn't deduped
+	RandomClientNodeID   = report.MakeEndpointNodeID(ServerHostID, RandomClientIP, "12345")   // this should become an internet node
 
 	ClientProcess1NodeID      = report.MakeProcessNodeID(ClientHostID, Client1PID)
 	ClientProcess2NodeID      = report.MakeProcessNodeID(ClientHostID, Client2PID)

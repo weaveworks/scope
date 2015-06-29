@@ -79,6 +79,7 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	// multiple origins. The ultimate goal here is to generate tables to view
 	// in the UI, so we skip the intermediate representations, but we could
 	// add them later.
+	connections := []Row{}
 outer:
 	for _, id := range n.Origins {
 		if table, ok := OriginTable(r, id); ok {
@@ -89,7 +90,12 @@ outer:
 				}
 			}
 			tables = append(tables, table)
+		} else if nmd, ok := r.Endpoint.NodeMetadatas[id]; ok {
+			connections = append(connections, connectionDetailsRows(r.Endpoint, id, nmd)...)
 		}
+	}
+	if len(connections) > 0 {
+		tables = append(tables, connectionDetailsTable(connections))
 	}
 
 	// Sort tables by rank
@@ -107,9 +113,6 @@ outer:
 // OriginTable produces a table (to be consumed directly by the UI) based on
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
 func OriginTable(r report.Report, originID string) (Table, bool) {
-	if nmd, ok := r.Endpoint.NodeMetadatas[originID]; ok {
-		return endpointOriginTable(nmd)
-	}
 	if nmd, ok := r.Address.NodeMetadatas[originID]; ok {
 		return addressOriginTable(nmd)
 	}
@@ -128,22 +131,29 @@ func OriginTable(r report.Report, originID string) (Table, bool) {
 	return Table{}, false
 }
 
-func endpointOriginTable(nmd report.NodeMetadata) (Table, bool) {
+func connectionDetailsRows(endpointTopology report.Topology, originID string, nmd report.NodeMetadata) []Row {
 	rows := []Row{}
-	for _, tuple := range []struct{ key, human string }{
-		{"addr", "Endpoint"},
-		{"port", "Port"},
-	} {
-		if val, ok := nmd[tuple.key]; ok {
-			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
+	local := fmt.Sprintf("%s:%s", nmd["addr"], nmd["port"])
+	adjacencies := endpointTopology.Adjacency[report.MakeAdjacencyID(originID)]
+	sort.Strings(adjacencies)
+	for _, adj := range adjacencies {
+		if _, address, port, ok := report.ParseEndpointNodeID(adj); ok {
+			rows = append(rows, Row{
+				Key:        local,
+				ValueMajor: fmt.Sprintf("%s:%s", address, port),
+			})
 		}
 	}
+	return rows
+}
+
+func connectionDetailsTable(connectionRows []Row) Table {
 	return Table{
-		Title:   "Origin Endpoint",
+		Title:   "Connection Details",
 		Numeric: false,
-		Rows:    rows,
+		Rows:    append([]Row{{Key: "Local", ValueMajor: "Remote"}}, connectionRows...),
 		Rank:    endpointRank,
-	}, len(rows) > 0
+	}
 }
 
 func addressOriginTable(nmd report.NodeMetadata) (Table, bool) {
