@@ -9,7 +9,7 @@ func init() {
 	spew.Config.SortKeys = true // :\
 }
 
-// Diff diff diff
+// Diff diffs two arbitrary data structures, giving human-readable output.
 func Diff(want, have interface{}) string {
 	text, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
 		A:        difflib.SplitLines(spew.Sdump(want)),

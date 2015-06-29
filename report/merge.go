@@ -1,8 +1,7 @@
 package report
 
-// Merge() functions for all topology datatypes.
-// The general semantics are that the receiver is modified, and what's merged
-// in isn't.
+// Merge functions for all topology datatypes. The general semantics are that
+// the receiver is modified, and what's merged in isn't.
 
 // Merge merges another Report into the receiver.
 func (r *Report) Merge(other Report) {
@@ -38,9 +37,9 @@ func (m *NodeMetadatas) Merge(other NodeMetadatas) {
 	}
 }
 
-// Merge merges another EdgeMetadatas into the receiver.
-// If other is from another probe this is the union of both metadatas. Keys
-// present in both are summed.
+// Merge merges another EdgeMetadatas into the receiver. If other is from
+// another probe this is the union of both metadatas. Keys present in both are
+// summed.
 func (e *EdgeMetadatas) Merge(other EdgeMetadatas) {
 	for id, edgemeta := range other {
 		local := (*e)[id]
@@ -65,8 +64,8 @@ func (m *EdgeMetadata) Merge(other EdgeMetadata) {
 	}
 }
 
-// Flatten sums two EdgeMetadatas, their 'Window's should be the same size. The
-// two EdgeMetadatas should represent different edges at the same time.
+// Flatten sums two EdgeMetadatas. Their windows should be the same duration;
+// they should represent different edges at the same time.
 func (m *EdgeMetadata) Flatten(other EdgeMetadata) {
 	if other.WithBytes {
 		m.WithBytes = true
