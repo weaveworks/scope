@@ -14,7 +14,6 @@ import (
 
 const (
 	// WeavePeerName is the key for the peer name, typically a MAC address.
-	// It's also the unscoped
 	WeavePeerName = "weave_peer_name"
 
 	// WeavePeerNickName is the key for the peer nickname, typically a
