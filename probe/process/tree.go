@@ -14,9 +14,9 @@ type tree struct {
 }
 
 // NewTree returns a new Tree that can be polled.
-func NewTree(procRoot string) (Tree, error) {
+func NewTree(walker Walker) (Tree, error) {
 	pt := tree{processes: map[int]*Process{}}
-	err := Walk(procRoot, func(p *Process) {
+	err := walker.Walk(func(p *Process) {
 		pt.processes[p.PID] = p
 	})
 

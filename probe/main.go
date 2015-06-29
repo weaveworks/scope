@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"runtime"
@@ -57,7 +58,10 @@ func main() {
 			log.Printf("exposing Prometheus endpoint at %s%s", *httpListen, *prometheusEndpoint)
 			http.Handle(*prometheusEndpoint, makePrometheusHandler())
 		}
-		go func(err error) { log.Print(err) }(http.ListenAndServe(*httpListen, nil))
+		go func() {
+			err := http.ListenAndServe(*httpListen, nil)
+			log.Print(err)
+		}()
 	}
 
 	if *spyProcs && os.Getegid() != 0 {
@@ -76,7 +80,8 @@ func main() {
 	)
 
 	var (
-		weaveTagger *tag.WeaveTagger
+		weaveTagger  *tag.WeaveTagger
+		processCache *process.CachingWalker
 	)
 
 	taggers := []tag.Tagger{
@@ -89,19 +94,25 @@ func main() {
 		endpoint.NewReporter(hostID, hostName, *spyProcs),
 	}
 
-	if *dockerEnabled && runtime.GOOS == linux {
-		if err = report.AddLocalBridge(*dockerBridge); err != nil {
-			log.Fatalf("failed to get docker bridge address: %v", err)
-		}
+	// TODO provide an alternate implementation for Darwin.
+	if runtime.GOOS == linux {
+		processCache = process.NewCachingWalker(process.NewWalker(*procRoot))
+		reporters = append(reporters, process.NewReporter(processCache, hostID))
 
-		dockerRegistry, err := docker.NewRegistry(*dockerInterval)
-		if err != nil {
-			log.Fatalf("failed to start docker registry: %v", err)
-		}
-		defer dockerRegistry.Stop()
+		if *dockerEnabled {
+			if err = report.AddLocalBridge(*dockerBridge); err != nil {
+				log.Fatalf("failed to get docker bridge address: %v", err)
+			}
 
-		taggers = append(taggers, docker.NewTagger(dockerRegistry, *procRoot))
-		reporters = append(reporters, docker.NewReporter(dockerRegistry, hostID))
+			dockerRegistry, err := docker.NewRegistry(*dockerInterval)
+			if err != nil {
+				log.Fatalf("failed to start docker registry: %v", err)
+			}
+			defer dockerRegistry.Stop()
+
+			taggers = append(taggers, docker.NewTagger(dockerRegistry, processCache))
+			reporters = append(reporters, docker.NewReporter(dockerRegistry, hostID))
+		}
 	}
 
 	if *weaveRouterAddr != "" {
@@ -111,11 +122,6 @@ func main() {
 			log.Fatalf("failed to start Weave tagger: %v", err)
 		}
 		taggers = append(taggers, weaveTagger)
-	}
-
-	// TODO provide an alternate implementation for Darwin.
-	if runtime.GOOS == linux {
-		reporters = append(reporters, process.NewReporter(*procRoot, hostID))
 	}
 
 	log.Printf("listening on %s", *listen)
@@ -137,6 +143,12 @@ func main() {
 				r = report.MakeReport()
 
 			case <-spyTick:
+				if processCache != nil {
+					if err := processCache.Update(); err != nil {
+						log.Printf("error reading processes: %v", err)
+					}
+				}
+
 				for _, reporter := range reporters {
 					newReport, err := reporter.Report()
 					if err != nil {
