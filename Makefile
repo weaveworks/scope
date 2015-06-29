@@ -4,8 +4,8 @@
 SUDO=sudo
 DOCKER_SQUASH=$(shell which docker-squash)
 DOCKERHUB_USER=weaveworks
-APP_EXE=app/app
-PROBE_EXE=probe/probe
+APP_EXE=app/scope-app
+PROBE_EXE=probe/scope-probe
 FIXPROBE_EXE=experimental/fixprobe/fixprobe
 SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 SCOPE_EXPORT=scope.tar
