@@ -1,11 +1,8 @@
 package host
 
 import (
-	"fmt"
-	"io/ioutil"
 	"net"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
@@ -34,7 +31,6 @@ const (
 var (
 	InterfaceAddrs = net.InterfaceAddrs
 	Now            = func() string { return time.Now().UTC().Format(time.RFC3339Nano) }
-	ReadFile       = ioutil.ReadFile
 )
 
 type reporter struct {
@@ -49,27 +45,6 @@ func NewReporter(hostID, hostName string) tag.Reporter {
 		hostID:   hostID,
 		hostName: hostName,
 	}
-}
-
-func getUptime() (time.Duration, error) {
-	var result time.Duration
-
-	buf, err := ReadFile(ProcUptime)
-	if err != nil {
-		return result, err
-	}
-
-	fields := strings.Fields(string(buf))
-	if len(fields) != 2 {
-		return result, fmt.Errorf("invalid format: %s", string(buf))
-	}
-
-	uptime, err := strconv.ParseFloat(fields[0], 64)
-	if err != nil {
-		return result, err
-	}
-
-	return time.Duration(uptime) * time.Second, nil
 }
 
 func (r *reporter) Report() (report.Report, error) {
@@ -89,12 +64,12 @@ func (r *reporter) Report() (report.Report, error) {
 		}
 	}
 
-	uptime, err := getUptime()
+	uptime, err := GetUptime()
 	if err != nil {
 		return rep, err
 	}
 
-	kernel, err := getKernelVersion()
+	kernel, err := GetKernelVersion()
 	if err != nil {
 		return rep, err
 	}
@@ -104,7 +79,7 @@ func (r *reporter) Report() (report.Report, error) {
 		HostName:      r.hostName,
 		LocalNetworks: strings.Join(localCIDRs, " "),
 		OS:            runtime.GOOS,
-		Load:          getLoad(),
+		Load:          GetLoad(),
 		KernelVersion: kernel,
 		Uptime:        uptime.String(),
 	}
