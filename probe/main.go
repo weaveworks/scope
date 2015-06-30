@@ -75,24 +75,12 @@ func main() {
 	defer publisher.Close()
 
 	var (
-		hostName = hostname()
-		hostID   = hostName // TODO: we should sanitize the hostname
-	)
-
-	var (
-		weaveTagger  *overlay.WeaveTagger
+		hostName     = hostname()
+		hostID       = hostName // TODO: we should sanitize the hostname
+		taggers      = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
+		reporters    = []Reporter{host.NewReporter(hostID, hostName), endpoint.NewReporter(hostID, hostName, *spyProcs)}
 		processCache *process.CachingWalker
 	)
-
-	taggers := []Tagger{
-		newTopologyTagger(),
-		host.NewTagger(hostID),
-	}
-
-	reporters := []Reporter{
-		host.NewReporter(hostID, hostName),
-		endpoint.NewReporter(hostID, hostName, *spyProcs),
-	}
 
 	// TODO provide an alternate implementation for Darwin.
 	if runtime.GOOS == linux {
@@ -116,12 +104,12 @@ func main() {
 	}
 
 	if *weaveRouterAddr != "" {
-		var err error
-		weaveTagger, err = overlay.NewWeaveTagger(*weaveRouterAddr)
+		weave, err := overlay.NewWeave(*weaveRouterAddr)
 		if err != nil {
 			log.Fatalf("failed to start Weave tagger: %v", err)
 		}
-		taggers = append(taggers, weaveTagger)
+		taggers = append(taggers, weave)
+		reporters = append(reporters, weave)
 	}
 
 	log.Printf("listening on %s", *listen)
@@ -155,10 +143,6 @@ func main() {
 						log.Printf("error generating report: %v", err)
 					}
 					r.Merge(newReport)
-				}
-
-				if weaveTagger != nil {
-					r.Overlay.Merge(weaveTagger.OverlayTopology())
 				}
 
 				r = Apply(r, taggers)

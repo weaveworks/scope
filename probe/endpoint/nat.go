@@ -149,7 +149,6 @@ func applyNAT(rpt report.Report, scope string) error {
 func conntrackModulePresent() bool {
 	f, err := os.Open(modules)
 	if err != nil {
-		//log.Printf("conntrack error: %v", err) // /proc doesn't exist on Darwin
 		return false
 	}
 	defer f.Close()
