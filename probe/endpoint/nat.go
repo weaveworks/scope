@@ -149,7 +149,6 @@ func applyNAT(rpt report.Report, scope string) error {
 func conntrackModulePresent() bool {
 	f, err := os.Open(modules)
 	if err != nil {
-		log.Printf("conntrack error: %v", err)
 		return false
 	}
 	defer f.Close()

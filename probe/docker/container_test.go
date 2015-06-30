@@ -53,9 +53,8 @@ func TestContainer(t *testing.T) {
 	// Send some stats to the docker container
 	stats := &client.Stats{}
 	stats.MemoryStats.Usage = 12345
-	err = json.NewEncoder(writer).Encode(&stats)
-	if err != nil {
-		t.Errorf("%v", err)
+	if err = json.NewEncoder(writer).Encode(&stats); err != nil {
+		t.Error(err)
 	}
 	runtime.Gosched() // wait for StartGatheringStats goroutine to receive the stats
 
