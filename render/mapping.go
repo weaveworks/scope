@@ -250,6 +250,33 @@ func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
 	return newDerivedNode(id, n), true
 }
 
+// MapContainerImage2Name maps container images RenderableNodes to
+// RenderableNodes for each container image name.
+//
+// This mapper is unlike the other foo2bar mappers as the intention
+// is not to join the information with another topology.  Therefore
+// it outputs a properly-formed node with labels etc.
+func MapContainerImage2Name(n RenderableNode) (RenderableNode, bool) {
+	if n.Pseudo {
+		return n, true
+	}
+
+	name, ok := n.NodeMetadata[docker.ImageName]
+	if !ok {
+		return RenderableNode{}, false
+	}
+
+	parts := strings.SplitN(name, ":", 2)
+	if len(parts) == 2 {
+		name = parts[0]
+	}
+
+	node := newDerivedNode(name, n)
+	node.LabelMajor = name
+	node.Rank = name
+	return node, true
+}
+
 // MapAddress2Host maps address RenderableNodes to host RenderableNodes.
 //
 // Otherthan pseudo nodes, we can assume all nodes have a HostID

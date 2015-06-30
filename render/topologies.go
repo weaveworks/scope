@@ -48,17 +48,20 @@ var ContainerRenderer = MakeReduce(
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
-var ContainerImageRenderer = MakeReduce(
-	Map{
-		MapFunc:  MapContainer2ContainerImage,
-		Renderer: ContainerRenderer,
-	},
-	LeafMap{
-		Selector: report.SelectContainerImage,
-		Mapper:   MapContainerImageIdentity,
-		Pseudo:   PanicPseudoNode,
-	},
-)
+var ContainerImageRenderer = Map{
+	MapFunc: MapContainerImage2Name,
+	Renderer: MakeReduce(
+		Map{
+			MapFunc:  MapContainer2ContainerImage,
+			Renderer: ContainerRenderer,
+		},
+		LeafMap{
+			Selector: report.SelectContainerImage,
+			Mapper:   MapContainerImageIdentity,
+			Pseudo:   PanicPseudoNode,
+		},
+	),
+}
 
 // AddressRenderer is a Renderer which produces a renderable address
 // graph from the address topology.

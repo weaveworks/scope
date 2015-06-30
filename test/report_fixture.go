@@ -51,6 +51,8 @@ var (
 	ServerContainerImageID     = "imageid456"
 	ClientContainerImageNodeID = report.MakeContainerNodeID(ClientHostID, ClientContainerImageID)
 	ServerContainerImageNodeID = report.MakeContainerNodeID(ServerHostID, ServerContainerImageID)
+	ClientContainerImageName   = "image/client"
+	ServerContainerImageName   = "image/server"
 
 	ClientAddressNodeID   = report.MakeAddressNodeID(ClientHostID, "10.10.10.20")
 	ServerAddressNodeID   = report.MakeAddressNodeID(ServerHostID, "192.168.1.1")
@@ -178,12 +180,12 @@ var (
 			NodeMetadatas: report.NodeMetadatas{
 				ClientContainerImageNodeID: report.NodeMetadata{
 					docker.ImageID:    ClientContainerImageID,
-					docker.ImageName:  "client_image",
+					docker.ImageName:  ClientContainerImageName,
 					report.HostNodeID: ClientHostNodeID,
 				},
 				ServerContainerImageNodeID: report.NodeMetadata{
 					docker.ImageID:    ServerContainerImageID,
-					docker.ImageName:  "server_image",
+					docker.ImageName:  ServerContainerImageName,
 					report.HostNodeID: ServerHostNodeID,
 				},
 			},

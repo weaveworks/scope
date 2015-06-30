@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"testing"
 
@@ -13,6 +14,41 @@ import (
 	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/test"
 )
+
+func TestAll(t *testing.T) {
+	ts := httptest.NewServer(Router(StaticReport{}))
+	defer ts.Close()
+
+	body := getRawJSON(t, ts, "/api/topology")
+	var topologies []APITopologyDesc
+	if err := json.Unmarshal(body, &topologies); err != nil {
+		t.Fatalf("JSON parse error: %s", err)
+	}
+
+	getTopology := func(topologyURL string) {
+		body := getRawJSON(t, ts, topologyURL)
+		var topology APITopology
+		if err := json.Unmarshal(body, &topology); err != nil {
+			t.Fatalf("JSON parse error: %s", err)
+		}
+
+		for _, node := range topology.Nodes {
+			body := getRawJSON(t, ts, fmt.Sprintf("%s/%s", topologyURL, url.QueryEscape(node.ID)))
+			var node APINode
+			if err := json.Unmarshal(body, &node); err != nil {
+				t.Fatalf("JSON parse error: %s", err)
+			}
+		}
+	}
+
+	for _, topology := range topologies {
+		getTopology(topology.URL)
+
+		for _, subTopology := range topology.SubTopologies {
+			getTopology(subTopology.URL)
+		}
+	}
+}
 
 func TestAPITopologyApplications(t *testing.T) {
 	ts := httptest.NewServer(Router(StaticReport{}))
