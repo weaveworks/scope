@@ -3,7 +3,6 @@ package process
 import (
 	"strconv"
 
-	"github.com/weaveworks/scope/probe/tag"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -16,22 +15,22 @@ const (
 	Threads = "threads"
 )
 
-// Reporter generate Reports containing the Process topology
-type reporter struct {
+// Reporter generates Reports containing the Process topology.
+type Reporter struct {
 	scope  string
 	walker Walker
 }
 
-// NewReporter makes a new Reporter
-func NewReporter(walker Walker, scope string) tag.Reporter {
-	return &reporter{
+// NewReporter makes a new Reporter.
+func NewReporter(walker Walker, scope string) *Reporter {
+	return &Reporter{
 		scope:  scope,
 		walker: walker,
 	}
 }
 
-// Report generates a Report containing the Process topology
-func (r *reporter) Report() (report.Report, error) {
+// Report implements Reporter.
+func (r *Reporter) Report() (report.Report, error) {
 	result := report.MakeReport()
 	processes, err := r.processTopology()
 	if err != nil {
@@ -41,7 +40,7 @@ func (r *reporter) Report() (report.Report, error) {
 	return result, nil
 }
 
-func (r *reporter) processTopology() (report.Topology, error) {
+func (r *Reporter) processTopology() (report.Topology, error) {
 	t := report.NewTopology()
 	err := r.walker.Walk(func(p *Process) {
 		pidstr := strconv.Itoa(p.PID)

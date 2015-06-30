@@ -1,4 +1,4 @@
-package tag
+package overlay
 
 import (
 	"encoding/json"

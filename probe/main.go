@@ -16,8 +16,8 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/probe/tag"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
 )
@@ -80,16 +80,16 @@ func main() {
 	)
 
 	var (
-		weaveTagger  *tag.WeaveTagger
+		weaveTagger  *overlay.WeaveTagger
 		processCache *process.CachingWalker
 	)
 
-	taggers := []tag.Tagger{
-		tag.NewTopologyTagger(),
-		tag.NewOriginHostTagger(hostID),
+	taggers := []Tagger{
+		newTopologyTagger(),
+		host.NewTagger(hostID),
 	}
 
-	reporters := []tag.Reporter{
+	reporters := []Reporter{
 		host.NewReporter(hostID, hostName),
 		endpoint.NewReporter(hostID, hostName, *spyProcs),
 	}
@@ -117,7 +117,7 @@ func main() {
 
 	if *weaveRouterAddr != "" {
 		var err error
-		weaveTagger, err = tag.NewWeaveTagger(*weaveRouterAddr)
+		weaveTagger, err = overlay.NewWeaveTagger(*weaveRouterAddr)
 		if err != nil {
 			log.Fatalf("failed to start Weave tagger: %v", err)
 		}
@@ -161,7 +161,7 @@ func main() {
 					r.Overlay.Merge(weaveTagger.OverlayTopology())
 				}
 
-				r = tag.Apply(r, taggers)
+				r = Apply(r, taggers)
 
 			case <-quit:
 				return

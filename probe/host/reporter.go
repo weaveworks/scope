@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/weaveworks/scope/probe/tag"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -33,21 +32,23 @@ var (
 	Now            = func() string { return time.Now().UTC().Format(time.RFC3339Nano) }
 )
 
-type reporter struct {
+// Reporter generates Reports containing the host topology.
+type Reporter struct {
 	hostID   string
 	hostName string
 }
 
 // NewReporter returns a Reporter which produces a report containing host
 // topology for this host.
-func NewReporter(hostID, hostName string) tag.Reporter {
-	return &reporter{
+func NewReporter(hostID, hostName string) *Reporter {
+	return &Reporter{
 		hostID:   hostID,
 		hostName: hostName,
 	}
 }
 
-func (r *reporter) Report() (report.Report, error) {
+// Report implements Reporter.
+func (r *Reporter) Report() (report.Report, error) {
 	var (
 		rep        = report.MakeReport()
 		localCIDRs []string

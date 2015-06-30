@@ -8,11 +8,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/weaveworks/procspy"
-	"github.com/weaveworks/scope/probe/tag"
 	"github.com/weaveworks/scope/report"
 )
 
-type reporter struct {
+// Reporter generates Reports containing the Endpoint topology.
+type Reporter struct {
 	hostID           string
 	hostName         string
 	includeProcesses bool
@@ -33,10 +33,11 @@ var SpyDuration = prometheus.NewSummaryVec(
 
 // NewReporter creates a new Reporter that invokes procspy.Connections to
 // generate a report.Report that contains every discovered (spied) connection
-// on the host machine, at the granularity of host and port. It optionally
-// enriches that topology with process (PID) information.
-func NewReporter(hostID, hostName string, includeProcesses bool) tag.Reporter {
-	return &reporter{
+// on the host machine, at the granularity of host and port. That information
+// is stored in the Endpoint topology. It optionally enriches that topology
+// with process (PID) information.
+func NewReporter(hostID, hostName string, includeProcesses bool) *Reporter {
+	return &Reporter{
 		hostID:           hostID,
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
@@ -44,62 +45,63 @@ func NewReporter(hostID, hostName string, includeProcesses bool) tag.Reporter {
 	}
 }
 
-func (rep *reporter) Report() (report.Report, error) {
+// Report implements Reporter.
+func (r *Reporter) Report() (report.Report, error) {
 	defer func(begin time.Time) {
 		SpyDuration.WithLabelValues().Observe(float64(time.Since(begin)))
 	}(time.Now())
 
-	r := report.MakeReport()
-	conns, err := procspy.Connections(rep.includeProcesses)
+	rpt := report.MakeReport()
+	conns, err := procspy.Connections(r.includeProcesses)
 	if err != nil {
-		return r, err
+		return rpt, err
 	}
 
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
-		rep.addConnection(&r, conn)
+		r.addConnection(&rpt, conn)
 	}
 
-	if rep.includeNAT {
-		err = applyNAT(r, rep.hostID)
+	if r.includeNAT {
+		err = applyNAT(rpt, r.hostID)
 	}
 
-	return r, err
+	return rpt, err
 }
 
-func (rep *reporter) addConnection(r *report.Report, c *procspy.Connection) {
+func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 	var (
-		scopedLocal  = report.MakeAddressNodeID(rep.hostID, c.LocalAddress.String())
-		scopedRemote = report.MakeAddressNodeID(rep.hostID, c.RemoteAddress.String())
+		scopedLocal  = report.MakeAddressNodeID(r.hostID, c.LocalAddress.String())
+		scopedRemote = report.MakeAddressNodeID(r.hostID, c.RemoteAddress.String())
 		key          = report.MakeAdjacencyID(scopedLocal)
 		edgeKey      = report.MakeEdgeID(scopedLocal, scopedRemote)
 	)
 
-	r.Address.Adjacency[key] = r.Address.Adjacency[key].Add(scopedRemote)
+	rpt.Address.Adjacency[key] = rpt.Address.Adjacency[key].Add(scopedRemote)
 
-	if _, ok := r.Address.NodeMetadatas[scopedLocal]; !ok {
-		r.Address.NodeMetadatas[scopedLocal] = report.NodeMetadata{
-			"name": rep.hostName,
+	if _, ok := rpt.Address.NodeMetadatas[scopedLocal]; !ok {
+		rpt.Address.NodeMetadatas[scopedLocal] = report.NodeMetadata{
+			"name": r.hostName,
 			"addr": c.LocalAddress.String(),
 		}
 	}
 
 	// Count the TCP connection.
-	edgeMeta := r.Address.EdgeMetadatas[edgeKey]
+	edgeMeta := rpt.Address.EdgeMetadatas[edgeKey]
 	edgeMeta.WithConnCountTCP = true
 	edgeMeta.MaxConnCountTCP++
-	r.Address.EdgeMetadatas[edgeKey] = edgeMeta
+	rpt.Address.EdgeMetadatas[edgeKey] = edgeMeta
 
 	if c.Proc.PID > 0 {
 		var (
-			scopedLocal  = report.MakeEndpointNodeID(rep.hostID, c.LocalAddress.String(), strconv.Itoa(int(c.LocalPort)))
-			scopedRemote = report.MakeEndpointNodeID(rep.hostID, c.RemoteAddress.String(), strconv.Itoa(int(c.RemotePort)))
+			scopedLocal  = report.MakeEndpointNodeID(r.hostID, c.LocalAddress.String(), strconv.Itoa(int(c.LocalPort)))
+			scopedRemote = report.MakeEndpointNodeID(r.hostID, c.RemoteAddress.String(), strconv.Itoa(int(c.RemotePort)))
 			key          = report.MakeAdjacencyID(scopedLocal)
 			edgeKey      = report.MakeEdgeID(scopedLocal, scopedRemote)
 		)
 
-		r.Endpoint.Adjacency[key] = r.Endpoint.Adjacency[key].Add(scopedRemote)
+		rpt.Endpoint.Adjacency[key] = rpt.Endpoint.Adjacency[key].Add(scopedRemote)
 
-		if _, ok := r.Endpoint.NodeMetadatas[scopedLocal]; !ok {
+		if _, ok := rpt.Endpoint.NodeMetadatas[scopedLocal]; !ok {
 			// First hit establishes NodeMetadata for scoped local address + port
 			md := report.NodeMetadata{
 				"addr": c.LocalAddress.String(),
@@ -107,12 +109,12 @@ func (rep *reporter) addConnection(r *report.Report, c *procspy.Connection) {
 				"pid":  fmt.Sprintf("%d", c.Proc.PID),
 			}
 
-			r.Endpoint.NodeMetadatas[scopedLocal] = md
+			rpt.Endpoint.NodeMetadatas[scopedLocal] = md
 		}
 		// Count the TCP connection.
-		edgeMeta := r.Endpoint.EdgeMetadatas[edgeKey]
+		edgeMeta := rpt.Endpoint.EdgeMetadatas[edgeKey]
 		edgeMeta.WithConnCountTCP = true
 		edgeMeta.MaxConnCountTCP++
-		r.Endpoint.EdgeMetadatas[edgeKey] = edgeMeta
+		rpt.Endpoint.EdgeMetadatas[edgeKey] = edgeMeta
 	}
 }

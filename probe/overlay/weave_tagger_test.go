@@ -1,4 +1,4 @@
-package tag_test
+package overlay_test
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/weaveworks/scope/probe/tag"
+	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -15,7 +15,7 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(mockWeaveRouter))
 	defer s.Close()
 
-	w, err := tag.NewWeaveTagger(s.URL)
+	w, err := overlay.NewWeaveTagger(s.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,8 +25,8 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
 			report.MakeOverlayNodeID(mockWeavePeerName): {
-				tag.WeavePeerName:     mockWeavePeerName,
-				tag.WeavePeerNickName: mockWeavePeerNickName,
+				overlay.WeavePeerName:     mockWeavePeerName,
+				overlay.WeavePeerNickName: mockWeavePeerNickName,
 			},
 		},
 	}), w.OverlayTopology(); !reflect.DeepEqual(want, have) {

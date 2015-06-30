@@ -1,14 +1,15 @@
-package tag_test
+package host_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/weaveworks/scope/probe/tag"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test"
 )
 
-func TestOriginHostTagger(t *testing.T) {
+func TestTagger(t *testing.T) {
 	var (
 		hostID         = "foo"
 		endpointNodeID = report.MakeEndpointNodeID(hostID, "1.2.3.4", "56789") // hostID ignored
@@ -18,9 +19,9 @@ func TestOriginHostTagger(t *testing.T) {
 	r := report.MakeReport()
 	r.Endpoint.NodeMetadatas[endpointNodeID] = nodeMetadata
 	want := nodeMetadata.Merge(report.NodeMetadata{report.HostNodeID: report.MakeHostNodeID(hostID)})
-	rpt, _ := tag.NewOriginHostTagger(hostID).Tag(r)
+	rpt, _ := host.NewTagger(hostID).Tag(r)
 	have := rpt.Endpoint.NodeMetadatas[endpointNodeID].Copy()
 	if !reflect.DeepEqual(want, have) {
-		t.Errorf("\nwant %+v\nhave %+v", want, have)
+		t.Error(test.Diff(want, have))
 	}
 }
