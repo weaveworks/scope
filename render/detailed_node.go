@@ -2,7 +2,6 @@ package render
 
 import (
 	"fmt"
-	"reflect"
 	"sort"
 	"strconv"
 
@@ -80,15 +79,8 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	// in the UI, so we skip the intermediate representations, but we could
 	// add them later.
 	connections := []Row{}
-outer:
 	for _, id := range n.Origins {
 		if table, ok := OriginTable(r, id); ok {
-			// TODO there's a bug that yields duplicate tables. Quick fix.
-			for _, existing := range tables {
-				if reflect.DeepEqual(existing, table) {
-					continue outer
-				}
-			}
 			tables = append(tables, table)
 		} else if nmd, ok := r.Endpoint.NodeMetadatas[id]; ok {
 			connections = append(connections, connectionDetailsRows(r.Endpoint, id, nmd)...)
