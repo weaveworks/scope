@@ -85,11 +85,7 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 		}
 	}
 
-	// Count the TCP connection.
-	edgeMeta := rpt.Address.EdgeMetadatas[edgeKey]
-	edgeMeta.WithConnCountTCP = true
-	edgeMeta.MaxConnCountTCP++
-	rpt.Address.EdgeMetadatas[edgeKey] = edgeMeta
+	countTCPConnection(rpt.Address.EdgeMetadatas, edgeKey)
 
 	if c.Proc.PID > 0 {
 		var (
@@ -111,10 +107,14 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 
 			rpt.Endpoint.NodeMetadatas[scopedLocal] = md
 		}
-		// Count the TCP connection.
-		edgeMeta := rpt.Endpoint.EdgeMetadatas[edgeKey]
-		edgeMeta.WithConnCountTCP = true
-		edgeMeta.MaxConnCountTCP++
-		rpt.Endpoint.EdgeMetadatas[edgeKey] = edgeMeta
+
+		countTCPConnection(rpt.Endpoint.EdgeMetadatas, edgeKey)
 	}
+}
+
+func countTCPConnection(m report.EdgeMetadatas, edgeKey string) {
+	edgeMeta := m[edgeKey]
+	edgeMeta.WithConnCountTCP = true
+	edgeMeta.MaxConnCountTCP++
+	m[edgeKey] = edgeMeta
 }
