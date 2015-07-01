@@ -71,7 +71,7 @@ function getTopologies() {
 
 function getNodeDetails(topologyUrl, nodeId) {
   if (topologyUrl && nodeId) {
-    const url = [topologyUrl, nodeId].join('/');
+    const url = [topologyUrl, encodeURIComponent(nodeId)].join('/');
     reqwest({
       url: url,
       success: function(res) {

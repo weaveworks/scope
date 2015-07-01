@@ -2,11 +2,44 @@ package main
 
 import (
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/render"
 )
+
+// URLMatcher uses request.RequestURI (the raw, unparsed request) to attempt
+// to match pattern.  It does this as go's URL.Parse method is broken, and
+// mistakenly unescapes the Path before parsing it.  This breaks %2F (encoded
+// forward slashes) in the paths.
+func URLMatcher(pattern string) mux.MatcherFunc {
+	matchParts := strings.Split(pattern, "/")
+
+	return func(r *http.Request, rm *mux.RouteMatch) bool {
+		path := strings.SplitN(r.RequestURI, "?", 2)[0]
+		parts := strings.Split(path, "/")
+		if len(parts) != len(matchParts) {
+			return false
+		}
+
+		rm.Vars = map[string]string{}
+		for i, part := range parts {
+			unescaped, err := url.QueryUnescape(part)
+			if err != nil {
+				return false
+			}
+			match := matchParts[i]
+			if strings.HasPrefix(match, "{") && strings.HasSuffix(match, "}") {
+				rm.Vars[strings.Trim(match, "{}")] = unescaped
+			} else if matchParts[i] != unescaped {
+				return false
+			}
+		}
+		return true
+	}
+}
 
 // Router gives of the HTTP dispatcher. It will always use the embedded HTML
 // resources.
@@ -17,9 +50,9 @@ func Router(c Reporter) *mux.Router {
 	get.HandleFunc("/api/topology", makeTopologyList(c))
 	get.HandleFunc("/api/topology/{topology}", captureTopology(c, handleTopology))
 	get.HandleFunc("/api/topology/{topology}/ws", captureTopology(c, handleWs))
-	get.HandleFunc("/api/topology/{topology}/{id}", captureTopology(c, handleNode))
-	get.HandleFunc("/api/topology/{topology}/{local}/{remote}", captureTopology(c, handleEdge))
-	get.HandleFunc("/api/origin/host/{id}", makeOriginHostHandler(c))
+	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).HandlerFunc(captureTopology(c, handleNode))
+	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{local}/{remote}")).HandlerFunc(captureTopology(c, handleEdge))
+	get.MatcherFunc(URLMatcher("/api/origin/host/{id}")).HandlerFunc(makeOriginHostHandler(c))
 	get.HandleFunc("/api/report", makeRawReportHandler(c))
 	get.PathPrefix("/").Handler(http.FileServer(FS(false))) // everything else is static
 	return router

@@ -227,13 +227,13 @@ var (
 	}
 
 	RenderedContainerImages = render.RenderableNodes{
-		test.ClientContainerImageID: {
-			ID:         test.ClientContainerImageID,
-			LabelMajor: "client_image",
+		test.ClientContainerImageName: {
+			ID:         test.ClientContainerImageName,
+			LabelMajor: test.ClientContainerImageName,
 			LabelMinor: "",
-			Rank:       test.ClientContainerImageID,
+			Rank:       test.ClientContainerImageName,
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList(test.ServerContainerImageID),
+			Adjacency:  report.MakeIDList(test.ServerContainerImageName),
 			Origins: report.MakeIDList(
 				test.ClientContainerImageNodeID,
 				test.ClientContainerNodeID,
@@ -248,13 +248,13 @@ var (
 				render.KeyBytesEgress:  30,
 			},
 		},
-		test.ServerContainerImageID: {
-			ID:         test.ServerContainerImageID,
-			LabelMajor: "server_image",
+		test.ServerContainerImageName: {
+			ID:         test.ServerContainerImageName,
+			LabelMajor: test.ServerContainerImageName,
 			LabelMinor: "",
-			Rank:       test.ServerContainerImageID,
+			Rank:       test.ServerContainerImageName,
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList(test.ClientContainerImageID, render.TheInternetID),
+			Adjacency:  report.MakeIDList(test.ClientContainerImageName, render.TheInternetID),
 			Origins: report.MakeIDList(
 				test.ServerContainerImageNodeID,
 				test.ServerContainerNodeID,
