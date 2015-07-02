@@ -34,9 +34,11 @@ coverage.html
 scope.tar
 scope_ui_build.tar
 app/app
+app/scope-app
 probe/probe
-docker/app
-docker/probe
+probe/scope-probe
+docker/scope-app
+docker/scope-probe
 experimental/bridge/bridge
 experimental/demoprobe/demoprobe
 experimental/fixprobe/fixprobe

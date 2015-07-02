@@ -44,8 +44,8 @@ while true; do
 done
 
 mkdir -p /etc/weave
-echo "$APP_ARGS" >/etc/weave/app.args
-echo "$PROBE_ARGS" >/etc/weave/probe.args
+echo "$APP_ARGS" >/etc/weave/scope-app.args
+echo "$PROBE_ARGS" >/etc/weave/scope-probe.args
 
 if [ -n "$DNS_SERVER" -a -n "$SEARCHPATH" ]; then
     echo "domain $SEARCHPATH" >/etc/resolv.conf
