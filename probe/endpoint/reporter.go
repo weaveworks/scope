@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/weaveworks/procspy"
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -80,8 +81,8 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 
 	if _, ok := rpt.Address.NodeMetadatas[scopedLocal]; !ok {
 		rpt.Address.NodeMetadatas[scopedLocal] = report.NodeMetadata{
-			"name": r.hostName,
-			"addr": c.LocalAddress.String(),
+			docker.Name: r.hostName,
+			docker.Addr: c.LocalAddress.String(),
 		}
 	}
 

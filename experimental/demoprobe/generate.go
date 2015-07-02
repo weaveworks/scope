@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -70,17 +71,17 @@ func DemoReport(nodeCount int) report.Report {
 		// Endpoint topology
 		if _, ok := r.Endpoint.NodeMetadatas[srcPortID]; !ok {
 			r.Endpoint.NodeMetadatas[srcPortID] = report.NodeMetadata{
-				"pid":    "4000",
-				"name":   c.srcProc,
-				"domain": "node-" + src,
+				docker.PID:    "4000",
+				docker.Name:   c.srcProc,
+				docker.Domain: "node-" + src,
 			}
 		}
 		r.Endpoint.Adjacency[srcID] = r.Endpoint.Adjacency[srcID].Add(dstPortID)
 		if _, ok := r.Endpoint.NodeMetadatas[dstPortID]; !ok {
 			r.Endpoint.NodeMetadatas[dstPortID] = report.NodeMetadata{
-				"pid":    "4000",
-				"name":   c.dstProc,
-				"domain": "node-" + dst,
+				docker.PID:    "4000",
+				docker.Name:   c.dstProc,
+				docker.Domain: "node-" + dst,
 			}
 		}
 		r.Endpoint.Adjacency[dstID] = r.Endpoint.Adjacency[dstID].Add(srcPortID)
@@ -100,13 +101,13 @@ func DemoReport(nodeCount int) report.Report {
 		// Address topology
 		if _, ok := r.Address.NodeMetadatas[srcAddressID]; !ok {
 			r.Address.NodeMetadatas[srcAddressID] = report.NodeMetadata{
-				"name": src,
+				docker.Name: src,
 			}
 		}
 		r.Address.Adjacency[nodeSrcAddressID] = r.Address.Adjacency[nodeSrcAddressID].Add(dstAddressID)
 		if _, ok := r.Address.NodeMetadatas[dstAddressID]; !ok {
 			r.Address.NodeMetadatas[dstAddressID] = report.NodeMetadata{
-				"name": dst,
+				docker.Name: dst,
 			}
 		}
 		r.Address.Adjacency[nodeDstAddressID] = r.Address.Adjacency[nodeDstAddressID].Add(srcAddressID)

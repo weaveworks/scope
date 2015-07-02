@@ -10,7 +10,12 @@ import (
 // These constants are keys used in node metadata
 // TODO: use these constants in report/{mapping.go, detailed_node.go} - pending some circular references
 const (
+	Addr        = "addr"
 	ContainerID = "docker_container_id"
+	Domain      = "domain"
+	Name        = "name"
+	PID         = "pid"
+	Port        = "port"
 )
 
 // These vars are exported for testing.

@@ -125,7 +125,7 @@ func OriginTable(r report.Report, originID string) (Table, bool) {
 
 func connectionDetailsRows(endpointTopology report.Topology, originID string, nmd report.NodeMetadata) []Row {
 	rows := []Row{}
-	local := fmt.Sprintf("%s:%s", nmd["addr"], nmd["port"])
+	local := fmt.Sprintf("%s:%s", nmd[docker.Addr], nmd[docker.Port])
 	adjacencies := endpointTopology.Adjacency[report.MakeAdjacencyID(originID)]
 	sort.Strings(adjacencies)
 	for _, adj := range adjacencies {
