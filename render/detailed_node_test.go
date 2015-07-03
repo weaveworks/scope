@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -13,14 +14,6 @@ func TestOriginTable(t *testing.T) {
 		t.Errorf("unknown origin ID gave unexpected success")
 	}
 	for originID, want := range map[string]render.Table{
-		test.Client54001NodeID: {
-			Title:   "Origin Endpoint",
-			Numeric: false,
-			Rows: []render.Row{
-				{"Endpoint", test.ClientIP, ""},
-				{"Port", test.ClientPort54001, ""},
-			},
-		},
 		test.ClientAddressNodeID: {
 			Title:   "Origin Address",
 			Numeric: false,
@@ -107,11 +100,40 @@ func TestMakeDetailedNode(t *testing.T) {
 				},
 			},
 			{
-				Title:   "Origin Endpoint",
+				Title:   "Connection Details",
 				Numeric: false,
 				Rows: []render.Row{
-					{"Endpoint", test.ServerIP, ""},
-					{"Port", test.ServerPort, ""},
+					{"Local", "Remote", ""},
+					{
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54010),
+						"",
+					},
+					{
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54020),
+						"",
+					},
+					{
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", test.UnknownClient3IP, test.ClientPort54020),
+						"",
+					},
+					{
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54001),
+						"",
+					},
+					{
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54002),
+						"",
+					},
+					{
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", test.RandomClientIP, test.ClientPort12345),
+						"",
+					},
 				},
 			},
 		},

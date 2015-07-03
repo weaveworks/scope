@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/weaveworks/procspy"
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/report"
 )
@@ -95,7 +96,7 @@ func TestSpyNoProcesses(t *testing.T) {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 
-	if want, have := nodeName, r.Address.NodeMetadatas[scopedLocal]["name"]; want != have {
+	if want, have := nodeName, r.Address.NodeMetadatas[scopedLocal][docker.Name]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/weaveworks/procspy"
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -80,16 +81,12 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 
 	if _, ok := rpt.Address.NodeMetadatas[scopedLocal]; !ok {
 		rpt.Address.NodeMetadatas[scopedLocal] = report.NodeMetadata{
-			"name": r.hostName,
-			"addr": c.LocalAddress.String(),
+			docker.Name: r.hostName,
+			docker.Addr: c.LocalAddress.String(),
 		}
 	}
 
-	// Count the TCP connection.
-	edgeMeta := rpt.Address.EdgeMetadatas[edgeKey]
-	edgeMeta.WithConnCountTCP = true
-	edgeMeta.MaxConnCountTCP++
-	rpt.Address.EdgeMetadatas[edgeKey] = edgeMeta
+	countTCPConnection(rpt.Address.EdgeMetadatas, edgeKey)
 
 	if c.Proc.PID > 0 {
 		var (
@@ -111,10 +108,14 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 
 			rpt.Endpoint.NodeMetadatas[scopedLocal] = md
 		}
-		// Count the TCP connection.
-		edgeMeta := rpt.Endpoint.EdgeMetadatas[edgeKey]
-		edgeMeta.WithConnCountTCP = true
-		edgeMeta.MaxConnCountTCP++
-		rpt.Endpoint.EdgeMetadatas[edgeKey] = edgeMeta
+
+		countTCPConnection(rpt.Endpoint.EdgeMetadatas, edgeKey)
 	}
+}
+
+func countTCPConnection(m report.EdgeMetadatas, edgeKey string) {
+	edgeMeta := m[edgeKey]
+	edgeMeta.WithConnCountTCP = true
+	edgeMeta.MaxConnCountTCP++
+	m[edgeKey] = edgeMeta
 }
