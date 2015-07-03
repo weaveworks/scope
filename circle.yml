@@ -10,6 +10,7 @@ machine:
     GOPATH: /home/ubuntu:$GOPATH
     SRCDIR: /home/ubuntu/src/github.com/weaveworks/scope
     PATH: $PATH:$HOME/.local/bin
+    CLOUDSDK_CORE_DISABLE_PROMPTS: 1
     SCOPE_UI_BUILD: $HOME/docker/scope_ui_build.tar
 
 dependencies:
@@ -24,6 +25,8 @@ dependencies:
         mkdir -p $(dirname "$SCOPE_UI_BUILD");
         mv scope_ui_build.tar $(dirname "$SCOPE_UI_BUILD");
       fi
+    - curl https://sdk.cloud.google.com | bash
+    - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
   post:
     - go version
     - go clean -i net
@@ -41,7 +44,12 @@ test:
     - cd $SRCDIR; rm -f app/app probe/probe; GOOS=linux make
     - cd $SRCDIR; ./bin/test -slow
     - cd $SRCDIR/experimental; make
+    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup)
+    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; . ./gce.sh hosts; ./setup.sh)
+    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; . ./gce.sh hosts; ./run_all.sh):
+        timeout: 300
   post:
+    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy)
     - goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true
     - cd $SRCDIR; cp coverage.html $CIRCLE_ARTIFACTS
     - cd $SRCDIR; cp scope.tar $CIRCLE_ARTIFACTS
