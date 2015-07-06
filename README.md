@@ -32,6 +32,7 @@ boot2docker, replace localhost with the output of `boot2docker ip`.)
 ## Build
 
 ```
+make deps
 make
 ```
 
