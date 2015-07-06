@@ -67,7 +67,7 @@ $(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/gulpfile.js client/package.js
 
 clean:
 	go clean ./...
-	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) client/build
+	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) $(APP_EXE) $(PROBE_EXE) client/build
 
 deps:
 	go get \
