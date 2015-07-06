@@ -53,7 +53,7 @@ func TestCollector(t *testing.T) {
 	}
 
 	reports <- r
-	poll(t, 100*time.Millisecond, func() bool {
+	test.Poll(t, 100*time.Millisecond, func() bool {
 		return len(concreteCollector.peek().Address.NodeMetadatas) == 1
 	}, "missed the report")
 
@@ -100,17 +100,4 @@ func testPublisher(t *testing.T, input <-chan interface{}) net.Listener {
 		}
 	}()
 	return ln
-}
-
-func poll(t *testing.T, d time.Duration, condition func() bool, msg string) {
-	deadline := time.Now().Add(d)
-	for {
-		if time.Now().After(deadline) {
-			t.Fatal(msg)
-		}
-		if condition() {
-			return
-		}
-		time.Sleep(d / 10)
-	}
 }

@@ -2,10 +2,10 @@
 
 set -eu
 
-GO_TEST_ARGS=""
+GO_TEST_ARGS="-cpu 4 -timeout 10s -tags netgo"
 SLOW=""
 if [ $# -eq 1 ] && [ "$1" = "-slow" ]; then
-    GO_TEST_ARGS="-race -covermode=atomic"
+    GO_TEST_ARGS="$GO_TEST_ARGS -race -covermode=atomic"
     SLOW="yes"
 fi
 
@@ -26,7 +26,7 @@ for dir in $(find . -type f -name '*_test.go' | grep -v '^./.git/'  | grep -v '^
     GO_TEST_ARGS_RUN="$GO_TEST_ARGS"
   fi
 
-  if ! go test $GO_TEST_ARGS_RUN -timeout 10s -tags netgo $dir ; then
+  if ! go test $GO_TEST_ARGS_RUN $dir ; then
     fail=1
   fi
 
