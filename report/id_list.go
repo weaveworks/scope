@@ -26,7 +26,9 @@ func (a IDList) Add(ids ...string) IDList {
 			continue
 		}
 		// It a new element, insert it in order.
-		a = append(a[:i], append(IDList{s}, a[i:]...)...)
+		a = append(a, "")
+		copy(a[i+1:], a[i:])
+		a[i] = s
 	}
 	return a
 }
