@@ -8,11 +8,12 @@ type IDList []string
 // MakeIDList makes a new IDList.
 func MakeIDList(ids ...string) IDList {
 	sort.Strings(ids)
-	for i := 1; i < len(ids); i++ { // shuffle down any duplicates
+	for i := 1; i < len(ids); { // shuffle down any duplicates
 		if ids[i-1] == ids[i] {
 			ids = append(ids[:i-1], ids[i:]...)
-			i--
+			continue
 		}
+		i++
 	}
 	return IDList(ids)
 }
