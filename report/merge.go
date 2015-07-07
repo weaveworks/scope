@@ -24,7 +24,7 @@ func (t *Topology) Merge(other Topology) {
 // Merge merges another Adjacency list into the receiver.
 func (a *Adjacency) Merge(other Adjacency) {
 	for addr, adj := range other {
-		(*a)[addr] = (*a)[addr].Add(adj...)
+		(*a)[addr] = (*a)[addr].Merge(adj)
 	}
 }
 

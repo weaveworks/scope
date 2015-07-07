@@ -85,7 +85,7 @@ func (m Map) render(rpt report.Report) (RenderableNodes, map[string]string) {
 
 		output[outRenderable.ID] = outRenderable
 		mapped[inRenderable.ID] = outRenderable.ID
-		adjacencies[outRenderable.ID] = adjacencies[outRenderable.ID].Add(inRenderable.Adjacency...)
+		adjacencies[outRenderable.ID] = adjacencies[outRenderable.ID].Merge(inRenderable.Adjacency)
 	}
 
 	// Rewrite Adjacency for new node IDs.

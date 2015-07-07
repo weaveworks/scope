@@ -31,6 +31,34 @@ func (a IDList) Add(ids ...string) IDList {
 	return a
 }
 
+// Merge all elements from a and b into a new list
+func (a IDList) Merge(b IDList) IDList {
+	if len(b) == 0 { // Optimise special case, to avoid allocating
+		return a // (note unit test DeepEquals breaks if we don't do this)
+	}
+	d := make(IDList, len(a)+len(b))
+	for i, j, k := 0, 0, 0; ; k++ {
+		switch {
+		case i >= len(a):
+			copy(d[k:], b[j:])
+			return d[:k+len(b)-j]
+		case j >= len(b):
+			copy(d[k:], a[i:])
+			return d[:k+len(a)-i]
+		case a[i] < b[j]:
+			d[k] = a[i]
+			i++
+		case a[i] > b[j]:
+			d[k] = b[j]
+			j++
+		default: // equal
+			d[k] = a[i]
+			i++
+			j++
+		}
+	}
+}
+
 // Contains returns true if id is in the list.
 func (a IDList) Contains(id string) bool {
 	i := sort.Search(len(a), func(i int) bool { return a[i] >= id })
