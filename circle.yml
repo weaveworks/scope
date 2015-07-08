@@ -18,13 +18,7 @@ dependencies:
     - "~/docker"
   override:
     - sudo apt-get --only-upgrade install tar
-    - if [[ -e "$SCOPE_UI_BUILD" ]]; then
-        docker load -i $SCOPE_UI_BUILD;
-      else
-        make scope_ui_build.tar;
-        mkdir -p $(dirname "$SCOPE_UI_BUILD");
-        mv scope_ui_build.tar $(dirname "$SCOPE_UI_BUILD");
-      fi
+    - bin/rebuild-ui-build-image
     - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
   post:
