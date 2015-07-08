@@ -53,9 +53,9 @@ func TestCollector(t *testing.T) {
 	}
 
 	reports <- r
-	test.Poll(t, 100*time.Millisecond, func() bool {
-		return len(concreteCollector.peek().Address.NodeMetadatas) == 1
-	}, "missed the report")
+	test.Poll(t, 100*time.Millisecond, 1, func() interface{} {
+		return len(concreteCollector.peek().Address.NodeMetadatas)
+	})
 
 	go func() { publish <- time.Now() }()
 	collected := <-collector.Reports()

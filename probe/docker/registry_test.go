@@ -46,7 +46,7 @@ func (c *mockContainer) GetNodeMetadata() report.NodeMetadata {
 }
 
 type mockDockerClient struct {
-	sync.Mutex
+	sync.RWMutex
 	apiContainers []client.APIContainers
 	containers    map[string]*client.Container
 	apiImages     []client.APIImages
@@ -54,16 +54,20 @@ type mockDockerClient struct {
 }
 
 func (m *mockDockerClient) ListContainers(client.ListContainersOptions) ([]client.APIContainers, error) {
+	m.RLock()
+	defer m.RUnlock()
 	return m.apiContainers, nil
 }
 
 func (m *mockDockerClient) InspectContainer(id string) (*client.Container, error) {
+	m.RLock()
+	defer m.RUnlock()
 	return m.containers[id], nil
 }
 
 func (m *mockDockerClient) ListImages(client.ListImagesOptions) ([]client.APIImages, error) {
-	m.Lock()
-	defer m.Unlock()
+	m.RLock()
+	defer m.RUnlock()
 	return m.apiImages, nil
 }
 
@@ -86,8 +90,8 @@ func (m *mockDockerClient) RemoveEventListener(events chan *client.APIEvents) er
 }
 
 func (m *mockDockerClient) send(event *client.APIEvents) {
-	m.Lock()
-	defer m.Unlock()
+	m.RLock()
+	defer m.RUnlock()
 	for _, c := range m.events {
 		c <- event
 	}
@@ -160,11 +164,12 @@ func TestRegistry(t *testing.T) {
 		defer registry.Stop()
 		runtime.Gosched()
 
-		test.Poll(t, 10*time.Millisecond, func() bool {
-			have := allContainers(registry)
+		{
 			want := []docker.Container{&mockContainer{container1}}
-			return reflect.DeepEqual(want, have)
-		}, "Didn't get containers!")
+			test.Poll(t, 10*time.Millisecond, want, func() interface{} {
+				return allContainers(registry)
+			})
+		}
 
 		{
 			have := allImages(registry)
@@ -183,6 +188,12 @@ func TestRegistryEvents(t *testing.T) {
 		defer registry.Stop()
 		runtime.Gosched()
 
+		check := func(want []docker.Container) {
+			test.Poll(t, 10*time.Millisecond, want, func() interface{} {
+				return allContainers(registry)
+			})
+		}
+
 		{
 			mdc.Lock()
 			mdc.containers["wiff"] = container2
@@ -190,11 +201,8 @@ func TestRegistryEvents(t *testing.T) {
 			mdc.send(&client.APIEvents{Status: docker.StartEvent, ID: "wiff"})
 			runtime.Gosched()
 
-			have := allContainers(registry)
 			want := []docker.Container{&mockContainer{container1}, &mockContainer{container2}}
-			if !reflect.DeepEqual(want, have) {
-				t.Errorf("%s", test.Diff(want, have))
-			}
+			check(want)
 		}
 
 		{
@@ -204,11 +212,8 @@ func TestRegistryEvents(t *testing.T) {
 			mdc.send(&client.APIEvents{Status: docker.DieEvent, ID: "wiff"})
 			runtime.Gosched()
 
-			have := allContainers(registry)
 			want := []docker.Container{&mockContainer{container1}}
-			if !reflect.DeepEqual(want, have) {
-				t.Errorf("%s", test.Diff(want, have))
-			}
+			check(want)
 		}
 
 		{
@@ -218,22 +223,16 @@ func TestRegistryEvents(t *testing.T) {
 			mdc.send(&client.APIEvents{Status: docker.DieEvent, ID: "ping"})
 			runtime.Gosched()
 
-			have := allContainers(registry)
 			want := []docker.Container{}
-			if !reflect.DeepEqual(want, have) {
-				t.Errorf("%s", test.Diff(want, have))
-			}
+			check(want)
 		}
 
 		{
 			mdc.send(&client.APIEvents{Status: docker.DieEvent, ID: "doesntexist"})
 			runtime.Gosched()
 
-			have := allContainers(registry)
 			want := []docker.Container{}
-			if !reflect.DeepEqual(want, have) {
-				t.Errorf("%s", test.Diff(want, have))
-			}
+			check(want)
 		}
 	})
 }
