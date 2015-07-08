@@ -8,9 +8,12 @@ import (
 	"net/http"
 	"runtime"
 	"testing"
+	"time"
 
 	client "github.com/fsouza/go-dockerclient"
+
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/test"
 )
 
 type mockConnection struct {
@@ -56,11 +59,10 @@ func TestContainer(t *testing.T) {
 	if err = json.NewEncoder(writer).Encode(&stats); err != nil {
 		t.Error(err)
 	}
-	runtime.Gosched() // wait for StartGatheringStats goroutine to receive the stats
 
 	// Now see if we go them
-	nmd := c.GetNodeMetadata()
-	if nmd[docker.MemoryUsage] != "12345" {
-		t.Errorf("want 12345, got %s", nmd[docker.MemoryUsage])
-	}
+	test.Poll(t, 10*time.Millisecond, func() bool {
+		nmd := c.GetNodeMetadata()
+		return nmd[docker.MemoryUsage] == "12345"
+	}, "Failed to get stats")
 }

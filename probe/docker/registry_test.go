@@ -160,13 +160,11 @@ func TestRegistry(t *testing.T) {
 		defer registry.Stop()
 		runtime.Gosched()
 
-		{
+		test.Poll(t, 10*time.Millisecond, func() bool {
 			have := allContainers(registry)
 			want := []docker.Container{&mockContainer{container1}}
-			if !reflect.DeepEqual(want, have) {
-				t.Errorf("%s", test.Diff(want, have))
-			}
-		}
+			return reflect.DeepEqual(want, have)
+		}, "Didn't get containers!")
 
 		{
 			have := allImages(registry)
