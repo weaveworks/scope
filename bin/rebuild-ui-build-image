@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -eux
+
+CACHE_DIR=$HOME/docker/
+
+rebuild() {
+	rm $CACHE_DIR/*
+	make scope_ui_build.tar
+	mkdir -p $CACHE_DIR
+	mv scope_ui_build.tar $CACHE_DIR/image-$CIRCLE_SHA1
+}
+
+# Get the revision the cached image was build at
+cached_image_rev() {
+	find $CACHE_DIR -name 'image-*' -type f | sed 's/[^\-]*\-//'
+}
+
+# Have there been any revision beween $1 and $2
+has_changes() {
+	local rev1=$1
+	local rev2=$2
+	local changes=$(git log --oneline $rev1..$rev2 -- client/Dockerfile client/gulpfile.js client/package.json | wc -l)
+	[ "$changes" -gt 0 ]
+}
+
+cached_revision=$(cached_image_rev)
+if [ -z "$cached_revision" ]; then
+	rebuild
+	exit 0
+fi
+
+if has_changes $cached_revision $CIRCLE_SHA1 ; then
+	rebuild
+	exit 0
+fi
+
+# we didn't rebuild; import cached version
+docker load -i $CACHE_DIR/image-*
