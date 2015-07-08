@@ -53,8 +53,8 @@ func (rn *RenderableNode) Merge(other RenderableNode) {
 		panic(rn.ID)
 	}
 
-	rn.Adjacency = rn.Adjacency.Add(other.Adjacency...)
-	rn.Origins = rn.Origins.Add(other.Origins...)
+	rn.Adjacency = rn.Adjacency.Merge(other.Adjacency)
+	rn.Origins = rn.Origins.Merge(other.Origins)
 
 	rn.AggregateMetadata.Merge(other.AggregateMetadata)
 	rn.NodeMetadata.Merge(other.NodeMetadata)
