@@ -152,7 +152,9 @@ case "$COMMAND" in
 
         # If Weave is running, we want to expose a Weave IP to the host
         # network namespace, so Scope can use it.
-        weave_expose
+        if is_running $WEAVE_CONTAINER_NAME; then
+            weave_expose
+        fi
 
         # If WeaveDNS is running, we want to automatically tell the scope
         # image to use weave dns.  We can't use --dns with --net=host, so we
@@ -168,11 +170,14 @@ case "$COMMAND" in
 
         IP_ADDRS=$(docker run --net=host gliderlabs/alpine /bin/sh -c "$IP_ADDR_CMD")
         if is_running $DNS_CONTAINER_NAME; then
-            if [ -z "$IP_ADDRS" ]; then
-                echo "Could not determine local IP address; Weave DNS integration will not work correctly."
-                exit 1
+            if is_running $WEAVE_CONTAINER_NAME; then
+                if [ -z "$IP_ADDRS" ]; then
+                    echo "Could not determine local IP address; Weave DNS integration will not work correctly."
+                    exit 1
+                fi
+
+                weave_dns_add $CONTAINER $FQDN $IP_ADDRS
             fi
-            weave_dns_add $CONTAINER $FQDN $IP_ADDRS
         fi
 
         echo $CONTAINER

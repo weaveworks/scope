@@ -5,7 +5,7 @@ set -eux
 CACHE_DIR=$HOME/docker/
 
 rebuild() {
-	rm $CACHE_DIR/*
+	rm $CACHE_DIR/* || true
 	make scope_ui_build.tar
 	mkdir -p $CACHE_DIR
 	mv scope_ui_build.tar $CACHE_DIR/image-$CIRCLE_SHA1
