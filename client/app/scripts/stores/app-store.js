@@ -145,6 +145,7 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.CLICK_TOPOLOGY:
+      selectedNodeId = null;
       if (payload.topologyId !== currentTopologyId) {
         currentTopologyId = payload.topologyId;
         nodes = {};

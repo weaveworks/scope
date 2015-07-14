@@ -143,6 +143,23 @@ describe('AppStore', function() {
     expect(AppStore.getNodes()).toEqual(NODE_SET);
   });
 
+  it('closes details when changing topologies', function() {
+    registeredCallback(ReceiveTopologiesAction);
+    registeredCallback(ClickTopologyAction);
+    registeredCallback(ReceiveNodesDeltaAction);
+
+    expect(AppStore.getAppState())
+      .toEqual({"topologyId":"topo1","selectedNodeId": null});
+
+    registeredCallback(ClickNodeAction);
+    expect(AppStore.getAppState())
+      .toEqual({"topologyId":"topo1","selectedNodeId": 'n1'});
+
+    registeredCallback(ClickSubTopologyAction);
+    expect(AppStore.getAppState())
+      .toEqual({"topologyId":"topo1-grouped","selectedNodeId": null});
+  });
+
   // connection errors
 
   it('resets topology on websocket reconnect', function() {
