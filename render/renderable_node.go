@@ -16,7 +16,7 @@ type RenderableNode struct {
 	Adjacency  report.IDList `json:"adjacency,omitempty"`   // Node IDs (in the same topology domain)
 	Origins    report.IDList `json:"origins,omitempty"`     // Core node IDs that contributed information
 
-	AggregateMetadata   `json:"metadata"` // Numeric sums
+	report.EdgeMetadata `json:"metadata"` // Numeric sums
 	report.NodeMetadata `json:"-"`        // merged NodeMetadata of the nodes used to build this
 }
 
@@ -56,57 +56,57 @@ func (rn *RenderableNode) Merge(other RenderableNode) {
 	rn.Adjacency = rn.Adjacency.Merge(other.Adjacency)
 	rn.Origins = rn.Origins.Merge(other.Origins)
 
-	rn.AggregateMetadata.Merge(other.AggregateMetadata)
+	rn.EdgeMetadata.Merge(other.EdgeMetadata)
 	rn.NodeMetadata.Merge(other.NodeMetadata)
 }
 
 // NewRenderableNode makes a new RenderableNode
 func NewRenderableNode(id, major, minor, rank string, nmd report.NodeMetadata) RenderableNode {
 	return RenderableNode{
-		ID:                id,
-		LabelMajor:        major,
-		LabelMinor:        minor,
-		Rank:              rank,
-		Pseudo:            false,
-		AggregateMetadata: AggregateMetadata{},
-		NodeMetadata:      nmd.Copy(),
+		ID:           id,
+		LabelMajor:   major,
+		LabelMinor:   minor,
+		Rank:         rank,
+		Pseudo:       false,
+		EdgeMetadata: report.EdgeMetadata{},
+		NodeMetadata: nmd.Copy(),
 	}
 }
 
 func newDerivedNode(id string, node RenderableNode) RenderableNode {
 	return RenderableNode{
-		ID:                id,
-		LabelMajor:        "",
-		LabelMinor:        "",
-		Rank:              "",
-		Pseudo:            node.Pseudo,
-		AggregateMetadata: node.AggregateMetadata,
-		Origins:           node.Origins,
-		NodeMetadata:      report.MakeNodeMetadata(),
+		ID:           id,
+		LabelMajor:   "",
+		LabelMinor:   "",
+		Rank:         "",
+		Pseudo:       node.Pseudo,
+		EdgeMetadata: node.EdgeMetadata,
+		Origins:      node.Origins,
+		NodeMetadata: report.MakeNodeMetadata(),
 	}
 }
 
 func newPseudoNode(id, major, minor string) RenderableNode {
 	return RenderableNode{
-		ID:                id,
-		LabelMajor:        major,
-		LabelMinor:        minor,
-		Rank:              "",
-		Pseudo:            true,
-		AggregateMetadata: AggregateMetadata{},
-		NodeMetadata:      report.MakeNodeMetadata(),
+		ID:           id,
+		LabelMajor:   major,
+		LabelMinor:   minor,
+		Rank:         "",
+		Pseudo:       true,
+		EdgeMetadata: report.EdgeMetadata{},
+		NodeMetadata: report.MakeNodeMetadata(),
 	}
 }
 
 func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode {
 	return RenderableNode{
-		ID:                id,
-		LabelMajor:        major,
-		LabelMinor:        "",
-		Rank:              "",
-		Pseudo:            true,
-		AggregateMetadata: node.AggregateMetadata,
-		Origins:           node.Origins,
-		NodeMetadata:      report.MakeNodeMetadata(),
+		ID:           id,
+		LabelMajor:   major,
+		LabelMinor:   "",
+		Rank:         "",
+		Pseudo:       true,
+		EdgeMetadata: node.EdgeMetadata,
+		Origins:      node.Origins,
+		NodeMetadata: report.MakeNodeMetadata(),
 	}
 }

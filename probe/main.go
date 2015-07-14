@@ -3,11 +3,13 @@ package main
 import (
 	"flag"
 	"log"
+	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -17,6 +19,7 @@ import (
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
+	"github.com/weaveworks/scope/probe/sniff"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
 )
@@ -36,8 +39,13 @@ func main() {
 		dockerBridge       = flag.String("docker.bridge", "docker0", "the docker bridge name")
 		weaveRouterAddr    = flag.String("weave.router.addr", "", "IP address or FQDN of the Weave router")
 		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
+		captureEnabled     = flag.Bool("capture", false, "perform sampled packet capture")
+		captureInterfaces  = flag.String("capture.interfaces", interfaces(), "packet capture on these interfaces")
+		captureOn          = flag.Duration("capture.on", 1*time.Second, "packet capture duty cycle 'on'")
+		captureOff         = flag.Duration("capture.off", 5*time.Second, "packet capture duty cycle 'off'")
 	)
 	flag.Parse()
+	log.SetFlags(log.Lmicroseconds)
 
 	if len(flag.Args()) != 0 {
 		flag.Usage()
@@ -106,6 +114,21 @@ func main() {
 		reporters = append(reporters, weave)
 	}
 
+	if *captureEnabled {
+		if *captureOn > *captureOff {
+			log.Fatalf("-capture.on (%s) must be <= -capture.off (%s)", *captureOn, *captureOff)
+		}
+		for _, iface := range strings.Split(*captureInterfaces, ",") {
+			source, err := sniff.NewSource(iface)
+			if err != nil {
+				log.Printf("warning: %v", err)
+				continue
+			}
+			log.Printf("capturing packets on %s", iface)
+			reporters = append(reporters, sniff.New(hostID, source, *captureOn, *captureOff))
+		}
+	}
+
 	log.Printf("listening on %s", *listen)
 
 	quit := make(chan struct{})
@@ -152,4 +175,17 @@ func interrupt() chan os.Signal {
 	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	return c
+}
+
+func interfaces() string {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		log.Print(err)
+		return ""
+	}
+	a := make([]string, 0, len(ifaces))
+	for _, iface := range ifaces {
+		a = append(a, iface.Name)
+	}
+	return strings.Join(a, ",")
 }

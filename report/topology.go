@@ -28,16 +28,12 @@ type EdgeMetadatas map[string]EdgeMetadata
 // IDs.
 type NodeMetadatas map[string]NodeMetadata
 
-// EdgeMetadata describes a superset of the metadata that probes can
-// conceivably (and usefully) collect about an edge between two nodes in any
-// topology.
+// EdgeMetadata describes a superset of the metadata that probes can possibly
+// collect about a directed edge between two nodes in any topology.
 type EdgeMetadata struct {
-	WithBytes    bool `json:"with_bytes,omitempty"`
-	BytesIngress uint `json:"bytes_ingress,omitempty"` // dst -> src
-	BytesEgress  uint `json:"bytes_egress,omitempty"`  // src -> dst
-
-	WithConnCountTCP bool `json:"with_conn_count_tcp,omitempty"`
-	MaxConnCountTCP  uint `json:"max_conn_count_tcp,omitempty"`
+	PacketCount     *uint64 `json:"packet_count,omitempty"`
+	ByteCount       *uint64 `json:"byte_count,omitempty"`
+	MaxConnCountTCP *uint64 `json:"max_conn_count_tcp,omitempty"`
 }
 
 // NodeMetadata describes a superset of the metadata that probes can collect

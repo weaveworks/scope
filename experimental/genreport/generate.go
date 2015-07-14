@@ -89,12 +89,10 @@ func DemoReport(nodeCount int) report.Report {
 			edgeKeyIngress = report.MakeEdgeID(dstPortID, srcPortID)
 		)
 		r.Endpoint.EdgeMetadatas[edgeKeyEgress] = report.EdgeMetadata{
-			WithConnCountTCP: true,
-			MaxConnCountTCP:  uint(rand.Intn(100) + 10),
+			MaxConnCountTCP: newu64(uint64(rand.Intn(100) + 10)),
 		}
 		r.Endpoint.EdgeMetadatas[edgeKeyIngress] = report.EdgeMetadata{
-			WithConnCountTCP: true,
-			MaxConnCountTCP:  uint(rand.Intn(100) + 10),
+			MaxConnCountTCP: newu64(uint64(rand.Intn(100) + 10)),
 		}
 
 		// Address topology
@@ -122,3 +120,5 @@ func DemoReport(nodeCount int) report.Report {
 
 	return r
 }
+
+func newu64(value uint64) *uint64 { return &value }

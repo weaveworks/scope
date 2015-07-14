@@ -12,6 +12,7 @@ import (
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
+	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
 
@@ -71,6 +72,7 @@ func TestAPITopologyApplications(t *testing.T) {
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatal(err)
 		}
+
 		if want, have := render.OnlyConnected(expected.RenderedProcesses), fixNodeMetadatas(topo.Nodes); !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
@@ -93,9 +95,9 @@ func TestAPITopologyApplications(t *testing.T) {
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
-		if want, have := (render.AggregateMetadata{
-			"egress_bytes":  10,
-			"ingress_bytes": 100,
+		if want, have := (report.EdgeMetadata{
+			PacketCount: newu64(100),
+			ByteCount:   newu64(10),
 		}), edge.Metadata; !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
@@ -112,7 +114,8 @@ func TestAPITopologyHosts(t *testing.T) {
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatal(err)
 		}
-		if want, have := (expected.RenderedHosts), fixNodeMetadatas(topo.Nodes); !reflect.DeepEqual(want, have) {
+
+		if want, have := expected.RenderedHosts, fixNodeMetadatas(topo.Nodes); !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}
@@ -134,11 +137,10 @@ func TestAPITopologyHosts(t *testing.T) {
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
-		want := render.AggregateMetadata{
-			"max_conn_count_tcp": 3,
-		}
-		if !reflect.DeepEqual(want, edge.Metadata) {
-			t.Errorf("Edge metadata error. Want %v, have %v", want, edge)
+		if want, have := (report.EdgeMetadata{
+			MaxConnCountTCP: newu64(3),
+		}), edge.Metadata; !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
 		}
 	}
 }
@@ -176,3 +178,5 @@ func TestAPITopologyWebsocket(t *testing.T) {
 	equals(t, 0, len(d.Update))
 	equals(t, 0, len(d.Remove))
 }
+
+func newu64(value uint64) *uint64 { return &value }

@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/report"
 )
 
 const (
@@ -27,7 +28,7 @@ type APINode struct {
 
 // APIEdge is returned by the /api/topology/*/*/* handlers.
 type APIEdge struct {
-	Metadata render.AggregateMetadata `json:"metadata"`
+	Metadata report.EdgeMetadata `json:"metadata"`
 }
 
 // Full topology.
@@ -76,7 +77,7 @@ func handleEdge(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Req
 		localID  = vars["local"]
 		remoteID = vars["remote"]
 		rpt      = rep.Report()
-		metadata = t.renderer.AggregateMetadata(rpt, localID, remoteID)
+		metadata = t.renderer.EdgeMetadata(rpt, localID, remoteID)
 	)
 
 	respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})

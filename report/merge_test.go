@@ -112,102 +112,82 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 			a: report.EdgeMetadatas{},
 			b: report.EdgeMetadatas{
 				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:        true,
-					BytesEgress:      12,
-					BytesIngress:     0,
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  2,
+					PacketCount:     newu64(12),
+					ByteCount:       newu64(0),
+					MaxConnCountTCP: newu64(2),
 				},
 			},
 			want: report.EdgeMetadatas{
 				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:        true,
-					BytesEgress:      12,
-					BytesIngress:     0,
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  2,
+					PacketCount:     newu64(12),
+					ByteCount:       newu64(0),
+					MaxConnCountTCP: newu64(2),
 				},
 			},
 		},
 		"Empty b": {
 			a: report.EdgeMetadatas{
 				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:    true,
-					BytesEgress:  12,
-					BytesIngress: 0,
+					PacketCount: newu64(12),
+					ByteCount:   newu64(0),
 				},
 			},
 			b: report.EdgeMetadatas{},
 			want: report.EdgeMetadatas{
 				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:    true,
-					BytesEgress:  12,
-					BytesIngress: 0,
+					PacketCount: newu64(12),
+					ByteCount:   newu64(0),
 				},
 			},
 		},
 		"Host merge": {
 			a: report.EdgeMetadatas{
 				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:        true,
-					BytesEgress:      12,
-					BytesIngress:     0,
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  4,
+					PacketCount:     newu64(12),
+					ByteCount:       newu64(0),
+					MaxConnCountTCP: newu64(4),
 				},
 			},
 			b: report.EdgeMetadatas{
 				"hostQ|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:        true,
-					BytesEgress:      1,
-					BytesIngress:     2,
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  6,
+					PacketCount:     newu64(1),
+					ByteCount:       newu64(2),
+					MaxConnCountTCP: newu64(6),
 				},
 			},
 			want: report.EdgeMetadatas{
 				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:        true,
-					BytesEgress:      12,
-					BytesIngress:     0,
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  4,
+					PacketCount:     newu64(12),
+					ByteCount:       newu64(0),
+					MaxConnCountTCP: newu64(4),
 				},
 				"hostQ|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:        true,
-					BytesEgress:      1,
-					BytesIngress:     2,
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  6,
+					PacketCount:     newu64(1),
+					ByteCount:       newu64(2),
+					MaxConnCountTCP: newu64(6),
 				},
 			},
 		},
 		"Edge merge": {
 			a: report.EdgeMetadatas{
 				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:        true,
-					BytesEgress:      12,
-					BytesIngress:     0,
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  7,
+					PacketCount:     newu64(12),
+					ByteCount:       newu64(0),
+					MaxConnCountTCP: newu64(7),
 				},
 			},
 			b: report.EdgeMetadatas{
 				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:        true,
-					BytesEgress:      1,
-					BytesIngress:     2,
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  9,
+					PacketCount:     newu64(1),
+					ByteCount:       newu64(2),
+					MaxConnCountTCP: newu64(9),
 				},
 			},
 			want: report.EdgeMetadatas{
 				"hostA|:192.168.1.1:12345|:192.168.1.2:80": report.EdgeMetadata{
-					WithBytes:        true,
-					BytesEgress:      13,
-					BytesIngress:     2,
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  9,
+					PacketCount:     newu64(13),
+					ByteCount:       newu64(2),
+					MaxConnCountTCP: newu64(9),
 				},
 			},
 		},
@@ -319,3 +299,5 @@ func TestMergeNodeMetadatas(t *testing.T) {
 		}
 	}
 }
+
+func newu64(value uint64) *uint64 { return &value }

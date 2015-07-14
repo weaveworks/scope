@@ -61,14 +61,14 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	tables := tables{}
 	{
 		rows := []Row{}
-		if val, ok := n.AggregateMetadata[KeyMaxConnCountTCP]; ok {
-			rows = append(rows, Row{"TCP connections", strconv.FormatInt(int64(val), 10), ""})
+		if n.EdgeMetadata.MaxConnCountTCP != nil {
+			rows = append(rows, Row{"TCP connections", strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10), ""})
 		}
-		if val, ok := n.AggregateMetadata[KeyBytesIngress]; ok {
-			rows = append(rows, Row{"Bytes ingress", strconv.FormatInt(int64(val), 10), ""})
+		if n.EdgeMetadata.PacketCount != nil {
+			rows = append(rows, Row{"Packets", strconv.FormatUint(*n.EdgeMetadata.PacketCount, 10), ""})
 		}
-		if val, ok := n.AggregateMetadata[KeyBytesEgress]; ok {
-			rows = append(rows, Row{"Bytes egress", strconv.FormatInt(int64(val), 10), ""})
+		if n.EdgeMetadata.ByteCount != nil {
+			rows = append(rows, Row{"Bytes", strconv.FormatUint(*n.EdgeMetadata.ByteCount, 10), ""})
 		}
 		if len(rows) > 0 {
 			tables = append(tables, Table{"Connections", true, connectionsRank, rows})
