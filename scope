@@ -27,7 +27,6 @@ HOSTNAME=scope
 DOMAINNAME=weave.local
 FQDN=$HOSTNAME.$DOMAINNAME
 DOCKER_BRIDGE=${DOCKER_BRIDGE:-docker0}
-WEAVE=$(set +e; which weave)
 IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
 IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
     xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
@@ -38,6 +37,11 @@ WEAVESCOPE_DNS_ARGS=${WEAVESCOPE_DNS_ARGS:-}
 [ $# -gt 0 ] || usage
 COMMAND=$1
 shift 1
+
+# http://stackoverflow.com/questions/592620/how-to-check-if-a-program-exists-from-a-bash-script
+command_exists() {
+    command -v $1 >/dev/null 2>&1
+}
 
 is_running() {
     status=$(docker inspect --format='{{.State.Running}}' $1 2>/dev/null) && [ "$status" = "true" ]
@@ -74,14 +78,9 @@ check_not_running() {
 
 # Run `weave expose` if it's not already exposed.
 weave_expose() {
-    if [ "$WEAVE" == "" ]; then
-        echo "weave command not found. Not placing Scope on Weave network." >&2
-        return
-    fi
-
-    status=$($WEAVE ps weave:expose | awk '{print $3}' 2>/dev/null)
+    status=$(weave ps weave:expose | awk '{print $3}' 2>/dev/null)
     if [ "$status" == "" ]; then
-        $WEAVE expose
+        weave expose
     fi
 }
 
@@ -91,13 +90,8 @@ weave_dns_add() {
     CONTAINER_FQDN="$2"
     shift 2
 
-    if [ "$WEAVE" == "" ]; then
-        echo "weave command not found. Not adding Scope to Weave DNS." >&2
-        return
-    fi
-
-    for ip in $*; do
-        $WEAVE dns-add $ip $CONTAINER_ID -h $CONTAINER_FQDN
+	for ip in $*; do
+        weave dns-add $ip $CONTAINER_ID -h $CONTAINER_FQDN
     done
 }
 
@@ -152,7 +146,7 @@ case "$COMMAND" in
 
         # If Weave is running, we want to expose a Weave IP to the host
         # network namespace, so Scope can use it.
-        if is_running $WEAVE_CONTAINER_NAME; then
+        if is_running $WEAVE_CONTAINER_NAME && command_exists weave; then
             weave_expose
         fi
 
@@ -169,15 +163,12 @@ case "$COMMAND" in
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS "$@")
 
         IP_ADDRS=$(docker run --net=host gliderlabs/alpine /bin/sh -c "$IP_ADDR_CMD")
-        if is_running $DNS_CONTAINER_NAME; then
-            if is_running $WEAVE_CONTAINER_NAME; then
-                if [ -z "$IP_ADDRS" ]; then
-                    echo "Could not determine local IP address; Weave DNS integration will not work correctly."
-                    exit 1
-                fi
-
-                weave_dns_add $CONTAINER $FQDN $IP_ADDRS
+        if is_running $DNS_CONTAINER_NAME && is_running $WEAVE_CONTAINER_NAME && command_exists weave; then
+            if [ -z "$IP_ADDRS" ]; then
+                echo "Could not determine local IP address; Weave DNS integration will not work correctly."
+                exit 1
             fi
+            weave_dns_add $CONTAINER $FQDN $IP_ADDRS
         fi
 
         echo $CONTAINER
