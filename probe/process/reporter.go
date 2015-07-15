@@ -45,14 +45,14 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 	err := r.walker.Walk(func(p *Process) {
 		pidstr := strconv.Itoa(p.PID)
 		nodeID := report.MakeProcessNodeID(r.scope, pidstr)
-		t.NodeMetadatas[nodeID] = report.NodeMetadata{
+		t.NodeMetadatas[nodeID] = report.NewNodeMetadata(report.Metadata{
 			PID:     pidstr,
 			Comm:    p.Comm,
 			Cmdline: p.Cmdline,
 			Threads: strconv.Itoa(p.Threads),
-		}
+		})
 		if p.PPID > 0 {
-			t.NodeMetadatas[nodeID][PPID] = strconv.Itoa(p.PPID)
+			t.NodeMetadatas[nodeID].Metadata[PPID] = strconv.Itoa(p.PPID)
 		}
 	})
 

@@ -29,10 +29,10 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 		Adjacency:     report.Adjacency{},
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
-			report.MakeOverlayNodeID(mockWeavePeerName): {
+			report.MakeOverlayNodeID(mockWeavePeerName): report.NewNodeMetadata(report.Metadata{
 				overlay.WeavePeerName:     mockWeavePeerName,
 				overlay.WeavePeerNickName: mockWeavePeerNickName,
-			},
+			}),
 		},
 	}), have.Overlay; !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))

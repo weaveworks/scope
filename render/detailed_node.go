@@ -125,7 +125,7 @@ func OriginTable(r report.Report, originID string) (Table, bool) {
 
 func connectionDetailsRows(endpointTopology report.Topology, originID string, nmd report.NodeMetadata) []Row {
 	rows := []Row{}
-	local := fmt.Sprintf("%s:%s", nmd[docker.Addr], nmd[docker.Port])
+	local := fmt.Sprintf("%s:%s", nmd.Metadata[docker.Addr], nmd.Metadata[docker.Port])
 	adjacencies := endpointTopology.Adjacency[report.MakeAdjacencyID(originID)]
 	sort.Strings(adjacencies)
 	for _, adj := range adjacencies {
@@ -150,7 +150,7 @@ func connectionDetailsTable(connectionRows []Row) Table {
 
 func addressOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
-	if val, ok := nmd["addr"]; ok {
+	if val, ok := nmd.Metadata["addr"]; ok {
 		rows = append(rows, Row{"Address", val, ""})
 	}
 	return Table{
@@ -170,7 +170,7 @@ func processOriginTable(nmd report.NodeMetadata) (Table, bool) {
 		{process.Cmdline, "Command"},
 		{process.Threads, "# Threads"},
 	} {
-		if val, ok := nmd[tuple.key]; ok {
+		if val, ok := nmd.Metadata[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
 		}
 	}
@@ -193,12 +193,12 @@ func containerOriginTable(nmd report.NodeMetadata) (Table, bool) {
 		{docker.ContainerCreated, "Created"},
 		{docker.ContainerCommand, "Command"},
 	} {
-		if val, ok := nmd[tuple.key]; ok {
+		if val, ok := nmd.Metadata[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
 		}
 	}
 
-	if val, ok := nmd[docker.MemoryUsage]; ok {
+	if val, ok := nmd.Metadata[docker.MemoryUsage]; ok {
 		memory, err := strconv.ParseFloat(val, 64)
 		if err == nil {
 			memoryStr := fmt.Sprintf("%0.2f", memory/float64(mb))
@@ -220,7 +220,7 @@ func containerImageOriginTable(nmd report.NodeMetadata) (Table, bool) {
 		{docker.ImageID, "Image ID"},
 		{docker.ImageName, "Image name"},
 	} {
-		if val, ok := nmd[tuple.key]; ok {
+		if val, ok := nmd.Metadata[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
 		}
 	}
@@ -241,7 +241,7 @@ func hostOriginTable(nmd report.NodeMetadata) (Table, bool) {
 		{host.KernelVersion, "Kernel version"},
 		{host.Uptime, "Uptime"},
 	} {
-		if val, ok := nmd[tuple.key]; ok {
+		if val, ok := nmd.Metadata[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
 		}
 	}

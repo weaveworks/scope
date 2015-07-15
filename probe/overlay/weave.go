@@ -70,10 +70,10 @@ func (w Weave) Report() (report.Report, error) {
 	}
 
 	for _, peer := range status.Peers {
-		r.Overlay.NodeMetadatas[report.MakeOverlayNodeID(peer.Name)] = report.NodeMetadata{
+		r.Overlay.NodeMetadatas[report.MakeOverlayNodeID(peer.Name)] = report.NewNodeMetadata(report.Metadata{
 			WeavePeerName:     peer.Name,
 			WeavePeerNickName: peer.NickName,
-		}
+		})
 	}
 	return r, nil
 }

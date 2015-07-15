@@ -14,8 +14,8 @@ import (
 func TestReportLocalNetworks(t *testing.T) {
 	r := report.MakeReport()
 	r.Merge(report.Report{Host: report.Topology{NodeMetadatas: report.NodeMetadatas{
-		"nonets": {},
-		"foo":    {host.LocalNetworks: "10.0.0.1/8 192.168.1.1/24 10.0.0.1/8 badnet/33"},
+		"nonets": report.NewNodeMetadata(report.Metadata{}),
+		"foo":    report.NewNodeMetadata(report.Metadata{host.LocalNetworks: "10.0.0.1/8 192.168.1.1/24 10.0.0.1/8 badnet/33"}),
 	}}})
 	want := report.Networks([]*net.IPNet{
 		mustParseCIDR("10.0.0.1/8"),

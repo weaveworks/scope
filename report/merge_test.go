@@ -4,8 +4,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
+)
+
+const (
+	PID    = "pid"
+	Name   = "name"
+	Domain = "domain"
 )
 
 func TestMergeAdjacency(t *testing.T) {
@@ -223,86 +228,86 @@ func TestMergeNodeMetadatas(t *testing.T) {
 		"Empty a": {
 			a: report.NodeMetadatas{},
 			b: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NodeMetadata{
-					docker.PID:    "23128",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
+				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+					PID:    "23128",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
 			},
 			want: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NodeMetadata{
-					docker.PID:    "23128",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
+				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+					PID:    "23128",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
 			},
 		},
 		"Empty b": {
 			a: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NodeMetadata{
-					docker.PID:    "23128",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
+				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+					PID:    "23128",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
 			},
 			b: report.NodeMetadatas{},
 			want: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NodeMetadata{
-					docker.PID:    "23128",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
+				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+					PID:    "23128",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
 			},
 		},
 		"Simple merge": {
 			a: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NodeMetadata{
-					docker.PID:    "23128",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
+				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+					PID:    "23128",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
 			},
 			b: report.NodeMetadatas{
-				":192.168.1.2:12345": report.NodeMetadata{
-					docker.PID:    "42",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
+				":192.168.1.2:12345": report.NewNodeMetadata(report.Metadata{
+					PID:    "42",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
 			},
 			want: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NodeMetadata{
-					docker.PID:    "23128",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
-				":192.168.1.2:12345": report.NodeMetadata{
-					docker.PID:    "42",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
+				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+					PID:    "23128",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
+				":192.168.1.2:12345": report.NewNodeMetadata(report.Metadata{
+					PID:    "42",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
 			},
 		},
 		"Merge conflict": {
 			a: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NodeMetadata{
-					docker.PID:    "23128",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
+				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+					PID:    "23128",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
 			},
 			b: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NodeMetadata{ // <-- same ID
-					docker.PID:    "0",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
+				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{ // <-- same ID
+					PID:    "0",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
 			},
 			want: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NodeMetadata{
-					docker.PID:    "23128",
-					docker.Name:   "curl",
-					docker.Domain: "node-a.local",
-				},
+				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+					PID:    "23128",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
 			},
 		},
 	} {

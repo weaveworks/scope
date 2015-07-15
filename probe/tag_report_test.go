@@ -11,8 +11,8 @@ func TestApply(t *testing.T) {
 	var (
 		endpointNodeID       = "c"
 		addressNodeID        = "d"
-		endpointNodeMetadata = report.NodeMetadata{"5": "6"}
-		addressNodeMetadata  = report.NodeMetadata{"7": "8"}
+		endpointNodeMetadata = report.NewNodeMetadata(report.Metadata{"5": "6"})
+		addressNodeMetadata  = report.NewNodeMetadata(report.Metadata{"7": "8"})
 	)
 
 	r := report.MakeReport()
@@ -25,8 +25,8 @@ func TestApply(t *testing.T) {
 		from report.Topology
 		via  string
 	}{
-		{endpointNodeMetadata.Copy().Merge(report.NodeMetadata{"topology": "endpoint"}), r.Endpoint, endpointNodeID},
-		{addressNodeMetadata.Copy().Merge(report.NodeMetadata{"topology": "address"}), r.Address, addressNodeID},
+		{endpointNodeMetadata.Copy().Merge(report.NewNodeMetadata(report.Metadata{"topology": "endpoint"})), r.Endpoint, endpointNodeID},
+		{addressNodeMetadata.Copy().Merge(report.NewNodeMetadata(report.Metadata{"topology": "address"})), r.Address, addressNodeID},
 	} {
 		if want, have := tuple.want, tuple.from.NodeMetadatas[tuple.via]; !reflect.DeepEqual(want, have) {
 			t.Errorf("want %+v, have %+v", want, have)
@@ -37,7 +37,7 @@ func TestApply(t *testing.T) {
 func TestTagMissingID(t *testing.T) {
 	const nodeID = "not-found"
 	r := report.MakeReport()
-	want := report.NodeMetadata{}
+	want := report.NewNodeMetadata(report.Metadata{})
 	rpt, _ := newTopologyTagger().Tag(r)
 	have := rpt.Endpoint.NodeMetadatas[nodeID].Copy()
 	if !reflect.DeepEqual(want, have) {

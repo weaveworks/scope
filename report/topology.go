@@ -41,28 +41,28 @@ type EdgeMetadata struct {
 }
 
 // NodeMetadata describes a superset of the metadata that probes can collect
-// about a given node in a given topology. Right now it's a weakly-typed map,
-// which should probably change (see comment on type MapFunc).
-type NodeMetadata map[string]string
+// about a given node in a given topology.
+type NodeMetadata struct {
+	Metadata
+}
+
+// Metadata is shorthand for a string:string map.
+type Metadata map[string]string
+
+// NewNodeMetadata creates a new NodeMetadata with the supplied Metadata.
+func NewNodeMetadata(m Metadata) NodeMetadata {
+	return NodeMetadata{
+		Metadata: m,
+	}
+}
 
 // Copy returns a value copy, useful for tests.
 func (nm NodeMetadata) Copy() NodeMetadata {
-	cp := make(NodeMetadata, len(nm))
-	for k, v := range nm {
-		cp[k] = v
+	cp := NewNodeMetadata(Metadata{})
+	for k, v := range nm.Metadata {
+		cp.Metadata[k] = v
 	}
 	return cp
-}
-
-// Merge merges two node metadata maps together. In case of conflict, the
-// other (right-hand) side wins. Always reassign the result of merge to the
-// destination. Merge is defined on the value-type, but node metadata map is
-// itself a reference type, so if you want to maintain immutability, use copy.
-func (nm NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
-	for k, v := range other {
-		nm[k] = v // other takes precedence
-	}
-	return nm
 }
 
 // NewTopology gives you a Topology.

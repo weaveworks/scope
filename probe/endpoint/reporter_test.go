@@ -96,7 +96,7 @@ func TestSpyNoProcesses(t *testing.T) {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 
-	if want, have := nodeName, r.Address.NodeMetadatas[scopedLocal][docker.Name]; want != have {
+	if want, have := nodeName, r.Address.NodeMetadatas[scopedLocal].Metadata[docker.Name]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 }
@@ -130,7 +130,7 @@ func TestSpyWithProcesses(t *testing.T) {
 	for key, want := range map[string]string{
 		"pid": strconv.FormatUint(uint64(fixProcessPID), 10),
 	} {
-		if have := r.Endpoint.NodeMetadatas[scopedLocal][key]; want != have {
+		if have := r.Endpoint.NodeMetadatas[scopedLocal].Metadata[key]; want != have {
 			t.Errorf("Process.NodeMetadatas[%q][%q]: want %q, have %q", scopedLocal, key, want, have)
 		}
 	}

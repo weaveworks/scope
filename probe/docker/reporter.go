@@ -49,12 +49,12 @@ func (r *Reporter) containerImageTopology() report.Topology {
 	result := report.NewTopology()
 
 	r.registry.WalkImages(func(image *docker_client.APIImages) {
-		nmd := report.NodeMetadata{
+		nmd := report.NewNodeMetadata(report.Metadata{
 			ImageID: image.ID,
-		}
+		})
 
 		if len(image.RepoTags) > 0 {
-			nmd[ImageName] = image.RepoTags[0]
+			nmd.Metadata[ImageName] = image.RepoTags[0]
 		}
 
 		nodeID := report.MakeContainerNodeID(r.scope, image.ID)

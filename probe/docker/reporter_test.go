@@ -53,21 +53,21 @@ func TestReporter(t *testing.T) {
 		Adjacency:     report.Adjacency{},
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
-			report.MakeContainerNodeID("", "ping"): report.NodeMetadata{
+			report.MakeContainerNodeID("", "ping"): report.NewNodeMetadata(report.Metadata{
 				docker.ContainerID:   "ping",
 				docker.ContainerName: "pong",
 				docker.ImageID:       "baz",
-			},
+			}),
 		},
 	}
 	want.ContainerImage = report.Topology{
 		Adjacency:     report.Adjacency{},
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
-			report.MakeContainerNodeID("", "baz"): report.NodeMetadata{
+			report.MakeContainerNodeID("", "baz"): report.NewNodeMetadata(report.Metadata{
 				docker.ImageID:   "baz",
 				docker.ImageName: "bang",
-			},
+			}),
 		},
 	}
 

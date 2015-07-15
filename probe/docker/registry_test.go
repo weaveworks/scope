@@ -38,11 +38,11 @@ func (c *mockContainer) StartGatheringStats() error {
 func (c *mockContainer) StopGatheringStats() {}
 
 func (c *mockContainer) GetNodeMetadata() report.NodeMetadata {
-	return report.NodeMetadata{
+	return report.NewNodeMetadata(report.Metadata{
 		docker.ContainerID:   c.c.ID,
 		docker.ContainerName: c.c.Name,
 		docker.ImageID:       c.c.Image,
-	}
+	})
 }
 
 type mockDockerClient struct {

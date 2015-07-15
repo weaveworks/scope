@@ -110,8 +110,8 @@ func TestMapEdge(t *testing.T) {
 	selector := func(_ report.Report) report.Topology {
 		return report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
-				"foo": report.NodeMetadata{"id": "foo"},
-				"bar": report.NodeMetadata{"id": "bar"},
+				"foo": report.NewNodeMetadata(report.Metadata{"id": "foo"}),
+				"bar": report.NewNodeMetadata(report.Metadata{"id": "bar"}),
 			},
 			Adjacency: report.Adjacency{
 				">foo": report.MakeIDList("bar"),
@@ -125,7 +125,7 @@ func TestMapEdge(t *testing.T) {
 	}
 
 	identity := func(nmd report.NodeMetadata) (render.RenderableNode, bool) {
-		return render.NewRenderableNode(nmd["id"], "", "", "", nmd), true
+		return render.NewRenderableNode(nmd.Metadata["id"], "", "", "", nmd), true
 	}
 
 	mapper := render.Map{

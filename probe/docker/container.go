@@ -205,20 +205,20 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 	c.RLock()
 	defer c.RUnlock()
 
-	result := report.NodeMetadata{
+	result := report.NewNodeMetadata(report.Metadata{
 		ContainerID:      c.ID(),
 		ContainerName:    strings.TrimPrefix(c.container.Name, "/"),
 		ContainerPorts:   c.ports(),
 		ContainerCreated: c.container.Created.Format(time.RFC822),
 		ContainerCommand: c.container.Path + " " + strings.Join(c.container.Args, " "),
 		ImageID:          c.container.Image,
-	}
+	})
 
 	if c.latestStats == nil {
 		return result
 	}
 
-	result.Merge(report.NodeMetadata{
+	result.Merge(report.NewNodeMetadata(report.Metadata{
 		NetworkRxDropped: strconv.FormatUint(c.latestStats.Network.RxDropped, 10),
 		NetworkRxBytes:   strconv.FormatUint(c.latestStats.Network.RxBytes, 10),
 		NetworkRxErrors:  strconv.FormatUint(c.latestStats.Network.RxErrors, 10),
@@ -238,6 +238,6 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 		CPUTotalUsage:        strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.TotalUsage, 10),
 		CPUUsageInKernelmode: strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.UsageInKernelmode, 10),
 		CPUSystemCPUUsage:    strconv.FormatUint(c.latestStats.CPUStats.SystemCPUUsage, 10),
-	})
+	}))
 	return result
 }

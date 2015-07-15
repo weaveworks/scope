@@ -36,33 +36,33 @@ func TestReporter(t *testing.T) {
 		Adjacency:     report.Adjacency{},
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
-			report.MakeProcessNodeID("", "1"): report.NodeMetadata{
+			report.MakeProcessNodeID("", "1"): report.NewNodeMetadata(report.Metadata{
 				process.PID:     "1",
 				process.Comm:    "init",
 				process.Cmdline: "",
 				process.Threads: "0",
-			},
-			report.MakeProcessNodeID("", "2"): report.NodeMetadata{
+			}),
+			report.MakeProcessNodeID("", "2"): report.NewNodeMetadata(report.Metadata{
 				process.PID:     "2",
 				process.Comm:    "bash",
 				process.PPID:    "1",
 				process.Cmdline: "",
 				process.Threads: "0",
-			},
-			report.MakeProcessNodeID("", "3"): report.NodeMetadata{
+			}),
+			report.MakeProcessNodeID("", "3"): report.NewNodeMetadata(report.Metadata{
 				process.PID:     "3",
 				process.Comm:    "apache",
 				process.PPID:    "1",
 				process.Cmdline: "",
 				process.Threads: "2",
-			},
-			report.MakeProcessNodeID("", "4"): report.NodeMetadata{
+			}),
+			report.MakeProcessNodeID("", "4"): report.NewNodeMetadata(report.Metadata{
 				process.PID:     "4",
 				process.Comm:    "ping",
 				process.PPID:    "2",
 				process.Cmdline: "ping foo.bar.local",
 				process.Threads: "0",
-			},
+			}),
 		},
 	}
 

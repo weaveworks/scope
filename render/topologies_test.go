@@ -6,13 +6,14 @@ import (
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
+	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
 
 func trimNodeMetadata(rns render.RenderableNodes) render.RenderableNodes {
 	result := render.RenderableNodes{}
 	for id, rn := range rns {
-		rn.NodeMetadata = nil
+		rn.NodeMetadata = report.NodeMetadata{}
 		result[id] = rn
 	}
 	return result
