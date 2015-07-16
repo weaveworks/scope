@@ -205,7 +205,7 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 	c.RLock()
 	defer c.RUnlock()
 
-	result := report.NewNodeMetadata(report.Metadata{
+	result := report.NewNodeMetadata(map[string]string{
 		ContainerID:      c.ID(),
 		ContainerName:    strings.TrimPrefix(c.container.Name, "/"),
 		ContainerPorts:   c.ports(),
@@ -218,7 +218,7 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 		return result
 	}
 
-	result.Merge(report.NewNodeMetadata(report.Metadata{
+	result.Merge(report.NewNodeMetadata(map[string]string{
 		NetworkRxDropped: strconv.FormatUint(c.latestStats.Network.RxDropped, 10),
 		NetworkRxBytes:   strconv.FormatUint(c.latestStats.Network.RxBytes, 10),
 		NetworkRxErrors:  strconv.FormatUint(c.latestStats.Network.RxErrors, 10),

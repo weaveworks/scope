@@ -46,7 +46,7 @@ func TestReporter(t *testing.T) {
 	host.InterfaceAddrs = func() ([]net.Addr, error) { _, ipnet, _ := net.ParseCIDR(network); return []net.Addr{ipnet}, nil }
 
 	want := report.MakeReport()
-	want.Host.NodeMetadatas[report.MakeHostNodeID(hostID)] = report.NewNodeMetadata(report.Metadata{
+	want.Host.NodeMetadatas[report.MakeHostNodeID(hostID)] = report.NewNodeMetadata(map[string]string{
 		host.Timestamp:     now,
 		host.HostName:      hostname,
 		host.LocalNetworks: network,

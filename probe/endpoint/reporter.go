@@ -80,7 +80,7 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 	rpt.Address.Adjacency[key] = rpt.Address.Adjacency[key].Add(scopedRemote)
 
 	if _, ok := rpt.Address.NodeMetadatas[scopedLocal]; !ok {
-		rpt.Address.NodeMetadatas[scopedLocal] = report.NewNodeMetadata(report.Metadata{
+		rpt.Address.NodeMetadatas[scopedLocal] = report.NewNodeMetadata(map[string]string{
 			docker.Name: r.hostName,
 			docker.Addr: c.LocalAddress.String(),
 		})
@@ -100,7 +100,7 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 
 		if _, ok := rpt.Endpoint.NodeMetadatas[scopedLocal]; !ok {
 			// First hit establishes NodeMetadata for scoped local address + port
-			md := report.NewNodeMetadata(report.Metadata{
+			md := report.NewNodeMetadata(map[string]string{
 				"addr": c.LocalAddress.String(),
 				"port": strconv.Itoa(int(c.LocalPort)),
 				"pid":  fmt.Sprintf("%d", c.Proc.PID),

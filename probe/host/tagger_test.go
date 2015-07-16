@@ -13,12 +13,12 @@ func TestTagger(t *testing.T) {
 	var (
 		hostID         = "foo"
 		endpointNodeID = report.MakeEndpointNodeID(hostID, "1.2.3.4", "56789") // hostID ignored
-		nodeMetadata   = report.NewNodeMetadata(report.Metadata{"foo": "bar"})
+		nodeMetadata   = report.NewNodeMetadata(map[string]string{"foo": "bar"})
 	)
 
 	r := report.MakeReport()
 	r.Endpoint.NodeMetadatas[endpointNodeID] = nodeMetadata
-	want := nodeMetadata.Merge(report.NewNodeMetadata(report.Metadata{
+	want := nodeMetadata.Merge(report.NewNodeMetadata(map[string]string{
 		report.HostNodeID: report.MakeHostNodeID(hostID),
 	}))
 	rpt, _ := host.NewTagger(hostID).Tag(r)

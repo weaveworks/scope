@@ -49,7 +49,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 	result := report.NewTopology()
 
 	r.registry.WalkImages(func(image *docker_client.APIImages) {
-		nmd := report.NewNodeMetadata(report.Metadata{
+		nmd := report.NewNodeMetadata(map[string]string{
 			ImageID: image.ID,
 		})
 

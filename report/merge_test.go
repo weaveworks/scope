@@ -228,14 +228,14 @@ func TestMergeNodeMetadatas(t *testing.T) {
 		"Empty a": {
 			a: report.NodeMetadatas{},
 			b: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+				":192.168.1.1:12345": report.NewNodeMetadata(map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
 			},
 			want: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+				":192.168.1.1:12345": report.NewNodeMetadata(map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
@@ -244,7 +244,7 @@ func TestMergeNodeMetadatas(t *testing.T) {
 		},
 		"Empty b": {
 			a: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+				":192.168.1.1:12345": report.NewNodeMetadata(map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
@@ -252,7 +252,7 @@ func TestMergeNodeMetadatas(t *testing.T) {
 			},
 			b: report.NodeMetadatas{},
 			want: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+				":192.168.1.1:12345": report.NewNodeMetadata(map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
@@ -261,26 +261,26 @@ func TestMergeNodeMetadatas(t *testing.T) {
 		},
 		"Simple merge": {
 			a: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+				":192.168.1.1:12345": report.NewNodeMetadata(map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
 			},
 			b: report.NodeMetadatas{
-				":192.168.1.2:12345": report.NewNodeMetadata(report.Metadata{
+				":192.168.1.2:12345": report.NewNodeMetadata(map[string]string{
 					PID:    "42",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
 			},
 			want: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+				":192.168.1.1:12345": report.NewNodeMetadata(map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
-				":192.168.1.2:12345": report.NewNodeMetadata(report.Metadata{
+				":192.168.1.2:12345": report.NewNodeMetadata(map[string]string{
 					PID:    "42",
 					Name:   "curl",
 					Domain: "node-a.local",
@@ -289,21 +289,21 @@ func TestMergeNodeMetadatas(t *testing.T) {
 		},
 		"Merge conflict": {
 			a: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+				":192.168.1.1:12345": report.NewNodeMetadata(map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
 			},
 			b: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{ // <-- same ID
+				":192.168.1.1:12345": report.NewNodeMetadata(map[string]string{ // <-- same ID
 					PID:    "0",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
 			},
 			want: report.NodeMetadatas{
-				":192.168.1.1:12345": report.NewNodeMetadata(report.Metadata{
+				":192.168.1.1:12345": report.NewNodeMetadata(map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
