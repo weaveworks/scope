@@ -1,3 +1,21 @@
+## Release 0.5.0
+
+New features:
+- Aggregate all connection information into a single table in the details
+  dialog.
+  [#298](https://github.com/weaveworks/scope/pull/298)
+- Renamed binaries to scope-app and scope-probe
+  [#293](https://github.com/weaveworks/scope/pull/293)
+- Group containers topology by name only, and not version
+  [#291](https://github.com/weaveworks/scope/issues/291)
+- Make intra-scope communication traverse the weave network if present.
+  [#71](https://github.com/weaveworks/scope/issues/71)
+
+Bug fixes:
+- Reduced memory usage
+  [#266](https://github.com/weaveworks/scope/issues/266)
+
+
 ## Release 0.4.0
 
 New features:
