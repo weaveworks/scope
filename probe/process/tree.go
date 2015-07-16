@@ -10,13 +10,13 @@ type Tree interface {
 }
 
 type tree struct {
-	processes map[int]*Process
+	processes map[int]Process
 }
 
 // NewTree returns a new Tree that can be polled.
 func NewTree(walker Walker) (Tree, error) {
-	pt := tree{processes: map[int]*Process{}}
-	err := walker.Walk(func(p *Process) {
+	pt := tree{processes: map[int]Process{}}
+	err := walker.Walk(func(p Process) {
 		pt.processes[p.PID] = p
 	})
 

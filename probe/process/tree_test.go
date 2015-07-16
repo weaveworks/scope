@@ -9,7 +9,7 @@ import (
 
 func TestTree(t *testing.T) {
 	walker := &mockWalker{
-		processes: []*process.Process{
+		processes: []process.Process{
 			{PID: 1, PPID: 0, Comm: "init"},
 			{PID: 2, PPID: 1, Comm: "bash"},
 			{PID: 3, PPID: 1, Comm: "apache", Threads: 2},

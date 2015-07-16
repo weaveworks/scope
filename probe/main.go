@@ -7,7 +7,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
-	"runtime"
 	"strconv"
 	"syscall"
 	"time"
@@ -24,8 +23,6 @@ import (
 
 var version = "dev" // set at build time
 
-const linux = "linux" // runtime.GOOS
-
 func main() {
 	var (
 		httpListen         = flag.String("http.listen", "", "listen address for HTTP profiling and instrumentation server")
@@ -34,7 +31,7 @@ func main() {
 		listen             = flag.String("listen", ":"+strconv.Itoa(xfer.ProbePort), "listen address")
 		prometheusEndpoint = flag.String("prometheus.endpoint", "/metrics", "Prometheus metrics exposition endpoint (requires -http.listen)")
 		spyProcs           = flag.Bool("processes", true, "report processes (needs root)")
-		dockerEnabled      = flag.Bool("docker", true, "collect Docker-related attributes for processes")
+		dockerEnabled      = flag.Bool("docker", false, "collect Docker-related attributes for processes")
 		dockerInterval     = flag.Duration("docker.interval", 10*time.Second, "how often to update Docker attributes")
 		dockerBridge       = flag.String("docker.bridge", "docker0", "the docker bridge name")
 		weaveRouterAddr    = flag.String("weave.router.addr", "", "IP address or FQDN of the Weave router")
@@ -82,25 +79,22 @@ func main() {
 		processCache *process.CachingWalker
 	)
 
-	// TODO provide an alternate implementation for Darwin.
-	if runtime.GOOS == linux {
-		processCache = process.NewCachingWalker(process.NewWalker(*procRoot))
-		reporters = append(reporters, process.NewReporter(processCache, hostID))
+	processCache = process.NewCachingWalker(process.NewWalker(*procRoot))
+	reporters = append(reporters, process.NewReporter(processCache, hostID))
 
-		if *dockerEnabled {
-			if err = report.AddLocalBridge(*dockerBridge); err != nil {
-				log.Fatalf("failed to get docker bridge address: %v", err)
-			}
-
-			dockerRegistry, err := docker.NewRegistry(*dockerInterval)
-			if err != nil {
-				log.Fatalf("failed to start docker registry: %v", err)
-			}
-			defer dockerRegistry.Stop()
-
-			taggers = append(taggers, docker.NewTagger(dockerRegistry, processCache))
-			reporters = append(reporters, docker.NewReporter(dockerRegistry, hostID))
+	if *dockerEnabled {
+		if err := report.AddLocalBridge(*dockerBridge); err != nil {
+			log.Fatalf("failed to get docker bridge address: %v", err)
 		}
+
+		dockerRegistry, err := docker.NewRegistry(*dockerInterval)
+		if err != nil {
+			log.Fatalf("failed to start docker registry: %v", err)
+		}
+		defer dockerRegistry.Stop()
+
+		taggers = append(taggers, docker.NewTagger(dockerRegistry, processCache))
+		reporters = append(reporters, docker.NewReporter(dockerRegistry, hostID))
 	}
 
 	if *weaveRouterAddr != "" {
@@ -131,10 +125,8 @@ func main() {
 				r = report.MakeReport()
 
 			case <-spyTick:
-				if processCache != nil {
-					if err := processCache.Update(); err != nil {
-						log.Printf("error reading processes: %v", err)
-					}
+				if err := processCache.Update(); err != nil {
+					log.Printf("error reading processes: %v", err)
 				}
 
 				for _, reporter := range reporters {
