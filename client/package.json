@@ -6,8 +6,8 @@
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
+    "cola": "tgdwyer/WebCola#master",
     "d3": "^3.5.5",
-    "dagre": "^0.7.2",
     "debug": "^2.2.0",
     "flux": "^2.0.3",
     "font-awesome": "^4.3.0",
@@ -23,8 +23,7 @@
     "react-motion": "^0.2.7",
     "react-tap-event-plugin": "^0.1.7",
     "react-tween-state": "0.0.5",
-    "reqwest": "~1.1.5",
-    "timely": "^0.1.0"
+    "reqwest": "~1.1.5"
   },
   "devDependencies": {
     "autoprefixer-core": "^5.2.0",

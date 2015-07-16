@@ -2,7 +2,6 @@ const _ = require('lodash');
 const d3 = require('d3');
 const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
-const timely = require('timely');
 const Spring = require('react-motion').Spring;
 
 const AppActions = require('../actions/app-actions');
@@ -27,8 +26,8 @@ const NodesChart = React.createClass({
 
   getInitialState: function() {
     return {
-      nodes: {},
-      edges: {},
+      nodes: [],
+      edges: [],
       nodeScale: d3.scale.linear(),
       shiftTranslate: [0, 0],
       panTranslate: [0, 0],
@@ -61,8 +60,8 @@ const NodesChart = React.createClass({
     if (nextProps.topologyId !== this.props.topologyId) {
       _.assign(state, {
         autoShifted: false,
-        nodes: {},
-        edges: {}
+        nodes: [],
+        edges: []
       });
     }
     // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
@@ -127,8 +126,8 @@ const NodesChart = React.createClass({
             subLabel={node.subLabel}
             rank={node.rank}
             scale={scale}
-            dx={node.x}
-            dy={node.y}
+            dx={node.x + MARGINS.left}
+            dy={node.y + MARGINS.top}
           />
         );
       })
@@ -144,8 +143,15 @@ const NodesChart = React.createClass({
       const blurred = hasSelectedNode
         && edge.source.id !== selectedNodeId
         && edge.target.id !== selectedNodeId;
+      const points = [{
+        x: edge.source.x + MARGINS.left,
+        y: edge.source.y + MARGINS.top
+      }, {
+        x: edge.target.x + MARGINS.left,
+        y: edge.target.y + MARGINS.top
+      }];
       return (
-        <Edge key={edge.id} id={edge.id} points={edge.points} blurred={blurred}
+        <Edge key={edge.id} id={edge.id} points={points} blurred={blurred}
           highlighted={highlighted} />
       );
     }, this);
@@ -399,24 +405,22 @@ const NodesChart = React.createClass({
 
     const nodes = this.initNodes(props.nodes, state.nodes);
     const edges = this.initEdges(props.nodes, nodes);
-
+    const width = props.width - MARGINS.left - MARGINS.right;
+    const height = props.height - MARGINS.top - MARGINS.bottom;
     const expanse = Math.min(props.height, props.width);
     const nodeSize = expanse / 3; // single node should fill a third of the screen
     const normalizedNodeSize = nodeSize / Math.sqrt(n); // assuming rectangular layout
     const nodeScale = this.state.nodeScale.range([0, normalizedNodeSize]);
 
-    const timedLayouter = timely(NodesLayout.doLayout);
-    const graph = timedLayouter(
+    const graph = NodesLayout.doLayout(
       nodes,
       edges,
-      props.width,
-      props.height,
+      width,
+      height,
       nodeScale,
       MARGINS,
       this.props.topologyId
     );
-
-    debug('graph layout took ' + timedLayouter.time + 'ms');
 
     // layout was aborted
     if (!graph) {
@@ -435,12 +439,26 @@ const NodesChart = React.createClass({
     // adjust layout based on viewport
     const xFactor = (props.width - MARGINS.left - MARGINS.right) / graph.width;
     const yFactor = props.height / graph.height;
+    const xOffset = graph.left;
+    const yOffset = graph.top;
     const zoomFactor = Math.min(xFactor, yFactor);
     let zoomScale = this.state.scale;
+    let translate = this.state.translate;
 
     if (this.zoom && !this.state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
       zoomScale = zoomFactor;
+
+      if (xOffset < 0) {
+        translate[0] = xOffset * -1 * zoomFactor;
+      }
+      if (yOffset < 0) {
+        translate[1] = yOffset * -1 * zoomFactor;
+      }
+
       // saving in d3's behavior cache
+      debug('adjust graph', graph, translate, zoomFactor);
+
+      this.zoom.translate(translate);
       this.zoom.scale(zoomFactor);
     }
 
@@ -449,7 +467,8 @@ const NodesChart = React.createClass({
       edges: edges,
       nodeScale: nodeScale,
       scale: zoomScale,
-      maxNodesExceeded: false
+      maxNodesExceeded: false,
+      translate: translate
     };
   },
 
