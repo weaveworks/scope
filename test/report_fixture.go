@@ -80,24 +80,24 @@ var (
 				// NodeMetadata is arbitrary. We're free to put only precisely what we
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
-				Client54001NodeID: report.NodeMetadata{
+				Client54001NodeID: report.NewNodeMetadata(map[string]string{
 					"addr":            ClientIP,
 					"port":            ClientPort54001,
 					"pid":             Client1PID,
 					report.HostNodeID: ClientHostNodeID,
-				},
-				Client54002NodeID: report.NodeMetadata{
+				}),
+				Client54002NodeID: report.NewNodeMetadata(map[string]string{
 					"addr":            ClientIP,
 					"port":            ClientPort54002,
 					"pid":             Client2PID,
 					report.HostNodeID: ClientHostNodeID,
-				},
-				Server80NodeID: report.NodeMetadata{
+				}),
+				Server80NodeID: report.NewNodeMetadata(map[string]string{
 					"addr":            ServerIP,
 					"port":            ServerPort,
 					"pid":             ServerPID,
 					report.HostNodeID: ServerHostNodeID,
-				},
+				}),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				report.MakeEdgeID(Client54001NodeID, Server80NodeID): report.EdgeMetadata{
@@ -141,60 +141,60 @@ var (
 		Process: report.Topology{
 			Adjacency: report.Adjacency{},
 			NodeMetadatas: report.NodeMetadatas{
-				ClientProcess1NodeID: report.NodeMetadata{
+				ClientProcess1NodeID: report.NewNodeMetadata(map[string]string{
 					"pid":              Client1PID,
 					"comm":             "curl",
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
-				},
-				ClientProcess2NodeID: report.NodeMetadata{
+				}),
+				ClientProcess2NodeID: report.NewNodeMetadata(map[string]string{
 					"pid":              Client2PID,
 					"comm":             "curl",
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
-				},
-				ServerProcessNodeID: report.NodeMetadata{
+				}),
+				ServerProcessNodeID: report.NewNodeMetadata(map[string]string{
 					"pid":              ServerPID,
 					"comm":             "apache",
 					docker.ContainerID: ServerContainerID,
 					report.HostNodeID:  ServerHostNodeID,
-				},
-				NonContainerProcessNodeID: report.NodeMetadata{
+				}),
+				NonContainerProcessNodeID: report.NewNodeMetadata(map[string]string{
 					"pid":             NonContainerPID,
 					"comm":            "bash",
 					report.HostNodeID: ServerHostNodeID,
-				},
+				}),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{},
 		},
 		Container: report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
-				ClientContainerNodeID: report.NodeMetadata{
+				ClientContainerNodeID: report.NewNodeMetadata(map[string]string{
 					docker.ContainerID:   ClientContainerID,
 					docker.ContainerName: "client",
 					docker.ImageID:       ClientContainerImageID,
 					report.HostNodeID:    ClientHostNodeID,
-				},
-				ServerContainerNodeID: report.NodeMetadata{
+				}),
+				ServerContainerNodeID: report.NewNodeMetadata(map[string]string{
 					docker.ContainerID:   ServerContainerID,
 					docker.ContainerName: "server",
 					docker.ImageID:       ServerContainerImageID,
 					report.HostNodeID:    ServerHostNodeID,
-				},
+				}),
 			},
 		},
 		ContainerImage: report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
-				ClientContainerImageNodeID: report.NodeMetadata{
+				ClientContainerImageNodeID: report.NewNodeMetadata(map[string]string{
 					docker.ImageID:    ClientContainerImageID,
 					docker.ImageName:  ClientContainerImageName,
 					report.HostNodeID: ClientHostNodeID,
-				},
-				ServerContainerImageNodeID: report.NodeMetadata{
+				}),
+				ServerContainerImageNodeID: report.NewNodeMetadata(map[string]string{
 					docker.ImageID:    ServerContainerImageID,
 					docker.ImageName:  ServerContainerImageName,
 					report.HostNodeID: ServerHostNodeID,
-				},
+				}),
 			},
 		},
 		Address: report.Topology{
@@ -204,14 +204,14 @@ var (
 					ClientAddressNodeID, UnknownAddress1NodeID, UnknownAddress2NodeID, RandomAddressNodeID), // no backlinks to unknown/random
 			},
 			NodeMetadatas: report.NodeMetadatas{
-				ClientAddressNodeID: report.NodeMetadata{
+				ClientAddressNodeID: report.NewNodeMetadata(map[string]string{
 					"addr":            ClientIP,
 					report.HostNodeID: ClientHostNodeID,
-				},
-				ServerAddressNodeID: report.NodeMetadata{
+				}),
+				ServerAddressNodeID: report.NewNodeMetadata(map[string]string{
 					"addr":            ServerIP,
 					report.HostNodeID: ServerHostNodeID,
-				},
+				}),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				report.MakeEdgeID(ClientAddressNodeID, ServerAddressNodeID): report.EdgeMetadata{
@@ -227,20 +227,20 @@ var (
 		Host: report.Topology{
 			Adjacency: report.Adjacency{},
 			NodeMetadatas: report.NodeMetadatas{
-				ClientHostNodeID: report.NodeMetadata{
+				ClientHostNodeID: report.NewNodeMetadata(map[string]string{
 					"host_name":       ClientHostName,
 					"local_networks":  "10.10.10.0/24",
 					"os":              "Linux",
 					"load":            "0.01 0.01 0.01",
 					report.HostNodeID: ClientHostNodeID,
-				},
-				ServerHostNodeID: report.NodeMetadata{
+				}),
+				ServerHostNodeID: report.NewNodeMetadata(map[string]string{
 					"host_name":       ServerHostName,
 					"local_networks":  "10.10.10.0/24",
 					"os":              "Linux",
 					"load":            "0.01 0.01 0.01",
 					report.HostNodeID: ServerHostNodeID,
-				},
+				}),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{},
 		},

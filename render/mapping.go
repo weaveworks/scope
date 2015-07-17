@@ -49,9 +49,9 @@ type MapFunc func(RenderableNode) (RenderableNode, bool)
 // assume the presence of certain keys.
 func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id      = MakeEndpointID(report.ExtractHostID(m), m["addr"], m["port"])
-		major   = fmt.Sprintf("%s:%s", m["addr"], m["port"])
-		pid, ok = m["pid"]
+		id      = MakeEndpointID(report.ExtractHostID(m), m.Metadata["addr"], m.Metadata["port"])
+		major   = fmt.Sprintf("%s:%s", m.Metadata["addr"], m.Metadata["port"])
+		pid, ok = m.Metadata["pid"]
 		minor   = report.ExtractHostID(m)
 		rank    = major
 	)
@@ -68,10 +68,10 @@ func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // presence of certain keys.
 func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = MakeProcessID(report.ExtractHostID(m), m["pid"])
-		major = m["comm"]
-		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), m["pid"])
-		rank  = m["pid"]
+		id    = MakeProcessID(report.ExtractHostID(m), m.Metadata["pid"])
+		major = m.Metadata["comm"]
+		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), m.Metadata["pid"])
+		rank  = m.Metadata["pid"]
 	)
 
 	return NewRenderableNode(id, major, minor, rank, m), true
@@ -82,10 +82,10 @@ func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // nodes, we can safely assume the presences of certain keys.
 func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = m[docker.ContainerID]
-		major = m[docker.ContainerName]
+		id    = m.Metadata[docker.ContainerID]
+		major = m.Metadata[docker.ContainerName]
 		minor = report.ExtractHostID(m)
-		rank  = m[docker.ImageID]
+		rank  = m.Metadata[docker.ImageID]
 	)
 
 	return NewRenderableNode(id, major, minor, rank, m), true
@@ -96,9 +96,9 @@ func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // topology nodes, we can safely assume the presences of certain keys.
 func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = m[docker.ImageID]
-		major = m[docker.ImageName]
-		rank  = m[docker.ImageID]
+		id    = m.Metadata[docker.ImageID]
+		major = m.Metadata[docker.ImageName]
+		rank  = m.Metadata[docker.ImageID]
 	)
 
 	return NewRenderableNode(id, major, "", rank, m), true
@@ -109,8 +109,8 @@ func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // assume the presence of certain keys.
 func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = MakeAddressID(report.ExtractHostID(m), m["addr"])
-		major = m["addr"]
+		id    = MakeAddressID(report.ExtractHostID(m), m.Metadata["addr"])
+		major = m.Metadata["addr"]
 		minor = report.ExtractHostID(m)
 		rank  = major
 	)
@@ -124,7 +124,7 @@ func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 func MapHostIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
 		id                 = MakeHostID(report.ExtractHostID(m))
-		hostname           = m[host.HostName]
+		hostname           = m.Metadata[host.HostName]
 		parts              = strings.SplitN(hostname, ".", 2)
 		major, minor, rank = "", "", ""
 	)
@@ -154,7 +154,7 @@ func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
 		return n, true
 	}
 
-	pid, ok := n.NodeMetadata["pid"]
+	pid, ok := n.NodeMetadata.Metadata["pid"]
 	if !ok {
 		return RenderableNode{}, false
 	}
@@ -189,7 +189,7 @@ func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
 	// into an per-host "Uncontained" node.  If for whatever reason
 	// this node doesn't have a host id in their nodemetadata, it'll
 	// all get grouped into a single uncontained node.
-	id, ok := n.NodeMetadata[docker.ContainerID]
+	id, ok := n.NodeMetadata.Metadata[docker.ContainerID]
 	if !ok {
 		hostID := report.ExtractHostID(n.NodeMetadata)
 		id = MakePseudoNodeID(UncontainedID, hostID)
@@ -212,7 +212,7 @@ func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
 		return n, true
 	}
 
-	name, ok := n.NodeMetadata["comm"]
+	name, ok := n.NodeMetadata.Metadata["comm"]
 	if !ok {
 		return RenderableNode{}, false
 	}
@@ -242,7 +242,7 @@ func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
 
 	// Otherwise, if some some reason the container doesn't have a image_id
 	// (maybe slightly out of sync reports), just drop it
-	id, ok := n.NodeMetadata[docker.ImageID]
+	id, ok := n.NodeMetadata.Metadata[docker.ImageID]
 	if !ok {
 		return n, false
 	}
@@ -261,7 +261,7 @@ func MapContainerImage2Name(n RenderableNode) (RenderableNode, bool) {
 		return n, true
 	}
 
-	name, ok := n.NodeMetadata[docker.ImageName]
+	name, ok := n.NodeMetadata.Metadata[docker.ImageName]
 	if !ok {
 		return RenderableNode{}, false
 	}

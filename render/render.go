@@ -170,7 +170,7 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 
 		origins := mapped.Origins
 		origins = origins.Add(nodeID)
-		origins = origins.Add(metadata[report.HostNodeID])
+		origins = origins.Add(metadata.Metadata[report.HostNodeID])
 		mapped.Origins = origins
 
 		nodes[mapped.ID] = mapped

@@ -37,6 +37,17 @@ func (m *NodeMetadatas) Merge(other NodeMetadatas) {
 	}
 }
 
+// Merge merges two node metadata maps together. In case of conflict, the
+// other (right-hand) side wins. Always reassign the result of merge to the
+// destination. Merge is defined on the value-type, but node metadata map is
+// itself a reference type, so if you want to maintain immutability, use copy.
+func (nm NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
+	for k, v := range other.Metadata {
+		nm.Metadata[k] = v // other takes precedence
+	}
+	return nm
+}
+
 // Merge merges another EdgeMetadatas into the receiver. If other is from
 // another probe this is the union of both metadatas. Keys present in both are
 // summed.
