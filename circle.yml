@@ -39,8 +39,8 @@ test:
     - cd $SRCDIR; ./bin/test -slow
     - cd $SRCDIR/experimental; make
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup)
-    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; . ./gce.sh hosts; ./setup.sh)
-    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; . ./gce.sh hosts; ./run_all.sh):
+    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./setup.sh)
+    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./run_all.sh):
         timeout: 300
   post:
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy)
