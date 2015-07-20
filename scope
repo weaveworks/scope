@@ -88,7 +88,7 @@ weave_dns_add() {
     CONTAINER_FQDN="$2"
     shift 2
 
-	for ip in $*; do
+    for ip in $*; do
         weave dns-add $ip $CONTAINER_ID -h $CONTAINER_FQDN
     done
 }
@@ -162,7 +162,7 @@ case "$COMMAND" in
 
         CONTAINER=$(docker run --privileged -d --name=$SCOPE_CONTAINER_NAME --net=host --pid=host \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS "$@")
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS --probe.docker true "$@")
 
         IP_ADDRS=$(docker run --net=host gliderlabs/alpine /bin/sh -c "$IP_ADDR_CMD")
         if command_exists weave && is_running $WEAVE_CONTAINER_NAME && weave_dns_present; then
