@@ -21,8 +21,6 @@ IMAGE_VERSION=${VERSION:-$IMAGE_VERSION}
 SCOPE_IMAGE=weaveworks/scope:$IMAGE_VERSION
 SCOPE_CONTAINER_NAME=weavescope
 WEAVE_CONTAINER_NAME=weave
-DNS_CONTAINER_NAME=weavedns
-DNS_HTTP_PORT=6785
 HOSTNAME=scope
 DOMAINNAME=weave.local
 FQDN=$HOSTNAME.$DOMAINNAME
@@ -95,6 +93,10 @@ weave_dns_add() {
     done
 }
 
+weave_dns_present() {
+    return $(docker run gliderlabs/alpine nc -z $DOCKER_BRIDGE_IP 53; echo $?)
+}
+
 set_docker_bridge_ip() {
     DOCKER_BRIDGE_IP=$(ip -4 addr show dev $DOCKER_BRIDGE | grep -m1 -o 'inet [.0-9]*')
     DOCKER_BRIDGE_IP=${DOCKER_BRIDGE_IP#inet }
@@ -143,18 +145,18 @@ case "$COMMAND" in
 
     launch)
         check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE
+        set_docker_bridge_ip
 
         # If Weave is running, we want to expose a Weave IP to the host
         # network namespace, so Scope can use it.
-        if is_running $WEAVE_CONTAINER_NAME && command_exists weave; then
+        if command_exists weave && is_running $WEAVE_CONTAINER_NAME; then
             weave_expose
         fi
 
         # If WeaveDNS is running, we want to automatically tell the scope
         # image to use weave dns.  We can't use --dns with --net=host, so we
         # have to hack it.
-        if is_running $DNS_CONTAINER_NAME; then
-            set_docker_bridge_ip
+        if command_exists weave && weave_dns_present; then
             WEAVESCOPE_DNS_ARGS="$WEAVESCOPE_DNS_ARGS --dns $DOCKER_BRIDGE_IP --searchpath $DOMAINNAME"
         fi
 
@@ -163,7 +165,7 @@ case "$COMMAND" in
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS "$@")
 
         IP_ADDRS=$(docker run --net=host gliderlabs/alpine /bin/sh -c "$IP_ADDR_CMD")
-        if is_running $DNS_CONTAINER_NAME && is_running $WEAVE_CONTAINER_NAME && command_exists weave; then
+        if command_exists weave && is_running $WEAVE_CONTAINER_NAME && weave_dns_present; then
             if [ -z "$IP_ADDRS" ]; then
                 echo "Could not determine local IP address; Weave DNS integration will not work correctly."
                 exit 1
