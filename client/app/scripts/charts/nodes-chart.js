@@ -445,23 +445,18 @@ const NodesChart = React.createClass({
     let translate = this.state.translate;
 
     if (this.zoom && !this.state.hasZoomed) {
-      let adjusted = false;
-
       if (zoomFactor > 0 && zoomFactor < 1) {
         zoomScale = zoomFactor;
         // saving in d3's behavior cache
         this.zoom.scale(zoomFactor);
-        adjusted = true;
       }
 
       if (xOffset < 0) {
         translate[0] = xOffset * -1 * zoomScale + MARGINS.left;
-        adjusted = true;
       }
 
       if (yOffset < 0) {
         translate[1] = yOffset * -1 * zoomScale + MARGINS.top;
-        adjusted = true;
       }
 
       // saving in d3's behavior cache
@@ -474,7 +469,6 @@ const NodesChart = React.createClass({
       nodeScale: nodeScale,
       scale: zoomScale,
       maxNodesExceeded: false,
-      translate: translate
       translate: translate,
       initialLayout: empty
     };

@@ -5,6 +5,31 @@ const debug = require('debug')('scope:nodes-layout');
 
 const MAX_NODES = 100;
 
+const getConstraints = function(nodes) {
+  const constraints = [];
+
+  // produce node offsets for each rank
+  const nodesByRank = _.groupBy(nodes, 'rank');
+  _.each(nodesByRank, function(groupedNodes, rank) {
+    if (groupedNodes.length > 1 && rank) {
+      const offsets = _.map(groupedNodes, function(node) {
+        return {
+          node: node.index,
+          offset: '0'
+        };
+      });
+
+      constraints.push({
+        type: 'alignment',
+        axis: 'y',
+        offsets: offsets
+      });
+    }
+  });
+
+  return constraints;
+};
+
 const doLayout = function(nodes, edges, width, height, scale) {
   if (_.size(nodes) > MAX_NODES) {
     debug('Too many nodes to lay out.');
@@ -26,14 +51,18 @@ const doLayout = function(nodes, edges, width, height, scale) {
     return edge.id;
   });
 
-  nodeList.forEach(function(v) {
+  nodeList.forEach(function(v, i) {
     v.height = scale(2.25);
     v.width = scale(2.25);
+    v.index = i;
   });
 
-  debug('graph layout for node count: ' + _.size(nodes));
+  const constraints = getConstraints(nodes);
+
+  debug('graph layout constraints', constraints);
 
   cola
+    .constraints(constraints)
     .convergenceThreshold(1e-3)
     .nodes(nodeList)
     .links(edgeList)
