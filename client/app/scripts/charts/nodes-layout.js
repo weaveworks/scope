@@ -11,12 +11,20 @@ const doLayout = function(nodes, edges, width, height, scale) {
     return null;
   }
 
+  if (_.size(nodes) === 0) {
+    return {height: 0, width: 0};
+  }
+
   const cola = new webcola.Layout()
     .avoidOverlaps(true)
     .size([width, height]);
 
-  const nodeList = _.values(nodes);
-  const edgeList = _.values(edges);
+  const nodeList = _.sortBy(nodes, function(node) {
+    return node.id;
+  });
+  const edgeList = _.values(edges, function(edge) {
+    return edge.id;
+  });
 
   nodeList.forEach(function(v) {
     v.height = scale(2.25);
@@ -29,9 +37,7 @@ const doLayout = function(nodes, edges, width, height, scale) {
     .convergenceThreshold(1e-3)
     .nodes(nodeList)
     .links(edgeList)
-    // .flowLayout('y', 150)
-    // .jaccardLinkLengths(20)
-    .start(10, 20, 40);
+    .start(5, 20, 10);
 
   debug('graph layout done');
 

@@ -61,7 +61,8 @@ const NodesChart = React.createClass({
       _.assign(state, {
         autoShifted: false,
         nodes: [],
-        edges: []
+        edges: [],
+        initialLayout: true
       });
     }
     // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
@@ -412,15 +413,11 @@ const NodesChart = React.createClass({
     const normalizedNodeSize = nodeSize / Math.sqrt(n); // assuming rectangular layout
     const nodeScale = this.state.nodeScale.range([0, normalizedNodeSize]);
 
-    const graph = NodesLayout.doLayout(
-      nodes,
-      edges,
-      width,
-      height,
-      nodeScale,
-      MARGINS,
-      this.props.topologyId
-    );
+    let graph = NodesLayout.doLayout(nodes, edges, width, height, nodeScale);
+    if (this.state.initialLayout && graph.width > 0) {
+      debug('running layout twice to reduce jitter on initial layout');
+      graph = NodesLayout.doLayout(nodes, edges, width, height, nodeScale);
+    }
 
     // layout was aborted
     if (!graph) {
@@ -437,6 +434,8 @@ const NodesChart = React.createClass({
     });
 
     // adjust layout based on viewport
+
+    const empty = graph.width === 0;
     const xFactor = width / graph.width;
     const yFactor = height / graph.height;
     const xOffset = graph.left;
@@ -446,17 +445,23 @@ const NodesChart = React.createClass({
     let translate = this.state.translate;
 
     if (this.zoom && !this.state.hasZoomed) {
+      let adjusted = false;
+
       if (zoomFactor > 0 && zoomFactor < 1) {
         zoomScale = zoomFactor;
         // saving in d3's behavior cache
         this.zoom.scale(zoomFactor);
+        adjusted = true;
       }
 
       if (xOffset < 0) {
         translate[0] = xOffset * -1 * zoomScale + MARGINS.left;
+        adjusted = true;
       }
+
       if (yOffset < 0) {
         translate[1] = yOffset * -1 * zoomScale + MARGINS.top;
+        adjusted = true;
       }
 
       // saving in d3's behavior cache
@@ -470,6 +475,8 @@ const NodesChart = React.createClass({
       scale: zoomScale,
       maxNodesExceeded: false,
       translate: translate
+      translate: translate,
+      initialLayout: empty
     };
   },
 
