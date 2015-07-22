@@ -9,7 +9,7 @@ set -ex
 
 KEY_FILE=/tmp/gce_private_key.json
 SSH_KEY_FILE=$HOME/.ssh/gce_ssh_key
-PROJECT=positive-cocoa-90213
+PROJECT=${PROJECT:-positive-cocoa-90213}
 IMAGE=ubuntu-14-04
 ZONE=us-central1-a
 NUM_HOSTS=2
@@ -67,15 +67,10 @@ function install_on {
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9;
 echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list;
 apt-get update -qq;
-apt-get install -q -y --force-yes --no-install-recommends lxc-docker ethtool emacs23-nox git make binutils mercurial;
+apt-get install -q -y --force-yes --no-install-recommends lxc-docker ethtool emacs23-nox git make binutils mercurial libpcap-dev gcc;
 usermod -a -G docker vagrant;
 echo 'DOCKER_OPTS="-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375"' >> /etc/default/docker;
 service docker restart;
-curl -L git.io/weave -o /usr/local/bin/weave;
-chmod a+x /usr/local/bin/weave;
-weave launch $otherpeers;
-weave launch-dns;
-weave launch-proxy;
 wget -q https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz;
 tar -C /usr/local -xzf go1.4.2.linux-amd64.tar.gz;
 /usr/local/go/bin/go clean -i net
@@ -87,19 +82,20 @@ echo "export GOPATH=$HOME" >>~/.profile
 . ~/.profile
 mkdir -p ~/src/github.com/weaveworks
 cd ~/src/github.com/weaveworks
-git clone http://github.com/weaveworks/scope.git
-cd scope
-make deps
+git clone http://github.com/weaveworks/weave.git
+cd weave
 make
-./scope launch
+cp weave ~/bin
+weave launch $otherpeers
 EOF
+
 }
 
 # Create new set of VMS
 function setup {
 	destroy
 	names="$(vm_names)"
-	gcloud compute instances create $names --image $IMAGE --zone $ZONE --machine-type n1-standard-4
+	gcloud compute instances create $names --image $IMAGE --zone $ZONE
 	gcloud compute config-ssh --ssh-key-file $SSH_KEY_FILE
 
 	for name in $names; do
@@ -119,6 +115,19 @@ function setup {
 
 		install_on $hostname "$otherpeers"
 	done
+
+    for name in $names; do
+        hostname="$name.$ZONE.$PROJECT"
+        ssh -t $hostname bash -x -s <<EOF
+. ~/.profile
+cd ~/src/github.com/weaveworks
+git clone http://github.com/weaveworks/scope.git
+cd scope
+make deps
+make
+./scope launch
+EOF
+    done
 }
 
 function hosts {
