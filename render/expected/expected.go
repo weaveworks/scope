@@ -40,9 +40,9 @@ var (
 	RenderedProcesses = render.RenderableNodes{
 		ClientProcess1ID: {
 			ID:         ClientProcess1ID,
-			LabelMajor: "curl",
+			LabelMajor: test.Client1Comm,
 			LabelMinor: fmt.Sprintf("%s (%s)", test.ClientHostID, test.Client1PID),
-			Rank:       test.Client1PID,
+			Rank:       test.Client1Comm,
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(ServerProcessID),
 			Origins: report.MakeIDList(
@@ -57,9 +57,9 @@ var (
 		},
 		ClientProcess2ID: {
 			ID:         ClientProcess2ID,
-			LabelMajor: "curl",
+			LabelMajor: test.Client2Comm,
 			LabelMinor: fmt.Sprintf("%s (%s)", test.ClientHostID, test.Client2PID),
-			Rank:       test.Client2PID,
+			Rank:       test.Client2Comm,
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(ServerProcessID),
 			Origins: report.MakeIDList(
@@ -76,7 +76,7 @@ var (
 			ID:         ServerProcessID,
 			LabelMajor: "apache",
 			LabelMinor: fmt.Sprintf("%s (%s)", test.ServerHostID, test.ServerPID),
-			Rank:       test.ServerPID,
+			Rank:       test.ServerComm,
 			Pseudo:     false,
 			Adjacency: report.MakeIDList(
 				ClientProcess1ID,
@@ -99,7 +99,7 @@ var (
 			ID:         nonContainerProcessID,
 			LabelMajor: "bash",
 			LabelMinor: fmt.Sprintf("%s (%s)", test.ServerHostID, test.NonContainerPID),
-			Rank:       test.NonContainerPID,
+			Rank:       test.NonContainerComm,
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(),
 			Origins: report.MakeIDList(

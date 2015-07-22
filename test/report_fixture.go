@@ -33,6 +33,11 @@ var (
 	ServerPID       = "215"
 	NonContainerPID = "1234"
 
+	Client1Comm      = "curl"
+	Client2Comm      = "curl"
+	ServerComm       = "apache"
+	NonContainerComm = "bash"
+
 	ClientHostNodeID = report.MakeHostNodeID(ClientHostID)
 	ServerHostNodeID = report.MakeHostNodeID(ServerHostID)
 
@@ -143,25 +148,25 @@ var (
 			NodeMetadatas: report.NodeMetadatas{
 				ClientProcess1NodeID: report.NewNodeMetadata(map[string]string{
 					"pid":              Client1PID,
-					"comm":             "curl",
+					"comm":             Client1Comm,
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
 				}),
 				ClientProcess2NodeID: report.NewNodeMetadata(map[string]string{
 					"pid":              Client2PID,
-					"comm":             "curl",
+					"comm":             Client2Comm,
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
 				}),
 				ServerProcessNodeID: report.NewNodeMetadata(map[string]string{
 					"pid":              ServerPID,
-					"comm":             "apache",
+					"comm":             ServerComm,
 					docker.ContainerID: ServerContainerID,
 					report.HostNodeID:  ServerHostNodeID,
 				}),
 				NonContainerProcessNodeID: report.NewNodeMetadata(map[string]string{
 					"pid":             NonContainerPID,
-					"comm":            "bash",
+					"comm":            NonContainerComm,
 					report.HostNodeID: ServerHostNodeID,
 				}),
 			},
