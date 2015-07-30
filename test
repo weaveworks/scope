@@ -3,9 +3,13 @@
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SLOW=${SLOW-}
 GO_TEST_ARGS="-tags netgo -cpu 4 -timeout 8m"
-if [ -n "$SLOW" -o "$1" = "-slow" ]; then
+
+if [ -n "$SLOW" -o "$1" = "-slow" -o -n "$CIRCLECI" ]; then
+    SLOW=true
+fi
+
+if [ -n "$SLOW" ]; then
     GO_TEST_ARGS="$GO_TEST_ARGS -race -covermode=atomic"
 
     if [ -n "$COVERDIR" ] ; then
