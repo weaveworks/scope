@@ -110,8 +110,8 @@ func TestMapEdge(t *testing.T) {
 	selector := func(_ report.Report) report.Topology {
 		return report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
-				"foo": report.NewNodeMetadata(map[string]string{"id": "foo"}),
-				"bar": report.NewNodeMetadata(map[string]string{"id": "bar"}),
+				"foo": report.MakeNodeMetadataWith(map[string]string{"id": "foo"}),
+				"bar": report.MakeNodeMetadataWith(map[string]string{"id": "bar"}),
 			},
 			Adjacency: report.Adjacency{
 				">foo": report.MakeIDList("bar"),

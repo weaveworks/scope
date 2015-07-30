@@ -41,12 +41,12 @@ func TestMerge(t *testing.T) {
 
 	{
 		r := report.MakeReport()
-		r.Host.NodeMetadatas[k1] = report.NewNodeMetadata(map[string]string{"host_name": "test1"})
+		r.Host.NodeMetadatas[k1] = report.MakeNodeMetadataWith(map[string]string{"host_name": "test1"})
 		p1.Publish(r)
 	}
 	{
 		r := report.MakeReport()
-		r.Host.NodeMetadatas[k2] = report.NewNodeMetadata(map[string]string{"host_name": "test2"})
+		r.Host.NodeMetadatas[k2] = report.MakeNodeMetadataWith(map[string]string{"host_name": "test2"})
 		p2.Publish(r)
 	}
 

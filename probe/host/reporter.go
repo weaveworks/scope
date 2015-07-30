@@ -75,7 +75,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		return rep, err
 	}
 
-	rep.Host.NodeMetadatas[report.MakeHostNodeID(r.hostID)] = report.NewNodeMetadata(map[string]string{
+	rep.Host.NodeMetadatas[report.MakeHostNodeID(r.hostID)] = report.MakeNodeMetadataWith(map[string]string{
 		Timestamp:     Now(),
 		HostName:      r.hostName,
 		LocalNetworks: strings.Join(localCIDRs, " "),

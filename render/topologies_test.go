@@ -13,7 +13,7 @@ import (
 func trimNodeMetadata(rns render.RenderableNodes) render.RenderableNodes {
 	result := render.RenderableNodes{}
 	for id, rn := range rns {
-		rn.NodeMetadata = report.NodeMetadata{}
+		rn.NodeMetadata = report.MakeNodeMetadata()
 		result[id] = rn
 	}
 	return result
