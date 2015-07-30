@@ -2,6 +2,8 @@ package test
 
 import (
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/endpoint"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -86,21 +88,21 @@ var (
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
 				Client54001NodeID: report.NewNodeMetadata(map[string]string{
-					"addr":            ClientIP,
-					"port":            ClientPort54001,
-					"pid":             Client1PID,
+					endpoint.Addr:     ClientIP,
+					endpoint.Port:     ClientPort54001,
+					process.PID:       Client1PID,
 					report.HostNodeID: ClientHostNodeID,
 				}),
 				Client54002NodeID: report.NewNodeMetadata(map[string]string{
-					"addr":            ClientIP,
-					"port":            ClientPort54002,
-					"pid":             Client2PID,
+					endpoint.Addr:     ClientIP,
+					endpoint.Port:     ClientPort54002,
+					process.PID:       Client2PID,
 					report.HostNodeID: ClientHostNodeID,
 				}),
 				Server80NodeID: report.NewNodeMetadata(map[string]string{
-					"addr":            ServerIP,
-					"port":            ServerPort,
-					"pid":             ServerPID,
+					endpoint.Addr:     ServerIP,
+					endpoint.Port:     ServerPort,
+					process.PID:       ServerPID,
 					report.HostNodeID: ServerHostNodeID,
 				}),
 			},
@@ -147,25 +149,25 @@ var (
 			Adjacency: report.Adjacency{},
 			NodeMetadatas: report.NodeMetadatas{
 				ClientProcess1NodeID: report.NewNodeMetadata(map[string]string{
-					"pid":              Client1PID,
+					process.PID:        Client1PID,
 					"comm":             Client1Comm,
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
 				}),
 				ClientProcess2NodeID: report.NewNodeMetadata(map[string]string{
-					"pid":              Client2PID,
+					process.PID:        Client2PID,
 					"comm":             Client2Comm,
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
 				}),
 				ServerProcessNodeID: report.NewNodeMetadata(map[string]string{
-					"pid":              ServerPID,
+					process.PID:        ServerPID,
 					"comm":             ServerComm,
 					docker.ContainerID: ServerContainerID,
 					report.HostNodeID:  ServerHostNodeID,
 				}),
 				NonContainerProcessNodeID: report.NewNodeMetadata(map[string]string{
-					"pid":             NonContainerPID,
+					process.PID:       NonContainerPID,
 					"comm":            NonContainerComm,
 					report.HostNodeID: ServerHostNodeID,
 				}),
@@ -210,11 +212,11 @@ var (
 			},
 			NodeMetadatas: report.NodeMetadatas{
 				ClientAddressNodeID: report.NewNodeMetadata(map[string]string{
-					"addr":            ClientIP,
+					endpoint.Addr:     ClientIP,
 					report.HostNodeID: ClientHostNodeID,
 				}),
 				ServerAddressNodeID: report.NewNodeMetadata(map[string]string{
-					"addr":            ServerIP,
+					endpoint.Addr:     ServerIP,
 					report.HostNodeID: ServerHostNodeID,
 				}),
 			},

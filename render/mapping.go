@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -49,9 +51,9 @@ type MapFunc func(RenderableNode) (RenderableNode, bool)
 // assume the presence of certain keys.
 func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id      = MakeEndpointID(report.ExtractHostID(m), m.Metadata["addr"], m.Metadata["port"])
-		major   = fmt.Sprintf("%s:%s", m.Metadata["addr"], m.Metadata["port"])
-		pid, ok = m.Metadata["pid"]
+		id      = MakeEndpointID(report.ExtractHostID(m), m.Metadata[endpoint.Addr], m.Metadata[endpoint.Port])
+		major   = fmt.Sprintf("%s:%s", m.Metadata[endpoint.Addr], m.Metadata[endpoint.Port])
+		pid, ok = m.Metadata[process.PID]
 		minor   = report.ExtractHostID(m)
 		rank    = major
 	)
@@ -68,9 +70,9 @@ func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // presence of certain keys.
 func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = MakeProcessID(report.ExtractHostID(m), m.Metadata["pid"])
+		id    = MakeProcessID(report.ExtractHostID(m), m.Metadata[process.PID])
 		major = m.Metadata["comm"]
-		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), m.Metadata["pid"])
+		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), m.Metadata[process.PID])
 		rank  = m.Metadata["comm"]
 	)
 
@@ -109,8 +111,8 @@ func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // assume the presence of certain keys.
 func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
-		id    = MakeAddressID(report.ExtractHostID(m), m.Metadata["addr"])
-		major = m.Metadata["addr"]
+		id    = MakeAddressID(report.ExtractHostID(m), m.Metadata[endpoint.Addr])
+		major = m.Metadata[endpoint.Addr]
 		minor = report.ExtractHostID(m)
 		rank  = major
 	)
@@ -154,7 +156,7 @@ func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
 		return n, true
 	}
 
-	pid, ok := n.NodeMetadata.Metadata["pid"]
+	pid, ok := n.NodeMetadata.Metadata[process.PID]
 	if !ok {
 		return RenderableNode{}, false
 	}

@@ -8,8 +8,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/weaveworks/procspy"
-	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
+)
+
+// Node metadata keys.
+const (
+	Addr = "addr" // typically IPv4
+	Port = "port"
 )
 
 // Reporter generates Reports containing the Endpoint topology.
@@ -71,45 +77,45 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 	var (
-		scopedLocal  = report.MakeAddressNodeID(r.hostID, c.LocalAddress.String())
-		scopedRemote = report.MakeAddressNodeID(r.hostID, c.RemoteAddress.String())
-		key          = report.MakeAdjacencyID(scopedLocal)
-		edgeKey      = report.MakeEdgeID(scopedLocal, scopedRemote)
+		localAddressNodeID  = report.MakeAddressNodeID(r.hostID, c.LocalAddress.String())
+		remoteAddressNodeID = report.MakeAddressNodeID(r.hostID, c.RemoteAddress.String())
+		adjacencyID         = report.MakeAdjacencyID(localAddressNodeID)
+		edgeID              = report.MakeEdgeID(localAddressNodeID, remoteAddressNodeID)
 	)
 
-	rpt.Address.Adjacency[key] = rpt.Address.Adjacency[key].Add(scopedRemote)
+	rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(remoteAddressNodeID)
 
-	if _, ok := rpt.Address.NodeMetadatas[scopedLocal]; !ok {
-		rpt.Address.NodeMetadatas[scopedLocal] = report.NewNodeMetadata(map[string]string{
-			docker.Name: r.hostName,
-			docker.Addr: c.LocalAddress.String(),
+	if _, ok := rpt.Address.NodeMetadatas[localAddressNodeID]; !ok {
+		rpt.Address.NodeMetadatas[localAddressNodeID] = report.NewNodeMetadata(map[string]string{
+			"name": r.hostName, // TODO this is ambiguous, be more specific
+			Addr:   c.LocalAddress.String(),
 		})
 	}
 
-	countTCPConnection(rpt.Address.EdgeMetadatas, edgeKey)
+	countTCPConnection(rpt.Address.EdgeMetadatas, edgeID)
 
 	if c.Proc.PID > 0 {
 		var (
-			scopedLocal  = report.MakeEndpointNodeID(r.hostID, c.LocalAddress.String(), strconv.Itoa(int(c.LocalPort)))
-			scopedRemote = report.MakeEndpointNodeID(r.hostID, c.RemoteAddress.String(), strconv.Itoa(int(c.RemotePort)))
-			key          = report.MakeAdjacencyID(scopedLocal)
-			edgeKey      = report.MakeEdgeID(scopedLocal, scopedRemote)
+			localEndpointNodeID  = report.MakeEndpointNodeID(r.hostID, c.LocalAddress.String(), strconv.Itoa(int(c.LocalPort)))
+			remoteEndpointNodeID = report.MakeEndpointNodeID(r.hostID, c.RemoteAddress.String(), strconv.Itoa(int(c.RemotePort)))
+			adjacencyID          = report.MakeAdjacencyID(localEndpointNodeID)
+			edgeID               = report.MakeEdgeID(localEndpointNodeID, remoteEndpointNodeID)
 		)
 
-		rpt.Endpoint.Adjacency[key] = rpt.Endpoint.Adjacency[key].Add(scopedRemote)
+		rpt.Endpoint.Adjacency[adjacencyID] = rpt.Endpoint.Adjacency[adjacencyID].Add(remoteEndpointNodeID)
 
-		if _, ok := rpt.Endpoint.NodeMetadatas[scopedLocal]; !ok {
+		if _, ok := rpt.Endpoint.NodeMetadatas[localEndpointNodeID]; !ok {
 			// First hit establishes NodeMetadata for scoped local address + port
 			md := report.NewNodeMetadata(map[string]string{
-				"addr": c.LocalAddress.String(),
-				"port": strconv.Itoa(int(c.LocalPort)),
-				"pid":  fmt.Sprintf("%d", c.Proc.PID),
+				Addr:        c.LocalAddress.String(),
+				Port:        strconv.Itoa(int(c.LocalPort)),
+				process.PID: fmt.Sprint(c.Proc.PID),
 			})
 
-			rpt.Endpoint.NodeMetadatas[scopedLocal] = md
+			rpt.Endpoint.NodeMetadatas[localEndpointNodeID] = md
 		}
 
-		countTCPConnection(rpt.Endpoint.EdgeMetadatas, edgeKey)
+		countTCPConnection(rpt.Endpoint.EdgeMetadatas, edgeID)
 	}
 }
 

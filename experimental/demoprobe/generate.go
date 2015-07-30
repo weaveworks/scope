@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -71,17 +72,17 @@ func DemoReport(nodeCount int) report.Report {
 		// Endpoint topology
 		if _, ok := r.Endpoint.NodeMetadatas[srcPortID]; !ok {
 			r.Endpoint.NodeMetadatas[srcPortID] = report.NewNodeMetadata(map[string]string{
-				docker.PID:    "4000",
-				docker.Name:   c.srcProc,
-				docker.Domain: "node-" + src,
+				process.PID: "4000",
+				"name":      c.srcProc,
+				"domain":    "node-" + src,
 			})
 		}
 		r.Endpoint.Adjacency[srcID] = r.Endpoint.Adjacency[srcID].Add(dstPortID)
 		if _, ok := r.Endpoint.NodeMetadatas[dstPortID]; !ok {
 			r.Endpoint.NodeMetadatas[dstPortID] = report.NewNodeMetadata(map[string]string{
-				docker.PID:    "4000",
-				docker.Name:   c.dstProc,
-				docker.Domain: "node-" + dst,
+				process.PID: "4000",
+				"name":      c.dstProc,
+				"domain":    "node-" + dst,
 			})
 		}
 		r.Endpoint.Adjacency[dstID] = r.Endpoint.Adjacency[dstID].Add(srcPortID)
