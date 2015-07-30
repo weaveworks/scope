@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -125,7 +126,7 @@ func OriginTable(r report.Report, originID string) (Table, bool) {
 
 func connectionDetailsRows(endpointTopology report.Topology, originID string, nmd report.NodeMetadata) []Row {
 	rows := []Row{}
-	local := fmt.Sprintf("%s:%s", nmd.Metadata[docker.Addr], nmd.Metadata[docker.Port])
+	local := fmt.Sprintf("%s:%s", nmd.Metadata[endpoint.Addr], nmd.Metadata[endpoint.Port])
 	adjacencies := endpointTopology.Adjacency[report.MakeAdjacencyID(originID)]
 	sort.Strings(adjacencies)
 	for _, adj := range adjacencies {
@@ -150,7 +151,7 @@ func connectionDetailsTable(connectionRows []Row) Table {
 
 func addressOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
-	if val, ok := nmd.Metadata["addr"]; ok {
+	if val, ok := nmd.Metadata[endpoint.Addr]; ok {
 		rows = append(rows, Row{"Address", val, ""})
 	}
 	return Table{

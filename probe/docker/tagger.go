@@ -7,15 +7,11 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-// These constants are keys used in node metadata
-// TODO: use these constants in report/{mapping.go, detailed_node.go} - pending some circular references
+// Node metadata keys.
 const (
-	Addr        = "addr"
 	ContainerID = "docker_container_id"
-	Domain      = "domain"
-	Name        = "name"
-	PID         = "pid"
-	Port        = "port"
+	Domain      = "domain" // TODO this is ambiguous, be more specific
+	Name        = "name"   // TODO this is ambiguous, be more specific
 )
 
 // These vars are exported for testing.
@@ -50,7 +46,7 @@ func (t *Tagger) Tag(r report.Report) (report.Report, error) {
 
 func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 	for nodeID, nodeMetadata := range topology.NodeMetadatas {
-		pidStr, ok := nodeMetadata.Metadata["pid"]
+		pidStr, ok := nodeMetadata.Metadata[process.PID]
 		if !ok {
 			continue
 		}
