@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"io"
+	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"runtime"
@@ -31,6 +33,8 @@ func (c *mockConnection) Close() error {
 }
 
 func TestContainer(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
+
 	oldDialStub, oldNewClientConnStub := docker.DialStub, docker.NewClientConnStub
 	defer func() { docker.DialStub, docker.NewClientConnStub = oldDialStub, oldNewClientConnStub }()
 

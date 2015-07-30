@@ -122,7 +122,7 @@ func (c *container) StartGatheringStats() error {
 			return
 		}
 
-		dial, err := net.Dial(url.Scheme, url.Path)
+		dial, err := DialStub(url.Scheme, url.Path)
 		if err != nil {
 			log.Printf("docker container: %v", err)
 			return
