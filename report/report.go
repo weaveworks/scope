@@ -40,7 +40,7 @@ type Report struct {
 	Overlay Topology
 
 	// Sampling data for this report.
-	Sampling
+	Sampling Sampling
 }
 
 // MakeReport makes a clean report, ready to Merge() other reports into.
@@ -53,6 +53,7 @@ func MakeReport() Report {
 		ContainerImage: NewTopology(),
 		Host:           NewTopology(),
 		Overlay:        NewTopology(),
+		Sampling:       Sampling{},
 	}
 }
 
