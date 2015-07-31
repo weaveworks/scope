@@ -46,33 +46,47 @@ type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string,
 // shall be omitted from the rendered topology.
 type MapFunc func(RenderableNode) (RenderableNode, bool)
 
-// MapEndpointIdentity maps a endpoint topology node to endpoint RenderableNode
-// node. As it is only ever run on endpoint topology nodes, we can safely
-// assume the presence of certain keys.
+// MapEndpointIdentity maps an endpoint topology node to an endpoint
+// renderable node. As it is only ever run on endpoint topology nodes, we
+// expect that certain keys are present.
 func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+	addr, ok := m.Metadata[endpoint.Addr]
+	if !ok {
+		return RenderableNode{}, false
+	}
+
+	port, ok := m.Metadata[endpoint.Port]
+	if !ok {
+		return RenderableNode{}, false
+	}
+
 	var (
-		id      = MakeEndpointID(report.ExtractHostID(m), m.Metadata[endpoint.Addr], m.Metadata[endpoint.Port])
-		major   = fmt.Sprintf("%s:%s", m.Metadata[endpoint.Addr], m.Metadata[endpoint.Port])
-		pid, ok = m.Metadata[process.PID]
-		minor   = report.ExtractHostID(m)
-		rank    = major
+		id    = MakeEndpointID(report.ExtractHostID(m), addr, port)
+		major = fmt.Sprintf("%s:%s", addr, port)
+		minor = report.ExtractHostID(m)
+		rank  = major
 	)
 
-	if ok {
-		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), pid)
+	if pid, ok := m.Metadata[process.PID]; ok {
+		minor = fmt.Sprintf("%s (%s)", minor, pid)
 	}
 
 	return NewRenderableNode(id, major, minor, rank, m), true
 }
 
-// MapProcessIdentity maps a process topology node to process RenderableNode node.
-// As it is only ever run on process topology nodes, we can safely assume the
-// presence of certain keys.
+// MapProcessIdentity maps a process topology node to a process renderable
+// node. As it is only ever run on process topology nodes, we expect that
+// certain keys are present.
 func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+	pid, ok := m.Metadata[process.PID]
+	if !ok {
+		return RenderableNode{}, false
+	}
+
 	var (
-		id    = MakeProcessID(report.ExtractHostID(m), m.Metadata[process.PID])
+		id    = MakeProcessID(report.ExtractHostID(m), pid)
 		major = m.Metadata["comm"]
-		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), m.Metadata[process.PID])
+		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), pid)
 		rank  = m.Metadata["comm"]
 	)
 
@@ -80,11 +94,15 @@ func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 }
 
 // MapContainerIdentity maps a container topology node to a container
-// RenderableNode node. As it is only ever run on container topology
-// nodes, we can safely assume the presences of certain keys.
+// renderable node. As it is only ever run on container topology nodes, we
+// expect that certain keys are present.
 func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+	id, ok := m.Metadata[docker.ContainerID]
+	if !ok {
+		return RenderableNode{}, false
+	}
+
 	var (
-		id    = m.Metadata[docker.ContainerID]
 		major = m.Metadata[docker.ContainerName]
 		minor = report.ExtractHostID(m)
 		rank  = m.Metadata[docker.ImageID]
@@ -94,11 +112,15 @@ func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 }
 
 // MapContainerImageIdentity maps a container image topology node to container
-// image RenderableNode node. As it is only ever run on container image
-// topology nodes, we can safely assume the presences of certain keys.
+// image renderable node. As it is only ever run on container image topology
+// nodes, we expect that certain keys are present.
 func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+	id, ok := m.Metadata[docker.ImageID]
+	if !ok {
+		return RenderableNode{}, false
+	}
+
 	var (
-		id    = m.Metadata[docker.ImageID]
 		major = m.Metadata[docker.ImageName]
 		rank  = m.Metadata[docker.ImageID]
 	)
@@ -106,13 +128,18 @@ func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	return NewRenderableNode(id, major, "", rank, m), true
 }
 
-// MapAddressIdentity maps a address topology node to address RenderableNode
-// node. As it is only ever run on address topology nodes, we can safely
-// assume the presence of certain keys.
+// MapAddressIdentity maps an address topology node to an address renderable
+// node. As it is only ever run on address topology nodes, we expect that
+// certain keys are present.
 func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+	addr, ok := m.Metadata[endpoint.Addr]
+	if !ok {
+		return RenderableNode{}, false
+	}
+
 	var (
-		id    = MakeAddressID(report.ExtractHostID(m), m.Metadata[endpoint.Addr])
-		major = m.Metadata[endpoint.Addr]
+		id    = MakeAddressID(report.ExtractHostID(m), addr)
+		major = addr
 		minor = report.ExtractHostID(m)
 		rank  = major
 	)
@@ -120,9 +147,9 @@ func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	return NewRenderableNode(id, major, minor, rank, m), true
 }
 
-// MapHostIdentity maps a host topology node to host RenderableNode
-// node. As it is only ever run on host topology nodes, we can safely
-// assume the presence of certain keys.
+// MapHostIdentity maps a host topology node to a host renderable node. As it
+// is only ever run on host topology nodes, we expect that certain keys are
+// present.
 func MapHostIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 	var (
 		id                 = MakeHostID(report.ExtractHostID(m))
