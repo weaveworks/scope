@@ -34,16 +34,16 @@ func TestTagger(t *testing.T) {
 	var (
 		pid1NodeID       = report.MakeProcessNodeID("somehost.com", "1")
 		pid2NodeID       = report.MakeProcessNodeID("somehost.com", "2")
-		wantNodeMetadata = report.NewNodeMetadata(map[string]string{docker.ContainerID: "ping"})
+		wantNodeMetadata = report.MakeNodeMetadataWith(map[string]string{docker.ContainerID: "ping"})
 	)
 
 	input := report.MakeReport()
-	input.Process.NodeMetadatas[pid1NodeID] = report.NewNodeMetadata(map[string]string{"pid": "1"})
-	input.Process.NodeMetadatas[pid2NodeID] = report.NewNodeMetadata(map[string]string{"pid": "2"})
+	input.Process.NodeMetadatas[pid1NodeID] = report.MakeNodeMetadataWith(map[string]string{"pid": "1"})
+	input.Process.NodeMetadatas[pid2NodeID] = report.MakeNodeMetadataWith(map[string]string{"pid": "2"})
 
 	want := report.MakeReport()
-	want.Process.NodeMetadatas[pid1NodeID] = report.NewNodeMetadata(map[string]string{"pid": "1"}).Merge(wantNodeMetadata)
-	want.Process.NodeMetadatas[pid2NodeID] = report.NewNodeMetadata(map[string]string{"pid": "2"}).Merge(wantNodeMetadata)
+	want.Process.NodeMetadatas[pid1NodeID] = report.MakeNodeMetadataWith(map[string]string{"pid": "1"}).Merge(wantNodeMetadata)
+	want.Process.NodeMetadatas[pid2NodeID] = report.MakeNodeMetadataWith(map[string]string{"pid": "2"}).Merge(wantNodeMetadata)
 
 	tagger := docker.NewTagger(mockRegistryInstance, nil)
 	have, err := tagger.Tag(input)

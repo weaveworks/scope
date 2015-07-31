@@ -46,8 +46,13 @@ type NodeMetadata struct {
 	Metadata map[string]string
 }
 
-// NewNodeMetadata creates a new NodeMetadata with the supplied Metadata.
-func NewNodeMetadata(m map[string]string) NodeMetadata {
+// MakeNodeMetadata creates a new NodeMetadata with no initial metadata.
+func MakeNodeMetadata() NodeMetadata {
+	return MakeNodeMetadataWith(map[string]string{})
+}
+
+// MakeNodeMetadataWith creates a new NodeMetadata with the supplied map.
+func MakeNodeMetadataWith(m map[string]string) NodeMetadata {
 	return NodeMetadata{
 		Metadata: m,
 	}
@@ -55,7 +60,7 @@ func NewNodeMetadata(m map[string]string) NodeMetadata {
 
 // Copy returns a value copy, useful for tests.
 func (nm NodeMetadata) Copy() NodeMetadata {
-	cp := NewNodeMetadata(map[string]string{})
+	cp := MakeNodeMetadata()
 	for k, v := range nm.Metadata {
 		cp.Metadata[k] = v
 	}

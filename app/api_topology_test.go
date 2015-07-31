@@ -15,6 +15,17 @@ import (
 	"github.com/weaveworks/scope/test"
 )
 
+func fixNodeMetadatas(nodes render.RenderableNodes) render.RenderableNodes {
+	result := make(render.RenderableNodes, len(nodes))
+	for id, node := range nodes {
+		if node.NodeMetadata.Metadata == nil {
+			node.NodeMetadata.Metadata = map[string]string{}
+		}
+		result[id] = node
+	}
+	return result
+}
+
 func TestAll(t *testing.T) {
 	ts := httptest.NewServer(Router(StaticReport{}))
 	defer ts.Close()
@@ -60,10 +71,8 @@ func TestAPITopologyApplications(t *testing.T) {
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatal(err)
 		}
-
-		want := render.OnlyConnected(expected.RenderedProcesses)
-		if !reflect.DeepEqual(want, topo.Nodes) {
-			t.Error("\n" + test.Diff(want, topo.Nodes))
+		if want, have := render.OnlyConnected(expected.RenderedProcesses), fixNodeMetadatas(topo.Nodes); !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
 		}
 	}
 	{
@@ -84,12 +93,11 @@ func TestAPITopologyApplications(t *testing.T) {
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
-		want := render.AggregateMetadata{
+		if want, have := (render.AggregateMetadata{
 			"egress_bytes":  10,
 			"ingress_bytes": 100,
-		}
-		if !reflect.DeepEqual(want, edge.Metadata) {
-			t.Error("\n" + test.Diff(want, edge.Metadata))
+		}), edge.Metadata; !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
 		}
 	}
 }
@@ -104,9 +112,8 @@ func TestAPITopologyHosts(t *testing.T) {
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatal(err)
 		}
-
-		if !reflect.DeepEqual(expected.RenderedHosts, topo.Nodes) {
-			t.Error("\n" + test.Diff(expected.RenderedHosts, topo.Nodes))
+		if want, have := (expected.RenderedHosts), fixNodeMetadatas(topo.Nodes); !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
 		}
 	}
 	{

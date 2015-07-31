@@ -79,7 +79,7 @@ func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 			continue
 		}
 
-		md := report.NewNodeMetadata(map[string]string{
+		md := report.MakeNodeMetadataWith(map[string]string{
 			ContainerID: c.ID(),
 		})
 

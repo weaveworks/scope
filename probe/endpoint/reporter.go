@@ -86,7 +86,7 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 	rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(remoteAddressNodeID)
 
 	if _, ok := rpt.Address.NodeMetadatas[localAddressNodeID]; !ok {
-		rpt.Address.NodeMetadatas[localAddressNodeID] = report.NewNodeMetadata(map[string]string{
+		rpt.Address.NodeMetadatas[localAddressNodeID] = report.MakeNodeMetadataWith(map[string]string{
 			"name": r.hostName, // TODO this is ambiguous, be more specific
 			Addr:   c.LocalAddress.String(),
 		})
@@ -106,7 +106,7 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 
 		if _, ok := rpt.Endpoint.NodeMetadatas[localEndpointNodeID]; !ok {
 			// First hit establishes NodeMetadata for scoped local address + port
-			md := report.NewNodeMetadata(map[string]string{
+			md := report.MakeNodeMetadataWith(map[string]string{
 				Addr:        c.LocalAddress.String(),
 				Port:        strconv.Itoa(int(c.LocalPort)),
 				process.PID: fmt.Sprint(c.Proc.PID),

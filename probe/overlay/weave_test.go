@@ -29,7 +29,7 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 		Adjacency:     report.Adjacency{},
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
-			report.MakeOverlayNodeID(mockWeavePeerName): report.NewNodeMetadata(map[string]string{
+			report.MakeOverlayNodeID(mockWeavePeerName): report.MakeNodeMetadataWith(map[string]string{
 				overlay.WeavePeerName:     mockWeavePeerName,
 				overlay.WeavePeerNickName: mockWeavePeerNickName,
 			}),

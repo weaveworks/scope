@@ -71,7 +71,7 @@ func DemoReport(nodeCount int) report.Report {
 
 		// Endpoint topology
 		if _, ok := r.Endpoint.NodeMetadatas[srcPortID]; !ok {
-			r.Endpoint.NodeMetadatas[srcPortID] = report.NewNodeMetadata(map[string]string{
+			r.Endpoint.NodeMetadatas[srcPortID] = report.MakeNodeMetadataWith(map[string]string{
 				process.PID: "4000",
 				"name":      c.srcProc,
 				"domain":    "node-" + src,
@@ -79,7 +79,7 @@ func DemoReport(nodeCount int) report.Report {
 		}
 		r.Endpoint.Adjacency[srcID] = r.Endpoint.Adjacency[srcID].Add(dstPortID)
 		if _, ok := r.Endpoint.NodeMetadatas[dstPortID]; !ok {
-			r.Endpoint.NodeMetadatas[dstPortID] = report.NewNodeMetadata(map[string]string{
+			r.Endpoint.NodeMetadatas[dstPortID] = report.MakeNodeMetadataWith(map[string]string{
 				process.PID: "4000",
 				"name":      c.dstProc,
 				"domain":    "node-" + dst,
@@ -101,20 +101,20 @@ func DemoReport(nodeCount int) report.Report {
 
 		// Address topology
 		if _, ok := r.Address.NodeMetadatas[srcAddressID]; !ok {
-			r.Address.NodeMetadatas[srcAddressID] = report.NewNodeMetadata(map[string]string{
+			r.Address.NodeMetadatas[srcAddressID] = report.MakeNodeMetadataWith(map[string]string{
 				docker.Name: src,
 			})
 		}
 		r.Address.Adjacency[nodeSrcAddressID] = r.Address.Adjacency[nodeSrcAddressID].Add(dstAddressID)
 		if _, ok := r.Address.NodeMetadatas[dstAddressID]; !ok {
-			r.Address.NodeMetadatas[dstAddressID] = report.NewNodeMetadata(map[string]string{
+			r.Address.NodeMetadatas[dstAddressID] = report.MakeNodeMetadataWith(map[string]string{
 				docker.Name: dst,
 			})
 		}
 		r.Address.Adjacency[nodeDstAddressID] = r.Address.Adjacency[nodeDstAddressID].Add(srcAddressID)
 
 		// Host data
-		r.Host.NodeMetadatas["hostX"] = report.NewNodeMetadata(map[string]string{
+		r.Host.NodeMetadatas["hostX"] = report.MakeNodeMetadataWith(map[string]string{
 			"ts":             time.Now().UTC().Format(time.RFC3339Nano),
 			"host_name":      "host-x",
 			"local_networks": localNet.String(),

@@ -53,7 +53,7 @@ func TestReporter(t *testing.T) {
 		Adjacency:     report.Adjacency{},
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
-			report.MakeContainerNodeID("", "ping"): report.NewNodeMetadata(map[string]string{
+			report.MakeContainerNodeID("", "ping"): report.MakeNodeMetadataWith(map[string]string{
 				docker.ContainerID:   "ping",
 				docker.ContainerName: "pong",
 				docker.ImageID:       "baz",
@@ -64,7 +64,7 @@ func TestReporter(t *testing.T) {
 		Adjacency:     report.Adjacency{},
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
-			report.MakeContainerNodeID("", "baz"): report.NewNodeMetadata(map[string]string{
+			report.MakeContainerNodeID("", "baz"): report.MakeNodeMetadataWith(map[string]string{
 				docker.ImageID:   "baz",
 				docker.ImageName: "bang",
 			}),

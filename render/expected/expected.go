@@ -17,18 +17,21 @@ var (
 		ID:                unknownPseudoNode1ID,
 		LabelMajor:        "10.10.10.10",
 		Pseudo:            true,
+		NodeMetadata:      report.MakeNodeMetadata(),
 		AggregateMetadata: render.AggregateMetadata{},
 	}
 	unknownPseudoNode2 = render.RenderableNode{
 		ID:                unknownPseudoNode2ID,
 		LabelMajor:        "10.10.10.11",
 		Pseudo:            true,
+		NodeMetadata:      report.MakeNodeMetadata(),
 		AggregateMetadata: render.AggregateMetadata{},
 	}
 	theInternetNode = render.RenderableNode{
 		ID:                render.TheInternetID,
 		LabelMajor:        render.TheInternetMajor,
 		Pseudo:            true,
+		NodeMetadata:      report.MakeNodeMetadata(),
 		AggregateMetadata: render.AggregateMetadata{},
 	}
 
@@ -50,6 +53,7 @@ var (
 				test.ClientProcess1NodeID,
 				test.ClientHostNodeID,
 			),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 100,
 				render.KeyBytesEgress:  10,
@@ -67,6 +71,7 @@ var (
 				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 200,
 				render.KeyBytesEgress:  20,
@@ -90,6 +95,7 @@ var (
 				test.ServerProcessNodeID,
 				test.ServerHostNodeID,
 			),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 150,
 				render.KeyBytesEgress:  1500,
@@ -106,6 +112,7 @@ var (
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
 			),
+			NodeMetadata:      report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{},
 		},
 		unknownPseudoNode1ID: unknownPseudoNode1,
@@ -128,6 +135,7 @@ var (
 				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 300,
 				render.KeyBytesEgress:  30,
@@ -150,6 +158,7 @@ var (
 				test.ServerProcessNodeID,
 				test.ServerHostNodeID,
 			),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 150,
 				render.KeyBytesEgress:  1500,
@@ -165,6 +174,7 @@ var (
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
 			),
+			NodeMetadata:      report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{},
 		},
 		unknownPseudoNode1ID: unknownPseudoNode1,
@@ -188,6 +198,7 @@ var (
 				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 300,
 				render.KeyBytesEgress:  30,
@@ -206,6 +217,7 @@ var (
 				test.ServerProcessNodeID,
 				test.ServerHostNodeID,
 			),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 150,
 				render.KeyBytesEgress:  1500,
@@ -221,6 +233,7 @@ var (
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
 			),
+			NodeMetadata:      report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{},
 		},
 		render.TheInternetID: theInternetNode,
@@ -243,6 +256,7 @@ var (
 				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 300,
 				render.KeyBytesEgress:  30,
@@ -261,6 +275,7 @@ var (
 				test.Server80NodeID,
 				test.ServerProcessNodeID,
 				test.ServerHostNodeID),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyBytesIngress: 150,
 				render.KeyBytesEgress:  1500,
@@ -276,6 +291,7 @@ var (
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
 			),
+			NodeMetadata:      report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{},
 		},
 		render.TheInternetID: theInternetNode,
@@ -298,6 +314,7 @@ var (
 				test.ServerHostNodeID,
 				test.ServerAddressNodeID,
 			),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyMaxConnCountTCP: 3,
 			},
@@ -313,6 +330,7 @@ var (
 				test.ClientHostNodeID,
 				test.ClientAddressNodeID,
 			),
+			NodeMetadata: report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{
 				render.KeyMaxConnCountTCP: 3,
 			},
@@ -321,12 +339,14 @@ var (
 			ID:                pseudoHostID1,
 			LabelMajor:        "10.10.10.10",
 			Pseudo:            true,
+			NodeMetadata:      report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{},
 		},
 		pseudoHostID2: {
 			ID:                pseudoHostID2,
 			LabelMajor:        "10.10.10.11",
 			Pseudo:            true,
+			NodeMetadata:      report.MakeNodeMetadata(),
 			AggregateMetadata: render.AggregateMetadata{},
 		},
 		render.TheInternetID: theInternetNode,

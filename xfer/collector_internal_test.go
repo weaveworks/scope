@@ -47,7 +47,7 @@ func TestCollector(t *testing.T) {
 	r := report.Report{
 		Address: report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
-				report.MakeAddressNodeID("a", "b"): report.NodeMetadata{},
+				report.MakeAddressNodeID("a", "b"): report.MakeNodeMetadata(),
 			},
 		},
 	}
