@@ -14,6 +14,9 @@ if [ ! -d "$WEAVE_ROOT" ] ; then
   git clone --depth 1 -b master https://$WEAVE_REPO.git "$WEAVE_ROOT"
   go get $WEAVE_REPO/...
 fi
+if [ ! -x "$WEAVE_ROOT/testing/runner/runner" ] ; then
+  (cd "$WEAVE_ROOT" && make testing/runner/runner)
+fi
 
 . "$WEAVE_ROOT/test/config.sh"
 
