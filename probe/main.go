@@ -115,9 +115,6 @@ func main() {
 	}
 
 	if *captureEnabled {
-		if *captureOn > *captureOff {
-			log.Fatalf("-capture.on (%s) must be <= -capture.off (%s)", *captureOn, *captureOff)
-		}
 		for _, iface := range strings.Split(*captureInterfaces, ",") {
 			source, err := sniff.NewSource(iface)
 			if err != nil {

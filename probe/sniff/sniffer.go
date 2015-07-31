@@ -64,6 +64,12 @@ func (s *Sniffer) loop(src gopacket.ZeroCopyPacketDataSource, on, off time.Durat
 		done    = make(chan struct{})     // when src is finished, we're done too
 	)
 
+	// As a special case, if our off duty cycle is zero, i.e. 100% sample
+	// rate, we simply disable the turn-off signal channel.
+	if off == 0 {
+		turnOff = nil
+	}
+
 	go func() {
 		s.read(src, packets, &process, &total, &count)
 		close(done)
