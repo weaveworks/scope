@@ -24,7 +24,7 @@ dependencies:
     - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
   post:
-    - git clone --depth 1 -b gce-parameterize https://$WEAVE_REPO.git "$WEAVE_ROOT"
+    - git clone --depth 1 -b master https://$WEAVE_REPO.git "$WEAVE_ROOT"
     - go get $WEAVE_REPO/...
     - cd $WEAVE_ROOT; make testing/runner/runner
     - sudo apt-get install jq
