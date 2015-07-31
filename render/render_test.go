@@ -118,8 +118,8 @@ func TestMapEdge(t *testing.T) {
 				">bar": report.MakeIDList("foo"),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
-				"foo|bar": report.EdgeMetadata{PacketCount: newu64(1), ByteCount: newu64(2)},
-				"bar|foo": report.EdgeMetadata{PacketCount: newu64(3), ByteCount: newu64(4)},
+				"foo|bar": report.EdgeMetadata{PacketCount: newu64(1), EgressByteCount: newu64(2)},
+				"bar|foo": report.EdgeMetadata{PacketCount: newu64(3), EgressByteCount: newu64(4)},
 			},
 		}
 	}
@@ -140,8 +140,8 @@ func TestMapEdge(t *testing.T) {
 	}
 
 	if want, have := (report.EdgeMetadata{
-		PacketCount: newu64(1),
-		ByteCount:   newu64(2),
+		PacketCount:     newu64(1),
+		EgressByteCount: newu64(2),
 	}), mapper.EdgeMetadata(report.MakeReport(), "_foo", "_bar"); !reflect.DeepEqual(want, have) {
 		t.Errorf("want %+v, have %+v", want, have)
 	}

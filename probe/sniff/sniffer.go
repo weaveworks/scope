@@ -3,6 +3,7 @@ package sniff
 import (
 	"io"
 	"log"
+	"net"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -15,27 +16,29 @@ import (
 
 // Sniffer is a packet-sniffing reporter.
 type Sniffer struct {
-	hostID  string
-	reports chan chan report.Report
-	parser  *gopacket.DecodingLayerParser
-	decoded []gopacket.LayerType
-	eth     layers.Ethernet
-	ip4     layers.IPv4
-	ip6     layers.IPv6
-	tcp     layers.TCP
-	udp     layers.UDP
-	icmp4   layers.ICMPv4
-	icmp6   layers.ICMPv6
+	hostID    string
+	localNets report.Networks
+	reports   chan chan report.Report
+	parser    *gopacket.DecodingLayerParser
+	decoded   []gopacket.LayerType
+	eth       layers.Ethernet
+	ip4       layers.IPv4
+	ip6       layers.IPv6
+	tcp       layers.TCP
+	udp       layers.UDP
+	icmp4     layers.ICMPv4
+	icmp6     layers.ICMPv6
 }
 
 // New returns a new sniffing reporter that samples traffic by turning its
 // packet capture facilities on and off. Note that the on and off durations
 // represent a way to bound CPU burn. Effective sample rate needs to be
 // calculated as (packets decoded / packets observed).
-func New(hostID string, src gopacket.ZeroCopyPacketDataSource, on, off time.Duration) *Sniffer {
+func New(hostID string, localNets report.Networks, src gopacket.ZeroCopyPacketDataSource, on, off time.Duration) *Sniffer {
 	s := &Sniffer{
-		hostID:  hostID,
-		reports: make(chan chan report.Report),
+		hostID:    hostID,
+		localNets: localNets,
+		reports:   make(chan chan report.Report),
 	}
 	s.parser = gopacket.NewDecodingLayerParser(
 		layers.LayerTypeEthernet,
@@ -119,8 +122,11 @@ func interpolateCounts(r report.Report) {
 			if emd.PacketCount != nil {
 				*emd.PacketCount = uint64(float64(*emd.PacketCount) * factor)
 			}
-			if emd.ByteCount != nil {
-				*emd.ByteCount = uint64(float64(*emd.ByteCount) * factor)
+			if emd.EgressByteCount != nil {
+				*emd.EgressByteCount = uint64(float64(*emd.EgressByteCount) * factor)
+			}
+			if emd.IngressByteCount != nil {
+				*emd.IngressByteCount = uint64(float64(*emd.IngressByteCount) * factor)
 			}
 		}
 	}
@@ -204,54 +210,104 @@ func (s *Sniffer) read(src gopacket.ZeroCopyPacketDataSource, dst chan Packet, p
 }
 
 // Merge puts the packet into the report.
+//
+// Note that, for the moment, we encode bidirectional traffic as ingress and
+// egress traffic on a single edge whose src is local and dst is remote. That
+// is, if we see a packet from the remote addr 9.8.7.6 to the local addr
+// 1.2.3.4, we apply it as *ingress* on the edge (1.2.3.4 -> 9.8.7.6).
 func (s *Sniffer) Merge(p Packet, rpt report.Report) {
-	// With a src and dst IP, we can add to the address topology.
-	if p.SrcIP != "" && p.DstIP != "" {
+	if p.SrcIP == "" || p.DstIP == "" {
+		return
+	}
+
+	// One end of the traffic has to be local. Otherwise, we don't know how to
+	// construct the edge.
+	//
+	// If we need to get around this limitation, we may be able to change the
+	// semantics of the report, and allow the src side of edges to be from
+	// anywhere. But that will have ramifications throughout Scope (read: it
+	// may violate implicit invariants) and needs to be thought through.
+	var (
+		srcLocal = s.localNets.Contains(net.ParseIP(p.SrcIP))
+		dstLocal = s.localNets.Contains(net.ParseIP(p.DstIP))
+		localIP  string
+		remoteIP string
+		egress   bool
+	)
+	switch {
+	case srcLocal && !dstLocal:
+		localIP, remoteIP, egress = p.SrcIP, p.DstIP, true
+	case !srcLocal && dstLocal:
+		localIP, remoteIP, egress = p.DstIP, p.SrcIP, false
+	case srcLocal && dstLocal:
+		localIP, remoteIP, egress = p.SrcIP, p.DstIP, true // loopback
+	case !srcLocal && !dstLocal:
+		log.Printf("sniffer ignoring remote-to-remote (%s -> %s) traffic", p.SrcIP, p.DstIP)
+		return
+	}
+
+	// For sure, we can add to the address topology.
+	{
 		var (
-			srcNodeID      = report.MakeAddressNodeID(s.hostID, p.SrcIP)
-			dstNodeID      = report.MakeAddressNodeID(s.hostID, p.DstIP)
+			srcNodeID      = report.MakeAddressNodeID(s.hostID, localIP)
+			dstNodeID      = report.MakeAddressNodeID(s.hostID, remoteIP)
 			edgeID         = report.MakeEdgeID(srcNodeID, dstNodeID)
 			srcAdjacencyID = report.MakeAdjacencyID(srcNodeID)
 		)
+
 		rpt.Address.NodeMetadatas[srcNodeID] = report.MakeNodeMetadata()
-		rpt.Address.NodeMetadatas[dstNodeID] = report.MakeNodeMetadata()
 
 		emd := rpt.Address.EdgeMetadatas[edgeID]
 		if emd.PacketCount == nil {
 			emd.PacketCount = new(uint64)
 		}
 		*emd.PacketCount++
-		if emd.ByteCount == nil {
-			emd.ByteCount = new(uint64)
-		}
-		*emd.ByteCount += uint64(p.Network)
-		rpt.Address.EdgeMetadatas[edgeID] = emd
 
+		if egress {
+			if emd.EgressByteCount == nil {
+				emd.EgressByteCount = new(uint64)
+			}
+			*emd.EgressByteCount += uint64(p.Network)
+		} else {
+			if emd.IngressByteCount == nil {
+				emd.IngressByteCount = new(uint64)
+			}
+			*emd.IngressByteCount += uint64(p.Network)
+		}
+
+		rpt.Address.EdgeMetadatas[edgeID] = emd
 		rpt.Address.Adjacency[srcAdjacencyID] = rpt.Address.Adjacency[srcAdjacencyID].Add(dstNodeID)
 	}
 
-	// With a src and dst IP and port, we can add to the endpoints.
-	if p.SrcIP != "" && p.DstIP != "" && p.SrcPort != "" && p.DstPort != "" {
+	// If we have ports, we can add to the endpoint topology, too.
+	if p.SrcPort != "" && p.DstPort != "" {
 		var (
-			srcNodeID      = report.MakeEndpointNodeID(s.hostID, p.SrcIP, p.SrcPort)
-			dstNodeID      = report.MakeEndpointNodeID(s.hostID, p.DstIP, p.DstPort)
+			srcNodeID      = report.MakeEndpointNodeID(s.hostID, localIP, p.SrcPort)
+			dstNodeID      = report.MakeEndpointNodeID(s.hostID, remoteIP, p.DstPort)
 			edgeID         = report.MakeEdgeID(srcNodeID, dstNodeID)
 			srcAdjacencyID = report.MakeAdjacencyID(srcNodeID)
 		)
 		rpt.Endpoint.NodeMetadatas[srcNodeID] = report.MakeNodeMetadata()
-		rpt.Endpoint.NodeMetadatas[dstNodeID] = report.MakeNodeMetadata()
 
 		emd := rpt.Endpoint.EdgeMetadatas[edgeID]
 		if emd.PacketCount == nil {
 			emd.PacketCount = new(uint64)
 		}
 		*emd.PacketCount++
-		if emd.ByteCount == nil {
-			emd.ByteCount = new(uint64)
-		}
-		*emd.ByteCount += uint64(p.Transport)
-		rpt.Endpoint.EdgeMetadatas[edgeID] = emd
 
+		if egress {
+			if emd.EgressByteCount == nil {
+				emd.EgressByteCount = new(uint64)
+			}
+			*emd.EgressByteCount += uint64(p.Transport)
+		} else {
+			if emd.IngressByteCount == nil {
+				emd.IngressByteCount = new(uint64)
+			}
+			*emd.IngressByteCount += uint64(p.Transport)
+		}
+
+		rpt.Endpoint.EdgeMetadatas[edgeID] = emd
 		rpt.Endpoint.Adjacency[srcAdjacencyID] = rpt.Endpoint.Adjacency[srcAdjacencyID].Add(dstNodeID)
 	}
 }

@@ -55,8 +55,8 @@ var (
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{
-				PacketCount: newu64(100),
-				ByteCount:   newu64(10),
+				PacketCount:     newu64(10),
+				EgressByteCount: newu64(100),
 			},
 		},
 		ClientProcess2ID: {
@@ -73,8 +73,8 @@ var (
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{
-				PacketCount: newu64(200),
-				ByteCount:   newu64(20),
+				PacketCount:     newu64(20),
+				EgressByteCount: newu64(200),
 			},
 		},
 		ServerProcessID: {
@@ -97,8 +97,8 @@ var (
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{
-				PacketCount: newu64(150),
-				ByteCount:   newu64(1500),
+				PacketCount:     newu64(150),
+				EgressByteCount: newu64(1500),
 			},
 		},
 		nonContainerProcessID: {
@@ -137,8 +137,8 @@ var (
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{
-				PacketCount: newu64(300),
-				ByteCount:   newu64(30),
+				PacketCount:     newu64(30),
+				EgressByteCount: newu64(300),
 			},
 		},
 		"apache": {
@@ -160,8 +160,8 @@ var (
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{
-				PacketCount: newu64(150),
-				ByteCount:   newu64(1500),
+				PacketCount:     newu64(150),
+				EgressByteCount: newu64(1500),
 			},
 		},
 		"bash": {
@@ -200,8 +200,8 @@ var (
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{
-				PacketCount: newu64(300),
-				ByteCount:   newu64(30),
+				PacketCount:     newu64(30),
+				EgressByteCount: newu64(300),
 			},
 		},
 		test.ServerContainerID: {
@@ -219,8 +219,8 @@ var (
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{
-				PacketCount: newu64(150),
-				ByteCount:   newu64(1500),
+				PacketCount:     newu64(150),
+				EgressByteCount: newu64(1500),
 			},
 		},
 		uncontainedServerID: {
@@ -258,8 +258,8 @@ var (
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{
-				PacketCount: newu64(300),
-				ByteCount:   newu64(30),
+				PacketCount:     newu64(30),
+				EgressByteCount: newu64(300),
 			},
 		},
 		test.ServerContainerImageName: {
@@ -277,8 +277,8 @@ var (
 				test.ServerHostNodeID),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{
-				PacketCount: newu64(150),
-				ByteCount:   newu64(1500),
+				PacketCount:     newu64(150),
+				EgressByteCount: newu64(1500),
 			},
 		},
 		uncontainedServerID: {

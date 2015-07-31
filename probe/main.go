@@ -79,11 +79,23 @@ func main() {
 	}
 	defer publisher.Close()
 
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Fatal(err)
+	}
+	localNets := report.Networks{}
+	for _, addr := range addrs {
+		// Not all addrs are IPNets.
+		if ipNet, ok := addr.(*net.IPNet); ok {
+			localNets = append(localNets, ipNet)
+		}
+	}
+
 	var (
 		hostName     = hostname()
 		hostID       = hostName // TODO: we should sanitize the hostname
 		taggers      = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
-		reporters    = []Reporter{host.NewReporter(hostID, hostName), endpoint.NewReporter(hostID, hostName, *spyProcs)}
+		reporters    = []Reporter{host.NewReporter(hostID, hostName, localNets), endpoint.NewReporter(hostID, hostName, *spyProcs)}
 		processCache *process.CachingWalker
 	)
 
@@ -122,7 +134,7 @@ func main() {
 				continue
 			}
 			log.Printf("capturing packets on %s", iface)
-			reporters = append(reporters, sniff.New(hostID, source, *captureOn, *captureOff))
+			reporters = append(reporters, sniff.New(hostID, localNets, source, *captureOn, *captureOff))
 		}
 	}
 

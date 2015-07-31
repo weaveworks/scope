@@ -64,7 +64,8 @@ func (e *EdgeMetadatas) Merge(other EdgeMetadatas) {
 // should represent the same edge on different times.
 func (m *EdgeMetadata) Merge(other EdgeMetadata) {
 	m.PacketCount = merge(m.PacketCount, other.PacketCount, sum)
-	m.ByteCount = merge(m.ByteCount, other.ByteCount, sum)
+	m.EgressByteCount = merge(m.EgressByteCount, other.EgressByteCount, sum)
+	m.IngressByteCount = merge(m.IngressByteCount, other.IngressByteCount, sum)
 	m.MaxConnCountTCP = merge(m.MaxConnCountTCP, other.MaxConnCountTCP, max)
 }
 
@@ -72,7 +73,8 @@ func (m *EdgeMetadata) Merge(other EdgeMetadata) {
 // they should represent different edges at the same time.
 func (m *EdgeMetadata) Flatten(other EdgeMetadata) {
 	m.PacketCount = merge(m.PacketCount, other.PacketCount, sum)
-	m.ByteCount = merge(m.ByteCount, other.ByteCount, sum)
+	m.EgressByteCount = merge(m.EgressByteCount, other.EgressByteCount, sum)
+	m.IngressByteCount = merge(m.IngressByteCount, other.IngressByteCount, sum)
 	// Note that summing of two maximums doesn't always give us the true
 	// maximum. But it's a best effort.
 	m.MaxConnCountTCP = merge(m.MaxConnCountTCP, other.MaxConnCountTCP, sum)

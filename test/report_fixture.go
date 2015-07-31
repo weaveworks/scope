@@ -108,33 +108,33 @@ var (
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				report.MakeEdgeID(Client54001NodeID, Server80NodeID): report.EdgeMetadata{
-					PacketCount: newu64(100),
-					ByteCount:   newu64(10),
+					PacketCount:     newu64(10),
+					EgressByteCount: newu64(100),
 				},
 				report.MakeEdgeID(Client54002NodeID, Server80NodeID): report.EdgeMetadata{
-					PacketCount: newu64(200),
-					ByteCount:   newu64(20),
+					PacketCount:     newu64(20),
+					EgressByteCount: newu64(200),
 				},
 
 				report.MakeEdgeID(Server80NodeID, Client54001NodeID): report.EdgeMetadata{
-					PacketCount: newu64(10),
-					ByteCount:   newu64(100),
+					PacketCount:     newu64(10),
+					EgressByteCount: newu64(100),
 				},
 				report.MakeEdgeID(Server80NodeID, Client54002NodeID): report.EdgeMetadata{
-					PacketCount: newu64(20),
-					ByteCount:   newu64(200),
+					PacketCount:     newu64(20),
+					EgressByteCount: newu64(200),
 				},
 				report.MakeEdgeID(Server80NodeID, UnknownClient1NodeID): report.EdgeMetadata{
-					PacketCount: newu64(30),
-					ByteCount:   newu64(300),
+					PacketCount:     newu64(30),
+					EgressByteCount: newu64(300),
 				},
 				report.MakeEdgeID(Server80NodeID, UnknownClient2NodeID): report.EdgeMetadata{
-					PacketCount: newu64(40),
-					ByteCount:   newu64(400),
+					PacketCount:     newu64(40),
+					EgressByteCount: newu64(400),
 				},
 				report.MakeEdgeID(Server80NodeID, UnknownClient3NodeID): report.EdgeMetadata{
-					PacketCount: newu64(50),
-					ByteCount:   newu64(500),
+					PacketCount:     newu64(50),
+					EgressByteCount: newu64(500),
 				},
 			},
 		},

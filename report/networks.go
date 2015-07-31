@@ -12,12 +12,11 @@ type Interface interface {
 	Addrs() ([]net.Addr, error)
 }
 
-// Variables exposed for testing
+// Variables exposed for testing.
+// TODO this design is broken, make it consistent with probe networks.
 var (
 	LocalNetworks       = Networks{}
-	InterfaceByNameStub = func(name string) (Interface, error) {
-		return net.InterfaceByName(name)
-	}
+	InterfaceByNameStub = func(name string) (Interface, error) { return net.InterfaceByName(name) }
 )
 
 // Contains returns true if IP is in Networks.

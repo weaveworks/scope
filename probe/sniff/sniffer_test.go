@@ -2,6 +2,7 @@ package sniff_test
 
 import (
 	"io"
+	"net"
 	"reflect"
 	"sync"
 	"testing"
@@ -20,7 +21,7 @@ func TestSnifferShutdown(t *testing.T) {
 		src    = newMockSource([]byte{}, nil)
 		on     = time.Millisecond
 		off    = time.Millisecond
-		s      = sniff.New(hostID, src, on, off)
+		s      = sniff.New(hostID, report.Networks{}, src, on, off)
 	)
 
 	// Stopping the source should terminate the sniffer.
@@ -53,8 +54,11 @@ func TestMerge(t *testing.T) {
 			Network:   512,
 			Transport: 256,
 		}
+
+		_, ipnet, _ = net.ParseCIDR(p.SrcIP + "/24") // ;)
+		localNets   = report.Networks([]*net.IPNet{ipnet})
 	)
-	sniff.New(hostID, src, on, off).Merge(p, rpt)
+	sniff.New(hostID, localNets, src, on, off).Merge(p, rpt)
 
 	var (
 		srcEndpointNodeID = report.MakeEndpointNodeID(hostID, p.SrcIP, p.SrcPort)
@@ -68,13 +72,12 @@ func TestMerge(t *testing.T) {
 		},
 		EdgeMetadatas: report.EdgeMetadatas{
 			report.MakeEdgeID(srcEndpointNodeID, dstEndpointNodeID): report.EdgeMetadata{
-				PacketCount: newu64(1),
-				ByteCount:   newu64(256),
+				PacketCount:     newu64(1),
+				EgressByteCount: newu64(256),
 			},
 		},
 		NodeMetadatas: report.NodeMetadatas{
 			srcEndpointNodeID: report.MakeNodeMetadata(),
-			dstEndpointNodeID: report.MakeNodeMetadata(),
 		},
 	}), rpt.Endpoint; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
@@ -92,13 +95,12 @@ func TestMerge(t *testing.T) {
 		},
 		EdgeMetadatas: report.EdgeMetadatas{
 			report.MakeEdgeID(srcAddressNodeID, dstAddressNodeID): report.EdgeMetadata{
-				PacketCount: newu64(1),
-				ByteCount:   newu64(512),
+				PacketCount:     newu64(1),
+				EgressByteCount: newu64(512),
 			},
 		},
 		NodeMetadatas: report.NodeMetadatas{
 			srcAddressNodeID: report.MakeNodeMetadata(),
-			dstAddressNodeID: report.MakeNodeMetadata(),
 		},
 	}), rpt.Address; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))

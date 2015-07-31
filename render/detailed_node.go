@@ -67,8 +67,11 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 		if n.EdgeMetadata.PacketCount != nil {
 			rows = append(rows, Row{"Packets", strconv.FormatUint(*n.EdgeMetadata.PacketCount, 10), ""})
 		}
-		if n.EdgeMetadata.ByteCount != nil {
-			rows = append(rows, Row{"Bytes", strconv.FormatUint(*n.EdgeMetadata.ByteCount, 10), ""})
+		if n.EdgeMetadata.EgressByteCount != nil {
+			rows = append(rows, Row{"Egress bytes", strconv.FormatUint(*n.EdgeMetadata.EgressByteCount, 10), ""}) // TODO rate
+		}
+		if n.EdgeMetadata.IngressByteCount != nil {
+			rows = append(rows, Row{"Ingress bytes", strconv.FormatUint(*n.EdgeMetadata.IngressByteCount, 10), ""}) // TODO rate
 		}
 		if len(rows) > 0 {
 			tables = append(tables, Table{"Connections", true, connectionsRank, rows})
