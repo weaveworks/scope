@@ -3,6 +3,7 @@ package report
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 // Report is the core data type. It's produced by probes, and consumed and
@@ -44,6 +45,14 @@ type Report struct {
 
 	// Sampling data for this report.
 	Sampling Sampling
+
+	// Window is the amount of time that this report purports to represent.
+	// Windows must be carefully merged. They should only be added when
+	// reports cover non-overlapping periods of time. By default, we assume
+	// that's true, and add windows in merge operations. When that's not true,
+	// such as in the app, we expect the component to overwrite the window
+	// before serving it to consumers.
+	Window time.Duration
 }
 
 // MakeReport makes a clean report, ready to Merge() other reports into.
@@ -57,6 +66,7 @@ func MakeReport() Report {
 		Host:           NewTopology(),
 		Overlay:        NewTopology(),
 		Sampling:       Sampling{},
+		Window:         0,
 	}
 }
 

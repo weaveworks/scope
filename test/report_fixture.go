@@ -1,6 +1,8 @@
 package test
 
 import (
+	"time"
+
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
@@ -246,6 +248,7 @@ var (
 			Count: 1024,
 			Total: 4096,
 		},
+		Window: 2 * time.Second,
 	}
 )
 

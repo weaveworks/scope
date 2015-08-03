@@ -153,6 +153,7 @@ func main() {
 			select {
 			case <-pubTick:
 				publishTicks.WithLabelValues().Add(1)
+				r.Window = *publishInterval
 				publisher.Publish(r)
 				r = report.MakeReport()
 
@@ -160,7 +161,6 @@ func main() {
 				if err := processCache.Update(); err != nil {
 					log.Printf("error reading processes: %v", err)
 				}
-
 				for _, reporter := range reporters {
 					newReport, err := reporter.Report()
 					if err != nil {
@@ -168,7 +168,6 @@ func main() {
 					}
 					r.Merge(newReport)
 				}
-
 				r = Apply(r, taggers)
 
 			case <-quit:

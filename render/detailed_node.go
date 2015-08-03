@@ -58,23 +58,46 @@ func (t tables) Less(i, j int) bool { return t[i].Rank > t[j].Rank }
 // MakeDetailedNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
 func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
+	sec := r.Window.Seconds()
+	rate := func(u *uint64) (float64, bool) {
+		if u == nil {
+			return 0.0, false
+		}
+		if sec <= 0 {
+			return 0.0, true
+		}
+		return float64(*u) / sec, true
+	}
+	shortenByteRate := func(rate float64) (major, minor string) {
+		switch {
+		case rate > 1024*1024:
+			return fmt.Sprintf("%.2f", rate/1024/1024), "MBps"
+		case rate > 1024:
+			return fmt.Sprintf("%.1f", rate/1024), "KBps"
+		default:
+			return fmt.Sprintf("%.0f", rate), "Bps"
+		}
+	}
+
 	tables := tables{}
 	{
 		rows := []Row{}
 		if n.EdgeMetadata.MaxConnCountTCP != nil {
 			rows = append(rows, Row{"TCP connections", strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10), ""})
 		}
-		if n.EdgeMetadata.EgressPacketCount != nil {
-			rows = append(rows, Row{"Egress packets", strconv.FormatUint(*n.EdgeMetadata.EgressPacketCount, 10), ""})
+		if rate, ok := rate(n.EdgeMetadata.EgressPacketCount); ok {
+			rows = append(rows, Row{"Egress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec"})
 		}
-		if n.EdgeMetadata.IngressPacketCount != nil {
-			rows = append(rows, Row{"Ingress packets", strconv.FormatUint(*n.EdgeMetadata.IngressPacketCount, 10), ""})
+		if rate, ok := rate(n.EdgeMetadata.IngressPacketCount); ok {
+			rows = append(rows, Row{"Ingress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec"})
 		}
-		if n.EdgeMetadata.EgressByteCount != nil {
-			rows = append(rows, Row{"Egress bytes", strconv.FormatUint(*n.EdgeMetadata.EgressByteCount, 10), ""}) // TODO rate
+		if rate, ok := rate(n.EdgeMetadata.EgressByteCount); ok {
+			s, unit := shortenByteRate(rate)
+			rows = append(rows, Row{"Egress byte rate", s, unit})
 		}
-		if n.EdgeMetadata.IngressByteCount != nil {
-			rows = append(rows, Row{"Ingress bytes", strconv.FormatUint(*n.EdgeMetadata.IngressByteCount, 10), ""}) // TODO rate
+		if rate, ok := rate(n.EdgeMetadata.IngressByteCount); ok {
+			s, unit := shortenByteRate(rate)
+			rows = append(rows, Row{"Ingress byte rate", s, unit})
 		}
 		if len(rows) > 0 {
 			tables = append(tables, Table{"Connections", true, connectionsRank, rows})

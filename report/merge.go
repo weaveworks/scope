@@ -14,6 +14,7 @@ func (r *Report) Merge(other Report) {
 	r.Host.Merge(other.Host)
 	r.Overlay.Merge(other.Overlay)
 	r.Sampling.Merge(other.Sampling)
+	r.Window += other.Window
 }
 
 // Merge merges another Topology into the receiver.
