@@ -89,7 +89,6 @@ func (t Topology) Validate() error {
 		}
 		if _, ok := t.NodeMetadatas[srcNodeID]; !ok {
 			errs = append(errs, fmt.Sprintf("node metadata missing for source node ID %q (from edge %q)", srcNodeID, edgeID))
-			continue
 		}
 		dstNodeIDs, ok := t.Adjacency[MakeAdjacencyID(srcNodeID)]
 		if !ok {
@@ -98,7 +97,6 @@ func (t Topology) Validate() error {
 		}
 		if !dstNodeIDs.Contains(dstNodeID) {
 			errs = append(errs, fmt.Sprintf("adjacency destination missing for destination node ID %q (from edge %q)", dstNodeID, edgeID))
-			continue
 		}
 	}
 
@@ -111,20 +109,22 @@ func (t Topology) Validate() error {
 		}
 		if _, ok := t.NodeMetadatas[nodeID]; !ok {
 			errs = append(errs, fmt.Sprintf("node metadata missing for source node %q (from adjacency %q)", nodeID, adjacencyID))
-			continue
 		}
 	}
 
-	// Check all node metadata keys are parse-able (i.e. contain a scope)
+	// Check all node metadatas are valid, and the keys are parseable, i.e.
+	// contain a scope.
 	for nodeID := range t.NodeMetadatas {
+		if t.NodeMetadatas[nodeID].Metadata == nil {
+			errs = append(errs, fmt.Sprintf("node ID %q has nil metadata", nodeID))
+		}
 		if _, _, ok := ParseNodeID(nodeID); !ok {
 			errs = append(errs, fmt.Sprintf("invalid node ID %q", nodeID))
-			continue
 		}
 	}
 
 	if len(errs) > 0 {
-		return fmt.Errorf(strings.Join(errs, "; "))
+		return fmt.Errorf("%d error(s): %s", len(errs), strings.Join(errs, "; "))
 	}
 
 	return nil
