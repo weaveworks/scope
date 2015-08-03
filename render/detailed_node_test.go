@@ -66,7 +66,7 @@ func TestMakeDetailedNode(t *testing.T) {
 				Numeric: true,
 				Rank:    100,
 				Rows: []render.Row{
-					{"Packets", "150", ""},
+					{"Egress packets", "150", ""},
 					{"Egress bytes", "1500", ""},
 				},
 			},

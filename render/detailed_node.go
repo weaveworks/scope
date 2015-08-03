@@ -64,8 +64,11 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 		if n.EdgeMetadata.MaxConnCountTCP != nil {
 			rows = append(rows, Row{"TCP connections", strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10), ""})
 		}
-		if n.EdgeMetadata.PacketCount != nil {
-			rows = append(rows, Row{"Packets", strconv.FormatUint(*n.EdgeMetadata.PacketCount, 10), ""})
+		if n.EdgeMetadata.EgressPacketCount != nil {
+			rows = append(rows, Row{"Egress packets", strconv.FormatUint(*n.EdgeMetadata.EgressPacketCount, 10), ""})
+		}
+		if n.EdgeMetadata.IngressPacketCount != nil {
+			rows = append(rows, Row{"Ingress packets", strconv.FormatUint(*n.EdgeMetadata.IngressPacketCount, 10), ""})
 		}
 		if n.EdgeMetadata.EgressByteCount != nil {
 			rows = append(rows, Row{"Egress bytes", strconv.FormatUint(*n.EdgeMetadata.EgressByteCount, 10), ""}) // TODO rate

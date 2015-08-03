@@ -72,8 +72,8 @@ func TestMerge(t *testing.T) {
 		},
 		EdgeMetadatas: report.EdgeMetadatas{
 			report.MakeEdgeID(srcEndpointNodeID, dstEndpointNodeID): report.EdgeMetadata{
-				PacketCount:     newu64(1),
-				EgressByteCount: newu64(256),
+				EgressPacketCount: newu64(1),
+				EgressByteCount:   newu64(256),
 			},
 		},
 		NodeMetadatas: report.NodeMetadatas{
@@ -95,8 +95,8 @@ func TestMerge(t *testing.T) {
 		},
 		EdgeMetadatas: report.EdgeMetadatas{
 			report.MakeEdgeID(srcAddressNodeID, dstAddressNodeID): report.EdgeMetadata{
-				PacketCount:     newu64(1),
-				EgressByteCount: newu64(512),
+				EgressPacketCount: newu64(1),
+				EgressByteCount:   newu64(512),
 			},
 		},
 		NodeMetadatas: report.NodeMetadatas{

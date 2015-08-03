@@ -3,7 +3,8 @@ package report
 // Merge functions for all topology datatypes. The general semantics are that
 // the receiver is modified, and what's merged in isn't.
 
-// Merge merges another Report into the receiver.
+// Merge merges another Report into the receiver. Pass addWindows true if the
+// reports represent distinct (non-overlapping) periods of time.
 func (r *Report) Merge(other Report) {
 	r.Endpoint.Merge(other.Endpoint)
 	r.Address.Merge(other.Address)
@@ -63,7 +64,8 @@ func (e *EdgeMetadatas) Merge(other EdgeMetadatas) {
 // Merge merges another EdgeMetadata into the receiver. The two edge metadatas
 // should represent the same edge on different times.
 func (m *EdgeMetadata) Merge(other EdgeMetadata) {
-	m.PacketCount = merge(m.PacketCount, other.PacketCount, sum)
+	m.EgressPacketCount = merge(m.EgressPacketCount, other.EgressPacketCount, sum)
+	m.IngressPacketCount = merge(m.IngressPacketCount, other.IngressPacketCount, sum)
 	m.EgressByteCount = merge(m.EgressByteCount, other.EgressByteCount, sum)
 	m.IngressByteCount = merge(m.IngressByteCount, other.IngressByteCount, sum)
 	m.MaxConnCountTCP = merge(m.MaxConnCountTCP, other.MaxConnCountTCP, max)
@@ -72,7 +74,8 @@ func (m *EdgeMetadata) Merge(other EdgeMetadata) {
 // Flatten sums two EdgeMetadatas. Their windows should be the same duration;
 // they should represent different edges at the same time.
 func (m *EdgeMetadata) Flatten(other EdgeMetadata) {
-	m.PacketCount = merge(m.PacketCount, other.PacketCount, sum)
+	m.EgressPacketCount = merge(m.EgressPacketCount, other.EgressPacketCount, sum)
+	m.IngressPacketCount = merge(m.IngressPacketCount, other.IngressPacketCount, sum)
 	m.EgressByteCount = merge(m.EgressByteCount, other.EgressByteCount, sum)
 	m.IngressByteCount = merge(m.IngressByteCount, other.IngressByteCount, sum)
 	// Note that summing of two maximums doesn't always give us the true

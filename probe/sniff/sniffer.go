@@ -119,8 +119,11 @@ func interpolateCounts(r report.Report) {
 	factor := 1.0 / rate
 	for _, topology := range r.Topologies() {
 		for _, emd := range topology.EdgeMetadatas {
-			if emd.PacketCount != nil {
-				*emd.PacketCount = uint64(float64(*emd.PacketCount) * factor)
+			if emd.EgressPacketCount != nil {
+				*emd.EgressPacketCount = uint64(float64(*emd.EgressPacketCount) * factor)
+			}
+			if emd.IngressPacketCount != nil {
+				*emd.IngressPacketCount = uint64(float64(*emd.IngressPacketCount) * factor)
 			}
 			if emd.EgressByteCount != nil {
 				*emd.EgressByteCount = uint64(float64(*emd.EgressByteCount) * factor)
@@ -261,17 +264,21 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 		}
 
 		emd := rpt.Address.EdgeMetadatas[edgeID]
-		if emd.PacketCount == nil {
-			emd.PacketCount = new(uint64)
-		}
-		*emd.PacketCount++
 
 		if egress {
+			if emd.EgressPacketCount == nil {
+				emd.EgressPacketCount = new(uint64)
+			}
+			*emd.EgressPacketCount++
 			if emd.EgressByteCount == nil {
 				emd.EgressByteCount = new(uint64)
 			}
 			*emd.EgressByteCount += uint64(p.Network)
 		} else {
+			if emd.IngressPacketCount == nil {
+				emd.IngressPacketCount = new(uint64)
+			}
+			*emd.IngressPacketCount++
 			if emd.IngressByteCount == nil {
 				emd.IngressByteCount = new(uint64)
 			}
@@ -296,17 +303,21 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 		}
 
 		emd := rpt.Endpoint.EdgeMetadatas[edgeID]
-		if emd.PacketCount == nil {
-			emd.PacketCount = new(uint64)
-		}
-		*emd.PacketCount++
 
 		if egress {
+			if emd.EgressPacketCount == nil {
+				emd.EgressPacketCount = new(uint64)
+			}
+			*emd.EgressPacketCount++
 			if emd.EgressByteCount == nil {
 				emd.EgressByteCount = new(uint64)
 			}
 			*emd.EgressByteCount += uint64(p.Transport)
 		} else {
+			if emd.IngressPacketCount == nil {
+				emd.IngressPacketCount = new(uint64)
+			}
+			*emd.IngressPacketCount++
 			if emd.IngressByteCount == nil {
 				emd.IngressByteCount = new(uint64)
 			}

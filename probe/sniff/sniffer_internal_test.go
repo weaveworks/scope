@@ -22,9 +22,10 @@ func TestInterpolateCounts(t *testing.T) {
 	r.Sampling.Count = samplingCount
 	r.Sampling.Total = samplingTotal
 	r.Endpoint.EdgeMetadatas[edgeID] = report.EdgeMetadata{
-		PacketCount:      newu64(packetCount),
-		IngressByteCount: newu64(byteCount),
-		EgressByteCount:  newu64(byteCount),
+		EgressPacketCount:  newu64(packetCount),
+		IngressPacketCount: newu64(packetCount),
+		EgressByteCount:    newu64(byteCount),
+		IngressByteCount:   newu64(byteCount),
 	}
 
 	interpolateCounts(r)
@@ -35,7 +36,10 @@ func TestInterpolateCounts(t *testing.T) {
 		apply  = func(v uint64) uint64 { return uint64(factor * float64(v)) }
 		emd    = r.Endpoint.EdgeMetadatas[edgeID]
 	)
-	if want, have := apply(packetCount), (*emd.PacketCount); want != have {
+	if want, have := apply(packetCount), (*emd.EgressPacketCount); want != have {
+		t.Errorf("want %d packets, have %d", want, have)
+	}
+	if want, have := apply(packetCount), (*emd.IngressPacketCount); want != have {
 		t.Errorf("want %d packets, have %d", want, have)
 	}
 	if want, have := apply(byteCount), (*emd.EgressByteCount); want != have {

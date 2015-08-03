@@ -36,11 +36,11 @@ func TestReduceRender(t *testing.T) {
 
 func TestReduceEdge(t *testing.T) {
 	renderer := render.Reduce([]render.Renderer{
-		mockRenderer{edgeMetadata: report.EdgeMetadata{PacketCount: newu64(1)}},
-		mockRenderer{edgeMetadata: report.EdgeMetadata{PacketCount: newu64(2)}},
+		mockRenderer{edgeMetadata: report.EdgeMetadata{EgressPacketCount: newu64(1)}},
+		mockRenderer{edgeMetadata: report.EdgeMetadata{EgressPacketCount: newu64(2)}},
 	})
 
-	want := report.EdgeMetadata{PacketCount: newu64(3)}
+	want := report.EdgeMetadata{EgressPacketCount: newu64(3)}
 	have := renderer.EdgeMetadata(report.MakeReport(), "", "")
 
 	if !reflect.DeepEqual(want, have) {
@@ -118,8 +118,8 @@ func TestMapEdge(t *testing.T) {
 				">bar": report.MakeIDList("foo"),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
-				"foo|bar": report.EdgeMetadata{PacketCount: newu64(1), EgressByteCount: newu64(2)},
-				"bar|foo": report.EdgeMetadata{PacketCount: newu64(3), EgressByteCount: newu64(4)},
+				"foo|bar": report.EdgeMetadata{EgressPacketCount: newu64(1), EgressByteCount: newu64(2)},
+				"bar|foo": report.EdgeMetadata{EgressPacketCount: newu64(3), EgressByteCount: newu64(4)},
 			},
 		}
 	}
@@ -140,8 +140,8 @@ func TestMapEdge(t *testing.T) {
 	}
 
 	if want, have := (report.EdgeMetadata{
-		PacketCount:     newu64(1),
-		EgressByteCount: newu64(2),
+		EgressPacketCount: newu64(1),
+		EgressByteCount:   newu64(2),
 	}), mapper.EdgeMetadata(report.MakeReport(), "_foo", "_bar"); !reflect.DeepEqual(want, have) {
 		t.Errorf("want %+v, have %+v", want, have)
 	}

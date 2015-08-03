@@ -96,8 +96,8 @@ func TestAPITopologyApplications(t *testing.T) {
 			t.Fatalf("JSON parse error: %s", err)
 		}
 		if want, have := (report.EdgeMetadata{
-			PacketCount:     newu64(10),
-			EgressByteCount: newu64(100),
+			EgressPacketCount: newu64(10),
+			EgressByteCount:   newu64(100),
 		}), edge.Metadata; !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}

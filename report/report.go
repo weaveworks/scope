@@ -1,6 +1,9 @@
 package report
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Report is the core data type. It's produced by probes, and consumed and
 // stored by apps. It's composed of multiple topologies, each representing
@@ -72,22 +75,17 @@ func (r Report) Topologies() []Topology {
 
 // Validate checks the report for various inconsistencies.
 func (r Report) Validate() error {
-	var packets uint64
+	var errs []string
 	for _, topology := range r.Topologies() {
 		if err := topology.Validate(); err != nil {
-			return err
-		}
-		for _, emd := range topology.EdgeMetadatas {
-			if emd.PacketCount != nil {
-				packets += *emd.PacketCount
-			}
+			errs = append(errs, err.Error())
 		}
 	}
 	if r.Sampling.Count > r.Sampling.Total {
-		return fmt.Errorf("sampling count (%d) bigger than total (%d)", r.Sampling.Count, r.Sampling.Total)
+		errs = append(errs, fmt.Sprintf("sampling count (%d) bigger than total (%d)", r.Sampling.Count, r.Sampling.Total))
 	}
-	if packets > 0 && (r.Sampling.Count == 0 || r.Sampling.Total == 0) {
-		return fmt.Errorf("packets exist in EdgeMetadata, but no sampling count or total in the base report")
+	if len(errs) > 0 {
+		return fmt.Errorf("%d error(s): %s", len(errs), strings.Join(errs, "; "))
 	}
 	return nil
 }
