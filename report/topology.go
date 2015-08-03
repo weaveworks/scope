@@ -32,8 +32,8 @@ type NodeMetadatas map[string]NodeMetadata
 // collect about a directed edge between two nodes in any topology.
 type EdgeMetadata struct {
 	PacketCount      *uint64 `json:"packet_count,omitempty"`
-	EgressByteCount  *uint64 `json:"ingress_byte_count,omitempty"`
-	IngressByteCount *uint64 `json:"egress_byte_count,omitempty"`
+	EgressByteCount  *uint64 `json:"egress_byte_count,omitempty"`
+	IngressByteCount *uint64 `json:"ingress_byte_count,omitempty"`
 	MaxConnCountTCP  *uint64 `json:"max_conn_count_tcp,omitempty"`
 }
 

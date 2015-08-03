@@ -145,7 +145,6 @@ type Packet struct {
 
 func (s *Sniffer) read(src gopacket.ZeroCopyPacketDataSource, dst chan Packet, process, total, count *uint64) {
 	var (
-		p    Packet
 		data []byte
 		err  error
 	)
@@ -167,6 +166,7 @@ func (s *Sniffer) read(src gopacket.ZeroCopyPacketDataSource, dst chan Packet, p
 			// We'll always get an error when we encounter a layer type for
 			// which we haven't configured a decoder.
 		}
+		var p Packet
 		for _, t := range s.decoded {
 			switch t {
 			case layers.LayerTypeEthernet:
@@ -178,15 +178,15 @@ func (s *Sniffer) read(src gopacket.ZeroCopyPacketDataSource, dst chan Packet, p
 			case layers.LayerTypeICMPv6:
 				p.Network += len(s.icmp6.Payload)
 
-			case layers.LayerTypeIPv6:
-				p.SrcIP = s.ip6.SrcIP.String()
-				p.DstIP = s.ip6.DstIP.String()
-				p.Network += len(s.ip6.Payload)
-
 			case layers.LayerTypeIPv4:
 				p.SrcIP = s.ip4.SrcIP.String()
 				p.DstIP = s.ip4.DstIP.String()
 				p.Network += len(s.ip4.Payload)
+
+			case layers.LayerTypeIPv6:
+				p.SrcIP = s.ip6.SrcIP.String()
+				p.DstIP = s.ip6.DstIP.String()
+				p.Network += len(s.ip6.Payload)
 
 			case layers.LayerTypeTCP:
 				p.SrcPort = strconv.Itoa(int(s.tcp.SrcPort))
@@ -199,7 +199,6 @@ func (s *Sniffer) read(src gopacket.ZeroCopyPacketDataSource, dst chan Packet, p
 				p.Transport += len(s.udp.Payload)
 			}
 		}
-
 		select {
 		case dst <- p:
 			atomic.AddUint64(count, 1)
@@ -228,19 +227,21 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 	// anywhere. But that will have ramifications throughout Scope (read: it
 	// may violate implicit invariants) and needs to be thought through.
 	var (
-		srcLocal = s.localNets.Contains(net.ParseIP(p.SrcIP))
-		dstLocal = s.localNets.Contains(net.ParseIP(p.DstIP))
-		localIP  string
-		remoteIP string
-		egress   bool
+		srcLocal   = s.localNets.Contains(net.ParseIP(p.SrcIP))
+		dstLocal   = s.localNets.Contains(net.ParseIP(p.DstIP))
+		localIP    string
+		remoteIP   string
+		localPort  string
+		remotePort string
+		egress     bool
 	)
 	switch {
 	case srcLocal && !dstLocal:
-		localIP, remoteIP, egress = p.SrcIP, p.DstIP, true
+		localIP, localPort, remoteIP, remotePort, egress = p.SrcIP, p.SrcPort, p.DstIP, p.DstPort, true
 	case !srcLocal && dstLocal:
-		localIP, remoteIP, egress = p.DstIP, p.SrcIP, false
+		localIP, localPort, remoteIP, remotePort, egress = p.DstIP, p.DstPort, p.SrcIP, p.SrcPort, false
 	case srcLocal && dstLocal:
-		localIP, remoteIP, egress = p.SrcIP, p.DstIP, true // loopback
+		localIP, localPort, remoteIP, remotePort, egress = p.SrcIP, p.SrcPort, p.DstIP, p.DstPort, true // loopback
 	case !srcLocal && !dstLocal:
 		log.Printf("sniffer ignoring remote-to-remote (%s -> %s) traffic", p.SrcIP, p.DstIP)
 		return
@@ -255,7 +256,9 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 			srcAdjacencyID = report.MakeAdjacencyID(srcNodeID)
 		)
 
-		rpt.Address.NodeMetadatas[srcNodeID] = report.MakeNodeMetadata()
+		if _, ok := rpt.Address.NodeMetadatas[srcNodeID]; !ok {
+			rpt.Address.NodeMetadatas[srcNodeID] = report.MakeNodeMetadata()
+		}
 
 		emd := rpt.Address.EdgeMetadatas[edgeID]
 		if emd.PacketCount == nil {
@@ -282,12 +285,15 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 	// If we have ports, we can add to the endpoint topology, too.
 	if p.SrcPort != "" && p.DstPort != "" {
 		var (
-			srcNodeID      = report.MakeEndpointNodeID(s.hostID, localIP, p.SrcPort)
-			dstNodeID      = report.MakeEndpointNodeID(s.hostID, remoteIP, p.DstPort)
+			srcNodeID      = report.MakeEndpointNodeID(s.hostID, localIP, localPort)
+			dstNodeID      = report.MakeEndpointNodeID(s.hostID, remoteIP, remotePort)
 			edgeID         = report.MakeEdgeID(srcNodeID, dstNodeID)
 			srcAdjacencyID = report.MakeAdjacencyID(srcNodeID)
 		)
-		rpt.Endpoint.NodeMetadatas[srcNodeID] = report.MakeNodeMetadata()
+
+		if _, ok := rpt.Endpoint.NodeMetadatas[srcNodeID]; !ok {
+			rpt.Endpoint.NodeMetadatas[srcNodeID] = report.MakeNodeMetadata()
+		}
 
 		emd := rpt.Endpoint.EdgeMetadatas[edgeID]
 		if emd.PacketCount == nil {
