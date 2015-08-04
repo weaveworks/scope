@@ -8,6 +8,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -127,14 +128,22 @@ func main() {
 	}
 
 	if *captureEnabled {
+		var sniffers int
 		for _, iface := range strings.Split(*captureInterfaces, ",") {
 			source, err := sniff.NewSource(iface)
 			if err != nil {
 				log.Printf("warning: %v", err)
 				continue
 			}
+			defer source.Close()
 			log.Printf("capturing packets on %s", iface)
 			reporters = append(reporters, sniff.New(hostID, localNets, source, *captureOn, *captureOff))
+			sniffers++
+		}
+		// Packet capture can block OS threads on Linux, so we need to provide
+		// sufficient overhead in GOMAXPROCS.
+		if have, want := runtime.GOMAXPROCS(-1), (sniffers + 1); have < want {
+			runtime.GOMAXPROCS(want)
 		}
 	}
 
