@@ -34,14 +34,18 @@ has_changes() {
 
 cached_revision=$(cached_image_rev)
 if [ -z "$cached_revision" ]; then
+	echo ">>> No cached image found; rebuilding"
 	rebuild
 	exit 0
 fi
 
+echo ">>> Found cached image rev $cached_revision"
 if has_changes $cached_revision $CIRCLE_SHA1 ; then
+	echo ">>> Found changes, rebuilding"
 	rebuild
 	exit 0
 fi
 
 # we didn't rebuild; import cached version
+echo ">>> No changes found, importing cached image"
 docker load -i $CACHEDIR/$IMAGENAME-*
