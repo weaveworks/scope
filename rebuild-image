@@ -16,12 +16,12 @@ rebuild() {
     mkdir -p $CACHEDIR
     rm $CACHEDIR/$IMAGENAME* || true
     docker build -t $IMAGENAME $IMAGEDIR
-	docker save $IMAGENAME:latest > $CACHEDIR/image-$CIRCLE_SHA1
+	docker save $IMAGENAME:latest > $CACHEDIR/$IMAGENAME-$CIRCLE_SHA1
 }
 
 # Get the revision the cached image was build at
 cached_image_rev() {
-	find $CACHEDIR -name '$IMAGENAME-*' -type f | sed 's/[^\-]*\-//'
+	find $CACHEDIR -name "$IMAGENAME-*" -type f | sed 's/[^\-]*\-//'
 }
 
 # Have there been any revision beween $1 and $2
