@@ -79,15 +79,15 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 	var (
 		localAddressNodeID  = report.MakeAddressNodeID(r.hostID, c.LocalAddress.String())
 		remoteAddressNodeID = report.MakeAddressNodeID(r.hostID, c.RemoteAddress.String())
-		adjacencyID         = report.MakeAdjacencyID(localAddressNodeID)
+		adjecencyID         = report.MakeAdjacencyID(localAddressNodeID)
 		edgeID              = report.MakeEdgeID(localAddressNodeID, remoteAddressNodeID)
 	)
 
-	rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(remoteAddressNodeID)
+	rpt.Address.Adjacency[adjecencyID] = rpt.Address.Adjacency[adjecencyID].Add(remoteAddressNodeID)
 
 	if _, ok := rpt.Address.NodeMetadatas[localAddressNodeID]; !ok {
 		rpt.Address.NodeMetadatas[localAddressNodeID] = report.MakeNodeMetadataWith(map[string]string{
-			"name": r.hostName, // TODO this is ambiguous, be more specific
+			"name": r.hostName,
 			Addr:   c.LocalAddress.String(),
 		})
 	}
@@ -98,11 +98,11 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 		var (
 			localEndpointNodeID  = report.MakeEndpointNodeID(r.hostID, c.LocalAddress.String(), strconv.Itoa(int(c.LocalPort)))
 			remoteEndpointNodeID = report.MakeEndpointNodeID(r.hostID, c.RemoteAddress.String(), strconv.Itoa(int(c.RemotePort)))
-			adjacencyID          = report.MakeAdjacencyID(localEndpointNodeID)
+			adjecencyID          = report.MakeAdjacencyID(localEndpointNodeID)
 			edgeID               = report.MakeEdgeID(localEndpointNodeID, remoteEndpointNodeID)
 		)
 
-		rpt.Endpoint.Adjacency[adjacencyID] = rpt.Endpoint.Adjacency[adjacencyID].Add(remoteEndpointNodeID)
+		rpt.Endpoint.Adjacency[adjecencyID] = rpt.Endpoint.Adjacency[adjecencyID].Add(remoteEndpointNodeID)
 
 		if _, ok := rpt.Endpoint.NodeMetadatas[localEndpointNodeID]; !ok {
 			// First hit establishes NodeMetadata for scoped local address + port
@@ -119,9 +119,11 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 	}
 }
 
-func countTCPConnection(m report.EdgeMetadatas, edgeKey string) {
-	edgeMeta := m[edgeKey]
-	edgeMeta.WithConnCountTCP = true
-	edgeMeta.MaxConnCountTCP++
-	m[edgeKey] = edgeMeta
+func countTCPConnection(mds report.EdgeMetadatas, key string) {
+	md := mds[key]
+	if md.MaxConnCountTCP == nil {
+		md.MaxConnCountTCP = new(uint64)
+	}
+	*md.MaxConnCountTCP++
+	mds[key] = md
 }

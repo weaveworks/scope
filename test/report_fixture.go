@@ -1,6 +1,8 @@
 package test
 
 import (
+	"time"
+
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
@@ -108,40 +110,33 @@ var (
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				report.MakeEdgeID(Client54001NodeID, Server80NodeID): report.EdgeMetadata{
-					WithBytes:    true,
-					BytesIngress: 100,
-					BytesEgress:  10,
+					EgressPacketCount: newu64(10),
+					EgressByteCount:   newu64(100),
 				},
 				report.MakeEdgeID(Client54002NodeID, Server80NodeID): report.EdgeMetadata{
-					WithBytes:    true,
-					BytesIngress: 200,
-					BytesEgress:  20,
+					EgressPacketCount: newu64(20),
+					EgressByteCount:   newu64(200),
 				},
 
 				report.MakeEdgeID(Server80NodeID, Client54001NodeID): report.EdgeMetadata{
-					WithBytes:    true,
-					BytesIngress: 10,
-					BytesEgress:  100,
+					EgressPacketCount: newu64(10),
+					EgressByteCount:   newu64(100),
 				},
 				report.MakeEdgeID(Server80NodeID, Client54002NodeID): report.EdgeMetadata{
-					WithBytes:    true,
-					BytesIngress: 20,
-					BytesEgress:  200,
+					EgressPacketCount: newu64(20),
+					EgressByteCount:   newu64(200),
 				},
 				report.MakeEdgeID(Server80NodeID, UnknownClient1NodeID): report.EdgeMetadata{
-					WithBytes:    true,
-					BytesIngress: 30,
-					BytesEgress:  300,
+					EgressPacketCount: newu64(30),
+					EgressByteCount:   newu64(300),
 				},
 				report.MakeEdgeID(Server80NodeID, UnknownClient2NodeID): report.EdgeMetadata{
-					WithBytes:    true,
-					BytesIngress: 40,
-					BytesEgress:  400,
+					EgressPacketCount: newu64(40),
+					EgressByteCount:   newu64(400),
 				},
 				report.MakeEdgeID(Server80NodeID, UnknownClient3NodeID): report.EdgeMetadata{
-					WithBytes:    true,
-					BytesIngress: 50,
-					BytesEgress:  500,
+					EgressPacketCount: newu64(50),
+					EgressByteCount:   newu64(500),
 				},
 			},
 		},
@@ -222,12 +217,10 @@ var (
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				report.MakeEdgeID(ClientAddressNodeID, ServerAddressNodeID): report.EdgeMetadata{
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  3,
+					MaxConnCountTCP: newu64(3),
 				},
 				report.MakeEdgeID(ServerAddressNodeID, ClientAddressNodeID): report.EdgeMetadata{
-					WithConnCountTCP: true,
-					MaxConnCountTCP:  3,
+					MaxConnCountTCP: newu64(3),
 				},
 			},
 		},
@@ -251,6 +244,11 @@ var (
 			},
 			EdgeMetadatas: report.EdgeMetadatas{},
 		},
+		Sampling: report.Sampling{
+			Count: 1024,
+			Total: 4096,
+		},
+		Window: 2 * time.Second,
 	}
 )
 
@@ -259,3 +257,5 @@ func init() {
 		panic(err)
 	}
 }
+
+func newu64(value uint64) *uint64 { return &value }

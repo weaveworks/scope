@@ -19,7 +19,7 @@ dependencies:
   cache_directories:
     - "~/docker"
   override:
-    - sudo apt-get --only-upgrade install tar
+    - sudo apt-get --only-upgrade install tar libpcap0.8-dev
     - bin/rebuild-ui-build-image
     - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
@@ -40,8 +40,7 @@ test:
     - cd $SRCDIR; ./bin/lint .
     - cd $SRCDIR; make client-test
     - cd $SRCDIR; make static
-    - cd $SRCDIR; rm -f app/app probe/probe; GOOS=darwin make && make clean
-    - cd $SRCDIR; rm -f app/app probe/probe; GOOS=linux make
+    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; make
     - cd $SRCDIR; ./bin/test -slow
     - cd $SRCDIR/experimental; make
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup)

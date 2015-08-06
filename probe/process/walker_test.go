@@ -9,7 +9,6 @@ import (
 )
 
 func TestBasicWalk(t *testing.T) {
-	// Don't panic or error.
 	var (
 		procRoot = "/proc"
 		procFunc = func(process.Process) {}

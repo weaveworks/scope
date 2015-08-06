@@ -3,11 +3,14 @@ package main
 import (
 	"flag"
 	"log"
+	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -17,6 +20,7 @@ import (
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
+	"github.com/weaveworks/scope/probe/sniff"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
 )
@@ -36,8 +40,13 @@ func main() {
 		dockerBridge       = flag.String("docker.bridge", "docker0", "the docker bridge name")
 		weaveRouterAddr    = flag.String("weave.router.addr", "", "IP address or FQDN of the Weave router")
 		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
+		captureEnabled     = flag.Bool("capture", false, "perform sampled packet capture")
+		captureInterfaces  = flag.String("capture.interfaces", interfaces(), "packet capture on these interfaces")
+		captureOn          = flag.Duration("capture.on", 1*time.Second, "packet capture duty cycle 'on'")
+		captureOff         = flag.Duration("capture.off", 5*time.Second, "packet capture duty cycle 'off'")
 	)
 	flag.Parse()
+	log.SetFlags(log.Lmicroseconds)
 
 	if len(flag.Args()) != 0 {
 		flag.Usage()
@@ -71,11 +80,23 @@ func main() {
 	}
 	defer publisher.Close()
 
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Fatal(err)
+	}
+	localNets := report.Networks{}
+	for _, addr := range addrs {
+		// Not all addrs are IPNets.
+		if ipNet, ok := addr.(*net.IPNet); ok {
+			localNets = append(localNets, ipNet)
+		}
+	}
+
 	var (
 		hostName     = hostname()
 		hostID       = hostName // TODO: we should sanitize the hostname
 		taggers      = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
-		reporters    = []Reporter{host.NewReporter(hostID, hostName), endpoint.NewReporter(hostID, hostName, *spyProcs)}
+		reporters    = []Reporter{host.NewReporter(hostID, hostName, localNets), endpoint.NewReporter(hostID, hostName, *spyProcs)}
 		processCache *process.CachingWalker
 	)
 
@@ -106,6 +127,26 @@ func main() {
 		reporters = append(reporters, weave)
 	}
 
+	if *captureEnabled {
+		var sniffers int
+		for _, iface := range strings.Split(*captureInterfaces, ",") {
+			source, err := sniff.NewSource(iface)
+			if err != nil {
+				log.Printf("warning: %v", err)
+				continue
+			}
+			defer source.Close()
+			log.Printf("capturing packets on %s", iface)
+			reporters = append(reporters, sniff.New(hostID, localNets, source, *captureOn, *captureOff))
+			sniffers++
+		}
+		// Packet capture can block OS threads on Linux, so we need to provide
+		// sufficient overhead in GOMAXPROCS.
+		if have, want := runtime.GOMAXPROCS(-1), (sniffers + 1); have < want {
+			runtime.GOMAXPROCS(want)
+		}
+	}
+
 	log.Printf("listening on %s", *listen)
 
 	quit := make(chan struct{})
@@ -121,6 +162,7 @@ func main() {
 			select {
 			case <-pubTick:
 				publishTicks.WithLabelValues().Add(1)
+				r.Window = *publishInterval
 				publisher.Publish(r)
 				r = report.MakeReport()
 
@@ -128,7 +170,6 @@ func main() {
 				if err := processCache.Update(); err != nil {
 					log.Printf("error reading processes: %v", err)
 				}
-
 				for _, reporter := range reporters {
 					newReport, err := reporter.Report()
 					if err != nil {
@@ -136,7 +177,6 @@ func main() {
 					}
 					r.Merge(newReport)
 				}
-
 				r = Apply(r, taggers)
 
 			case <-quit:
@@ -152,4 +192,17 @@ func interrupt() chan os.Signal {
 	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	return c
+}
+
+func interfaces() string {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		log.Print(err)
+		return ""
+	}
+	a := make([]string, 0, len(ifaces))
+	for _, iface := range ifaces {
+		a = append(a, iface.Name)
+	}
+	return strings.Join(a, ",")
 }
