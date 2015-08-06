@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -9,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -29,10 +29,11 @@ var version = "dev" // set at build time
 
 func main() {
 	var (
+		targets            = []string{fmt.Sprintf("localhost:%d", xfer.AppPort), fmt.Sprintf("scope.weave.local:%d", xfer.AppPort)}
+		token              = flag.String("token", "default-token", "probe token")
 		httpListen         = flag.String("http.listen", "", "listen address for HTTP profiling and instrumentation server")
 		publishInterval    = flag.Duration("publish.interval", 3*time.Second, "publish (output) interval")
 		spyInterval        = flag.Duration("spy.interval", time.Second, "spy (scan) interval")
-		listen             = flag.String("listen", ":"+strconv.Itoa(xfer.ProbePort), "listen address")
 		prometheusEndpoint = flag.String("prometheus.endpoint", "/metrics", "Prometheus metrics exposition endpoint (requires -http.listen)")
 		spyProcs           = flag.Bool("processes", true, "report processes (needs root)")
 		dockerEnabled      = flag.Bool("docker", false, "collect Docker-related attributes for processes")
@@ -46,14 +47,13 @@ func main() {
 		captureOff         = flag.Duration("capture.off", 5*time.Second, "packet capture duty cycle 'off'")
 	)
 	flag.Parse()
-	log.SetFlags(log.Lmicroseconds)
 
-	if len(flag.Args()) != 0 {
-		flag.Usage()
-		os.Exit(1)
+	log.Printf("probe starting, version %s", version)
+
+	if len(flag.Args()) > 0 {
+		targets = flag.Args()
 	}
-
-	log.Printf("probe version %s", version)
+	log.Printf("publishing to: %s", strings.Join(targets, ", "))
 
 	procspy.SetProcRoot(*procRoot)
 
@@ -74,11 +74,10 @@ func main() {
 		log.Printf("warning: process reporting enabled, but that requires root to find everything")
 	}
 
-	publisher, err := xfer.NewTCPPublisher(*listen)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer publisher.Close()
+	publisherFactory := func(target string) (xfer.Publisher, error) { return xfer.NewHTTPPublisher(target, *token) }
+	publishers := xfer.NewMultiPublisher(publisherFactory)
+	resolver := newStaticResolver(targets, publishers.Add)
+	defer resolver.Stop()
 
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
@@ -147,8 +146,6 @@ func main() {
 		}
 	}
 
-	log.Printf("listening on %s", *listen)
-
 	quit := make(chan struct{})
 	defer close(quit)
 	go func() {
@@ -163,7 +160,9 @@ func main() {
 			case <-pubTick:
 				publishTicks.WithLabelValues().Add(1)
 				r.Window = *publishInterval
-				publisher.Publish(r)
+				if err := publishers.Publish(r); err != nil {
+					log.Printf("publish: %v", err)
+				}
 				r = report.MakeReport()
 
 			case <-spyTick:
@@ -184,7 +183,6 @@ func main() {
 			}
 		}
 	}()
-
 	log.Printf("%s", <-interrupt())
 }
 

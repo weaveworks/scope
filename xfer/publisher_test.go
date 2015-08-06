@@ -2,120 +2,72 @@ package xfer_test
 
 import (
 	"encoding/gob"
-	"fmt"
-	"io/ioutil"
-	"log"
-	"net"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
 	"testing"
-	"time"
 
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/xfer"
 )
 
-func TestTCPPublisher(t *testing.T) {
-	log.SetOutput(ioutil.Discard)
+func TestHTTPPublisher(t *testing.T) {
+	var (
+		token = "abcdefg"
+		rpt   = report.MakeReport()
+	)
 
-	// Choose a port
-	port, err := getFreePort()
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if want, have := token, r.Header.Get("Authorization"); want != have {
+			t.Errorf("want %q, have %q", want, have)
+		}
+		var have report.Report
+		if err := gob.NewDecoder(r.Body).Decode(&have); err != nil {
+			t.Error(err)
+			return
+		}
+		if want := rpt; !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer s.Close()
+
+	p, err := xfer.NewHTTPPublisher(s.URL, token)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// Start a publisher
-	p, err := xfer.NewTCPPublisher(port)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer p.Close()
-
-	// Start a raw listener
-	conn, err := net.Dial("tcp4", "127.0.0.1"+port)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer conn.Close()
-	time.Sleep(time.Millisecond)
-
-	// Send handshake
-	if err := gob.NewEncoder(conn).Encode(xfer.HandshakeRequest{ID: "foo"}); err != nil {
-		t.Fatal(err)
-	}
-
-	// Publish a message
-	p.Publish(report.Report{})
-
-	// Check it was received
-	var r report.Report
-	if err := gob.NewDecoder(conn).Decode(&r); err != nil {
-		t.Fatal(err)
+	if err := p.Publish(rpt); err != nil {
+		t.Error(err)
 	}
 }
 
-func TestPublisherClosesDuplicateConnections(t *testing.T) {
-	log.SetOutput(ioutil.Discard)
+func TestMultiPublisher(t *testing.T) {
+	var (
+		p              = &mockPublisher{}
+		factory        = func(string) (xfer.Publisher, error) { return p, nil }
+		multiPublisher = xfer.NewMultiPublisher(factory)
+	)
 
-	// Choose a port
-	port, err := getFreePort()
-	if err != nil {
-		t.Fatal(err)
+	multiPublisher.Add("first")
+	if err := multiPublisher.Publish(report.MakeReport()); err != nil {
+		t.Error(err)
+	}
+	if want, have := 1, p.count; want != have {
+		t.Errorf("want %d, have %d", want, have)
 	}
 
-	// Start a publisher
-	p, err := xfer.NewTCPPublisher(port)
-	if err != nil {
-		t.Fatal(err)
+	multiPublisher.Add("second") // but factory returns same mockPublisher
+	if err := multiPublisher.Publish(report.MakeReport()); err != nil {
+		t.Error(err)
 	}
-	defer p.Close()
-
-	// Connect a listener
-	conn, err := net.Dial("tcp4", "127.0.0.1"+port)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer conn.Close()
-	if err := gob.NewEncoder(conn).Encode(xfer.HandshakeRequest{ID: "foo"}); err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Millisecond)
-
-	// Try to connect the same listener
-	dupconn, err := net.Dial("tcp4", "127.0.0.1"+port)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Send handshake
-	if err := gob.NewEncoder(dupconn).Encode(xfer.HandshakeRequest{ID: "foo"}); err != nil {
-		t.Fatal(err)
-	}
-	defer dupconn.Close()
-
-	// Publish a message
-	p.Publish(report.Report{})
-
-	// The first listener should receive it
-	var r report.Report
-	if err := gob.NewDecoder(conn).Decode(&r); err != nil {
-		t.Fatal(err)
-	}
-
-	// The duplicate listener should have an error
-	if err := gob.NewDecoder(dupconn).Decode(&r); err == nil {
-		t.Errorf("expected error, got none")
-	} else {
-		t.Logf("dupconn got expected error: %v", err)
+	if want, have := 3, p.count; want != have {
+		t.Errorf("want %d, have %d", want, have)
 	}
 }
 
-func getFreePort() (string, error) {
-	ln, err := net.Listen("tcp4", ":0")
-	if err != nil {
-		return "", fmt.Errorf("Listen: %v", err)
-	}
-	defer ln.Close()
-	_, port, err := net.SplitHostPort(ln.Addr().String())
-	if err != nil {
-		return "", fmt.Errorf("SplitHostPort(%s): %v", ln.Addr().String(), err)
-	}
-	return ":" + port, nil
-}
+type mockPublisher struct{ count int }
+
+func (p *mockPublisher) Publish(report.Report) error { p.count++; return nil }

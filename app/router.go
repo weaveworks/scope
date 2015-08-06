@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"net/http"
 	"net/url"
 	"strings"
@@ -8,6 +9,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/xfer"
 )
 
 // URLMatcher uses request.RequestURI (the raw, unparsed request) to attempt
@@ -41,10 +44,17 @@ func URLMatcher(pattern string) mux.MatcherFunc {
 	}
 }
 
-// Router gives of the HTTP dispatcher. It will always use the embedded HTML
-// resources.
-func Router(c Reporter) *mux.Router {
+type collector interface {
+	xfer.Reporter
+	xfer.Adder
+}
+
+// Router returns the HTTP dispatcher, managing API and UI requests, and
+// accepting reports from probes.. It will always use the embedded HTML
+// resources for the UI.
+func Router(c collector) *mux.Router {
 	router := mux.NewRouter()
+	router.HandleFunc("/api/report", makeReportPostHandler(c)).Methods("POST")
 	get := router.Methods("GET").Subrouter()
 	get.HandleFunc("/api", apiHandler)
 	get.HandleFunc("/api/topology", makeTopologyList(c))
@@ -58,7 +68,19 @@ func Router(c Reporter) *mux.Router {
 	return router
 }
 
-func captureTopology(rep Reporter, f func(Reporter, topologyView, http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+func makeReportPostHandler(a xfer.Adder) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var rpt report.Report
+		if err := gob.NewDecoder(r.Body).Decode(&rpt); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		a.Add(rpt)
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func captureTopology(rep xfer.Reporter, f func(xfer.Reporter, topologyView, http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		topology, ok := topologyRegistry[mux.Vars(r)["topology"]]
 		if !ok {

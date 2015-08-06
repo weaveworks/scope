@@ -1,132 +1,119 @@
 package xfer
 
 import (
+	"bytes"
 	"encoding/gob"
-	"io"
+	"fmt"
 	"log"
-	"net"
+	"net/http"
+	"net/url"
+	"strings"
+	"sync"
 
 	"github.com/weaveworks/scope/report"
 )
 
-// Publisher provides a way to send reports upstream.
+// Publisher is something which can send a report to a remote collector.
 type Publisher interface {
-	Publish(report.Report)
-	Close()
+	Publish(report.Report) error
 }
 
-// TCPPublisher is a Publisher implementation which uses TCP and gob encoding.
-type TCPPublisher struct {
-	msg    chan report.Report
-	closer io.Closer
+// HTTPPublisher publishes reports by POST to a fixed endpoint.
+type HTTPPublisher struct {
+	url   string
+	token string
 }
 
-// HandshakeRequest contains the unique ID of the connecting app.
-type HandshakeRequest struct {
-	ID string
-}
-
-// NewTCPPublisher listens for connections on listenAddress. Only one client
-// is accepted at a time; other clients are accepted, but disconnected right
-// away. Reports published via publish() will be written to the connected
-// client, if any. Gentle shutdown of the returned publisher via close().
-func NewTCPPublisher(listenAddress string) (*TCPPublisher, error) {
-	listener, err := net.Listen("tcp", listenAddress)
+// NewHTTPPublisher returns an HTTPPublisher ready for use.
+func NewHTTPPublisher(target, token string) (*HTTPPublisher, error) {
+	if !strings.HasPrefix(target, "http") {
+		target = "http://" + target
+	}
+	u, err := url.Parse(target)
 	if err != nil {
 		return nil, err
 	}
+	if u.Path == "" {
+		u.Path = "/api/report"
+	}
+	return &HTTPPublisher{
+		url:   u.String(),
+		token: token,
+	}, nil
+}
 
-	p := &TCPPublisher{
-		msg:    make(chan report.Report),
-		closer: listener,
+// Publish publishes the report to the URL.
+func (p HTTPPublisher) Publish(rpt report.Report) error {
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(rpt); err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", p.url, &buf)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", p.token)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf(resp.Status)
+	}
+	return nil
+}
+
+// MultiPublisher implements Publisher over a set of publishers.
+type MultiPublisher struct {
+	mtx     sync.RWMutex
+	factory func(string) (Publisher, error)
+	m       map[string]Publisher
+}
+
+// NewMultiPublisher returns a new MultiPublisher ready for use. The factory
+// should be e.g. NewHTTPPublisher, except you need to curry it over the
+// probe token.
+func NewMultiPublisher(factory func(string) (Publisher, error)) *MultiPublisher {
+	return &MultiPublisher{
+		factory: factory,
+		m:       map[string]Publisher{},
+	}
+}
+
+// Add allows additional targets to be added dynamically. It will dedupe
+// identical targets. TODO we have no good mechanism to remove.
+func (p *MultiPublisher) Add(target string) {
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
+
+	if _, ok := p.m[target]; ok {
+		return
 	}
 
-	go p.loop(fwd(listener))
-
-	return p, nil
-}
-
-// Close stops a TCPPublisher and closes the socket.
-func (p *TCPPublisher) Close() {
-	close(p.msg)
-	p.closer.Close()
-}
-
-// Publish sens a Report to the client, if any.
-func (p *TCPPublisher) Publish(msg report.Report) {
-	p.msg <- msg
-}
-
-func (p *TCPPublisher) loop(incoming <-chan net.Conn) {
-	type connEncoder struct {
-		net.Conn
-		*gob.Encoder
+	publisher, err := p.factory(target)
+	if err != nil {
+		log.Printf("multi-publisher: %v", err)
+		return
 	}
 
-	activeConns := map[string]connEncoder{} // host: connEncoder
+	p.m[target] = publisher
+}
 
-	for {
-		select {
-		case conn, ok := <-incoming:
-			if !ok {
-				return // someone closed our connection chan -- weird?
-			}
+// Publish implements Publisher by emitting the report to all publishers.
+func (p *MultiPublisher) Publish(rpt report.Report) error {
+	p.mtx.RLock()
+	defer p.mtx.RUnlock()
 
-			// Don't allow multiple connections from the same remote host.
-			listenerID, err := getListenerID(conn)
-			if err != nil {
-				log.Printf("incoming connection: %s: %v (dropped)", conn.RemoteAddr(), err)
-				conn.Close()
-				continue
-			}
-			if _, ok := activeConns[listenerID]; ok {
-				log.Printf("duplicate connection: %s (dropped)", conn.RemoteAddr())
-				conn.Close()
-				continue
-			}
-
-			log.Printf("connection initiated: %s (%s)", conn.RemoteAddr(), listenerID)
-			activeConns[listenerID] = connEncoder{conn, gob.NewEncoder(conn)}
-
-		case msg, ok := <-p.msg:
-			if !ok {
-				return // someone closed our msg chan, so we're done
-			}
-
-			for host, connEncoder := range activeConns {
-				if err := connEncoder.Encoder.Encode(msg); err != nil {
-					log.Printf("connection terminated: %s: %v", connEncoder.Conn.RemoteAddr(), err)
-					connEncoder.Conn.Close()
-					delete(activeConns, host)
-				}
-			}
+	var errs []string
+	for _, publisher := range p.m {
+		if err := publisher.Publish(rpt); err != nil {
+			errs = append(errs, err.Error())
 		}
 	}
-}
 
-func getListenerID(c net.Conn) (string, error) {
-	var req HandshakeRequest
-	if err := gob.NewDecoder(c).Decode(&req); err != nil {
-		return "", err
+	if len(errs) > 0 {
+		return fmt.Errorf(strings.Join(errs, "; "))
 	}
-
-	return req.ID, nil
-}
-
-func fwd(ln net.Listener) chan net.Conn {
-	c := make(chan net.Conn)
-
-	go func() {
-		defer close(c)
-		for {
-			conn, err := ln.Accept()
-			if err != nil {
-				log.Printf("%s: %s", ln.Addr(), err)
-				return
-			}
-			c <- conn
-		}
-	}()
-
-	return c
+	return nil
 }

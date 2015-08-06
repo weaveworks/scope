@@ -43,26 +43,26 @@ func TestResolver(t *testing.T) {
 				t.Errorf("line %d: want %q, have %q", line, want, have)
 			}
 		case <-time.After(time.Millisecond):
-			t.Fatalf("line %d: didn't get add in time", line)
+			t.Errorf("line %d: didn't get add in time", line)
 		}
 	}
 
 	// Initial resolve should just give us IPs
 	assertAdd(ip1 + port)
-	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.ProbePort))
+	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.AppPort))
 
 	// Trigger another resolve with a tick; again,
 	// just want ips.
 	c <- time.Now()
 	assertAdd(ip1 + port)
-	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.ProbePort))
+	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.AppPort))
 
 	ip3 := "1.2.3.4"
 	ips = map[string][]net.IP{"symbolic.name": makeIPs(ip3)}
 	c <- time.Now()       // trigger a resolve
 	assertAdd(ip3 + port) // we want 1 add
 	assertAdd(ip1 + port)
-	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.ProbePort))
+	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.AppPort))
 
 	ip4 := "10.10.10.10"
 	ips = map[string][]net.IP{"symbolic.name": makeIPs(ip3, ip4)}
@@ -70,7 +70,7 @@ func TestResolver(t *testing.T) {
 	assertAdd(ip3 + port) // first add
 	assertAdd(ip4 + port) // second add
 	assertAdd(ip1 + port)
-	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.ProbePort))
+	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.AppPort))
 
 	done := make(chan struct{})
 	go func() { r.Stop(); close(done) }()

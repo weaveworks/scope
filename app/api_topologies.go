@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/xfer"
 )
 
 // APITopologyDesc is returned in a list by the /api/topology handler.
@@ -21,7 +22,7 @@ type topologyStats struct {
 }
 
 // makeTopologyList returns a handler that yields an APITopologyList.
-func makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request) {
+func makeTopologyList(rep xfer.Reporter) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			rpt        = rep.Report()
