@@ -19,7 +19,7 @@ func TestHTTPPublisher(t *testing.T) {
 	)
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if want, have := token, r.Header.Get("Authorization"); want != have {
+		if want, have := xfer.AuthorizationHeader(token), r.Header.Get("Authorization"); want != have {
 			t.Errorf("want %q, have %q", want, have)
 		}
 		var have report.Report

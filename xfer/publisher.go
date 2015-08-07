@@ -52,7 +52,7 @@ func (p HTTPPublisher) Publish(rpt report.Report) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", p.token)
+	req.Header.Set("Authorization", AuthorizationHeader(p.token))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
@@ -62,6 +62,12 @@ func (p HTTPPublisher) Publish(rpt report.Report) error {
 		return fmt.Errorf(resp.Status)
 	}
 	return nil
+}
+
+// AuthorizationHeader returns a value suitable for an HTTP Authorization
+// header, based on the passed token string.
+func AuthorizationHeader(token string) string {
+	return fmt.Sprintf("Scope-Probe token=%s", token)
 }
 
 // MultiPublisher implements Publisher over a set of publishers.
