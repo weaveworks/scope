@@ -57,7 +57,7 @@ func prepareNames(strs []string) []peer {
 				continue
 			}
 		} else {
-			hostname, port = s, strconv.Itoa(xfer.ProbePort)
+			hostname, port = s, strconv.Itoa(xfer.AppPort)
 		}
 
 		results = append(results, peer{hostname, port})

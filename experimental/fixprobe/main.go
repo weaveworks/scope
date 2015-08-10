@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/weaveworks/scope/report"
@@ -16,35 +15,29 @@ import (
 
 func main() {
 	var (
+		publish         = flag.String("publish", fmt.Sprintf("localhost:%d", xfer.AppPort), "publish target")
 		publishInterval = flag.Duration("publish.interval", 1*time.Second, "publish (output) interval")
-		listenAddress   = flag.String("listen", ":"+strconv.Itoa(xfer.ProbePort), "listen address")
 	)
 	flag.Parse()
 
 	if len(flag.Args()) != 1 {
-		fmt.Printf("usage: fixprobe [--args] report.json\n")
-		return
-	}
-	fixture := flag.Arg(0)
-
-	f, err := os.Open(fixture)
-	if err != nil {
-		fmt.Printf("json error: %v\n", err)
-		return
-	}
-	var fixedReport report.Report
-	if err := json.NewDecoder(f).Decode(&fixedReport); err != nil {
-		fmt.Printf("json error: %v\n", err)
-		return
+		log.Fatal("usage: fixprobe [--args] report.json")
 	}
 
-	publisher, err := xfer.NewTCPPublisher(*listenAddress)
+	f, err := os.Open(flag.Arg(0))
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer publisher.Close()
+	var fixedReport report.Report
+	if err := json.NewDecoder(f).Decode(&fixedReport); err != nil {
+		log.Fatal(err)
+	}
+	f.Close()
 
-	log.Printf("listening on %s", *listenAddress)
+	publisher, err := xfer.NewHTTPPublisher(*publish, "fixprobe")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for range time.Tick(*publishInterval) {
 		publisher.Publish(fixedReport)

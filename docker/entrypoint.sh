@@ -54,10 +54,10 @@ if [ -n "$DNS_SERVER" -a -n "$SEARCHPATH" ]; then
 fi
 
 # End of the command line can optionally be some
-# addresses of probes to connect to, for people not
-# using Weave DNS.  We stick these in /etc/weave/probes
-# for the run-app script to pick up.
-MANUAL_PROBES=$@
-echo "$MANUAL_PROBES" >/etc/weave/probes
+# addresses of apps to connect to, for people not
+# using Weave DNS. We stick these in /etc/weave/apps
+# for the run-probe script to pick up.
+MANUAL_APPS=$@
+echo "$MANUAL_APPS" >/etc/weave/apps
 
 exec /sbin/runsvdir /etc/service

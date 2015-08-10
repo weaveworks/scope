@@ -8,6 +8,7 @@ import (
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/xfer"
 )
 
 // OriginHost represents a host that runs a probe, i.e. the origin host of
@@ -35,7 +36,7 @@ func getOriginHost(t report.Topology, nodeID string) (OriginHost, bool) {
 }
 
 // makeOriginHostHandler makes the /api/origin/* handler.
-func makeOriginHostHandler(rep Reporter) http.HandlerFunc {
+func makeOriginHostHandler(rep xfer.Reporter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			vars   = mux.Vars(r)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/xfer"
 )
 
 const (
@@ -32,14 +33,14 @@ type APIEdge struct {
 }
 
 // Full topology.
-func handleTopology(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
+func handleTopology(rep xfer.Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
 		Nodes: t.renderer.Render(rep.Report()),
 	})
 }
 
 // Websocket for the full topology. This route overlaps with the next.
-func handleWs(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
+func handleWs(rep xfer.Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		respondWith(w, http.StatusInternalServerError, err.Error())
 		return
@@ -56,7 +57,7 @@ func handleWs(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Reque
 }
 
 // Individual nodes.
-func handleNode(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
+func handleNode(rep xfer.Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars     = mux.Vars(r)
 		nodeID   = vars["id"]
@@ -71,7 +72,7 @@ func handleNode(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Req
 }
 
 // Individual edges.
-func handleEdge(rep Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
+func handleEdge(rep xfer.Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars     = mux.Vars(r)
 		localID  = vars["local"]
@@ -90,7 +91,7 @@ var upgrader = websocket.Upgrader{
 func handleWebsocket(
 	w http.ResponseWriter,
 	r *http.Request,
-	rep Reporter,
+	rep xfer.Reporter,
 	t topologyView,
 	loop time.Duration,
 ) {
