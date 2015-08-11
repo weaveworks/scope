@@ -13,7 +13,7 @@ machine:
     CLOUDSDK_CORE_DISABLE_PROMPTS: 1
     SCOPE_UI_BUILD: $HOME/docker/scope_ui_build.tar
     WEAVE_REPO: github.com/weaveworks/weave
-    WEAVE_ROOT: "${GOPATH%%:*}/src/github.com/weaveworks/weave"
+    WEAVE_ROOT: /home/ubuntu/src/github.com/weaveworks/weave
 
 dependencies:
   cache_directories:
@@ -24,9 +24,8 @@ dependencies:
     - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
   post:
-    - git clone --depth 1 -b master https://$WEAVE_REPO.git "$WEAVE_ROOT"
     - go get $WEAVE_REPO/...
-    - cd $WEAVE_ROOT; make testing/runner/runner
+    - make -C $WEAVE_ROOT testing/runner/runner
     - sudo apt-get install jq
     - go version
     - go clean -i net
