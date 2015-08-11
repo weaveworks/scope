@@ -7,16 +7,11 @@ set -e
 export SSH_DIR="$PWD"
 export HOSTS
 
-WEAVE_REPO="github.com/weaveworks/weave"
-WEAVE_ROOT="${GOPATH%%:*}/src/$WEAVE_REPO"
-if [ ! -d "$WEAVE_ROOT" ] ; then
-  mkdir -p "$(dirname "$WEAVE_ROOT")"
-  git clone --depth 1 -b master https://$WEAVE_REPO.git "$WEAVE_ROOT"
-  go get $WEAVE_REPO/...
-fi
-if [ ! -x "$WEAVE_ROOT/testing/runner/runner" ] ; then
-  (cd "$WEAVE_ROOT" && make testing/runner/runner)
-fi
+: ${WEAVE_REPO:=github.com/weaveworks/weave}
+: ${WEAVE_ROOT:="$(go list -e -f {{.Dir}} $WEAVE_REPO)"}
+
+RUNNER="$WEAVE_ROOT/testing/runner/runner"
+[ -x "$RUNNER" ] || (echo "Could not find weave test runner at $RUNNER." >&2 ; exit 1)
 
 . "$WEAVE_ROOT/test/config.sh"
 
@@ -24,5 +19,12 @@ scope_on() {
   host=$1
   shift 1
   [ -z "$DEBUG" ] || greyly echo "Scope on $host: $@" >&2
-  run_on $host "DOCKER_HOST=tcp://$host:$DOCKER_PORT" scope "$@"
+  run_on $host DOCKER_HOST=tcp://$host:$DOCKER_PORT scope "$@"
+}
+
+weave_on() {
+  host=$1
+  shift 1
+  [ -z "$DEBUG" ] || greyly echo "Weave on $host: $@" >&2
+  run_on $host DOCKER_HOST=tcp://$host:$DOCKER_PORT weave "$@"
 }
