@@ -37,6 +37,14 @@ while true; do
             shift 2
             PROBE_ARGS="$PROBE_ARGS -$ARG_NAME=$ARG_VALUE"
             ;;
+        --no-app)
+            touch /etc/service/app/down
+            shift 1
+            ;;
+        --no-probe)
+            touch /etc/service/probe/down
+            shift 1
+            ;;
         *)
             break
             ;;
