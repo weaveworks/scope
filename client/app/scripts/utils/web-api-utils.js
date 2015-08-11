@@ -3,7 +3,7 @@ const reqwest = require('reqwest');
 
 const AppActions = require('../actions/app-actions');
 
-const WS_URL = window.WS_URL || 'ws://' + location.host;
+const WS_URL = window.WS_URL || 'ws://' + location.host + location.pathname.replace(/\/$/, '');
 
 
 const apiTimerInterval = 10000;
@@ -52,9 +52,11 @@ function createWebsocket(topologyUrl) {
   currentUrl = topologyUrl;
 }
 
+/* keep URLs relative */
+
 function getTopologies() {
   clearTimeout(topologyTimer);
-  const url = '/api/topology';
+  const url = 'api/topology';
   reqwest({
     url: url,
     success: function(res) {
@@ -71,7 +73,7 @@ function getTopologies() {
 
 function getNodeDetails(topologyUrl, nodeId) {
   if (topologyUrl && nodeId) {
-    const url = [topologyUrl, encodeURIComponent(nodeId)].join('/');
+    const url = [topologyUrl, encodeURIComponent(nodeId)].join('/').substr(1);
     reqwest({
       url: url,
       success: function(res) {
@@ -87,7 +89,7 @@ function getNodeDetails(topologyUrl, nodeId) {
 
 function getApiDetails() {
   clearTimeout(apiDetailsTimer);
-  const url = '/api';
+  const url = 'api';
   reqwest({
     url: url,
     success: function(res) {
