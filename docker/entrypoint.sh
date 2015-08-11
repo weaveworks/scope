@@ -16,39 +16,48 @@ while true; do
         --dns)
             [ $# -gt 1 ] || usage
             DNS_SERVER="$2"
-            shift 2
+            shift
             ;;
         --searchpath)
             [ $# -gt 1 ] || usage
             SEARCHPATH="$2"
-            shift 2
+            shift
             ;;
         --app.*)
-            [ $# -gt 1 ] || usage
-            ARG_NAME=$(echo "$1" | sed 's/\-\-app\.//')
-            ARG_VALUE="$2"
-            shift 2
+            if echo "$1" | grep "="; then
+                ARG_NAME=$(echo "$1" | sed 's/\-\-app\.\([^=]*\)=\(.*\)/\1/')
+                ARG_VALUE=$(echo "$1" | sed 's/\-\-app\.\([^=]*\)=\(.*\)/\2/')
+            else
+                [ $# -gt 1 ] || usage
+                ARG_NAME=$(echo "$1" | sed 's/\-\-app\.//')
+                ARG_VALUE="$2"
+                shift
+            fi
             APP_ARGS="$APP_ARGS -$ARG_NAME=$ARG_VALUE"
             ;;
         --probe.*)
-            [ $# -gt 1 ] || usage
-            ARG_NAME=$(echo "$1" | sed 's/\-\-probe\.//')
-            ARG_VALUE="$2"
-            shift 2
+            if echo "$1" | grep "="; then
+                ARG_NAME=$(echo "$1" | sed 's/\-\-probe\.\([^=]*\)=\(.*\)/\1/')
+                ARG_VALUE=$(echo "$1" | sed 's/\-\-probe\.\([^=]*\)=\(.*\)/\2/')
+            else
+                [ $# -gt 1 ] || usage
+                ARG_NAME=$(echo "$1" | sed 's/\-\-probe\.//')
+                ARG_VALUE="$2"
+                shift
+            fi
             PROBE_ARGS="$PROBE_ARGS -$ARG_NAME=$ARG_VALUE"
             ;;
         --no-app)
             touch /etc/service/app/down
-            shift 1
             ;;
         --no-probe)
             touch /etc/service/probe/down
-            shift 1
             ;;
         *)
             break
             ;;
     esac
+    shift
 done
 
 mkdir -p /etc/weave
