@@ -94,7 +94,7 @@ weave_dns_add() {
 }
 
 weave_dns_present() {
-    return $(docker run gliderlabs/alpine nc -z $DOCKER_BRIDGE_IP 53; echo $?)
+    return $(docker run --rm gliderlabs/alpine nc -z $DOCKER_BRIDGE_IP 53; echo $?)
 }
 
 set_docker_bridge_ip() {
@@ -164,7 +164,7 @@ case "$COMMAND" in
             -v /var/run/docker.sock:/var/run/docker.sock \
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS --probe.docker true "$@")
 
-        IP_ADDRS=$(docker run --net=host gliderlabs/alpine /bin/sh -c "$IP_ADDR_CMD")
+        IP_ADDRS=$(docker run --rm --net=host gliderlabs/alpine /bin/sh -c "$IP_ADDR_CMD")
         if command_exists weave && is_running $WEAVE_CONTAINER_NAME && weave_dns_present; then
             if [ -z "$IP_ADDRS" ]; then
                 echo "Could not determine local IP address; Weave DNS integration will not work correctly."
