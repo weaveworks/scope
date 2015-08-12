@@ -13,27 +13,33 @@ import (
 // used to determine which nodes in the report are "remote", i.e. outside of
 // our infrastructure.
 func LocalNetworks(r report.Report) report.Networks {
-	var (
-		result   = report.Networks{}
-		networks = map[string]struct{}{}
-	)
-
+	result := report.Networks{}
 	for _, md := range r.Host.NodeMetadatas {
 		val, ok := md.Metadata[host.LocalNetworks]
 		if !ok {
 			continue
 		}
-		for _, s := range strings.Fields(val) {
-			_, ipNet, err := net.ParseCIDR(s)
-			if err != nil {
-				continue
-			}
-			_, ok := networks[ipNet.String()]
-			if !ok {
-				result = append(result, ipNet)
-				networks[ipNet.String()] = struct{}{}
-			}
-		}
+		result = append(result, ParseNetworks(val)...)
 	}
 	return result
+}
+
+// ParseNetworks converts a string of space-separated CIDRs to a
+// report.Networks.
+func ParseNetworks(v string) report.Networks {
+	var (
+		nets = report.Networks{}
+		set  = map[string]struct{}{}
+	)
+	for _, s := range strings.Fields(v) {
+		_, ipNet, err := net.ParseCIDR(s)
+		if err != nil {
+			continue
+		}
+		if _, ok := set[ipNet.String()]; !ok {
+			nets = append(nets, ipNet)
+			set[ipNet.String()] = struct{}{}
+		}
+	}
+	return nets
 }

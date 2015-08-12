@@ -1,0 +1,82 @@
+{
+  "Process": {
+    "NodeMetadatas": {
+      "nydev.bourgon.org;1295": {
+        "Metadata": {
+          "cmdline": "/app db1 db2 db3 ",
+          "comm": "app",
+          "docker_container_id": "0952127d5294bf20591d90fc9dc8f15d684c1a140e50ac92e8807293faeb6c5b",
+          "host_node_id": "nydev.bourgon.org;<host>",
+          "pid": "1295",
+          "ppid": "5082",
+          "threads": "7",
+          "topology": "process"
+        }
+      }
+    }
+  },
+  "Endpoint": {
+    "Adjacency": {
+      ">nydev.bourgon.org;172.17.0.56;45890": [
+        "nydev.bourgon.org;172.17.0.54;9000"
+      ],
+      ">nydev.bourgon.org;172.17.0.56;49569": [
+        "nydev.bourgon.org;172.17.0.50;9000"
+      ],
+      ">nydev.bourgon.org;172.17.0.56;60705": [
+        "nydev.bourgon.org;172.17.0.52;9000"
+      ],
+      ">nydev.bourgon.org;172.17.0.56;8080": [
+        "nydev.bourgon.org;172.17.0.60;49914",
+        "nydev.bourgon.org;172.17.0.62;42329"
+      ]
+    },
+    "NodeMetadatas": {
+      "nydev.bourgon.org;172.17.0.56;45890": {
+        "Metadata": {
+          "addr": "172.17.0.56",
+          "host_node_id": "nydev.bourgon.org;<host>",
+          "pid": "1295",
+          "port": "45890",
+          "topology": "endpoint"
+        }
+      },
+      "nydev.bourgon.org;172.17.0.56;49569": {
+        "Metadata": {
+          "addr": "172.17.0.56",
+          "host_node_id": "nydev.bourgon.org;<host>",
+          "pid": "1295",
+          "port": "49569",
+          "topology": "endpoint"
+        }
+      },
+      "nydev.bourgon.org;172.17.0.56;60705": {
+        "Metadata": {
+          "addr": "172.17.0.56",
+          "host_node_id": "nydev.bourgon.org;<host>",
+          "pid": "1295",
+          "port": "60705",
+          "topology": "endpoint"
+        }
+      },
+      "nydev.bourgon.org;172.17.0.56;8080": {
+        "Metadata": {
+          "addr": "172.17.0.56",
+          "host_node_id": "nydev.bourgon.org;<host>",
+          "pid": "1295",
+          "port": "8080",
+          "topology": "endpoint"
+        }
+      },
+      "nydev.bourgon.org;172.17.0.54;9000": {
+        "Metadata": {
+          "addr": "172.17.0.54",
+          "host_node_id": "nydev.bourgon.org;<host>",
+          "pid": "1212",
+          "port": "9000",
+          "topology": "endpoint"
+        }
+      }
+    }
+  }
+}
