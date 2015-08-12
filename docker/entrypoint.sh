@@ -8,6 +8,7 @@ usage() {
 # This script exists to modify the network settings in the scope containers
 # as docker doesn't allow it when started with --net=host
 
+mkdir -p /etc/weave
 APP_ARGS=""
 PROBE_ARGS=""
 
@@ -24,7 +25,7 @@ while true; do
             shift
             ;;
         --app.*)
-            if echo "$1" | grep "="; then
+            if echo "$1" | grep "=" 1>/dev/null; then
                 ARG_NAME=$(echo "$1" | sed 's/\-\-app\.\([^=]*\)=\(.*\)/\1/')
                 ARG_VALUE=$(echo "$1" | sed 's/\-\-app\.\([^=]*\)=\(.*\)/\2/')
             else
@@ -36,7 +37,7 @@ while true; do
             APP_ARGS="$APP_ARGS -$ARG_NAME=$ARG_VALUE"
             ;;
         --probe.*)
-            if echo "$1" | grep "="; then
+            if echo "$1" | grep "=" 1>/dev/null; then
                 ARG_NAME=$(echo "$1" | sed 's/\-\-probe\.\([^=]*\)=\(.*\)/\1/')
                 ARG_VALUE=$(echo "$1" | sed 's/\-\-probe\.\([^=]*\)=\(.*\)/\2/')
             else
@@ -46,6 +47,18 @@ while true; do
                 shift
             fi
             PROBE_ARGS="$PROBE_ARGS -$ARG_NAME=$ARG_VALUE"
+            ;;
+        --service-token*)
+            if echo "$1" | grep "=" 1>/dev/null; then
+                ARG_VALUE=$(echo "$1" | sed 's/\-\-service-token=\(.*\)/\1/')
+            else
+                [ $# -gt 1 ] || usage
+                ARG_VALUE="$2"
+                shift
+            fi
+            PROBE_ARGS="$PROBE_ARGS -token=$ARG_VALUE"
+            echo "run.weave.works:80" >/etc/weave/apps
+            touch /etc/service/app/down
             ;;
         --no-app)
             touch /etc/service/app/down
@@ -60,7 +73,6 @@ while true; do
     shift
 done
 
-mkdir -p /etc/weave
 echo "$APP_ARGS" >/etc/weave/scope-app.args
 echo "$PROBE_ARGS" >/etc/weave/scope-probe.args
 
@@ -75,6 +87,6 @@ fi
 # using Weave DNS. We stick these in /etc/weave/apps
 # for the run-probe script to pick up.
 MANUAL_APPS=$@
-echo "$MANUAL_APPS" >/etc/weave/apps
+echo "$MANUAL_APPS" >>/etc/weave/apps
 
 exec /sbin/runsvdir /etc/service

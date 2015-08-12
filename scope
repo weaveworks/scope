@@ -175,10 +175,12 @@ case "$COMMAND" in
 
         echo $CONTAINER
 
-        echo "Weave Scope is reachable at the following URL(s):" >&2
-        for ip in $IP_ADDRS; do
-            echo "  * http://$ip:4040/" >&2
-        done
+        if ! echo "$@" | grep -E "\-\-no\-app|\-\-service\-token" 1>/dev/null; then
+            echo "Weave Scope is reachable at the following URL(s):" >&2
+            for ip in $IP_ADDRS; do
+                echo "  * http://$ip:4040/" >&2
+            done
+        fi
         ;;
 
     stop)
