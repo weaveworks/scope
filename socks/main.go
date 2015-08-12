@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	socks5 "github.com/armon/go-socks5"
-	"github.com/weaveworks/weave/common"
+	"github.com/weaveworks/weave/common/mflagext"
 	"github.com/docker/docker/pkg/mflag"
 )
 
@@ -31,7 +31,7 @@ function FindProxyForURL(url, host) {
 
 func main() {
 	var as []string
-	common.ListVar(&as, []string{"a", "-alias"}, []string{}, "Specify hostname aliases in the form alias:hostname.  Can be repeated.")
+	mflagext.ListVar(&as, []string{"a", "-alias"}, []string{}, "Specify hostname aliases in the form alias:hostname.  Can be repeated.")
 	mflag.Parse()
 
 	var aliases = map[string]string{}
