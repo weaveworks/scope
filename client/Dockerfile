@@ -1,7 +1,7 @@
 FROM debian:latest
 WORKDIR /home/weave
 
-RUN apt-get update && apt-get install -y curl bzip2 libfreetype6 libfontconfig1
+RUN apt-get update && apt-get install -y curl bzip2 libfreetype6 libfontconfig1 make
 
 # Install nodejs
 RUN curl -sL https://deb.nodesource.com/setup | bash -

@@ -25,6 +25,7 @@ dependencies:
     - sudo apt-get update
     - sudo apt-get --only-upgrade install tar libpcap0.8-dev
     - sudo apt-get install jq
+    - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
     - go get $WEAVE_REPO/...
     - make -C $WEAVE_ROOT testing/runner/runner
@@ -34,7 +35,7 @@ dependencies:
     - make deps
     - mkdir -p $(dirname $SRCDIR)
     - cp -r $(pwd)/ $SRCDIR
-    - bin/rebuild-ui-build-image
+    - cd $SRCDIR/client; $TOOLS/rebuild-image weaveworks/scope-ui-build . Dockerfile gulpfile.js package.json webpack.config.js .eslintrc
 
 test:
   override:
