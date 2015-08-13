@@ -16,7 +16,7 @@ dependencies:
 
 test:
   override:
-    - cd $SRDDIR; ./lint .
+    - cd $SRCDIR; ./lint .
     - cd $SRCDIR/cover; make
     - cd $SRCDIR/socks; make
 
