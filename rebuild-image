@@ -4,7 +4,7 @@
 
 set -eux
 
-IMAGENAME=$1 # no dashes in the name please!
+IMAGENAME=$(echo $1 | sed "s/[\/\-]/\./g")
 IMAGEDIR=$2
 shift 2
 
