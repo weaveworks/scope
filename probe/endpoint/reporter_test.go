@@ -85,14 +85,14 @@ func TestSpyNoProcesses(t *testing.T) {
 	var (
 		scopedLocal  = report.MakeAddressNodeID(nodeID, fixLocalAddress.String())
 		scopedRemote = report.MakeAddressNodeID(nodeID, fixRemoteAddress.String())
-		localKey     = report.MakeAdjacencyID(scopedLocal)
+		remoteKey    = report.MakeAdjacencyID(scopedRemote)
 	)
 
-	if want, have := 1, len(r.Address.Adjacency[localKey]); want != have {
+	if want, have := 1, len(r.Address.Adjacency[remoteKey]); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
 
-	if want, have := scopedRemote, r.Address.Adjacency[localKey][0]; want != have {
+	if want, have := scopedLocal, r.Address.Adjacency[remoteKey][0]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 
@@ -116,14 +116,14 @@ func TestSpyWithProcesses(t *testing.T) {
 	var (
 		scopedLocal  = report.MakeEndpointNodeID(nodeID, fixLocalAddress.String(), strconv.Itoa(int(fixLocalPort)))
 		scopedRemote = report.MakeEndpointNodeID(nodeID, fixRemoteAddress.String(), strconv.Itoa(int(fixRemotePort)))
-		localKey     = report.MakeAdjacencyID(scopedLocal)
+		remoteKey    = report.MakeAdjacencyID(scopedRemote)
 	)
 
-	if want, have := 1, len(r.Endpoint.Adjacency[localKey]); want != have {
+	if want, have := 1, len(r.Endpoint.Adjacency[remoteKey]); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
 
-	if want, have := scopedRemote, r.Endpoint.Adjacency[localKey][0]; want != have {
+	if want, have := scopedLocal, r.Endpoint.Adjacency[remoteKey][0]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 
