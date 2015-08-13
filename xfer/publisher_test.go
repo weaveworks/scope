@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -15,11 +16,16 @@ import (
 func TestHTTPPublisher(t *testing.T) {
 	var (
 		token = "abcdefg"
+		id    = "1234567"
 		rpt   = report.MakeReport()
+		done  = make(chan struct{})
 	)
 
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if want, have := xfer.AuthorizationHeader(token), r.Header.Get("Authorization"); want != have {
+			t.Errorf("want %q, have %q", want, have)
+		}
+		if want, have := id, r.Header.Get(xfer.ScopeProbeIDHeader); want != have {
 			t.Errorf("want %q, have %q", want, have)
 		}
 		var have report.Report
@@ -32,15 +38,22 @@ func TestHTTPPublisher(t *testing.T) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
+		close(done)
 	}))
 	defer s.Close()
 
-	p, err := xfer.NewHTTPPublisher(s.URL, token)
+	p, err := xfer.NewHTTPPublisher(s.URL, token, id)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := p.Publish(rpt); err != nil {
 		t.Error(err)
+	}
+
+	select {
+	case <-done:
+	case <-time.After(time.Millisecond):
+		t.Error("timeout")
 	}
 }
 

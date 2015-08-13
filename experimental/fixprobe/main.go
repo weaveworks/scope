@@ -34,7 +34,7 @@ func main() {
 	}
 	f.Close()
 
-	publisher, err := xfer.NewHTTPPublisher(*publish, "fixprobe")
+	publisher, err := xfer.NewHTTPPublisher(*publish, "fixprobe", "fixprobe")
 	if err != nil {
 		log.Fatal(err)
 	}

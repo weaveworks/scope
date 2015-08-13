@@ -22,10 +22,17 @@ type Publisher interface {
 type HTTPPublisher struct {
 	url   string
 	token string
+	id    string
 }
 
+// ScopeProbeIDHeader is the header we use to carry the probe's unique ID. The
+// ID is currently set to the probe's hostname. It's designed to deduplicate
+// reports from the same probe to the same receiver, in case the probe is
+// configured to publish to multiple receivers that resolve to the same app.
+const ScopeProbeIDHeader = "X-Scope-Probe-ID"
+
 // NewHTTPPublisher returns an HTTPPublisher ready for use.
-func NewHTTPPublisher(target, token string) (*HTTPPublisher, error) {
+func NewHTTPPublisher(target, token, id string) (*HTTPPublisher, error) {
 	if !strings.HasPrefix(target, "http") {
 		target = "http://" + target
 	}
@@ -39,6 +46,7 @@ func NewHTTPPublisher(target, token string) (*HTTPPublisher, error) {
 	return &HTTPPublisher{
 		url:   u.String(),
 		token: token,
+		id:    id,
 	}, nil
 }
 
@@ -53,6 +61,7 @@ func (p HTTPPublisher) Publish(rpt report.Report) error {
 		return err
 	}
 	req.Header.Set("Authorization", AuthorizationHeader(p.token))
+	req.Header.Set(ScopeProbeIDHeader, p.id)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err

@@ -48,7 +48,12 @@ func main() {
 	)
 	flag.Parse()
 
-	log.Printf("probe starting, version %s", version)
+	var (
+		hostName = hostname()
+		hostID   = hostName // TODO: we should sanitize the hostname
+		probeID  = hostName // TODO: does this need to be a random string instead?
+	)
+	log.Printf("probe starting, version %s, ID %s", version, probeID)
 
 	if len(flag.Args()) > 0 {
 		targets = flag.Args()
@@ -74,7 +79,7 @@ func main() {
 		log.Printf("warning: process reporting enabled, but that requires root to find everything")
 	}
 
-	publisherFactory := func(target string) (xfer.Publisher, error) { return xfer.NewHTTPPublisher(target, *token) }
+	publisherFactory := func(target string) (xfer.Publisher, error) { return xfer.NewHTTPPublisher(target, *token, probeID) }
 	publishers := xfer.NewMultiPublisher(publisherFactory)
 	resolver := newStaticResolver(targets, publishers.Add)
 	defer resolver.Stop()
@@ -92,8 +97,6 @@ func main() {
 	}
 
 	var (
-		hostName     = hostname()
-		hostID       = hostName // TODO: we should sanitize the hostname
 		taggers      = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
 		reporters    = []Reporter{host.NewReporter(hostID, hostName, localNets), endpoint.NewReporter(hostID, hostName, *spyProcs)}
 		processCache *process.CachingWalker
