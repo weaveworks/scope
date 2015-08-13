@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 	"os"
+	"strings"
 	"text/template"
 
 	socks5 "github.com/armon/go-socks5"
-	"github.com/weaveworks/weave/common/mflagext"
 	"github.com/docker/docker/pkg/mflag"
+	"github.com/weaveworks/weave/common/mflagext"
 )
 
 const (
@@ -73,7 +73,7 @@ func (r aliasingResolver) Resolve(name string) (net.IP, error) {
 func socksProxy(aliases map[string]string) {
 	conf := &socks5.Config{
 		Resolver: aliasingResolver{
-			aliases: aliases,
+			aliases:      aliases,
 			NameResolver: socks5.DNSResolver{},
 		},
 	}

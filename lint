@@ -95,7 +95,7 @@ function lint {
 
 	# Don't lint this script or static.go
 	case "${filename}" in
-	./bin/lint) return;;
+	./lint) return;;
 	./app/static.go) return;;
 	./coverage.html) return;;
 	esac
