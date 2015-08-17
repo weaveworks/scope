@@ -61,7 +61,7 @@ client-sync:
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) gulp sync
 
-$(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/gulpfile.js client/package.json  client/webpack.config.js client/.eslintrc
+$(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/gulpfile.js client/package.json client/webpack.config.js client/.eslintrc
 	docker build -t $(SCOPE_UI_BUILD_IMAGE) client
 	docker save $(SCOPE_UI_BUILD_IMAGE):latest > $@
 
