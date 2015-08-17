@@ -33,6 +33,11 @@ has_changes() {
 	[ "$changes" -gt 0 ]
 }
 
+commit_timestamp() {
+	local rev=$1
+	git show -s --format=%ct $rev
+}
+
 cached_revision=$(cached_image_rev)
 if [ -z "$cached_revision" ]; then
 	echo ">>> No cached image found; rebuilding"
@@ -43,6 +48,12 @@ fi
 echo ">>> Found cached image rev $cached_revision"
 if has_changes $cached_revision $CIRCLE_SHA1 ; then
 	echo ">>> Found changes, rebuilding"
+	rebuild
+	exit 0
+fi
+
+if [ "$(commit_timestamp $cached_revision)" -lt "$(( $(date +%s) - 86400 ))" ]; then
+	echo ">>> Image is more the 24hrs old; rebuilding"
 	rebuild
 	exit 0
 fi
