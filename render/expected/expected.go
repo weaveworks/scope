@@ -20,8 +20,8 @@ var (
 			Pseudo:       true,
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(40),
-				EgressByteCount:   newu64(400),
+				EgressPacketCount: newu64(70),
+				EgressByteCount:   newu64(700),
 			},
 			Adjacency: adjacency,
 		}
@@ -107,7 +107,10 @@ var (
 				test.ServerHostNodeID,
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
-			EdgeMetadata: report.EdgeMetadata{},
+			EdgeMetadata: report.EdgeMetadata{
+				EgressPacketCount: newu64(210),
+				EgressByteCount:   newu64(2100),
+			},
 		},
 		nonContainerProcessID: {
 			ID:         nonContainerProcessID,
@@ -162,7 +165,10 @@ var (
 				test.ServerHostNodeID,
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
-			EdgeMetadata: report.EdgeMetadata{},
+			EdgeMetadata: report.EdgeMetadata{
+				EgressPacketCount: newu64(210),
+				EgressByteCount:   newu64(2100),
+			},
 		},
 		"bash": {
 			ID:         "bash",
@@ -218,7 +224,10 @@ var (
 				test.ServerHostNodeID,
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
-			EdgeMetadata: report.EdgeMetadata{},
+			EdgeMetadata: report.EdgeMetadata{
+				EgressPacketCount: newu64(210),
+				EgressByteCount:   newu64(2100),
+			},
 		},
 		uncontainedServerID: {
 			ID:         uncontainedServerID,
@@ -273,7 +282,10 @@ var (
 				test.ServerProcessNodeID,
 				test.ServerHostNodeID),
 			NodeMetadata: report.MakeNodeMetadata(),
-			EdgeMetadata: report.EdgeMetadata{},
+			EdgeMetadata: report.EdgeMetadata{
+				EgressPacketCount: newu64(210),
+				EgressByteCount:   newu64(2100),
+			},
 		},
 		uncontainedServerID: {
 			ID:         uncontainedServerID,
@@ -309,7 +321,9 @@ var (
 				test.ServerAddressNodeID,
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
-			EdgeMetadata: report.EdgeMetadata{},
+			EdgeMetadata: report.EdgeMetadata{
+				MaxConnCountTCP: newu64(3),
+			},
 		},
 		ClientHostRenderedID: {
 			ID:         ClientHostRenderedID,

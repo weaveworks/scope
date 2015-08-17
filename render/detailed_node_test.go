@@ -1,7 +1,7 @@
 package render_test
 
 import (
-	//	"fmt"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -121,15 +121,15 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 		LabelMinor: test.ServerHostName,
 		Pseudo:     false,
 		Tables: []render.Table{
-			//			{
-			//				Title:   "Connections",
-			//				Numeric: true,
-			//				Rank:    100,
-			//				Rows: []render.Row{
-			//					{"Egress packet rate", "75", "packets/sec"},
-			//					{"Egress byte rate", "750", "Bps"},
-			//				},
-			//			},
+			{
+				Title:   "Connections",
+				Numeric: true,
+				Rank:    100,
+				Rows: []render.Row{
+					{"Egress packet rate", "105", "packets/sec"},
+					{"Egress byte rate", "1.0", "KBps"},
+				},
+			},
 			{
 				Title:   "Origin Container",
 				Numeric: false,
@@ -159,43 +159,43 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 					{"Operating system", "Linux", ""},
 				},
 			},
-			//			{
-			//				Title:   "Connection Details",
-			//				Numeric: false,
-			//				Rows: []render.Row{
-			//					{"Local", "Remote", ""},
-			//					{
-			//						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
-			//						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54010),
-			//						"",
-			//					},
-			//					{
-			//						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
-			//						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54020),
-			//						"",
-			//					},
-			//					{
-			//						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
-			//						fmt.Sprintf("%s:%s", test.UnknownClient3IP, test.ClientPort54020),
-			//						"",
-			//					},
-			//					{
-			//						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
-			//						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54001),
-			//						"",
-			//					},
-			//					{
-			//						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
-			//						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54002),
-			//						"",
-			//					},
-			//					{
-			//						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
-			//						fmt.Sprintf("%s:%s", test.RandomClientIP, test.ClientPort12345),
-			//						"",
-			//					},
-			//				},
-			//			},
+			{
+				Title:   "Connection Details",
+				Numeric: false,
+				Rows: []render.Row{
+					{"Client", "Server", ""},
+					{
+						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54010),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						"",
+					},
+					{
+						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54020),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						"",
+					},
+					{
+						fmt.Sprintf("%s:%s", test.UnknownClient3IP, test.ClientPort54020),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						"",
+					},
+					{
+						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54001),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						"",
+					},
+					{
+						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54002),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						"",
+					},
+					{
+						fmt.Sprintf("%s:%s", test.RandomClientIP, test.ClientPort12345),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						"",
+					},
+				},
+			},
 		},
 	}
 	if !reflect.DeepEqual(want, have) {

@@ -48,6 +48,23 @@ type Row struct {
 	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
 }
 
+type rows []Row
+
+func (r rows) Len() int      { return len(r) }
+func (r rows) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
+func (r rows) Less(i, j int) bool {
+	switch {
+	case r[i].Key != r[j].Key:
+		return r[i].Key < r[j].Key
+
+	case r[i].ValueMajor != r[j].ValueMajor:
+		return r[i].ValueMajor < r[j].ValueMajor
+
+	default:
+		return r[i].ValueMinor < r[j].ValueMinor
+	}
+}
+
 type tables []Table
 
 func (t tables) Len() int           { return len(t) }
@@ -118,6 +135,7 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 		}
 	}
 	if len(connections) > 0 {
+		sort.Sort(rows(connections))
 		tables = append(tables, connectionDetailsTable(connections))
 	}
 
@@ -166,14 +184,24 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 	if !ok {
 		return rows
 	}
-	adjacencies := topology.Adjacency[report.MakeAdjacencyID(originID)]
-	sort.Strings(adjacencies)
-	for _, nodeID := range adjacencies {
-		if remote, ok := labeler(nodeID); ok {
+	for _, serverNodeID := range topology.Adjacency[report.MakeAdjacencyID(originID)] {
+		if remote, ok := labeler(serverNodeID); ok {
 			rows = append(rows, Row{
 				Key:        local,
 				ValueMajor: remote,
 			})
+		}
+	}
+	for clientAdjID, serverNodeIDs := range topology.Adjacency {
+		if serverNodeIDs.Contains(originID) {
+			if clientNodeID, ok := report.ParseAdjacencyID(clientAdjID); ok {
+				if remote, ok := labeler(clientNodeID); ok {
+					rows = append(rows, Row{
+						Key:        remote,
+						ValueMajor: local,
+					})
+				}
+			}
 		}
 	}
 	return rows
@@ -183,7 +211,7 @@ func connectionDetailsTable(connectionRows []Row) Table {
 	return Table{
 		Title:   "Connection Details",
 		Numeric: false,
-		Rows:    append([]Row{{Key: "Local", ValueMajor: "Remote"}}, connectionRows...),
+		Rows:    append([]Row{{Key: "Client", ValueMajor: "Server"}}, connectionRows...),
 		Rank:    endpointRank,
 	}
 }

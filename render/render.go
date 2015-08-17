@@ -177,6 +177,24 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 		source2mapped[nodeID] = mapped.ID
 	}
 
+	mkPseudoNode := func(srcID, dstId string, srcIsClient bool) (string, bool) {
+		pseudoNode, ok := m.Pseudo(srcID, dstId, srcIsClient, localNetworks)
+		if !ok {
+			return "", false
+		}
+		// TODO(tomwilkie): we should propagate origin nodes for pseudo nodes.
+		// Not worth doing until they are selectable in the UI
+		// pseudoNode.Origins = pseudoNode.Origins.Add(srcID)
+		existing, ok := nodes[pseudoNode.ID]
+		if ok {
+			pseudoNode.Merge(existing)
+		}
+
+		nodes[pseudoNode.ID] = pseudoNode
+		source2mapped[pseudoNode.ID] = srcID
+		return pseudoNode.ID, true
+	}
+
 	// Walk the graph and make connections.
 	for src, dsts := range t.Adjacency {
 		srcNodeID, ok := report.ParseAdjacencyID(src)
@@ -185,11 +203,8 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 			continue
 		}
 
-		var (
-			srcRenderableID, ok1 = source2mapped[srcNodeID]
-			srcRenderableNode    = nodes[srcRenderableID]
-		)
-		if !ok1 {
+		srcRenderableID, ok := source2mapped[srcNodeID]
+		if !ok {
 			// One of the entries in dsts must be a non-pseudo node
 			var existingDstNodeID string
 			for _, dstNodeID := range dsts {
@@ -199,33 +214,31 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 				}
 			}
 
-			pseudoNode, ok := m.Pseudo(srcNodeID, existingDstNodeID, true, localNetworks)
+			srcRenderableID, ok = mkPseudoNode(srcNodeID, existingDstNodeID, true)
 			if !ok {
 				continue
 			}
-
-			srcRenderableID = pseudoNode.ID
-			srcRenderableNode = pseudoNode
-			nodes[srcRenderableID] = srcRenderableNode
-			source2mapped[srcNodeID] = srcRenderableID
 		}
+		srcRenderableNode := nodes[srcRenderableID]
 
 		for _, dstNodeID := range dsts {
 			dstRenderableID, ok := source2mapped[dstNodeID]
 			if !ok {
-				pseudoNode, ok := m.Pseudo(dstNodeID, srcNodeID, false, localNetworks)
+				dstRenderableID, ok = mkPseudoNode(dstNodeID, srcNodeID, false)
 				if !ok {
 					continue
 				}
-				dstRenderableID = pseudoNode.ID
-				nodes[dstRenderableID] = pseudoNode
-				source2mapped[dstNodeID] = dstRenderableID
 			}
+			dstRenderableNode := nodes[dstRenderableID]
 
 			srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
-			edgeID := report.MakeEdgeID(srcNodeID, dstNodeID)
-			if md, ok := t.EdgeMetadatas[edgeID]; ok {
+
+			// We propagate edge metadata to nodes on both ends of the edges.
+			// TODO we should 'reverse' one end of the edge meta data - ingress -> egress etc.
+			if md, ok := t.EdgeMetadatas[report.MakeEdgeID(srcNodeID, dstNodeID)]; ok {
 				srcRenderableNode.EdgeMetadata.Merge(md)
+				dstRenderableNode.EdgeMetadata.Merge(md)
+				nodes[dstRenderableID] = dstRenderableNode
 			}
 		}
 
