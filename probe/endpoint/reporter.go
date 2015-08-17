@@ -80,18 +80,18 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 		localIsClient       = int(c.LocalPort) > int(c.RemotePort)
 		localAddressNodeID  = report.MakeAddressNodeID(r.hostID, c.LocalAddress.String())
 		remoteAddressNodeID = report.MakeAddressNodeID(r.hostID, c.RemoteAddress.String())
-		adjecencyID         = ""
+		adjacencyID         = ""
 		edgeID              = ""
 	)
 
 	if localIsClient {
-		adjecencyID = report.MakeAdjacencyID(localAddressNodeID)
-		rpt.Address.Adjacency[adjecencyID] = rpt.Address.Adjacency[adjecencyID].Add(remoteAddressNodeID)
+		adjacencyID = report.MakeAdjacencyID(localAddressNodeID)
+		rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(remoteAddressNodeID)
 
 		edgeID = report.MakeEdgeID(localAddressNodeID, remoteAddressNodeID)
 	} else {
-		adjecencyID = report.MakeAdjacencyID(remoteAddressNodeID)
-		rpt.Address.Adjacency[adjecencyID] = rpt.Address.Adjacency[adjecencyID].Add(localAddressNodeID)
+		adjacencyID = report.MakeAdjacencyID(remoteAddressNodeID)
+		rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(localAddressNodeID)
 
 		edgeID = report.MakeEdgeID(remoteAddressNodeID, localAddressNodeID)
 	}
@@ -109,18 +109,18 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 		var (
 			localEndpointNodeID  = report.MakeEndpointNodeID(r.hostID, c.LocalAddress.String(), strconv.Itoa(int(c.LocalPort)))
 			remoteEndpointNodeID = report.MakeEndpointNodeID(r.hostID, c.RemoteAddress.String(), strconv.Itoa(int(c.RemotePort)))
-			adjecencyID          = ""
+			adjacencyID          = ""
 			edgeID               = ""
 		)
 
 		if localIsClient {
-			adjecencyID = report.MakeAdjacencyID(localEndpointNodeID)
-			rpt.Endpoint.Adjacency[adjecencyID] = rpt.Endpoint.Adjacency[adjecencyID].Add(remoteEndpointNodeID)
+			adjacencyID = report.MakeAdjacencyID(localEndpointNodeID)
+			rpt.Endpoint.Adjacency[adjacencyID] = rpt.Endpoint.Adjacency[adjacencyID].Add(remoteEndpointNodeID)
 
 			edgeID = report.MakeEdgeID(localEndpointNodeID, remoteEndpointNodeID)
 		} else {
-			adjecencyID = report.MakeAdjacencyID(remoteEndpointNodeID)
-			rpt.Endpoint.Adjacency[adjecencyID] = rpt.Endpoint.Adjacency[adjecencyID].Add(localEndpointNodeID)
+			adjacencyID = report.MakeAdjacencyID(remoteEndpointNodeID)
+			rpt.Endpoint.Adjacency[adjacencyID] = rpt.Endpoint.Adjacency[adjacencyID].Add(localEndpointNodeID)
 
 			edgeID = report.MakeEdgeID(remoteEndpointNodeID, localEndpointNodeID)
 		}

@@ -94,8 +94,8 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Rank:    0,
 				Rows: []render.Row{
 					{
-						Key:        "Local",
-						ValueMajor: "Remote",
+						Key:        "Client",
+						ValueMajor: "Server",
 						ValueMinor: "",
 					},
 					{

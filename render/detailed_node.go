@@ -184,25 +184,38 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 	if !ok {
 		return rows
 	}
-	for _, serverNodeID := range topology.Adjacency[report.MakeAdjacencyID(originID)] {
-		if remote, ok := labeler(serverNodeID); ok {
-			rows = append(rows, Row{
-				Key:        local,
-				ValueMajor: remote,
-			})
+	// Firstly, collection outgoing connections from this node.
+	originAdjID := report.MakeAdjacencyID(originID)
+	for _, serverNodeID := range topology.Adjacency[originAdjID] {
+		remote, ok := labeler(serverNodeID)
+		if !ok {
+			continue
 		}
+		rows = append(rows, Row{
+			Key:        local,
+			ValueMajor: remote,
+		})
 	}
+	// Next, scan the topology for incoming connections to this node.
 	for clientAdjID, serverNodeIDs := range topology.Adjacency {
-		if serverNodeIDs.Contains(originID) {
-			if clientNodeID, ok := report.ParseAdjacencyID(clientAdjID); ok {
-				if remote, ok := labeler(clientNodeID); ok {
-					rows = append(rows, Row{
-						Key:        remote,
-						ValueMajor: local,
-					})
-				}
-			}
+		if clientAdjID == originAdjID {
+			continue
 		}
+		if !serverNodeIDs.Contains(originID) {
+			continue
+		}
+		clientNodeID, ok := report.ParseAdjacencyID(clientAdjID)
+		if !ok {
+			continue
+		}
+		remote, ok := labeler(clientNodeID)
+		if !ok {
+			continue
+		}
+		rows = append(rows, Row{
+			Key:        remote,
+			ValueMajor: local,
+		})
 	}
 	return rows
 }

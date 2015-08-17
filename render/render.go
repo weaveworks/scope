@@ -177,8 +177,8 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 		source2mapped[nodeID] = mapped.ID
 	}
 
-	mkPseudoNode := func(srcID, dstId string, srcIsClient bool) (string, bool) {
-		pseudoNode, ok := m.Pseudo(srcID, dstId, srcIsClient, localNetworks)
+	mkPseudoNode := func(srcNodeID, dstNodeID string, srcIsClient bool) (string, bool) {
+		pseudoNode, ok := m.Pseudo(srcNodeID, dstNodeID, srcIsClient, localNetworks)
 		if !ok {
 			return "", false
 		}
@@ -191,7 +191,7 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 		}
 
 		nodes[pseudoNode.ID] = pseudoNode
-		source2mapped[pseudoNode.ID] = srcID
+		source2mapped[pseudoNode.ID] = srcNodeID
 		return pseudoNode.ID, true
 	}
 

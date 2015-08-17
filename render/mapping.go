@@ -33,12 +33,12 @@ const (
 // rendered topology.
 type LeafMapFunc func(report.NodeMetadata) (RenderableNode, bool)
 
-// PseudoFunc creates RenderableNode representing pseudo nodes given the nodeID.
-// dstNodeID is the node id of one of the nodes this node is attached to.
-// nodeID and dstNodeID are node IDs prior to mapping.  isClient indicated the direction
-// of the edge to dstNodeID - true indicates nodeID is the client, false indicates
-// nodeID is the server.
-type PseudoFunc func(nodeID string, dstNodeID string, isClient bool, local report.Networks) (RenderableNode, bool)
+// PseudoFunc creates RenderableNode representing pseudo nodes given the
+// srcNodeID. dstNodeID is the node id of one of the nodes this node has an
+// edge to. srcNodeID and dstNodeID are node IDs prior to mapping.  srcIsClient
+// indicates the direction of the edge to dstNodeID - true indicates srcNodeID
+// is the client, false indicates dstNodeID is the server.
+type PseudoFunc func(srcNodeID, dstNodeID string, srcIsClient bool, local report.Networks) (RenderableNode, bool)
 
 // MapFunc is anything which can take an arbitrary RenderableNode and
 // return another RenderableNode.
@@ -324,25 +324,25 @@ func MapAddress2Host(n RenderableNode) (RenderableNode, bool) {
 // the report's local networks.  Otherwise, the returned function will
 // produce a single pseudo node per (dst address, src address, src port).
 func GenericPseudoNode(addresser func(id string) net.IP) PseudoFunc {
-	return func(nodeID, dstNodeId string, isClient bool, local report.Networks) (RenderableNode, bool) {
+	return func(srcNodeID, dstNodeID string, srcIsClient bool, local report.Networks) (RenderableNode, bool) {
 		// Use the addresser to extract the IP of the missing node
-		nodeAddr := addresser(nodeID)
+		srcNodeAddr := addresser(srcNodeID)
 		// If the dstNodeAddr is not in a network local to this report, we emit an
 		// internet node
-		if !local.Contains(nodeAddr) {
+		if !local.Contains(srcNodeAddr) {
 			return newPseudoNode(TheInternetID, TheInternetMajor, ""), true
 		}
 
-		if isClient {
-			// If the client node is missing, generate a single pseudo node for every (client ip, server ip, server por)
-			serverIP, serverPort := trySplitAddr(dstNodeId)
-			outputID := MakePseudoNodeID(nodeAddr.String(), serverIP, serverPort)
-			major := nodeAddr.String()
+		if srcIsClient {
+			// If the client node is missing, generate a single pseudo node for every (client ip, server ip, server port)
+			serverIP, serverPort := trySplitAddr(dstNodeID)
+			outputID := MakePseudoNodeID(srcNodeAddr.String(), serverIP, serverPort)
+			major := srcNodeAddr.String()
 			return newPseudoNode(outputID, major, ""), true
 		}
 
-		// Othereise (the server node is missing), generate a pseudo node for every (server ip, server port)
-		serverIP, serverPort := trySplitAddr(nodeID)
+		// Otherwise (the server node is missing), generate a pseudo node for every (server ip, server port)
+		serverIP, serverPort := trySplitAddr(srcNodeID)
 		outputID := MakePseudoNodeID(serverIP, serverPort)
 		if serverPort != "" {
 			return newPseudoNode(outputID, serverIP+":"+serverPort, ""), true
