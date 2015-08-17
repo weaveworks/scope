@@ -19,6 +19,7 @@ dependencies:
   cache_directories:
     - "~/docker"
   override:
+    - sudo apt-get update
     - sudo apt-get --only-upgrade install tar libpcap0.8-dev
     - bin/rebuild-ui-build-image
     - curl https://sdk.cloud.google.com | bash
