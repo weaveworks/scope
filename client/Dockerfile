@@ -1,19 +1,5 @@
-FROM debian:latest
+FROM node:0.10
 WORKDIR /home/weave
-
-RUN apt-get update && apt-get install -y curl bzip2 libfreetype6 libfontconfig1 make
-
-# Install nodejs
-RUN curl -sL https://deb.nodesource.com/setup | bash -
-RUN apt-get install -y nodejs
-
-# build tool
+COPY package.json gulpfile.js webpack.config.js .eslintrc /home/weave/
 RUN npm install -g gulp
-
-# install app and build dependencies
-ADD package.json /home/weave/
 RUN npm install
-
-ADD gulpfile.js webpack.config.js .eslintrc /home/weave/
-
-# For instructions on running this container, consult the toplevel Makefile
