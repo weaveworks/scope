@@ -179,20 +179,41 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 
 	// Walk the graph and make connections.
 	for src, dsts := range t.Adjacency {
-		var (
-			srcNodeID, ok     = report.ParseAdjacencyID(src)
-			srcRenderableID   = source2mapped[srcNodeID] // must exist
-			srcRenderableNode = nodes[srcRenderableID]   // must exist
-		)
+		srcNodeID, ok := report.ParseAdjacencyID(src)
 		if !ok {
 			log.Printf("bad adjacency ID %q", src)
 			continue
 		}
 
+		var (
+			srcRenderableID, ok1 = source2mapped[srcNodeID]
+			srcRenderableNode    = nodes[srcRenderableID]
+		)
+		if !ok1 {
+			// One of the entries in dsts must be a non-pseudo node
+			var existingDstNodeID string
+			for _, dstNodeID := range dsts {
+				if _, ok := source2mapped[dstNodeID]; ok {
+					existingDstNodeID = dstNodeID
+					break
+				}
+			}
+
+			pseudoNode, ok := m.Pseudo(srcNodeID, existingDstNodeID, true, localNetworks)
+			if !ok {
+				continue
+			}
+
+			srcRenderableID = pseudoNode.ID
+			srcRenderableNode = pseudoNode
+			nodes[srcRenderableID] = srcRenderableNode
+			source2mapped[srcNodeID] = srcRenderableID
+		}
+
 		for _, dstNodeID := range dsts {
 			dstRenderableID, ok := source2mapped[dstNodeID]
 			if !ok {
-				pseudoNode, ok := m.Pseudo(srcNodeID, srcRenderableNode, dstNodeID, localNetworks)
+				pseudoNode, ok := m.Pseudo(dstNodeID, srcNodeID, false, localNetworks)
 				if !ok {
 					continue
 				}
@@ -202,12 +223,10 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 			}
 
 			srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
-			srcRenderableNode.Origins = srcRenderableNode.Origins.Add(srcNodeID)
 			edgeID := report.MakeEdgeID(srcNodeID, dstNodeID)
 			if md, ok := t.EdgeMetadatas[edgeID]; ok {
 				srcRenderableNode.EdgeMetadata.Merge(md)
 			}
-
 		}
 
 		nodes[srcRenderableID] = srcRenderableNode
