@@ -38,16 +38,6 @@ make
 
 This will produce a Docker image called **weaveworks/scope**.
 
-Note that the repository contains a copy of the compiled UI. To build a fresh
-UI from the source in the client subdirectory, and re-build the Docker
-container,
-
-```
-make scope_ui_build.tar
-make static
-make
-```
-
 
 ## Run
 

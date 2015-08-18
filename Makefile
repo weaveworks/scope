@@ -1,4 +1,4 @@
-.PHONY: all deps static clean client-lint client-test client-sync
+.PHONY: all deps clean client-lint client-test client-sync
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo
@@ -21,7 +21,7 @@ $(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) docker/*
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker save $(SCOPE_IMAGE):latest | sudo $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
 
-$(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go
+$(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go app/static.go
 
 $(PROBE_EXE): probe/*.go probe/docker/*.go probe/endpoint/*.go probe/host/*.go probe/process/*.go probe/overlay/*.go report/*.go xfer/*.go
 
@@ -37,26 +37,26 @@ $(APP_EXE) $(PROBE_EXE):
 	        false; \
 	    }
 
-static: client/build/app.js
-	esc -o app/static.go -prefix client/build client/build
+app/static.go: client/build/app.js
+	esc -o $@ -prefix client/build client/build
 
-client/build/app.js: client/app/scripts/*
+client/build/app.js: client/app/scripts/* $(SCOPE_UI_BUILD_EXPORT)
 	mkdir -p client/build
 	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) gulp build --release
 
-client-test: client/test/*
+client-test: client/test/* $(SCOPE_UI_BUILD_EXPORT)
 	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm test
 
-client-lint:
+client-lint: $(SCOPE_UI_BUILD_EXPORT)
 	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm run lint
 
-client-sync:
+client-sync: $(SCOPE_UI_BUILD_EXPORT)
 	docker run -ti --net=host -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) gulp sync
