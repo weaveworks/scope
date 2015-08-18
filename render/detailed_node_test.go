@@ -14,13 +14,6 @@ func TestOriginTable(t *testing.T) {
 		t.Errorf("unknown origin ID gave unexpected success")
 	}
 	for originID, want := range map[string]render.Table{
-		test.ClientAddressNodeID: {
-			Title:   "Origin Address",
-			Numeric: false,
-			Rows: []render.Row{
-				{"Address", test.ClientIP, ""},
-			},
-		},
 		test.ServerProcessNodeID: {
 			Title:   "Origin Process",
 			Numeric: false,
@@ -52,7 +45,74 @@ func TestOriginTable(t *testing.T) {
 	}
 }
 
-func TestMakeDetailedNode(t *testing.T) {
+func TestMakeDetailedHostNode(t *testing.T) {
+	renderableNode := render.HostRenderer.Render(test.Report)[render.MakeHostID(test.ClientHostID)]
+	have := render.MakeDetailedNode(test.Report, renderableNode)
+	want := render.DetailedNode{
+		ID:         render.MakeHostID(test.ClientHostID),
+		LabelMajor: "client",
+		LabelMinor: "hostname.com",
+		Pseudo:     false,
+		Tables: []render.Table{
+			{
+				Title:   "Connections",
+				Numeric: true,
+				Rank:    100,
+				Rows: []render.Row{
+					{
+						Key:        "TCP connections",
+						ValueMajor: "3",
+						ValueMinor: "",
+					},
+				},
+			},
+			{
+				Title:   "Origin Host",
+				Numeric: false,
+				Rank:    1,
+				Rows: []render.Row{
+					{
+						Key:        "Host name",
+						ValueMajor: "client.hostname.com",
+						ValueMinor: "",
+					},
+					{
+						Key:        "Load",
+						ValueMajor: "0.01 0.01 0.01",
+						ValueMinor: "",
+					},
+					{
+						Key:        "Operating system",
+						ValueMajor: "Linux",
+						ValueMinor: "",
+					},
+				},
+			},
+			{
+				Title:   "Connection Details",
+				Numeric: false,
+				Rank:    0,
+				Rows: []render.Row{
+					{
+						Key:        "Local",
+						ValueMajor: "Remote",
+						ValueMinor: "",
+					},
+					{
+						Key:        "10.10.10.20",
+						ValueMajor: "192.168.1.1",
+						ValueMinor: "",
+					},
+				},
+			},
+		},
+	}
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("%s", test.Diff(want, have))
+	}
+}
+
+func TestMakeDetailedContainerNode(t *testing.T) {
 	renderableNode := render.ContainerRenderer.Render(test.Report)[test.ServerContainerID]
 	have := render.MakeDetailedNode(test.Report, renderableNode)
 	want := render.DetailedNode{
