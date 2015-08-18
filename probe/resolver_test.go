@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -18,13 +19,21 @@ func TestResolver(t *testing.T) {
 
 	oldLookupIP := lookupIP
 	defer func() { lookupIP = oldLookupIP }()
+	ipsLock := sync.Mutex{}
 	ips := map[string][]net.IP{}
 	lookupIP = func(host string) ([]net.IP, error) {
+		ipsLock.Lock()
+		defer ipsLock.Unlock()
 		addrs, ok := ips[host]
 		if !ok {
 			return nil, fmt.Errorf("Not found")
 		}
 		return addrs, nil
+	}
+	updateIPs := func(key string, values []net.IP) {
+		ipsLock.Lock()
+		defer ipsLock.Unlock()
+		ips = map[string][]net.IP{key: values}
 	}
 
 	port := ":80"
@@ -42,8 +51,8 @@ func TestResolver(t *testing.T) {
 			if want != have {
 				t.Errorf("line %d: want %q, have %q", line, want, have)
 			}
-		case <-time.After(time.Millisecond):
-			t.Errorf("line %d: didn't get add in time", line)
+		case <-time.After(100 * time.Millisecond):
+			t.Fatalf("line %d: didn't get add in time", line)
 		}
 	}
 
@@ -58,14 +67,14 @@ func TestResolver(t *testing.T) {
 	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.AppPort))
 
 	ip3 := "1.2.3.4"
-	ips = map[string][]net.IP{"symbolic.name": makeIPs(ip3)}
+	updateIPs("symbolic.name", makeIPs(ip3))
 	c <- time.Now()       // trigger a resolve
 	assertAdd(ip3 + port) // we want 1 add
 	assertAdd(ip1 + port)
 	assertAdd(fmt.Sprintf("%s:%d", ip2, xfer.AppPort))
 
 	ip4 := "10.10.10.10"
-	ips = map[string][]net.IP{"symbolic.name": makeIPs(ip3, ip4)}
+	updateIPs("symbolic.name", makeIPs(ip3, ip4))
 	c <- time.Now()       // trigger another resolve, this time with 2 adds
 	assertAdd(ip3 + port) // first add
 	assertAdd(ip4 + port) // second add
