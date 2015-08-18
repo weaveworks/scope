@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -112,8 +111,10 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	for _, id := range n.Origins {
 		if table, ok := OriginTable(r, id); ok {
 			tables = append(tables, table)
-		} else if nmd, ok := r.Endpoint.NodeMetadatas[id]; ok {
-			connections = append(connections, connectionDetailsRows(r.Endpoint, id, nmd)...)
+		} else if _, ok := r.Endpoint.NodeMetadatas[id]; ok {
+			connections = append(connections, connectionDetailsRows(r.Endpoint, id)...)
+		} else if _, ok := r.Address.NodeMetadatas[id]; ok {
+			connections = append(connections, connectionDetailsRows(r.Address, id)...)
 		}
 	}
 	if len(connections) > 0 {
@@ -135,9 +136,6 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 // OriginTable produces a table (to be consumed directly by the UI) based on
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
 func OriginTable(r report.Report, originID string) (Table, bool) {
-	if nmd, ok := r.Address.NodeMetadatas[originID]; ok {
-		return addressOriginTable(nmd)
-	}
 	if nmd, ok := r.Process.NodeMetadatas[originID]; ok {
 		return processOriginTable(nmd)
 	}
@@ -153,18 +151,27 @@ func OriginTable(r report.Report, originID string) (Table, bool) {
 	return Table{}, false
 }
 
-func connectionDetailsRows(endpointTopology report.Topology, originID string, nmd report.NodeMetadata) []Row {
+func connectionDetailsRows(topology report.Topology, originID string) []Row {
 	rows := []Row{}
-	local := fmt.Sprintf("%s:%s", nmd.Metadata[endpoint.Addr], nmd.Metadata[endpoint.Port])
-	adjacencies := endpointTopology.Adjacency[report.MakeAdjacencyID(originID)]
-	sort.Strings(adjacencies)
-	for _, adj := range adjacencies {
-		if _, address, port, ok := report.ParseEndpointNodeID(adj); ok {
-			rows = append(rows, Row{
-				Key:        local,
-				ValueMajor: fmt.Sprintf("%s:%s", address, port),
-			})
+
+	labeler := func(nodeID string) string {
+		if _, addr, port, ok := report.ParseEndpointNodeID(nodeID); ok {
+			return fmt.Sprintf("%s:%s", addr, port)
 		}
+		if _, addr, ok := report.ParseAddressNodeID(nodeID); ok {
+			return addr
+		}
+		return ""
+	}
+
+	local := labeler(originID)
+	adjacencies := topology.Adjacency[report.MakeAdjacencyID(originID)]
+	sort.Strings(adjacencies)
+	for _, nodeID := range adjacencies {
+		rows = append(rows, Row{
+			Key:        local,
+			ValueMajor: labeler(nodeID),
+		})
 	}
 	return rows
 }
@@ -176,19 +183,6 @@ func connectionDetailsTable(connectionRows []Row) Table {
 		Rows:    append([]Row{{Key: "Local", ValueMajor: "Remote"}}, connectionRows...),
 		Rank:    endpointRank,
 	}
-}
-
-func addressOriginTable(nmd report.NodeMetadata) (Table, bool) {
-	rows := []Row{}
-	if val, ok := nmd.Metadata[endpoint.Addr]; ok {
-		rows = append(rows, Row{"Address", val, ""})
-	}
-	return Table{
-		Title:   "Origin Address",
-		Numeric: false,
-		Rows:    rows,
-		Rank:    addressRank,
-	}, len(rows) > 0
 }
 
 func processOriginTable(nmd report.NodeMetadata) (Table, bool) {
