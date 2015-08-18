@@ -21,6 +21,7 @@ IMAGE_VERSION=${VERSION:-$IMAGE_VERSION}
 SCOPE_IMAGE=weaveworks/scope:$IMAGE_VERSION
 SCOPE_CONTAINER_NAME=weavescope
 WEAVE_CONTAINER_NAME=weave
+WEAVEDNS_CONTAINER_NAME=weavedns
 HOSTNAME=scope
 DOMAINNAME=weave.local
 FQDN=$HOSTNAME.$DOMAINNAME
@@ -94,7 +95,7 @@ weave_dns_add() {
 }
 
 weave_dns_present() {
-    return $(docker run --rm gliderlabs/alpine nc -z $DOCKER_BRIDGE_IP 53; echo $?)
+    docker run --rm gliderlabs/alpine nc -z $DOCKER_BRIDGE_IP 53 || is_running $WEAVEDNS_CONTAINER_NAME
 }
 
 set_docker_bridge_ip() {
