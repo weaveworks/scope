@@ -50,4 +50,5 @@ experimental/_integration/_integration
 *sublime-project
 *sublime-workspace
 *npm-debug.log
+app/static.go
 
