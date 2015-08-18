@@ -1,6 +1,10 @@
 package render
 
 import (
+	"fmt"
+
+	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -24,6 +28,45 @@ var ProcessRenderer = MakeReduce(
 		Pseudo:   PanicPseudoNode,
 	},
 )
+
+// ProcessWithContainerNameRenderer is a Renderer which produces a process
+// graph enriched with container names where appropriate
+type ProcessWithContainerNameRenderer struct{}
+
+// Render produces a process graph where the minor labels contain the
+// container name, if found.
+func (r ProcessWithContainerNameRenderer) Render(rpt report.Report) RenderableNodes {
+	var processes = ProcessRenderer.Render(rpt)
+	var containers = LeafMap{
+		Selector: report.SelectContainer,
+		Mapper:   MapContainerIdentity,
+		Pseudo:   PanicPseudoNode,
+	}.Render(rpt)
+
+	for id, p := range processes {
+		pid, ok := p.NodeMetadata.Metadata[process.PID]
+		if !ok {
+			continue
+		}
+		containerID, ok := p.NodeMetadata.Metadata[docker.ContainerID]
+		if !ok {
+			continue
+		}
+		container, ok := containers[containerID]
+		if !ok {
+			continue
+		}
+		p.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(p.NodeMetadata), container.LabelMajor, pid)
+		processes[id] = p
+	}
+
+	return processes
+}
+
+// EdgeMetadata produces an EdgeMetadata for a given edge.
+func (r ProcessWithContainerNameRenderer) EdgeMetadata(rpt report.Report, localID, remoteID string) report.EdgeMetadata {
+	return ProcessRenderer.EdgeMetadata(rpt, localID, remoteID)
+}
 
 // ProcessRenderer is a Renderer which produces a renderable process
 // name graph by munging the progess graph.
