@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -20,10 +21,16 @@ var version = "dev"
 
 func main() {
 	var (
-		window = flag.Duration("window", 15*time.Second, "window")
-		listen = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
+		window       = flag.Duration("window", 15*time.Second, "window")
+		listen       = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
+		printVersion = flag.Bool("version", false, "print version number and exit")
 	)
 	flag.Parse()
+
+	if *printVersion {
+		fmt.Println(version)
+		return
+	}
 
 	rand.Seed(time.Now().UnixNano())
 	id := strconv.FormatInt(rand.Int63(), 16)

@@ -45,8 +45,14 @@ func main() {
 		captureInterfaces  = flag.String("capture.interfaces", interfaces(), "packet capture on these interfaces")
 		captureOn          = flag.Duration("capture.on", 1*time.Second, "packet capture duty cycle 'on'")
 		captureOff         = flag.Duration("capture.off", 5*time.Second, "packet capture duty cycle 'off'")
+		printVersion       = flag.Bool("version", false, "print version number and exit")
 	)
 	flag.Parse()
+
+	if *printVersion {
+		fmt.Println(version)
+		return
+	}
 
 	var (
 		hostName = hostname()

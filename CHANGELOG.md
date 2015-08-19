@@ -1,3 +1,45 @@
+## Release 0.6.0
+
+New features:
+- Probes now push data to the app, instead of the app pulling it.
+  [#342](https://github.com/weaveworks/scope/pull/342)
+- Allow probe and app to be started independently, via --no-app and
+  --no-probe flags.
+  [#345](https://github.com/weaveworks/scope/pull/345)
+- Close details pane when changing topology view.
+  [#297](https://github.com/weaveworks/scope/issues/297)
+- Add support for --probe.foo=bar style flags, in addition to
+  --probe.foo bar, which is already supported.
+  [#347](https://github.com/weaveworks/scope/pull/347)
+- Added X-Scope-Probe-ID header to identify probes when sending
+  information to the app.
+  [#351](https://github.com/weaveworks/scope/pull/351)
+
+Bug fixes:
+- Update scope script to work with master version of weave, where DNS
+  has been embedded in the router.
+  [#321](https://github.com/weaveworks/scope/issues/321)
+- Fixed regression where process names weren't appearing for Darwin
+  probes.
+  [#320](https://github.com/weaveworks/scope/pull/320)
+- Fixed rendering bug resulting in orphaned nodes.
+  [#339](https://github.com/weaveworks/scope/pull/339)
+- App now only logs to stderr, to match the probe.
+  [#343](https://github.com/weaveworks/scope/pull/343)
+- Use relative paths for all URLs in the UI.
+  [#344](https://github.com/weaveworks/scope/pull/344)
+- Removed temporary containers created by the scope script.
+  [#348](https://github.com/weaveworks/scope/issues/348)
+
+Experimental features:
+- Added support for pcap based packet sniffing, to provide bandwidth
+  usage information. It can be enabled via the --capture flag. When
+  enabled the probe will monitor packets for a portion of the time, and
+  estimate bandwidth usage. Network throughput will be affected if
+  capture is enabled.
+  [#317](https://github.com/weaveworks/scope/pull/317)
+
+
 ## Release 0.5.0
 
 New features:
