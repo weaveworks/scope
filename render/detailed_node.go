@@ -153,25 +153,28 @@ func OriginTable(r report.Report, originID string) (Table, bool) {
 
 func connectionDetailsRows(topology report.Topology, originID string) []Row {
 	rows := []Row{}
-
-	labeler := func(nodeID string) string {
+	labeler := func(nodeID string) (string, bool) {
 		if _, addr, port, ok := report.ParseEndpointNodeID(nodeID); ok {
-			return fmt.Sprintf("%s:%s", addr, port)
+			return fmt.Sprintf("%s:%s", addr, port), true
 		}
 		if _, addr, ok := report.ParseAddressNodeID(nodeID); ok {
-			return addr
+			return addr, true
 		}
-		return ""
+		return "", false
 	}
-
-	local := labeler(originID)
+	local, ok := labeler(originID)
+	if !ok {
+		return rows
+	}
 	adjacencies := topology.Adjacency[report.MakeAdjacencyID(originID)]
 	sort.Strings(adjacencies)
 	for _, nodeID := range adjacencies {
-		rows = append(rows, Row{
-			Key:        local,
-			ValueMajor: labeler(nodeID),
-		})
+		if remote, ok := labeler(nodeID); ok {
+			rows = append(rows, Row{
+				Key:        local,
+				ValueMajor: remote,
+			})
+		}
 	}
 	return rows
 }
