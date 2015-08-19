@@ -114,6 +114,15 @@ func ParseEndpointNodeID(endpointNodeID string) (hostID, address, port string, o
 	return fields[0], fields[1], fields[2], true
 }
 
+// ParseAddressNodeID produces the host ID, address from an address node ID.
+func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) {
+	fields := strings.SplitN(addressNodeID, ScopeDelim, 2)
+	if len(fields) != 2 {
+		return "", "", false
+	}
+	return fields[0], fields[1], true
+}
+
 // ExtractHostID extracts the host id from NodeMetadata
 func ExtractHostID(m NodeMetadata) string {
 	hostid, _, _ := ParseNodeID(m.Metadata[HostNodeID])
