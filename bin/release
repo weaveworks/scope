@@ -53,7 +53,7 @@ build() {
     sed -i -e "s/^SCRIPT_VERSION=.*$/SCRIPT_VERSION=\"$VERSION\"/" ./scope
     make SUDO=$SUDO SCOPE_VERSION=$VERSION DOCKERHUB_USER=$DOCKERHUB_USER
 
-    if ./bin/test; then
+    if $(go list -e -f {{.Dir}} github.com/weaveworks/tools)/test; then
         echo -e '\u2713 Tests pass'
     else
         echo -e "\u2757 Tests failed, probably best not publish this one" >&2
