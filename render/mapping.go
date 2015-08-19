@@ -344,7 +344,7 @@ func MapCountContainers(n RenderableNode) (RenderableNode, bool) {
 	if containers == 1 {
 		n.LabelMinor = "1 container"
 	} else {
-		n.LabelMinor = fmt.Sprintf("%d container(s)", containers)
+		n.LabelMinor = fmt.Sprintf("%d containers", containers)
 	}
 	return n, true
 }
