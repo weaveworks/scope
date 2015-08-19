@@ -19,6 +19,9 @@ const (
 
 	TheInternetID    = "theinternet"
 	TheInternetMajor = "The Internet"
+
+	containersKey = "containers"
+	processesKey  = "processes"
 )
 
 // LeafMapFunc is anything which can take an arbitrary NodeMetadata, which is
@@ -250,7 +253,25 @@ func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
 	node := newDerivedNode(name, n)
 	node.LabelMajor = name
 	node.Rank = name
+	node.NodeMetadata.Counters[processesKey] = 1
 	return node, true
+}
+
+// MapCountProcessName maps 1:1 process name nodes, counting
+// the number of processes grouped together and putting
+// that info in the minor label.
+func MapCountProcessName(n RenderableNode) (RenderableNode, bool) {
+	if n.Pseudo {
+		return n, true
+	}
+
+	processes := n.NodeMetadata.Counters[processesKey]
+	if processes == 1 {
+		n.LabelMinor = "1 process"
+	} else {
+		n.LabelMinor = fmt.Sprintf("%d processes", processes)
+	}
+	return n, true
 }
 
 // MapContainer2ContainerImage maps container RenderableNodes to container
@@ -277,7 +298,10 @@ func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
 		return n, false
 	}
 
-	return newDerivedNode(id, n), true
+	// Add container-<id> key to NMD, which will later be counted to produce the minor label
+	result := newDerivedNode(id, n)
+	result.NodeMetadata.Counters[containersKey] = 1
+	return result, true
 }
 
 // MapContainerImage2Name maps container images RenderableNodes to
@@ -304,7 +328,25 @@ func MapContainerImage2Name(n RenderableNode) (RenderableNode, bool) {
 	node := newDerivedNode(name, n)
 	node.LabelMajor = name
 	node.Rank = name
+	node.NodeMetadata = n.NodeMetadata.Copy() // Propagate NMD for container counting.
 	return node, true
+}
+
+// MapCountContainers maps 1:1 container image nodes, counting
+// the number of containers grouped together and putting
+// that info in the minor label.
+func MapCountContainers(n RenderableNode) (RenderableNode, bool) {
+	if n.Pseudo {
+		return n, true
+	}
+
+	containers := n.NodeMetadata.Counters[containersKey]
+	if containers == 1 {
+		n.LabelMinor = "1 container"
+	} else {
+		n.LabelMinor = fmt.Sprintf("%d container(s)", containers)
+	}
+	return n, true
 }
 
 // MapAddress2Host maps address RenderableNodes to host RenderableNodes.

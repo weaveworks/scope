@@ -22,6 +22,9 @@ func fixNodeMetadatas(nodes render.RenderableNodes) render.RenderableNodes {
 		if node.NodeMetadata.Metadata == nil {
 			node.NodeMetadata.Metadata = map[string]string{}
 		}
+		if node.NodeMetadata.Counters == nil {
+			node.NodeMetadata.Counters = map[string]int{}
+		}
 		result[id] = node
 	}
 	return result

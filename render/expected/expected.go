@@ -135,7 +135,7 @@ var (
 		"curl": {
 			ID:         "curl",
 			LabelMajor: "curl",
-			LabelMinor: "",
+			LabelMinor: "2 processes",
 			Rank:       "curl",
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList("apache"),
@@ -155,7 +155,7 @@ var (
 		"apache": {
 			ID:         "apache",
 			LabelMajor: "apache",
-			LabelMinor: "",
+			LabelMinor: "1 process",
 			Rank:       "apache",
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(),
@@ -173,7 +173,7 @@ var (
 		"bash": {
 			ID:         "bash",
 			LabelMajor: "bash",
-			LabelMinor: "",
+			LabelMinor: "1 process",
 			Rank:       "bash",
 			Pseudo:     false,
 			Origins: report.MakeIDList(
@@ -249,7 +249,7 @@ var (
 		test.ClientContainerImageName: {
 			ID:         test.ClientContainerImageName,
 			LabelMajor: test.ClientContainerImageName,
-			LabelMinor: "",
+			LabelMinor: "1 container",
 			Rank:       test.ClientContainerImageName,
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(test.ServerContainerImageName),
@@ -271,7 +271,7 @@ var (
 		test.ServerContainerImageName: {
 			ID:         test.ServerContainerImageName,
 			LabelMajor: test.ServerContainerImageName,
-			LabelMinor: "",
+			LabelMinor: "1 container",
 			Rank:       test.ServerContainerImageName,
 			Pseudo:     false,
 			Adjacency:  report.MakeIDList(),

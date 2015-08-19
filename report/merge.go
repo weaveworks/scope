@@ -48,6 +48,9 @@ func (nm NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
 	for k, v := range other.Metadata {
 		nm.Metadata[k] = v // other takes precedence
 	}
+	for k, v := range other.Counters {
+		nm.Counters[k] = nm.Counters[k] + v
+	}
 	return nm
 }
 

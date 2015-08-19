@@ -71,8 +71,11 @@ func (r ProcessWithContainerNameRenderer) EdgeMetadata(rpt report.Report, localI
 // ProcessRenderer is a Renderer which produces a renderable process
 // name graph by munging the progess graph.
 var ProcessNameRenderer = Map{
-	MapFunc:  MapProcess2Name,
-	Renderer: ProcessRenderer,
+	MapFunc: MapCountProcessName,
+	Renderer: Map{
+		MapFunc:  MapProcess2Name,
+		Renderer: ProcessRenderer,
+	},
 }
 
 // ContainerRenderer is a Renderer which produces a renderable container
@@ -92,18 +95,21 @@ var ContainerRenderer = MakeReduce(
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
 var ContainerImageRenderer = Map{
-	MapFunc: MapContainerImage2Name,
-	Renderer: MakeReduce(
-		Map{
-			MapFunc:  MapContainer2ContainerImage,
-			Renderer: ContainerRenderer,
-		},
-		LeafMap{
-			Selector: report.SelectContainerImage,
-			Mapper:   MapContainerImageIdentity,
-			Pseudo:   PanicPseudoNode,
-		},
-	),
+	MapFunc: MapCountContainers,
+	Renderer: Map{
+		MapFunc: MapContainerImage2Name,
+		Renderer: MakeReduce(
+			Map{
+				MapFunc:  MapContainer2ContainerImage,
+				Renderer: ContainerRenderer,
+			},
+			LeafMap{
+				Selector: report.SelectContainerImage,
+				Mapper:   MapContainerImageIdentity,
+				Pseudo:   PanicPseudoNode,
+			},
+		),
+	},
 }
 
 // AddressRenderer is a Renderer which produces a renderable address
