@@ -20,8 +20,8 @@ const (
 	TheInternetID    = "theinternet"
 	TheInternetMajor = "The Internet"
 
-	containersPrefix = "container-"
-	processesPrefix  = "process-"
+	containersKey = "containers"
+	processesKey  = "processes"
 )
 
 // LeafMapFunc is anything which can take an arbitrary NodeMetadata, which is
@@ -252,18 +252,8 @@ func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
 	node := newDerivedNode(name, n)
 	node.LabelMajor = name
 	node.Rank = name
-	node.NodeMetadata.Metadata[processesPrefix+n.ID] = ""
+	node.NodeMetadata.Counters[processesKey] = 1
 	return node, true
-}
-
-func countPrefix(prefix string, n RenderableNode) int {
-	count := 0
-	for key := range n.NodeMetadata.Metadata {
-		if strings.HasPrefix(key, prefix) {
-			count++
-		}
-	}
-	return count
 }
 
 // MapCountProcessName maps 1:1 process name nodes, counting
@@ -274,7 +264,7 @@ func MapCountProcessName(n RenderableNode) (RenderableNode, bool) {
 		return n, true
 	}
 
-	processes := countPrefix(processesPrefix, n)
+	processes := n.NodeMetadata.Counters[processesKey]
 	if processes == 1 {
 		n.LabelMinor = "1 process"
 	} else {
@@ -309,7 +299,7 @@ func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
 
 	// Add container-<id> key to NMD, which will later be counted to produce the minor label
 	result := newDerivedNode(id, n)
-	result.NodeMetadata.Metadata[containersPrefix+n.ID] = ""
+	result.NodeMetadata.Counters[containersKey] = 1
 	return result, true
 }
 
@@ -349,7 +339,7 @@ func MapCountContainers(n RenderableNode) (RenderableNode, bool) {
 		return n, true
 	}
 
-	containers := countPrefix(containersPrefix, n)
+	containers := n.NodeMetadata.Counters[containersKey]
 	if containers == 1 {
 		n.LabelMinor = "1 container"
 	} else {

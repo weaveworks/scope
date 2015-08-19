@@ -42,6 +42,7 @@ type EdgeMetadata struct {
 // about a given node in a given topology.
 type NodeMetadata struct {
 	Metadata map[string]string
+	Counters map[string]int
 }
 
 // MakeNodeMetadata creates a new NodeMetadata with no initial metadata.
@@ -53,6 +54,7 @@ func MakeNodeMetadata() NodeMetadata {
 func MakeNodeMetadataWith(m map[string]string) NodeMetadata {
 	return NodeMetadata{
 		Metadata: m,
+		Counters: map[string]int{},
 	}
 }
 
@@ -61,6 +63,9 @@ func (nm NodeMetadata) Copy() NodeMetadata {
 	cp := MakeNodeMetadata()
 	for k, v := range nm.Metadata {
 		cp.Metadata[k] = v
+	}
+	for k, v := range nm.Counters {
+		cp.Counters[k] = v
 	}
 	return cp
 }
