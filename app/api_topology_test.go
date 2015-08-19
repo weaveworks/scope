@@ -62,10 +62,8 @@ func TestAll(t *testing.T) {
 	}
 }
 
-func TestAPITopologyApplications(t *testing.T) {
+func TestAPITopologyContainers(t *testing.T) {
 	ts := httptest.NewServer(Router(StaticReport{}))
-	defer ts.Close()
-	is404(t, ts, "/api/topology/applications/foobar")
 	{
 		body := getRawJSON(t, ts, "/api/topology/containers")
 		var topo APITopology
@@ -77,6 +75,12 @@ func TestAPITopologyApplications(t *testing.T) {
 			t.Error(test.Diff(want, have))
 		}
 	}
+}
+
+func TestAPITopologyApplications(t *testing.T) {
+	ts := httptest.NewServer(Router(StaticReport{}))
+	defer ts.Close()
+	is404(t, ts, "/api/topology/applications/foobar")
 	{
 		body := getRawJSON(t, ts, "/api/topology/applications/"+expected.ServerProcessID)
 		var node APINode

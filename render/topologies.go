@@ -36,8 +36,8 @@ type ProcessWithContainerNameRenderer struct{}
 // Render produces a process graph where the minor labels contain the
 // container name, if found.
 func (r ProcessWithContainerNameRenderer) Render(rpt report.Report) RenderableNodes {
-	var processes = ProcessRenderer.Render(rpt)
-	var containers = LeafMap{
+	processes := ProcessRenderer.Render(rpt)
+	containers := LeafMap{
 		Selector: report.SelectContainer,
 		Mapper:   MapContainerIdentity,
 		Pseudo:   PanicPseudoNode,
