@@ -26,7 +26,7 @@ func TestOriginTable(t *testing.T) {
 			Numeric: false,
 			Rank:    2,
 			Rows: []render.Row{
-				{"Name (comm)", "apache", ""},
+				{"Name", "apache", ""},
 				{"PID", test.ServerPID, ""},
 			},
 		},
@@ -85,7 +85,7 @@ func TestMakeDetailedNode(t *testing.T) {
 				Numeric: false,
 				Rank:    2,
 				Rows: []render.Row{
-					{"Name (comm)", "apache", ""},
+					{"Name", "apache", ""},
 					{"PID", test.ServerPID, ""},
 				},
 			},

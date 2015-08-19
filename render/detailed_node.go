@@ -194,7 +194,7 @@ func addressOriginTable(nmd report.NodeMetadata) (Table, bool) {
 func processOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		{process.Comm, "Name (comm)"},
+		{process.Comm, "Name"},
 		{process.PID, "PID"},
 		{process.PPID, "Parent PID"},
 		{process.Cmdline, "Command"},
