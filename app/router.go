@@ -104,7 +104,7 @@ var topologyRegistry = map[string]topologyView{
 	"applications": {
 		human:    "Applications",
 		parent:   "",
-		renderer: render.FilterUnconnected{Renderer: render.ProcessRenderer},
+		renderer: render.FilterUnconnected{Renderer: render.ProcessWithContainerNameRenderer{}},
 	},
 	"applications-by-name": {
 		human:    "by name",

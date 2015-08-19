@@ -62,21 +62,25 @@ func TestAll(t *testing.T) {
 	}
 }
 
-func TestAPITopologyApplications(t *testing.T) {
+func TestAPITopologyContainers(t *testing.T) {
 	ts := httptest.NewServer(Router(StaticReport{}))
-	defer ts.Close()
-	is404(t, ts, "/api/topology/applications/foobar")
 	{
-		body := getRawJSON(t, ts, "/api/topology/applications")
+		body := getRawJSON(t, ts, "/api/topology/containers")
 		var topo APITopology
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatal(err)
 		}
 
-		if want, have := render.OnlyConnected(expected.RenderedProcesses), fixNodeMetadatas(topo.Nodes); !reflect.DeepEqual(want, have) {
+		if want, have := expected.RenderedContainers, fixNodeMetadatas(topo.Nodes); !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}
+}
+
+func TestAPITopologyApplications(t *testing.T) {
+	ts := httptest.NewServer(Router(StaticReport{}))
+	defer ts.Close()
+	is404(t, ts, "/api/topology/applications/foobar")
 	{
 		body := getRawJSON(t, ts, "/api/topology/applications/"+expected.ServerProcessID)
 		var node APINode
@@ -85,7 +89,7 @@ func TestAPITopologyApplications(t *testing.T) {
 		}
 		equals(t, expected.ServerProcessID, node.Node.ID)
 		equals(t, "apache", node.Node.LabelMajor)
-		equals(t, fmt.Sprintf("%s (%s)", test.ServerHostID, test.ServerPID), node.Node.LabelMinor)
+		equals(t, fmt.Sprintf("%s (server:%s)", test.ServerHostID, test.ServerPID), node.Node.LabelMinor)
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables
 	}
