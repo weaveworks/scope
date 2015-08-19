@@ -33,11 +33,12 @@ const (
 // rendered topology.
 type LeafMapFunc func(report.NodeMetadata) (RenderableNode, bool)
 
-// PseudoFunc creates RenderableNode representing pseudo nodes given the dstNodeID.
-// The srcNode renderable node is essentially from MapFunc, representing one of
-// the rendered nodes this pseudo node refers to. srcNodeID and dstNodeID are
-// node IDs prior to mapping.
-type PseudoFunc func(srcNodeID string, srcNode RenderableNode, dstNodeID string, local report.Networks) (RenderableNode, bool)
+// PseudoFunc creates RenderableNode representing pseudo nodes given the
+// srcNodeID. dstNodeID is the node id of one of the nodes this node has an
+// edge to. srcNodeID and dstNodeID are node IDs prior to mapping.  srcIsClient
+// indicates the direction of the edge to dstNodeID - true indicates srcNodeID
+// is the client, false indicates dstNodeID is the server.
+type PseudoFunc func(srcNodeID, dstNodeID string, srcIsClient bool, local report.Networks) (RenderableNode, bool)
 
 // MapFunc is anything which can take an arbitrary RenderableNode and
 // return another RenderableNode.
@@ -323,29 +324,36 @@ func MapAddress2Host(n RenderableNode) (RenderableNode, bool) {
 // the report's local networks.  Otherwise, the returned function will
 // produce a single pseudo node per (dst address, src address, src port).
 func GenericPseudoNode(addresser func(id string) net.IP) PseudoFunc {
-	return func(src string, srcMapped RenderableNode, dst string, local report.Networks) (RenderableNode, bool) {
-		// Use the addresser to extract the destination IP
-		dstNodeAddr := addresser(dst)
-
+	return func(srcNodeID, dstNodeID string, srcIsClient bool, local report.Networks) (RenderableNode, bool) {
+		// Use the addresser to extract the IP of the missing node
+		srcNodeAddr := addresser(srcNodeID)
 		// If the dstNodeAddr is not in a network local to this report, we emit an
 		// internet node
-		if !local.Contains(dstNodeAddr) {
+		if !local.Contains(srcNodeAddr) {
 			return newPseudoNode(TheInternetID, TheInternetMajor, ""), true
 		}
 
-		// Otherwise, the rule for non-internet psuedo nodes; emit 1 new node for each
-		// dstNodeAddr, srcNodeAddr, srcNodePort.
-		srcNodeAddr, srcNodePort := trySplitAddr(src)
+		if srcIsClient {
+			// If the client node is missing, generate a single pseudo node for every (client ip, server ip, server port)
+			serverIP, serverPort := trySplitAddr(dstNodeID)
+			outputID := MakePseudoNodeID(srcNodeAddr.String(), serverIP, serverPort)
+			major := srcNodeAddr.String()
+			return newPseudoNode(outputID, major, ""), true
+		}
 
-		outputID := MakePseudoNodeID(dstNodeAddr.String(), srcNodeAddr, srcNodePort)
-		major := dstNodeAddr.String()
-		return newPseudoNode(outputID, major, ""), true
+		// Otherwise (the server node is missing), generate a pseudo node for every (server ip, server port)
+		serverIP, serverPort := trySplitAddr(srcNodeID)
+		outputID := MakePseudoNodeID(serverIP, serverPort)
+		if serverPort != "" {
+			return newPseudoNode(outputID, serverIP+":"+serverPort, ""), true
+		}
+		return newPseudoNode(outputID, serverIP, ""), true
 	}
 }
 
 // PanicPseudoNode just panics; it is for Topologies without edges
-func PanicPseudoNode(src string, srcMapped RenderableNode, dst string, local report.Networks) (RenderableNode, bool) {
-	panic(dst)
+func PanicPseudoNode(src, dst string, isClient bool, local report.Networks) (RenderableNode, bool) {
+	panic(src)
 }
 
 // trySplitAddr is basically ParseArbitraryNodeID, since its callsites

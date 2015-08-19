@@ -85,8 +85,11 @@ func (t Topology) Validate() error {
 			errs = append(errs, fmt.Sprintf("invalid edge ID %q", edgeID))
 			continue
 		}
+		// For each edge, at least one of the ends must exist in nodemetadata
 		if _, ok := t.NodeMetadatas[srcNodeID]; !ok {
-			errs = append(errs, fmt.Sprintf("node metadata missing for source node ID %q (from edge %q)", srcNodeID, edgeID))
+			if _, ok := t.NodeMetadatas[dstNodeID]; !ok {
+				errs = append(errs, fmt.Sprintf("node metadatas missing for edge %q", edgeID))
+			}
 		}
 		dstNodeIDs, ok := t.Adjacency[MakeAdjacencyID(srcNodeID)]
 		if !ok {
@@ -99,14 +102,19 @@ func (t Topology) Validate() error {
 	}
 
 	// Check all adjancency keys has entries in NodeMetadata.
-	for adjacencyID := range t.Adjacency {
-		nodeID, ok := ParseAdjacencyID(adjacencyID)
+	for adjacencyID, dsts := range t.Adjacency {
+		srcNodeID, ok := ParseAdjacencyID(adjacencyID)
 		if !ok {
 			errs = append(errs, fmt.Sprintf("invalid adjacency ID %q", adjacencyID))
 			continue
 		}
-		if _, ok := t.NodeMetadatas[nodeID]; !ok {
-			errs = append(errs, fmt.Sprintf("node metadata missing for source node %q (from adjacency %q)", nodeID, adjacencyID))
+		for _, dstNodeID := range dsts {
+			// For each edge, at least one of the ends must exist in nodemetadata
+			if _, ok := t.NodeMetadatas[srcNodeID]; !ok {
+				if _, ok := t.NodeMetadatas[dstNodeID]; !ok {
+					errs = append(errs, fmt.Sprintf("node metadata missing from adjacency %q -> %q", srcNodeID, dstNodeID))
+				}
+			}
 		}
 	}
 

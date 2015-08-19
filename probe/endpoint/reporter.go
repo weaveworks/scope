@@ -77,13 +77,24 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 	var (
+		localIsClient       = int(c.LocalPort) > int(c.RemotePort)
 		localAddressNodeID  = report.MakeAddressNodeID(r.hostID, c.LocalAddress.String())
 		remoteAddressNodeID = report.MakeAddressNodeID(r.hostID, c.RemoteAddress.String())
-		adjecencyID         = report.MakeAdjacencyID(localAddressNodeID)
-		edgeID              = report.MakeEdgeID(localAddressNodeID, remoteAddressNodeID)
+		adjacencyID         = ""
+		edgeID              = ""
 	)
 
-	rpt.Address.Adjacency[adjecencyID] = rpt.Address.Adjacency[adjecencyID].Add(remoteAddressNodeID)
+	if localIsClient {
+		adjacencyID = report.MakeAdjacencyID(localAddressNodeID)
+		rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(remoteAddressNodeID)
+
+		edgeID = report.MakeEdgeID(localAddressNodeID, remoteAddressNodeID)
+	} else {
+		adjacencyID = report.MakeAdjacencyID(remoteAddressNodeID)
+		rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(localAddressNodeID)
+
+		edgeID = report.MakeEdgeID(remoteAddressNodeID, localAddressNodeID)
+	}
 
 	if _, ok := rpt.Address.NodeMetadatas[localAddressNodeID]; !ok {
 		rpt.Address.NodeMetadatas[localAddressNodeID] = report.MakeNodeMetadataWith(map[string]string{
@@ -98,11 +109,21 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 		var (
 			localEndpointNodeID  = report.MakeEndpointNodeID(r.hostID, c.LocalAddress.String(), strconv.Itoa(int(c.LocalPort)))
 			remoteEndpointNodeID = report.MakeEndpointNodeID(r.hostID, c.RemoteAddress.String(), strconv.Itoa(int(c.RemotePort)))
-			adjecencyID          = report.MakeAdjacencyID(localEndpointNodeID)
-			edgeID               = report.MakeEdgeID(localEndpointNodeID, remoteEndpointNodeID)
+			adjacencyID          = ""
+			edgeID               = ""
 		)
 
-		rpt.Endpoint.Adjacency[adjecencyID] = rpt.Endpoint.Adjacency[adjecencyID].Add(remoteEndpointNodeID)
+		if localIsClient {
+			adjacencyID = report.MakeAdjacencyID(localEndpointNodeID)
+			rpt.Endpoint.Adjacency[adjacencyID] = rpt.Endpoint.Adjacency[adjacencyID].Add(remoteEndpointNodeID)
+
+			edgeID = report.MakeEdgeID(localEndpointNodeID, remoteEndpointNodeID)
+		} else {
+			adjacencyID = report.MakeAdjacencyID(remoteEndpointNodeID)
+			rpt.Endpoint.Adjacency[adjacencyID] = rpt.Endpoint.Adjacency[adjacencyID].Add(localEndpointNodeID)
+
+			edgeID = report.MakeEdgeID(remoteEndpointNodeID, localEndpointNodeID)
+		}
 
 		if _, ok := rpt.Endpoint.NodeMetadatas[localEndpointNodeID]; !ok {
 			// First hit establishes NodeMetadata for scoped local address + port

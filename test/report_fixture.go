@@ -79,11 +79,12 @@ var (
 	Report = report.Report{
 		Endpoint: report.Topology{
 			Adjacency: report.Adjacency{
-				report.MakeAdjacencyID(Client54001NodeID): report.MakeIDList(Server80NodeID),
-				report.MakeAdjacencyID(Client54002NodeID): report.MakeIDList(Server80NodeID),
-				report.MakeAdjacencyID(Server80NodeID): report.MakeIDList(
-					Client54001NodeID, Client54002NodeID, UnknownClient1NodeID, UnknownClient2NodeID,
-					UnknownClient3NodeID, RandomClientNodeID),
+				report.MakeAdjacencyID(Client54001NodeID):    report.MakeIDList(Server80NodeID),
+				report.MakeAdjacencyID(Client54002NodeID):    report.MakeIDList(Server80NodeID),
+				report.MakeAdjacencyID(UnknownClient1NodeID): report.MakeIDList(Server80NodeID),
+				report.MakeAdjacencyID(UnknownClient2NodeID): report.MakeIDList(Server80NodeID),
+				report.MakeAdjacencyID(UnknownClient3NodeID): report.MakeIDList(Server80NodeID),
+				report.MakeAdjacencyID(RandomClientNodeID):   report.MakeIDList(Server80NodeID),
 			},
 			NodeMetadatas: report.NodeMetadatas{
 				// NodeMetadata is arbitrary. We're free to put only precisely what we
@@ -117,26 +118,21 @@ var (
 					EgressPacketCount: newu64(20),
 					EgressByteCount:   newu64(200),
 				},
-
-				report.MakeEdgeID(Server80NodeID, Client54001NodeID): report.EdgeMetadata{
-					EgressPacketCount: newu64(10),
-					EgressByteCount:   newu64(100),
-				},
-				report.MakeEdgeID(Server80NodeID, Client54002NodeID): report.EdgeMetadata{
-					EgressPacketCount: newu64(20),
-					EgressByteCount:   newu64(200),
-				},
-				report.MakeEdgeID(Server80NodeID, UnknownClient1NodeID): report.EdgeMetadata{
+				report.MakeEdgeID(UnknownClient1NodeID, Server80NodeID): report.EdgeMetadata{
 					EgressPacketCount: newu64(30),
 					EgressByteCount:   newu64(300),
 				},
-				report.MakeEdgeID(Server80NodeID, UnknownClient2NodeID): report.EdgeMetadata{
+				report.MakeEdgeID(UnknownClient2NodeID, Server80NodeID): report.EdgeMetadata{
 					EgressPacketCount: newu64(40),
 					EgressByteCount:   newu64(400),
 				},
-				report.MakeEdgeID(Server80NodeID, UnknownClient3NodeID): report.EdgeMetadata{
+				report.MakeEdgeID(UnknownClient3NodeID, Server80NodeID): report.EdgeMetadata{
 					EgressPacketCount: newu64(50),
 					EgressByteCount:   newu64(500),
+				},
+				report.MakeEdgeID(RandomClientNodeID, Server80NodeID): report.EdgeMetadata{
+					EgressPacketCount: newu64(60),
+					EgressByteCount:   newu64(600),
 				},
 			},
 		},
@@ -201,9 +197,10 @@ var (
 		},
 		Address: report.Topology{
 			Adjacency: report.Adjacency{
-				report.MakeAdjacencyID(ClientAddressNodeID): report.MakeIDList(ServerAddressNodeID),
-				report.MakeAdjacencyID(ServerAddressNodeID): report.MakeIDList(
-					ClientAddressNodeID, UnknownAddress1NodeID, UnknownAddress2NodeID, RandomAddressNodeID), // no backlinks to unknown/random
+				report.MakeAdjacencyID(ClientAddressNodeID):   report.MakeIDList(ServerAddressNodeID),
+				report.MakeAdjacencyID(UnknownAddress1NodeID): report.MakeIDList(ServerAddressNodeID),
+				report.MakeAdjacencyID(UnknownAddress2NodeID): report.MakeIDList(ServerAddressNodeID),
+				report.MakeAdjacencyID(RandomAddressNodeID):   report.MakeIDList(ServerAddressNodeID),
 			},
 			NodeMetadatas: report.NodeMetadatas{
 				ClientAddressNodeID: report.MakeNodeMetadataWith(map[string]string{
@@ -217,9 +214,6 @@ var (
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				report.MakeEdgeID(ClientAddressNodeID, ServerAddressNodeID): report.EdgeMetadata{
-					MaxConnCountTCP: newu64(3),
-				},
-				report.MakeEdgeID(ServerAddressNodeID, ClientAddressNodeID): report.EdgeMetadata{
 					MaxConnCountTCP: newu64(3),
 				},
 			},

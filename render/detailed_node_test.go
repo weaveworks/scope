@@ -94,8 +94,8 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Rank:    0,
 				Rows: []render.Row{
 					{
-						Key:        "Local",
-						ValueMajor: "Remote",
+						Key:        "Client",
+						ValueMajor: "Server",
 						ValueMinor: "",
 					},
 					{
@@ -126,8 +126,8 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Numeric: true,
 				Rank:    100,
 				Rows: []render.Row{
-					{"Egress packet rate", "75", "packets/sec"},
-					{"Egress byte rate", "750", "Bps"},
+					{"Egress packet rate", "105", "packets/sec"},
+					{"Egress byte rate", "1.0", "KBps"},
 				},
 			},
 			{
@@ -163,35 +163,35 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Title:   "Connection Details",
 				Numeric: false,
 				Rows: []render.Row{
-					{"Local", "Remote", ""},
+					{"Client", "Server", ""},
 					{
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54010),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
 					},
 					{
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54020),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
 					},
 					{
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						fmt.Sprintf("%s:%s", test.UnknownClient3IP, test.ClientPort54020),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
 					},
 					{
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54001),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
 					},
 					{
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54002),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
 					},
 					{
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						fmt.Sprintf("%s:%s", test.RandomClientIP, test.ClientPort12345),
+						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
 					},
 				},

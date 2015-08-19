@@ -136,7 +136,7 @@ func TestAPITopologyHosts(t *testing.T) {
 		// Let's not unit-test the specific content of the detail tables
 	}
 	{
-		body := getRawJSON(t, ts, fmt.Sprintf("/api/topology/hosts/%s/%s", expected.ServerHostRenderedID, expected.ClientHostRenderedID))
+		body := getRawJSON(t, ts, fmt.Sprintf("/api/topology/hosts/%s/%s", expected.ClientHostRenderedID, expected.ServerHostRenderedID))
 		var edge APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)

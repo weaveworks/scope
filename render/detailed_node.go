@@ -48,6 +48,23 @@ type Row struct {
 	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
 }
 
+type rows []Row
+
+func (r rows) Len() int      { return len(r) }
+func (r rows) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
+func (r rows) Less(i, j int) bool {
+	switch {
+	case r[i].Key != r[j].Key:
+		return r[i].Key < r[j].Key
+
+	case r[i].ValueMajor != r[j].ValueMajor:
+		return r[i].ValueMajor < r[j].ValueMajor
+
+	default:
+		return r[i].ValueMinor < r[j].ValueMinor
+	}
+}
+
 type tables []Table
 
 func (t tables) Len() int           { return len(t) }
@@ -118,6 +135,7 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 		}
 	}
 	if len(connections) > 0 {
+		sort.Sort(rows(connections))
 		tables = append(tables, connectionDetailsTable(connections))
 	}
 
@@ -166,15 +184,38 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 	if !ok {
 		return rows
 	}
-	adjacencies := topology.Adjacency[report.MakeAdjacencyID(originID)]
-	sort.Strings(adjacencies)
-	for _, nodeID := range adjacencies {
-		if remote, ok := labeler(nodeID); ok {
-			rows = append(rows, Row{
-				Key:        local,
-				ValueMajor: remote,
-			})
+	// Firstly, collection outgoing connections from this node.
+	originAdjID := report.MakeAdjacencyID(originID)
+	for _, serverNodeID := range topology.Adjacency[originAdjID] {
+		remote, ok := labeler(serverNodeID)
+		if !ok {
+			continue
 		}
+		rows = append(rows, Row{
+			Key:        local,
+			ValueMajor: remote,
+		})
+	}
+	// Next, scan the topology for incoming connections to this node.
+	for clientAdjID, serverNodeIDs := range topology.Adjacency {
+		if clientAdjID == originAdjID {
+			continue
+		}
+		if !serverNodeIDs.Contains(originID) {
+			continue
+		}
+		clientNodeID, ok := report.ParseAdjacencyID(clientAdjID)
+		if !ok {
+			continue
+		}
+		remote, ok := labeler(clientNodeID)
+		if !ok {
+			continue
+		}
+		rows = append(rows, Row{
+			Key:        remote,
+			ValueMajor: local,
+		})
 	}
 	return rows
 }
@@ -183,7 +224,7 @@ func connectionDetailsTable(connectionRows []Row) Table {
 	return Table{
 		Title:   "Connection Details",
 		Numeric: false,
-		Rows:    append([]Row{{Key: "Local", ValueMajor: "Remote"}}, connectionRows...),
+		Rows:    append([]Row{{Key: "Client", ValueMajor: "Server"}}, connectionRows...),
 		Rank:    endpointRank,
 	}
 }
