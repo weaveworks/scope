@@ -46,6 +46,7 @@ type Row struct {
 	Key        string `json:"key"`                   // e.g. Ingress
 	ValueMajor string `json:"value_major"`           // e.g. 25
 	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
+	Expandable bool   `json:expandable,omitempty`    // Whether it can be expanded (hidden by default)
 }
 
 type rows []Row
@@ -99,21 +100,21 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	{
 		rows := []Row{}
 		if n.EdgeMetadata.MaxConnCountTCP != nil {
-			rows = append(rows, Row{"TCP connections", strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10), ""})
+			rows = append(rows, Row{"TCP connections", strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10), "", false})
 		}
 		if rate, ok := rate(n.EdgeMetadata.EgressPacketCount); ok {
-			rows = append(rows, Row{"Egress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec"})
+			rows = append(rows, Row{"Egress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec", false})
 		}
 		if rate, ok := rate(n.EdgeMetadata.IngressPacketCount); ok {
-			rows = append(rows, Row{"Ingress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec"})
+			rows = append(rows, Row{"Ingress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec", false})
 		}
 		if rate, ok := rate(n.EdgeMetadata.EgressByteCount); ok {
 			s, unit := shortenByteRate(rate)
-			rows = append(rows, Row{"Egress byte rate", s, unit})
+			rows = append(rows, Row{"Egress byte rate", s, unit, false})
 		}
 		if rate, ok := rate(n.EdgeMetadata.IngressByteCount); ok {
 			s, unit := shortenByteRate(rate)
-			rows = append(rows, Row{"Ingress byte rate", s, unit})
+			rows = append(rows, Row{"Ingress byte rate", s, unit, false})
 		}
 		if len(rows) > 0 {
 			tables = append(tables, Table{"Connections", true, connectionsRank, rows})

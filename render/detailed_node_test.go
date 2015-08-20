@@ -19,8 +19,8 @@ func TestOriginTable(t *testing.T) {
 			Numeric: false,
 			Rank:    2,
 			Rows: []render.Row{
-				{"Name", "apache", ""},
-				{"PID", test.ServerPID, ""},
+				{"Name", "apache", "", false},
+				{"PID", test.ServerPID, "", false},
 			},
 		},
 		test.ServerHostNodeID: {
@@ -28,9 +28,9 @@ func TestOriginTable(t *testing.T) {
 			Numeric: false,
 			Rank:    1,
 			Rows: []render.Row{
-				{"Host name", test.ServerHostName, ""},
-				{"Load", "0.01 0.01 0.01", ""},
-				{"Operating system", "Linux", ""},
+				{"Host name", test.ServerHostName, "", false},
+				{"Load", "0.01 0.01 0.01", "", false},
+				{"Operating system", "Linux", "", false},
 			},
 		},
 	} {
@@ -63,6 +63,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 						Key:        "TCP connections",
 						ValueMajor: "3",
 						ValueMinor: "",
+						Expandable: false,
 					},
 				},
 			},
@@ -75,16 +76,19 @@ func TestMakeDetailedHostNode(t *testing.T) {
 						Key:        "Host name",
 						ValueMajor: "client.hostname.com",
 						ValueMinor: "",
+						Expandable: false,
 					},
 					{
 						Key:        "Load",
 						ValueMajor: "0.01 0.01 0.01",
 						ValueMinor: "",
+						Expandable: false,
 					},
 					{
 						Key:        "Operating system",
 						ValueMajor: "Linux",
 						ValueMinor: "",
+						Expandable: false,
 					},
 				},
 			},
@@ -97,11 +101,13 @@ func TestMakeDetailedHostNode(t *testing.T) {
 						Key:        "Client",
 						ValueMajor: "Server",
 						ValueMinor: "",
+						Expandable: false,
 					},
 					{
 						Key:        "10.10.10.20",
 						ValueMajor: "192.168.1.1",
 						ValueMinor: "",
+						Expandable: false,
 					},
 				},
 			},
@@ -126,8 +132,8 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Numeric: true,
 				Rank:    100,
 				Rows: []render.Row{
-					{"Egress packet rate", "105", "packets/sec"},
-					{"Egress byte rate", "1.0", "KBps"},
+					{"Egress packet rate", "105", "packets/sec", false},
+					{"Egress byte rate", "1.0", "KBps", false},
 				},
 			},
 			{
@@ -135,9 +141,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Numeric: false,
 				Rank:    3,
 				Rows: []render.Row{
-					{"ID", test.ServerContainerID, ""},
-					{"Name", "server", ""},
-					{"Image ID", test.ServerContainerImageID, ""},
+					{"ID", test.ServerContainerID, "", false},
+					{"Name", "server", "", false},
+					{"Image ID", test.ServerContainerImageID, "", false},
 				},
 			},
 			{
@@ -145,8 +151,8 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Numeric: false,
 				Rank:    2,
 				Rows: []render.Row{
-					{"Name", "apache", ""},
-					{"PID", test.ServerPID, ""},
+					{"Name", "apache", "", false},
+					{"PID", test.ServerPID, "", false},
 				},
 			},
 			{
@@ -154,45 +160,51 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Numeric: false,
 				Rank:    1,
 				Rows: []render.Row{
-					{"Host name", test.ServerHostName, ""},
-					{"Load", "0.01 0.01 0.01", ""},
-					{"Operating system", "Linux", ""},
+					{"Host name", test.ServerHostName, "", false},
+					{"Load", "0.01 0.01 0.01", "", false},
+					{"Operating system", "Linux", "", false},
 				},
 			},
 			{
 				Title:   "Connection Details",
 				Numeric: false,
 				Rows: []render.Row{
-					{"Client", "Server", ""},
+					{"Client", "Server", "", false},
 					{
 						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54010),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
+						false,
 					},
 					{
 						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54020),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
+						false,
 					},
 					{
 						fmt.Sprintf("%s:%s", test.UnknownClient3IP, test.ClientPort54020),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
+						false,
 					},
 					{
 						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54001),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
+						false,
 					},
 					{
 						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54002),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
+						false,
 					},
 					{
 						fmt.Sprintf("%s:%s", test.RandomClientIP, test.ClientPort12345),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
+						false,
 					},
 				},
 			},
