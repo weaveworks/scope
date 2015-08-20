@@ -55,19 +55,6 @@ func TestMakeDetailedHostNode(t *testing.T) {
 		Pseudo:     false,
 		Tables: []render.Table{
 			{
-				Title:   "Connections",
-				Numeric: true,
-				Rank:    100,
-				Rows: []render.Row{
-					{
-						Key:        "TCP connections",
-						ValueMajor: "3",
-						ValueMinor: "",
-						Expandable: false,
-					},
-				},
-			},
-			{
 				Title:   "Origin Host",
 				Numeric: false,
 				Rank:    1,
@@ -76,38 +63,40 @@ func TestMakeDetailedHostNode(t *testing.T) {
 						Key:        "Host name",
 						ValueMajor: "client.hostname.com",
 						ValueMinor: "",
-						Expandable: false,
 					},
 					{
 						Key:        "Load",
 						ValueMajor: "0.01 0.01 0.01",
 						ValueMinor: "",
-						Expandable: false,
 					},
 					{
 						Key:        "Operating system",
 						ValueMajor: "Linux",
 						ValueMinor: "",
-						Expandable: false,
 					},
 				},
 			},
 			{
-				Title:   "Connection Details",
-				Numeric: false,
+				Title:   "Connections",
+				Numeric: true,
 				Rank:    0,
 				Rows: []render.Row{
+					{
+						Key:        "TCP connections",
+						ValueMajor: "3",
+						ValueMinor: "",
+					},
 					{
 						Key:        "Client",
 						ValueMajor: "Server",
 						ValueMinor: "",
-						Expandable: false,
+						Expandable: true,
 					},
 					{
 						Key:        "10.10.10.20",
 						ValueMajor: "192.168.1.1",
 						ValueMinor: "",
-						Expandable: false,
+						Expandable: true,
 					},
 				},
 			},
@@ -127,15 +116,6 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 		LabelMinor: test.ServerHostName,
 		Pseudo:     false,
 		Tables: []render.Table{
-			{
-				Title:   "Connections",
-				Numeric: true,
-				Rank:    100,
-				Rows: []render.Row{
-					{"Egress packet rate", "105", "packets/sec", false},
-					{"Egress byte rate", "1.0", "KBps", false},
-				},
-			},
 			{
 				Title:   "Origin Container",
 				Numeric: false,
@@ -166,45 +146,48 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				},
 			},
 			{
-				Title:   "Connection Details",
-				Numeric: false,
+				Title:   "Connections",
+				Numeric: true,
+				Rank:    0,
 				Rows: []render.Row{
-					{"Client", "Server", "", false},
+					{"Egress packet rate", "105", "packets/sec", false},
+					{"Egress byte rate", "1.0", "KBps", false},
+					{"Client", "Server", "", true},
 					{
 						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54010),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
-						false,
+						true,
 					},
 					{
 						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54020),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
-						false,
+						true,
 					},
 					{
 						fmt.Sprintf("%s:%s", test.UnknownClient3IP, test.ClientPort54020),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
-						false,
+						true,
 					},
 					{
 						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54001),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
-						false,
+						true,
 					},
 					{
 						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54002),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
-						false,
+						true,
 					},
 					{
 						fmt.Sprintf("%s:%s", test.RandomClientIP, test.ClientPort12345),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
-						false,
+						true,
 					},
 				},
 			},
