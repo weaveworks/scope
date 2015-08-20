@@ -44,7 +44,7 @@ client/build/app.js: client/app/scripts/*
 	mkdir -p client/build
 	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
-		$(SCOPE_UI_BUILD_IMAGE) gulp build --release
+		$(SCOPE_UI_BUILD_IMAGE) npm run build
 
 client-test: client/test/*
 	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
@@ -56,18 +56,18 @@ client-lint:
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm run lint
 
-client-sync:
+client-start:
 	docker run -ti --net=host -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
-		$(SCOPE_UI_BUILD_IMAGE) gulp sync
+		$(SCOPE_UI_BUILD_IMAGE) npm start
 
-$(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/gulpfile.js client/package.json client/webpack.config.js client/.eslintrc
+$(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
 	docker build -t $(SCOPE_UI_BUILD_IMAGE) client
 	docker save $(SCOPE_UI_BUILD_IMAGE):latest > $@
 
 clean:
 	go clean ./...
-	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) $(APP_EXE) $(PROBE_EXE) client/build
+	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) $(APP_EXE) $(PROBE_EXE) client/build/app.js
 
 deps:
 	go get \

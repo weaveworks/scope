@@ -3,15 +3,15 @@
 ## Getting Started
 
 - Setup: `npm install`
-- Build: `gulp build --release`, output will be in `build/`
-- Develop: `gulp sync` and then open `http://localhost:4042/`
+- Build: `npm run build`, output will be in `build/`
+- Develop: `npm start` and then open `http://localhost:4042/`
 
 To see a topology, `../app/app` needs to be running, as well as a probe.
 
 ## Coding
 
 This directory has a `.eslintrc`, make sure your editor supports linter hints.
-To run a linter, you also run `gulp lint`.
+To run a linter, you also run `npm run lint`.
 
 ## Logging
 
