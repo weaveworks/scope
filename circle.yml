@@ -35,7 +35,7 @@ dependencies:
     - make deps
     - mkdir -p $(dirname $SRCDIR)
     - cp -r $(pwd)/ $SRCDIR
-    - cd $SRCDIR/client; $TOOLS/rebuild-image weaveworks/scope-ui-build . Dockerfile gulpfile.js package.json webpack.config.js .eslintrc
+    - cd $SRCDIR/client; $TOOLS/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc
 
 test:
   override:

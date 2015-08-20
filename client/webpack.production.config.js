@@ -1,18 +1,30 @@
 var webpack = require('webpack');
 var autoprefixer = require('autoprefixer-core');
+var path = require('path');
 
 /**
  * This is the Webpack configuration file for production.
  */
 module.exports = {
+
+  // fail on first error when building release
+  bail: true,
+
   entry: './app/scripts/main',
 
   output: {
-    path: __dirname + '/build/',
+    path: path.join(__dirname, 'build/'),
     filename: 'app.js'
   },
 
   module: {
+    preLoaders: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'eslint-loader'
+      }
+    ],
     loaders: [
       {
         test: /\.less$/,
@@ -35,6 +47,10 @@ module.exports = {
       browsers: ['last 2 versions']
     })
   ],
+
+  eslint: {
+    failOnError: true
+  },
 
   resolve: {
     extensions: ['', '.js', '.jsx']

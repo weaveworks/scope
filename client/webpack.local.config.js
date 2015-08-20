@@ -27,7 +27,7 @@ module.exports = {
   // This will not actually create a app.js file in ./build. It is used
   // by the dev server for dynamic hot loading.
   output: {
-    path: path.resolve(__dirname, '/build/'),
+    path: path.join(__dirname, 'build/'),
     filename: 'app.js',
     publicPath: 'http://localhost:4041/build/'
   },
