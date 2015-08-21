@@ -103,16 +103,13 @@ func main() {
 	}
 
 	var (
-		endpointReporter = endpoint.NewReporter(hostID, hostName, *spyProcs)
-		processCache     = process.NewCachingWalker(process.NewWalker(*procRoot))
-		reporters        = []Reporter{
-			endpointReporter,
-			host.NewReporter(hostID, hostName, localNets),
-			process.NewReporter(processCache, hostID),
-		}
-		taggers = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
+		taggers      = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
+		reporters    = []Reporter{host.NewReporter(hostID, hostName, localNets), endpoint.NewReporter(hostID, hostName, *spyProcs)}
+		processCache *process.CachingWalker
 	)
-	defer endpointReporter.Stop()
+
+	processCache = process.NewCachingWalker(process.NewWalker(*procRoot))
+	reporters = append(reporters, process.NewReporter(processCache, hostID))
 
 	if *dockerEnabled {
 		if err := report.AddLocalBridge(*dockerBridge); err != nil {

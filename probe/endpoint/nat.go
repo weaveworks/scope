@@ -44,7 +44,7 @@ type flow struct {
 	Metas   []meta   `xml:"meta"`
 }
 
-type conntrackOutput struct {
+type conntrack struct {
 	XMLName xml.Name `xml:"conntrack"`
 	Flows   []flow   `xml:"flow"`
 }
@@ -61,7 +61,7 @@ type endpointMapping struct {
 
 // natTable returns a list of endpoints that have been remapped by NAT.
 func natTable() ([]endpointMapping, error) {
-	var conntrack conntrackOutput
+	var conntrack conntrack
 	cmd := exec.Command("conntrack", "-L", "--any-nat", "-o", "xml")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
