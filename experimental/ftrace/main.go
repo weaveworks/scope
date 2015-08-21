@@ -69,7 +69,15 @@ func main() {
 	syscalls := make(chan *syscall, 100)
 	go ftrace.events(syscalls)
 
+	onSocket := func(s *syscall) {
+
+	}
+
 	onConnection := func(s *syscall) {
+		if s.returnCode != 0 {
+			return
+		}
+
 		fdStr, ok := s.args["fd"]
 		if !ok {
 			panic("no pid")
@@ -105,6 +113,8 @@ func main() {
 		case s := <-syscalls:
 
 			switch s.name {
+			case "socket":
+				onSocket(s)
 			case "connect":
 				onConnection(s)
 			case "accept", "accept4":
