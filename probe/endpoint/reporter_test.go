@@ -19,7 +19,6 @@ var (
 	fixRemotePortB   = uint16(12346)
 	fixProcessPID    = uint(4242)
 	fixProcessName   = "nginx"
-	fixProcessPIDB   = uint(4243)
 
 	fixConnections = []procspy.Connection{
 		{
@@ -55,9 +54,9 @@ var (
 			LocalAddress:  fixLocalAddress,
 			LocalPort:     fixLocalPort,
 			RemoteAddress: fixRemoteAddress,
-			RemotePort:    fixRemotePort,
+			RemotePort:    fixRemotePortB,
 			Proc: procspy.Proc{
-				PID:  fixProcessPIDB,
+				PID:  fixProcessPID,
 				Name: fixProcessName,
 			},
 		},
@@ -72,7 +71,7 @@ func TestSpyNoProcesses(t *testing.T) {
 		nodeName = "frenchs-since-1904"   // TODO rename to hostNmae
 	)
 
-	reporter := endpoint.NewReporter(nodeID, nodeName, false)
+	reporter := endpoint.NewReporter(nodeID, nodeName, false, false)
 	r, _ := reporter.Report()
 	//buf, _ := json.MarshalIndent(r, "", "    ")
 	//t.Logf("\n%s\n", buf)
@@ -109,7 +108,7 @@ func TestSpyWithProcesses(t *testing.T) {
 		nodeName = "fishermans-friend" // TODO rename to hostNmae
 	)
 
-	reporter := endpoint.NewReporter(nodeID, nodeName, false)
+	reporter := endpoint.NewReporter(nodeID, nodeName, true, false)
 	r, _ := reporter.Report()
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
 

@@ -1,7 +1,7 @@
 package endpoint
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -24,6 +24,8 @@ type Reporter struct {
 	hostName         string
 	includeProcesses bool
 	includeNAT       bool
+	conntracker      *Conntracker
+	natmapper        *natmapper
 }
 
 // SpyDuration is an exported prometheus metric
@@ -43,12 +45,41 @@ var SpyDuration = prometheus.NewSummaryVec(
 // on the host machine, at the granularity of host and port. That information
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
-func NewReporter(hostID, hostName string, includeProcesses bool) *Reporter {
+func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool) *Reporter {
+	var (
+		conntrackModulePresent = ConntrackModulePresent()
+		conntracker            *Conntracker
+		natmapper              *natmapper
+		err                    error
+	)
+	if conntrackModulePresent && useConntrack {
+		conntracker, err = NewConntracker()
+		if err != nil {
+			log.Printf("Failed to start conntracker: %v", err)
+		}
+	}
+	if conntrackModulePresent {
+		natmapper, err = newNATMapper()
+		if err != nil {
+			log.Printf("Failed to start natMapper: %v", err)
+		}
+	}
 	return &Reporter{
 		hostID:           hostID,
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
-		includeNAT:       conntrackModulePresent(),
+		conntracker:      conntracker,
+		natmapper:        natmapper,
+	}
+}
+
+// Stop stop stop
+func (r *Reporter) Stop() {
+	if r.conntracker != nil {
+		r.conntracker.Stop()
+	}
+	if r.natmapper != nil {
+		r.natmapper.Stop()
 	}
 }
 
@@ -65,50 +96,73 @@ func (r *Reporter) Report() (report.Report, error) {
 	}
 
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
-		r.addConnection(&rpt, conn)
+		var (
+			localPort  = conn.LocalPort
+			remotePort = conn.RemotePort
+			localAddr  = conn.LocalAddress.String()
+			remoteAddr = conn.RemoteAddress.String()
+		)
+		r.addConnection(&rpt, localAddr, remoteAddr, localPort, remotePort, &conn.Proc)
 	}
 
-	if r.includeNAT {
-		err = applyNAT(rpt, r.hostID)
+	if r.conntracker != nil {
+		r.conntracker.WalkFlows(func(f Flow) {
+			var (
+				localPort  = f.Original.Layer4.SrcPort
+				remotePort = f.Original.Layer4.DstPort
+				localAddr  = f.Original.Layer3.SrcIP
+				remoteAddr = f.Original.Layer3.DstIP
+			)
+			r.addConnection(&rpt, localAddr, remoteAddr, uint16(localPort), uint16(remotePort), nil)
+		})
+	}
+
+	if r.natmapper != nil {
+		r.natmapper.applyNAT(rpt, r.hostID)
 	}
 
 	return rpt, err
 }
 
-func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
-	var (
-		localIsClient       = int(c.LocalPort) > int(c.RemotePort)
-		localAddressNodeID  = report.MakeAddressNodeID(r.hostID, c.LocalAddress.String())
-		remoteAddressNodeID = report.MakeAddressNodeID(r.hostID, c.RemoteAddress.String())
-		adjacencyID         = ""
-		edgeID              = ""
-	)
+func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr string, localPort, remotePort uint16, proc *procspy.Proc) {
+	localIsClient := int(localPort) > int(remotePort)
 
-	if localIsClient {
-		adjacencyID = report.MakeAdjacencyID(localAddressNodeID)
-		rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(remoteAddressNodeID)
-
-		edgeID = report.MakeEdgeID(localAddressNodeID, remoteAddressNodeID)
-	} else {
-		adjacencyID = report.MakeAdjacencyID(remoteAddressNodeID)
-		rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(localAddressNodeID)
-
-		edgeID = report.MakeEdgeID(remoteAddressNodeID, localAddressNodeID)
-	}
-
-	if _, ok := rpt.Address.NodeMetadatas[localAddressNodeID]; !ok {
-		rpt.Address.NodeMetadatas[localAddressNodeID] = report.MakeNodeMetadataWith(map[string]string{
-			"name": r.hostName,
-			Addr:   c.LocalAddress.String(),
-		})
-	}
-
-	countTCPConnection(rpt.Address.EdgeMetadatas, edgeID)
-
-	if c.Proc.PID > 0 {
+	// Update address topology
+	{
 		var (
-			localEndpointNodeID  = report.MakeEndpointNodeID(r.hostID, c.LocalAddress.String(), strconv.Itoa(int(c.LocalPort)))
-			remoteEndpointNodeID = report.MakeEndpointNodeID(r.hostID, c.RemoteAddress.String(), strconv.Itoa(int(c.RemotePort)))
+			localAddressNodeID  = report.MakeAddressNodeID(r.hostID, localAddr)
+			remoteAddressNodeID = report.MakeAddressNodeID(r.hostID, remoteAddr)
+			adjacencyID         = ""
+			edgeID              = ""
+		)
+
+		if localIsClient {
+			adjacencyID = report.MakeAdjacencyID(localAddressNodeID)
+			rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(remoteAddressNodeID)
+
+			edgeID = report.MakeEdgeID(localAddressNodeID, remoteAddressNodeID)
+		} else {
+			adjacencyID = report.MakeAdjacencyID(remoteAddressNodeID)
+			rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(localAddressNodeID)
+
+			edgeID = report.MakeEdgeID(remoteAddressNodeID, localAddressNodeID)
+		}
+
+		countTCPConnection(rpt.Address.EdgeMetadatas, edgeID)
+
+		if _, ok := rpt.Address.NodeMetadatas[localAddressNodeID]; !ok {
+			rpt.Address.NodeMetadatas[localAddressNodeID] = report.MakeNodeMetadataWith(map[string]string{
+				"name": r.hostName,
+				Addr:   localAddr,
+			})
+		}
+	}
+
+	// Update endpoint topology
+	if r.includeProcesses {
+		var (
+			localEndpointNodeID  = report.MakeEndpointNodeID(r.hostID, localAddr, strconv.Itoa(int(localPort)))
+			remoteEndpointNodeID = report.MakeEndpointNodeID(r.hostID, remoteAddr, strconv.Itoa(int(remotePort)))
 			adjacencyID          = ""
 			edgeID               = ""
 		)
@@ -125,18 +179,24 @@ func (r *Reporter) addConnection(rpt *report.Report, c *procspy.Connection) {
 			edgeID = report.MakeEdgeID(remoteEndpointNodeID, localEndpointNodeID)
 		}
 
-		if _, ok := rpt.Endpoint.NodeMetadatas[localEndpointNodeID]; !ok {
-			// First hit establishes NodeMetadata for scoped local address + port
-			md := report.MakeNodeMetadataWith(map[string]string{
-				Addr:        c.LocalAddress.String(),
-				Port:        strconv.Itoa(int(c.LocalPort)),
-				process.PID: fmt.Sprint(c.Proc.PID),
-			})
+		countTCPConnection(rpt.Endpoint.EdgeMetadatas, edgeID)
 
+		md, ok := rpt.Endpoint.NodeMetadatas[localEndpointNodeID]
+		updated := !ok
+		if !ok {
+			md = report.MakeNodeMetadataWith(map[string]string{
+				Addr: localAddr,
+				Port: strconv.Itoa(int(localPort)),
+			})
+		}
+		if proc != nil && proc.PID > 0 {
+			pid := strconv.FormatUint(uint64(proc.PID), 10)
+			updated = updated || md.Metadata[process.PID] != pid
+			md.Metadata[process.PID] = pid
+		}
+		if updated {
 			rpt.Endpoint.NodeMetadatas[localEndpointNodeID] = md
 		}
-
-		countTCPConnection(rpt.Endpoint.EdgeMetadatas, edgeID)
 	}
 }
 

@@ -1,10 +1,7 @@
 package overlay_test
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -14,37 +11,14 @@ import (
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/exec"
 )
 
-type mockCmd struct {
-	*bytes.Buffer
-}
-
-func (c *mockCmd) Start() error {
-	return nil
-}
-
-func (c *mockCmd) Wait() error {
-	return nil
-}
-
-func (c *mockCmd) StdoutPipe() (io.ReadCloser, error) {
-	return struct {
-		io.Reader
-		io.Closer
-	}{
-		c.Buffer,
-		ioutil.NopCloser(nil),
-	}, nil
-}
-
 func TestWeaveTaggerOverlayTopology(t *testing.T) {
-	oldExecCmd := overlay.ExecCommand
-	defer func() { overlay.ExecCommand = oldExecCmd }()
-	overlay.ExecCommand = func(name string, args ...string) overlay.Cmd {
-		return &mockCmd{
-			bytes.NewBufferString(fmt.Sprintf("%s %s %s/24\n", mockContainerID, mockContainerMAC, mockContainerIP)),
-		}
+	oldExecCmd := exec.Command
+	defer func() { exec.Command = oldExecCmd }()
+	exec.Command = func(name string, args ...string) exec.Cmd {
+		return exec.NewMockCmdString(fmt.Sprintf("%s %s %s/24\n", mockContainerID, mockContainerMAC, mockContainerIP))
 	}
 
 	s := httptest.NewServer(http.HandlerFunc(mockWeaveRouter))

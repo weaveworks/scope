@@ -2,6 +2,7 @@ package test
 
 import (
 	"reflect"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -20,6 +21,7 @@ func Poll(t *testing.T, d time.Duration, want interface{}, have func() interface
 	}
 	h := have()
 	if !reflect.DeepEqual(want, h) {
-		t.Fatal(Diff(want, h))
+		_, file, line, _ := runtime.Caller(1)
+		t.Fatalf("%s:%d: %s", file, line, Diff(want, h))
 	}
 }
