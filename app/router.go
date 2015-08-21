@@ -107,9 +107,10 @@ var topologyRegistry = map[string]topologyView{
 		renderer: render.FilterUnconnected{Renderer: render.ProcessWithContainerNameRenderer{}},
 	},
 	"applications-by-name": {
-		human:    "by name",
-		parent:   "applications",
-		renderer: render.FilterUnconnected{Renderer: render.ProcessNameRenderer},
+		human:       "by name",
+		parent:      "applications",
+		renderer:    render.FilterUnconnected{Renderer: render.ProcessNameRenderer},
+		isMultiHost: true,
 	},
 	"containers": {
 		human:    "Containers",
@@ -117,9 +118,10 @@ var topologyRegistry = map[string]topologyView{
 		renderer: render.ContainerRenderer,
 	},
 	"containers-by-image": {
-		human:    "by image",
-		parent:   "containers",
-		renderer: render.ContainerImageRenderer,
+		human:       "by image",
+		parent:      "containers",
+		renderer:    render.ContainerImageRenderer,
+		isMultiHost: true,
 	},
 	"hosts": {
 		human:    "Hosts",
@@ -129,7 +131,8 @@ var topologyRegistry = map[string]topologyView{
 }
 
 type topologyView struct {
-	human    string
-	parent   string
-	renderer render.Renderer
+	human       string
+	parent      string
+	renderer    render.Renderer
+	isMultiHost bool // does the view involve information from multiple hosts?
 }

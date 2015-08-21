@@ -68,7 +68,7 @@ func handleNode(rep xfer.Reporter, t topologyView, w http.ResponseWriter, r *htt
 		http.NotFound(w, r)
 		return
 	}
-	respondWith(w, http.StatusOK, APINode{Node: render.MakeDetailedNode(rpt, node)})
+	respondWith(w, http.StatusOK, APINode{Node: render.MakeDetailedNode(rpt, node, t.isMultiHost)})
 }
 
 // Individual edges.

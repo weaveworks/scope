@@ -10,7 +10,7 @@ import (
 )
 
 func TestOriginTable(t *testing.T) {
-	if _, ok := render.OriginTable(test.Report, "not-found"); ok {
+	if _, ok := render.OriginTable(test.Report, "not-found", false); ok {
 		t.Errorf("unknown origin ID gave unexpected success")
 	}
 	for originID, want := range map[string]render.Table{
@@ -34,7 +34,7 @@ func TestOriginTable(t *testing.T) {
 			},
 		},
 	} {
-		have, ok := render.OriginTable(test.Report, originID)
+		have, ok := render.OriginTable(test.Report, originID, false)
 		if !ok {
 			t.Errorf("%q: not OK", originID)
 			continue
@@ -43,11 +43,46 @@ func TestOriginTable(t *testing.T) {
 			t.Errorf("%q: %s", originID, test.Diff(want, have))
 		}
 	}
+
+	// Test host tags
+	for originID, want := range map[string]render.Table{
+		test.ServerProcessNodeID: {
+			Title:   "Origin Process",
+			Numeric: false,
+			Rank:    2,
+			Rows: []render.Row{
+				{"Host", test.ServerHostID, "", false},
+				{"Name", "apache", "", false},
+				{"PID", test.ServerPID, "", false},
+			},
+		},
+		test.ServerContainerNodeID: {
+			Title:   "Origin Container",
+			Numeric: false,
+			Rank:    3,
+			Rows: []render.Row{
+				{"Host", test.ServerHostID, "", false},
+				{"ID", test.ServerContainerID, "", false},
+				{"Name", "server", "", false},
+				{"Image ID", test.ServerContainerImageID, "", false},
+			},
+		},
+	} {
+		have, ok := render.OriginTable(test.Report, originID, true)
+		if !ok {
+			t.Errorf("%q: not OK", originID)
+			continue
+		}
+		if !reflect.DeepEqual(want, have) {
+			t.Errorf("%q: %s", originID, test.Diff(want, have))
+		}
+	}
+
 }
 
 func TestMakeDetailedHostNode(t *testing.T) {
 	renderableNode := render.HostRenderer.Render(test.Report)[render.MakeHostID(test.ClientHostID)]
-	have := render.MakeDetailedNode(test.Report, renderableNode)
+	have := render.MakeDetailedNode(test.Report, renderableNode, false)
 	want := render.DetailedNode{
 		ID:         render.MakeHostID(test.ClientHostID),
 		LabelMajor: "client",
@@ -109,7 +144,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 
 func TestMakeDetailedContainerNode(t *testing.T) {
 	renderableNode := render.ContainerRenderer.Render(test.Report)[test.ServerContainerID]
-	have := render.MakeDetailedNode(test.Report, renderableNode)
+	have := render.MakeDetailedNode(test.Report, renderableNode, false)
 	want := render.DetailedNode{
 		ID:         test.ServerContainerID,
 		LabelMajor: "server",
