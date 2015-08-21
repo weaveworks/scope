@@ -230,8 +230,6 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 func processOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		{process.Comm, "Name"},
-		{process.PID, "PID"},
 		{process.PPID, "Parent PID"},
 		{process.Cmdline, "Command"},
 		{process.Threads, "# Threads"},
@@ -243,19 +241,30 @@ func processOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool) 
 	if addHostTag {
 		rows = append([]Row{{Key: "Host", ValueMajor: report.ExtractHostID(nmd)}}, rows...)
 	}
+
+	title := "Process"
+	var (
+		commFound, pidFound bool
+		name, pid           string
+	)
+	if name, commFound = nmd.Metadata[process.Comm]; commFound {
+		title += ` "` + name + `"`
+	}
+	if pid, pidFound = nmd.Metadata[process.PID]; pidFound {
+		title += " (" + pid + ")"
+	}
 	return Table{
-		Title:   "Origin Process",
+		Title:   title,
 		Numeric: false,
 		Rows:    rows,
 		Rank:    processRank,
-	}, len(rows) > 0
+	}, len(rows) > 0 || commFound || pidFound
 }
 
 func containerOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
 		{docker.ContainerID, "ID"},
-		{docker.ContainerName, "Name"},
 		{docker.ImageID, "Image ID"},
 		{docker.ContainerPorts, "Ports"},
 		{docker.ContainerCreated, "Created"},
@@ -276,36 +285,52 @@ func containerOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool
 	if addHostTag {
 		rows = append([]Row{{Key: "Host", ValueMajor: report.ExtractHostID(nmd)}}, rows...)
 	}
+
+	title := "Container"
+	var (
+		name      string
+		nameFound bool
+	)
+	if name, nameFound = nmd.Metadata[docker.ContainerName]; nameFound {
+		title += ` "` + name + `"`
+	}
+
 	return Table{
-		Title:   "Origin Container",
+		Title:   title,
 		Numeric: false,
 		Rows:    rows,
 		Rank:    containerRank,
-	}, len(rows) > 0
+	}, len(rows) > 0 || nameFound
 }
 
 func containerImageOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
 		{docker.ImageID, "Image ID"},
-		{docker.ImageName, "Image name"},
 	} {
 		if val, ok := nmd.Metadata[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
 		}
 	}
+	title := "Container Image"
+	var (
+		nameFound bool
+		name      string
+	)
+	if name, nameFound = nmd.Metadata[docker.ImageName]; nameFound {
+		title += ` "` + name + `"`
+	}
 	return Table{
-		Title:   "Origin Container Image",
+		Title:   title,
 		Numeric: false,
 		Rows:    rows,
 		Rank:    containerImageRank,
-	}, len(rows) > 0
+	}, len(rows) > 0 || nameFound
 }
 
 func hostOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		{host.HostName, "Host name"},
 		{host.Load, "Load"},
 		{host.OS, "Operating system"},
 		{host.KernelVersion, "Kernel version"},
@@ -316,10 +341,18 @@ func hostOriginTable(nmd report.NodeMetadata) (Table, bool) {
 		}
 	}
 
+	title := "Host"
+	var (
+		name      string
+		foundName bool
+	)
+	if name, foundName = nmd.Metadata[host.HostName]; foundName {
+		title += ` "` + name + `"`
+	}
 	return Table{
-		Title:   "Origin Host",
+		Title:   title,
 		Numeric: false,
 		Rows:    rows,
 		Rank:    hostRank,
-	}, len(rows) > 0
+	}, len(rows) > 0 || foundName
 }
