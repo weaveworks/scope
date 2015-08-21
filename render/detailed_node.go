@@ -13,13 +13,11 @@ import (
 
 const (
 	mb                 = 1 << 20
-	connectionsRank    = 100
 	containerImageRank = 4
 	containerRank      = 3
 	processRank        = 2
 	hostRank           = 1
-	endpointRank       = 0 // this is the least important table, so sort to bottom
-	addressRank        = 0 // also least important; never merged with endpoints
+	connectionsRank    = 0 // keep connections at the bottom until they are expandable in the UI
 )
 
 // DetailedNode is the data type that's yielded to the JavaScript layer when
@@ -46,13 +44,14 @@ type Row struct {
 	Key        string `json:"key"`                   // e.g. Ingress
 	ValueMajor string `json:"value_major"`           // e.g. 25
 	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
+	Expandable bool   `json:"expandable,omitempty"`  // Whether it can be expanded (hidden by default)
 }
 
-type rows []Row
+type sortableRows []Row
 
-func (r rows) Len() int      { return len(r) }
-func (r rows) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
-func (r rows) Less(i, j int) bool {
+func (r sortableRows) Len() int      { return len(r) }
+func (r sortableRows) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
+func (r sortableRows) Less(i, j int) bool {
 	switch {
 	case r[i].Key != r[j].Key:
 		return r[i].Key < r[j].Key
@@ -74,6 +73,37 @@ func (t tables) Less(i, j int) bool { return t[i].Rank > t[j].Rank }
 // MakeDetailedNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
 func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
+	tables := tables{}
+	// RenderableNode may be the result of merge operation(s), and so may have
+	// multiple origins. The ultimate goal here is to generate tables to view
+	// in the UI, so we skip the intermediate representations, but we could
+	// add them later.
+	connections := []Row{}
+	for _, id := range n.Origins {
+		if table, ok := OriginTable(r, id); ok {
+			tables = append(tables, table)
+		} else if _, ok := r.Endpoint.NodeMetadatas[id]; ok {
+			connections = append(connections, connectionDetailsRows(r.Endpoint, id)...)
+		} else if _, ok := r.Address.NodeMetadatas[id]; ok {
+			connections = append(connections, connectionDetailsRows(r.Address, id)...)
+		}
+	}
+
+	addConnectionsTable(&tables, connections, r, n)
+
+	// Sort tables by rank
+	sort.Sort(tables)
+
+	return DetailedNode{
+		ID:         n.ID,
+		LabelMajor: n.LabelMajor,
+		LabelMinor: n.LabelMinor,
+		Pseudo:     n.Pseudo,
+		Tables:     tables,
+	}
+}
+
+func addConnectionsTable(tables *tables, connections []Row, r report.Report, n RenderableNode) {
 	sec := r.Window.Seconds()
 	rate := func(u *uint64) (float64, bool) {
 		if u == nil {
@@ -95,59 +125,31 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 		}
 	}
 
-	tables := tables{}
-	{
-		rows := []Row{}
-		if n.EdgeMetadata.MaxConnCountTCP != nil {
-			rows = append(rows, Row{"TCP connections", strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10), ""})
-		}
-		if rate, ok := rate(n.EdgeMetadata.EgressPacketCount); ok {
-			rows = append(rows, Row{"Egress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec"})
-		}
-		if rate, ok := rate(n.EdgeMetadata.IngressPacketCount); ok {
-			rows = append(rows, Row{"Ingress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec"})
-		}
-		if rate, ok := rate(n.EdgeMetadata.EgressByteCount); ok {
-			s, unit := shortenByteRate(rate)
-			rows = append(rows, Row{"Egress byte rate", s, unit})
-		}
-		if rate, ok := rate(n.EdgeMetadata.IngressByteCount); ok {
-			s, unit := shortenByteRate(rate)
-			rows = append(rows, Row{"Ingress byte rate", s, unit})
-		}
-		if len(rows) > 0 {
-			tables = append(tables, Table{"Connections", true, connectionsRank, rows})
-		}
+	rows := []Row{}
+	if n.EdgeMetadata.MaxConnCountTCP != nil {
+		rows = append(rows, Row{"TCP connections", strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10), "", false})
 	}
-
-	// RenderableNode may be the result of merge operation(s), and so may have
-	// multiple origins. The ultimate goal here is to generate tables to view
-	// in the UI, so we skip the intermediate representations, but we could
-	// add them later.
-	connections := []Row{}
-	for _, id := range n.Origins {
-		if table, ok := OriginTable(r, id); ok {
-			tables = append(tables, table)
-		} else if _, ok := r.Endpoint.NodeMetadatas[id]; ok {
-			connections = append(connections, connectionDetailsRows(r.Endpoint, id)...)
-		} else if _, ok := r.Address.NodeMetadatas[id]; ok {
-			connections = append(connections, connectionDetailsRows(r.Address, id)...)
-		}
+	if rate, ok := rate(n.EdgeMetadata.EgressPacketCount); ok {
+		rows = append(rows, Row{"Egress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec", false})
+	}
+	if rate, ok := rate(n.EdgeMetadata.IngressPacketCount); ok {
+		rows = append(rows, Row{"Ingress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec", false})
+	}
+	if rate, ok := rate(n.EdgeMetadata.EgressByteCount); ok {
+		s, unit := shortenByteRate(rate)
+		rows = append(rows, Row{"Egress byte rate", s, unit, false})
+	}
+	if rate, ok := rate(n.EdgeMetadata.IngressByteCount); ok {
+		s, unit := shortenByteRate(rate)
+		rows = append(rows, Row{"Ingress byte rate", s, unit, false})
 	}
 	if len(connections) > 0 {
-		sort.Sort(rows(connections))
-		tables = append(tables, connectionDetailsTable(connections))
+		sort.Sort(sortableRows(connections))
+		rows = append(rows, Row{Key: "Client", ValueMajor: "Server", Expandable: true})
+		rows = append(rows, connections...)
 	}
-
-	// Sort tables by rank
-	sort.Sort(tables)
-
-	return DetailedNode{
-		ID:         n.ID,
-		LabelMajor: n.LabelMajor,
-		LabelMinor: n.LabelMinor,
-		Pseudo:     n.Pseudo,
-		Tables:     tables,
+	if len(rows) > 0 {
+		*tables = append(*tables, Table{"Connections", true, connectionsRank, rows})
 	}
 }
 
@@ -194,6 +196,7 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 		rows = append(rows, Row{
 			Key:        local,
 			ValueMajor: remote,
+			Expandable: true,
 		})
 	}
 	// Next, scan the topology for incoming connections to this node.
@@ -215,18 +218,10 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 		rows = append(rows, Row{
 			Key:        remote,
 			ValueMajor: local,
+			Expandable: true,
 		})
 	}
 	return rows
-}
-
-func connectionDetailsTable(connectionRows []Row) Table {
-	return Table{
-		Title:   "Connection Details",
-		Numeric: false,
-		Rows:    append([]Row{{Key: "Client", ValueMajor: "Server"}}, connectionRows...),
-		Rank:    endpointRank,
-	}
 }
 
 func processOriginTable(nmd report.NodeMetadata) (Table, bool) {
