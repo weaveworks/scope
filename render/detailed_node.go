@@ -64,16 +64,16 @@ func (r sortableRows) Less(i, j int) bool {
 	}
 }
 
-type tables []Table
+type sortableTables []Table
 
-func (t tables) Len() int           { return len(t) }
-func (t tables) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
-func (t tables) Less(i, j int) bool { return t[i].Rank > t[j].Rank }
+func (t sortableTables) Len() int           { return len(t) }
+func (t sortableTables) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t sortableTables) Less(i, j int) bool { return t[i].Rank > t[j].Rank }
 
 // MakeDetailedNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
 func MakeDetailedNode(r report.Report, n RenderableNode, addHostTags bool) DetailedNode {
-	tables := tables{}
+	tables := sortableTables{}
 	// RenderableNode may be the result of merge operation(s), and so may have
 	// multiple origins. The ultimate goal here is to generate tables to view
 	// in the UI, so we skip the intermediate representations, but we could
@@ -89,7 +89,9 @@ func MakeDetailedNode(r report.Report, n RenderableNode, addHostTags bool) Detai
 		}
 	}
 
-	addConnectionsTable(&tables, connections, r, n)
+	if table, ok := connectionsTable(connections, r, n); ok {
+		tables = append(tables, table)
+	}
 
 	// Sort tables by rank
 	sort.Sort(tables)
@@ -103,7 +105,7 @@ func MakeDetailedNode(r report.Report, n RenderableNode, addHostTags bool) Detai
 	}
 }
 
-func addConnectionsTable(tables *tables, connections []Row, r report.Report, n RenderableNode) {
+func connectionsTable(connections []Row, r report.Report, n RenderableNode) (Table, bool) {
 	sec := r.Window.Seconds()
 	rate := func(u *uint64) (float64, bool) {
 		if u == nil {
@@ -149,8 +151,9 @@ func addConnectionsTable(tables *tables, connections []Row, r report.Report, n R
 		rows = append(rows, connections...)
 	}
 	if len(rows) > 0 {
-		*tables = append(*tables, Table{"Connections", true, connectionsRank, rows})
+		return Table{"Connections", true, connectionsRank, rows}, true
 	}
+	return Table{}, false
 }
 
 // OriginTable produces a table (to be consumed directly by the UI) based on
