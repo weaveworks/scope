@@ -181,6 +181,8 @@ func (f *Ftrace) events(out chan<- *syscall) {
 
 func (f *Ftrace) start() error {
 	for _, e := range []struct{ class, event string }{
+		{"syscalls", "sys_enter_socket"},
+		{"syscalls", "sys_exit_socket"},
 		{"syscalls", "sys_enter_connect"},
 		{"syscalls", "sys_exit_connect"},
 		{"syscalls", "sys_enter_accept"},
