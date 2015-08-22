@@ -37,6 +37,7 @@ const Nodes = React.createClass({
           onNodeClick={this.onNodeClick}
           width={this.state.width}
           height={this.state.height}
+          topologyId={this.props.topologyId}
           context="view"
         />
       </div>
