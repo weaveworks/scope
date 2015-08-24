@@ -255,15 +255,15 @@ func processOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool) 
 		rows = append([]Row{{Key: "Host", ValueMajor: report.ExtractHostID(nmd)}}, rows...)
 	}
 
-	title := "Process"
 	var (
-		commFound, pidFound bool
-		name, pid           string
+		title           = "Process"
+		name, commFound = nmd.Metadata[process.Comm]
+		pid, pidFound   = nmd.Metadata[process.PID]
 	)
-	if name, commFound = nmd.Metadata[process.Comm]; commFound {
+	if commFound {
 		title += ` "` + name + `"`
 	}
-	if pid, pidFound = nmd.Metadata[process.PID]; pidFound {
+	if pidFound {
 		title += " (" + pid + ")"
 	}
 	return Table{
@@ -299,12 +299,11 @@ func containerOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool
 		rows = append([]Row{{Key: "Host", ValueMajor: report.ExtractHostID(nmd)}}, rows...)
 	}
 
-	title := "Container"
 	var (
-		name      string
-		nameFound bool
+		title           = "Container"
+		name, nameFound = nmd.Metadata[docker.ContainerName]
 	)
-	if name, nameFound = nmd.Metadata[docker.ContainerName]; nameFound {
+	if nameFound {
 		title += ` "` + name + `"`
 	}
 
