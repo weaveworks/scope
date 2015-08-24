@@ -74,7 +74,7 @@ func TestOriginTable(t *testing.T) {
 
 func TestMakeDetailedHostNode(t *testing.T) {
 	renderableNode := render.HostRenderer.Render(test.Report)[render.MakeHostID(test.ClientHostID)]
-	have := render.MakeDetailedNode(test.Report, renderableNode, false)
+	have := render.MakeDetailedNode(test.Report, renderableNode)
 	want := render.DetailedNode{
 		ID:         render.MakeHostID(test.ClientHostID),
 		LabelMajor: "client",
@@ -131,7 +131,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 
 func TestMakeDetailedContainerNode(t *testing.T) {
 	renderableNode := render.ContainerRenderer.Render(test.Report)[test.ServerContainerID]
-	have := render.MakeDetailedNode(test.Report, renderableNode, false)
+	have := render.MakeDetailedNode(test.Report, renderableNode)
 	want := render.DetailedNode{
 		ID:         test.ServerContainerID,
 		LabelMajor: "server",

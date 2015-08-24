@@ -72,15 +72,28 @@ func (t sortableTables) Less(i, j int) bool { return t[i].Rank > t[j].Rank }
 
 // MakeDetailedNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
-func MakeDetailedNode(r report.Report, n RenderableNode, addHostTags bool) DetailedNode {
+func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	tables := sortableTables{}
+
+	// Figure out if multiple hosts are referenced by the renderableNode
+	originHosts := make(map[string]struct{})
+	for _, id := range n.Origins {
+		for _, topology := range r.Topologies() {
+			if nmd, ok := topology.NodeMetadatas[id]; ok {
+				originHosts[report.ExtractHostID(nmd)] = struct{}{}
+				break
+			}
+		}
+	}
+	multiHost := len(originHosts) > 1
+
 	// RenderableNode may be the result of merge operation(s), and so may have
 	// multiple origins. The ultimate goal here is to generate tables to view
 	// in the UI, so we skip the intermediate representations, but we could
 	// add them later.
 	connections := []Row{}
 	for _, id := range n.Origins {
-		if table, ok := OriginTable(r, id, addHostTags); ok {
+		if table, ok := OriginTable(r, id, multiHost); ok {
 			tables = append(tables, table)
 		} else if _, ok := r.Endpoint.NodeMetadatas[id]; ok {
 			connections = append(connections, connectionDetailsRows(r.Endpoint, id)...)
