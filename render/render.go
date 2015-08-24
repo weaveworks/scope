@@ -182,9 +182,7 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 		if !ok {
 			return "", false
 		}
-		// TODO(tomwilkie): we should propagate origin nodes for pseudo nodes.
-		// Not worth doing until they are selectable in the UI
-		// pseudoNode.Origins = pseudoNode.Origins.Add(srcID)
+		pseudoNode.Origins = pseudoNode.Origins.Add(srcNodeID)
 		existing, ok := nodes[pseudoNode.ID]
 		if ok {
 			pseudoNode.Merge(existing)
