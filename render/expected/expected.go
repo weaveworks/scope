@@ -24,6 +24,10 @@ var (
 				EgressByteCount:   newu64(700),
 			},
 			Adjacency: adjacency,
+			Origins: report.MakeIDList(
+				test.UnknownClient1NodeID,
+				test.UnknownClient2NodeID,
+			),
 		}
 	}
 	unknownPseudoNode2 = func(adjacency report.IDList) render.RenderableNode {
@@ -37,6 +41,9 @@ var (
 				EgressByteCount:   newu64(500),
 			},
 			Adjacency: adjacency,
+			Origins: report.MakeIDList(
+				test.UnknownClient3NodeID,
+			),
 		}
 	}
 	theInternetNode = func(adjacency report.IDList) render.RenderableNode {
@@ -50,6 +57,9 @@ var (
 				EgressByteCount:   newu64(600),
 			},
 			Adjacency: adjacency,
+			Origins: report.MakeIDList(
+				test.RandomClientNodeID,
+			),
 		}
 	}
 	ClientProcess1ID      = render.MakeProcessID(test.ClientHostID, test.Client1PID)
@@ -348,6 +358,7 @@ var (
 			Adjacency:    report.MakeIDList(ServerHostRenderedID),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{},
+			Origins:      report.MakeIDList(test.UnknownAddress1NodeID),
 		},
 		pseudoHostID2: {
 			ID:           pseudoHostID2,
@@ -356,6 +367,7 @@ var (
 			Adjacency:    report.MakeIDList(ServerHostRenderedID),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{},
+			Origins:      report.MakeIDList(test.UnknownAddress2NodeID),
 		},
 		render.TheInternetID: {
 			ID:           render.TheInternetID,
@@ -364,6 +376,7 @@ var (
 			Adjacency:    report.MakeIDList(ServerHostRenderedID),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{},
+			Origins:      report.MakeIDList(test.RandomAddressNodeID),
 		},
 	}
 )

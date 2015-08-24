@@ -46,9 +46,9 @@ const Node = React.createClass({
     const textOffsetY = scale(0.5) + 18;
     const isPseudo = !!this.props.pseudo;
     const color = isPseudo ? '' : this.getNodeColor(this.props.label);
-    const onClick = isPseudo ? null : this.props.onClick;
-    const onMouseEnter = isPseudo ? null : this.handleMouseEnter;
-    const onMouseLeave = isPseudo ? null : this.handleMouseLeave;
+    const onClick = this.props.onClick;
+    const onMouseEnter = this.handleMouseEnter;
+    const onMouseLeave = this.handleMouseLeave;
     const classNames = ['node'];
 
     if (this.props.highlighted) {
