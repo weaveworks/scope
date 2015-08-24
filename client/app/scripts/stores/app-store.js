@@ -57,6 +57,10 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return findCurrentTopology(topologies, currentTopologyId);
   },
 
+  getCurrentTopologyId: function() {
+    return currentTopologyId;
+  },
+
   getCurrentTopologyUrl: function() {
     const topology = this.getCurrentTopology();
 

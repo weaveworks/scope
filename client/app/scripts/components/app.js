@@ -15,6 +15,7 @@ const ESC_KEY_CODE = 27;
 function getStateFromStores() {
   return {
     currentTopology: AppStore.getCurrentTopology(),
+    currentTopologyId: AppStore.getCurrentTopologyId(),
     errorUrl: AppStore.getErrorUrl(),
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
@@ -70,7 +71,8 @@ const App = React.createClass({
         </div>
 
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
-          highlightedEdgeIds={this.state.highlightedEdgeIds} />
+          highlightedEdgeIds={this.state.highlightedEdgeIds}
+          topologyId={this.state.currentTopologyId} />
 
         <div className="footer">
           {versionString}&nbsp;&nbsp;

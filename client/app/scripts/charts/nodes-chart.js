@@ -133,11 +133,10 @@ const NodesChart = React.createClass({
     _.each(topology, function(node, id) {
       nodes[id] = prevNodes[id] || {};
 
-      // initialize position for new nodes
+      // use cached positions if available
       _.defaults(nodes[id], {
         x: centerX,
-        y: centerY,
-        textAnchor: 'start'
+        y: centerY
       });
 
       // copy relevant fields to state nodes
@@ -184,12 +183,17 @@ const NodesChart = React.createClass({
   },
 
   updateGraphState: function(props) {
+    const n = _.size(props.nodes);
+
+    if (n === 0) {
+      return;
+    }
+
     const nodes = this.initNodes(props.nodes, this.state.nodes);
     const edges = this.initEdges(props.nodes, nodes);
 
     const expanse = Math.min(props.height, props.width);
     const nodeSize = expanse / 2;
-    const n = _.size(props.nodes);
     const nodeScale = d3.scale.linear().range([0, nodeSize / Math.pow(n, 0.7)]);
 
     const timedLayouter = timely(NodesLayout.doLayout);
@@ -199,7 +203,8 @@ const NodesChart = React.createClass({
       props.width,
       props.height,
       nodeScale,
-      MARGINS
+      MARGINS,
+      this.props.topologyId
     );
 
     debug('graph layout took ' + timedLayouter.time + 'ms');
