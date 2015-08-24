@@ -195,16 +195,14 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 
 		srcRenderableIDs, ok := source2mapped[srcNodeID]
 		if !ok {
-			// One of the entries in dsts must be a non-pseudo node
-			var existingDstNodeID string
+			// One of the entries in dsts must be a non-pseudo node, unless
+			// it was dropped by the mapping function.
 			for _, dstNodeID := range dsts {
 				if _, ok := source2mapped[dstNodeID]; ok {
-					existingDstNodeID = dstNodeID
+					srcRenderableIDs = mkPseudoNode(srcNodeID, dstNodeID, true)
 					break
 				}
 			}
-
-			srcRenderableIDs = mkPseudoNode(srcNodeID, existingDstNodeID, true)
 		}
 		if len(srcRenderableIDs) == 0 {
 			continue

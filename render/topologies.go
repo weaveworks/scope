@@ -99,10 +99,33 @@ var ContainerRenderer = MakeReduce(
 			},
 		},
 	},
+
 	LeafMap{
 		Selector: report.SelectContainer,
 		Mapper:   MapContainerIdentity,
 		Pseudo:   PanicPseudoNode,
+	},
+
+	// This mapper brings in short lived connections by joining with container IPs.
+	// We need to be careful to ensure we only include each edge once.  Edges brought in
+	// by the above renders will have a pid, so its enough to filter out any nodes with
+	// pids.
+	Map{
+		MapFunc: MapIP2Container,
+		Renderer: FilterUnconnected(
+			MakeReduce(
+				LeafMap{
+					Selector: report.SelectContainer,
+					Mapper:   MapContainer2IP,
+					Pseudo:   PanicPseudoNode,
+				},
+				LeafMap{
+					Selector: report.SelectEndpoint,
+					Mapper:   MapEndpoint2IP,
+					Pseudo:   IPPseudoNode,
+				},
+			),
+		),
 	},
 )
 

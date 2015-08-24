@@ -168,6 +168,78 @@ func MapHostIdentity(m report.NodeMetadata) RenderableNodes {
 	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
 }
 
+// MapEndpoint2IP maps endpoint nodes to their IP address, for joining
+// with container nodes.  We drop endpoint nodes with pids, as they
+// will be joined to containers through the process topology, and we
+// don't want to double count edges.
+func MapEndpoint2IP(m report.NodeMetadata) RenderableNodes {
+	_, ok := m.Metadata[process.PID]
+	if ok {
+		return RenderableNodes{}
+	}
+	addr, ok := m.Metadata[endpoint.Addr]
+	if !ok {
+		return RenderableNodes{}
+	}
+	return RenderableNodes{addr: NewRenderableNode(addr, "", "", "", m)}
+}
+
+// IPPseudoNode maps endpoint pseudo nodes to regular IP address nodes, or
+// the internet node.
+func IPPseudoNode(srcNodeID, _ string, _ bool, local report.Networks) (RenderableNode, bool) {
+	// Use the addresser to extract the IP of the missing node
+	srcNodeAddr := report.EndpointIDAddresser(srcNodeID)
+	// If the dstNodeAddr is not in a network local to this report, we emit an
+	// internet node
+	if !local.Contains(srcNodeAddr) {
+		return newPseudoNode(TheInternetID, TheInternetMajor, ""), true
+	}
+	return NewRenderableNode(srcNodeAddr.String(), "", "", "", report.MakeNodeMetadata()), true
+}
+
+// MapContainer2IP maps container nodes to their IP addresses (outputs
+// multiple nodes).  This allows container to be joined directly with
+// the endpoint topology.
+func MapContainer2IP(m report.NodeMetadata) RenderableNodes {
+	result := RenderableNodes{}
+	addrs, ok := m.Metadata[docker.ContainerIPs]
+	if !ok {
+		return result
+	}
+	for _, addr := range strings.Fields(addrs) {
+		n := NewRenderableNode(addr, "", "", "", m)
+		n.NodeMetadata.Counters[containersKey] = 1
+		result[addr] = n
+	}
+	return result
+}
+
+// MapIP2Container maps IP nodes produced from MapContainer2IP back to
+// container nodes.  If there is more than one container with a given
+// IP, it is dropped.
+func MapIP2Container(n RenderableNode) RenderableNodes {
+	// If an IP is shared between multiple containers, we can't
+	// reliably attribute an connection based on its IP
+	if n.NodeMetadata.Counters[containersKey] > 1 {
+		return RenderableNodes{}
+	}
+
+	// Propogate the internet pseudo node.
+	if n.ID == TheInternetID {
+		return RenderableNodes{n.ID: n}
+	}
+
+	// If this node is not a container, exclude it.
+	// This excludes all the nodes we've dragged in from endpoint
+	// that we failed to join to a container.
+	id, ok := n.NodeMetadata.Metadata[docker.ContainerID]
+	if !ok {
+		return RenderableNodes{}
+	}
+
+	return RenderableNodes{id: newDerivedNode(id, n)}
+}
+
 // MapEndpoint2Process maps endpoint RenderableNodes to process
 // RenderableNodes.
 //
