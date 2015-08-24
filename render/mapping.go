@@ -31,10 +31,7 @@ const (
 //
 // A single NodeMetadata can yield arbitrary many representations, including
 // representations that reduce the cardinality of the set of nodes.
-//
-// If the final output parameter is false, the node shall be omitted from the
-// rendered topology.
-type LeafMapFunc func(report.NodeMetadata) (RenderableNode, bool)
+type LeafMapFunc func(report.NodeMetadata) RenderableNodes
 
 // PseudoFunc creates RenderableNode representing pseudo nodes given the
 // srcNodeID. dstNodeID is the node id of one of the nodes this node has an
@@ -48,20 +45,20 @@ type PseudoFunc func(srcNodeID, dstNodeID string, srcIsClient bool, local report
 //
 // As with LeafMapFunc, if the final output parameter is false, the node
 // shall be omitted from the rendered topology.
-type MapFunc func(RenderableNode) (RenderableNode, bool)
+type MapFunc func(RenderableNode) RenderableNodes
 
 // MapEndpointIdentity maps an endpoint topology node to an endpoint
 // renderable node. As it is only ever run on endpoint topology nodes, we
 // expect that certain keys are present.
-func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+func MapEndpointIdentity(m report.NodeMetadata) RenderableNodes {
 	addr, ok := m.Metadata[endpoint.Addr]
 	if !ok {
-		return RenderableNode{}, false
+		return RenderableNodes{}
 	}
 
 	port, ok := m.Metadata[endpoint.Port]
 	if !ok {
-		return RenderableNode{}, false
+		return RenderableNodes{}
 	}
 
 	var (
@@ -75,16 +72,16 @@ func MapEndpointIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 		minor = fmt.Sprintf("%s (%s)", minor, pid)
 	}
 
-	return NewRenderableNode(id, major, minor, rank, m), true
+	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
 }
 
 // MapProcessIdentity maps a process topology node to a process renderable
 // node. As it is only ever run on process topology nodes, we expect that
 // certain keys are present.
-func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+func MapProcessIdentity(m report.NodeMetadata) RenderableNodes {
 	pid, ok := m.Metadata[process.PID]
 	if !ok {
-		return RenderableNode{}, false
+		return RenderableNodes{}
 	}
 
 	var (
@@ -94,16 +91,16 @@ func MapProcessIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 		rank  = m.Metadata["comm"]
 	)
 
-	return NewRenderableNode(id, major, minor, rank, m), true
+	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
 }
 
 // MapContainerIdentity maps a container topology node to a container
 // renderable node. As it is only ever run on container topology nodes, we
 // expect that certain keys are present.
-func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+func MapContainerIdentity(m report.NodeMetadata) RenderableNodes {
 	id, ok := m.Metadata[docker.ContainerID]
 	if !ok {
-		return RenderableNode{}, false
+		return RenderableNodes{}
 	}
 
 	var (
@@ -112,16 +109,16 @@ func MapContainerIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 		rank  = m.Metadata[docker.ImageID]
 	)
 
-	return NewRenderableNode(id, major, minor, rank, m), true
+	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
 }
 
 // MapContainerImageIdentity maps a container image topology node to container
 // image renderable node. As it is only ever run on container image topology
 // nodes, we expect that certain keys are present.
-func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+func MapContainerImageIdentity(m report.NodeMetadata) RenderableNodes {
 	id, ok := m.Metadata[docker.ImageID]
 	if !ok {
-		return RenderableNode{}, false
+		return RenderableNodes{}
 	}
 
 	var (
@@ -129,16 +126,16 @@ func MapContainerImageIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 		rank  = m.Metadata[docker.ImageID]
 	)
 
-	return NewRenderableNode(id, major, "", rank, m), true
+	return RenderableNodes{id: NewRenderableNode(id, major, "", rank, m)}
 }
 
 // MapAddressIdentity maps an address topology node to an address renderable
 // node. As it is only ever run on address topology nodes, we expect that
 // certain keys are present.
-func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+func MapAddressIdentity(m report.NodeMetadata) RenderableNodes {
 	addr, ok := m.Metadata[endpoint.Addr]
 	if !ok {
-		return RenderableNode{}, false
+		return RenderableNodes{}
 	}
 
 	var (
@@ -148,13 +145,13 @@ func MapAddressIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 		rank  = major
 	)
 
-	return NewRenderableNode(id, major, minor, rank, m), true
+	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
 }
 
 // MapHostIdentity maps a host topology node to a host renderable node. As it
 // is only ever run on host topology nodes, we expect that certain keys are
 // present.
-func MapHostIdentity(m report.NodeMetadata) (RenderableNode, bool) {
+func MapHostIdentity(m report.NodeMetadata) RenderableNodes {
 	var (
 		id                 = MakeHostID(report.ExtractHostID(m))
 		hostname           = m.Metadata[host.HostName]
@@ -168,7 +165,7 @@ func MapHostIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 		major = hostname
 	}
 
-	return NewRenderableNode(id, major, minor, rank, m), true
+	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
 }
 
 // MapEndpoint2Process maps endpoint RenderableNodes to process
@@ -182,18 +179,18 @@ func MapHostIdentity(m report.NodeMetadata) (RenderableNode, bool) {
 // format for a process, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a process graph to get that info.
-func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
+func MapEndpoint2Process(n RenderableNode) RenderableNodes {
 	if n.Pseudo {
-		return n, true
+		return RenderableNodes{n.ID: n}
 	}
 
 	pid, ok := n.NodeMetadata.Metadata[process.PID]
 	if !ok {
-		return RenderableNode{}, false
+		return RenderableNodes{}
 	}
 
 	id := MakeProcessID(report.ExtractHostID(n.NodeMetadata), pid)
-	return newDerivedNode(id, n), true
+	return RenderableNodes{id: newDerivedNode(id, n)}
 }
 
 // MapProcess2Container maps process RenderableNodes to container
@@ -207,15 +204,15 @@ func MapEndpoint2Process(n RenderableNode) (RenderableNode, bool) {
 // format for a container, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
-func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
+func MapProcess2Container(n RenderableNode) RenderableNodes {
 	// Propogate the internet pseudo node
 	if n.ID == TheInternetID {
-		return n, true
+		return RenderableNodes{n.ID: n}
 	}
 
 	// Don't propogate non-internet pseudo nodes
 	if n.Pseudo {
-		return n, false
+		return RenderableNodes{}
 	}
 
 	// Otherwise, if the process is not in a container, group it
@@ -228,10 +225,10 @@ func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
 		id = MakePseudoNodeID(UncontainedID, hostID)
 		node := newDerivedPseudoNode(id, UncontainedMajor, n)
 		node.LabelMinor = hostID
-		return node, true
+		return RenderableNodes{id: node}
 	}
 
-	return newDerivedNode(id, n), true
+	return RenderableNodes{id: newDerivedNode(id, n)}
 }
 
 // MapProcess2Name maps process RenderableNodes to RenderableNodes
@@ -240,29 +237,29 @@ func MapProcess2Container(n RenderableNode) (RenderableNode, bool) {
 // This mapper is unlike the other foo2bar mappers as the intention
 // is not to join the information with another topology.  Therefore
 // it outputs a properly-formed node with labels etc.
-func MapProcess2Name(n RenderableNode) (RenderableNode, bool) {
+func MapProcess2Name(n RenderableNode) RenderableNodes {
 	if n.Pseudo {
-		return n, true
+		return RenderableNodes{n.ID: n}
 	}
 
 	name, ok := n.NodeMetadata.Metadata["comm"]
 	if !ok {
-		return RenderableNode{}, false
+		return RenderableNodes{}
 	}
 
 	node := newDerivedNode(name, n)
 	node.LabelMajor = name
 	node.Rank = name
 	node.NodeMetadata.Counters[processesKey] = 1
-	return node, true
+	return RenderableNodes{name: node}
 }
 
 // MapCountProcessName maps 1:1 process name nodes, counting
 // the number of processes grouped together and putting
 // that info in the minor label.
-func MapCountProcessName(n RenderableNode) (RenderableNode, bool) {
+func MapCountProcessName(n RenderableNode) RenderableNodes {
 	if n.Pseudo {
-		return n, true
+		return RenderableNodes{n.ID: n}
 	}
 
 	processes := n.NodeMetadata.Counters[processesKey]
@@ -271,7 +268,7 @@ func MapCountProcessName(n RenderableNode) (RenderableNode, bool) {
 	} else {
 		n.LabelMinor = fmt.Sprintf("%d processes", processes)
 	}
-	return n, true
+	return RenderableNodes{n.ID: n}
 }
 
 // MapContainer2ContainerImage maps container RenderableNodes to container
@@ -285,23 +282,23 @@ func MapCountProcessName(n RenderableNode) (RenderableNode, bool) {
 // format for a container, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
-func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
+func MapContainer2ContainerImage(n RenderableNode) RenderableNodes {
 	// Propogate all pseudo nodes
 	if n.Pseudo {
-		return n, true
+		return RenderableNodes{n.ID: n}
 	}
 
 	// Otherwise, if some some reason the container doesn't have a image_id
 	// (maybe slightly out of sync reports), just drop it
 	id, ok := n.NodeMetadata.Metadata[docker.ImageID]
 	if !ok {
-		return n, false
+		return RenderableNodes{}
 	}
 
 	// Add container-<id> key to NMD, which will later be counted to produce the minor label
 	result := newDerivedNode(id, n)
 	result.NodeMetadata.Counters[containersKey] = 1
-	return result, true
+	return RenderableNodes{id: result}
 }
 
 // MapContainerImage2Name maps container images RenderableNodes to
@@ -310,14 +307,14 @@ func MapContainer2ContainerImage(n RenderableNode) (RenderableNode, bool) {
 // This mapper is unlike the other foo2bar mappers as the intention
 // is not to join the information with another topology.  Therefore
 // it outputs a properly-formed node with labels etc.
-func MapContainerImage2Name(n RenderableNode) (RenderableNode, bool) {
+func MapContainerImage2Name(n RenderableNode) RenderableNodes {
 	if n.Pseudo {
-		return n, true
+		return RenderableNodes{n.ID: n}
 	}
 
 	name, ok := n.NodeMetadata.Metadata[docker.ImageName]
 	if !ok {
-		return RenderableNode{}, false
+		return RenderableNodes{}
 	}
 
 	parts := strings.SplitN(name, ":", 2)
@@ -329,15 +326,15 @@ func MapContainerImage2Name(n RenderableNode) (RenderableNode, bool) {
 	node.LabelMajor = name
 	node.Rank = name
 	node.NodeMetadata = n.NodeMetadata.Copy() // Propagate NMD for container counting.
-	return node, true
+	return RenderableNodes{name: node}
 }
 
 // MapCountContainers maps 1:1 container image nodes, counting
 // the number of containers grouped together and putting
 // that info in the minor label.
-func MapCountContainers(n RenderableNode) (RenderableNode, bool) {
+func MapCountContainers(n RenderableNode) RenderableNodes {
 	if n.Pseudo {
-		return n, true
+		return RenderableNodes{n.ID: n}
 	}
 
 	containers := n.NodeMetadata.Counters[containersKey]
@@ -346,19 +343,19 @@ func MapCountContainers(n RenderableNode) (RenderableNode, bool) {
 	} else {
 		n.LabelMinor = fmt.Sprintf("%d containers", containers)
 	}
-	return n, true
+	return RenderableNodes{n.ID: n}
 }
 
 // MapAddress2Host maps address RenderableNodes to host RenderableNodes.
 //
 // Otherthan pseudo nodes, we can assume all nodes have a HostID
-func MapAddress2Host(n RenderableNode) (RenderableNode, bool) {
+func MapAddress2Host(n RenderableNode) RenderableNodes {
 	if n.Pseudo {
-		return n, true
+		return RenderableNodes{n.ID: n}
 	}
 
 	id := MakeHostID(report.ExtractHostID(n.NodeMetadata))
-	return newDerivedNode(id, n), true
+	return RenderableNodes{id: newDerivedNode(id, n)}
 }
 
 // GenericPseudoNode makes a PseudoFunc given an addresser.  The returned
