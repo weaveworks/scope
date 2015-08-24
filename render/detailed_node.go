@@ -297,13 +297,15 @@ func containerOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
 		{docker.ContainerID, "ID"},
-		{overlay.WeaveDNSHostname, "Weave DNS Hostname"},
 		{docker.ImageID, "Image ID"},
 		{docker.ContainerPorts, "Ports"},
 		{docker.ContainerCreated, "Created"},
 		{docker.ContainerCommand, "Command"},
+		{docker.ContainerIPs, "IP Addresses"},
+		{overlay.WeaveMACAddress, "Weave MAC"},
+		{overlay.WeaveDNSHostname, "Weave DNS Hostname"},
 	} {
-		if val, ok := nmd.Metadata[tuple.key]; ok {
+		if val, ok := nmd.Metadata[tuple.key]; ok && val != "" {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
 		}
 	}

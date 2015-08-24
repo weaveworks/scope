@@ -26,6 +26,7 @@ const (
 	ContainerCommand = "docker_container_command"
 	ContainerPorts   = "docker_container_ports"
 	ContainerCreated = "docker_container_created"
+	ContainerIPs     = "docker_container_ips"
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
@@ -212,6 +213,8 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 		ContainerCreated: c.container.Created.Format(time.RFC822),
 		ContainerCommand: c.container.Path + " " + strings.Join(c.container.Args, " "),
 		ImageID:          c.container.Image,
+		ContainerIPs: strings.Join(append(c.container.NetworkSettings.SecondaryIPAddresses,
+			c.container.NetworkSettings.IPAddress), " "),
 	})
 
 	if c.latestStats == nil {

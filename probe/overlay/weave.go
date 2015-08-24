@@ -1,13 +1,19 @@
 package overlay
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
+	"os/exec"
+	"regexp"
 	"strings"
 
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -21,7 +27,24 @@ const (
 
 	// WeaveDNSHostname is the ket for the WeaveDNS hostname
 	WeaveDNSHostname = "weave_dns_hostname"
+
+	// WeaveMACAddress is the key for the mac address of the container on the
+	// weave network, to be found in container node metadata
+	WeaveMACAddress = "weave_mac_address"
 )
+
+var weavePsMatch = regexp.MustCompile(`^([0-9a-f]{12}) ((?:[0-9a-f][0-9a-f]\:){5}(?:[0-9a-f][0-9a-f]))(.*)$`)
+var ipMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})(/[0-9]+)`)
+
+// Cmd is a hook for mocking
+type Cmd interface {
+	StdoutPipe() (io.ReadCloser, error)
+	Start() error
+	Wait() error
+}
+
+// ExecCommand is a hook for mocking
+var ExecCommand = func(name string, args ...string) Cmd { return exec.Command(name, args...) }
 
 // Weave represents a single Weave router, presumably on the same host
 // as the probe. It is both a Reporter and a Tagger: it produces an Overlay
@@ -83,6 +106,59 @@ func (w Weave) update() (weaveStatus, error) {
 	return result, json.NewDecoder(resp.Body).Decode(&result)
 }
 
+type psEntry struct {
+	containerIDPrefix string
+	macAddress        string
+	ips               []string
+}
+
+func (w Weave) ps() ([]psEntry, error) {
+	var result []psEntry
+	cmd := ExecCommand("weave", "--local", "ps")
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		return result, err
+	}
+	if err := cmd.Start(); err != nil {
+		return result, err
+	}
+	defer func() {
+		if err := cmd.Wait(); err != nil {
+			log.Printf("Weave tagger, cmd failed: %v", err)
+		}
+	}()
+	scanner := bufio.NewScanner(out)
+	for scanner.Scan() {
+		line := scanner.Text()
+		groups := weavePsMatch.FindStringSubmatch(line)
+		if len(groups) == 0 {
+			continue
+		}
+		containerIDPrefix, macAddress, ips := groups[1], groups[2], []string{}
+		for _, ipGroup := range ipMatch.FindAllStringSubmatch(groups[3], -1) {
+			ips = append(ips, ipGroup[1])
+		}
+		result = append(result, psEntry{containerIDPrefix, macAddress, ips})
+	}
+	return result, scanner.Err()
+}
+
+func (w Weave) tagContainer(r report.Report, containerIDPrefix, macAddress string, ips []string) {
+	for nodeid, nmd := range r.Container.NodeMetadatas {
+		idPrefix := nmd.Metadata[docker.ContainerID][:12]
+		if idPrefix != containerIDPrefix {
+			continue
+		}
+
+		existingIPs := report.MakeIDList(strings.Fields(nmd.Metadata[docker.ContainerIPs])...)
+		existingIPs = existingIPs.Add(ips...)
+		nmd.Metadata[docker.ContainerIPs] = strings.Join(existingIPs, " ")
+		nmd.Metadata[WeaveMACAddress] = macAddress
+		r.Container.NodeMetadatas[nodeid] = nmd
+		break
+	}
+}
+
 // Tag implements Tagger.
 func (w Weave) Tag(r report.Report) (report.Report, error) {
 	status, err := w.update()
@@ -105,6 +181,13 @@ func (w Weave) Tag(r report.Report) (report.Report, error) {
 		r.Container.NodeMetadatas[nodeID] = node
 	}
 
+	psEntries, err := w.ps()
+	if err != nil {
+		return r, nil
+	}
+	for _, e := range psEntries {
+		w.tagContainer(r, e.containerIDPrefix, e.macAddress, e.ips)
+	}
 	return r, nil
 }
 

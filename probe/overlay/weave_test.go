@@ -1,18 +1,52 @@
 package overlay_test
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
 
+type mockCmd struct {
+	*bytes.Buffer
+}
+
+func (c *mockCmd) Start() error {
+	return nil
+}
+
+func (c *mockCmd) Wait() error {
+	return nil
+}
+
+func (c *mockCmd) StdoutPipe() (io.ReadCloser, error) {
+	return struct {
+		io.Reader
+		io.Closer
+	}{
+		c.Buffer,
+		ioutil.NopCloser(nil),
+	}, nil
+}
+
 func TestWeaveTaggerOverlayTopology(t *testing.T) {
+	oldExecCmd := overlay.ExecCommand
+	defer func() { overlay.ExecCommand = oldExecCmd }()
+	overlay.ExecCommand = func(name string, args ...string) overlay.Cmd {
+		return &mockCmd{
+			bytes.NewBufferString(fmt.Sprintf("%s %s %s/24\n", mockContainerID, mockContainerMAC, mockContainerIP)),
+		}
+	}
+
 	s := httptest.NewServer(http.HandlerFunc(mockWeaveRouter))
 	defer s.Close()
 
@@ -46,7 +80,10 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 			Container: report.Topology{
 				NodeMetadatas: report.NodeMetadatas{
 					nodeID: report.MakeNodeMetadataWith(map[string]string{
+						docker.ContainerID:       mockContainerID,
 						overlay.WeaveDNSHostname: mockHostname,
+						overlay.WeaveMACAddress:  mockContainerMAC,
+						docker.ContainerIPs:      mockContainerIP,
 					}),
 				},
 			},
@@ -54,7 +91,9 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 		have, err := w.Tag(report.Report{
 			Container: report.Topology{
 				NodeMetadatas: report.NodeMetadatas{
-					nodeID: report.MakeNodeMetadata(),
+					nodeID: report.MakeNodeMetadataWith(map[string]string{
+						docker.ContainerID: mockContainerID,
+					}),
 				},
 			},
 		})
@@ -71,7 +110,9 @@ const (
 	mockHostID            = "host1"
 	mockWeavePeerName     = "winnebago"
 	mockWeavePeerNickName = "winny"
-	mockContainerID       = "a1b2c3d4e5"
+	mockContainerID       = "83183a667c01"
+	mockContainerMAC      = "d6:f2:5a:12:36:a8"
+	mockContainerIP       = "10.0.0.123"
 	mockHostname          = "hostname.weave.local"
 )
 

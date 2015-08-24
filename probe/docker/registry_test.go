@@ -103,6 +103,9 @@ var (
 		Name:  "pong",
 		Image: "baz",
 		State: client.State{Pid: 1, Running: true},
+		NetworkSettings: &client.NetworkSettings{
+			IPAddress: "1.2.3.4",
+		},
 	}
 	container2 = &client.Container{
 		ID:    "wiff",
