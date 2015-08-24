@@ -10,7 +10,7 @@ import (
 )
 
 func TestOriginTable(t *testing.T) {
-	if _, ok := render.OriginTable(test.Report, "not-found", false); ok {
+	if _, ok := render.OriginTable(test.Report, "not-found", false, false); ok {
 		t.Errorf("unknown origin ID gave unexpected success")
 	}
 	for originID, want := range map[string]render.Table{test.ServerProcessNodeID: {
@@ -29,7 +29,7 @@ func TestOriginTable(t *testing.T) {
 			},
 		},
 	} {
-		have, ok := render.OriginTable(test.Report, originID, false)
+		have, ok := render.OriginTable(test.Report, originID, false, false)
 		if !ok {
 			t.Errorf("%q: not OK", originID)
 			continue
@@ -39,7 +39,7 @@ func TestOriginTable(t *testing.T) {
 		}
 	}
 
-	// Test host tags
+	// Test host/container tags
 	for originID, want := range map[string]render.Table{
 		test.ServerProcessNodeID: {
 			Title:   fmt.Sprintf(`Process "apache" (%s)`, test.ServerPID),
@@ -47,6 +47,7 @@ func TestOriginTable(t *testing.T) {
 			Rank:    2,
 			Rows: []render.Row{
 				{"Host", test.ServerHostID, "", false},
+				{"Container ID", test.ServerContainerID, "", false},
 			},
 		},
 		test.ServerContainerNodeID: {
@@ -60,7 +61,7 @@ func TestOriginTable(t *testing.T) {
 			},
 		},
 	} {
-		have, ok := render.OriginTable(test.Report, originID, true)
+		have, ok := render.OriginTable(test.Report, originID, true, true)
 		if !ok {
 			t.Errorf("%q: not OK", originID)
 			continue
