@@ -269,27 +269,79 @@ func (m LeafMap) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableI
 	return metadata
 }
 
-// FilterUnconnected is a Renderer which filters out unconnected nodes.
-type FilterUnconnected struct {
+// CustomRenderer allow for mapping functions that recived the entire topology
+// in one call - useful for functions that need to consider the entire graph
+type CustomRenderer struct {
+	RenderFunc func(RenderableNodes) RenderableNodes
 	Renderer
 }
 
-// Render produces a set of RenderableNodes given a Report
-func (f FilterUnconnected) Render(rpt report.Report) RenderableNodes {
-	return OnlyConnected(f.Renderer.Render(rpt))
+// Render implements Renderer
+func (c CustomRenderer) Render(rpt report.Report) RenderableNodes {
+	return c.RenderFunc(c.Renderer.Render(rpt))
 }
+
+// IsConnected is the key added to NodeMetadata by ColorConnected
+// to indicate a node has an edge pointing to it or from it
+const IsConnected = "is_connected"
 
 // OnlyConnected filters out unconnected RenderedNodes
 func OnlyConnected(input RenderableNodes) RenderableNodes {
 	output := RenderableNodes{}
+	for id, node := range ColorConnected(input) {
+		if _, ok := node.NodeMetadata.Metadata[IsConnected]; ok {
+			output[id] = node
+		}
+	}
+	return output
+}
+
+// FilterUnconnected produces a renderer that filters unconnected nodes
+// from the given renderer
+func FilterUnconnected(r Renderer) Renderer {
+	return CustomRenderer{
+		RenderFunc: OnlyConnected,
+		Renderer:   r,
+	}
+}
+
+// ColorConnected colors nodes with the IsConnected key if
+// they have edges to or from them.
+func ColorConnected(input RenderableNodes) RenderableNodes {
+	connected := map[string]struct{}{}
+	void := struct{}{}
+
 	for id, node := range input {
 		if len(node.Adjacency) == 0 {
 			continue
 		}
 
-		output[id] = node
+		connected[id] = void
 		for _, id := range node.Adjacency {
-			output[id] = input[id]
+			connected[id] = void
+		}
+	}
+
+	for id := range connected {
+		node := input[id]
+		node.NodeMetadata.Metadata[IsConnected] = "true"
+		input[id] = node
+	}
+	return input
+}
+
+// Filter removes nodes from a view based on a predicate.
+type Filter struct {
+	Renderer
+	f func(RenderableNode) bool
+}
+
+// Render implements Renderer
+func (f Filter) Render(rpt report.Report) RenderableNodes {
+	output := RenderableNodes{}
+	for id, node := range f.Renderer.Render(rpt) {
+		if f.f(node) {
+			output[id] = node
 		}
 	}
 	return output

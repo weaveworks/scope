@@ -28,6 +28,7 @@ var (
 	UnknownClient2IP = "10.10.10.10"
 	UnknownClient3IP = "10.10.10.11"
 	RandomClientIP   = "51.52.53.54"
+	GoogleIP         = "8.8.8.8"
 
 	ClientHostName = ClientHostID
 	ServerHostName = ServerHostID
@@ -52,6 +53,8 @@ var (
 	UnknownClient2NodeID = report.MakeEndpointNodeID(ServerHostID, UnknownClient2IP, "54020") // to the same server, are deduped.
 	UnknownClient3NodeID = report.MakeEndpointNodeID(ServerHostID, UnknownClient3IP, "54020") // Check this one isn't deduped
 	RandomClientNodeID   = report.MakeEndpointNodeID(ServerHostID, RandomClientIP, "12345")   // this should become an internet node
+	NonContainerNodeID   = report.MakeEndpointNodeID(ServerHostID, ServerIP, "46789")
+	GoogleEndpointNodeID = report.MakeEndpointNodeID(ServerHostID, GoogleIP, "80")
 
 	ClientProcess1NodeID      = report.MakeProcessNodeID(ClientHostID, Client1PID)
 	ClientProcess2NodeID      = report.MakeProcessNodeID(ClientHostID, Client2PID)
@@ -85,6 +88,7 @@ var (
 				report.MakeAdjacencyID(UnknownClient2NodeID): report.MakeIDList(Server80NodeID),
 				report.MakeAdjacencyID(UnknownClient3NodeID): report.MakeIDList(Server80NodeID),
 				report.MakeAdjacencyID(RandomClientNodeID):   report.MakeIDList(Server80NodeID),
+				report.MakeAdjacencyID(NonContainerNodeID):   report.MakeIDList(GoogleEndpointNodeID),
 			},
 			NodeMetadatas: report.NodeMetadatas{
 				// NodeMetadata is arbitrary. We're free to put only precisely what we
@@ -106,6 +110,12 @@ var (
 					endpoint.Addr:     ServerIP,
 					endpoint.Port:     ServerPort,
 					process.PID:       ServerPID,
+					report.HostNodeID: ServerHostNodeID,
+				}),
+				NonContainerNodeID: report.MakeNodeMetadataWith(map[string]string{
+					endpoint.Addr:     ServerIP,
+					endpoint.Port:     "46789",
+					process.PID:       NonContainerPID,
 					report.HostNodeID: ServerHostNodeID,
 				}),
 			},
