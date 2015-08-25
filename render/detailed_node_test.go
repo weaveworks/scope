@@ -10,31 +10,26 @@ import (
 )
 
 func TestOriginTable(t *testing.T) {
-	if _, ok := render.OriginTable(test.Report, "not-found"); ok {
+	if _, ok := render.OriginTable(test.Report, "not-found", false, false); ok {
 		t.Errorf("unknown origin ID gave unexpected success")
 	}
-	for originID, want := range map[string]render.Table{
-		test.ServerProcessNodeID: {
-			Title:   "Origin Process",
-			Numeric: false,
-			Rank:    2,
-			Rows: []render.Row{
-				{"Name", "apache", "", false},
-				{"PID", test.ServerPID, "", false},
-			},
-		},
+	for originID, want := range map[string]render.Table{test.ServerProcessNodeID: {
+		Title:   fmt.Sprintf(`Process "apache" (%s)`, test.ServerPID),
+		Numeric: false,
+		Rank:    2,
+		Rows:    []render.Row{},
+	},
 		test.ServerHostNodeID: {
-			Title:   "Origin Host",
+			Title:   fmt.Sprintf("Host %q", test.ServerHostName),
 			Numeric: false,
 			Rank:    1,
 			Rows: []render.Row{
-				{"Host name", test.ServerHostName, "", false},
 				{"Load", "0.01 0.01 0.01", "", false},
 				{"Operating system", "Linux", "", false},
 			},
 		},
 	} {
-		have, ok := render.OriginTable(test.Report, originID)
+		have, ok := render.OriginTable(test.Report, originID, false, false)
 		if !ok {
 			t.Errorf("%q: not OK", originID)
 			continue
@@ -43,6 +38,39 @@ func TestOriginTable(t *testing.T) {
 			t.Errorf("%q: %s", originID, test.Diff(want, have))
 		}
 	}
+
+	// Test host/container tags
+	for originID, want := range map[string]render.Table{
+		test.ServerProcessNodeID: {
+			Title:   fmt.Sprintf(`Process "apache" (%s)`, test.ServerPID),
+			Numeric: false,
+			Rank:    2,
+			Rows: []render.Row{
+				{"Host", test.ServerHostID, "", false},
+				{"Container ID", test.ServerContainerID, "", false},
+			},
+		},
+		test.ServerContainerNodeID: {
+			Title:   `Container "server"`,
+			Numeric: false,
+			Rank:    3,
+			Rows: []render.Row{
+				{"Host", test.ServerHostID, "", false},
+				{"ID", test.ServerContainerID, "", false},
+				{"Image ID", test.ServerContainerImageID, "", false},
+			},
+		},
+	} {
+		have, ok := render.OriginTable(test.Report, originID, true, true)
+		if !ok {
+			t.Errorf("%q: not OK", originID)
+			continue
+		}
+		if !reflect.DeepEqual(want, have) {
+			t.Errorf("%q: %s", originID, test.Diff(want, have))
+		}
+	}
+
 }
 
 func TestMakeDetailedHostNode(t *testing.T) {
@@ -55,15 +83,10 @@ func TestMakeDetailedHostNode(t *testing.T) {
 		Pseudo:     false,
 		Tables: []render.Table{
 			{
-				Title:   "Origin Host",
+				Title:   fmt.Sprintf("Host %q", test.ClientHostName),
 				Numeric: false,
 				Rank:    1,
 				Rows: []render.Row{
-					{
-						Key:        "Host name",
-						ValueMajor: "client.hostname.com",
-						ValueMinor: "",
-					},
 					{
 						Key:        "Load",
 						ValueMajor: "0.01 0.01 0.01",
@@ -117,30 +140,25 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 		Pseudo:     false,
 		Tables: []render.Table{
 			{
-				Title:   "Origin Container",
+				Title:   `Container "server"`,
 				Numeric: false,
 				Rank:    3,
 				Rows: []render.Row{
 					{"ID", test.ServerContainerID, "", false},
-					{"Name", "server", "", false},
 					{"Image ID", test.ServerContainerImageID, "", false},
 				},
 			},
 			{
-				Title:   "Origin Process",
+				Title:   fmt.Sprintf(`Process "apache" (%s)`, test.ServerPID),
 				Numeric: false,
 				Rank:    2,
-				Rows: []render.Row{
-					{"Name", "apache", "", false},
-					{"PID", test.ServerPID, "", false},
-				},
+				Rows:    []render.Row{},
 			},
 			{
-				Title:   "Origin Host",
+				Title:   fmt.Sprintf("Host %q", test.ServerHostName),
 				Numeric: false,
 				Rank:    1,
 				Rows: []render.Row{
-					{"Host name", test.ServerHostName, "", false},
 					{"Load", "0.01 0.01 0.01", "", false},
 					{"Operating system", "Linux", "", false},
 				},

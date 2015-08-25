@@ -64,23 +64,27 @@ func (r sortableRows) Less(i, j int) bool {
 	}
 }
 
-type tables []Table
+type sortableTables []Table
 
-func (t tables) Len() int           { return len(t) }
-func (t tables) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
-func (t tables) Less(i, j int) bool { return t[i].Rank > t[j].Rank }
+func (t sortableTables) Len() int           { return len(t) }
+func (t sortableTables) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t sortableTables) Less(i, j int) bool { return t[i].Rank > t[j].Rank }
 
 // MakeDetailedNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
 func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
-	tables := tables{}
+	tables := sortableTables{}
+
+	// Figure out if multiple hosts/containers are referenced by the renderableNode
+	multiContainer, multiHost := getRenderingContext(r, n)
+
 	// RenderableNode may be the result of merge operation(s), and so may have
 	// multiple origins. The ultimate goal here is to generate tables to view
 	// in the UI, so we skip the intermediate representations, but we could
 	// add them later.
 	connections := []Row{}
 	for _, id := range n.Origins {
-		if table, ok := OriginTable(r, id); ok {
+		if table, ok := OriginTable(r, id, multiHost, multiContainer); ok {
 			tables = append(tables, table)
 		} else if _, ok := r.Endpoint.NodeMetadatas[id]; ok {
 			connections = append(connections, connectionDetailsRows(r.Endpoint, id)...)
@@ -89,7 +93,9 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 		}
 	}
 
-	addConnectionsTable(&tables, connections, r, n)
+	if table, ok := connectionsTable(connections, r, n); ok {
+		tables = append(tables, table)
+	}
 
 	// Sort tables by rank
 	sort.Sort(tables)
@@ -103,7 +109,29 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	}
 }
 
-func addConnectionsTable(tables *tables, connections []Row, r report.Report, n RenderableNode) {
+func getRenderingContext(r report.Report, n RenderableNode) (multiContainer bool, multiHost bool) {
+	originHosts := make(map[string]struct{})
+	originContainers := make(map[string]struct{})
+	for _, id := range n.Origins {
+		for _, topology := range r.Topologies() {
+			if nmd, ok := topology.NodeMetadatas[id]; ok {
+				originHosts[report.ExtractHostID(nmd)] = struct{}{}
+				if id, ok := nmd.Metadata[docker.ContainerID]; ok {
+					originContainers[id] = struct{}{}
+				}
+			}
+			// Return early if possible
+			multiHost = len(originHosts) > 1
+			multiContainer = len(originContainers) > 1
+			if multiHost && multiContainer {
+				return
+			}
+		}
+	}
+	return
+}
+
+func connectionsTable(connections []Row, r report.Report, n RenderableNode) (Table, bool) {
 	sec := r.Window.Seconds()
 	rate := func(u *uint64) (float64, bool) {
 		if u == nil {
@@ -149,18 +177,19 @@ func addConnectionsTable(tables *tables, connections []Row, r report.Report, n R
 		rows = append(rows, connections...)
 	}
 	if len(rows) > 0 {
-		*tables = append(*tables, Table{"Connections", true, connectionsRank, rows})
+		return Table{"Connections", true, connectionsRank, rows}, true
 	}
+	return Table{}, false
 }
 
 // OriginTable produces a table (to be consumed directly by the UI) based on
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
-func OriginTable(r report.Report, originID string) (Table, bool) {
+func OriginTable(r report.Report, originID string, addHostTags bool, addContainerTags bool) (Table, bool) {
 	if nmd, ok := r.Process.NodeMetadatas[originID]; ok {
-		return processOriginTable(nmd)
+		return processOriginTable(nmd, addHostTags, addContainerTags)
 	}
 	if nmd, ok := r.Container.NodeMetadatas[originID]; ok {
-		return containerOriginTable(nmd)
+		return containerOriginTable(nmd, addHostTags)
 	}
 	if nmd, ok := r.ContainerImage.NodeMetadatas[originID]; ok {
 		return containerImageOriginTable(nmd)
@@ -224,11 +253,9 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 	return rows
 }
 
-func processOriginTable(nmd report.NodeMetadata) (Table, bool) {
+func processOriginTable(nmd report.NodeMetadata, addHostTag bool, addContainerTag bool) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		{process.Comm, "Name"},
-		{process.PID, "PID"},
 		{process.PPID, "Parent PID"},
 		{process.Cmdline, "Command"},
 		{process.Threads, "# Threads"},
@@ -238,19 +265,37 @@ func processOriginTable(nmd report.NodeMetadata) (Table, bool) {
 		}
 	}
 
+	if containerID, ok := nmd.Metadata[docker.ContainerID]; ok && addContainerTag {
+		rows = append([]Row{{Key: "Container ID", ValueMajor: containerID}}, rows...)
+	}
+
+	if addHostTag {
+		rows = append([]Row{{Key: "Host", ValueMajor: report.ExtractHostID(nmd)}}, rows...)
+	}
+
+	var (
+		title           = "Process"
+		name, commFound = nmd.Metadata[process.Comm]
+		pid, pidFound   = nmd.Metadata[process.PID]
+	)
+	if commFound {
+		title += ` "` + name + `"`
+	}
+	if pidFound {
+		title += " (" + pid + ")"
+	}
 	return Table{
-		Title:   "Origin Process",
+		Title:   title,
 		Numeric: false,
 		Rows:    rows,
 		Rank:    processRank,
-	}, len(rows) > 0
+	}, len(rows) > 0 || commFound || pidFound
 }
 
-func containerOriginTable(nmd report.NodeMetadata) (Table, bool) {
+func containerOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
 		{docker.ContainerID, "ID"},
-		{docker.ContainerName, "Name"},
 		{docker.ImageID, "Image ID"},
 		{docker.ContainerPorts, "Ports"},
 		{docker.ContainerCreated, "Created"},
@@ -268,37 +313,54 @@ func containerOriginTable(nmd report.NodeMetadata) (Table, bool) {
 			rows = append(rows, Row{Key: "Memory Usage (MB):", ValueMajor: memoryStr, ValueMinor: ""})
 		}
 	}
+	if addHostTag {
+		rows = append([]Row{{Key: "Host", ValueMajor: report.ExtractHostID(nmd)}}, rows...)
+	}
+
+	var (
+		title           = "Container"
+		name, nameFound = nmd.Metadata[docker.ContainerName]
+	)
+	if nameFound {
+		title += ` "` + name + `"`
+	}
 
 	return Table{
-		Title:   "Origin Container",
+		Title:   title,
 		Numeric: false,
 		Rows:    rows,
 		Rank:    containerRank,
-	}, len(rows) > 0
+	}, len(rows) > 0 || nameFound
 }
 
 func containerImageOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
 		{docker.ImageID, "Image ID"},
-		{docker.ImageName, "Image name"},
 	} {
 		if val, ok := nmd.Metadata[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
 		}
 	}
+	title := "Container Image"
+	var (
+		nameFound bool
+		name      string
+	)
+	if name, nameFound = nmd.Metadata[docker.ImageName]; nameFound {
+		title += ` "` + name + `"`
+	}
 	return Table{
-		Title:   "Origin Container Image",
+		Title:   title,
 		Numeric: false,
 		Rows:    rows,
 		Rank:    containerImageRank,
-	}, len(rows) > 0
+	}, len(rows) > 0 || nameFound
 }
 
 func hostOriginTable(nmd report.NodeMetadata) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		{host.HostName, "Host name"},
 		{host.Load, "Load"},
 		{host.OS, "Operating system"},
 		{host.KernelVersion, "Kernel version"},
@@ -309,10 +371,18 @@ func hostOriginTable(nmd report.NodeMetadata) (Table, bool) {
 		}
 	}
 
+	title := "Host"
+	var (
+		name      string
+		foundName bool
+	)
+	if name, foundName = nmd.Metadata[host.HostName]; foundName {
+		title += ` "` + name + `"`
+	}
 	return Table{
-		Title:   "Origin Host",
+		Title:   title,
 		Numeric: false,
 		Rows:    rows,
 		Rank:    hostRank,
-	}, len(rows) > 0
+	}, len(rows) > 0 || foundName
 }
