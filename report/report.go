@@ -70,6 +70,19 @@ func MakeReport() Report {
 	}
 }
 
+// Merge merges another Report into the receiver.
+func (r *Report) Merge(other Report) {
+	r.Endpoint.Merge(other.Endpoint)
+	r.Address.Merge(other.Address)
+	r.Process.Merge(other.Process)
+	r.Container.Merge(other.Container)
+	r.ContainerImage.Merge(other.ContainerImage)
+	r.Host.Merge(other.Host)
+	r.Overlay.Merge(other.Overlay)
+	r.Sampling.Merge(other.Sampling)
+	r.Window += other.Window
+}
+
 // Topologies returns a slice of Topologies in this report
 func (r Report) Topologies() []Topology {
 	return []Topology{
@@ -116,6 +129,12 @@ func (s Sampling) Rate() float64 {
 		return 1.0
 	}
 	return float64(s.Count) / float64(s.Total)
+}
+
+// Merge combines two sampling structures via simple addition.
+func (s *Sampling) Merge(other Sampling) {
+	s.Count += other.Count
+	s.Total += other.Total
 }
 
 const (
