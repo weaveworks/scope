@@ -14,50 +14,103 @@ type Topology struct {
 	NodeMetadatas
 }
 
-// Merge merges another Topology into the receiver.
-func (t *Topology) Merge(other Topology) {
-	t.Adjacency.Merge(other.Adjacency)
-	t.EdgeMetadatas.Merge(other.EdgeMetadatas)
-	t.NodeMetadatas.Merge(other.NodeMetadatas)
+// MakeTopology gives you a Topology.
+func MakeTopology() Topology {
+	return Topology{
+		Adjacency:     map[string]IDList{},
+		EdgeMetadatas: map[string]EdgeMetadata{},
+		NodeMetadatas: map[string]NodeMetadata{},
+	}
 }
 
-// Adjacency is an adjacency-list encoding of the topology. Keys are node IDs,
-// as produced by the relevant MappingFunc for the topology.
+// Copy returns a value copy of the Topology.
+func (t Topology) Copy() Topology {
+	return Topology{
+		Adjacency:     t.Adjacency.Copy(),
+		EdgeMetadatas: t.EdgeMetadatas.Copy(),
+		NodeMetadatas: t.NodeMetadatas.Copy(),
+	}
+}
+
+// Merge merges the other object into this one, and returns the result object.
+// The original is not modified.
+func (t Topology) Merge(other Topology) Topology {
+	return Topology{
+		Adjacency:     t.Adjacency.Merge(other.Adjacency),
+		EdgeMetadatas: t.EdgeMetadatas.Merge(other.EdgeMetadatas),
+		NodeMetadatas: t.NodeMetadatas.Merge(other.NodeMetadatas),
+	}
+}
+
+// Adjacency is an adjacency-list encoding of the topology. Keys are adjacency
+// IDs, values are lists of node IDs.
 type Adjacency map[string]IDList
 
-// Merge merges another Adjacency list into the receiver.
-func (a *Adjacency) Merge(other Adjacency) {
-	for addr, adj := range other {
-		(*a)[addr] = (*a)[addr].Merge(adj)
+// Copy returns a value copy of the adjacency.
+func (a Adjacency) Copy() Adjacency {
+	cp := make(Adjacency, len(a))
+	for k, v := range a {
+		cp[k] = v.Copy()
 	}
+	return cp
+}
+
+// Merge merges the other object into this one, and returns the result object.
+// The original is not modified.
+func (a Adjacency) Merge(other Adjacency) Adjacency {
+	cp := a.Copy()
+	for k, v := range other {
+		cp[k] = cp[k].Merge(v)
+	}
+	return cp
 }
 
 // EdgeMetadatas collect metadata about each edge in a topology. Keys are a
 // concatenation of node IDs.
 type EdgeMetadatas map[string]EdgeMetadata
 
-// Merge merges another EdgeMetadatas into the receiver. If other is from
-// another probe this is the union of both metadatas. Keys present in both are
-// summed.
-func (e *EdgeMetadatas) Merge(other EdgeMetadatas) {
-	for id, edgemeta := range other {
-		local := (*e)[id]
-		local.Merge(edgemeta)
-		(*e)[id] = local
+// Copy returns a value copy of the EdgeMetadatas.
+func (e EdgeMetadatas) Copy() EdgeMetadatas {
+	cp := make(EdgeMetadatas, len(e))
+	for k, v := range e {
+		cp[k] = v.Copy()
 	}
+	return cp
+}
+
+// Merge merges the other object into this one, and returns the result object.
+// The original is not modified.
+func (e EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
+	cp := e.Copy()
+	for k, v := range other {
+		cp[k] = cp[k].Merge(v)
+	}
+	return cp
 }
 
 // NodeMetadatas collect metadata about each node in a topology. Keys are node
 // IDs.
 type NodeMetadatas map[string]NodeMetadata
 
-// Merge merges another NodeMetadatas into the receiver.
-func (m *NodeMetadatas) Merge(other NodeMetadatas) {
-	for id, meta := range other {
-		if _, ok := (*m)[id]; !ok {
-			(*m)[id] = meta // not a copy
+// Copy returns a value copy of the NodeMetadatas.
+func (n NodeMetadatas) Copy() NodeMetadatas {
+	cp := make(NodeMetadatas, len(n))
+	for k, v := range n {
+		cp[k] = v.Copy()
+	}
+	return cp
+}
+
+// Merge merges the other object into this one, and returns the result object.
+// The original is not modified.
+func (n NodeMetadatas) Merge(other NodeMetadatas) NodeMetadatas {
+	cp := n.Copy()
+	for k, v := range other {
+		if _, ok := cp[k]; !ok { // don't overwrite
+			cp[k] = v.Copy()
 		}
 	}
+	return cp
 }
 
 // EdgeMetadata describes a superset of the metadata that probes can possibly
@@ -70,26 +123,51 @@ type EdgeMetadata struct {
 	MaxConnCountTCP    *uint64 `json:"max_conn_count_tcp,omitempty"`
 }
 
-// Merge merges another EdgeMetadata into the receiver. The two edge metadatas
-// should represent the same edge on different times.
-func (m *EdgeMetadata) Merge(other EdgeMetadata) {
-	m.EgressPacketCount = merge(m.EgressPacketCount, other.EgressPacketCount, sum)
-	m.IngressPacketCount = merge(m.IngressPacketCount, other.IngressPacketCount, sum)
-	m.EgressByteCount = merge(m.EgressByteCount, other.EgressByteCount, sum)
-	m.IngressByteCount = merge(m.IngressByteCount, other.IngressByteCount, sum)
-	m.MaxConnCountTCP = merge(m.MaxConnCountTCP, other.MaxConnCountTCP, max)
+// Copy returns a value copy of the EdgeMetadata.
+func (e EdgeMetadata) Copy() EdgeMetadata {
+	return EdgeMetadata{
+		EgressPacketCount:  cpu64ptr(e.EgressPacketCount),
+		IngressPacketCount: cpu64ptr(e.IngressPacketCount),
+		EgressByteCount:    cpu64ptr(e.EgressByteCount),
+		IngressByteCount:   cpu64ptr(e.IngressByteCount),
+		MaxConnCountTCP:    cpu64ptr(e.MaxConnCountTCP),
+	}
 }
 
-// Flatten sums two EdgeMetadatas. Their windows should be the same duration;
-// they should represent different edges at the same time.
-func (m *EdgeMetadata) Flatten(other EdgeMetadata) {
-	m.EgressPacketCount = merge(m.EgressPacketCount, other.EgressPacketCount, sum)
-	m.IngressPacketCount = merge(m.IngressPacketCount, other.IngressPacketCount, sum)
-	m.EgressByteCount = merge(m.EgressByteCount, other.EgressByteCount, sum)
-	m.IngressByteCount = merge(m.IngressByteCount, other.IngressByteCount, sum)
+func cpu64ptr(u *uint64) *uint64 {
+	if u == nil {
+		return nil
+	}
+	value := *u   // oh man
+	return &value // this sucks
+}
+
+// Merge merges another EdgeMetadata into the receiver and returns the result.
+// The receiver is not modified. The two edge metadatas should represent the
+// same edge on different times.
+func (e EdgeMetadata) Merge(other EdgeMetadata) EdgeMetadata {
+	cp := e.Copy()
+	cp.EgressPacketCount = merge(cp.EgressPacketCount, other.EgressPacketCount, sum)
+	cp.IngressPacketCount = merge(cp.IngressPacketCount, other.IngressPacketCount, sum)
+	cp.EgressByteCount = merge(cp.EgressByteCount, other.EgressByteCount, sum)
+	cp.IngressByteCount = merge(cp.IngressByteCount, other.IngressByteCount, sum)
+	cp.MaxConnCountTCP = merge(cp.MaxConnCountTCP, other.MaxConnCountTCP, max)
+	return cp
+}
+
+// Flatten sums two EdgeMetadatas and returns the result. The receiver is not
+// modified. The two edge metadata windows should be the same duration; they
+// should represent different edges at the same time.
+func (e EdgeMetadata) Flatten(other EdgeMetadata) EdgeMetadata {
+	cp := e.Copy()
+	cp.EgressPacketCount = merge(cp.EgressPacketCount, other.EgressPacketCount, sum)
+	cp.IngressPacketCount = merge(cp.IngressPacketCount, other.IngressPacketCount, sum)
+	cp.EgressByteCount = merge(cp.EgressByteCount, other.EgressByteCount, sum)
+	cp.IngressByteCount = merge(cp.IngressByteCount, other.IngressByteCount, sum)
 	// Note that summing of two maximums doesn't always give us the true
 	// maximum. But it's a best effort.
-	m.MaxConnCountTCP = merge(m.MaxConnCountTCP, other.MaxConnCountTCP, sum)
+	cp.MaxConnCountTCP = merge(cp.MaxConnCountTCP, other.MaxConnCountTCP, sum)
+	return cp
 }
 
 // NodeMetadata describes a superset of the metadata that probes can collect
@@ -112,39 +190,30 @@ func MakeNodeMetadataWith(m map[string]string) NodeMetadata {
 	}
 }
 
-// Merge merges two node metadata maps together. In case of conflict, the
-// other (right-hand) side wins. Always reassign the result of merge to the
-// destination. Merge is defined on the value-type, but node metadata map is
-// itself a reference type, so if you want to maintain immutability, use copy.
-func (nm NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
-	for k, v := range other.Metadata {
-		nm.Metadata[k] = v // other takes precedence
-	}
-	for k, v := range other.Counters {
-		nm.Counters[k] = nm.Counters[k] + v
-	}
-	return nm
-}
-
-// Copy returns a value copy, useful for tests.
-func (nm NodeMetadata) Copy() NodeMetadata {
+// Copy returns a value copy of the NodeMetadata.
+func (n NodeMetadata) Copy() NodeMetadata {
 	cp := MakeNodeMetadata()
-	for k, v := range nm.Metadata {
+	for k, v := range n.Metadata {
 		cp.Metadata[k] = v
 	}
-	for k, v := range nm.Counters {
+	for k, v := range n.Counters {
 		cp.Counters[k] = v
 	}
 	return cp
 }
 
-// NewTopology gives you a Topology.
-func NewTopology() Topology {
-	return Topology{
-		Adjacency:     map[string]IDList{},
-		EdgeMetadatas: map[string]EdgeMetadata{},
-		NodeMetadatas: map[string]NodeMetadata{},
+// Merge merges two node metadata maps together. In case of conflict, the
+// other (right-hand) side wins. Always reassign the result of merge to the
+// destination. Merge does not modify the receiver.
+func (n NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
+	cp := n.Copy()
+	for k, v := range other.Metadata {
+		cp.Metadata[k] = v // other takes precedence
 	}
+	for k, v := range other.Counters {
+		cp.Counters[k] = n.Counters[k] + v
+	}
+	return cp
 }
 
 // Validate checks the topology for various inconsistencies.

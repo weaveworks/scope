@@ -11,7 +11,7 @@ import (
 func TestReportTopologies(t *testing.T) {
 	var (
 		reportType   = reflect.TypeOf(report.MakeReport())
-		topologyType = reflect.TypeOf(report.NewTopology())
+		topologyType = reflect.TypeOf(report.MakeTopology())
 	)
 
 	var want int

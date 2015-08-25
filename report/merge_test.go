@@ -96,9 +96,7 @@ func TestMergeAdjacency(t *testing.T) {
 			},
 		},
 	} {
-		have := c.a
-		have.Merge(c.b)
-		if !reflect.DeepEqual(c.want, have) {
+		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s: want\n\t%#v\nhave\n\t%#v", name, c.want, have)
 		}
 	}
@@ -192,10 +190,7 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 			},
 		},
 	} {
-		have := c.a
-		have.Merge(c.b)
-
-		if !reflect.DeepEqual(c.want, have) {
+		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s: want\n\t%#v, have\n\t%#v", name, c.want, have)
 		}
 	}
@@ -291,10 +286,7 @@ func TestMergeNodeMetadatas(t *testing.T) {
 			},
 		},
 	} {
-		have := c.a
-		have.Merge(c.b)
-
-		if !reflect.DeepEqual(c.want, have) {
+		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s: want\n\t%#v, have\n\t%#v", name, c.want, have)
 		}
 	}

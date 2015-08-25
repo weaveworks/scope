@@ -7,6 +7,9 @@ type IDList []string
 
 // MakeIDList makes a new IDList.
 func MakeIDList(ids ...string) IDList {
+	if len(ids) <= 0 {
+		return IDList{}
+	}
 	sort.Strings(ids)
 	for i := 1; i < len(ids); { // shuffle down any duplicates
 		if ids[i-1] == ids[i] {
@@ -16,6 +19,15 @@ func MakeIDList(ids ...string) IDList {
 		i++
 	}
 	return IDList(ids)
+}
+
+// Copy returns a copy of the IDList.
+func (a IDList) Copy() IDList {
+	cp := make(IDList, len(a))
+	for i, s := range a {
+		cp[i] = s
+	}
+	return cp
 }
 
 // Add is the only correct way to add ids to an IDList.
