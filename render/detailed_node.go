@@ -7,6 +7,7 @@ import (
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -296,6 +297,7 @@ func containerOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
 		{docker.ContainerID, "ID"},
+		{overlay.WeaveDNSHostname, "Weave DNS Hostname"},
 		{docker.ImageID, "Image ID"},
 		{docker.ContainerPorts, "Ports"},
 		{docker.ContainerCreated, "Created"},
