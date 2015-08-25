@@ -127,7 +127,7 @@ func main() {
 	}
 
 	if *weaveRouterAddr != "" {
-		weave, err := overlay.NewWeave(*weaveRouterAddr)
+		weave, err := overlay.NewWeave(hostID, *weaveRouterAddr)
 		if err != nil {
 			log.Fatalf("failed to start Weave tagger: %v", err)
 		}

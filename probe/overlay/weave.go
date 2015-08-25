@@ -18,6 +18,9 @@ const (
 	// WeavePeerNickName is the key for the peer nickname, typically a
 	// hostname.
 	WeavePeerNickName = "weave_peer_nick_name"
+
+	// WeaveDNSHostname is the ket for the WeaveDNS hostname
+	WeaveDNSHostname = "weave_dns_hostname"
 )
 
 // Weave represents a single Weave router, presumably on the same host
@@ -26,27 +29,37 @@ const (
 // overlay -- though I'm not sure what that would look like in practice right
 // now.
 type Weave struct {
-	url string
+	url    string
+	hostID string
 }
 
 type weaveStatus struct {
 	Router struct {
 		Peers []struct {
-			Name     string `json:"name"`
-			NickName string `json:"nickname"`
-		} `json:"peers"`
-	} `json:"router"`
+			Name     string
+			NickName string
+		}
+	}
+
+	DNS struct {
+		Entries []struct {
+			Hostname    string
+			ContainerID string
+			Tombstone   int64
+		}
+	}
 }
 
 // NewWeave returns a new Weave tagger based on the Weave router at
 // address. The address should be an IP or FQDN, no port.
-func NewWeave(weaveRouterAddress string) (*Weave, error) {
+func NewWeave(hostID, weaveRouterAddress string) (*Weave, error) {
 	s, err := sanitize("http://", 6784, "/report")(weaveRouterAddress)
 	if err != nil {
 		return nil, err
 	}
 	return &Weave{
-		url: s,
+		url:    s,
+		hostID: hostID,
 	}, nil
 }
 
@@ -72,8 +85,26 @@ func (w Weave) update() (weaveStatus, error) {
 
 // Tag implements Tagger.
 func (w Weave) Tag(r report.Report) (report.Report, error) {
-	// The status-json endpoint doesn't return any link information, so
-	// there's nothing to tag, yet.
+	status, err := w.update()
+	if err != nil {
+		return r, nil
+	}
+
+	for _, entry := range status.DNS.Entries {
+		if entry.Tombstone > 0 {
+			continue
+		}
+		nodeID := report.MakeContainerNodeID(w.hostID, entry.ContainerID)
+		node, ok := r.Container.NodeMetadatas[nodeID]
+		if !ok {
+			continue
+		}
+		hostnames := report.IDList(strings.Fields(node.Metadata[WeaveDNSHostname]))
+		hostnames = hostnames.Add(strings.TrimSuffix(entry.Hostname, "."))
+		node.Metadata[WeaveDNSHostname] = strings.Join(hostnames, " ")
+		r.Container.NodeMetadatas[nodeID] = node
+	}
+
 	return r, nil
 }
 
