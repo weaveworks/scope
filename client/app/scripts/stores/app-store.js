@@ -157,6 +157,11 @@ AppStore.registeredCallback = function(payload) {
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
+    case ActionTypes.OPEN_WEBSOCKET:
+      websocketClosed = false;
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
     case ActionTypes.CLOSE_WEBSOCKET:
       websocketClosed = true;
       AppStore.emit(AppStore.CHANGE_EVENT);

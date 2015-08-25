@@ -26,6 +26,10 @@ function createWebsocket(topologyUrl) {
 
   socket = new WebSocket(WS_URL + topologyUrl + '/ws?t=' + updateFrequency);
 
+  socket.onopen = function() {
+    AppActions.openWebsocket();
+  };
+
   socket.onclose = function() {
     clearTimeout(reconnectTimer);
     socket = null;
