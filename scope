@@ -150,7 +150,10 @@ case "$COMMAND" in
 
         # If Weave is running, we want to expose a Weave IP to the host
         # network namespace, so Scope can use it.
+        SCOPE_ARGS=
         if command_exists weave && is_running $WEAVE_CONTAINER_NAME; then
+            container_ip $WEAVE_CONTAINER_NAME
+            SCOPE_ARGS="--probe.weave.router.addr=$CONTAINER_IP"
             weave_expose
         fi
 
@@ -163,7 +166,7 @@ case "$COMMAND" in
 
         CONTAINER=$(docker run --privileged -d --name=$SCOPE_CONTAINER_NAME --net=host --pid=host \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS --probe.docker true "$@")
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS $SCOPE_ARGS --probe.docker true "$@")
 
         IP_ADDRS=$(docker run --rm --net=host gliderlabs/alpine /bin/sh -c "$IP_ADDR_CMD")
         if command_exists weave && is_running $WEAVE_CONTAINER_NAME && weave_dns_present; then

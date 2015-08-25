@@ -1,7 +1,7 @@
 package overlay_test
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -44,13 +44,19 @@ const (
 	mockWeavePeerNickName = "winny"
 )
 
+var (
+	mockResponse = fmt.Sprintf(`{
+		"router": {
+			"peers": [{
+				"name": "%s",
+				"nickname": "%s"
+			}]
+		}
+	}`, mockWeavePeerName, mockWeavePeerNickName)
+)
+
 func mockWeaveRouter(w http.ResponseWriter, r *http.Request) {
-	if err := json.NewEncoder(w).Encode(map[string]interface{}{
-		"Peers": []map[string]interface{}{{
-			"Name":     mockWeavePeerName,
-			"NickName": mockWeavePeerNickName,
-		}},
-	}); err != nil {
+	if _, err := w.Write([]byte(mockResponse)); err != nil {
 		panic(err)
 	}
 }
