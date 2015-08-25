@@ -29,13 +29,13 @@ func NewReporter(registry Registry, scope string) *Reporter {
 // Report generates a Report containing Container and ContainerImage topologies
 func (r *Reporter) Report() (report.Report, error) {
 	result := report.MakeReport()
-	result.Container.Merge(r.containerTopology())
-	result.ContainerImage.Merge(r.containerImageTopology())
+	result.Container = result.Container.Merge(r.containerTopology())
+	result.ContainerImage = result.ContainerImage.Merge(r.containerImageTopology())
 	return result, nil
 }
 
 func (r *Reporter) containerTopology() report.Topology {
-	result := report.NewTopology()
+	result := report.MakeTopology()
 
 	r.registry.WalkContainers(func(c Container) {
 		nodeID := report.MakeContainerNodeID(r.scope, c.ID())
@@ -46,7 +46,7 @@ func (r *Reporter) containerTopology() report.Topology {
 }
 
 func (r *Reporter) containerImageTopology() report.Topology {
-	result := report.NewTopology()
+	result := report.MakeTopology()
 
 	r.registry.WalkImages(func(image *docker_client.APIImages) {
 		nmd := report.MakeNodeMetadataWith(map[string]string{
