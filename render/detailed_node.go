@@ -76,20 +76,7 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	tables := sortableTables{}
 
 	// Figure out if multiple hosts/containers are referenced by the renderableNode
-	originHosts := make(map[string]struct{})
-	originContainers := make(map[string]struct{})
-	for _, id := range n.Origins {
-		for _, topology := range r.Topologies() {
-			if nmd, ok := topology.NodeMetadatas[id]; ok {
-				originHosts[report.ExtractHostID(nmd)] = struct{}{}
-				if id, ok := nmd.Metadata[docker.ContainerID]; ok {
-					originContainers[id] = struct{}{}
-				}
-			}
-		}
-	}
-	multiHost := len(originHosts) > 1
-	multiContainer := len(originContainers) > 1
+	multiContainer, multiHost := getRenderingContext(r, n)
 
 	// RenderableNode may be the result of merge operation(s), and so may have
 	// multiple origins. The ultimate goal here is to generate tables to view
@@ -120,6 +107,28 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 		Pseudo:     n.Pseudo,
 		Tables:     tables,
 	}
+}
+
+func getRenderingContext(r report.Report, n RenderableNode) (multiContainer bool, multiHost bool) {
+	originHosts := make(map[string]struct{})
+	originContainers := make(map[string]struct{})
+	for _, id := range n.Origins {
+		for _, topology := range r.Topologies() {
+			if nmd, ok := topology.NodeMetadatas[id]; ok {
+				originHosts[report.ExtractHostID(nmd)] = struct{}{}
+				if id, ok := nmd.Metadata[docker.ContainerID]; ok {
+					originContainers[id] = struct{}{}
+				}
+			}
+			// Return early if possible
+			multiHost = len(originHosts) > 1
+			multiContainer = len(originContainers) > 1
+			if multiHost && multiContainer {
+				return
+			}
+		}
+	}
+	return
 }
 
 func connectionsTable(connections []Row, r report.Report, n RenderableNode) (Table, bool) {
