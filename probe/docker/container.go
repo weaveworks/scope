@@ -153,7 +153,7 @@ func (c *container) StartGatheringStats() error {
 
 		for err := decoder.Decode(&stats); err != io.EOF; err = decoder.Decode(&stats) {
 			if err != nil {
-				log.Printf("docker container: error reading event %v", err)
+				log.Printf("docker container: error reading event, did container stop? %v", err)
 				return
 			}
 
