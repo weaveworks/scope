@@ -192,7 +192,7 @@ func TestRegistryEvents(t *testing.T) {
 		runtime.Gosched()
 
 		check := func(want []docker.Container) {
-			test.Poll(t, 10*time.Millisecond, want, func() interface{} {
+			test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 				return allContainers(registry)
 			})
 		}

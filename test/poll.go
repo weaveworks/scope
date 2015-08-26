@@ -19,7 +19,7 @@ func Poll(t *testing.T, d time.Duration, want interface{}, have func() interface
 		time.Sleep(d / 10)
 	}
 	h := have()
-	if reflect.DeepEqual(want, h) {
+	if !reflect.DeepEqual(want, h) {
 		t.Fatal(Diff(want, h))
 	}
 }
