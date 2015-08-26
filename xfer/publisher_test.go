@@ -1,12 +1,16 @@
 package xfer_test
 
 import (
+	"compress/gzip"
 	"encoding/gob"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/gorilla/handlers"
 
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -21,7 +25,7 @@ func TestHTTPPublisher(t *testing.T) {
 		done  = make(chan struct{})
 	)
 
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if want, have := xfer.AuthorizationHeader(token), r.Header.Get("Authorization"); want != have {
 			t.Errorf("want %q, have %q", want, have)
 		}
@@ -29,7 +33,19 @@ func TestHTTPPublisher(t *testing.T) {
 			t.Errorf("want %q, have %q", want, have)
 		}
 		var have report.Report
-		if err := gob.NewDecoder(r.Body).Decode(&have); err != nil {
+
+		reader := r.Body
+		var err error
+		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+			reader, err = gzip.NewReader(r.Body)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			defer reader.Close()
+		}
+
+		if err := gob.NewDecoder(reader).Decode(&have); err != nil {
 			t.Error(err)
 			return
 		}
@@ -39,7 +55,9 @@ func TestHTTPPublisher(t *testing.T) {
 		}
 		w.WriteHeader(http.StatusOK)
 		close(done)
-	}))
+	})
+
+	s := httptest.NewServer(handlers.CompressHandler(handler))
 	defer s.Close()
 
 	p, err := xfer.NewHTTPPublisher(s.URL, token, id)

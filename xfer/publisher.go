@@ -2,6 +2,7 @@ package xfer
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/gob"
 	"fmt"
 	"log"
@@ -52,21 +53,30 @@ func NewHTTPPublisher(target, token, id string) (*HTTPPublisher, error) {
 
 // Publish publishes the report to the URL.
 func (p HTTPPublisher) Publish(rpt report.Report) error {
-	var buf bytes.Buffer
-	if err := gob.NewEncoder(&buf).Encode(rpt); err != nil {
+	gzbuf := bytes.Buffer{}
+	gzwriter := gzip.NewWriter(&gzbuf)
+
+	if err := gob.NewEncoder(gzwriter).Encode(rpt); err != nil {
 		return err
 	}
-	req, err := http.NewRequest("POST", p.url, &buf)
+	gzwriter.Close() // otherwise the content won't get flushed to the output stream
+
+	req, err := http.NewRequest("POST", p.url, &gzbuf)
 	if err != nil {
 		return err
 	}
+
 	req.Header.Set("Authorization", AuthorizationHeader(p.token))
 	req.Header.Set(ScopeProbeIDHeader, p.id)
+	req.Header.Set("Content-Encoding", "gzip")
+	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf(resp.Status)
 	}
