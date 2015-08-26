@@ -27,6 +27,7 @@ const (
 	ContainerPorts   = "docker_container_ports"
 	ContainerCreated = "docker_container_created"
 	ContainerIPs     = "docker_container_ips"
+	ContainerLabels  = "docker_container_labels"
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
@@ -206,6 +207,7 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 	c.RLock()
 	defer c.RUnlock()
 
+	labels, _ := json.Marshal(c.container.Config.Labels)
 	result := report.MakeNodeMetadataWith(map[string]string{
 		ContainerID:      c.ID(),
 		ContainerName:    strings.TrimPrefix(c.container.Name, "/"),
@@ -215,6 +217,7 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 		ImageID:          c.container.Image,
 		ContainerIPs: strings.Join(append(c.container.NetworkSettings.SecondaryIPAddresses,
 			c.container.NetworkSettings.IPAddress), " "),
+		ContainerLabels: string(labels),
 	})
 
 	if c.latestStats == nil {
@@ -242,6 +245,13 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 		CPUUsageInKernelmode: strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.UsageInKernelmode, 10),
 		CPUSystemCPUUsage:    strconv.FormatUint(c.latestStats.CPUStats.SystemCPUUsage, 10),
 	}))
+	return result
+}
+
+// ExtractContainerLabels returns the list of Docker container labels given a NodeMetadata from the Container topology.
+func ExtractContainerLabels(nmd report.NodeMetadata) map[string]string {
+	result := make(map[string]string)
+	json.Unmarshal([]byte(nmd.Metadata[ContainerLabels]), &result)
 	return result
 }
 
