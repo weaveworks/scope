@@ -62,11 +62,10 @@ const doLayout = function(nodes, edges, width, height, scale) {
   debug('graph layout constraints', constraints);
 
   cola
-    .constraints(constraints)
-    .convergenceThreshold(1e-3)
     .nodes(nodeList)
     .links(edgeList)
-    .start(5, 20, 10);
+    .flowLayout('y', 100)
+    .start(5, 5, 10);
 
   debug('graph layout done');
 

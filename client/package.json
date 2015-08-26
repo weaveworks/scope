@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
-    "cola": "tgdwyer/WebCola#21eada8b1281675f407be04bc990c7a656ef2a04",
+    "cola": "tgdwyer/WebCola#1d0b591861cdef724963349ca9fe12c92c664c3a",
     "d3": "^3.5.5",
     "debug": "^2.2.0",
     "flux": "^2.0.3",
@@ -17,6 +17,7 @@
     "lodash": "~3.9.3",
     "material-ui": "^0.11.0",
     "materialize-css": "^0.96.1",
+    "md5": "^2.0.0",
     "object-assign": "^2.0.0",
     "page": "^1.6.3",
     "react": "^0.13.3",
@@ -60,7 +61,6 @@
     "webpack-dev-server": "^1.10.1"
   },
   "scripts": {
-    "postinstall": "npm run build",
     "build": "webpack -p --config webpack.production.config.js",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
