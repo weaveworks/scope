@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,12 +22,11 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	ContainerName        = "docker_container_name"
-	ContainerCommand     = "docker_container_command"
-	ContainerPorts       = "docker_container_ports"
-	ContainerCreated     = "docker_container_created"
-	ContainerIPs         = "docker_container_ips"
-	ContainerLabelPrefix = "docker_container_label_"
+	ContainerName    = "docker_container_name"
+	ContainerCommand = "docker_container_command"
+	ContainerPorts   = "docker_container_ports"
+	ContainerCreated = "docker_container_created"
+	ContainerIPs     = "docker_container_ips"
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
@@ -218,17 +216,7 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 		ContainerIPs: strings.Join(append(c.container.NetworkSettings.SecondaryIPAddresses,
 			c.container.NetworkSettings.IPAddress), " "),
 	})
-
-	// Add labels in alphabetical order
-	labels := c.container.Config.Labels
-	labelKeys := make([]string, 0, len(labels))
-	for k := range labels {
-		labelKeys = append(labelKeys, k)
-	}
-	sort.Strings(labelKeys)
-	for _, labelKey := range labelKeys {
-		result.Metadata[ContainerLabelPrefix+labelKey] = labels[labelKey]
-	}
+	AddLabels(result, c.container.Config.Labels)
 
 	if c.latestStats == nil {
 		return result
@@ -261,16 +249,4 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 // ExtractContainerIPs returns the list of container IPs given a NodeMetadata from the Container topology.
 func ExtractContainerIPs(nmd report.NodeMetadata) []string {
 	return strings.Fields(nmd.Metadata[ContainerIPs])
-}
-
-// ExtractContainerLabels returns the list of Docker container labels given a NodeMetadata from the Container topology.
-func ExtractContainerLabels(nmd report.NodeMetadata) map[string]string {
-	result := map[string]string{}
-	for key, value := range nmd.Metadata {
-		if strings.HasPrefix(key, ContainerLabelPrefix) {
-			label := key[len(ContainerLabelPrefix):]
-			result[label] = value
-		}
-	}
-	return result
 }

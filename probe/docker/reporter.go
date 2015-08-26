@@ -52,6 +52,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 		nmd := report.MakeNodeMetadataWith(map[string]string{
 			ImageID: image.ID,
 		})
+		AddLabels(nmd, image.Labels)
 
 		if len(image.RepoTags) > 0 {
 			nmd.Metadata[ImageName] = image.RepoTags[0]
