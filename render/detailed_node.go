@@ -313,15 +313,8 @@ func containerOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool
 		rows = append(rows, Row{Key: "IP Address", ValueMajor: ip, ValueMinor: ""})
 	}
 
-	// Add labels in alphabetical order
-	labels := docker.ExtractContainerLabels(nmd)
-	labelKeys := make([]string, 0, len(labels))
-	for k := range labels {
-		labelKeys = append(labelKeys, k)
-	}
-	sort.Strings(labelKeys)
-	for _, key := range labelKeys {
-		rows = append(rows, Row{Key: fmt.Sprintf("Label %q", key), ValueMajor: labels[key]})
+	for labelKey, labelValue := range docker.ExtractContainerLabels(nmd) {
+		rows = append(rows, Row{Key: fmt.Sprintf("Label %q", labelKey), ValueMajor: labelValue})
 
 	}
 
