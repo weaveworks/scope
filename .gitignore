@@ -39,6 +39,8 @@ probe/probe
 probe/scope-probe
 docker/scope-app
 docker/scope-probe
+docker/docker*
+docker/weave
 experimental/bridge/bridge
 experimental/demoprobe/demoprobe
 experimental/fixprobe/fixprobe

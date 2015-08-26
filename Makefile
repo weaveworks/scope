@@ -12,12 +12,23 @@ SCOPE_EXPORT=scope.tar
 SCOPE_UI_BUILD_EXPORT=scope_ui_build.tar
 SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
+DOCKER_VERSION=1.3.1
+DOCKER_DISTRIB=docker/docker-$(DOCKER_VERSION).tgz
+DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
 
 all: $(SCOPE_EXPORT)
 
-$(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) docker/*
+$(DOCKER_DISTRIB):
+	curl -o $(DOCKER_DISTRIB) $(DOCKER_DISTRIB_URL)
+
+docker/weave:
+	curl -L git.io/weave -o docker/weave
+	chmod u+x docker/weave
+
+$(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) $(DOCKER_DISTRIB) docker/weave docker/entrypoint.sh docker/Dockerfile docker/run-app docker/run-probe
 	@if [ -z '$(DOCKER_SQUASH)' ]; then echo "Please install docker-squash by running 'make deps'." && exit 1; fi
 	cp $(APP_EXE) $(PROBE_EXE) docker/
+	cp $(DOCKER_DISTRIB) docker/docker.tgz
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker save $(SCOPE_IMAGE):latest | sudo $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
 
