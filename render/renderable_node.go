@@ -16,8 +16,8 @@ type RenderableNode struct {
 	Adjacency  report.IDList `json:"adjacency,omitempty"`   // Node IDs (in the same topology domain)
 	Origins    report.IDList `json:"origins,omitempty"`     // Core node IDs that contributed information
 
-	report.EdgeMetadata `json:"metadata"` // Numeric sums
-	report.NodeMetadata `json:"-"`        // merged NodeMetadata of the nodes used to build this
+	report.EdgeMetadata `json:"metadata"`        // Numeric sums
+	report.NodeMetadata `json:"XXXNODEMETADATA"` // merged NodeMetadata of the nodes used to build this // TODO ###
 }
 
 // RenderableNodes is a set of RenderableNodes
@@ -56,8 +56,8 @@ func (rn *RenderableNode) Merge(other RenderableNode) {
 	rn.Adjacency = rn.Adjacency.Merge(other.Adjacency)
 	rn.Origins = rn.Origins.Merge(other.Origins)
 
-	rn.EdgeMetadata.Merge(other.EdgeMetadata)
-	rn.NodeMetadata.Merge(other.NodeMetadata)
+	rn.EdgeMetadata = rn.EdgeMetadata.Merge(other.EdgeMetadata)
+	rn.NodeMetadata = rn.NodeMetadata.Merge(other.NodeMetadata)
 }
 
 // NewRenderableNode makes a new RenderableNode
@@ -80,8 +80,8 @@ func newDerivedNode(id string, node RenderableNode) RenderableNode {
 		LabelMinor:   "",
 		Rank:         "",
 		Pseudo:       node.Pseudo,
-		EdgeMetadata: node.EdgeMetadata,
-		Origins:      node.Origins,
+		Origins:      node.Origins.Copy(),
+		EdgeMetadata: node.EdgeMetadata.Copy(),
 		NodeMetadata: report.MakeNodeMetadata(),
 	}
 }
@@ -105,8 +105,8 @@ func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode 
 		LabelMinor:   "",
 		Rank:         "",
 		Pseudo:       true,
-		EdgeMetadata: node.EdgeMetadata,
-		Origins:      node.Origins,
+		Origins:      node.Origins.Copy(),
+		EdgeMetadata: node.EdgeMetadata.Copy(),
 		NodeMetadata: report.MakeNodeMetadata(),
 	}
 }

@@ -109,9 +109,11 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 	}
 }
 
-func getRenderingContext(r report.Report, n RenderableNode) (multiContainer bool, multiHost bool) {
-	originHosts := make(map[string]struct{})
-	originContainers := make(map[string]struct{})
+func getRenderingContext(r report.Report, n RenderableNode) (multiContainer, multiHost bool) {
+	var (
+		originHosts      = map[string]struct{}{}
+		originContainers = map[string]struct{}{}
+	)
 	for _, id := range n.Origins {
 		for _, topology := range r.Topologies() {
 			if nmd, ok := topology.NodeMetadatas[id]; ok {

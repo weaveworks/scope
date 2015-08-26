@@ -6,6 +6,7 @@ import (
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test"
 )
 
 type mockRenderer struct {
@@ -76,12 +77,12 @@ func TestMapRender2(t *testing.T) {
 			"baz": {ID: "baz"},
 		}},
 	}
-	want := render.RenderableNodes{
+	want := sterilize(render.RenderableNodes{
 		"bar": render.RenderableNode{ID: "bar"},
-	}
+	}, false)
 	have := mapper.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {
-		t.Errorf("want %+v, have %+v", want, have)
+		t.Error(test.Diff(want, have))
 	}
 }
 
@@ -129,8 +130,8 @@ func TestMapEdge(t *testing.T) {
 	}
 
 	mapper := render.Map{
-		MapFunc: func(nodes render.RenderableNode) (render.RenderableNode, bool) {
-			return render.RenderableNode{ID: "_" + nodes.ID}, true
+		MapFunc: func(n render.RenderableNode) (render.RenderableNode, bool) {
+			return render.RenderableNode{ID: "_" + n.ID}, true
 		},
 		Renderer: render.LeafMap{
 			Selector: selector,
@@ -143,7 +144,7 @@ func TestMapEdge(t *testing.T) {
 		EgressPacketCount: newu64(1),
 		EgressByteCount:   newu64(2),
 	}), mapper.EdgeMetadata(report.MakeReport(), "_foo", "_bar"); !reflect.DeepEqual(want, have) {
-		t.Errorf("want %+v, have %+v", want, have)
+		t.Error(test.Diff(want, have))
 	}
 }
 

@@ -16,26 +16,6 @@ type Renderer interface {
 // other renderers.
 type Reduce []Renderer
 
-// Map is a Renderer which produces a set of RenderableNodes from the set of
-// RenderableNodes produced by another Renderer.
-type Map struct {
-	MapFunc
-	Renderer
-}
-
-// LeafMap is a Renderer which produces a set of RenderableNodes from a report.Topology
-// by using a map function and topology selector.
-type LeafMap struct {
-	Selector report.TopologySelector
-	Mapper   LeafMapFunc
-	Pseudo   PseudoFunc
-}
-
-// FilterUnconnected is a Renderer which filters out unconnected nodes.
-type FilterUnconnected struct {
-	Renderer
-}
-
 // MakeReduce is the only sane way to produce a Reduce Renderer.
 func MakeReduce(renderers ...Renderer) Renderer {
 	return Reduce(renderers)
@@ -54,9 +34,16 @@ func (r Reduce) Render(rpt report.Report) RenderableNodes {
 func (r Reduce) EdgeMetadata(rpt report.Report, localID, remoteID string) report.EdgeMetadata {
 	metadata := report.EdgeMetadata{}
 	for _, renderer := range r {
-		metadata.Merge(renderer.EdgeMetadata(rpt, localID, remoteID))
+		metadata = metadata.Merge(renderer.EdgeMetadata(rpt, localID, remoteID))
 	}
 	return metadata
+}
+
+// Map is a Renderer which produces a set of RenderableNodes from the set of
+// RenderableNodes produced by another Renderer.
+type Map struct {
+	MapFunc
+	Renderer
 }
 
 // Render transforms a set of RenderableNodes produces by another Renderer.
@@ -133,9 +120,17 @@ func (m Map) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableID st
 	output := report.EdgeMetadata{}
 	for _, edge := range oldEdges {
 		metadata := m.Renderer.EdgeMetadata(rpt, edge.src, edge.dst)
-		output.Merge(metadata)
+		output = output.Merge(metadata)
 	}
 	return output
+}
+
+// LeafMap is a Renderer which produces a set of RenderableNodes from a report.Topology
+// by using a map function and topology selector.
+type LeafMap struct {
+	Selector report.TopologySelector
+	Mapper   LeafMapFunc
+	Pseudo   PseudoFunc
 }
 
 // Render transforms a given Report into a set of RenderableNodes, which
@@ -234,8 +229,8 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 			// We propagate edge metadata to nodes on both ends of the edges.
 			// TODO we should 'reverse' one end of the edge meta data - ingress -> egress etc.
 			if md, ok := t.EdgeMetadatas[report.MakeEdgeID(srcNodeID, dstNodeID)]; ok {
-				srcRenderableNode.EdgeMetadata.Merge(md)
-				dstRenderableNode.EdgeMetadata.Merge(md)
+				srcRenderableNode.EdgeMetadata = srcRenderableNode.EdgeMetadata.Merge(md)
+				dstRenderableNode.EdgeMetadata = dstRenderableNode.EdgeMetadata.Merge(md)
 				nodes[dstRenderableID] = dstRenderableNode
 			}
 		}
@@ -268,10 +263,15 @@ func (m LeafMap) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableI
 			dst = mapped.ID
 		}
 		if src == srcRenderableID && dst == dstRenderableID {
-			metadata.Flatten(edgeMeta)
+			metadata = metadata.Flatten(edgeMeta)
 		}
 	}
 	return metadata
+}
+
+// FilterUnconnected is a Renderer which filters out unconnected nodes.
+type FilterUnconnected struct {
+	Renderer
 }
 
 // Render produces a set of RenderableNodes given a Report
