@@ -244,3 +244,8 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 	}))
 	return result
 }
+
+// ExtractContainerIPs returns the list of container IPs given a NodeMetadata from the Container topology.
+func ExtractContainerIPs(nmd report.NodeMetadata) []string {
+	return strings.Fields(nmd.Metadata[ContainerIPs])
+}

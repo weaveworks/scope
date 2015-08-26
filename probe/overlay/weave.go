@@ -150,7 +150,7 @@ func (w Weave) tagContainer(r report.Report, containerIDPrefix, macAddress strin
 			continue
 		}
 
-		existingIPs := report.MakeIDList(strings.Fields(nmd.Metadata[docker.ContainerIPs])...)
+		existingIPs := report.MakeIDList(docker.ExtractContainerIPs(nmd)...)
 		existingIPs = existingIPs.Add(ips...)
 		nmd.Metadata[docker.ContainerIPs] = strings.Join(existingIPs, " ")
 		nmd.Metadata[WeaveMACAddress] = macAddress
