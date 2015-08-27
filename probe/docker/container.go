@@ -222,7 +222,7 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 		return result
 	}
 
-	result.Merge(report.MakeNodeMetadataWith(map[string]string{
+	result = result.Merge(report.MakeNodeMetadataWith(map[string]string{
 		NetworkRxDropped: strconv.FormatUint(c.latestStats.Network.RxDropped, 10),
 		NetworkRxBytes:   strconv.FormatUint(c.latestStats.Network.RxBytes, 10),
 		NetworkRxErrors:  strconv.FormatUint(c.latestStats.Network.RxErrors, 10),

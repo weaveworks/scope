@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"runtime"
 	"testing"
 	"time"
 
@@ -55,7 +54,6 @@ func TestContainer(t *testing.T) {
 		t.Errorf("%v", err)
 	}
 	defer c.StopGatheringStats()
-	runtime.Gosched() // wait for StartGatheringStats goroutine to call connection.Do
 
 	// Send some stats to the docker container
 	stats := &client.Stats{}
@@ -65,7 +63,7 @@ func TestContainer(t *testing.T) {
 	}
 
 	// Now see if we go them
-	test.Poll(t, 10*time.Millisecond, "12345", func() interface{} {
+	test.Poll(t, 100*time.Millisecond, "12345", func() interface{} {
 		return c.GetNodeMetadata().Metadata[docker.MemoryUsage]
 	})
 }
