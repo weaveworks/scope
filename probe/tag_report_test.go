@@ -25,8 +25,8 @@ func TestApply(t *testing.T) {
 		from report.Topology
 		via  string
 	}{
-		{endpointNodeMetadata.Copy().Merge(report.MakeNodeMetadataWith(map[string]string{"topology": "endpoint"})), r.Endpoint, endpointNodeID},
-		{addressNodeMetadata.Copy().Merge(report.MakeNodeMetadataWith(map[string]string{"topology": "address"})), r.Address, addressNodeID},
+		{endpointNodeMetadata.Merge(report.MakeNodeMetadataWith(map[string]string{"topology": "endpoint"})), r.Endpoint, endpointNodeID},
+		{addressNodeMetadata.Merge(report.MakeNodeMetadataWith(map[string]string{"topology": "address"})), r.Address, addressNodeID},
 	} {
 		if want, have := tuple.want, tuple.from.NodeMetadatas[tuple.via]; !reflect.DeepEqual(want, have) {
 			t.Errorf("want %+v, have %+v", want, have)
