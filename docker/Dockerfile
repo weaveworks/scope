@@ -1,5 +1,6 @@
 FROM gliderlabs/alpine
 MAINTAINER Weaveworks Inc <help@weave.works>
+LABEL works.weave.role=system
 WORKDIR /home/weave
 RUN echo "http://dl-4.alpinelinux.org/alpine/edge/testing" >>/etc/apk/repositories && \
 	apk add --update runit conntrack-tools iproute2 util-linux && \
