@@ -65,11 +65,6 @@ func TestMerge(t *testing.T) {
 		dstEndpointNodeID = report.MakeEndpointNodeID(hostID, p.DstIP, p.DstPort)
 	)
 	if want, have := (report.Topology{
-		Adjacency: report.Adjacency{
-			report.MakeAdjacencyID(srcEndpointNodeID): report.MakeIDList(
-				dstEndpointNodeID,
-			),
-		},
 		EdgeMetadatas: report.EdgeMetadatas{
 			report.MakeEdgeID(srcEndpointNodeID, dstEndpointNodeID): report.EdgeMetadata{
 				EgressPacketCount: newu64(1),
@@ -77,7 +72,16 @@ func TestMerge(t *testing.T) {
 			},
 		},
 		NodeMetadatas: report.NodeMetadatas{
-			srcEndpointNodeID: report.MakeNodeMetadata(),
+			srcEndpointNodeID: {
+				Metadata:  map[string]string{},
+				Counters:  map[string]int{},
+				Adjacency: report.MakeIDList(dstEndpointNodeID),
+			},
+			dstEndpointNodeID: report.NodeMetadata{
+				Metadata:  map[string]string{},
+				Counters:  map[string]int{},
+				Adjacency: report.MakeIDList(),
+			},
 		},
 	}), rpt.Endpoint; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
@@ -88,11 +92,6 @@ func TestMerge(t *testing.T) {
 		dstAddressNodeID = report.MakeAddressNodeID(hostID, p.DstIP)
 	)
 	if want, have := (report.Topology{
-		Adjacency: report.Adjacency{
-			report.MakeAdjacencyID(srcAddressNodeID): report.MakeIDList(
-				dstAddressNodeID,
-			),
-		},
 		EdgeMetadatas: report.EdgeMetadatas{
 			report.MakeEdgeID(srcAddressNodeID, dstAddressNodeID): report.EdgeMetadata{
 				EgressPacketCount: newu64(1),
@@ -100,7 +99,16 @@ func TestMerge(t *testing.T) {
 			},
 		},
 		NodeMetadatas: report.NodeMetadatas{
-			srcAddressNodeID: report.MakeNodeMetadata(),
+			srcAddressNodeID: report.NodeMetadata{
+				Metadata:  map[string]string{},
+				Counters:  map[string]int{},
+				Adjacency: report.MakeIDList(dstAddressNodeID),
+			},
+			dstAddressNodeID: report.NodeMetadata{
+				Metadata:  map[string]string{},
+				Counters:  map[string]int{},
+				Adjacency: report.MakeIDList(),
+			},
 		},
 	}), rpt.Address; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))

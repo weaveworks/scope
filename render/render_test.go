@@ -112,12 +112,14 @@ func TestMapEdge(t *testing.T) {
 	selector := func(_ report.Report) report.Topology {
 		return report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
-				"foo": report.MakeNodeMetadataWith(map[string]string{"id": "foo"}),
-				"bar": report.MakeNodeMetadataWith(map[string]string{"id": "bar"}),
-			},
-			Adjacency: report.Adjacency{
-				">foo": report.MakeIDList("bar"),
-				">bar": report.MakeIDList("foo"),
+				"foo": {
+					Metadata:  map[string]string{"id": "foo"},
+					Adjacency: report.MakeIDList("bar"),
+				},
+				"bar": {
+					Metadata:  map[string]string{"id": "bar"},
+					Adjacency: report.MakeIDList("foo"),
+				},
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				"foo|bar": report.EdgeMetadata{EgressPacketCount: newu64(1), EgressByteCount: newu64(2)},
@@ -126,7 +128,7 @@ func TestMapEdge(t *testing.T) {
 		}
 	}
 
-	identity := func(nmd report.NodeMetadata) render.RenderableNodes {
+	identity := func(nmd report.NodeMetadata, _ report.Networks) render.RenderableNodes {
 		return render.RenderableNodes{nmd.Metadata["id"]: render.NewRenderableNode(nmd.Metadata["id"], "", "", "", nmd)}
 	}
 
@@ -138,8 +140,16 @@ func TestMapEdge(t *testing.T) {
 		Renderer: render.LeafMap{
 			Selector: selector,
 			Mapper:   identity,
-			Pseudo:   nil,
 		},
+	}
+
+	have := mapper.Render(report.MakeReport())
+	want := render.RenderableNodes{
+		"_foo": {ID: "_foo", Adjacency: report.MakeIDList("_bar")},
+		"_bar": {ID: "_bar", Adjacency: report.MakeIDList("_foo")},
+	}
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
 	}
 
 	if want, have := (report.EdgeMetadata{

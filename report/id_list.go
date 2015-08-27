@@ -21,15 +21,6 @@ func MakeIDList(ids ...string) IDList {
 	return IDList(ids)
 }
 
-// Copy returns a copy of the IDList.
-func (a IDList) Copy() IDList {
-	cp := make(IDList, len(a))
-	for i, s := range a {
-		cp[i] = s
-	}
-	return cp
-}
-
 // Add is the only correct way to add ids to an IDList.
 func (a IDList) Add(ids ...string) IDList {
 	for _, s := range ids {
@@ -44,6 +35,13 @@ func (a IDList) Add(ids ...string) IDList {
 		a[i] = s
 	}
 	return a
+}
+
+// Copy returns a copy of the IDList.
+func (a IDList) Copy() IDList {
+	result := make(IDList, len(a))
+	copy(result, a)
+	return result
 }
 
 // Merge all elements from a and b into a new list

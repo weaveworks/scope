@@ -77,25 +77,24 @@ func TestSpyNoProcesses(t *testing.T) {
 	//t.Logf("\n%s\n", buf)
 
 	// No process nodes, please
-	if want, have := 0, len(r.Endpoint.Adjacency); want != have {
+	if want, have := 0, len(r.Endpoint.NodeMetadatas); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
 
 	var (
 		scopedLocal  = report.MakeAddressNodeID(nodeID, fixLocalAddress.String())
 		scopedRemote = report.MakeAddressNodeID(nodeID, fixRemoteAddress.String())
-		remoteKey    = report.MakeAdjacencyID(scopedRemote)
 	)
 
-	if want, have := 1, len(r.Address.Adjacency[remoteKey]); want != have {
-		t.Fatalf("want %d, have %d", want, have)
-	}
-
-	if want, have := scopedLocal, r.Address.Adjacency[remoteKey][0]; want != have {
+	if want, have := nodeName, r.Address.NodeMetadatas[scopedLocal].Metadata[docker.Name]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 
-	if want, have := nodeName, r.Address.NodeMetadatas[scopedLocal].Metadata[docker.Name]; want != have {
+	if want, have := 1, len(r.Address.NodeMetadatas[scopedRemote].Adjacency); want != have {
+		t.Fatalf("want %d, have %d", want, have)
+	}
+
+	if want, have := scopedLocal, r.Address.NodeMetadatas[scopedRemote].Adjacency[0]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 }
@@ -115,14 +114,13 @@ func TestSpyWithProcesses(t *testing.T) {
 	var (
 		scopedLocal  = report.MakeEndpointNodeID(nodeID, fixLocalAddress.String(), strconv.Itoa(int(fixLocalPort)))
 		scopedRemote = report.MakeEndpointNodeID(nodeID, fixRemoteAddress.String(), strconv.Itoa(int(fixRemotePort)))
-		remoteKey    = report.MakeAdjacencyID(scopedRemote)
 	)
 
-	if want, have := 1, len(r.Endpoint.Adjacency[remoteKey]); want != have {
+	if want, have := 1, len(r.Endpoint.NodeMetadatas[scopedRemote].Adjacency); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
 
-	if want, have := scopedLocal, r.Endpoint.Adjacency[remoteKey][0]; want != have {
+	if want, have := scopedLocal, r.Endpoint.NodeMetadatas[scopedRemote].Adjacency[0]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 

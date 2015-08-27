@@ -250,21 +250,30 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 		return
 	}
 
+	addAdjacency := func(t report.Topology, srcNodeID, dstNodeID string) {
+		srcNode, ok := t.NodeMetadatas[srcNodeID]
+		if !ok {
+			srcNode = report.MakeNodeMetadata()
+		}
+		srcNode.Adjacency = srcNode.Adjacency.Add(dstNodeID)
+		t.NodeMetadatas[srcNodeID] = srcNode
+
+		if _, ok := t.NodeMetadatas[dstNodeID]; !ok {
+			t.NodeMetadatas[dstNodeID] = report.MakeNodeMetadata()
+		}
+	}
+
 	// For sure, we can add to the address topology.
 	{
 		var (
-			srcNodeID      = report.MakeAddressNodeID(s.hostID, localIP)
-			dstNodeID      = report.MakeAddressNodeID(s.hostID, remoteIP)
-			edgeID         = report.MakeEdgeID(srcNodeID, dstNodeID)
-			srcAdjacencyID = report.MakeAdjacencyID(srcNodeID)
+			srcNodeID = report.MakeAddressNodeID(s.hostID, localIP)
+			dstNodeID = report.MakeAddressNodeID(s.hostID, remoteIP)
+			edgeID    = report.MakeEdgeID(srcNodeID, dstNodeID)
 		)
 
-		if _, ok := rpt.Address.NodeMetadatas[srcNodeID]; !ok {
-			rpt.Address.NodeMetadatas[srcNodeID] = report.MakeNodeMetadata()
-		}
+		addAdjacency(rpt.Address, srcNodeID, dstNodeID)
 
 		emd := rpt.Address.EdgeMetadatas[edgeID]
-
 		if egress {
 			if emd.EgressPacketCount == nil {
 				emd.EgressPacketCount = new(uint64)
@@ -284,26 +293,20 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 			}
 			*emd.IngressByteCount += uint64(p.Network)
 		}
-
 		rpt.Address.EdgeMetadatas[edgeID] = emd
-		rpt.Address.Adjacency[srcAdjacencyID] = rpt.Address.Adjacency[srcAdjacencyID].Add(dstNodeID)
 	}
 
 	// If we have ports, we can add to the endpoint topology, too.
 	if p.SrcPort != "" && p.DstPort != "" {
 		var (
-			srcNodeID      = report.MakeEndpointNodeID(s.hostID, localIP, localPort)
-			dstNodeID      = report.MakeEndpointNodeID(s.hostID, remoteIP, remotePort)
-			edgeID         = report.MakeEdgeID(srcNodeID, dstNodeID)
-			srcAdjacencyID = report.MakeAdjacencyID(srcNodeID)
+			srcNodeID = report.MakeEndpointNodeID(s.hostID, localIP, localPort)
+			dstNodeID = report.MakeEndpointNodeID(s.hostID, remoteIP, remotePort)
+			edgeID    = report.MakeEdgeID(srcNodeID, dstNodeID)
 		)
 
-		if _, ok := rpt.Endpoint.NodeMetadatas[srcNodeID]; !ok {
-			rpt.Endpoint.NodeMetadatas[srcNodeID] = report.MakeNodeMetadata()
-		}
+		addAdjacency(rpt.Endpoint, srcNodeID, dstNodeID)
 
 		emd := rpt.Endpoint.EdgeMetadatas[edgeID]
-
 		if egress {
 			if emd.EgressPacketCount == nil {
 				emd.EgressPacketCount = new(uint64)
@@ -323,8 +326,6 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 			}
 			*emd.IngressByteCount += uint64(p.Transport)
 		}
-
 		rpt.Endpoint.EdgeMetadatas[edgeID] = emd
-		rpt.Endpoint.Adjacency[srcAdjacencyID] = rpt.Endpoint.Adjacency[srcAdjacencyID].Add(dstNodeID)
 	}
 }

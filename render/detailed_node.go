@@ -219,8 +219,7 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 		return rows
 	}
 	// Firstly, collection outgoing connections from this node.
-	originAdjID := report.MakeAdjacencyID(originID)
-	for _, serverNodeID := range topology.Adjacency[originAdjID] {
+	for _, serverNodeID := range topology.NodeMetadatas[originID].Adjacency {
 		remote, ok := labeler(serverNodeID)
 		if !ok {
 			continue
@@ -232,15 +231,12 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 		})
 	}
 	// Next, scan the topology for incoming connections to this node.
-	for clientAdjID, serverNodeIDs := range topology.Adjacency {
-		if clientAdjID == originAdjID {
+	for clientNodeID, clientNodeMetadata := range topology.NodeMetadatas {
+		if clientNodeID == originID {
 			continue
 		}
+		serverNodeIDs := clientNodeMetadata.Adjacency
 		if !serverNodeIDs.Contains(originID) {
-			continue
-		}
-		clientNodeID, ok := report.ParseAdjacencyID(clientAdjID)
-		if !ok {
 			continue
 		}
 		remote, ok := labeler(clientNodeID)

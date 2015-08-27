@@ -323,8 +323,8 @@ var (
 
 	ServerHostRenderedID = render.MakeHostID(test.ServerHostID)
 	ClientHostRenderedID = render.MakeHostID(test.ClientHostID)
-	pseudoHostID1        = render.MakePseudoNodeID("10.10.10.10", "192.168.1.1", "")
-	pseudoHostID2        = render.MakePseudoNodeID("10.10.10.11", "192.168.1.1", "")
+	pseudoHostID1        = render.MakePseudoNodeID(test.UnknownClient1IP, test.ServerIP)
+	pseudoHostID2        = render.MakePseudoNodeID(test.UnknownClient3IP, test.ServerIP)
 
 	RenderedHosts = render.RenderableNodes{
 		ServerHostRenderedID: {
@@ -361,21 +361,21 @@ var (
 		},
 		pseudoHostID1: {
 			ID:           pseudoHostID1,
-			LabelMajor:   "10.10.10.10",
+			LabelMajor:   test.UnknownClient1IP,
 			Pseudo:       true,
 			Adjacency:    report.MakeIDList(ServerHostRenderedID),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{},
-			Origins:      report.MakeIDList(test.UnknownAddress1NodeID),
+			Origins:      report.MakeIDList(test.UnknownAddress1NodeID, test.UnknownAddress2NodeID),
 		},
 		pseudoHostID2: {
 			ID:           pseudoHostID2,
-			LabelMajor:   "10.10.10.11",
+			LabelMajor:   test.UnknownClient3IP,
 			Pseudo:       true,
 			Adjacency:    report.MakeIDList(ServerHostRenderedID),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{},
-			Origins:      report.MakeIDList(test.UnknownAddress2NodeID),
+			Origins:      report.MakeIDList(test.UnknownAddress3NodeID),
 		},
 		render.TheInternetID: {
 			ID:           render.TheInternetID,

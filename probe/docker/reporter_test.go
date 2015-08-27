@@ -50,7 +50,6 @@ var (
 func TestReporter(t *testing.T) {
 	want := report.MakeReport()
 	want.Container = report.Topology{
-		Adjacency:     report.Adjacency{},
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
 			report.MakeContainerNodeID("", "ping"): report.MakeNodeMetadataWith(map[string]string{
@@ -61,7 +60,6 @@ func TestReporter(t *testing.T) {
 		},
 	}
 	want.ContainerImage = report.Topology{
-		Adjacency:     report.Adjacency{},
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
 			report.MakeContainerNodeID("", "baz"): report.MakeNodeMetadataWith(map[string]string{

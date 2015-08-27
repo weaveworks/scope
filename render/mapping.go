@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -31,14 +32,7 @@ const (
 //
 // A single NodeMetadata can yield arbitrary many representations, including
 // representations that reduce (or even increase) the cardinality of the set of nodes.
-type LeafMapFunc func(report.NodeMetadata) RenderableNodes
-
-// PseudoFunc creates RenderableNode representing pseudo nodes given the
-// srcNodeID. dstNodeID is the node id of one of the nodes this node has an
-// edge to. srcNodeID and dstNodeID are node IDs prior to mapping.  srcIsClient
-// indicates the direction of the edge to dstNodeID - true indicates srcNodeID
-// is the client, false indicates dstNodeID is the server.
-type PseudoFunc func(srcNodeID, dstNodeID string, srcIsClient bool, local report.Networks) (RenderableNode, bool)
+type LeafMapFunc func(report.NodeMetadata, report.Networks) RenderableNodes
 
 // MapFunc is anything which can take an arbitrary RenderableNode and
 // return a set of other RenderableNodes.
@@ -50,7 +44,7 @@ type MapFunc func(RenderableNode) RenderableNodes
 // MapEndpointIdentity maps an endpoint topology node to a single endpoint
 // renderable node. As it is only ever run on endpoint topology nodes, we
 // expect that certain keys are present.
-func MapEndpointIdentity(m report.NodeMetadata) RenderableNodes {
+func MapEndpointIdentity(m report.NodeMetadata, local report.Networks) RenderableNodes {
 	addr, ok := m.Metadata[endpoint.Addr]
 	if !ok {
 		return RenderableNodes{}
@@ -59,6 +53,34 @@ func MapEndpointIdentity(m report.NodeMetadata) RenderableNodes {
 	port, ok := m.Metadata[endpoint.Port]
 	if !ok {
 		return RenderableNodes{}
+	}
+
+	// Nodes without a hostid are treated as psuedo nodes
+	_, ok = m.Metadata[report.HostNodeID]
+	if !ok {
+		// If the dstNodeAddr is not in a network local to this report, we emit an
+		// internet node
+		if !local.Contains(net.ParseIP(addr)) {
+			return RenderableNodes{TheInternetID: newPseudoNode(TheInternetID, TheInternetMajor, "")}
+		}
+
+		// We are a 'client' pseudo node if the port is in the ephemeral port range.
+		// Linux uses 32768 to 61000.
+		if p, err := strconv.Atoi(port); err == nil && p >= 32768 && p < 61000 {
+			// We only exist if there is something in our adjacency
+			// Generate a single pseudo node for every (client ip, server ip, server port)
+			dstNodeID := m.Adjacency[0]
+			serverIP, serverPort := trySplitAddr(dstNodeID)
+			outputID := MakePseudoNodeID(addr, serverIP, serverPort)
+			return RenderableNodes{outputID: newPseudoNode(outputID, addr, "")}
+		}
+
+		// Otherwise (the server node is missing), generate a pseudo node for every (server ip, server port)
+		outputID := MakePseudoNodeID(addr, port)
+		if port != "" {
+			return RenderableNodes{outputID: newPseudoNode(outputID, addr+":"+port, "")}
+		}
+		return RenderableNodes{outputID: newPseudoNode(outputID, addr, "")}
 	}
 
 	var (
@@ -78,7 +100,7 @@ func MapEndpointIdentity(m report.NodeMetadata) RenderableNodes {
 // MapProcessIdentity maps a process topology node to a process renderable
 // node. As it is only ever run on process topology nodes, we expect that
 // certain keys are present.
-func MapProcessIdentity(m report.NodeMetadata) RenderableNodes {
+func MapProcessIdentity(m report.NodeMetadata, _ report.Networks) RenderableNodes {
 	pid, ok := m.Metadata[process.PID]
 	if !ok {
 		return RenderableNodes{}
@@ -97,7 +119,7 @@ func MapProcessIdentity(m report.NodeMetadata) RenderableNodes {
 // MapContainerIdentity maps a container topology node to a container
 // renderable node. As it is only ever run on container topology nodes, we
 // expect that certain keys are present.
-func MapContainerIdentity(m report.NodeMetadata) RenderableNodes {
+func MapContainerIdentity(m report.NodeMetadata, _ report.Networks) RenderableNodes {
 	id, ok := m.Metadata[docker.ContainerID]
 	if !ok {
 		return RenderableNodes{}
@@ -115,7 +137,7 @@ func MapContainerIdentity(m report.NodeMetadata) RenderableNodes {
 // MapContainerImageIdentity maps a container image topology node to container
 // image renderable node. As it is only ever run on container image topology
 // nodes, we expect that certain keys are present.
-func MapContainerImageIdentity(m report.NodeMetadata) RenderableNodes {
+func MapContainerImageIdentity(m report.NodeMetadata, _ report.Networks) RenderableNodes {
 	id, ok := m.Metadata[docker.ImageID]
 	if !ok {
 		return RenderableNodes{}
@@ -132,10 +154,25 @@ func MapContainerImageIdentity(m report.NodeMetadata) RenderableNodes {
 // MapAddressIdentity maps an address topology node to an address renderable
 // node. As it is only ever run on address topology nodes, we expect that
 // certain keys are present.
-func MapAddressIdentity(m report.NodeMetadata) RenderableNodes {
+func MapAddressIdentity(m report.NodeMetadata, local report.Networks) RenderableNodes {
 	addr, ok := m.Metadata[endpoint.Addr]
 	if !ok {
 		return RenderableNodes{}
+	}
+
+	// Nodes without a hostid are treated as psuedo nodes
+	_, ok = m.Metadata[report.HostNodeID]
+	if !ok {
+		// If the addr is not in a network local to this report, we emit an
+		// internet node
+		if !local.Contains(net.ParseIP(addr)) {
+			return RenderableNodes{TheInternetID: newPseudoNode(TheInternetID, TheInternetMajor, "")}
+		}
+
+		// Otherwise generate a pseudo node for every
+		_, dstID, _ := report.ParseAddressNodeID(m.Adjacency[0])
+		outputID := MakePseudoNodeID(addr, dstID)
+		return RenderableNodes{outputID: newPseudoNode(outputID, addr, "")}
 	}
 
 	var (
@@ -151,7 +188,7 @@ func MapAddressIdentity(m report.NodeMetadata) RenderableNodes {
 // MapHostIdentity maps a host topology node to a host renderable node. As it
 // is only ever run on host topology nodes, we expect that certain keys are
 // present.
-func MapHostIdentity(m report.NodeMetadata) RenderableNodes {
+func MapHostIdentity(m report.NodeMetadata, _ report.Networks) RenderableNodes {
 	var (
 		id                 = MakeHostID(report.ExtractHostID(m))
 		hostname           = m.Metadata[host.HostName]
@@ -172,7 +209,7 @@ func MapHostIdentity(m report.NodeMetadata) RenderableNodes {
 // with container nodes.  We drop endpoint nodes with pids, as they
 // will be joined to containers through the process topology, and we
 // don't want to double count edges.
-func MapEndpoint2IP(m report.NodeMetadata) RenderableNodes {
+func MapEndpoint2IP(m report.NodeMetadata, local report.Networks) RenderableNodes {
 	_, ok := m.Metadata[process.PID]
 	if ok {
 		return RenderableNodes{}
@@ -181,26 +218,16 @@ func MapEndpoint2IP(m report.NodeMetadata) RenderableNodes {
 	if !ok {
 		return RenderableNodes{}
 	}
-	return RenderableNodes{addr: NewRenderableNode(addr, "", "", "", m)}
-}
-
-// IPPseudoNode maps endpoint pseudo nodes to regular IP address nodes, or
-// the internet node.
-func IPPseudoNode(srcNodeID, _ string, _ bool, local report.Networks) (RenderableNode, bool) {
-	// Use the addresser to extract the IP of the missing node
-	srcNodeAddr := report.EndpointIDAddresser(srcNodeID)
-	// If the dstNodeAddr is not in a network local to this report, we emit an
-	// internet node
-	if !local.Contains(srcNodeAddr) {
-		return newPseudoNode(TheInternetID, TheInternetMajor, ""), true
+	if !local.Contains(net.ParseIP(addr)) {
+		return RenderableNodes{TheInternetID: newPseudoNode(TheInternetID, TheInternetMajor, "")}
 	}
-	return NewRenderableNode(srcNodeAddr.String(), "", "", "", report.MakeNodeMetadata()), true
+	return RenderableNodes{addr: NewRenderableNode(addr, "", "", "", m)}
 }
 
 // MapContainer2IP maps container nodes to their IP addresses (outputs
 // multiple nodes).  This allows container to be joined directly with
 // the endpoint topology.
-func MapContainer2IP(m report.NodeMetadata) RenderableNodes {
+func MapContainer2IP(m report.NodeMetadata, _ report.Networks) RenderableNodes {
 	result := RenderableNodes{}
 	addrs, ok := m.Metadata[docker.ContainerIPs]
 	if !ok {
@@ -428,43 +455,6 @@ func MapAddress2Host(n RenderableNode) RenderableNodes {
 
 	id := MakeHostID(report.ExtractHostID(n.NodeMetadata))
 	return RenderableNodes{id: newDerivedNode(id, n)}
-}
-
-// GenericPseudoNode makes a PseudoFunc given an addresser.  The returned
-// PseudoFunc will produce Internet pseudo nodes for addresses not in
-// the report's local networks.  Otherwise, the returned function will
-// produce a single pseudo node per (dst address, src address, src port).
-func GenericPseudoNode(addresser func(id string) net.IP) PseudoFunc {
-	return func(srcNodeID, dstNodeID string, srcIsClient bool, local report.Networks) (RenderableNode, bool) {
-		// Use the addresser to extract the IP of the missing node
-		srcNodeAddr := addresser(srcNodeID)
-		// If the dstNodeAddr is not in a network local to this report, we emit an
-		// internet node
-		if !local.Contains(srcNodeAddr) {
-			return newPseudoNode(TheInternetID, TheInternetMajor, ""), true
-		}
-
-		if srcIsClient {
-			// If the client node is missing, generate a single pseudo node for every (client ip, server ip, server port)
-			serverIP, serverPort := trySplitAddr(dstNodeID)
-			outputID := MakePseudoNodeID(srcNodeAddr.String(), serverIP, serverPort)
-			major := srcNodeAddr.String()
-			return newPseudoNode(outputID, major, ""), true
-		}
-
-		// Otherwise (the server node is missing), generate a pseudo node for every (server ip, server port)
-		serverIP, serverPort := trySplitAddr(srcNodeID)
-		outputID := MakePseudoNodeID(serverIP, serverPort)
-		if serverPort != "" {
-			return newPseudoNode(outputID, serverIP+":"+serverPort, ""), true
-		}
-		return newPseudoNode(outputID, serverIP, ""), true
-	}
-}
-
-// PanicPseudoNode just panics; it is for Topologies without edges
-func PanicPseudoNode(src, dst string, isClient bool, local report.Networks) (RenderableNode, bool) {
-	panic(src)
 }
 
 // trySplitAddr is basically ParseArbitraryNodeID, since its callsites

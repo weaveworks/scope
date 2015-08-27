@@ -130,7 +130,6 @@ func (m Map) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableID st
 type LeafMap struct {
 	Selector report.TopologySelector
 	Mapper   LeafMapFunc
-	Pseudo   PseudoFunc
 }
 
 // Render transforms a given Report into a set of RenderableNodes, which
@@ -142,15 +141,16 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 	var (
 		t             = m.Selector(rpt)
 		nodes         = RenderableNodes{}
+		source2mapped = map[string]report.IDList{} // input node ID -> output node IDs
+		adjacencies   = map[string]report.IDList{} // input node ID -> input node Adjacencies
 		localNetworks = LocalNetworks(rpt)
 	)
 
 	// Build a set of RenderableNodes for all non-pseudo probes, and an
 	// addressID to nodeID lookup map. Multiple addressIDs can map to the same
 	// RenderableNodes.
-	source2mapped := map[string]report.IDList{} // source node ID -> mapped node IDs
 	for nodeID, metadata := range t.NodeMetadatas {
-		for _, mapped := range m.Mapper(metadata) {
+		for _, mapped := range m.Mapper(metadata, localNetworks) {
 			// mapped.ID needs not be unique over all addressIDs. If not, we merge with
 			// the existing data, on the assumption that the MapFunc returns the same
 			// data.
@@ -161,66 +161,25 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 
 			origins := mapped.Origins
 			origins = origins.Add(nodeID)
-			origins = origins.Add(metadata.Metadata[report.HostNodeID])
+			if hostNodeID, ok := metadata.Metadata[report.HostNodeID]; ok {
+				origins = origins.Add(hostNodeID)
+			}
 			mapped.Origins = origins
-
 			nodes[mapped.ID] = mapped
 			source2mapped[nodeID] = source2mapped[nodeID].Add(mapped.ID)
+			adjacencies[nodeID] = metadata.Adjacency
 		}
-	}
-
-	mkPseudoNode := func(srcNodeID, dstNodeID string, srcIsClient bool) report.IDList {
-		pseudoNode, ok := m.Pseudo(srcNodeID, dstNodeID, srcIsClient, localNetworks)
-		if !ok {
-			return report.MakeIDList()
-		}
-		pseudoNode.Origins = pseudoNode.Origins.Add(srcNodeID)
-		existing, ok := nodes[pseudoNode.ID]
-		if ok {
-			pseudoNode.Merge(existing)
-		}
-
-		nodes[pseudoNode.ID] = pseudoNode
-		source2mapped[pseudoNode.ID] = source2mapped[pseudoNode.ID].Add(srcNodeID)
-		return report.MakeIDList(pseudoNode.ID)
 	}
 
 	// Walk the graph and make connections.
-	for src, dsts := range t.Adjacency {
-		srcNodeID, ok := report.ParseAdjacencyID(src)
-		if !ok {
-			log.Printf("bad adjacency ID %q", src)
-			continue
-		}
-
-		srcRenderableIDs, ok := source2mapped[srcNodeID]
-		if !ok {
-			// One of the entries in dsts must be a non-pseudo node, unless
-			// it was dropped by the mapping function.
-			for _, dstNodeID := range dsts {
-				if _, ok := source2mapped[dstNodeID]; ok {
-					srcRenderableIDs = mkPseudoNode(srcNodeID, dstNodeID, true)
-					break
-				}
-			}
-		}
-		if len(srcRenderableIDs) == 0 {
-			continue
-		}
-
-		for _, srcRenderableID := range srcRenderableIDs {
+	for srcNodeID, dstNodeIDs := range adjacencies {
+		for _, srcRenderableID := range source2mapped[srcNodeID] {
 			srcRenderableNode := nodes[srcRenderableID]
 
-			for _, dstNodeID := range dsts {
-				dstRenderableIDs, ok := source2mapped[dstNodeID]
-				if !ok {
-					dstRenderableIDs = mkPseudoNode(dstNodeID, srcNodeID, false)
-				}
-				if len(dstRenderableIDs) == 0 {
-					continue
-				}
-				for _, dstRenderableID := range dstRenderableIDs {
+			for _, dstNodeID := range dstNodeIDs {
+				for _, dstRenderableID := range source2mapped[dstNodeID] {
 					dstRenderableNode := nodes[dstRenderableID]
+
 					srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
 
 					// We propagate edge metadata to nodes on both ends of the edges.
@@ -253,8 +212,11 @@ func ids(nodes RenderableNodes) report.IDList {
 // level, it uses the supplied mapping function to translate address IDs to
 // renderable node (mapped) IDs.
 func (m LeafMap) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableID string) report.EdgeMetadata {
-	t := m.Selector(rpt)
-	metadata := report.EdgeMetadata{}
+	var (
+		t             = m.Selector(rpt)
+		localNetworks = LocalNetworks(rpt)
+		metadata      = report.EdgeMetadata{}
+	)
 	for edgeID, edgeMeta := range t.EdgeMetadatas {
 		src, dst, ok := report.ParseEdgeID(edgeID)
 		if !ok {
@@ -263,11 +225,11 @@ func (m LeafMap) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableI
 		}
 		srcs, dsts := report.MakeIDList(src), report.MakeIDList(dst)
 		if src != report.TheInternet {
-			mapped := m.Mapper(t.NodeMetadatas[src])
+			mapped := m.Mapper(t.NodeMetadatas[src], localNetworks)
 			srcs = ids(mapped)
 		}
 		if dst != report.TheInternet {
-			mapped := m.Mapper(t.NodeMetadatas[dst])
+			mapped := m.Mapper(t.NodeMetadatas[dst], localNetworks)
 			dsts = ids(mapped)
 		}
 		if srcs.Contains(srcRenderableID) && dsts.Contains(dstRenderableID) {

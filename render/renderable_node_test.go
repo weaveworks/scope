@@ -44,7 +44,10 @@ func sterilize(r render.RenderableNodes, destructive bool) render.RenderableNode
 	// case where we explicitly don't compare node metadata.
 	for id, n := range r {
 		if n.Adjacency == nil {
-			n.Adjacency = report.IDList{}
+			n.Adjacency = report.MakeIDList()
+		}
+		if destructive || n.NodeMetadata.Adjacency == nil {
+			n.NodeMetadata.Adjacency = report.MakeIDList()
 		}
 		if destructive || n.NodeMetadata.Metadata == nil {
 			n.NodeMetadata.Metadata = map[string]string{}

@@ -53,37 +53,37 @@ func DemoReport(nodeCount int) report.Report {
 	connectionCount := nodeCount * 8
 	for i := 0; i < connectionCount; i++ {
 		var (
-			c                = procPool[rand.Intn(len(procPool))]
-			src              = hosts[rand.Intn(len(hosts))]
-			dst              = hosts[rand.Intn(len(hosts))]
-			srcPort          = rand.Intn(50000) + 10000
-			srcPortID        = report.MakeEndpointNodeID("", src, strconv.Itoa(srcPort))
-			dstPortID        = report.MakeEndpointNodeID("", dst, strconv.Itoa(c.dstPort))
-			srcID            = report.MakeAdjacencyID(srcPortID)
-			dstID            = report.MakeAdjacencyID(dstPortID)
-			srcAddressID     = report.MakeAddressNodeID("", src)
-			dstAddressID     = report.MakeAddressNodeID("", dst)
-			nodeSrcAddressID = report.MakeAdjacencyID(srcAddressID)
-			nodeDstAddressID = report.MakeAdjacencyID(dstAddressID)
+			c            = procPool[rand.Intn(len(procPool))]
+			src          = hosts[rand.Intn(len(hosts))]
+			dst          = hosts[rand.Intn(len(hosts))]
+			srcPort      = rand.Intn(50000) + 10000
+			srcPortID    = report.MakeEndpointNodeID("", src, strconv.Itoa(srcPort))
+			dstPortID    = report.MakeEndpointNodeID("", dst, strconv.Itoa(c.dstPort))
+			srcAddressID = report.MakeAddressNodeID("", src)
+			dstAddressID = report.MakeAddressNodeID("", dst)
 		)
 
 		// Endpoint topology
 		if _, ok := r.Endpoint.NodeMetadatas[srcPortID]; !ok {
-			r.Endpoint.NodeMetadatas[srcPortID] = report.MakeNodeMetadataWith(map[string]string{
-				"pid":    "4000",
-				"name":   c.srcProc,
-				"domain": "node-" + src,
-			})
+			r.Endpoint.NodeMetadatas[srcPortID] = report.NodeMetadata{
+				Metadata: map[string]string{
+					"pid":    "4000",
+					"name":   c.srcProc,
+					"domain": "node-" + src,
+				},
+				Adjacency: report.MakeIDList(dstPortID),
+			}
 		}
-		r.Endpoint.Adjacency[srcID] = r.Endpoint.Adjacency[srcID].Add(dstPortID)
 		if _, ok := r.Endpoint.NodeMetadatas[dstPortID]; !ok {
-			r.Endpoint.NodeMetadatas[dstPortID] = report.MakeNodeMetadataWith(map[string]string{
-				"pid":    "4000",
-				"name":   c.dstProc,
-				"domain": "node-" + dst,
-			})
+			r.Endpoint.NodeMetadatas[dstPortID] = report.NodeMetadata{
+				Metadata: map[string]string{
+					"pid":    "4000",
+					"name":   c.dstProc,
+					"domain": "node-" + dst,
+				},
+				Adjacency: report.MakeIDList(srcPortID),
+			}
 		}
-		r.Endpoint.Adjacency[dstID] = r.Endpoint.Adjacency[dstID].Add(srcPortID)
 		var (
 			edgeKeyEgress  = report.MakeEdgeID(srcPortID, dstPortID)
 			edgeKeyIngress = report.MakeEdgeID(dstPortID, srcPortID)
@@ -97,17 +97,21 @@ func DemoReport(nodeCount int) report.Report {
 
 		// Address topology
 		if _, ok := r.Address.NodeMetadatas[srcAddressID]; !ok {
-			r.Address.NodeMetadatas[srcAddressID] = report.MakeNodeMetadataWith(map[string]string{
-				"name": src,
-			})
+			r.Address.NodeMetadatas[srcAddressID] = report.NodeMetadata{
+				Metadata: map[string]string{
+					"name": src,
+				},
+				Adjacency: report.MakeIDList(dstAddressID),
+			}
 		}
-		r.Address.Adjacency[nodeSrcAddressID] = r.Address.Adjacency[nodeSrcAddressID].Add(dstAddressID)
 		if _, ok := r.Address.NodeMetadatas[dstAddressID]; !ok {
-			r.Address.NodeMetadatas[dstAddressID] = report.MakeNodeMetadataWith(map[string]string{
-				"name": dst,
-			})
+			r.Address.NodeMetadatas[dstAddressID] = report.NodeMetadata{
+				Metadata: map[string]string{
+					"name": dst,
+				},
+				Adjacency: report.MakeIDList(srcAddressID),
+			}
 		}
-		r.Address.Adjacency[nodeDstAddressID] = r.Address.Adjacency[nodeDstAddressID].Add(srcAddressID)
 
 		// Host data
 		r.Host.NodeMetadatas["hostX"] = report.MakeNodeMetadataWith(map[string]string{

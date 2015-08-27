@@ -12,7 +12,6 @@ import (
 var EndpointRenderer = LeafMap{
 	Selector: report.SelectEndpoint,
 	Mapper:   MapEndpointIdentity,
-	Pseudo:   GenericPseudoNode(report.EndpointIDAddresser),
 }
 
 // ProcessRenderer is a Renderer which produces a renderable process
@@ -25,7 +24,6 @@ var ProcessRenderer = MakeReduce(
 	LeafMap{
 		Selector: report.SelectProcess,
 		Mapper:   MapProcessIdentity,
-		Pseudo:   PanicPseudoNode,
 	},
 )
 
@@ -40,7 +38,6 @@ func (r ProcessWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 	containers := LeafMap{
 		Selector: report.SelectContainer,
 		Mapper:   MapContainerIdentity,
-		Pseudo:   PanicPseudoNode,
 	}.Render(rpt)
 
 	for id, p := range processes {
@@ -103,7 +100,6 @@ var ContainerRenderer = MakeReduce(
 	LeafMap{
 		Selector: report.SelectContainer,
 		Mapper:   MapContainerIdentity,
-		Pseudo:   PanicPseudoNode,
 	},
 
 	// This mapper brings in short lived connections by joining with container IPs.
@@ -117,12 +113,10 @@ var ContainerRenderer = MakeReduce(
 				LeafMap{
 					Selector: report.SelectContainer,
 					Mapper:   MapContainer2IP,
-					Pseudo:   PanicPseudoNode,
 				},
 				LeafMap{
 					Selector: report.SelectEndpoint,
 					Mapper:   MapEndpoint2IP,
-					Pseudo:   IPPseudoNode,
 				},
 			),
 		),
@@ -143,7 +137,6 @@ var ContainerImageRenderer = Map{
 			LeafMap{
 				Selector: report.SelectContainerImage,
 				Mapper:   MapContainerImageIdentity,
-				Pseudo:   PanicPseudoNode,
 			},
 		),
 	},
@@ -154,7 +147,6 @@ var ContainerImageRenderer = Map{
 var AddressRenderer = LeafMap{
 	Selector: report.SelectAddress,
 	Mapper:   MapAddressIdentity,
-	Pseudo:   GenericPseudoNode(report.AddressIDAddresser),
 }
 
 // HostRenderer is a Renderer which produces a renderable host
@@ -167,6 +159,5 @@ var HostRenderer = MakeReduce(
 	LeafMap{
 		Selector: report.SelectHost,
 		Mapper:   MapHostIdentity,
-		Pseudo:   PanicPseudoNode,
 	},
 )

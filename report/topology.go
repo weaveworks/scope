@@ -6,10 +6,10 @@ import (
 )
 
 // Topology describes a specific view of a network. It consists of nodes and
-// edges, represented by Adjacency, and metadata about those nodes and edges,
-// represented by EdgeMetadatas and NodeMetadatas respectively.
+// edges, and metadata about those nodes and edges, represented by EdgeMetadatas
+// and NodeMetadatas respectively.  Edges are directional, and embedded in the
+// NodeMetadata.
 type Topology struct {
-	Adjacency
 	EdgeMetadatas
 	NodeMetadatas
 }
@@ -17,7 +17,6 @@ type Topology struct {
 // MakeTopology gives you a Topology.
 func MakeTopology() Topology {
 	return Topology{
-		Adjacency:     map[string]IDList{},
 		EdgeMetadatas: map[string]EdgeMetadata{},
 		NodeMetadatas: map[string]NodeMetadata{},
 	}
@@ -26,7 +25,6 @@ func MakeTopology() Topology {
 // Copy returns a value copy of the Topology.
 func (t Topology) Copy() Topology {
 	return Topology{
-		Adjacency:     t.Adjacency.Copy(),
 		EdgeMetadatas: t.EdgeMetadatas.Copy(),
 		NodeMetadatas: t.NodeMetadatas.Copy(),
 	}
@@ -36,33 +34,9 @@ func (t Topology) Copy() Topology {
 // The original is not modified.
 func (t Topology) Merge(other Topology) Topology {
 	return Topology{
-		Adjacency:     t.Adjacency.Merge(other.Adjacency),
 		EdgeMetadatas: t.EdgeMetadatas.Merge(other.EdgeMetadatas),
 		NodeMetadatas: t.NodeMetadatas.Merge(other.NodeMetadatas),
 	}
-}
-
-// Adjacency is an adjacency-list encoding of the topology. Keys are adjacency
-// IDs, values are lists of node IDs.
-type Adjacency map[string]IDList
-
-// Copy returns a value copy of the adjacency.
-func (a Adjacency) Copy() Adjacency {
-	cp := make(Adjacency, len(a))
-	for k, v := range a {
-		cp[k] = v.Copy()
-	}
-	return cp
-}
-
-// Merge merges the other object into this one, and returns the result object.
-// The original is not modified.
-func (a Adjacency) Merge(other Adjacency) Adjacency {
-	cp := a.Copy()
-	for k, v := range other {
-		cp[k] = cp[k].Merge(v)
-	}
-	return cp
 }
 
 // EdgeMetadatas collect metadata about each edge in a topology. Keys are a
@@ -173,8 +147,9 @@ func (e EdgeMetadata) Flatten(other EdgeMetadata) EdgeMetadata {
 // NodeMetadata describes a superset of the metadata that probes can collect
 // about a given node in a given topology.
 type NodeMetadata struct {
-	Metadata map[string]string
-	Counters map[string]int
+	Metadata  map[string]string
+	Counters  map[string]int
+	Adjacency IDList
 }
 
 // MakeNodeMetadata creates a new NodeMetadata with no initial metadata.
@@ -185,8 +160,9 @@ func MakeNodeMetadata() NodeMetadata {
 // MakeNodeMetadataWith creates a new NodeMetadata with the supplied map.
 func MakeNodeMetadataWith(m map[string]string) NodeMetadata {
 	return NodeMetadata{
-		Metadata: m,
-		Counters: map[string]int{},
+		Metadata:  m,
+		Counters:  map[string]int{},
+		Adjacency: MakeIDList(),
 	}
 }
 
@@ -199,6 +175,7 @@ func (n NodeMetadata) Copy() NodeMetadata {
 	for k, v := range n.Counters {
 		cp.Counters[k] = v
 	}
+	cp.Adjacency = n.Adjacency.Copy()
 	return cp
 }
 
@@ -213,6 +190,7 @@ func (n NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
 	for k, v := range other.Counters {
 		cp.Counters[k] = n.Counters[k] + v
 	}
+	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
 	return cp
 }
 
@@ -227,47 +205,29 @@ func (t Topology) Validate() error {
 			errs = append(errs, fmt.Sprintf("invalid edge ID %q", edgeID))
 			continue
 		}
-		// For each edge, at least one of the ends must exist in nodemetadata
-		if _, ok := t.NodeMetadatas[srcNodeID]; !ok {
-			if _, ok := t.NodeMetadatas[dstNodeID]; !ok {
-				errs = append(errs, fmt.Sprintf("node metadatas missing for edge %q", edgeID))
-			}
-		}
-		dstNodeIDs, ok := t.Adjacency[MakeAdjacencyID(srcNodeID)]
-		if !ok {
-			errs = append(errs, fmt.Sprintf("adjacency entries missing for source node ID %q (from edge %q)", srcNodeID, edgeID))
-			continue
-		}
-		if !dstNodeIDs.Contains(dstNodeID) {
-			errs = append(errs, fmt.Sprintf("adjacency destination missing for destination node ID %q (from edge %q)", dstNodeID, edgeID))
-		}
-	}
-
-	// Check all adjancency keys has entries in NodeMetadata.
-	for adjacencyID, dsts := range t.Adjacency {
-		srcNodeID, ok := ParseAdjacencyID(adjacencyID)
-		if !ok {
-			errs = append(errs, fmt.Sprintf("invalid adjacency ID %q", adjacencyID))
-			continue
-		}
-		for _, dstNodeID := range dsts {
-			// For each edge, at least one of the ends must exist in nodemetadata
-			if _, ok := t.NodeMetadatas[srcNodeID]; !ok {
-				if _, ok := t.NodeMetadatas[dstNodeID]; !ok {
-					errs = append(errs, fmt.Sprintf("node metadata missing from adjacency %q -> %q", srcNodeID, dstNodeID))
-				}
-			}
+		// For each edge, ensure they are connected in the right direction
+		if src, ok := t.NodeMetadatas[srcNodeID]; !ok {
+			errs = append(errs, fmt.Sprintf("node %s metadatas missing for edge %q", srcNodeID, edgeID))
+		} else if !src.Adjacency.Contains(dstNodeID) {
+			errs = append(errs, fmt.Sprintf("adjacency destination missing for destination node ID %q (from edge %q)", srcNodeID, edgeID))
 		}
 	}
 
 	// Check all node metadatas are valid, and the keys are parseable, i.e.
 	// contain a scope.
-	for nodeID := range t.NodeMetadatas {
-		if t.NodeMetadatas[nodeID].Metadata == nil {
+	for nodeID, nmd := range t.NodeMetadatas {
+		if nmd.Metadata == nil {
 			errs = append(errs, fmt.Sprintf("node ID %q has nil metadata", nodeID))
 		}
 		if _, _, ok := ParseNodeID(nodeID); !ok {
 			errs = append(errs, fmt.Sprintf("invalid node ID %q", nodeID))
+		}
+
+		// Check all adjancency keys has entries in NodeMetadata.
+		for _, dstNodeID := range nmd.Adjacency {
+			if _, ok := t.NodeMetadatas[dstNodeID]; !ok {
+				errs = append(errs, fmt.Sprintf("node metadata missing from adjacency %q -> %q", nodeID, dstNodeID))
+			}
 		}
 	}
 

@@ -125,37 +125,45 @@ func (r *Reporter) Report() (report.Report, error) {
 }
 
 func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr string, localPort, remotePort uint16, proc *procspy.Proc) {
-	localIsClient := int(localPort) > int(remotePort)
+	var (
+		localIsClient = int(localPort) > int(remotePort)
+		hostNodeID    = report.MakeHostNodeID(r.hostID)
+		addNode       = func(t report.Topology, nodeID string, nmd report.NodeMetadata) {
+			if existing, ok := t.NodeMetadatas[nodeID]; ok {
+				nmd = nmd.Merge(existing)
+			}
+			t.NodeMetadatas[nodeID] = nmd
+		}
+	)
 
 	// Update address topology
 	{
 		var (
 			localAddressNodeID  = report.MakeAddressNodeID(r.hostID, localAddr)
 			remoteAddressNodeID = report.MakeAddressNodeID(r.hostID, remoteAddr)
-			adjacencyID         = ""
 			edgeID              = ""
+
+			localNode = report.MakeNodeMetadataWith(map[string]string{
+				"name":            r.hostName,
+				Addr:              localAddr,
+				report.HostNodeID: hostNodeID,
+			})
+			remoteNode = report.MakeNodeMetadataWith(map[string]string{
+				Addr: remoteAddr,
+			})
 		)
 
 		if localIsClient {
-			adjacencyID = report.MakeAdjacencyID(localAddressNodeID)
-			rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(remoteAddressNodeID)
-
+			localNode.Adjacency = localNode.Adjacency.Add(remoteAddressNodeID)
 			edgeID = report.MakeEdgeID(localAddressNodeID, remoteAddressNodeID)
 		} else {
-			adjacencyID = report.MakeAdjacencyID(remoteAddressNodeID)
-			rpt.Address.Adjacency[adjacencyID] = rpt.Address.Adjacency[adjacencyID].Add(localAddressNodeID)
-
+			remoteNode.Adjacency = localNode.Adjacency.Add(localAddressNodeID)
 			edgeID = report.MakeEdgeID(remoteAddressNodeID, localAddressNodeID)
 		}
 
+		addNode(rpt.Address, localAddressNodeID, localNode)
+		addNode(rpt.Address, remoteAddressNodeID, remoteNode)
 		countTCPConnection(rpt.Address.EdgeMetadatas, edgeID)
-
-		if _, ok := rpt.Address.NodeMetadatas[localAddressNodeID]; !ok {
-			rpt.Address.NodeMetadatas[localAddressNodeID] = report.MakeNodeMetadataWith(map[string]string{
-				"name": r.hostName,
-				Addr:   localAddr,
-			})
-		}
 	}
 
 	// Update endpoint topology
@@ -163,40 +171,34 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		var (
 			localEndpointNodeID  = report.MakeEndpointNodeID(r.hostID, localAddr, strconv.Itoa(int(localPort)))
 			remoteEndpointNodeID = report.MakeEndpointNodeID(r.hostID, remoteAddr, strconv.Itoa(int(remotePort)))
-			adjacencyID          = ""
 			edgeID               = ""
+
+			localNode = report.MakeNodeMetadataWith(map[string]string{
+				Addr:              localAddr,
+				Port:              strconv.Itoa(int(localPort)),
+				report.HostNodeID: hostNodeID,
+			})
+			remoteNode = report.MakeNodeMetadataWith(map[string]string{
+				Addr: remoteAddr,
+				Port: strconv.Itoa(int(remotePort)),
+			})
 		)
 
 		if localIsClient {
-			adjacencyID = report.MakeAdjacencyID(localEndpointNodeID)
-			rpt.Endpoint.Adjacency[adjacencyID] = rpt.Endpoint.Adjacency[adjacencyID].Add(remoteEndpointNodeID)
-
+			localNode.Adjacency = localNode.Adjacency.Add(remoteEndpointNodeID)
 			edgeID = report.MakeEdgeID(localEndpointNodeID, remoteEndpointNodeID)
 		} else {
-			adjacencyID = report.MakeAdjacencyID(remoteEndpointNodeID)
-			rpt.Endpoint.Adjacency[adjacencyID] = rpt.Endpoint.Adjacency[adjacencyID].Add(localEndpointNodeID)
-
+			remoteNode.Adjacency = remoteNode.Adjacency.Add(localEndpointNodeID)
 			edgeID = report.MakeEdgeID(remoteEndpointNodeID, localEndpointNodeID)
 		}
 
-		countTCPConnection(rpt.Endpoint.EdgeMetadatas, edgeID)
-
-		md, ok := rpt.Endpoint.NodeMetadatas[localEndpointNodeID]
-		updated := !ok
-		if !ok {
-			md = report.MakeNodeMetadataWith(map[string]string{
-				Addr: localAddr,
-				Port: strconv.Itoa(int(localPort)),
-			})
-		}
 		if proc != nil && proc.PID > 0 {
-			pid := strconv.FormatUint(uint64(proc.PID), 10)
-			updated = updated || md.Metadata[process.PID] != pid
-			md.Metadata[process.PID] = pid
+			localNode.Metadata[process.PID] = strconv.FormatUint(uint64(proc.PID), 10)
 		}
-		if updated {
-			rpt.Endpoint.NodeMetadatas[localEndpointNodeID] = md
-		}
+
+		addNode(rpt.Endpoint, localEndpointNodeID, localNode)
+		addNode(rpt.Endpoint, remoteEndpointNodeID, remoteNode)
+		countTCPConnection(rpt.Endpoint.EdgeMetadatas, edgeID)
 	}
 }
 

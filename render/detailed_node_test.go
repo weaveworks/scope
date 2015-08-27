@@ -176,19 +176,19 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 					{"Egress byte rate", "1.0", "KBps", false},
 					{"Client", "Server", "", true},
 					{
-						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54010),
+						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.UnknownClient1Port),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
 						true,
 					},
 					{
-						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.ClientPort54020),
+						fmt.Sprintf("%s:%s", test.UnknownClient2IP, test.UnknownClient2Port),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
 						true,
 					},
 					{
-						fmt.Sprintf("%s:%s", test.UnknownClient3IP, test.ClientPort54020),
+						fmt.Sprintf("%s:%s", test.UnknownClient3IP, test.UnknownClient3Port),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
 						true,
@@ -206,7 +206,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						true,
 					},
 					{
-						fmt.Sprintf("%s:%s", test.RandomClientIP, test.ClientPort12345),
+						fmt.Sprintf("%s:%s", test.RandomClientIP, test.RandomClientPort),
 						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
 						"",
 						true,
