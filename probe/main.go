@@ -183,7 +183,7 @@ func main() {
 					if err != nil {
 						log.Printf("error generating report: %v", err)
 					}
-					r.Merge(newReport)
+					r = r.Merge(newReport)
 				}
 				r = Apply(r, taggers)
 
