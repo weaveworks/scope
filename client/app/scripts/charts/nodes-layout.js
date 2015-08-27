@@ -65,7 +65,7 @@ const doLayout = function(nodes, edges, width, height, scale) {
     .nodes(nodeList)
     .links(edgeList)
     .flowLayout('y', 100)
-    .start(5, 5, 10);
+    .start(10, 20, 10);
 
   debug('graph layout done');
 

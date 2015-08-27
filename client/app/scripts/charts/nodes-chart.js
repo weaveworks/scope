@@ -217,7 +217,7 @@ const NodesChart = React.createClass({
       nodes[id] = {};
 
       // use cached positions if available
-      _.defaults(nodes[id], prevNodes[id], {
+      _.defaults(nodes[id], {
         x: centerX,
         y: centerY
       });
@@ -416,8 +416,6 @@ const NodesChart = React.createClass({
     const nodeSize = expanse / 3; // single node should fill a third of the screen
     const normalizedNodeSize = nodeSize / Math.sqrt(n); // assuming rectangular layout
     const nodeScale = this.state.nodeScale.range([0, normalizedNodeSize]);
-
-    debug('fingerprint', md5(JSON.stringify(_.keys(nodes)) + JSON.stringify(_.keys(edges))));
 
     let graph = NodesLayout.doLayout(nodes, edges, width, height, nodeScale);
     if (this.state.initialLayout && graph.width > 0) {
