@@ -26,6 +26,7 @@ type Reporter struct {
 	includeNAT       bool
 	conntracker      *Conntracker
 	natmapper        *natmapper
+	revResolver      *reverseResolver
 }
 
 // SpyDuration is an exported prometheus metric
@@ -64,12 +65,16 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 			log.Printf("Failed to start natMapper: %v", err)
 		}
 	}
+
+	revRes := newReverseResolver()
+
 	return &Reporter{
 		hostID:           hostID,
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
 		conntracker:      conntracker,
 		natmapper:        natmapper,
+		revResolver:      revRes,
 	}
 }
 
@@ -81,6 +86,7 @@ func (r *Reporter) Stop() {
 	if r.natmapper != nil {
 		r.natmapper.Stop()
 	}
+	r.revResolver.Stop()
 }
 
 // Report implements Reporter.
@@ -145,6 +151,13 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			})
 		)
 
+		// in case we have a reverse resolution for the IP, we can use it for the name...
+		if revRemoteName, err := r.revResolver.Get(remoteAddr, false); err == nil {
+			remoteNode = remoteNode.AddMetadata(map[string]string{
+				"name": revRemoteName,
+			})
+		}
+
 		if localIsClient {
 			// New nodes are merged into the report so we don't need to do any counting here; the merge does it for us.
 			localNode = localNode.WithEdge(remoteAddressNodeID, report.EdgeMetadata{
@@ -176,6 +189,13 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 				Port: strconv.Itoa(int(remotePort)),
 			})
 		)
+
+		// in case we have a reverse resolution for the IP, we can use it for the name...
+		if revRemoteName, err := r.revResolver.Get(remoteAddr, false); err == nil {
+			remoteNode = remoteNode.AddMetadata(map[string]string{
+				"name": revRemoteName,
+			})
+		}
 
 		if localIsClient {
 			// New nodes are merged into the report so we don't need to do any counting here; the merge does it for us.
