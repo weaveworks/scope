@@ -149,18 +149,17 @@ func TestMapEdge(t *testing.T) {
 }
 
 func TestFilterRender(t *testing.T) {
-	renderer := render.FilterUnconnected{
-		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": {ID: "foo", Adjacency: report.MakeIDList("bar")},
-			"bar": {ID: "bar", Adjacency: report.MakeIDList("foo")},
-			"baz": {ID: "baz", Adjacency: report.MakeIDList()},
-		}},
-	}
+	renderer := render.FilterUnconnected(
+		mockRenderer{RenderableNodes: render.RenderableNodes{
+			"foo": {ID: "foo", Adjacency: report.MakeIDList("bar"), NodeMetadata: report.MakeNodeMetadata()},
+			"bar": {ID: "bar", Adjacency: report.MakeIDList("foo"), NodeMetadata: report.MakeNodeMetadata()},
+			"baz": {ID: "baz", Adjacency: report.MakeIDList(), NodeMetadata: report.MakeNodeMetadata()},
+		}})
 	want := render.RenderableNodes{
-		"foo": {ID: "foo", Adjacency: report.MakeIDList("bar")},
-		"bar": {ID: "bar", Adjacency: report.MakeIDList("foo")},
+		"foo": {ID: "foo", Adjacency: report.MakeIDList("bar"), NodeMetadata: report.MakeNodeMetadata()},
+		"bar": {ID: "bar", Adjacency: report.MakeIDList("foo"), NodeMetadata: report.MakeNodeMetadata()},
 	}
-	have := renderer.Render(report.MakeReport())
+	have := sterilize(renderer.Render(report.MakeReport()), true)
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want %+v, have %+v", want, have)
 	}

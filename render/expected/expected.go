@@ -59,6 +59,7 @@ var (
 			Adjacency: adjacency,
 			Origins: report.MakeIDList(
 				test.RandomClientNodeID,
+				test.GoogleEndpointNodeID,
 			),
 		}
 	}
@@ -124,14 +125,15 @@ var (
 		},
 		nonContainerProcessID: {
 			ID:         nonContainerProcessID,
-			LabelMajor: "bash",
+			LabelMajor: test.NonContainerComm,
 			LabelMinor: fmt.Sprintf("%s (%s)", test.ServerHostID, test.NonContainerPID),
 			Rank:       test.NonContainerComm,
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList(),
+			Adjacency:  report.MakeIDList(render.TheInternetID),
 			Origins: report.MakeIDList(
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
+				test.NonContainerNodeID,
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{},
@@ -180,16 +182,17 @@ var (
 				EgressByteCount:   newu64(2100),
 			},
 		},
-		"bash": {
-			ID:         "bash",
-			LabelMajor: "bash",
+		test.NonContainerComm: {
+			ID:         test.NonContainerComm,
+			LabelMajor: test.NonContainerComm,
 			LabelMinor: "1 process",
-			Rank:       "bash",
+			Rank:       test.NonContainerComm,
 			Pseudo:     false,
-			Adjacency:  report.MakeIDList(),
+			Adjacency:  report.MakeIDList(render.TheInternetID),
 			Origins: report.MakeIDList(
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
+				test.NonContainerNodeID,
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{},
@@ -246,10 +249,11 @@ var (
 			LabelMinor: test.ServerHostName,
 			Rank:       "",
 			Pseudo:     true,
-			Adjacency:  report.MakeIDList(),
+			Adjacency:  report.MakeIDList(render.TheInternetID),
 			Origins: report.MakeIDList(
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
+				test.NonContainerNodeID,
 			),
 			NodeMetadata: report.MakeNodeMetadata(),
 			EdgeMetadata: report.EdgeMetadata{},
@@ -305,8 +309,9 @@ var (
 			LabelMinor: test.ServerHostName,
 			Rank:       "",
 			Pseudo:     true,
-			Adjacency:  report.MakeIDList(),
+			Adjacency:  report.MakeIDList(render.TheInternetID),
 			Origins: report.MakeIDList(
+				test.NonContainerNodeID,
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
 			),
