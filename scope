@@ -99,7 +99,7 @@ weave_dns_present() {
 }
 
 set_docker_bridge_ip() {
-    DOCKER_BRIDGE_IP=$(ip -4 addr show dev $DOCKER_BRIDGE | grep -m1 -o 'inet [.0-9]*')
+    DOCKER_BRIDGE_IP=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "ip -f inet address show dev $DOCKER_BRIDGE" | grep -m1 -o 'inet \([.0-9]\)*')
     DOCKER_BRIDGE_IP=${DOCKER_BRIDGE_IP#inet }
 }
 
