@@ -5,7 +5,7 @@ const debug = require('debug')('scope:nodes-layout');
 
 const MAX_NODES = 100;
 
-const getConstraints = function(nodes) {
+const getConstraints = function(nodes, scale) {
   const constraints = [];
   const theInternetId = 'theinternet';
   const internetNode = nodes[theInternetId];
@@ -17,7 +17,7 @@ const getConstraints = function(nodes) {
         axis: 'y',
         left: internetNode.index,
         right: node.index,
-        gap: 200
+        gap: scale(4)
       });
     }
   });
@@ -47,12 +47,12 @@ const doLayout = function(nodes, edges, width, height, scale) {
   });
 
   nodeList.forEach(function(v, i) {
-    v.height = scale(2.25);
-    v.width = scale(2.25);
+    v.height = scale(2.5);
+    v.width = scale(2.5);
     v.index = i;
   });
 
-  const constraints = getConstraints(nodes);
+  const constraints = getConstraints(nodes, scale);
 
   debug('graph layout constraints', constraints);
 
@@ -60,7 +60,7 @@ const doLayout = function(nodes, edges, width, height, scale) {
     .nodes(nodeList)
     .links(edgeList)
     .constraints(constraints)
-    .flowLayout('y', 25)
+    .flowLayout('y', scale(0.5))
     .start(5, 10, 20);
 
   debug('graph layout done');
