@@ -50,19 +50,19 @@ func checkRequest(t *testing.T, ts *httptest.Server, method, path string, body [
 	}
 	req, err := http.NewRequest(method, fullPath, bodyReader)
 	if err != nil {
-		t.Fatalf("Error getting %s: %s", path, err)
+		t.Fatalf("Error getting %s: %s %s", method, path, err)
 	}
 
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Error getting %s: %s", path, err)
+		t.Fatalf("Error getting %s %s: %s", method, path, err)
 	}
 
 	body, err = ioutil.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		t.Fatalf("%s body read error: %s", path, err)
+		t.Fatalf("%s %s body read error: %s", method, path, err)
 	}
 	return res, body
 }

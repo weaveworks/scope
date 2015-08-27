@@ -28,6 +28,16 @@ type Report struct {
 	// Edges are not present.
 	Container Topology
 
+	// Pod nodes represent all Kubernetes pods running on hosts running probes.
+	// Metadata includes things like pod id, name etc. Edges are not
+	// present.
+	Pod Topology
+
+	// Service nodes represent all Kubernetes services running on hosts running probes.
+	// Metadata includes things like service id, name etc. Edges are not
+	// present.
+	Service Topology
+
 	// ContainerImages nodes represent all Docker containers images on
 	// hosts running probes. Metadata includes things like image id, name etc.
 	// Edges are not present.
@@ -64,6 +74,8 @@ func MakeReport() Report {
 		Container:      MakeTopology(),
 		ContainerImage: MakeTopology(),
 		Host:           MakeTopology(),
+		Pod:            MakeTopology(),
+		Service:        MakeTopology(),
 		Overlay:        MakeTopology(),
 		Sampling:       Sampling{},
 		Window:         0,
@@ -79,6 +91,8 @@ func (r Report) Copy() Report {
 		Container:      r.Container.Copy(),
 		ContainerImage: r.ContainerImage.Copy(),
 		Host:           r.Host.Copy(),
+		Pod:            r.Pod.Copy(),
+		Service:        r.Service.Copy(),
 		Overlay:        r.Overlay.Copy(),
 		Sampling:       r.Sampling,
 		Window:         r.Window,
@@ -95,6 +109,8 @@ func (r Report) Merge(other Report) Report {
 	cp.Container = r.Container.Merge(other.Container)
 	cp.ContainerImage = r.ContainerImage.Merge(other.ContainerImage)
 	cp.Host = r.Host.Merge(other.Host)
+	cp.Pod = r.Pod.Merge(other.Pod)
+	cp.Service = r.Service.Merge(other.Service)
 	cp.Overlay = r.Overlay.Merge(other.Overlay)
 	cp.Sampling = r.Sampling.Merge(other.Sampling)
 	cp.Window += other.Window
@@ -109,6 +125,8 @@ func (r Report) Topologies() []Topology {
 		r.Process,
 		r.Container,
 		r.ContainerImage,
+		r.Pod,
+		r.Service,
 		r.Host,
 		r.Overlay,
 	}

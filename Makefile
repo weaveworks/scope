@@ -41,7 +41,7 @@ $(RUNSVINIT): vendor/runsvinit/*.go
 
 $(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go
 
-$(PROBE_EXE): probe/*.go probe/docker/*.go probe/endpoint/*.go probe/host/*.go probe/process/*.go probe/overlay/*.go report/*.go xfer/*.go
+$(PROBE_EXE): probe/*.go probe/docker/*.go probe/kubernetes/*.go probe/endpoint/*.go probe/host/*.go probe/process/*.go probe/overlay/*.go report/*.go xfer/*.go
 
 $(APP_EXE) $(PROBE_EXE):
 	go get -d -tags netgo ./$(@D)

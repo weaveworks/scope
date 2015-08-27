@@ -38,36 +38,25 @@ func makeTopologyList(rep xfer.Reporter) func(w http.ResponseWriter, r *http.Req
 			rpt        = rep.Report()
 			topologies = []APITopologyDesc{}
 		)
-		for name, def := range topologyRegistry {
-			// Don't show sub-topologies at the top level.
-			if def.parent != "" {
-				continue
+		topologyRegistry.walk(func(name string, def topologyView, subDefs map[string]topologyView) {
+			describedSubDefs := []APITopologyDesc{}
+			for subName, subDef := range subDefs {
+				describedSubDefs = append(describedSubDefs, APITopologyDesc{
+					Name:    subDef.human,
+					URL:     "/api/topology/" + subName,
+					Options: makeTopologyOptions(subDef),
+					Stats:   stats(subDef.renderer, rpt),
+				})
 			}
-			decorateTopologyForRequest(r, &def)
-
-			// Collect all sub-topologies of this one, depth=1 only.
-			subTopologies := []APITopologyDesc{}
-			for subName, subDef := range topologyRegistry {
-				if subDef.parent == name {
-					decorateTopologyForRequest(r, &subDef)
-					subTopologies = append(subTopologies, APITopologyDesc{
-						Name:    subDef.human,
-						URL:     "/api/topology/" + subName,
-						Options: makeTopologyOptions(subDef),
-						Stats:   stats(subDef.renderer, rpt),
-					})
-				}
-			}
-
-			// Append.
 			topologies = append(topologies, APITopologyDesc{
 				Name:          def.human,
 				URL:           "/api/topology/" + name,
-				SubTopologies: subTopologies,
+				SubTopologies: describedSubDefs,
 				Options:       makeTopologyOptions(def),
 				Stats:         stats(def.renderer, rpt),
 			})
-		}
+		})
+
 		respondWith(w, http.StatusOK, topologies)
 	}
 }
