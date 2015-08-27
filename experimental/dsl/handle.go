@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os/exec"
@@ -32,19 +34,21 @@ func handleSVG(tpy report.Topology) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cmd := exec.Command(engine(r), "-Tsvg")
 
-		wc, err := cmd.StdinPipe()
+		buff := &bytes.Buffer{}
+		dot(buff, getView(r).eval(tpy.Copy()))
+		cmd.Stdin = buff
+
+		cmd.Stdout = w
+		stderr, err := cmd.StderrPipe()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		cmd.Stdout = w
-
-		dot(wc, getView(r).eval(tpy.Copy()))
-		wc.Close()
-
 		w.Header().Set("Content-Type", "image/svg+xml")
 		if err := cmd.Run(); err != nil {
+			stderrB, _ := ioutil.ReadAll(stderr)
+			log.Printf("stderr: %s, %q", err, stderrB)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
