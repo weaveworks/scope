@@ -12,6 +12,7 @@
     "flux": "^2.0.3",
     "font-awesome": "^4.3.0",
     "font-awesome-webpack": "0.0.3",
+    "immutable": "^3.7.4",
     "keymirror": "^0.1.1",
     "lodash": "~3.9.3",
     "material-ui": "~0.7.5",
