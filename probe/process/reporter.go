@@ -36,12 +36,12 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	result.Process.Merge(processes)
+	result.Process = result.Process.Merge(processes)
 	return result, nil
 }
 
 func (r *Reporter) processTopology() (report.Topology, error) {
-	t := report.NewTopology()
+	t := report.MakeTopology()
 	err := r.walker.Walk(func(p Process) {
 		pidstr := strconv.Itoa(p.PID)
 		nodeID := report.MakeProcessNodeID(r.scope, pidstr)

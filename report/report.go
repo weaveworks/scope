@@ -58,16 +58,47 @@ type Report struct {
 // MakeReport makes a clean report, ready to Merge() other reports into.
 func MakeReport() Report {
 	return Report{
-		Endpoint:       NewTopology(),
-		Address:        NewTopology(),
-		Process:        NewTopology(),
-		Container:      NewTopology(),
-		ContainerImage: NewTopology(),
-		Host:           NewTopology(),
-		Overlay:        NewTopology(),
+		Endpoint:       MakeTopology(),
+		Address:        MakeTopology(),
+		Process:        MakeTopology(),
+		Container:      MakeTopology(),
+		ContainerImage: MakeTopology(),
+		Host:           MakeTopology(),
+		Overlay:        MakeTopology(),
 		Sampling:       Sampling{},
 		Window:         0,
 	}
+}
+
+// Copy returns a value copy of the report.
+func (r Report) Copy() Report {
+	return Report{
+		Endpoint:       r.Endpoint.Copy(),
+		Address:        r.Address.Copy(),
+		Process:        r.Process.Copy(),
+		Container:      r.Container.Copy(),
+		ContainerImage: r.ContainerImage.Copy(),
+		Host:           r.Host.Copy(),
+		Overlay:        r.Overlay.Copy(),
+		Sampling:       r.Sampling,
+		Window:         r.Window,
+	}
+}
+
+// Merge merges another Report into the receiver and returns the result. The
+// original is not modified.
+func (r Report) Merge(other Report) Report {
+	cp := r.Copy()
+	cp.Endpoint = r.Endpoint.Merge(other.Endpoint)
+	cp.Address = r.Address.Merge(other.Address)
+	cp.Process = r.Process.Merge(other.Process)
+	cp.Container = r.Container.Merge(other.Container)
+	cp.ContainerImage = r.ContainerImage.Merge(other.ContainerImage)
+	cp.Host = r.Host.Merge(other.Host)
+	cp.Overlay = r.Overlay.Merge(other.Overlay)
+	cp.Sampling = r.Sampling.Merge(other.Sampling)
+	cp.Window += other.Window
+	return cp
 }
 
 // Topologies returns a slice of Topologies in this report
@@ -116,6 +147,15 @@ func (s Sampling) Rate() float64 {
 		return 1.0
 	}
 	return float64(s.Count) / float64(s.Total)
+}
+
+// Merge combines two sampling structures via simple addition and returns the
+// result. The original is not modified.
+func (s Sampling) Merge(other Sampling) Sampling {
+	return Sampling{
+		Count: s.Count + other.Count,
+		Total: s.Total + other.Total,
+	}
 }
 
 const (

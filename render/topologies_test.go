@@ -6,55 +6,45 @@ import (
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
-	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
 
-func trimNodeMetadata(rns render.RenderableNodes) render.RenderableNodes {
-	result := render.RenderableNodes{}
-	for id, rn := range rns {
-		rn.NodeMetadata = report.MakeNodeMetadata()
-		result[id] = rn
-	}
-	return result
-}
-
 func TestProcessRenderer(t *testing.T) {
-	have := render.ProcessRenderer.Render(test.Report)
-	have = trimNodeMetadata(have)
-	if !reflect.DeepEqual(expected.RenderedProcesses, have) {
-		t.Error(test.Diff(expected.RenderedProcesses, have))
+	have := sterilize(render.ProcessRenderer.Render(test.Report), true)
+	want := expected.RenderedProcesses
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestProcessNameRenderer(t *testing.T) {
-	have := render.ProcessNameRenderer.Render(test.Report)
-	have = trimNodeMetadata(have)
-	if !reflect.DeepEqual(expected.RenderedProcessNames, have) {
-		t.Error(test.Diff(expected.RenderedProcessNames, have))
+	have := sterilize(render.ProcessNameRenderer.Render(test.Report), true)
+	want := expected.RenderedProcessNames
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := render.ContainerRenderer.Render(test.Report)
-	have = trimNodeMetadata(have)
-	if !reflect.DeepEqual(expected.RenderedContainers, have) {
-		t.Error(test.Diff(expected.RenderedContainers, have))
+	have := sterilize(render.ContainerRenderer.Render(test.Report), true)
+	want := expected.RenderedContainers
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestContainerImageRenderer(t *testing.T) {
-	have := render.ContainerImageRenderer.Render(test.Report)
-	have = trimNodeMetadata(have)
-	if !reflect.DeepEqual(expected.RenderedContainerImages, have) {
-		t.Error(test.Diff(expected.RenderedContainerImages, have))
+	have := sterilize(render.ContainerImageRenderer.Render(test.Report), true)
+	want := expected.RenderedContainerImages
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestHostRenderer(t *testing.T) {
-	have := render.HostRenderer.Render(test.Report)
-	have = trimNodeMetadata(have)
-	if !reflect.DeepEqual(expected.RenderedHosts, have) {
-		t.Error(test.Diff(expected.RenderedHosts, have))
+	have := sterilize(render.HostRenderer.Render(test.Report), true)
+	want := expected.RenderedHosts
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
 	}
 }

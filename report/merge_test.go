@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test"
 )
 
 const (
@@ -96,9 +97,7 @@ func TestMergeAdjacency(t *testing.T) {
 			},
 		},
 	} {
-		have := c.a
-		have.Merge(c.b)
-		if !reflect.DeepEqual(c.want, have) {
+		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s: want\n\t%#v\nhave\n\t%#v", name, c.want, have)
 		}
 	}
@@ -192,12 +191,28 @@ func TestMergeEdgeMetadatas(t *testing.T) {
 			},
 		},
 	} {
-		have := c.a
-		have.Merge(c.b)
-
-		if !reflect.DeepEqual(c.want, have) {
-			t.Errorf("%s: want\n\t%#v, have\n\t%#v", name, c.want, have)
+		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
+			t.Errorf("%s:\n%s", name, test.Diff(c.want, have))
 		}
+	}
+}
+
+func TestFlattenEdgeMetadata(t *testing.T) {
+	have := (report.EdgeMetadata{
+		EgressPacketCount: newu64(1),
+		MaxConnCountTCP:   newu64(2),
+	}).Flatten(report.EdgeMetadata{
+		EgressPacketCount: newu64(4),
+		EgressByteCount:   newu64(8),
+		MaxConnCountTCP:   newu64(16),
+	})
+	want := report.EdgeMetadata{
+		EgressPacketCount: newu64(1 + 4),
+		EgressByteCount:   newu64(8),
+		MaxConnCountTCP:   newu64(2 + 16), // flatten should sum MaxConnCountTCP
+	}
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
 	}
 }
 
@@ -291,10 +306,7 @@ func TestMergeNodeMetadatas(t *testing.T) {
 			},
 		},
 	} {
-		have := c.a
-		have.Merge(c.b)
-
-		if !reflect.DeepEqual(c.want, have) {
+		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s: want\n\t%#v, have\n\t%#v", name, c.want, have)
 		}
 	}

@@ -32,9 +32,10 @@ func TestCollector(t *testing.T) {
 	}
 
 	c.Add(r2)
+
 	merged := report.MakeReport()
-	merged.Merge(r1)
-	merged.Merge(r2)
+	merged = merged.Merge(r1)
+	merged = merged.Merge(r2)
 	if want, have := merged, c.Report(); !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

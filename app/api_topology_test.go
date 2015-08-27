@@ -16,18 +16,17 @@ import (
 	"github.com/weaveworks/scope/test"
 )
 
-func fixNodeMetadatas(nodes render.RenderableNodes) render.RenderableNodes {
-	result := make(render.RenderableNodes, len(nodes))
-	for id, node := range nodes {
-		if node.NodeMetadata.Metadata == nil {
-			node.NodeMetadata.Metadata = map[string]string{}
+// A copy of sanitize from the render package.
+func sanitize(nodes render.RenderableNodes) render.RenderableNodes {
+	for id, n := range nodes {
+		if n.Adjacency == nil {
+			n.Adjacency = report.IDList{}
 		}
-		if node.NodeMetadata.Counters == nil {
-			node.NodeMetadata.Counters = map[string]int{}
-		}
-		result[id] = node
+		n.NodeMetadata.Metadata = map[string]string{}
+		n.NodeMetadata.Counters = map[string]int{}
+		nodes[id] = n
 	}
-	return result
+	return nodes
 }
 
 func TestAll(t *testing.T) {
@@ -74,7 +73,7 @@ func TestAPITopologyContainers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if want, have := expected.RenderedContainers, fixNodeMetadatas(topo.Nodes); !reflect.DeepEqual(want, have) {
+		if want, have := expected.RenderedContainers, sanitize(topo.Nodes); !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}
@@ -122,7 +121,7 @@ func TestAPITopologyHosts(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if want, have := expected.RenderedHosts, fixNodeMetadatas(topo.Nodes); !reflect.DeepEqual(want, have) {
+		if want, have := expected.RenderedHosts, sanitize(topo.Nodes); !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}

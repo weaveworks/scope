@@ -17,10 +17,10 @@ func NewTagger(hostID string) Tagger {
 
 // Tag implements Tagger.
 func (t Tagger) Tag(r report.Report) (report.Report, error) {
-	md := report.MakeNodeMetadataWith(map[string]string{report.HostNodeID: t.hostNodeID})
+	other := report.MakeNodeMetadataWith(map[string]string{report.HostNodeID: t.hostNodeID})
 	for _, topology := range r.Topologies() {
-		for nodeID := range topology.NodeMetadatas {
-			topology.NodeMetadatas[nodeID].Merge(md)
+		for id, md := range topology.NodeMetadatas {
+			topology.NodeMetadatas[id] = md.Merge(other)
 		}
 	}
 	return r, nil

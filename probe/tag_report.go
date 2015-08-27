@@ -50,9 +50,9 @@ func (topologyTagger) Tag(r report.Report) (report.Report, error) {
 		"host":            &(r.Host),
 		"overlay":         &(r.Overlay),
 	} {
-		md := report.MakeNodeMetadataWith(map[string]string{Topology: val})
-		for nodeID := range topology.NodeMetadatas {
-			(*topology).NodeMetadatas[nodeID].Merge(md)
+		other := report.MakeNodeMetadataWith(map[string]string{Topology: val})
+		for id, md := range topology.NodeMetadatas {
+			topology.NodeMetadatas[id] = md.Merge(other)
 		}
 	}
 	return r, nil

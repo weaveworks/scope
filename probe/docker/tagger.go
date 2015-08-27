@@ -83,6 +83,6 @@ func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 			ContainerID: c.ID(),
 		})
 
-		topology.NodeMetadatas[nodeID].Merge(md)
+		topology.NodeMetadatas[nodeID] = nodeMetadata.Merge(md)
 	}
 }

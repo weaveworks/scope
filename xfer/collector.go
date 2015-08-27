@@ -52,11 +52,11 @@ func (c *Collector) Report() report.Report {
 
 	c.reports = clean(c.reports, c.window)
 
-	report := report.MakeReport()
+	rpt := report.MakeReport()
 	for _, tr := range c.reports {
-		report.Merge(tr.report)
+		rpt = rpt.Merge(tr.report)
 	}
-	return report
+	return rpt
 }
 
 type timestampReport struct {

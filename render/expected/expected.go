@@ -186,6 +186,7 @@ var (
 			LabelMinor: "1 process",
 			Rank:       "bash",
 			Pseudo:     false,
+			Adjacency:  report.MakeIDList(),
 			Origins: report.MakeIDList(
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
@@ -245,6 +246,7 @@ var (
 			LabelMinor: test.ServerHostName,
 			Rank:       "",
 			Pseudo:     true,
+			Adjacency:  report.MakeIDList(),
 			Origins: report.MakeIDList(
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
@@ -303,6 +305,7 @@ var (
 			LabelMinor: test.ServerHostName,
 			Rank:       "",
 			Pseudo:     true,
+			Adjacency:  report.MakeIDList(),
 			Origins: report.MakeIDList(
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
