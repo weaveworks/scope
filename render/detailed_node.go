@@ -312,6 +312,7 @@ func containerOriginTable(nmd report.NodeMetadata, addHostTag bool) (Table, bool
 	for _, ip := range docker.ExtractContainerIPs(nmd) {
 		rows = append(rows, Row{Key: "IP Address", ValueMajor: ip, ValueMinor: ""})
 	}
+	rows = append(rows, getDockerLabelRows(nmd)...)
 
 	if val, ok := nmd.Metadata[docker.MemoryUsage]; ok {
 		memory, err := strconv.ParseFloat(val, 64)
@@ -349,6 +350,7 @@ func containerImageOriginTable(nmd report.NodeMetadata) (Table, bool) {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
 		}
 	}
+	rows = append(rows, getDockerLabelRows(nmd)...)
 	title := "Container Image"
 	var (
 		nameFound bool
@@ -363,6 +365,21 @@ func containerImageOriginTable(nmd report.NodeMetadata) (Table, bool) {
 		Rows:    rows,
 		Rank:    containerImageRank,
 	}, len(rows) > 0 || nameFound
+}
+
+func getDockerLabelRows(nmd report.NodeMetadata) []Row {
+	rows := []Row{}
+	// Add labels in alphabetical order
+	labels := docker.ExtractLabels(nmd)
+	labelKeys := make([]string, 0, len(labels))
+	for k := range labels {
+		labelKeys = append(labelKeys, k)
+	}
+	sort.Strings(labelKeys)
+	for _, labelKey := range labelKeys {
+		rows = append(rows, Row{Key: fmt.Sprintf("Label %q", labelKey), ValueMajor: labels[labelKey]})
+	}
+	return rows
 }
 
 func hostOriginTable(nmd report.NodeMetadata) (Table, bool) {

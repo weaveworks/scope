@@ -106,12 +106,24 @@ var (
 		NetworkSettings: &client.NetworkSettings{
 			IPAddress: "1.2.3.4",
 		},
+		Config: &client.Config{
+			Labels: map[string]string{
+				"foo1": "bar1",
+				"foo2": "bar2",
+			},
+		},
 	}
 	container2 = &client.Container{
 		ID:    "wiff",
 		Name:  "waff",
 		Image: "baz",
 		State: client.State{Pid: 1, Running: true},
+		Config: &client.Config{
+			Labels: map[string]string{
+				"foo1": "bar1",
+				"foo2": "bar2",
+			},
+		},
 	}
 	apiContainer1 = client.APIContainers{ID: "ping"}
 	apiImage1     = client.APIImages{ID: "baz", RepoTags: []string{"bang", "not-chosen"}}

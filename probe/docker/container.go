@@ -216,6 +216,7 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 		ContainerIPs: strings.Join(append(c.container.NetworkSettings.SecondaryIPAddresses,
 			c.container.NetworkSettings.IPAddress), " "),
 	})
+	AddLabels(result, c.container.Config.Labels)
 
 	if c.latestStats == nil {
 		return result
