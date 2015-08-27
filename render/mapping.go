@@ -25,12 +25,12 @@ const (
 )
 
 // LeafMapFunc is anything which can take an arbitrary NodeMetadata, which is
-// always one-to-one with nodes in a topology, and return a specific
-// representation of the referenced node, in the form of a node ID and a
-// human-readable major and minor labels.
+// always one-to-one with nodes in a topology, and return a set of RenderableNodes
+// - specific representations of the referenced node, in the form of a map of node
+// ID to a human-readable major and minor labels.
 //
 // A single NodeMetadata can yield arbitrary many representations, including
-// representations that reduce the cardinality of the set of nodes.
+// representations that reduce (or even increase) the cardinality of the set of nodes.
 type LeafMapFunc func(report.NodeMetadata) RenderableNodes
 
 // PseudoFunc creates RenderableNode representing pseudo nodes given the
@@ -41,13 +41,13 @@ type LeafMapFunc func(report.NodeMetadata) RenderableNodes
 type PseudoFunc func(srcNodeID, dstNodeID string, srcIsClient bool, local report.Networks) (RenderableNode, bool)
 
 // MapFunc is anything which can take an arbitrary RenderableNode and
-// return another RenderableNode.
+// return a set of other RenderableNodes.
 //
-// As with LeafMapFunc, if the final output parameter is false, the node
+// As with LeafMapFunc, if the output is empty, the node
 // shall be omitted from the rendered topology.
 type MapFunc func(RenderableNode) RenderableNodes
 
-// MapEndpointIdentity maps an endpoint topology node to an endpoint
+// MapEndpointIdentity maps an endpoint topology node to a single endpoint
 // renderable node. As it is only ever run on endpoint topology nodes, we
 // expect that certain keys are present.
 func MapEndpointIdentity(m report.NodeMetadata) RenderableNodes {

@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/weaveworks/scope/common/exec"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test/exec"
 )
 
 const (

@@ -7,9 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/weaveworks/scope/common/exec"
 	. "github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/exec"
+	testExec "github.com/weaveworks/scope/test/exec"
 )
 
 func makeFlow(id int64, srcIP, dstIP string, srcPort, dstPort int, ty, state string) Flow {
@@ -72,7 +73,7 @@ func TestConntracker(t *testing.T) {
 
 	reader, writer := io.Pipe()
 	exec.Command = func(name string, args ...string) exec.Cmd {
-		return exec.NewMockCmd(reader)
+		return testExec.NewMockCmd(reader)
 	}
 
 	conntracker, err := NewConntracker()

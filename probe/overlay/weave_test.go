@@ -7,18 +7,19 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/weaveworks/scope/common/exec"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/exec"
+	testExec "github.com/weaveworks/scope/test/exec"
 )
 
 func TestWeaveTaggerOverlayTopology(t *testing.T) {
 	oldExecCmd := exec.Command
 	defer func() { exec.Command = oldExecCmd }()
 	exec.Command = func(name string, args ...string) exec.Cmd {
-		return exec.NewMockCmdString(fmt.Sprintf("%s %s %s/24\n", mockContainerID, mockContainerMAC, mockContainerIP))
+		return testExec.NewMockCmdString(fmt.Sprintf("%s %s %s/24\n", mockContainerID, mockContainerMAC, mockContainerIP))
 	}
 
 	s := httptest.NewServer(http.HandlerFunc(mockWeaveRouter))

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/weaveworks/scope/test/exec"
+	"github.com/weaveworks/scope/common/exec"
 )
 
 // Constants exported for testing
