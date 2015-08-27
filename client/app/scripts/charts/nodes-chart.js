@@ -418,10 +418,6 @@ const NodesChart = React.createClass({
     const nodeScale = this.state.nodeScale.range([0, normalizedNodeSize]);
 
     let graph = NodesLayout.doLayout(nodes, edges, width, height, nodeScale);
-    if (this.state.initialLayout && graph.width > 0) {
-      debug('running layout twice to reduce jitter on initial layout');
-      graph = NodesLayout.doLayout(nodes, edges, width, height, nodeScale);
-    }
 
     // layout was aborted
     if (!graph) {

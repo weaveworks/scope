@@ -7,22 +7,17 @@ const MAX_NODES = 100;
 
 const getConstraints = function(nodes) {
   const constraints = [];
+  const theInternetId = 'theinternet';
+  const internetNode = nodes[theInternetId];
 
-  // produce node offsets for each rank
-  const nodesByRank = _.groupBy(nodes, 'rank');
-  _.each(nodesByRank, function(groupedNodes, rank) {
-    if (groupedNodes.length > 1 && rank) {
-      const offsets = _.map(groupedNodes, function(node) {
-        return {
-          node: node.index,
-          offset: '0'
-        };
-      });
-
+  // all nodes have to be below the internet node
+  _.each(nodes, function(node, id) {
+    if (id !== theInternetId) {
       constraints.push({
-        type: 'alignment',
         axis: 'y',
-        offsets: offsets
+        left: internetNode.index,
+        right: node.index,
+        gap: 200
       });
     }
   });
@@ -64,8 +59,9 @@ const doLayout = function(nodes, edges, width, height, scale) {
   cola
     .nodes(nodeList)
     .links(edgeList)
-    .flowLayout('y', 100)
-    .start(10, 20, 10);
+    .constraints(constraints)
+    .flowLayout('y', 25)
+    .start(5, 10, 20);
 
   debug('graph layout done');
 
