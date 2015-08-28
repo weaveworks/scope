@@ -30,6 +30,12 @@ module.exports = {
     WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
   },
 
+  openWebsocket: function() {
+    AppDispatcher.dispatch({
+      type: ActionTypes.OPEN_WEBSOCKET
+    });
+  },
+
   closeWebsocket: function() {
     AppDispatcher.dispatch({
       type: ActionTypes.CLOSE_WEBSOCKET

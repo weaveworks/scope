@@ -39,6 +39,10 @@ describe('AppStore', function() {
     type: ActionTypes.HIT_ESC_KEY
   };
 
+  const OpenWebsocketAction = {
+    type: ActionTypes.OPEN_WEBSOCKET
+  };
+
   const ReceiveEmptyNodesDeltaAction = {
     type: ActionTypes.RECEIVE_NODES_DELTA,
     delta: {}
@@ -169,6 +173,9 @@ describe('AppStore', function() {
     registeredCallback(CloseWebsocketAction);
     expect(AppStore.isWebsocketClosed()).toBeTruthy();
     expect(AppStore.getNodes()).toEqual(NODE_SET);
+
+    registeredCallback(OpenWebsocketAction);
+    expect(AppStore.isWebsocketClosed()).toBeFalsy();
 
     registeredCallback(ReceiveEmptyNodesDeltaAction);
     expect(AppStore.getNodes()).toEqual({});

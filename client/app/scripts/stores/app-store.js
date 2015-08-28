@@ -188,6 +188,14 @@ AppStore.registeredCallback = function(payload) {
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
+    case ActionTypes.OPEN_WEBSOCKET:
+      // flush nodes cache after re-connect
+      nodes = {};
+      websocketClosed = false;
+
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
     case ActionTypes.RECEIVE_ERROR:
       errorUrl = payload.errorUrl;
       AppStore.emit(AppStore.CHANGE_EVENT);
@@ -206,12 +214,6 @@ AppStore.registeredCallback = function(payload) {
         'add', _.size(payload.delta.add));
 
       errorUrl = null;
-
-      // flush nodes cache after re-connect
-      if (websocketClosed) {
-        nodes = {};
-      }
-      websocketClosed = false;
 
       // nodes that no longer exist
       _.each(payload.delta.remove, function(nodeId) {

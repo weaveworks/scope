@@ -10,6 +10,7 @@ module.exports = keymirror({
   HIT_ESC_KEY: null,
   LEAVE_EDGE: null,
   LEAVE_NODE: null,
+  OPEN_WEBSOCKET: null,
   RECEIVE_NODE_DETAILS: null,
   RECEIVE_NODES: null,
   RECEIVE_NODES_DELTA: null,
