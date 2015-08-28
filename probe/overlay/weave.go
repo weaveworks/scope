@@ -4,15 +4,14 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
-	"os/exec"
 	"regexp"
 	"strings"
 
+	"github.com/weaveworks/scope/common/exec"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
@@ -35,16 +34,6 @@ const (
 
 var weavePsMatch = regexp.MustCompile(`^([0-9a-f]{12}) ((?:[0-9a-f][0-9a-f]\:){5}(?:[0-9a-f][0-9a-f]))(.*)$`)
 var ipMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})(/[0-9]+)`)
-
-// Cmd is a hook for mocking
-type Cmd interface {
-	StdoutPipe() (io.ReadCloser, error)
-	Start() error
-	Wait() error
-}
-
-// ExecCommand is a hook for mocking
-var ExecCommand = func(name string, args ...string) Cmd { return exec.Command(name, args...) }
 
 // Weave represents a single Weave router, presumably on the same host
 // as the probe. It is both a Reporter and a Tagger: it produces an Overlay
@@ -114,7 +103,7 @@ type psEntry struct {
 
 func (w Weave) ps() ([]psEntry, error) {
 	var result []psEntry
-	cmd := ExecCommand("weave", "--local", "ps")
+	cmd := exec.Command("weave", "--local", "ps")
 	out, err := cmd.StdoutPipe()
 	if err != nil {
 		return result, err

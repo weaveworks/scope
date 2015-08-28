@@ -52,8 +52,8 @@ func TestReduceEdge(t *testing.T) {
 func TestMapRender1(t *testing.T) {
 	// 1. Check when we return false, the node gets filtered out
 	mapper := render.Map{
-		MapFunc: func(nodes render.RenderableNode) (render.RenderableNode, bool) {
-			return render.RenderableNode{}, false
+		MapFunc: func(nodes render.RenderableNode) render.RenderableNodes {
+			return render.RenderableNodes{}
 		},
 		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
 			"foo": {ID: "foo"},
@@ -69,8 +69,8 @@ func TestMapRender1(t *testing.T) {
 func TestMapRender2(t *testing.T) {
 	// 2. Check we can remap two nodes into one
 	mapper := render.Map{
-		MapFunc: func(nodes render.RenderableNode) (render.RenderableNode, bool) {
-			return render.RenderableNode{ID: "bar"}, true
+		MapFunc: func(nodes render.RenderableNode) render.RenderableNodes {
+			return render.RenderableNodes{"bar": render.RenderableNode{ID: "bar"}}
 		},
 		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
 			"foo": {ID: "foo"},
@@ -89,8 +89,9 @@ func TestMapRender2(t *testing.T) {
 func TestMapRender3(t *testing.T) {
 	// 3. Check we can remap adjacencies
 	mapper := render.Map{
-		MapFunc: func(nodes render.RenderableNode) (render.RenderableNode, bool) {
-			return render.RenderableNode{ID: "_" + nodes.ID}, true
+		MapFunc: func(nodes render.RenderableNode) render.RenderableNodes {
+			id := "_" + nodes.ID
+			return render.RenderableNodes{id: render.RenderableNode{ID: id}}
 		},
 		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
 			"foo": {ID: "foo", Adjacency: report.MakeIDList("baz")},
@@ -125,13 +126,14 @@ func TestMapEdge(t *testing.T) {
 		}
 	}
 
-	identity := func(nmd report.NodeMetadata) (render.RenderableNode, bool) {
-		return render.NewRenderableNode(nmd.Metadata["id"], "", "", "", nmd), true
+	identity := func(nmd report.NodeMetadata) render.RenderableNodes {
+		return render.RenderableNodes{nmd.Metadata["id"]: render.NewRenderableNode(nmd.Metadata["id"], "", "", "", nmd)}
 	}
 
 	mapper := render.Map{
-		MapFunc: func(n render.RenderableNode) (render.RenderableNode, bool) {
-			return render.RenderableNode{ID: "_" + n.ID}, true
+		MapFunc: func(nodes render.RenderableNode) render.RenderableNodes {
+			id := "_" + nodes.ID
+			return render.RenderableNodes{id: render.RenderableNode{ID: id}}
 		},
 		Renderer: render.LeafMap{
 			Selector: selector,

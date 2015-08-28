@@ -46,6 +46,7 @@ func main() {
 		captureOn          = flag.Duration("capture.on", 1*time.Second, "packet capture duty cycle 'on'")
 		captureOff         = flag.Duration("capture.off", 5*time.Second, "packet capture duty cycle 'off'")
 		printVersion       = flag.Bool("version", false, "print version number and exit")
+		useConntrack       = flag.Bool("conntrack", true, "also use conntrack to track connections")
 	)
 	flag.Parse()
 
@@ -103,13 +104,16 @@ func main() {
 	}
 
 	var (
-		taggers      = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
-		reporters    = []Reporter{host.NewReporter(hostID, hostName, localNets), endpoint.NewReporter(hostID, hostName, *spyProcs)}
-		processCache *process.CachingWalker
+		endpointReporter = endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack)
+		processCache     = process.NewCachingWalker(process.NewWalker(*procRoot))
+		reporters        = []Reporter{
+			endpointReporter,
+			host.NewReporter(hostID, hostName, localNets),
+			process.NewReporter(processCache, hostID),
+		}
+		taggers = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
 	)
-
-	processCache = process.NewCachingWalker(process.NewWalker(*procRoot))
-	reporters = append(reporters, process.NewReporter(processCache, hostID))
+	defer endpointReporter.Stop()
 
 	if *dockerEnabled {
 		if err := report.AddLocalBridge(*dockerBridge); err != nil {

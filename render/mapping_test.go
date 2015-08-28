@@ -72,7 +72,7 @@ type testcase struct {
 }
 
 func testMap(t *testing.T, f render.LeafMapFunc, input testcase) {
-	if _, have := f(input.md); input.ok != have {
+	if have := f(input.md); input.ok != (len(have) > 0) {
 		t.Errorf("%v: want %v, have %v", input.md, input.ok, have)
 	}
 }
