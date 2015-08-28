@@ -4,6 +4,7 @@ module.exports = function(config) {
       'PhantomJS'
     ],
     files: [
+      './polyfill.js',
       {
         pattern: 'tests.webpack.js',
         watched: false
