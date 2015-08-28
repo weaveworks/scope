@@ -21,8 +21,8 @@ var fixture = report.Topology{
 		"c": report.MakeNodeMetadataWith(map[string]string{"is-a-or-b-or-c": "true"}),
 	},
 	EdgeMetadatas: map[string]report.EdgeMetadata{
-		report.MakeEdgeID("a", "c"): report.EdgeMetadata{EgressPacketCount: newu64(1)},
-		report.MakeEdgeID("b", "c"): report.EdgeMetadata{EgressPacketCount: newu64(2)},
+		report.MakeEdgeID("a", "c"): {EgressPacketCount: newu64(1)},
+		report.MakeEdgeID("b", "c"): {EgressPacketCount: newu64(2)},
 	},
 }
 

@@ -2,10 +2,29 @@ package report
 
 import (
 	"net"
+	"strings"
 )
 
 // Networks represent a set of subnets
 type Networks []*net.IPNet
+
+// ParseNetworks converts a string of space-separated CIDRs to a Networks.
+func ParseNetworks(v string) Networks {
+	set := map[string]struct{}{}
+	for _, s := range strings.Fields(v) {
+		_, ipNet, err := net.ParseCIDR(s)
+		if err != nil {
+			continue
+		}
+		set[ipNet.String()] = struct{}{}
+	}
+	nets := Networks{}
+	for s := range set {
+		_, ipNet, _ := net.ParseCIDR(s)
+		nets = append(nets, ipNet)
+	}
+	return nets
+}
 
 // Interface is exported for testing.
 type Interface interface {

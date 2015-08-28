@@ -1,7 +1,6 @@
 package render_test
 
 import (
-	"fmt"
 	"net"
 	"reflect"
 	"testing"
@@ -30,30 +29,6 @@ func TestReportLocalNetworks(t *testing.T) {
 	have := render.LocalNetworks(r)
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
-	}
-}
-
-func TestParseNetworks(t *testing.T) {
-	var (
-		hugenetStr  = "1.0.0.0/8"
-		bignetStr   = "10.1.0.1/16"
-		smallnetStr = "5.6.7.8/32"
-		hugenet     = mustParseCIDR(hugenetStr)
-		bignet      = mustParseCIDR(bignetStr)
-		smallnet    = mustParseCIDR(smallnetStr)
-	)
-	for _, tc := range []struct {
-		input string
-		want  report.Networks
-	}{
-		{"", report.Networks{}},
-		{fmt.Sprintf("%s", bignetStr), report.Networks([]*net.IPNet{bignet})},
-		{fmt.Sprintf("%s %s", bignetStr, bignetStr), report.Networks([]*net.IPNet{bignet})},
-		{fmt.Sprintf("%s foo %s oops  %s", hugenetStr, smallnetStr, hugenetStr), report.Networks([]*net.IPNet{hugenet, smallnet})},
-	} {
-		if want, have := tc.want, render.ParseNetworks(tc.input); !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
-		}
 	}
 }
 

@@ -97,7 +97,6 @@ func ParseExpressions(strs ...string) Expressions {
 			log.Printf("%s: %v", str, err)
 			continue
 		}
-		log.Printf("%s: OK", str)
 		exprs = append(exprs, expr)
 	}
 	return exprs

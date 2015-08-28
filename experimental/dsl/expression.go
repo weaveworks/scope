@@ -10,7 +10,6 @@ import (
 
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -75,7 +74,7 @@ func selectNonlocal(tpy report.Topology) []string {
 	for _, md := range tpy.NodeMetadatas {
 		for k, v := range md.Metadata {
 			if k == host.LocalNetworks {
-				local = append(local, render.ParseNetworks(v)...)
+				local = append(local, report.ParseNetworks(v)...)
 			}
 		}
 	}

@@ -2,7 +2,6 @@ package dsl
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"net"
 	"regexp"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -51,7 +49,7 @@ func selectAll(tpy report.Topology) []string {
 	for id := range tpy.NodeMetadatas {
 		out = append(out, id)
 	}
-	log.Printf("select ALL: %d", len(out))
+	//log.Printf("select ALL: %d", len(out))
 	return out
 }
 
@@ -73,7 +71,7 @@ func selectConnected(tpy report.Topology) []string {
 			out = append(out, id)
 		}
 	}
-	log.Printf("select CONNECTED: %d", len(out))
+	//log.Printf("select CONNECTED: %d", len(out))
 	return out
 }
 
@@ -82,7 +80,7 @@ func selectNonlocal(tpy report.Topology) []string {
 	for _, md := range tpy.NodeMetadatas {
 		for k, v := range md.Metadata {
 			if k == host.LocalNetworks {
-				local = append(local, render.ParseNetworks(v)...)
+				local = append(local, report.ParseNetworks(v)...)
 			}
 		}
 	}
@@ -107,14 +105,14 @@ func selectNonlocal(tpy report.Topology) []string {
 			}
 		}
 	}
-	log.Printf("select NONLOCAL: %d", len(out))
+	//log.Printf("select NONLOCAL: %d", len(out))
 	return out
 }
 
 func selectLike(s string) selector {
 	re, err := regexp.Compile(s)
 	if err != nil {
-		log.Printf("select LIKE %q: %v", s, err)
+		//log.Printf("select LIKE %q: %v", s, err)
 		re = regexp.MustCompile("")
 	}
 	return func(tpy report.Topology) []string {
@@ -124,7 +122,7 @@ func selectLike(s string) selector {
 				out = append(out, id)
 			}
 		}
-		log.Printf("select LIKE %q: %d", s, len(out))
+		//log.Printf("select LIKE %q: %d", s, len(out))
 		return out
 	}
 }
@@ -146,7 +144,7 @@ func selectWith(s string) selector {
 				}
 			}
 		}
-		log.Printf("select WITH %q: %d", s, len(out))
+		//log.Printf("select WITH %q: %d", s, len(out))
 		return out
 	}
 }
@@ -164,7 +162,7 @@ func selectNot(s selector) selector {
 			}
 			out = append(out, id)
 		}
-		log.Printf("select NOT: %d", len(out))
+		//log.Printf("select NOT: %d", len(out))
 		return out
 	}
 }
@@ -175,7 +173,7 @@ func transformHighlight(tpy report.Topology, ids []string) report.Topology {
 	for _, id := range ids {
 		tpy.NodeMetadatas[id] = tpy.NodeMetadatas[id].Merge(report.MakeNodeMetadataWith(map[string]string{highlightKey: "true"}))
 	}
-	log.Printf("transform HIGHLIGHT %d: OK", len(ids))
+	//log.Printf("transform HIGHLIGHT %d: OK", len(ids))
 	return tpy
 }
 
@@ -192,7 +190,7 @@ func transformRemove(tpy report.Topology, ids []string) report.Topology {
 		cp(out, tpy, id)
 	}
 	clean(out, toRemove)
-	log.Printf("transform REMOVE %d: in %d, out %d", len(ids), len(tpy.NodeMetadatas), len(out.NodeMetadatas))
+	//log.Printf("transform REMOVE %d: in %d, out %d", len(ids), len(tpy.NodeMetadatas), len(out.NodeMetadatas))
 	return out
 }
 
@@ -204,7 +202,7 @@ func transformShowOnly(tpy report.Topology, ids []string) report.Topology {
 		}
 		cp(out, tpy, id)
 	}
-	log.Printf("transform SHOWONLY %d: in %d, out %d", len(ids), len(tpy.NodeMetadatas), len(out.NodeMetadatas))
+	//log.Printf("transform SHOWONLY %d: in %d, out %d", len(ids), len(tpy.NodeMetadatas), len(out.NodeMetadatas))
 	return out
 }
 
@@ -222,7 +220,7 @@ func transformMerge(tpy report.Topology, ids []string) report.Topology {
 			cp(out, tpy, id)
 		}
 	}
-	log.Printf("transform MERGE %d: in %d, out %d", len(ids), len(tpy.NodeMetadatas), len(out.NodeMetadatas))
+	//log.Printf("transform MERGE %d: in %d, out %d", len(ids), len(tpy.NodeMetadatas), len(out.NodeMetadatas))
 	return out
 }
 
@@ -269,7 +267,7 @@ func transformGroupBy(s string) transformer {
 			}
 		}
 
-		log.Printf("transform GROUPBY %v %d: in %d, out %d", keys, len(ids), len(tpy.NodeMetadatas), len(out.NodeMetadatas))
+		//log.Printf("transform GROUPBY %v %d: in %d, out %d", keys, len(ids), len(tpy.NodeMetadatas), len(out.NodeMetadatas))
 		return out
 	}
 }
@@ -310,7 +308,7 @@ func transformJoin(key string) transformer {
 			out.NodeMetadatas[id] = md // write
 		}
 
-		log.Printf("transform JOIN %v %d: in %d, out %d", key, len(ids), len(tpy.NodeMetadatas), len(out.NodeMetadatas))
+		//log.Printf("transform JOIN %v %d: in %d, out %d", key, len(ids), len(tpy.NodeMetadatas), len(out.NodeMetadatas))
 		return out
 	}
 }
