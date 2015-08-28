@@ -95,11 +95,11 @@ weave_dns_add() {
 }
 
 weave_dns_present() {
-    docker run --rm gliderlabs/alpine nc -z $DOCKER_BRIDGE_IP 53 || is_running $WEAVEDNS_CONTAINER_NAME
+    docker run --rm --entrypoint /bin/sh $SCOPE_IMAGE -c "nc -z $DOCKER_BRIDGE_IP 53" || is_running $WEAVEDNS_CONTAINER_NAME
 }
 
 set_docker_bridge_ip() {
-    DOCKER_BRIDGE_IP=$(ip -4 addr show dev $DOCKER_BRIDGE | grep -m1 -o 'inet [.0-9]*')
+    DOCKER_BRIDGE_IP=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "ip -f inet address show dev $DOCKER_BRIDGE" | grep -m1 -o 'inet \([.0-9]\)*')
     DOCKER_BRIDGE_IP=${DOCKER_BRIDGE_IP#inet }
 }
 
@@ -168,7 +168,7 @@ case "$COMMAND" in
             -v /var/run/docker.sock:/var/run/docker.sock \
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS $SCOPE_ARGS --probe.docker true "$@")
 
-        IP_ADDRS=$(docker run --rm --net=host gliderlabs/alpine /bin/sh -c "$IP_ADDR_CMD")
+        IP_ADDRS=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "$IP_ADDR_CMD")
         if command_exists weave && is_running $WEAVE_CONTAINER_NAME && weave_dns_present; then
             if [ -z "$IP_ADDRS" ]; then
                 echo "Could not determine local IP address; Weave DNS integration will not work correctly."
