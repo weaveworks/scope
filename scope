@@ -99,8 +99,11 @@ weave_dns_present() {
 }
 
 set_docker_bridge_ip() {
-    DOCKER_BRIDGE_IP=$(ip -4 addr show dev $DOCKER_BRIDGE | grep -m1 -o 'inet [.0-9]*')
-    DOCKER_BRIDGE_IP=${DOCKER_BRIDGE_IP#inet }
+    if [ -z ${DOCKER_BRIDGE_IP+x} ]
+    then
+        DOCKER_BRIDGE_IP=$(ip -4 addr show dev $DOCKER_BRIDGE | grep -m1 -o 'inet [.0-9]*')
+        DOCKER_BRIDGE_IP=${DOCKER_BRIDGE_IP#inet }
+    fi
 }
 
 # Call url $4 with http verb $3 on container $1 at port $2
