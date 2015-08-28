@@ -2,7 +2,7 @@
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo
-DOCKER_SQUASH=$(shell which docker-squash)
+DOCKER_SQUASH=$(shell which docker-squash 2>/dev/null)
 DOCKERHUB_USER=weaveworks
 APP_EXE=app/scope-app
 PROBE_EXE=probe/scope-probe
@@ -26,7 +26,7 @@ docker/weave:
 	chmod u+x docker/weave
 
 $(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) $(DOCKER_DISTRIB) docker/weave docker/entrypoint.sh docker/Dockerfile docker/run-app docker/run-probe
-	@if [ -z '$(DOCKER_SQUASH)' ]; then echo "Please install docker-squash by running 'make deps'." && exit 1; fi
+	@if [ -z '$(DOCKER_SQUASH)' ] ; then echo "Please install docker-squash by running 'make deps' (and make sure GOPATH/bin is in your PATH)." && exit 1 ; fi
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	cp $(DOCKER_DISTRIB) docker/docker.tgz
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
