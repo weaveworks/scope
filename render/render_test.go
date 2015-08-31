@@ -187,7 +187,29 @@ func TestFilterRender(t *testing.T) {
 	}
 	have := expected.Sterilize(renderer.Render(report.MakeReport()))
 	if !reflect.DeepEqual(want, have) {
-		t.Errorf("want %+v, have %+v", want, have)
+		t.Error(test.Diff(want, have))
+	}
+}
+
+func TestFilterRender2(t *testing.T) {
+	// Test adjacencies are removed for filtered nodes.
+	renderer := render.Filter{
+		FilterFunc: func(node render.RenderableNode) bool {
+			return node.ID != "bar"
+		},
+		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
+			"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("bar")},
+			"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("foo")},
+			"baz": {ID: "baz", Node: report.MakeNode()},
+		}},
+	}
+	want := render.RenderableNodes{
+		"foo": {ID: "foo", Node: report.MakeNode()},
+		"baz": {ID: "baz", Node: report.MakeNode()},
+	}
+	have := expected.Sterilize(renderer.Render(report.MakeReport()))
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
 	}
 }
 

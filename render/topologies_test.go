@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/test"
@@ -28,6 +29,19 @@ func TestProcessNameRenderer(t *testing.T) {
 func TestContainerRenderer(t *testing.T) {
 	have := expected.Sterilize(render.ContainerWithImageNameRenderer{}.Render(test.Report))
 	want := expected.RenderedContainers
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
+func TestContainerFilterRenderer(t *testing.T) {
+	// tag on of the containers in the topology and ensure
+	// it is filtered out correctly.
+	input := test.Report.Copy()
+	input.Container.Nodes[test.ClientContainerNodeID].Metadata[docker.LabelPrefix+"works.weave.role"] = "system"
+	have := expected.Sterilize(render.FilterSystem(render.ContainerWithImageNameRenderer{}).Render(input))
+	want := expected.RenderedContainers.Copy()
+	delete(want, test.ClientContainerID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
