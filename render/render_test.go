@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
@@ -77,9 +78,9 @@ func TestMapRender2(t *testing.T) {
 			"baz": {ID: "baz"},
 		}},
 	}
-	want := sterilize(render.RenderableNodes{
+	want := expected.Sterilize(render.RenderableNodes{
 		"bar": render.RenderableNode{ID: "bar"},
-	}, false)
+	})
 	have := mapper.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -171,7 +172,7 @@ func TestFilterRender(t *testing.T) {
 		"foo": {ID: "foo", Adjacency: report.MakeIDList("bar"), NodeMetadata: report.MakeNodeMetadata()},
 		"bar": {ID: "bar", Adjacency: report.MakeIDList("foo"), NodeMetadata: report.MakeNodeMetadata()},
 	}
-	have := sterilize(renderer.Render(report.MakeReport()), true)
+	have := expected.Sterilize(renderer.Render(report.MakeReport()))
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want %+v, have %+v", want, have)
 	}

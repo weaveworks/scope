@@ -10,7 +10,7 @@ import (
 )
 
 func TestProcessRenderer(t *testing.T) {
-	have := sterilize(render.ProcessRenderer.Render(test.Report), true)
+	have := expected.Sterilize(render.ProcessRenderer.Render(test.Report))
 	want := expected.RenderedProcesses
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -18,7 +18,7 @@ func TestProcessRenderer(t *testing.T) {
 }
 
 func TestProcessNameRenderer(t *testing.T) {
-	have := sterilize(render.ProcessNameRenderer.Render(test.Report), true)
+	have := expected.Sterilize(render.ProcessNameRenderer.Render(test.Report))
 	want := expected.RenderedProcessNames
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -26,7 +26,7 @@ func TestProcessNameRenderer(t *testing.T) {
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := sterilize(render.ContainerRenderer.Render(test.Report), true)
+	have := expected.Sterilize(render.ContainerRenderer.Render(test.Report))
 	want := expected.RenderedContainers
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -34,7 +34,7 @@ func TestContainerRenderer(t *testing.T) {
 }
 
 func TestContainerImageRenderer(t *testing.T) {
-	have := sterilize(render.ContainerImageRenderer.Render(test.Report), true)
+	have := expected.Sterilize(render.ContainerImageRenderer.Render(test.Report))
 	want := expected.RenderedContainerImages
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -42,7 +42,7 @@ func TestContainerImageRenderer(t *testing.T) {
 }
 
 func TestHostRenderer(t *testing.T) {
-	have := sterilize(render.HostRenderer.Render(test.Report), true)
+	have := expected.Sterilize(render.HostRenderer.Render(test.Report))
 	want := expected.RenderedHosts
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))

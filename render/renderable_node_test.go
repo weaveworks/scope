@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
@@ -18,46 +19,15 @@ func TestMergeRenderableNodes(t *testing.T) {
 		"bar": render.RenderableNode{ID: "bar"},
 		"baz": render.RenderableNode{ID: "baz"},
 	}
-	want := sterilize(render.RenderableNodes{
+	want := expected.Sterilize(render.RenderableNodes{
 		"foo": render.RenderableNode{ID: "foo"},
 		"bar": render.RenderableNode{ID: "bar"},
 		"baz": render.RenderableNode{ID: "baz"},
-	}, false)
+	})
 	nodes1.Merge(nodes2)
-	if have := sterilize(nodes1, false); !reflect.DeepEqual(want, have) {
+	if have := expected.Sterilize(nodes1); !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
-}
-
-func sterilize(r render.RenderableNodes, destructive bool) render.RenderableNodes {
-	// Since introducing new map fields to the report.NodeMetadata type, its
-	// zero value is •not valid• -- every time you need one, you need to use
-	// the report.MakeNodeMetadata constructor. (Similarly, but not exactly
-	// the same, is that a zero-value Adjacency is not the same as a created
-	// but empty Adjacency.)
-	//
-	// But we're not doing this in tests. So this function sterilizes invalid
-	// RenderableNodes by fixing all nil Metadata fields. The proper fix
-	// involves lots of annoying changes to instantiation.
-	//
-	// The extra destructive parameter is to support a historical test use
-	// case where we explicitly don't compare node metadata.
-	for id, n := range r {
-		if n.Adjacency == nil {
-			n.Adjacency = report.MakeIDList()
-		}
-		if destructive || n.NodeMetadata.Adjacency == nil {
-			n.NodeMetadata.Adjacency = report.MakeIDList()
-		}
-		if destructive || n.NodeMetadata.Metadata == nil {
-			n.NodeMetadata.Metadata = map[string]string{}
-		}
-		if destructive || n.NodeMetadata.Counters == nil {
-			n.NodeMetadata.Counters = map[string]int{}
-		}
-		r[id] = n
-	}
-	return r
 }
 
 func TestMergeRenderableNode(t *testing.T) {
