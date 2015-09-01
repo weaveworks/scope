@@ -34,7 +34,6 @@ func TestReporter(t *testing.T) {
 	reporter := process.NewReporter(walker, "")
 	want := report.MakeReport()
 	want.Process = report.Topology{
-		Adjacency:     report.Adjacency{},
 		EdgeMetadatas: report.EdgeMetadatas{},
 		NodeMetadatas: report.NodeMetadatas{
 			report.MakeProcessNodeID("", "1"): report.MakeNodeMetadataWith(map[string]string{

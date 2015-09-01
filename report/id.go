@@ -21,19 +21,6 @@ const (
 	EdgeDelim = "|"
 )
 
-// MakeAdjacencyID produces an adjacency ID from a node id.
-func MakeAdjacencyID(srcNodeID string) string {
-	return ">" + srcNodeID
-}
-
-// ParseAdjacencyID produces a node ID from an adjancency ID.
-func ParseAdjacencyID(adjacencyID string) (string, bool) {
-	if !strings.HasPrefix(adjacencyID, ">") {
-		return "", false
-	}
-	return adjacencyID[1:], true
-}
-
 // MakeEdgeID produces an edge ID from composite parts.
 func MakeEdgeID(srcNodeID, dstNodeID string) string {
 	return srcNodeID + EdgeDelim + dstNodeID
@@ -127,29 +114,6 @@ func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) 
 func ExtractHostID(m NodeMetadata) string {
 	hostid, _, _ := ParseNodeID(m.Metadata[HostNodeID])
 	return hostid
-}
-
-// IDAddresser tries to convert a node ID to a net.IP, if possible.
-type IDAddresser func(string) net.IP
-
-// EndpointIDAddresser converts an endpoint node ID to an IP.
-func EndpointIDAddresser(id string) net.IP {
-	fields := strings.SplitN(id, ScopeDelim, 3)
-	if len(fields) != 3 {
-		//log.Printf("EndpointIDAddresser: bad input %q", id)
-		return nil
-	}
-	return net.ParseIP(fields[1])
-}
-
-// AddressIDAddresser converts an address node ID to an IP.
-func AddressIDAddresser(id string) net.IP {
-	fields := strings.SplitN(id, ScopeDelim, 2)
-	if len(fields) != 2 {
-		//log.Printf("AddressIDAddresser: bad input %q", id)
-		return nil
-	}
-	return net.ParseIP(fields[1])
 }
 
 func isLoopback(address string) bool {

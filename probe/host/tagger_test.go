@@ -17,12 +17,12 @@ func TestTagger(t *testing.T) {
 	)
 
 	r := report.MakeReport()
-	r.Endpoint.NodeMetadatas[endpointNodeID] = nodeMetadata
+	r.Process.NodeMetadatas[endpointNodeID] = nodeMetadata
 	want := nodeMetadata.Merge(report.MakeNodeMetadataWith(map[string]string{
 		report.HostNodeID: report.MakeHostNodeID(hostID),
 	}))
 	rpt, _ := host.NewTagger(hostID).Tag(r)
-	have := rpt.Endpoint.NodeMetadatas[endpointNodeID].Copy()
+	have := rpt.Process.NodeMetadatas[endpointNodeID].Copy()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

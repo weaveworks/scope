@@ -58,18 +58,13 @@ func TestMerge(t *testing.T) {
 		_, ipnet, _ = net.ParseCIDR(p.SrcIP + "/24") // ;)
 		localNets   = report.Networks([]*net.IPNet{ipnet})
 	)
-	sniff.New(hostID, localNets, src, on, off).Merge(p, rpt)
+	sniff.New(hostID, localNets, src, on, off).Merge(p, &rpt)
 
 	var (
 		srcEndpointNodeID = report.MakeEndpointNodeID(hostID, p.SrcIP, p.SrcPort)
 		dstEndpointNodeID = report.MakeEndpointNodeID(hostID, p.DstIP, p.DstPort)
 	)
 	if want, have := (report.Topology{
-		Adjacency: report.Adjacency{
-			report.MakeAdjacencyID(srcEndpointNodeID): report.MakeIDList(
-				dstEndpointNodeID,
-			),
-		},
 		EdgeMetadatas: report.EdgeMetadatas{
 			report.MakeEdgeID(srcEndpointNodeID, dstEndpointNodeID): report.EdgeMetadata{
 				EgressPacketCount: newu64(1),
@@ -77,7 +72,8 @@ func TestMerge(t *testing.T) {
 			},
 		},
 		NodeMetadatas: report.NodeMetadatas{
-			srcEndpointNodeID: report.MakeNodeMetadata(),
+			srcEndpointNodeID: report.MakeNodeMetadata().WithAdjacent(dstEndpointNodeID),
+			dstEndpointNodeID: report.MakeNodeMetadata(),
 		},
 	}), rpt.Endpoint; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
@@ -88,11 +84,6 @@ func TestMerge(t *testing.T) {
 		dstAddressNodeID = report.MakeAddressNodeID(hostID, p.DstIP)
 	)
 	if want, have := (report.Topology{
-		Adjacency: report.Adjacency{
-			report.MakeAdjacencyID(srcAddressNodeID): report.MakeIDList(
-				dstAddressNodeID,
-			),
-		},
 		EdgeMetadatas: report.EdgeMetadatas{
 			report.MakeEdgeID(srcAddressNodeID, dstAddressNodeID): report.EdgeMetadata{
 				EgressPacketCount: newu64(1),
@@ -100,7 +91,8 @@ func TestMerge(t *testing.T) {
 			},
 		},
 		NodeMetadatas: report.NodeMetadatas{
-			srcAddressNodeID: report.MakeNodeMetadata(),
+			srcAddressNodeID: report.MakeNodeMetadata().WithAdjacent(dstAddressNodeID),
+			dstAddressNodeID: report.MakeNodeMetadata(),
 		},
 	}), rpt.Address; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
