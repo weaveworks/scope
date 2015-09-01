@@ -10,14 +10,12 @@ import (
 // and NodeMetadatas respectively.  Edges are directional, and embedded in the
 // NodeMetadata.
 type Topology struct {
-	EdgeMetadatas
 	NodeMetadatas
 }
 
 // MakeTopology gives you a Topology.
 func MakeTopology() Topology {
 	return Topology{
-		EdgeMetadatas: map[string]EdgeMetadata{},
 		NodeMetadatas: map[string]NodeMetadata{},
 	}
 }
@@ -36,7 +34,6 @@ func (t Topology) WithNode(nodeID string, nmd NodeMetadata) Topology {
 // Copy returns a value copy of the Topology.
 func (t Topology) Copy() Topology {
 	return Topology{
-		EdgeMetadatas: t.EdgeMetadatas.Copy(),
 		NodeMetadatas: t.NodeMetadatas.Copy(),
 	}
 }
@@ -45,32 +42,8 @@ func (t Topology) Copy() Topology {
 // The original is not modified.
 func (t Topology) Merge(other Topology) Topology {
 	return Topology{
-		EdgeMetadatas: t.EdgeMetadatas.Merge(other.EdgeMetadatas),
 		NodeMetadatas: t.NodeMetadatas.Merge(other.NodeMetadatas),
 	}
-}
-
-// EdgeMetadatas collect metadata about each edge in a topology. Keys are a
-// concatenation of node IDs.
-type EdgeMetadatas map[string]EdgeMetadata
-
-// Copy returns a value copy of the EdgeMetadatas.
-func (e EdgeMetadatas) Copy() EdgeMetadatas {
-	cp := make(EdgeMetadatas, len(e))
-	for k, v := range e {
-		cp[k] = v.Copy()
-	}
-	return cp
-}
-
-// Merge merges the other object into this one, and returns the result object.
-// The original is not modified.
-func (e EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
-	cp := e.Copy()
-	for k, v := range other {
-		cp[k] = cp[k].Merge(v)
-	}
-	return cp
 }
 
 // NodeMetadatas collect metadata about each node in a topology. Keys are node
@@ -94,6 +67,119 @@ func (n NodeMetadatas) Merge(other NodeMetadatas) NodeMetadatas {
 		if _, ok := cp[k]; !ok { // don't overwrite
 			cp[k] = v.Copy()
 		}
+	}
+	return cp
+}
+
+// NodeMetadata describes a superset of the metadata that probes can collect
+// about a given node in a given topology.
+type NodeMetadata struct {
+	Metadata  map[string]string
+	Counters  map[string]int
+	Adjacency IDList
+	EdgeMetadatas
+}
+
+// MakeNodeMetadata creates a new NodeMetadata with no initial metadata.
+func MakeNodeMetadata() NodeMetadata {
+	return NodeMetadata{
+		Metadata:      map[string]string{},
+		Counters:      map[string]int{},
+		Adjacency:     MakeIDList(),
+		EdgeMetadatas: EdgeMetadatas{},
+	}
+}
+
+// MakeNodeMetadataWith creates a new NodeMetadata with the supplied map.
+func MakeNodeMetadataWith(m map[string]string) NodeMetadata {
+	return MakeNodeMetadata().WithMetadata(m)
+}
+
+// WithMetadata returns a fresh copy of n, with Metadata set to m
+func (n NodeMetadata) WithMetadata(m map[string]string) NodeMetadata {
+	result := n.Copy()
+	result.Metadata = m
+	return result
+}
+
+// WithCounters returns a fresh copy of n, with Counters set to c
+func (n NodeMetadata) WithCounters(c map[string]int) NodeMetadata {
+	result := n.Copy()
+	result.Counters = c
+	return result
+}
+
+// WithAdjacency returns a fresh copy of n, with Adjacency set to a
+func (n NodeMetadata) WithAdjacency(a IDList) NodeMetadata {
+	result := n.Copy()
+	result.Adjacency = a
+	return result
+}
+
+// WithAdjacent returns a fresh copy of n, with 'a' added to Adjacency
+func (n NodeMetadata) WithAdjacent(a string) NodeMetadata {
+	result := n.Copy()
+	result.Adjacency = result.Adjacency.Add(a)
+	return result
+}
+
+// WithEdgeMetadata returns a fresh copy of n, with 'dst' added to Adjacency and md added to EdgeMetadata
+func (n NodeMetadata) WithEdgeMetadata(dst string, md EdgeMetadata) NodeMetadata {
+	result := n.Copy()
+	result.Adjacency = result.Adjacency.Add(dst)
+	result.EdgeMetadatas[dst] = md
+	return result
+}
+
+// Copy returns a value copy of the NodeMetadata.
+func (n NodeMetadata) Copy() NodeMetadata {
+	cp := MakeNodeMetadata()
+	for k, v := range n.Metadata {
+		cp.Metadata[k] = v
+	}
+	for k, v := range n.Counters {
+		cp.Counters[k] = v
+	}
+	cp.Adjacency = n.Adjacency.Copy()
+	cp.EdgeMetadatas = n.EdgeMetadatas.Copy()
+	return cp
+}
+
+// Merge merges two node metadata maps together. In case of conflict, the
+// other (right-hand) side wins. Always reassign the result of merge to the
+// destination. Merge does not modify the receiver.
+func (n NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
+	cp := n.Copy()
+	for k, v := range other.Metadata {
+		cp.Metadata[k] = v // other takes precedence
+	}
+	for k, v := range other.Counters {
+		cp.Counters[k] = n.Counters[k] + v
+	}
+	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
+	cp.EdgeMetadatas = cp.EdgeMetadatas.Merge(n.EdgeMetadatas)
+	return cp
+}
+
+// EdgeMetadatas collect metadata about each edge in a topology. Keys are
+// the remote node IDs, as in Adjacency.
+type EdgeMetadatas map[string]EdgeMetadata
+
+// Copy returns a value copy of the EdgeMetadatas.
+func (e EdgeMetadatas) Copy() EdgeMetadatas {
+	cp := make(EdgeMetadatas, len(e))
+	for k, v := range e {
+		cp[k] = v.Copy()
+	}
+	return cp
+}
+
+// Merge merges the other object into this one, and returns the result object.
+// The original is not modified.
+func (e EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
+	cp := e.Copy()
+	for k, v := range other {
+		cp[k] = cp[k].Merge(v)
 	}
 	return cp
 }
@@ -155,102 +241,9 @@ func (e EdgeMetadata) Flatten(other EdgeMetadata) EdgeMetadata {
 	return cp
 }
 
-// NodeMetadata describes a superset of the metadata that probes can collect
-// about a given node in a given topology.
-type NodeMetadata struct {
-	Metadata  map[string]string
-	Counters  map[string]int
-	Adjacency IDList
-}
-
-// MakeNodeMetadata creates a new NodeMetadata with no initial metadata.
-func MakeNodeMetadata() NodeMetadata {
-	return MakeNodeMetadataWith(map[string]string{})
-}
-
-// MakeNodeMetadataWith creates a new NodeMetadata with the supplied map.
-func MakeNodeMetadataWith(m map[string]string) NodeMetadata {
-	return NodeMetadata{
-		Metadata:  m,
-		Counters:  map[string]int{},
-		Adjacency: MakeIDList(),
-	}
-}
-
-// WithMetadata returns a fresh copy of n, with Metadata set to m
-func (n NodeMetadata) WithMetadata(m map[string]string) NodeMetadata {
-	result := n.Copy()
-	result.Metadata = m
-	return result
-}
-
-// WithCounters returns a fresh copy of n, with Counters set to c
-func (n NodeMetadata) WithCounters(c map[string]int) NodeMetadata {
-	result := n.Copy()
-	result.Counters = c
-	return result
-}
-
-// WithAdjacency returns a fresh copy of n, with Adjacency set to a
-func (n NodeMetadata) WithAdjacency(a IDList) NodeMetadata {
-	result := n.Copy()
-	result.Adjacency = a
-	return result
-}
-
-// WithAdjacent returns a fresh copy of n, with 'a' added to Adjacency
-func (n NodeMetadata) WithAdjacent(a string) NodeMetadata {
-	result := n.Copy()
-	result.Adjacency = result.Adjacency.Add(a)
-	return result
-}
-
-// Copy returns a value copy of the NodeMetadata.
-func (n NodeMetadata) Copy() NodeMetadata {
-	cp := MakeNodeMetadata()
-	for k, v := range n.Metadata {
-		cp.Metadata[k] = v
-	}
-	for k, v := range n.Counters {
-		cp.Counters[k] = v
-	}
-	cp.Adjacency = n.Adjacency.Copy()
-	return cp
-}
-
-// Merge merges two node metadata maps together. In case of conflict, the
-// other (right-hand) side wins. Always reassign the result of merge to the
-// destination. Merge does not modify the receiver.
-func (n NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
-	cp := n.Copy()
-	for k, v := range other.Metadata {
-		cp.Metadata[k] = v // other takes precedence
-	}
-	for k, v := range other.Counters {
-		cp.Counters[k] = n.Counters[k] + v
-	}
-	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
-	return cp
-}
-
 // Validate checks the topology for various inconsistencies.
 func (t Topology) Validate() error {
-	// Check all edge metadata keys must have the appropriate entries in
-	// adjacencies & node metadata.
-	var errs []string
-	for edgeID := range t.EdgeMetadatas {
-		srcNodeID, dstNodeID, ok := ParseEdgeID(edgeID)
-		if !ok {
-			errs = append(errs, fmt.Sprintf("invalid edge ID %q", edgeID))
-			continue
-		}
-		// For each edge, ensure they are connected in the right direction
-		if src, ok := t.NodeMetadatas[srcNodeID]; !ok {
-			errs = append(errs, fmt.Sprintf("node %s metadatas missing for edge %q", srcNodeID, edgeID))
-		} else if !src.Adjacency.Contains(dstNodeID) {
-			errs = append(errs, fmt.Sprintf("adjacency destination missing for destination node ID %q (from edge %q)", srcNodeID, edgeID))
-		}
-	}
+	errs := []string{}
 
 	// Check all node metadatas are valid, and the keys are parseable, i.e.
 	// contain a scope.
@@ -266,6 +259,13 @@ func (t Topology) Validate() error {
 		for _, dstNodeID := range nmd.Adjacency {
 			if _, ok := t.NodeMetadatas[dstNodeID]; !ok {
 				errs = append(errs, fmt.Sprintf("node metadata missing from adjacency %q -> %q", nodeID, dstNodeID))
+			}
+		}
+
+		// Check all the edge metadatas have entries in adjacencies
+		for dstNodeID := range nmd.EdgeMetadatas {
+			if _, ok := t.NodeMetadatas[dstNodeID]; !ok {
+				errs = append(errs, fmt.Sprintf("node %s metadatas missing for edge %q", dstNodeID, nodeID))
 			}
 		}
 	}

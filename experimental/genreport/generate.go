@@ -68,23 +68,16 @@ func DemoReport(nodeCount int) report.Report {
 			"pid":    "4000",
 			"name":   c.srcProc,
 			"domain": "node-" + src,
-		}).WithAdjacent(dstPortID))
+		}).WithEdgeMetadata(dstPortID, report.EdgeMetadata{
+			MaxConnCountTCP: newu64(uint64(rand.Intn(100) + 10)),
+		}))
 		r.Endpoint = r.Endpoint.WithNode(dstPortID, report.MakeNodeMetadata().WithMetadata(map[string]string{
 			"pid":    "4000",
 			"name":   c.dstProc,
 			"domain": "node-" + dst,
-		}).WithAdjacent(srcPortID))
-
-		var (
-			edgeKeyEgress  = report.MakeEdgeID(srcPortID, dstPortID)
-			edgeKeyIngress = report.MakeEdgeID(dstPortID, srcPortID)
-		)
-		r.Endpoint.EdgeMetadatas[edgeKeyEgress] = report.EdgeMetadata{
+		}).WithEdgeMetadata(srcPortID, report.EdgeMetadata{
 			MaxConnCountTCP: newu64(uint64(rand.Intn(100) + 10)),
-		}
-		r.Endpoint.EdgeMetadatas[edgeKeyIngress] = report.EdgeMetadata{
-			MaxConnCountTCP: newu64(uint64(rand.Intn(100) + 10)),
-		}
+		}))
 
 		// Address topology
 		r.Address = r.Address.WithNode(srcAddressID, report.MakeNodeMetadata().WithMetadata(map[string]string{

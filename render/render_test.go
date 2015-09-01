@@ -113,18 +113,19 @@ func TestMapEdge(t *testing.T) {
 	selector := func(_ report.Report) report.Topology {
 		return report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
-				"foo": {
-					Metadata:  map[string]string{"id": "foo"},
-					Adjacency: report.MakeIDList("bar"),
-				},
-				"bar": {
-					Metadata:  map[string]string{"id": "bar"},
-					Adjacency: report.MakeIDList("foo"),
-				},
-			},
-			EdgeMetadatas: report.EdgeMetadatas{
-				"foo|bar": report.EdgeMetadata{EgressPacketCount: newu64(1), EgressByteCount: newu64(2)},
-				"bar|foo": report.EdgeMetadata{EgressPacketCount: newu64(3), EgressByteCount: newu64(4)},
+				"foo": report.MakeNodeMetadata().WithMetadata(map[string]string{
+					"id": "foo",
+				}).WithEdgeMetadata("bar", report.EdgeMetadata{
+					EgressPacketCount: newu64(1),
+					EgressByteCount:   newu64(2),
+				}),
+
+				"bar": report.MakeNodeMetadata().WithMetadata(map[string]string{
+					"id": "bar",
+				}).WithEdgeMetadata("foo", report.EdgeMetadata{
+					EgressPacketCount: newu64(3),
+					EgressByteCount:   newu64(4),
+				}),
 			},
 		}
 	}
