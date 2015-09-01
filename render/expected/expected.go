@@ -8,6 +8,7 @@ import (
 	"github.com/weaveworks/scope/test"
 )
 
+// Sterilize cleans up RenderableNodes test fixtures
 func Sterilize(r render.RenderableNodes) render.RenderableNodes {
 	// Since introducing new map fields to the report.NodeMetadata type, its
 	// zero value is •not valid• -- every time you need one, you need to use
