@@ -74,10 +74,10 @@ func (n NodeMetadatas) Merge(other NodeMetadatas) NodeMetadatas {
 // NodeMetadata describes a superset of the metadata that probes can collect
 // about a given node in a given topology.
 type NodeMetadata struct {
-	Metadata
-	Counters
-	Adjacency IDList
-	Edges     EdgeMetadatas
+	Metadata  `json:"-"`
+	Counters  `json:"-"`
+	Adjacency IDList        `json:"adjacency"`
+	Edges     EdgeMetadatas `json:"-"`
 }
 
 // MakeNodeMetadata creates a new NodeMetadata with no initial metadata.
@@ -218,6 +218,16 @@ func (e EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
 		cp[k] = cp[k].Merge(v)
 	}
 	return cp
+}
+
+// Flatten flattens all the EdgeMetadatas in this set and returns the result.
+// The original is not modified.
+func (e EdgeMetadatas) Flatten() EdgeMetadata {
+	result := EdgeMetadata{}
+	for _, v := range e {
+		result = result.Flatten(v)
+	}
+	return result
 }
 
 // EdgeMetadata describes a superset of the metadata that probes can possibly

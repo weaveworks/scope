@@ -9,9 +9,9 @@ import (
 )
 
 // EndpointRenderer is a Renderer which produces a renderable endpoint graph.
-var EndpointRenderer = LeafMap{
-	Selector: report.SelectEndpoint,
-	Mapper:   MapEndpointIdentity,
+var EndpointRenderer = Map{
+	MapFunc:  MapEndpointIdentity,
+	Renderer: SelectEndpoint,
 }
 
 // ProcessRenderer is a Renderer which produces a renderable process
@@ -21,9 +21,9 @@ var ProcessRenderer = MakeReduce(
 		MapFunc:  MapEndpoint2Process,
 		Renderer: EndpointRenderer,
 	},
-	LeafMap{
-		Selector: report.SelectProcess,
-		Mapper:   MapProcessIdentity,
+	Map{
+		MapFunc:  MapProcessIdentity,
+		Renderer: SelectProcess,
 	},
 )
 
@@ -35,9 +35,9 @@ type ProcessWithContainerNameRenderer struct{}
 // container name, if found.
 func (r ProcessWithContainerNameRenderer) Render(rpt report.Report) RenderableNodes {
 	processes := ProcessRenderer.Render(rpt)
-	containers := LeafMap{
-		Selector: report.SelectContainer,
-		Mapper:   MapContainerIdentity,
+	containers := Map{
+		MapFunc:  MapContainerIdentity,
+		Renderer: SelectContainer,
 	}.Render(rpt)
 
 	for id, p := range processes {
@@ -97,9 +97,9 @@ var ContainerRenderer = MakeReduce(
 		},
 	},
 
-	LeafMap{
-		Selector: report.SelectContainer,
-		Mapper:   MapContainerIdentity,
+	Map{
+		MapFunc:  MapContainerIdentity,
+		Renderer: SelectContainer,
 	},
 
 	// This mapper brings in short lived connections by joining with container IPs.
@@ -110,13 +110,13 @@ var ContainerRenderer = MakeReduce(
 		MapFunc: MapIP2Container,
 		Renderer: FilterUnconnected(
 			MakeReduce(
-				LeafMap{
-					Selector: report.SelectContainer,
-					Mapper:   MapContainer2IP,
+				Map{
+					MapFunc:  MapContainer2IP,
+					Renderer: SelectContainer,
 				},
-				LeafMap{
-					Selector: report.SelectEndpoint,
-					Mapper:   MapEndpoint2IP,
+				Map{
+					MapFunc:  MapEndpoint2IP,
+					Renderer: SelectEndpoint,
 				},
 			),
 		),
@@ -134,9 +134,9 @@ var ContainerImageRenderer = Map{
 				MapFunc:  MapContainer2ContainerImage,
 				Renderer: ContainerRenderer,
 			},
-			LeafMap{
-				Selector: report.SelectContainerImage,
-				Mapper:   MapContainerImageIdentity,
+			Map{
+				MapFunc:  MapContainerImageIdentity,
+				Renderer: SelectContainerImage,
 			},
 		),
 	},
@@ -144,9 +144,9 @@ var ContainerImageRenderer = Map{
 
 // AddressRenderer is a Renderer which produces a renderable address
 // graph from the address topology.
-var AddressRenderer = LeafMap{
-	Selector: report.SelectAddress,
-	Mapper:   MapAddressIdentity,
+var AddressRenderer = Map{
+	MapFunc:  MapAddressIdentity,
+	Renderer: SelectAddress,
 }
 
 // HostRenderer is a Renderer which produces a renderable host
@@ -156,8 +156,8 @@ var HostRenderer = MakeReduce(
 		MapFunc:  MapAddress2Host,
 		Renderer: AddressRenderer,
 	},
-	LeafMap{
-		Selector: report.SelectHost,
-		Mapper:   MapHostIdentity,
+	Map{
+		MapFunc:  MapHostIdentity,
+		Renderer: SelectHost,
 	},
 )
