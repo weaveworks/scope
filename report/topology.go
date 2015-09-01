@@ -201,7 +201,7 @@ func (n NodeMetadata) WithAdjacency(a IDList) NodeMetadata {
 // WithAdjacent returns a fresh copy of n, with 'a' added to Adjacency
 func (n NodeMetadata) WithAdjacent(a string) NodeMetadata {
 	result := n.Copy()
-	n.Adjacency = n.Adjacency.Add(a)
+	result.Adjacency = result.Adjacency.Add(a)
 	return result
 }
 
