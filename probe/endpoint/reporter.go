@@ -128,12 +128,6 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 	var (
 		localIsClient = int(localPort) > int(remotePort)
 		hostNodeID    = report.MakeHostNodeID(r.hostID)
-		addNode       = func(t report.Topology, nodeID string, nmd report.NodeMetadata) {
-			if existing, ok := t.NodeMetadatas[nodeID]; ok {
-				nmd = nmd.Merge(existing)
-			}
-			t.NodeMetadatas[nodeID] = nmd
-		}
 	)
 
 	// Update address topology
@@ -161,8 +155,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			edgeID = report.MakeEdgeID(remoteAddressNodeID, localAddressNodeID)
 		}
 
-		addNode(rpt.Address, localAddressNodeID, localNode)
-		addNode(rpt.Address, remoteAddressNodeID, remoteNode)
+		rpt.Address = rpt.Address.WithNode(localAddressNodeID, localNode)
+		rpt.Address = rpt.Address.WithNode(remoteAddressNodeID, remoteNode)
 		countTCPConnection(rpt.Address.EdgeMetadatas, edgeID)
 	}
 
@@ -196,8 +190,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			localNode.Metadata[process.PID] = strconv.FormatUint(uint64(proc.PID), 10)
 		}
 
-		addNode(rpt.Endpoint, localEndpointNodeID, localNode)
-		addNode(rpt.Endpoint, remoteEndpointNodeID, remoteNode)
+		rpt.Endpoint = rpt.Endpoint.WithNode(localEndpointNodeID, localNode)
+		rpt.Endpoint = rpt.Endpoint.WithNode(remoteEndpointNodeID, remoteNode)
 		countTCPConnection(rpt.Endpoint.EdgeMetadatas, edgeID)
 	}
 }

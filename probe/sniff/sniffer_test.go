@@ -58,7 +58,7 @@ func TestMerge(t *testing.T) {
 		_, ipnet, _ = net.ParseCIDR(p.SrcIP + "/24") // ;)
 		localNets   = report.Networks([]*net.IPNet{ipnet})
 	)
-	sniff.New(hostID, localNets, src, on, off).Merge(p, rpt)
+	sniff.New(hostID, localNets, src, on, off).Merge(p, &rpt)
 
 	var (
 		srcEndpointNodeID = report.MakeEndpointNodeID(hostID, p.SrcIP, p.SrcPort)
@@ -72,16 +72,8 @@ func TestMerge(t *testing.T) {
 			},
 		},
 		NodeMetadatas: report.NodeMetadatas{
-			srcEndpointNodeID: {
-				Metadata:  map[string]string{},
-				Counters:  map[string]int{},
-				Adjacency: report.MakeIDList(dstEndpointNodeID),
-			},
-			dstEndpointNodeID: report.NodeMetadata{
-				Metadata:  map[string]string{},
-				Counters:  map[string]int{},
-				Adjacency: report.MakeIDList(),
-			},
+			srcEndpointNodeID: report.MakeNodeMetadata().WithAdjacent(dstEndpointNodeID),
+			dstEndpointNodeID: report.MakeNodeMetadata(),
 		},
 	}), rpt.Endpoint; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
@@ -99,16 +91,8 @@ func TestMerge(t *testing.T) {
 			},
 		},
 		NodeMetadatas: report.NodeMetadatas{
-			srcAddressNodeID: report.NodeMetadata{
-				Metadata:  map[string]string{},
-				Counters:  map[string]int{},
-				Adjacency: report.MakeIDList(dstAddressNodeID),
-			},
-			dstAddressNodeID: report.NodeMetadata{
-				Metadata:  map[string]string{},
-				Counters:  map[string]int{},
-				Adjacency: report.MakeIDList(),
-			},
+			srcAddressNodeID: report.MakeNodeMetadata().WithAdjacent(dstAddressNodeID),
+			dstAddressNodeID: report.MakeNodeMetadata(),
 		},
 	}), rpt.Address; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))

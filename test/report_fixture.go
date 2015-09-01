@@ -90,79 +90,59 @@ var (
 				// NodeMetadata is arbitrary. We're free to put only precisely what we
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
-				Client54001NodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr:     ClientIP,
-						endpoint.Port:     ClientPort54001,
-						process.PID:       Client1PID,
-						report.HostNodeID: ClientHostNodeID,
-					},
-					Adjacency: report.MakeIDList(Server80NodeID),
-				},
-				Client54002NodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr:     ClientIP,
-						endpoint.Port:     ClientPort54002,
-						process.PID:       Client2PID,
-						report.HostNodeID: ClientHostNodeID,
-					},
-					Adjacency: report.MakeIDList(Server80NodeID),
-				},
-				Server80NodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr:     ServerIP,
-						endpoint.Port:     ServerPort,
-						process.PID:       ServerPID,
-						report.HostNodeID: ServerHostNodeID,
-					},
-					Adjacency: report.MakeIDList(),
-				},
-				NonContainerNodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr:     ServerIP,
-						endpoint.Port:     NonContainerClientPort,
-						process.PID:       NonContainerPID,
-						report.HostNodeID: ServerHostNodeID,
-					},
-					Adjacency: report.MakeIDList(GoogleEndpointNodeID),
-				},
+				Client54001NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr:     ClientIP,
+					endpoint.Port:     ClientPort54001,
+					process.PID:       Client1PID,
+					report.HostNodeID: ClientHostNodeID,
+				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+
+				Client54002NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr:     ClientIP,
+					endpoint.Port:     ClientPort54002,
+					process.PID:       Client2PID,
+					report.HostNodeID: ClientHostNodeID,
+				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+
+				Server80NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr:     ServerIP,
+					endpoint.Port:     ServerPort,
+					process.PID:       ServerPID,
+					report.HostNodeID: ServerHostNodeID,
+				}),
+
+				NonContainerNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr:     ServerIP,
+					endpoint.Port:     NonContainerClientPort,
+					process.PID:       NonContainerPID,
+					report.HostNodeID: ServerHostNodeID,
+				}).WithAdjacency(report.MakeIDList(GoogleEndpointNodeID)),
 
 				// Probe pseudo nodes
-				UnknownClient1NodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr: UnknownClient1IP,
-						endpoint.Port: UnknownClient1Port,
-					},
-					Adjacency: report.MakeIDList(Server80NodeID),
-				},
-				UnknownClient2NodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr: UnknownClient2IP,
-						endpoint.Port: UnknownClient2Port,
-					},
-					Adjacency: report.MakeIDList(Server80NodeID),
-				},
-				UnknownClient3NodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr: UnknownClient3IP,
-						endpoint.Port: UnknownClient3Port,
-					},
-					Adjacency: report.MakeIDList(Server80NodeID),
-				},
-				RandomClientNodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr: RandomClientIP,
-						endpoint.Port: RandomClientPort,
-					},
-					Adjacency: report.MakeIDList(Server80NodeID),
-				},
-				GoogleEndpointNodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr: GoogleIP,
-						endpoint.Port: GooglePort,
-					},
-					Adjacency: report.MakeIDList(),
-				},
+				UnknownClient1NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr: UnknownClient1IP,
+					endpoint.Port: UnknownClient1Port,
+				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+
+				UnknownClient2NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr: UnknownClient2IP,
+					endpoint.Port: UnknownClient2Port,
+				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+
+				UnknownClient3NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr: UnknownClient3IP,
+					endpoint.Port: UnknownClient3Port,
+				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+
+				RandomClientNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr: RandomClientIP,
+					endpoint.Port: RandomClientPort,
+				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+
+				GoogleEndpointNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr: GoogleIP,
+					endpoint.Port: GooglePort,
+				}),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				report.MakeEdgeID(Client54001NodeID, Server80NodeID): report.EdgeMetadata{
@@ -255,42 +235,31 @@ var (
 		},
 		Address: report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
-				ClientAddressNodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr:     ClientIP,
-						report.HostNodeID: ClientHostNodeID,
-					},
-					Adjacency: report.MakeIDList(ServerAddressNodeID),
-				},
-				ServerAddressNodeID: report.MakeNodeMetadataWith(map[string]string{
+				ClientAddressNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr:     ClientIP,
+					report.HostNodeID: ClientHostNodeID,
+				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
+
+				ServerAddressNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr:     ServerIP,
 					report.HostNodeID: ServerHostNodeID,
 				}),
 
-				UnknownAddress1NodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr: UnknownClient1IP,
-					},
-					Adjacency: report.MakeIDList(ServerAddressNodeID),
-				},
-				UnknownAddress2NodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr: UnknownClient2IP,
-					},
-					Adjacency: report.MakeIDList(ServerAddressNodeID),
-				},
-				UnknownAddress3NodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr: UnknownClient3IP,
-					},
-					Adjacency: report.MakeIDList(ServerAddressNodeID),
-				},
-				RandomAddressNodeID: report.NodeMetadata{
-					Metadata: map[string]string{
-						endpoint.Addr: RandomClientIP,
-					},
-					Adjacency: report.MakeIDList(ServerAddressNodeID),
-				},
+				UnknownAddress1NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr: UnknownClient1IP,
+				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
+
+				UnknownAddress2NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr: UnknownClient2IP,
+				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
+
+				UnknownAddress3NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr: UnknownClient3IP,
+				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
+
+				RandomAddressNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+					endpoint.Addr: RandomClientIP,
+				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
 			},
 			EdgeMetadatas: report.EdgeMetadatas{
 				report.MakeEdgeID(ClientAddressNodeID, ServerAddressNodeID): report.EdgeMetadata{

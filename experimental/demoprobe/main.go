@@ -84,26 +84,17 @@ func demoReport(nodeCount int) report.Report {
 		)
 
 		// Endpoint topology
-		if _, ok := r.Endpoint.NodeMetadatas[srcPortID]; !ok {
-			r.Endpoint.NodeMetadatas[srcPortID] = report.NodeMetadata{
-				Metadata: map[string]string{
-					process.PID: "4000",
-					"name":      c.srcProc,
-					"domain":    "node-" + src,
-				},
-				Adjacency: report.MakeIDList(dstPortID),
-			}
-		}
-		if _, ok := r.Endpoint.NodeMetadatas[dstPortID]; !ok {
-			r.Endpoint.NodeMetadatas[dstPortID] = report.NodeMetadata{
-				Metadata: map[string]string{
-					process.PID: "4000",
-					"name":      c.dstProc,
-					"domain":    "node-" + dst,
-				},
-				Adjacency: report.MakeIDList(srcPortID),
-			}
-		}
+		r.Endpoint = r.Endpoint.WithNode(srcPortID, report.MakeNodeMetadata().WithMetadata(map[string]string{
+			process.PID: "4000",
+			"name":      c.srcProc,
+			"domain":    "node-" + src,
+		}).WithAdjacent(dstPortID))
+		r.Endpoint = r.Endpoint.WithNode(dstPortID, report.MakeNodeMetadata().WithMetadata(map[string]string{
+			process.PID: "4000",
+			"name":      c.dstProc,
+			"domain":    "node-" + dst,
+		}).WithAdjacent(srcPortID))
+
 		var (
 			edgeKeyEgress  = report.MakeEdgeID(srcPortID, dstPortID)
 			edgeKeyIngress = report.MakeEdgeID(dstPortID, srcPortID)
@@ -116,30 +107,20 @@ func demoReport(nodeCount int) report.Report {
 		}
 
 		// Address topology
-		if _, ok := r.Address.NodeMetadatas[srcAddressID]; !ok {
-			r.Address.NodeMetadatas[srcAddressID] = report.NodeMetadata{
-				Metadata: map[string]string{
-					docker.Name: src,
-				},
-				Adjacency: report.MakeIDList(dstAddressID),
-			}
-		}
-		if _, ok := r.Address.NodeMetadatas[dstAddressID]; !ok {
-			r.Address.NodeMetadatas[dstAddressID] = report.NodeMetadata{
-				Metadata: map[string]string{
-					docker.Name: dst,
-				},
-				Adjacency: report.MakeIDList(srcAddressID),
-			}
-		}
+		r.Address = r.Address.WithNode(srcAddressID, report.MakeNodeMetadata().WithMetadata(map[string]string{
+			docker.Name: src,
+		}).WithAdjacent(dstAddressID))
+		r.Address = r.Address.WithNode(srcAddressID, report.MakeNodeMetadata().WithMetadata(map[string]string{
+			docker.Name: dst,
+		}).WithAdjacent(srcAddressID))
 
 		// Host data
-		r.Host.NodeMetadatas["hostX"] = report.MakeNodeMetadataWith(map[string]string{
+		r.Host = r.Host.WithNode("hostX", report.MakeNodeMetadataWith(map[string]string{
 			"ts":             time.Now().UTC().Format(time.RFC3339Nano),
 			"host_name":      "host-x",
 			"local_networks": localNet.String(),
 			"os":             "linux",
-		})
+		}))
 	}
 
 	return r

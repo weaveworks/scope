@@ -22,6 +22,17 @@ func MakeTopology() Topology {
 	}
 }
 
+// WithNode produces a topology from t, with nmd added under key nodeID; if a node already exists
+// for this key, nmd is merged with that node.  NB A fresh topology is returned.
+func (t Topology) WithNode(nodeID string, nmd NodeMetadata) Topology {
+	if existing, ok := t.NodeMetadatas[nodeID]; ok {
+		nmd = nmd.Merge(existing)
+	}
+	result := t.Copy()
+	result.NodeMetadatas[nodeID] = nmd
+	return result
+}
+
 // Copy returns a value copy of the Topology.
 func (t Topology) Copy() Topology {
 	return Topology{
@@ -164,6 +175,34 @@ func MakeNodeMetadataWith(m map[string]string) NodeMetadata {
 		Counters:  map[string]int{},
 		Adjacency: MakeIDList(),
 	}
+}
+
+// WithMetadata returns a fresh copy of n, with Metadata set to m
+func (n NodeMetadata) WithMetadata(m map[string]string) NodeMetadata {
+	result := n.Copy()
+	result.Metadata = m
+	return result
+}
+
+// WithCounters returns a fresh copy of n, with Counters set to c
+func (n NodeMetadata) WithCounters(c map[string]int) NodeMetadata {
+	result := n.Copy()
+	result.Counters = c
+	return result
+}
+
+// WithAdjacency returns a fresh copy of n, with Adjacency set to a
+func (n NodeMetadata) WithAdjacency(a IDList) NodeMetadata {
+	result := n.Copy()
+	result.Adjacency = a
+	return result
+}
+
+// WithAdjacent returns a fresh copy of n, with 'a' added to Adjacency
+func (n NodeMetadata) WithAdjacent(a string) NodeMetadata {
+	result := n.Copy()
+	n.Adjacency = n.Adjacency.Add(a)
+	return result
 }
 
 // Copy returns a value copy of the NodeMetadata.

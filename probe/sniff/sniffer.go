@@ -81,7 +81,7 @@ func (s *Sniffer) loop(src gopacket.ZeroCopyPacketDataSource, on, off time.Durat
 	for {
 		select {
 		case p := <-packets:
-			s.Merge(p, rpt)
+			s.Merge(p, &rpt)
 
 		case <-turnOn:
 			atomic.StoreUint64(&process, 1) // enable packet capture
@@ -217,7 +217,7 @@ func (s *Sniffer) read(src gopacket.ZeroCopyPacketDataSource, dst chan Packet, p
 // egress traffic on a single edge whose src is local and dst is remote. That
 // is, if we see a packet from the remote addr 9.8.7.6 to the local addr
 // 1.2.3.4, we apply it as *ingress* on the edge (1.2.3.4 -> 9.8.7.6).
-func (s *Sniffer) Merge(p Packet, rpt report.Report) {
+func (s *Sniffer) Merge(p Packet, rpt *report.Report) {
 	if p.SrcIP == "" || p.DstIP == "" {
 		return
 	}
@@ -250,17 +250,10 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 		return
 	}
 
-	addAdjacency := func(t report.Topology, srcNodeID, dstNodeID string) {
-		srcNode, ok := t.NodeMetadatas[srcNodeID]
-		if !ok {
-			srcNode = report.MakeNodeMetadata()
-		}
-		srcNode.Adjacency = srcNode.Adjacency.Add(dstNodeID)
-		t.NodeMetadatas[srcNodeID] = srcNode
-
-		if _, ok := t.NodeMetadatas[dstNodeID]; !ok {
-			t.NodeMetadatas[dstNodeID] = report.MakeNodeMetadata()
-		}
+	addAdjacency := func(t report.Topology, srcNodeID, dstNodeID string) report.Topology {
+		result := t.WithNode(srcNodeID, report.MakeNodeMetadata().WithAdjacent(dstNodeID))
+		result = result.WithNode(dstNodeID, report.MakeNodeMetadata())
+		return result
 	}
 
 	// For sure, we can add to the address topology.
@@ -271,7 +264,7 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 			edgeID    = report.MakeEdgeID(srcNodeID, dstNodeID)
 		)
 
-		addAdjacency(rpt.Address, srcNodeID, dstNodeID)
+		rpt.Address = addAdjacency(rpt.Address, srcNodeID, dstNodeID)
 
 		emd := rpt.Address.EdgeMetadatas[edgeID]
 		if egress {
@@ -304,7 +297,7 @@ func (s *Sniffer) Merge(p Packet, rpt report.Report) {
 			edgeID    = report.MakeEdgeID(srcNodeID, dstNodeID)
 		)
 
-		addAdjacency(rpt.Endpoint, srcNodeID, dstNodeID)
+		rpt.Endpoint = addAdjacency(rpt.Endpoint, srcNodeID, dstNodeID)
 
 		emd := rpt.Endpoint.EdgeMetadatas[edgeID]
 		if egress {
