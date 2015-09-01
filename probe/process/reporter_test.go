@@ -4,16 +4,17 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
 
 type mockWalker struct {
-	processes []process.Process
+	processes []proc.Process
 }
 
-func (m *mockWalker) Walk(f func(process.Process)) error {
+func (m *mockWalker) Walk(f func(proc.Process)) error {
 	for _, p := range m.processes {
 		f(p)
 	}
@@ -22,7 +23,7 @@ func (m *mockWalker) Walk(f func(process.Process)) error {
 
 func TestReporter(t *testing.T) {
 	walker := &mockWalker{
-		processes: []process.Process{
+		processes: []proc.Process{
 			{PID: 1, PPID: 0, Comm: "init"},
 			{PID: 2, PPID: 1, Comm: "bash"},
 			{PID: 3, PPID: 1, Comm: "apache", Threads: 2},

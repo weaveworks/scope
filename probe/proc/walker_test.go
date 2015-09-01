@@ -1,25 +1,36 @@
-package process_test
+package proc_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/weaveworks/scope/probe/process"
+	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/test"
 )
+
+type mockWalker struct {
+	processes []proc.Process
+}
+
+func (m *mockWalker) Walk(f func(proc.Process)) error {
+	for _, p := range m.processes {
+		f(p)
+	}
+	return nil
+}
 
 func TestBasicWalk(t *testing.T) {
 	var (
 		procRoot = "/proc"
-		procFunc = func(process.Process) {}
+		procFunc = func(proc.Process) {}
 	)
-	if err := process.NewWalker(procRoot).Walk(procFunc); err != nil {
+	if err := proc.NewWalker(procRoot).Walk(procFunc); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestCache(t *testing.T) {
-	processes := []process.Process{
+	processes := []proc.Process{
 		{PID: 1, PPID: 0, Comm: "init"},
 		{PID: 2, PPID: 1, Comm: "bash"},
 		{PID: 3, PPID: 1, Comm: "apache", Threads: 2},
@@ -28,7 +39,7 @@ func TestCache(t *testing.T) {
 	walker := &mockWalker{
 		processes: processes,
 	}
-	cachingWalker := process.NewCachingWalker(walker)
+	cachingWalker := proc.NewCachingWalker(walker)
 	err := cachingWalker.Tick()
 	if err != nil {
 		t.Fatal(err)
@@ -39,7 +50,7 @@ func TestCache(t *testing.T) {
 		t.Errorf("%v (%v)", test.Diff(processes, have), err)
 	}
 
-	walker.processes = []process.Process{}
+	walker.processes = []proc.Process{}
 	have, err = all(cachingWalker)
 	if err != nil || !reflect.DeepEqual(processes, have) {
 		t.Errorf("%v (%v)", test.Diff(processes, have), err)
@@ -51,15 +62,15 @@ func TestCache(t *testing.T) {
 	}
 
 	have, err = all(cachingWalker)
-	want := []process.Process{}
+	want := []proc.Process{}
 	if err != nil || !reflect.DeepEqual(want, have) {
 		t.Errorf("%v (%v)", test.Diff(want, have), err)
 	}
 }
 
-func all(w process.Walker) ([]process.Process, error) {
-	all := []process.Process{}
-	err := w.Walk(func(p process.Process) {
+func all(w proc.Walker) ([]proc.Process, error) {
+	all := []proc.Process{}
+	err := w.Walk(func(p proc.Process) {
 		all = append(all, p)
 	})
 	return all, err

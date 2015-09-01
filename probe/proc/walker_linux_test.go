@@ -1,4 +1,4 @@
-package process_test
+package proc_test
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/probe/process"
+	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/test"
 )
 
@@ -25,10 +25,10 @@ func (p mockProcess) IsDir() bool        { return true }
 func (p mockProcess) Sys() interface{}   { return nil }
 
 func TestWalker(t *testing.T) {
-	oldReadDir, oldReadFile := process.ReadDir, process.ReadFile
+	oldReadDir, oldReadFile := proc.ReadDir, proc.ReadFile
 	defer func() {
-		process.ReadDir = oldReadDir
-		process.ReadFile = oldReadFile
+		proc.ReadDir = oldReadDir
+		proc.ReadFile = oldReadFile
 	}()
 
 	processes := map[string]mockProcess{
@@ -39,7 +39,7 @@ func TestWalker(t *testing.T) {
 		"1":       {name: "1", comm: "init\n"},
 	}
 
-	process.ReadDir = func(path string) ([]os.FileInfo, error) {
+	proc.ReadDir = func(path string) ([]os.FileInfo, error) {
 		result := []os.FileInfo{}
 		for _, p := range processes {
 			result = append(result, p)
@@ -47,7 +47,7 @@ func TestWalker(t *testing.T) {
 		return result, nil
 	}
 
-	process.ReadFile = func(path string) ([]byte, error) {
+	proc.ReadFile = func(path string) ([]byte, error) {
 		splits := strings.Split(path, "/")
 
 		pid := splits[len(splits)-2]
@@ -71,16 +71,16 @@ func TestWalker(t *testing.T) {
 		return nil, fmt.Errorf("not found")
 	}
 
-	want := map[int]process.Process{
+	want := map[int]proc.Process{
 		3: {PID: 3, PPID: 2, Comm: "curl", Cmdline: "curl google.com", Threads: 1},
 		2: {PID: 2, PPID: 1, Comm: "bash", Cmdline: "", Threads: 1},
 		4: {PID: 4, PPID: 3, Comm: "apache", Cmdline: "", Threads: 1},
 		1: {PID: 1, PPID: 0, Comm: "init", Cmdline: "", Threads: 1},
 	}
 
-	have := map[int]process.Process{}
-	walker := process.NewWalker("unused")
-	err := walker.Walk(func(p process.Process) {
+	have := map[int]proc.Process{}
+	walker := proc.NewWalker("unused")
+	err := walker.Walk(func(p proc.Process) {
 		have[p.PID] = p
 	})
 

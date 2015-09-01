@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/weaveworks/procspy"
+	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/report"
@@ -20,7 +20,7 @@ var (
 	fixProcessPID    = uint(4242)
 	fixProcessName   = "nginx"
 
-	fixConnections = []procspy.Connection{
+	fixConnections = []proc.Connection{
 		{
 			Transport:     "tcp",
 			LocalAddress:  fixLocalAddress,
@@ -37,14 +37,14 @@ var (
 		},
 	}
 
-	fixConnectionsWithProcesses = []procspy.Connection{
+	fixConnectionsWithProcesses = []proc.Connection{
 		{
 			Transport:     "tcp",
 			LocalAddress:  fixLocalAddress,
 			LocalPort:     fixLocalPort,
 			RemoteAddress: fixRemoteAddress,
 			RemotePort:    fixRemotePort,
-			Proc: procspy.Proc{
+			Proc: proc.Proc{
 				PID:  fixProcessPID,
 				Name: fixProcessName,
 			},
@@ -55,7 +55,7 @@ var (
 			LocalPort:     fixLocalPort,
 			RemoteAddress: fixRemoteAddress,
 			RemotePort:    fixRemotePort,
-			Proc: procspy.Proc{
+			Proc: proc.Proc{
 				PID:  fixProcessPID,
 				Name: fixProcessName,
 			},
@@ -64,7 +64,7 @@ var (
 )
 
 func TestSpyNoProcesses(t *testing.T) {
-	procspy.SetFixtures(fixConnections)
+	proc.SetFixtures(fixConnections)
 
 	const (
 		nodeID   = "heinz-tomato-ketchup" // TODO rename to hostID
@@ -100,7 +100,7 @@ func TestSpyNoProcesses(t *testing.T) {
 }
 
 func TestSpyWithProcesses(t *testing.T) {
-	procspy.SetFixtures(fixConnectionsWithProcesses)
+	proc.SetFixtures(fixConnectionsWithProcesses)
 
 	const (
 		nodeID   = "nikon"             // TODO rename to hostID

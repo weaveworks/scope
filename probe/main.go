@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/weaveworks/procspy"
+	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
@@ -67,7 +67,7 @@ func main() {
 	}
 	log.Printf("publishing to: %s", strings.Join(targets, ", "))
 
-	procspy.SetProcRoot(*procRoot)
+	proc.SetProcRoot(*procRoot)
 
 	if *httpListen != "" {
 		log.Printf("profiling data being exported to %s", *httpListen)
@@ -112,7 +112,7 @@ func main() {
 
 	var (
 		endpointReporter = endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack)
-		processCache     = process.NewCachingWalker(process.NewWalker(*procRoot))
+		processCache     = proc.NewCachingWalker(proc.NewWalker(*procRoot))
 		tickers          = []Ticker{processCache}
 		reporters        = []Reporter{
 			endpointReporter,

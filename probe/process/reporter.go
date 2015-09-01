@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/probe/proc"
 )
 
 // We use these keys in node metadata
@@ -18,11 +19,11 @@ const (
 // Reporter generates Reports containing the Process topology.
 type Reporter struct {
 	scope  string
-	walker Walker
+	walker proc.Walker
 }
 
 // NewReporter makes a new Reporter.
-func NewReporter(walker Walker, scope string) *Reporter {
+func NewReporter(walker proc.Walker, scope string) *Reporter {
 	return &Reporter{
 		scope:  scope,
 		walker: walker,
@@ -42,7 +43,7 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) processTopology() (report.Topology, error) {
 	t := report.MakeTopology()
-	err := r.walker.Walk(func(p Process) {
+	err := r.walker.Walk(func(p proc.Process) {
 		pidstr := strconv.Itoa(p.PID)
 		nodeID := report.MakeProcessNodeID(r.scope, pidstr)
 		t.Nodes[nodeID] = report.MakeNode()

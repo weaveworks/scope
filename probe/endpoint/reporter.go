@@ -7,7 +7,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/weaveworks/procspy"
+	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -42,7 +42,7 @@ var SpyDuration = prometheus.NewSummaryVec(
 	[]string{},
 )
 
-// NewReporter creates a new Reporter that invokes procspy.Connections to
+// NewReporter creates a new Reporter that invokes Connections to
 // generate a report.Report that contains every discovered (spied) connection
 // on the host machine, at the granularity of host and port. That information
 // is stored in the Endpoint topology. It optionally enriches that topology
@@ -94,7 +94,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	}(time.Now())
 
 	rpt := report.MakeReport()
-	conns, err := procspy.Connections(r.includeProcesses)
+	conns, err := proc.Connections(r.includeProcesses)
 	if err != nil {
 		return rpt, err
 	}

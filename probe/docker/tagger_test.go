@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/process"
+	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
@@ -27,7 +27,7 @@ func TestTagger(t *testing.T) {
 	oldProcessTree := docker.NewProcessTreeStub
 	defer func() { docker.NewProcessTreeStub = oldProcessTree }()
 
-	docker.NewProcessTreeStub = func(_ process.Walker) (process.Tree, error) {
+	docker.NewProcessTreeStub = func(_ proc.Walker) (proc.Tree, error) {
 		return &mockProcessTree{map[int]int{2: 1}}, nil
 	}
 

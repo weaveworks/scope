@@ -1,15 +1,15 @@
-package process_test
+package proc_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/weaveworks/scope/probe/process"
+	"github.com/weaveworks/scope/probe/proc"
 )
 
 func TestTree(t *testing.T) {
 	walker := &mockWalker{
-		processes: []process.Process{
+		processes: []proc.Process{
 			{PID: 1, PPID: 0, Comm: "init"},
 			{PID: 2, PPID: 1, Comm: "bash"},
 			{PID: 3, PPID: 1, Comm: "apache", Threads: 2},
@@ -17,7 +17,7 @@ func TestTree(t *testing.T) {
 		},
 	}
 
-	tree, err := process.NewTree(walker)
+	tree, err := proc.NewTree(walker)
 	if err != nil {
 		t.Fatalf("newProcessTree error: %v", err)
 	}
