@@ -66,7 +66,7 @@ func TestMerge(t *testing.T) {
 	)
 	if want, have := (report.Topology{
 		NodeMetadatas: report.NodeMetadatas{
-			srcEndpointNodeID: report.MakeNodeMetadata().WithEdgeMetadata(dstEndpointNodeID, report.EdgeMetadata{
+			srcEndpointNodeID: report.MakeNodeMetadata().WithEdge(dstEndpointNodeID, report.EdgeMetadata{
 				EgressPacketCount: newu64(1),
 				EgressByteCount:   newu64(256),
 			}),
@@ -82,7 +82,7 @@ func TestMerge(t *testing.T) {
 	)
 	if want, have := (report.Topology{
 		NodeMetadatas: report.NodeMetadatas{
-			srcAddressNodeID: report.MakeNodeMetadata().WithEdgeMetadata(dstAddressNodeID, report.EdgeMetadata{
+			srcAddressNodeID: report.MakeNodeMetadata().WithEdge(dstAddressNodeID, report.EdgeMetadata{
 				EgressPacketCount: newu64(1),
 				EgressByteCount:   newu64(512),
 			}),

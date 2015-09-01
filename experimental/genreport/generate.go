@@ -68,14 +68,14 @@ func DemoReport(nodeCount int) report.Report {
 			"pid":    "4000",
 			"name":   c.srcProc,
 			"domain": "node-" + src,
-		}).WithEdgeMetadata(dstPortID, report.EdgeMetadata{
+		}).WithEdge(dstPortID, report.EdgeMetadata{
 			MaxConnCountTCP: newu64(uint64(rand.Intn(100) + 10)),
 		}))
 		r.Endpoint = r.Endpoint.WithNode(dstPortID, report.MakeNodeMetadata().WithMetadata(map[string]string{
 			"pid":    "4000",
 			"name":   c.dstProc,
 			"domain": "node-" + dst,
-		}).WithEdgeMetadata(srcPortID, report.EdgeMetadata{
+		}).WithEdge(srcPortID, report.EdgeMetadata{
 			MaxConnCountTCP: newu64(uint64(rand.Intn(100) + 10)),
 		}))
 

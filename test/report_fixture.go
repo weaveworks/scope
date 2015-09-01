@@ -95,7 +95,7 @@ var (
 					endpoint.Port:     ClientPort54001,
 					process.PID:       Client1PID,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithEdgeMetadata(Server80NodeID, report.EdgeMetadata{
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(10),
 					EgressByteCount:   newu64(100),
 				}),
@@ -105,7 +105,7 @@ var (
 					endpoint.Port:     ClientPort54002,
 					process.PID:       Client2PID,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithEdgeMetadata(Server80NodeID, report.EdgeMetadata{
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(20),
 					EgressByteCount:   newu64(200),
 				}),
@@ -128,7 +128,7 @@ var (
 				UnknownClient1NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient1IP,
 					endpoint.Port: UnknownClient1Port,
-				}).WithEdgeMetadata(Server80NodeID, report.EdgeMetadata{
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(30),
 					EgressByteCount:   newu64(300),
 				}),
@@ -136,7 +136,7 @@ var (
 				UnknownClient2NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient2IP,
 					endpoint.Port: UnknownClient2Port,
-				}).WithEdgeMetadata(Server80NodeID, report.EdgeMetadata{
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(40),
 					EgressByteCount:   newu64(400),
 				}),
@@ -144,7 +144,7 @@ var (
 				UnknownClient3NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient3IP,
 					endpoint.Port: UnknownClient3Port,
-				}).WithEdgeMetadata(Server80NodeID, report.EdgeMetadata{
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(50),
 					EgressByteCount:   newu64(500),
 				}),
@@ -152,7 +152,7 @@ var (
 				RandomClientNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr: RandomClientIP,
 					endpoint.Port: RandomClientPort,
-				}).WithEdgeMetadata(Server80NodeID, report.EdgeMetadata{
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(60),
 					EgressByteCount:   newu64(600),
 				}),
@@ -229,7 +229,7 @@ var (
 				ClientAddressNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr:     ClientIP,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithEdgeMetadata(ServerAddressNodeID, report.EdgeMetadata{
+				}).WithEdge(ServerAddressNodeID, report.EdgeMetadata{
 					MaxConnCountTCP: newu64(3),
 				}),
 

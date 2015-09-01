@@ -147,11 +147,11 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 
 		if localIsClient {
 			// New nodes are merged into the report so we don't need to do any counting here; the merge does it for us.
-			localNode = localNode.WithEdgeMetadata(remoteAddressNodeID, report.EdgeMetadata{
+			localNode = localNode.WithEdge(remoteAddressNodeID, report.EdgeMetadata{
 				MaxConnCountTCP: newu64(1),
 			})
 		} else {
-			remoteNode = localNode.WithEdgeMetadata(localAddressNodeID, report.EdgeMetadata{
+			remoteNode = localNode.WithEdge(localAddressNodeID, report.EdgeMetadata{
 				MaxConnCountTCP: newu64(1),
 			})
 		}
@@ -179,11 +179,11 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 
 		if localIsClient {
 			// New nodes are merged into the report so we don't need to do any counting here; the merge does it for us.
-			localNode = localNode.WithEdgeMetadata(remoteEndpointNodeID, report.EdgeMetadata{
+			localNode = localNode.WithEdge(remoteEndpointNodeID, report.EdgeMetadata{
 				MaxConnCountTCP: newu64(1),
 			})
 		} else {
-			remoteNode = remoteNode.WithEdgeMetadata(localEndpointNodeID, report.EdgeMetadata{
+			remoteNode = remoteNode.WithEdge(localEndpointNodeID, report.EdgeMetadata{
 				MaxConnCountTCP: newu64(1),
 			})
 		}

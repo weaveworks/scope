@@ -74,19 +74,19 @@ func (n NodeMetadatas) Merge(other NodeMetadatas) NodeMetadatas {
 // NodeMetadata describes a superset of the metadata that probes can collect
 // about a given node in a given topology.
 type NodeMetadata struct {
-	Metadata  map[string]string
-	Counters  map[string]int
+	Metadata
+	Counters
 	Adjacency IDList
-	EdgeMetadatas
+	Edges     EdgeMetadatas
 }
 
 // MakeNodeMetadata creates a new NodeMetadata with no initial metadata.
 func MakeNodeMetadata() NodeMetadata {
 	return NodeMetadata{
-		Metadata:      map[string]string{},
-		Counters:      map[string]int{},
-		Adjacency:     MakeIDList(),
-		EdgeMetadatas: EdgeMetadatas{},
+		Metadata:  Metadata{},
+		Counters:  Counters{},
+		Adjacency: MakeIDList(),
+		Edges:     EdgeMetadatas{},
 	}
 }
 
@@ -123,42 +123,78 @@ func (n NodeMetadata) WithAdjacent(a string) NodeMetadata {
 	return result
 }
 
-// WithEdgeMetadata returns a fresh copy of n, with 'dst' added to Adjacency and md added to EdgeMetadata
-func (n NodeMetadata) WithEdgeMetadata(dst string, md EdgeMetadata) NodeMetadata {
+// WithEdge returns a fresh copy of n, with 'dst' added to Adjacency and md added to EdgeMetadata
+func (n NodeMetadata) WithEdge(dst string, md EdgeMetadata) NodeMetadata {
 	result := n.Copy()
 	result.Adjacency = result.Adjacency.Add(dst)
-	result.EdgeMetadatas[dst] = md
+	result.Edges[dst] = md
 	return result
 }
 
 // Copy returns a value copy of the NodeMetadata.
 func (n NodeMetadata) Copy() NodeMetadata {
 	cp := MakeNodeMetadata()
-	for k, v := range n.Metadata {
-		cp.Metadata[k] = v
-	}
-	for k, v := range n.Counters {
-		cp.Counters[k] = v
-	}
+	cp.Metadata = n.Metadata.Copy()
+	cp.Counters = n.Counters.Copy()
 	cp.Adjacency = n.Adjacency.Copy()
-	cp.EdgeMetadatas = n.EdgeMetadatas.Copy()
+	cp.Edges = n.Edges.Copy()
 	return cp
 }
+
+// Merge mergses the individual components of a node and returns a
+// fresh node.
+func (n NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
+	cp := n.Copy()
+	cp.Metadata = cp.Metadata.Merge(other.Metadata)
+	cp.Counters = cp.Counters.Merge(other.Counters)
+	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
+	cp.Edges = cp.Edges.Merge(n.Edges)
+	return cp
+}
+
+// Metadata is a string->string map
+type Metadata map[string]string
 
 // Merge merges two node metadata maps together. In case of conflict, the
 // other (right-hand) side wins. Always reassign the result of merge to the
 // destination. Merge does not modify the receiver.
-func (n NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
-	cp := n.Copy()
-	for k, v := range other.Metadata {
-		cp.Metadata[k] = v // other takes precedence
+func (m Metadata) Merge(other Metadata) Metadata {
+	result := m.Copy()
+	for k, v := range other {
+		result[k] = v // other takes precedence
 	}
-	for k, v := range other.Counters {
-		cp.Counters[k] = n.Counters[k] + v
+	return result
+}
+
+// Copy creates a deep copy of the Metadata
+func (m Metadata) Copy() Metadata {
+	result := Metadata{}
+	for k, v := range m {
+		result[k] = v
 	}
-	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
-	cp.EdgeMetadatas = cp.EdgeMetadatas.Merge(n.EdgeMetadatas)
-	return cp
+	return result
+}
+
+// Counters is a string->int map
+type Counters map[string]int
+
+// Merge merges two sets of counters into a fresh set of counters,
+// summing values where appropriate
+func (c Counters) Merge(other Counters) Counters {
+	result := c.Copy()
+	for k, v := range other {
+		result[k] = result[k] + v
+	}
+	return result
+}
+
+// Copy creates a deep copy of the Counters
+func (c Counters) Copy() Counters {
+	result := Counters{}
+	for k, v := range c {
+		result[k] = v
+	}
+	return result
 }
 
 // EdgeMetadatas collect metadata about each edge in a topology. Keys are
@@ -263,7 +299,7 @@ func (t Topology) Validate() error {
 		}
 
 		// Check all the edge metadatas have entries in adjacencies
-		for dstNodeID := range nmd.EdgeMetadatas {
+		for dstNodeID := range nmd.Edges {
 			if _, ok := t.NodeMetadatas[dstNodeID]; !ok {
 				errs = append(errs, fmt.Sprintf("node %s metadatas missing for edge %q", dstNodeID, nodeID))
 			}

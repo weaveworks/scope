@@ -119,7 +119,7 @@ func interpolateCounts(r report.Report) {
 	factor := 1.0 / rate
 	for _, topology := range r.Topologies() {
 		for _, nmd := range topology.NodeMetadatas {
-			for _, emd := range nmd.EdgeMetadatas {
+			for _, emd := range nmd.Edges {
 				if emd.EgressPacketCount != nil {
 					*emd.EgressPacketCount = uint64(float64(*emd.EgressPacketCount) * factor)
 				}
@@ -267,7 +267,7 @@ func (s *Sniffer) Merge(p Packet, rpt *report.Report) {
 
 		rpt.Address = addAdjacency(rpt.Address, srcNodeID, dstNodeID)
 
-		emd := rpt.Address.NodeMetadatas[srcNodeID].EdgeMetadatas[dstNodeID]
+		emd := rpt.Address.NodeMetadatas[srcNodeID].Edges[dstNodeID]
 		if egress {
 			if emd.EgressPacketCount == nil {
 				emd.EgressPacketCount = new(uint64)
@@ -287,7 +287,7 @@ func (s *Sniffer) Merge(p Packet, rpt *report.Report) {
 			}
 			*emd.IngressByteCount += uint64(p.Network)
 		}
-		rpt.Address.NodeMetadatas[srcNodeID].EdgeMetadatas[dstNodeID] = emd
+		rpt.Address.NodeMetadatas[srcNodeID].Edges[dstNodeID] = emd
 	}
 
 	// If we have ports, we can add to the endpoint topology, too.
@@ -299,7 +299,7 @@ func (s *Sniffer) Merge(p Packet, rpt *report.Report) {
 
 		rpt.Endpoint = addAdjacency(rpt.Endpoint, srcNodeID, dstNodeID)
 
-		emd := rpt.Endpoint.NodeMetadatas[srcNodeID].EdgeMetadatas[dstNodeID]
+		emd := rpt.Endpoint.NodeMetadatas[srcNodeID].Edges[dstNodeID]
 		if egress {
 			if emd.EgressPacketCount == nil {
 				emd.EgressPacketCount = new(uint64)
@@ -319,6 +319,6 @@ func (s *Sniffer) Merge(p Packet, rpt *report.Report) {
 			}
 			*emd.IngressByteCount += uint64(p.Transport)
 		}
-		rpt.Endpoint.NodeMetadatas[srcNodeID].EdgeMetadatas[dstNodeID] = emd
+		rpt.Endpoint.NodeMetadatas[srcNodeID].Edges[dstNodeID] = emd
 	}
 }

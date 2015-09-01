@@ -175,7 +175,7 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 		for _, srcRenderableID := range source2mapped[srcNodeID] {
 			srcRenderableNode := nodes[srcRenderableID]
 
-			for dstNodeID, emd := range nmd.EdgeMetadatas {
+			for dstNodeID, emd := range nmd.Edges {
 				for _, dstRenderableID := range source2mapped[dstNodeID] {
 					dstRenderableNode := nodes[dstRenderableID]
 
@@ -227,7 +227,7 @@ func (m LeafMap) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableI
 		metadata      = report.EdgeMetadata{}
 	)
 	for src, nmd := range t.NodeMetadatas {
-		for dst, edgeMeta := range nmd.EdgeMetadatas {
+		for dst, edgeMeta := range nmd.Edges {
 			srcs, dsts := report.MakeIDList(src), report.MakeIDList(dst)
 			if src != report.TheInternet {
 				mapped := m.Mapper(t.NodeMetadatas[src], localNetworks)

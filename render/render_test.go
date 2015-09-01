@@ -115,14 +115,14 @@ func TestMapEdge(t *testing.T) {
 			NodeMetadatas: report.NodeMetadatas{
 				"foo": report.MakeNodeMetadata().WithMetadata(map[string]string{
 					"id": "foo",
-				}).WithEdgeMetadata("bar", report.EdgeMetadata{
+				}).WithEdge("bar", report.EdgeMetadata{
 					EgressPacketCount: newu64(1),
 					EgressByteCount:   newu64(2),
 				}),
 
 				"bar": report.MakeNodeMetadata().WithMetadata(map[string]string{
 					"id": "bar",
-				}).WithEdgeMetadata("foo", report.EdgeMetadata{
+				}).WithEdge("foo", report.EdgeMetadata{
 					EgressPacketCount: newu64(3),
 					EgressByteCount:   newu64(4),
 				}),
