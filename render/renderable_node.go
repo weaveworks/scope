@@ -16,8 +16,8 @@ type RenderableNode struct {
 	Adjacency  report.IDList `json:"adjacency,omitempty"`   // Node IDs (in the same topology domain)
 	Origins    report.IDList `json:"origins,omitempty"`     // Core node IDs that contributed information
 
-	report.EdgeMetadata `json:"metadata"`        // Numeric sums
-	report.NodeMetadata `json:"XXXNODEMETADATA"` // merged NodeMetadata of the nodes used to build this // TODO ###
+	report.EdgeMetadata `json:"metadata"` // Numeric sums
+	report.NodeMetadata `json:"-"`        // merged NodeMetadata of the nodes used to build this
 }
 
 // RenderableNodes is a set of RenderableNodes
