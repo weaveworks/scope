@@ -9,20 +9,9 @@ import (
 	"github.com/weaveworks/scope/test"
 )
 
-type mockWalker struct {
-	processes []process.Process
-}
-
-func (m *mockWalker) Walk(f func(process.Process)) error {
-	for _, p := range m.processes {
-		f(p)
-	}
-	return nil
-}
-
 func TestReporter(t *testing.T) {
-	walker := &mockWalker{
-		processes: []process.Process{
+	procReader := &process.MockedReader{
+		Procs: []process.Process{
 			{PID: 1, PPID: 0, Comm: "init"},
 			{PID: 2, PPID: 1, Comm: "bash"},
 			{PID: 3, PPID: 1, Comm: "apache", Threads: 2},
@@ -31,7 +20,7 @@ func TestReporter(t *testing.T) {
 		},
 	}
 
-	reporter := process.NewReporter(walker, "")
+	reporter := process.NewReporter(procReader, "")
 	want := report.MakeReport()
 	want.Process = report.Topology{
 		Nodes: report.Nodes{

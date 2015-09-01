@@ -18,11 +18,11 @@ const (
 // Reporter generates Reports containing the Process topology.
 type Reporter struct {
 	scope  string
-	walker Walker
+	walker Reader
 }
 
 // NewReporter makes a new Reporter.
-func NewReporter(walker Walker, scope string) *Reporter {
+func NewReporter(walker Reader, scope string) *Reporter {
 	return &Reporter{
 		scope:  scope,
 		walker: walker,
@@ -42,7 +42,7 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) processTopology() (report.Topology, error) {
 	t := report.MakeTopology()
-	err := r.walker.Walk(func(p Process) {
+	err := r.walker.Processes(func(p Process) {
 		pidstr := strconv.Itoa(p.PID)
 		nodeID := report.MakeProcessNodeID(r.scope, pidstr)
 		node := report.MakeNode()
