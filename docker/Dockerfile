@@ -1,4 +1,4 @@
-FROM gliderlabs/alpine
+FROM alpine:latest
 MAINTAINER Weaveworks Inc <help@weave.works>
 LABEL works.weave.role=system
 WORKDIR /home/weave

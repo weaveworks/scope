@@ -1,4 +1,4 @@
-FROM gliderlabs/alpine
+FROM alpine:latest
 MAINTAINER Weaveworks Inc <help@weave.works>
 WORKDIR /home/weave
 ADD shout /home/weave/
