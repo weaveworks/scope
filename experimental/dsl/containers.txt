@@ -1,0 +1,3 @@
+ALL GROUPBY {{pid}}
+ALL GROUPBY {{docker_container_id}}
+NOT WITH {{docker_container_id}} REMOVE

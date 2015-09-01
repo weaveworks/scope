@@ -124,6 +124,45 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var topologyRegistry = map[string]topologyView{
+	"applications-expr": {
+		human:  "Applications (expr)",
+		parent: "",
+		renderer: render.ExpressionRenderer(
+			"ALL GROUPBY {{pid}}",
+			"NOT WITH {{pid}} REMOVE",
+			"NOT CONNECTED REMOVE",
+		),
+	},
+	"applications-expr-by-name": {
+		human:  "by name (expr)",
+		parent: "applications-expr",
+		renderer: render.ExpressionRenderer(
+			"ALL GROUPBY {{pid}}",
+			"ALL GROUPBY {{comm}}",
+			"NOT WITH {{comm}} REMOVE",
+			"NOT CONNECTED REMOVE",
+		),
+	},
+	"containers-expr": {
+		human:  "Containers (expr)",
+		parent: "",
+		renderer: render.ExpressionRenderer(
+			"ALL GROUPBY {{pid}}",
+			"ALL GROUPBY {{docker_container_id}}",
+			"NOT WITH {{docker_container_id}} REMOVE",
+		),
+	},
+	"containers-expr-by-image": {
+		human:  "by image (expr)",
+		parent: "containers-expr",
+		renderer: render.ExpressionRenderer(
+			"ALL GROUPBY {{pid}}",
+			"ALL GROUPBY {{docker_container_id}}",
+			"ALL GROUPBY {{docker_image_id}}",
+			"NOT WITH {{docker_image_name}} REMOVE",
+		),
+	},
+
 	"applications": {
 		human:    "Applications",
 		parent:   "",
@@ -144,6 +183,7 @@ var topologyRegistry = map[string]topologyView{
 		parent:   "containers",
 		renderer: render.ContainerImageRenderer,
 	},
+
 	"hosts": {
 		human:    "Hosts",
 		parent:   "",

@@ -1,0 +1,60 @@
+{
+  "Endpoint": {
+    "Adjacency": {
+      ">endpoint-1": [
+        "endpoint-2",
+        "endpoint-3"
+      ]
+    },
+    "EdgeMetadatas": {},
+    "NodeMetadatas": {
+      "endpoint-1": {
+        "Metadata": {
+          "endpoint_statistic": "one",
+          "pid": "1234",
+          "host_node_id": "nydev.bourgon.org;<host>"
+        }
+      },
+      "endpoint-2": {
+        "Metadata": {
+          "endpoint_statistic": "two",
+          "host_node_id": "nydev.bourgon.org;<host>"
+        }
+      },
+      "endpoint-3": {
+        "Metadata": {
+          "endpoint_statistic": "three",
+          "host_node_id": "nydev.bourgon.org;<host>"
+        }
+      }
+    }
+  },
+  "Process": {
+    "Adjacency": {},
+    "EdgeMetadatas": {},
+    "NodeMetadatas": {
+      "process-1234": {
+        "Metadata": {
+          "pid": "1234",
+          "docker_container_id": "abc",
+          "process_statistic": "555",
+          "host_node_id": "nydev.bourgon.org;<host>"
+        }
+      }
+    }
+  },
+  "Container": {
+    "Adjacency": {},
+    "EdgeMetadatas": {},
+    "NodeMetadatas": {
+      "abc": {
+        "Metadata": {
+          "docker_container_id": "abc",
+          "docker_statistic": "999",
+          "host_node_id": "nydev.bourgon.org;<host>"
+        }
+      }
+    }
+  },
+  "Window": 60000000000
+}

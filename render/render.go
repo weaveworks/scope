@@ -1,8 +1,11 @@
 package render
 
 import (
+	"fmt"
 	"log"
+	"strings"
 
+	"github.com/weaveworks/scope/render/dsl"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -315,4 +318,86 @@ func (f Filter) Render(rpt report.Report) RenderableNodes {
 		}
 	}
 	return output
+}
+
+// ExpressionRenderer is a Renderer that's based on a set of DSL expressions.
+func ExpressionRenderer(exprStrs ...string) Renderer {
+	return expressionRenderer{dsl.ParseExpressions(exprStrs...)}
+}
+
+type expressionRenderer struct {
+	exprs dsl.Expressions
+}
+
+func (r expressionRenderer) Render(rpt report.Report) RenderableNodes {
+	// Flatten all the topologies.
+	tpy := report.MakeTopology()
+	for _, t := range rpt.Topologies() {
+		if err := conflict(tpy, t); err != nil {
+			log.Printf("conflict in node IDs: %v", err) // oh well...
+		}
+		tpy = tpy.Merge(t)
+	}
+
+	// Evaluate expressions.
+	tpy = r.exprs.Eval(tpy)
+
+	// Convert to RenderableNodes.
+	return tpy2rns(tpy)
+}
+
+func (r expressionRenderer) EdgeMetadata(rpt report.Report, localID, remoteID string) report.EdgeMetadata {
+	return report.EdgeMetadata{} // TODO(pb)
+}
+
+func tpy2rns(tpy report.Topology) RenderableNodes {
+	out := RenderableNodes{}
+
+	// First, get the nodes.
+	for id, md := range tpy.NodeMetadatas {
+		var (
+			major = "" // TODO(pb)
+			minor = "" // TODO(pb)
+			rank  = "" // TODO(pb)
+		)
+		out[id] = NewRenderableNode(id, major, minor, rank, md)
+	}
+
+	// Then, inject the adjacencies.
+	for adjacencyID, dstIDs := range tpy.Adjacency {
+		srcID, ok := report.ParseAdjacencyID(adjacencyID)
+		if !ok {
+			log.Printf("invalid adjacency ID %q", adjacencyID)
+			continue
+		}
+		node := out[srcID]
+		node.Adjacency = dstIDs
+		out[srcID] = node
+	}
+
+	// TODO(pb): we have no way to track origins at the moment. We should have
+	// a separate NodeMetadata.Sets field, and push origin IDs there when we
+	// MERGE or GROUPBY.
+
+	// TODO(pb): EdgeMetadata
+
+	return out
+}
+
+func conflict(a, b report.Topology) error {
+	var errs []string
+	for id := range a.NodeMetadatas {
+		if _, ok := b.NodeMetadatas[id]; ok {
+			errs = append(errs, id)
+		}
+	}
+	for id := range b.NodeMetadatas {
+		if _, ok := a.NodeMetadatas[id]; ok {
+			errs = append(errs, id)
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf(strings.Join(errs, ", "))
+	}
+	return nil
 }
