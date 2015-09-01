@@ -43,6 +43,8 @@ function makeNode(node) {
 
 // Initial values
 
+let activeTopologyOptions = {};
+let currentTopology = null;
 let currentTopologyId = 'containers';
 let errorUrl = null;
 let version = '';
@@ -54,33 +56,60 @@ let selectedNodeId = null;
 let topologies = [];
 let websocketClosed = true;
 
+function setTopology(topologyId) {
+  currentTopologyId = topologyId;
+  currentTopology = findCurrentTopology(topologies, topologyId);
+}
+
+function setDefaultTopologyOptions() {
+  activeTopologyOptions = {};
+  if (currentTopology) {
+    _.each(currentTopology.options, function(items, option) {
+      _.each(items, function(item) {
+        if (item.default === true) {
+          activeTopologyOptions[option] = item.value;
+        }
+      });
+    });
+  }
+}
+
 // Store API
 
 const AppStore = assign({}, EventEmitter.prototype, {
 
   CHANGE_EVENT: 'change',
 
+  // keep at the top
   getAppState: function() {
     return {
       topologyId: currentTopologyId,
-      selectedNodeId: this.getSelectedNodeId()
+      selectedNodeId: this.getSelectedNodeId(),
+      topologyOptions: this.getActiveTopologyOptions()
     };
   },
 
+  getActiveTopologyOptions: function() {
+    return activeTopologyOptions;
+  },
+
   getCurrentTopology: function() {
-    return findCurrentTopology(topologies, currentTopologyId);
+    if (!currentTopology) {
+      currentTopology = setTopology(currentTopologyId);
+    }
+    return currentTopology;
   },
 
   getCurrentTopologyId: function() {
     return currentTopologyId;
   },
 
-  getCurrentTopologyUrl: function() {
-    const topology = this.getCurrentTopology();
+  getCurrentTopologyOptions: function() {
+    return currentTopology && currentTopology.options;
+  },
 
-    if (topology) {
-      return topology.url;
-    }
+  getCurrentTopologyUrl: function() {
+    return currentTopology && currentTopology.url;
   },
 
   getErrorUrl: function() {
@@ -156,6 +185,14 @@ const AppStore = assign({}, EventEmitter.prototype, {
 AppStore.registeredCallback = function(payload) {
   switch (payload.type) {
 
+    case ActionTypes.CHANGE_TOPOLOGY_OPTION:
+      if (activeTopologyOptions[payload.option] !== payload.value) {
+        nodes = nodes.clear();
+      }
+      activeTopologyOptions[payload.option] = payload.value;
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
     case ActionTypes.CLICK_CLOSE_DETAILS:
       selectedNodeId = null;
       AppStore.emit(AppStore.CHANGE_EVENT);
@@ -169,7 +206,8 @@ AppStore.registeredCallback = function(payload) {
     case ActionTypes.CLICK_TOPOLOGY:
       selectedNodeId = null;
       if (payload.topologyId !== currentTopologyId) {
-        currentTopologyId = payload.topologyId;
+        setTopology(payload.topologyId);
+        setDefaultTopologyOptions();
         nodes = nodes.clear();
       }
       AppStore.emit(AppStore.CHANGE_EVENT);
@@ -261,6 +299,10 @@ AppStore.registeredCallback = function(payload) {
     case ActionTypes.RECEIVE_TOPOLOGIES:
       errorUrl = null;
       topologies = payload.topologies;
+      if (!currentTopology) {
+        setTopology(currentTopologyId);
+        setDefaultTopologyOptions();
+      }
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
@@ -274,8 +316,10 @@ AppStore.registeredCallback = function(payload) {
       if (currentTopologyId !== payload.state.topologyId) {
         nodes = nodes.clear();
       }
-      currentTopologyId = payload.state.topologyId;
+      setTopology(payload.state.topologyId);
+      setDefaultTopologyOptions();
       selectedNodeId = payload.state.selectedNodeId;
+      activeTopologyOptions = payload.state.topologyOptions || activeTopologyOptions;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 

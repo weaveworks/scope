@@ -4,6 +4,7 @@ const Logo = require('./logo');
 const AppStore = require('../stores/app-store');
 const Status = require('./status.js');
 const Topologies = require('./topologies.js');
+const TopologyOptions = require('./topology-options.js');
 const WebapiUtils = require('../utils/web-api-utils');
 const AppActions = require('../actions/app-actions');
 const Details = require('./details');
@@ -14,8 +15,10 @@ const ESC_KEY_CODE = 27;
 
 function getStateFromStores() {
   return {
+    activeTopologyOptions: AppStore.getActiveTopologyOptions(),
     currentTopology: AppStore.getCurrentTopology(),
     currentTopologyId: AppStore.getCurrentTopologyId(),
+    currentTopologyOptions: AppStore.getCurrentTopologyOptions(),
     errorUrl: AppStore.getErrorUrl(),
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
@@ -67,6 +70,8 @@ const App = React.createClass({
         <div className="header">
           <Logo />
           <Topologies topologies={this.state.topologies} currentTopology={this.state.currentTopology} />
+          <TopologyOptions options={this.state.currentTopologyOptions}
+            activeOptions={this.state.activeTopologyOptions} />
           <Status errorUrl={this.state.errorUrl} websocketClosed={this.state.websocketClosed} />
         </div>
 

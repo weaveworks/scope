@@ -28,6 +28,18 @@ describe('AppStore', function() {
 
   // actions
 
+  const ChangeTopologyOptionAction = {
+    type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+    option: 'option1',
+    value: 'on'
+  };
+
+  const ChangeTopologyOptionAction2 = {
+    type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+    option: 'option1',
+    value: 'off'
+  };
+
   const ClickNodeAction = {
     type: ActionTypes.CLICK_NODE,
     nodeId: 'n1'
@@ -88,6 +100,12 @@ describe('AppStore', function() {
     topologies: [{
       url: '/topo1',
       name: 'Topo1',
+      options: {
+        option1: [
+          {value: 'on'},
+          {value: 'off', default: true}
+        ]
+      },
       sub_topologies: [{
         url: '/topo1-grouped',
         name: 'topo 1 grouped'
@@ -122,6 +140,7 @@ describe('AppStore', function() {
     expect(AppStore.getTopologies().length).toBe(1);
     expect(AppStore.getCurrentTopology().name).toBe('Topo1');
     expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1');
+    expect(AppStore.getCurrentTopologyOptions().option1).toBeDefined();
   });
 
   it('get sub-topology', function() {
@@ -131,6 +150,32 @@ describe('AppStore', function() {
     expect(AppStore.getTopologies().length).toBe(1);
     expect(AppStore.getCurrentTopology().name).toBe('topo 1 grouped');
     expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1-grouped');
+    expect(AppStore.getCurrentTopologyOptions()).toBeUndefined();
+  });
+
+  // topology options
+
+  it('changes topology option', function() {
+    // default options
+    registeredCallback(ReceiveTopologiesAction);
+    registeredCallback(ClickTopologyAction);
+    expect(AppStore.getActiveTopologyOptions().option1).toBe('off');
+    expect(AppStore.getAppState().topologyOptions.option1).toBe('off');
+
+    // turn on
+    registeredCallback(ChangeTopologyOptionAction);
+    expect(AppStore.getActiveTopologyOptions().option1).toBe('on');
+    expect(AppStore.getAppState().topologyOptions.option1).toBe('on');
+
+    // turn off
+    registeredCallback(ChangeTopologyOptionAction2);
+    expect(AppStore.getActiveTopologyOptions().option1).toBe('off');
+    expect(AppStore.getAppState().topologyOptions.option1).toBe('off');
+
+    // other topology w/o options
+    registeredCallback(ClickSubTopologyAction);
+    expect(AppStore.getActiveTopologyOptions().option1).toBeUndefined();
+    expect(AppStore.getAppState().topologyOptions.option1).toBeUndefined();
   });
 
   // nodes delta
@@ -166,12 +211,10 @@ describe('AppStore', function() {
     registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveNodesDeltaAction);
 
-    expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1","selectedNodeId": null});
+    expect(AppStore.getAppState().selectedNodeId).toEqual(null);
 
     registeredCallback(ClickNodeAction);
-    expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1","selectedNodeId": 'n1'});
+    expect(AppStore.getAppState().selectedNodeId).toEqual('n1');
 
     // go back in browsing
     RouteAction.state = {"topologyId":"topo1","selectedNodeId": null};
@@ -185,16 +228,16 @@ describe('AppStore', function() {
     registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveNodesDeltaAction);
 
-    expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1","selectedNodeId": null});
+    expect(AppStore.getAppState().selectedNodeId).toEqual(null);
+    expect(AppStore.getAppState().topologyId).toEqual('topo1');
 
     registeredCallback(ClickNodeAction);
-    expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1","selectedNodeId": 'n1'});
+    expect(AppStore.getAppState().selectedNodeId).toEqual('n1');
+    expect(AppStore.getAppState().topologyId).toEqual('topo1');
 
     registeredCallback(ClickSubTopologyAction);
-    expect(AppStore.getAppState())
-      .toEqual({"topologyId":"topo1-grouped","selectedNodeId": null});
+    expect(AppStore.getAppState().selectedNodeId).toEqual(null);
+    expect(AppStore.getAppState().topologyId).toEqual('topo1-grouped');
   });
 
   // connection errors

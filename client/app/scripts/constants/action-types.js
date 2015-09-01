@@ -1,6 +1,7 @@
 const keymirror = require('keymirror');
 
 module.exports = keymirror({
+  CHANGE_TOPOLOGY_OPTION: null,
   CLICK_CLOSE_DETAILS: null,
   CLICK_NODE: null,
   CLICK_TOPOLOGY: null,
