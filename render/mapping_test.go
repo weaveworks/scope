@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"net"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -16,6 +17,7 @@ func TestMapEndpointIdentity(t *testing.T) {
 		{report.MakeNodeMetadataWith(map[string]string{endpoint.Addr: "1.2.3.4"}), false},
 		{report.MakeNodeMetadataWith(map[string]string{endpoint.Port: "1234"}), false},
 		{report.MakeNodeMetadataWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "1234"}), true},
+		{report.MakeNodeMetadataWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "40000"}), true},
 		{report.MakeNodeMetadataWith(map[string]string{report.HostNodeID: report.MakeHostNodeID("foo"), endpoint.Addr: "10.0.0.1", endpoint.Port: "20001"}), true},
 	} {
 		testMap(t, render.MapEndpointIdentity, input)
@@ -72,7 +74,12 @@ type testcase struct {
 }
 
 func testMap(t *testing.T, f render.LeafMapFunc, input testcase) {
-	if have := f(input.md, report.Networks{}); input.ok != (len(have) > 0) {
+	_, ipNet, err := net.ParseCIDR("1.2.3.0/16")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	localNetworks := report.Networks([]*net.IPNet{ipNet})
+	if have := f(input.md, localNetworks); input.ok != (len(have) > 0) {
 		t.Errorf("%v: want %v, have %v", input.md, input.ok, have)
 	}
 }
