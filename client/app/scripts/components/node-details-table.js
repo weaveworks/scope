@@ -7,7 +7,7 @@ const NodeDetailsTable = React.createClass({
 
     return (
       <div className="node-details-table">
-        <h4 className="node-details-table-title">
+        <h4 className="node-details-table-title truncate" title={this.props.title}>
           {this.props.title}
         </h4>
 
