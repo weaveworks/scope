@@ -131,8 +131,8 @@ func MapContainerIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 
 	node := NewRenderableNodeWith(id, major, minor, rank, m)
 	if imageID, ok := m.Metadata[docker.ImageID]; ok {
-		scope, _, _ := report.ParseContainerNodeID(m.ID)
-		node.Origins = node.Origins.Add(report.MakeContainerNodeID(scope, imageID))
+		hostID, _, _ := report.ParseContainerNodeID(m.ID)
+		node.Origins = node.Origins.Add(report.MakeContainerNodeID(hostID, imageID))
 	}
 	return RenderableNodes{id: node}
 }
