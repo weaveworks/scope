@@ -142,6 +142,16 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 		Pseudo:     false,
 		Tables: []render.Table{
 			{
+				Title:   `Container Image "image/server"`,
+				Numeric: false,
+				Rank:    4,
+				Rows: []render.Row{
+					{"Image ID", test.ServerContainerImageID, "", false},
+					{`Label "foo1"`, `bar1`, "", false},
+					{`Label "foo2"`, `bar2`, "", false},
+				},
+			},
+			{
 				Title:   `Container "server"`,
 				Numeric: false,
 				Rank:    3,

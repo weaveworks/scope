@@ -121,7 +121,12 @@ func MapContainerIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 		rank  = m.Metadata[docker.ImageID]
 	)
 
-	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
+	node := NewRenderableNodeWith(id, major, minor, rank, m)
+	if imageID, ok := m.Metadata[docker.ImageID]; ok {
+		scope, _, _ := report.ParseContainerNodeID(m.ID)
+		node.Origins = node.Origins.Add(report.MakeContainerNodeID(scope, imageID))
+	}
+	return RenderableNodes{id: node}
 }
 
 // MapContainerImageIdentity maps a container image topology node to container

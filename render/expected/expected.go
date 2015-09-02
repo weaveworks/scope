@@ -215,6 +215,7 @@ var (
 			Rank:       test.ClientContainerImageID,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
+				test.ClientContainerImageNodeID,
 				test.ClientContainerNodeID,
 				test.Client54001NodeID,
 				test.Client54002NodeID,
@@ -235,6 +236,7 @@ var (
 			Rank:       test.ServerContainerImageID,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
+				test.ServerContainerImageNodeID,
 				test.ServerContainerNodeID,
 				test.Server80NodeID,
 				test.ServerProcessNodeID,
