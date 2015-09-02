@@ -310,13 +310,16 @@ body {
 
   &-table {
 
-    margin-bottom: 8px;
+    &:last-child {
+      margin-bottom: 1em;
+    }
 
     &-title {
       text-transform: uppercase;
-      margin-bottom: 0;
+      margin-bottom: 0.25em;
       color: @text-secondary-color;
       font-size: 100%;
+      line-height: 125%;
     }
 
     &-row {
