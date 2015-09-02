@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const React = require('react');
 
 const NodeDetailsTable = require('./node-details-table');
@@ -74,7 +75,8 @@ const NodeDetails = React.createClass({
 
         <div className="node-details-content">
           {details.tables.map(function(table) {
-            return <NodeDetailsTable title={table.title} rows={table.rows} isNumeric={table.numeric} />;
+            const key = _.snakeCase(table.title);
+            return <NodeDetailsTable title={table.title} key={key} rows={table.rows} isNumeric={table.numeric} />;
           })}
         </div>
       </div>
