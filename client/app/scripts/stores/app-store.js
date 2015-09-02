@@ -176,7 +176,6 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.CLOSE_WEBSOCKET:
-      nodes = nodes.clear();
       websocketClosed = true;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
@@ -209,7 +208,7 @@ AppStore.registeredCallback = function(payload) {
 
     case ActionTypes.OPEN_WEBSOCKET:
       // flush nodes cache after re-connect
-      nodes = {};
+      nodes = nodes.clear();
       websocketClosed = false;
 
       AppStore.emit(AppStore.CHANGE_EVENT);

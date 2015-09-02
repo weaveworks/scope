@@ -60,11 +60,6 @@ describe('AppStore', function() {
     type: ActionTypes.OPEN_WEBSOCKET
   };
 
-  const ReceiveEmptyNodesDeltaAction = {
-    type: ActionTypes.RECEIVE_NODES_DELTA,
-    delta: {}
-  };
-
   const ReceiveNodesDeltaAction = {
     type: ActionTypes.RECEIVE_NODES_DELTA,
     delta: {
@@ -189,12 +184,12 @@ describe('AppStore', function() {
 
     registeredCallback(CloseWebsocketAction);
     expect(AppStore.isWebsocketClosed()).toBeTruthy();
+    // keep showing old nodes
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
 
     registeredCallback(OpenWebsocketAction);
     expect(AppStore.isWebsocketClosed()).toBeFalsy();
-
-    registeredCallback(ReceiveEmptyNodesDeltaAction);
+    // opened socket clears nodes
     expect(AppStore.getNodes().toJS()).toEqual({});
   });
 
