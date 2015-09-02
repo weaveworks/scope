@@ -66,7 +66,7 @@ func MapEndpointIdentity(m report.NodeMetadata, local report.Networks) Renderabl
 
 		// We are a 'client' pseudo node if the port is in the ephemeral port range.
 		// Linux uses 32768 to 61000.
-		if p, err := strconv.Atoi(port); err == nil && p >= 32768 && p < 61000 {
+		if p, err := strconv.Atoi(port); err == nil && len(m.Adjacency) > 0 && p >= 32768 && p < 61000 {
 			// We only exist if there is something in our adjacency
 			// Generate a single pseudo node for every (client ip, server ip, server port)
 			dstNodeID := m.Adjacency[0]
@@ -170,8 +170,11 @@ func MapAddressIdentity(m report.NodeMetadata, local report.Networks) Renderable
 		}
 
 		// Otherwise generate a pseudo node for every
-		_, dstID, _ := report.ParseAddressNodeID(m.Adjacency[0])
-		outputID := MakePseudoNodeID(addr, dstID)
+		outputID := MakePseudoNodeID(addr, "")
+		if len(m.Adjacency) > 0 {
+			_, dstAddr, _ := report.ParseAddressNodeID(m.Adjacency[0])
+			outputID = MakePseudoNodeID(addr, dstAddr)
+		}
 		return RenderableNodes{outputID: newPseudoNode(outputID, addr, "")}
 	}
 
