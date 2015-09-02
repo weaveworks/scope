@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const React = require('react');
 
 const NodeDetailsTable = require('./node-details-table');
@@ -28,7 +29,7 @@ const NodeDetails = React.createClass({
     return (
       <div className="node-details">
         <div className="node-details-header node-details-header-notavailable">
-          <h2 className="node-details-header-label truncate">
+          <h2 className="node-details-header-label">
             n/a
           </h2>
           <div className="node-details-header-label-minor truncate">
@@ -64,15 +65,18 @@ const NodeDetails = React.createClass({
     return (
       <div className="node-details">
         <div className="node-details-header" style={style}>
-          <h2 className="node-details-header-label truncate">
+          <h2 className="node-details-header-label truncate" title={details.label_major}>
             {details.label_major}
           </h2>
-          <div className="node-details-header-label-minor truncate">{details.label_minor}</div>
+          <div className="node-details-header-label-minor truncate" title={details.label_minor}>
+            {details.label_minor}
+          </div>
         </div>
 
         <div className="node-details-content">
           {details.tables.map(function(table) {
-            return <NodeDetailsTable title={table.title} rows={table.rows} isNumeric={table.numeric} />;
+            const key = _.snakeCase(table.title);
+            return <NodeDetailsTable title={table.title} key={key} rows={table.rows} isNumeric={table.numeric} />;
           })}
         </div>
       </div>
