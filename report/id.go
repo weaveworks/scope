@@ -21,20 +21,6 @@ const (
 	EdgeDelim = "|"
 )
 
-// MakeEdgeID produces an edge ID from composite parts.
-func MakeEdgeID(srcNodeID, dstNodeID string) string {
-	return srcNodeID + EdgeDelim + dstNodeID
-}
-
-// ParseEdgeID splits an edge ID to its composite parts.
-func ParseEdgeID(edgeID string) (srcNodeID, dstNodeID string, ok bool) {
-	fields := strings.SplitN(edgeID, EdgeDelim, 2)
-	if len(fields) != 2 {
-		return "", "", false
-	}
-	return fields[0], fields[1], true
-}
-
 // MakeEndpointNodeID produces an endpoint node ID from its composite parts.
 func MakeEndpointNodeID(hostID, address, port string) string {
 	return MakeAddressNodeID(hostID, address) + ScopeDelim + port

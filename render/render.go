@@ -1,8 +1,6 @@
 package render
 
 import (
-	"log"
-
 	"github.com/weaveworks/scope/report"
 )
 
@@ -171,6 +169,27 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 		}
 	}
 
+	// We propagate edge metadata to nodes on both ends of the edges.
+	// TODO we should 'reverse' one end of the edge meta data - ingress -> egress etc.
+	for srcNodeID, nmd := range t.NodeMetadatas {
+		for _, srcRenderableID := range source2mapped[srcNodeID] {
+			srcRenderableNode := nodes[srcRenderableID]
+
+			for dstNodeID, emd := range nmd.Edges {
+				for _, dstRenderableID := range source2mapped[dstNodeID] {
+					dstRenderableNode := nodes[dstRenderableID]
+
+					srcRenderableNode.EdgeMetadata = srcRenderableNode.EdgeMetadata.Merge(emd)
+					dstRenderableNode.EdgeMetadata = dstRenderableNode.EdgeMetadata.Merge(emd)
+
+					nodes[dstRenderableID] = dstRenderableNode
+				}
+			}
+
+			nodes[srcRenderableID] = srcRenderableNode
+		}
+	}
+
 	// Walk the graph and make connections.
 	for srcNodeID, dstNodeIDs := range adjacencies {
 		for _, srcRenderableID := range source2mapped[srcNodeID] {
@@ -178,17 +197,7 @@ func (m LeafMap) Render(rpt report.Report) RenderableNodes {
 
 			for _, dstNodeID := range dstNodeIDs {
 				for _, dstRenderableID := range source2mapped[dstNodeID] {
-					dstRenderableNode := nodes[dstRenderableID]
-
 					srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
-
-					// We propagate edge metadata to nodes on both ends of the edges.
-					// TODO we should 'reverse' one end of the edge meta data - ingress -> egress etc.
-					if md, ok := t.EdgeMetadatas[report.MakeEdgeID(srcNodeID, dstNodeID)]; ok {
-						srcRenderableNode.EdgeMetadata = srcRenderableNode.EdgeMetadata.Merge(md)
-						dstRenderableNode.EdgeMetadata = dstRenderableNode.EdgeMetadata.Merge(md)
-						nodes[dstRenderableID] = dstRenderableNode
-					}
 				}
 			}
 
@@ -217,23 +226,20 @@ func (m LeafMap) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableI
 		localNetworks = LocalNetworks(rpt)
 		metadata      = report.EdgeMetadata{}
 	)
-	for edgeID, edgeMeta := range t.EdgeMetadatas {
-		src, dst, ok := report.ParseEdgeID(edgeID)
-		if !ok {
-			log.Printf("bad edge ID %q", edgeID)
-			continue
-		}
-		srcs, dsts := report.MakeIDList(src), report.MakeIDList(dst)
-		if src != report.TheInternet {
-			mapped := m.Mapper(t.NodeMetadatas[src], localNetworks)
-			srcs = ids(mapped)
-		}
-		if dst != report.TheInternet {
-			mapped := m.Mapper(t.NodeMetadatas[dst], localNetworks)
-			dsts = ids(mapped)
-		}
-		if srcs.Contains(srcRenderableID) && dsts.Contains(dstRenderableID) {
-			metadata = metadata.Flatten(edgeMeta)
+	for src, nmd := range t.NodeMetadatas {
+		for dst, edgeMeta := range nmd.Edges {
+			srcs, dsts := report.MakeIDList(src), report.MakeIDList(dst)
+			if src != report.TheInternet {
+				mapped := m.Mapper(t.NodeMetadatas[src], localNetworks)
+				srcs = ids(mapped)
+			}
+			if dst != report.TheInternet {
+				mapped := m.Mapper(t.NodeMetadatas[dst], localNetworks)
+				dsts = ids(mapped)
+			}
+			if srcs.Contains(srcRenderableID) && dsts.Contains(dstRenderableID) {
+				metadata = metadata.Flatten(edgeMeta)
+			}
 		}
 	}
 	return metadata

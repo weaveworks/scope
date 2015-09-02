@@ -36,7 +36,6 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 			t.Fatal(err)
 		}
 		if want, have := (report.Topology{
-			EdgeMetadatas: report.EdgeMetadatas{},
 			NodeMetadatas: report.NodeMetadatas{
 				report.MakeOverlayNodeID(mockWeavePeerName): report.MakeNodeMetadataWith(map[string]string{
 					overlay.WeavePeerName:     mockWeavePeerName,

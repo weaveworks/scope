@@ -135,9 +135,7 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		var (
 			localAddressNodeID  = report.MakeAddressNodeID(r.hostID, localAddr)
 			remoteAddressNodeID = report.MakeAddressNodeID(r.hostID, remoteAddr)
-			edgeID              = ""
-
-			localNode = report.MakeNodeMetadataWith(map[string]string{
+			localNode           = report.MakeNodeMetadataWith(map[string]string{
 				"name":            r.hostName,
 				Addr:              localAddr,
 				report.HostNodeID: hostNodeID,
@@ -148,16 +146,18 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		)
 
 		if localIsClient {
-			localNode.Adjacency = localNode.Adjacency.Add(remoteAddressNodeID)
-			edgeID = report.MakeEdgeID(localAddressNodeID, remoteAddressNodeID)
+			// New nodes are merged into the report so we don't need to do any counting here; the merge does it for us.
+			localNode = localNode.WithEdge(remoteAddressNodeID, report.EdgeMetadata{
+				MaxConnCountTCP: newu64(1),
+			})
 		} else {
-			remoteNode.Adjacency = localNode.Adjacency.Add(localAddressNodeID)
-			edgeID = report.MakeEdgeID(remoteAddressNodeID, localAddressNodeID)
+			remoteNode = localNode.WithEdge(localAddressNodeID, report.EdgeMetadata{
+				MaxConnCountTCP: newu64(1),
+			})
 		}
 
 		rpt.Address = rpt.Address.WithNode(localAddressNodeID, localNode)
 		rpt.Address = rpt.Address.WithNode(remoteAddressNodeID, remoteNode)
-		countTCPConnection(rpt.Address.EdgeMetadatas, edgeID)
 	}
 
 	// Update endpoint topology
@@ -165,7 +165,6 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		var (
 			localEndpointNodeID  = report.MakeEndpointNodeID(r.hostID, localAddr, strconv.Itoa(int(localPort)))
 			remoteEndpointNodeID = report.MakeEndpointNodeID(r.hostID, remoteAddr, strconv.Itoa(int(remotePort)))
-			edgeID               = ""
 
 			localNode = report.MakeNodeMetadataWith(map[string]string{
 				Addr:              localAddr,
@@ -179,11 +178,14 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		)
 
 		if localIsClient {
-			localNode.Adjacency = localNode.Adjacency.Add(remoteEndpointNodeID)
-			edgeID = report.MakeEdgeID(localEndpointNodeID, remoteEndpointNodeID)
+			// New nodes are merged into the report so we don't need to do any counting here; the merge does it for us.
+			localNode = localNode.WithEdge(remoteEndpointNodeID, report.EdgeMetadata{
+				MaxConnCountTCP: newu64(1),
+			})
 		} else {
-			remoteNode.Adjacency = remoteNode.Adjacency.Add(localEndpointNodeID)
-			edgeID = report.MakeEdgeID(remoteEndpointNodeID, localEndpointNodeID)
+			remoteNode = remoteNode.WithEdge(localEndpointNodeID, report.EdgeMetadata{
+				MaxConnCountTCP: newu64(1),
+			})
 		}
 
 		if proc != nil && proc.PID > 0 {
@@ -192,15 +194,9 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 
 		rpt.Endpoint = rpt.Endpoint.WithNode(localEndpointNodeID, localNode)
 		rpt.Endpoint = rpt.Endpoint.WithNode(remoteEndpointNodeID, remoteNode)
-		countTCPConnection(rpt.Endpoint.EdgeMetadatas, edgeID)
 	}
 }
 
-func countTCPConnection(mds report.EdgeMetadatas, key string) {
-	md := mds[key]
-	if md.MaxConnCountTCP == nil {
-		md.MaxConnCountTCP = new(uint64)
-	}
-	*md.MaxConnCountTCP++
-	mds[key] = md
+func newu64(i uint64) *uint64 {
+	return &i
 }

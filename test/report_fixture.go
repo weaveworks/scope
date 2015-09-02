@@ -95,14 +95,20 @@ var (
 					endpoint.Port:     ClientPort54001,
 					process.PID:       Client1PID,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
+					EgressPacketCount: newu64(10),
+					EgressByteCount:   newu64(100),
+				}),
 
 				Client54002NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr:     ClientIP,
 					endpoint.Port:     ClientPort54002,
 					process.PID:       Client2PID,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
+					EgressPacketCount: newu64(20),
+					EgressByteCount:   newu64(200),
+				}),
 
 				Server80NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr:     ServerIP,
@@ -116,59 +122,45 @@ var (
 					endpoint.Port:     NonContainerClientPort,
 					process.PID:       NonContainerPID,
 					report.HostNodeID: ServerHostNodeID,
-				}).WithAdjacency(report.MakeIDList(GoogleEndpointNodeID)),
+				}).WithAdjacent(GoogleEndpointNodeID),
 
 				// Probe pseudo nodes
 				UnknownClient1NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient1IP,
 					endpoint.Port: UnknownClient1Port,
-				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
+					EgressPacketCount: newu64(30),
+					EgressByteCount:   newu64(300),
+				}),
 
 				UnknownClient2NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient2IP,
 					endpoint.Port: UnknownClient2Port,
-				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
+					EgressPacketCount: newu64(40),
+					EgressByteCount:   newu64(400),
+				}),
 
 				UnknownClient3NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient3IP,
 					endpoint.Port: UnknownClient3Port,
-				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
+					EgressPacketCount: newu64(50),
+					EgressByteCount:   newu64(500),
+				}),
 
 				RandomClientNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr: RandomClientIP,
 					endpoint.Port: RandomClientPort,
-				}).WithAdjacency(report.MakeIDList(Server80NodeID)),
+				}).WithEdge(Server80NodeID, report.EdgeMetadata{
+					EgressPacketCount: newu64(60),
+					EgressByteCount:   newu64(600),
+				}),
 
 				GoogleEndpointNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr: GoogleIP,
 					endpoint.Port: GooglePort,
 				}),
-			},
-			EdgeMetadatas: report.EdgeMetadatas{
-				report.MakeEdgeID(Client54001NodeID, Server80NodeID): report.EdgeMetadata{
-					EgressPacketCount: newu64(10),
-					EgressByteCount:   newu64(100),
-				},
-				report.MakeEdgeID(Client54002NodeID, Server80NodeID): report.EdgeMetadata{
-					EgressPacketCount: newu64(20),
-					EgressByteCount:   newu64(200),
-				},
-				report.MakeEdgeID(UnknownClient1NodeID, Server80NodeID): report.EdgeMetadata{
-					EgressPacketCount: newu64(30),
-					EgressByteCount:   newu64(300),
-				},
-				report.MakeEdgeID(UnknownClient2NodeID, Server80NodeID): report.EdgeMetadata{
-					EgressPacketCount: newu64(40),
-					EgressByteCount:   newu64(400),
-				},
-				report.MakeEdgeID(UnknownClient3NodeID, Server80NodeID): report.EdgeMetadata{
-					EgressPacketCount: newu64(50),
-					EgressByteCount:   newu64(500),
-				},
-				report.MakeEdgeID(RandomClientNodeID, Server80NodeID): report.EdgeMetadata{
-					EgressPacketCount: newu64(60),
-					EgressByteCount:   newu64(600),
-				},
 			},
 		},
 		Process: report.Topology{
@@ -197,7 +189,6 @@ var (
 					report.HostNodeID: ServerHostNodeID,
 				}),
 			},
-			EdgeMetadatas: report.EdgeMetadatas{},
 		},
 		Container: report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
@@ -238,7 +229,9 @@ var (
 				ClientAddressNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr:     ClientIP,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
+				}).WithEdge(ServerAddressNodeID, report.EdgeMetadata{
+					MaxConnCountTCP: newu64(3),
+				}),
 
 				ServerAddressNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
 					endpoint.Addr:     ServerIP,
@@ -261,11 +254,6 @@ var (
 					endpoint.Addr: RandomClientIP,
 				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
 			},
-			EdgeMetadatas: report.EdgeMetadatas{
-				report.MakeEdgeID(ClientAddressNodeID, ServerAddressNodeID): report.EdgeMetadata{
-					MaxConnCountTCP: newu64(3),
-				},
-			},
 		},
 		Host: report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
@@ -284,7 +272,6 @@ var (
 					report.HostNodeID: ServerHostNodeID,
 				}),
 			},
-			EdgeMetadatas: report.EdgeMetadatas{},
 		},
 		Sampling: report.Sampling{
 			Count: 1024,

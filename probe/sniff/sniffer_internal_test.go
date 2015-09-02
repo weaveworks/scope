@@ -11,7 +11,6 @@ func TestInterpolateCounts(t *testing.T) {
 		hostID        = "macbook-air"
 		srcNodeID     = report.MakeEndpointNodeID(hostID, "1.2.3.4", "5678")
 		dstNodeID     = report.MakeEndpointNodeID(hostID, "5.6.7.8", "9012")
-		edgeID        = report.MakeEdgeID(srcNodeID, dstNodeID)
 		samplingCount = uint64(200)
 		samplingTotal = uint64(2345)
 		packetCount   = uint64(123)
@@ -21,12 +20,12 @@ func TestInterpolateCounts(t *testing.T) {
 	r := report.MakeReport()
 	r.Sampling.Count = samplingCount
 	r.Sampling.Total = samplingTotal
-	r.Endpoint.EdgeMetadatas[edgeID] = report.EdgeMetadata{
+	r.Endpoint.NodeMetadatas[srcNodeID] = report.MakeNodeMetadata().WithEdge(dstNodeID, report.EdgeMetadata{
 		EgressPacketCount:  newu64(packetCount),
 		IngressPacketCount: newu64(packetCount),
 		EgressByteCount:    newu64(byteCount),
 		IngressByteCount:   newu64(byteCount),
-	}
+	})
 
 	interpolateCounts(r)
 
@@ -34,7 +33,7 @@ func TestInterpolateCounts(t *testing.T) {
 		rate   = float64(samplingCount) / float64(samplingTotal)
 		factor = 1.0 / rate
 		apply  = func(v uint64) uint64 { return uint64(factor * float64(v)) }
-		emd    = r.Endpoint.EdgeMetadatas[edgeID]
+		emd    = r.Endpoint.NodeMetadatas[srcNodeID].Edges[dstNodeID]
 	)
 	if want, have := apply(packetCount), (*emd.EgressPacketCount); want != have {
 		t.Errorf("want %d packets, have %d", want, have)
