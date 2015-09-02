@@ -7,7 +7,24 @@ describe('AppStore', function() {
 
   // fixtures
 
-  const NODE_SET = {n1: {id: 'n1'}, n2: {id: 'n2'}};
+  const NODE_SET = {
+    n1: {
+      id: 'n1',
+      rank: undefined,
+      adjacency: undefined,
+      pseudo: undefined,
+      label_major: undefined,
+      label_minor: undefined
+    },
+    n2: {
+      id: 'n2',
+      rank: undefined,
+      adjacency: undefined,
+      pseudo: undefined,
+      label_major: undefined,
+      label_minor: undefined
+    }
+  };
 
   // actions
 
@@ -113,7 +130,7 @@ describe('AppStore', function() {
 
   it('shows nodes that were received', function() {
     registeredCallback(ReceiveNodesDeltaAction);
-    expect(AppStore.getNodes()).toEqual(NODE_SET);
+    expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
   });
 
   it('gets selected node after click', function() {
@@ -121,11 +138,11 @@ describe('AppStore', function() {
 
     registeredCallback(ClickNodeAction);
     expect(AppStore.getSelectedNodeId()).toBe('n1');
-    expect(AppStore.getNodes()).toEqual(NODE_SET);
+    expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
 
     registeredCallback(HitEscAction)
     expect(AppStore.getSelectedNodeId()).toBe(null);
-    expect(AppStore.getNodes()).toEqual(NODE_SET);
+    expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
   });
 
   it('keeps showing nodes on navigating back after node click', function() {
@@ -144,7 +161,7 @@ describe('AppStore', function() {
     RouteAction.state = {"topologyId":"topo1","selectedNodeId": null};
     registeredCallback(RouteAction);
     expect(AppStore.getSelectedNodeId()).toBe(null);
-    expect(AppStore.getNodes()).toEqual(NODE_SET);
+    expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
   });
 
   it('closes details when changing topologies', function() {
@@ -168,17 +185,17 @@ describe('AppStore', function() {
 
   it('resets topology on websocket reconnect', function() {
     registeredCallback(ReceiveNodesDeltaAction);
-    expect(AppStore.getNodes()).toEqual(NODE_SET);
+    expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
 
     registeredCallback(CloseWebsocketAction);
     expect(AppStore.isWebsocketClosed()).toBeTruthy();
-    expect(AppStore.getNodes()).toEqual(NODE_SET);
+    expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
 
     registeredCallback(OpenWebsocketAction);
     expect(AppStore.isWebsocketClosed()).toBeFalsy();
 
     registeredCallback(ReceiveEmptyNodesDeltaAction);
-    expect(AppStore.getNodes()).toEqual({});
+    expect(AppStore.getNodes().toJS()).toEqual({});
   });
 
 
