@@ -19,11 +19,11 @@ func (r ByID) Less(i, j int) bool { return r[i].ID < r[j].ID }
 
 func TestTopoDiff(t *testing.T) {
 	nodea := render.RenderableNode{
-		ID:           "nodea",
-		LabelMajor:   "Node A",
-		LabelMinor:   "'ts an a",
-		Pseudo:       false,
-		NodeMetadata: report.MakeNodeMetadata().WithAdjacent("nodeb"),
+		ID:         "nodea",
+		LabelMajor: "Node A",
+		LabelMinor: "'ts an a",
+		Pseudo:     false,
+		Node:       report.MakeNode().WithAdjacent("nodeb"),
 	}
 	nodeap := nodea
 	nodeap.Adjacency = []string{

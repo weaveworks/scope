@@ -17,10 +17,10 @@ func TestCollector(t *testing.T) {
 	c := xfer.NewCollector(window)
 
 	r1 := report.MakeReport()
-	r1.Endpoint.NodeMetadatas["foo"] = report.MakeNodeMetadata()
+	r1.Endpoint.Nodes["foo"] = report.MakeNode()
 
 	r2 := report.MakeReport()
-	r2.Endpoint.NodeMetadatas["bar"] = report.MakeNodeMetadata()
+	r2.Endpoint.Nodes["bar"] = report.MakeNode()
 
 	if want, have := report.MakeReport(), c.Report(); !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))

@@ -11,18 +11,18 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-func nrn(nmd report.NodeMetadata) render.RenderableNode {
-	return render.NewRenderableNode("").WithNodeMetadata(nmd)
+func nrn(nmd report.Node) render.RenderableNode {
+	return render.NewRenderableNode("").WithNode(nmd)
 }
 
 func TestMapEndpointIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNodeMetadata()), false},
-		{nrn(report.MakeNodeMetadataWith(map[string]string{endpoint.Addr: "1.2.3.4"})), false},
-		{nrn(report.MakeNodeMetadataWith(map[string]string{endpoint.Port: "1234"})), false},
-		{nrn(report.MakeNodeMetadataWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "1234"})), true},
-		{nrn(report.MakeNodeMetadataWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "40000"})), true},
-		{nrn(report.MakeNodeMetadataWith(map[string]string{report.HostNodeID: report.MakeHostNodeID("foo"), endpoint.Addr: "10.0.0.1", endpoint.Port: "20001"})), true},
+		{nrn(report.MakeNode()), false},
+		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4"})), false},
+		{nrn(report.MakeNodeWith(map[string]string{endpoint.Port: "1234"})), false},
+		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "1234"})), true},
+		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "40000"})), true},
+		{nrn(report.MakeNodeWith(map[string]string{report.HostNodeID: report.MakeHostNodeID("foo"), endpoint.Addr: "10.0.0.1", endpoint.Port: "20001"})), true},
 	} {
 		testMap(t, render.MapEndpointIdentity, input)
 	}
@@ -30,8 +30,8 @@ func TestMapEndpointIdentity(t *testing.T) {
 
 func TestMapProcessIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNodeMetadata()), false},
-		{nrn(report.MakeNodeMetadataWith(map[string]string{process.PID: "201"})), true},
+		{nrn(report.MakeNode()), false},
+		{nrn(report.MakeNodeWith(map[string]string{process.PID: "201"})), true},
 	} {
 		testMap(t, render.MapProcessIdentity, input)
 	}
@@ -39,8 +39,8 @@ func TestMapProcessIdentity(t *testing.T) {
 
 func TestMapContainerIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNodeMetadata()), false},
-		{nrn(report.MakeNodeMetadataWith(map[string]string{docker.ContainerID: "a1b2c3"})), true},
+		{nrn(report.MakeNode()), false},
+		{nrn(report.MakeNodeWith(map[string]string{docker.ContainerID: "a1b2c3"})), true},
 	} {
 		testMap(t, render.MapContainerIdentity, input)
 	}
@@ -48,8 +48,8 @@ func TestMapContainerIdentity(t *testing.T) {
 
 func TestMapContainerImageIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNodeMetadata()), false},
-		{nrn(report.MakeNodeMetadataWith(map[string]string{docker.ImageID: "a1b2c3"})), true},
+		{nrn(report.MakeNode()), false},
+		{nrn(report.MakeNodeWith(map[string]string{docker.ImageID: "a1b2c3"})), true},
 	} {
 		testMap(t, render.MapContainerImageIdentity, input)
 	}
@@ -57,8 +57,8 @@ func TestMapContainerImageIdentity(t *testing.T) {
 
 func TestMapAddressIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNodeMetadata()), false},
-		{nrn(report.MakeNodeMetadataWith(map[string]string{endpoint.Addr: "192.168.1.1"})), true},
+		{nrn(report.MakeNode()), false},
+		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "192.168.1.1"})), true},
 	} {
 		testMap(t, render.MapAddressIdentity, input)
 	}
@@ -66,7 +66,7 @@ func TestMapAddressIdentity(t *testing.T) {
 
 func TestMapHostIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNodeMetadata()), true}, // TODO it's questionable if this is actually correct
+		{nrn(report.MakeNode()), true}, // TODO it's questionable if this is actually correct
 	} {
 		testMap(t, render.MapHostIdentity, input)
 	}

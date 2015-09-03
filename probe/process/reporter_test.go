@@ -34,32 +34,32 @@ func TestReporter(t *testing.T) {
 	reporter := process.NewReporter(walker, "")
 	want := report.MakeReport()
 	want.Process = report.Topology{
-		NodeMetadatas: report.NodeMetadatas{
-			report.MakeProcessNodeID("", "1"): report.MakeNodeMetadataWith(map[string]string{
+		Nodes: report.Nodes{
+			report.MakeProcessNodeID("", "1"): report.MakeNodeWith(map[string]string{
 				process.PID:     "1",
 				process.Comm:    "init",
 				process.Threads: "0",
 			}),
-			report.MakeProcessNodeID("", "2"): report.MakeNodeMetadataWith(map[string]string{
+			report.MakeProcessNodeID("", "2"): report.MakeNodeWith(map[string]string{
 				process.PID:     "2",
 				process.Comm:    "bash",
 				process.PPID:    "1",
 				process.Threads: "0",
 			}),
-			report.MakeProcessNodeID("", "3"): report.MakeNodeMetadataWith(map[string]string{
+			report.MakeProcessNodeID("", "3"): report.MakeNodeWith(map[string]string{
 				process.PID:     "3",
 				process.Comm:    "apache",
 				process.PPID:    "1",
 				process.Threads: "2",
 			}),
-			report.MakeProcessNodeID("", "4"): report.MakeNodeMetadataWith(map[string]string{
+			report.MakeProcessNodeID("", "4"): report.MakeNodeWith(map[string]string{
 				process.PID:     "4",
 				process.Comm:    "ping",
 				process.PPID:    "2",
 				process.Cmdline: "ping foo.bar.local",
 				process.Threads: "0",
 			}),
-			report.MakeProcessNodeID("", "5"): report.MakeNodeMetadataWith(map[string]string{
+			report.MakeProcessNodeID("", "5"): report.MakeNodeWith(map[string]string{
 				process.PID:     "5",
 				process.PPID:    "1",
 				process.Cmdline: "tail -f /var/log/syslog",

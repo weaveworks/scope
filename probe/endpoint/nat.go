@@ -49,18 +49,18 @@ func toMapping(f Flow) *endpointMapping {
 	return &mapping
 }
 
-// applyNAT duplicates NodeMetadatas in the endpoint topology of a
+// applyNAT duplicates Nodes in the endpoint topology of a
 // report, based on the NAT table as returns by natTable.
 func (n *natmapper) applyNAT(rpt report.Report, scope string) {
 	n.WalkFlows(func(f Flow) {
 		mapping := toMapping(f)
 		realEndpointID := report.MakeEndpointNodeID(scope, mapping.originalIP, strconv.Itoa(mapping.originalPort))
 		copyEndpointID := report.MakeEndpointNodeID(scope, mapping.rewrittenIP, strconv.Itoa(mapping.rewrittenPort))
-		nmd, ok := rpt.Endpoint.NodeMetadatas[realEndpointID]
+		node, ok := rpt.Endpoint.Nodes[realEndpointID]
 		if !ok {
 			return
 		}
 
-		rpt.Endpoint.NodeMetadatas[copyEndpointID] = nmd.Copy()
+		rpt.Endpoint.Nodes[copyEndpointID] = node.Copy()
 	})
 }

@@ -14,9 +14,9 @@ import (
 func TestReportLocalNetworks(t *testing.T) {
 	r := report.MakeReport().Merge(report.Report{
 		Host: report.Topology{
-			NodeMetadatas: report.NodeMetadatas{
-				"nonets": report.MakeNodeMetadata(),
-				"foo": report.MakeNodeMetadataWith(map[string]string{
+			Nodes: report.Nodes{
+				"nonets": report.MakeNode(),
+				"foo": report.MakeNodeWith(map[string]string{
 					host.LocalNetworks: "10.0.0.1/8 192.168.1.1/24 10.0.0.1/8 badnet/33",
 				}),
 			},

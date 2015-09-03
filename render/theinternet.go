@@ -18,7 +18,7 @@ func LocalNetworks(r report.Report) report.Networks {
 		networks = map[string]struct{}{}
 	)
 
-	for _, md := range r.Host.NodeMetadatas {
+	for _, md := range r.Host.Nodes {
 		val, ok := md.Metadata[host.LocalNetworks]
 		if !ok {
 			continue

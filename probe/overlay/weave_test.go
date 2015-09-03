@@ -36,8 +36,8 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 			t.Fatal(err)
 		}
 		if want, have := (report.Topology{
-			NodeMetadatas: report.NodeMetadatas{
-				report.MakeOverlayNodeID(mockWeavePeerName): report.MakeNodeMetadataWith(map[string]string{
+			Nodes: report.Nodes{
+				report.MakeOverlayNodeID(mockWeavePeerName): report.MakeNodeWith(map[string]string{
 					overlay.WeavePeerName:     mockWeavePeerName,
 					overlay.WeavePeerNickName: mockWeavePeerNickName,
 				}),
@@ -51,8 +51,8 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 		nodeID := report.MakeContainerNodeID(mockHostID, mockContainerID)
 		want := report.Report{
 			Container: report.Topology{
-				NodeMetadatas: report.NodeMetadatas{
-					nodeID: report.MakeNodeMetadataWith(map[string]string{
+				Nodes: report.Nodes{
+					nodeID: report.MakeNodeWith(map[string]string{
 						docker.ContainerID:       mockContainerID,
 						overlay.WeaveDNSHostname: mockHostname,
 						overlay.WeaveMACAddress:  mockContainerMAC,
@@ -63,8 +63,8 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 		}
 		have, err := w.Tag(report.Report{
 			Container: report.Topology{
-				NodeMetadatas: report.NodeMetadatas{
-					nodeID: report.MakeNodeMetadataWith(map[string]string{
+				Nodes: report.Nodes{
+					nodeID: report.MakeNodeWith(map[string]string{
 						docker.ContainerID: mockContainerID,
 					}),
 				},

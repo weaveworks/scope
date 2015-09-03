@@ -45,7 +45,7 @@ func TestReporter(t *testing.T) {
 	host.Now = func() string { return now }
 
 	want := report.MakeReport()
-	want.Host.NodeMetadatas[report.MakeHostNodeID(hostID)] = report.MakeNodeMetadataWith(map[string]string{
+	want.Host.Nodes[report.MakeHostNodeID(hostID)] = report.MakeNodeWith(map[string]string{
 		host.Timestamp:     now,
 		host.HostName:      hostname,
 		host.LocalNetworks: network,

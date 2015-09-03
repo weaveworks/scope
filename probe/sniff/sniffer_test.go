@@ -65,12 +65,12 @@ func TestMerge(t *testing.T) {
 		dstEndpointNodeID = report.MakeEndpointNodeID(hostID, p.DstIP, p.DstPort)
 	)
 	if want, have := (report.Topology{
-		NodeMetadatas: report.NodeMetadatas{
-			srcEndpointNodeID: report.MakeNodeMetadata().WithEdge(dstEndpointNodeID, report.EdgeMetadata{
+		Nodes: report.Nodes{
+			srcEndpointNodeID: report.MakeNode().WithEdge(dstEndpointNodeID, report.EdgeMetadata{
 				EgressPacketCount: newu64(1),
 				EgressByteCount:   newu64(256),
 			}),
-			dstEndpointNodeID: report.MakeNodeMetadata(),
+			dstEndpointNodeID: report.MakeNode(),
 		},
 	}), rpt.Endpoint; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
@@ -81,12 +81,12 @@ func TestMerge(t *testing.T) {
 		dstAddressNodeID = report.MakeAddressNodeID(hostID, p.DstIP)
 	)
 	if want, have := (report.Topology{
-		NodeMetadatas: report.NodeMetadatas{
-			srcAddressNodeID: report.MakeNodeMetadata().WithEdge(dstAddressNodeID, report.EdgeMetadata{
+		Nodes: report.Nodes{
+			srcAddressNodeID: report.MakeNode().WithEdge(dstAddressNodeID, report.EdgeMetadata{
 				EgressPacketCount: newu64(1),
 				EgressByteCount:   newu64(512),
 			}),
-			dstAddressNodeID: report.MakeNodeMetadata(),
+			dstAddressNodeID: report.MakeNode(),
 		},
 	}), rpt.Address; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))

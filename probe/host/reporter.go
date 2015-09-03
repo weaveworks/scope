@@ -8,7 +8,7 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-// Keys for use in NodeMetadata.
+// Keys for use in Node.Metadata.
 const (
 	Timestamp     = "ts"
 	HostName      = "host_name"
@@ -68,7 +68,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		return rep, err
 	}
 
-	rep.Host.NodeMetadatas[report.MakeHostNodeID(r.hostID)] = report.MakeNodeMetadataWith(map[string]string{
+	rep.Host.Nodes[report.MakeHostNodeID(r.hostID)] = report.MakeNodeWith(map[string]string{
 		Timestamp:     Now(),
 		HostName:      r.hostName,
 		LocalNetworks: strings.Join(localCIDRs, " "),

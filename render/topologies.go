@@ -41,11 +41,11 @@ func (r ProcessWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 	}.Render(rpt)
 
 	for id, p := range processes {
-		pid, ok := p.NodeMetadata.Metadata[process.PID]
+		pid, ok := p.Node.Metadata[process.PID]
 		if !ok {
 			continue
 		}
-		containerID, ok := p.NodeMetadata.Metadata[docker.ContainerID]
+		containerID, ok := p.Node.Metadata[docker.ContainerID]
 		if !ok {
 			continue
 		}
@@ -53,7 +53,7 @@ func (r ProcessWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 		if !ok {
 			continue
 		}
-		p.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(p.NodeMetadata), container.LabelMajor, pid)
+		p.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(p.Node), container.LabelMajor, pid)
 		processes[id] = p
 	}
 
@@ -86,8 +86,8 @@ var ContainerRenderer = MakeReduce(
 		// including the ProcessRenderer once.
 		Renderer: Filter{
 			f: func(n RenderableNode) bool {
-				_, inContainer := n.NodeMetadata.Metadata[docker.ContainerID]
-				_, isConnected := n.NodeMetadata.Metadata[IsConnected]
+				_, inContainer := n.Node.Metadata[docker.ContainerID]
+				_, isConnected := n.Node.Metadata[IsConnected]
 				return inContainer || isConnected
 			},
 			Renderer: CustomRenderer{

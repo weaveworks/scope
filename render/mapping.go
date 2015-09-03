@@ -74,9 +74,9 @@ func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNode
 	}
 
 	var (
-		id    = MakeEndpointID(report.ExtractHostID(m.NodeMetadata), addr, port)
+		id    = MakeEndpointID(report.ExtractHostID(m.Node), addr, port)
 		major = fmt.Sprintf("%s:%s", addr, port)
-		minor = report.ExtractHostID(m.NodeMetadata)
+		minor = report.ExtractHostID(m.Node)
 		rank  = major
 	)
 
@@ -97,9 +97,9 @@ func MapProcessIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	}
 
 	var (
-		id    = MakeProcessID(report.ExtractHostID(m.NodeMetadata), pid)
+		id    = MakeProcessID(report.ExtractHostID(m.Node), pid)
 		major = m.Metadata["comm"]
-		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m.NodeMetadata), pid)
+		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m.Node), pid)
 		rank  = m.Metadata["comm"]
 	)
 
@@ -117,11 +117,16 @@ func MapContainerIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 
 	var (
 		major = m.Metadata[docker.ContainerName]
-		minor = report.ExtractHostID(m.NodeMetadata)
+		minor = report.ExtractHostID(m.Node)
 		rank  = m.Metadata[docker.ImageID]
 	)
 
-	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
+	node := NewRenderableNodeWith(id, major, minor, rank, m)
+	if imageID, ok := m.Metadata[docker.ImageID]; ok {
+		scope, _, _ := report.ParseContainerNodeID(m.ID)
+		node.Origins = node.Origins.Add(report.MakeContainerNodeID(scope, imageID))
+	}
+	return RenderableNodes{id: node}
 }
 
 // MapContainerImageIdentity maps a container image topology node to container
@@ -169,9 +174,9 @@ func MapAddressIdentity(m RenderableNode, local report.Networks) RenderableNodes
 	}
 
 	var (
-		id    = MakeAddressID(report.ExtractHostID(m.NodeMetadata), addr)
+		id    = MakeAddressID(report.ExtractHostID(m.Node), addr)
 		major = addr
-		minor = report.ExtractHostID(m.NodeMetadata)
+		minor = report.ExtractHostID(m.Node)
 		rank  = major
 	)
 
@@ -183,7 +188,7 @@ func MapAddressIdentity(m RenderableNode, local report.Networks) RenderableNodes
 // present.
 func MapHostIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	var (
-		id                 = MakeHostID(report.ExtractHostID(m.NodeMetadata))
+		id                 = MakeHostID(report.ExtractHostID(m.Node))
 		hostname           = m.Metadata[host.HostName]
 		parts              = strings.SplitN(hostname, ".", 2)
 		major, minor, rank = "", "", ""
@@ -228,7 +233,7 @@ func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 	}
 	for _, addr := range strings.Fields(addrs) {
 		n := NewRenderableNodeWith(addr, "", "", "", m)
-		n.NodeMetadata.Counters[containersKey] = 1
+		n.Node.Counters[containersKey] = 1
 		result[addr] = n
 	}
 	return result
@@ -240,7 +245,7 @@ func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 	// If an IP is shared between multiple containers, we can't
 	// reliably attribute an connection based on its IP
-	if n.NodeMetadata.Counters[containersKey] > 1 {
+	if n.Node.Counters[containersKey] > 1 {
 		return RenderableNodes{}
 	}
 
@@ -252,7 +257,7 @@ func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 	// If this node is not a container, exclude it.
 	// This excludes all the nodes we've dragged in from endpoint
 	// that we failed to join to a container.
-	id, ok := n.NodeMetadata.Metadata[docker.ContainerID]
+	id, ok := n.Node.Metadata[docker.ContainerID]
 	if !ok {
 		return RenderableNodes{}
 	}
@@ -276,12 +281,12 @@ func MapEndpoint2Process(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{n.ID: n}
 	}
 
-	pid, ok := n.NodeMetadata.Metadata[process.PID]
+	pid, ok := n.Node.Metadata[process.PID]
 	if !ok {
 		return RenderableNodes{}
 	}
 
-	id := MakeProcessID(report.ExtractHostID(n.NodeMetadata), pid)
+	id := MakeProcessID(report.ExtractHostID(n.Node), pid)
 	return RenderableNodes{id: NewDerivedNode(id, n)}
 }
 
@@ -311,9 +316,9 @@ func MapProcess2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 	// into an per-host "Uncontained" node.  If for whatever reason
 	// this node doesn't have a host id in their nodemetadata, it'll
 	// all get grouped into a single uncontained node.
-	id, ok := n.NodeMetadata.Metadata[docker.ContainerID]
+	id, ok := n.Node.Metadata[docker.ContainerID]
 	if !ok {
-		hostID := report.ExtractHostID(n.NodeMetadata)
+		hostID := report.ExtractHostID(n.Node)
 		id = MakePseudoNodeID(UncontainedID, hostID)
 		node := newDerivedPseudoNode(id, UncontainedMajor, n)
 		node.LabelMinor = hostID
@@ -334,7 +339,7 @@ func MapProcess2Name(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{n.ID: n}
 	}
 
-	name, ok := n.NodeMetadata.Metadata["comm"]
+	name, ok := n.Node.Metadata["comm"]
 	if !ok {
 		return RenderableNodes{}
 	}
@@ -342,7 +347,7 @@ func MapProcess2Name(n RenderableNode, _ report.Networks) RenderableNodes {
 	node := NewDerivedNode(name, n)
 	node.LabelMajor = name
 	node.Rank = name
-	node.NodeMetadata.Counters[processesKey] = 1
+	node.Node.Counters[processesKey] = 1
 	return RenderableNodes{name: node}
 }
 
@@ -354,7 +359,7 @@ func MapCountProcessName(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{n.ID: n}
 	}
 
-	processes := n.NodeMetadata.Counters[processesKey]
+	processes := n.Node.Counters[processesKey]
 	if processes == 1 {
 		n.LabelMinor = "1 process"
 	} else {
@@ -382,14 +387,14 @@ func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) Renderable
 
 	// Otherwise, if some some reason the container doesn't have a image_id
 	// (maybe slightly out of sync reports), just drop it
-	id, ok := n.NodeMetadata.Metadata[docker.ImageID]
+	id, ok := n.Node.Metadata[docker.ImageID]
 	if !ok {
 		return RenderableNodes{}
 	}
 
 	// Add container-<id> key to NMD, which will later be counted to produce the minor label
 	result := NewDerivedNode(id, n)
-	result.NodeMetadata.Counters[containersKey] = 1
+	result.Node.Counters[containersKey] = 1
 	return RenderableNodes{id: result}
 }
 
@@ -404,7 +409,7 @@ func MapContainerImage2Name(n RenderableNode, _ report.Networks) RenderableNodes
 		return RenderableNodes{n.ID: n}
 	}
 
-	name, ok := n.NodeMetadata.Metadata[docker.ImageName]
+	name, ok := n.Node.Metadata[docker.ImageName]
 	if !ok {
 		return RenderableNodes{}
 	}
@@ -417,7 +422,7 @@ func MapContainerImage2Name(n RenderableNode, _ report.Networks) RenderableNodes
 	node := NewDerivedNode(name, n)
 	node.LabelMajor = name
 	node.Rank = name
-	node.NodeMetadata = n.NodeMetadata.Copy() // Propagate NMD for container counting.
+	node.Node = n.Node.Copy() // Propagate NMD for container counting.
 	return RenderableNodes{name: node}
 }
 
@@ -429,7 +434,7 @@ func MapCountContainers(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{n.ID: n}
 	}
 
-	containers := n.NodeMetadata.Counters[containersKey]
+	containers := n.Node.Counters[containersKey]
 	if containers == 1 {
 		n.LabelMinor = "1 container"
 	} else {
@@ -446,7 +451,7 @@ func MapAddress2Host(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{n.ID: n}
 	}
 
-	id := MakeHostID(report.ExtractHostID(n.NodeMetadata))
+	id := MakeHostID(report.ExtractHostID(n.Node))
 	return RenderableNodes{id: NewDerivedNode(id, n)}
 }
 

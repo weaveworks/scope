@@ -87,6 +87,16 @@ func ParseEndpointNodeID(endpointNodeID string) (hostID, address, port string, o
 	return fields[0], fields[1], fields[2], true
 }
 
+// ParseContainerNodeID produces the host ID, and container id from an container
+// node ID.
+func ParseContainerNodeID(containerNodeID string) (hostID, containerID string, ok bool) {
+	fields := strings.SplitN(containerNodeID, ScopeDelim, 3)
+	if len(fields) != 2 {
+		return "", "", false
+	}
+	return fields[0], fields[1], true
+}
+
 // ParseAddressNodeID produces the host ID, address from an address node ID.
 func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) {
 	fields := strings.SplitN(addressNodeID, ScopeDelim, 2)
@@ -96,8 +106,8 @@ func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) 
 	return fields[0], fields[1], true
 }
 
-// ExtractHostID extracts the host id from NodeMetadata
-func ExtractHostID(m NodeMetadata) string {
+// ExtractHostID extracts the host id from Node
+func ExtractHostID(m Node) string {
 	hostid, _, _ := ParseNodeID(m.Metadata[HostNodeID])
 	return hostid
 }

@@ -135,7 +135,7 @@ func (c CustomRenderer) Render(rpt report.Report) RenderableNodes {
 	return c.RenderFunc(c.Renderer.Render(rpt))
 }
 
-// IsConnected is the key added to NodeMetadata by ColorConnected
+// IsConnected is the key added to Node.Metadata by ColorConnected
 // to indicate a node has an edge pointing to it or from it
 const IsConnected = "is_connected"
 
@@ -143,7 +143,7 @@ const IsConnected = "is_connected"
 func OnlyConnected(input RenderableNodes) RenderableNodes {
 	output := RenderableNodes{}
 	for id, node := range ColorConnected(input) {
-		if _, ok := node.NodeMetadata.Metadata[IsConnected]; ok {
+		if _, ok := node.Node.Metadata[IsConnected]; ok {
 			output[id] = node
 		}
 	}
@@ -178,7 +178,7 @@ func ColorConnected(input RenderableNodes) RenderableNodes {
 
 	for id := range connected {
 		node := input[id]
-		node.NodeMetadata.Metadata[IsConnected] = "true"
+		node.Node.Metadata[IsConnected] = "true"
 		input[id] = node
 	}
 	return input
