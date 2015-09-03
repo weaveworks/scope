@@ -33,7 +33,7 @@ func (t TopologySelector) EdgeMetadata(rpt report.Report, srcID, dstID string) r
 func MakeRenderableNodes(t report.Topology) RenderableNodes {
 	result := RenderableNodes{}
 	for id, nmd := range t.NodeMetadatas {
-		rn := NewRenderableNode(id).WithNode(nmd)
+		rn := NewRenderableNode(id).WithNodeMetadata(nmd)
 		rn.Origins = report.MakeIDList(id)
 		if hostNodeID, ok := nmd.Metadata[report.HostNodeID]; ok {
 			rn.Origins = rn.Origins.Add(hostNodeID)

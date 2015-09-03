@@ -28,8 +28,7 @@ const (
 // MapFunc is anything which can take an arbitrary RenderableNode and
 // return a set of other RenderableNodes.
 //
-// As with LeafMapFunc, if the output is empty, the node
-// shall be omitted from the rendered topology.
+// If the output is empty, the node shall be omitted from the rendered topology.
 type MapFunc func(RenderableNode, report.Networks) RenderableNodes
 
 // MapEndpointIdentity maps an endpoint topology node to a single endpoint
@@ -51,7 +50,7 @@ func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNode
 	if !ok {
 		// If the dstNodeAddr is not in a network local to this report, we emit an
 		// internet node
-		if !local.Contains(net.ParseIP(addr)) {
+		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
 			return RenderableNodes{TheInternetID: newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)}
 		}
 

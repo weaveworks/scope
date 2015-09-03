@@ -15,8 +15,8 @@ func Sterilize(r render.RenderableNodes) render.RenderableNodes {
 	// state not sent to the client.  So in the tests we ignore
 	// this state.
 	for id, n := range r {
-		n.NodeMetadata.Metadata = map[string]string{}
-		n.NodeMetadata.Counters = map[string]int{}
+		n.NodeMetadata.Metadata = report.Metadata{}
+		n.NodeMetadata.Counters = report.Counters{}
 		n.NodeMetadata.Edges = report.EdgeMetadatas{}
 		r[id] = n
 	}

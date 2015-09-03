@@ -148,7 +148,7 @@ func (n NodeMetadata) Merge(other NodeMetadata) NodeMetadata {
 	cp.Metadata = cp.Metadata.Merge(other.Metadata)
 	cp.Counters = cp.Counters.Merge(other.Counters)
 	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
-	cp.Edges = cp.Edges.Merge(n.Edges)
+	cp.Edges = cp.Edges.Merge(other.Edges)
 	return cp
 }
 

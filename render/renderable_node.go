@@ -74,10 +74,10 @@ func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode 
 	}
 }
 
-// WithNode creates a new RenderableNode bases on rn, with n
-func (rn RenderableNode) WithNode(n report.NodeMetadata) RenderableNode {
+// WithNodeMetadata creates a new RenderableNode based on rn, with n
+func (rn RenderableNode) WithNodeMetadata(n report.NodeMetadata) RenderableNode {
 	result := rn.Copy()
-	result.NodeMetadata = n
+	result.NodeMetadata = result.NodeMetadata.Merge(n)
 	return result
 }
 

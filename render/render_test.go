@@ -98,13 +98,13 @@ func TestMapRender3(t *testing.T) {
 			return render.RenderableNodes{id: render.NewRenderableNode(id)}
 		},
 		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": render.NewRenderableNode("foo").WithNode(report.MakeNodeMetadata().WithAdjacent("baz")),
-			"baz": render.NewRenderableNode("baz").WithNode(report.MakeNodeMetadata().WithAdjacent("foo")),
+			"foo": render.NewRenderableNode("foo").WithNodeMetadata(report.MakeNodeMetadata().WithAdjacent("baz")),
+			"baz": render.NewRenderableNode("baz").WithNodeMetadata(report.MakeNodeMetadata().WithAdjacent("foo")),
 		}},
 	}
 	want := render.RenderableNodes{
-		"_foo": render.NewRenderableNode("_foo").WithNode(report.MakeNodeMetadata().WithAdjacent("_baz")),
-		"_baz": render.NewRenderableNode("_baz").WithNode(report.MakeNodeMetadata().WithAdjacent("_foo")),
+		"_foo": render.NewRenderableNode("_foo").WithNodeMetadata(report.MakeNodeMetadata().WithAdjacent("_baz")),
+		"_baz": render.NewRenderableNode("_baz").WithNodeMetadata(report.MakeNodeMetadata().WithAdjacent("_foo")),
 	}
 	have := mapper.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {

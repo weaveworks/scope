@@ -12,7 +12,7 @@ import (
 )
 
 func nrn(nmd report.NodeMetadata) render.RenderableNode {
-	return render.NewRenderableNode("").WithNode(nmd)
+	return render.NewRenderableNode("").WithNodeMetadata(nmd)
 }
 
 func TestMapEndpointIdentity(t *testing.T) {
