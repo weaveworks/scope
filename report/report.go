@@ -164,36 +164,3 @@ const (
 	// the node was originally detected.
 	HostNodeID = "host_node_id"
 )
-
-// TopologySelector selects a single topology from a report.
-type TopologySelector func(r Report) Topology
-
-// SelectEndpoint selects the endpoint topology.
-func SelectEndpoint(r Report) Topology {
-	return r.Endpoint
-}
-
-// SelectProcess selects the process topology.
-func SelectProcess(r Report) Topology {
-	return r.Process
-}
-
-// SelectContainer selects the container topology.
-func SelectContainer(r Report) Topology {
-	return r.Container
-}
-
-// SelectContainerImage selects the container image topology.
-func SelectContainerImage(r Report) Topology {
-	return r.ContainerImage
-}
-
-// SelectAddress selects the address topology.
-func SelectAddress(r Report) Topology {
-	return r.Address
-}
-
-// SelectHost selects the address topology.
-func SelectHost(r Report) Topology {
-	return r.Host
-}

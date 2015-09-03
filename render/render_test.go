@@ -24,13 +24,15 @@ func (m mockRenderer) EdgeMetadata(rpt report.Report, localID, remoteID string) 
 
 func TestReduceRender(t *testing.T) {
 	renderer := render.Reduce([]render.Renderer{
-		mockRenderer{RenderableNodes: render.RenderableNodes{"foo": {ID: "foo"}}},
-		mockRenderer{RenderableNodes: render.RenderableNodes{"bar": {ID: "bar"}}},
+		mockRenderer{RenderableNodes: render.RenderableNodes{"foo": render.NewRenderableNode("foo")}},
+		mockRenderer{RenderableNodes: render.RenderableNodes{"bar": render.NewRenderableNode("bar")}},
 	})
 
-	want := render.RenderableNodes{"foo": {ID: "foo"}, "bar": {ID: "bar"}}
+	want := render.RenderableNodes{
+		"foo": render.NewRenderableNode("foo"),
+		"bar": render.NewRenderableNode("bar"),
+	}
 	have := renderer.Render(report.MakeReport())
-
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want %+v, have %+v", want, have)
 	}
@@ -44,7 +46,6 @@ func TestReduceEdge(t *testing.T) {
 
 	want := report.EdgeMetadata{EgressPacketCount: newu64(3)}
 	have := renderer.EdgeMetadata(report.MakeReport(), "", "")
-
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want %+v, have %+v", want, have)
 	}
@@ -53,11 +54,11 @@ func TestReduceEdge(t *testing.T) {
 func TestMapRender1(t *testing.T) {
 	// 1. Check when we return false, the node gets filtered out
 	mapper := render.Map{
-		MapFunc: func(nodes render.RenderableNode) render.RenderableNodes {
+		MapFunc: func(nodes render.RenderableNode, _ report.Networks) render.RenderableNodes {
 			return render.RenderableNodes{}
 		},
 		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": {ID: "foo"},
+			"foo": render.NewRenderableNode("foo"),
 		}},
 	}
 	want := render.RenderableNodes{}
@@ -70,17 +71,19 @@ func TestMapRender1(t *testing.T) {
 func TestMapRender2(t *testing.T) {
 	// 2. Check we can remap two nodes into one
 	mapper := render.Map{
-		MapFunc: func(nodes render.RenderableNode) render.RenderableNodes {
-			return render.RenderableNodes{"bar": render.RenderableNode{ID: "bar"}}
+		MapFunc: func(nodes render.RenderableNode, _ report.Networks) render.RenderableNodes {
+			return render.RenderableNodes{
+				"bar": render.NewRenderableNode("bar"),
+			}
 		},
 		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": {ID: "foo"},
-			"baz": {ID: "baz"},
+			"foo": render.NewRenderableNode("foo"),
+			"baz": render.NewRenderableNode("baz"),
 		}},
 	}
-	want := expected.Sterilize(render.RenderableNodes{
-		"bar": render.RenderableNode{ID: "bar"},
-	})
+	want := render.RenderableNodes{
+		"bar": render.NewRenderableNode("bar"),
+	}
 	have := mapper.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -90,28 +93,28 @@ func TestMapRender2(t *testing.T) {
 func TestMapRender3(t *testing.T) {
 	// 3. Check we can remap adjacencies
 	mapper := render.Map{
-		MapFunc: func(nodes render.RenderableNode) render.RenderableNodes {
+		MapFunc: func(nodes render.RenderableNode, _ report.Networks) render.RenderableNodes {
 			id := "_" + nodes.ID
-			return render.RenderableNodes{id: render.RenderableNode{ID: id}}
+			return render.RenderableNodes{id: render.NewRenderableNode(id)}
 		},
 		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": {ID: "foo", Adjacency: report.MakeIDList("baz")},
-			"baz": {ID: "baz", Adjacency: report.MakeIDList("foo")},
+			"foo": render.NewRenderableNode("foo").WithNodeMetadata(report.MakeNodeMetadata().WithAdjacent("baz")),
+			"baz": render.NewRenderableNode("baz").WithNodeMetadata(report.MakeNodeMetadata().WithAdjacent("foo")),
 		}},
 	}
 	want := render.RenderableNodes{
-		"_foo": {ID: "_foo", Adjacency: report.MakeIDList("_baz")},
-		"_baz": {ID: "_baz", Adjacency: report.MakeIDList("_foo")},
+		"_foo": render.NewRenderableNode("_foo").WithNodeMetadata(report.MakeNodeMetadata().WithAdjacent("_baz")),
+		"_baz": render.NewRenderableNode("_baz").WithNodeMetadata(report.MakeNodeMetadata().WithAdjacent("_foo")),
 	}
 	have := mapper.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {
-		t.Errorf("want %+v, have %+v", want, have)
+		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestMapEdge(t *testing.T) {
-	selector := func(_ report.Report) report.Topology {
-		return report.Topology{
+	selector := render.TopologySelector(func(_ report.Report) render.RenderableNodes {
+		return render.MakeRenderableNodes(report.Topology{
 			NodeMetadatas: report.NodeMetadatas{
 				"foo": report.MakeNodeMetadata().WithMetadata(map[string]string{
 					"id": "foo",
@@ -127,29 +130,38 @@ func TestMapEdge(t *testing.T) {
 					EgressByteCount:   newu64(4),
 				}),
 			},
-		}
-	}
-
-	identity := func(nmd report.NodeMetadata, _ report.Networks) render.RenderableNodes {
-		return render.RenderableNodes{nmd.Metadata["id"]: render.NewRenderableNode(nmd.Metadata["id"], "", "", "", nmd)}
-	}
+		})
+	})
 
 	mapper := render.Map{
-		MapFunc: func(nodes render.RenderableNode) render.RenderableNodes {
-			id := "_" + nodes.ID
-			return render.RenderableNodes{id: render.RenderableNode{ID: id}}
+		MapFunc: func(node render.RenderableNode, _ report.Networks) render.RenderableNodes {
+			id := "_" + node.ID
+			return render.RenderableNodes{id: render.NewDerivedNode(id, node)}
 		},
-		Renderer: render.LeafMap{
-			Selector: selector,
-			Mapper:   identity,
-		},
+		Renderer: selector,
 	}
 
-	have := mapper.Render(report.MakeReport())
-	want := render.RenderableNodes{
-		"_foo": {ID: "_foo", Adjacency: report.MakeIDList("_bar")},
-		"_bar": {ID: "_bar", Adjacency: report.MakeIDList("_foo")},
-	}
+	have := expected.Sterilize(mapper.Render(report.MakeReport()))
+	want := expected.Sterilize(render.RenderableNodes{
+		"_foo": {
+			ID:           "_foo",
+			Origins:      report.MakeIDList("foo"),
+			NodeMetadata: report.MakeNodeMetadata().WithAdjacent("_bar"),
+			EdgeMetadata: report.EdgeMetadata{
+				EgressPacketCount: newu64(4),
+				EgressByteCount:   newu64(6),
+			},
+		},
+		"_bar": {
+			ID:           "_bar",
+			Origins:      report.MakeIDList("bar"),
+			NodeMetadata: report.MakeNodeMetadata().WithAdjacent("_foo"),
+			EdgeMetadata: report.EdgeMetadata{
+				EgressPacketCount: newu64(4),
+				EgressByteCount:   newu64(6),
+			},
+		},
+	})
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -165,13 +177,13 @@ func TestMapEdge(t *testing.T) {
 func TestFilterRender(t *testing.T) {
 	renderer := render.FilterUnconnected(
 		mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": {ID: "foo", Adjacency: report.MakeIDList("bar"), NodeMetadata: report.MakeNodeMetadata()},
-			"bar": {ID: "bar", Adjacency: report.MakeIDList("foo"), NodeMetadata: report.MakeNodeMetadata()},
-			"baz": {ID: "baz", Adjacency: report.MakeIDList(), NodeMetadata: report.MakeNodeMetadata()},
+			"foo": {ID: "foo", NodeMetadata: report.MakeNodeMetadata().WithAdjacent("bar")},
+			"bar": {ID: "bar", NodeMetadata: report.MakeNodeMetadata().WithAdjacent("foo")},
+			"baz": {ID: "baz", NodeMetadata: report.MakeNodeMetadata()},
 		}})
 	want := render.RenderableNodes{
-		"foo": {ID: "foo", Adjacency: report.MakeIDList("bar"), NodeMetadata: report.MakeNodeMetadata()},
-		"bar": {ID: "bar", Adjacency: report.MakeIDList("foo"), NodeMetadata: report.MakeNodeMetadata()},
+		"foo": {ID: "foo", NodeMetadata: report.MakeNodeMetadata().WithAdjacent("bar")},
+		"bar": {ID: "bar", NodeMetadata: report.MakeNodeMetadata().WithAdjacent("foo")},
 	}
 	have := expected.Sterilize(renderer.Render(report.MakeReport()))
 	if !reflect.DeepEqual(want, have) {

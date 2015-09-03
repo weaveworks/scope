@@ -23,7 +23,7 @@ func MakeReduce(renderers ...Renderer) Renderer {
 func (r Reduce) Render(rpt report.Report) RenderableNodes {
 	result := RenderableNodes{}
 	for _, renderer := range r {
-		result.Merge(renderer.Render(rpt))
+		result = result.Merge(renderer.Render(rpt))
 	}
 	return result
 }
@@ -52,17 +52,20 @@ func (m Map) Render(rpt report.Report) RenderableNodes {
 }
 
 func (m Map) render(rpt report.Report) (RenderableNodes, map[string]report.IDList) {
-	input := m.Renderer.Render(rpt)
-	output := RenderableNodes{}
-	mapped := map[string]report.IDList{}      // input node ID -> output node IDs
-	adjacencies := map[string]report.IDList{} // output node ID -> input node Adjacencies
+	var (
+		input         = m.Renderer.Render(rpt)
+		output        = RenderableNodes{}
+		mapped        = map[string]report.IDList{} // input node ID -> output node IDs
+		adjacencies   = map[string]report.IDList{} // output node ID -> input node Adjacencies
+		localNetworks = LocalNetworks(rpt)
+	)
 
+	// Rewrite all the nodes according to the map function
 	for _, inRenderable := range input {
-		outRenderables := m.MapFunc(inRenderable)
-		for _, outRenderable := range outRenderables {
+		for _, outRenderable := range m.MapFunc(inRenderable, localNetworks) {
 			existing, ok := output[outRenderable.ID]
 			if ok {
-				outRenderable.Merge(existing)
+				outRenderable = outRenderable.Merge(existing)
 			}
 
 			output[outRenderable.ID] = outRenderable
@@ -72,9 +75,6 @@ func (m Map) render(rpt report.Report) (RenderableNodes, map[string]report.IDLis
 	}
 
 	// Rewrite Adjacency for new node IDs.
-	// NB we don't do pseudo nodes here; we assume the input graph
-	// is properly-connected, and if the map func dropped a node,
-	// we drop links to it.
 	for outNodeID, inAdjacency := range adjacencies {
 		outAdjacency := report.MakeIDList()
 		for _, inAdjacent := range inAdjacency {
@@ -121,128 +121,6 @@ func (m Map) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableID st
 		output = output.Merge(metadata)
 	}
 	return output
-}
-
-// LeafMap is a Renderer which produces a set of RenderableNodes from a report.Topology
-// by using a map function and topology selector.
-type LeafMap struct {
-	Selector report.TopologySelector
-	Mapper   LeafMapFunc
-}
-
-// Render transforms a given Report into a set of RenderableNodes, which
-// the UI will render collectively as a graph. Note that a RenderableNode will
-// always be rendered with other nodes, and therefore contains limited detail.
-//
-// Nodes with the same mapped IDs will be merged.
-func (m LeafMap) Render(rpt report.Report) RenderableNodes {
-	var (
-		t             = m.Selector(rpt)
-		nodes         = RenderableNodes{}
-		source2mapped = map[string]report.IDList{} // input node ID -> output node IDs
-		adjacencies   = map[string]report.IDList{} // input node ID -> input node Adjacencies
-		localNetworks = LocalNetworks(rpt)
-	)
-
-	// Build a set of RenderableNodes for all non-pseudo probes, and an
-	// addressID to nodeID lookup map. Multiple addressIDs can map to the same
-	// RenderableNodes.
-	for nodeID, metadata := range t.NodeMetadatas {
-		for _, mapped := range m.Mapper(metadata, localNetworks) {
-			// mapped.ID needs not be unique over all addressIDs. If not, we merge with
-			// the existing data, on the assumption that the MapFunc returns the same
-			// data.
-			existing, ok := nodes[mapped.ID]
-			if ok {
-				mapped.Merge(existing)
-			}
-
-			origins := mapped.Origins
-			origins = origins.Add(nodeID)
-			if hostNodeID, ok := metadata.Metadata[report.HostNodeID]; ok {
-				origins = origins.Add(hostNodeID)
-			}
-			mapped.Origins = origins
-			nodes[mapped.ID] = mapped
-			source2mapped[nodeID] = source2mapped[nodeID].Add(mapped.ID)
-			adjacencies[nodeID] = metadata.Adjacency
-		}
-	}
-
-	// We propagate edge metadata to nodes on both ends of the edges.
-	// TODO we should 'reverse' one end of the edge meta data - ingress -> egress etc.
-	for srcNodeID, nmd := range t.NodeMetadatas {
-		for _, srcRenderableID := range source2mapped[srcNodeID] {
-			srcRenderableNode := nodes[srcRenderableID]
-
-			for dstNodeID, emd := range nmd.Edges {
-				for _, dstRenderableID := range source2mapped[dstNodeID] {
-					dstRenderableNode := nodes[dstRenderableID]
-
-					srcRenderableNode.EdgeMetadata = srcRenderableNode.EdgeMetadata.Merge(emd)
-					dstRenderableNode.EdgeMetadata = dstRenderableNode.EdgeMetadata.Merge(emd)
-
-					nodes[dstRenderableID] = dstRenderableNode
-				}
-			}
-
-			nodes[srcRenderableID] = srcRenderableNode
-		}
-	}
-
-	// Walk the graph and make connections.
-	for srcNodeID, dstNodeIDs := range adjacencies {
-		for _, srcRenderableID := range source2mapped[srcNodeID] {
-			srcRenderableNode := nodes[srcRenderableID]
-
-			for _, dstNodeID := range dstNodeIDs {
-				for _, dstRenderableID := range source2mapped[dstNodeID] {
-					srcRenderableNode.Adjacency = srcRenderableNode.Adjacency.Add(dstRenderableID)
-				}
-			}
-
-			nodes[srcRenderableID] = srcRenderableNode
-		}
-	}
-
-	return nodes
-}
-
-func ids(nodes RenderableNodes) report.IDList {
-	result := report.MakeIDList()
-	for id := range nodes {
-		result = result.Add(id)
-	}
-	return result
-}
-
-// EdgeMetadata gives the metadata of an edge from the perspective of the
-// srcRenderableID. Since an edgeID can have multiple edges on the address
-// level, it uses the supplied mapping function to translate address IDs to
-// renderable node (mapped) IDs.
-func (m LeafMap) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableID string) report.EdgeMetadata {
-	var (
-		t             = m.Selector(rpt)
-		localNetworks = LocalNetworks(rpt)
-		metadata      = report.EdgeMetadata{}
-	)
-	for src, nmd := range t.NodeMetadatas {
-		for dst, edgeMeta := range nmd.Edges {
-			srcs, dsts := report.MakeIDList(src), report.MakeIDList(dst)
-			if src != report.TheInternet {
-				mapped := m.Mapper(t.NodeMetadatas[src], localNetworks)
-				srcs = ids(mapped)
-			}
-			if dst != report.TheInternet {
-				mapped := m.Mapper(t.NodeMetadatas[dst], localNetworks)
-				dsts = ids(mapped)
-			}
-			if srcs.Contains(srcRenderableID) && dsts.Contains(dstRenderableID) {
-				metadata = metadata.Flatten(edgeMeta)
-			}
-		}
-	}
-	return metadata
 }
 
 // CustomRenderer allow for mapping functions that recived the entire topology

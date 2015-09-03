@@ -25,26 +25,16 @@ const (
 	processesKey  = "processes"
 )
 
-// LeafMapFunc is anything which can take an arbitrary NodeMetadata, which is
-// always one-to-one with nodes in a topology, and return a set of RenderableNodes
-// - specific representations of the referenced node, in the form of a map of node
-// ID to a human-readable major and minor labels.
-//
-// A single NodeMetadata can yield arbitrary many representations, including
-// representations that reduce (or even increase) the cardinality of the set of nodes.
-type LeafMapFunc func(report.NodeMetadata, report.Networks) RenderableNodes
-
 // MapFunc is anything which can take an arbitrary RenderableNode and
 // return a set of other RenderableNodes.
 //
-// As with LeafMapFunc, if the output is empty, the node
-// shall be omitted from the rendered topology.
-type MapFunc func(RenderableNode) RenderableNodes
+// If the output is empty, the node shall be omitted from the rendered topology.
+type MapFunc func(RenderableNode, report.Networks) RenderableNodes
 
 // MapEndpointIdentity maps an endpoint topology node to a single endpoint
 // renderable node. As it is only ever run on endpoint topology nodes, we
 // expect that certain keys are present.
-func MapEndpointIdentity(m report.NodeMetadata, local report.Networks) RenderableNodes {
+func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNodes {
 	addr, ok := m.Metadata[endpoint.Addr]
 	if !ok {
 		return RenderableNodes{}
@@ -60,8 +50,8 @@ func MapEndpointIdentity(m report.NodeMetadata, local report.Networks) Renderabl
 	if !ok {
 		// If the dstNodeAddr is not in a network local to this report, we emit an
 		// internet node
-		if !local.Contains(net.ParseIP(addr)) {
-			return RenderableNodes{TheInternetID: newPseudoNode(TheInternetID, TheInternetMajor, "")}
+		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
+			return RenderableNodes{TheInternetID: newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)}
 		}
 
 		// We are a 'client' pseudo node if the port is in the ephemeral port range.
@@ -72,21 +62,21 @@ func MapEndpointIdentity(m report.NodeMetadata, local report.Networks) Renderabl
 			dstNodeID := m.Adjacency[0]
 			serverIP, serverPort := trySplitAddr(dstNodeID)
 			outputID := MakePseudoNodeID(addr, serverIP, serverPort)
-			return RenderableNodes{outputID: newPseudoNode(outputID, addr, "")}
+			return RenderableNodes{outputID: newDerivedPseudoNode(outputID, addr, m)}
 		}
 
 		// Otherwise (the server node is missing), generate a pseudo node for every (server ip, server port)
 		outputID := MakePseudoNodeID(addr, port)
 		if port != "" {
-			return RenderableNodes{outputID: newPseudoNode(outputID, addr+":"+port, "")}
+			return RenderableNodes{outputID: newDerivedPseudoNode(outputID, addr+":"+port, m)}
 		}
-		return RenderableNodes{outputID: newPseudoNode(outputID, addr, "")}
+		return RenderableNodes{outputID: newDerivedPseudoNode(outputID, addr, m)}
 	}
 
 	var (
-		id    = MakeEndpointID(report.ExtractHostID(m), addr, port)
+		id    = MakeEndpointID(report.ExtractHostID(m.NodeMetadata), addr, port)
 		major = fmt.Sprintf("%s:%s", addr, port)
-		minor = report.ExtractHostID(m)
+		minor = report.ExtractHostID(m.NodeMetadata)
 		rank  = major
 	)
 
@@ -94,32 +84,32 @@ func MapEndpointIdentity(m report.NodeMetadata, local report.Networks) Renderabl
 		minor = fmt.Sprintf("%s (%s)", minor, pid)
 	}
 
-	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
+	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
 }
 
 // MapProcessIdentity maps a process topology node to a process renderable
 // node. As it is only ever run on process topology nodes, we expect that
 // certain keys are present.
-func MapProcessIdentity(m report.NodeMetadata, _ report.Networks) RenderableNodes {
+func MapProcessIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	pid, ok := m.Metadata[process.PID]
 	if !ok {
 		return RenderableNodes{}
 	}
 
 	var (
-		id    = MakeProcessID(report.ExtractHostID(m), pid)
+		id    = MakeProcessID(report.ExtractHostID(m.NodeMetadata), pid)
 		major = m.Metadata["comm"]
-		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m), pid)
+		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m.NodeMetadata), pid)
 		rank  = m.Metadata["comm"]
 	)
 
-	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
+	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
 }
 
 // MapContainerIdentity maps a container topology node to a container
 // renderable node. As it is only ever run on container topology nodes, we
 // expect that certain keys are present.
-func MapContainerIdentity(m report.NodeMetadata, _ report.Networks) RenderableNodes {
+func MapContainerIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	id, ok := m.Metadata[docker.ContainerID]
 	if !ok {
 		return RenderableNodes{}
@@ -127,17 +117,17 @@ func MapContainerIdentity(m report.NodeMetadata, _ report.Networks) RenderableNo
 
 	var (
 		major = m.Metadata[docker.ContainerName]
-		minor = report.ExtractHostID(m)
+		minor = report.ExtractHostID(m.NodeMetadata)
 		rank  = m.Metadata[docker.ImageID]
 	)
 
-	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
+	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
 }
 
 // MapContainerImageIdentity maps a container image topology node to container
 // image renderable node. As it is only ever run on container image topology
 // nodes, we expect that certain keys are present.
-func MapContainerImageIdentity(m report.NodeMetadata, _ report.Networks) RenderableNodes {
+func MapContainerImageIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	id, ok := m.Metadata[docker.ImageID]
 	if !ok {
 		return RenderableNodes{}
@@ -148,13 +138,13 @@ func MapContainerImageIdentity(m report.NodeMetadata, _ report.Networks) Rendera
 		rank  = m.Metadata[docker.ImageID]
 	)
 
-	return RenderableNodes{id: NewRenderableNode(id, major, "", rank, m)}
+	return RenderableNodes{id: NewRenderableNodeWith(id, major, "", rank, m)}
 }
 
 // MapAddressIdentity maps an address topology node to an address renderable
 // node. As it is only ever run on address topology nodes, we expect that
 // certain keys are present.
-func MapAddressIdentity(m report.NodeMetadata, local report.Networks) RenderableNodes {
+func MapAddressIdentity(m RenderableNode, local report.Networks) RenderableNodes {
 	addr, ok := m.Metadata[endpoint.Addr]
 	if !ok {
 		return RenderableNodes{}
@@ -166,7 +156,7 @@ func MapAddressIdentity(m report.NodeMetadata, local report.Networks) Renderable
 		// If the addr is not in a network local to this report, we emit an
 		// internet node
 		if !local.Contains(net.ParseIP(addr)) {
-			return RenderableNodes{TheInternetID: newPseudoNode(TheInternetID, TheInternetMajor, "")}
+			return RenderableNodes{TheInternetID: newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)}
 		}
 
 		// Otherwise generate a pseudo node for every
@@ -175,25 +165,25 @@ func MapAddressIdentity(m report.NodeMetadata, local report.Networks) Renderable
 			_, dstAddr, _ := report.ParseAddressNodeID(m.Adjacency[0])
 			outputID = MakePseudoNodeID(addr, dstAddr)
 		}
-		return RenderableNodes{outputID: newPseudoNode(outputID, addr, "")}
+		return RenderableNodes{outputID: newDerivedPseudoNode(outputID, addr, m)}
 	}
 
 	var (
-		id    = MakeAddressID(report.ExtractHostID(m), addr)
+		id    = MakeAddressID(report.ExtractHostID(m.NodeMetadata), addr)
 		major = addr
-		minor = report.ExtractHostID(m)
+		minor = report.ExtractHostID(m.NodeMetadata)
 		rank  = major
 	)
 
-	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
+	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
 }
 
 // MapHostIdentity maps a host topology node to a host renderable node. As it
 // is only ever run on host topology nodes, we expect that certain keys are
 // present.
-func MapHostIdentity(m report.NodeMetadata, _ report.Networks) RenderableNodes {
+func MapHostIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	var (
-		id                 = MakeHostID(report.ExtractHostID(m))
+		id                 = MakeHostID(report.ExtractHostID(m.NodeMetadata))
 		hostname           = m.Metadata[host.HostName]
 		parts              = strings.SplitN(hostname, ".", 2)
 		major, minor, rank = "", "", ""
@@ -205,14 +195,14 @@ func MapHostIdentity(m report.NodeMetadata, _ report.Networks) RenderableNodes {
 		major = hostname
 	}
 
-	return RenderableNodes{id: NewRenderableNode(id, major, minor, rank, m)}
+	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
 }
 
 // MapEndpoint2IP maps endpoint nodes to their IP address, for joining
 // with container nodes.  We drop endpoint nodes with pids, as they
 // will be joined to containers through the process topology, and we
 // don't want to double count edges.
-func MapEndpoint2IP(m report.NodeMetadata, local report.Networks) RenderableNodes {
+func MapEndpoint2IP(m RenderableNode, local report.Networks) RenderableNodes {
 	_, ok := m.Metadata[process.PID]
 	if ok {
 		return RenderableNodes{}
@@ -222,22 +212,22 @@ func MapEndpoint2IP(m report.NodeMetadata, local report.Networks) RenderableNode
 		return RenderableNodes{}
 	}
 	if !local.Contains(net.ParseIP(addr)) {
-		return RenderableNodes{TheInternetID: newPseudoNode(TheInternetID, TheInternetMajor, "")}
+		return RenderableNodes{TheInternetID: newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)}
 	}
-	return RenderableNodes{addr: NewRenderableNode(addr, "", "", "", m)}
+	return RenderableNodes{addr: NewRenderableNodeWith(addr, "", "", "", m)}
 }
 
 // MapContainer2IP maps container nodes to their IP addresses (outputs
 // multiple nodes).  This allows container to be joined directly with
 // the endpoint topology.
-func MapContainer2IP(m report.NodeMetadata, _ report.Networks) RenderableNodes {
+func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 	result := RenderableNodes{}
 	addrs, ok := m.Metadata[docker.ContainerIPs]
 	if !ok {
 		return result
 	}
 	for _, addr := range strings.Fields(addrs) {
-		n := NewRenderableNode(addr, "", "", "", m)
+		n := NewRenderableNodeWith(addr, "", "", "", m)
 		n.NodeMetadata.Counters[containersKey] = 1
 		result[addr] = n
 	}
@@ -247,7 +237,7 @@ func MapContainer2IP(m report.NodeMetadata, _ report.Networks) RenderableNodes {
 // MapIP2Container maps IP nodes produced from MapContainer2IP back to
 // container nodes.  If there is more than one container with a given
 // IP, it is dropped.
-func MapIP2Container(n RenderableNode) RenderableNodes {
+func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 	// If an IP is shared between multiple containers, we can't
 	// reliably attribute an connection based on its IP
 	if n.NodeMetadata.Counters[containersKey] > 1 {
@@ -267,7 +257,7 @@ func MapIP2Container(n RenderableNode) RenderableNodes {
 		return RenderableNodes{}
 	}
 
-	return RenderableNodes{id: newDerivedNode(id, n)}
+	return RenderableNodes{id: NewDerivedNode(id, n)}
 }
 
 // MapEndpoint2Process maps endpoint RenderableNodes to process
@@ -281,7 +271,7 @@ func MapIP2Container(n RenderableNode) RenderableNodes {
 // format for a process, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a process graph to get that info.
-func MapEndpoint2Process(n RenderableNode) RenderableNodes {
+func MapEndpoint2Process(n RenderableNode, _ report.Networks) RenderableNodes {
 	if n.Pseudo {
 		return RenderableNodes{n.ID: n}
 	}
@@ -292,7 +282,7 @@ func MapEndpoint2Process(n RenderableNode) RenderableNodes {
 	}
 
 	id := MakeProcessID(report.ExtractHostID(n.NodeMetadata), pid)
-	return RenderableNodes{id: newDerivedNode(id, n)}
+	return RenderableNodes{id: NewDerivedNode(id, n)}
 }
 
 // MapProcess2Container maps process RenderableNodes to container
@@ -306,7 +296,7 @@ func MapEndpoint2Process(n RenderableNode) RenderableNodes {
 // format for a container, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
-func MapProcess2Container(n RenderableNode) RenderableNodes {
+func MapProcess2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 	// Propogate the internet pseudo node
 	if n.ID == TheInternetID {
 		return RenderableNodes{n.ID: n}
@@ -330,7 +320,7 @@ func MapProcess2Container(n RenderableNode) RenderableNodes {
 		return RenderableNodes{id: node}
 	}
 
-	return RenderableNodes{id: newDerivedNode(id, n)}
+	return RenderableNodes{id: NewDerivedNode(id, n)}
 }
 
 // MapProcess2Name maps process RenderableNodes to RenderableNodes
@@ -339,7 +329,7 @@ func MapProcess2Container(n RenderableNode) RenderableNodes {
 // This mapper is unlike the other foo2bar mappers as the intention
 // is not to join the information with another topology.  Therefore
 // it outputs a properly-formed node with labels etc.
-func MapProcess2Name(n RenderableNode) RenderableNodes {
+func MapProcess2Name(n RenderableNode, _ report.Networks) RenderableNodes {
 	if n.Pseudo {
 		return RenderableNodes{n.ID: n}
 	}
@@ -349,7 +339,7 @@ func MapProcess2Name(n RenderableNode) RenderableNodes {
 		return RenderableNodes{}
 	}
 
-	node := newDerivedNode(name, n)
+	node := NewDerivedNode(name, n)
 	node.LabelMajor = name
 	node.Rank = name
 	node.NodeMetadata.Counters[processesKey] = 1
@@ -359,7 +349,7 @@ func MapProcess2Name(n RenderableNode) RenderableNodes {
 // MapCountProcessName maps 1:1 process name nodes, counting
 // the number of processes grouped together and putting
 // that info in the minor label.
-func MapCountProcessName(n RenderableNode) RenderableNodes {
+func MapCountProcessName(n RenderableNode, _ report.Networks) RenderableNodes {
 	if n.Pseudo {
 		return RenderableNodes{n.ID: n}
 	}
@@ -384,7 +374,7 @@ func MapCountProcessName(n RenderableNode) RenderableNodes {
 // format for a container, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
-func MapContainer2ContainerImage(n RenderableNode) RenderableNodes {
+func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) RenderableNodes {
 	// Propogate all pseudo nodes
 	if n.Pseudo {
 		return RenderableNodes{n.ID: n}
@@ -398,7 +388,7 @@ func MapContainer2ContainerImage(n RenderableNode) RenderableNodes {
 	}
 
 	// Add container-<id> key to NMD, which will later be counted to produce the minor label
-	result := newDerivedNode(id, n)
+	result := NewDerivedNode(id, n)
 	result.NodeMetadata.Counters[containersKey] = 1
 	return RenderableNodes{id: result}
 }
@@ -409,7 +399,7 @@ func MapContainer2ContainerImage(n RenderableNode) RenderableNodes {
 // This mapper is unlike the other foo2bar mappers as the intention
 // is not to join the information with another topology.  Therefore
 // it outputs a properly-formed node with labels etc.
-func MapContainerImage2Name(n RenderableNode) RenderableNodes {
+func MapContainerImage2Name(n RenderableNode, _ report.Networks) RenderableNodes {
 	if n.Pseudo {
 		return RenderableNodes{n.ID: n}
 	}
@@ -424,7 +414,7 @@ func MapContainerImage2Name(n RenderableNode) RenderableNodes {
 		name = parts[0]
 	}
 
-	node := newDerivedNode(name, n)
+	node := NewDerivedNode(name, n)
 	node.LabelMajor = name
 	node.Rank = name
 	node.NodeMetadata = n.NodeMetadata.Copy() // Propagate NMD for container counting.
@@ -434,7 +424,7 @@ func MapContainerImage2Name(n RenderableNode) RenderableNodes {
 // MapCountContainers maps 1:1 container image nodes, counting
 // the number of containers grouped together and putting
 // that info in the minor label.
-func MapCountContainers(n RenderableNode) RenderableNodes {
+func MapCountContainers(n RenderableNode, _ report.Networks) RenderableNodes {
 	if n.Pseudo {
 		return RenderableNodes{n.ID: n}
 	}
@@ -451,13 +441,13 @@ func MapCountContainers(n RenderableNode) RenderableNodes {
 // MapAddress2Host maps address RenderableNodes to host RenderableNodes.
 //
 // Otherthan pseudo nodes, we can assume all nodes have a HostID
-func MapAddress2Host(n RenderableNode) RenderableNodes {
+func MapAddress2Host(n RenderableNode, _ report.Networks) RenderableNodes {
 	if n.Pseudo {
 		return RenderableNodes{n.ID: n}
 	}
 
 	id := MakeHostID(report.ExtractHostID(n.NodeMetadata))
-	return RenderableNodes{id: newDerivedNode(id, n)}
+	return RenderableNodes{id: NewDerivedNode(id, n)}
 }
 
 // trySplitAddr is basically ParseArbitraryNodeID, since its callsites
