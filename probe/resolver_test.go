@@ -85,7 +85,7 @@ func TestResolver(t *testing.T) {
 	go func() { r.Stop(); close(done) }()
 	select {
 	case <-done:
-	case <-time.After(time.Millisecond):
+	case <-time.After(100*time.Millisecond):
 		t.Errorf("didn't Stop in time")
 	}
 }
