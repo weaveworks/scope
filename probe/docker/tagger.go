@@ -45,7 +45,7 @@ func (t *Tagger) Tag(r report.Report) (report.Report, error) {
 }
 
 func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
-	for nodeID, nodeMetadata := range topology.NodeMetadatas {
+	for nodeID, nodeMetadata := range topology.Nodes {
 		pidStr, ok := nodeMetadata.Metadata[process.PID]
 		if !ok {
 			continue
@@ -79,10 +79,10 @@ func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 			continue
 		}
 
-		md := report.MakeNodeMetadataWith(map[string]string{
+		md := report.MakeNodeWith(map[string]string{
 			ContainerID: c.ID(),
 		})
 
-		topology.NodeMetadatas[nodeID] = nodeMetadata.Merge(md)
+		topology.Nodes[nodeID] = nodeMetadata.Merge(md)
 	}
 }

@@ -70,7 +70,7 @@ type Container interface {
 	ID() string
 	Image() string
 	PID() int
-	GetNodeMetadata() report.NodeMetadata
+	GetNode() report.Node
 
 	StartGatheringStats() error
 	StopGatheringStats()
@@ -202,11 +202,11 @@ func (c *container) ports() string {
 	return strings.Join(ports, ", ")
 }
 
-func (c *container) GetNodeMetadata() report.NodeMetadata {
+func (c *container) GetNode() report.Node {
 	c.RLock()
 	defer c.RUnlock()
 
-	result := report.MakeNodeMetadataWith(map[string]string{
+	result := report.MakeNodeWith(map[string]string{
 		ContainerID:      c.ID(),
 		ContainerName:    strings.TrimPrefix(c.container.Name, "/"),
 		ContainerPorts:   c.ports(),
@@ -222,7 +222,7 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 		return result
 	}
 
-	result = result.Merge(report.MakeNodeMetadataWith(map[string]string{
+	result = result.Merge(report.MakeNodeWith(map[string]string{
 		NetworkRxDropped: strconv.FormatUint(c.latestStats.Network.RxDropped, 10),
 		NetworkRxBytes:   strconv.FormatUint(c.latestStats.Network.RxBytes, 10),
 		NetworkRxErrors:  strconv.FormatUint(c.latestStats.Network.RxErrors, 10),
@@ -246,7 +246,7 @@ func (c *container) GetNodeMetadata() report.NodeMetadata {
 	return result
 }
 
-// ExtractContainerIPs returns the list of container IPs given a NodeMetadata from the Container topology.
-func ExtractContainerIPs(nmd report.NodeMetadata) []string {
+// ExtractContainerIPs returns the list of container IPs given a Node from the Container topology.
+func ExtractContainerIPs(nmd report.Node) []string {
 	return strings.Fields(nmd.Metadata[ContainerIPs])
 }

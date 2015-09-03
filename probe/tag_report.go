@@ -28,7 +28,7 @@ func Apply(r report.Report, taggers []Tagger) report.Report {
 	return r
 }
 
-// Topology is the NodeMetadata key for the origin topology.
+// Topology is the Node key for the origin topology.
 const Topology = "topology"
 
 type topologyTagger struct{}
@@ -50,9 +50,9 @@ func (topologyTagger) Tag(r report.Report) (report.Report, error) {
 		"host":            &(r.Host),
 		"overlay":         &(r.Overlay),
 	} {
-		other := report.MakeNodeMetadataWith(map[string]string{Topology: val})
-		for id, md := range topology.NodeMetadatas {
-			topology.NodeMetadatas[id] = md.Merge(other)
+		other := report.MakeNodeWith(map[string]string{Topology: val})
+		for id, md := range topology.Nodes {
+			topology.Nodes[id] = md.Merge(other)
 		}
 	}
 	return r, nil

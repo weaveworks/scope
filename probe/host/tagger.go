@@ -17,13 +17,13 @@ func NewTagger(hostID string) Tagger {
 
 // Tag implements Tagger.
 func (t Tagger) Tag(r report.Report) (report.Report, error) {
-	other := report.MakeNodeMetadataWith(map[string]string{report.HostNodeID: t.hostNodeID})
+	other := report.MakeNodeWith(map[string]string{report.HostNodeID: t.hostNodeID})
 
 	// Explicity don't tag Endpoints and Addresses - These topologies include pseudo nodes,
 	// and as such do their own host tagging
 	for _, topology := range []report.Topology{r.Process, r.Container, r.ContainerImage, r.Host, r.Overlay} {
-		for id, md := range topology.NodeMetadatas {
-			topology.NodeMetadatas[id] = md.Merge(other)
+		for id, md := range topology.Nodes {
+			topology.Nodes[id] = md.Merge(other)
 		}
 	}
 	return r, nil

@@ -77,7 +77,7 @@ func TestSpyNoProcesses(t *testing.T) {
 	//t.Logf("\n%s\n", buf)
 
 	// No process nodes, please
-	if want, have := 0, len(r.Endpoint.NodeMetadatas); want != have {
+	if want, have := 0, len(r.Endpoint.Nodes); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
 
@@ -86,15 +86,15 @@ func TestSpyNoProcesses(t *testing.T) {
 		scopedRemote = report.MakeAddressNodeID(nodeID, fixRemoteAddress.String())
 	)
 
-	if want, have := nodeName, r.Address.NodeMetadatas[scopedLocal].Metadata[docker.Name]; want != have {
+	if want, have := nodeName, r.Address.Nodes[scopedLocal].Metadata[docker.Name]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 
-	if want, have := 1, len(r.Address.NodeMetadatas[scopedRemote].Adjacency); want != have {
+	if want, have := 1, len(r.Address.Nodes[scopedRemote].Adjacency); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
 
-	if want, have := scopedLocal, r.Address.NodeMetadatas[scopedRemote].Adjacency[0]; want != have {
+	if want, have := scopedLocal, r.Address.Nodes[scopedRemote].Adjacency[0]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 }
@@ -116,19 +116,19 @@ func TestSpyWithProcesses(t *testing.T) {
 		scopedRemote = report.MakeEndpointNodeID(nodeID, fixRemoteAddress.String(), strconv.Itoa(int(fixRemotePort)))
 	)
 
-	if want, have := 1, len(r.Endpoint.NodeMetadatas[scopedRemote].Adjacency); want != have {
+	if want, have := 1, len(r.Endpoint.Nodes[scopedRemote].Adjacency); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
 
-	if want, have := scopedLocal, r.Endpoint.NodeMetadatas[scopedRemote].Adjacency[0]; want != have {
+	if want, have := scopedLocal, r.Endpoint.Nodes[scopedRemote].Adjacency[0]; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 
 	for key, want := range map[string]string{
 		"pid": strconv.FormatUint(uint64(fixProcessPID), 10),
 	} {
-		if have := r.Endpoint.NodeMetadatas[scopedLocal].Metadata[key]; want != have {
-			t.Errorf("Process.NodeMetadatas[%q][%q]: want %q, have %q", scopedLocal, key, want, have)
+		if have := r.Endpoint.Nodes[scopedLocal].Metadata[key]; want != have {
+			t.Errorf("Process.Nodes[%q][%q]: want %q, have %q", scopedLocal, key, want, have)
 		}
 	}
 }

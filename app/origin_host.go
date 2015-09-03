@@ -22,7 +22,7 @@ type OriginHost struct {
 }
 
 func getOriginHost(t report.Topology, nodeID string) (OriginHost, bool) {
-	h, ok := t.NodeMetadatas[nodeID]
+	h, ok := t.Nodes[nodeID]
 	if !ok {
 		return OriginHost{}, false
 	}

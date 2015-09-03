@@ -64,6 +64,6 @@ func TestContainer(t *testing.T) {
 
 	// Now see if we go them
 	test.Poll(t, 100*time.Millisecond, "12345", func() interface{} {
-		return c.GetNodeMetadata().Metadata[docker.MemoryUsage]
+		return c.GetNode().Metadata[docker.MemoryUsage]
 	})
 }

@@ -37,8 +37,8 @@ func (c *mockContainer) StartGatheringStats() error {
 
 func (c *mockContainer) StopGatheringStats() {}
 
-func (c *mockContainer) GetNodeMetadata() report.NodeMetadata {
-	return report.MakeNodeMetadataWith(map[string]string{
+func (c *mockContainer) GetNode() report.Node {
+	return report.MakeNodeWith(map[string]string{
 		docker.ContainerID:   c.c.ID,
 		docker.ContainerName: c.c.Name,
 		docker.ImageID:       c.c.Image,

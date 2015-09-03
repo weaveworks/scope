@@ -86,11 +86,11 @@ var (
 
 	Report = report.Report{
 		Endpoint: report.Topology{
-			NodeMetadatas: report.NodeMetadatas{
-				// NodeMetadata is arbitrary. We're free to put only precisely what we
+			Nodes: report.Nodes{
+				// Node is arbitrary. We're free to put only precisely what we
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
-				Client54001NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				Client54001NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr:     ClientIP,
 					endpoint.Port:     ClientPort54001,
 					process.PID:       Client1PID,
@@ -100,7 +100,7 @@ var (
 					EgressByteCount:   newu64(100),
 				}),
 
-				Client54002NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				Client54002NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr:     ClientIP,
 					endpoint.Port:     ClientPort54002,
 					process.PID:       Client2PID,
@@ -110,14 +110,14 @@ var (
 					EgressByteCount:   newu64(200),
 				}),
 
-				Server80NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				Server80NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr:     ServerIP,
 					endpoint.Port:     ServerPort,
 					process.PID:       ServerPID,
 					report.HostNodeID: ServerHostNodeID,
 				}),
 
-				NonContainerNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				NonContainerNodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr:     ServerIP,
 					endpoint.Port:     NonContainerClientPort,
 					process.PID:       NonContainerPID,
@@ -125,7 +125,7 @@ var (
 				}).WithAdjacent(GoogleEndpointNodeID),
 
 				// Probe pseudo nodes
-				UnknownClient1NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				UnknownClient1NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient1IP,
 					endpoint.Port: UnknownClient1Port,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
@@ -133,7 +133,7 @@ var (
 					EgressByteCount:   newu64(300),
 				}),
 
-				UnknownClient2NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				UnknownClient2NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient2IP,
 					endpoint.Port: UnknownClient2Port,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
@@ -141,7 +141,7 @@ var (
 					EgressByteCount:   newu64(400),
 				}),
 
-				UnknownClient3NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				UnknownClient3NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient3IP,
 					endpoint.Port: UnknownClient3Port,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
@@ -149,7 +149,7 @@ var (
 					EgressByteCount:   newu64(500),
 				}),
 
-				RandomClientNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				RandomClientNodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: RandomClientIP,
 					endpoint.Port: RandomClientPort,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
@@ -157,33 +157,33 @@ var (
 					EgressByteCount:   newu64(600),
 				}),
 
-				GoogleEndpointNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				GoogleEndpointNodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: GoogleIP,
 					endpoint.Port: GooglePort,
 				}),
 			},
 		},
 		Process: report.Topology{
-			NodeMetadatas: report.NodeMetadatas{
-				ClientProcess1NodeID: report.MakeNodeMetadataWith(map[string]string{
+			Nodes: report.Nodes{
+				ClientProcess1NodeID: report.MakeNodeWith(map[string]string{
 					process.PID:        Client1PID,
 					"comm":             Client1Comm,
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
 				}),
-				ClientProcess2NodeID: report.MakeNodeMetadataWith(map[string]string{
+				ClientProcess2NodeID: report.MakeNodeWith(map[string]string{
 					process.PID:        Client2PID,
 					"comm":             Client2Comm,
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
 				}),
-				ServerProcessNodeID: report.MakeNodeMetadataWith(map[string]string{
+				ServerProcessNodeID: report.MakeNodeWith(map[string]string{
 					process.PID:        ServerPID,
 					"comm":             ServerComm,
 					docker.ContainerID: ServerContainerID,
 					report.HostNodeID:  ServerHostNodeID,
 				}),
-				NonContainerProcessNodeID: report.MakeNodeMetadataWith(map[string]string{
+				NonContainerProcessNodeID: report.MakeNodeWith(map[string]string{
 					process.PID:       NonContainerPID,
 					"comm":            NonContainerComm,
 					report.HostNodeID: ServerHostNodeID,
@@ -191,14 +191,14 @@ var (
 			},
 		},
 		Container: report.Topology{
-			NodeMetadatas: report.NodeMetadatas{
-				ClientContainerNodeID: report.MakeNodeMetadataWith(map[string]string{
+			Nodes: report.Nodes{
+				ClientContainerNodeID: report.MakeNodeWith(map[string]string{
 					docker.ContainerID:   ClientContainerID,
 					docker.ContainerName: "client",
 					docker.ImageID:       ClientContainerImageID,
 					report.HostNodeID:    ClientHostNodeID,
 				}),
-				ServerContainerNodeID: report.MakeNodeMetadataWith(map[string]string{
+				ServerContainerNodeID: report.MakeNodeWith(map[string]string{
 					docker.ContainerID:          ServerContainerID,
 					docker.ContainerName:        "server",
 					docker.ImageID:              ServerContainerImageID,
@@ -209,13 +209,13 @@ var (
 			},
 		},
 		ContainerImage: report.Topology{
-			NodeMetadatas: report.NodeMetadatas{
-				ClientContainerImageNodeID: report.MakeNodeMetadataWith(map[string]string{
+			Nodes: report.Nodes{
+				ClientContainerImageNodeID: report.MakeNodeWith(map[string]string{
 					docker.ImageID:    ClientContainerImageID,
 					docker.ImageName:  ClientContainerImageName,
 					report.HostNodeID: ClientHostNodeID,
 				}),
-				ServerContainerImageNodeID: report.MakeNodeMetadataWith(map[string]string{
+				ServerContainerImageNodeID: report.MakeNodeWith(map[string]string{
 					docker.ImageID:              ServerContainerImageID,
 					docker.ImageName:            ServerContainerImageName,
 					report.HostNodeID:           ServerHostNodeID,
@@ -225,46 +225,46 @@ var (
 			},
 		},
 		Address: report.Topology{
-			NodeMetadatas: report.NodeMetadatas{
-				ClientAddressNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+			Nodes: report.Nodes{
+				ClientAddressNodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr:     ClientIP,
 					report.HostNodeID: ClientHostNodeID,
 				}).WithEdge(ServerAddressNodeID, report.EdgeMetadata{
 					MaxConnCountTCP: newu64(3),
 				}),
 
-				ServerAddressNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				ServerAddressNodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr:     ServerIP,
 					report.HostNodeID: ServerHostNodeID,
 				}),
 
-				UnknownAddress1NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				UnknownAddress1NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient1IP,
 				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
 
-				UnknownAddress2NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				UnknownAddress2NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient2IP,
 				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
 
-				UnknownAddress3NodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				UnknownAddress3NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient3IP,
 				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
 
-				RandomAddressNodeID: report.MakeNodeMetadata().WithMetadata(map[string]string{
+				RandomAddressNodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: RandomClientIP,
 				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
 			},
 		},
 		Host: report.Topology{
-			NodeMetadatas: report.NodeMetadatas{
-				ClientHostNodeID: report.MakeNodeMetadataWith(map[string]string{
+			Nodes: report.Nodes{
+				ClientHostNodeID: report.MakeNodeWith(map[string]string{
 					"host_name":       ClientHostName,
 					"local_networks":  "10.10.10.0/24",
 					"os":              "Linux",
 					"load":            "0.01 0.01 0.01",
 					report.HostNodeID: ClientHostNodeID,
 				}),
-				ServerHostNodeID: report.MakeNodeMetadataWith(map[string]string{
+				ServerHostNodeID: report.MakeNodeWith(map[string]string{
 					"host_name":       ServerHostName,
 					"local_networks":  "10.10.10.0/24",
 					"os":              "Linux",

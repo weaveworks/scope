@@ -135,12 +135,12 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		var (
 			localAddressNodeID  = report.MakeAddressNodeID(r.hostID, localAddr)
 			remoteAddressNodeID = report.MakeAddressNodeID(r.hostID, remoteAddr)
-			localNode           = report.MakeNodeMetadataWith(map[string]string{
+			localNode           = report.MakeNodeWith(map[string]string{
 				"name":            r.hostName,
 				Addr:              localAddr,
 				report.HostNodeID: hostNodeID,
 			})
-			remoteNode = report.MakeNodeMetadataWith(map[string]string{
+			remoteNode = report.MakeNodeWith(map[string]string{
 				Addr: remoteAddr,
 			})
 		)
@@ -166,12 +166,12 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			localEndpointNodeID  = report.MakeEndpointNodeID(r.hostID, localAddr, strconv.Itoa(int(localPort)))
 			remoteEndpointNodeID = report.MakeEndpointNodeID(r.hostID, remoteAddr, strconv.Itoa(int(remotePort)))
 
-			localNode = report.MakeNodeMetadataWith(map[string]string{
+			localNode = report.MakeNodeWith(map[string]string{
 				Addr:              localAddr,
 				Port:              strconv.Itoa(int(localPort)),
 				report.HostNodeID: hostNodeID,
 			})
-			remoteNode = report.MakeNodeMetadataWith(map[string]string{
+			remoteNode = report.MakeNodeWith(map[string]string{
 				Addr: remoteAddr,
 				Port: strconv.Itoa(int(remotePort)),
 			})

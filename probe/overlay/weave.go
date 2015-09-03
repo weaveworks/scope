@@ -133,7 +133,7 @@ func (w Weave) ps() ([]psEntry, error) {
 }
 
 func (w Weave) tagContainer(r report.Report, containerIDPrefix, macAddress string, ips []string) {
-	for nodeid, nmd := range r.Container.NodeMetadatas {
+	for nodeid, nmd := range r.Container.Nodes {
 		idPrefix := nmd.Metadata[docker.ContainerID][:12]
 		if idPrefix != containerIDPrefix {
 			continue
@@ -143,7 +143,7 @@ func (w Weave) tagContainer(r report.Report, containerIDPrefix, macAddress strin
 		existingIPs = existingIPs.Add(ips...)
 		nmd.Metadata[docker.ContainerIPs] = strings.Join(existingIPs, " ")
 		nmd.Metadata[WeaveMACAddress] = macAddress
-		r.Container.NodeMetadatas[nodeid] = nmd
+		r.Container.Nodes[nodeid] = nmd
 		break
 	}
 }
@@ -160,14 +160,14 @@ func (w Weave) Tag(r report.Report) (report.Report, error) {
 			continue
 		}
 		nodeID := report.MakeContainerNodeID(w.hostID, entry.ContainerID)
-		node, ok := r.Container.NodeMetadatas[nodeID]
+		node, ok := r.Container.Nodes[nodeID]
 		if !ok {
 			continue
 		}
 		hostnames := report.IDList(strings.Fields(node.Metadata[WeaveDNSHostname]))
 		hostnames = hostnames.Add(strings.TrimSuffix(entry.Hostname, "."))
 		node.Metadata[WeaveDNSHostname] = strings.Join(hostnames, " ")
-		r.Container.NodeMetadatas[nodeID] = node
+		r.Container.Nodes[nodeID] = node
 	}
 
 	psEntries, err := w.ps()
@@ -189,7 +189,7 @@ func (w Weave) Report() (report.Report, error) {
 	}
 
 	for _, peer := range status.Router.Peers {
-		r.Overlay.NodeMetadatas[report.MakeOverlayNodeID(peer.Name)] = report.MakeNodeMetadataWith(map[string]string{
+		r.Overlay.Nodes[report.MakeOverlayNodeID(peer.Name)] = report.MakeNodeWith(map[string]string{
 			WeavePeerName:     peer.Name,
 			WeavePeerNickName: peer.NickName,
 		})

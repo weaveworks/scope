@@ -9,26 +9,26 @@ import (
 
 func TestApply(t *testing.T) {
 	var (
-		endpointNodeID       = "c"
-		addressNodeID        = "d"
-		endpointNodeMetadata = report.MakeNodeMetadataWith(map[string]string{"5": "6"})
-		addressNodeMetadata  = report.MakeNodeMetadataWith(map[string]string{"7": "8"})
+		endpointNodeID = "c"
+		addressNodeID  = "d"
+		endpointNode   = report.MakeNodeWith(map[string]string{"5": "6"})
+		addressNode    = report.MakeNodeWith(map[string]string{"7": "8"})
 	)
 
 	r := report.MakeReport()
-	r.Endpoint.NodeMetadatas[endpointNodeID] = endpointNodeMetadata
-	r.Address.NodeMetadatas[addressNodeID] = addressNodeMetadata
+	r.Endpoint.Nodes[endpointNodeID] = endpointNode
+	r.Address.Nodes[addressNodeID] = addressNode
 	r = Apply(r, []Tagger{newTopologyTagger()})
 
 	for _, tuple := range []struct {
-		want report.NodeMetadata
+		want report.Node
 		from report.Topology
 		via  string
 	}{
-		{endpointNodeMetadata.Merge(report.MakeNodeMetadataWith(map[string]string{"topology": "endpoint"})), r.Endpoint, endpointNodeID},
-		{addressNodeMetadata.Merge(report.MakeNodeMetadataWith(map[string]string{"topology": "address"})), r.Address, addressNodeID},
+		{endpointNode.Merge(report.MakeNodeWith(map[string]string{"topology": "endpoint"})), r.Endpoint, endpointNodeID},
+		{addressNode.Merge(report.MakeNodeWith(map[string]string{"topology": "address"})), r.Address, addressNodeID},
 	} {
-		if want, have := tuple.want, tuple.from.NodeMetadatas[tuple.via]; !reflect.DeepEqual(want, have) {
+		if want, have := tuple.want, tuple.from.Nodes[tuple.via]; !reflect.DeepEqual(want, have) {
 			t.Errorf("want %+v, have %+v", want, have)
 		}
 	}
@@ -37,9 +37,9 @@ func TestApply(t *testing.T) {
 func TestTagMissingID(t *testing.T) {
 	const nodeID = "not-found"
 	r := report.MakeReport()
-	want := report.MakeNodeMetadata()
+	want := report.MakeNode()
 	rpt, _ := newTopologyTagger().Tag(r)
-	have := rpt.Endpoint.NodeMetadatas[nodeID].Copy()
+	have := rpt.Endpoint.Nodes[nodeID].Copy()
 	if !reflect.DeepEqual(want, have) {
 		t.Error("TopologyTagger erroneously tagged a missing node ID")
 	}

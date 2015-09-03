@@ -10,14 +10,14 @@ import (
 
 // Sterilize cleans up RenderableNodes test fixtures
 func Sterilize(r render.RenderableNodes) render.RenderableNodes {
-	// RenderableNodes contain NodeMetadatas, but generally we
+	// RenderableNodes contain Nodes, but generally we
 	// only care about the Adjacency field - the rest is internal
 	// state not sent to the client.  So in the tests we ignore
 	// this state.
 	for id, n := range r {
-		n.NodeMetadata.Metadata = report.Metadata{}
-		n.NodeMetadata.Counters = report.Counters{}
-		n.NodeMetadata.Edges = report.EdgeMetadatas{}
+		n.Node.Metadata = report.Metadata{}
+		n.Node.Counters = report.Counters{}
+		n.Node.Edges = report.EdgeMetadatas{}
 		r[id] = n
 	}
 	return r
@@ -30,10 +30,10 @@ var (
 	unknownPseudoNode2ID = render.MakePseudoNodeID("10.10.10.11", test.ServerIP, "80")
 	unknownPseudoNode1   = func(adjacency report.IDList) render.RenderableNode {
 		return render.RenderableNode{
-			ID:           unknownPseudoNode1ID,
-			LabelMajor:   "10.10.10.10",
-			Pseudo:       true,
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacency(adjacency),
+			ID:         unknownPseudoNode1ID,
+			LabelMajor: "10.10.10.10",
+			Pseudo:     true,
+			Node:       report.MakeNode().WithAdjacency(adjacency),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(70),
 				EgressByteCount:   newu64(700),
@@ -46,10 +46,10 @@ var (
 	}
 	unknownPseudoNode2 = func(adjacency report.IDList) render.RenderableNode {
 		return render.RenderableNode{
-			ID:           unknownPseudoNode2ID,
-			LabelMajor:   "10.10.10.11",
-			Pseudo:       true,
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacency(adjacency),
+			ID:         unknownPseudoNode2ID,
+			LabelMajor: "10.10.10.11",
+			Pseudo:     true,
+			Node:       report.MakeNode().WithAdjacency(adjacency),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(50),
 				EgressByteCount:   newu64(500),
@@ -61,10 +61,10 @@ var (
 	}
 	theInternetNode = func(adjacency report.IDList) render.RenderableNode {
 		return render.RenderableNode{
-			ID:           render.TheInternetID,
-			LabelMajor:   render.TheInternetMajor,
-			Pseudo:       true,
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacency(adjacency),
+			ID:         render.TheInternetID,
+			LabelMajor: render.TheInternetMajor,
+			Pseudo:     true,
+			Node:       report.MakeNode().WithAdjacency(adjacency),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(60),
 				EgressByteCount:   newu64(600),
@@ -92,7 +92,7 @@ var (
 				test.ClientProcess1NodeID,
 				test.ClientHostNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(ServerProcessID),
+			Node: report.MakeNode().WithAdjacent(ServerProcessID),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(10),
 				EgressByteCount:   newu64(100),
@@ -109,7 +109,7 @@ var (
 				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(ServerProcessID),
+			Node: report.MakeNode().WithAdjacent(ServerProcessID),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(20),
 				EgressByteCount:   newu64(200),
@@ -126,7 +126,7 @@ var (
 				test.ServerProcessNodeID,
 				test.ServerHostNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata(),
+			Node: report.MakeNode(),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(210),
 				EgressByteCount:   newu64(2100),
@@ -143,7 +143,7 @@ var (
 				test.ServerHostNodeID,
 				test.NonContainerNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(render.TheInternetID),
+			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
 		unknownPseudoNode1ID: unknownPseudoNode1(report.MakeIDList(ServerProcessID)),
@@ -165,7 +165,7 @@ var (
 				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent("apache"),
+			Node: report.MakeNode().WithAdjacent("apache"),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(30),
 				EgressByteCount:   newu64(300),
@@ -182,7 +182,7 @@ var (
 				test.ServerProcessNodeID,
 				test.ServerHostNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata(),
+			Node: report.MakeNode(),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(210),
 				EgressByteCount:   newu64(2100),
@@ -199,7 +199,7 @@ var (
 				test.ServerHostNodeID,
 				test.NonContainerNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(render.TheInternetID),
+			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
 		unknownPseudoNode1ID: unknownPseudoNode1(report.MakeIDList("apache")),
@@ -223,7 +223,7 @@ var (
 				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(test.ServerContainerID),
+			Node: report.MakeNode().WithAdjacent(test.ServerContainerID),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(30),
 				EgressByteCount:   newu64(300),
@@ -242,7 +242,7 @@ var (
 				test.ServerProcessNodeID,
 				test.ServerHostNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata(),
+			Node: report.MakeNode(),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(210),
 				EgressByteCount:   newu64(2100),
@@ -259,7 +259,7 @@ var (
 				test.ServerHostNodeID,
 				test.NonContainerNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(render.TheInternetID),
+			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
 		render.TheInternetID: theInternetNode(report.MakeIDList(test.ServerContainerID)),
@@ -281,7 +281,7 @@ var (
 				test.ClientProcess2NodeID,
 				test.ClientHostNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(test.ServerContainerImageName),
+			Node: report.MakeNode().WithAdjacent(test.ServerContainerImageName),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(30),
 				EgressByteCount:   newu64(300),
@@ -299,7 +299,7 @@ var (
 				test.Server80NodeID,
 				test.ServerProcessNodeID,
 				test.ServerHostNodeID),
-			NodeMetadata: report.MakeNodeMetadata(),
+			Node: report.MakeNode(),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(210),
 				EgressByteCount:   newu64(2100),
@@ -316,7 +316,7 @@ var (
 				test.NonContainerProcessNodeID,
 				test.ServerHostNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(render.TheInternetID),
+			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
 		render.TheInternetID: theInternetNode(report.MakeIDList(test.ServerContainerImageName)),
@@ -338,7 +338,7 @@ var (
 				test.ServerHostNodeID,
 				test.ServerAddressNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata(),
+			Node: report.MakeNode(),
 			EdgeMetadata: report.EdgeMetadata{
 				MaxConnCountTCP: newu64(3),
 			},
@@ -353,7 +353,7 @@ var (
 				test.ClientHostNodeID,
 				test.ClientAddressNodeID,
 			),
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(ServerHostRenderedID),
+			Node: report.MakeNode().WithAdjacent(ServerHostRenderedID),
 			EdgeMetadata: report.EdgeMetadata{
 				MaxConnCountTCP: newu64(3),
 			},
@@ -362,7 +362,7 @@ var (
 			ID:           pseudoHostID1,
 			LabelMajor:   test.UnknownClient1IP,
 			Pseudo:       true,
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(ServerHostRenderedID),
+			Node:         report.MakeNode().WithAdjacent(ServerHostRenderedID),
 			EdgeMetadata: report.EdgeMetadata{},
 			Origins:      report.MakeIDList(test.UnknownAddress1NodeID, test.UnknownAddress2NodeID),
 		},
@@ -370,7 +370,7 @@ var (
 			ID:           pseudoHostID2,
 			LabelMajor:   test.UnknownClient3IP,
 			Pseudo:       true,
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(ServerHostRenderedID),
+			Node:         report.MakeNode().WithAdjacent(ServerHostRenderedID),
 			EdgeMetadata: report.EdgeMetadata{},
 			Origins:      report.MakeIDList(test.UnknownAddress3NodeID),
 		},
@@ -378,7 +378,7 @@ var (
 			ID:           render.TheInternetID,
 			LabelMajor:   render.TheInternetMajor,
 			Pseudo:       true,
-			NodeMetadata: report.MakeNodeMetadata().WithAdjacent(ServerHostRenderedID),
+			Node:         report.MakeNode().WithAdjacent(ServerHostRenderedID),
 			EdgeMetadata: report.EdgeMetadata{},
 			Origins:      report.MakeIDList(test.RandomAddressNodeID),
 		},

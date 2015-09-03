@@ -16,7 +16,7 @@ type RenderableNode struct {
 	Origins    report.IDList `json:"origins,omitempty"`     // Core node IDs that contributed information
 
 	report.EdgeMetadata `json:"metadata"` // Numeric sums
-	report.NodeMetadata
+	report.Node
 }
 
 // NewRenderableNode makes a new RenderableNode
@@ -29,7 +29,7 @@ func NewRenderableNode(id string) RenderableNode {
 		Pseudo:       false,
 		Origins:      report.MakeIDList(),
 		EdgeMetadata: report.EdgeMetadata{},
-		NodeMetadata: report.MakeNodeMetadata(),
+		Node:         report.MakeNode(),
 	}
 }
 
@@ -43,7 +43,7 @@ func NewRenderableNodeWith(id, major, minor, rank string, rn RenderableNode) Ren
 		Pseudo:       false,
 		Origins:      rn.Origins.Copy(),
 		EdgeMetadata: rn.EdgeMetadata.Copy(),
-		NodeMetadata: rn.NodeMetadata.Copy(),
+		Node:         rn.Node.Copy(),
 	}
 }
 
@@ -57,7 +57,7 @@ func NewDerivedNode(id string, node RenderableNode) RenderableNode {
 		Pseudo:       node.Pseudo,
 		Origins:      node.Origins.Copy(),
 		EdgeMetadata: node.EdgeMetadata.Copy(),
-		NodeMetadata: node.NodeMetadata.Copy(),
+		Node:         node.Node.Copy(),
 	}
 }
 
@@ -70,14 +70,14 @@ func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode 
 		Pseudo:       true,
 		Origins:      node.Origins.Copy(),
 		EdgeMetadata: node.EdgeMetadata.Copy(),
-		NodeMetadata: node.NodeMetadata.Copy(),
+		Node:         node.Node.Copy(),
 	}
 }
 
-// WithNodeMetadata creates a new RenderableNode based on rn, with n
-func (rn RenderableNode) WithNodeMetadata(n report.NodeMetadata) RenderableNode {
+// WithNode creates a new RenderableNode based on rn, with n
+func (rn RenderableNode) WithNode(n report.Node) RenderableNode {
 	result := rn.Copy()
-	result.NodeMetadata = result.NodeMetadata.Merge(n)
+	result.Node = result.Node.Merge(n)
 	return result
 }
 
@@ -103,7 +103,7 @@ func (rn RenderableNode) Merge(other RenderableNode) RenderableNode {
 
 	result.Origins = rn.Origins.Merge(other.Origins)
 	result.EdgeMetadata = rn.EdgeMetadata.Merge(other.EdgeMetadata)
-	result.NodeMetadata = rn.NodeMetadata.Merge(other.NodeMetadata)
+	result.Node = rn.Node.Merge(other.Node)
 
 	return result
 }
@@ -118,7 +118,7 @@ func (rn RenderableNode) Copy() RenderableNode {
 		Pseudo:       rn.Pseudo,
 		Origins:      rn.Origins.Copy(),
 		EdgeMetadata: rn.EdgeMetadata.Copy(),
-		NodeMetadata: rn.NodeMetadata.Copy(),
+		Node:         rn.Node.Copy(),
 	}
 }
 

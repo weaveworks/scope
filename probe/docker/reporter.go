@@ -6,7 +6,7 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-// Keys for use in NodeMetadata
+// Keys for use in Node
 const (
 	ImageID   = "docker_image_id"
 	ImageName = "docker_image_name"
@@ -39,7 +39,7 @@ func (r *Reporter) containerTopology() report.Topology {
 
 	r.registry.WalkContainers(func(c Container) {
 		nodeID := report.MakeContainerNodeID(r.scope, c.ID())
-		result.NodeMetadatas[nodeID] = c.GetNodeMetadata()
+		result.Nodes[nodeID] = c.GetNode()
 	})
 
 	return result
@@ -49,7 +49,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 	result := report.MakeTopology()
 
 	r.registry.WalkImages(func(image *docker_client.APIImages) {
-		nmd := report.MakeNodeMetadataWith(map[string]string{
+		nmd := report.MakeNodeWith(map[string]string{
 			ImageID: image.ID,
 		})
 		AddLabels(nmd, image.Labels)
@@ -59,7 +59,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 		}
 
 		nodeID := report.MakeContainerNodeID(r.scope, image.ID)
-		result.NodeMetadatas[nodeID] = nmd
+		result.Nodes[nodeID] = nmd
 	})
 
 	return result
