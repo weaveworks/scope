@@ -57,4 +57,4 @@ def hello():
 if __name__ == "__main__":
   logging.basicConfig(format='%(asctime)s %(levelname)s %(filename)s:%(lineno)d - %(message)s', level=logging.INFO)
   WSGIRequestHandler.protocol_version = "HTTP/1.1"
-  app.run(host="0.0.0.0", port=5000, debug=True)
+  app.run(host="0.0.0.0", port=80, debug=True)

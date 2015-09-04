@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-g -lpthread
 
-all: qotd.marker app.marker client.marker searchapp.marker shout.marker
+all: qotd.marker app.marker client.marker searchapp.marker shout.marker frontend.marker
 
 qotd/qotd: qotd/qotd.o
 	gcc -o $@ $< $(CFLAGS)
@@ -20,6 +20,7 @@ app.marker: app/*
 client.marker: client/*
 searchapp.marker: searchapp/* searchapp/searchapp
 shout.marker: shout/* shout/shout
+frontend.marker: frontend/*
 %.marker:
 	docker build -t tomwilkie/$(<D) $(<D)/
 	touch $@

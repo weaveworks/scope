@@ -10,9 +10,9 @@ make all
 # "architecture"
 
 ```
-curl -> app --> searchapp -> elasticsearch
-            |
-            --> qotd -> internet
-            |
-            --> redis
+curl -> frontend --> app --> searchapp -> elasticsearch
+         (nginx) |
+                 --> qotd -> internet
+                 |
+                 --> redis
 ```

@@ -3,21 +3,28 @@ import random
 import threading
 import time
 import logging
+import socket
 import sys
 
-app = 'http://app:5000/'
+frontend = 'frontend'
 concurrency = 2
+
+def do_request(s):
+  addrs = socket.getaddrinfo(frontend, 80)
+  if len(addrs) <= 0:
+    return
+  addr = random.choice(addrs)
+  s.get("http://%s:%d" % addr[4], timeout=1.0)
 
 def do_requests():
   s = requests.Session()
   while True:
     try:
-      s.get(app, timeout=1.0)
-      logging.info("Did request")
-      time.sleep(1)
+      do_request(s)
     except:
       logging.error("Error doing request", exc_info=sys.exc_info())
-      time.sleep(1)
+
+    time.sleep(1)
     logging.info("Did request")
 
 def main():
