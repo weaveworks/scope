@@ -212,7 +212,7 @@ var (
 			ID:         test.ClientContainerID,
 			LabelMajor: "client",
 			LabelMinor: test.ClientHostName,
-			Rank:       test.ClientContainerImageID,
+			Rank:       test.ClientContainerImageName,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
 				test.ClientContainerImageNodeID,
@@ -233,7 +233,7 @@ var (
 			ID:         test.ServerContainerID,
 			LabelMajor: "server",
 			LabelMinor: test.ServerHostName,
-			Rank:       test.ServerContainerImageID,
+			Rank:       test.ServerContainerImageName,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
 				test.ServerContainerImageNodeID,

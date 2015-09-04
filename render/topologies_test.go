@@ -26,7 +26,7 @@ func TestProcessNameRenderer(t *testing.T) {
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := expected.Sterilize(render.ContainerRenderer.Render(test.Report))
+	have := expected.Sterilize(render.ContainerWithImageNameRenderer{}.Render(test.Report))
 	want := expected.RenderedContainers
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))

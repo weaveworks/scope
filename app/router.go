@@ -137,7 +137,7 @@ var topologyRegistry = map[string]topologyView{
 	"containers": {
 		human:    "Containers",
 		parent:   "",
-		renderer: render.ContainerRenderer,
+		renderer: render.ContainerWithImageNameRenderer{},
 	},
 	"containers-by-image": {
 		human:    "by image",

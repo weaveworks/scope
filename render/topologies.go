@@ -123,6 +123,40 @@ var ContainerRenderer = MakeReduce(
 	},
 )
 
+// ContainerWithImageNameRenderer is a Renderer which produces a container
+// graph where the ranks are the image names, not their IDs
+type ContainerWithImageNameRenderer struct{}
+
+// Render produces a process graph where the minor labels contain the
+// container name, if found.
+func (r ContainerWithImageNameRenderer) Render(rpt report.Report) RenderableNodes {
+	containers := ContainerRenderer.Render(rpt)
+	images := Map{
+		MapFunc:  MapContainerImageIdentity,
+		Renderer: SelectContainerImage,
+	}.Render(rpt)
+
+	for id, c := range containers {
+		imageID, ok := c.Node.Metadata[docker.ImageID]
+		if !ok {
+			continue
+		}
+		image, ok := images[imageID]
+		if !ok {
+			continue
+		}
+		c.Rank = imageNameWithoutVersion(image.LabelMajor)
+		containers[id] = c
+	}
+
+	return containers
+}
+
+// EdgeMetadata produces an EdgeMetadata for a given edge.
+func (r ContainerWithImageNameRenderer) EdgeMetadata(rpt report.Report, localID, remoteID string) report.EdgeMetadata {
+	return ContainerRenderer.EdgeMetadata(rpt, localID, remoteID)
+}
+
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
 var ContainerImageRenderer = Map{

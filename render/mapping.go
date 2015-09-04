@@ -398,6 +398,14 @@ func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) Renderable
 	return RenderableNodes{id: result}
 }
 
+func imageNameWithoutVersion(name string) string {
+	parts := strings.SplitN(name, ":", 2)
+	if len(parts) == 2 {
+		return parts[0]
+	}
+	return name
+}
+
 // MapContainerImage2Name maps container images RenderableNodes to
 // RenderableNodes for each container image name.
 //
@@ -414,10 +422,7 @@ func MapContainerImage2Name(n RenderableNode, _ report.Networks) RenderableNodes
 		return RenderableNodes{}
 	}
 
-	parts := strings.SplitN(name, ":", 2)
-	if len(parts) == 2 {
-		name = parts[0]
-	}
+	name = imageNameWithoutVersion(name)
 
 	node := NewDerivedNode(name, n)
 	node.LabelMajor = name
