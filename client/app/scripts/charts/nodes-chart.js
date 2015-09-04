@@ -87,6 +87,7 @@ const NodesChart = React.createClass({
           label={node.label}
           pseudo={node.pseudo}
           subLabel={node.subLabel}
+          rank={node.rank}
           scale={scale}
           dx={node.x}
           dy={node.y}
