@@ -1,13 +1,12 @@
 const React = require('react');
-const tweenState = require('react-tween-state');
+const Spring = require('react-motion').Spring;
 
 const AppActions = require('../actions/app-actions');
 const NodeColorMixin = require('../mixins/node-color-mixin');
 
 const Node = React.createClass({
   mixins: [
-    NodeColorMixin,
-    tweenState.Mixin
+    NodeColorMixin
   ],
 
   getInitialState: function() {
@@ -17,30 +16,8 @@ const Node = React.createClass({
     };
   },
 
-  componentWillMount: function() {
-    // initial node position when rendered the first time
-    this.setState({
-      x: this.props.dx,
-      y: this.props.dy
-    });
-  },
-
-  componentWillReceiveProps: function(nextProps) {
-    // animate node transition to next position
-    this.tweenState('x', {
-      easing: tweenState.easingTypes.easeInOutQuad,
-      duration: 500,
-      endValue: nextProps.dx
-    });
-    this.tweenState('y', {
-      easing: tweenState.easingTypes.easeInOutQuad,
-      duration: 500,
-      endValue: nextProps.dy
-    });
-  },
-
   render: function() {
-    const transform = 'translate(' + this.getTweeningValue('x') + ',' + this.getTweeningValue('y') + ')';
+    const props = this.props;
     const scale = this.props.scale;
     const textOffsetX = 0;
     const textOffsetY = scale(0.5) + 18;
@@ -50,6 +27,7 @@ const Node = React.createClass({
     const onMouseEnter = this.handleMouseEnter;
     const onMouseLeave = this.handleMouseLeave;
     const classNames = ['node'];
+    const ellipsis = this.ellipsis;
 
     if (this.props.highlighted) {
       classNames.push('highlighted');
@@ -60,19 +38,26 @@ const Node = React.createClass({
     }
 
     return (
-      <g className={classNames.join(' ')} transform={transform} id={this.props.id}
-        onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-        {this.props.highlighted && <circle r={scale(0.7)} className="highlighted"></circle>}
-        <circle r={scale(0.5)} className="border" stroke={color}></circle>
-        <circle r={scale(0.45)} className="shadow"></circle>
-        <circle r={Math.max(2, scale(0.125))} className="node"></circle>
-        <text className="node-label" textAnchor="middle" x={textOffsetX} y={textOffsetY}>
-          {this.ellipsis(this.props.label, 14)}
-        </text>
-        <text className="node-sublabel" textAnchor="middle" x={textOffsetX} y={textOffsetY + 17}>
-          {this.ellipsis(this.props.subLabel, 12)}
-        </text>
-      </g>
+      <Spring endValue={{x: this.props.dx, y: this.props.dy}}>
+        {function(interpolated) {
+          const transform = 'translate(' + interpolated.x + ',' + interpolated.y + ')';
+          return (
+            <g className={classNames.join(' ')} transform={transform} id={props.id}
+              onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+              {props.highlighted && <circle r={scale(0.7)} className="highlighted"></circle>}
+              <circle r={scale(0.5)} className="border" stroke={color}></circle>
+              <circle r={scale(0.45)} className="shadow"></circle>
+              <circle r={Math.max(2, scale(0.125))} className="node"></circle>
+              <text className="node-label" textAnchor="middle" x={textOffsetX} y={textOffsetY}>
+                {ellipsis(props.label, 14)}
+              </text>
+              <text className="node-sublabel" textAnchor="middle" x={textOffsetX} y={textOffsetY + 17}>
+                {ellipsis(props.subLabel, 12)}
+              </text>
+            </g>
+          );
+        }}
+      </Spring>
     );
   },
 
