@@ -1,3 +1,73 @@
+## Release 0.7.0
+
+New features:
+- Show short-lived connections in the containers view.
+  [#356](https://github.com/weaveworks/scope/issues/356)
+  [#447](https://github.com/weaveworks/scope/issues/447)
+- Details pane:
+  1. Add more information:
+    - Docker labels.
+      [#400](https://github.com/weaveworks/scope/pull/400)
+    - Weave IPs/hostnames/MACs and Docker IPs.
+      [#394](https://github.com/weaveworks/scope/pull/394)
+      [#396](https://github.com/weaveworks/scope/pull/396)
+    - Host/container context when ambiguous.
+      [#387](https://github.com/weaveworks/scope/pull/387)
+  2. Present it in a more intuitive way:
+    - Show hostnames instead of IPs when possible.
+      [#404](https://github.com/weaveworks/scope/pull/404)
+      [#451](https://github.com/weaveworks/scope/pull/451)
+    - Merge all the connection-related information into a single table.
+      [#322](https://github.com/weaveworks/scope/issues/322)
+    - Include relevant information in the table titles.
+      [#387](https://github.com/weaveworks/scope/pull/387)
+    - Stop including empty fields.
+      [#370](https://github.com/weaveworks/scope/issues/370)
+- Allow filtering out system containers (e.g. Weave and Scope containers) and
+  unconnected containers. System containers are filtered out by default.
+  [#420](https://github.com/weaveworks/scope/pull/420)
+  [#337](https://github.com/weaveworks/scope/issues/337)
+  [#454](https://github.com/weaveworks/scope/issues/454)
+  [#457](https://github.com/weaveworks/scope/issues/457)
+- Improve rendering by making edges' directions flow from client to server.
+  [#355](https://github.com/weaveworks/scope/pull/355)
+- Highlight selected node
+  [#473](https://github.com/weaveworks/scope/pull/473)
+- Animate Edges during UI transtions
+  [#445](https://github.com/weaveworks/scope/pull/445)
+- New status bar on the bottom left of the UI
+  [#487](https://github.com/weaveworks/scope/pull/487)
+- Show more information for pseudo nodes where possible - such as processes for uncontained, and connected to/from the internet.
+  [#249](https://github.com/weaveworks/scope/issues/249)
+  [#401](https://github.com/weaveworks/scope/pull/401)
+  [#426](https://github.com/weaveworks/scope/pull/426)
+- Truncate node names and text in the details pane.
+  [#429](https://github.com/weaveworks/scope/pull/429)
+  [#430](https://github.com/weaveworks/scope/pull/430)
+- Amazon ECS: Stop displaying mangled container names, display the original Container Definition name instead.
+  [#456](https://github.com/weaveworks/scope/pull/456)
+- Annotate processes in containers with the container name, in the *Applications* view.
+  [#331](https://github.com/weaveworks/scope/issues/331)
+- Improve graph transitions between updates.
+  [#379](https://github.com/weaveworks/scope/pull/379)
+- Reduce CPU usage of Scope probes
+  [#470](https://github.com/weaveworks/scope/pull/470)
+  [#484](https://github.com/weaveworks/scope/pull/484)
+- Make report propagation more reliable
+  [#459](https://github.com/weaveworks/scope/pull/459)
+- Support Weave 1.1 status interface
+  [#389](https://github.com/weaveworks/scope/pull/389)
+
+Bug fixes:
+- *Trying to reconnect..* in UI even though its connected.
+  [#392](https://github.com/weaveworks/scope/pull/392)
+- The *Applications* view goes blank after a few seconds.
+  [#442](https://github.com/weaveworks/scope/pull/442)
+- Frequently getting disconnected lines in UI
+  [#460](https://github.com/weaveworks/scope/issues/460)
+- Panic due to closing request body
+  [#480](https://github.com/weaveworks/scope/pull/480)
+
 ## Release 0.6.0
 
 New features:
