@@ -11,7 +11,7 @@ describe('AppStore', function() {
     n1: {
       id: 'n1',
       rank: undefined,
-      adjacency: undefined,
+      adjacency: ['n1', 'n2'],
       pseudo: undefined,
       label_major: undefined,
       label_minor: undefined
@@ -64,10 +64,22 @@ describe('AppStore', function() {
     type: ActionTypes.RECEIVE_NODES_DELTA,
     delta: {
       add: [{
-        id: 'n1'
+        id: 'n1',
+        adjacency: ['n1', 'n2']
       }, {
         id: 'n2'
       }]
+    }
+  };
+
+  const ReceiveNodesDeltaUpdateAction = {
+    type: ActionTypes.RECEIVE_NODES_DELTA,
+    delta: {
+      update: [{
+        id: 'n1',
+        adjacency: ['n1']
+      }],
+      remove: ['n2']
     }
   };
 
@@ -119,6 +131,15 @@ describe('AppStore', function() {
     expect(AppStore.getTopologies().length).toBe(1);
     expect(AppStore.getCurrentTopology().name).toBe('topo 1 grouped');
     expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1-grouped');
+  });
+
+  // nodes delta
+
+  it('replaces adjacency on update', function() {
+    registeredCallback(ReceiveNodesDeltaAction);
+    expect(AppStore.getNodes().toJS().n1.adjacency).toEqual(['n1', 'n2']);
+    registeredCallback(ReceiveNodesDeltaUpdateAction);
+    expect(AppStore.getNodes().toJS().n1.adjacency).toEqual(['n1']);
   });
 
   // browsing

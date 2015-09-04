@@ -247,7 +247,7 @@ AppStore.registeredCallback = function(payload) {
 
       // update existing nodes
       _.each(payload.delta.update, function(node) {
-        nodes = nodes.set(node.id, nodes.get(node.id).mergeDeep(makeNode(node)));
+        nodes = nodes.set(node.id, nodes.get(node.id).merge(makeNode(node)));
       });
 
       // add new nodes
