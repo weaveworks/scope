@@ -38,7 +38,7 @@ $(PROBE_EXE): probe/*.go probe/docker/*.go probe/endpoint/*.go probe/host/*.go p
 
 $(APP_EXE) $(PROBE_EXE):
 	go get -d -tags netgo ./$(@D)
-	go build -ldflags "-extldflags \"-static\" -X main.version $(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
+	go build -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
 	        echo "\nYour go standard library was built without the 'netgo' build tag."; \
@@ -81,7 +81,7 @@ clean:
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) $(APP_EXE) $(PROBE_EXE) client/build/app.js
 
 deps:
-	go get \
+	go get -tags netgo \
 		github.com/jwilder/docker-squash \
 		github.com/golang/lint/golint \
 		github.com/fzipp/gocyclo \
