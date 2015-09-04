@@ -13,8 +13,8 @@ const line = d3.svg.line()
 const flattenPoints = function(points) {
   const flattened = {};
   points.forEach(function(point, i) {
-    flattened['x' + i] = point.x;
-    flattened['y' + i] = point.y;
+    flattened['x' + i] = {val: point.x};
+    flattened['y' + i] = {val: point.y};
   });
   return flattened;
 };
@@ -27,7 +27,7 @@ const extractPoints = function(points) {
     if (!extracted[index]) {
       extracted[index] = {};
     }
-    extracted[index][axis] = value;
+    extracted[index][axis] = value.val;
   });
   return extracted;
 };
@@ -35,7 +35,17 @@ const extractPoints = function(points) {
 const Edge = React.createClass({
 
   getInitialState: function() {
-    return flattenPoints(this.props.points);
+    return {
+      points: []
+    };
+  },
+
+  componentWillMount: function() {
+    this.ensureSameLength(this.props.points);
+  },
+
+  componentWillReceiveProps: function(nextProps) {
+    this.ensureSameLength(nextProps.points);
   },
 
   render: function() {
@@ -58,6 +68,19 @@ const Edge = React.createClass({
         }}
       </Spring>
     );
+  },
+
+  ensureSameLength: function(points) {
+    // Spring needs constant list length, hoping that dagre will insert never more than 10
+    const length = 10;
+    let missing = length - points.length;
+
+    while (missing) {
+      points.unshift(points[0]);
+      missing = length - points.length;
+    }
+
+    return points;
   },
 
   handleMouseEnter: function(ev) {

@@ -9,13 +9,6 @@ const Node = React.createClass({
     NodeColorMixin
   ],
 
-  getInitialState: function() {
-    return {
-      x: 0,
-      y: 0
-    };
-  },
-
   render: function() {
     const props = this.props;
     const scale = this.props.scale;
@@ -38,9 +31,9 @@ const Node = React.createClass({
     }
 
     return (
-      <Spring endValue={{x: this.props.dx, y: this.props.dy}}>
+      <Spring endValue={{x: {val: this.props.dx}, y: {val: this.props.dy}}}>
         {function(interpolated) {
-          const transform = 'translate(' + interpolated.x + ',' + interpolated.y + ')';
+          const transform = 'translate(' + interpolated.x.val + ',' + interpolated.y.val + ')';
           return (
             <g className={classNames.join(' ')} transform={transform} id={props.id}
               onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
