@@ -45,9 +45,16 @@ func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNode
 		return RenderableNodes{}
 	}
 
+	// We need to filter out short lived connections from this view,
+	// if they don't also have a pid; see #447
+	pid, pidOK := m.Metadata[process.PID]
+	_, conntracked := m.Metadata[endpoint.Conntracked]
+	if !pidOK && conntracked {
+		return RenderableNodes{}
+	}
+
 	// Nodes without a hostid are treated as psuedo nodes
-	_, ok = m.Metadata[report.HostNodeID]
-	if !ok {
+	if _, ok = m.Metadata[report.HostNodeID]; !ok {
 		// If the dstNodeAddr is not in a network local to this report, we emit an
 		// internet node
 		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
@@ -80,7 +87,7 @@ func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNode
 		rank  = major
 	)
 
-	if pid, ok := m.Metadata[process.PID]; ok {
+	if pidOK {
 		minor = fmt.Sprintf("%s (%s)", minor, pid)
 	}
 
