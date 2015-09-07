@@ -6,6 +6,7 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -199,12 +200,13 @@ var (
 					report.HostNodeID:    ClientHostNodeID,
 				}),
 				ServerContainerNodeID: report.MakeNodeWith(map[string]string{
-					docker.ContainerID:          ServerContainerID,
-					docker.ContainerName:        "server",
-					docker.ImageID:              ServerContainerImageID,
-					report.HostNodeID:           ServerHostNodeID,
-					docker.LabelPrefix + "foo1": "bar1",
-					docker.LabelPrefix + "foo2": "bar2",
+					docker.ContainerID:                                      ServerContainerID,
+					docker.ContainerName:                                    "task-name-5-server-aceb93e2f2b797caba01",
+					docker.ImageID:                                          ServerContainerImageID,
+					report.HostNodeID:                                       ServerHostNodeID,
+					docker.LabelPrefix + render.AmazonECSContainerNameLabel: "server",
+					docker.LabelPrefix + "foo1":                             "bar1",
+					docker.LabelPrefix + "foo2":                             "bar2",
 				}),
 			},
 		},

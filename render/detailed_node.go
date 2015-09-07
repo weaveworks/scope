@@ -334,7 +334,7 @@ func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 
 	var (
 		title           = "Container"
-		name, nameFound = nmd.Metadata[docker.ContainerName]
+		name, nameFound = GetRenderableContainerName(nmd)
 	)
 	if nameFound {
 		title += ` "` + name + `"`

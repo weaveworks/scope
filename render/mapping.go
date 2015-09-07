@@ -23,6 +23,8 @@ const (
 
 	containersKey = "containers"
 	processesKey  = "processes"
+
+	AmazonECSContainerNameLabel = "com.amazonaws.ecs.container-name"
 )
 
 // MapFunc is anything which can take an arbitrary RenderableNode and
@@ -123,9 +125,9 @@ func MapContainerIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	}
 
 	var (
-		major = m.Metadata[docker.ContainerName]
-		minor = report.ExtractHostID(m.Node)
-		rank  = m.Metadata[docker.ImageID]
+		major, _ = GetRenderableContainerName(m.Node)
+		minor    = report.ExtractHostID(m.Node)
+		rank     = m.Metadata[docker.ImageID]
 	)
 
 	node := NewRenderableNodeWith(id, major, minor, rank, m)
@@ -134,6 +136,22 @@ func MapContainerIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 		node.Origins = node.Origins.Add(report.MakeContainerNodeID(scope, imageID))
 	}
 	return RenderableNodes{id: node}
+}
+
+// GetRenderableContainerName obtains a user-friendly container name, to render in the UI
+func GetRenderableContainerName(nmd report.Node) (string, bool) {
+	// Amazon's ecs-agent produces huge Docker container names, destructively
+	// derived from mangling Container Definition names in Task
+	// Definitions.
+	//
+	// However, the ecs-agent provides a label containing the original Container
+	// Definition name.
+	if labelValue, ok := nmd.Metadata[docker.LabelPrefix+AmazonECSContainerNameLabel]; ok {
+		return labelValue, true
+	}
+
+	name, ok := nmd.Metadata[docker.ContainerName]
+	return name, ok
 }
 
 // MapContainerImageIdentity maps a container image topology node to container
