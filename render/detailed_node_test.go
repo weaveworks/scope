@@ -103,7 +103,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			},
 			{
 				Title:   "Connections",
-				Numeric: true,
+				Numeric: false,
 				Rank:    0,
 				Rows: []render.Row{
 					{
@@ -179,7 +179,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 			},
 			{
 				Title:   "Connections",
-				Numeric: true,
+				Numeric: false,
 				Rank:    0,
 				Rows: []render.Row{
 					{"Egress packet rate", "105", "packets/sec", false},
