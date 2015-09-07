@@ -180,7 +180,12 @@ func connectionsTable(connections []Row, r report.Report, n RenderableNode) (Tab
 		rows = append(rows, connections...)
 	}
 	if len(rows) > 0 {
-		return Table{"Connections", true, connectionsRank, rows}, true
+		return Table{
+			Title:   "Connections",
+			Numeric: false,
+			Rank:    connectionsRank,
+			Rows:    rows,
+		}, true
 	}
 	return Table{}, false
 }
@@ -249,6 +254,7 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 		rows = append(rows, Row{
 			Key:        remote,
 			ValueMajor: local,
+			ValueMinor: "",
 			Expandable: true,
 		})
 	}
