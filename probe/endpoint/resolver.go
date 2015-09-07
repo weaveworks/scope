@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -13,6 +14,8 @@ const (
 	rAddrBacklog         = 1000
 	rAddrCacheExpiration = 30 * time.Minute
 )
+
+var errNotFound = fmt.Errorf("Not found")
 
 type revResFunc func(addr string) (names []string, err error)
 
@@ -42,8 +45,11 @@ func NewReverseResolver() *ReverseResolver {
 // possible names that can be obtained for that IP.
 func (r *ReverseResolver) Get(address string) (string, error) {
 	val, err := r.cache.Get(address)
-	if err == nil {
-		return val.(string), nil
+	if hostname, ok := val.(string); err == nil && ok {
+		return hostname, nil
+	}
+	if _, ok := val.(struct{}); err == nil && ok {
+		return "", errNotFound
 	}
 	if err == gcache.NotFoundKeyError {
 		// We trigger a asynchronous reverse resolution when not cached
@@ -52,20 +58,22 @@ func (r *ReverseResolver) Get(address string) (string, error) {
 		default:
 		}
 	}
-	return "", err
+	return "", errNotFound
 }
 
 func (r *ReverseResolver) loop() {
 	for request := range r.addresses {
-		<-r.Throttle // rate limit our DNS resolutions
-		// and check if the answer is already in the cache
+		// check if the answer is already in the cache
 		if _, err := r.cache.Get(request); err == nil {
 			continue
 		}
+		<-r.Throttle // rate limit our DNS resolutions
 		names, err := r.Resolver(request)
 		if err == nil && len(names) > 0 {
 			name := strings.TrimRight(names[0], ".")
 			r.cache.Set(request, name)
+		} else {
+			r.cache.Set(request, struct{}{})
 		}
 	}
 }
