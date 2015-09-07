@@ -102,3 +102,4 @@ func TestMultiPublisher(t *testing.T) {
 type mockPublisher struct{ count int }
 
 func (p *mockPublisher) Publish(report.Report) error { p.count++; return nil }
+func (p *mockPublisher) Stop()                       {}

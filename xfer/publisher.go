@@ -17,6 +17,7 @@ import (
 // Publisher is something which can send a report to a remote collector.
 type Publisher interface {
 	Publish(report.Report) error
+	Stop()
 }
 
 // HTTPPublisher publishes reports by POST to a fixed endpoint.
@@ -83,10 +84,55 @@ func (p HTTPPublisher) Publish(rpt report.Report) error {
 	return nil
 }
 
+// Stop implements Publisher
+func (p HTTPPublisher) Stop() {}
+
 // AuthorizationHeader returns a value suitable for an HTTP Authorization
 // header, based on the passed token string.
 func AuthorizationHeader(token string) string {
 	return fmt.Sprintf("Scope-Probe token=%s", token)
+}
+
+// BackgroundPublisher is a publisher which does the publish asynchronously.
+// It will only do one publish at once; if there is an ongoing publish,
+// concurrent publishes are dropped.
+type BackgroundPublisher struct {
+	publisher Publisher
+	reports   chan report.Report
+}
+
+// NewBackgroundPublisher creates a new BackgroundPublisher with the given publisher
+func NewBackgroundPublisher(p Publisher) *BackgroundPublisher {
+	result := &BackgroundPublisher{
+		publisher: p,
+		reports:   make(chan report.Report),
+	}
+	go result.loop()
+	return result
+}
+
+func (b *BackgroundPublisher) loop() {
+	for r := range b.reports {
+		if err := b.publisher.Publish(r); err != nil {
+			log.Printf("Error publishing: %v", err)
+		}
+	}
+}
+
+// Publish implements Publisher
+func (b *BackgroundPublisher) Publish(r report.Report) error {
+	select {
+	case b.reports <- r:
+		return nil
+	default:
+		return fmt.Errorf("Dropping report - can't push fast enough")
+	}
+}
+
+// Stop implements Publisher
+func (b *BackgroundPublisher) Stop() {
+	close(b.reports)
+	b.publisher.Stop()
 }
 
 // MultiPublisher implements Publisher over a set of publishers.
@@ -141,4 +187,14 @@ func (p *MultiPublisher) Publish(rpt report.Report) error {
 		return fmt.Errorf(strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+// Stop implements Publisher
+func (p *MultiPublisher) Stop() {
+	p.mtx.RLock()
+	defer p.mtx.RUnlock()
+
+	for _, publisher := range p.m {
+		publisher.Stop()
+	}
 }
