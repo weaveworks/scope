@@ -14,8 +14,9 @@ import (
 
 // Node metadata keys.
 const (
-	Addr = "addr" // typically IPv4
-	Port = "port"
+	Addr        = "addr" // typically IPv4
+	Port        = "port"
+	Conntracked = "conntracked"
 )
 
 // Reporter generates Reports containing the Endpoint topology.
@@ -105,18 +106,27 @@ func (r *Reporter) Report() (report.Report, error) {
 			localAddr  = conn.LocalAddress.String()
 			remoteAddr = conn.RemoteAddress.String()
 		)
-		r.addConnection(&rpt, localAddr, remoteAddr, localPort, remotePort, &conn.Proc)
+		extraNodeInfo := report.MakeNode()
+		if conn.Proc.PID > 0 {
+			extraNodeInfo = extraNodeInfo.WithMetadata(report.Metadata{
+				process.PID: strconv.FormatUint(uint64(conn.Proc.PID), 10),
+			})
+		}
+		r.addConnection(&rpt, localAddr, remoteAddr, localPort, remotePort, &extraNodeInfo, nil)
 	}
 
 	if r.conntracker != nil {
+		extraNodeInfo := report.MakeNode().WithMetadata(report.Metadata{
+			Conntracked: "true",
+		})
 		r.conntracker.WalkFlows(func(f Flow) {
 			var (
-				localPort  = f.Original.Layer4.SrcPort
-				remotePort = f.Original.Layer4.DstPort
+				localPort  = uint16(f.Original.Layer4.SrcPort)
+				remotePort = uint16(f.Original.Layer4.DstPort)
 				localAddr  = f.Original.Layer3.SrcIP
 				remoteAddr = f.Original.Layer3.DstIP
 			)
-			r.addConnection(&rpt, localAddr, remoteAddr, uint16(localPort), uint16(remotePort), nil)
+			r.addConnection(&rpt, localAddr, remoteAddr, localPort, remotePort, &extraNodeInfo, &extraNodeInfo)
 		})
 	}
 
@@ -127,7 +137,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	return rpt, err
 }
 
-func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr string, localPort, remotePort uint16, proc *procspy.Proc) {
+func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr string, localPort, remotePort uint16, extraLocalNode, extraRemoteNode *report.Node) {
 	var (
 		localIsClient = int(localPort) > int(remotePort)
 		hostNodeID    = report.MakeHostNodeID(r.hostID)
@@ -209,10 +219,12 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			})
 		}
 
-		if proc != nil && proc.PID > 0 {
-			localNode.Metadata[process.PID] = strconv.FormatUint(uint64(proc.PID), 10)
+		if extraLocalNode != nil {
+			localNode = localNode.Merge(*extraLocalNode)
 		}
-
+		if extraRemoteNode != nil {
+			remoteNode = remoteNode.Merge(*extraRemoteNode)
+		}
 		rpt.Endpoint = rpt.Endpoint.WithNode(localEndpointNodeID, localNode)
 		rpt.Endpoint = rpt.Endpoint.WithNode(remoteEndpointNodeID, remoteNode)
 	}
