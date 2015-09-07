@@ -43,7 +43,7 @@ function makeNode(node) {
 
 // Initial values
 
-let activeTopologyOptions = {};
+let activeTopologyOptions = null;
 let currentTopology = null;
 let currentTopologyId = 'containers';
 let errorUrl = null;
@@ -62,8 +62,8 @@ function setTopology(topologyId) {
 }
 
 function setDefaultTopologyOptions() {
-  activeTopologyOptions = {};
   if (currentTopology) {
+    activeTopologyOptions = {};
     _.each(currentTopology.options, function(items, option) {
       _.each(items, function(item) {
         if (item.default === true) {
@@ -301,7 +301,10 @@ AppStore.registeredCallback = function(payload) {
       topologies = payload.topologies;
       if (!currentTopology) {
         setTopology(currentTopologyId);
-        setDefaultTopologyOptions();
+        // only set on first load
+        if (activeTopologyOptions === null) {
+          setDefaultTopologyOptions();
+        }
       }
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;

@@ -178,6 +178,34 @@ describe('AppStore', function() {
     expect(AppStore.getAppState().topologyOptions.option1).toBeUndefined();
   });
 
+  it('sets topology options from route', function() {
+    RouteAction.state = {
+      "topologyId":"topo1",
+      "selectedNodeId": null,
+      "topologyOptions": {'option1': 'on'}};
+    registeredCallback(RouteAction);
+    expect(AppStore.getActiveTopologyOptions().option1).toBe('on');
+    expect(AppStore.getAppState().topologyOptions.option1).toBe('on');
+
+    // stay same after topos have been received
+    registeredCallback(ReceiveTopologiesAction);
+    registeredCallback(ClickTopologyAction);
+    expect(AppStore.getActiveTopologyOptions().option1).toBe('on');
+    expect(AppStore.getAppState().topologyOptions.option1).toBe('on');
+  });
+
+  it('uses default topology options from route', function() {
+    RouteAction.state = {
+      "topologyId":"topo1",
+      "selectedNodeId": null,
+      "topologyOptions": null};
+    registeredCallback(RouteAction);
+    registeredCallback(ReceiveTopologiesAction);
+    registeredCallback(ClickTopologyAction);
+    expect(AppStore.getActiveTopologyOptions().option1).toBe('off');
+    expect(AppStore.getAppState().topologyOptions.option1).toBe('off');
+  });
+
   // nodes delta
 
   it('replaces adjacency on update', function() {
