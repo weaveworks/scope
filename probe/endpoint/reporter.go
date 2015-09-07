@@ -55,7 +55,7 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		err                    error
 	)
 	if conntrackModulePresent && useConntrack {
-		conntracker, err = NewConntracker()
+		conntracker, err = NewConntracker(true)
 		if err != nil {
 			log.Printf("Failed to start conntracker: %v", err)
 		}

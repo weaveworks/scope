@@ -21,7 +21,7 @@ type natmapper struct {
 }
 
 func newNATMapper() (*natmapper, error) {
-	ct, err := NewConntracker("--any-nat")
+	ct, err := NewConntracker(true, "--any-nat")
 	if err != nil {
 		return nil, err
 	}
