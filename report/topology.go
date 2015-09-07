@@ -6,9 +6,9 @@ import (
 )
 
 // Topology describes a specific view of a network. It consists of nodes and
-// edges, and metadata about those nodes and edges, represented by EdgeMetadatas
-// and Nodes respectively.  Edges are directional, and embedded in the
-// Node struct.
+// edges, and metadata about those nodes and edges, represented by
+// EdgeMetadatas and Nodes respectively. Edges are directional, and embedded
+// in the Node struct.
 type Topology struct {
 	Nodes
 }
@@ -20,8 +20,9 @@ func MakeTopology() Topology {
 	}
 }
 
-// WithNode produces a topology from t, with nmd added under key nodeID; if a node already exists
-// for this key, nmd is merged with that node.  NB A fresh topology is returned.
+// WithNode produces a topology from t, with nmd added under key nodeID; if a
+// node already exists for this key, nmd is merged with that node. Note that a
+// fresh topology is returned.
 func (t Topology) WithNode(nodeID string, nmd Node) Topology {
 	if existing, ok := t.Nodes[nodeID]; ok {
 		nmd = nmd.Merge(existing)
@@ -70,9 +71,9 @@ func (n Nodes) Merge(other Nodes) Nodes {
 	return cp
 }
 
-// Node describes a superset of the metadata that probes can collect
-// about a given node in a given topology, along with the edges emanating
-// from the node and metadata about those edges.
+// Node describes a superset of the metadata that probes can collect about a
+// given node in a given topology, along with the edges emanating from the
+// node and metadata about those edges.
 type Node struct {
 	Metadata  `json:"-"`
 	Counters  `json:"-"`
@@ -102,20 +103,21 @@ func (n Node) WithMetadata(m map[string]string) Node {
 	return result
 }
 
-// AddMetadata returns a fresh copy of n, with Metadata set to the merge of n and the metadata provided
+// AddMetadata returns a fresh copy of n, with Metadata set to the merge of n
+// and the metadata provided.
 func (n Node) AddMetadata(m map[string]string) Node {
 	additional := MakeNodeWith(m)
 	return n.Merge(additional)
 }
 
-// WithCounters returns a fresh copy of n, with Counters set to c
+// WithCounters returns a fresh copy of n, with Counters set to c.
 func (n Node) WithCounters(c map[string]int) Node {
 	result := n.Copy()
 	result.Counters = c
 	return result
 }
 
-// WithAdjacency returns a fresh copy of n, with Adjacency set to a
+// WithAdjacency returns a fresh copy of n, with Adjacency set to a.
 func (n Node) WithAdjacency(a IDList) Node {
 	result := n.Copy()
 	result.Adjacency = a
@@ -129,7 +131,8 @@ func (n Node) WithAdjacent(a string) Node {
 	return result
 }
 
-// WithEdge returns a fresh copy of n, with 'dst' added to Adjacency and md added to EdgeMetadata
+// WithEdge returns a fresh copy of n, with 'dst' added to Adjacency and md
+// added to EdgeMetadata.
 func (n Node) WithEdge(dst string, md EdgeMetadata) Node {
 	result := n.Copy()
 	result.Adjacency = result.Adjacency.Add(dst)
@@ -158,7 +161,7 @@ func (n Node) Merge(other Node) Node {
 	return cp
 }
 
-// Metadata is a string->string map
+// Metadata is a string->string map.
 type Metadata map[string]string
 
 // Merge merges two node metadata maps together. In case of conflict, the
@@ -172,7 +175,7 @@ func (m Metadata) Merge(other Metadata) Metadata {
 	return result
 }
 
-// Copy creates a deep copy of the Metadata
+// Copy creates a deep copy of the Metadata.
 func (m Metadata) Copy() Metadata {
 	result := Metadata{}
 	for k, v := range m {
@@ -181,11 +184,11 @@ func (m Metadata) Copy() Metadata {
 	return result
 }
 
-// Counters is a string->int map
+// Counters is a string->int map.
 type Counters map[string]int
 
-// Merge merges two sets of counters into a fresh set of counters,
-// summing values where appropriate
+// Merge merges two sets of counters into a fresh set of counters, summing
+// values where appropriate.
 func (c Counters) Merge(other Counters) Counters {
 	result := c.Copy()
 	for k, v := range other {
@@ -194,7 +197,7 @@ func (c Counters) Merge(other Counters) Counters {
 	return result
 }
 
-// Copy creates a deep copy of the Counters
+// Copy creates a deep copy of the Counters.
 func (c Counters) Copy() Counters {
 	result := Counters{}
 	for k, v := range c {
@@ -203,8 +206,8 @@ func (c Counters) Copy() Counters {
 	return result
 }
 
-// EdgeMetadatas collect metadata about each edge in a topology. Keys are
-// the remote node IDs, as in Adjacency.
+// EdgeMetadatas collect metadata about each edge in a topology. Keys are the
+// remote node IDs, as in Adjacency.
 type EdgeMetadatas map[string]EdgeMetadata
 
 // Copy returns a value copy of the EdgeMetadatas.

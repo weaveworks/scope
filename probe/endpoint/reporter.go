@@ -148,7 +148,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			})
 		)
 
-		// in case we have a reverse resolution for the IP, we can use it for the name...
+		// In case we have a reverse resolution for the IP, we can use it for
+		// the name...
 		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
 			remoteNode = remoteNode.AddMetadata(map[string]string{
 				"name": revRemoteName,
@@ -156,7 +157,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		}
 
 		if localIsClient {
-			// New nodes are merged into the report so we don't need to do any counting here; the merge does it for us.
+			// New nodes are merged into the report so we don't need to do any
+			// counting here; the merge does it for us.
 			localNode = localNode.WithEdge(remoteAddressNodeID, report.EdgeMetadata{
 				MaxConnCountTCP: newu64(1),
 			})
@@ -187,7 +189,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			})
 		)
 
-		// in case we have a reverse resolution for the IP, we can use it for the name...
+		// In case we have a reverse resolution for the IP, we can use it for
+		// the name...
 		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
 			remoteNode = remoteNode.AddMetadata(map[string]string{
 				"name": revRemoteName,
@@ -195,7 +198,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		}
 
 		if localIsClient {
-			// New nodes are merged into the report so we don't need to do any counting here; the merge does it for us.
+			// New nodes are merged into the report so we don't need to do any
+			// counting here; the merge does it for us.
 			localNode = localNode.WithEdge(remoteEndpointNodeID, report.EdgeMetadata{
 				MaxConnCountTCP: newu64(1),
 			})

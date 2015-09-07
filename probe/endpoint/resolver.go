@@ -16,7 +16,7 @@ const (
 
 type revResFunc func(addr string) (names []string, err error)
 
-// ReverseResolver is a caching, reverse resolver
+// ReverseResolver is a caching, reverse resolver.
 type ReverseResolver struct {
 	addresses chan string
 	cache     gcache.Cache
@@ -24,8 +24,8 @@ type ReverseResolver struct {
 	Resolver  revResFunc
 }
 
-// NewReverseResolver starts a new reverse resolver that
-// performs reverse resolutions and caches the result.
+// NewReverseResolver starts a new reverse resolver that performs reverse
+// resolutions and caches the result.
 func NewReverseResolver() *ReverseResolver {
 	r := ReverseResolver{
 		addresses: make(chan string, rAddrBacklog),
@@ -37,16 +37,16 @@ func NewReverseResolver() *ReverseResolver {
 	return &r
 }
 
-// Get the reverse resolution for an IP address if already in the cache,
-// a gcache.NotFoundKeyError error otherwise.
-// Note: it returns one of the possible names that can be obtained for that IP.
+// Get the reverse resolution for an IP address if already in the cache, a
+// gcache.NotFoundKeyError error otherwise. Note: it returns one of the
+// possible names that can be obtained for that IP.
 func (r *ReverseResolver) Get(address string) (string, error) {
 	val, err := r.cache.Get(address)
 	if err == nil {
 		return val.(string), nil
 	}
 	if err == gcache.NotFoundKeyError {
-		// we trigger a asynchronous reverse resolution when not cached
+		// We trigger a asynchronous reverse resolution when not cached
 		select {
 		case r.addresses <- address:
 		default:
@@ -70,7 +70,7 @@ func (r *ReverseResolver) loop() {
 	}
 }
 
-// Stop the async reverse resolver
+// Stop the async reverse resolver.
 func (r *ReverseResolver) Stop() {
 	close(r.addresses)
 }

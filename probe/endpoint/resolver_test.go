@@ -18,7 +18,7 @@ func TestReverseResolver(t *testing.T) {
 	revRes := NewReverseResolver()
 	defer revRes.Stop()
 
-	// use a mocked resolver function
+	// Use a mocked resolver function.
 	revRes.Resolver = func(addr string) (names []string, err error) {
 		if name, ok := tests[addr]; ok {
 			return []string{name}, nil
@@ -26,7 +26,7 @@ func TestReverseResolver(t *testing.T) {
 		return []string{}, errors.New("invalid IP")
 	}
 
-	// Up the rate limit so the test runs faster
+	// Up the rate limit so the test runs faster.
 	revRes.Throttle = time.Tick(time.Millisecond)
 
 	for ip, hostname := range tests {
