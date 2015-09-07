@@ -125,6 +125,15 @@ func (rn RenderableNode) Copy() RenderableNode {
 // RenderableNodes is a set of RenderableNodes
 type RenderableNodes map[string]RenderableNode
 
+// Copy produces a deep copy of the RenderableNodes
+func (rns RenderableNodes) Copy() RenderableNodes {
+	result := RenderableNodes{}
+	for key, value := range rns {
+		result[key] = value.Copy()
+	}
+	return result
+}
+
 // Merge merges two sets of RenderableNodes, returning a new set.
 func (rns RenderableNodes) Merge(other RenderableNodes) RenderableNodes {
 	result := RenderableNodes{}

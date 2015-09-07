@@ -211,8 +211,12 @@ const NodesChart = React.createClass({
 
     debug('graph layout took ' + timedLayouter.time + 'ms');
 
-    // adjust layout based on viewport
+    // layout was aborted
+    if (!graph) {
+      return;
+    }
 
+    // adjust layout based on viewport
     const xFactor = (props.width - MARGINS.left - MARGINS.right) / graph.width;
     const yFactor = props.height / graph.height;
     const zoomFactor = Math.min(xFactor, yFactor);

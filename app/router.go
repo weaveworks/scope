@@ -110,6 +110,14 @@ func captureTopology(rep xfer.Reporter, f func(xfer.Reporter, topologyView, http
 			http.NotFound(w, r)
 			return
 		}
+		for param, opts := range topology.options {
+			value := r.FormValue(param)
+			for _, opt := range opts {
+				if (value == "" && opt.def) || (opt.value != "" && opt.value == value) {
+					topology.renderer = opt.decorator(topology.renderer)
+				}
+			}
+		}
 		f(rep, topology, w, r)
 	}
 }
@@ -138,11 +146,19 @@ var topologyRegistry = map[string]topologyView{
 		human:    "Containers",
 		parent:   "",
 		renderer: render.ContainerWithImageNameRenderer{},
+		options: optionParams{"system": {
+			{"show", "Show system containers", false, nop},
+			{"hide", "Hide system containers", true, render.FilterSystem},
+		}},
 	},
 	"containers-by-image": {
 		human:    "by image",
 		parent:   "containers",
 		renderer: render.ContainerImageRenderer,
+		options: optionParams{"system": {
+			{"show", "Show system containers", false, nop},
+			{"hide", "Hide system containers", true, render.FilterSystem},
+		}},
 	},
 	"hosts": {
 		human:    "Hosts",
@@ -155,4 +171,16 @@ type topologyView struct {
 	human    string
 	parent   string
 	renderer render.Renderer
+	options  optionParams
 }
+
+type optionParams map[string][]optionValue // param: values
+
+type optionValue struct {
+	value     string // "hide"
+	human     string // "Hide system containers"
+	def       bool
+	decorator func(render.Renderer) render.Renderer
+}
+
+func nop(r render.Renderer) render.Renderer { return r }

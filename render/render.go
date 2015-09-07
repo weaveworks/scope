@@ -1,6 +1,9 @@
 package render
 
 import (
+	"strings"
+
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -124,7 +127,8 @@ func (m Map) EdgeMetadata(rpt report.Report, srcRenderableID, dstRenderableID st
 }
 
 // CustomRenderer allow for mapping functions that recived the entire topology
-// in one call - useful for functions that need to consider the entire graph
+// in one call - useful for functions that need to consider the entire graph.
+// We should minimise the use of this renderer type, as it is very inflexible.
 type CustomRenderer struct {
 	RenderFunc func(RenderableNodes) RenderableNodes
 	Renderer
@@ -135,68 +139,116 @@ func (c CustomRenderer) Render(rpt report.Report) RenderableNodes {
 	return c.RenderFunc(c.Renderer.Render(rpt))
 }
 
-// IsConnected is the key added to Node.Metadata by ColorConnected
-// to indicate a node has an edge pointing to it or from it
-const IsConnected = "is_connected"
-
-// OnlyConnected filters out unconnected RenderedNodes
-func OnlyConnected(input RenderableNodes) RenderableNodes {
-	output := RenderableNodes{}
-	for id, node := range ColorConnected(input) {
-		if _, ok := node.Node.Metadata[IsConnected]; ok {
-			output[id] = node
-		}
-	}
-	return output
-}
-
-// FilterUnconnected produces a renderer that filters unconnected nodes
-// from the given renderer
-func FilterUnconnected(r Renderer) Renderer {
-	return CustomRenderer{
-		RenderFunc: OnlyConnected,
-		Renderer:   r,
-	}
-}
-
 // ColorConnected colors nodes with the IsConnected key if
 // they have edges to or from them.
-func ColorConnected(input RenderableNodes) RenderableNodes {
-	connected := map[string]struct{}{}
-	void := struct{}{}
+func ColorConnected(r Renderer) Renderer {
+	return CustomRenderer{
+		Renderer: r,
+		RenderFunc: func(input RenderableNodes) RenderableNodes {
+			connected := map[string]struct{}{}
+			void := struct{}{}
 
-	for id, node := range input {
-		if len(node.Adjacency) == 0 {
-			continue
-		}
+			for id, node := range input {
+				if len(node.Adjacency) == 0 {
+					continue
+				}
 
-		connected[id] = void
-		for _, id := range node.Adjacency {
-			connected[id] = void
-		}
+				connected[id] = void
+				for _, id := range node.Adjacency {
+					connected[id] = void
+				}
+			}
+
+			for id := range connected {
+				node := input[id]
+				node.Metadata[IsConnected] = "true"
+				input[id] = node
+			}
+			return input
+		},
 	}
-
-	for id := range connected {
-		node := input[id]
-		node.Node.Metadata[IsConnected] = "true"
-		input[id] = node
-	}
-	return input
 }
 
 // Filter removes nodes from a view based on a predicate.
 type Filter struct {
 	Renderer
-	f func(RenderableNode) bool
+	FilterFunc func(RenderableNode) bool
 }
 
 // Render implements Renderer
 func (f Filter) Render(rpt report.Report) RenderableNodes {
 	output := RenderableNodes{}
 	for id, node := range f.Renderer.Render(rpt) {
-		if f.f(node) {
+		if f.FilterFunc(node) {
 			output[id] = node
 		}
 	}
+
+	// Deleted nodes also need to be cut as destinations in adjacency lists.
+	for id, node := range output {
+		newAdjacency := make(report.IDList, 0, len(node.Adjacency))
+		for _, dstID := range node.Adjacency {
+			if _, ok := output[dstID]; ok {
+				newAdjacency = newAdjacency.Add(dstID)
+			}
+		}
+		node.Adjacency = newAdjacency
+		output[id] = node
+	}
 	return output
+}
+
+// IsConnected is the key added to Node.Metadata by ColorConnected
+// to indicate a node has an edge pointing to it or from it
+const IsConnected = "is_connected"
+
+// FilterUnconnected produces a renderer that filters unconnected nodes
+// from the given renderer
+func FilterUnconnected(r Renderer) Renderer {
+	return Filter{
+		Renderer: ColorConnected(r),
+		FilterFunc: func(node RenderableNode) bool {
+			_, ok := node.Metadata[IsConnected]
+			return ok
+		},
+	}
+}
+
+// FilterSystem is a Renderer which filters out system nodes.
+func FilterSystem(r Renderer) Renderer {
+	return Filter{
+		Renderer: r,
+		FilterFunc: func(node RenderableNode) bool {
+			containerName := node.Metadata[docker.ContainerName]
+			if _, ok := systemContainerNames[containerName]; ok {
+				return false
+			}
+			imagePrefix := strings.SplitN(node.Metadata[docker.ImageName], ":", 2)[0] // :(
+			if _, ok := systemImagePrefixes[imagePrefix]; ok {
+				return false
+			}
+			if node.Metadata[docker.LabelPrefix+"works.weave.role"] == "system" {
+				return false
+			}
+			return true
+		},
+	}
+}
+
+var systemContainerNames = map[string]struct{}{
+	"weavescope": {},
+	"weavedns":   {},
+	"weave":      {},
+	"weaveproxy": {},
+	"weaveexec":  {},
+	"ecs-agent":  {},
+}
+
+var systemImagePrefixes = map[string]struct{}{
+	"weaveworks/scope":        {},
+	"weaveworks/weavedns":     {},
+	"weaveworks/weave":        {},
+	"weaveworks/weaveproxy":   {},
+	"weaveworks/weaveexec":    {},
+	"amazon/amazon-ecs-agent": {},
 }

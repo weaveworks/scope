@@ -5,6 +5,16 @@ let RouterUtils;
 let WebapiUtils;
 
 module.exports = {
+  changeTopologyOption: function(option, value) {
+    AppDispatcher.dispatch({
+      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+      option: option,
+      value: value
+    });
+    RouterUtils.updateRoute();
+    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl(), AppStore.getActiveTopologyOptions());
+  },
+
   clickCloseDetails: function() {
     AppDispatcher.dispatch({
       type: ActionTypes.CLICK_CLOSE_DETAILS
@@ -27,7 +37,7 @@ module.exports = {
       topologyId: topologyId
     });
     RouterUtils.updateRoute();
-    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
+    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl(), AppStore.getActiveTopologyOptions());
   },
 
   openWebsocket: function() {
@@ -96,7 +106,7 @@ module.exports = {
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies: topologies
     });
-    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
+    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl(), AppStore.getActiveTopologyOptions());
     WebapiUtils.getNodeDetails(AppStore.getCurrentTopologyUrl(), AppStore.getSelectedNodeId());
   },
 
@@ -119,7 +129,7 @@ module.exports = {
       state: state,
       type: ActionTypes.ROUTE_TOPOLOGY
     });
-    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl());
+    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl(), AppStore.getActiveTopologyOptions());
     WebapiUtils.getNodeDetails(AppStore.getCurrentTopologyUrl(), AppStore.getSelectedNodeId());
   }
 };

@@ -85,15 +85,12 @@ var ContainerRenderer = MakeReduce(
 		// but we need to be careful to ensure we only include each edge once, by only
 		// including the ProcessRenderer once.
 		Renderer: Filter{
-			f: func(n RenderableNode) bool {
+			FilterFunc: func(n RenderableNode) bool {
 				_, inContainer := n.Node.Metadata[docker.ContainerID]
 				_, isConnected := n.Node.Metadata[IsConnected]
 				return inContainer || isConnected
 			},
-			Renderer: CustomRenderer{
-				RenderFunc: ColorConnected,
-				Renderer:   ProcessRenderer,
-			},
+			Renderer: ColorConnected(ProcessRenderer),
 		},
 	},
 
