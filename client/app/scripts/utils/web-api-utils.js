@@ -19,6 +19,13 @@ let currentOptions = null;
 let topologyTimer = 0;
 let apiDetailsTimer = 0;
 
+
+function buildOptionsQuery(options) {
+  return _.map(options, function(value, param) {
+    return param + '=' + value;
+  }).join('&');
+}
+
 function createWebsocket(topologyUrl, optionsQuery) {
   if (socket) {
     socket.onclose = null;
@@ -77,9 +84,7 @@ function getTopologies() {
 }
 
 function getTopology(topologyUrl, options) {
-  const optionsQuery = _.map(options, function(value, param) {
-    return param + '=' + value;
-  }).join('&');
+  const optionsQuery = buildOptionsQuery(options);
 
   // only recreate websocket if url changed
   if (topologyUrl && (topologyUrl !== currentUrl || currentOptions !== optionsQuery)) {
@@ -89,9 +94,12 @@ function getTopology(topologyUrl, options) {
   }
 }
 
-function getNodeDetails(topologyUrl, nodeId) {
+function getNodeDetails(topologyUrl, nodeId, options) {
+  const optionsQuery = buildOptionsQuery(options);
+
   if (topologyUrl && nodeId) {
-    const url = [topologyUrl, encodeURIComponent(nodeId)].join('/').substr(1);
+    const url = [topologyUrl, '/', encodeURIComponent(nodeId), '?', optionsQuery]
+      .join('').substr(1);
     reqwest({
       url: url,
       success: function(res) {

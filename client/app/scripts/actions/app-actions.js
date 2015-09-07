@@ -12,7 +12,10 @@ module.exports = {
       value: value
     });
     RouterUtils.updateRoute();
-    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl(), AppStore.getActiveTopologyOptions());
+    WebapiUtils.getNodesDelta(
+      AppStore.getCurrentTopologyUrl(),
+      AppStore.getActiveTopologyOptions()
+    );
   },
 
   clickCloseDetails: function() {
@@ -28,7 +31,11 @@ module.exports = {
       nodeId: nodeId
     });
     RouterUtils.updateRoute();
-    WebapiUtils.getNodeDetails(AppStore.getCurrentTopologyUrl(), AppStore.getSelectedNodeId());
+    WebapiUtils.getNodeDetails(
+      AppStore.getCurrentTopologyUrl(),
+      AppStore.getSelectedNodeId(),
+      AppStore.getActiveTopologyOptions()
+    );
   },
 
   clickTopology: function(topologyId) {
@@ -37,7 +44,10 @@ module.exports = {
       topologyId: topologyId
     });
     RouterUtils.updateRoute();
-    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl(), AppStore.getActiveTopologyOptions());
+    WebapiUtils.getNodesDelta(
+      AppStore.getCurrentTopologyUrl(),
+      AppStore.getActiveTopologyOptions()
+    );
   },
 
   openWebsocket: function() {
@@ -106,8 +116,15 @@ module.exports = {
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies: topologies
     });
-    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl(), AppStore.getActiveTopologyOptions());
-    WebapiUtils.getNodeDetails(AppStore.getCurrentTopologyUrl(), AppStore.getSelectedNodeId());
+    WebapiUtils.getNodesDelta(
+      AppStore.getCurrentTopologyUrl(),
+      AppStore.getActiveTopologyOptions()
+    );
+    WebapiUtils.getNodeDetails(
+      AppStore.getCurrentTopologyUrl(),
+      AppStore.getSelectedNodeId(),
+      AppStore.getActiveTopologyOptions()
+    );
   },
 
   receiveApiDetails: function(apiDetails) {
@@ -129,8 +146,15 @@ module.exports = {
       state: state,
       type: ActionTypes.ROUTE_TOPOLOGY
     });
-    WebapiUtils.getNodesDelta(AppStore.getCurrentTopologyUrl(), AppStore.getActiveTopologyOptions());
-    WebapiUtils.getNodeDetails(AppStore.getCurrentTopologyUrl(), AppStore.getSelectedNodeId());
+    WebapiUtils.getNodesDelta(
+      AppStore.getCurrentTopologyUrl(),
+      AppStore.getActiveTopologyOptions()
+    );
+    WebapiUtils.getNodeDetails(
+      AppStore.getCurrentTopologyUrl(),
+      AppStore.getSelectedNodeId(),
+      AppStore.getActiveTopologyOptions()
+    );
   }
 };
 
