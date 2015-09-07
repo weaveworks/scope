@@ -54,7 +54,7 @@ var (
 			LocalAddress:  fixLocalAddress,
 			LocalPort:     fixLocalPort,
 			RemoteAddress: fixRemoteAddress,
-			RemotePort:    fixRemotePortB,
+			RemotePort:    fixRemotePort,
 			Proc: procspy.Proc{
 				PID:  fixProcessPID,
 				Name: fixProcessName,

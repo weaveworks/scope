@@ -26,6 +26,7 @@ type Reporter struct {
 	includeNAT       bool
 	conntracker      *Conntracker
 	natmapper        *natmapper
+	revResolver      *ReverseResolver
 }
 
 // SpyDuration is an exported prometheus metric
@@ -70,6 +71,7 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		includeProcesses: includeProcesses,
 		conntracker:      conntracker,
 		natmapper:        natmapper,
+		revResolver:      NewReverseResolver(),
 	}
 }
 
@@ -81,6 +83,7 @@ func (r *Reporter) Stop() {
 	if r.natmapper != nil {
 		r.natmapper.Stop()
 	}
+	r.revResolver.Stop()
 }
 
 // Report implements Reporter.
@@ -145,8 +148,17 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			})
 		)
 
+		// In case we have a reverse resolution for the IP, we can use it for
+		// the name...
+		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
+			remoteNode = remoteNode.AddMetadata(map[string]string{
+				"name": revRemoteName,
+			})
+		}
+
 		if localIsClient {
-			// New nodes are merged into the report so we don't need to do any counting here; the merge does it for us.
+			// New nodes are merged into the report so we don't need to do any
+			// counting here; the merge does it for us.
 			localNode = localNode.WithEdge(remoteAddressNodeID, report.EdgeMetadata{
 				MaxConnCountTCP: newu64(1),
 			})
@@ -177,8 +189,17 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			})
 		)
 
+		// In case we have a reverse resolution for the IP, we can use it for
+		// the name...
+		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
+			remoteNode = remoteNode.AddMetadata(map[string]string{
+				"name": revRemoteName,
+			})
+		}
+
 		if localIsClient {
-			// New nodes are merged into the report so we don't need to do any counting here; the merge does it for us.
+			// New nodes are merged into the report so we don't need to do any
+			// counting here; the merge does it for us.
 			localNode = localNode.WithEdge(remoteEndpointNodeID, report.EdgeMetadata{
 				MaxConnCountTCP: newu64(1),
 			})
