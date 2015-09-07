@@ -186,6 +186,7 @@ func main() {
 				r = report.MakeReport()
 
 			case <-spyTick:
+				start := time.Now()
 				if err := processCache.Update(); err != nil {
 					log.Printf("error reading processes: %v", err)
 				}
@@ -197,6 +198,10 @@ func main() {
 					r = r.Merge(newReport)
 				}
 				r = Apply(r, taggers)
+
+				if took := time.Since(start); took > *spyInterval {
+					log.Printf("report generation took too long (%s)", took)
+				}
 
 			case <-quit:
 				return
