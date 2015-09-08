@@ -16,6 +16,13 @@ type Reporter interface {
 	Report() (report.Report, error)
 }
 
+// Ticker is something which will be invoked every spyDuration.
+// It's useful for things that should be updated on that interval.
+// For example, cached shared state between Taggers and Reporters.
+type Ticker interface {
+	Tick() error
+}
+
 // Apply tags the report with all the taggers.
 func Apply(r report.Report, taggers []Tagger) report.Report {
 	var err error

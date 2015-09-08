@@ -43,6 +43,7 @@ var ipMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3
 type Weave struct {
 	url    string
 	hostID string
+	status weaveStatus
 }
 
 type weaveStatus struct {
@@ -75,24 +76,30 @@ func NewWeave(hostID, weaveRouterAddress string) (*Weave, error) {
 	}, nil
 }
 
-func (w Weave) update() (weaveStatus, error) {
+// Tick implements Ticker
+func (w *Weave) Tick() error {
 	var result weaveStatus
 	req, err := http.NewRequest("GET", w.url, nil)
 	if err != nil {
-		return result, err
+		return err
 	}
 	req.Header.Add("Accept", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return result, err
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return result, fmt.Errorf("Weave Tagger: got %d", resp.StatusCode)
+		return fmt.Errorf("Weave Tagger: got %d", resp.StatusCode)
 	}
 
-	return result, json.NewDecoder(resp.Body).Decode(&result)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return err
+	}
+
+	w.status = result
+	return nil
 }
 
 type psEntry struct {
@@ -132,7 +139,7 @@ func (w Weave) ps() ([]psEntry, error) {
 	return result, scanner.Err()
 }
 
-func (w Weave) tagContainer(r report.Report, containerIDPrefix, macAddress string, ips []string) {
+func (w *Weave) tagContainer(r report.Report, containerIDPrefix, macAddress string, ips []string) {
 	for nodeid, nmd := range r.Container.Nodes {
 		idPrefix := nmd.Metadata[docker.ContainerID][:12]
 		if idPrefix != containerIDPrefix {
@@ -150,12 +157,7 @@ func (w Weave) tagContainer(r report.Report, containerIDPrefix, macAddress strin
 
 // Tag implements Tagger.
 func (w Weave) Tag(r report.Report) (report.Report, error) {
-	status, err := w.update()
-	if err != nil {
-		return r, nil
-	}
-
-	for _, entry := range status.DNS.Entries {
+	for _, entry := range w.status.DNS.Entries {
 		if entry.Tombstone > 0 {
 			continue
 		}
@@ -183,12 +185,7 @@ func (w Weave) Tag(r report.Report) (report.Report, error) {
 // Report implements Reporter.
 func (w Weave) Report() (report.Report, error) {
 	r := report.MakeReport()
-	status, err := w.update()
-	if err != nil {
-		return r, err
-	}
-
-	for _, peer := range status.Router.Peers {
+	for _, peer := range w.status.Router.Peers {
 		r.Overlay.Nodes[report.MakeOverlayNodeID(peer.Name)] = report.MakeNodeWith(map[string]string{
 			WeavePeerName:     peer.Name,
 			WeavePeerNickName: peer.NickName,

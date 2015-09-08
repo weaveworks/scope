@@ -113,6 +113,7 @@ func main() {
 	var (
 		endpointReporter = endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack)
 		processCache     = process.NewCachingWalker(process.NewWalker(*procRoot))
+		tickers          = []Ticker{processCache}
 		reporters        = []Reporter{
 			endpointReporter,
 			host.NewReporter(hostID, hostName, localNets),
@@ -142,6 +143,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to start Weave tagger: %v", err)
 		}
+		tickers = append(tickers, weave)
 		taggers = append(taggers, weave)
 		reporters = append(reporters, weave)
 	}
@@ -187,8 +189,11 @@ func main() {
 
 			case <-spyTick:
 				start := time.Now()
-				if err := processCache.Update(); err != nil {
-					log.Printf("error reading processes: %v", err)
+
+				for _, ticker := range tickers {
+					if err := ticker.Tick(); err != nil {
+						log.Printf("error doing ticker: %v", err)
+					}
 				}
 
 				r = r.Merge(doReport(reporters))

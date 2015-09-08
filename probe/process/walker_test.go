@@ -29,7 +29,7 @@ func TestCache(t *testing.T) {
 		processes: processes,
 	}
 	cachingWalker := process.NewCachingWalker(walker)
-	err := cachingWalker.Update()
+	err := cachingWalker.Tick()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestCache(t *testing.T) {
 		t.Errorf("%v (%v)", test.Diff(processes, have), err)
 	}
 
-	err = cachingWalker.Update()
+	err = cachingWalker.Tick()
 	if err != nil {
 		t.Fatal(err)
 	}

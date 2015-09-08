@@ -39,8 +39,8 @@ func (c *CachingWalker) Walk(f func(Process)) error {
 	return nil
 }
 
-// Update updates cached copy of process list
-func (c *CachingWalker) Update() error {
+// Tick updates cached copy of process list
+func (c *CachingWalker) Tick() error {
 	newCache := []Process{}
 	err := c.source.Walk(func(p Process) {
 		newCache = append(newCache, p)
