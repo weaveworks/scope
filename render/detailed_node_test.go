@@ -58,6 +58,7 @@ func TestOriginTable(t *testing.T) {
 				{"Host", test.ServerHostID, "", false},
 				{"ID", test.ServerContainerID, "", false},
 				{"Image ID", test.ServerContainerImageID, "", false},
+				{fmt.Sprintf(`Label %q`, render.AmazonECSContainerNameLabel), `server`, "", false},
 				{`Label "foo1"`, `bar1`, "", false},
 				{`Label "foo2"`, `bar2`, "", false},
 			},
@@ -158,6 +159,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Rows: []render.Row{
 					{"ID", test.ServerContainerID, "", false},
 					{"Image ID", test.ServerContainerImageID, "", false},
+					{fmt.Sprintf(`Label %q`, render.AmazonECSContainerNameLabel), `server`, "", false},
 					{`Label "foo1"`, `bar1`, "", false},
 					{`Label "foo2"`, `bar2`, "", false},
 				},
