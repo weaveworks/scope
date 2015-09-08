@@ -21,6 +21,7 @@ const Node = React.createClass({
     const onMouseLeave = this.handleMouseLeave;
     const classNames = ['node'];
     const ellipsis = this.ellipsis;
+    const animConfig = [80, 20]; // stiffness, bounce
 
     if (this.props.highlighted) {
       classNames.push('highlighted');
@@ -31,7 +32,7 @@ const Node = React.createClass({
     }
 
     return (
-      <Spring endValue={{x: {val: this.props.dx}, y: {val: this.props.dy}}}>
+      <Spring endValue={{x: {val: this.props.dx, config: animConfig}, y: {val: this.props.dy, config: animConfig}}}>
         {function(interpolated) {
           const transform = 'translate(' + interpolated.x.val + ',' + interpolated.y.val + ')';
           return (
