@@ -190,13 +190,8 @@ func main() {
 				if err := processCache.Update(); err != nil {
 					log.Printf("error reading processes: %v", err)
 				}
-				for _, reporter := range reporters {
-					newReport, err := reporter.Report()
-					if err != nil {
-						log.Printf("error generating report: %v", err)
-					}
-					r = r.Merge(newReport)
-				}
+
+				r = r.Merge(doReport(reporters))
 				r = Apply(r, taggers)
 
 				if took := time.Since(start); took > *spyInterval {
@@ -209,6 +204,26 @@ func main() {
 		}
 	}()
 	log.Printf("%s", <-interrupt())
+}
+
+func doReport(reporters []Reporter) report.Report {
+	reports := make(chan report.Report, len(reporters))
+	for _, rep := range reporters {
+		go func(rep Reporter) {
+			newReport, err := rep.Report()
+			if err != nil {
+				log.Printf("error generating report: %v", err)
+				newReport = report.MakeReport() // empty is OK to merge
+			}
+			reports <- newReport
+		}(rep)
+	}
+
+	result := report.MakeReport()
+	for i := 0; i < cap(reports); i++ {
+		result = result.Merge(<-reports)
+	}
+	return result
 }
 
 func interrupt() chan os.Signal {
