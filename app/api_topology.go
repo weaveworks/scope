@@ -35,7 +35,7 @@ type APIEdge struct {
 // Full topology.
 func handleTopology(rep xfer.Reporter, t topologyView, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: t.renderer.Render(rep.Report()),
+		Nodes: t.renderer.Render(rep.Report()).Prune(),
 	})
 }
 
@@ -117,7 +117,7 @@ func handleWebsocket(
 		tick         = time.Tick(loop)
 	)
 	for {
-		newTopo := t.renderer.Render(rep.Report())
+		newTopo := t.renderer.Render(rep.Report()).Prune()
 		diff := render.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

@@ -60,7 +60,7 @@ func TestAPITopologyContainers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if want, have := expected.RenderedContainers, expected.Sterilize(topo.Nodes); !reflect.DeepEqual(want, have) {
+		if want, have := expected.RenderedContainers, topo.Nodes.Prune(); !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}
@@ -108,7 +108,7 @@ func TestAPITopologyHosts(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if want, have := expected.RenderedHosts, expected.Sterilize(topo.Nodes); !reflect.DeepEqual(want, have) {
+		if want, have := expected.RenderedHosts, topo.Nodes.Prune(); !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}

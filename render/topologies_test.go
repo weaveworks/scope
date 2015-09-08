@@ -11,7 +11,7 @@ import (
 )
 
 func TestProcessRenderer(t *testing.T) {
-	have := expected.Sterilize(render.ProcessRenderer.Render(test.Report))
+	have := render.ProcessRenderer.Render(test.Report).Prune()
 	want := expected.RenderedProcesses
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -19,7 +19,7 @@ func TestProcessRenderer(t *testing.T) {
 }
 
 func TestProcessNameRenderer(t *testing.T) {
-	have := expected.Sterilize(render.ProcessNameRenderer.Render(test.Report))
+	have := render.ProcessNameRenderer.Render(test.Report).Prune()
 	want := expected.RenderedProcessNames
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -27,7 +27,7 @@ func TestProcessNameRenderer(t *testing.T) {
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := expected.Sterilize(render.ContainerWithImageNameRenderer{}.Render(test.Report))
+	have := (render.ContainerWithImageNameRenderer{}.Render(test.Report)).Prune()
 	want := expected.RenderedContainers
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -39,7 +39,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 	// it is filtered out correctly.
 	input := test.Report.Copy()
 	input.Container.Nodes[test.ClientContainerNodeID].Metadata[docker.LabelPrefix+"works.weave.role"] = "system"
-	have := expected.Sterilize(render.FilterSystem(render.ContainerWithImageNameRenderer{}).Render(input))
+	have := render.FilterSystem(render.ContainerWithImageNameRenderer{}).Render(input).Prune()
 	want := expected.RenderedContainers.Copy()
 	delete(want, test.ClientContainerID)
 	if !reflect.DeepEqual(want, have) {
@@ -48,7 +48,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 }
 
 func TestContainerImageRenderer(t *testing.T) {
-	have := expected.Sterilize(render.ContainerImageRenderer.Render(test.Report))
+	have := render.ContainerImageRenderer.Render(test.Report).Prune()
 	want := expected.RenderedContainerImages
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -56,7 +56,7 @@ func TestContainerImageRenderer(t *testing.T) {
 }
 
 func TestHostRenderer(t *testing.T) {
-	have := expected.Sterilize(render.HostRenderer.Render(test.Report))
+	have := render.HostRenderer.Render(test.Report).Prune()
 	want := expected.RenderedHosts
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
