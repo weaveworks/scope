@@ -27,7 +27,7 @@ func TestTagger(t *testing.T) {
 	oldProcessTree := docker.NewProcessTreeStub
 	defer func() { docker.NewProcessTreeStub = oldProcessTree }()
 
-	docker.NewProcessTreeStub = func(_ proc.Walker) (proc.Tree, error) {
+	docker.NewProcessTreeStub = func(_ proc.ProcReader) (proc.Tree, error) {
 		return &mockProcessTree{map[int]int{2: 1}}, nil
 	}
 

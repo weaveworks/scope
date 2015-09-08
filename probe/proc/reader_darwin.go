@@ -2,26 +2,27 @@ package proc
 
 import (
 	"fmt"
+	"net"
 	"os/exec"
 	"strconv"
 	"strings"
 )
 
-// NewWalker returns a Darwin (lsof-based) walker.
-func NewWalker(_ string) Walker {
-	return &walker{}
+type procReader struct{}
+
+// NewProcReader returns a Darwin (lsof-based) '/proc' reader
+func NewProcReader(proc ProcDir) *procReader {
+	return &procReader{}
 }
 
-type walker struct{}
-
 const (
-	lsofBinary = "lsof"
-	lsofFields = "cn" // parseLSOF() depends on the order
+	lsofBinary    = "lsof"
+	lsofFields    = "cn" // parseLSOF() depends on the order
+	netstatBinary = "netstat"
+	lsofBinary    = "lsof"
 )
 
-// These functions copied from procspy.
-
-func (walker) Walk(f func(Process)) error {
+func (procReader) Processes(f func(Process)) error {
 	output, err := exec.Command(
 		lsofBinary,
 		"-i",       // only Internet files
@@ -40,6 +41,54 @@ func (walker) Walk(f func(Process)) error {
 
 	for _, process := range processes {
 		f(process)
+	}
+	return nil
+}
+
+func (w *walker) Connections(withProcs bool, f func(Connection)) error {
+	out, err := exec.Command(
+		netstatBinary,
+		"-n", // no number resolving
+		"-W", // Wide output
+		// "-l", // full IPv6 addresses // What does this do?
+		"-p", "tcp", // only TCP
+	).CombinedOutput()
+	if err != nil {
+		return err
+	}
+	connections := parseDarwinNetstat(string(out))
+
+	if withProcs {
+		out, err := exec.Command(
+			lsofBinary,
+			"-i",       // only Internet files
+			"-n", "-P", // no number resolving
+			"-w",             // no warnings
+			"-F", lsofFields, // \n based output of only the fields we want.
+		).CombinedOutput()
+		if err != nil {
+			return err
+		}
+
+		procs, err := parseLSOF(string(out))
+		if err != nil {
+			return err
+		}
+		for local, proc := range procs {
+			for i, c := range connections {
+				localAddr := net.JoinHostPort(
+					c.LocalAddress.String(),
+					strconv.Itoa(int(c.LocalPort)),
+				)
+				if localAddr == local {
+					connections[i].Proc = proc
+				}
+			}
+		}
+	}
+
+	for _, c := range connections {
+		f(c)
 	}
 	return nil
 }

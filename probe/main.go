@@ -14,11 +14,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/overlay"
+	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/probe/sniff"
 	"github.com/weaveworks/scope/report"
@@ -67,8 +67,6 @@ func main() {
 	}
 	log.Printf("publishing to: %s", strings.Join(targets, ", "))
 
-	proc.SetProcRoot(*procRoot)
-
 	if *httpListen != "" {
 		log.Printf("profiling data being exported to %s", *httpListen)
 		log.Printf("go tool pprof http://%s/debug/pprof/{profile,heap,block}", *httpListen)
@@ -111,13 +109,14 @@ func main() {
 	}
 
 	var (
-		endpointReporter = endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack)
-		processCache     = proc.NewCachingWalker(proc.NewWalker(*procRoot))
-		tickers          = []Ticker{processCache}
+		procDir          = proc.OSProcDir{Dir: *procRoot}
+		procReader       = proc.NewCachingProcReader(proc.NewProcReader(procDir), *spyProcs)
+		tickers          = []Ticker{procReader}
+		endpointReporter = endpoint.NewReporter(hostID, hostName, *spyProcs, procReader, *useConntrack)
 		reporters        = []Reporter{
 			endpointReporter,
 			host.NewReporter(hostID, hostName, localNets),
-			process.NewReporter(processCache, hostID),
+			process.NewReporter(procReader, hostID),
 		}
 		taggers = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
 	)
@@ -134,7 +133,7 @@ func main() {
 		}
 		defer dockerRegistry.Stop()
 
-		taggers = append(taggers, docker.NewTagger(dockerRegistry, processCache))
+		taggers = append(taggers, docker.NewTagger(dockerRegistry, procReader))
 		reporters = append(reporters, docker.NewReporter(dockerRegistry, hostID))
 	}
 

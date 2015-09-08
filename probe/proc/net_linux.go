@@ -25,7 +25,7 @@ func NewProcNet(b []byte, wantedState uint) *ProcNet {
 // Next returns the next connection. All buffers are re-used, so if you want
 // to keep the IPs you have to copy them.
 func (p *ProcNet) Next() *Connection {
-	again:
+again:
 	if len(p.b) == 0 {
 		return nil
 	}
@@ -73,7 +73,7 @@ func scanAddressNA(in []byte, buf *[16]byte) (net.IP, uint16) {
 
 	// Network address is big endian. Can be either ipv4 or ipv6.
 	address := hexDecode32bigNA(in[:col], buf)
-	return net.IP(address), uint16(parseHex(in[col + 1:]))
+	return net.IP(address), uint16(parseHex(in[col+1:]))
 }
 
 // hexDecode32big decodes sequences of 32bit big endian bytes.
@@ -81,12 +81,12 @@ func hexDecode32bigNA(src []byte, buf *[16]byte) []byte {
 	blocks := len(src) / 8
 	for block := 0; block < blocks; block++ {
 		for i := 0; i < 4; i++ {
-			a := fromHexChar(src[block * 8 + i * 2])
-			b := fromHexChar(src[block * 8 + i * 2 + 1])
-			buf[block * 4 + 3 - i] = (a << 4) | b
+			a := fromHexChar(src[block*8+i*2])
+			b := fromHexChar(src[block*8+i*2+1])
+			buf[block*4+3-i] = (a << 4) | b
 		}
 	}
-	return buf[:blocks * 4]
+	return buf[:blocks*4]
 }
 
 func nextField(s []byte) ([]byte, []byte) {
@@ -113,7 +113,7 @@ func nextLine(s []byte) []byte {
 	if i == -1 {
 		return nil
 	}
-	return s[i + 1:]
+	return s[i+1:]
 }
 
 // Simplified copy of strconv.ParseUint(16).
@@ -138,13 +138,13 @@ func parseDec(s []byte) uint64 {
 
 // hexDecode32big decodes sequences of 32bit big endian bytes.
 func hexDecode32big(src []byte) []byte {
-	dst := make([]byte, len(src) / 2)
+	dst := make([]byte, len(src)/2)
 	blocks := len(src) / 8
 	for block := 0; block < blocks; block++ {
 		for i := 0; i < 4; i++ {
-			a := fromHexChar(src[block * 8 + i * 2])
-			b := fromHexChar(src[block * 8 + i * 2 + 1])
-			dst[block * 4 + 3 - i] = (a << 4) | b
+			a := fromHexChar(src[block*8+i*2])
+			b := fromHexChar(src[block*8+i*2+1])
+			dst[block*4+3-i] = (a << 4) | b
 		}
 	}
 	return dst
