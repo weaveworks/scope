@@ -10,7 +10,7 @@ import (
 // EdgeMetadatas and Nodes respectively. Edges are directional, and embedded
 // in the Node struct.
 type Topology struct {
-	Nodes
+	Nodes // TODO(pb): remove Nodes intermediate type
 }
 
 // MakeTopology gives you a Topology.
@@ -48,6 +48,7 @@ func (t Topology) Merge(other Topology) Topology {
 }
 
 // Nodes is a collection of nodes in a topology. Keys are node IDs.
+// TODO(pb): type Topology map[string]Node
 type Nodes map[string]Node
 
 // Copy returns a value copy of the Nodes.
@@ -75,10 +76,10 @@ func (n Nodes) Merge(other Nodes) Nodes {
 // given node in a given topology, along with the edges emanating from the
 // node and metadata about those edges.
 type Node struct {
-	Metadata  `json:"-"`
-	Counters  `json:"-"`
+	Metadata  `json:"metadata,omitempty"`
+	Counters  `json:"counters,omitempty"`
 	Adjacency IDList        `json:"adjacency"`
-	Edges     EdgeMetadatas `json:"-"`
+	Edges     EdgeMetadatas `json:"edges,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
@@ -19,11 +18,11 @@ func TestMergeRenderableNodes(t *testing.T) {
 		"bar": render.NewRenderableNode("bar"),
 		"baz": render.NewRenderableNode("baz"),
 	}
-	want := expected.Sterilize(render.RenderableNodes{
+	want := (render.RenderableNodes{
 		"foo": render.NewRenderableNode("foo"),
 		"bar": render.NewRenderableNode("bar"),
 		"baz": render.NewRenderableNode("baz"),
-	})
+	}).Prune()
 	have := nodes1.Merge(nodes2)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))

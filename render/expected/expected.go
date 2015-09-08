@@ -8,21 +8,6 @@ import (
 	"github.com/weaveworks/scope/test"
 )
 
-// Sterilize cleans up RenderableNodes test fixtures
-func Sterilize(r render.RenderableNodes) render.RenderableNodes {
-	// RenderableNodes contain Nodes, but generally we
-	// only care about the Adjacency field - the rest is internal
-	// state not sent to the client.  So in the tests we ignore
-	// this state.
-	for id, n := range r {
-		n.Node.Metadata = report.Metadata{}
-		n.Node.Counters = report.Counters{}
-		n.Node.Edges = report.EdgeMetadatas{}
-		r[id] = n
-	}
-	return r
-}
-
 // Exported for testing.
 var (
 	uncontainedServerID  = render.MakePseudoNodeID(render.UncontainedID, test.ServerHostName)
@@ -80,7 +65,7 @@ var (
 	ServerProcessID       = render.MakeProcessID(test.ServerHostID, test.ServerPID)
 	nonContainerProcessID = render.MakeProcessID(test.ServerHostID, test.NonContainerPID)
 
-	RenderedProcesses = Sterilize(render.RenderableNodes{
+	RenderedProcesses = (render.RenderableNodes{
 		ClientProcess1ID: {
 			ID:         ClientProcess1ID,
 			LabelMajor: test.Client1Comm,
@@ -149,9 +134,9 @@ var (
 		unknownPseudoNode1ID: unknownPseudoNode1(report.MakeIDList(ServerProcessID)),
 		unknownPseudoNode2ID: unknownPseudoNode2(report.MakeIDList(ServerProcessID)),
 		render.TheInternetID: theInternetNode(report.MakeIDList(ServerProcessID)),
-	})
+	}).Prune()
 
-	RenderedProcessNames = Sterilize(render.RenderableNodes{
+	RenderedProcessNames = (render.RenderableNodes{
 		"curl": {
 			ID:         "curl",
 			LabelMajor: "curl",
@@ -205,9 +190,9 @@ var (
 		unknownPseudoNode1ID: unknownPseudoNode1(report.MakeIDList("apache")),
 		unknownPseudoNode2ID: unknownPseudoNode2(report.MakeIDList("apache")),
 		render.TheInternetID: theInternetNode(report.MakeIDList("apache")),
-	})
+	}).Prune()
 
-	RenderedContainers = Sterilize(render.RenderableNodes{
+	RenderedContainers = (render.RenderableNodes{
 		test.ClientContainerID: {
 			ID:         test.ClientContainerID,
 			LabelMajor: "client",
@@ -263,9 +248,9 @@ var (
 			EdgeMetadata: report.EdgeMetadata{},
 		},
 		render.TheInternetID: theInternetNode(report.MakeIDList(test.ServerContainerID)),
-	})
+	}).Prune()
 
-	RenderedContainerImages = Sterilize(render.RenderableNodes{
+	RenderedContainerImages = (render.RenderableNodes{
 		test.ClientContainerImageName: {
 			ID:         test.ClientContainerImageName,
 			LabelMajor: test.ClientContainerImageName,
@@ -320,14 +305,14 @@ var (
 			EdgeMetadata: report.EdgeMetadata{},
 		},
 		render.TheInternetID: theInternetNode(report.MakeIDList(test.ServerContainerImageName)),
-	})
+	}).Prune()
 
 	ServerHostRenderedID = render.MakeHostID(test.ServerHostID)
 	ClientHostRenderedID = render.MakeHostID(test.ClientHostID)
 	pseudoHostID1        = render.MakePseudoNodeID(test.UnknownClient1IP, test.ServerIP)
 	pseudoHostID2        = render.MakePseudoNodeID(test.UnknownClient3IP, test.ServerIP)
 
-	RenderedHosts = Sterilize(render.RenderableNodes{
+	RenderedHosts = (render.RenderableNodes{
 		ServerHostRenderedID: {
 			ID:         ServerHostRenderedID,
 			LabelMajor: "server",       // before first .
@@ -382,7 +367,7 @@ var (
 			EdgeMetadata: report.EdgeMetadata{},
 			Origins:      report.MakeIDList(test.RandomAddressNodeID),
 		},
-	})
+	}).Prune()
 )
 
 func newu64(value uint64) *uint64 { return &value }

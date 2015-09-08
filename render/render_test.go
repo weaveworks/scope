@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
@@ -141,8 +140,8 @@ func TestMapEdge(t *testing.T) {
 		Renderer: selector,
 	}
 
-	have := expected.Sterilize(mapper.Render(report.MakeReport()))
-	want := expected.Sterilize(render.RenderableNodes{
+	have := mapper.Render(report.MakeReport()).Prune()
+	want := (render.RenderableNodes{
 		"_foo": {
 			ID:      "_foo",
 			Origins: report.MakeIDList("foo"),
@@ -161,7 +160,7 @@ func TestMapEdge(t *testing.T) {
 				EgressByteCount:   newu64(6),
 			},
 		},
-	})
+	}).Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -182,10 +181,10 @@ func TestFilterRender(t *testing.T) {
 			"baz": {ID: "baz", Node: report.MakeNode()},
 		}})
 	want := render.RenderableNodes{
-		"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("bar")},
-		"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("foo")},
+		"foo": {ID: "foo", Origins: report.IDList{}, Node: report.MakeNode().WithAdjacent("bar")},
+		"bar": {ID: "bar", Origins: report.IDList{}, Node: report.MakeNode().WithAdjacent("foo")},
 	}
-	have := expected.Sterilize(renderer.Render(report.MakeReport()))
+	have := renderer.Render(report.MakeReport()).Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -204,10 +203,10 @@ func TestFilterRender2(t *testing.T) {
 		}},
 	}
 	want := render.RenderableNodes{
-		"foo": {ID: "foo", Node: report.MakeNode()},
-		"baz": {ID: "baz", Node: report.MakeNode()},
+		"foo": {ID: "foo", Origins: report.IDList{}, Node: report.MakeNode()},
+		"baz": {ID: "baz", Origins: report.IDList{}, Node: report.MakeNode()},
 	}
-	have := expected.Sterilize(renderer.Render(report.MakeReport()))
+	have := renderer.Render(report.MakeReport()).Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

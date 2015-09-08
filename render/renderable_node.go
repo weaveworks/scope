@@ -122,6 +122,17 @@ func (rn RenderableNode) Copy() RenderableNode {
 	}
 }
 
+// Prune returns a copy of the RenderableNode with all information not
+// strictly necessary for rendering nodes and edges stripped away.
+// Specifically, that means cutting out parts of the Node.
+func (rn RenderableNode) Prune() RenderableNode {
+	cp := rn.Copy()
+	cp.Node.Metadata = report.Metadata{}   // snip
+	cp.Node.Counters = report.Counters{}   // snip
+	cp.Node.Edges = report.EdgeMetadatas{} // snip
+	return cp
+}
+
 // RenderableNodes is a set of RenderableNodes
 type RenderableNodes map[string]RenderableNode
 
@@ -148,4 +159,14 @@ func (rns RenderableNodes) Merge(other RenderableNodes) RenderableNodes {
 		result[key] = value
 	}
 	return result
+}
+
+// Prune returns a copy of the RenderableNodes with all information not
+// strictly necessary for rendering nodes and edges in the UI cut away.
+func (rns RenderableNodes) Prune() RenderableNodes {
+	cp := rns.Copy()
+	for id, rn := range cp {
+		cp[id] = rn.Prune()
+	}
+	return cp
 }
