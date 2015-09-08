@@ -76,10 +76,10 @@ func (n Nodes) Merge(other Nodes) Nodes {
 // given node in a given topology, along with the edges emanating from the
 // node and metadata about those edges.
 type Node struct {
-	Metadata  `json:"metadata"`
-	Counters  `json:"counters"`
+	Metadata  `json:"metadata,omitempty"`
+	Counters  `json:"counters,omitempty"`
 	Adjacency IDList        `json:"adjacency"`
-	Edges     EdgeMetadatas `json:"edges"`
+	Edges     EdgeMetadatas `json:"edges,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
