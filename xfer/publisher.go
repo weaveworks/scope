@@ -10,13 +10,20 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/weaveworks/scope/report"
+)
+
+const (
+	initialBackoff = 1 * time.Second
+	maxBackoff     = 60 * time.Second
 )
 
 // Publisher is something which can send a report to a remote collector.
 type Publisher interface {
 	Publish(report.Report) error
+	Stop()
 }
 
 // HTTPPublisher publishes reports by POST to a fixed endpoint.
@@ -51,6 +58,10 @@ func NewHTTPPublisher(target, token, id string) (*HTTPPublisher, error) {
 	}, nil
 }
 
+func (p HTTPPublisher) String() string {
+	return p.url
+}
+
 // Publish publishes the report to the URL.
 func (p HTTPPublisher) Publish(rpt report.Report) error {
 	gzbuf := bytes.Buffer{}
@@ -83,10 +94,71 @@ func (p HTTPPublisher) Publish(rpt report.Report) error {
 	return nil
 }
 
+// Stop implements Publisher
+func (p HTTPPublisher) Stop() {}
+
 // AuthorizationHeader returns a value suitable for an HTTP Authorization
 // header, based on the passed token string.
 func AuthorizationHeader(token string) string {
 	return fmt.Sprintf("Scope-Probe token=%s", token)
+}
+
+// BackgroundPublisher is a publisher which does the publish asynchronously.
+// It will only do one publish at once; if there is an ongoing publish,
+// concurrent publishes are dropped.
+type BackgroundPublisher struct {
+	publisher Publisher
+	reports   chan report.Report
+	quit      chan struct{}
+}
+
+// NewBackgroundPublisher creates a new BackgroundPublisher with the given publisher
+func NewBackgroundPublisher(p Publisher) *BackgroundPublisher {
+	result := &BackgroundPublisher{
+		publisher: p,
+		reports:   make(chan report.Report),
+		quit:      make(chan struct{}),
+	}
+	go result.loop()
+	return result
+}
+
+func (b *BackgroundPublisher) loop() {
+	backoff := initialBackoff
+
+	for r := range b.reports {
+		err := b.publisher.Publish(r)
+		if err == nil {
+			backoff = initialBackoff
+			continue
+		}
+
+		log.Printf("Error publishing to %s, backing off %s: %v", b.publisher, backoff, err)
+		select {
+		case <-time.After(backoff):
+		case <-b.quit:
+		}
+		backoff = backoff * 2
+		if backoff > maxBackoff {
+			backoff = maxBackoff
+		}
+	}
+}
+
+// Publish implements Publisher
+func (b *BackgroundPublisher) Publish(r report.Report) error {
+	select {
+	case b.reports <- r:
+	default:
+	}
+	return nil
+}
+
+// Stop implements Publisher
+func (b *BackgroundPublisher) Stop() {
+	close(b.reports)
+	close(b.quit)
+	b.publisher.Stop()
 }
 
 // MultiPublisher implements Publisher over a set of publishers.
@@ -141,4 +213,14 @@ func (p *MultiPublisher) Publish(rpt report.Report) error {
 		return fmt.Errorf(strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+// Stop implements Publisher
+func (p *MultiPublisher) Stop() {
+	p.mtx.RLock()
+	defer p.mtx.RUnlock()
+
+	for _, publisher := range p.m {
+		publisher.Stop()
+	}
 }

@@ -86,8 +86,15 @@ func main() {
 		log.Printf("warning: process reporting enabled, but that requires root to find everything")
 	}
 
-	publisherFactory := func(target string) (xfer.Publisher, error) { return xfer.NewHTTPPublisher(target, *token, probeID) }
+	publisherFactory := func(target string) (xfer.Publisher, error) {
+		publisher, err := xfer.NewHTTPPublisher(target, *token, probeID)
+		if err != nil {
+			return nil, err
+		}
+		return xfer.NewBackgroundPublisher(publisher), nil
+	}
 	publishers := xfer.NewMultiPublisher(publisherFactory)
+	defer publishers.Stop()
 	resolver := newStaticResolver(targets, publishers.Add)
 	defer resolver.Stop()
 
