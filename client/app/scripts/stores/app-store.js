@@ -9,6 +9,7 @@ const ActionTypes = require('../constants/action-types');
 const Naming = require('../constants/naming');
 
 const makeOrderedMap = Immutable.OrderedMap;
+const makeSet = Immutable.Set;
 
 // Helpers
 
@@ -44,6 +45,7 @@ function makeNode(node) {
 // Initial values
 
 let activeTopologyOptions = null;
+let adjacentNodes = makeSet();
 let currentTopology = null;
 let currentTopologyId = 'containers';
 let errorUrl = null;
@@ -94,9 +96,19 @@ const AppStore = assign({}, EventEmitter.prototype, {
   },
 
   getAdjacentNodes: function() {
+    adjacentNodes = adjacentNodes.clear();
+
     if (nodes.has(selectedNodeId)) {
-      return nodes.get(selectedNodeId).get('adjacency');
+      adjacentNodes = makeSet(nodes.get(selectedNodeId).get('adjacency'));
+      // fill up set with reverse edges
+      nodes.forEach(function(node, nodeId) {
+        if (node.get('adjacency').includes(selectedNodeId)) {
+          adjacentNodes = adjacentNodes.add(nodeId);
+        }
+      });
     }
+
+    return adjacentNodes;
   },
 
   getCurrentTopology: function() {

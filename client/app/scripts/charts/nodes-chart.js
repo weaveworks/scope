@@ -4,6 +4,7 @@ const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
 const timely = require('timely');
 
+const AppStore = require('../stores/app-store');
 const Edge = require('./edge');
 const Naming = require('../constants/naming');
 const NodesLayout = require('./nodes-layout');
@@ -83,7 +84,7 @@ const NodesChart = React.createClass({
 
   renderGraphNodes: function(nodes, scale) {
     const hasSelectedNode = this.props.selectedNodeId && this.props.nodes.has(this.props.selectedNodeId);
-    const adjacency = hasSelectedNode ? this.props.nodes.get(this.props.selectedNodeId).get('adjacency') : null;
+    const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes() : null;
     return _.map(nodes, function(node) {
       const highlighted = _.includes(this.props.highlightedNodeIds, node.id)
         || this.props.selectedNodeId === node.id;
@@ -214,7 +215,7 @@ const NodesChart = React.createClass({
       return;
     }
 
-    const adjacency = this.props.nodes.get(props.selectedNodeId).get('adjacency');
+    const adjacency = AppStore.getAdjacentNodes();
     const adjacentLayoutNodes = [];
 
     adjacency.forEach(function(adjacentId) {
