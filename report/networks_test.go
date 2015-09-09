@@ -1,6 +1,7 @@
 package report_test
 
 import (
+	"fmt"
 	"net"
 	"reflect"
 	"testing"
@@ -21,6 +22,28 @@ func TestContains(t *testing.T) {
 
 	if !networks.Contains(net.ParseIP("10.0.0.1")) {
 		t.Errorf("10.0.0.1 in %v", networks)
+	}
+}
+
+func TestParseNetworks(t *testing.T) {
+	var (
+		bignetStr   = "10.1.0.1/16"
+		smallnetStr = "5.6.7.8/32"
+		bignet      = mustParseCIDR(bignetStr)
+		smallnet    = mustParseCIDR(smallnetStr)
+	)
+	for _, tc := range []struct {
+		input string
+		want  report.Networks
+	}{
+		{"", report.Networks{}},
+		{fmt.Sprintf("%s", bignetStr), report.Networks([]*net.IPNet{bignet})},
+		{fmt.Sprintf("%s %s", bignetStr, bignetStr), report.Networks([]*net.IPNet{bignet})},
+		{fmt.Sprintf("%s foo %s oops  %s", smallnetStr, smallnetStr, smallnetStr), report.Networks([]*net.IPNet{smallnet})},
+	} {
+		if want, have := tc.want, report.ParseNetworks(tc.input); !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
+		}
 	}
 }
 
