@@ -77,6 +77,7 @@ const App = React.createClass({
 
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
           highlightedEdgeIds={this.state.highlightedEdgeIds}
+          selectedNodeId={this.state.selectedNodeId}
           topologyId={this.state.currentTopologyId} />
 
         <div className="footer">

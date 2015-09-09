@@ -50,6 +50,12 @@ const NodesChart = React.createClass({
       });
       this.updateGraphState(nextProps);
     }
+    if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
+      this.restoreLayout();
+    }
+    if (nextProps.selectedNodeId) {
+      this.centerSelectedNode(nextProps);
+    }
   },
 
   componentWillUnmount: function() {
@@ -77,7 +83,8 @@ const NodesChart = React.createClass({
 
   renderGraphNodes: function(nodes, scale) {
     return _.map(nodes, function(node) {
-      const highlighted = _.includes(this.props.highlightedNodeIds, node.id);
+      const highlighted = _.includes(this.props.highlightedNodeIds, node.id)
+        || this.props.selectedNodeId === node.id;
       return (
         <Node
           highlighted={highlighted}
@@ -184,6 +191,73 @@ const NodesChart = React.createClass({
     return edges;
   },
 
+  centerSelectedNode: function(props) {
+    const layoutNodes = this.state.nodes;
+    const layoutEdges = this.state.edges;
+    const selectedLayoutNode = layoutNodes[props.selectedNodeId];
+
+    if (!selectedLayoutNode) {
+      return;
+    }
+
+    const adjacency = props.nodes.get(props.selectedNodeId).get('adjacency');
+    const adjacentLayoutNodes = [];
+
+    adjacency.forEach(function(adjacentId) {
+      adjacentLayoutNodes.push(layoutNodes[adjacentId]);
+    });
+
+    // circle layout for adjacent nodes
+
+    const centerX = selectedLayoutNode.x;
+    const centerY = selectedLayoutNode.y;
+    const radius = Math.min(props.width, props.height) / 3;
+    const adjacentCount = adjacentLayoutNodes.length;
+
+    _.each(adjacentLayoutNodes, function(node, i) {
+      const angle = Math.PI * 2 * i / adjacentCount;
+      node.x = centerX + radius * Math.sin(angle);
+      node.y = centerY + radius * Math.cos(angle);
+    });
+
+    // fix all edges for circular nodes
+
+    _.each(layoutEdges, function(edge) {
+      if (edge.source === selectedLayoutNode
+        || edge.target === selectedLayoutNode
+        || _.includes(adjacentLayoutNodes, edge.source)
+        || _.includes(adjacentLayoutNodes, edge.target)) {
+        edge.points = [
+          {x: edge.source.x, y: edge.source.y},
+          {x: edge.target.x, y: edge.target.y}
+        ];
+      }
+    });
+
+    this.setState({
+      edges: layoutEdges,
+      nodes: layoutNodes
+    });
+  },
+
+  restoreLayout: function() {
+    const edges = this.state.edges;
+    const nodes = this.state.nodes;
+
+    _.each(nodes, function(node) {
+      node.x = node.px;
+      node.y = node.py;
+    });
+
+    _.each(edges, function(edge) {
+      if (edge.ppoints) {
+        edge.points = edge.ppoints;
+      }
+    });
+
+    this.setState({edges: edges, nodes: nodes});
+  },
+
   updateGraphState: function(props) {
     const n = props.nodes.size;
 
@@ -215,6 +289,15 @@ const NodesChart = React.createClass({
     if (!graph) {
       return;
     }
+
+    // save coordinates for restore
+    _.each(nodes, function(node) {
+      node.px = node.x;
+      node.py = node.y;
+    });
+    _.each(edges, function(edge) {
+      edge.ppoints = edge.points;
+    });
 
     // adjust layout based on viewport
     const xFactor = (props.width - MARGINS.left - MARGINS.right) / graph.width;
