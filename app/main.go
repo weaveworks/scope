@@ -37,7 +37,7 @@ func main() {
 	log.Printf("app starting, version %s, ID %s", version, id)
 
 	c := xfer.NewCollector(*window)
-	http.Handle("/", Router(c))
+	http.Handle("/", Router(c, id))
 	irq := interrupt()
 	go func() {
 		log.Printf("listening on %s", *listen)
