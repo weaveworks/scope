@@ -47,7 +47,7 @@ function createWebsocket(topologyUrl, optionsQuery) {
     debug('Closed websocket to ' + topologyUrl);
 
     reconnectTimer = setTimeout(function() {
-      createWebsocket(topologyUrl);
+      createWebsocket(topologyUrl, optionsQuery);
     }, reconnectTimerInterval);
   };
 
