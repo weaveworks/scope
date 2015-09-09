@@ -26,17 +26,20 @@ const Node = React.createClass({
     if (this.props.highlighted) {
       classNames.push('highlighted');
     }
-
+    if (this.props.blurred) {
+      classNames.push('blurred');
+    }
     if (this.props.pseudo) {
       classNames.push('pseudo');
     }
+    const classes = classNames.join(' ');
 
     return (
       <Spring endValue={{x: {val: this.props.dx, config: animConfig}, y: {val: this.props.dy, config: animConfig}}}>
         {function(interpolated) {
           const transform = 'translate(' + interpolated.x.val + ',' + interpolated.y.val + ')';
           return (
-            <g className={classNames.join(' ')} transform={transform} id={props.id}
+            <g className={classes} transform={transform} id={props.id}
               onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
               {props.highlighted && <circle r={scale(0.7)} className="highlighted"></circle>}
               <circle r={scale(0.5)} className="border" stroke={color}></circle>

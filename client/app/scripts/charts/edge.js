@@ -51,18 +51,26 @@ const Edge = React.createClass({
   },
 
   render: function() {
-    const className = this.props.highlighted ? 'edge highlighted' : 'edge';
+    const classNames = ['edge'];
     const points = flattenPoints(this.props.points);
     const props = this.props;
     const handleMouseEnter = this.handleMouseEnter;
     const handleMouseLeave = this.handleMouseLeave;
+
+    if (this.props.highlighted) {
+      classNames.push('highlighted');
+    }
+    if (this.props.blurred) {
+      classNames.push('blurred');
+    }
+    const classes = classNames.join(' ');
 
     return (
       <Spring endValue={points}>
         {function(interpolated) {
           const path = line(extractPoints(interpolated));
           return (
-            <g className={className} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} id={props.id}>
+            <g className={classes} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} id={props.id}>
               <path d={path} className="shadow" />
               <path d={path} className="link" />
             </g>

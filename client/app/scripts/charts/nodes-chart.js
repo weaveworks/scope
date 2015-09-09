@@ -82,11 +82,18 @@ const NodesChart = React.createClass({
   },
 
   renderGraphNodes: function(nodes, scale) {
+    const hasSelectedNode = this.props.selectedNodeId && this.props.nodes.has(this.props.selectedNodeId);
+    const adjacency = hasSelectedNode ? this.props.nodes.get(this.props.selectedNodeId).get('adjacency') : null;
     return _.map(nodes, function(node) {
       const highlighted = _.includes(this.props.highlightedNodeIds, node.id)
         || this.props.selectedNodeId === node.id;
+      const blurred = hasSelectedNode
+        && this.props.selectedNodeId !== node.id
+        && !adjacency.includes(node.id);
+
       return (
         <Node
+          blurred={blurred}
           highlighted={highlighted}
           onClick={this.props.onNodeClick}
           key={node.id}
@@ -104,10 +111,17 @@ const NodesChart = React.createClass({
   },
 
   renderGraphEdges: function(edges) {
+    const selectedNodeId = this.props.selectedNodeId;
+    const hasSelectedNode = selectedNodeId && this.props.nodes.has(selectedNodeId);
+
     return _.map(edges, function(edge) {
       const highlighted = _.includes(this.props.highlightedEdgeIds, edge.id);
+      const blurred = hasSelectedNode
+        && edge.source.id !== selectedNodeId
+        && edge.target.id !== selectedNodeId;
       return (
-        <Edge key={edge.id} id={edge.id} points={edge.points} highlighted={highlighted} />
+        <Edge key={edge.id} id={edge.id} points={edge.points} blurred={blurred}
+          highlighted={highlighted} />
       );
     }, this);
   },
@@ -200,7 +214,7 @@ const NodesChart = React.createClass({
       return;
     }
 
-    const adjacency = props.nodes.get(props.selectedNodeId).get('adjacency');
+    const adjacency = this.props.nodes.get(props.selectedNodeId).get('adjacency');
     const adjacentLayoutNodes = [];
 
     adjacency.forEach(function(adjacentId) {

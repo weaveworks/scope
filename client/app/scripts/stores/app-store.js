@@ -93,6 +93,12 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return activeTopologyOptions;
   },
 
+  getAdjacentNodes: function() {
+    if (nodes.has(selectedNodeId)) {
+      return nodes.get(selectedNodeId).get('adjacency');
+    }
+  },
+
   getCurrentTopology: function() {
     if (!currentTopology) {
       currentTopology = setTopology(currentTopologyId);
