@@ -102,7 +102,7 @@ const AppStore = assign({}, EventEmitter.prototype, {
       adjacentNodes = makeSet(nodes.get(selectedNodeId).get('adjacency'));
       // fill up set with reverse edges
       nodes.forEach(function(node, nodeId) {
-        if (node.get('adjacency').includes(selectedNodeId)) {
+        if (node.get('adjacency') && node.get('adjacency').includes(selectedNodeId)) {
           adjacentNodes = adjacentNodes.add(nodeId);
         }
       });

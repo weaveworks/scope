@@ -285,5 +285,19 @@ describe('AppStore', function() {
     expect(AppStore.getNodes().toJS()).toEqual({});
   });
 
+  // adjacency test
+
+  it('returns the correct adjacency set for a node', function() {
+    registeredCallback(ReceiveNodesDeltaAction);
+    expect(AppStore.getAdjacentNodes().size).toEqual(0);
+
+    registeredCallback(ClickNodeAction);
+    expect(AppStore.getAdjacentNodes().size).toEqual(2);
+    expect(AppStore.getAdjacentNodes().has('n1')).toBeTruthy();
+    expect(AppStore.getAdjacentNodes().has('n2')).toBeTruthy();
+
+    registeredCallback(HitEscAction)
+    expect(AppStore.getAdjacentNodes().size).toEqual(0);
+  });
 
 });
