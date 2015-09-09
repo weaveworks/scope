@@ -59,9 +59,9 @@ func gzipHandler(h http.HandlerFunc) http.HandlerFunc {
 // Router returns the HTTP dispatcher, managing API and UI requests, and
 // accepting reports from probes.. It will always use the embedded HTML
 // resources for the UI.
-func Router(c collector) *mux.Router {
+func Router(c collector, id string) *mux.Router {
 	router := mux.NewRouter()
-	router.HandleFunc("/api/report", makeReportPostHandler(c)).Methods("POST")
+	router.HandleFunc("/api/report", makeReportPostHandler(c, id)).Methods("POST")
 
 	get := router.Methods("GET").Subrouter()
 	get.HandleFunc("/api", gzipHandler(apiHandler))
@@ -77,7 +77,7 @@ func Router(c collector) *mux.Router {
 	return router
 }
 
-func makeReportPostHandler(a xfer.Adder) http.HandlerFunc {
+func makeReportPostHandler(a xfer.Adder, id string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var rpt report.Report
 
@@ -99,6 +99,8 @@ func makeReportPostHandler(a xfer.Adder) http.HandlerFunc {
 			return
 		}
 		a.Add(rpt)
+
+		w.Header()[xfer.ScopeAppIDHeader] = []string{id}
 		w.WriteHeader(http.StatusOK)
 	}
 }
