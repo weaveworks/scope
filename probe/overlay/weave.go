@@ -139,24 +139,9 @@ func (w Weave) ps() ([]psEntry, error) {
 	return result, scanner.Err()
 }
 
-func (w *Weave) tagContainer(r report.Report, containerIDPrefix, macAddress string, ips []string) {
-	for nodeid, nmd := range r.Container.Nodes {
-		idPrefix := nmd.Metadata[docker.ContainerID][:12]
-		if idPrefix != containerIDPrefix {
-			continue
-		}
-
-		existingIPs := report.MakeIDList(docker.ExtractContainerIPs(nmd)...)
-		existingIPs = existingIPs.Add(ips...)
-		nmd.Metadata[docker.ContainerIPs] = strings.Join(existingIPs, " ")
-		nmd.Metadata[WeaveMACAddress] = macAddress
-		r.Container.Nodes[nodeid] = nmd
-		break
-	}
-}
-
 // Tag implements Tagger.
 func (w Weave) Tag(r report.Report) (report.Report, error) {
+	// Put information from weaveDNS on the container nodes
 	for _, entry := range w.status.DNS.Entries {
 		if entry.Tombstone > 0 {
 			continue
@@ -169,15 +154,28 @@ func (w Weave) Tag(r report.Report) (report.Report, error) {
 		hostnames := report.IDList(strings.Fields(node.Metadata[WeaveDNSHostname]))
 		hostnames = hostnames.Add(strings.TrimSuffix(entry.Hostname, "."))
 		node.Metadata[WeaveDNSHostname] = strings.Join(hostnames, " ")
-		r.Container.Nodes[nodeID] = node
 	}
 
+	// Put information from weave ps on the container nodes
 	psEntries, err := w.ps()
 	if err != nil {
 		return r, nil
 	}
+	containersByPrefix := map[string]report.Node{}
+	for _, node := range r.Container.Nodes {
+		prefix := node.Metadata[docker.ContainerID][:12]
+		containersByPrefix[prefix] = node
+	}
 	for _, e := range psEntries {
-		w.tagContainer(r, e.containerIDPrefix, e.macAddress, e.ips)
+		node, ok := containersByPrefix[e.containerIDPrefix]
+		if !ok {
+			continue
+		}
+
+		existingIPs := report.MakeIDList(docker.ExtractContainerIPs(node)...)
+		existingIPs = existingIPs.Add(e.ips...)
+		node.Metadata[docker.ContainerIPs] = strings.Join(existingIPs, " ")
+		node.Metadata[WeaveMACAddress] = e.macAddress
 	}
 	return r, nil
 }
