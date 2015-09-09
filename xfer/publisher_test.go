@@ -64,7 +64,8 @@ func TestHTTPPublisher(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := p.Publish(rpt); err != nil {
+	rp := xfer.NewReportPublisher(p)
+	if err := rp.Publish(rpt); err != nil {
 		t.Error(err)
 	}
 
@@ -83,7 +84,7 @@ func TestMultiPublisher(t *testing.T) {
 	)
 
 	multiPublisher.Add("first")
-	if err := multiPublisher.Publish(report.MakeReport()); err != nil {
+	if err := multiPublisher.Publish(xfer.NewBuffer(nil)); err != nil {
 		t.Error(err)
 	}
 	if want, have := 1, p.count; want != have {
@@ -91,7 +92,7 @@ func TestMultiPublisher(t *testing.T) {
 	}
 
 	multiPublisher.Add("second") // but factory returns same mockPublisher
-	if err := multiPublisher.Publish(report.MakeReport()); err != nil {
+	if err := multiPublisher.Publish(xfer.NewBuffer(nil)); err != nil {
 		t.Error(err)
 	}
 	if want, have := 3, p.count; want != have {
@@ -101,5 +102,5 @@ func TestMultiPublisher(t *testing.T) {
 
 type mockPublisher struct{ count int }
 
-func (p *mockPublisher) Publish(report.Report) error { p.count++; return nil }
-func (p *mockPublisher) Stop()                       {}
+func (p *mockPublisher) Publish(*xfer.Buffer) error { p.count++; return nil }
+func (p *mockPublisher) Stop()                      {}

@@ -27,10 +27,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	rp := xfer.NewReportPublisher(publisher)
 
 	rand.Seed(time.Now().UnixNano())
 	for range time.Tick(*publishInterval) {
-		if err := publisher.Publish(demoReport(*hostCount)); err != nil {
+		if err := rp.Publish(demoReport(*hostCount)); err != nil {
 			log.Print(err)
 		}
 	}

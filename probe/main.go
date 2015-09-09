@@ -175,6 +175,7 @@ func main() {
 			pubTick = time.Tick(*publishInterval)
 			spyTick = time.Tick(*spyInterval)
 			r       = report.MakeReport()
+			p       = xfer.NewReportPublisher(publishers)
 		)
 
 		for {
@@ -182,7 +183,7 @@ func main() {
 			case <-pubTick:
 				publishTicks.WithLabelValues().Add(1)
 				r.Window = *publishInterval
-				if err := publishers.Publish(r); err != nil {
+				if err := p.Publish(r); err != nil {
 					log.Printf("publish: %v", err)
 				}
 				r = report.MakeReport()
