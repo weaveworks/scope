@@ -52,5 +52,3 @@ experimental/_integration/_integration
 *sublime-project
 *sublime-workspace
 *npm-debug.log
-backend/scope-app
-backend/scope-probe

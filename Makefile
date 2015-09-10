@@ -77,11 +77,9 @@ $(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/package.json client/webpack.l
 	docker build -t $(SCOPE_UI_BUILD_IMAGE) client
 	docker save $(SCOPE_UI_BUILD_IMAGE):latest > $@
 
-# backend is an alternate Docker-based method to produce APP_EXE and PROBE_EXE
 backend:
 	docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) backend
-	docker run -ti -v $(shell pwd)/app:/mount $(SCOPE_BACKEND_BUILD_IMAGE) cp /go/bin/scope-app /mount
-	docker run -ti -v $(shell pwd)/probe:/mount $(SCOPE_BACKEND_BUILD_IMAGE) cp /go/bin/scope-probe /mount
+	docker run -ti -v $(shell pwd):/go/src/github.com/weaveworks/scope $(SCOPE_BACKEND_BUILD_IMAGE) /build.bash
 
 clean:
 	go clean ./...
