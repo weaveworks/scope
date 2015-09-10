@@ -95,15 +95,15 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return activeTopologyOptions;
   },
 
-  getAdjacentNodes: function() {
+  getAdjacentNodes: function(nodeId) {
     adjacentNodes = adjacentNodes.clear();
 
-    if (nodes.has(selectedNodeId)) {
-      adjacentNodes = makeSet(nodes.get(selectedNodeId).get('adjacency'));
+    if (nodes.has(nodeId)) {
+      adjacentNodes = makeSet(nodes.get(nodeId).get('adjacency'));
       // fill up set with reverse edges
-      nodes.forEach(function(node, nodeId) {
-        if (node.get('adjacency') && node.get('adjacency').includes(selectedNodeId)) {
-          adjacentNodes = adjacentNodes.add(nodeId);
+      nodes.forEach(function(node, id) {
+        if (node.get('adjacency') && node.get('adjacency').includes(nodeId)) {
+          adjacentNodes = adjacentNodes.add(id);
         }
       });
     }
@@ -157,8 +157,8 @@ const AppStore = assign({}, EventEmitter.prototype, {
 
   getHighlightedNodeIds: function() {
     if (mouseOverNodeId) {
-      const adjacency = nodes.get(mouseOverNodeId).get('adjacency');
-      if (adjacency) {
+      const adjacency = this.getAdjacentNodes(mouseOverNodeId);
+      if (adjacency.size) {
         return _.union(adjacency.toJS(), [mouseOverNodeId]);
       }
     }

@@ -84,7 +84,7 @@ const NodesChart = React.createClass({
 
   renderGraphNodes: function(nodes, scale) {
     const hasSelectedNode = this.props.selectedNodeId && this.props.nodes.has(this.props.selectedNodeId);
-    const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes() : null;
+    const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes(this.props.selectedNodeId) : null;
     return _.map(nodes, function(node) {
       const highlighted = _.includes(this.props.highlightedNodeIds, node.id)
         || this.props.selectedNodeId === node.id;
@@ -215,7 +215,7 @@ const NodesChart = React.createClass({
       return;
     }
 
-    const adjacency = AppStore.getAdjacentNodes();
+    const adjacency = AppStore.getAdjacentNodes(props.selectedNodeId);
     const adjacentLayoutNodes = [];
 
     adjacency.forEach(function(adjacentId) {
