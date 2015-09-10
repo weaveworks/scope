@@ -91,19 +91,20 @@ func (w *reader) Processes(f func(Process)) error {
 	}
 
 	buf := bytes.NewBuffer(make([]byte, 0, 5000))
-	readIntoBuffer := func(filename string) error {
-		buf.Reset()
-		res := w.handles.ReadInto(filename, buf)
-		return res
-	}
 
-	for _, filename := range dirEntries {
-		pid, err := strconv.Atoi(filename)
+	for _, subdir := range dirEntries {
+		readIntoBuffer := func(filename string) error {
+			buf.Reset()
+			res := w.handles.ReadInto(path.Join(subdir, filename), buf)
+			return res
+		}
+
+		pid, err := strconv.Atoi(subdir)
 		if err != nil {
 			continue
 		}
 
-		if readIntoBuffer(path.Join(filename, "stat")) != nil {
+		if readIntoBuffer("stat") != nil {
 			continue
 		}
 		splits := strings.Fields(buf.String())
@@ -118,13 +119,13 @@ func (w *reader) Processes(f func(Process)) error {
 		}
 
 		cmdline := ""
-		if readIntoBuffer(path.Join(filename, "cmdline")) == nil {
+		if readIntoBuffer("cmdline") == nil {
 			cmdlineBuf := bytes.Replace(buf.Bytes(), []byte{'\000'}, []byte{' '}, -1)
 			cmdline = string(cmdlineBuf)
 		}
 
 		comm := "(unknown)"
-		if readIntoBuffer(path.Join(filename, "comm")) == nil {
+		if readIntoBuffer("comm") == nil {
 			comm = strings.TrimSpace(buf.String())
 		}
 
