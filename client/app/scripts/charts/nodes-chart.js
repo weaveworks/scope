@@ -17,6 +17,10 @@ const MARGINS = {
   bottom: 0
 };
 
+// make sure circular layouts lots of nodes spread out
+const radiusDensity = d3.scale.sqrt()
+  .domain([12, 2]).range([2.5, 5]).clamp(true);
+
 const NodesChart = React.createClass({
 
   getInitialState: function() {
@@ -226,8 +230,9 @@ const NodesChart = React.createClass({
 
     const centerX = selectedLayoutNode.x;
     const centerY = selectedLayoutNode.y;
-    const radius = Math.min(props.width, props.height) / 3;
     const adjacentCount = adjacentLayoutNodes.length;
+    const density = radiusDensity(adjacentCount);
+    const radius = Math.min(props.width, props.height) / density;
 
     _.each(adjacentLayoutNodes, function(node, i) {
       const angle = Math.PI * 2 * i / adjacentCount;
