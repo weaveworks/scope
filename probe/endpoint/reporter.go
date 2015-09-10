@@ -28,7 +28,7 @@ type Reporter struct {
 	conntracker      *Conntracker
 	natmapper        *natmapper
 	revResolver      *ReverseResolver
-	procReader       proc.ProcReader
+	procReader       proc.Reader
 }
 
 // SpyDuration is an exported prometheus metric
@@ -48,7 +48,7 @@ var SpyDuration = prometheus.NewSummaryVec(
 // on the host machine, at the granularity of host and port. That information
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
-func NewReporter(hostID, hostName string, includeProcesses bool, procReader proc.ProcReader, useConntrack bool) *Reporter {
+func NewReporter(hostID, hostName string, includeProcesses bool, procReader proc.Reader, useConntrack bool) *Reporter {
 	var (
 		conntrackModulePresent = ConntrackModulePresent()
 		conntracker            *Conntracker

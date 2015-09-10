@@ -24,11 +24,11 @@ var (
 // nodes that have a PID.
 type Tagger struct {
 	registry   Registry
-	procWalker proc.ProcReader
+	procWalker proc.Reader
 }
 
 // NewTagger returns a usable Tagger.
-func NewTagger(registry Registry, procWalker proc.ProcReader) *Tagger {
+func NewTagger(registry Registry, procWalker proc.Reader) *Tagger {
 	return &Tagger{
 		registry:   registry,
 		procWalker: procWalker,

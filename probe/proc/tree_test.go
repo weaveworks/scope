@@ -8,7 +8,7 @@ import (
 )
 
 func TestTree(t *testing.T) {
-	walker := &proc.MockedProcReader{
+	walker := &proc.MockedReader{
 		Procs: []proc.Process{
 			{PID: 1, PPID: 0, Comm: "init"},
 			{PID: 2, PPID: 1, Comm: "bash"},

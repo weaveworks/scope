@@ -14,7 +14,7 @@ type tree struct {
 }
 
 // NewTree returns a new Tree that can be polled.
-func NewTree(walker ProcReader) (Tree, error) {
+func NewTree(walker Reader) (Tree, error) {
 	pt := tree{processes: map[int]Process{}}
 	err := walker.Processes(func(p Process) {
 		pt.processes[p.PID] = p

@@ -11,7 +11,7 @@ import (
 )
 
 func TestReporter(t *testing.T) {
-	procReader := &proc.MockedProcReader{
+	procReader := &proc.MockedReader{
 		Procs: []proc.Process{
 			{PID: 1, PPID: 0, Comm: "init"},
 			{PID: 2, PPID: 1, Comm: "bash"},

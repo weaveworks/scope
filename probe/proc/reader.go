@@ -2,37 +2,70 @@ package proc
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
+	"path"
 	"sync"
 )
 
-// ProcDir is the '/proc' directory and the associated ops for
-// reading subdirs or files.
-type ProcDir interface {
-	Root() string                             // proc directory
-	ReadDir(string) ([]os.FileInfo, error)    // read a subdirectory in the "root"
-	ReadFile(string) ([]byte, error)          // read a file in the "root"
-	ReadFileInto(string, *bytes.Buffer) error // read a file in the "root" in a buffer
+// File is a file in the "/proc" directory
+type File interface {
+	ReadInto(buf *bytes.Buffer) error
+	Close() error
 }
 
-type OSProcDir struct{ Dir string }
+// OSFile is a native file
+type OSFile struct{ *os.File }
 
-func (dp OSProcDir) Root() string                            { return dp.Dir }
-func (dp OSProcDir) ReadDir(s string) ([]os.FileInfo, error) { return ioutil.ReadDir(s) }
-func (dp OSProcDir) ReadFile(s string) ([]byte, error)       { return ioutil.ReadFile(s) }
-func (dp OSProcDir) ReadFileInto(filename string, buf *bytes.Buffer) error {
-	f, err := os.Open(filename)
-	if err != nil {
+// ReadInto reads the whole file into a buffer
+func (of *OSFile) ReadInto(buf *bytes.Buffer) error {
+	if _, err := of.File.Seek(0, 0); err != nil {
 		return err
 	}
-	_, err = buf.ReadFrom(f)
-	f.Close()
+	_, err := buf.ReadFrom(of.File)
 	return err
 }
 
+// Dir is the '/proc' directory and the associated ops for
+// reading subdirs or files.
+type Dir interface {
+	Root() string                          // the "/proc" directory
+	Open(s string) (File, error)           // open a file in the "/proc" dir
+	ReadDirNames(string) ([]string, error) // list a subdirectory in the "/proc"
+}
+
+// OSDir is a OS "/proc" firectory
+type OSDir struct{ Dir string }
+
+// Root returns the "/proc" top dir
+func (dp OSDir) Root() string {
+	return dp.Dir
+}
+
+// Open returns a ProcFile
+func (dp OSDir) Open(s string) (File, error) {
+	h, err := os.Open(path.Join(dp.Root(), s))
+	if err != nil {
+		return nil, err
+	}
+	return &OSFile{h}, nil
+}
+
+// ReadDirNames reads all the directory entries
+func (dp OSDir) ReadDirNames(s string) ([]string, error) {
+	f, err := os.Open(s)
+	if err != nil {
+		return nil, err
+	}
+	list, err := f.Readdirnames(-1)
+	f.Close()
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
 // DefaultProcDir is the default '/proc' directory
-var DefaultProcDir = OSProcDir{Dir: "/proc"}
+var DefaultProcDir = OSDir{Dir: "/proc"}
 
 // Process represents a single process.
 type Process struct {
@@ -43,13 +76,15 @@ type Process struct {
 	Inodes    []uint64
 }
 
-// ProcReader is something that reads the /proc directory and
+// Reader is something that reads the /proc directory and
 // returns some info like processes and connections
-type ProcReader interface {
+type Reader interface {
 	// Processes walks through the processes
 	Processes(func(Process)) error
 	// Connections walks through the connections
 	Connections(bool, func(Connection)) error
+	// Close closes the "/proc" reader
+	Close() error
 }
 
 // CachingProcReader is a '/proc' reader than caches a copy of the output from another
@@ -57,13 +92,13 @@ type ProcReader interface {
 type CachingProcReader struct {
 	procsCache   []Process
 	connsCache   []Connection
-	source       ProcReader
+	source       Reader
 	includeProcs bool
 	sync.RWMutex
 }
 
 // NewCachingProcReader returns a new CachingProcReader
-func NewCachingProcReader(source ProcReader, includeProcs bool) *CachingProcReader {
+func NewCachingProcReader(source Reader, includeProcs bool) *CachingProcReader {
 	return &CachingProcReader{source: source, includeProcs: includeProcs}
 }
 
@@ -89,6 +124,11 @@ func (c *CachingProcReader) Connections(_ bool, f func(Connection)) error {
 	}
 	return nil
 
+}
+
+// Close closes the "/proc" reader
+func (c *CachingProcReader) Close() error {
+	return c.source.Close()
 }
 
 // Update updates the cached copy of the processes and connections lists

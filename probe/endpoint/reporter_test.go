@@ -17,7 +17,7 @@ var (
 	fixRemoteAddress = net.ParseIP("192.168.1.2")
 	fixRemotePort    = uint16(12345)
 	fixRemotePortB   = uint16(12346)
-	fixProcessPID = int(4242)
+	fixProcessPID    = int(4242)
 	fixProcessName   = "nginx"
 
 	fixConnections = []proc.Connection{
@@ -69,7 +69,7 @@ func TestSpyNoProcesses(t *testing.T) {
 		nodeName = "frenchs-since-1904"   // TODO rename to hostNmae
 	)
 
-	procReader := proc.MockedProcReader{Conns: fixConnections}
+	procReader := proc.MockedReader{Conns: fixConnections}
 	reporter := endpoint.NewReporter(nodeID, nodeName, false, &procReader, false)
 	r, _ := reporter.Report()
 	//buf, _ := json.MarshalIndent(r, "", "    ")
@@ -104,7 +104,7 @@ func TestSpyWithProcesses(t *testing.T) {
 		nodeName = "fishermans-friend" // TODO rename to hostNmae
 	)
 
-	procReader := proc.MockedProcReader{Conns: fixConnectionsWithProcesses}
+	procReader := proc.MockedReader{Conns: fixConnectionsWithProcesses}
 	reporter := endpoint.NewReporter(nodeID, nodeName, true, &procReader, false)
 	r, _ := reporter.Report()
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)

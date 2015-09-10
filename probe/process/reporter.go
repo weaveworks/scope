@@ -3,8 +3,8 @@ package process
 import (
 	"strconv"
 
-	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/probe/proc"
+	"github.com/weaveworks/scope/report"
 )
 
 // We use these keys in node metadata
@@ -19,11 +19,11 @@ const (
 // Reporter generates Reports containing the Process topology.
 type Reporter struct {
 	scope  string
-	walker proc.ProcReader
+	walker proc.Reader
 }
 
 // NewReporter makes a new Reporter.
-func NewReporter(walker proc.ProcReader, scope string) *Reporter {
+func NewReporter(walker proc.Reader, scope string) *Reporter {
 	return &Reporter{
 		scope:  scope,
 		walker: walker,

@@ -10,13 +10,19 @@ import (
 
 func TestProcReaderBasic(t *testing.T) {
 	procFunc := func(proc.Process) {}
-	if err := proc.NewProcReader(proc.EmptyProcDir).Processes(procFunc); err != nil {
+	nullProcDir := mockedDir{
+		Dir:              "",
+		OpenFunc:         func(string) (proc.File, error) { return &proc.OSFile{File: nil}, nil },
+		ReadDirNamesFunc: func(string) ([]string, error) { return []string{}, nil },
+	}
+
+	if err := proc.NewReader(nullProcDir).Processes(procFunc); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestCachingProcReader(t *testing.T) {
-	all := func(w proc.ProcReader) ([]proc.Process, error) {
+	all := func(w proc.Reader) ([]proc.Process, error) {
 		all := []proc.Process{}
 		err := w.Processes(func(p proc.Process) {
 			all = append(all, p)
@@ -30,7 +36,7 @@ func TestCachingProcReader(t *testing.T) {
 		{PID: 3, PPID: 1, Comm: "apache", Threads: 2},
 		{PID: 4, PPID: 2, Comm: "ping", Cmdline: "ping foo.bar.local"},
 	}
-	procReader := &proc.MockedProcReader{
+	procReader := &proc.MockedReader{
 		Procs: processes,
 	}
 	cachingProcReader := proc.NewCachingProcReader(procReader, true)

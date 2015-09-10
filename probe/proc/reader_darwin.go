@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-type procReader struct{}
+type reader struct{}
 
-// NewProcReader returns a Darwin (lsof-based) '/proc' reader
-func NewProcReader(proc ProcDir) *procReader {
-	return &procReader{}
+// NewReader returns a Darwin (lsof-based) '/proc' reader
+func NewReader(proc Dir) Reader {
+	return &reader{}
 }
 
 const (
@@ -22,7 +22,7 @@ const (
 	lsofBinary    = "lsof"
 )
 
-func (procReader) Processes(f func(Process)) error {
+func (reader) Processes(f func(Process)) error {
 	output, err := exec.Command(
 		lsofBinary,
 		"-i",       // only Internet files
@@ -45,7 +45,7 @@ func (procReader) Processes(f func(Process)) error {
 	return nil
 }
 
-func (w *walker) Connections(withProcs bool, f func(Connection)) error {
+func (w *reader) Connections(withProcs bool, f func(Connection)) error {
 	out, err := exec.Command(
 		netstatBinary,
 		"-n", // no number resolving
@@ -90,6 +90,11 @@ func (w *walker) Connections(withProcs bool, f func(Connection)) error {
 	for _, c := range connections {
 		f(c)
 	}
+	return nil
+}
+
+// Close closes the Darwin "/proc" reader
+func (w *reader) Close() error {
 	return nil
 }
 

@@ -109,8 +109,8 @@ func main() {
 	}
 
 	var (
-		procDir          = proc.OSProcDir{Dir: *procRoot}
-		procReader       = proc.NewCachingProcReader(proc.NewProcReader(procDir), *spyProcs)
+		procDir          = proc.OSDir{Dir: *procRoot}
+		procReader       = proc.NewCachingProcReader(proc.NewReader(procDir), *spyProcs)
 		tickers          = []Ticker{procReader}
 		endpointReporter = endpoint.NewReporter(hostID, hostName, *spyProcs, procReader, *useConntrack)
 		reporters        = []Reporter{
@@ -120,6 +120,7 @@ func main() {
 		}
 		taggers = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
 	)
+	defer procReader.Close()
 	defer endpointReporter.Stop()
 
 	if *dockerEnabled {
