@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/render/dsl"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
 )
@@ -136,6 +137,21 @@ var topologyRegistry = map[string]topologyView{
 		human:    "Applications",
 		parent:   "",
 		renderer: render.FilterUnconnected(render.ProcessWithContainerNameRenderer{}),
+	},
+	"applications-expr": {
+		human:  "Applications (expr)",
+		parent: "",
+		renderer: render.CustomRenderer{
+			Renderer: render.Map{
+				Renderer: render.SelectAll,
+				MapFunc:  render.MapIdentity,
+			},
+			RenderFunc: dsl.ParseExpressions(
+				"ALL GROUPBY {{pid}}",
+				"NOT WITH {{pid}} REMOVE",
+				"NOT CONNECTED REMOVE",
+			).Eval,
+		},
 	},
 	"applications-by-name": {
 		human:    "by name",

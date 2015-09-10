@@ -16,7 +16,7 @@ func TestAPITopology(t *testing.T) {
 	if err := json.Unmarshal(body, &topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
-	equals(t, 3, len(topologies))
+	equals(t, 4, len(topologies))
 
 	for _, topology := range topologies {
 		is200(t, ts, topology.URL)

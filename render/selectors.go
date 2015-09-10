@@ -86,4 +86,15 @@ var (
 	SelectHost = TopologySelector(func(r report.Report) RenderableNodes {
 		return MakeRenderableNodes(r.Host)
 	})
+
+	// SelectAll merges all topologies.
+	SelectAll = TopologySelector(func(r report.Report) RenderableNodes {
+		rns := RenderableNodes{}
+		for _, t := range r.Topologies() {
+			for id, rn := range MakeRenderableNodes(t) {
+				rns[id] = rn
+			}
+		}
+		return rns
+	})
 )

@@ -31,6 +31,11 @@ const (
 // If the output is empty, the node shall be omitted from the rendered topology.
 type MapFunc func(RenderableNode, report.Networks) RenderableNodes
 
+// MapIdentity returns a perfect identity mapping of the input domain.
+func MapIdentity(n RenderableNode, _ report.Networks) RenderableNodes {
+	return RenderableNodes{n.ID: n}
+}
+
 // MapEndpointIdentity maps an endpoint topology node to a single endpoint
 // renderable node. As it is only ever run on endpoint topology nodes, we
 // expect that certain keys are present.

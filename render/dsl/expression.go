@@ -341,7 +341,11 @@ func cp(dst render.RenderableNodes, src render.RenderableNodes, id string) {
 }
 
 func merge(dst render.RenderableNodes, dstID string, src render.RenderableNodes, srcID string) {
-	dst[dstID] = dst[dstID].Merge(src[srcID])
+	dstNode, ok := dst[dstID]
+	if !ok {
+		dstNode = render.NewRenderableNode(dstID)
+	}
+	dst[dstID] = dstNode.Merge(src[srcID])
 
 	// Every transform that calls merge must call shift at the end, to update
 	// adjacency lists and edge metadatas.

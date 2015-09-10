@@ -95,7 +95,7 @@ func ParseExpressions(strs ...string) Expressions {
 	for _, str := range strs {
 		expr, err := ParseExpression(str)
 		if err != nil {
-			log.Printf("%s: %v", str, err)
+			log.Printf("%q: %v", str, err)
 			continue
 		}
 		exprs = append(exprs, expr)
