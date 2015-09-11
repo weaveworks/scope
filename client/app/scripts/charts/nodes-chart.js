@@ -35,7 +35,8 @@ const NodesChart = React.createClass({
   },
 
   componentWillMount: function() {
-    this.updateGraphState(this.props);
+    const state = this.updateGraphState(this.props, this.state);
+    this.setState(state);
   },
 
   componentDidMount: function() {
@@ -48,22 +49,28 @@ const NodesChart = React.createClass({
   },
 
   componentWillReceiveProps: function(nextProps) {
+    // gather state, setState should be called only once here
+    const state = _.assign({}, this.state);
+
     // wipe node states when showing different topology
     if (nextProps.topologyId !== this.props.topologyId) {
-      this.setState({
+      _.assign(state, {
         nodes: {},
         edges: {}
       });
     }
+    // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
     if (nextProps.nodes !== this.props.nodes) {
-      this.updateGraphState(nextProps);
+      _.assign(state, this.updateGraphState(nextProps, state));
     }
     if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
-      this.restoreLayout();
+      _.assign(state, this.restoreLayout(state));
     }
     if (nextProps.selectedNodeId) {
-      this.centerSelectedNode(nextProps);
+      this.centerSelectedNode(nextProps, state);
     }
+
+    this.setState(state);
   },
 
   componentWillUnmount: function() {
@@ -213,13 +220,13 @@ const NodesChart = React.createClass({
     return edges;
   },
 
-  centerSelectedNode: function(props) {
-    const layoutNodes = this.state.nodes;
-    const layoutEdges = this.state.edges;
+  centerSelectedNode: function(props, state) {
+    const layoutNodes = state.nodes;
+    const layoutEdges = state.edges;
     const selectedLayoutNode = layoutNodes[props.selectedNodeId];
 
     if (!selectedLayoutNode) {
-      return;
+      return {};
     }
 
     const adjacency = AppStore.getAdjacentNodes(props.selectedNodeId);
@@ -257,15 +264,15 @@ const NodesChart = React.createClass({
       }
     });
 
-    this.setState({
+    return {
       edges: layoutEdges,
       nodes: layoutNodes
-    });
+    };
   },
 
-  restoreLayout: function() {
-    const edges = this.state.edges;
-    const nodes = this.state.nodes;
+  restoreLayout: function(state) {
+    const edges = state.edges;
+    const nodes = state.nodes;
 
     _.each(nodes, function(node) {
       node.x = node.px;
@@ -278,17 +285,17 @@ const NodesChart = React.createClass({
       }
     });
 
-    this.setState({edges: edges, nodes: nodes});
+    return {edges: edges, nodes: nodes};
   },
 
-  updateGraphState: function(props) {
+  updateGraphState: function(props, state) {
     const n = props.nodes.size;
 
     if (n === 0) {
-      return;
+      return {};
     }
 
-    const nodes = this.initNodes(props.nodes, this.state.nodes);
+    const nodes = this.initNodes(props.nodes, state.nodes);
     const edges = this.initEdges(props.nodes, nodes);
 
     const expanse = Math.min(props.height, props.width);
@@ -310,7 +317,7 @@ const NodesChart = React.createClass({
 
     // layout was aborted
     if (!graph) {
-      return;
+      return {};
     }
 
     // save coordinates for restore
@@ -334,12 +341,12 @@ const NodesChart = React.createClass({
       this.zoom.scale(zoomFactor);
     }
 
-    this.setState({
+    return {
       nodes: nodes,
       edges: edges,
       nodeScale: nodeScale,
       scale: zoomScale
-    });
+    };
   },
 
   zoomed: function() {

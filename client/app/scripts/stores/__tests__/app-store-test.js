@@ -292,9 +292,9 @@ describe('AppStore', function() {
     expect(AppStore.getAdjacentNodes().size).toEqual(0);
 
     registeredCallback(ClickNodeAction);
-    expect(AppStore.getAdjacentNodes().size).toEqual(2);
-    expect(AppStore.getAdjacentNodes().has('n1')).toBeTruthy();
-    expect(AppStore.getAdjacentNodes().has('n2')).toBeTruthy();
+    expect(AppStore.getAdjacentNodes('n1').size).toEqual(2);
+    expect(AppStore.getAdjacentNodes('n1').has('n1')).toBeTruthy();
+    expect(AppStore.getAdjacentNodes('n1').has('n2')).toBeTruthy();
 
     registeredCallback(HitEscAction)
     expect(AppStore.getAdjacentNodes().size).toEqual(0);
