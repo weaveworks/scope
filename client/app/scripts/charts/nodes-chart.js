@@ -3,6 +3,7 @@ const d3 = require('d3');
 const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
 const timely = require('timely');
+const Spring = require('react-motion').Spring;
 
 const AppStore = require('../stores/app-store');
 const Edge = require('./edge');
@@ -29,6 +30,7 @@ const NodesChart = React.createClass({
       edges: {},
       nodeScale: 1,
       translate: [0, 0],
+      panTranslate: [0, 0],
       scale: 1,
       hasZoomed: false
     };
@@ -144,20 +146,37 @@ const NodesChart = React.createClass({
   render: function() {
     const nodeElements = this.renderGraphNodes(this.state.nodes, this.state.nodeScale);
     const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
-    const transform = 'translate(' + this.state.translate + ')' +
-      ' scale(' + this.state.scale + ')';
-    debug('translate', transform);
+    const scale = this.state.scale;
+
+    // only animate shift behavior, not panning
+    const panTranslate = this.state.panTranslate;
+    const shiftTranslate = this.state.translate;
+    let translate = panTranslate;
+    let wasShifted = false;
+    if (shiftTranslate[0] !== panTranslate[0] || shiftTranslate[1] !== panTranslate[1]) {
+      translate = shiftTranslate;
+      wasShifted = true;
+    }
 
     return (
       <svg width="100%" height="100%" className="nodes-chart">
-        <g className="canvas" transform={transform}>
-          <g className="edges">
-            {edgeElements}
-          </g>
-          <g className="nodes">
-            {nodeElements}
-          </g>
-        </g>
+        <Spring endValue={{val: translate, config: [80, 20]}}>
+          {function(interpolated) {
+            let interpolatedTranslate = wasShifted ? interpolated.val : panTranslate;
+            const transform = 'translate(' + interpolatedTranslate + ')' +
+              ' scale(' + scale + ')';
+            return (
+              <g className="canvas" transform={transform}>
+                <g className="edges">
+                  {edgeElements}
+                </g>
+                <g className="nodes">
+                  {nodeElements}
+                </g>
+              </g>
+            );
+          }}
+        </Spring>
       </svg>
     );
   },
@@ -370,7 +389,8 @@ const NodesChart = React.createClass({
   zoomed: function() {
     this.setState({
       hasZoomed: true,
-      translate: d3.event.translate,
+      panTranslate: d3.event.translate.slice(),
+      translate: d3.event.translate.slice(),
       scale: d3.event.scale
     });
   }
