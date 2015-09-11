@@ -178,10 +178,6 @@ body {
     cursor: pointer;
     transition: opacity .5s ease-in-out;
 
-    &.blurred {
-      opacity: 0.25;
-    }
-
     &.pseudo {
       opacity: 0.8;
       cursor: default;
@@ -198,6 +194,10 @@ body {
         stroke: @text-tertiary-color;
         stroke-width: 1px;
       }
+    }
+
+    &.blurred {
+      opacity: 0.25;
     }
   }
 
