@@ -1,4 +1,4 @@
-.PHONY: all deps static clean client-lint client-test client-sync
+.PHONY: all deps static clean client-lint client-test client-sync backend
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo
@@ -11,6 +11,7 @@ SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 SCOPE_EXPORT=scope.tar
 SCOPE_UI_BUILD_EXPORT=scope_ui_build.tar
 SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
+SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
 DOCKER_VERSION=1.3.1
 DOCKER_DISTRIB=docker/docker-$(DOCKER_VERSION).tgz
@@ -75,6 +76,10 @@ client-start:
 $(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
 	docker build -t $(SCOPE_UI_BUILD_IMAGE) client
 	docker save $(SCOPE_UI_BUILD_IMAGE):latest > $@
+
+backend:
+	docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) backend
+	docker run -ti -v $(shell pwd):/go/src/github.com/weaveworks/scope $(SCOPE_BACKEND_BUILD_IMAGE) /build.bash
 
 clean:
 	go clean ./...
