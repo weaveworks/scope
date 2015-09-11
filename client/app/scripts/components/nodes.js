@@ -40,6 +40,7 @@ const Nodes = React.createClass({
           height={this.state.height}
           topologyId={this.props.topologyId}
           detailsWidth={this.props.detailsWidth}
+          topMargin={this.props.topMargin}
         />
       </div>
     );

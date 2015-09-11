@@ -297,6 +297,17 @@ const NodesChart = React.createClass({
       const shift = offsetX - offsetX + centerX - radius;
       translate[0] = -shift;
     }
+    const offsetY = translate[1];
+    if (offsetY + centerY + radius > props.height) {
+      // shift up if past bottom
+      const shift = centerY + radius - props.height;
+      translate[1] = -shift;
+    } else if (offsetY + centerY - radius - props.topMargin < 0) {
+      // shift down if off canvas
+      const shift = offsetY - offsetY + centerY - radius - props.topMargin;
+      translate[1] = -shift;
+    }
+
     // saving translate in d3's panning cache
     this.zoom.translate(translate);
 

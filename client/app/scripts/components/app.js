@@ -62,6 +62,7 @@ const App = React.createClass({
     const versionString = this.state.version ? 'Version ' + this.state.version : '';
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 420 : 0;
+    const topMargin = 100;
 
     return (
       <div>
@@ -79,7 +80,7 @@ const App = React.createClass({
 
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
           highlightedEdgeIds={this.state.highlightedEdgeIds} detailsWidth={detailsWidth}
-          selectedNodeId={this.state.selectedNodeId}
+          selectedNodeId={this.state.selectedNodeId} topMargin={topMargin}
           topologyId={this.state.currentTopologyId} />
 
         <div className="footer">
