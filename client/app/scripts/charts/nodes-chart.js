@@ -48,11 +48,14 @@ const NodesChart = React.createClass({
   },
 
   componentWillReceiveProps: function(nextProps) {
-    if (nextProps.nodes !== this.props.nodes) {
+    // wipe node states when showing different topology
+    if (nextProps.topologyId !== this.props.topologyId) {
       this.setState({
         nodes: {},
         edges: {}
       });
+    }
+    if (nextProps.nodes !== this.props.nodes) {
       this.updateGraphState(nextProps);
     }
     if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
@@ -151,13 +154,13 @@ const NodesChart = React.createClass({
     );
   },
 
-  initNodes: function(topology, prevNodes) {
+  initNodes: function(topology) {
     const centerX = this.props.width / 2;
     const centerY = this.props.height / 2;
     const nodes = {};
 
     topology.forEach(function(node, id) {
-      nodes[id] = prevNodes[id] || {};
+      nodes[id] = {};
 
       // use cached positions if available
       _.defaults(nodes[id], {
