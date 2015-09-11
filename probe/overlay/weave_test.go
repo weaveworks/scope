@@ -30,6 +30,8 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	w.Tick()
+
 	{
 		have, err := w.Report()
 		if err != nil {

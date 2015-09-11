@@ -113,6 +113,7 @@ func main() {
 	var (
 		endpointReporter = endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack)
 		processCache     = process.NewCachingWalker(process.NewWalker(*procRoot))
+		tickers          = []Ticker{processCache}
 		reporters        = []Reporter{
 			endpointReporter,
 			host.NewReporter(hostID, hostName, localNets),
@@ -142,6 +143,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to start Weave tagger: %v", err)
 		}
+		tickers = append(tickers, weave)
 		taggers = append(taggers, weave)
 		reporters = append(reporters, weave)
 	}
@@ -173,6 +175,7 @@ func main() {
 			pubTick = time.Tick(*publishInterval)
 			spyTick = time.Tick(*spyInterval)
 			r       = report.MakeReport()
+			p       = xfer.NewReportPublisher(publishers)
 		)
 
 		for {
@@ -180,23 +183,26 @@ func main() {
 			case <-pubTick:
 				publishTicks.WithLabelValues().Add(1)
 				r.Window = *publishInterval
-				if err := publishers.Publish(r); err != nil {
+				if err := p.Publish(r); err != nil {
 					log.Printf("publish: %v", err)
 				}
 				r = report.MakeReport()
 
 			case <-spyTick:
-				if err := processCache.Update(); err != nil {
-					log.Printf("error reading processes: %v", err)
-				}
-				for _, reporter := range reporters {
-					newReport, err := reporter.Report()
-					if err != nil {
-						log.Printf("error generating report: %v", err)
+				start := time.Now()
+
+				for _, ticker := range tickers {
+					if err := ticker.Tick(); err != nil {
+						log.Printf("error doing ticker: %v", err)
 					}
-					r = r.Merge(newReport)
 				}
+
+				r = r.Merge(doReport(reporters))
 				r = Apply(r, taggers)
+
+				if took := time.Since(start); took > *spyInterval {
+					log.Printf("report generation took too long (%s)", took)
+				}
 
 			case <-quit:
 				return
@@ -204,6 +210,26 @@ func main() {
 		}
 	}()
 	log.Printf("%s", <-interrupt())
+}
+
+func doReport(reporters []Reporter) report.Report {
+	reports := make(chan report.Report, len(reporters))
+	for _, rep := range reporters {
+		go func(rep Reporter) {
+			newReport, err := rep.Report()
+			if err != nil {
+				log.Printf("error generating report: %v", err)
+				newReport = report.MakeReport() // empty is OK to merge
+			}
+			reports <- newReport
+		}(rep)
+	}
+
+	result := report.MakeReport()
+	for i := 0; i < cap(reports); i++ {
+		result = result.Merge(<-reports)
+	}
+	return result
 }
 
 func interrupt() chan os.Signal {

@@ -1,8 +1,13 @@
 package report
 
 import (
+	"hash"
+	"hash/fnv"
 	"net"
 	"strings"
+	"sync"
+
+	"github.com/bluele/gcache"
 )
 
 // TheInternet is used as a node ID to indicate a remote IP.
@@ -21,9 +26,38 @@ const (
 	EdgeDelim = "|"
 )
 
+var (
+	idCache = gcache.New(1024).LRU().Build()
+	hashers = sync.Pool{
+		New: func() interface{} {
+			return fnv.New64a()
+		},
+	}
+)
+
+func lookupID(part1, part2, part3 string, f func() string) string {
+	h := hashers.Get().(hash.Hash64)
+	h.Write([]byte(part1))
+	h.Write([]byte(part2))
+	h.Write([]byte(part3))
+	sum := h.Sum64()
+	var result string
+	if id, err := idCache.Get(sum); id != nil && err != nil {
+		result = id.(string)
+	} else {
+		result = f()
+		idCache.Set(sum, result)
+	}
+	h.Reset()
+	hashers.Put(h)
+	return result
+}
+
 // MakeEndpointNodeID produces an endpoint node ID from its composite parts.
 func MakeEndpointNodeID(hostID, address, port string) string {
-	return MakeAddressNodeID(hostID, address) + ScopeDelim + port
+	return lookupID(hostID, address, port, func() string {
+		return MakeAddressNodeID(hostID, address) + ScopeDelim + port
+	})
 }
 
 // MakeAddressNodeID produces an address node ID from its composite parts.

@@ -253,8 +253,8 @@ func (s *Sniffer) Merge(p Packet, rpt *report.Report) {
 	}
 
 	addAdjacency := func(t report.Topology, srcNodeID, dstNodeID string) report.Topology {
-		result := t.WithNode(srcNodeID, report.MakeNode().WithAdjacent(dstNodeID))
-		result = result.WithNode(dstNodeID, report.MakeNode())
+		result := t.AddNode(srcNodeID, report.MakeNode().WithAdjacent(dstNodeID))
+		result = result.AddNode(dstNodeID, report.MakeNode())
 		return result
 	}
 

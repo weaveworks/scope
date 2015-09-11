@@ -20,16 +20,17 @@ func MakeTopology() Topology {
 	}
 }
 
-// WithNode produces a topology from t, with nmd added under key nodeID; if a
-// node already exists for this key, nmd is merged with that node. Note that a
-// fresh topology is returned.
-func (t Topology) WithNode(nodeID string, nmd Node) Topology {
+// AddNode adds node to the topology under key nodeID; if a
+// node already exists for this key, nmd is merged with that node.
+// The same topology is returned to enable chaining.
+// This method is different from all the other similar methods
+// in that it mutates the Topology, to solve issues of GC pressure.
+func (t Topology) AddNode(nodeID string, nmd Node) Topology {
 	if existing, ok := t.Nodes[nodeID]; ok {
 		nmd = nmd.Merge(existing)
 	}
-	result := t.Copy()
-	result.Nodes[nodeID] = nmd
-	return result
+	t.Nodes[nodeID] = nmd
+	return t
 }
 
 // Copy returns a value copy of the Topology.

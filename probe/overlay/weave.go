@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/weaveworks/scope/common/exec"
 	"github.com/weaveworks/scope/probe/docker"
@@ -43,6 +44,9 @@ var ipMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3
 type Weave struct {
 	url    string
 	hostID string
+
+	mtx    sync.RWMutex
+	status weaveStatus
 }
 
 type weaveStatus struct {
@@ -75,24 +79,32 @@ func NewWeave(hostID, weaveRouterAddress string) (*Weave, error) {
 	}, nil
 }
 
-func (w Weave) update() (weaveStatus, error) {
-	var result weaveStatus
+// Tick implements Ticker
+func (w *Weave) Tick() error {
 	req, err := http.NewRequest("GET", w.url, nil)
 	if err != nil {
-		return result, err
+		return err
 	}
 	req.Header.Add("Accept", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return result, err
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return result, fmt.Errorf("Weave Tagger: got %d", resp.StatusCode)
+		return fmt.Errorf("Weave Tagger: got %d", resp.StatusCode)
 	}
 
-	return result, json.NewDecoder(resp.Body).Decode(&result)
+	var result weaveStatus
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return err
+	}
+
+	w.mtx.Lock()
+	defer w.mtx.Unlock()
+	w.status = result
+	return nil
 }
 
 type psEntry struct {
@@ -101,7 +113,7 @@ type psEntry struct {
 	ips               []string
 }
 
-func (w Weave) ps() ([]psEntry, error) {
+func (w *Weave) ps() ([]psEntry, error) {
 	var result []psEntry
 	cmd := exec.Command("weave", "--local", "ps")
 	out, err := cmd.StdoutPipe()
@@ -132,30 +144,13 @@ func (w Weave) ps() ([]psEntry, error) {
 	return result, scanner.Err()
 }
 
-func (w Weave) tagContainer(r report.Report, containerIDPrefix, macAddress string, ips []string) {
-	for nodeid, nmd := range r.Container.Nodes {
-		idPrefix := nmd.Metadata[docker.ContainerID][:12]
-		if idPrefix != containerIDPrefix {
-			continue
-		}
-
-		existingIPs := report.MakeIDList(docker.ExtractContainerIPs(nmd)...)
-		existingIPs = existingIPs.Add(ips...)
-		nmd.Metadata[docker.ContainerIPs] = strings.Join(existingIPs, " ")
-		nmd.Metadata[WeaveMACAddress] = macAddress
-		r.Container.Nodes[nodeid] = nmd
-		break
-	}
-}
-
 // Tag implements Tagger.
-func (w Weave) Tag(r report.Report) (report.Report, error) {
-	status, err := w.update()
-	if err != nil {
-		return r, nil
-	}
+func (w *Weave) Tag(r report.Report) (report.Report, error) {
+	w.mtx.RLock()
+	defer w.mtx.RUnlock()
 
-	for _, entry := range status.DNS.Entries {
+	// Put information from weaveDNS on the container nodes
+	for _, entry := range w.status.DNS.Entries {
 		if entry.Tombstone > 0 {
 			continue
 		}
@@ -167,28 +162,39 @@ func (w Weave) Tag(r report.Report) (report.Report, error) {
 		hostnames := report.IDList(strings.Fields(node.Metadata[WeaveDNSHostname]))
 		hostnames = hostnames.Add(strings.TrimSuffix(entry.Hostname, "."))
 		node.Metadata[WeaveDNSHostname] = strings.Join(hostnames, " ")
-		r.Container.Nodes[nodeID] = node
 	}
 
+	// Put information from weave ps on the container nodes
 	psEntries, err := w.ps()
 	if err != nil {
 		return r, nil
 	}
+	containersByPrefix := map[string]report.Node{}
+	for _, node := range r.Container.Nodes {
+		prefix := node.Metadata[docker.ContainerID][:12]
+		containersByPrefix[prefix] = node
+	}
 	for _, e := range psEntries {
-		w.tagContainer(r, e.containerIDPrefix, e.macAddress, e.ips)
+		node, ok := containersByPrefix[e.containerIDPrefix]
+		if !ok {
+			continue
+		}
+
+		existingIPs := report.MakeIDList(docker.ExtractContainerIPs(node)...)
+		existingIPs = existingIPs.Add(e.ips...)
+		node.Metadata[docker.ContainerIPs] = strings.Join(existingIPs, " ")
+		node.Metadata[WeaveMACAddress] = e.macAddress
 	}
 	return r, nil
 }
 
 // Report implements Reporter.
-func (w Weave) Report() (report.Report, error) {
-	r := report.MakeReport()
-	status, err := w.update()
-	if err != nil {
-		return r, err
-	}
+func (w *Weave) Report() (report.Report, error) {
+	w.mtx.RLock()
+	defer w.mtx.RUnlock()
 
-	for _, peer := range status.Router.Peers {
+	r := report.MakeReport()
+	for _, peer := range w.status.Router.Peers {
 		r.Overlay.Nodes[report.MakeOverlayNodeID(peer.Name)] = report.MakeNodeWith(map[string]string{
 			WeavePeerName:     peer.Name,
 			WeavePeerNickName: peer.NickName,

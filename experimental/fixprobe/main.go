@@ -39,7 +39,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	rp := xfer.NewReportPublisher(publisher)
 	for range time.Tick(*publishInterval) {
-		publisher.Publish(fixedReport)
+		rp.Publish(fixedReport)
 	}
 }

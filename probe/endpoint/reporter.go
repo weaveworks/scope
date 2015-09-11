@@ -178,8 +178,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			})
 		}
 
-		rpt.Address = rpt.Address.WithNode(localAddressNodeID, localNode)
-		rpt.Address = rpt.Address.WithNode(remoteAddressNodeID, remoteNode)
+		rpt.Address = rpt.Address.AddNode(localAddressNodeID, localNode)
+		rpt.Address = rpt.Address.AddNode(remoteAddressNodeID, remoteNode)
 	}
 
 	// Update endpoint topology
@@ -225,8 +225,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		if extraRemoteNode != nil {
 			remoteNode = remoteNode.Merge(*extraRemoteNode)
 		}
-		rpt.Endpoint = rpt.Endpoint.WithNode(localEndpointNodeID, localNode)
-		rpt.Endpoint = rpt.Endpoint.WithNode(remoteEndpointNodeID, remoteNode)
+		rpt.Endpoint = rpt.Endpoint.AddNode(localEndpointNodeID, localNode)
+		rpt.Endpoint = rpt.Endpoint.AddNode(remoteEndpointNodeID, remoteNode)
 	}
 }
 

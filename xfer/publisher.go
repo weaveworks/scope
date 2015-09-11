@@ -1,9 +1,6 @@
 package xfer
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/gob"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,8 +8,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/weaveworks/scope/report"
 )
 
 const (
@@ -20,9 +15,10 @@ const (
 	maxBackoff     = 60 * time.Second
 )
 
-// Publisher is something which can send a report to a remote collector.
+// Publisher is something which can send a buffered set of data somewhere,
+// probably to a collector.
 type Publisher interface {
-	Publish(report.Report) error
+	Publish(*Buffer) error
 	Stop()
 }
 
@@ -63,16 +59,10 @@ func (p HTTPPublisher) String() string {
 }
 
 // Publish publishes the report to the URL.
-func (p HTTPPublisher) Publish(rpt report.Report) error {
-	gzbuf := bytes.Buffer{}
-	gzwriter := gzip.NewWriter(&gzbuf)
+func (p HTTPPublisher) Publish(buf *Buffer) error {
+	defer buf.Put()
 
-	if err := gob.NewEncoder(gzwriter).Encode(rpt); err != nil {
-		return err
-	}
-	gzwriter.Close() // otherwise the content won't get flushed to the output stream
-
-	req, err := http.NewRequest("POST", p.url, &gzbuf)
+	req, err := http.NewRequest("POST", p.url, buf)
 	if err != nil {
 		return err
 	}
@@ -108,7 +98,7 @@ func AuthorizationHeader(token string) string {
 // concurrent publishes are dropped.
 type BackgroundPublisher struct {
 	publisher Publisher
-	reports   chan report.Report
+	reports   chan *Buffer
 	quit      chan struct{}
 }
 
@@ -116,7 +106,7 @@ type BackgroundPublisher struct {
 func NewBackgroundPublisher(p Publisher) *BackgroundPublisher {
 	result := &BackgroundPublisher{
 		publisher: p,
-		reports:   make(chan report.Report),
+		reports:   make(chan *Buffer),
 		quit:      make(chan struct{}),
 	}
 	go result.loop()
@@ -146,9 +136,9 @@ func (b *BackgroundPublisher) loop() {
 }
 
 // Publish implements Publisher
-func (b *BackgroundPublisher) Publish(r report.Report) error {
+func (b *BackgroundPublisher) Publish(buf *Buffer) error {
 	select {
-	case b.reports <- r:
+	case b.reports <- buf:
 	default:
 	}
 	return nil
@@ -198,13 +188,18 @@ func (p *MultiPublisher) Add(target string) {
 }
 
 // Publish implements Publisher by emitting the report to all publishers.
-func (p *MultiPublisher) Publish(rpt report.Report) error {
+func (p *MultiPublisher) Publish(buf *Buffer) error {
 	p.mtx.RLock()
 	defer p.mtx.RUnlock()
 
+	// First take a reference for each publisher
+	for range p.m {
+		buf.Get()
+	}
+
 	var errs []string
 	for _, publisher := range p.m {
-		if err := publisher.Publish(rpt); err != nil {
+		if err := publisher.Publish(buf); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

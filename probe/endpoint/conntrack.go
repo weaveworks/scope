@@ -105,7 +105,7 @@ var ConntrackModulePresent = func() bool {
 
 // NB this is not re-entrant!
 func (c *Conntracker) run(args ...string) {
-	args = append([]string{"-E", "-o", "xml"}, args...)
+	args = append([]string{"-E", "-o", "xml", "-p", "tcp"}, args...)
 	cmd := exec.Command("conntrack", args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
