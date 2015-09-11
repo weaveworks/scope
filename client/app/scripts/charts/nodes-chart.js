@@ -28,7 +28,7 @@ const NodesChart = React.createClass({
       nodes: {},
       edges: {},
       nodeScale: 1,
-      translate: '0,0',
+      translate: [0, 0],
       scale: 1,
       hasZoomed: false
     };
@@ -146,6 +146,7 @@ const NodesChart = React.createClass({
     const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
     const transform = 'translate(' + this.state.translate + ')' +
       ' scale(' + this.state.scale + ')';
+    debug('translate', transform);
 
     return (
       <svg width="100%" height="100%" className="nodes-chart">
@@ -264,9 +265,26 @@ const NodesChart = React.createClass({
       }
     });
 
+    // shift canvas selected node out of view
+    const visibleWidth = Math.max(props.width - props.detailsWidth, 0);
+    const translate = state.translate;
+    const offsetX = translate[0];
+    if (offsetX + centerX + radius > visibleWidth) {
+      // shift left if blocked by details
+      const shift = centerX + radius - visibleWidth;
+      translate[0] = -shift;
+    } else if (offsetX + centerX - radius < 0) {
+      // shift right if off canvas
+      const shift = offsetX - offsetX + centerX - radius;
+      translate[0] = -shift;
+    }
+    // saving translate in d3's panning cache
+    this.zoom.translate(translate);
+
     return {
       edges: layoutEdges,
-      nodes: layoutNodes
+      nodes: layoutNodes,
+      translate: translate
     };
   },
 

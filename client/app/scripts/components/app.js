@@ -60,6 +60,8 @@ const App = React.createClass({
   render: function() {
     const showingDetails = this.state.selectedNodeId;
     const versionString = this.state.version ? 'Version ' + this.state.version : '';
+    // width of details panel blocking a view
+    const detailsWidth = showingDetails ? 420 : 0;
 
     return (
       <div>
@@ -76,7 +78,7 @@ const App = React.createClass({
         </div>
 
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
-          highlightedEdgeIds={this.state.highlightedEdgeIds}
+          highlightedEdgeIds={this.state.highlightedEdgeIds} detailsWidth={detailsWidth}
           selectedNodeId={this.state.selectedNodeId}
           topologyId={this.state.currentTopologyId} />
 
