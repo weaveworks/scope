@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/weaveworks/scope/common/exec"
 	"github.com/weaveworks/scope/probe/docker"
@@ -43,6 +44,8 @@ var ipMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3
 type Weave struct {
 	url    string
 	hostID string
+
+	mtx    sync.RWMutex
 	status weaveStatus
 }
 
@@ -78,7 +81,6 @@ func NewWeave(hostID, weaveRouterAddress string) (*Weave, error) {
 
 // Tick implements Ticker
 func (w *Weave) Tick() error {
-	var result weaveStatus
 	req, err := http.NewRequest("GET", w.url, nil)
 	if err != nil {
 		return err
@@ -94,10 +96,13 @@ func (w *Weave) Tick() error {
 		return fmt.Errorf("Weave Tagger: got %d", resp.StatusCode)
 	}
 
+	var result weaveStatus
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return err
 	}
 
+	w.mtx.Lock()
+	defer w.mtx.Unlock()
 	w.status = result
 	return nil
 }
@@ -108,7 +113,7 @@ type psEntry struct {
 	ips               []string
 }
 
-func (w Weave) ps() ([]psEntry, error) {
+func (w *Weave) ps() ([]psEntry, error) {
 	var result []psEntry
 	cmd := exec.Command("weave", "--local", "ps")
 	out, err := cmd.StdoutPipe()
@@ -140,7 +145,10 @@ func (w Weave) ps() ([]psEntry, error) {
 }
 
 // Tag implements Tagger.
-func (w Weave) Tag(r report.Report) (report.Report, error) {
+func (w *Weave) Tag(r report.Report) (report.Report, error) {
+	w.mtx.RLock()
+	defer w.mtx.RUnlock()
+
 	// Put information from weaveDNS on the container nodes
 	for _, entry := range w.status.DNS.Entries {
 		if entry.Tombstone > 0 {
@@ -181,7 +189,10 @@ func (w Weave) Tag(r report.Report) (report.Report, error) {
 }
 
 // Report implements Reporter.
-func (w Weave) Report() (report.Report, error) {
+func (w *Weave) Report() (report.Report, error) {
+	w.mtx.RLock()
+	defer w.mtx.RUnlock()
+
 	r := report.MakeReport()
 	for _, peer := range w.status.Router.Peers {
 		r.Overlay.Nodes[report.MakeOverlayNodeID(peer.Name)] = report.MakeNodeWith(map[string]string{

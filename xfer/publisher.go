@@ -15,7 +15,8 @@ const (
 	maxBackoff     = 60 * time.Second
 )
 
-// Publisher is something which can send a report to a remote collector.
+// Publisher is something which can send a buffered set of data somewhere,
+// probably to a collector.
 type Publisher interface {
 	Publish(*Buffer) error
 	Stop()
