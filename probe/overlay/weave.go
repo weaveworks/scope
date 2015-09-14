@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/weaveworks/scope/common/sanitize"
 
 	"github.com/weaveworks/scope/common/exec"
 	"github.com/weaveworks/scope/probe/docker"
@@ -68,15 +68,11 @@ type weaveStatus struct {
 
 // NewWeave returns a new Weave tagger based on the Weave router at
 // address. The address should be an IP or FQDN, no port.
-func NewWeave(hostID, weaveRouterAddress string) (*Weave, error) {
-	s, err := sanitize("http://", 6784, "/report")(weaveRouterAddress)
-	if err != nil {
-		return nil, err
-	}
+func NewWeave(hostID, weaveRouterAddress string) *Weave {
 	return &Weave{
-		url:    s,
+		url:    sanitize.URL("http://", 6784, "/report")(weaveRouterAddress),
 		hostID: hostID,
-	}, nil
+	}
 }
 
 // Tick implements Ticker
@@ -201,26 +197,4 @@ func (w *Weave) Report() (report.Report, error) {
 		})
 	}
 	return r, nil
-}
-
-func sanitize(scheme string, port int, path string) func(string) (string, error) {
-	return func(s string) (string, error) {
-		if s == "" {
-			return "", fmt.Errorf("no host")
-		}
-		if !strings.HasPrefix(s, "http") {
-			s = scheme + s
-		}
-		u, err := url.Parse(s)
-		if err != nil {
-			return "", err
-		}
-		if _, _, err = net.SplitHostPort(u.Host); err != nil {
-			u.Host += fmt.Sprintf(":%d", port)
-		}
-		if u.Path != path {
-			u.Path = path
-		}
-		return u.String(), nil
-	}
 }
