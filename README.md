@@ -31,23 +31,18 @@ boot2docker, replace localhost with the output of `boot2docker ip`.)
 
 ## Build
 
-```
-make deps
-make
-```
-
-This will produce a Docker image called **weaveworks/scope**.
-
-Note that the repository contains a copy of the compiled UI. To build a fresh
-UI from the source in the client subdirectory, and re-build the Docker
-container,
+The build is in four stages. `make frontend` builds a UI build image with all
+NPM dependencies. `make static` compiles the UI into `static.go` which is part
+of the repository for convenience. `make backend` builds the backend Go app
+which then includes the static files. The final `make` pushes the app into a
+Docker image called **weaveworks/scope**.
 
 ```
-make scope_ui_build.tar
+make frontend
 make static
+make backend
 make
 ```
-
 
 ## Run
 

@@ -1,4 +1,4 @@
-.PHONY: all deps static clean client-lint client-test client-sync backend
+.PHONY: all deps static clean client-lint client-test client-sync backend frontend
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo
@@ -85,6 +85,8 @@ $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 
 backend: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	docker run -ti $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope $(SCOPE_BACKEND_BUILD_IMAGE) /build.bash
+
+frontend: $(SCOPE_UI_BUILD_UPTODATE)
 
 clean:
 	go clean ./...
