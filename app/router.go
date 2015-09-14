@@ -3,6 +3,7 @@ package main
 import (
 	"compress/gzip"
 	"encoding/gob"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -76,6 +77,11 @@ func Router(c collector) *mux.Router {
 	return router
 }
 
+func badRequest(r *http.Request, w http.ResponseWriter, err error) {
+	http.Error(w, err.Error(), http.StatusBadRequest)
+	log.Printf("Error procressing request for %s: %v", r.URL.Path, err)
+}
+
 func makeReportPostHandler(a xfer.Adder) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
@@ -86,13 +92,13 @@ func makeReportPostHandler(a xfer.Adder) http.HandlerFunc {
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			reader, err = gzip.NewReader(r.Body)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				badRequest(r, w, err)
 				return
 			}
 		}
 
 		if err := gob.NewDecoder(reader).Decode(&rpt); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			badRequest(r, w, err)
 			return
 		}
 		a.Add(rpt)

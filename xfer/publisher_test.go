@@ -81,10 +81,11 @@ func TestMultiPublisher(t *testing.T) {
 		p              = &mockPublisher{}
 		factory        = func(string) (xfer.Publisher, error) { return p, nil }
 		multiPublisher = xfer.NewMultiPublisher(factory)
+		buffers        = xfer.NewBufferPool()
 	)
 
 	multiPublisher.Add("first")
-	if err := multiPublisher.Publish(xfer.NewBuffer(nil)); err != nil {
+	if err := multiPublisher.Publish(buffers.Get().(xfer.Buffer)); err != nil {
 		t.Error(err)
 	}
 	if want, have := 1, p.count; want != have {
@@ -92,7 +93,7 @@ func TestMultiPublisher(t *testing.T) {
 	}
 
 	multiPublisher.Add("second") // but factory returns same mockPublisher
-	if err := multiPublisher.Publish(xfer.NewBuffer(nil)); err != nil {
+	if err := multiPublisher.Publish(buffers.Get().(xfer.Buffer)); err != nil {
 		t.Error(err)
 	}
 	if want, have := 3, p.count; want != have {
@@ -102,5 +103,5 @@ func TestMultiPublisher(t *testing.T) {
 
 type mockPublisher struct{ count int }
 
-func (p *mockPublisher) Publish(*xfer.Buffer) error { p.count++; return nil }
-func (p *mockPublisher) Stop()                      {}
+func (p *mockPublisher) Publish(xfer.Buffer) error { p.count++; return nil }
+func (p *mockPublisher) Stop()                     {}
