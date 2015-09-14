@@ -1,7 +1,6 @@
 package docker_test
 
 import (
-	"reflect"
 	"runtime"
 	"sort"
 	"sync"
@@ -181,17 +180,16 @@ func TestRegistry(t *testing.T) {
 
 		{
 			want := []docker.Container{&mockContainer{container1}}
-			test.Poll(t, 10*time.Millisecond, want, func() interface{} {
+			test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 				return allContainers(registry)
 			})
 		}
 
 		{
-			have := allImages(registry)
 			want := []*client.APIImages{&apiImage1}
-			if !reflect.DeepEqual(want, have) {
-				t.Errorf("%s", test.Diff(want, have))
-			}
+			test.Poll(t, 100*time.Millisecond, want, func() interface{} {
+				return allImages(registry)
+			})
 		}
 	})
 }
