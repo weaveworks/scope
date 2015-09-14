@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/weaveworks/procspy"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
+	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -17,10 +17,10 @@ var (
 	fixRemoteAddress = net.ParseIP("192.168.1.2")
 	fixRemotePort    = uint16(12345)
 	fixRemotePortB   = uint16(12346)
-	fixProcessPID    = uint(4242)
+	fixProcessPID    = int(4242)
 	fixProcessName   = "nginx"
 
-	fixConnections = []procspy.Connection{
+	fixConnections = []proc.Connection{
 		{
 			Transport:     "tcp",
 			LocalAddress:  fixLocalAddress,
@@ -37,16 +37,16 @@ var (
 		},
 	}
 
-	fixConnectionsWithProcesses = []procspy.Connection{
+	fixConnectionsWithProcesses = []proc.Connection{
 		{
 			Transport:     "tcp",
 			LocalAddress:  fixLocalAddress,
 			LocalPort:     fixLocalPort,
 			RemoteAddress: fixRemoteAddress,
 			RemotePort:    fixRemotePort,
-			Proc: procspy.Proc{
+			Process: proc.Process{
 				PID:  fixProcessPID,
-				Name: fixProcessName,
+				Comm: fixProcessName,
 			},
 		},
 		{
@@ -55,23 +55,22 @@ var (
 			LocalPort:     fixLocalPort,
 			RemoteAddress: fixRemoteAddress,
 			RemotePort:    fixRemotePort,
-			Proc: procspy.Proc{
+			Process: proc.Process{
 				PID:  fixProcessPID,
-				Name: fixProcessName,
+				Comm: fixProcessName,
 			},
 		},
 	}
 )
 
 func TestSpyNoProcesses(t *testing.T) {
-	procspy.SetFixtures(fixConnections)
-
 	const (
 		nodeID   = "heinz-tomato-ketchup" // TODO rename to hostID
 		nodeName = "frenchs-since-1904"   // TODO rename to hostNmae
 	)
 
-	reporter := endpoint.NewReporter(nodeID, nodeName, false, false)
+	procReader := proc.MockedReader{Conns: fixConnections}
+	reporter := endpoint.NewReporter(nodeID, nodeName, false, &procReader, false)
 	r, _ := reporter.Report()
 	//buf, _ := json.MarshalIndent(r, "", "    ")
 	//t.Logf("\n%s\n", buf)
@@ -100,14 +99,13 @@ func TestSpyNoProcesses(t *testing.T) {
 }
 
 func TestSpyWithProcesses(t *testing.T) {
-	procspy.SetFixtures(fixConnectionsWithProcesses)
-
 	const (
 		nodeID   = "nikon"             // TODO rename to hostID
 		nodeName = "fishermans-friend" // TODO rename to hostNmae
 	)
 
-	reporter := endpoint.NewReporter(nodeID, nodeName, true, false)
+	procReader := proc.MockedReader{Conns: fixConnectionsWithProcesses}
+	reporter := endpoint.NewReporter(nodeID, nodeName, true, &procReader, false)
 	r, _ := reporter.Report()
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
 

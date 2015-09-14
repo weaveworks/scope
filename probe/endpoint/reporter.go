@@ -7,7 +7,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/weaveworks/procspy"
+	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -28,6 +28,7 @@ type Reporter struct {
 	conntracker      *Conntracker
 	natmapper        *natmapper
 	revResolver      *ReverseResolver
+	procReader       proc.Reader
 }
 
 // SpyDuration is an exported prometheus metric
@@ -42,12 +43,12 @@ var SpyDuration = prometheus.NewSummaryVec(
 	[]string{},
 )
 
-// NewReporter creates a new Reporter that invokes procspy.Connections to
+// NewReporter creates a new Reporter that invokes Connections to
 // generate a report.Report that contains every discovered (spied) connection
 // on the host machine, at the granularity of host and port. That information
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
-func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool) *Reporter {
+func NewReporter(hostID, hostName string, includeProcesses bool, procReader proc.Reader, useConntrack bool) *Reporter {
 	var (
 		conntrackModulePresent = ConntrackModulePresent()
 		conntracker            *Conntracker
@@ -73,6 +74,7 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		conntracker:      conntracker,
 		natmapper:        natmapper,
 		revResolver:      NewReverseResolver(),
+		procReader:       procReader,
 	}
 }
 
@@ -94,12 +96,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	}(time.Now())
 
 	rpt := report.MakeReport()
-	conns, err := procspy.Connections(r.includeProcesses)
-	if err != nil {
-		return rpt, err
-	}
-
-	for conn := conns.Next(); conn != nil; conn = conns.Next() {
+	err := r.procReader.Connections(r.includeProcesses, func(conn proc.Connection) {
 		var (
 			localPort  = conn.LocalPort
 			remotePort = conn.RemotePort
@@ -107,12 +104,15 @@ func (r *Reporter) Report() (report.Report, error) {
 			remoteAddr = conn.RemoteAddress.String()
 		)
 		extraNodeInfo := report.MakeNode()
-		if conn.Proc.PID > 0 {
+		if conn.Process.PID > 0 {
 			extraNodeInfo = extraNodeInfo.WithMetadata(report.Metadata{
-				process.PID: strconv.FormatUint(uint64(conn.Proc.PID), 10),
+				process.PID: strconv.FormatUint(uint64(conn.Process.PID), 10),
 			})
 		}
 		r.addConnection(&rpt, localAddr, remoteAddr, localPort, remotePort, &extraNodeInfo, nil)
+	})
+	if err != nil {
+		return rpt, err
 	}
 
 	if r.conntracker != nil {
