@@ -81,7 +81,7 @@ func main() {
 	}
 
 	publisherFactory := func(target string) (xfer.Publisher, error) {
-		publisher, err := xfer.NewHTTPPublisher(target, *token, probeID)
+		_, publisher, err := xfer.NewHTTPPublisher(target, *token, probeID)
 		if err != nil {
 			return nil, err
 		}
@@ -133,10 +133,7 @@ func main() {
 	}
 
 	if *weaveRouterAddr != "" {
-		weave, err := overlay.NewWeave(hostID, *weaveRouterAddr)
-		if err != nil {
-			log.Fatalf("failed to start Weave tagger: %v", err)
-		}
+		weave := overlay.NewWeave(hostID, *weaveRouterAddr)
 		tickers = append(tickers, weave)
 		taggers = append(taggers, weave)
 		reporters = append(reporters, weave)

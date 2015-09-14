@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/gob"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -27,6 +28,11 @@ func TestHTTPPublisher(t *testing.T) {
 	)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api" {
+			json.NewEncoder(w).Encode(map[string]string{"id": "irrelevant"})
+			return
+		}
+
 		if want, have := xfer.AuthorizationHeader(token), r.Header.Get("Authorization"); want != have {
 			t.Errorf("want %q, have %q", want, have)
 		}
@@ -61,7 +67,7 @@ func TestHTTPPublisher(t *testing.T) {
 	s := httptest.NewServer(handlers.CompressHandler(handler))
 	defer s.Close()
 
-	p, err := xfer.NewHTTPPublisher(s.URL, token, id)
+	_, p, err := xfer.NewHTTPPublisher(s.URL, token, id)
 	if err != nil {
 		t.Fatal(err)
 	}

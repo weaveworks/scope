@@ -2,13 +2,15 @@ package xfer
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/weaveworks/scope/common/sanitize"
 )
 
 const (
@@ -17,7 +19,7 @@ const (
 )
 
 // Publisher is something which can send a buffered set of data somewhere,
-// probably to a collector.
+// probably to a remote collector.
 type Publisher interface {
 	Publish(*bytes.Buffer) error
 	Stop()
@@ -25,9 +27,9 @@ type Publisher interface {
 
 // HTTPPublisher publishes reports by POST to a fixed endpoint.
 type HTTPPublisher struct {
-	url   string
-	token string
-	id    string
+	url     string
+	token   string
+	probeID string
 }
 
 // ScopeProbeIDHeader is the header we use to carry the probe's unique ID. The
@@ -37,21 +39,23 @@ type HTTPPublisher struct {
 const ScopeProbeIDHeader = "X-Scope-Probe-ID"
 
 // NewHTTPPublisher returns an HTTPPublisher ready for use.
-func NewHTTPPublisher(target, token, id string) (*HTTPPublisher, error) {
-	if !strings.HasPrefix(target, "http") {
-		target = "http://" + target
-	}
-	u, err := url.Parse(target)
+func NewHTTPPublisher(target, token, probeID string) (string, *HTTPPublisher, error) {
+	targetAPI := sanitize.URL("http://", 0, "/api")(target)
+	resp, err := http.Get(targetAPI)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	if u.Path == "" {
-		u.Path = "/api/report"
+	defer resp.Body.Close()
+	var apiResponse struct {
+		ID string `json:"id"`
 	}
-	return &HTTPPublisher{
-		url:   u.String(),
-		token: token,
-		id:    id,
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return "", nil, err
+	}
+	return apiResponse.ID, &HTTPPublisher{
+		url:     sanitize.URL("http://", 0, "/api/report")(target),
+		token:   token,
+		probeID: probeID,
 	}, nil
 }
 
@@ -65,9 +69,8 @@ func (p HTTPPublisher) Publish(buf *bytes.Buffer) error {
 	if err != nil {
 		return err
 	}
-
 	req.Header.Set("Authorization", AuthorizationHeader(p.token))
-	req.Header.Set(ScopeProbeIDHeader, p.id)
+	req.Header.Set(ScopeProbeIDHeader, p.probeID)
 	req.Header.Set("Content-Encoding", "gzip")
 	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
 
