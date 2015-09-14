@@ -9,9 +9,10 @@ PROBE_EXE=probe/scope-probe
 FIXPROBE_EXE=experimental/fixprobe/fixprobe
 SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 SCOPE_EXPORT=scope.tar
-SCOPE_UI_BUILD_EXPORT=scope_ui_build.tar
 SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
+SCOPE_UI_BUILD_UPTODATE=.scope_ui_build.uptodate
 SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
+SCOPE_BACKEND_BUILD_UPTODATE=.scope_backend_build.uptodate
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
 DOCKER_VERSION=1.3.1
 DOCKER_DISTRIB=docker/docker-$(DOCKER_VERSION).tgz
@@ -54,32 +55,35 @@ static: client/build/app.js
 
 client/build/app.js: client/app/scripts/*
 	mkdir -p client/build
-	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
+	docker run -ti --rm -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm run build
 
 client-test: client/test/*
-	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
+	docker run -ti --rm -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm test
 
 client-lint:
-	docker run -ti -v $(shell pwd)/client/app:/home/weave/app \
+	docker run -ti --rm -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm run lint
 
 client-start:
-	docker run -ti --net=host -v $(shell pwd)/client/app:/home/weave/app \
+	docker run -ti --rm --net=host -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm start
 
-$(SCOPE_UI_BUILD_EXPORT): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
+$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
 	docker build -t $(SCOPE_UI_BUILD_IMAGE) client
-	docker save $(SCOPE_UI_BUILD_IMAGE):latest > $@
+	touch $@
 
-backend:
+$(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) backend
-	docker run -ti -v $(shell pwd):/go/src/github.com/weaveworks/scope $(SCOPE_BACKEND_BUILD_IMAGE) /build.bash
+	touch $@
+
+backend: $(SCOPE_BACKEND_BUILD_UPTODATE)
+	docker run -ti --rm -v $(shell pwd):/go/src/github.com/weaveworks/scope $(SCOPE_BACKEND_BUILD_IMAGE) /build.bash
 
 clean:
 	go clean ./...
