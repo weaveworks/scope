@@ -17,6 +17,7 @@ SCOPE_VERSION=$(shell git rev-parse --short HEAD)
 DOCKER_VERSION=1.3.1
 DOCKER_DISTRIB=docker/docker-$(DOCKER_VERSION).tgz
 DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
+RM=--rm
 
 all: $(SCOPE_EXPORT)
 
@@ -55,22 +56,22 @@ static: client/build/app.js
 
 client/build/app.js: client/app/scripts/*
 	mkdir -p client/build
-	docker run -ti --rm -v $(shell pwd)/client/app:/home/weave/app \
+	docker run -ti $(RM) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm run build
 
 client-test: client/test/*
-	docker run -ti --rm -v $(shell pwd)/client/app:/home/weave/app \
+	docker run -ti $(RM) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm test
 
 client-lint:
-	docker run -ti --rm -v $(shell pwd)/client/app:/home/weave/app \
+	docker run -ti $(RM) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm run lint
 
 client-start:
-	docker run -ti --rm --net=host -v $(shell pwd)/client/app:/home/weave/app \
+	docker run -ti $(RM) --net=host -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm start
 
@@ -83,7 +84,7 @@ $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	touch $@
 
 backend: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	docker run -ti --rm -v $(shell pwd):/go/src/github.com/weaveworks/scope $(SCOPE_BACKEND_BUILD_IMAGE) /build.bash
+	docker run -ti $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope $(SCOPE_BACKEND_BUILD_IMAGE) /build.bash
 
 clean:
 	go clean ./...

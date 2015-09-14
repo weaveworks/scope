@@ -40,8 +40,8 @@ dependencies:
 test:
   override:
     - cd $SRCDIR; $TOOLS/lint .
-    - cd $SRCDIR; make client-test
-    - cd $SRCDIR; make static
+    - cd $SRCDIR; make RM= client-test
+    - cd $SRCDIR; make RM= static
     - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; make
     - cd $SRCDIR; $TOOLS/test -slow
     - cd $SRCDIR/experimental; make
