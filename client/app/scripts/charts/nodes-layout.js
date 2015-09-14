@@ -93,6 +93,9 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
       point.y += offsetY;
     });
     edge.points = graphEdge.points;
+    // set beginning and end points to node coordinates to ignore node bounding box
+    edge.points[0] = {x: edge.source.x, y: edge.source.y};
+    edge.points[edge.points.length - 1] = {x: edge.target.x, y: edge.target.y};
   });
 
   // return object with the width and height of layout
