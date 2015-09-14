@@ -1,7 +1,9 @@
 const React = require('react');
+const mui = require('material-ui');
 
 const Logo = require('./logo');
 const AppStore = require('../stores/app-store');
+const Sidebar = require('./sidebar.js');
 const Status = require('./status.js');
 const Topologies = require('./topologies.js');
 const TopologyOptions = require('./topology-options.js');
@@ -10,6 +12,8 @@ const AppActions = require('../actions/app-actions');
 const Details = require('./details');
 const Nodes = require('./nodes');
 const RouterUtils = require('../utils/router-utils');
+
+const ThemeManager = new mui.Styles.ThemeManager();
 
 const ESC_KEY_CODE = 27;
 
@@ -57,6 +61,12 @@ const App = React.createClass({
     }
   },
 
+  getChildContext: function() {
+    return {
+      muiTheme: ThemeManager.getCurrentTheme()
+    };
+  },
+
   render: function() {
     const showingDetails = this.state.selectedNodeId;
     const versionString = this.state.version ? 'Version ' + this.state.version : '';
@@ -73,9 +83,6 @@ const App = React.createClass({
         <div className="header">
           <Logo />
           <Topologies topologies={this.state.topologies} currentTopology={this.state.currentTopology} />
-          <TopologyOptions options={this.state.currentTopologyOptions}
-            activeOptions={this.state.activeTopologyOptions} />
-          <Status errorUrl={this.state.errorUrl} websocketClosed={this.state.websocketClosed} />
         </div>
 
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
@@ -83,14 +90,24 @@ const App = React.createClass({
           selectedNodeId={this.state.selectedNodeId} topMargin={topMargin}
           topologyId={this.state.currentTopologyId} />
 
+        <Sidebar>
+          <TopologyOptions options={this.state.currentTopologyOptions}
+            activeOptions={this.state.activeTopologyOptions} />
+          <Status errorUrl={this.state.errorUrl} topology={this.state.currentTopology}
+            websocketClosed={this.state.websocketClosed} />
+        </Sidebar>
+
         <div className="footer">
           {versionString}&nbsp;&nbsp;
           <a href="https://gitreports.com/issue/weaveworks/scope" target="_blank">Report an issue</a>
         </div>
       </div>
     );
-  }
+  },
 
+  childContextTypes: {
+    muiTheme: React.PropTypes.object
+  }
 });
 
 module.exports = App;

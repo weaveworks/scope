@@ -10,7 +10,7 @@ const Details = React.createClass({
   render: function() {
     return (
       <div id="details">
-        <Paper zDepth={3}>
+        <Paper zDepth={3} style={{height: '100%', paddingBottom: 8}}>
           <div className="details-tools-wrapper">
             <div className="details-tools">
               <span className="fa fa-close" onClick={this.handleClickClose} />

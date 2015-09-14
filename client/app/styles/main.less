@@ -1,13 +1,9 @@
-@import "~material-ui/src/less/scaffolding.less";
-@import "~material-ui/src/less/components.less";
-
 @font-face {
   font-family: "Roboto";
   src: url("../../node_modules/materialize-css/font/roboto/Roboto-Regular.woff2"),
     url("../../node_modules/materialize-css/font/roboto/Roboto-Regular.woff"),
     url("../../node_modules/materialize-css/font/roboto/Roboto-Regular.ttf");
 }
-
 
 .browsehappy {
   margin: 0.2em 0;
@@ -32,12 +28,6 @@
 @text-darker-color: @primary-color;
 @white: @background-secondary-color;
 
-html, body {
-}
-
-.wrap {
-}
-
 /* add this class to truncate text with ellipsis, container needs width */
 .truncate {
   white-space: nowrap;
@@ -50,6 +40,25 @@ body {
   background: linear-gradient(30deg, @background-color 0%, @background-secondary-color 100%);
   color: @text-color;
   line-height: 150%;
+  font-family: Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+}
+
+p {
+  line-height: 20px;
+  padding-top: 6px;
+  margin-bottom: 14px;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: @text-color;
+}
+
+h2 {
+  font-size: 34px;
+  line-height: 40px;
+  padding-top: 8px;
+  margin-bottom: 12px;
+  font-weight: 400;
 }
 
 #app {
@@ -135,10 +144,6 @@ body {
 }
 
 .status {
-  float: right;
-  margin-top: 14px;
-  margin-right: 64px;
-
   &-icon {
     font-size: 16px;
     position: relative;
@@ -280,26 +285,6 @@ body {
   }
 }
 
-.mui-paper, .mui-paper-container {
-  height: 100%;
-}
-
-.mui-drop-down-menu {
-  .mui-menu-control {
-    .mui-menu-label {
-      font-size: 12px;
-    }
-
-    .mui-menu-control-underline {
-      border-top: none;
-    }
-
-    .mui-menu-control-bg {
-      background-color: transparent;
-    }
-  }
-}
-
 .node-details {
   height: 100%;
   width: 100%;
@@ -311,7 +296,7 @@ body {
 
     &-label {
       color: white;
-      margin-bottom: 0;
+      margin: 0;
       width: 348px;
 
       &-minor {
@@ -383,3 +368,31 @@ body {
 
 }
 
+.sidebar {
+  position: fixed;
+  bottom: 16px;
+  left: 24px;
+  width: 16em;
+  font-size: 85%;
+
+  &-item {
+    background-color: darken(@background-color, 8%);
+    border-radius: 2px;
+    padding: 4px 8px;
+    width: 100%;
+    margin-top: 2px;
+
+    &.status {
+      background-color: darken(@background-color, 4%);
+      color: @text-secondary-color;
+    }
+
+    &-action {
+      float: right;
+      text-transform: uppercase;
+      font-weight: bold;
+      color: darken(@weave-orange, 15%);
+      cursor: pointer;
+    }
+  }
+}

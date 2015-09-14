@@ -1,40 +1,35 @@
 const React = require('react');
 const _ = require('lodash');
-const mui = require('material-ui');
-const DropDownMenu = mui.DropDownMenu;
 
-const AppActions = require('../actions/app-actions');
+const TopologyOptionAction = require('./topology-option-action');
 
 const TopologyOptions = React.createClass({
 
-  componentDidMount: function() {
-    this.fixWidth();
-  },
-
-  onChange: function(ev, index, item) {
-    ev.preventDefault();
-    AppActions.changeTopologyOption(item.option, item.payload);
+  renderAction: function(action, option) {
+    return (
+      <TopologyOptionAction option={option} value={action} />
+    );
   },
 
   renderOption: function(items) {
-    let selected = 0;
-    let key;
+    let activeText;
+    const actions = [];
     const activeOptions = this.props.activeOptions;
-    const menuItems = items.map(function(item, index) {
+    items.forEach(function(item) {
       if (activeOptions[item.option] && activeOptions[item.option] === item.value) {
-        selected = index;
+        activeText = item.display;
+      } else {
+        actions.push(this.renderAction(item.value, item.option));
       }
-      key = item.option;
-      return {
-        option: item.option,
-        payload: item.value,
-        text: item.display
-      };
-    });
+    }, this);
 
     return (
-      <DropDownMenu menuItems={menuItems} onChange={this.onChange} key={key}
-        selectedIndex={selected} />
+      <div className="sidebar-item">
+        {activeText}
+        <span className="sidebar-item-actions">
+          {actions}
+        </span>
+      </div>
     );
   },
 
@@ -51,27 +46,14 @@ const TopologyOptions = React.createClass({
     );
 
     return (
-      <div className="topology-options" ref="container">
+      <div className="topology-options">
         {options.map(function(items) {
           return this.renderOption(items);
         }, this)}
       </div>
     );
-  },
-
-  componentDidUpdate: function() {
-    this.fixWidth();
-  },
-
-  fixWidth: function() {
-    const containerNode = this.refs.container.getDOMNode();
-    _.each(containerNode.childNodes, function(child) {
-      // set drop down width to length of current label
-      const label = child.getElementsByClassName('mui-menu-label')[0];
-      const width = label.getBoundingClientRect().width + 40;
-      child.style.width = width + 'px';
-    });
   }
+
 });
 
 module.exports = TopologyOptions;

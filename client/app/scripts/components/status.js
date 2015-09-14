@@ -14,10 +14,17 @@ const Status = React.createClass({
     }
   },
 
+  renderTopologyStats: function(stats) {
+    const statsText = `${stats.node_count} nodes, ${stats.edge_count} connections`;
+    return <div className="status-stats">{statsText}</div>;
+  },
+
   render: function() {
+    const showStats = this.props.topology && !this.props.errorUrl && !this.props.websocketClosed;
     return (
-      <div className="status">
-        {this.renderConnectionState(this.props.errorUrl, this.props.websocketClosed)}
+      <div className="status sidebar-item">
+        {showStats && this.renderTopologyStats(this.props.topology.stats)}
+        {!showStats && this.renderConnectionState(this.props.errorUrl, this.props.websocketClosed)}
       </div>
     );
   }
