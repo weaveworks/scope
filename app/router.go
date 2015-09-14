@@ -121,11 +121,12 @@ func captureTopology(rep xfer.Reporter, f func(xfer.Reporter, topologyView, http
 
 // APIDetails are some generic details that can be fetched from /api
 type APIDetails struct {
+	ID      string `json:"id"`
 	Version string `json:"version"`
 }
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
-	respondWith(w, http.StatusOK, APIDetails{Version: version})
+	respondWith(w, http.StatusOK, APIDetails{ID: uniqueID, Version: version})
 }
 
 // Topology option labels should tell the current state. The first item must

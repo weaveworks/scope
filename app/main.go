@@ -16,8 +16,13 @@ import (
 	"github.com/weaveworks/scope/xfer"
 )
 
-// Set during buildtime.
-var version = "dev"
+var (
+	// Set at buildtime.
+	version = "dev"
+
+	// Set at runtime.
+	uniqueID = "0"
+)
 
 func main() {
 	var (
@@ -33,8 +38,8 @@ func main() {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	id := strconv.FormatInt(rand.Int63(), 16)
-	log.Printf("app starting, version %s, ID %s", version, id)
+	uniqueID = strconv.FormatInt(rand.Int63(), 16)
+	log.Printf("app starting, version %s, ID %s", version, uniqueID)
 
 	c := xfer.NewCollector(*window)
 	http.Handle("/", Router(c))
