@@ -19,7 +19,6 @@ const (
 	lsofBinary    = "lsof"
 	lsofFields    = "cn" // parseLSOF() depends on the order
 	netstatBinary = "netstat"
-	lsofBinary    = "lsof"
 )
 
 func (reader) Processes(f func(Process)) error {
@@ -81,7 +80,7 @@ func (r *reader) Connections(withProcs bool, f func(Connection)) error {
 					strconv.Itoa(int(c.LocalPort)),
 				)
 				if localAddr == local {
-					connections[i].Proc = proc
+					connections[i].Process = proc
 				}
 			}
 		}
