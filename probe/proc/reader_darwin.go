@@ -45,7 +45,7 @@ func (reader) Processes(f func(Process)) error {
 	return nil
 }
 
-func (w *reader) Connections(withProcs bool, f func(Connection)) error {
+func (r *reader) Connections(withProcs bool, f func(Connection)) error {
 	out, err := exec.Command(
 		netstatBinary,
 		"-n", // no number resolving
@@ -94,7 +94,7 @@ func (w *reader) Connections(withProcs bool, f func(Connection)) error {
 }
 
 // Close closes the Darwin "/proc" reader
-func (w *reader) Close() error {
+func (reader) Close() error {
 	return nil
 }
 

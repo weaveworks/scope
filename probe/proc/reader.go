@@ -76,6 +76,14 @@ type Process struct {
 	Inodes    []uint64
 }
 
+// Copy returns a copy of a process
+func (p Process) Copy() Process {
+	dup := make([]uint64, len(p.Inodes))
+	copy(dup, p.Inodes)
+	p.Inodes = dup
+	return p
+}
+
 // Reader is something that reads the /proc directory and
 // returns some info like processes and connections
 type Reader interface {
@@ -131,7 +139,7 @@ func (c *CachingProcReader) Close() error {
 	return c.source.Close()
 }
 
-// Update updates the cached copy of the processes and connections lists
+// Tick updates the cached copy of the processes and connections lists
 func (c *CachingProcReader) Tick() error {
 	newProcsCache := []Process{}
 	newConnsCache := []Connection{}

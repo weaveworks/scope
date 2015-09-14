@@ -30,6 +30,7 @@ func (c Connection) Copy() Connection {
 
 	c.LocalAddress = dupIP(c.LocalAddress)
 	c.RemoteAddress = dupIP(c.RemoteAddress)
+	c.Process = c.Process.Copy()
 	return c
 }
 
