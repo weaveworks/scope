@@ -53,14 +53,21 @@ func toMapping(f Flow) *endpointMapping {
 // report, based on the NAT table as returns by natTable.
 func (n *natmapper) applyNAT(rpt report.Report, scope string) {
 	n.WalkFlows(func(f Flow) {
-		mapping := toMapping(f)
-		realEndpointID := report.MakeEndpointNodeID(scope, mapping.originalIP, strconv.Itoa(mapping.originalPort))
-		copyEndpointID := report.MakeEndpointNodeID(scope, mapping.rewrittenIP, strconv.Itoa(mapping.rewrittenPort))
-		node, ok := rpt.Endpoint.Nodes[realEndpointID]
+		var (
+			mapping          = toMapping(f)
+			realEndpointID   = report.MakeEndpointNodeID(scope, mapping.originalIP, strconv.Itoa(mapping.originalPort))
+			copyEndpointPort = strconv.Itoa(mapping.rewrittenPort)
+			copyEndpointID   = report.MakeEndpointNodeID(scope, mapping.rewrittenIP, copyEndpointPort)
+			node, ok         = rpt.Endpoint.Nodes[realEndpointID]
+		)
 		if !ok {
 			return
 		}
 
-		rpt.Endpoint.Nodes[copyEndpointID] = node.Copy()
+		node = node.Copy()
+		node.Metadata[Addr] = mapping.rewrittenIP
+		node.Metadata[Port] = copyEndpointPort
+		node.Metadata["copy_of"] = realEndpointID
+		rpt.Endpoint.AddNode(copyEndpointID, node)
 	})
 }
