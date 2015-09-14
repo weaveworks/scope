@@ -9,6 +9,7 @@ const ActionTypes = require('../constants/action-types');
 const Naming = require('../constants/naming');
 
 const makeOrderedMap = Immutable.OrderedMap;
+const makeSet = Immutable.Set;
 
 // Helpers
 
@@ -44,6 +45,7 @@ function makeNode(node) {
 // Initial values
 
 let activeTopologyOptions = null;
+let adjacentNodes = makeSet();
 let currentTopology = null;
 let currentTopologyId = 'containers';
 let errorUrl = null;
@@ -93,6 +95,22 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return activeTopologyOptions;
   },
 
+  getAdjacentNodes: function(nodeId) {
+    adjacentNodes = adjacentNodes.clear();
+
+    if (nodes.has(nodeId)) {
+      adjacentNodes = makeSet(nodes.get(nodeId).get('adjacency'));
+      // fill up set with reverse edges
+      nodes.forEach(function(node, id) {
+        if (node.get('adjacency') && node.get('adjacency').includes(nodeId)) {
+          adjacentNodes = adjacentNodes.add(id);
+        }
+      });
+    }
+
+    return adjacentNodes;
+  },
+
   getCurrentTopology: function() {
     if (!currentTopology) {
       currentTopology = setTopology(currentTopologyId);
@@ -139,8 +157,8 @@ const AppStore = assign({}, EventEmitter.prototype, {
 
   getHighlightedNodeIds: function() {
     if (mouseOverNodeId) {
-      const adjacency = nodes.get(mouseOverNodeId).get('adjacency');
-      if (adjacency) {
+      const adjacency = this.getAdjacentNodes(mouseOverNodeId);
+      if (adjacency.size) {
         return _.union(adjacency.toJS(), [mouseOverNodeId]);
       }
     }

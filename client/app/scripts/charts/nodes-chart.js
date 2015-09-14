@@ -3,7 +3,9 @@ const d3 = require('d3');
 const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
 const timely = require('timely');
+const Spring = require('react-motion').Spring;
 
+const AppStore = require('../stores/app-store');
 const Edge = require('./edge');
 const Naming = require('../constants/naming');
 const NodesLayout = require('./nodes-layout');
@@ -16,6 +18,10 @@ const MARGINS = {
   bottom: 0
 };
 
+// make sure circular layouts lots of nodes spread out
+const radiusDensity = d3.scale.sqrt()
+  .domain([12, 2]).range([2.5, 5]).clamp(true);
+
 const NodesChart = React.createClass({
 
   getInitialState: function() {
@@ -23,14 +29,16 @@ const NodesChart = React.createClass({
       nodes: {},
       edges: {},
       nodeScale: 1,
-      translate: '0,0',
+      translate: [0, 0],
+      panTranslate: [0, 0],
       scale: 1,
       hasZoomed: false
     };
   },
 
   componentWillMount: function() {
-    this.updateGraphState(this.props);
+    const state = this.updateGraphState(this.props, this.state);
+    this.setState(state);
   },
 
   componentDidMount: function() {
@@ -43,13 +51,28 @@ const NodesChart = React.createClass({
   },
 
   componentWillReceiveProps: function(nextProps) {
-    if (nextProps.nodes !== this.props.nodes) {
-      this.setState({
+    // gather state, setState should be called only once here
+    const state = _.assign({}, this.state);
+
+    // wipe node states when showing different topology
+    if (nextProps.topologyId !== this.props.topologyId) {
+      _.assign(state, {
         nodes: {},
         edges: {}
       });
-      this.updateGraphState(nextProps);
     }
+    // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
+    if (nextProps.nodes !== this.props.nodes) {
+      _.assign(state, this.updateGraphState(nextProps, state));
+    }
+    if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
+      _.assign(state, this.restoreLayout(state));
+    }
+    if (nextProps.selectedNodeId) {
+      this.centerSelectedNode(nextProps, state);
+    }
+
+    this.setState(state);
   },
 
   componentWillUnmount: function() {
@@ -76,10 +99,18 @@ const NodesChart = React.createClass({
   },
 
   renderGraphNodes: function(nodes, scale) {
+    const hasSelectedNode = this.props.selectedNodeId && this.props.nodes.has(this.props.selectedNodeId);
+    const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes(this.props.selectedNodeId) : null;
     return _.map(nodes, function(node) {
-      const highlighted = _.includes(this.props.highlightedNodeIds, node.id);
+      const highlighted = _.includes(this.props.highlightedNodeIds, node.id)
+        || this.props.selectedNodeId === node.id;
+      const blurred = hasSelectedNode
+        && this.props.selectedNodeId !== node.id
+        && !adjacency.includes(node.id);
+
       return (
         <Node
+          blurred={blurred}
           highlighted={highlighted}
           onClick={this.props.onNodeClick}
           key={node.id}
@@ -97,10 +128,17 @@ const NodesChart = React.createClass({
   },
 
   renderGraphEdges: function(edges) {
+    const selectedNodeId = this.props.selectedNodeId;
+    const hasSelectedNode = selectedNodeId && this.props.nodes.has(selectedNodeId);
+
     return _.map(edges, function(edge) {
       const highlighted = _.includes(this.props.highlightedEdgeIds, edge.id);
+      const blurred = hasSelectedNode
+        && edge.source.id !== selectedNodeId
+        && edge.target.id !== selectedNodeId;
       return (
-        <Edge key={edge.id} id={edge.id} points={edge.points} highlighted={highlighted} />
+        <Edge key={edge.id} id={edge.id} points={edge.points} blurred={blurred}
+          highlighted={highlighted} />
       );
     }, this);
   },
@@ -108,30 +146,48 @@ const NodesChart = React.createClass({
   render: function() {
     const nodeElements = this.renderGraphNodes(this.state.nodes, this.state.nodeScale);
     const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
-    const transform = 'translate(' + this.state.translate + ')' +
-      ' scale(' + this.state.scale + ')';
+    const scale = this.state.scale;
+
+    // only animate shift behavior, not panning
+    const panTranslate = this.state.panTranslate;
+    const shiftTranslate = this.state.translate;
+    let translate = panTranslate;
+    let wasShifted = false;
+    if (shiftTranslate[0] !== panTranslate[0] || shiftTranslate[1] !== panTranslate[1]) {
+      translate = shiftTranslate;
+      wasShifted = true;
+    }
 
     return (
       <svg width="100%" height="100%" className="nodes-chart">
-        <g className="canvas" transform={transform}>
-          <g className="edges">
-            {edgeElements}
-          </g>
-          <g className="nodes">
-            {nodeElements}
-          </g>
-        </g>
+        <Spring endValue={{val: translate, config: [80, 20]}}>
+          {function(interpolated) {
+            let interpolatedTranslate = wasShifted ? interpolated.val : panTranslate;
+            const transform = 'translate(' + interpolatedTranslate + ')' +
+              ' scale(' + scale + ')';
+            return (
+              <g className="canvas" transform={transform}>
+                <g className="edges">
+                  {edgeElements}
+                </g>
+                <g className="nodes">
+                  {nodeElements}
+                </g>
+              </g>
+            );
+          }}
+        </Spring>
       </svg>
     );
   },
 
-  initNodes: function(topology, prevNodes) {
+  initNodes: function(topology) {
     const centerX = this.props.width / 2;
     const centerY = this.props.height / 2;
     const nodes = {};
 
     topology.forEach(function(node, id) {
-      nodes[id] = prevNodes[id] || {};
+      nodes[id] = {};
 
       // use cached positions if available
       _.defaults(nodes[id], {
@@ -184,14 +240,110 @@ const NodesChart = React.createClass({
     return edges;
   },
 
-  updateGraphState: function(props) {
+  centerSelectedNode: function(props, state) {
+    const layoutNodes = state.nodes;
+    const layoutEdges = state.edges;
+    const selectedLayoutNode = layoutNodes[props.selectedNodeId];
+
+    if (!selectedLayoutNode) {
+      return {};
+    }
+
+    const adjacency = AppStore.getAdjacentNodes(props.selectedNodeId);
+    const adjacentLayoutNodes = [];
+
+    adjacency.forEach(function(adjacentId) {
+      adjacentLayoutNodes.push(layoutNodes[adjacentId]);
+    });
+
+    // circle layout for adjacent nodes
+
+    const centerX = selectedLayoutNode.x;
+    const centerY = selectedLayoutNode.y;
+    const adjacentCount = adjacentLayoutNodes.length;
+    const density = radiusDensity(adjacentCount);
+    const radius = Math.min(props.width, props.height) / density;
+
+    _.each(adjacentLayoutNodes, function(node, i) {
+      const angle = Math.PI * 2 * i / adjacentCount;
+      node.x = centerX + radius * Math.sin(angle);
+      node.y = centerY + radius * Math.cos(angle);
+    });
+
+    // fix all edges for circular nodes
+
+    _.each(layoutEdges, function(edge) {
+      if (edge.source === selectedLayoutNode
+        || edge.target === selectedLayoutNode
+        || _.includes(adjacentLayoutNodes, edge.source)
+        || _.includes(adjacentLayoutNodes, edge.target)) {
+        edge.points = [
+          {x: edge.source.x, y: edge.source.y},
+          {x: edge.target.x, y: edge.target.y}
+        ];
+      }
+    });
+
+    // shift canvas selected node out of view
+    const visibleWidth = Math.max(props.width - props.detailsWidth, 0);
+    const translate = state.translate;
+    const offsetX = translate[0];
+    if (offsetX + centerX + radius > visibleWidth) {
+      // shift left if blocked by details
+      const shift = centerX + radius - visibleWidth;
+      translate[0] = -shift;
+    } else if (offsetX + centerX - radius < 0) {
+      // shift right if off canvas
+      const shift = offsetX - offsetX + centerX - radius;
+      translate[0] = -shift;
+    }
+    const offsetY = translate[1];
+    if (offsetY + centerY + radius > props.height) {
+      // shift up if past bottom
+      const shift = centerY + radius - props.height;
+      translate[1] = -shift;
+    } else if (offsetY + centerY - radius - props.topMargin < 0) {
+      // shift down if off canvas
+      const shift = offsetY - offsetY + centerY - radius - props.topMargin;
+      translate[1] = -shift;
+    }
+
+    // saving translate in d3's panning cache
+    this.zoom.translate(translate);
+
+    return {
+      edges: layoutEdges,
+      nodes: layoutNodes,
+      translate: translate
+    };
+  },
+
+  restoreLayout: function(state) {
+    const edges = state.edges;
+    const nodes = state.nodes;
+
+    _.each(nodes, function(node) {
+      node.x = node.px;
+      node.y = node.py;
+    });
+
+    _.each(edges, function(edge) {
+      if (edge.ppoints) {
+        edge.points = edge.ppoints;
+      }
+    });
+
+    return {edges: edges, nodes: nodes};
+  },
+
+  updateGraphState: function(props, state) {
     const n = props.nodes.size;
 
     if (n === 0) {
-      return;
+      return {};
     }
 
-    const nodes = this.initNodes(props.nodes, this.state.nodes);
+    const nodes = this.initNodes(props.nodes, state.nodes);
     const edges = this.initEdges(props.nodes, nodes);
 
     const expanse = Math.min(props.height, props.width);
@@ -213,8 +365,17 @@ const NodesChart = React.createClass({
 
     // layout was aborted
     if (!graph) {
-      return;
+      return {};
     }
+
+    // save coordinates for restore
+    _.each(nodes, function(node) {
+      node.px = node.x;
+      node.py = node.y;
+    });
+    _.each(edges, function(edge) {
+      edge.ppoints = edge.points;
+    });
 
     // adjust layout based on viewport
     const xFactor = (props.width - MARGINS.left - MARGINS.right) / graph.width;
@@ -228,18 +389,19 @@ const NodesChart = React.createClass({
       this.zoom.scale(zoomFactor);
     }
 
-    this.setState({
+    return {
       nodes: nodes,
       edges: edges,
       nodeScale: nodeScale,
       scale: zoomScale
-    });
+    };
   },
 
   zoomed: function() {
     this.setState({
       hasZoomed: true,
-      translate: d3.event.translate,
+      panTranslate: d3.event.translate.slice(),
+      translate: d3.event.translate.slice(),
       scale: d3.event.scale
     });
   }

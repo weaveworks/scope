@@ -33,12 +33,14 @@ const Nodes = React.createClass({
         <NodesChart
           highlightedEdgeIds={this.props.highlightedEdgeIds}
           highlightedNodeIds={this.props.highlightedNodeIds}
+          selectedNodeId={this.props.selectedNodeId}
           nodes={this.props.nodes}
           onNodeClick={this.onNodeClick}
           width={this.state.width}
           height={this.state.height}
           topologyId={this.props.topologyId}
-          context="view"
+          detailsWidth={this.props.detailsWidth}
+          topMargin={this.props.topMargin}
         />
       </div>
     );

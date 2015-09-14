@@ -176,6 +176,7 @@ body {
 
   g.node {
     cursor: pointer;
+    transition: opacity .5s ease-in-out;
 
     &.pseudo {
       opacity: 0.8;
@@ -194,12 +195,22 @@ body {
         stroke-width: 1px;
       }
     }
+
+    &.blurred {
+      opacity: 0.25;
+    }
   }
 
   .edge {
+    transition: opacity .5s ease-in-out;
+
+    &.blurred {
+      opacity: 0.2;
+    }
+
     .link {
       stroke: @text-secondary-color;
-      stroke-width: 1.5px;
+      stroke-width: 1px;
       fill: none;
       stroke-opacity: 0.5;
     }
