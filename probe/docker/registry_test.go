@@ -125,13 +125,17 @@ var (
 		},
 	}
 	apiContainer1 = client.APIContainers{ID: "ping"}
+	apiContainer2 = client.APIContainers{ID: "wiff"}
 	apiImage1     = client.APIImages{ID: "baz", RepoTags: []string{"bang", "not-chosen"}}
-	mockClient    = mockDockerClient{
+)
+
+func newMockClient() *mockDockerClient {
+	return &mockDockerClient{
 		apiContainers: []client.APIContainers{apiContainer1},
 		containers:    map[string]*client.Container{"ping": container1},
 		apiImages:     []client.APIImages{apiImage1},
 	}
-)
+}
 
 func setupStubs(mdc *mockDockerClient, f func()) {
 	oldDockerClient, oldNewContainer := docker.NewDockerClientStub, docker.NewContainerStub
@@ -172,8 +176,8 @@ func allImages(r docker.Registry) []*client.APIImages {
 }
 
 func TestRegistry(t *testing.T) {
-	mdc := mockClient // take a copy
-	setupStubs(&mdc, func() {
+	mdc := newMockClient()
+	setupStubs(mdc, func() {
 		registry, _ := docker.NewRegistry(10 * time.Second)
 		defer registry.Stop()
 		runtime.Gosched()
@@ -195,8 +199,8 @@ func TestRegistry(t *testing.T) {
 }
 
 func TestRegistryEvents(t *testing.T) {
-	mdc := mockClient // take a copy
-	setupStubs(&mdc, func() {
+	mdc := newMockClient()
+	setupStubs(mdc, func() {
 		registry, _ := docker.NewRegistry(10 * time.Second)
 		defer registry.Stop()
 		runtime.Gosched()
@@ -209,6 +213,7 @@ func TestRegistryEvents(t *testing.T) {
 
 		{
 			mdc.Lock()
+			mdc.apiContainers = []client.APIContainers{apiContainer1, apiContainer2}
 			mdc.containers["wiff"] = container2
 			mdc.Unlock()
 			mdc.send(&client.APIEvents{Status: docker.StartEvent, ID: "wiff"})
@@ -220,6 +225,7 @@ func TestRegistryEvents(t *testing.T) {
 
 		{
 			mdc.Lock()
+			mdc.apiContainers = []client.APIContainers{apiContainer1}
 			delete(mdc.containers, "wiff")
 			mdc.Unlock()
 			mdc.send(&client.APIEvents{Status: docker.DieEvent, ID: "wiff"})
@@ -231,6 +237,7 @@ func TestRegistryEvents(t *testing.T) {
 
 		{
 			mdc.Lock()
+			mdc.apiContainers = []client.APIContainers{}
 			delete(mdc.containers, "ping")
 			mdc.Unlock()
 			mdc.send(&client.APIEvents{Status: docker.DieEvent, ID: "ping"})
