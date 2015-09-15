@@ -86,16 +86,11 @@ func main() {
 		log.Printf("warning: process reporting enabled, but that requires root to find everything")
 	}
 
-	publisherFactory := func(target string) (xfer.Publisher, error) {
-		publisher, err := xfer.NewHTTPPublisher(target, *token, probeID)
-		if err != nil {
-			return nil, err
-		}
-		return xfer.NewBackgroundPublisher(publisher), nil
+	factory := func(target string) (xfer.Sender, error) {
+		return xfer.NewHTTPSender(target, *token, probeID), nil
 	}
-	publishers := xfer.NewMultiPublisher(publisherFactory)
-	defer publishers.Stop()
-	resolver := newStaticResolver(targets, publishers.Add)
+	multiSender := xfer.NewMultiSender(factory)
+	resolver := newStaticResolver(targets, multiSender.Add)
 	defer resolver.Stop()
 
 	addrs, err := net.InterfaceAddrs()
@@ -175,7 +170,7 @@ func main() {
 			pubTick = time.Tick(*publishInterval)
 			spyTick = time.Tick(*spyInterval)
 			r       = report.MakeReport()
-			p       = xfer.NewReportPublisher(publishers)
+			p       = xfer.NewSendingPublisher(xfer.GzipGobEncoder, multiSender)
 		)
 
 		for {

@@ -23,15 +23,12 @@ func main() {
 	)
 	flag.Parse()
 
-	publisher, err := xfer.NewHTTPPublisher(*publish, "demoprobe", "demoprobe")
-	if err != nil {
-		log.Fatal(err)
-	}
-	rp := xfer.NewReportPublisher(publisher)
+	sender := xfer.NewHTTPSender(*publish, "demoprobe", "demoprobe")
+	publisher := xfer.NewSendingPublisher(xfer.GzipGobEncoder, sender)
 
 	rand.Seed(time.Now().UnixNano())
 	for range time.Tick(*publishInterval) {
-		if err := rp.Publish(demoReport(*hostCount)); err != nil {
+		if err := publisher.Publish(demoReport(*hostCount)); err != nil {
 			log.Print(err)
 		}
 	}

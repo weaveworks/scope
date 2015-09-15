@@ -34,13 +34,9 @@ func main() {
 	}
 	f.Close()
 
-	publisher, err := xfer.NewHTTPPublisher(*publish, "fixprobe", "fixprobe")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	rp := xfer.NewReportPublisher(publisher)
+	sender := xfer.NewHTTPSender(*publish, "fixprobe", "fixprobe")
+	publisher := xfer.NewSendingPublisher(xfer.GzipGobEncoder, sender)
 	for range time.Tick(*publishInterval) {
-		rp.Publish(fixedReport)
+		publisher.Publish(fixedReport)
 	}
 }

@@ -1,224 +1,71 @@
 package xfer
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-	"net/url"
-	"strings"
+	"bytes"
+	"compress/gzip"
+	"encoding/gob"
+	"encoding/json"
+	"io"
+	"io/ioutil"
 	"sync"
-	"time"
+
+	"github.com/weaveworks/scope/report"
 )
 
-const (
-	initialBackoff = 1 * time.Second
-	maxBackoff     = 60 * time.Second
-)
-
-// Publisher is something which can send a buffered set of data somewhere,
-// probably to a collector.
+// Publisher publishes a report.Report to a remote collector.
 type Publisher interface {
-	Publish(Buffer) error
-	Stop()
+	Publish(report.Report) error
 }
 
-// HTTPPublisher publishes reports by POST to a fixed endpoint.
-type HTTPPublisher struct {
-	url   string
-	token string
-	id    string
-}
+// ReportEncoder is used to serialize reports.
+type ReportEncoder func(dst io.Writer, src report.Report) error
 
-// ScopeProbeIDHeader is the header we use to carry the probe's unique ID. The
-// ID is currently set to the probe's hostname. It's designed to deduplicate
-// reports from the same probe to the same receiver, in case the probe is
-// configured to publish to multiple receivers that resolve to the same app.
-const ScopeProbeIDHeader = "X-Scope-Probe-ID"
-
-// NewHTTPPublisher returns an HTTPPublisher ready for use.
-func NewHTTPPublisher(target, token, id string) (*HTTPPublisher, error) {
-	if !strings.HasPrefix(target, "http") {
-		target = "http://" + target
+// GzipGobEncoder is the default report encoder.
+func GzipGobEncoder(dst io.Writer, src report.Report) error {
+	gzw := gzip.NewWriter(dst)
+	if err := gob.NewEncoder(gzw).Encode(src); err != nil {
+		return err
 	}
-	u, err := url.Parse(target)
-	if err != nil {
-		return nil, err
-	}
-	if u.Path == "" {
-		u.Path = "/api/report"
-	}
-	return &HTTPPublisher{
-		url:   u.String(),
-		token: token,
-		id:    id,
-	}, nil
+	return gzw.Close() // required to flush
 }
 
-func (p HTTPPublisher) String() string {
-	return p.url
+// JSONEncoder is a debug report encoder.
+func JSONEncoder(dst io.Writer, src report.Report) error {
+	return json.NewEncoder(dst).Encode(src)
 }
 
-// Publish publishes the report to the URL.
-func (p HTTPPublisher) Publish(buf Buffer) error {
-	req, err := http.NewRequest("POST", p.url, buf)
-	if err != nil {
+// SendingPublisher publishes reports by serializing them to a Sender.
+// It serializes into buffers managed by a sync.Pool to reduce GC pressure.
+type SendingPublisher struct {
+	enc    ReportEncoder
+	sender Sender
+	pool   *sync.Pool
+}
+
+// NewSendingPublisher returns a new SendingPublisher ready to use.
+func NewSendingPublisher(enc ReportEncoder, s Sender) Publisher {
+	return SendingPublisher{
+		enc:    enc,
+		sender: s,
+		pool:   &sync.Pool{New: func() interface{} { return &bytes.Buffer{} }},
+	}
+}
+
+// Publish implements Publisher by serializing the report and forwarding it
+// to the sender.
+func (sp SendingPublisher) Publish(rpt report.Report) error {
+	buf := sp.pool.Get().(*bytes.Buffer)
+	defer sp.pool.Put(buf)
+
+	buf.Reset()
+	if err := sp.enc(buf, rpt); err != nil {
 		return err
 	}
 
-	req.Header.Set("Authorization", AuthorizationHeader(p.token))
-	req.Header.Set(ScopeProbeIDHeader, p.id)
-	req.Header.Set("Content-Encoding", "gzip")
-	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf(resp.Status)
-	}
+	// When send returns, the sender is guaranteed to have called Close and be
+	// done with the buf. But we don't leverage that fact (via pooledBuffer)
+	// because we don't need to: we're able to return the buf to the pool in
+	// our context (via the defer) so that's what we do.
+	sp.sender.Send(ioutil.NopCloser(buf))
 	return nil
-}
-
-// Stop implements Publisher
-func (p HTTPPublisher) Stop() {}
-
-// AuthorizationHeader returns a value suitable for an HTTP Authorization
-// header, based on the passed token string.
-func AuthorizationHeader(token string) string {
-	return fmt.Sprintf("Scope-Probe token=%s", token)
-}
-
-// BackgroundPublisher is a publisher which does the publish asynchronously.
-// It will only do one publish at once; if there is an ongoing publish,
-// concurrent publishes are dropped.
-type BackgroundPublisher struct {
-	publisher Publisher
-	reports   chan Buffer
-	quit      chan struct{}
-}
-
-// NewBackgroundPublisher creates a new BackgroundPublisher with the given publisher
-func NewBackgroundPublisher(p Publisher) *BackgroundPublisher {
-	result := &BackgroundPublisher{
-		publisher: p,
-		reports:   make(chan Buffer),
-		quit:      make(chan struct{}),
-	}
-	go result.loop()
-	return result
-}
-
-func (b *BackgroundPublisher) loop() {
-	backoff := initialBackoff
-
-	for buf := range b.reports {
-		err := b.publisher.Publish(buf)
-		buf.Put()
-		if err == nil {
-			backoff = initialBackoff
-			continue
-		}
-
-		log.Printf("Error publishing to %s, backing off %s: %v", b.publisher, backoff, err)
-		select {
-		case <-time.After(backoff):
-		case <-b.quit:
-		}
-		backoff = backoff * 2
-		if backoff > maxBackoff {
-			backoff = maxBackoff
-		}
-	}
-}
-
-// Publish implements Publisher
-func (b *BackgroundPublisher) Publish(buf Buffer) error {
-	buf = buf.Get()
-
-	select {
-	case b.reports <- buf:
-	default:
-		buf.Put()
-	}
-	return nil
-}
-
-// Stop implements Publisher
-func (b *BackgroundPublisher) Stop() {
-	close(b.reports)
-	close(b.quit)
-	b.publisher.Stop()
-}
-
-// MultiPublisher implements Publisher over a set of publishers.
-type MultiPublisher struct {
-	mtx     sync.RWMutex
-	factory func(string) (Publisher, error)
-	m       map[string]Publisher
-}
-
-// NewMultiPublisher returns a new MultiPublisher ready for use. The factory
-// should be e.g. NewHTTPPublisher, except you need to curry it over the
-// probe token.
-func NewMultiPublisher(factory func(string) (Publisher, error)) *MultiPublisher {
-	return &MultiPublisher{
-		factory: factory,
-		m:       map[string]Publisher{},
-	}
-}
-
-// Add allows additional targets to be added dynamically. It will dedupe
-// identical targets. TODO we have no good mechanism to remove.
-func (p *MultiPublisher) Add(target string) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	if _, ok := p.m[target]; ok {
-		return
-	}
-
-	publisher, err := p.factory(target)
-	if err != nil {
-		log.Printf("multi-publisher: %v", err)
-		return
-	}
-
-	p.m[target] = publisher
-}
-
-// Publish implements Publisher by emitting the report to all publishers.
-func (p *MultiPublisher) Publish(buf Buffer) error {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	// First take a reference for me, to prevent one of
-	// the many publishers returning before I get a chance
-	// to give references to the other publishers.
-	buf = buf.Get()
-	defer buf.Put()
-
-	var errs []string
-	for _, publisher := range p.m {
-		if err := publisher.Publish(buf); err != nil {
-			errs = append(errs, err.Error())
-		}
-	}
-
-	if len(errs) > 0 {
-		return fmt.Errorf(strings.Join(errs, "; "))
-	}
-	return nil
-}
-
-// Stop implements Publisher
-func (p *MultiPublisher) Stop() {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	for _, publisher := range p.m {
-		publisher.Stop()
-	}
 }
