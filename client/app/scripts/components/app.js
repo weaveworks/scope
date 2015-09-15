@@ -30,6 +30,7 @@ function getStateFromStores() {
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     topologies: AppStore.getTopologies(),
+    topologiesLoaded: AppStore.isTopologiesLoaded(),
     version: AppStore.getVersion(),
     websocketClosed: AppStore.isWebsocketClosed()
   };
@@ -94,6 +95,7 @@ const App = React.createClass({
           <TopologyOptions options={this.state.currentTopologyOptions}
             activeOptions={this.state.activeTopologyOptions} />
           <Status errorUrl={this.state.errorUrl} topology={this.state.currentTopology}
+            topologiesLoaded={this.state.topologiesLoaded}
             websocketClosed={this.state.websocketClosed} />
         </Sidebar>
 
