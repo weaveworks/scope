@@ -66,9 +66,10 @@ func (n Nodes) Copy() Nodes {
 func (n Nodes) Merge(other Nodes) Nodes {
 	cp := n.Copy()
 	for k, v := range other {
-		if _, ok := cp[k]; !ok { // don't overwrite
-			cp[k] = v.Copy()
+		if n, ok := cp[k]; ok { // don't overwrite
+			v = v.Merge(n)
 		}
+		cp[k] = v
 	}
 	return cp
 }

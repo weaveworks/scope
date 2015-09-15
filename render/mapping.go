@@ -180,9 +180,17 @@ func MapAddressIdentity(m RenderableNode, local report.Networks) RenderableNodes
 		return RenderableNodes{}
 	}
 
+	// Conntracked connections don't have a host id unless
+	// they were merged with a procspied connection.  Filter
+	// out those that weren't.
+	_, hasHostID := m.Metadata[report.HostNodeID]
+	_, conntracked := m.Metadata[endpoint.Conntracked]
+	if !hasHostID && conntracked {
+		return RenderableNodes{}
+	}
+
 	// Nodes without a hostid are treated as psuedo nodes
-	_, ok = m.Metadata[report.HostNodeID]
-	if !ok {
+	if !hasHostID {
 		// If the addr is not in a network local to this report, we emit an
 		// internet node
 		if !local.Contains(net.ParseIP(addr)) {

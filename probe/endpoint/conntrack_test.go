@@ -76,7 +76,7 @@ func TestConntracker(t *testing.T) {
 		return testExec.NewMockCmd(reader)
 	}
 
-	conntracker, err := NewConntracker()
+	conntracker, err := NewConntracker(false)
 	if err != nil {
 		t.Fatal(err)
 	}
