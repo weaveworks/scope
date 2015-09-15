@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"sync"
+
+	"github.com/weaveworks/scope/common/sanitize"
 )
 
 // Sender takes ownership of ReadClosers and tries to send them to a remote
@@ -34,7 +36,7 @@ type HTTPSender struct {
 // NewHTTPSender returns a usable HTTP-based Sender.
 func NewHTTPSender(target, authToken, probeID string) Sender {
 	s := &HTTPSender{
-		target:    target, // TODO(pb): sanitize.URL("http://", AppPort, "/api/report")(target),
+		target:    sanitize.URL("http://", AppPort, "/api/report")(target),
 		authToken: authToken,
 		probeID:   probeID,
 		recv:      make(chan io.ReadCloser),
