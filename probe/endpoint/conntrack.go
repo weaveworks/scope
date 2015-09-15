@@ -164,9 +164,7 @@ func (c *Conntracker) run(args ...string) {
 		return
 	}
 
-	defer func() {
-		log.Printf("contrack exiting")
-	}()
+	defer log.Printf("contrack exiting")
 
 	// Now loop on the output stream
 	decoder := xml.NewDecoder(reader)
@@ -181,28 +179,28 @@ func (c *Conntracker) run(args ...string) {
 }
 
 func (c *Conntracker) existingConnections(args ...string) ([]Flow, error) {
-	var conntrack conntrack
 	args = append([]string{"-L", "-o", "xml", "-p", "tcp"}, args...)
 	cmd := exec.Command("conntrack", args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return conntrack.Flows, err
+		return []Flow{}, err
 	}
 	if err := cmd.Start(); err != nil {
-		return conntrack.Flows, err
+		return []Flow{}, err
 	}
 	defer func() {
 		if err := cmd.Wait(); err != nil {
 			log.Printf("conntrack existingConnections exit error: %v", err)
 		}
 	}()
-	if err := xml.NewDecoder(stdout).Decode(&conntrack); err != nil {
+	var result conntrack
+	if err := xml.NewDecoder(stdout).Decode(&result); err != nil {
 		if err == io.EOF {
-			return conntrack.Flows, err
+			return []Flow{}, err
 		}
-		return conntrack.Flows, err
+		return []Flow{}, err
 	}
-	return conntrack.Flows, nil
+	return result.Flows, nil
 }
 
 // Stop stop stop
