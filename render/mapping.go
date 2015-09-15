@@ -48,10 +48,14 @@ func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNode
 	}
 
 	// We need to filter out short lived connections from this view,
-	// if they don't also have a pid; see #447
+	// if they don't also have a pid; see #447.  Note if they
+	// we're introduced by proc spy then they are guaranteed to
+	// have a pid on the other end of the adjacency, so we include them
+	// no matter what.
 	pid, pidOK := m.Metadata[process.PID]
 	_, conntracked := m.Metadata[endpoint.Conntracked]
-	if !pidOK && conntracked {
+	_, procspied := m.Metadata[endpoint.Procspied]
+	if !procspied && !pidOK && conntracked {
 		return RenderableNodes{}
 	}
 
@@ -64,8 +68,8 @@ func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNode
 		}
 
 		// We are a 'client' pseudo node if the port is in the ephemeral port range.
-		// Linux uses 32768 to 61000.
-		if p, err := strconv.Atoi(port); err == nil && len(m.Adjacency) > 0 && p >= 32768 && p < 61000 {
+		// Linux uses 32768 to 61000, IANA suggests 49152 to 65535.
+		if p, err := strconv.Atoi(port); err == nil && len(m.Adjacency) > 0 && p >= 32768 && p < 65535 {
 			// We only exist if there is something in our adjacency
 			// Generate a single pseudo node for every (client ip, server ip, server port)
 			dstNodeID := m.Adjacency[0]

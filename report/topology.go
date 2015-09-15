@@ -102,7 +102,7 @@ func MakeNodeWith(m map[string]string) Node {
 // WithMetadata returns a fresh copy of n, with Metadata set to m
 func (n Node) WithMetadata(m map[string]string) Node {
 	result := n.Copy()
-	result.Metadata = m
+	result.Metadata = result.Metadata.Merge(m)
 	return result
 }
 
