@@ -93,6 +93,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		SpyDuration.WithLabelValues().Observe(float64(time.Since(begin)))
 	}(time.Now())
 
+	hostNodeID := report.MakeHostNodeID(r.hostID)
 	rpt := report.MakeReport()
 	conns, err := procspy.Connections(r.includeProcesses)
 	if err != nil {
@@ -109,7 +110,8 @@ func (r *Reporter) Report() (report.Report, error) {
 		extraNodeInfo := report.MakeNode()
 		if conn.Proc.PID > 0 {
 			extraNodeInfo = extraNodeInfo.WithMetadata(report.Metadata{
-				process.PID: strconv.FormatUint(uint64(conn.Proc.PID), 10),
+				process.PID:       strconv.FormatUint(uint64(conn.Proc.PID), 10),
+				report.HostNodeID: hostNodeID,
 			})
 		}
 		r.addConnection(&rpt, localAddr, remoteAddr, localPort, remotePort, &extraNodeInfo, nil)
@@ -138,10 +140,7 @@ func (r *Reporter) Report() (report.Report, error) {
 }
 
 func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr string, localPort, remotePort uint16, extraLocalNode, extraRemoteNode *report.Node) {
-	var (
-		localIsClient = int(localPort) > int(remotePort)
-		hostNodeID    = report.MakeHostNodeID(r.hostID)
-	)
+	localIsClient := int(localPort) > int(remotePort)
 
 	// Update address topology
 	{
@@ -149,9 +148,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			localAddressNodeID  = report.MakeAddressNodeID(r.hostID, localAddr)
 			remoteAddressNodeID = report.MakeAddressNodeID(r.hostID, remoteAddr)
 			localNode           = report.MakeNodeWith(map[string]string{
-				"name":            r.hostName,
-				Addr:              localAddr,
-				report.HostNodeID: hostNodeID,
+				"name": r.hostName,
+				Addr:   localAddr,
 			})
 			remoteNode = report.MakeNodeWith(map[string]string{
 				Addr: remoteAddr,
@@ -189,9 +187,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			remoteEndpointNodeID = report.MakeEndpointNodeID(r.hostID, remoteAddr, strconv.Itoa(int(remotePort)))
 
 			localNode = report.MakeNodeWith(map[string]string{
-				Addr:              localAddr,
-				Port:              strconv.Itoa(int(localPort)),
-				report.HostNodeID: hostNodeID,
+				Addr: localAddr,
+				Port: strconv.Itoa(int(localPort)),
 			})
 			remoteNode = report.MakeNodeWith(map[string]string{
 				Addr: remoteAddr,
