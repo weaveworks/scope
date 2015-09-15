@@ -176,6 +176,12 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 			})
 		}
 
+		if extraLocalNode != nil {
+			localNode = localNode.Merge(*extraLocalNode)
+		}
+		if extraRemoteNode != nil {
+			remoteNode = remoteNode.Merge(*extraRemoteNode)
+		}
 		rpt.Address = rpt.Address.AddNode(localAddressNodeID, localNode)
 		rpt.Address = rpt.Address.AddNode(remoteAddressNodeID, remoteNode)
 	}
