@@ -7,13 +7,11 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/weaveworks/scope/xfer"
-
-	"testing"
 )
 
 func TestHTTPSender(t *testing.T) {
@@ -21,8 +19,7 @@ func TestHTTPSender(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { c <- mustReadAll(r.Body) }))
 	defer s.Close()
 
-	const authToken, probeID = "123", "abc"
-	sender := xfer.NewHTTPSender(s.URL, authToken, probeID)
+	sender := xfer.NewHTTPSender(s.URL, "some-auth-token", "some-probe-ID")
 	defer sender.Stop()
 
 	const str = "alright"
@@ -35,26 +32,28 @@ func TestHTTPSender(t *testing.T) {
 func TestHTTPSenderNonBlocking(t *testing.T) {
 	log.SetOutput(ioutil.Discard) // logging the errors takes time and can cause test failure
 
-	delay := 5 * time.Millisecond
-	s := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { time.Sleep(delay) }))
+	var (
+		d = 5 * time.Millisecond
+		c = make(chan string)
+	)
+
+	s := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { time.Sleep(d); c <- mustReadAll(r.Body) }))
 	defer s.Close()
 
-	const authToken, probeID = "123", "abc"
-	sender := xfer.NewHTTPSender(s.URL, authToken, probeID)
+	sender := xfer.NewHTTPSender(s.URL, "some-auth-token", "some-probe-ID")
 	defer sender.Stop()
 
-	done := make(chan struct{})
-	go func() {
-		for i := 0; i < 100; i++ {
-			sender.Send(ioutil.NopCloser(bytes.NewBufferString(strconv.Itoa(i))))
-		}
-		close(done)
-	}()
+	sender.Send(ioutil.NopCloser(bytes.NewBufferString("a")))
+	sender.Send(ioutil.NopCloser(bytes.NewBufferString("dropped 1")))
+	sender.Send(ioutil.NopCloser(bytes.NewBufferString("dropped 2")))
+	sender.Send(ioutil.NopCloser(bytes.NewBufferString("dropped 3")))
+	sender.Send(ioutil.NopCloser(bytes.NewBufferString("z")))
 
-	select {
-	case <-done:
-	case <-time.After(delay / 2):
-		t.Errorf("HTTPSender appears to be blocking")
+	if want, have := "a", <-c; want != have {
+		t.Errorf("want %q, have %q", want, have)
+	}
+	if want, have := "z", <-c; want != have {
+		t.Errorf("want %q, have %q", want, have)
 	}
 }
 
