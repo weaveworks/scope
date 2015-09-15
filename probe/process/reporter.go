@@ -3,7 +3,6 @@ package process
 import (
 	"strconv"
 
-	"github.com/weaveworks/scope/probe/proc"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -19,11 +18,11 @@ const (
 // Reporter generates Reports containing the Process topology.
 type Reporter struct {
 	scope  string
-	walker proc.Reader
+	walker Walker
 }
 
 // NewReporter makes a new Reporter.
-func NewReporter(walker proc.Reader, scope string) *Reporter {
+func NewReporter(walker Walker, scope string) *Reporter {
 	return &Reporter{
 		scope:  scope,
 		walker: walker,
@@ -43,7 +42,7 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) processTopology() (report.Topology, error) {
 	t := report.MakeTopology()
-	err := r.walker.Processes(func(p proc.Process) {
+	err := r.walker.Walk(func(p Process) {
 		pidstr := strconv.Itoa(p.PID)
 		nodeID := report.MakeProcessNodeID(r.scope, pidstr)
 		t.Nodes[nodeID] = report.MakeNode()

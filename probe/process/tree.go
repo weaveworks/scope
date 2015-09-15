@@ -1,4 +1,4 @@
-package proc
+package process
 
 import (
 	"fmt"
@@ -14,9 +14,9 @@ type tree struct {
 }
 
 // NewTree returns a new Tree that can be polled.
-func NewTree(walker Reader) (Tree, error) {
+func NewTree(walker Walker) (Tree, error) {
 	pt := tree{processes: map[int]Process{}}
-	err := walker.Processes(func(p Process) {
+	err := walker.Walk(func(p Process) {
 		pt.processes[p.PID] = p
 	})
 
