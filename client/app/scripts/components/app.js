@@ -72,7 +72,7 @@ const App = React.createClass({
     const showingDetails = this.state.selectedNodeId;
     const versionString = this.state.version ? 'Version ' + this.state.version : '';
     // width of details panel blocking a view
-    const detailsWidth = showingDetails ? 420 : 0;
+    const detailsWidth = showingDetails ? 450 : 0;
     const topMargin = 100;
 
     return (

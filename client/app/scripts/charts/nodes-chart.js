@@ -288,23 +288,24 @@ const NodesChart = React.createClass({
     const visibleWidth = Math.max(props.width - props.detailsWidth, 0);
     const translate = state.translate;
     const offsetX = translate[0];
-    if (offsetX + centerX + radius > visibleWidth) {
+    const outerRadius = radius + this.state.nodeScale(2);
+    if (offsetX + centerX + outerRadius > visibleWidth) {
       // shift left if blocked by details
-      const shift = centerX + radius - visibleWidth;
+      const shift = centerX + outerRadius - visibleWidth;
       translate[0] = -shift;
-    } else if (offsetX + centerX - radius < 0) {
+    } else if (offsetX + centerX - outerRadius < 0) {
       // shift right if off canvas
-      const shift = offsetX - offsetX + centerX - radius;
+      const shift = offsetX - offsetX + centerX - outerRadius;
       translate[0] = -shift;
     }
     const offsetY = translate[1];
-    if (offsetY + centerY + radius > props.height) {
+    if (offsetY + centerY + outerRadius > props.height) {
       // shift up if past bottom
-      const shift = centerY + radius - props.height;
+      const shift = centerY + outerRadius - props.height;
       translate[1] = -shift;
-    } else if (offsetY + centerY - radius - props.topMargin < 0) {
+    } else if (offsetY + centerY - outerRadius - props.topMargin < 0) {
       // shift down if off canvas
-      const shift = offsetY - offsetY + centerY - radius - props.topMargin;
+      const shift = offsetY - offsetY + centerY - outerRadius - props.topMargin;
       translate[1] = -shift;
     }
 
