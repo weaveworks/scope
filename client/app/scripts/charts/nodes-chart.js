@@ -34,6 +34,7 @@ const NodesChart = React.createClass({
       panTranslate: [0, 0],
       scale: 1,
       hasZoomed: false,
+      autoShifted: false,
       maxNodesExceeded: false
     };
   },
@@ -72,7 +73,7 @@ const NodesChart = React.createClass({
       _.assign(state, this.restoreLayout(state));
     }
     if (nextProps.selectedNodeId) {
-      this.centerSelectedNode(nextProps, state);
+      _.assign(state, this.centerSelectedNode(nextProps, state));
     }
 
     this.setState(state);
@@ -88,18 +89,6 @@ const NodesChart = React.createClass({
       .on('onmousewheel', null)
       .on('dblclick.zoom', null)
       .on('touchstart.zoom', null);
-  },
-
-  getTopologyFingerprint: function(topology) {
-    const fingerprint = [];
-
-    _.each(topology, function(node) {
-      fingerprint.push(node.id);
-      if (node.adjacency) {
-        fingerprint.push(node.adjacency.join(','));
-      }
-    });
-    return fingerprint.join(';');
   },
 
   renderGraphNodes: function(nodes, scale) {
@@ -316,38 +305,44 @@ const NodesChart = React.createClass({
       }
     });
 
-    // shift canvas selected node out of view
-    const visibleWidth = Math.max(props.width - props.detailsWidth, 0);
+    // shift canvas selected node out of view if it has not been shifted already
+    let autoShifted = this.state.autoShifted;
     const translate = state.translate;
-    const offsetX = translate[0];
-    // normalize graph coordinates by zoomScale
-    const zoomScale = state.scale;
-    const outerRadius = radius + this.state.nodeScale(2);
-    if (offsetX + (centerX + outerRadius) * zoomScale > visibleWidth) {
-      // shift left if blocked by details
-      const shift = (centerX + outerRadius) * zoomScale - visibleWidth;
-      translate[0] = -shift;
-    } else if (offsetX + (centerX - outerRadius) * zoomScale < 0) {
-      // shift right if off canvas
-      const shift = offsetX - offsetX + (centerX - outerRadius) * zoomScale;
-      translate[0] = -shift;
-    }
-    const offsetY = translate[1];
-    if (offsetY + (centerY + outerRadius) * zoomScale > props.height) {
-      // shift up if past bottom
-      const shift = (centerY + outerRadius) * zoomScale - props.height;
-      translate[1] = -shift;
-    } else if (offsetY + (centerY - outerRadius) * zoomScale - props.topMargin < 0) {
-      // shift down if off canvas
-      const shift = offsetY - offsetY + (centerY - outerRadius) * zoomScale - props.topMargin;
-      translate[1] = -shift;
-    }
-    // debug('shift', centerX, centerY, outerRadius, translate);
 
-    // saving translate in d3's panning cache
-    this.zoom.translate(translate);
+    if (!autoShifted) {
+      const visibleWidth = Math.max(props.width - props.detailsWidth, 0);
+      const offsetX = translate[0];
+      // normalize graph coordinates by zoomScale
+      const zoomScale = state.scale;
+      const outerRadius = radius + this.state.nodeScale(2);
+      if (offsetX + (centerX + outerRadius) * zoomScale > visibleWidth) {
+        // shift left if blocked by details
+        const shift = (centerX + outerRadius) * zoomScale - visibleWidth;
+        translate[0] = -shift;
+      } else if (offsetX + (centerX - outerRadius) * zoomScale < 0) {
+        // shift right if off canvas
+        const shift = offsetX - offsetX + (centerX - outerRadius) * zoomScale;
+        translate[0] = -shift;
+      }
+      const offsetY = translate[1];
+      if (offsetY + (centerY + outerRadius) * zoomScale > props.height) {
+        // shift up if past bottom
+        const shift = (centerY + outerRadius) * zoomScale - props.height;
+        translate[1] = -shift;
+      } else if (offsetY + (centerY - outerRadius) * zoomScale - props.topMargin < 0) {
+        // shift down if off canvas
+        const shift = offsetY - offsetY + (centerY - outerRadius) * zoomScale - props.topMargin;
+        translate[1] = -shift;
+      }
+      // debug('shift', centerX, centerY, outerRadius, translate);
+
+      // saving translate in d3's panning cache
+      this.zoom.translate(translate);
+      autoShifted = true;
+    }
 
     return {
+      autoShifted: autoShifted,
       edges: layoutEdges,
       nodes: layoutNodes,
       translate: translate
@@ -356,6 +351,10 @@ const NodesChart = React.createClass({
 
   handleBackgroundClick: function() {
     AppActions.clickCloseDetails();
+    // allow shifts again
+    this.setState({
+      autoShifted: false
+    });
   },
 
   restoreLayout: function(state) {
@@ -441,6 +440,7 @@ const NodesChart = React.createClass({
   zoomed: function() {
     // debug('zoomed', d3.event.scale, d3.event.translate);
     this.setState({
+      autoShifted: false,
       hasZoomed: true,
       panTranslate: d3.event.translate.slice(),
       translate: d3.event.translate.slice(),
