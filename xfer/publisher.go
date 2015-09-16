@@ -1,6 +1,7 @@
 package xfer
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,7 +19,7 @@ const (
 // Publisher is something which can send a buffered set of data somewhere,
 // probably to a collector.
 type Publisher interface {
-	Publish(*Buffer) error
+	Publish(*bytes.Buffer) error
 	Stop()
 }
 
@@ -59,9 +60,7 @@ func (p HTTPPublisher) String() string {
 }
 
 // Publish publishes the report to the URL.
-func (p HTTPPublisher) Publish(buf *Buffer) error {
-	defer buf.Put()
-
+func (p HTTPPublisher) Publish(buf *bytes.Buffer) error {
 	req, err := http.NewRequest("POST", p.url, buf)
 	if err != nil {
 		return err
@@ -98,7 +97,7 @@ func AuthorizationHeader(token string) string {
 // concurrent publishes are dropped.
 type BackgroundPublisher struct {
 	publisher Publisher
-	reports   chan *Buffer
+	reports   chan *bytes.Buffer
 	quit      chan struct{}
 }
 
@@ -106,7 +105,7 @@ type BackgroundPublisher struct {
 func NewBackgroundPublisher(p Publisher) *BackgroundPublisher {
 	result := &BackgroundPublisher{
 		publisher: p,
-		reports:   make(chan *Buffer),
+		reports:   make(chan *bytes.Buffer),
 		quit:      make(chan struct{}),
 	}
 	go result.loop()
@@ -136,7 +135,7 @@ func (b *BackgroundPublisher) loop() {
 }
 
 // Publish implements Publisher
-func (b *BackgroundPublisher) Publish(buf *Buffer) error {
+func (b *BackgroundPublisher) Publish(buf *bytes.Buffer) error {
 	select {
 	case b.reports <- buf:
 	default:
@@ -188,18 +187,13 @@ func (p *MultiPublisher) Add(target string) {
 }
 
 // Publish implements Publisher by emitting the report to all publishers.
-func (p *MultiPublisher) Publish(buf *Buffer) error {
+func (p *MultiPublisher) Publish(buf *bytes.Buffer) error {
 	p.mtx.RLock()
 	defer p.mtx.RUnlock()
 
-	// First take a reference for each publisher
-	for range p.m {
-		buf.Get()
-	}
-
 	var errs []string
 	for _, publisher := range p.m {
-		if err := publisher.Publish(buf); err != nil {
+		if err := publisher.Publish(bytes.NewBuffer(buf.Bytes())); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
