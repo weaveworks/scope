@@ -5,6 +5,7 @@ const React = require('react');
 const timely = require('timely');
 const Spring = require('react-motion').Spring;
 
+const AppActions = require('../actions/app-actions');
 const AppStore = require('../stores/app-store');
 const Edge = require('./edge');
 const Naming = require('../constants/naming');
@@ -28,7 +29,7 @@ const NodesChart = React.createClass({
     return {
       nodes: {},
       edges: {},
-      nodeScale: 1,
+      nodeScale: d3.scale.linear(),
       translate: [0, 0],
       panTranslate: [0, 0],
       scale: 1,
@@ -47,6 +48,7 @@ const NodesChart = React.createClass({
       .on('zoom', this.zoomed);
 
     d3.select('.nodes-chart')
+      .on('click', this.handleBackgroundClick)
       .call(this.zoom);
   },
 
@@ -79,6 +81,7 @@ const NodesChart = React.createClass({
     // undoing .call(zoom)
 
     d3.select('.nodes-chart')
+      .on('click', null)
       .on('mousedown.zoom', null)
       .on('onwheel', null)
       .on('onmousewheel', null)
@@ -322,6 +325,10 @@ const NodesChart = React.createClass({
     };
   },
 
+  handleBackgroundClick: function() {
+    AppActions.clickCloseDetails();
+  },
+
   restoreLayout: function(state) {
     const edges = state.edges;
     const nodes = state.nodes;
@@ -352,7 +359,7 @@ const NodesChart = React.createClass({
 
     const expanse = Math.min(props.height, props.width);
     const nodeSize = expanse / 2;
-    const nodeScale = d3.scale.linear().range([0, nodeSize / Math.pow(n, 0.7)]);
+    const nodeScale = this.state.nodeScale.range([0, nodeSize / Math.pow(n, 0.7)]);
 
     const timedLayouter = timely(NodesLayout.doLayout);
     const graph = timedLayouter(
