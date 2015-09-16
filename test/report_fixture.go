@@ -48,6 +48,8 @@ var (
 	ServerComm       = "apache"
 	NonContainerComm = "bash"
 
+	True = "true"
+
 	ClientHostNodeID = report.MakeHostNodeID(ClientHostID)
 	ServerHostNodeID = report.MakeHostNodeID(ServerHostID)
 
@@ -92,75 +94,84 @@ var (
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
 				Client54001NodeID: report.MakeNode().WithMetadata(map[string]string{
-					endpoint.Addr:     ClientIP,
-					endpoint.Port:     ClientPort54001,
-					process.PID:       Client1PID,
-					report.HostNodeID: ClientHostNodeID,
+					endpoint.Addr:      ClientIP,
+					endpoint.Port:      ClientPort54001,
+					process.PID:        Client1PID,
+					report.HostNodeID:  ClientHostNodeID,
+					endpoint.Procspied: True,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(10),
 					EgressByteCount:   newu64(100),
 				}),
 
 				Client54002NodeID: report.MakeNode().WithMetadata(map[string]string{
-					endpoint.Addr:     ClientIP,
-					endpoint.Port:     ClientPort54002,
-					process.PID:       Client2PID,
-					report.HostNodeID: ClientHostNodeID,
+					endpoint.Addr:      ClientIP,
+					endpoint.Port:      ClientPort54002,
+					process.PID:        Client2PID,
+					report.HostNodeID:  ClientHostNodeID,
+					endpoint.Procspied: True,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(20),
 					EgressByteCount:   newu64(200),
 				}),
 
 				Server80NodeID: report.MakeNode().WithMetadata(map[string]string{
-					endpoint.Addr:     ServerIP,
-					endpoint.Port:     ServerPort,
-					process.PID:       ServerPID,
-					report.HostNodeID: ServerHostNodeID,
+					endpoint.Addr:      ServerIP,
+					endpoint.Port:      ServerPort,
+					process.PID:        ServerPID,
+					report.HostNodeID:  ServerHostNodeID,
+					endpoint.Procspied: True,
 				}),
 
 				NonContainerNodeID: report.MakeNode().WithMetadata(map[string]string{
-					endpoint.Addr:     ServerIP,
-					endpoint.Port:     NonContainerClientPort,
-					process.PID:       NonContainerPID,
-					report.HostNodeID: ServerHostNodeID,
+					endpoint.Addr:      ServerIP,
+					endpoint.Port:      NonContainerClientPort,
+					process.PID:        NonContainerPID,
+					report.HostNodeID:  ServerHostNodeID,
+					endpoint.Procspied: True,
 				}).WithAdjacent(GoogleEndpointNodeID),
 
 				// Probe pseudo nodes
 				UnknownClient1NodeID: report.MakeNode().WithMetadata(map[string]string{
-					endpoint.Addr: UnknownClient1IP,
-					endpoint.Port: UnknownClient1Port,
+					endpoint.Addr:      UnknownClient1IP,
+					endpoint.Port:      UnknownClient1Port,
+					endpoint.Procspied: True,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(30),
 					EgressByteCount:   newu64(300),
 				}),
 
 				UnknownClient2NodeID: report.MakeNode().WithMetadata(map[string]string{
-					endpoint.Addr: UnknownClient2IP,
-					endpoint.Port: UnknownClient2Port,
+					endpoint.Addr:      UnknownClient2IP,
+					endpoint.Port:      UnknownClient2Port,
+					endpoint.Procspied: True,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(40),
 					EgressByteCount:   newu64(400),
 				}),
 
 				UnknownClient3NodeID: report.MakeNode().WithMetadata(map[string]string{
-					endpoint.Addr: UnknownClient3IP,
-					endpoint.Port: UnknownClient3Port,
+					endpoint.Addr:      UnknownClient3IP,
+					endpoint.Port:      UnknownClient3Port,
+					endpoint.Procspied: True,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(50),
 					EgressByteCount:   newu64(500),
 				}),
 
 				RandomClientNodeID: report.MakeNode().WithMetadata(map[string]string{
-					endpoint.Addr: RandomClientIP,
-					endpoint.Port: RandomClientPort,
+					endpoint.Addr:      RandomClientIP,
+					endpoint.Port:      RandomClientPort,
+					endpoint.Procspied: True,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(60),
 					EgressByteCount:   newu64(600),
 				}),
 
 				GoogleEndpointNodeID: report.MakeNode().WithMetadata(map[string]string{
-					endpoint.Addr: GoogleIP,
-					endpoint.Port: GooglePort,
+					endpoint.Addr:      GoogleIP,
+					endpoint.Port:      GooglePort,
+					endpoint.Procspied: True,
 				}),
 			},
 		},

@@ -18,11 +18,11 @@ func nrn(nmd report.Node) render.RenderableNode {
 func TestMapEndpointIdentity(t *testing.T) {
 	for _, input := range []testcase{
 		{nrn(report.MakeNode()), false},
-		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4"})), false},
-		{nrn(report.MakeNodeWith(map[string]string{endpoint.Port: "1234"})), false},
-		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "1234"})), true},
-		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "40000"})), true},
-		{nrn(report.MakeNodeWith(map[string]string{report.HostNodeID: report.MakeHostNodeID("foo"), endpoint.Addr: "10.0.0.1", endpoint.Port: "20001"})), true},
+		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Procspied: "true"})), false},
+		{nrn(report.MakeNodeWith(map[string]string{endpoint.Port: "1234", endpoint.Procspied: "true"})), false},
+		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "1234", endpoint.Procspied: "true"})), true},
+		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "40000", endpoint.Procspied: "true"})), true},
+		{nrn(report.MakeNodeWith(map[string]string{report.HostNodeID: report.MakeHostNodeID("foo"), endpoint.Addr: "10.0.0.1", endpoint.Port: "20001", endpoint.Procspied: "true"})), true},
 	} {
 		testMap(t, render.MapEndpointIdentity, input)
 	}

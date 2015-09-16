@@ -47,15 +47,9 @@ func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNode
 		return RenderableNodes{}
 	}
 
-	// We need to filter out short lived connections from this view,
-	// if they don't also have a pid; see #447.  Note if they
-	// we're introduced by proc spy then they are guaranteed to
-	// have a pid on the other end of the adjacency, so we include them
-	// no matter what.
-	pid, pidOK := m.Metadata[process.PID]
-	_, conntracked := m.Metadata[endpoint.Conntracked]
+	// We only show nodes found through procspy in this view.
 	_, procspied := m.Metadata[endpoint.Procspied]
-	if !procspied && !pidOK && conntracked {
+	if !procspied {
 		return RenderableNodes{}
 	}
 
@@ -93,6 +87,7 @@ func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNode
 		rank  = major
 	)
 
+	pid, pidOK := m.Metadata[process.PID]
 	if pidOK {
 		minor = fmt.Sprintf("%s (%s)", minor, pid)
 	}
