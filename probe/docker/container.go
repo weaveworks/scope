@@ -70,7 +70,7 @@ type Container interface {
 	ID() string
 	Image() string
 	PID() int
-	GetNode() report.Node
+	GetNode([]net.IP) report.Node
 
 	StartGatheringStats() error
 	StopGatheringStats()
@@ -183,7 +183,7 @@ func (c *container) StopGatheringStats() {
 	return
 }
 
-func (c *container) ports() string {
+func (c *container) ports(localAddrs []net.IP) string {
 	if c.container.NetworkSettings == nil {
 		return ""
 	}
@@ -195,21 +195,27 @@ func (c *container) ports() string {
 			continue
 		}
 		for _, b := range bindings {
-			ports = append(ports, fmt.Sprintf("%s:%s->%s", b.HostIP, b.HostPort, port))
+			if b.HostIP == "0.0.0.0" {
+				for _, ip := range localAddrs {
+					ports = append(ports, fmt.Sprintf("%s:%s->%s", ip, b.HostPort, port))
+				}
+			} else {
+				ports = append(ports, fmt.Sprintf("%s:%s->%s", b.HostIP, b.HostPort, port))
+			}
 		}
 	}
 
 	return strings.Join(ports, ", ")
 }
 
-func (c *container) GetNode() report.Node {
+func (c *container) GetNode(localAddrs []net.IP) report.Node {
 	c.RLock()
 	defer c.RUnlock()
 
 	result := report.MakeNodeWith(map[string]string{
 		ContainerID:      c.ID(),
 		ContainerName:    strings.TrimPrefix(c.container.Name, "/"),
-		ContainerPorts:   c.ports(),
+		ContainerPorts:   c.ports(localAddrs),
 		ContainerCreated: c.container.Created.Format(time.RFC822),
 		ContainerCommand: c.container.Path + " " + strings.Join(c.container.Args, " "),
 		ImageID:          c.container.Image,
