@@ -35,6 +35,14 @@
   text-overflow: ellipsis;
 }
 
+.hideable {
+  transition: opacity .5s ease-in-out;
+}
+
+.hide {
+  opacity: 0;
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -174,7 +182,22 @@ h2 {
   }
 }
 
-#nodes {
+.nodes-chart {
+
+  &-error {
+    .hideable;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: @text-secondary-color;
+
+    &-icon {
+      opacity: 0.25;
+      font-size: 320px;
+    }
+  }
 
   svg {
     position: absolute;

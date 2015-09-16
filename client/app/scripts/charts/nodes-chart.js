@@ -48,7 +48,7 @@ const NodesChart = React.createClass({
       .scaleExtent([0.1, 2])
       .on('zoom', this.zoomed);
 
-    d3.select('.nodes-chart')
+    d3.select('.canvas')
       .on('click', this.handleBackgroundClick)
       .call(this.zoom);
   },
@@ -81,7 +81,7 @@ const NodesChart = React.createClass({
   componentWillUnmount: function() {
     // undoing .call(zoom)
 
-    d3.select('.nodes-chart')
+    d3.select('.canvas')
       .on('click', null)
       .on('mousedown.zoom', null)
       .on('onwheel', null)
@@ -161,35 +161,34 @@ const NodesChart = React.createClass({
       translate = shiftTranslate;
       wasShifted = true;
     }
-
-    if (this.state.maxNodesExceeded) {
-      return (
-        <div className="nodes-chart-error">
-          <span className="fa fa-ban" />
-        </div>
-      );
-    }
+    const errorClassNames = this.state.maxNodesExceeded ? 'nodes-chart-error' : 'nodes-chart-error hide';
 
     return (
-      <svg width="100%" height="100%" className="nodes-chart">
-        <Spring endValue={{val: translate, config: [80, 20]}}>
-          {function(interpolated) {
-            let interpolatedTranslate = wasShifted ? interpolated.val : panTranslate;
-            const transform = 'translate(' + interpolatedTranslate + ')' +
-              ' scale(' + scale + ')';
-            return (
-              <g className="canvas" transform={transform}>
-                <g className="edges">
-                  {edgeElements}
+      <div className="nodes-chart">
+        <div className={errorClassNames}>
+          <span className="nodes-chart-error-icon fa fa-ban" />
+          <div>Too many nodes to show in the browser.<br />Please select a different topology.</div>
+        </div>
+        <svg width="100%" height="100%">
+          <Spring endValue={{val: translate, config: [80, 20]}}>
+            {function(interpolated) {
+              let interpolatedTranslate = wasShifted ? interpolated.val : panTranslate;
+              const transform = 'translate(' + interpolatedTranslate + ')' +
+                ' scale(' + scale + ')';
+              return (
+                <g className="canvas" transform={transform}>
+                  <g className="edges">
+                    {edgeElements}
+                  </g>
+                  <g className="nodes">
+                    {nodeElements}
+                  </g>
                 </g>
-                <g className="nodes">
-                  {nodeElements}
-                </g>
-              </g>
-            );
-          }}
-        </Spring>
-      </svg>
+              );
+            }}
+          </Spring>
+        </svg>
+      </div>
     );
   },
 
@@ -413,7 +412,8 @@ const NodesChart = React.createClass({
       nodes: nodes,
       edges: edges,
       nodeScale: nodeScale,
-      scale: zoomScale
+      scale: zoomScale,
+      maxNodesExceeded: false
     };
   },
 
