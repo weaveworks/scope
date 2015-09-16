@@ -33,7 +33,8 @@ const NodesChart = React.createClass({
       translate: [0, 0],
       panTranslate: [0, 0],
       scale: 1,
-      hasZoomed: false
+      hasZoomed: false,
+      maxNodesExceeded: false
     };
   },
 
@@ -159,6 +160,14 @@ const NodesChart = React.createClass({
     if (shiftTranslate[0] !== panTranslate[0] || shiftTranslate[1] !== panTranslate[1]) {
       translate = shiftTranslate;
       wasShifted = true;
+    }
+
+    if (this.state.maxNodesExceeded) {
+      return (
+        <div className="nodes-chart-error">
+          <span className="fa fa-ban" />
+        </div>
+      );
     }
 
     return (
@@ -376,7 +385,7 @@ const NodesChart = React.createClass({
 
     // layout was aborted
     if (!graph) {
-      return {};
+      return {maxNodesExceeded: true};
     }
 
     // save coordinates for restore
