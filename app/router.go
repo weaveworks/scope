@@ -128,6 +128,8 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APIDetails{Version: version})
 }
 
+// Topology option labels should tell the current state. The first item must
+// be the verb to get to that state
 var topologyRegistry = map[string]topologyView{
 	"applications": {
 		human:    "Applications",
@@ -144,8 +146,8 @@ var topologyRegistry = map[string]topologyView{
 		parent:   "",
 		renderer: render.ContainerWithImageNameRenderer{},
 		options: optionParams{"system": {
-			{"show", "Show system containers", false, nop},
-			{"hide", "Hide system containers", true, render.FilterSystem},
+			{"show", "System containers shown", false, nop},
+			{"hide", "System containers hidden", true, render.FilterSystem},
 		}},
 	},
 	"containers-by-image": {
@@ -153,8 +155,8 @@ var topologyRegistry = map[string]topologyView{
 		parent:   "containers",
 		renderer: render.ContainerImageRenderer,
 		options: optionParams{"system": {
-			{"show", "Show system containers", false, nop},
-			{"hide", "Hide system containers", true, render.FilterSystem},
+			{"show", "System containers shown", false, nop},
+			{"hide", "System containers hidden", true, render.FilterSystem},
 		}},
 	},
 	"hosts": {

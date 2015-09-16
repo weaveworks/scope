@@ -5,6 +5,7 @@ const React = require('react');
 const timely = require('timely');
 const Spring = require('react-motion').Spring;
 
+const AppActions = require('../actions/app-actions');
 const AppStore = require('../stores/app-store');
 const Edge = require('./edge');
 const Naming = require('../constants/naming');
@@ -28,7 +29,7 @@ const NodesChart = React.createClass({
     return {
       nodes: {},
       edges: {},
-      nodeScale: 1,
+      nodeScale: d3.scale.linear(),
       translate: [0, 0],
       panTranslate: [0, 0],
       scale: 1,
@@ -47,6 +48,7 @@ const NodesChart = React.createClass({
       .on('zoom', this.zoomed);
 
     d3.select('.nodes-chart')
+      .on('click', this.handleBackgroundClick)
       .call(this.zoom);
   },
 
@@ -79,6 +81,7 @@ const NodesChart = React.createClass({
     // undoing .call(zoom)
 
     d3.select('.nodes-chart')
+      .on('click', null)
       .on('mousedown.zoom', null)
       .on('onwheel', null)
       .on('onmousewheel', null)
@@ -288,25 +291,29 @@ const NodesChart = React.createClass({
     const visibleWidth = Math.max(props.width - props.detailsWidth, 0);
     const translate = state.translate;
     const offsetX = translate[0];
-    if (offsetX + centerX + radius > visibleWidth) {
+    // normalize graph coordinates by zoomScale
+    const zoomScale = state.scale;
+    const outerRadius = radius + this.state.nodeScale(2);
+    if (offsetX + (centerX + outerRadius) * zoomScale > visibleWidth) {
       // shift left if blocked by details
-      const shift = centerX + radius - visibleWidth;
+      const shift = (centerX + outerRadius) * zoomScale - visibleWidth;
       translate[0] = -shift;
-    } else if (offsetX + centerX - radius < 0) {
+    } else if (offsetX + (centerX - outerRadius) * zoomScale < 0) {
       // shift right if off canvas
-      const shift = offsetX - offsetX + centerX - radius;
+      const shift = offsetX - offsetX + (centerX - outerRadius) * zoomScale;
       translate[0] = -shift;
     }
     const offsetY = translate[1];
-    if (offsetY + centerY + radius > props.height) {
+    if (offsetY + (centerY + outerRadius) * zoomScale > props.height) {
       // shift up if past bottom
-      const shift = centerY + radius - props.height;
+      const shift = (centerY + outerRadius) * zoomScale - props.height;
       translate[1] = -shift;
-    } else if (offsetY + centerY - radius - props.topMargin < 0) {
+    } else if (offsetY + (centerY - outerRadius) * zoomScale - props.topMargin < 0) {
       // shift down if off canvas
-      const shift = offsetY - offsetY + centerY - radius - props.topMargin;
+      const shift = offsetY - offsetY + (centerY - outerRadius) * zoomScale - props.topMargin;
       translate[1] = -shift;
     }
+    // debug('shift', centerX, centerY, outerRadius, translate);
 
     // saving translate in d3's panning cache
     this.zoom.translate(translate);
@@ -316,6 +323,10 @@ const NodesChart = React.createClass({
       nodes: layoutNodes,
       translate: translate
     };
+  },
+
+  handleBackgroundClick: function() {
+    AppActions.clickCloseDetails();
   },
 
   restoreLayout: function(state) {
@@ -348,7 +359,7 @@ const NodesChart = React.createClass({
 
     const expanse = Math.min(props.height, props.width);
     const nodeSize = expanse / 2;
-    const nodeScale = d3.scale.linear().range([0, nodeSize / Math.pow(n, 0.7)]);
+    const nodeScale = this.state.nodeScale.range([0, nodeSize / Math.pow(n, 0.7)]);
 
     const timedLayouter = timely(NodesLayout.doLayout);
     const graph = timedLayouter(
@@ -398,6 +409,7 @@ const NodesChart = React.createClass({
   },
 
   zoomed: function() {
+    // debug('zoomed', d3.event.scale, d3.event.translate);
     this.setState({
       hasZoomed: true,
       panTranslate: d3.event.translate.slice(),

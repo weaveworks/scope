@@ -15,7 +15,7 @@
     "immutable": "^3.7.4",
     "keymirror": "^0.1.1",
     "lodash": "~3.9.3",
-    "material-ui": "~0.7.5",
+    "material-ui": "^0.11.0",
     "materialize-css": "^0.96.1",
     "object-assign": "^2.0.0",
     "page": "^1.6.3",

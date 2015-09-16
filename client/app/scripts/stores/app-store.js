@@ -56,6 +56,7 @@ let nodes = makeOrderedMap();
 let nodeDetails = null;
 let selectedNodeId = null;
 let topologies = [];
+let topologiesLoaded = false;
 let websocketClosed = true;
 
 function setTopology(topologyId) {
@@ -192,6 +193,10 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return version;
   },
 
+  isTopologiesLoaded: function() {
+    return topologiesLoaded;
+  },
+
   isWebsocketClosed: function() {
     return websocketClosed;
   }
@@ -316,6 +321,7 @@ AppStore.registeredCallback = function(payload) {
 
     case ActionTypes.RECEIVE_TOPOLOGIES:
       errorUrl = null;
+      topologiesLoaded = true;
       topologies = payload.topologies;
       if (!currentTopology) {
         setTopology(currentTopologyId);
