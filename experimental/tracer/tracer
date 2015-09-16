@@ -16,11 +16,8 @@ shift 1
 case "$COMMAND" in
 
     launch)
-        docker run --privileged --net=host --pid=host -d -v /var/run/docker.sock:/var/run/docker.sock \
+        docker run --privileged --net=host --pid=host -ti -v /var/run/docker.sock:/var/run/docker.sock \
             --name $CONTAINER_NAME weaveworks/tracer
-        for ip in $(hostname -I); do
-            echo http://$ip:6060
-        done
         ;;
 
     stop)

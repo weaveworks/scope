@@ -52,6 +52,21 @@ func NewPTracer() PTracer {
 	return t
 }
 
+func (t *PTracer) Stop() {
+	out := make(chan []int)
+	t.ops <- func() {
+		pids := []int{}
+		for pid := range t.processes {
+			pids = append(pids, pid)
+		}
+		out <- pids
+	}
+	for _, pid := range <-out {
+		t.StopTracing(pid)
+	}
+	t.quit <- struct{}{}
+}
+
 // TraceProcess starts tracing the given pid
 func (t *PTracer) TraceProcess(pid int) *process {
 	result := make(chan *process)
@@ -149,7 +164,10 @@ func (t *PTracer) traceThread(pid int, process *process) *thread {
 
 		t.threads[pid] = thread
 		result <- thread
-		t.childAttached <- struct{}{}
+		select {
+		case t.childAttached <- struct{}{}:
+		default:
+		}
 	}
 	return <-result
 }
@@ -162,19 +180,20 @@ func (t *PTracer) waitLoop() {
 	)
 
 	for {
+		log.Printf("Waiting...")
 		pid, err = syscall.Wait4(-1, &status, syscall.WALL, nil)
 		if err != nil && err.(syscall.Errno) == syscall.ECHILD {
-			log.Printf("No children to wait4")
+			log.Printf( "No children to wait4")
 			<-t.childAttached
 			continue
 		}
 
 		if err != nil {
-			log.Printf("Wait failed: %v %d", err, err.(syscall.Errno))
+			log.Printf(" Wait failed: %v %d", err, err.(syscall.Errno))
 			return
 		}
 
-		log.Printf("PID %d stopped", pid)
+		log.Printf(" PID %d stopped with signal %#x", pid, status)
 		t.stopped <- stopped{pid, status}
 	}
 }
@@ -235,6 +254,7 @@ func (t *PTracer) handleStopped(pid int, status syscall.WaitStatus) {
 	}
 
 	// Restart stopped caller in syscall trap mode.
+	log.Printf("Restarting pid %d with signal %d", pid, int(signal))
 	err = syscall.PtraceSyscall(pid, int(signal))
 	if err != nil {
 		log.Printf("PtraceSyscall failed, pid=%d, err=%v", pid, err)
