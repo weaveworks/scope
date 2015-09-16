@@ -288,26 +288,29 @@ const NodesChart = React.createClass({
     const visibleWidth = Math.max(props.width - props.detailsWidth, 0);
     const translate = state.translate;
     const offsetX = translate[0];
+    // normalize graph coordinates by zoomScale
+    const zoomScale = state.scale;
     const outerRadius = radius + this.state.nodeScale(2);
-    if (offsetX + centerX + outerRadius > visibleWidth) {
+    if (offsetX + (centerX + outerRadius) * zoomScale > visibleWidth) {
       // shift left if blocked by details
-      const shift = centerX + outerRadius - visibleWidth;
+      const shift = (centerX + outerRadius) * zoomScale - visibleWidth;
       translate[0] = -shift;
-    } else if (offsetX + centerX - outerRadius < 0) {
+    } else if (offsetX + (centerX - outerRadius) * zoomScale < 0) {
       // shift right if off canvas
-      const shift = offsetX - offsetX + centerX - outerRadius;
+      const shift = offsetX - offsetX + (centerX - outerRadius) * zoomScale;
       translate[0] = -shift;
     }
     const offsetY = translate[1];
-    if (offsetY + centerY + outerRadius > props.height) {
+    if (offsetY + (centerY + outerRadius) * zoomScale > props.height) {
       // shift up if past bottom
-      const shift = centerY + outerRadius - props.height;
+      const shift = (centerY + outerRadius) * zoomScale - props.height;
       translate[1] = -shift;
-    } else if (offsetY + centerY - outerRadius - props.topMargin < 0) {
+    } else if (offsetY + (centerY - outerRadius) * zoomScale - props.topMargin < 0) {
       // shift down if off canvas
-      const shift = offsetY - offsetY + centerY - outerRadius - props.topMargin;
+      const shift = offsetY - offsetY + (centerY - outerRadius) * zoomScale - props.topMargin;
       translate[1] = -shift;
     }
+    // debug('shift', centerX, centerY, outerRadius, translate);
 
     // saving translate in d3's panning cache
     this.zoom.translate(translate);
@@ -399,6 +402,7 @@ const NodesChart = React.createClass({
   },
 
   zoomed: function() {
+    // debug('zoomed', d3.event.scale, d3.event.translate);
     this.setState({
       hasZoomed: true,
       panTranslate: d3.event.translate.slice(),
