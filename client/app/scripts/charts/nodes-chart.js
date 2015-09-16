@@ -21,7 +21,7 @@ const MARGINS = {
 
 // make sure circular layouts lots of nodes spread out
 const radiusDensity = d3.scale.sqrt()
-  .domain([12, 2]).range([2.5, 5]).clamp(true);
+  .domain([12, 2]).range([3, 4]).clamp(true);
 
 const NodesChart = React.createClass({
 
@@ -104,30 +104,46 @@ const NodesChart = React.createClass({
   renderGraphNodes: function(nodes, scale) {
     const hasSelectedNode = this.props.selectedNodeId && this.props.nodes.has(this.props.selectedNodeId);
     const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes(this.props.selectedNodeId) : null;
-    return _.map(nodes, function(node) {
-      const highlighted = _.includes(this.props.highlightedNodeIds, node.id)
-        || this.props.selectedNodeId === node.id;
-      const blurred = hasSelectedNode
-        && this.props.selectedNodeId !== node.id
-        && !adjacency.includes(node.id);
+    const onNodeClick = this.props.onNodeClick;
 
-      return (
-        <Node
-          blurred={blurred}
-          highlighted={highlighted}
-          onClick={this.props.onNodeClick}
-          key={node.id}
-          id={node.id}
-          label={node.label}
-          pseudo={node.pseudo}
-          subLabel={node.subLabel}
-          rank={node.rank}
-          scale={scale}
-          dx={node.x}
-          dy={node.y}
-        />
-      );
+    _.each(nodes, function(node) {
+      node.highlighted = _.includes(this.props.highlightedNodeIds, node.id)
+        || this.props.selectedNodeId === node.id;
+      node.focused = hasSelectedNode
+        && (this.props.selectedNodeId === node.id || adjacency.includes(node.id));
+      node.blurred = hasSelectedNode && !node.focused;
     }, this);
+
+    return _.chain(nodes)
+      .sortBy(function(node) {
+        if (node.blurred) {
+          return 0;
+        }
+        if (node.highlighted) {
+          return 2;
+        }
+        return 1;
+      })
+      .map(function(node) {
+        return (
+          <Node
+            blurred={node.blurred}
+            focused={node.focused}
+            highlighted={node.highlighted}
+            onClick={onNodeClick}
+            key={node.id}
+            id={node.id}
+            label={node.label}
+            pseudo={node.pseudo}
+            subLabel={node.subLabel}
+            rank={node.rank}
+            scale={scale}
+            dx={node.x}
+            dy={node.y}
+          />
+        );
+      })
+      .value();
   },
 
   renderGraphEdges: function(edges) {
@@ -149,7 +165,7 @@ const NodesChart = React.createClass({
   render: function() {
     const nodeElements = this.renderGraphNodes(this.state.nodes, this.state.nodeScale);
     const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
-    const scale = this.state.scale;
+    let scale = this.state.scale;
 
     // only animate shift behavior, not panning
     const panTranslate = this.state.panTranslate;
@@ -259,8 +275,12 @@ const NodesChart = React.createClass({
       adjacentLayoutNodes.push(layoutNodes[adjacentId]);
     });
 
-    // circle layout for adjacent nodes
+    // shift center node a bit
+    const nodeScale = state.nodeScale;
+    selectedLayoutNode.x = selectedLayoutNode.px + nodeScale(1);
+    selectedLayoutNode.y = selectedLayoutNode.py + nodeScale(1);
 
+    // circle layout for adjacent nodes
     const centerX = selectedLayoutNode.x;
     const centerY = selectedLayoutNode.y;
     const adjacentCount = adjacentLayoutNodes.length;

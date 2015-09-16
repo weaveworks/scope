@@ -12,16 +12,23 @@ const Node = React.createClass({
   render: function() {
     const props = this.props;
     const scale = this.props.scale;
+    let scaleFactor = 1;
+    if (props.focused) {
+      scaleFactor = 1.25;
+    } else if (props.blurred) {
+      scaleFactor = 0.75;
+    }
     const textOffsetX = 0;
-    const textOffsetY = scale(0.5) + 18;
+    const textOffsetY = scale(0.5 * scaleFactor) + 18;
     const isPseudo = !!this.props.pseudo;
     const color = isPseudo ? '' : this.getNodeColor(this.props.rank);
     const onClick = this.props.onClick;
     const onMouseEnter = this.handleMouseEnter;
     const onMouseLeave = this.handleMouseLeave;
     const classNames = ['node'];
-    const ellipsis = this.ellipsis;
     const animConfig = [80, 20]; // stiffness, bounce
+    const label = this.ellipsis(props.label, 14, scale(4 * scaleFactor));
+    const subLabel = this.ellipsis(props.subLabel, 12, scale(4 * scaleFactor));
 
     if (this.props.highlighted) {
       classNames.push('highlighted');
@@ -37,19 +44,19 @@ const Node = React.createClass({
     return (
       <Spring endValue={{x: {val: this.props.dx, config: animConfig}, y: {val: this.props.dy, config: animConfig}}}>
         {function(interpolated) {
-          const transform = 'translate(' + interpolated.x.val + ',' + interpolated.y.val + ')';
+          const transform = `translate(${interpolated.x.val},${interpolated.y.val})`;
           return (
             <g className={classes} transform={transform} id={props.id}
               onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-              {props.highlighted && <circle r={scale(0.7)} className="highlighted"></circle>}
-              <circle r={scale(0.5)} className="border" stroke={color}></circle>
-              <circle r={scale(0.45)} className="shadow"></circle>
-              <circle r={Math.max(2, scale(0.125))} className="node"></circle>
+              {props.highlighted && <circle r={scale(0.7 * scaleFactor)} className="highlighted"></circle>}
+              <circle r={scale(0.5 * scaleFactor)} className="border" stroke={color}></circle>
+              <circle r={scale(0.45 * scaleFactor)} className="shadow"></circle>
+              <circle r={Math.max(2, scale(0.125 * scaleFactor))} className="node"></circle>
               <text className="node-label" textAnchor="middle" x={textOffsetX} y={textOffsetY}>
-                {ellipsis(props.label, 14)}
+                {label}
               </text>
               <text className="node-sublabel" textAnchor="middle" x={textOffsetX} y={textOffsetY + 17}>
-                {ellipsis(props.subLabel, 12)}
+                {subLabel}
               </text>
             </g>
           );
@@ -58,8 +65,7 @@ const Node = React.createClass({
     );
   },
 
-  ellipsis: function(text, fontSize) {
-    const maxWidth = this.props.scale(4);
+  ellipsis: function(text, fontSize, maxWidth) {
     const averageCharLength = fontSize / 1.5;
     const allowedChars = maxWidth / averageCharLength;
     let truncatedText = text;
