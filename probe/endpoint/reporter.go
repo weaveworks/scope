@@ -17,6 +17,7 @@ const (
 	Addr        = "addr" // typically IPv4
 	Port        = "port"
 	Conntracked = "conntracked"
+	Procspied   = "procspied"
 )
 
 // Reporter generates Reports containing the Endpoint topology.
@@ -95,26 +96,31 @@ func (r *Reporter) Report() (report.Report, error) {
 
 	hostNodeID := report.MakeHostNodeID(r.hostID)
 	rpt := report.MakeReport()
-	conns, err := procspy.Connections(r.includeProcesses)
-	if err != nil {
-		return rpt, err
-	}
 
-	for conn := conns.Next(); conn != nil; conn = conns.Next() {
-		var (
-			localPort  = conn.LocalPort
-			remotePort = conn.RemotePort
-			localAddr  = conn.LocalAddress.String()
-			remoteAddr = conn.RemoteAddress.String()
-		)
-		extraNodeInfo := report.MakeNode()
-		if conn.Proc.PID > 0 {
-			extraNodeInfo = extraNodeInfo.WithMetadata(report.Metadata{
-				process.PID:       strconv.FormatUint(uint64(conn.Proc.PID), 10),
-				report.HostNodeID: hostNodeID,
-			})
+	{
+		conns, err := procspy.Connections(r.includeProcesses)
+		if err != nil {
+			return rpt, err
 		}
-		r.addConnection(&rpt, localAddr, remoteAddr, localPort, remotePort, &extraNodeInfo, nil)
+		commonNodeInfo := report.MakeNode().WithMetadata(report.Metadata{
+			Procspied: "true",
+		})
+		for conn := conns.Next(); conn != nil; conn = conns.Next() {
+			var (
+				localPort  = conn.LocalPort
+				remotePort = conn.RemotePort
+				localAddr  = conn.LocalAddress.String()
+				remoteAddr = conn.RemoteAddress.String()
+			)
+			extraNodeInfo := commonNodeInfo.Copy()
+			if conn.Proc.PID > 0 {
+				extraNodeInfo = extraNodeInfo.WithMetadata(report.Metadata{
+					process.PID:       strconv.FormatUint(uint64(conn.Proc.PID), 10),
+					report.HostNodeID: hostNodeID,
+				})
+			}
+			r.addConnection(&rpt, localAddr, remoteAddr, localPort, remotePort, &extraNodeInfo, &commonNodeInfo)
+		}
 	}
 
 	if r.conntracker != nil {
@@ -136,7 +142,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		r.natmapper.applyNAT(rpt, r.hostID)
 	}
 
-	return rpt, err
+	return rpt, nil
 }
 
 func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr string, localPort, remotePort uint16, extraLocalNode, extraRemoteNode *report.Node) {
