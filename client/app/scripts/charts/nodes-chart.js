@@ -162,14 +162,15 @@ const NodesChart = React.createClass({
       wasShifted = true;
     }
     const errorClassNames = this.state.maxNodesExceeded ? 'nodes-chart-error' : 'nodes-chart-error hide';
+    const svgClassNames = this.state.maxNodesExceeded || _.size(nodeElements) === 0 ? 'hide' : '';
 
     return (
       <div className="nodes-chart">
         <div className={errorClassNames}>
           <span className="nodes-chart-error-icon fa fa-ban" />
-          <div>Too many nodes to show in the browser.<br />Please select a different topology.</div>
+          <div>Too many nodes to show in the browser.<br />We're working on it, but for now, try a different topology?</div>
         </div>
-        <svg width="100%" height="100%">
+        <svg width="100%" height="100%" className={svgClassNames}>
           <Spring endValue={{val: translate, config: [80, 20]}}>
             {function(interpolated) {
               let interpolatedTranslate = wasShifted ? interpolated.val : panTranslate;
