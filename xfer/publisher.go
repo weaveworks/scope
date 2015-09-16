@@ -18,7 +18,7 @@ const (
 // Publisher is something which can send a buffered set of data somewhere,
 // probably to a collector.
 type Publisher interface {
-	Publish(*Buffer) error
+	Publish(Buffer) error
 	Stop()
 }
 
@@ -59,9 +59,7 @@ func (p HTTPPublisher) String() string {
 }
 
 // Publish publishes the report to the URL.
-func (p HTTPPublisher) Publish(buf *Buffer) error {
-	defer buf.Put()
-
+func (p HTTPPublisher) Publish(buf Buffer) error {
 	req, err := http.NewRequest("POST", p.url, buf)
 	if err != nil {
 		return err
@@ -98,7 +96,7 @@ func AuthorizationHeader(token string) string {
 // concurrent publishes are dropped.
 type BackgroundPublisher struct {
 	publisher Publisher
-	reports   chan *Buffer
+	reports   chan Buffer
 	quit      chan struct{}
 }
 
@@ -106,7 +104,7 @@ type BackgroundPublisher struct {
 func NewBackgroundPublisher(p Publisher) *BackgroundPublisher {
 	result := &BackgroundPublisher{
 		publisher: p,
-		reports:   make(chan *Buffer),
+		reports:   make(chan Buffer),
 		quit:      make(chan struct{}),
 	}
 	go result.loop()
@@ -116,8 +114,9 @@ func NewBackgroundPublisher(p Publisher) *BackgroundPublisher {
 func (b *BackgroundPublisher) loop() {
 	backoff := initialBackoff
 
-	for r := range b.reports {
-		err := b.publisher.Publish(r)
+	for buf := range b.reports {
+		err := b.publisher.Publish(buf)
+		buf.Put()
 		if err == nil {
 			backoff = initialBackoff
 			continue
@@ -136,10 +135,13 @@ func (b *BackgroundPublisher) loop() {
 }
 
 // Publish implements Publisher
-func (b *BackgroundPublisher) Publish(buf *Buffer) error {
+func (b *BackgroundPublisher) Publish(buf Buffer) error {
+	buf = buf.Get()
+
 	select {
 	case b.reports <- buf:
 	default:
+		buf.Put()
 	}
 	return nil
 }
@@ -188,14 +190,15 @@ func (p *MultiPublisher) Add(target string) {
 }
 
 // Publish implements Publisher by emitting the report to all publishers.
-func (p *MultiPublisher) Publish(buf *Buffer) error {
+func (p *MultiPublisher) Publish(buf Buffer) error {
 	p.mtx.RLock()
 	defer p.mtx.RUnlock()
 
-	// First take a reference for each publisher
-	for range p.m {
-		buf.Get()
-	}
+	// First take a reference for me, to prevent one of
+	// the many publishers returning before I get a chance
+	// to give references to the other publishers.
+	buf = buf.Get()
+	defer buf.Put()
 
 	var errs []string
 	for _, publisher := range p.m {

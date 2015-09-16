@@ -25,11 +25,12 @@ func NewReportPublisher(publisher Publisher) *ReportPublisher {
 
 // Publish serialises and compresses a report, then passes it to a publisher
 func (p *ReportPublisher) Publish(r report.Report) error {
-	buf := p.buffers.Get().(*Buffer)
+	buf := p.buffers.Get().(Buffer)
+	buf.Get()
+	defer buf.Put()
+
 	gzwriter := gzip.NewWriter(buf)
 	if err := gob.NewEncoder(gzwriter).Encode(r); err != nil {
-		buf.Reset()
-		p.buffers.Put(buf)
 		return err
 	}
 	gzwriter.Close() // otherwise the content won't get flushed to the output stream
