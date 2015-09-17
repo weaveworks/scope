@@ -32,10 +32,14 @@
       Handlebars.registerHelper('duration', function(input) {
         var ms = input.Stop - input.Start
         if (ms < 60000) {
-          return sprintf("%0.2fs", ms / 1000)
+          return new Handlebars.SafeString(sprintf("%0.2fs", ms / 1000));
         }
         var ds = moment.duration(ms).humanize();
         return new Handlebars.SafeString(ds);
+      });
+
+      Handlebars.registerHelper('count', function(input) {
+        return new Handlebars.SafeString(input === null ? '0' : sprintf("%d", input.len));
       });
 
       function render() {
@@ -138,7 +142,7 @@
               {{#traces}}
               <tr><td>{{ts Root.Start}}</td><td>{{duration Root}}</td>
                 <td>{{PID}}</td><td>{{Root.FromAddr}}:{{Root.FromPort}}</td>
-                <td>{{Root.ToAddr}}:{{Root.ToPort}}</td></tr>
+                <td>{{Root.ToAddr}}:{{Root.ToPort}}</td><td>{{count Root.Children}}</tr>
               {{/traces}}
             </tbody>
           </table>

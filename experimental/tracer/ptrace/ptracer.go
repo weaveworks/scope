@@ -301,6 +301,11 @@ func pidForTid(tid int) (pid int, err error) {
 }
 
 func (t *PTracer) thread(tid int) (*thread, error) {
+	// unfortunately we can't propage fd affinitiy as we
+	// can reliably determin who clone'd new threads, as
+	// the pids returned by the ptrace calls are in the process'
+	// namespace, not ours.
+
 	thread, ok := t.threads[tid]
 	if !ok {
 		pid, err := pidForTid(tid)

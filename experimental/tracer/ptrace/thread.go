@@ -43,14 +43,17 @@ type thread struct {
 	callRegs   syscall.PtraceRegs
 	resultRegs syscall.PtraceRegs
 
-	currentConnection *Fd // current incoming connection
+	currentIncoming map[int]*Fd
+	currentOutgoing map[int]*Fd
 }
 
 func newThread(pid int, process *process, tracer *PTracer) *thread {
 	t := &thread{
-		tid:     pid,
-		process: process,
-		tracer:  tracer,
+		tid:             pid,
+		process:         process,
+		tracer:          tracer,
+		currentIncoming: map[int]*Fd{},
+		currentOutgoing: map[int]*Fd{},
 	}
 	return t
 }
@@ -187,9 +190,6 @@ func (t *thread) handleConnect(call, result *syscall.PtraceRegs) {
 	}
 
 	t.process.newFd(connection)
-	if t.currentConnection != nil {
-		t.currentConnection.Children = append(t.currentConnection.Children, connection)
-	}
 
 	t.logf("Made connection from %s:%d -> %s:%d on fd %d",
 		connection.ToAddr, connection.ToPort, connection.FromAddr,
@@ -205,16 +205,27 @@ func (t *thread) handleClose(call, result *syscall.PtraceRegs) {
 	}
 
 	fd.close()
-	delete(t.process.fds, fdNum)
-
-	// clear current connection if we just closed it!
-	if t.currentConnection != nil && t.currentConnection.fd == fdNum {
-		t.currentConnection = nil
-	}
 
 	// if this connection was incoming, add it to 'the registry'
 	if fd.direction == incoming {
+		for _, outgoing := range t.currentOutgoing {
+			t.logf("Fd %d caused %d", fd.fd, outgoing.fd)
+			fd.Children = append(fd.Children, outgoing)
+		}
+
 		t.tracer.store.RecordConnection(t.process.pid, fd)
+	} else {
+		for _, incoming := range t.currentIncoming {
+			t.logf("Fd %d caused %d", incoming.fd, fd.fd)
+			incoming.Children = append(incoming.Children, fd)
+		}
+	}
+
+	// now make sure we've remove it from everywhere
+	delete(t.process.fds, fdNum)
+	for _, thread := range t.process.threads {
+		delete(thread.currentIncoming, fdNum)
+		delete(t.currentOutgoing, fdNum)
 	}
 }
 
@@ -228,7 +239,9 @@ func (t *thread) handleIO(call, result *syscall.PtraceRegs) {
 
 	if fd.direction == incoming {
 		t.logf("IO on incoming connection %d; setting affinity", fdNum)
-		t.currentConnection = fd
+		t.currentIncoming[fdNum] = fd
+	} else {
+		t.currentOutgoing[fdNum] = fd
 	}
 }
 
