@@ -142,28 +142,9 @@ func (t *PTracer) traceThread(pid int, process *process) *thread {
 			return
 		}
 
-		var status syscall.WaitStatus
-		if _, err = syscall.Wait4(pid, &status, 0, nil); err != nil {
-			log.Printf("Wait %d failed: %v", pid, err)
-			return
-		}
-
-		thread.attached = true
-
-		err = syscall.PtraceSetOptions(pid, ptraceOptions)
-		if err != nil {
-			log.Printf("SetOptions failed, pid=%d, err=%v", pid, err)
-			return
-		}
-
-		err = syscall.PtraceSyscall(pid, 0)
-		if err != nil {
-			log.Printf("PtraceSyscall failed, pid=%d, err=%v", pid, err)
-			return
-		}
-
 		t.threads[pid] = thread
 		result <- thread
+
 		select {
 		case t.childAttached <- struct{}{}:
 		default:
@@ -180,20 +161,18 @@ func (t *PTracer) waitLoop() {
 	)
 
 	for {
-		log.Printf("Waiting...")
+		//log.Printf("Waiting...")
 		pid, err = syscall.Wait4(-1, &status, syscall.WALL, nil)
 		if err != nil && err.(syscall.Errno) == syscall.ECHILD {
-			log.Printf( "No children to wait4")
+			//log.Printf( "No children to wait4")
 			<-t.childAttached
 			continue
 		}
-
 		if err != nil {
 			log.Printf(" Wait failed: %v %d", err, err.(syscall.Errno))
 			return
 		}
-
-		log.Printf(" PID %d stopped with signal %#x", pid, status)
+		//log.Printf(" PID %d stopped with signal %#x", pid, status)
 		t.stopped <- stopped{pid, status}
 	}
 }
@@ -221,9 +200,19 @@ func (t *PTracer) handleStopped(pid int, status syscall.WaitStatus) {
 		return
 	}
 
-	if status.Stopped() && status.StopSignal() == syscall.SIGTRAP|ptraceTracesysgoodBit {
+	if !target.attached {
+		target.attached = true
+
+		err = syscall.PtraceSetOptions(pid, ptraceOptions)
+		if err != nil {
+			log.Printf("SetOptions failed, pid=%d, err=%v", pid, err)
+			return
+		}
+
+	} else if status.Stopped() && status.StopSignal() == syscall.SIGTRAP|ptraceTracesysgoodBit {
 		// pid entered Syscall-enter-stop or syscall-exit-stop
 		target.syscallStopped()
+
 	} else if status.Stopped() && status.StopSignal() == syscall.SIGTRAP {
 		// pid entered PTRACE_EVENT stop
 		switch status.TrapCause() {
@@ -254,7 +243,7 @@ func (t *PTracer) handleStopped(pid int, status syscall.WaitStatus) {
 	}
 
 	// Restart stopped caller in syscall trap mode.
-	log.Printf("Restarting pid %d with signal %d", pid, int(signal))
+	// log.Printf("Restarting pid %d with signal %d", pid, int(signal))
 	err = syscall.PtraceSyscall(pid, int(signal))
 	if err != nil {
 		log.Printf("PtraceSyscall failed, pid=%d, err=%v", pid, err)

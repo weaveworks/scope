@@ -8,16 +8,12 @@
 /* this function is run by the  thread */
 void *thread_func(void *sock) {
   struct sockaddr_in dest;
-  char buffer[1024];
+  char in_buffer[1024];
+  char out_buffer[1024];
   int sockfd = (int)sock;
   int clientfd;
 
   printf("I'm thread %d\n", syscall(SYS_gettid));
-
-  if (read(sockfd, buffer, sizeof(buffer)) < 0) {
-    perror("ERROR reading from socket");
-    return;
-  }
 
   clientfd = socket(AF_INET, SOCK_STREAM, 0);
   if (clientfd < 0) {
@@ -37,10 +33,11 @@ void *thread_func(void *sock) {
     return;
   }
 
-  int readbytes = recv(clientfd, buffer, sizeof(buffer), 0);
+  int readbytes = recv(clientfd, in_buffer, sizeof(in_buffer), 0);
   close(clientfd);
 
-  if (write(sockfd, buffer, read) < 0) {
+  int writtenbytes = snprintf(out_buffer, sizeof(out_buffer), "{\"qotd\": %s}\n", in_buffer);
+  if (write(sockfd, out_buffer, writtenbytes) < 0) {
     perror("ERROR writing to socket");
     return;
   }
