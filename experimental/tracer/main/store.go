@@ -21,8 +21,10 @@ type key struct {
 
 type trace struct {
 	PID      int
-	Root     *ptrace.Fd
+	ServerDetails *ptrace.ConnectionDetails
+	ClientDetails *ptrace.ConnectionDetails
 	Children []*trace
+	Level    int
 }
 
 type store struct {
@@ -63,10 +65,18 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 	s.Lock()
 	defer s.Unlock()
 
-	newTrace := &trace{PID: pid, Root: connection}
-	newTraceKey := newKey(connection)
+	newTrace := &trace{
+		PID: pid,
+		ServerDetails: &connection.ConnectionDetails,
+	}
+	for _, child := range connection.Children {
+		newTrace.Children = append(newTrace.Children, &trace{
+			Level: 1,
+			ClientDetails: &child.ConnectionDetails,
+		})
+	}
 
-	log.Printf("Recording trace: %+v", newTrace)
+	newTraceKey := newKey(connection)
 
 	// First, see if this new conneciton is a child of an existing connection.
 	// This indicates we have a parent connection to attach to.
@@ -75,6 +85,7 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 		parentNode.Remove()
 		parentTrace := parentNode.Value.(*trace)
 		log.Printf(" Found parent trace: %+v", parentTrace)
+		newTrace.Level = parentTrace.Level + 1
 		parentTrace.Children = append(parentTrace.Children, newTrace)
 	} else {
 		s.traces.Insert(newTraceKey, newTrace)
@@ -89,6 +100,7 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 			childNode.Remove()
 			childTrace := childNode.Value.(*trace)
 			log.Printf(" Found child trace: %+v", childTrace)
+			IncrementLevel(childTrace, newTrace.Level)
 			newTrace.Children = append(newTrace.Children, childTrace)
 		} else {
 			s.traces.Insert(childTraceKey, newTrace)
@@ -96,11 +108,18 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 	}
 }
 
+func IncrementLevel(trace *trace, increment int) {
+	trace.Level += increment
+	for _, child := range trace.Children {
+		IncrementLevel(child, increment)
+	}
+}
+
 func (s *store) Traces() []*trace {
 	s.RLock()
 	defer s.RUnlock()
 
-	var traces []*trace
+	traces := []*trace{}
 	var cur = s.traces.First()
 	for cur != nil {
 		traces = append(traces, cur.Value.(*trace))

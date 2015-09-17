@@ -29,10 +29,8 @@ var (
 	tcpRegexp   = regexp.MustCompile(tcpPattern)
 )
 
-// Fd represents a connect and subsequent connections caused by it.
-type Fd struct {
+type ConnectionDetails struct {
 	direction int
-	fd        int
 
 	Start    int64
 	Stop     int64
@@ -43,6 +41,14 @@ type Fd struct {
 	FromPort uint16
 	ToAddr   net.IP
 	ToPort   uint16
+}
+
+// Fd represents a connect and subsequent connections caused by it.
+type Fd struct {
+	fd     int
+	closed bool
+
+	ConnectionDetails
 
 	// Fds are connections, and can have a causal-link to other Fds
 	Children []*Fd
@@ -133,8 +139,14 @@ func newListeningFd(pid, fd int) (*Fd, error) {
 	}
 
 	return &Fd{
-		direction: listening, fd: fd, Start: now(),
-		ToAddr: localAddr, ToPort: uint16(localPort),
+		fd: fd,
+
+		ConnectionDetails: ConnectionDetails{
+			direction: listening,
+			Start:     now(),
+			ToAddr:    localAddr,
+			ToPort:    uint16(localPort),
+		},
 	}, nil
 }
 
@@ -146,9 +158,16 @@ func newConnectionFd(pid, fd int, remoteAddr net.IP, remotePort uint16) (*Fd, er
 	}
 
 	return &Fd{
-		direction: outgoing, fd: fd, Start: now(),
-		FromAddr: localAddr, FromPort: uint16(localPort),
-		ToAddr: remoteAddr, ToPort: remotePort,
+		fd: fd,
+
+		ConnectionDetails: ConnectionDetails{
+			direction: outgoing,
+			Start:     now(),
+			FromAddr:  localAddr,
+			FromPort:  uint16(localPort),
+			ToAddr:    remoteAddr,
+			ToPort:    remotePort,
+		},
 	}, nil
 }
 
@@ -159,12 +178,20 @@ func (fd *Fd) newConnection(addr net.IP, port uint16, newFd int) (*Fd, error) {
 	}
 
 	return &Fd{
-		direction: incoming, fd: newFd, Start: now(),
-		ToAddr: fd.ToAddr, ToPort: fd.ToPort,
-		FromAddr: addr, FromPort: port,
+		fd: newFd,
+
+		ConnectionDetails: ConnectionDetails{
+			direction: incoming,
+			Start:     now(),
+			ToAddr:    fd.ToAddr,
+			ToPort:    fd.ToPort,
+			FromAddr:  addr,
+			FromPort:  port,
+		},
 	}, nil
 }
 
 func (fd *Fd) close() {
+	fd.closed = true
 	fd.Stop = now()
 }

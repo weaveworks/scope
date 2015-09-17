@@ -204,28 +204,26 @@ func (t *thread) handleClose(call, result *syscall.PtraceRegs) {
 		return
 	}
 
+	t.logf("Closing fd %d", fdNum)
 	fd.close()
 
 	// if this connection was incoming, add it to 'the registry'
 	if fd.direction == incoming {
+		// collect all the outgoing connections this thread has made
+		// and treat them as caused by this incoming connections
 		for _, outgoing := range t.currentOutgoing {
-			t.logf("Fd %d caused %d", fd.fd, outgoing.fd)
+			t.logf("Fd %d caused %d", fdNum, outgoing.fd)
 			fd.Children = append(fd.Children, outgoing)
 		}
+		t.currentOutgoing = map[int]*Fd{}
 
 		t.tracer.store.RecordConnection(t.process.pid, fd)
-	} else {
-		for _, incoming := range t.currentIncoming {
-			t.logf("Fd %d caused %d", incoming.fd, fd.fd)
-			incoming.Children = append(incoming.Children, fd)
-		}
 	}
 
 	// now make sure we've remove it from everywhere
 	delete(t.process.fds, fdNum)
 	for _, thread := range t.process.threads {
 		delete(thread.currentIncoming, fdNum)
-		delete(t.currentOutgoing, fdNum)
 	}
 }
 
@@ -241,6 +239,7 @@ func (t *thread) handleIO(call, result *syscall.PtraceRegs) {
 		t.logf("IO on incoming connection %d; setting affinity", fdNum)
 		t.currentIncoming[fdNum] = fd
 	} else {
+		t.logf("IO on outgoing connection %d; setting affinity", fdNum)
 		t.currentOutgoing[fdNum] = fd
 	}
 }

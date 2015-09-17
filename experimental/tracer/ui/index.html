@@ -24,6 +24,10 @@
       var containers = [];
       var traces = [];
 
+      Handlebars.registerHelper('spaces', function(input) {
+        return new Array(input + 1).join("> ");
+      });
+
       Handlebars.registerHelper('ts', function(input) {
         var ts = moment(input).format("LTS")
         return new Handlebars.SafeString(ts);
@@ -39,8 +43,10 @@
       });
 
       Handlebars.registerHelper('count', function(input) {
-        return new Handlebars.SafeString(input === null ? '0' : sprintf("%d", input.len));
+        return new Handlebars.SafeString(input === null ? '0' : sprintf("%d", input.length));
       });
+
+      Handlebars.registerPartial('traces', $("#traces").html());
 
       function render() {
         var template = $('script#process-template').text();
@@ -115,6 +121,27 @@
         width: 100%;
       }
     </style>
+    <script type="text/x-handlebars-template" id="traces">
+      {{#.}}
+      {{#if ServerDetails}}
+        {{#with ServerDetails}}
+        <tr>
+          <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
+          <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
+          <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../Children}}</tr>
+        {{/with}}
+      {{else}}
+        {{#with ClientDetails}}
+        <tr>
+          <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
+          <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
+          <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../Children}}</tr>
+        {{/with}}
+      {{/if}}
+      {{>traces Children}}
+      {{/.}}
+    </script>
+
     <script type="text/x-handlebars-template" id="process-template">
       <div class="container-fluid">
         <div class="col-md-4">
@@ -136,16 +163,13 @@
               <span class="glyphicon glyphicon-stop" aria-hidden="true"></span> Stop</button>
           </div>
 
-          <table>
+          <table padding="2">
             <thead><tr><th>Start time</th><th>Duration</th><th>PID<th>From</th><th>To</th><th>Sub-traces</th></tr></thead>
             <tbody>
-              {{#traces}}
-              <tr><td>{{ts Root.Start}}</td><td>{{duration Root}}</td>
-                <td>{{PID}}</td><td>{{Root.FromAddr}}:{{Root.FromPort}}</td>
-                <td>{{Root.ToAddr}}:{{Root.ToPort}}</td><td>{{count Root.Children}}</tr>
-              {{/traces}}
+          {{>traces traces}}
             </tbody>
           </table>
+
           {{/if}}
         </div>
       </div>
