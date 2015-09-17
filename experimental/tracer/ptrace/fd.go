@@ -35,14 +35,14 @@ type Fd struct {
 	fd        int
 
 	Start    int64
-	stop     int64
+	Stop     int64
 	sent     int64
 	received int64
 
 	FromAddr net.IP
 	FromPort uint16
-	toAddr   net.IP
-	toPort   uint16
+	ToAddr   net.IP
+	ToPort   uint16
 
 	// Fds are connections, and can have a causal-link to other Fds
 	Children []*Fd
@@ -120,6 +120,11 @@ func getLocalAddr(pid, fd int) (addr net.IP, port uint16, err error) {
 	return
 }
 
+// in milliseconds
+func now() int64 {
+	return time.Now().UnixNano() / 1000000
+}
+
 // We want to get the listening address from /proc
 func newListeningFd(pid, fd int) (*Fd, error) {
 	localAddr, localPort, err := getLocalAddr(pid, fd)
@@ -128,8 +133,8 @@ func newListeningFd(pid, fd int) (*Fd, error) {
 	}
 
 	return &Fd{
-		direction: listening, fd: fd, Start: time.Now().Unix(),
-		toAddr: localAddr, toPort: uint16(localPort),
+		direction: listening, fd: fd, Start: now(),
+		ToAddr: localAddr, ToPort: uint16(localPort),
 	}, nil
 }
 
@@ -141,9 +146,9 @@ func newConnectionFd(pid, fd int, remoteAddr net.IP, remotePort uint16) (*Fd, er
 	}
 
 	return &Fd{
-		direction: outgoing, fd: fd, Start: time.Now().Unix(),
+		direction: outgoing, fd: fd, Start: now(),
 		FromAddr: localAddr, FromPort: uint16(localPort),
-		toAddr: remoteAddr, toPort: remotePort,
+		ToAddr: remoteAddr, ToPort: remotePort,
 	}, nil
 }
 
@@ -154,12 +159,12 @@ func (fd *Fd) newConnection(addr net.IP, port uint16, newFd int) (*Fd, error) {
 	}
 
 	return &Fd{
-		direction: incoming, fd: newFd, Start: time.Now().Unix(),
-		toAddr: fd.toAddr, toPort: fd.toPort,
+		direction: incoming, fd: newFd, Start: now(),
+		ToAddr: fd.ToAddr, ToPort: fd.ToPort,
 		FromAddr: addr, FromPort: port,
 	}, nil
 }
 
 func (fd *Fd) close() {
-	fd.stop = time.Now().Unix()
+	fd.Stop = now()
 }

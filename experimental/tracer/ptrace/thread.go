@@ -168,7 +168,7 @@ func (t *thread) handleAccept(call, result *syscall.PtraceRegs) {
 	t.process.newFd(connection)
 
 	t.logf("Accepted connection from %s:%d -> %s:%d on fd %d, new fd %d",
-		addr, port, connection.toAddr, connection.toPort, listeningFdNum, connectionFdNum)
+		addr, port, connection.ToAddr, connection.ToPort, listeningFdNum, connectionFdNum)
 }
 
 func (t *thread) handleConnect(call, result *syscall.PtraceRegs) {
@@ -192,7 +192,7 @@ func (t *thread) handleConnect(call, result *syscall.PtraceRegs) {
 	}
 
 	t.logf("Made connection from %s:%d -> %s:%d on fd %d",
-		connection.toAddr, connection.toPort, connection.FromAddr,
+		connection.ToAddr, connection.ToPort, connection.FromAddr,
 		connection.FromPort, fd)
 }
 

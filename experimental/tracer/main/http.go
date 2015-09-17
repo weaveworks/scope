@@ -61,7 +61,7 @@ func (t *tracer) http(port int) {
 		w.WriteHeader(204)
 	})
 
-	router.Methods("GET").Path("/trace").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	router.Methods("GET").Path("/traces").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		respondWith(w, http.StatusOK, t.store.Traces())
 	})
 

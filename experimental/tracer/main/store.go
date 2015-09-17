@@ -20,9 +20,9 @@ type key struct {
 }
 
 type trace struct {
-	pid      int
-	root     *ptrace.Fd
-	children []*trace
+	PID      int
+	Root     *ptrace.Fd
+	Children []*trace
 }
 
 type store struct {
@@ -63,7 +63,7 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 	s.Lock()
 	defer s.Unlock()
 
-	newTrace := &trace{pid: pid, root: connection}
+	newTrace := &trace{PID: pid, Root: connection}
 	newTraceKey := newKey(connection)
 
 	log.Printf("Recording trace: %+v", newTrace)
@@ -75,7 +75,7 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 		parentNode.Remove()
 		parentTrace := parentNode.Value.(*trace)
 		log.Printf(" Found parent trace: %+v", parentTrace)
-		parentTrace.children = append(parentTrace.children, newTrace)
+		parentTrace.Children = append(parentTrace.Children, newTrace)
 	} else {
 		s.traces.Insert(newTraceKey, newTrace)
 	}
@@ -89,7 +89,7 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 			childNode.Remove()
 			childTrace := childNode.Value.(*trace)
 			log.Printf(" Found child trace: %+v", childTrace)
-			newTrace.children = append(newTrace.children, childTrace)
+			newTrace.Children = append(newTrace.Children, childTrace)
 		} else {
 			s.traces.Insert(childTraceKey, newTrace)
 		}
@@ -102,12 +102,9 @@ func (s *store) Traces() []*trace {
 
 	var traces []*trace
 	var cur = s.traces.First()
-	for {
+	for cur != nil {
 		traces = append(traces, cur.Value.(*trace))
 		cur = cur.Next()
-		if cur == nil {
-			break
-		}
 	}
 	return traces
 }

@@ -12,102 +12,141 @@
     <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/3.0.3/handlebars.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
     <script src="sprintf.min.js"></script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <script>
     $(function () {
-      var containers = {};
-      var traces = {}
+      var currentContainer = null;
+      var containersByID = {};
+      var containers = [];
+      var traces = [];
+
+      Handlebars.registerHelper('ts', function(input) {
+        var ts = moment(input).format("LTS")
+        return new Handlebars.SafeString(ts);
+      });
+
+      Handlebars.registerHelper('duration', function(input) {
+        var ms = input.Stop - input.Start
+        if (ms < 60000) {
+          return sprintf("%0.2fs", ms / 1000)
+        }
+        var ds = moment.duration(ms).humanize();
+        return new Handlebars.SafeString(ds);
+      });
+
+      function render() {
+        var template = $('script#process-template').text();
+        template = Handlebars.compile(template);
+        var rendered = template({
+          containers: containers,
+          container: currentContainer,
+          traces: traces
+        });
+        $('body').html(rendered);
+      }
 
       function updateContainers() {
-          $.get("/containers").done(function (data) {
-            $("ul.containers").html("")
-            data.sort(function (a, b) {
-                if (a.Name > b.Name) {
-                    return 1;
-                }
-                if (a.Name < b.Name) {
-                    return -1;
-                }
-                // a must be equal to b
-                return 0;
-            });
-            $.each(data, function(i, container) {
-              containers[container.Id] = container
-              $("ul.containers").append(sprintf("<li id='%s'>%s</li>", container.Id, container.Name.substring(1)))
-            });
-            window.setTimeout(updateContainers, 5 * 1000)
+        $.get("/containers").done(function (data) {
+          data.sort(function (a, b) {
+              if (a.Name > b.Name) {
+                  return 1;
+              }
+              if (a.Name < b.Name) {
+                  return -1;
+              }
+              // a must be equal to b
+              return 0;
           });
+          containers = data;
+          $.each(data, function(i, container) {
+            containersByID[container.Id] = container
+          });
+          render();
+          window.setTimeout(updateContainers, 5 * 1000);
+        });
       }
       updateContainers()
 
-      $("ul.containers").on("click", "li", function() {
-        var container = containers[$(this).attr("id")]
-        var containerTraces = traces[$(this).attr("id")] || []
+      function fetchTraces() {
+        $.get("/traces").done(function (data) {
+          traces = data;
+          render();
+          window.setTimeout(fetchTraces, 2 * 1000);
+        });
+      }
+      fetchTraces();
 
-        var template = $('script#process-template').text();
-        template = Handlebars.compile(template);
-        var rendered = template({container: container, traces: containerTraces});
-        $('div.mainview').html(rendered);
+      $("body").on("click", "ul.containers li", function() {
+        var container = containersByID[$(this).attr("id")]
+        currentContainer = container
+        render()
       })
 
-      $("div.mainview").on("click",  "button.start", function() {
+      $("body").on("click", "div.mainview button.start", function() {
         var id = $(this).parent().data("containerId")
-        var container = containers[id]
+        var container = containersByID[id]
         $.post(sprintf("/pid/%d", container.State.Pid))
       })
 
-      $("div.mainview").on("click",  "button.stop", function() {
+      $("body").on("click", "div.mainview button.stop", function() {
         var id = $(this).parent().data("containerId")
-        var container = containers[id]
+        var container = containersByID[id]
         $.ajax({
-            url: sprintf("/pid/%d", container.State.Pid),
-            type: 'DELETE',
+          url: sprintf("/pid/%d", container.State.Pid),
+          type: 'DELETE',
         });
       })
     })
     </script>
-
     <style>
       ul.containers li {
         cursor: pointer;
       }
+
+      table {
+        width: 100%;
+      }
     </style>
+    <script type="text/x-handlebars-template" id="process-template">
+      <div class="container-fluid">
+        <div class="col-md-4">
+          <h1>Weave Tracer</h1>
+          <ul class="containers">
+            {{#containers}}
+            <li id={{Id}}>{{Name}}</li>
+            {{/containers}}
+          </ul>
+        </div>
+
+        <div class="col-md-8 mainview">
+          {{#if container}}
+          <h2>{{container.Name}}</h2>
+          <div class="btn-group" role="group" data-container-id="{{container.Id}}">
+            <button type="button" class="btn btn-default start">
+              <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Start</button>
+            <button type="button" class="btn btn-default stop">
+              <span class="glyphicon glyphicon-stop" aria-hidden="true"></span> Stop</button>
+          </div>
+
+          <table>
+            <thead><tr><th>Start time</th><th>Duration</th><th>PID<th>From</th><th>To</th><th>Sub-traces</th></tr></thead>
+            <tbody>
+              {{#traces}}
+              <tr><td>{{ts Root.Start}}</td><td>{{duration Root}}</td>
+                <td>{{PID}}</td><td>{{Root.FromAddr}}:{{Root.FromPort}}</td>
+                <td>{{Root.ToAddr}}:{{Root.ToPort}}</td></tr>
+              {{/traces}}
+            </tbody>
+          </table>
+          {{/if}}
+        </div>
+      </div>
+    </script>
   </head>
   <body>
-    <script type="text/x-handlebars-template" id="process-template">
-      <h2>{{container.Name}}</h2>
-      <div class="btn-group" role="group" data-container-id="{{container.Id}}">
-        <button type="button" class="btn btn-default start">
-          <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Start</button>
-        <button type="button" class="btn btn-default stop">
-          <span class="glyphicon glyphicon-stop" aria-hidden="true"></span> Stop</button>
-        <button type="button" class="btn btn-default fetch">
-          <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span> Get Traces</button>
-      </div>
-
-      <table>
-        <thead><tr><th>Start time</th><th>Duration</th><th>Sub-traces</th></tr></thead>
-        <tbody>
-          {{#traces}}
-          <tr><td>{{.}}</td></tr>
-          {{/traces}}
-        </tbody>
-      </table>
-    </script>
-
-    <div class="container-fluid">
-      <div class="col-md-4">
-        <h1>Weave Tracer</h1>
-        <ul class="containers">
-        </ul>
-      </div>
-
-      <div class="col-md-8 mainview">
-
-      </div>
-    </div>
   </body>
 </html>
