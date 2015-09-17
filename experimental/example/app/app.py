@@ -46,13 +46,8 @@ def ignore_error(f):
 
 @app.route('/')
 def hello():
-  counter_future = pool.submit(do_redis)
-  search_future = pool.submit(do_search)
-  qotd_future = pool.submit(do_qotd)
-  result = 'Hello World! I have been seen %s times.' % ignore_error(counter_future.result)
-  result += ignore_error(search_future.result)
-  result += ignore_error(qotd_future.result)
-  return result
+  qotd_msg = do_qotd()
+  return qotd_msg
 
 if __name__ == "__main__":
   logging.basicConfig(format='%(asctime)s %(levelname)s %(filename)s:%(lineno)d - %(message)s', level=logging.INFO)

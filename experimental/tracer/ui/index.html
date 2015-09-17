@@ -60,7 +60,7 @@
       }
 
       function updateContainers() {
-        $.get("/containers").done(function (data) {
+        $.get("/container").done(function (data) {
           data.sort(function (a, b) {
               if (a.Name > b.Name) {
                   return 1;
@@ -99,14 +99,14 @@
       $("body").on("click", "div.mainview button.start", function() {
         var id = $(this).parent().data("containerId")
         var container = containersByID[id]
-        $.post(sprintf("/pid/%d", container.State.Pid))
+        $.post(sprintf("/container/%s", container.Id))
       })
 
       $("body").on("click", "div.mainview button.stop", function() {
         var id = $(this).parent().data("containerId")
         var container = containersByID[id]
         $.ajax({
-          url: sprintf("/pid/%d", container.State.Pid),
+          url: sprintf("/container/%s", container.Id),
           type: 'DELETE',
         });
       })

@@ -11,6 +11,7 @@ import (
 	dockerClient "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/process"
 )
 
 func respondWith(w http.ResponseWriter, code int, response interface{}) {
@@ -23,16 +24,64 @@ func respondWith(w http.ResponseWriter, code int, response interface{}) {
 	}
 }
 
+func (t *tracer) pidsForContainer(id string) ([]int, error) {
+	var container docker.Container
+	t.docker.WalkContainers(func(c docker.Container) {
+		if c.ID() == id {
+			container = c
+		}
+	})
+
+	if container == nil {
+		return []int{}, fmt.Errorf("Not Found")
+	}
+
+	pidTree, err := process.NewTree(process.NewWalker("/proc"))
+	if err != nil {
+		return []int{}, err
+	}
+
+	return pidTree.GetChildren(container.PID())
+}
+
 func (t *tracer) http(port int) {
 	router := mux.NewRouter()
 
-	router.Methods("GET").Path("/containers").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	router.Methods("GET").Path("/container").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		containers := []*dockerClient.Container{}
 		t.docker.WalkContainers(func(container docker.Container) {
 			containers = append(containers, container.Container())
 		})
 
 		respondWith(w, http.StatusOK, containers)
+	})
+
+	router.Methods("POST").Path("/container/{id}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := mux.Vars(r)["id"]
+		children, err := t.pidsForContainer(id)
+		if err != nil {
+			respondWith(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		for _, pid := range children {
+			t.ptrace.TraceProcess(pid)
+		}
+		w.WriteHeader(204)
+	})
+
+	router.Methods("DELETE").Path("/container/{id}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := mux.Vars(r)["id"]
+		children, err := t.pidsForContainer(id)
+		if err != nil {
+			respondWith(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		for _, pid := range children {
+			t.ptrace.StopTracing(pid)
+		}
+		w.WriteHeader(204)
 	})
 
 	router.Methods("GET").Path("/pid").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -60,6 +109,8 @@ func (t *tracer) http(port int) {
 		t.ptrace.StopTracing(pid)
 		w.WriteHeader(204)
 	})
+
+
 
 	router.Methods("GET").Path("/traces").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		respondWith(w, http.StatusOK, t.store.Traces())
