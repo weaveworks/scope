@@ -37,9 +37,10 @@ func main() {
 		log.Fatalf("Could start docker watcher: %v", err)
 	}
 
+	store := newStore()
 	tracer := tracer{
-		ptrace: ptrace.NewPTracer(),
-		store:  newStore(),
+		store:  store,
+		ptrace: ptrace.NewPTracer(store),
 		docker: dockerRegistry,
 	}
 	defer tracer.Stop()

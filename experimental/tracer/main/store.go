@@ -3,6 +3,7 @@ package main
 import (
 	"math/rand"
 	"sync"
+	"log"
 
 	"github.com/msackman/skiplist"
 
@@ -65,12 +66,15 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 	newTrace := &trace{pid: pid, root: connection}
 	newTraceKey := newKey(connection)
 
+	log.Printf("Recording trace: %+v", newTrace)
+
 	// First, see if this new conneciton is a child of an existing connection.
 	// This indicates we have a parent connection to attach to.
 	// If not, insert this connection.
 	if parentNode := s.traces.Get(newTraceKey); parentNode != nil {
 		parentNode.Remove()
 		parentTrace := parentNode.Value.(*trace)
+		log.Printf(" Found parent trace: %+v", parentTrace)
 		parentTrace.children = append(parentTrace.children, newTrace)
 	} else {
 		s.traces.Insert(newTraceKey, newTrace)
@@ -84,6 +88,7 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 		if childNode := s.traces.Get(childTraceKey); childNode != nil {
 			childNode.Remove()
 			childTrace := childNode.Value.(*trace)
+			log.Printf(" Found child trace: %+v", childTrace)
 			newTrace.children = append(newTrace.children, childTrace)
 		} else {
 			s.traces.Insert(childTraceKey, newTrace)

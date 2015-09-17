@@ -43,7 +43,7 @@ type thread struct {
 	callRegs   syscall.PtraceRegs
 	resultRegs syscall.PtraceRegs
 
-	currentConnection *Fd
+	currentConnection *Fd // current incoming connection
 }
 
 func newThread(pid int, process *process, tracer *PTracer) *thread {
@@ -213,9 +213,9 @@ func (t *thread) handleClose(call, result *syscall.PtraceRegs) {
 	}
 
 	// if this connection was incoming, add it to 'the registry'
-	//if fd.direction == incoming {
-	//	t.tracer.store.RecordConnection(t.process.pid, fd)
-	//}
+	if fd.direction == incoming {
+		t.tracer.store.RecordConnection(t.process.pid, fd)
+	}
 }
 
 func (t *thread) handleIO(call, result *syscall.PtraceRegs) {

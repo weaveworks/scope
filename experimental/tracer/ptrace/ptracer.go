@@ -16,6 +16,10 @@ const (
 	ptraceTracesysgoodBit = 0x80
 )
 
+type Store interface {
+	RecordConnection(int, *Fd)
+}
+
 // PTracer ptrace processed and threads
 type PTracer struct {
 
@@ -29,6 +33,7 @@ type PTracer struct {
 
 	threads   map[int]*thread
 	processes map[int]*process
+	store     Store
 }
 
 type stopped struct {
@@ -37,7 +42,7 @@ type stopped struct {
 }
 
 // NewPTracer creates a new ptracer.
-func NewPTracer() PTracer {
+func NewPTracer(store Store) PTracer {
 	t := PTracer{
 		ops:           make(chan func()),
 		stopped:       make(chan stopped),
@@ -46,6 +51,7 @@ func NewPTracer() PTracer {
 
 		threads:   make(map[int]*thread),
 		processes: make(map[int]*process),
+		store:     store,
 	}
 	go t.waitLoop()
 	go t.loop()
@@ -135,6 +141,7 @@ func (t *PTracer) traceThread(pid int, process *process) *thread {
 	result := make(chan *thread)
 	t.ops <- func() {
 		thread := newThread(pid, process, t)
+		t.threads[pid] = thread
 
 		err := syscall.PtraceAttach(pid)
 		if err != nil {
@@ -142,7 +149,6 @@ func (t *PTracer) traceThread(pid int, process *process) *thread {
 			return
 		}
 
-		t.threads[pid] = thread
 		result <- thread
 
 		select {
