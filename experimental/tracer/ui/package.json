@@ -1,0 +1,15 @@
+{
+  "name": "scope-tracer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "David Kaltschmidt <david.kaltschmidt@gmail.com>",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "express": "^4.13.3"
+  }
+}

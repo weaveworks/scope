@@ -3,14 +3,12 @@
   <head>
     <title>Weave Tracer</title>
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-
-    <!-- Optional theme -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="https://cask.scotch.io/bootstrap-4.0-flex.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
 
     <!-- Latest compiled and minified JavaScript -->
     <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/3.0.3/handlebars.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
     <script src="sprintf.min.js"></script>
@@ -23,6 +21,12 @@
       var containersByID = {};
       var containers = [];
       var traces = [];
+
+      Handlebars.registerHelper('isSelected', function(input) {
+        if (currentContainer && input === currentContainer.Id) {
+          return 'class=selected';
+        }
+      });
 
       Handlebars.registerHelper('spaces', function(input) {
         return new Array(input + 1).join("> ");
@@ -75,6 +79,10 @@
           $.each(data, function(i, container) {
             containersByID[container.Id] = container
           });
+          // auto-select first container
+          if (containers.length) {
+            currentContainer = containersByID[containers[0].Id];
+          }
           render();
           window.setTimeout(updateContainers, 5 * 1000);
         });
@@ -113,12 +121,69 @@
     })
     </script>
     <style>
+      body {
+        height: 100%;
+        width: 100%;
+        color: #46466a;
+        font-family: "Roboto", sans-serif;
+      }
+      .logo {
+        margin-bottom: 30px;
+      }
+      .container-fluid {
+        background: linear-gradient(30deg, #e2e2ec 0%, #fafafc 100%);
+        padding: 30px 45px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: scroll;
+      }
       ul.containers li {
         cursor: pointer;
+        list-style: none;
+        font-size: 85%;
+        margin-bottom: 0.5rem;
+        opacity: 0.7;
       }
-
+      ul.containers li.selected {
+        opacity: 1;
+      }
+      .heading {
+        margin: 10px 40px;
+        opacity: 0.4;
+        text-transform: uppercase;
+      }
+      .btn-default {
+        text-transform: uppercase;
+        margin-top: 3px;
+        opacity: 0.8;
+      }
+      h2 {
+        font-weight: normal;
+        margin-left: 1.5rem;
+        margin-right: 2rem;
+        margin-bottom: 1rem;
+      }
       table {
         width: 100%;
+      }
+      th {
+        text-transform: uppercase;
+        opacity: 0.4;
+        font-weight: normal;
+      }
+      .mainview {
+        margin-top: 2rem;
+      }
+      .table td {
+        font-size: 80%;
+        font-family: monospace;
+        padding-left: 0.5rem;
+      }
+      .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #e2e2ec;
       }
     </style>
     <script type="text/x-handlebars-template" id="traces">
@@ -144,26 +209,28 @@
 
     <script type="text/x-handlebars-template" id="process-template">
       <div class="container-fluid">
+        <div class="row">
         <div class="col-md-4">
-          <h1>Weave Tracer</h1>
+        <div class="logo"><img src="logo.svg" width="300"/></div>
+          <div class="heading">Containers</div>
           <ul class="containers">
             {{#containers}}
-            <li id={{Id}}>{{Name}}</li>
+            <li {{isSelected Id}} id={{Id}}>{{Name}}</li>
             {{/containers}}
           </ul>
         </div>
 
         <div class="col-md-8 mainview">
           {{#if container}}
-          <h2>{{container.Name}}</h2>
-          <div class="btn-group" role="group" data-container-id="{{container.Id}}">
+          <h2 class="pull-left">{{container.Name}}</h2>
+          <div class="btn-group btn-group-sm" role="group" data-container-id="{{container.Id}}">
             <button type="button" class="btn btn-default start">
-              <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Start</button>
+              <span class="fa fa-play" aria-hidden="true"></span> Start</button>
             <button type="button" class="btn btn-default stop">
-              <span class="glyphicon glyphicon-stop" aria-hidden="true"></span> Stop</button>
+              <span class="fa fa-stop" aria-hidden="true"></span> Stop</button>
           </div>
 
-          <table padding="2">
+          <table class="table table-striped table-sm">
             <thead><tr><th>Start time</th><th>Duration</th><th>PID<th>From</th><th>To</th><th>Sub-traces</th></tr></thead>
             <tbody>
           {{>traces traces}}
@@ -171,6 +238,7 @@
           </table>
 
           {{/if}}
+        </div>
         </div>
       </div>
     </script>
