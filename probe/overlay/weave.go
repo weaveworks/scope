@@ -10,9 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/weaveworks/scope/common/sanitize"
-
 	"github.com/weaveworks/scope/common/exec"
+	"github.com/weaveworks/scope/common/sanitize"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )

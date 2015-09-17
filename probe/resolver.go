@@ -17,7 +17,7 @@ var (
 
 type staticResolver struct {
 	quit  chan struct{}
-	add   func(string)
+	set   func(string, []string)
 	peers []peer
 }
 
@@ -31,10 +31,10 @@ type peer struct {
 // resolved IPs.  It explictiy supports hostnames which
 // resolve to multiple IPs; it will repeatedly call
 // add with the same IP, expecting the target to dedupe.
-func newStaticResolver(peers []string, add func(string)) staticResolver {
+func newStaticResolver(peers []string, set func(target string, endpoints []string)) staticResolver {
 	r := staticResolver{
 		quit:  make(chan struct{}),
-		add:   add,
+		set:   set,
 		peers: prepareNames(peers),
 	}
 	go r.loop()
@@ -92,13 +92,15 @@ func (r staticResolver) resolveHosts() {
 			}
 		}
 
+		endpoints := make([]string, 0, len(addrs))
 		for _, addr := range addrs {
 			// For now, ignore IPv6
 			if addr.To4() == nil {
 				continue
 			}
-			r.add(net.JoinHostPort(addr.String(), peer.port))
+			endpoints = append(endpoints, net.JoinHostPort(addr.String(), peer.port))
 		}
+		r.set(peer.hostname, endpoints)
 	}
 }
 

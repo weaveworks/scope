@@ -39,15 +39,19 @@ func TestResolver(t *testing.T) {
 	port := ":80"
 	ip1 := "192.168.0.1"
 	ip2 := "192.168.0.10"
-	adds := make(chan string)
-	add := func(s string) { adds <- s }
+	sets := make(chan string)
+	set := func(target string, endpoints []string) {
+		for _, endpoint := range endpoints {
+			sets <- endpoint
+		}
+	}
 
-	r := newStaticResolver([]string{"symbolic.name" + port, "namewithnoport", ip1 + port, ip2}, add)
+	r := newStaticResolver([]string{"symbolic.name" + port, "namewithnoport", ip1 + port, ip2}, set)
 
 	assertAdd := func(want string) {
 		_, _, line, _ := runtime.Caller(1)
 		select {
-		case have := <-adds:
+		case have := <-sets:
 			if want != have {
 				t.Errorf("line %d: want %q, have %q", line, want, have)
 			}
