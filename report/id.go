@@ -1,13 +1,14 @@
 package report
 
 import (
+	"fmt"
 	"hash"
 	"hash/fnv"
 	"net"
 	"strings"
 	"sync"
 
-	"github.com/bluele/gcache"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 // TheInternet is used as a node ID to indicate a remote IP.
@@ -27,13 +28,21 @@ const (
 )
 
 var (
-	idCache = gcache.New(1024).LRU().Build()
+	idCache *lru.Cache
 	hashers = sync.Pool{
 		New: func() interface{} {
 			return fnv.New64a()
 		},
 	}
 )
+
+func init() {
+	var err error
+	idCache, err = lru.New(1024)
+	if err != nil {
+		panic(fmt.Sprintf("could not create cache: %s", err))
+	}
+}
 
 func lookupID(part1, part2, part3 string, f func() string) string {
 	h := hashers.Get().(hash.Hash64)
@@ -42,11 +51,11 @@ func lookupID(part1, part2, part3 string, f func() string) string {
 	h.Write([]byte(part3))
 	sum := h.Sum64()
 	var result string
-	if id, err := idCache.Get(sum); id != nil && err != nil {
+	if id, found := idCache.Get(sum); found && id != nil {
 		result = id.(string)
 	} else {
 		result = f()
-		idCache.Set(sum, result)
+		idCache.Add(sum, result)
 	}
 	h.Reset()
 	hashers.Put(h)
