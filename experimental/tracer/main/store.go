@@ -1,11 +1,10 @@
 package main
 
 import (
-	"math/rand"
-	"sync"
-	"log"
 	"fmt"
+	"math/rand"
 	"sort"
+	"sync"
 
 	"github.com/msackman/skiplist"
 
@@ -26,12 +25,12 @@ func (k key) MarshalJSON() ([]byte, error) {
 }
 
 type trace struct {
-	PID      int
-	Key      key
+	PID           int
+	Key           key
 	ServerDetails *ptrace.ConnectionDetails
 	ClientDetails *ptrace.ConnectionDetails
-	Children []*trace
-	Level    int
+	Children      []*trace
+	Level         int
 }
 
 type byKey []*trace
@@ -57,7 +56,20 @@ func newKey(fd *ptrace.Fd) key {
 
 func (l key) LessThan(other skiplist.Comparable) bool {
 	r := other.(key)
-	return l.fromAddr < r.fromAddr && l.fromPort < r.fromPort && l.startTime < r.startTime
+
+	if l.fromAddr != r.fromAddr {
+		return l.fromAddr > r.fromAddr
+	}
+
+	if l.fromPort != r.fromPort {
+		return l.fromPort < r.fromPort
+	}
+
+	if l.Equal(other) {
+		return false
+	}
+
+	return l.startTime < r.startTime
 }
 
 func (l key) Equal(other skiplist.Comparable) bool {
@@ -74,50 +86,61 @@ func newStore() *store {
 	return &store{traces: skiplist.New(rand.New(rand.NewSource(0)))}
 }
 
+func (t *trace) addChild(child *trace) {
+	// find the child we're supposed to be replacing
+	for i, candidate := range t.Children {
+		if !candidate.Key.Equal(skiplist.Comparable(child.Key)) {
+			continue
+		}
+
+		// Fix up some fields
+		child.ClientDetails = candidate.ClientDetails
+		child.PID = candidate.PID
+		IncrementLevel(child, t.Level+1)
+
+		// Overwrite old record
+		t.Children[i] = child
+		return
+	}
+}
+
 func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 	s.Lock()
 	defer s.Unlock()
 
 	newTrace := &trace{
-		PID: pid,
-		Key: newKey(connection),
+		PID:           pid,
+		Key:           newKey(connection),
 		ServerDetails: &connection.ConnectionDetails,
 	}
 	for _, child := range connection.Children {
 		newTrace.Children = append(newTrace.Children, &trace{
-			Level: 1,
+			Level:         1,
+			Key:           newKey(child),
 			ClientDetails: &child.ConnectionDetails,
 		})
 	}
 
-	newTraceKey := newTrace.Key
-
 	// First, see if this new conneciton is a child of an existing connection.
 	// This indicates we have a parent connection to attach to.
 	// If not, insert this connection.
-	if parentNode := s.traces.Get(newTraceKey); parentNode != nil {
-		parentNode.Remove()
+	if parentNode := s.traces.Get(newTrace.Key); parentNode != nil {
 		parentTrace := parentNode.Value.(*trace)
-		log.Printf(" Found parent trace: %+v", parentTrace)
-		newTrace.Level = parentTrace.Level + 1
-		parentTrace.Children = append(parentTrace.Children, newTrace)
+		parentTrace.addChild(newTrace)
+		parentNode.Remove()
 	} else {
-		s.traces.Insert(newTraceKey, newTrace)
+		s.traces.Insert(newTrace.Key, newTrace)
 	}
 
 	// Next, see if we already know about the child connections
 	// If not, insert each of our children.
-	for _, childConnection := range connection.Children {
-		childTraceKey := newKey(childConnection)
-
-		if childNode := s.traces.Get(childTraceKey); childNode != nil {
-			childNode.Remove()
+	for _, child := range newTrace.Children {
+		if childNode := s.traces.Get(child.Key); childNode != nil {
 			childTrace := childNode.Value.(*trace)
-			log.Printf(" Found child trace: %+v", childTrace)
-			IncrementLevel(childTrace, newTrace.Level)
-			newTrace.Children = append(newTrace.Children, childTrace)
+			newTrace.addChild(childTrace)
+			childNode.Remove()
 		} else {
-			s.traces.Insert(childTraceKey, newTrace)
+			s.traces.Insert(child.Key, newTrace)
 		}
 	}
 }
@@ -133,20 +156,17 @@ func (s *store) Traces() []*trace {
 	s.RLock()
 	defer s.RUnlock()
 
-	traces := map[key]*trace{}
+	traces := []*trace{}
 	var cur = s.traces.First()
 	for cur != nil {
+		key := cur.Key.(key)
 		trace := cur.Value.(*trace)
-		traces[trace.Key] = trace
+		if trace.Key == key {
+			traces = append(traces, trace)
+		}
 		cur = cur.Next()
 	}
 
-	result := []*trace{}
-	for _, trace := range traces {
-		result = append(result, trace)
-	}
-
-	sort.Sort(byKey(result))
-
-	return result
+	sort.Sort(byKey(traces))
+	return traces
 }

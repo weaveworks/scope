@@ -53,8 +53,18 @@
         return new Handlebars.SafeString(ds);
       });
 
+      function numChildren(input) {
+        if (input.Children === null) {
+          return 0
+        }
+        var count = input.Children.length
+        $.each(input.Children, function(i, child) {
+          count += numChildren(child)
+        })
+        return count
+      }
       Handlebars.registerHelper('count', function(input) {
-        return new Handlebars.SafeString(input === null ? '0' : sprintf("%d", input.length));
+        return sprintf("%d", numChildren(input));
       });
 
       Handlebars.registerPartial('traces', $("#traces").html());
@@ -214,13 +224,13 @@
         {{#with ServerDetails}}
         <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
         <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
-        <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../Children}}</td>
+        <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../.}}</td>
         {{/with}}
       {{else}}
         {{#with ClientDetails}}
         <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
         <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
-        <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../Children}}</td>
+        <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../.}}</td>
         {{/with}}
       {{/if}}
       </tr>
@@ -236,14 +246,14 @@
         <tr>
           <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
           <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
-          <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../Children}}</tr>
+          <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../.}}</tr>
         {{/with}}
       {{else}}
         {{#with ClientDetails}}
         <tr>
           <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
           <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
-          <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../Children}}</tr>
+          <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../.}}</tr>
         {{/with}}
       {{/if}}
       {{>children Children}}

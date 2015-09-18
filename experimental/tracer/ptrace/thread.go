@@ -17,6 +17,7 @@ const (
 	STAT          = 4
 	MMAP          = 9
 	MPROTECT      = 10
+	MUNMAP        = 11
 	SELECT        = 23
 	MADVISE       = 28
 	SOCKET        = 41
@@ -24,8 +25,11 @@ const (
 	ACCEPT        = 43
 	SENDTO        = 44
 	RECVFROM      = 45
+	SHUTDOWN      = 48
 	CLONE         = 56
+	GETTIMEOFDAY  = 96
 	GETID         = 186
+	FUTEX         = 202
 	SETROBUSTLIST = 273
 	ACCEPT4       = 288
 )
@@ -102,7 +106,7 @@ func (t *thread) syscallStopped() {
 	case SETROBUSTLIST, GETID, MMAP, MPROTECT, MADVISE, SOCKET, CLONE, STAT, SELECT:
 		return
 
-	case OPEN:
+	case OPEN, FUTEX, SHUTDOWN, GETTIMEOFDAY, MUNMAP:
 		return
 
 	default:
@@ -214,7 +218,7 @@ func (t *thread) handleClose(call, result *syscall.PtraceRegs) {
 		return
 	}
 
-	t.logf("Closing fd %d", fdNum)
+	//t.logf("Closing fd %d", fdNum)
 	fd.close()
 
 	// if this connection was incoming, add it to 'the registry'
@@ -222,7 +226,7 @@ func (t *thread) handleClose(call, result *syscall.PtraceRegs) {
 		// collect all the outgoing connections this thread has made
 		// and treat them as caused by this incoming connections
 		for _, outgoing := range t.currentOutgoing {
-			t.logf("Fd %d caused %d", fdNum, outgoing.fd)
+			//t.logf("Fd %d caused %d", fdNum, outgoing.fd)
 			fd.Children = append(fd.Children, outgoing)
 		}
 		t.currentOutgoing = map[int]*Fd{}
@@ -241,15 +245,15 @@ func (t *thread) handleIO(call, result *syscall.PtraceRegs) {
 	fdNum := int(call.Rdi)
 	fd, ok := t.process.fds[fdNum]
 	if !ok {
-		t.logf("IO on unknown fd %d", fdNum)
+		//t.logf("IO on unknown fd %d", fdNum)
 		return
 	}
 
 	if fd.direction == incoming {
-		t.logf("IO on incoming connection %d; setting affinity", fdNum)
+		//t.logf("IO on incoming connection %d; setting affinity", fdNum)
 		t.currentIncoming[fdNum] = fd
 	} else {
-		t.logf("IO on outgoing connection %d; setting affinity", fdNum)
+		//t.logf("IO on outgoing connection %d; setting affinity", fdNum)
 		t.currentOutgoing[fdNum] = fd
 	}
 }
