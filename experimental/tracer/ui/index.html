@@ -45,12 +45,8 @@
       });
 
       Handlebars.registerHelper('duration', function(input) {
-        var ms = input.Stop - input.Start
-        if (ms < 60000) {
-          return new Handlebars.SafeString(sprintf("%0.2fs", ms / 1000));
-        }
-        var ds = moment.duration(ms).humanize();
-        return new Handlebars.SafeString(ds);
+        var durationText = formatDuration(input);
+        return new Handlebars.SafeString(durationText);
       });
 
       function numChildren(input) {
@@ -67,8 +63,28 @@
         return sprintf("%d", numChildren(input));
       });
 
+      Handlebars.registerHelper('childTitle', function() {
+        var duration = formatDuration(this);
+        return '[' + duration + '] ' + this.FromAddr + ':' + this.FromPort + ' - ' + this.ToAddr + ':' + this.ToPort;
+      });
+
+      Handlebars.registerHelper('childWrapperStyle', function() {
+        var parentSpan = this.ParentStop - this.ParentStart; // = 100%
+        var span = (this.Stop - this.Start) / parentSpan * 100;
+        var offset = (this.Start - this.ParentStart) / parentSpan * 100;
+
+        return 'width:' + span + '%; margin-left:' + offset + '%;';
+      });
+
+      Handlebars.registerHelper('childStyle', function() {
+        var color = shadeColor(weaveRed, this.Level / 5);
+        return 'width: 100%; background-color:' + color;
+      });
+
       Handlebars.registerPartial('traces', $("#traces").html());
       Handlebars.registerPartial('children', $("#children").html());
+      Handlebars.registerPartial('childrenDetails', $("#childrenDetails").html());
+      Handlebars.registerPartial('childrenDetailsMarkup', $("#childrenDetailsMarkup").html());
 
       function render() {
         var template = $('script#process-template').text();
@@ -107,9 +123,37 @@
       }
       updateContainers()
 
+      var weaveRed = '#FF4B19';
+
+      function shadeColor(color, percent) {
+        var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
+        return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+      }
+
+      function formatDuration(input) {
+        var ms = input.Stop - input.Start
+        if (ms < 60000) {
+          return sprintf("%0.2fs", ms / 1000);
+        }
+        var ds = moment.duration(ms).humanize();
+        return ds;
+      }
+
+      function addParentTimeToTrace(trace) {
+        var details = trace.ServerDetails || trace.ClientDetails;
+        trace.Children && $.each(trace.Children, function(i, childTrace) {
+          childTrace.ParentStart = details.Start;
+          childTrace.ParentStop = details.Stop;
+          addParentTimeToTrace(childTrace);
+        });
+      }
+
       function fetchTraces() {
         $.get("/traces").done(function (data) {
           traces = data;
+          traces && $.each(traces, function(i, trace) {
+            addParentTimeToTrace(trace);
+          });
           render();
           window.setTimeout(fetchTraces, 2 * 1000);
         });
@@ -216,6 +260,12 @@
       .table-striped tbody tr:nth-of-type(odd) {
         background-color: #e2e2ec;
       }
+      .childBox {
+        padding: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     </style>
     <script type="text/x-handlebars-template" id="traces">
       {{#.}}
@@ -235,28 +285,40 @@
       {{/if}}
       </tr>
       {{#isExpanded}}
-      {{>children Children}}
+        <tr>
+          <td colspan="6" style="padding: 0 0.5rem;">
+            <div style="width: 100%; background-color: #FF4B19; height: 4px;"></div>
+            {{>children Children}}
+        </td>
+      </tr>
       {{/isExpanded}}
       {{/.}}
     </script>
+
+    <script type="text/x-handlebars-template" id="childrenDetailsMarkup">
+      <tr>
+        <td>{{spaces Level}}{{ts Start}}</td><td>{{duration .}}</td>
+        <td>{{PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
+        <td>{{ToAddr}}:{{ToPort}}</td><td>{{count Children}}</td>
+      </tr>
+    </script>
+
+    <script type="text/x-handlebars-template" id="childrenDetails">
+      <div style="{{childWrapperStyle}}">
+        <div title="{{childTitle}}" style="{{childStyle}}" class="childBox">
+          {{childTitle}}
+        </div>
+        {{>children Children}}
+      </div>
+    </script>
+
     <script type="text/x-handlebars-template" id="children">
       {{#.}}
       {{#if ClientDetails}}
-        {{#with ClientDetails}}
-        <tr>
-          <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
-          <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
-          <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../.}}</tr>
-        {{/with}}
+        {{>childrenDetails ClientDetails Level=../Level PID=../PID Children=../Children ParentStart=../ParentStart ParentStop=../ParentStop}}
       {{else}}
-        {{#with ServerDetails}}
-        <tr>
-          <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
-          <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
-          <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../.}}</tr>
-        {{/with}}
+        {{>childrenDetails ServerDetails Level=../Level PID=../PID Children=../Children ParentStart=../ParentStart ParentStop=../ParentStop}}
       {{/if}}
-      {{>children Children}}
       {{/.}}
     </script>
 
