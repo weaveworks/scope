@@ -27,7 +27,7 @@ func TestHTTPPublisher(t *testing.T) {
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api" {
-			json.NewEncoder(w).Encode(map[string]string{"id": "irrelevant"})
+			_ = json.NewEncoder(w).Encode(map[string]string{"id": "irrelevant"})
 			return
 		}
 

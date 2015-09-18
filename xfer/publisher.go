@@ -1,10 +1,10 @@
 package xfer
 
-import "bytes"
+import "io"
 
-// Publisher is something which can send a buffered set of data somewhere,
-// probably to a remote collector.
+// Publisher is something which can send a stream of data somewhere, probably
+// to a remote collector.
 type Publisher interface {
-	Publish(*bytes.Buffer) error
+	Publish(io.Reader) error
 	Stop()
 }

@@ -1,7 +1,7 @@
 package xfer
 
 import (
-	"bytes"
+	"io"
 	"log"
 	"time"
 )
@@ -16,7 +16,7 @@ const (
 // concurrent publishes are dropped.
 type BackgroundPublisher struct {
 	publisher Publisher
-	buffers   chan *bytes.Buffer
+	readers   chan io.Reader
 	quit      chan struct{}
 }
 
@@ -24,7 +24,7 @@ type BackgroundPublisher struct {
 func NewBackgroundPublisher(p Publisher) *BackgroundPublisher {
 	bp := &BackgroundPublisher{
 		publisher: p,
-		buffers:   make(chan *bytes.Buffer),
+		readers:   make(chan io.Reader),
 		quit:      make(chan struct{}),
 	}
 	go bp.loop()
@@ -34,8 +34,8 @@ func NewBackgroundPublisher(p Publisher) *BackgroundPublisher {
 func (bp *BackgroundPublisher) loop() {
 	backoff := initialBackoff
 
-	for buf := range bp.buffers {
-		err := bp.publisher.Publish(buf)
+	for r := range bp.readers {
+		err := bp.publisher.Publish(r)
 		if err == nil {
 			backoff = initialBackoff
 			continue
@@ -54,9 +54,9 @@ func (bp *BackgroundPublisher) loop() {
 }
 
 // Publish implements Publisher
-func (bp *BackgroundPublisher) Publish(buf *bytes.Buffer) error {
+func (bp *BackgroundPublisher) Publish(r io.Reader) error {
 	select {
-	case bp.buffers <- buf:
+	case bp.readers <- r:
 	default:
 	}
 	return nil
@@ -64,7 +64,7 @@ func (bp *BackgroundPublisher) Publish(buf *bytes.Buffer) error {
 
 // Stop implements Publisher
 func (bp *BackgroundPublisher) Stop() {
-	close(bp.buffers)
+	close(bp.readers)
 	close(bp.quit)
 	bp.publisher.Stop()
 }

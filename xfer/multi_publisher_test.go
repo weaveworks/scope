@@ -3,6 +3,7 @@ package xfer_test
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/weaveworks/scope/xfer"
@@ -48,5 +49,5 @@ func TestMultiPublisher(t *testing.T) {
 
 type mockPublisher struct{ count int }
 
-func (p *mockPublisher) Publish(*bytes.Buffer) error { p.count++; return nil }
-func (p *mockPublisher) Stop()                       {}
+func (p *mockPublisher) Publish(io.Reader) error { p.count++; return nil }
+func (p *mockPublisher) Stop()                   {}

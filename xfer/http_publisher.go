@@ -1,9 +1,9 @@
 package xfer
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/weaveworks/scope/common/sanitize"
@@ -42,8 +42,8 @@ func (p HTTPPublisher) String() string {
 }
 
 // Publish publishes the report to the URL.
-func (p HTTPPublisher) Publish(buf *bytes.Buffer) error {
-	req, err := http.NewRequest("POST", p.url, buf)
+func (p HTTPPublisher) Publish(r io.Reader) error {
+	req, err := http.NewRequest("POST", p.url, r)
 	if err != nil {
 		return err
 	}

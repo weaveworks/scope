@@ -3,6 +3,8 @@ package xfer
 import (
 	"bytes"
 	"errors"
+	"io"
+	"io/ioutil"
 	"log"
 	"strings"
 	"sync"
@@ -60,21 +62,29 @@ func (p *MultiPublisher) Delete(target string) {
 	p.list = p.appendFilter([]tuple{}, func(t tuple) bool { return t.target != target })
 }
 
-// Publish implements Publisher by publishing the buffer to all of the
-// underlying publishers sequentially. But, it will publish to one endpoint
-// for each unique ID. Failed publishes don't count.
-func (p *MultiPublisher) Publish(buf *bytes.Buffer) error {
+// Publish implements Publisher by publishing the reader to all of the
+// underlying publishers sequentially. To do that, it needs to drain the
+// reader, and recreate new readers for each publisher. Note that it will
+// publish to one endpoint for each unique ID. Failed publishes don't count.
+func (p *MultiPublisher) Publish(r io.Reader) error {
+	buf, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
 	var (
 		ids  = map[string]struct{}{}
 		errs = []string{}
 	)
+
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
+
 	for _, t := range p.list {
 		if _, ok := ids[t.id]; ok {
 			continue
 		}
-		if err := t.publisher.Publish(bytes.NewBuffer(buf.Bytes())); err != nil {
+		if err := t.publisher.Publish(bytes.NewReader(buf)); err != nil {
 			errs = append(errs, err.Error())
 			continue
 		}
