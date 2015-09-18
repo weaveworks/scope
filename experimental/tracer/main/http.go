@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"mime"
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
 	dockerClient "github.com/fsouza/go-dockerclient"
+	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/process"
@@ -110,11 +111,11 @@ func (t *tracer) http(port int) {
 		w.WriteHeader(204)
 	})
 
-
-
 	router.Methods("GET").Path("/traces").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		respondWith(w, http.StatusOK, t.store.Traces())
 	})
+
+	mime.AddExtensionType(".svg", "image/svg+xml")
 
 	router.Methods("GET").PathPrefix("/").Handler(http.FileServer(FS(false))) // everything else is static
 

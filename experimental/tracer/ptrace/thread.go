@@ -16,6 +16,7 @@ const (
 	STAT          = 4
 	MMAP          = 9
 	MPROTECT      = 10
+	SELECT        = 23
 	MADVISE       = 28
 	SOCKET        = 41
 	CONNECT       = 42
@@ -97,7 +98,7 @@ func (t *thread) syscallStopped() {
 		t.handleIO(&t.callRegs, &t.resultRegs)
 
 	// we can ignore these syscalls
-	case SETROBUSTLIST, GETID, MMAP, MPROTECT, MADVISE, SOCKET, CLONE, STAT:
+	case SETROBUSTLIST, GETID, MMAP, MPROTECT, MADVISE, SOCKET, CLONE, STAT, SELECT:
 		return
 
 	default:
