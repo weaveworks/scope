@@ -95,7 +95,6 @@ func (t *trace) addChild(child *trace) {
 
 		// Fix up some fields
 		child.ClientDetails = candidate.ClientDetails
-		child.PID = candidate.PID
 		IncrementLevel(child, t.Level+1)
 
 		// Overwrite old record

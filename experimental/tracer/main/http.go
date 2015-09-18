@@ -7,8 +7,8 @@ import (
 	"mime"
 	"net/http"
 	"strconv"
+	"strings"
 
-	dockerClient "github.com/fsouza/go-dockerclient"
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -45,13 +45,31 @@ func (t *tracer) pidsForContainer(id string) ([]int, error) {
 	return pidTree.GetChildren(container.PID())
 }
 
+type Container struct {
+	Id   string
+	Name string
+	PIDs []int
+}
+
 func (t *tracer) http(port int) {
 	router := mux.NewRouter()
 
 	router.Methods("GET").Path("/container").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		containers := []*dockerClient.Container{}
+		pidTree, err := process.NewTree(process.NewWalker("/proc"))
+		if err != nil {
+			respondWith(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		containers := []Container{}
 		t.docker.WalkContainers(func(container docker.Container) {
-			containers = append(containers, container.Container())
+			children, _ := pidTree.GetChildren(container.PID())
+			out := Container{
+				Name: strings.TrimPrefix(container.Container().Name, "/"),
+				Id: container.ID(),
+				PIDs: children,
+			}
+			containers = append(containers, out)
 		})
 
 		respondWith(w, http.StatusOK, containers)

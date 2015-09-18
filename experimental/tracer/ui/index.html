@@ -220,14 +220,14 @@
     <script type="text/x-handlebars-template" id="traces">
       {{#.}}
       <tr class="trace" data-key="{{Key}}">
-      {{#if ServerDetails}}
-        {{#with ServerDetails}}
+      {{#if ClientDetails}}
+        {{#with ClientDetails}}
         <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
         <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
         <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../.}}</td>
         {{/with}}
       {{else}}
-        {{#with ClientDetails}}
+        {{#with ServerDetails}}
         <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
         <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
         <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../.}}</td>
@@ -241,15 +241,15 @@
     </script>
     <script type="text/x-handlebars-template" id="children">
       {{#.}}
-      {{#if ServerDetails}}
-        {{#with ServerDetails}}
+      {{#if ClientDetails}}
+        {{#with ClientDetails}}
         <tr>
           <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
           <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
           <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../.}}</tr>
         {{/with}}
       {{else}}
-        {{#with ClientDetails}}
+        {{#with ServerDetails}}
         <tr>
           <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
           <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
