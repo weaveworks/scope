@@ -73,7 +73,7 @@
         var span = (this.Stop - this.Start) / parentSpan * 100;
         var offset = (this.Start - this.ParentStart) / parentSpan * 100;
 
-        return 'width:' + span + '%; margin-left:' + offset + '%;';
+        return 'width:' + span + '%; left:' + offset + '%;';
       });
 
       Handlebars.registerHelper('childStyle', function() {
@@ -266,6 +266,13 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      .childBoxWrapper {
+        position: absolute;
+      }
+      .childRow {
+        position: relative;
+        height: 100px;
+      }
     </style>
     <script type="text/x-handlebars-template" id="traces">
       {{#.}}
@@ -304,15 +311,18 @@
     </script>
 
     <script type="text/x-handlebars-template" id="childrenDetails">
-      <div style="{{childWrapperStyle}}">
+      <div style="{{childWrapperStyle}}" class="childBoxWrapper">
         <div title="{{childTitle}}" style="{{childStyle}}" class="childBox">
           {{childTitle}}
         </div>
-        {{>children Children}}
+        <div class="childRow">
+          {{>children Children}}
+        </div>
       </div>
     </script>
 
     <script type="text/x-handlebars-template" id="children">
+      <div class="childRow">
       {{#.}}
       {{#if ClientDetails}}
         {{>childrenDetails ClientDetails Level=../Level PID=../PID Children=../Children ParentStart=../ParentStart ParentStop=../ParentStop}}
@@ -320,6 +330,7 @@
         {{>childrenDetails ServerDetails Level=../Level PID=../PID Children=../Children ParentStart=../ParentStart ParentStop=../ParentStop}}
       {{/if}}
       {{/.}}
+      </div>
     </script>
 
     <script type="text/x-handlebars-template" id="process-template">
