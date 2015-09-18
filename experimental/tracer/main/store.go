@@ -4,13 +4,15 @@ import (
 	"math/rand"
 	"sync"
 	"log"
+	"fmt"
+	"sort"
 
 	"github.com/msackman/skiplist"
 
 	"github.com/weaveworks/scope/experimental/tracer/ptrace"
 )
 
-const epsilon = int64(5)
+const epsilon = int64(5) * 1000 // milliseconds
 
 // Traces are indexed by from addr, from port, and start time.
 type key struct {
@@ -19,13 +21,24 @@ type key struct {
 	startTime int64
 }
 
+func (k key) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%x.%x.%x\"", k.fromAddr, k.fromPort, k.startTime)), nil
+}
+
 type trace struct {
 	PID      int
+	Key      key
 	ServerDetails *ptrace.ConnectionDetails
 	ClientDetails *ptrace.ConnectionDetails
 	Children []*trace
 	Level    int
 }
+
+type byKey []*trace
+
+func (a byKey) Len() int           { return len(a) }
+func (a byKey) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byKey) Less(i, j int) bool { return a[i].Key.startTime < a[j].Key.startTime }
 
 type store struct {
 	sync.RWMutex
@@ -67,6 +80,7 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 
 	newTrace := &trace{
 		PID: pid,
+		Key: newKey(connection),
 		ServerDetails: &connection.ConnectionDetails,
 	}
 	for _, child := range connection.Children {
@@ -76,7 +90,7 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 		})
 	}
 
-	newTraceKey := newKey(connection)
+	newTraceKey := newTrace.Key
 
 	// First, see if this new conneciton is a child of an existing connection.
 	// This indicates we have a parent connection to attach to.
@@ -119,11 +133,20 @@ func (s *store) Traces() []*trace {
 	s.RLock()
 	defer s.RUnlock()
 
-	traces := []*trace{}
+	traces := map[key]*trace{}
 	var cur = s.traces.First()
 	for cur != nil {
-		traces = append(traces, cur.Value.(*trace))
+		trace := cur.Value.(*trace)
+		traces[trace.Key] = trace
 		cur = cur.Next()
 	}
-	return traces
+
+	result := []*trace{}
+	for _, trace := range traces {
+		result = append(result, trace)
+	}
+
+	sort.Sort(byKey(result))
+
+	return result
 }

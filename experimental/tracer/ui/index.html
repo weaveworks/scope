@@ -18,6 +18,7 @@
     <script>
     $(function () {
       var currentContainer = null;
+      var expandedTrace = null;
       var containersByID = {};
       var containers = [];
       var traces = [];
@@ -25,6 +26,12 @@
       Handlebars.registerHelper('isSelected', function(input) {
         if (currentContainer && input === currentContainer.Id) {
           return 'class=selected';
+        }
+      });
+
+      Handlebars.registerHelper('isExpanded', function(options) {
+        if (expandedTrace && this.Key === expandedTrace) {
+          return options.fn(this)
         }
       });
 
@@ -51,6 +58,7 @@
       });
 
       Handlebars.registerPartial('traces', $("#traces").html());
+      Handlebars.registerPartial('children', $("#children").html());
 
       function render() {
         var template = $('script#process-template').text();
@@ -80,7 +88,7 @@
             containersByID[container.Id] = container
           });
           // auto-select first container
-          if (containers.length) {
+          if (containers.length && currentContainer === null) {
             currentContainer = containersByID[containers[0].Id];
           }
           render();
@@ -117,6 +125,16 @@
           url: sprintf("/container/%s", container.Id),
           type: 'DELETE',
         });
+      })
+
+      $("body").on("click", "table tr.trace", function() {
+        var key = $(this).data("key");
+        if (expandedTrace === key) {
+          expandedTrace = null;
+        } else {
+          expandedTrace = key;
+        }
+        render()
       })
     })
     </script>
@@ -174,6 +192,9 @@
         opacity: 0.4;
         font-weight: normal;
       }
+      tr.trace {
+        cursor: pointer;
+      }
       .mainview {
         margin-top: 2rem;
       }
@@ -187,6 +208,28 @@
       }
     </style>
     <script type="text/x-handlebars-template" id="traces">
+      {{#.}}
+      <tr class="trace" data-key="{{Key}}">
+      {{#if ServerDetails}}
+        {{#with ServerDetails}}
+        <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
+        <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
+        <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../Children}}</td>
+        {{/with}}
+      {{else}}
+        {{#with ClientDetails}}
+        <td>{{spaces ../Level}}{{ts Start}}</td><td>{{duration .}}</td>
+        <td>{{../PID}}</td><td>{{FromAddr}}:{{FromPort}}</td>
+        <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../Children}}</td>
+        {{/with}}
+      {{/if}}
+      </tr>
+      {{#isExpanded}}
+      {{>children Children}}
+      {{/isExpanded}}
+      {{/.}}
+    </script>
+    <script type="text/x-handlebars-template" id="children">
       {{#.}}
       {{#if ServerDetails}}
         {{#with ServerDetails}}
@@ -203,7 +246,7 @@
           <td>{{ToAddr}}:{{ToPort}}</td><td>{{count ../Children}}</tr>
         {{/with}}
       {{/if}}
-      {{>traces Children}}
+      {{>children Children}}
       {{/.}}
     </script>
 
