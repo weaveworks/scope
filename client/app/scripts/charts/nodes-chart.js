@@ -33,7 +33,8 @@ const NodesChart = React.createClass({
       translate: [0, 0],
       panTranslate: [0, 0],
       scale: 1,
-      hasZoomed: false
+      hasZoomed: false,
+      maxNodesExceeded: false
     };
   },
 
@@ -47,7 +48,7 @@ const NodesChart = React.createClass({
       .scaleExtent([0.1, 2])
       .on('zoom', this.zoomed);
 
-    d3.select('.nodes-chart')
+    d3.select('.canvas')
       .on('click', this.handleBackgroundClick)
       .call(this.zoom);
   },
@@ -80,7 +81,7 @@ const NodesChart = React.createClass({
   componentWillUnmount: function() {
     // undoing .call(zoom)
 
-    d3.select('.nodes-chart')
+    d3.select('.canvas')
       .on('click', null)
       .on('mousedown.zoom', null)
       .on('onwheel', null)
@@ -160,27 +161,35 @@ const NodesChart = React.createClass({
       translate = shiftTranslate;
       wasShifted = true;
     }
+    const errorClassNames = this.state.maxNodesExceeded ? 'nodes-chart-error' : 'nodes-chart-error hide';
+    const svgClassNames = this.state.maxNodesExceeded || _.size(nodeElements) === 0 ? 'hide' : '';
 
     return (
-      <svg width="100%" height="100%" className="nodes-chart">
-        <Spring endValue={{val: translate, config: [80, 20]}}>
-          {function(interpolated) {
-            let interpolatedTranslate = wasShifted ? interpolated.val : panTranslate;
-            const transform = 'translate(' + interpolatedTranslate + ')' +
-              ' scale(' + scale + ')';
-            return (
-              <g className="canvas" transform={transform}>
-                <g className="edges">
-                  {edgeElements}
+      <div className="nodes-chart">
+        <div className={errorClassNames}>
+          <span className="nodes-chart-error-icon fa fa-ban" />
+          <div>Too many nodes to show in the browser.<br />We're working on it, but for now, try a different view?</div>
+        </div>
+        <svg width="100%" height="100%" className={svgClassNames}>
+          <Spring endValue={{val: translate, config: [80, 20]}}>
+            {function(interpolated) {
+              let interpolatedTranslate = wasShifted ? interpolated.val : panTranslate;
+              const transform = 'translate(' + interpolatedTranslate + ')' +
+                ' scale(' + scale + ')';
+              return (
+                <g className="canvas" transform={transform}>
+                  <g className="edges">
+                    {edgeElements}
+                  </g>
+                  <g className="nodes">
+                    {nodeElements}
+                  </g>
                 </g>
-                <g className="nodes">
-                  {nodeElements}
-                </g>
-              </g>
-            );
-          }}
-        </Spring>
-      </svg>
+              );
+            }}
+          </Spring>
+        </svg>
+      </div>
     );
   },
 
@@ -376,7 +385,7 @@ const NodesChart = React.createClass({
 
     // layout was aborted
     if (!graph) {
-      return {};
+      return {maxNodesExceeded: true};
     }
 
     // save coordinates for restore
@@ -404,7 +413,8 @@ const NodesChart = React.createClass({
       nodes: nodes,
       edges: edges,
       nodeScale: nodeScale,
-      scale: zoomScale
+      scale: zoomScale,
+      maxNodesExceeded: false
     };
   },
 

@@ -29,20 +29,18 @@ const Nodes = React.createClass({
 
   render: function() {
     return (
-      <div id="nodes">
-        <NodesChart
-          highlightedEdgeIds={this.props.highlightedEdgeIds}
-          highlightedNodeIds={this.props.highlightedNodeIds}
-          selectedNodeId={this.props.selectedNodeId}
-          nodes={this.props.nodes}
-          onNodeClick={this.onNodeClick}
-          width={this.state.width}
-          height={this.state.height}
-          topologyId={this.props.topologyId}
-          detailsWidth={this.props.detailsWidth}
-          topMargin={this.props.topMargin}
-        />
-      </div>
+      <NodesChart
+        highlightedEdgeIds={this.props.highlightedEdgeIds}
+        highlightedNodeIds={this.props.highlightedNodeIds}
+        selectedNodeId={this.props.selectedNodeId}
+        nodes={this.props.nodes}
+        onNodeClick={this.onNodeClick}
+        width={this.state.width}
+        height={this.state.height}
+        topologyId={this.props.topologyId}
+        detailsWidth={this.props.detailsWidth}
+        topMargin={this.props.topMargin}
+      />
     );
   },
 
