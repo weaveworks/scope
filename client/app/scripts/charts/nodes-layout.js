@@ -33,8 +33,8 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
     if (!graph.hasNode(node.id)) {
       graph.setNode(node.id, {
         id: node.id,
-        width: scale(0.75),
-        height: scale(0.75)
+        width: scale(1),
+        height: scale(1)
       });
     }
   });

@@ -19,9 +19,9 @@ const MARGINS = {
   bottom: 0
 };
 
-// make sure circular layouts lots of nodes spread out
-const radiusDensity = d3.scale.sqrt()
-  .domain([12, 2]).range([3, 4]).clamp(true);
+// make sure circular layouts a bit denser with 3-6 nodes
+const radiusDensity = d3.scale.threshold()
+  .domain([3, 6]).range([3, 4, 3]);
 
 const NodesChart = React.createClass({
 
@@ -270,7 +270,10 @@ const NodesChart = React.createClass({
     const adjacentLayoutNodes = [];
 
     adjacency.forEach(function(adjacentId) {
-      adjacentLayoutNodes.push(layoutNodes[adjacentId]);
+      // filter loopback
+      if (adjacentId !== props.selectedNodeId) {
+        adjacentLayoutNodes.push(layoutNodes[adjacentId]);
+      }
     });
 
     // shift center node a bit
@@ -314,7 +317,7 @@ const NodesChart = React.createClass({
       const offsetX = translate[0];
       // normalize graph coordinates by zoomScale
       const zoomScale = state.scale;
-      const outerRadius = radius + this.state.nodeScale(2);
+      const outerRadius = radius + this.state.nodeScale(1.5);
       if (offsetX + (centerX + outerRadius) * zoomScale > visibleWidth) {
         // shift left if blocked by details
         const shift = (centerX + outerRadius) * zoomScale - visibleWidth;
@@ -386,8 +389,9 @@ const NodesChart = React.createClass({
     const edges = this.initEdges(props.nodes, nodes);
 
     const expanse = Math.min(props.height, props.width);
-    const nodeSize = expanse / 2;
-    const nodeScale = this.state.nodeScale.range([0, nodeSize / Math.pow(n, 0.7)]);
+    const nodeSize = expanse / 3; // single node should fill a third of the screen
+    const normalizedNodeSize = nodeSize / Math.sqrt(n); // assuming rectangular layout
+    const nodeScale = this.state.nodeScale.range([0, normalizedNodeSize]);
 
     const timedLayouter = timely(NodesLayout.doLayout);
     const graph = timedLayouter(
