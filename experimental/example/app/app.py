@@ -37,6 +37,10 @@ def do_search():
   r = sessions.session.get(random.choice(searchapps))
   return r.text
 
+def do_echo(text):
+  r = requests.get("http://echo/", data=text)
+  return r.text
+
 def ignore_error(f):
   try:
     return str(f())
@@ -47,7 +51,7 @@ def ignore_error(f):
 @app.route('/')
 def hello():
   qotd_msg = do_qotd()
-  qotd_msg += do_qotd()
+  qotd_msg = do_echo(qotd_msg)
   return qotd_msg
 
 if __name__ == "__main__":

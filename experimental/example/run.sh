@@ -21,4 +21,4 @@ start_container() {
 
 start_container 1 tomwilkie/qotd qotd
 start_container 1 tomwilkie/app app
-
+start_container 1 tomwilkie/echo echo
