@@ -18,8 +18,8 @@ const Node = React.createClass({
     } else if (props.blurred) {
       scaleFactor = 0.75;
     }
-    const textOffsetX = 0;
-    const textOffsetY = scale(0.5 * scaleFactor) + 18;
+    const labelOffsetY = 18;
+    const subLabelOffsetY = labelOffsetY + 17;
     const isPseudo = !!this.props.pseudo;
     const color = isPseudo ? '' : this.getNodeColor(this.props.rank);
     const onClick = this.props.onClick;
@@ -42,20 +42,24 @@ const Node = React.createClass({
     const classes = classNames.join(' ');
 
     return (
-      <Spring endValue={{x: {val: this.props.dx, config: animConfig}, y: {val: this.props.dy, config: animConfig}}}>
+      <Spring endValue={{
+        x: {val: this.props.dx, config: animConfig},
+        y: {val: this.props.dy, config: animConfig},
+        f: {val: scaleFactor, config: animConfig}
+      }}>
         {function(interpolated) {
           const transform = `translate(${interpolated.x.val},${interpolated.y.val})`;
           return (
             <g className={classes} transform={transform} id={props.id}
               onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-              {props.highlighted && <circle r={scale(0.7 * scaleFactor)} className="highlighted"></circle>}
-              <circle r={scale(0.5 * scaleFactor)} className="border" stroke={color}></circle>
-              <circle r={scale(0.45 * scaleFactor)} className="shadow"></circle>
-              <circle r={Math.max(2, scale(0.125 * scaleFactor))} className="node"></circle>
-              <text className="node-label" textAnchor="middle" x={textOffsetX} y={textOffsetY}>
+              {props.highlighted && <circle r={scale(0.7 * interpolated.f.val)} className="highlighted"></circle>}
+              <circle r={scale(0.5 * interpolated.f.val)} className="border" stroke={color}></circle>
+              <circle r={scale(0.45 * interpolated.f.val)} className="shadow"></circle>
+              <circle r={Math.max(2, scale(0.125 * interpolated.f.val))} className="node"></circle>
+              <text className="node-label" textAnchor="middle" x="0" y={labelOffsetY + scale(0.5 * interpolated.f.val)}>
                 {label}
               </text>
-              <text className="node-sublabel" textAnchor="middle" x={textOffsetX} y={textOffsetY + 17}>
+              <text className="node-sublabel" textAnchor="middle" x="0" y={subLabelOffsetY + scale(0.5 * interpolated.f.val)}>
                 {subLabel}
               </text>
             </g>
@@ -69,10 +73,8 @@ const Node = React.createClass({
     const averageCharLength = fontSize / 1.5;
     const allowedChars = maxWidth / averageCharLength;
     let truncatedText = text;
-    let trimmedText = text;
-    while (text && trimmedText.length > 1 && trimmedText.length > allowedChars) {
-      trimmedText = trimmedText.slice(0, -1);
-      truncatedText = trimmedText + '...';
+    if (text && text.length > allowedChars) {
+      truncatedText = text.slice(0, allowedChars) + '...';
     }
     return truncatedText;
   },
