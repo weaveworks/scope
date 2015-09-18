@@ -9,7 +9,7 @@ import (
 	"github.com/weaveworks/scope/common/sanitize"
 )
 
-// HTTPPublisher publishes reports by POST to a fixed endpoint.
+// HTTPPublisher publishes buffers by POST to a fixed endpoint.
 type HTTPPublisher struct {
 	url     string
 	token   string

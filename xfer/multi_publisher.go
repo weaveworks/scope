@@ -74,7 +74,7 @@ func (p *MultiPublisher) Publish(buf *bytes.Buffer) error {
 		if _, ok := ids[t.id]; ok {
 			continue
 		}
-		if err := t.publisher.Publish(buf); err != nil {
+		if err := t.publisher.Publish(bytes.NewBuffer(buf.Bytes())); err != nil {
 			errs = append(errs, err.Error())
 			continue
 		}
