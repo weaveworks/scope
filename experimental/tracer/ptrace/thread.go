@@ -12,6 +12,7 @@ import (
 const (
 	READ          = 0
 	WRITE         = 1
+	OPEN          = 2
 	CLOSE         = 3
 	STAT          = 4
 	MMAP          = 9
@@ -101,9 +102,16 @@ func (t *thread) syscallStopped() {
 	case SETROBUSTLIST, GETID, MMAP, MPROTECT, MADVISE, SOCKET, CLONE, STAT, SELECT:
 		return
 
+	case OPEN:
+		return
+
 	default:
 		t.logf("syscall(%d)", t.callRegs.Orig_rax)
 	}
+}
+
+func ntohl(b uint16) uint16 {
+	return (b << 8) | ((b & 0xff00) >> 8)
 }
 
 func (t *thread) getSocketAddress(ptr uintptr) (addr net.IP, port uint16, err error) {
@@ -128,7 +136,7 @@ func (t *thread) getSocketAddress(ptr uintptr) (addr net.IP, port uint16, err er
 	}
 
 	addr = net.IP(sockaddr4.Addr[0:])
-	port = sockaddr4.Port
+	port = ntohl(sockaddr4.Port)
 	return
 }
 

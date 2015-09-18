@@ -19,10 +19,6 @@ start_container() {
     done
 }
 
-start_container 1 elasticsearch elasticsearch
-start_container 2 tomwilkie/searchapp searchapp
-start_container 1 redis redis
 start_container 1 tomwilkie/qotd qotd
-start_container 2 tomwilkie/app app
-start_container 2 tomwilkie/frontend frontend --add-host=dns.weave.local:$(weave docker-bridge-ip)
-start_container 1 tomwilkie/client client
+start_container 1 tomwilkie/app app
+

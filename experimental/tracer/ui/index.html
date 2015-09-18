@@ -273,8 +273,15 @@
               <span class="fa fa-stop" aria-hidden="true"></span> Stop</button>
           </div>
 
-          <table class="table table-striped table-sm">
-            <thead><tr><th>Start time</th><th>Duration</th><th>PID<th>From</th><th>To</th><th>Sub-traces</th></tr></thead>
+          <table class="table table-sm">
+            <thead><tr>
+              <th width="25%">Start time</th>
+              <th width="15%">Duration</th>
+              <th width="15%">PID</th>
+              <th width="15%">From</th>
+              <th width="15%">To</th>
+              <th width="15%">Sub-traces</th>
+            </tr></thead>
             <tbody>
           {{>traces traces}}
             </tbody>
