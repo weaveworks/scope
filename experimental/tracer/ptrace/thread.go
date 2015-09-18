@@ -52,6 +52,7 @@ type thread struct {
 
 	currentIncoming map[int]*Fd
 	currentOutgoing map[int]*Fd
+	closedOutgoing []*Fd
 }
 
 func newThread(pid int, process *process, tracer *PTracer) *thread {
@@ -206,8 +207,8 @@ func (t *thread) handleConnect(call, result *syscall.PtraceRegs) {
 	t.process.newFd(connection)
 
 	t.logf("Made connection from %s:%d -> %s:%d on fd %d",
-		connection.ToAddr, connection.ToPort, connection.FromAddr,
-		connection.FromPort, fd)
+		connection.FromAddr, connection.FromPort,
+		connection.ToAddr, connection.ToPort, fd)
 }
 
 func (t *thread) handleClose(call, result *syscall.PtraceRegs) {
@@ -231,6 +232,12 @@ func (t *thread) handleClose(call, result *syscall.PtraceRegs) {
 		}
 		t.currentOutgoing = map[int]*Fd{}
 
+		for _, outgoing := range t.closedOutgoing {
+			//t.logf("Fd %d caused %d", fdNum, outgoing.fd)
+			fd.Children = append(fd.Children, outgoing)
+		}
+		t.closedOutgoing = []*Fd{}
+
 		t.tracer.store.RecordConnection(t.process.pid, fd)
 	}
 
@@ -238,6 +245,11 @@ func (t *thread) handleClose(call, result *syscall.PtraceRegs) {
 	delete(t.process.fds, fdNum)
 	for _, thread := range t.process.threads {
 		delete(thread.currentIncoming, fdNum)
+
+		if _, ok := thread.currentOutgoing[fdNum]; ok {
+			thread.closedOutgoing = append(thread.closedOutgoing, fd)
+		}
+		delete(thread.currentOutgoing, fdNum)
 	}
 }
 

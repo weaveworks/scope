@@ -47,6 +47,7 @@ def ignore_error(f):
 @app.route('/')
 def hello():
   qotd_msg = do_qotd()
+  qotd_msg += do_qotd()
   return qotd_msg
 
 if __name__ == "__main__":
