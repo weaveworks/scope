@@ -60,9 +60,7 @@ function createWebsocket(topologyUrl, optionsQuery) {
 
   socket.onmessage = function(event) {
     const msg = JSON.parse(event.data);
-    if (msg.add || msg.remove || msg.update) {
-      AppActions.receiveNodesDelta(msg);
-    }
+    AppActions.receiveNodesDelta(msg);
   };
 }
 
@@ -146,4 +144,3 @@ module.exports = {
 
   getNodesDelta: getTopology
 };
-

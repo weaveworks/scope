@@ -217,6 +217,10 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return topologiesLoaded;
   },
 
+  isTopologyEmpty: function() {
+    return currentTopology && currentTopology.stats && currentTopology.stats.node_count === 0 && nodes.size === 0;
+  },
+
   isWebsocketClosed: function() {
     return websocketClosed;
   }
@@ -310,10 +314,15 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.RECEIVE_NODES_DELTA:
-      debug('RECEIVE_NODES_DELTA',
-        'remove', _.size(payload.delta.remove),
-        'update', _.size(payload.delta.update),
-        'add', _.size(payload.delta.add));
+      const emptyMessage = !payload.delta.add && !payload.delta.remove
+        && payload.delta.update;
+
+      if (!emptyMessage) {
+        debug('RECEIVE_NODES_DELTA',
+          'remove', _.size(payload.delta.remove),
+          'update', _.size(payload.delta.update),
+          'add', _.size(payload.delta.add));
+      }
 
       errorUrl = null;
 

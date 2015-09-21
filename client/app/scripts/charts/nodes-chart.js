@@ -11,6 +11,7 @@ const Edge = require('./edge');
 const Naming = require('../constants/naming');
 const NodesLayout = require('./nodes-layout');
 const Node = require('./node');
+const NodesError = require('./nodes-error');
 
 const MARGINS = {
   top: 130,
@@ -151,6 +152,27 @@ const NodesChart = React.createClass({
     }, this);
   },
 
+  renderMaxNodesError: function(show) {
+    return (
+      <NodesError faIconClass="fa-ban" hidden={!show}>
+        <div className="centered">Too many nodes to show in the browser.<br />We're working on it, but for now, try a different view?</div>
+      </NodesError>
+    );
+  },
+
+  renderEmptyTopologyError: function(show) {
+    return (
+      <NodesError faIconClass="fa-circle-thin" hidden={!show}>
+        <div className="heading">Nothing to show. This can have any of these reasons:</div>
+        <ul>
+          <li>We haven't received any reports from probes recently. Are the probes properly configured?</li>
+          <li>There are nodes, but they're currently hidden. Check the view options in the bottom-left if they allow for showing hidden nodes.</li>
+          <li>Containers view only: you're not running Docker, or you don't have any containers.</li>
+        </ul>
+      </NodesError>
+    );
+  },
+
   render: function() {
     const nodeElements = this.renderGraphNodes(this.state.nodes, this.state.nodeScale);
     const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
@@ -165,15 +187,14 @@ const NodesChart = React.createClass({
       translate = shiftTranslate;
       wasShifted = true;
     }
-    const errorClassNames = this.state.maxNodesExceeded ? 'nodes-chart-error' : 'nodes-chart-error hide';
     const svgClassNames = this.state.maxNodesExceeded || _.size(nodeElements) === 0 ? 'hide' : '';
+    const errorEmpty = this.renderEmptyTopologyError(AppStore.isTopologyEmpty());
+    const errorMaxNodesExceeded = this.renderMaxNodesError(this.state.maxNodesExceeded);
 
     return (
       <div className="nodes-chart">
-        <div className={errorClassNames}>
-          <span className="nodes-chart-error-icon fa fa-ban" />
-          <div>Too many nodes to show in the browser.<br />We're working on it, but for now, try a different view?</div>
-        </div>
+        {errorEmpty}
+        {errorMaxNodesExceeded}
         <svg width="100%" height="100%" className={svgClassNames} onMouseUp={this.handleMouseUp}>
           <Spring endValue={{val: translate, config: [80, 20]}}>
             {function(interpolated) {
