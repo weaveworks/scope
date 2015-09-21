@@ -15,14 +15,14 @@ const (
 // Reporter generate Reports containing Container and ContainerImage topologies
 type Reporter struct {
 	registry Registry
-	scope    string
+	hostID   string
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(registry Registry, scope string) *Reporter {
+func NewReporter(registry Registry, hostID string) *Reporter {
 	return &Reporter{
 		registry: registry,
-		scope:    scope,
+		hostID:   hostID,
 	}
 }
 
@@ -38,7 +38,7 @@ func (r *Reporter) containerTopology() report.Topology {
 	result := report.MakeTopology()
 
 	r.registry.WalkContainers(func(c Container) {
-		nodeID := report.MakeContainerNodeID(r.scope, c.ID())
+		nodeID := report.MakeContainerNodeID(r.hostID, c.ID())
 		result.AddNode(nodeID, c.GetNode())
 	})
 
@@ -58,7 +58,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 			nmd.Metadata[ImageName] = image.RepoTags[0]
 		}
 
-		nodeID := report.MakeContainerNodeID(r.scope, image.ID)
+		nodeID := report.MakeContainerNodeID(r.hostID, image.ID)
 		result.AddNode(nodeID, nmd)
 	})
 

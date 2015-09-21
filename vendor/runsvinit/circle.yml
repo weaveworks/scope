@@ -1,0 +1,8 @@
+machine:
+  services:
+    - docker
+
+test:
+  override:
+    - go test -v
+    - make CIRCLECI=true SUDO=sudo RM= -C zombietest

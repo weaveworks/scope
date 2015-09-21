@@ -1,0 +1,15 @@
+#!/bin/sh
+
+handle() {
+	echo "got signal"
+	exit
+}
+
+trap handle SIGINT
+
+while true
+do
+	echo bar: `date`
+	sleep 1
+done
+
