@@ -18,7 +18,7 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
 
   // one engine per topology, to keep renderings similar
   if (!topologyGraphs[topologyId]) {
-    topologyGraphs[topologyId] = new dagre.graphlib.Graph({});
+    topologyGraphs[topologyId] = new dagre.graphlib.Graph({compound: true});
   }
   graph = topologyGraphs[topologyId];
 
@@ -28,7 +28,7 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
     ranksep: scale(2.5)
   });
 
-  // add nodes to the graph if not already there
+  // add nodes to the graph if not already there, and collect ranks
   _.each(nodes, function(node) {
     if (!graph.hasNode(node.id)) {
       graph.setNode(node.id, {
@@ -38,6 +38,21 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
       });
     }
   });
+
+  // add node ranks for clustering
+  const ranks = _.uniq(_.pluck(nodes, 'rank'));
+  _.each(ranks, function(rank) {
+    if (!graph.hasNode(rank)) {
+      graph.setNode('rank_' + rank, {clusterId: rank});
+    }
+  });
+  _.each(nodes, function(node) {
+    if (node.rank) {
+      graph.setParent(node.id, 'rank_' + node.rank);
+    }
+  });
+
+  // TODO remove rank nodes
 
   // remove nodes that are no longer there
   _.each(graph.nodes(), function(nodeid) {
