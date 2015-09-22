@@ -121,10 +121,10 @@ func ParseEndpointNodeID(endpointNodeID string) (hostID, address, port string, o
 	return fields[0], fields[1], fields[2], true
 }
 
-// ParseContainerNodeID produces the host ID, and container id from an container
+// ParseContainerNodeID produces the host and container id from an container
 // node ID.
 func ParseContainerNodeID(containerNodeID string) (hostID, containerID string, ok bool) {
-	fields := strings.SplitN(containerNodeID, ScopeDelim, 3)
+	fields := strings.SplitN(containerNodeID, ScopeDelim, 2)
 	if len(fields) != 2 {
 		return "", "", false
 	}
