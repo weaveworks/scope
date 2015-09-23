@@ -17,7 +17,7 @@ func TestTagger(t *testing.T) {
 	)
 
 	r := report.MakeReport()
-	r.Process.Nodes[endpointNodeID] = nodeMetadata
+	r.Process.AddNode(endpointNodeID, nodeMetadata)
 	want := nodeMetadata.Merge(report.MakeNodeWith(map[string]string{
 		report.HostNodeID: report.MakeHostNodeID(hostID),
 	}))

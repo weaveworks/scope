@@ -22,8 +22,8 @@ func (t Tagger) Tag(r report.Report) (report.Report, error) {
 	// Explicity don't tag Endpoints and Addresses - These topologies include pseudo nodes,
 	// and as such do their own host tagging
 	for _, topology := range []report.Topology{r.Process, r.Container, r.ContainerImage, r.Host, r.Overlay} {
-		for id, md := range topology.Nodes {
-			topology.Nodes[id] = md.Merge(other)
+		for id := range topology.Nodes {
+			topology.AddNode(id, other)
 		}
 	}
 	return r, nil

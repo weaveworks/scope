@@ -68,7 +68,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		return rep, err
 	}
 
-	rep.Host.Nodes[report.MakeHostNodeID(r.hostID)] = report.MakeNodeWith(map[string]string{
+	rep.Host.AddNode(report.MakeHostNodeID(r.hostID), report.MakeNodeWith(map[string]string{
 		Timestamp:     Now(),
 		HostName:      r.hostName,
 		LocalNetworks: strings.Join(localCIDRs, " "),
@@ -76,7 +76,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		Load:          GetLoad(),
 		KernelVersion: kernel,
 		Uptime:        uptime.String(),
-	})
+	}))
 
 	return rep, nil
 }

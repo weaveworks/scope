@@ -45,7 +45,7 @@ func TestReporter(t *testing.T) {
 	host.Now = func() string { return now }
 
 	want := report.MakeReport()
-	want.Host.Nodes[report.MakeHostNodeID(hostID)] = report.MakeNodeWith(map[string]string{
+	want.Host.AddNode(report.MakeHostNodeID(hostID), report.MakeNodeWith(map[string]string{
 		host.Timestamp:     now,
 		host.HostName:      hostname,
 		host.LocalNetworks: network,
@@ -53,7 +53,7 @@ func TestReporter(t *testing.T) {
 		host.Load:          load,
 		host.Uptime:        uptime,
 		host.KernelVersion: kernel,
-	})
+	}))
 	have, _ := host.NewReporter(hostID, hostname, localNets).Report()
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
