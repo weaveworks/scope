@@ -9,7 +9,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
-	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -20,7 +19,6 @@ import (
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/probe/sniff"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
 )
@@ -41,10 +39,6 @@ func main() {
 		dockerBridge       = flag.String("docker.bridge", "docker0", "the docker bridge name")
 		weaveRouterAddr    = flag.String("weave.router.addr", "", "IP address or FQDN of the Weave router")
 		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
-		captureEnabled     = flag.Bool("capture", false, "perform sampled packet capture")
-		captureInterfaces  = flag.String("capture.interfaces", interfaces(), "packet capture on these interfaces")
-		captureOn          = flag.Duration("capture.on", 1*time.Second, "packet capture duty cycle 'on'")
-		captureOff         = flag.Duration("capture.off", 5*time.Second, "packet capture duty cycle 'off'")
 		printVersion       = flag.Bool("version", false, "print version number and exit")
 		useConntrack       = flag.Bool("conntrack", true, "also use conntrack to track connections")
 	)
@@ -148,26 +142,6 @@ func main() {
 		reporters = append(reporters, weave)
 	}
 
-	if *captureEnabled {
-		var sniffers int
-		for _, iface := range strings.Split(*captureInterfaces, ",") {
-			source, err := sniff.NewSource(iface)
-			if err != nil {
-				log.Printf("warning: %v", err)
-				continue
-			}
-			defer source.Close()
-			log.Printf("capturing packets on %s", iface)
-			reporters = append(reporters, sniff.New(hostID, localNets, source, *captureOn, *captureOff))
-			sniffers++
-		}
-		// Packet capture can block OS threads on Linux, so we need to provide
-		// sufficient overhead in GOMAXPROCS.
-		if have, want := runtime.GOMAXPROCS(-1), (sniffers + 1); have < want {
-			runtime.GOMAXPROCS(want)
-		}
-	}
-
 	quit := make(chan struct{})
 	defer close(quit)
 	go func() {
@@ -236,17 +210,4 @@ func interrupt() chan os.Signal {
 	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	return c
-}
-
-func interfaces() string {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		log.Print(err)
-		return ""
-	}
-	a := make([]string, 0, len(ifaces))
-	for _, iface := range ifaces {
-		a = append(a, iface.Name)
-	}
-	return strings.Join(a, ",")
 }

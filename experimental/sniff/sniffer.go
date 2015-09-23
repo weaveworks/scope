@@ -8,11 +8,50 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/weaveworks/scope/report"
-
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+
+	"github.com/weaveworks/scope/report"
 )
+
+/*
+It's important to adjust GOMAXPROCS when using sniffer:
+
+if *captureEnabled {
+	var sniffers int
+	for _, iface := range strings.Split(*captureInterfaces, ",") {
+		source, err := sniff.NewSource(iface)
+		if err != nil {
+			log.Printf("warning: %v", err)
+			continue
+		}
+		defer source.Close()
+		log.Printf("capturing packets on %s", iface)
+		reporters = append(reporters, sniff.New(hostID, localNets, source, *captureOn, *captureOff))
+		sniffers++
+	}
+	// Packet capture can block OS threads on Linux, so we need to provide
+	// sufficient overhead in GOMAXPROCS.
+	if have, want := runtime.GOMAXPROCS(-1), (sniffers + 1); have < want {
+		runtime.GOMAXPROCS(want)
+	}
+}
+
+func interfaces() string {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		log.Print(err)
+		return ""
+	}
+	a := make([]string, 0, len(ifaces))
+	for _, iface := range ifaces {
+		a = append(a, iface.Name)
+	}
+	return strings.Join(a, ",")
+}
+
+Also, the capture on/off sampling methodology is probably not worth keeping.
+*/
 
 // Sniffer is a packet-sniffing reporter.
 type Sniffer struct {
