@@ -16,8 +16,8 @@ func TestApply(t *testing.T) {
 	)
 
 	r := report.MakeReport()
-	r.Endpoint.Nodes[endpointNodeID] = endpointNode
-	r.Address.Nodes[addressNodeID] = addressNode
+	r.Endpoint.AddNode(endpointNodeID, endpointNode)
+	r.Address.AddNode(addressNodeID, addressNode)
 	r = Apply(r, []Tagger{newTopologyTagger()})
 
 	for _, tuple := range []struct {

@@ -39,7 +39,7 @@ func (r *Reporter) containerTopology() report.Topology {
 
 	r.registry.WalkContainers(func(c Container) {
 		nodeID := report.MakeContainerNodeID(r.scope, c.ID())
-		result.Nodes[nodeID] = c.GetNode()
+		result.AddNode(nodeID, c.GetNode())
 	})
 
 	return result
@@ -59,7 +59,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 		}
 
 		nodeID := report.MakeContainerNodeID(r.scope, image.ID)
-		result.Nodes[nodeID] = nmd
+		result.AddNode(nodeID, nmd)
 	})
 
 	return result

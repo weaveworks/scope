@@ -58,8 +58,8 @@ func (topologyTagger) Tag(r report.Report) (report.Report, error) {
 		"overlay":         &(r.Overlay),
 	} {
 		other := report.MakeNodeWith(map[string]string{Topology: val})
-		for id, md := range topology.Nodes {
-			topology.Nodes[id] = md.Merge(other)
+		for id := range topology.Nodes {
+			topology.AddNode(id, other)
 		}
 	}
 	return r, nil
