@@ -54,7 +54,7 @@ func TestMergeRenderableNode(t *testing.T) {
 		LabelMinor:   "minor",
 		Rank:         "rank",
 		Pseudo:       false,
-		Node:         report.MakeNode().WithAdjacency(report.MakeIDList("a1", "a2")),
+		Node:         report.MakeNode().WithAdjacent("a1").WithAdjacent("a2"),
 		Origins:      report.MakeIDList("o1", "o2"),
 		EdgeMetadata: report.EdgeMetadata{},
 	}

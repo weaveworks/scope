@@ -253,19 +253,19 @@ var (
 
 				UnknownAddress1NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient1IP,
-				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
+				}).WithAdjacent(ServerAddressNodeID),
 
 				UnknownAddress2NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient2IP,
-				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
+				}).WithAdjacent(ServerAddressNodeID),
 
 				UnknownAddress3NodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: UnknownClient3IP,
-				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
+				}).WithAdjacent(ServerAddressNodeID),
 
 				RandomAddressNodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr: RandomClientIP,
-				}).WithAdjacency(report.MakeIDList(ServerAddressNodeID)),
+				}).WithAdjacent(ServerAddressNodeID),
 			},
 		},
 		Host: report.Topology{

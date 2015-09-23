@@ -165,7 +165,7 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		// In case we have a reverse resolution for the IP, we can use it for
 		// the name...
 		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
-			remoteNode = remoteNode.AddMetadata(map[string]string{
+			remoteNode = remoteNode.WithMetadata(map[string]string{
 				"name": revRemoteName,
 			})
 		}
@@ -211,7 +211,7 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		// In case we have a reverse resolution for the IP, we can use it for
 		// the name...
 		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
-			remoteNode = remoteNode.AddMetadata(map[string]string{
+			remoteNode = remoteNode.WithMetadata(map[string]string{
 				"name": revRemoteName,
 			})
 		}
