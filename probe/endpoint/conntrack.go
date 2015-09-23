@@ -65,8 +65,14 @@ type conntrack struct {
 	Flows   []Flow   `xml:"flow"`
 }
 
+// Conntracker is somethin that tracks connections.
+type Conntracker interface {
+	WalkFlows(f func(Flow))
+	Stop()
+}
+
 // Conntracker uses the conntrack command to track network connections
-type Conntracker struct {
+type conntracker struct {
 	sync.Mutex
 	cmd           exec.Cmd
 	activeFlows   map[int64]Flow // active flows in state != TIME_WAIT
@@ -75,11 +81,11 @@ type Conntracker struct {
 }
 
 // NewConntracker creates and starts a new Conntracter
-func NewConntracker(existingConns bool, args ...string) (*Conntracker, error) {
+var NewConntracker = func(existingConns bool, args ...string) (Conntracker, error) {
 	if !ConntrackModulePresent() {
 		return nil, fmt.Errorf("No conntrack module")
 	}
-	result := &Conntracker{
+	result := &conntracker{
 		activeFlows:   map[int64]Flow{},
 		existingConns: existingConns,
 	}
@@ -112,7 +118,7 @@ var ConntrackModulePresent = func() bool {
 }
 
 // NB this is not re-entrant!
-func (c *Conntracker) run(args ...string) {
+func (c *conntracker) run(args ...string) {
 	if c.existingConns {
 		// Fork another conntrack, just to capture existing connections
 		// for which we don't get events
@@ -178,7 +184,7 @@ func (c *Conntracker) run(args ...string) {
 	}
 }
 
-func (c *Conntracker) existingConnections(args ...string) ([]Flow, error) {
+func (c *conntracker) existingConnections(args ...string) ([]Flow, error) {
 	args = append([]string{"-L", "-o", "xml", "-p", "tcp"}, args...)
 	cmd := exec.Command("conntrack", args...)
 	stdout, err := cmd.StdoutPipe()
@@ -203,7 +209,7 @@ func (c *Conntracker) existingConnections(args ...string) ([]Flow, error) {
 }
 
 // Stop stop stop
-func (c *Conntracker) Stop() {
+func (c *conntracker) Stop() {
 	c.Lock()
 	defer c.Unlock()
 	if c.cmd == nil {
@@ -215,7 +221,7 @@ func (c *Conntracker) Stop() {
 	}
 }
 
-func (c *Conntracker) handleFlow(f Flow, forceAdd bool) {
+func (c *conntracker) handleFlow(f Flow, forceAdd bool) {
 	// A flow consists of 3 'metas' - the 'original' 4 tuple (as seen by this
 	// host) and the 'reply' 4 tuple, which is what it has been rewritten to.
 	// This code finds those metas, which are identified by a Direction
@@ -260,7 +266,7 @@ func (c *Conntracker) handleFlow(f Flow, forceAdd bool) {
 
 // WalkFlows calls f with all active flows and flows that have come and gone
 // since the last call to WalkFlows
-func (c *Conntracker) WalkFlows(f func(Flow)) {
+func (c *conntracker) WalkFlows(f func(Flow)) {
 	c.Lock()
 	defer c.Unlock()
 	for _, flow := range c.activeFlows {

@@ -26,8 +26,8 @@ type Reporter struct {
 	hostName         string
 	includeProcesses bool
 	includeNAT       bool
-	conntracker      *Conntracker
-	natmapper        *natmapper
+	conntracker      Conntracker
+	natmapper        *NATMapper
 	revResolver      *ReverseResolver
 }
 
@@ -51,8 +51,8 @@ var SpyDuration = prometheus.NewSummaryVec(
 func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool) *Reporter {
 	var (
 		conntrackModulePresent = ConntrackModulePresent()
-		conntracker            *Conntracker
-		natmapper              *natmapper
+		conntracker            Conntracker
+		natmapper              *NATMapper
 		err                    error
 	)
 	if conntrackModulePresent && useConntrack {
@@ -62,7 +62,7 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		}
 	}
 	if conntrackModulePresent {
-		natmapper, err = newNATMapper()
+		natmapper, err = NewNATMapper()
 		if err != nil {
 			log.Printf("Failed to start natMapper: %v", err)
 		}
@@ -139,7 +139,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	}
 
 	if r.natmapper != nil {
-		r.natmapper.applyNAT(rpt, r.hostID)
+		r.natmapper.ApplyNAT(rpt, r.hostID)
 	}
 
 	return rpt, nil

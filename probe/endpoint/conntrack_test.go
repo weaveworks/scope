@@ -13,54 +13,62 @@ import (
 	testExec "github.com/weaveworks/scope/test/exec"
 )
 
-func makeFlow(id int64, srcIP, dstIP string, srcPort, dstPort int, ty, state string) Flow {
+func makeFlow(ty string) Flow {
 	return Flow{
 		XMLName: xml.Name{
 			Local: "flow",
 		},
 		Type: ty,
-		Metas: []Meta{
-			{
-				XMLName: xml.Name{
-					Local: "meta",
-				},
-				Direction: "original",
-				Layer3: Layer3{
-					XMLName: xml.Name{
-						Local: "layer3",
-					},
-					SrcIP: srcIP,
-					DstIP: dstIP,
-				},
-				Layer4: Layer4{
-					XMLName: xml.Name{
-						Local: "layer4",
-					},
-					SrcPort: srcPort,
-					DstPort: dstPort,
-					Proto:   TCP,
-				},
+	}
+}
+
+func addMeta(f *Flow, dir, srcIP, dstIP string, srcPort, dstPort int) *Meta {
+	meta := Meta{
+		XMLName: xml.Name{
+			Local: "meta",
+		},
+		Direction: dir,
+		Layer3: Layer3{
+			XMLName: xml.Name{
+				Local: "layer3",
 			},
-			{
-				XMLName: xml.Name{
-					Local: "meta",
-				},
-				Direction: "independent",
-				ID:        id,
-				State:     state,
-				Layer3: Layer3{
-					XMLName: xml.Name{
-						Local: "layer3",
-					},
-				},
-				Layer4: Layer4{
-					XMLName: xml.Name{
-						Local: "layer4",
-					},
-				},
+			SrcIP: srcIP,
+			DstIP: dstIP,
+		},
+		Layer4: Layer4{
+			XMLName: xml.Name{
+				Local: "layer4",
+			},
+			SrcPort: srcPort,
+			DstPort: dstPort,
+			Proto:   TCP,
+		},
+	}
+	f.Metas = append(f.Metas, meta)
+	return &meta
+}
+
+func addIndependant(f *Flow, id int64, state string) *Meta {
+	meta := Meta{
+		XMLName: xml.Name{
+			Local: "meta",
+		},
+		Direction: "independent",
+		ID:        id,
+		State:     state,
+		Layer3: Layer3{
+			XMLName: xml.Name{
+				Local: "layer3",
+			},
+		},
+		Layer4: Layer4{
+			XMLName: xml.Name{
+				Local: "layer4",
 			},
 		},
 	}
+	f.Metas = append(f.Metas, meta)
+	return &meta
 }
 
 func TestConntracker(t *testing.T) {
@@ -121,7 +129,9 @@ func TestConntracker(t *testing.T) {
 		}
 	}
 
-	flow1 := makeFlow(1, "1.2.3.4", "2.3.4.5", 2, 3, New, "")
+	flow1 := makeFlow(New)
+	addMeta(&flow1, "original", "1.2.3.4", "2.3.4.5", 2, 3)
+	addIndependant(&flow1, 1, "")
 	writeFlow(flow1)
 	test.Poll(t, ts, []Flow{flow1}, have)
 
