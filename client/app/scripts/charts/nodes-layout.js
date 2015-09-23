@@ -51,8 +51,9 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
   // add node ranks for clustering
   const ranks = _.uniq(_.pluck(nodes, 'rank'));
   _.each(ranks, function(rank) {
-    if (!graph.hasNode(rank)) {
-      graph.setNode('rank_' + rank, {});
+    const rankId = 'rank_' + rank;
+    if (!graph.hasNode(rankId)) {
+      graph.setNode(rankId, {});
     }
   });
   _.each(nodes, function(node) {
