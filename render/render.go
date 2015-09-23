@@ -178,10 +178,12 @@ type Filter struct {
 // Render implements Renderer
 func (f Filter) Render(rpt report.Report) RenderableNodes {
 	output := RenderableNodes{}
+	inDegrees := map[string]int{}
 	for id, node := range f.Renderer.Render(rpt) {
 		if f.FilterFunc(node) {
 			output[id] = node
 		}
+		inDegrees[id] = 0
 	}
 
 	// Deleted nodes also need to be cut as destinations in adjacency lists.
@@ -190,10 +192,23 @@ func (f Filter) Render(rpt report.Report) RenderableNodes {
 		for _, dstID := range node.Adjacency {
 			if _, ok := output[dstID]; ok {
 				newAdjacency = newAdjacency.Add(dstID)
+				inDegrees[dstID]++
 			}
 		}
 		node.Adjacency = newAdjacency
 		output[id] = node
+	}
+
+	// Remove unconnected pseudo nodes, see #483.
+	for id, inDegree := range inDegrees {
+		if inDegree > 0 {
+			continue
+		}
+		node := output[id]
+		if !node.Pseudo || len(node.Adjacency) > 0 {
+			continue
+		}
+		delete(output, id)
 	}
 	return output
 }

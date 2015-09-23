@@ -212,4 +212,65 @@ func TestFilterRender2(t *testing.T) {
 	}
 }
 
+func TestFilterUnconnectedPesudoNodes(t *testing.T) {
+	// Test pseudo nodes that are made unconnected by filtering
+	// are also removed.
+	{
+		nodes := render.RenderableNodes{
+			"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("bar")},
+			"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("baz")},
+			"baz": {ID: "baz", Node: report.MakeNode(), Pseudo: true},
+		}
+		renderer := render.Filter{
+			FilterFunc: func(node render.RenderableNode) bool {
+				return true
+			},
+			Renderer: mockRenderer{RenderableNodes: nodes},
+		}
+		want := nodes.Prune()
+		have := renderer.Render(report.MakeReport()).Prune()
+		if !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
+		}
+	}
+	{
+		renderer := render.Filter{
+			FilterFunc: func(node render.RenderableNode) bool {
+				return node.ID != "bar"
+			},
+			Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
+				"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("bar")},
+				"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("baz")},
+				"baz": {ID: "baz", Node: report.MakeNode(), Pseudo: true},
+			}},
+		}
+		want := render.RenderableNodes{
+			"foo": {ID: "foo", Origins: report.IDList{}, Node: report.MakeNode()},
+		}
+		have := renderer.Render(report.MakeReport()).Prune()
+		if !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
+		}
+	}
+	{
+		renderer := render.Filter{
+			FilterFunc: func(node render.RenderableNode) bool {
+				return node.ID != "bar"
+			},
+			Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
+				"foo": {ID: "foo", Node: report.MakeNode()},
+				"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("foo")},
+				"baz": {ID: "baz", Node: report.MakeNode().WithAdjacent("bar"), Pseudo: true},
+			}},
+		}
+		want := render.RenderableNodes{
+			"foo": {ID: "foo", Origins: report.IDList{}, Node: report.MakeNode()},
+		}
+		have := renderer.Render(report.MakeReport()).Prune()
+		if !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
+		}
+	}
+}
+
 func newu64(value uint64) *uint64 { return &value }
