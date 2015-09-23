@@ -194,10 +194,9 @@ func (c *Conntracker) existingConnections(args ...string) ([]Flow, error) {
 		}
 	}()
 	var result conntrack
-	if err := xml.NewDecoder(stdout).Decode(&result); err != nil {
-		if err == io.EOF {
-			return []Flow{}, err
-		}
+	if err := xml.NewDecoder(stdout).Decode(&result); err == io.EOF {
+		return []Flow{}, nil
+	} else if err != nil {
 		return []Flow{}, err
 	}
 	return result.Flows, nil
