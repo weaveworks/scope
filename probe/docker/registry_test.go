@@ -104,6 +104,15 @@ var (
 		State: client.State{Pid: 1, Running: true},
 		NetworkSettings: &client.NetworkSettings{
 			IPAddress: "1.2.3.4",
+			Ports: map[client.Port][]client.PortBinding{
+				client.Port("80/tcp"): {
+					{
+						HostIP:   "1.2.3.4",
+						HostPort: "80",
+					},
+				},
+				client.Port("81/tcp"): {},
+			},
 		},
 		Config: &client.Config{
 			Labels: map[string]string{
@@ -195,6 +204,23 @@ func TestRegistry(t *testing.T) {
 				return allImages(registry)
 			})
 		}
+	})
+}
+
+func TestLookupByPID(t *testing.T) {
+	mdc := newMockClient()
+	setupStubs(mdc, func() {
+		registry, _ := docker.NewRegistry(10 * time.Second)
+		defer registry.Stop()
+
+		want := docker.Container(&mockContainer{container1})
+		test.Poll(t, 100*time.Millisecond, want, func() interface{} {
+			var have docker.Container
+			registry.LockedPIDLookup(func(lookup func(int) docker.Container) {
+				have = lookup(1)
+			})
+			return have
+		})
 	})
 }
 
