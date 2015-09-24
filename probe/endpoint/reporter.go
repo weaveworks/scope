@@ -52,7 +52,7 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 	var (
 		conntrackModulePresent = ConntrackModulePresent()
 		conntracker            Conntracker
-		natmapper              *NATMapper
+		natmapper              NATMapper
 		err                    error
 	)
 	if conntrackModulePresent && useConntrack {
@@ -62,17 +62,18 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		}
 	}
 	if conntrackModulePresent {
-		natmapper, err = NewNATMapper()
+		ct, err := NewConntracker(true, "--any-nat")
 		if err != nil {
-			log.Printf("Failed to start natMapper: %v", err)
+			log.Printf("Failed to start conntracker for natmapper: %v", err)
 		}
+		natmapper = NewNATMapper(ct)
 	}
 	return &Reporter{
 		hostID:           hostID,
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
 		conntracker:      conntracker,
-		natmapper:        natmapper,
+		natmapper:        &natmapper,
 		revResolver:      NewReverseResolver(),
 	}
 }

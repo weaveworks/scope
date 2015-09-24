@@ -22,43 +22,76 @@ func (m *mockConntracker) WalkFlows(f func(endpoint.Flow)) {
 func (m *mockConntracker) Stop() {}
 
 func TestNat(t *testing.T) {
-	oldNewConntracker := endpoint.NewConntracker
-	defer func() { endpoint.NewConntracker = oldNewConntracker }()
+	// test that two containers, on the docker network, get their connections mapped
+	// correctly.
+	// the setup is this:
+	//
+	// container2 (10.0.47.2:222222), host2 (2.3.4.5:22223) ->
+	//     host1 (1.2.3.4:80), container1 (10.0.47.2:80)
 
-	endpoint.NewConntracker = func(existingConns bool, args ...string) (endpoint.Conntracker, error) {
+	// from the PoV of host1
+	{
 		flow := makeFlow("")
 		addIndependant(&flow, 1, "")
-		flow.Original = addMeta(&flow, "original", "10.0.47.1", "2.3.4.5", 80, 22222)
-		flow.Reply = addMeta(&flow, "reply", "2.3.4.5", "1.2.3.4", 22222, 80)
-
-		return &mockConntracker{
+		flow.Original = addMeta(&flow, "original", "2.3.4.5", "1.2.3.4", 222222, 80)
+		flow.Reply = addMeta(&flow, "reply", "10.0.47.1", "2.3.4.5", 80, 222222)
+		ct := &mockConntracker{
 			flows: []endpoint.Flow{flow},
-		}, nil
+		}
+
+		have := report.MakeReport()
+		originalID := report.MakeEndpointNodeID("host1", "10.0.47.1", "80")
+		have.Endpoint.AddNode(originalID, report.MakeNodeWith(report.Metadata{
+			endpoint.Addr: "10.0.47.1",
+			endpoint.Port: "80",
+			"foo":         "bar",
+		}))
+
+		want := have.Copy()
+		want.Endpoint.AddNode(report.MakeEndpointNodeID("host1", "1.2.3.4", "80"), report.MakeNodeWith(report.Metadata{
+			endpoint.Addr: "1.2.3.4",
+			endpoint.Port: "80",
+			"copy_of":     originalID,
+			"foo":         "bar",
+		}))
+
+		natmapper := endpoint.NewNATMapper(ct)
+		natmapper.ApplyNAT(have, "host1")
+		if !reflect.DeepEqual(want, have) {
+			t.Fatal(test.Diff(want, have))
+		}
 	}
 
-	have := report.MakeReport()
-	originalID := report.MakeEndpointNodeID("host1", "10.0.47.1", "80")
-	have.Endpoint.AddNode(originalID, report.MakeNodeWith(report.Metadata{
-		endpoint.Addr: "10.0.47.1",
-		endpoint.Port: "80",
-		"foo":         "bar",
-	}))
+	// form the PoV of host2
+	{
+		flow := makeFlow("")
+		addIndependant(&flow, 2, "")
+		flow.Original = addMeta(&flow, "original", "10.0.47.2", "1.2.3.4", 22222, 80)
+		flow.Reply = addMeta(&flow, "reply", "1.2.3.4", "2.3.4.5", 80, 22223)
+		ct := &mockConntracker{
+			flows: []endpoint.Flow{flow},
+		}
 
-	want := have.Copy()
-	want.Endpoint.AddNode(report.MakeEndpointNodeID("host1", "1.2.3.4", "80"), report.MakeNodeWith(report.Metadata{
-		endpoint.Addr: "1.2.3.4",
-		endpoint.Port: "80",
-		"copy_of":     originalID,
-		"foo":         "bar",
-	}))
+		have := report.MakeReport()
+		originalID := report.MakeEndpointNodeID("host2", "10.0.47.2", "22222")
+		have.Endpoint.AddNode(originalID, report.MakeNodeWith(report.Metadata{
+			endpoint.Addr: "10.0.47.2",
+			endpoint.Port: "22222",
+			"foo":         "baz",
+		}))
 
-	natmapper, err := endpoint.NewNATMapper()
-	if err != nil {
-		t.Fatal(err)
-	}
+		want := have.Copy()
+		want.Endpoint.AddNode(report.MakeEndpointNodeID("host2", "2.3.4.5", "22223"), report.MakeNodeWith(report.Metadata{
+			endpoint.Addr: "2.3.4.5",
+			endpoint.Port: "22223",
+			"copy_of":     originalID,
+			"foo":         "baz",
+		}))
 
-	natmapper.ApplyNAT(have, "host1")
-	if !reflect.DeepEqual(want, have) {
-		t.Fatal(test.Diff(want, have))
+		natmapper := endpoint.NewNATMapper(ct)
+		natmapper.ApplyNAT(have, "host1")
+		if !reflect.DeepEqual(want, have) {
+			t.Fatal(test.Diff(want, have))
+		}
 	}
 }

@@ -65,7 +65,7 @@ type conntrack struct {
 	Flows   []Flow   `xml:"flow"`
 }
 
-// Conntracker is somethin that tracks connections.
+// Conntracker is something that tracks connections.
 type Conntracker interface {
 	WalkFlows(f func(Flow))
 	Stop()
@@ -81,7 +81,7 @@ type conntracker struct {
 }
 
 // NewConntracker creates and starts a new Conntracter
-var NewConntracker = func(existingConns bool, args ...string) (Conntracker, error) {
+func NewConntracker(existingConns bool, args ...string) (Conntracker, error) {
 	if !ConntrackModulePresent() {
 		return nil, fmt.Errorf("No conntrack module")
 	}
