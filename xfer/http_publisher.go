@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/weaveworks/scope/common/sanitize"
 )
@@ -16,10 +17,14 @@ type HTTPPublisher struct {
 	probeID string
 }
 
+var fastClient = http.Client{
+	Timeout: 5 * time.Second,
+}
+
 // NewHTTPPublisher returns an HTTPPublisher ready for use.
 func NewHTTPPublisher(target, token, probeID string) (string, *HTTPPublisher, error) {
 	targetAPI := sanitize.URL("http://", 0, "/api")(target)
-	resp, err := http.Get(targetAPI)
+	resp, err := fastClient.Get(targetAPI)
 	if err != nil {
 		return "", nil, err
 	}

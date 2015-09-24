@@ -15,12 +15,9 @@ var (
 	lookupIP = net.LookupIP
 )
 
-const maxConcurrentLookup = 10
-
 type staticResolver struct {
 	set     func(string, []string)
 	targets []target
-	sema    semaphore
 	quit    chan struct{}
 }
 
@@ -35,7 +32,6 @@ func newStaticResolver(targets []string, set func(target string, endpoints []str
 	r := staticResolver{
 		targets: prepare(targets),
 		set:     set,
-		sema:    newSemaphore(maxConcurrentLookup),
 		quit:    make(chan struct{}),
 	}
 	go r.loop()
@@ -79,17 +75,15 @@ func prepare(strs []string) []target {
 }
 
 func (r staticResolver) resolve() {
-	for t, endpoints := range resolveMany(r.sema, r.targets) {
+	for t, endpoints := range resolveMany(r.targets) {
 		r.set(t.String(), endpoints)
 	}
 }
 
-func resolveMany(s semaphore, targets []target) map[target][]string {
+func resolveMany(targets []target) map[target][]string {
 	result := map[target][]string{}
 	for _, t := range targets {
-		c := make(chan []string)
-		go func(t target) { s.p(); defer s.v(); c <- resolveOne(t) }(t)
-		result[t] = <-c
+		result[t] = resolveOne(t)
 	}
 	return result
 }
@@ -115,15 +109,3 @@ func resolveOne(t target) []string {
 	}
 	return endpoints
 }
-
-type semaphore chan struct{}
-
-func newSemaphore(n int) semaphore {
-	c := make(chan struct{}, n)
-	for i := 0; i < n; i++ {
-		c <- struct{}{}
-	}
-	return semaphore(c)
-}
-func (s semaphore) p() { <-s }
-func (s semaphore) v() { s <- struct{}{} }

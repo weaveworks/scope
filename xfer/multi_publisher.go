@@ -15,6 +15,7 @@ import (
 type MultiPublisher struct {
 	mtx     sync.Mutex
 	factory func(endpoint string) (string, Publisher, error)
+	sema    semaphore
 	list    []tuple
 }
 
@@ -22,6 +23,7 @@ type MultiPublisher struct {
 func NewMultiPublisher(factory func(endpoint string) (string, Publisher, error)) *MultiPublisher {
 	return &MultiPublisher{
 		factory: factory,
+		sema:    newSemaphore(maxConcurrentGET),
 	}
 }
 
@@ -30,7 +32,10 @@ type tuple struct {
 	target    string // DNS name
 	endpoint  string // IP addr
 	id        string // unique ID from app
+	err       error  // if factory failed
 }
+
+const maxConcurrentGET = 10
 
 // Set declares that the target (DNS name) resolves to the provided endpoints
 // (IPs), and that we want to publish to each of those endpoints. Set replaces
@@ -39,14 +44,23 @@ type tuple struct {
 // unique ID.
 func (p *MultiPublisher) Set(target string, endpoints []string) {
 	// Convert endpoints to publishers.
-	list := make([]tuple, 0, len(p.list)+len(endpoints))
+	c := make(chan tuple, len(endpoints))
 	for _, endpoint := range endpoints {
-		id, publisher, err := p.factory(endpoint)
-		if err != nil {
-			log.Printf("multi-publisher set: %s (%s): %v", target, endpoint, err)
+		go func(endpoint string) {
+			p.sema.p()
+			defer p.sema.v()
+			id, publisher, err := p.factory(endpoint)
+			c <- tuple{publisher, target, endpoint, id, err}
+		}(endpoint)
+	}
+	list := make([]tuple, 0, len(p.list)+len(endpoints))
+	for i := 0; i < cap(c); i++ {
+		t := <-c
+		if t.err != nil {
+			log.Printf("multi-publisher set: %s (%s): %v", t.target, t.endpoint, t.err)
 			continue
 		}
-		list = append(list, tuple{publisher, target, endpoint, id})
+		list = append(list, t)
 	}
 
 	// Copy all other tuples over to the new list.
@@ -115,3 +129,15 @@ func (p *MultiPublisher) appendFilter(list []tuple, f func(tuple) bool) []tuple 
 	}
 	return list
 }
+
+type semaphore chan struct{}
+
+func newSemaphore(n int) semaphore {
+	c := make(chan struct{}, n)
+	for i := 0; i < n; i++ {
+		c <- struct{}{}
+	}
+	return semaphore(c)
+}
+func (s semaphore) p() { <-s }
+func (s semaphore) v() { s <- struct{}{} }
