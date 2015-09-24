@@ -106,24 +106,10 @@ func (n Node) WithMetadata(m map[string]string) Node {
 	return result
 }
 
-// AddMetadata returns a fresh copy of n, with Metadata set to the merge of n
-// and the metadata provided.
-func (n Node) AddMetadata(m map[string]string) Node {
-	additional := MakeNodeWith(m)
-	return n.Merge(additional)
-}
-
-// WithCounters returns a fresh copy of n, with Counters set to c.
+// WithCounters returns a fresh copy of n, with Counters c merged in.
 func (n Node) WithCounters(c map[string]int) Node {
 	result := n.Copy()
-	result.Counters = c
-	return result
-}
-
-// WithAdjacency returns a fresh copy of n, with Adjacency set to a.
-func (n Node) WithAdjacency(a IDList) Node {
-	result := n.Copy()
-	result.Adjacency = a
+	result.Counters = result.Counters.Merge(c)
 	return result
 }
 

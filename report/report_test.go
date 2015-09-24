@@ -25,3 +25,39 @@ func TestReportTopologies(t *testing.T) {
 		t.Errorf("want %d, have %d", want, have)
 	}
 }
+
+func TestNode(t *testing.T) {
+	{
+		node := report.MakeNode().WithMetadata(report.Metadata{
+			"foo": "bar",
+		})
+		if node.Metadata["foo"] != "bar" {
+			t.Errorf("want foo, have %s", node.Metadata["foo"])
+		}
+	}
+	{
+		node := report.MakeNode().WithCounters(report.Counters{
+			"foo": 1,
+		})
+		if node.Counters["foo"] != 1 {
+			t.Errorf("want foo, have %d", node.Counters["foo"])
+		}
+	}
+	{
+		node := report.MakeNode().WithAdjacent("foo")
+		if node.Adjacency[0] != "foo" {
+			t.Errorf("want foo, have %v", node.Adjacency)
+		}
+	}
+	{
+		node := report.MakeNode().WithEdge("foo", report.EdgeMetadata{
+			EgressPacketCount: newu64(13),
+		})
+		if node.Adjacency[0] != "foo" {
+			t.Errorf("want foo, have %v", node.Adjacency)
+		}
+		if *node.Edges["foo"].EgressPacketCount != 13 {
+			t.Errorf("want 13, have %v", node.Edges)
+		}
+	}
+}

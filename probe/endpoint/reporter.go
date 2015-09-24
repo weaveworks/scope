@@ -26,8 +26,8 @@ type Reporter struct {
 	hostName         string
 	includeProcesses bool
 	includeNAT       bool
-	conntracker      *Conntracker
-	natmapper        *natmapper
+	conntracker      Conntracker
+	natmapper        *NATMapper
 	revResolver      *ReverseResolver
 }
 
@@ -51,8 +51,8 @@ var SpyDuration = prometheus.NewSummaryVec(
 func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool) *Reporter {
 	var (
 		conntrackModulePresent = ConntrackModulePresent()
-		conntracker            *Conntracker
-		natmapper              *natmapper
+		conntracker            Conntracker
+		natmapper              NATMapper
 		err                    error
 	)
 	if conntrackModulePresent && useConntrack {
@@ -62,17 +62,18 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		}
 	}
 	if conntrackModulePresent {
-		natmapper, err = newNATMapper()
+		ct, err := NewConntracker(true, "--any-nat")
 		if err != nil {
-			log.Printf("Failed to start natMapper: %v", err)
+			log.Printf("Failed to start conntracker for natmapper: %v", err)
 		}
+		natmapper = NewNATMapper(ct)
 	}
 	return &Reporter{
 		hostID:           hostID,
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
 		conntracker:      conntracker,
-		natmapper:        natmapper,
+		natmapper:        &natmapper,
 		revResolver:      NewReverseResolver(),
 	}
 }
@@ -139,7 +140,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	}
 
 	if r.natmapper != nil {
-		r.natmapper.applyNAT(rpt, r.hostID)
+		r.natmapper.ApplyNAT(rpt, r.hostID)
 	}
 
 	return rpt, nil
@@ -165,7 +166,7 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		// In case we have a reverse resolution for the IP, we can use it for
 		// the name...
 		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
-			remoteNode = remoteNode.AddMetadata(map[string]string{
+			remoteNode = remoteNode.WithMetadata(map[string]string{
 				"name": revRemoteName,
 			})
 		}
@@ -211,7 +212,7 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 		// In case we have a reverse resolution for the IP, we can use it for
 		// the name...
 		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
-			remoteNode = remoteNode.AddMetadata(map[string]string{
+			remoteNode = remoteNode.WithMetadata(map[string]string{
 				"name": revRemoteName,
 			})
 		}
