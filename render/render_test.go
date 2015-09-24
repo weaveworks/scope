@@ -147,8 +147,10 @@ func TestMapEdge(t *testing.T) {
 			Origins: report.MakeIDList("foo"),
 			Node:    report.MakeNode().WithAdjacent("_bar"),
 			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(4),
-				EgressByteCount:   newu64(6),
+				EgressPacketCount:  newu64(1),
+				EgressByteCount:    newu64(2),
+				IngressPacketCount: newu64(3),
+				IngressByteCount:   newu64(4),
 			},
 		},
 		"_bar": {
@@ -156,8 +158,10 @@ func TestMapEdge(t *testing.T) {
 			Origins: report.MakeIDList("bar"),
 			Node:    report.MakeNode().WithAdjacent("_foo"),
 			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(4),
-				EgressByteCount:   newu64(6),
+				EgressPacketCount:  newu64(3),
+				EgressByteCount:    newu64(4),
+				IngressPacketCount: newu64(1),
+				IngressByteCount:   newu64(2),
 			},
 		},
 	}).Prune()

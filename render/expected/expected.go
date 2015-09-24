@@ -113,8 +113,8 @@ var (
 			),
 			Node: report.MakeNode(),
 			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(210),
-				EgressByteCount:   newu64(2100),
+				IngressPacketCount: newu64(210),
+				IngressByteCount:   newu64(2100),
 			},
 		},
 		nonContainerProcessID: {
@@ -169,8 +169,8 @@ var (
 			),
 			Node: report.MakeNode(),
 			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(210),
-				EgressByteCount:   newu64(2100),
+				IngressPacketCount: newu64(210),
+				IngressByteCount:   newu64(2100),
 			},
 		},
 		test.NonContainerComm: {
@@ -229,8 +229,8 @@ var (
 			),
 			Node: report.MakeNode(),
 			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(210),
-				EgressByteCount:   newu64(2100),
+				IngressPacketCount: newu64(210),
+				IngressByteCount:   newu64(2100),
 			},
 		},
 		uncontainedServerID: {
@@ -286,8 +286,8 @@ var (
 				test.ServerHostNodeID),
 			Node: report.MakeNode(),
 			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(210),
-				EgressByteCount:   newu64(2100),
+				IngressPacketCount: newu64(210),
+				IngressByteCount:   newu64(2100),
 			},
 		},
 		uncontainedServerID: {

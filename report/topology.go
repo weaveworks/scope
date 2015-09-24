@@ -249,6 +249,17 @@ func (e EdgeMetadata) Copy() EdgeMetadata {
 	}
 }
 
+// Reversed returns a value copy of the EdgeMetadata, with the direction reversed.
+func (e EdgeMetadata) Reversed() EdgeMetadata {
+	return EdgeMetadata{
+		EgressPacketCount:  cpu64ptr(e.IngressPacketCount),
+		IngressPacketCount: cpu64ptr(e.EgressPacketCount),
+		EgressByteCount:    cpu64ptr(e.IngressByteCount),
+		IngressByteCount:   cpu64ptr(e.EgressByteCount),
+		MaxConnCountTCP:    cpu64ptr(e.MaxConnCountTCP),
+	}
+}
+
 func cpu64ptr(u *uint64) *uint64 {
 	if u == nil {
 		return nil
