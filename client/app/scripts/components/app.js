@@ -48,7 +48,10 @@ const App = React.createClass({
     window.addEventListener('keyup', this.onKeyPress);
 
     RouterUtils.getRouter().start({hashbang: true});
-    WebapiUtils.getTopologies();
+    if (!AppStore.isRouteSet()) {
+      // dont request topologies when already done via router
+      WebapiUtils.getTopologies(AppStore.getActiveTopologyOptions());
+    }
     WebapiUtils.getApiDetails();
   },
 
@@ -93,6 +96,7 @@ const App = React.createClass({
 
         <Sidebar>
           <TopologyOptions options={this.state.currentTopologyOptions}
+            topologyId={this.state.currentTopologyId}
             activeOptions={this.state.activeTopologyOptions} />
           <Status errorUrl={this.state.errorUrl} topology={this.state.currentTopology}
             topologiesLoaded={this.state.topologiesLoaded}

@@ -5,9 +5,9 @@ const TopologyOptionAction = require('./topology-option-action');
 
 const TopologyOptions = React.createClass({
 
-  renderAction: function(action, option) {
+  renderAction: function(action, option, topologyId) {
     return (
-      <TopologyOptionAction option={option} value={action} />
+      <TopologyOptionAction option={option} value={action} topologyId={topologyId} />
     );
   },
 
@@ -15,11 +15,12 @@ const TopologyOptions = React.createClass({
     let activeText;
     const actions = [];
     const activeOptions = this.props.activeOptions;
+    const topologyId = this.props.topologyId;
     items.forEach(function(item) {
-      if (activeOptions[item.option] && activeOptions[item.option] === item.value) {
+      if (activeOptions && activeOptions.has(item.option) && activeOptions.get(item.option) === item.value) {
         activeText = item.display;
       } else {
-        actions.push(this.renderAction(item.value, item.option));
+        actions.push(this.renderAction(item.value, item.option, topologyId));
       }
     }, this);
 

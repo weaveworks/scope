@@ -6,7 +6,7 @@ const TopologyOptionAction = React.createClass({
 
   onClick: function(ev) {
     ev.preventDefault();
-    AppActions.changeTopologyOption(this.props.option, this.props.value);
+    AppActions.changeTopologyOption(this.props.option, this.props.value, this.props.topologyId);
   },
 
   render: function() {

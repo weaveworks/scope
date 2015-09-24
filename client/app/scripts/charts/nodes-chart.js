@@ -394,7 +394,10 @@ const NodesChart = React.createClass({
     const n = props.nodes.size;
 
     if (n === 0) {
-      return {};
+      return {
+        nodes: {},
+        edges: {}
+      };
     }
 
     const nodes = this.initNodes(props.nodes, state.nodes);
