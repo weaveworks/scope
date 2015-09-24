@@ -20,6 +20,9 @@ func (m mockRenderer) Render(rpt report.Report) render.RenderableNodes {
 func (m mockRenderer) EdgeMetadata(rpt report.Report, localID, remoteID string) report.EdgeMetadata {
 	return m.edgeMetadata
 }
+func (m mockRenderer) Stats(rpt report.Report) render.Stats {
+	return render.Stats{}
+}
 
 func TestReduceRender(t *testing.T) {
 	renderer := render.Reduce([]render.Renderer{

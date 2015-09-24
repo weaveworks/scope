@@ -11,6 +11,18 @@ import (
 type Renderer interface {
 	Render(report.Report) RenderableNodes
 	EdgeMetadata(rpt report.Report, localID, remoteID string) report.EdgeMetadata
+	Stats(report.Report) Stats
+}
+
+// Stats is the type returned by Renderer.Stats
+type Stats struct {
+	FilteredNodes int
+}
+
+func (s Stats) merge(other Stats) Stats {
+	return Stats{
+		FilteredNodes: s.FilteredNodes + other.FilteredNodes,
+	}
 }
 
 // Reduce renderer is a Renderer which merges together the output of several
@@ -40,6 +52,15 @@ func (r Reduce) EdgeMetadata(rpt report.Report, localID, remoteID string) report
 	return metadata
 }
 
+// Stats implements Renderer
+func (r Reduce) Stats(rpt report.Report) Stats {
+	var result Stats
+	for _, renderer := range r {
+		result = result.merge(renderer.Stats(rpt))
+	}
+	return result
+}
+
 // Map is a Renderer which produces a set of RenderableNodes from the set of
 // RenderableNodes produced by another Renderer.
 type Map struct {
@@ -52,6 +73,14 @@ type Map struct {
 func (m Map) Render(rpt report.Report) RenderableNodes {
 	output, _ := m.render(rpt)
 	return output
+}
+
+// Stats implements Renderer
+func (m Map) Stats(rpt report.Report) Stats {
+	// There doesn't seem to be an instance where we want stats to recurse
+	// through Maps - for instance we don't want to see the number of filtered
+	// processes in the container renderer.
+	return Stats{}
 }
 
 func (m Map) render(rpt report.Report) (RenderableNodes, map[string]report.IDList) {
@@ -177,13 +206,21 @@ type Filter struct {
 
 // Render implements Renderer
 func (f Filter) Render(rpt report.Report) RenderableNodes {
+	nodes, _ := f.render(rpt)
+	return nodes
+}
+
+func (f Filter) render(rpt report.Report) (RenderableNodes, int) {
 	output := RenderableNodes{}
 	inDegrees := map[string]int{}
+	filtered := 0
 	for id, node := range f.Renderer.Render(rpt) {
 		if f.FilterFunc(node) {
 			output[id] = node
+			inDegrees[id] = 0
+		} else {
+			filtered++
 		}
-		inDegrees[id] = 0
 	}
 
 	// Deleted nodes also need to be cut as destinations in adjacency lists.
@@ -209,8 +246,17 @@ func (f Filter) Render(rpt report.Report) RenderableNodes {
 			continue
 		}
 		delete(output, id)
+		filtered++
 	}
-	return output
+	return output, filtered
+}
+
+// Stats implements Renderer
+func (f Filter) Stats(rpt report.Report) Stats {
+	_, filtered := f.render(rpt)
+	var upstream = f.Renderer.Stats(rpt)
+	upstream.FilteredNodes += filtered
+	return upstream
 }
 
 // IsConnected is the key added to Node.Metadata by ColorConnected

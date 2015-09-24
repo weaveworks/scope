@@ -27,7 +27,7 @@ func TestProcessNameRenderer(t *testing.T) {
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := (render.ContainerWithImageNameRenderer{}.Render(test.Report)).Prune()
+	have := (render.ContainerWithImageNameRenderer.Render(test.Report)).Prune()
 	want := expected.RenderedContainers
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -39,7 +39,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 	// it is filtered out correctly.
 	input := test.Report.Copy()
 	input.Container.Nodes[test.ClientContainerNodeID].Metadata[docker.LabelPrefix+"works.weave.role"] = "system"
-	have := render.FilterSystem(render.ContainerWithImageNameRenderer{}).Render(input).Prune()
+	have := render.FilterSystem(render.ContainerWithImageNameRenderer).Render(input).Prune()
 	want := expected.RenderedContainers.Copy()
 	delete(want, test.ClientContainerID)
 	if !reflect.DeepEqual(want, have) {
