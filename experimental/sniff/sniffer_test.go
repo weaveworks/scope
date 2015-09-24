@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/gopacket"
 
-	"github.com/weaveworks/scope/probe/sniff"
+	"github.com/weaveworks/scope/experimental/sniff"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
