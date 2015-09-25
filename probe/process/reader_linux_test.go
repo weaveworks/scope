@@ -26,8 +26,10 @@ func (p mockedProcess) Sys() interface{}   { return nil }
 
 func TestProcReaderProcesses(t *testing.T) {
 	processes := map[string]mockedProcess{
+		"8":       {ID: "8", Comm: "scsi_eh_3\n"},
+		"7":       {ID: "7", Comm: "watchdog/2\n"},
 		"3":       {ID: "3", Comm: "curl\n", Cmdline: "curl\000google.com"},
-		"2":       {ID: "2", Comm: "bash\n"},
+		"2":       {ID: "2", Comm: "chrome\n"},
 		"4":       {ID: "4", Comm: "apache\n"},
 		"notapid": {ID: "notapid"},
 		"1":       {ID: "1", Comm: "init\n"},
@@ -35,9 +37,8 @@ func TestProcReaderProcesses(t *testing.T) {
 
 	want := map[int]process.Process{
 		3: {PID: 3, PPID: 2, Comm: "curl", Cmdline: "curl google.com", Threads: 1, Inodes: []uint64{}},
-		2: {PID: 2, PPID: 1, Comm: "bash", Cmdline: "", Threads: 1, Inodes: []uint64{}},
+		2: {PID: 2, PPID: 1, Comm: "chrome", Cmdline: "", Threads: 1, Inodes: []uint64{}},
 		4: {PID: 4, PPID: 3, Comm: "apache", Cmdline: "", Threads: 1, Inodes: []uint64{}},
-		1: {PID: 1, PPID: 0, Comm: "init", Cmdline: "", Threads: 1, Inodes: []uint64{}},
 	}
 
 	// use a mocked /proc that reads from our mocked processes

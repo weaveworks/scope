@@ -3,11 +3,124 @@ package process
 import (
 	"bytes"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"syscall"
 )
+
+// processes that we will skip just based on the name
+// note: we must be sure about these names, so keep it for kernel tasks,
+//       system processes, command line tools, etc...
+var skippedComms = []string{
+	"(sd-pam)",
+	"ModemManager",
+	"NetworkManager",
+	"Xorg",
+	"accounts-daemon",
+	"acpi_.*",
+	"acpid",
+	"agetty",
+	"akonadi.*",
+	"ata_sff",
+	"baloo_file",
+	"bash",
+	"bioset",
+	"bluetoothd",
+	"cat",
+	"cfg80211",
+	"charger_manager",
+	"cron",
+	"crypto",
+	"dbus",
+	"dbus-daemon",
+	"dbus-launch",
+	"dconf-service",
+	"deferwq",
+	"devfreq_wq",
+	"ecryptfs-kthrea",
+	"ext4-rsv-conver",
+	"fsnotifier64",
+	"fsnotify_mark",
+	"gconfd-.*",
+	"gnome-keyring-.*",
+	"gpg-agent",
+	"gvfsd",
+	"ipv6_addrconf",
+	"irq/.*",
+	"irqbalance",
+	"jbd[[:digit:]]/.*",
+	"kaccess",
+	"kactivitymanage",
+	"kauditd",
+	"kblockd",
+	"kdeconnectd",
+	"kded.*",
+	"kdeinit.*",
+	"kdevtmpfs",
+	"kerneloops",
+	"kglobalaccel5",
+	"khelper",
+	"khugepaged",
+	"khungtaskd",
+	"kintegrityd",
+	"krunner",
+	"kscreen_backend",
+	"ksmd",
+	"ksmserver",
+	"ksoftirqd/0",
+	"ksuperkey",
+	"init",
+	"irq/.*",
+	"jbd2/.*",
+	"kswapd.*",
+	"kwalletd.*",
+	"kwin_.*",
+	"kworker.*",
+	"migration/[[:digit:]]",
+	"rcu_bh",
+	"rcu_sched",
+	"rcuob/[[:digit:]]",
+	"rcuos/[[:digit:]]",
+	"rsyslogd",
+	"rtkit-daemon",
+	"scsi_eh_[[:digit:]]",
+	"scsi_tmf_[[:digit:]]",
+	"sddm",
+	"sddm-helper",
+	"ssh-agent",
+	"start_kdeinit",
+	"startkde",
+	"systemd",
+	"systemd-.*",
+	"thermald",
+	"udisksd",
+	"uniq",
+	"update-apt-.*",
+	"upowerd",
+	"watchdog/[[:digit:]]",
+	"whoopsie",
+	"wpa_supplicant",
+	"writeback",
+}
+
+var skippedCommsRegexps = []*regexp.Regexp{}
+
+func init() {
+	for _, s := range skippedComms {
+		skippedCommsRegexps = append(skippedCommsRegexps, regexp.MustCompile(s))
+	}
+}
+
+func isSkippedComm(c *bytes.Buffer) bool {
+	for _, regexp := range skippedCommsRegexps {
+		if regexp.Match(c.Bytes()) {
+			return true
+		}
+	}
+	return false
+}
 
 // ProcReader is the Linux "/proc" reader
 type ProcReader struct {
@@ -65,6 +178,14 @@ func (r *ProcReader) Read() error {
 			continue // Not a number, so not a PID subdir
 		}
 
+		comm := "(unknown)"
+		if readIntoBuffer("comm", true) == nil {
+			if isSkippedComm(&buf) {
+				continue
+			}
+			comm = strings.TrimSpace(buf.String())
+		}
+
 		if readIntoBuffer("stat", false) != nil {
 			continue
 		}
@@ -85,24 +206,6 @@ func (r *ProcReader) Read() error {
 			cmdline = string(cmdlineBuf)
 		}
 
-		comm := "(unknown)"
-		if readIntoBuffer("comm", true) == nil {
-			comm = strings.TrimSpace(buf.String())
-		}
-
-		// Read network namespace, and if we haven't seen it before,
-		// read /proc/<pid>/net/tcp
-		if err := r.proc.Stat(path.Join(subdir, "/ns/net"), true, &fdStat); err != nil {
-			continue
-		}
-
-		if _, ok := namespaces[fdStat.Ino]; !ok {
-			namespaces[fdStat.Ino] = struct{}{}
-			appendConnectionsFrom([]string{
-				path.Join(subdir, "net", "tcp"),
-				path.Join(subdir, "net", "tcp6")})
-		}
-
 		fdsSubdir := path.Join(subdir, "fd")
 		fdNames, err := r.proc.ReadDirNames(fdsSubdir)
 		if err != nil {
@@ -118,7 +221,6 @@ func (r *ProcReader) Read() error {
 				inodes = append(inodes, fdStat.Ino)
 			}
 		}
-
 		p := Process{
 			PID:     pid,
 			PPID:    ppid,
@@ -133,6 +235,19 @@ func (r *ProcReader) Read() error {
 			for _, inode := range inodes {
 				procsByInode[inode] = &p
 			}
+		}
+
+		// Read network namespace, and if we haven't seen it before,
+		// read /proc/<pid>/net/tcp
+		if err := r.proc.Stat(path.Join(subdir, "/ns/net"), true, &fdStat); err != nil {
+			continue
+		}
+
+		if _, ok := namespaces[fdStat.Ino]; !ok {
+			namespaces[fdStat.Ino] = struct{}{}
+			appendConnectionsFrom([]string{
+				path.Join(subdir, "net", "tcp"),
+				path.Join(subdir, "net", "tcp6")})
 		}
 	}
 
