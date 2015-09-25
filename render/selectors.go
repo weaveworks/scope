@@ -47,7 +47,7 @@ func MakeRenderableNodes(t report.Topology) RenderableNodes {
 			srcNode.EdgeMetadata = srcNode.EdgeMetadata.Flatten(emd)
 
 			dstNode := result[dstID]
-			dstNode.EdgeMetadata = dstNode.EdgeMetadata.Flatten(emd)
+			dstNode.EdgeMetadata = dstNode.EdgeMetadata.Flatten(emd.Reversed())
 			result[dstID] = dstNode
 		}
 

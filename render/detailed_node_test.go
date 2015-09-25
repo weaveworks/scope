@@ -184,8 +184,8 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Numeric: false,
 				Rank:    0,
 				Rows: []render.Row{
-					{"Egress packet rate", "105", "packets/sec", false},
-					{"Egress byte rate", "1.0", "KBps", false},
+					{"Ingress packet rate", "105", "packets/sec", false},
+					{"Ingress byte rate", "1.0", "KBps", false},
 					{"Client", "Server", "", true},
 					{
 						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.UnknownClient1Port),
