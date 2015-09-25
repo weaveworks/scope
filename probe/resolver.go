@@ -16,92 +16,96 @@ var (
 )
 
 type staticResolver struct {
-	quit  chan struct{}
-	add   func(string)
-	peers []peer
+	set     func(string, []string)
+	targets []target
+	quit    chan struct{}
 }
 
-type peer struct {
-	hostname string
-	port     string
-}
+type target struct{ host, port string }
 
-// NewResolver starts a new resolver that periodically
-// tries to resolve peers and the calls add() with all the
-// resolved IPs.  It explictiy supports hostnames which
-// resolve to multiple IPs; it will repeatedly call
-// add with the same IP, expecting the target to dedupe.
-func newStaticResolver(peers []string, add func(string)) staticResolver {
+func (t target) String() string { return net.JoinHostPort(t.host, t.port) }
+
+// newStaticResolver periodically resolves the targets, and calls the set
+// function with all the resolved IPs. It explictiy supports targets which
+// resolve to multiple IPs.
+func newStaticResolver(targets []string, set func(target string, endpoints []string)) staticResolver {
 	r := staticResolver{
-		quit:  make(chan struct{}),
-		add:   add,
-		peers: prepareNames(peers),
+		targets: prepare(targets),
+		set:     set,
+		quit:    make(chan struct{}),
 	}
 	go r.loop()
 	return r
 }
 
-func prepareNames(strs []string) []peer {
-	var results []peer
-	for _, s := range strs {
-		var (
-			hostname string
-			port     string
-		)
-
-		if strings.Contains(s, ":") {
-			var err error
-			hostname, port, err = net.SplitHostPort(s)
-			if err != nil {
-				log.Printf("invalid address %s: %v", s, err)
-				continue
-			}
-		} else {
-			hostname, port = s, strconv.Itoa(xfer.AppPort)
-		}
-
-		results = append(results, peer{hostname, port})
-	}
-	return results
-}
-
 func (r staticResolver) loop() {
-	r.resolveHosts()
+	r.resolve()
 	t := tick(time.Minute)
 	for {
 		select {
 		case <-t:
-			r.resolveHosts()
-
+			r.resolve()
 		case <-r.quit:
 			return
 		}
 	}
 }
 
-func (r staticResolver) resolveHosts() {
-	for _, peer := range r.peers {
-		var addrs []net.IP
-		if addr := net.ParseIP(peer.hostname); addr != nil {
-			addrs = []net.IP{addr}
-		} else {
-			var err error
-			addrs, err = lookupIP(peer.hostname)
-			if err != nil {
-				continue
-			}
-		}
+func (r staticResolver) Stop() {
+	close(r.quit)
+}
 
-		for _, addr := range addrs {
-			// For now, ignore IPv6
-			if addr.To4() == nil {
+func prepare(strs []string) []target {
+	var targets []target
+	for _, s := range strs {
+		var host, port string
+		if strings.Contains(s, ":") {
+			var err error
+			host, port, err = net.SplitHostPort(s)
+			if err != nil {
+				log.Printf("invalid address %s: %v", s, err)
 				continue
 			}
-			r.add(net.JoinHostPort(addr.String(), peer.port))
+		} else {
+			host, port = s, strconv.Itoa(xfer.AppPort)
 		}
+		targets = append(targets, target{host, port})
+	}
+	return targets
+}
+
+func (r staticResolver) resolve() {
+	for t, endpoints := range resolveMany(r.targets) {
+		r.set(t.String(), endpoints)
 	}
 }
 
-func (r staticResolver) Stop() {
-	close(r.quit)
+func resolveMany(targets []target) map[target][]string {
+	result := map[target][]string{}
+	for _, t := range targets {
+		result[t] = resolveOne(t)
+	}
+	return result
+}
+
+func resolveOne(t target) []string {
+	var addrs []net.IP
+	if addr := net.ParseIP(t.host); addr != nil {
+		addrs = []net.IP{addr}
+	} else {
+		var err error
+		addrs, err = lookupIP(t.host)
+		if err != nil {
+			return []string{}
+		}
+	}
+	endpoints := make([]string, 0, len(addrs))
+	for _, addr := range addrs {
+		// For now, ignore IPv6
+		if addr.To4() == nil {
+			continue
+		}
+		endpoints = append(endpoints, net.JoinHostPort(addr.String(), t.port))
+	}
+	return endpoints
 }

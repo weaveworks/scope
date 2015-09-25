@@ -1,9 +1,9 @@
 package xfer_test
 
 import (
-	"bytes"
 	"compress/gzip"
 	"encoding/gob"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
-
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/xfer"
@@ -27,6 +26,11 @@ func TestHTTPPublisher(t *testing.T) {
 	)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api" {
+			_ = json.NewEncoder(w).Encode(map[string]string{"id": "irrelevant"})
+			return
+		}
+
 		if want, have := xfer.AuthorizationHeader(token), r.Header.Get("Authorization"); want != have {
 			t.Errorf("want %q, have %q", want, have)
 		}
@@ -61,7 +65,7 @@ func TestHTTPPublisher(t *testing.T) {
 	s := httptest.NewServer(handlers.CompressHandler(handler))
 	defer s.Close()
 
-	p, err := xfer.NewHTTPPublisher(s.URL, token, id)
+	_, p, err := xfer.NewHTTPPublisher(s.URL, token, id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,32 +80,3 @@ func TestHTTPPublisher(t *testing.T) {
 		t.Error("timeout")
 	}
 }
-
-func TestMultiPublisher(t *testing.T) {
-	var (
-		p              = &mockPublisher{}
-		factory        = func(string) (xfer.Publisher, error) { return p, nil }
-		multiPublisher = xfer.NewMultiPublisher(factory)
-	)
-
-	multiPublisher.Add("first")
-	if err := multiPublisher.Publish(&bytes.Buffer{}); err != nil {
-		t.Error(err)
-	}
-	if want, have := 1, p.count; want != have {
-		t.Errorf("want %d, have %d", want, have)
-	}
-
-	multiPublisher.Add("second") // but factory returns same mockPublisher
-	if err := multiPublisher.Publish(&bytes.Buffer{}); err != nil {
-		t.Error(err)
-	}
-	if want, have := 3, p.count; want != have {
-		t.Errorf("want %d, have %d", want, have)
-	}
-}
-
-type mockPublisher struct{ count int }
-
-func (p *mockPublisher) Publish(*bytes.Buffer) error { p.count++; return nil }
-func (p *mockPublisher) Stop()                       {}

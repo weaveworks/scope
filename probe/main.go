@@ -80,16 +80,16 @@ func main() {
 		log.Printf("warning: process reporting enabled, but that requires root to find everything")
 	}
 
-	publisherFactory := func(target string) (xfer.Publisher, error) {
-		publisher, err := xfer.NewHTTPPublisher(target, *token, probeID)
+	factory := func(endpoint string) (string, xfer.Publisher, error) {
+		id, publisher, err := xfer.NewHTTPPublisher(endpoint, *token, probeID)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
-		return xfer.NewBackgroundPublisher(publisher), nil
+		return id, xfer.NewBackgroundPublisher(publisher), nil
 	}
-	publishers := xfer.NewMultiPublisher(publisherFactory)
+	publishers := xfer.NewMultiPublisher(factory)
 	defer publishers.Stop()
-	resolver := newStaticResolver(targets, publishers.Add)
+	resolver := newStaticResolver(targets, publishers.Set)
 	defer resolver.Stop()
 
 	addrs, err := net.InterfaceAddrs()
@@ -133,10 +133,7 @@ func main() {
 	}
 
 	if *weaveRouterAddr != "" {
-		weave, err := overlay.NewWeave(hostID, *weaveRouterAddr)
-		if err != nil {
-			log.Fatalf("failed to start Weave tagger: %v", err)
-		}
+		weave := overlay.NewWeave(hostID, *weaveRouterAddr)
 		tickers = append(tickers, weave)
 		taggers = append(taggers, weave)
 		reporters = append(reporters, weave)

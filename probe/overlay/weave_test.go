@@ -25,11 +25,7 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(mockWeaveRouter))
 	defer s.Close()
 
-	w, err := overlay.NewWeave(mockHostID, s.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	w := overlay.NewWeave(mockHostID, s.URL)
 	w.Tick()
 
 	{
