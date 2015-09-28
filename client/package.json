@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
-    "cola": "tgdwyer/WebCola#1d0b591861cdef724963349ca9fe12c92c664c3a",
+    "cola": "tgdwyer/WebCola#dbf04fb15ead2a451deadafb073dadeb0214c0b4",
     "d3": "^3.5.5",
     "debug": "^2.2.0",
     "flux": "^2.0.3",

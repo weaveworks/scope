@@ -417,7 +417,9 @@ const NodesChart = React.createClass({
     const normalizedNodeSize = nodeSize / Math.sqrt(n); // assuming rectangular layout
     const nodeScale = this.state.nodeScale.range([0, normalizedNodeSize]);
 
+    let start = _.now();
     let graph = NodesLayout.doLayout(nodes, edges, width, height, nodeScale);
+    debug('graph layout took ' + (_.now() - start) + 'ms');
 
     // layout was aborted
     if (!graph) {
@@ -443,7 +445,7 @@ const NodesChart = React.createClass({
     // only adjust zooming in
     const zoomFactor = Math.min(1, Math.min(xFactor, yFactor));
     let zoomScale = this.state.scale;
-    let translate = this.state.translate;
+    let translate = this.state.panTranslate;
 
     if (this.zoom && !this.state.hasZoomed) {
       if (zoomFactor > 0 && zoomFactor !== zoomScale) {
@@ -470,7 +472,8 @@ const NodesChart = React.createClass({
       nodeScale: nodeScale,
       scale: zoomScale,
       maxNodesExceeded: false,
-      translate: translate,
+      panTranslate: translate,
+      shiftTranslate: translate,
       initialLayout: empty
     };
   },
