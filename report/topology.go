@@ -2,6 +2,7 @@ package report
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -78,8 +79,9 @@ func (n Nodes) Merge(other Nodes) Nodes {
 // given node in a given topology, along with the edges emanating from the
 // node and metadata about those edges.
 type Node struct {
-	Metadata  `json:"metadata,omitempty"`
-	Counters  `json:"counters,omitempty"`
+	Metadata  Metadata      `json:"metadata,omitempty"`
+	Counters  Counters      `json:"counters,omitempty"`
+	Sets      Sets          `json:"sets,omitempty"`
 	Adjacency IDList        `json:"adjacency"`
 	Edges     EdgeMetadatas `json:"edges,omitempty"`
 }
@@ -192,6 +194,100 @@ func (c Counters) Copy() Counters {
 	for k, v := range c {
 		result[k] = v
 	}
+	return result
+}
+
+// Sets is a string->set-of-strings map.
+type Sets map[string]StringSet
+
+// Merge merges two sets maps into a fresh set, performing set-union merges as
+// appropriate.
+func (s Sets) Merge(other Sets) Sets {
+	result := s.Copy()
+	for k, v := range other {
+		result[k].Merge(v)
+	}
+	return result
+}
+
+// Copy returns a value copy of the sets map.
+func (s Sets) Copy() Sets {
+	result := Sets{}
+	for k, v := range s {
+		result[k] = v.Copy()
+	}
+	return result
+}
+
+// StringSet is a sorted set of unique strings. Clients must use the Add
+// method to add strings.
+type StringSet []string
+
+// MakeStringSet makes a new StringSet with the given strings.
+func MakeStringSet(strs ...string) StringSet {
+	if len(strs) <= 0 {
+		return StringSet{}
+	}
+	sort.Strings(strs)
+	for i := 1; i < len(strs); { // shuffle down any duplicates
+		if strs[i-1] == strs[i] {
+			strs = append(strs[:i-1], strs[i:]...)
+			continue
+		}
+		i++
+	}
+	return StringSet(strs)
+}
+
+// Add adds the strings to the StringSet. Add is the only valid way to grow a
+// StringSet. Add returns the StringSet to enable chaining.
+func (s StringSet) Add(strs ...string) StringSet {
+	for _, str := range strs {
+		i := sort.Search(len(s), func(i int) bool { return s[i] >= str })
+		if i < len(s) && s[i] == str {
+			// The list already has the element.
+			continue
+		}
+		// It a new element, insert it in order.
+		s = append(s, "")
+		copy(s[i+1:], s[i:])
+		s[i] = str
+	}
+	return s
+}
+
+// Merge combines the two StringSets and returns a new result.
+func (s StringSet) Merge(other StringSet) StringSet {
+	if len(other) == 0 { // Optimise special case, to avoid allocating
+		return s // (note unit test DeepEquals breaks if we don't do this)
+	}
+	result := make(StringSet, len(s)+len(other))
+	for i, j, k := 0, 0, 0; ; k++ {
+		switch {
+		case i >= len(s):
+			copy(result[k:], other[j:])
+			return result[:k+len(other)-j]
+		case j >= len(other):
+			copy(result[k:], s[i:])
+			return result[:k+len(s)-i]
+		case s[i] < other[j]:
+			result[k] = s[i]
+			i++
+		case s[i] > other[j]:
+			result[k] = other[j]
+			j++
+		default: // equal
+			result[k] = s[i]
+			i++
+			j++
+		}
+	}
+}
+
+// Copy returns a value copy of the StringSet.
+func (s StringSet) Copy() StringSet {
+	result := make(StringSet, len(s))
+	copy(result, s)
 	return result
 }
 
