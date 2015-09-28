@@ -33,6 +33,7 @@ func TestMultiPublisher(t *testing.T) {
 			return "", nil, fmt.Errorf("invalid endpoint %s", endpoint)
 		}
 	})
+	defer mp.Stop()
 
 	mp.Set("a", []string{"a1", "a2"})
 	mp.Set("b", []string{"b2", "b3"})
