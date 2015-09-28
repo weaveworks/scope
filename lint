@@ -116,10 +116,10 @@ function lint {
 	fi
 
 	# Don't lint this script or static.go
-	case "${filename}" in
-	./lint) return;;
-	./app/static.go) return;;
-	./coverage.html) return;;
+	case "$(basename "${filename}")" in
+	lint) return;;
+	static.go) return;;
+	coverage.html) return;;
 	esac
 
 	case "$ext" in
