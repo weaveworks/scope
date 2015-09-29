@@ -89,4 +89,5 @@ fi
 MANUAL_APPS=$@
 echo "$MANUAL_APPS" >>/etc/weave/apps
 
-exec /sbin/runsvdir /etc/service
+exec /home/weave/runsvinit
+

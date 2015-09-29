@@ -1,0 +1,17 @@
+#!/bin/sh
+
+handle() {
+	echo "got signal"
+	exit
+}
+
+trap "handle" SIGINT
+
+for i in `seq 1 5`
+do
+	echo foo: $i
+	sleep 1
+done
+
+echo foo: terminating!
+

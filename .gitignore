@@ -42,6 +42,7 @@ docker/scope-app
 docker/scope-probe
 docker/docker*
 docker/weave
+docker/runsvinit
 experimental/bridge/bridge
 experimental/demoprobe/demoprobe
 experimental/fixprobe/fixprobe
