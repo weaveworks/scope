@@ -11,16 +11,18 @@ const getConstraints = function(nodes, scale) {
   const internetNode = nodes[theInternetId];
 
   // all nodes have to be below the internet node
-  _.each(nodes, function(node, id) {
-    if (id !== theInternetId) {
-      constraints.push({
-        axis: 'y',
-        left: internetNode.index,
-        right: node.index,
-        gap: scale(4)
-      });
-    }
-  });
+  if (internetNode) {
+    _.each(nodes, function(node, id) {
+      if (id !== theInternetId) {
+        constraints.push({
+          axis: 'y',
+          left: internetNode.index,
+          right: node.index,
+          gap: scale(1.5)
+        });
+      }
+    });
+  }
 
   return constraints;
 };
@@ -61,7 +63,7 @@ const doLayout = function(nodes, edges, width, height, scale) {
     .links(edgeList)
     .constraints(constraints)
     .flowLayout('y', scale(0.5))
-    .start(5, 10, 20);
+    .start(16, 8, 0);
 
   debug('graph layout done');
 
