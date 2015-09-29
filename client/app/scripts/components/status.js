@@ -21,7 +21,10 @@ const Status = React.createClass({
       showWarningIcon = true;
     } else if (this.props.topology) {
       const stats = this.props.topology.stats;
-      text = `${stats.node_count} nodes, ${stats.edge_count} connections`;
+      text = `${stats.node_count} nodes`;
+      if (stats.filtered_nodes) {
+        text = `${text} (${stats.filtered_nodes} filtered)`;
+      }
       classNames += ' status-stats';
       showWarningIcon = false;
     }

@@ -44,7 +44,7 @@ function makeNode(node) {
 
 // Initial values
 
-let activeTopologyOptions = null;
+let topologyOptions = makeOrderedMap();
 let adjacentNodes = makeSet();
 let currentTopology = null;
 let currentTopologyId = 'containers';
@@ -57,24 +57,43 @@ let nodeDetails = null;
 let selectedNodeId = null;
 let topologies = [];
 let topologiesLoaded = false;
+let routeSet = false;
 let websocketClosed = true;
+
+function processTopologies(topologyList) {
+  // adds ID field to topology, based on last part of URL path
+  _.each(topologyList, function(topology) {
+    topology.id = topology.url.split('/').pop();
+    processTopologies(topology.sub_topologies);
+  });
+  return topologyList;
+}
 
 function setTopology(topologyId) {
   currentTopologyId = topologyId;
   currentTopology = findCurrentTopology(topologies, topologyId);
 }
 
-function setDefaultTopologyOptions() {
-  if (currentTopology) {
-    activeTopologyOptions = {};
-    _.each(currentTopology.options, function(items, option) {
+function setDefaultTopologyOptions(topologyList) {
+  _.each(topologyList, function(topology) {
+    let defaultOptions = makeOrderedMap();
+    _.each(topology.options, function(items, option) {
       _.each(items, function(item) {
         if (item.default === true) {
-          activeTopologyOptions[option] = item.value;
+          defaultOptions = defaultOptions.set(option, item.value);
         }
       });
     });
-  }
+
+    if (defaultOptions.size) {
+      topologyOptions = topologyOptions.set(
+        topology.id,
+        defaultOptions
+      );
+    }
+
+    setDefaultTopologyOptions(topology.sub_topologies);
+  });
 }
 
 // Store API
@@ -88,12 +107,13 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return {
       topologyId: currentTopologyId,
       selectedNodeId: this.getSelectedNodeId(),
-      topologyOptions: this.getActiveTopologyOptions()
+      topologyOptions: topologyOptions.toJS() // all options
     };
   },
 
   getActiveTopologyOptions: function() {
-    return activeTopologyOptions;
+    // options for current topology
+    return topologyOptions.get(currentTopologyId);
   },
 
   getAdjacentNodes: function(nodeId) {
@@ -136,7 +156,7 @@ const AppStore = assign({}, EventEmitter.prototype, {
   },
 
   getHighlightedEdgeIds: function() {
-    if (mouseOverNodeId) {
+    if (mouseOverNodeId && nodes.has(mouseOverNodeId)) {
       // all neighbour combinations because we dont know which direction exists
       const adjacency = nodes.get(mouseOverNodeId).get('adjacency');
       if (adjacency) {
@@ -185,12 +205,12 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return topologies;
   },
 
-  getTopologyIdForUrl: function(url) {
-    return url.split('/').pop();
-  },
-
   getVersion: function() {
     return version;
+  },
+
+  isRouteSet: function() {
+    return routeSet;
   },
 
   isTopologiesLoaded: function() {
@@ -209,10 +229,14 @@ AppStore.registeredCallback = function(payload) {
   switch (payload.type) {
 
     case ActionTypes.CHANGE_TOPOLOGY_OPTION:
-      if (activeTopologyOptions[payload.option] !== payload.value) {
+      if (topologyOptions.getIn([payload.topologyId, payload.option])
+        !== payload.value) {
         nodes = nodes.clear();
       }
-      activeTopologyOptions[payload.option] = payload.value;
+      topologyOptions = topologyOptions.setIn(
+        [payload.topologyId, payload.option],
+        payload.value
+      );
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
@@ -230,7 +254,6 @@ AppStore.registeredCallback = function(payload) {
       selectedNodeId = null;
       if (payload.topologyId !== currentTopologyId) {
         setTopology(payload.topologyId);
-        setDefaultTopologyOptions();
         nodes = nodes.clear();
       }
       AppStore.emit(AppStore.CHANGE_EVENT);
@@ -321,15 +344,13 @@ AppStore.registeredCallback = function(payload) {
 
     case ActionTypes.RECEIVE_TOPOLOGIES:
       errorUrl = null;
-      topologiesLoaded = true;
-      topologies = payload.topologies;
-      if (!currentTopology) {
-        setTopology(currentTopologyId);
-        // only set on first load
-        if (activeTopologyOptions === null) {
-          setDefaultTopologyOptions();
-        }
+      topologies = processTopologies(payload.topologies);
+      setTopology(currentTopologyId);
+      // only set on first load, if options are not already set via route
+      if (!topologiesLoaded && topologyOptions.size === 0) {
+        setDefaultTopologyOptions(topologies);
       }
+      topologiesLoaded = true;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
@@ -340,13 +361,15 @@ AppStore.registeredCallback = function(payload) {
       break;
 
     case ActionTypes.ROUTE_TOPOLOGY:
+      routeSet = true;
       if (currentTopologyId !== payload.state.topologyId) {
         nodes = nodes.clear();
       }
       setTopology(payload.state.topologyId);
-      setDefaultTopologyOptions();
+      setDefaultTopologyOptions(topologies);
       selectedNodeId = payload.state.selectedNodeId;
-      activeTopologyOptions = payload.state.topologyOptions || activeTopologyOptions;
+      topologyOptions = Immutable.fromJS(payload.state.topologyOptions)
+        || topologyOptions;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 

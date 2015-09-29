@@ -5,15 +5,25 @@ let RouterUtils;
 let WebapiUtils;
 
 module.exports = {
-  changeTopologyOption: function(option, value) {
+  changeTopologyOption: function(option, value, topologyId) {
     AppDispatcher.dispatch({
       type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+      topologyId: topologyId,
       option: option,
       value: value
     });
     RouterUtils.updateRoute();
+    // update all request workers with new options
+    WebapiUtils.getTopologies(
+      AppStore.getActiveTopologyOptions()
+    );
     WebapiUtils.getNodesDelta(
       AppStore.getCurrentTopologyUrl(),
+      AppStore.getActiveTopologyOptions()
+    );
+    WebapiUtils.getNodeDetails(
+      AppStore.getCurrentTopologyUrl(),
+      AppStore.getSelectedNodeId(),
       AppStore.getActiveTopologyOptions()
     );
   },
@@ -146,6 +156,9 @@ module.exports = {
       state: state,
       type: ActionTypes.ROUTE_TOPOLOGY
     });
+    WebapiUtils.getTopologies(
+      AppStore.getActiveTopologyOptions()
+    );
     WebapiUtils.getNodesDelta(
       AppStore.getCurrentTopologyUrl(),
       AppStore.getActiveTopologyOptions()

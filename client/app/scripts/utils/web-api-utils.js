@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const debug = require('debug')('scope:web-api-utils');
 const reqwest = require('reqwest');
 
@@ -21,9 +20,12 @@ let apiDetailsTimer = 0;
 
 
 function buildOptionsQuery(options) {
-  return _.map(options, function(value, param) {
-    return param + '=' + value;
-  }).join('&');
+  if (options) {
+    return options.reduce(function(query, value, param) {
+      return `${query}&${param}=${value}`;
+    }, '');
+  }
+  return '';
 }
 
 function createWebsocket(topologyUrl, optionsQuery) {
@@ -66,19 +68,24 @@ function createWebsocket(topologyUrl, optionsQuery) {
 
 /* keep URLs relative */
 
-function getTopologies() {
+function getTopologies(options) {
   clearTimeout(topologyTimer);
-  const url = 'api/topology';
+  const optionsQuery = buildOptionsQuery(options);
+  const url = `api/topology?${optionsQuery}`;
   reqwest({
     url: url,
     success: function(res) {
       AppActions.receiveTopologies(res);
-      topologyTimer = setTimeout(getTopologies, topologyTimerInterval);
+      topologyTimer = setTimeout(function() {
+        getTopologies(options);
+      }, topologyTimerInterval / 2);
     },
     error: function(err) {
       debug('Error in topology request: ' + err);
       AppActions.receiveError(url);
-      topologyTimer = setTimeout(getTopologies, topologyTimerInterval / 2);
+      topologyTimer = setTimeout(function() {
+        getTopologies(options);
+      }, topologyTimerInterval / 2);
     }
   });
 }

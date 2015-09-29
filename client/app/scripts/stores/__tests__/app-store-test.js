@@ -1,4 +1,4 @@
-
+// Appstore test suite using Jasmine matchers
 
 describe('AppStore', function() {
   const ActionTypes = require('../../constants/action-types');
@@ -30,12 +30,14 @@ describe('AppStore', function() {
 
   const ChangeTopologyOptionAction = {
     type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+    topologyId: 'topo1',
     option: 'option1',
     value: 'on'
   };
 
   const ChangeTopologyOptionAction2 = {
     type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+    topologyId: 'topo1',
     option: 'option1',
     value: 'off'
   };
@@ -159,39 +161,40 @@ describe('AppStore', function() {
     // default options
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickTopologyAction);
-    expect(AppStore.getActiveTopologyOptions().option1).toBe('off');
-    expect(AppStore.getAppState().topologyOptions.option1).toBe('off');
+    expect(AppStore.getActiveTopologyOptions().has('option1')).toBeTruthy();
+    expect(AppStore.getActiveTopologyOptions().get('option1')).toBe('off');
+    expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('off');
 
     // turn on
     registeredCallback(ChangeTopologyOptionAction);
-    expect(AppStore.getActiveTopologyOptions().option1).toBe('on');
-    expect(AppStore.getAppState().topologyOptions.option1).toBe('on');
+    expect(AppStore.getActiveTopologyOptions().get('option1')).toBe('on');
+    expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('on');
 
     // turn off
     registeredCallback(ChangeTopologyOptionAction2);
-    expect(AppStore.getActiveTopologyOptions().option1).toBe('off');
-    expect(AppStore.getAppState().topologyOptions.option1).toBe('off');
+    expect(AppStore.getActiveTopologyOptions().get('option1')).toBe('off');
+    expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('off');
 
-    // other topology w/o options
+    // other topology w/o options dont return options, but keep in app state
     registeredCallback(ClickSubTopologyAction);
-    expect(AppStore.getActiveTopologyOptions().option1).toBeUndefined();
-    expect(AppStore.getAppState().topologyOptions.option1).toBeUndefined();
+    expect(AppStore.getActiveTopologyOptions()).toBeUndefined();
+    expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('off');
   });
 
   it('sets topology options from route', function() {
     RouteAction.state = {
       "topologyId":"topo1",
       "selectedNodeId": null,
-      "topologyOptions": {'option1': 'on'}};
+      "topologyOptions": {'topo1':{'option1': 'on'}}};
     registeredCallback(RouteAction);
-    expect(AppStore.getActiveTopologyOptions().option1).toBe('on');
-    expect(AppStore.getAppState().topologyOptions.option1).toBe('on');
+    expect(AppStore.getActiveTopologyOptions().get('option1')).toBe('on');
+    expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('on');
 
     // stay same after topos have been received
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickTopologyAction);
-    expect(AppStore.getActiveTopologyOptions().option1).toBe('on');
-    expect(AppStore.getAppState().topologyOptions.option1).toBe('on');
+    expect(AppStore.getActiveTopologyOptions().get('option1')).toBe('on');
+    expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('on');
   });
 
   it('uses default topology options from route', function() {
@@ -202,8 +205,8 @@ describe('AppStore', function() {
     registeredCallback(RouteAction);
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickTopologyAction);
-    expect(AppStore.getActiveTopologyOptions().option1).toBe('off');
-    expect(AppStore.getAppState().topologyOptions.option1).toBe('off');
+    expect(AppStore.getActiveTopologyOptions().get('option1')).toBe('off');
+    expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('off');
   });
 
   // nodes delta
@@ -220,6 +223,12 @@ describe('AppStore', function() {
   it('shows nodes that were received', function() {
     registeredCallback(ReceiveNodesDeltaAction);
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
+  });
+
+  it('knows a route was set', function() {
+    expect(AppStore.isRouteSet()).toBeFalsy();
+    registeredCallback(RouteAction);
+    expect(AppStore.isRouteSet()).toBeTruthy();
   });
 
   it('gets selected node after click', function() {

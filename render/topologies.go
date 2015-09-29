@@ -27,14 +27,14 @@ var ProcessRenderer = MakeReduce(
 	},
 )
 
-// ProcessWithContainerNameRenderer is a Renderer which produces a process
+// processWithContainerNameRenderer is a Renderer which produces a process
 // graph enriched with container names where appropriate
-type ProcessWithContainerNameRenderer struct{}
+type processWithContainerNameRenderer struct {
+	Renderer
+}
 
-// Render produces a process graph where the minor labels contain the
-// container name, if found.
-func (r ProcessWithContainerNameRenderer) Render(rpt report.Report) RenderableNodes {
-	processes := ProcessRenderer.Render(rpt)
+func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNodes {
+	processes := r.Renderer.Render(rpt)
 	containers := Map{
 		MapFunc:  MapContainerIdentity,
 		Renderer: SelectContainer,
@@ -60,10 +60,9 @@ func (r ProcessWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 	return processes
 }
 
-// EdgeMetadata produces an EdgeMetadata for a given edge.
-func (r ProcessWithContainerNameRenderer) EdgeMetadata(rpt report.Report, localID, remoteID string) report.EdgeMetadata {
-	return ProcessRenderer.EdgeMetadata(rpt, localID, remoteID)
-}
+// ProcessWithContainerNameRenderer is a Renderer which produces a process
+// graph enriched with container names where appropriate
+var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessRenderer}
 
 // ProcessRenderer is a Renderer which produces a renderable process
 // name graph by munging the progess graph.
@@ -120,14 +119,14 @@ var ContainerRenderer = MakeReduce(
 	},
 )
 
-// ContainerWithImageNameRenderer is a Renderer which produces a container
-// graph where the ranks are the image names, not their IDs
-type ContainerWithImageNameRenderer struct{}
+type containerWithImageNameRenderer struct {
+	Renderer
+}
 
 // Render produces a process graph where the minor labels contain the
 // container name, if found.
-func (r ContainerWithImageNameRenderer) Render(rpt report.Report) RenderableNodes {
-	containers := ContainerRenderer.Render(rpt)
+func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNodes {
+	containers := r.Renderer.Render(rpt)
 	images := Map{
 		MapFunc:  MapContainerImageIdentity,
 		Renderer: SelectContainerImage,
@@ -149,10 +148,9 @@ func (r ContainerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 	return containers
 }
 
-// EdgeMetadata produces an EdgeMetadata for a given edge.
-func (r ContainerWithImageNameRenderer) EdgeMetadata(rpt report.Report, localID, remoteID string) report.EdgeMetadata {
-	return ContainerRenderer.EdgeMetadata(rpt, localID, remoteID)
-}
+// ContainerWithImageNameRenderer is a Renderer which produces a container
+// graph where the ranks are the image names, not their IDs
+var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerRenderer}
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.

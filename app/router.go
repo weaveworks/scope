@@ -100,6 +100,17 @@ func makeReportPostHandler(a xfer.Adder) http.HandlerFunc {
 	}
 }
 
+func decorateTopologyForRequest(r *http.Request, topology *topologyView) {
+	for param, opts := range topology.options {
+		value := r.FormValue(param)
+		for _, opt := range opts {
+			if (value == "" && opt.def) || (opt.value != "" && opt.value == value) {
+				topology.renderer = opt.decorator(topology.renderer)
+			}
+		}
+	}
+}
+
 func captureTopology(rep xfer.Reporter, f func(xfer.Reporter, topologyView, http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		topology, ok := topologyRegistry[mux.Vars(r)["topology"]]
@@ -107,14 +118,7 @@ func captureTopology(rep xfer.Reporter, f func(xfer.Reporter, topologyView, http
 			http.NotFound(w, r)
 			return
 		}
-		for param, opts := range topology.options {
-			value := r.FormValue(param)
-			for _, opt := range opts {
-				if (value == "" && opt.def) || (opt.value != "" && opt.value == value) {
-					topology.renderer = opt.decorator(topology.renderer)
-				}
-			}
-		}
+		decorateTopologyForRequest(r, &topology)
 		f(rep, topology, w, r)
 	}
 }
@@ -135,7 +139,7 @@ var topologyRegistry = map[string]topologyView{
 	"applications": {
 		human:    "Applications",
 		parent:   "",
-		renderer: render.FilterUnconnected(render.ProcessWithContainerNameRenderer{}),
+		renderer: render.FilterUnconnected(render.ProcessWithContainerNameRenderer),
 	},
 	"applications-by-name": {
 		human:    "by name",
@@ -145,7 +149,7 @@ var topologyRegistry = map[string]topologyView{
 	"containers": {
 		human:    "Containers",
 		parent:   "",
-		renderer: render.ContainerWithImageNameRenderer{},
+		renderer: render.ContainerWithImageNameRenderer,
 		options: optionParams{"system": {
 			{"show", "System containers shown", false, nop},
 			{"hide", "System containers hidden", true, render.FilterSystem},

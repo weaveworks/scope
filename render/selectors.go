@@ -29,6 +29,11 @@ func (t TopologySelector) EdgeMetadata(rpt report.Report, srcID, dstID string) r
 	return metadata
 }
 
+// Stats implements Renderer
+func (t TopologySelector) Stats(r report.Report) Stats {
+	return Stats{}
+}
+
 // MakeRenderableNodes converts a topology to a set of RenderableNodes
 func MakeRenderableNodes(t report.Topology) RenderableNodes {
 	result := RenderableNodes{}

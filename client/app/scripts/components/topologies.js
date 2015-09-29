@@ -2,7 +2,6 @@ const React = require('react');
 const _ = require('lodash');
 
 const AppActions = require('../actions/app-actions');
-const AppStore = require('../stores/app-store');
 
 const Topologies = React.createClass({
 
@@ -13,7 +12,7 @@ const Topologies = React.createClass({
 
   renderSubTopology: function(subTopology) {
     const isActive = subTopology.name === this.props.currentTopology.name;
-    const topologyId = AppStore.getTopologyIdForUrl(subTopology.url);
+    const topologyId = subTopology.id;
     const title = this.renderTitle(subTopology);
     const className = isActive ? 'topologies-sub-item topologies-sub-item-active' : 'topologies-sub-item';
 
@@ -35,7 +34,7 @@ const Topologies = React.createClass({
   renderTopology: function(topology) {
     const isActive = topology.name === this.props.currentTopology.name;
     const className = isActive ? 'topologies-item-main topologies-item-main-active' : 'topologies-item-main';
-    const topologyId = AppStore.getTopologyIdForUrl(topology.url);
+    const topologyId = topology.id;
     const title = this.renderTitle(topology);
 
     return (
