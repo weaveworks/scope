@@ -50,30 +50,29 @@ var SpyDuration = prometheus.NewSummaryVec(
 // with process (PID) information.
 func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool) *Reporter {
 	var (
-		conntrackModulePresent = ConntrackModulePresent()
-		conntracker            Conntracker
-		natmapper              NATMapper
-		err                    error
+		conntracker Conntracker
+		natmapper   *NATMapper
 	)
-	if conntrackModulePresent && useConntrack {
-		conntracker, err = NewConntracker(true)
-		if err != nil {
-			log.Printf("Failed to start conntracker: %v", err)
+	if ConntrackModulePresent() {
+		if useConntrack {
+			var err error
+			if conntracker, err = NewConntracker(true); err != nil {
+				log.Printf("Failed to start conntracker for endpoint reporter: %v", err)
+			}
 		}
-	}
-	if conntrackModulePresent {
-		ct, err := NewConntracker(true, "--any-nat")
-		if err != nil {
-			log.Printf("Failed to start conntracker for natmapper: %v", err)
+		if natmapperConntracker, err := NewConntracker(true, "--any-nat"); err == nil {
+			m := MakeNATMapper(natmapperConntracker)
+			natmapper = &m
+		} else {
+			log.Printf("Failed to start conntracker for NAT mapper: %v", err)
 		}
-		natmapper = MakeNATMapper(ct)
 	}
 	return &Reporter{
 		hostID:           hostID,
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
 		conntracker:      conntracker,
-		natmapper:        &natmapper,
+		natmapper:        natmapper,
 		revResolver:      NewReverseResolver(),
 	}
 }
