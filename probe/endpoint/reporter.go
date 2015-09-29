@@ -66,7 +66,7 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		if err != nil {
 			log.Printf("Failed to start conntracker for natmapper: %v", err)
 		}
-		natmapper = NewNATMapper(ct)
+		natmapper = MakeNATMapper(ct)
 	}
 	return &Reporter{
 		hostID:           hostID,

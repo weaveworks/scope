@@ -55,7 +55,7 @@ func TestNat(t *testing.T) {
 			"foo":         "bar",
 		}))
 
-		natmapper := endpoint.NewNATMapper(ct)
+		natmapper := endpoint.MakeNATMapper(ct)
 		natmapper.ApplyNAT(have, "host1")
 		if !reflect.DeepEqual(want, have) {
 			t.Fatal(test.Diff(want, have))
@@ -88,7 +88,7 @@ func TestNat(t *testing.T) {
 			"foo":         "baz",
 		}))
 
-		natmapper := endpoint.NewNATMapper(ct)
+		natmapper := endpoint.MakeNATMapper(ct)
 		natmapper.ApplyNAT(have, "host1")
 		if !reflect.DeepEqual(want, have) {
 			t.Fatal(test.Diff(want, have))

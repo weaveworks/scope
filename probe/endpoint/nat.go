@@ -21,8 +21,8 @@ type NATMapper struct {
 	Conntracker
 }
 
-// NewNATMapper is exposed for testing
-func NewNATMapper(ct Conntracker) NATMapper {
+// MakeNATMapper is exposed for testing
+func MakeNATMapper(ct Conntracker) NATMapper {
 	return NATMapper{ct}
 }
 
@@ -50,7 +50,10 @@ func toMapping(f Flow) *endpointMapping {
 // ApplyNAT duplicates Nodes in the endpoint topology of a
 // report, based on the NAT table as returns by natTable.
 func (n NATMapper) ApplyNAT(rpt report.Report, scope string) {
-	n.WalkFlows(func(f Flow) {
+	if n.Conntracker == nil {
+		return
+	}
+	n.Conntracker.WalkFlows(func(f Flow) {
 		var (
 			mapping          = toMapping(f)
 			realEndpointID   = report.MakeEndpointNodeID(scope, mapping.originalIP, strconv.Itoa(mapping.originalPort))
