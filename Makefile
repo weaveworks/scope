@@ -29,7 +29,7 @@ docker/weave:
 	curl -L git.io/weave -o docker/weave
 	chmod u+x docker/weave
 
-$(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/run-app docker/run-probe
+$(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/run-app docker/run-probe docker/entrypoint.sh
 	@if [ -z '$(DOCKER_SQUASH)' ] ; then echo "Please install docker-squash by running 'make deps' (and make sure GOPATH/bin is in your PATH)." && exit 1 ; fi
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	cp $(DOCKER_DISTRIB) docker/docker.tgz
