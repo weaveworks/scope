@@ -16,7 +16,7 @@ func TestBackgroundPublisher(t *testing.T) {
 	defer backgroundPublisher.Stop()
 	runtime.Gosched()
 
-	for i := 0; i < 10; i++ {
+	for i := 1; i <= 10; i++ {
 		err := backgroundPublisher.Publish(&bytes.Buffer{})
 		if err != nil {
 			t.Fatalf("%v", err)
