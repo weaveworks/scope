@@ -10,6 +10,10 @@ import (
 	"github.com/weaveworks/scope/xfer"
 )
 
+const (
+	dnsPollInterval = 10 * time.Second
+)
+
 var (
 	tick     = time.Tick
 	lookupIP = net.LookupIP
@@ -40,7 +44,7 @@ func newStaticResolver(targets []string, set func(target string, endpoints []str
 
 func (r staticResolver) loop() {
 	r.resolve()
-	t := tick(time.Minute)
+	t := tick(dnsPollInterval)
 	for {
 		select {
 		case <-t:
