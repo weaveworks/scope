@@ -20,7 +20,6 @@ fi
 IMAGE_VERSION=${VERSION:-$IMAGE_VERSION}
 SCOPE_IMAGE=weaveworks/scope:$IMAGE_VERSION
 SCOPE_CONTAINER_NAME=weavescope
-DOCKER_BRIDGE=${DOCKER_BRIDGE:-docker0}
 IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
 IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
     xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
@@ -70,7 +69,7 @@ case "$COMMAND" in
         echo $CONTAINER
 
         if ! echo "$@" | grep -E "\-\-no\-app|\-\-service\-token" 1>/dev/null; then
-			IP_ADDRS=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "$IP_ADDR_CMD")
+            IP_ADDRS=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "$IP_ADDR_CMD")
             echo "Weave Scope is reachable at the following URL(s):" >&2
             for ip in $IP_ADDRS; do
                 echo "  * http://$ip:4040/" >&2

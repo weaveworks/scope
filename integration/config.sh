@@ -18,17 +18,17 @@ RUNNER="$WEAVE_ROOT/testing/runner/runner"
 . "$WEAVE_ROOT/test/config.sh"
 
 scope_on() {
-  local host=$1
-  shift 1
-  [ -z "$DEBUG" ] || greyly echo "Scope on $host: $@" >&2
-  DOCKER_HOST=tcp://$host:$DOCKER_PORT $SCOPE "$@"
+	local host=$1
+	shift 1
+	[ -z "$DEBUG" ] || greyly echo "Scope on $host: $@" >&2
+	DOCKER_HOST=tcp://$host:$DOCKER_PORT $SCOPE "$@"
 }
 
 weave_on() {
-  local host=$1
-  shift 1
-  [ -z "$DEBUG" ] || greyly echo "Weave on $host: $@" >&2
-  DOCKER_HOST=tcp://$host:$DOCKER_PORT $WEAVE "$@"
+	local host=$1
+	shift 1
+	[ -z "$DEBUG" ] || greyly echo "Weave on $host: $@" >&2
+	DOCKER_HOST=tcp://$host:$DOCKER_PORT $WEAVE "$@"
 }
 
 # this checks we have a weavescope container
