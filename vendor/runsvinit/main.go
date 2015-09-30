@@ -13,52 +13,66 @@ import (
 
 const etcService = "/etc/service"
 
+var (
+	debugf = log.Printf
+	info   = log.Print
+	infof  = log.Printf
+	fatal  = log.Fatal
+	fatalf = log.Fatalf
+)
+
 func main() {
-	reap := flag.Bool("reap", true, "reap orphan children")
+	var (
+		reap  = flag.Bool("reap", true, "reap orphan children")
+		debug = flag.Bool("debug", false, "log debug information")
+	)
 	flag.Parse()
 
 	log.SetFlags(0)
 
+	if !*debug {
+		debugf = func(string, ...interface{}) {}
+	}
+
 	runsvdir, err := exec.LookPath("runsvdir")
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 
 	sv, err := exec.LookPath("sv")
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 
 	if fi, err := os.Stat(etcService); err != nil {
-		log.Fatal(err)
+		fatal(err)
 	} else if !fi.IsDir() {
-		log.Fatalf("%s is not a directory", etcService)
+		fatalf("%s is not a directory", etcService)
 	}
 
 	if pid := os.Getpid(); pid != 1 {
-		log.Printf("warning: I'm not PID 1, I'm PID %d", pid)
+		debugf("warning: I'm not PID 1, I'm PID %d", pid)
 	}
 
 	if *reap {
-		log.Print("reaping zombies")
 		go reapLoop()
 	} else {
-		log.Print("NOT reaping zombies")
+		infof("warning: NOT reaping zombies")
 	}
 
 	supervisor := cmd(runsvdir, etcService)
 	if err := supervisor.Start(); err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 
-	log.Printf("%s started", runsvdir)
+	debugf("%s started", runsvdir)
 
 	go shutdown(sv, supervisor.Process)
 
 	if err := supervisor.Wait(); err != nil {
-		log.Printf("%s exited with error: %v", runsvdir, err)
+		infof("%s exited with error: %v", runsvdir, err)
 	} else {
-		log.Printf("%s exited cleanly", runsvdir)
+		debugf("%s exited cleanly", runsvdir)
 	}
 }
 
@@ -87,7 +101,7 @@ func reapChildren() {
 		if err == syscall.ECHILD {
 			return // done
 		}
-		log.Printf("reaped child process %d (%+v)", pid, ws)
+		infof("reaped child process %d (%+v)", pid, ws)
 	}
 }
 
@@ -99,11 +113,11 @@ func shutdown(sv string, s signaler) {
 	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	sig := <-c
-	log.Printf("received %s", sig)
+	debugf("received %s", sig)
 
 	matches, err := filepath.Glob(filepath.Join(etcService, "*"))
 	if err != nil {
-		log.Printf("when shutting down services: %v", err)
+		infof("when shutting down services: %v", err)
 		return
 	}
 
@@ -111,28 +125,28 @@ func shutdown(sv string, s signaler) {
 	for _, match := range matches {
 		fi, err := os.Stat(match)
 		if err != nil {
-			log.Printf("%s: %v", match, err)
+			infof("%s: %v", match, err)
 			continue
 		}
 		if !fi.IsDir() {
-			log.Printf("%s: not a directory", match)
+			infof("%s: not a directory", match)
 			continue
 		}
 		service := filepath.Base(match)
 		stop := cmd(sv, "stop", service)
 		if err := stop.Run(); err != nil {
-			log.Printf("%s: %v", strings.Join(stop.Args, " "), err)
+			infof("%s: %v", strings.Join(stop.Args, " "), err)
 			continue
 		}
 		stopped = append(stopped, service)
 	}
 
-	log.Printf("stopped %d: %s", len(stopped), strings.Join(stopped, ", "))
-	log.Printf("stopping supervisor with signal %s...", sig)
+	debugf("stopped %d: %s", len(stopped), strings.Join(stopped, ", "))
+	debugf("stopping supervisor with signal %s...", sig)
 	if err := s.Signal(sig); err != nil {
-		log.Print(err)
+		info(err)
 	}
-	log.Printf("shutdown handler exiting")
+	debugf("shutdown handler exiting")
 }
 
 func cmd(path string, args ...string) *exec.Cmd {
