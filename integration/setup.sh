@@ -16,11 +16,3 @@ for HOST in $HOSTS; do
     run_on $HOST "sudo curl -sL git.io/weave -o /usr/local/bin/weave"
     run_on $HOST "sudo chmod a+x /usr/local/bin/weave"
 done
-
-echo Prefetching Images
-for HOST in $HOSTS; do
-    weave_on $HOST setup
-    docker_on $HOST pull peterbourgon/tns-db
-done
-
-curl -sL git.io/weave -o ./weave

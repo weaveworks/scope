@@ -1,56 +1,12 @@
 #!/bin/sh
 
 usage() {
-	echo "$0 --app.foo bar --probe.foo bar"
+	echo "$0 --dns <IP> --hostname <NAME> --searchpath <SEARCHPATH> --app.foo bar --probe.foo bar"
 	exit 1
 }
 
 # This script exists to modify the network settings in the scope containers
 # as docker doesn't allow it when started with --net=host
-
-WEAVE_CONTAINER_NAME=weave
-DOCKER_BRIDGE=docker0
-HOSTNAME=scope
-DOMAIN=weave.local
-IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
-
-container_ip() {
-    if ! status=$(docker inspect --format='{{.State.Running}} {{.NetworkSettings.IPAddress}}' $1 2>/dev/null); then
-        echo "$2" >&2
-        return 1
-    fi
-    case "$status" in
-        "true ")
-            echo "$1 container has no IP address; is Docker networking enabled?" >&2
-            return 1
-            ;;
-        true*)
-            CONTAINER_IP="${status#true }"
-            ;;
-        *)
-            echo "$3" >&2
-            return 1
-            ;;
-    esac
-}
-
-is_running() {
-    status=$(docker inspect --format='{{.State.Running}}' $1 2>/dev/null) && [ "$status" = "true" ]
-    return $?
-}
-
-docker_bridge_ip() {
-    local DOCKER_BRIDGE_IP=$(ip -f inet address show dev $DOCKER_BRIDGE | grep -m1 -o 'inet \([.0-9]\)*')
-    echo ${DOCKER_BRIDGE_IP#inet }
-}
-
-# Run `weave expose` if it's not already exposed.
-weave_expose() {
-    status=$(weave --local ps weave:expose | awk '{print $3}' 2>/dev/null)
-    if [ "$status" = "" ]; then
-        weave --local expose
-    fi
-}
 
 mkdir -p /etc/weave
 APP_ARGS=""
@@ -58,6 +14,16 @@ PROBE_ARGS=""
 
 while true; do
     case "$1" in
+        --dns)
+            [ $# -gt 1 ] || usage
+            DNS_SERVER="$2"
+            shift
+            ;;
+        --searchpath)
+            [ $# -gt 1 ] || usage
+            SEARCHPATH="$2"
+            shift
+            ;;
         --app.*)
             if echo "$1" | grep "=" 1>/dev/null; then
                 ARG_NAME=$(echo "$1" | sed 's/\-\-app\.\([^=]*\)=\(.*\)/\1/')
@@ -107,33 +73,14 @@ while true; do
     shift
 done
 
-if is_running $WEAVE_CONTAINER_NAME; then
-    container_ip $WEAVE_CONTAINER_NAME
-    PROBE_ARGS="$PROBE_ARGS -weave.router.addr=$CONTAINER_IP"
-    weave_expose
-
-    DOCKER_BRIDGE_IP=$(docker_bridge_ip)
-    echo "Weave container detected at $CONTAINER_IP, Docker bridge at $DOCKER_BRIDGE_IP"
-
-    echo "domain $DOMAIN" >/etc/resolv.conf
-    echo "search $DOMAIN" >>/etc/resolv.conf
-    echo "nameserver $DOCKER_BRIDGE_IP" >>/etc/resolv.conf
-
-    IP_ADDRS=$(find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
-        xargs -n1 ip addr show | grep inet | awk '{ print $2 }' | grep -oE "$IP_REGEXP")
-    CONTAINER=$(docker inspect --format='{{.Id}}' weavescope)
-    if [ -z "$IP_ADDRS" ]; then
-        echo "Could not determine local IP address; Weave DNS integration will not work correctly."
-        exit 1
-    else
-        for ip in $IP_ADDRS; do
-            weave --local dns-add $ip $CONTAINER -h $HOSTNAME.$DOMAIN
-        done
-    fi
-fi
-
 echo "$APP_ARGS" >/etc/weave/scope-app.args
 echo "$PROBE_ARGS" >/etc/weave/scope-probe.args
+
+if [ -n "$DNS_SERVER" -a -n "$SEARCHPATH" ]; then
+    echo "domain $SEARCHPATH" >/etc/resolv.conf
+    echo "search $SEARCHPATH" >>/etc/resolv.conf
+    echo "nameserver $DNS_SERVER" >>/etc/resolv.conf
+fi
 
 # End of the command line can optionally be some
 # addresses of apps to connect to, for people not

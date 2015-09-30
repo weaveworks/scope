@@ -4,12 +4,11 @@
 
 start_suite "Launch scope (without weave installed) and check it boots"
 
-scope_on $HOST1 launch
+assert_raises "run_on $HOST1 \
+  PATH=/usr/local/scope/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  DOCKER_HOST=tcp://$HOST1:$DOCKER_PORT \
+  scope launch"
 
-sleep 5 # give the probe a few seconds to build a report and send it to the app
+assert_raises "curl $HOST1:4040"
 
-has_container $HOST1 weave 0
-has_container $HOST1 weaveproxy 0
-has_container $HOST1 weavescope 1
-
-scope_end_suite
+end_suite

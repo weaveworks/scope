@@ -20,14 +20,32 @@ fi
 IMAGE_VERSION=${VERSION:-$IMAGE_VERSION}
 SCOPE_IMAGE=weaveworks/scope:$IMAGE_VERSION
 SCOPE_CONTAINER_NAME=weavescope
+WEAVE_CONTAINER_NAME=weave
+WEAVEDNS_CONTAINER_NAME=weavedns
+HOSTNAME=scope
+DOMAINNAME=weave.local
+FQDN=$HOSTNAME.$DOMAINNAME
+DOCKER_BRIDGE=${DOCKER_BRIDGE:-docker0}
 IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
 IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
     xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
+
 WEAVESCOPE_DOCKER_ARGS=${WEAVESCOPE_DOCKER_ARGS:-}
+WEAVESCOPE_DNS_ARGS=${WEAVESCOPE_DNS_ARGS:-}
 
 [ $# -gt 0 ] || usage
 COMMAND=$1
 shift 1
+
+# http://stackoverflow.com/questions/592620/how-to-check-if-a-program-exists-from-a-bash-script
+command_exists() {
+    command -v $1 >/dev/null 2>&1
+}
+
+is_running() {
+    status=$(docker inspect --format='{{.State.Running}}' $1 2>/dev/null) && [ "$status" = "true" ]
+    return $?
+}
 
 # Check that a container named $1 with image $2 is not running
 check_not_running() {
@@ -57,19 +75,113 @@ check_not_running() {
     esac
 }
 
+# Run `weave expose` if it's not already exposed.
+weave_expose() {
+    status=$(weave ps weave:expose | awk '{print $3}' 2>/dev/null)
+    if [ "$status" = "" ]; then
+        weave expose
+    fi
+}
+
+# Add all Scope IPs to its DNS record.
+weave_dns_add() {
+    CONTAINER_ID="$1"
+    CONTAINER_FQDN="$2"
+    shift 2
+
+    for ip in $*; do
+        weave dns-add $ip $CONTAINER_ID -h $CONTAINER_FQDN
+    done
+}
+
+weave_dns_present() {
+    docker run --rm --entrypoint /bin/sh $SCOPE_IMAGE -c "nc -z $DOCKER_BRIDGE_IP 53" || is_running $WEAVEDNS_CONTAINER_NAME
+}
+
+set_docker_bridge_ip() {
+    DOCKER_BRIDGE_IP=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "ip -f inet address show dev $DOCKER_BRIDGE" | grep -m1 -o 'inet \([.0-9]\)*')
+    DOCKER_BRIDGE_IP=${DOCKER_BRIDGE_IP#inet }
+}
+
+# Call url $4 with http verb $3 on container $1 at port $2
+http_call() {
+    container_ip $1 \
+        "$1 container is not present. Have you launched it?" \
+        "$1 container is not running." \
+        || return 1
+    shift 1
+    http_call_ip $CONTAINER_IP "$@"
+}
+
+http_call_ip() {
+    ip="$1"
+    port="$2"
+    http_verb="$3"
+    url="$4"
+    shift 4
+    curl --connect-timeout 3 -s -X $http_verb "$@" http://$ip:$port$url
+}
+
+container_ip() {
+    if ! status=$(docker inspect --format='{{.State.Running}} {{.NetworkSettings.IPAddress}}' $1 2>/dev/null); then
+        echo "$2" >&2
+        return 1
+    fi
+    case "$status" in
+        "true ")
+            echo "$1 container has no IP address; is Docker networking enabled?" >&2
+            return 1
+            ;;
+        true*)
+            CONTAINER_IP="${status#true }"
+            ;;
+        *)
+            echo "$3" >&2
+            return 1
+            ;;
+    esac
+}
+
 case "$COMMAND" in
 
     launch)
         check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE
+        set_docker_bridge_ip
+
+        # If Weave is running, we want to expose a Weave IP to the host
+        # network namespace, so Scope can use it.
+        SCOPE_ARGS=
+        if command_exists weave && is_running $WEAVE_CONTAINER_NAME; then
+            container_ip $WEAVE_CONTAINER_NAME
+            SCOPE_ARGS="--probe.weave.router.addr=$CONTAINER_IP"
+            weave_expose
+        fi
+
+        # If WeaveDNS is running, we want to automatically tell the scope
+        # image to use weave dns.  We can't use --dns with --net=host, so we
+        # have to hack it.
+        if command_exists weave && weave_dns_present; then
+            WEAVESCOPE_DNS_ARGS="$WEAVESCOPE_DNS_ARGS --dns $DOCKER_BRIDGE_IP --searchpath $DOMAINNAME"
+        fi
+
         docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
 
         CONTAINER=$(docker run --privileged -d --name=$SCOPE_CONTAINER_NAME --net=host --pid=host \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --probe.docker true "$@")
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE $WEAVESCOPE_DNS_ARGS $SCOPE_ARGS --probe.docker true "$@")
+
+        IP_ADDRS=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "$IP_ADDR_CMD")
+        if command_exists weave && is_running $WEAVE_CONTAINER_NAME && weave_dns_present; then
+            if [ -z "$IP_ADDRS" ]; then
+                echo "Could not determine local IP address; Weave DNS integration will not work correctly."
+                exit 1
+            fi
+            weave_dns_add $CONTAINER $FQDN $IP_ADDRS
+        fi
+
         echo $CONTAINER
 
         if ! echo "$@" | grep -E "\-\-no\-app|\-\-service\-token" 1>/dev/null; then
-            IP_ADDRS=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "$IP_ADDR_CMD")
             echo "Weave Scope is reachable at the following URL(s):" >&2
             for ip in $IP_ADDRS; do
                 echo "  * http://$ip:4040/" >&2
