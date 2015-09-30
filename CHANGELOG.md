@@ -9,10 +9,6 @@ New features:
   [#483](https://github.com/weaveworks/scope/issues/483)
 - Show number of filtered nodes in status pane.
   [#509](https://github.com/weaveworks/scope/issues/509)
-- Improve unit and integration test coverage.
-  [#515](https://github.com/weaveworks/scope/pull/515)
-  [#517](https://github.com/weaveworks/scope/pull/517)
-  [#521](https://github.com/weaveworks/scope/pull/521)
 
 Bug fixes:
 - Prevent detail pane from hiding nodes on click-to-focus.
