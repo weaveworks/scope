@@ -13,4 +13,4 @@ assert_raises "docker_on $HOST1 logs weavescope 2>&1 | grep 'app exiting'"
 assert_raises "docker_on $HOST1 logs weavescope 2>&1 | grep 'probe exiting'"
 assert_raises "docker_on $HOST1 inspect --format='{{.State.Running}}' weavescope" "false"
 
-end_suite
+scope_end_suite

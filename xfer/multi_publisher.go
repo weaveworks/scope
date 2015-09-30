@@ -123,6 +123,7 @@ func (p *MultiPublisher) Stop() {
 func (p *MultiPublisher) appendFilter(list []tuple, f func(tuple) bool) []tuple {
 	for _, t := range p.list {
 		if !f(t) {
+			t.publisher.Stop()
 			continue
 		}
 		list = append(list, t)
