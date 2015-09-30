@@ -1,3 +1,34 @@
+## Release 0.8.0
+
+New features:
+- Show message in the UI when topologies exceed size limits.
+  [#474](https://github.com/weaveworks/scope/issues/474)
+- Provide container image information in detail pane for containers.
+  [#398](https://github.com/weaveworks/scope/issues/398)
+- When filtering out system containers, also filter out pseudo nodes, if they were only connected to system containers.
+  [#483](https://github.com/weaveworks/scope/issues/483)
+- Show number of filtered nodes in status pane.
+  [#509](https://github.com/weaveworks/scope/issues/509)
+- Improve unit and integration test coverage.
+  [#515](https://github.com/weaveworks/scope/pull/515)
+  [#517](https://github.com/weaveworks/scope/pull/517)
+  [#521](https://github.com/weaveworks/scope/pull/521)
+
+Bug fixes:
+- Prevent detail pane from hiding nodes on click-to-focus.
+  [#495](https://github.com/weaveworks/scope/issues/495)
+- Stop radial view from bouncing in some circumstances.
+  [#496](https://github.com/weaveworks/scope/issues/496)
+- Make NAT tracking component more resilient to failure.
+  [#506](https://github.com/weaveworks/scope/issues/506)
+- Prevent duplicate reports from reaching the same app.
+  [#463](https://github.com/weaveworks/scope/issues/463)
+- Improve consistency of edge directionality in some use-cases.
+  [#373](https://github.com/weaveworks/scope/issues/373)
+- Ensure probe, app, and container shut down cleanly.
+  [#424](https://github.com/weaveworks/scope/issues/424)
+  [#478](https://github.com/weaveworks/scope/issues/478)
+
 ## Release 0.7.0
 
 New features:
