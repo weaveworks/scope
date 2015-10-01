@@ -31,12 +31,12 @@ weave_on() {
 	DOCKER_HOST=tcp://$host:$DOCKER_PORT $WEAVE "$@"
 }
 
-# this checks we have a weavescope container
+# this checks we have a named container
 has_container() {
 	local host=$1
 	local name=$2
 	local count=$3
-	assert "curl -s http://$host:4040/api/topology/containers?system=show | jq -r '[.nodes | .[] | select(.label_major == \"$name\")] | length'" $count
+	assert "curl -s http://$host:4040/api/topology/containers?system=show | jq -r '[.nodes[] | select(.label_major == \"$name\")] | length'" $count
 }
 
 scope_end_suite() {
@@ -44,4 +44,20 @@ scope_end_suite() {
 	for host in $HOSTS; do
 		docker_on $host rm -f $(docker_on $host ps -a -q) 2>/dev/null 1>&2 || true
 	done
+}
+
+container_id() {
+	local host="$1"
+	local name="$2"
+	echo $(curl -s http://$host:4040/api/topology/containers?system=show | jq -r ".nodes[] | select(.label_major == \"$name\") | .id")
+}
+
+# this checks we have an edge from container 1 to container 2
+has_connection() {
+	local host="$1"
+	local from="$2"
+	local to="$3"
+	local from_id=$(container_id "$host" "$from")
+	local to_id=$(container_id "$host" "$to")
+	assert "curl -s http://$host:4040/api/topology/containers?system=show | jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
 }
