@@ -159,10 +159,8 @@ func main() {
 	defer func() { done.Wait() }() // second, wait for the main loops to be killed
 	defer close(quit)              // first, kill the main loops
 
-	var (
-		rpt     = report.MakeReport()
-		rptLock = sync.Mutex{}
-	)
+	var rpt syncReport
+	rpt.swap(report.MakeReport())
 
 	go func() {
 		defer done.Done()
@@ -178,16 +176,10 @@ func main() {
 					}
 				}
 
-				rptLock.Lock()
-				localReport := rpt.Copy()
-				rptLock.Unlock()
-
+				localReport := rpt.copy()
 				localReport = localReport.Merge(doReport(reporters))
 				localReport = Apply(localReport, taggers)
-
-				rptLock.Lock()
-				rpt = localReport
-				rptLock.Unlock()
+				rpt.swap(localReport)
 
 				if took := time.Since(start); took > *spyInterval {
 					log.Printf("report generation took too long (%s)", took)
@@ -202,21 +194,15 @@ func main() {
 	go func() {
 		defer done.Done()
 		var (
-			pubTick     = time.Tick(*publishInterval)
-			p           = xfer.NewReportPublisher(publishers)
-			localReport = report.MakeReport()
+			pubTick = time.Tick(*publishInterval)
+			p       = xfer.NewReportPublisher(publishers)
 		)
 
 		for {
 			select {
 			case <-pubTick:
 				publishTicks.WithLabelValues().Add(1)
-
-				rptLock.Lock()
-				localReport = rpt
-				rpt = report.MakeReport()
-				rptLock.Unlock()
-
+				localReport := rpt.swap(report.MakeReport())
 				localReport.Window = *publishInterval
 				if err := p.Publish(localReport); err != nil {
 					log.Printf("publish: %v", err)
@@ -255,4 +241,23 @@ func interrupt() <-chan os.Signal {
 	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	return c
+}
+
+type syncReport struct {
+	mtx sync.RWMutex
+	rpt report.Report
+}
+
+func (r *syncReport) swap(other report.Report) report.Report {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+	old := r.rpt
+	r.rpt = other
+	return old
+}
+
+func (r *syncReport) copy() report.Report {
+	r.mtx.RLock()
+	defer r.mtx.RUnlock()
+	return r.rpt.Copy()
 }
