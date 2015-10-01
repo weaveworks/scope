@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -153,27 +154,22 @@ func main() {
 		}()
 	}
 
-	quit, done := make(chan struct{}), make(chan struct{})
-	defer func() { <-done }() // second, wait for the main loop to be killed
-	defer close(quit)         // first, kill the main loop
+	quit, done := make(chan struct{}), sync.WaitGroup{}
+	done.Add(2)
+	defer func() { done.Wait() }() // second, wait for the main loops to be killed
+	defer close(quit)              // first, kill the main loops
+
+	var (
+		rpt     = report.MakeReport()
+		rptLock = sync.Mutex{}
+	)
+
 	go func() {
-		defer close(done)
-		var (
-			pubTick = time.Tick(*publishInterval)
-			spyTick = time.Tick(*spyInterval)
-			r       = report.MakeReport()
-			p       = xfer.NewReportPublisher(publishers)
-		)
+		defer done.Done()
+		spyTick := time.Tick(*spyInterval)
+
 		for {
 			select {
-			case <-pubTick:
-				publishTicks.WithLabelValues().Add(1)
-				r.Window = *publishInterval
-				if err := p.Publish(r); err != nil {
-					log.Printf("publish: %v", err)
-				}
-				r = report.MakeReport()
-
 			case <-spyTick:
 				start := time.Now()
 				for _, ticker := range tickers {
@@ -181,10 +177,49 @@ func main() {
 						log.Printf("error doing ticker: %v", err)
 					}
 				}
-				r = r.Merge(doReport(reporters))
-				r = Apply(r, taggers)
+
+				rptLock.Lock()
+				localReport := rpt.Copy()
+				rptLock.Unlock()
+
+				localReport = localReport.Merge(doReport(reporters))
+				localReport = Apply(localReport, taggers)
+
+				rptLock.Lock()
+				rpt = localReport
+				rptLock.Unlock()
+
 				if took := time.Since(start); took > *spyInterval {
 					log.Printf("report generation took too long (%s)", took)
+				}
+
+			case <-quit:
+				return
+			}
+		}
+	}()
+
+	go func() {
+		defer done.Done()
+		var (
+			pubTick     = time.Tick(*publishInterval)
+			p           = xfer.NewReportPublisher(publishers)
+			localReport = report.MakeReport()
+		)
+
+		for {
+			select {
+			case <-pubTick:
+				publishTicks.WithLabelValues().Add(1)
+
+				rptLock.Lock()
+				localReport = rpt
+				rpt = report.MakeReport()
+				rptLock.Unlock()
+
+				localReport.Window = *publishInterval
+				if err := p.Publish(localReport); err != nil {
+					log.Printf("publish: %v", err)
 				}
 
 			case <-quit:
