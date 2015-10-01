@@ -172,7 +172,8 @@ publish() {
 
     if [ "$RELEASE_TYPE" = 'PRERELEASE' ] ; then
         echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
-        make UPDATE_LATEST=$UPDATE_LATEST SUDO=$SUDO SCOPE_VERSION=$VERSION DOCKERHUB_USER=$DOCKERHUB_USER publish
+        $SUDO docker tag -f $DOCKERHUB_USER/scope $DOCKERHUB_USER/scope:$VERSION
+        $SUDO docker push   $DOCKERHUB_USER/scope:$VERSION
         echo "** Docker images tagged and pushed"
 
         echo "== Publishing pre-release on GitHub"
@@ -204,7 +205,8 @@ publish() {
         echo '** Sanity checks OK for publishing tag' $LATEST_TAG as $DOCKERHUB_USER/scope:$VERSION
 
         echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
-        make UPDATE_LATEST=$UPDATE_LATEST SUDO=$SUDO SCOPE_VERSION=$VERSION DOCKERHUB_USER=$DOCKERHUB_USER publish
+        $SUDO docker tag -f $DOCKERHUB_USER/scope $DOCKERHUB_USER/scope:$VERSION
+        $SUDO docker push   $DOCKERHUB_USER/scope:$VERSION
         echo "** Docker images tagged and pushed"
 
         echo "== Publishing release on GitHub"
