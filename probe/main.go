@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -153,27 +154,20 @@ func main() {
 		}()
 	}
 
-	quit, done := make(chan struct{}), make(chan struct{})
-	defer func() { <-done }() // second, wait for the main loop to be killed
-	defer close(quit)         // first, kill the main loop
+	quit, done := make(chan struct{}), sync.WaitGroup{}
+	done.Add(2)
+	defer func() { done.Wait() }() // second, wait for the main loops to be killed
+	defer close(quit)              // first, kill the main loops
+
+	var rpt syncReport
+	rpt.swap(report.MakeReport())
+
 	go func() {
-		defer close(done)
-		var (
-			pubTick = time.Tick(*publishInterval)
-			spyTick = time.Tick(*spyInterval)
-			r       = report.MakeReport()
-			p       = xfer.NewReportPublisher(publishers)
-		)
+		defer done.Done()
+		spyTick := time.Tick(*spyInterval)
+
 		for {
 			select {
-			case <-pubTick:
-				publishTicks.WithLabelValues().Add(1)
-				r.Window = *publishInterval
-				if err := p.Publish(r); err != nil {
-					log.Printf("publish: %v", err)
-				}
-				r = report.MakeReport()
-
 			case <-spyTick:
 				start := time.Now()
 				for _, ticker := range tickers {
@@ -181,10 +175,37 @@ func main() {
 						log.Printf("error doing ticker: %v", err)
 					}
 				}
-				r = r.Merge(doReport(reporters))
-				r = Apply(r, taggers)
+
+				localReport := rpt.copy()
+				localReport = localReport.Merge(doReport(reporters))
+				localReport = Apply(localReport, taggers)
+				rpt.swap(localReport)
+
 				if took := time.Since(start); took > *spyInterval {
 					log.Printf("report generation took too long (%s)", took)
+				}
+
+			case <-quit:
+				return
+			}
+		}
+	}()
+
+	go func() {
+		defer done.Done()
+		var (
+			pubTick = time.Tick(*publishInterval)
+			p       = xfer.NewReportPublisher(publishers)
+		)
+
+		for {
+			select {
+			case <-pubTick:
+				publishTicks.WithLabelValues().Add(1)
+				localReport := rpt.swap(report.MakeReport())
+				localReport.Window = *publishInterval
+				if err := p.Publish(localReport); err != nil {
+					log.Printf("publish: %v", err)
 				}
 
 			case <-quit:
@@ -220,4 +241,23 @@ func interrupt() <-chan os.Signal {
 	c := make(chan os.Signal)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	return c
+}
+
+type syncReport struct {
+	mtx sync.RWMutex
+	rpt report.Report
+}
+
+func (r *syncReport) swap(other report.Report) report.Report {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+	old := r.rpt
+	r.rpt = other
+	return old
+}
+
+func (r *syncReport) copy() report.Report {
+	r.mtx.RLock()
+	defer r.mtx.RUnlock()
+	return r.rpt.Copy()
 }
