@@ -94,10 +94,10 @@ frontend: $(SCOPE_UI_BUILD_UPTODATE)
 
 clean:
 	go clean ./...
-	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) $(APP_EXE) $(PROBE_EXE) client/build/app.js
+	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) $(APP_EXE) $(PROBE_EXE) client/build/app.js docker/weave
 
 deps:
-	go get -tags netgo \
+	go get -u -f -tags netgo \
 		github.com/jwilder/docker-squash \
 		github.com/golang/lint/golint \
 		github.com/fzipp/gocyclo \
@@ -105,3 +105,6 @@ deps:
 		github.com/mjibson/esc \
 		github.com/kisielk/errcheck \
 		github.com/aktau/github-release
+
+update:
+	go get -u -f -v -tags -netgo ./...
