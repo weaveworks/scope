@@ -140,11 +140,20 @@ var topologyRegistry = map[string]topologyView{
 		human:    "Applications",
 		parent:   "",
 		renderer: render.FilterUnconnected(render.ProcessWithContainerNameRenderer),
+		options: optionParams{"unconnected": {
+			// Show the user why there are filtered nodes in this view.
+			// Don't give them the option to show those nodes.
+			{"hide", "Unconnected nodes hidden", true, nop},
+		}},
 	},
 	"applications-by-name": {
 		human:    "by name",
 		parent:   "applications",
 		renderer: render.FilterUnconnected(render.ProcessNameRenderer),
+		options: optionParams{"unconnected": {
+			// Ditto above.
+			{"hide", "Unconnected nodes hidden", true, nop},
+		}},
 	},
 	"containers": {
 		human:    "Containers",
