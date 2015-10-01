@@ -10,15 +10,53 @@ RELEASE_DESCRIPTION=${RELEASE_DESCRIPTION:-"Container Visibility"}
 
 PWD=`pwd`
 
-setup() {
-    ## Get the new version number from the most recent tag
-    if ! LATEST_TAG=$(git describe --abbrev=0 --match='v*' 2>/dev/null) ; then
-        echo "Could not find an annotated 'v*' version tag." >&2
-        exit 1
+infer_release_type() {
+    if echo $1 | grep -qE '^v[0-9]+\.[0-9]+\.0+$' ; then
+        echo MAINLINE
+    elif echo $1 | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$' ; then
+        echo BRANCH
+    else
+        echo PRERELEASE
     fi
+}
+
+setup() {
+    # Ensure we have exactly one annotated tag pointing at HEAD
+    HEAD_TAGS=$(git tag --points-at HEAD)
+    case $(echo $HEAD_TAGS | wc -w) in
+        1)
+            if [ $HEAD_TAGS != "latest_release" ] ; then
+                LATEST_TAG=$HEAD_TAGS
+            else
+                echo "Cannot determine version - latest_release points at HEAD" >&2
+                exit 1
+            fi
+            ;;
+        0)
+            echo "Cannot determine version - no tags point at HEAD" >&2
+            exit 1
+            ;;
+        *)
+            echo "Cannot determine version - multiple tags point at HEAD:" >&2
+            for TAG in $HEAD_TAGS ; do
+                echo -e "\t$TAG" >&2
+            done
+            exit 1
+            ;;
+    esac
+
+    RELEASE_TYPE=$(infer_release_type $LATEST_TAG)
+    echo "== Inferred release type $RELEASE_TYPE from tag $LATEST_TAG"
+
     LATEST_TAG_SHA=$(git rev-parse $LATEST_TAG)
+    LATEST_TAG_COMMIT_SHA=$(git rev-list -1 $LATEST_TAG)
     LATEST_RELEASE_SHA=$(git rev-parse latest_release)
-    VERSION=${LATEST_TAG#v}
+    LATEST_RELEASE_COMMIT_SHA=$(git rev-list -1 latest_release)
+    if [ "$RELEASE_TYPE" != 'PRERELEASE' ] ; then
+        VERSION=${LATEST_TAG#v}
+    else
+        VERSION=${LATEST_TAG}
+    fi
     # NB does not check that this tag is on master
     RELEASE_DIR=./releases/$LATEST_TAG
 }
@@ -39,8 +77,8 @@ build() {
     cd $RELEASE_DIR
 
     ## Check that the top changelog entry is this version
-    if ! latest_changelog=$(grep -o "## Release [0-9].*" -m1 ./CHANGELOG.md) || \
-       ! [ `echo "$latest_changelog" | grep -o '[0-9][^ ]*'` == "$VERSION" ]; then
+    if ! latest_changelog=$(grep -oP '(?<=^## Release ).*' -m1 ./CHANGELOG.md) || \
+       ! [ `echo "$latest_changelog" = "$VERSION"` ]; then
         echo -e "\u2757 Latest changelog entry \"$latest_changelog\" does not match the release version $VERSION" >&2
         exit 1
     fi
@@ -50,10 +88,10 @@ build() {
 
     ## Inject the version numbers and build the distributables
     ## (library versions?)
-    sed -i -e "s/^SCRIPT_VERSION=.*$/SCRIPT_VERSION=\"$VERSION\"/" ./scope
+    sed -i "/SCRIPT_VERSION=/ c\SCRIPT_VERSION=\"$VERSION\"" ./scope
     make SUDO=$SUDO SCOPE_VERSION=$VERSION DOCKERHUB_USER=$DOCKERHUB_USER
 
-    if $(go list -e -f {{.Dir}} github.com/weaveworks/tools)/test; then
+    if make tests; then
         echo -e '\u2713 Tests pass'
     else
         echo -e "\u2757 Tests failed, probably best not publish this one" >&2
@@ -71,23 +109,12 @@ build() {
     echo '** Release artefacts in' $RELEASE_DIR
 }
 
-publish() {
+draft() {
     setup
+
     cd $PWD/$RELEASE_DIR
 
     echo "== Sanity checks"
-
-    if ! which github-release >/dev/null; then
-        echo "Please install git-release:" >&2
-        echo -e "\tgo get github.com/aktau/github-release" >&2
-        echo "and create a git token per https://github.com/aktau/github-release" >&2
-        exit 1
-    fi
-
-    if ! [ $(git rev-list -1 $LATEST_TAG) == $(git rev-list -1 latest_release) ]; then
-        echo -e "\u2757 The tag latest_release does not point to the same commit as $LATEST_TAG"
-        exit 1
-    fi
 
     ## Check that the tag exists by looking at github
     if ! curl -sSf https://api.github.com/repos/$GITHUB_USER/scope/git/tags/$LATEST_TAG_SHA >/dev/null 2>&1; then
@@ -98,19 +125,9 @@ publish() {
         exit 1
     fi
 
-    ## Check that the 'latest_release' tag exists by looking at github
-    if ! curl -sSf https://api.github.com/repos/$GITHUB_USER/scope/git/tags/$LATEST_RELEASE_SHA >/dev/null 2>&1; then
-        echo -e "\u2757 Tag latest_release is not on GitHub, or is not the same as the local tag" >&2
-        echo -e "\thttps://github.com/$GITHUB_USER/scope/tags" >&2
-        echo "You may need to" >&2
-        echo -e "\tgit tag -af latest_release"
-        echo -e "\tgit push -f git@github.com:$GITHUB_USER/scope latest_release"
-        exit 1
-    fi
-
     echo -e "\u2713 Tag $LATEST_TAG exists in GitHub repo $GITHUB_USER/scope"
 
-    ## Check that the version doesn't already exist by looking at github
+    ## Check that the version does not already exist by looking at github
     ## releases
     if github-release info --user $GITHUB_USER --repo scope --tag $LATEST_TAG >/dev/null 2>&1; then
         echo -e "\u2757 Release $LATEST_TAG already exists on GitHub" >&2
@@ -120,14 +137,13 @@ publish() {
 
     echo '** Sanity checks OK for publishing tag' $LATEST_TAG as $DOCKERHUB_USER/scope:$VERSION
 
-    echo "== Tagging and publishing images on docker hub as user $DOCKERHUB_USER"
-    $SUDO docker tag -f $DOCKERHUB_USER/scope $DOCKERHUB_USER/scope:$VERSION
-    $SUDO docker push   $DOCKERHUB_USER/scope:$VERSION
+    RELEASE_ARGS="--draft"
+    if [ "$RELEASE_TYPE" = 'PRERELEASE' ] ; then
+        RELEASE_ARGS="$RELEASE_ARGS --pre-release"
+    fi
 
-    echo "== Creating GitHub release $RELEASE_NAME $VERSION"
-    # This cannot be done as a draft because of a bug in
-    # github-release: https://github.com/aktau/github-release/issues/7
-    github-release release \
+    echo "== Creating GitHub release $RELEASE_ARGS $RELEASE_NAME $VERSION"
+    github-release release $RELEASE_ARGS \
         --user $GITHUB_USER \
         --repo scope \
         --tag $LATEST_TAG \
@@ -141,52 +157,126 @@ publish() {
         --name "scope" \
         --file "./scope"
 
-    echo "** Published release $RELEASE_NAME $VERSION"
+    echo "** Draft $TYPE $RELEASE_NAME $VERSION created at"
     echo -e "\thttps://github.com/$GITHUB_USER/scope/releases/$LATEST_TAG"
+}
 
-    if github-release info --user $GITHUB_USER --repo scope \
-        --tag latest_release >/dev/null 2>&1; then
-        github-release delete \
-            --user $GITHUB_USER \
-            --repo scope \
-            --tag latest_release
+publish() {
+    setup
+    cd $PWD/$RELEASE_DIR
+
+    UPDATE_LATEST=false
+    if [ "$RELEASE_TYPE" = 'MAINLINE' ] ; then
+        UPDATE_LATEST=true
     fi
 
-    github-release release \
-        --user $GITHUB_USER \
-        --repo scope \
-        --tag latest_release \
-        --name "$RELEASE_NAME latest ($VERSION)" \
-        --description "$RELEASE_DESCRIPTION"
+    if [ "$RELEASE_TYPE" = 'PRERELEASE' ] ; then
+        echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
+        make UPDATE_LATEST=$UPDATE_LATEST SUDO=$SUDO SCOPE_VERSION=$VERSION DOCKERHUB_USER=$DOCKERHUB_USER publish
+        echo "** Docker images tagged and pushed"
 
-    github-release upload \
-        --user $GITHUB_USER \
-        --repo scope \
-        --tag latest_release \
-        --name "scope" \
-        --file "./scope"
+        echo "== Publishing pre-release on GitHub"
 
-    echo "** Published $RELEASE_NAME as latest_release at"
-    echo -e "\thttps://github.com/$GITHUB_USER/scope/releases/latest_release"
+        github-release publish \
+            --user $GITHUB_USER \
+            --repo scope \
+            --tag $LATEST_TAG
+
+        echo "** Pre-release $RELEASE_NAME $VERSION published at"
+        echo -e "\thttps://github.com/$GITHUB_USER/scope/releases/$LATEST_TAG"
+    else
+        echo "== Sanity checks"
+        if ! [ "$LATEST_TAG_COMMIT_SHA" == "$LATEST_RELEASE_COMMIT_SHA" ] ; then
+            echo -e "\u2757 The tag latest_release does not point to the same commit as $LATEST_TAG" >&2
+            echo "You may need to" >&2
+            echo -e "\tgit tag -af latest_release $LATEST_TAG" >&2
+            exit 1
+        fi
+
+        ## Check that the 'latest_release' tag exists by looking at github
+        if ! curl -sSf https://api.github.com/repos/$GITHUB_USER/scope/git/tags/$LATEST_RELEASE_SHA >/dev/null 2>&1; then
+            echo -e "\u2757 Tag latest_release is not on GitHub, or is not the same as the local tag" >&2
+            echo -e "\thttps://github.com/$GITHUB_USER/scope/tags" >&2
+            echo "You may need to" >&2
+            echo -e "\tgit push -f git@github.com:$GITHUB_USER/scope latest_release" >&2
+            exit 1
+        fi
+        echo '** Sanity checks OK for publishing tag' $LATEST_TAG as $DOCKERHUB_USER/scope:$VERSION
+
+        echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
+        make UPDATE_LATEST=$UPDATE_LATEST SUDO=$SUDO SCOPE_VERSION=$VERSION DOCKERHUB_USER=$DOCKERHUB_USER publish
+        echo "** Docker images tagged and pushed"
+
+        echo "== Publishing release on GitHub"
+
+        github-release publish \
+            --user $GITHUB_USER \
+            --repo scope \
+            --tag $LATEST_TAG
+
+        if github-release info --user $GITHUB_USER --repo scope \
+            --tag latest_release >/dev/null 2>&1; then
+            github-release delete \
+                --user $GITHUB_USER \
+                --repo scope \
+                --tag latest_release
+        fi
+
+        github-release release \
+            --user $GITHUB_USER \
+            --repo scope \
+            --tag latest_release \
+            --name "$RELEASE_NAME latest ($VERSION)" \
+            --description "[Release Notes](https://github.com/$GITHUB_USER/scope/releases/$LATEST_TAG)"
+
+        github-release upload \
+            --user $GITHUB_USER \
+            --repo scope \
+            --tag latest_release \
+            --name "scope" \
+            --file "./scope"
+
+        echo "** Release $RELEASE_NAME $VERSION published at"
+        echo -e "\thttps://github.com/$GITHUB_USER/scope/releases/$LATEST_TAG"
+        echo -e "\thttps://github.com/$GITHUB_USER/scope/releases/latest_release"
+    fi
 }
 
 usage() {
     echo "Usage:"
     echo -e "\t./bin/release build"
     echo "-- Build artefacts for the latest version tag"
+    echo -e "\t./bin/release draft"
+    echo "-- Create draft release with artefacts in GitHub"
     echo -e "\t./bin/release publish"
-    echo "-- Publish the artefacts for the latest tag to GitHub and DockerHub"
+    echo "-- Publish the GitHub release and update DockerHub"
+    exit 1
 }
 
-case "$1" in
+# Ensure required tooling is installed
+if ! which github-release >/dev/null; then
+    echo "Please install git-release:" >&2
+    echo -e "\tgo get github.com/weaveworks/github-release" >&2
+    echo "and create a git token per https://github.com/weaveworks/github-release" >&2
+    exit 1
+fi
+
+[ $# -eq 0 ] && usage
+COMMAND=$1
+shift
+
+case "$COMMAND" in
     build)
-        build
+        build "$@"
+        ;;
+    draft)
+        draft "$@"
         ;;
     publish)
-        publish
+        publish "$@"
         ;;
     *)
-        echo "Unknown command \"$1\""
+        echo "Unknown command \"$COMMAND\""
         usage
         ;;
 esac
