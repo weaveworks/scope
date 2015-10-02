@@ -26,7 +26,7 @@ type Reporter struct {
 	hostName         string
 	includeProcesses bool
 	includeNAT       bool
-	conntracker      Conntracker
+	flowWalker       flowWalker // interface
 	natMapper        *natMapper
 	reverseResolver  *reverseResolver
 }
@@ -50,18 +50,18 @@ var SpyDuration = prometheus.NewSummaryVec(
 // with process (PID) information.
 func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool) *Reporter {
 	var (
-		conntracker Conntracker
-		natMapper   *natMapper
+		flowWalker flowWalker
+		natMapper  *natMapper
 	)
 	if ConntrackModulePresent() { // TODO(pb)
 		if useConntrack {
 			var err error
-			if conntracker, err = NewConntracker(true); err != nil {
+			if flowWalker, err = newConntrackFlowWalker(true); err != nil {
 				log.Printf("Failed to start conntracker for endpoint reporter: %v", err)
 			}
 		}
-		if natmapperConntracker, err := NewConntracker(true, "--any-nat"); err == nil {
-			m := makeNATMapper(natmapperConntracker)
+		if natmapperFlowWalker, err := newConntrackFlowWalker(true, "--any-nat"); err == nil {
+			m := makeNATMapper(natmapperFlowWalker)
 			natMapper = &m // TODO(pb): if we only ever use this as a pointer, newNATMapper
 		} else {
 			log.Printf("Failed to start conntracker for NAT mapper: %v", err)
@@ -71,7 +71,7 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		hostID:           hostID,
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
-		conntracker:      conntracker,
+		flowWalker:       flowWalker,
 		natMapper:        natMapper,
 		reverseResolver:  newReverseResolver(),
 	}
@@ -79,11 +79,11 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 
 // Stop stop stop
 func (r *Reporter) Stop() {
-	if r.conntracker != nil { // TODO(pb): this should never be nil (implies interface)
-		r.conntracker.Stop()
+	if r.flowWalker != nil { // TODO(pb): this should never be nil (implies interface)
+		r.flowWalker.stop()
 	}
 	if r.natMapper != nil { // TODO(pb): this should never be nil (implies interface)
-		r.natMapper.Stop()
+		r.natMapper.stop()
 	}
 	r.reverseResolver.stop()
 }
@@ -123,11 +123,11 @@ func (r *Reporter) Report() (report.Report, error) {
 		}
 	}
 
-	if r.conntracker != nil {
+	if r.flowWalker != nil {
 		extraNodeInfo := report.MakeNode().WithMetadata(report.Metadata{
 			Conntracked: "true",
 		})
-		r.conntracker.WalkFlows(func(f Flow) {
+		r.flowWalker.walkFlows(func(f flow) {
 			var (
 				localPort  = uint16(f.Original.Layer4.SrcPort)
 				remotePort = uint16(f.Original.Layer4.DstPort)
