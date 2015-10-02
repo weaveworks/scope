@@ -28,7 +28,7 @@ type Reporter struct {
 	includeNAT       bool
 	conntracker      Conntracker
 	natmapper        *NATMapper
-	revResolver      *ReverseResolver
+	reverseResolver  *reverseResolver
 }
 
 // SpyDuration is an exported prometheus metric
@@ -73,7 +73,7 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		includeProcesses: includeProcesses,
 		conntracker:      conntracker,
 		natmapper:        natmapper,
-		revResolver:      NewReverseResolver(),
+		reverseResolver:  newReverseResolver(),
 	}
 }
 
@@ -85,7 +85,7 @@ func (r *Reporter) Stop() {
 	if r.natmapper != nil {
 		r.natmapper.Stop()
 	}
-	r.revResolver.Stop()
+	r.reverseResolver.stop()
 }
 
 // Report implements Reporter.
@@ -164,9 +164,9 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 
 		// In case we have a reverse resolution for the IP, we can use it for
 		// the name...
-		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
+		if remoteName, err := r.reverseResolver.get(remoteAddr); err == nil {
 			remoteNode = remoteNode.WithMetadata(map[string]string{
-				"name": revRemoteName,
+				"name": remoteName,
 			})
 		}
 
@@ -210,9 +210,9 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 
 		// In case we have a reverse resolution for the IP, we can use it for
 		// the name...
-		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
+		if remoteName, err := r.reverseResolver.get(remoteAddr); err == nil {
 			remoteNode = remoteNode.WithMetadata(map[string]string{
-				"name": revRemoteName,
+				"name": remoteName,
 			})
 		}
 
