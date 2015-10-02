@@ -37,7 +37,8 @@ func dot(w io.Writer, t render.RenderableNodes) {
 func handleHTML(rpt report.Report) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logRequest("HTML", r)
-		fmt.Fprintf(w, `<html><head></head><body><img src="/svg?%s" width="95%" height="95%"/></body></html>`, r.URL.RawQuery)
+		format := `<html><head></head><body><center><img src="/svg?%s" style="margin:5%;"/></center></body></html>`
+		fmt.Fprintf(w, format, r.URL.RawQuery)
 	}
 }
 
