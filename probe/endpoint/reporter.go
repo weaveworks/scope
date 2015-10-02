@@ -27,7 +27,7 @@ type Reporter struct {
 	includeProcesses bool
 	includeNAT       bool
 	conntracker      Conntracker
-	natmapper        *NATMapper
+	natMapper        *natMapper
 	reverseResolver  *reverseResolver
 }
 
@@ -51,9 +51,9 @@ var SpyDuration = prometheus.NewSummaryVec(
 func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool) *Reporter {
 	var (
 		conntracker Conntracker
-		natmapper   *NATMapper
+		natMapper   *natMapper
 	)
-	if ConntrackModulePresent() {
+	if ConntrackModulePresent() { // TODO(pb)
 		if useConntrack {
 			var err error
 			if conntracker, err = NewConntracker(true); err != nil {
@@ -61,8 +61,8 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 			}
 		}
 		if natmapperConntracker, err := NewConntracker(true, "--any-nat"); err == nil {
-			m := MakeNATMapper(natmapperConntracker)
-			natmapper = &m
+			m := makeNATMapper(natmapperConntracker)
+			natMapper = &m // TODO(pb): if we only ever use this as a pointer, newNATMapper
 		} else {
 			log.Printf("Failed to start conntracker for NAT mapper: %v", err)
 		}
@@ -72,18 +72,18 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
 		conntracker:      conntracker,
-		natmapper:        natmapper,
+		natMapper:        natMapper,
 		reverseResolver:  newReverseResolver(),
 	}
 }
 
 // Stop stop stop
 func (r *Reporter) Stop() {
-	if r.conntracker != nil {
+	if r.conntracker != nil { // TODO(pb): this should never be nil (implies interface)
 		r.conntracker.Stop()
 	}
-	if r.natmapper != nil {
-		r.natmapper.Stop()
+	if r.natMapper != nil { // TODO(pb): this should never be nil (implies interface)
+		r.natMapper.Stop()
 	}
 	r.reverseResolver.stop()
 }
@@ -138,8 +138,8 @@ func (r *Reporter) Report() (report.Report, error) {
 		})
 	}
 
-	if r.natmapper != nil {
-		r.natmapper.ApplyNAT(rpt, r.hostID)
+	if r.natMapper != nil { // TODO(pb): should never be nil
+		r.natMapper.applyNAT(rpt, r.hostID)
 	}
 
 	return rpt, nil

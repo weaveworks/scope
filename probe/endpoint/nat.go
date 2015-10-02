@@ -16,14 +16,13 @@ type endpointMapping struct {
 	rewrittenPort int
 }
 
-// NATMapper rewrites a report to deal with NAT's connections
-type NATMapper struct {
+// natMapper rewrites a report to deal with NAT'd connections.
+type natMapper struct {
 	Conntracker
 }
 
-// MakeNATMapper is exposed for testing
-func MakeNATMapper(ct Conntracker) NATMapper {
-	return NATMapper{ct}
+func makeNATMapper(ct Conntracker) natMapper {
+	return natMapper{ct}
 }
 
 func toMapping(f Flow) *endpointMapping {
@@ -47,10 +46,10 @@ func toMapping(f Flow) *endpointMapping {
 	return &mapping
 }
 
-// ApplyNAT duplicates Nodes in the endpoint topology of a
-// report, based on the NAT table as returns by natTable.
-func (n NATMapper) ApplyNAT(rpt report.Report, scope string) {
-	if n.Conntracker == nil {
+// applyNAT duplicates Nodes in the endpoint topology of a report, based on
+// the NAT table.
+func (n natMapper) applyNAT(rpt report.Report, scope string) {
+	if n.Conntracker == nil { // TODO(pb)
 		return
 	}
 	n.Conntracker.WalkFlows(func(f Flow) {
