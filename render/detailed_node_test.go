@@ -7,20 +7,21 @@ import (
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/fixture"
 )
 
 func TestOriginTable(t *testing.T) {
-	if _, ok := render.OriginTable(test.Report, "not-found", false, false); ok {
+	if _, ok := render.OriginTable(fixture.Report, "not-found", false, false); ok {
 		t.Errorf("unknown origin ID gave unexpected success")
 	}
-	for originID, want := range map[string]render.Table{test.ServerProcessNodeID: {
-		Title:   fmt.Sprintf(`Process "apache" (%s)`, test.ServerPID),
+	for originID, want := range map[string]render.Table{fixture.ServerProcessNodeID: {
+		Title:   fmt.Sprintf(`Process "apache" (%s)`, fixture.ServerPID),
 		Numeric: false,
 		Rank:    2,
 		Rows:    []render.Row{},
 	},
-		test.ServerHostNodeID: {
-			Title:   fmt.Sprintf("Host %q", test.ServerHostName),
+		fixture.ServerHostNodeID: {
+			Title:   fmt.Sprintf("Host %q", fixture.ServerHostName),
 			Numeric: false,
 			Rank:    1,
 			Rows: []render.Row{
@@ -29,7 +30,7 @@ func TestOriginTable(t *testing.T) {
 			},
 		},
 	} {
-		have, ok := render.OriginTable(test.Report, originID, false, false)
+		have, ok := render.OriginTable(fixture.Report, originID, false, false)
 		if !ok {
 			t.Errorf("%q: not OK", originID)
 			continue
@@ -41,23 +42,23 @@ func TestOriginTable(t *testing.T) {
 
 	// Test host/container tags
 	for originID, want := range map[string]render.Table{
-		test.ServerProcessNodeID: {
-			Title:   fmt.Sprintf(`Process "apache" (%s)`, test.ServerPID),
+		fixture.ServerProcessNodeID: {
+			Title:   fmt.Sprintf(`Process "apache" (%s)`, fixture.ServerPID),
 			Numeric: false,
 			Rank:    2,
 			Rows: []render.Row{
-				{"Host", test.ServerHostID, "", false},
-				{"Container ID", test.ServerContainerID, "", false},
+				{"Host", fixture.ServerHostID, "", false},
+				{"Container ID", fixture.ServerContainerID, "", false},
 			},
 		},
-		test.ServerContainerNodeID: {
+		fixture.ServerContainerNodeID: {
 			Title:   `Container "server"`,
 			Numeric: false,
 			Rank:    3,
 			Rows: []render.Row{
-				{"Host", test.ServerHostID, "", false},
-				{"ID", test.ServerContainerID, "", false},
-				{"Image ID", test.ServerContainerImageID, "", false},
+				{"Host", fixture.ServerHostID, "", false},
+				{"ID", fixture.ServerContainerID, "", false},
+				{"Image ID", fixture.ServerContainerImageID, "", false},
 				{fmt.Sprintf(`Label %q`, render.AmazonECSContainerNameLabel), `server`, "", false},
 				{`Label "foo1"`, `bar1`, "", false},
 				{`Label "foo2"`, `bar2`, "", false},
@@ -65,7 +66,7 @@ func TestOriginTable(t *testing.T) {
 			},
 		},
 	} {
-		have, ok := render.OriginTable(test.Report, originID, true, true)
+		have, ok := render.OriginTable(fixture.Report, originID, true, true)
 		if !ok {
 			t.Errorf("%q: not OK", originID)
 			continue
@@ -78,16 +79,16 @@ func TestOriginTable(t *testing.T) {
 }
 
 func TestMakeDetailedHostNode(t *testing.T) {
-	renderableNode := render.HostRenderer.Render(test.Report)[render.MakeHostID(test.ClientHostID)]
-	have := render.MakeDetailedNode(test.Report, renderableNode)
+	renderableNode := render.HostRenderer.Render(fixture.Report)[render.MakeHostID(fixture.ClientHostID)]
+	have := render.MakeDetailedNode(fixture.Report, renderableNode)
 	want := render.DetailedNode{
-		ID:         render.MakeHostID(test.ClientHostID),
+		ID:         render.MakeHostID(fixture.ClientHostID),
 		LabelMajor: "client",
 		LabelMinor: "hostname.com",
 		Pseudo:     false,
 		Tables: []render.Table{
 			{
-				Title:   fmt.Sprintf("Host %q", test.ClientHostName),
+				Title:   fmt.Sprintf("Host %q", fixture.ClientHostName),
 				Numeric: false,
 				Rank:    1,
 				Rows: []render.Row{
@@ -135,12 +136,12 @@ func TestMakeDetailedHostNode(t *testing.T) {
 }
 
 func TestMakeDetailedContainerNode(t *testing.T) {
-	renderableNode := render.ContainerRenderer.Render(test.Report)[test.ServerContainerID]
-	have := render.MakeDetailedNode(test.Report, renderableNode)
+	renderableNode := render.ContainerRenderer.Render(fixture.Report)[fixture.ServerContainerID]
+	have := render.MakeDetailedNode(fixture.Report, renderableNode)
 	want := render.DetailedNode{
-		ID:         test.ServerContainerID,
+		ID:         fixture.ServerContainerID,
 		LabelMajor: "server",
-		LabelMinor: test.ServerHostName,
+		LabelMinor: fixture.ServerHostName,
 		Pseudo:     false,
 		Tables: []render.Table{
 			{
@@ -148,7 +149,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Numeric: false,
 				Rank:    4,
 				Rows: []render.Row{
-					{"Image ID", test.ServerContainerImageID, "", false},
+					{"Image ID", fixture.ServerContainerImageID, "", false},
 					{`Label "foo1"`, `bar1`, "", false},
 					{`Label "foo2"`, `bar2`, "", false},
 				},
@@ -158,8 +159,8 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Numeric: false,
 				Rank:    3,
 				Rows: []render.Row{
-					{"ID", test.ServerContainerID, "", false},
-					{"Image ID", test.ServerContainerImageID, "", false},
+					{"ID", fixture.ServerContainerID, "", false},
+					{"Image ID", fixture.ServerContainerImageID, "", false},
 					{fmt.Sprintf(`Label %q`, render.AmazonECSContainerNameLabel), `server`, "", false},
 					{`Label "foo1"`, `bar1`, "", false},
 					{`Label "foo2"`, `bar2`, "", false},
@@ -167,13 +168,13 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				},
 			},
 			{
-				Title:   fmt.Sprintf(`Process "apache" (%s)`, test.ServerPID),
+				Title:   fmt.Sprintf(`Process "apache" (%s)`, fixture.ServerPID),
 				Numeric: false,
 				Rank:    2,
 				Rows:    []render.Row{},
 			},
 			{
-				Title:   fmt.Sprintf("Host %q", test.ServerHostName),
+				Title:   fmt.Sprintf("Host %q", fixture.ServerHostName),
 				Numeric: false,
 				Rank:    1,
 				Rows: []render.Row{
@@ -190,38 +191,38 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 					{"Ingress byte rate", "1.0", "KBps", false},
 					{"Client", "Server", "", true},
 					{
-						fmt.Sprintf("%s:%s", test.UnknownClient1IP, test.UnknownClient1Port),
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", fixture.UnknownClient1IP, fixture.UnknownClient1Port),
+						fmt.Sprintf("%s:%s", fixture.ServerIP, fixture.ServerPort),
 						"",
 						true,
 					},
 					{
-						fmt.Sprintf("%s:%s", test.UnknownClient2IP, test.UnknownClient2Port),
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", fixture.UnknownClient2IP, fixture.UnknownClient2Port),
+						fmt.Sprintf("%s:%s", fixture.ServerIP, fixture.ServerPort),
 						"",
 						true,
 					},
 					{
-						fmt.Sprintf("%s:%s", test.UnknownClient3IP, test.UnknownClient3Port),
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", fixture.UnknownClient3IP, fixture.UnknownClient3Port),
+						fmt.Sprintf("%s:%s", fixture.ServerIP, fixture.ServerPort),
 						"",
 						true,
 					},
 					{
-						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54001),
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", fixture.ClientIP, fixture.ClientPort54001),
+						fmt.Sprintf("%s:%s", fixture.ServerIP, fixture.ServerPort),
 						"",
 						true,
 					},
 					{
-						fmt.Sprintf("%s:%s", test.ClientIP, test.ClientPort54002),
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", fixture.ClientIP, fixture.ClientPort54002),
+						fmt.Sprintf("%s:%s", fixture.ServerIP, fixture.ServerPort),
 						"",
 						true,
 					},
 					{
-						fmt.Sprintf("%s:%s", test.RandomClientIP, test.RandomClientPort),
-						fmt.Sprintf("%s:%s", test.ServerIP, test.ServerPort),
+						fmt.Sprintf("%s:%s", fixture.RandomClientIP, fixture.RandomClientPort),
+						fmt.Sprintf("%s:%s", fixture.ServerIP, fixture.ServerPort),
 						"",
 						true,
 					},

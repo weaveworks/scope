@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/fixture"
 )
 
 func TestAPIOriginHost(t *testing.T) {
@@ -18,7 +18,7 @@ func TestAPIOriginHost(t *testing.T) {
 
 	{
 		// Origin
-		body := getRawJSON(t, ts, fmt.Sprintf("/api/origin/host/%s", test.ServerHostNodeID))
+		body := getRawJSON(t, ts, fmt.Sprintf("/api/origin/host/%s", fixture.ServerHostNodeID))
 		var o OriginHost
 		if err := json.Unmarshal(body, &o); err != nil {
 			t.Fatalf("JSON parse error: %s", err)

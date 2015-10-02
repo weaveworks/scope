@@ -1,4 +1,4 @@
-package test
+package fixture
 
 import (
 	"time"
