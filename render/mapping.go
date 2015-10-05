@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -240,7 +241,8 @@ func MapHostIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 // will be joined to containers through the process topology, and we
 // don't want to double count edges.
 func MapEndpoint2IP(m RenderableNode, local report.Networks) RenderableNodes {
-	_, ok := m.Metadata[process.PID]
+	// Don't include procspied connections, to prevent double counting
+	_, ok := m.Metadata[endpoint.Procspied]
 	if ok {
 		return RenderableNodes{}
 	}
@@ -251,8 +253,19 @@ func MapEndpoint2IP(m RenderableNode, local report.Networks) RenderableNodes {
 	if !local.Contains(net.ParseIP(addr)) {
 		return RenderableNodes{TheInternetID: newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)}
 	}
-	return RenderableNodes{addr: NewRenderableNodeWith(addr, "", "", "", m)}
+
+	result := RenderableNodes{addr: NewRenderableNodeWith(addr, "", "", "", m)}
+	// Emit addr:port nodes as well, so connections from the internet to containers
+	// via port mapping also works.
+	port, ok := m.Metadata[endpoint.Port]
+	if ok {
+		id := fmt.Sprintf("%s:%s", addr, port)
+		result[id] = NewRenderableNodeWith(id, "", "", "", m)
+	}
+	return result
 }
+
+var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}):([0-9]+)->([0-9]+)/tcp`)
 
 // MapContainer2IP maps container nodes to their IP addresses (outputs
 // multiple nodes).  This allows container to be joined directly with
@@ -264,10 +277,20 @@ func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 		return result
 	}
 	for _, addr := range strings.Fields(addrs) {
-		n := NewRenderableNodeWith(addr, "", "", "", m)
-		n.Node.Counters[containersKey] = 1
-		result[addr] = n
+		node := NewRenderableNodeWith(addr, "", "", "", m)
+		node.Counters[containersKey] = 1
+		result[addr] = node
 	}
+
+	// also output all the host:port port mappings
+	for _, mapping := range portMappingMatch.FindAllStringSubmatch(m.Metadata[docker.ContainerPorts], -1) {
+		ip, port := mapping[1], mapping[2]
+		id := fmt.Sprintf("%s:%s", ip, port)
+		node := NewRenderableNodeWith(id, "", "", "", m)
+		node.Counters[containersKey] = 1
+		result[id] = node
+	}
+
 	return result
 }
 

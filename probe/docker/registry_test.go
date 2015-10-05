@@ -1,6 +1,7 @@
 package docker_test
 
 import (
+	"net"
 	"runtime"
 	"sort"
 	"sync"
@@ -36,7 +37,7 @@ func (c *mockContainer) StartGatheringStats() error {
 
 func (c *mockContainer) StopGatheringStats() {}
 
-func (c *mockContainer) GetNode() report.Node {
+func (c *mockContainer) GetNode(_ []net.IP) report.Node {
 	return report.MakeNodeWith(map[string]string{
 		docker.ContainerID:   c.c.ID,
 		docker.ContainerName: c.c.Name,

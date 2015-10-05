@@ -1,6 +1,8 @@
 package docker
 
 import (
+	"net"
+
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/report"
@@ -28,18 +30,23 @@ func NewReporter(registry Registry, hostID string) *Reporter {
 
 // Report generates a Report containing Container and ContainerImage topologies
 func (r *Reporter) Report() (report.Report, error) {
+	localAddrs, err := report.LocalAddresses()
+	if err != nil {
+		return report.MakeReport(), nil
+	}
+
 	result := report.MakeReport()
-	result.Container = result.Container.Merge(r.containerTopology())
+	result.Container = result.Container.Merge(r.containerTopology(localAddrs))
 	result.ContainerImage = result.ContainerImage.Merge(r.containerImageTopology())
 	return result, nil
 }
 
-func (r *Reporter) containerTopology() report.Topology {
+func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	result := report.MakeTopology()
 
 	r.registry.WalkContainers(func(c Container) {
 		nodeID := report.MakeContainerNodeID(r.hostID, c.ID())
-		result.AddNode(nodeID, c.GetNode())
+		result.AddNode(nodeID, c.GetNode(localAddrs))
 	})
 
 	return result

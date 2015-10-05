@@ -2,6 +2,7 @@ package report
 
 import (
 	"net"
+	"strings"
 )
 
 // Networks represent a set of subnets
@@ -27,6 +28,40 @@ func (n Networks) Contains(ip net.IP) bool {
 		}
 	}
 	return false
+}
+
+// LocalAddresses returns a list of the local IP addresses.
+func LocalAddresses() ([]net.IP, error) {
+	result := []net.IP{}
+
+	infs, err := net.Interfaces()
+	if err != nil {
+		return []net.IP{}, err
+	}
+
+	for _, inf := range infs {
+		if strings.HasPrefix(inf.Name, "veth") ||
+			strings.HasPrefix(inf.Name, "docker") ||
+			strings.HasPrefix(inf.Name, "lo") {
+			continue
+		}
+
+		addrs, err := inf.Addrs()
+		if err != nil {
+			return []net.IP{}, err
+		}
+
+		for _, addr := range addrs {
+			ipnet, ok := addr.(*net.IPNet)
+			if !ok {
+				continue
+			}
+
+			result = append(result, ipnet.IP)
+		}
+	}
+
+	return result, nil
 }
 
 // AddLocalBridge records the subnet address associated with the bridge name

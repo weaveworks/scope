@@ -78,7 +78,7 @@ func TestContainer(t *testing.T) {
 		"memory_usage":             "12345",
 	})
 	test.Poll(t, 100*time.Millisecond, want, func() interface{} {
-		node := c.GetNode()
+		node := c.GetNode([]net.IP{})
 		for k, v := range node.Metadata {
 			if v == "0" {
 				delete(node.Metadata, k)
@@ -93,7 +93,7 @@ func TestContainer(t *testing.T) {
 	if c.PID() != 1 {
 		t.Errorf("%s != 1", c.PID())
 	}
-	if !reflect.DeepEqual(docker.ExtractContainerIPs(c.GetNode()), []string{"1.2.3.4"}) {
-		t.Errorf("%v != %v", docker.ExtractContainerIPs(c.GetNode()), []string{"1.2.3.4"})
+	if !reflect.DeepEqual(docker.ExtractContainerIPs(c.GetNode([]net.IP{})), []string{"1.2.3.4"}) {
+		t.Errorf("%v != %v", docker.ExtractContainerIPs(c.GetNode([]net.IP{})), []string{"1.2.3.4"})
 	}
 }
