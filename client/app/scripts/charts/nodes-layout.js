@@ -18,23 +18,25 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
 
   // one engine per topology, to keep renderings similar
   if (!topologyGraphs[topologyId]) {
-    topologyGraphs[topologyId] = new dagre.graphlib.Graph({});
+    topologyGraphs[topologyId] = new dagre.graphlib.Graph({
+      compound: true
+    });
   }
   graph = topologyGraphs[topologyId];
 
   // configure node margins
   graph.setGraph({
-    nodesep: scale(2.5),
-    ranksep: scale(2.5)
+    // nodesep: scale(1.5),
+    ranksep: scale(1.5)
   });
 
-  // add nodes to the graph if not already there
+  // add nodes to the graph if not already there, and collect ranks
   _.each(nodes, function(node) {
     if (!graph.hasNode(node.id)) {
       graph.setNode(node.id, {
         id: node.id,
-        width: scale(1),
-        height: scale(1)
+        width: scale(1.0),
+        height: scale(1.0)
       });
     }
   });
@@ -45,6 +47,22 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
       graph.removeNode(nodeid);
     }
   });
+
+  // add node ranks for clustering
+  const ranks = _.uniq(_.pluck(nodes, 'rank'));
+  _.each(ranks, function(rank) {
+    const rankId = 'rank_' + rank;
+    if (!graph.hasNode(rankId)) {
+      graph.setNode(rankId, {});
+    }
+  });
+  _.each(nodes, function(node) {
+    if (node.rank) {
+      graph.setParent(node.id, 'rank_' + node.rank);
+    }
+  });
+
+  // TODO remove rank nodes
 
   // add edges to the graph if not already there
   _.each(edges, function(edge) {
@@ -80,9 +98,11 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
 
   graph.nodes().forEach(function(id) {
     const node = nodes[id];
-    const graphNode = graph.node(id);
-    node.x = graphNode.x + offsetX;
-    node.y = graphNode.y + offsetY;
+    if (node) {
+      const graphNode = graph.node(id);
+      node.x = graphNode.x + offsetX;
+      node.y = graphNode.y + offsetY;
+    }
   });
 
   graph.edges().forEach(function(id) {
