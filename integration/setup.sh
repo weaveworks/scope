@@ -21,6 +21,7 @@ echo Prefetching Images
 for HOST in $HOSTS; do
     weave_on $HOST setup
     docker_on $HOST pull peterbourgon/tns-db
+    docker_on $HOST pull alpine
 done
 
 curl -sL git.io/weave -o ./weave
