@@ -224,6 +224,15 @@ var topologyRegistry = &registry{
 				{"hide", "System containers hidden", true, render.FilterSystem},
 			}},
 		},
+		"containers-by-hostname": {
+			human:    "by hostname",
+			parent:   "containers",
+			renderer: render.ContainerHostnameRenderer,
+			options: optionParams{"system": {
+				{"show", "System containers shown", false, nop},
+				{"hide", "System containers hidden", true, render.FilterSystem},
+			}},
+		},
 		"hosts": {
 			human:    "Hosts",
 			parent:   "",

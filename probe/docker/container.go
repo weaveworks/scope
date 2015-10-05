@@ -22,11 +22,12 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	ContainerName    = "docker_container_name"
-	ContainerCommand = "docker_container_command"
-	ContainerPorts   = "docker_container_ports"
-	ContainerCreated = "docker_container_created"
-	ContainerIPs     = "docker_container_ips"
+	ContainerName     = "docker_container_name"
+	ContainerCommand  = "docker_container_command"
+	ContainerPorts    = "docker_container_ports"
+	ContainerCreated  = "docker_container_created"
+	ContainerIPs      = "docker_container_ips"
+	ContainerHostname = "docker_container_hostname"
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
@@ -221,6 +222,7 @@ func (c *container) GetNode(localAddrs []net.IP) report.Node {
 		ImageID:          c.container.Image,
 		ContainerIPs: strings.Join(append(c.container.NetworkSettings.SecondaryIPAddresses,
 			c.container.NetworkSettings.IPAddress), " "),
+		ContainerHostname: c.container.Config.Hostname,
 	})
 	AddLabels(result, c.container.Config.Labels)
 

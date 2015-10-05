@@ -594,6 +594,28 @@ func MapContainer2Pod(n RenderableNode, _ report.Networks) RenderableNodes {
 	return RenderableNodes{id: result}
 }
 
+// MapContainer2Hostname maps container RenderableNodes to 'hostname' renderabled nodes..
+func MapContainer2Hostname(n RenderableNode, _ report.Networks) RenderableNodes {
+	// Propogate all pseudo nodes
+	if n.Pseudo {
+		return RenderableNodes{n.ID: n}
+	}
+
+	// Otherwise, if some some reason the container doesn't have a hostname
+	// (maybe slightly out of sync reports), just drop it
+	id, ok := n.Node.Metadata[docker.ContainerHostname]
+	if !ok {
+		return RenderableNodes{}
+	}
+
+	// Add container-<id> key to NMD, which will later be counted to produce the minor label
+	result := NewDerivedNode(id, n)
+	result.LabelMajor = id
+	result.Rank = id
+	result.Node.Counters[containersKey] = 1
+	return RenderableNodes{id: result}
+}
+
 // MapCountContainers maps 1:1 container image nodes, counting
 // the number of containers grouped together and putting
 // that info in the minor label.
