@@ -91,4 +91,14 @@ var (
 	SelectHost = TopologySelector(func(r report.Report) RenderableNodes {
 		return MakeRenderableNodes(r.Host)
 	})
+
+	// SelectPod selects the pod topology.
+	SelectPod = TopologySelector(func(r report.Report) RenderableNodes {
+		return MakeRenderableNodes(r.Pod)
+	})
+
+	// SelectService selects the service topology.
+	SelectService = TopologySelector(func(r report.Report) RenderableNodes {
+		return MakeRenderableNodes(r.Service)
+	})
 )

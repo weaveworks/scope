@@ -10,6 +10,7 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -23,7 +24,9 @@ const (
 	TheInternetMajor = "The Internet"
 
 	containersKey = "containers"
+	podsKey       = "pods"
 	processesKey  = "processes"
+	servicesKey   = "services"
 
 	AmazonECSContainerNameLabel = "com.amazonaws.ecs.container-name"
 )
@@ -166,6 +169,40 @@ func MapContainerImageIdentity(m RenderableNode, _ report.Networks) RenderableNo
 	var (
 		major = m.Metadata[docker.ImageName]
 		rank  = m.Metadata[docker.ImageID]
+	)
+
+	return RenderableNodes{id: NewRenderableNodeWith(id, major, "", rank, m)}
+}
+
+// MapPodIdentity maps a pod topology node to pod renderable node. As it is
+// only ever run on pod topology nodes, we expect that certain keys
+// are present.
+func MapPodIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
+	id, ok := m.Metadata[kubernetes.PodID]
+	if !ok {
+		return RenderableNodes{}
+	}
+
+	var (
+		major = m.Metadata[kubernetes.PodName]
+		rank  = m.Metadata[kubernetes.PodID]
+	)
+
+	return RenderableNodes{id: NewRenderableNodeWith(id, major, "", rank, m)}
+}
+
+// MapServiceIdentity maps a service topology node to service renderable node. As it is
+// only ever run on service topology nodes, we expect that certain keys
+// are present.
+func MapServiceIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
+	id, ok := m.Metadata[kubernetes.ServiceID]
+	if !ok {
+		return RenderableNodes{}
+	}
+
+	var (
+		major = m.Metadata[kubernetes.ServiceName]
+		rank  = m.Metadata[kubernetes.ServiceID]
 	)
 
 	return RenderableNodes{id: NewRenderableNodeWith(id, major, "", rank, m)}
@@ -453,6 +490,38 @@ func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) Renderable
 	return RenderableNodes{id: result}
 }
 
+// MapPod2Service maps pod RenderableNodes to service RenderableNodes.
+//
+// If this function is given a node without a kubernetes_pod_id
+// (including other pseudo nodes), it will produce an "Uncontained"
+// pseudo node.
+//
+// Otherwise, this function will produce a node with the correct ID
+// format for a container, but without any Major or Minor labels.
+// It does not have enough info to do that, and the resulting graph
+// must be merged with a pod graph to get that info.
+func MapPod2Service(n RenderableNode, _ report.Networks) RenderableNodes {
+	// Propogate all pseudo nodes
+	if n.Pseudo {
+		return RenderableNodes{n.ID: n}
+	}
+
+	// Otherwise, if some some reason the pod doesn't have a service_ids (maybe
+	// slightly out of sync reports, or its not in a service), just drop it
+	ids, ok := n.Node.Metadata[kubernetes.ServiceIDs]
+	if !ok {
+		return RenderableNodes{}
+	}
+
+	result := RenderableNodes{}
+	for _, id := range strings.Fields(ids) {
+		n := NewDerivedNode(id, n)
+		n.Node.Counters[podsKey] = 1
+		result[id] = n
+	}
+	return result
+}
+
 func imageNameWithoutVersion(name string) string {
 	parts := strings.SplitN(name, ":", 2)
 	if len(parts) == 2 {
@@ -486,6 +555,45 @@ func MapContainerImage2Name(n RenderableNode, _ report.Networks) RenderableNodes
 	return RenderableNodes{name: node}
 }
 
+// MapContainer2Pod maps container RenderableNodes to pod
+// RenderableNodes.
+//
+// If this function is given a node without a kubernetes_pod_id
+// (including other pseudo nodes), it will produce an "Unmanaged"
+// pseudo node.
+//
+// Otherwise, this function will produce a node with the correct ID
+// format for a container, but without any Major or Minor labels.
+// It does not have enough info to do that, and the resulting graph
+// must be merged with a container graph to get that info.
+func MapContainer2Pod(n RenderableNode, _ report.Networks) RenderableNodes {
+	// Propogate all pseudo nodes
+	if n.Pseudo {
+		return RenderableNodes{n.ID: n}
+	}
+
+	// Otherwise, if some some reason the container doesn't have a pod_id (maybe
+	// slightly out of sync reports, or its not in a pod), just drop it
+	id, ok := n.Node.Metadata["docker_label_io.kubernetes.pod.name"]
+	if !ok {
+		return RenderableNodes{}
+	}
+
+	// Add container-<id> key to NMD, which will later be counted to produce the
+	// minor label
+	result := NewRenderableNodeWith(id, "", "", id, n)
+	result.Node.Counters[containersKey] = 1
+	// Due to a bug in kubernetes, addon pods on the master node are not returned
+	// from the API. This is a workaround until
+	// https://github.com/kubernetes/kubernetes/issues/14738 is fixed.
+	if s := strings.SplitN(id, "/", 2); len(s) == 2 {
+		result.LabelMajor = s[1]
+		result.Node.Metadata[kubernetes.Namespace] = s[0]
+		result.Node.Metadata[kubernetes.PodName] = s[1]
+	}
+	return RenderableNodes{id: result}
+}
+
 // MapCountContainers maps 1:1 container image nodes, counting
 // the number of containers grouped together and putting
 // that info in the minor label.
@@ -499,6 +607,22 @@ func MapCountContainers(n RenderableNode, _ report.Networks) RenderableNodes {
 		n.LabelMinor = "1 container"
 	} else {
 		n.LabelMinor = fmt.Sprintf("%d containers", containers)
+	}
+	return RenderableNodes{n.ID: n}
+}
+
+// MapCountPods maps 1:1 service nodes, counting the number of pods grouped
+// together and putting that info in the minor label.
+func MapCountPods(n RenderableNode, _ report.Networks) RenderableNodes {
+	if n.Pseudo {
+		return RenderableNodes{n.ID: n}
+	}
+
+	pods := n.Node.Counters[podsKey]
+	if pods == 1 {
+		n.LabelMinor = "1 pod"
+	} else {
+		n.LabelMinor = fmt.Sprintf("%d pods", pods)
 	}
 	return RenderableNodes{n.ID: n}
 }

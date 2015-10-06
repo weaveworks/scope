@@ -190,3 +190,35 @@ var HostRenderer = MakeReduce(
 		Renderer: SelectHost,
 	},
 )
+
+// PodRenderer is a Renderer which produces a renderable kubernetes
+// graph by merging the container graph and the pods topology.
+var PodRenderer = Map{
+	MapFunc: MapCountContainers,
+	Renderer: MakeReduce(
+		Map{
+			MapFunc:  MapPodIdentity,
+			Renderer: SelectPod,
+		},
+		Map{
+			MapFunc:  MapContainer2Pod,
+			Renderer: ContainerRenderer,
+		},
+	),
+}
+
+// PodsServiceRenderer is a Renderer which produces a renderable kubernetes services
+// graph by merging the pods graph and the services topology.
+var PodServiceRenderer = Map{
+	MapFunc: MapCountPods,
+	Renderer: MakeReduce(
+		Map{
+			MapFunc:  MapPod2Service,
+			Renderer: PodRenderer,
+		},
+		Map{
+			MapFunc:  MapServiceIdentity,
+			Renderer: SelectService,
+		},
+	),
+}

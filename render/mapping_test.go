@@ -6,6 +6,7 @@ import (
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -69,6 +70,24 @@ func TestMapHostIdentity(t *testing.T) {
 		{nrn(report.MakeNode()), true}, // TODO it's questionable if this is actually correct
 	} {
 		testMap(t, render.MapHostIdentity, input)
+	}
+}
+
+func TestMapPodIdentity(t *testing.T) {
+	for _, input := range []testcase{
+		{nrn(report.MakeNode()), false},
+		{nrn(report.MakeNodeWith(map[string]string{kubernetes.PodID: "ping/pong", kubernetes.PodName: "pong"})), true},
+	} {
+		testMap(t, render.MapPodIdentity, input)
+	}
+}
+
+func TestMapServiceIdentity(t *testing.T) {
+	for _, input := range []testcase{
+		{nrn(report.MakeNode()), false},
+		{nrn(report.MakeNodeWith(map[string]string{kubernetes.ServiceID: "ping/pong", kubernetes.ServiceName: "pong"})), true},
+	} {
+		testMap(t, render.MapServiceIdentity, input)
 	}
 }
 

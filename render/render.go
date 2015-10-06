@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -289,6 +290,12 @@ func FilterSystem(r Renderer) Renderer {
 				return false
 			}
 			if node.Metadata[docker.LabelPrefix+"works.weave.role"] == "system" {
+				return false
+			}
+			if node.Metadata[kubernetes.Namespace] == "kube-system" {
+				return false
+			}
+			if strings.HasPrefix(node.Metadata[docker.LabelPrefix+"io.kubernetes.pod.name"], "kube-system/") {
 				return false
 			}
 			return true

@@ -61,6 +61,7 @@ func TestOriginTable(t *testing.T) {
 				{fmt.Sprintf(`Label %q`, render.AmazonECSContainerNameLabel), `server`, "", false},
 				{`Label "foo1"`, `bar1`, "", false},
 				{`Label "foo2"`, `bar2`, "", false},
+				{`Label "io.kubernetes.pod.name"`, "ping/pong-b", "", false},
 			},
 		},
 	} {
@@ -162,6 +163,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 					{fmt.Sprintf(`Label %q`, render.AmazonECSContainerNameLabel), `server`, "", false},
 					{`Label "foo1"`, `bar1`, "", false},
 					{`Label "foo2"`, `bar2`, "", false},
+					{`Label "io.kubernetes.pod.name"`, "ping/pong-b", "", false},
 				},
 			},
 			{
