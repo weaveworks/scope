@@ -12,7 +12,7 @@ import (
 // Uname is swappable for mocking in tests.
 var Uname = syscall.Uname
 
-func charsToString(ca [65]int8) string {
+func charsToString(ca [65]uint8) string {
 	s := make([]byte, len(ca))
 	var lens int
 	for ; lens < len(ca); lens++ {
