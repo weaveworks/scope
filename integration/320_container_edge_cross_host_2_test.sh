@@ -16,8 +16,8 @@ weave_on $HOST2 run -d --name client alpine /bin/sh -c "while true; do wget http
 sleep 30 # need to allow the scopes to poll dns, resolve the other app ids, and send them reports
 
 check() {
-	has_container $1 nginx 1
-	has_container $1 client 1
+	has_container $1 nginx
+	has_container $1 client
 	has_connection $1 client nginx
 }
 
