@@ -12,18 +12,6 @@ import (
 // Uname is swappable for mocking in tests.
 var Uname = syscall.Uname
 
-func charsToString(ca [65]uint8) string {
-	s := make([]byte, len(ca))
-	var lens int
-	for ; lens < len(ca); lens++ {
-		if ca[lens] == 0 {
-			break
-		}
-		s[lens] = uint8(ca[lens])
-	}
-	return string(s[0:lens])
-}
-
 // GetKernelVersion returns the kernel version as reported by uname.
 var GetKernelVersion = func() (string, error) {
 	var utsname syscall.Utsname
