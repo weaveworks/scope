@@ -16,7 +16,7 @@ do_connections() {
 }
 do_connections&
 
-sleep 5 # give the probe a few seconds to build a report and send it to the app
+sleep 20 # give the probe a few seconds to build a report and send it to the app
 
 has_container $HOST1 nginx
 has_connection $HOST1 "The Internet" nginx
