@@ -10,6 +10,6 @@ sleep 5 # give the probe a few seconds to build a report and send it to the app
 
 has_container $HOST1 weave 0
 has_container $HOST1 weaveproxy 0
-has_container $HOST1 weavescope 1
+has_container $HOST1 weavescope
 
 scope_end_suite
