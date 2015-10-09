@@ -31,6 +31,10 @@ func (c *mockContainer) Image() string {
 	return c.c.Image
 }
 
+func (c *mockContainer) Hostname() string {
+	return ""
+}
+
 func (c *mockContainer) StartGatheringStats() error {
 	return nil
 }

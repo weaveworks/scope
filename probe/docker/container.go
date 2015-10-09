@@ -71,6 +71,7 @@ type Container interface {
 	ID() string
 	Image() string
 	PID() int
+	Hostname() string
 	GetNode([]net.IP) report.Node
 
 	StartGatheringStats() error
@@ -99,6 +100,15 @@ func (c *container) Image() string {
 
 func (c *container) PID() int {
 	return c.container.State.Pid
+}
+
+func (c *container) Hostname() string {
+	if c.container.Config.Domainname == "" {
+		return c.container.Config.Hostname
+	}
+
+	return fmt.Sprintf("%s.%s", c.container.Config.Hostname,
+		c.container.Config.Domainname)
 }
 
 func (c *container) StartGatheringStats() error {
@@ -222,7 +232,7 @@ func (c *container) GetNode(localAddrs []net.IP) report.Node {
 		ImageID:          c.container.Image,
 		ContainerIPs: strings.Join(append(c.container.NetworkSettings.SecondaryIPAddresses,
 			c.container.NetworkSettings.IPAddress), " "),
-		ContainerHostname: c.container.Config.Hostname,
+		ContainerHostname: c.Hostname(),
 	})
 	AddLabels(result, c.container.Config.Labels)
 

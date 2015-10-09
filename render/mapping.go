@@ -484,7 +484,7 @@ func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) Renderable
 		return RenderableNodes{}
 	}
 
-	// Add container-<id> key to NMD, which will later be counted to produce the minor label
+	// Add container id key to the counters, which will later be counted to produce the minor label
 	result := NewDerivedNode(id, n)
 	result.Node.Counters[containersKey] = 1
 	return RenderableNodes{id: result}
@@ -608,10 +608,11 @@ func MapContainer2Hostname(n RenderableNode, _ report.Networks) RenderableNodes 
 		return RenderableNodes{}
 	}
 
-	// Add container-<id> key to NMD, which will later be counted to produce the minor label
 	result := NewDerivedNode(id, n)
 	result.LabelMajor = id
 	result.Rank = id
+
+	// Add container id key to the counters, which will later be counted to produce the minor label
 	result.Node.Counters[containersKey] = 1
 	return RenderableNodes{id: result}
 }
