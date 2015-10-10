@@ -171,6 +171,16 @@ var ContainerImageRenderer = Map{
 	},
 }
 
+// ContainerHostnameRenderer is a Renderer which produces a renderable container
+// by hostname graph..
+var ContainerHostnameRenderer = Map{
+	MapFunc: MapCountContainers,
+	Renderer: Map{
+		MapFunc:  MapContainer2Hostname,
+		Renderer: ContainerRenderer,
+	},
+}
+
 // AddressRenderer is a Renderer which produces a renderable address
 // graph from the address topology.
 var AddressRenderer = Map{

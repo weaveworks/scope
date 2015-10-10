@@ -80,7 +80,7 @@ func TestContainer(t *testing.T) {
 	test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 		node := c.GetNode([]net.IP{})
 		for k, v := range node.Metadata {
-			if v == "0" {
+			if v == "0" || v == "" {
 				delete(node.Metadata, k)
 			}
 		}
