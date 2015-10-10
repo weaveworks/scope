@@ -19,8 +19,8 @@ check() {
 	has_container $1 weave 2
 	has_container $1 weaveproxy 2
 	has_container $1 weavescope 2
-	has_container $1 db1 1
-	has_container $1 db2 1
+	has_container $1 db1
+	has_container $1 db2
 }
 
 check $HOST1

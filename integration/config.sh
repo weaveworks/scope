@@ -35,7 +35,7 @@ weave_on() {
 has_container() {
 	local host=$1
 	local name=$2
-	local count=$3
+	local count=${3:-1}
 	assert "curl -s http://$host:4040/api/topology/containers?system=show | jq -r '[.nodes[] | select(.label_major == \"$name\")] | length'" $count
 }
 
