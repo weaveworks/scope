@@ -31,12 +31,14 @@ if [ -n "$CIRCLECI" -a -z "$NO_SCHEDULER" -a -x "$DIR/sched" ]; then
     echo $TESTDIRS
 fi
 
+PACKAGE_BASE=$(go list -e ./)
+
 for dir in $TESTDIRS; do
     go get -t -tags netgo $dir
 
     GO_TEST_ARGS_RUN="$GO_TEST_ARGS"
     if [ -n "$SLOW" ]; then
-        COVERPKGS=$((go list $dir; go list -f '{{join .Deps "\n"}}' $dir | grep "weaveworks") | paste -s -d,)
+        COVERPKGS=$((go list $dir; go list -f '{{join .Deps "\n"}}' $dir | grep "^$PACKAGE_BASE/") | paste -s -d,)
         output=$(mktemp $coverdir/unit.XXXXXXXXXX)
         GO_TEST_ARGS_RUN="$GO_TEST_ARGS -coverprofile=$output -coverpkg=$COVERPKGS"
     fi
