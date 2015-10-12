@@ -57,13 +57,13 @@ has_connection() {
 	local host="$1"
 	local from="$2"
 	local to="$3"
-	local timeout="${4:-10}"
+	local timeout="${4:-60}"
 	local from_id=$(container_id "$host" "$from")
 	local to_id=$(container_id "$host" "$to")
 
 	for i in $(seq $timeout); do
 		local containers="$(curl -s http://$host:4040/api/topology/containers?system=show)"
-		local edge=$(echo "$containers" |  jq -r ".nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])")
+		local edge=$(echo "$containers" |  jq -r ".nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])" 2>/dev/null)
 		if [ "$edge" = "true" ]; then
 			echo "Found edge $from -> $to after $i secs"
 			assert "curl -s http://$host:4040/api/topology/containers?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
@@ -72,7 +72,7 @@ has_connection() {
 		sleep 1
 	done
 
-	echo "Failed to fing edge $from -> $to after $timeout secs"
+	echo "Failed to find edge $from -> $to after $timeout secs"
 	assert "curl -s http://$host:4040/api/topology/containers?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
 }
 
@@ -86,7 +86,7 @@ wait_for_containers() {
 		local found=0
 		for name in "$@"; do
 			local count=$(echo "$containers" | jq -r "[.nodes[] | select(.label_major == \"$name\")] | length")
-			if [ "$count" -ge 1 ]; then
+			if [ -n "$count" ] && [ "$count" -ge 1 ]; then
 				found=$(( found + 1 ))
 			fi
 		done

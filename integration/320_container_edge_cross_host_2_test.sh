@@ -11,7 +11,10 @@ scope_on $HOST1 launch
 scope_on $HOST2 launch
 
 weave_on $HOST1 run -d --name nginx nginx
-weave_on $HOST2 run -d --name client alpine /bin/sh -c "while true; do wget http://nginx.weave.local:80/ >/dev/null; sleep 1; done"
+weave_on $HOST2 run -d --name client alpine /bin/sh -c "while true; do \
+	wget http://nginx.weave.local:80/ >/dev/null || true; \
+	sleep 1; \
+done"
 
 sleep 30 # need to allow the scopes to poll dns, resolve the other app ids, and send them reports
 
