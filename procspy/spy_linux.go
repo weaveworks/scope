@@ -24,7 +24,7 @@ func (c *pnConnIter) Next() *Connection {
 		bufPool.Put(c.buf)
 		return nil
 	}
-	if proc, ok := c.procs[n.inode]; ok {
+	if proc, ok := c.procs[n.Inode]; ok {
 		n.Proc = proc
 	}
 	return n
@@ -44,7 +44,7 @@ var cbConnections = func(processes bool) (ConnIter, error) {
 		}
 	}
 	return &pnConnIter{
-		pn:    NewProcNet(buf.Bytes(), tcpEstablished),
+		pn:    NewProcNet(buf.Bytes(), TCPEstablished),
 		buf:   buf,
 		procs: procs,
 	}, nil

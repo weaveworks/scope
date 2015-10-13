@@ -57,7 +57,7 @@ again:
 
 	p.c.LocalAddress, p.c.LocalPort = scanAddressNA(local, &p.bytesLocal)
 	p.c.RemoteAddress, p.c.RemotePort = scanAddressNA(remote, &p.bytesRemote)
-	p.c.inode = parseDec(inode)
+	p.c.Inode = parseDec(inode)
 	p.b = nextLine(b)
 	return &p.c
 }

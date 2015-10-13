@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	tcpEstablished = 1 // according to /include/net/tcp_states.h
+	// TCPEstablished according to /include/net/tcp_states.h
+	TCPEstablished = 1
 )
 
 // Connection is a (TCP) connection. The Proc struct might not be filled in.
@@ -18,7 +19,7 @@ type Connection struct {
 	LocalPort     uint16
 	RemoteAddress net.IP
 	RemotePort    uint16
-	inode         uint64
+	Inode         uint64
 	Proc
 }
 
