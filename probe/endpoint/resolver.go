@@ -3,6 +3,7 @@ package endpoint
 import (
 	"fmt"
 	"net"
+	"sort"
 	"strings"
 	"time"
 
@@ -70,6 +71,7 @@ func (r *ReverseResolver) loop() {
 		<-r.Throttle // rate limit our DNS resolutions
 		names, err := r.Resolver(request)
 		if err == nil && len(names) > 0 {
+			sort.Strings(names)
 			name := strings.TrimRight(names[0], ".")
 			r.cache.Set(request, name)
 		} else {
