@@ -26,17 +26,19 @@ func TestHTTPPublisher(t *testing.T) {
 	)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if want, have := xfer.AuthorizationHeader(token), r.Header.Get("Authorization"); want != have {
+			t.Errorf("want %q, have %q", want, have)
+		}
+
+		if want, have := id, r.Header.Get(xfer.ScopeProbeIDHeader); want != have {
+			t.Errorf("want %q, have %q", want, have)
+		}
+
 		if r.URL.Path == "/api" {
 			_ = json.NewEncoder(w).Encode(map[string]string{"id": "irrelevant"})
 			return
 		}
 
-		if want, have := xfer.AuthorizationHeader(token), r.Header.Get("Authorization"); want != have {
-			t.Errorf("want %q, have %q", want, have)
-		}
-		if want, have := id, r.Header.Get(xfer.ScopeProbeIDHeader); want != have {
-			t.Errorf("want %q, have %q", want, have)
-		}
 		var have report.Report
 
 		reader := r.Body
