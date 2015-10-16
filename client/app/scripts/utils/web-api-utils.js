@@ -3,8 +3,8 @@ const reqwest = require('reqwest');
 
 const AppActions = require('../actions/app-actions');
 
-const WS_URL = window.WS_URL || 'ws://' + location.host + location.pathname.replace(/\/$/, '');
-
+const WS_PROTO = window.WS_PROTO || (location.protocol === 'https:' ? 'wss' : 'ws');
+const WS_URL = window.WS_URL || WS_PROTO + '://' + location.host + location.pathname.replace(/\/$/, '');
 
 const apiTimerInterval = 10000;
 const reconnectTimerInterval = 5000;
