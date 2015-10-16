@@ -45,10 +45,11 @@ var (
 			},
 		}
 	}
-	theInternetNode = func(adjacent string) render.RenderableNode {
+	theIncomingInternetNode = func(adjacent string) render.RenderableNode {
 		return render.RenderableNode{
-			ID:         render.TheInternetID,
-			LabelMajor: render.TheInternetMajor,
+			ID:         render.IncomingInternetID,
+			LabelMajor: render.InboundMajor,
+			LabelMinor: render.RequestsMinor,
 			Pseudo:     true,
 			Shape:      cloud,
 			Node:       report.MakeNode().WithAdjacent(adjacent),
@@ -57,6 +58,15 @@ var (
 				EgressByteCount:   newu64(600),
 			},
 		}
+	}
+	theOutgoingInternetNode = render.RenderableNode{
+		ID:           render.OutgoingInternetID,
+		LabelMajor:   render.OutboundMajor,
+		LabelMinor:   render.RequestsMinor,
+		Pseudo:       true,
+		Shape:        cloud,
+		Node:         report.MakeNode(),
+		EdgeMetadata: report.EdgeMetadata{},
 	}
 	ClientProcess1ID      = render.MakeProcessID(fixture.ClientHostID, fixture.Client1PID)
 	ClientProcess2ID      = render.MakeProcessID(fixture.ClientHostID, fixture.Client2PID)
@@ -110,12 +120,13 @@ var (
 			Rank:         fixture.NonContainerName,
 			Pseudo:       false,
 			Shape:        square,
-			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
+			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		unknownPseudoNode1ID: unknownPseudoNode1(ServerProcessID),
-		unknownPseudoNode2ID: unknownPseudoNode2(ServerProcessID),
-		render.TheInternetID: theInternetNode(ServerProcessID),
+		unknownPseudoNode1ID:      unknownPseudoNode1(ServerProcessID),
+		unknownPseudoNode2ID:      unknownPseudoNode2(ServerProcessID),
+		render.IncomingInternetID: theIncomingInternetNode(ServerProcessID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
 	}).Prune()
 
 	ServerProcessRenderedID  = render.MakeProcessID(fixture.ServerHostID, fixture.ServerPID)
@@ -169,12 +180,13 @@ var (
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.NonContainerProcessNodeID],
 			),
-			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
+			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		unknownPseudoNode1ID: unknownPseudoNode1(fixture.ServerName),
-		unknownPseudoNode2ID: unknownPseudoNode2(fixture.ServerName),
-		render.TheInternetID: theInternetNode(fixture.ServerName),
+		unknownPseudoNode1ID:      unknownPseudoNode1(fixture.ServerName),
+		unknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerName),
+		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerName),
+		render.OutgoingInternetID: theOutgoingInternetNode,
 	}).Prune()
 
 	ServerContainerRenderedID = render.MakeContainerID(fixture.ServerContainerID)
@@ -227,10 +239,11 @@ var (
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.NonContainerProcessNodeID],
 			),
-			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
+			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		render.TheInternetID: theInternetNode(ServerContainerRenderedID),
+		render.IncomingInternetID: theIncomingInternetNode(ServerContainerRenderedID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
 	}).Prune()
 
 	ClientContainerImageRenderedName = render.MakeContainerImageID(fixture.ClientContainerImageName)
@@ -285,10 +298,11 @@ var (
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.NonContainerProcessNodeID],
 			),
-			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
+			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		render.TheInternetID: theInternetNode(ServerContainerImageRenderedName),
+		render.IncomingInternetID: theIncomingInternetNode(ServerContainerImageRenderedName),
+		render.OutgoingInternetID: theOutgoingInternetNode,
 	}).Prune()
 
 	ServerHostRenderedID = render.MakeHostID(fixture.ServerHostID)
@@ -352,9 +366,10 @@ var (
 			Node:         report.MakeNode().WithAdjacent(ServerHostRenderedID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		render.TheInternetID: {
-			ID:           render.TheInternetID,
-			LabelMajor:   render.TheInternetMajor,
+		render.IncomingInternetID: {
+			ID:           render.IncomingInternetID,
+			LabelMajor:   render.InboundMajor,
+			LabelMinor:   render.RequestsMinor,
 			Pseudo:       true,
 			Shape:        cloud,
 			Node:         report.MakeNode().WithAdjacent(ServerHostRenderedID),
@@ -416,20 +431,11 @@ var (
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.NonContainerProcessNodeID],
 			),
-			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
+			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		render.TheInternetID: {
-			ID:         render.TheInternetID,
-			LabelMajor: render.TheInternetMajor,
-			Pseudo:     true,
-			Shape:      cloud,
-			Node:       report.MakeNode().WithAdjacent(ServerPodRenderedID),
-			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(60),
-				EgressByteCount:   newu64(600),
-			},
-		},
+		render.IncomingInternetID: theIncomingInternetNode(ServerPodRenderedID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
 	}).Prune()
 
 	ServiceRenderedID = render.MakeServiceID("ping/pongservice")
@@ -473,20 +479,11 @@ var (
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.NonContainerProcessNodeID],
 			),
-			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
+			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		render.TheInternetID: {
-			ID:         render.TheInternetID,
-			LabelMajor: render.TheInternetMajor,
-			Pseudo:     true,
-			Shape:      cloud,
-			Node:       report.MakeNode().WithAdjacent(ServiceRenderedID),
-			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(60),
-				EgressByteCount:   newu64(600),
-			},
-		},
+		render.IncomingInternetID: theIncomingInternetNode(ServiceRenderedID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
 	}).Prune()
 )
 

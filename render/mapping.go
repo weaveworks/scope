@@ -20,8 +20,12 @@ const (
 	UncontainedID    = "uncontained"
 	UncontainedMajor = "Uncontained"
 
-	TheInternetID    = "theinternet"
-	TheInternetMajor = "The Internet"
+	TheInternetID      = "theinternet"
+	IncomingInternetID = "in-" + TheInternetID
+	OutgoingInternetID = "out-" + TheInternetID
+	InboundMajor       = "Inbound"
+	OutboundMajor      = "Outbound"
+	RequestsMinor      = "Requests"
 
 	ContainersKey = "containers"
 	ipsKey        = "ips"
@@ -40,9 +44,19 @@ const (
 type MapFunc func(RenderableNode, report.Networks) RenderableNodes
 
 func theInternetNode(m RenderableNode) RenderableNode {
-	r := newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)
-	r.Shape = Cloud
-	return r
+	node := newDerivedPseudoNode("", "", m)
+	node.Shape = Cloud
+	// emit one internet node for incoming, one for outgoing
+	if len(m.Adjacency) > 0 {
+		node.ID = IncomingInternetID
+		node.LabelMajor = InboundMajor
+		node.LabelMinor = RequestsMinor
+	} else {
+		node.ID = OutgoingInternetID
+		node.LabelMajor = OutboundMajor
+		node.LabelMinor = RequestsMinor
+	}
+	return node
 }
 
 // MapEndpointIdentity maps an endpoint topology node to a single endpoint
@@ -258,7 +272,7 @@ func MapAddressIdentity(m RenderableNode, local report.Networks) RenderableNodes
 	if !hasHostID {
 		// If the addr is not in a network local to this report, we emit an
 		// internet node
-		if !local.Contains(net.ParseIP(addr)) {
+		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
 			return RenderableNodes{TheInternetID: theInternetNode(m)}
 		}
 
@@ -381,8 +395,8 @@ func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{}
 	}
 
-	// Propogate the internet pseudo node.
-	if n.ID == TheInternetID {
+	// Propogate the internet pseudo node
+	if strings.HasSuffix(n.ID, TheInternetID) {
 		return RenderableNodes{n.ID: n}
 	}
 
@@ -440,7 +454,7 @@ func MapEndpoint2Process(n RenderableNode, _ report.Networks) RenderableNodes {
 // must be merged with a container graph to get that info.
 func MapProcess2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 	// Propogate the internet pseudo node
-	if n.ID == TheInternetID {
+	if strings.HasSuffix(n.ID, TheInternetID) {
 		return RenderableNodes{n.ID: n}
 	}
 

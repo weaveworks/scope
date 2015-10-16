@@ -22,11 +22,11 @@ do_connections() {
 }
 do_connections&
 
-wait_for_containers $HOST1 60 nginx "The Internet"
+wait_for_containers $HOST1 60 nginx "Inbound"
 
 has_container $HOST1 nginx
-has_container $HOST1 "The Internet"
-has_connection containers $HOST1 "The Internet" nginx
+has_container $HOST1 "Inbound"
+has_connection containers $HOST1 "Inbound" nginx
 
 kill %do_connections
 

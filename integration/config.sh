@@ -67,7 +67,6 @@ has_connection() {
 	local timeout="${5:-60}"
 	local from_id=$(node_id "${view}" "${host}" "${from}")
 	local to_id=$(node_id "${view}" "${host}" "${to}")
-
 	for i in $(seq $timeout); do
 		local nodes="$(curl -s http://$host:4040/api/topology/${view}?system=show)"
 		local edge=$(echo "$nodes" |  jq -r ".nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])" 2>/dev/null)

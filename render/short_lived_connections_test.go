@@ -70,9 +70,10 @@ var (
 	}
 
 	want = (render.RenderableNodes{
-		render.TheInternetID: {
-			ID:         render.TheInternetID,
-			LabelMajor: render.TheInternetMajor,
+		render.IncomingInternetID: {
+			ID:         render.IncomingInternetID,
+			LabelMajor: render.InboundMajor,
+			LabelMinor: render.RequestsMinor,
 			Pseudo:     true,
 			Shape:      "cloud",
 			Node:       report.MakeNode().WithAdjacent(render.MakeContainerID(containerID)),
