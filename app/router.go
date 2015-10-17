@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"sync"
 
@@ -143,6 +144,32 @@ type registry struct {
 	items map[string]topologyView
 }
 
+type topologyViewAndID struct {
+	topologyView
+	id string
+}
+
+type topologyViewAndIDs []topologyViewAndID
+
+func (a topologyViewAndIDs) Len() int           { return len(a) }
+func (a topologyViewAndIDs) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a topologyViewAndIDs) Less(i, j int) bool { return a[i].id < a[j].id }
+
+func (r *registry) collectTopologyViews(f func(topologyView) bool) topologyViewAndIDs {
+	result := topologyViewAndIDs{}
+	for name, def := range r.items {
+		if !f(def) {
+			continue
+		}
+		result = append(result, topologyViewAndID{
+			topologyView: def,
+			id:           name,
+		})
+	}
+	sort.Sort(result)
+	return result
+}
+
 func (r *registry) add(ts map[string]topologyView) {
 	r.Lock()
 	defer r.Unlock()
@@ -163,23 +190,18 @@ func (r *registry) get(name string) (topologyView, bool) {
 	return t, ok
 }
 
-func (r *registry) walk(f func(string, topologyView, map[string]topologyView)) {
+func (r *registry) walk(f func(topologyViewAndID, topologyViewAndIDs)) {
 	r.RLock()
 	defer r.RUnlock()
-	for name, def := range r.items {
-		if def.parent != "" {
-			continue
-		}
+	parents := r.collectTopologyViews(func(def topologyView) bool {
+		return def.parent == ""
+	})
 
-		subDefs := map[string]topologyView{}
-		for subName, subDef := range r.items {
-			if subDef.parent != name {
-				continue
-			}
-			subDefs[subName] = subDef
-		}
-
-		f(name, def, subDefs)
+	for _, parent := range parents {
+		subDefs := r.collectTopologyViews(func(def topologyView) bool {
+			return def.parent == parent.id
+		})
+		f(parent, subDefs)
 	}
 }
 

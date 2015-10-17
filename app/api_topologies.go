@@ -38,21 +38,21 @@ func makeTopologyList(rep xfer.Reporter) func(w http.ResponseWriter, r *http.Req
 			rpt        = rep.Report()
 			topologies = []APITopologyDesc{}
 		)
-		topologyRegistry.walk(func(name string, def topologyView, subDefs map[string]topologyView) {
+		topologyRegistry.walk(func(def topologyViewAndID, subDefs topologyViewAndIDs) {
 			describedSubDefs := []APITopologyDesc{}
-			for subName, subDef := range subDefs {
+			for _, subDef := range subDefs {
 				describedSubDefs = append(describedSubDefs, APITopologyDesc{
 					Name:    subDef.human,
-					URL:     "/api/topology/" + subName,
-					Options: makeTopologyOptions(subDef),
+					URL:     "/api/topology/" + subDef.id,
+					Options: makeTopologyOptions(subDef.topologyView),
 					Stats:   stats(subDef.renderer, rpt),
 				})
 			}
 			topologies = append(topologies, APITopologyDesc{
 				Name:          def.human,
-				URL:           "/api/topology/" + name,
+				URL:           "/api/topology/" + def.id,
 				SubTopologies: describedSubDefs,
-				Options:       makeTopologyOptions(def),
+				Options:       makeTopologyOptions(def.topologyView),
 				Stats:         stats(def.renderer, rpt),
 			})
 		})
