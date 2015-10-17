@@ -12,17 +12,20 @@ for HOST in $HOSTS; do
 done
 
 echo Installing weave
+# Download the latest released weave script locally,
+# for use by weave_on
+curl -sL git.io/weave -o ./weave
+chmod a+x ./weave
 for HOST in $HOSTS; do
 	run_on $HOST "sudo curl -sL git.io/weave -o /usr/local/bin/weave"
 	run_on $HOST "sudo chmod a+x /usr/local/bin/weave"
+	weave_on $HOST setup
 done
 
 echo Prefetching Images
 for HOST in $HOSTS; do
-	weave_on $HOST setup
 	docker_on $HOST pull peterbourgon/tns-db
 	docker_on $HOST pull alpine
 	docker_on $HOST pull nginx
 done
 
-curl -sL git.io/weave -o ./weave
