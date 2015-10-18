@@ -10,10 +10,6 @@
 Weave Scope automatically generates a map of your containers, enabling you to
 intuitively understand, monitor, and control your applications.
 
-Please note that the code, and especially the building and running story, is
-in a **prerelease** state. Please take a look, but don't be surprised if you
-hit bugs or missing pieces.
-
 
 ## Getting started
 
