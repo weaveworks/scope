@@ -64,7 +64,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 // graph enriched with container names where appropriate
 var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessRenderer}
 
-// ProcessRenderer is a Renderer which produces a renderable process
+// ProcessNameRenderer is a Renderer which produces a renderable process
 // name graph by munging the progess graph.
 var ProcessNameRenderer = Map{
 	MapFunc: MapCountProcessName,
@@ -217,7 +217,7 @@ var PodRenderer = Map{
 	),
 }
 
-// PodsServiceRenderer is a Renderer which produces a renderable kubernetes services
+// PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
 var PodServiceRenderer = Map{
 	MapFunc: MapCountPods,
