@@ -25,7 +25,119 @@ Now, open your web browser to **http://localhost:4040**. (If you're using
 boot2docker, replace localhost with the output of `boot2docker ip`.)
 
 
-## Build
+## Requirements
+
+Scope does not need any configuration and does not require the Weave Network.
+But Scope does need to be running on every machine you want to monitor.
+
+
+## Architecture
+
+Weave Scope consists of two components: the app and the probe. These two
+components are deployed as a single Docker container using the `scope`
+script.
+
+The probe is responsible for gathering information about the host is it running
+on. This information is sent to the app in the form of a report. The app is
+responsible for processing reports from the probe into usable topologies,
+serving the UI, and pushing these topologies to the UI.
+
+```
++--Docker host----------+
+|  +--Container------+  |    .---------------.
+|  |                 |  |    | Browser       |
+|  |  +-----------+  |  |    |---------------|
+|  |  | scope-app |<---------|               |
+|  |  +-----------+  |  |    |               |
+|  |        ^        |  |    |               |
+|  |        |        |  |    '---------------'
+|  | +-------------+ |  |
+|  | | scope-probe | |  |
+|  | +-------------+ |  |
+|  |                 |  |
+|  +-----------------+  |
++------------------------+
+```
+
+## Multi host setup
+
+When running Scope in a cluster, each probe sends reports to each app.
+The App merges the reports from each probe into a more complete report.
+You need to run Scope on every machine you want to monitor.
+
+```
++--Docker host----------+      +--Docker host----------+
+|  +--Container------+  |      |  +--Container------+  |
+|  |                 |  |      |  |                 |  |
+|  |  +-----------+  |  |      |  |  +-----------+  |  |
+|  |  | scope-app |<-----.    .----->| scope-app |  |  |
+|  |  +-----------+  |  | \  / |  |  +-----------+  |  |
+|  |        ^        |  |  \/  |  |        ^        |  |
+|  |        |        |  |  /\  |  |        |        |  |
+|  | +-------------+ |  | /  \ |  | +-------------+ |  |
+|  | | scope-probe |-----'    '-----| scope-probe | |  |
+|  | +-------------+ |  |      |  | +-------------+ |  |
+|  |                 |  |      |  |                 |  |
+|  +-----------------+  |      |  +-----------------+  |
++-----------------------+      +-----------------------+
+```
+
+If you run Scope on the same machine as the Weave Network, the probe will use
+weaveDNS to automatically discover other apps on your network. Scope acheives
+this by registering itself under the address **scope.weave.local**. Each probe
+will send reports to every app registered under this address. Therefore, if
+you have a running weaveDNS setup, you do not need to take any further steps.
+
+If you do not wish to use weaveDNS, you can instruct Scope to cluster with
+other Scope instances on the command line. Hostnames and IP addresses are
+acceptable, both with and without ports:
+
+```
+# weave launch scope1:4030 192.168.0.12 192.168.0.11:4030
+```
+
+Hostnames will be regularly resolved as A records, and each answer used as a
+target.
+
+## Using Scope Service
+
+Scope can also be used to feed reports to the Scope Service. The Scope Service
+allows you centrally manage and share access to your Scope UI. In this
+configuration, you only run the probe locally; the apps are hosted for you.
+
+To get an account on the Scope Service, sign up at [scope.weave.works][]. You
+need to run a probe on every machine you want to monitor with Scope. To launch
+a probe and send reports to the service, run the following command:
+
+[scope.weave.works]: http://scope.weave.works
+
+```
+sudo scope launch --service-token=<token>
+```
+
+```
+                       .-~~~-.
+                 .- ~'`       )_   ___
+                /               `-'   )_
+               |    scope.weave.works   \
+                \                      .'
+                  ~-______________..--'
+                           ^^
+                           ||
+                           ||
++--Docker host----------+  ||  +--Docker host----------+
+|  +--Container------+  |  ||  |  +--Container------+  |
+|  |                 |  |  ||  |  |                 |  |
+|  | +-------------+ |  | /  \ |  | +-------------+ |  |
+|  | | scope-probe |-----'    '-----| scope-probe | |  |
+|  | +-------------+ |  |      |  | +-------------+ |  |
+|  |                 |  |      |  |                 |  |
+|  +-----------------+  |      |  +-----------------+  |
++-----------------------+      +-----------------------+
+```
+
+
+## Developing
 
 The build is in five stages. `make deps` installs some tools we use later in
 the build. `make frontend` builds a UI build image with all NPM dependencies.
@@ -42,7 +154,7 @@ make backend
 make
 ```
 
-## Run
+Then, run the local build via
 
 ```
 ./scope launch
