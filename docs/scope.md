@@ -139,7 +139,7 @@ sudo scope launch --service-token=<service token>
 | |                         | |       ||       | |                         | |
 | | Weave Scope Container   | |       ||       | | Weave Scope Container   | |
 | |                         | |       ||       | |                         | |
-| | +------------+--------+ | |      /  \      | | +------------+--------+ | |
+| | +---------------------+ | |      /  \      | | +---------------------+ | |
 | | |                     | | |     /    \     | | |                     | | |
 | | | Scope-probe         +---------      ---------+ Scope-probe         | | |
 | | |                     | | |                | | |                     | | |
