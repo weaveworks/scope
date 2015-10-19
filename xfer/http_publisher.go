@@ -23,8 +23,16 @@ var fastClient = http.Client{
 
 // NewHTTPPublisher returns an HTTPPublisher ready for use.
 func NewHTTPPublisher(target, token, probeID string) (string, *HTTPPublisher, error) {
-	targetAPI := sanitize.URL("http://", 0, "/api")(target)
-	resp, err := fastClient.Get(targetAPI)
+	p := &HTTPPublisher{
+		url:     sanitize.URL("http://", 0, "/api/report")(target),
+		token:   token,
+		probeID: probeID,
+	}
+	req, err := p.authorizedRequest("GET", sanitize.URL("http://", 0, "/api")(target), nil)
+	if err != nil {
+		return "", nil, err
+	}
+	resp, err := fastClient.Do(req)
 	if err != nil {
 		return "", nil, err
 	}
@@ -35,11 +43,16 @@ func NewHTTPPublisher(target, token, probeID string) (string, *HTTPPublisher, er
 	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
 		return "", nil, err
 	}
-	return apiResponse.ID, &HTTPPublisher{
-		url:     sanitize.URL("http://", 0, "/api/report")(target),
-		token:   token,
-		probeID: probeID,
-	}, nil
+	return apiResponse.ID, p, nil
+}
+
+func (p HTTPPublisher) authorizedRequest(method string, urlStr string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(method, urlStr, body)
+	if err == nil {
+		req.Header.Set("Authorization", AuthorizationHeader(p.token))
+		req.Header.Set(ScopeProbeIDHeader, p.probeID)
+	}
+	return req, err
 }
 
 func (p HTTPPublisher) String() string {
@@ -48,12 +61,10 @@ func (p HTTPPublisher) String() string {
 
 // Publish publishes the report to the URL.
 func (p HTTPPublisher) Publish(r io.Reader) error {
-	req, err := http.NewRequest("POST", p.url, r)
+	req, err := p.authorizedRequest("POST", p.url, r)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", AuthorizationHeader(p.token))
-	req.Header.Set(ScopeProbeIDHeader, p.probeID)
 	req.Header.Set("Content-Encoding", "gzip")
 	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
 
