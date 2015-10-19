@@ -123,6 +123,12 @@ type APITopologyDesc struct {
 	Stats         *topologyStats    `json:"stats,omitempty"`
 }
 
+type byName []APITopologyDesc
+
+func (a byName) Len() int           { return len(a) }
+func (a byName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byName) Less(i, j int) bool { return a[i].Name < a[j].Name }
+
 // APITopologyOption describes a &param=value to a given topology.
 type APITopologyOption struct {
 	Value   string `json:"value"`
@@ -139,12 +145,6 @@ type topologyStats struct {
 	FilteredNodes      int `json:"filtered_nodes"`
 }
 
-type byName []APITopologyDesc
-
-func (a byName) Len() int           { return len(a) }
-func (a byName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byName) Less(i, j int) bool { return a[i].Name < a[j].Name }
-
 func (r *registry) add(ts ...APITopologyDesc) {
 	r.Lock()
 	defer r.Unlock()
@@ -153,7 +153,7 @@ func (r *registry) add(ts ...APITopologyDesc) {
 
 		if t.parent != "" {
 			parent := r.items[t.parent]
-			parent.SubTopologies = append(r.items[t.parent].SubTopologies, t)
+			parent.SubTopologies = append(parent.SubTopologies, t)
 			sort.Sort(byName(parent.SubTopologies))
 			r.items[t.parent] = parent
 		}
@@ -186,17 +186,17 @@ func (r *registry) walk(f func(APITopologyDesc)) {
 }
 
 // makeTopologyList returns a handler that yields an APITopologyList.
-func makeTopologyList(rep xfer.Reporter) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (r *registry) makeTopologyList(rep xfer.Reporter) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
 		var (
 			rpt        = rep.Report()
 			topologies = []APITopologyDesc{}
 		)
-		topologyRegistry.walk(func(desc APITopologyDesc) {
-			decorateTopologyForRequest(r, &desc)
+		r.walk(func(desc APITopologyDesc) {
+			decorateTopologyForRequest(req, &desc)
 			decorateWithStats(&desc, rpt)
 			for i := range desc.SubTopologies {
-				decorateTopologyForRequest(r, &desc.SubTopologies[i])
+				decorateTopologyForRequest(req, &desc.SubTopologies[i])
 				decorateWithStats(&desc.SubTopologies[i], rpt)
 			}
 			topologies = append(topologies, desc)
@@ -229,8 +229,8 @@ func decorateWithStats(desc *APITopologyDesc, rpt report.Report) {
 
 func nop(r render.Renderer) render.Renderer { return r }
 
-func enableKubernetesTopologies() {
-	topologyRegistry.add(kubernetesTopologies...)
+func (r *registry) enableKubernetesTopologies() {
+	r.add(kubernetesTopologies...)
 }
 
 func decorateTopologyForRequest(r *http.Request, topology *APITopologyDesc) {
@@ -244,14 +244,14 @@ func decorateTopologyForRequest(r *http.Request, topology *APITopologyDesc) {
 	}
 }
 
-func captureTopology(rep xfer.Reporter, f func(xfer.Reporter, APITopologyDesc, http.ResponseWriter, *http.Request)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		topology, ok := topologyRegistry.get(mux.Vars(r)["topology"])
+func (r *registry) captureTopology(rep xfer.Reporter, f func(xfer.Reporter, APITopologyDesc, http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		topology, ok := r.get(mux.Vars(req)["topology"])
 		if !ok {
-			http.NotFound(w, r)
+			http.NotFound(w, req)
 			return
 		}
-		decorateTopologyForRequest(r, &topology)
-		f(rep, topology, w, r)
+		decorateTopologyForRequest(req, &topology)
+		f(rep, topology, w, req)
 	}
 }

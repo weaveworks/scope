@@ -63,12 +63,17 @@ func Router(c collector) *mux.Router {
 
 	get := router.Methods("GET").Subrouter()
 	get.HandleFunc("/api", gzipHandler(apiHandler))
-	get.HandleFunc("/api/topology", gzipHandler(makeTopologyList(c)))
-	get.HandleFunc("/api/topology/{topology}", gzipHandler(captureTopology(c, handleTopology)))
-	get.HandleFunc("/api/topology/{topology}/ws", captureTopology(c, handleWs)) // NB not gzip!
-	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).HandlerFunc(gzipHandler(captureTopology(c, handleNode)))
-	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{local}/{remote}")).HandlerFunc(gzipHandler(captureTopology(c, handleEdge)))
-	get.MatcherFunc(URLMatcher("/api/origin/host/{id}")).HandlerFunc(gzipHandler(makeOriginHostHandler(c)))
+	get.HandleFunc("/api/topology", gzipHandler(topologyRegistry.makeTopologyList(c)))
+	get.HandleFunc("/api/topology/{topology}",
+		gzipHandler(topologyRegistry.captureTopology(c, handleTopology)))
+	get.HandleFunc("/api/topology/{topology}/ws",
+		topologyRegistry.captureTopology(c, handleWs)) // NB not gzip!
+	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).HandlerFunc(
+		gzipHandler(topologyRegistry.captureTopology(c, handleNode)))
+	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{local}/{remote}")).HandlerFunc(
+		gzipHandler(topologyRegistry.captureTopology(c, handleEdge)))
+	get.MatcherFunc(URLMatcher("/api/origin/host/{id}")).HandlerFunc(
+		gzipHandler(makeOriginHostHandler(c)))
 	get.HandleFunc("/api/report", gzipHandler(makeRawReportHandler(c)))
 	get.PathPrefix("/").Handler(http.FileServer(FS(false))) // everything else is static
 
@@ -96,7 +101,7 @@ func makeReportPostHandler(a xfer.Adder) http.HandlerFunc {
 		}
 		a.Add(rpt)
 		if len(rpt.Pod.Nodes) > 0 {
-			enableKubernetesTopologies()
+			topologyRegistry.enableKubernetesTopologies()
 		}
 		w.WriteHeader(http.StatusOK)
 	}
