@@ -6,6 +6,7 @@ usage() {
     echo "Usage:"
     echo "scope launch [<peer> ...]"
     echo "scope stop"
+    echo "scope command"
     echo
     echo "scope <peer>    is of the form <ip_address_or_fqdn>[:<port>]"
     exit 1
@@ -57,15 +58,22 @@ check_not_running() {
     esac
 }
 
+launch_command() {
+    echo docker run --privileged -d --name=$SCOPE_CONTAINER_NAME --net=host --pid=host \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --probe.docker true "$@"
+}
+
 case "$COMMAND" in
+    command)
+        launch_command "$@"
+        ;;
 
     launch)
         check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE
         docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
 
-        CONTAINER=$(docker run --privileged -d --name=$SCOPE_CONTAINER_NAME --net=host --pid=host \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --probe.docker true "$@")
+        CONTAINER=$($(launch_command "$@"))
         echo $CONTAINER
 
         if ! echo "$@" | grep -E "\-\-no\-app|\-\-service\-token" 1>/dev/null; then
