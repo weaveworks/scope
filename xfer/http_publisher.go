@@ -1,9 +1,11 @@
 package xfer
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"time"
 
@@ -15,24 +17,39 @@ type HTTPPublisher struct {
 	url     string
 	token   string
 	probeID string
+	client  *http.Client
 }
 
-var fastClient = http.Client{
+var fastClient = &http.Client{
 	Timeout: 5 * time.Second,
 }
 
 // NewHTTPPublisher returns an HTTPPublisher ready for use.
-func NewHTTPPublisher(target, token, probeID string) (string, *HTTPPublisher, error) {
-	p := &HTTPPublisher{
-		url:     sanitize.URL("http://", 0, "/api/report")(target),
-		token:   token,
-		probeID: probeID,
-	}
-	req, err := p.authorizedRequest("GET", sanitize.URL("http://", 0, "/api")(target), nil)
+func NewHTTPPublisher(target, token, probeID string, insecure bool) (string, *HTTPPublisher, error) {
+	_, port, err := net.SplitHostPort(target)
 	if err != nil {
 		return "", nil, err
 	}
-	resp, err := fastClient.Do(req)
+	scheme := "http"
+	if port == "443" {
+		scheme = "https"
+	}
+	p := &HTTPPublisher{
+		url:     sanitize.URL(scheme+"://", 0, "/api/report")(target),
+		token:   token,
+		probeID: probeID,
+		client:  http.DefaultClient,
+	}
+	client := fastClient
+	if insecure {
+		allowInsecure(fastClient)
+		allowInsecure(p.client)
+	}
+	req, err := p.authorizedRequest("GET", sanitize.URL(scheme+"://", 0, "/api")(target), nil)
+	if err != nil {
+		return "", nil, err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", nil, err
 	}
@@ -68,7 +85,7 @@ func (p HTTPPublisher) Publish(r io.Reader) error {
 	req.Header.Set("Content-Encoding", "gzip")
 	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -87,6 +104,12 @@ func (p HTTPPublisher) Stop() {}
 // header, based on the passed token string.
 func AuthorizationHeader(token string) string {
 	return fmt.Sprintf("Scope-Probe token=%s", token)
+}
+
+func allowInsecure(c *http.Client) {
+	c.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 }
 
 // ScopeProbeIDHeader is the header we use to carry the probe's unique ID. The

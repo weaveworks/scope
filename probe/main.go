@@ -45,6 +45,7 @@ func main() {
 		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
 		printVersion       = flag.Bool("version", false, "print version number and exit")
 		useConntrack       = flag.Bool("conntrack", true, "also use conntrack to track connections")
+		insecure           = flag.Bool("insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
 		logPrefix          = flag.String("log.prefix", "<probe>", "prefix for each log line")
 	)
 	flag.Parse()
@@ -90,7 +91,7 @@ func main() {
 	log.Printf("publishing to: %s", strings.Join(targets, ", "))
 
 	factory := func(endpoint string) (string, xfer.Publisher, error) {
-		id, publisher, err := xfer.NewHTTPPublisher(endpoint, *token, probeID)
+		id, publisher, err := xfer.NewHTTPPublisher(endpoint, *token, probeID, *insecure)
 		if err != nil {
 			return "", nil, err
 		}
