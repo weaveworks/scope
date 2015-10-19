@@ -4,6 +4,7 @@ Weave Scope automatically generates a map of your containers, enabling you to
 intuitively understand, monitor, and control your applications.
 
 Scope does not need any configuration and does not require the Weave Network.
+You need to run Scope on every machine you want to monitor.
 
 ## Architecture
 
@@ -51,6 +52,7 @@ serving the UI and pushing these topologies to the UI.
 
 When running Scope in a cluster, each Probe sends reports to each App.
 The App merges the reports from each probe into a more complete report.
+You need to run Scope on every machine you want to monitor.
 
 ```
 +-------------------------------+            +-------------------------------+
@@ -80,7 +82,9 @@ The App merges the reports from each probe into a more complete report.
 ```
 
 If you run Scope on the same machine as the Weave Network, the Probe will use
-WeaveDNS to automatically discover other Apps on your network. Therefore, if
+WeaveDNS to automatically discover other Apps on your network. Scope acheives
+this by registering itself under the address scope.weave.local; each Probe
+will send reports to every App register for this address. Therefore, if
 you have a running WeaveDNS setup, you do not need to take any further steps.
 
 If you do not wish to use WeaveDNS, you can instruct Scope to cluster with
