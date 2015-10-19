@@ -15,20 +15,21 @@ DOMAIN=weave.local
 IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
 
 container_ip() {
-    if ! status=$(docker inspect --format='{{.State.Running}} {{.NetworkSettings.IPAddress}}' $1 2>/dev/null); then
-        echo "$2" >&2
+    if ! status=$(docker inspect --format='{{.State.Running}} {{.HostConfig.NetworkMode}}' $1 2>/dev/null); then
+        echo "Container $1 not found" >&2
         return 1
     fi
     case "$status" in
-        "true ")
-            echo "$1 container has no IP address; is Docker networking enabled?" >&2
-            return 1
+        "true host")
+            CONTAINER_IP="127.0.0.1"
+            return 0
             ;;
-        true*)
-            CONTAINER_IP="${status#true }"
+        "true default" | "true bridge")
+            CONTAINER_IP="$(docker inspect --format='{{.NetworkSettings.IPAddress}}' $1 2>/dev/null)"
+            return 0
             ;;
         *)
-            echo "$3" >&2
+            echo "Container $1 not running" >&2
             return 1
             ;;
     esac
@@ -44,11 +45,22 @@ docker_bridge_ip() {
     echo ${DOCKER_BRIDGE_IP#inet }
 }
 
+# Run `weave` in the weave exec container
+weave() {
+    WEAVEXEC_IMAGE=$(docker inspect --format='{{.Config.Image}}' weave | sed 's/\/weave/\/weaveexec/')
+    docker run -t --rm --privileged --net=host \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /proc:/hostproc \
+        -e PROCFS=/hostproc \
+        $WEAVEXEC_IMAGE --local "$@"
+}
+
 # Run `weave expose` if it's not already exposed.
 weave_expose() {
-    status=$(weave --local ps weave:expose | awk '{print $3}' 2>/dev/null)
+    status=$(weave ps weave:expose | awk '{print $3}' 2>/dev/null)
     if [ "$status" = "" ]; then
-        weave --local expose
+        echo "Exposing host to weave network."
+        weave expose
     fi
 }
 
@@ -127,7 +139,7 @@ if is_running $WEAVE_CONTAINER_NAME; then
         exit 1
     else
         for ip in $IP_ADDRS; do
-            weave --local dns-add $ip $CONTAINER -h $HOSTNAME.$DOMAIN
+            weave dns-add $ip $CONTAINER -h $HOSTNAME.$DOMAIN
         done
     fi
 fi

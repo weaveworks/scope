@@ -12,7 +12,7 @@ scope_on $HOST2 launch
 
 weave_on $HOST1 run -d --name nginx nginx
 weave_on $HOST2 run -d --name client alpine /bin/sh -c "while true; do \
-	wget http://nginx.weave.local:80/ >/dev/null || true; \
+	wget http://nginx.weave.local:80/ -O - >/dev/null || true; \
 	sleep 1; \
 done"
 
