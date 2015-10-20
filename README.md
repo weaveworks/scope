@@ -93,7 +93,7 @@ other Scope instances on the command line. Hostnames and IP addresses are
 acceptable, both with and without ports:
 
 ```
-# weave launch scope1:4030 192.168.0.12 192.168.0.11:4030
+# scope launch scope1:4030 192.168.0.12 192.168.0.11:4030
 ```
 
 Hostnames will be regularly resolved as A records, and each answer used as a
