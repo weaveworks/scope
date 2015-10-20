@@ -22,12 +22,13 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	ContainerName     = "docker_container_name"
-	ContainerCommand  = "docker_container_command"
-	ContainerPorts    = "docker_container_ports"
-	ContainerCreated  = "docker_container_created"
-	ContainerIPs      = "docker_container_ips"
-	ContainerHostname = "docker_container_hostname"
+	ContainerName          = "docker_container_name"
+	ContainerCommand       = "docker_container_command"
+	ContainerPorts         = "docker_container_ports"
+	ContainerCreated       = "docker_container_created"
+	ContainerIPs           = "docker_container_ips"
+	ContainerHostname      = "docker_container_hostname"
+	ContainerIPsWithScopes = "docker_container_ips_with_scopes"
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
@@ -72,7 +73,7 @@ type Container interface {
 	Image() string
 	PID() int
 	Hostname() string
-	GetNode([]net.IP) report.Node
+	GetNode(string, []net.IP) report.Node
 
 	StartGatheringStats() error
 	StopGatheringStats()
@@ -219,20 +220,28 @@ func (c *container) ports(localAddrs []net.IP) string {
 	return strings.Join(ports, ", ")
 }
 
-func (c *container) GetNode(localAddrs []net.IP) report.Node {
+func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	c.RLock()
 	defer c.RUnlock()
 
+	ips := append(c.container.NetworkSettings.SecondaryIPAddresses,
+		c.container.NetworkSettings.IPAddress)
+	// Treat all Docker IPs as local scoped.
+	ipsWithScopes := []string{}
+	for _, ip := range ips {
+		ipsWithScopes = append(ipsWithScopes, fmt.Sprintf("%s:%s", hostID, ip))
+	}
+
 	result := report.MakeNodeWith(map[string]string{
-		ContainerID:      c.ID(),
-		ContainerName:    strings.TrimPrefix(c.container.Name, "/"),
-		ContainerPorts:   c.ports(localAddrs),
-		ContainerCreated: c.container.Created.Format(time.RFC822),
-		ContainerCommand: c.container.Path + " " + strings.Join(c.container.Args, " "),
-		ImageID:          c.container.Image,
-		ContainerIPs: strings.Join(append(c.container.NetworkSettings.SecondaryIPAddresses,
-			c.container.NetworkSettings.IPAddress), " "),
-		ContainerHostname: c.Hostname(),
+		ContainerID:            c.ID(),
+		ContainerName:          strings.TrimPrefix(c.container.Name, "/"),
+		ContainerPorts:         c.ports(localAddrs),
+		ContainerCreated:       c.container.Created.Format(time.RFC822),
+		ContainerCommand:       c.container.Path + " " + strings.Join(c.container.Args, " "),
+		ImageID:                c.container.Image,
+		ContainerIPs:           strings.Join(ips, " "),
+		ContainerIPsWithScopes: strings.Join(ipsWithScopes, " "),
+		ContainerHostname:      c.Hostname(),
 	})
 	AddLabels(result, c.container.Config.Labels)
 
@@ -267,4 +276,10 @@ func (c *container) GetNode(localAddrs []net.IP) report.Node {
 // ExtractContainerIPs returns the list of container IPs given a Node from the Container topology.
 func ExtractContainerIPs(nmd report.Node) []string {
 	return strings.Fields(nmd.Metadata[ContainerIPs])
+}
+
+// ExtractContainerIPsWithScopes returns the list of container IPs, prepended
+// with scopes, given a Node from the Container topology.
+func ExtractContainerIPsWithScopes(nmd report.Node) []string {
+	return strings.Fields(nmd.Metadata[ContainerIPsWithScopes])
 }

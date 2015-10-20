@@ -178,6 +178,13 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 		existingIPs := report.MakeIDList(docker.ExtractContainerIPs(node)...)
 		existingIPs = existingIPs.Add(e.ips...)
 		node.Metadata[docker.ContainerIPs] = strings.Join(existingIPs, " ")
+
+		existingIPsWithScopes := report.MakeIDList(docker.ExtractContainerIPsWithScopes(node)...)
+		for _, ip := range e.ips {
+			existingIPsWithScopes = existingIPsWithScopes.Add(fmt.Sprintf(":%s", ip))
+		}
+		node.Metadata[docker.ContainerIPsWithScopes] = strings.Join(existingIPsWithScopes, " ")
+
 		node.Metadata[WeaveMACAddress] = e.macAddress
 	}
 	return r, nil

@@ -66,19 +66,20 @@ func TestContainer(t *testing.T) {
 
 	// Now see if we go them
 	want := report.MakeNode().WithMetadata(map[string]string{
-		"docker_container_command": " ",
-		"docker_container_created": "01 Jan 01 00:00 UTC",
-		"docker_container_id":      "ping",
-		"docker_container_ips":     "1.2.3.4",
-		"docker_container_name":    "pong",
-		"docker_container_ports":   "1.2.3.4:80->80/tcp, 81/tcp",
-		"docker_image_id":          "baz",
-		"docker_label_foo1":        "bar1",
-		"docker_label_foo2":        "bar2",
-		"memory_usage":             "12345",
+		"docker_container_command":         " ",
+		"docker_container_created":         "01 Jan 01 00:00 UTC",
+		"docker_container_id":              "ping",
+		"docker_container_ips":             "1.2.3.4",
+		"docker_container_ips_with_scopes": "scope:1.2.3.4",
+		"docker_container_name":            "pong",
+		"docker_container_ports":           "1.2.3.4:80->80/tcp, 81/tcp",
+		"docker_image_id":                  "baz",
+		"docker_label_foo1":                "bar1",
+		"docker_label_foo2":                "bar2",
+		"memory_usage":                     "12345",
 	})
 	test.Poll(t, 100*time.Millisecond, want, func() interface{} {
-		node := c.GetNode([]net.IP{})
+		node := c.GetNode("scope", []net.IP{})
 		for k, v := range node.Metadata {
 			if v == "0" || v == "" {
 				delete(node.Metadata, k)
@@ -93,7 +94,7 @@ func TestContainer(t *testing.T) {
 	if c.PID() != 1 {
 		t.Errorf("%s != 1", c.PID())
 	}
-	if !reflect.DeepEqual(docker.ExtractContainerIPs(c.GetNode([]net.IP{})), []string{"1.2.3.4"}) {
-		t.Errorf("%v != %v", docker.ExtractContainerIPs(c.GetNode([]net.IP{})), []string{"1.2.3.4"})
+	if have := docker.ExtractContainerIPs(c.GetNode("", []net.IP{})); !reflect.DeepEqual(have, []string{"1.2.3.4"}) {
+		t.Errorf("%v != %v", have, []string{"1.2.3.4"})
 	}
 }

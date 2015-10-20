@@ -46,7 +46,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 
 	r.registry.WalkContainers(func(c Container) {
 		nodeID := report.MakeContainerNodeID(r.hostID, c.ID())
-		result.AddNode(nodeID, c.GetNode(localAddrs))
+		result.AddNode(nodeID, c.GetNode(r.hostID, localAddrs))
 	})
 
 	return result
