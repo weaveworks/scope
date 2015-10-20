@@ -24,7 +24,7 @@ dependencies:
     - git clone https://github.com/weaveworks/tools.git $TOOLS
     - sudo apt-get update
     - sudo apt-get --only-upgrade install tar libpcap0.8-dev
-    - sudo apt-get install jq
+    - sudo apt-get install jq pv
     - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
     - go get $WEAVE_REPO/...
