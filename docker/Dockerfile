@@ -10,5 +10,6 @@ ADD ./weave /usr/bin/
 COPY ./scope-app ./scope-probe ./runsvinit ./entrypoint.sh /home/weave/
 COPY ./run-app /etc/service/app/run
 COPY ./run-probe /etc/service/probe/run
+COPY ./ca-certificates.crt /etc/ssl/certs/
 EXPOSE 4040
 ENTRYPOINT ["/home/weave/entrypoint.sh"]

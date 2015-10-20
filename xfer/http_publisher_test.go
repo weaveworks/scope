@@ -67,7 +67,7 @@ func TestHTTPPublisher(t *testing.T) {
 	s := httptest.NewServer(handlers.CompressHandler(handler))
 	defer s.Close()
 
-	_, p, err := xfer.NewHTTPPublisher(s.URL, token, id)
+	_, p, err := xfer.NewHTTPPublisher(s.URL, token, id, false)
 	if err != nil {
 		t.Fatal(err)
 	}
