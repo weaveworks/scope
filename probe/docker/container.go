@@ -224,12 +224,11 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	c.RLock()
 	defer c.RUnlock()
 
-	ips := append(c.container.NetworkSettings.SecondaryIPAddresses,
-		c.container.NetworkSettings.IPAddress)
+	ips := append(c.container.NetworkSettings.SecondaryIPAddresses, c.container.NetworkSettings.IPAddress)
 	// Treat all Docker IPs as local scoped.
 	ipsWithScopes := []string{}
 	for _, ip := range ips {
-		ipsWithScopes = append(ipsWithScopes, fmt.Sprintf("%s:%s", hostID, ip))
+		ipsWithScopes = append(ipsWithScopes, report.MakeScopedAddressNodeID(hostID, ip))
 	}
 
 	result := report.MakeNodeWith(map[string]string{

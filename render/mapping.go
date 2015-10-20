@@ -291,10 +291,13 @@ func MapEndpoint2IP(m RenderableNode, local report.Networks) RenderableNodes {
 		return RenderableNodes{TheInternetID: newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)}
 	}
 
-	// Emit 2 nodes: scope:addr and scope:addr:port, so connections from the
-	// internet to containers via port mapping also works.
-	id := fmt.Sprintf("%s:%s", scope, addr)
-	idWithPort := fmt.Sprintf("%s:%s:%s", scope, addr, port)
+	// We don't always know what port a container is listening on, and
+	// container-to-container communications can be unambiguously identified
+	// without ports. OTOH, connections to the host IPs which have been port
+	// mapped to a container can only be unambiguously identified with the port.
+	// So we need to emit two nodes, for two different cases.
+	id := report.MakeScopedEndpointNodeID(scope, addr, "")
+	idWithPort := report.MakeScopedEndpointNodeID(scope, addr, port)
 	return RenderableNodes{
 		id:         NewRenderableNodeWith(id, "", "", "", m),
 		idWithPort: NewRenderableNodeWith(idWithPort, "", "", "", m),
@@ -310,18 +313,22 @@ func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 	result := RenderableNodes{}
 	if addrs, ok := m.Metadata[docker.ContainerIPsWithScopes]; ok {
 		for _, addr := range strings.Fields(addrs) {
-			node := NewRenderableNodeWith(addr, "", "", "", m)
+			scope, addr, ok := report.ParseAddressNodeID(addr)
+			if !ok {
+				continue
+			}
+			id := report.MakeScopedEndpointNodeID(scope, addr, "")
+			node := NewRenderableNodeWith(id, "", "", "", m)
 			node.Counters[containersKey] = 1
-			result[addr] = node
+			result[id] = node
 		}
 	}
 
-	// Also output all the host:port port mappings.
-	// In this case, we assume this doesn't need a scope,
-	// as they are for host IPs.
+	// Also output all the host:port port mappings (see above comment).
+	// In this case we assume this doesn't need a scope, as they are for host IPs.
 	for _, mapping := range portMappingMatch.FindAllStringSubmatch(m.Metadata[docker.ContainerPorts], -1) {
 		ip, port := mapping[1], mapping[2]
-		id := fmt.Sprintf(":%s:%s", ip, port)
+		id := report.MakeScopedEndpointNodeID("", ip, port)
 		node := NewRenderableNodeWith(id, "", "", "", m)
 		node.Counters[containersKey] = 1
 		result[id] = node

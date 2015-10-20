@@ -85,7 +85,7 @@ const (
 	mockContainerID          = "83183a667c01"
 	mockContainerMAC         = "d6:f2:5a:12:36:a8"
 	mockContainerIP          = "10.0.0.123"
-	mockContainerIPWithScope = ":10.0.0.123"
+	mockContainerIPWithScope = ";10.0.0.123"
 	mockHostname             = "hostname.weave.local"
 )
 

@@ -70,7 +70,7 @@ func TestContainer(t *testing.T) {
 		"docker_container_created":         "01 Jan 01 00:00 UTC",
 		"docker_container_id":              "ping",
 		"docker_container_ips":             "1.2.3.4",
-		"docker_container_ips_with_scopes": "scope:1.2.3.4",
+		"docker_container_ips_with_scopes": "scope;1.2.3.4",
 		"docker_container_name":            "pong",
 		"docker_container_ports":           "1.2.3.4:80->80/tcp, 81/tcp",
 		"docker_image_id":                  "baz",

@@ -181,7 +181,7 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 
 		existingIPsWithScopes := report.MakeIDList(docker.ExtractContainerIPsWithScopes(node)...)
 		for _, ip := range e.ips {
-			existingIPsWithScopes = existingIPsWithScopes.Add(fmt.Sprintf(":%s", ip))
+			existingIPsWithScopes = existingIPsWithScopes.Add(report.MakeAddressNodeID("", ip))
 		}
 		node.Metadata[docker.ContainerIPsWithScopes] = strings.Join(existingIPsWithScopes, " ")
 
