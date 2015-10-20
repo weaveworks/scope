@@ -1,3 +1,35 @@
+## Release 0.9.0
+
+New features:
+- Add basic Kubernetes views for pods and services
+  [#441](https://github.com/weaveworks/scope/pull/441)
+- Add containers-by-hostname view
+  [#545](https://github.com/weaveworks/scope/pull/545)
+- Make ```scope launch``` work from remote hosts, with an appropriately defined DOCKER_HOST
+  [#524](https://github.com/weaveworks/scope/pull/524)
+- Increase DNS poll frequency such that Scope clusters up more quickly
+  [#524](https://github.com/weaveworks/scope/pull/524)
+- Add ```scope command``` for printing the Docker commands used to run Scope
+  [#553](https://github.com/weaveworks/scope/pull/553)
+- Include some basic documentation on how to run Scope
+  [#572](https://github.com/weaveworks/scope/pull/572)
+- Warn if the users tries to run Scope on Docker versions <1.5.0
+  [#557](https://github.com/weaveworks/scope/pull/557)
+- Add support for loading the Scope UI from https endpoings
+  [#572](https://github.com/weaveworks/scope/pull/572)
+
+Big fixes:
+- Don't leak goroutines in the probe
+  [#531](https://github.com/weaveworks/scope/issue/531)
+- Correctly render short-lived connections from the internet
+  [#493](https://github.com/weaveworks/scope/pull/493)
+- Ensure service credentials are sent when doing intial probe<->app handshake
+  [#564](https://github.com/weaveworks/scope/pull/564)
+- Sort reverse-DNS-resolved names to mitigate some UI fluttering
+  [#562](https://github.com/weaveworks/scope/pull/562)
+- Make ```scope launch``` work correctly with upcoming versions of Weave
+  [#574](https://github.com/weaveworks/scope/pull/574)
+
 ## Release 0.8.0
 
 New features:
