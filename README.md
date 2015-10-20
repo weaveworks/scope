@@ -56,7 +56,7 @@ serving the UI, and pushing these topologies to the UI.
 |  | +-------------+ |  |
 |  |                 |  |
 |  +-----------------+  |
-+------------------------+
++-----------------------+
 ```
 
 ## Multi host setup
