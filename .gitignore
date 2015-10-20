@@ -43,6 +43,7 @@ docker/scope-probe
 docker/docker*
 docker/weave
 docker/runsvinit
+docker/ca-certificates.crt
 experimental/bridge/bridge
 experimental/demoprobe/demoprobe
 experimental/fixprobe/fixprobe

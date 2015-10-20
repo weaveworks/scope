@@ -10,29 +10,29 @@ import (
 
 // URL returns a function that sanitizes a URL string. It lets underspecified
 // strings to be converted to usable URLs via some default arguments.
-func URL(scheme string, port int, path string) func(string) string {
-	if scheme == "" {
-		scheme = "http://"
+func URL(defaultScheme string, defaultPort int, defaultPath string) func(string) string {
+	if defaultScheme == "" {
+		defaultScheme = "http://"
 	}
 	return func(s string) string {
 		if s == "" {
 			return s // can't do much here
 		}
-		if !strings.HasPrefix(s, "http") {
-			s = scheme + s
+		if !strings.Contains(s, "://") {
+			s = defaultScheme + s
 		}
 		u, err := url.Parse(s)
 		if err != nil {
 			log.Printf("%q: %v", s, err)
 			return s // oh well
 		}
-		if port > 0 {
-			if _, _, err = net.SplitHostPort(u.Host); err != nil {
-				u.Host += fmt.Sprintf(":%d", port)
-			}
+		if _, port, err := net.SplitHostPort(u.Host); err != nil && defaultPort > 0 {
+			u.Host += fmt.Sprintf(":%d", defaultPort)
+		} else if port == "443" {
+			u.Scheme = "https"
 		}
-		if path != "" && u.Path != path {
-			u.Path = path
+		if defaultPath != "" && u.Path != defaultPath {
+			u.Path = defaultPath
 		}
 		return u.String()
 	}

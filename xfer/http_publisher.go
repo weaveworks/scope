@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"time"
 
@@ -26,16 +25,8 @@ var fastClient = &http.Client{
 
 // NewHTTPPublisher returns an HTTPPublisher ready for use.
 func NewHTTPPublisher(target, token, probeID string, insecure bool) (string, *HTTPPublisher, error) {
-	_, port, err := net.SplitHostPort(target)
-	if err != nil {
-		return "", nil, err
-	}
-	scheme := "http"
-	if port == "443" {
-		scheme = "https"
-	}
 	p := &HTTPPublisher{
-		url:     sanitize.URL(scheme+"://", 0, "/api/report")(target),
+		url:     sanitize.URL("", 0, "/api/report")(target),
 		token:   token,
 		probeID: probeID,
 		client:  http.DefaultClient,
@@ -45,7 +36,7 @@ func NewHTTPPublisher(target, token, probeID string, insecure bool) (string, *HT
 		allowInsecure(fastClient)
 		allowInsecure(p.client)
 	}
-	req, err := p.authorizedRequest("GET", sanitize.URL(scheme+"://", 0, "/api")(target), nil)
+	req, err := p.authorizedRequest("GET", sanitize.URL("", 0, "/api")(target), nil)
 	if err != nil {
 		return "", nil, err
 	}
