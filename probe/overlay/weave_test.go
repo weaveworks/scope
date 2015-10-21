@@ -51,10 +51,11 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 			Container: report.Topology{
 				Nodes: report.Nodes{
 					nodeID: report.MakeNodeWith(map[string]string{
-						docker.ContainerID:       mockContainerID,
-						overlay.WeaveDNSHostname: mockHostname,
-						overlay.WeaveMACAddress:  mockContainerMAC,
-						docker.ContainerIPs:      mockContainerIP,
+						docker.ContainerID:            mockContainerID,
+						overlay.WeaveDNSHostname:      mockHostname,
+						overlay.WeaveMACAddress:       mockContainerMAC,
+						docker.ContainerIPs:           mockContainerIP,
+						docker.ContainerIPsWithScopes: mockContainerIPWithScope,
 					}),
 				},
 			},
@@ -78,13 +79,14 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 }
 
 const (
-	mockHostID            = "host1"
-	mockWeavePeerName     = "winnebago"
-	mockWeavePeerNickName = "winny"
-	mockContainerID       = "83183a667c01"
-	mockContainerMAC      = "d6:f2:5a:12:36:a8"
-	mockContainerIP       = "10.0.0.123"
-	mockHostname          = "hostname.weave.local"
+	mockHostID               = "host1"
+	mockWeavePeerName        = "winnebago"
+	mockWeavePeerNickName    = "winny"
+	mockContainerID          = "83183a667c01"
+	mockContainerMAC         = "d6:f2:5a:12:36:a8"
+	mockContainerIP          = "10.0.0.123"
+	mockContainerIPWithScope = ";10.0.0.123"
+	mockHostname             = "hostname.weave.local"
 )
 
 var (

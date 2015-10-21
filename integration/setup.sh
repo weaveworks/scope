@@ -6,7 +6,8 @@ set -e
 
 echo Copying scope images and scripts to hosts
 for HOST in $HOSTS; do
-	docker_on $HOST load -i ../scope.tar
+	SIZE=$(stat --printf="%s" ../scope.tar)
+	cat ../scope.tar | pv -N "scope.tar" -s $SIZE | $SSH -C $HOST sudo docker load
 	upload_executable $HOST ../scope
 	upload_executable $HOST ../scope /usr/local/scope/bin/scope
 done

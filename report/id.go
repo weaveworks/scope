@@ -76,6 +76,18 @@ func MakeAddressNodeID(hostID, address string) string {
 	return scope + ScopeDelim + address
 }
 
+// MakeScopedEndpointNodeID is like MakeEndpointNodeID, but it always
+// prefixes the ID witha scope.
+func MakeScopedEndpointNodeID(hostID, address, port string) string {
+	return hostID + ScopeDelim + address + ScopeDelim + port
+}
+
+// MakeScopedAddressNodeID is like MakeAddressNodeID, but it always
+// prefixes the ID witha scope.
+func MakeScopedAddressNodeID(hostID, address string) string {
+	return hostID + ScopeDelim + address
+}
+
 // MakeProcessNodeID produces a process node ID from its composite parts.
 func MakeProcessNodeID(hostID, pid string) string {
 	return hostID + ScopeDelim + pid

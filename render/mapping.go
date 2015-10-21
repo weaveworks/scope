@@ -283,23 +283,25 @@ func MapEndpoint2IP(m RenderableNode, local report.Networks) RenderableNodes {
 	if ok {
 		return RenderableNodes{}
 	}
-	addr, ok := m.Metadata[endpoint.Addr]
+	scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
 	if !ok {
 		return RenderableNodes{}
 	}
-	if !local.Contains(net.ParseIP(addr)) {
+	if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
 		return RenderableNodes{TheInternetID: newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)}
 	}
 
-	result := RenderableNodes{addr: NewRenderableNodeWith(addr, "", "", "", m)}
-	// Emit addr:port nodes as well, so connections from the internet to containers
-	// via port mapping also works.
-	port, ok := m.Metadata[endpoint.Port]
-	if ok {
-		id := fmt.Sprintf("%s:%s", addr, port)
-		result[id] = NewRenderableNodeWith(id, "", "", "", m)
+	// We don't always know what port a container is listening on, and
+	// container-to-container communications can be unambiguously identified
+	// without ports. OTOH, connections to the host IPs which have been port
+	// mapped to a container can only be unambiguously identified with the port.
+	// So we need to emit two nodes, for two different cases.
+	id := report.MakeScopedEndpointNodeID(scope, addr, "")
+	idWithPort := report.MakeScopedEndpointNodeID(scope, addr, port)
+	return RenderableNodes{
+		id:         NewRenderableNodeWith(id, "", "", "", m),
+		idWithPort: NewRenderableNodeWith(idWithPort, "", "", "", m),
 	}
-	return result
 }
 
 var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}):([0-9]+)->([0-9]+)/tcp`)
@@ -309,20 +311,24 @@ var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.
 // the endpoint topology.
 func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 	result := RenderableNodes{}
-	addrs, ok := m.Metadata[docker.ContainerIPs]
-	if !ok {
-		return result
-	}
-	for _, addr := range strings.Fields(addrs) {
-		node := NewRenderableNodeWith(addr, "", "", "", m)
-		node.Counters[containersKey] = 1
-		result[addr] = node
+	if addrs, ok := m.Metadata[docker.ContainerIPsWithScopes]; ok {
+		for _, addr := range strings.Fields(addrs) {
+			scope, addr, ok := report.ParseAddressNodeID(addr)
+			if !ok {
+				continue
+			}
+			id := report.MakeScopedEndpointNodeID(scope, addr, "")
+			node := NewRenderableNodeWith(id, "", "", "", m)
+			node.Counters[containersKey] = 1
+			result[id] = node
+		}
 	}
 
-	// also output all the host:port port mappings
+	// Also output all the host:port port mappings (see above comment).
+	// In this case we assume this doesn't need a scope, as they are for host IPs.
 	for _, mapping := range portMappingMatch.FindAllStringSubmatch(m.Metadata[docker.ContainerPorts], -1) {
 		ip, port := mapping[1], mapping[2]
-		id := fmt.Sprintf("%s:%s", ip, port)
+		id := report.MakeScopedEndpointNodeID("", ip, port)
 		node := NewRenderableNodeWith(id, "", "", "", m)
 		node.Counters[containersKey] = 1
 		result[id] = node
