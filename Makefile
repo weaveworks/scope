@@ -42,7 +42,6 @@ $(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go common/sanitize/*.go
 $(PROBE_EXE): probe/*.go probe/docker/*.go probe/kubernetes/*.go probe/endpoint/*.go probe/host/*.go probe/process/*.go probe/overlay/*.go report/*.go xfer/*.go common/sanitize/*.go common/exec/*.go
 
 $(APP_EXE) $(PROBE_EXE):
-	go get -d -tags netgo ./$(@D)
 	go build -ldflags "-extldflags \"-static\" -X main.version $(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
@@ -102,6 +101,3 @@ deps:
 		github.com/mjibson/esc \
 		github.com/kisielk/errcheck \
 		github.com/aktau/github-release
-
-update:
-	go get -u -f -v -tags netgo ./...
