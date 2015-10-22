@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"log"
@@ -12,7 +12,8 @@ import (
 	"github.com/weaveworks/scope/xfer"
 )
 
-func registerControlRoutes(router *mux.Router) {
+// RegisterControlRoutes registers the various control routes with a http mux.
+func RegisterControlRoutes(router *mux.Router) {
 	controlRouter := &controlRouter{
 		probes: map[string]controlHandler{},
 	}

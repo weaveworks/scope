@@ -1,4 +1,4 @@
-package main
+package app_test
 
 import (
 	"github.com/weaveworks/scope/report"

@@ -1,4 +1,4 @@
-package main
+package app_test
 
 import (
 	"encoding/json"
@@ -9,14 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/xfer"
-
 	"github.com/gorilla/mux"
+
+	"github.com/weaveworks/scope/app"
+	"github.com/weaveworks/scope/xfer"
 )
 
 func TestControl(t *testing.T) {
 	router := mux.NewRouter()
-	registerControlRoutes(router)
+	app.RegisterControlRoutes(router)
 	server := httptest.NewServer(router)
 	defer server.Close()
 

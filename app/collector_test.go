@@ -1,17 +1,18 @@
-package main
+package app_test
 
 import (
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
 
 func TestCollector(t *testing.T) {
 	window := time.Millisecond
-	c := NewCollector(window)
+	c := app.NewCollector(window)
 
 	r1 := report.MakeReport()
 	r1.Endpoint.AddNode("foo", report.MakeNode())

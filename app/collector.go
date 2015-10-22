@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"sync"
@@ -21,9 +21,15 @@ type Adder interface {
 	Add(report.Report)
 }
 
+// A Collector is a Reporter and an Adder
+type Collector interface {
+	Reporter
+	Adder
+}
+
 // Collector receives published reports from multiple producers. It yields a
 // single merged report, representing all collected reports.
-type Collector struct {
+type collector struct {
 	mtx     sync.Mutex
 	reports []timestampReport
 	window  time.Duration
@@ -60,8 +66,8 @@ func (wc *waitableCondition) Broadcast() {
 }
 
 // NewCollector returns a collector ready for use.
-func NewCollector(window time.Duration) *Collector {
-	return &Collector{
+func NewCollector(window time.Duration) Collector {
+	return &collector{
 		window: window,
 		waitableCondition: waitableCondition{
 			waiters: map[chan struct{}]struct{}{},
@@ -72,7 +78,7 @@ func NewCollector(window time.Duration) *Collector {
 var now = time.Now
 
 // Add adds a report to the collector's internal state. It implements Adder.
-func (c *Collector) Add(rpt report.Report) {
+func (c *collector) Add(rpt report.Report) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	c.reports = append(c.reports, timestampReport{now(), rpt})
@@ -84,7 +90,7 @@ func (c *Collector) Add(rpt report.Report) {
 
 // Report returns a merged report over all added reports. It implements
 // Reporter.
-func (c *Collector) Report() report.Report {
+func (c *collector) Report() report.Report {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 

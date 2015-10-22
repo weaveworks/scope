@@ -3,7 +3,7 @@
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo -E
 DOCKERHUB_USER=weaveworks
-APP_EXE=app/scope-app
+APP_EXE=prog/app/scope-app
 PROBE_EXE=prog/probe/scope-probe
 FIXPROBE_EXE=experimental/fixprobe/fixprobe
 SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
@@ -38,7 +38,7 @@ $(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVI
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
-$(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go common/sanitize/*.go app/static.go
+$(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go common/sanitize/*.go prog/app/*.go prog/app/static.go
 
 $(PROBE_EXE): prog/probe/*.go $(shell find probe/ -type f -name *.go) report/*.go xfer/*.go common/sanitize/*.go common/exec/*.go
 
@@ -62,9 +62,9 @@ $(RUNSVINIT):
 	go build -ldflags "-extldflags \"-static\"" -o $@ ./$(@D)
 endif
 
-static: app/static.go
+static: prog/app/static.go
 
-app/static.go: client/build/app.js
+prog/app/static.go: client/build/app.js
 	esc -o $@ -prefix client/build client/build
 
 ifeq ($(BUILD_IN_CONTAINER),true)

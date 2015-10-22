@@ -1,9 +1,10 @@
-package main
+package app_test
 
 import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 )
@@ -21,7 +23,7 @@ type v map[string]string
 func TestURLMatcher(t *testing.T) {
 	test := func(pattern, path string, match bool, vars v) {
 		routeMatch := &mux.RouteMatch{}
-		if URLMatcher(pattern)(&http.Request{RequestURI: path}, routeMatch) != match {
+		if app.URLMatcher(pattern)(&http.Request{RequestURI: path}, routeMatch) != match {
 			t.Fatalf("'%s' '%s'", pattern, path)
 		}
 		if match && !reflect.DeepEqual(v(routeMatch.Vars), vars) {
@@ -39,21 +41,38 @@ func TestURLMatcher(t *testing.T) {
 
 func TestReportPostHandler(t *testing.T) {
 	test := func(contentType string, encoder func(interface{}) ([]byte, error)) {
+		router := mux.NewRouter()
+		c := app.NewCollector(1 * time.Minute)
+		app.RegisterReportPostHandler(c, router)
+		ts := httptest.NewServer(router)
+		defer ts.Close()
+
 		b, err := encoder(fixture.Report)
 		if err != nil {
 			t.Fatalf("Content-Type %s: %s", contentType, err)
 		}
 
-		r, _ := http.NewRequest("POST", "/api/report", bytes.NewReader(b))
-		r.Header.Set("Content-Type", contentType)
-		w := httptest.NewRecorder()
-		c := NewCollector(1 * time.Minute)
-		makeReportPostHandler(c).ServeHTTP(w, r)
-		if w.Code != http.StatusOK {
-			t.Fatalf("Content-Type %s: http status: %d\nbody: %s", contentType, w.Code, w.Body.String())
+		req, err := http.NewRequest("POST", ts.URL+"/api/report", bytes.NewReader(b))
+		if err != nil {
+			t.Fatalf("Error posting report: %v", err)
 		}
-		// Just check a few items, to confirm it parsed. Otherwise
-		// reflect.DeepEqual chokes on nil vs empty arrays.
+		req.Header.Set("Content-Type", contentType)
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("Error posting report %v", err)
+		}
+
+		_, err = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			t.Fatalf("Error posting report: %v", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("Error posting report: %d", resp.StatusCode)
+		}
+
 		if want, have := fixture.Report.Endpoint.Nodes, c.Report().Endpoint.Nodes; len(have) == 0 || len(want) != len(have) {
 			t.Fatalf("Content-Type %s: %v", contentType, test.Diff(have, want))
 		}

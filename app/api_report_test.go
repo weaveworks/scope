@@ -1,15 +1,24 @@
-package main
+package app_test
 
 import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
+
+	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/report"
 )
 
+func topologyServer() *httptest.Server {
+	router := mux.NewRouter()
+	app.RegisterTopologyRoutes(StaticReport{}, router)
+	return httptest.NewServer(router)
+}
+
 func TestAPIReport(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
+	ts := topologyServer()
 	defer ts.Close()
 
 	is404(t, ts, "/api/report/foobar")
