@@ -122,6 +122,11 @@ var ConntrackModulePresent = func() bool {
 }
 
 func (c *conntracker) loop() {
+	// conntrack can sometimes fail with ENOBUFS, when there is a particularly
+	// high connection rate.  In these cases just retry in a loop, so we can
+	// survive the spike.  For sustained loads this degrades nicely, as we
+	// read the table before starting to handle events - basically degrading to
+	// polling.
 	for {
 		c.run()
 		c.clearFlows()
