@@ -7,7 +7,7 @@ machine:
   services:
     - docker
   environment:
-    GOPATH: /home/ubuntu:$GOPATH
+    GOPATH: /home/ubuntu
     TOOLS: /home/ubuntu/src/github.com/weaveworks/tools
     SRCDIR: /home/ubuntu/src/github.com/weaveworks/scope
     PATH: $PATH:$HOME/.local/bin
@@ -36,13 +36,17 @@ dependencies:
     - mkdir -p $(dirname $SRCDIR)
     - cp -r $(pwd)/ $SRCDIR
     - cd $SRCDIR/client; $TOOLS/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc
+    - cd $SRCDIR/backend; $TOOLS/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh
+    - touch $SRCDIR/.scope_backend_build.uptodate
 
 test:
   override:
     - cd $SRCDIR; $TOOLS/lint .
     - cd $SRCDIR; make RM= client-test
     - cd $SRCDIR; make RM= static
-    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; make
+    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOARCH=arm make RM= backend
+    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOOS=darwin make RM= backend
+    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; make RM=
     - cd $SRCDIR; $TOOLS/test -slow
     - cd $SRCDIR/experimental; make
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup)
