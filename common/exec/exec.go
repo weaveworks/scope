@@ -2,16 +2,16 @@ package exec
 
 import (
 	"io"
-	"os"
 	"os/exec"
 )
 
 // Cmd is a hook for mocking
 type Cmd interface {
 	StdoutPipe() (io.ReadCloser, error)
+	StderrPipe() (io.ReadCloser, error)
 	Start() error
 	Wait() error
-	Process() *os.Process
+	Kill() error
 }
 
 // Command is a hook for mocking
@@ -23,6 +23,6 @@ type realCmd struct {
 	*exec.Cmd
 }
 
-func (c *realCmd) Process() *os.Process {
-	return c.Cmd.Process
+func (c *realCmd) Kill() error {
+	return c.Cmd.Process.Kill()
 }
