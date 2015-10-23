@@ -37,7 +37,7 @@ $(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVI
 	$(SUDO) docker save $(SCOPE_IMAGE):latest | sudo $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
 
 docker/ca-certificates.crt: /etc/ssl/certs/ca-certificates.crt
-		cp $? $@
+	cp $? $@
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 	go build -o $@ github.com/weaveworks/scope/vendor/runsvinit
