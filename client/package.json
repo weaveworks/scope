@@ -6,8 +6,8 @@
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
+    "cola": "tgdwyer/WebCola#dbf04fb15ead2a451deadafb073dadeb0214c0b4",
     "d3": "^3.5.5",
-    "dagre": "^0.7.2",
     "debug": "^2.2.0",
     "flux": "^2.0.3",
     "font-awesome": "^4.3.0",
@@ -17,14 +17,13 @@
     "lodash": "~3.9.3",
     "material-ui": "^0.11.0",
     "materialize-css": "^0.96.1",
+    "md5": "^2.0.0",
     "object-assign": "^2.0.0",
     "page": "^1.6.3",
     "react": "^0.13.3",
     "react-motion": "^0.2.7",
     "react-tap-event-plugin": "^0.1.7",
-    "react-tween-state": "0.0.5",
-    "reqwest": "~1.1.5",
-    "timely": "^0.1.0"
+    "reqwest": "~1.1.5"
   },
   "devDependencies": {
     "autoprefixer-core": "^5.2.0",
@@ -62,7 +61,6 @@
     "webpack-dev-server": "^1.10.1"
   },
   "scripts": {
-    "postinstall": "npm run build",
     "build": "webpack -p --config webpack.production.config.js",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",

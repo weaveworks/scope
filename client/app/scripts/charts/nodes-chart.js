@@ -2,7 +2,6 @@ const _ = require('lodash');
 const d3 = require('d3');
 const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
-const timely = require('timely');
 const Spring = require('react-motion').Spring;
 
 const AppActions = require('../actions/app-actions');
@@ -13,10 +12,10 @@ const NodesLayout = require('./nodes-layout');
 const Node = require('./node');
 
 const MARGINS = {
-  top: 130,
+  top: 100,
   left: 40,
   right: 40,
-  bottom: 0
+  bottom: 20
 };
 
 // make sure circular layouts a bit denser with 3-6 nodes
@@ -27,11 +26,11 @@ const NodesChart = React.createClass({
 
   getInitialState: function() {
     return {
-      nodes: {},
-      edges: {},
+      nodes: [],
+      edges: [],
       nodeScale: d3.scale.linear(),
-      shiftTranslate: [0, 0],
-      panTranslate: [0, 0],
+      shiftTranslate: [MARGINS.left, MARGINS.top],
+      panTranslate: [MARGINS.left, MARGINS.top],
       scale: 1,
       hasZoomed: false,
       autoShifted: false,
@@ -51,6 +50,8 @@ const NodesChart = React.createClass({
 
     d3.select('.nodes-chart svg')
       .call(this.zoom);
+
+    this.updateGraphState(this.props);
   },
 
   componentWillReceiveProps: function(nextProps) {
@@ -61,9 +62,12 @@ const NodesChart = React.createClass({
     if (nextProps.topologyId !== this.props.topologyId) {
       _.assign(state, {
         autoShifted: false,
-        nodes: {},
-        edges: {}
+        nodes: [],
+        edges: [],
+        hasZoomed: false,
+        initialLayout: true
       });
+      this.updateGraphState(nextProps);
     }
     // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
     if (nextProps.nodes !== this.props.nodes) {
@@ -144,8 +148,15 @@ const NodesChart = React.createClass({
       const blurred = hasSelectedNode
         && edge.source.id !== selectedNodeId
         && edge.target.id !== selectedNodeId;
+      const points = [{
+        x: edge.source.x,
+        y: edge.source.y
+      }, {
+        x: edge.target.x,
+        y: edge.target.y
+      }];
       return (
-        <Edge key={edge.id} id={edge.id} points={edge.points} blurred={blurred}
+        <Edge key={edge.id} id={edge.id} points={points} blurred={blurred}
           highlighted={highlighted} />
       );
     }, this);
@@ -402,24 +413,16 @@ const NodesChart = React.createClass({
 
     const nodes = this.initNodes(props.nodes, state.nodes);
     const edges = this.initEdges(props.nodes, nodes);
-
+    const width = props.width - MARGINS.left - MARGINS.right;
+    const height = props.height - MARGINS.top - MARGINS.bottom;
     const expanse = Math.min(props.height, props.width);
     const nodeSize = expanse / 3; // single node should fill a third of the screen
     const normalizedNodeSize = nodeSize / Math.sqrt(n); // assuming rectangular layout
     const nodeScale = this.state.nodeScale.range([0, normalizedNodeSize]);
 
-    const timedLayouter = timely(NodesLayout.doLayout);
-    const graph = timedLayouter(
-      nodes,
-      edges,
-      props.width,
-      props.height,
-      nodeScale,
-      MARGINS,
-      this.props.topologyId
-    );
-
-    debug('graph layout took ' + timedLayouter.time + 'ms');
+    let start = _.now();
+    let graph = NodesLayout.doLayout(nodes, edges, width, height, nodeScale);
+    debug('graph layout took ' + (_.now() - start) + 'ms');
 
     // layout was aborted
     if (!graph) {
@@ -436,15 +439,34 @@ const NodesChart = React.createClass({
     });
 
     // adjust layout based on viewport
-    const xFactor = (props.width - MARGINS.left - MARGINS.right) / graph.width;
-    const yFactor = props.height / graph.height;
-    const zoomFactor = Math.min(xFactor, yFactor);
-    let zoomScale = this.state.scale;
 
-    if (this.zoom && !this.state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
-      zoomScale = zoomFactor;
+    const empty = graph.width === 0;
+    const xFactor = width / graph.width;
+    const yFactor = height / graph.height;
+    const xOffset = graph.left;
+    const yOffset = graph.top;
+    // only adjust zooming in
+    const zoomFactor = Math.min(1, Math.min(xFactor, yFactor));
+    let zoomScale = this.state.scale;
+    let translate = this.state.panTranslate;
+
+    if (this.zoom && !this.state.hasZoomed) {
+      if (zoomFactor > 0 && zoomFactor !== zoomScale) {
+        zoomScale = zoomFactor;
+        // saving in d3's behavior cache
+        this.zoom.scale(zoomFactor);
+      }
+
+      if (xOffset < 0) {
+        translate[0] = xOffset * -1 * zoomScale + MARGINS.left;
+      }
+
+      if (yOffset < 0) {
+        translate[1] = yOffset * -1 * zoomScale + MARGINS.top;
+      }
+
       // saving in d3's behavior cache
-      this.zoom.scale(zoomFactor);
+      this.zoom.translate(translate);
     }
 
     return {
@@ -452,7 +474,10 @@ const NodesChart = React.createClass({
       edges: edges,
       nodeScale: nodeScale,
       scale: zoomScale,
-      maxNodesExceeded: false
+      maxNodesExceeded: false,
+      panTranslate: translate,
+      shiftTranslate: translate,
+      initialLayout: empty
     };
   },
 

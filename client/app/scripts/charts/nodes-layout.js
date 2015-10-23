@@ -1,106 +1,83 @@
-const dagre = require('dagre');
-const debug = require('debug')('scope:nodes-layout');
-const Naming = require('../constants/naming');
 const _ = require('lodash');
+const d3 = require('d3');
+const webcola = require('webcola');
+const debug = require('debug')('scope:nodes-layout');
 
 const MAX_NODES = 100;
-const topologyGraphs = {};
 
-const doLayout = function(nodes, edges, width, height, scale, margins, topologyId) {
-  let offsetX = 0 + margins.left;
-  let offsetY = 0 + margins.top;
-  let graph;
+const getConstraints = function(nodes, scale) {
+  const constraints = [];
+  const theInternetId = 'theinternet';
+  const internetNode = nodes[theInternetId];
 
+  // all nodes have to be below the internet node
+  if (internetNode) {
+    _.each(nodes, function(node, id) {
+      if (id !== theInternetId) {
+        constraints.push({
+          axis: 'y',
+          left: internetNode.index,
+          right: node.index,
+          gap: scale(1.5)
+        });
+      }
+    });
+  }
+
+  return constraints;
+};
+
+const doLayout = function(nodes, edges, width, height, scale) {
   if (_.size(nodes) > MAX_NODES) {
-    debug('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
+    debug('Too many nodes to lay out.');
     return null;
   }
 
-  // one engine per topology, to keep renderings similar
-  if (!topologyGraphs[topologyId]) {
-    topologyGraphs[topologyId] = new dagre.graphlib.Graph({});
-  }
-  graph = topologyGraphs[topologyId];
-
-  // configure node margins
-  graph.setGraph({
-    nodesep: scale(2.5),
-    ranksep: scale(2.5)
-  });
-
-  // add nodes to the graph if not already there
-  _.each(nodes, function(node) {
-    if (!graph.hasNode(node.id)) {
-      graph.setNode(node.id, {
-        id: node.id,
-        width: scale(1),
-        height: scale(1)
-      });
-    }
-  });
-
-  // remove nodes that are no longer there
-  _.each(graph.nodes(), function(nodeid) {
-    if (!_.has(nodes, nodeid)) {
-      graph.removeNode(nodeid);
-    }
-  });
-
-  // add edges to the graph if not already there
-  _.each(edges, function(edge) {
-    if (!graph.hasEdge(edge.source.id, edge.target.id)) {
-      const virtualNodes = edge.source.id === edge.target.id ? 1 : 0;
-      graph.setEdge(edge.source.id, edge.target.id, {id: edge.id, minlen: virtualNodes});
-    }
-  });
-
-  // remoed egdes that are no longer there
-  _.each(graph.edges(), function(edgeObj) {
-    const edge = [edgeObj.v, edgeObj.w];
-    const edgeId = edge.join(Naming.EDGE_ID_SEPARATOR);
-    if (!_.has(edges, edgeId)) {
-      graph.removeEdge(edgeObj.v, edgeObj.w);
-    }
-  });
-
-  dagre.layout(graph);
-
-  const layout = graph.graph();
-
-  // shifting graph coordinates to center
-
-  if (layout.width < width) {
-    offsetX = (width - layout.width) / 2 + margins.left;
-  }
-  if (layout.height < height) {
-    offsetY = (height - layout.height) / 2 + margins.top;
+  if (_.size(nodes) === 0) {
+    return {height: 0, width: 0};
   }
 
-  // apply coordinates to nodes and edges
+  const cola = new webcola.Layout()
+    .avoidOverlaps(true)
+    .size([width, height]);
 
-  graph.nodes().forEach(function(id) {
-    const node = nodes[id];
-    const graphNode = graph.node(id);
-    node.x = graphNode.x + offsetX;
-    node.y = graphNode.y + offsetY;
+  const nodeList = _.sortBy(nodes, function(node) {
+    return node.id;
+  });
+  const edgeList = _.values(edges, function(edge) {
+    return edge.id;
   });
 
-  graph.edges().forEach(function(id) {
-    const graphEdge = graph.edge(id);
-    const edge = edges[graphEdge.id];
-    _.each(graphEdge.points, function(point) {
-      point.x += offsetX;
-      point.y += offsetY;
-    });
-    edge.points = graphEdge.points;
-    // set beginning and end points to node coordinates to ignore node bounding box
-    edge.points[0] = {x: edge.source.x, y: edge.source.y};
-    edge.points[edge.points.length - 1] = {x: edge.target.x, y: edge.target.y};
+  nodeList.forEach(function(v, i) {
+    v.height = scale(2.5);
+    v.width = scale(2.5);
+    v.index = i;
   });
+
+  const constraints = getConstraints(nodes, scale);
+
+  debug('graph layout constraints', constraints);
+
+  cola
+    .nodes(nodeList)
+    .links(edgeList)
+    .constraints(constraints)
+    .flowLayout('y', scale(0.5))
+    .start(16, 8, 0);
+
+  debug('graph layout done');
+
+  const extentX = d3.extent(nodeList, function(n) { return n.x; });
+  const extentY = d3.extent(nodeList, function(n) { return n.y; });
 
   // return object with the width and height of layout
 
-  return layout;
+  return {
+    left: extentX[0],
+    height: extentY[1] - extentY[0],
+    top: extentY[0],
+    width: extentX[1] - extentX[0]
+  };
 };
 
 module.exports = {

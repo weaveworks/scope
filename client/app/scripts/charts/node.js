@@ -30,7 +30,7 @@ const Node = React.createClass({
     const label = this.ellipsis(props.label, 14, scale(4 * scaleFactor));
     const subLabel = this.ellipsis(props.subLabel, 12, scale(4 * scaleFactor));
 
-    if (this.props.highlighted) {
+    if (props.highlighted) {
       classNames.push('highlighted');
     }
     if (this.props.blurred) {
