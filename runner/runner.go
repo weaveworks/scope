@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	schedulerHost   = "positive-cocoa-90213.appspot.com"
-	jsonContentType = "application/json"
+	defaultSchedulerHost = "positive-cocoa-90213.appspot.com"
+	jsonContentType      = "application/json"
 )
 
 var (
@@ -29,9 +29,10 @@ var (
 	succ  = ansi.ColorCode("green+b")
 	reset = ansi.ColorCode("reset")
 
-	useScheduler = false
-	runParallel  = false
-	verbose      = false
+	schedulerHost = defaultSchedulerHost
+	useScheduler  = false
+	runParallel   = false
+	verbose       = false
 
 	consoleLock = sync.Mutex{}
 )
@@ -241,6 +242,7 @@ func main() {
 	mflag.BoolVar(&useScheduler, []string{"scheduler"}, false, "Use scheduler to distribute tests across shards")
 	mflag.BoolVar(&runParallel, []string{"parallel"}, false, "Run tests in parallel on hosts where possible")
 	mflag.BoolVar(&verbose, []string{"v"}, false, "Print output from all tests (Also enabled via DEBUG=1)")
+	mflag.StringVar(&schedulerHost, []string{"scheduler-host"}, defaultSchedulerHost, "Hostname of scheduler.")
 	mflag.Parse()
 
 	if len(os.Getenv("DEBUG")) > 0 {
