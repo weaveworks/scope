@@ -2,7 +2,6 @@
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo
-DOCKER_SQUASH=$(shell which docker-squash 2>/dev/null)
 DOCKERHUB_USER=weaveworks
 APP_EXE=app/scope-app
 PROBE_EXE=probe/scope-probe
@@ -30,11 +29,10 @@ docker/weave:
 	chmod u+x docker/weave
 
 $(SCOPE_EXPORT): backend $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/run-app docker/run-probe docker/entrypoint.sh
-	@if [ -z '$(DOCKER_SQUASH)' ] ; then echo "Please install docker-squash by running 'make deps' (and make sure GOPATH/bin is in your PATH)." && exit 1 ; fi
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	cp $(DOCKER_DISTRIB) docker/docker.tgz
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
-	$(SUDO) docker save $(SCOPE_IMAGE):latest | sudo $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
+	$(SUDO) docker save $(SCOPE_IMAGE):latest > $@
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 	go build -o $@ github.com/weaveworks/scope/vendor/runsvinit
@@ -98,7 +96,6 @@ clean:
 
 deps:
 	go get -u -f -tags netgo \
-		github.com/jwilder/docker-squash \
 		github.com/golang/lint/golint \
 		github.com/fzipp/gocyclo \
 		github.com/mattn/goveralls \
