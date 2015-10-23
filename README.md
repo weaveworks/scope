@@ -13,8 +13,8 @@ Included in this repo are tools shared by weave.git and scope.git.  They include
   the Weave network
 - ```test```: a script to run all go unit tests in subdirectories, gather the
   coverage results, and merge them into a single report.
-- ```runner```: a tools for running tests in parallel; given each test is
-  suffixes with the number of hosts it requires, and the host availible are
+- ```runner```: a tool for running tests in parallel; given each test is
+  suffixed with the number of hosts it requires, and the hosts available are
   contained in the environment variable HOSTS, the tool will run tests in
   parallel, on different hosts.
 
