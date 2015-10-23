@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/certifi/gocertifi"
+
 	"github.com/weaveworks/scope/common/sanitize"
 )
 
@@ -19,22 +21,43 @@ type HTTPPublisher struct {
 	client  *http.Client
 }
 
-var fastClient = &http.Client{
-	Timeout: 5 * time.Second,
+func getHTTPTransport(insecure bool) (*http.Transport, error) {
+	if insecure {
+		return &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}, nil
+	}
+
+	certPool, err := gocertifi.CACerts()
+	if err != nil {
+		return nil, err
+	}
+	return &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs: certPool,
+		},
+	}, nil
 }
 
 // NewHTTPPublisher returns an HTTPPublisher ready for use.
 func NewHTTPPublisher(target, token, probeID string, insecure bool) (string, *HTTPPublisher, error) {
+	httpTransport, err := getHTTPTransport(insecure)
+	if err != nil {
+		return "", nil, err
+	}
+
 	p := &HTTPPublisher{
 		url:     sanitize.URL("", 0, "/api/report")(target),
 		token:   token,
 		probeID: probeID,
-		client:  http.DefaultClient,
+		client: &http.Client{
+			Transport: httpTransport,
+		},
 	}
-	client := fastClient
-	if insecure {
-		allowInsecure(fastClient)
-		allowInsecure(p.client)
+
+	client := &http.Client{
+		Timeout:   5 * time.Second,
+		Transport: httpTransport,
 	}
 	req, err := p.authorizedRequest("GET", sanitize.URL("", 0, "/api")(target), nil)
 	if err != nil {
@@ -95,12 +118,6 @@ func (p HTTPPublisher) Stop() {}
 // header, based on the passed token string.
 func AuthorizationHeader(token string) string {
 	return fmt.Sprintf("Scope-Probe token=%s", token)
-}
-
-func allowInsecure(c *http.Client) {
-	c.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
 }
 
 // ScopeProbeIDHeader is the header we use to carry the probe's unique ID. The

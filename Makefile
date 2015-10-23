@@ -2,7 +2,6 @@
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo
-DOCKER_SQUASH=$(shell which docker-squash 2>/dev/null)
 DOCKERHUB_USER=weaveworks
 APP_EXE=app/scope-app
 PROBE_EXE=probe/scope-probe
@@ -29,15 +28,11 @@ docker/weave:
 	curl -L git.io/weave -o docker/weave
 	chmod u+x docker/weave
 
-$(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/run-app docker/run-probe docker/entrypoint.sh docker/ca-certificates.crt
-	@if [ -z '$(DOCKER_SQUASH)' ] ; then echo "Please install docker-squash by running 'make deps' (and make sure GOPATH/bin is in your PATH)." && exit 1 ; fi
+$(SCOPE_EXPORT): backend $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/run-app docker/run-probe docker/entrypoint.sh
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	cp $(DOCKER_DISTRIB) docker/docker.tgz
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
-	$(SUDO) docker save $(SCOPE_IMAGE):latest | sudo $(DOCKER_SQUASH) -t $(SCOPE_IMAGE) | tee $@ | $(SUDO) docker load
-
-docker/ca-certificates.crt: /etc/ssl/certs/ca-certificates.crt
-	cp $? $@
+	$(SUDO) docker save $(SCOPE_IMAGE):latest > $@
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 	go build -o $@ github.com/weaveworks/scope/vendor/runsvinit
@@ -91,17 +86,16 @@ $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	touch $@
 
 backend: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	docker run -ti $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope $(SCOPE_BACKEND_BUILD_IMAGE) /build.bash
+	docker run -ti $(RM) -v $(GOPATH)/src:/go/src -e GOARCH -e GOOS $(SCOPE_BACKEND_BUILD_IMAGE) /build.bash
 
 frontend: $(SCOPE_UI_BUILD_UPTODATE)
 
 clean:
 	go clean ./...
-	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_EXPORT) $(APP_EXE) $(PROBE_EXE) client/build/app.js docker/weave
+	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) $(APP_EXE) $(PROBE_EXE) client/build/app.js docker/weave
 
 deps:
 	go get -u -f -tags netgo \
-		github.com/jwilder/docker-squash \
 		github.com/golang/lint/golint \
 		github.com/fzipp/gocyclo \
 		github.com/mattn/goveralls \
