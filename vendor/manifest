@@ -1,0 +1,867 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "bitbucket.org/ww/goautoneg",
+			"repository": "https://bitbucket.org/ww/goautoneg",
+			"revision": "75cd24fc2f2c",
+			"branch": "default"
+		},
+		{
+			"importpath": "github.com/PuerkitoBio/ghost",
+			"repository": "https://github.com/PuerkitoBio/ghost",
+			"revision": "a0146f2f931611b8bfe40f07018c97a7c881c76a",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/PuerkitoBio/ghost/handlers",
+			"repository": "https://github.com/PuerkitoBio/ghost",
+			"revision": "a0146f2f931611b8bfe40f07018c97a7c881c76a",
+			"branch": "master",
+			"path": "/handlers"
+		},
+		{
+			"importpath": "github.com/beorn7/perks/quantile",
+			"repository": "https://github.com/beorn7/perks",
+			"revision": "b965b613227fddccbfffe13eae360ed3fa822f8d",
+			"branch": "master",
+			"path": "/quantile"
+		},
+		{
+			"importpath": "github.com/bluele/gcache",
+			"repository": "https://github.com/bluele/gcache",
+			"revision": "fb6c0b0e1ff03057a054886141927cdce6239dec",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/certifi/gocertifi",
+			"repository": "https://github.com/certifi/gocertifi",
+			"revision": "84c0a38a18fcd2d657f3eabc958433c1f37ecdc0",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/bitbucket.org/ww/goautoneg",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/bitbucket.org/ww/goautoneg"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/beorn7/perks/quantile",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/beorn7/perks/quantile"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/boltdb/bolt",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/boltdb/bolt"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/bradfitz/http2",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/bradfitz/http2"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/coreos/go-semver/semver",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/coreos/go-semver/semver"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/coreos/go-systemd/journal",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/coreos/go-systemd/journal"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/coreos/pkg/capnslog",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/coreos/pkg/capnslog"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/gogo/protobuf/proto",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/gogo/protobuf/proto"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/golang/glog",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/golang/glog"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/golang/protobuf/proto",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/golang/protobuf/proto"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/google/btree",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/google/btree"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/jonboulle/clockwork",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/jonboulle/clockwork"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/matttproud/golang_protobuf_extensions/pbutil",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/matttproud/golang_protobuf_extensions/pbutil"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/prometheus/client_golang/prometheus",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/prometheus/client_golang/prometheus"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/prometheus/client_model/go",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/prometheus/client_model/go"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/prometheus/common/expfmt",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/prometheus/common/expfmt"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/prometheus/common/model",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/prometheus/common/model"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/prometheus/procfs",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/prometheus/procfs"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/ugorji/go/codec",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/ugorji/go/codec"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/xiang90/probing",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/github.com/xiang90/probing"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/golang.org/x/crypto/bcrypt",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/golang.org/x/crypto/bcrypt"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/golang.org/x/crypto/blowfish",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/golang.org/x/crypto/blowfish"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/golang.org/x/net/context",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/golang.org/x/net/context"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/golang.org/x/oauth2",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/golang.org/x/oauth2"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/google.golang.org/cloud/compute/metadata",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/google.golang.org/cloud/compute/metadata"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/google.golang.org/cloud/internal",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/google.golang.org/cloud/internal"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/google.golang.org/grpc",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/Godeps/_workspace/src/google.golang.org/grpc"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/client",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/client"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/discovery",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/discovery"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/error",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/error"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/etcdserver",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/etcdserver"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/crc",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/crc"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/fileutil",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/fileutil"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/httputil",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/httputil"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/idutil",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/idutil"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/ioutil",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/ioutil"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/netutil",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/netutil"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/pathutil",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/pathutil"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/pbutil",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/pbutil"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/runtime",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/runtime"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/timeutil",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/timeutil"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/transport",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/transport"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/types",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/types"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/pkg/wait",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/pkg/wait"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/raft",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/raft"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/rafthttp",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/rafthttp"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/snap",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/snap"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/storage",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/storage"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/store",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/store"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/version",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/version"
+		},
+		{
+			"importpath": "github.com/coreos/etcd/wal",
+			"repository": "https://github.com/coreos/etcd",
+			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
+			"branch": "master",
+			"path": "/wal"
+		},
+		{
+			"importpath": "github.com/coreos/go-etcd/etcd",
+			"repository": "https://github.com/coreos/go-etcd",
+			"revision": "2038b5942e8e7f4f244729ff9353afab8ba11afc",
+			"branch": "master",
+			"path": "/etcd"
+		},
+		{
+			"importpath": "github.com/cpuguy83/go-md2man/md2man",
+			"repository": "https://github.com/cpuguy83/go-md2man",
+			"revision": "71acacd42f85e5e82f70a55327789582a5200a90",
+			"branch": "master",
+			"path": "/md2man"
+		},
+		{
+			"importpath": "github.com/davecgh/go-spew/spew",
+			"repository": "https://github.com/davecgh/go-spew",
+			"revision": "2df174808ee097f90d259e432cc04442cf60be21",
+			"branch": "master",
+			"path": "/spew"
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/mount",
+			"repository": "https://github.com/docker/docker",
+			"revision": "60ea37d56f15d64961f0bc59dd2db1c968c80288",
+			"branch": "master",
+			"path": "/pkg/mount"
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/units",
+			"repository": "https://github.com/docker/docker",
+			"revision": "60ea37d56f15d64961f0bc59dd2db1c968c80288",
+			"branch": "master",
+			"path": "/pkg/units"
+		},
+		{
+			"importpath": "github.com/docker/libcontainer/cgroups",
+			"repository": "https://github.com/docker/libcontainer",
+			"revision": "83a102cc68a09d890cce3b6c2e5c14c49e6373a0",
+			"branch": "master",
+			"path": "/cgroups"
+		},
+		{
+			"importpath": "github.com/docker/libcontainer/cgroups/fs",
+			"repository": "https://github.com/docker/libcontainer",
+			"revision": "83a102cc68a09d890cce3b6c2e5c14c49e6373a0",
+			"branch": "master",
+			"path": "/cgroups/fs"
+		},
+		{
+			"importpath": "github.com/docker/libcontainer/configs",
+			"repository": "https://github.com/docker/libcontainer",
+			"revision": "83a102cc68a09d890cce3b6c2e5c14c49e6373a0",
+			"branch": "master",
+			"path": "/configs"
+		},
+		{
+			"importpath": "github.com/docker/libcontainer/system",
+			"repository": "https://github.com/docker/libcontainer",
+			"revision": "83a102cc68a09d890cce3b6c2e5c14c49e6373a0",
+			"branch": "master",
+			"path": "/system"
+		},
+		{
+			"importpath": "github.com/emicklei/go-restful",
+			"repository": "https://github.com/emicklei/go-restful",
+			"revision": "f3b10ff408486b3e248197254514778285fbdea1",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/emicklei/go-restful/swagger",
+			"repository": "https://github.com/emicklei/go-restful",
+			"revision": "f3b10ff408486b3e248197254514778285fbdea1",
+			"branch": "master",
+			"path": "/swagger"
+		},
+		{
+			"importpath": "github.com/fsouza/go-dockerclient",
+			"repository": "https://github.com/fsouza/go-dockerclient",
+			"revision": "44f75219dec4d25d3ac5483d38d3ada7eaf047ab",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/garyburd/redigo/internal",
+			"repository": "https://github.com/garyburd/redigo",
+			"revision": "3d0709611e0e29c05a4e925e8447b065abb4eef6",
+			"branch": "master",
+			"path": "/internal"
+		},
+		{
+			"importpath": "github.com/garyburd/redigo/redis",
+			"repository": "https://github.com/garyburd/redigo",
+			"revision": "3d0709611e0e29c05a4e925e8447b065abb4eef6",
+			"branch": "master",
+			"path": "/redis"
+		},
+		{
+			"importpath": "github.com/ghodss/yaml",
+			"repository": "https://github.com/ghodss/yaml",
+			"revision": "73d445a93680fa1a78ae23a5839bad48f32ba1ee",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/golang/glog",
+			"repository": "https://github.com/golang/glog",
+			"revision": "fca8c8854093a154ff1eb580aae10276ad6b1b5f",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/golang/protobuf/proto",
+			"repository": "https://github.com/golang/protobuf",
+			"revision": "5baca1b63153b1a82014546382edbdd302b138b6",
+			"branch": "master",
+			"path": "/proto"
+		},
+		{
+			"importpath": "github.com/google/cadvisor/info/v1",
+			"repository": "https://github.com/google/cadvisor",
+			"revision": "aa6f80814bc6fdb43a0ed12719658225420ffb7d",
+			"branch": "master",
+			"path": "/info/v1"
+		},
+		{
+			"importpath": "github.com/google/gofuzz",
+			"repository": "https://github.com/google/gofuzz",
+			"revision": "e4af62d086c303f2bed467b227fc0a034b218916",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/gorilla/context",
+			"repository": "https://github.com/gorilla/context",
+			"revision": "1c83b3eabd45b6d76072b66b746c20815fb2872d",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/gorilla/handlers",
+			"repository": "https://github.com/gorilla/handlers",
+			"revision": "9a8d6fa6e6479b56ec164996e54fa5d7eb3ef544",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/gorilla/mux",
+			"repository": "https://github.com/gorilla/mux",
+			"revision": "ad4d7a5882b961e07e2626045eb995c022ac6664",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/gorilla/securecookie",
+			"repository": "https://github.com/gorilla/securecookie",
+			"revision": "e95799a481bbcc3d01c2ad5178524cb8bec9f370",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/gorilla/websocket",
+			"repository": "https://github.com/gorilla/websocket",
+			"revision": "527637c0f38a8035d7856bb758e56f7ee2c704a9",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/inconshreveable/mousetrap",
+			"repository": "https://github.com/inconshreveable/mousetrap",
+			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/juju/ratelimit",
+			"repository": "https://github.com/juju/ratelimit",
+			"revision": "772f5c38e468398c4511514f4f6aa9a4185bc0a0",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/matttproud/golang_protobuf_extensions/pbutil",
+			"repository": "https://github.com/matttproud/golang_protobuf_extensions",
+			"revision": "d0c3fe89de86839aecf2e0579c40ba3bb336a453",
+			"branch": "master",
+			"path": "/pbutil"
+		},
+		{
+			"importpath": "github.com/nu7hatch/gouuid",
+			"repository": "https://github.com/nu7hatch/gouuid",
+			"revision": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/pborman/uuid",
+			"repository": "https://github.com/pborman/uuid",
+			"revision": "cccd189d45f7ac3368a0d127efb7f4d08ae0b655",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/pmezard/go-difflib/difflib",
+			"repository": "https://github.com/pmezard/go-difflib",
+			"revision": "f78a839676152fd9f4863704f5d516195c18fc14",
+			"branch": "master",
+			"path": "/difflib"
+		},
+		{
+			"importpath": "github.com/prometheus/client_golang/prometheus",
+			"repository": "https://github.com/prometheus/client_golang",
+			"revision": "e51041b3fa41cece0dca035740ba6411905be473",
+			"branch": "master",
+			"path": "/prometheus"
+		},
+		{
+			"importpath": "github.com/prometheus/client_model/go",
+			"repository": "https://github.com/prometheus/client_model",
+			"revision": "fa8ad6fec33561be4280a8f0514318c79d7f6cb6",
+			"branch": "master",
+			"path": "/go"
+		},
+		{
+			"importpath": "github.com/prometheus/common/expfmt",
+			"repository": "https://github.com/prometheus/common",
+			"revision": "369ec0491ce7be15431bd4f23b7fa17308f94190",
+			"branch": "master",
+			"path": "/expfmt"
+		},
+		{
+			"importpath": "github.com/prometheus/common/model",
+			"repository": "https://github.com/prometheus/common",
+			"revision": "369ec0491ce7be15431bd4f23b7fa17308f94190",
+			"branch": "master",
+			"path": "/model"
+		},
+		{
+			"importpath": "github.com/prometheus/procfs",
+			"repository": "https://github.com/prometheus/procfs",
+			"revision": "454a56f35412459b5e684fd5ec0f9211b94f002a",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/russross/blackfriday",
+			"repository": "https://github.com/russross/blackfriday",
+			"revision": "a18a46c9b94395417241e528fc53478ad914c670",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/shurcooL/sanitized_anchor_name",
+			"repository": "https://github.com/shurcooL/sanitized_anchor_name",
+			"revision": "244f5ac324cb97e1987ef901a0081a77bfd8e845",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/spf13/cobra",
+			"repository": "https://github.com/spf13/cobra",
+			"revision": "8b2293c74173adb0e12df6862c1ea36afac2401f",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/spf13/pflag",
+			"repository": "https://github.com/spf13/pflag",
+			"revision": "08b1a584251b5b62f458943640fc8ebd4d50aaa5",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/ugorji/go/codec",
+			"repository": "https://github.com/ugorji/go",
+			"revision": "8a2a3a8c488c3ebd98f422a965260278267a0551",
+			"branch": "master",
+			"path": "/codec"
+		},
+		{
+			"importpath": "github.com/weaveworks/procspy",
+			"repository": "https://github.com/weaveworks/procspy",
+			"revision": "cb970aa190c374d1e47711dbffb3c2c6e9ef0dd1",
+			"branch": "master"
+		},
+		{
+			"importpath": "golang.org/x/crypto/curve25519",
+			"repository": "https://go.googlesource.com/crypto",
+			"revision": "c8b9e6388ef638d5a8a9d865c634befdc46a6784",
+			"branch": "master",
+			"path": "/curve25519"
+		},
+		{
+			"importpath": "golang.org/x/crypto/ssh",
+			"repository": "https://go.googlesource.com/crypto",
+			"revision": "c8b9e6388ef638d5a8a9d865c634befdc46a6784",
+			"branch": "master",
+			"path": "/ssh"
+		},
+		{
+			"importpath": "golang.org/x/net/context",
+			"repository": "https://go.googlesource.com/net",
+			"revision": "2cba614e8ff920c60240d2677bc019af32ee04e5",
+			"branch": "master",
+			"path": "/context"
+		},
+		{
+			"importpath": "gopkg.in/yaml.v2",
+			"repository": "https://gopkg.in/yaml.v2",
+			"revision": "53feefa2559fb8dfa8d81baad31be332c97d6c77",
+			"branch": "v2"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/api",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/api"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/apis/extensions",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/apis/extensions"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/auth/user",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/auth/user"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/capabilities",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/capabilities"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/client/cache",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/client/cache"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/client/metrics",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/client/metrics"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/client/unversioned",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/client/unversioned"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/conversion",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/conversion"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/fieldpath",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/fieldpath"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/fields",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/fields"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/kubectl",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/kubectl"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/kubelet/qos/util",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/kubelet/qos/util"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/labels",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/labels"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/runtime",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/runtime"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/storage",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/storage"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/storage/etcd",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/storage/etcd"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/tools",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/tools"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/types",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/types"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/util",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/util"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/version",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/version"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/watch",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/pkg/watch"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/third_party/forked/reflect",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/third_party/forked/reflect"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/third_party/golang/template",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"branch": "master",
+			"path": "/third_party/golang/template"
+		},
+		{
+			"importpath": "speter.net/go/exp/math/dec/inf",
+			"repository": "https://code.google.com/p/go-decimal-inf.exp",
+			"revision": "42ca6cd68aa922bc3f32f1e056e61b65945d9ad7",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/google/gopacket",
+			"repository": "https://github.com/google/gopacket",
+			"revision": "1b0b78901cdd351ecfc68bf1a2adafcd2ff30220",
+			"branch": "master"
+		}
+	]
+}

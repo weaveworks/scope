@@ -142,15 +142,13 @@ sudo scope launch --service-token=<token>
 The build is in five stages. `make deps` installs some tools we use later in
 the build. `make frontend` builds a UI build image with all NPM dependencies.
 `make static` compiles the UI into `static.go` which is part of the repository
-for convenience. `make backend` builds the backend Go app which then includes
-the static files. The final `make` pushes the app into a Docker image called
-**weaveworks/scope**.
+for convenience. The final `make` builds the app and probe, in a container,
+and pushes the lot into a Docker image called **weaveworks/scope**.
 
 ```
 make deps
 make frontend
 make static
-make backend
 make
 ```
 
