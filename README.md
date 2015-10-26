@@ -59,7 +59,7 @@ serving the UI, and pushing these topologies to the UI.
 +-----------------------+
 ```
 
-## Standalone Mode
+## Using Weave Scope in Standalone Mode
 
 When running Scope in a cluster, each probe sends reports to each app.
 The App merges the reports from each probe into a more complete report.
@@ -99,7 +99,7 @@ acceptable, both with and without ports:
 Hostnames will be regularly resolved as A records, and each answer used as a
 target.
 
-## Service Mode
+## Using Weave Scope in Service Mode
 
 Scope can also be used to feed reports to the Scope Service. The Scope Service
 allows you centrally manage and share access to your Scope UI. In this
