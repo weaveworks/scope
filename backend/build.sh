@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -eux
 
@@ -6,6 +6,6 @@ set -eux
 #  -v $(pwd):/go/src/github.com/weaveworks/scope
 
 cd $GOPATH/src/github.com/weaveworks/scope
-make app/scope-app
-make probe/scope-probe
+rm $1 2>/dev/null || true
+make LOCAL=true $1
 

@@ -18,6 +18,7 @@ DOCKER_DISTRIB=docker/docker-$(DOCKER_VERSION).tgz
 DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
 RUNSVINIT=docker/runsvinit
 RM=--rm
+LOCAL=
 
 all: $(SCOPE_EXPORT)
 
@@ -28,7 +29,7 @@ docker/weave:
 	curl -L git.io/weave -o docker/weave
 	chmod u+x docker/weave
 
-$(SCOPE_EXPORT): backend $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/run-app docker/run-probe docker/entrypoint.sh
+$(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/run-app docker/run-probe docker/entrypoint.sh
 	cp $(APP_EXE) $(PROBE_EXE) docker/
 	cp $(DOCKER_DISTRIB) docker/docker.tgz
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
@@ -41,6 +42,7 @@ $(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go common/sanitize/*.go
 
 $(PROBE_EXE): probe/*.go probe/docker/*.go probe/kubernetes/*.go probe/endpoint/*.go probe/host/*.go probe/process/*.go probe/overlay/*.go report/*.go xfer/*.go common/sanitize/*.go common/exec/*.go
 
+ifeq ($(LOCAL),true)
 $(APP_EXE) $(PROBE_EXE):
 	go build -ldflags "-extldflags \"-static\" -X main.version $(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
@@ -51,6 +53,12 @@ $(APP_EXE) $(PROBE_EXE):
 	        echo "    sudo go install -tags netgo std"; \
 	        false; \
 	    }
+else
+$(APP_EXE) $(PROBE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
+	docker run -ti $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
+		$(SCOPE_BACKEND_BUILD_IMAGE) $@
+
+endif
 
 static: client/build/app.js
 	esc -o app/static.go -prefix client/build client/build
@@ -84,8 +92,6 @@ $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) backend
 	touch $@
 
-backend: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	docker run -ti $(RM) -v $(GOPATH)/src:/go/src -e GOARCH -e GOOS $(SCOPE_BACKEND_BUILD_IMAGE) /build.bash
 
 frontend: $(SCOPE_UI_BUILD_UPTODATE)
 
