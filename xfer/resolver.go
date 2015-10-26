@@ -1,4 +1,4 @@
-package main
+package xfer
 
 import (
 	"log"
@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/weaveworks/scope/xfer"
 )
 
 const (
@@ -21,6 +19,11 @@ var (
 
 type setter func(string, []string)
 
+// Resolver is a thing that can be stopped...
+type Resolver interface {
+	Stop()
+}
+
 type staticResolver struct {
 	setters []setter
 	targets []target
@@ -31,10 +34,10 @@ type target struct{ host, port string }
 
 func (t target) String() string { return net.JoinHostPort(t.host, t.port) }
 
-// newStaticResolver periodically resolves the targets, and calls the set
+// NewStaticResolver periodically resolves the targets, and calls the set
 // function with all the resolved IPs. It explictiy supports targets which
 // resolve to multiple IPs.
-func newStaticResolver(targets []string, setters ...setter) staticResolver {
+func NewStaticResolver(targets []string, setters ...setter) Resolver {
 	r := staticResolver{
 		targets: prepare(targets),
 		setters: setters,
@@ -73,7 +76,7 @@ func prepare(strs []string) []target {
 				continue
 			}
 		} else {
-			host, port = s, strconv.Itoa(xfer.AppPort)
+			host, port = s, strconv.Itoa(AppPort)
 		}
 		targets = append(targets, target{host, port})
 	}

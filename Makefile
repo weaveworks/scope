@@ -4,7 +4,7 @@
 SUDO=sudo -E
 DOCKERHUB_USER=weaveworks
 APP_EXE=app/scope-app
-PROBE_EXE=probe/scope-probe
+PROBE_EXE=prog/probe/scope-probe
 FIXPROBE_EXE=experimental/fixprobe/fixprobe
 SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 SCOPE_EXPORT=scope.tar
