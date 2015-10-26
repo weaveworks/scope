@@ -1,0 +1,11 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/google/gopacket",
+			"repository": "https://github.com/google/gopacket",
+			"revision": "1b0b78901cdd351ecfc68bf1a2adafcd2ff30220",
+			"branch": "master"
+		}
+	]
+}
