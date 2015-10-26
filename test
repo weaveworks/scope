@@ -4,8 +4,31 @@ set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GO_TEST_ARGS="-tags netgo -cpu 4 -timeout 8m"
+SLOW=
+NO_GO_GET=
 
-if [ -n "$SLOW" -o "$1" = "-slow" -o -n "$CIRCLECI" ]; then
+usage() {
+    echo "$0 [-slow] [-in-container foo]"
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        "-slow")
+            SLOW=true
+            shift 1
+            ;;
+        "-no-go-get")
+            NO_GO_GET=true
+            shift 1
+            ;;
+        *)
+            usage
+            exit 2
+            ;;
+    esac
+done
+
+if [ -n "$SLOW" -o -n "$CIRCLECI" ]; then
     SLOW=true
 fi
 
@@ -34,7 +57,9 @@ fi
 PACKAGE_BASE=$(go list -e ./)
 
 for dir in $TESTDIRS; do
-    go get -t -tags netgo $dir
+    if [ -z "$NO_GO_GET" ]; then
+        go get -t -tags netgo $dir
+    fi
 
     GO_TEST_ARGS_RUN="$GO_TEST_ARGS"
     if [ -n "$SLOW" ]; then
@@ -44,7 +69,7 @@ for dir in $TESTDIRS; do
     fi
 
     START=$(date +%s)
-    if ! go test $GO_TEST_ARGS_RUN $dir ; then
+    if ! go test $GO_TEST_ARGS_RUN $dir; then
         fail=1
     fi
     RUNTIME=$(( $(date +%s) - $START ))
