@@ -107,10 +107,10 @@ ifeq ($(BUILD_IN_CONTAINER),true)
 tests:
 	$(SUDO) docker run -ti $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope \
 		-e GOARCH -e GOOS -e CIRCLECI --entrypoint=/bin/sh $(SCOPE_BACKEND_BUILD_IMAGE) -c \
-		"cd /go/src/github.com/weaveworks/scope && ./tools/test"
+		"cd /go/src/github.com/weaveworks/scope && ./tools/test -no-go-get"
 else
 tests:
-	./tools/test
+	./tools/test -no-go-get
 endif
 
 deps:
