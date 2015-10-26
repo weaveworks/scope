@@ -856,6 +856,12 @@
 			"repository": "https://code.google.com/p/go-decimal-inf.exp",
 			"revision": "42ca6cd68aa922bc3f32f1e056e61b65945d9ad7",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/google/gopacket",
+			"repository": "https://github.com/google/gopacket",
+			"revision": "1b0b78901cdd351ecfc68bf1a2adafcd2ff30220",
+			"branch": "master"
 		}
 	]
 }
