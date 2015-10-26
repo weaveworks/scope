@@ -41,13 +41,13 @@ dependencies:
 
 test:
   override:
-    - cd $SRCDIR; $TOOLS/lint .
+    - cd $SRCDIR; ./tools/lint .
+    - cd $SRCDIR; make RM= tests
     - cd $SRCDIR; make RM= client-test
     - cd $SRCDIR; make RM= static
     - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOARCH=arm make RM= backend
     - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOOS=darwin make RM= backend
     - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; make RM=
-    - cd $SRCDIR; $TOOLS/test -slow
     - cd $SRCDIR/experimental; make
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup)
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./setup.sh)

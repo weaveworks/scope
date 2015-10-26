@@ -103,6 +103,16 @@ clean:
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
 		$(APP_EXE) $(PROBE_EXE) $(RUNSVINIT) client/build/app.js docker/weave
 
+ifeq ($(BUILD_IN_CONTAINER),true)
+tests:
+	$(SUDO) docker run -ti $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope \
+		-e GOARCH -e GOOS \ --entrypoint=/bin/sh $(SCOPE_BACKEND_BUILD_IMAGE) -c \
+		"cd /go/src/github.com/weaveworks/scope && ./tools/test"
+else
+tests:
+	./tools/test
+endif
+
 deps:
 	go get -u -f -tags netgo \
 		github.com/golang/lint/golint \
