@@ -65,13 +65,13 @@ static: client/build/app.js
 	esc -o app/static.go -prefix client/build client/build
 
 ifeq ($(BUILD_IN_CONTAINER),true)
-client/build/app.js: client/app/scripts/*
+client/build/app.js: $(shell find client/app/scripts -type f)
 	mkdir -p client/build
 	$(SUDO) docker run -ti $(RM) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm run build
 
-client-test: client/test/*
+client-test: $(shell find client/app/scripts -type f)
 	$(SUDO) docker run -ti $(RM) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm test
