@@ -1,7 +1,7 @@
 .PHONY: all deps static clean client-lint client-test client-sync backend frontend
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
-SUDO=sudo
+SUDO=sudo -E
 DOCKERHUB_USER=weaveworks
 APP_EXE=app/scope-app
 PROBE_EXE=probe/scope-probe
