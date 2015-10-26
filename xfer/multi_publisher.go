@@ -14,13 +14,13 @@ import (
 // targets. See documentation of each method to understand the semantics.
 type MultiPublisher struct {
 	mtx     sync.Mutex
-	factory func(endpoint string) (string, Publisher, error)
+	factory func(endpoint, hostname string) (string, Publisher, error)
 	sema    semaphore
 	list    []tuple
 }
 
 // NewMultiPublisher returns a new MultiPublisher ready for use.
-func NewMultiPublisher(factory func(endpoint string) (string, Publisher, error)) *MultiPublisher {
+func NewMultiPublisher(factory func(endpoint, hostname string) (string, Publisher, error)) *MultiPublisher {
 	return &MultiPublisher{
 		factory: factory,
 		sema:    newSemaphore(maxConcurrentGET),
@@ -49,7 +49,7 @@ func (p *MultiPublisher) Set(target string, endpoints []string) {
 		go func(endpoint string) {
 			p.sema.p()
 			defer p.sema.v()
-			id, publisher, err := p.factory(endpoint)
+			id, publisher, err := p.factory(endpoint, target)
 			c <- tuple{publisher, target, endpoint, id, err}
 		}(endpoint)
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"time"
 
@@ -21,11 +22,16 @@ type HTTPPublisher struct {
 	client  *http.Client
 }
 
-func getHTTPTransport(insecure bool) (*http.Transport, error) {
+func getHTTPTransport(hostname string, insecure bool) (*http.Transport, error) {
 	if insecure {
 		return &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}, nil
+	}
+
+	host, _, err := net.SplitHostPort(hostname)
+	if err != nil {
+		return nil, err
 	}
 
 	certPool, err := gocertifi.CACerts()
@@ -34,14 +40,15 @@ func getHTTPTransport(insecure bool) (*http.Transport, error) {
 	}
 	return &http.Transport{
 		TLSClientConfig: &tls.Config{
-			RootCAs: certPool,
+			RootCAs:    certPool,
+			ServerName: host,
 		},
 	}, nil
 }
 
 // NewHTTPPublisher returns an HTTPPublisher ready for use.
-func NewHTTPPublisher(target, token, probeID string, insecure bool) (string, *HTTPPublisher, error) {
-	httpTransport, err := getHTTPTransport(insecure)
+func NewHTTPPublisher(target, hostname, token, probeID string, insecure bool) (string, *HTTPPublisher, error) {
+	httpTransport, err := getHTTPTransport(hostname, insecure)
 	if err != nil {
 		return "", nil, err
 	}
