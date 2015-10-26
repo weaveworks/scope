@@ -42,7 +42,7 @@ test:
     - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOARCH=arm make RM= app/scope-app probe/scope-probe
     - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOOS=darwin make RM= app/scope-app probe/scope-probe
     - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; make RM=
-    - cd $SRCDIR/experimental; make
+    - cd $SRCDIR/experimental; make RM=
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup)
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./setup.sh)
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./run_all.sh):

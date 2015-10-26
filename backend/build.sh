@@ -7,5 +7,5 @@ set -eux
 
 cd $GOPATH/src/github.com/weaveworks/scope
 rm $1 2>/dev/null || true
-make BUILD_IN_CONTAINER=false $1
+make BUILD_IN_CONTAINER=false $@
 
