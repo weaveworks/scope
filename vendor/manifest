@@ -531,6 +531,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/gorilla/handlers",
+			"repository": "https://github.com/gorilla/handlers",
+			"revision": "9a8d6fa6e6479b56ec164996e54fa5d7eb3ef544",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/gorilla/mux",
 			"repository": "https://github.com/gorilla/mux",
 			"revision": "ad4d7a5882b961e07e2626045eb995c022ac6664",
@@ -578,6 +584,13 @@
 			"repository": "https://github.com/pborman/uuid",
 			"revision": "cccd189d45f7ac3368a0d127efb7f4d08ae0b655",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/pmezard/go-difflib/difflib",
+			"repository": "https://github.com/pmezard/go-difflib",
+			"revision": "f78a839676152fd9f4863704f5d516195c18fc14",
+			"branch": "master",
+			"path": "/difflib"
 		},
 		{
 			"importpath": "github.com/prometheus/client_golang/prometheus",
