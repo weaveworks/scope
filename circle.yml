@@ -39,8 +39,8 @@ test:
     - cd $SRCDIR; make RM= tests
     - cd $SRCDIR; make RM= client-test
     - cd $SRCDIR; make RM= static
-    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOARCH=arm make RM= backend
-    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOOS=darwin make RM= backend
+    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOARCH=arm make RM= app/scope-app probe/scope-probe
+    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOOS=darwin make RM= app/scope-app probe/scope-probe
     - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; make RM=
     - cd $SRCDIR/experimental; make
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup)
