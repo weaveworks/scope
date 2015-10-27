@@ -66,7 +66,7 @@ func TestHostRenderer(t *testing.T) {
 }
 
 func TestPodRenderer(t *testing.T) {
-	have := render.PodRenderer.Render(test.Report).Prune()
+	have := render.PodRenderer.Render(fixture.Report).Prune()
 	want := expected.RenderedPods
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -76,22 +76,22 @@ func TestPodRenderer(t *testing.T) {
 func TestPodFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure
 	// it is filtered out correctly.
-	input := test.Report.Copy()
-	input.Pod.Nodes[test.ClientPodNodeID].Metadata[kubernetes.PodID] = "kube-system/foo"
-	input.Pod.Nodes[test.ClientPodNodeID].Metadata[kubernetes.Namespace] = "kube-system"
-	input.Pod.Nodes[test.ClientPodNodeID].Metadata[kubernetes.PodName] = "foo"
-	input.Container.Nodes[test.ClientContainerNodeID].Metadata[docker.LabelPrefix+"io.kubernetes.pod.name"] = "kube-system/foo"
+	input := fixture.Report.Copy()
+	input.Pod.Nodes[fixture.ClientPodNodeID].Metadata[kubernetes.PodID] = "kube-system/foo"
+	input.Pod.Nodes[fixture.ClientPodNodeID].Metadata[kubernetes.Namespace] = "kube-system"
+	input.Pod.Nodes[fixture.ClientPodNodeID].Metadata[kubernetes.PodName] = "foo"
+	input.Container.Nodes[fixture.ClientContainerNodeID].Metadata[docker.LabelPrefix+"io.kubernetes.pod.name"] = "kube-system/foo"
 	have := render.FilterSystem(render.PodRenderer).Render(input).Prune()
 	want := expected.RenderedPods.Copy()
-	delete(want, test.ClientPodID)
-	delete(want, test.ClientContainerID)
+	delete(want, fixture.ClientPodID)
+	delete(want, fixture.ClientContainerID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestPodServiceRenderer(t *testing.T) {
-	have := render.PodServiceRenderer.Render(test.Report).Prune()
+	have := render.PodServiceRenderer.Render(fixture.Report).Prune()
 	want := expected.RenderedPodServices
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
