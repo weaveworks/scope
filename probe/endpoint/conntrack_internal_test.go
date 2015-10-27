@@ -83,11 +83,7 @@ func TestConntracker(t *testing.T) {
 		return testexec.NewMockCmd(reader)
 	}
 
-	flowWalker, err := newConntrackFlowWalker(false)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	flowWalker := newConntrackFlowWalker(true, false)
 	bw := bufio.NewWriter(writer)
 	if _, err := bw.WriteString(xmlHeader); err != nil {
 		t.Fatal(err)

@@ -1,7 +1,6 @@
 package endpoint
 
 import (
-	"log"
 	"strconv"
 	"time"
 
@@ -27,7 +26,7 @@ type Reporter struct {
 	includeProcesses bool
 	includeNAT       bool
 	flowWalker       flowWalker // interface
-	natMapper        *natMapper
+	natMapper        natMapper
 	reverseResolver  *reverseResolver
 }
 
@@ -49,42 +48,20 @@ var SpyDuration = prometheus.NewSummaryVec(
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
 func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool) *Reporter {
-	var (
-		flowWalker flowWalker
-		natMapper  *natMapper
-	)
-	if ConntrackModulePresent() { // TODO(pb)
-		if useConntrack {
-			var err error
-			if flowWalker, err = newConntrackFlowWalker(true); err != nil {
-				log.Printf("Failed to start conntracker for endpoint reporter: %v", err)
-			}
-		}
-		if natmapperFlowWalker, err := newConntrackFlowWalker(true, "--any-nat"); err == nil {
-			m := makeNATMapper(natmapperFlowWalker)
-			natMapper = &m // TODO(pb): if we only ever use this as a pointer, newNATMapper
-		} else {
-			log.Printf("Failed to start conntracker for NAT mapper: %v", err)
-		}
-	}
 	return &Reporter{
 		hostID:           hostID,
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
-		flowWalker:       flowWalker,
-		natMapper:        natMapper,
+		flowWalker:       newConntrackFlowWalker(useConntrack, true),
+		natMapper:        makeNATMapper(newConntrackFlowWalker(useConntrack, true, "--any-nat")),
 		reverseResolver:  newReverseResolver(),
 	}
 }
 
 // Stop stop stop
 func (r *Reporter) Stop() {
-	if r.flowWalker != nil { // TODO(pb): this should never be nil (implies interface)
-		r.flowWalker.stop()
-	}
-	if r.natMapper != nil { // TODO(pb): this should never be nil (implies interface)
-		r.natMapper.stop()
-	}
+	r.flowWalker.stop()
+	r.natMapper.stop()
 	r.reverseResolver.stop()
 }
 
@@ -123,7 +100,8 @@ func (r *Reporter) Report() (report.Report, error) {
 		}
 	}
 
-	if r.flowWalker != nil {
+	// Consult the flowWalker for short-live connections
+	{
 		extraNodeInfo := report.MakeNode().WithMetadata(report.Metadata{
 			Conntracked: "true",
 		})
@@ -138,10 +116,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		})
 	}
 
-	if r.natMapper != nil { // TODO(pb): should never be nil
-		r.natMapper.applyNAT(rpt, r.hostID)
-	}
-
+	r.natMapper.applyNAT(rpt, r.hostID)
 	return rpt, nil
 }
 

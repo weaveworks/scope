@@ -3,7 +3,6 @@ package endpoint
 import (
 	"bufio"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -68,6 +67,11 @@ type flowWalker interface {
 	stop()
 }
 
+type nilFlowWalker struct{}
+
+func (n *nilFlowWalker) stop()                  {}
+func (n *nilFlowWalker) walkFlows(f func(flow)) {}
+
 // conntrackWalker uses the conntrack command to track network connections and
 // implement flowWalker.
 type conntrackWalker struct {
@@ -81,9 +85,12 @@ type conntrackWalker struct {
 }
 
 // newConntracker creates and starts a new conntracker.
-func newConntrackFlowWalker(existingConns bool, args ...string) (flowWalker, error) {
+func newConntrackFlowWalker(useConntrack, existingConns bool, args ...string) flowWalker {
 	if !ConntrackModulePresent() {
-		return nil, fmt.Errorf("No conntrack module")
+		log.Printf("Not using conntrack: module not present")
+		return &nilFlowWalker{}
+	} else if !useConntrack {
+		return &nilFlowWalker{}
 	}
 	result := &conntrackWalker{
 		activeFlows:   map[int64]flow{},
@@ -91,7 +98,7 @@ func newConntrackFlowWalker(existingConns bool, args ...string) (flowWalker, err
 		args:          args,
 	}
 	go result.loop()
-	return result, nil
+	return result
 }
 
 // ConntrackModulePresent returns true if the kernel has the conntrack module

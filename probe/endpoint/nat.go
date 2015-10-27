@@ -49,9 +49,6 @@ func toMapping(f flow) *endpointMapping {
 // applyNAT duplicates Nodes in the endpoint topology of a report, based on
 // the NAT table.
 func (n natMapper) applyNAT(rpt report.Report, scope string) {
-	if n.flowWalker == nil { // TODO(pb)
-		return
-	}
 	n.flowWalker.walkFlows(func(f flow) {
 		var (
 			mapping          = toMapping(f)
