@@ -99,7 +99,7 @@ acceptable, both with and without ports:
 Hostnames will be regularly resolved as A records, and each answer used as a
 target.
 
-## Using Weave Scope in Service Mode
+## Using Weave Scope in Cloud Service Mode
 
 Scope can also be used to feed reports to the Scope Service. The Scope Service
 allows you centrally manage and share access to your Scope UI. In this
