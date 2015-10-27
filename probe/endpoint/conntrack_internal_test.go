@@ -12,6 +12,8 @@ import (
 	testexec "github.com/weaveworks/scope/test/exec"
 )
 
+const conntrackCloseTag = "</conntrack>\n"
+
 func makeFlow(ty string) flow {
 	return flow{
 		XMLName: xml.Name{
@@ -78,12 +80,35 @@ func TestConntracker(t *testing.T) {
 		return true
 	}
 
+	first := true
+	existingConnectionsReader, existingConnectionsWriter := io.Pipe()
 	reader, writer := io.Pipe()
 	exec.Command = func(name string, args ...string) exec.Cmd {
+		if first {
+			first = false
+			return testexec.NewMockCmd(existingConnectionsReader)
+		}
 		return testexec.NewMockCmd(reader)
 	}
 
-	flowWalker := newConntrackFlowWalker(true, false)
+	flowWalker := newConntrackFlowWalker(true)
+
+	// First write out some empty xml for the existing connections
+	ecbw := bufio.NewWriter(existingConnectionsWriter)
+	if _, err := ecbw.WriteString(xmlHeader); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ecbw.WriteString(conntrackOpenTag); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ecbw.WriteString(conntrackCloseTag); err != nil {
+		t.Fatal(err)
+	}
+	if err := ecbw.Flush(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Then write out eventa
 	bw := bufio.NewWriter(writer)
 	if _, err := bw.WriteString(xmlHeader); err != nil {
 		t.Fatal(err)

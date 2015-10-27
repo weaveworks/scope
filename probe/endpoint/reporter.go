@@ -52,8 +52,8 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		hostID:           hostID,
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
-		flowWalker:       newConntrackFlowWalker(useConntrack, true),
-		natMapper:        makeNATMapper(newConntrackFlowWalker(useConntrack, true, "--any-nat")),
+		flowWalker:       newConntrackFlowWalker(useConntrack),
+		natMapper:        makeNATMapper(newConntrackFlowWalker(useConntrack, "--any-nat")),
 		reverseResolver:  newReverseResolver(),
 	}
 }

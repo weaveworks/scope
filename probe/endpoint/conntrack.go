@@ -69,8 +69,8 @@ type flowWalker interface {
 
 type nilFlowWalker struct{}
 
-func (n *nilFlowWalker) stop()                  {}
-func (n *nilFlowWalker) walkFlows(f func(flow)) {}
+func (n nilFlowWalker) stop()                  {}
+func (n nilFlowWalker) walkFlows(f func(flow)) {}
 
 // conntrackWalker uses the conntrack command to track network connections and
 // implement flowWalker.
@@ -79,23 +79,21 @@ type conntrackWalker struct {
 	cmd           exec.Cmd
 	activeFlows   map[int64]flow // active flows in state != TIME_WAIT
 	bufferedFlows []flow         // flows coming out of activeFlows spend 1 walk cycle here
-	existingConns bool
 	args          []string
 	quit          chan struct{}
 }
 
 // newConntracker creates and starts a new conntracker.
-func newConntrackFlowWalker(useConntrack, existingConns bool, args ...string) flowWalker {
+func newConntrackFlowWalker(useConntrack bool, args ...string) flowWalker {
 	if !ConntrackModulePresent() {
 		log.Printf("Not using conntrack: module not present")
-		return &nilFlowWalker{}
+		return nilFlowWalker{}
 	} else if !useConntrack {
-		return &nilFlowWalker{}
+		return nilFlowWalker{}
 	}
 	result := &conntrackWalker{
-		activeFlows:   map[int64]flow{},
-		existingConns: existingConns,
-		args:          args,
+		activeFlows: map[int64]flow{},
+		args:        args,
 	}
 	go result.loop()
 	return result
@@ -165,17 +163,15 @@ func logPipe(prefix string, reader io.Reader) {
 }
 
 func (c *conntrackWalker) run() {
-	if c.existingConns {
-		// Fork another conntrack, just to capture existing connections
-		// for which we don't get events
-		existingFlows, err := c.existingConnections()
-		if err != nil {
-			log.Printf("conntrack existingConnections error: %v", err)
-			return
-		}
-		for _, flow := range existingFlows {
-			c.handleFlow(flow, true)
-		}
+	// Fork another conntrack, just to capture existing connections
+	// for which we don't get events
+	existingFlows, err := c.existingConnections()
+	if err != nil {
+		log.Printf("conntrack existingConnections error: %v", err)
+		return
+	}
+	for _, flow := range existingFlows {
+		c.handleFlow(flow, true)
 	}
 
 	args := append([]string{"-E", "-o", "xml", "-p", "tcp"}, c.args...)
