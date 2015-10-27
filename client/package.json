@@ -78,6 +78,7 @@
       "react",
       "immutable",
       "d3",
+      "dagre",
       "keymirror",
       "object-assign",
       "lodash",
