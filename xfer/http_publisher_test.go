@@ -72,7 +72,7 @@ func TestHTTPPublisher(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, p, err := xfer.NewHTTPPublisher(s.URL, u.Host, token, id, false)
+	_, p, err := xfer.NewHTTPPublisher(u.Host, s.URL, token, id, false)
 	if err != nil {
 		t.Fatal(err)
 	}

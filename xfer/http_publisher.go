@@ -47,7 +47,7 @@ func getHTTPTransport(hostname string, insecure bool) (*http.Transport, error) {
 }
 
 // NewHTTPPublisher returns an HTTPPublisher ready for use.
-func NewHTTPPublisher(target, hostname, token, probeID string, insecure bool) (string, *HTTPPublisher, error) {
+func NewHTTPPublisher(hostname, target, token, probeID string, insecure bool) (string, *HTTPPublisher, error) {
 	httpTransport, err := getHTTPTransport(hostname, insecure)
 	if err != nil {
 		return "", nil, err
