@@ -116,6 +116,7 @@ func (n Node) WithCounters(c map[string]int) Node {
 	return result
 }
 
+// WithSet returns a fresh copy of n, with set merged in at key.
 func (n Node) WithSet(key string, set StringSet) Node {
 	result := n.Copy()
 	existing := n.Sets[key]
