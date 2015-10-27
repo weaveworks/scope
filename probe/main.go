@@ -90,8 +90,8 @@ func main() {
 	}
 	log.Printf("publishing to: %s", strings.Join(targets, ", "))
 
-	factory := func(endpoint string) (string, xfer.Publisher, error) {
-		id, publisher, err := xfer.NewHTTPPublisher(endpoint, *token, probeID, *insecure)
+	factory := func(hostname, endpoint string) (string, xfer.Publisher, error) {
+		id, publisher, err := xfer.NewHTTPPublisher(hostname, endpoint, *token, probeID, *insecure)
 		if err != nil {
 			return "", nil, err
 		}

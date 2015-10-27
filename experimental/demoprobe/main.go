@@ -23,7 +23,7 @@ func main() {
 	)
 	flag.Parse()
 
-	_, publisher, err := xfer.NewHTTPPublisher(*publish, "demoprobe", "demoprobe", false)
+	_, publisher, err := xfer.NewHTTPPublisher(*publish, *publish, "demoprobe", "demoprobe", false)
 	if err != nil {
 		log.Fatal(err)
 	}

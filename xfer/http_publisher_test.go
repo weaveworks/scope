@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -67,7 +68,11 @@ func TestHTTPPublisher(t *testing.T) {
 	s := httptest.NewServer(handlers.CompressHandler(handler))
 	defer s.Close()
 
-	_, p, err := xfer.NewHTTPPublisher(s.URL, token, id, false)
+	u, err := url.Parse(s.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, p, err := xfer.NewHTTPPublisher(u.Host, s.URL, token, id, false)
 	if err != nil {
 		t.Fatal(err)
 	}

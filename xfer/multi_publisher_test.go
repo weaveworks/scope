@@ -19,7 +19,7 @@ func TestMultiPublisher(t *testing.T) {
 
 	sum := func() int { return a1.count + a2.count + b2.count + b3.count }
 
-	mp := xfer.NewMultiPublisher(func(endpoint string) (string, xfer.Publisher, error) {
+	mp := xfer.NewMultiPublisher(func(hostname, endpoint string) (string, xfer.Publisher, error) {
 		switch endpoint {
 		case "a1":
 			return "1", a1, nil
