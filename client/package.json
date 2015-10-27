@@ -19,10 +19,9 @@
     "materialize-css": "^0.96.1",
     "object-assign": "^2.0.0",
     "page": "^1.6.3",
-    "react": "^0.13.3",
+    "react": "0.13.3",
     "react-motion": "^0.2.7",
     "react-tap-event-plugin": "^0.1.7",
-    "react-tween-state": "0.0.5",
     "reqwest": "~1.1.5",
     "timely": "^0.1.0"
   },
@@ -30,46 +29,60 @@
     "autoprefixer-core": "^5.2.0",
     "babel-core": "^5.4.7",
     "babel-eslint": "^3.1.9",
+    "babel-jest": "^5.3.0",
     "babel-loader": "^5.1.3",
     "css-loader": "^0.14.4",
     "eslint": "^0.21.2",
     "eslint-loader": "^0.11.2",
     "eslint-plugin-jasmine": "^1.0.0",
     "eslint-plugin-react": "^2.3.0",
-    "express": "^4.13.3",
-    "express-http-proxy": "^0.6.0",
     "file-loader": "^0.8.4",
-    "istanbul-instrumenter-loader": "^0.1.3",
-    "jasmine-core": "^2.3.4",
+    "jest-cli": "0.4.19",
     "json-loader": "^0.5.2",
-    "karma": "^0.13.3",
-    "karma-cli": "0.0.4",
-    "karma-coverage": "^0.4.2",
-    "karma-jasmine": "^0.3.5",
-    "karma-phantomjs-launcher": "^0.1.4",
-    "karma-webpack": "^1.7.0",
     "less": "^2.5.1",
     "less-loader": "^2.2.0",
-    "phantomjs": "^1.9.18",
     "postcss-loader": "^0.4.3",
-    "proxy-middleware": "^0.13.1",
-    "react-hot-loader": "^1.2.8",
-    "react-tools": "^0.13.3",
     "style-loader": "^0.12.3",
     "url": "^0.10.3",
     "url-loader": "^0.5.6",
-    "webpack": "^1.9.10",
+    "webpack": "^1.9.10"
+  },
+  "optionalDependencies": {
+    "express": "^4.13.3",
+    "express-http-proxy": "^0.6.0",
+    "proxy-middleware": "^0.13.1",
+    "react-hot-loader": "^1.2.8",
     "webpack-dev-server": "^1.10.1"
   },
   "scripts": {
-    "postinstall": "npm run build",
     "build": "webpack -p --config webpack.production.config.js",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
-    "test": "karma start test/karma.conf.js --single-run",
+    "test": "jest --coverage",
     "coveralls": "cat coverage/lcov.info | coveralls",
     "lint": "eslint app",
     "clean": "rm build/app.js"
+  },
+  "jest": {
+    "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",
+    "testFileExtensions": [
+      "es6",
+      "js"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "es6"
+    ],
+    "unmockedModulePathPatterns": [
+      "react",
+      "immutable",
+      "d3",
+      "keymirror",
+      "object-assign",
+      "lodash",
+      "debug"
+    ]
   },
   "engines": {
     "node": ">=0.10.0"

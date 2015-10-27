@@ -1,3 +1,7 @@
+jest.dontMock('../node-details.js');
+jest.dontMock('../../mixins/node-color-mixin');
+jest.dontMock('../../utils/title-utils');
+
 describe('NodeDetails', () => {
   let NodeDetails;
   let nodes;
