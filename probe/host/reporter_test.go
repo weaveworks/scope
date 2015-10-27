@@ -48,11 +48,12 @@ func TestReporter(t *testing.T) {
 	want.Host.AddNode(report.MakeHostNodeID(hostID), report.MakeNodeWith(map[string]string{
 		host.Timestamp:     now,
 		host.HostName:      hostname,
-		host.LocalNetworks: network,
 		host.OS:            runtime.GOOS,
 		host.Load:          load,
 		host.Uptime:        uptime,
 		host.KernelVersion: kernel,
+	}).WithSets(report.Sets{
+		host.LocalNetworks: report.MakeStringSet(network),
 	}))
 	have, _ := host.NewReporter(hostID, hostname, localNets).Report()
 	if !reflect.DeepEqual(want, have) {

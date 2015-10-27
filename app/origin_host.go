@@ -30,7 +30,7 @@ func getOriginHost(t report.Topology, nodeID string) (OriginHost, bool) {
 	return OriginHost{
 		Hostname: h.Metadata[host.HostName],
 		OS:       h.Metadata[host.OS],
-		Networks: strings.Split(h.Metadata[host.LocalNetworks], " "),
+		Networks: h.Sets[host.LocalNetworks],
 		Load:     h.Metadata[host.Load],
 	}, true
 }
