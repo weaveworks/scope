@@ -50,9 +50,10 @@ var (
 				containerNodeID: report.MakeNode().WithMetadata(map[string]string{
 					docker.ContainerID:    containerID,
 					docker.ContainerName:  containerName,
-					docker.ContainerIPs:   containerIP,
-					docker.ContainerPorts: fmt.Sprintf("%s:%s->%s/tcp", serverIP, serverPort, serverPort),
 					report.HostNodeID:     serverHostNodeID,
+				}).WithSets(report.Sets{
+					docker.ContainerIPs:   report.MakeStringSet(containerIP),
+					docker.ContainerPorts: report.MakeStringSet(fmt.Sprintf("%s:%s->%s/tcp", serverIP, serverPort, serverPort)),
 				}),
 			},
 		},

@@ -124,6 +124,13 @@ func (n Node) WithSet(key string, set StringSet) Node {
 	return result
 }
 
+// WithSets returns a fresh copy of n, with sets merged in.
+func (n Node) WithSets(sets Sets) Node {
+	result := n.Copy()
+	result.Sets = result.Sets.Merge(sets)
+	return result
+}
+
 // WithAdjacent returns a fresh copy of n, with 'a' added to Adjacency
 func (n Node) WithAdjacent(a string) Node {
 	result := n.Copy()
@@ -216,7 +223,7 @@ type Sets map[string]StringSet
 func (s Sets) Merge(other Sets) Sets {
 	result := s.Copy()
 	for k, v := range other {
-		result[k].Merge(v)
+		result[k] = result[k].Merge(v)
 	}
 	return result
 }

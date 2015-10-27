@@ -164,28 +164,25 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 	if err != nil {
 		return r, nil
 	}
-	containersByPrefix := map[string]report.Node{}
-	for _, node := range r.Container.Nodes {
-		prefix := node.Metadata[docker.ContainerID][:12]
-		containersByPrefix[prefix] = node
+	psEntriesByPrefix := map[string]psEntry{}
+	for _, entry := range psEntries {
+		psEntriesByPrefix[entry.containerIDPrefix] = entry
 	}
-	for _, e := range psEntries {
-		node, ok := containersByPrefix[e.containerIDPrefix]
+	for id, node := range r.Container.Nodes {
+		prefix := node.Metadata[docker.ContainerID][:12]
+		entry, ok := psEntriesByPrefix[prefix]
 		if !ok {
 			continue
 		}
 
-		existingIPs := report.MakeIDList(docker.ExtractContainerIPs(node)...)
-		existingIPs = existingIPs.Add(e.ips...)
-		node.Metadata[docker.ContainerIPs] = strings.Join(existingIPs, " ")
-
-		existingIPsWithScopes := report.MakeIDList(docker.ExtractContainerIPsWithScopes(node)...)
-		for _, ip := range e.ips {
-			existingIPsWithScopes = existingIPsWithScopes.Add(report.MakeAddressNodeID("", ip))
+		ipsWithScope := report.MakeStringSet()
+		for _, ip := range entry.ips {
+			ipsWithScope = ipsWithScope.Add(report.MakeAddressNodeID("", ip))
 		}
-		node.Metadata[docker.ContainerIPsWithScopes] = strings.Join(existingIPsWithScopes, " ")
-
-		node.Metadata[WeaveMACAddress] = e.macAddress
+		node = node.WithSet(docker.ContainerIPs, report.MakeStringSet(entry.ips...))
+		node = node.WithSet(docker.ContainerIPsWithScopes, ipsWithScope)
+		node.Metadata[WeaveMACAddress] = entry.macAddress
+		r.Container.Nodes[id] = node
 	}
 	return r, nil
 }

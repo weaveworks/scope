@@ -311,8 +311,8 @@ var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.
 // the endpoint topology.
 func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 	result := RenderableNodes{}
-	if addrs, ok := m.Metadata[docker.ContainerIPsWithScopes]; ok {
-		for _, addr := range strings.Fields(addrs) {
+	if addrs, ok := m.Sets[docker.ContainerIPsWithScopes]; ok {
+		for _, addr := range addrs {
 			scope, addr, ok := report.ParseAddressNodeID(addr)
 			if !ok {
 				continue
@@ -326,12 +326,14 @@ func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 
 	// Also output all the host:port port mappings (see above comment).
 	// In this case we assume this doesn't need a scope, as they are for host IPs.
-	for _, mapping := range portMappingMatch.FindAllStringSubmatch(m.Metadata[docker.ContainerPorts], -1) {
-		ip, port := mapping[1], mapping[2]
-		id := report.MakeScopedEndpointNodeID("", ip, port)
-		node := NewRenderableNodeWith(id, "", "", "", m)
-		node.Counters[containersKey] = 1
-		result[id] = node
+	for _, portMapping := range m.Sets[docker.ContainerPorts] {
+		if mapping := portMappingMatch.FindStringSubmatch(portMapping); mapping != nil {
+			ip, port := mapping[1], mapping[2]
+			id := report.MakeScopedEndpointNodeID("", ip, port)
+			node := NewRenderableNodeWith(id, "", "", "", m)
+			node.Counters[containersKey] = 1
+			result[id] = node
+		}
 	}
 
 	return result

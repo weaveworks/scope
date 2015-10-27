@@ -54,8 +54,9 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 						docker.ContainerID:            mockContainerID,
 						overlay.WeaveDNSHostname:      mockHostname,
 						overlay.WeaveMACAddress:       mockContainerMAC,
-						docker.ContainerIPs:           mockContainerIP,
-						docker.ContainerIPsWithScopes: mockContainerIPWithScope,
+					}).WithSets(report.Sets{
+						docker.ContainerIPs:           report.MakeStringSet(mockContainerIP),
+						docker.ContainerIPsWithScopes: report.MakeStringSet(mockContainerIPWithScope),
 					}),
 				},
 			},
