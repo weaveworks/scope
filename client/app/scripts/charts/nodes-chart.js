@@ -428,17 +428,16 @@ const NodesChart = React.createClass({
     const nodeSize = expanse / 3; // single node should fill a third of the screen
     const normalizedNodeSize = nodeSize / Math.sqrt(n); // assuming rectangular layout
     const nodeScale = this.state.nodeScale.range([0, normalizedNodeSize]);
+    const options = {
+      width: props.width,
+      height: props.height,
+      scale: nodeScale,
+      margins: MARGINS,
+      topologyId: this.props.topologyId
+    };
 
     const timedLayouter = timely(NodesLayout.doLayout);
-    const graph = timedLayouter(
-      nodes,
-      edges,
-      props.width,
-      props.height,
-      nodeScale,
-      MARGINS,
-      this.props.topologyId
-    );
+    const graph = timedLayouter(nodes, edges, options);
 
     debug('graph layout took ' + timedLayouter.time + 'ms');
 

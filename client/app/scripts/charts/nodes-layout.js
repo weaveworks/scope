@@ -6,7 +6,14 @@ const _ = require('lodash');
 const MAX_NODES = 100;
 const topologyGraphs = {};
 
-const doLayout = function(nodes, edges, width, height, scale, margins, topologyId) {
+export function doLayout(nodes, edges, opts) {
+  const options = opts || {};
+  const margins = options.margins || {top: 0, left: 0};
+  const width = options.width || 800;
+  const height = options.height || width / 2;
+  const scale = options.scale || (val => val * 2);
+  const topologyId = options.topologyId || 'noId';
+
   let offsetX = 0 + margins.left;
   let offsetY = 0 + margins.top;
   let graph;
@@ -101,8 +108,4 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
   // return object with the width and height of layout
 
   return layout;
-};
-
-module.exports = {
-  doLayout: doLayout
-};
+}

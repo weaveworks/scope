@@ -34,7 +34,7 @@ describe('NodesLayout', () => {
   it('lays out initial nodeset', () => {
     const nodes = nodeSets.initial4.nodes;
     const edges = nodeSets.initial4.edges;
-    NodesLayout.doLayout(nodes, edges, width, height, scale, margins, topologyId);
+    NodesLayout.doLayout(nodes, edges);
     expect(nodes.n1.x).toBeLessThan(nodes.n2.x);
     expect(nodes.n1.y).toEqual(nodes.n2.y);
 
