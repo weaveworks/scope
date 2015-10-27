@@ -1,11 +1,10 @@
-package endpoint_test
+package endpoint
 
 import (
 	"errors"
 	"testing"
 	"time"
 
-	. "github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/test"
 )
 
@@ -15,8 +14,8 @@ func TestReverseResolver(t *testing.T) {
 		"4.3.2.1": {"im.a.little.tea.pot"},
 	}
 
-	revRes := NewReverseResolver()
-	defer revRes.Stop()
+	revRes := newReverseResolver()
+	defer revRes.stop()
 
 	// Use a mocked resolver function.
 	revRes.Resolver = func(addr string) (names []string, err error) {
@@ -31,7 +30,7 @@ func TestReverseResolver(t *testing.T) {
 
 	for ip, names := range tests {
 		test.Poll(t, 100*time.Millisecond, names[0], func() interface{} {
-			result, _ := revRes.Get(ip)
+			result, _ := revRes.get(ip)
 			return result
 		})
 	}

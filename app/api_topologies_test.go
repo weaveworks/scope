@@ -11,7 +11,7 @@ import (
 
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/fixture"
 )
 
 func TestAPITopology(t *testing.T) {
@@ -62,7 +62,7 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 	// Enable the kubernetes topologies
 	rpt := report.MakeReport()
 	rpt.Pod = report.MakeTopology()
-	rpt.Pod.Nodes[test.ClientPodNodeID] = kubernetes.NewPod(&api.Pod{
+	rpt.Pod.Nodes[fixture.ClientPodNodeID] = kubernetes.NewPod(&api.Pod{
 		ObjectMeta: api.ObjectMeta{
 			Name:      "pong-a",
 			Namespace: "ping",

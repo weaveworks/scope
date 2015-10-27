@@ -3,7 +3,6 @@ package endpoint
 import (
 	"bufio"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -14,87 +13,90 @@ import (
 	"github.com/weaveworks/scope/common/exec"
 )
 
-// Constants exported for testing
 const (
 	modules          = "/proc/modules"
 	conntrackModule  = "nf_conntrack"
-	XMLHeader        = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-	ConntrackOpenTag = "<conntrack>\n"
-	TimeWait         = "TIME_WAIT"
-	TCP              = "tcp"
-	New              = "new"
-	Update           = "update"
-	Destroy          = "destroy"
+	xmlHeader        = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+	conntrackOpenTag = "<conntrack>\n"
+	timeWait         = "TIME_WAIT"
+	tcpProto         = "tcp"
+	newType          = "new"
+	updateType       = "update"
+	destroyType      = "destroy"
 )
 
-// Layer3 - these structs are for the parsed conntrack output
-type Layer3 struct {
+type layer3 struct {
 	XMLName xml.Name `xml:"layer3"`
 	SrcIP   string   `xml:"src"`
 	DstIP   string   `xml:"dst"`
 }
 
-// Layer4 - these structs are for the parsed conntrack output
-type Layer4 struct {
+type layer4 struct {
 	XMLName xml.Name `xml:"layer4"`
 	SrcPort int      `xml:"sport"`
 	DstPort int      `xml:"dport"`
 	Proto   string   `xml:"protoname,attr"`
 }
 
-// Meta - these structs are for the parsed conntrack output
-type Meta struct {
+type meta struct {
 	XMLName   xml.Name `xml:"meta"`
 	Direction string   `xml:"direction,attr"`
-	Layer3    Layer3   `xml:"layer3"`
-	Layer4    Layer4   `xml:"layer4"`
+	Layer3    layer3   `xml:"layer3"`
+	Layer4    layer4   `xml:"layer4"`
 	ID        int64    `xml:"id"`
 	State     string   `xml:"state"`
 }
 
-// Flow - these structs are for the parsed conntrack output
-type Flow struct {
+type flow struct {
 	XMLName xml.Name `xml:"flow"`
-	Metas   []Meta   `xml:"meta"`
+	Metas   []meta   `xml:"meta"`
 	Type    string   `xml:"type,attr"`
 
-	Original, Reply, Independent *Meta `xml:"-"`
+	Original, Reply, Independent *meta `xml:"-"`
 }
 
 type conntrack struct {
 	XMLName xml.Name `xml:"conntrack"`
-	Flows   []Flow   `xml:"flow"`
+	Flows   []flow   `xml:"flow"`
 }
 
-// Conntracker is something that tracks connections.
-type Conntracker interface {
-	WalkFlows(f func(Flow))
-	Stop()
+// flowWalker is something that maintains flows, and provides an accessor
+// method to walk them.
+type flowWalker interface {
+	walkFlows(f func(flow))
+	stop()
 }
 
-// Conntracker uses the conntrack command to track network connections
-type conntracker struct {
+type nilFlowWalker struct{}
+
+func (n nilFlowWalker) stop()                  {}
+func (n nilFlowWalker) walkFlows(f func(flow)) {}
+
+// conntrackWalker uses the conntrack command to track network connections and
+// implement flowWalker.
+type conntrackWalker struct {
 	sync.Mutex
 	cmd           exec.Cmd
-	activeFlows   map[int64]Flow // active flows in state != TIME_WAIT
-	bufferedFlows []Flow         // flows coming out of activeFlows spend 1 walk cycle here
-	existingConns bool
+	activeFlows   map[int64]flow // active flows in state != TIME_WAIT
+	bufferedFlows []flow         // flows coming out of activeFlows spend 1 walk cycle here
 	args          []string
 	quit          chan struct{}
 }
 
-// NewConntracker creates and starts a new Conntracter
-func NewConntracker(existingConns bool, args ...string) (Conntracker, error) {
+// newConntracker creates and starts a new conntracker.
+func newConntrackFlowWalker(useConntrack bool, args ...string) flowWalker {
 	if !ConntrackModulePresent() {
-		return nil, fmt.Errorf("No conntrack module")
+		log.Printf("Not using conntrack: module not present")
+		return nilFlowWalker{}
+	} else if !useConntrack {
+		return nilFlowWalker{}
 	}
-	result := &conntracker{
-		activeFlows:   map[int64]Flow{},
-		existingConns: existingConns,
-		args:          args,
+	result := &conntrackWalker{
+		activeFlows: map[int64]flow{},
+		args:        args,
 	}
 	go result.loop()
-	return result, nil
+	return result
 }
 
 // ConntrackModulePresent returns true if the kernel has the conntrack module
@@ -121,7 +123,7 @@ var ConntrackModulePresent = func() bool {
 	return false
 }
 
-func (c *conntracker) loop() {
+func (c *conntrackWalker) loop() {
 	// conntrack can sometimes fail with ENOBUFS, when there is a particularly
 	// high connection rate.  In these cases just retry in a loop, so we can
 	// survive the spike.  For sustained loads this degrades nicely, as we
@@ -139,7 +141,7 @@ func (c *conntracker) loop() {
 	}
 }
 
-func (c *conntracker) clearFlows() {
+func (c *conntrackWalker) clearFlows() {
 	c.Lock()
 	defer c.Unlock()
 
@@ -147,7 +149,7 @@ func (c *conntracker) clearFlows() {
 		c.bufferedFlows = append(c.bufferedFlows, f)
 	}
 
-	c.activeFlows = map[int64]Flow{}
+	c.activeFlows = map[int64]flow{}
 }
 
 func logPipe(prefix string, reader io.Reader) {
@@ -160,18 +162,16 @@ func logPipe(prefix string, reader io.Reader) {
 	}
 }
 
-func (c *conntracker) run() {
-	if c.existingConns {
-		// Fork another conntrack, just to capture existing connections
-		// for which we don't get events
-		existingFlows, err := c.existingConnections()
-		if err != nil {
-			log.Printf("conntrack existingConnections error: %v", err)
-			return
-		}
-		for _, flow := range existingFlows {
-			c.handleFlow(flow, true)
-		}
+func (c *conntrackWalker) run() {
+	// Fork another conntrack, just to capture existing connections
+	// for which we don't get events
+	existingFlows, err := c.existingConnections()
+	if err != nil {
+		log.Printf("conntrack existingConnections error: %v", err)
+		return
+	}
+	for _, flow := range existingFlows {
+		c.handleFlow(flow, true)
 	}
 
 	args := append([]string{"-E", "-o", "xml", "-p", "tcp"}, c.args...)
@@ -217,14 +217,14 @@ func (c *conntracker) run() {
 	if line, err := reader.ReadString('\n'); err != nil {
 		log.Printf("conntrack error: %v", err)
 		return
-	} else if line != XMLHeader {
+	} else if line != xmlHeader {
 		log.Printf("conntrack invalid output: '%s'", line)
 		return
 	}
 	if line, err := reader.ReadString('\n'); err != nil {
 		log.Printf("conntrack error: %v", err)
 		return
-	} else if line != ConntrackOpenTag {
+	} else if line != conntrackOpenTag {
 		log.Printf("conntrack invalid output: '%s'", line)
 		return
 	}
@@ -234,7 +234,7 @@ func (c *conntracker) run() {
 	// Now loop on the output stream
 	decoder := xml.NewDecoder(reader)
 	for {
-		var f Flow
+		var f flow
 		if err := decoder.Decode(&f); err != nil {
 			log.Printf("conntrack error: %v", err)
 			return
@@ -243,15 +243,15 @@ func (c *conntracker) run() {
 	}
 }
 
-func (c *conntracker) existingConnections() ([]Flow, error) {
+func (c *conntrackWalker) existingConnections() ([]flow, error) {
 	args := append([]string{"-L", "-o", "xml", "-p", "tcp"}, c.args...)
 	cmd := exec.Command("conntrack", args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return []Flow{}, err
+		return []flow{}, err
 	}
 	if err := cmd.Start(); err != nil {
-		return []Flow{}, err
+		return []flow{}, err
 	}
 	defer func() {
 		if err := cmd.Wait(); err != nil {
@@ -260,15 +260,14 @@ func (c *conntracker) existingConnections() ([]Flow, error) {
 	}()
 	var result conntrack
 	if err := xml.NewDecoder(stdout).Decode(&result); err == io.EOF {
-		return []Flow{}, nil
+		return []flow{}, nil
 	} else if err != nil {
-		return []Flow{}, err
+		return []flow{}, err
 	}
 	return result.Flows, nil
 }
 
-// Stop stop stop
-func (c *conntracker) Stop() {
+func (c *conntrackWalker) stop() {
 	c.Lock()
 	defer c.Unlock()
 	close(c.quit)
@@ -277,7 +276,7 @@ func (c *conntracker) Stop() {
 	}
 }
 
-func (c *conntracker) handleFlow(f Flow, forceAdd bool) {
+func (c *conntrackWalker) handleFlow(f flow, forceAdd bool) {
 	// A flow consists of 3 'metas' - the 'original' 4 tuple (as seen by this
 	// host) and the 'reply' 4 tuple, which is what it has been rewritten to.
 	// This code finds those metas, which are identified by a Direction
@@ -297,7 +296,7 @@ func (c *conntracker) handleFlow(f Flow, forceAdd bool) {
 	// For not, I'm only interested in tcp connections - there is too much udp
 	// traffic going on (every container talking to weave dns, for example) to
 	// render nicely. TODO: revisit this.
-	if f.Original.Layer4.Proto != TCP {
+	if f.Original.Layer4.Proto != tcpProto {
 		return
 	}
 
@@ -305,14 +304,14 @@ func (c *conntracker) handleFlow(f Flow, forceAdd bool) {
 	defer c.Unlock()
 
 	switch {
-	case forceAdd || f.Type == New || f.Type == Update:
-		if f.Independent.State != TimeWait {
+	case forceAdd || f.Type == newType || f.Type == updateType:
+		if f.Independent.State != timeWait {
 			c.activeFlows[f.Independent.ID] = f
 		} else if _, ok := c.activeFlows[f.Independent.ID]; ok {
 			delete(c.activeFlows, f.Independent.ID)
 			c.bufferedFlows = append(c.bufferedFlows, f)
 		}
-	case f.Type == Destroy:
+	case f.Type == destroyType:
 		if _, ok := c.activeFlows[f.Independent.ID]; ok {
 			delete(c.activeFlows, f.Independent.ID)
 			c.bufferedFlows = append(c.bufferedFlows, f)
@@ -320,9 +319,9 @@ func (c *conntracker) handleFlow(f Flow, forceAdd bool) {
 	}
 }
 
-// WalkFlows calls f with all active flows and flows that have come and gone
-// since the last call to WalkFlows
-func (c *conntracker) WalkFlows(f func(Flow)) {
+// walkFlows calls f with all active flows and flows that have come and gone
+// since the last call to walkFlows
+func (c *conntrackWalker) walkFlows(f func(flow)) {
 	c.Lock()
 	defer c.Unlock()
 	for _, flow := range c.activeFlows {

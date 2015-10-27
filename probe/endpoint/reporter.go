@@ -1,7 +1,6 @@
 package endpoint
 
 import (
-	"log"
 	"strconv"
 	"time"
 
@@ -26,9 +25,9 @@ type Reporter struct {
 	hostName         string
 	includeProcesses bool
 	includeNAT       bool
-	conntracker      Conntracker
-	natmapper        *NATMapper
-	revResolver      *ReverseResolver
+	flowWalker       flowWalker // interface
+	natMapper        natMapper
+	reverseResolver  *reverseResolver
 }
 
 // SpyDuration is an exported prometheus metric
@@ -49,44 +48,21 @@ var SpyDuration = prometheus.NewSummaryVec(
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
 func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool) *Reporter {
-	var (
-		conntrackModulePresent = ConntrackModulePresent()
-		conntracker            Conntracker
-		natmapper              NATMapper
-		err                    error
-	)
-	if conntrackModulePresent && useConntrack {
-		conntracker, err = NewConntracker(true)
-		if err != nil {
-			log.Printf("Failed to start conntracker: %v", err)
-		}
-	}
-	if conntrackModulePresent {
-		ct, err := NewConntracker(true, "--any-nat")
-		if err != nil {
-			log.Printf("Failed to start conntracker for natmapper: %v", err)
-		}
-		natmapper = NewNATMapper(ct)
-	}
 	return &Reporter{
 		hostID:           hostID,
 		hostName:         hostName,
 		includeProcesses: includeProcesses,
-		conntracker:      conntracker,
-		natmapper:        &natmapper,
-		revResolver:      NewReverseResolver(),
+		flowWalker:       newConntrackFlowWalker(useConntrack),
+		natMapper:        makeNATMapper(newConntrackFlowWalker(useConntrack, "--any-nat")),
+		reverseResolver:  newReverseResolver(),
 	}
 }
 
 // Stop stop stop
 func (r *Reporter) Stop() {
-	if r.conntracker != nil {
-		r.conntracker.Stop()
-	}
-	if r.natmapper != nil {
-		r.natmapper.Stop()
-	}
-	r.revResolver.Stop()
+	r.flowWalker.stop()
+	r.natMapper.stop()
+	r.reverseResolver.stop()
 }
 
 // Report implements Reporter.
@@ -124,11 +100,12 @@ func (r *Reporter) Report() (report.Report, error) {
 		}
 	}
 
-	if r.conntracker != nil {
+	// Consult the flowWalker for short-live connections
+	{
 		extraNodeInfo := report.MakeNode().WithMetadata(report.Metadata{
 			Conntracked: "true",
 		})
-		r.conntracker.WalkFlows(func(f Flow) {
+		r.flowWalker.walkFlows(func(f flow) {
 			var (
 				localPort  = uint16(f.Original.Layer4.SrcPort)
 				remotePort = uint16(f.Original.Layer4.DstPort)
@@ -139,10 +116,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		})
 	}
 
-	if r.natmapper != nil {
-		r.natmapper.ApplyNAT(rpt, r.hostID)
-	}
-
+	r.natMapper.applyNAT(rpt, r.hostID)
 	return rpt, nil
 }
 
@@ -165,9 +139,9 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 
 		// In case we have a reverse resolution for the IP, we can use it for
 		// the name...
-		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
+		if remoteName, err := r.reverseResolver.get(remoteAddr); err == nil {
 			remoteNode = remoteNode.WithMetadata(map[string]string{
-				"name": revRemoteName,
+				"name": remoteName,
 			})
 		}
 
@@ -211,9 +185,9 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 
 		// In case we have a reverse resolution for the IP, we can use it for
 		// the name...
-		if revRemoteName, err := r.revResolver.Get(remoteAddr); err == nil {
+		if remoteName, err := r.reverseResolver.get(remoteAddr); err == nil {
 			remoteNode = remoteNode.WithMetadata(map[string]string{
-				"name": revRemoteName,
+				"name": remoteName,
 			})
 		}
 

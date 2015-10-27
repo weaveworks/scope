@@ -16,17 +16,16 @@ type endpointMapping struct {
 	rewrittenPort int
 }
 
-// NATMapper rewrites a report to deal with NAT's connections
-type NATMapper struct {
-	Conntracker
+// natMapper rewrites a report to deal with NAT'd connections.
+type natMapper struct {
+	flowWalker
 }
 
-// NewNATMapper is exposed for testing
-func NewNATMapper(ct Conntracker) NATMapper {
-	return NATMapper{ct}
+func makeNATMapper(fw flowWalker) natMapper {
+	return natMapper{fw}
 }
 
-func toMapping(f Flow) *endpointMapping {
+func toMapping(f flow) *endpointMapping {
 	var mapping endpointMapping
 	if f.Original.Layer3.SrcIP == f.Reply.Layer3.DstIP {
 		mapping = endpointMapping{
@@ -47,10 +46,10 @@ func toMapping(f Flow) *endpointMapping {
 	return &mapping
 }
 
-// ApplyNAT duplicates Nodes in the endpoint topology of a
-// report, based on the NAT table as returns by natTable.
-func (n NATMapper) ApplyNAT(rpt report.Report, scope string) {
-	n.WalkFlows(func(f Flow) {
+// applyNAT duplicates Nodes in the endpoint topology of a report, based on
+// the NAT table.
+func (n natMapper) applyNAT(rpt report.Report, scope string) {
+	n.flowWalker.walkFlows(func(f flow) {
 		var (
 			mapping          = toMapping(f)
 			realEndpointID   = report.MakeEndpointNodeID(scope, mapping.originalIP, strconv.Itoa(mapping.originalPort))
