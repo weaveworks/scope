@@ -91,6 +91,7 @@ func MakeNode() Node {
 	return Node{
 		Metadata:  Metadata{},
 		Counters:  Counters{},
+		Sets:      Sets{},
 		Adjacency: MakeIDList(),
 		Edges:     EdgeMetadatas{},
 	}
@@ -115,6 +116,13 @@ func (n Node) WithCounters(c map[string]int) Node {
 	return result
 }
 
+func (n Node) WithSet(key string, set StringSet) Node {
+	result := n.Copy()
+	existing := n.Sets[key]
+	result.Sets[key] = existing.Merge(set)
+	return result
+}
+
 // WithAdjacent returns a fresh copy of n, with 'a' added to Adjacency
 func (n Node) WithAdjacent(a string) Node {
 	result := n.Copy()
@@ -136,6 +144,7 @@ func (n Node) Copy() Node {
 	cp := MakeNode()
 	cp.Metadata = n.Metadata.Copy()
 	cp.Counters = n.Counters.Copy()
+	cp.Sets = n.Sets.Copy()
 	cp.Adjacency = n.Adjacency.Copy()
 	cp.Edges = n.Edges.Copy()
 	return cp
@@ -147,6 +156,7 @@ func (n Node) Merge(other Node) Node {
 	cp := n.Copy()
 	cp.Metadata = cp.Metadata.Merge(other.Metadata)
 	cp.Counters = cp.Counters.Merge(other.Counters)
+	cp.Sets = cp.Sets.Merge(other.Sets)
 	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
 	cp.Edges = cp.Edges.Merge(other.Edges)
 	return cp
