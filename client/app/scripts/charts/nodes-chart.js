@@ -2,6 +2,7 @@ const _ = require('lodash');
 const d3 = require('d3');
 const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
+const makeMap = require('immutable').Map;
 const timely = require('timely');
 const Spring = require('react-motion').Spring;
 
@@ -28,8 +29,8 @@ const NodesChart = React.createClass({
 
   getInitialState: function() {
     return {
-      nodes: {},
-      edges: {},
+      nodes: makeMap(),
+      edges: makeMap(),
       nodeScale: d3.scale.linear(),
       shiftTranslate: [0, 0],
       panTranslate: [0, 0],
@@ -62,8 +63,8 @@ const NodesChart = React.createClass({
     if (nextProps.topologyId !== this.props.topologyId) {
       _.assign(state, {
         autoShifted: false,
-        nodes: {},
-        edges: {}
+        nodes: makeMap(),
+        edges: makeMap()
       });
     }
     // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
@@ -96,60 +97,81 @@ const NodesChart = React.createClass({
     const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes(this.props.selectedNodeId) : null;
     const onNodeClick = this.props.onNodeClick;
 
-    _.each(nodes, function(node) {
-      node.highlighted = _.includes(this.props.highlightedNodeIds, node.id)
-        || this.props.selectedNodeId === node.id;
-      node.focused = hasSelectedNode
-        && (this.props.selectedNodeId === node.id || adjacency.includes(node.id));
-      node.blurred = hasSelectedNode && !node.focused;
-    }, this);
+    // highlighter functions
+    const setHighlighted = node => {
+      const highlighted = _.includes(this.props.highlightedNodeIds, node.get('id'))
+        || this.props.selectedNodeId === node.get('id');
+      return node.set('highlighted', highlighted);
+    };
+    const setFocused = node => {
+      const focused = hasSelectedNode
+        && (this.props.selectedNodeId === node.get('id') || adjacency.includes(node.get('id')));
+      return node.set('focused', focused);
+    };
+    const setBlurred = node => {
+      return node.set('blurred', hasSelectedNode && !node.get('focused'));
+    };
 
-    return _.chain(nodes)
-      .sortBy(function(node) {
-        if (node.blurred) {
-          return 0;
-        }
-        if (node.highlighted) {
-          return 2;
-        }
-        return 1;
-      })
-      .map(function(node) {
-        return (
-          <Node
-            blurred={node.blurred}
-            focused={node.focused}
-            highlighted={node.highlighted}
+    // make sure blurred nodes are in the background
+    const sortNodes = node => {
+      if (node.get('blurred')) {
+        return 0;
+      }
+      if (node.get('highlighted')) {
+        return 2;
+      }
+      return 1;
+    };
+
+    return nodes
+      .toIndexedSeq()
+      .map(setHighlighted)
+      .map(setFocused)
+      .map(setBlurred)
+      .sortBy(sortNodes)
+      .map(node => {
+        return (<Node
+            blurred={node.get('blurred')}
+            focused={node.get('focused')}
+            highlighted={node.get('highlighted')}
             onClick={onNodeClick}
-            key={node.id}
-            id={node.id}
-            label={node.label}
-            pseudo={node.pseudo}
-            subLabel={node.subLabel}
-            rank={node.rank}
+            key={node.get('id')}
+            id={node.get('id')}
+            label={node.get('label')}
+            pseudo={node.get('pseudo')}
+            subLabel={node.get('subLabel')}
+            rank={node.get('rank')}
             scale={scale}
-            dx={node.x}
-            dy={node.y}
+            dx={node.get('x')}
+            dy={node.get('y')}
           />
         );
-      })
-      .value();
+      });
   },
 
   renderGraphEdges: function(edges) {
     const selectedNodeId = this.props.selectedNodeId;
     const hasSelectedNode = selectedNodeId && this.props.nodes.has(selectedNodeId);
 
-    return _.map(edges, function(edge) {
-      const highlighted = _.includes(this.props.highlightedEdgeIds, edge.id);
-      const blurred = hasSelectedNode
-        && edge.source.id !== selectedNodeId
-        && edge.target.id !== selectedNodeId;
-      return (
-        <Edge key={edge.id} id={edge.id} points={edge.points} blurred={blurred}
-          highlighted={highlighted} />
-      );
-    }, this);
+    const setHighlighted = edge => {
+      return edge.set('highlighted', _.includes(this.props.highlightedEdgeIds, edge.get('id')));
+    };
+    const setBlurred = edge => {
+      return (edge.set('blurred', hasSelectedNode
+        && edge.get('source') !== selectedNodeId
+        && edge.get('target') !== selectedNodeId));
+    };
+
+    return edges
+      .toIndexedSeq()
+      .map(setHighlighted)
+      .map(setBlurred)
+      .map(edge => {
+        return (
+          <Edge key={edge.get('id')} id={edge.get('id')} points={edge.get('points')}
+            blurred={edge.get('blurred')} highlighted={edge.get('highlighted')} />
+        );
+      });
   },
 
   renderMaxNodesError: function(show) {
@@ -187,7 +209,7 @@ const NodesChart = React.createClass({
       translate = shiftTranslate;
       wasShifted = true;
     }
-    const svgClassNames = this.state.maxNodesExceeded || _.size(nodeElements) === 0 ? 'hide' : '';
+    const svgClassNames = this.state.maxNodesExceeded || nodeElements.size === 0 ? 'hide' : '';
     const errorEmpty = this.renderEmptyTopologyError(AppStore.isTopologyEmpty());
     const errorMaxNodesExceeded = this.renderMaxNodesError(this.state.maxNodesExceeded);
 
@@ -219,34 +241,22 @@ const NodesChart = React.createClass({
   },
 
   initNodes: function(topology) {
-    const centerX = this.props.width / 2;
-    const centerY = this.props.height / 2;
-    const nodes = {};
-
-    topology.forEach(function(node, id) {
-      nodes[id] = {};
-
-      // use cached positions if available
-      _.defaults(nodes[id], {
-        x: centerX,
-        y: centerY
-      });
-
+    return topology.map((node, id) => {
       // copy relevant fields to state nodes
-      _.assign(nodes[id], {
+      return makeMap({
         id: id,
         label: node.get('label_major'),
         pseudo: node.get('pseudo'),
         subLabel: node.get('label_minor'),
-        rank: node.get('rank')
+        rank: node.get('rank'),
+        x: 0,
+        y: 0
       });
     });
-
-    return nodes;
   },
 
-  initEdges: function(topology, nodes) {
-    const edges = {};
+  initEdges: function(topology, stateNodes) {
+    let edges = makeMap();
 
     topology.forEach(function(node, nodeId) {
       const adjacency = node.get('adjacency');
@@ -255,20 +265,20 @@ const NodesChart = React.createClass({
           const edge = [nodeId, adjacent];
           const edgeId = edge.join(Naming.EDGE_ID_SEPARATOR);
 
-          if (!edges[edgeId]) {
-            const source = nodes[edge[0]];
-            const target = nodes[edge[1]];
+          if (!edges.has(edgeId)) {
+            const source = edge[0];
+            const target = edge[1];
 
-            if (!source || !target) {
-              debug('Missing edge node', edge[0], source, edge[1], target);
+            if (!stateNodes.has(source) || !stateNodes.has(target)) {
+              debug('Missing edge node', edge[0], edge[1]);
             }
 
-            edges[edgeId] = {
+            edges = edges.set(edgeId, makeMap({
               id: edgeId,
               value: 1,
               source: source,
               target: target
-            };
+            }));
           }
         });
       }
@@ -278,55 +288,65 @@ const NodesChart = React.createClass({
   },
 
   centerSelectedNode: function(props, state) {
-    const layoutNodes = state.nodes;
-    const layoutEdges = state.edges;
-    const selectedLayoutNode = layoutNodes[props.selectedNodeId];
+    let stateNodes = state.nodes;
+    let stateEdges = state.edges;
+    let selectedLayoutNode = stateNodes.get(props.selectedNodeId);
 
     if (!selectedLayoutNode) {
       return {};
     }
 
     const adjacency = AppStore.getAdjacentNodes(props.selectedNodeId);
-    const adjacentLayoutNodes = [];
+    let adjacentLayoutNodeIds = [];
 
     adjacency.forEach(function(adjacentId) {
       // filter loopback
       if (adjacentId !== props.selectedNodeId) {
-        adjacentLayoutNodes.push(layoutNodes[adjacentId]);
+        adjacentLayoutNodeIds.push(adjacentId);
       }
     });
 
     // shift center node a bit
     const nodeScale = state.nodeScale;
-    selectedLayoutNode.x = selectedLayoutNode.px + nodeScale(1);
-    selectedLayoutNode.y = selectedLayoutNode.py + nodeScale(1);
+    const centerX = selectedLayoutNode.get('px') + nodeScale(1);
+    const centerY = selectedLayoutNode.get('py') + nodeScale(1);
+    stateNodes = stateNodes.mergeIn([props.selectedNodeId], {
+      x: centerX,
+      y: centerY
+    });
 
     // circle layout for adjacent nodes
-    const centerX = selectedLayoutNode.x;
-    const centerY = selectedLayoutNode.y;
-    const adjacentCount = adjacentLayoutNodes.length;
+    const adjacentCount = adjacentLayoutNodeIds.length;
     const density = radiusDensity(adjacentCount);
     const radius = Math.min(props.width, props.height) / density;
     const offsetAngle = Math.PI / 4;
 
-    _.each(adjacentLayoutNodes, function(node, i) {
-      const angle = offsetAngle + Math.PI * 2 * i / adjacentCount;
-      node.x = centerX + radius * Math.sin(angle);
-      node.y = centerY + radius * Math.cos(angle);
+    stateNodes = stateNodes.map((node) => {
+      const index = adjacentLayoutNodeIds.indexOf(node.get('id'));
+      if (index > -1) {
+        const angle = offsetAngle + Math.PI * 2 * index / adjacentCount;
+        return node.merge({
+          x: centerX + radius * Math.sin(angle),
+          y: centerY + radius * Math.cos(angle)
+        });
+      }
+      return node;
     });
 
     // fix all edges for circular nodes
-
-    _.each(layoutEdges, function(edge) {
-      if (edge.source === selectedLayoutNode
-        || edge.target === selectedLayoutNode
-        || _.includes(adjacentLayoutNodes, edge.source)
-        || _.includes(adjacentLayoutNodes, edge.target)) {
-        edge.points = [
-          {x: edge.source.x, y: edge.source.y},
-          {x: edge.target.x, y: edge.target.y}
-        ];
+    stateEdges = stateEdges.map(edge => {
+      if (edge.get('source') === selectedLayoutNode.get('id')
+        || edge.get('target') === selectedLayoutNode.get('id')
+        || _.includes(adjacentLayoutNodeIds, edge.get('source'))
+        || _.includes(adjacentLayoutNodeIds, edge.get('target'))) {
+        const source = stateNodes.get(edge.get('source'));
+        const target = stateNodes.get(edge.get('target'));
+        return edge.set('points', [
+          {x: source.get('x'), y: source.get('y')},
+          {x: target.get('x'), y: target.get('y')}
+        ]);
       }
+      return edge;
     });
 
     // shift canvas selected node out of view if it has not been shifted already
@@ -373,8 +393,8 @@ const NodesChart = React.createClass({
 
     return {
       autoShifted: autoShifted,
-      edges: layoutEdges,
-      nodes: layoutNodes,
+      edges: stateEdges,
+      nodes: stateNodes,
       shiftTranslate: shiftTranslate
     };
   },
@@ -394,21 +414,21 @@ const NodesChart = React.createClass({
   },
 
   restoreLayout: function(state) {
-    const edges = state.edges;
-    const nodes = state.nodes;
-
-    _.each(nodes, function(node) {
-      node.x = node.px;
-      node.y = node.py;
+    const nodes = state.nodes.map(node => {
+      return node.merge({
+        x: node.get('px'),
+        y: node.get('py')
+      });
     });
 
-    _.each(edges, function(edge) {
-      if (edge.ppoints) {
-        edge.points = edge.ppoints;
+    const edges = state.edges.map(edge => {
+      if (edge.has('ppoints')) {
+        return edge.set('points', edge.get('ppoints'));
       }
+      return edge;
     });
 
-    return {edges: edges, nodes: nodes};
+    return {edges, nodes};
   },
 
   updateGraphState: function(props, state) {
@@ -416,13 +436,13 @@ const NodesChart = React.createClass({
 
     if (n === 0) {
       return {
-        nodes: {},
-        edges: {}
+        nodes: makeMap(),
+        edges: makeMap()
       };
     }
 
-    const nodes = this.initNodes(props.nodes, state.nodes);
-    const edges = this.initEdges(props.nodes, nodes);
+    let stateNodes = this.initNodes(props.nodes, state.nodes);
+    let stateEdges = this.initEdges(props.nodes, stateNodes);
 
     const expanse = Math.min(props.height, props.width);
     const nodeSize = expanse / 3; // single node should fill a third of the screen
@@ -437,7 +457,7 @@ const NodesChart = React.createClass({
     };
 
     const timedLayouter = timely(NodesLayout.doLayout);
-    const graph = timedLayouter(nodes, edges, options);
+    const graph = timedLayouter(stateNodes, stateEdges, options);
 
     debug('graph layout took ' + timedLayouter.time + 'ms');
 
@@ -445,14 +465,18 @@ const NodesChart = React.createClass({
     if (!graph) {
       return {maxNodesExceeded: true};
     }
+    stateNodes = graph.nodes;
+    stateEdges = graph.edges;
 
     // save coordinates for restore
-    _.each(nodes, function(node) {
-      node.px = node.x;
-      node.py = node.y;
+    stateNodes = stateNodes.map(node => {
+      return node.merge({
+        px: node.get('x'),
+        py: node.get('y')
+      });
     });
-    _.each(edges, function(edge) {
-      edge.ppoints = edge.points;
+    stateEdges = stateEdges.map(edge => {
+      return edge.set('ppoints', edge.get('points'));
     });
 
     // adjust layout based on viewport
@@ -468,8 +492,8 @@ const NodesChart = React.createClass({
     }
 
     return {
-      nodes: nodes,
-      edges: edges,
+      nodes: stateNodes,
+      edges: stateEdges,
       nodeScale: nodeScale,
       scale: zoomScale,
       maxNodesExceeded: false

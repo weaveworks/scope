@@ -1,12 +1,19 @@
 const dagre = require('dagre');
 const debug = require('debug')('scope:nodes-layout');
 const Naming = require('../constants/naming');
-const _ = require('lodash');
 
 const MAX_NODES = 100;
 const topologyGraphs = {};
 
-export function doLayout(nodes, edges, opts) {
+function runLayoutEngine(imNodes, imEdges, opts) {
+  let nodes = imNodes;
+  let edges = imEdges;
+
+  if (nodes.size > MAX_NODES) {
+    debug('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
+    return null;
+  }
+
   const options = opts || {};
   const margins = options.margins || {top: 0, left: 0};
   const width = options.width || 800;
@@ -14,20 +21,11 @@ export function doLayout(nodes, edges, opts) {
   const scale = options.scale || (val => val * 2);
   const topologyId = options.topologyId || 'noId';
 
-  let offsetX = 0 + margins.left;
-  let offsetY = 0 + margins.top;
-  let graph;
-
-  if (_.size(nodes) > MAX_NODES) {
-    debug('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
-    return null;
-  }
-
   // one engine per topology, to keep renderings similar
   if (!topologyGraphs[topologyId]) {
     topologyGraphs[topologyId] = new dagre.graphlib.Graph({});
   }
-  graph = topologyGraphs[topologyId];
+  const graph = topologyGraphs[topologyId];
 
   // configure node margins
   graph.setGraph({
@@ -36,10 +34,10 @@ export function doLayout(nodes, edges, opts) {
   });
 
   // add nodes to the graph if not already there
-  _.each(nodes, function(node) {
-    if (!graph.hasNode(node.id)) {
-      graph.setNode(node.id, {
-        id: node.id,
+  nodes.forEach(node => {
+    if (!graph.hasNode(node.get('id'))) {
+      graph.setNode(node.get('id'), {
+        id: node.get('id'),
         width: scale(1),
         height: scale(1)
       });
@@ -47,34 +45,40 @@ export function doLayout(nodes, edges, opts) {
   });
 
   // remove nodes that are no longer there
-  _.each(graph.nodes(), function(nodeid) {
-    if (!_.has(nodes, nodeid)) {
+  graph.nodes().forEach(nodeid => {
+    if (!nodes.has(nodeid)) {
       graph.removeNode(nodeid);
     }
   });
 
   // add edges to the graph if not already there
-  _.each(edges, function(edge) {
-    if (!graph.hasEdge(edge.source.id, edge.target.id)) {
-      const virtualNodes = edge.source.id === edge.target.id ? 1 : 0;
-      graph.setEdge(edge.source.id, edge.target.id, {id: edge.id, minlen: virtualNodes});
+  edges.forEach(edge => {
+    if (!graph.hasEdge(edge.get('source'), edge.get('target'))) {
+      const virtualNodes = edge.get('source') === edge.get('target') ? 1 : 0;
+      graph.setEdge(
+        edge.get('source'),
+        edge.get('target'),
+        {id: edge.get('id'), minlen: virtualNodes}
+      );
     }
   });
 
-  // remoed egdes that are no longer there
-  _.each(graph.edges(), function(edgeObj) {
+  // remove edges that are no longer there
+  graph.edges().forEach(edgeObj => {
     const edge = [edgeObj.v, edgeObj.w];
     const edgeId = edge.join(Naming.EDGE_ID_SEPARATOR);
-    if (!_.has(edges, edgeId)) {
+    if (!edges.has(edgeId)) {
       graph.removeEdge(edgeObj.v, edgeObj.w);
     }
   });
 
   dagre.layout(graph);
-
   const layout = graph.graph();
 
   // shifting graph coordinates to center
+
+  let offsetX = 0 + margins.left;
+  let offsetY = 0 + margins.top;
 
   if (layout.width < width) {
     offsetX = (width - layout.width) / 2 + margins.left;
@@ -85,27 +89,45 @@ export function doLayout(nodes, edges, opts) {
 
   // apply coordinates to nodes and edges
 
-  graph.nodes().forEach(function(id) {
-    const node = nodes[id];
+  graph.nodes().forEach(id => {
     const graphNode = graph.node(id);
-    node.x = graphNode.x + offsetX;
-    node.y = graphNode.y + offsetY;
+    nodes = nodes.setIn([id, 'x'], graphNode.x + offsetX);
+    nodes = nodes.setIn([id, 'y'], graphNode.y + offsetY);
   });
 
-  graph.edges().forEach(function(id) {
+  graph.edges().forEach(id => {
     const graphEdge = graph.edge(id);
-    const edge = edges[graphEdge.id];
-    _.each(graphEdge.points, function(point) {
-      point.x += offsetX;
-      point.y += offsetY;
-    });
-    edge.points = graphEdge.points;
+    const edge = edges.get(graphEdge.id);
+    const points = graphEdge.points.map(point => ({
+      x: point.x + offsetX,
+      y: point.y + offsetY
+    }));
+
     // set beginning and end points to node coordinates to ignore node bounding box
-    edge.points[0] = {x: edge.source.x, y: edge.source.y};
-    edge.points[edge.points.length - 1] = {x: edge.target.x, y: edge.target.y};
+    const source = nodes.get(edge.get('source'));
+    const target = nodes.get(edge.get('target'));
+    points[0] = {x: source.get('x'), y: source.get('y')};
+    points[points.length - 1] = {x: target.get('x'), y: target.get('y')};
+
+    edges = edges.setIn([graphEdge.id, 'points'], points);
   });
 
   // return object with the width and height of layout
-
+  layout.nodes = nodes;
+  layout.edges = edges;
   return layout;
+}
+
+/**
+ * Layout of nodes and edges
+ * @param  {Map} nodes All nodes
+ * @param  {Map} edges All edges
+ * @param  {object} opts  width, height, margins, etc...
+ * @return {object} graph object with nodes, edges, dimensions
+ */
+export function doLayout(nodes, edges, opts) {
+  // const options = opts || {};
+  // const history = options.history || [];
+
+  return runLayoutEngine(nodes, edges, opts);
 }
