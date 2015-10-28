@@ -31,6 +31,7 @@ const NodesChart = React.createClass({
     return {
       nodes: makeMap(),
       edges: makeMap(),
+      history: [],
       nodeScale: d3.scale.linear(),
       shiftTranslate: [0, 0],
       panTranslate: [0, 0],
@@ -453,7 +454,8 @@ const NodesChart = React.createClass({
       height: props.height,
       scale: nodeScale,
       margins: MARGINS,
-      topologyId: this.props.topologyId
+      topologyId: this.props.topologyId,
+      history: state.history
     };
 
     const timedLayouter = timely(NodesLayout.doLayout);
@@ -492,6 +494,7 @@ const NodesChart = React.createClass({
     }
 
     return {
+      history: [graph],
       nodes: stateNodes,
       edges: stateEdges,
       nodeScale: nodeScale,

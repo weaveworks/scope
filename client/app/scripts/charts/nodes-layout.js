@@ -1,5 +1,6 @@
 const dagre = require('dagre');
 const debug = require('debug')('scope:nodes-layout');
+const ImmSet = require('immutable').Set;
 const Naming = require('../constants/naming');
 
 const MAX_NODES = 100;
@@ -118,6 +119,38 @@ function runLayoutEngine(imNodes, imEdges, opts) {
   return layout;
 }
 
+function doLayoutEdges(nodes, edges, previousLayout) {
+  const previousEdges = previousLayout.edges;
+
+  // remove old edges
+  let layoutEdges = previousEdges.filter(edge => {
+    return edges.has(edge.get('id'));
+  });
+
+  // add new edges with points from source and target
+  let source;
+  let target;
+  let layoutEdge;
+  edges.forEach(edge => {
+    if (!layoutEdges.has(edge.get('id'))) {
+      source = nodes.get(edge.get('source'));
+      target = nodes.get(edge.get('target'));
+      layoutEdge = edge.set('points', [
+        {x: source.get('x'), y: source.get('y')},
+        {x: target.get('x'), y: target.get('y')}
+      ]);
+      layoutEdges = layoutEdges.set(layoutEdge.get('id'), layoutEdge);
+    }
+  });
+
+  previousLayout.edges = layoutEdges;
+  return previousLayout;
+}
+
+function hasSameNodes(nodes, prevNodes) {
+  return ImmSet.fromKeys(nodes).equals(ImmSet.fromKeys(prevNodes));
+}
+
 /**
  * Layout of nodes and edges
  * @param  {Map} nodes All nodes
@@ -126,8 +159,22 @@ function runLayoutEngine(imNodes, imEdges, opts) {
  * @return {object} graph object with nodes, edges, dimensions
  */
 export function doLayout(nodes, edges, opts) {
-  // const options = opts || {};
-  // const history = options.history || [];
+  const options = opts || {};
+  const history = options.history || [];
+  const previous = history.pop();
+  let layout;
 
-  return runLayoutEngine(nodes, edges, opts);
+  if (previous) {
+    // add/remove edges if nodes are the same
+    if (hasSameNodes(previous.nodes, nodes)) {
+      debug('skip layout, only edges changed', edges.size, previous.edges.size);
+      layout = doLayoutEdges(nodes, edges, previous);
+    }
+  }
+
+  if (layout === undefined) {
+    layout = runLayoutEngine(nodes, edges, opts);
+  }
+
+  return layout;
 }
