@@ -94,6 +94,7 @@ func newConntrackFlowWalker(useConntrack bool, args ...string) flowWalker {
 	result := &conntrackWalker{
 		activeFlows: map[int64]flow{},
 		args:        args,
+		quit:        make(chan struct{}),
 	}
 	go result.loop()
 	return result
