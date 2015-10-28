@@ -1,7 +1,7 @@
 jest.dontMock('../nodes-layout');
 jest.dontMock('../../constants/naming'); // edge naming: 'source-target'
 
-import { fromJS, is } from 'immutable';
+import { fromJS, List } from 'immutable';
 
 describe('NodesLayout', () => {
   const NodesLayout = require('../nodes-layout');
@@ -16,7 +16,7 @@ describe('NodesLayout', () => {
     left: 0,
     top: 0
   };
-  let history;
+  let history = List();
   let nodes;
 
   const nodeSets = {
@@ -44,8 +44,23 @@ describe('NodesLayout', () => {
         'n1-n3': {id: 'n1-n3', source: 'n1', target: 'n3'},
         'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'}
       })
-    }
+    },
+    removeNode2: {
+      nodes: fromJS({
+        n1: {id: 'n1'},
+        n3: {id: 'n3'},
+        n4: {id: 'n4'}
+      }),
+      edges: fromJS({
+        'n1-n3': {id: 'n1-n3', source: 'n1', target: 'n3'},
+        'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'}
+      })
+    },
   };
+
+  beforeEach(() => {
+    history = history.clear();
+  })
 
   it('lays out initial nodeset in a rectangle', () => {
     const result = NodesLayout.doLayout(
@@ -66,10 +81,10 @@ describe('NodesLayout', () => {
     let result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
       nodeSets.initial4.edges);
-    history = [{
+    history = history.unshift({
       nodes: result.nodes,
       edges: result.edges
-    }];
+    });
     result = NodesLayout.doLayout(
       nodeSets.removeEdge24.nodes,
       nodeSets.removeEdge24.edges,
@@ -91,20 +106,20 @@ describe('NodesLayout', () => {
       nodeSets.initial4.nodes,
       nodeSets.initial4.edges);
 
-    history = [{
+    history = history.unshift({
       nodes: result.nodes,
       edges: result.edges
-    }];
+    });
     result = NodesLayout.doLayout(
       nodeSets.removeEdge24.nodes,
       nodeSets.removeEdge24.edges,
       {history}
     );
 
-    history = [{
+    history = history.unshift({
       nodes: result.nodes,
       edges: result.edges
-    }];
+    });
     result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
       nodeSets.initial4.edges,
@@ -122,6 +137,27 @@ describe('NodesLayout', () => {
     expect(nodes.n3.y).toEqual(nodes.n4.y);
   });
 
+  it('keeps nodes in rectangle after node dissappears', () => {
+    let result = NodesLayout.doLayout(
+      nodeSets.initial4.nodes,
+      nodeSets.initial4.edges);
 
+    history = history.unshift({
+      nodes: result.nodes,
+      edges: result.edges
+    });
+    result = NodesLayout.doLayout(
+      nodeSets.removeNode2.nodes,
+      nodeSets.removeNode2.edges,
+      {history}
+    );
+
+    nodes = result.nodes.toJS();
+
+    expect(nodes.n1.x).toEqual(nodes.n3.x);
+    expect(nodes.n1.y).toBeLessThan(nodes.n3.y);
+    expect(nodes.n3.x).toBeLessThan(nodes.n4.x);
+    expect(nodes.n3.y).toEqual(nodes.n4.y);
+  });
 
 });

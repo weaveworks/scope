@@ -6,6 +6,16 @@ const Naming = require('../constants/naming');
 const MAX_NODES = 100;
 const topologyGraphs = {};
 
+/**
+ * Wrapper around layout engine
+ * After the layout engine run nodes and edges have x-y-coordinates. Creates and
+ * reuses one engine per topology. Engine is not run if the number of nodes is
+ * bigger than `MAX_NODES`.
+ * @param  {Map} imNodes new node set
+ * @param  {Map} imEdges new edge set
+ * @param  {Object} opts    dimensions, scales, etc.
+ * @return {Object}         Layout with nodes, edges, dimensions
+ */
 function runLayoutEngine(imNodes, imEdges, opts) {
   let nodes = imNodes;
   let edges = imEdges;
@@ -119,7 +129,14 @@ function runLayoutEngine(imNodes, imEdges, opts) {
   return layout;
 }
 
-function doLayoutEdges(nodes, edges, previousLayout) {
+/**
+ * Modifies add/remove edges to a previous layout based on what is present in
+ * the new edge set
+ * @param {Map} nodes          new node set
+ * @param {Map} edges          new edges
+ * @param {Object} previousLayout modified layout
+ */
+function addRemoveLayoutEdges(nodes, edges, previousLayout) {
   const previousEdges = previousLayout.edges;
 
   // remove old edges
@@ -147,12 +164,48 @@ function doLayoutEdges(nodes, edges, previousLayout) {
   return previousLayout;
 }
 
+/**
+ * Removes nodes from `previousLayout.nodes` that are not in `nodes` and returns
+ * the modified `previousLayout`.
+ * @param  {Map} nodes          new set of nodes
+ * @param  {Map} edges          new set of edges
+ * @param  {object} previousLayout old layout
+ * @return {Object}                Layout with nodes and and edges
+ */
+function removeOldLayoutNodes(nodes, edges, previousLayout) {
+  const previousNodes = previousLayout.nodes;
+  let layoutNodes = previousNodes.filter(node => {
+    return nodes.has(node.get('id'));
+  });
+  previousLayout.nodes = layoutNodes;
+  return previousLayout;
+}
+
+/**
+ * Determine if two node sets have the same nodes
+ * @param  {Map}  nodes     new node set
+ * @param  {Map}  prevNodes old node set
+ * @return {Boolean}           True if node ids of both sets are the same
+ */
 function hasSameNodes(nodes, prevNodes) {
   return ImmSet.fromKeys(nodes).equals(ImmSet.fromKeys(prevNodes));
 }
 
 /**
+ * Determine if nodes were removed between node sets
+ * @param  {Map} nodes     new Map of nodes
+ * @param  {Map} prevNodes old Map of nodes
+ * @return {Boolean}           True if nodes had no new node ids
+ */
+function wereNodesOnlyRemoved(nodes, prevNodes) {
+  return (nodes.size < prevNodes.size
+    && ImmSet.fromKeys(nodes).isSubset(ImmSet.fromKeys(prevNodes)));
+}
+
+/**
  * Layout of nodes and edges
+ * If a previous layout was given and not too much changed, the previous layout
+ * is changed and returned. Otherwise does a new layout engine run.
  * @param  {Map} nodes All nodes
  * @param  {Map} edges All edges
  * @param  {object} opts  width, height, margins, etc...
@@ -160,15 +213,17 @@ function hasSameNodes(nodes, prevNodes) {
  */
 export function doLayout(nodes, edges, opts) {
   const options = opts || {};
-  const history = options.history || [];
-  const previous = history.pop();
+  const previous = options.history && options.history.first();
   let layout;
 
   if (previous) {
-    // add/remove edges if nodes are the same
-    if (hasSameNodes(previous.nodes, nodes)) {
+    if (hasSameNodes(nodes, previous.nodes)) {
       debug('skip layout, only edges changed', edges.size, previous.edges.size);
-      layout = doLayoutEdges(nodes, edges, previous);
+      layout = addRemoveLayoutEdges(nodes, edges, previous);
+    } else if (wereNodesOnlyRemoved(nodes, previous.nodes)) {
+      debug('skip layout, only nodes removed', nodes.size, previous.nodes.size);
+      layout = removeOldLayoutNodes(nodes, edges, previous);
+      layout = addRemoveLayoutEdges(nodes, edges, layout);
     }
   }
 

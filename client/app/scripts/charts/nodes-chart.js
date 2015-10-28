@@ -2,6 +2,7 @@ const _ = require('lodash');
 const d3 = require('d3');
 const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
+const makeList = require('immutable').List;
 const makeMap = require('immutable').Map;
 const timely = require('timely');
 const Spring = require('react-motion').Spring;
@@ -21,6 +22,8 @@ const MARGINS = {
   bottom: 0
 };
 
+const MAX_HISTORY = 3;
+
 // make sure circular layouts a bit denser with 3-6 nodes
 const radiusDensity = d3.scale.threshold()
   .domain([3, 6]).range([2.5, 3.5, 3]);
@@ -31,7 +34,7 @@ const NodesChart = React.createClass({
     return {
       nodes: makeMap(),
       edges: makeMap(),
-      history: [],
+      history: makeList(),
       nodeScale: d3.scale.linear(),
       shiftTranslate: [0, 0],
       panTranslate: [0, 0],
@@ -493,8 +496,11 @@ const NodesChart = React.createClass({
       this.zoom.scale(zoomFactor);
     }
 
+    // throw away old layouts and save this layout result, first item is recent
+    const history = state.history.setSize(MAX_HISTORY - 1).unshift(graph);
+
     return {
-      history: [graph],
+      history: history,
       nodes: stateNodes,
       edges: stateEdges,
       nodeScale: nodeScale,
