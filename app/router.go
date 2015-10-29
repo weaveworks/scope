@@ -65,13 +65,13 @@ func Router(c collector) *mux.Router {
 	get.HandleFunc("/api", gzipHandler(apiHandler))
 	get.HandleFunc("/api/topology", gzipHandler(topologyRegistry.makeTopologyList(c)))
 	get.HandleFunc("/api/topology/{topology}",
-		gzipHandler(topologyRegistry.captureTopology(c, handleTopology)))
+		gzipHandler(topologyRegistry.captureRenderer(c, handleTopology)))
 	get.HandleFunc("/api/topology/{topology}/ws",
-		topologyRegistry.captureTopology(c, handleWs)) // NB not gzip!
+		topologyRegistry.captureRenderer(c, handleWs)) // NB not gzip!
 	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).HandlerFunc(
-		gzipHandler(topologyRegistry.captureTopology(c, handleNode)))
+		gzipHandler(topologyRegistry.captureRenderer(c, handleNode)))
 	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{local}/{remote}")).HandlerFunc(
-		gzipHandler(topologyRegistry.captureTopology(c, handleEdge)))
+		gzipHandler(topologyRegistry.captureRenderer(c, handleEdge)))
 	get.MatcherFunc(URLMatcher("/api/origin/host/{id}")).HandlerFunc(
 		gzipHandler(makeOriginHostHandler(c)))
 	get.HandleFunc("/api/report", gzipHandler(makeRawReportHandler(c)))
