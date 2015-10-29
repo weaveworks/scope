@@ -246,15 +246,17 @@ func MakeStringSet(strs ...string) StringSet {
 	if len(strs) <= 0 {
 		return StringSet{}
 	}
-	sort.Strings(strs)
-	for i := 1; i < len(strs); { // shuffle down any duplicates
-		if strs[i-1] == strs[i] {
-			strs = append(strs[:i-1], strs[i:]...)
+	result := make([]string, len(strs))
+	copy(result, strs)
+	sort.Strings(result)
+	for i := 1; i < len(result); { // shuffle down any duplicates
+		if result[i-1] == result[i] {
+			result = append(result[:i-1], result[i:]...)
 			continue
 		}
 		i++
 	}
-	return StringSet(strs)
+	return StringSet(result)
 }
 
 // Add adds the strings to the StringSet. Add is the only valid way to grow a
