@@ -2,7 +2,6 @@ package host
 
 import (
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/weaveworks/scope/report"
@@ -71,11 +70,12 @@ func (r *Reporter) Report() (report.Report, error) {
 	rep.Host.AddNode(report.MakeHostNodeID(r.hostID), report.MakeNodeWith(map[string]string{
 		Timestamp:     Now(),
 		HostName:      r.hostName,
-		LocalNetworks: strings.Join(localCIDRs, " "),
 		OS:            runtime.GOOS,
 		Load:          GetLoad(),
 		KernelVersion: kernel,
 		Uptime:        uptime.String(),
+	}).WithSets(report.Sets{
+		LocalNetworks: report.MakeStringSet(localCIDRs...),
 	}))
 
 	return rep, nil

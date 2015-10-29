@@ -66,17 +66,18 @@ func TestContainer(t *testing.T) {
 
 	// Now see if we go them
 	want := report.MakeNode().WithMetadata(map[string]string{
-		"docker_container_command":         " ",
-		"docker_container_created":         "01 Jan 01 00:00 UTC",
-		"docker_container_id":              "ping",
-		"docker_container_ips":             "1.2.3.4",
-		"docker_container_ips_with_scopes": "scope;1.2.3.4",
-		"docker_container_name":            "pong",
-		"docker_container_ports":           "1.2.3.4:80->80/tcp, 81/tcp",
-		"docker_image_id":                  "baz",
-		"docker_label_foo1":                "bar1",
-		"docker_label_foo2":                "bar2",
-		"memory_usage":                     "12345",
+		"docker_container_command": " ",
+		"docker_container_created": "01 Jan 01 00:00 UTC",
+		"docker_container_id":      "ping",
+		"docker_container_name":    "pong",
+		"docker_image_id":          "baz",
+		"docker_label_foo1":        "bar1",
+		"docker_label_foo2":        "bar2",
+		"memory_usage":             "12345",
+	}).WithSets(report.Sets{
+		"docker_container_ports":           report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp"),
+		"docker_container_ips":             report.MakeStringSet("1.2.3.4"),
+		"docker_container_ips_with_scopes": report.MakeStringSet("scope;1.2.3.4"),
 	})
 	test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 		node := c.GetNode("scope", []net.IP{})

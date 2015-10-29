@@ -2,7 +2,6 @@ package render
 
 import (
 	"net"
-	"strings"
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -19,11 +18,7 @@ func LocalNetworks(r report.Report) report.Networks {
 	)
 
 	for _, md := range r.Host.Nodes {
-		val, ok := md.Metadata[host.LocalNetworks]
-		if !ok {
-			continue
-		}
-		for _, s := range strings.Fields(val) {
+		for _, s := range md.Sets[host.LocalNetworks] {
 			_, ipNet, err := net.ParseCIDR(s)
 			if err != nil {
 				continue

@@ -2,6 +2,7 @@ package report
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -78,8 +79,9 @@ func (n Nodes) Merge(other Nodes) Nodes {
 // given node in a given topology, along with the edges emanating from the
 // node and metadata about those edges.
 type Node struct {
-	Metadata  `json:"metadata,omitempty"`
-	Counters  `json:"counters,omitempty"`
+	Metadata  Metadata      `json:"metadata,omitempty"`
+	Counters  Counters      `json:"counters,omitempty"`
+	Sets      Sets          `json:"sets,omitempty"`
 	Adjacency IDList        `json:"adjacency"`
 	Edges     EdgeMetadatas `json:"edges,omitempty"`
 }
@@ -89,6 +91,7 @@ func MakeNode() Node {
 	return Node{
 		Metadata:  Metadata{},
 		Counters:  Counters{},
+		Sets:      Sets{},
 		Adjacency: MakeIDList(),
 		Edges:     EdgeMetadatas{},
 	}
@@ -113,6 +116,21 @@ func (n Node) WithCounters(c map[string]int) Node {
 	return result
 }
 
+// WithSet returns a fresh copy of n, with set merged in at key.
+func (n Node) WithSet(key string, set StringSet) Node {
+	result := n.Copy()
+	existing := n.Sets[key]
+	result.Sets[key] = existing.Merge(set)
+	return result
+}
+
+// WithSets returns a fresh copy of n, with sets merged in.
+func (n Node) WithSets(sets Sets) Node {
+	result := n.Copy()
+	result.Sets = result.Sets.Merge(sets)
+	return result
+}
+
 // WithAdjacent returns a fresh copy of n, with 'a' added to Adjacency
 func (n Node) WithAdjacent(a string) Node {
 	result := n.Copy()
@@ -134,6 +152,7 @@ func (n Node) Copy() Node {
 	cp := MakeNode()
 	cp.Metadata = n.Metadata.Copy()
 	cp.Counters = n.Counters.Copy()
+	cp.Sets = n.Sets.Copy()
 	cp.Adjacency = n.Adjacency.Copy()
 	cp.Edges = n.Edges.Copy()
 	return cp
@@ -145,6 +164,7 @@ func (n Node) Merge(other Node) Node {
 	cp := n.Copy()
 	cp.Metadata = cp.Metadata.Merge(other.Metadata)
 	cp.Counters = cp.Counters.Merge(other.Counters)
+	cp.Sets = cp.Sets.Merge(other.Sets)
 	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
 	cp.Edges = cp.Edges.Merge(other.Edges)
 	return cp
@@ -192,6 +212,102 @@ func (c Counters) Copy() Counters {
 	for k, v := range c {
 		result[k] = v
 	}
+	return result
+}
+
+// Sets is a string->set-of-strings map.
+type Sets map[string]StringSet
+
+// Merge merges two sets maps into a fresh set, performing set-union merges as
+// appropriate.
+func (s Sets) Merge(other Sets) Sets {
+	result := s.Copy()
+	for k, v := range other {
+		result[k] = result[k].Merge(v)
+	}
+	return result
+}
+
+// Copy returns a value copy of the sets map.
+func (s Sets) Copy() Sets {
+	result := Sets{}
+	for k, v := range s {
+		result[k] = v.Copy()
+	}
+	return result
+}
+
+// StringSet is a sorted set of unique strings. Clients must use the Add
+// method to add strings.
+type StringSet []string
+
+// MakeStringSet makes a new StringSet with the given strings.
+func MakeStringSet(strs ...string) StringSet {
+	if len(strs) <= 0 {
+		return StringSet{}
+	}
+	result := make([]string, len(strs))
+	copy(result, strs)
+	sort.Strings(result)
+	for i := 1; i < len(result); { // shuffle down any duplicates
+		if result[i-1] == result[i] {
+			result = append(result[:i-1], result[i:]...)
+			continue
+		}
+		i++
+	}
+	return StringSet(result)
+}
+
+// Add adds the strings to the StringSet. Add is the only valid way to grow a
+// StringSet. Add returns the StringSet to enable chaining.
+func (s StringSet) Add(strs ...string) StringSet {
+	for _, str := range strs {
+		i := sort.Search(len(s), func(i int) bool { return s[i] >= str })
+		if i < len(s) && s[i] == str {
+			// The list already has the element.
+			continue
+		}
+		// It a new element, insert it in order.
+		s = append(s, "")
+		copy(s[i+1:], s[i:])
+		s[i] = str
+	}
+	return s
+}
+
+// Merge combines the two StringSets and returns a new result.
+func (s StringSet) Merge(other StringSet) StringSet {
+	if len(other) == 0 { // Optimise special case, to avoid allocating
+		return s // (note unit test DeepEquals breaks if we don't do this)
+	}
+	result := make(StringSet, len(s)+len(other))
+	for i, j, k := 0, 0, 0; ; k++ {
+		switch {
+		case i >= len(s):
+			copy(result[k:], other[j:])
+			return result[:k+len(other)-j]
+		case j >= len(other):
+			copy(result[k:], s[i:])
+			return result[:k+len(s)-i]
+		case s[i] < other[j]:
+			result[k] = s[i]
+			i++
+		case s[i] > other[j]:
+			result[k] = other[j]
+			j++
+		default: // equal
+			result[k] = s[i]
+			i++
+			j++
+		}
+	}
+}
+
+// Copy returns a value copy of the StringSet.
+func (s StringSet) Copy() StringSet {
+	result := make(StringSet, len(s))
+	copy(result, s)
 	return result
 }
 

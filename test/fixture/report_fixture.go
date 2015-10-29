@@ -5,6 +5,7 @@ import (
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
@@ -282,17 +283,19 @@ var (
 			Nodes: report.Nodes{
 				ClientHostNodeID: report.MakeNodeWith(map[string]string{
 					"host_name":       ClientHostName,
-					"local_networks":  "10.10.10.0/24",
 					"os":              "Linux",
 					"load":            "0.01 0.01 0.01",
 					report.HostNodeID: ClientHostNodeID,
+				}).WithSets(report.Sets{
+					host.LocalNetworks: report.MakeStringSet("10.10.10.0/24"),
 				}),
 				ServerHostNodeID: report.MakeNodeWith(map[string]string{
 					"host_name":       ServerHostName,
-					"local_networks":  "10.10.10.0/24",
 					"os":              "Linux",
 					"load":            "0.01 0.01 0.01",
 					report.HostNodeID: ServerHostNodeID,
+				}).WithSets(report.Sets{
+					host.LocalNetworks: report.MakeStringSet("10.10.10.0/24"),
 				}),
 			},
 		},

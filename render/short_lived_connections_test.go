@@ -7,6 +7,7 @@ import (
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -48,19 +49,21 @@ var (
 		Container: report.Topology{
 			Nodes: report.Nodes{
 				containerNodeID: report.MakeNode().WithMetadata(map[string]string{
-					docker.ContainerID:    containerID,
-					docker.ContainerName:  containerName,
-					docker.ContainerIPs:   containerIP,
-					docker.ContainerPorts: fmt.Sprintf("%s:%s->%s/tcp", serverIP, serverPort, serverPort),
-					report.HostNodeID:     serverHostNodeID,
+					docker.ContainerID:   containerID,
+					docker.ContainerName: containerName,
+					report.HostNodeID:    serverHostNodeID,
+				}).WithSets(report.Sets{
+					docker.ContainerIPs:   report.MakeStringSet(containerIP),
+					docker.ContainerPorts: report.MakeStringSet(fmt.Sprintf("%s:%s->%s/tcp", serverIP, serverPort, serverPort)),
 				}),
 			},
 		},
 		Host: report.Topology{
 			Nodes: report.Nodes{
 				serverHostNodeID: report.MakeNodeWith(map[string]string{
-					"local_networks":  "192.168.0.0/16",
 					report.HostNodeID: serverHostNodeID,
+				}).WithSets(report.Sets{
+					host.LocalNetworks: report.MakeStringSet("192.168.0.0/16"),
 				}),
 			},
 		},

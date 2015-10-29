@@ -51,11 +51,12 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 			Container: report.Topology{
 				Nodes: report.Nodes{
 					nodeID: report.MakeNodeWith(map[string]string{
-						docker.ContainerID:            mockContainerID,
-						overlay.WeaveDNSHostname:      mockHostname,
-						overlay.WeaveMACAddress:       mockContainerMAC,
-						docker.ContainerIPs:           mockContainerIP,
-						docker.ContainerIPsWithScopes: mockContainerIPWithScope,
+						docker.ContainerID:       mockContainerID,
+						overlay.WeaveDNSHostname: mockHostname,
+						overlay.WeaveMACAddress:  mockContainerMAC,
+					}).WithSets(report.Sets{
+						docker.ContainerIPs:           report.MakeStringSet(mockContainerIP),
+						docker.ContainerIPsWithScopes: report.MakeStringSet(mockContainerIPWithScope),
 					}),
 				},
 			},
