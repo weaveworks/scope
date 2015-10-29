@@ -1,22 +1,23 @@
 const dagre = require('dagre');
 const debug = require('debug')('scope:nodes-layout');
+const makeMap = require('immutable').Map;
 const ImmSet = require('immutable').Set;
 const Naming = require('../constants/naming');
 
 const MAX_NODES = 100;
-const topologyGraphs = {};
+const topologyCaches = {};
 
 /**
- * Wrapper around layout engine
- * After the layout engine run nodes and edges have x-y-coordinates. Creates and
- * reuses one engine per topology. Engine is not run if the number of nodes is
- * bigger than `MAX_NODES`.
+ * Layout engine runner
+ * After the layout engine run nodes and edges have x-y-coordinates. Engine is
+ * not run if the number of nodes is bigger than `MAX_NODES`.
+ * @param  {Object} graph dagre graph instance
  * @param  {Map} imNodes new node set
  * @param  {Map} imEdges new edge set
  * @param  {Object} opts    dimensions, scales, etc.
  * @return {Object}         Layout with nodes, edges, dimensions
  */
-function runLayoutEngine(imNodes, imEdges, opts) {
+function runLayoutEngine(graph, imNodes, imEdges, opts) {
   let nodes = imNodes;
   let edges = imEdges;
 
@@ -30,13 +31,6 @@ function runLayoutEngine(imNodes, imEdges, opts) {
   const width = options.width || 800;
   const height = options.height || width / 2;
   const scale = options.scale || (val => val * 2);
-  const topologyId = options.topologyId || 'noId';
-
-  // one engine per topology, to keep renderings similar
-  if (!topologyGraphs[topologyId]) {
-    topologyGraphs[topologyId] = new dagre.graphlib.Graph({});
-  }
-  const graph = topologyGraphs[topologyId];
 
   // configure node margins
   graph.setGraph({
@@ -130,76 +124,62 @@ function runLayoutEngine(imNodes, imEdges, opts) {
 }
 
 /**
- * Modifies add/remove edges to a previous layout based on what is present in
- * the new edge set
- * @param {Map} nodes          new node set
- * @param {Map} edges          new edges
- * @param {Object} previousLayout modified layout
+ * Adds `points` array to edge based on location of source and target
+ * @param {Map} edge           new edge
+ * @param {Map} nodeCache      all nodes
+ * @returns {Map}              modified edge
  */
-function addRemoveLayoutEdges(nodes, edges, previousLayout) {
-  const previousEdges = previousLayout.edges;
-
-  // remove old edges
-  let layoutEdges = previousEdges.filter(edge => {
-    return edges.has(edge.get('id'));
-  });
-
-  // add new edges with points from source and target
-  let source;
-  let target;
-  let layoutEdge;
-  edges.forEach(edge => {
-    if (!layoutEdges.has(edge.get('id'))) {
-      source = nodes.get(edge.get('source'));
-      target = nodes.get(edge.get('target'));
-      layoutEdge = edge.set('points', [
-        {x: source.get('x'), y: source.get('y')},
-        {x: target.get('x'), y: target.get('y')}
-      ]);
-      layoutEdges = layoutEdges.set(layoutEdge.get('id'), layoutEdge);
-    }
-  });
-
-  previousLayout.edges = layoutEdges;
-  return previousLayout;
+function setSimpleEdgePoints(edge, nodeCache) {
+  const source = nodeCache.get(edge.get('source'));
+  const target = nodeCache.get(edge.get('target'));
+  return edge.set('points', [
+    {x: source.get('x'), y: source.get('y')},
+    {x: target.get('x'), y: target.get('y')}
+  ]);
 }
 
 /**
- * Removes nodes from `previousLayout.nodes` that are not in `nodes` and returns
- * the modified `previousLayout`.
- * @param  {Map} nodes          new set of nodes
- * @param  {Map} edges          new set of edges
- * @param  {object} previousLayout old layout
- * @return {Object}                Layout with nodes and and edges
- */
-function removeOldLayoutNodes(nodes, edges, previousLayout) {
-  const previousNodes = previousLayout.nodes;
-  let layoutNodes = previousNodes.filter(node => {
-    return nodes.has(node.get('id'));
-  });
-  previousLayout.nodes = layoutNodes;
-  return previousLayout;
-}
-
-/**
- * Determine if two node sets have the same nodes
- * @param  {Map}  nodes     new node set
- * @param  {Map}  prevNodes old node set
- * @return {Boolean}           True if node ids of both sets are the same
- */
-function hasSameNodes(nodes, prevNodes) {
-  return ImmSet.fromKeys(nodes).equals(ImmSet.fromKeys(prevNodes));
-}
-
-/**
- * Determine if nodes were removed between node sets
+ * Determine if nodes were added between node sets
  * @param  {Map} nodes     new Map of nodes
- * @param  {Map} prevNodes old Map of nodes
- * @return {Boolean}           True if nodes had no new node ids
+ * @param  {Map} cache     old Map of nodes
+ * @return {Boolean}       True if nodes had node ids that are not in cache
  */
-function wereNodesOnlyRemoved(nodes, prevNodes) {
-  return (nodes.size < prevNodes.size
-    && ImmSet.fromKeys(nodes).isSubset(ImmSet.fromKeys(prevNodes)));
+function hasUnseenNodes(nodes, cache) {
+  return (nodes.size > cache.size
+    || !ImmSet.fromKeys(nodes).isSubset(ImmSet.fromKeys(nodes)));
+}
+
+/**
+ * Clones a previous layout
+ * @param  {Object} layout Layout object
+ * @param  {Map} nodes  new nodes
+ * @param  {Map} edges  new edges
+ * @return {Object}        layout clone
+ */
+function cloneLayout(layout, nodes, edges) {
+  const clone = {...layout, nodes, edges};
+  return clone;
+}
+
+/**
+ * Copies node properties from previous layout runs to new nodes.
+ * This assumes the cache has data for all new nodes.
+ * @param  {Object} layout Layout
+ * @param  {Object} nodeCache  cache of all old nodes
+ * @param  {Object} edgeCache  cache of all old edges
+ * @return {Object}        modified layout
+ */
+function copyLayoutProperties(layout, nodeCache, edgeCache) {
+  layout.nodes = layout.nodes.map(node => {
+    return node.merge(nodeCache.get(node.get('id')));
+  });
+  layout.edges = layout.edges.map(edge => {
+    if (edgeCache.has(edge.get('id'))) {
+      return edge.merge(edgeCache.get(edge.get('id')));
+    }
+    return setSimpleEdgePoints(edge, nodeCache);
+  });
+  return layout;
 }
 
 /**
@@ -213,23 +193,37 @@ function wereNodesOnlyRemoved(nodes, prevNodes) {
  */
 export function doLayout(nodes, edges, opts) {
   const options = opts || {};
-  const previous = options.history && options.history.first();
+  const topologyId = options.topologyId || 'noId';
+
+  // one engine and node and edge caches per topology, to keep renderings similar
+  if (!topologyCaches[topologyId]) {
+    topologyCaches[topologyId] = {
+      nodeCache: makeMap(),
+      edgeCache: makeMap(),
+      graph: new dagre.graphlib.Graph({})
+    };
+  }
+
+  const cache = topologyCaches[topologyId];
+  const cachedLayout = options.cachedLayout || cache.cachedLayout;
+  const nodeCache = options.nodeCache || cache.nodeCache;
+  const edgeCache = options.edgeCache || cache.edgeCache;
   let layout;
 
-  if (previous) {
-    if (hasSameNodes(nodes, previous.nodes)) {
-      debug('skip layout, only edges changed', edges.size, previous.edges.size);
-      layout = addRemoveLayoutEdges(nodes, edges, previous);
-    } else if (wereNodesOnlyRemoved(nodes, previous.nodes)) {
-      debug('skip layout, only nodes removed', nodes.size, previous.nodes.size);
-      layout = removeOldLayoutNodes(nodes, edges, previous);
-      layout = addRemoveLayoutEdges(nodes, edges, layout);
-    }
+  if (cachedLayout && nodeCache && edgeCache && !hasUnseenNodes(nodes, nodeCache)) {
+    debug('skip layout, trivial adjustment');
+    layout = cloneLayout(cachedLayout, nodes, edges);
+    // copy old properties, works also if nodes get re-added
+    layout = copyLayoutProperties(layout, nodeCache, edgeCache);
+  } else {
+    const graph = cache.graph;
+    layout = runLayoutEngine(graph, nodes, edges, opts);
   }
 
-  if (layout === undefined) {
-    layout = runLayoutEngine(nodes, edges, opts);
-  }
+  // cache results
+  cache.cachedLayout = layout;
+  cache.nodeCache = cache.nodeCache.merge(layout.nodes);
+  cache.edgeCache = cache.edgeCache.merge(layout.edges);
 
   return layout;
 }

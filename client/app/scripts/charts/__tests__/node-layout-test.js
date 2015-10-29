@@ -1,7 +1,7 @@
 jest.dontMock('../nodes-layout');
 jest.dontMock('../../constants/naming'); // edge naming: 'source-target'
 
-import { fromJS, List } from 'immutable';
+import { fromJS, Map } from 'immutable';
 
 describe('NodesLayout', () => {
   const NodesLayout = require('../nodes-layout');
@@ -16,7 +16,7 @@ describe('NodesLayout', () => {
     left: 0,
     top: 0
   };
-  let history = List();
+  let options;
   let nodes;
 
   const nodeSets = {
@@ -56,11 +56,23 @@ describe('NodesLayout', () => {
         'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'}
       })
     },
+    removeNode23: {
+      nodes: fromJS({
+        n1: {id: 'n1'},
+        n4: {id: 'n4'}
+      }),
+      edges: fromJS({
+        'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'}
+      })
+    }
   };
 
   beforeEach(() => {
-    history = history.clear();
-  })
+    options = {
+      nodeCache: Map(),
+      edgeCache: Map()
+    };
+  });
 
   it('lays out initial nodeset in a rectangle', () => {
     const result = NodesLayout.doLayout(
@@ -81,14 +93,15 @@ describe('NodesLayout', () => {
     let result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
       nodeSets.initial4.edges);
-    history = history.unshift({
-      nodes: result.nodes,
-      edges: result.edges
-    });
+
+    options.cachedLayout = result;
+    options.nodeCache = options.nodeCache.merge(result.nodes);
+    options.edgeCache = options.edgeCache.merge(result.edge);
+
     result = NodesLayout.doLayout(
       nodeSets.removeEdge24.nodes,
       nodeSets.removeEdge24.edges,
-      {history}
+      options
     );
     nodes = result.nodes.toJS();
     // console.log('remove 1 edge', nodes, result);
@@ -106,24 +119,22 @@ describe('NodesLayout', () => {
       nodeSets.initial4.nodes,
       nodeSets.initial4.edges);
 
-    history = history.unshift({
-      nodes: result.nodes,
-      edges: result.edges
-    });
+    options.cachedLayout = result;
+    options.nodeCache = options.nodeCache.merge(result.nodes);
+    options.edgeCache = options.edgeCache.merge(result.edge);
     result = NodesLayout.doLayout(
       nodeSets.removeEdge24.nodes,
       nodeSets.removeEdge24.edges,
-      {history}
+      options
     );
 
-    history = history.unshift({
-      nodes: result.nodes,
-      edges: result.edges
-    });
+    options.cachedLayout = result;
+    options.nodeCache = options.nodeCache.merge(result.nodes);
+    options.edgeCache = options.edgeCache.merge(result.edge);
     result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
       nodeSets.initial4.edges,
-      {history}
+      options
     );
 
     nodes = result.nodes.toJS();
@@ -142,17 +153,56 @@ describe('NodesLayout', () => {
       nodeSets.initial4.nodes,
       nodeSets.initial4.edges);
 
-    history = history.unshift({
-      nodes: result.nodes,
-      edges: result.edges
-    });
+    options.cachedLayout = result;
+    options.nodeCache = options.nodeCache.merge(result.nodes);
+    options.edgeCache = options.edgeCache.merge(result.edge);
     result = NodesLayout.doLayout(
       nodeSets.removeNode2.nodes,
       nodeSets.removeNode2.edges,
-      {history}
+      options
     );
 
     nodes = result.nodes.toJS();
+
+    expect(nodes.n1.x).toEqual(nodes.n3.x);
+    expect(nodes.n1.y).toBeLessThan(nodes.n3.y);
+    expect(nodes.n3.x).toBeLessThan(nodes.n4.x);
+    expect(nodes.n3.y).toEqual(nodes.n4.y);
+  });
+
+  it('keeps nodes in rectangle after removed node reappears', () => {
+    let result = NodesLayout.doLayout(
+      nodeSets.initial4.nodes,
+      nodeSets.initial4.edges);
+
+    nodes = result.nodes.toJS();
+
+    options.cachedLayout = result;
+    options.nodeCache = options.nodeCache.merge(result.nodes);
+    options.edgeCache = options.edgeCache.merge(result.edge);
+
+    result = NodesLayout.doLayout(
+      nodeSets.removeNode23.nodes,
+      nodeSets.removeNode23.edges,
+      options
+    );
+
+    nodes = result.nodes.toJS();
+
+    expect(nodes.n1.x).toBeLessThan(nodes.n4.x);
+    expect(nodes.n1.y).toBeLessThan(nodes.n4.y);
+
+    options.cachedLayout = result;
+    options.nodeCache = options.nodeCache.merge(result.nodes);
+    options.edgeCache = options.edgeCache.merge(result.edge);
+    result = NodesLayout.doLayout(
+      nodeSets.removeNode2.nodes,
+      nodeSets.removeNode2.edges,
+      options
+    );
+
+    nodes = result.nodes.toJS();
+    // console.log('re-add 1 node', nodes);
 
     expect(nodes.n1.x).toEqual(nodes.n3.x);
     expect(nodes.n1.y).toBeLessThan(nodes.n3.y);

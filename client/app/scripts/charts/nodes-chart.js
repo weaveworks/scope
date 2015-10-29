@@ -22,8 +22,6 @@ const MARGINS = {
   bottom: 0
 };
 
-const MAX_HISTORY = 3;
-
 // make sure circular layouts a bit denser with 3-6 nodes
 const radiusDensity = d3.scale.threshold()
   .domain([3, 6]).range([2.5, 3.5, 3]);
@@ -496,11 +494,7 @@ const NodesChart = React.createClass({
       this.zoom.scale(zoomFactor);
     }
 
-    // throw away old layouts and save this layout result, first item is recent
-    const history = state.history.setSize(MAX_HISTORY - 1).unshift(graph);
-
     return {
-      history: history,
       nodes: stateNodes,
       edges: stateEdges,
       nodeScale: nodeScale,
