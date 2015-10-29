@@ -156,6 +156,24 @@ export function hasUnseenNodes(nodes, cache) {
 }
 
 /**
+ * Determine if edge has same endpoints in new nodes as well as in the nodeCache
+ * @param  {Map}  edge      Edge with source and target
+ * @param  {Map}  nodes     new node set
+ * @param  {Map}  nodeCache set of previous nodes
+ * @return {Boolean}           True if old and new endpoints have same coordinates
+ */
+function hasSameEndpoints(edge, nodes, nodeCache) {
+  const oldSource = nodeCache.get(edge.get('source'));
+  const oldTarget = nodeCache.get(edge.get('target'));
+  const newSource = nodes.get(edge.get('source'));
+  const newTarget = nodes.get(edge.get('target'));
+  return (oldSource.get('x') === newSource.get('x')
+    && oldSource.get('y') === newSource.get('y')
+    && oldTarget.get('x') === newTarget.get('x')
+    && oldTarget.get('y') === newTarget.get('y'));
+}
+
+/**
  * Clones a previous layout
  * @param  {Object} layout Layout object
  * @param  {Map} nodes  new nodes
@@ -180,7 +198,7 @@ function copyLayoutProperties(layout, nodeCache, edgeCache) {
     return node.merge(nodeCache.get(node.get('id')));
   });
   layout.edges = layout.edges.map(edge => {
-    if (edgeCache.has(edge.get('id'))) {
+    if (edgeCache.has(edge.get('id')) && hasSameEndpoints(edge, layout.nodes, nodeCache)) {
       return edge.merge(edgeCache.get(edge.get('id')));
     }
     return setSimpleEdgePoints(edge, nodeCache);
