@@ -76,16 +76,16 @@ tar -C /usr/local -xzf go1.4.2.linux-amd64.tar.gz;
 /usr/local/go/bin/go clean -i net
 /usr/local/go/bin/go install -tags netgo std
 EOF
+
 	ssh -t $name bash -x -s <<EOF
 echo "export PATH=$PATH:/usr/local/go/bin:~/bin" >>~/.profile
 echo "export GOPATH=$HOME" >>~/.profile
 . ~/.profile
-mkdir -p ~/src/github.com/weaveworks
-cd ~/src/github.com/weaveworks
-git clone http://github.com/weaveworks/weave.git
-cd weave
-make
-cp weave ~/bin
+EOF
+
+	ssh -t $name bash -x -s <<EOF
+sudo curl -L git.io/weave -o /usr/local/bin/weave
+sudo chmod a+x /usr/local/bin/weave
 weave launch $otherpeers
 EOF
 
@@ -120,9 +120,9 @@ function setup {
         hostname="$name.$ZONE.$PROJECT"
         ssh -t $hostname bash -x -s <<EOF
 . ~/.profile
-cd ~/src/github.com/weaveworks
 git clone http://github.com/weaveworks/scope.git
 cd scope
+git checkout 0.9
 make deps
 make
 ./scope launch
