@@ -119,7 +119,12 @@ func (p HTTPPublisher) Publish(r io.Reader) error {
 }
 
 // Stop implements Publisher
-func (p HTTPPublisher) Stop() {}
+func (p *HTTPPublisher) Stop() {
+	// We replace the HTTPPublishers pretty regularly, so we need to ensure the
+	// underlying connections get closed, or we end up with lots of idle
+	// goroutines on the server (see #604)
+	p.client.Transport.(*http.Transport).CloseIdleConnections()
+}
 
 // AuthorizationHeader returns a value suitable for an HTTP Authorization
 // header, based on the passed token string.
