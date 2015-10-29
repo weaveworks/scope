@@ -144,9 +144,13 @@ function setSimpleEdgePoints(edge, nodeCache) {
  * @param  {Map} cache     old Map of nodes
  * @return {Boolean}       True if nodes had node ids that are not in cache
  */
-function hasUnseenNodes(nodes, cache) {
-  return (nodes.size > cache.size
-    || !ImmSet.fromKeys(nodes).isSubset(ImmSet.fromKeys(nodes)));
+export function hasUnseenNodes(nodes, cache) {
+  const hasUnseen = nodes.size > cache.size
+    || !ImmSet.fromKeys(nodes).isSubset(ImmSet.fromKeys(cache));
+  if (hasUnseen) {
+    debug('unseen nodes:', ...ImmSet.fromKeys(nodes).subtract(ImmSet.fromKeys(cache)).toJS());
+  }
+  return hasUnseen;
 }
 
 /**

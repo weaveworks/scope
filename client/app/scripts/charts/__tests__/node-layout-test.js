@@ -74,6 +74,31 @@ describe('NodesLayout', () => {
     };
   });
 
+  it('detects unseen nodes', () => {
+    const set1 = fromJS({
+      n1: {id: 'n1'}
+    });
+    const set12 = fromJS({
+      n1: {id: 'n1'},
+      n2: {id: 'n2'}
+    });
+    const set13 = fromJS({
+      n1: {id: 'n1'},
+      n3: {id: 'n3'}
+    });
+    let hasUnseen;
+    hasUnseen = NodesLayout.hasUnseenNodes(set12, set1);
+    expect(hasUnseen).toBeTruthy();
+    hasUnseen = NodesLayout.hasUnseenNodes(set13, set1);
+    expect(hasUnseen).toBeTruthy();
+    hasUnseen = NodesLayout.hasUnseenNodes(set1, set12);
+    expect(hasUnseen).toBeFalsy();
+    hasUnseen = NodesLayout.hasUnseenNodes(set1, set13);
+    expect(hasUnseen).toBeFalsy();
+    hasUnseen = NodesLayout.hasUnseenNodes(set12, set13);
+    expect(hasUnseen).toBeTruthy();
+  });
+
   it('lays out initial nodeset in a rectangle', () => {
     const result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
