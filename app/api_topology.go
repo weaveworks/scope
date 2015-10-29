@@ -33,14 +33,14 @@ type APIEdge struct {
 }
 
 // Full topology.
-func handleTopology(rep xfer.Reporter, t APITopologyDesc, w http.ResponseWriter, r *http.Request) {
+func handleTopology(rep xfer.Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: t.renderer.Render(rep.Report()).Prune(),
+		Nodes: renderer.Render(rep.Report()).Prune(),
 	})
 }
 
 // Websocket for the full topology. This route overlaps with the next.
-func handleWs(rep xfer.Reporter, t APITopologyDesc, w http.ResponseWriter, r *http.Request) {
+func handleWs(rep xfer.Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		respondWith(w, http.StatusInternalServerError, err.Error())
 		return
@@ -53,16 +53,16 @@ func handleWs(rep xfer.Reporter, t APITopologyDesc, w http.ResponseWriter, r *ht
 			return
 		}
 	}
-	handleWebsocket(w, r, rep, t, loop)
+	handleWebsocket(w, r, rep, renderer, loop)
 }
 
 // Individual nodes.
-func handleNode(rep xfer.Reporter, t APITopologyDesc, w http.ResponseWriter, r *http.Request) {
+func handleNode(rep xfer.Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars     = mux.Vars(r)
 		nodeID   = vars["id"]
 		rpt      = rep.Report()
-		node, ok = t.renderer.Render(rep.Report())[nodeID]
+		node, ok = renderer.Render(rep.Report())[nodeID]
 	)
 	if !ok {
 		http.NotFound(w, r)
@@ -72,13 +72,13 @@ func handleNode(rep xfer.Reporter, t APITopologyDesc, w http.ResponseWriter, r *
 }
 
 // Individual edges.
-func handleEdge(rep xfer.Reporter, t APITopologyDesc, w http.ResponseWriter, r *http.Request) {
+func handleEdge(rep xfer.Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars     = mux.Vars(r)
 		localID  = vars["local"]
 		remoteID = vars["remote"]
 		rpt      = rep.Report()
-		metadata = t.renderer.EdgeMetadata(rpt, localID, remoteID)
+		metadata = renderer.EdgeMetadata(rpt, localID, remoteID)
 	)
 
 	respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})
@@ -92,7 +92,7 @@ func handleWebsocket(
 	w http.ResponseWriter,
 	r *http.Request,
 	rep xfer.Reporter,
-	t APITopologyDesc,
+	renderer render.Renderer,
 	loop time.Duration,
 ) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -117,7 +117,7 @@ func handleWebsocket(
 		tick         = time.Tick(loop)
 	)
 	for {
-		newTopo := t.renderer.Render(rep.Report()).Prune()
+		newTopo := renderer.Render(rep.Report()).Prune()
 		diff := render.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
