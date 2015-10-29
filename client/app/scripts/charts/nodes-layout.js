@@ -6,6 +6,8 @@ const Naming = require('../constants/naming');
 
 const MAX_NODES = 100;
 const topologyCaches = {};
+let layoutRuns = 0;
+let layoutRunsTrivial = 0;
 
 /**
  * Layout engine runner
@@ -214,8 +216,9 @@ export function doLayout(nodes, edges, opts) {
   const edgeCache = options.edgeCache || cache.edgeCache;
   let layout;
 
+  ++layoutRuns;
   if (cachedLayout && nodeCache && edgeCache && !hasUnseenNodes(nodes, nodeCache)) {
-    debug('skip layout, trivial adjustment');
+    debug('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
     layout = cloneLayout(cachedLayout, nodes, edges);
     // copy old properties, works also if nodes get re-added
     layout = copyLayoutProperties(layout, nodeCache, edgeCache);
