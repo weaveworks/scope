@@ -120,7 +120,7 @@ type APITopologyDesc struct {
 
 	URL           string            `json:"url"`
 	SubTopologies []APITopologyDesc `json:"sub_topologies,omitempty"`
-	Stats         *topologyStats    `json:"stats,omitempty"`
+	Stats         topologyStats     `json:"stats,omitempty"`
 }
 
 type byName []APITopologyDesc
@@ -193,11 +193,11 @@ func (r *registry) makeTopologyList(rep xfer.Reporter) func(w http.ResponseWrite
 			topologies = []APITopologyDesc{}
 		)
 		r.walk(func(desc APITopologyDesc) {
-			decorateTopologyForRequest(req, &desc)
-			decorateWithStats(&desc, rpt)
+			renderer := renderedForRequest(req, desc)
+			desc.Stats = decorateWithStats(rpt, renderer)
 			for i := range desc.SubTopologies {
-				decorateTopologyForRequest(req, &desc.SubTopologies[i])
-				decorateWithStats(&desc.SubTopologies[i], rpt)
+				renderer := renderedForRequest(req, desc.SubTopologies[i])
+				desc.Stats = decorateWithStats(rpt, renderer)
 			}
 			topologies = append(topologies, desc)
 		})
@@ -205,21 +205,21 @@ func (r *registry) makeTopologyList(rep xfer.Reporter) func(w http.ResponseWrite
 	}
 }
 
-func decorateWithStats(desc *APITopologyDesc, rpt report.Report) {
+func decorateWithStats(rpt report.Report, renderer render.Renderer) topologyStats {
 	var (
 		nodes     int
 		realNodes int
 		edges     int
 	)
-	for _, n := range desc.renderer.Render(rpt) {
+	for _, n := range renderer.Render(rpt) {
 		nodes++
 		if !n.Pseudo {
 			realNodes++
 		}
 		edges += len(n.Adjacency)
 	}
-	renderStats := desc.renderer.Stats(rpt)
-	desc.Stats = &topologyStats{
+	renderStats := renderer.Stats(rpt)
+	return topologyStats{
 		NodeCount:          nodes,
 		NonpseudoNodeCount: realNodes,
 		EdgeCount:          edges,
@@ -233,25 +233,27 @@ func (r *registry) enableKubernetesTopologies() {
 	r.add(kubernetesTopologies...)
 }
 
-func decorateTopologyForRequest(r *http.Request, topology *APITopologyDesc) {
+func renderedForRequest(r *http.Request, topology APITopologyDesc) render.Renderer {
+	renderer := topology.renderer
 	for param, opts := range topology.Options {
 		value := r.FormValue(param)
 		for _, opt := range opts {
 			if (value == "" && opt.Default) || (opt.Value != "" && opt.Value == value) {
-				topology.renderer = opt.decorator(topology.renderer)
+				renderer = opt.decorator(renderer)
 			}
 		}
 	}
+	return renderer
 }
 
-func (r *registry) captureTopology(rep xfer.Reporter, f func(xfer.Reporter, APITopologyDesc, http.ResponseWriter, *http.Request)) http.HandlerFunc {
+func (r *registry) captureRenderer(rep xfer.Reporter, f func(xfer.Reporter, render.Renderer, http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		topology, ok := r.get(mux.Vars(req)["topology"])
 		if !ok {
 			http.NotFound(w, req)
 			return
 		}
-		decorateTopologyForRequest(req, &topology)
-		f(rep, topology, w, req)
+		renderer := renderedForRequest(req, topology)
+		f(rep, renderer, w, req)
 	}
 }

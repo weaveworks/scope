@@ -92,6 +92,7 @@ func TestConntracker(t *testing.T) {
 	}
 
 	flowWalker := newConntrackFlowWalker(true)
+	defer flowWalker.stop()
 
 	// First write out some empty xml for the existing connections
 	ecbw := bufio.NewWriter(existingConnectionsWriter)
