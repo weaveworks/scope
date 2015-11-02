@@ -44,7 +44,7 @@ $(PROBE_EXE): probe/*.go probe/docker/*.go probe/kubernetes/*.go probe/endpoint/
 ifeq ($(BUILD_IN_CONTAINER),true)
 $(APP_EXE) $(PROBE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
-		$(SCOPE_BACKEND_BUILD_IMAGE) $@
+		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) $@
 else
 $(APP_EXE) $(PROBE_EXE):
 	go build -ldflags "-extldflags \"-static\" -X main.version $(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
