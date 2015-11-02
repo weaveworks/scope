@@ -7,21 +7,21 @@ New features:
   [#574](https://github.com/weaveworks/scope/pull/574)
 - Add containers-by-hostname view
   [#545](https://github.com/weaveworks/scope/pull/545)
-- Build using Go 1.5, with vendored dependancies
+- Build using Go 1.5, with vendored dependencies
   [#584](https://github.com/weaveworks/scope/pull/584)
 - Make `scope launch` work from remote hosts, with an appropriately defined DOCKER_HOST
   [#524](https://github.com/weaveworks/scope/pull/524)
-- Increase DNS poll frequency such that Scope clusters up more quickly
+- Increase DNS poll frequency such that Scope clusters more quickly
   [#524](https://github.com/weaveworks/scope/pull/524)
 - Add `scope command` for printing the Docker commands used to run Scope
   [#553](https://github.com/weaveworks/scope/pull/553)
 - Include some basic documentation on how to run Scope
   [#572](https://github.com/weaveworks/scope/pull/572)
-- Warn if the users tries to run Scope on Docker versions <1.5.0
+- Warn if the user tries to run Scope on Docker versions <1.5.0
   [#557](https://github.com/weaveworks/scope/pull/557)
 - Add support for loading the Scope UI from https endpoints
   [#572](https://github.com/weaveworks/scope/pull/572)
-- Add support from probe sending reports to https endpoints
+- Add support for probe sending reports to https endpoints
   [#575](https://github.com/weaveworks/scope/pull/575)
 
 Bug fixes:
@@ -37,7 +37,7 @@ Bug fixes:
   [#531](https://github.com/weaveworks/scope/issue/531)
 - Rerun background conntrack processes if they fail
   [#581](https://github.com/weaveworks/scope/issue/581)
-- Build and test using Go 1.5 and vendor all dependancies
+- Build and test using Go 1.5 and vendor all dependencies
   [#584](https://github.com/weaveworks/scope/pull/584)
 - Fix "close on nil channel" error on shutdown
   [#599](https://github.com/weaveworks/scope/issues/599)
