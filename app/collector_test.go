@@ -1,20 +1,17 @@
-package xfer_test
+package main
 
 import (
 	"reflect"
+	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/test"
-
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/xfer"
-
-	"testing"
+	"github.com/weaveworks/scope/test"
 )
 
 func TestCollector(t *testing.T) {
 	window := time.Millisecond
-	c := xfer.NewCollector(window)
+	c := NewCollector(window)
 
 	r1 := report.MakeReport()
 	r1.Endpoint.AddNode("foo", report.MakeNode())

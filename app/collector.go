@@ -1,4 +1,4 @@
-package xfer
+package main
 
 import (
 	"sync"
