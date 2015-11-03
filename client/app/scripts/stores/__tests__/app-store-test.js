@@ -61,6 +61,11 @@ describe('AppStore', function() {
     topologyId: 'topo1'
   };
 
+  const ClickTopology2Action = {
+    type: ActionTypes.CLICK_TOPOLOGY,
+    topologyId: 'topo2'
+  };
+
   const ClickGroupingAction = {
     type: ActionTypes.CLICK_GROUPING,
     grouping: 'grouped'
@@ -112,10 +117,19 @@ describe('AppStore', function() {
           {value: 'off', default: true}
         ]
       },
+      stats: {
+        node_count: 1
+      },
       sub_topologies: [{
         url: '/topo1-grouped',
         name: 'topo 1 grouped'
       }]
+    }, {
+      url: '/topo2',
+      name: 'Topo2',
+      stats: {
+        node_count: 0
+      }
     }]
   };
 
@@ -142,7 +156,7 @@ describe('AppStore', function() {
     registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveTopologiesAction);
 
-    expect(AppStore.getTopologies().length).toBe(1);
+    expect(AppStore.getTopologies().length).toBe(2);
     expect(AppStore.getCurrentTopology().name).toBe('Topo1');
     expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1');
     expect(AppStore.getCurrentTopologyOptions().option1).toBeDefined();
@@ -152,7 +166,7 @@ describe('AppStore', function() {
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickSubTopologyAction);
 
-    expect(AppStore.getTopologies().length).toBe(1);
+    expect(AppStore.getTopologies().length).toBe(2);
     expect(AppStore.getCurrentTopology().name).toBe('topo 1 grouped');
     expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1-grouped');
     expect(AppStore.getCurrentTopologyOptions()).toBeUndefined();
@@ -310,6 +324,20 @@ describe('AppStore', function() {
 
     registeredCallback(HitEscAction)
     expect(AppStore.getAdjacentNodes().size).toEqual(0);
+  });
+
+  // empty topology
+
+  it('detects that the topology is empty', function() {
+    registeredCallback(ReceiveTopologiesAction);
+    registeredCallback(ClickTopologyAction);
+    expect(AppStore.isTopologyEmpty()).toBeFalsy();
+
+    registeredCallback(ClickTopology2Action);
+    expect(AppStore.isTopologyEmpty()).toBeTruthy();
+
+    registeredCallback(ClickTopologyAction);
+    expect(AppStore.isTopologyEmpty()).toBeFalsy();
   });
 
 });
