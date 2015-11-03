@@ -1,7 +1,6 @@
 const React = require('react');
 
 const NodesChart = require('../charts/nodes-chart');
-const AppActions = require('../actions/app-actions');
 
 const navbarHeight = 160;
 const marginTop = 0;
@@ -23,10 +22,6 @@ const Nodes = React.createClass({
     window.removeEventListener('resize', this.handleResize);
   },
 
-  onNodeClick: function(ev) {
-    AppActions.clickNode(ev.currentTarget.id);
-  },
-
   render: function() {
     return (
       <NodesChart
@@ -34,7 +29,6 @@ const Nodes = React.createClass({
         highlightedNodeIds={this.props.highlightedNodeIds}
         selectedNodeId={this.props.selectedNodeId}
         nodes={this.props.nodes}
-        onNodeClick={this.onNodeClick}
         width={this.state.width}
         height={this.state.height}
         topologyId={this.props.topologyId}

@@ -218,7 +218,7 @@ const NodesChart = React.createClass({
       <div className="nodes-chart">
         {errorEmpty}
         {errorMaxNodesExceeded}
-        <svg width="100%" height="100%" className={svgClassNames} onMouseUp={this.handleMouseUp}>
+        <svg width="100%" height="100%" className={svgClassNames} onClick={this.handleMouseClick}>
           <Spring endValue={{val: translate, config: [80, 20]}}>
             {function(interpolated) {
               let interpolatedTranslate = wasShifted ? interpolated.val : panTranslate;
@@ -402,7 +402,7 @@ const NodesChart = React.createClass({
 
   isZooming: false, // distinguish pan/zoom from click
 
-  handleMouseUp: function() {
+  handleMouseClick: function() {
     if (!this.isZooming) {
       AppActions.clickCloseDetails();
       // allow shifts again

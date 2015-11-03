@@ -46,6 +46,8 @@ function makeNode(node) {
 
 let topologyOptions = makeOrderedMap();
 let adjacentNodes = makeSet();
+let controlError = null;
+let controlPending = false;
 let currentTopology = null;
 let currentTopologyId = 'containers';
 let errorUrl = null;
@@ -132,6 +134,10 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return adjacentNodes;
   },
 
+  getControlError: function() {
+    return controlError;
+  },
+
   getCurrentTopology: function() {
     if (!currentTopology) {
       currentTopology = setTopology(currentTopologyId);
@@ -209,6 +215,10 @@ const AppStore = assign({}, EventEmitter.prototype, {
     return version;
   },
 
+  isControlPending: function() {
+    return controlPending;
+  },
+
   isRouteSet: function() {
     return routeSet;
   },
@@ -244,13 +254,23 @@ AppStore.registeredCallback = function(payload) {
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
+    case ActionTypes.CLEAR_CONTROL_ERROR:
+      controlError = null;
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
     case ActionTypes.CLICK_CLOSE_DETAILS:
       selectedNodeId = null;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
     case ActionTypes.CLICK_NODE:
-      selectedNodeId = payload.nodeId;
+      if (payload.nodeId === selectedNodeId) {
+        // clicking same node twice unsets the selection
+        selectedNodeId = null;
+      } else {
+        selectedNodeId = payload.nodeId;
+      }
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
@@ -265,6 +285,12 @@ AppStore.registeredCallback = function(payload) {
 
     case ActionTypes.CLOSE_WEBSOCKET:
       websocketClosed = true;
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
+    case ActionTypes.DO_CONTROL:
+      controlPending = true;
+      controlError = null;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 
@@ -299,6 +325,18 @@ AppStore.registeredCallback = function(payload) {
       nodes = nodes.clear();
       websocketClosed = false;
 
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
+    case ActionTypes.DO_CONTROL_ERROR:
+      controlPending = false;
+      controlError = payload.error;
+      AppStore.emit(AppStore.CHANGE_EVENT);
+      break;
+
+    case ActionTypes.DO_CONTROL_SUCCESS:
+      controlPending = false;
+      controlError = null;
       AppStore.emit(AppStore.CHANGE_EVENT);
       break;
 

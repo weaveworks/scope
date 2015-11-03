@@ -12,6 +12,13 @@ var path = require('path');
  *
  * For more information, see: http://webpack.github.io/docs/configuration.html
  */
+
+ // Inject websocket url to dev backend
+var BACKEND_HOST = process.env.BACKEND_HOST || 'localhost:4040';
+var GLOBALS = {
+  __WS_URL__: JSON.stringify('ws://' + BACKEND_HOST)
+};
+
 module.exports = {
 
   // Efficiently evaluate modules with source maps
@@ -21,7 +28,7 @@ module.exports = {
   entry: [
     'webpack-dev-server/client?http://localhost:4041',
     'webpack/hot/only-dev-server',
-    './app/scripts/local'
+    './app/scripts/main'
   ],
 
   // This will not actually create a app.js file in ./build. It is used
@@ -34,6 +41,7 @@ module.exports = {
 
   // Necessary plugins for hot load
   plugins: [
+    new webpack.DefinePlugin(GLOBALS),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin()
   ],

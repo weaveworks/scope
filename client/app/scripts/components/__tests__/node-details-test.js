@@ -2,6 +2,8 @@ jest.dontMock('../node-details.js');
 jest.dontMock('../../mixins/node-color-mixin');
 jest.dontMock('../../utils/title-utils');
 
+__WS_URL__ = false
+
 describe('NodeDetails', () => {
   let NodeDetails;
   let nodes;

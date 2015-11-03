@@ -35,6 +35,11 @@
   text-overflow: ellipsis;
 }
 
+.palable {
+  transition: opacity .2s ease-in-out;
+  transition: border-color .2s ease-in-out;
+}
+
 .hideable {
   transition: opacity .5s ease-in-out;
 }
@@ -313,24 +318,6 @@ h2 {
   top: 24px;
   bottom: 48px;
   width: 420px;
-
-  .details-tools-wrapper {
-    position: relative;
-  }
-
-  .details-tools {
-    position: absolute;
-    top: 16px;
-    right: 24px;
-    color: @white;
-
-    span {
-      cursor: pointer;
-      &:hover {
-        color: white;
-      }
-    }
-  }
 }
 
 .node-details {
@@ -342,26 +329,79 @@ h2 {
 
     padding: 24px 36px 24px 36px;
 
+    &-row {
+      display: flex;
+    }
+
     &-label {
       color: white;
       margin: 0;
       width: 348px;
+      padding-top: 0;
 
       &-minor {
-        width: 348px;
+        flex: 1;
         font-size: 120%;
         color: @white;
       }
     }
 
+    .details-tools {
+      position: absolute;
+      top: 16px;
+      right: 24px;
+    }
+
     &-notavailable {
       background-color: @background-dark-color;
+    }
+
+  }
+
+  &-controls {
+    white-space: nowrap;
+    text-align: right;
+    margin: -8px -8px 0 0;
+
+    .node-control-button {
+      .palable;
+      padding: 6px;
+      margin-left: 2px;
+      font-size: 110%;
+      color: @white;
+      cursor: pointer;
+      opacity: 0.7;
+      border: 1px solid rgba(255, 255, 255, 0);
+      border-radius: 10%;
+      &:hover {
+        opacity: 1;
+        border-color: rgba(255, 255, 255, 0.6);
+      }
+      &-pending, &-pending:hover {
+        opacity: 0.2;
+        border-color: rgba(255, 255, 255, 0);
+        cursor: not-allowed;
+      }
+    }
+
+    &-error {
+      .truncate;
+      float: left;
+      width: 66%;
+      padding-top: 6px;
+      text-align: left;
+      color: @white;
+
+      &-icon {
+        margin-right: 0.5em;
+        animation: blinking 2.0s infinite ease-in-out;
+      }
     }
   }
 
   &-content {
     position: absolute;
-    top: 115px;
+    top: 128px;
     bottom: 0;
     padding: 0 36px 0 36px;
     overflow-y: scroll;
@@ -446,6 +486,14 @@ h2 {
       cursor: pointer;
       font-size: 90%;
     }
+  }
+}
+
+@keyframes blinking {
+  0%, 100% {
+    opacity: 1.0;
+  } 50% {
+    opacity: 0.5;
   }
 }
 

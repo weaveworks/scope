@@ -20,6 +20,8 @@ const ESC_KEY_CODE = 27;
 function getStateFromStores() {
   return {
     activeTopologyOptions: AppStore.getActiveTopologyOptions(),
+    controlError: AppStore.getControlError(),
+    controlPending: AppStore.isControlPending(),
     currentTopology: AppStore.getCurrentTopology(),
     currentTopologyId: AppStore.getCurrentTopologyId(),
     currentTopologyOptions: AppStore.getCurrentTopologyOptions(),
@@ -81,6 +83,8 @@ const App = React.createClass({
     return (
       <div>
         {showingDetails && <Details nodes={this.state.nodes}
+          controlError={this.state.controlError}
+          controlPending={this.state.controlPending}
           nodeId={this.state.selectedNodeId}
           details={this.state.nodeDetails} /> }
 

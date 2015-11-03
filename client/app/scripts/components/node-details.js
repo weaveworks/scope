@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const React = require('react');
 
+const NodeDetailsControls = require('./node-details-controls');
 const NodeDetailsTable = require('./node-details-table');
 const NodeColorMixin = require('../mixins/node-color-mixin');
 const TitleUtils = require('../utils/title-utils');
@@ -65,6 +66,8 @@ const NodeDetails = React.createClass({
     return (
       <div className="node-details">
         <div className="node-details-header" style={style}>
+          <NodeDetailsControls controls={details.controls}
+            pending={this.props.controlPending} error={this.props.controlError} />
           <h2 className="node-details-header-label truncate" title={details.label_major}>
             {details.label_major}
           </h2>
