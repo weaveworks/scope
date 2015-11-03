@@ -10,9 +10,6 @@ export HOSTS
 : ${WEAVE_REPO:=github.com/weaveworks/weave}
 : ${WEAVE_ROOT:="$(go list -e -f {{.Dir}} $WEAVE_REPO)"}
 
-RUNNER="$WEAVE_ROOT/testing/runner/runner"
-[ -x "$RUNNER" ] || (echo "Could not find weave test runner at $RUNNER." >&2 ; exit 1)
-
 . "$WEAVE_ROOT/test/config.sh"
 
 WEAVE="./weave"
