@@ -24,7 +24,6 @@ dependencies:
     - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
     - go get $WEAVE_REPO/...
-    - make -C tools/runner && mkdir -p $WEAVE_REPO/tools/runner && cp tools/runner/runner $WEAVE_REPO/tools/runner
     - make deps
     - mkdir -p $(dirname $SRCDIR)
     - cp -r $(pwd)/ $SRCDIR
@@ -32,6 +31,7 @@ dependencies:
     - touch $SRCDIR/.scope_ui_build.uptodate
     - cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh
     - touch $SRCDIR/.scope_backend_build.uptodate
+    - make -C $SRCDIR/tools/runner && mkdir -p $WEAVE_REPO/tools/runner && cp $SRCDIR/tools/runner/runner $WEAVE_REPO/tools/runner
 
 test:
   override:
