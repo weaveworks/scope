@@ -31,7 +31,9 @@ dependencies:
     - touch $SRCDIR/.scope_ui_build.uptodate
     - cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh
     - touch $SRCDIR/.scope_backend_build.uptodate
-    - make -C $SRCDIR/tools/runner && mkdir -p $WEAVE_REPO/tools/runner && cp $SRCDIR/tools/runner/runner $WEAVE_REPO/tools/runner
+    - make -C $SRCDIR/tools/runner
+    - mkdir -p $WEAVE_REPO/tools/runner
+    - cp $SRCDIR/tools/runner/runner $WEAVE_REPO/tools/runner
 
 test:
   override:
