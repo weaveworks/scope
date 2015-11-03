@@ -21,7 +21,7 @@
     "page": "^1.6.3",
     "react": "0.13.3",
     "react-motion": "^0.2.7",
-    "react-tap-event-plugin": "^0.1.7",
+    "react-tap-event-plugin": "0.1.7",
     "reqwest": "~1.1.5",
     "timely": "^0.1.0"
   },
