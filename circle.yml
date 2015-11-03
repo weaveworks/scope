@@ -24,7 +24,7 @@ dependencies:
     - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
     - go get $WEAVE_REPO/...
-    - make -C $WEAVE_ROOT tools/runner/runner
+    - make -C tools/runner && mkdir -p $WEAVE_REPO/tools/runner && cp tools/runner/runner $WEAVE_REPO/tools/runner
     - make deps
     - mkdir -p $(dirname $SRCDIR)
     - cp -r $(pwd)/ $SRCDIR
