@@ -91,6 +91,7 @@ type Node struct {
 	Edges     EdgeMetadatas `json:"edges,omitempty"`
 	Controls  NodeControls  `json:"controls,omitempty"`
 	Latest    LatestMap     `json:"latest,omitempty"`
+	Metrics   Metrics       `json:"metrics,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
@@ -103,6 +104,7 @@ func MakeNode() Node {
 		Edges:     EdgeMetadatas{},
 		Controls:  MakeNodeControls(),
 		Latest:    MakeLatestMap(),
+		Metrics:   Metrics{},
 	}
 }
 
@@ -137,6 +139,21 @@ func (n Node) WithSet(key string, set StringSet) Node {
 func (n Node) WithSets(sets Sets) Node {
 	result := n.Copy()
 	result.Sets = result.Sets.Merge(sets)
+	return result
+}
+
+// WithMetric returns a fresh copy of n, with metric merged in at key.
+func (n Node) WithMetric(key string, metric Metric) Node {
+	result := n.Copy()
+	existing := n.Metrics[key]
+	result.Metrics[key] = existing.Merge(metric)
+	return result
+}
+
+// WithMetrics returns a fresh copy of n, with metrics merged in.
+func (n Node) WithMetrics(metrics Metrics) Node {
+	result := n.Copy()
+	result.Metrics = result.Metrics.Merge(metrics)
 	return result
 }
 
@@ -180,6 +197,7 @@ func (n Node) Copy() Node {
 	cp.Edges = n.Edges.Copy()
 	cp.Controls = n.Controls.Copy()
 	cp.Latest = n.Latest.Copy()
+	cp.Metrics = n.Metrics.Copy()
 	return cp
 }
 
@@ -194,6 +212,7 @@ func (n Node) Merge(other Node) Node {
 	cp.Edges = cp.Edges.Merge(other.Edges)
 	cp.Controls = cp.Controls.Merge(other.Controls)
 	cp.Latest = cp.Latest.Merge(other.Latest)
+	cp.Metrics = cp.Metrics.Merge(other.Metrics)
 	return cp
 }
 
@@ -342,6 +361,99 @@ func (s StringSet) Copy() StringSet {
 	result := make(StringSet, len(s))
 	copy(result, s)
 	return result
+}
+
+// Metrics is a string->metric map.
+type Metrics map[string]Metric
+
+// Merge merges two sets maps into a fresh set, performing set-union merges as
+// appropriate.
+func (m Metrics) Merge(other Metrics) Metrics {
+	result := m.Copy()
+	for k, v := range other {
+		result[k] = result[k].Merge(v)
+	}
+	return result
+}
+
+// Copy returns a value copy of the sets map.
+func (m Metrics) Copy() Metrics {
+	result := Metrics{}
+	for k, v := range m {
+		result[k] = v.Copy()
+	}
+	return result
+}
+
+// Metric is a list of timeseries data. Clients must use the Add
+// method to add values.
+type Metric struct {
+	Samples []Sample  `json:"samples"`
+	Min     float64   `json:"min"`
+	Max     float64   `json:"max"`
+	First   time.Time `json:"first"`
+	Last    time.Time `json:"last"`
+}
+
+type Sample struct {
+	Timestamp time.Time `json:"date"`
+	Value     float64   `json:"value"`
+}
+
+// MakeMetric makes a new Metric.
+func MakeMetric() Metric {
+	return Metric{}
+}
+
+// Add adds the sample to the Metric. Add is the only valid way to grow a
+// Metric. Add returns the Metric to enable chaining.
+func (m Metric) Add(t time.Time, v float64) Metric {
+	i := sort.Search(len(m.Samples), func(i int) bool { return t.Before(m.Samples[i].Timestamp) })
+	if i < len(m.Samples) && m.Samples[i].Timestamp.Equal(t) {
+		// The list already has the element.
+		return m
+	}
+	// It is a new element, insert it in order.
+	m.Samples = append(m.Samples, Sample{})
+	copy(m.Samples[i+1:], m.Samples[i:])
+	m.Samples[i] = Sample{Timestamp: t, Value: v}
+	if v > m.Max {
+		m.Max = v
+	}
+	if v < m.Min {
+		m.Min = v
+	}
+	if m.First.IsZero() || t.Before(m.First) {
+		m.First = t
+	}
+	if m.Last.IsZero() || t.After(m.Last) {
+		m.Last = t
+	}
+	return m
+}
+
+// Merge combines the two Metrics and returns a new result.
+func (m Metric) Merge(other Metric) Metric {
+	for _, sample := range other.Samples {
+		m = m.Add(sample.Timestamp, sample.Value)
+	}
+	return m
+}
+
+// Copy returns a value copy of the Metric.
+func (m Metric) Copy() Metric {
+	samples := make([]Sample, len(m.Samples))
+	copy(samples, m.Samples)
+	return Metric{Samples: samples, Max: m.Max, Min: m.Min, First: m.First, Last: m.Last}
+}
+
+// Last returns the last sample in the metric.
+// Returns nil if there are no samples.
+func (m Metric) LastSample() *Sample {
+	if len(m.Samples) == 0 {
+		return nil
+	}
+	return &m.Samples[len(m.Samples)-1]
 }
 
 // EdgeMetadatas collect metadata about each edge in a topology. Keys are the

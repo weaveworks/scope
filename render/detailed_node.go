@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
@@ -43,10 +44,12 @@ type Table struct {
 
 // Row is a single entry in a Table dataset.
 type Row struct {
-	Key        string `json:"key"`                   // e.g. Ingress
-	ValueMajor string `json:"value_major"`           // e.g. 25
-	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
-	Expandable bool   `json:"expandable,omitempty"`  // Whether it can be expanded (hidden by default)
+	Key        string        `json:"key"`                   // e.g. Ingress
+	ValueMajor string        `json:"value_major"`           // e.g. 25
+	ValueMinor string        `json:"value_minor,omitempty"` // e.g. KB/s
+	Expandable bool          `json:"expandable,omitempty"`  // Whether it can be expanded (hidden by default)
+	ValueType  string        `json:"value_type,omitempty"`  // e.g. sparkline
+	Metric     report.Metric `json:"metric,omitempty"`      // e.g. KB/s
 }
 
 // ControlInstance contains a control description, and all the info
@@ -168,21 +171,21 @@ func connectionsTable(connections []Row, r report.Report, n RenderableNode) (Tab
 
 	rows := []Row{}
 	if n.EdgeMetadata.MaxConnCountTCP != nil {
-		rows = append(rows, Row{"TCP connections", strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10), "", false})
+		rows = append(rows, Row{Key: "TCP connections", ValueMajor: strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10)})
 	}
 	if rate, ok := rate(n.EdgeMetadata.EgressPacketCount); ok {
-		rows = append(rows, Row{"Egress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec", false})
+		rows = append(rows, Row{Key: "Egress packet rate", ValueMajor: fmt.Sprintf("%.0f", rate), ValueMinor: "packets/sec"})
 	}
 	if rate, ok := rate(n.EdgeMetadata.IngressPacketCount); ok {
-		rows = append(rows, Row{"Ingress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec", false})
+		rows = append(rows, Row{Key: "Ingress packet rate", ValueMajor: fmt.Sprintf("%.0f", rate), ValueMinor: "packets/sec"})
 	}
 	if rate, ok := rate(n.EdgeMetadata.EgressByteCount); ok {
 		s, unit := shortenByteRate(rate)
-		rows = append(rows, Row{"Egress byte rate", s, unit, false})
+		rows = append(rows, Row{Key: "Egress byte rate", ValueMajor: s, ValueMinor: unit})
 	}
 	if rate, ok := rate(n.EdgeMetadata.IngressByteCount); ok {
 		s, unit := shortenByteRate(rate)
-		rows = append(rows, Row{"Ingress byte rate", s, unit, false})
+		rows = append(rows, Row{Key: "Ingress byte rate", ValueMajor: s, ValueMinor: unit})
 	}
 	if len(connections) > 0 {
 		sort.Sort(sortableRows(connections))
@@ -441,15 +444,46 @@ func getDockerLabelRows(nmd report.Node) []Row {
 }
 
 func hostOriginTable(nmd report.Node) (Table, bool) {
+	// Ensure that all metrics have the same max
+	var (
+		maxLoad  = 0.0
+		lastLoad time.Time
+	)
+	for _, key := range []string{host.Load1, host.Load5, host.Load15} {
+		if metric, ok := nmd.Metrics[key]; ok {
+			if len(metric.Samples) == 0 {
+				continue
+			}
+			if metric.Max > maxLoad {
+				maxLoad = metric.Max
+			}
+			if lastLoad.IsZero() || metric.Last.After(lastLoad) {
+				lastLoad = metric.Last
+			}
+		}
+	}
+
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		{host.Load, "Load"},
+		// TODO(paulbellamy): render this as a sparkline and number
+		{host.Load1, "Load (1m)"},
+		{host.Load5, "Load (5m)"},
+		{host.Load15, "Load (15m)"},
 		{host.OS, "Operating system"},
 		{host.KernelVersion, "Kernel version"},
 		{host.Uptime, "Uptime"},
 	} {
 		if val, ok := nmd.Metadata[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
+		} else if val, ok := nmd.Metrics[tuple.key]; ok {
+			lastStr := ""
+			if last := val.LastSample(); last != nil {
+				lastStr = fmt.Sprint(last.Value)
+			}
+			val.Max = maxLoad
+			val.First = lastLoad.Add(-15 * time.Second) // TODO(paulbellamy): This should be based on the duration flag, maybe? or just auto-scale to data.
+			val.Last = lastLoad
+			rows = append(rows, Row{Key: tuple.human, ValueMajor: lastStr, Metric: val, ValueType: "sparkline"})
 		}
 	}
 

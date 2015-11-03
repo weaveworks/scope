@@ -20,7 +20,7 @@ func TestGetKernelVersion(t *testing.T) {
 
 func TestGetLoad(t *testing.T) {
 	have := host.GetLoad()
-	if strings.Contains(have, "unknown") {
+	if have == nil {
 		t.Fatal(have)
 	}
 	t.Log(have)
