@@ -1,6 +1,7 @@
 package docker_test
 
 import (
+	"fmt"
 	"net"
 	"runtime"
 	"sort"
@@ -18,6 +19,8 @@ import (
 type mockContainer struct {
 	c *client.Container
 }
+
+func (c *mockContainer) UpdateState(_ *client.Container) {}
 
 func (c *mockContainer) ID() string {
 	return c.c.ID
@@ -66,7 +69,11 @@ func (m *mockDockerClient) ListContainers(client.ListContainersOptions) ([]clien
 func (m *mockDockerClient) InspectContainer(id string) (*client.Container, error) {
 	m.RLock()
 	defer m.RUnlock()
-	return m.containers[id], nil
+	c, ok := m.containers[id]
+	if !ok {
+		return nil, &client.NoSuchContainer{}
+	}
+	return c, nil
 }
 
 func (m *mockDockerClient) ListImages(client.ListImagesOptions) ([]client.APIImages, error) {
@@ -91,6 +98,26 @@ func (m *mockDockerClient) RemoveEventListener(events chan *client.APIEvents) er
 		}
 	}
 	return nil
+}
+
+func (m *mockDockerClient) StartContainer(_ string, _ *client.HostConfig) error {
+	return fmt.Errorf("started")
+}
+
+func (m *mockDockerClient) StopContainer(_ string, _ uint) error {
+	return fmt.Errorf("stopped")
+}
+
+func (m *mockDockerClient) RestartContainer(_ string, _ uint) error {
+	return fmt.Errorf("restarted")
+}
+
+func (m *mockDockerClient) PauseContainer(_ string) error {
+	return fmt.Errorf("paused")
+}
+
+func (m *mockDockerClient) UnpauseContainer(_ string) error {
+	return fmt.Errorf("unpaused")
 }
 
 func (m *mockDockerClient) send(event *client.APIEvents) {
@@ -259,7 +286,7 @@ func TestRegistryEvents(t *testing.T) {
 			mdc.apiContainers = []client.APIContainers{apiContainer1}
 			delete(mdc.containers, "wiff")
 			mdc.Unlock()
-			mdc.send(&client.APIEvents{Status: docker.DieEvent, ID: "wiff"})
+			mdc.send(&client.APIEvents{Status: docker.DestroyEvent, ID: "wiff"})
 			runtime.Gosched()
 
 			want := []docker.Container{&mockContainer{container1}}

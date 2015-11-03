@@ -57,6 +57,33 @@ func TestReporter(t *testing.T) {
 				docker.ImageID:       "baz",
 			}),
 		},
+		Controls: report.Controls{
+			docker.RestartContainer: report.Control{
+				ID:    docker.RestartContainer,
+				Human: "Restart",
+				Icon:  "fa-repeat",
+			},
+			docker.StartContainer: report.Control{
+				ID:    docker.StartContainer,
+				Human: "Start",
+				Icon:  "fa-play",
+			},
+			docker.StopContainer: report.Control{
+				ID:    docker.StopContainer,
+				Human: "Stop",
+				Icon:  "fa-stop",
+			},
+			docker.PauseContainer: report.Control{
+				ID:    docker.PauseContainer,
+				Human: "Pause",
+				Icon:  "fa-pause",
+			},
+			docker.UnpauseContainer: report.Control{
+				ID:    docker.UnpauseContainer,
+				Human: "Unpause",
+				Icon:  "fa-play",
+			},
+		},
 	}
 	want.ContainerImage = report.Topology{
 		Nodes: report.Nodes{
@@ -65,6 +92,7 @@ func TestReporter(t *testing.T) {
 				docker.ImageName: "bang",
 			}),
 		},
+		Controls: report.Controls{},
 	}
 
 	reporter := docker.NewReporter(mockRegistryInstance, "")

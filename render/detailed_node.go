@@ -346,6 +346,7 @@ func processOriginTable(nmd report.Node, addHostTag bool, addContainerTag bool) 
 func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
+		{docker.ContainerState, "State"},
 		{docker.ContainerID, "ID"},
 		{docker.ImageID, "Image ID"},
 		{docker.ContainerPorts, "Ports"},
