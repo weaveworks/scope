@@ -46,8 +46,8 @@ $(APP_EXE) $(PROBE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
 		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) $@
 else
-$(APP_EXE) $(PROBE_EXE):
-	go build -ldflags "-extldflags \"-static\" -X main.version $(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
+$(APP_EXE) $(PROBE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
+	go build -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
 	        echo "\nYour go standard library was built without the 'netgo' build tag."; \
