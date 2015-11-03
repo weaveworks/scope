@@ -19,7 +19,8 @@ else
     IMAGE_VERSION=$SCRIPT_VERSION
 fi
 IMAGE_VERSION=${VERSION:-$IMAGE_VERSION}
-SCOPE_IMAGE=weaveworks/scope:$IMAGE_VERSION
+SCOPE_IMAGE_NAME=weaveworks/scope
+SCOPE_IMAGE=$SCOPE_IMAGE_NAME:$IMAGE_VERSION
 SCOPE_CONTAINER_NAME=weavescope
 IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
 IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
@@ -101,7 +102,7 @@ case "$COMMAND" in
         ;;
 
     launch)
-        check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE
+        check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
         docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
 
         CONTAINER=$($(launch_command "$@"))
