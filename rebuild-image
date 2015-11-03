@@ -17,12 +17,12 @@ rebuild() {
     mkdir -p $CACHEDIR
     rm $CACHEDIR/$SAVEDNAME* || true
     docker build -t $IMAGENAME $IMAGEDIR
-	docker save $IMAGENAME:latest > $CACHEDIR/$SAVEDNAME-$CIRCLE_SHA1
+	docker save $IMAGENAME:latest | gzip - > $CACHEDIR/$SAVEDNAME-$CIRCLE_SHA1.gz
 }
 
 # Get the revision the cached image was build at
 cached_image_rev() {
-	find $CACHEDIR -name "$SAVEDNAME-*" -type f | sed 's/[^\-]*\-//'
+	find $CACHEDIR -name "$SAVEDNAME-*" -type f | sed -n 's/^[^\-]*\-\([a-z0-9]*\).gz$/\1/p'
 }
 
 # Have there been any revision beween $1 and $2
@@ -60,4 +60,4 @@ fi
 
 # we didn't rebuild; import cached version
 echo ">>> No changes found, importing cached image"
-docker load -i $CACHEDIR/$SAVEDNAME-$cached_revision
+zcat $CACHEDIR/$SAVEDNAME-$cached_revision.gz | docker load
