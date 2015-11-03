@@ -1,62 +1,39 @@
 package xfer
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"time"
-
-	"github.com/certifi/gocertifi"
 
 	"github.com/weaveworks/scope/common/sanitize"
 )
 
 // HTTPPublisher publishes buffers by POST to a fixed endpoint.
 type HTTPPublisher struct {
-	url     string
-	token   string
-	probeID string
-	client  *http.Client
-}
+	ProbeConfig
 
-func getHTTPTransport(hostname string, insecure bool) (*http.Transport, error) {
-	if insecure {
-		return &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}, nil
-	}
-
-	host, _, err := net.SplitHostPort(hostname)
-	if err != nil {
-		return nil, err
-	}
-
-	certPool, err := gocertifi.CACerts()
-	if err != nil {
-		return nil, err
-	}
-	return &http.Transport{
-		TLSClientConfig: &tls.Config{
-			RootCAs:    certPool,
-			ServerName: host,
-		},
-	}, nil
+	url    string
+	client *http.Client
 }
 
 // NewHTTPPublisher returns an HTTPPublisher ready for use.
 func NewHTTPPublisher(hostname, target, token, probeID string, insecure bool) (string, *HTTPPublisher, error) {
-	httpTransport, err := getHTTPTransport(hostname, insecure)
+	pc := ProbeConfig{
+		Token:    token,
+		ProbeID:  probeID,
+		Insecure: insecure,
+	}
+
+	httpTransport, err := pc.getHTTPTransport(hostname)
 	if err != nil {
 		return "", nil, err
 	}
 
 	p := &HTTPPublisher{
-		url:     sanitize.URL("", 0, "/api/report")(target),
-		token:   token,
-		probeID: probeID,
+		ProbeConfig: pc,
+		url:         sanitize.URL("", 0, "/api/report")(target),
 		client: &http.Client{
 			Transport: httpTransport,
 		},
@@ -66,7 +43,7 @@ func NewHTTPPublisher(hostname, target, token, probeID string, insecure bool) (s
 		Timeout:   5 * time.Second,
 		Transport: httpTransport,
 	}
-	req, err := p.authorizedRequest("GET", sanitize.URL("", 0, "/api")(target), nil)
+	req, err := pc.authorizedRequest("GET", sanitize.URL("", 0, "/api")(target), nil)
 	if err != nil {
 		return "", nil, err
 	}
@@ -84,22 +61,13 @@ func NewHTTPPublisher(hostname, target, token, probeID string, insecure bool) (s
 	return apiResponse.ID, p, nil
 }
 
-func (p HTTPPublisher) authorizedRequest(method string, urlStr string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(method, urlStr, body)
-	if err == nil {
-		req.Header.Set("Authorization", AuthorizationHeader(p.token))
-		req.Header.Set(ScopeProbeIDHeader, p.probeID)
-	}
-	return req, err
-}
-
 func (p HTTPPublisher) String() string {
 	return p.url
 }
 
 // Publish publishes the report to the URL.
 func (p HTTPPublisher) Publish(r io.Reader) error {
-	req, err := p.authorizedRequest("POST", p.url, r)
+	req, err := p.ProbeConfig.authorizedRequest("POST", p.url, r)
 	if err != nil {
 		return err
 	}
@@ -125,15 +93,3 @@ func (p *HTTPPublisher) Stop() {
 	// goroutines on the server (see #604)
 	p.client.Transport.(*http.Transport).CloseIdleConnections()
 }
-
-// AuthorizationHeader returns a value suitable for an HTTP Authorization
-// header, based on the passed token string.
-func AuthorizationHeader(token string) string {
-	return fmt.Sprintf("Scope-Probe token=%s", token)
-}
-
-// ScopeProbeIDHeader is the header we use to carry the probe's unique ID. The
-// ID is currently set to the probe's hostname. It's designed to deduplicate
-// reports from the same probe to the same receiver, in case the probe is
-// configured to publish to multiple receivers that resolve to the same app.
-const ScopeProbeIDHeader = "X-Scope-Probe-ID"

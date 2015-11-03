@@ -4,11 +4,15 @@ package main
 import (
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
 )
 
 // Test site
 func TestSite(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
+	router := mux.NewRouter()
+	registerStatic(router)
+	ts := httptest.NewServer(router)
 	defer ts.Close()
 
 	is200(t, ts, "/")

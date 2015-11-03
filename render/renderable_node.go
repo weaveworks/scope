@@ -8,12 +8,13 @@ import (
 // an element of a topology. It should contain information that's relevant
 // to rendering a node when there are many nodes visible at once.
 type RenderableNode struct {
-	ID         string        `json:"id"`                    //
-	LabelMajor string        `json:"label_major"`           // e.g. "process", human-readable
-	LabelMinor string        `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
-	Rank       string        `json:"rank"`                  // to help the layout engine
-	Pseudo     bool          `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
-	Origins    report.IDList `json:"origins,omitempty"`     // Core node IDs that contributed information
+	ID          string        `json:"id"`                    //
+	LabelMajor  string        `json:"label_major"`           // e.g. "process", human-readable
+	LabelMinor  string        `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
+	Rank        string        `json:"rank"`                  // to help the layout engine
+	Pseudo      bool          `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
+	Origins     report.IDList `json:"origins,omitempty"`     // Core node IDs that contributed information
+	ControlNode string        `json:"-"`                     // ID of node from which to show the controls in the UI
 
 	report.EdgeMetadata `json:"metadata"` // Numeric sums
 	report.Node
@@ -58,6 +59,7 @@ func NewDerivedNode(id string, node RenderableNode) RenderableNode {
 		Origins:      node.Origins.Copy(),
 		EdgeMetadata: node.EdgeMetadata.Copy(),
 		Node:         node.Node.Copy(),
+		ControlNode:  "", // Do not propagate ControlNode when making a derived node!
 	}
 }
 
@@ -97,6 +99,10 @@ func (rn RenderableNode) Merge(other RenderableNode) RenderableNode {
 		result.Rank = other.Rank
 	}
 
+	if result.ControlNode == "" {
+		result.ControlNode = other.ControlNode
+	}
+
 	if result.Pseudo != other.Pseudo {
 		panic(result.ID)
 	}
@@ -119,6 +125,7 @@ func (rn RenderableNode) Copy() RenderableNode {
 		Origins:      rn.Origins.Copy(),
 		EdgeMetadata: rn.EdgeMetadata.Copy(),
 		Node:         rn.Node.Copy(),
+		ControlNode:  rn.ControlNode,
 	}
 }
 

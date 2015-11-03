@@ -60,8 +60,13 @@ func TestAPITopologyContainers(t *testing.T) {
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatal(err)
 		}
+		want := expected.RenderedContainers.Copy()
+		for id, node := range want {
+			node.ControlNode = ""
+			want[id] = node
+		}
 
-		if want, have := expected.RenderedContainers, topo.Nodes.Prune(); !reflect.DeepEqual(want, have) {
+		if have := topo.Nodes.Prune(); !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}

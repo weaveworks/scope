@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -27,7 +28,7 @@ func TestHTTPPublisher(t *testing.T) {
 	)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if want, have := xfer.AuthorizationHeader(token), r.Header.Get("Authorization"); want != have {
+		if want, have := fmt.Sprintf("Scope-Probe token=%s", token), r.Header.Get("Authorization"); want != have {
 			t.Errorf("want %q, have %q", want, have)
 		}
 

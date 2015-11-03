@@ -14,12 +14,13 @@ func TestOriginTable(t *testing.T) {
 	if _, ok := render.OriginTable(fixture.Report, "not-found", false, false); ok {
 		t.Errorf("unknown origin ID gave unexpected success")
 	}
-	for originID, want := range map[string]render.Table{fixture.ServerProcessNodeID: {
-		Title:   fmt.Sprintf(`Process "apache" (%s)`, fixture.ServerPID),
-		Numeric: false,
-		Rank:    2,
-		Rows:    []render.Row{},
-	},
+	for originID, want := range map[string]render.Table{
+		fixture.ServerProcessNodeID: {
+			Title:   fmt.Sprintf(`Process "apache" (%s)`, fixture.ServerPID),
+			Numeric: false,
+			Rank:    2,
+			Rows:    []render.Row{},
+		},
 		fixture.ServerHostNodeID: {
 			Title:   fmt.Sprintf("Host %q", fixture.ServerHostName),
 			Numeric: false,
@@ -75,7 +76,6 @@ func TestOriginTable(t *testing.T) {
 			t.Errorf("%q: %s", originID, test.Diff(want, have))
 		}
 	}
-
 }
 
 func TestMakeDetailedHostNode(t *testing.T) {
@@ -86,6 +86,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 		LabelMajor: "client",
 		LabelMinor: "hostname.com",
 		Pseudo:     false,
+		Controls:   []render.ControlInstance{},
 		Tables: []render.Table{
 			{
 				Title:   fmt.Sprintf("Host %q", fixture.ClientHostName),
@@ -143,6 +144,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 		LabelMajor: "server",
 		LabelMinor: fixture.ServerHostName,
 		Pseudo:     false,
+		Controls:   []render.ControlInstance{},
 		Tables: []render.Table{
 			{
 				Title:   `Container Image "image/server"`,

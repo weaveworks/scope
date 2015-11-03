@@ -33,40 +33,42 @@ func TestReporter(t *testing.T) {
 
 	reporter := process.NewReporter(walker, "")
 	want := report.MakeReport()
-	want.Process = report.Topology{
-		Nodes: report.Nodes{
-			report.MakeProcessNodeID("", "1"): report.MakeNodeWith(map[string]string{
-				process.PID:     "1",
-				process.Comm:    "init",
-				process.Threads: "0",
-			}),
-			report.MakeProcessNodeID("", "2"): report.MakeNodeWith(map[string]string{
-				process.PID:     "2",
-				process.Comm:    "bash",
-				process.PPID:    "1",
-				process.Threads: "0",
-			}),
-			report.MakeProcessNodeID("", "3"): report.MakeNodeWith(map[string]string{
-				process.PID:     "3",
-				process.Comm:    "apache",
-				process.PPID:    "1",
-				process.Threads: "2",
-			}),
-			report.MakeProcessNodeID("", "4"): report.MakeNodeWith(map[string]string{
-				process.PID:     "4",
-				process.Comm:    "ping",
-				process.PPID:    "2",
-				process.Cmdline: "ping foo.bar.local",
-				process.Threads: "0",
-			}),
-			report.MakeProcessNodeID("", "5"): report.MakeNodeWith(map[string]string{
-				process.PID:     "5",
-				process.PPID:    "1",
-				process.Cmdline: "tail -f /var/log/syslog",
-				process.Threads: "0",
-			}),
-		},
-	}
+	want.Process = report.MakeTopology().AddNode(
+		report.MakeProcessNodeID("", "1"), report.MakeNodeWith(map[string]string{
+			process.PID:     "1",
+			process.Comm:    "init",
+			process.Threads: "0",
+		}),
+	).AddNode(
+		report.MakeProcessNodeID("", "2"), report.MakeNodeWith(map[string]string{
+			process.PID:     "2",
+			process.Comm:    "bash",
+			process.PPID:    "1",
+			process.Threads: "0",
+		}),
+	).AddNode(
+		report.MakeProcessNodeID("", "3"), report.MakeNodeWith(map[string]string{
+			process.PID:     "3",
+			process.Comm:    "apache",
+			process.PPID:    "1",
+			process.Threads: "2",
+		}),
+	).AddNode(
+		report.MakeProcessNodeID("", "4"), report.MakeNodeWith(map[string]string{
+			process.PID:     "4",
+			process.Comm:    "ping",
+			process.PPID:    "2",
+			process.Cmdline: "ping foo.bar.local",
+			process.Threads: "0",
+		}),
+	).AddNode(
+		report.MakeProcessNodeID("", "5"), report.MakeNodeWith(map[string]string{
+			process.PID:     "5",
+			process.PPID:    "1",
+			process.Cmdline: "tail -f /var/log/syslog",
+			process.Threads: "0",
+		}),
+	)
 
 	have, err := reporter.Report()
 	if err != nil || !reflect.DeepEqual(want, have) {

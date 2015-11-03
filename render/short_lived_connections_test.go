@@ -78,13 +78,14 @@ var (
 			Origins:    report.MakeIDList(randomEndpointNodeID),
 		},
 		containerID: {
-			ID:         containerID,
-			LabelMajor: containerName,
-			LabelMinor: serverHostID,
-			Rank:       "",
-			Pseudo:     false,
-			Origins:    report.MakeIDList(containerNodeID, serverEndpointNodeID, serverHostNodeID),
-			Node:       report.MakeNode(),
+			ID:          containerID,
+			LabelMajor:  containerName,
+			LabelMinor:  serverHostID,
+			Rank:        "",
+			Pseudo:      false,
+			Origins:     report.MakeIDList(containerNodeID, serverEndpointNodeID, serverHostNodeID),
+			Node:        report.MakeNode(),
+			ControlNode: containerNodeID,
 		},
 	}).Prune()
 )

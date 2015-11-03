@@ -24,11 +24,12 @@ const (
 // DetailedNode is the data type that's yielded to the JavaScript layer when
 // we want deep information about an individual node.
 type DetailedNode struct {
-	ID         string  `json:"id"`
-	LabelMajor string  `json:"label_major"`
-	LabelMinor string  `json:"label_minor,omitempty"`
-	Pseudo     bool    `json:"pseudo,omitempty"`
-	Tables     []Table `json:"tables"`
+	ID         string            `json:"id"`
+	LabelMajor string            `json:"label_major"`
+	LabelMinor string            `json:"label_minor,omitempty"`
+	Pseudo     bool              `json:"pseudo,omitempty"`
+	Tables     []Table           `json:"tables"`
+	Controls   []ControlInstance `json:"controls"`
 }
 
 // Table is a dataset associated with a node. It will be displayed in the
@@ -46,6 +47,14 @@ type Row struct {
 	ValueMajor string `json:"value_major"`           // e.g. 25
 	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
 	Expandable bool   `json:"expandable,omitempty"`  // Whether it can be expanded (hidden by default)
+}
+
+// ControlInstance contains a control description, and all the info
+// needed to execute it.
+type ControlInstance struct {
+	ProbeID string `json:"probeId"`
+	NodeID  string `json:"nodeId"`
+	report.Control
 }
 
 type sortableRows []Row
@@ -107,6 +116,7 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 		LabelMinor: n.LabelMinor,
 		Pseudo:     n.Pseudo,
 		Tables:     tables,
+		Controls:   controls(r, n),
 	}
 }
 
@@ -190,22 +200,55 @@ func connectionsTable(connections []Row, r report.Report, n RenderableNode) (Tab
 	return Table{}, false
 }
 
+func controlsFor(topology report.Topology, nodeID string) []ControlInstance {
+	result := []ControlInstance{}
+	node, ok := topology.Nodes[nodeID]
+	if !ok {
+		return result
+	}
+
+	for _, id := range node.Controls {
+		if control, ok := topology.Controls[id]; ok {
+			result = append(result, ControlInstance{
+				ProbeID: node.Metadata[report.ProbeID],
+				NodeID:  nodeID,
+				Control: control,
+			})
+		}
+	}
+	return result
+}
+
+func controls(r report.Report, n RenderableNode) []ControlInstance {
+	if _, ok := r.Process.Nodes[n.ControlNode]; ok {
+		return controlsFor(r.Process, n.ControlNode)
+	} else if _, ok := r.Container.Nodes[n.ControlNode]; ok {
+		return controlsFor(r.Container, n.ControlNode)
+	} else if _, ok := r.ContainerImage.Nodes[n.ControlNode]; ok {
+		return controlsFor(r.ContainerImage, n.ControlNode)
+	} else if _, ok := r.Host.Nodes[n.ControlNode]; ok {
+		return controlsFor(r.Host, n.ControlNode)
+	}
+	return []ControlInstance{}
+}
+
 // OriginTable produces a table (to be consumed directly by the UI) based on
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
 func OriginTable(r report.Report, originID string, addHostTags bool, addContainerTags bool) (Table, bool) {
+	result, show := Table{}, false
 	if nmd, ok := r.Process.Nodes[originID]; ok {
-		return processOriginTable(nmd, addHostTags, addContainerTags)
+		result, show = processOriginTable(nmd, addHostTags, addContainerTags)
 	}
 	if nmd, ok := r.Container.Nodes[originID]; ok {
-		return containerOriginTable(nmd, addHostTags)
+		result, show = containerOriginTable(nmd, addHostTags)
 	}
 	if nmd, ok := r.ContainerImage.Nodes[originID]; ok {
-		return containerImageOriginTable(nmd)
+		result, show = containerImageOriginTable(nmd)
 	}
 	if nmd, ok := r.Host.Nodes[originID]; ok {
-		return hostOriginTable(nmd)
+		result, show = hostOriginTable(nmd)
 	}
-	return Table{}, false
+	return result, show
 }
 
 func connectionDetailsRows(topology report.Topology, originID string) []Row {

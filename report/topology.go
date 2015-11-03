@@ -12,12 +12,14 @@ import (
 // in the Node struct.
 type Topology struct {
 	Nodes // TODO(pb): remove Nodes intermediate type
+	Controls
 }
 
 // MakeTopology gives you a Topology.
 func MakeTopology() Topology {
 	return Topology{
-		Nodes: map[string]Node{},
+		Nodes:    map[string]Node{},
+		Controls: Controls{},
 	}
 }
 
@@ -37,7 +39,8 @@ func (t Topology) AddNode(nodeID string, nmd Node) Topology {
 // Copy returns a value copy of the Topology.
 func (t Topology) Copy() Topology {
 	return Topology{
-		Nodes: t.Nodes.Copy(),
+		Nodes:    t.Nodes.Copy(),
+		Controls: t.Controls.Copy(),
 	}
 }
 
@@ -45,7 +48,8 @@ func (t Topology) Copy() Topology {
 // The original is not modified.
 func (t Topology) Merge(other Topology) Topology {
 	return Topology{
-		Nodes: t.Nodes.Merge(other.Nodes),
+		Nodes:    t.Nodes.Merge(other.Nodes),
+		Controls: t.Controls.Merge(other.Controls),
 	}
 }
 
@@ -84,6 +88,7 @@ type Node struct {
 	Sets      Sets          `json:"sets,omitempty"`
 	Adjacency IDList        `json:"adjacency"`
 	Edges     EdgeMetadatas `json:"edges,omitempty"`
+	Controls  IDList        `json:"controls,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
@@ -94,6 +99,7 @@ func MakeNode() Node {
 		Sets:      Sets{},
 		Adjacency: MakeIDList(),
 		Edges:     EdgeMetadatas{},
+		Controls:  MakeIDList(),
 	}
 }
 
@@ -147,6 +153,13 @@ func (n Node) WithEdge(dst string, md EdgeMetadata) Node {
 	return result
 }
 
+// WithControls returns a fresh copy of n, with cs added to Controls.
+func (n Node) WithControls(cs ...string) Node {
+	result := n.Copy()
+	result.Controls = result.Controls.Add(cs...)
+	return result
+}
+
 // Copy returns a value copy of the Node.
 func (n Node) Copy() Node {
 	cp := MakeNode()
@@ -155,6 +168,7 @@ func (n Node) Copy() Node {
 	cp.Sets = n.Sets.Copy()
 	cp.Adjacency = n.Adjacency.Copy()
 	cp.Edges = n.Edges.Copy()
+	cp.Controls = n.Controls.Copy()
 	return cp
 }
 
@@ -167,6 +181,7 @@ func (n Node) Merge(other Node) Node {
 	cp.Sets = cp.Sets.Merge(other.Sets)
 	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
 	cp.Edges = cp.Edges.Merge(other.Edges)
+	cp.Controls = cp.Controls.Merge(other.Controls)
 	return cp
 }
 
