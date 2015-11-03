@@ -4,4 +4,5 @@ set -e
 
 . ./config.sh
 
-NO_SCHEDULER=1 "$WEAVE_ROOT/test/run_all.sh" "$@"
+SCHEDULER_PREFIX=scope-integration
+. $WEAVE_ROOT/test/run_all.sh "$@"
