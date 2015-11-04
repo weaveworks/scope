@@ -17,6 +17,8 @@ Included in this repo are tools shared by weave.git and scope.git.  They include
   suffixed with the number of hosts it requires, and the hosts available are
   contained in the environment variable HOSTS, the tool will run tests in
   parallel, on different hosts.
+- ```scheduler```: an appengine application that can be used to distribute
+  tests across different shards in CircleCI.
 
 ## Using build-tools.git
 
