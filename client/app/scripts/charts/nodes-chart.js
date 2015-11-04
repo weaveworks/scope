@@ -2,7 +2,6 @@ const _ = require('lodash');
 const d3 = require('d3');
 const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
-const makeList = require('immutable').List;
 const makeMap = require('immutable').Map;
 const timely = require('timely');
 const Spring = require('react-motion').Spring;
@@ -32,7 +31,6 @@ const NodesChart = React.createClass({
     return {
       nodes: makeMap(),
       edges: makeMap(),
-      history: makeList(),
       nodeScale: d3.scale.linear(),
       shiftTranslate: [0, 0],
       panTranslate: [0, 0],
@@ -177,9 +175,10 @@ const NodesChart = React.createClass({
   },
 
   renderMaxNodesError: function(show) {
+    const errorHint = 'We\u0027re working on it, but for now, try a different view?';
     return (
       <NodesError faIconClass="fa-ban" hidden={!show}>
-        <div className="centered">Too many nodes to show in the browser.<br />We're working on it, but for now, try a different view?</div>
+        <div className="centered">Too many nodes to show in the browser.<br />{errorHint}</div>
       </NodesError>
     );
   },
@@ -455,8 +454,7 @@ const NodesChart = React.createClass({
       height: props.height,
       scale: nodeScale,
       margins: MARGINS,
-      topologyId: this.props.topologyId,
-      history: state.history
+      topologyId: this.props.topologyId
     };
 
     const timedLayouter = timely(NodesLayout.doLayout);

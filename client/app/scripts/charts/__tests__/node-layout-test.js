@@ -6,18 +6,21 @@ import { fromJS, Map } from 'immutable';
 describe('NodesLayout', () => {
   const NodesLayout = require('../nodes-layout');
 
-  function scale(val) {
-    return val * 3;
+  function getNodeCoordinates(nodes) {
+    const coords = [];
+    nodes
+      .sortBy(node => node.get('id'))
+      .forEach(node => {
+        coords.push(node.get('x'));
+        coords.push(node.get('y'));
+      });
+    return coords;
   }
-  const topologyId = 'tid';
-  const width = 80;
-  const height = 80;
-  const margins = {
-    left: 0,
-    top: 0
-  };
+
   let options;
   let nodes;
+  let coords;
+  let resultCoords;
 
   const nodeSets = {
     initial4: {
@@ -122,6 +125,7 @@ describe('NodesLayout', () => {
     options.cachedLayout = result;
     options.nodeCache = options.nodeCache.merge(result.nodes);
     options.edgeCache = options.edgeCache.merge(result.edge);
+    coords = getNodeCoordinates(result.nodes);
 
     result = NodesLayout.doLayout(
       nodeSets.removeEdge24.nodes,
@@ -131,12 +135,8 @@ describe('NodesLayout', () => {
     nodes = result.nodes.toJS();
     // console.log('remove 1 edge', nodes, result);
 
-    expect(nodes.n1.x).toBeLessThan(nodes.n2.x);
-    expect(nodes.n1.y).toEqual(nodes.n2.y);
-    expect(nodes.n1.x).toEqual(nodes.n3.x);
-    expect(nodes.n1.y).toBeLessThan(nodes.n3.y);
-    expect(nodes.n3.x).toBeLessThan(nodes.n4.x);
-    expect(nodes.n3.y).toEqual(nodes.n4.y);
+    resultCoords = getNodeCoordinates(result.nodes);
+    expect(resultCoords).toEqual(coords);
   });
 
   it('keeps nodes in rectangle after removed edge reappears', () => {
@@ -144,6 +144,7 @@ describe('NodesLayout', () => {
       nodeSets.initial4.nodes,
       nodeSets.initial4.edges);
 
+    coords = getNodeCoordinates(result.nodes);
     options.cachedLayout = result;
     options.nodeCache = options.nodeCache.merge(result.nodes);
     options.edgeCache = options.edgeCache.merge(result.edge);
@@ -165,12 +166,8 @@ describe('NodesLayout', () => {
     nodes = result.nodes.toJS();
     // console.log('re-add 1 edge', nodes, result);
 
-    expect(nodes.n1.x).toBeLessThan(nodes.n2.x);
-    expect(nodes.n1.y).toEqual(nodes.n2.y);
-    expect(nodes.n1.x).toEqual(nodes.n3.x);
-    expect(nodes.n1.y).toBeLessThan(nodes.n3.y);
-    expect(nodes.n3.x).toBeLessThan(nodes.n4.x);
-    expect(nodes.n3.y).toEqual(nodes.n4.y);
+    resultCoords = getNodeCoordinates(result.nodes);
+    expect(resultCoords).toEqual(coords);
   });
 
   it('keeps nodes in rectangle after node dissappears', () => {
@@ -189,10 +186,9 @@ describe('NodesLayout', () => {
 
     nodes = result.nodes.toJS();
 
-    expect(nodes.n1.x).toEqual(nodes.n3.x);
-    expect(nodes.n1.y).toBeLessThan(nodes.n3.y);
-    expect(nodes.n3.x).toBeLessThan(nodes.n4.x);
-    expect(nodes.n3.y).toEqual(nodes.n4.y);
+    resultCoords = getNodeCoordinates(result.nodes);
+    expect(resultCoords.slice(0,2)).toEqual(coords.slice(0,2));
+    expect(resultCoords.slice(2,6)).toEqual(coords.slice(4,8));
   });
 
   it('keeps nodes in rectangle after removed node reappears', () => {
@@ -202,6 +198,7 @@ describe('NodesLayout', () => {
 
     nodes = result.nodes.toJS();
 
+    coords = getNodeCoordinates(result.nodes);
     options.cachedLayout = result;
     options.nodeCache = options.nodeCache.merge(result.nodes);
     options.edgeCache = options.edgeCache.merge(result.edge);
@@ -229,10 +226,9 @@ describe('NodesLayout', () => {
     nodes = result.nodes.toJS();
     // console.log('re-add 1 node', nodes);
 
-    expect(nodes.n1.x).toEqual(nodes.n3.x);
-    expect(nodes.n1.y).toBeLessThan(nodes.n3.y);
-    expect(nodes.n3.x).toBeLessThan(nodes.n4.x);
-    expect(nodes.n3.y).toEqual(nodes.n4.y);
+    resultCoords = getNodeCoordinates(result.nodes);
+    expect(resultCoords.slice(0,2)).toEqual(coords.slice(0,2));
+    expect(resultCoords.slice(2,6)).toEqual(coords.slice(4,8));
   });
 
 });

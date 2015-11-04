@@ -246,9 +246,11 @@ export function doLayout(nodes, edges, opts) {
   }
 
   // cache results
-  cache.cachedLayout = layout;
-  cache.nodeCache = cache.nodeCache.merge(layout.nodes);
-  cache.edgeCache = cache.edgeCache.merge(layout.edges);
+  if (layout) {
+    cache.cachedLayout = layout;
+    cache.nodeCache = cache.nodeCache.merge(layout.nodes);
+    cache.edgeCache = cache.edgeCache.merge(layout.edges);
+  }
 
   return layout;
 }
