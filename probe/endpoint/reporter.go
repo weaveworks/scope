@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/procspy"
+	"github.com/weaveworks/scope/probe/procspy"
 	"github.com/weaveworks/scope/report"
 )
 

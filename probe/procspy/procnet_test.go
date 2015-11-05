@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/weaveworks/scope/procspy"
+	"github.com/weaveworks/scope/probe/procspy"
 )
 
 func TestProcNet(t *testing.T) {
