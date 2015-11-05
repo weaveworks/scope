@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/xfer"
 )
 
 // URLMatcher uses request.RequestURI (the raw, unparsed request) to attempt
@@ -46,8 +45,8 @@ func URLMatcher(pattern string) mux.MatcherFunc {
 }
 
 type collector interface {
-	xfer.Reporter
-	xfer.Adder
+	Reporter
+	Adder
 }
 
 func gzipHandler(h http.HandlerFunc) http.HandlerFunc {
@@ -80,7 +79,7 @@ func Router(c collector) *mux.Router {
 	return router
 }
 
-func makeReportPostHandler(a xfer.Adder) http.HandlerFunc {
+func makeReportPostHandler(a Adder) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			rpt    report.Report

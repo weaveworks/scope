@@ -50,7 +50,7 @@ func main() {
 	uniqueID = strconv.FormatInt(rand.Int63(), 16)
 	log.Printf("app starting, version %s, ID %s", version, uniqueID)
 
-	c := xfer.NewCollector(*window)
+	c := NewCollector(*window)
 	http.Handle("/", Router(c))
 	go func() {
 		log.Printf("listening on %s", *listen)

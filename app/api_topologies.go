@@ -9,7 +9,6 @@ import (
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/xfer"
 )
 
 const apiTopologyURL = "/api/topology/"
@@ -186,7 +185,7 @@ func (r *registry) walk(f func(APITopologyDesc)) {
 }
 
 // makeTopologyList returns a handler that yields an APITopologyList.
-func (r *registry) makeTopologyList(rep xfer.Reporter) func(w http.ResponseWriter, r *http.Request) {
+func (r *registry) makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var (
 			rpt        = rep.Report()
@@ -246,7 +245,7 @@ func renderedForRequest(r *http.Request, topology APITopologyDesc) render.Render
 	return renderer
 }
 
-func (r *registry) captureRenderer(rep xfer.Reporter, f func(xfer.Reporter, render.Renderer, http.ResponseWriter, *http.Request)) http.HandlerFunc {
+func (r *registry) captureRenderer(rep Reporter, f func(Reporter, render.Renderer, http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		topology, ok := r.get(mux.Vars(req)["topology"])
 		if !ok {
