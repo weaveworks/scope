@@ -37,23 +37,38 @@ dependencies:
 
 test:
   override:
-    - cd $SRCDIR; ./tools/lint .
-    - cd $SRCDIR; make RM= tests
-    - cd $SRCDIR; make RM= client-test
-    - cd $SRCDIR; make RM= static
-    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOARCH=arm make RM= app/scope-app probe/scope-probe
-    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; GOOS=darwin make RM= app/scope-app probe/scope-probe
-    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; make RM=
-    - cd $SRCDIR/experimental; make RM=
-    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup)
-    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./setup.sh)
+    - cd $SRCDIR; ./tools/lint .:
+        parallel: true
+    - cd $SRCDIR; COVERDIR=./coverage make RM= tests:
+        parallel: true
+    - cd $SRCDIR; make RM= client-test:
+        parallel: true
+    - cd $SRCDIR; make RM= static:
+        parallel: true
+    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; if [ "$CIRCLE_NODE_INDEX" = "0" ]; then GOARCH=arm make RM= app/scope-app probe/scope-probe; else GOOS=darwin make RM= app/scope-app probe/scope-probe; fi:
+        parallel: true
+    - cd $SRCDIR; rm -f app/scope-app probe/scope-probe; make RM=:
+        parallel: true
+    - cd $SRCDIR/experimental; ./build_on_circle.sh:
+        parallel: true
+    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup):
+        parallel: true
+    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./setup.sh):
+        parallel: true
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./run_all.sh):
         timeout: 300
   post:
-    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy)
-    - goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true
-    - cd $SRCDIR; cp coverage.html $CIRCLE_ARTIFACTS
-    - cd $SRCDIR; cp scope.tar $CIRCLE_ARTIFACTS
+    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy):
+        parallel: true
+
+teardown:
+  pre:
+    - test "$CIRCLE_NODE_INDEX" != "0" || (cd $SRCDIR; ./tools/cover/gather_coverage.sh ./coverage $SRCDIR/coverage):
+        parallel: true
+    - test "$CIRCLE_NODE_INDEX" != "0" || (goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true):
+        parallel: true
+    - test "$CIRCLE_NODE_INDEX" != "0" || (cd $SRCDIR; cp coverage.* scope.tar $CIRCLE_ARTIFACTS):
+        parallel: true
 
 deployment:
   hub:

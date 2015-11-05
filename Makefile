@@ -104,9 +104,10 @@ clean:
 		$(APP_EXE) $(PROBE_EXE) $(RUNSVINIT) client/build/app.js docker/weave
 
 ifeq ($(BUILD_IN_CONTAINER),true)
-tests:
+tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope \
-		-e GOARCH -e GOOS -e CIRCLECI $(SCOPE_BACKEND_BUILD_IMAGE) tests
+		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL -e CIRCLE_NODE_INDEX -e COVERDIR\
+		$(SCOPE_BACKEND_BUILD_IMAGE) tests
 else
 tests:
 	./tools/test -no-go-get
