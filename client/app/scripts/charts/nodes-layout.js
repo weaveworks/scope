@@ -1,26 +1,38 @@
 const dagre = require('dagre');
 const debug = require('debug')('scope:nodes-layout');
+const makeMap = require('immutable').Map;
+const ImmSet = require('immutable').Set;
 const Naming = require('../constants/naming');
-const _ = require('lodash');
 
 const MAX_NODES = 100;
-const topologyGraphs = {};
+const topologyCaches = {};
+let layoutRuns = 0;
+let layoutRunsTrivial = 0;
 
-const doLayout = function(nodes, edges, width, height, scale, margins, topologyId) {
-  let offsetX = 0 + margins.left;
-  let offsetY = 0 + margins.top;
-  let graph;
+/**
+ * Layout engine runner
+ * After the layout engine run nodes and edges have x-y-coordinates. Engine is
+ * not run if the number of nodes is bigger than `MAX_NODES`.
+ * @param  {Object} graph dagre graph instance
+ * @param  {Map} imNodes new node set
+ * @param  {Map} imEdges new edge set
+ * @param  {Object} opts    dimensions, scales, etc.
+ * @return {Object}         Layout with nodes, edges, dimensions
+ */
+function runLayoutEngine(graph, imNodes, imEdges, opts) {
+  let nodes = imNodes;
+  let edges = imEdges;
 
-  if (_.size(nodes) > MAX_NODES) {
+  if (nodes.size > MAX_NODES) {
     debug('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
     return null;
   }
 
-  // one engine per topology, to keep renderings similar
-  if (!topologyGraphs[topologyId]) {
-    topologyGraphs[topologyId] = new dagre.graphlib.Graph({});
-  }
-  graph = topologyGraphs[topologyId];
+  const options = opts || {};
+  const margins = options.margins || {top: 0, left: 0};
+  const width = options.width || 800;
+  const height = options.height || width / 2;
+  const scale = options.scale || (val => val * 2);
 
   // configure node margins
   graph.setGraph({
@@ -29,10 +41,10 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
   });
 
   // add nodes to the graph if not already there
-  _.each(nodes, function(node) {
-    if (!graph.hasNode(node.id)) {
-      graph.setNode(node.id, {
-        id: node.id,
+  nodes.forEach(node => {
+    if (!graph.hasNode(node.get('id'))) {
+      graph.setNode(node.get('id'), {
+        id: node.get('id'),
         width: scale(1),
         height: scale(1)
       });
@@ -40,34 +52,40 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
   });
 
   // remove nodes that are no longer there
-  _.each(graph.nodes(), function(nodeid) {
-    if (!_.has(nodes, nodeid)) {
+  graph.nodes().forEach(nodeid => {
+    if (!nodes.has(nodeid)) {
       graph.removeNode(nodeid);
     }
   });
 
   // add edges to the graph if not already there
-  _.each(edges, function(edge) {
-    if (!graph.hasEdge(edge.source.id, edge.target.id)) {
-      const virtualNodes = edge.source.id === edge.target.id ? 1 : 0;
-      graph.setEdge(edge.source.id, edge.target.id, {id: edge.id, minlen: virtualNodes});
+  edges.forEach(edge => {
+    if (!graph.hasEdge(edge.get('source'), edge.get('target'))) {
+      const virtualNodes = edge.get('source') === edge.get('target') ? 1 : 0;
+      graph.setEdge(
+        edge.get('source'),
+        edge.get('target'),
+        {id: edge.get('id'), minlen: virtualNodes}
+      );
     }
   });
 
-  // remoed egdes that are no longer there
-  _.each(graph.edges(), function(edgeObj) {
+  // remove edges that are no longer there
+  graph.edges().forEach(edgeObj => {
     const edge = [edgeObj.v, edgeObj.w];
     const edgeId = edge.join(Naming.EDGE_ID_SEPARATOR);
-    if (!_.has(edges, edgeId)) {
+    if (!edges.has(edgeId)) {
       graph.removeEdge(edgeObj.v, edgeObj.w);
     }
   });
 
   dagre.layout(graph);
-
   const layout = graph.graph();
 
   // shifting graph coordinates to center
+
+  let offsetX = 0 + margins.left;
+  let offsetY = 0 + margins.top;
 
   if (layout.width < width) {
     offsetX = (width - layout.width) / 2 + margins.left;
@@ -78,31 +96,161 @@ const doLayout = function(nodes, edges, width, height, scale, margins, topologyI
 
   // apply coordinates to nodes and edges
 
-  graph.nodes().forEach(function(id) {
-    const node = nodes[id];
+  graph.nodes().forEach(id => {
     const graphNode = graph.node(id);
-    node.x = graphNode.x + offsetX;
-    node.y = graphNode.y + offsetY;
+    nodes = nodes.setIn([id, 'x'], graphNode.x + offsetX);
+    nodes = nodes.setIn([id, 'y'], graphNode.y + offsetY);
   });
 
-  graph.edges().forEach(function(id) {
+  graph.edges().forEach(id => {
     const graphEdge = graph.edge(id);
-    const edge = edges[graphEdge.id];
-    _.each(graphEdge.points, function(point) {
-      point.x += offsetX;
-      point.y += offsetY;
-    });
-    edge.points = graphEdge.points;
+    const edge = edges.get(graphEdge.id);
+    const points = graphEdge.points.map(point => ({
+      x: point.x + offsetX,
+      y: point.y + offsetY
+    }));
+
     // set beginning and end points to node coordinates to ignore node bounding box
-    edge.points[0] = {x: edge.source.x, y: edge.source.y};
-    edge.points[edge.points.length - 1] = {x: edge.target.x, y: edge.target.y};
+    const source = nodes.get(edge.get('source'));
+    const target = nodes.get(edge.get('target'));
+    points[0] = {x: source.get('x'), y: source.get('y')};
+    points[points.length - 1] = {x: target.get('x'), y: target.get('y')};
+
+    edges = edges.setIn([graphEdge.id, 'points'], points);
   });
 
   // return object with the width and height of layout
+  layout.nodes = nodes;
+  layout.edges = edges;
+  return layout;
+}
+
+/**
+ * Adds `points` array to edge based on location of source and target
+ * @param {Map} edge           new edge
+ * @param {Map} nodeCache      all nodes
+ * @returns {Map}              modified edge
+ */
+function setSimpleEdgePoints(edge, nodeCache) {
+  const source = nodeCache.get(edge.get('source'));
+  const target = nodeCache.get(edge.get('target'));
+  return edge.set('points', [
+    {x: source.get('x'), y: source.get('y')},
+    {x: target.get('x'), y: target.get('y')}
+  ]);
+}
+
+/**
+ * Determine if nodes were added between node sets
+ * @param  {Map} nodes     new Map of nodes
+ * @param  {Map} cache     old Map of nodes
+ * @return {Boolean}       True if nodes had node ids that are not in cache
+ */
+export function hasUnseenNodes(nodes, cache) {
+  const hasUnseen = nodes.size > cache.size
+    || !ImmSet.fromKeys(nodes).isSubset(ImmSet.fromKeys(cache));
+  if (hasUnseen) {
+    debug('unseen nodes:', ...ImmSet.fromKeys(nodes).subtract(ImmSet.fromKeys(cache)).toJS());
+  }
+  return hasUnseen;
+}
+
+/**
+ * Determine if edge has same endpoints in new nodes as well as in the nodeCache
+ * @param  {Map}  edge      Edge with source and target
+ * @param  {Map}  nodes     new node set
+ * @return {Boolean}           True if old and new endpoints have same coordinates
+ */
+function hasSameEndpoints(cachedEdge, nodes) {
+  const oldPoints = cachedEdge.get('points');
+  const oldSourcePoint = oldPoints[0];
+  const oldTargetPoint = oldPoints[oldPoints.length - 1];
+  const newSource = nodes.get(cachedEdge.get('source'));
+  const newTarget = nodes.get(cachedEdge.get('target'));
+  return (oldSourcePoint.x === newSource.get('x')
+    && oldSourcePoint.y === newSource.get('y')
+    && oldTargetPoint.x === newTarget.get('x')
+    && oldTargetPoint.y === newTarget.get('y'));
+}
+
+/**
+ * Clones a previous layout
+ * @param  {Object} layout Layout object
+ * @param  {Map} nodes  new nodes
+ * @param  {Map} edges  new edges
+ * @return {Object}        layout clone
+ */
+function cloneLayout(layout, nodes, edges) {
+  const clone = {...layout, nodes, edges};
+  return clone;
+}
+
+/**
+ * Copies node properties from previous layout runs to new nodes.
+ * This assumes the cache has data for all new nodes.
+ * @param  {Object} layout Layout
+ * @param  {Object} nodeCache  cache of all old nodes
+ * @param  {Object} edgeCache  cache of all old edges
+ * @return {Object}        modified layout
+ */
+function copyLayoutProperties(layout, nodeCache, edgeCache) {
+  layout.nodes = layout.nodes.map(node => {
+    return node.merge(nodeCache.get(node.get('id')));
+  });
+  layout.edges = layout.edges.map(edge => {
+    if (edgeCache.has(edge.get('id')) && hasSameEndpoints(edgeCache.get(edge.get('id')), layout.nodes)) {
+      return edge.merge(edgeCache.get(edge.get('id')));
+    }
+    return setSimpleEdgePoints(edge, nodeCache);
+  });
+  return layout;
+}
+
+/**
+ * Layout of nodes and edges
+ * If a previous layout was given and not too much changed, the previous layout
+ * is changed and returned. Otherwise does a new layout engine run.
+ * @param  {Map} nodes All nodes
+ * @param  {Map} edges All edges
+ * @param  {object} opts  width, height, margins, etc...
+ * @return {object} graph object with nodes, edges, dimensions
+ */
+export function doLayout(nodes, edges, opts) {
+  const options = opts || {};
+  const topologyId = options.topologyId || 'noId';
+
+  // one engine and node and edge caches per topology, to keep renderings similar
+  if (!topologyCaches[topologyId]) {
+    topologyCaches[topologyId] = {
+      nodeCache: makeMap(),
+      edgeCache: makeMap(),
+      graph: new dagre.graphlib.Graph({})
+    };
+  }
+
+  const cache = topologyCaches[topologyId];
+  const cachedLayout = options.cachedLayout || cache.cachedLayout;
+  const nodeCache = options.nodeCache || cache.nodeCache;
+  const edgeCache = options.edgeCache || cache.edgeCache;
+  let layout;
+
+  ++layoutRuns;
+  if (cachedLayout && nodeCache && edgeCache && !hasUnseenNodes(nodes, nodeCache)) {
+    debug('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
+    layout = cloneLayout(cachedLayout, nodes, edges);
+    // copy old properties, works also if nodes get re-added
+    layout = copyLayoutProperties(layout, nodeCache, edgeCache);
+  } else {
+    const graph = cache.graph;
+    layout = runLayoutEngine(graph, nodes, edges, opts);
+  }
+
+  // cache results
+  if (layout) {
+    cache.cachedLayout = layout;
+    cache.nodeCache = cache.nodeCache.merge(layout.nodes);
+    cache.edgeCache = cache.edgeCache.merge(layout.edges);
+  }
 
   return layout;
-};
-
-module.exports = {
-  doLayout: doLayout
-};
+}
