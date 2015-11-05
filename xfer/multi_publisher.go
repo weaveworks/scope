@@ -47,8 +47,8 @@ func (p *MultiPublisher) Set(target string, endpoints []string) {
 	c := make(chan tuple, len(endpoints))
 	for _, endpoint := range endpoints {
 		go func(endpoint string) {
-			p.sema.p()
-			defer p.sema.v()
+			p.sema.acquire()
+			defer p.sema.release()
 			id, publisher, err := p.factory(target, endpoint)
 			c <- tuple{publisher, target, endpoint, id, err}
 		}(endpoint)
@@ -140,5 +140,5 @@ func newSemaphore(n int) semaphore {
 	}
 	return semaphore(c)
 }
-func (s semaphore) p() { <-s }
-func (s semaphore) v() { s <- struct{}{} }
+func (s semaphore) acquire() { <-s }
+func (s semaphore) release() { s <- struct{}{} }
