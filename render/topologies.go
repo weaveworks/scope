@@ -76,21 +76,20 @@ var ProcessNameRenderer = Map{
 
 // ContainerRenderer is a Renderer which produces a renderable container
 // graph by merging the process graph and the container topology.
+// NB We only want processes in container _or_ processes with network connections
+// but we need to be careful to ensure we only include each edge once, by only
+// including the ProcessRenderer once.
 var ContainerRenderer = MakeReduce(
-	Map{
-		MapFunc: MapProcess2Container,
-
-		// We only want processes in container _or_ processes with network connections
-		// but we need to be careful to ensure we only include each edge once, by only
-		// including the ProcessRenderer once.
-		Renderer: Filter{
-			FilterFunc: func(n RenderableNode) bool {
-				_, inContainer := n.Node.Metadata[docker.ContainerID]
-				_, isConnected := n.Node.Metadata[IsConnected]
-				return inContainer || isConnected
-			},
-			Renderer: ColorConnected(ProcessRenderer),
+	Filter{
+		FilterFunc: func(n RenderableNode) bool {
+			_, inContainer := n.Node.Metadata[docker.ContainerID]
+			_, isConnected := n.Node.Metadata[IsConnected]
+			return inContainer || isConnected
 		},
+		Renderer: ColorConnected(Map{
+			MapFunc:  MapProcess2Container,
+			Renderer: ProcessRenderer,
+		}),
 	},
 
 	Map{
