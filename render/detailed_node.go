@@ -346,6 +346,14 @@ func processOriginTable(nmd report.Node, addHostTag bool, addContainerTag bool) 
 	}, len(rows) > 0 || commFound || pidFound
 }
 
+func sparklineRow(human, format string, scale float64, metric report.Metric) Row {
+	lastStr := ""
+	if last := metric.LastSample(); last != nil {
+		lastStr = fmt.Sprintf(format, last.Value/scale)
+	}
+	return Row{Key: human, ValueMajor: lastStr, Metric: metric, ValueType: "sparkline"}
+}
+
 func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
@@ -379,20 +387,11 @@ func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 		rows = append([]Row{{Key: "Host", ValueMajor: report.ExtractHostID(nmd)}}, rows...)
 	}
 
-	for _, tuple := range []struct {
-		key, human, format string
-		scale              float64
-	}{
-		{docker.MemoryUsage, "Memory Usage", "%0.2f MB", 1024 * 1024.},
-		{docker.CPUTotalUsage, "CPU Usage", "%0.2f%%", 1.},
-	} {
-		if val, ok := nmd.Metrics[tuple.key]; ok {
-			lastStr := ""
-			if last := val.LastSample(); last != nil {
-				lastStr = fmt.Sprintf(tuple.format, last.Value/tuple.scale)
-			}
-			rows = append(rows, Row{Key: tuple.human, ValueMajor: lastStr, Metric: val, ValueType: "sparkline"})
-		}
+	if val, ok := nmd.Metrics[docker.MemoryUsage]; ok {
+		rows = append(rows, sparklineRow("Memory Usage", "%0.2f MB", 1024*1024, val))
+	}
+	if val, ok := nmd.Metrics[docker.CPUTotalUsage]; ok {
+		rows = append(rows, sparklineRow("CPU Usage", "%0.2f%%", 1, val))
 	}
 
 	var (
@@ -474,25 +473,24 @@ func hostOriginTable(nmd report.Node) (Table, bool) {
 
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		// TODO(paulbellamy): render this as a sparkline and number
 		{host.Load1, "Load (1m)"},
 		{host.Load5, "Load (5m)"},
 		{host.Load15, "Load (15m)"},
+	} {
+		if val, ok := nmd.Metrics[tuple.key]; ok {
+			val.Max = maxLoad
+			val.First = lastLoad.Add(-15 * time.Second) // TODO(paulbellamy): This should be based on the duration flag, maybe? or just auto-scale to data.
+			val.Last = lastLoad
+			rows = append(rows, sparklineRow(tuple.human, "%0.2f", 1, val))
+		}
+	}
+	for _, tuple := range []struct{ key, human string }{
 		{host.OS, "Operating system"},
 		{host.KernelVersion, "Kernel version"},
 		{host.Uptime, "Uptime"},
 	} {
 		if val, ok := nmd.Metadata[tuple.key]; ok {
 			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
-		} else if val, ok := nmd.Metrics[tuple.key]; ok {
-			lastStr := ""
-			if last := val.LastSample(); last != nil {
-				lastStr = fmt.Sprint(last.Value)
-			}
-			val.Max = maxLoad
-			val.First = lastLoad.Add(-15 * time.Second) // TODO(paulbellamy): This should be based on the duration flag, maybe? or just auto-scale to data.
-			val.Last = lastLoad
-			rows = append(rows, Row{Key: tuple.human, ValueMajor: lastStr, Metric: val, ValueType: "sparkline"})
 		}
 	}
 

@@ -405,10 +405,15 @@ func MakeMetric() Metric {
 	return Metric{}
 }
 
+func (m Metric) WithFirst(t time.Time) Metric {
+	m.First = t
+	return m
+}
+
 // Add adds the sample to the Metric. Add is the only valid way to grow a
 // Metric. Add returns the Metric to enable chaining.
 func (m Metric) Add(t time.Time, v float64) Metric {
-	i := sort.Search(len(m.Samples), func(i int) bool { return t.Before(m.Samples[i].Timestamp) })
+	i := sort.Search(len(m.Samples), func(i int) bool { return !t.After(m.Samples[i].Timestamp) })
 	if i < len(m.Samples) && m.Samples[i].Timestamp.Equal(t) {
 		// The list already has the element.
 		return m
@@ -437,13 +442,28 @@ func (m Metric) Merge(other Metric) Metric {
 	for _, sample := range other.Samples {
 		m = m.Add(sample.Timestamp, sample.Value)
 	}
+	if !other.First.IsZero() && other.First.Before(m.First) {
+		m.First = other.First
+	}
+	if !other.Last.IsZero() && other.Last.After(m.Last) {
+		m.Last = other.Last
+	}
+	if other.Min < m.Min {
+		m.Min = other.Min
+	}
+	if other.Max > m.Max {
+		m.Max = other.Max
+	}
 	return m
 }
 
 // Copy returns a value copy of the Metric.
 func (m Metric) Copy() Metric {
-	samples := make([]Sample, len(m.Samples))
-	copy(samples, m.Samples)
+	var samples []Sample
+	if m.Samples != nil {
+		samples = make([]Sample, len(m.Samples))
+		copy(samples, m.Samples)
+	}
 	return Metric{Samples: samples, Max: m.Max, Min: m.Min, First: m.First, Last: m.Last}
 }
 

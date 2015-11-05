@@ -20,10 +20,14 @@ func TestGetKernelVersion(t *testing.T) {
 
 func TestGetLoad(t *testing.T) {
 	have := host.GetLoad()
-	if have == nil {
-		t.Fatal(have)
+	if len(have) != 3 {
+		t.Fatalf("Expected 3 metrics, but got: %v", have)
 	}
-	t.Log(have)
+	for key, metric := range have {
+		if len(metric.Samples) != 1 {
+			t.Errorf("Expected metric %s to have 1 sample, but had: %d", key, len(metric.Samples))
+		}
+	}
 }
 
 func TestGetUptime(t *testing.T) {
