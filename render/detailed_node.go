@@ -375,15 +375,24 @@ func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 	}
 	rows = append(rows, getDockerLabelRows(nmd)...)
 
-	if val, ok := nmd.Metadata[docker.MemoryUsage]; ok {
-		memory, err := strconv.ParseFloat(val, 64)
-		if err == nil {
-			memoryStr := fmt.Sprintf("%0.2f", memory/float64(mb))
-			rows = append(rows, Row{Key: "Memory Usage (MB):", ValueMajor: memoryStr, ValueMinor: ""})
-		}
-	}
 	if addHostTag {
 		rows = append([]Row{{Key: "Host", ValueMajor: report.ExtractHostID(nmd)}}, rows...)
+	}
+
+	for _, tuple := range []struct {
+		key, human, format string
+		scale              float64
+	}{
+		{docker.MemoryUsage, "Memory Usage", "%0.2f MB", 1024 * 1024.},
+		{docker.CPUTotalUsage, "CPU Usage", "%0.2f%%", 1.},
+	} {
+		if val, ok := nmd.Metrics[tuple.key]; ok {
+			lastStr := ""
+			if last := val.LastSample(); last != nil {
+				lastStr = fmt.Sprintf(tuple.format, last.Value/tuple.scale)
+			}
+			rows = append(rows, Row{Key: tuple.human, ValueMajor: lastStr, Metric: val, ValueType: "sparkline"})
+		}
 	}
 
 	var (
