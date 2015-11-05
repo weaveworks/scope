@@ -7,10 +7,10 @@ const Sparkline = React.createClass({
     return {
       width: 100,
       height: 16,
-      strokeColor: 'black',
+      strokeColor: '#7d7da8',
       strokeWidth: '0.5px',
       interpolate: 'basis',
-      circleDiameter: 1.5,
+      circleDiameter: 1.75,
       data: [1, 23, 5, 5, 23, 0, 0, 0, 4, 32, 3, 12, 3, 1, 24, 1, 5, 5, 24, 23] // Some semi-random data.
     };
   },
@@ -105,7 +105,8 @@ const Sparkline = React.createClass({
       attr('class', 'sparkcircle').
       attr('cx', lastX).
       attr('cy', lastY).
-      attr('fill', 'red').
+      attr('fill', '#46466a').
+      attr('fill-opacity', 0.6).
       attr('stroke', 'none').
       attr('r', this.props.circleDiameter);
   },
