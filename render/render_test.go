@@ -190,7 +190,7 @@ func TestFilterRender(t *testing.T) {
 	want := render.RenderableNodes{
 		"foo": {ID: "foo", Origins: report.IDList{}, Node: report.MakeNode().WithAdjacent("bar")},
 		"bar": {ID: "bar", Origins: report.IDList{}, Node: report.MakeNode().WithAdjacent("foo")},
-	}
+	}.Prune()
 	have := renderer.Render(report.MakeReport()).Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -212,7 +212,7 @@ func TestFilterRender2(t *testing.T) {
 	want := render.RenderableNodes{
 		"foo": {ID: "foo", Origins: report.IDList{}, Node: report.MakeNode()},
 		"baz": {ID: "baz", Origins: report.IDList{}, Node: report.MakeNode()},
-	}
+	}.Prune()
 	have := renderer.Render(report.MakeReport()).Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -253,7 +253,7 @@ func TestFilterUnconnectedPesudoNodes(t *testing.T) {
 		}
 		want := render.RenderableNodes{
 			"foo": {ID: "foo", Origins: report.IDList{}, Node: report.MakeNode()},
-		}
+		}.Prune()
 		have := renderer.Render(report.MakeReport()).Prune()
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
@@ -272,7 +272,7 @@ func TestFilterUnconnectedPesudoNodes(t *testing.T) {
 		}
 		want := render.RenderableNodes{
 			"foo": {ID: "foo", Origins: report.IDList{}, Node: report.MakeNode()},
-		}
+		}.Prune()
 		have := renderer.Render(report.MakeReport()).Prune()
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))

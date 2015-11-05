@@ -23,7 +23,7 @@ func TestMergeRenderableNodes(t *testing.T) {
 		"bar": render.NewRenderableNode("bar"),
 		"baz": render.NewRenderableNode("baz"),
 	}).Prune()
-	have := nodes1.Merge(nodes2)
+	have := nodes1.Merge(nodes2).Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -57,8 +57,8 @@ func TestMergeRenderableNode(t *testing.T) {
 		Node:         report.MakeNode().WithAdjacent("a1").WithAdjacent("a2"),
 		Origins:      report.MakeIDList("o1", "o2"),
 		EdgeMetadata: report.EdgeMetadata{},
-	}
-	have := node1.Merge(node2)
+	}.Prune()
+	have := node1.Merge(node2).Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

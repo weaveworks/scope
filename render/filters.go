@@ -138,8 +138,8 @@ func FilterStopped(r Renderer) Renderer {
 	return Filter{
 		Renderer: r,
 		FilterFunc: func(node RenderableNode) bool {
-			containerState := node.Metadata[docker.ContainerState]
-			return containerState != docker.StateStopped
+			containerState, ok := node.Latest.Lookup(docker.ContainerState)
+			return !ok || containerState != docker.StateStopped
 		},
 	}
 }

@@ -207,7 +207,7 @@ func controlsFor(topology report.Topology, nodeID string) []ControlInstance {
 		return result
 	}
 
-	for _, id := range node.Controls {
+	for _, id := range node.Controls.Controls {
 		if control, ok := topology.Controls[id]; ok {
 			result = append(result, ControlInstance{
 				ProbeID: node.Metadata[report.ProbeID],
@@ -347,6 +347,13 @@ func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
 		{docker.ContainerState, "State"},
+	} {
+		if val, ok := nmd.Latest.Lookup(tuple.key); ok && val != "" {
+			rows = append(rows, Row{Key: tuple.human, ValueMajor: val, ValueMinor: ""})
+		}
+	}
+
+	for _, tuple := range []struct{ key, human string }{
 		{docker.ContainerID, "ID"},
 		{docker.ImageID, "Image ID"},
 		{docker.ContainerPorts, "Ports"},

@@ -219,7 +219,7 @@ var (
 					docker.ImageID:                                ClientContainerImageID,
 					report.HostNodeID:                             ClientHostNodeID,
 					docker.LabelPrefix + "io.kubernetes.pod.name": ClientPodID,
-				}),
+				}).WithLatest(docker.ContainerState, docker.StateRunning),
 				ServerContainerNodeID: report.MakeNodeWith(map[string]string{
 					docker.ContainerID:                                      ServerContainerID,
 					docker.ContainerName:                                    "task-name-5-server-aceb93e2f2b797caba01",
@@ -229,7 +229,7 @@ var (
 					docker.LabelPrefix + "foo1":                             "bar1",
 					docker.LabelPrefix + "foo2":                             "bar2",
 					docker.LabelPrefix + "io.kubernetes.pod.name":           ServerPodID,
-				}),
+				}).WithLatest(docker.ContainerState, docker.StateRunning),
 			},
 		},
 		ContainerImage: report.Topology{

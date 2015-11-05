@@ -58,6 +58,7 @@ func TestOriginTable(t *testing.T) {
 			Rank:    3,
 			Rows: []render.Row{
 				{"Host", fixture.ServerHostID, "", false},
+				{"State", "running", "", false},
 				{"ID", fixture.ServerContainerID, "", false},
 				{"Image ID", fixture.ServerContainerImageID, "", false},
 				{fmt.Sprintf(`Label %q`, render.AmazonECSContainerNameLabel), `server`, "", false},
@@ -161,6 +162,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Numeric: false,
 				Rank:    3,
 				Rows: []render.Row{
+					{"State", "running", "", false},
 					{"ID", fixture.ServerContainerID, "", false},
 					{"Image ID", fixture.ServerContainerImageID, "", false},
 					{fmt.Sprintf(`Label %q`, render.AmazonECSContainerNameLabel), `server`, "", false},

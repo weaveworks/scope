@@ -525,6 +525,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/google/gopacket",
+			"repository": "https://github.com/google/gopacket",
+			"revision": "1b0b78901cdd351ecfc68bf1a2adafcd2ff30220",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/gorilla/context",
 			"repository": "https://github.com/gorilla/context",
 			"revision": "1c83b3eabd45b6d76072b66b746c20815fb2872d",
@@ -572,6 +578,12 @@
 			"revision": "d0c3fe89de86839aecf2e0579c40ba3bb336a453",
 			"branch": "master",
 			"path": "/pbutil"
+		},
+		{
+			"importpath": "github.com/mndrix/ps",
+			"repository": "https://github.com/mndrix/ps",
+			"revision": "35fef6f28be7e47a87d8a71ef5b80cbf2c4c167a",
+			"branch": "master"
 		},
 		{
 			"importpath": "github.com/nu7hatch/gouuid",
@@ -855,12 +867,6 @@
 			"importpath": "speter.net/go/exp/math/dec/inf",
 			"repository": "https://code.google.com/p/go-decimal-inf.exp",
 			"revision": "42ca6cd68aa922bc3f32f1e056e61b65945d9ad7",
-			"branch": "master"
-		},
-		{
-			"importpath": "github.com/google/gopacket",
-			"repository": "https://github.com/google/gopacket",
-			"revision": "1b0b78901cdd351ecfc68bf1a2adafcd2ff30220",
 			"branch": "master"
 		}
 	]
