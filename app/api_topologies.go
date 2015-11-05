@@ -196,7 +196,7 @@ func (r *registry) makeTopologyList(rep Reporter) func(w http.ResponseWriter, r 
 			desc.Stats = decorateWithStats(rpt, renderer)
 			for i := range desc.SubTopologies {
 				renderer := renderedForRequest(req, desc.SubTopologies[i])
-				desc.Stats = decorateWithStats(rpt, renderer)
+				desc.SubTopologies[i].Stats = decorateWithStats(rpt, renderer)
 			}
 			topologies = append(topologies, desc)
 		})
