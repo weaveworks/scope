@@ -12,7 +12,7 @@ func TestSemaphore(t *testing.T) {
 	// First n should be fine
 	for i := 0; i < n; i++ {
 		ok := make(chan struct{})
-		go func() { s.p(); close(ok) }()
+		go func() { s.acquire(); close(ok) }()
 		select {
 		case <-ok:
 		case <-time.After(10 * time.Millisecond):
@@ -22,7 +22,7 @@ func TestSemaphore(t *testing.T) {
 
 	// This should block
 	ok := make(chan struct{})
-	go func() { s.p(); close(ok) }()
+	go func() { s.acquire(); close(ok) }()
 	select {
 	case <-ok:
 		t.Errorf("%dth p OK, but should block", n+1)
@@ -30,7 +30,7 @@ func TestSemaphore(t *testing.T) {
 		//t.Logf("%dth p blocks, as expected", n+1)
 	}
 
-	s.v()
+	s.release()
 
 	select {
 	case <-ok:
