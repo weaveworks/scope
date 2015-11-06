@@ -71,8 +71,6 @@ func Router(c collector) *mux.Router {
 		gzipHandler(topologyRegistry.captureRenderer(c, handleNode)))
 	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{local}/{remote}")).HandlerFunc(
 		gzipHandler(topologyRegistry.captureRenderer(c, handleEdge)))
-	get.MatcherFunc(URLMatcher("/api/origin/host/{id}")).HandlerFunc(
-		gzipHandler(makeOriginHostHandler(c)))
 	get.HandleFunc("/api/report", gzipHandler(makeRawReportHandler(c)))
 	get.PathPrefix("/").Handler(http.FileServer(FS(false))) // everything else is static
 
