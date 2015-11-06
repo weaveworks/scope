@@ -2,6 +2,10 @@ var webpack = require('webpack');
 var autoprefixer = require('autoprefixer-core');
 var path = require('path');
 
+var GLOBALS = {
+  __WS_URL__: 'false'
+};
+
 /**
  * This is the Webpack configuration file for production.
  */
@@ -56,9 +60,12 @@ module.exports = {
     extensions: ['', '.js', '.jsx']
   },
 
-  plugins: [new webpack.optimize.UglifyJsPlugin({
-    compress: {
-      warnings: false
-    }
-  })]
+  plugins: [
+    new webpack.DefinePlugin(GLOBALS),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false
+      }
+    })
+  ]
 };

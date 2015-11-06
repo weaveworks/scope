@@ -1,10 +1,11 @@
+
 const debug = require('debug')('scope:web-api-utils');
 const reqwest = require('reqwest');
 
 const AppActions = require('../actions/app-actions');
 
-const WS_PROTO = window.WS_PROTO || (location.protocol === 'https:' ? 'wss' : 'ws');
-const WS_URL = window.WS_URL || WS_PROTO + '://' + location.host + location.pathname.replace(/\/$/, '');
+const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+const wsUrl = __WS_URL__ || wsProto + '://' + location.host + location.pathname.replace(/\/$/, '');
 
 const apiTimerInterval = 10000;
 const reconnectTimerInterval = 5000;
@@ -17,7 +18,7 @@ let currentUrl = null;
 let currentOptions = null;
 let topologyTimer = 0;
 let apiDetailsTimer = 0;
-
+let controlErrorTimer = 0;
 
 function buildOptionsQuery(options) {
   if (options) {
@@ -35,7 +36,7 @@ function createWebsocket(topologyUrl, optionsQuery) {
     socket.close();
   }
 
-  socket = new WebSocket(WS_URL + topologyUrl
+  socket = new WebSocket(wsUrl + topologyUrl
     + '/ws?t=' + updateFrequency + '&' + optionsQuery);
 
   socket.onopen = function() {
@@ -135,7 +136,28 @@ function getApiDetails() {
   });
 }
 
+function doControl(probeId, nodeId, control) {
+  clearTimeout(controlErrorTimer);
+  const url = `api/control/${encodeURIComponent(probeId)}/`
+    + `${encodeURIComponent(nodeId)}/${control}`;
+  reqwest({
+    method: 'POST',
+    url: url,
+    success: function() {
+      AppActions.receiveControlSuccess();
+    },
+    error: function(err) {
+      AppActions.receiveControlError(err.response);
+      controlErrorTimer = setTimeout(function() {
+        AppActions.clearControlError();
+      }, 10000);
+    }
+  });
+}
+
 module.exports = {
+  doControl: doControl,
+
   getNodeDetails: getNodeDetails,
 
   getTopologies: getTopologies,

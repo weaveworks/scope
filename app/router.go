@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/xfer"
 )
 
 // URLMatcher uses request.RequestURI (the raw, unparsed request) to attempt
@@ -53,13 +54,7 @@ func gzipHandler(h http.HandlerFunc) http.HandlerFunc {
 	return handlers.GZIPHandlerFunc(h, nil)
 }
 
-// Router returns the HTTP dispatcher, managing API and UI requests, and
-// accepting reports from probes.. It will always use the embedded HTML
-// resources for the UI.
-func Router(c collector) *mux.Router {
-	router := mux.NewRouter()
-	router.HandleFunc("/api/report", makeReportPostHandler(c)).Methods("POST")
-
+func registerTopologyRoutes(c collector, router *mux.Router) {
 	get := router.Methods("GET").Subrouter()
 	get.HandleFunc("/api", gzipHandler(apiHandler))
 	get.HandleFunc("/api/topology", gzipHandler(topologyRegistry.makeTopologyList(c)))
@@ -72,9 +67,9 @@ func Router(c collector) *mux.Router {
 	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{local}/{remote}")).HandlerFunc(
 		gzipHandler(topologyRegistry.captureRenderer(c, handleEdge)))
 	get.HandleFunc("/api/report", gzipHandler(makeRawReportHandler(c)))
-	get.PathPrefix("/").Handler(http.FileServer(FS(false))) // everything else is static
 
-	return router
+	post := router.Methods("POST").Subrouter()
+	post.HandleFunc("/api/report", makeReportPostHandler(c)).Methods("POST")
 }
 
 func makeReportPostHandler(a Adder) http.HandlerFunc {
@@ -104,12 +99,6 @@ func makeReportPostHandler(a Adder) http.HandlerFunc {
 	}
 }
 
-// APIDetails are some generic details that can be fetched from /api
-type APIDetails struct {
-	ID      string `json:"id"`
-	Version string `json:"version"`
-}
-
 func apiHandler(w http.ResponseWriter, r *http.Request) {
-	respondWith(w, http.StatusOK, APIDetails{ID: uniqueID, Version: version})
+	respondWith(w, http.StatusOK, xfer.Details{ID: uniqueID, Version: version})
 }

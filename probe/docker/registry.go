@@ -10,9 +10,13 @@ import (
 
 // Consts exported for testing.
 const (
-	StartEvent = "start"
-	DieEvent   = "die"
-	endpoint   = "unix:///var/run/docker.sock"
+	CreateEvent  = "create"
+	DestroyEvent = "destroy"
+	StartEvent   = "start"
+	DieEvent     = "die"
+	PauseEvent   = "pause"
+	UnpauseEvent = "unpause"
+	endpoint     = "unix:///var/run/docker.sock"
 )
 
 // Vars exported for testing.
@@ -47,6 +51,11 @@ type Client interface {
 	ListImages(docker_client.ListImagesOptions) ([]docker_client.APIImages, error)
 	AddEventListener(chan<- *docker_client.APIEvents) error
 	RemoveEventListener(chan *docker_client.APIEvents) error
+	StopContainer(string, uint) error
+	StartContainer(string, *docker_client.HostConfig) error
+	RestartContainer(string, uint) error
+	PauseContainer(string) error
+	UnpauseContainer(string) error
 }
 
 func newDockerClient(endpoint string) (Client, error) {
@@ -70,6 +79,7 @@ func NewRegistry(interval time.Duration) (Registry, error) {
 		quit:     make(chan chan struct{}),
 	}
 
+	r.registerControls()
 	go r.loop()
 	return r, nil
 }
@@ -170,9 +180,7 @@ func (r *registry) updateContainers() error {
 	}
 
 	for _, apiContainer := range apiContainers {
-		if err := r.addContainer(apiContainer.ID); err != nil {
-			return err
-		}
+		r.updateContainerState(apiContainer.ID)
 	}
 
 	return nil
@@ -197,56 +205,54 @@ func (r *registry) updateImages() error {
 
 func (r *registry) handleEvent(event *docker_client.APIEvents) {
 	switch event.Status {
-	case DieEvent:
-		containerID := event.ID
-		r.removeContainer(containerID)
-
-	case StartEvent:
-		containerID := event.ID
-		if err := r.addContainer(containerID); err != nil {
-			log.Printf("docker registry: %s", err)
-		}
+	case CreateEvent, StartEvent, DieEvent, DestroyEvent, PauseEvent, UnpauseEvent:
+		r.updateContainerState(event.ID)
 	}
 }
 
-func (r *registry) addContainer(containerID string) error {
+func (r *registry) updateContainerState(containerID string) {
+	r.Lock()
+	defer r.Unlock()
+
 	dockerContainer, err := r.client.InspectContainer(containerID)
 	if err != nil {
 		// Don't spam the logs if the container was short lived
-		if _, ok := err.(*docker_client.NoSuchContainer); ok {
-			return nil
+		if _, ok := err.(*docker_client.NoSuchContainer); !ok {
+			log.Printf("Error processing event for container %s: %v", containerID, err)
+			return
 		}
-		return err
-	}
 
-	if !dockerContainer.State.Running {
-		// We get events late, and the containers sometimes have already
-		// stopped.  Not an error, so don't return it.
-		return nil
-	}
+		// Container doesn't exist anymore, so lets stop and remove it
+		container, ok := r.containers[containerID]
+		if !ok {
+			return
+		}
 
-	r.Lock()
-	defer r.Unlock()
-
-	c := NewContainerStub(dockerContainer)
-	r.containers[containerID] = c
-	r.containersByPID[dockerContainer.State.Pid] = c
-
-	return c.StartGatheringStats()
-}
-
-func (r *registry) removeContainer(containerID string) {
-	r.Lock()
-	defer r.Unlock()
-
-	container, ok := r.containers[containerID]
-	if !ok {
+		delete(r.containers, containerID)
+		delete(r.containersByPID, container.PID())
+		container.StopGatheringStats()
 		return
 	}
 
-	delete(r.containers, containerID)
-	delete(r.containersByPID, container.PID())
-	container.StopGatheringStats()
+	// Container exists, ensure we have it
+	c, ok := r.containers[containerID]
+	if !ok {
+		c = NewContainerStub(dockerContainer)
+		r.containers[containerID] = c
+		r.containersByPID[dockerContainer.State.Pid] = c
+	} else {
+		c.UpdateState(dockerContainer)
+	}
+
+	// And finally, ensure we gather stats for it
+	if dockerContainer.State.Running {
+		if err := c.StartGatheringStats(); err != nil {
+			log.Printf("Error gather stats for container: %s", containerID)
+			return
+		}
+	} else {
+		c.StopGatheringStats()
+	}
 }
 
 // LockedPIDLookup runs f under a read lock, and gives f a function for
@@ -270,6 +276,13 @@ func (r *registry) WalkContainers(f func(Container)) {
 	for _, container := range r.containers {
 		f(container)
 	}
+}
+
+func (r *registry) getContainer(id string) (Container, bool) {
+	r.RLock()
+	defer r.RUnlock()
+	c, ok := r.containers[id]
+	return c, ok
 }
 
 // WalkImages runs f on every image of running containers the registry

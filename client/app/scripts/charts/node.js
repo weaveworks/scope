@@ -22,9 +22,9 @@ const Node = React.createClass({
     const subLabelOffsetY = labelOffsetY + 17;
     const isPseudo = !!this.props.pseudo;
     const color = isPseudo ? '' : this.getNodeColor(this.props.rank);
-    const onClick = this.props.onClick;
     const onMouseEnter = this.handleMouseEnter;
     const onMouseLeave = this.handleMouseLeave;
+    const onMouseClick = this.handleMouseClick;
     const classNames = ['node'];
     const animConfig = [80, 20]; // stiffness, bounce
     const label = this.ellipsis(props.label, 14, scale(4 * scaleFactor));
@@ -51,7 +51,7 @@ const Node = React.createClass({
           const transform = `translate(${interpolated.x.val},${interpolated.y.val})`;
           return (
             <g className={classes} transform={transform} id={props.id}
-              onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+              onClick={onMouseClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
               {props.highlighted && <circle r={scale(0.7 * interpolated.f.val)} className="highlighted"></circle>}
               <circle r={scale(0.5 * interpolated.f.val)} className="border" stroke={color}></circle>
               <circle r={scale(0.45 * interpolated.f.val)} className="shadow"></circle>
@@ -77,6 +77,11 @@ const Node = React.createClass({
       truncatedText = text.slice(0, allowedChars) + '...';
     }
     return truncatedText;
+  },
+
+  handleMouseClick: function(ev) {
+    ev.stopPropagation();
+    AppActions.clickNode(ev.currentTarget.id);
   },
 
   handleMouseEnter: function(ev) {

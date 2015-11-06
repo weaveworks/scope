@@ -4,16 +4,19 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
@@ -66,10 +69,11 @@ func main() {
 		log.Printf("warning: -process=true, but that requires root to find everything")
 	}
 
+	rand.Seed(time.Now().UnixNano())
+	probeID := strconv.FormatInt(rand.Int63(), 16)
 	var (
 		hostName = hostname()
 		hostID   = hostName // TODO(pb): we should sanitize the hostname
-		probeID  = hostName // TODO(pb): does this need to be a random string instead?
 	)
 	log.Printf("probe starting, version %s, ID %s", version, probeID)
 
@@ -101,7 +105,14 @@ func main() {
 	publishers := xfer.NewMultiPublisher(factory)
 	defer publishers.Stop()
 
-	resolver := newStaticResolver(targets, publishers.Set)
+	clients := xfer.NewMultiAppClient(xfer.ProbeConfig{
+		Token:    *token,
+		ProbeID:  probeID,
+		Insecure: *insecure,
+	}, xfer.ControlHandlerFunc(controls.HandleControlRequest), xfer.NewAppClient)
+	defer clients.Stop()
+
+	resolver := newStaticResolver(targets, publishers.Set, clients.Set)
 	defer resolver.Stop()
 
 	endpointReporter := endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack)
@@ -112,7 +123,7 @@ func main() {
 	var (
 		tickers   = []Ticker{processCache}
 		reporters = []Reporter{endpointReporter, host.NewReporter(hostID, hostName, localNets), process.NewReporter(processCache, hostID)}
-		taggers   = []Tagger{newTopologyTagger(), host.NewTagger(hostID)}
+		taggers   = []Tagger{newTopologyTagger(), host.NewTagger(hostID, probeID)}
 	)
 
 	dockerTagger, dockerReporter, dockerRegistry := func() (*docker.Tagger, *docker.Reporter, docker.Registry) {

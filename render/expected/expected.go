@@ -213,6 +213,7 @@ var (
 				EgressPacketCount: newu64(30),
 				EgressByteCount:   newu64(300),
 			},
+			ControlNode: fixture.ClientContainerNodeID,
 		},
 		fixture.ServerContainerID: {
 			ID:         fixture.ServerContainerID,
@@ -232,6 +233,7 @@ var (
 				IngressPacketCount: newu64(210),
 				IngressByteCount:   newu64(2100),
 			},
+			ControlNode: fixture.ServerContainerNodeID,
 		},
 		uncontainedServerID: {
 			ID:         uncontainedServerID,

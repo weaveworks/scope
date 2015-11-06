@@ -29,6 +29,7 @@ const (
 	ContainerIPs           = "docker_container_ips"
 	ContainerHostname      = "docker_container_hostname"
 	ContainerIPsWithScopes = "docker_container_ips_with_scopes"
+	ContainerState         = "docker_container_state"
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
@@ -49,6 +50,12 @@ const (
 	CPUTotalUsage        = "cpu_total_usage"
 	CPUUsageInKernelmode = "cpu_usage_in_kernelmode"
 	CPUSystemCPUUsage    = "cpu_system_cpu_usage"
+
+	StateRunning = "running"
+	StateStopped = "stopped"
+	StatePaused  = "paused"
+
+	stopTimeout = 10
 )
 
 // Exported for testing
@@ -69,6 +76,8 @@ type ClientConn interface {
 
 // Container represents a Docker container
 type Container interface {
+	UpdateState(*docker.Container)
+
 	ID() string
 	Image() string
 	PID() int
@@ -88,7 +97,15 @@ type container struct {
 
 // NewContainer creates a new Container
 func NewContainer(c *docker.Container) Container {
-	return &container{container: c}
+	return &container{
+		container: c,
+	}
+}
+
+func (c *container) UpdateState(container *docker.Container) {
+	c.Lock()
+	defer c.Unlock()
+	c.container = container
 }
 
 func (c *container) ID() string {
@@ -231,6 +248,15 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ipsWithScopes = append(ipsWithScopes, report.MakeScopedAddressNodeID(hostID, ip))
 	}
 
+	var state string
+	if c.container.State.Paused {
+		state = StatePaused
+	} else if c.container.State.Running {
+		state = StateRunning
+	} else {
+		state = StateStopped
+	}
+
 	result := report.MakeNodeWith(map[string]string{
 		ContainerID:       c.ID(),
 		ContainerName:     strings.TrimPrefix(c.container.Name, "/"),
@@ -238,11 +264,21 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
 		ImageID:           c.container.Image,
 		ContainerHostname: c.Hostname(),
+		ContainerState:    state,
 	}).WithSets(report.Sets{
 		ContainerPorts:         c.ports(localAddrs),
 		ContainerIPs:           report.MakeStringSet(ips...),
 		ContainerIPsWithScopes: report.MakeStringSet(ipsWithScopes...),
 	})
+
+	if c.container.State.Paused {
+		result = result.WithControls(UnpauseContainer)
+	} else if c.container.State.Running {
+		result = result.WithControls(RestartContainer, StopContainer, PauseContainer)
+	} else {
+		result = result.WithControls(StartContainer)
+	}
+
 	AddLabels(result, c.container.Config.Labels)
 
 	if c.latestStats == nil {

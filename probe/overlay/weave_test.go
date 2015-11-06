@@ -33,14 +33,13 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if want, have := (report.Topology{
-			Nodes: report.Nodes{
-				report.MakeOverlayNodeID(mockWeavePeerName): report.MakeNodeWith(map[string]string{
-					overlay.WeavePeerName:     mockWeavePeerName,
-					overlay.WeavePeerNickName: mockWeavePeerNickName,
-				}),
-			},
-		}), have.Overlay; !reflect.DeepEqual(want, have) {
+		if want, have := report.MakeTopology().AddNode(
+			report.MakeOverlayNodeID(mockWeavePeerName),
+			report.MakeNodeWith(map[string]string{
+				overlay.WeavePeerName:     mockWeavePeerName,
+				overlay.WeavePeerNickName: mockWeavePeerNickName,
+			}),
+		), have.Overlay; !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}
@@ -48,27 +47,19 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 	{
 		nodeID := report.MakeContainerNodeID(mockHostID, mockContainerID)
 		want := report.Report{
-			Container: report.Topology{
-				Nodes: report.Nodes{
-					nodeID: report.MakeNodeWith(map[string]string{
-						docker.ContainerID:       mockContainerID,
-						overlay.WeaveDNSHostname: mockHostname,
-						overlay.WeaveMACAddress:  mockContainerMAC,
-					}).WithSets(report.Sets{
-						docker.ContainerIPs:           report.MakeStringSet(mockContainerIP),
-						docker.ContainerIPsWithScopes: report.MakeStringSet(mockContainerIPWithScope),
-					}),
-				},
-			},
+			Container: report.MakeTopology().AddNode(nodeID, report.MakeNodeWith(map[string]string{
+				docker.ContainerID:       mockContainerID,
+				overlay.WeaveDNSHostname: mockHostname,
+				overlay.WeaveMACAddress:  mockContainerMAC,
+			}).WithSets(report.Sets{
+				docker.ContainerIPs:           report.MakeStringSet(mockContainerIP),
+				docker.ContainerIPsWithScopes: report.MakeStringSet(mockContainerIPWithScope),
+			})),
 		}
 		have, err := w.Tag(report.Report{
-			Container: report.Topology{
-				Nodes: report.Nodes{
-					nodeID: report.MakeNodeWith(map[string]string{
-						docker.ContainerID: mockContainerID,
-					}),
-				},
-			},
+			Container: report.MakeTopology().AddNode(nodeID, report.MakeNodeWith(map[string]string{
+				docker.ContainerID: mockContainerID,
+			})),
 		})
 		if err != nil {
 			t.Fatal(err)

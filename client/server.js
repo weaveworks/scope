@@ -28,9 +28,11 @@ app.get('/app.js', function(req, res) {
 
 // Proxy to backend
 
+var BACKEND_HOST = process.env.BACKEND_HOST || 'localhost:4040';
+
 // HACK need express-http-proxy, because proxy-middleware does
 // not proxy to /api itself
-app.use(httpProxy('localhost:4040', {
+app.use(httpProxy(BACKEND_HOST, {
   filter: function(req) {
     return url.parse(req.url).path === '/api';
   },
@@ -39,7 +41,7 @@ app.use(httpProxy('localhost:4040', {
   }
 }));
 
-app.use('/api', proxy('http://localhost:4040/api/'));
+app.use('/api', proxy('http://' + BACKEND_HOST + '/api/'));
 
 // Serve index page
 

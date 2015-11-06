@@ -14,6 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/weaveworks/scope/xfer"
 )
 
@@ -24,6 +26,19 @@ var (
 	// Set at runtime.
 	uniqueID = "0"
 )
+
+func registerStatic(router *mux.Router) {
+	router.Methods("GET").PathPrefix("/").Handler(http.FileServer(FS(false)))
+}
+
+// Router creates the mux for all the various app components.
+func Router(c collector) *mux.Router {
+	router := mux.NewRouter()
+	registerTopologyRoutes(c, router)
+	registerControlRoutes(router)
+	registerStatic(router)
+	return router
+}
 
 func main() {
 	var (

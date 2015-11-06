@@ -66,10 +66,27 @@ module.exports = {
     });
   },
 
+  clearControlError: function() {
+    AppDispatcher.dispatch({
+      type: ActionTypes.CLEAR_CONTROL_ERROR
+    });
+  },
+
   closeWebsocket: function() {
     AppDispatcher.dispatch({
       type: ActionTypes.CLOSE_WEBSOCKET
     });
+  },
+
+  doControl: function(probeId, nodeId, control) {
+    AppDispatcher.dispatch({
+      type: ActionTypes.DO_CONTROL
+    });
+    WebapiUtils.doControl(
+      probeId,
+      nodeId,
+      control,
+    );
   },
 
   enterEdge: function(edgeId) {
@@ -107,6 +124,19 @@ module.exports = {
     });
   },
 
+  receiveControlError: function(err) {
+    AppDispatcher.dispatch({
+      type: ActionTypes.DO_CONTROL_ERROR,
+      error: err
+    });
+  },
+
+  receiveControlSuccess: function() {
+    AppDispatcher.dispatch({
+      type: ActionTypes.DO_CONTROL_SUCCESS
+    });
+  },
+
   receiveNodeDetails: function(details) {
     AppDispatcher.dispatch({
       type: ActionTypes.RECEIVE_NODE_DETAILS,
@@ -139,15 +169,15 @@ module.exports = {
 
   receiveApiDetails: function(apiDetails) {
     AppDispatcher.dispatch({
-        type: ActionTypes.RECEIVE_API_DETAILS,
-        version: apiDetails.version
+      type: ActionTypes.RECEIVE_API_DETAILS,
+      version: apiDetails.version
     });
   },
 
   receiveError: function(errorUrl) {
     AppDispatcher.dispatch({
-        errorUrl: errorUrl,
-        type: ActionTypes.RECEIVE_ERROR
+      errorUrl: errorUrl,
+      type: ActionTypes.RECEIVE_ERROR
     });
   },
 

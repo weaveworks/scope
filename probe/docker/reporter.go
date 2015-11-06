@@ -43,6 +43,31 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	result := report.MakeTopology()
+	result.Controls.AddControl(report.Control{
+		ID:    StopContainer,
+		Human: "Stop",
+		Icon:  "fa-stop",
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    StartContainer,
+		Human: "Start",
+		Icon:  "fa-play",
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    RestartContainer,
+		Human: "Restart",
+		Icon:  "fa-repeat",
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    PauseContainer,
+		Human: "Pause",
+		Icon:  "fa-pause",
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    UnpauseContainer,
+		Human: "Unpause",
+		Icon:  "fa-play",
+	})
 
 	r.registry.WalkContainers(func(c Container) {
 		nodeID := report.MakeContainerNodeID(r.hostID, c.ID())

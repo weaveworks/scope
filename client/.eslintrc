@@ -26,6 +26,9 @@
     "templateStrings": true,
     "jsx": true
   },
+  "globals": {
+    __WS_URL__: false
+  },
   "rules": {
 /**
  * Strict mode

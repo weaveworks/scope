@@ -111,36 +111,27 @@ func TestReporter(t *testing.T) {
 	want := report.MakeReport()
 	pod1ID := report.MakePodNodeID("ping", "pong-a")
 	pod2ID := report.MakePodNodeID("ping", "pong-b")
-	want.Pod = report.Topology{
-		Nodes: report.Nodes{
-			pod1ID: report.MakeNodeWith(map[string]string{
-				kubernetes.PodID:           "ping/pong-a",
-				kubernetes.PodName:         "pong-a",
-				kubernetes.Namespace:       "ping",
-				kubernetes.PodCreated:      pod1.Created(),
-				kubernetes.PodContainerIDs: "container1 container2",
-				kubernetes.ServiceIDs:      "ping/pongservice",
-			}),
-			pod2ID: report.MakeNodeWith(map[string]string{
-				kubernetes.PodID:           "ping/pong-b",
-				kubernetes.PodName:         "pong-b",
-				kubernetes.Namespace:       "ping",
-				kubernetes.PodCreated:      pod1.Created(),
-				kubernetes.PodContainerIDs: "container3 container4",
-				kubernetes.ServiceIDs:      "ping/pongservice",
-			}),
-		},
-	}
-	want.Service = report.Topology{
-		Nodes: report.Nodes{
-			report.MakeServiceNodeID("ping", "pongservice"): report.MakeNodeWith(map[string]string{
-				kubernetes.ServiceID:      "ping/pongservice",
-				kubernetes.ServiceName:    "pongservice",
-				kubernetes.Namespace:      "ping",
-				kubernetes.ServiceCreated: pod1.Created(),
-			}),
-		},
-	}
+	want.Pod = report.MakeTopology().AddNode(pod1ID, report.MakeNodeWith(map[string]string{
+		kubernetes.PodID:           "ping/pong-a",
+		kubernetes.PodName:         "pong-a",
+		kubernetes.Namespace:       "ping",
+		kubernetes.PodCreated:      pod1.Created(),
+		kubernetes.PodContainerIDs: "container1 container2",
+		kubernetes.ServiceIDs:      "ping/pongservice",
+	})).AddNode(pod2ID, report.MakeNodeWith(map[string]string{
+		kubernetes.PodID:           "ping/pong-b",
+		kubernetes.PodName:         "pong-b",
+		kubernetes.Namespace:       "ping",
+		kubernetes.PodCreated:      pod1.Created(),
+		kubernetes.PodContainerIDs: "container3 container4",
+		kubernetes.ServiceIDs:      "ping/pongservice",
+	}))
+	want.Service = report.MakeTopology().AddNode(report.MakeServiceNodeID("ping", "pongservice"), report.MakeNodeWith(map[string]string{
+		kubernetes.ServiceID:      "ping/pongservice",
+		kubernetes.ServiceName:    "pongservice",
+		kubernetes.Namespace:      "ping",
+		kubernetes.ServiceCreated: pod1.Created(),
+	}))
 
 	reporter := kubernetes.NewReporter(mockClientInstance)
 	have, _ := reporter.Report()

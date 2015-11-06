@@ -19,8 +19,10 @@ var (
 	lookupIP = net.LookupIP
 )
 
+type setter func(string, []string)
+
 type staticResolver struct {
-	set     func(string, []string)
+	setters []setter
 	targets []target
 	quit    chan struct{}
 }
@@ -32,10 +34,10 @@ func (t target) String() string { return net.JoinHostPort(t.host, t.port) }
 // newStaticResolver periodically resolves the targets, and calls the set
 // function with all the resolved IPs. It explictiy supports targets which
 // resolve to multiple IPs.
-func newStaticResolver(targets []string, set func(target string, endpoints []string)) staticResolver {
+func newStaticResolver(targets []string, setters ...setter) staticResolver {
 	r := staticResolver{
 		targets: prepare(targets),
-		set:     set,
+		setters: setters,
 		quit:    make(chan struct{}),
 	}
 	go r.loop()
@@ -80,7 +82,9 @@ func prepare(strs []string) []target {
 
 func (r staticResolver) resolve() {
 	for t, endpoints := range resolveMany(r.targets) {
-		r.set(t.String(), endpoints)
+		for _, setter := range r.setters {
+			setter(t.String(), endpoints)
+		}
 	}
 }
 

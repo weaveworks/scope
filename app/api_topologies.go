@@ -23,7 +23,7 @@ var (
 			renderer: render.PodRenderer,
 			Name:     "Pods",
 			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System containers shown", false, nop},
+				{"show", "System containers shown", false, render.FilterNoop},
 				{"hide", "System containers hidden", true, render.FilterSystem},
 			}},
 		},
@@ -33,7 +33,7 @@ var (
 			renderer: render.PodServiceRenderer,
 			Name:     "by service",
 			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System containers shown", false, nop},
+				{"show", "System containers shown", false, render.FilterNoop},
 				{"hide", "System containers hidden", true, render.FilterSystem},
 			}},
 		},
@@ -41,6 +41,17 @@ var (
 )
 
 func init() {
+	containerFilters := map[string][]APITopologyOption{
+		"system": {
+			{"show", "System containers shown", false, render.FilterNoop},
+			{"hide", "System containers hidden", true, render.FilterSystem},
+		},
+		"stopped": {
+			{"show", "Stopped containers shown", false, render.FilterNoop},
+			{"hide", "Stopped containers hidden", true, render.FilterStopped},
+		},
+	}
+
 	// Topology option labels should tell the current state. The first item must
 	// be the verb to get to that state
 	topologyRegistry.add(
@@ -51,7 +62,7 @@ func init() {
 			Options: map[string][]APITopologyOption{"unconnected": {
 				// Show the user why there are filtered nodes in this view.
 				// Don't give them the option to show those nodes.
-				{"hide", "Unconnected nodes hidden", true, nop},
+				{"hide", "Unconnected nodes hidden", true, render.FilterNoop},
 			}},
 		},
 		APITopologyDesc{
@@ -61,37 +72,28 @@ func init() {
 			Name:     "by name",
 			Options: map[string][]APITopologyOption{"unconnected": {
 				// Ditto above.
-				{"hide", "Unconnected nodes hidden", true, nop},
+				{"hide", "Unconnected nodes hidden", true, render.FilterNoop},
 			}},
 		},
 		APITopologyDesc{
 			id:       "containers",
 			renderer: render.ContainerWithImageNameRenderer,
 			Name:     "Containers",
-			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System containers shown", false, nop},
-				{"hide", "System containers hidden", true, render.FilterSystem},
-			}},
+			Options:  containerFilters,
 		},
 		APITopologyDesc{
 			id:       "containers-by-image",
 			parent:   "containers",
 			renderer: render.ContainerImageRenderer,
 			Name:     "by image",
-			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System containers shown", false, nop},
-				{"hide", "System containers hidden", true, render.FilterSystem},
-			}},
+			Options:  containerFilters,
 		},
 		APITopologyDesc{
 			id:       "containers-by-hostname",
 			parent:   "containers",
 			renderer: render.ContainerHostnameRenderer,
 			Name:     "by hostname",
-			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System containers shown", false, nop},
-				{"hide", "System containers hidden", true, render.FilterSystem},
-			}},
+			Options:  containerFilters,
 		},
 		APITopologyDesc{
 			id:       "hosts",
@@ -225,8 +227,6 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer) topologyStat
 		FilteredNodes:      renderStats.FilteredNodes,
 	}
 }
-
-func nop(r render.Renderer) render.Renderer { return r }
 
 func (r *registry) enableKubernetesTopologies() {
 	r.add(kubernetesTopologies...)
