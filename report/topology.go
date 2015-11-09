@@ -271,7 +271,7 @@ type StringSet []string
 // MakeStringSet makes a new StringSet with the given strings.
 func MakeStringSet(strs ...string) StringSet {
 	if len(strs) <= 0 {
-		return StringSet{}
+		return nil
 	}
 	result := make([]string, len(strs))
 	copy(result, strs)
@@ -305,8 +305,11 @@ func (s StringSet) Add(strs ...string) StringSet {
 
 // Merge combines the two StringSets and returns a new result.
 func (s StringSet) Merge(other StringSet) StringSet {
-	if len(other) == 0 { // Optimise special case, to avoid allocating
+	switch {
+	case len(other) <= 0: // Optimise special case, to avoid allocating
 		return s // (note unit test DeepEquals breaks if we don't do this)
+	case len(s) <= 0:
+		return other
 	}
 	result := make(StringSet, len(s)+len(other))
 	for i, j, k := 0, 0, 0; ; k++ {
@@ -333,6 +336,9 @@ func (s StringSet) Merge(other StringSet) StringSet {
 
 // Copy returns a value copy of the StringSet.
 func (s StringSet) Copy() StringSet {
+	if s == nil {
+		return s
+	}
 	result := make(StringSet, len(s))
 	copy(result, s)
 	return result
