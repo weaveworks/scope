@@ -43,7 +43,7 @@ $(PROBE_EXE): probe/*.go probe/docker/*.go probe/kubernetes/*.go probe/endpoint/
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 $(APP_EXE) $(PROBE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
-	$(SUDO) docker run $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
+	$(SUDO) docker run $(RM) -ti -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
 		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) $@
 else
 $(APP_EXE) $(PROBE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
@@ -67,22 +67,22 @@ static: client/build/app.js
 ifeq ($(BUILD_IN_CONTAINER),true)
 client/build/app.js: $(shell find client/app/scripts -type f)
 	mkdir -p client/build
-	$(SUDO) docker run $(RM) -v $(shell pwd)/client/app:/home/weave/app \
+	$(SUDO) docker run $(RM) -ti -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm run build
 
 client-test: $(shell find client/app/scripts -type f)
-	$(SUDO) docker run $(RM) -v $(shell pwd)/client/app:/home/weave/app \
+	$(SUDO) docker run $(RM) -ti -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm test
 
 client-lint:
-	$(SUDO) docker run $(RM) -v $(shell pwd)/client/app:/home/weave/app \
+	$(SUDO) docker run $(RM) -ti -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm run lint
 
 client-start:
-	$(SUDO) docker run $(RM) --net=host -v $(shell pwd)/client/app:/home/weave/app \
+	$(SUDO) docker run $(RM) -ti --net=host -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm start
 endif
@@ -105,7 +105,7 @@ clean:
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	$(SUDO) docker run $(RM) -v $(shell pwd):/go/src/github.com/weaveworks/scope \
+	$(SUDO) docker run $(RM) -ti -v $(shell pwd):/go/src/github.com/weaveworks/scope \
 		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL -e CIRCLE_NODE_INDEX -e COVERDIR\
 		$(SCOPE_BACKEND_BUILD_IMAGE) tests
 else
