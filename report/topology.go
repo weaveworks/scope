@@ -395,6 +395,7 @@ type Metric struct {
 	Last    time.Time `json:"last"`
 }
 
+// Sample is a single datapoint of a metric.
 type Sample struct {
 	Timestamp time.Time `json:"date"`
 	Value     float64   `json:"value"`
@@ -405,7 +406,9 @@ func MakeMetric() Metric {
 	return Metric{}
 }
 
+// WithFirst returns a fresh copy of m, with First set to t.
 func (m Metric) WithFirst(t time.Time) Metric {
+	m = m.Copy()
 	m.First = t
 	return m
 }
@@ -467,8 +470,8 @@ func (m Metric) Copy() Metric {
 	return Metric{Samples: samples, Max: m.Max, Min: m.Min, First: m.First, Last: m.Last}
 }
 
-// Last returns the last sample in the metric.
-// Returns nil if there are no samples.
+// LastSample returns the last sample in the metric, or nil if there are no
+// samples.
 func (m Metric) LastSample() *Sample {
 	if len(m.Samples) == 0 {
 		return nil

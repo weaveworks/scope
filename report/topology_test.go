@@ -106,10 +106,10 @@ func TestMetricFirstLastMinMax(t *testing.T) {
 			t.Errorf("Expected metric.Last == %q, but was: %q", test.first, metric.Last)
 		}
 		if metric.Min != test.min {
-			t.Errorf("Expected metric.Min == %q, but was: %q", test.min, metric.Min)
+			t.Errorf("Expected metric.Min == %f, but was: %f", test.min, metric.Min)
 		}
 		if metric.Max != test.max {
-			t.Errorf("Expected metric.Max == %q, but was: %q", test.max, metric.Max)
+			t.Errorf("Expected metric.Max == %f, but was: %f", test.max, metric.Max)
 		}
 	}
 }

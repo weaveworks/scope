@@ -44,12 +44,12 @@ type Table struct {
 
 // Row is a single entry in a Table dataset.
 type Row struct {
-	Key        string        `json:"key"`                   // e.g. Ingress
-	ValueMajor string        `json:"value_major"`           // e.g. 25
-	ValueMinor string        `json:"value_minor,omitempty"` // e.g. KB/s
-	Expandable bool          `json:"expandable,omitempty"`  // Whether it can be expanded (hidden by default)
-	ValueType  string        `json:"value_type,omitempty"`  // e.g. sparkline
-	Metric     report.Metric `json:"metric,omitempty"`      // e.g. KB/s
+	Key        string         `json:"key"`                   // e.g. Ingress
+	ValueMajor string         `json:"value_major"`           // e.g. 25
+	ValueMinor string         `json:"value_minor,omitempty"` // e.g. KB/s
+	Expandable bool           `json:"expandable,omitempty"`  // Whether it can be expanded (hidden by default)
+	ValueType  string         `json:"value_type,omitempty"`  // e.g. sparkline
+	Metric     *report.Metric `json:"metric,omitempty"`      // e.g. KB/s
 }
 
 // ControlInstance contains a control description, and all the info
@@ -346,13 +346,20 @@ func processOriginTable(nmd report.Node, addHostTag bool, addContainerTag bool) 
 	}, len(rows) > 0 || commFound || pidFound
 }
 
-func sparklineRow(human, format string, scale float64, metric report.Metric) Row {
+func sparklineRow(human string, metric report.Metric, format func(*report.Sample) string) Row {
+	if format == nil {
+		format = formatDefault
+	}
 	lastStr := ""
 	if last := metric.LastSample(); last != nil {
-		lastStr = fmt.Sprintf(format, last.Value/scale)
+		lastStr = format(last)
 	}
-	return Row{Key: human, ValueMajor: lastStr, Metric: metric, ValueType: "sparkline"}
+	return Row{Key: human, ValueMajor: lastStr, Metric: &metric, ValueType: "sparkline"}
 }
+
+func formatDefault(s *report.Sample) string { return fmt.Sprintf("%0.2f", s.Value) }
+func formatMB(s *report.Sample) string      { return fmt.Sprintf("%0.2f MB", s.Value/1024*1024) }
+func formatPercent(s *report.Sample) string { return fmt.Sprintf("%0.2f%%", s.Value) }
 
 func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 	rows := []Row{}
@@ -388,10 +395,10 @@ func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 	}
 
 	if val, ok := nmd.Metrics[docker.MemoryUsage]; ok {
-		rows = append(rows, sparklineRow("Memory Usage", "%0.2f MB", 1024*1024, val))
+		rows = append(rows, sparklineRow("Memory Usage", val, formatMB))
 	}
 	if val, ok := nmd.Metrics[docker.CPUTotalUsage]; ok {
-		rows = append(rows, sparklineRow("CPU Usage", "%0.2f%%", 1, val))
+		rows = append(rows, sparklineRow("CPU Usage", val, formatPercent))
 	}
 
 	var (
@@ -481,7 +488,7 @@ func hostOriginTable(nmd report.Node) (Table, bool) {
 			val.Max = maxLoad
 			val.First = lastLoad.Add(-15 * time.Second) // TODO(paulbellamy): This should be based on the duration flag, maybe? or just auto-scale to data.
 			val.Last = lastLoad
-			rows = append(rows, sparklineRow(tuple.human, "%0.2f", 1, val))
+			rows = append(rows, sparklineRow(tuple.human, val, nil))
 		}
 	}
 	for _, tuple := range []struct{ key, human string }{
