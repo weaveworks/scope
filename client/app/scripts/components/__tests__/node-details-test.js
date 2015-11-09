@@ -15,7 +15,7 @@ describe('NodeDetails', () => {
 
   beforeEach(() => {
     NodeDetails = require('../node-details.js');
-    nodes = Immutable.OrderedMap();
+    nodes = new Immutable.OrderedMap();
     nodeId = 'n1';
   });
 
@@ -33,5 +33,4 @@ describe('NodeDetails', () => {
     const title = TestUtils.findRenderedDOMComponentWithClass(c, 'node-details-header-label');
     expect(title.getDOMNode().textContent).toBe('Node 1');
   });
-
 });
