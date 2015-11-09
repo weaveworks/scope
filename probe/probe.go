@@ -9,6 +9,10 @@ import (
 	"github.com/weaveworks/scope/xfer"
 )
 
+const (
+	reportBufferSize = 16
+)
+
 // Probe sits there, generating and publishing reports.
 type Probe struct {
 	spyInterval, publishInterval time.Duration
@@ -20,7 +24,9 @@ type Probe struct {
 
 	quit chan struct{}
 	done sync.WaitGroup
-	rpt  syncReport
+
+	spiedReports    chan report.Report
+	shortcutReports chan report.Report
 }
 
 // Tagger tags nodes with value-add node metadata.
@@ -47,8 +53,9 @@ func New(spyInterval, publishInterval time.Duration, publisher xfer.Publisher) *
 		publishInterval: publishInterval,
 		publisher:       publisher,
 		quit:            make(chan struct{}),
+		spiedReports:    make(chan report.Report, reportBufferSize),
+		shortcutReports: make(chan report.Report, reportBufferSize),
 	}
-	result.rpt.swap(report.MakeReport())
 	return result
 }
 
@@ -80,6 +87,12 @@ func (p *Probe) Stop() {
 	p.done.Wait()
 }
 
+// Publish will queue a report for immediate publication,
+// bypassing the spy tick
+func (p *Probe) Publish(rpt report.Report) {
+	p.shortcutReports <- rpt
+}
+
 func (p *Probe) spyLoop() {
 	defer p.done.Done()
 	spyTick := time.Tick(p.spyInterval)
@@ -94,10 +107,9 @@ func (p *Probe) spyLoop() {
 				}
 			}
 
-			localReport := p.rpt.copy()
-			localReport = localReport.Merge(p.report())
-			localReport = p.tag(localReport)
-			p.rpt.swap(localReport)
+			rpt := p.report()
+			rpt = p.tag(rpt)
+			p.spiedReports <- rpt
 
 			if took := time.Since(start); took > p.spyInterval {
 				log.Printf("report generation took too long (%s)", took)
@@ -140,6 +152,17 @@ func (p *Probe) tag(r report.Report) report.Report {
 	return r
 }
 
+func condense(rpt report.Report, rs chan report.Report) report.Report {
+	for {
+		select {
+		case r := <-rs:
+			rpt = rpt.Merge(r)
+		default:
+			return rpt
+		}
+	}
+}
+
 func (p *Probe) publishLoop() {
 	defer p.done.Done()
 	var (
@@ -150,8 +173,14 @@ func (p *Probe) publishLoop() {
 	for {
 		select {
 		case <-pubTick:
-			localReport := p.rpt.swap(report.MakeReport())
-			if err := rptPub.Publish(localReport); err != nil {
+			rpt := condense(report.MakeReport(), p.spiedReports)
+			if err := rptPub.Publish(rpt); err != nil {
+				log.Printf("publish: %v", err)
+			}
+
+		case rpt := <-p.shortcutReports:
+			rpt = condense(rpt, p.shortcutReports)
+			if err := rptPub.Publish(rpt); err != nil {
 				log.Printf("publish: %v", err)
 			}
 
