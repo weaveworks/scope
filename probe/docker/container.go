@@ -17,6 +17,7 @@ import (
 
 	docker "github.com/fsouza/go-dockerclient"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -264,12 +265,11 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
 		ImageID:           c.container.Image,
 		ContainerHostname: c.Hostname(),
-		ContainerState:    state,
 	}).WithSets(report.Sets{
 		ContainerPorts:         c.ports(localAddrs),
 		ContainerIPs:           report.MakeStringSet(ips...),
 		ContainerIPsWithScopes: report.MakeStringSet(ipsWithScopes...),
-	})
+	}).WithLatest(ContainerState, mtime.Now(), state)
 
 	if c.container.State.Paused {
 		result = result.WithControls(UnpauseContainer)
@@ -285,7 +285,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		return result
 	}
 
-	result = result.Merge(report.MakeNodeWith(map[string]string{
+	result = result.WithMetadata(map[string]string{
 		NetworkRxDropped: strconv.FormatUint(c.latestStats.Network.RxDropped, 10),
 		NetworkRxBytes:   strconv.FormatUint(c.latestStats.Network.RxBytes, 10),
 		NetworkRxErrors:  strconv.FormatUint(c.latestStats.Network.RxErrors, 10),
@@ -305,7 +305,8 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		CPUTotalUsage:        strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.TotalUsage, 10),
 		CPUUsageInKernelmode: strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.UsageInKernelmode, 10),
 		CPUSystemCPUUsage:    strconv.FormatUint(c.latestStats.CPUStats.SystemCPUUsage, 10),
-	}))
+	})
+
 	return result
 }
 

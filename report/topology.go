@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 )
 
 // Topology describes a specific view of a network. It consists of nodes and
@@ -88,7 +89,8 @@ type Node struct {
 	Sets      Sets          `json:"sets,omitempty"`
 	Adjacency IDList        `json:"adjacency"`
 	Edges     EdgeMetadatas `json:"edges,omitempty"`
-	Controls  IDList        `json:"controls,omitempty"`
+	Controls  NodeControls  `json:"controls,omitempty"`
+	Latest    LatestMap     `json:"latest,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
@@ -99,7 +101,8 @@ func MakeNode() Node {
 		Sets:      Sets{},
 		Adjacency: MakeIDList(),
 		Edges:     EdgeMetadatas{},
-		Controls:  MakeIDList(),
+		Controls:  MakeNodeControls(),
+		Latest:    MakeLatestMap(),
 	}
 }
 
@@ -138,9 +141,9 @@ func (n Node) WithSets(sets Sets) Node {
 }
 
 // WithAdjacent returns a fresh copy of n, with 'a' added to Adjacency
-func (n Node) WithAdjacent(a string) Node {
+func (n Node) WithAdjacent(a ...string) Node {
 	result := n.Copy()
-	result.Adjacency = result.Adjacency.Add(a)
+	result.Adjacency = result.Adjacency.Add(a...)
 	return result
 }
 
@@ -160,6 +163,13 @@ func (n Node) WithControls(cs ...string) Node {
 	return result
 }
 
+// WithLatest produces a new Node with k mapped to v in the Latest metadata.
+func (n Node) WithLatest(k string, ts time.Time, v string) Node {
+	result := n.Copy()
+	result.Latest = result.Latest.Set(k, ts, v)
+	return result
+}
+
 // Copy returns a value copy of the Node.
 func (n Node) Copy() Node {
 	cp := MakeNode()
@@ -169,6 +179,7 @@ func (n Node) Copy() Node {
 	cp.Adjacency = n.Adjacency.Copy()
 	cp.Edges = n.Edges.Copy()
 	cp.Controls = n.Controls.Copy()
+	cp.Latest = n.Latest.Copy()
 	return cp
 }
 
@@ -182,6 +193,7 @@ func (n Node) Merge(other Node) Node {
 	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
 	cp.Edges = cp.Edges.Merge(other.Edges)
 	cp.Controls = cp.Controls.Merge(other.Controls)
+	cp.Latest = cp.Latest.Merge(other.Latest)
 	return cp
 }
 

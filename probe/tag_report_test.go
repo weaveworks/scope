@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 )
 
 func TestApply(t *testing.T) {
@@ -38,11 +37,9 @@ func TestApply(t *testing.T) {
 func TestTagMissingID(t *testing.T) {
 	const nodeID = "not-found"
 	r := report.MakeReport()
-	want := report.MakeNode()
 	rpt, _ := newTopologyTagger().Tag(r)
-	have := rpt.Endpoint.Nodes[nodeID].Copy()
-	if !reflect.DeepEqual(want, have) {
-		t.Error(test.Diff(want, have))
+	_, ok := rpt.Endpoint.Nodes[nodeID]
+	if ok {
 		t.Error("TopologyTagger erroneously tagged a missing node ID")
 	}
 }
