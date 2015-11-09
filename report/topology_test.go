@@ -69,6 +69,21 @@ func TestStringSetMerge(t *testing.T) {
 	}
 }
 
+func checkMetric(t *testing.T, metric report.Metric, first, last time.Time, min, max float64) {
+	if !metric.First.Equal(first) {
+		t.Errorf("Expected metric.First == %q, but was: %q", first, metric.First)
+	}
+	if !metric.Last.Equal(last) {
+		t.Errorf("Expected metric.Last == %q, but was: %q", last, metric.Last)
+	}
+	if metric.Min != min {
+		t.Errorf("Expected metric.Min == %f, but was: %f", min, metric.Min)
+	}
+	if metric.Max != max {
+		t.Errorf("Expected metric.Max == %f, but was: %f", max, metric.Max)
+	}
+}
+
 func TestMetricFirstLastMinMax(t *testing.T) {
 	metric := report.MakeMetric()
 	var zero time.Time
@@ -95,22 +110,17 @@ func TestMetricFirstLastMinMax(t *testing.T) {
 		{func(m report.Metric) report.Metric { return m.Merge(other) }, t1.Add(-1 * time.Minute), t4.Add(1 * time.Minute), -5, 5},
 	}
 	for _, test := range tests {
+		oldFirst, oldLast, oldMin, oldMax := metric.First, metric.Last, metric.Min, metric.Max
+		oldMetric := metric
 		if test.f != nil {
 			metric = test.f(metric)
 		}
 
-		if !metric.First.Equal(test.first) {
-			t.Errorf("Expected metric.First == %q, but was: %q", test.last, metric.First)
-		}
-		if !metric.Last.Equal(test.last) {
-			t.Errorf("Expected metric.Last == %q, but was: %q", test.first, metric.Last)
-		}
-		if metric.Min != test.min {
-			t.Errorf("Expected metric.Min == %f, but was: %f", test.min, metric.Min)
-		}
-		if metric.Max != test.max {
-			t.Errorf("Expected metric.Max == %f, but was: %f", test.max, metric.Max)
-		}
+		// Check it didn't modify the old one
+		checkMetric(t, oldMetric, oldFirst, oldLast, oldMin, oldMax)
+
+		// Check the new one is as expected
+		checkMetric(t, metric, test.first, test.last, test.min, test.max)
 	}
 }
 
@@ -120,11 +130,18 @@ func TestMetricAdd(t *testing.T) {
 		{time.Now().Add(1 * time.Minute), 0.2},
 		{time.Now().Add(2 * time.Minute), 0.3},
 	}
-	have := report.MakeMetric().
+
+	intermediate := report.MakeMetric().
 		Add(want[0].Timestamp, want[0].Value).
-		Add(want[2].Timestamp, want[2].Value). // Keeps sorted
+		Add(want[2].Timestamp, want[2].Value) // Keeps sorted
+	have := intermediate.
 		Add(want[1].Timestamp, want[1].Value).
 		Add(want[2].Timestamp, 0.5) // Ignores duplicate timestamps
+
+	intermedWant := []report.Sample{want[0], want[2]}
+	if !reflect.DeepEqual(intermedWant, intermediate.Samples) {
+		t.Errorf("diff: %s", test.Diff(want, intermediate.Samples))
+	}
 
 	if !reflect.DeepEqual(want, have.Samples) {
 		t.Errorf("diff: %s", test.Diff(want, have.Samples))
@@ -138,16 +155,16 @@ func TestMetricMerge(t *testing.T) {
 	t4 := time.Now().Add(3 * time.Minute)
 
 	metric1 := report.MakeMetric().
-		Add(t1, 0.1).
-		Add(t3, 0.31).
-		Add(t4, 0.4)
+		Add(t2, 0.2).
+		Add(t3, 0.31)
 
 	metric2 := report.MakeMetric().
-		Add(t2, 0.2).
-		Add(t3, 0.3)
+		Add(t1, -0.1).
+		Add(t3, 0.3).
+		Add(t4, 0.4)
 
 	want := report.MakeMetric().
-		Add(t1, 0.1).
+		Add(t1, -0.1).
 		Add(t2, 0.2).
 		Add(t3, 0.31).
 		Add(t4, 0.4)
@@ -155,12 +172,30 @@ func TestMetricMerge(t *testing.T) {
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("diff: %s", test.Diff(want, have))
 	}
+
+	// Check it didn't modify metric1
+	if !metric1.First.Equal(t2) {
+		t.Errorf("Expected metric1.First == %q, but was: %q", t2, metric1.First)
+	}
+	if !metric1.Last.Equal(t3) {
+		t.Errorf("Expected metric1.Last == %q, but was: %q", t3, metric1.Last)
+	}
+	if metric1.Min != 0.0 {
+		t.Errorf("Expected metric1.Min == %f, but was: %f", 0.0, metric1.Min)
+	}
+	if metric1.Max != 0.31 {
+		t.Errorf("Expected metric1.Max == %f, but was: %f", 0.31, metric1.Max)
+	}
+
+	// Check the result is not the same instance as metric1
+	if &metric1 == &have {
+		t.Errorf("Expected different pointers for metric1 and have, but both were: %p", &have)
+	}
 }
 
 func TestMetricCopy(t *testing.T) {
-	var want, have report.Metric
-	want = report.MakeMetric()
-	have = want.Copy()
+	want := report.MakeMetric()
+	have := want.Copy()
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("diff: %s", test.Diff(want, have))
 	}
@@ -170,4 +205,23 @@ func TestMetricCopy(t *testing.T) {
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("diff: %s", test.Diff(want, have))
 	}
+}
+
+func TestMetricDiv(t *testing.T) {
+	t1 := time.Now()
+	t2 := time.Now().Add(1 * time.Minute)
+
+	want := report.MakeMetric().
+		Add(t1, -2).
+		Add(t2, 2)
+	beforeDiv := report.MakeMetric().
+		Add(t1, -2048).
+		Add(t2, 2048)
+	have := beforeDiv.Div(1024)
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("diff: %s", test.Diff(want, have))
+	}
+
+	// Check the original was unmodified
+	checkMetric(t, beforeDiv, t1, t2, -2048, 2048)
 }

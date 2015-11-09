@@ -473,7 +473,6 @@ func (m Metric) Copy() Metric {
 // Div returns a new copy of the metric, with each value divided by n.
 func (m Metric) Div(n float64) Metric {
 	var newSamples []Sample
-	m = m.Copy()
 	for _, sample := range m.Samples {
 		newSamples = append(newSamples, Sample{Timestamp: sample.Timestamp, Value: sample.Value / n})
 	}
