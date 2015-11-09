@@ -59,15 +59,19 @@ const NodeDetails = React.createClass({
       return this.renderLoading();
     }
 
-    const style = {
-      'backgroundColor': this.getNodeColorDark(details.label_major)
+    const nodeColor = this.getNodeColorDark(details.label_major);
+    const styles = {
+      controls: {
+        'backgroundColor': this.brightenColor(nodeColor)
+      },
+      header: {
+        'backgroundColor': nodeColor
+      }
     };
 
     return (
       <div className="node-details">
-        <div className="node-details-header" style={style}>
-          <NodeDetailsControls controls={details.controls}
-            pending={this.props.controlPending} error={this.props.controlError} />
+        <div className="node-details-header" style={styles.header}>
           <h2 className="node-details-header-label truncate" title={details.label_major}>
             {details.label_major}
           </h2>
@@ -75,6 +79,11 @@ const NodeDetails = React.createClass({
             {details.label_minor}
           </div>
         </div>
+
+        {details.controls && details.controls.length > 0 && <div className="node-details-controls-wrapper" style={styles.controls}>
+          <NodeDetailsControls controls={details.controls}
+            pending={this.props.controlPending} error={this.props.controlError} />
+        </div>}
 
         <div className="node-details-content">
           {details.tables.map(function(table) {

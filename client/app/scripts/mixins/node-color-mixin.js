@@ -16,10 +16,21 @@ const NodeColorMixin = {
     let hsl = color.hsl();
 
     // ensure darkness
-    // if (hsl.l > 0.5) {
-    hsl = hsl.darker();
-    // }
+    if (hsl.l > 0.7) {
+      hsl = hsl.darker(1.5);
+    } else {
+      hsl = hsl.darker(1);
+    }
 
+    return hsl.toString();
+  },
+  brightenColor: function(color) {
+    let hsl = d3.rgb(color).hsl();
+    if (hsl.l > 0.5) {
+      hsl = hsl.brighter(0.5);
+    } else {
+      hsl = hsl.brighter(0.8);
+    }
     return hsl.toString();
   }
 };
