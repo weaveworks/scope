@@ -253,10 +253,10 @@ func OriginTable(r report.Report, originID string, addHostTags bool, addContaine
 
 func connectionDetailsRows(topology report.Topology, originID string) []Row {
 	rows := []Row{}
-	labeler := func(nodeID string, meta map[string]string) (string, bool) {
+	labeler := func(nodeID string, sets report.Sets) (string, bool) {
 		if _, addr, port, ok := report.ParseEndpointNodeID(nodeID); ok {
-			if name, ok := meta["name"]; ok {
-				return fmt.Sprintf("%s:%s", name, port), true
+			if names, ok := sets["name"]; ok {
+				return fmt.Sprintf("%s:%s", names[0], port), true
 			}
 			return fmt.Sprintf("%s:%s", addr, port), true
 		}
@@ -265,13 +265,13 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 		}
 		return "", false
 	}
-	local, ok := labeler(originID, topology.Nodes[originID].Metadata)
+	local, ok := labeler(originID, topology.Nodes[originID].Sets)
 	if !ok {
 		return rows
 	}
 	// Firstly, collection outgoing connections from this node.
 	for _, serverNodeID := range topology.Nodes[originID].Adjacency {
-		remote, ok := labeler(serverNodeID, topology.Nodes[serverNodeID].Metadata)
+		remote, ok := labeler(serverNodeID, topology.Nodes[serverNodeID].Sets)
 		if !ok {
 			continue
 		}
@@ -290,7 +290,7 @@ func connectionDetailsRows(topology report.Topology, originID string) []Row {
 		if !serverNodeIDs.Contains(originID) {
 			continue
 		}
-		remote, ok := labeler(clientNodeID, clientNode.Metadata)
+		remote, ok := labeler(clientNodeID, clientNode.Sets)
 		if !ok {
 			continue
 		}

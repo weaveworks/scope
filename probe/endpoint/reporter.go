@@ -139,10 +139,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 
 		// In case we have a reverse resolution for the IP, we can use it for
 		// the name...
-		if remoteName, err := r.reverseResolver.get(remoteAddr); err == nil {
-			remoteNode = remoteNode.WithMetadata(map[string]string{
-				"name": remoteName,
-			})
+		if remoteNames, err := r.reverseResolver.get(remoteAddr); err == nil {
+			remoteNode = remoteNode.WithSet("name", report.MakeStringSet(remoteNames...))
 		}
 
 		if localIsClient {
@@ -185,10 +183,8 @@ func (r *Reporter) addConnection(rpt *report.Report, localAddr, remoteAddr strin
 
 		// In case we have a reverse resolution for the IP, we can use it for
 		// the name...
-		if remoteName, err := r.reverseResolver.get(remoteAddr); err == nil {
-			remoteNode = remoteNode.WithMetadata(map[string]string{
-				"name": remoteName,
-			})
+		if remoteNames, err := r.reverseResolver.get(remoteAddr); err == nil {
+			remoteNode = remoteNode.WithSet("name", report.MakeStringSet(remoteNames...))
 		}
 
 		if localIsClient {
