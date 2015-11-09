@@ -29,9 +29,9 @@ func TestReverseResolver(t *testing.T) {
 	revRes.Throttle = time.Tick(time.Millisecond)
 
 	for ip, names := range tests {
-		test.Poll(t, 100*time.Millisecond, names[0], func() interface{} {
-			result, _ := revRes.get(ip)
-			return result
+		test.Poll(t, 100*time.Millisecond, names, func() interface{} {
+			ns, _ := revRes.get(ip)
+			return ns
 		})
 	}
 }
