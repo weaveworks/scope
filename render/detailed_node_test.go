@@ -26,9 +26,9 @@ func TestOriginTable(t *testing.T) {
 			Numeric: false,
 			Rank:    1,
 			Rows: []render.Row{
-				{Key: "Load (1m)", ValueMajor: "0.01", Metric: fixture.LoadMetric, ValueType: "sparkline"},
-				{Key: "Load (5m)", ValueMajor: "0.01", Metric: fixture.LoadMetric, ValueType: "sparkline"},
-				{Key: "Load (15m)", ValueMajor: "0.01", Metric: fixture.LoadMetric, ValueType: "sparkline"},
+				{Key: "Load (1m)", ValueMajor: "0.01", Metric: &fixture.LoadMetric, ValueType: "sparkline"},
+				{Key: "Load (5m)", ValueMajor: "0.01", Metric: &fixture.LoadMetric, ValueType: "sparkline"},
+				{Key: "Load (15m)", ValueMajor: "0.01", Metric: &fixture.LoadMetric, ValueType: "sparkline"},
 				{Key: "Operating system", ValueMajor: "Linux"},
 			},
 		},
@@ -99,19 +99,19 @@ func TestMakeDetailedHostNode(t *testing.T) {
 					{
 						Key:        "Load (1m)",
 						ValueMajor: "0.01",
-						Metric:     fixture.LoadMetric,
+						Metric:     &fixture.LoadMetric,
 						ValueType:  "sparkline",
 					},
 					{
 						Key:        "Load (5m)",
 						ValueMajor: "0.01",
-						Metric:     fixture.LoadMetric,
+						Metric:     &fixture.LoadMetric,
 						ValueType:  "sparkline",
 					},
 					{
 						Key:        "Load (15m)",
 						ValueMajor: "0.01",
-						Metric:     fixture.LoadMetric,
+						Metric:     &fixture.LoadMetric,
 						ValueType:  "sparkline",
 					},
 					{
@@ -193,9 +193,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Numeric: false,
 				Rank:    1,
 				Rows: []render.Row{
-					{Key: "Load (1m)", ValueMajor: "0.01", Metric: fixture.LoadMetric, ValueType: "sparkline"},
-					{Key: "Load (5m)", ValueMajor: "0.01", Metric: fixture.LoadMetric, ValueType: "sparkline"},
-					{Key: "Load (15m)", ValueMajor: "0.01", Metric: fixture.LoadMetric, ValueType: "sparkline"},
+					{Key: "Load (1m)", ValueMajor: "0.01", Metric: &fixture.LoadMetric, ValueType: "sparkline"},
+					{Key: "Load (5m)", ValueMajor: "0.01", Metric: &fixture.LoadMetric, ValueType: "sparkline"},
+					{Key: "Load (15m)", ValueMajor: "0.01", Metric: &fixture.LoadMetric, ValueType: "sparkline"},
 					{Key: "Operating system", ValueMajor: "Linux"},
 				},
 			},

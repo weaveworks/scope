@@ -358,7 +358,7 @@ func sparklineRow(human string, metric report.Metric, format func(*report.Sample
 }
 
 func formatDefault(s *report.Sample) string { return fmt.Sprintf("%0.2f", s.Value) }
-func formatMB(s *report.Sample) string      { return fmt.Sprintf("%0.2f MB", s.Value/1024*1024) }
+func formatMB(s *report.Sample) string      { return fmt.Sprintf("%0.2f MB", s.Value) }
 func formatPercent(s *report.Sample) string { return fmt.Sprintf("%0.2f%%", s.Value) }
 
 func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
@@ -395,7 +395,7 @@ func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 	}
 
 	if val, ok := nmd.Metrics[docker.MemoryUsage]; ok {
-		rows = append(rows, sparklineRow("Memory Usage", val, formatMB))
+		rows = append(rows, sparklineRow("Memory Usage", val.Div(1024*1024), formatMB))
 	}
 	if val, ok := nmd.Metrics[docker.CPUTotalUsage]; ok {
 		rows = append(rows, sparklineRow("CPU Usage", val, formatPercent))

@@ -470,6 +470,19 @@ func (m Metric) Copy() Metric {
 	return Metric{Samples: samples, Max: m.Max, Min: m.Min, First: m.First, Last: m.Last}
 }
 
+// Div returns a new copy of the metric, with each value divided by n.
+func (m Metric) Div(n float64) Metric {
+	var newSamples []Sample
+	m = m.Copy()
+	for _, sample := range m.Samples {
+		newSamples = append(newSamples, Sample{Timestamp: sample.Timestamp, Value: sample.Value / n})
+	}
+	m.Samples = newSamples
+	m.Max = m.Max / n
+	m.Min = m.Min / n
+	return m
+}
+
 // LastSample returns the last sample in the metric, or nil if there are no
 // samples.
 func (m Metric) LastSample() *Sample {

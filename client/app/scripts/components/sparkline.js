@@ -44,6 +44,7 @@ const Sparkline = React.createClass({
     let line;
     let lastX;
     let lastY;
+    let title;
     if (data[0].date) {
       // Convert dates into D3 dates
       data.forEach(d => {
@@ -55,10 +56,9 @@ const Sparkline = React.createClass({
         x(d => x(d.date)).
         y(d => y(d.value));
 
-      x.domain([
-        this.props.first ? d3.time.format.iso.parse(this.props.first) : d3.min(data, d => d.date),
-        this.props.last ? d3.time.format.iso.parse(this.props.last) : d3.max(data, d => d.date)
-      ]);
+      let first = this.props.first ? d3.time.format.iso.parse(this.props.first) : d3.min(data, d => d.date);
+      let last = this.props.last ? d3.time.format.iso.parse(this.props.last) : d3.max(data, d => d.date);
+      x.domain([first, last]);
 
       y.domain([
         this.props.min || d3.min(data, d => d.value),
@@ -67,6 +67,7 @@ const Sparkline = React.createClass({
 
       lastX = x(data[data.length - 1].date);
       lastY = y(data[data.length - 1].value);
+      title = 'Last ' + d3.round((last - first) / 1000) + ' seconds, ' + data.length + ' samples, min: ' + d3.round(d3.min(data, d => d.value), 2) + ', max: ' + d3.round(d3.max(data, d => d.value), 2) + ', mean: ' + d3.round(d3.mean(data, d => d.value), 2);
     } else {
       line = d3.svg.line().
         interpolate(this.props.interpolate).
@@ -85,7 +86,10 @@ const Sparkline = React.createClass({
 
       lastX = x(data.length - 1);
       lastY = y(data[data.length - 1]);
+      title = data.length + ' samples, min: ' + d3.round(d3.min(data), 2) + ', max: ' + d3.round(d3.max(data), 2) + ', mean: ' + d3.round(d3.mean(data), 2);
     }
+
+    d3.select(this.getDOMNode()).attr('title', title);
 
     let svg = d3.select(this.getDOMNode()).
       append('svg').
