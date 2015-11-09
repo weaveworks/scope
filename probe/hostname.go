@@ -1,8 +1,9 @@
-package main
+package probe
 
 import "os"
 
-func hostname() string {
+// Hostname returns the hostname of this host.
+func Hostname() string {
 	if hostname := os.Getenv("SCOPE_HOSTNAME"); hostname != "" {
 		return hostname
 	}

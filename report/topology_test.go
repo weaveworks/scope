@@ -12,6 +12,7 @@ func TestMakeStringSet(t *testing.T) {
 		input []string
 		want  report.StringSet
 	}{
+		{input: nil, want: nil},
 		{input: []string{}, want: report.MakeStringSet()},
 		{input: []string{"a"}, want: report.MakeStringSet("a")},
 		{input: []string{"a", "a"}, want: report.MakeStringSet("a")},
@@ -29,6 +30,7 @@ func TestStringSetAdd(t *testing.T) {
 		strs  []string
 		want  report.StringSet
 	}{
+		{input: report.StringSet(nil), strs: []string{}, want: report.StringSet(nil)},
 		{input: report.MakeStringSet(), strs: []string{}, want: report.MakeStringSet()},
 		{input: report.MakeStringSet("a"), strs: []string{}, want: report.MakeStringSet("a")},
 		{input: report.MakeStringSet(), strs: []string{"a"}, want: report.MakeStringSet("a")},
@@ -49,6 +51,7 @@ func TestStringSetMerge(t *testing.T) {
 		other report.StringSet
 		want  report.StringSet
 	}{
+		{input: report.StringSet(nil), other: report.StringSet(nil), want: report.StringSet(nil)},
 		{input: report.MakeStringSet(), other: report.MakeStringSet(), want: report.MakeStringSet()},
 		{input: report.MakeStringSet("a"), other: report.MakeStringSet(), want: report.MakeStringSet("a")},
 		{input: report.MakeStringSet(), other: report.MakeStringSet("a"), want: report.MakeStringSet("a")},
@@ -62,5 +65,4 @@ func TestStringSetMerge(t *testing.T) {
 			t.Errorf("%v + %v: want %v, have %v", testcase.input, testcase.other, want, have)
 		}
 	}
-
 }

@@ -38,6 +38,7 @@ app/app
 app/scope-app
 probe/probe
 probe/scope-probe
+prog/probe/scope-probe
 docker/scope-app
 docker/scope-probe
 docker/docker*

@@ -78,7 +78,7 @@ func (f Filter) render(rpt report.Report) (RenderableNodes, int) {
 
 	// Deleted nodes also need to be cut as destinations in adjacency lists.
 	for id, node := range output {
-		newAdjacency := make(report.IDList, 0, len(node.Adjacency))
+		newAdjacency := report.MakeIDList()
 		for _, dstID := range node.Adjacency {
 			if _, ok := output[dstID]; ok {
 				newAdjacency = newAdjacency.Add(dstID)
