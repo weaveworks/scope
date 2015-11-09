@@ -91,6 +91,7 @@ type Node struct {
 	Edges     EdgeMetadatas `json:"edges,omitempty"`
 	Controls  NodeControls  `json:"controls,omitempty"`
 	Latest    LatestMap     `json:"latest,omitempty"`
+	Metrics   Metrics       `json:"metrics,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
@@ -103,6 +104,7 @@ func MakeNode() Node {
 		Edges:     EdgeMetadatas{},
 		Controls:  MakeNodeControls(),
 		Latest:    MakeLatestMap(),
+		Metrics:   Metrics{},
 	}
 }
 
@@ -137,6 +139,20 @@ func (n Node) WithSet(key string, set StringSet) Node {
 func (n Node) WithSets(sets Sets) Node {
 	result := n.Copy()
 	result.Sets = result.Sets.Merge(sets)
+	return result
+}
+
+// WithMetric returns a fresh copy of n, with metric merged in at key.
+func (n Node) WithMetric(key string, metric Metric) Node {
+	result := n.Copy()
+	n.Metrics[key] = n.Metrics[key].Merge(metric)
+	return result
+}
+
+// WithMetrics returns a fresh copy of n, with metrics merged in.
+func (n Node) WithMetrics(metrics Metrics) Node {
+	result := n.Copy()
+	result.Metrics = result.Metrics.Merge(metrics)
 	return result
 }
 
@@ -180,6 +196,7 @@ func (n Node) Copy() Node {
 	cp.Edges = n.Edges.Copy()
 	cp.Controls = n.Controls.Copy()
 	cp.Latest = n.Latest.Copy()
+	cp.Metrics = n.Metrics.Copy()
 	return cp
 }
 
@@ -194,6 +211,7 @@ func (n Node) Merge(other Node) Node {
 	cp.Edges = cp.Edges.Merge(other.Edges)
 	cp.Controls = cp.Controls.Merge(other.Controls)
 	cp.Latest = cp.Latest.Merge(other.Latest)
+	cp.Metrics = cp.Metrics.Merge(other.Metrics)
 	return cp
 }
 
