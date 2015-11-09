@@ -324,10 +324,12 @@ h2 {
   height: 100%;
   width: 100%;
   background-color: rgba(255, 255, 255, 0.86);
+  display: flex;
+  flex-flow: column;
 
   &-header {
 
-    padding: 24px 36px 24px 36px;
+    padding: 24px 36px 16px 36px;
 
     &-row {
       display: flex;
@@ -360,8 +362,10 @@ h2 {
 
   &-controls {
     white-space: nowrap;
-    text-align: right;
-    margin: -8px -8px 0 0;
+
+    &-wrapper {
+      padding: 8px 36px 8px 32px;
+    }
 
     .node-control-button {
       .palable;
@@ -384,10 +388,16 @@ h2 {
       }
     }
 
+    &-spinner {
+      .hideable;
+      color: @white;
+      margin-left: 8px;
+    }
+
     &-error {
       .truncate;
-      float: left;
-      width: 66%;
+      float: right;
+      width: 55%;
       padding-top: 6px;
       text-align: left;
       color: @white;
@@ -400,9 +410,7 @@ h2 {
   }
 
   &-content {
-    position: absolute;
-    top: 128px;
-    bottom: 0;
+    flex: 1;
     padding: 0 36px 0 36px;
     overflow-y: scroll;
     width: 100%;
