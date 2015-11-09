@@ -2,6 +2,8 @@ package report
 
 import (
 	"time"
+
+	"github.com/weaveworks/scope/common/mtime"
 )
 
 // Controls describe the control tags within the Nodes
@@ -37,18 +39,18 @@ func (cs Controls) AddControl(c Control) {
 	cs[c.ID] = c
 }
 
-// NodeControls represent the individual controls that are valid
-// for a given node at a given point in time.  Its is immutable.
+// NodeControls represent the individual controls that are valid for a given
+// node at a given point in time.  Its is immutable. A zero-value for Timestamp
+// indicated this NodeControls is 'not set'.
 type NodeControls struct {
-	Timestamp int64  `json:"timestamp"`
-	Controls  IDList `json:"controls"`
+	Timestamp time.Time `json:"timestamp"`
+	Controls  StringSet `json:"controls,omitempty"`
 }
 
 // MakeNodeControls makes a new NodeControls
 func MakeNodeControls() NodeControls {
 	return NodeControls{
-		Timestamp: time.Now().Unix(),
-		Controls:  MakeIDList(),
+		Controls: MakeStringSet(),
 	}
 }
 
@@ -60,7 +62,7 @@ func (nc NodeControls) Copy() NodeControls {
 // Merge returns the newest of the two NodeControls; it does not take the union
 // of the valid Controls.
 func (nc NodeControls) Merge(other NodeControls) NodeControls {
-	if other.Timestamp > nc.Timestamp {
+	if nc.Timestamp.Before(other.Timestamp) {
 		return other
 	}
 	return nc
@@ -69,7 +71,7 @@ func (nc NodeControls) Merge(other NodeControls) NodeControls {
 // Add the new control IDs to this NodeControls, producing a fresh NodeControls.
 func (nc NodeControls) Add(ids ...string) NodeControls {
 	return NodeControls{
-		Timestamp: time.Now().Unix(),
+		Timestamp: mtime.Now(),
 		Controls:  nc.Controls.Add(ids...),
 	}
 }

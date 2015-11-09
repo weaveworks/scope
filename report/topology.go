@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 )
 
 // Topology describes a specific view of a network. It consists of nodes and
@@ -140,9 +141,9 @@ func (n Node) WithSets(sets Sets) Node {
 }
 
 // WithAdjacent returns a fresh copy of n, with 'a' added to Adjacency
-func (n Node) WithAdjacent(a string) Node {
+func (n Node) WithAdjacent(a ...string) Node {
 	result := n.Copy()
-	result.Adjacency = result.Adjacency.Add(a)
+	result.Adjacency = result.Adjacency.Add(a...)
 	return result
 }
 
@@ -163,9 +164,9 @@ func (n Node) WithControls(cs ...string) Node {
 }
 
 // WithLatest produces a new Node with k mapped to v in the Latest metadata.
-func (n Node) WithLatest(k, v string) Node {
+func (n Node) WithLatest(k string, ts time.Time, v string) Node {
 	result := n.Copy()
-	result.Latest = result.Latest.Set(k, v)
+	result.Latest = result.Latest.Set(k, ts, v)
 	return result
 }
 

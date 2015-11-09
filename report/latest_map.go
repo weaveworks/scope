@@ -18,8 +18,8 @@ type LatestMap struct {
 
 // LatestEntry represents a timestamped value inside the LatestMap.
 type LatestEntry struct {
-	Timestamp int64  `json:"timestamp"`
-	Value     string `json:"value"`
+	Timestamp time.Time `json:"timestamp"`
+	Value     string    `json:"value"`
 }
 
 func (e LatestEntry) String() string {
@@ -46,7 +46,7 @@ func (m LatestMap) Merge(newer LatestMap) LatestMap {
 
 	m.Map.ForEach(func(key string, olderVal interface{}) {
 		if newerVal, ok := newer.Map.Lookup(key); ok {
-			if olderVal.(LatestEntry).Timestamp > newerVal.(LatestEntry).Timestamp {
+			if newerVal.(LatestEntry).Timestamp.Before(olderVal.(LatestEntry).Timestamp) {
 				output = output.Set(key, olderVal)
 			}
 		} else {
@@ -67,9 +67,8 @@ func (m LatestMap) Lookup(key string) (string, bool) {
 }
 
 // Set the value for the given key.
-func (m LatestMap) Set(key string, value string) LatestMap {
-	now := time.Now()
-	return LatestMap{m.Map.Set(key, LatestEntry{now.Unix(), value})}
+func (m LatestMap) Set(key string, timestamp time.Time, value string) LatestMap {
+	return LatestMap{m.Map.Set(key, LatestEntry{timestamp, value})}
 }
 
 func (m LatestMap) toIntermediate() map[string]LatestEntry {

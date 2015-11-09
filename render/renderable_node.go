@@ -134,12 +134,7 @@ func (rn RenderableNode) Copy() RenderableNode {
 // Specifically, that means cutting out parts of the Node.
 func (rn RenderableNode) Prune() RenderableNode {
 	cp := rn.Copy()
-	cp.Node.Metadata = report.Metadata{}     // snip
-	cp.Node.Counters = report.Counters{}     // snip
-	cp.Node.Edges = report.EdgeMetadatas{}   // snip
-	cp.Node.Sets = report.Sets{}             // snip
-	cp.Node.Controls = report.NodeControls{} // snip
-	cp.Node.Latest = report.LatestMap{}      // snip
+	cp.Node = report.MakeNode().WithAdjacent(cp.Node.Adjacency...)
 	return cp
 }
 

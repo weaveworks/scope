@@ -17,6 +17,7 @@ import (
 
 	docker "github.com/fsouza/go-dockerclient"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -268,7 +269,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ContainerPorts:         c.ports(localAddrs),
 		ContainerIPs:           report.MakeStringSet(ips...),
 		ContainerIPsWithScopes: report.MakeStringSet(ipsWithScopes...),
-	}).WithLatest(ContainerState, state)
+	}).WithLatest(ContainerState, mtime.Now(), state)
 
 	if c.container.State.Paused {
 		result = result.WithControls(UnpauseContainer)

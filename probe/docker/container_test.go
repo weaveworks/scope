@@ -14,6 +14,7 @@ import (
 
 	client "github.com/fsouza/go-dockerclient"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -64,6 +65,10 @@ func TestContainer(t *testing.T) {
 		t.Error(err)
 	}
 
+	now := time.Now()
+	mtime.NowForce(now)
+	defer mtime.NowReset()
+
 	// Now see if we go them
 	want := report.MakeNode().WithMetadata(map[string]string{
 		"docker_container_command": " ",
@@ -80,7 +85,7 @@ func TestContainer(t *testing.T) {
 		"docker_container_ips_with_scopes": report.MakeStringSet("scope;1.2.3.4"),
 	}).WithControls(
 		docker.RestartContainer, docker.StopContainer, docker.PauseContainer,
-	).WithLatest("docker_container_state", "running")
+	).WithLatest("docker_container_state", now, "running")
 
 	test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 		node := c.GetNode("scope", []net.IP{})
