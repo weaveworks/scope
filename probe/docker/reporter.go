@@ -42,6 +42,7 @@ func (r *Reporter) ContainerUpdated(c Container) {
 
 	// Publish a 'short cut' report container just this container
 	rpt := report.MakeReport()
+	rpt.Shortcut = true
 	rpt.Container.AddNode(report.MakeContainerNodeID(r.hostID, c.ID()), c.GetNode(r.hostID, localAddrs))
 	r.probe.Publish(rpt)
 }

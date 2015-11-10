@@ -11,6 +11,8 @@ import (
 // interface for parts of the app, and several experimental components.
 type Reporter interface {
 	Report() report.Report
+	WaitOn(chan struct{})
+	UnWait(chan struct{})
 }
 
 // Adder is something that can accept reports. It's a convenient interface for
@@ -25,12 +27,45 @@ type Collector struct {
 	mtx     sync.Mutex
 	reports []timestampReport
 	window  time.Duration
+	waitableCondition
+}
+
+type waitableCondition struct {
+	sync.Mutex
+	waiters map[chan struct{}]struct{}
+}
+
+func (wc *waitableCondition) WaitOn(waiter chan struct{}) {
+	wc.Lock()
+	wc.waiters[waiter] = struct{}{}
+	wc.Unlock()
+}
+
+func (wc *waitableCondition) UnWait(waiter chan struct{}) {
+	wc.Lock()
+	delete(wc.waiters, waiter)
+	wc.Unlock()
+}
+
+func (wc *waitableCondition) Broadcast() {
+	wc.Lock()
+	for waiter := range wc.waiters {
+		// Non-block write to channel
+		select {
+		case waiter <- struct{}{}:
+		default:
+		}
+	}
+	wc.Unlock()
 }
 
 // NewCollector returns a collector ready for use.
 func NewCollector(window time.Duration) *Collector {
 	return &Collector{
 		window: window,
+		waitableCondition: waitableCondition{
+			waiters: map[chan struct{}]struct{}{},
+		},
 	}
 }
 
@@ -42,6 +77,9 @@ func (c *Collector) Add(rpt report.Report) {
 	defer c.mtx.Unlock()
 	c.reports = append(c.reports, timestampReport{now(), rpt})
 	c.reports = clean(c.reports, c.window)
+	if rpt.Shortcut {
+		c.Broadcast()
+	}
 }
 
 // Report returns a merged report over all added reports. It implements
