@@ -10,16 +10,24 @@ import (
 
 // Request is the UI -> App -> Probe message type for control RPCs
 type Request struct {
-	ID      int64
+	AppID   string
 	NodeID  string
 	Control string
 }
 
 // Response is the Probe -> App -> UI message type for the control RPCs.
 type Response struct {
-	ID    int64
-	Value interface{}
-	Error string
+	Value  interface{} `json:"value,omitempty"`
+	Error  string      `json:"error,omitempty"`
+	Pipe   string      `json:"pipe,omitempty"`
+	RawTTY bool        `json:"raw_tty,omitempty"`
+}
+
+// Message is the unions of Request, Response and PipeIO
+type Message struct {
+	Request  *rpc.Request
+	Response *rpc.Response
+	Value    interface{}
 }
 
 // ControlHandler is interface used in the app and the probe to represent
@@ -82,27 +90,44 @@ func (j *JSONWebsocketCodec) WriteRequest(r *rpc.Request, v interface{}) error {
 	j.Lock()
 	defer j.Unlock()
 
-	if err := j.conn.WriteJSON(r); err != nil {
+	if err := j.conn.WriteJSON(Message{Request: r}); err != nil {
 		return err
 	}
-	return j.conn.WriteJSON(v)
+	return j.conn.WriteJSON(Message{Value: v})
+}
+
+// WriteResponse implements rpc.ServerCodec
+func (j *JSONWebsocketCodec) WriteResponse(r *rpc.Response, v interface{}) error {
+	j.Lock()
+	defer j.Unlock()
+
+	if err := j.conn.WriteJSON(Message{Response: r}); err != nil {
+		return err
+	}
+	return j.conn.WriteJSON(Message{Value: v})
+}
+
+func (j *JSONWebsocketCodec) readMessage(v interface{}) (*Message, error) {
+	m := Message{Value: v}
+	if err := j.conn.ReadJSON(&m); err != nil {
+		close(j.err)
+		return nil, err
+	}
+	return &m, nil
 }
 
 // ReadResponseHeader implements rpc.ClientCodec
 func (j *JSONWebsocketCodec) ReadResponseHeader(r *rpc.Response) error {
-	err := j.conn.ReadJSON(r)
-	if err != nil {
-		close(j.err)
+	m, err := j.readMessage(nil)
+	if err == nil {
+		*r = *m.Response
 	}
 	return err
 }
 
 // ReadResponseBody implements rpc.ClientCodec
 func (j *JSONWebsocketCodec) ReadResponseBody(v interface{}) error {
-	err := j.conn.ReadJSON(v)
-	if err != nil {
-		close(j.err)
-	}
+	_, err := j.readMessage(v)
 	return err
 }
 
@@ -113,29 +138,15 @@ func (j *JSONWebsocketCodec) Close() error {
 
 // ReadRequestHeader implements rpc.ServerCodec
 func (j *JSONWebsocketCodec) ReadRequestHeader(r *rpc.Request) error {
-	err := j.conn.ReadJSON(r)
-	if err != nil {
-		close(j.err)
+	m, err := j.readMessage(nil)
+	if err == nil {
+		*r = *m.Request
 	}
 	return err
 }
 
 // ReadRequestBody implements rpc.ServerCodec
 func (j *JSONWebsocketCodec) ReadRequestBody(v interface{}) error {
-	err := j.conn.ReadJSON(v)
-	if err != nil {
-		close(j.err)
-	}
+	_, err := j.readMessage(v)
 	return err
-}
-
-// WriteResponse implements rpc.ServerCodec
-func (j *JSONWebsocketCodec) WriteResponse(r *rpc.Response, v interface{}) error {
-	j.Lock()
-	defer j.Unlock()
-
-	if err := j.conn.WriteJSON(r); err != nil {
-		return err
-	}
-	return j.conn.WriteJSON(v)
 }

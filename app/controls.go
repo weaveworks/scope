@@ -24,6 +24,12 @@ func RegisterControlRoutes(router *mux.Router) {
 type controlHandler struct {
 	id     int64
 	client *rpc.Client
+	codec  *xfer.JSONWebsocketCodec
+}
+
+type controlRouter struct {
+	sync.Mutex
+	probes map[string]controlHandler
 }
 
 func (ch *controlHandler) handle(req xfer.Request) xfer.Response {
@@ -32,11 +38,6 @@ func (ch *controlHandler) handle(req xfer.Request) xfer.Response {
 		return xfer.ResponseError(err)
 	}
 	return res
-}
-
-type controlRouter struct {
-	sync.Mutex
-	probes map[string]controlHandler
 }
 
 func (cr *controlRouter) get(probeID string) (controlHandler, bool) {
@@ -79,7 +80,7 @@ func (cr *controlRouter) handleControl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := handler.handle(xfer.Request{
-		ID:      rand.Int63(),
+		AppID:   UniqueID,
 		NodeID:  nodeID,
 		Control: control,
 	})
@@ -87,7 +88,7 @@ func (cr *controlRouter) handleControl(w http.ResponseWriter, r *http.Request) {
 		respondWith(w, http.StatusBadRequest, result.Error)
 		return
 	}
-	respondWith(w, http.StatusOK, result.Value)
+	respondWith(w, http.StatusOK, result)
 }
 
 // handleProbeWS accepts websocket connections from the probe and registers
@@ -110,6 +111,7 @@ func (cr *controlRouter) handleProbeWS(w http.ResponseWriter, r *http.Request) {
 	client := rpc.NewClientWithCodec(codec)
 	handler := controlHandler{
 		id:     rand.Int63(),
+		codec:  codec,
 		client: client,
 	}
 

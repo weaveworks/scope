@@ -24,6 +24,7 @@ func router(c app.Collector) *mux.Router {
 	app.RegisterTopologyRoutes(c, router)
 	app.RegisterReportPostHandler(c, router)
 	app.RegisterControlRoutes(router)
+	app.RegisterPipeRoutes(router)
 	router.Methods("GET").PathPrefix("/").Handler(http.FileServer(FS(false)))
 	return router
 }

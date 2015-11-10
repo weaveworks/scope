@@ -102,12 +102,19 @@ func probeMain() {
 	}
 	log.Printf("publishing to: %s", strings.Join(targets, ", "))
 
-	clients := xfer.NewMultiAppClient(xfer.ProbeConfig{
+	probeConfig := xfer.ProbeConfig{
 		Token:    *token,
 		ProbeID:  probeID,
 		Insecure: *insecure,
-	}, xfer.ControlHandlerFunc(controls.HandleControlRequest), xfer.NewAppClient)
+	}
+	clients := xfer.NewMultiAppClient(func(hostname, endpoint string) (xfer.AppClient, error) {
+		return xfer.NewAppClient(
+			probeConfig, hostname, endpoint,
+			xfer.ControlHandlerFunc(controls.HandleControlRequest),
+		)
+	})
 	defer clients.Stop()
+	controls.Client = clients
 
 	resolver := xfer.NewStaticResolver(targets, clients.Set)
 	defer resolver.Stop()

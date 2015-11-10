@@ -87,7 +87,7 @@ func TestAppClientPublishInternal(t *testing.T) {
 		Insecure: false,
 	}
 
-	p, err := NewAppClient(pc, u.Host, s.URL)
+	p, err := NewAppClient(pc, u.Host, s.URL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +126,7 @@ func TestAppClientDetails(t *testing.T) {
 		Insecure: false,
 	}
 
-	p, err := NewAppClient(pc, u.Host, s.URL)
+	p, err := NewAppClient(pc, u.Host, s.URL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,7 +173,7 @@ func TestAppClientPublish(t *testing.T) {
 		ProbeID:  "",
 		Insecure: false,
 	}
-	p, err := NewAppClient(pc, u.Host, s.URL)
+	p, err := NewAppClient(pc, u.Host, s.URL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

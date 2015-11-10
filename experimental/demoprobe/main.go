@@ -27,7 +27,7 @@ func main() {
 		Token:    "demoprobe",
 		ProbeID:  "demoprobe",
 		Insecure: false,
-	}, *publish, *publish)
+	}, *publish, *publish, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

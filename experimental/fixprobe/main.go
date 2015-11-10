@@ -38,7 +38,7 @@ func main() {
 		Token:    "fixprobe",
 		ProbeID:  "fixprobe",
 		Insecure: false,
-	}, *publish, *publish)
+	}, *publish, *publish, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

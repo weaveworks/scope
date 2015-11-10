@@ -20,7 +20,7 @@ func (c *mockClient) Details() (xfer.Details, error) {
 	return xfer.Details{ID: c.id}, nil
 }
 
-func (c *mockClient) ControlConnection(handler xfer.ControlHandler) {
+func (c *mockClient) ControlConnection() {
 	c.count++
 }
 
@@ -33,12 +33,15 @@ func (c *mockClient) Publish(io.Reader) error {
 	return nil
 }
 
+func (c *mockClient) PipeConnection(_ string, _ xfer.Pipe) {}
+func (c *mockClient) PipeClose(_ string) error             { return nil }
+
 var (
 	a1      = &mockClient{id: "1"} // hostname a, app id 1
 	a2      = &mockClient{id: "2"} // hostname a, app id 2
 	b2      = &mockClient{id: "2"} // hostname b, app id 2 (duplicate)
 	b3      = &mockClient{id: "3"} // hostname b, app id 3
-	factory = func(_ xfer.ProbeConfig, hostname, target string) (xfer.AppClient, error) {
+	factory = func(hostname, target string) (xfer.AppClient, error) {
 		switch target {
 		case "a1":
 			return a1, nil
@@ -55,9 +58,6 @@ var (
 
 func TestMultiClient(t *testing.T) {
 	var (
-		controlHandler = xfer.ControlHandlerFunc(func(_ xfer.Request) xfer.Response {
-			return xfer.Response{}
-		})
 		expect = func(i, j int) {
 			if i != j {
 				_, file, line, _ := runtime.Caller(1)
@@ -66,7 +66,7 @@ func TestMultiClient(t *testing.T) {
 		}
 	)
 
-	mp := xfer.NewMultiAppClient(xfer.ProbeConfig{}, controlHandler, factory)
+	mp := xfer.NewMultiAppClient(factory)
 	defer mp.Stop()
 
 	// Add two hostnames with overlapping apps, check we don't add the same app twice
@@ -88,7 +88,7 @@ func TestMultiClient(t *testing.T) {
 }
 
 func TestMultiClientPublish(t *testing.T) {
-	mp := xfer.NewMultiAppClient(xfer.ProbeConfig{}, nil, factory)
+	mp := xfer.NewMultiAppClient(factory)
 	defer mp.Stop()
 
 	sum := func() int { return a1.publish + a2.publish + b2.publish + b3.publish }

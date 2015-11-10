@@ -29,13 +29,7 @@ func TestControl(t *testing.T) {
 	probeConfig := xfer.ProbeConfig{
 		ProbeID: "foo",
 	}
-	client, err := xfer.NewAppClient(probeConfig, ip+":"+port, ip+":"+port)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer client.Stop()
-
-	client.ControlConnection(xfer.ControlHandlerFunc(func(req xfer.Request) xfer.Response {
+	controlHandler := xfer.ControlHandlerFunc(func(req xfer.Request) xfer.Response {
 		if req.NodeID != "nodeid" {
 			t.Fatalf("'%s' != 'nodeid'", req.NodeID)
 		}
@@ -47,7 +41,13 @@ func TestControl(t *testing.T) {
 		return xfer.Response{
 			Value: "foo",
 		}
-	}))
+	})
+	client, err := xfer.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, controlHandler)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client.ControlConnection()
+	defer client.Stop()
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -59,12 +59,12 @@ func TestControl(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var response string
+	var response xfer.Response
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		t.Fatal(err)
 	}
 
-	if response != "foo" {
-		t.Fatalf("'%s' != 'foo'", response)
+	if response.Value != "foo" {
+		t.Fatalf("'%s' != 'foo'", response.Value)
 	}
 }

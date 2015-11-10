@@ -30,58 +30,98 @@ type Details struct {
 // AppClient is a client to an app for dealing with controls.
 type AppClient interface {
 	Details() (Details, error)
-	ControlConnection(handler ControlHandler)
+	ControlConnection()
+	PipeConnection(string, Pipe)
+	PipeClose(string) error
 	Publish(r io.Reader) error
 	Stop()
 }
 
+// appClient is a client to an app for dealing with controls.
 type appClient struct {
 	ProbeConfig
 
-	quit     chan struct{}
-	target   string
-	insecure bool
-	client   http.Client
+	quit   chan struct{}
+	mtx    sync.Mutex
+	target string
+	client http.Client
+
+	// Track ongoing websocket connections
+	conns map[string]*websocket.Conn
 
 	// For publish
 	publishLoop sync.Once
+	publishWait sync.WaitGroup
 	readers     chan io.Reader
 
 	// For controls
-	controlServerCodecMtx sync.Mutex
-	controlServerCodec    rpc.ServerCodec
+	control ControlHandler
 }
 
-// NewAppClient makes a new AppClient.
-func NewAppClient(pc ProbeConfig, hostname, target string) (AppClient, error) {
+// NewAppClient makes a new appClient.
+func NewAppClient(pc ProbeConfig, hostname, target string, control ControlHandler) (AppClient, error) {
 	httpTransport, err := pc.getHTTPTransport(hostname)
 	if err != nil {
 		return nil, err
 	}
 
-	appClient := &appClient{
+	return &appClient{
 		ProbeConfig: pc,
 		quit:        make(chan struct{}),
-		readers:     make(chan io.Reader),
 		target:      target,
 		client: http.Client{
 			Transport: httpTransport,
 		},
-	}
+		conns:   map[string]*websocket.Conn{},
+		readers: make(chan io.Reader),
+		control: control,
+	}, nil
+}
 
-	return appClient, nil
+func (c *appClient) hasQuit() bool {
+	select {
+	case <-c.quit:
+		return true
+	default:
+		return false
+	}
+}
+
+func (c *appClient) registerConn(id string, conn *websocket.Conn) bool {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	if c.hasQuit() {
+		conn.Close()
+		return false
+	}
+	c.conns[id] = conn
+	return true
+}
+
+func (c *appClient) closeConn(id string) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	if conn, ok := c.conns[id]; ok {
+		conn.Close()
+		delete(c.conns, id)
+	}
 }
 
 // Stop stops the appClient.
 func (c *appClient) Stop() {
-	c.controlServerCodecMtx.Lock()
-	defer c.controlServerCodecMtx.Unlock()
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 	close(c.readers)
 	close(c.quit)
-	if c.controlServerCodec != nil {
-		c.controlServerCodec.Close()
+
+	for _, conn := range c.conns {
+		conn.Close()
 	}
+	c.conns = map[string]*websocket.Conn{}
 	c.client.Transport.(*http.Transport).CloseIdleConnections()
+
+	c.publishWait.Wait()
+	return
 }
 
 // Details fetches the details (version, id) of the app.
@@ -125,7 +165,7 @@ func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
 	}
 }
 
-func (c *appClient) controlConnection(handler ControlHandler) error {
+func (c *appClient) controlConnection() error {
 	dialer := websocket.Dialer{}
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
@@ -142,36 +182,26 @@ func (c *appClient) controlConnection(handler ControlHandler) error {
 
 	codec := NewJSONWebsocketCodec(conn)
 	server := rpc.NewServer()
-	if err := server.RegisterName("control", handler); err != nil {
+	if err := server.RegisterName("control", c.control); err != nil {
 		return err
 	}
 
-	c.controlServerCodecMtx.Lock()
-	c.controlServerCodec = codec
-	// At this point we may have tried to quit earlier, so check to see if the
-	// quit channel has been closed, non-blocking.
-	select {
-	default:
-	case <-c.quit:
-		codec.Close()
+	// Will return false if we are exiting
+	if !c.registerConn("control", conn) {
 		return nil
 	}
-	c.controlServerCodecMtx.Unlock()
+	defer c.closeConn("control")
 
 	server.ServeCodec(codec)
-
-	c.controlServerCodecMtx.Lock()
-	c.controlServerCodec = nil
-	c.controlServerCodecMtx.Unlock()
 	return nil
 }
 
-func (c *appClient) ControlConnection(handler ControlHandler) {
+func (c *appClient) ControlConnection() {
 	go func() {
 		log.Printf("Control connection to %s starting", c.target)
 		defer log.Printf("Control connection to %s exiting", c.target)
 		c.doWithBackoff("controls", func() (bool, error) {
-			return false, c.controlConnection(handler)
+			return false, c.controlConnection()
 		})
 	}()
 }
@@ -184,7 +214,6 @@ func (c *appClient) publish(r io.Reader) error {
 	}
 	req.Header.Set("Content-Encoding", "gzip")
 	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
-
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -201,6 +230,16 @@ func (c *appClient) startPublishing() {
 	go func() {
 		log.Printf("Publish loop for %s starting", c.target)
 		defer log.Printf("Publish loop for %s exiting", c.target)
+
+		c.mtx.Lock()
+		if c.hasQuit() {
+			c.mtx.Unlock()
+			return
+		}
+		c.publishWait.Add(1)
+		defer c.publishWait.Done()
+		c.mtx.Unlock()
+
 		c.doWithBackoff("publish", func() (bool, error) {
 			r := <-c.readers
 			if r == nil {
@@ -219,5 +258,56 @@ func (c *appClient) Publish(r io.Reader) error {
 	case c.readers <- r:
 	default:
 	}
+	return nil
+}
+
+func (c *appClient) pipeConnection(id string, pipe Pipe) (bool, error) {
+	dialer := websocket.Dialer{}
+	headers := http.Header{}
+	c.ProbeConfig.authorizeHeaders(headers)
+	// TODO(twilkie) need to update sanitize to work with wss
+	url := sanitize.URL("ws://", 0, fmt.Sprintf("/api/pipe/%s/probe", id))(c.target)
+	conn, resp, err := dialer.Dial(url, headers)
+	if resp != nil && resp.StatusCode == http.StatusNotFound {
+		// Special handling - 404 means the app/user has closed the pipe
+		pipe.Close()
+		return true, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	// Will return false if we are exiting
+	if !c.registerConn(id, conn) {
+		return true, nil
+	}
+	defer c.closeConn(id)
+
+	_, remote := pipe.Ends()
+	return false, pipe.CopyToWebsocket(remote, conn)
+}
+
+func (c *appClient) PipeConnection(id string, pipe Pipe) {
+	go func() {
+		log.Printf("Pipe %s connection to %s starting", id, c.target)
+		defer log.Printf("Pipe %s connection to %s exiting", id, c.target)
+		c.doWithBackoff(id, func() (bool, error) {
+			return c.pipeConnection(id, pipe)
+		})
+	}()
+}
+
+// PipeClose closes the given pipe id on the app.
+func (c *appClient) PipeClose(id string) error {
+	url := sanitize.URL("", 0, fmt.Sprintf("/api/pipe/%s", id))(c.target)
+	req, err := c.ProbeConfig.authorizedRequest("DELETE", url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
 	return nil
 }
