@@ -466,7 +466,7 @@ func hostOriginTable(nmd report.Node) (Table, bool) {
 	)
 	for _, key := range []string{host.Load1, host.Load5, host.Load15} {
 		if metric, ok := nmd.Metrics[key]; ok {
-			if len(metric.Samples) == 0 {
+			if metric.Len() == 0 {
 				continue
 			}
 			if metric.Max > maxLoad {

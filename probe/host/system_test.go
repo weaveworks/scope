@@ -24,8 +24,8 @@ func TestGetLoad(t *testing.T) {
 		t.Fatalf("Expected 3 metrics, but got: %v", have)
 	}
 	for key, metric := range have {
-		if len(metric.Samples) != 1 {
-			t.Errorf("Expected metric %v to have 1 sample, but had: %d", key, len(metric.Samples))
+		if metric.Len() != 1 {
+			t.Errorf("Expected metric %v to have 1 sample, but had: %d", key, metric.Len())
 		}
 	}
 }
