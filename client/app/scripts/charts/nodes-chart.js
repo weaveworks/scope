@@ -4,8 +4,6 @@ const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
 const makeMap = require('immutable').Map;
 const timely = require('timely');
-const Motion = require('react-motion').Motion;
-const spring = require('react-motion').spring;
 
 const AppActions = require('../actions/app-actions');
 const AppStore = require('../stores/app-store');
@@ -32,12 +30,9 @@ const NodesChart = React.createClass({
     return {
       nodes: makeMap(),
       edges: makeMap(),
-      nodeScale: d3.scale.linear(),
-      shiftTranslate: [0, 0],
       panTranslate: [0, 0],
       scale: 1,
       hasZoomed: false,
-      autoShifted: false,
       maxNodesExceeded: false
     };
   },
@@ -63,7 +58,6 @@ const NodesChart = React.createClass({
     // wipe node states when showing different topology
     if (nextProps.topologyId !== this.props.topologyId) {
       _.assign(state, {
-        autoShifted: false,
         nodes: makeMap(),
         edges: makeMap()
       });
@@ -93,10 +87,11 @@ const NodesChart = React.createClass({
       .on('touchstart.zoom', null);
   },
 
-  renderGraphNodes: function(nodes, scale) {
+  renderGraphNodes: function(nodes, nodeScale) {
     const hasSelectedNode = this.props.selectedNodeId && this.props.nodes.has(this.props.selectedNodeId);
     const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes(this.props.selectedNodeId) : null;
     const onNodeClick = this.props.onNodeClick;
+    const zoomScale = this.state.scale;
 
     // highlighter functions
     const setHighlighted = node => {
@@ -142,7 +137,8 @@ const NodesChart = React.createClass({
             pseudo={node.get('pseudo')}
             subLabel={node.get('subLabel')}
             rank={node.get('rank')}
-            scale={scale}
+            nodeScale={nodeScale}
+            zoomScale={zoomScale}
             dx={node.get('x')}
             dy={node.get('y')}
           />
@@ -198,46 +194,29 @@ const NodesChart = React.createClass({
   },
 
   render: function() {
-    const nodeElements = this.renderGraphNodes(this.state.nodes, this.state.nodeScale);
-    const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
+    const nodeElements = this.renderGraphNodes(this.state.nodes, this.props.nodeScale);
+    const edgeElements = this.renderGraphEdges(this.state.edges, this.props.nodeScale);
     const scale = this.state.scale;
 
-    // only animate shift behavior, not panning
-    const panTranslate = this.state.panTranslate;
-    const shiftTranslate = this.state.shiftTranslate;
-    let translate = panTranslate;
-    let wasShifted = false;
-    if (shiftTranslate[0] !== panTranslate[0] || shiftTranslate[1] !== panTranslate[1]) {
-      translate = shiftTranslate;
-      wasShifted = true;
-    }
+    const translate = this.state.panTranslate;
+    const transform = 'translate(' + translate + ') scale(' + scale + ')';
     const svgClassNames = this.state.maxNodesExceeded || nodeElements.size === 0 ? 'hide' : '';
     const errorEmpty = this.renderEmptyTopologyError(AppStore.isTopologyEmpty());
     const errorMaxNodesExceeded = this.renderMaxNodesError(this.state.maxNodesExceeded);
-    const motionConfig = [80, 20];
 
     return (
       <div className="nodes-chart">
         {errorEmpty}
         {errorMaxNodesExceeded}
         <svg width="100%" height="100%" className={svgClassNames} onClick={this.handleMouseClick}>
-          <Motion style={{x: spring(translate[0], motionConfig), y: spring(translate[1], motionConfig)}}>
-            {function(interpolated) {
-              const interpolatedTranslate = wasShifted ? [interpolated.x, interpolated.y] : panTranslate;
-              const transform = 'translate(' + interpolatedTranslate + ')' +
-                ' scale(' + scale + ')';
-              return (
-                <g className="canvas" transform={transform}>
-                  <g className="edges">
-                    {edgeElements}
-                  </g>
-                  <g className="nodes">
-                    {nodeElements}
-                  </g>
-                </g>
-              );
-            }}
-          </Motion>
+          <g className="canvas" transform={transform}>
+            <g className="edges">
+              {edgeElements}
+            </g>
+            <g className="nodes">
+              {nodeElements}
+            </g>
+          </g>
         </svg>
       </div>
     );
@@ -309,10 +288,12 @@ const NodesChart = React.createClass({
       }
     });
 
-    // shift center node a bit
-    const nodeScale = state.nodeScale;
-    const centerX = selectedLayoutNode.get('px') + nodeScale(1);
-    const centerY = selectedLayoutNode.get('py') + nodeScale(1);
+    // move origin node to center of viewport
+    const zoomScale = state.scale;
+    const detailsWidth = 420;
+    const translate = state.panTranslate;
+    const centerX = (-translate[0] + (props.width + MARGINS.left - detailsWidth) / 2) / zoomScale;
+    const centerY = (-translate[1] + (props.height + MARGINS.top) / 2) / zoomScale;
     stateNodes = stateNodes.mergeIn([props.selectedNodeId], {
       x: centerX,
       y: centerY
@@ -321,7 +302,7 @@ const NodesChart = React.createClass({
     // circle layout for adjacent nodes
     const adjacentCount = adjacentLayoutNodeIds.length;
     const density = radiusDensity(adjacentCount);
-    const radius = Math.min(props.width, props.height) / density;
+    const radius = Math.min(props.width, props.height) / density / zoomScale;
     const offsetAngle = Math.PI / 4;
 
     stateNodes = stateNodes.map((node) => {
@@ -352,53 +333,9 @@ const NodesChart = React.createClass({
       return edge;
     });
 
-    // shift canvas selected node out of view if it has not been shifted already
-    let autoShifted = this.state.autoShifted;
-    const shiftTranslate = state.shiftTranslate;
-
-    if (!autoShifted) {
-      const visibleWidth = Math.max(props.width - props.detailsWidth, 0);
-      const offsetX = shiftTranslate[0];
-      // normalize graph coordinates by zoomScale
-      const zoomScale = state.scale;
-      const outerRadius = radius + this.state.nodeScale(1.5);
-      if (2 * outerRadius * zoomScale > props.width) {
-        // radius too big, centering center node on canvas
-        shiftTranslate[0] = -(centerX * zoomScale - (props.width + MARGINS.left) / 2);
-      } else if (offsetX + (centerX + outerRadius) * zoomScale > visibleWidth) {
-        // shift left if blocked by details
-        const shift = (centerX + outerRadius) * zoomScale - visibleWidth;
-        shiftTranslate[0] = -shift;
-      } else if (offsetX + (centerX - outerRadius) * zoomScale < 0) {
-        // shift right if off canvas
-        const shift = offsetX - offsetX + (centerX - outerRadius) * zoomScale;
-        shiftTranslate[0] = -shift;
-      }
-      const offsetY = shiftTranslate[1];
-      if (2 * outerRadius * zoomScale > props.height) {
-        // radius too big, centering center node on canvas
-        shiftTranslate[1] = -(centerY * zoomScale - (props.height + MARGINS.top) / 2);
-      } else if (offsetY + (centerY + outerRadius) * zoomScale > props.height) {
-        // shift up if past bottom
-        const shift = (centerY + outerRadius) * zoomScale - props.height;
-        shiftTranslate[1] = -shift;
-      } else if (offsetY + (centerY - outerRadius) * zoomScale - props.topMargin < 0) {
-        // shift down if off canvas
-        const shift = offsetY - offsetY + (centerY - outerRadius) * zoomScale - props.topMargin;
-        shiftTranslate[1] = -shift;
-      }
-      // debug('shift', centerX, centerY, outerRadius, shiftTranslate);
-
-      // saving translate in d3's panning cache
-      this.zoom.translate(shiftTranslate);
-      autoShifted = true;
-    }
-
     return {
-      autoShifted: autoShifted,
       edges: stateEdges,
-      nodes: stateNodes,
-      shiftTranslate: shiftTranslate
+      nodes: stateNodes
     };
   },
 
@@ -407,10 +344,6 @@ const NodesChart = React.createClass({
   handleMouseClick: function() {
     if (!this.isZooming) {
       AppActions.clickCloseDetails();
-      // allow shifts again
-      this.setState({
-        autoShifted: false
-      });
     } else {
       this.isZooming = false;
     }
@@ -431,7 +364,7 @@ const NodesChart = React.createClass({
       return edge;
     });
 
-    return {edges, nodes};
+    return { edges, nodes};
   },
 
   updateGraphState: function(props, state) {
@@ -447,14 +380,10 @@ const NodesChart = React.createClass({
     let stateNodes = this.initNodes(props.nodes, state.nodes);
     let stateEdges = this.initEdges(props.nodes, stateNodes);
 
-    const expanse = Math.min(props.height, props.width);
-    const nodeSize = expanse / 3; // single node should fill a third of the screen
-    const normalizedNodeSize = nodeSize / Math.sqrt(n); // assuming rectangular layout
-    const nodeScale = this.state.nodeScale.range([0, normalizedNodeSize]);
     const options = {
       width: props.width,
       height: props.height,
-      scale: nodeScale,
+      scale: props.nodeScale,
       margins: MARGINS,
       topologyId: this.props.topologyId
     };
@@ -497,7 +426,6 @@ const NodesChart = React.createClass({
     return {
       nodes: stateNodes,
       edges: stateEdges,
-      nodeScale: nodeScale,
       scale: zoomScale,
       maxNodesExceeded: false
     };
@@ -506,13 +434,14 @@ const NodesChart = React.createClass({
   zoomed: function() {
     // debug('zoomed', d3.event.scale, d3.event.translate);
     this.isZooming = true;
-    this.setState({
-      autoShifted: false,
-      hasZoomed: true,
-      panTranslate: d3.event.translate.slice(),
-      shiftTranslate: d3.event.translate.slice(),
-      scale: d3.event.scale
-    });
+    // dont pan while node is selected
+    if (!this.props.selectedNodeId) {
+      this.setState({
+        hasZoomed: true,
+        panTranslate: d3.event.translate.slice(),
+        scale: d3.event.scale
+      });
+    }
   }
 
 });
