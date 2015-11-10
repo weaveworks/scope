@@ -4,8 +4,8 @@
 
 start_suite "Test short lived connections between containers on different hosts"
 
-WEAVE_NO_FASTDP=true weave_on $HOST1 launch $HOST1 $HOST2
-WEAVE_NO_FASTDP=true weave_on $HOST2 launch $HOST1 $HOST2
+WEAVE_NO_FASTDP=true WEAVE_DOCKER_ARGS=$ADD_HOST_ARGS weave_on $HOST1 launch $HOST1 $HOST2
+WEAVE_NO_FASTDP=true WEAVE_DOCKER_ARGS=$ADD_HOST_ARGS weave_on $HOST2 launch $HOST1 $HOST2
 
 scope_on $HOST1 launch
 scope_on $HOST2 launch
