@@ -111,21 +111,19 @@ func TestMetricAdd(t *testing.T) {
 		{time.Now().Add(2 * time.Minute), 0.3},
 	}
 
-	intermediate := report.MakeMetric().
+	have := report.MakeMetric().
 		Add(s[0].Timestamp, s[0].Value).
-		Add(s[2].Timestamp, s[2].Value) // Keeps sorted
-	have := intermediate.
+		Add(s[2].Timestamp, s[2].Value). // Keeps sorted
 		Add(s[1].Timestamp, s[1].Value).
-		Add(s[2].Timestamp, 0.5) // Ignores duplicate timestamps
+		Add(s[2].Timestamp, 0.5) // Overwrites duplicate timestamps
 
-	intermedWant := report.Samples{}.Cons(s[0]).Cons(s[2])
-	if !reflect.DeepEqual(intermedWant, intermediate.Samples) {
-		t.Errorf("diff: %s", test.Diff(s, intermediate.Samples))
-	}
+	want := report.MakeMetric().
+		Add(s[0].Timestamp, s[0].Value).
+		Add(s[1].Timestamp, s[1].Value).
+		Add(s[2].Timestamp, 0.5)
 
-	want := report.Samples{}.Cons(s[0]).Cons(s[1]).Cons(s[2])
-	if !reflect.DeepEqual(want, have.Samples) {
-		t.Errorf("diff: %s", test.Diff(want, have.Samples))
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("diff: %s", test.Diff(want, have))
 	}
 }
 
