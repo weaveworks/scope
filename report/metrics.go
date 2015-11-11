@@ -27,7 +27,7 @@ func (m Metrics) Merge(other Metrics) Metrics {
 func (m Metrics) Copy() Metrics {
 	result := Metrics{}
 	for k, v := range m {
-		result[k] = v.Copy()
+		result[k] = v
 	}
 	return result
 }
@@ -46,11 +46,11 @@ type Sample struct {
 	Value     float64   `json:"value"`
 }
 
+var nilMetric = Metric{Samples: ps.NewList()}
+
 // MakeMetric makes a new Metric.
 func MakeMetric() Metric {
-	return Metric{
-		Samples: ps.NewList(),
-	}
+	return nilMetric
 }
 
 // Copy returns a value copy of the Metric. Metric is immutable, so we can skip
@@ -92,27 +92,47 @@ func last(t1, t2 time.Time) time.Time {
 	return t2
 }
 
+// revCons appends acc to the head of curr, where acc is in reverse order.
+// acc must never be nil, curr can be.
+func revCons(acc, curr ps.List) ps.List {
+	if curr == nil {
+		return acc.Reverse()
+	}
+	for !acc.IsNil() {
+		acc, curr = acc.Tail(), curr.Cons(acc.Head())
+	}
+	return curr
+}
+
 // Add returns a new Metric with (t, v) added to its Samples. Add is the only
 // valid way to grow a Metric.
 func (m Metric) Add(t time.Time, v float64) Metric {
 	// Find the first element which is before you element, and insert
 	// your new element in the list.  NB we want to dedupe entries with
 	// equal timestamps.
-	var insert func(ps.List) ps.List
-	insert = func(ss ps.List) ps.List {
-		if ss == nil || ss.IsNil() {
-			return ps.NewList().Cons(Sample{t, v})
-		}
-		currSample := ss.Head().(Sample)
-		if currSample.Timestamp.Equal(t) {
-			return ss.Tail().Cons(Sample{t, v})
-		}
-		if currSample.Timestamp.Before(t) {
-			return ss.Cons(Sample{t, v})
-		}
-		return insert(ss.Tail()).Cons(currSample)
-	}
+	// This should be O(1) to insert a latest element, and O(n) in general.
+	insert := func(ss ps.List) ps.List {
+		curr, acc := ss, ps.NewList()
+		for {
+			if curr == nil || curr.IsNil() {
+				acc = acc.Cons(Sample{t, v})
+				break
+			}
 
+			currSample := curr.Head().(Sample)
+			if currSample.Timestamp.Equal(t) {
+				acc, curr = acc.Cons(Sample{t, v}), curr.Tail()
+				break
+			}
+			if currSample.Timestamp.Before(t) {
+				acc = acc.Cons(Sample{t, v})
+				break
+			}
+
+			acc, curr = acc.Cons(curr.Head()), curr.Tail()
+		}
+		return revCons(acc, curr)
+	}
 	return Metric{
 		Samples: insert(m.Samples),
 		Max:     math.Max(m.Max, v),
@@ -124,23 +144,27 @@ func (m Metric) Add(t time.Time, v float64) Metric {
 
 // Merge combines the two Metrics and returns a new result.
 func (m Metric) Merge(other Metric) Metric {
-	var merge func(ps.List, ps.List) ps.List
-	merge = func(ss1, ss2 ps.List) ps.List {
-		if ss1 == nil || ss1.IsNil() {
-			return ss2
-		} else if ss2 == nil || ss2.IsNil() {
-			return ss1
-		}
+	// Merge two lists of samples in O(n)
+	merge := func(ss1, ss2 ps.List) ps.List {
+		curr1, curr2, acc := ss1, ss2, ps.NewList()
 
-		s1 := ss1.Head().(Sample)
-		s2 := ss2.Head().(Sample)
+		for {
+			if curr1 == nil || curr1.IsNil() {
+				return revCons(acc, curr2)
+			} else if curr2 == nil || curr2.IsNil() {
+				return revCons(acc, curr1)
+			}
 
-		if s1.Timestamp.Equal(s2.Timestamp) {
-			return merge(ss1.Tail(), ss2.Tail()).Cons(s1)
-		} else if s1.Timestamp.After(s2.Timestamp) {
-			return merge(ss1.Tail(), ss2).Cons(s1)
-		} else {
-			return merge(ss1, ss2.Tail()).Cons(s2)
+			s1 := curr1.Head().(Sample)
+			s2 := curr2.Head().(Sample)
+
+			if s1.Timestamp.Equal(s2.Timestamp) {
+				curr1, curr2, acc = curr1.Tail(), curr2.Tail(), acc.Cons(s1)
+			} else if s1.Timestamp.After(s2.Timestamp) {
+				curr1, acc = curr1.Tail(), acc.Cons(s1)
+			} else {
+				curr2, acc = curr2.Tail(), acc.Cons(s2)
+			}
 		}
 	}
 
@@ -155,13 +179,13 @@ func (m Metric) Merge(other Metric) Metric {
 
 // Div returns a new copy of the metric, with each value divided by n.
 func (m Metric) Div(n float64) Metric {
-	var div func(ps.List) ps.List
-	div = func(ss ps.List) ps.List {
-		if ss == nil || ss.IsNil() {
-			return ss
+	div := func(ss ps.List) ps.List {
+		curr, acc := ss, ps.NewList()
+		for curr != nil && !curr.IsNil() {
+			s := curr.Head().(Sample)
+			curr, acc = curr.Tail(), acc.Cons(Sample{s.Timestamp, s.Value / n})
 		}
-		s := ss.Head().(Sample)
-		return div(ss.Tail()).Cons(Sample{s.Timestamp, s.Value / n})
+		return acc.Reverse()
 	}
 	return Metric{
 		Samples: div(m.Samples),
