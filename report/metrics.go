@@ -111,30 +111,29 @@ func (m Metric) Add(t time.Time, v float64) Metric {
 	// your new element in the list.  NB we want to dedupe entries with
 	// equal timestamps.
 	// This should be O(1) to insert a latest element, and O(n) in general.
-	insert := func(ss ps.List) ps.List {
-		curr, acc := ss, ps.NewList()
-		for {
-			if curr == nil || curr.IsNil() {
-				acc = acc.Cons(Sample{t, v})
-				break
-			}
-
-			currSample := curr.Head().(Sample)
-			if currSample.Timestamp.Equal(t) {
-				acc, curr = acc.Cons(Sample{t, v}), curr.Tail()
-				break
-			}
-			if currSample.Timestamp.Before(t) {
-				acc = acc.Cons(Sample{t, v})
-				break
-			}
-
-			acc, curr = acc.Cons(curr.Head()), curr.Tail()
+	curr, acc := m.Samples, ps.NewList()
+	for {
+		if curr == nil || curr.IsNil() {
+			acc = acc.Cons(Sample{t, v})
+			break
 		}
-		return revCons(acc, curr)
+
+		currSample := curr.Head().(Sample)
+		if currSample.Timestamp.Equal(t) {
+			acc, curr = acc.Cons(Sample{t, v}), curr.Tail()
+			break
+		}
+		if currSample.Timestamp.Before(t) {
+			acc = acc.Cons(Sample{t, v})
+			break
+		}
+
+		acc, curr = acc.Cons(curr.Head()), curr.Tail()
 	}
+	acc = revCons(acc, curr)
+
 	return Metric{
-		Samples: insert(m.Samples),
+		Samples: acc,
 		Max:     math.Max(m.Max, v),
 		Min:     math.Min(m.Min, v),
 		First:   first(m.First, t),
@@ -145,31 +144,31 @@ func (m Metric) Add(t time.Time, v float64) Metric {
 // Merge combines the two Metrics and returns a new result.
 func (m Metric) Merge(other Metric) Metric {
 	// Merge two lists of samples in O(n)
-	merge := func(ss1, ss2 ps.List) ps.List {
-		curr1, curr2, acc := ss1, ss2, ps.NewList()
+	curr1, curr2, acc := m.Samples, other.Samples, ps.NewList()
 
-		for {
-			if curr1 == nil || curr1.IsNil() {
-				return revCons(acc, curr2)
-			} else if curr2 == nil || curr2.IsNil() {
-				return revCons(acc, curr1)
-			}
+	for {
+		if curr1 == nil || curr1.IsNil() {
+			acc = revCons(acc, curr2)
+			break
+		} else if curr2 == nil || curr2.IsNil() {
+			acc = revCons(acc, curr1)
+			break
+		}
 
-			s1 := curr1.Head().(Sample)
-			s2 := curr2.Head().(Sample)
+		s1 := curr1.Head().(Sample)
+		s2 := curr2.Head().(Sample)
 
-			if s1.Timestamp.Equal(s2.Timestamp) {
-				curr1, curr2, acc = curr1.Tail(), curr2.Tail(), acc.Cons(s1)
-			} else if s1.Timestamp.After(s2.Timestamp) {
-				curr1, acc = curr1.Tail(), acc.Cons(s1)
-			} else {
-				curr2, acc = curr2.Tail(), acc.Cons(s2)
-			}
+		if s1.Timestamp.Equal(s2.Timestamp) {
+			curr1, curr2, acc = curr1.Tail(), curr2.Tail(), acc.Cons(s1)
+		} else if s1.Timestamp.After(s2.Timestamp) {
+			curr1, acc = curr1.Tail(), acc.Cons(s1)
+		} else {
+			curr2, acc = curr2.Tail(), acc.Cons(s2)
 		}
 	}
 
 	return Metric{
-		Samples: merge(m.Samples, other.Samples),
+		Samples: acc,
 		Max:     math.Max(m.Max, other.Max),
 		Min:     math.Min(m.Min, other.Min),
 		First:   first(m.First, other.First),
@@ -179,16 +178,14 @@ func (m Metric) Merge(other Metric) Metric {
 
 // Div returns a new copy of the metric, with each value divided by n.
 func (m Metric) Div(n float64) Metric {
-	div := func(ss ps.List) ps.List {
-		curr, acc := ss, ps.NewList()
-		for curr != nil && !curr.IsNil() {
-			s := curr.Head().(Sample)
-			curr, acc = curr.Tail(), acc.Cons(Sample{s.Timestamp, s.Value / n})
-		}
-		return acc.Reverse()
+	curr, acc := m.Samples, ps.NewList()
+	for curr != nil && !curr.IsNil() {
+		s := curr.Head().(Sample)
+		curr, acc = curr.Tail(), acc.Cons(Sample{s.Timestamp, s.Value / n})
 	}
+	acc = acc.Reverse()
 	return Metric{
-		Samples: div(m.Samples),
+		Samples: acc,
 		Max:     m.Max / n,
 		Min:     m.Min / n,
 		First:   m.First,
