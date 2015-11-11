@@ -207,24 +207,48 @@ func TestMetricDiv(t *testing.T) {
 	checkMetric(t, beforeDiv, t1, t2, -2048, 2048)
 }
 
+type codec struct {
+	name        string
+	encode      func(interface{}) ([]byte, error)
+	decode      func([]byte, interface{}) error
+	extraChecks func(*testing.T, codec, []byte)
+}
+
 func TestMetricMarshalling(t *testing.T) {
 	t1 := time.Now().UTC()
 	t2 := time.Now().UTC().Add(1 * time.Minute)
 	t3 := time.Now().UTC().Add(2 * time.Minute)
 	t4 := time.Now().UTC().Add(3 * time.Minute)
 
-	want := report.MakeMetric().
-		Add(t1, 0.1).
-		Add(t2, 0.2).
-		Add(t3, 0.3).
-		Add(t4, 0.4)
+	wantSamples := []report.Sample{
+		{Timestamp: t1, Value: 0.1},
+		{Timestamp: t2, Value: 0.2},
+		{Timestamp: t3, Value: 0.3},
+		{Timestamp: t4, Value: 0.4},
+	}
 
-	codecs := []struct {
-		name   string
-		encode func(interface{}) ([]byte, error)
-		decode func([]byte, interface{}) error
-	}{
-		{"json", json.Marshal, json.Unmarshal},
+	want := report.MakeMetric()
+	for _, sample := range wantSamples {
+		want = want.Add(sample.Timestamp, sample.Value)
+	}
+
+	codecs := []codec{
+		{
+			"json",
+			json.Marshal,
+			json.Unmarshal,
+			func(t *testing.T, codec codec, b []byte) {
+				var wire struct {
+					Samples []report.Sample `json:"samples"`
+				}
+				if err := codec.decode(b, &wire); err != nil {
+					t.Fatalf("[%s] %s", codec.name, err)
+				}
+				if !reflect.DeepEqual(wantSamples, wire.Samples) {
+					t.Errorf("[%s] diff: %sencoded: %s", codec.name, test.Diff(wantSamples, wire.Samples), b)
+				}
+			},
+		},
 		{
 			"gob",
 			func(v interface{}) ([]byte, error) {
@@ -235,6 +259,7 @@ func TestMetricMarshalling(t *testing.T) {
 			func(b []byte, v interface{}) error {
 				return gob.NewDecoder(bytes.NewReader(b)).Decode(v)
 			},
+			nil,
 		},
 	}
 	for _, codec := range codecs {
@@ -251,6 +276,10 @@ func TestMetricMarshalling(t *testing.T) {
 
 		if !reflect.DeepEqual(want, have) {
 			t.Errorf("[%s] diff: %sencoded: %s", codec.name, test.Diff(want, have), b)
+		}
+
+		if codec.extraChecks != nil {
+			codec.extraChecks(t, codec, b)
 		}
 	}
 }
