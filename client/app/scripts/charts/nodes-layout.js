@@ -1,6 +1,3 @@
-// polyfill
-Object.assign = require('object-assign');
-
 const dagre = require('dagre');
 const debug = require('debug')('scope:nodes-layout');
 const makeMap = require('immutable').Map;
