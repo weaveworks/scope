@@ -1,6 +1,5 @@
 const EventEmitter = require('events').EventEmitter;
 const _ = require('lodash');
-const assign = require('object-assign');
 const debug = require('debug')('scope:app-store');
 const Immutable = require('immutable');
 
@@ -100,7 +99,7 @@ function setDefaultTopologyOptions(topologyList) {
 
 // Store API
 
-const AppStore = assign({}, EventEmitter.prototype, {
+const AppStore = Object.assign({}, EventEmitter.prototype, {
 
   CHANGE_EVENT: 'change',
 

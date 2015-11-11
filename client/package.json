@@ -16,7 +16,6 @@
     "keymirror": "0.1.1",
     "lodash": "~3.10.1",
     "materialize-css": "0.97.2",
-    "object-assign": "4.0.1",
     "page": "1.6.4",
     "react": "0.14.2",
     "react-addons-pure-render-mixin": "0.14.2",
