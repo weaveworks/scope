@@ -134,10 +134,7 @@ func main() {
 		if registry, err := docker.NewRegistry(*dockerInterval); err == nil {
 			defer registry.Stop()
 			p.AddTagger(docker.NewTagger(registry, processCache))
-
-			reporter := docker.NewReporter(registry, hostID, p)
-			registry.WatchContainerUpdates(reporter.ContainerUpdated)
-			p.AddReporter(reporter)
+			p.AddReporter(docker.NewReporter(registry, hostID, p))
 		} else {
 			log.Printf("Docker: failed to start registry: %v", err)
 		}

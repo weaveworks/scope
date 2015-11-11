@@ -25,11 +25,13 @@ type Reporter struct {
 
 // NewReporter makes a new Reporter
 func NewReporter(registry Registry, hostID string, probe *probe.Probe) *Reporter {
-	return &Reporter{
+	reporter := &Reporter{
 		registry: registry,
 		hostID:   hostID,
 		probe:    probe,
 	}
+	registry.WatchContainerUpdates(reporter.ContainerUpdated)
+	return reporter
 }
 
 // ContainerUpdated should be called whenever a container is updated.

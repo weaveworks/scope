@@ -16,7 +16,7 @@ const (
 // Probe sits there, generating and publishing reports.
 type Probe struct {
 	spyInterval, publishInterval time.Duration
-	publisher                    xfer.Publisher
+	publisher                    *xfer.ReportPublisher
 
 	tickers   []Ticker
 	reporters []Reporter
@@ -51,7 +51,7 @@ func New(spyInterval, publishInterval time.Duration, publisher xfer.Publisher) *
 	result := &Probe{
 		spyInterval:     spyInterval,
 		publishInterval: publishInterval,
-		publisher:       publisher,
+		publisher:       xfer.NewReportPublisher(publisher),
 		quit:            make(chan struct{}),
 		spiedReports:    make(chan report.Report, reportBufferSize),
 		shortcutReports: make(chan report.Report, reportBufferSize),
@@ -152,37 +152,33 @@ func (p *Probe) tag(r report.Report) report.Report {
 	return r
 }
 
-func condense(rpt report.Report, rs chan report.Report) report.Report {
+func (p *Probe) drainAndPublish(rpt report.Report, rs chan report.Report) {
+ForLoop:
 	for {
 		select {
 		case r := <-rs:
 			rpt = rpt.Merge(r)
 		default:
-			return rpt
+			break ForLoop
 		}
+	}
+
+	if err := p.publisher.Publish(rpt); err != nil {
+		log.Printf("publish: %v", err)
 	}
 }
 
 func (p *Probe) publishLoop() {
 	defer p.done.Done()
-	var (
-		pubTick = time.Tick(p.publishInterval)
-		rptPub  = xfer.NewReportPublisher(p.publisher)
-	)
+	pubTick := time.Tick(p.publishInterval)
 
 	for {
 		select {
 		case <-pubTick:
-			rpt := condense(report.MakeReport(), p.spiedReports)
-			if err := rptPub.Publish(rpt); err != nil {
-				log.Printf("publish: %v", err)
-			}
+			p.drainAndPublish(report.MakeReport(), p.spiedReports)
 
 		case rpt := <-p.shortcutReports:
-			rpt = condense(rpt, p.shortcutReports)
-			if err := rptPub.Publish(rpt); err != nil {
-				log.Printf("publish: %v", err)
-			}
+			p.drainAndPublish(rpt, p.shortcutReports)
 
 		case <-p.quit:
 			return
