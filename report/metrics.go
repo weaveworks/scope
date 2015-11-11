@@ -18,10 +18,7 @@ type Metrics map[string]Metric
 func (m Metrics) Merge(other Metrics) Metrics {
 	result := m.Copy()
 	for k, v := range other {
-		if o, ok := result[k]; ok {
-			v = v.Merge(o)
-		}
-		result[k] = v
+		result[k] = result[k].Merge(v)
 	}
 	return result
 }
@@ -75,6 +72,9 @@ func (m Metric) WithFirst(t time.Time) Metric {
 
 // Len returns the number of samples in the metric.
 func (m Metric) Len() int {
+	if m.Samples == nil {
+		return 0
+	}
 	return m.Samples.Size()
 }
 
@@ -100,8 +100,8 @@ func (m Metric) Add(t time.Time, v float64) Metric {
 	// equal timestamps.
 	var insert func(ps.List) ps.List
 	insert = func(ss ps.List) ps.List {
-		if ss.IsNil() {
-			return ss.Cons(Sample{t, v})
+		if ss == nil || ss.IsNil() {
+			return ps.NewList().Cons(Sample{t, v})
 		}
 		currSample := ss.Head().(Sample)
 		if currSample.Timestamp.Equal(t) {
@@ -126,9 +126,9 @@ func (m Metric) Add(t time.Time, v float64) Metric {
 func (m Metric) Merge(other Metric) Metric {
 	var merge func(ps.List, ps.List) ps.List
 	merge = func(ss1, ss2 ps.List) ps.List {
-		if ss1.IsNil() {
+		if ss1 == nil || ss1.IsNil() {
 			return ss2
-		} else if ss2.IsNil() {
+		} else if ss2 == nil || ss2.IsNil() {
 			return ss1
 		}
 
@@ -157,7 +157,7 @@ func (m Metric) Merge(other Metric) Metric {
 func (m Metric) Div(n float64) Metric {
 	var div func(ps.List) ps.List
 	div = func(ss ps.List) ps.List {
-		if ss.IsNil() {
+		if ss == nil || ss.IsNil() {
 			return ss
 		}
 		s := ss.Head().(Sample)
@@ -175,7 +175,7 @@ func (m Metric) Div(n float64) Metric {
 // LastSample returns the last sample in the metric, or nil if there are no
 // samples.
 func (m Metric) LastSample() *Sample {
-	if m.Samples.IsNil() {
+	if m.Samples == nil || m.Samples.IsNil() {
 		return nil
 	}
 	s := m.Samples.Head().(Sample)
@@ -193,9 +193,11 @@ type WireMetrics struct {
 
 func (m Metric) toIntermediate() WireMetrics {
 	samples := []Sample{}
-	m.Samples.ForEach(func(s interface{}) {
-		samples = append(samples, s.(Sample))
-	})
+	if m.Samples != nil {
+		m.Samples.ForEach(func(s interface{}) {
+			samples = append(samples, s.(Sample))
+		})
+	}
 	return WireMetrics{
 		Samples: samples,
 		Max:     m.Max,
