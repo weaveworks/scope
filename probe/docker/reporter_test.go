@@ -36,6 +36,8 @@ func (r *mockRegistry) WalkImages(f func(*client.APIImages)) {
 	}
 }
 
+func (r *mockRegistry) WatchContainerUpdates(_ docker.ContainerUpdateWatcher) {}
+
 var (
 	mockRegistryInstance = &mockRegistry{
 		containersByPID: map[int]docker.Container{
@@ -95,7 +97,7 @@ func TestReporter(t *testing.T) {
 		Controls: report.Controls{},
 	}
 
-	reporter := docker.NewReporter(mockRegistryInstance, "")
+	reporter := docker.NewReporter(mockRegistryInstance, "", nil)
 	have, _ := reporter.Report()
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))

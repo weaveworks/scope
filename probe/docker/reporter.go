@@ -1,10 +1,12 @@
 package docker
 
 import (
+	"log"
 	"net"
 
 	docker_client "github.com/fsouza/go-dockerclient"
 
+	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -18,14 +20,33 @@ const (
 type Reporter struct {
 	registry Registry
 	hostID   string
+	probe    *probe.Probe
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(registry Registry, hostID string) *Reporter {
-	return &Reporter{
+func NewReporter(registry Registry, hostID string, probe *probe.Probe) *Reporter {
+	reporter := &Reporter{
 		registry: registry,
 		hostID:   hostID,
+		probe:    probe,
 	}
+	registry.WatchContainerUpdates(reporter.ContainerUpdated)
+	return reporter
+}
+
+// ContainerUpdated should be called whenever a container is updated.
+func (r *Reporter) ContainerUpdated(c Container) {
+	localAddrs, err := report.LocalAddresses()
+	if err != nil {
+		log.Printf("Error getting local address: %v", err)
+		return
+	}
+
+	// Publish a 'short cut' report container just this container
+	rpt := report.MakeReport()
+	rpt.Shortcut = true
+	rpt.Container.AddNode(report.MakeContainerNodeID(r.hostID, c.ID()), c.GetNode(r.hostID, localAddrs))
+	r.probe.Publish(rpt)
 }
 
 // Report generates a Report containing Container and ContainerImage topologies

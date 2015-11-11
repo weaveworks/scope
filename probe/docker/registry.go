@@ -31,7 +31,11 @@ type Registry interface {
 	LockedPIDLookup(f func(func(int) Container))
 	WalkContainers(f func(Container))
 	WalkImages(f func(*docker_client.APIImages))
+	WatchContainerUpdates(ContainerUpdateWatcher)
 }
+
+// ContainerUpdateWatcher is the type of functions that get called when containers are updated.
+type ContainerUpdateWatcher func(c Container)
 
 type registry struct {
 	sync.RWMutex
@@ -39,6 +43,7 @@ type registry struct {
 	interval time.Duration
 	client   Client
 
+	watchers        []ContainerUpdateWatcher
 	containers      map[string]Container
 	containersByPID map[int]Container
 	images          map[string]*docker_client.APIImages
@@ -89,6 +94,14 @@ func (r *registry) Stop() {
 	ch := make(chan struct{})
 	r.quit <- ch
 	<-ch
+}
+
+// WatchContainerUpdates registers a callback to be called
+// whenever a container is updated.
+func (r *registry) WatchContainerUpdates(f ContainerUpdateWatcher) {
+	r.Lock()
+	defer r.Unlock()
+	r.watchers = append(r.watchers, f)
 }
 
 func (r *registry) loop() {
@@ -242,6 +255,11 @@ func (r *registry) updateContainerState(containerID string) {
 		r.containersByPID[dockerContainer.State.Pid] = c
 	} else {
 		c.UpdateState(dockerContainer)
+	}
+
+	// Trigger anyone watching for updates
+	for _, f := range r.watchers {
+		f(c)
 	}
 
 	// And finally, ensure we gather stats for it

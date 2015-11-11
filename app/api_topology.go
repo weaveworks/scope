@@ -114,7 +114,11 @@ func handleWebsocket(
 	var (
 		previousTopo render.RenderableNodes
 		tick         = time.Tick(loop)
+		wait         = make(chan struct{}, 1)
 	)
+	rep.WaitOn(wait)
+	defer rep.UnWait(wait)
+
 	for {
 		newTopo := renderer.Render(rep.Report()).Prune()
 		diff := render.TopoDiff(previousTopo, newTopo)
@@ -128,9 +132,10 @@ func handleWebsocket(
 		}
 
 		select {
+		case <-wait:
+		case <-tick:
 		case <-quit:
 			return
-		case <-tick:
 		}
 	}
 }

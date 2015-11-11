@@ -9,5 +9,6 @@ import (
 type StaticReport struct{}
 
 func (s StaticReport) Report() report.Report { return fixture.Report }
-
-func (s StaticReport) Add(report.Report) {}
+func (s StaticReport) Add(report.Report)     {}
+func (s StaticReport) WaitOn(chan struct{})  {}
+func (s StaticReport) UnWait(chan struct{})  {}

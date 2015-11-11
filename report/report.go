@@ -63,6 +63,10 @@ type Report struct {
 	// such as in the app, we expect the component to overwrite the window
 	// before serving it to consumers.
 	Window time.Duration
+
+	// Shortcut reports should be propogated to the UI as quickly as possible,
+	// bypassing the usual spy interval, publish interval and app ws interval.
+	Shortcut bool
 }
 
 // MakeReport makes a clean report, ready to Merge() other reports into.
