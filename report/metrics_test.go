@@ -12,6 +12,43 @@ import (
 	"github.com/weaveworks/scope/test"
 )
 
+func TestMetricsMerge(t *testing.T) {
+	t1 := time.Now()
+	t2 := time.Now().Add(1 * time.Minute)
+	t3 := time.Now().Add(2 * time.Minute)
+	t4 := time.Now().Add(3 * time.Minute)
+
+	metrics1 := report.Metrics{
+		"metric1": report.MakeMetric().Add(t1, 0.1).Add(t2, 0.2),
+		"metric2": report.MakeMetric().Add(t3, 0.3),
+	}
+	metrics2 := report.Metrics{
+		"metric2": report.MakeMetric().Add(t4, 0.4),
+		"metric3": report.MakeMetric().Add(t1, 0.1).Add(t2, 0.2),
+	}
+	want := report.Metrics{
+		"metric1": report.MakeMetric().Add(t1, 0.1).Add(t2, 0.2),
+		"metric2": report.MakeMetric().Add(t3, 0.3).Add(t4, 0.4),
+		"metric3": report.MakeMetric().Add(t1, 0.1).Add(t2, 0.2),
+	}
+	have := metrics1.Merge(metrics2)
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("diff: %s", test.Diff(want, have))
+	}
+}
+
+func TestMetricsCopy(t *testing.T) {
+	t1 := time.Now()
+	want := report.Metrics{
+		"metric1": report.MakeMetric().Add(t1, 0.1),
+	}
+	delete(want.Copy(), "metric1") // Modify a copy
+	have := want.Copy()            // Check the original wasn't affected
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("diff: %s", test.Diff(want, have))
+	}
+}
+
 func checkMetric(t *testing.T, metric report.Metric, first, last time.Time, min, max float64) {
 	if !metric.First.Equal(first) {
 		t.Errorf("Expected metric.First == %q, but was: %q", first, metric.First)
