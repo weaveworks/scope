@@ -58,16 +58,17 @@ func TestContainer(t *testing.T) {
 	}
 	defer c.StopGatheringStats()
 
+	now := time.Unix(12345, 67890).UTC()
+	mtime.NowForce(now)
+	defer mtime.NowReset()
+
 	// Send some stats to the docker container
 	stats := &client.Stats{}
+	stats.Read = now
 	stats.MemoryStats.Usage = 12345
 	if err = json.NewEncoder(writer).Encode(&stats); err != nil {
 		t.Error(err)
 	}
-
-	now := time.Now()
-	mtime.NowForce(now)
-	defer mtime.NowReset()
 
 	// Now see if we go them
 	want := report.MakeNode().WithMetadata(map[string]string{
@@ -85,8 +86,12 @@ func TestContainer(t *testing.T) {
 		"docker_container_ips_with_scopes": report.MakeStringSet("scope;1.2.3.4"),
 	}).WithControls(
 		docker.RestartContainer, docker.StopContainer, docker.PauseContainer,
-	).WithLatest("docker_container_state", now, "running")
-
+	).WithLatest(
+		"docker_container_state", now, "running",
+	).WithMetrics(report.Metrics{
+		"cpu_total_usage": report.MakeMetric(),
+		"memory_usage":    report.MakeMetric().Add(now, 12345),
+	})
 	test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 		node := c.GetNode("scope", []net.IP{})
 		for k, v := range node.Metadata {

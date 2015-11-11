@@ -7,6 +7,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/weaveworks/scope/report"
 )
 
 // Uname is swappable for mocking in tests.
@@ -21,29 +23,34 @@ var GetKernelVersion = func() (string, error) {
 	return fmt.Sprintf("%s %s", charsToString(utsname.Release), charsToString(utsname.Version)), nil
 }
 
-// GetLoad returns the current load averages in standard form.
-var GetLoad = func() string {
+// GetLoad returns the current load averages as metrics.
+var GetLoad = func() report.Metrics {
 	buf, err := ioutil.ReadFile("/proc/loadavg")
 	if err != nil {
-		return "unknown"
+		return nil
 	}
+	now := time.Now()
 	toks := strings.Fields(string(buf))
 	if len(toks) < 3 {
-		return "unknown"
+		return nil
 	}
 	one, err := strconv.ParseFloat(toks[0], 64)
 	if err != nil {
-		return "unknown"
+		return nil
 	}
 	five, err := strconv.ParseFloat(toks[1], 64)
 	if err != nil {
-		return "unknown"
+		return nil
 	}
 	fifteen, err := strconv.ParseFloat(toks[2], 64)
 	if err != nil {
-		return "unknown"
+		return nil
 	}
-	return fmt.Sprintf("%.2f %.2f %.2f", one, five, fifteen)
+	return report.Metrics{
+		Load1:  report.MakeMetric().Add(now, one),
+		Load5:  report.MakeMetric().Add(now, five),
+		Load15: report.MakeMetric().Add(now, fifteen),
+	}
 }
 
 // GetUptime returns the uptime of the host.

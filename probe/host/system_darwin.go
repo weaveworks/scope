@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/weaveworks/scope/report"
 )
 
 var (
@@ -27,17 +29,35 @@ var GetKernelVersion = func() (string, error) {
 	return fmt.Sprintf("Darwin %s", matches[0][1]), nil
 }
 
-// GetLoad returns the current load averages in standard form.
-var GetLoad = func() string {
+// GetLoad returns the current load averages as metrics.
+var GetLoad = func() report.Metrics {
 	out, err := exec.Command("w").CombinedOutput()
 	if err != nil {
-		return "unknown"
+		return nil
 	}
+	now := time.Now()
 	matches := loadRe.FindAllStringSubmatch(string(out), -1)
 	if matches == nil || len(matches) < 1 || len(matches[0]) < 4 {
-		return "unknown"
+		return nil
 	}
-	return fmt.Sprintf("%s %s %s", matches[0][1], matches[0][2], matches[0][3])
+
+	one, err := strconv.ParseFloat(matches[0][1], 64)
+	if err != nil {
+		return nil
+	}
+	five, err := strconv.ParseFloat(matches[0][2], 64)
+	if err != nil {
+		return nil
+	}
+	fifteen, err := strconv.ParseFloat(matches[0][3], 64)
+	if err != nil {
+		return nil
+	}
+	return report.Metrics{
+		Load1:  report.MakeMetric().Add(now, one),
+		Load5:  report.MakeMetric().Add(now, five),
+		Load15: report.MakeMetric().Add(now, fifteen),
+	}
 }
 
 // GetUptime returns the uptime of the host.
