@@ -242,186 +242,186 @@ const AppStore = assign({}, EventEmitter.prototype, {
 AppStore.registeredCallback = function(payload) {
   switch (payload.type) {
 
-    case ActionTypes.CHANGE_TOPOLOGY_OPTION:
-      if (topologyOptions.getIn([payload.topologyId, payload.option])
-        !== payload.value) {
-        nodes = nodes.clear();
-      }
-      topologyOptions = topologyOptions.setIn(
-        [payload.topologyId, payload.option],
-        payload.value
-      );
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.CLEAR_CONTROL_ERROR:
-      controlError = null;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.CLICK_CLOSE_DETAILS:
-      selectedNodeId = null;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.CLICK_NODE:
-      if (payload.nodeId === selectedNodeId) {
-        // clicking same node twice unsets the selection
-        selectedNodeId = null;
-      } else {
-        selectedNodeId = payload.nodeId;
-      }
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.CLICK_TOPOLOGY:
-      selectedNodeId = null;
-      if (payload.topologyId !== currentTopologyId) {
-        setTopology(payload.topologyId);
-        nodes = nodes.clear();
-      }
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.CLOSE_WEBSOCKET:
-      websocketClosed = true;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.DO_CONTROL:
-      controlPending = true;
-      controlError = null;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.ENTER_EDGE:
-      mouseOverEdgeId = payload.edgeId;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.ENTER_NODE:
-      mouseOverNodeId = payload.nodeId;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.HIT_ESC_KEY:
-      nodeDetails = null;
-      selectedNodeId = null;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.LEAVE_EDGE:
-      mouseOverEdgeId = null;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.LEAVE_NODE:
-      mouseOverNodeId = null;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.OPEN_WEBSOCKET:
-      // flush nodes cache after re-connect
+  case ActionTypes.CHANGE_TOPOLOGY_OPTION:
+    if (topologyOptions.getIn([payload.topologyId, payload.option])
+      !== payload.value) {
       nodes = nodes.clear();
-      websocketClosed = false;
+    }
+    topologyOptions = topologyOptions.setIn(
+      [payload.topologyId, payload.option],
+      payload.value
+    );
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
 
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
+  case ActionTypes.CLEAR_CONTROL_ERROR:
+    controlError = null;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
 
-    case ActionTypes.DO_CONTROL_ERROR:
-      controlPending = false;
-      controlError = payload.error;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
+  case ActionTypes.CLICK_CLOSE_DETAILS:
+    selectedNodeId = null;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
 
-    case ActionTypes.DO_CONTROL_SUCCESS:
-      controlPending = false;
-      controlError = null;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
+  case ActionTypes.CLICK_NODE:
+    if (payload.nodeId === selectedNodeId) {
+      // clicking same node twice unsets the selection
+      selectedNodeId = null;
+    } else {
+      selectedNodeId = payload.nodeId;
+    }
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
 
-    case ActionTypes.RECEIVE_ERROR:
-      errorUrl = payload.errorUrl;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
+  case ActionTypes.CLICK_TOPOLOGY:
+    selectedNodeId = null;
+    if (payload.topologyId !== currentTopologyId) {
+      setTopology(payload.topologyId);
+      nodes = nodes.clear();
+    }
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
 
-    case ActionTypes.RECEIVE_NODE_DETAILS:
-      errorUrl = null;
-      nodeDetails = payload.details;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
+  case ActionTypes.CLOSE_WEBSOCKET:
+    websocketClosed = true;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
 
-    case ActionTypes.RECEIVE_NODES_DELTA:
-      const emptyMessage = !payload.delta.add && !payload.delta.remove
-        && payload.delta.update;
+  case ActionTypes.DO_CONTROL:
+    controlPending = true;
+    controlError = null;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
 
-      if (!emptyMessage) {
-        debug('RECEIVE_NODES_DELTA',
-          'remove', _.size(payload.delta.remove),
-          'update', _.size(payload.delta.update),
-          'add', _.size(payload.delta.add));
+  case ActionTypes.ENTER_EDGE:
+    mouseOverEdgeId = payload.edgeId;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.ENTER_NODE:
+    mouseOverNodeId = payload.nodeId;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.HIT_ESC_KEY:
+    nodeDetails = null;
+    selectedNodeId = null;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.LEAVE_EDGE:
+    mouseOverEdgeId = null;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.LEAVE_NODE:
+    mouseOverNodeId = null;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.OPEN_WEBSOCKET:
+    // flush nodes cache after re-connect
+    nodes = nodes.clear();
+    websocketClosed = false;
+
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.DO_CONTROL_ERROR:
+    controlPending = false;
+    controlError = payload.error;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.DO_CONTROL_SUCCESS:
+    controlPending = false;
+    controlError = null;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.RECEIVE_ERROR:
+    errorUrl = payload.errorUrl;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.RECEIVE_NODE_DETAILS:
+    errorUrl = null;
+    nodeDetails = payload.details;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.RECEIVE_NODES_DELTA:
+    const emptyMessage = !payload.delta.add && !payload.delta.remove
+      && payload.delta.update;
+
+    if (!emptyMessage) {
+      debug('RECEIVE_NODES_DELTA',
+        'remove', _.size(payload.delta.remove),
+        'update', _.size(payload.delta.update),
+        'add', _.size(payload.delta.add));
+    }
+
+    errorUrl = null;
+
+    // nodes that no longer exist
+    _.each(payload.delta.remove, function(nodeId) {
+      // in case node disappears before mouseleave event
+      if (mouseOverNodeId === nodeId) {
+        mouseOverNodeId = null;
       }
-
-      errorUrl = null;
-
-      // nodes that no longer exist
-      _.each(payload.delta.remove, function(nodeId) {
-        // in case node disappears before mouseleave event
-        if (mouseOverNodeId === nodeId) {
-          mouseOverNodeId = null;
-        }
-        if (nodes.has(nodeId) && _.contains(mouseOverEdgeId, nodeId)) {
-          mouseOverEdgeId = null;
-        }
-        nodes = nodes.delete(nodeId);
-      });
-
-      // update existing nodes
-      _.each(payload.delta.update, function(node) {
-        nodes = nodes.set(node.id, nodes.get(node.id).merge(makeNode(node)));
-      });
-
-      // add new nodes
-      _.each(payload.delta.add, function(node) {
-        nodes = nodes.set(node.id, Immutable.fromJS(makeNode(node)));
-      });
-
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
-
-    case ActionTypes.RECEIVE_TOPOLOGIES:
-      errorUrl = null;
-      topologies = processTopologies(payload.topologies);
-      setTopology(currentTopologyId);
-      // only set on first load, if options are not already set via route
-      if (!topologiesLoaded && topologyOptions.size === 0) {
-        setDefaultTopologyOptions(topologies);
+      if (nodes.has(nodeId) && _.contains(mouseOverEdgeId, nodeId)) {
+        mouseOverEdgeId = null;
       }
-      topologiesLoaded = true;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
+      nodes = nodes.delete(nodeId);
+    });
 
-    case ActionTypes.RECEIVE_API_DETAILS:
-      errorUrl = null;
-      version = payload.version;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
+    // update existing nodes
+    _.each(payload.delta.update, function(node) {
+      nodes = nodes.set(node.id, nodes.get(node.id).merge(makeNode(node)));
+    });
 
-    case ActionTypes.ROUTE_TOPOLOGY:
-      routeSet = true;
-      if (currentTopologyId !== payload.state.topologyId) {
-        nodes = nodes.clear();
-      }
-      setTopology(payload.state.topologyId);
+    // add new nodes
+    _.each(payload.delta.add, function(node) {
+      nodes = nodes.set(node.id, Immutable.fromJS(makeNode(node)));
+    });
+
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.RECEIVE_TOPOLOGIES:
+    errorUrl = null;
+    topologies = processTopologies(payload.topologies);
+    setTopology(currentTopologyId);
+    // only set on first load, if options are not already set via route
+    if (!topologiesLoaded && topologyOptions.size === 0) {
       setDefaultTopologyOptions(topologies);
-      selectedNodeId = payload.state.selectedNodeId;
-      topologyOptions = Immutable.fromJS(payload.state.topologyOptions)
-        || topologyOptions;
-      AppStore.emit(AppStore.CHANGE_EVENT);
-      break;
+    }
+    topologiesLoaded = true;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
 
-    default:
-      break;
+  case ActionTypes.RECEIVE_API_DETAILS:
+    errorUrl = null;
+    version = payload.version;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  case ActionTypes.ROUTE_TOPOLOGY:
+    routeSet = true;
+    if (currentTopologyId !== payload.state.topologyId) {
+      nodes = nodes.clear();
+    }
+    setTopology(payload.state.topologyId);
+    setDefaultTopologyOptions(topologies);
+    selectedNodeId = payload.state.selectedNodeId;
+    topologyOptions = Immutable.fromJS(payload.state.topologyOptions)
+      || topologyOptions;
+    AppStore.emit(AppStore.CHANGE_EVENT);
+    break;
+
+  default:
+    break;
 
   }
 };

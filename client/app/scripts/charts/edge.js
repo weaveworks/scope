@@ -1,7 +1,8 @@
 const _ = require('lodash');
 const d3 = require('d3');
 const React = require('react');
-const Spring = require('react-motion').Spring;
+const Motion = require('react-motion').Motion;
+const spring = require('react-motion').spring;
 
 const AppActions = require('../actions/app-actions');
 
@@ -15,8 +16,8 @@ const animConfig = [80, 20]; // stiffness, bounce
 const flattenPoints = function(points) {
   const flattened = {};
   points.forEach(function(point, i) {
-    flattened['x' + i] = {val: point.x, config: animConfig};
-    flattened['y' + i] = {val: point.y, config: animConfig};
+    flattened['x' + i] = spring(point.x, animConfig);
+    flattened['y' + i] = spring(point.y, animConfig);
   });
   return flattened;
 };
@@ -29,7 +30,7 @@ const extractPoints = function(points) {
     if (!extracted[index]) {
       extracted[index] = {};
     }
-    extracted[index][axis] = value.val;
+    extracted[index][axis] = value;
   });
   return extracted;
 };
@@ -66,7 +67,7 @@ const Edge = React.createClass({
     const classes = classNames.join(' ');
 
     return (
-      <Spring endValue={points}>
+      <Motion style={points}>
         {function(interpolated) {
           const path = line(extractPoints(interpolated));
           return (
@@ -76,7 +77,7 @@ const Edge = React.createClass({
             </g>
           );
         }}
-      </Spring>
+      </Motion>
     );
   },
 

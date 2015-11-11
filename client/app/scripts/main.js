@@ -2,9 +2,10 @@ require('font-awesome-webpack');
 require('../styles/main.less');
 
 const React = require('react');
+const ReactDOM = require('react-dom');
 
 const App = require('./components/app.js');
 
-React.render(
+ReactDOM.render(
   <App/>,
   document.getElementById('app'));

@@ -1,6 +1,4 @@
 const React = require('react');
-const mui = require('material-ui');
-const Paper = mui.Paper;
 
 const NodeDetails = require('./node-details');
 
@@ -9,9 +7,11 @@ const Details = React.createClass({
   render: function() {
     return (
       <div id="details">
-        <Paper zDepth={3} style={{height: '100%', paddingBottom: 8}}>
+        <div style={{height: '100%', paddingBottom: 8, borderRadius: 2,
+          backgroundColor: '#fff',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.19), 0 6px 10px rgba(0, 0, 0, 0.23)'}}>
           <NodeDetails {...this.props} />
-        </Paper>
+        </div>
       </div>
     );
   }

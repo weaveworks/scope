@@ -85,7 +85,7 @@ module.exports = {
     WebapiUtils.doControl(
       probeId,
       nodeId,
-      control,
+      control
     );
   },
 

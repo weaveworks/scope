@@ -1,3 +1,6 @@
+// polyfill
+Object.assign = require('object-assign');
+
 const dagre = require('dagre');
 const debug = require('debug')('scope:nodes-layout');
 const makeMap = require('immutable').Map;
@@ -181,7 +184,7 @@ function hasSameEndpoints(cachedEdge, nodes) {
  * @return {Object}        layout clone
  */
 function cloneLayout(layout, nodes, edges) {
-  const clone = {...layout, nodes, edges};
+  const clone = Object.assign({}, layout, {nodes, edges});
   return clone;
 }
 

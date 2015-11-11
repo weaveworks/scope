@@ -7,7 +7,7 @@ const NodesError = React.createClass({
     if (this.props.hidden) {
       classNames += ' hide';
     }
-    let iconClassName = 'fa ' + this.props.faIconClass;
+    const iconClassName = 'fa ' + this.props.faIconClass;
 
     return (
       <div className={classNames}>

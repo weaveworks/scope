@@ -31,7 +31,7 @@ describe('NodeDetails', () => {
     const c = TestUtils.renderIntoDocument(<NodeDetails nodes={nodes} nodeId={nodeId} details={details} />);
 
     const title = TestUtils.findRenderedDOMComponentWithClass(c, 'node-details-header-label');
-    expect(title.getDOMNode().textContent).toBe('Node 1');
+    expect(title.textContent).toBe('Node 1');
   });
 
 });
