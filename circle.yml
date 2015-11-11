@@ -19,21 +19,15 @@ dependencies:
   cache_directories:
     - "~/docker"
   post:
-    - sudo apt-get update
-    - sudo apt-get install jq pv
+    - "sudo apt-get update && sudo apt-get install jq pv"
     - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
     - go get $WEAVE_REPO/...
     - make deps
-    - mkdir -p $(dirname $SRCDIR)
-    - cp -r $(pwd)/ $SRCDIR
-    - cd $SRCDIR/client; ../tools/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc
-    - touch $SRCDIR/.scope_ui_build.uptodate
-    - cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh
-    - touch $SRCDIR/.scope_backend_build.uptodate
-    - make -C $SRCDIR/tools/runner
-    - mkdir -p $WEAVE_ROOT/tools/runner
-    - cp $SRCDIR/tools/runner/runner $WEAVE_ROOT/tools/runner
+    - "mkdir -p $(dirname $SRCDIR) && cp -r $(pwd)/ $SRCDIR"
+    - "cd $SRCDIR/client; ../tools/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc && touch $SRCDIR/.scope_ui_build.uptodate"
+    - "cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh && touch $SRCDIR/.scope_backend_build.uptodate"
+    - "make -C $SRCDIR/tools/runner && mkdir -p $WEAVE_ROOT/tools/runner && cp $SRCDIR/tools/runner/runner $WEAVE_ROOT/tools/runner"
 
 test:
   override:
@@ -51,9 +45,7 @@ test:
         parallel: true
     - cd $SRCDIR/experimental; ./build_on_circle.sh:
         parallel: true
-    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup):
-        parallel: true
-    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./setup.sh):
+    - "test -z \"$SECRET_PASSWORD\" || (cd $SRCDIR/integration; ./gce.sh setup && eval $(./gce.sh hosts); ./setup.sh)":
         parallel: true
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./run_all.sh):
         timeout: 300
