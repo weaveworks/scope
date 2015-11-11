@@ -1,4 +1,4 @@
-FROM node:0.10
+FROM node:4.2.2
 WORKDIR /home/weave
 COPY package.json /home/weave/
 # Dont install optional developer tools

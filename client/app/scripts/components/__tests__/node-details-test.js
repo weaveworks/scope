@@ -2,8 +2,6 @@ jest.dontMock('../node-details.js');
 jest.dontMock('../../mixins/node-color-mixin');
 jest.dontMock('../../utils/title-utils');
 
-__WS_URL__ = false
-
 describe('NodeDetails', () => {
   let NodeDetails;
   let nodes;
@@ -28,7 +26,8 @@ describe('NodeDetails', () => {
   it('show label of node with title', () => {
     nodes = nodes.set(nodeId, Immutable.fromJS({id: nodeId}));
     details = {label_major: 'Node 1', tables: []};
-    const c = TestUtils.renderIntoDocument(<NodeDetails nodes={nodes} nodeId={nodeId} details={details} />);
+    const c = TestUtils.renderIntoDocument(<NodeDetails nodes={nodes}
+      nodeId={nodeId} details={details} />);
 
     const title = TestUtils.findRenderedDOMComponentWithClass(c, 'node-details-header-label');
     expect(title.textContent).toBe('Node 1');

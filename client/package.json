@@ -40,7 +40,7 @@
     "eslint-plugin-jasmine": "1.6.0",
     "eslint-plugin-react": "3.8.0",
     "file-loader": "0.8.4",
-    "jest-cli": "~0.4.19",
+    "jest-cli": "~0.7.1",
     "json-loader": "0.5.3",
     "less": "~2.5.1",
     "less-loader": "2.2.1",
@@ -72,20 +72,19 @@
       "es6",
       "js"
     ],
+    "testPathDirs": [
+      "<rootDir>/app/scripts"
+    ],
+    "globals": {
+      "__WS_URL__": false
+    },
     "moduleFileExtensions": [
       "js",
       "json",
       "es6"
     ],
     "unmockedModulePathPatterns": [
-      "react",
-      "immutable",
-      "d3",
-      "dagre",
-      "keymirror",
-      "object-assign",
-      "lodash",
-      "debug"
+      "/node_modules/"
     ]
   },
   "engines": {
