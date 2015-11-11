@@ -63,7 +63,7 @@
     "build": "webpack -p --config webpack.production.config.js",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
-    "test": "jest --coverage",
+    "test": "jest",
     "coveralls": "cat coverage/lcov.info | coveralls",
     "lint": "eslint app",
     "clean": "rm build/app.js"
