@@ -3,6 +3,11 @@
   "globals": {
     __WS_URL__: false
   },
+  "env": {
+    "browser": true,
+    "jest": true,
+    "node": true
+  },
   "rules": {
     "comma-dangle": 0,
     "func-names": 0,

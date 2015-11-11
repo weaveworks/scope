@@ -3,6 +3,8 @@ jest.dontMock('../../constants/naming'); // edge naming: 'source-target'
 
 import { fromJS, Map } from 'immutable';
 
+const makeMap = Map;
+
 describe('NodesLayout', () => {
   const NodesLayout = require('../nodes-layout');
 
@@ -72,8 +74,8 @@ describe('NodesLayout', () => {
 
   beforeEach(() => {
     options = {
-      nodeCache: Map(),
-      edgeCache: Map()
+      nodeCache: makeMap(),
+      edgeCache: makeMap()
     };
   });
 
@@ -187,8 +189,8 @@ describe('NodesLayout', () => {
     nodes = result.nodes.toJS();
 
     resultCoords = getNodeCoordinates(result.nodes);
-    expect(resultCoords.slice(0,2)).toEqual(coords.slice(0,2));
-    expect(resultCoords.slice(2,6)).toEqual(coords.slice(4,8));
+    expect(resultCoords.slice(0, 2)).toEqual(coords.slice(0, 2));
+    expect(resultCoords.slice(2, 6)).toEqual(coords.slice(4, 8));
   });
 
   it('keeps nodes in rectangle after removed node reappears', () => {
@@ -227,8 +229,7 @@ describe('NodesLayout', () => {
     // console.log('re-add 1 node', nodes);
 
     resultCoords = getNodeCoordinates(result.nodes);
-    expect(resultCoords.slice(0,2)).toEqual(coords.slice(0,2));
-    expect(resultCoords.slice(2,6)).toEqual(coords.slice(4,8));
+    expect(resultCoords.slice(0, 2)).toEqual(coords.slice(0, 2));
+    expect(resultCoords.slice(2, 6)).toEqual(coords.slice(4, 8));
   });
-
 });
