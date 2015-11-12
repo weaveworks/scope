@@ -12,7 +12,7 @@ const Node = React.createClass({
 
   render: function() {
     const props = this.props;
-    const scale = this.props.nodeScale;
+    const nodeScale = this.props.nodeScale;
     const zoomScale = this.props.zoomScale;
     let scaleFactor = 1;
     if (props.focused) {
@@ -29,8 +29,8 @@ const Node = React.createClass({
     const onMouseClick = this.handleMouseClick;
     const classNames = ['node'];
     const animConfig = [80, 20]; // stiffness, bounce
-    const label = this.ellipsis(props.label, 14, scale(4 * scaleFactor));
-    const subLabel = this.ellipsis(props.subLabel, 12, scale(4 * scaleFactor));
+    const label = this.ellipsis(props.label, 14, nodeScale(4 * scaleFactor));
+    const subLabel = this.ellipsis(props.subLabel, 12, nodeScale(4 * scaleFactor));
     let labelFontSize = 14;
     let subLabelFontSize = 12;
 
@@ -66,16 +66,16 @@ const Node = React.createClass({
           return (
             <g className={classes} transform={transform} id={props.id}
               onClick={onMouseClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-              {props.highlighted && <circle r={scale(0.7 * interpolated.f)} className="highlighted"></circle>}
-              <circle r={scale(0.5 * interpolated.f)} className="border" stroke={color}></circle>
-              <circle r={scale(0.45 * interpolated.f)} className="shadow"></circle>
-              <circle r={Math.max(2, scale(0.125 * interpolated.f))} className="node"></circle>
+              {props.highlighted && <circle r={nodeScale(0.7 * interpolated.f)} className="highlighted"></circle>}
+              <circle r={nodeScale(0.5 * interpolated.f)} className="border" stroke={color}></circle>
+              <circle r={nodeScale(0.45 * interpolated.f)} className="shadow"></circle>
+              <circle r={Math.max(2, nodeScale(0.125 * interpolated.f))} className="node"></circle>
               <text className="node-label" textAnchor="middle" style={{fontSize: interpolated.labelFontSize}}
-                x="0" y={interpolated.labelOffsetY + scale(0.5 * interpolated.f)}>
+                x="0" y={interpolated.labelOffsetY + nodeScale(0.5 * interpolated.f)}>
                 {label}
               </text>
-              <text className="node-sublabel" textAnchor="middle" style={{fontSize: interpolated.subLabelFontSize.val}}
-                x="0" y={interpolated.subLabelOffsetY + scale(0.5 * interpolated.f)}>
+              <text className="node-sublabel" textAnchor="middle" style={{fontSize: interpolated.subLabelFontSize}}
+                x="0" y={interpolated.subLabelOffsetY + nodeScale(0.5 * interpolated.f)}>
                 {subLabel}
               </text>
             </g>
