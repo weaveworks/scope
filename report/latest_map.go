@@ -79,7 +79,7 @@ func (m LatestMap) toIntermediate() map[string]LatestEntry {
 	return intermediate
 }
 
-func fromIntermediate(in map[string]LatestEntry) LatestMap {
+func (m LatestMap) fromIntermediate(in map[string]LatestEntry) LatestMap {
 	out := ps.NewMap()
 	for k, v := range in {
 		out = out.Set(k, v)
@@ -105,7 +105,7 @@ func (m *LatestMap) UnmarshalJSON(input []byte) error {
 	if err := json.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
 		return err
 	}
-	*m = fromIntermediate(in)
+	*m = LatestMap{}.fromIntermediate(in)
 	return nil
 }
 
@@ -122,6 +122,6 @@ func (m *LatestMap) GobDecode(input []byte) error {
 	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
 		return err
 	}
-	*m = fromIntermediate(in)
+	*m = LatestMap{}.fromIntermediate(in)
 	return nil
 }

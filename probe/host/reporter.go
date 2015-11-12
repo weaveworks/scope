@@ -13,9 +13,11 @@ const (
 	HostName      = "host_name"
 	LocalNetworks = "local_networks"
 	OS            = "os"
-	Load          = "load"
 	KernelVersion = "kernel_version"
 	Uptime        = "uptime"
+	Load1         = "load1"
+	Load5         = "load5"
+	Load15        = "load15"
 )
 
 // Exposed for testing.
@@ -71,12 +73,11 @@ func (r *Reporter) Report() (report.Report, error) {
 		Timestamp:     Now(),
 		HostName:      r.hostName,
 		OS:            runtime.GOOS,
-		Load:          GetLoad(),
 		KernelVersion: kernel,
 		Uptime:        uptime.String(),
 	}).WithSets(report.Sets{
 		LocalNetworks: report.MakeStringSet(localCIDRs...),
-	}))
+	}).WithMetrics(GetLoad()))
 
 	return rep, nil
 }

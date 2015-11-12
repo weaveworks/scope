@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	mb                 = 1 << 20
 	containerImageRank = 4
 	containerRank      = 3
 	processRank        = 2
@@ -43,10 +42,12 @@ type Table struct {
 
 // Row is a single entry in a Table dataset.
 type Row struct {
-	Key        string `json:"key"`                   // e.g. Ingress
-	ValueMajor string `json:"value_major"`           // e.g. 25
-	ValueMinor string `json:"value_minor,omitempty"` // e.g. KB/s
-	Expandable bool   `json:"expandable,omitempty"`  // Whether it can be expanded (hidden by default)
+	Key        string         `json:"key"`                   // e.g. Ingress
+	ValueMajor string         `json:"value_major"`           // e.g. 25
+	ValueMinor string         `json:"value_minor,omitempty"` // e.g. KB/s
+	Expandable bool           `json:"expandable,omitempty"`  // Whether it can be expanded (hidden by default)
+	ValueType  string         `json:"value_type,omitempty"`  // e.g. sparkline
+	Metric     *report.Metric `json:"metric,omitempty"`      // e.g. sparkline data samples
 }
 
 // ControlInstance contains a control description, and all the info
@@ -168,21 +169,21 @@ func connectionsTable(connections []Row, r report.Report, n RenderableNode) (Tab
 
 	rows := []Row{}
 	if n.EdgeMetadata.MaxConnCountTCP != nil {
-		rows = append(rows, Row{"TCP connections", strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10), "", false})
+		rows = append(rows, Row{Key: "TCP connections", ValueMajor: strconv.FormatUint(*n.EdgeMetadata.MaxConnCountTCP, 10)})
 	}
 	if rate, ok := rate(n.EdgeMetadata.EgressPacketCount); ok {
-		rows = append(rows, Row{"Egress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec", false})
+		rows = append(rows, Row{Key: "Egress packet rate", ValueMajor: fmt.Sprintf("%.0f", rate), ValueMinor: "packets/sec"})
 	}
 	if rate, ok := rate(n.EdgeMetadata.IngressPacketCount); ok {
-		rows = append(rows, Row{"Ingress packet rate", fmt.Sprintf("%.0f", rate), "packets/sec", false})
+		rows = append(rows, Row{Key: "Ingress packet rate", ValueMajor: fmt.Sprintf("%.0f", rate), ValueMinor: "packets/sec"})
 	}
 	if rate, ok := rate(n.EdgeMetadata.EgressByteCount); ok {
 		s, unit := shortenByteRate(rate)
-		rows = append(rows, Row{"Egress byte rate", s, unit, false})
+		rows = append(rows, Row{Key: "Egress byte rate", ValueMajor: s, ValueMinor: unit})
 	}
 	if rate, ok := rate(n.EdgeMetadata.IngressByteCount); ok {
 		s, unit := shortenByteRate(rate)
-		rows = append(rows, Row{"Ingress byte rate", s, unit, false})
+		rows = append(rows, Row{Key: "Ingress byte rate", ValueMajor: s, ValueMinor: unit})
 	}
 	if len(connections) > 0 {
 		sort.Sort(sortableRows(connections))
@@ -343,6 +344,58 @@ func processOriginTable(nmd report.Node, addHostTag bool, addContainerTag bool) 
 	}, len(rows) > 0 || commFound || pidFound
 }
 
+func sparklineRow(human string, metric report.Metric, format func(report.Metric) (report.Metric, string)) Row {
+	if format == nil {
+		format = formatDefault
+	}
+	metric, lastStr := format(metric)
+	return Row{Key: human, ValueMajor: lastStr, Metric: &metric, ValueType: "sparkline"}
+}
+
+func formatDefault(m report.Metric) (report.Metric, string) {
+	if s := m.LastSample(); s != nil {
+		return m, fmt.Sprintf("%0.2f", s.Value)
+	}
+	return m, ""
+}
+
+func memoryScale(n float64) (string, float64) {
+	brackets := []struct {
+		human string
+		shift uint
+	}{
+		{"bytes", 0},
+		{"KB", 10},
+		{"MB", 20},
+		{"GB", 30},
+		{"TB", 40},
+		{"PB", 50},
+	}
+	for _, bracket := range brackets {
+		unit := (1 << bracket.shift)
+		if n < float64(unit<<10) {
+			return bracket.human, float64(unit)
+		}
+	}
+	return "PB", float64(1 << 50)
+}
+
+func formatMemory(m report.Metric) (report.Metric, string) {
+	s := m.LastSample()
+	if s == nil {
+		return m, ""
+	}
+	human, divisor := memoryScale(s.Value)
+	return m.Div(divisor), fmt.Sprintf("%0.2f %s", s.Value/divisor, human)
+}
+
+func formatPercent(m report.Metric) (report.Metric, string) {
+	if s := m.LastSample(); s != nil {
+		return m, fmt.Sprintf("%0.2f%%", s.Value)
+	}
+	return m, ""
+}
+
 func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
@@ -372,15 +425,15 @@ func containerOriginTable(nmd report.Node, addHostTag bool) (Table, bool) {
 	}
 	rows = append(rows, getDockerLabelRows(nmd)...)
 
-	if val, ok := nmd.Metadata[docker.MemoryUsage]; ok {
-		memory, err := strconv.ParseFloat(val, 64)
-		if err == nil {
-			memoryStr := fmt.Sprintf("%0.2f", memory/float64(mb))
-			rows = append(rows, Row{Key: "Memory Usage (MB):", ValueMajor: memoryStr, ValueMinor: ""})
-		}
-	}
 	if addHostTag {
 		rows = append([]Row{{Key: "Host", ValueMajor: report.ExtractHostID(nmd)}}, rows...)
+	}
+
+	if val, ok := nmd.Metrics[docker.MemoryUsage]; ok {
+		rows = append(rows, sparklineRow("Memory Usage", val, formatMemory))
+	}
+	if val, ok := nmd.Metrics[docker.CPUTotalUsage]; ok {
+		rows = append(rows, sparklineRow("CPU Usage", val, formatPercent))
 	}
 
 	var (
@@ -441,9 +494,31 @@ func getDockerLabelRows(nmd report.Node) []Row {
 }
 
 func hostOriginTable(nmd report.Node) (Table, bool) {
+	// Ensure that all metrics have the same max
+	maxLoad := 0.0
+	for _, key := range []string{host.Load1, host.Load5, host.Load15} {
+		if metric, ok := nmd.Metrics[key]; ok {
+			if metric.Len() == 0 {
+				continue
+			}
+			if metric.Max > maxLoad {
+				maxLoad = metric.Max
+			}
+		}
+	}
+
 	rows := []Row{}
 	for _, tuple := range []struct{ key, human string }{
-		{host.Load, "Load"},
+		{host.Load1, "Load (1m)"},
+		{host.Load5, "Load (5m)"},
+		{host.Load15, "Load (15m)"},
+	} {
+		if val, ok := nmd.Metrics[tuple.key]; ok {
+			val.Max = maxLoad
+			rows = append(rows, sparklineRow(tuple.human, val, nil))
+		}
+	}
+	for _, tuple := range []struct{ key, human string }{
 		{host.OS, "Operating system"},
 		{host.KernelVersion, "Kernel version"},
 		{host.Uptime, "Uptime"},

@@ -91,9 +91,10 @@ type Container interface {
 
 type container struct {
 	sync.RWMutex
-	container   *docker.Container
-	statsConn   ClientConn
-	latestStats *docker.Stats
+	container    *docker.Container
+	statsConn    ClientConn
+	latestStats  *docker.Stats
+	pendingStats []*docker.Stats
 }
 
 // NewContainer creates a new Container
@@ -190,6 +191,7 @@ func (c *container) StartGatheringStats() error {
 
 			c.Lock()
 			c.latestStats = stats
+			c.pendingStats = append(c.pendingStats, stats)
 			c.Unlock()
 
 			stats = &docker.Stats{}
@@ -238,6 +240,52 @@ func (c *container) ports(localAddrs []net.IP) report.StringSet {
 	return report.MakeStringSet(ports...)
 }
 
+func (c *container) memoryUsageMetric() report.Metric {
+	result := report.MakeMetric()
+	for _, s := range c.pendingStats {
+		result = result.Add(s.Read, float64(s.MemoryStats.Usage))
+	}
+	return result
+}
+
+func (c *container) cpuPercentMetric() report.Metric {
+	result := report.MakeMetric()
+	if len(c.pendingStats) < 2 {
+		return result
+	}
+
+	previous := c.pendingStats[0]
+	for _, s := range c.pendingStats[1:] {
+		// Copies from docker/api/client/stats.go#L205
+		cpuDelta := float64(s.CPUStats.CPUUsage.TotalUsage - previous.CPUStats.CPUUsage.TotalUsage)
+		systemDelta := float64(s.CPUStats.SystemCPUUsage - previous.CPUStats.SystemCPUUsage)
+		cpuPercent := 0.0
+		if systemDelta > 0.0 && cpuDelta > 0.0 {
+			cpuPercent = (cpuDelta / systemDelta) * float64(len(s.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+		}
+		result = result.Add(s.Read, cpuPercent)
+		available := float64(len(s.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+		if available >= result.Max {
+			result.Max = available
+		}
+		previous = s
+	}
+	return result
+}
+
+func (c *container) metrics() report.Metrics {
+	result := report.Metrics{
+		MemoryUsage:   c.memoryUsageMetric(),
+		CPUTotalUsage: c.cpuPercentMetric(),
+	}
+
+	// Keep the latest report to help with relative metric reporting.
+	if len(c.pendingStats) > 0 {
+		c.pendingStats = c.pendingStats[len(c.pendingStats)-1:]
+	}
+	return result
+}
+
 func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	c.RLock()
 	defer c.RUnlock()
@@ -269,7 +317,9 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ContainerPorts:         c.ports(localAddrs),
 		ContainerIPs:           report.MakeStringSet(ips...),
 		ContainerIPsWithScopes: report.MakeStringSet(ipsWithScopes...),
-	}).WithLatest(ContainerState, mtime.Now(), state)
+	}).WithLatest(
+		ContainerState, mtime.Now(), state,
+	).WithMetrics(c.metrics())
 
 	if c.container.State.Paused {
 		result = result.WithControls(UnpauseContainer)
@@ -305,8 +355,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		CPUTotalUsage:        strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.TotalUsage, 10),
 		CPUUsageInKernelmode: strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.UsageInKernelmode, 10),
 		CPUSystemCPUUsage:    strconv.FormatUint(c.latestStats.CPUStats.SystemCPUUsage, 10),
-	})
-
+	}).WithMetrics(c.metrics())
 	return result
 }
 
