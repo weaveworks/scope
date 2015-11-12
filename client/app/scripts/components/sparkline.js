@@ -21,20 +21,20 @@ const Sparkline = React.createClass({
 
   renderSparkline: function() {
     // If the sparkline has already been rendered, remove it.
-    let el = this.getDOMNode();
+    const el = this.getDOMNode();
     while (el.firstChild) {
       el.removeChild(el.firstChild);
     }
 
-    let data = this.props.data.slice();
+    const data = this.props.data.slice();
 
     // Do nothing if no data is passed in.
     if (data.length === 0) {
       return;
     }
 
-    let x = d3.scale.linear().range([2, this.props.width - 2]);
-    let y = d3.scale.linear().range([this.props.height - 2, 2]);
+    const x = d3.scale.linear().range([2, this.props.width - 2]);
+    const y = d3.scale.linear().range([this.props.height - 2, 2]);
 
     // react-sparkline allows you to pass in two types of data.
     // Data tied to dates and linear data. We need to change our line and x/y
@@ -56,8 +56,8 @@ const Sparkline = React.createClass({
         x(d => x(d.date)).
         y(d => y(d.value));
 
-      let first = this.props.first ? d3.time.format.iso.parse(this.props.first) : d3.min(data, d => d.date);
-      let last = this.props.last ? d3.time.format.iso.parse(this.props.last) : d3.max(data, d => d.date);
+      const first = this.props.first ? d3.time.format.iso.parse(this.props.first) : d3.min(data, d => d.date);
+      const last = this.props.last ? d3.time.format.iso.parse(this.props.last) : d3.max(data, d => d.date);
       x.domain([first, last]);
 
       y.domain([
@@ -91,7 +91,7 @@ const Sparkline = React.createClass({
 
     d3.select(this.getDOMNode()).attr('title', title);
 
-    let svg = d3.select(this.getDOMNode()).
+    const svg = d3.select(this.getDOMNode()).
       append('svg').
       attr('width', this.props.width).
       attr('height', this.props.height).
