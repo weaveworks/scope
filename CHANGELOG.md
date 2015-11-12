@@ -1,3 +1,38 @@
+## Release 0.10.0
+
+Notes:
+- Due to the Scope UI now being able to start/stop/restart Docker
+  containers, it is not wise to have it accessible to untrusted
+  parties.
+
+New features:
+- Add lifecycle controls (start/stop/restart) for Docker containers
+  [#598](https://github.com/weaveworks/scope/pull/598)
+  [#642](https://github.com/weaveworks/scope/pull/642)
+- Add sparklines to the UI for some metrics
+  [#622](https://github.com/weaveworks/scope/pull/622)
+- Show a message when the selected topology is empty
+  [#505](https://github.com/weaveworks/scope/pull/505)
+
+Bug fixes:
+- Change node layout incrementally to reduce re-layouts
+  [#593](https://github.com/weaveworks/scope/pull/593)
+- Improve responsiveness of UI updates to container state changes
+  [#628](https://github.com/weaveworks/scope/pull/628)
+  [#640](https://github.com/weaveworks/scope/pull/640)
+- Handle DNS Resolution to a set of names
+  [#639](https://github.com/weaveworks/scope/pull/639)
+- Correctly show node counts for sub-topologies
+  [#621](https://github.com/weaveworks/scope/issues/621)
+- Allow scope to start after being upgraded
+  [#617](https://github.com/weaveworks/scope/pull/617)
+- Prevent a stranded uncontained node from appearing in the container view
+  [#627](https://github.com/weaveworks/scope/pull/627)
+- Parallelise and improve the testing infrastructure
+  [#614](https://github.com/weaveworks/scope/pull/614)
+  [#618](https://github.com/weaveworks/scope/pull/618)
+  [#644](https://github.com/weaveworks/scope/pull/644)
+
 ## Release 0.9.0
 
 New features:
