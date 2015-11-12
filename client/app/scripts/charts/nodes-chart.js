@@ -350,6 +350,10 @@ const NodesChart = React.createClass({
   },
 
   restoreLayout: function(state) {
+    // undo any pan/zooming that might have happened
+    this.zoom.scale(state.scale);
+    this.zoom.translate(state.panTranslate);
+
     const nodes = state.nodes.map(node => {
       return node.merge({
         x: node.get('px'),
