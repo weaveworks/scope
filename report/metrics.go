@@ -205,11 +205,23 @@ func (m Metric) LastSample() *Sample {
 
 // WireMetrics is the on-the-wire representation of Metrics.
 type WireMetrics struct {
-	Samples []Sample  `json:"samples"` // On the wire, samples are sorted oldest to newest,
-	Min     float64   `json:"min"`     // the opposite order to how we store them internally.
-	Max     float64   `json:"max"`
-	First   time.Time `json:"first"`
-	Last    time.Time `json:"last"`
+	Samples []Sample `json:"samples"` // On the wire, samples are sorted oldest to newest,
+	Min     float64  `json:"min"`     // the opposite order to how we store them internally.
+	Max     float64  `json:"max"`
+	First   string   `json:"first,omitempty"`
+	Last    string   `json:"last,omitempty"`
+}
+
+func renderTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format(time.RFC3339Nano)
+}
+
+func parseTime(s string) time.Time {
+	t, _ := time.Parse(time.RFC3339Nano, s)
+	return t
 }
 
 func (m Metric) toIntermediate() WireMetrics {
@@ -223,8 +235,8 @@ func (m Metric) toIntermediate() WireMetrics {
 		Samples: samples,
 		Max:     m.Max,
 		Min:     m.Min,
-		First:   m.First,
-		Last:    m.Last,
+		First:   renderTime(m.First),
+		Last:    renderTime(m.Last),
 	}
 }
 
@@ -237,8 +249,8 @@ func (m WireMetrics) fromIntermediate() Metric {
 		Samples: samples,
 		Max:     m.Max,
 		Min:     m.Min,
-		First:   m.First,
-		Last:    m.Last,
+		First:   parseTime(m.First),
+		Last:    parseTime(m.Last),
 	}
 }
 
