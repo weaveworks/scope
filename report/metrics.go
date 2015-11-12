@@ -79,14 +79,14 @@ func (m Metric) Len() int {
 }
 
 func first(t1, t2 time.Time) time.Time {
-	if !t1.IsZero() && t1.Before(t2) {
+	if t2.IsZero() || (!t1.IsZero() && t1.Before(t2)) {
 		return t1
 	}
 	return t2
 }
 
 func last(t1, t2 time.Time) time.Time {
-	if !t1.IsZero() && t1.After(t2) {
+	if t2.IsZero() || (!t1.IsZero() && t1.After(t2)) {
 		return t1
 	}
 	return t2
