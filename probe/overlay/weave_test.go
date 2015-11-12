@@ -26,6 +26,7 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 	defer s.Close()
 
 	w := overlay.NewWeave(mockHostID, s.URL)
+	defer w.Stop()
 	w.Tick()
 
 	{

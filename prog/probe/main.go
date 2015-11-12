@@ -159,6 +159,7 @@ func main() {
 
 	if *weaveRouterAddr != "" {
 		weave := overlay.NewWeave(hostID, *weaveRouterAddr)
+		defer weave.Stop()
 		p.AddTicker(weave)
 		p.AddTagger(weave)
 		p.AddReporter(weave)
