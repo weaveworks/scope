@@ -36,8 +36,8 @@ scope.tar
 scope_ui_build.tar
 app/app
 app/scope-app
-probe/probe
 probe/scope-probe
+prog/probe/probe
 prog/probe/scope-probe
 docker/scope-app
 docker/scope-probe

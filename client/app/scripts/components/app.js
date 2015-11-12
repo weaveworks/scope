@@ -1,5 +1,4 @@
 const React = require('react');
-const mui = require('material-ui');
 
 const Logo = require('./logo');
 const AppStore = require('../stores/app-store');
@@ -12,8 +11,6 @@ const AppActions = require('../actions/app-actions');
 const Details = require('./details');
 const Nodes = require('./nodes');
 const RouterUtils = require('../utils/router-utils');
-
-const ThemeManager = new mui.Styles.ThemeManager();
 
 const ESC_KEY_CODE = 27;
 
@@ -67,12 +64,6 @@ const App = React.createClass({
     }
   },
 
-  getChildContext: function() {
-    return {
-      muiTheme: ThemeManager.getCurrentTheme()
-    };
-  },
-
   render: function() {
     const showingDetails = this.state.selectedNodeId;
     const versionString = this.state.version ? 'Version ' + this.state.version : '';
@@ -115,9 +106,6 @@ const App = React.createClass({
     );
   },
 
-  childContextTypes: {
-    muiTheme: React.PropTypes.object
-  }
 });
 
 module.exports = App;

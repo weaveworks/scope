@@ -1,5 +1,5 @@
 var webpack = require('webpack');
-var autoprefixer = require('autoprefixer-core');
+var autoprefixer = require('autoprefixer');
 var path = require('path');
 
 /**
@@ -75,7 +75,7 @@ module.exports = {
       {
         test: /\.jsx?$/,
         exclude: /node_modules/,
-        loaders: ['react-hot', 'babel-loader?stage=0']
+        loaders: ['react-hot', 'babel']
       }
     ]
   },

@@ -1,5 +1,6 @@
 const React = require('react');
-const Spring = require('react-motion').Spring;
+const Motion = require('react-motion').Motion;
+const spring = require('react-motion').spring;
 
 const AppActions = require('../actions/app-actions');
 const NodeColorMixin = require('../mixins/node-color-mixin');
@@ -42,30 +43,30 @@ const Node = React.createClass({
     const classes = classNames.join(' ');
 
     return (
-      <Spring endValue={{
-        x: {val: this.props.dx, config: animConfig},
-        y: {val: this.props.dy, config: animConfig},
-        f: {val: scaleFactor, config: animConfig}
+      <Motion style={{
+        x: spring(this.props.dx, animConfig),
+        y: spring(this.props.dy, animConfig),
+        f: spring(scaleFactor, animConfig)
       }}>
         {function(interpolated) {
-          const transform = `translate(${interpolated.x.val},${interpolated.y.val})`;
+          const transform = `translate(${interpolated.x},${interpolated.y})`;
           return (
             <g className={classes} transform={transform} id={props.id}
               onClick={onMouseClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-              {props.highlighted && <circle r={scale(0.7 * interpolated.f.val)} className="highlighted"></circle>}
-              <circle r={scale(0.5 * interpolated.f.val)} className="border" stroke={color}></circle>
-              <circle r={scale(0.45 * interpolated.f.val)} className="shadow"></circle>
-              <circle r={Math.max(2, scale(0.125 * interpolated.f.val))} className="node"></circle>
-              <text className="node-label" textAnchor="middle" x="0" y={labelOffsetY + scale(0.5 * interpolated.f.val)}>
+              {props.highlighted && <circle r={scale(0.7 * interpolated.f)} className="highlighted"></circle>}
+              <circle r={scale(0.5 * interpolated.f)} className="border" stroke={color}></circle>
+              <circle r={scale(0.45 * interpolated.f)} className="shadow"></circle>
+              <circle r={Math.max(2, scale(0.125 * interpolated.f))} className="node"></circle>
+              <text className="node-label" textAnchor="middle" x="0" y={labelOffsetY + scale(0.5 * interpolated.f)}>
                 {label}
               </text>
-              <text className="node-sublabel" textAnchor="middle" x="0" y={subLabelOffsetY + scale(0.5 * interpolated.f.val)}>
+              <text className="node-sublabel" textAnchor="middle" x="0" y={subLabelOffsetY + scale(0.5 * interpolated.f)}>
                 {subLabel}
               </text>
             </g>
           );
         }}
-      </Spring>
+      </Motion>
     );
   },
 

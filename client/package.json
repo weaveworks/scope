@@ -9,56 +9,60 @@
     "d3": "~3.5.5",
     "dagre": "0.7.4",
     "debug": "~2.2.0",
-    "flux": "2.0.3",
-    "font-awesome": "4.3.0",
-    "font-awesome-webpack": "0.0.3",
+    "flux": "2.1.1",
+    "font-awesome": "4.4.0",
+    "font-awesome-webpack": "0.0.4",
     "immutable": "~3.7.4",
     "keymirror": "0.1.1",
-    "lodash": "~3.9.3",
-    "material-ui": "0.11.0",
-    "materialize-css": "0.96.1",
-    "object-assign": "2.0.0",
-    "page": "1.6.3",
-    "react": "~0.13.3",
-    "react-motion": "0.2.7",
-    "react-tap-event-plugin": "0.1.7",
-    "reqwest": "~1.1.5",
+    "lodash": "~3.10.1",
+    "materialize-css": "0.97.2",
+    "page": "1.6.4",
+    "react": "0.14.2",
+    "react-addons-pure-render-mixin": "0.14.2",
+    "react-addons-transition-group": "0.14.2",
+    "react-addons-update": "0.14.2",
+    "react-dom": "0.14.2",
+    "react-motion": "0.3.1",
+    "reqwest": "~2.0.5",
     "timely": "0.1.0"
   },
   "devDependencies": {
-    "autoprefixer-core": "5.2.0",
-    "babel-core": "5.4.7",
-    "babel-eslint": "3.1.9",
-    "babel-jest": "5.3.0",
-    "babel-loader": "5.1.3",
-    "css-loader": "0.14.4",
-    "eslint": "~0.21.2",
-    "eslint-loader": "0.11.2",
-    "eslint-plugin-jasmine": "1.0.0",
-    "eslint-plugin-react": "2.3.0",
+    "autoprefixer": "6.0.1",
+    "babel-core": "6.1.4",
+    "babel-eslint": "4.1.5",
+    "babel-jest": "6.0.1",
+    "babel-loader": "6.1.0",
+    "babel-preset-es2015": "6.1.4",
+    "babel-preset-react": "6.1.4",
+    "css-loader": "0.22.0",
+    "eslint": "1.9.0",
+    "eslint-config-airbnb": "1.0.0",
+    "eslint-loader": "1.1.1",
+    "eslint-plugin-jasmine": "1.6.0",
+    "eslint-plugin-react": "3.8.0",
     "file-loader": "0.8.4",
-    "jest-cli": "~0.4.19",
-    "json-loader": "0.5.2",
+    "jest-cli": "~0.7.1",
+    "json-loader": "0.5.3",
     "less": "~2.5.1",
-    "less-loader": "2.2.0",
-    "postcss-loader": "0.4.3",
-    "style-loader": "0.12.3",
-    "url": "0.10.3",
+    "less-loader": "2.2.1",
+    "postcss-loader": "0.7.0",
+    "style-loader": "0.13.0",
+    "url": "0.11.0",
     "url-loader": "0.5.6",
-    "webpack": "~1.9.10"
+    "webpack": "~1.12.4"
   },
   "optionalDependencies": {
     "express": "~4.13.3",
     "express-http-proxy": "~0.6.0",
-    "proxy-middleware": "~0.13.1",
-    "react-hot-loader": "~1.2.8",
-    "webpack-dev-server": "~1.10.1"
+    "proxy-middleware": "~0.15.0",
+    "react-hot-loader": "~1.3.0",
+    "webpack-dev-server": "~1.12.1"
   },
   "scripts": {
     "build": "webpack -p --config webpack.production.config.js",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
-    "test": "jest --coverage",
+    "test": "jest",
     "coveralls": "cat coverage/lcov.info | coveralls",
     "lint": "eslint app",
     "clean": "rm build/app.js"
@@ -66,26 +70,23 @@
   "jest": {
     "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",
     "testFileExtensions": [
-      "es6",
       "js"
     ],
+    "testPathDirs": [
+      "<rootDir>/app/scripts"
+    ],
+    "globals": {
+      "__WS_URL__": false
+    },
     "moduleFileExtensions": [
       "js",
-      "json",
-      "es6"
+      "json"
     ],
     "unmockedModulePathPatterns": [
-      "react",
-      "immutable",
-      "d3",
-      "dagre",
-      "keymirror",
-      "object-assign",
-      "lodash",
-      "debug"
+      "/node_modules/"
     ]
   },
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=4.2.2"
   }
 }

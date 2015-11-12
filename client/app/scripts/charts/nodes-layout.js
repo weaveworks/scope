@@ -181,7 +181,7 @@ function hasSameEndpoints(cachedEdge, nodes) {
  * @return {Object}        layout clone
  */
 function cloneLayout(layout, nodes, edges) {
-  const clone = {...layout, nodes, edges};
+  const clone = Object.assign({}, layout, {nodes, edges});
   return clone;
 }
 

@@ -4,7 +4,8 @@ const debug = require('debug')('scope:nodes-chart');
 const React = require('react');
 const makeMap = require('immutable').Map;
 const timely = require('timely');
-const Spring = require('react-motion').Spring;
+const Motion = require('react-motion').Motion;
+const spring = require('react-motion').spring;
 
 const AppActions = require('../actions/app-actions');
 const AppStore = require('../stores/app-store');
@@ -199,7 +200,7 @@ const NodesChart = React.createClass({
   render: function() {
     const nodeElements = this.renderGraphNodes(this.state.nodes, this.state.nodeScale);
     const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
-    let scale = this.state.scale;
+    const scale = this.state.scale;
 
     // only animate shift behavior, not panning
     const panTranslate = this.state.panTranslate;
@@ -213,15 +214,16 @@ const NodesChart = React.createClass({
     const svgClassNames = this.state.maxNodesExceeded || nodeElements.size === 0 ? 'hide' : '';
     const errorEmpty = this.renderEmptyTopologyError(AppStore.isTopologyEmpty());
     const errorMaxNodesExceeded = this.renderMaxNodesError(this.state.maxNodesExceeded);
+    const motionConfig = [80, 20];
 
     return (
       <div className="nodes-chart">
         {errorEmpty}
         {errorMaxNodesExceeded}
         <svg width="100%" height="100%" className={svgClassNames} onClick={this.handleMouseClick}>
-          <Spring endValue={{val: translate, config: [80, 20]}}>
+          <Motion style={{x: spring(translate[0], motionConfig), y: spring(translate[1], motionConfig)}}>
             {function(interpolated) {
-              let interpolatedTranslate = wasShifted ? interpolated.val : panTranslate;
+              const interpolatedTranslate = wasShifted ? [interpolated.x, interpolated.y] : panTranslate;
               const transform = 'translate(' + interpolatedTranslate + ')' +
                 ' scale(' + scale + ')';
               return (
@@ -235,7 +237,7 @@ const NodesChart = React.createClass({
                 </g>
               );
             }}
-          </Spring>
+          </Motion>
         </svg>
       </div>
     );
@@ -291,14 +293,14 @@ const NodesChart = React.createClass({
   centerSelectedNode: function(props, state) {
     let stateNodes = state.nodes;
     let stateEdges = state.edges;
-    let selectedLayoutNode = stateNodes.get(props.selectedNodeId);
+    const selectedLayoutNode = stateNodes.get(props.selectedNodeId);
 
     if (!selectedLayoutNode) {
       return {};
     }
 
     const adjacency = AppStore.getAdjacentNodes(props.selectedNodeId);
-    let adjacentLayoutNodeIds = [];
+    const adjacentLayoutNodeIds = [];
 
     adjacency.forEach(function(adjacentId) {
       // filter loopback
