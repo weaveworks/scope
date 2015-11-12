@@ -15,6 +15,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/armon/go-metrics"
+
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
@@ -56,6 +58,12 @@ func main() {
 		fmt.Println(version)
 		return
 	}
+
+	// Setup in memory metrics sink
+	inm := metrics.NewInmemSink(time.Minute, 2*time.Minute)
+	sig := metrics.DefaultInmemSignal(inm)
+	defer sig.Stop()
+	metrics.NewGlobal(metrics.DefaultConfig("scope-probe"), inm)
 
 	if !strings.HasSuffix(*logPrefix, " ") {
 		*logPrefix += " "
@@ -151,6 +159,7 @@ func main() {
 
 	if *weaveRouterAddr != "" {
 		weave := overlay.NewWeave(hostID, *weaveRouterAddr)
+		defer weave.Stop()
 		p.AddTicker(weave)
 		p.AddTagger(weave)
 		p.AddReporter(weave)

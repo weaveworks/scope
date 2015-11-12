@@ -8,6 +8,13 @@
 			"branch": "default"
 		},
 		{
+			"importpath": "github.com/DataDog/datadog-go/statsd",
+			"repository": "https://github.com/DataDog/datadog-go",
+			"revision": "b050cd8f4d7c394545fd7d966c8e2909ce89d552",
+			"branch": "master",
+			"path": "/statsd"
+		},
+		{
 			"importpath": "github.com/PuerkitoBio/ghost",
 			"repository": "https://github.com/PuerkitoBio/ghost",
 			"revision": "a0146f2f931611b8bfe40f07018c97a7c881c76a",
@@ -19,6 +26,12 @@
 			"revision": "a0146f2f931611b8bfe40f07018c97a7c881c76a",
 			"branch": "master",
 			"path": "/handlers"
+		},
+		{
+			"importpath": "github.com/armon/go-metrics",
+			"repository": "https://github.com/armon/go-metrics",
+			"revision": "6c5fa0d8f48f4661c9ba8709799c88d425ad20f0",
+			"branch": "master"
 		},
 		{
 			"importpath": "github.com/beorn7/perks/quantile",

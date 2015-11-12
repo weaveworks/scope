@@ -15,6 +15,8 @@ func NewTopologyTagger() Tagger {
 	return &topologyTagger{}
 }
 
+func (topologyTagger) Name() string { return "Topology" }
+
 // Tag implements Tagger
 func (topologyTagger) Tag(r report.Report) (report.Report, error) {
 	for val, topology := range map[string]*report.Topology{

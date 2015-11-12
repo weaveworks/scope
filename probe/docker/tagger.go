@@ -34,6 +34,9 @@ func NewTagger(registry Registry, procWalker process.Walker) *Tagger {
 	}
 }
 
+// Name of this tagger, for metrics gathering
+func (Tagger) Name() string { return "Docker" }
+
 // Tag implements Tagger.
 func (t *Tagger) Tag(r report.Report) (report.Report, error) {
 	tree, err := NewProcessTreeStub(t.procWalker)

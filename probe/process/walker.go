@@ -28,6 +28,9 @@ func NewCachingWalker(source Walker) *CachingWalker {
 	return &CachingWalker{source: source}
 }
 
+// Name of this ticker, for metrics gathering
+func (*CachingWalker) Name() string { return "Process" }
+
 // Walk walks a cached copy of process list
 func (c *CachingWalker) Walk(f func(Process)) error {
 	c.cacheLock.RLock()
