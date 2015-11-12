@@ -50,6 +50,8 @@ func (m mockReporter) Report() (report.Report, error) {
 	return m.r.Copy(), nil
 }
 
+func (mockReporter) Name() string { return "Mock" }
+
 type mockPublisher struct {
 	have chan report.Report
 }

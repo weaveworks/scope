@@ -21,6 +21,9 @@ func NewTagger(hostID, probeID string) Tagger {
 	}
 }
 
+// Name of this tagger, for metrics gathering
+func (Tagger) Name() string { return "Host" }
+
 // Tag implements Tagger.
 func (t Tagger) Tag(r report.Report) (report.Report, error) {
 	metadata := map[string]string{

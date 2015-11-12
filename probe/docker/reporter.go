@@ -34,6 +34,9 @@ func NewReporter(registry Registry, hostID string, probe *probe.Probe) *Reporter
 	return reporter
 }
 
+// Name of this reporter, for metrics gathering
+func (Reporter) Name() string { return "Docker" }
+
 // ContainerUpdated should be called whenever a container is updated.
 func (r *Reporter) ContainerUpdated(c Container) {
 	localAddrs, err := report.LocalAddresses()

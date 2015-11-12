@@ -48,6 +48,9 @@ func NewReporter(hostID, hostName string, localNets report.Networks) *Reporter {
 	}
 }
 
+// Name of this reporter, for metrics gathering
+func (Reporter) Name() string { return "Host" }
+
 // Report implements Reporter.
 func (r *Reporter) Report() (report.Report, error) {
 	var (

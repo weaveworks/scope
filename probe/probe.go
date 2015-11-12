@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/armon/go-metrics"
+
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
 )
@@ -31,11 +33,13 @@ type Probe struct {
 
 // Tagger tags nodes with value-add node metadata.
 type Tagger interface {
+	Name() string
 	Tag(r report.Report) (report.Report, error)
 }
 
 // Reporter generates Reports.
 type Reporter interface {
+	Name() string
 	Report() (report.Report, error)
 }
 
@@ -43,6 +47,7 @@ type Reporter interface {
 // It's useful for things that should be updated on that interval.
 // For example, cached shared state between Taggers and Reporters.
 type Ticker interface {
+	Name() string
 	Tick() error
 }
 
@@ -100,23 +105,25 @@ func (p *Probe) spyLoop() {
 	for {
 		select {
 		case <-spyTick:
-			start := time.Now()
-			for _, ticker := range p.tickers {
-				if err := ticker.Tick(); err != nil {
-					log.Printf("error doing ticker: %v", err)
-				}
-			}
-
+			t := time.Now()
+			p.tick()
 			rpt := p.report()
 			rpt = p.tag(rpt)
 			p.spiedReports <- rpt
-
-			if took := time.Since(start); took > p.spyInterval {
-				log.Printf("report generation took too long (%s)", took)
-			}
-
+			metrics.MeasureSince([]string{"Report Generaton"}, t)
 		case <-p.quit:
 			return
+		}
+	}
+}
+
+func (p *Probe) tick() {
+	for _, ticker := range p.tickers {
+		t := time.Now()
+		err := ticker.Tick()
+		metrics.MeasureSince([]string{ticker.Name(), "ticker"}, t)
+		if err != nil {
+			log.Printf("error doing ticker: %v", err)
 		}
 	}
 }
@@ -125,7 +132,9 @@ func (p *Probe) report() report.Report {
 	reports := make(chan report.Report, len(p.reporters))
 	for _, rep := range p.reporters {
 		go func(rep Reporter) {
+			t := time.Now()
 			newReport, err := rep.Report()
+			metrics.MeasureSince([]string{rep.Name(), "reporter"}, t)
 			if err != nil {
 				log.Printf("error generating report: %v", err)
 				newReport = report.MakeReport() // empty is OK to merge
@@ -144,7 +153,9 @@ func (p *Probe) report() report.Report {
 func (p *Probe) tag(r report.Report) report.Report {
 	var err error
 	for _, tagger := range p.taggers {
+		t := time.Now()
 		r, err = tagger.Tag(r)
+		metrics.MeasureSince([]string{tagger.Name(), "tagger"}, t)
 		if err != nil {
 			log.Printf("error applying tagger: %v", err)
 		}

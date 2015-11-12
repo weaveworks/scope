@@ -16,6 +16,9 @@ func NewReporter(client Client) *Reporter {
 	}
 }
 
+// Name of this reporter, for metrics gathering
+func (Reporter) Name() string { return "K8s" }
+
 // Report generates a Report containing Container and ContainerImage topologies
 func (r *Reporter) Report() (report.Report, error) {
 	result := report.MakeReport()

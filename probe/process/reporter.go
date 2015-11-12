@@ -29,6 +29,9 @@ func NewReporter(walker Walker, scope string) *Reporter {
 	}
 }
 
+// Name of this reporter, for metrics gathering
+func (Reporter) Name() string { return "Process" }
+
 // Report implements Reporter.
 func (r *Reporter) Report() (report.Report, error) {
 	result := report.MakeReport()

@@ -58,6 +58,9 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 	}
 }
 
+// Name of this reporter, for metrics gathering
+func (Reporter) Name() string { return "Endpoint" }
+
 // Stop stop stop
 func (r *Reporter) Stop() {
 	r.flowWalker.stop()
