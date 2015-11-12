@@ -66,11 +66,6 @@ describe('AppStore', function() {
     topologyId: 'topo2'
   };
 
-  const ClickGroupingAction = {
-    type: ActionTypes.CLICK_GROUPING,
-    grouping: 'grouped'
-  };
-
   const CloseWebsocketAction = {
     type: ActionTypes.CLOSE_WEBSOCKET
   };
@@ -114,7 +109,7 @@ describe('AppStore', function() {
       options: {
         option1: [
           {value: 'on'},
-          {value: 'off', default: true}
+          {value: 'off', 'default': true}
         ]
       },
       stats: {
@@ -200,9 +195,9 @@ describe('AppStore', function() {
 
   it('sets topology options from route', function() {
     RouteAction.state = {
-      "topologyId":"topo1",
-      "selectedNodeId": null,
-      "topologyOptions": {'topo1':{'option1': 'on'}}};
+      'topologyId': 'topo1',
+      'selectedNodeId': null,
+      'topologyOptions': {'topo1': {'option1': 'on'}}};
     registeredCallback(RouteAction);
     expect(AppStore.getActiveTopologyOptions().get('option1')).toBe('on');
     expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('on');
@@ -216,9 +211,9 @@ describe('AppStore', function() {
 
   it('uses default topology options from route', function() {
     RouteAction.state = {
-      "topologyId":"topo1",
-      "selectedNodeId": null,
-      "topologyOptions": null};
+      'topologyId': 'topo1',
+      'selectedNodeId': null,
+      'topologyOptions': null};
     registeredCallback(RouteAction);
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickTopologyAction);
@@ -255,7 +250,7 @@ describe('AppStore', function() {
     expect(AppStore.getSelectedNodeId()).toBe('n1');
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
 
-    registeredCallback(HitEscAction)
+    registeredCallback(HitEscAction);
     expect(AppStore.getSelectedNodeId()).toBe(null);
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
   });
@@ -271,7 +266,7 @@ describe('AppStore', function() {
     expect(AppStore.getAppState().selectedNodeId).toEqual('n1');
 
     // go back in browsing
-    RouteAction.state = {"topologyId":"topo1","selectedNodeId": null};
+    RouteAction.state = {'topologyId': 'topo1', 'selectedNodeId': null};
     registeredCallback(RouteAction);
     expect(AppStore.getSelectedNodeId()).toBe(null);
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
@@ -322,7 +317,7 @@ describe('AppStore', function() {
     expect(AppStore.getAdjacentNodes('n1').has('n1')).toBeTruthy();
     expect(AppStore.getAdjacentNodes('n1').has('n2')).toBeTruthy();
 
-    registeredCallback(HitEscAction)
+    registeredCallback(HitEscAction);
     expect(AppStore.getAdjacentNodes().size).toEqual(0);
   });
 
@@ -339,5 +334,4 @@ describe('AppStore', function() {
     registeredCallback(ClickTopologyAction);
     expect(AppStore.isTopologyEmpty()).toBeFalsy();
   });
-
 });

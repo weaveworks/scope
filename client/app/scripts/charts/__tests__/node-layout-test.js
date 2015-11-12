@@ -6,15 +6,15 @@ import { fromJS, Map } from 'immutable';
 describe('NodesLayout', () => {
   const NodesLayout = require('../nodes-layout');
 
-  function getNodeCoordinates(nodes) {
-    const coords = [];
-    nodes
+  function getNodeCoordinates(n) {
+    const coordinates = [];
+    n
       .sortBy(node => node.get('id'))
       .forEach(node => {
-        coords.push(node.get('x'));
-        coords.push(node.get('y'));
+        coordinates.push(node.get('x'));
+        coordinates.push(node.get('y'));
       });
-    return coords;
+    return coordinates;
   }
 
   let options;
@@ -72,8 +72,8 @@ describe('NodesLayout', () => {
 
   beforeEach(() => {
     options = {
-      nodeCache: Map(),
-      edgeCache: Map()
+      nodeCache: new Map(),
+      edgeCache: new Map()
     };
   });
 
@@ -187,8 +187,8 @@ describe('NodesLayout', () => {
     nodes = result.nodes.toJS();
 
     resultCoords = getNodeCoordinates(result.nodes);
-    expect(resultCoords.slice(0,2)).toEqual(coords.slice(0,2));
-    expect(resultCoords.slice(2,6)).toEqual(coords.slice(4,8));
+    expect(resultCoords.slice(0, 2)).toEqual(coords.slice(0, 2));
+    expect(resultCoords.slice(2, 6)).toEqual(coords.slice(4, 8));
   });
 
   it('keeps nodes in rectangle after removed node reappears', () => {
@@ -227,8 +227,7 @@ describe('NodesLayout', () => {
     // console.log('re-add 1 node', nodes);
 
     resultCoords = getNodeCoordinates(result.nodes);
-    expect(resultCoords.slice(0,2)).toEqual(coords.slice(0,2));
-    expect(resultCoords.slice(2,6)).toEqual(coords.slice(4,8));
+    expect(resultCoords.slice(0, 2)).toEqual(coords.slice(0, 2));
+    expect(resultCoords.slice(2, 6)).toEqual(coords.slice(4, 8));
   });
-
 });

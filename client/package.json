@@ -60,7 +60,9 @@
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest --coverage",
     "coveralls": "cat coverage/lcov.info | coveralls",
-    "lint": "eslint app",
+    "lint": "npm run lint-code && npm run lint-tests",
+    "lint-code": "eslint app",
+    "lint-tests": "eslint --ignore-path .eslintignore-test --env jest app/**/*-test.js",
     "clean": "rm build/app.js"
   },
   "jest": {
