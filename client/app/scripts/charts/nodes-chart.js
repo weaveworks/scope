@@ -32,6 +32,8 @@ const NodesChart = React.createClass({
       edges: makeMap(),
       panTranslate: [0, 0],
       scale: 1,
+      nodeScale: d3.scale.linear(),
+      selectedNodeScale: d3.scale.linear(),
       hasZoomed: false,
       maxNodesExceeded: false
     };
@@ -92,6 +94,7 @@ const NodesChart = React.createClass({
     const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes(this.props.selectedNodeId) : null;
     const onNodeClick = this.props.onNodeClick;
     const zoomScale = this.state.scale;
+    const selectedNodeScale = this.state.selectedNodeScale;
 
     // highlighter functions
     const setHighlighted = node => {
@@ -137,6 +140,7 @@ const NodesChart = React.createClass({
             pseudo={node.get('pseudo')}
             subLabel={node.get('subLabel')}
             rank={node.get('rank')}
+            selectedNodeScale={selectedNodeScale}
             nodeScale={nodeScale}
             zoomScale={zoomScale}
             dx={node.get('x')}
@@ -194,8 +198,8 @@ const NodesChart = React.createClass({
   },
 
   render: function() {
-    const nodeElements = this.renderGraphNodes(this.state.nodes, this.props.nodeScale);
-    const edgeElements = this.renderGraphEdges(this.state.edges, this.props.nodeScale);
+    const nodeElements = this.renderGraphNodes(this.state.nodes, this.state.nodeScale);
+    const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
     const scale = this.state.scale;
 
     const translate = this.state.panTranslate;
@@ -333,7 +337,11 @@ const NodesChart = React.createClass({
       return edge;
     });
 
+    // auto-scale node size for selected nodes
+    const selectedNodeScale = this.getNodeScale(props);
+
     return {
+      selectedNodeScale,
       edges: stateEdges,
       nodes: stateNodes
     };
@@ -383,11 +391,12 @@ const NodesChart = React.createClass({
 
     let stateNodes = this.initNodes(props.nodes, state.nodes);
     let stateEdges = this.initEdges(props.nodes, stateNodes);
+    const nodeScale = this.getNodeScale(props);
 
     const options = {
       width: props.width,
       height: props.height,
-      scale: props.nodeScale,
+      scale: nodeScale,
       margins: MARGINS,
       topologyId: this.props.topologyId
     };
@@ -431,8 +440,17 @@ const NodesChart = React.createClass({
       nodes: stateNodes,
       edges: stateEdges,
       scale: zoomScale,
+      nodeScale: nodeScale,
       maxNodesExceeded: false
     };
+  },
+
+  getNodeScale: function(props) {
+    const expanse = Math.min(props.height, props.width);
+    const nodeSize = expanse / 3; // single node should fill a third of the screen
+    const maxNodeSize = expanse / 10;
+    const normalizedNodeSize = Math.min(nodeSize / Math.sqrt(props.nodes.size), maxNodeSize);
+    return this.state.nodeScale.copy().range([0, normalizedNodeSize]);
   },
 
   zoomed: function() {

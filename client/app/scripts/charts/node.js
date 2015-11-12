@@ -12,7 +12,7 @@ const Node = React.createClass({
 
   render: function() {
     const props = this.props;
-    const nodeScale = this.props.nodeScale;
+    const nodeScale = props.focused ? props.selectedNodeScale : props.nodeScale;
     const zoomScale = this.props.zoomScale;
     let scaleFactor = 1;
     if (props.focused) {
