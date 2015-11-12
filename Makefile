@@ -40,7 +40,7 @@ $(RUNSVINIT): vendor/runsvinit/*.go
 
 $(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go common/sanitize/*.go
 
-$(PROBE_EXE): probe/*.go probe/docker/*.go probe/kubernetes/*.go probe/endpoint/*.go probe/host/*.go probe/process/*.go probe/overlay/*.go report/*.go xfer/*.go common/sanitize/*.go common/exec/*.go
+$(PROBE_EXE): prog/probe/*.go $(shell find probe/ -type f -name *.go) report/*.go xfer/*.go common/sanitize/*.go common/exec/*.go
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 $(APP_EXE) $(PROBE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
