@@ -6,6 +6,12 @@ const Naming = require('../constants/naming');
 
 const MAX_NODES = 100;
 const topologyCaches = {};
+const DEFAULT_WIDTH = 800;
+const DEFAULT_MARGINS = {top: 0, left: 0};
+const DEFAULT_SCALE = val => val * 2;
+const NODE_SIZE_FACTOR = 1;
+const NODE_SEPARATION_FACTOR = 2.5;
+const RANK_SEPARATION_FACTOR = 2.5;
 let layoutRuns = 0;
 let layoutRunsTrivial = 0;
 
@@ -29,15 +35,16 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   }
 
   const options = opts || {};
-  const margins = options.margins || {top: 0, left: 0};
-  const width = options.width || 800;
-  const height = options.height || width / 2;
-  const scale = options.scale || (val => val * 2);
+  const scale = options.scale || DEFAULT_SCALE;
+  const ranksep = scale(RANK_SEPARATION_FACTOR);
+  const nodesep = scale(NODE_SEPARATION_FACTOR);
+  const nodeWidth = scale(NODE_SIZE_FACTOR);
+  const nodeHeight = scale(NODE_SIZE_FACTOR);
 
   // configure node margins
   graph.setGraph({
-    nodesep: scale(2.5),
-    ranksep: scale(2.5)
+    nodesep: nodesep,
+    ranksep: ranksep
   });
 
   // add nodes to the graph if not already there
@@ -45,15 +52,15 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
     if (!graph.hasNode(node.get('id'))) {
       graph.setNode(node.get('id'), {
         id: node.get('id'),
-        width: scale(1),
-        height: scale(1)
+        width: nodeWidth,
+        height: nodeHeight
       });
     }
   });
 
-  // remove nodes that are no longer there
+  // remove nodes that are no longer there or are 0-degree nodes
   graph.nodes().forEach(nodeid => {
-    if (!nodes.has(nodeid)) {
+    if (!nodes.has(nodeid) || nodes.get(nodeid).get('degree') === 0) {
       graph.removeNode(nodeid);
     }
   });
@@ -82,33 +89,18 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   dagre.layout(graph);
   const layout = graph.graph();
 
-  // shifting graph coordinates to center
-
-  let offsetX = 0 + margins.left;
-  let offsetY = 0 + margins.top;
-
-  if (layout.width < width) {
-    offsetX = (width - layout.width) / 2 + margins.left;
-  }
-  if (layout.height < height) {
-    offsetY = (height - layout.height) / 2 + margins.top;
-  }
-
   // apply coordinates to nodes and edges
 
   graph.nodes().forEach(id => {
     const graphNode = graph.node(id);
-    nodes = nodes.setIn([id, 'x'], graphNode.x + offsetX);
-    nodes = nodes.setIn([id, 'y'], graphNode.y + offsetY);
+    nodes = nodes.setIn([id, 'x'], graphNode.x);
+    nodes = nodes.setIn([id, 'y'], graphNode.y);
   });
 
   graph.edges().forEach(id => {
     const graphEdge = graph.edge(id);
     const edge = edges.get(graphEdge.id);
-    const points = graphEdge.points.map(point => ({
-      x: point.x + offsetX,
-      y: point.y + offsetY
-    }));
+    const points = graphEdge.points;
 
     // set beginning and end points to node coordinates to ignore node bounding box
     const source = nodes.get(edge.get('source'));
@@ -122,6 +114,124 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   // return object with the width and height of layout
   layout.nodes = nodes;
   layout.edges = edges;
+  return layout;
+}
+
+/**
+ * Add coordinates to 0-degree nodes using a square layout
+ * Depending on the previous layout run's graph aspect ratio, the square will be
+ * placed on the right side or below the graph.
+ * @param  {Object} layout Layout with nodes and edges
+ * @param  {Object} opts   Options with node distances
+ * @return {Object}        modified layout
+ */
+function layoutSingleNodes(layout, opts) {
+  const options = opts || {};
+  const margins = options.margins || DEFAULT_MARGINS;
+  const scale = options.scale || DEFAULT_SCALE;
+  const ranksep = scale(RANK_SEPARATION_FACTOR) / 2; // dagre splits it in half
+  const nodesep = scale(NODE_SEPARATION_FACTOR);
+  const nodeWidth = scale(NODE_SIZE_FACTOR);
+  const nodeHeight = scale(NODE_SIZE_FACTOR);
+  const aspectRatio = layout.height ? layout.width / layout.height : 1;
+
+  let nodes = layout.nodes;
+
+  // 0-degree nodes
+  const singleNodes = nodes.filter(node => node.get('degree') === 0);
+
+  if (singleNodes.size) {
+    const nonSingleNodes = nodes.filter(node => node.get('degree') !== 0);
+    let offsetX;
+    let offsetY;
+    if (aspectRatio < 1) {
+      debug('laying out single nodes to the right', aspectRatio);
+      offsetX = nonSingleNodes.maxBy(node => node.get('x')).get('x');
+      offsetY = nonSingleNodes.minBy(node => node.get('y')).get('y');
+      if (offsetX) {
+        offsetX += nodeWidth + nodesep;
+      }
+    } else {
+      debug('laying out single nodes below', aspectRatio);
+      offsetX = nonSingleNodes.minBy(node => node.get('x')).get('x');
+      offsetY = nonSingleNodes.maxBy(node => node.get('y')).get('y');
+      if (offsetY) {
+        offsetY += nodeHeight + ranksep;
+      }
+    }
+
+    // default margins
+    offsetX = offsetX || margins.left + nodeWidth / 2;
+    offsetY = offsetY || margins.top + nodeHeight / 2;
+
+    const columns = Math.ceil(Math.sqrt(singleNodes.size));
+    let row = 0;
+    let col = 0;
+    let singleX;
+    let singleY;
+    nodes = nodes.sortBy(node => node.get('rank')).map(node => {
+      if (singleNodes.has(node.get('id'))) {
+        if (col === columns) {
+          col = 0;
+          row++;
+        }
+        singleX = col * (nodesep + nodeWidth) + offsetX;
+        singleY = row * (ranksep + nodeHeight) + offsetY;
+        col++;
+        return node.merge({
+          x: singleX,
+          y: singleY
+        });
+      }
+      return node;
+    });
+
+    // adjust layout dimensions if graph is now bigger
+    layout.width = Math.max(layout.width, singleX + nodeWidth / 2 + nodesep);
+    layout.height = Math.max(layout.height, singleY + nodeHeight / 2 + ranksep);
+    layout.nodes = nodes;
+  }
+
+  return layout;
+}
+
+/**
+ * Shifts all coordinates of node and edge points to make the layout more centered
+ * @param  {Object} layout Layout
+ * @param  {Object} opts   Options with width and margins
+ * @return {Object}        modified layout
+ */
+function shiftLayoutToCenter(layout, opts) {
+  const options = opts || {};
+  const margins = options.margins || DEFAULT_MARGINS;
+  const width = options.width || DEFAULT_WIDTH;
+  const height = options.height || width / 2;
+
+  let offsetX = 0 + margins.left;
+  let offsetY = 0 + margins.top;
+
+  if (layout.width < width) {
+    offsetX = (width - layout.width) / 2 + margins.left;
+  }
+  if (layout.height < height) {
+    offsetY = (height - layout.height) / 2 + margins.top;
+  }
+
+  layout.nodes = layout.nodes.map(node => {
+    return node.merge({
+      x: node.get('x') + offsetX,
+      y: node.get('y') + offsetY
+    });
+  });
+
+  layout.edges = layout.edges.map(edge => {
+    const points = edge.get('points').map(point => ({
+      x: point.x + offsetX,
+      y: point.y + offsetY
+    }));
+    return edge.set('points', points);
+  });
+
   return layout;
 }
 
@@ -243,6 +353,8 @@ export function doLayout(nodes, edges, opts) {
   } else {
     const graph = cache.graph;
     layout = runLayoutEngine(graph, nodes, edges, opts);
+    layout = layoutSingleNodes(layout, opts);
+    layout = shiftLayoutToCenter(layout, opts);
   }
 
   // cache results
