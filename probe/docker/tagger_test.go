@@ -28,22 +28,22 @@ func TestTagger(t *testing.T) {
 	defer func() { docker.NewProcessTreeStub = oldProcessTree }()
 
 	docker.NewProcessTreeStub = func(_ process.Walker) (process.Tree, error) {
-		return &mockProcessTree{map[int]int{2: 1}}, nil
+		return &mockProcessTree{map[int]int{3: 2}}, nil
 	}
 
 	var (
-		pid1NodeID = report.MakeProcessNodeID("somehost.com", "1")
-		pid2NodeID = report.MakeProcessNodeID("somehost.com", "2")
+		pid1NodeID = report.MakeProcessNodeID("somehost.com", "2")
+		pid2NodeID = report.MakeProcessNodeID("somehost.com", "3")
 		wantNode   = report.MakeNodeWith(map[string]string{docker.ContainerID: "ping"})
 	)
 
 	input := report.MakeReport()
-	input.Process.AddNode(pid1NodeID, report.MakeNodeWith(map[string]string{"pid": "1"}))
-	input.Process.AddNode(pid2NodeID, report.MakeNodeWith(map[string]string{"pid": "2"}))
+	input.Process.AddNode(pid1NodeID, report.MakeNodeWith(map[string]string{process.PID: "2"}))
+	input.Process.AddNode(pid2NodeID, report.MakeNodeWith(map[string]string{process.PID: "3"}))
 
 	want := report.MakeReport()
-	want.Process.AddNode(pid1NodeID, report.MakeNodeWith(map[string]string{"pid": "1"}).Merge(wantNode))
-	want.Process.AddNode(pid2NodeID, report.MakeNodeWith(map[string]string{"pid": "2"}).Merge(wantNode))
+	want.Process.AddNode(pid1NodeID, report.MakeNodeWith(map[string]string{process.PID: "2"}).Merge(wantNode))
+	want.Process.AddNode(pid2NodeID, report.MakeNodeWith(map[string]string{process.PID: "3"}).Merge(wantNode))
 
 	tagger := docker.NewTagger(mockRegistryInstance, nil)
 	have, err := tagger.Tag(input)

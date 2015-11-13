@@ -105,8 +105,8 @@ func TestContainer(t *testing.T) {
 	if c.Image() != "baz" {
 		t.Errorf("%s != baz", c.Image())
 	}
-	if c.PID() != 1 {
-		t.Errorf("%d != 1", c.PID())
+	if c.PID() != 2 {
+		t.Errorf("%d != 2", c.PID())
 	}
 	if have := docker.ExtractContainerIPs(c.GetNode("", []net.IP{})); !reflect.DeepEqual(have, []string{"1.2.3.4"}) {
 		t.Errorf("%v != %v", have, []string{"1.2.3.4"})
