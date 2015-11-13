@@ -101,21 +101,19 @@ var ContainerRenderer = MakeReduce(
 	// We need to be careful to ensure we only include each edge once.  Edges brought in
 	// by the above renders will have a pid, so its enough to filter out any nodes with
 	// pids.
-	Map{
+	FilterUnconnected(Map{
 		MapFunc: MapIP2Container,
-		Renderer: FilterUnconnected(
-			MakeReduce(
-				Map{
-					MapFunc:  MapContainer2IP,
-					Renderer: SelectContainer,
-				},
-				Map{
-					MapFunc:  MapEndpoint2IP,
-					Renderer: SelectEndpoint,
-				},
-			),
+		Renderer: MakeReduce(
+			Map{
+				MapFunc:  MapContainer2IP,
+				Renderer: SelectContainer,
+			},
+			Map{
+				MapFunc:  MapEndpoint2IP,
+				Renderer: SelectEndpoint,
+			},
 		),
-	},
+	}),
 )
 
 type containerWithImageNameRenderer struct {
