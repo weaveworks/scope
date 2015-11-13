@@ -5,13 +5,13 @@
 ![Weave Scope Screenshot](http://weave.works/img/header-image-left.png)
 
 
-## Overview
+## <a name="overview"></a>Overview
 
 Weave Scope automatically generates a map of your containers, enabling you to
 intuitively understand, monitor, and control your applications.
 
 
-## Getting started
+## <a name="getting-started"></a>Getting started
 
 ```
 sudo wget -O /usr/local/bin/scope \
@@ -25,13 +25,13 @@ Now, open your web browser to **http://localhost:4040**. (If you're using
 boot2docker, replace localhost with the output of `boot2docker ip`.)
 
 
-## Requirements
+## <a name="requirements"></a>Requirements
 
 Scope does not need any configuration and does not require the Weave Network.
 But Scope does need to be running on every machine you want to monitor.
 
 
-## Architecture
+## <a name="architecture"></a>Architecture
 
 Weave Scope consists of two components: the app and the probe. These two
 components are deployed as a single Docker container using the `scope`
@@ -59,7 +59,7 @@ serving the UI, and pushing these topologies to the UI.
 +-----------------------+
 ```
 
-## Using Weave Scope in Standalone Mode
+## <a name="using-weave-scope-in-standalone-mode"></a>Using Weave Scope in Standalone Mode
 
 When running Scope in a cluster, each probe sends reports to each app.
 The App merges the reports from each probe into a more complete report.
@@ -99,7 +99,7 @@ acceptable, both with and without ports:
 Hostnames will be regularly resolved as A records, and each answer used as a
 target.
 
-## Using Weave Scope in Cloud Service Mode
+## <a name="using-weave-scope-in-cloud-service-mode"></a>Using Weave Scope in Cloud Service Mode
 
 Scope can also be used to feed reports to the Scope Service. The Scope Service
 allows you centrally manage and share access to your Scope UI. In this
@@ -137,7 +137,49 @@ sudo scope launch --service-token=<token>
 ```
 
 
-## Developing
+## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
+
+To use Scope's Kubernetes integration, you need to start Scope with the
+`--probe.kubernetes true` flag.  Scope needs to be installed on all
+nodes (master and minions), but this flag should only be enabled on the
+Kubernetes master node.
+
+As per the normal requirements, you will need to run Scope on every
+machine you want to monitor, as shown in [Getting
+Started](#getting-started). However, when launching Scope you
+need to pass different arguments to the Kubernetes master and minion
+nodes.
+
+On the master node you need to launch Scope with Kubernetes support:
+
+```
+sudo scope launch --probe.kubernetes true
+```
+
+Depending on your setup, you may find that Kubernetes has renamed your
+Docker bridge interface. In this instance you'll need to tell Scope
+about the new name when launching it. For example, if your Docker bridge is
+named `cbr0`:
+
+```
+sudo DOCKER_BRIDGE=cbr0 scope launch --probe.docker.bridge cbr0 --probe.kubernetes true
+```
+
+On each minion node you need to launch Scope telling it
+to connect to the master node.
+
+```
+sudo scope launch --no-app kubernetes-master.my.network
+```
+
+Again, if your Docker bridge interface is named differently, you'll
+need to pass that to your probe when launching it.
+
+Once the first few reports come in, the UI should begin displaying two
+Kubernetes-specific views "Pods", and "Pods by Service".
+
+
+## <a name="developing"></a>Developing
 
 The build is in five stages. `make deps` installs some tools we use later in
 the build. `make frontend` builds a UI build image with all NPM dependencies.
