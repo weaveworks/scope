@@ -137,6 +137,48 @@ sudo scope launch --service-token=<token>
 ```
 
 
+## Using Weave Scope with Kubernetes
+
+To try scope's Kubernetes integration, you will start Scope with the
+special `--probe.kubernetes true` flag. While the probe needs to be
+installed on all nodes (master and minions), this flag should only be
+enabled on the Kubernetes master node.
+
+As per the normal requirements, you will need to run Scope on every
+machine you want to monitor, as shown in [Getting
+Started](#getting-started). However, when launching Scope you will
+need to pass different arguments to the Kubernetes master and minion
+nodes.
+
+On the master node you will launch scope with Kubernetes support.
+
+```
+sudo scope launch --probe.kubernetes true
+```
+
+Depending on your setup, you may find that Kubernetes has renamed your
+docker bridge interface. In this instance you'll need to tell scope
+about the new name when launching it. For example, if your docker bridge is
+named `cbr0`:
+
+```
+sudo DOCKER_BRIDGE=cbr0 scope launch --probe.docker.bridge cbr0 --probe.kubernetes true
+```
+
+At this point, on each minion node, you launch the probe, telling it
+to connect to the master node.
+
+```
+sudo scope launch --no-app kubernetes-master.my.network
+```
+
+Again, if your docker bridge interface is named differently, you'll
+need to pass that to your probe when launching it.
+
+Once the first few reports come in, the UI should begin displaying two
+Kubernetes-specific views "Pods", and "Pods by Service".
+
+
 ## Developing
 
 The build is in five stages. `make deps` installs some tools we use later in
