@@ -112,8 +112,11 @@ function getNodeDetails(topologyUrl, nodeId, options) {
         AppActions.receiveNodeDetails(res.node);
       },
       error: function(err) {
-        debug('Error in node details request: ' + err);
-        AppActions.receiveError(topologyUrl);
+        debug('Error in node details request: ' + err.responseText);
+        // dont treat missing node as error
+        if (err.status !== 404) {
+          AppActions.receiveError(topologyUrl);
+        }
       }
     });
   }
