@@ -84,6 +84,7 @@ type Container interface {
 	PID() int
 	Hostname() string
 	GetNode(string, []net.IP) report.Node
+	State() string
 
 	StartGatheringStats() error
 	StopGatheringStats()
@@ -129,6 +130,15 @@ func (c *container) Hostname() string {
 
 	return fmt.Sprintf("%s.%s", c.container.Config.Hostname,
 		c.container.Config.Domainname)
+}
+
+func (c *container) State() string {
+	if c.container.State.Paused {
+		return StatePaused
+	} else if c.container.State.Running {
+		return StateRunning
+	}
+	return StateStopped
 }
 
 func (c *container) StartGatheringStats() error {
@@ -297,14 +307,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ipsWithScopes = append(ipsWithScopes, report.MakeScopedAddressNodeID(hostID, ip))
 	}
 
-	var state string
-	if c.container.State.Paused {
-		state = StatePaused
-	} else if c.container.State.Running {
-		state = StateRunning
-	} else {
-		state = StateStopped
-	}
+	state := c.State()
 
 	result := report.MakeNodeWith(map[string]string{
 		ContainerID:       c.ID(),
