@@ -12,7 +12,7 @@ const NodeDetailsTable = React.createClass({
 
         {this.props.rows.map(function(row) {
           return (
-            <div className="node-details-table-row" key={row.key + row.value_major}>
+            <div className="node-details-table-row" key={row.key + row.value_major + row.value_minor}>
               <div className="node-details-table-row-key truncate" title={row.key}>{row.key}</div>
               { row.value_type === 'numeric' && <div className="node-details-table-row-value-scalar">{row.value_major}</div> }
               { row.value_type === 'numeric' && <div className="node-details-table-row-value-unit">{row.value_minor}</div> }
