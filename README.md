@@ -139,40 +139,40 @@ sudo scope launch --service-token=<token>
 
 ## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
 
-To try scope's Kubernetes integration, you will start Scope with the
-special `--probe.kubernetes true` flag. While the probe needs to be
-installed on all nodes (master and minions), this flag should only be
-enabled on the Kubernetes master node.
+To use Scope's Kubernetes integration, you need to start Scope with the
+`--probe.kubernetes true` flag.  Scope needs to be installed on all
+nodes (master and minions), but this flag should only be enabled on the
+Kubernetes master node.
 
 As per the normal requirements, you will need to run Scope on every
 machine you want to monitor, as shown in [Getting
-Started](#getting-started). However, when launching Scope you will
+Started](#getting-started). However, when launching Scope you
 need to pass different arguments to the Kubernetes master and minion
 nodes.
 
-On the master node you will launch scope with Kubernetes support.
+On the master node you need to launch Scope with Kubernetes support:
 
 ```
 sudo scope launch --probe.kubernetes true
 ```
 
 Depending on your setup, you may find that Kubernetes has renamed your
-docker bridge interface. In this instance you'll need to tell scope
-about the new name when launching it. For example, if your docker bridge is
+Docker bridge interface. In this instance you'll need to tell Scope
+about the new name when launching it. For example, if your Docker bridge is
 named `cbr0`:
 
 ```
 sudo DOCKER_BRIDGE=cbr0 scope launch --probe.docker.bridge cbr0 --probe.kubernetes true
 ```
 
-At this point, on each minion node, you launch the probe, telling it
+On each minion node you need to launch Scope telling it
 to connect to the master node.
 
 ```
 sudo scope launch --no-app kubernetes-master.my.network
 ```
 
-Again, if your docker bridge interface is named differently, you'll
+Again, if your Docker bridge interface is named differently, you'll
 need to pass that to your probe when launching it.
 
 Once the first few reports come in, the UI should begin displaying two
