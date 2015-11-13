@@ -7,10 +7,15 @@ const TopologyOptions = React.createClass({
 
   renderAction: function(action, option, topologyId) {
     return (
-      <TopologyOptionAction option={option} value={action} topologyId={topologyId} />
+      <TopologyOptionAction option={option} value={action} topologyId={topologyId} key={action} />
     );
   },
 
+  /**
+   * transforms a list of options into one sidebar-item.
+   * The sidebar text comes from the active option. the actions come from the
+   * remaining items.
+   */
   renderOption: function(items) {
     let activeText;
     let activeValue;
@@ -41,7 +46,7 @@ const TopologyOptions = React.createClass({
     }, this);
 
     return (
-      <div className="sidebar-item">
+      <div className="sidebar-item" key={option}>
         {activeText}
         <span className="sidebar-item-actions">
           {actions}
