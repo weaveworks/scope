@@ -14,11 +14,13 @@ const NodeDetailsControls = React.createClass({
 
     return (
       <div className="node-details-controls">
-        {this.props.controls && this.props.controls.map(control => {
-          return (
-            <NodeControlButton control={control} pending={this.props.pending} />
-          );
-        })}
+        <span className="node-details-controls-buttons">
+          {this.props.controls && this.props.controls.map(control => {
+            return (
+              <NodeControlButton control={control} pending={this.props.pending} key={control.id} />
+            );
+          })}
+        </span>
         {this.props.controls && <span title="Applying..." className={spinnerClassName}></span>}
         {this.props.error && <div className="node-details-controls-error" title={this.props.error}>
           <span className="node-details-controls-error-icon fa fa-warning" />
