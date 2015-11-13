@@ -316,6 +316,33 @@ h2 {
   top: 24px;
   bottom: 48px;
   width: 420px;
+
+  .details-tools-wrapper {
+    position: relative;
+  }
+
+  .details-tools {
+    position: absolute;
+    top: 16px;
+    right: 24px;
+
+    span {
+      .palable;
+      padding: 4px;
+      margin-left: 2px;
+      font-size: 110%;
+      color: @white;
+      cursor: pointer;
+      opacity: 0.7;
+      border: 1px solid rgba(255, 255, 255, 0);
+      border-radius: 10%;
+
+      &:hover {
+        opacity: 1;
+        border-color: rgba(255, 255, 255, 0.6);
+      }
+    }
+  }
 }
 
 .node-details {
@@ -327,7 +354,7 @@ h2 {
 
   &-header {
 
-    padding: 24px 36px 16px 36px;
+    padding: 36px 36px 16px 36px;
 
     &-row {
       display: flex;
