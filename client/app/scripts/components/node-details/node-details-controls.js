@@ -1,6 +1,6 @@
 const React = require('react');
 
-const NodeControlButton = require('./node-control-button');
+const NodeControlButton = require('../node-control-button');
 
 const NodeDetailsControls = React.createClass({
 

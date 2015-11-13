@@ -1,8 +1,8 @@
 const _ = require('lodash');
 const React = require('react');
 
-const NodeDetailsControls = require('./node-details-controls');
-const NodeDetailsTable = require('./node-details-table');
+const NodeDetailsControls = require('./node-details/node-details-controls');
+const NodeDetailsTable = require('./node-details/node-details-table');
 const NodeColorMixin = require('../mixins/node-color-mixin');
 const TitleUtils = require('../utils/title-utils');
 
