@@ -43,10 +43,10 @@ const Nodes = React.createClass({
   },
 
   setDimensions: function() {
-    this.setState({
-      height: window.innerHeight - navbarHeight - marginTop,
-      width: window.innerWidth
-    });
+    const width = window.innerWidth;
+    const height = window.innerHeight - navbarHeight - marginTop;
+
+    this.setState({height, width});
   }
 
 });
