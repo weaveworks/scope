@@ -1,7 +1,8 @@
 const React = require('react');
-const AppActions = require('../actions/app-actions');
 
-const NodeControlButton = React.createClass({
+const AppActions = require('../../actions/app-actions');
+
+const NodeDetailsControlButton = React.createClass({
 
   render: function() {
     let className = `node-control-button fa ${this.props.control.icon}`;
@@ -20,4 +21,4 @@ const NodeControlButton = React.createClass({
 
 });
 
-module.exports = NodeControlButton;
+module.exports = NodeDetailsControlButton;

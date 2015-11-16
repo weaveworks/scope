@@ -1,6 +1,6 @@
 const React = require('react');
 
-const NodeControlButton = require('./node-control-button');
+const NodeDetailsControlButton = require('./node-details-control-button');
 
 const NodeDetailsControls = React.createClass({
 
@@ -17,7 +17,8 @@ const NodeDetailsControls = React.createClass({
         <span className="node-details-controls-buttons">
           {this.props.controls && this.props.controls.map(control => {
             return (
-              <NodeControlButton control={control} pending={this.props.pending} key={control.id} />
+              <NodeDetailsControlButton control={control}
+                pending={this.props.pending} key={control.id} />
             );
           })}
         </span>
