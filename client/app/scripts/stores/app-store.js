@@ -97,6 +97,11 @@ function setDefaultTopologyOptions(topologyList) {
   });
 }
 
+function deSelectNode() {
+  selectedNodeId = null;
+  nodeDetails = null;
+}
+
 // Store API
 
 const AppStore = Object.assign({}, EventEmitter.prototype, {
@@ -259,14 +264,14 @@ AppStore.registeredCallback = function(payload) {
     break;
 
   case ActionTypes.CLICK_CLOSE_DETAILS:
-    selectedNodeId = null;
+    deSelectNode();
     AppStore.emit(AppStore.CHANGE_EVENT);
     break;
 
   case ActionTypes.CLICK_NODE:
     if (payload.nodeId === selectedNodeId) {
       // clicking same node twice unsets the selection
-      selectedNodeId = null;
+      deSelectNode();
     } else {
       selectedNodeId = payload.nodeId;
     }
@@ -274,7 +279,7 @@ AppStore.registeredCallback = function(payload) {
     break;
 
   case ActionTypes.CLICK_TOPOLOGY:
-    selectedNodeId = null;
+    deSelectNode();
     if (payload.topologyId !== currentTopologyId) {
       setTopology(payload.topologyId);
       nodes = nodes.clear();
@@ -304,8 +309,7 @@ AppStore.registeredCallback = function(payload) {
     break;
 
   case ActionTypes.HIT_ESC_KEY:
-    nodeDetails = null;
-    selectedNodeId = null;
+    deSelectNode();
     AppStore.emit(AppStore.CHANGE_EVENT);
     break;
 
