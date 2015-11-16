@@ -13,11 +13,27 @@ const TopologyOptions = React.createClass({
 
   renderOption: function(items) {
     let activeText;
+    let activeValue;
     const actions = [];
     const activeOptions = this.props.activeOptions;
     const topologyId = this.props.topologyId;
+    const option = items[0].option;
+
+    // find active option value
+    if (activeOptions && activeOptions.has(option)) {
+      activeValue = activeOptions.get(option);
+    } else {
+      // get default value
+      items.forEach(function(item) {
+        if (item.default) {
+          activeValue = item.value;
+        }
+      });
+    }
+
+    // render active option as text, add other options as actions
     items.forEach(function(item) {
-      if (activeOptions && activeOptions.has(item.option) && activeOptions.get(item.option) === item.value) {
+      if (item.value === activeValue) {
         activeText = item.display;
       } else {
         actions.push(this.renderAction(item.value, item.option, topologyId));
