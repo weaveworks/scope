@@ -103,7 +103,7 @@ while true; do
                 shift
             fi
             PROBE_ARGS="$PROBE_ARGS -token=$ARG_VALUE"
-            echo "scope.weave.works:443" >/etc/weave/apps
+            echo "scope.weave.works:80" >/etc/weave/apps
             touch /etc/service/app/down
             ;;
         --no-app)

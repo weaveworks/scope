@@ -252,9 +252,15 @@ func (r *registry) updateContainerState(containerID string) {
 	if !ok {
 		c = NewContainerStub(dockerContainer)
 		r.containers[containerID] = c
-		r.containersByPID[dockerContainer.State.Pid] = c
 	} else {
+		// potentially remove existing pid mapping.
+		delete(r.containersByPID, c.PID())
 		c.UpdateState(dockerContainer)
+	}
+
+	// Update PID index
+	if c.PID() > 1 {
+		r.containersByPID[c.PID()] = c
 	}
 
 	// Trigger anyone watching for updates

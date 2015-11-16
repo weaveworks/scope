@@ -41,7 +41,7 @@ func (r *mockRegistry) WatchContainerUpdates(_ docker.ContainerUpdateWatcher) {}
 var (
 	mockRegistryInstance = &mockRegistry{
 		containersByPID: map[int]docker.Container{
-			1: &mockContainer{container1},
+			2: &mockContainer{container1},
 		},
 		images: map[string]*client.APIImages{
 			"baz": &apiImage1,

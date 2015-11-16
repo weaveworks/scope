@@ -38,6 +38,10 @@ func (c *mockContainer) Hostname() string {
 	return ""
 }
 
+func (c *mockContainer) State() string {
+	return docker.StateRunning
+}
+
 func (c *mockContainer) StartGatheringStats() error {
 	return nil
 }
@@ -133,7 +137,7 @@ var (
 		ID:    "ping",
 		Name:  "pong",
 		Image: "baz",
-		State: client.State{Pid: 1, Running: true},
+		State: client.State{Pid: 2, Running: true},
 		NetworkSettings: &client.NetworkSettings{
 			IPAddress: "1.2.3.4",
 			Ports: map[client.Port][]client.PortBinding{
@@ -249,7 +253,7 @@ func TestLookupByPID(t *testing.T) {
 		test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 			var have docker.Container
 			registry.LockedPIDLookup(func(lookup func(int) docker.Container) {
-				have = lookup(1)
+				have = lookup(2)
 			})
 			return have
 		})
