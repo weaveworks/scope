@@ -25,17 +25,24 @@ module.exports = {
   devtool: 'cheap-module-source-map',
 
   // Set entry point include necessary files for hot load
-  entry: [
-    'webpack-dev-server/client?http://localhost:4041',
-    'webpack/hot/only-dev-server',
-    './app/scripts/main'
-  ],
+  entry: {
+    'app': [
+      './app/scripts/main',
+      'webpack-dev-server/client?http://localhost:4041',
+      'webpack/hot/only-dev-server'
+    ],
+    'terminal-app': [
+      './app/scripts/terminal-main',
+      'webpack-dev-server/client?http://localhost:4041',
+      'webpack/hot/only-dev-server'
+    ]
+  },
 
   // This will not actually create a app.js file in ./build. It is used
   // by the dev server for dynamic hot loading.
   output: {
     path: path.join(__dirname, 'build/'),
-    filename: 'app.js',
+    filename: '[name].js',
     publicPath: 'http://localhost:4041/build/'
   },
 
@@ -51,7 +58,7 @@ module.exports = {
     preLoaders: [
       {
         test: /\.js$/,
-        exclude: /node_modules/,
+        exclude: /node_modules|vendor/,
         loader: 'eslint-loader'
       }
     ],
@@ -74,7 +81,7 @@ module.exports = {
       },
       {
         test: /\.jsx?$/,
-        exclude: /node_modules/,
+        exclude: /node_modules|vendor/,
         loaders: ['react-hot', 'babel']
       }
     ]

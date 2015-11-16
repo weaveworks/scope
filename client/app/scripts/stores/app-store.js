@@ -11,6 +11,8 @@ const makeOrderedMap = Immutable.OrderedMap;
 const makeSet = Immutable.Set;
 const log = debug('scope:app-store');
 
+const error = debug('scope:error');
+
 // Helpers
 
 function findCurrentTopology(subTree, topologyId) {
@@ -44,7 +46,7 @@ function makeNode(node) {
 
 // Initial values
 
-let topologyOptions = makeOrderedMap();
+let topologyOptions = makeOrderedMap(); // topologyId -> options
 let adjacentNodes = makeSet();
 let controlError = null;
 let controlPending = false;
@@ -55,12 +57,13 @@ let hostname = '...';
 let version = '...';
 let mouseOverEdgeId = null;
 let mouseOverNodeId = null;
-let nodes = makeOrderedMap();
+let nodes = makeOrderedMap(); // nodeId -> node
 let nodeDetails = null;
 let selectedNodeId = null;
 let topologies = [];
 let topologiesLoaded = false;
 let routeSet = false;
+let controlPipe = null;
 let websocketClosed = true;
 
 function processTopologies(topologyList) {
@@ -102,6 +105,7 @@ function setDefaultTopologyOptions(topologyList) {
 function deSelectNode() {
   selectedNodeId = null;
   nodeDetails = null;
+  controlPipe = null;
 }
 
 // Store API
@@ -113,6 +117,7 @@ export class AppStore extends Store {
     return {
       topologyId: currentTopologyId,
       selectedNodeId: this.getSelectedNodeId(),
+      controlPipe: this.getControlPipe(),
       topologyOptions: topologyOptions.toJS() // all options
     };
   }
@@ -140,6 +145,10 @@ export class AppStore extends Store {
 
   getControlError() {
     return controlError;
+  }
+
+  getControlPipe() {
+    return controlPipe;
   }
 
   getCurrentTopology() {
@@ -244,8 +253,11 @@ export class AppStore extends Store {
   }
 
   __onDispatch(payload) {
-    switch (payload.type) {
+    if (!payload.type) {
+      error('Payload missing a type!', payload);
+    }
 
+    switch (payload.type) {
     case ActionTypes.CHANGE_TOPOLOGY_OPTION:
       if (topologyOptions.getIn([payload.topologyId, payload.option])
         !== payload.value) {
@@ -265,6 +277,11 @@ export class AppStore extends Store {
 
     case ActionTypes.CLICK_CLOSE_DETAILS:
       deSelectNode();
+      this.__emitChange();
+      break;
+
+    case ActionTypes.CLICK_CLOSE_TERMINAL:
+      controlPipe = null;
       this.__emitChange();
       break;
 
@@ -307,7 +324,7 @@ export class AppStore extends Store {
       this.__emitChange();
       break;
 
-    case ActionTypes.HIT_ESC_KEY:
+    case ActionTypes.DESELECT_NODE:
       deSelectNode();
       this.__emitChange();
       break;
@@ -340,6 +357,21 @@ export class AppStore extends Store {
       controlPending = false;
       controlError = null;
       this.__emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_CONTROL_PIPE:
+      controlPipe = {
+        id: payload.pipeId,
+        raw: payload.rawTty
+      };
+      this.__emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_CONTROL_PIPE_STATUS:
+      if (controlPipe) {
+        controlPipe.status = payload.status;
+        this.__emitChange();
+      }
       break;
 
     case ActionTypes.RECEIVE_ERROR:
@@ -421,6 +453,7 @@ export class AppStore extends Store {
       setTopology(payload.state.topologyId);
       setDefaultTopologyOptions(topologies);
       selectedNodeId = payload.state.selectedNodeId;
+      controlPipe = payload.state.controlPipe;
       topologyOptions = Immutable.fromJS(payload.state.topologyOptions)
         || topologyOptions;
       this.__emitChange();

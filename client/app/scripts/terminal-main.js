@@ -4,6 +4,6 @@ require('../styles/main.less');
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import App from './components/app.js';
+import { TerminalApp } from './components/terminal-app.js';
 
-ReactDOM.render(<App/>, document.getElementById('app'));
+ReactDOM.render(<TerminalApp/>, document.getElementById('app'));

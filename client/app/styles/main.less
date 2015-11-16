@@ -18,6 +18,9 @@
 @weave-orange: rgb(255,75,25);
 @weave-charcoal-blue: rgb(50,50,75); // #32324B
 
+@base-font: "Roboto", sans-serif;
+@mono-font: "Menlo", "DejaVu Sans Mono", "Liberation Mono", monospace;
+
 @primary-color: @weave-charcoal-blue;
 @background-color: lighten(@primary-color, 66%);
 @background-secondary-color: lighten(@background-color, 8%);
@@ -28,6 +31,9 @@
 @text-tertiary-color: lighten(@primary-color, 50%);
 @text-darker-color: @primary-color;
 @white: @background-secondary-color;
+
+@details-window-width: 420px;
+@details-window-padding-left: 36px;
 
 /* add this class to truncate text with ellipsis, container needs width */
 .truncate {
@@ -51,6 +57,14 @@
 
 .hide {
   opacity: 0;
+}
+
+.shadow-2 {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16), 0 3px 10px rgba(0, 0, 0, 0.23);
+}
+
+.shadow-3 {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 6px 10px rgba(0, 0, 0, 0.23);
 }
 
 * {
@@ -77,7 +91,7 @@ body {
   background: linear-gradient(30deg, @background-color 0%, @background-secondary-color 100%);
   color: @text-color;
   line-height: 150%;
-  font-family: "Roboto", sans-serif;
+  font-family: @base-font;
   font-size: 13px;
   margin: 0;
 }
@@ -99,7 +113,13 @@ h2 {
   font-weight: 400;
 }
 
-#app {
+.app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  overflow: auto;
 }
 
 .header {
@@ -222,7 +242,7 @@ h2 {
   }
 
   text {
-    font-family: Roboto;
+    font-family: @base-font;
     fill: @text-secondary-color;
 
     &.node-label {
@@ -313,13 +333,13 @@ h2 {
 }
 
 #details {
-  position: absolute;
+  position: fixed;
   z-index: 1024;
   display: block;
-  right: 36px;
+  right: @details-window-padding-left;
   top: 24px;
   bottom: 48px;
-  width: 420px;
+  width: @details-window-width;
 
   .details-tools-wrapper {
     position: relative;
@@ -327,8 +347,8 @@ h2 {
 
   .details-tools {
     position: absolute;
-    top: 16px;
-    right: 24px;
+    top: 8px;
+    right: 8px;
 
     span {
       .palable;
@@ -346,6 +366,14 @@ h2 {
         border-color: rgba(255, 255, 255, 0.6);
       }
     }
+  }
+
+  .details-wrapper {
+    height: 100%;
+    padding-bottom: 8px;
+    border-radius: 2px;
+    background-color: #fff;
+    .shadow-2;
   }
 }
 
@@ -508,9 +536,112 @@ h2 {
       }
 
     }
+  }
+}
 
+.terminal {
+
+  &-app {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-flow: column;
   }
 
+  &-embedded {
+    z-index: 512;
+    position: fixed;
+    display: flex;
+    flex-flow: column;
+    top: 24px;
+    bottom: 48px;
+    left: 36px;
+    right: (@details-window-width + @details-window-padding-left + 4px);
+  }
+
+  &-wrapper {
+    display: flex;
+    flex-flow: column;
+    flex: 1;
+    border: 0px solid #000000;
+    border-radius: 4px;
+    color: #f0f0f0;
+    font-family: @mono-font;
+    .shadow-2;
+  }
+
+  &-header {
+    .truncate;
+    text-align: center;
+    color: @white;
+    padding: 8px 24px;
+    background-color: @text-color;
+    position: relative;
+
+    &-title {
+      cursor: default;
+    }
+
+    &-tools {
+      position: absolute;
+      right: 8px;
+
+      &-icon {
+        .palable;
+        padding: 4px;
+        color: @white;
+        cursor: pointer;
+        opacity: 0.7;
+        border: 1px solid rgba(255, 255, 255, 0);
+        border-radius: 10%;
+        &:hover {
+          opacity: 1;
+          border-color: rgba(255, 255, 255, 0.6);
+        }
+      }
+    }
+  }
+
+  &-inner {
+    flex: 1;
+    background-color: rgba(0, 0, 0, 0.93);
+    padding: 8px;
+
+    .terminal {
+      background-color: transparent !important;
+    }
+  }
+
+  &-status-bar {
+    font-family: @base-font;
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 50%;
+    height: 130px;
+    padding: 16px;
+    opacity: 0.8;
+
+    h1 {
+      margin: 8px 0;
+    }
+
+    p {
+      color: @white;
+    }
+  }
+
+  &-cursor {
+    color: #000;
+    background: #f0f0f0;
+  }
+}
+
+.terminal-inactive .terminal-cursor {
+  visibility: hidden;
 }
 
 .sidebar {

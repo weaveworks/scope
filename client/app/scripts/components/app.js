@@ -10,6 +10,7 @@ import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { hitEsc } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
+import EmbeddedTerminal from './embedded-terminal';
 import { getRouter } from '../utils/router-utils';
 
 const ESC_KEY_CODE = 27;
@@ -19,6 +20,7 @@ function getStateFromStores() {
     activeTopologyOptions: AppStore.getActiveTopologyOptions(),
     controlError: AppStore.getControlError(),
     controlPending: AppStore.isControlPending(),
+    controlPipe: AppStore.getControlPipe(),
     currentTopology: AppStore.getCurrentTopology(),
     currentTopologyId: AppStore.getCurrentTopologyId(),
     currentTopologyOptions: AppStore.getCurrentTopologyOptions(),
@@ -33,11 +35,12 @@ function getStateFromStores() {
     topologiesLoaded: AppStore.isTopologiesLoaded(),
     version: AppStore.getVersion(),
     websocketClosed: AppStore.isWebsocketClosed()
+
   };
 }
 
-
 export default class App extends React.Component {
+
   constructor(props, context) {
     super(props, context);
     this.onChange = this.onChange.bind(this);
@@ -69,18 +72,24 @@ export default class App extends React.Component {
 
   render() {
     const showingDetails = this.state.selectedNodeId;
+    const showingTerminal = this.state.controlPipe;
     const footer = `Version ${this.state.version} on ${this.state.hostname}`;
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 450 : 0;
     const topMargin = 100;
 
     return (
-      <div>
+      <div className="app">
         {showingDetails && <Details nodes={this.state.nodes}
           controlError={this.state.controlError}
           controlPending={this.state.controlPending}
           nodeId={this.state.selectedNodeId}
-          details={this.state.nodeDetails} /> }
+          details={this.state.nodeDetails} />}
+
+        {showingTerminal && <EmbeddedTerminal
+          pipe={this.state.controlPipe}
+          nodeId={this.state.selectedNodeId}
+          nodes={this.state.nodes} />}
 
         <div className="header">
           <Logo />
