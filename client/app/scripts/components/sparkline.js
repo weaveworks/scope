@@ -1,5 +1,6 @@
 // Forked from: https://github.com/KyleAMathews/react-sparkline at commit a9d7c5203d8f240938b9f2288287aaf0478df013
 const React = require('react');
+const ReactDOM = require('react-dom');
 const d3 = require('d3');
 
 const Sparkline = React.createClass({
@@ -21,7 +22,7 @@ const Sparkline = React.createClass({
 
   renderSparkline: function() {
     // If the sparkline has already been rendered, remove it.
-    const el = this.getDOMNode();
+    const el = ReactDOM.findDOMNode(this);
     while (el.firstChild) {
       el.removeChild(el.firstChild);
     }
@@ -89,9 +90,9 @@ const Sparkline = React.createClass({
       title = data.length + ' samples, min: ' + d3.round(d3.min(data), 2) + ', max: ' + d3.round(d3.max(data), 2) + ', mean: ' + d3.round(d3.mean(data), 2);
     }
 
-    d3.select(this.getDOMNode()).attr('title', title);
+    d3.select(ReactDOM.findDOMNode(this)).attr('title', title);
 
-    const svg = d3.select(this.getDOMNode()).
+    const svg = d3.select(ReactDOM.findDOMNode(this)).
       append('svg').
       attr('width', this.props.width).
       attr('height', this.props.height).
