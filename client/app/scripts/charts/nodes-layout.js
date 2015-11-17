@@ -2,7 +2,9 @@ const dagre = require('dagre');
 const debug = require('debug')('scope:nodes-layout');
 const makeMap = require('immutable').Map;
 const ImmSet = require('immutable').Set;
+
 const Naming = require('../constants/naming');
+const TopologyUtils = require('./topology-utils');
 
 const MAX_NODES = 100;
 const topologyCaches = {};
@@ -141,22 +143,24 @@ function layoutSingleNodes(layout, opts) {
   const singleNodes = nodes.filter(node => node.get('degree') === 0);
 
   if (singleNodes.size) {
-    const nonSingleNodes = nodes.filter(node => node.get('degree') !== 0);
     let offsetX;
     let offsetY;
-    if (aspectRatio < 1) {
-      debug('laying out single nodes to the right', aspectRatio);
-      offsetX = nonSingleNodes.maxBy(node => node.get('x')).get('x');
-      offsetY = nonSingleNodes.minBy(node => node.get('y')).get('y');
-      if (offsetX) {
-        offsetX += nodeWidth + nodesep;
-      }
-    } else {
-      debug('laying out single nodes below', aspectRatio);
-      offsetX = nonSingleNodes.minBy(node => node.get('x')).get('x');
-      offsetY = nonSingleNodes.maxBy(node => node.get('y')).get('y');
-      if (offsetY) {
-        offsetY += nodeHeight + ranksep;
+    const nonSingleNodes = nodes.filter(node => node.get('degree') !== 0);
+    if (nonSingleNodes.size > 0) {
+      if (aspectRatio < 1) {
+        debug('laying out single nodes to the right', aspectRatio);
+        offsetX = nonSingleNodes.maxBy(node => node.get('x')).get('x');
+        offsetY = nonSingleNodes.minBy(node => node.get('y')).get('y');
+        if (offsetX) {
+          offsetX += nodeWidth + nodesep;
+        }
+      } else {
+        debug('laying out single nodes below', aspectRatio);
+        offsetX = nonSingleNodes.minBy(node => node.get('x')).get('x');
+        offsetY = nonSingleNodes.maxBy(node => node.get('y')).get('y');
+        if (offsetY) {
+          offsetY += nodeHeight + ranksep;
+        }
       }
     }
 
@@ -320,12 +324,12 @@ function copyLayoutProperties(layout, nodeCache, edgeCache) {
  * Layout of nodes and edges
  * If a previous layout was given and not too much changed, the previous layout
  * is changed and returned. Otherwise does a new layout engine run.
- * @param  {Map} nodes All nodes
- * @param  {Map} edges All edges
+ * @param  {Map} immNodes All nodes
+ * @param  {Map} immEdges All edges
  * @param  {object} opts  width, height, margins, etc...
  * @return {object} graph object with nodes, edges, dimensions
  */
-export function doLayout(nodes, edges, opts) {
+export function doLayout(immNodes, immEdges, opts) {
   const options = opts || {};
   const topologyId = options.topologyId || 'noId';
 
@@ -345,14 +349,15 @@ export function doLayout(nodes, edges, opts) {
   let layout;
 
   ++layoutRuns;
-  if (cachedLayout && nodeCache && edgeCache && !hasUnseenNodes(nodes, nodeCache)) {
+  if (cachedLayout && nodeCache && edgeCache && !hasUnseenNodes(immNodes, nodeCache)) {
     debug('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
-    layout = cloneLayout(cachedLayout, nodes, edges);
+    layout = cloneLayout(cachedLayout, immNodes, immEdges);
     // copy old properties, works also if nodes get re-added
     layout = copyLayoutProperties(layout, nodeCache, edgeCache);
   } else {
     const graph = cache.graph;
-    layout = runLayoutEngine(graph, nodes, edges, opts);
+    const nodesWithDegrees = TopologyUtils.updateNodeDegrees(immNodes, immEdges);
+    layout = runLayoutEngine(graph, nodesWithDegrees, immEdges, opts);
     layout = layoutSingleNodes(layout, opts);
     layout = shiftLayoutToCenter(layout, opts);
   }

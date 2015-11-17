@@ -12,7 +12,6 @@ const Naming = require('../constants/naming');
 const NodesLayout = require('./nodes-layout');
 const Node = require('./node');
 const NodesError = require('./nodes-error');
-const TopologyUtils = require('./topology-utils');
 
 const MARGINS = {
   top: 130,
@@ -236,7 +235,6 @@ const NodesChart = React.createClass({
         pseudo: node.get('pseudo'),
         subLabel: node.get('label_minor'),
         rank: node.get('rank'),
-        degree: TopologyUtils.getDegreeForNodeId(topology, id),
         x: 0,
         y: 0
       });
