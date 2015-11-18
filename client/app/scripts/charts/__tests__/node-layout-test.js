@@ -1,4 +1,5 @@
 jest.dontMock('../nodes-layout');
+jest.dontMock('../topology-utils');
 jest.dontMock('../../constants/naming'); // edge naming: 'source-target'
 
 import { fromJS, Map } from 'immutable';
@@ -65,6 +66,26 @@ describe('NodesLayout', () => {
       nodes: fromJS({
         n1: {id: 'n1'},
         n4: {id: 'n4'}
+      }),
+      edges: fromJS({
+        'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'}
+      })
+    },
+    single3: {
+      nodes: fromJS({
+        n1: {id: 'n1'},
+        n2: {id: 'n2'},
+        n3: {id: 'n3'}
+      }),
+      edges: fromJS({})
+    },
+    singlePortrait: {
+      nodes: fromJS({
+        n1: {id: 'n1'},
+        n2: {id: 'n2'},
+        n3: {id: 'n3'},
+        n4: {id: 'n4'},
+        n5: {id: 'n5'}
       }),
       edges: fromJS({
         'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'}
@@ -231,5 +252,38 @@ describe('NodesLayout', () => {
     resultCoords = getNodeCoordinates(result.nodes);
     expect(resultCoords.slice(0, 2)).toEqual(coords.slice(0, 2));
     expect(resultCoords.slice(2, 6)).toEqual(coords.slice(4, 8));
+  });
+
+  it('renders single nodes in a square', () => {
+    const result = NodesLayout.doLayout(
+      nodeSets.single3.nodes,
+      nodeSets.single3.edges);
+
+    nodes = result.nodes.toJS();
+
+    expect(nodes.n1.x).toEqual(nodes.n3.x);
+    expect(nodes.n1.y).toEqual(nodes.n2.y);
+    expect(nodes.n1.x).toBeLessThan(nodes.n2.x);
+    expect(nodes.n1.y).toBeLessThan(nodes.n3.y);
+  });
+
+  it('renders single nodes next to portrait graph', () => {
+    const result = NodesLayout.doLayout(
+      nodeSets.singlePortrait.nodes,
+      nodeSets.singlePortrait.edges);
+
+    nodes = result.nodes.toJS();
+
+    // first square row on same level as top-most other node
+    expect(nodes.n1.y).toEqual(nodes.n2.y);
+    expect(nodes.n1.y).toEqual(nodes.n3.y);
+    expect(nodes.n4.y).toEqual(nodes.n5.y);
+
+    // all singles right to other nodes
+    expect(nodes.n1.x).toEqual(nodes.n4.x);
+    expect(nodes.n1.x).toBeLessThan(nodes.n2.x);
+    expect(nodes.n1.x).toBeLessThan(nodes.n3.x);
+    expect(nodes.n1.x).toBeLessThan(nodes.n5.x);
+    expect(nodes.n2.x).toEqual(nodes.n5.x);
   });
 });
