@@ -30,11 +30,13 @@ const NodeDetails = React.createClass({
     return (
       <div className="node-details">
         <div className="node-details-header node-details-header-notavailable">
-          <h2 className="node-details-header-label">
-            n/a
-          </h2>
-          <div className="node-details-header-label-minor truncate">
-            {this.props.nodeId}
+          <div className="node-details-header-wrapper">
+            <h2 className="node-details-header-label">
+              n/a
+            </h2>
+            <div className="node-details-header-label-minor truncate">
+              {this.props.nodeId}
+            </div>
           </div>
         </div>
         <div className="node-details-content">
@@ -72,11 +74,13 @@ const NodeDetails = React.createClass({
     return (
       <div className="node-details">
         <div className="node-details-header" style={styles.header}>
-          <h2 className="node-details-header-label truncate" title={details.label_major}>
-            {details.label_major}
-          </h2>
-          <div className="node-details-header-label-minor truncate" title={details.label_minor}>
-            {details.label_minor}
+          <div className="node-details-header-wrapper">
+            <h2 className="node-details-header-label truncate" title={details.label_major}>
+              {details.label_major}
+            </h2>
+            <div className="node-details-header-label-minor truncate" title={details.label_minor}>
+              {details.label_minor}
+            </div>
           </div>
         </div>
 

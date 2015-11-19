@@ -219,7 +219,6 @@ h2 {
   text {
     font-family: Roboto;
     fill: @text-secondary-color;
-    text-shadow: 0 2px 0 @white, 2px 0 0 @white, 0 -2px 0 @white, -2px 0 0 @white;
 
     &.node-label {
       fill: @text-color;
@@ -354,7 +353,9 @@ h2 {
 
   &-header {
 
-    padding: 36px 36px 16px 36px;
+    &-wrapper {
+      padding: 36px 36px 16px 36px;
+    }
 
     &-row {
       display: flex;
