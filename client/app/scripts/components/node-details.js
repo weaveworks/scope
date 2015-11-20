@@ -22,7 +22,23 @@ const NodeDetails = React.createClass({
 
   renderLoading: function() {
     return (
-      <div className="node-details" />
+      <div className="node-details">
+        <div className="node-details-header node-details-header-loading">
+          <div className="node-details-header-wrapper">
+            <h2 className="node-details-header-label">
+              Loading...
+            </h2>
+            <div className="node-details-header-label-minor truncate">
+              {this.props.nodeId}
+            </div>
+          </div>
+        </div>
+        <div className="node-details-content">
+          <div className="node-details-content-loading">
+            <span className="fa fa-circle-o-notch fa-spin" />
+          </div>
+        </div>
+      </div>
     );
   },
 
