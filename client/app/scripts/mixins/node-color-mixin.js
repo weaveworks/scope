@@ -4,7 +4,7 @@ const PSEUDO_COLOR = '#b1b1cb';
 const hueRange = [20, 330]; // exclude red
 const hueScale = d3.scale.linear().range(hueRange);
 // map hues to lightness
-const lightnessScale = d3.scale.linear().domain(hueRange).range([0.3, 0.7]);
+const lightnessScale = d3.scale.linear().domain(hueRange).range([0.5, 0.7]);
 const startLetterRange = 'A'.charCodeAt();
 const endLetterRange = 'Z'.charCodeAt();
 const letterRange = endLetterRange - startLetterRange;
@@ -30,7 +30,7 @@ function colors(text, secondText) {
   if (hue > 70 && hue < 150) {
     hue += 80;
   }
-  const saturation = 0.7;
+  const saturation = 0.6;
   let lightness = 0.5;
   if (secondText) {
     // reuse text2degree and feed degree to lightness scale
