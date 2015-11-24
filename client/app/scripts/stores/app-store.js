@@ -269,10 +269,9 @@ AppStore.registeredCallback = function(payload) {
     break;
 
   case ActionTypes.CLICK_NODE:
-    if (payload.nodeId === selectedNodeId) {
-      // clicking same node twice unsets the selection
-      deSelectNode();
-    } else {
+    deSelectNode();
+    if (payload.nodeId !== selectedNodeId) {
+      // select new node if it's not the same (in that case just delesect)
       selectedNodeId = payload.nodeId;
     }
     AppStore.emit(AppStore.CHANGE_EVENT);
