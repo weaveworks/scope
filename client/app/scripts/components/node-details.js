@@ -61,7 +61,7 @@ const NodeDetails = React.createClass({
       return this.renderLoading();
     }
 
-    const nodeColor = this.getNodeColorDark(details.label_major);
+    const nodeColor = this.getNodeColorDark(details.rank);
     const styles = {
       controls: {
         'backgroundColor': this.brightenColor(nodeColor)

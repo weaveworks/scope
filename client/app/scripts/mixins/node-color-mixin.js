@@ -1,17 +1,24 @@
 const d3 = require('d3');
 
 const colors = d3.scale.category20();
-
-// make sure the internet always gets the same color
-const internetLabel = 'the Internet';
-colors(internetLabel);
-
+const PSEUDO_COLOR = '#b1b1cb';
+let colorIndex = 0;
 
 const NodeColorMixin = {
   getNodeColor: function(text) {
+    colorIndex++;
+    // skip green and red (index 5-8 in d3.scale.category20)
+    if (colorIndex > 4 && colorIndex < 9) {
+      colors('_' + colorIndex);
+      return this.getNodeColor(text);
+    }
+
     return colors(text);
   },
   getNodeColorDark: function(text) {
+    if (text === undefined) {
+      return PSEUDO_COLOR;
+    }
     const color = d3.rgb(colors(text));
     let hsl = color.hsl();
 

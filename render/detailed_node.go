@@ -26,6 +26,7 @@ type DetailedNode struct {
 	ID         string            `json:"id"`
 	LabelMajor string            `json:"label_major"`
 	LabelMinor string            `json:"label_minor,omitempty"`
+	Rank       string            `json:"rank,omitempty"`
 	Pseudo     bool              `json:"pseudo,omitempty"`
 	Tables     []Table           `json:"tables"`
 	Controls   []ControlInstance `json:"controls"`
@@ -115,6 +116,7 @@ func MakeDetailedNode(r report.Report, n RenderableNode) DetailedNode {
 		ID:         n.ID,
 		LabelMajor: n.LabelMajor,
 		LabelMinor: n.LabelMinor,
+		Rank:       n.Rank,
 		Pseudo:     n.Pseudo,
 		Tables:     tables,
 		Controls:   controls(r, n),

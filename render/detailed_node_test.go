@@ -88,6 +88,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 		ID:         render.MakeHostID(fixture.ClientHostID),
 		LabelMajor: "client",
 		LabelMinor: "hostname.com",
+		Rank:       "hostname.com",
 		Pseudo:     false,
 		Controls:   []render.ControlInstance{},
 		Tables: []render.Table{
@@ -155,6 +156,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 		ID:         fixture.ServerContainerID,
 		LabelMajor: "server",
 		LabelMinor: fixture.ServerHostName,
+		Rank:       "imageid456",
 		Pseudo:     false,
 		Controls:   []render.ControlInstance{},
 		Tables: []render.Table{
