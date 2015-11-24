@@ -3,7 +3,8 @@ var autoprefixer = require('autoprefixer');
 var path = require('path');
 
 var GLOBALS = {
-  __WS_URL__: 'false'
+  __WS_URL__: 'false',
+  'process.env': {NODE_ENV: '"production"'}
 };
 
 /**
