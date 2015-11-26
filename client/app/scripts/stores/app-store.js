@@ -269,10 +269,9 @@ AppStore.registeredCallback = function(payload) {
     break;
 
   case ActionTypes.CLICK_NODE:
-    if (payload.nodeId === selectedNodeId) {
-      // clicking same node twice unsets the selection
-      deSelectNode();
-    } else {
+    deSelectNode();
+    if (payload.nodeId !== selectedNodeId) {
+      // select new node if it's not the same (in that case just delesect)
       selectedNodeId = payload.nodeId;
     }
     AppStore.emit(AppStore.CHANGE_EVENT);
@@ -350,13 +349,16 @@ AppStore.registeredCallback = function(payload) {
 
   case ActionTypes.RECEIVE_NODE_DETAILS:
     errorUrl = null;
-    nodeDetails = payload.details;
+    // disregard if node is not selected anymore
+    if (payload.details.id === selectedNodeId) {
+      nodeDetails = payload.details;
+    }
     AppStore.emit(AppStore.CHANGE_EVENT);
     break;
 
   case ActionTypes.RECEIVE_NODES_DELTA:
     const emptyMessage = !payload.delta.add && !payload.delta.remove
-      && payload.delta.update;
+      && !payload.delta.update;
 
     if (!emptyMessage) {
       debug('RECEIVE_NODES_DELTA',

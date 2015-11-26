@@ -22,6 +22,7 @@
 @background-color: lighten(@primary-color, 66%);
 @background-secondary-color: lighten(@background-color, 8%);
 @background-dark-color: @primary-color;
+@background-medium-color: lighten(@background-dark-color, 55%);
 @text-color: lighten(@primary-color, 10%);
 @text-secondary-color: lighten(@primary-color, 33%);
 @text-tertiary-color: lighten(@primary-color, 50%);
@@ -33,6 +34,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.colorable {
+  transition: background-color .3s ease-in-out;
 }
 
 .palable {
@@ -352,6 +357,7 @@ h2 {
   flex-flow: column;
 
   &-header {
+    .colorable;
 
     &-wrapper {
       padding: 36px 36px 16px 36px;
@@ -443,6 +449,14 @@ h2 {
 
     &-info {
       margin-top: 16px;
+    }
+
+    &-loading {
+      margin-top: 48px;
+      text-align: center;
+      font-size: 48px;
+      color: @background-medium-color;
+      opacity: 0.7;
     }
   }
 

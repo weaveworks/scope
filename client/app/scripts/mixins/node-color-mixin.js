@@ -45,7 +45,7 @@ const NodeColorMixin = {
     return colors(text, secondText);
   },
   getNodeColorDark: function(text, secondText) {
-    if (text === undefined) {
+    if (!text) {
       return PSEUDO_COLOR;
     }
     const color = d3.rgb(colors(text, secondText));

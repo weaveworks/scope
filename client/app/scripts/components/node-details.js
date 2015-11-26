@@ -21,8 +21,32 @@ const NodeDetails = React.createClass({
   },
 
   renderLoading: function() {
+    const node = this.props.nodes.get(this.props.nodeId);
+    const nodeColor = this.getNodeColorDark(node.get('rank'), node.get('label_major'));
+    const styles = {
+      header: {
+        'backgroundColor': nodeColor
+      }
+    };
+
     return (
-      <div className="node-details" />
+      <div className="node-details">
+        <div className="node-details-header" style={styles.header}>
+          <div className="node-details-header-wrapper">
+            <h2 className="node-details-header-label truncate">
+              {node.get('label_major')}
+            </h2>
+            <div className="node-details-header-label-minor truncate">
+              {node.get('label_minor')}
+            </div>
+          </div>
+        </div>
+        <div className="node-details-content">
+          <div className="node-details-content-loading">
+            <span className="fa fa-circle-o-notch fa-spin" />
+          </div>
+        </div>
+      </div>
     );
   },
 
