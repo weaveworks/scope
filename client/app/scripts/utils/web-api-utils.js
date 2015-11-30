@@ -100,11 +100,9 @@ function getTopology(topologyUrl, options) {
   }
 }
 
-function getNodeDetails(topologyUrl, nodeId, options) {
-  const optionsQuery = buildOptionsQuery(options);
-
+function getNodeDetails(topologyUrl, nodeId) {
   if (topologyUrl && nodeId) {
-    const url = [topologyUrl, '/', encodeURIComponent(nodeId), '?', optionsQuery]
+    const url = [topologyUrl, '/', encodeURIComponent(nodeId)]
       .join('').substr(1);
     reqwest({
       url: url,
