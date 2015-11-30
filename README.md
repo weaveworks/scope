@@ -28,8 +28,12 @@ boot2docker, replace localhost with the output of `boot2docker ip`.)
 ## <a name="requirements"></a>Requirements
 
 Scope does not need any configuration and does not require the Weave Network.
-But Scope does need to be running on every machine you want to monitor.
+Scope does need to be running on every machine you want to monitor.
 
+Scope allows anyone with access to the UI control over your containers: as
+such, the Scope app endpoint (port 4040) should not be made accessible on
+the Internet.  Whats more, probe <-> app traffic is currently insecure and
+should not traverse the internet.
 
 ## <a name="architecture"></a>Architecture
 
