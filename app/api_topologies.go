@@ -245,7 +245,9 @@ func renderedForRequest(r *http.Request, topology APITopologyDesc) render.Render
 	return renderer
 }
 
-func (r *registry) captureRenderer(rep Reporter, f func(Reporter, render.Renderer, http.ResponseWriter, *http.Request)) http.HandlerFunc {
+type reportRenderHandler func(Reporter, render.Renderer, http.ResponseWriter, *http.Request)
+
+func (r *registry) captureRenderer(rep Reporter, f reportRenderHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		topology, ok := r.get(mux.Vars(req)["topology"])
 		if !ok {
@@ -254,5 +256,16 @@ func (r *registry) captureRenderer(rep Reporter, f func(Reporter, render.Rendere
 		}
 		renderer := renderedForRequest(req, topology)
 		f(rep, renderer, w, req)
+	}
+}
+
+func (r *registry) captureRendererWithoutFilters(rep Reporter, f reportRenderHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		topology, ok := r.get(mux.Vars(req)["topology"])
+		if !ok {
+			http.NotFound(w, req)
+			return
+		}
+		f(rep, topology.renderer, w, req)
 	}
 }
