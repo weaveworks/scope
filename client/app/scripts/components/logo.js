@@ -1,8 +1,7 @@
-const React = require('react');
+import React from 'react';
 
-const Logo = React.createClass({
-
-  render: function() {
+export default class Logo extends React.Component {
+  render() {
     return (
       <div className="logo">
         <svg width="100%" height="100%" viewBox="0 0 1089 217">
@@ -59,7 +58,4 @@ const Logo = React.createClass({
       </div>
     );
   }
-
-});
-
-module.exports = Logo;
+}

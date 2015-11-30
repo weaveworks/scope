@@ -1,28 +1,23 @@
-const _ = require('lodash');
-const React = require('react');
+import _ from 'lodash';
+import React from 'react';
 
-const NodeDetailsControls = require('./node-details/node-details-controls');
-const NodeDetailsTable = require('./node-details/node-details-table');
-const NodeColorMixin = require('../mixins/node-color-mixin');
-const TitleUtils = require('../utils/title-utils');
+import NodeDetailsControls from './node-details/node-details-controls';
+import NodeDetailsTable from './node-details/node-details-table';
+import { brightenColor, getNodeColorDark } from '../utils/color-utils';
+import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
 
-const NodeDetails = React.createClass({
-
-  mixins: [
-    NodeColorMixin
-  ],
-
-  componentDidMount: function() {
+export default class NodeDetails extends React.Component {
+  componentDidMount() {
     this.updateTitle();
-  },
+  }
 
-  componentWillUnmount: function() {
-    TitleUtils.resetTitle();
-  },
+  componentWillUnmount() {
+    resetDocumentTitle();
+  }
 
-  renderLoading: function() {
+  renderLoading() {
     const node = this.props.nodes.get(this.props.nodeId);
-    const nodeColor = this.getNodeColorDark(node.get('rank'), node.get('label_major'));
+    const nodeColor = getNodeColorDark(node.get('rank'), node.get('label_major'));
     const styles = {
       header: {
         'backgroundColor': nodeColor
@@ -48,9 +43,9 @@ const NodeDetails = React.createClass({
         </div>
       </div>
     );
-  },
+  }
 
-  renderNotAvailable: function() {
+  renderNotAvailable() {
     return (
       <div className="node-details">
         <div className="node-details-header node-details-header-notavailable">
@@ -71,9 +66,9 @@ const NodeDetails = React.createClass({
         </div>
       </div>
     );
-  },
+  }
 
-  render: function() {
+  render() {
     const details = this.props.details;
     const nodeExists = this.props.nodes && this.props.nodes.has(this.props.nodeId);
 
@@ -90,10 +85,10 @@ const NodeDetails = React.createClass({
 
   renderDetails: function() {
     const details = this.props.details;
-    const nodeColor = this.getNodeColorDark(details.rank, details.label_major);
+    const nodeColor = getNodeColorDark(details.rank, details.label_major);
     const styles = {
       controls: {
-        'backgroundColor': this.brightenColor(nodeColor)
+        'backgroundColor': brightenColor(nodeColor)
       },
       header: {
         'backgroundColor': nodeColor
@@ -126,16 +121,13 @@ const NodeDetails = React.createClass({
         </div>
       </div>
     );
-  },
-
-  componentDidUpdate: function() {
-    this.updateTitle();
-  },
-
-  updateTitle: function() {
-    TitleUtils.setTitle(this.props.details && this.props.details.label_major);
   }
 
-});
+  componentDidUpdate() {
+    this.updateTitle();
+  }
 
-module.exports = NodeDetails;
+  updateTitle() {
+    setDocumentTitle(this.props.details && this.props.details.label_major);
+  }
+}

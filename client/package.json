@@ -13,7 +13,6 @@
     "font-awesome": "4.4.0",
     "font-awesome-webpack": "0.0.4",
     "immutable": "~3.7.4",
-    "keymirror": "0.1.1",
     "lodash": "~3.10.1",
     "materialize-css": "0.97.2",
     "page": "1.6.4",
@@ -83,6 +82,7 @@
       "json"
     ],
     "unmockedModulePathPatterns": [
+      "/dispatcher/",
       "/node_modules/"
     ]
   },

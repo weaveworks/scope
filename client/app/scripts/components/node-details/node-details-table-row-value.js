@@ -1,8 +1,7 @@
-const React = require('react');
+import React from 'react';
 
-const NodeDetailsTableRowValue = React.createClass({
-
-  render: function() {
+export default class NodeDetailsTableRowValue extends React.Component {
+  render() {
     const row = this.props.row;
     return (
       <div className="node-details-table-row-value">
@@ -15,6 +14,4 @@ const NodeDetailsTableRowValue = React.createClass({
       </div>
     );
   }
-});
-
-module.exports = NodeDetailsTableRowValue;
+}

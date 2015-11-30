@@ -1,15 +1,11 @@
-const React = require('react');
+import React from 'react';
 
-const Sidebar = React.createClass({
-
-  render: function() {
+export default class Sidebar extends React.Component {
+  render() {
     return (
       <div className="sidebar">
         {this.props.children}
       </div>
     );
   }
-
-});
-
-module.exports = Sidebar;
+}

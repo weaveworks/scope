@@ -1,11 +1,13 @@
+import debug from 'debug';
+import reqwest from 'reqwest';
 
-const debug = require('debug')('scope:web-api-utils');
-const reqwest = require('reqwest');
-
-const AppActions = require('../actions/app-actions');
+import { clearControlError, closeWebsocket, openWebsocket, receiveError,
+  receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
+  receiveControlSuccess, receiveTopologies } from '../actions/app-actions';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = __WS_URL__ || wsProto + '://' + location.host + location.pathname.replace(/\/$/, '');
+const log = debug('scope:web-api-utils');
 
 const apiTimerInterval = 10000;
 const reconnectTimerInterval = 5000;
@@ -40,14 +42,14 @@ function createWebsocket(topologyUrl, optionsQuery) {
     + '/ws?t=' + updateFrequency + '&' + optionsQuery);
 
   socket.onopen = function() {
-    AppActions.openWebsocket();
+    openWebsocket();
   };
 
   socket.onclose = function() {
     clearTimeout(reconnectTimer);
     socket = null;
-    AppActions.closeWebsocket();
-    debug('Closed websocket to ' + topologyUrl);
+    closeWebsocket();
+    log('Closed websocket to ' + topologyUrl);
 
     reconnectTimer = setTimeout(function() {
       createWebsocket(topologyUrl, optionsQuery);
@@ -55,33 +57,33 @@ function createWebsocket(topologyUrl, optionsQuery) {
   };
 
   socket.onerror = function() {
-    debug('Error in websocket to ' + topologyUrl);
-    AppActions.receiveError(currentUrl);
+    log('Error in websocket to ' + topologyUrl);
+    receiveError(currentUrl);
   };
 
   socket.onmessage = function(event) {
     const msg = JSON.parse(event.data);
-    AppActions.receiveNodesDelta(msg);
+    receiveNodesDelta(msg);
   };
 }
 
 /* keep URLs relative */
 
-function getTopologies(options) {
+export function getTopologies(options) {
   clearTimeout(topologyTimer);
   const optionsQuery = buildOptionsQuery(options);
   const url = `api/topology?${optionsQuery}`;
   reqwest({
     url: url,
     success: function(res) {
-      AppActions.receiveTopologies(res);
+      receiveTopologies(res);
       topologyTimer = setTimeout(function() {
         getTopologies(options);
       }, topologyTimerInterval / 2);
     },
     error: function(err) {
-      debug('Error in topology request: ' + err);
-      AppActions.receiveError(url);
+      log('Error in topology request: ' + err);
+      receiveError(url);
       topologyTimer = setTimeout(function() {
         getTopologies(options);
       }, topologyTimerInterval / 2);
@@ -89,7 +91,7 @@ function getTopologies(options) {
   });
 }
 
-function getTopology(topologyUrl, options) {
+export function getNodesDelta(topologyUrl, options) {
   const optionsQuery = buildOptionsQuery(options);
 
   // only recreate websocket if url changed
@@ -100,44 +102,44 @@ function getTopology(topologyUrl, options) {
   }
 }
 
-function getNodeDetails(topologyUrl, nodeId) {
+export function getNodeDetails(topologyUrl, nodeId) {
   if (topologyUrl && nodeId) {
     const url = [topologyUrl, '/', encodeURIComponent(nodeId)]
       .join('').substr(1);
     reqwest({
       url: url,
       success: function(res) {
-        AppActions.receiveNodeDetails(res.node);
+        receiveNodeDetails(res.node);
       },
       error: function(err) {
-        debug('Error in node details request: ' + err.responseText);
+        log('Error in node details request: ' + err.responseText);
         // dont treat missing node as error
         if (err.status !== 404) {
-          AppActions.receiveError(topologyUrl);
+          receiveError(topologyUrl);
         }
       }
     });
   }
 }
 
-function getApiDetails() {
+export function getApiDetails() {
   clearTimeout(apiDetailsTimer);
   const url = 'api';
   reqwest({
     url: url,
     success: function(res) {
-      AppActions.receiveApiDetails(res);
+      receiveApiDetails(res);
       apiDetailsTimer = setTimeout(getApiDetails, apiTimerInterval);
     },
     error: function(err) {
-      debug('Error in api details request: ' + err);
-      AppActions.receiveError(url);
+      log('Error in api details request: ' + err);
+      receiveError(url);
       apiDetailsTimer = setTimeout(getApiDetails, apiTimerInterval / 2);
     }
   });
 }
 
-function doControl(probeId, nodeId, control) {
+export function doControl(probeId, nodeId, control) {
   clearTimeout(controlErrorTimer);
   const url = `api/control/${encodeURIComponent(probeId)}/`
     + `${encodeURIComponent(nodeId)}/${control}`;
@@ -145,25 +147,13 @@ function doControl(probeId, nodeId, control) {
     method: 'POST',
     url: url,
     success: function() {
-      AppActions.receiveControlSuccess();
+      receiveControlSuccess();
     },
     error: function(err) {
-      AppActions.receiveControlError(err.response);
+      receiveControlError(err.response);
       controlErrorTimer = setTimeout(function() {
-        AppActions.clearControlError();
+        clearControlError();
       }, 10000);
     }
   });
 }
-
-module.exports = {
-  doControl: doControl,
-
-  getNodeDetails: getNodeDetails,
-
-  getTopologies: getTopologies,
-
-  getApiDetails: getApiDetails,
-
-  getNodesDelta: getTopology
-};

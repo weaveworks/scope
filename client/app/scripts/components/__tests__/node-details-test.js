@@ -1,19 +1,22 @@
+import React from 'react';
+import Immutable from 'immutable';
+import TestUtils from 'react/lib/ReactTestUtils';
+
+jest.dontMock('../../dispatcher/app-dispatcher');
 jest.dontMock('../node-details.js');
-jest.dontMock('../../mixins/node-color-mixin');
+jest.dontMock('../../utils/color-utils');
 jest.dontMock('../../utils/title-utils');
 
+// need ES5 require to keep automocking off
+const NodeDetails = require('../node-details.js').default;
+
 describe('NodeDetails', () => {
-  let NodeDetails;
   let nodes;
   let nodeId;
   let details;
-  const React = require('react');
-  const Immutable = require('immutable');
-  const TestUtils = require('react/lib/ReactTestUtils');
   const makeMap = Immutable.OrderedMap;
 
   beforeEach(() => {
-    NodeDetails = require('../node-details.js');
     nodes = makeMap();
     nodeId = 'n1';
   });

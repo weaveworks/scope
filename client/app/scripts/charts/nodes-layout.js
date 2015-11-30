@@ -1,10 +1,11 @@
-const dagre = require('dagre');
-const debug = require('debug')('scope:nodes-layout');
-const makeMap = require('immutable').Map;
-const ImmSet = require('immutable').Set;
+import dagre from 'dagre';
+import debug from 'debug';
+import { Map as makeMap, Set as ImmSet } from 'immutable';
 
-const Naming = require('../constants/naming');
-const TopologyUtils = require('./topology-utils');
+import { EDGE_ID_SEPARATOR } from '../constants/naming';
+import { updateNodeDegrees } from './topology-utils';
+
+const log = debug('scope:nodes-layout');
 
 const MAX_NODES = 100;
 const topologyCaches = {};
@@ -32,7 +33,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   let edges = imEdges;
 
   if (nodes.size > MAX_NODES) {
-    debug('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
+    log('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
     return null;
   }
 
@@ -82,7 +83,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   // remove edges that are no longer there
   graph.edges().forEach(edgeObj => {
     const edge = [edgeObj.v, edgeObj.w];
-    const edgeId = edge.join(Naming.EDGE_ID_SEPARATOR);
+    const edgeId = edge.join(EDGE_ID_SEPARATOR);
     if (!edges.has(edgeId)) {
       graph.removeEdge(edgeObj.v, edgeObj.w);
     }
@@ -148,14 +149,14 @@ function layoutSingleNodes(layout, opts) {
     const nonSingleNodes = nodes.filter(node => node.get('degree') !== 0);
     if (nonSingleNodes.size > 0) {
       if (aspectRatio < 1) {
-        debug('laying out single nodes to the right', aspectRatio);
+        log('laying out single nodes to the right', aspectRatio);
         offsetX = nonSingleNodes.maxBy(node => node.get('x')).get('x');
         offsetY = nonSingleNodes.minBy(node => node.get('y')).get('y');
         if (offsetX) {
           offsetX += nodeWidth + nodesep;
         }
       } else {
-        debug('laying out single nodes below', aspectRatio);
+        log('laying out single nodes below', aspectRatio);
         offsetX = nonSingleNodes.minBy(node => node.get('x')).get('x');
         offsetY = nonSingleNodes.maxBy(node => node.get('y')).get('y');
         if (offsetY) {
@@ -264,7 +265,7 @@ export function hasUnseenNodes(nodes, cache) {
   const hasUnseen = nodes.size > cache.size
     || !ImmSet.fromKeys(nodes).isSubset(ImmSet.fromKeys(cache));
   if (hasUnseen) {
-    debug('unseen nodes:', ...ImmSet.fromKeys(nodes).subtract(ImmSet.fromKeys(cache)).toJS());
+    log('unseen nodes:', ...ImmSet.fromKeys(nodes).subtract(ImmSet.fromKeys(cache)).toJS());
   }
   return hasUnseen;
 }
@@ -350,13 +351,13 @@ export function doLayout(immNodes, immEdges, opts) {
 
   ++layoutRuns;
   if (cachedLayout && nodeCache && edgeCache && !hasUnseenNodes(immNodes, nodeCache)) {
-    debug('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
+    log('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
     layout = cloneLayout(cachedLayout, immNodes, immEdges);
     // copy old properties, works also if nodes get re-added
     layout = copyLayoutProperties(layout, nodeCache, edgeCache);
   } else {
     const graph = cache.graph;
-    const nodesWithDegrees = TopologyUtils.updateNodeDegrees(immNodes, immEdges);
+    const nodesWithDegrees = updateNodeDegrees(immNodes, immEdges);
     layout = runLayoutEngine(graph, nodesWithDegrees, immEdges, opts);
     layout = layoutSingleNodes(layout, opts);
     layout = shiftLayoutToCenter(layout, opts);

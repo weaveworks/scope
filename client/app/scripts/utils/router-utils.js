@@ -1,9 +1,9 @@
-const page = require('page');
+import page from 'page';
 
-const AppActions = require('../actions/app-actions');
-const AppStore = require('../stores/app-store');
+import { route } from '../actions/app-actions';
+import AppStore from '../stores/app-store';
 
-function updateRoute() {
+export function updateRoute() {
   const state = AppStore.getAppState();
   const stateUrl = JSON.stringify(state);
   const dispatch = false;
@@ -17,13 +17,9 @@ page('/', function() {
 
 page('/state/:state', function(ctx) {
   const state = JSON.parse(ctx.params.state);
-  AppActions.route(state);
+  route(state);
 });
 
-module.exports = {
-  getRouter: function() {
-    return page;
-  },
-
-  updateRoute: updateRoute
-};
+export function getRouter() {
+  return page;
+}

@@ -1,207 +1,197 @@
-let ActionTypes;
-let AppDispatcher;
-let AppStore;
-let RouterUtils;
-let WebapiUtils;
+import AppDispatcher from '../dispatcher/app-dispatcher';
+import ActionTypes from '../constants/action-types';
 
-module.exports = {
-  changeTopologyOption: function(option, value, topologyId) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
-      topologyId: topologyId,
-      option: option,
-      value: value
-    });
-    RouterUtils.updateRoute();
-    // update all request workers with new options
-    WebapiUtils.getTopologies(
-      AppStore.getActiveTopologyOptions()
-    );
-    WebapiUtils.getNodesDelta(
-      AppStore.getCurrentTopologyUrl(),
-      AppStore.getActiveTopologyOptions()
-    );
-    WebapiUtils.getNodeDetails(
-      AppStore.getCurrentTopologyUrl(),
-      AppStore.getSelectedNodeId()
-    );
-  },
+import { updateRoute } from '../utils/router-utils';
+import { doControl as doControlRequest, getNodesDelta, getNodeDetails, getTopologies } from '../utils/web-api-utils';
+import AppStore from '../stores/app-store';
 
-  clickCloseDetails: function() {
-    AppDispatcher.dispatch({
-      type: ActionTypes.CLICK_CLOSE_DETAILS
-    });
-    RouterUtils.updateRoute();
-  },
+export function changeTopologyOption(option, value, topologyId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+    topologyId: topologyId,
+    option: option,
+    value: value
+  });
+  updateRoute();
+  // update all request workers with new options
+  getTopologies(
+    AppStore.getActiveTopologyOptions()
+  );
+  getNodesDelta(
+    AppStore.getCurrentTopologyUrl(),
+    AppStore.getActiveTopologyOptions()
+  );
+  getNodeDetails(
+    AppStore.getCurrentTopologyUrl(),
+    AppStore.getSelectedNodeId()
+  );
+}
 
-  clickNode: function(nodeId) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.CLICK_NODE,
-      nodeId: nodeId
-    });
-    RouterUtils.updateRoute();
-    WebapiUtils.getNodeDetails(
-      AppStore.getCurrentTopologyUrl(),
-      AppStore.getSelectedNodeId()
-    );
-  },
+export function clickCloseDetails() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_CLOSE_DETAILS
+  });
+  updateRoute();
+}
 
-  clickTopology: function(topologyId) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.CLICK_TOPOLOGY,
-      topologyId: topologyId
-    });
-    RouterUtils.updateRoute();
-    WebapiUtils.getNodesDelta(
-      AppStore.getCurrentTopologyUrl(),
-      AppStore.getActiveTopologyOptions()
-    );
-  },
+export function clickNode(nodeId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_NODE,
+    nodeId: nodeId
+  });
+  updateRoute();
+  getNodeDetails(
+    AppStore.getCurrentTopologyUrl(),
+    AppStore.getSelectedNodeId()
+  );
+}
 
-  openWebsocket: function() {
-    AppDispatcher.dispatch({
-      type: ActionTypes.OPEN_WEBSOCKET
-    });
-  },
+export function clickTopology(topologyId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_TOPOLOGY,
+    topologyId: topologyId
+  });
+  updateRoute();
+  getNodesDelta(
+    AppStore.getCurrentTopologyUrl(),
+    AppStore.getActiveTopologyOptions()
+  );
+}
 
-  clearControlError: function() {
-    AppDispatcher.dispatch({
-      type: ActionTypes.CLEAR_CONTROL_ERROR
-    });
-  },
+export function openWebsocket() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.OPEN_WEBSOCKET
+  });
+}
 
-  closeWebsocket: function() {
-    AppDispatcher.dispatch({
-      type: ActionTypes.CLOSE_WEBSOCKET
-    });
-  },
+export function clearControlError() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLEAR_CONTROL_ERROR
+  });
+}
 
-  doControl: function(probeId, nodeId, control) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.DO_CONTROL
-    });
-    WebapiUtils.doControl(
-      probeId,
-      nodeId,
-      control
-    );
-  },
+export function closeWebsocket() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLOSE_WEBSOCKET
+  });
+}
 
-  enterEdge: function(edgeId) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.ENTER_EDGE,
-      edgeId: edgeId
-    });
-  },
+export function doControl(probeId, nodeId, control) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.DO_CONTROL
+  });
+  doControlRequest(
+    probeId,
+    nodeId,
+    control
+  );
+}
 
-  enterNode: function(nodeId) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.ENTER_NODE,
-      nodeId: nodeId
-    });
-  },
+export function enterEdge(edgeId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.ENTER_EDGE,
+    edgeId: edgeId
+  });
+}
 
-  hitEsc: function() {
-    AppDispatcher.dispatch({
-      type: ActionTypes.HIT_ESC_KEY
-    });
-    RouterUtils.updateRoute();
-  },
+export function enterNode(nodeId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.ENTER_NODE,
+    nodeId: nodeId
+  });
+}
 
-  leaveEdge: function(edgeId) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.LEAVE_EDGE,
-      edgeId: edgeId
-    });
-  },
+export function hitEsc() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.HIT_ESC_KEY
+  });
+  updateRoute();
+}
 
-  leaveNode: function(nodeId) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.LEAVE_NODE,
-      nodeId: nodeId
-    });
-  },
+export function leaveEdge(edgeId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.LEAVE_EDGE,
+    edgeId: edgeId
+  });
+}
 
-  receiveControlError: function(err) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.DO_CONTROL_ERROR,
-      error: err
-    });
-  },
+export function leaveNode(nodeId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.LEAVE_NODE,
+    nodeId: nodeId
+  });
+}
 
-  receiveControlSuccess: function() {
-    AppDispatcher.dispatch({
-      type: ActionTypes.DO_CONTROL_SUCCESS
-    });
-  },
+export function receiveControlError(err) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.DO_CONTROL_ERROR,
+    error: err
+  });
+}
 
-  receiveNodeDetails: function(details) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.RECEIVE_NODE_DETAILS,
-      details: details
-    });
-  },
+export function receiveControlSuccess() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.DO_CONTROL_SUCCESS
+  });
+}
 
-  receiveNodesDelta: function(delta) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.RECEIVE_NODES_DELTA,
-      delta: delta
-    });
-  },
+export function receiveNodeDetails(details) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.RECEIVE_NODE_DETAILS,
+    details: details
+  });
+}
 
-  receiveTopologies: function(topologies) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.RECEIVE_TOPOLOGIES,
-      topologies: topologies
-    });
-    WebapiUtils.getNodesDelta(
-      AppStore.getCurrentTopologyUrl(),
-      AppStore.getActiveTopologyOptions()
-    );
-    WebapiUtils.getNodeDetails(
-      AppStore.getCurrentTopologyUrl(),
-      AppStore.getSelectedNodeId()
-    );
-  },
+export function receiveNodesDelta(delta) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.RECEIVE_NODES_DELTA,
+    delta: delta
+  });
+}
 
-  receiveApiDetails: function(apiDetails) {
-    AppDispatcher.dispatch({
-      type: ActionTypes.RECEIVE_API_DETAILS,
-      version: apiDetails.version
-    });
-  },
+export function receiveTopologies(topologies) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.RECEIVE_TOPOLOGIES,
+    topologies: topologies
+  });
+  getNodesDelta(
+    AppStore.getCurrentTopologyUrl(),
+    AppStore.getActiveTopologyOptions()
+  );
+  getNodeDetails(
+    AppStore.getCurrentTopologyUrl(),
+    AppStore.getSelectedNodeId()
+  );
+}
 
-  receiveError: function(errorUrl) {
-    AppDispatcher.dispatch({
-      errorUrl: errorUrl,
-      type: ActionTypes.RECEIVE_ERROR
-    });
-  },
+export function receiveApiDetails(apiDetails) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.RECEIVE_API_DETAILS,
+    version: apiDetails.version
+  });
+}
 
-  route: function(state) {
-    AppDispatcher.dispatch({
-      state: state,
-      type: ActionTypes.ROUTE_TOPOLOGY
-    });
-    WebapiUtils.getTopologies(
-      AppStore.getActiveTopologyOptions()
-    );
-    WebapiUtils.getNodesDelta(
-      AppStore.getCurrentTopologyUrl(),
-      AppStore.getActiveTopologyOptions()
-    );
-    WebapiUtils.getNodeDetails(
-      AppStore.getCurrentTopologyUrl(),
-      AppStore.getSelectedNodeId()
-    );
-  }
-};
+export function receiveError(errorUrl) {
+  AppDispatcher.dispatch({
+    errorUrl: errorUrl,
+    type: ActionTypes.RECEIVE_ERROR
+  });
+}
 
-// require below export to break circular dep
-
-AppDispatcher = require('../dispatcher/app-dispatcher');
-ActionTypes = require('../constants/action-types');
-
-RouterUtils = require('../utils/router-utils');
-WebapiUtils = require('../utils/web-api-utils');
-AppStore = require('../stores/app-store');
+export function route(state) {
+  AppDispatcher.dispatch({
+    state: state,
+    type: ActionTypes.ROUTE_TOPOLOGY
+  });
+  getTopologies(
+    AppStore.getActiveTopologyOptions()
+  );
+  getNodesDelta(
+    AppStore.getCurrentTopologyUrl(),
+    AppStore.getActiveTopologyOptions()
+  );
+  getNodeDetails(
+    AppStore.getCurrentTopologyUrl(),
+    AppStore.getSelectedNodeId()
+  );
+}

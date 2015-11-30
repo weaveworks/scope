@@ -1,22 +1,23 @@
-const React = require('react');
+import React from 'react';
 
-const AppActions = require('../actions/app-actions');
+import { changeTopologyOption } from '../actions/app-actions';
 
-const TopologyOptionAction = React.createClass({
+export default class TopologyOptionAction extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+    this.onClick = this.onClick.bind(this);
+  }
 
-  onClick: function(ev) {
+  onClick(ev) {
     ev.preventDefault();
-    AppActions.changeTopologyOption(this.props.option, this.props.value, this.props.topologyId);
-  },
+    changeTopologyOption(this.props.option, this.props.value, this.props.topologyId);
+  }
 
-  render: function() {
+  render() {
     return (
       <span className="sidebar-item-action" onClick={this.onClick}>
         {this.props.value}
       </span>
     );
   }
-
-});
-
-module.exports = TopologyOptionAction;
+}
