@@ -77,14 +77,19 @@ const NodeDetails = React.createClass({
     const details = this.props.details;
     const nodeExists = this.props.nodes && this.props.nodes.has(this.props.nodeId);
 
+    if (details) {
+      return this.renderDetails();
+    }
+
     if (!nodeExists) {
       return this.renderNotAvailable();
     }
 
-    if (!details) {
-      return this.renderLoading();
-    }
+    return this.renderLoading();
+  },
 
+  renderDetails: function() {
+    const details = this.props.details;
     const nodeColor = this.getNodeColorDark(details.rank, details.label_major);
     const styles = {
       controls: {
