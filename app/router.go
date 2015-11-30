@@ -11,6 +11,7 @@ import (
 	"github.com/PuerkitoBio/ghost/handlers"
 	"github.com/gorilla/mux"
 
+	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
 )
@@ -105,5 +106,9 @@ func makeReportPostHandler(a Adder) http.HandlerFunc {
 }
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
-	respondWith(w, http.StatusOK, xfer.Details{ID: uniqueID, Version: version})
+	respondWith(w, http.StatusOK, xfer.Details{
+		ID:       uniqueID,
+		Version:  version,
+		Hostname: hostname.Get(),
+	})
 }

@@ -15,8 +15,9 @@ import (
 
 // Details are some generic details that can be fetched from /api
 type Details struct {
-	ID      string `json:"id"`
-	Version string `json:"version"`
+	ID       string `json:"id"`
+	Version  string `json:"version"`
+	Hostname string `json:"hostname"`
 }
 
 // AppClient is a client to an app for dealing with controls.
