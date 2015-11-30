@@ -23,8 +23,7 @@ module.exports = {
     );
     WebapiUtils.getNodeDetails(
       AppStore.getCurrentTopologyUrl(),
-      AppStore.getSelectedNodeId(),
-      AppStore.getActiveTopologyOptions()
+      AppStore.getSelectedNodeId()
     );
   },
 
@@ -43,8 +42,7 @@ module.exports = {
     RouterUtils.updateRoute();
     WebapiUtils.getNodeDetails(
       AppStore.getCurrentTopologyUrl(),
-      AppStore.getSelectedNodeId(),
-      AppStore.getActiveTopologyOptions()
+      AppStore.getSelectedNodeId()
     );
   },
 
@@ -162,8 +160,7 @@ module.exports = {
     );
     WebapiUtils.getNodeDetails(
       AppStore.getCurrentTopologyUrl(),
-      AppStore.getSelectedNodeId(),
-      AppStore.getActiveTopologyOptions()
+      AppStore.getSelectedNodeId()
     );
   },
 
@@ -195,8 +192,7 @@ module.exports = {
     );
     WebapiUtils.getNodeDetails(
       AppStore.getCurrentTopologyUrl(),
-      AppStore.getSelectedNodeId(),
-      AppStore.getActiveTopologyOptions()
+      AppStore.getSelectedNodeId()
     );
   }
 };
