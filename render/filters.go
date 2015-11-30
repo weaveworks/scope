@@ -22,7 +22,8 @@ func (c CustomRenderer) Render(rpt report.Report) RenderableNodes {
 }
 
 // ColorConnected colors nodes with the IsConnected key if
-// they have edges to or from them.
+// they have edges to or from them.  Edges to/from yourself
+// are not counted here (see #656).
 func ColorConnected(r Renderer) Renderer {
 	return CustomRenderer{
 		Renderer: r,
@@ -35,9 +36,11 @@ func ColorConnected(r Renderer) Renderer {
 					continue
 				}
 
-				connected[id] = void
-				for _, id := range node.Adjacency {
-					connected[id] = void
+				for _, adj := range node.Adjacency {
+					if adj != id {
+						connected[id] = void
+						connected[adj] = void
+					}
 				}
 			}
 
