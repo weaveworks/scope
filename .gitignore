@@ -36,7 +36,6 @@ scope.tar
 scope_ui_build.tar
 app/app
 app/scope-app
-probe/scope-probe
 prog/probe/probe
 prog/probe/scope-probe
 docker/scope-app
@@ -44,7 +43,6 @@ docker/scope-probe
 docker/docker*
 docker/weave
 docker/runsvinit
-docker/ca-certificates.crt
 experimental/bridge/bridge
 experimental/demoprobe/demoprobe
 experimental/fixprobe/fixprobe
