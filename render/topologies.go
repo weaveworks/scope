@@ -121,7 +121,8 @@ type containerWithImageNameRenderer struct {
 }
 
 // Render produces a process graph where the minor labels contain the
-// container name, if found.
+// container name, if found.  It also merges the image node metadata into the
+// container metadata.
 func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNodes {
 	containers := r.Renderer.Render(rpt)
 	images := Map{
@@ -139,6 +140,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 			continue
 		}
 		c.Rank = imageNameWithoutVersion(image.LabelMajor)
+		c.Metadata = image.Metadata.Merge(c.Metadata)
 		containers[id] = c
 	}
 
