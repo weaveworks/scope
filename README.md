@@ -2,14 +2,13 @@
 
 [![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master) [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope) [![Sourcegraph](https://sourcegraph.com/api/repos/github.com/weaveworks/scope/.badges/status.svg)](https://sourcegraph.com/github.com/weaveworks/scope)
 
-![Weave Scope Screenshot](http://weave.works/img/header-image-left.png)
+![Weave Scope Screenshot](http://blog.weave.works/wp-content/uploads/2015/11/0.10-Deailts-Panel-2-1.png)
 
 
 ## <a name="overview"></a>Overview
 
 Weave Scope automatically generates a map of your containers, enabling you to
 intuitively understand, monitor, and control your applications.
-
 
 ## <a name="getting-started"></a>Getting started
 
@@ -24,6 +23,14 @@ This script will download and run a recent Scope image from the Docker Hub.
 Now, open your web browser to **http://localhost:4040**. (If you're using
 boot2docker, replace localhost with the output of `boot2docker ip`.)
 
+## <a name="help"></a>Getting help
+
+If you have any questions about, feedback for or problem with Scope we invite
+you to:
+- send an email to <a href="mailto:weave-users@weave.works">weave-users@weave.works</a>
+- <a href="https://github.com/weaveworks/scope/issues/new">file an issue</a>
+
+Your feedback is always welcome!
 
 ## <a name="requirements"></a>Requirements
 
