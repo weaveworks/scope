@@ -47,6 +47,13 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/c9s/goprocinfo/linux",
+			"repository": "https://github.com/c9s/goprocinfo",
+			"revision": "19cb9f127a9c8d2034cf59ccb683cdb94b9deb6c",
+			"branch": "master",
+			"path": "/linux"
+		},
+		{
 			"importpath": "github.com/certifi/gocertifi",
 			"repository": "https://github.com/certifi/gocertifi",
 			"revision": "84c0a38a18fcd2d657f3eabc958433c1f37ecdc0",

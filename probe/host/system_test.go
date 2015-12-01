@@ -3,6 +3,7 @@ package host_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/weaveworks/scope/probe/host"
 )
@@ -19,7 +20,7 @@ func TestGetKernelVersion(t *testing.T) {
 }
 
 func TestGetLoad(t *testing.T) {
-	have := host.GetLoad()
+	have := host.GetLoad(time.Now())
 	if len(have) != 3 {
 		t.Fatalf("Expected 3 metrics, but got: %v", have)
 	}

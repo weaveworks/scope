@@ -30,12 +30,11 @@ var GetKernelVersion = func() (string, error) {
 }
 
 // GetLoad returns the current load averages as metrics.
-var GetLoad = func() report.Metrics {
+var GetLoad = func(now time.Time) report.Metrics {
 	out, err := exec.Command("w").CombinedOutput()
 	if err != nil {
 		return nil
 	}
-	now := time.Now()
 	matches := loadRe.FindAllStringSubmatch(string(out), -1)
 	if matches == nil || len(matches) < 1 || len(matches[0]) < 4 {
 		return nil
@@ -83,4 +82,14 @@ var GetUptime = func() (time.Duration, error) {
 		return 0, err
 	}
 	return (time.Duration(d) * 24 * time.Hour) + (time.Duration(h) * time.Hour) + (time.Duration(m) * time.Minute), nil
+}
+
+// GetCPUUsagePercent returns the percent cpu usage and max (ie #cpus * 100)
+var GetCPUUsagePercent = func() (float64, float64) {
+	return 0.0, 0.0
+}
+
+// GetMemoryUsagePercent returns the percent memory usage and max (ie 100)
+var GetMemoryUsagePercent = func() (float64, float64) {
+	return 0.0, 0.0
 }
