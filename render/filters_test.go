@@ -108,3 +108,18 @@ func TestFilterUnconnectedPesudoNodes(t *testing.T) {
 		}
 	}
 }
+
+func TestFilterUnconnectedSelf(t *testing.T) {
+	// Test nodes that are only connected to themselves are filtered.
+	{
+		nodes := render.RenderableNodes{
+			"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("foo")},
+		}
+		renderer := render.FilterUnconnected(mockRenderer{RenderableNodes: nodes})
+		want := render.RenderableNodes{}
+		have := renderer.Render(report.MakeReport()).Prune()
+		if !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
+		}
+	}
+}
