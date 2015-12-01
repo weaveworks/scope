@@ -1,16 +1,16 @@
-const React = require('react');
+import React from 'react';
 
-const Logo = require('./logo');
-const AppStore = require('../stores/app-store');
-const Sidebar = require('./sidebar.js');
-const Status = require('./status.js');
-const Topologies = require('./topologies.js');
-const TopologyOptions = require('./topology-options.js');
-const WebapiUtils = require('../utils/web-api-utils');
-const AppActions = require('../actions/app-actions');
-const Details = require('./details');
-const Nodes = require('./nodes');
-const RouterUtils = require('../utils/router-utils');
+import Logo from './logo';
+import AppStore from '../stores/app-store';
+import Sidebar from './sidebar.js';
+import Status from './status.js';
+import Topologies from './topologies.js';
+import TopologyOptions from './topology-options.js';
+import { getApiDetails, getTopologies } from '../utils/web-api-utils';
+import { hitEsc } from '../actions/app-actions';
+import Details from './details';
+import Nodes from './nodes';
+import { getRouter } from '../utils/router-utils';
 
 const ESC_KEY_CODE = 27;
 
@@ -36,35 +36,37 @@ function getStateFromStores() {
 }
 
 
-const App = React.createClass({
+export default class App extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+    this.onChange = this.onChange.bind(this);
+    this.onKeyPress = this.onKeyPress.bind(this);
+    this.state = getStateFromStores();
+  }
 
-  getInitialState: function() {
-    return getStateFromStores();
-  },
-
-  componentDidMount: function() {
-    AppStore.on(AppStore.CHANGE_EVENT, this.onChange);
+  componentDidMount() {
+    AppStore.addListener(this.onChange);
     window.addEventListener('keyup', this.onKeyPress);
 
-    RouterUtils.getRouter().start({hashbang: true});
+    getRouter().start({hashbang: true});
     if (!AppStore.isRouteSet()) {
       // dont request topologies when already done via router
-      WebapiUtils.getTopologies(AppStore.getActiveTopologyOptions());
+      getTopologies(AppStore.getActiveTopologyOptions());
     }
-    WebapiUtils.getApiDetails();
-  },
+    getApiDetails();
+  }
 
-  onChange: function() {
+  onChange() {
     this.setState(getStateFromStores());
-  },
+  }
 
-  onKeyPress: function(ev) {
+  onKeyPress(ev) {
     if (ev.keyCode === ESC_KEY_CODE) {
-      AppActions.hitEsc();
+      hitEsc();
     }
-  },
+  }
 
-  render: function() {
+  render() {
     const showingDetails = this.state.selectedNodeId;
     const versionString = this.state.version ? 'Version ' + this.state.version : '';
     // width of details panel blocking a view
@@ -104,8 +106,5 @@ const App = React.createClass({
         </div>
       </div>
     );
-  },
-
-});
-
-module.exports = App;
+  }
+}

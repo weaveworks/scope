@@ -1,8 +1,7 @@
-const React = require('react');
+import React from 'react';
 
-const Status = React.createClass({
-
-  render: function() {
+export default class Status extends React.Component {
+  render() {
     let title = '';
     let text = 'Trying to reconnect...';
     let showWarningIcon = false;
@@ -36,7 +35,4 @@ const Status = React.createClass({
       </div>
     );
   }
-
-});
-
-module.exports = Status;
+}

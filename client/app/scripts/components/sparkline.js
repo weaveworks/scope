@@ -1,26 +1,14 @@
 // Forked from: https://github.com/KyleAMathews/react-sparkline at commit a9d7c5203d8f240938b9f2288287aaf0478df013
-const React = require('react');
-const ReactDOM = require('react-dom');
-const d3 = require('d3');
+import React from 'react';
+import ReactDOM from 'react-dom';
+import d3 from 'd3';
 
-const Sparkline = React.createClass({
-  getDefaultProps: function() {
-    return {
-      width: 100,
-      height: 16,
-      strokeColor: '#7d7da8',
-      strokeWidth: '0.5px',
-      interpolate: 'basis',
-      circleDiameter: 1.75,
-      data: [1, 23, 5, 5, 23, 0, 0, 0, 4, 32, 3, 12, 3, 1, 24, 1, 5, 5, 24, 23] // Some semi-random data.
-    };
-  },
-
-  componentDidMount: function() {
+export default class Sparkline extends React.Component {
+  componentDidMount() {
     return this.renderSparkline();
-  },
+  }
 
-  renderSparkline: function() {
+  renderSparkline() {
     // If the sparkline has already been rendered, remove it.
     const el = ReactDOM.findDOMNode(this);
     while (el.firstChild) {
@@ -114,17 +102,25 @@ const Sparkline = React.createClass({
       attr('fill-opacity', 0.6).
       attr('stroke', 'none').
       attr('r', this.props.circleDiameter);
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <div/>
     );
-  },
+  }
 
-  componentDidUpdate: function() {
+  componentDidUpdate() {
     return this.renderSparkline();
   }
-});
+}
 
-module.exports = Sparkline;
+Sparkline.defaultProps = {
+  width: 100,
+  height: 16,
+  strokeColor: '#7d7da8',
+  strokeWidth: '0.5px',
+  interpolate: 'basis',
+  circleDiameter: 1.75,
+  data: [1, 23, 5, 5, 23, 0, 0, 0, 4, 32, 3, 12, 3, 1, 24, 1, 5, 5, 24, 23] // Some semi-random data.
+};

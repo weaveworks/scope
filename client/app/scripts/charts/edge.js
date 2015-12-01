@@ -1,17 +1,16 @@
-const _ = require('lodash');
-const d3 = require('d3');
-const React = require('react');
-const Motion = require('react-motion').Motion;
-const spring = require('react-motion').spring;
+import _ from 'lodash';
+import d3 from 'd3';
+import React from 'react';
+import { Motion, spring } from 'react-motion';
 
-const AppActions = require('../actions/app-actions');
+import { enterEdge, leaveEdge } from '../actions/app-actions';
 
 const line = d3.svg.line()
   .interpolate('basis')
   .x(function(d) { return d.x; })
   .y(function(d) { return d.y; });
 
-const animConfig = [80, 20]; // stiffness, bounce
+const animConfig = [80, 20];// stiffness, bounce
 
 const flattenPoints = function(points) {
   const flattened = {};
@@ -35,23 +34,26 @@ const extractPoints = function(points) {
   return extracted;
 };
 
-const Edge = React.createClass({
+export default class Edge extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+    this.handleMouseEnter = this.handleMouseEnter.bind(this);
+    this.handleMouseLeave = this.handleMouseLeave.bind(this);
 
-  getInitialState: function() {
-    return {
+    this.state = {
       points: []
     };
-  },
+  }
 
-  componentWillMount: function() {
+  componentWillMount() {
     this.ensureSameLength(this.props.points);
-  },
+  }
 
-  componentWillReceiveProps: function(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.ensureSameLength(nextProps.points);
-  },
+  }
 
-  render: function() {
+  render() {
     const classNames = ['edge'];
     const points = flattenPoints(this.props.points);
     const props = this.props;
@@ -79,9 +81,9 @@ const Edge = React.createClass({
         }}
       </Motion>
     );
-  },
+  }
 
-  ensureSameLength: function(points) {
+  ensureSameLength(points) {
     // Spring needs constant list length, hoping that dagre will insert never more than 10
     const length = 10;
     let missing = length - points.length;
@@ -92,16 +94,13 @@ const Edge = React.createClass({
     }
 
     return points;
-  },
-
-  handleMouseEnter: function(ev) {
-    AppActions.enterEdge(ev.currentTarget.id);
-  },
-
-  handleMouseLeave: function(ev) {
-    AppActions.leaveEdge(ev.currentTarget.id);
   }
 
-});
+  handleMouseEnter(ev) {
+    enterEdge(ev.currentTarget.id);
+  }
 
-module.exports = Edge;
+  handleMouseLeave(ev) {
+    leaveEdge(ev.currentTarget.id);
+  }
+}

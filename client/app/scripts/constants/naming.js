@@ -1,4 +1,2 @@
 
-module.exports = {
-  EDGE_ID_SEPARATOR: '-'
-};
+export const EDGE_ID_SEPARATOR = '-';

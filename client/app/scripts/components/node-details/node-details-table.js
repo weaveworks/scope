@@ -1,12 +1,11 @@
-const React = require('react');
+import React from 'react';
 
-const NodeDetailsTableRowValue = require('./node-details-table-row-value');
-const NodeDetailsTableRowNumber = require('./node-details-table-row-number');
-const NodeDetailsTableRowSparkline = require('./node-details-table-row-sparkline');
+import NodeDetailsTableRowValue from './node-details-table-row-value';
+import NodeDetailsTableRowNumber from './node-details-table-row-number';
+import NodeDetailsTableRowSparkline from './node-details-table-row-sparkline';
 
-const NodeDetailsTable = React.createClass({
-
-  render: function() {
+export default class NodeDetailsTable extends React.Component {
+  render() {
     return (
       <div className="node-details-table">
         <h4 className="node-details-table-title truncate" title={this.props.title}>
@@ -32,7 +31,4 @@ const NodeDetailsTable = React.createClass({
       </div>
     );
   }
-
-});
-
-module.exports = NodeDetailsTable;
+}

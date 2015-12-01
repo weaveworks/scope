@@ -1,8 +1,7 @@
-const React = require('react');
+import React from 'react';
 
-const NodesError = React.createClass({
-
-  render: function() {
+export default class NodesError extends React.Component {
+  render() {
     let classNames = 'nodes-chart-error';
     if (this.props.hidden) {
       classNames += ' hide';
@@ -18,7 +17,4 @@ const NodesError = React.createClass({
       </div>
     );
   }
-
-});
-
-module.exports = NodesError;
+}

@@ -1,10 +1,9 @@
-const React = require('react');
+import React from 'react';
 
-const NodeDetailsControlButton = require('./node-details-control-button');
+import NodeDetailsControlButton from './node-details-control-button';
 
-const NodeDetailsControls = React.createClass({
-
-  render: function() {
+export default class NodeDetailsControls extends React.Component {
+  render() {
     let spinnerClassName = 'fa fa-circle-o-notch fa-spin';
     if (this.props.pending) {
       spinnerClassName += ' node-details-controls-spinner';
@@ -30,7 +29,4 @@ const NodeDetailsControls = React.createClass({
       </div>
     );
   }
-
-});
-
-module.exports = NodeDetailsControls;
+}

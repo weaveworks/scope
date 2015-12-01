@@ -1,16 +1,20 @@
-const React = require('react');
+import React from 'react';
 
-const AppActions = require('../actions/app-actions');
-const NodeDetails = require('./node-details');
+import { clickCloseDetails } from '../actions/app-actions';
+import NodeDetails from './node-details';
 
-const Details = React.createClass({
+export default class Details extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+    this.handleClickClose = this.handleClickClose.bind(this);
+  }
 
-  handleClickClose: function(ev) {
+  handleClickClose(ev) {
     ev.preventDefault();
-    AppActions.clickCloseDetails();
-  },
+    clickCloseDetails();
+  }
 
-  render: function() {
+  render() {
     return (
       <div id="details">
         <div style={{height: '100%', paddingBottom: 8, borderRadius: 2,
@@ -26,7 +30,4 @@ const Details = React.createClass({
       </div>
     );
   }
-
-});
-
-module.exports = Details;
+}

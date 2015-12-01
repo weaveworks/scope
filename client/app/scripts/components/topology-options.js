@@ -1,22 +1,21 @@
-const React = require('react');
-const _ = require('lodash');
+import React from 'react';
+import _ from 'lodash';
 
-const TopologyOptionAction = require('./topology-option-action');
+import TopologyOptionAction from './topology-option-action';
 
-const TopologyOptions = React.createClass({
-
-  renderAction: function(action, option, topologyId) {
+export default class TopologyOptions extends React.Component {
+  renderAction(action, option, topologyId) {
     return (
       <TopologyOptionAction option={option} value={action} topologyId={topologyId} key={action} />
     );
-  },
+  }
 
   /**
    * transforms a list of options into one sidebar-item.
    * The sidebar text comes from the active option. the actions come from the
    * remaining items.
    */
-  renderOption: function(items) {
+  renderOption(items) {
     let activeText;
     let activeValue;
     const actions = [];
@@ -53,9 +52,9 @@ const TopologyOptions = React.createClass({
         </span>
       </div>
     );
-  },
+  }
 
-  render: function() {
+  render() {
     const options = _.sortBy(
       _.map(this.props.options, function(items, optionId) {
         _.each(items, function(item) {
@@ -75,7 +74,4 @@ const TopologyOptions = React.createClass({
       </div>
     );
   }
-
-});
-
-module.exports = TopologyOptions;
+}

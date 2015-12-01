@@ -1,28 +1,30 @@
-const React = require('react');
+import React from 'react';
 
-const NodesChart = require('../charts/nodes-chart');
+import NodesChart from '../charts/nodes-chart';
 
 const navbarHeight = 160;
 const marginTop = 0;
 
-const Nodes = React.createClass({
+export default class Nodes extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+    this.handleResize = this.handleResize.bind(this);
 
-  getInitialState: function() {
-    return {
+    this.state = {
       width: window.innerWidth,
       height: window.innerHeight - navbarHeight - marginTop
     };
-  },
+  }
 
-  componentDidMount: function() {
+  componentDidMount() {
     window.addEventListener('resize', this.handleResize);
-  },
+  }
 
-  componentWillUnmount: function() {
+  componentWillUnmount() {
     window.removeEventListener('resize', this.handleResize);
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <NodesChart
         highlightedEdgeIds={this.props.highlightedEdgeIds}
@@ -36,19 +38,16 @@ const Nodes = React.createClass({
         topMargin={this.props.topMargin}
       />
     );
-  },
+  }
 
-  handleResize: function() {
+  handleResize() {
     this.setDimensions();
-  },
+  }
 
-  setDimensions: function() {
+  setDimensions() {
     const width = window.innerWidth;
     const height = window.innerHeight - navbarHeight - marginTop;
 
     this.setState({height, width});
   }
-
-});
-
-module.exports = Nodes;
+}

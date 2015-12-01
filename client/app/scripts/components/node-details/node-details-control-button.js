@@ -1,10 +1,14 @@
-const React = require('react');
+import React from 'react';
 
-const AppActions = require('../../actions/app-actions');
+import { doControl } from '../../actions/app-actions';
 
-const NodeDetailsControlButton = React.createClass({
+export default class NodeDetailsControlButton extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+    this.handleClick = this.handleClick.bind(this);
+  }
 
-  render: function() {
+  render() {
     let className = `node-control-button fa ${this.props.control.icon}`;
     if (this.props.pending) {
       className += ' node-control-button-pending';
@@ -12,13 +16,10 @@ const NodeDetailsControlButton = React.createClass({
     return (
       <span className={className} title={this.props.control.human} onClick={this.handleClick} />
     );
-  },
-
-  handleClick: function(ev) {
-    ev.preventDefault();
-    AppActions.doControl(this.props.control.probeId, this.props.control.nodeId, this.props.control.id);
   }
 
-});
-
-module.exports = NodeDetailsControlButton;
+  handleClick(ev) {
+    ev.preventDefault();
+    doControl(this.props.control.probeId, this.props.control.nodeId, this.props.control.id);
+  }
+}

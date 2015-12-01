@@ -1,4 +1,4 @@
-const d3 = require('d3');
+import d3 from 'd3';
 
 const PSEUDO_COLOR = '#b1b1cb';
 const hueRange = [20, 330]; // exclude red
@@ -40,35 +40,33 @@ function colors(text, secondText) {
   return color;
 }
 
-const NodeColorMixin = {
-  getNodeColor: function(text, secondText) {
-    return colors(text, secondText);
-  },
-  getNodeColorDark: function(text, secondText) {
-    if (!text) {
-      return PSEUDO_COLOR;
-    }
-    const color = d3.rgb(colors(text, secondText));
-    let hsl = color.hsl();
+export function getNodeColor(text, secondText) {
+  return colors(text, secondText);
+}
 
-    // ensure darkness
-    if (hsl.l > 0.7) {
-      hsl = hsl.darker(1.5);
-    } else {
-      hsl = hsl.darker(1);
-    }
-
-    return hsl.toString();
-  },
-  brightenColor: function(color) {
-    let hsl = d3.rgb(color).hsl();
-    if (hsl.l > 0.5) {
-      hsl = hsl.brighter(0.5);
-    } else {
-      hsl = hsl.brighter(0.8);
-    }
-    return hsl.toString();
+export function getNodeColorDark(text, secondText) {
+  if (!text) {
+    return PSEUDO_COLOR;
   }
-};
+  const color = d3.rgb(colors(text, secondText));
+  let hsl = color.hsl();
 
-module.exports = NodeColorMixin;
+  // ensure darkness
+  if (hsl.l > 0.7) {
+    hsl = hsl.darker(1.5);
+  } else {
+    hsl = hsl.darker(1);
+  }
+
+  return hsl.toString();
+}
+
+export function brightenColor(color) {
+  let hsl = d3.rgb(color).hsl();
+  if (hsl.l > 0.5) {
+    hsl = hsl.brighter(0.5);
+  } else {
+    hsl = hsl.brighter(0.8);
+  }
+  return hsl.toString();
+}

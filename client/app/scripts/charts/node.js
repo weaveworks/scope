@@ -1,16 +1,18 @@
-const React = require('react');
-const Motion = require('react-motion').Motion;
-const spring = require('react-motion').spring;
+import React from 'react';
+import { Motion, spring } from 'react-motion';
 
-const AppActions = require('../actions/app-actions');
-const NodeColorMixin = require('../mixins/node-color-mixin');
+import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
+import { getNodeColor } from '../utils/color-utils';
 
-const Node = React.createClass({
-  mixins: [
-    NodeColorMixin
-  ],
+export default class Node extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+    this.handleMouseClick = this.handleMouseClick.bind(this);
+    this.handleMouseEnter = this.handleMouseEnter.bind(this);
+    this.handleMouseLeave = this.handleMouseLeave.bind(this);
+  }
 
-  render: function() {
+  render() {
     const props = this.props;
     const nodeScale = props.focused ? props.selectedNodeScale : props.nodeScale;
     const zoomScale = this.props.zoomScale;
@@ -23,7 +25,7 @@ const Node = React.createClass({
     let labelOffsetY = 18;
     let subLabelOffsetY = 35;
     const isPseudo = !!this.props.pseudo;
-    const color = isPseudo ? '' : this.getNodeColor(this.props.rank, this.props.label);
+    const color = isPseudo ? '' : getNodeColor(this.props.rank, this.props.label);
     const onMouseEnter = this.handleMouseEnter;
     const onMouseLeave = this.handleMouseLeave;
     const onMouseClick = this.handleMouseClick;
@@ -83,9 +85,9 @@ const Node = React.createClass({
         }}
       </Motion>
     );
-  },
+  }
 
-  ellipsis: function(text, fontSize, maxWidth) {
+  ellipsis(text, fontSize, maxWidth) {
     const averageCharLength = fontSize / 1.5;
     const allowedChars = maxWidth / averageCharLength;
     let truncatedText = text;
@@ -93,21 +95,18 @@ const Node = React.createClass({
       truncatedText = text.slice(0, allowedChars) + '...';
     }
     return truncatedText;
-  },
-
-  handleMouseClick: function(ev) {
-    ev.stopPropagation();
-    AppActions.clickNode(ev.currentTarget.id);
-  },
-
-  handleMouseEnter: function(ev) {
-    AppActions.enterNode(ev.currentTarget.id);
-  },
-
-  handleMouseLeave: function(ev) {
-    AppActions.leaveNode(ev.currentTarget.id);
   }
 
-});
+  handleMouseClick(ev) {
+    ev.stopPropagation();
+    clickNode(ev.currentTarget.id);
+  }
 
-module.exports = Node;
+  handleMouseEnter(ev) {
+    enterNode(ev.currentTarget.id);
+  }
+
+  handleMouseLeave(ev) {
+    leaveNode(ev.currentTarget.id);
+  }
+}

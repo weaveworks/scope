@@ -1,16 +1,21 @@
-const React = require('react');
-const _ = require('lodash');
+import React from 'react';
+import _ from 'lodash';
 
-const AppActions = require('../actions/app-actions');
+import { clickTopology } from '../actions/app-actions';
 
-const Topologies = React.createClass({
+export default class Topologies extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+    this.onTopologyClick = this.onTopologyClick.bind(this);
+    this.renderSubTopology = this.renderSubTopology.bind(this);
+  }
 
-  onTopologyClick: function(ev) {
+  onTopologyClick(ev) {
     ev.preventDefault();
-    AppActions.clickTopology(ev.currentTarget.getAttribute('rel'));
-  },
+    clickTopology(ev.currentTarget.getAttribute('rel'));
+  }
 
-  renderSubTopology: function(subTopology) {
+  renderSubTopology(subTopology) {
     const isActive = subTopology.name === this.props.currentTopology.name;
     const topologyId = subTopology.id;
     const title = this.renderTitle(subTopology);
@@ -24,14 +29,14 @@ const Topologies = React.createClass({
         </div>
       </div>
     );
-  },
+  }
 
-  renderTitle: function(topology) {
+  renderTitle(topology) {
     return ['Nodes: ' + topology.stats.node_count,
       'Connections: ' + topology.stats.node_count].join('\n');
-  },
+  }
 
-  renderTopology: function(topology) {
+  renderTopology(topology) {
     const isActive = topology.name === this.props.currentTopology.name;
     const className = isActive ? 'topologies-item-main topologies-item-main-active' : 'topologies-item-main';
     const topologyId = topology.id;
@@ -49,9 +54,9 @@ const Topologies = React.createClass({
         </div>
       </div>
     );
-  },
+  }
 
-  render: function() {
+  render() {
     const topologies = _.sortBy(this.props.topologies, function(topology) {
       return topology.name;
     });
@@ -64,7 +69,4 @@ const Topologies = React.createClass({
       </div>
     );
   }
-
-});
-
-module.exports = Topologies;
+}

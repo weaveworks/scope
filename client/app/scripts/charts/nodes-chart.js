@@ -1,17 +1,19 @@
-const _ = require('lodash');
-const d3 = require('d3');
-const debug = require('debug')('scope:nodes-chart');
-const React = require('react');
-const makeMap = require('immutable').Map;
-const timely = require('timely');
+import _ from 'lodash';
+import d3 from 'd3';
+import debug from 'debug';
+import React from 'react';
+import { Map as makeMap } from 'immutable';
+import timely from 'timely';
 
-const AppActions = require('../actions/app-actions');
-const AppStore = require('../stores/app-store');
-const Edge = require('./edge');
-const Naming = require('../constants/naming');
-const NodesLayout = require('./nodes-layout');
-const Node = require('./node');
-const NodesError = require('./nodes-error');
+import { clickCloseDetails } from '../actions/app-actions';
+import AppStore from '../stores/app-store';
+import Edge from './edge';
+import { EDGE_ID_SEPARATOR } from '../constants/naming';
+import { doLayout } from './nodes-layout';
+import Node from './node';
+import NodesError from './nodes-error';
+
+const log = debug('scope:nodes-chart');
 
 const MARGINS = {
   top: 130,
@@ -24,10 +26,13 @@ const MARGINS = {
 const radiusDensity = d3.scale.threshold()
   .domain([3, 6]).range([2.5, 3.5, 3]);
 
-const NodesChart = React.createClass({
+export default class NodesChart extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+    this.handleMouseClick = this.handleMouseClick.bind(this);
+    this.zoomed = this.zoomed.bind(this);
 
-  getInitialState: function() {
-    return {
+    this.state = {
       nodes: makeMap(),
       edges: makeMap(),
       panTranslate: [0, 0],
@@ -37,23 +42,26 @@ const NodesChart = React.createClass({
       hasZoomed: false,
       maxNodesExceeded: false
     };
-  },
+  }
 
-  componentWillMount: function() {
+  componentWillMount() {
     const state = this.updateGraphState(this.props, this.state);
     this.setState(state);
-  },
+  }
 
-  componentDidMount: function() {
+  componentDidMount() {
+    // distinguish pan/zoom from click
+    this.isZooming = false;
+
     this.zoom = d3.behavior.zoom()
       .scaleExtent([0.1, 2])
       .on('zoom', this.zoomed);
 
     d3.select('.nodes-chart svg')
       .call(this.zoom);
-  },
+  }
 
-  componentWillReceiveProps: function(nextProps) {
+  componentWillReceiveProps(nextProps) {
     // gather state, setState should be called only once here
     const state = _.assign({}, this.state);
 
@@ -76,9 +84,9 @@ const NodesChart = React.createClass({
     }
 
     this.setState(state);
-  },
+  }
 
-  componentWillUnmount: function() {
+  componentWillUnmount() {
     // undoing .call(zoom)
 
     d3.select('.nodes-chart svg')
@@ -87,9 +95,9 @@ const NodesChart = React.createClass({
       .on('onmousewheel', null)
       .on('dblclick.zoom', null)
       .on('touchstart.zoom', null);
-  },
+  }
 
-  renderGraphNodes: function(nodes, nodeScale) {
+  renderGraphNodes(nodes, nodeScale) {
     const hasSelectedNode = this.props.selectedNodeId && this.props.nodes.has(this.props.selectedNodeId);
     const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes(this.props.selectedNodeId) : null;
     const onNodeClick = this.props.onNodeClick;
@@ -148,9 +156,9 @@ const NodesChart = React.createClass({
           />
         );
       });
-  },
+  }
 
-  renderGraphEdges: function(edges) {
+  renderGraphEdges(edges) {
     const selectedNodeId = this.props.selectedNodeId;
     const hasSelectedNode = selectedNodeId && this.props.nodes.has(selectedNodeId);
 
@@ -173,18 +181,18 @@ const NodesChart = React.createClass({
             blurred={edge.get('blurred')} highlighted={edge.get('highlighted')} />
         );
       });
-  },
+  }
 
-  renderMaxNodesError: function(show) {
+  renderMaxNodesError(show) {
     const errorHint = 'We\u0027re working on it, but for now, try a different view?';
     return (
       <NodesError faIconClass="fa-ban" hidden={!show}>
         <div className="centered">Too many nodes to show in the browser.<br />{errorHint}</div>
       </NodesError>
     );
-  },
+  }
 
-  renderEmptyTopologyError: function(show) {
+  renderEmptyTopologyError(show) {
     return (
       <NodesError faIconClass="fa-circle-thin" hidden={!show}>
         <div className="heading">Nothing to show. This can have any of these reasons:</div>
@@ -195,9 +203,9 @@ const NodesChart = React.createClass({
         </ul>
       </NodesError>
     );
-  },
+  }
 
-  render: function() {
+  render() {
     const nodeElements = this.renderGraphNodes(this.state.nodes, this.state.nodeScale);
     const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
     const scale = this.state.scale;
@@ -224,9 +232,9 @@ const NodesChart = React.createClass({
         </svg>
       </div>
     );
-  },
+  }
 
-  initNodes: function(topology) {
+  initNodes(topology) {
     return topology.map((node, id) => {
       // copy relevant fields to state nodes
       return makeMap({
@@ -239,9 +247,9 @@ const NodesChart = React.createClass({
         y: 0
       });
     });
-  },
+  }
 
-  initEdges: function(topology, stateNodes) {
+  initEdges(topology, stateNodes) {
     let edges = makeMap();
 
     topology.forEach(function(node, nodeId) {
@@ -249,14 +257,14 @@ const NodesChart = React.createClass({
       if (adjacency) {
         adjacency.forEach(function(adjacent) {
           const edge = [nodeId, adjacent];
-          const edgeId = edge.join(Naming.EDGE_ID_SEPARATOR);
+          const edgeId = edge.join(EDGE_ID_SEPARATOR);
 
           if (!edges.has(edgeId)) {
             const source = edge[0];
             const target = edge[1];
 
             if (!stateNodes.has(source) || !stateNodes.has(target)) {
-              debug('Missing edge node', edge[0], edge[1]);
+              log('Missing edge node', edge[0], edge[1]);
             }
 
             edges = edges.set(edgeId, makeMap({
@@ -271,9 +279,9 @@ const NodesChart = React.createClass({
     });
 
     return edges;
-  },
+  }
 
-  centerSelectedNode: function(props, state) {
+  centerSelectedNode(props, state) {
     let stateNodes = state.nodes;
     let stateEdges = state.edges;
     const selectedLayoutNode = stateNodes.get(props.selectedNodeId);
@@ -345,19 +353,17 @@ const NodesChart = React.createClass({
       edges: stateEdges,
       nodes: stateNodes
     };
-  },
+  }
 
-  isZooming: false, // distinguish pan/zoom from click
-
-  handleMouseClick: function() {
+  handleMouseClick() {
     if (!this.isZooming) {
-      AppActions.clickCloseDetails();
+      clickCloseDetails();
     } else {
       this.isZooming = false;
     }
-  },
+  }
 
-  restoreLayout: function(state) {
+  restoreLayout(state) {
     // undo any pan/zooming that might have happened
     this.zoom.scale(state.scale);
     this.zoom.translate(state.panTranslate);
@@ -377,9 +383,9 @@ const NodesChart = React.createClass({
     });
 
     return { edges, nodes};
-  },
+  }
 
-  updateGraphState: function(props, state) {
+  updateGraphState(props, state) {
     const n = props.nodes.size;
 
     if (n === 0) {
@@ -401,10 +407,10 @@ const NodesChart = React.createClass({
       topologyId: this.props.topologyId
     };
 
-    const timedLayouter = timely(NodesLayout.doLayout);
+    const timedLayouter = timely(doLayout);
     const graph = timedLayouter(stateNodes, stateEdges, options);
 
-    debug('graph layout took ' + timedLayouter.time + 'ms');
+    log('graph layout took ' + timedLayouter.time + 'ms');
 
     // layout was aborted
     if (!graph) {
@@ -443,17 +449,17 @@ const NodesChart = React.createClass({
       nodeScale: nodeScale,
       maxNodesExceeded: false
     };
-  },
+  }
 
-  getNodeScale: function(props) {
+  getNodeScale(props) {
     const expanse = Math.min(props.height, props.width);
     const nodeSize = expanse / 3; // single node should fill a third of the screen
     const maxNodeSize = expanse / 10;
     const normalizedNodeSize = Math.min(nodeSize / Math.sqrt(props.nodes.size), maxNodeSize);
     return this.state.nodeScale.copy().range([0, normalizedNodeSize]);
-  },
+  }
 
-  zoomed: function() {
+  zoomed() {
     // debug('zoomed', d3.event.scale, d3.event.translate);
     this.isZooming = true;
     // dont pan while node is selected
@@ -465,7 +471,4 @@ const NodesChart = React.createClass({
       });
     }
   }
-
-});
-
-module.exports = NodesChart;
+}

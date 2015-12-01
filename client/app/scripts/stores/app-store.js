@@ -1,14 +1,15 @@
-const EventEmitter = require('events').EventEmitter;
-const _ = require('lodash');
-const debug = require('debug')('scope:app-store');
-const Immutable = require('immutable');
+import _ from 'lodash';
+import debug from 'debug';
+import Immutable from 'immutable';
+import { Store } from 'flux/utils';
 
-const AppDispatcher = require('../dispatcher/app-dispatcher');
-const ActionTypes = require('../constants/action-types');
-const Naming = require('../constants/naming');
+import AppDispatcher from '../dispatcher/app-dispatcher';
+import ActionTypes from '../constants/action-types';
+import { EDGE_ID_SEPARATOR } from '../constants/naming';
 
 const makeOrderedMap = Immutable.OrderedMap;
 const makeSet = Immutable.Set;
+const log = debug('scope:app-store');
 
 // Helpers
 
@@ -104,25 +105,23 @@ function deSelectNode() {
 
 // Store API
 
-const AppStore = Object.assign({}, EventEmitter.prototype, {
-
-  CHANGE_EVENT: 'change',
+export class AppStore extends Store {
 
   // keep at the top
-  getAppState: function() {
+  getAppState() {
     return {
       topologyId: currentTopologyId,
       selectedNodeId: this.getSelectedNodeId(),
       topologyOptions: topologyOptions.toJS() // all options
     };
-  },
+  }
 
-  getActiveTopologyOptions: function() {
+  getActiveTopologyOptions() {
     // options for current topology
     return topologyOptions.get(currentTopologyId);
-  },
+  }
 
-  getAdjacentNodes: function(nodeId) {
+  getAdjacentNodes(nodeId) {
     adjacentNodes = adjacentNodes.clear();
 
     if (nodes.has(nodeId)) {
@@ -136,36 +135,36 @@ const AppStore = Object.assign({}, EventEmitter.prototype, {
     }
 
     return adjacentNodes;
-  },
+  }
 
-  getControlError: function() {
+  getControlError() {
     return controlError;
-  },
+  }
 
-  getCurrentTopology: function() {
+  getCurrentTopology() {
     if (!currentTopology) {
       currentTopology = setTopology(currentTopologyId);
     }
     return currentTopology;
-  },
+  }
 
-  getCurrentTopologyId: function() {
+  getCurrentTopologyId() {
     return currentTopologyId;
-  },
+  }
 
-  getCurrentTopologyOptions: function() {
+  getCurrentTopologyOptions() {
     return currentTopology && currentTopology.options;
-  },
+  }
 
-  getCurrentTopologyUrl: function() {
+  getCurrentTopologyUrl() {
     return currentTopology && currentTopology.url;
-  },
+  }
 
-  getErrorUrl: function() {
+  getErrorUrl() {
     return errorUrl;
-  },
+  }
 
-  getHighlightedEdgeIds: function() {
+  getHighlightedEdgeIds() {
     if (mouseOverNodeId && nodes.has(mouseOverNodeId)) {
       // all neighbour combinations because we dont know which direction exists
       const adjacency = nodes.get(mouseOverNodeId).get('adjacency');
@@ -173,8 +172,8 @@ const AppStore = Object.assign({}, EventEmitter.prototype, {
         return _.flatten(
           adjacency.forEach(function(nodeId) {
             return [
-              [nodeId, mouseOverNodeId].join(Naming.EDGE_ID_SEPARATOR),
-              [mouseOverNodeId, nodeId].join(Naming.EDGE_ID_SEPARATOR)
+              [nodeId, mouseOverNodeId].join(EDGE_ID_SEPARATOR),
+              [mouseOverNodeId, nodeId].join(EDGE_ID_SEPARATOR)
             ];
           })
         );
@@ -184,9 +183,9 @@ const AppStore = Object.assign({}, EventEmitter.prototype, {
       return mouseOverEdgeId;
     }
     return null;
-  },
+  }
 
-  getHighlightedNodeIds: function() {
+  getHighlightedNodeIds() {
     if (mouseOverNodeId) {
       const adjacency = this.getAdjacentNodes(mouseOverNodeId);
       if (adjacency.size) {
@@ -194,243 +193,238 @@ const AppStore = Object.assign({}, EventEmitter.prototype, {
       }
     }
     if (mouseOverEdgeId) {
-      return mouseOverEdgeId.split(Naming.EDGE_ID_SEPARATOR);
+      return mouseOverEdgeId.split(EDGE_ID_SEPARATOR);
     }
     return null;
-  },
+  }
 
-  getNodeDetails: function() {
+  getNodeDetails() {
     return nodeDetails;
-  },
+  }
 
-  getNodes: function() {
+  getNodes() {
     return nodes;
-  },
+  }
 
-  getSelectedNodeId: function() {
+  getSelectedNodeId() {
     return selectedNodeId;
-  },
+  }
 
-  getTopologies: function() {
+  getTopologies() {
     return topologies;
-  },
+  }
 
-  getVersion: function() {
+  getVersion() {
     return version;
-  },
+  }
 
-  isControlPending: function() {
+  isControlPending() {
     return controlPending;
-  },
+  }
 
-  isRouteSet: function() {
+  isRouteSet() {
     return routeSet;
-  },
+  }
 
-  isTopologiesLoaded: function() {
+  isTopologiesLoaded() {
     return topologiesLoaded;
-  },
+  }
 
-  isTopologyEmpty: function() {
+  isTopologyEmpty() {
     return currentTopology && currentTopology.stats && currentTopology.stats.node_count === 0 && nodes.size === 0;
-  },
+  }
 
-  isWebsocketClosed: function() {
+  isWebsocketClosed() {
     return websocketClosed;
   }
 
-});
+  __onDispatch(payload) {
+    switch (payload.type) {
 
-// Store Dispatch Hooks
-
-AppStore.registeredCallback = function(payload) {
-  switch (payload.type) {
-
-  case ActionTypes.CHANGE_TOPOLOGY_OPTION:
-    if (topologyOptions.getIn([payload.topologyId, payload.option])
-      !== payload.value) {
-      nodes = nodes.clear();
-    }
-    topologyOptions = topologyOptions.setIn(
-      [payload.topologyId, payload.option],
-      payload.value
-    );
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.CLEAR_CONTROL_ERROR:
-    controlError = null;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.CLICK_CLOSE_DETAILS:
-    deSelectNode();
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.CLICK_NODE:
-    deSelectNode();
-    if (payload.nodeId !== selectedNodeId) {
-      // select new node if it's not the same (in that case just delesect)
-      selectedNodeId = payload.nodeId;
-    }
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.CLICK_TOPOLOGY:
-    deSelectNode();
-    if (payload.topologyId !== currentTopologyId) {
-      setTopology(payload.topologyId);
-      nodes = nodes.clear();
-    }
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.CLOSE_WEBSOCKET:
-    websocketClosed = true;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.DO_CONTROL:
-    controlPending = true;
-    controlError = null;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.ENTER_EDGE:
-    mouseOverEdgeId = payload.edgeId;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.ENTER_NODE:
-    mouseOverNodeId = payload.nodeId;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.HIT_ESC_KEY:
-    deSelectNode();
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.LEAVE_EDGE:
-    mouseOverEdgeId = null;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.LEAVE_NODE:
-    mouseOverNodeId = null;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.OPEN_WEBSOCKET:
-    // flush nodes cache after re-connect
-    nodes = nodes.clear();
-    websocketClosed = false;
-
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.DO_CONTROL_ERROR:
-    controlPending = false;
-    controlError = payload.error;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.DO_CONTROL_SUCCESS:
-    controlPending = false;
-    controlError = null;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.RECEIVE_ERROR:
-    errorUrl = payload.errorUrl;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.RECEIVE_NODE_DETAILS:
-    errorUrl = null;
-    // disregard if node is not selected anymore
-    if (payload.details.id === selectedNodeId) {
-      nodeDetails = payload.details;
-    }
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.RECEIVE_NODES_DELTA:
-    const emptyMessage = !payload.delta.add && !payload.delta.remove
-      && !payload.delta.update;
-
-    if (!emptyMessage) {
-      debug('RECEIVE_NODES_DELTA',
-        'remove', _.size(payload.delta.remove),
-        'update', _.size(payload.delta.update),
-        'add', _.size(payload.delta.add));
-    }
-
-    errorUrl = null;
-
-    // nodes that no longer exist
-    _.each(payload.delta.remove, function(nodeId) {
-      // in case node disappears before mouseleave event
-      if (mouseOverNodeId === nodeId) {
-        mouseOverNodeId = null;
+    case ActionTypes.CHANGE_TOPOLOGY_OPTION:
+      if (topologyOptions.getIn([payload.topologyId, payload.option])
+        !== payload.value) {
+        nodes = nodes.clear();
       }
-      if (nodes.has(nodeId) && _.contains(mouseOverEdgeId, nodeId)) {
-        mouseOverEdgeId = null;
+      topologyOptions = topologyOptions.setIn(
+        [payload.topologyId, payload.option],
+        payload.value
+      );
+      this.__emitChange();
+      break;
+
+    case ActionTypes.CLEAR_CONTROL_ERROR:
+      controlError = null;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.CLICK_CLOSE_DETAILS:
+      deSelectNode();
+      this.__emitChange();
+      break;
+
+    case ActionTypes.CLICK_NODE:
+      deSelectNode();
+      if (payload.nodeId !== selectedNodeId) {
+        // select new node if it's not the same (in that case just delesect)
+        selectedNodeId = payload.nodeId;
       }
-      nodes = nodes.delete(nodeId);
-    });
+      this.__emitChange();
+      break;
 
-    // update existing nodes
-    _.each(payload.delta.update, function(node) {
-      nodes = nodes.set(node.id, nodes.get(node.id).merge(makeNode(node)));
-    });
+    case ActionTypes.CLICK_TOPOLOGY:
+      deSelectNode();
+      if (payload.topologyId !== currentTopologyId) {
+        setTopology(payload.topologyId);
+        nodes = nodes.clear();
+      }
+      this.__emitChange();
+      break;
 
-    // add new nodes
-    _.each(payload.delta.add, function(node) {
-      nodes = nodes.set(node.id, Immutable.fromJS(makeNode(node)));
-    });
+    case ActionTypes.CLOSE_WEBSOCKET:
+      websocketClosed = true;
+      this.__emitChange();
+      break;
 
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
+    case ActionTypes.DO_CONTROL:
+      controlPending = true;
+      controlError = null;
+      this.__emitChange();
+      break;
 
-  case ActionTypes.RECEIVE_TOPOLOGIES:
-    errorUrl = null;
-    topologies = processTopologies(payload.topologies);
-    setTopology(currentTopologyId);
-    // only set on first load, if options are not already set via route
-    if (!topologiesLoaded && topologyOptions.size === 0) {
+    case ActionTypes.ENTER_EDGE:
+      mouseOverEdgeId = payload.edgeId;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.ENTER_NODE:
+      mouseOverNodeId = payload.nodeId;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.HIT_ESC_KEY:
+      deSelectNode();
+      this.__emitChange();
+      break;
+
+    case ActionTypes.LEAVE_EDGE:
+      mouseOverEdgeId = null;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.LEAVE_NODE:
+      mouseOverNodeId = null;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.OPEN_WEBSOCKET:
+      // flush nodes cache after re-connect
+      nodes = nodes.clear();
+      websocketClosed = false;
+
+      this.__emitChange();
+      break;
+
+    case ActionTypes.DO_CONTROL_ERROR:
+      controlPending = false;
+      controlError = payload.error;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.DO_CONTROL_SUCCESS:
+      controlPending = false;
+      controlError = null;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_ERROR:
+      errorUrl = payload.errorUrl;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_NODE_DETAILS:
+      errorUrl = null;
+      // disregard if node is not selected anymore
+      if (payload.details.id === selectedNodeId) {
+        nodeDetails = payload.details;
+      }
+      this.__emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_NODES_DELTA:
+      const emptyMessage = !payload.delta.add && !payload.delta.remove
+        && !payload.delta.update;
+
+      if (!emptyMessage) {
+        log('RECEIVE_NODES_DELTA',
+          'remove', _.size(payload.delta.remove),
+          'update', _.size(payload.delta.update),
+          'add', _.size(payload.delta.add));
+      }
+
+      errorUrl = null;
+
+      // nodes that no longer exist
+      _.each(payload.delta.remove, function(nodeId) {
+        // in case node disappears before mouseleave event
+        if (mouseOverNodeId === nodeId) {
+          mouseOverNodeId = null;
+        }
+        if (nodes.has(nodeId) && _.contains(mouseOverEdgeId, nodeId)) {
+          mouseOverEdgeId = null;
+        }
+        nodes = nodes.delete(nodeId);
+      });
+
+      // update existing nodes
+      _.each(payload.delta.update, function(node) {
+        nodes = nodes.set(node.id, nodes.get(node.id).merge(makeNode(node)));
+      });
+
+      // add new nodes
+      _.each(payload.delta.add, function(node) {
+        nodes = nodes.set(node.id, Immutable.fromJS(makeNode(node)));
+      });
+
+      this.__emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_TOPOLOGIES:
+      errorUrl = null;
+      topologies = processTopologies(payload.topologies);
+      setTopology(currentTopologyId);
+      // only set on first load, if options are not already set via route
+      if (!topologiesLoaded && topologyOptions.size === 0) {
+        setDefaultTopologyOptions(topologies);
+      }
+      topologiesLoaded = true;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_API_DETAILS:
+      errorUrl = null;
+      version = payload.version;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.ROUTE_TOPOLOGY:
+      routeSet = true;
+      if (currentTopologyId !== payload.state.topologyId) {
+        nodes = nodes.clear();
+      }
+      setTopology(payload.state.topologyId);
       setDefaultTopologyOptions(topologies);
+      selectedNodeId = payload.state.selectedNodeId;
+      topologyOptions = Immutable.fromJS(payload.state.topologyOptions)
+        || topologyOptions;
+      this.__emitChange();
+      break;
+
+    default:
+      break;
+
     }
-    topologiesLoaded = true;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.RECEIVE_API_DETAILS:
-    errorUrl = null;
-    version = payload.version;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  case ActionTypes.ROUTE_TOPOLOGY:
-    routeSet = true;
-    if (currentTopologyId !== payload.state.topologyId) {
-      nodes = nodes.clear();
-    }
-    setTopology(payload.state.topologyId);
-    setDefaultTopologyOptions(topologies);
-    selectedNodeId = payload.state.selectedNodeId;
-    topologyOptions = Immutable.fromJS(payload.state.topologyOptions)
-      || topologyOptions;
-    AppStore.emit(AppStore.CHANGE_EVENT);
-    break;
-
-  default:
-    break;
-
   }
-};
+}
 
-AppStore.dispatchToken = AppDispatcher.register(AppStore.registeredCallback);
-
-module.exports = AppStore;
+export default new AppStore(AppDispatcher);

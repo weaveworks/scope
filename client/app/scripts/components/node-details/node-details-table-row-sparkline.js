@@ -1,10 +1,9 @@
-const React = require('react');
+import React from 'react';
 
-const Sparkline = require('../sparkline');
+import Sparkline from '../sparkline';
 
-const NodeDetailsTableRowSparkline = React.createClass({
-
-  render: function() {
+export default class NodeDetailsTableRowSparkline extends React.Component {
+  render() {
     const row = this.props.row;
     return (
       <div className="node-details-table-row-value">
@@ -13,6 +12,4 @@ const NodeDetailsTableRowSparkline = React.createClass({
       </div>
     );
   }
-});
-
-module.exports = NodeDetailsTableRowSparkline;
+}

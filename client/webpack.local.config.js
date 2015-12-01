@@ -22,7 +22,7 @@ var GLOBALS = {
 module.exports = {
 
   // Efficiently evaluate modules with source maps
-  devtool: 'eval',
+  devtool: 'cheap-module-source-map',
 
   // Set entry point include necessary files for hot load
   entry: [

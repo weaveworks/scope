@@ -4,7 +4,7 @@ jest.dontMock('../app-store');
 // Appstore test suite using Jasmine matchers
 
 describe('AppStore', function() {
-  const ActionTypes = require('../../constants/action-types');
+  const ActionTypes = require('../../constants/action-types').default;
   let AppDispatcher;
   let AppStore;
   let registeredCallback;
@@ -134,9 +134,10 @@ describe('AppStore', function() {
   };
 
   beforeEach(function() {
-    AppDispatcher = require('../../dispatcher/app-dispatcher');
-    AppStore = require('../app-store');
-    registeredCallback = AppDispatcher.register.mock.calls[0][0];
+    AppStore = require('../app-store').default;
+    AppDispatcher = AppStore.getDispatcher();
+    const callback = AppDispatcher.dispatch.bind(AppDispatcher);
+    registeredCallback = callback;
   });
 
   // topology tests
