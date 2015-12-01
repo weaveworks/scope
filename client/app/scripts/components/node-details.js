@@ -81,9 +81,9 @@ export default class NodeDetails extends React.Component {
     }
 
     return this.renderLoading();
-  },
+  }
 
-  renderDetails: function() {
+  renderDetails() {
     const details = this.props.details;
     const nodeColor = getNodeColorDark(details.rank, details.label_major);
     const styles = {
