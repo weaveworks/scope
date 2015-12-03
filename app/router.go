@@ -3,6 +3,7 @@ package main
 import (
 	"compress/gzip"
 	"encoding/gob"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
@@ -87,7 +88,11 @@ func makeReportPostHandler(a Adder) http.HandlerFunc {
 			}
 		}
 
-		if err := gob.NewDecoder(reader).Decode(&rpt); err != nil {
+		decoder := gob.NewDecoder(reader).Decode
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+			decoder = json.NewDecoder(reader).Decode
+		}
+		if err := decoder(&rpt); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
