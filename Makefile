@@ -20,6 +20,7 @@ RUNSVINIT=vendor/runsvinit/runsvinit
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
+SHARE_PKG=-v $(GOPATH)/pkg:/go/pkg
 
 all: $(SCOPE_EXPORT)
 
@@ -44,8 +45,8 @@ $(PROBE_EXE): prog/probe/*.go $(shell find probe/ -type f -name *.go) report/*.g
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 $(APP_EXE) $(PROBE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
-		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) $@
+	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope $(SHARE_PKG) \
+		-e GOARCH -e GOOS $(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) $@
 else
 $(APP_EXE) $(PROBE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	go build -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
@@ -106,7 +107,7 @@ clean:
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope \
+	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope $(SHARE_PKG) \
 		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL -e CIRCLE_NODE_INDEX -e COVERDIR\
 		$(SCOPE_BACKEND_BUILD_IMAGE) tests
 else
