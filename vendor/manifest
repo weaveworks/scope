@@ -28,6 +28,12 @@
 			"path": "/handlers"
 		},
 		{
+			"importpath": "github.com/Sirupsen/logrus",
+			"repository": "https://github.com/Sirupsen/logrus",
+			"revision": "cdaedc68f2894175ac2b3221869685602c759e71",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/armon/go-metrics",
 			"repository": "https://github.com/armon/go-metrics",
 			"revision": "6c5fa0d8f48f4661c9ba8709799c88d425ad20f0",
@@ -431,6 +437,20 @@
 			"path": "/spew"
 		},
 		{
+			"importpath": "github.com/docker/docker/pkg/homedir",
+			"repository": "https://github.com/docker/docker",
+			"revision": "7c1c96551d41e369a588e365a9bb99acb5bc8fdb",
+			"branch": "master",
+			"path": "/pkg/homedir"
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/mflag",
+			"repository": "https://github.com/docker/docker",
+			"revision": "7c1c96551d41e369a588e365a9bb99acb5bc8fdb",
+			"branch": "master",
+			"path": "/pkg/mflag"
+		},
+		{
 			"importpath": "github.com/docker/docker/pkg/mount",
 			"repository": "https://github.com/docker/docker",
 			"revision": "60ea37d56f15d64961f0bc59dd2db1c968c80288",
@@ -605,6 +625,13 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/opencontainers/runc/libcontainer/user",
+			"repository": "https://github.com/opencontainers/runc",
+			"revision": "3317785f562b363eb386a2fa4909a55f267088c8",
+			"branch": "master",
+			"path": "/libcontainer/user"
+		},
+		{
 			"importpath": "github.com/pborman/uuid",
 			"repository": "https://github.com/pborman/uuid",
 			"revision": "cccd189d45f7ac3368a0d127efb7f4d08ae0b655",
@@ -683,10 +710,24 @@
 			"path": "/codec"
 		},
 		{
+			"importpath": "github.com/weaveworks/go-odp/odp",
+			"repository": "https://github.com/weaveworks/go-odp",
+			"revision": "f8c8c40c18898d7c4f6be33978d68f5d2810f373",
+			"branch": "master",
+			"path": "/odp"
+		},
+		{
 			"importpath": "github.com/weaveworks/procspy",
 			"repository": "https://github.com/weaveworks/procspy",
 			"revision": "cb970aa190c374d1e47711dbffb3c2c6e9ef0dd1",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/common",
+			"repository": "https://github.com/weaveworks/weave",
+			"revision": "29f3d711c65121f436a9d191af4633ba4600d0fd",
+			"branch": "master",
+			"path": "/common"
 		},
 		{
 			"importpath": "golang.org/x/crypto/curve25519",

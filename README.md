@@ -210,3 +210,28 @@ Then, run the local build via
 ```
 ./scope launch
 ```
+
+## <a name="developing"></a>Debugging
+
+Scope has a collection of built in debugging tools to aid Scope delevopers.
+
+- To have the app or probe dump their goroutine stacks, run:
+```
+pkill -SIGQUIT scope-(app|probe)
+docker logs weavescope
+```
+
+- The probe is instrumented with various counters and timers. To have it dump
+  those values, run:
+```
+pkill -SIGUSR1 scope-probe
+docker logs weavescope
+```
+
+- The app and probe both include golang's pprof integration for gathering CPU
+  and memory profiles.  To use these with the probe, you must launch Scope with
+  the following arguments `scope launch --probe.http.listen :4041`.  You can
+  then collect profiles in the usual way:
+```
+go tool pprof http://localhost:(4040|4041)/debug/pprof/profile
+```
