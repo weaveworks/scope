@@ -38,7 +38,7 @@ $(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVI
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
-$(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go common/sanitize/*.go
+$(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go common/sanitize/*.go app/static.go
 
 $(PROBE_EXE): prog/probe/*.go $(shell find probe/ -type f -name *.go) report/*.go xfer/*.go common/sanitize/*.go common/exec/*.go
 
@@ -62,30 +62,35 @@ $(RUNSVINIT):
 	go build -ldflags "-extldflags \"-static\"" -o $@ ./$(@D)
 endif
 
-static: client/build/app.js
-	esc -o app/static.go -prefix client/build client/build
+static: app/static.go
+
+app/static.go: client/build/app.js
+	esc -o $@ -prefix client/build client/build
 
 ifeq ($(BUILD_IN_CONTAINER),true)
-client/build/app.js: $(shell find client/app/scripts -type f)
+client/build/app.js: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	mkdir -p client/build
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm run build
 
-client-test: $(shell find client/app/scripts -type f)
+client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm test
 
-client-lint:
+client-lint: $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
 		$(SCOPE_UI_BUILD_IMAGE) npm run lint
 
-client-start:
+client-start: $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm start
+else
+client/build/app.js:
+	cd client && npm run build
 endif
 
 $(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
@@ -95,8 +100,6 @@ $(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack
 $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	$(SUDO) docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) backend
 	touch $@
-
-frontend: $(SCOPE_UI_BUILD_UPTODATE)
 
 clean:
 	go clean ./...
