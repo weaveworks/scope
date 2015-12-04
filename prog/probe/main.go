@@ -9,13 +9,12 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/armon/go-metrics"
+	"github.com/weaveworks/weave/common"
 
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
@@ -176,11 +175,5 @@ func main() {
 	p.Start()
 	defer p.Stop()
 
-	log.Printf("%s", <-interrupt())
-}
-
-func interrupt() <-chan os.Signal {
-	c := make(chan os.Signal)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-	return c
+	common.SignalHandlerLoop()
 }

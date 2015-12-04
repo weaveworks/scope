@@ -7,14 +7,12 @@ import (
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
-	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/weaveworks/weave/common"
 
 	"github.com/weaveworks/scope/xfer"
 )
@@ -71,11 +69,6 @@ func main() {
 		log.Printf("listening on %s", *listen)
 		log.Print(http.ListenAndServe(*listen, nil))
 	}()
-	log.Printf("%s", <-interrupt())
-}
 
-func interrupt() chan os.Signal {
-	c := make(chan os.Signal)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-	return c
+	common.SignalHandlerLoop()
 }
