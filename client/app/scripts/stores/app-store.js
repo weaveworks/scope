@@ -51,7 +51,8 @@ let controlPending = false;
 let currentTopology = null;
 let currentTopologyId = 'containers';
 let errorUrl = null;
-let version = '';
+let hostname = '...';
+let version = '...';
 let mouseOverEdgeId = null;
 let mouseOverNodeId = null;
 let nodes = makeOrderedMap();
@@ -196,6 +197,10 @@ export class AppStore extends Store {
       return mouseOverEdgeId.split(EDGE_ID_SEPARATOR);
     }
     return null;
+  }
+
+  getHostname() {
+    return hostname;
   }
 
   getNodeDetails() {
@@ -403,6 +408,7 @@ export class AppStore extends Store {
 
     case ActionTypes.RECEIVE_API_DETAILS:
       errorUrl = null;
+      hostname = payload.hostname;
       version = payload.version;
       this.__emitChange();
       break;

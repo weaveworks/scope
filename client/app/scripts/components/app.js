@@ -25,6 +25,7 @@ function getStateFromStores() {
     errorUrl: AppStore.getErrorUrl(),
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
+    hostname: AppStore.getHostname(),
     selectedNodeId: AppStore.getSelectedNodeId(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
@@ -68,7 +69,7 @@ export default class App extends React.Component {
 
   render() {
     const showingDetails = this.state.selectedNodeId;
-    const versionString = this.state.version ? 'Version ' + this.state.version : '';
+    const footer = `Version ${this.state.version} on ${this.state.hostname}`;
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 450 : 0;
     const topMargin = 100;
@@ -101,7 +102,7 @@ export default class App extends React.Component {
         </Sidebar>
 
         <div className="footer">
-          {versionString}&nbsp;&nbsp;
+          {footer}&nbsp;&nbsp;
           <a href="https://gitreports.com/issue/weaveworks/scope" target="_blank">Report an issue</a>
         </div>
       </div>

@@ -16,6 +16,7 @@ import (
 	"github.com/armon/go-metrics"
 	"github.com/weaveworks/weave/common"
 
+	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
@@ -78,7 +79,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	probeID := strconv.FormatInt(rand.Int63(), 16)
 	var (
-		hostName = probe.Hostname()
+		hostName = hostname.Get()
 		hostID   = hostName // TODO(pb): we should sanitize the hostname
 	)
 	log.Printf("probe starting, version %s, ID %s", version, probeID)
