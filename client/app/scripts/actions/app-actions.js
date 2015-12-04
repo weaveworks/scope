@@ -167,6 +167,7 @@ export function receiveTopologies(topologies) {
 export function receiveApiDetails(apiDetails) {
   AppDispatcher.dispatch({
     type: ActionTypes.RECEIVE_API_DETAILS,
+    hostname: apiDetails.hostname,
     version: apiDetails.version
   });
 }
