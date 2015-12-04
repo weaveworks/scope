@@ -12,8 +12,8 @@ import (
 // EdgeMetadatas and Nodes respectively. Edges are directional, and embedded
 // in the Node struct.
 type Topology struct {
-	Nodes // TODO(pb): remove Nodes intermediate type
-	Controls
+	Nodes    `json:"nodes"`
+	Controls `json:"controls,omitempty"`
 }
 
 // MakeTopology gives you a Topology.
