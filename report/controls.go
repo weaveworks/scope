@@ -1,6 +1,8 @@
 package report
 
 import (
+	"bytes"
+	"encoding/json"
 	"time"
 
 	"github.com/weaveworks/scope/common/mtime"
@@ -43,8 +45,8 @@ func (cs Controls) AddControl(c Control) {
 // node at a given point in time.  Its is immutable. A zero-value for Timestamp
 // indicated this NodeControls is 'not set'.
 type NodeControls struct {
-	Timestamp time.Time `json:"timestamp"`
-	Controls  StringSet `json:"controls,omitempty"`
+	Timestamp time.Time
+	Controls  StringSet
 }
 
 // MakeNodeControls makes a new NodeControls
@@ -74,4 +76,33 @@ func (nc NodeControls) Add(ids ...string) NodeControls {
 		Timestamp: mtime.Now(),
 		Controls:  nc.Controls.Add(ids...),
 	}
+}
+
+// WireNodeControls is the intermediate type for json encoding.
+type WireNodeControls struct {
+	Timestamp string    `json:"timestamp,omitempty"`
+	Controls  StringSet `json:"controls,omitempty"`
+}
+
+// MarshalJSON implements json.Marshaller
+func (nc NodeControls) MarshalJSON() ([]byte, error) {
+	buf := bytes.Buffer{}
+	err := json.NewEncoder(&buf).Encode(WireNodeControls{
+		Timestamp: renderTime(nc.Timestamp),
+		Controls:  nc.Controls,
+	})
+	return buf.Bytes(), err
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (nc *NodeControls) UnmarshalJSON(input []byte) error {
+	in := WireNodeControls{}
+	if err := json.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
+		return err
+	}
+	*nc = NodeControls{
+		Timestamp: parseTime(in.Timestamp),
+		Controls:  in.Controls,
+	}
+	return nil
 }
