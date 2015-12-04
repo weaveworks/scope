@@ -23,11 +23,15 @@ func main() {
 	)
 	flag.Parse()
 
-	_, publisher, err := xfer.NewHTTPPublisher(*publish, *publish, "demoprobe", "demoprobe", false)
+	client, err := xfer.NewAppClient(xfer.ProbeConfig{
+		Token:    "demoprobe",
+		ProbeID:  "demoprobe",
+		Insecure: false,
+	}, *publish, *publish)
 	if err != nil {
 		log.Fatal(err)
 	}
-	rp := xfer.NewReportPublisher(publisher)
+	rp := xfer.NewReportPublisher(client)
 
 	rand.Seed(time.Now().UnixNano())
 	for range time.Tick(*publishInterval) {

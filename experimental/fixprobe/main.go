@@ -34,12 +34,16 @@ func main() {
 	}
 	f.Close()
 
-	_, publisher, err := xfer.NewHTTPPublisher(*publish, *publish, "fixprobe", "fixprobe", false)
+	client, err := xfer.NewAppClient(xfer.ProbeConfig{
+		Token:    "fixprobe",
+		ProbeID:  "fixprobe",
+		Insecure: false,
+	}, *publish, *publish)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rp := xfer.NewReportPublisher(publisher)
+	rp := xfer.NewReportPublisher(client)
 	for range time.Tick(*publishInterval) {
 		rp.Publish(fixedReport)
 	}
