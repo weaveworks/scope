@@ -70,6 +70,17 @@ func (m Metric) WithFirst(t time.Time) Metric {
 	}
 }
 
+// WithMax returns a fresh copy of m, with Max set to max
+func (m Metric) WithMax(max float64) Metric {
+	return Metric{
+		Samples: m.Samples,
+		Max:     max,
+		Min:     m.Min,
+		First:   m.First,
+		Last:    m.Last,
+	}
+}
+
 // Len returns the number of samples in the metric.
 func (m Metric) Len() int {
 	if m.Samples == nil {

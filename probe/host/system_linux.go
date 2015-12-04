@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	linuxproc "github.com/c9s/goprocinfo/linux"
+
 	"github.com/weaveworks/scope/report"
 )
 
@@ -24,12 +26,11 @@ var GetKernelVersion = func() (string, error) {
 }
 
 // GetLoad returns the current load averages as metrics.
-var GetLoad = func() report.Metrics {
+var GetLoad = func(now time.Time) report.Metrics {
 	buf, err := ioutil.ReadFile("/proc/loadavg")
 	if err != nil {
 		return nil
 	}
-	now := time.Now()
 	toks := strings.Fields(string(buf))
 	if len(toks) < 3 {
 		return nil
@@ -71,4 +72,43 @@ var GetUptime = func() (time.Duration, error) {
 	}
 
 	return time.Duration(uptime) * time.Second, nil
+}
+
+var previousStat = linuxproc.CPUStat{}
+
+// GetCPUUsagePercent returns the percent cpu usage and max (ie #cpus * 100)
+var GetCPUUsagePercent = func() (float64, float64) {
+	stat, err := linuxproc.ReadStat(ProcStat)
+	if err != nil {
+		return 0.0, 0.0
+	}
+
+	// From http://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux
+	var (
+		currentStat = stat.CPUStatAll
+		prevIdle    = previousStat.Idle + previousStat.IOWait
+		idle        = currentStat.Idle + currentStat.IOWait
+		prevNonIdle = (previousStat.User + previousStat.Nice + previousStat.System +
+			previousStat.IRQ + previousStat.SoftIRQ + previousStat.Steal)
+		nonIdle = (currentStat.User + currentStat.Nice + currentStat.System +
+			currentStat.IRQ + currentStat.SoftIRQ + currentStat.Steal)
+		prevTotal = prevIdle + prevNonIdle
+		total     = idle + nonIdle
+		// differentiate: actual value minus the previous one
+		totald = total - prevTotal
+		idled  = idle - prevIdle
+	)
+	previousStat = currentStat
+	return float64(totald-idled) * 100. / float64(totald), float64(len(stat.CPUStats)) * 100.
+}
+
+// GetMemoryUsagePercent returns the percent memory usage and max (ie 100)
+var GetMemoryUsagePercent = func() (float64, float64) {
+	meminfo, err := linuxproc.ReadMemInfo(ProcMemInfo)
+	if err != nil {
+		return 0.0, 0.0
+	}
+
+	used := meminfo.MemTotal - meminfo.MemFree - meminfo.Buffers - meminfo.Cached
+	return float64(used) * 100. / float64(meminfo.MemTotal), 100.
 }

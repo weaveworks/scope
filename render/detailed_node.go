@@ -346,7 +346,9 @@ func processOriginTable(nmd report.Node, addHostTag bool, addContainerTag bool) 
 	}, len(rows) > 0 || commFound || pidFound
 }
 
-func sparklineRow(human string, metric report.Metric, format func(report.Metric) (report.Metric, string)) Row {
+type formatter func(report.Metric) (report.Metric, string)
+
+func sparklineRow(human string, metric report.Metric, format formatter) Row {
 	if format == nil {
 		format = formatDefault
 	}
@@ -518,6 +520,17 @@ func hostOriginTable(nmd report.Node) (Table, bool) {
 		if val, ok := nmd.Metrics[tuple.key]; ok {
 			val.Max = maxLoad
 			rows = append(rows, sparklineRow(tuple.human, val, nil))
+		}
+	}
+	for _, tuple := range []struct {
+		key, human string
+		fmt        formatter
+	}{
+		{host.CPUUsage, "CPU Usage", formatPercent},
+		{host.MemUsage, "Memory Usage", formatPercent},
+	} {
+		if val, ok := nmd.Metrics[tuple.key]; ok {
+			rows = append(rows, sparklineRow(tuple.human, val, tuple.fmt))
 		}
 	}
 	for _, tuple := range []struct{ key, human string }{

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -18,13 +19,14 @@ func TestReporter(t *testing.T) {
 		version   = "version"
 		network   = "192.168.0.0/16"
 		hostID    = "hostid"
-		now       = "now"
 		hostname  = "hostname"
 		timestamp = time.Now()
 		load      = report.Metrics{
-			host.Load1:  report.MakeMetric().Add(timestamp, 1.0),
-			host.Load5:  report.MakeMetric().Add(timestamp, 5.0),
-			host.Load15: report.MakeMetric().Add(timestamp, 15.0),
+			host.Load1:    report.MakeMetric().Add(timestamp, 1.0),
+			host.Load5:    report.MakeMetric().Add(timestamp, 5.0),
+			host.Load15:   report.MakeMetric().Add(timestamp, 15.0),
+			host.CPUUsage: report.MakeMetric().Add(timestamp, 30.0).WithMax(100.0),
+			host.MemUsage: report.MakeMetric().Add(timestamp, 60.0).WithMax(100.0),
 		}
 		uptime      = "278h55m43s"
 		kernel      = "release version"
@@ -32,26 +34,32 @@ func TestReporter(t *testing.T) {
 		localNets   = report.Networks([]*net.IPNet{ipnet})
 	)
 
+	mtime.NowForce(timestamp)
+	defer mtime.NowReset()
+
 	var (
-		oldGetKernelVersion = host.GetKernelVersion
-		oldGetLoad          = host.GetLoad
-		oldGetUptime        = host.GetUptime
-		oldNow              = host.Now
+		oldGetKernelVersion      = host.GetKernelVersion
+		oldGetLoad               = host.GetLoad
+		oldGetUptime             = host.GetUptime
+		oldGetCPUUsagePercent    = host.GetCPUUsagePercent
+		oldGetMemoryUsagePercent = host.GetMemoryUsagePercent
 	)
 	defer func() {
 		host.GetKernelVersion = oldGetKernelVersion
 		host.GetLoad = oldGetLoad
 		host.GetUptime = oldGetUptime
-		host.Now = oldNow
+		host.GetCPUUsagePercent = oldGetCPUUsagePercent
+		host.GetMemoryUsagePercent = oldGetMemoryUsagePercent
 	}()
 	host.GetKernelVersion = func() (string, error) { return release + " " + version, nil }
-	host.GetLoad = func() report.Metrics { return load }
+	host.GetLoad = func(time.Time) report.Metrics { return load }
 	host.GetUptime = func() (time.Duration, error) { return time.ParseDuration(uptime) }
-	host.Now = func() string { return now }
+	host.GetCPUUsagePercent = func() (float64, float64) { return 30.0, 100.0 }
+	host.GetMemoryUsagePercent = func() (float64, float64) { return 60.0, 100.0 }
 
 	want := report.MakeReport()
 	want.Host.AddNode(report.MakeHostNodeID(hostID), report.MakeNodeWith(map[string]string{
-		host.Timestamp:     now,
+		host.Timestamp:     timestamp.UTC().Format(time.RFC3339Nano),
 		host.HostName:      hostname,
 		host.OS:            runtime.GOOS,
 		host.Uptime:        uptime,

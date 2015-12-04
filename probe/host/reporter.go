@@ -4,6 +4,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -18,17 +19,16 @@ const (
 	Load1         = "load1"
 	Load5         = "load5"
 	Load15        = "load15"
+	CPUUsage      = "cpu_usage_percent"
+	MemUsage      = "mem_usage_percent"
 )
 
 // Exposed for testing.
 const (
-	ProcUptime = "/proc/uptime"
-	ProcLoad   = "/proc/loadavg"
-)
-
-// Exposed for testing.
-var (
-	Now = func() string { return time.Now().UTC().Format(time.RFC3339Nano) }
+	ProcUptime  = "/proc/uptime"
+	ProcLoad    = "/proc/loadavg"
+	ProcStat    = "/proc/stat"
+	ProcMemInfo = "/proc/meminfo"
 )
 
 // Reporter generates Reports containing the host topology.
@@ -72,15 +72,22 @@ func (r *Reporter) Report() (report.Report, error) {
 		return rep, err
 	}
 
+	now := mtime.Now()
+	metrics := GetLoad(now)
+	cpuUsage, max := GetCPUUsagePercent()
+	metrics[CPUUsage] = report.MakeMetric().Add(now, cpuUsage).WithMax(max)
+	memUsage, max := GetMemoryUsagePercent()
+	metrics[MemUsage] = report.MakeMetric().Add(now, memUsage).WithMax(max)
+
 	rep.Host.AddNode(report.MakeHostNodeID(r.hostID), report.MakeNodeWith(map[string]string{
-		Timestamp:     Now(),
+		Timestamp:     mtime.Now().UTC().Format(time.RFC3339Nano),
 		HostName:      r.hostName,
 		OS:            runtime.GOOS,
 		KernelVersion: kernel,
 		Uptime:        uptime.String(),
 	}).WithSets(report.Sets{
 		LocalNetworks: report.MakeStringSet(localCIDRs...),
-	}).WithMetrics(GetLoad()))
+	}).WithMetrics(metrics))
 
 	return rep, nil
 }
