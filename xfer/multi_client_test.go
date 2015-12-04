@@ -1,6 +1,8 @@
 package xfer_test
 
 import (
+	"bytes"
+	"io"
 	"runtime"
 	"testing"
 
@@ -11,6 +13,7 @@ type mockClient struct {
 	id      string
 	count   int
 	stopped int
+	publish int
 }
 
 func (c *mockClient) Details() (xfer.Details, error) {
@@ -25,26 +28,33 @@ func (c *mockClient) Stop() {
 	c.stopped++
 }
 
+func (c *mockClient) Publish(io.Reader) error {
+	c.publish++
+	return nil
+}
+
+var (
+	a1      = &mockClient{id: "1"} // hostname a, app id 1
+	a2      = &mockClient{id: "2"} // hostname a, app id 2
+	b2      = &mockClient{id: "2"} // hostname b, app id 2 (duplicate)
+	b3      = &mockClient{id: "3"} // hostname b, app id 3
+	factory = func(_ xfer.ProbeConfig, hostname, target string) (xfer.AppClient, error) {
+		switch target {
+		case "a1":
+			return a1, nil
+		case "a2":
+			return a2, nil
+		case "b2":
+			return b2, nil
+		case "b3":
+			return b3, nil
+		}
+		panic(target)
+	}
+)
+
 func TestMultiClient(t *testing.T) {
 	var (
-		a1      = &mockClient{id: "1"} // hostname a, app id 1
-		a2      = &mockClient{id: "2"} // hostname a, app id 2
-		b2      = &mockClient{id: "2"} // hostname b, app id 2 (duplicate)
-		b3      = &mockClient{id: "3"} // hostname b, app id 3
-		factory = func(_ xfer.ProbeConfig, hostname, target string) (xfer.AppClient, error) {
-			switch target {
-			case "a1":
-				return a1, nil
-			case "a2":
-				return a2, nil
-			case "b2":
-				return b2, nil
-			case "b3":
-				return b3, nil
-			}
-			t.Fatal(target)
-			return a1, nil
-		}
 		controlHandler = xfer.ControlHandlerFunc(func(_ xfer.Request) xfer.Response {
 			return xfer.Response{}
 		})
@@ -75,4 +85,23 @@ func TestMultiClient(t *testing.T) {
 	// Now check we remove apps
 	mp.Set("b", []string{})
 	expect(b3.stopped, 1)
+}
+
+func TestMultiClientPublish(t *testing.T) {
+	mp := xfer.NewMultiAppClient(xfer.ProbeConfig{}, nil, factory)
+	defer mp.Stop()
+
+	sum := func() int { return a1.publish + a2.publish + b2.publish + b3.publish }
+
+	mp.Set("a", []string{"a1", "a2"})
+	mp.Set("b", []string{"b2", "b3"})
+
+	for i := 1; i < 10; i++ {
+		if err := mp.Publish(&bytes.Buffer{}); err != nil {
+			t.Error(err)
+		}
+		if want, have := 3*i, sum(); want != have {
+			t.Errorf("want %d, have %d", want, have)
+		}
+	}
 }

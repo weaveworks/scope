@@ -2,6 +2,8 @@ package xfer
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/rpc"
@@ -11,6 +13,11 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/weaveworks/scope/common/sanitize"
+)
+
+const (
+	initialBackoff = 1 * time.Second
+	maxBackoff     = 60 * time.Second
 )
 
 // Details are some generic details that can be fetched from /api
@@ -23,6 +30,7 @@ type Details struct {
 type AppClient interface {
 	Details() (Details, error)
 	ControlConnection(handler ControlHandler)
+	Publish(r io.Reader) error
 	Stop()
 }
 
@@ -34,6 +42,11 @@ type appClient struct {
 	insecure bool
 	client   http.Client
 
+	// For publish
+	publishLoop sync.Once
+	readers     chan io.Reader
+
+	// For controls
 	controlServerCodecMtx sync.Mutex
 	controlServerCodec    rpc.ServerCodec
 }
@@ -45,20 +58,24 @@ func NewAppClient(pc ProbeConfig, hostname, target string) (AppClient, error) {
 		return nil, err
 	}
 
-	return &appClient{
+	appClient := &appClient{
 		ProbeConfig: pc,
 		quit:        make(chan struct{}),
+		readers:     make(chan io.Reader),
 		target:      target,
 		client: http.Client{
 			Transport: httpTransport,
 		},
-	}, nil
+	}
+
+	return appClient, nil
 }
 
 // Stop stops the appClient.
 func (c *appClient) Stop() {
 	c.controlServerCodecMtx.Lock()
 	defer c.controlServerCodecMtx.Unlock()
+	close(c.readers)
 	close(c.quit)
 	if c.controlServerCodec != nil {
 		c.controlServerCodec.Close()
@@ -79,6 +96,32 @@ func (c *appClient) Details() (Details, error) {
 	}
 	defer resp.Body.Close()
 	return result, json.NewDecoder(resp.Body).Decode(&result)
+}
+
+func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
+	backoff := initialBackoff
+
+	for {
+		again, err := f()
+		if !again {
+			return
+		}
+		if err == nil {
+			backoff = initialBackoff
+			continue
+		}
+
+		log.Printf("Error doing %s for %s, backing off %s: %v", msg, c.target, backoff, err)
+		select {
+		case <-time.After(backoff):
+		case <-c.quit:
+			return
+		}
+		backoff *= 2
+		if backoff > maxBackoff {
+			backoff = maxBackoff
+		}
+	}
 }
 
 func (c *appClient) controlConnection(handler ControlHandler) error {
@@ -122,30 +165,58 @@ func (c *appClient) controlConnection(handler ControlHandler) error {
 	return nil
 }
 
-func (c *appClient) controlConnectionLoop(handler ControlHandler) {
-	defer log.Printf("Control connection to %s exiting", c.target)
-	backoff := initialBackoff
-
-	for {
-		err := c.controlConnection(handler)
-		if err == nil {
-			backoff = initialBackoff
-			continue
-		}
-
-		log.Printf("Error doing controls for %s, backing off %s: %v", c.target, backoff, err)
-		select {
-		case <-time.After(backoff):
-		case <-c.quit:
-			return
-		}
-		backoff *= 2
-		if backoff > maxBackoff {
-			backoff = maxBackoff
-		}
-	}
+func (c *appClient) ControlConnection(handler ControlHandler) {
+	go func() {
+		log.Printf("Control connection to %s starting", c.target)
+		defer log.Printf("Control connection to %s exiting", c.target)
+		c.doWithBackoff("controls", func() (bool, error) {
+			return true, c.controlConnection(handler)
+		})
+	}()
 }
 
-func (c *appClient) ControlConnection(handler ControlHandler) {
-	go c.controlConnectionLoop(handler)
+func (c *appClient) publish(r io.Reader) error {
+	url := sanitize.URL("", 0, "/api/report")(c.target)
+	req, err := c.ProbeConfig.authorizedRequest("POST", url, r)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Encoding", "gzip")
+	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf(resp.Status)
+	}
+	return nil
+}
+
+func (c *appClient) startPublishing() {
+	go func() {
+		log.Printf("Publish loop for %s starting", c.target)
+		defer log.Printf("Publish loop for %s exiting", c.target)
+		c.doWithBackoff("publish", func() (bool, error) {
+			r := <-c.readers
+			if r == nil {
+				return false, nil
+			}
+			return true, c.publish(r)
+		})
+	}()
+}
+
+// Publish implements Publisher
+func (c *appClient) Publish(r io.Reader) error {
+	// Lazily start the background publishing loop.
+	c.publishLoop.Do(c.startPublishing)
+	select {
+	case c.readers <- r:
+	default:
+	}
+	return nil
 }

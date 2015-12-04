@@ -1,10 +1,10 @@
-package xfer_test
+package xfer
 
 import (
 	"compress/gzip"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -16,10 +16,17 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/xfer"
 )
 
-func TestHTTPPublisher(t *testing.T) {
+type publisherFunc func(io.Reader) error
+
+func (p publisherFunc) Publish(r io.Reader) error {
+	return p(r)
+}
+
+func (publisherFunc) Stop() {}
+
+func TestAppClientPublish(t *testing.T) {
 	var (
 		token = "abcdefg"
 		id    = "1234567"
@@ -32,13 +39,8 @@ func TestHTTPPublisher(t *testing.T) {
 			t.Errorf("want %q, have %q", want, have)
 		}
 
-		if want, have := id, r.Header.Get(xfer.ScopeProbeIDHeader); want != have {
+		if want, have := id, r.Header.Get(ScopeProbeIDHeader); want != have {
 			t.Errorf("want %q, have %q", want, have)
-		}
-
-		if r.URL.Path == "/api" {
-			_ = json.NewEncoder(w).Encode(map[string]string{"id": "irrelevant"})
-			return
 		}
 
 		var have report.Report
@@ -73,18 +75,26 @@ func TestHTTPPublisher(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, p, err := xfer.NewHTTPPublisher(u.Host, s.URL, token, id, false)
+
+	pc := ProbeConfig{
+		Token:    token,
+		ProbeID:  id,
+		Insecure: false,
+	}
+
+	p, err := NewAppClient(pc, u.Host, s.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rp := xfer.NewReportPublisher(p)
+	defer p.Stop()
+	rp := NewReportPublisher(publisherFunc(p.(*appClient).publish))
 	if err := rp.Publish(rpt); err != nil {
 		t.Error(err)
 	}
 
 	select {
 	case <-done:
-	case <-time.After(time.Millisecond):
+	case <-time.After(100 * time.Millisecond):
 		t.Error("timeout")
 	}
 }
