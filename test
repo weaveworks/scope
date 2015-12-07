@@ -50,7 +50,8 @@ TESTDIRS=$(find . -type f -name '*_test.go' | xargs -n1 dirname | grep -vE '^\./
 
 # If running on circle, use the scheduler to work out what tests to run on what shard
 if [ -n "$CIRCLECI" -a -z "$NO_SCHEDULER" -a -x "$DIR/sched" ]; then
-    TESTDIRS=$(echo $TESTDIRS | "$DIR/sched" sched units-$CIRCLE_BUILD_NUM $CIRCLE_NODE_TOTAL $CIRCLE_NODE_INDEX)
+    PREFIX=$(go list -e ./ | sed -e 's/\//-/g')
+    TESTDIRS=$(echo $TESTDIRS | "$DIR/sched" sched $PREFIX-$CIRCLE_BUILD_NUM $CIRCLE_NODE_TOTAL $CIRCLE_NODE_INDEX)
     echo $TESTDIRS
 fi
 
