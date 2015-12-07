@@ -1,11 +1,18 @@
 package xfer
 
 import (
+	"bytes"
+	"errors"
+	"io"
+	"io/ioutil"
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/weaveworks/scope/report"
 )
+
+const maxConcurrentGET = 10
 
 // ClientFactory is a thing thats makes AppClients
 type ClientFactory func(ProbeConfig, string, string) (AppClient, error)
@@ -33,6 +40,7 @@ type clientTuple struct {
 type MultiAppClient interface {
 	Set(hostname string, endpoints []string)
 	Stop()
+	Publish(io.Reader) error
 }
 
 // NewMultiAppClient creates a new MultiAppClient.
@@ -116,3 +124,39 @@ func (c *multiClient) Stop() {
 	c.clients = map[string]AppClient{}
 	close(c.quit)
 }
+
+// Publish implements Publisher by publishing the reader to all of the
+// underlying publishers sequentially. To do that, it needs to drain the
+// reader, and recreate new readers for each publisher. Note that it will
+// publish to one endpoint for each unique ID. Failed publishes don't count.
+func (c *multiClient) Publish(r io.Reader) error {
+	buf, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	errs := []string{}
+	for _, c := range c.clients {
+		if err := c.Publish(bytes.NewReader(buf)); err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "; "))
+	}
+	return nil
+}
+
+type semaphore chan struct{}
+
+func newSemaphore(n int) semaphore {
+	c := make(chan struct{}, n)
+	for i := 0; i < n; i++ {
+		c <- struct{}{}
+	}
+	return semaphore(c)
+}
+func (s semaphore) acquire() { <-s }
+func (s semaphore) release() { s <- struct{}{} }

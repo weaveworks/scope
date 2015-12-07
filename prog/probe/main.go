@@ -101,17 +101,6 @@ func main() {
 	}
 	log.Printf("publishing to: %s", strings.Join(targets, ", "))
 
-	factory := func(hostname, endpoint string) (string, xfer.Publisher, error) {
-		id, publisher, err := xfer.NewHTTPPublisher(hostname, endpoint, *token, probeID, *insecure)
-		if err != nil {
-			return "", nil, err
-		}
-		return id, xfer.NewBackgroundPublisher(publisher), nil
-	}
-
-	publishers := xfer.NewMultiPublisher(factory)
-	defer publishers.Stop()
-
 	clients := xfer.NewMultiAppClient(xfer.ProbeConfig{
 		Token:    *token,
 		ProbeID:  probeID,
@@ -119,14 +108,14 @@ func main() {
 	}, xfer.ControlHandlerFunc(controls.HandleControlRequest), xfer.NewAppClient)
 	defer clients.Stop()
 
-	resolver := xfer.NewStaticResolver(targets, publishers.Set, clients.Set)
+	resolver := xfer.NewStaticResolver(targets, clients.Set)
 	defer resolver.Stop()
 
 	endpointReporter := endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack)
 	defer endpointReporter.Stop()
 
 	processCache := process.NewCachingWalker(process.NewWalker(*procRoot))
-	p := probe.New(*spyInterval, *publishInterval, publishers)
+	p := probe.New(*spyInterval, *publishInterval, clients)
 	p.AddTicker(processCache)
 	p.AddReporter(
 		endpointReporter,
