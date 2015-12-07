@@ -14,27 +14,17 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/weaveworks/weave/common"
 
+	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/xfer"
 )
 
-var (
-	// Set at buildtime.
-	version = "dev"
-
-	// Set at runtime.
-	uniqueID = "0"
-)
-
-func registerStatic(router *mux.Router) {
-	router.Methods("GET").PathPrefix("/").Handler(http.FileServer(FS(false)))
-}
-
 // Router creates the mux for all the various app components.
-func Router(c collector) *mux.Router {
+func Router(c app.Collector) *mux.Router {
 	router := mux.NewRouter()
-	registerTopologyRoutes(c, router)
-	registerControlRoutes(router)
-	registerStatic(router)
+	app.RegisterTopologyRoutes(c, router)
+	app.RegisterReportPostHandler(c, router)
+	app.RegisterControlRoutes(router)
+	router.Methods("GET").PathPrefix("/").Handler(http.FileServer(FS(false)))
 	return router
 }
 
@@ -48,7 +38,7 @@ func main() {
 	flag.Parse()
 
 	if *printVersion {
-		fmt.Println(version)
+		fmt.Println(app.Version)
 		return
 	}
 
@@ -60,11 +50,9 @@ func main() {
 	defer log.Print("app exiting")
 
 	rand.Seed(time.Now().UnixNano())
-	uniqueID = strconv.FormatInt(rand.Int63(), 16)
-	log.Printf("app starting, version %s, ID %s", version, uniqueID)
-
-	c := NewCollector(*window)
-	http.Handle("/", Router(c))
+	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
+	log.Printf("app starting, version %s, ID %s", app.Version, app.UniqueID)
+	http.Handle("/", Router(app.NewCollector(*window)))
 	go func() {
 		log.Printf("listening on %s", *listen)
 		log.Print(http.ListenAndServe(*listen, nil))

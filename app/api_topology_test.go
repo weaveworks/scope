@@ -1,15 +1,15 @@
-package main
+package app_test
 
 import (
 	"encoding/json"
 	"fmt"
-	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"testing"
 
 	"github.com/gorilla/websocket"
 
+	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/report"
@@ -18,25 +18,25 @@ import (
 )
 
 func TestAll(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
+	ts := topologyServer()
 	defer ts.Close()
 
 	body := getRawJSON(t, ts, "/api/topology")
-	var topologies []APITopologyDesc
+	var topologies []app.APITopologyDesc
 	if err := json.Unmarshal(body, &topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
 
 	getTopology := func(topologyURL string) {
 		body := getRawJSON(t, ts, topologyURL)
-		var topology APITopology
+		var topology app.APITopology
 		if err := json.Unmarshal(body, &topology); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
 
 		for _, node := range topology.Nodes {
 			body := getRawJSON(t, ts, fmt.Sprintf("%s/%s", topologyURL, url.QueryEscape(node.ID)))
-			var node APINode
+			var node app.APINode
 			if err := json.Unmarshal(body, &node); err != nil {
 				t.Fatalf("JSON parse error: %s", err)
 			}
@@ -53,10 +53,10 @@ func TestAll(t *testing.T) {
 }
 
 func TestAPITopologyContainers(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
+	ts := topologyServer()
 	{
 		body := getRawJSON(t, ts, "/api/topology/containers")
-		var topo APITopology
+		var topo app.APITopology
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatal(err)
 		}
@@ -73,12 +73,12 @@ func TestAPITopologyContainers(t *testing.T) {
 }
 
 func TestAPITopologyApplications(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
+	ts := topologyServer()
 	defer ts.Close()
 	is404(t, ts, "/api/topology/applications/foobar")
 	{
 		body := getRawJSON(t, ts, "/api/topology/applications/"+expected.ServerProcessID)
-		var node APINode
+		var node app.APINode
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatal(err)
 		}
@@ -90,7 +90,7 @@ func TestAPITopologyApplications(t *testing.T) {
 	}
 	{
 		body := getRawJSON(t, ts, fmt.Sprintf("/api/topology/applications/%s/%s", expected.ClientProcess1ID, expected.ServerProcessID))
-		var edge APIEdge
+		var edge app.APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
@@ -104,12 +104,12 @@ func TestAPITopologyApplications(t *testing.T) {
 }
 
 func TestAPITopologyHosts(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
+	ts := topologyServer()
 	defer ts.Close()
 	is404(t, ts, "/api/topology/hosts/foobar")
 	{
 		body := getRawJSON(t, ts, "/api/topology/hosts")
-		var topo APITopology
+		var topo app.APITopology
 		if err := json.Unmarshal(body, &topo); err != nil {
 			t.Fatal(err)
 		}
@@ -120,7 +120,7 @@ func TestAPITopologyHosts(t *testing.T) {
 	}
 	{
 		body := getRawJSON(t, ts, "/api/topology/hosts/"+expected.ServerHostRenderedID)
-		var node APINode
+		var node app.APINode
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatal(err)
 		}
@@ -132,7 +132,7 @@ func TestAPITopologyHosts(t *testing.T) {
 	}
 	{
 		body := getRawJSON(t, ts, fmt.Sprintf("/api/topology/hosts/%s/%s", expected.ClientHostRenderedID, expected.ServerHostRenderedID))
-		var edge APIEdge
+		var edge app.APIEdge
 		if err := json.Unmarshal(body, &edge); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
@@ -146,7 +146,7 @@ func TestAPITopologyHosts(t *testing.T) {
 
 // Basic websocket test
 func TestAPITopologyWebsocket(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
+	ts := topologyServer()
 	defer ts.Close()
 	url := "/api/topology/applications/ws"
 

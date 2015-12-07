@@ -192,16 +192,14 @@ Kubernetes-specific views "Pods", and "Pods by Service".
 
 ## <a name="developing"></a>Developing
 
-The build is in five stages. `make deps` installs some tools we use later in
-the build. `make frontend` builds a UI build image with all NPM dependencies.
-`make static` compiles the UI into `static.go` which is part of the repository
-for convenience. The final `make` builds the app and probe, in a container,
-and pushes the lot into a Docker image called **weaveworks/scope**.
+The build is in two stages. `make deps` installs some tools we use later in
+the build. `make` builds the UI build container, builds the UI in said
+container, builds the backend build container, builds the app and probe in a
+said container, and finally pushes the lot into a Docker image called
+**weaveworks/scope**.
 
 ```
 make deps
-make frontend
-make static
 make
 ```
 

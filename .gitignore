@@ -34,8 +34,8 @@ coverage.html
 .*.uptodate
 scope.tar
 scope_ui_build.tar
-app/app
-app/scope-app
+prog/app/app
+prog/app/scope-app
 prog/probe/probe
 prog/probe/scope-probe
 docker/scope-app
@@ -54,3 +54,5 @@ experimental/_integration/_integration
 *sublime-project
 *sublime-workspace
 *npm-debug.log
+app/static.go
+prog/app/static.go

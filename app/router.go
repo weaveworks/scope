@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"compress/gzip"
@@ -14,6 +14,14 @@ import (
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/xfer"
+)
+
+var (
+	// Version - set at buildtime.
+	Version = "dev"
+
+	// UniqueID - set at runtime.
+	UniqueID = "0"
 )
 
 // URLMatcher uses request.RequestURI (the raw, unparsed request) to attempt
@@ -47,16 +55,12 @@ func URLMatcher(pattern string) mux.MatcherFunc {
 	}
 }
 
-type collector interface {
-	Reporter
-	Adder
-}
-
 func gzipHandler(h http.HandlerFunc) http.HandlerFunc {
 	return handlers.GZIPHandlerFunc(h, nil)
 }
 
-func registerTopologyRoutes(c collector, router *mux.Router) {
+// RegisterTopologyRoutes registers the various topology routes with a http mux.
+func RegisterTopologyRoutes(c Reporter, router *mux.Router) {
 	get := router.Methods("GET").Subrouter()
 	get.HandleFunc("/api", gzipHandler(apiHandler))
 	get.HandleFunc("/api/topology", gzipHandler(topologyRegistry.makeTopologyList(c)))
@@ -69,13 +73,12 @@ func registerTopologyRoutes(c collector, router *mux.Router) {
 	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{local}/{remote}")).HandlerFunc(
 		gzipHandler(topologyRegistry.captureRenderer(c, handleEdge)))
 	get.HandleFunc("/api/report", gzipHandler(makeRawReportHandler(c)))
-
-	post := router.Methods("POST").Subrouter()
-	post.HandleFunc("/api/report", makeReportPostHandler(c)).Methods("POST")
 }
 
-func makeReportPostHandler(a Adder) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// RegisterReportPostHandler registers the handler for report submission
+func RegisterReportPostHandler(a Adder, router *mux.Router) {
+	post := router.Methods("POST").Subrouter()
+	post.HandleFunc("/api/report", func(w http.ResponseWriter, r *http.Request) {
 		var (
 			rpt    report.Report
 			reader = r.Body
@@ -102,13 +105,13 @@ func makeReportPostHandler(a Adder) http.HandlerFunc {
 			topologyRegistry.enableKubernetesTopologies()
 		}
 		w.WriteHeader(http.StatusOK)
-	}
+	})
 }
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, xfer.Details{
-		ID:       uniqueID,
-		Version:  version,
+		ID:       UniqueID,
+		Version:  Version,
 		Hostname: hostname.Get(),
 	})
 }

@@ -1,4 +1,4 @@
-package main
+package app_test
 
 import (
 	"bytes"
@@ -6,21 +6,24 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/gorilla/mux"
 	"k8s.io/kubernetes/pkg/api"
 
+	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/fixture"
 )
 
 func TestAPITopology(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
+	ts := topologyServer()
 	defer ts.Close()
 
 	body := getRawJSON(t, ts, "/api/topology")
 
-	var topologies []APITopologyDesc
+	var topologies []app.APITopologyDesc
 	if err := json.Unmarshal(body, &topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
@@ -48,12 +51,16 @@ func TestAPITopology(t *testing.T) {
 }
 
 func TestAPITopologyAddsKubernetes(t *testing.T) {
-	ts := httptest.NewServer(Router(StaticReport{}))
+	router := mux.NewRouter()
+	c := app.NewCollector(1 * time.Minute)
+	app.RegisterTopologyRoutes(c, router)
+	app.RegisterReportPostHandler(c, router)
+	ts := httptest.NewServer(router)
 	defer ts.Close()
 
 	body := getRawJSON(t, ts, "/api/topology")
 
-	var topologies []APITopologyDesc
+	var topologies []app.APITopologyDesc
 	if err := json.Unmarshal(body, &topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
