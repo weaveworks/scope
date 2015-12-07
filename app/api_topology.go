@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
 )
 
 const (
@@ -24,11 +23,6 @@ type APITopology struct {
 // APINode is returned by the /api/topology/{name}/{id} handler.
 type APINode struct {
 	Node render.DetailedNode `json:"node"`
-}
-
-// APIEdge is returned by the /api/topology/*/*/* handlers.
-type APIEdge struct {
-	Metadata report.EdgeMetadata `json:"metadata"`
 }
 
 // Full topology.
@@ -68,19 +62,6 @@ func handleNode(rep Reporter, renderer render.Renderer, w http.ResponseWriter, r
 		return
 	}
 	respondWith(w, http.StatusOK, APINode{Node: render.MakeDetailedNode(rpt, node)})
-}
-
-// Individual edges.
-func handleEdge(rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
-	var (
-		vars     = mux.Vars(r)
-		localID  = vars["local"]
-		remoteID = vars["remote"]
-		rpt      = rep.Report()
-		metadata = renderer.EdgeMetadata(rpt, localID, remoteID)
-	)
-
-	respondWith(w, http.StatusOK, APIEdge{Metadata: metadata})
 }
 
 var upgrader = websocket.Upgrader{
