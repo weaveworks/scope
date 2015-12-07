@@ -13,22 +13,6 @@ func (t TopologySelector) Render(r report.Report) RenderableNodes {
 	return t(r)
 }
 
-// EdgeMetadata implements Renderer
-func (t TopologySelector) EdgeMetadata(rpt report.Report, srcID, dstID string) report.EdgeMetadata {
-	var (
-		nodes    = t(rpt)
-		metadata = report.EdgeMetadata{}
-	)
-	for src, node := range nodes {
-		for dst, edgeMeta := range node.Edges {
-			if src == srcID && dst == dstID {
-				return edgeMeta
-			}
-		}
-	}
-	return metadata
-}
-
 // Stats implements Renderer
 func (t TopologySelector) Stats(r report.Report) Stats {
 	return Stats{}
