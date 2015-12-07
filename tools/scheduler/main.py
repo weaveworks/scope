@@ -96,7 +96,7 @@ def gc():
     headers={'Accept': 'application/json'})
   assert result.status_code == 200
   builds = json.loads(result.content)
-  running = {build['build_num'] for build in builds if build['status'] == 'running'}
+  running = {build['build_num'] for build in builds if not build.get('stop_time')}
   logging.info("Runnings builds: %r", running)
 
   # Stop VMs for builds that aren't running
