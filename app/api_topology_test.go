@@ -12,7 +12,6 @@ import (
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
-	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 )
@@ -88,19 +87,6 @@ func TestAPITopologyApplications(t *testing.T) {
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables
 	}
-	{
-		body := getRawJSON(t, ts, fmt.Sprintf("/api/topology/applications/%s/%s", expected.ClientProcess1ID, expected.ServerProcessID))
-		var edge app.APIEdge
-		if err := json.Unmarshal(body, &edge); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
-		}
-		if want, have := (report.EdgeMetadata{
-			EgressPacketCount: newu64(10),
-			EgressByteCount:   newu64(100),
-		}), edge.Metadata; !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
-		}
-	}
 }
 
 func TestAPITopologyHosts(t *testing.T) {
@@ -129,18 +115,6 @@ func TestAPITopologyHosts(t *testing.T) {
 		equals(t, "hostname.com", node.Node.LabelMinor)
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables
-	}
-	{
-		body := getRawJSON(t, ts, fmt.Sprintf("/api/topology/hosts/%s/%s", expected.ClientHostRenderedID, expected.ServerHostRenderedID))
-		var edge app.APIEdge
-		if err := json.Unmarshal(body, &edge); err != nil {
-			t.Fatalf("JSON parse error: %s", err)
-		}
-		if want, have := (report.EdgeMetadata{
-			MaxConnCountTCP: newu64(3),
-		}), edge.Metadata; !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
-		}
 	}
 }
 

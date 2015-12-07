@@ -70,8 +70,6 @@ func RegisterTopologyRoutes(c Reporter, router *mux.Router) {
 		topologyRegistry.captureRenderer(c, handleWs)) // NB not gzip!
 	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).HandlerFunc(
 		gzipHandler(topologyRegistry.captureRendererWithoutFilters(c, handleNode)))
-	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{local}/{remote}")).HandlerFunc(
-		gzipHandler(topologyRegistry.captureRenderer(c, handleEdge)))
 	get.HandleFunc("/api/report", gzipHandler(makeRawReportHandler(c)))
 }
 
