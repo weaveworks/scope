@@ -23,13 +23,15 @@ var (
 // nodes that have a PID.
 type Tagger struct {
 	registry   Registry
+	hostID     string
 	procWalker process.Walker
 }
 
 // NewTagger returns a usable Tagger.
-func NewTagger(registry Registry, procWalker process.Walker) *Tagger {
+func NewTagger(registry Registry, hostID string, procWalker process.Walker) *Tagger {
 	return &Tagger{
 		registry:   registry,
+		hostID:     hostID,
 		procWalker: procWalker,
 	}
 }
@@ -84,6 +86,9 @@ func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 
 		topology.AddNode(nodeID, report.MakeNodeWith(map[string]string{
 			ContainerID: c.ID(),
+		}).WithParents(report.Sets{
+			"container":       report.MakeStringSet(report.MakeContainerNodeID(c.ID())),
+			"container_image": report.MakeStringSet(report.MakeContainerImageNodeID(t.hostID, c.Image())),
 		}))
 	}
 }

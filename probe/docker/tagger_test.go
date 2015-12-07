@@ -38,7 +38,12 @@ func TestTagger(t *testing.T) {
 	var (
 		pid1NodeID = report.MakeProcessNodeID("somehost.com", "2")
 		pid2NodeID = report.MakeProcessNodeID("somehost.com", "3")
-		wantNode   = report.MakeNodeWith(map[string]string{docker.ContainerID: "ping"})
+		wantNode   = report.MakeNodeWith(map[string]string{
+			docker.ContainerID: "ping",
+		}).WithParents(report.Sets{
+			"container":       report.MakeStringSet(report.MakeContainerNodeID("ping")),
+			"container_image": report.MakeStringSet(report.MakeContainerImageNodeID("somehost.com", "baz")),
+		})
 	)
 
 	input := report.MakeReport()
@@ -49,7 +54,7 @@ func TestTagger(t *testing.T) {
 	want.Process.AddNode(pid1NodeID, report.MakeNodeWith(map[string]string{process.PID: "2"}).Merge(wantNode))
 	want.Process.AddNode(pid2NodeID, report.MakeNodeWith(map[string]string{process.PID: "3"}).Merge(wantNode))
 
-	tagger := docker.NewTagger(mockRegistryInstance, nil)
+	tagger := docker.NewTagger(mockRegistryInstance, "somehost.com", nil)
 	have, err := tagger.Tag(input)
 	if err != nil {
 		t.Errorf("%v", err)

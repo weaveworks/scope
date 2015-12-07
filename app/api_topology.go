@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/render/detailed"
 )
 
 const (
@@ -21,7 +22,7 @@ type APITopology struct {
 
 // APINode is returned by the /api/topology/{name}/{id} handler.
 type APINode struct {
-	Node render.DetailedNode `json:"node"`
+	Node detailed.Node `json:"node"`
 }
 
 // Full topology.
@@ -59,7 +60,7 @@ func handleNode(nodeID string) func(Reporter, render.Renderer, http.ResponseWrit
 			http.NotFound(w, r)
 			return
 		}
-		respondWith(w, http.StatusOK, APINode{Node: render.MakeDetailedNode(rpt, node)})
+		respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(rpt, node)})
 	}
 }
 

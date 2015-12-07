@@ -49,7 +49,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 		if !ok {
 			continue
 		}
-		container, ok := containers[containerID]
+		container, ok := containers[MakeContainerID(containerID)]
 		if !ok {
 			continue
 		}
@@ -86,15 +86,10 @@ var ContainerRenderer = MakeReduce(
 			_, isConnected := n.Node.Metadata[IsConnected]
 			return inContainer || isConnected
 		},
-		Renderer: ColorConnected(Map{
+		Renderer: Map{
 			MapFunc:  MapProcess2Container,
-			Renderer: ProcessRenderer,
-		}),
-	},
-
-	Map{
-		MapFunc:  MapContainerIdentity,
-		Renderer: SelectContainer,
+			Renderer: ColorConnected(ProcessRenderer),
+		},
 	},
 
 	// This mapper brings in short lived connections by joining with container IPs.
@@ -114,6 +109,11 @@ var ContainerRenderer = MakeReduce(
 			},
 		),
 	}),
+
+	Map{
+		MapFunc:  MapContainerIdentity,
+		Renderer: SelectContainer,
+	},
 )
 
 type containerWithImageNameRenderer struct {
@@ -135,11 +135,11 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 		if !ok {
 			continue
 		}
-		image, ok := images[imageID]
+		image, ok := images[MakeContainerImageID(imageID)]
 		if !ok {
 			continue
 		}
-		c.Rank = imageNameWithoutVersion(image.LabelMajor)
+		c.Rank = ImageNameWithoutVersion(image.LabelMajor)
 		c.Metadata = image.Metadata.Merge(c.Metadata)
 		containers[id] = c
 	}
@@ -191,7 +191,25 @@ var AddressRenderer = Map{
 // graph from the host topology and address graph.
 var HostRenderer = MakeReduce(
 	Map{
-		MapFunc:  MapAddress2Host,
+		MapFunc: MapX2Host,
+		Renderer: Map{
+			MapFunc:  MapContainerImageIdentity,
+			Renderer: SelectContainerImage,
+		},
+	},
+	Map{
+		MapFunc:  MapX2Host,
+		Renderer: FilterPseudo(ContainerRenderer),
+	},
+	Map{
+		MapFunc: MapX2Host,
+		Renderer: Map{
+			MapFunc:  MapPodIdentity,
+			Renderer: SelectPod,
+		},
+	},
+	Map{
+		MapFunc:  MapX2Host,
 		Renderer: AddressRenderer,
 	},
 	Map{
@@ -206,12 +224,12 @@ var PodRenderer = Map{
 	MapFunc: MapCountContainers,
 	Renderer: MakeReduce(
 		Map{
-			MapFunc:  MapPodIdentity,
-			Renderer: SelectPod,
-		},
-		Map{
 			MapFunc:  MapContainer2Pod,
 			Renderer: ContainerRenderer,
+		},
+		Map{
+			MapFunc:  MapPodIdentity,
+			Renderer: SelectPod,
 		},
 	),
 }

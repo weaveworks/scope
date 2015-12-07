@@ -48,7 +48,7 @@ func TestFilterRender2(t *testing.T) {
 	}
 }
 
-func TestFilterUnconnectedPesudoNodes(t *testing.T) {
+func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 	// Test pseudo nodes that are made unconnected by filtering
 	// are also removed.
 	{
@@ -117,6 +117,24 @@ func TestFilterUnconnectedSelf(t *testing.T) {
 		}
 		renderer := render.FilterUnconnected(mockRenderer{RenderableNodes: nodes})
 		want := render.RenderableNodes{}
+		have := renderer.Render(report.MakeReport()).Prune()
+		if !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
+		}
+	}
+}
+
+func TestFilterPseudo(t *testing.T) {
+	// Test pseudonodes are removed
+	{
+		nodes := render.RenderableNodes{
+			"foo": {ID: "foo", Node: report.MakeNode()},
+			"bar": {ID: "bar", Pseudo: true, Node: report.MakeNode()},
+		}
+		renderer := render.FilterPseudo(mockRenderer{RenderableNodes: nodes})
+		want := render.RenderableNodes{
+			"foo": {ID: "foo", Node: report.MakeNode()},
+		}
 		have := renderer.Render(report.MakeReport()).Prune()
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))

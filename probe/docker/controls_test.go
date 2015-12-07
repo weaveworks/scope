@@ -30,7 +30,7 @@ func TestControls(t *testing.T) {
 		} {
 			result := controls.HandleControlRequest(xfer.Request{
 				Control: tc.command,
-				NodeID:  report.MakeContainerNodeID("", "a1b2c3d4e5"),
+				NodeID:  report.MakeContainerNodeID("a1b2c3d4e5"),
 			})
 			if !reflect.DeepEqual(result, xfer.Response{
 				Error: tc.result,
@@ -72,7 +72,7 @@ func TestPipes(t *testing.T) {
 		} {
 			result := controls.HandleControlRequest(xfer.Request{
 				Control: tc,
-				NodeID:  report.MakeContainerNodeID("", "ping"),
+				NodeID:  report.MakeContainerNodeID("ping"),
 			})
 			want := xfer.Response{
 				Pipe:   "pipeid",

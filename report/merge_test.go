@@ -193,7 +193,30 @@ func TestMergeNodes(t *testing.T) {
 				}),
 			},
 		},
-		"Merge conflict": {
+		"Merge conflict with rank difference": {
+			a: report.Nodes{
+				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+					PID:    "23128",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
+			},
+			b: report.Nodes{
+				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{ // <-- same ID
+					PID:    "0",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
+			},
+			want: report.Nodes{
+				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+					PID:    "23128",
+					Name:   "curl",
+					Domain: "node-a.local",
+				}),
+			},
+		},
+		"Merge conflict with no rank difference": {
 			a: report.Nodes{
 				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
 					PID:    "23128",

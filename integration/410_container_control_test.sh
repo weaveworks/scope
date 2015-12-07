@@ -14,7 +14,7 @@ wait_for_containers $HOST1 60 alpine
 assert "docker_on $HOST1 inspect --format='{{.State.Running}}' alpine" "true"
 PROBEID=$(docker_on $HOST1 logs weavescope 2>&1 | grep "probe starting" | sed -n 's/^.*ID \([0-9a-f]*\)$/\1/p')
 HOSTID=$(echo $HOST1 | cut -d"." -f1)
-assert_raises "curl -f -X POST  'http://$HOST1:4040/api/control/$PROBEID/$HOSTID;$CID/docker_stop_container'"
+assert_raises "curl -f -X POST  'http://$HOST1:4040/api/control/$PROBEID/$CID;<container>/docker_stop_container'"
 
 sleep 5
 assert "docker_on $HOST1 inspect --format='{{.State.Running}}' alpine" "false"

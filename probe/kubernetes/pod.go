@@ -84,5 +84,14 @@ func (p *pod) GetNode() report.Node {
 	if len(p.serviceIDs) > 0 {
 		n.Metadata[ServiceIDs] = strings.Join(p.serviceIDs, " ")
 	}
+	for _, serviceID := range p.serviceIDs {
+		segments := strings.SplitN(serviceID, "/", 2)
+		if len(segments) != 2 {
+			continue
+		}
+		n = n.WithParents(report.Sets{
+			"service": report.MakeStringSet(report.MakeServiceNodeID(p.Namespace(), segments[1])),
+		})
+	}
 	return n
 }

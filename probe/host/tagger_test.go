@@ -22,6 +22,8 @@ func TestTagger(t *testing.T) {
 	want := nodeMetadata.Merge(report.MakeNodeWith(map[string]string{
 		report.HostNodeID: report.MakeHostNodeID(hostID),
 		report.ProbeID:    probeID,
+	}).WithParents(report.Sets{
+		"host": report.MakeStringSet(report.MakeHostNodeID(hostID)),
 	}))
 	rpt, _ := host.NewTagger(hostID, probeID).Tag(r)
 	have := rpt.Process.Nodes[endpointNodeID].Copy()

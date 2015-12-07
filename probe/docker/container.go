@@ -331,7 +331,11 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ContainerIPsWithScopes: report.MakeStringSet(ipsWithScopes...),
 	}).WithLatest(
 		ContainerState, mtime.Now(), state,
-	).WithMetrics(c.metrics())
+	).WithMetrics(
+		c.metrics(),
+	).WithParents(report.Sets{
+		"container_image": report.MakeStringSet(report.MakeContainerImageNodeID(hostID, c.container.Image)),
+	})
 
 	if c.container.State.Paused {
 		result = result.WithControls(UnpauseContainer)

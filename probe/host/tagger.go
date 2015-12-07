@@ -26,16 +26,21 @@ func (Tagger) Name() string { return "Host" }
 
 // Tag implements Tagger.
 func (t Tagger) Tag(r report.Report) (report.Report, error) {
-	metadata := map[string]string{
-		report.HostNodeID: t.hostNodeID,
-		report.ProbeID:    t.probeID,
-	}
+	var (
+		metadata = map[string]string{
+			report.HostNodeID: t.hostNodeID,
+			report.ProbeID:    t.probeID,
+		}
+		parents = report.Sets{
+			"host": report.MakeStringSet(t.hostNodeID),
+		}
+	)
 
 	// Explicity don't tag Endpoints and Addresses - These topologies include pseudo nodes,
 	// and as such do their own host tagging
 	for _, topology := range []report.Topology{r.Process, r.Container, r.ContainerImage, r.Host, r.Overlay} {
 		for id, node := range topology.Nodes {
-			topology.AddNode(id, node.WithMetadata(metadata))
+			topology.AddNode(id, node.WithMetadata(metadata).WithParents(parents))
 		}
 	}
 	return r, nil

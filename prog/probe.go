@@ -131,7 +131,7 @@ func probeMain() {
 		}
 		if registry, err := docker.NewRegistry(*dockerInterval, clients); err == nil {
 			defer registry.Stop()
-			p.AddTagger(docker.NewTagger(registry, processCache))
+			p.AddTagger(docker.NewTagger(registry, hostID, processCache))
 			p.AddReporter(docker.NewReporter(registry, hostID, p))
 		} else {
 			log.Printf("Docker: failed to start registry: %v", err)

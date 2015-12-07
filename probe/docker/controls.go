@@ -142,7 +142,7 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 
 func captureContainerID(f func(string, xfer.Request) xfer.Response) func(xfer.Request) xfer.Response {
 	return func(req xfer.Request) xfer.Response {
-		_, containerID, ok := report.ParseContainerNodeID(req.NodeID)
+		containerID, ok := report.ParseContainerNodeID(req.NodeID)
 		if !ok {
 			return xfer.ResponseErrorf("Invalid ID: %s", req.NodeID)
 		}

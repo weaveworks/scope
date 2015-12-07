@@ -84,6 +84,8 @@ func (n Nodes) Merge(other Nodes) Nodes {
 // given node in a given topology, along with the edges emanating from the
 // node and metadata about those edges.
 type Node struct {
+	ID        string        `json:"id,omitempty"`
+	Topology  string        `json:"topology,omitempty"`
 	Metadata  Metadata      `json:"metadata,omitempty"`
 	Counters  Counters      `json:"counters,omitempty"`
 	Sets      Sets          `json:"sets,omitempty"`
@@ -92,6 +94,7 @@ type Node struct {
 	Controls  NodeControls  `json:"controls,omitempty"`
 	Latest    LatestMap     `json:"latest,omitempty"`
 	Metrics   Metrics       `json:"metrics,omitempty"`
+	Parents   Sets          `json:"parents,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
@@ -99,18 +102,32 @@ func MakeNode() Node {
 	return Node{
 		Metadata:  Metadata{},
 		Counters:  Counters{},
-		Sets:      Sets{},
 		Adjacency: MakeIDList(),
 		Edges:     EdgeMetadatas{},
 		Controls:  MakeNodeControls(),
 		Latest:    MakeLatestMap(),
 		Metrics:   Metrics{},
+		Parents:   Sets{},
 	}
 }
 
 // MakeNodeWith creates a new Node with the supplied map.
 func MakeNodeWith(m map[string]string) Node {
 	return MakeNode().WithMetadata(m)
+}
+
+// WithID returns a fresh copy of n, with ID changed.
+func (n Node) WithID(id string) Node {
+	result := n.Copy()
+	result.ID = id
+	return result
+}
+
+// WithTopology returns a fresh copy of n, with ID changed.
+func (n Node) WithTopology(topology string) Node {
+	result := n.Copy()
+	result.Topology = topology
+	return result
 }
 
 // WithMetadata returns a fresh copy of n, with Metadata m merged in.
@@ -130,8 +147,7 @@ func (n Node) WithCounters(c map[string]int) Node {
 // WithSet returns a fresh copy of n, with set merged in at key.
 func (n Node) WithSet(key string, set StringSet) Node {
 	result := n.Copy()
-	existing := n.Sets[key]
-	result.Sets[key] = existing.Merge(set)
+	result.Sets = result.Sets.Merge(Sets{key: set})
 	return result
 }
 
@@ -186,9 +202,18 @@ func (n Node) WithLatest(k string, ts time.Time, v string) Node {
 	return result
 }
 
+// WithParents returns a fresh copy of n, with sets merged in.
+func (n Node) WithParents(parents Sets) Node {
+	result := n.Copy()
+	result.Parents = result.Parents.Merge(parents)
+	return result
+}
+
 // Copy returns a value copy of the Node.
 func (n Node) Copy() Node {
 	cp := MakeNode()
+	cp.ID = n.ID
+	cp.Topology = n.Topology
 	cp.Metadata = n.Metadata.Copy()
 	cp.Counters = n.Counters.Copy()
 	cp.Sets = n.Sets.Copy()
@@ -197,6 +222,7 @@ func (n Node) Copy() Node {
 	cp.Controls = n.Controls.Copy()
 	cp.Latest = n.Latest.Copy()
 	cp.Metrics = n.Metrics.Copy()
+	cp.Parents = n.Parents.Copy()
 	return cp
 }
 
@@ -204,6 +230,12 @@ func (n Node) Copy() Node {
 // fresh node.
 func (n Node) Merge(other Node) Node {
 	cp := n.Copy()
+	if cp.ID == "" {
+		cp.ID = other.ID
+	}
+	if cp.Topology == "" {
+		cp.Topology = other.Topology
+	}
 	cp.Metadata = cp.Metadata.Merge(other.Metadata)
 	cp.Counters = cp.Counters.Merge(other.Counters)
 	cp.Sets = cp.Sets.Merge(other.Sets)
@@ -212,6 +244,7 @@ func (n Node) Merge(other Node) Node {
 	cp.Controls = cp.Controls.Merge(other.Controls)
 	cp.Latest = cp.Latest.Merge(other.Latest)
 	cp.Metrics = cp.Metrics.Merge(other.Metrics)
+	cp.Parents = cp.Parents.Merge(other.Parents)
 	return cp
 }
 
@@ -268,6 +301,9 @@ type Sets map[string]StringSet
 func (s Sets) Merge(other Sets) Sets {
 	result := s.Copy()
 	for k, v := range other {
+		if result == nil {
+			result = Sets{}
+		}
 		result[k] = result[k].Merge(v)
 	}
 	return result
@@ -275,6 +311,9 @@ func (s Sets) Merge(other Sets) Sets {
 
 // Copy returns a value copy of the sets map.
 func (s Sets) Copy() Sets {
+	if s == nil {
+		return s
+	}
 	result := Sets{}
 	for k, v := range s {
 		result[k] = v.Copy()
@@ -317,6 +356,21 @@ func (s StringSet) Add(strs ...string) StringSet {
 		s = append(s, "")
 		copy(s[i+1:], s[i:])
 		s[i] = str
+	}
+	return s
+}
+
+// Remove removes the strings from the StringSet. Remove is the only valid way
+// to shrink a StringSet. Remove returns the StringSet to enable chaining.
+func (s StringSet) Remove(strs ...string) StringSet {
+	for _, str := range strs {
+		i := sort.Search(len(s), func(i int) bool { return s[i] >= str })
+		if i >= len(s) || s[i] != str {
+			// The list does not have the element.
+			continue
+		}
+		// has the element, remove it.
+		s = append(s[:i], s[i+1:]...)
 	}
 	return s
 }
