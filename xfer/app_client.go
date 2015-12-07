@@ -102,8 +102,8 @@ func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
 	backoff := initialBackoff
 
 	for {
-		again, err := f()
-		if !again {
+		done, err := f()
+		if done {
 			return
 		}
 		if err == nil {
@@ -170,7 +170,7 @@ func (c *appClient) ControlConnection(handler ControlHandler) {
 		log.Printf("Control connection to %s starting", c.target)
 		defer log.Printf("Control connection to %s exiting", c.target)
 		c.doWithBackoff("controls", func() (bool, error) {
-			return true, c.controlConnection(handler)
+			return false, c.controlConnection(handler)
 		})
 	}()
 }
@@ -203,9 +203,9 @@ func (c *appClient) startPublishing() {
 		c.doWithBackoff("publish", func() (bool, error) {
 			r := <-c.readers
 			if r == nil {
-				return false, nil
+				return true, nil
 			}
-			return true, c.publish(r)
+			return false, c.publish(r)
 		})
 	}()
 }
