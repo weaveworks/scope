@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"flag"
@@ -6,10 +6,12 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	_ "net/http/pprof"
 	"strconv"
 	"strings"
 	"time"
+
+	// a blank import should be only in a main or test package, or have a comment justifying it
+	_ "net/http/pprof"
 
 	"github.com/gorilla/mux"
 	"github.com/weaveworks/weave/common"
@@ -28,7 +30,8 @@ func Router(c app.Collector) *mux.Router {
 	return router
 }
 
-func main() {
+// Main runs the app
+func Main() {
 	var (
 		window       = flag.Duration("window", 15*time.Second, "window")
 		listen       = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")

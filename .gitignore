@@ -34,12 +34,8 @@ coverage.html
 .*.uptodate
 scope.tar
 scope_ui_build.tar
-prog/app/app
-prog/app/scope-app
-prog/probe/probe
-prog/probe/scope-probe
-docker/scope-app
-docker/scope-probe
+prog/scope
+docker/scope
 docker/docker*
 docker/weave
 docker/runsvinit

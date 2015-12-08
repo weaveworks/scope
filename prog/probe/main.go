@@ -1,4 +1,4 @@
-package main
+package probe
 
 import (
 	"flag"
@@ -7,11 +7,13 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	// a blank import should be only in a main or test package, or have a comment justifying it
+	_ "net/http/pprof"
 
 	"github.com/armon/go-metrics"
 	"github.com/weaveworks/weave/common"
@@ -31,7 +33,8 @@ import (
 
 var version = "dev" // set at build time
 
-func main() {
+// Main runs the probe
+func Main() {
 	var (
 		targets            = []string{fmt.Sprintf("localhost:%d", xfer.AppPort), fmt.Sprintf("scope.weave.local:%d", xfer.AppPort)}
 		token              = flag.String("token", "default-token", "probe token")

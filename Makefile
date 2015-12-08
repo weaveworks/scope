@@ -3,9 +3,7 @@
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo -E
 DOCKERHUB_USER=weaveworks
-APP_EXE=prog/app/scope-app
-PROBE_EXE=prog/probe/scope-probe
-FIXPROBE_EXE=experimental/fixprobe/fixprobe
+SCOPE_EXE=prog/scope
 SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 SCOPE_EXPORT=scope.tar
 SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
@@ -30,24 +28,22 @@ docker/weave:
 	curl -L git.io/weave -o docker/weave
 	chmod u+x docker/weave
 
-$(SCOPE_EXPORT): $(APP_EXE) $(PROBE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/run-app docker/run-probe docker/entrypoint.sh
-	cp $(APP_EXE) $(PROBE_EXE) $(RUNSVINIT) docker/
+$(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/run-app docker/run-probe docker/entrypoint.sh
+	cp $(SCOPE_EXE) $(RUNSVINIT) docker/
 	cp $(DOCKER_DISTRIB) docker/docker.tgz
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker save $(SCOPE_IMAGE):latest > $@
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
-$(APP_EXE): app/*.go render/*.go report/*.go xfer/*.go common/sanitize/*.go prog/app/*.go prog/app/static.go
-
-$(PROBE_EXE): prog/probe/*.go $(shell find probe/ -type f -name *.go) report/*.go xfer/*.go common/sanitize/*.go common/exec/*.go
+$(SCOPE_EXE): $(shell find ./ -type f -name *.go) prog/app/static.go
 
 ifeq ($(BUILD_IN_CONTAINER),true)
-$(APP_EXE) $(PROBE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(SCOPE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
 		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) $@
 else
-$(APP_EXE) $(PROBE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	go build -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
@@ -65,7 +61,7 @@ endif
 static: prog/app/static.go
 
 prog/app/static.go: client/build/app.js
-	esc -o $@ -prefix client/build client/build
+	esc -o $@ -prefix client/build -pkg app client/build
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 client/build/app.js: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
@@ -105,7 +101,7 @@ clean:
 	go clean ./...
 	$(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
-		$(APP_EXE) $(PROBE_EXE) $(RUNSVINIT) client/build/app.js docker/weave
+		$(SCOPE_EXE) $(RUNSVINIT) prog/app/static.go client/build/app.js docker/weave
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 tests: $(SCOPE_BACKEND_BUILD_UPTODATE)

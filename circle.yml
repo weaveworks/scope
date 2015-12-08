@@ -39,9 +39,9 @@ test:
         parallel: true
     - cd $SRCDIR; make RM= static:
         parallel: true
-    - cd $SRCDIR; rm -f prog/app/scope-app prog/probe/scope-probe; if [ "$CIRCLE_NODE_INDEX" = "0" ]; then GOARCH=arm make RM= prog/app/scope-app prog/probe/scope-probe; else GOOS=darwin make RM= prog/app/scope-app prog/probe/scope-probe; fi:
+    - cd $SRCDIR; rm -f prog/scope; if [ "$CIRCLE_NODE_INDEX" = "0" ]; then GOARCH=arm make RM= prog/scope; else GOOS=darwin make RM= prog/scope; fi:
         parallel: true
-    - cd $SRCDIR; rm -f prog/app/scope-app prog/probe/scope-probe; make RM=:
+    - cd $SRCDIR; rm -f prog/scope; make RM=:
         parallel: true
     - cd $SRCDIR/experimental; ./build_on_circle.sh:
         parallel: true
