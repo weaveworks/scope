@@ -32,6 +32,7 @@ type Registry interface {
 	WalkContainers(f func(Container))
 	WalkImages(f func(*docker_client.APIImages))
 	WatchContainerUpdates(ContainerUpdateWatcher)
+	GetContainer(string) (Container, bool)
 }
 
 // ContainerUpdateWatcher is the type of functions that get called when containers are updated.
@@ -56,11 +57,15 @@ type Client interface {
 	ListImages(docker_client.ListImagesOptions) ([]docker_client.APIImages, error)
 	AddEventListener(chan<- *docker_client.APIEvents) error
 	RemoveEventListener(chan *docker_client.APIEvents) error
+
 	StopContainer(string, uint) error
 	StartContainer(string, *docker_client.HostConfig) error
 	RestartContainer(string, uint) error
 	PauseContainer(string) error
 	UnpauseContainer(string) error
+	AttachToContainerNonBlocking(docker_client.AttachToContainerOptions) (docker_client.CloseWaiter, error)
+	CreateExec(docker_client.CreateExecOptions) (*docker_client.Exec, error)
+	StartExecNonBlocking(string, docker_client.StartExecOptions) (docker_client.CloseWaiter, error)
 }
 
 func newDockerClient(endpoint string) (Client, error) {
@@ -302,7 +307,7 @@ func (r *registry) WalkContainers(f func(Container)) {
 	}
 }
 
-func (r *registry) getContainer(id string) (Container, bool) {
+func (r *registry) GetContainer(id string) (Container, bool) {
 	r.RLock()
 	defer r.RUnlock()
 	c, ok := r.containers[id]

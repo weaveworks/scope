@@ -22,6 +22,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/fsouza/go-dockerclient/external/github.com/hashicorp/go-cleanhttp"
 )
 
 func TestStateString(t *testing.T) {
@@ -261,6 +263,220 @@ func TestInspectContainer(t *testing.T) {
 	if gotPath := fakeRT.requests[0].URL.Path; gotPath != expectedURL.Path {
 		t.Errorf("InspectContainer(%q): Wrong path in request. Want %q. Got %q.", id, expectedURL.Path, gotPath)
 	}
+}
+
+func TestInspectContainerNetwork(t *testing.T) {
+	jsonContainer := `{
+            "Id": "81e1bbe20b5508349e1c804eb08b7b6ca8366751dbea9f578b3ea0773fa66c1c",
+            "Created": "2015-11-12T14:54:04.791485659Z",
+            "Path": "consul-template",
+            "Args": [
+                "-config=/tmp/haproxy.json",
+                "-consul=192.168.99.120:8500"
+            ],
+            "State": {
+                "Status": "running",
+                "Running": true,
+                "Paused": false,
+                "Restarting": false,
+                "OOMKilled": false,
+                "Dead": false,
+                "Pid": 3196,
+                "ExitCode": 0,
+                "Error": "",
+                "StartedAt": "2015-11-12T14:54:05.026747471Z",
+                "FinishedAt": "0001-01-01T00:00:00Z"
+            },
+            "Image": "4921c5917fc117df3dec32f4c1976635dc6c56ccd3336fe1db3477f950e78bf7",
+            "ResolvConfPath": "/mnt/sda1/var/lib/docker/containers/81e1bbe20b5508349e1c804eb08b7b6ca8366751dbea9f578b3ea0773fa66c1c/resolv.conf",
+            "HostnamePath": "/mnt/sda1/var/lib/docker/containers/81e1bbe20b5508349e1c804eb08b7b6ca8366751dbea9f578b3ea0773fa66c1c/hostname",
+            "HostsPath": "/mnt/sda1/var/lib/docker/containers/81e1bbe20b5508349e1c804eb08b7b6ca8366751dbea9f578b3ea0773fa66c1c/hosts",
+            "LogPath": "/mnt/sda1/var/lib/docker/containers/81e1bbe20b5508349e1c804eb08b7b6ca8366751dbea9f578b3ea0773fa66c1c/81e1bbe20b5508349e1c804eb08b7b6ca8366751dbea9f578b3ea0773fa66c1c-json.log",
+            "Node": {
+                "ID": "AUIB:LFOT:3LSF:SCFS:OYDQ:NLXD:JZNE:4INI:3DRC:ZFBB:GWCY:DWJK",
+                "IP": "192.168.99.121",
+                "Addr": "192.168.99.121:2376",
+                "Name": "swl-demo1",
+                "Cpus": 1,
+                "Memory": 2099945472,
+                "Labels": {
+                    "executiondriver": "native-0.2",
+                    "kernelversion": "4.1.12-boot2docker",
+                    "operatingsystem": "Boot2Docker 1.9.0 (TCL 6.4); master : 16e4a2a - Tue Nov  3 19:49:22 UTC 2015",
+                    "provider": "virtualbox",
+                    "storagedriver": "aufs"
+                }
+            },
+            "Name": "/docker-proxy.swl-demo1",
+            "RestartCount": 0,
+            "Driver": "aufs",
+            "ExecDriver": "native-0.2",
+            "MountLabel": "",
+            "ProcessLabel": "",
+            "AppArmorProfile": "",
+            "ExecIDs": null,
+            "HostConfig": {
+                "Binds": null,
+                "ContainerIDFile": "",
+                "LxcConf": [],
+                "Memory": 0,
+                "MemoryReservation": 0,
+                "MemorySwap": 0,
+                "KernelMemory": 0,
+                "CpuShares": 0,
+                "CpuPeriod": 0,
+                "CpusetCpus": "",
+                "CpusetMems": "",
+                "CpuQuota": 0,
+                "BlkioWeight": 0,
+                "OomKillDisable": false,
+                "MemorySwappiness": -1,
+                "Privileged": false,
+                "PortBindings": {
+                    "443/tcp": [
+                        {
+                            "HostIp": "",
+                            "HostPort": "443"
+                        }
+                    ]
+                },
+                "Links": null,
+                "PublishAllPorts": false,
+                "Dns": null,
+                "DnsOptions": null,
+                "DnsSearch": null,
+                "ExtraHosts": null,
+                "VolumesFrom": null,
+                "Devices": [],
+                "NetworkMode": "swl-net",
+                "IpcMode": "",
+                "PidMode": "",
+                "UTSMode": "",
+                "CapAdd": null,
+                "CapDrop": null,
+                "GroupAdd": null,
+                "RestartPolicy": {
+                    "Name": "no",
+                    "MaximumRetryCount": 0
+                },
+                "SecurityOpt": null,
+                "ReadonlyRootfs": false,
+                "Ulimits": null,
+                "LogConfig": {
+                    "Type": "json-file",
+                    "Config": {}
+                },
+                "CgroupParent": "",
+                "ConsoleSize": [
+                    0,
+                    0
+                ],
+                "VolumeDriver": ""
+            },
+            "GraphDriver": {
+                "Name": "aufs",
+                "Data": null
+            },
+            "Mounts": [],
+            "Config": {
+                "Hostname": "81e1bbe20b55",
+                "Domainname": "",
+                "User": "",
+                "AttachStdin": false,
+                "AttachStdout": false,
+                "AttachStderr": false,
+                "ExposedPorts": {
+                    "443/tcp": {}
+                },
+                "Tty": false,
+                "OpenStdin": false,
+                "StdinOnce": false,
+                "Env": [
+                    "DOMAIN=local.auto",
+                    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    "CONSUL_TEMPLATE_VERSION=0.11.1"
+                ],
+                "Cmd": [
+                    "-consul=192.168.99.120:8500"
+                ],
+                "Image": "docker-proxy:latest",
+                "Volumes": null,
+                "WorkingDir": "",
+                "Entrypoint": [
+                    "consul-template",
+                    "-config=/tmp/haproxy.json"
+                ],
+                "OnBuild": null,
+                "Labels": {},
+                "StopSignal": "SIGTERM"
+            },
+            "NetworkSettings": {
+                "Bridge": "",
+                "SandboxID": "c6b903dc5c1a96113a22dbc44709e30194079bd2d262eea1eb4f38d85821f6e1",
+                "HairpinMode": false,
+                "LinkLocalIPv6Address": "",
+                "LinkLocalIPv6PrefixLen": 0,
+                "Ports": {
+                    "443/tcp": [
+                        {
+                            "HostIp": "192.168.99.121",
+                            "HostPort": "443"
+                        }
+                    ]
+                },
+                "SandboxKey": "/var/run/docker/netns/c6b903dc5c1a",
+                "SecondaryIPAddresses": null,
+                "SecondaryIPv6Addresses": null,
+                "EndpointID": "",
+                "Gateway": "",
+                "GlobalIPv6Address": "",
+                "GlobalIPv6PrefixLen": 0,
+                "IPAddress": "",
+                "IPPrefixLen": 0,
+                "IPv6Gateway": "",
+                "MacAddress": "",
+                "Networks": {
+                    "swl-net": {
+                        "EndpointID": "683e3092275782a53c3b0968cc7e3a10f23264022ded9cb20490902f96fc5981",
+                        "Gateway": "",
+                        "IPAddress": "10.0.0.3",
+                        "IPPrefixLen": 24,
+                        "IPv6Gateway": "",
+                        "GlobalIPv6Address": "",
+                        "GlobalIPv6PrefixLen": 0,
+                        "MacAddress": "02:42:0a:00:00:03"
+                    }
+                }
+            }
+}`
+
+	fakeRT := &FakeRoundTripper{message: jsonContainer, status: http.StatusOK}
+	client := newTestClient(fakeRT)
+	id := "81e1bbe20b55"
+	exp := "10.0.0.3"
+
+	container, err := client.InspectContainer(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s := reflect.Indirect(reflect.ValueOf(container.NetworkSettings))
+	networks := s.FieldByName("Networks")
+	if networks.IsValid() {
+		var ip string
+		for _, net := range networks.MapKeys() {
+			if net.Interface().(string) == container.HostConfig.NetworkMode {
+				ip = networks.MapIndex(net).FieldByName("IPAddress").Interface().(string)
+				t.Logf("%s %v", net, ip)
+			}
+		}
+		if ip != exp {
+			t.Errorf("InspectContainerNetworks(%q): Expected %#v. Got %#v.", id, exp, ip)
+		}
+	} else {
+		t.Errorf("InspectContainerNetworks(%q): No method Networks for NetworkSettings", id)
+	}
+
 }
 
 func TestInspectContainerNegativeSwap(t *testing.T) {
@@ -1088,6 +1304,52 @@ func TestAttachToContainerNilStderr(t *testing.T) {
 	}
 }
 
+func TestAttachToContainerStdinOnly(t *testing.T) {
+	var reader = strings.NewReader("send value")
+	serverFinished := make(chan struct{})
+	clientFinished := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		hj, ok := w.(http.Hijacker)
+		if !ok {
+			t.Fatal("cannot hijack server connection")
+		}
+		conn, _, err := hj.Hijack()
+		if err != nil {
+			t.Fatal(err)
+		}
+		// wait for client to indicate it's finished
+		<-clientFinished
+		// inform test that the server has finished
+		close(serverFinished)
+		conn.Close()
+	}))
+	defer server.Close()
+	client, _ := NewClient(server.URL)
+	client.SkipServerVersionCheck = true
+	success := make(chan struct{})
+	opts := AttachToContainerOptions{
+		Container:   "a123456",
+		InputStream: reader,
+		Stdin:       true,
+		Stdout:      false,
+		Stderr:      false,
+		Stream:      true,
+		RawTerminal: false,
+		Success:     success,
+	}
+	go func() {
+		if err := client.AttachToContainer(opts); err != nil {
+			t.Error(err)
+		}
+		// client's attach session is over
+		close(clientFinished)
+	}()
+	success <- <-success
+	// wait for server to finish handling attach
+	<-serverFinished
+}
+
 func TestAttachToContainerRawTerminalFalse(t *testing.T) {
 	input := strings.NewReader("send value")
 	var req http.Request
@@ -1371,7 +1633,7 @@ func TestExportContainerViaUnixSocket(t *testing.T) {
 	endpoint := "unix://" + tempSocket
 	u, _ := parseEndpoint(endpoint, false)
 	client := Client{
-		HTTPClient:             &http.Client{},
+		HTTPClient:             cleanhttp.DefaultClient(),
 		Dialer:                 &net.Dialer{},
 		endpoint:               endpoint,
 		endpointURL:            u,

@@ -1749,14 +1749,13 @@ func addNetworks(server *DockerServer, n int) {
 	for i := 0; i < n; i++ {
 		netid := fmt.Sprintf("%x", rand.Int()%10000)
 		network := docker.Network{
-			Name: netid,
-			ID:   fmt.Sprintf("%x", rand.Int()%10000),
-			Type: "bridge",
-			Endpoints: []*docker.Endpoint{
-				{
-					Name:    "blah",
-					ID:      fmt.Sprintf("%x", rand.Int()%10000),
-					Network: netid,
+			Name:   netid,
+			ID:     fmt.Sprintf("%x", rand.Int()%10000),
+			Driver: "bridge",
+			Containers: map[string]docker.Endpoint{
+				"blah": {
+					Name: "blah",
+					ID:   fmt.Sprintf("%x", rand.Int()%10000),
 				},
 			},
 		}
@@ -1777,10 +1776,10 @@ func TestListNetworks(t *testing.T) {
 	expected := make([]docker.Network, 2)
 	for i, network := range server.networks {
 		expected[i] = docker.Network{
-			ID:        network.ID,
-			Name:      network.Name,
-			Type:      network.Type,
-			Endpoints: network.Endpoints,
+			ID:         network.ID,
+			Name:       network.Name,
+			Driver:     network.Driver,
+			Containers: network.Containers,
 		}
 	}
 	var got []docker.Network

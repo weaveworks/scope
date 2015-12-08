@@ -101,6 +101,44 @@ func (c *Client) StartExec(id string, opts StartExecOptions) error {
 		return nil
 	}
 
+	cw, err := c.hijack("POST", path, hijackOptions{
+		success:        opts.Success,
+		setRawTerminal: opts.RawTerminal,
+		in:             opts.InputStream,
+		stdout:         opts.OutputStream,
+		stderr:         opts.ErrorStream,
+		data:           opts,
+	})
+	if err != nil {
+		return err
+	}
+	return cw.Wait()
+}
+
+// StartExecNonBlocking starts a previously set up exec instance id. If opts.Detach is
+// true, it returns after starting the exec command. Otherwise, it sets up an
+// interactive session with the exec command.
+//
+// See https://goo.gl/iQCnto for more details
+func (c *Client) StartExecNonBlocking(id string, opts StartExecOptions) (CloseWaiter, error) {
+	if id == "" {
+		return nil, &NoSuchExec{ID: id}
+	}
+
+	path := fmt.Sprintf("/exec/%s/start", id)
+
+	if opts.Detach {
+		resp, err := c.do("POST", path, doOptions{data: opts})
+		if err != nil {
+			if e, ok := err.(*Error); ok && e.Status == http.StatusNotFound {
+				return nil, &NoSuchExec{ID: id}
+			}
+			return nil, err
+		}
+		defer resp.Body.Close()
+		return nil, nil
+	}
+
 	return c.hijack("POST", path, hijackOptions{
 		success:        opts.Success,
 		setRawTerminal: opts.RawTerminal,

@@ -86,6 +86,7 @@ func TestContainer(t *testing.T) {
 		"docker_container_ips_with_scopes": report.MakeStringSet("scope;1.2.3.4"),
 	}).WithControls(
 		docker.RestartContainer, docker.StopContainer, docker.PauseContainer,
+		docker.AttachContainer, docker.ExecContainer,
 	).WithLatest(
 		"docker_container_state", now, "running",
 	).WithMetrics(report.Metrics{
