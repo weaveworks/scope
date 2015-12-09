@@ -1,75 +1,80 @@
 package process_test
 
 import (
-	"fmt"
-	"os"
 	"reflect"
-	"strconv"
-	"strings"
 	"testing"
-	"time"
 
+	fs_hook "github.com/weaveworks/scope/common/fs"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/fs"
 )
 
-type mockProcess struct {
-	name, comm, cmdline string
-}
-
-func (p mockProcess) Name() string       { return p.name }
-func (p mockProcess) Size() int64        { return 0 }
-func (p mockProcess) Mode() os.FileMode  { return 0 }
-func (p mockProcess) ModTime() time.Time { return time.Now() }
-func (p mockProcess) IsDir() bool        { return true }
-func (p mockProcess) Sys() interface{}   { return nil }
+var mockFS = fs.Dir("",
+	fs.Dir("proc",
+		fs.Dir("3",
+			fs.File{
+				FName:     "comm",
+				FContents: "curl\n",
+			},
+			fs.File{
+				FName:     "cmdline",
+				FContents: "curl\000google.com",
+			},
+			fs.File{
+				FName:     "stat",
+				FContents: "3 na R 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
+			},
+		),
+		fs.Dir("2",
+			fs.File{
+				FName:     "comm",
+				FContents: "bash\n",
+			},
+			fs.File{
+				FName:     "cmdline",
+				FContents: "",
+			},
+			fs.File{
+				FName:     "stat",
+				FContents: "2 na R 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
+			},
+		),
+		fs.Dir("4",
+			fs.File{
+				FName:     "comm",
+				FContents: "apache\n",
+			},
+			fs.File{
+				FName:     "cmdline",
+				FContents: "",
+			},
+			fs.File{
+				FName:     "stat",
+				FContents: "4 na R 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
+			},
+		),
+		fs.Dir("notapid"),
+		fs.Dir("1",
+			fs.File{
+				FName:     "comm",
+				FContents: "init\n",
+			},
+			fs.File{
+				FName:     "cmdline",
+				FContents: "",
+			},
+			fs.File{
+				FName:     "stat",
+				FContents: "1 na R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
+			},
+		),
+	),
+)
 
 func TestWalker(t *testing.T) {
-	oldReadDir, oldReadFile := process.ReadDir, process.ReadFile
-	defer func() {
-		process.ReadDir = oldReadDir
-		process.ReadFile = oldReadFile
-	}()
-
-	processes := map[string]mockProcess{
-		"3":       {name: "3", comm: "curl\n", cmdline: "curl\000google.com"},
-		"2":       {name: "2", comm: "bash\n"},
-		"4":       {name: "4", comm: "apache\n"},
-		"notapid": {name: "notapid"},
-		"1":       {name: "1", comm: "init\n"},
-	}
-
-	process.ReadDir = func(path string) ([]os.FileInfo, error) {
-		result := []os.FileInfo{}
-		for _, p := range processes {
-			result = append(result, p)
-		}
-		return result, nil
-	}
-
-	process.ReadFile = func(path string) ([]byte, error) {
-		splits := strings.Split(path, "/")
-
-		pid := splits[len(splits)-2]
-		process, ok := processes[pid]
-		if !ok {
-			return nil, fmt.Errorf("not found")
-		}
-
-		file := splits[len(splits)-1]
-		switch file {
-		case "comm":
-			return []byte(process.comm), nil
-		case "stat":
-			pid, _ := strconv.Atoi(splits[len(splits)-2])
-			parent := pid - 1
-			return []byte(fmt.Sprintf("%d na R %d 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1", pid, parent)), nil
-		case "cmdline":
-			return []byte(process.cmdline), nil
-		}
-
-		return nil, fmt.Errorf("not found")
-	}
+	fs_hook.Mock(mockFS)
+	defer fs_hook.Restore()
 
 	want := map[int]process.Process{
 		3: {PID: 3, PPID: 2, Comm: "curl", Cmdline: "curl google.com", Threads: 1},
@@ -79,7 +84,7 @@ func TestWalker(t *testing.T) {
 	}
 
 	have := map[int]process.Process{}
-	walker := process.NewWalker("unused")
+	walker := process.NewWalker("/proc")
 	err := walker.Walk(func(p process.Process) {
 		have[p.PID] = p
 	})

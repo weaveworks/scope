@@ -4,8 +4,6 @@ package procspy
 
 import (
 	"bytes"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strconv"
 	"syscall"
@@ -23,14 +21,6 @@ func SetProcRoot(root string) {
 	procRoot = root
 }
 
-// made variables for mocking
-var (
-	readDir = ioutil.ReadDir
-	lstat   = syscall.Lstat
-	stat    = syscall.Stat
-	open    = fs.Open
-)
-
 // walkProcPid walks over all numerical (PID) /proc entries, and sees if their
 // ./fd/* files are symlink to sockets. Returns a map from socket ID (inode)
 // to PID. Will return an error if /proc isn't there.
@@ -44,7 +34,7 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]Proc, err
 	walker.Walk(func(p process.Process) {
 		dirName := strconv.Itoa(p.PID)
 		fdBase := filepath.Join(procRoot, dirName, "fd")
-		fds, err := readDir(fdBase)
+		fds, err := fs.FS.ReadDir(fdBase)
 		if err != nil {
 			// Process is be gone by now, or we don't have access.
 			return
@@ -52,7 +42,7 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]Proc, err
 
 		// Read network namespace, and if we haven't seen it before,
 		// read /proc/<pid>/net/tcp
-		err = lstat(filepath.Join(procRoot, dirName, "/ns/net"), &statT)
+		err = fs.FS.Lstat(filepath.Join(procRoot, dirName, "/ns/net"), &statT)
 		if err != nil {
 			return
 		}
@@ -65,7 +55,7 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]Proc, err
 
 		for _, fd := range fds {
 			// Direct use of syscall.Stat() to save garbage.
-			err = stat(filepath.Join(fdBase, fd.Name()), &statT)
+			err = fs.FS.Stat(filepath.Join(fdBase, fd.Name()), &statT)
 			if err != nil {
 				continue
 			}
@@ -85,33 +75,11 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]Proc, err
 	return res, nil
 }
 
-// procName does a pid->name lookup.
-func procName(base string) string {
-	fh, err := open(filepath.Join(base, "/comm"))
-	if err != nil {
-		return ""
-	}
-
-	name := make([]byte, 64)
-	l, err := fh.Read(name)
-	fh.Close()
-	if err != nil {
-		return ""
-	}
-
-	if l < 2 {
-		return ""
-	}
-
-	// drop trailing "\n"
-	return string(name[:l-1])
-}
-
 // readFile reads an arbitrary file into a buffer. It's a variable so it can
 // be overwritten for benchmarks. That's bad practice and we should change it
 // to be a dependency.
 var readFile = func(filename string, buf *bytes.Buffer) error {
-	f, err := os.Open(filename)
+	f, err := fs.FS.Open(filename)
 	if err != nil {
 		return err
 	}

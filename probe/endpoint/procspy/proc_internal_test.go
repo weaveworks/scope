@@ -6,6 +6,8 @@ import (
 	"syscall"
 	"testing"
 
+	fs_hook "github.com/weaveworks/scope/common/fs"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/test/fs"
 )
 
@@ -31,17 +33,20 @@ var mockFS = fs.Dir("",
 					FStat: syscall.Stat_t{},
 				},
 			),
+			fs.File{
+				FName:     "stat",
+				FContents: "1 na R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
+			},
 		),
 	),
 )
 
 func TestWalkProcPid(t *testing.T) {
-	oldReadDir, oldLstat, oldStat, oldOpen := readDir, lstat, stat, open
-	defer func() { readDir, lstat, stat, open = oldReadDir, oldLstat, oldStat, oldOpen }()
-	readDir, lstat, stat, open = mockFS.ReadDir, mockFS.Lstat, mockFS.Stat, mockFS.Open
+	fs_hook.Mock(mockFS)
+	defer fs_hook.Restore()
 
 	buf := bytes.Buffer{}
-	have, err := walkProcPid(&buf)
+	have, err := walkProcPid(&buf, process.NewWalker(procRoot))
 	if err != nil {
 		t.Fatal(err)
 	}

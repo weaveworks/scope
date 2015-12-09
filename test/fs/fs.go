@@ -9,6 +9,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/weaveworks/scope/common/fs"
 )
 
 type mockInode struct{}
@@ -16,7 +18,7 @@ type mockInode struct{}
 type dir struct {
 	mockInode
 	name    string
-	entries map[string]FS
+	entries map[string]Entry
 	stat    syscall.Stat_t
 }
 
@@ -28,21 +30,17 @@ type File struct {
 	FStat     syscall.Stat_t
 }
 
-// FS is a mock filesystem
-type FS interface {
+// Entry is an entry in the mock filesystem
+type Entry interface {
 	os.FileInfo
-	ReadDir(string) ([]os.FileInfo, error)
-	ReadFile(string) ([]byte, error)
-	Lstat(string, *syscall.Stat_t) error
-	Stat(string, *syscall.Stat_t) error
-	Open(string) (io.ReadWriteCloser, error)
+	fs.T
 }
 
 // Dir creates a new directory with the given entries.
-func Dir(name string, entries ...FS) FS {
+func Dir(name string, entries ...Entry) Entry {
 	result := dir{
 		name:    name,
-		entries: map[string]FS{},
+		entries: map[string]Entry{},
 	}
 
 	for _, entry := range entries {
