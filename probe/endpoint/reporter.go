@@ -26,6 +26,7 @@ type Reporter struct {
 	includeProcesses bool
 	includeNAT       bool
 	flowWalker       flowWalker // interface
+	procWalker       process.Walker
 	natMapper        natMapper
 	reverseResolver  *reverseResolver
 }
@@ -47,7 +48,7 @@ var SpyDuration = prometheus.NewSummaryVec(
 // on the host machine, at the granularity of host and port. That information
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
-func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool) *Reporter {
+func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool, procWalker process.Walker) *Reporter {
 	return &Reporter{
 		hostID:           hostID,
 		hostName:         hostName,
@@ -55,6 +56,7 @@ func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bo
 		flowWalker:       newConntrackFlowWalker(useConntrack),
 		natMapper:        makeNATMapper(newConntrackFlowWalker(useConntrack, "--any-nat")),
 		reverseResolver:  newReverseResolver(),
+		procWalker:       procWalker,
 	}
 }
 
@@ -78,7 +80,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	rpt := report.MakeReport()
 
 	{
-		conns, err := procspy.Connections(r.includeProcesses)
+		conns, err := procspy.Connections(r.includeProcesses, r.procWalker)
 		if err != nil {
 			return rpt, err
 		}

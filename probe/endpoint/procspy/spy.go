@@ -5,6 +5,8 @@ package procspy
 
 import (
 	"net"
+
+	"github.com/weaveworks/scope/probe/process"
 )
 
 const (
@@ -38,6 +40,6 @@ type ConnIter interface {
 // If processes is true it'll additionally try to lookup the process owning the
 // connection, filling in the Proc field. You will need to run this as root to
 // find all processes.
-func Connections(processes bool) (ConnIter, error) {
-	return cbConnections(processes)
+func Connections(processes bool, walker process.Walker) (ConnIter, error) {
+	return cbConnections(processes, walker)
 }
