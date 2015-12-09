@@ -3,13 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-
-	"github.com/weaveworks/scope/prog/app"
-	"github.com/weaveworks/scope/prog/probe"
 )
 
 func usage() {
-	fmt.Printf("usage: %s (app|probe) args...\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "usage: %s (app|probe) args...\n", os.Args[0])
 	os.Exit(1)
 }
 
@@ -23,9 +20,9 @@ func main() {
 
 	switch module {
 	case "app":
-		app.Main()
+		appMain()
 	case "probe":
-		probe.Main()
+		probeMain()
 	default:
 		usage()
 	}

@@ -36,7 +36,7 @@ $(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
-$(SCOPE_EXE): $(shell find ./ -type f -name *.go) prog/app/static.go
+$(SCOPE_EXE): $(shell find ./ -type f -name *.go) prog/static.go
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 $(SCOPE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
@@ -58,10 +58,10 @@ $(RUNSVINIT):
 	go build -ldflags "-extldflags \"-static\"" -o $@ ./$(@D)
 endif
 
-static: prog/app/static.go
+static: prog/static.go
 
-prog/app/static.go: client/build/app.js
-	esc -o $@ -prefix client/build -pkg app client/build
+prog/static.go: client/build/app.js
+	esc -o $@ -prefix client/build client/build
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 client/build/app.js: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
@@ -101,7 +101,7 @@ clean:
 	go clean ./...
 	$(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
-		$(SCOPE_EXE) $(RUNSVINIT) prog/app/static.go client/build/app.js docker/weave
+		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
