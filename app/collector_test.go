@@ -38,3 +38,21 @@ func TestCollector(t *testing.T) {
 		t.Error(test.Diff(want, have))
 	}
 }
+
+func TestCollectorWait(t *testing.T) {
+	window := time.Millisecond
+	c := app.NewCollector(window)
+
+	waiter := make(chan struct{}, 1)
+	c.WaitOn(waiter)
+	defer c.UnWait(waiter)
+	c.(interface {
+		Broadcast()
+	}).Broadcast()
+
+	select {
+	case <-waiter:
+	default:
+		t.Fatal("Didn't unblock")
+	}
+}
