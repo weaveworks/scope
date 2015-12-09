@@ -23,13 +23,12 @@ func NewWalker(procRoot string) Walker {
 // passes one-by-one to the supplied function. Walk is only made public
 // so that is can be tested.
 func (w *walker) Walk(f func(Process)) error {
-	dirEntries, err := fs.ReadDir(w.procRoot)
+	dirEntries, err := fs.ReadDirNames(w.procRoot)
 	if err != nil {
 		return err
 	}
 
-	for _, dirEntry := range dirEntries {
-		filename := dirEntry.Name()
+	for _, filename := range dirEntries {
 		pid, err := strconv.Atoi(filename)
 		if err != nil {
 			continue

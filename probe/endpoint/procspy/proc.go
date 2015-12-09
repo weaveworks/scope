@@ -34,15 +34,10 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]Proc, err
 	walker.Walk(func(p process.Process) {
 		dirName := strconv.Itoa(p.PID)
 		fdBase := filepath.Join(procRoot, dirName, "fd")
-		fds, err := fs.ReadDir(fdBase)
-		if err != nil {
-			// Process is be gone by now, or we don't have access.
-			return
-		}
 
 		// Read network namespace, and if we haven't seen it before,
 		// read /proc/<pid>/net/tcp
-		err = fs.Lstat(filepath.Join(procRoot, dirName, "/ns/net"), &statT)
+		err := fs.Lstat(filepath.Join(procRoot, dirName, "/ns/net"), &statT)
 		if err != nil {
 			return
 		}
@@ -53,9 +48,14 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]Proc, err
 			readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
 		}
 
+		fds, err := fs.ReadDirNames(fdBase)
+		if err != nil {
+			// Process is be gone by now, or we don't have access.
+			return
+		}
 		for _, fd := range fds {
 			// Direct use of syscall.Stat() to save garbage.
-			err = fs.Stat(filepath.Join(fdBase, fd.Name()), &statT)
+			err = fs.Stat(filepath.Join(fdBase, fd), &statT)
 			if err != nil {
 				continue
 			}

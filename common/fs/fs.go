@@ -10,6 +10,7 @@ import (
 // Interface is the filesystem interface type.
 type Interface interface {
 	ReadDir(string) ([]os.FileInfo, error)
+	ReadDirNames(string) ([]string, error)
 	ReadFile(string) ([]byte, error)
 	Lstat(string, *syscall.Stat_t) error
 	Stat(string, *syscall.Stat_t) error
@@ -23,6 +24,15 @@ var fs Interface = realFS{}
 
 func (realFS) ReadDir(path string) ([]os.FileInfo, error) {
 	return ioutil.ReadDir(path)
+}
+
+func (realFS) ReadDirNames(path string) ([]string, error) {
+	fh, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer fh.Close()
+	return fh.Readdirnames(-1)
 }
 
 func (realFS) ReadFile(path string) ([]byte, error) {
@@ -46,6 +56,11 @@ func (realFS) Open(path string) (io.ReadWriteCloser, error) {
 // ReadDir see ioutil.ReadDir
 func ReadDir(path string) ([]os.FileInfo, error) {
 	return fs.ReadDir(path)
+}
+
+// ReadDirNames see os.File.ReadDirNames
+func ReadDirNames(path string) ([]string, error) {
+	return fs.ReadDirNames(path)
 }
 
 // ReadFile see ioutil.ReadFile
