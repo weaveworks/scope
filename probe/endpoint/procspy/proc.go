@@ -37,15 +37,12 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]Proc, err
 
 		// Read network namespace, and if we haven't seen it before,
 		// read /proc/<pid>/net/tcp
-		err := fs.Lstat(filepath.Join(procRoot, dirName, "/ns/net"), &statT)
-		if err != nil {
+		if err := fs.Lstat(filepath.Join(procRoot, dirName, "/ns/net"), &statT); err != nil {
 			return
 		}
-
 		if _, ok := namespaces[statT.Ino]; !ok {
 			namespaces[statT.Ino] = struct{}{}
 			readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
-			readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
 		}
 
 		fds, err := fs.ReadDirNames(fdBase)
