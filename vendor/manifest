@@ -66,6 +66,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/coocood/freecache",
+			"repository": "https://github.com/coocood/freecache",
+			"revision": "a27035d5537f1fa5518225e9373c9ec7450f2ea2",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/coreos/etcd/Godeps/_workspace/src/bitbucket.org/ww/goautoneg",
 			"repository": "https://github.com/coreos/etcd",
 			"revision": "ae62a77de61d70f434ed848ba48b44247cb54c94",
@@ -695,6 +701,12 @@
 			"importpath": "github.com/shurcooL/sanitized_anchor_name",
 			"repository": "https://github.com/shurcooL/sanitized_anchor_name",
 			"revision": "244f5ac324cb97e1987ef901a0081a77bfd8e845",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/spaolacci/murmur3",
+			"repository": "https://github.com/spaolacci/murmur3",
+			"revision": "0d12bf811670bf6a1a63828dfbd003eded177fce",
 			"branch": "master"
 		},
 		{
