@@ -19,7 +19,7 @@ import (
 )
 
 // Router creates the mux for all the various app components.
-func Router(c app.Collector) *mux.Router {
+func router(c app.Collector) *mux.Router {
 	router := mux.NewRouter()
 	app.RegisterTopologyRoutes(c, router)
 	app.RegisterReportPostHandler(c, router)
@@ -28,7 +28,8 @@ func Router(c app.Collector) *mux.Router {
 	return router
 }
 
-func main() {
+// Main runs the app
+func appMain() {
 	var (
 		window       = flag.Duration("window", 15*time.Second, "window")
 		listen       = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
@@ -52,7 +53,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
 	log.Printf("app starting, version %s, ID %s", app.Version, app.UniqueID)
-	http.Handle("/", Router(app.NewCollector(*window)))
+	http.Handle("/", router(app.NewCollector(*window)))
 	go func() {
 		log.Printf("listening on %s", *listen)
 		log.Print(http.ListenAndServe(*listen, nil))

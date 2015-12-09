@@ -31,7 +31,8 @@ import (
 
 var version = "dev" // set at build time
 
-func main() {
+// Main runs the probe
+func probeMain() {
 	var (
 		targets            = []string{fmt.Sprintf("localhost:%d", xfer.AppPort), fmt.Sprintf("scope.weave.local:%d", xfer.AppPort)}
 		token              = flag.String("token", "default-token", "probe token")

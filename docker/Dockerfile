@@ -7,7 +7,7 @@ RUN echo "http://dl-4.alpinelinux.org/alpine/edge/testing" >>/etc/apk/repositori
 	rm -rf /var/cache/apk/*
 ADD ./docker.tgz /
 ADD ./weave /usr/bin/
-COPY ./scope-app ./scope-probe ./runsvinit ./entrypoint.sh /home/weave/
+COPY ./scope ./runsvinit ./entrypoint.sh /home/weave/
 COPY ./run-app /etc/service/app/run
 COPY ./run-probe /etc/service/probe/run
 EXPOSE 4040
