@@ -2,6 +2,7 @@ package xfer
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"net"
@@ -13,6 +14,16 @@ import (
 // ScopeProbeIDHeader is the header we use to carry the probe's unique ID. The
 // ID is currently set to the a random string on probe startup.
 const ScopeProbeIDHeader = "X-Scope-Probe-ID"
+
+var certPool *x509.CertPool
+
+func init() {
+	var err error
+	certPool, err = gocertifi.CACerts()
+	if err != nil {
+		panic(err)
+	}
+}
 
 // ProbeConfig contains all the info needed for a probe to do HTTP requests
 type ProbeConfig struct {
@@ -46,10 +57,6 @@ func (pc ProbeConfig) getHTTPTransport(hostname string) (*http.Transport, error)
 		return nil, err
 	}
 
-	certPool, err := gocertifi.CACerts()
-	if err != nil {
-		return nil, err
-	}
 	return &http.Transport{
 		TLSClientConfig: &tls.Config{
 			RootCAs:    certPool,
