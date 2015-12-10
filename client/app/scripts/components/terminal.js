@@ -90,11 +90,16 @@ export default class Terminal extends React.Component {
 
     socket.onclose = () => {
       log('socket closed');
-      this.setState({connected: false});
       this.socket = null;
+      const wereConnected = this.state.connected;
+      this.setState({connected: false});
       if (this.term && this.props.pipe.status !== 'PIPE_DELETED') {
-        reconnectTimer = setTimeout(
-          this.createWebsocket.bind(this, term), reconnectTimerInterval);
+        if (wereConnected) {
+          this.createWebsocket(term);
+        } else {
+          reconnectTimer = setTimeout(
+            this.createWebsocket.bind(this, term), reconnectTimerInterval);
+        }
       }
     };
 
@@ -260,7 +265,7 @@ export default class Terminal extends React.Component {
       opacity: this.state.connected ? 0 : 0.9
     };
     return (
-      <div className="terminal-status-bar hideable hang-around" style={style}>
+      <div className="terminal-status-bar hideable" style={style}>
         {this.getStatus()}
       </div>
     );
