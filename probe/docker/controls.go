@@ -55,7 +55,7 @@ func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Re
 	}
 
 	hasTTY := c.HasTTY()
-	id, pipe, err := controls.NewPipe(req.AppID)
+	id, pipe, err := controls.NewPipe(r.pipes, req.AppID)
 	if err != nil {
 		xfer.ResponseError(err)
 	}
@@ -106,7 +106,7 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 		xfer.ResponseError(err)
 	}
 
-	id, pipe, err := controls.NewPipe(req.AppID)
+	id, pipe, err := controls.NewPipe(r.pipes, req.AppID)
 	if err != nil {
 		xfer.ResponseError(err)
 	}

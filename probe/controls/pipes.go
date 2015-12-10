@@ -7,8 +7,8 @@ import (
 	"github.com/weaveworks/scope/xfer"
 )
 
-// Client is the thing the probe uses to make pipe connections.
-var Client interface {
+// PipeClient is the type of the thing the probe uses to make pipe connections.
+type PipeClient interface {
 	PipeConnection(string, string, xfer.Pipe) error
 	PipeClose(string, string) error
 }
@@ -18,17 +18,19 @@ var Client interface {
 type pipe struct {
 	xfer.Pipe
 	id, appID string
+	client    PipeClient
 }
 
 // NewPipe creats a new pipe and connects it to the app.
-var NewPipe = func(appID string) (string, xfer.Pipe, error) {
+var NewPipe = func(c PipeClient, appID string) (string, xfer.Pipe, error) {
 	pipeID := fmt.Sprintf("pipe-%d", rand.Int63())
 	pipe := &pipe{
-		Pipe:  xfer.NewPipe(),
-		appID: appID,
-		id:    pipeID,
+		Pipe:   xfer.NewPipe(),
+		appID:  appID,
+		id:     pipeID,
+		client: c,
 	}
-	if err := Client.PipeConnection(appID, pipeID, pipe.Pipe); err != nil {
+	if err := c.PipeConnection(appID, pipeID, pipe.Pipe); err != nil {
 		return "", nil, err
 	}
 	return pipeID, pipe, nil
@@ -36,7 +38,7 @@ var NewPipe = func(appID string) (string, xfer.Pipe, error) {
 
 func (p *pipe) Close() error {
 	err1 := p.Pipe.Close()
-	err2 := Client.PipeClose(p.appID, p.id)
+	err2 := p.client.PipeClose(p.appID, p.id)
 	if err1 != nil {
 		return err1
 	}

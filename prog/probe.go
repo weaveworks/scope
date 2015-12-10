@@ -114,7 +114,6 @@ func probeMain() {
 		)
 	})
 	defer clients.Stop()
-	controls.Client = clients
 
 	resolver := xfer.NewStaticResolver(targets, clients.Set)
 	defer resolver.Stop()
@@ -136,7 +135,7 @@ func probeMain() {
 		if err := report.AddLocalBridge(*dockerBridge); err != nil {
 			log.Printf("Docker: problem with bridge %s: %v", *dockerBridge, err)
 		}
-		if registry, err := docker.NewRegistry(*dockerInterval); err == nil {
+		if registry, err := docker.NewRegistry(*dockerInterval, clients); err == nil {
 			defer registry.Stop()
 			p.AddTagger(docker.NewTagger(registry, processCache))
 			p.AddReporter(docker.NewReporter(registry, hostID, p))

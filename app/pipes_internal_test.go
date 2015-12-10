@@ -84,12 +84,8 @@ func TestPipeClose(t *testing.T) {
 	}
 	defer client.Stop()
 
-	oldClient := controls.Client
-	defer func() { controls.Client = oldClient }()
-	controls.Client = adapter{client}
-
 	// this is the probe end of the pipe
-	pipeID, pipe, err := controls.NewPipe("appid")
+	pipeID, pipe, err := controls.NewPipe(adapter{client}, "appid")
 	if err != nil {
 		t.Fatal(err)
 	}

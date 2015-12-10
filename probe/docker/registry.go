@@ -6,6 +6,8 @@ import (
 	"time"
 
 	docker_client "github.com/fsouza/go-dockerclient"
+
+	"github.com/weaveworks/scope/probe/controls"
 )
 
 // Consts exported for testing.
@@ -43,6 +45,7 @@ type registry struct {
 	quit     chan chan struct{}
 	interval time.Duration
 	client   Client
+	pipes    controls.PipeClient
 
 	watchers        []ContainerUpdateWatcher
 	containers      map[string]Container
@@ -73,7 +76,7 @@ func newDockerClient(endpoint string) (Client, error) {
 }
 
 // NewRegistry returns a usable Registry. Don't forget to Stop it.
-func NewRegistry(interval time.Duration) (Registry, error) {
+func NewRegistry(interval time.Duration, pipes controls.PipeClient) (Registry, error) {
 	client, err := NewDockerClientStub(endpoint)
 	if err != nil {
 		return nil, err
@@ -85,6 +88,7 @@ func NewRegistry(interval time.Duration) (Registry, error) {
 		images:          map[string]*docker_client.APIImages{},
 
 		client:   client,
+		pipes:    pipes,
 		interval: interval,
 		quit:     make(chan chan struct{}),
 	}

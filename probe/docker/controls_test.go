@@ -18,7 +18,7 @@ import (
 func TestControls(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10 * time.Second)
+		registry, _ := docker.NewRegistry(10*time.Second, nil)
 		defer registry.Stop()
 
 		for _, tc := range []struct{ command, result string }{
@@ -52,13 +52,13 @@ func (mockPipe) OnClose(func())                                       {}
 func TestPipes(t *testing.T) {
 	oldNewPipe := controls.NewPipe
 	defer func() { controls.NewPipe = oldNewPipe }()
-	controls.NewPipe = func(_ string) (string, xfer.Pipe, error) {
+	controls.NewPipe = func(_ controls.PipeClient, _ string) (string, xfer.Pipe, error) {
 		return "pipeid", mockPipe{}, nil
 	}
 
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10 * time.Second)
+		registry, _ := docker.NewRegistry(10*time.Second, nil)
 		defer registry.Stop()
 
 		test.Poll(t, 100*time.Millisecond, true, func() interface{} {
