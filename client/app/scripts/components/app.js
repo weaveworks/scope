@@ -35,7 +35,6 @@ function getStateFromStores() {
     topologiesLoaded: AppStore.isTopologiesLoaded(),
     version: AppStore.getVersion(),
     websocketClosed: AppStore.isWebsocketClosed()
-
   };
 }
 

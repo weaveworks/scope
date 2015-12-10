@@ -198,7 +198,7 @@ export default class Terminal extends React.Component {
     ev.preventDefault();
     const paramString = JSON.stringify(this.props);
     clickCloseTerminal(this.getPipeId());
-    openNewWindow(`/terminal.html#!/state/${paramString}`);
+    openNewWindow(`terminal.html#!/state/${paramString}`);
   }
 
   handleResize() {
@@ -247,8 +247,8 @@ export default class Terminal extends React.Component {
         <div>
           <h3>Connection Closed</h3>
           <p>
-            The connection to this container has been closed. <span
-            className="link" onClick={this.handleCloseClick}>Close terminal.</span>
+            The connection to this container has been closed.
+            <div className="link" onClick={this.handleCloseClick}>Close terminal</div>
           </p>
         </div>
       );

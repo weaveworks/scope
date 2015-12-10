@@ -1,4 +1,3 @@
-require('font-awesome-webpack');
 require('../styles/main.less');
 
 import React from 'react';

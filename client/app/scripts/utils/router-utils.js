@@ -3,16 +3,13 @@ import page from 'page';
 import { route } from '../actions/app-actions';
 import AppStore from '../stores/app-store';
 
-//
-// TODO: move this logic somewhere else.
-//
 function shouldReplaceState(prevState, nextState) {
-  return (
-    // Opening a new terminal while an existing one is open.
-    (prevState.controlPipe && nextState.controlPipe) ||
-    // Closing a terminal.
-    (prevState.controlPipe && !nextState.controlPipe)
-  );
+  // Opening a new terminal while an existing one is open.
+  const terminalToTerminal = (prevState.controlPipe && nextState.controlPipe);
+  // Closing a terminal.
+  const closingTheTerminal = (prevState.controlPipe && !nextState.controlPipe);
+
+  return terminalToTerminal || closingTheTerminal;
 }
 
 export function updateRoute() {

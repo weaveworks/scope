@@ -4,10 +4,6 @@ import AppStore from '../stores/app-store';
 import Terminal from './terminal';
 import { receiveControlPipeFromParams } from '../actions/app-actions';
 
-export function shouldLaunchTerminal() {
-  return window.location.hash.indexOf('#!/terminal/') === 0;
-}
-
 function getStateFromStores() {
   return {
     controlPipe: AppStore.getControlPipe()
