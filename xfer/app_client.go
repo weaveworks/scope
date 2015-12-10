@@ -165,7 +165,7 @@ func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
 	}
 }
 
-func (c *appClient) controlConnection() error {
+func (c *appClient) controlConnection() (bool, error) {
 	dialer := websocket.Dialer{}
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
@@ -173,7 +173,7 @@ func (c *appClient) controlConnection() error {
 	url := sanitize.URL("ws://", 0, "/api/control/ws")(c.target)
 	conn, _, err := dialer.Dial(url, headers)
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer func() {
 		log.Printf("Closing control connection to %s", c.target)
@@ -183,26 +183,24 @@ func (c *appClient) controlConnection() error {
 	codec := NewJSONWebsocketCodec(conn)
 	server := rpc.NewServer()
 	if err := server.RegisterName("control", c.control); err != nil {
-		return err
+		return false, err
 	}
 
 	// Will return false if we are exiting
 	if !c.registerConn("control", conn) {
-		return nil
+		return true, nil
 	}
 	defer c.closeConn("control")
 
 	server.ServeCodec(codec)
-	return nil
+	return false, nil
 }
 
 func (c *appClient) ControlConnection() {
 	go func() {
 		log.Printf("Control connection to %s starting", c.target)
 		defer log.Printf("Control connection to %s exiting", c.target)
-		c.doWithBackoff("controls", func() (bool, error) {
-			return false, c.controlConnection()
-		})
+		c.doWithBackoff("controls", c.controlConnection)
 	}()
 }
 
