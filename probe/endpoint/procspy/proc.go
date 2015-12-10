@@ -4,10 +4,13 @@ package procspy
 
 import (
 	"bytes"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"syscall"
+
+	"github.com/weaveworks/scope/common/fs"
 )
 
 var (
@@ -19,17 +22,19 @@ func SetProcRoot(root string) {
 	procRoot = root
 }
 
+// made variables for mocking
+var (
+	readDir = ioutil.ReadDir
+	lstat   = syscall.Lstat
+	stat    = syscall.Stat
+	open    = fs.Open
+)
+
 // walkProcPid walks over all numerical (PID) /proc entries, and sees if their
 // ./fd/* files are symlink to sockets. Returns a map from socket ID (inode)
 // to PID. Will return an error if /proc isn't there.
 func walkProcPid(buf *bytes.Buffer) (map[uint64]Proc, error) {
-	fh, err := os.Open(procRoot)
-	if err != nil {
-		return nil, err
-	}
-
-	dirNames, err := fh.Readdirnames(-1)
-	fh.Close()
+	dirNames, err := readDir(procRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -37,9 +42,10 @@ func walkProcPid(buf *bytes.Buffer) (map[uint64]Proc, error) {
 	var (
 		res        = map[uint64]Proc{}
 		namespaces = map[uint64]struct{}{}
-		stat       syscall.Stat_t
+		statT      syscall.Stat_t
 	)
-	for _, dirName := range dirNames {
+	for _, entry := range dirNames {
+		dirName := entry.Name()
 		pid, err := strconv.ParseUint(dirName, 10, 0)
 		if err != nil {
 			// Not a number, so not a PID subdir.
@@ -47,41 +53,35 @@ func walkProcPid(buf *bytes.Buffer) (map[uint64]Proc, error) {
 		}
 
 		fdBase := filepath.Join(procRoot, dirName, "fd")
-		dfh, err := os.Open(fdBase)
+		fds, err := readDir(fdBase)
 		if err != nil {
 			// Process is be gone by now, or we don't have access.
 			continue
 		}
 
-		fdNames, err := dfh.Readdirnames(-1)
-		dfh.Close()
-		if err != nil {
-			continue
-		}
-
 		// Read network namespace, and if we haven't seen it before,
 		// read /proc/<pid>/net/tcp
-		err = syscall.Lstat(filepath.Join(procRoot, dirName, "/ns/net"), &stat)
+		err = lstat(filepath.Join(procRoot, dirName, "/ns/net"), &statT)
 		if err != nil {
 			continue
 		}
 
-		if _, ok := namespaces[stat.Ino]; !ok {
-			namespaces[stat.Ino] = struct{}{}
+		if _, ok := namespaces[statT.Ino]; !ok {
+			namespaces[statT.Ino] = struct{}{}
 			readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
 			readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
 		}
 
 		var name string
-		for _, fdName := range fdNames {
+		for _, fd := range fds {
 			// Direct use of syscall.Stat() to save garbage.
-			err = syscall.Stat(filepath.Join(fdBase, fdName), &stat)
+			err = stat(filepath.Join(fdBase, fd.Name()), &statT)
 			if err != nil {
 				continue
 			}
 
 			// We want sockets only.
-			if stat.Mode&syscall.S_IFMT != syscall.S_IFSOCK {
+			if statT.Mode&syscall.S_IFMT != syscall.S_IFSOCK {
 				continue
 			}
 
@@ -92,7 +92,7 @@ func walkProcPid(buf *bytes.Buffer) (map[uint64]Proc, error) {
 				}
 			}
 
-			res[stat.Ino] = Proc{
+			res[statT.Ino] = Proc{
 				PID:  uint(pid),
 				Name: name,
 			}
@@ -104,7 +104,7 @@ func walkProcPid(buf *bytes.Buffer) (map[uint64]Proc, error) {
 
 // procName does a pid->name lookup.
 func procName(base string) string {
-	fh, err := os.Open(filepath.Join(base, "/comm"))
+	fh, err := open(filepath.Join(base, "/comm"))
 	if err != nil {
 		return ""
 	}
