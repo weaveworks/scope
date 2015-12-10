@@ -20,6 +20,7 @@ type Pipe interface {
 
 type pipe struct {
 	mtx             sync.Mutex
+	wg              sync.WaitGroup
 	port, starboard io.ReadWriter
 	quit            chan struct{}
 	closed          bool
@@ -60,6 +61,7 @@ func (p *pipe) Close() error {
 		onClose = p.onClose
 	}
 	p.mtx.Unlock()
+	p.wg.Wait()
 
 	// Don't run onClose under lock.
 	if onClose != nil {
@@ -82,6 +84,15 @@ func (p *pipe) OnClose(f func()) {
 
 // CopyToWebsocket copies pipe data to/from a websocket.  It blocks.
 func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn *websocket.Conn) error {
+	p.mtx.Lock()
+	if p.closed {
+		p.mtx.Unlock()
+		return nil
+	}
+	p.wg.Add(1)
+	p.mtx.Unlock()
+	defer p.wg.Done()
+
 	errors := make(chan error, 1)
 
 	// Read-from-UI loop
