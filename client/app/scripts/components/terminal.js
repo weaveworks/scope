@@ -24,6 +24,7 @@ const MDASH = '\u2014';
 
 const reconnectTimerInterval = 2000;
 let reconnectTimer = null;
+let resizeTimout = null;
 
 function ab2str(buf) {
   return String.fromCharCode.apply(null, new Uint8Array(buf));
@@ -141,7 +142,7 @@ export default class Terminal extends React.Component {
 
     window.addEventListener('resize', this.handleResize);
 
-    setTimeout(() => {
+    resizeTimout = setTimeout(() => {
       this.setState({
         pixelPerCol: pixelPerCol,
         pixelPerRow: pixelPerRow
@@ -152,7 +153,12 @@ export default class Terminal extends React.Component {
 
   componentWillUnmount() {
     log('cwu terminal');
+
+    clearTimeout(resizeTimout);
+    clearTimeout(reconnectTimer);
+
     window.removeEventListener('resize', this.handleResize);
+
     if (this.term) {
       log('destroy terminal');
       this.term.destroy();
