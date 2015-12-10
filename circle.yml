@@ -22,7 +22,7 @@ dependencies:
     - "sudo apt-get update && sudo apt-get install jq pv"
     - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
-    - go get $WEAVE_REPO/...
+    - mkdir -p $GOPATH/src/$WEAVE_REPO; git clone http://github.com/weaveworks/weave $GOPATH/src/$WEAVE_REPO
     - make deps
     - "mkdir -p $(dirname $SRCDIR) && cp -r $(pwd)/ $SRCDIR"
     - "cd $SRCDIR/client; ../tools/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc .babelrc && touch $SRCDIR/.scope_ui_build.uptodate"
