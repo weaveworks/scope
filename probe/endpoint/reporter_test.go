@@ -71,7 +71,7 @@ func TestSpyNoProcesses(t *testing.T) {
 		nodeName = "frenchs-since-1904"   // TODO rename to hostNmae
 	)
 
-	reporter := endpoint.NewReporter(nodeID, nodeName, false, false)
+	reporter := endpoint.NewReporter(nodeID, nodeName, false, false, nil)
 	r, _ := reporter.Report()
 	//buf, _ := json.MarshalIndent(r, "", "    ")
 	//t.Logf("\n%s\n", buf)
@@ -107,7 +107,7 @@ func TestSpyWithProcesses(t *testing.T) {
 		nodeName = "fishermans-friend" // TODO rename to hostNmae
 	)
 
-	reporter := endpoint.NewReporter(nodeID, nodeName, true, false)
+	reporter := endpoint.NewReporter(nodeID, nodeName, true, false, nil)
 	r, _ := reporter.Report()
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
 

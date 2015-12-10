@@ -112,10 +112,11 @@ func probeMain() {
 	resolver := xfer.NewStaticResolver(targets, clients.Set)
 	defer resolver.Stop()
 
-	endpointReporter := endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack)
+	processCache := process.NewCachingWalker(process.NewWalker(*procRoot))
+
+	endpointReporter := endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack, processCache)
 	defer endpointReporter.Stop()
 
-	processCache := process.NewCachingWalker(process.NewWalker(*procRoot))
 	p := probe.New(*spyInterval, *publishInterval, clients)
 	p.AddTicker(processCache)
 	p.AddReporter(

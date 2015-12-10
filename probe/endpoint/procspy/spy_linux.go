@@ -3,6 +3,8 @@ package procspy
 import (
 	"bytes"
 	"sync"
+
+	"github.com/weaveworks/scope/probe/process"
 )
 
 var bufPool = sync.Pool{
@@ -31,7 +33,7 @@ func (c *pnConnIter) Next() *Connection {
 }
 
 // cbConnections sets Connections()
-var cbConnections = func(processes bool) (ConnIter, error) {
+var cbConnections = func(processes bool, walker process.Walker) (ConnIter, error) {
 	// buffer for contents of /proc/<pid>/net/tcp
 	buf := bufPool.Get().(*bytes.Buffer)
 	buf.Reset()
@@ -39,7 +41,7 @@ var cbConnections = func(processes bool) (ConnIter, error) {
 	var procs map[uint64]Proc
 	if processes {
 		var err error
-		if procs, err = walkProcPid(buf); err != nil {
+		if procs, err = walkProcPid(buf, walker); err != nil {
 			return nil, err
 		}
 	}
