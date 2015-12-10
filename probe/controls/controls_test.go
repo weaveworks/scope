@@ -30,7 +30,7 @@ func TestControls(t *testing.T) {
 
 func TestControlsNotFound(t *testing.T) {
 	want := xfer.Response{
-		Error: "Control 'baz' not recognised",
+		Error: "Control \"baz\" not recognised",
 	}
 	have := controls.HandleControlRequest(xfer.Request{
 		Control: "baz",

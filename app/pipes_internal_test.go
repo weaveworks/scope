@@ -29,21 +29,21 @@ func TestPipeTimeout(t *testing.T) {
 
 	// create a new pipe.
 	id := "foo"
-	pipe, ok := pr.getOrCreatePipe(id)
+	pipe, ok := pr.getOrCreate(id)
 	if !ok {
 		t.Fatalf("not ok")
 	}
 
 	// move time forward such that the new pipe should timeout
 	mtime.NowForce(mtime.Now().Add(pipeTimeout))
-	pr.timeoutPipes()
+	pr.timeout()
 	if !pipe.Closed() {
 		t.Fatalf("pipe didn't timeout")
 	}
 
 	// move time forward such that the pipe should be GCd
 	mtime.NowForce(mtime.Now().Add(gcTimeout))
-	pr.gcPipes()
+	pr.garbageCollect()
 	if _, ok := pr.pipes[id]; ok {
 		t.Fatalf("pipe not gc'd")
 	}

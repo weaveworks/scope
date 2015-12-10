@@ -13,19 +13,15 @@ var Client interface {
 	PipeClose(string, string) error
 }
 
-// Pipe the probe-local type for a pipe, extending
+// pipe is the probe-local type for a pipe, extending
 // xfer.Pipe with the appID and a custom closer method.
-type Pipe interface {
-	xfer.Pipe
-}
-
 type pipe struct {
 	xfer.Pipe
 	id, appID string
 }
 
 // NewPipe creats a new pipe and connects it to the app.
-var NewPipe = func(appID string) (string, Pipe, error) {
+var NewPipe = func(appID string) (string, xfer.Pipe, error) {
 	pipeID := fmt.Sprintf("pipe-%d", rand.Int63())
 	pipe := &pipe{
 		Pipe:  xfer.NewPipe(),

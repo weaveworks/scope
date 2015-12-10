@@ -16,7 +16,7 @@ import (
 const (
 	gcInterval  = 30 * time.Second // we check all the pipes every 30s
 	pipeTimeout = 1 * time.Minute  // pipes are closed when a client hasn't been connected for 1 minute
-	gcTimeout   = 1 * time.Minute  // after another 1 minute, tombstoned pipes are forgotten
+	gcTimeout   = 10 * time.Minute // after another 10 minutes, tombstoned pipes are forgotten
 )
 
 // PipeRouter connects incoming and outgoing pipes.
@@ -49,16 +49,21 @@ func RegisterPipeRoutes(router *mux.Router) *PipeRouter {
 	}
 	pipeRouter.wait.Add(1)
 	go pipeRouter.gcLoop()
-	router.Methods("GET").Path("/api/pipe/{pipeID}").HandlerFunc(pipeRouter.handleWs(func(p *pipe) (*end, io.ReadWriter) {
+	router.Methods("GET").
+		Path("/api/pipe/{pipeID}").
+		HandlerFunc(pipeRouter.handleWs(func(p *pipe) (*end, io.ReadWriter) {
 		uiEnd, _ := p.Ends()
 		return &p.ui, uiEnd
 	}))
-	router.Methods("GET").Path("/api/pipe/{pipeID}/probe").HandlerFunc(pipeRouter.handleWs(func(p *pipe) (*end, io.ReadWriter) {
+	router.Methods("GET").
+		Path("/api/pipe/{pipeID}/probe").
+		HandlerFunc(pipeRouter.handleWs(func(p *pipe) (*end, io.ReadWriter) {
 		_, probeEnd := p.Ends()
 		return &p.probe, probeEnd
 	}))
-	router.Methods("DELETE").Path("/api/pipe/{pipeID}").HandlerFunc(pipeRouter.deletePipe)
-	router.Methods("POST").Path("/api/pipe/{pipeID}").HandlerFunc(pipeRouter.deletePipe)
+	router.Methods("DELETE", "POST").
+		Path("/api/pipe/{pipeID}").
+		HandlerFunc(pipeRouter.delete)
 	return pipeRouter
 }
 
@@ -78,12 +83,12 @@ func (pr *PipeRouter) gcLoop() {
 		case <-ticker:
 		}
 
-		pr.timeoutPipes()
-		pr.gcPipes()
+		pr.timeout()
+		pr.garbageCollect()
 	}
 }
 
-func (pr *PipeRouter) timeoutPipes() {
+func (pr *PipeRouter) timeout() {
 	pr.Lock()
 	defer pr.Unlock()
 	now := mtime.Now()
@@ -101,7 +106,7 @@ func (pr *PipeRouter) timeoutPipes() {
 	}
 }
 
-func (pr *PipeRouter) gcPipes() {
+func (pr *PipeRouter) garbageCollect() {
 	pr.Lock()
 	defer pr.Unlock()
 	now := mtime.Now()
@@ -112,7 +117,7 @@ func (pr *PipeRouter) gcPipes() {
 	}
 }
 
-func (pr *PipeRouter) getOrCreatePipe(id string) (*pipe, bool) {
+func (pr *PipeRouter) getOrCreate(id string) (*pipe, bool) {
 	pr.Lock()
 	defer pr.Unlock()
 	p, ok := pr.pipes[id]
@@ -131,7 +136,7 @@ func (pr *PipeRouter) getOrCreatePipe(id string) (*pipe, bool) {
 	return p, true
 }
 
-func (pr *PipeRouter) getPipeRef(id string, pipe *pipe, end *end) bool {
+func (pr *PipeRouter) retain(id string, pipe *pipe, end *end) bool {
 	pr.Lock()
 	defer pr.Unlock()
 	if pipe.Closed() {
@@ -141,7 +146,7 @@ func (pr *PipeRouter) getPipeRef(id string, pipe *pipe, end *end) bool {
 	return true
 }
 
-func (pr *PipeRouter) putPipeRef(id string, pipe *pipe, end *end) {
+func (pr *PipeRouter) release(id string, pipe *pipe, end *end) {
 	pr.Lock()
 	defer pr.Unlock()
 
@@ -158,18 +163,18 @@ func (pr *PipeRouter) putPipeRef(id string, pipe *pipe, end *end) {
 func (pr *PipeRouter) handleWs(endSelector func(*pipe) (*end, io.ReadWriter)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pipeID := mux.Vars(r)["pipeID"]
-		pipe, ok := pr.getOrCreatePipe(pipeID)
+		pipe, ok := pr.getOrCreate(pipeID)
 		if !ok {
 			http.NotFound(w, r)
 			return
 		}
 
 		endRef, endIO := endSelector(pipe)
-		if !pr.getPipeRef(pipeID, pipe, endRef) {
+		if !pr.retain(pipeID, pipe, endRef) {
 			http.NotFound(w, r)
 			return
 		}
-		defer pr.putPipeRef(pipeID, pipe, endRef)
+		defer pr.release(pipeID, pipe, endRef)
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -182,13 +187,13 @@ func (pr *PipeRouter) handleWs(endSelector func(*pipe) (*end, io.ReadWriter)) fu
 	}
 }
 
-func (pr *PipeRouter) deletePipe(w http.ResponseWriter, r *http.Request) {
+func (pr *PipeRouter) delete(w http.ResponseWriter, r *http.Request) {
 	pipeID := mux.Vars(r)["pipeID"]
-	pipe, ok := pr.getOrCreatePipe(pipeID)
-	if ok && pr.getPipeRef(pipeID, pipe, &pipe.ui) {
+	pipe, ok := pr.getOrCreate(pipeID)
+	if ok && pr.retain(pipeID, pipe, &pipe.ui) {
 		log.Printf("Closing pipe %s", pipeID)
 		pipe.Close()
 		pipe.tombstoneTime = mtime.Now()
-		pr.putPipeRef(pipeID, pipe, &pipe.ui)
+		pr.release(pipeID, pipe, &pipe.ui)
 	}
 }

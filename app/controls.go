@@ -24,7 +24,6 @@ func RegisterControlRoutes(router *mux.Router) {
 type controlHandler struct {
 	id     int64
 	client *rpc.Client
-	codec  *xfer.JSONWebsocketCodec
 }
 
 type controlRouter struct {
@@ -111,7 +110,6 @@ func (cr *controlRouter) handleProbeWS(w http.ResponseWriter, r *http.Request) {
 	client := rpc.NewClientWithCodec(codec)
 	handler := controlHandler{
 		id:     rand.Int63(),
-		codec:  codec,
 		client: client,
 	}
 

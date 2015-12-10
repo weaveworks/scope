@@ -52,7 +52,7 @@ func (mockPipe) OnClose(func())                                       {}
 func TestPipes(t *testing.T) {
 	oldNewPipe := controls.NewPipe
 	defer func() { controls.NewPipe = oldNewPipe }()
-	controls.NewPipe = func(_ string) (string, controls.Pipe, error) {
+	controls.NewPipe = func(_ string) (string, xfer.Pipe, error) {
 		return "pipeid", mockPipe{}, nil
 	}
 

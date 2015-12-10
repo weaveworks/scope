@@ -17,7 +17,7 @@ func HandleControlRequest(req xfer.Request) xfer.Response {
 	handler, ok := handlers[req.Control]
 	mtx.Unlock()
 	if !ok {
-		return xfer.ResponseErrorf("Control '%s' not recognised", req.Control)
+		return xfer.ResponseErrorf("Control %q not recognised", req.Control)
 	}
 
 	return handler(req)
