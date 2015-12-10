@@ -7,8 +7,8 @@ import (
 	"syscall"
 )
 
-// T is the filesystem interface type.
-type T interface {
+// Interface is the filesystem interface type.
+type Interface interface {
 	ReadDir(string) ([]os.FileInfo, error)
 	ReadFile(string) ([]byte, error)
 	Lstat(string, *syscall.Stat_t) error
@@ -19,17 +19,7 @@ type T interface {
 type realFS struct{}
 
 // FS is the way you should access the filesystem.
-var FS T = realFS{}
-
-// Mock is used to switch out the filesystem for a mock.
-func Mock(fs T) {
-	FS = fs
-}
-
-// Restore puts back the real filesystem.
-func Restore() {
-	FS = realFS{}
-}
+var fs Interface = realFS{}
 
 func (realFS) ReadDir(path string) ([]os.FileInfo, error) {
 	return ioutil.ReadDir(path)
@@ -49,4 +39,41 @@ func (realFS) Stat(path string, stat *syscall.Stat_t) error {
 
 func (realFS) Open(path string) (io.ReadWriteCloser, error) {
 	return os.Open(path)
+}
+
+// trampolines here to allow users to do fs.ReadDir etc
+
+// ReadDir see ioutil.ReadDir
+func ReadDir(path string) ([]os.FileInfo, error) {
+	return fs.ReadDir(path)
+}
+
+// ReadFile see ioutil.ReadFile
+func ReadFile(path string) ([]byte, error) {
+	return fs.ReadFile(path)
+}
+
+// Lstat see syscall.Lstat
+func Lstat(path string, stat *syscall.Stat_t) error {
+	return fs.Lstat(path, stat)
+}
+
+// Stat see syscall.Stat
+func Stat(path string, stat *syscall.Stat_t) error {
+	return fs.Stat(path, stat)
+}
+
+// Open see os.Open
+func Open(path string) (io.ReadWriteCloser, error) {
+	return fs.Open(path)
+}
+
+// Mock is used to switch out the filesystem for a mock.
+func Mock(mock Interface) {
+	fs = mock
+}
+
+// Restore puts back the real filesystem.
+func Restore() {
+	fs = realFS{}
 }

@@ -23,7 +23,7 @@ func NewWalker(procRoot string) Walker {
 // passes one-by-one to the supplied function. Walk is only made public
 // so that is can be tested.
 func (w *walker) Walk(f func(Process)) error {
-	dirEntries, err := fs.FS.ReadDir(w.procRoot)
+	dirEntries, err := fs.ReadDir(w.procRoot)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (w *walker) Walk(f func(Process)) error {
 			continue
 		}
 
-		stat, err := fs.FS.ReadFile(path.Join(w.procRoot, filename, "stat"))
+		stat, err := fs.ReadFile(path.Join(w.procRoot, filename, "stat"))
 		if err != nil {
 			continue
 		}
@@ -51,13 +51,13 @@ func (w *walker) Walk(f func(Process)) error {
 		}
 
 		cmdline := ""
-		if cmdlineBuf, err := fs.FS.ReadFile(path.Join(w.procRoot, filename, "cmdline")); err == nil {
+		if cmdlineBuf, err := fs.ReadFile(path.Join(w.procRoot, filename, "cmdline")); err == nil {
 			cmdlineBuf = bytes.Replace(cmdlineBuf, []byte{'\000'}, []byte{' '}, -1)
 			cmdline = string(cmdlineBuf)
 		}
 
 		comm := "(unknown)"
-		if commBuf, err := fs.FS.ReadFile(path.Join(w.procRoot, filename, "comm")); err == nil {
+		if commBuf, err := fs.ReadFile(path.Join(w.procRoot, filename, "comm")); err == nil {
 			comm = strings.TrimSpace(string(commBuf))
 		}
 

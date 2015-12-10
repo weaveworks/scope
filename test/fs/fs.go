@@ -33,7 +33,7 @@ type File struct {
 // Entry is an entry in the mock filesystem
 type Entry interface {
 	os.FileInfo
-	fs.T
+	fs.Interface
 }
 
 // Dir creates a new directory with the given entries.
