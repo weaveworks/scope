@@ -16,7 +16,7 @@ var bufPool = sync.Pool{
 type pnConnIter struct {
 	pn    *ProcNet
 	buf   *bytes.Buffer
-	procs map[uint64]Proc
+	procs map[uint64]*Proc
 }
 
 func (c *pnConnIter) Next() *Connection {
@@ -27,7 +27,7 @@ func (c *pnConnIter) Next() *Connection {
 		return nil
 	}
 	if proc, ok := c.procs[n.inode]; ok {
-		n.Proc = proc
+		n.Proc = *proc
 	}
 	return n
 }
@@ -38,7 +38,7 @@ var cbConnections = func(processes bool, walker process.Walker) (ConnIter, error
 	buf := bufPool.Get().(*bytes.Buffer)
 	buf.Reset()
 
-	var procs map[uint64]Proc
+	var procs map[uint64]*Proc
 	if processes {
 		var err error
 		if procs, err = walkProcPid(buf, walker); err != nil {

@@ -33,6 +33,12 @@ var mockFS = fs.Dir("",
 					FStat: syscall.Stat_t{},
 				},
 			),
+			fs.Dir("net",
+				fs.File{
+					FName:     "tcp",
+					FContents: "I'm a little teapot",
+				},
+			),
 			fs.File{
 				FName:     "stat",
 				FContents: "1 na R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
@@ -50,7 +56,7 @@ func TestWalkProcPid(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[uint64]Proc{
+	want := map[uint64]*Proc{
 		45: {
 			PID:  1,
 			Name: "foo",

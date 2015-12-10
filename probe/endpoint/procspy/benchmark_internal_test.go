@@ -6,13 +6,16 @@ import (
 )
 
 func BenchmarkParseConnectionsBaseline(b *testing.B) {
-	readFile = func(string, *bytes.Buffer) error { return nil }
+	readFile = func(string, *bytes.Buffer) (int64, error) { return 0, nil }
 	benchmarkConnections(b)
 	// 333 ns/op, 0 allocs/op
 }
 
 func BenchmarkParseConnectionsFixture(b *testing.B) {
-	readFile = func(_ string, buf *bytes.Buffer) error { _, err := buf.Write(fixture); return err }
+	readFile = func(_ string, buf *bytes.Buffer) (int64, error) {
+		n, err := buf.Write(fixture)
+		return int64(n), err
+	}
 	benchmarkConnections(b)
 	// 15553 ns/op, 12 allocs/op
 }
