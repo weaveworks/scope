@@ -23,8 +23,6 @@ const TIMES = '\u00D7';
 const MDASH = '\u2014';
 
 const reconnectTimerInterval = 2000;
-let reconnectTimer = null;
-let resizeTimout = null;
 
 function ab2str(buf) {
   return String.fromCharCode.apply(null, new Uint8Array(buf));
@@ -65,6 +63,10 @@ function openNewWindow(url) {
 export default class Terminal extends React.Component {
   constructor(props, context) {
     super(props, context);
+
+    this.reconnectTimeout = null;
+    this.resizeTimeout = null;
+
     this.state = {
       connected: false,
       rows: DEFAULT_ROWS,
@@ -84,7 +86,7 @@ export default class Terminal extends React.Component {
     getPipeStatus(this.getPipeId());
 
     socket.onopen = () => {
-      clearTimeout(reconnectTimer);
+      clearTimeout(this.reconnectTimeout);
       log('socket open to', wsUrl);
       this.setState({connected: true});
     };
@@ -98,7 +100,7 @@ export default class Terminal extends React.Component {
         if (wereConnected) {
           this.createWebsocket(term);
         } else {
-          reconnectTimer = setTimeout(
+          this.reconnectTimeout = setTimeout(
             this.createWebsocket.bind(this, term), reconnectTimerInterval);
         }
       }
@@ -142,7 +144,7 @@ export default class Terminal extends React.Component {
 
     window.addEventListener('resize', this.handleResize);
 
-    resizeTimout = setTimeout(() => {
+    this.resizeTimeout = setTimeout(() => {
       this.setState({
         pixelPerCol: pixelPerCol,
         pixelPerRow: pixelPerRow
@@ -154,8 +156,8 @@ export default class Terminal extends React.Component {
   componentWillUnmount() {
     log('cwu terminal');
 
-    clearTimeout(resizeTimout);
-    clearTimeout(reconnectTimer);
+    clearTimeout(this.reconnectTimeout);
+    clearTimeout(this.resizeTimeout);
 
     window.removeEventListener('resize', this.handleResize);
 
