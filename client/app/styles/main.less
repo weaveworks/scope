@@ -35,6 +35,8 @@
 @details-window-width: 420px;
 @details-window-padding-left: 36px;
 
+@terminal-header-height: 34px;
+
 /* add this class to truncate text with ellipsis, container needs width */
 .truncate {
   white-space: nowrap;
@@ -53,6 +55,15 @@
 
 .hideable {
   transition: opacity .5s ease-in-out;
+}
+
+.hang-around {
+  transition-delay: .5s;
+}
+
+.link {
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .hide {
@@ -347,12 +358,12 @@ h2 {
 
   .details-tools {
     position: absolute;
-    top: 8px;
+    top: 6px;
     right: 8px;
 
     span {
       .palable;
-      padding: 4px;
+      padding: 4px 5px;
       margin-left: 2px;
       font-size: 110%;
       color: @white;
@@ -554,18 +565,18 @@ h2 {
   &-embedded {
     z-index: 512;
     position: fixed;
-    display: flex;
-    flex-flow: column;
     top: 24px;
     bottom: 48px;
     left: 36px;
-    right: (@details-window-width + @details-window-padding-left + 4px);
+    right: (@details-window-width + @details-window-padding-left + 10px);
   }
 
   &-wrapper {
-    display: flex;
-    flex-flow: column;
-    flex: 1;
+    position: absolute;
+    bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     border: 0px solid #000000;
     border-radius: 4px;
     color: #f0f0f0;
@@ -577,6 +588,7 @@ h2 {
     .truncate;
     text-align: center;
     color: @white;
+    height: @terminal-header-height;
     padding: 8px 24px;
     background-color: @text-color;
     position: relative;
@@ -588,10 +600,11 @@ h2 {
     &-tools {
       position: absolute;
       right: 8px;
+      top: 6px;
 
       &-icon {
         .palable;
-        padding: 4px;
+        padding: 4px 5px;
         color: @white;
         cursor: pointer;
         opacity: 0.7;
@@ -605,10 +618,16 @@ h2 {
     }
   }
 
+  &-embedded &-inner { top: @terminal-header-height; }
+  &-app &-inner { top: 0; }
   &-inner {
-    flex: 1;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
     background-color: rgba(0, 0, 0, 0.93);
     padding: 8px;
+    border-radius: 0 0 2px 2px;
 
     .terminal {
       background-color: transparent !important;
@@ -621,15 +640,16 @@ h2 {
     bottom: 16px;
     right: 16px;
     width: 50%;
-    height: 130px;
-    padding: 16px;
+    padding: 16px 16px;
     opacity: 0.8;
+    border-radius: 4px;
 
-    h1 {
-      margin: 8px 0;
+    h3 {
+      margin: 4px 0;
     }
 
     p {
+      margin: 4px 0;
       color: @white;
     }
   }

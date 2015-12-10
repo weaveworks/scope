@@ -45,8 +45,9 @@ function openNewWindow(url) {
   const screenLeft = window.screenX || window.screenLeft;
   const screenTop = window.screenY || window.screenTop;
   const popoutWindowToolbarHeight = 51;
+  // TODO replace this stuff w/ looking up bounding box.
   const windowOptions = {
-    width: window.innerWidth - 420 - 36 - 36 - 4,
+    width: window.innerWidth - 420 - 36 - 36 - 10,
     height: window.innerHeight - 24 - 48 - popoutWindowToolbarHeight,
     left: screenLeft + 36,
     top: screenTop + (window.outerHeight - window.innerHeight) + 24,
@@ -168,14 +169,18 @@ export default class Terminal extends React.Component {
     if (sizeChanged) {
       this.term.resize(this.state.cols, this.state.rows);
     }
-    if (!this.props.embedded) {
+    if (this.isEmbedded()) {
       setDocumentTitle(this.getTitle());
     }
   }
 
   handleCloseClick(ev) {
     ev.preventDefault();
-    clickCloseTerminal(this.getPipeId(), true);
+    if (this.isEmbedded()) {
+      clickCloseTerminal(this.getPipeId(), true);
+    } else {
+      window.close();
+    }
   }
 
   handlePopoutTerminal(ev) {
@@ -227,36 +232,36 @@ export default class Terminal extends React.Component {
 
   getStatus() {
     if (this.props.pipe.status === 'PIPE_DELETED') {
-      return {
-        title: 'Pipe Deleted.',
-        message: 'The control pipe for the connection to this container has ' +
-          'been deleted. Try performing the attach or exec again.'
-      };
+      return (
+        <div>
+          <h3>Connection Closed</h3>
+          <p>
+            The connection to this container has been closed. <span
+            className="link" onClick={this.handleCloseClick}>Close terminal.</span>
+          </p>
+        </div>
+      );
     }
 
     if (!this.state.connected) {
-      return {
-        title: 'Connecting...',
-        message: 'Establishing a connection to the container.'
-      };
+      return (
+        <h3>Connecting...</h3>
+      );
     }
 
-    return {
-      title: 'Connected',
-      message: 'Lets do this!'
-    };
+    return (
+      <h3>Connected</h3>
+    );
   }
 
   getTerminalStatusBar() {
-    const {title, message} = this.getStatus();
     const style = {
       backgroundColor: this.props.statusBarColor || getNeutralColor(),
       opacity: this.state.connected ? 0 : 0.9
     };
     return (
-      <div className="terminal-status-bar hideable" style={style}>
-        <h1>{title}</h1>
-        <p>{message}</p>
+      <div className="terminal-status-bar hideable hang-around" style={style}>
+        {this.getStatus()}
       </div>
     );
   }
