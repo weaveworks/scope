@@ -68,6 +68,11 @@ mkdir -p /etc/weave
 APP_ARGS=""
 PROBE_ARGS=""
 
+if [ "$1" = version ]; then
+    /home/weave/scope version
+    exit 0
+fi
+
 while true; do
     case "$1" in
         --app.*)

@@ -102,6 +102,10 @@ case "$COMMAND" in
         launch_command "$@"
         ;;
 
+    version)
+        docker run $SCOPE_IMAGE version
+        ;;
+
     launch)
         check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
         docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true

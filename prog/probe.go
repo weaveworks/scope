@@ -29,8 +29,6 @@ import (
 	"github.com/weaveworks/scope/xfer"
 )
 
-var version = "dev" // set at build time
-
 // Main runs the probe
 func probeMain() {
 	var (
@@ -48,17 +46,11 @@ func probeMain() {
 		kubernetesInterval = flag.Duration("kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
 		weaveRouterAddr    = flag.String("weave.router.addr", "", "IP address or FQDN of the Weave router")
 		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
-		printVersion       = flag.Bool("version", false, "print version number and exit")
 		useConntrack       = flag.Bool("conntrack", true, "also use conntrack to track connections")
 		insecure           = flag.Bool("insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
 		logPrefix          = flag.String("log.prefix", "<probe>", "prefix for each log line")
 	)
 	flag.Parse()
-
-	if *printVersion {
-		fmt.Println(version)
-		return
-	}
 
 	// Setup in memory metrics sink
 	inm := metrics.NewInmemSink(time.Minute, 2*time.Minute)
