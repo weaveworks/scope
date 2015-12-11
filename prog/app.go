@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -32,17 +31,11 @@ func router(c app.Collector) *mux.Router {
 // Main runs the app
 func appMain() {
 	var (
-		window       = flag.Duration("window", 15*time.Second, "window")
-		listen       = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
-		logPrefix    = flag.String("log.prefix", "<app>", "prefix for each log line")
-		printVersion = flag.Bool("version", false, "print version number and exit")
+		window    = flag.Duration("window", 15*time.Second, "window")
+		listen    = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
+		logPrefix = flag.String("log.prefix", "<app>", "prefix for each log line")
 	)
 	flag.Parse()
-
-	if *printVersion {
-		fmt.Println(app.Version)
-		return
-	}
 
 	if !strings.HasSuffix(*logPrefix, " ") {
 		*logPrefix += " "
@@ -53,6 +46,7 @@ func appMain() {
 
 	rand.Seed(time.Now().UnixNano())
 	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
+	app.Version = version
 	log.Printf("app starting, version %s, ID %s", app.Version, app.UniqueID)
 	http.Handle("/", router(app.NewCollector(*window)))
 	go func() {

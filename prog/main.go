@@ -5,8 +5,10 @@ import (
 	"os"
 )
 
+var version = "dev" // set at build time
+
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: %s (app|probe) args...\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "usage: %s (app|probe|version) args...\n", os.Args[0])
 	os.Exit(1)
 }
 
@@ -23,6 +25,8 @@ func main() {
 		appMain()
 	case "probe":
 		probeMain()
+	case "version":
+		fmt.Println("Weave Scope version", version)
 	default:
 		usage()
 	}
