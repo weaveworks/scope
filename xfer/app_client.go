@@ -46,12 +46,14 @@ type appClient struct {
 	target string
 	client http.Client
 
+	// Track all the background goroutines, ensure they all stop
+	backgroundWait sync.WaitGroup
+
 	// Track ongoing websocket connections
 	conns map[string]*websocket.Conn
 
 	// For publish
 	publishLoop sync.Once
-	publishWait sync.WaitGroup
 	readers     chan io.Reader
 
 	// For controls
@@ -107,20 +109,33 @@ func (c *appClient) closeConn(id string) {
 	}
 }
 
+func (c *appClient) retainGoroutine() bool {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	if c.hasQuit() {
+		return false
+	}
+	c.backgroundWait.Add(1)
+	return true
+}
+
+func (c *appClient) releaseGoroutine() {
+	c.backgroundWait.Done()
+}
+
 // Stop stops the appClient.
 func (c *appClient) Stop() {
 	c.mtx.Lock()
-	defer c.mtx.Unlock()
 	close(c.readers)
 	close(c.quit)
-
 	for _, conn := range c.conns {
 		conn.Close()
 	}
 	c.conns = map[string]*websocket.Conn{}
-	c.client.Transport.(*http.Transport).CloseIdleConnections()
+	c.mtx.Unlock()
 
-	c.publishWait.Wait()
+	c.backgroundWait.Wait()
+	c.client.Transport.(*http.Transport).CloseIdleConnections()
 	return
 }
 
@@ -140,6 +155,11 @@ func (c *appClient) Details() (Details, error) {
 }
 
 func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
+	if !c.retainGoroutine() {
+		return
+	}
+	defer c.releaseGoroutine()
+
 	backoff := initialBackoff
 
 	for {
@@ -228,16 +248,6 @@ func (c *appClient) startPublishing() {
 	go func() {
 		log.Printf("Publish loop for %s starting", c.target)
 		defer log.Printf("Publish loop for %s exiting", c.target)
-
-		c.mtx.Lock()
-		if c.hasQuit() {
-			c.mtx.Unlock()
-			return
-		}
-		c.publishWait.Add(1)
-		defer c.publishWait.Done()
-		c.mtx.Unlock()
-
 		c.doWithBackoff("publish", func() (bool, error) {
 			r := <-c.readers
 			if r == nil {
