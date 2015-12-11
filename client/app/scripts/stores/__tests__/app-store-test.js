@@ -70,8 +70,8 @@ describe('AppStore', function() {
     type: ActionTypes.CLOSE_WEBSOCKET
   };
 
-  const HitEscAction = {
-    type: ActionTypes.HIT_ESC_KEY
+  const deSelectNode = {
+    type: ActionTypes.DESELECT_NODE
   };
 
   const OpenWebsocketAction = {
@@ -251,7 +251,7 @@ describe('AppStore', function() {
     expect(AppStore.getSelectedNodeId()).toBe('n1');
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
 
-    registeredCallback(HitEscAction);
+    registeredCallback(deSelectNode);
     expect(AppStore.getSelectedNodeId()).toBe(null);
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
   });
@@ -318,7 +318,7 @@ describe('AppStore', function() {
     expect(AppStore.getAdjacentNodes('n1').has('n1')).toBeTruthy();
     expect(AppStore.getAdjacentNodes('n1').has('n2')).toBeTruthy();
 
-    registeredCallback(HitEscAction);
+    registeredCallback(deSelectNode);
     expect(AppStore.getAdjacentNodes().size).toEqual(0);
   });
 

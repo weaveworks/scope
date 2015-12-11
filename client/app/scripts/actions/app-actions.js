@@ -1,9 +1,13 @@
+import debug from 'debug';
+
 import AppDispatcher from '../dispatcher/app-dispatcher';
 import ActionTypes from '../constants/action-types';
-
 import { updateRoute } from '../utils/router-utils';
-import { doControl as doControlRequest, getNodesDelta, getNodeDetails, getTopologies } from '../utils/web-api-utils';
+import { doControl as doControlRequest, getNodesDelta, getNodeDetails,
+  getTopologies, deletePipe } from '../utils/web-api-utils';
 import AppStore from '../stores/app-store';
+
+const log = debug('scope:app-actions');
 
 export function changeTopologyOption(option, value, topologyId) {
   AppDispatcher.dispatch({
@@ -31,6 +35,17 @@ export function clickCloseDetails() {
   AppDispatcher.dispatch({
     type: ActionTypes.CLICK_CLOSE_DETAILS
   });
+  updateRoute();
+}
+
+export function clickCloseTerminal(pipeId, closePipe) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_CLOSE_TERMINAL,
+    pipeId: pipeId
+  });
+  if (closePipe) {
+    deletePipe(pipeId);
+  }
   updateRoute();
 }
 
@@ -102,10 +117,11 @@ export function enterNode(nodeId) {
 }
 
 export function hitEsc() {
-  AppDispatcher.dispatch({
-    type: ActionTypes.HIT_ESC_KEY
-  });
-  updateRoute();
+  // Dont deselect node on ESC if there is a controlPipe (keep terminal open)
+  if (AppStore.getSelectedNodeId() && !AppStore.getControlPipe()) {
+    AppDispatcher.dispatch({type: ActionTypes.DESELECT_NODE});
+    updateRoute();
+  }
 }
 
 export function leaveEdge(edgeId) {
@@ -169,6 +185,43 @@ export function receiveApiDetails(apiDetails) {
     type: ActionTypes.RECEIVE_API_DETAILS,
     hostname: apiDetails.hostname,
     version: apiDetails.version
+  });
+}
+
+export function receiveControlPipeFromParams(pipeId, rawTty) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.RECEIVE_CONTROL_PIPE,
+    pipeId: pipeId,
+    rawTty: rawTty
+  });
+}
+
+export function receiveControlPipe(pipeId, nodeId, rawTty) {
+  if (nodeId.split(';').pop() !== AppStore.getSelectedNodeId()) {
+    log('Node was deselected before we could set up control!');
+    deletePipe(pipeId);
+    return;
+  }
+
+  const controlPipe = AppStore.getControlPipe();
+  if (controlPipe && controlPipe.id !== pipeId) {
+    deletePipe(controlPipe.id);
+  }
+
+  AppDispatcher.dispatch({
+    type: ActionTypes.RECEIVE_CONTROL_PIPE,
+    pipeId: pipeId,
+    rawTty: rawTty
+  });
+
+  updateRoute();
+}
+
+export function receiveControlPipeStatus(pipeId, status) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.RECEIVE_CONTROL_PIPE_STATUS,
+    pipeId: pipeId,
+    status: status
   });
 }
 

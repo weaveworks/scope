@@ -18,6 +18,9 @@
 @weave-orange: rgb(255,75,25);
 @weave-charcoal-blue: rgb(50,50,75); // #32324B
 
+@base-font: "Roboto", sans-serif;
+@mono-font: "Menlo", "DejaVu Sans Mono", "Liberation Mono", monospace;
+
 @primary-color: @weave-charcoal-blue;
 @background-color: lighten(@primary-color, 66%);
 @background-secondary-color: lighten(@background-color, 8%);
@@ -28,6 +31,11 @@
 @text-tertiary-color: lighten(@primary-color, 50%);
 @text-darker-color: @primary-color;
 @white: @background-secondary-color;
+
+@details-window-width: 420px;
+@details-window-padding-left: 36px;
+
+@terminal-header-height: 34px;
 
 /* add this class to truncate text with ellipsis, container needs width */
 .truncate {
@@ -49,8 +57,20 @@
   transition: opacity .5s ease-in-out;
 }
 
+.hang-around {
+  transition-delay: .5s;
+}
+
 .hide {
   opacity: 0;
+}
+
+.shadow-2 {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16), 0 3px 10px rgba(0, 0, 0, 0.23);
+}
+
+.shadow-3 {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 6px 10px rgba(0, 0, 0, 0.23);
 }
 
 * {
@@ -77,7 +97,7 @@ body {
   background: linear-gradient(30deg, @background-color 0%, @background-secondary-color 100%);
   color: @text-color;
   line-height: 150%;
-  font-family: "Roboto", sans-serif;
+  font-family: @base-font;
   font-size: 13px;
   margin: 0;
 }
@@ -99,7 +119,13 @@ h2 {
   font-weight: 400;
 }
 
-#app {
+.app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  overflow: auto;
 }
 
 .header {
@@ -222,7 +248,7 @@ h2 {
   }
 
   text {
-    font-family: Roboto;
+    font-family: @base-font;
     fill: @text-secondary-color;
 
     &.node-label {
@@ -313,13 +339,13 @@ h2 {
 }
 
 #details {
-  position: absolute;
+  position: fixed;
   z-index: 1024;
   display: block;
-  right: 36px;
+  right: @details-window-padding-left;
   top: 24px;
   bottom: 48px;
-  width: 420px;
+  width: @details-window-width;
 
   .details-tools-wrapper {
     position: relative;
@@ -327,12 +353,12 @@ h2 {
 
   .details-tools {
     position: absolute;
-    top: 16px;
-    right: 24px;
+    top: 6px;
+    right: 8px;
 
     span {
       .palable;
-      padding: 4px;
+      padding: 4px 5px;
       margin-left: 2px;
       font-size: 110%;
       color: @white;
@@ -346,6 +372,14 @@ h2 {
         border-color: rgba(255, 255, 255, 0.6);
       }
     }
+  }
+
+  .details-wrapper {
+    height: 100%;
+    padding-bottom: 8px;
+    border-radius: 2px;
+    background-color: #fff;
+    .shadow-2;
   }
 }
 
@@ -508,9 +542,127 @@ h2 {
       }
 
     }
+  }
+}
 
+.terminal {
+
+  &-app {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-flow: column;
   }
 
+  &-embedded {
+    z-index: 512;
+    position: fixed;
+    top: 24px;
+    bottom: 48px;
+    left: 36px;
+    right: (@details-window-width + @details-window-padding-left + 10px);
+  }
+
+  &-wrapper {
+    position: absolute;
+    bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    border: 0px solid #000000;
+    border-radius: 4px;
+    color: #f0f0f0;
+    font-family: @mono-font;
+    .shadow-2;
+  }
+
+  &-header {
+    .truncate;
+    text-align: center;
+    color: @white;
+    height: @terminal-header-height;
+    padding: 8px 24px;
+    background-color: @text-color;
+    position: relative;
+
+    &-title {
+      cursor: default;
+    }
+
+    &-tools {
+      position: absolute;
+      right: 8px;
+      top: 6px;
+
+      &-icon {
+        .palable;
+        padding: 4px 5px;
+        color: @white;
+        cursor: pointer;
+        opacity: 0.7;
+        border: 1px solid rgba(255, 255, 255, 0);
+        border-radius: 10%;
+        &:hover {
+          opacity: 1;
+          border-color: rgba(255, 255, 255, 0.6);
+        }
+      }
+    }
+  }
+
+  &-embedded &-inner { top: @terminal-header-height; }
+  &-app &-inner { top: 0; }
+  &-inner {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.93);
+    padding: 8px;
+    border-radius: 0 0 2px 2px;
+
+    .terminal {
+      background-color: transparent !important;
+    }
+  }
+
+  &-status-bar {
+    font-family: @base-font;
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 50%;
+    padding: 16px 16px;
+    opacity: 0.8;
+    border-radius: 4px;
+
+    h3 {
+      margin: 4px 0;
+    }
+
+    p {
+      margin: 4px 0;
+      color: @white;
+    }
+    .link {
+      text-transform: uppercase;
+      font-weight: bold;
+      cursor: pointer;
+      float: right;
+    }
+  }
+
+  &-cursor {
+    color: #000;
+    background: #f0f0f0;
+  }
+}
+
+.terminal-inactive .terminal-cursor {
+  visibility: hidden;
 }
 
 .sidebar {

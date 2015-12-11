@@ -56,6 +56,8 @@ func (c *mockContainer) GetNode(_ string, _ []net.IP) report.Node {
 	})
 }
 
+func (c *mockContainer) HasTTY() bool { return true }
+
 type mockDockerClient struct {
 	sync.RWMutex
 	apiContainers []client.APIContainers
@@ -122,6 +124,23 @@ func (m *mockDockerClient) PauseContainer(_ string) error {
 
 func (m *mockDockerClient) UnpauseContainer(_ string) error {
 	return fmt.Errorf("unpaused")
+}
+
+type mockCloseWaiter struct{}
+
+func (mockCloseWaiter) Close() error { return nil }
+func (mockCloseWaiter) Wait() error  { return nil }
+
+func (m *mockDockerClient) AttachToContainerNonBlocking(_ client.AttachToContainerOptions) (client.CloseWaiter, error) {
+	return mockCloseWaiter{}, nil
+}
+
+func (m *mockDockerClient) CreateExec(client.CreateExecOptions) (*client.Exec, error) {
+	return &client.Exec{ID: "id"}, nil
+}
+
+func (m *mockDockerClient) StartExecNonBlocking(string, client.StartExecOptions) (client.CloseWaiter, error) {
+	return mockCloseWaiter{}, nil
 }
 
 func (m *mockDockerClient) send(event *client.APIEvents) {
@@ -223,7 +242,7 @@ func allImages(r docker.Registry) []*client.APIImages {
 func TestRegistry(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10 * time.Second)
+		registry, _ := docker.NewRegistry(10*time.Second, nil)
 		defer registry.Stop()
 		runtime.Gosched()
 
@@ -246,7 +265,7 @@ func TestRegistry(t *testing.T) {
 func TestLookupByPID(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10 * time.Second)
+		registry, _ := docker.NewRegistry(10*time.Second, nil)
 		defer registry.Stop()
 
 		want := docker.Container(&mockContainer{container1})
@@ -263,7 +282,7 @@ func TestLookupByPID(t *testing.T) {
 func TestRegistryEvents(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10 * time.Second)
+		registry, _ := docker.NewRegistry(10*time.Second, nil)
 		defer registry.Stop()
 		runtime.Gosched()
 

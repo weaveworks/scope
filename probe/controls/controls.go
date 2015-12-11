@@ -1,7 +1,6 @@
 package controls
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/weaveworks/scope/xfer"
@@ -18,15 +17,10 @@ func HandleControlRequest(req xfer.Request) xfer.Response {
 	handler, ok := handlers[req.Control]
 	mtx.Unlock()
 	if !ok {
-		return xfer.Response{
-			ID:    req.ID,
-			Error: fmt.Sprintf("Control '%s' not recognised", req.Control),
-		}
+		return xfer.ResponseErrorf("Control %q not recognised", req.Control)
 	}
 
-	response := handler(req)
-	response.ID = req.ID
-	return response
+	return handler(req)
 }
 
 // Register a new control handler under a given id.

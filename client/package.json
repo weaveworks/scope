@@ -6,6 +6,7 @@
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
+    "classnames": "^2.2.1",
     "d3": "~3.5.5",
     "dagre": "0.7.4",
     "debug": "~2.2.0",

@@ -92,6 +92,16 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 		Human: "Unpause",
 		Icon:  "fa-play",
 	})
+	result.Controls.AddControl(report.Control{
+		ID:    AttachContainer,
+		Human: "Attach",
+		Icon:  "fa-desktop",
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    ExecContainer,
+		Human: "Exec /bin/sh",
+		Icon:  "fa-terminal",
+	})
 
 	r.registry.WalkContainers(func(c Container) {
 		nodeID := report.MakeContainerNodeID(r.hostID, c.ID())

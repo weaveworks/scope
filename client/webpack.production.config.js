@@ -15,18 +15,21 @@ module.exports = {
   // fail on first error when building release
   bail: true,
 
-  entry: './app/scripts/main',
+  entry: {
+    app: './app/scripts/main',
+    'terminal-app': './app/scripts/terminal-main'
+  },
 
   output: {
     path: path.join(__dirname, 'build/'),
-    filename: 'app.js'
+    filename: '[name].js'
   },
 
   module: {
     preLoaders: [
       {
         test: /\.js$/,
-        exclude: /node_modules/,
+        exclude: /node_modules|vendor/,
         loader: 'eslint-loader'
       }
     ],
@@ -43,7 +46,7 @@ module.exports = {
         test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
         loader: 'file-loader'
       },
-      { test: /\.jsx?$/, exclude: /node_modules/, loader: 'babel' }
+      { test: /\.jsx?$/, exclude: /node_modules|vendor/, loader: 'babel' }
     ]
   },
 

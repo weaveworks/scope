@@ -6,6 +6,8 @@ import (
 	"time"
 
 	docker_client "github.com/fsouza/go-dockerclient"
+
+	"github.com/weaveworks/scope/probe/controls"
 )
 
 // Consts exported for testing.
@@ -32,6 +34,7 @@ type Registry interface {
 	WalkContainers(f func(Container))
 	WalkImages(f func(*docker_client.APIImages))
 	WatchContainerUpdates(ContainerUpdateWatcher)
+	GetContainer(string) (Container, bool)
 }
 
 // ContainerUpdateWatcher is the type of functions that get called when containers are updated.
@@ -42,6 +45,7 @@ type registry struct {
 	quit     chan chan struct{}
 	interval time.Duration
 	client   Client
+	pipes    controls.PipeClient
 
 	watchers        []ContainerUpdateWatcher
 	containers      map[string]Container
@@ -56,11 +60,15 @@ type Client interface {
 	ListImages(docker_client.ListImagesOptions) ([]docker_client.APIImages, error)
 	AddEventListener(chan<- *docker_client.APIEvents) error
 	RemoveEventListener(chan *docker_client.APIEvents) error
+
 	StopContainer(string, uint) error
 	StartContainer(string, *docker_client.HostConfig) error
 	RestartContainer(string, uint) error
 	PauseContainer(string) error
 	UnpauseContainer(string) error
+	AttachToContainerNonBlocking(docker_client.AttachToContainerOptions) (docker_client.CloseWaiter, error)
+	CreateExec(docker_client.CreateExecOptions) (*docker_client.Exec, error)
+	StartExecNonBlocking(string, docker_client.StartExecOptions) (docker_client.CloseWaiter, error)
 }
 
 func newDockerClient(endpoint string) (Client, error) {
@@ -68,7 +76,7 @@ func newDockerClient(endpoint string) (Client, error) {
 }
 
 // NewRegistry returns a usable Registry. Don't forget to Stop it.
-func NewRegistry(interval time.Duration) (Registry, error) {
+func NewRegistry(interval time.Duration, pipes controls.PipeClient) (Registry, error) {
 	client, err := NewDockerClientStub(endpoint)
 	if err != nil {
 		return nil, err
@@ -80,6 +88,7 @@ func NewRegistry(interval time.Duration) (Registry, error) {
 		images:          map[string]*docker_client.APIImages{},
 
 		client:   client,
+		pipes:    pipes,
 		interval: interval,
 		quit:     make(chan chan struct{}),
 	}
@@ -302,7 +311,7 @@ func (r *registry) WalkContainers(f func(Container)) {
 	}
 }
 
-func (r *registry) getContainer(id string) (Container, bool) {
+func (r *registry) GetContainer(id string) (Container, bool) {
 	r.RLock()
 	defer r.RUnlock()
 	c, ok := r.containers[id]

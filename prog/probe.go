@@ -102,11 +102,17 @@ func probeMain() {
 	}
 	log.Printf("publishing to: %s", strings.Join(targets, ", "))
 
-	clients := xfer.NewMultiAppClient(xfer.ProbeConfig{
+	probeConfig := xfer.ProbeConfig{
 		Token:    *token,
 		ProbeID:  probeID,
 		Insecure: *insecure,
-	}, xfer.ControlHandlerFunc(controls.HandleControlRequest), xfer.NewAppClient)
+	}
+	clients := xfer.NewMultiAppClient(func(hostname, endpoint string) (xfer.AppClient, error) {
+		return xfer.NewAppClient(
+			probeConfig, hostname, endpoint,
+			xfer.ControlHandlerFunc(controls.HandleControlRequest),
+		)
+	})
 	defer clients.Stop()
 
 	resolver := xfer.NewStaticResolver(targets, clients.Set)
@@ -130,7 +136,7 @@ func probeMain() {
 		if err := report.AddLocalBridge(*dockerBridge); err != nil {
 			log.Printf("Docker: problem with bridge %s: %v", *dockerBridge, err)
 		}
-		if registry, err := docker.NewRegistry(*dockerInterval); err == nil {
+		if registry, err := docker.NewRegistry(*dockerInterval, clients); err == nil {
 			defer registry.Stop()
 			p.AddTagger(docker.NewTagger(registry, processCache))
 			p.AddReporter(docker.NewReporter(registry, hostID, p))

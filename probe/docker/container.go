@@ -85,6 +85,7 @@ type Container interface {
 	Hostname() string
 	GetNode(string, []net.IP) report.Node
 	State() string
+	HasTTY() bool
 
 	StartGatheringStats() error
 	StopGatheringStats()
@@ -130,6 +131,10 @@ func (c *container) Hostname() string {
 
 	return fmt.Sprintf("%s.%s", c.container.Config.Hostname,
 		c.container.Config.Domainname)
+}
+
+func (c *container) HasTTY() bool {
+	return c.container.Config.Tty
 }
 
 func (c *container) State() string {
@@ -327,7 +332,9 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	if c.container.State.Paused {
 		result = result.WithControls(UnpauseContainer)
 	} else if c.container.State.Running {
-		result = result.WithControls(RestartContainer, StopContainer, PauseContainer)
+		result = result.WithControls(
+			RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer,
+		)
 	} else {
 		result = result.WithControls(StartContainer)
 	}

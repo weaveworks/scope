@@ -3,7 +3,8 @@ import reqwest from 'reqwest';
 
 import { clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
-  receiveControlSuccess, receiveTopologies } from '../actions/app-actions';
+  receiveControlPipe, receiveControlPipeStatus, receiveControlSuccess,
+  receiveTopologies } from '../actions/app-actions';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = __WS_URL__ || wsProto + '://' + location.host + location.pathname.replace(/\/$/, '');
@@ -29,6 +30,21 @@ function buildOptionsQuery(options) {
     }, '');
   }
   return '';
+}
+
+export function basePath(urlPath) {
+  //
+  // "/scope/terminal.html" -> "/scope"
+  // "/scope/" -> "/scope"
+  // "/scope" -> "/scope"
+  // "/" -> ""
+  //
+  const parts = urlPath.split('/');
+  // if the last item has a "." in it, e.g. foo.html...
+  if (parts[parts.length - 1].indexOf('.') !== -1) {
+    return parts.slice(0, -1).join('/');
+  }
+  return parts.join('/').replace(/\/$/, '');
 }
 
 function createWebsocket(topologyUrl, optionsQuery) {
@@ -146,14 +162,56 @@ export function doControl(probeId, nodeId, control) {
   reqwest({
     method: 'POST',
     url: url,
-    success: function() {
+    success: function(res) {
       receiveControlSuccess();
+      if (res && res.pipe) {
+        receiveControlPipe(res.pipe, nodeId, res.raw_tty, true);
+      }
     },
     error: function(err) {
       receiveControlError(err.response);
       controlErrorTimer = setTimeout(function() {
         clearControlError();
       }, 10000);
+    }
+  });
+}
+
+export function deletePipe(pipeId) {
+  const url = `api/pipe/${encodeURIComponent(pipeId)}`;
+  reqwest({
+    method: 'DELETE',
+    url: url,
+    success: function() {
+      log('Closed the pipe!');
+    },
+    error: function(err) {
+      log('Error closing pipe:' + err);
+      receiveError(url);
+    }
+  });
+}
+
+export function getPipeStatus(pipeId) {
+  const url = `/api/pipe/${encodeURIComponent(pipeId)}`;
+  reqwest({
+    method: 'GET',
+    url: url,
+    success: function(res) {
+      log('ERROR: expected responses: [400, 404]. Got:', res);
+    },
+    error: function(err) {
+      const status = {
+        400: 'PIPE_ALIVE',
+        404: 'PIPE_DELETED'
+      }[err.status];
+
+      if (!status) {
+        log('Unexpected pipe status:', err.status);
+        return;
+      }
+
+      receiveControlPipeStatus(pipeId, status);
     }
   });
 }

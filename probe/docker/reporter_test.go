@@ -38,6 +38,8 @@ func (r *mockRegistry) WalkImages(f func(*client.APIImages)) {
 
 func (r *mockRegistry) WatchContainerUpdates(_ docker.ContainerUpdateWatcher) {}
 
+func (r *mockRegistry) GetContainer(_ string) (docker.Container, bool) { return nil, false }
+
 var (
 	mockRegistryInstance = &mockRegistry{
 		containersByPID: map[int]docker.Container{
@@ -84,6 +86,16 @@ func TestReporter(t *testing.T) {
 				ID:    docker.UnpauseContainer,
 				Human: "Unpause",
 				Icon:  "fa-play",
+			},
+			docker.AttachContainer: report.Control{
+				ID:    docker.AttachContainer,
+				Human: "Attach",
+				Icon:  "fa-desktop",
+			},
+			docker.ExecContainer: report.Control{
+				ID:    docker.ExecContainer,
+				Human: "Exec /bin/sh",
+				Icon:  "fa-terminal",
 			},
 		},
 	}

@@ -26,17 +26,17 @@ type controlHandler struct {
 	client *rpc.Client
 }
 
+type controlRouter struct {
+	sync.Mutex
+	probes map[string]controlHandler
+}
+
 func (ch *controlHandler) handle(req xfer.Request) xfer.Response {
 	var res xfer.Response
 	if err := ch.client.Call("control.Handle", req, &res); err != nil {
 		return xfer.ResponseError(err)
 	}
 	return res
-}
-
-type controlRouter struct {
-	sync.Mutex
-	probes map[string]controlHandler
 }
 
 func (cr *controlRouter) get(probeID string) (controlHandler, bool) {
@@ -79,7 +79,7 @@ func (cr *controlRouter) handleControl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := handler.handle(xfer.Request{
-		ID:      rand.Int63(),
+		AppID:   UniqueID,
 		NodeID:  nodeID,
 		Control: control,
 	})
@@ -87,7 +87,7 @@ func (cr *controlRouter) handleControl(w http.ResponseWriter, r *http.Request) {
 		respondWith(w, http.StatusBadRequest, result.Error)
 		return
 	}
-	respondWith(w, http.StatusOK, result.Value)
+	respondWith(w, http.StatusOK, result)
 }
 
 // handleProbeWS accepts websocket connections from the probe and registers

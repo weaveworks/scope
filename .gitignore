@@ -30,6 +30,9 @@ coverage.html
 # Emacs backup files
 *~
 
+# ctags files
+tags
+
 # Project specific
 .*.uptodate
 scope.tar

@@ -40,8 +40,12 @@ function colors(text, secondText) {
   return color;
 }
 
+export function getNeutralColor() {
+  return PSEUDO_COLOR;
+}
+
 export function getNodeColor(text, secondText) {
-  return colors(text, secondText);
+  return colors(text, secondText).toString();
 }
 
 export function getNodeColorDark(text, secondText) {
