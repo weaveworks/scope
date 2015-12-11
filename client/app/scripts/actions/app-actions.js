@@ -117,15 +117,8 @@ export function enterNode(nodeId) {
 }
 
 export function hitEsc() {
-  //
-  // This simulates an "ESC-stack"
-  // 1st esc removes the controlPipe and closes the terminal.
-  // 2nd esc deselects the node and closes the details.
-  //
-  const controlPipe = AppStore.getControlPipe();
-  if (controlPipe) {
-    clickCloseTerminal(controlPipe.id, true);
-  } else {
+  // Dont deselect node on ESC if there is a controlPipe (keep terminal open)
+  if (AppStore.getSelectedNodeId() && !AppStore.getControlPipe()) {
     AppDispatcher.dispatch({type: ActionTypes.DESELECT_NODE});
     updateRoute();
   }
