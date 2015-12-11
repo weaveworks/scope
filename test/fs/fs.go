@@ -89,6 +89,24 @@ func (p dir) ReadDir(path string) ([]os.FileInfo, error) {
 	return fs.ReadDir(tail)
 }
 
+func (p dir) ReadDirNames(path string) ([]string, error) {
+	if path == "/" {
+		result := []string{}
+		for _, v := range p.entries {
+			result = append(result, v.Name())
+		}
+		return result, nil
+	}
+
+	head, tail := split(path)
+	fs, ok := p.entries[head]
+	if !ok {
+		return nil, fmt.Errorf("Not found: %s", path)
+	}
+
+	return fs.ReadDirNames(tail)
+}
+
 func (p dir) ReadFile(path string) ([]byte, error) {
 	if path == "/" {
 		return nil, fmt.Errorf("I'm a directory!")
@@ -153,6 +171,11 @@ func (p File) IsDir() bool { return false }
 
 // ReadDir implements FS
 func (p File) ReadDir(path string) ([]os.FileInfo, error) {
+	return nil, fmt.Errorf("I'm a file!")
+}
+
+// ReadDirNames implements FS
+func (p File) ReadDirNames(path string) ([]string, error) {
 	return nil, fmt.Errorf("I'm a file!")
 }
 
