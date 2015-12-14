@@ -2803,8 +2803,11 @@ Terminal.prototype.keyDown = function(ev) {
           key = '\x1b' + String.fromCharCode(ev.keyCode + 32);
         } else if (ev.keyCode === 192) {
           key = '\x1b`';
-        } else if (ev.keyCode >= 48 && ev.keyCode <= 57) {
-          key = '\x1b' + (ev.keyCode - 48);
+        // disable bash repeating for now. Supporting UK locale is more
+        // important.
+        //
+        // } else if (ev.keyCode >= 48 && ev.keyCode <= 57) {
+        //   key = '\x1b' + (ev.keyCode - 48);
         }
       }
       break;
@@ -2858,7 +2861,8 @@ Terminal.prototype.keyPress = function(ev) {
     return false;
   }
 
-  if (!key || ev.ctrlKey || ev.altKey || ev.metaKey) return false;
+  // allow ev.altKey through here, its used like "shift" in some locales.
+  if (!key || ev.ctrlKey || ev.metaKey) return false;
 
   key = String.fromCharCode(key);
 
