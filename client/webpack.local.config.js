@@ -15,9 +15,6 @@ var path = require('path');
 
  // Inject websocket url to dev backend
 var BACKEND_HOST = process.env.BACKEND_HOST || 'localhost:4040';
-var GLOBALS = {
-  __WS_URL__: JSON.stringify('ws://' + BACKEND_HOST)
-};
 
 module.exports = {
 
@@ -48,7 +45,6 @@ module.exports = {
 
   // Necessary plugins for hot load
   plugins: [
-    new webpack.DefinePlugin(GLOBALS),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin()
   ],

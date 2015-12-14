@@ -10,7 +10,7 @@ import { getPipeStatus, basePath } from '../utils/web-api-utils';
 import Term from '../vendor/term.js';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = __WS_URL__ || wsProto + '://' + location.host + basePath(location.pathname);
+const wsUrl = wsProto + '://' + location.host + basePath(location.pathname);
 const log = debug('scope:terminal');
 
 const DEFAULT_COLS = 80;

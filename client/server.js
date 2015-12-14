@@ -1,6 +1,5 @@
 var express = require('express');
-var proxy = require('proxy-middleware');
-var httpProxy = require('express-http-proxy');
+var httpProxy = require('http-proxy');
 var url = require('url');
 
 var app = express();
@@ -18,6 +17,7 @@ var app = express();
  *
  ************************************************************/
 
+
 // Serve application file depending on environment
 app.get(/(app|terminal-app).js/, function(req, res) {
   var filename = req.originalUrl;
@@ -32,18 +32,12 @@ app.get(/(app|terminal-app).js/, function(req, res) {
 
 var BACKEND_HOST = process.env.BACKEND_HOST || 'localhost:4040';
 
-// HACK need express-http-proxy, because proxy-middleware does
-// not proxy to /api itself
-app.use(httpProxy(BACKEND_HOST, {
-  filter: function(req) {
-    return url.parse(req.url).path === '/api';
-  },
-  forwardPath: function(req) {
-    return url.parse(req.url).path;
-  }
-}));
+var proxy = httpProxy.createProxy({
+  ws: true,
+  target: 'http://' + BACKEND_HOST
+});
 
-app.use('/api', proxy('http://' + BACKEND_HOST + '/api/'));
+app.all('/api*', proxy.web.bind(proxy));
 
 // Serve index page
 
@@ -90,3 +84,5 @@ var server = app.listen(port, function () {
 
   console.log('Scope UI listening at http://%s:%s', host, port);
 });
+
+server.on('upgrade', proxy.ws.bind(proxy));
