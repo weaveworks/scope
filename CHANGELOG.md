@@ -1,3 +1,84 @@
+## Release 0.11.0
+
+New features:
+
+- Add a terminal to the UI with the ability to `attach` to, or `exec` a shell in, a Docker container.
+  [#650](https://github.com/weaveworks/scope/pull/650)
+  [#735](https://github.com/weaveworks/scope/pull/735)
+  [#726](https://github.com/weaveworks/scope/pull/726)
+- Added `scope version` command
+  [#750](https://github.com/weaveworks/scope/pull/750)
+- Various CPU usage reductions for probe
+  [#742](https://github.com/weaveworks/scope/pull/742)
+  [#741](https://github.com/weaveworks/scope/pull/741)
+  [#737](https://github.com/weaveworks/scope/pull/737)
+- Show hostname of app you are connected to in the bottom right of the UI
+  [#707](https://github.com/weaveworks/scope/pull/707)
+- Add host memory and CPU usage metrics to the details panel
+  [#711](https://github.com/weaveworks/scope/pull/711)
+- Add json support to app POST /api/report
+  [#722](https://github.com/weaveworks/scope/pull/722)
+- Update the docker version we embed into the scope image to 1.6.2 in sync with weave 1.3 changes.
+  [#702](https://github.com/weaveworks/scope/pull/702)
+- Show a spinner while node details are loading
+  [#691](https://github.com/weaveworks/scope/pull/691)
+- Deterministic coloring of nodes based on rank and label
+  [#694](https://github.com/weaveworks/scope/pull/694)
+
+Bug fixes:
+
+- Mitigate one-line-of-nodes layouts (when graph has few connections), layout in rectangle instead
+  [#679](https://github.com/weaveworks/scope/pull/679)
+- When filtering unconnected nodes in the processes view, also filter nodes that are only connected to themselves.
+  [#706](https://github.com/weaveworks/scope/pull/706)
+- Correctly hide container based on docker labels on the container image.
+  [#705](https://github.com/weaveworks/scope/pull/705)
+- Show details for stopped container in the default view, by not applying filters to the node details endpoints.
+  [#704](https://github.com/weaveworks/scope/pull/704)
+  [#701](https://github.com/weaveworks/scope/pull/701)
+- Fix render issues in Safari
+  [#686](https://github.com/weaveworks/scope/pull/686)
+- Take default topology option if missing in URL
+  [#678](https://github.com/weaveworks/scope/pull/678)
+- Dont treat missing node as UI error
+  [#677](https://github.com/weaveworks/scope/pull/677)
+- Unset previous details when deselecting a node
+  [#675](https://github.com/weaveworks/scope/pull/675)
+- Add x to close details panel again
+  [#673](https://github.com/weaveworks/scope/pull/673)
+
+Documentation:
+
+- Add basic security warning.
+  [#703](https://github.com/weaveworks/scope/pull/703)
+- Add basic kubernetes how-to to the readme
+  [#669](https://github.com/weaveworks/scope/pull/669)
+- Document debug options for developers
+  [#723](https://github.com/weaveworks/scope/pull/723)
+- Add 'getting help' section and update screenshot
+  [#709](https://github.com/weaveworks/scope/pull/709)
+
+Build improvements and cleanup:
+
+- Don't go get weave, git clone it so weave build errors don't affect Scope.
+  [#743](https://github.com/weaveworks/scope/pull/743)
+- Reduce image size and build time by merging scope probe and app binaries.
+  [#732](https://github.com/weaveworks/scope/pull/732)
+- Cleaning up some dead code around edges and edgemetadata
+  [#730](https://github.com/weaveworks/scope/pull/730)
+- Make `make` build  the UI
+  [#728](https://github.com/weaveworks/scope/pull/728)
+- Omit controls field from json if emtpy.
+  [#725](https://github.com/weaveworks/scope/pull/725)
+- JS to ES2015
+  [#712](https://github.com/weaveworks/scope/pull/712)
+- Upgraded react to 0.14.3
+  [#687](https://github.com/weaveworks/scope/pull/687)
+- Cleaned up node-details-table
+  [#676](https://github.com/weaveworks/scope/pull/676)
+- Fix react key warning
+  [#672](https://github.com/weaveworks/scope/pull/672)
+
 ## Release 0.10.0
 
 Notes:
