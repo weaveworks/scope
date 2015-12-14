@@ -132,7 +132,6 @@ export default class Terminal extends React.Component {
     const innerNode = ReactDOM.findDOMNode(component.inner);
     this.term.open(innerNode);
     this.term.on('data', (data) => {
-      log('data', data);
       if (this.socket) {
         this.socket.send(data);
       }
