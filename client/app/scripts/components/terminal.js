@@ -13,8 +13,8 @@ const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = wsProto + '://' + location.host + basePath(location.pathname);
 const log = debug('scope:terminal');
 
-const DEFAULT_COLS = 1;
-const DEFAULT_ROWS = 1;
+const DEFAULT_COLS = 80;
+const DEFAULT_ROWS = 24;
 // Unicode points can be used in html and document.title
 // html shorthand codes (&times;) don't work in document.title.
 const TIMES = '\u00D7';
@@ -28,10 +28,11 @@ function ab2str(buf) {
 
 function terminalCellSize(wrapperNode, rows, cols) {
   const height = wrapperNode.clientHeight;
-  const firstRow = wrapperNode.querySelector('.terminal div');
 
   // Guess the width of the row.
   let width = wrapperNode.clientWidth;
+  // Now try and measure the first row we find.
+  const firstRow = wrapperNode.querySelector('.terminal div');
   if (!firstRow) {
     log("ERROR: Couldn't find first row, resizing might not work very well.");
   } else {
