@@ -120,7 +120,7 @@ func probeMain() {
 	p.AddReporter(
 		endpointReporter,
 		host.NewReporter(hostID, hostName, localNets),
-		process.NewReporter(processCache, hostID),
+		process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies),
 	)
 	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID, probeID))
 

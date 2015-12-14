@@ -11,7 +11,7 @@ import (
 func TestBasicWalk(t *testing.T) {
 	var (
 		procRoot = "/proc"
-		procFunc = func(process.Process) {}
+		procFunc = func(process.Process, process.Process) {}
 	)
 	if err := process.NewWalker(procRoot).Walk(procFunc); err != nil {
 		t.Fatal(err)
@@ -59,7 +59,7 @@ func TestCache(t *testing.T) {
 
 func all(w process.Walker) ([]process.Process, error) {
 	all := []process.Process{}
-	err := w.Walk(func(p process.Process) {
+	err := w.Walk(func(p, _ process.Process) {
 		all = append(all, p)
 	})
 	return all, err

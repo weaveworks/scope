@@ -31,7 +31,7 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, er
 		statT      syscall.Stat_t
 	)
 
-	walker.Walk(func(p process.Process) {
+	walker.Walk(func(p, _ process.Process) {
 		dirName := strconv.Itoa(p.PID)
 		fdBase := filepath.Join(procRoot, dirName, "fd")
 
