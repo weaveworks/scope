@@ -174,7 +174,6 @@ export default class Terminal extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    log('cdu terminal');
     const sizeChanged = (
       prevState.cols !== this.state.cols ||
       prevState.rows !== this.state.rows
@@ -182,7 +181,7 @@ export default class Terminal extends React.Component {
     if (sizeChanged) {
       this.term.resize(this.state.cols, this.state.rows);
     }
-    if (this.isEmbedded()) {
+    if (!this.isEmbedded()) {
       setDocumentTitle(this.getTitle());
     }
   }
