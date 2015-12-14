@@ -125,7 +125,6 @@ export default class Terminal extends React.Component {
     this.term = new Term({
       cols: this.state.cols,
       rows: this.state.rows,
-      screenKeys: true,
       convertEol: !this.props.raw
     });
 
