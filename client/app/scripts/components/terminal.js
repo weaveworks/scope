@@ -132,6 +132,7 @@ export default class Terminal extends React.Component {
     const innerNode = ReactDOM.findDOMNode(component.inner);
     this.term.open(innerNode);
     this.term.on('data', (data) => {
+      log('data', data);
       if (this.socket) {
         this.socket.send(data);
       }
@@ -174,7 +175,6 @@ export default class Terminal extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    log('cdu terminal');
     const sizeChanged = (
       prevState.cols !== this.state.cols ||
       prevState.rows !== this.state.rows
@@ -182,7 +182,7 @@ export default class Terminal extends React.Component {
     if (sizeChanged) {
       this.term.resize(this.state.cols, this.state.rows);
     }
-    if (this.isEmbedded()) {
+    if (!this.isEmbedded()) {
       setDocumentTitle(this.getTitle());
     }
   }

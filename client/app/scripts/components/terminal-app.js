@@ -21,6 +21,7 @@ export class TerminalApp extends React.Component {
     receiveControlPipeFromParams(params.pipe.id, null, params.pipe.raw, false);
 
     this.state = {
+      title: params.title,
       titleBarColor: params.titleBarColor,
       statusBarColor: params.statusBarColor,
       controlPipe: AppStore.getControlPipe()
