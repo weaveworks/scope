@@ -1,3 +1,9 @@
+## Release 0.11.1
+
+Bug fix:
+- Scrape /proc/PID/net/tcp6 such that we see both ends of local connections
+  [change](https://github.com/weaveworks/scope/commit/550f21511a2da20717c6de6172b5bf2e9841d905)
+
 ## Release 0.11.0
 
 New features:
