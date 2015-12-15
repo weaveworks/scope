@@ -18,7 +18,7 @@ var mockFS = fs.Dir("",
 				fs.File{
 					FName: "16",
 					FStat: syscall.Stat_t{
-						Ino:  45,
+						Ino:  5107,
 						Mode: syscall.S_IFSOCK,
 					},
 				},
@@ -35,8 +35,10 @@ var mockFS = fs.Dir("",
 			),
 			fs.Dir("net",
 				fs.File{
-					FName:     "tcp",
-					FContents: "I'm a little teapot",
+					FName: "tcp",
+					FContents: `  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
+   0: 00000000:A6C0 00000000:0000 01 00000000:00000000 00:00000000 00000000   105        0 5107 1 ffff8800a6aaf040 100 0 0 10 2d
+`,
 				},
 			),
 			fs.File{
@@ -57,7 +59,7 @@ func TestWalkProcPid(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := map[uint64]*Proc{
-		45: {
+		5107: {
 			PID:  1,
 			Name: "foo",
 		},
