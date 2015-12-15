@@ -7,7 +7,7 @@ import { clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveTopologies } from '../actions/app-actions';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = __WS_URL__ || wsProto + '://' + location.host + location.pathname.replace(/\/$/, '');
+const wsUrl = wsProto + '://' + location.host + location.pathname.replace(/\/$/, '');
 const log = debug('scope:web-api-utils');
 
 const apiTimerInterval = 10000;
