@@ -42,8 +42,9 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, er
 		}
 		hasConns, ok := namespaces[statT.Ino]
 		if !ok {
-			read, err := readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
-			hasConns = err == nil && read > 0
+			read, _ := readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
+			read6, _ := readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
+			hasConns = read+read6 > 0
 			namespaces[statT.Ino] = hasConns
 		}
 		if !hasConns {
