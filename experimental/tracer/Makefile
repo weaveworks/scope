@@ -4,7 +4,7 @@ tracer.tar: main/main main/Dockerfile
 
 main/main: main/*.go main/static.go ptrace/*.go
 	go get -tags netgo ./$(@D)
-	go build -ldflags "-extldflags \"-static\" -X main.version $(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
+	go build -ldflags "-extldflags \"-static\"" -tags netgo -o $@ ./$(@D)
 
 main/static.go: ui/*
 	esc -o main/static.go -prefix ui ui

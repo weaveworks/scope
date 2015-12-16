@@ -86,8 +86,6 @@ type Container interface {
 	GetNode(string, []net.IP) report.Node
 	State() string
 	HasTTY() bool
-
-	GetNode() report.Node
 	Container() *docker.Container
 	StartGatheringStats() error
 	StopGatheringStats()

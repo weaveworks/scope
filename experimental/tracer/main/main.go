@@ -32,7 +32,7 @@ func (t *tracer) Stop() {
 }
 
 func main() {
-	dockerRegistry, err := docker.NewRegistry(pollInterval)
+	dockerRegistry, err := docker.NewRegistry(pollInterval, nil)
 	if err != nil {
 		log.Fatalf("Could start docker watcher: %v", err)
 	}
@@ -65,6 +65,6 @@ func handleSignals() chan struct{} {
 				log.Printf("=== received SIGQUIT ===\n*** goroutine dump...\n%s\n*** end\n", buf[:stacklen])
 			}
 		}
-	} ()
+	}()
 	return quit
 }
