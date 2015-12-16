@@ -15,8 +15,6 @@ const log = debug('scope:terminal');
 
 const DEFAULT_COLS = 80;
 const DEFAULT_ROWS = 24;
-const MIN_COLS = 40;
-const MIN_ROWS = 4;
 // Unicode points can be used in html and document.title
 // html shorthand codes (&times;) don't work in document.title.
 const TIMES = '\u00D7';
@@ -29,24 +27,35 @@ function ab2str(buf) {
 }
 
 function terminalCellSize(wrapperNode, rows, cols) {
-  //
-  // wrapperNode should be an unsized block. E.g. An element that 'clings' to
-  // its inner terminal so we get a nice size reading of the inner terminal.
-  //
-  const width = wrapperNode.clientWidth;
   const height = wrapperNode.clientHeight;
-  const pixelPerRow = height / rows;
+
+  // Guess the width of the row.
+  let width = wrapperNode.clientWidth;
+  // Now try and measure the first row we find.
+  const firstRow = wrapperNode.querySelector('.terminal div');
+  if (!firstRow) {
+    log("ERROR: Couldn't find first row, resizing might not work very well.");
+  } else {
+    const rowDisplay = firstRow.style.display;
+    firstRow.style.display = 'inline';
+    width = firstRow.offsetWidth;
+    firstRow.style.display = rowDisplay;
+  }
+
   const pixelPerCol = width / cols;
+  const pixelPerRow = height / rows;
+
+  log('Caculated (col, row) sizes in px: ', pixelPerCol, pixelPerRow);
   return {pixelPerCol, pixelPerRow};
 }
 
-function openNewWindow(url) {
+function openNewWindow(url, minWidth = 200) {
   const screenLeft = window.screenX || window.screenLeft;
   const screenTop = window.screenY || window.screenTop;
   const popoutWindowToolbarHeight = 51;
   // TODO replace this stuff w/ looking up bounding box.
   const windowOptions = {
-    width: window.innerWidth - 420 - 36 - 36 - 10,
+    width: Math.max(minWidth, window.innerWidth - 420 - 36 - 36 - 10),
     height: window.innerHeight - 24 - 48 - popoutWindowToolbarHeight,
     left: screenLeft + 36,
     top: screenTop + (window.outerHeight - window.innerHeight) + 24,
@@ -198,15 +207,17 @@ export default class Terminal extends React.Component {
     ev.preventDefault();
     const paramString = JSON.stringify(this.props);
     clickCloseTerminal(this.getPipeId());
-    openNewWindow(`terminal.html#!/state/${paramString}`);
+
+    const minWidth = this.state.pixelPerCol * 80 + (8 * 2);
+    openNewWindow(`terminal.html#!/state/${paramString}`, minWidth);
   }
 
   handleResize() {
     const innerNode = ReactDOM.findDOMNode(this.innerFlex);
     const width = innerNode.clientWidth - (2 * 8);
     const height = innerNode.clientHeight - (2 * 8);
-    const cols = Math.max(MIN_COLS, Math.floor(width / this.state.pixelPerCol));
-    const rows = Math.max(MIN_ROWS, Math.floor(height / this.state.pixelPerRow));
+    const cols = Math.floor(width / this.state.pixelPerCol);
+    const rows = Math.floor(height / this.state.pixelPerRow);
     this.setState({cols, rows});
   }
 
