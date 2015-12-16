@@ -43,7 +43,7 @@ var mockFS = fs.Dir("",
 			),
 			fs.File{
 				FName:     "stat",
-				FContents: "1 na R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
+				FContents: "1 na R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0",
 			},
 		),
 	),

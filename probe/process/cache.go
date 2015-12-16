@@ -1,8 +1,6 @@
 package process
 
 import (
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/armon/go-metrics"
@@ -40,33 +38,4 @@ func cachedReadFile(path string) ([]byte, error) {
 	fileCache.Set(key, buf, generalTimeout)
 	metrics.IncrCounter(missMetricsKey, 1.0)
 	return buf, err
-}
-
-// we cache the stats, but for a shorter period
-func readStats(path string) (int, int, error) {
-	var (
-		key = []byte(path)
-		buf []byte
-		err error
-	)
-	if buf, err = fileCache.Get(key); err == nil {
-		metrics.IncrCounter(hitMetricsKey, 1.0)
-	} else {
-		buf, err = fs.ReadFile(path)
-		if err != nil {
-			return -1, -1, err
-		}
-		fileCache.Set(key, buf, statsTimeout)
-		metrics.IncrCounter(missMetricsKey, 1.0)
-	}
-	splits := strings.Fields(string(buf))
-	ppid, err := strconv.Atoi(splits[3])
-	if err != nil {
-		return -1, -1, err
-	}
-	threads, err := strconv.Atoi(splits[19])
-	if err != nil {
-		return -1, -1, err
-	}
-	return ppid, threads, nil
 }

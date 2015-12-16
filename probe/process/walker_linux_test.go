@@ -23,7 +23,7 @@ var mockFS = fs.Dir("",
 			},
 			fs.File{
 				FName:     "stat",
-				FContents: "3 na R 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
+				FContents: "3 na R 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0",
 			},
 		),
 		fs.Dir("2",
@@ -37,7 +37,7 @@ var mockFS = fs.Dir("",
 			},
 			fs.File{
 				FName:     "stat",
-				FContents: "2 na R 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
+				FContents: "2 na R 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0",
 			},
 		),
 		fs.Dir("4",
@@ -51,7 +51,7 @@ var mockFS = fs.Dir("",
 			},
 			fs.File{
 				FName:     "stat",
-				FContents: "4 na R 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
+				FContents: "4 na R 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0",
 			},
 		),
 		fs.Dir("notapid"),
@@ -66,7 +66,7 @@ var mockFS = fs.Dir("",
 			},
 			fs.File{
 				FName:     "stat",
-				FContents: "1 na R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1",
+				FContents: "1 na R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0",
 			},
 		),
 	),
@@ -85,7 +85,7 @@ func TestWalker(t *testing.T) {
 
 	have := map[int]process.Process{}
 	walker := process.NewWalker("/proc")
-	err := walker.Walk(func(p process.Process) {
+	err := walker.Walk(func(p, _ process.Process) {
 		have[p.PID] = p
 	})
 

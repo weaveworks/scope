@@ -13,6 +13,8 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
+const kb = 1024
+
 // Uname is swappable for mocking in tests.
 var Uname = syscall.Uname
 
@@ -102,13 +104,13 @@ var GetCPUUsagePercent = func() (float64, float64) {
 	return float64(totald-idled) * 100. / float64(totald), float64(len(stat.CPUStats)) * 100.
 }
 
-// GetMemoryUsagePercent returns the percent memory usage and max (ie 100)
-var GetMemoryUsagePercent = func() (float64, float64) {
+// GetMemoryUsageBytes returns the bytes memory usage and max
+var GetMemoryUsageBytes = func() (float64, float64) {
 	meminfo, err := linuxproc.ReadMemInfo(ProcMemInfo)
 	if err != nil {
 		return 0.0, 0.0
 	}
 
 	used := meminfo.MemTotal - meminfo.MemFree - meminfo.Buffers - meminfo.Cached
-	return float64(used) * 100. / float64(meminfo.MemTotal), 100.
+	return float64(used * kb), float64(meminfo.MemTotal * kb)
 }

@@ -38,24 +38,24 @@ func TestReporter(t *testing.T) {
 	defer mtime.NowReset()
 
 	var (
-		oldGetKernelVersion      = host.GetKernelVersion
-		oldGetLoad               = host.GetLoad
-		oldGetUptime             = host.GetUptime
-		oldGetCPUUsagePercent    = host.GetCPUUsagePercent
-		oldGetMemoryUsagePercent = host.GetMemoryUsagePercent
+		oldGetKernelVersion    = host.GetKernelVersion
+		oldGetLoad             = host.GetLoad
+		oldGetUptime           = host.GetUptime
+		oldGetCPUUsagePercent  = host.GetCPUUsagePercent
+		oldGetMemoryUsageBytes = host.GetMemoryUsageBytes
 	)
 	defer func() {
 		host.GetKernelVersion = oldGetKernelVersion
 		host.GetLoad = oldGetLoad
 		host.GetUptime = oldGetUptime
 		host.GetCPUUsagePercent = oldGetCPUUsagePercent
-		host.GetMemoryUsagePercent = oldGetMemoryUsagePercent
+		host.GetMemoryUsageBytes = oldGetMemoryUsageBytes
 	}()
 	host.GetKernelVersion = func() (string, error) { return release + " " + version, nil }
 	host.GetLoad = func(time.Time) report.Metrics { return load }
 	host.GetUptime = func() (time.Duration, error) { return time.ParseDuration(uptime) }
 	host.GetCPUUsagePercent = func() (float64, float64) { return 30.0, 100.0 }
-	host.GetMemoryUsagePercent = func() (float64, float64) { return 60.0, 100.0 }
+	host.GetMemoryUsageBytes = func() (float64, float64) { return 60.0, 100.0 }
 
 	want := report.MakeReport()
 	want.Host.AddNode(report.MakeHostNodeID(hostID), report.MakeNodeWith(map[string]string{

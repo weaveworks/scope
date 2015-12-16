@@ -22,7 +22,7 @@ const (
 
 // These functions copied from procspy.
 
-func (walker) Walk(f func(Process)) error {
+func (walker) Walk(f func(Process, Process)) error {
 	output, err := exec.Command(
 		lsofBinary,
 		"-i",       // only Internet files
@@ -40,7 +40,7 @@ func (walker) Walk(f func(Process)) error {
 	}
 
 	for _, process := range processes {
-		f(process)
+		f(process, Process{})
 	}
 	return nil
 }
@@ -91,4 +91,9 @@ func parseLSOF(output string) (map[string]Process, error) {
 		}
 	}
 	return processes, nil
+}
+
+// GetDeltaTotalJiffies returns 0 - darwin doesn't have jiffies.
+func GetDeltaTotalJiffies() (uint64, float64, error) {
+	return 0, 0.0, nil
 }

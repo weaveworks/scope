@@ -20,7 +20,7 @@ const (
 	Load5         = "load5"
 	Load15        = "load15"
 	CPUUsage      = "cpu_usage_percent"
-	MemUsage      = "mem_usage_percent"
+	MemUsage      = "mem_usage_bytes"
 )
 
 // Exposed for testing.
@@ -76,7 +76,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	metrics := GetLoad(now)
 	cpuUsage, max := GetCPUUsagePercent()
 	metrics[CPUUsage] = report.MakeMetric().Add(now, cpuUsage).WithMax(max)
-	memUsage, max := GetMemoryUsagePercent()
+	memUsage, max := GetMemoryUsageBytes()
 	metrics[MemUsage] = report.MakeMetric().Add(now, memUsage).WithMax(max)
 
 	rep.Host.AddNode(report.MakeHostNodeID(r.hostID), report.MakeNodeWith(map[string]string{

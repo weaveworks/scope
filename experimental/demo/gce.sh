@@ -122,9 +122,9 @@ function setup {
 . ~/.profile
 git clone http://github.com/weaveworks/scope.git
 cd scope
-git checkout 0.9
+git checkout master
 make deps
-make
+make RUN_FLAGS=
 ./scope launch
 EOF
     done

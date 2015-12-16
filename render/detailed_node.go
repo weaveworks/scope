@@ -327,6 +327,18 @@ func processOriginTable(nmd report.Node, addHostTag bool, addContainerTag bool) 
 		rows = append([]Row{{Key: "Host", ValueMajor: report.ExtractHostID(nmd)}}, rows...)
 	}
 
+	for _, tuple := range []struct {
+		key, human string
+		fmt        formatter
+	}{
+		{process.CPUUsage, "CPU Usage", formatPercent},
+		{process.MemoryUsage, "Memory Usage", formatMemory},
+	} {
+		if val, ok := nmd.Metrics[tuple.key]; ok {
+			rows = append(rows, sparklineRow(tuple.human, val, tuple.fmt))
+		}
+	}
+
 	var (
 		title           = "Process"
 		name, commFound = nmd.Metadata[process.Comm]
@@ -527,7 +539,7 @@ func hostOriginTable(nmd report.Node) (Table, bool) {
 		fmt        formatter
 	}{
 		{host.CPUUsage, "CPU Usage", formatPercent},
-		{host.MemUsage, "Memory Usage", formatPercent},
+		{host.MemUsage, "Memory Usage", formatMemory},
 	} {
 		if val, ok := nmd.Metrics[tuple.key]; ok {
 			rows = append(rows, sparklineRow(tuple.human, val, tuple.fmt))
