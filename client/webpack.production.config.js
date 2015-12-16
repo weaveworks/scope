@@ -14,6 +14,8 @@ module.exports = {
   // fail on first error when building release
   bail: true,
 
+  cache: {},
+
   entry: {
     app: './app/scripts/main',
     'terminal-app': './app/scripts/terminal-main'
@@ -25,6 +27,9 @@ module.exports = {
   },
 
   module: {
+    include: [
+      path.resolve(__dirname, 'app/scripts')
+    ],
     preLoaders: [
       {
         test: /\.js$/,
