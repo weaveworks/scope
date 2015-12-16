@@ -89,7 +89,7 @@ var GetCPUUsagePercent = func() (float64, float64) {
 	return 0.0, 0.0
 }
 
-// GetMemoryUsagePercent returns the percent memory usage and max (ie 100)
-var GetMemoryUsagePercent = func() (float64, float64) {
+// GetMemoryUsageBytes returns the bytes memory usage and max
+var GetMemoryUsageBytes = func() (float64, float64) {
 	return 0.0, 0.0
 }
