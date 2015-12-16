@@ -14,9 +14,13 @@ module.exports = {
   // fail on first error when building release
   bail: true,
 
+  cache: {},
+
   entry: {
     app: './app/scripts/main',
-    'terminal-app': './app/scripts/terminal-main'
+    'terminal-app': './app/scripts/terminal-main',
+    vendors: ['classnames', 'd3', 'dagre', 'flux', 'immutable',
+      'lodash', 'page', 'react', 'react-dom', 'react-motion']
   },
 
   output: {
@@ -25,6 +29,9 @@ module.exports = {
   },
 
   module: {
+    include: [
+      path.resolve(__dirname, 'app/scripts')
+    ],
     preLoaders: [
       {
         test: /\.js$/,
@@ -65,7 +72,10 @@ module.exports = {
 
   plugins: [
     new webpack.DefinePlugin(GLOBALS),
+    new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
+    new webpack.optimize.OccurenceOrderPlugin(true),
     new webpack.optimize.UglifyJsPlugin({
+      sourceMap: false,
       compress: {
         warnings: false
       }
