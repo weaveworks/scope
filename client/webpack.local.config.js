@@ -32,7 +32,9 @@ module.exports = {
       './app/scripts/terminal-main',
       'webpack-dev-server/client?http://localhost:4041',
       'webpack/hot/only-dev-server'
-    ]
+    ],
+    vendors: ['classnames', 'd3', 'dagre', 'flux', 'immutable',
+      'lodash', 'page', 'react', 'react-dom', 'react-motion']
   },
 
   // This will not actually create a app.js file in ./build. It is used
@@ -45,12 +47,17 @@ module.exports = {
 
   // Necessary plugins for hot load
   plugins: [
+    new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin()
   ],
 
   // Transform source code using Babel and React Hot Loader
   module: {
+    include: [
+      path.resolve(__dirname, 'app/scripts')
+    ],
+
     preLoaders: [
       {
         test: /\.js$/,

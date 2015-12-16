@@ -19,7 +19,7 @@ var app = express();
 
 
 // Serve application file depending on environment
-app.get(/(app|terminal-app).js/, function(req, res) {
+app.get(/(app|terminal-app|vendors).js/, function(req, res) {
   var filename = req.originalUrl;
   if (process.env.NODE_ENV === 'production') {
     res.sendFile(__dirname + '/build' + filename);

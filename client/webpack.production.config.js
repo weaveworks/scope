@@ -18,7 +18,9 @@ module.exports = {
 
   entry: {
     app: './app/scripts/main',
-    'terminal-app': './app/scripts/terminal-main'
+    'terminal-app': './app/scripts/terminal-main',
+    vendors: ['classnames', 'd3', 'dagre', 'flux', 'immutable',
+      'lodash', 'page', 'react', 'react-dom', 'react-motion']
   },
 
   output: {
@@ -70,6 +72,7 @@ module.exports = {
 
   plugins: [
     new webpack.DefinePlugin(GLOBALS),
+    new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
     new webpack.optimize.UglifyJsPlugin({
       compress: {
         warnings: false
