@@ -539,7 +539,7 @@ func hostOriginTable(nmd report.Node) (Table, bool) {
 		fmt        formatter
 	}{
 		{host.CPUUsage, "CPU Usage", formatPercent},
-		{host.MemUsage, "Memory Usage", formatPercent},
+		{host.MemUsage, "Memory Usage", formatMemory},
 	} {
 		if val, ok := nmd.Metrics[tuple.key]; ok {
 			rows = append(rows, sparklineRow(tuple.human, val, tuple.fmt))

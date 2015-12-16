@@ -20,7 +20,7 @@ type Walker interface {
 // CachingWalker is a walker than caches a copy of the output from another
 // Walker, and then allows other concurrent readers to Walk that copy.
 type CachingWalker struct {
-	cache         []Process
+	cache         map[int]Process
 	previousByPID map[int]Process
 	cacheLock     sync.RWMutex
 	source        Walker
@@ -47,9 +47,9 @@ func (c *CachingWalker) Walk(f func(Process, Process)) error {
 
 // Tick updates cached copy of process list
 func (c *CachingWalker) Tick() error {
-	newCache := []Process{}
+	newCache := map[int]Process{}
 	err := c.source.Walk(func(p, _ Process) {
-		newCache = append(newCache, p)
+		newCache[p.PID] = p
 	})
 	if err != nil {
 		return err
@@ -57,10 +57,7 @@ func (c *CachingWalker) Tick() error {
 
 	c.cacheLock.Lock()
 	defer c.cacheLock.Unlock()
-	c.previousByPID = map[int]Process{}
-	for _, p := range c.cache {
-		c.previousByPID[p.PID] = p
-	}
+	c.previousByPID = c.cache
 	c.cache = newCache
 	return nil
 }

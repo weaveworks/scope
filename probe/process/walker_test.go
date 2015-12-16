@@ -34,15 +34,16 @@ func TestCache(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	want, err := all(walker)
 	have, err := all(cachingWalker)
-	if err != nil || !reflect.DeepEqual(processes, have) {
-		t.Errorf("%v (%v)", test.Diff(processes, have), err)
+	if err != nil || !reflect.DeepEqual(want, have) {
+		t.Errorf("%v (%v)", test.Diff(want, have), err)
 	}
 
 	walker.processes = []process.Process{}
 	have, err = all(cachingWalker)
-	if err != nil || !reflect.DeepEqual(processes, have) {
-		t.Errorf("%v (%v)", test.Diff(processes, have), err)
+	if err != nil || !reflect.DeepEqual(want, have) {
+		t.Errorf("%v (%v)", test.Diff(want, have), err)
 	}
 
 	err = cachingWalker.Tick()
@@ -51,16 +52,16 @@ func TestCache(t *testing.T) {
 	}
 
 	have, err = all(cachingWalker)
-	want := []process.Process{}
+	want = map[process.Process]struct{}{}
 	if err != nil || !reflect.DeepEqual(want, have) {
 		t.Errorf("%v (%v)", test.Diff(want, have), err)
 	}
 }
 
-func all(w process.Walker) ([]process.Process, error) {
-	all := []process.Process{}
+func all(w process.Walker) (map[process.Process]struct{}, error) {
+	all := map[process.Process]struct{}{}
 	err := w.Walk(func(p, _ process.Process) {
-		all = append(all, p)
+		all[p] = struct{}{}
 	})
 	return all, err
 }
