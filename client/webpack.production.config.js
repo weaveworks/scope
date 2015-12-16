@@ -73,7 +73,9 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin(GLOBALS),
     new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
+    new webpack.optimize.OccurenceOrderPlugin(true),
     new webpack.optimize.UglifyJsPlugin({
+      sourceMap: false,
       compress: {
         warnings: false
       }
