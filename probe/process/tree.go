@@ -53,7 +53,7 @@ func (pt *tree) GetChildren(pid int) ([]int, error) {
 	}
 
 	children := []int{pid}
-	for id, _ := range pt.processes {
+	for id := range pt.processes {
 		if isChild(id) {
 			children = append(children, id)
 		}

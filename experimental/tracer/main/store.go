@@ -54,31 +54,31 @@ func newKey(fd *ptrace.Fd) key {
 	return key{fromAddr, fd.FromPort, fd.Start}
 }
 
-func (l key) LessThan(other skiplist.Comparable) bool {
+func (k key) LessThan(other skiplist.Comparable) bool {
 	r := other.(key)
 
-	if l.fromAddr != r.fromAddr {
-		return l.fromAddr > r.fromAddr
+	if k.fromAddr != r.fromAddr {
+		return k.fromAddr > r.fromAddr
 	}
 
-	if l.fromPort != r.fromPort {
-		return l.fromPort < r.fromPort
+	if k.fromPort != r.fromPort {
+		return k.fromPort < r.fromPort
 	}
 
-	if l.Equal(other) {
+	if k.Equal(other) {
 		return false
 	}
 
-	return l.startTime < r.startTime
+	return k.startTime < r.startTime
 }
 
-func (l key) Equal(other skiplist.Comparable) bool {
+func (k key) Equal(other skiplist.Comparable) bool {
 	r := other.(key)
-	if l.fromAddr != r.fromAddr || l.fromPort != r.fromPort {
+	if k.fromAddr != r.fromAddr || k.fromPort != r.fromPort {
 		return false
 	}
 
-	diff := l.startTime - r.startTime
+	diff := k.startTime - r.startTime
 	return -epsilon < diff && diff < epsilon
 }
 
@@ -144,6 +144,7 @@ func (s *store) RecordConnection(pid int, connection *ptrace.Fd) {
 	}
 }
 
+// IncrementLevel ...
 func IncrementLevel(trace *trace, increment int) {
 	trace.Level += increment
 	for _, child := range trace.Children {

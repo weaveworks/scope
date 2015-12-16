@@ -25,7 +25,7 @@
       var traces = [];
 
       Handlebars.registerHelper('isSelected', function(input) {
-        if (currentContainer && input === currentContainer.Id) {
+        if (currentContainer && input === currentContainer.ID) {
           return 'class=selected';
         }
       });
@@ -122,14 +122,14 @@
           containersByID = {};
           containersByPID = {};
           $.each(data, function(i, container) {
-            containersByID[container.Id] = container
+            containersByID[container.ID] = container
             $.each(container.PIDs, function(i, pid) {
               containersByPID[pid] = container
             });
           });
           // auto-select first container
           if (containers.length && currentContainer === null) {
-            currentContainer = containersByID[containers[0].Id];
+            currentContainer = containersByID[containers[0].ID];
           }
           render();
           window.setTimeout(updateContainers, 5 * 1000);
@@ -183,14 +183,14 @@
       $("body").on("click", "div.mainview button.start", function() {
         var id = $(this).parent().data("containerId")
         var container = containersByID[id]
-        $.post(sprintf("/container/%s", container.Id))
+        $.post(sprintf("/container/%s", container.ID))
       })
 
       $("body").on("click", "div.mainview button.stop", function() {
         var id = $(this).parent().data("containerId")
         var container = containersByID[id]
         $.ajax({
-          url: sprintf("/container/%s", container.Id),
+          url: sprintf("/container/%s", container.ID),
           type: 'DELETE',
         });
       })
@@ -353,7 +353,7 @@
           <div class="heading">Containers</div>
           <ul class="containers">
             {{#containers}}
-            <li {{isSelected Id}} id={{Id}}>{{Name}}</li>
+            <li {{isSelected ID}} id={{ID}}>{{Name}}</li>
             {{/containers}}
           </ul>
         </div>
@@ -361,7 +361,7 @@
         <div class="col-md-8 mainview">
           {{#if container}}
           <h2 class="pull-left">{{container.Name}}</h2>
-          <div class="btn-group btn-group-sm" role="group" data-container-id="{{container.Id}}">
+          <div class="btn-group btn-group-sm" role="group" data-container-id="{{container.ID}}">
             <button type="button" class="btn btn-default start">
               <span class="fa fa-play" aria-hidden="true"></span> Start</button>
             <button type="button" class="btn btn-default stop">

@@ -16,6 +16,7 @@ const (
 	ptraceTracesysgoodBit = 0x80
 )
 
+// Store ...
 type Store interface {
 	RecordConnection(int, *Fd)
 }
@@ -58,6 +59,7 @@ func NewPTracer(store Store) PTracer {
 	return t
 }
 
+// Stop stop stop
 func (t *PTracer) Stop() {
 	out := make(chan []int)
 	t.ops <- func() {

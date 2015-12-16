@@ -29,6 +29,7 @@ var (
 	tcpRegexp   = regexp.MustCompile(tcpPattern)
 )
 
+// ConnectionDetails ...
 type ConnectionDetails struct {
 	direction int
 

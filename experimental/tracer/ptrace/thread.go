@@ -52,7 +52,7 @@ type thread struct {
 
 	currentIncoming map[int]*Fd
 	currentOutgoing map[int]*Fd
-	closedOutgoing []*Fd
+	closedOutgoing  []*Fd
 }
 
 func newThread(pid int, process *process, tracer *PTracer) *thread {

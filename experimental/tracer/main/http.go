@@ -45,8 +45,9 @@ func (t *tracer) pidsForContainer(id string) ([]int, error) {
 	return pidTree.GetChildren(container.PID())
 }
 
+// Container is the type exported by the HTTP API.
 type Container struct {
-	Id   string
+	ID   string
 	Name string
 	PIDs []int
 }
@@ -66,7 +67,7 @@ func (t *tracer) http(port int) {
 			children, _ := pidTree.GetChildren(container.PID())
 			out := Container{
 				Name: strings.TrimPrefix(container.Container().Name, "/"),
-				Id: container.ID(),
+				ID:   container.ID(),
 				PIDs: children,
 			}
 			containers = append(containers, out)
