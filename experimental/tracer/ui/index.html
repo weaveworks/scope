@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Weave Tracer</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cask.scotch.io/bootstrap-4.0-flex.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/3.0.3/handlebars.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
+    <script src="sprintf.min.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script>
+    $(function () {
+      var currentContainer = null;
+      var expandedTrace = null;
+      var containersByID = {};
+      var containersByPID = {};
+      var containers = [];
+      var traces = [];
+
+      Handlebars.registerHelper('isSelected', function(input) {
+        if (currentContainer && input === currentContainer.ID) {
+          return 'class=selected';
+        }
+      });
+
+      Handlebars.registerHelper('isExpanded', function(options) {
+        if (expandedTrace && this.Key === expandedTrace) {
+          return options.fn(this)
+        }
+      });
+
+      function containerName(trace) {
+        var container = containersByPID[trace.PID]
+        if (!container) {
+          return sprintf("%s:%d", trace.ToAddr, trace.ToPort)
+        }
+        return sprintf("%s (%d)", container.Name, trace.PID)
+      }
+      Handlebars.registerHelper('containerName', containerName);
+
+      Handlebars.registerHelper('spaces', function(input) {
+        return new Array(input + 1).join("> ");
+      });
+
+      Handlebars.registerHelper('ts', function(input) {
+        var ts = moment(input).format("LTS")
+        return new Handlebars.SafeString(ts);
+      });
+
+      Handlebars.registerHelper('duration', function(input) {
+        var durationText = formatDuration(input);
+        return new Handlebars.SafeString(durationText);
+      });
+
+      function numChildren(input) {
+        if (input.Children === null) {
+          return 0
+        }
+        var count = input.Children.length
+        $.each(input.Children, function(i, child) {
+          count += numChildren(child)
+        })
+        return count
+      }
+      Handlebars.registerHelper('count', function(input) {
+        return sprintf("%d", numChildren(input));
+      });
+
+      Handlebars.registerHelper('childTitle', function() {
+        var duration = formatDuration(this);
+        return '[' + duration + '] ' + containerName(this);
+      });
+
+      Handlebars.registerHelper('childWrapperStyle', function() {
+        var parentSpan = this.ParentStop - this.ParentStart; // = 100%
+        var span = (this.Stop - this.Start) / parentSpan * 100;
+        var offset = (this.Start - this.ParentStart) / parentSpan * 100;
+
+        return 'width:' + span + '%; left:' + offset + '%;';
+      });
+
+      Handlebars.registerHelper('childStyle', function() {
+        var color = shadeColor(weaveRed, this.Level / 5);
+        return 'width: 100%; background-color:' + color;
+      });
+
+      Handlebars.registerPartial('traces', $("#traces").html());
+      Handlebars.registerPartial('children', $("#children").html());
+      Handlebars.registerPartial('childrenDetails', $("#childrenDetails").html());
+
+      function render() {
+        var template = $('script#process-template').text();
+        template = Handlebars.compile(template);
+        var rendered = template({
+          containers: containers,
+          container: currentContainer,
+          traces: traces
+        });
+        $('body').html(rendered);
+      }
+
+      function updateContainers() {
+        $.get("/container").done(function (data) {
+          data.sort(function (a, b) {
+              if (a.Name > b.Name) {
+                  return 1;
+              }
+              if (a.Name < b.Name) {
+                  return -1;
+              }
+              // a must be equal to b
+              return 0;
+          });
+          containers = data;
+          containersByID = {};
+          containersByPID = {};
+          $.each(data, function(i, container) {
+            containersByID[container.ID] = container
+            $.each(container.PIDs, function(i, pid) {
+              containersByPID[pid] = container
+            });
+          });
+          // auto-select first container
+          if (containers.length && currentContainer === null) {
+            currentContainer = containersByID[containers[0].ID];
+          }
+          render();
+          window.setTimeout(updateContainers, 5 * 1000);
+        });
+      }
+      updateContainers()
+
+      var weaveRed = '#FF4B19';
+
+      function shadeColor(color, percent) {
+        var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
+        return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+      }
+
+      function formatDuration(input) {
+        var ms = input.Stop - input.Start
+        if (ms < 60000) {
+          return sprintf("%0.2fs", ms / 1000);
+        }
+        var ds = moment.duration(ms).humanize();
+        return ds;
+      }
+
+      function addParentTimeToTrace(trace) {
+        var details = trace.ServerDetails || trace.ClientDetails;
+        trace.Children && $.each(trace.Children, function(i, childTrace) {
+          childTrace.ParentStart = details.Start;
+          childTrace.ParentStop = details.Stop;
+          addParentTimeToTrace(childTrace);
+        });
+      }
+
+      function fetchTraces() {
+        $.get("/traces").done(function (data) {
+          traces = data;
+          traces && $.each(traces, function(i, trace) {
+            addParentTimeToTrace(trace);
+          });
+          render();
+          window.setTimeout(fetchTraces, 2 * 1000);
+        });
+      }
+      fetchTraces();
+
+      $("body").on("click", "ul.containers li", function() {
+        var container = containersByID[$(this).attr("id")]
+        currentContainer = container
+        render()
+      })
+
+      $("body").on("click", "div.mainview button.start", function() {
+        var id = $(this).parent().data("containerId")
+        var container = containersByID[id]
+        $.post(sprintf("/container/%s", container.ID))
+      })
+
+      $("body").on("click", "div.mainview button.stop", function() {
+        var id = $(this).parent().data("containerId")
+        var container = containersByID[id]
+        $.ajax({
+          url: sprintf("/container/%s", container.ID),
+          type: 'DELETE',
+        });
+      })
+
+      $("body").on("click", "table tr.trace", function() {
+        var key = $(this).data("key");
+        if (expandedTrace === key) {
+          expandedTrace = null;
+        } else {
+          expandedTrace = key;
+        }
+        render()
+      })
+    })
+    </script>
+    <style>
+      body {
+        height: 100%;
+        width: 100%;
+        color: #46466a;
+        font-family: "Roboto", sans-serif;
+      }
+      .logo {
+        margin-bottom: 30px;
+      }
+      .container-fluid {
+        background: linear-gradient(30deg, #e2e2ec 0%, #fafafc 100%);
+        padding: 30px 45px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: scroll;
+      }
+      ul.containers li {
+        cursor: pointer;
+        list-style: none;
+        font-size: 85%;
+        margin-bottom: 0.5rem;
+        opacity: 0.7;
+      }
+      ul.containers li.selected {
+        opacity: 1;
+      }
+      .heading {
+        margin: 10px 40px;
+        opacity: 0.4;
+        text-transform: uppercase;
+      }
+      .btn-default {
+        text-transform: uppercase;
+        margin-top: 3px;
+        opacity: 0.8;
+      }
+      h2 {
+        font-weight: normal;
+        margin-left: 1.5rem;
+        margin-right: 2rem;
+        margin-bottom: 1rem;
+      }
+      table {
+        width: 100%;
+      }
+      th {
+        text-transform: uppercase;
+        opacity: 0.4;
+        font-weight: normal;
+      }
+      tr.trace {
+        cursor: pointer;
+      }
+      .mainview {
+        margin-top: 2rem;
+      }
+      .table td {
+        font-size: 80%;
+        font-family: monospace;
+        padding-left: 0.5rem;
+      }
+      .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #e2e2ec;
+      }
+      .childBox {
+        padding: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .childBoxWrapper {
+        position: absolute;
+      }
+      .childRow {
+        position: relative;
+        height: 100px;
+      }
+    </style>
+    <script type="text/x-handlebars-template" id="traces">
+      {{#.}}
+      <tr class="trace" data-key="{{Key}}">
+      {{#if ClientDetails}}
+        {{#with ClientDetails}}
+        <td>{{spaces ../Level}}{{ts Start}}</td>
+        <td>{{containerName . PID=../PID}}</td>
+        <td>{{duration .}}</td>
+        <td>{{FromAddr}}:{{FromPort}}</td>
+        <td>{{ToAddr}}:{{ToPort}}</td>
+        <td>{{count ../.}}</td>
+        {{/with}}
+      {{else}}
+        {{#with ServerDetails}}
+        <td>{{spaces ../Level}}{{ts Start}}</td>
+        <td>{{containerName ../.}}</td>
+        <td>{{duration .}}</td>
+        <td>{{FromAddr}}:{{FromPort}}</td>
+        <td>{{ToAddr}}:{{ToPort}}</td>
+        <td>{{count ../.}}</td>
+        {{/with}}
+      {{/if}}
+      </tr>
+      {{#isExpanded}}
+        <tr>
+          <td colspan="6" style="padding: 0 0.5rem;">
+            <div style="width: 100%; background-color: #FF4B19; height: 4px;"></div>
+            {{>children Children}}
+        </td>
+      </tr>
+      {{/isExpanded}}
+      {{/.}}
+    </script>
+
+    <script type="text/x-handlebars-template" id="childrenDetails">
+      <div style="{{childWrapperStyle}}" class="childBoxWrapper">
+        <div title="{{childTitle}}" style="{{childStyle}}" class="childBox">
+          {{childTitle}}
+        </div>
+        <div class="childRow">
+          {{>children Children}}
+        </div>
+      </div>
+    </script>
+
+    <script type="text/x-handlebars-template" id="children">
+      <div class="childRow">
+      {{#.}}
+      {{#if ClientDetails}}
+        {{>childrenDetails ClientDetails Level=../Level PID=../PID Children=../Children ParentStart=../ParentStart ParentStop=../ParentStop}}
+      {{else}}
+        {{>childrenDetails ServerDetails Level=../Level PID=../PID Children=../Children ParentStart=../ParentStart ParentStop=../ParentStop}}
+      {{/if}}
+      {{/.}}
+      </div>
+    </script>
+
+    <script type="text/x-handlebars-template" id="process-template">
+      <div class="container-fluid">
+        <div class="row">
+        <div class="col-md-4">
+        <div class="logo"><img src="logo.svg" width="300"/></div>
+          <div class="heading">Containers</div>
+          <ul class="containers">
+            {{#containers}}
+            <li {{isSelected ID}} id={{ID}}>{{Name}}</li>
+            {{/containers}}
+          </ul>
+        </div>
+
+        <div class="col-md-8 mainview">
+          {{#if container}}
+          <h2 class="pull-left">{{container.Name}}</h2>
+          <div class="btn-group btn-group-sm" role="group" data-container-id="{{container.ID}}">
+            <button type="button" class="btn btn-default start">
+              <span class="fa fa-play" aria-hidden="true"></span> Start</button>
+            <button type="button" class="btn btn-default stop">
+              <span class="fa fa-stop" aria-hidden="true"></span> Stop</button>
+          </div>
+
+          <table class="table table-sm">
+            <thead><tr>
+              <th width="15%">Start time</th>
+              <th width="25%">Container</th>
+              <th width="15%">Duration</th>
+              <th width="15%">From</th>
+              <th width="15%">To</th>
+              <th width="15%">Sub-traces</th>
+            </tr></thead>
+            <tbody>
+          {{>traces traces}}
+            </tbody>
+          </table>
+
+          {{/if}}
+        </div>
+        </div>
+      </div>
+    </script>
+  </head>
+  <body>
+  </body>
+</html>

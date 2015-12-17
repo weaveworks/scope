@@ -37,6 +37,10 @@ def do_search():
   r = sessions.session.get(random.choice(searchapps))
   return r.text
 
+def do_echo(text):
+  r = requests.get("http://echo/", data=text)
+  return r.text
+
 def ignore_error(f):
   try:
     return str(f())
@@ -44,14 +48,24 @@ def ignore_error(f):
     logging.error("Error executing function", exc_info=sys.exc_info())
   return "Error"
 
-@app.route('/')
+# this root is for the tracing demo
+@app.route('/hello')
 def hello():
+  qotd_msg = do_qotd()
+  qotd_msg = do_echo(qotd_msg)
+  return qotd_msg
+
+# this is for normal demos
+@app.route('/')
+def root():
   counter_future = pool.submit(do_redis)
   search_future = pool.submit(do_search)
   qotd_future = pool.submit(do_qotd)
+  echo_future = pool.submit(lambda: do_echo("foo"))
   result = 'Hello World! I have been seen %s times.' % ignore_error(counter_future.result)
   result += ignore_error(search_future.result)
   result += ignore_error(qotd_future.result)
+  result += ignore_error(echo_future.result)
   return result
 
 if __name__ == "__main__":

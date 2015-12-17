@@ -86,7 +86,7 @@ type Container interface {
 	GetNode(string, []net.IP) report.Node
 	State() string
 	HasTTY() bool
-
+	Container() *docker.Container
 	StartGatheringStats() error
 	StopGatheringStats()
 }
@@ -144,6 +144,10 @@ func (c *container) State() string {
 		return StateRunning
 	}
 	return StateStopped
+}
+
+func (c *container) Container() *docker.Container {
+	return c.container
 }
 
 func (c *container) StartGatheringStats() error {
