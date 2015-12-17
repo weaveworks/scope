@@ -56,6 +56,10 @@ func (c *mockContainer) GetNode(_ string, _ []net.IP) report.Node {
 	})
 }
 
+func (c *mockContainer) Container() *client.Container {
+	return c.c
+}
+
 func (c *mockContainer) HasTTY() bool { return true }
 
 type mockDockerClient struct {

@@ -23,6 +23,10 @@ func (m *mockProcessTree) GetParent(pid int) (int, error) {
 	return parent, nil
 }
 
+func (m *mockProcessTree) GetChildren(int) ([]int, error) {
+	panic("Not implemented")
+}
+
 func TestTagger(t *testing.T) {
 	oldProcessTree := docker.NewProcessTreeStub
 	defer func() { docker.NewProcessTreeStub = oldProcessTree }()
