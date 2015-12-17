@@ -21,7 +21,7 @@ sleep 30 # need to allow the scopes to poll dns, resolve the other app ids, and 
 check() {
 	has_container $1 nginx
 	has_container $1 client
-	has_connection $1 client nginx
+	has_connection containers $1 client nginx
 }
 
 check $HOST1
