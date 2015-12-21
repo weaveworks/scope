@@ -189,7 +189,6 @@ func (c *appClient) controlConnection() (bool, error) {
 	dialer := websocket.Dialer{}
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
-	// TODO(twilkie) need to update sanitize to work with wss
 	url := sanitize.URL("ws://", 0, "/api/control/ws")(c.target)
 	conn, _, err := dialer.Dial(url, headers)
 	if err != nil {
@@ -273,7 +272,6 @@ func (c *appClient) pipeConnection(id string, pipe Pipe) (bool, error) {
 	dialer := websocket.Dialer{}
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
-	// TODO(twilkie) need to update sanitize to work with wss
 	url := sanitize.URL("ws://", 0, fmt.Sprintf("/api/pipe/%s/probe", id))(c.target)
 	conn, resp, err := dialer.Dial(url, headers)
 	if resp != nil && resp.StatusCode == http.StatusNotFound {

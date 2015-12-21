@@ -29,7 +29,11 @@ func URL(defaultScheme string, defaultPort int, defaultPath string) func(string)
 		if _, port, err := net.SplitHostPort(u.Host); err != nil && defaultPort > 0 {
 			u.Host += fmt.Sprintf(":%d", defaultPort)
 		} else if port == "443" {
-			u.Scheme = "https"
+			if u.Scheme == "ws" {
+				u.Scheme = "wss"
+			} else {
+				u.Scheme = "https"
+			}
 		}
 		if defaultPath != "" && u.Path != defaultPath {
 			u.Path = defaultPath
