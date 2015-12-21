@@ -67,6 +67,7 @@ weave_expose() {
 mkdir -p /etc/weave
 APP_ARGS=""
 PROBE_ARGS=""
+TOKEN_PROVIDED=false
 
 if [ "$1" = version ]; then
     /home/weave/scope version
@@ -108,7 +109,7 @@ while true; do
                 shift
             fi
             PROBE_ARGS="$PROBE_ARGS -token=$ARG_VALUE"
-            echo "scope.weave.works:443" >/etc/weave/apps
+            TOKEN_PROVIDED=true
             touch /etc/service/app/down
             ;;
         --no-app)
@@ -157,7 +158,15 @@ echo "$PROBE_ARGS" >/etc/weave/scope-probe.args
 # using Weave DNS. We stick these in /etc/weave/apps
 # for the run-probe script to pick up.
 MANUAL_APPS=$@
+
+# Implicitly target the Scope Service if a service token was provided with
+# no explicit manual app.
+if [ "$MANUAL_APPS" = "" -a "$TOKEN_PROVIDED" = "true" ]; then
+    MANUAL_APPS="scope.weave.works:443"
+fi
+
 echo "$MANUAL_APPS" >>/etc/weave/apps
+
 
 exec /home/weave/runsvinit
 
