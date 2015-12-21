@@ -41,10 +41,11 @@ type AppClient interface {
 type appClient struct {
 	ProbeConfig
 
-	quit   chan struct{}
-	mtx    sync.Mutex
-	target string
-	client http.Client
+	quit     chan struct{}
+	mtx      sync.Mutex
+	target   string
+	client   http.Client
+	wsDialer websocket.Dialer
 
 	// Track all the background goroutines, ensure they all stop
 	backgroundWait sync.WaitGroup
@@ -73,6 +74,9 @@ func NewAppClient(pc ProbeConfig, hostname, target string, control ControlHandle
 		target:      target,
 		client: http.Client{
 			Transport: httpTransport,
+		},
+		wsDialer: websocket.Dialer{
+			TLSClientConfig: httpTransport.TLSClientConfig,
 		},
 		conns:   map[string]*websocket.Conn{},
 		readers: make(chan io.Reader),
@@ -186,11 +190,10 @@ func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
 }
 
 func (c *appClient) controlConnection() (bool, error) {
-	dialer := websocket.Dialer{}
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
 	url := sanitize.URL("ws://", 0, "/api/control/ws")(c.target)
-	conn, _, err := dialer.Dial(url, headers)
+	conn, _, err := c.wsDialer.Dial(url, headers)
 	if err != nil {
 		return false, err
 	}
@@ -269,11 +272,10 @@ func (c *appClient) Publish(r io.Reader) error {
 }
 
 func (c *appClient) pipeConnection(id string, pipe Pipe) (bool, error) {
-	dialer := websocket.Dialer{}
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
 	url := sanitize.URL("ws://", 0, fmt.Sprintf("/api/pipe/%s/probe", id))(c.target)
-	conn, resp, err := dialer.Dial(url, headers)
+	conn, resp, err := c.wsDialer.Dial(url, headers)
 	if resp != nil && resp.StatusCode == http.StatusNotFound {
 		// Special handling - 404 means the app/user has closed the pipe
 		pipe.Close()
