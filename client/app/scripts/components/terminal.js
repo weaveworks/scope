@@ -23,7 +23,10 @@ const MDASH = '\u2014';
 const reconnectTimerInterval = 2000;
 
 function ab2str(buf) {
-  return String.fromCharCode.apply(null, new Uint8Array(buf));
+  // http://stackoverflow.com/questions/17191945/conversion-between-utf-8-arraybuffer-and-string
+  const encodedString = String.fromCharCode.apply(null, new Uint8Array(buf));
+  const decodedString = decodeURIComponent(escape(encodedString));
+  return decodedString;
 }
 
 function terminalCellSize(wrapperNode, rows, cols) {
