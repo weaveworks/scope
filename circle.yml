@@ -18,7 +18,7 @@ machine:
 dependencies:
   cache_directories:
     - "~/docker"
-  post:
+  override:
     - "sudo apt-get update && sudo apt-get install jq pv"
     - curl https://sdk.cloud.google.com | bash
     - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
@@ -28,6 +28,8 @@ dependencies:
     - "cd $SRCDIR/client; ../tools/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc .babelrc && touch $SRCDIR/.scope_ui_build.uptodate"
     - "cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh && touch $SRCDIR/.scope_backend_build.uptodate"
     - "make -C $SRCDIR/tools/runner && mkdir -p $WEAVE_ROOT/tools/runner && cp $SRCDIR/tools/runner/runner $WEAVE_ROOT/tools/runner"
+    - cd $SRCDIR/integration; ./gce.sh make_template:
+        parallel: false
 
 test:
   override:
