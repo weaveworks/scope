@@ -18,7 +18,8 @@ RUNSVINIT=vendor/runsvinit/runsvinit
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
-GO_BUILD_FLAGS=-i -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags netgo
+GO_BUILD_INSTALL_DEPS=-i
+GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags netgo
 
 all: $(SCOPE_EXPORT)
 
@@ -44,12 +45,12 @@ $(SCOPE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	@mkdir -p $(shell pwd)/pkg
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
 		-v $(shell pwd)/pkg:/go/pkg \
-		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) $@
+		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@
 
 shell:
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
 		-v $(shell pwd)/pkg:/go/pkg \
-		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) $@
+		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@
 else
 $(SCOPE_EXE):
 	time go build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
