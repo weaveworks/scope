@@ -1081,7 +1081,7 @@ func TestCommitContainerParams(t *testing.T) {
 		{CommitContainerOptions{Container: "44c004db4b17"}, map[string][]string{"container": {"44c004db4b17"}}, nil},
 		{
 			CommitContainerOptions{Container: "44c004db4b17", Repository: "tsuru/python", Message: "something"},
-			map[string][]string{"container": {"44c004db4b17"}, "repo": {"tsuru/python"}, "m": {"something"}},
+			map[string][]string{"container": {"44c004db4b17"}, "repo": {"tsuru/python"}, "comment": {"something"}},
 			nil,
 		},
 		{
@@ -1924,16 +1924,18 @@ func TestStatsTimeout(t *testing.T) {
 func TestStats(t *testing.T) {
 	jsonStats1 := `{
        "read" : "2015-01-08T22:57:31.547920715Z",
-       "network" : {
-          "rx_dropped" : 0,
-          "rx_bytes" : 648,
-          "rx_errors" : 0,
-          "tx_packets" : 8,
-          "tx_dropped" : 0,
-          "rx_packets" : 8,
-          "tx_errors" : 0,
-          "tx_bytes" : 648
-       },
+	   "networks" : {
+		   "eth0":{
+			   "rx_dropped" : 0,
+			   "rx_bytes" : 648,
+			   "rx_errors" : 0,
+			   "tx_packets" : 8,
+			   "tx_dropped" : 0,
+			   "rx_packets" : 8,
+			   "tx_errors" : 0,
+			   "tx_bytes" : 648
+		   }
+	   },
        "memory_stats" : {
           "stats" : {
              "total_pgmajfault" : 0,
@@ -2039,17 +2041,19 @@ func TestStats(t *testing.T) {
 	// 1 second later, cache is 100
 	jsonStats2 := `{
        "read" : "2015-01-08T22:57:32.547920715Z",
-       "network" : {
-          "rx_dropped" : 0,
-          "rx_bytes" : 648,
-          "rx_errors" : 0,
-          "tx_packets" : 8,
-          "tx_dropped" : 0,
-          "rx_packets" : 8,
-          "tx_errors" : 0,
-          "tx_bytes" : 648
-       },
-       "memory_stats" : {
+	   "networks" : {
+		   "eth0":{
+			   "rx_dropped" : 0,
+			   "rx_bytes" : 648,
+			   "rx_errors" : 0,
+			   "tx_packets" : 8,
+			   "tx_dropped" : 0,
+			   "rx_packets" : 8,
+			   "tx_errors" : 0,
+			   "tx_bytes" : 648
+		   }
+	   },
+	   "memory_stats" : {
           "stats" : {
              "total_pgmajfault" : 0,
              "cache" : 100,
