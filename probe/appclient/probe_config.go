@@ -1,4 +1,4 @@
-package xfer
+package appclient
 
 import (
 	"crypto/tls"
@@ -9,11 +9,8 @@ import (
 	"net/http"
 
 	"github.com/certifi/gocertifi"
+	"github.com/weaveworks/scope/common/xfer"
 )
-
-// ScopeProbeIDHeader is the header we use to carry the probe's unique ID. The
-// ID is currently set to the a random string on probe startup.
-const ScopeProbeIDHeader = "X-Scope-Probe-ID"
 
 var certPool *x509.CertPool
 
@@ -34,7 +31,7 @@ type ProbeConfig struct {
 
 func (pc ProbeConfig) authorizeHeaders(headers http.Header) {
 	headers.Set("Authorization", fmt.Sprintf("Scope-Probe token=%s", pc.Token))
-	headers.Set(ScopeProbeIDHeader, pc.ProbeID)
+	headers.Set(xfer.ScopeProbeIDHeader, pc.ProbeID)
 }
 
 func (pc ProbeConfig) authorizedRequest(method string, urlStr string, body io.Reader) (*http.Request, error) {

@@ -7,8 +7,8 @@ import (
 
 	"github.com/armon/go-metrics"
 
+	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/xfer"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 // Probe sits there, generating and publishing reports.
 type Probe struct {
 	spyInterval, publishInterval time.Duration
-	publisher                    *xfer.ReportPublisher
+	publisher                    *appclient.ReportPublisher
 
 	tickers   []Ticker
 	reporters []Reporter
@@ -52,11 +52,11 @@ type Ticker interface {
 }
 
 // New makes a new Probe.
-func New(spyInterval, publishInterval time.Duration, publisher xfer.Publisher) *Probe {
+func New(spyInterval, publishInterval time.Duration, publisher appclient.Publisher) *Probe {
 	result := &Probe{
 		spyInterval:     spyInterval,
 		publishInterval: publishInterval,
-		publisher:       xfer.NewReportPublisher(publisher),
+		publisher:       appclient.NewReportPublisher(publisher),
 		quit:            make(chan struct{}),
 		spiedReports:    make(chan report.Report, reportBufferSize),
 		shortcutReports: make(chan report.Report, reportBufferSize),

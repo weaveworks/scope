@@ -12,7 +12,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/xfer"
+	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/probe/appclient"
 )
 
 func TestControl(t *testing.T) {
@@ -26,7 +27,7 @@ func TestControl(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	probeConfig := xfer.ProbeConfig{
+	probeConfig := appclient.ProbeConfig{
 		ProbeID: "foo",
 	}
 	controlHandler := xfer.ControlHandlerFunc(func(req xfer.Request) xfer.Response {
@@ -42,7 +43,7 @@ func TestControl(t *testing.T) {
 			Value: "foo",
 		}
 	})
-	client, err := xfer.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, controlHandler)
+	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, controlHandler)
 	if err != nil {
 		t.Fatal(err)
 	}

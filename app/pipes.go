@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/common/mtime"
-	"github.com/weaveworks/scope/xfer"
+	"github.com/weaveworks/scope/common/xfer"
 )
 
 const (

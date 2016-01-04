@@ -1,4 +1,4 @@
-package xfer
+package appclient
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -29,15 +30,22 @@ type multiClient struct {
 }
 
 type clientTuple struct {
-	Details
+	xfer.Details
 	AppClient
+}
+
+// Publisher is something which can send a stream of data somewhere, probably
+// to a remote collector.
+type Publisher interface {
+	Publish(io.Reader) error
+	Stop()
 }
 
 // MultiAppClient maintains a set of upstream apps, and ensures we have an
 // AppClient for each one.
 type MultiAppClient interface {
 	Set(hostname string, endpoints []string)
-	PipeConnection(appID, pipeID string, pipe Pipe) error
+	PipeConnection(appID, pipeID string, pipe xfer.Pipe) error
 	PipeClose(appID, pipeID string) error
 	Stop()
 	Publish(io.Reader) error
@@ -122,7 +130,7 @@ func (c *multiClient) withClient(appID string, f func(AppClient) error) error {
 	return f(client)
 }
 
-func (c *multiClient) PipeConnection(appID, pipeID string, pipe Pipe) error {
+func (c *multiClient) PipeConnection(appID, pipeID string, pipe xfer.Pipe) error {
 	return c.withClient(appID, func(client AppClient) error {
 		client.PipeConnection(pipeID, pipe)
 		return nil

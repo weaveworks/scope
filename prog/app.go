@@ -14,7 +14,7 @@ import (
 	"github.com/weaveworks/weave/common"
 
 	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/xfer"
+	"github.com/weaveworks/scope/common/xfer"
 )
 
 // Router creates the mux for all the various app components.
