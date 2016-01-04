@@ -198,9 +198,7 @@ export class AppStore extends Store {
   getHighlightedNodeIds() {
     if (mouseOverNodeId) {
       const adjacency = this.getAdjacentNodes(mouseOverNodeId);
-      if (adjacency.size) {
-        return _.union(adjacency.toJS(), [mouseOverNodeId]);
-      }
+      return _.union(adjacency.toJS(), [mouseOverNodeId]);
     }
     if (mouseOverEdgeId) {
       return mouseOverEdgeId.split(EDGE_ID_SEPARATOR);
