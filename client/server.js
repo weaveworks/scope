@@ -37,6 +37,10 @@ var proxy = httpProxy.createProxy({
   target: 'http://' + BACKEND_HOST
 });
 
+proxy.on('error', function(err) {
+  console.error('Proxy error', err);
+});
+
 app.all('/api*', proxy.web.bind(proxy));
 
 // Serve index page
