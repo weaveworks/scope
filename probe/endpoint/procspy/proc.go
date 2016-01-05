@@ -71,7 +71,7 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, er
 			if proc == nil {
 				proc = &Proc{
 					PID:  uint(p.PID),
-					Name: p.Comm,
+					Name: p.Name,
 				}
 			}
 			res[statT.Ino] = proc

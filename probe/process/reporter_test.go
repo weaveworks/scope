@@ -25,10 +25,10 @@ func (m *mockWalker) Walk(f func(process.Process, process.Process)) error {
 func TestReporter(t *testing.T) {
 	walker := &mockWalker{
 		processes: []process.Process{
-			{PID: 1, PPID: 0, Comm: "init"},
-			{PID: 2, PPID: 1, Comm: "bash"},
-			{PID: 3, PPID: 1, Comm: "apache", Threads: 2},
-			{PID: 4, PPID: 2, Comm: "ping", Cmdline: "ping foo.bar.local"},
+			{PID: 1, PPID: 0, Name: "init"},
+			{PID: 2, PPID: 1, Name: "bash"},
+			{PID: 3, PPID: 1, Name: "apache", Threads: 2},
+			{PID: 4, PPID: 2, Name: "ping", Cmdline: "ping foo.bar.local"},
 			{PID: 5, PPID: 1, Cmdline: "tail -f /var/log/syslog"},
 		},
 	}
@@ -42,27 +42,27 @@ func TestReporter(t *testing.T) {
 	want.Process = report.MakeTopology().AddNode(
 		report.MakeProcessNodeID("", "1"), report.MakeNodeWith(map[string]string{
 			process.PID:     "1",
-			process.Comm:    "init",
+			process.Name:    "init",
 			process.Threads: "0",
 		}).WithMetric(process.MemoryUsage, report.MakeMetric().Add(now, 0.)),
 	).AddNode(
 		report.MakeProcessNodeID("", "2"), report.MakeNodeWith(map[string]string{
 			process.PID:     "2",
-			process.Comm:    "bash",
+			process.Name:    "bash",
 			process.PPID:    "1",
 			process.Threads: "0",
 		}).WithMetric(process.MemoryUsage, report.MakeMetric().Add(now, 0.)),
 	).AddNode(
 		report.MakeProcessNodeID("", "3"), report.MakeNodeWith(map[string]string{
 			process.PID:     "3",
-			process.Comm:    "apache",
+			process.Name:    "apache",
 			process.PPID:    "1",
 			process.Threads: "2",
 		}).WithMetric(process.MemoryUsage, report.MakeMetric().Add(now, 0.)),
 	).AddNode(
 		report.MakeProcessNodeID("", "4"), report.MakeNodeWith(map[string]string{
 			process.PID:     "4",
-			process.Comm:    "ping",
+			process.Name:    "ping",
 			process.PPID:    "2",
 			process.Cmdline: "ping foo.bar.local",
 			process.Threads: "0",

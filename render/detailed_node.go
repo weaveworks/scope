@@ -341,7 +341,7 @@ func processOriginTable(nmd report.Node, addHostTag bool, addContainerTag bool) 
 
 	var (
 		title           = "Process"
-		name, commFound = nmd.Metadata[process.Comm]
+		name, commFound = nmd.Metadata[process.Name]
 		pid, pidFound   = nmd.Metadata[process.PID]
 	)
 	if commFound {

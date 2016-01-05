@@ -5,7 +5,7 @@ import "sync"
 // Process represents a single process.
 type Process struct {
 	PID, PPID int
-	Comm      string
+	Name      string
 	Cmdline   string
 	Threads   int
 	Jiffies   uint64

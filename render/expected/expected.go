@@ -68,9 +68,9 @@ var (
 	RenderedProcesses = (render.RenderableNodes{
 		ClientProcess1ID: {
 			ID:         ClientProcess1ID,
-			LabelMajor: fixture.Client1Comm,
+			LabelMajor: fixture.Client1Name,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ClientHostID, fixture.Client1PID),
-			Rank:       fixture.Client1Comm,
+			Rank:       fixture.Client1Name,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
 				fixture.Client54001NodeID,
@@ -85,9 +85,9 @@ var (
 		},
 		ClientProcess2ID: {
 			ID:         ClientProcess2ID,
-			LabelMajor: fixture.Client2Comm,
+			LabelMajor: fixture.Client2Name,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ClientHostID, fixture.Client2PID),
-			Rank:       fixture.Client2Comm,
+			Rank:       fixture.Client2Name,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
 				fixture.Client54002NodeID,
@@ -104,7 +104,7 @@ var (
 			ID:         ServerProcessID,
 			LabelMajor: "apache",
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.ServerPID),
-			Rank:       fixture.ServerComm,
+			Rank:       fixture.ServerName,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
 				fixture.Server80NodeID,
@@ -119,9 +119,9 @@ var (
 		},
 		nonContainerProcessID: {
 			ID:         nonContainerProcessID,
-			LabelMajor: fixture.NonContainerComm,
+			LabelMajor: fixture.NonContainerName,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.NonContainerPID),
-			Rank:       fixture.NonContainerComm,
+			Rank:       fixture.NonContainerName,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
 				fixture.NonContainerProcessNodeID,
@@ -173,11 +173,11 @@ var (
 				IngressByteCount:   newu64(2100),
 			},
 		},
-		fixture.NonContainerComm: {
-			ID:         fixture.NonContainerComm,
-			LabelMajor: fixture.NonContainerComm,
+		fixture.NonContainerName: {
+			ID:         fixture.NonContainerName,
+			LabelMajor: fixture.NonContainerName,
 			LabelMinor: "1 process",
-			Rank:       fixture.NonContainerComm,
+			Rank:       fixture.NonContainerName,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
 				fixture.NonContainerProcessNodeID,

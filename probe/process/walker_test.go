@@ -20,10 +20,10 @@ func TestBasicWalk(t *testing.T) {
 
 func TestCache(t *testing.T) {
 	processes := []process.Process{
-		{PID: 1, PPID: 0, Comm: "init"},
-		{PID: 2, PPID: 1, Comm: "bash"},
-		{PID: 3, PPID: 1, Comm: "apache", Threads: 2},
-		{PID: 4, PPID: 2, Comm: "ping", Cmdline: "ping foo.bar.local"},
+		{PID: 1, PPID: 0, Name: "init", Cmdline: "init"},
+		{PID: 2, PPID: 1, Name: "bash", Cmdline: "bash"},
+		{PID: 3, PPID: 1, Name: "apache", Threads: 2, Cmdline: "apache"},
+		{PID: 4, PPID: 2, Name: "ping", Cmdline: "ping foo.bar.local"},
 	}
 	walker := &mockWalker{
 		processes: processes,

@@ -10,7 +10,7 @@ import (
 // We use these keys in node metadata
 const (
 	PID         = "pid"
-	Comm        = "comm"
+	Name        = "name"
 	PPID        = "ppid"
 	Cmdline     = "cmdline"
 	Threads     = "threads"
@@ -65,7 +65,7 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 		node := report.MakeNode()
 		for _, tuple := range []struct{ key, value string }{
 			{PID, pidstr},
-			{Comm, p.Comm},
+			{Name, p.Name},
 			{Cmdline, p.Cmdline},
 			{Threads, strconv.Itoa(p.Threads)},
 		} {

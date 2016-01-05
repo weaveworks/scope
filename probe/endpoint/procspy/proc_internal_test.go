@@ -24,8 +24,8 @@ var mockFS = fs.Dir("",
 				},
 			),
 			fs.File{
-				FName:     "comm",
-				FContents: "foo\n",
+				FName:     "cmdline",
+				FContents: "foo",
 			},
 			fs.Dir("ns",
 				fs.File{
