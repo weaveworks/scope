@@ -16,7 +16,7 @@ export default class NodeDetailsControls extends React.Component {
         <span className="node-details-controls-buttons">
           {this.props.controls && this.props.controls.map(control => {
             return (
-              <NodeDetailsControlButton control={control}
+              <NodeDetailsControlButton nodeId={this.props.nodeId} control={control}
                 pending={this.props.pending} key={control.id} />
             );
           })}

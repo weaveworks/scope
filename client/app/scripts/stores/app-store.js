@@ -7,6 +7,7 @@ import AppDispatcher from '../dispatcher/app-dispatcher';
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 
+const makeMap = Immutable.Map;
 const makeOrderedMap = Immutable.OrderedMap;
 const makeSet = Immutable.Set;
 const log = debug('scope:app-store');
@@ -48,8 +49,7 @@ function makeNode(node) {
 
 let topologyOptions = makeOrderedMap(); // topologyId -> options
 let adjacentNodes = makeSet();
-let controlError = null;
-let controlPending = false;
+let controlStatus = makeMap();
 let currentTopology = null;
 let currentTopologyId = 'containers';
 let errorUrl = null;
@@ -143,8 +143,8 @@ export class AppStore extends Store {
     return adjacentNodes;
   }
 
-  getControlError() {
-    return controlError;
+  getControlStatus() {
+    return controlStatus.toJS();
   }
 
   getControlPipe() {
@@ -232,10 +232,6 @@ export class AppStore extends Store {
     return version;
   }
 
-  isControlPending() {
-    return controlPending;
-  }
-
   isRouteSet() {
     return routeSet;
   }
@@ -271,7 +267,7 @@ export class AppStore extends Store {
       break;
 
     case ActionTypes.CLEAR_CONTROL_ERROR:
-      controlError = null;
+      controlStatus = controlStatus.removeIn([payload.nodeId, 'error']);
       this.__emitChange();
       break;
 
@@ -309,8 +305,10 @@ export class AppStore extends Store {
       break;
 
     case ActionTypes.DO_CONTROL:
-      controlPending = true;
-      controlError = null;
+      controlStatus = controlStatus.set(payload.nodeId, makeMap({
+        pending: true,
+        error: null
+      }));
       this.__emitChange();
       break;
 
@@ -348,14 +346,18 @@ export class AppStore extends Store {
       break;
 
     case ActionTypes.DO_CONTROL_ERROR:
-      controlPending = false;
-      controlError = payload.error;
+      controlStatus = controlStatus.set(payload.nodeId, makeMap({
+        pending: false,
+        error: payload.error
+      }));
       this.__emitChange();
       break;
 
     case ActionTypes.DO_CONTROL_SUCCESS:
-      controlPending = false;
-      controlError = null;
+      controlStatus = controlStatus.set(payload.nodeId, makeMap({
+        pending: false,
+        error: null
+      }));
       this.__emitChange();
       break;
 

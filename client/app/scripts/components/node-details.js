@@ -86,6 +86,7 @@ export default class NodeDetails extends React.Component {
   renderDetails() {
     const details = this.props.details;
     const nodeColor = getNodeColorDark(details.rank, details.label_major);
+    const {error, pending} = (this.props.controlStatus || {});
     const styles = {
       controls: {
         'backgroundColor': brightenColor(nodeColor)
@@ -109,8 +110,10 @@ export default class NodeDetails extends React.Component {
         </div>
 
         {details.controls && details.controls.length > 0 && <div className="node-details-controls-wrapper" style={styles.controls}>
-          <NodeDetailsControls controls={details.controls}
-            pending={this.props.controlPending} error={this.props.controlError} />
+          <NodeDetailsControls nodeId={this.props.nodeId}
+            controls={details.controls}
+            pending={pending}
+            error={error} />
         </div>}
 
         <div className="node-details-content">

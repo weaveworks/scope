@@ -20,6 +20,6 @@ export default class NodeDetailsControlButton extends React.Component {
 
   handleClick(ev) {
     ev.preventDefault();
-    doControl(this.props.control.probeId, this.props.control.nodeId, this.props.control.id);
+    doControl(this.props.nodeId, this.props.control);
   }
 }
