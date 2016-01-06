@@ -8,6 +8,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// ErrInvalidMessage is the error returned when the on-wire message is unexpected.
+var ErrInvalidMessage = fmt.Errorf("Invalid Message")
+
 // Request is the UI -> App -> Probe message type for control RPCs
 type Request struct {
 	AppID   string
@@ -23,7 +26,7 @@ type Response struct {
 	RawTTY bool        `json:"raw_tty,omitempty"`
 }
 
-// Message is the unions of Request, Response and PipeIO
+// Message is the unions of Request, Response and arbitrary Value.
 type Message struct {
 	Request  *rpc.Request
 	Response *rpc.Response
@@ -119,16 +122,26 @@ func (j *JSONWebsocketCodec) readMessage(v interface{}) (*Message, error) {
 // ReadResponseHeader implements rpc.ClientCodec
 func (j *JSONWebsocketCodec) ReadResponseHeader(r *rpc.Response) error {
 	m, err := j.readMessage(nil)
-	if err == nil {
-		*r = *m.Response
+	if err != nil {
+		return err
 	}
-	return err
+	if m.Response == nil {
+		return ErrInvalidMessage
+	}
+	*r = *m.Response
+	return nil
 }
 
 // ReadResponseBody implements rpc.ClientCodec
 func (j *JSONWebsocketCodec) ReadResponseBody(v interface{}) error {
 	_, err := j.readMessage(v)
-	return err
+	if err != nil {
+		return err
+	}
+	if v == nil {
+		return ErrInvalidMessage
+	}
+	return nil
 }
 
 // Close implements rpc.ClientCodec and rpc.ServerCodec
@@ -139,14 +152,24 @@ func (j *JSONWebsocketCodec) Close() error {
 // ReadRequestHeader implements rpc.ServerCodec
 func (j *JSONWebsocketCodec) ReadRequestHeader(r *rpc.Request) error {
 	m, err := j.readMessage(nil)
-	if err == nil {
-		*r = *m.Request
+	if err != nil {
+		return err
 	}
-	return err
+	if m.Request == nil {
+		return ErrInvalidMessage
+	}
+	*r = *m.Request
+	return nil
 }
 
 // ReadRequestBody implements rpc.ServerCodec
 func (j *JSONWebsocketCodec) ReadRequestBody(v interface{}) error {
 	_, err := j.readMessage(v)
-	return err
+	if err != nil {
+		return err
+	}
+	if v == nil {
+		return ErrInvalidMessage
+	}
+	return nil
 }
