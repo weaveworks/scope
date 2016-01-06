@@ -4,8 +4,8 @@
 
 start_suite "Test short lived connections between containers on different hosts"
 
-WEAVE_NO_FASTDP=true WEAVE_DOCKER_ARGS=$ADD_HOST_ARGS weave_on $HOST1 launch $HOST1 $HOST2
-WEAVE_NO_FASTDP=true WEAVE_DOCKER_ARGS=$ADD_HOST_ARGS weave_on $HOST2 launch $HOST1 $HOST2
+weave_on $HOST1 launch $HOST1 $HOST2
+weave_on $HOST2 launch $HOST1 $HOST2
 
 scope_on $HOST1 launch
 scope_on $HOST2 launch
@@ -21,7 +21,7 @@ sleep 30 # need to allow the scopes to poll dns, resolve the other app ids, and 
 check() {
 	has_container $1 nginx
 	has_container $1 client
-	has_connection $1 client nginx
+	has_connection containers $1 client nginx
 }
 
 check $HOST1

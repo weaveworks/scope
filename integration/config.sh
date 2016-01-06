@@ -29,14 +29,6 @@ weave_on() {
 	DOCKER_HOST=tcp://$host:$DOCKER_PORT $WEAVE "$@"
 }
 
-# this checks we have a named container
-has_container() {
-	local host=$1
-	local name=$2
-	local count=${3:-1}
-	assert "curl -s http://$host:4040/api/topology/containers?system=show | jq -r '[.nodes[] | select(.label_major == \"$name\")] | length'" $count
-}
-
 scope_end_suite() {
 	end_suite
 	for host in $HOSTS; do
@@ -44,58 +36,84 @@ scope_end_suite() {
 	done
 }
 
+# this checks we have a named node in the given view
+has() {
+	local view=$1
+	local host=$2
+	local name=$3
+	local count=${4:-1}
+	assert "curl -s http://${host}:4040/api/topology/${view}?system=show | jq -r '[.nodes[] | select(.label_major == \"${name}\")] | length'" $count
+}
+
+# this checks we have a named container
+has_container() {
+	has containers "$@"
+}
+
+node_id() {
+    local view="$1"
+	local host="$2"
+	local name="$3"
+	echo $(curl -s http://${host}:4040/api/topology/${view}?system=show | jq -r ".nodes[] | select(.label_major == \"${name}\") | .id")
+}
+
 container_id() {
-	local host="$1"
-	local name="$2"
-	echo $(curl -s http://$host:4040/api/topology/containers?system=show | jq -r ".nodes[] | select(.label_major == \"$name\") | .id")
+    node_id containers "$@"
 }
 
 # this checks we have an edge from container 1 to container 2
 has_connection() {
-	local host="$1"
-	local from="$2"
-	local to="$3"
-	local timeout="${4:-60}"
-	local from_id=$(container_id "$host" "$from")
-	local to_id=$(container_id "$host" "$to")
+	local view="$1"
+	local host="$2"
+	local from="$3"
+	local to="$4"
+	local timeout="${5:-60}"
+	local from_id=$(node_id "${view}" "${host}" "${from}")
+	local to_id=$(node_id "${view}" "${host}" "${to}")
 
 	for i in $(seq $timeout); do
-		local containers="$(curl -s http://$host:4040/api/topology/containers?system=show)"
-		local edge=$(echo "$containers" |  jq -r ".nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])" 2>/dev/null)
+		local nodes="$(curl -s http://$host:4040/api/topology/${view}?system=show)"
+		local edge=$(echo "$nodes" |  jq -r ".nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])" 2>/dev/null)
 		if [ "$edge" = "true" ]; then
 			echo "Found edge $from -> $to after $i secs"
-			assert "curl -s http://$host:4040/api/topology/containers?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
+			assert "curl -s http://$host:4040/api/topology/${view}?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
 			return
 		fi
 		sleep 1
 	done
 
 	echo "Failed to find edge $from -> $to after $timeout secs"
-	assert "curl -s http://$host:4040/api/topology/containers?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
+	assert "curl -s http://$host:4040/api/topology/${view}?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
 }
 
-wait_for_containers() {
-	local host="$1"
-	local timeout="$2"
+wait_for() {
+	local view="$1"
+	local host="$2"
+	local timeout="$3"
 	shift 2
 
-	for i in $(seq $timeout); do
-		local containers="$(curl -s http://$host:4040/api/topology/containers?system=show)"
+	for i in $(seq ${timeout}); do
+		local nodes="$(curl -s http://$host:4040/api/topology/${view}?system=show)"
 		local found=0
 		for name in "$@"; do
-			local count=$(echo "$containers" | jq -r "[.nodes[] | select(.label_major == \"$name\")] | length")
-			if [ -n "$count" ] && [ "$count" -ge 1 ]; then
+			local count=$(echo "${nodes}" | jq -r "[.nodes[] | select(.label_major == \"${name}\")] | length")
+			if [ -n "${count}" ] && [ "${count}" -ge 1 ]; then
 				found=$(( found + 1 ))
 			fi
 		done
 
-		if [ "$found" -eq $# ]; then
-			echo "Found $found containers after $i secs"
+		if [ "${found}" -eq $# ]; then
+			echo "Found ${found} nodes after $i secs"
 			return
 		fi
 
 		sleep 1
 	done
 
-	echo "Failed to find containers $@ after $i secs"
+	echo "Failed to find nodes $@ after $i secs"
+}
+
+
+wait_for_containers() {
+	wait_for containers "$@"
 }
