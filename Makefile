@@ -1,4 +1,4 @@
-.PHONY: all deps static clean client-lint client-test client-sync backend frontend
+.PHONY: all deps static clean client-lint client-test client-sync backend frontend shell
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo -E
@@ -12,12 +12,14 @@ SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
 SCOPE_BACKEND_BUILD_UPTODATE=.scope_backend_build.uptodate
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
 DOCKER_VERSION=1.6.2
-DOCKER_DISTRIB=docker/docker-$(DOCKER_VERSION).tgz
+DOCKER_DISTRIB=.pkg/docker-$(DOCKER_VERSION).tgz
 DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
 RUNSVINIT=vendor/runsvinit/runsvinit
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
+GO_BUILD_INSTALL_DEPS=-i
+GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags netgo
 
 all: $(SCOPE_EXPORT)
 
@@ -36,15 +38,23 @@ $(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
-$(SCOPE_EXE): $(shell find ./ -type f -name *.go) prog/static.go
+$(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name *.go) prog/static.go
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 $(SCOPE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
+	@mkdir -p $(shell pwd)/.pkg
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
-		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) $@
+		-v $(shell pwd)/.pkg:/go/pkg \
+		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@
+
+shell:
+	@mkdir -p $(shell pwd)/.pkg
+	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
+		-v $(shell pwd)/.pkg:/go/pkg \
+		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@
 else
 $(SCOPE_EXE):
-	go build -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags netgo -o $@ ./$(@D)
+	time go build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
 	        echo "\nYour go standard library was built without the 'netgo' build tag."; \
@@ -55,7 +65,10 @@ $(SCOPE_EXE):
 	    }
 
 $(RUNSVINIT):
-	go build -ldflags "-extldflags \"-static\"" -o $@ ./$(@D)
+	time go build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
+
+shell:
+	/bin/bash
 endif
 
 static: prog/static.go
@@ -101,7 +114,7 @@ clean:
 	go clean ./...
 	$(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
-		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave
+		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave .pkg
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
