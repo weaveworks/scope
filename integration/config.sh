@@ -38,7 +38,7 @@ scope_end_suite() {
 
 # this checks we have a named node in the given view
 has() {
-    local view=$1
+	local view=$1
 	local host=$2
 	local name=$3
 	local count=${4:-1}
@@ -63,7 +63,7 @@ container_id() {
 
 # this checks we have an edge from container 1 to container 2
 has_connection() {
-    local view="$1"
+	local view="$1"
 	local host="$2"
 	local from="$3"
 	local to="$4"
@@ -87,7 +87,7 @@ has_connection() {
 }
 
 wait_for() {
-    local view="$1"
+	local view="$1"
 	local host="$2"
 	local timeout="$3"
 	shift 2
@@ -115,5 +115,5 @@ wait_for() {
 
 
 wait_for_containers() {
-    wait_for containers "$@"
+	wait_for containers "$@"
 }
