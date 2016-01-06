@@ -36,11 +36,10 @@ tags
 # Project specific
 .*.uptodate
 scope.tar
-scope_ui_build.tar
+.pkg
 prog/scope
 docker/scope
-docker/docker*
-docker*.tgz
+docker/docker.tgz
 docker/weave
 docker/runsvinit
 experimental/bridge/bridge

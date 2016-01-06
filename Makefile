@@ -12,7 +12,7 @@ SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
 SCOPE_BACKEND_BUILD_UPTODATE=.scope_backend_build.uptodate
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
 DOCKER_VERSION=1.6.2
-DOCKER_DISTRIB=docker-$(DOCKER_VERSION).tgz
+DOCKER_DISTRIB=.pkg/docker-$(DOCKER_VERSION).tgz
 DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
 RUNSVINIT=vendor/runsvinit/runsvinit
 RM=--rm
@@ -42,14 +42,15 @@ $(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name *.go) prog/
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 $(SCOPE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
-	@mkdir -p $(shell pwd)/pkg
+	@mkdir -p $(shell pwd)/.pkg
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
-		-v $(shell pwd)/pkg:/go/pkg \
+		-v $(shell pwd)/.pkg:/go/pkg \
 		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@
 
 shell:
+	@mkdir -p $(shell pwd)/.pkg
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
-		-v $(shell pwd)/pkg:/go/pkg \
+		-v $(shell pwd)/.pkg:/go/pkg \
 		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@
 else
 $(SCOPE_EXE):
@@ -113,7 +114,7 @@ clean:
 	go clean ./...
 	$(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
-		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave pkg/
+		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave .pkg
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
