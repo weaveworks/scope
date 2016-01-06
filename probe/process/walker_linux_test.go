@@ -14,10 +14,6 @@ var mockFS = fs.Dir("",
 	fs.Dir("proc",
 		fs.Dir("3",
 			fs.File{
-				FName:     "comm",
-				FContents: "curl\n",
-			},
-			fs.File{
 				FName:     "cmdline",
 				FContents: "curl\000google.com",
 			},
@@ -28,12 +24,8 @@ var mockFS = fs.Dir("",
 		),
 		fs.Dir("2",
 			fs.File{
-				FName:     "comm",
-				FContents: "bash\n",
-			},
-			fs.File{
 				FName:     "cmdline",
-				FContents: "",
+				FContents: "bash",
 			},
 			fs.File{
 				FName:     "stat",
@@ -42,12 +34,8 @@ var mockFS = fs.Dir("",
 		),
 		fs.Dir("4",
 			fs.File{
-				FName:     "comm",
-				FContents: "apache\n",
-			},
-			fs.File{
 				FName:     "cmdline",
-				FContents: "",
+				FContents: "apache",
 			},
 			fs.File{
 				FName:     "stat",
@@ -57,12 +45,8 @@ var mockFS = fs.Dir("",
 		fs.Dir("notapid"),
 		fs.Dir("1",
 			fs.File{
-				FName:     "comm",
-				FContents: "init\n",
-			},
-			fs.File{
 				FName:     "cmdline",
-				FContents: "",
+				FContents: "init",
 			},
 			fs.File{
 				FName:     "stat",
@@ -77,10 +61,10 @@ func TestWalker(t *testing.T) {
 	defer fs_hook.Restore()
 
 	want := map[int]process.Process{
-		3: {PID: 3, PPID: 2, Comm: "curl", Cmdline: "curl google.com", Threads: 1},
-		2: {PID: 2, PPID: 1, Comm: "bash", Cmdline: "", Threads: 1},
-		4: {PID: 4, PPID: 3, Comm: "apache", Cmdline: "", Threads: 1},
-		1: {PID: 1, PPID: 0, Comm: "init", Cmdline: "", Threads: 1},
+		3: {PID: 3, PPID: 2, Name: "curl", Cmdline: "curl google.com", Threads: 1},
+		2: {PID: 2, PPID: 1, Name: "bash", Cmdline: "bash", Threads: 1},
+		4: {PID: 4, PPID: 3, Name: "apache", Cmdline: "apache", Threads: 1},
+		1: {PID: 1, PPID: 0, Name: "init", Cmdline: "init", Threads: 1},
 	}
 
 	have := map[int]process.Process{}

@@ -110,9 +110,9 @@ func MapProcessIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 
 	var (
 		id    = MakeProcessID(report.ExtractHostID(m.Node), pid)
-		major = m.Metadata["comm"]
+		major = m.Metadata[process.Name]
 		minor = fmt.Sprintf("%s (%s)", report.ExtractHostID(m.Node), pid)
-		rank  = m.Metadata["comm"]
+		rank  = m.Metadata[process.Name]
 	)
 
 	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
@@ -440,7 +440,7 @@ func MapProcess2Name(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{n.ID: n}
 	}
 
-	name, ok := n.Node.Metadata["comm"]
+	name, ok := n.Node.Metadata[process.Name]
 	if !ok {
 		return RenderableNodes{}
 	}

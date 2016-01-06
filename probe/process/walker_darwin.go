@@ -68,7 +68,7 @@ func parseLSOF(output string) (map[string]Process, error) {
 			process.PID = pid
 
 		case 'c':
-			process.Comm = value
+			process.Name = value
 
 		case 'n':
 			// 'n' is the last field, with '-F cn'
@@ -83,7 +83,7 @@ func parseLSOF(output string) (map[string]Process, error) {
 			}
 			processes[addresses[0]] = Process{
 				PID:  process.PID,
-				Comm: process.Comm,
+				Name: process.Name,
 			}
 
 		default:

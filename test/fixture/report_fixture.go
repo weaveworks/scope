@@ -47,10 +47,10 @@ var (
 	ServerPID       = "215"
 	NonContainerPID = "1234"
 
-	Client1Comm      = "curl"
-	Client2Comm      = "curl"
-	ServerComm       = "apache"
-	NonContainerComm = "bash"
+	Client1Name      = "curl"
+	Client2Name      = "curl"
+	ServerName       = "apache"
+	NonContainerName = "bash"
 
 	True = "true"
 
@@ -197,25 +197,25 @@ var (
 			Nodes: report.Nodes{
 				ClientProcess1NodeID: report.MakeNodeWith(map[string]string{
 					process.PID:        Client1PID,
-					"comm":             Client1Comm,
+					process.Name:       Client1Name,
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
 				}),
 				ClientProcess2NodeID: report.MakeNodeWith(map[string]string{
 					process.PID:        Client2PID,
-					"comm":             Client2Comm,
+					process.Name:       Client2Name,
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
 				}),
 				ServerProcessNodeID: report.MakeNodeWith(map[string]string{
 					process.PID:        ServerPID,
-					"comm":             ServerComm,
+					process.Name:       ServerName,
 					docker.ContainerID: ServerContainerID,
 					report.HostNodeID:  ServerHostNodeID,
 				}),
 				NonContainerProcessNodeID: report.MakeNodeWith(map[string]string{
 					process.PID:       NonContainerPID,
-					"comm":            NonContainerComm,
+					process.Name:      NonContainerName,
 					report.HostNodeID: ServerHostNodeID,
 				}),
 			},
