@@ -1,4 +1,4 @@
-package xfer_test
+package appclient_test
 
 import (
 	"bytes"
@@ -6,7 +6,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/weaveworks/scope/xfer"
+	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/probe/appclient"
 )
 
 type mockClient struct {
@@ -41,7 +42,7 @@ var (
 	a2      = &mockClient{id: "2"} // hostname a, app id 2
 	b2      = &mockClient{id: "2"} // hostname b, app id 2 (duplicate)
 	b3      = &mockClient{id: "3"} // hostname b, app id 3
-	factory = func(hostname, target string) (xfer.AppClient, error) {
+	factory = func(hostname, target string) (appclient.AppClient, error) {
 		switch target {
 		case "a1":
 			return a1, nil
@@ -66,7 +67,7 @@ func TestMultiClient(t *testing.T) {
 		}
 	)
 
-	mp := xfer.NewMultiAppClient(factory)
+	mp := appclient.NewMultiAppClient(factory)
 	defer mp.Stop()
 
 	// Add two hostnames with overlapping apps, check we don't add the same app twice
@@ -88,7 +89,7 @@ func TestMultiClient(t *testing.T) {
 }
 
 func TestMultiClientPublish(t *testing.T) {
-	mp := xfer.NewMultiAppClient(factory)
+	mp := appclient.NewMultiAppClient(factory)
 	defer mp.Stop()
 
 	sum := func() int { return a1.publish + a2.publish + b2.publish + b3.publish }

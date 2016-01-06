@@ -9,8 +9,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/xfer"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 	}
 	f.Close()
 
-	client, err := xfer.NewAppClient(xfer.ProbeConfig{
+	client, err := appclient.NewAppClient(appclient.ProbeConfig{
 		Token:    "fixprobe",
 		ProbeID:  "fixprobe",
 		Insecure: false,
@@ -43,7 +44,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rp := xfer.NewReportPublisher(client)
+	rp := appclient.NewReportPublisher(client)
 	for range time.Tick(*publishInterval) {
 		rp.Publish(fixedReport)
 	}

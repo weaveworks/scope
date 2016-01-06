@@ -1,4 +1,4 @@
-package xfer
+package appclient
 
 import (
 	"compress/gzip"
@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
@@ -33,7 +34,7 @@ func dummyServer(t *testing.T, expectedToken, expectedID string, expectedReport 
 			t.Errorf("want %q, have %q", expectedToken, have)
 		}
 
-		if have := r.Header.Get(ScopeProbeIDHeader); expectedID != have {
+		if have := r.Header.Get(xfer.ScopeProbeIDHeader); expectedID != have {
 			t.Errorf("want %q, have %q", expectedID, have)
 		}
 
@@ -151,7 +152,7 @@ func TestAppClientPublish(t *testing.T) {
 	var (
 		id      = "foobarbaz"
 		version = "imalittleteapot"
-		want    = Details{ID: id, Version: version}
+		want    = xfer.Details{ID: id, Version: version}
 	)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

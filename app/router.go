@@ -12,8 +12,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/common/hostname"
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/xfer"
 )
 
 var (

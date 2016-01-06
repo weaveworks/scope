@@ -1,4 +1,4 @@
-package xfer
+package appclient
 
 import (
 	"bytes"

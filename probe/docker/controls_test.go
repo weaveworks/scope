@@ -8,11 +8,11 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/xfer"
 )
 
 func TestControls(t *testing.T) {

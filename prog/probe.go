@@ -17,7 +17,9 @@ import (
 	"github.com/weaveworks/weave/common"
 
 	"github.com/weaveworks/scope/common/hostname"
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe"
+	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
@@ -26,7 +28,6 @@ import (
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/xfer"
 )
 
 // Main runs the probe
@@ -94,20 +95,20 @@ func probeMain() {
 	}
 	log.Printf("publishing to: %s", strings.Join(targets, ", "))
 
-	probeConfig := xfer.ProbeConfig{
+	probeConfig := appclient.ProbeConfig{
 		Token:    *token,
 		ProbeID:  probeID,
 		Insecure: *insecure,
 	}
-	clients := xfer.NewMultiAppClient(func(hostname, endpoint string) (xfer.AppClient, error) {
-		return xfer.NewAppClient(
+	clients := appclient.NewMultiAppClient(func(hostname, endpoint string) (appclient.AppClient, error) {
+		return appclient.NewAppClient(
 			probeConfig, hostname, endpoint,
 			xfer.ControlHandlerFunc(controls.HandleControlRequest),
 		)
 	})
 	defer clients.Stop()
 
-	resolver := xfer.NewStaticResolver(targets, clients.Set)
+	resolver := appclient.NewStaticResolver(targets, clients.Set)
 	defer resolver.Stop()
 
 	processCache := process.NewCachingWalker(process.NewWalker(*procRoot))

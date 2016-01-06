@@ -5,9 +5,9 @@ import (
 
 	docker_client "github.com/fsouza/go-dockerclient"
 
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/xfer"
 )
 
 // Control IDs used by the docker intergation.

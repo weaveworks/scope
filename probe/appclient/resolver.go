@@ -1,4 +1,4 @@
-package xfer
+package appclient
 
 import (
 	"log"
@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/weaveworks/scope/common/xfer"
 )
 
 const (
@@ -76,7 +78,7 @@ func prepare(strs []string) []target {
 				continue
 			}
 		} else {
-			host, port = s, strconv.Itoa(AppPort)
+			host, port = s, strconv.Itoa(xfer.AppPort)
 		}
 		targets = append(targets, target{host, port})
 	}

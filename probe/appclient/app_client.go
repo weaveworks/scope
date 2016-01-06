@@ -1,4 +1,4 @@
-package xfer
+package appclient
 
 import (
 	"encoding/json"
@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/weaveworks/scope/common/sanitize"
+	"github.com/weaveworks/scope/common/xfer"
 )
 
 const (
@@ -20,18 +21,11 @@ const (
 	maxBackoff     = 60 * time.Second
 )
 
-// Details are some generic details that can be fetched from /api
-type Details struct {
-	ID       string `json:"id"`
-	Version  string `json:"version"`
-	Hostname string `json:"hostname"`
-}
-
 // AppClient is a client to an app for dealing with controls.
 type AppClient interface {
-	Details() (Details, error)
+	Details() (xfer.Details, error)
 	ControlConnection()
-	PipeConnection(string, Pipe)
+	PipeConnection(string, xfer.Pipe)
 	PipeClose(string) error
 	Publish(r io.Reader) error
 	Stop()
@@ -58,11 +52,11 @@ type appClient struct {
 	readers     chan io.Reader
 
 	// For controls
-	control ControlHandler
+	control xfer.ControlHandler
 }
 
 // NewAppClient makes a new appClient.
-func NewAppClient(pc ProbeConfig, hostname, target string, control ControlHandler) (AppClient, error) {
+func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlHandler) (AppClient, error) {
 	httpTransport, err := pc.getHTTPTransport(hostname)
 	if err != nil {
 		return nil, err
@@ -144,8 +138,8 @@ func (c *appClient) Stop() {
 }
 
 // Details fetches the details (version, id) of the app.
-func (c *appClient) Details() (Details, error) {
-	result := Details{}
+func (c *appClient) Details() (xfer.Details, error) {
+	result := xfer.Details{}
 	req, err := c.ProbeConfig.authorizedRequest("GET", sanitize.URL("", 0, "/api")(c.target), nil)
 	if err != nil {
 		return result, err
@@ -202,7 +196,7 @@ func (c *appClient) controlConnection() (bool, error) {
 		conn.Close()
 	}()
 
-	codec := NewJSONWebsocketCodec(conn)
+	codec := xfer.NewJSONWebsocketCodec(conn)
 	server := rpc.NewServer()
 	if err := server.RegisterName("control", c.control); err != nil {
 		return false, err
@@ -271,7 +265,7 @@ func (c *appClient) Publish(r io.Reader) error {
 	return nil
 }
 
-func (c *appClient) pipeConnection(id string, pipe Pipe) (bool, error) {
+func (c *appClient) pipeConnection(id string, pipe xfer.Pipe) (bool, error) {
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
 	url := sanitize.URL("ws://", 0, fmt.Sprintf("/api/pipe/%s/probe", id))(c.target)
@@ -295,7 +289,7 @@ func (c *appClient) pipeConnection(id string, pipe Pipe) (bool, error) {
 	return false, pipe.CopyToWebsocket(remote, conn)
 }
 
-func (c *appClient) PipeConnection(id string, pipe Pipe) {
+func (c *appClient) PipeConnection(id string, pipe xfer.Pipe) {
 	go func() {
 		log.Printf("Pipe %s connection to %s starting", id, c.target)
 		defer log.Printf("Pipe %s connection to %s exiting", id, c.target)

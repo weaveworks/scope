@@ -14,9 +14,10 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/xfer"
 )
 
 func TestPipeTimeout(t *testing.T) {
@@ -50,7 +51,7 @@ func TestPipeTimeout(t *testing.T) {
 }
 
 type adapter struct {
-	c xfer.AppClient
+	c appclient.AppClient
 }
 
 func (a adapter) PipeConnection(_, pipeID string, pipe xfer.Pipe) error {
@@ -75,10 +76,10 @@ func TestPipeClose(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	probeConfig := xfer.ProbeConfig{
+	probeConfig := appclient.ProbeConfig{
 		ProbeID: "foo",
 	}
-	client, err := xfer.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, nil)
+	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
