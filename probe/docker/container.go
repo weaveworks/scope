@@ -350,15 +350,6 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	}
 
 	result = result.WithMetadata(map[string]string{
-		NetworkRxDropped: strconv.FormatUint(c.latestStats.Network.RxDropped, 10),
-		NetworkRxBytes:   strconv.FormatUint(c.latestStats.Network.RxBytes, 10),
-		NetworkRxErrors:  strconv.FormatUint(c.latestStats.Network.RxErrors, 10),
-		NetworkTxPackets: strconv.FormatUint(c.latestStats.Network.TxPackets, 10),
-		NetworkTxDropped: strconv.FormatUint(c.latestStats.Network.TxDropped, 10),
-		NetworkRxPackets: strconv.FormatUint(c.latestStats.Network.RxPackets, 10),
-		NetworkTxErrors:  strconv.FormatUint(c.latestStats.Network.TxErrors, 10),
-		NetworkTxBytes:   strconv.FormatUint(c.latestStats.Network.TxBytes, 10),
-
 		MemoryMaxUsage: strconv.FormatUint(c.latestStats.MemoryStats.MaxUsage, 10),
 		MemoryUsage:    strconv.FormatUint(c.latestStats.MemoryStats.Usage, 10),
 		MemoryFailcnt:  strconv.FormatUint(c.latestStats.MemoryStats.Failcnt, 10),

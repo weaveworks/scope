@@ -521,7 +521,7 @@
 		{
 			"importpath": "github.com/fsouza/go-dockerclient",
 			"repository": "https://github.com/fsouza/go-dockerclient",
-			"revision": "44f75219dec4d25d3ac5483d38d3ada7eaf047ab",
+			"revision": "83211b6fbbfc6aa4a19eeb76eaf5cbfbe1381004",
 			"branch": "master"
 		},
 		{

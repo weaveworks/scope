@@ -83,36 +83,14 @@ type StartExecOptions struct {
 //
 // See https://goo.gl/iQCnto for more details
 func (c *Client) StartExec(id string, opts StartExecOptions) error {
-	if id == "" {
-		return &NoSuchExec{ID: id}
-	}
-
-	path := fmt.Sprintf("/exec/%s/start", id)
-
-	if opts.Detach {
-		resp, err := c.do("POST", path, doOptions{data: opts})
-		if err != nil {
-			if e, ok := err.(*Error); ok && e.Status == http.StatusNotFound {
-				return &NoSuchExec{ID: id}
-			}
-			return err
-		}
-		defer resp.Body.Close()
-		return nil
-	}
-
-	cw, err := c.hijack("POST", path, hijackOptions{
-		success:        opts.Success,
-		setRawTerminal: opts.RawTerminal,
-		in:             opts.InputStream,
-		stdout:         opts.OutputStream,
-		stderr:         opts.ErrorStream,
-		data:           opts,
-	})
+	cw, err := c.StartExecNonBlocking(id, opts)
 	if err != nil {
 		return err
 	}
-	return cw.Wait()
+	if cw != nil {
+		return cw.Wait()
+	}
+	return nil
 }
 
 // StartExecNonBlocking starts a previously set up exec instance id. If opts.Detach is

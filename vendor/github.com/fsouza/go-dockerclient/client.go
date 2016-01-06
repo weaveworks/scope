@@ -730,13 +730,13 @@ func (c *Client) unixClient() *http.Client {
 		return c.unixHTTPClient
 	}
 	socketPath := c.endpointURL.Path
-	c.unixHTTPClient = &http.Client{
-		Transport: &http.Transport{
-			Dial: func(network, addr string) (net.Conn, error) {
-				return c.Dialer.Dial("unix", socketPath)
-			},
+	tr := &http.Transport{
+		Dial: func(network, addr string) (net.Conn, error) {
+			return c.Dialer.Dial("unix", socketPath)
 		},
 	}
+	cleanhttp.SetTransportFinalizer(tr)
+	c.unixHTTPClient = &http.Client{Transport: tr}
 	return c.unixHTTPClient
 }
 

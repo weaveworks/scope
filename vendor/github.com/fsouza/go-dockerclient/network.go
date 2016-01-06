@@ -142,7 +142,7 @@ func (c *Client) CreateNetwork(opts CreateNetworkOptions) (*Network, error) {
 	return &network, nil
 }
 
-// RemoveNetwork removes a network or an error in case of failure.
+// RemoveNetwork removes a network or returns an error in case of failure.
 //
 // See https://goo.gl/1kmPKZ for more details.
 func (c *Client) RemoveNetwork(id string) error {
@@ -157,6 +157,43 @@ func (c *Client) RemoveNetwork(id string) error {
 	return nil
 }
 
+// NetworkConnectionOptions specify parameters to the ConnectNetwork and DisconnectNetwork function.
+//
+// See https://goo.gl/1kmPKZ for more details.
+type NetworkConnectionOptions struct {
+	Container string
+}
+
+// ConnectNetwork adds a container to a network or returns an error in case of failure.
+//
+// See https://goo.gl/1kmPKZ for more details.
+func (c *Client) ConnectNetwork(id string, opts NetworkConnectionOptions) error {
+	resp, err := c.do("POST", "/networks/"+id+"/connect", doOptions{data: opts})
+	if err != nil {
+		if e, ok := err.(*Error); ok && e.Status == http.StatusNotFound {
+			return &NoSuchNetworkOrContainer{NetworkID: id, ContainerID: opts.Container}
+		}
+		return err
+	}
+	resp.Body.Close()
+	return nil
+}
+
+// DisconnectNetwork removes a container from a network or returns an error in case of failure.
+//
+// See https://goo.gl/1kmPKZ for more details.
+func (c *Client) DisconnectNetwork(id string, opts NetworkConnectionOptions) error {
+	resp, err := c.do("POST", "/networks/"+id+"/disconnect", doOptions{data: opts})
+	if err != nil {
+		if e, ok := err.(*Error); ok && e.Status == http.StatusNotFound {
+			return &NoSuchNetworkOrContainer{NetworkID: id, ContainerID: opts.Container}
+		}
+		return err
+	}
+	resp.Body.Close()
+	return nil
+}
+
 // NoSuchNetwork is the error returned when a given network does not exist.
 type NoSuchNetwork struct {
 	ID string
@@ -164,4 +201,14 @@ type NoSuchNetwork struct {
 
 func (err *NoSuchNetwork) Error() string {
 	return fmt.Sprintf("No such network: %s", err.ID)
+}
+
+// NoSuchNetwork is the error returned when a given network or container does not exist.
+type NoSuchNetworkOrContainer struct {
+	NetworkID   string
+	ContainerID string
+}
+
+func (err *NoSuchNetworkOrContainer) Error() string {
+	return fmt.Sprintf("No such network (%s) or container (%s)", err.NetworkID, err.ContainerID)
 }
