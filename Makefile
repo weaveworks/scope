@@ -53,7 +53,7 @@ shell:
 		-v $(shell pwd)/.pkg:/go/pkg \
 		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@
 else
-$(SCOPE_EXE):
+$(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time go build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
