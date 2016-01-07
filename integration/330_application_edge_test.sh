@@ -12,10 +12,10 @@ weave_on $HOST1 run -dti --name client alpine /bin/sh -c "while true; do \
 	sleep 1; \
 done"
 
-wait_for application $HOST1 60 nginx client
+wait_for applications $HOST1 60 nginx client
 
-has applications $HOST1 nginx
+has applications $HOST1 "nginx: worker process"
 has applications $HOST1 nc
-has_connection applications $HOST1 nc nginx
+has_connection applications $HOST1 nc "nginx: worker process"
 
 scope_end_suite
