@@ -19,9 +19,9 @@ done"
 sleep 30 # need to allow the scopes to poll dns, resolve the other app ids, and send them reports
 
 check() {
-    has applications $1 nginx
+    has applications $1 "nginx: worker process"
     has applications $1 nc
-    has_connection applications $1 nc nginx
+    has_connection applications $1 nc "nginx: worker process"
 }
 
 check $HOST1
