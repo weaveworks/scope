@@ -41,18 +41,18 @@ $(RUNSVINIT): vendor/runsvinit/*.go
 $(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name *.go) prog/static.go
 
 ifeq ($(BUILD_IN_CONTAINER),true)
-$(SCOPE_EXE) $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
+
+$(SCOPE_EXE) $(RUNSVINIT) tests shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	@mkdir -p $(shell pwd)/.pkg
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
+	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
+		-v $(shell pwd):/go/src/github.com/weaveworks/scope \
 		-v $(shell pwd)/.pkg:/go/pkg \
+		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL \
+		-e CIRCLE_NODE_INDEX -e COVERDIR -e SLOW \
 		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@
 
-shell:
-	@mkdir -p $(shell pwd)/.pkg
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
-		-v $(shell pwd)/.pkg:/go/pkg \
-		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@
 else
+
 $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time go build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
@@ -69,6 +69,10 @@ $(RUNSVINIT):
 
 shell:
 	/bin/bash
+
+tests:
+	./tools/test -no-go-get
+
 endif
 
 static: prog/static.go
@@ -115,16 +119,6 @@ clean:
 	$(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
 		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave .pkg
-
-ifeq ($(BUILD_IN_CONTAINER),true)
-tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd):/go/src/github.com/weaveworks/scope \
-		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL -e CIRCLE_NODE_INDEX -e COVERDIR\
-		$(SCOPE_BACKEND_BUILD_IMAGE) tests
-else
-tests:
-	./tools/test -no-go-get
-endif
 
 deps:
 	go get -u -f -tags netgo \
