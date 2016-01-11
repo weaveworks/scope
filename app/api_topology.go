@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
 	"github.com/weaveworks/scope/render"
@@ -50,18 +49,18 @@ func handleWs(rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *
 }
 
 // Individual nodes.
-func handleNode(rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
-	var (
-		vars     = mux.Vars(r)
-		nodeID   = vars["id"]
-		rpt      = rep.Report()
-		node, ok = renderer.Render(rep.Report())[nodeID]
-	)
-	if !ok {
-		http.NotFound(w, r)
-		return
+func handleNode(nodeID string) func(Reporter, render.Renderer, http.ResponseWriter, *http.Request) {
+	return func(rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
+		var (
+			rpt      = rep.Report()
+			node, ok = renderer.Render(rep.Report())[nodeID]
+		)
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		respondWith(w, http.StatusOK, APINode{Node: render.MakeDetailedNode(rpt, node)})
 	}
-	respondWith(w, http.StatusOK, APINode{Node: render.MakeDetailedNode(rpt, node)})
 }
 
 var upgrader = websocket.Upgrader{

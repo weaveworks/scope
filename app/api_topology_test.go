@@ -87,6 +87,20 @@ func TestAPITopologyApplications(t *testing.T) {
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables
 	}
+
+	{
+		body := getRawJSON(t, ts, "/api/topology/applications-by-name/"+
+			url.QueryEscape(fixture.Client1Name))
+		var node app.APINode
+		if err := json.Unmarshal(body, &node); err != nil {
+			t.Fatal(err)
+		}
+		equals(t, fixture.Client1Name, node.Node.ID)
+		equals(t, fixture.Client1Name, node.Node.LabelMajor)
+		equals(t, "2 processes", node.Node.LabelMinor)
+		equals(t, false, node.Node.Pseudo)
+		// Let's not unit-test the specific content of the detail tables
+	}
 }
 
 func TestAPITopologyHosts(t *testing.T) {

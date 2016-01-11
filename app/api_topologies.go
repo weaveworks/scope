@@ -259,9 +259,9 @@ func (r *registry) captureRenderer(rep Reporter, f reportRenderHandler) http.Han
 	}
 }
 
-func (r *registry) captureRendererWithoutFilters(rep Reporter, f reportRenderHandler) http.HandlerFunc {
+func (r *registry) captureRendererWithoutFilters(rep Reporter, topologyID string, f reportRenderHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		topology, ok := r.get(mux.Vars(req)["topology"])
+		topology, ok := r.get(topologyID)
 		if !ok {
 			http.NotFound(w, req)
 			return

@@ -47,8 +47,8 @@ var (
 	ServerPID       = "215"
 	NonContainerPID = "1234"
 
-	Client1Name      = "curl"
-	Client2Name      = "curl"
+	Client1Name      = "/usr/bin/curl"
+	Client2Name      = "/usr/bin/curl"
 	ServerName       = "apache"
 	NonContainerName = "bash"
 

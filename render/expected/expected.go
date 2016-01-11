@@ -102,7 +102,7 @@ var (
 		},
 		ServerProcessID: {
 			ID:         ServerProcessID,
-			LabelMajor: "apache",
+			LabelMajor: fixture.ServerName,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.ServerPID),
 			Rank:       fixture.ServerName,
 			Pseudo:     false,
@@ -137,11 +137,11 @@ var (
 	}).Prune()
 
 	RenderedProcessNames = (render.RenderableNodes{
-		"curl": {
-			ID:         "curl",
-			LabelMajor: "curl",
+		fixture.Client1Name: {
+			ID:         fixture.Client1Name,
+			LabelMajor: fixture.Client1Name,
 			LabelMinor: "2 processes",
-			Rank:       "curl",
+			Rank:       fixture.Client1Name,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
 				fixture.Client54001NodeID,
@@ -150,17 +150,17 @@ var (
 				fixture.ClientProcess2NodeID,
 				fixture.ClientHostNodeID,
 			),
-			Node: report.MakeNode().WithAdjacent("apache"),
+			Node: report.MakeNode().WithAdjacent(fixture.ServerName),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(30),
 				EgressByteCount:   newu64(300),
 			},
 		},
-		"apache": {
-			ID:         "apache",
-			LabelMajor: "apache",
+		fixture.ServerName: {
+			ID:         fixture.ServerName,
+			LabelMajor: fixture.ServerName,
 			LabelMinor: "1 process",
-			Rank:       "apache",
+			Rank:       fixture.ServerName,
 			Pseudo:     false,
 			Origins: report.MakeIDList(
 				fixture.Server80NodeID,
@@ -187,9 +187,9 @@ var (
 			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		unknownPseudoNode1ID: unknownPseudoNode1("apache"),
-		unknownPseudoNode2ID: unknownPseudoNode2("apache"),
-		render.TheInternetID: theInternetNode("apache"),
+		unknownPseudoNode1ID: unknownPseudoNode1(fixture.ServerName),
+		unknownPseudoNode2ID: unknownPseudoNode2(fixture.ServerName),
+		render.TheInternetID: theInternetNode(fixture.ServerName),
 	}).Prune()
 
 	RenderedContainers = (render.RenderableNodes{
