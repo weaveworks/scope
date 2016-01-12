@@ -26,6 +26,7 @@ import (
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
+	"github.com/weaveworks/scope/probe/plugins"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -50,6 +51,7 @@ func probeMain() {
 		useConntrack       = flag.Bool("conntrack", true, "also use conntrack to track connections")
 		insecure           = flag.Bool("insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
 		logPrefix          = flag.String("log.prefix", "<probe>", "prefix for each log line")
+		pluginPath         = flag.String("plugin.path", "", "path to scan for plugin scripts")
 	)
 	flag.Parse()
 
@@ -124,6 +126,12 @@ func probeMain() {
 		process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies),
 	)
 	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID, probeID))
+
+	if *pluginPath != "" {
+		pluginRegistry := plugins.NewPluginRegistry(*pluginPath)
+		defer pluginRegistry.Stop()
+		p.AddReporter(pluginRegistry)
+	}
 
 	if *dockerEnabled {
 		if err := report.AddLocalBridge(*dockerBridge); err != nil {

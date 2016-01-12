@@ -9,8 +9,9 @@ import (
 )
 
 type mockCmd struct {
-	io.ReadCloser
-	quit chan struct{}
+	stdout io.ReadCloser
+	stdin  io.WriteCloser
+	quit   chan struct{}
 }
 
 type blockingReader struct {
@@ -20,7 +21,7 @@ type blockingReader struct {
 // NewMockCmdString creates a new mock Cmd which has s on its stdout pipe
 func NewMockCmdString(s string) exec.Cmd {
 	return &mockCmd{
-		ReadCloser: struct {
+		stdout: struct {
 			io.Reader
 			io.Closer
 		}{
@@ -32,10 +33,11 @@ func NewMockCmdString(s string) exec.Cmd {
 }
 
 // NewMockCmd creates a new mock Cmd with rc as its stdout pipe
-func NewMockCmd(rc io.ReadCloser) exec.Cmd {
+func NewMockCmd(stdout io.ReadCloser, stdin io.WriteCloser) exec.Cmd {
 	return &mockCmd{
-		ReadCloser: rc,
-		quit:       make(chan struct{}),
+		stdout: stdout,
+		stdin:  stdin,
+		quit:   make(chan struct{}),
 	}
 }
 
@@ -48,11 +50,15 @@ func (c *mockCmd) Wait() error {
 }
 
 func (c *mockCmd) StdoutPipe() (io.ReadCloser, error) {
-	return c.ReadCloser, nil
+	return c.stdout, nil
 }
 
 func (c *mockCmd) StderrPipe() (io.ReadCloser, error) {
 	return &blockingReader{c.quit}, nil
+}
+
+func (c *mockCmd) StdinPipe() (io.WriteCloser, error) {
+	return c.stdin, nil
 }
 
 func (c *mockCmd) Kill() error {

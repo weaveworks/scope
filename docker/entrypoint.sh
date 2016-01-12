@@ -66,7 +66,7 @@ weave_expose() {
 
 mkdir -p /etc/weave
 APP_ARGS=""
-PROBE_ARGS=""
+PROBE_ARGS="-plugin.path=/etc/scope/plugins"
 TOKEN_PROVIDED=false
 
 if [ "$1" = version ]; then

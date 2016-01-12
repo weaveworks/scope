@@ -28,6 +28,7 @@ type File struct {
 	FName     string
 	FContents string
 	FStat     syscall.Stat_t
+	FMode     os.FileMode
 }
 
 // Entry is an entry in the mock filesystem
@@ -168,6 +169,9 @@ func (p File) Name() string { return p.FName }
 
 // IsDir implements os.FileInfo
 func (p File) IsDir() bool { return false }
+
+// Mode implements os.FileInfo
+func (p File) Mode() os.FileMode { return p.FMode }
 
 // ReadDir implements FS
 func (p File) ReadDir(path string) ([]os.FileInfo, error) {

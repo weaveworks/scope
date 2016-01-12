@@ -86,9 +86,9 @@ func TestConntracker(t *testing.T) {
 	exec.Command = func(name string, args ...string) exec.Cmd {
 		if first {
 			first = false
-			return testexec.NewMockCmd(existingConnectionsReader)
+			return testexec.NewMockCmd(existingConnectionsReader, nil)
 		}
-		return testexec.NewMockCmd(reader)
+		return testexec.NewMockCmd(reader, nil)
 	}
 
 	flowWalker := newConntrackFlowWalker(true)
