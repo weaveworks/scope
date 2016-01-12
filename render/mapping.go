@@ -28,7 +28,8 @@ const (
 	processesKey  = "processes"
 	servicesKey   = "services"
 
-	AmazonECSContainerNameLabel = "com.amazonaws.ecs.container-name"
+	AmazonECSContainerNameLabel  = "com.amazonaws.ecs.container-name"
+	KubernetesContainerNameLabel = "io.kubernetes.container.name"
 )
 
 // MapFunc is anything which can take an arbitrary RenderableNode and
@@ -151,6 +152,14 @@ func GetRenderableContainerName(nmd report.Node) (string, bool) {
 	// However, the ecs-agent provides a label containing the original Container
 	// Definition name.
 	if labelValue, ok := nmd.Metadata[docker.LabelPrefix+AmazonECSContainerNameLabel]; ok {
+		return labelValue, true
+	}
+
+	// Kubernetes also mangles its Docker container names and provides a
+	// label with the original container name. However, note that this label
+	// is only provided by Kubernetes versions >= 1.2 (see
+	// https://github.com/kubernetes/kubernetes/pull/17234/ )
+	if labelValue, ok := nmd.Metadata[docker.LabelPrefix+KubernetesContainerNameLabel]; ok {
 		return labelValue, true
 	}
 
