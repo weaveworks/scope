@@ -33,7 +33,21 @@ type client struct {
 
 // NewClient returns a usable Client. Don't forget to Stop it.
 func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
-	c, err := unversioned.New(&unversioned.Config{Host: addr})
+	var config *unversioned.Config
+	if addr != "" {
+		config = &unversioned.Config{Host: addr}
+	} else {
+		// If no API server address was provided, assume we are running
+		// inside a pod. Try to connect to the API server through its
+		// Service environment variables, using the default Service
+		// Account Token.
+		var err error
+		if config, err = unversioned.InClusterConfig(); err != nil {
+			return nil, err
+		}
+	}
+
+	c, err := unversioned.New(config)
 	if err != nil {
 		return nil, err
 	}
