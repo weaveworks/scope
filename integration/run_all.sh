@@ -4,4 +4,4 @@ set -e
 
 . ./config.sh
 
-NO_SCHEDULER=1 $WEAVE_ROOT/test/run_all.sh "$@"
+NO_SCHEDULER=1 ../tools/integration/run_all.sh "$@"
