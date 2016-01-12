@@ -46,6 +46,7 @@ test:
     - "test -z \"$SECRET_PASSWORD\" || (cd $SRCDIR/integration; ./gce.sh setup && eval $(./gce.sh hosts); ./setup.sh)":
         parallel: true
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./run_all.sh):
+        parallel: true
         timeout: 300
   post:
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy):
