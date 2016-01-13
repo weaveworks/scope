@@ -150,44 +150,54 @@ sudo scope launch --service-token=<token>
 
 ## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
 
-To use Scope's Kubernetes integration, you need to start Scope with the
-`--probe.kubernetes true` flag.  Scope needs to be installed on all
-nodes (master and minions), but this flag should only be enabled on the
-Kubernetes master node.
+Scope comes with built-in Kubernetes support. We recommend to run Scope natively
+in your Kubernetes cluster using
+[this resource definitions](https://github.com/TheNewNormal/kube-charts/tree/master/weavescope/manifests)
+which are easily deployable with [Helm](https://helm.sh/).
 
-As per the normal requirements, you will need to run Scope on every
-machine you want to monitor, as shown in [Getting
-Started](#getting-started). However, when launching Scope you
-need to pass different arguments to the Kubernetes master and minion
-nodes.
+1. Make sure your cluster supports
+   [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md)
+   in your cluster. DaemonSets are needed to ensure that each Kubernetes node
+   runs a Scope Probe:
+   
+   * To enable them in an existing cluster, make sure to add a
+     `--runtime-config=extensions/v1beta1/daemonsets=true` argument to the
+     [apiserver](https://github.com/kubernetes/kubernetes/blob/master/docs/admin/kube-apiserver.md)'s configuration
+     (normally found at `/etc/kubernetes/manifest/kube-apiserver.manifest`) followed by a
+     [restart of the apiserver and controller manager](https://github.com/kubernetes/kubernetes/issues/18656).
 
-On the master node you need to launch Scope with Kubernetes support:
+   * If you are creating a new cluster, set `KUBE_ENABLE_DAEMONSETS=true` in
+     your cluster configuration.
 
+2. Install [Helm](https://helm.sh/)
+3. Add the kube-charts helm repo:
+
+   ```
+helm up
+helm repo add kube-charts https://github.com/TheNewNormal/kube-charts
+helm up
 ```
-sudo scope launch --probe.kubernetes true
+4. Fetch the weavescope Chart:
+
+   ```
+helm fetch kube-charts/weavescope
 ```
 
-Depending on your setup, you may find that Kubernetes has renamed your
-Docker bridge interface. In this instance you'll need to tell Scope
-about the new name when launching it. For example, if your Docker bridge is
-named `cbr0`:
-
+5. Tweak the Scope probe configuration at `$HOME/.helm/workspace/charts/weavescope/manifests/scope-probe-ds.yaml`, namely:
+   * If you have an account at http://scope.weave.works and want to use Scope in
+     service mode, uncomment the `--probe.token=foo` argument, substitute `foo`
+     by the token found in your account page, and comment out the
+     `$(WEAVE_SCOPE_APP_SERVICE_HOST):$(WEAVE_SCOPE_APP_SERVICE_PORT)` argument.
+6. Install Scope in your cluster by using kubectl directly. Unfortunately `helm
+   install` cannot be used because the Scope App is optional (only needed in
+   standalone installations) and
+   [a specific deployment order is required](https://github.com/TheNewNormal/kube-charts/blob/915fcacb2a14f8b6a42c44ca5e2d217e21945137/weavescope/manifests/scope-probe-ds.yaml#L40-L42)):
+   
+   ```
+kubectl create -f $HOME/.helm/workspace/charts/weavescope/manifests/scope-app-rc.yaml # only if you want to run scope in standalone mode
+kubectl create -f $HOME/.helm/workspace/charts/weavescope/manifests/scope-app-svc.yaml # only if you want to run scope in standalone mode
+kubectl create -f $HOME/.helm/workspace/charts/weavescope/manifests/scope-probe-ds.yaml
 ```
-sudo DOCKER_BRIDGE=cbr0 scope launch --probe.docker.bridge cbr0 --probe.kubernetes true
-```
-
-On each minion node you need to launch Scope telling it
-to connect to the master node.
-
-```
-sudo scope launch --no-app kubernetes-master.my.network
-```
-
-Again, if your Docker bridge interface is named differently, you'll
-need to pass that to your probe when launching it.
-
-Once the first few reports come in, the UI should begin displaying two
-Kubernetes-specific views "Pods", and "Pods by Service".
 
 
 ## <a name="developing"></a>Developing
