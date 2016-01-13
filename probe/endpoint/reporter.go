@@ -49,6 +49,7 @@ var SpyDuration = prometheus.NewSummaryVec(
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
 func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool, procWalker process.Walker) *Reporter {
+	procspy.StartBackgroundReader()
 	return &Reporter{
 		hostID:           hostID,
 		hostName:         hostName,
