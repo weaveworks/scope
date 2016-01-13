@@ -7,10 +7,7 @@ set -e
 export SSH_DIR="$PWD"
 export HOSTS
 
-: ${WEAVE_REPO:=github.com/weaveworks/weave}
-: ${WEAVE_ROOT:="$(go list -e -f {{.Dir}} $WEAVE_REPO)"}
-
-. "$WEAVE_ROOT/test/config.sh"
+. "../tools/integration/config.sh"
 
 WEAVE="./weave"
 SCOPE="../scope"
