@@ -138,7 +138,9 @@ func updateScheduler(test string, duration float64) {
 
 func getSchedule(tests []string) ([]string, error) {
 	var (
-		testRun     = "integration-" + os.Getenv("CIRCLE_BUILD_NUM")
+		project     = os.Getenv("CIRCLE_PROJECT_REPONAME")
+		buildNum    = os.Getenv("CIRCLE_BUILD_NUM")
+		testRun     = project + "-integration-" + buildNum
 		shardCount  = os.Getenv("CIRCLE_NODE_TOTAL")
 		shardID     = os.Getenv("CIRCLE_NODE_INDEX")
 		requestBody = &bytes.Buffer{}
