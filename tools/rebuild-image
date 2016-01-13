@@ -52,7 +52,8 @@ if has_changes $cached_revision $CIRCLE_SHA1 ; then
 	exit 0
 fi
 
-if [ "$(commit_timestamp $cached_revision)" -lt "$(( $(date +%s) - 86400 ))" ]; then
+IMAGE_TIMEOUT="$(( 3 * 24 * 60 * 60 ))"
+if [ "$(commit_timestamp $cached_revision)" -lt "${IMAGE_TIMEOUT}" ]; then
 	echo ">>> Image is more the 24hrs old; rebuilding"
 	rebuild
 	exit 0
