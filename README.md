@@ -150,44 +150,48 @@ sudo scope launch --service-token=<token>
 
 ## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
 
-To use Scope's Kubernetes integration, you need to start Scope with the
-`--probe.kubernetes true` flag.  Scope needs to be installed on all
-nodes (master and minions), but this flag should only be enabled on the
-Kubernetes master node.
+Scope comes with built-in Kubernetes support. We recommend to run Scope natively
+in your Kubernetes cluster using
+[this resource definitions](https://github.com/TheNewNormal/kube-charts/tree/master/weavescope/manifests).
 
-As per the normal requirements, you will need to run Scope on every
-machine you want to monitor, as shown in [Getting
-Started](#getting-started). However, when launching Scope you
-need to pass different arguments to the Kubernetes master and minion
-nodes.
+1. If you are running a Kubernetes version lower than 1.1, make sure your
+   cluster allows running pods in privileged mode (required by the Scope
+   probes). To allow privileged pods, your API Server and all your Kubelets must
+   be provided with flag `--allow_privileged` at launch time.
 
-On the master node you need to launch Scope with Kubernetes support:
+2. Make sure your cluster supports
+   [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md)
+   in your cluster. DaemonSets are needed to ensure that each Kubernetes node
+   runs a Scope Probe:
+   
+   * To enable them in an existing cluster, make sure to add a
+     `--runtime-config=extensions/v1beta1/daemonsets=true` argument to the
+     [apiserver](https://github.com/kubernetes/kubernetes/blob/master/docs/admin/kube-apiserver.md)'s configuration
+     (normally found at `/etc/kubernetes/manifest/kube-apiserver.manifest`) followed by a
+     [restart of the apiserver and controller manager](https://github.com/kubernetes/kubernetes/issues/18656).
 
-```
-sudo scope launch --probe.kubernetes true
-```
+   * If you are creating a new cluster, set `KUBE_ENABLE_DAEMONSETS=true` in
+     your cluster configuration.
 
-Depending on your setup, you may find that Kubernetes has renamed your
-Docker bridge interface. In this instance you'll need to tell Scope
-about the new name when launching it. For example, if your Docker bridge is
-named `cbr0`:
+3. Download the resource definitions:
 
-```
-sudo DOCKER_BRIDGE=cbr0 scope launch --probe.docker.bridge cbr0 --probe.kubernetes true
-```
-
-On each minion node you need to launch Scope telling it
-to connect to the master node.
-
-```
-sudo scope launch --no-app kubernetes-master.my.network
+   ```
+for I in app-rc app-svc probe-ds; do curl -s -L https://raw.githubusercontent.com/TheNewNormal/kube-charts/master/weavescope/manifests/scope-$I.yaml -o scope-$I.yaml; done
 ```
 
-Again, if your Docker bridge interface is named differently, you'll
-need to pass that to your probe when launching it.
+4. Tweak the Scope probe configuration at `scope-probe-ds.yaml`, namely:
+   * If you have an account at http://scope.weave.works and want to use Scope in
+     Cloud Service Mode, uncomment the `--probe.token=foo` argument, substitute `foo`
+     by the token found in your account page, and comment out the
+     `$(WEAVE_SCOPE_APP_SERVICE_HOST):$(WEAVE_SCOPE_APP_SERVICE_PORT)` argument.
 
-Once the first few reports come in, the UI should begin displaying two
-Kubernetes-specific views "Pods", and "Pods by Service".
+5. Install Scope in your cluster (order is important):
+   
+   ```
+kubectl create -f scope-app-rc.yaml  # Only if you want to run Scope in Standalone Mode
+kubectl create -f scope-app-svc.yaml # Only if you want to run Scope in Standalone Mode
+kubectl create -f scope-probe-ds.yaml
+```
 
 
 ## <a name="developing"></a>Developing

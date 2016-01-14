@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"log"
 	"time"
 
 	"k8s.io/kubernetes/pkg/api"
@@ -8,6 +9,7 @@ import (
 	"k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/fields"
 	"k8s.io/kubernetes/pkg/labels"
+	"k8s.io/kubernetes/pkg/util"
 )
 
 // These constants are keys used in node metadata
@@ -31,9 +33,34 @@ type client struct {
 	serviceStore     *cache.StoreToServiceLister
 }
 
+// runReflectorUntil is equivalent to cache.Reflector.RunUntil, but it also logs
+// errors, which cache.Reflector.RunUntil simply ignores
+func runReflectorUntil(r *cache.Reflector, resyncPeriod time.Duration, stopCh <-chan struct{}) {
+	loggingListAndWatch := func() {
+		if err := r.ListAndWatch(stopCh); err != nil {
+			log.Printf("Kubernetes reflector error: %v", err)
+		}
+	}
+	go util.Until(loggingListAndWatch, resyncPeriod, stopCh)
+}
+
 // NewClient returns a usable Client. Don't forget to Stop it.
 func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
-	c, err := unversioned.New(&unversioned.Config{Host: addr})
+	var config *unversioned.Config
+	if addr != "" {
+		config = &unversioned.Config{Host: addr}
+	} else {
+		// If no API server address was provided, assume we are running
+		// inside a pod. Try to connect to the API server through its
+		// Service environment variables, using the default Service
+		// Account Token.
+		var err error
+		if config, err = unversioned.InClusterConfig(); err != nil {
+			return nil, err
+		}
+	}
+
+	c, err := unversioned.New(config)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +74,8 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 	serviceReflector := cache.NewReflector(serviceListWatch, &api.Service{}, serviceStore, resyncPeriod)
 
 	quit := make(chan struct{})
-	podReflector.RunUntil(quit)
-	serviceReflector.RunUntil(quit)
+	runReflectorUntil(podReflector, resyncPeriod, quit)
+	runReflectorUntil(serviceReflector, resyncPeriod, quit)
 
 	return &client{
 		quit:             quit,

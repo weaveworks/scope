@@ -43,7 +43,7 @@ func probeMain() {
 		dockerInterval     = flag.Duration("docker.interval", 10*time.Second, "how often to update Docker attributes")
 		dockerBridge       = flag.String("docker.bridge", "docker0", "the docker bridge name")
 		kubernetesEnabled  = flag.Bool("kubernetes", false, "collect kubernetes-related attributes for containers, should only be enabled on the master node")
-		kubernetesAPI      = flag.String("kubernetes.api", "http://localhost:8080", "Address of kubernetes master api")
+		kubernetesAPI      = flag.String("kubernetes.api", "", "Address of kubernetes master api")
 		kubernetesInterval = flag.Duration("kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
 		weaveRouterAddr    = flag.String("weave.router.addr", "", "IP address or FQDN of the Weave router")
 		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
@@ -144,6 +144,7 @@ func probeMain() {
 			p.AddReporter(kubernetes.NewReporter(client))
 		} else {
 			log.Printf("Kubernetes: failed to start client: %v", err)
+			log.Printf("Kubernetes: make sure to run Scope inside a POD with a service account or provide a valid kubernetes.api url")
 		}
 	}
 
