@@ -18,14 +18,12 @@ import (
 )
 
 // Router creates the mux for all the various app components.
-func router(c app.Collector) *mux.Router {
+func router(c app.Collector) http.Handler {
 	router := mux.NewRouter()
-	app.RegisterTopologyRoutes(c, router)
 	app.RegisterReportPostHandler(c, router)
 	app.RegisterControlRoutes(router)
 	app.RegisterPipeRoutes(router)
-	router.Methods("GET").PathPrefix("/").Handler(http.FileServer(FS(false)))
-	return router
+	return app.TopologyHandler(c, router, http.FileServer(FS(false)))
 }
 
 // Main runs the app
@@ -48,10 +46,10 @@ func appMain() {
 	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
 	app.Version = version
 	log.Printf("app starting, version %s, ID %s", app.Version, app.UniqueID)
-	http.Handle("/", router(app.NewCollector(*window)))
+	handler := router(app.NewCollector(*window))
 	go func() {
 		log.Printf("listening on %s", *listen)
-		log.Print(http.ListenAndServe(*listen, nil))
+		log.Print(http.ListenAndServe(*listen, handler))
 	}()
 
 	common.SignalHandlerLoop()
