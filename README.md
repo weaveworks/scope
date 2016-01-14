@@ -152,10 +152,14 @@ sudo scope launch --service-token=<token>
 
 Scope comes with built-in Kubernetes support. We recommend to run Scope natively
 in your Kubernetes cluster using
-[this resource definitions](https://github.com/TheNewNormal/kube-charts/tree/master/weavescope/manifests)
-which are easily deployable with [Helm](https://helm.sh/).
+[this resource definitions](https://github.com/TheNewNormal/kube-charts/tree/master/weavescope/manifests).
 
-1. Make sure your cluster supports
+1. If you are running a Kubernetes version lower than 1.1, make sure your
+   cluster allows running pods in privileged mode (required by the Scope
+   probes). To allow privileged pods, your API Server and all your Kubelets must
+   be provided with flag `--allow_privileged` at launch time.
+
+2. Make sure your cluster supports
    [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md)
    in your cluster. DaemonSets are needed to ensure that each Kubernetes node
    runs a Scope Probe:
@@ -169,34 +173,24 @@ which are easily deployable with [Helm](https://helm.sh/).
    * If you are creating a new cluster, set `KUBE_ENABLE_DAEMONSETS=true` in
      your cluster configuration.
 
-2. Install [Helm](https://helm.sh/)
-3. Add the kube-charts helm repo:
+3. Download the resource definitions:
 
    ```
-helm up
-helm repo add kube-charts https://github.com/TheNewNormal/kube-charts
-helm up
-```
-4. Fetch the weavescope Chart:
-
-   ```
-helm fetch kube-charts/weavescope
+for I in app-rc app-svc probe-ds; do curl -s -L https://raw.githubusercontent.com/TheNewNormal/kube-charts/master/weavescope/manifests/scope-$I.yaml -o scope-$I.yaml; done
 ```
 
-5. Tweak the Scope probe configuration at `$HOME/.helm/workspace/charts/weavescope/manifests/scope-probe-ds.yaml`, namely:
+4. Tweak the Scope probe configuration at `scope-probe-ds.yaml`, namely:
    * If you have an account at http://scope.weave.works and want to use Scope in
-     service mode, uncomment the `--probe.token=foo` argument, substitute `foo`
+     Cloud Service Mode, uncomment the `--probe.token=foo` argument, substitute `foo`
      by the token found in your account page, and comment out the
      `$(WEAVE_SCOPE_APP_SERVICE_HOST):$(WEAVE_SCOPE_APP_SERVICE_PORT)` argument.
-6. Install Scope in your cluster by using kubectl directly. Unfortunately `helm
-   install` cannot be used because the Scope App is optional (only needed in
-   standalone installations) and
-   [a specific deployment order is required](https://github.com/TheNewNormal/kube-charts/blob/915fcacb2a14f8b6a42c44ca5e2d217e21945137/weavescope/manifests/scope-probe-ds.yaml#L40-L42)):
+
+5. Install Scope in your cluster (order is important):
    
    ```
-kubectl create -f $HOME/.helm/workspace/charts/weavescope/manifests/scope-app-rc.yaml # only if you want to run scope in standalone mode
-kubectl create -f $HOME/.helm/workspace/charts/weavescope/manifests/scope-app-svc.yaml # only if you want to run scope in standalone mode
-kubectl create -f $HOME/.helm/workspace/charts/weavescope/manifests/scope-probe-ds.yaml
+kubectl create -f scope-app-rc.yaml  # Only if you want to run Scope in Standalone Mode
+kubectl create -f scope-app-svc.yaml # Only if you want to run Scope in Standalone Mode
+kubectl create -f scope-probe-ds.yaml
 ```
 
 
