@@ -2623,7 +2623,7 @@ Terminal.prototype.keyDown = function(ev) {
         break;
       }
       if (ev.ctrlKey) {
-        key = '\x1b[5D';
+        key = '\x1b[1;5D';
         break;
       }
       key = '\x1b[D';
@@ -2635,7 +2635,7 @@ Terminal.prototype.keyDown = function(ev) {
         break;
       }
       if (ev.ctrlKey) {
-        key = '\x1b[5C';
+        key = '\x1b[1;5C';
         break;
       }
       key = '\x1b[C';
