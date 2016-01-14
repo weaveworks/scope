@@ -303,6 +303,10 @@ h2 {
     }
   }
 
+  g.stack g.shape .border {
+    stroke-width: 2px;
+  }
+
   g.node {
     cursor: pointer;
     transition: opacity .5s ease-in-out;
@@ -357,28 +361,29 @@ h2 {
   }
 
 
-  circle.border {
-    stroke-width: @node-border-stroke-width;
-    fill: none;
-  }
+  .shape {
+    .border {
+      stroke-width: @node-border-stroke-width;
+      fill: @background-color;
+    }
 
-  circle.shadow {
-    stroke: none;
-    fill: @background-lighter-color;
-  }
+    .shadow {
+      stroke: none;
+      fill: @background-lighter-color;
+    }
 
-  circle.node {
-    fill: @text-color;
-  }
+    .node {
+      fill: @text-color;
+    }
 
-  circle.highlighted {
-    fill: @weave-blue;
-    fill-opacity: @node-highlight-fill-opacity;
-    stroke: @weave-blue;
-    stroke-width: @node-highlight-stroke-width;
-    stroke-opacity: @node-highlight-stroke-opacity;
+    .highlighted {
+      fill: @weave-blue;
+      fill-opacity: @node-highlight-fill-opacity;
+      stroke: @weave-blue;
+      stroke-width: @node-highlight-stroke-width;
+      stroke-opacity: @node-highlight-stroke-opacity;
+    }
   }
-
 }
 
 .details {

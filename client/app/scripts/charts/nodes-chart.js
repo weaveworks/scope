@@ -142,6 +142,7 @@ export default class NodesChart extends React.Component {
             blurred={node.get('blurred')}
             focused={node.get('focused')}
             highlighted={node.get('highlighted')}
+            topologyId={this.props.topologyId}
             onClick={onNodeClick}
             key={node.get('id')}
             id={node.get('id')}

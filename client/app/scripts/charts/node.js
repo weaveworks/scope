@@ -5,6 +5,42 @@ import { Motion, spring } from 'react-motion';
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
 import { getNodeColor } from '../utils/color-utils';
 
+import NodeShapeCircle from './node-shape-circle';
+import NodeShapeStack from './node-shape-stack';
+import NodeShapeRoundedSquare from './node-shape-rounded-square';
+import NodeShapeHex from './node-shape-hex';
+import NodeShapeCloud from './node-shape-cloud';
+
+function stackedShape(Shape) {
+  const factory = React.createFactory(NodeShapeStack);
+
+  return function(props) {
+    return factory(Object.assign({}, props, {shape: Shape}));
+  };
+}
+
+const nodeShapes = {
+  'hosts': NodeShapeCircle,
+  'containers': NodeShapeHex,
+  'containers-by-hostname': stackedShape(NodeShapeHex),
+  'containers-by-image': stackedShape(NodeShapeHex),
+  'applications': NodeShapeRoundedSquare,
+  'applications-by-name': stackedShape(NodeShapeRoundedSquare)
+};
+
+function isTheInternet(id) {
+  return id === 'theinternet';
+}
+
+function getNodeShape({id, pseudo, topologyId}) {
+  if (isTheInternet(id)) {
+    return NodeShapeCloud;
+  } else if (pseudo) {
+    return NodeShapeCircle;
+  }
+  return nodeShapes[topologyId];
+}
+
 export default class Node extends React.Component {
   constructor(props, context) {
     super(props, context);
@@ -52,7 +88,10 @@ export default class Node extends React.Component {
     if (this.props.pseudo) {
       classNames.push('pseudo');
     }
+
     const classes = classNames.join(' ');
+
+    const NodeShapeType = getNodeShape(this.props);
 
     return (
       <Motion style={{
@@ -69,10 +108,10 @@ export default class Node extends React.Component {
           return (
             <g className={classes} transform={transform} id={props.id}
               onClick={onMouseClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-              {props.highlighted && <circle r={nodeScale(0.7 * interpolated.f)} className="highlighted"></circle>}
-              <circle r={nodeScale(0.5 * interpolated.f)} className="border" stroke={color}></circle>
-              <circle r={nodeScale(0.45 * interpolated.f)} className="shadow"></circle>
-              <circle r={Math.max(2, nodeScale(0.125 * interpolated.f))} className="node"></circle>
+              <NodeShapeType
+                size={nodeScale(interpolated.f)}
+                color={color}
+                {...props} />
               <text className="node-label" textAnchor="middle" style={{fontSize: interpolated.labelFontSize}}
                 x="0" y={interpolated.labelOffsetY + nodeScale(0.5 * interpolated.f)}>
                 {label}
