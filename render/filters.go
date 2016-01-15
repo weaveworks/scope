@@ -184,10 +184,12 @@ var systemContainerNames = map[string]struct{}{
 }
 
 var systemImagePrefixes = map[string]struct{}{
-	"weaveworks/scope":        {},
-	"weaveworks/weavedns":     {},
-	"weaveworks/weave":        {},
-	"weaveworks/weaveproxy":   {},
-	"weaveworks/weaveexec":    {},
-	"amazon/amazon-ecs-agent": {},
+	"weaveworks/scope":                    {},
+	"weaveworks/weavedns":                 {},
+	"weaveworks/weave":                    {},
+	"weaveworks/weaveproxy":               {},
+	"weaveworks/weaveexec":                {},
+	"amazon/amazon-ecs-agent":             {},
+	"beta.gcr.io/google_containers/pause": {},
+	"gcr.io/google_containers/pause":      {},
 }
