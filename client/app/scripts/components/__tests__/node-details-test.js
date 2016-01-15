@@ -4,6 +4,9 @@ import TestUtils from 'react/lib/ReactTestUtils';
 
 jest.dontMock('../../dispatcher/app-dispatcher');
 jest.dontMock('../node-details.js');
+jest.dontMock('../node-details/node-details-controls.js');
+jest.dontMock('../node-details/node-details-relatives.js');
+jest.dontMock('../node-details/node-details-table.js');
 jest.dontMock('../../utils/color-utils');
 jest.dontMock('../../utils/title-utils');
 
@@ -22,14 +25,14 @@ describe('NodeDetails', () => {
   });
 
   it('shows n/a when node was not found', () => {
-    const c = TestUtils.renderIntoDocument(<NodeDetails nodes={nodes} nodeId={nodeId} />);
+    const c = TestUtils.renderIntoDocument(<NodeDetails notFound />);
     const notFound = TestUtils.findRenderedDOMComponentWithClass(c, 'node-details-header-notavailable');
     expect(notFound).toBeDefined();
   });
 
   it('show label of node with title', () => {
     nodes = nodes.set(nodeId, Immutable.fromJS({id: nodeId}));
-    details = {label_major: 'Node 1', tables: []};
+    details = {label: 'Node 1'};
     const c = TestUtils.renderIntoDocument(<NodeDetails nodes={nodes}
       nodeId={nodeId} details={details} />);
 

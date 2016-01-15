@@ -116,7 +116,7 @@ export default class Sparkline extends React.Component {
 }
 
 Sparkline.defaultProps = {
-  width: 100,
+  width: 80,
   height: 16,
   strokeColor: '#7d7da8',
   strokeWidth: '0.5px',

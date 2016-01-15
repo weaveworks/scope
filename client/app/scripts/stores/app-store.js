@@ -16,7 +16,7 @@ const error = debug('scope:error');
 
 // Helpers
 
-function findCurrentTopology(subTree, topologyId) {
+function findTopologyById(subTree, topologyId) {
   let foundTopology;
 
   _.each(subTree, function(topology) {
@@ -24,7 +24,7 @@ function findCurrentTopology(subTree, topologyId) {
       foundTopology = topology;
     }
     if (!foundTopology) {
-      foundTopology = findCurrentTopology(topology.sub_topologies, topologyId);
+      foundTopology = findTopologyById(topology.sub_topologies, topologyId);
     }
     if (foundTopology) {
       return false;
@@ -57,19 +57,22 @@ let hostname = '...';
 let version = '...';
 let mouseOverEdgeId = null;
 let mouseOverNodeId = null;
+let nodeDetails = makeOrderedMap(); // nodeId -> details
 let nodes = makeOrderedMap(); // nodeId -> node
-let nodeDetails = null;
 let selectedNodeId = null;
 let topologies = [];
 let topologiesLoaded = false;
+let topologyUrlsById = makeOrderedMap(); // topologyId -> topologyUrl
 let routeSet = false;
-let controlPipe = null;
+let controlPipes = makeOrderedMap(); // pipeId -> controlPipe
 let websocketClosed = true;
 
+// adds ID field to topology (based on last part of URL path) and save urls in
+// map for easy lookup
 function processTopologies(topologyList) {
-  // adds ID field to topology, based on last part of URL path
   _.each(topologyList, function(topology) {
     topology.id = topology.url.split('/').pop();
+    topologyUrlsById = topologyUrlsById.set(topology.id, topology.url);
     processTopologies(topology.sub_topologies);
   });
   return topologyList;
@@ -77,7 +80,7 @@ function processTopologies(topologyList) {
 
 function setTopology(topologyId) {
   currentTopologyId = topologyId;
-  currentTopology = findCurrentTopology(topologies, topologyId);
+  currentTopology = findTopologyById(topologies, topologyId);
 }
 
 function setDefaultTopologyOptions(topologyList) {
@@ -102,10 +105,24 @@ function setDefaultTopologyOptions(topologyList) {
   });
 }
 
-function deSelectNode() {
-  selectedNodeId = null;
-  nodeDetails = null;
-  controlPipe = null;
+function closeNodeDetails(nodeId) {
+  if (nodeDetails.size > 0) {
+    const popNodeId = nodeId || nodeDetails.keySeq().last();
+    // remove pipe if it belongs to the node being closed
+    controlPipes = controlPipes.filter(pipe => {
+      return pipe.nodeId !== popNodeId;
+    });
+    nodeDetails = nodeDetails.delete(popNodeId);
+  }
+  if (nodeDetails.size === 0 || selectedNodeId === nodeId) {
+    selectedNodeId = null;
+  }
+}
+
+function closeAllNodeDetails() {
+  while (nodeDetails.size) {
+    closeNodeDetails();
+  }
 }
 
 // Store API
@@ -115,9 +132,10 @@ export class AppStore extends Store {
   // keep at the top
   getAppState() {
     return {
-      topologyId: currentTopologyId,
-      selectedNodeId: this.getSelectedNodeId(),
       controlPipe: this.getControlPipe(),
+      nodeDetails: this.getNodeDetailsState(),
+      selectedNodeId: selectedNodeId,
+      topologyId: currentTopologyId,
       topologyOptions: topologyOptions.toJS() // all options
     };
   }
@@ -148,7 +166,7 @@ export class AppStore extends Store {
   }
 
   getControlPipe() {
-    return controlPipe;
+    return controlPipes.last();
   }
 
   getCurrentTopology() {
@@ -214,6 +232,12 @@ export class AppStore extends Store {
     return nodeDetails;
   }
 
+  getNodeDetailsState() {
+    return nodeDetails.toIndexedSeq().map(details => {
+      return {id: details.id, label: details.label, topologyId: details.topologyId};
+    }).toJS();
+  }
+
   getNodes() {
     return nodes;
   }
@@ -224,6 +248,10 @@ export class AppStore extends Store {
 
   getTopologies() {
     return topologies;
+  }
+
+  getTopologyUrlsById() {
+    return topologyUrlsById;
   }
 
   getVersion() {
@@ -269,27 +297,76 @@ export class AppStore extends Store {
       this.__emitChange();
       break;
 
+    case ActionTypes.CLICK_BACKGROUND:
+      closeAllNodeDetails();
+      this.__emitChange();
+      break;
+
     case ActionTypes.CLICK_CLOSE_DETAILS:
-      deSelectNode();
+      closeNodeDetails(payload.nodeId);
       this.__emitChange();
       break;
 
     case ActionTypes.CLICK_CLOSE_TERMINAL:
-      controlPipe = null;
+      controlPipes = controlPipes.clear();
       this.__emitChange();
       break;
 
     case ActionTypes.CLICK_NODE:
-      deSelectNode();
-      if (payload.nodeId !== selectedNodeId) {
-        // select new node if it's not the same (in that case just delesect)
+      const prevSelectedNodeId = selectedNodeId;
+      const prevDetailsStackSize = nodeDetails.size;
+      // click on sibling closes all
+      closeAllNodeDetails();
+      // select new node if it's not the same (in that case just delesect)
+      if (prevDetailsStackSize > 1 || prevSelectedNodeId !== payload.nodeId) {
+        // dont set origin if a node was already selected, suppresses animation
+        const origin = prevSelectedNodeId === null ? payload.origin : null;
+        nodeDetails = nodeDetails.set(
+          payload.nodeId,
+          {
+            id: payload.nodeId,
+            label: payload.label,
+            origin,
+            topologyId: currentTopologyId
+          }
+        );
         selectedNodeId = payload.nodeId;
       }
       this.__emitChange();
       break;
 
+    case ActionTypes.CLICK_RELATIVE:
+      if (nodeDetails.has(payload.nodeId)) {
+        // bring to front
+        const details = nodeDetails.get(payload.nodeId);
+        nodeDetails = nodeDetails.delete(payload.nodeId);
+        nodeDetails = nodeDetails.set(payload.nodeId, details);
+      } else {
+        nodeDetails = nodeDetails.set(
+          payload.nodeId,
+          {
+            id: payload.nodeId,
+            label: payload.label,
+            origin: payload.origin,
+            topologyId: payload.topologyId
+          }
+        );
+      }
+      this.__emitChange();
+      break;
+
+    case ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE:
+      nodeDetails = nodeDetails.filter((v, k) => k === payload.nodeId);
+      selectedNodeId = payload.nodeId;
+      if (payload.topologyId !== currentTopologyId) {
+        setTopology(payload.topologyId);
+        nodes = nodes.clear();
+      }
+      this.__emitChange();
+      break;
+
     case ActionTypes.CLICK_TOPOLOGY:
-      deSelectNode();
+      closeAllNodeDetails();
       if (payload.topologyId !== currentTopologyId) {
         setTopology(payload.topologyId);
         nodes = nodes.clear();
@@ -299,6 +376,11 @@ export class AppStore extends Store {
 
     case ActionTypes.CLOSE_WEBSOCKET:
       websocketClosed = true;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.DESELECT_NODE:
+      closeNodeDetails();
       this.__emitChange();
       break;
 
@@ -317,11 +399,6 @@ export class AppStore extends Store {
 
     case ActionTypes.ENTER_NODE:
       mouseOverNodeId = payload.nodeId;
-      this.__emitChange();
-      break;
-
-    case ActionTypes.DESELECT_NODE:
-      deSelectNode();
       this.__emitChange();
       break;
 
@@ -360,16 +437,17 @@ export class AppStore extends Store {
       break;
 
     case ActionTypes.RECEIVE_CONTROL_PIPE:
-      controlPipe = {
+      controlPipes = controlPipes.set(payload.pipeId, {
         id: payload.pipeId,
+        nodeId: payload.nodeId,
         raw: payload.rawTty
-      };
+      });
       this.__emitChange();
       break;
 
     case ActionTypes.RECEIVE_CONTROL_PIPE_STATUS:
-      if (controlPipe) {
-        controlPipe.status = payload.status;
+      if (controlPipes.has(payload.pipeId)) {
+        controlPipes = controlPipes.setIn([payload.pipeId, 'status'], payload.status);
         this.__emitChange();
       }
       break;
@@ -382,8 +460,12 @@ export class AppStore extends Store {
     case ActionTypes.RECEIVE_NODE_DETAILS:
       errorUrl = null;
       // disregard if node is not selected anymore
-      if (payload.details.id === selectedNodeId) {
-        nodeDetails = payload.details;
+      if (nodeDetails.has(payload.details.id)) {
+        nodeDetails = nodeDetails.update(payload.details.id, obj => {
+          obj.notFound = false;
+          obj.details = payload.details;
+          return obj;
+        });
       }
       this.__emitChange();
       break;
@@ -415,7 +497,9 @@ export class AppStore extends Store {
 
       // update existing nodes
       _.each(payload.delta.update, function(node) {
-        nodes = nodes.set(node.id, nodes.get(node.id).merge(makeNode(node)));
+        if (nodes.has(node.id)) {
+          nodes = nodes.set(node.id, nodes.get(node.id).merge(makeNode(node)));
+        }
       });
 
       // add new nodes
@@ -426,8 +510,19 @@ export class AppStore extends Store {
       this.__emitChange();
       break;
 
+    case ActionTypes.RECEIVE_NOT_FOUND:
+      if (nodeDetails.has(payload.nodeId)) {
+        nodeDetails = nodeDetails.update(payload.nodeId, obj => {
+          obj.notFound = true;
+          return obj;
+        });
+        this.__emitChange();
+      }
+      break;
+
     case ActionTypes.RECEIVE_TOPOLOGIES:
       errorUrl = null;
+      topologyUrlsById = topologyUrlsById.clear();
       topologies = processTopologies(payload.topologies);
       setTopology(currentTopologyId);
       // only set on first load, if options are not already set via route
@@ -453,7 +548,18 @@ export class AppStore extends Store {
       setTopology(payload.state.topologyId);
       setDefaultTopologyOptions(topologies);
       selectedNodeId = payload.state.selectedNodeId;
-      controlPipe = payload.state.controlPipe;
+      if (payload.state.controlPipe) {
+        controlPipes = makeOrderedMap(
+          [[payload.state.controlPipe.pipeId, payload.state.controlPipe]]
+        );
+      } else {
+        controlPipes = controlPipes.clear();
+      }
+      if (payload.state.nodeDetails) {
+        nodeDetails = makeOrderedMap(payload.state.nodeDetails.map(obj => [obj.id, obj]));
+      } else {
+        nodeDetails = nodeDetails.clear();
+      }
       topologyOptions = Immutable.fromJS(payload.state.topologyOptions)
         || topologyOptions;
       this.__emitChange();

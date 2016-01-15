@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { Motion, spring } from 'react-motion';
 
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
@@ -99,14 +100,14 @@ export default class Node extends React.Component {
 
   handleMouseClick(ev) {
     ev.stopPropagation();
-    clickNode(ev.currentTarget.id);
+    clickNode(this.props.id, this.props.label, ReactDOM.findDOMNode(this).getBoundingClientRect());
   }
 
-  handleMouseEnter(ev) {
-    enterNode(ev.currentTarget.id);
+  handleMouseEnter() {
+    enterNode(this.props.id);
   }
 
-  handleMouseLeave(ev) {
-    leaveNode(ev.currentTarget.id);
+  handleMouseLeave() {
+    leaveNode(this.props.id);
   }
 }

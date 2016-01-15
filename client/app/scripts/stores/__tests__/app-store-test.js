@@ -51,6 +51,22 @@ describe('AppStore', function() {
     nodeId: 'n1'
   };
 
+  const ClickNode2Action = {
+    type: ActionTypes.CLICK_NODE,
+    nodeId: 'n2'
+  };
+
+  const ClickRelativeAction = {
+    type: ActionTypes.CLICK_RELATIVE,
+    nodeId: 'rel1'
+  };
+
+  const ClickShowTopologyForNodeAction = {
+    type: ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE,
+    topologyId: 'topo2',
+    nodeId: 'rel1'
+  };
+
   const ClickSubTopologyAction = {
     type: ActionTypes.CLICK_TOPOLOGY,
     topologyId: 'topo1-grouped'
@@ -334,5 +350,78 @@ describe('AppStore', function() {
 
     registeredCallback(ClickTopologyAction);
     expect(AppStore.isTopologyEmpty()).toBeFalsy();
+  });
+
+  // selection of relatives
+
+  it('keeps relatives as a stack', function() {
+    registeredCallback(ClickNodeAction);
+    expect(AppStore.getSelectedNodeId()).toBe('n1');
+    expect(AppStore.getNodeDetails().size).toEqual(1);
+    expect(AppStore.getNodeDetails().has('n1')).toBeTruthy();
+    expect(AppStore.getNodeDetails().keySeq().last()).toEqual('n1');
+
+    registeredCallback(ClickRelativeAction);
+    // stack relative, first node stays main node
+    expect(AppStore.getSelectedNodeId()).toBe('n1');
+    expect(AppStore.getNodeDetails().keySeq().last()).toEqual('rel1');
+    expect(AppStore.getNodeDetails().size).toEqual(2);
+    expect(AppStore.getNodeDetails().has('rel1')).toBeTruthy();
+
+    // click on first node should clear the stack
+    registeredCallback(ClickNodeAction);
+    expect(AppStore.getSelectedNodeId()).toBe('n1');
+    expect(AppStore.getNodeDetails().keySeq().last()).toEqual('n1');
+    expect(AppStore.getNodeDetails().size).toEqual(1);
+    expect(AppStore.getNodeDetails().has('rel1')).toBeFalsy();
+  });
+
+  it('keeps clears stack when sibling is clicked', function() {
+    registeredCallback(ClickNodeAction);
+    expect(AppStore.getSelectedNodeId()).toBe('n1');
+    expect(AppStore.getNodeDetails().size).toEqual(1);
+    expect(AppStore.getNodeDetails().has('n1')).toBeTruthy();
+    expect(AppStore.getNodeDetails().keySeq().last()).toEqual('n1');
+
+    registeredCallback(ClickRelativeAction);
+    // stack relative, first node stays main node
+    expect(AppStore.getSelectedNodeId()).toBe('n1');
+    expect(AppStore.getNodeDetails().keySeq().last()).toEqual('rel1');
+    expect(AppStore.getNodeDetails().size).toEqual(2);
+    expect(AppStore.getNodeDetails().has('rel1')).toBeTruthy();
+
+    // click on sibling node should clear the stack
+    registeredCallback(ClickNode2Action);
+    expect(AppStore.getSelectedNodeId()).toBe('n2');
+    expect(AppStore.getNodeDetails().keySeq().last()).toEqual('n2');
+    expect(AppStore.getNodeDetails().size).toEqual(1);
+    expect(AppStore.getNodeDetails().has('n1')).toBeFalsy();
+    expect(AppStore.getNodeDetails().has('rel1')).toBeFalsy();
+  });
+
+  it('selectes relatives topology while keeping node selected', function() {
+    registeredCallback(ClickTopologyAction);
+    registeredCallback(ReceiveTopologiesAction);
+    expect(AppStore.getCurrentTopology().name).toBe('Topo1');
+
+    registeredCallback(ClickNodeAction);
+    expect(AppStore.getSelectedNodeId()).toBe('n1');
+    expect(AppStore.getNodeDetails().size).toEqual(1);
+    expect(AppStore.getNodeDetails().has('n1')).toBeTruthy();
+    expect(AppStore.getNodeDetails().keySeq().last()).toEqual('n1');
+
+    registeredCallback(ClickRelativeAction);
+    // stack relative, first node stays main node
+    expect(AppStore.getSelectedNodeId()).toBe('n1');
+    expect(AppStore.getNodeDetails().keySeq().last()).toEqual('rel1');
+    expect(AppStore.getNodeDetails().size).toEqual(2);
+    expect(AppStore.getNodeDetails().has('rel1')).toBeTruthy();
+
+    // click switches over to relative's topology and selectes relative
+    registeredCallback(ClickShowTopologyForNodeAction);
+    expect(AppStore.getSelectedNodeId()).toBe('rel1');
+    expect(AppStore.getNodeDetails().keySeq().last()).toEqual('rel1');
+    expect(AppStore.getNodeDetails().size).toEqual(1);
+    expect(AppStore.getCurrentTopology().name).toBe('Topo2');
   });
 });

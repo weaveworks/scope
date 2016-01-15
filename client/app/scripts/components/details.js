@@ -1,30 +1,21 @@
 import React from 'react';
 
-import { clickCloseDetails } from '../actions/app-actions';
-import NodeDetails from './node-details';
+import DetailsCard from './details-card';
 
 export default class Details extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-    this.handleClickClose = this.handleClickClose.bind(this);
-  }
 
-  handleClickClose(ev) {
-    ev.preventDefault();
-    clickCloseDetails();
-  }
-
+  // render all details as cards, later cards go on top
   render() {
+    const details = this.props.details.toIndexedSeq();
     return (
-      <div id="details">
-        <div className="details-wrapper">
-          <div className="details-tools-wrapper">
-            <div className="details-tools">
-              <span className="fa fa-close" onClick={this.handleClickClose} />
-            </div>
-          </div>
-          <NodeDetails {...this.props} />
-        </div>
+      <div className="details">
+        {details.map((obj, index) => {
+          return (
+            <DetailsCard key={obj.id} controlError={this.props.controlError}
+              controlPending={this.props.controlPending} index={index}
+              cardCount={details.size} nodes={this.props.nodes} {...obj} />
+          );
+        })}
       </div>
     );
   }
