@@ -541,11 +541,12 @@ func MapPod2Service(n RenderableNode, _ report.Networks) RenderableNodes {
 }
 
 func imageNameWithoutVersion(name string) string {
-	parts := strings.SplitN(name, ":", 2)
-	if len(parts) == 2 {
-		return parts[0]
+	parts := strings.SplitN(name, "/", 3)
+	if len(parts) == 3 {
+		name = fmt.Sprintf("%s/%s", parts[1], parts[2])
 	}
-	return name
+	parts = strings.SplitN(name, ":", 2)
+	return parts[0]
 }
 
 // MapContainerImage2Name maps container images RenderableNodes to
