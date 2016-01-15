@@ -87,7 +87,7 @@ wait_for() {
 	local view="$1"
 	local host="$2"
 	local timeout="$3"
-	shift 2
+	shift 3
 
 	for i in $(seq ${timeout}); do
 		local nodes="$(curl -s http://$host:4040/api/topology/${view}?system=show)"

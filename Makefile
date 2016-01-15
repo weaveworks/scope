@@ -1,4 +1,4 @@
-.PHONY: all deps static clean client-lint client-test client-sync backend frontend shell
+.PHONY: all deps static clean client-lint client-test client-sync backend frontend shell lint
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=sudo -E
@@ -42,7 +42,7 @@ $(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name *.go) prog/
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 
-$(SCOPE_EXE) $(RUNSVINIT) tests shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(SCOPE_EXE) $(RUNSVINIT) lint tests shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	@mkdir -p $(shell pwd)/.pkg
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 		-v $(shell pwd):/go/src/github.com/weaveworks/scope \
@@ -72,6 +72,9 @@ shell:
 
 tests:
 	./tools/test -no-go-get
+
+lint:
+	./tools/lint .
 
 endif
 
@@ -122,9 +125,6 @@ clean:
 
 deps:
 	go get -u -f -tags netgo \
-		github.com/golang/lint/golint \
-		github.com/fzipp/gocyclo \
 		github.com/mattn/goveralls \
 		github.com/mjibson/esc \
-		github.com/kisielk/errcheck \
 		github.com/weaveworks/github-release
