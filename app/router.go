@@ -84,6 +84,9 @@ func TopologyHandler(c Reporter, preRoutes *mux.Router, postRoutes http.Handler)
 		topologyRegistry.captureRenderer(c, handleWs)) // NB not gzip!
 	get.HandleFunc("/api/report", gzipHandler(makeRawReportHandler(c)))
 
+	// We pull in the http.DefaultServeMux to get the pprof routes
+	preRoutes.PathPrefix("/debug/pprof").Handler(http.DefaultServeMux)
+
 	if postRoutes != nil {
 		preRoutes.PathPrefix("/").Handler(postRoutes)
 	}
