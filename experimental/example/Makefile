@@ -1,19 +1,27 @@
 CC=gcc
 CFLAGS=-g -lpthread
+BUILD_IN_CONTAINER=true
 
 all: qotd.marker app.marker client.marker searchapp.marker shout.marker frontend.marker echo.marker
 
+searchapp/searchapp: searchapp/app.go
+shout/shout: shout/shout.go
 qotd/qotd: qotd/qotd.o
+
+ifeq ($(BUILD_IN_CONTAINER),true)
+qotd/qotd qotd/qotd.o searchapp/searchapp shout/shout:
+	$(SUDO) docker run -ti --rm -v $(shell pwd)/../../:/go/src/github.com/weaveworks/scope -e GOARCH -e GOOS \
+		weaveworks/scope-backend-build -C experimental/example $@
+else
+qotd/qotd:
 	gcc -o $@ $< $(CFLAGS)
 
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-searchapp/searchapp: searchapp/app.go
-shout/shout: shout/shout.go
 shout/shout searchapp/searchapp:
-	go get -tags netgo ./$(@D)
 	go build -ldflags "-extldflags \"-static\"" -tags netgo -o $@ ./$(@D)
+endif
 
 qotd.marker: qotd/* qotd/qotd
 app.marker: app/*

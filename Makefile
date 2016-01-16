@@ -125,6 +125,7 @@ clean:
 
 deps:
 	go get -u -f -tags netgo \
+		github.com/FiloSottile/gvt \
 		github.com/mattn/goveralls \
 		github.com/mjibson/esc \
 		github.com/weaveworks/github-release
