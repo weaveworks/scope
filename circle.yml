@@ -17,11 +17,14 @@ dependencies:
   cache_directories:
     - "~/docker"
   override:
-    - "sudo apt-get update && sudo apt-get install jq pv"
-    - curl https://sdk.cloud.google.com | bash
-    - test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
-    - make deps
-    - "mkdir -p $(dirname $SRCDIR) && cp -r $(pwd)/ $SRCDIR"
+    - >
+      sudo apt-get update &&
+      sudo apt-get install jq pv &&
+      (curl https://sdk.cloud.google.com | bash) &&
+      (test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD") &&
+      make deps &&
+      mkdir -p $(dirname $SRCDIR) &&
+      cp -r $(pwd)/ $SRCDIR
     - "cd $SRCDIR/client; ../tools/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc .babelrc && touch $SRCDIR/.scope_ui_build.uptodate"
     - "cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh && touch $SRCDIR/.scope_backend_build.uptodate"
     - cd $SRCDIR/integration; ./gce.sh make_template:
