@@ -14,13 +14,10 @@ import (
 // Node is the data type that's yielded to the JavaScript layer when
 // we want deep information about an individual node.
 type Node struct {
-	ID       string             `json:"id"`
-	Label    string             `json:"label"`
+	NodeSummary
 	Rank     string             `json:"rank,omitempty"`
 	Pseudo   bool               `json:"pseudo,omitempty"`
 	Controls []ControlInstance  `json:"controls"`
-	Metadata []MetadataRow      `json:"metadata,omitempty"`
-	Metrics  []MetricRow        `json:"metrics,omitempty"`
 	Children []NodeSummaryGroup `json:"children,omitempty"`
 	Parents  []Parent           `json:"parents,omitempty"`
 }
@@ -43,16 +40,16 @@ type ControlInstance struct {
 // MakeNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
 func MakeNode(r report.Report, n render.RenderableNode) Node {
+	summary, _ := MakeNodeSummary(n.Node)
+	summary.ID = n.ID
+	summary.Label = n.LabelMajor
 	return Node{
-		ID:       n.ID,
-		Label:    n.LabelMajor,
-		Rank:     n.Rank,
-		Pseudo:   n.Pseudo,
-		Controls: controls(r, n),
-		Metadata: NodeMetadata(n.Node),
-		Metrics:  NodeMetrics(n.Node),
-		Children: children(n),
-		Parents:  parents(r, n),
+		NodeSummary: summary,
+		Rank:        n.Rank,
+		Pseudo:      n.Pseudo,
+		Controls:    controls(r, n),
+		Children:    children(n),
+		Parents:     parents(r, n),
 	}
 }
 
@@ -125,17 +122,9 @@ func children(n render.RenderableNode) []NodeSummaryGroup {
 	return nodeSummaryGroups
 }
 
-// parents is a total a hack to find the parents of a node (which is
-// ill-defined).
+// parents renders the parents of this report.Node, which have been aggregated
+// from the probe reports.
 func parents(r report.Report, n render.RenderableNode) (result []Parent) {
-	defer func() {
-		for i, parent := range result {
-			if parent.ID == n.ID {
-				result = append(result[:i], result[i+1:]...)
-			}
-		}
-	}()
-
 	topologies := map[string]struct {
 		report.Topology
 		render func(report.Node) Parent
@@ -154,6 +143,10 @@ func parents(r report.Report, n render.RenderableNode) (result []Parent) {
 	for _, topologyID := range topologyIDs {
 		t := topologies[topologyID]
 		for _, id := range n.Node.Parents[topologyID] {
+			if topologyID == n.Node.Topology && id == n.ID {
+				continue
+			}
+
 			parent, ok := t.Nodes[id]
 			if !ok {
 				continue

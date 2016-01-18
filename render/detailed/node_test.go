@@ -25,65 +25,68 @@ func TestMakeDetailedHostNode(t *testing.T) {
 	process2NodeSummary, _ := detailed.MakeNodeSummary(fixture.Report.Process.Nodes[fixture.ClientProcess2NodeID])
 	process2NodeSummary.Linkable = true
 	want := detailed.Node{
-		ID:       render.MakeHostID(fixture.ClientHostID),
-		Label:    "client",
+		NodeSummary: detailed.NodeSummary{
+			ID:       render.MakeHostID(fixture.ClientHostID),
+			Label:    "client",
+			Linkable: true,
+			Metadata: []detailed.MetadataRow{
+				{
+					ID:    "host_name",
+					Label: "Hostname",
+					Value: "client.hostname.com",
+				},
+				{
+					ID:    "os",
+					Label: "Operating system",
+					Value: "Linux",
+				},
+				{
+					ID:    "local_networks",
+					Label: "Local Networks",
+					Value: "10.10.10.0/24",
+				},
+			},
+			Metrics: []detailed.MetricRow{
+				{
+					ID:     host.CPUUsage,
+					Format: "percent",
+					Label:  "CPU",
+					Value:  0.01,
+					Metric: &fixture.CPUMetric,
+				},
+				{
+					ID:     host.MemUsage,
+					Format: "filesize",
+					Label:  "Memory",
+					Value:  0.01,
+					Metric: &fixture.MemoryMetric,
+				},
+				{
+					ID:     host.Load1,
+					Group:  "load",
+					Label:  "Load (1m)",
+					Value:  0.01,
+					Metric: &fixture.LoadMetric,
+				},
+				{
+					ID:     host.Load5,
+					Group:  "load",
+					Label:  "Load (5m)",
+					Value:  0.01,
+					Metric: &fixture.LoadMetric,
+				},
+				{
+					ID:     host.Load15,
+					Label:  "Load (15m)",
+					Group:  "load",
+					Value:  0.01,
+					Metric: &fixture.LoadMetric,
+				},
+			},
+		},
 		Rank:     "hostname.com",
 		Pseudo:   false,
 		Controls: []detailed.ControlInstance{},
-		Metadata: []detailed.MetadataRow{
-			{
-				ID:    "host_name",
-				Label: "Hostname",
-				Value: "client.hostname.com",
-			},
-			{
-				ID:    "os",
-				Label: "Operating system",
-				Value: "Linux",
-			},
-			{
-				ID:    "local_networks",
-				Label: "Local Networks",
-				Value: "10.10.10.0/24",
-			},
-		},
-		Metrics: []detailed.MetricRow{
-			{
-				ID:     host.CPUUsage,
-				Format: "percent",
-				Label:  "CPU",
-				Value:  0.01,
-				Metric: &fixture.CPUMetric,
-			},
-			{
-				ID:     host.MemUsage,
-				Format: "filesize",
-				Label:  "Memory",
-				Value:  0.01,
-				Metric: &fixture.MemoryMetric,
-			},
-			{
-				ID:     host.Load1,
-				Group:  "load",
-				Label:  "Load (1m)",
-				Value:  0.01,
-				Metric: &fixture.LoadMetric,
-			},
-			{
-				ID:     host.Load5,
-				Group:  "load",
-				Label:  "Load (5m)",
-				Value:  0.01,
-				Metric: &fixture.LoadMetric,
-			},
-			{
-				ID:     host.Load15,
-				Label:  "Load (15m)",
-				Group:  "load",
-				Value:  0.01,
-				Metric: &fixture.LoadMetric,
-			},
-		},
 		Children: []detailed.NodeSummaryGroup{
 			{
 				Label:      "Container Images",
@@ -118,36 +121,39 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 	}
 	have := detailed.MakeNode(fixture.Report, renderableNode)
 	want := detailed.Node{
-		ID:       id,
-		Label:    "server",
+		NodeSummary: detailed.NodeSummary{
+			ID:       id,
+			Label:    "server",
+			Linkable: true,
+			Metadata: []detailed.MetadataRow{
+				{ID: "docker_container_id", Label: "ID", Value: fixture.ServerContainerID},
+				{ID: "docker_image_id", Label: "Image ID", Value: fixture.ServerContainerImageID},
+				{ID: "docker_container_state", Label: "State", Value: "running"},
+				{ID: "label_" + render.AmazonECSContainerNameLabel, Label: fmt.Sprintf(`Label %q`, render.AmazonECSContainerNameLabel), Value: `server`},
+				{ID: "label_foo1", Label: `Label "foo1"`, Value: `bar1`},
+				{ID: "label_foo2", Label: `Label "foo2"`, Value: `bar2`},
+				{ID: "label_io.kubernetes.pod.name", Label: `Label "io.kubernetes.pod.name"`, Value: "ping/pong-b"},
+			},
+			Metrics: []detailed.MetricRow{
+				{
+					ID:     docker.CPUTotalUsage,
+					Format: "percent",
+					Label:  "CPU",
+					Value:  0.01,
+					Metric: &fixture.CPUMetric,
+				},
+				{
+					ID:     docker.MemoryUsage,
+					Format: "filesize",
+					Label:  "Memory",
+					Value:  0.01,
+					Metric: &fixture.MemoryMetric,
+				},
+			},
+		},
 		Rank:     "imageid456",
 		Pseudo:   false,
 		Controls: []detailed.ControlInstance{},
-		Metadata: []detailed.MetadataRow{
-			{ID: "docker_container_id", Label: "ID", Value: fixture.ServerContainerID},
-			{ID: "docker_image_id", Label: "Image ID", Value: fixture.ServerContainerImageID},
-			{ID: "docker_container_state", Label: "State", Value: "running"},
-			{ID: "label_" + render.AmazonECSContainerNameLabel, Label: fmt.Sprintf(`Label %q`, render.AmazonECSContainerNameLabel), Value: `server`},
-			{ID: "label_foo1", Label: `Label "foo1"`, Value: `bar1`},
-			{ID: "label_foo2", Label: `Label "foo2"`, Value: `bar2`},
-			{ID: "label_io.kubernetes.pod.name", Label: `Label "io.kubernetes.pod.name"`, Value: "ping/pong-b"},
-		},
-		Metrics: []detailed.MetricRow{
-			{
-				ID:     docker.CPUTotalUsage,
-				Format: "percent",
-				Label:  "CPU",
-				Value:  0.01,
-				Metric: &fixture.CPUMetric,
-			},
-			{
-				ID:     docker.MemoryUsage,
-				Format: "filesize",
-				Label:  "Memory",
-				Value:  0.01,
-				Metric: &fixture.MemoryMetric,
-			},
-		},
 		Children: []detailed.NodeSummaryGroup{
 			{
 				Label:      "Applications",
