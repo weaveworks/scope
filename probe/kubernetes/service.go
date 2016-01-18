@@ -46,6 +46,9 @@ func (s *service) Namespace() string {
 }
 
 func (s *service) Selector() labels.Selector {
+	if s.Spec.Selector == nil {
+		return labels.Nothing()
+	}
 	return labels.SelectorFromSet(labels.Set(s.Spec.Selector))
 }
 

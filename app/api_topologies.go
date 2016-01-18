@@ -23,8 +23,8 @@ var (
 			renderer: render.PodRenderer,
 			Name:     "Pods",
 			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System containers shown", false, render.FilterNoop},
-				{"hide", "System containers hidden", true, render.FilterSystem},
+				{"show", "System pods shown", false, render.FilterNoop},
+				{"hide", "System pods hidden", true, render.FilterSystem},
 			}},
 		},
 		{
@@ -33,8 +33,8 @@ var (
 			renderer: render.PodServiceRenderer,
 			Name:     "by service",
 			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System containers shown", false, render.FilterNoop},
-				{"hide", "System containers hidden", true, render.FilterSystem},
+				{"show", "System services shown", false, render.FilterNoop},
+				{"hide", "System services hidden", true, render.FilterSystem},
 			}},
 		},
 	}
