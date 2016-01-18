@@ -127,7 +127,7 @@ export default class NodeDetails extends React.Component {
 
   renderDetails() {
     const details = this.props.details;
-    const showSummary = details.metadata !== undefined && details.metrics !== undefined;
+    const showSummary = details.metadata !== undefined || details.metrics !== undefined;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label_major);
     const {error, pending} = (this.props.controlStatus || {});
