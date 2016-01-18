@@ -51,14 +51,14 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			{
 				ID:     host.CPUUsage,
 				Format: "percent",
-				Label:  "CPU Usage",
+				Label:  "CPU",
 				Value:  0.01,
 				Metric: &fixture.CPUMetric,
 			},
 			{
 				ID:     host.MemUsage,
 				Format: "filesize",
-				Label:  "Memory Usage",
+				Label:  "Memory",
 				Value:  0.01,
 				Metric: &fixture.MemoryMetric,
 			},
@@ -136,14 +136,14 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 			{
 				ID:     docker.CPUTotalUsage,
 				Format: "percent",
-				Label:  "CPU Usage",
+				Label:  "CPU",
 				Value:  0.01,
 				Metric: &fixture.CPUMetric,
 			},
 			{
 				ID:     docker.MemoryUsage,
 				Format: "filesize",
-				Label:  "Memory Usage",
+				Label:  "Memory",
 				Value:  0.01,
 				Metric: &fixture.MemoryMetric,
 			},

@@ -16,6 +16,24 @@ const (
 	percentFormat  = "percent"
 )
 
+var (
+	processNodeMetrics = renderMetrics(
+		MetricRow{ID: process.CPUUsage, Label: "CPU", Format: percentFormat},
+		MetricRow{ID: process.MemoryUsage, Label: "Memory", Format: filesizeFormat},
+	)
+	containerNodeMetrics = renderMetrics(
+		MetricRow{ID: docker.CPUTotalUsage, Label: "CPU", Format: percentFormat},
+		MetricRow{ID: docker.MemoryUsage, Label: "Memory", Format: filesizeFormat},
+	)
+	hostNodeMetrics = renderMetrics(
+		MetricRow{ID: host.CPUUsage, Label: "CPU", Format: percentFormat},
+		MetricRow{ID: host.MemUsage, Label: "Memory", Format: filesizeFormat},
+		MetricRow{ID: host.Load1, Label: "Load (1m)", Format: defaultFormat, Group: "load"},
+		MetricRow{ID: host.Load5, Label: "Load (5m)", Format: defaultFormat, Group: "load"},
+		MetricRow{ID: host.Load15, Label: "Load (15m)", Format: defaultFormat, Group: "load"},
+	)
+)
+
 // MetricRow is a tuple of data used to render a metric as a sparkline and
 // accoutrements.
 type MetricRow struct {
@@ -29,15 +47,18 @@ type MetricRow struct {
 
 // Copy returns a value copy of the MetricRow
 func (m MetricRow) Copy() MetricRow {
-	metric := m.Metric.Copy()
-	return MetricRow{
+	row := MetricRow{
 		ID:     m.ID,
 		Label:  m.Label,
 		Format: m.Format,
 		Group:  m.Group,
 		Value:  m.Value,
-		Metric: &metric,
 	}
+	if m.Metric != nil {
+		var metric = m.Metric.Copy()
+		row.Metric = &metric
+	}
+	return row
 }
 
 // MarshalJSON marshals this MetricRow to json. It takes the basic Metric
@@ -60,27 +81,6 @@ func (m MetricRow) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func metricRow(id, label string, metric report.Metric, format, group string) MetricRow {
-	var last float64
-	if s := metric.LastSample(); s != nil {
-		last = s.Value
-	}
-	return MetricRow{
-		ID:     id,
-		Label:  label,
-		Format: format,
-		Group:  group,
-		Value:  toFixed(last, 2),
-		Metric: &metric,
-	}
-}
-
-// toFixed truncates decimals of float64 down to specified precision
-func toFixed(num float64, precision int) float64 {
-	output := math.Pow(10, float64(precision))
-	return float64(int64(num*output)) / output
-}
-
 // NodeMetrics produces a table (to be consumed directly by the UI) based on
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
 func NodeMetrics(n report.Node) []MetricRow {
@@ -95,82 +95,27 @@ func NodeMetrics(n report.Node) []MetricRow {
 	return nil
 }
 
-func processNodeMetrics(nmd report.Node) []MetricRow {
-	rows := []MetricRow{}
-	for _, tuple := range []struct {
-		ID, Label, fmt string
-	}{
-		{process.CPUUsage, "CPU Usage", percentFormat},
-		{process.MemoryUsage, "Memory Usage", filesizeFormat},
-	} {
-		if val, ok := nmd.Metrics[tuple.ID]; ok {
-			rows = append(rows, metricRow(
-				tuple.ID,
-				tuple.Label,
-				val,
-				tuple.fmt,
-				"",
-			))
-		}
-	}
-	return rows
-}
-
-func containerNodeMetrics(nmd report.Node) []MetricRow {
-	rows := []MetricRow{}
-	if val, ok := nmd.Metrics[docker.CPUTotalUsage]; ok {
-		rows = append(rows, metricRow(
-			docker.CPUTotalUsage,
-			"CPU Usage",
-			val,
-			percentFormat,
-			"",
-		))
-	}
-	if val, ok := nmd.Metrics[docker.MemoryUsage]; ok {
-		rows = append(rows, metricRow(
-			docker.MemoryUsage,
-			"Memory Usage",
-			val,
-			filesizeFormat,
-			"",
-		))
-	}
-	return rows
-}
-
-func hostNodeMetrics(nmd report.Node) []MetricRow {
-	// Ensure that all metrics have the same max
-	maxLoad := 0.0
-	for _, id := range []string{host.Load1, host.Load5, host.Load15} {
-		if metric, ok := nmd.Metrics[id]; ok {
-			if metric.Len() == 0 {
+func renderMetrics(templates ...MetricRow) func(report.Node) []MetricRow {
+	return func(n report.Node) []MetricRow {
+		rows := []MetricRow{}
+		for _, template := range templates {
+			metric, ok := n.Metrics[template.ID]
+			if !ok {
 				continue
 			}
-			if metric.Max > maxLoad {
-				maxLoad = metric.Max
+			t := template.Copy()
+			if s := metric.LastSample(); s != nil {
+				t.Value = toFixed(s.Value, 2)
 			}
+			t.Metric = &metric
+			rows = append(rows, t)
 		}
+		return rows
 	}
+}
 
-	rows := []MetricRow{}
-	for _, tuple := range []struct{ ID, Label, fmt string }{
-		{host.CPUUsage, "CPU Usage", percentFormat},
-		{host.MemUsage, "Memory Usage", filesizeFormat},
-	} {
-		if val, ok := nmd.Metrics[tuple.ID]; ok {
-			rows = append(rows, metricRow(tuple.ID, tuple.Label, val, tuple.fmt, ""))
-		}
-	}
-	for _, tuple := range []struct{ ID, Label string }{
-		{host.Load1, "Load (1m)"},
-		{host.Load5, "Load (5m)"},
-		{host.Load15, "Load (15m)"},
-	} {
-		if val, ok := nmd.Metrics[tuple.ID]; ok {
-			val.Max = maxLoad
-			rows = append(rows, metricRow(tuple.ID, tuple.Label, val, defaultFormat, "load"))
-		}
-	}
-	return rows
+// toFixed truncates decimals of float64 down to specified precision
+func toFixed(num float64, precision int) float64 {
+	output := math.Pow(10, float64(precision))
+	return float64(int64(num*output)) / output
 }
