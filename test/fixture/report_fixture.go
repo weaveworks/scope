@@ -79,8 +79,8 @@ var (
 
 	ClientContainerImageID     = "imageid123"
 	ServerContainerImageID     = "imageid456"
-	ClientContainerImageNodeID = report.MakeContainerImageNodeID(ClientHostID, ClientContainerImageID)
-	ServerContainerImageNodeID = report.MakeContainerImageNodeID(ServerHostID, ServerContainerImageID)
+	ClientContainerImageNodeID = report.MakeContainerImageNodeID(ClientContainerImageID)
+	ServerContainerImageNodeID = report.MakeContainerImageNodeID(ServerContainerImageID)
 	ClientContainerImageName   = "image/client"
 	ServerContainerImageName   = "image/server"
 

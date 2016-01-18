@@ -524,7 +524,7 @@ func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) Renderable
 	result.Children = result.Children.Add(n.Node)
 
 	result.Node.Topology = "container_image"
-	result.Node.ID = report.MakeContainerImageNodeID(report.ExtractHostID(n.Node), imageID)
+	result.Node.ID = report.MakeContainerImageNodeID(imageID)
 	return RenderableNodes{id: result}
 }
 

@@ -107,8 +107,8 @@ func MakeContainerNodeID(containerID string) string {
 }
 
 // MakeContainerImageNodeID produces a container image node ID from its composite parts.
-func MakeContainerImageNodeID(hostID, containerImageID string) string {
-	return hostID + ScopeDelim + containerImageID
+func MakeContainerImageNodeID(containerImageID string) string {
+	return containerImageID + ScopeDelim + "<container_image>"
 }
 
 // MakePodNodeID produces a pod node ID from its composite parts.

@@ -101,11 +101,9 @@ func TestReporter(t *testing.T) {
 	}
 	want.ContainerImage = report.Topology{
 		Nodes: report.Nodes{
-			report.MakeContainerImageNodeID("host1", "baz"): report.MakeNodeWith(map[string]string{
+			report.MakeContainerImageNodeID("baz"): report.MakeNodeWith(map[string]string{
 				docker.ImageID:   "baz",
 				docker.ImageName: "bang",
-			}).WithParents(report.Sets{
-				"host": report.MakeStringSet(report.MakeHostNodeID("host1")),
 			}),
 		},
 		Controls: report.Controls{},
