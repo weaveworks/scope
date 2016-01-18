@@ -53,7 +53,9 @@ func (c *mockContainer) GetNode(_ string, _ []net.IP) report.Node {
 		docker.ContainerID:   c.c.ID,
 		docker.ContainerName: c.c.Name,
 		docker.ImageID:       c.c.Image,
-	})
+	}).WithParents(report.EmptySets.
+		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.c.Image))),
+	)
 }
 
 func (c *mockContainer) Container() *client.Container {

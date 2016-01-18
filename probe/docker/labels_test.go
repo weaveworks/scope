@@ -16,7 +16,7 @@ func TestLabels(t *testing.T) {
 	}
 	nmd := report.MakeNode()
 
-	docker.AddLabels(nmd, want)
+	nmd = docker.AddLabels(nmd, want)
 	have := docker.ExtractLabels(nmd)
 
 	if !reflect.DeepEqual(want, have) {

@@ -115,17 +115,17 @@ func (r *Reporter) containerImageTopology() report.Topology {
 	result := report.MakeTopology()
 
 	r.registry.WalkImages(func(image *docker_client.APIImages) {
-		nmd := report.MakeNodeWith(map[string]string{
+		node := report.MakeNodeWith(map[string]string{
 			ImageID: image.ID,
 		})
-		AddLabels(nmd, image.Labels)
+		node = AddLabels(node, image.Labels)
 
 		if len(image.RepoTags) > 0 {
-			nmd.Metadata[ImageName] = image.RepoTags[0]
+			node = node.WithLatests(map[string]string{ImageName: image.RepoTags[0]})
 		}
 
 		nodeID := report.MakeContainerImageNodeID(image.ID)
-		result.AddNode(nodeID, nmd)
+		result.AddNode(nodeID, node)
 	})
 
 	return result

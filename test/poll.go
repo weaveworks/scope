@@ -1,10 +1,11 @@
 package test
 
 import (
-	"reflect"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 // Poll repeatedly evaluates condition until we either timeout, or it suceeds.

@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/common/exec"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 	testExec "github.com/weaveworks/scope/test/exec"
 )
 
 func TestWeaveTaggerOverlayTopology(t *testing.T) {
+	wait := make(chan struct{})
 	oldExecCmd := exec.Command
 	defer func() { exec.Command = oldExecCmd }()
 	exec.Command = func(name string, args ...string) exec.Cmd {
+		close(wait)
 		return testExec.NewMockCmdString(fmt.Sprintf("%s %s %s/24\n", mockContainerID, mockContainerMAC, mockContainerIP))
 	}
 
@@ -28,35 +28,31 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 	w := overlay.NewWeave(mockHostID, s.URL)
 	defer w.Stop()
 	w.Tick()
+	<-wait
 
 	{
+		// Overlay node should include peer name and nickname
 		have, err := w.Report()
 		if err != nil {
 			t.Fatal(err)
 		}
-		if want, have := report.MakeTopology().AddNode(
-			report.MakeOverlayNodeID(mockWeavePeerName),
-			report.MakeNodeWith(map[string]string{
-				overlay.WeavePeerName:     mockWeavePeerName,
-				overlay.WeavePeerNickName: mockWeavePeerNickName,
-			}),
-		), have.Overlay; !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+
+		nodeID := report.MakeOverlayNodeID(mockWeavePeerName)
+		node, ok := have.Overlay.Nodes[nodeID]
+		if !ok {
+			t.Errorf("Expected overlay node %q, but not found", nodeID)
+		}
+		if peerName, ok := node.Latest.Lookup(overlay.WeavePeerName); !ok || peerName != mockWeavePeerName {
+			t.Errorf("Expected weave peer name %q, got %q", mockWeavePeerName, peerName)
+		}
+		if peerNick, ok := node.Latest.Lookup(overlay.WeavePeerNickName); !ok || peerNick != mockWeavePeerNickName {
+			t.Errorf("Expected weave peer nickname %q, got %q", mockWeavePeerNickName, peerNick)
 		}
 	}
 
 	{
+		// Container nodes should be tagged with their overlay info
 		nodeID := report.MakeContainerNodeID(mockContainerID)
-		want := report.Report{
-			Container: report.MakeTopology().AddNode(nodeID, report.MakeNodeWith(map[string]string{
-				docker.ContainerID:       mockContainerID,
-				overlay.WeaveDNSHostname: mockHostname,
-				overlay.WeaveMACAddress:  mockContainerMAC,
-			}).WithSets(report.Sets{
-				docker.ContainerIPs:           report.MakeStringSet(mockContainerIP),
-				docker.ContainerIPsWithScopes: report.MakeStringSet(mockContainerIPWithScope),
-			})),
-		}
 		have, err := w.Tag(report.Report{
 			Container: report.MakeTopology().AddNode(nodeID, report.MakeNodeWith(map[string]string{
 				docker.ContainerID: mockContainerID,
@@ -65,8 +61,27 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+
+		node, ok := have.Container.Nodes[nodeID]
+		if !ok {
+			t.Errorf("Expected container node %q, but not found", nodeID)
+		}
+
+		// Should have Weave DNS Hostname
+		if have, ok := node.Latest.Lookup(overlay.WeaveDNSHostname); !ok || have != mockHostname {
+			t.Errorf("Expected weave dns hostname %q, got %q", mockHostname, have)
+		}
+		// Should have Weave MAC Address
+		if have, ok := node.Latest.Lookup(overlay.WeaveMACAddress); !ok || have != mockContainerMAC {
+			t.Errorf("Expected weave mac address %q, got %q", mockContainerMAC, have)
+		}
+		// Should have Weave container ip
+		if have, ok := node.Sets.Lookup(docker.ContainerIPs); !ok || !have.Contains(mockContainerIP) {
+			t.Errorf("Expected container ips to include the weave IP %q, got %q", mockContainerIP, have)
+		}
+		// Should have Weave container ip (with scope)
+		if have, ok := node.Sets.Lookup(docker.ContainerIPsWithScopes); !ok || !have.Contains(mockContainerIPWithScope) {
+			t.Errorf("Expected container ips to include the weave IP (with scope) %q, got %q", mockContainerIPWithScope, have)
 		}
 	}
 }

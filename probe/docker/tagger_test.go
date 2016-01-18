@@ -2,13 +2,13 @@ package docker_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
+	"time"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 )
 
 type mockProcessTree struct {
@@ -28,6 +28,9 @@ func (m *mockProcessTree) GetChildren(int) ([]int, error) {
 }
 
 func TestTagger(t *testing.T) {
+	mtime.NowForce(time.Now())
+	defer mtime.NowReset()
+
 	oldProcessTree := docker.NewProcessTreeStub
 	defer func() { docker.NewProcessTreeStub = oldProcessTree }()
 
@@ -38,28 +41,37 @@ func TestTagger(t *testing.T) {
 	var (
 		pid1NodeID = report.MakeProcessNodeID("somehost.com", "2")
 		pid2NodeID = report.MakeProcessNodeID("somehost.com", "3")
-		wantNode   = report.MakeNodeWith(map[string]string{
-			docker.ContainerID: "ping",
-		}).WithParents(report.Sets{
-			report.Container:      report.MakeStringSet(report.MakeContainerNodeID("ping")),
-			report.ContainerImage: report.MakeStringSet(report.MakeContainerImageNodeID("baz")),
-		})
 	)
 
 	input := report.MakeReport()
 	input.Process.AddNode(pid1NodeID, report.MakeNodeWith(map[string]string{process.PID: "2"}))
 	input.Process.AddNode(pid2NodeID, report.MakeNodeWith(map[string]string{process.PID: "3"}))
 
-	want := report.MakeReport()
-	want.Process.AddNode(pid1NodeID, report.MakeNodeWith(map[string]string{process.PID: "2"}).Merge(wantNode))
-	want.Process.AddNode(pid2NodeID, report.MakeNodeWith(map[string]string{process.PID: "3"}).Merge(wantNode))
-
-	tagger := docker.NewTagger(mockRegistryInstance, nil)
-	have, err := tagger.Tag(input)
+	have, err := docker.NewTagger(mockRegistryInstance, nil).Tag(input)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf("%s", test.Diff(want, have))
+
+	// Processes should be tagged with their container ID, and parents
+	for _, nodeID := range []string{pid1NodeID, pid2NodeID} {
+		node, ok := have.Process.Nodes[nodeID]
+		if !ok {
+			t.Errorf("Expected process node %s, but not found", nodeID)
+		}
+
+		// node should have the container id added
+		if have, ok := node.Latest.Lookup(docker.ContainerID); !ok || have != "ping" {
+			t.Errorf("Expected process node %s to have container id %q, got %q", nodeID, "ping", have)
+		}
+
+		// node should have the container as a parent
+		if have, ok := node.Parents.Lookup(report.Container); !ok || !have.Contains(report.MakeContainerNodeID("ping")) {
+			t.Errorf("Expected process node %s to have container %q as a parent, got %q", nodeID, "ping", have)
+		}
+
+		// node should have the container image as a parent
+		if have, ok := node.Parents.Lookup(report.ContainerImage); !ok || !have.Contains(report.MakeContainerImageNodeID("baz")) {
+			t.Errorf("Expected process node %s to have container image %q as a parent, got %q", nodeID, "baz", have)
+		}
 	}
 }

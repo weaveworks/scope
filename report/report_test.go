@@ -28,19 +28,19 @@ func TestReportTopologies(t *testing.T) {
 
 func TestNode(t *testing.T) {
 	{
-		node := report.MakeNode().WithMetadata(report.Metadata{
+		node := report.MakeNode().WithLatests(map[string]string{
 			"foo": "bar",
 		})
-		if node.Metadata["foo"] != "bar" {
-			t.Errorf("want foo, have %s", node.Metadata["foo"])
+		if v, _ := node.Latest.Lookup("foo"); v != "bar" {
+			t.Errorf("want foo, have %s", v)
 		}
 	}
 	{
-		node := report.MakeNode().WithCounters(report.Counters{
-			"foo": 1,
-		})
-		if node.Counters["foo"] != 1 {
-			t.Errorf("want foo, have %d", node.Counters["foo"])
+		node := report.MakeNode().WithCounters(
+			map[string]int{"foo": 1},
+		)
+		if value, _ := node.Counters.Lookup("foo"); value != 1 {
+			t.Errorf("want foo, have %d", value)
 		}
 	}
 	{

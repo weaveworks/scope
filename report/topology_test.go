@@ -1,10 +1,10 @@
 package report_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 func TestMakeStringSet(t *testing.T) {

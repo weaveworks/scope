@@ -168,8 +168,9 @@ func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) 
 
 // ExtractHostID extracts the host id from Node
 func ExtractHostID(m Node) string {
-	hostid, _, _ := ParseNodeID(m.Metadata[HostNodeID])
-	return hostid
+	hostNodeID, _ := m.Latest.Lookup(HostNodeID)
+	hostID, _, _ := ParseNodeID(hostNodeID)
+	return hostID
 }
 
 func isLoopback(address string) bool {

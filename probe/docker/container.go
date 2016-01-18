@@ -325,17 +325,17 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
 		ImageID:           c.container.Image,
 		ContainerHostname: c.Hostname(),
-	}).WithSets(report.Sets{
-		ContainerPorts:         c.ports(localAddrs),
-		ContainerIPs:           report.MakeStringSet(ips...),
-		ContainerIPsWithScopes: report.MakeStringSet(ipsWithScopes...),
-	}).WithLatest(
+	}).WithSets(report.EmptySets.
+		Add(ContainerPorts, c.ports(localAddrs)).
+		Add(ContainerIPs, report.MakeStringSet(ips...)).
+		Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...)),
+	).WithLatest(
 		ContainerState, mtime.Now(), state,
 	).WithMetrics(
 		c.metrics(),
-	).WithParents(report.Sets{
-		report.ContainerImage: report.MakeStringSet(report.MakeContainerImageNodeID(c.container.Image)),
-	})
+	).WithParents(report.EmptySets.
+		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.container.Image))),
+	)
 
 	if c.container.State.Paused {
 		result = result.WithControls(UnpauseContainer)
@@ -347,13 +347,13 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		result = result.WithControls(StartContainer)
 	}
 
-	AddLabels(result, c.container.Config.Labels)
+	result = AddLabels(result, c.container.Config.Labels)
 
 	if c.latestStats == nil {
 		return result
 	}
 
-	result = result.WithMetadata(map[string]string{
+	result = result.WithLatests(map[string]string{
 		MemoryMaxUsage: strconv.FormatUint(c.latestStats.MemoryStats.MaxUsage, 10),
 		MemoryUsage:    strconv.FormatUint(c.latestStats.MemoryStats.Usage, 10),
 		MemoryFailcnt:  strconv.FormatUint(c.latestStats.MemoryStats.Failcnt, 10),
@@ -370,11 +370,13 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 
 // ExtractContainerIPs returns the list of container IPs given a Node from the Container topology.
 func ExtractContainerIPs(nmd report.Node) []string {
-	return []string(nmd.Sets[ContainerIPs])
+	v, _ := nmd.Sets.Lookup(ContainerIPs)
+	return []string(v)
 }
 
 // ExtractContainerIPsWithScopes returns the list of container IPs, prepended
 // with scopes, given a Node from the Container topology.
 func ExtractContainerIPsWithScopes(nmd report.Node) []string {
-	return []string(nmd.Sets[ContainerIPsWithScopes])
+	v, _ := nmd.Sets.Lookup(ContainerIPsWithScopes)
+	return []string(v)
 }

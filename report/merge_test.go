@@ -1,11 +1,13 @@
 package report_test
 
 import (
-	"reflect"
 	"testing"
+	"time"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 const (
@@ -128,6 +130,9 @@ func TestFlattenEdgeMetadata(t *testing.T) {
 }
 
 func TestMergeNodes(t *testing.T) {
+	mtime.NowForce(time.Now())
+	defer mtime.NowReset()
+
 	for name, c := range map[string]struct {
 		a, b, want report.Nodes
 	}{
@@ -265,7 +270,7 @@ func TestMergeNodes(t *testing.T) {
 		},
 	} {
 		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
-			t.Errorf("%s: want\n\t%#v, have\n\t%#v", name, c.want, have)
+			t.Errorf("%s: %s", name, test.Diff(c.want, have))
 		}
 	}
 }
