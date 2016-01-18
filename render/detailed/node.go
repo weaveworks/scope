@@ -93,11 +93,11 @@ var (
 		topologyID string
 		NodeSummaryGroup
 	}{
-		{"host", NodeSummaryGroup{TopologyID: "hosts", Label: "Hosts", Columns: []string{host.CPUUsage, host.MemUsage}}},
-		{"pod", NodeSummaryGroup{TopologyID: "pods", Label: "Pods", Columns: []string{}}},
-		{"container_image", NodeSummaryGroup{TopologyID: "containers-by-image", Label: "Container Images", Columns: []string{}}},
-		{"container", NodeSummaryGroup{TopologyID: "containers", Label: "Containers", Columns: []string{docker.CPUTotalUsage, docker.MemoryUsage}}},
-		{"process", NodeSummaryGroup{TopologyID: "applications", Label: "Applications", Columns: []string{process.PID, process.CPUUsage, process.MemoryUsage}}},
+		{report.Host, NodeSummaryGroup{TopologyID: "hosts", Label: "Hosts", Columns: []string{host.CPUUsage, host.MemUsage}}},
+		{report.Pod, NodeSummaryGroup{TopologyID: "pods", Label: "Pods", Columns: []string{}}},
+		{report.ContainerImage, NodeSummaryGroup{TopologyID: "containers-by-image", Label: "Container Images", Columns: []string{}}},
+		{report.Container, NodeSummaryGroup{TopologyID: "containers", Label: "Containers", Columns: []string{docker.CPUTotalUsage, docker.MemoryUsage}}},
+		{report.Process, NodeSummaryGroup{TopologyID: "applications", Label: "Applications", Columns: []string{process.PID, process.CPUUsage, process.MemoryUsage}}},
 	}
 )
 
@@ -140,11 +140,11 @@ func parents(r report.Report, n render.RenderableNode) (result []Parent) {
 		report.Topology
 		render func(report.Node) Parent
 	}{
-		"container":       {r.Container, containerParent},
-		"pod":             {r.Pod, podParent},
-		"service":         {r.Service, serviceParent},
-		"container_image": {r.ContainerImage, containerImageParent},
-		"host":            {r.Host, hostParent},
+		report.Container:      {r.Container, containerParent},
+		report.Pod:            {r.Pod, podParent},
+		report.Service:        {r.Service, serviceParent},
+		report.ContainerImage: {r.ContainerImage, containerImageParent},
+		report.Host:           {r.Host, hostParent},
 	}
 	topologyIDs := []string{}
 	for topologyID := range topologies {

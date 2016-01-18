@@ -6,6 +6,19 @@ import (
 	"time"
 )
 
+// Names of the various topologies.
+const (
+	Endpoint       = "endpoint"
+	Address        = "address"
+	Process        = "process"
+	Container      = "container"
+	Pod            = "pod"
+	Service        = "service"
+	ContainerImage = "container_image"
+	Host           = "host"
+	Overlay        = "overlay"
+)
+
 // Report is the core data type. It's produced by probes, and consumed and
 // stored by apps. It's composed of multiple topologies, each representing
 // a different (related, but not equivalent) view of the network.

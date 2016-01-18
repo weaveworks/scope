@@ -65,7 +65,7 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 			PodID:     p.ID(),
 			Namespace: p.Namespace(),
 		}).WithParents(report.Sets{
-			"pod": report.MakeStringSet(nodeID),
+			report.Pod: report.MakeStringSet(nodeID),
 		})
 		for _, containerID := range p.ContainerIDs() {
 			containers.AddNode(report.MakeContainerNodeID(containerID), container)

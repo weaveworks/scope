@@ -32,7 +32,7 @@ func (t Tagger) Tag(r report.Report) (report.Report, error) {
 			report.ProbeID:    t.probeID,
 		}
 		parents = report.Sets{
-			"host": report.MakeStringSet(t.hostNodeID),
+			report.Host: report.MakeStringSet(t.hostNodeID),
 		}
 	)
 

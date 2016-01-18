@@ -70,11 +70,11 @@ func (m MetadataRow) Copy() MetadataRow {
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
 func NodeMetadata(n report.Node) []MetadataRow {
 	renderers := map[string]func(report.Node) []MetadataRow{
-		"process":         processNodeMetadata,
-		"container":       containerNodeMetadata,
-		"container_image": containerImageNodeMetadata,
-		"pod":             podNodeMetadata,
-		"host":            hostNodeMetadata,
+		report.Process:        processNodeMetadata,
+		report.Container:      containerNodeMetadata,
+		report.ContainerImage: containerImageNodeMetadata,
+		report.Pod:            podNodeMetadata,
+		report.Host:           hostNodeMetadata,
 	}
 	if renderer, ok := renderers[n.Topology]; ok {
 		return renderer(n)

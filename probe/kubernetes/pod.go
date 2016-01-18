@@ -90,7 +90,7 @@ func (p *pod) GetNode() report.Node {
 			continue
 		}
 		n = n.WithParents(report.Sets{
-			"service": report.MakeStringSet(report.MakeServiceNodeID(p.Namespace(), segments[1])),
+			report.Service: report.MakeStringSet(report.MakeServiceNodeID(p.Namespace(), segments[1])),
 		})
 	}
 	return n

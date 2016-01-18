@@ -41,8 +41,8 @@ func TestTagger(t *testing.T) {
 		wantNode   = report.MakeNodeWith(map[string]string{
 			docker.ContainerID: "ping",
 		}).WithParents(report.Sets{
-			"container":       report.MakeStringSet(report.MakeContainerNodeID("ping")),
-			"container_image": report.MakeStringSet(report.MakeContainerImageNodeID("baz")),
+			report.Container:      report.MakeStringSet(report.MakeContainerNodeID("ping")),
+			report.ContainerImage: report.MakeStringSet(report.MakeContainerImageNodeID("baz")),
 		})
 	)
 

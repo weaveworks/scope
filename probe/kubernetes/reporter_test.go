@@ -120,7 +120,7 @@ func TestReporter(t *testing.T) {
 		kubernetes.PodContainerIDs: "container1 container2",
 		kubernetes.ServiceIDs:      "ping/pongservice",
 	}).WithParents(report.Sets{
-		"service": report.MakeStringSet(serviceID),
+		report.Service: report.MakeStringSet(serviceID),
 	})).AddNode(pod2ID, report.MakeNodeWith(map[string]string{
 		kubernetes.PodID:           "ping/pong-b",
 		kubernetes.PodName:         "pong-b",
@@ -129,7 +129,7 @@ func TestReporter(t *testing.T) {
 		kubernetes.PodContainerIDs: "container3 container4",
 		kubernetes.ServiceIDs:      "ping/pongservice",
 	}).WithParents(report.Sets{
-		"service": report.MakeStringSet(serviceID),
+		report.Service: report.MakeStringSet(serviceID),
 	}))
 	want.Service = report.MakeTopology().AddNode(serviceID, report.MakeNodeWith(map[string]string{
 		kubernetes.ServiceID:      "ping/pongservice",
@@ -141,22 +141,22 @@ func TestReporter(t *testing.T) {
 		kubernetes.PodID:     "ping/pong-a",
 		kubernetes.Namespace: "ping",
 	}).WithParents(report.Sets{
-		"pod": report.MakeStringSet(pod1ID),
+		report.Pod: report.MakeStringSet(pod1ID),
 	})).AddNode(report.MakeContainerNodeID("container2"), report.MakeNodeWith(map[string]string{
 		kubernetes.PodID:     "ping/pong-a",
 		kubernetes.Namespace: "ping",
 	}).WithParents(report.Sets{
-		"pod": report.MakeStringSet(pod1ID),
+		report.Pod: report.MakeStringSet(pod1ID),
 	})).AddNode(report.MakeContainerNodeID("container3"), report.MakeNodeWith(map[string]string{
 		kubernetes.PodID:     "ping/pong-b",
 		kubernetes.Namespace: "ping",
 	}).WithParents(report.Sets{
-		"pod": report.MakeStringSet(pod2ID),
+		report.Pod: report.MakeStringSet(pod2ID),
 	})).AddNode(report.MakeContainerNodeID("container4"), report.MakeNodeWith(map[string]string{
 		kubernetes.PodID:     "ping/pong-b",
 		kubernetes.Namespace: "ping",
 	}).WithParents(report.Sets{
-		"pod": report.MakeStringSet(pod2ID),
+		report.Pod: report.MakeStringSet(pod2ID),
 	}))
 
 	reporter := kubernetes.NewReporter(mockClientInstance)

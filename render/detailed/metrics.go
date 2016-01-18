@@ -85,9 +85,9 @@ func toFixed(num float64, precision int) float64 {
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
 func NodeMetrics(n report.Node) []MetricRow {
 	renderers := map[string]func(report.Node) []MetricRow{
-		"process":   processNodeMetrics,
-		"container": containerNodeMetrics,
-		"host":      hostNodeMetrics,
+		report.Process:   processNodeMetrics,
+		report.Container: containerNodeMetrics,
+		report.Host:      hostNodeMetrics,
 	}
 	if renderer, ok := renderers[n.Topology]; ok {
 		return renderer(n)

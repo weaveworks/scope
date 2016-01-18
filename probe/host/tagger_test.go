@@ -23,7 +23,7 @@ func TestTagger(t *testing.T) {
 		report.HostNodeID: report.MakeHostNodeID(hostID),
 		report.ProbeID:    probeID,
 	}).WithParents(report.Sets{
-		"host": report.MakeStringSet(report.MakeHostNodeID(hostID)),
+		report.Host: report.MakeStringSet(report.MakeHostNodeID(hostID)),
 	}))
 	rpt, _ := host.NewTagger(hostID, probeID).Tag(r)
 	have := rpt.Process.Nodes[endpointNodeID].Copy()

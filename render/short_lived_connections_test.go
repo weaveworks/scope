@@ -37,13 +37,13 @@ var (
 					endpoint.Addr:        randomIP,
 					endpoint.Port:        randomPort,
 					endpoint.Conntracked: "true",
-				}).WithAdjacent(serverEndpointNodeID).WithID(randomEndpointNodeID).WithTopology("endpoint"),
+				}).WithAdjacent(serverEndpointNodeID).WithID(randomEndpointNodeID).WithTopology(report.Endpoint),
 
 				serverEndpointNodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr:        serverIP,
 					endpoint.Port:        serverPort,
 					endpoint.Conntracked: "true",
-				}).WithID(serverEndpointNodeID).WithTopology("endpoint"),
+				}).WithID(serverEndpointNodeID).WithTopology(report.Endpoint),
 			},
 		},
 		Container: report.Topology{
@@ -55,7 +55,7 @@ var (
 				}).WithSets(report.Sets{
 					docker.ContainerIPs:   report.MakeStringSet(containerIP),
 					docker.ContainerPorts: report.MakeStringSet(fmt.Sprintf("%s:%s->%s/tcp", serverIP, serverPort, serverPort)),
-				}).WithID(containerNodeID).WithTopology("container"),
+				}).WithID(containerNodeID).WithTopology(report.Container),
 			},
 		},
 		Host: report.Topology{
@@ -64,7 +64,7 @@ var (
 					report.HostNodeID: serverHostNodeID,
 				}).WithSets(report.Sets{
 					host.LocalNetworks: report.MakeStringSet("192.168.0.0/16"),
-				}).WithID(serverHostNodeID).WithTopology("host"),
+				}).WithID(serverHostNodeID).WithTopology(report.Host),
 			},
 		},
 	}
