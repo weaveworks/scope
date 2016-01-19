@@ -9,17 +9,27 @@ import (
 type NodeSet []Node
 
 // MakeNodeSet makes a new NodeSet with the given nodes.
-// TODO: Make this more efficient
 func MakeNodeSet(nodes ...Node) NodeSet {
 	if len(nodes) <= 0 {
 		return nil
 	}
-	result := NodeSet{}
-	for _, node := range nodes {
-		result = result.Add(node)
+	result := make(NodeSet, len(nodes))
+	copy(result, nodes)
+	sort.Sort(result)
+	for i := 1; i < len(result); { // remove any duplicates
+		if result[i-1].Equal(result[i]) {
+			result = append(result[:i-1], result[i:]...)
+			continue
+		}
+		i++
 	}
 	return result
 }
+
+// Implementation of sort.Interface
+func (n NodeSet) Len() int           { return len(n) }
+func (n NodeSet) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
+func (n NodeSet) Less(i, j int) bool { return n[i].Before(n[j]) }
 
 // Add adds the nodes to the NodeSet. Add is the only valid way to grow a
 // NodeSet. Add returns the NodeSet to enable chaining.
@@ -35,13 +45,12 @@ func (n NodeSet) Add(nodes ...Node) NodeSet {
 		// It a new element, insert it in order.
 		n = append(n, Node{})
 		copy(n[i+1:], n[i:])
-		n[i] = node.Copy()
+		n[i] = node
 	}
 	return n
 }
 
 // Merge combines the two NodeSets and returns a new result.
-// TODO: Make this more efficient
 func (n NodeSet) Merge(other NodeSet) NodeSet {
 	switch {
 	case len(other) <= 0: // Optimise special case, to avoid allocating
@@ -49,9 +58,25 @@ func (n NodeSet) Merge(other NodeSet) NodeSet {
 	case len(n) <= 0:
 		return other
 	}
-	result := n.Copy()
-	for _, node := range other {
-		result = result.Add(node)
+
+	result := make([]Node, 0, len(n)+len(other))
+	for len(n) > 0 || len(other) > 0 {
+		switch {
+		case len(n) == 0:
+			return append(result, other...)
+		case len(other) == 0:
+			return append(result, n...)
+		case n[0].Before(other[0]):
+			result = append(result, n[0])
+			n = n[1:]
+		case n[0].After(other[0]):
+			result = append(result, other[0])
+			other = other[1:]
+		default: // equal
+			result = append(result, other[0])
+			n = n[1:]
+			other = other[1:]
+		}
 	}
 	return result
 }
@@ -63,7 +88,7 @@ func (n NodeSet) Copy() NodeSet {
 	}
 	result := make(NodeSet, len(n))
 	for i, node := range n {
-		result[i] = node.Copy()
+		result[i] = node
 	}
 	return result
 }

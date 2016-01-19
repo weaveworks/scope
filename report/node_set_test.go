@@ -1,11 +1,14 @@
 package report_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/report"
 )
+
+var benchmarkResult report.NodeSet
 
 type nodeSpec struct {
 	topology string
@@ -47,8 +50,25 @@ func TestMakeNodeSet(t *testing.T) {
 			wants = append(wants, report.MakeNode().WithTopology(spec.topology).WithID(spec.id))
 		}
 		if want, have := report.NodeSet(wants), report.MakeNodeSet(inputs...); !reflect.DeepEqual(want, have) {
-			t.Errorf("%#v: want %#v, have %#v", testcase.inputs, want, have)
+			t.Errorf("%#v: want %#v, have %#v", inputs, wants, have)
 		}
+	}
+}
+
+func BenchmarkMakeNodeSet(b *testing.B) {
+	nodes := []report.Node{}
+	for i := 1000; i >= 0; i-- {
+		node := report.MakeNode().WithID(fmt.Sprint(i)).WithMetadata(map[string]string{
+			"a": "1",
+			"b": "2",
+		})
+		nodes = append(nodes, node)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		benchmarkResult = report.MakeNodeSet(nodes...)
 	}
 }
 
@@ -95,9 +115,37 @@ func TestNodeSetAdd(t *testing.T) {
 			want:  report.MakeNodeSet(report.MakeNode().WithID("a"), report.MakeNode().WithID("b"), report.MakeNode().WithID("c")),
 		},
 	} {
+		originalLen := len(testcase.input)
 		if want, have := testcase.want, testcase.input.Add(testcase.nodes...); !reflect.DeepEqual(want, have) {
 			t.Errorf("%v + %v: want %v, have %v", testcase.input, testcase.nodes, want, have)
 		}
+		if len(testcase.input) != originalLen {
+			t.Errorf("%v + %v: modified the original input!", testcase.input, testcase.nodes)
+		}
+	}
+}
+
+func BenchmarkNodeSetAdd(b *testing.B) {
+	n := report.MakeNodeSet()
+	for i := 0; i < 600; i++ {
+		n = n.Add(
+			report.MakeNode().WithID(fmt.Sprint(i)).WithMetadata(map[string]string{
+				"a": "1",
+				"b": "2",
+			}),
+		)
+	}
+
+	node := report.MakeNode().WithID("401.5").WithMetadata(map[string]string{
+		"a": "1",
+		"b": "2",
+	})
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		benchmarkResult = n.Add(node)
 	}
 }
 
@@ -145,8 +193,39 @@ func TestNodeSetMerge(t *testing.T) {
 			want:  report.MakeNodeSet(report.MakeNode().WithID("a"), report.MakeNode().WithID("b")),
 		},
 	} {
+		originalLen := len(testcase.input)
 		if want, have := testcase.want, testcase.input.Merge(testcase.other); !reflect.DeepEqual(want, have) {
 			t.Errorf("%v + %v: want %v, have %v", testcase.input, testcase.other, want, have)
 		}
+		if len(testcase.input) != originalLen {
+			t.Errorf("%v + %v: modified the original input!", testcase.input, testcase.other)
+		}
+	}
+}
+
+func BenchmarkNodeSetMerge(b *testing.B) {
+	n, other := report.MakeNodeSet(), report.MakeNodeSet()
+	for i := 0; i < 600; i++ {
+		n = n.Add(
+			report.MakeNode().WithID(fmt.Sprint(i)).WithMetadata(map[string]string{
+				"a": "1",
+				"b": "2",
+			}),
+		)
+	}
+
+	for i := 400; i < 1000; i++ {
+		other = other.Add(
+			report.MakeNode().WithID(fmt.Sprint(i)).WithMetadata(map[string]string{
+				"c": "1",
+				"d": "2",
+			}),
+		)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		benchmarkResult = n.Merge(other)
 	}
 }

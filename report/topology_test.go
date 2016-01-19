@@ -87,3 +87,25 @@ func TestStringSetMerge(t *testing.T) {
 		}
 	}
 }
+
+func TestNodeOrdering(t *testing.T) {
+	ids := [][2]string{{}, {"a", "0"}, {"a", "1"}, {"b", "0"}, {"b", "1"}, {"c", "3"}}
+	nodes := []report.Node{}
+	for _, id := range ids {
+		nodes = append(nodes, report.MakeNode().WithTopology(id[0]).WithID(id[1]))
+	}
+
+	for i, node := range nodes {
+		if !node.Equal(node) {
+			t.Errorf("Expected %q %q == %q %q, but was not", node.Topology, node.ID, node.Topology, node.ID)
+		}
+		if i > 0 {
+			if !node.After(nodes[i-1]) {
+				t.Errorf("Expected %q %q > %q %q, but was not", node.Topology, node.ID, nodes[i-1].Topology, nodes[i-1].ID)
+			}
+			if !nodes[i-1].Before(node) {
+				t.Errorf("Expected %q %q < %q %q, but was not", nodes[i-1].Topology, nodes[i-1].ID, node.Topology, node.ID)
+			}
+		}
+	}
+}

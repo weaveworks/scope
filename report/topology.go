@@ -130,6 +130,21 @@ func (n Node) WithTopology(topology string) Node {
 	return result
 }
 
+// Before is used for sorting nodes by topology and id
+func (n Node) Before(other Node) bool {
+	return n.Topology < other.Topology || (n.Topology == other.Topology && n.ID < other.ID)
+}
+
+// Equal is used for comparing nodes by topology and id
+func (n Node) Equal(other Node) bool {
+	return n.Topology == other.Topology && n.ID == other.ID
+}
+
+// After is used for sorting nodes by topology and id
+func (n Node) After(other Node) bool {
+	return other.Topology < n.Topology || (other.Topology == n.Topology && other.ID < n.ID)
+}
+
 // WithMetadata returns a fresh copy of n, with Metadata m merged in.
 func (n Node) WithMetadata(m map[string]string) Node {
 	result := n.Copy()

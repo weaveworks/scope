@@ -1,10 +1,20 @@
 package render_test
 
 import (
+	"encoding/json"
+	"flag"
+	"io/ioutil"
 	"testing"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/fixture"
+)
+
+var (
+	benchReportFile       = flag.String("bench-report-file", "", "json report file to use for benchmarking (relative to this package)")
+	benchmarkRenderResult map[string]render.RenderableNode
+	benchmarkStatsResult  render.Stats
 )
 
 func BenchmarkEndpointRender(b *testing.B) { benchmarkRender(b, render.EndpointRenderer) }
@@ -43,24 +53,45 @@ func BenchmarkPodServiceRender(b *testing.B) { benchmarkRender(b, render.PodServ
 func BenchmarkPodServiceStats(b *testing.B)  { benchmarkStats(b, render.PodServiceRenderer) }
 
 func benchmarkRender(b *testing.B, r render.Renderer) {
-	var result map[string]render.RenderableNode
+	report, err := loadReport()
+	if err != nil {
+		b.Fatal(err)
+	}
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		result = r.Render(fixture.Report)
-		if len(result) == 0 {
+		benchmarkRenderResult = r.Render(report)
+		if len(benchmarkRenderResult) == 0 {
 			b.Errorf("Rendered topology contained no nodes")
 		}
 	}
 }
 
 func benchmarkStats(b *testing.B, r render.Renderer) {
+	report, err := loadReport()
+	if err != nil {
+		b.Fatal(err)
+	}
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// No way to tell if this was successful :(
-		r.Stats(fixture.Report)
+		benchmarkStatsResult = r.Stats(report)
 	}
+}
+
+func loadReport() (report.Report, error) {
+	if *benchReportFile == "" {
+		return fixture.Report, nil
+	}
+
+	var rpt report.Report
+	b, err := ioutil.ReadFile(*benchReportFile)
+	if err != nil {
+		return rpt, err
+	}
+	err = json.Unmarshal(b, &rpt)
+	return rpt, err
 }
