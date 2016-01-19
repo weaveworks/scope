@@ -11,9 +11,9 @@ export default class Details extends React.Component {
       <div className="details">
         {details.map((obj, index) => {
           return (
-            <DetailsCard key={obj.id} controlError={this.props.controlError}
-              controlPending={this.props.controlPending} index={index}
-              cardCount={details.size} nodes={this.props.nodes} {...obj} />
+            <DetailsCard key={obj.id} index={index} cardCount={details.size}
+              nodes={this.props.nodes}
+              nodeControlStatus={this.props.controlStatus[obj.id]} {...obj} />
           );
         })}
       </div>

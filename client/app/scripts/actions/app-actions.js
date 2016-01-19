@@ -159,7 +159,10 @@ export function hitEsc() {
       type: ActionTypes.CLICK_CLOSE_TERMINAL,
       pipeId: controlPipe.id
     });
+    // Dont deselect node on ESC if there is a controlPipe (keep terminal open)
   } else if (AppStore.getSelectedNodeId() && !controlPipe) {
+    AppDispatcher.dispatch({type: ActionTypes.DESELECT_NODE});
+  }
   updateRoute();
 }
 

@@ -81,7 +81,7 @@ export default class App extends React.Component {
       <div className="app">
         {showingDebugToolbar() && <DebugToolbar />}
         {showingDetails && <Details nodes={this.state.nodes}
-          controlStatus={this.state.controlStatus[this.state.selectedNodeId]}
+          controlStatus={this.state.controlStatus}
           details={this.state.nodeDetails} />}
 
         {showingTerminal && <EmbeddedTerminal
