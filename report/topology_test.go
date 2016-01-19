@@ -45,6 +45,27 @@ func TestStringSetAdd(t *testing.T) {
 	}
 }
 
+func TestStringSetRemove(t *testing.T) {
+	for _, testcase := range []struct {
+		input report.StringSet
+		strs  []string
+		want  report.StringSet
+	}{
+		{input: report.StringSet(nil), strs: []string{}, want: report.StringSet(nil)},
+		{input: report.MakeStringSet(), strs: []string{}, want: report.MakeStringSet()},
+		{input: report.MakeStringSet("a"), strs: []string{}, want: report.MakeStringSet("a")},
+		{input: report.MakeStringSet(), strs: []string{"a"}, want: report.MakeStringSet()},
+		{input: report.MakeStringSet("a"), strs: []string{"a"}, want: report.StringSet{}},
+		{input: report.MakeStringSet("b"), strs: []string{"a", "b"}, want: report.StringSet{}},
+		{input: report.MakeStringSet("a"), strs: []string{"c", "b"}, want: report.MakeStringSet("a")},
+		{input: report.MakeStringSet("a", "c"), strs: []string{"b", "b", "b"}, want: report.MakeStringSet("a", "c")},
+	} {
+		if want, have := testcase.want, testcase.input.Remove(testcase.strs...); !reflect.DeepEqual(want, have) {
+			t.Errorf("%v - %v: want %#v, have %#v", testcase.input, testcase.strs, want, have)
+		}
+	}
+}
+
 func TestStringSetMerge(t *testing.T) {
 	for _, testcase := range []struct {
 		input report.StringSet
@@ -63,6 +84,28 @@ func TestStringSetMerge(t *testing.T) {
 	} {
 		if want, have := testcase.want, testcase.input.Merge(testcase.other); !reflect.DeepEqual(want, have) {
 			t.Errorf("%v + %v: want %v, have %v", testcase.input, testcase.other, want, have)
+		}
+	}
+}
+
+func TestNodeOrdering(t *testing.T) {
+	ids := [][2]string{{}, {"a", "0"}, {"a", "1"}, {"b", "0"}, {"b", "1"}, {"c", "3"}}
+	nodes := []report.Node{}
+	for _, id := range ids {
+		nodes = append(nodes, report.MakeNode().WithTopology(id[0]).WithID(id[1]))
+	}
+
+	for i, node := range nodes {
+		if !node.Equal(node) {
+			t.Errorf("Expected %q %q == %q %q, but was not", node.Topology, node.ID, node.Topology, node.ID)
+		}
+		if i > 0 {
+			if !node.After(nodes[i-1]) {
+				t.Errorf("Expected %q %q > %q %q, but was not", node.Topology, node.ID, nodes[i-1].Topology, nodes[i-1].ID)
+			}
+			if !nodes[i-1].Before(node) {
+				t.Errorf("Expected %q %q < %q %q, but was not", nodes[i-1].Topology, nodes[i-1].ID, node.Topology, node.ID)
+			}
 		}
 	}
 }

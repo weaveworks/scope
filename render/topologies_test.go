@@ -43,7 +43,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID].Metadata[docker.LabelPrefix+"works.weave.role"] = "system"
 	have := render.FilterSystem(render.ContainerWithImageNameRenderer).Render(input).Prune()
 	want := expected.RenderedContainers.Copy()
-	delete(want, fixture.ClientContainerID)
+	delete(want, expected.ClientContainerRenderedID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -77,14 +77,14 @@ func TestPodFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
-	input.Pod.Nodes[fixture.ClientPodNodeID].Metadata[kubernetes.PodID] = "kube-system/foo"
+	input.Pod.Nodes[fixture.ClientPodNodeID].Metadata[kubernetes.PodID] = "pod:kube-system/foo"
 	input.Pod.Nodes[fixture.ClientPodNodeID].Metadata[kubernetes.Namespace] = "kube-system"
 	input.Pod.Nodes[fixture.ClientPodNodeID].Metadata[kubernetes.PodName] = "foo"
 	input.Container.Nodes[fixture.ClientContainerNodeID].Metadata[docker.LabelPrefix+"io.kubernetes.pod.name"] = "kube-system/foo"
 	have := render.FilterSystem(render.PodRenderer).Render(input).Prune()
 	want := expected.RenderedPods.Copy()
-	delete(want, fixture.ClientPodID)
-	delete(want, fixture.ClientContainerID)
+	delete(want, expected.ClientPodRenderedID)
+	delete(want, expected.ClientContainerRenderedID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

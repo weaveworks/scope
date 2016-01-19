@@ -28,9 +28,9 @@ function getStateFromStores() {
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
     hostname: AppStore.getHostname(),
-    selectedNodeId: AppStore.getSelectedNodeId(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
+    selectedNodeId: AppStore.getSelectedNodeId(),
     topologies: AppStore.getTopologies(),
     topologiesLoaded: AppStore.isTopologiesLoaded(),
     version: AppStore.getVersion(),
@@ -70,7 +70,7 @@ export default class App extends React.Component {
   }
 
   render() {
-    const showingDetails = this.state.selectedNodeId;
+    const showingDetails = this.state.nodeDetails.size > 0;
     const showingTerminal = this.state.controlPipe;
     const footer = `Version ${this.state.version} on ${this.state.hostname}`;
     // width of details panel blocking a view
@@ -81,13 +81,12 @@ export default class App extends React.Component {
       <div className="app">
         {showingDebugToolbar() && <DebugToolbar />}
         {showingDetails && <Details nodes={this.state.nodes}
-          nodeId={this.state.selectedNodeId}
-          controlStatus={this.state.controlStatus[this.state.selectedNodeId]}
+          controlStatus={this.state.controlStatus}
           details={this.state.nodeDetails} />}
 
         {showingTerminal && <EmbeddedTerminal
           pipe={this.state.controlPipe}
-          nodeId={this.state.selectedNodeId}
+          nodeId={this.state.controlPipe.nodeId}
           nodes={this.state.nodes} />}
 
         <div className="header">

@@ -46,7 +46,7 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 	}
 
 	{
-		nodeID := report.MakeContainerNodeID(mockHostID, mockContainerID)
+		nodeID := report.MakeContainerNodeID(mockContainerID)
 		want := report.Report{
 			Container: report.MakeTopology().AddNode(nodeID, report.MakeNodeWith(map[string]string{
 				docker.ContainerID:       mockContainerID,

@@ -119,6 +119,17 @@ func (f Filter) Stats(rpt report.Report) Stats {
 // to indicate a node has an edge pointing to it or from it
 const IsConnected = "is_connected"
 
+// FilterPseudo produces a renderer that removes pseudo nodes from the given
+// renderer
+func FilterPseudo(r Renderer) Renderer {
+	return Filter{
+		Renderer: r,
+		FilterFunc: func(node RenderableNode) bool {
+			return !node.Pseudo
+		},
+	}
+}
+
 // FilterUnconnected produces a renderer that filters unconnected nodes
 // from the given renderer
 func FilterUnconnected(r Renderer) Renderer {

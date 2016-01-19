@@ -55,7 +55,7 @@ func TestReporter(t *testing.T) {
 	want := report.MakeReport()
 	want.Container = report.Topology{
 		Nodes: report.Nodes{
-			report.MakeContainerNodeID("", "ping"): report.MakeNodeWith(map[string]string{
+			report.MakeContainerNodeID("ping"): report.MakeNodeWith(map[string]string{
 				docker.ContainerID:   "ping",
 				docker.ContainerName: "pong",
 				docker.ImageID:       "baz",
@@ -101,7 +101,7 @@ func TestReporter(t *testing.T) {
 	}
 	want.ContainerImage = report.Topology{
 		Nodes: report.Nodes{
-			report.MakeContainerNodeID("", "baz"): report.MakeNodeWith(map[string]string{
+			report.MakeContainerImageNodeID("baz"): report.MakeNodeWith(map[string]string{
 				docker.ImageID:   "baz",
 				docker.ImageName: "bang",
 			}),
@@ -109,7 +109,7 @@ func TestReporter(t *testing.T) {
 		Controls: report.Controls{},
 	}
 
-	reporter := docker.NewReporter(mockRegistryInstance, "", nil)
+	reporter := docker.NewReporter(mockRegistryInstance, "host1", nil)
 	have, _ := reporter.Report()
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))

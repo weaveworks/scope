@@ -28,7 +28,7 @@ var (
 	containerID     = "a1b2c3d4e5"
 	containerIP     = "192.168.0.1"
 	containerName   = "foo"
-	containerNodeID = report.MakeContainerNodeID(serverHostID, containerID)
+	containerNodeID = report.MakeContainerNodeID(containerID)
 
 	rpt = report.Report{
 		Endpoint: report.Topology{
@@ -37,13 +37,13 @@ var (
 					endpoint.Addr:        randomIP,
 					endpoint.Port:        randomPort,
 					endpoint.Conntracked: "true",
-				}).WithAdjacent(serverEndpointNodeID),
+				}).WithAdjacent(serverEndpointNodeID).WithID(randomEndpointNodeID).WithTopology(report.Endpoint),
 
 				serverEndpointNodeID: report.MakeNode().WithMetadata(map[string]string{
 					endpoint.Addr:        serverIP,
 					endpoint.Port:        serverPort,
 					endpoint.Conntracked: "true",
-				}),
+				}).WithID(serverEndpointNodeID).WithTopology(report.Endpoint),
 			},
 		},
 		Container: report.Topology{
@@ -55,7 +55,7 @@ var (
 				}).WithSets(report.Sets{
 					docker.ContainerIPs:   report.MakeStringSet(containerIP),
 					docker.ContainerPorts: report.MakeStringSet(fmt.Sprintf("%s:%s->%s/tcp", serverIP, serverPort, serverPort)),
-				}),
+				}).WithID(containerNodeID).WithTopology(report.Container),
 			},
 		},
 		Host: report.Topology{
@@ -64,7 +64,7 @@ var (
 					report.HostNodeID: serverHostNodeID,
 				}).WithSets(report.Sets{
 					host.LocalNetworks: report.MakeStringSet("192.168.0.0/16"),
-				}),
+				}).WithID(serverHostNodeID).WithTopology(report.Host),
 			},
 		},
 	}
@@ -74,16 +74,14 @@ var (
 			ID:         render.TheInternetID,
 			LabelMajor: render.TheInternetMajor,
 			Pseudo:     true,
-			Node:       report.MakeNode().WithAdjacent(containerID),
-			Origins:    report.MakeIDList(randomEndpointNodeID),
+			Node:       report.MakeNode().WithAdjacent(render.MakeContainerID(containerID)),
 		},
-		containerID: {
-			ID:          containerID,
+		render.MakeContainerID(containerID): {
+			ID:          render.MakeContainerID(containerID),
 			LabelMajor:  containerName,
 			LabelMinor:  serverHostID,
 			Rank:        "",
 			Pseudo:      false,
-			Origins:     report.MakeIDList(containerNodeID, serverEndpointNodeID, serverHostNodeID),
 			Node:        report.MakeNode(),
 			ControlNode: containerNodeID,
 		},

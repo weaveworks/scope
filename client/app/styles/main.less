@@ -29,6 +29,7 @@
 @text-color: lighten(@primary-color, 10%);
 @text-secondary-color: lighten(@primary-color, 33%);
 @text-tertiary-color: lighten(@primary-color, 50%);
+@border-light-color: lighten(@primary-color, 66%);
 @text-darker-color: @primary-color;
 @white: @background-secondary-color;
 
@@ -338,20 +339,38 @@ h2 {
 
 }
 
-#details {
-  position: fixed;
-  z-index: 1024;
-  display: block;
-  right: @details-window-padding-left;
-  top: 24px;
-  bottom: 48px;
-  width: @details-window-width;
+.details {
+  &-wrapper {
+    position: fixed;
+    z-index: 1024;
+    right: @details-window-padding-left;
+    top: 24px;
+    bottom: 48px;
+    width: @details-window-width;
+    transition: transform 0.33333s cubic-bezier(0,0,0.21,1);
+  }
+}
 
-  .details-tools-wrapper {
+.node-details {
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.86);
+  display: flex;
+  flex-flow: column;
+  margin-bottom: 12px;
+  padding-bottom: 2px;
+  border-radius: 2px;
+  background-color: #fff;
+  .shadow-2;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &-tools-wrapper {
     position: relative;
   }
 
-  .details-tools {
+  &-tools {
     position: absolute;
     top: 6px;
     right: 8px;
@@ -374,31 +393,11 @@ h2 {
     }
   }
 
-  .details-wrapper {
-    height: 100%;
-    padding-bottom: 8px;
-    border-radius: 2px;
-    background-color: #fff;
-    .shadow-2;
-  }
-}
-
-.node-details {
-  height: 100%;
-  width: 100%;
-  background-color: rgba(255, 255, 255, 0.86);
-  display: flex;
-  flex-flow: column;
-
   &-header {
     .colorable;
 
     &-wrapper {
-      padding: 36px 36px 16px 36px;
-    }
-
-    &-row {
-      display: flex;
+      padding: 36px 36px 8px 36px;
     }
 
     &-label {
@@ -406,12 +405,6 @@ h2 {
       margin: 0;
       width: 348px;
       padding-top: 0;
-
-      &-minor {
-        flex: 1;
-        font-size: 120%;
-        color: @white;
-      }
     }
 
     .details-tools {
@@ -426,11 +419,50 @@ h2 {
 
   }
 
+  &-relatives {
+    margin-top: 4px;
+    font-size: 120%;
+    color: @white;
+
+    &-link {
+      .truncate;
+      .palable;
+      display: inline-block;
+      margin-right: 0.5em;
+      cursor: pointer;
+      text-decoration: underline;
+      opacity: 0.8;
+      max-width: 12em;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    &-more {
+      .palable;
+      padding: 0 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      opacity: 0.7;
+      font-size: 60%;
+      font-weight: bold;
+      display: inline-block;
+      position: relative;
+      top: -5px;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
   &-controls {
     white-space: nowrap;
+    padding: 8px 0;
 
     &-wrapper {
-      padding: 8px 36px 8px 32px;
+      padding: 0 36px 0 32px;
     }
 
     .node-control-button {
@@ -478,8 +510,7 @@ h2 {
   &-content {
     flex: 1;
     padding: 0 36px 0 36px;
-    overflow-y: scroll;
-    width: 100%;
+    overflow-y: auto;
 
     &-info {
       margin-top: 16px;
@@ -492,36 +523,206 @@ h2 {
       color: @background-medium-color;
       opacity: 0.7;
     }
+
+    &-section {
+      margin: 16px 0;
+
+      &-header {
+        text-transform: uppercase;
+        font-size: 90%;
+        color: @text-tertiary-color;
+        padding: 4px 0;
+      }
+    }
+  }
+
+  &-health {
+    display: flex;
+    justify-content: space-around;
+    align-content: center;
+    text-align: center;
+
+    &-expand {
+      .palable;
+      margin: 4px 16px 0;
+      border-top: 1px solid @border-light-color;
+      text-transform: uppercase;
+      font-size: 80%;
+      color: @text-secondary-color;
+      width: 100%;
+      cursor: pointer;
+      opacity: 0.8;
+
+      &:hover {
+        opacity: 1.0;
+      }
+    }
+
+    &-overflow {
+      .palable;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      border-left: 1px solid @border-light-color;
+      opacity: 0.85;
+      cursor: pointer;
+      position: relative;
+      padding-bottom: 16px;
+
+      &:hover {
+        opacity: 1;
+      }
+
+      &-expand {
+        text-transform: uppercase;
+        font-size: 70%;
+        color: @text-secondary-color;
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+      }
+
+      &-item {
+        padding: 4px 8px;
+        line-height: 1.2;
+        flex-basis: 48%;
+
+        &-value {
+          color: @text-secondary-color;
+          font-size: 100%;
+        }
+
+        &-label {
+          color: @text-secondary-color;
+          text-transform: uppercase;
+          font-size: 60%;
+        }
+      }
+    }
+
+    &-item {
+      padding: 8px 16px;
+      width: 33%;
+
+      &-label {
+        color: @text-secondary-color;
+        text-transform: uppercase;
+        font-size: 80%;
+      }
+
+      &-value {
+        color: @text-secondary-color;
+        font-size: 150%;
+        padding-bottom: 0.5em;
+      }
+    }
+  }
+
+  &-info {
+    margin: 16px 0;
+
+    &-field {
+      display: flex;
+      align-items: baseline;
+
+      &-label {
+        text-align: right;
+        width: 30%;
+        color: @text-secondary-color;
+        padding: 0 0.5em 0 0;
+        white-space: nowrap;
+        text-transform: uppercase;
+        font-size: 80%;
+
+        &::after {
+          content: ':';
+        }
+      }
+
+      &-value {
+        font-size: 105%;
+        flex: 1;
+        color: @text-color;
+      }
+    }
   }
 
   &-table {
+    width: 100%;
+    border-spacing: 0;
+    /* need fixed for truncating, but that does not extend wide columns dynamically */
+    table-layout: fixed;
 
-    &:last-child {
-      margin-bottom: 1em;
+    &-wrapper {
+      margin: 24px 0;
     }
 
-    &-title {
+    &-header {
       text-transform: uppercase;
-      margin-bottom: 0;
-      color: @text-secondary-color;
-      font-size: 100%;
-    }
+      color: @text-tertiary-color;
+      font-size: 90%;
+      text-align: right;
+      cursor: pointer;
+      padding: 0;
 
-    &-row {
-      white-space: nowrap;
-      clear: left;
-
-      &-key {
-        width: 11em;
-        float: left;
+      &-sorted {
+        color: @text-secondary-color;
       }
 
-      &-value-major {
-        margin-right: 0.5em;
+      &-sorter {
+        margin: 0 0.25em;
+      }
+
+      &:first-child {
+        margin-right: 0;
+        text-align: left;
+      }
+    }
+
+    &-more {
+      .palable;
+      padding: 2px 0;
+      text-transform: uppercase;
+      cursor: pointer;
+      color: @text-secondary-color;
+      opacity: 0.7;
+      font-size: 80%;
+      font-weight: bold;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    &-node {
+      font-size: 105%;
+      line-height: 1.5;
+
+      > * {
+        padding: 0;
+      }
+
+      &-link {
+        .palable;
+        text-decoration: underline;
+        cursor: pointer;
+        opacity: 0.8;
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+
+      &-value {
+        flex: 1;
+        margin-left: 0.5em;
+        text-align: right;
       }
 
       &-value-scalar {
-        width: 2em;
+        // width: 2em;
         text-align: right;
         margin-right: 0.5em;
       }
@@ -663,6 +864,12 @@ h2 {
 
 .terminal-inactive .terminal-cursor {
   visibility: hidden;
+}
+
+.metric {
+  &-unit {
+    padding-left: 0.25em;
+  }
 }
 
 .sidebar {

@@ -235,7 +235,9 @@ func parseTime(s string) time.Time {
 	return t
 }
 
-func (m Metric) toIntermediate() WireMetrics {
+// ToIntermediate converts the metric to a representation suitable
+// for serialization.
+func (m Metric) ToIntermediate() WireMetrics {
 	samples := []Sample{}
 	if m.Samples != nil {
 		m.Samples.Reverse().ForEach(func(s interface{}) {
@@ -268,7 +270,7 @@ func (m WireMetrics) fromIntermediate() Metric {
 // MarshalJSON implements json.Marshaller
 func (m Metric) MarshalJSON() ([]byte, error) {
 	buf := bytes.Buffer{}
-	in := m.toIntermediate()
+	in := m.ToIntermediate()
 	err := json.NewEncoder(&buf).Encode(in)
 	return buf.Bytes(), err
 }
@@ -286,7 +288,7 @@ func (m *Metric) UnmarshalJSON(input []byte) error {
 // GobEncode implements gob.Marshaller
 func (m Metric) GobEncode() ([]byte, error) {
 	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(m.toIntermediate())
+	err := gob.NewEncoder(&buf).Encode(m.ToIntermediate())
 	return buf.Bytes(), err
 }
 

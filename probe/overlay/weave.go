@@ -195,7 +195,7 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 		if entry.Tombstone > 0 {
 			continue
 		}
-		nodeID := report.MakeContainerNodeID(w.hostID, entry.ContainerID)
+		nodeID := report.MakeContainerNodeID(entry.ContainerID)
 		node, ok := r.Container.Nodes[nodeID]
 		if !ok {
 			continue

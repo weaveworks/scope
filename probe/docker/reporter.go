@@ -48,7 +48,7 @@ func (r *Reporter) ContainerUpdated(c Container) {
 	// Publish a 'short cut' report container just this container
 	rpt := report.MakeReport()
 	rpt.Shortcut = true
-	rpt.Container.AddNode(report.MakeContainerNodeID(r.hostID, c.ID()), c.GetNode(r.hostID, localAddrs))
+	rpt.Container.AddNode(report.MakeContainerNodeID(c.ID()), c.GetNode(r.hostID, localAddrs))
 	r.probe.Publish(rpt)
 }
 
@@ -104,7 +104,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	})
 
 	r.registry.WalkContainers(func(c Container) {
-		nodeID := report.MakeContainerNodeID(r.hostID, c.ID())
+		nodeID := report.MakeContainerNodeID(c.ID())
 		result.AddNode(nodeID, c.GetNode(r.hostID, localAddrs))
 	})
 
@@ -124,7 +124,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 			nmd.Metadata[ImageName] = image.RepoTags[0]
 		}
 
-		nodeID := report.MakeContainerNodeID(r.hostID, image.ID)
+		nodeID := report.MakeContainerImageNodeID(image.ID)
 		result.AddNode(nodeID, nmd)
 	})
 

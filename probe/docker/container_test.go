@@ -92,6 +92,8 @@ func TestContainer(t *testing.T) {
 	).WithMetrics(report.Metrics{
 		"cpu_total_usage": report.MakeMetric(),
 		"memory_usage":    report.MakeMetric().Add(now, 12345),
+	}).WithParents(report.Sets{
+		report.ContainerImage: report.MakeStringSet(report.MakeContainerImageNodeID("baz")),
 	})
 	test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 		node := c.GetNode("scope", []net.IP{})

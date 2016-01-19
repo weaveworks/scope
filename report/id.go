@@ -102,13 +102,18 @@ func MakeHostNodeID(hostID string) string {
 }
 
 // MakeContainerNodeID produces a container node ID from its composite parts.
-func MakeContainerNodeID(hostID, containerID string) string {
-	return hostID + ScopeDelim + containerID
+func MakeContainerNodeID(containerID string) string {
+	return containerID + ScopeDelim + "<container>"
+}
+
+// MakeContainerImageNodeID produces a container image node ID from its composite parts.
+func MakeContainerImageNodeID(containerImageID string) string {
+	return containerImageID + ScopeDelim + "<container_image>"
 }
 
 // MakePodNodeID produces a pod node ID from its composite parts.
-func MakePodNodeID(hostID, podID string) string {
-	return hostID + ScopeDelim + podID
+func MakePodNodeID(namespaceID, podID string) string {
+	return namespaceID + ScopeDelim + podID
 }
 
 // MakeServiceNodeID produces a service node ID from its composite parts.
@@ -143,14 +148,13 @@ func ParseEndpointNodeID(endpointNodeID string) (hostID, address, port string, o
 	return fields[0], fields[1], fields[2], true
 }
 
-// ParseContainerNodeID produces the host and container id from an container
-// node ID.
-func ParseContainerNodeID(containerNodeID string) (hostID, containerID string, ok bool) {
+// ParseContainerNodeID produces the container id from an container node ID.
+func ParseContainerNodeID(containerNodeID string) (containerID string, ok bool) {
 	fields := strings.SplitN(containerNodeID, ScopeDelim, 2)
-	if len(fields) != 2 {
-		return "", "", false
+	if len(fields) != 2 || fields[1] != "<container>" {
+		return "", false
 	}
-	return fields[0], fields[1], true
+	return fields[0], true
 }
 
 // ParseAddressNodeID produces the host ID, address from an address node ID.

@@ -26,14 +26,22 @@ export function changeTopologyOption(option, value, topologyId) {
     AppStore.getActiveTopologyOptions()
   );
   getNodeDetails(
-    AppStore.getCurrentTopologyUrl(),
-    AppStore.getSelectedNodeId()
+    AppStore.getTopologyUrlsById(),
+    AppStore.getNodeDetails()
   );
 }
 
-export function clickCloseDetails() {
+export function clickBackground() {
   AppDispatcher.dispatch({
-    type: ActionTypes.CLICK_CLOSE_DETAILS
+    type: ActionTypes.CLICK_BACKGROUND
+  });
+  updateRoute();
+}
+
+export function clickCloseDetails(nodeId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_CLOSE_DETAILS,
+    nodeId
   });
   updateRoute();
 }
@@ -49,15 +57,45 @@ export function clickCloseTerminal(pipeId, closePipe) {
   updateRoute();
 }
 
-export function clickNode(nodeId) {
+export function clickNode(nodeId, label, origin) {
   AppDispatcher.dispatch({
     type: ActionTypes.CLICK_NODE,
-    nodeId: nodeId
+    origin,
+    label,
+    nodeId
   });
   updateRoute();
   getNodeDetails(
+    AppStore.getTopologyUrlsById(),
+    AppStore.getNodeDetails()
+  );
+}
+
+export function clickRelative(nodeId, topologyId, label, origin) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_RELATIVE,
+    label,
+    origin,
+    nodeId,
+    topologyId
+  });
+  updateRoute();
+  getNodeDetails(
+    AppStore.getTopologyUrlsById(),
+    AppStore.getNodeDetails()
+  );
+}
+
+export function clickShowTopologyForNode(topologyId, nodeId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE,
+    topologyId,
+    nodeId
+  });
+  updateRoute();
+  getNodesDelta(
     AppStore.getCurrentTopologyUrl(),
-    AppStore.getSelectedNodeId()
+    AppStore.getActiveTopologyOptions()
   );
 }
 
@@ -121,7 +159,7 @@ export function hitEsc() {
       type: ActionTypes.CLICK_CLOSE_TERMINAL,
       pipeId: controlPipe.id
     });
-  // Dont deselect node on ESC if there is a controlPipe (keep terminal open)
+    // Dont deselect node on ESC if there is a controlPipe (keep terminal open)
   } else if (AppStore.getSelectedNodeId() && !controlPipe) {
     AppDispatcher.dispatch({type: ActionTypes.DESELECT_NODE});
   }
@@ -181,8 +219,8 @@ export function receiveTopologies(topologies) {
     AppStore.getActiveTopologyOptions()
   );
   getNodeDetails(
-    AppStore.getCurrentTopologyUrl(),
-    AppStore.getSelectedNodeId()
+    AppStore.getTopologyUrlsById(),
+    AppStore.getNodeDetails()
   );
 }
 
@@ -195,6 +233,7 @@ export function receiveApiDetails(apiDetails) {
 }
 
 export function receiveControlPipeFromParams(pipeId, rawTty) {
+  // TODO add nodeId
   AppDispatcher.dispatch({
     type: ActionTypes.RECEIVE_CONTROL_PIPE,
     pipeId: pipeId,
@@ -216,6 +255,7 @@ export function receiveControlPipe(pipeId, nodeId, rawTty) {
 
   AppDispatcher.dispatch({
     type: ActionTypes.RECEIVE_CONTROL_PIPE,
+    nodeId: nodeId,
     pipeId: pipeId,
     rawTty: rawTty
   });
@@ -238,6 +278,13 @@ export function receiveError(errorUrl) {
   });
 }
 
+export function receiveNotFound(nodeId) {
+  AppDispatcher.dispatch({
+    nodeId,
+    type: ActionTypes.RECEIVE_NOT_FOUND
+  });
+}
+
 export function route(state) {
   AppDispatcher.dispatch({
     state: state,
@@ -251,7 +298,7 @@ export function route(state) {
     AppStore.getActiveTopologyOptions()
   );
   getNodeDetails(
-    AppStore.getCurrentTopologyUrl(),
-    AppStore.getSelectedNodeId()
+    AppStore.getTopologyUrlsById(),
+    AppStore.getNodeDetails()
   );
 }

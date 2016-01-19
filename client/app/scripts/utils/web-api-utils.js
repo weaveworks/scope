@@ -4,7 +4,7 @@ import reqwest from 'reqwest';
 import { clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
   receiveControlPipe, receiveControlPipeStatus, receiveControlSuccess,
-  receiveTopologies } from '../actions/app-actions';
+  receiveTopologies, receiveNotFound } from '../actions/app-actions';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = wsProto + '://' + location.host + location.pathname.replace(/\/$/, '');
@@ -118,23 +118,33 @@ export function getNodesDelta(topologyUrl, options) {
   }
 }
 
-export function getNodeDetails(topologyUrl, nodeId) {
-  if (topologyUrl && nodeId) {
-    const url = [topologyUrl, '/', encodeURIComponent(nodeId)]
+export function getNodeDetails(topologyUrlsById, nodeMap) {
+  // get details for all opened nodes
+  const obj = nodeMap.last();
+  if (obj && topologyUrlsById.has(obj.topologyId)) {
+    const topologyUrl = topologyUrlsById.get(obj.topologyId);
+    const url = [topologyUrl, '/', encodeURIComponent(obj.id)]
       .join('').substr(1);
     reqwest({
       url: url,
       success: function(res) {
-        receiveNodeDetails(res.node);
+        // make sure node is still selected
+        if (nodeMap.has(res.node.id)) {
+          receiveNodeDetails(res.node);
+        }
       },
       error: function(err) {
         log('Error in node details request: ' + err.responseText);
         // dont treat missing node as error
-        if (err.status !== 404) {
+        if (err.status === 404) {
+          receiveNotFound(obj.id);
+        } else {
           receiveError(topologyUrl);
         }
       }
     });
+  } else {
+    log('No details or url found for ', obj);
   }
 }
 

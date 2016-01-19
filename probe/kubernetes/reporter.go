@@ -26,12 +26,13 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	podTopology, err := r.podTopology(services)
+	podTopology, containerTopology, err := r.podTopology(services)
 	if err != nil {
 		return result, err
 	}
 	result.Service = result.Service.Merge(serviceTopology)
 	result.Pod = result.Pod.Merge(podTopology)
+	result.Container = result.Container.Merge(containerTopology)
 	return result, nil
 }
 
@@ -49,8 +50,8 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 	return result, services, err
 }
 
-func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
-	result := report.MakeTopology()
+func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topology, error) {
+	pods, containers := report.MakeTopology(), report.MakeTopology()
 	err := r.client.WalkPods(func(p Pod) error {
 		for _, service := range services {
 			if service.Selector().Matches(p.Labels()) {
@@ -58,8 +59,18 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
 			}
 		}
 		nodeID := report.MakePodNodeID(p.Namespace(), p.Name())
-		result = result.AddNode(nodeID, p.GetNode())
+		pods = pods.AddNode(nodeID, p.GetNode())
+
+		container := report.MakeNodeWith(map[string]string{
+			PodID:     p.ID(),
+			Namespace: p.Namespace(),
+		}).WithParents(report.Sets{
+			report.Pod: report.MakeStringSet(nodeID),
+		})
+		for _, containerID := range p.ContainerIDs() {
+			containers.AddNode(report.MakeContainerNodeID(containerID), container)
+		}
 		return nil
 	})
-	return result, err
+	return pods, containers, err
 }

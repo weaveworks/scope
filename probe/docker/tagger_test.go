@@ -38,7 +38,12 @@ func TestTagger(t *testing.T) {
 	var (
 		pid1NodeID = report.MakeProcessNodeID("somehost.com", "2")
 		pid2NodeID = report.MakeProcessNodeID("somehost.com", "3")
-		wantNode   = report.MakeNodeWith(map[string]string{docker.ContainerID: "ping"})
+		wantNode   = report.MakeNodeWith(map[string]string{
+			docker.ContainerID: "ping",
+		}).WithParents(report.Sets{
+			report.Container:      report.MakeStringSet(report.MakeContainerNodeID("ping")),
+			report.ContainerImage: report.MakeStringSet(report.MakeContainerImageNodeID("baz")),
+		})
 	)
 
 	input := report.MakeReport()

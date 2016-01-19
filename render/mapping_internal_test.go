@@ -12,7 +12,7 @@ func TestDockerImageName(t *testing.T) {
 		{"docker-registry.domain.name:5000/repo/image1:ver", "repo/image1"},
 		{"foo", "foo"},
 	} {
-		name := imageNameWithoutVersion(input.in)
+		name := ImageNameWithoutVersion(input.in)
 		if name != input.name {
 			t.Fatalf("%s: %s != %s", input.in, name, input.name)
 		}

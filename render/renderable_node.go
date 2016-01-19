@@ -8,13 +8,13 @@ import (
 // an element of a topology. It should contain information that's relevant
 // to rendering a node when there are many nodes visible at once.
 type RenderableNode struct {
-	ID          string        `json:"id"`                    //
-	LabelMajor  string        `json:"label_major"`           // e.g. "process", human-readable
-	LabelMinor  string        `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
-	Rank        string        `json:"rank"`                  // to help the layout engine
-	Pseudo      bool          `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
-	Origins     report.IDList `json:"origins,omitempty"`     // Core node IDs that contributed information
-	ControlNode string        `json:"-"`                     // ID of node from which to show the controls in the UI
+	ID          string         `json:"id"`                    //
+	LabelMajor  string         `json:"label_major"`           // e.g. "process", human-readable
+	LabelMinor  string         `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
+	Rank        string         `json:"rank"`                  // to help the layout engine
+	Pseudo      bool           `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
+	Children    report.NodeSet `json:"children,omitempty"`    // Nodes which have been grouped into this one
+	ControlNode string         `json:"-"`                     // ID of node from which to show the controls in the UI
 
 	report.EdgeMetadata `json:"metadata"` // Numeric sums
 	report.Node
@@ -28,23 +28,22 @@ func NewRenderableNode(id string) RenderableNode {
 		LabelMinor:   "",
 		Rank:         "",
 		Pseudo:       false,
-		Origins:      report.MakeIDList(),
 		EdgeMetadata: report.EdgeMetadata{},
 		Node:         report.MakeNode(),
 	}
 }
 
 // NewRenderableNodeWith makes a new RenderableNode with some fields filled in
-func NewRenderableNodeWith(id, major, minor, rank string, rn RenderableNode) RenderableNode {
+func NewRenderableNodeWith(id, major, minor, rank string, node RenderableNode) RenderableNode {
 	return RenderableNode{
 		ID:           id,
 		LabelMajor:   major,
 		LabelMinor:   minor,
 		Rank:         rank,
 		Pseudo:       false,
-		Origins:      rn.Origins.Copy(),
-		EdgeMetadata: rn.EdgeMetadata.Copy(),
-		Node:         rn.Node.Copy(),
+		Children:     node.Children.Copy(),
+		EdgeMetadata: node.EdgeMetadata.Copy(),
+		Node:         node.Node.Copy(),
 	}
 }
 
@@ -56,7 +55,7 @@ func NewDerivedNode(id string, node RenderableNode) RenderableNode {
 		LabelMinor:   "",
 		Rank:         "",
 		Pseudo:       node.Pseudo,
-		Origins:      node.Origins.Copy(),
+		Children:     node.Children.Copy(),
 		EdgeMetadata: node.EdgeMetadata.Copy(),
 		Node:         node.Node.Copy(),
 		ControlNode:  "", // Do not propagate ControlNode when making a derived node!
@@ -70,7 +69,7 @@ func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode 
 		LabelMinor:   "",
 		Rank:         "",
 		Pseudo:       true,
-		Origins:      node.Origins.Copy(),
+		Children:     node.Children.Copy(),
 		EdgeMetadata: node.EdgeMetadata.Copy(),
 		Node:         node.Node.Copy(),
 	}
@@ -80,6 +79,13 @@ func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode 
 func (rn RenderableNode) WithNode(n report.Node) RenderableNode {
 	result := rn.Copy()
 	result.Node = result.Node.Merge(n)
+	return result
+}
+
+// WithParents creates a new RenderableNode based on rn, where n has the given parents set
+func (rn RenderableNode) WithParents(p report.Sets) RenderableNode {
+	result := rn.Copy()
+	result.Node.Parents = p
 	return result
 }
 
@@ -107,7 +113,7 @@ func (rn RenderableNode) Merge(other RenderableNode) RenderableNode {
 		panic(result.ID)
 	}
 
-	result.Origins = rn.Origins.Merge(other.Origins)
+	result.Children = rn.Children.Merge(other.Children)
 	result.EdgeMetadata = rn.EdgeMetadata.Merge(other.EdgeMetadata)
 	result.Node = rn.Node.Merge(other.Node)
 
@@ -122,7 +128,7 @@ func (rn RenderableNode) Copy() RenderableNode {
 		LabelMinor:   rn.LabelMinor,
 		Rank:         rn.Rank,
 		Pseudo:       rn.Pseudo,
-		Origins:      rn.Origins.Copy(),
+		Children:     rn.Children.Copy(),
 		EdgeMetadata: rn.EdgeMetadata.Copy(),
 		Node:         rn.Node.Copy(),
 		ControlNode:  rn.ControlNode,
@@ -135,6 +141,7 @@ func (rn RenderableNode) Copy() RenderableNode {
 func (rn RenderableNode) Prune() RenderableNode {
 	cp := rn.Copy()
 	cp.Node = report.MakeNode().WithAdjacent(cp.Node.Adjacency...)
+	cp.Children = nil
 	return cp
 }
 

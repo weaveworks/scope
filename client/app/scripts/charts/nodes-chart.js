@@ -5,7 +5,7 @@ import React from 'react';
 import { Map as makeMap } from 'immutable';
 import timely from 'timely';
 
-import { clickCloseDetails } from '../actions/app-actions';
+import { clickBackground } from '../actions/app-actions';
 import AppStore from '../stores/app-store';
 import Edge from './edge';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
@@ -357,7 +357,7 @@ export default class NodesChart extends React.Component {
 
   handleMouseClick() {
     if (!this.isZooming) {
-      clickCloseDetails();
+      clickBackground();
     } else {
       this.isZooming = false;
     }
