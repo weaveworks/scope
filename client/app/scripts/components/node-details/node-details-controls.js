@@ -13,6 +13,10 @@ export default class NodeDetailsControls extends React.Component {
 
     return (
       <div className="node-details-controls">
+        {this.props.error && <div className="node-details-controls-error" title={this.props.error}>
+          <span className="node-details-controls-error-icon fa fa-warning" />
+          <span className="node-details-controls-error-messages">{this.props.error}</span>
+        </div>}
         <span className="node-details-controls-buttons">
           {this.props.controls && this.props.controls.map(control => {
             return (
@@ -22,10 +26,6 @@ export default class NodeDetailsControls extends React.Component {
           })}
         </span>
         {this.props.controls && <span title="Applying..." className={spinnerClassName}></span>}
-        {this.props.error && <div className="node-details-controls-error" title={this.props.error}>
-          <span className="node-details-controls-error-icon fa fa-warning" />
-          <span className="node-details-controls-error-messages">{this.props.error}</span>
-        </div>}
       </div>
     );
   }
