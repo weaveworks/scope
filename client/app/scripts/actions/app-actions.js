@@ -117,11 +117,17 @@ export function enterNode(nodeId) {
 }
 
 export function hitEsc() {
+  const controlPipe = AppStore.getControlPipe();
+  if (controlPipe && controlPipe.status === 'PIPE_DELETED') {
+    AppDispatcher.dispatch({
+      type: ActionTypes.CLICK_CLOSE_TERMINAL,
+      pipeId: controlPipe.id
+    });
   // Dont deselect node on ESC if there is a controlPipe (keep terminal open)
-  if (AppStore.getSelectedNodeId() && !AppStore.getControlPipe()) {
+  } else if (AppStore.getSelectedNodeId() && !controlPipe) {
     AppDispatcher.dispatch({type: ActionTypes.DESELECT_NODE});
-    updateRoute();
   }
+  updateRoute();
 }
 
 export function leaveEdge(edgeId) {
