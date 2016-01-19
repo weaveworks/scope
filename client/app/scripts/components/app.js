@@ -19,8 +19,7 @@ const ESC_KEY_CODE = 27;
 function getStateFromStores() {
   return {
     activeTopologyOptions: AppStore.getActiveTopologyOptions(),
-    controlError: AppStore.getControlError(),
-    controlPending: AppStore.isControlPending(),
+    controlStatus: AppStore.getControlStatus(),
     controlPipe: AppStore.getControlPipe(),
     currentTopology: AppStore.getCurrentTopology(),
     currentTopologyId: AppStore.getCurrentTopologyId(),
@@ -82,9 +81,8 @@ export default class App extends React.Component {
       <div className="app">
         {showingDebugToolbar() && <DebugToolbar />}
         {showingDetails && <Details nodes={this.state.nodes}
-          controlError={this.state.controlError}
-          controlPending={this.state.controlPending}
           nodeId={this.state.selectedNodeId}
+          controlStatus={this.state.controlStatus[this.state.selectedNodeId]}
           details={this.state.nodeDetails} />}
 
         {showingTerminal && <EmbeddedTerminal

@@ -3,7 +3,7 @@ import debug from 'debug';
 import AppDispatcher from '../dispatcher/app-dispatcher';
 import ActionTypes from '../constants/action-types';
 import { updateRoute } from '../utils/router-utils';
-import { doControl as doControlRequest, getNodesDelta, getNodeDetails,
+import { doControlRequest, getNodesDelta, getNodeDetails,
   getTopologies, deletePipe } from '../utils/web-api-utils';
 import AppStore from '../stores/app-store';
 
@@ -79,9 +79,10 @@ export function openWebsocket() {
   });
 }
 
-export function clearControlError() {
+export function clearControlError(nodeId) {
   AppDispatcher.dispatch({
-    type: ActionTypes.CLEAR_CONTROL_ERROR
+    type: ActionTypes.CLEAR_CONTROL_ERROR,
+    nodeId: nodeId
   });
 }
 
@@ -91,15 +92,12 @@ export function closeWebsocket() {
   });
 }
 
-export function doControl(probeId, nodeId, control) {
+export function doControl(nodeId, control) {
   AppDispatcher.dispatch({
-    type: ActionTypes.DO_CONTROL
+    type: ActionTypes.DO_CONTROL,
+    nodeId: nodeId
   });
-  doControlRequest(
-    probeId,
-    nodeId,
-    control
-  );
+  doControlRequest(nodeId, control);
 }
 
 export function enterEdge(edgeId) {
@@ -144,16 +142,18 @@ export function leaveNode(nodeId) {
   });
 }
 
-export function receiveControlError(err) {
+export function receiveControlError(nodeId, err) {
   AppDispatcher.dispatch({
     type: ActionTypes.DO_CONTROL_ERROR,
+    nodeId: nodeId,
     error: err
   });
 }
 
-export function receiveControlSuccess() {
+export function receiveControlSuccess(nodeId) {
   AppDispatcher.dispatch({
-    type: ActionTypes.DO_CONTROL_SUCCESS
+    type: ActionTypes.DO_CONTROL_SUCCESS,
+    nodeId: nodeId
   });
 }
 
@@ -203,7 +203,7 @@ export function receiveControlPipeFromParams(pipeId, rawTty) {
 }
 
 export function receiveControlPipe(pipeId, nodeId, rawTty) {
-  if (nodeId.split(';').pop() !== AppStore.getSelectedNodeId()) {
+  if (nodeId !== AppStore.getSelectedNodeId()) {
     log('Node was deselected before we could set up control!');
     deletePipe(pipeId);
     return;

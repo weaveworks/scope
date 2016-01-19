@@ -155,23 +155,23 @@ export function getApiDetails() {
   });
 }
 
-export function doControl(probeId, nodeId, control) {
+export function doControlRequest(nodeId, control) {
   clearTimeout(controlErrorTimer);
-  const url = `api/control/${encodeURIComponent(probeId)}/`
-    + `${encodeURIComponent(nodeId)}/${control}`;
+  const url = `api/control/${encodeURIComponent(control.probeId)}/`
+    + `${encodeURIComponent(control.nodeId)}/${control.id}`;
   reqwest({
     method: 'POST',
     url: url,
     success: function(res) {
-      receiveControlSuccess();
+      receiveControlSuccess(nodeId);
       if (res && res.pipe) {
         receiveControlPipe(res.pipe, nodeId, res.raw_tty, true);
       }
     },
     error: function(err) {
-      receiveControlError(err.response);
+      receiveControlError(nodeId, err.response);
       controlErrorTimer = setTimeout(function() {
-        clearControlError();
+        clearControlError(nodeId);
       }, 10000);
     }
   });
