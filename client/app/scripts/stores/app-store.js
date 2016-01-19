@@ -166,7 +166,8 @@ export class AppStore extends Store {
   }
 
   getControlPipe() {
-    return controlPipes.last();
+    const cp = controlPipes.last();
+    return cp && cp.toJS();
   }
 
   getCurrentTopology() {
@@ -437,11 +438,11 @@ export class AppStore extends Store {
       break;
 
     case ActionTypes.RECEIVE_CONTROL_PIPE:
-      controlPipes = controlPipes.set(payload.pipeId, {
+      controlPipes = controlPipes.set(payload.pipeId, makeOrderedMap({
         id: payload.pipeId,
         nodeId: payload.nodeId,
         raw: payload.rawTty
-      });
+      }));
       this.__emitChange();
       break;
 
@@ -549,9 +550,10 @@ export class AppStore extends Store {
       setDefaultTopologyOptions(topologies);
       selectedNodeId = payload.state.selectedNodeId;
       if (payload.state.controlPipe) {
-        controlPipes = makeOrderedMap(
-          [[payload.state.controlPipe.pipeId, payload.state.controlPipe]]
-        );
+        controlPipes = makeOrderedMap({
+          [payload.state.controlPipe.pipeId]:
+            makeOrderedMap(payload.state.controlPipe)
+        });
       } else {
         controlPipes = controlPipes.clear();
       }

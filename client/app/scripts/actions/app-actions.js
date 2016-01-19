@@ -1,9 +1,13 @@
+import debug from 'debug';
+
 import AppDispatcher from '../dispatcher/app-dispatcher';
 import ActionTypes from '../constants/action-types';
 import { updateRoute } from '../utils/router-utils';
 import { doControlRequest, getNodesDelta, getNodeDetails,
   getTopologies, deletePipe } from '../utils/web-api-utils';
 import AppStore from '../stores/app-store';
+
+const log = debug('scope:app-actions');
 
 export function changeTopologyOption(option, value, topologyId) {
   AppDispatcher.dispatch({
