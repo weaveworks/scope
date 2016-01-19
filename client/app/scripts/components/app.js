@@ -12,6 +12,7 @@ import Details from './details';
 import Nodes from './nodes';
 import EmbeddedTerminal from './embedded-terminal';
 import { getRouter } from '../utils/router-utils';
+import { showingDebugToolbar, DebugToolbar } from './debug-toolbar.js';
 
 const ESC_KEY_CODE = 27;
 
@@ -79,6 +80,7 @@ export default class App extends React.Component {
 
     return (
       <div className="app">
+        {showingDebugToolbar() && <DebugToolbar />}
         {showingDetails && <Details nodes={this.state.nodes}
           controlError={this.state.controlError}
           controlPending={this.state.controlPending}

@@ -359,6 +359,9 @@ export function doLayout(immNodes, immEdges, opts) {
     const graph = cache.graph;
     const nodesWithDegrees = updateNodeDegrees(immNodes, immEdges);
     layout = runLayoutEngine(graph, nodesWithDegrees, immEdges, opts);
+    if (!layout) {
+      return layout;
+    }
     layout = layoutSingleNodes(layout, opts);
     layout = shiftLayoutToCenter(layout, opts);
   }

@@ -84,11 +84,11 @@ export default class Edge extends React.Component {
   }
 
   ensureSameLength(points) {
-    // Spring needs constant list length, hoping that dagre will insert never more than 10
-    const length = 10;
+    // Spring needs constant list length, hoping that dagre will insert never more than 30
+    const length = 30;
     let missing = length - points.length;
 
-    while (missing) {
+    while (missing > 0) {
       points.unshift(points[0]);
       missing = length - points.length;
     }
