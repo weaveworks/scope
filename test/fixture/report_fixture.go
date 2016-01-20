@@ -99,16 +99,26 @@ var (
 	ServiceID           = "ping/pongservice"
 	ServiceNodeID       = report.MakeServiceNodeID(KubernetesNamespace, "pongservice")
 
-	LoadMetric  = report.MakeMetric().Add(Now, 0.01).WithFirst(Now.Add(-15 * time.Second))
-	LoadMetrics = report.Metrics{
-		host.Load1:  LoadMetric,
-		host.Load5:  LoadMetric,
-		host.Load15: LoadMetric,
-	}
+	ClientProcess1CPUMetric    = report.MakeMetric().Add(Now, 0.01).WithFirst(Now.Add(-1 * time.Second))
+	ClientProcess1MemoryMetric = report.MakeMetric().Add(Now, 0.02).WithFirst(Now.Add(-2 * time.Second))
 
-	CPUMetric = report.MakeMetric().Add(Now, 0.01).WithFirst(Now.Add(-15 * time.Second))
+	ClientContainerCPUMetric    = report.MakeMetric().Add(Now, 0.03).WithFirst(Now.Add(-3 * time.Second))
+	ClientContainerMemoryMetric = report.MakeMetric().Add(Now, 0.04).WithFirst(Now.Add(-4 * time.Second))
 
-	MemoryMetric = report.MakeMetric().Add(Now, 0.01).WithFirst(Now.Add(-15 * time.Second))
+	ServerContainerCPUMetric    = report.MakeMetric().Add(Now, 0.05).WithFirst(Now.Add(-5 * time.Second))
+	ServerContainerMemoryMetric = report.MakeMetric().Add(Now, 0.06).WithFirst(Now.Add(-6 * time.Second))
+
+	ClientHostCPUMetric    = report.MakeMetric().Add(Now, 0.07).WithFirst(Now.Add(-7 * time.Second))
+	ClientHostMemoryMetric = report.MakeMetric().Add(Now, 0.08).WithFirst(Now.Add(-8 * time.Second))
+	ClientHostLoad1Metric  = report.MakeMetric().Add(Now, 0.09).WithFirst(Now.Add(-9 * time.Second))
+	ClientHostLoad5Metric  = report.MakeMetric().Add(Now, 0.10).WithFirst(Now.Add(-10 * time.Second))
+	ClientHostLoad15Metric = report.MakeMetric().Add(Now, 0.11).WithFirst(Now.Add(-11 * time.Second))
+
+	ServerHostCPUMetric    = report.MakeMetric().Add(Now, 0.12).WithFirst(Now.Add(-12 * time.Second))
+	ServerHostMemoryMetric = report.MakeMetric().Add(Now, 0.13).WithFirst(Now.Add(-13 * time.Second))
+	ServerHostLoad1Metric  = report.MakeMetric().Add(Now, 0.14).WithFirst(Now.Add(-14 * time.Second))
+	ServerHostLoad5Metric  = report.MakeMetric().Add(Now, 0.15).WithFirst(Now.Add(-15 * time.Second))
+	ServerHostLoad15Metric = report.MakeMetric().Add(Now, 0.16).WithFirst(Now.Add(-16 * time.Second))
 
 	Report = report.Report{
 		Endpoint: report.Topology{
@@ -210,8 +220,8 @@ var (
 					"container":       report.MakeStringSet(ClientContainerNodeID),
 					"container_image": report.MakeStringSet(ClientContainerImageNodeID),
 				}).WithMetrics(report.Metrics{
-					process.CPUUsage:    CPUMetric,
-					process.MemoryUsage: MemoryMetric,
+					process.CPUUsage:    ClientProcess1CPUMetric,
+					process.MemoryUsage: ClientProcess1MemoryMetric,
 				}),
 				ClientProcess2NodeID: report.MakeNodeWith(map[string]string{
 					process.PID:        Client2PID,
@@ -257,8 +267,8 @@ var (
 					"container_image": report.MakeStringSet(ClientContainerImageNodeID),
 					"pod":             report.MakeStringSet(ClientPodID),
 				}).WithMetrics(report.Metrics{
-					docker.CPUTotalUsage: CPUMetric,
-					docker.MemoryUsage:   MemoryMetric,
+					docker.CPUTotalUsage: ClientContainerCPUMetric,
+					docker.MemoryUsage:   ClientContainerMemoryMetric,
 				}),
 				ServerContainerNodeID: report.MakeNodeWith(map[string]string{
 					docker.ContainerID:                                      ServerContainerID,
@@ -277,8 +287,8 @@ var (
 					"container_image": report.MakeStringSet(ServerContainerImageNodeID),
 					"pod":             report.MakeStringSet(ServerPodID),
 				}).WithMetrics(report.Metrics{
-					docker.CPUTotalUsage: CPUMetric,
-					docker.MemoryUsage:   MemoryMetric,
+					docker.CPUTotalUsage: ServerContainerCPUMetric,
+					docker.MemoryUsage:   ServerContainerMemoryMetric,
 				}),
 			},
 		},
@@ -342,11 +352,11 @@ var (
 				}).WithID(ClientHostNodeID).WithTopology(report.Host).WithSets(report.Sets{
 					host.LocalNetworks: report.MakeStringSet("10.10.10.0/24"),
 				}).WithMetrics(report.Metrics{
-					host.CPUUsage: CPUMetric,
-					host.MemUsage: MemoryMetric,
-					host.Load1:    LoadMetric,
-					host.Load5:    LoadMetric,
-					host.Load15:   LoadMetric,
+					host.CPUUsage: ClientHostCPUMetric,
+					host.MemUsage: ClientHostMemoryMetric,
+					host.Load1:    ClientHostLoad1Metric,
+					host.Load5:    ClientHostLoad5Metric,
+					host.Load15:   ClientHostLoad15Metric,
 				}),
 				ServerHostNodeID: report.MakeNodeWith(map[string]string{
 					"host_name":       ServerHostName,
@@ -355,11 +365,11 @@ var (
 				}).WithID(ServerHostNodeID).WithTopology(report.Host).WithSets(report.Sets{
 					host.LocalNetworks: report.MakeStringSet("10.10.10.0/24"),
 				}).WithMetrics(report.Metrics{
-					host.CPUUsage: CPUMetric,
-					host.MemUsage: MemoryMetric,
-					host.Load1:    LoadMetric,
-					host.Load5:    LoadMetric,
-					host.Load15:   LoadMetric,
+					host.CPUUsage: ServerHostCPUMetric,
+					host.MemUsage: ServerHostMemoryMetric,
+					host.Load1:    ServerHostLoad1Metric,
+					host.Load5:    ServerHostLoad5Metric,
+					host.Load15:   ServerHostLoad15Metric,
 				}),
 			},
 		},
