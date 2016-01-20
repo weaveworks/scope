@@ -55,7 +55,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 					Metric: &fixture.ClientHostCPUMetric,
 				},
 				{
-					ID:     host.MemUsage,
+					ID:     host.MemoryUsage,
 					Format: "filesize",
 					Label:  "Memory",
 					Value:  0.08,

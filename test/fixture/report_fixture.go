@@ -352,11 +352,11 @@ var (
 				}).WithID(ClientHostNodeID).WithTopology(report.Host).WithSets(report.Sets{
 					host.LocalNetworks: report.MakeStringSet("10.10.10.0/24"),
 				}).WithMetrics(report.Metrics{
-					host.CPUUsage: ClientHostCPUMetric,
-					host.MemUsage: ClientHostMemoryMetric,
-					host.Load1:    ClientHostLoad1Metric,
-					host.Load5:    ClientHostLoad5Metric,
-					host.Load15:   ClientHostLoad15Metric,
+					host.CPUUsage:    ClientHostCPUMetric,
+					host.MemoryUsage: ClientHostMemoryMetric,
+					host.Load1:       ClientHostLoad1Metric,
+					host.Load5:       ClientHostLoad5Metric,
+					host.Load15:      ClientHostLoad15Metric,
 				}),
 				ServerHostNodeID: report.MakeNodeWith(map[string]string{
 					"host_name":       ServerHostName,
@@ -365,11 +365,11 @@ var (
 				}).WithID(ServerHostNodeID).WithTopology(report.Host).WithSets(report.Sets{
 					host.LocalNetworks: report.MakeStringSet("10.10.10.0/24"),
 				}).WithMetrics(report.Metrics{
-					host.CPUUsage: ServerHostCPUMetric,
-					host.MemUsage: ServerHostMemoryMetric,
-					host.Load1:    ServerHostLoad1Metric,
-					host.Load5:    ServerHostLoad5Metric,
-					host.Load15:   ServerHostLoad15Metric,
+					host.CPUUsage:    ServerHostCPUMetric,
+					host.MemoryUsage: ServerHostMemoryMetric,
+					host.Load1:       ServerHostLoad1Metric,
+					host.Load5:       ServerHostLoad5Metric,
+					host.Load15:      ServerHostLoad15Metric,
 				}),
 			},
 		},

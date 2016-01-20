@@ -76,7 +76,7 @@ func TestNodeMetrics(t *testing.T) {
 					Metric: &fixture.ClientHostCPUMetric,
 				},
 				{
-					ID:     host.MemUsage,
+					ID:     host.MemoryUsage,
 					Label:  "Memory",
 					Format: "filesize",
 					Group:  "",

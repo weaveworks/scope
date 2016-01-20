@@ -14,8 +14,8 @@ const (
 	PPID        = "ppid"
 	Cmdline     = "cmdline"
 	Threads     = "threads"
-	CPUUsage    = "cpu_usage_percent"
-	MemoryUsage = "memory_usage_bytes"
+	CPUUsage    = "process_cpu_usage_percent"
+	MemoryUsage = "process_memory_usage_bytes"
 )
 
 // Reporter generates Reports containing the Process topology.

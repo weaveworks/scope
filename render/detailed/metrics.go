@@ -27,7 +27,7 @@ var (
 	)
 	hostNodeMetrics = renderMetrics(
 		MetricRow{ID: host.CPUUsage, Label: "CPU", Format: percentFormat},
-		MetricRow{ID: host.MemUsage, Label: "Memory", Format: filesizeFormat},
+		MetricRow{ID: host.MemoryUsage, Label: "Memory", Format: filesizeFormat},
 		MetricRow{ID: host.Load1, Label: "Load (1m)", Format: defaultFormat, Group: "load"},
 		MetricRow{ID: host.Load5, Label: "Load (5m)", Format: defaultFormat, Group: "load"},
 		MetricRow{ID: host.Load15, Label: "Load (15m)", Format: defaultFormat, Group: "load"},

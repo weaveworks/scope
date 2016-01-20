@@ -90,7 +90,7 @@ var (
 		topologyID string
 		NodeSummaryGroup
 	}{
-		{report.Host, NodeSummaryGroup{TopologyID: "hosts", Label: "Hosts", Columns: []string{host.CPUUsage, host.MemUsage}}},
+		{report.Host, NodeSummaryGroup{TopologyID: "hosts", Label: "Hosts", Columns: []string{host.CPUUsage, host.MemoryUsage}}},
 		{report.Pod, NodeSummaryGroup{TopologyID: "pods", Label: "Pods", Columns: []string{}}},
 		{report.ContainerImage, NodeSummaryGroup{TopologyID: "containers-by-image", Label: "Container Images", Columns: []string{}}},
 		{report.Container, NodeSummaryGroup{TopologyID: "containers", Label: "Containers", Columns: []string{docker.CPUTotalUsage, docker.MemoryUsage}}},
