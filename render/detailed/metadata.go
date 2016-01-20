@@ -87,6 +87,7 @@ func NodeMetadata(n report.Node) []MetadataRow {
 		report.ContainerImage: containerImageNodeMetadata,
 		report.Pod:            podNodeMetadata,
 		report.Host:           hostNodeMetadata,
+		"group":               groupNodeMetadata,
 	}
 	if renderer, ok := renderers[n.Topology]; ok {
 		return renderer(n)
@@ -142,6 +143,55 @@ func getDockerLabelRows(nmd report.Node) []MetadataRow {
 	sort.Strings(labelKeys)
 	for _, labelKey := range labelKeys {
 		rows = append(rows, MetadataRow{ID: "label_" + labelKey, Value: labels[labelKey]})
+	}
+	return rows
+}
+
+func groupNodeMetadata(n report.Node) []MetadataRow {
+	rows := []MetadataRow{}
+
+	for _, template := range []struct {
+		keys   []string
+		lookup func(string, report.Node) (string, bool)
+	}{
+		{
+			n.Metadata.Keys(),
+			func(key string, n report.Node) (string, bool) {
+				val, ok := n.Metadata[key]
+				return val, ok
+			},
+		},
+		{
+			n.Latest.Keys(),
+			func(key string, n report.Node) (string, bool) {
+				return n.Latest.Lookup(key)
+			},
+		},
+		{
+			n.Sets.Keys(),
+			func(key string, n report.Node) (string, bool) {
+				if val, ok := n.Sets[key]; ok && len(val) > 0 {
+					return strings.Join(val, ", "), true
+				}
+				return "", false
+			},
+		},
+	} {
+		sort.Strings(template.keys)
+		for _, key := range template.keys {
+			if strings.HasPrefix(key, "_") {
+				continue
+			}
+			val, ok := template.lookup(key, n)
+			if !ok {
+				continue
+			}
+
+			rows = append(rows, MetadataRow{
+				ID:    key,
+				Value: val,
+			})
+		}
 	}
 	return rows
 }

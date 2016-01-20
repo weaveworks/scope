@@ -54,3 +54,8 @@ func MakeHostID(hostID string) string {
 func MakePseudoNodeID(parts ...string) string {
 	return makeID("pseudo", parts...)
 }
+
+// MakeGroupID makes a node ID for grouped aggregate rendered nodes.
+func MakeGroupID(key, val string) string {
+	return makeID("group", key, val)
+}

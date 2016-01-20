@@ -145,17 +145,37 @@ func (n Node) After(other Node) bool {
 	return other.Topology < n.Topology || (other.Topology == n.Topology && other.ID < n.ID)
 }
 
-// WithMetadata returns a fresh copy of n, with Metadata m merged in.
-func (n Node) WithMetadata(m map[string]string) Node {
+// WithMetadata returns a fresh copy of n, with Metadata m merged in. If any
+// specific keys are specified only those keys will be copied.
+func (n Node) WithMetadata(m map[string]string, keys ...string) Node {
+	values := m
+	if len(keys) > 0 {
+		values = map[string]string{}
+		for _, key := range keys {
+			if value, ok := m[key]; ok {
+				values[key] = value
+			}
+		}
+	}
 	result := n.Copy()
-	result.Metadata = result.Metadata.Merge(m)
+	result.Metadata = result.Metadata.Merge(values)
 	return result
 }
 
-// WithCounters returns a fresh copy of n, with Counters c merged in.
-func (n Node) WithCounters(c map[string]int) Node {
+// WithCounters returns a fresh copy of n, with Counters c merged in. If any
+// specific keys are specified only those keys will be copied.
+func (n Node) WithCounters(c map[string]int, keys ...string) Node {
+	values := c
+	if len(keys) > 0 {
+		values = map[string]int{}
+		for _, key := range keys {
+			if value, ok := c[key]; ok {
+				values[key] = value
+			}
+		}
+	}
 	result := n.Copy()
-	result.Counters = result.Counters.Merge(c)
+	result.Counters = result.Counters.Merge(values)
 	return result
 }
 
@@ -166,10 +186,20 @@ func (n Node) WithSet(key string, set StringSet) Node {
 	return result
 }
 
-// WithSets returns a fresh copy of n, with sets merged in.
-func (n Node) WithSets(sets Sets) Node {
+// WithSets returns a fresh copy of n, with sets merged in. If any
+// specific keys are specified only those keys will be copied.
+func (n Node) WithSets(sets Sets, keys ...string) Node {
+	values := sets
+	if len(keys) > 0 {
+		values = Sets{}
+		for _, key := range keys {
+			if value, ok := sets[key]; ok {
+				values[key] = value
+			}
+		}
+	}
 	result := n.Copy()
-	result.Sets = result.Sets.Merge(sets)
+	result.Sets = result.Sets.Merge(values)
 	return result
 }
 
@@ -180,10 +210,20 @@ func (n Node) WithMetric(key string, metric Metric) Node {
 	return result
 }
 
-// WithMetrics returns a fresh copy of n, with metrics merged in.
-func (n Node) WithMetrics(metrics Metrics) Node {
+// WithMetrics returns a fresh copy of n, with metrics merged in. If any
+// specific keys are specified only those keys will be copied.
+func (n Node) WithMetrics(metrics Metrics, keys ...string) Node {
+	values := metrics
+	if len(keys) > 0 {
+		values = Metrics{}
+		for _, key := range keys {
+			if value, ok := metrics[key]; ok {
+				values[key] = value
+			}
+		}
+	}
 	result := n.Copy()
-	result.Metrics = result.Metrics.Merge(metrics)
+	result.Metrics = result.Metrics.Merge(values)
 	return result
 }
 
@@ -214,6 +254,22 @@ func (n Node) WithControls(cs ...string) Node {
 func (n Node) WithLatest(k string, ts time.Time, v string) Node {
 	result := n.Copy()
 	result.Latest = result.Latest.Set(k, ts, v)
+	return result
+}
+
+// WithLatestMap produces a new Node with latest values merged in
+func (n Node) WithLatestMap(l LatestMap, keys ...string) Node {
+	values := l
+	if len(keys) > 0 {
+		values = MakeLatestMap()
+		for _, key := range keys {
+			if value, timestamp, ok := l.LookupWithTime(key); ok {
+				values = values.Set(key, timestamp, value)
+			}
+		}
+	}
+	result := n.Copy()
+	result.Latest = result.Latest.Merge(values)
 	return result
 }
 
@@ -266,6 +322,16 @@ func (n Node) Merge(other Node) Node {
 // Metadata is a string->string map.
 type Metadata map[string]string
 
+// Keys returns a slice with all keys in this map.
+// This operation is O(N) in the number of keys.
+func (m Metadata) Keys() []string {
+	result := make([]string, 0, len(m))
+	for k := range m {
+		result = append(result, k)
+	}
+	return result
+}
+
 // Merge merges two node metadata maps together. In case of conflict, the
 // other (right-hand) side wins. Always reassign the result of merge to the
 // destination. Merge does not modify the receiver.
@@ -310,6 +376,16 @@ func (c Counters) Copy() Counters {
 
 // Sets is a string->set-of-strings map.
 type Sets map[string]StringSet
+
+// Keys returns a slice with all keys in this map.
+// This operation is O(N) in the number of keys.
+func (s Sets) Keys() []string {
+	result := make([]string, 0, len(s))
+	for k := range s {
+		result = append(result, k)
+	}
+	return result
+}
 
 // Merge merges two sets maps into a fresh set, performing set-union merges as
 // appropriate.
