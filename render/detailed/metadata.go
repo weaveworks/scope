@@ -1,7 +1,7 @@
 package detailed
 
 import (
-	"fmt"
+	"encoding/json"
 	"sort"
 	"strings"
 
@@ -15,55 +15,67 @@ import (
 
 var (
 	processNodeMetadata = renderMetadata(
-		meta(process.PID, "PID"),
-		meta(process.PPID, "Parent PID"),
-		meta(process.Cmdline, "Command"),
-		meta(process.Threads, "# Threads"),
+		meta(process.PID),
+		meta(process.PPID),
+		meta(process.Cmdline),
+		meta(process.Threads),
 	)
 	containerNodeMetadata = renderMetadata(
-		meta(docker.ContainerID, "ID"),
-		meta(docker.ImageID, "Image ID"),
-		ltst(docker.ContainerState, "State"),
-		sets(docker.ContainerIPs, "IPs"),
-		sets(docker.ContainerPorts, "Ports"),
-		meta(docker.ContainerCreated, "Created"),
-		meta(docker.ContainerCommand, "Command"),
-		meta(overlay.WeaveMACAddress, "Weave MAC"),
-		meta(overlay.WeaveDNSHostname, "Weave DNS Hostname"),
+		meta(docker.ContainerID),
+		meta(docker.ImageID),
+		ltst(docker.ContainerState),
+		sets(docker.ContainerIPs),
+		sets(docker.ContainerPorts),
+		meta(docker.ContainerCreated),
+		meta(docker.ContainerCommand),
+		meta(overlay.WeaveMACAddress),
+		meta(overlay.WeaveDNSHostname),
 		getDockerLabelRows,
 	)
 	containerImageNodeMetadata = renderMetadata(
-		meta(docker.ImageID, "Image ID"),
+		meta(docker.ImageID),
 		getDockerLabelRows,
 	)
 	podNodeMetadata = renderMetadata(
-		meta(kubernetes.PodID, "ID"),
-		meta(kubernetes.Namespace, "Namespace"),
-		meta(kubernetes.PodCreated, "Created"),
+		meta(kubernetes.PodID),
+		meta(kubernetes.Namespace),
+		meta(kubernetes.PodCreated),
 	)
 	hostNodeMetadata = renderMetadata(
-		meta(host.HostName, "Hostname"),
-		meta(host.OS, "Operating system"),
-		meta(host.KernelVersion, "Kernel version"),
-		meta(host.Uptime, "Uptime"),
-		sets(host.LocalNetworks, "Local Networks"),
+		meta(host.HostName),
+		meta(host.OS),
+		meta(host.KernelVersion),
+		meta(host.Uptime),
+		sets(host.LocalNetworks),
 	)
 )
 
 // MetadataRow is a row for the metadata table.
 type MetadataRow struct {
-	ID    string `json:"id"`
-	Label string `json:"label"`
-	Value string `json:"value"`
+	ID    string
+	Value string
 }
 
 // Copy returns a value copy of a metadata row.
 func (m MetadataRow) Copy() MetadataRow {
 	return MetadataRow{
 		ID:    m.ID,
-		Label: m.Label,
 		Value: m.Value,
 	}
+}
+
+// MarshalJSON marshals this MetadataRow to json. It adds a label before
+// rendering.
+func (m MetadataRow) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		ID    string `json:"id"`
+		Label string `json:"label"`
+		Value string `json:"value"`
+	}{
+		ID:    m.ID,
+		Label: Label(m.ID),
+		Value: m.Value,
+	})
 }
 
 // NodeMetadata produces a table (to be consumed directly by the UI) based on
@@ -92,28 +104,28 @@ func renderMetadata(templates ...func(report.Node) []MetadataRow) func(report.No
 	}
 }
 
-func meta(id, label string) func(report.Node) []MetadataRow {
+func meta(id string) func(report.Node) []MetadataRow {
 	return func(n report.Node) []MetadataRow {
 		if val, ok := n.Metadata[id]; ok {
-			return []MetadataRow{{ID: id, Label: label, Value: val}}
+			return []MetadataRow{{ID: id, Value: val}}
 		}
 		return nil
 	}
 }
 
-func sets(id, label string) func(report.Node) []MetadataRow {
+func sets(id string) func(report.Node) []MetadataRow {
 	return func(n report.Node) []MetadataRow {
 		if val, ok := n.Sets[id]; ok && len(val) > 0 {
-			return []MetadataRow{{ID: id, Label: label, Value: strings.Join(val, ", ")}}
+			return []MetadataRow{{ID: id, Value: strings.Join(val, ", ")}}
 		}
 		return nil
 	}
 }
 
-func ltst(id, label string) func(report.Node) []MetadataRow {
+func ltst(id string) func(report.Node) []MetadataRow {
 	return func(n report.Node) []MetadataRow {
 		if val, ok := n.Latest.Lookup(id); ok {
-			return []MetadataRow{{ID: id, Label: label, Value: val}}
+			return []MetadataRow{{ID: id, Value: val}}
 		}
 		return nil
 	}
@@ -129,7 +141,7 @@ func getDockerLabelRows(nmd report.Node) []MetadataRow {
 	}
 	sort.Strings(labelKeys)
 	for _, labelKey := range labelKeys {
-		rows = append(rows, MetadataRow{ID: "label_" + labelKey, Label: fmt.Sprintf("Label %q", labelKey), Value: labels[labelKey]})
+		rows = append(rows, MetadataRow{ID: "label_" + labelKey, Value: labels[labelKey]})
 	}
 	return rows
 }
