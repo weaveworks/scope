@@ -555,7 +555,7 @@ export class AppStore extends Store {
       selectedNodeId = payload.state.selectedNodeId;
       if (payload.state.controlPipe) {
         controlPipes = makeOrderedMap({
-          [payload.state.controlPipe.pipeId]:
+          [payload.state.controlPipe.id]:
             makeOrderedMap(payload.state.controlPipe)
         });
       } else {
