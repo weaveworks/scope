@@ -239,6 +239,10 @@ export class AppStore extends Store {
     }).toJS();
   }
 
+  getTopCardNodeId() {
+    return nodeDetails.last().id;
+  }
+
   getNodes() {
     return nodes;
   }
