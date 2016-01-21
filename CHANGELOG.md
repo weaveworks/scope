@@ -13,8 +13,6 @@ New features and enhancements:
   [#819](https://github.com/weaveworks/scope/pull/819)
 
 Bug fixes
-- Less hacky fix for /%2F bug
-  [#806](https://github.com/weaveworks/scope/pull/806)
 - k8s: Filter out pause as a system container
   [#823](https://github.com/weaveworks/scope/pull/823)
 - k8s: Render container names from label "io.kubernetes.container.name"
@@ -31,7 +29,7 @@ Bug fixes
   [#766](https://github.com/weaveworks/scope/pull/766)
   [#780](https://github.com/weaveworks/scope/pull/780)
   [#817](https://github.com/weaveworks/scope/pull/817)
-- Correctly extract image name when using custom hub.
+- Correctly collapse nodes in the Container Images view when they use non-standard port.
   [#824](https://github.com/weaveworks/scope/pull/824)
 - Stop scope crashing chrome when we get "long" edges.
   [#837](https://github.com/weaveworks/scope/pull/837)
