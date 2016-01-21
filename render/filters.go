@@ -117,7 +117,7 @@ func (f Filter) Stats(rpt report.Report) Stats {
 
 // IsConnected is the key added to Node.Metadata by ColorConnected
 // to indicate a node has an edge pointing to it or from it
-const IsConnected = "is_connected"
+const IsConnected = "_is_connected"
 
 // FilterPseudo produces a renderer that removes pseudo nodes from the given
 // renderer

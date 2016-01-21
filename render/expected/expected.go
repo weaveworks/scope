@@ -172,7 +172,7 @@ var (
 				fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID],
 				fixture.Report.Process.Nodes[fixture.ClientProcess2NodeID],
 			),
-			Node: report.MakeNode().WithAdjacent(ServerContainerRenderedID),
+			Node: report.MakeNode().WithAdjacent(ServerContainerRenderedID).WithMetrics(fixture.Report.Container.Nodes[fixture.ClientContainerNodeID].Metrics),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(30),
 				EgressByteCount:   newu64(300),
@@ -188,7 +188,7 @@ var (
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ServerProcessNodeID],
 			),
-			Node: report.MakeNode(),
+			Node: report.MakeNode().WithMetrics(fixture.Report.Container.Nodes[fixture.ServerContainerNodeID].Metrics),
 			EdgeMetadata: report.EdgeMetadata{
 				IngressPacketCount: newu64(210),
 				IngressByteCount:   newu64(2100),
@@ -278,7 +278,7 @@ var (
 				fixture.Report.Container.Nodes[fixture.ServerContainerNodeID],
 				fixture.Report.Container.Nodes[fixture.ServerProcessNodeID],
 			),
-			Node: report.MakeNode(),
+			Node: report.MakeNode().WithMetrics(fixture.Report.Host.Nodes[fixture.ServerHostNodeID].Metrics),
 			EdgeMetadata: report.EdgeMetadata{
 				IngressPacketCount: newu64(210),
 				IngressByteCount:   newu64(2100),
@@ -296,7 +296,7 @@ var (
 				fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID],
 				fixture.Report.Process.Nodes[fixture.ClientProcess2NodeID],
 			),
-			Node: report.MakeNode().WithAdjacent(ServerHostRenderedID),
+			Node: report.MakeNode().WithAdjacent(ServerHostRenderedID).WithMetrics(fixture.Report.Host.Nodes[fixture.ClientHostNodeID].Metrics),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(30),
 				EgressByteCount:   newu64(300),

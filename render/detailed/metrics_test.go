@@ -25,7 +25,6 @@ func TestNodeMetrics(t *testing.T) {
 			want: []detailed.MetricRow{
 				{
 					ID:     process.CPUUsage,
-					Label:  "CPU",
 					Format: "percent",
 					Group:  "",
 					Value:  0.01,
@@ -33,7 +32,6 @@ func TestNodeMetrics(t *testing.T) {
 				},
 				{
 					ID:     process.MemoryUsage,
-					Label:  "Memory",
 					Format: "filesize",
 					Group:  "",
 					Value:  0.01,
@@ -47,7 +45,6 @@ func TestNodeMetrics(t *testing.T) {
 			want: []detailed.MetricRow{
 				{
 					ID:     docker.CPUTotalUsage,
-					Label:  "CPU",
 					Format: "percent",
 					Group:  "",
 					Value:  0.01,
@@ -55,7 +52,6 @@ func TestNodeMetrics(t *testing.T) {
 				},
 				{
 					ID:     docker.MemoryUsage,
-					Label:  "Memory",
 					Format: "filesize",
 					Group:  "",
 					Value:  0.01,
@@ -69,7 +65,6 @@ func TestNodeMetrics(t *testing.T) {
 			want: []detailed.MetricRow{
 				{
 					ID:     host.CPUUsage,
-					Label:  "CPU",
 					Format: "percent",
 					Group:  "",
 					Value:  0.01,
@@ -77,7 +72,6 @@ func TestNodeMetrics(t *testing.T) {
 				},
 				{
 					ID:     host.MemUsage,
-					Label:  "Memory",
 					Format: "filesize",
 					Group:  "",
 					Value:  0.01,
@@ -85,21 +79,18 @@ func TestNodeMetrics(t *testing.T) {
 				},
 				{
 					ID:     host.Load1,
-					Label:  "Load (1m)",
 					Group:  "load",
 					Value:  0.01,
 					Metric: &fixture.LoadMetric,
 				},
 				{
 					ID:     host.Load5,
-					Label:  "Load (5m)",
 					Group:  "load",
 					Value:  0.01,
 					Metric: &fixture.LoadMetric,
 				},
 				{
 					ID:     host.Load15,
-					Label:  "Load (15m)",
 					Group:  "load",
 					Value:  0.01,
 					Metric: &fixture.LoadMetric,

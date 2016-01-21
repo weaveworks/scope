@@ -44,11 +44,12 @@ type NodeSummary struct {
 // MakeNodeSummary summarizes a node, if possible.
 func MakeNodeSummary(n report.Node) (NodeSummary, bool) {
 	renderers := map[string]func(report.Node) NodeSummary{
-		"process":         processNodeSummary,
-		"container":       containerNodeSummary,
-		"container_image": containerImageNodeSummary,
-		"pod":             podNodeSummary,
-		"host":            hostNodeSummary,
+		report.Process:        processNodeSummary,
+		report.Container:      containerNodeSummary,
+		report.ContainerImage: containerImageNodeSummary,
+		report.Pod:            podNodeSummary,
+		report.Host:           hostNodeSummary,
+		"group":               groupNodeSummary,
 	}
 	if renderer, ok := renderers[n.Topology]; ok {
 		return renderer(n), true
@@ -111,6 +112,18 @@ func containerImageNodeSummary(nmd report.Node) NodeSummary {
 		Label:    imageName,
 		Linkable: true,
 		Metadata: containerImageNodeMetadata(nmd),
+	}
+}
+
+func groupNodeSummary(nmd report.Node) NodeSummary {
+	key := nmd.Metadata["group_key"]
+	value := nmd.Metadata["group_value"]
+	label := nmd.Metadata["group_label"]
+	return NodeSummary{
+		ID:       render.MakeGroupID(key, value),
+		Label:    label,
+		Linkable: true,
+		Metadata: groupNodeMetadata(nmd),
 	}
 }
 

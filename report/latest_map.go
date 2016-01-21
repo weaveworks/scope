@@ -66,6 +66,15 @@ func (m LatestMap) Lookup(key string) (string, bool) {
 	return value.(LatestEntry).Value, true
 }
 
+// LookupWithTime the value for the given key with the time.
+func (m LatestMap) LookupWithTime(key string) (string, time.Time, bool) {
+	value, ok := m.Map.Lookup(key)
+	if !ok {
+		return "", time.Time{}, false
+	}
+	return value.(LatestEntry).Value, value.(LatestEntry).Timestamp, true
+}
+
 // Set the value for the given key.
 func (m LatestMap) Set(key string, timestamp time.Time, value string) LatestMap {
 	return LatestMap{m.Map.Set(key, LatestEntry{timestamp, value})}

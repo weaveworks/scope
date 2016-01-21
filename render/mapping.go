@@ -464,14 +464,27 @@ func MapProcess2Name(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{}
 	}
 
-	node := NewDerivedNode(name, n)
-	node.LabelMajor = name
-	node.Rank = name
-	node.Node.Counters[processesKey] = 1
-	node.Node.Topology = "process_name"
-	node.Node.ID = name
-	node.Children = node.Children.Add(n.Node)
-	return RenderableNodes{name: node}
+	counters := map[string]int{processesKey: 1}
+	if threads, err := strconv.Atoi(n.Node.Metadata[process.Threads]); err == nil {
+		counters[process.Threads] = threads
+	}
+	result := NewDerivedNode(name, n)
+	result.LabelMajor = name
+	result.Rank = name
+	result.Node = report.MakeNodeWith(map[string]string{
+		"_group_key":   process.Name,
+		"_group_value": name,
+		"_group_label": name,
+	}).
+		WithMetadata(n.Node.Metadata, process.Name).
+		WithSets(n.Node.Sets, docker.ContainerPorts, docker.ContainerIPs).
+		WithParents(n.Node.Parents).
+		WithCounters(counters).
+		WithTopology("group").
+		WithID(MakeGroupID(process.Name, name))
+
+	result.Children = result.Children.Add(n.Node)
+	return RenderableNodes{name: result}
 }
 
 // MapCountProcessName maps 1:1 process name nodes, counting
@@ -515,16 +528,25 @@ func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) Renderable
 		return RenderableNodes{}
 	}
 
-	// Add container id key to the counters, which will later be counted to produce the minor label
 	id := MakeContainerImageID(imageID)
 	result := NewDerivedNode(id, n.WithParents(nil))
-	result.Node.Counters[containersKey] = 1
+	result.Node = report.MakeNodeWith(map[string]string{
+		"_group_key":   docker.ImageID,
+		"_group_value": imageID,
+		"_group_label": imageID,
+	}).
+		WithMetadata(n.Node.Metadata, docker.ImageID).
+		WithSets(n.Node.Sets, docker.ContainerPorts, docker.ContainerIPs).
+		WithParents(n.Node.Parents).
+		WithCounters(map[string]int{
+		// Add container id key to the counters, which will later be counted to
+		// produce the minor label
+		containersKey: 1,
+	}).WithTopology(report.ContainerImage).WithID(id)
 
 	// Add the container as a child of the new image node
 	result.Children = result.Children.Add(n.Node)
 
-	result.Node.Topology = "container_image"
-	result.Node.ID = report.MakeContainerImageNodeID(imageID)
 	return RenderableNodes{id: result}
 }
 
@@ -681,14 +703,21 @@ func MapContainer2Hostname(n RenderableNode, _ report.Networks) RenderableNodes 
 	}
 
 	result := NewDerivedNode(id, n)
+	result.Node = report.MakeNodeWith(map[string]string{
+		"_group_key":   docker.ContainerHostname,
+		"_group_value": id,
+		"_group_label": id,
+	}).
+		WithMetadata(n.Node.Metadata, docker.ContainerHostname).
+		WithSets(n.Node.Sets, docker.ContainerPorts, docker.ContainerIPs).
+		WithParents(n.Node.Parents).
+		WithCounters(map[string]int{
+		// Add container id key to the counters, which will later be counted to
+		// produce the minor label
+		containersKey: 1,
+	}).WithTopology("group").WithID(MakeGroupID(docker.ContainerHostname, id))
 	result.LabelMajor = id
 	result.Rank = id
-
-	// Add container id key to the counters, which will later be counted to produce the minor label
-	result.Node.Counters[containersKey] = 1
-
-	result.Node.Topology = "container_hostname"
-	result.Node.ID = id
 
 	result.Children = result.Children.Add(n.Node)
 
