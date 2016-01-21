@@ -16,7 +16,7 @@ New features and enhancements:
 - k8s: Render container names from label "io.kubernetes.container.name"
   [#810](https://github.com/weaveworks/scope/pull/810)
 
-Bug fixes
+Bug fixes:
 - General k8s fixups
   [#834](https://github.com/weaveworks/scope/pull/834)
 - Use argv\[0\] for process name, differentiate scope app and probe.
