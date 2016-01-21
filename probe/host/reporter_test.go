@@ -22,11 +22,11 @@ func TestReporter(t *testing.T) {
 		hostname  = "hostname"
 		timestamp = time.Now()
 		load      = report.Metrics{
-			host.Load1:    report.MakeMetric().Add(timestamp, 1.0),
-			host.Load5:    report.MakeMetric().Add(timestamp, 5.0),
-			host.Load15:   report.MakeMetric().Add(timestamp, 15.0),
-			host.CPUUsage: report.MakeMetric().Add(timestamp, 30.0).WithMax(100.0),
-			host.MemUsage: report.MakeMetric().Add(timestamp, 60.0).WithMax(100.0),
+			host.Load1:       report.MakeMetric().Add(timestamp, 1.0),
+			host.Load5:       report.MakeMetric().Add(timestamp, 5.0),
+			host.Load15:      report.MakeMetric().Add(timestamp, 15.0),
+			host.CPUUsage:    report.MakeMetric().Add(timestamp, 30.0).WithMax(100.0),
+			host.MemoryUsage: report.MakeMetric().Add(timestamp, 60.0).WithMax(100.0),
 		}
 		uptime      = "278h55m43s"
 		kernel      = "release version"

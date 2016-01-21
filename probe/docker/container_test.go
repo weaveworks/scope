@@ -79,7 +79,7 @@ func TestContainer(t *testing.T) {
 		"docker_image_id":          "baz",
 		"docker_label_foo1":        "bar1",
 		"docker_label_foo2":        "bar2",
-		"memory_usage":             "12345",
+		"docker_memory_usage":      "12345",
 	}).WithSets(report.Sets{
 		"docker_container_ports":           report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp"),
 		"docker_container_ips":             report.MakeStringSet("1.2.3.4"),
@@ -90,8 +90,8 @@ func TestContainer(t *testing.T) {
 	).WithLatest(
 		"docker_container_state", now, "running",
 	).WithMetrics(report.Metrics{
-		"cpu_total_usage": report.MakeMetric(),
-		"memory_usage":    report.MakeMetric().Add(now, 12345),
+		"docker_cpu_total_usage": report.MakeMetric(),
+		"docker_memory_usage":    report.MakeMetric().Add(now, 12345),
 	}).WithParents(report.Sets{
 		report.ContainerImage: report.MakeStringSet(report.MakeContainerImageNodeID("baz")),
 	})
