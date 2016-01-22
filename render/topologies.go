@@ -9,22 +9,22 @@ import (
 )
 
 // EndpointRenderer is a Renderer which produces a renderable endpoint graph.
-var EndpointRenderer = Map{
-	MapFunc:  MapEndpointIdentity,
-	Renderer: SelectEndpoint,
-}
+var EndpointRenderer = MakeMap(
+	MapEndpointIdentity,
+	SelectEndpoint,
+)
 
 // ProcessRenderer is a Renderer which produces a renderable process
 // graph by merging the endpoint graph and the process topology.
 var ProcessRenderer = MakeReduce(
-	Map{
-		MapFunc:  MapEndpoint2Process,
-		Renderer: EndpointRenderer,
-	},
-	Map{
-		MapFunc:  MapProcessIdentity,
-		Renderer: SelectProcess,
-	},
+	MakeMap(
+		MapEndpoint2Process,
+		EndpointRenderer,
+	),
+	MakeMap(
+		MapProcessIdentity,
+		SelectProcess,
+	),
 )
 
 // processWithContainerNameRenderer is a Renderer which produces a process
@@ -35,10 +35,10 @@ type processWithContainerNameRenderer struct {
 
 func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNodes {
 	processes := r.Renderer.Render(rpt)
-	containers := Map{
-		MapFunc:  MapContainerIdentity,
-		Renderer: SelectContainer,
-	}.Render(rpt)
+	containers := MakeMap(
+		MapContainerIdentity,
+		SelectContainer,
+	).Render(rpt)
 
 	for id, p := range processes {
 		pid, ok := p.Node.Latest.Lookup(process.PID)
@@ -66,13 +66,13 @@ var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessR
 
 // ProcessNameRenderer is a Renderer which produces a renderable process
 // name graph by munging the progess graph.
-var ProcessNameRenderer = Map{
-	MapFunc: MapCountProcessName,
-	Renderer: Map{
-		MapFunc:  MapProcess2Name,
-		Renderer: ProcessRenderer,
-	},
-}
+var ProcessNameRenderer = MakeMap(
+	MapCountProcessName,
+	MakeMap(
+		MapProcess2Name,
+		ProcessRenderer,
+	),
+)
 
 // ContainerRenderer is a Renderer which produces a renderable container
 // graph by merging the process graph and the container topology.
@@ -80,40 +80,40 @@ var ProcessNameRenderer = Map{
 // but we need to be careful to ensure we only include each edge once, by only
 // including the ProcessRenderer once.
 var ContainerRenderer = MakeReduce(
-	Filter{
-		FilterFunc: func(n RenderableNode) bool {
+	MakeFilter(
+		func(n RenderableNode) bool {
 			_, inContainer := n.Node.Latest.Lookup(docker.ContainerID)
 			_, isConnected := n.Node.Latest.Lookup(IsConnected)
 			return inContainer || isConnected
 		},
-		Renderer: Map{
-			MapFunc:  MapProcess2Container,
-			Renderer: ColorConnected(ProcessRenderer),
-		},
-	},
+		MakeMap(
+			MapProcess2Container,
+			ColorConnected(ProcessRenderer),
+		),
+	),
 
 	// This mapper brings in short lived connections by joining with container IPs.
 	// We need to be careful to ensure we only include each edge once.  Edges brought in
 	// by the above renders will have a pid, so its enough to filter out any nodes with
 	// pids.
-	FilterUnconnected(Map{
-		MapFunc: MapIP2Container,
-		Renderer: MakeReduce(
-			Map{
-				MapFunc:  MapContainer2IP,
-				Renderer: SelectContainer,
-			},
-			Map{
-				MapFunc:  MapEndpoint2IP,
-				Renderer: SelectEndpoint,
-			},
+	FilterUnconnected(MakeMap(
+		MapIP2Container,
+		MakeReduce(
+			MakeMap(
+				MapContainer2IP,
+				SelectContainer,
+			),
+			MakeMap(
+				MapEndpoint2IP,
+				SelectEndpoint,
+			),
 		),
-	}),
+	)),
 
-	Map{
-		MapFunc:  MapContainerIdentity,
-		Renderer: SelectContainer,
-	},
+	MakeMap(
+		MapContainerIdentity,
+		SelectContainer,
+	),
 )
 
 type containerWithImageNameRenderer struct {
@@ -125,10 +125,10 @@ type containerWithImageNameRenderer struct {
 // container metadata.
 func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNodes {
 	containers := r.Renderer.Render(rpt)
-	images := Map{
-		MapFunc:  MapContainerImageIdentity,
-		Renderer: SelectContainerImage,
-	}.Render(rpt)
+	images := MakeMap(
+		MapContainerImageIdentity,
+		SelectContainerImage,
+	).Render(rpt)
 
 	for id, c := range containers {
 		imageID, ok := c.Node.Latest.Lookup(docker.ImageID)
@@ -153,99 +153,99 @@ var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerRen
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
-var ContainerImageRenderer = Map{
-	MapFunc: MapCountContainers,
-	Renderer: Map{
-		MapFunc: MapContainerImage2Name,
-		Renderer: MakeReduce(
-			Map{
-				MapFunc:  MapContainer2ContainerImage,
-				Renderer: ContainerRenderer,
-			},
-			Map{
-				MapFunc:  MapContainerImageIdentity,
-				Renderer: SelectContainerImage,
-			},
+var ContainerImageRenderer = MakeMap(
+	MapCountContainers,
+	MakeMap(
+		MapContainerImage2Name,
+		MakeReduce(
+			MakeMap(
+				MapContainer2ContainerImage,
+				ContainerRenderer,
+			),
+			MakeMap(
+				MapContainerImageIdentity,
+				SelectContainerImage,
+			),
 		),
-	},
-}
+	),
+)
 
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
 // by hostname graph..
-var ContainerHostnameRenderer = Map{
-	MapFunc: MapCountContainers,
-	Renderer: Map{
-		MapFunc:  MapContainer2Hostname,
-		Renderer: ContainerRenderer,
-	},
-}
+var ContainerHostnameRenderer = MakeMap(
+	MapCountContainers,
+	MakeMap(
+		MapContainer2Hostname,
+		ContainerRenderer,
+	),
+)
 
 // AddressRenderer is a Renderer which produces a renderable address
 // graph from the address topology.
-var AddressRenderer = Map{
-	MapFunc:  MapAddressIdentity,
-	Renderer: SelectAddress,
-}
+var AddressRenderer = MakeMap(
+	MapAddressIdentity,
+	SelectAddress,
+)
 
 // HostRenderer is a Renderer which produces a renderable host
 // graph from the host topology and address graph.
 var HostRenderer = MakeReduce(
-	Map{
-		MapFunc: MapX2Host,
-		Renderer: Map{
-			MapFunc:  MapContainerImageIdentity,
-			Renderer: SelectContainerImage,
-		},
-	},
-	Map{
-		MapFunc:  MapX2Host,
-		Renderer: FilterPseudo(ContainerRenderer),
-	},
-	Map{
-		MapFunc: MapX2Host,
-		Renderer: Map{
-			MapFunc:  MapPodIdentity,
-			Renderer: SelectPod,
-		},
-	},
-	Map{
-		MapFunc:  MapX2Host,
-		Renderer: AddressRenderer,
-	},
-	Map{
-		MapFunc:  MapHostIdentity,
-		Renderer: SelectHost,
-	},
+	MakeMap(
+		MapX2Host,
+		MakeMap(
+			MapContainerImageIdentity,
+			SelectContainerImage,
+		),
+	),
+	MakeMap(
+		MapX2Host,
+		FilterPseudo(ContainerRenderer),
+	),
+	MakeMap(
+		MapX2Host,
+		MakeMap(
+			MapPodIdentity,
+			SelectPod,
+		),
+	),
+	MakeMap(
+		MapX2Host,
+		AddressRenderer,
+	),
+	MakeMap(
+		MapHostIdentity,
+		SelectHost,
+	),
 )
 
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
-var PodRenderer = Map{
-	MapFunc: MapCountContainers,
-	Renderer: MakeReduce(
-		Map{
-			MapFunc:  MapContainer2Pod,
-			Renderer: ContainerRenderer,
-		},
-		Map{
-			MapFunc:  MapPodIdentity,
-			Renderer: SelectPod,
-		},
+var PodRenderer = MakeMap(
+	MapCountContainers,
+	MakeReduce(
+		MakeMap(
+			MapContainer2Pod,
+			ContainerRenderer,
+		),
+		MakeMap(
+			MapPodIdentity,
+			SelectPod,
+		),
 	),
-}
+)
 
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
-var PodServiceRenderer = Map{
-	MapFunc: MapCountPods,
-	Renderer: MakeReduce(
-		Map{
-			MapFunc:  MapPod2Service,
-			Renderer: PodRenderer,
-		},
-		Map{
-			MapFunc:  MapServiceIdentity,
-			Renderer: SelectService,
-		},
+var PodServiceRenderer = MakeMap(
+	MapCountPods,
+	MakeReduce(
+		MakeMap(
+			MapPod2Service,
+			PodRenderer,
+		),
+		MakeMap(
+			MapServiceIdentity,
+			SelectService,
+		),
 	),
-}
+)

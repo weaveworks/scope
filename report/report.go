@@ -2,6 +2,7 @@ package report
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 )
@@ -80,6 +81,10 @@ type Report struct {
 	// Shortcut reports should be propogated to the UI as quickly as possible,
 	// bypassing the usual spy interval, publish interval and app ws interval.
 	Shortcut bool
+
+	// ID a random identifier for this report, used when caching
+	// rendered views of the report
+	ID string
 }
 
 // MakeReport makes a clean report, ready to Merge() other reports into.
@@ -96,6 +101,7 @@ func MakeReport() Report {
 		Overlay:        MakeTopology(),
 		Sampling:       Sampling{},
 		Window:         0,
+		ID:             fmt.Sprintf("%d", rand.Int63()),
 	}
 }
 
@@ -113,6 +119,7 @@ func (r Report) Copy() Report {
 		Overlay:        r.Overlay.Copy(),
 		Sampling:       r.Sampling,
 		Window:         r.Window,
+		ID:             fmt.Sprintf("%d", rand.Int63()),
 	}
 }
 

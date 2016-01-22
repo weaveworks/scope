@@ -87,11 +87,11 @@ func loadReport() (report.Report, error) {
 		return fixture.Report, nil
 	}
 
-	var rpt report.Report
 	b, err := ioutil.ReadFile(*benchReportFile)
 	if err != nil {
 		return rpt, err
 	}
+	rpt := report.MakeReport()
 	err = json.Unmarshal(b, &rpt)
 	return rpt, err
 }
