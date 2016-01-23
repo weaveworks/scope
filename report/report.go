@@ -83,8 +83,10 @@ type Report struct {
 	Shortcut bool
 
 	// ID a random identifier for this report, used when caching
-	// rendered views of the report
-	ID string
+	// rendered views of the report.  Reports with the same id
+	// must be equal, but we don't require that equal reports have
+	// the same id.
+	ID string `deepequal:"skip"`
 }
 
 // MakeReport makes a clean report, ready to Merge() other reports into.
