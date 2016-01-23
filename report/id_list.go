@@ -5,6 +5,9 @@ import "sort"
 // IDList is a list of string IDs, which are always sorted and unique.
 type IDList StringSet
 
+// EmptyIDList is an Empty ID List.
+var EmptyIDList = IDList(EmptyStringSet)
+
 // MakeIDList makes a new IDList.
 func MakeIDList(ids ...string) IDList {
 	return IDList(MakeStringSet(ids...))

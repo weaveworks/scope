@@ -97,11 +97,11 @@ func (t Topology) Validate() error {
 		}
 
 		// Check all the edge metadatas have entries in adjacencies
-		for dstNodeID := range nmd.Edges {
+		nmd.Edges.ForEach(func(dstNodeID string, _ EdgeMetadata) {
 			if _, ok := t.Nodes[dstNodeID]; !ok {
 				errs = append(errs, fmt.Sprintf("node %s missing for edge %q", dstNodeID, nodeID))
 			}
-		}
+		})
 	}
 
 	if len(errs) > 0 {

@@ -27,8 +27,8 @@ func MakeNode() Node {
 	return Node{
 		Counters:  EmptyCounters,
 		Sets:      EmptySets,
-		Adjacency: MakeIDList(),
-		Edges:     EdgeMetadatas{},
+		Adjacency: EmptyIDList,
+		Edges:     EmptyEdgeMetadatas,
 		Controls:  MakeNodeControls(),
 		Latest:    EmptyLatestMap,
 		Metrics:   Metrics{},
@@ -134,7 +134,7 @@ func (n Node) WithAdjacent(a ...string) Node {
 func (n Node) WithEdge(dst string, md EdgeMetadata) Node {
 	result := n.Copy()
 	result.Adjacency = result.Adjacency.Add(dst)
-	result.Edges[dst] = md
+	result.Edges = result.Edges.Add(dst, md)
 	return result
 }
 

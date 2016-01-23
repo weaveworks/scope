@@ -27,14 +27,13 @@ func MakeRenderableNodes(t report.Topology) RenderableNodes {
 
 	// Push EdgeMetadata to both ends of the edges
 	for srcID, srcNode := range result {
-		for dstID, emd := range srcNode.Edges {
+		srcNode.Edges.ForEach(func(dstID string, emd report.EdgeMetadata) {
 			srcNode.EdgeMetadata = srcNode.EdgeMetadata.Flatten(emd)
 
 			dstNode := result[dstID]
 			dstNode.EdgeMetadata = dstNode.EdgeMetadata.Flatten(emd.Reversed())
 			result[dstID] = dstNode
-		}
-
+		})
 		result[srcID] = srcNode
 	}
 	return result

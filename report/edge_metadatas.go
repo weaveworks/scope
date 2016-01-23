@@ -1,36 +1,174 @@
 package report
 
+import (
+	"bytes"
+	"encoding/gob"
+	"encoding/json"
+	"fmt"
+	"reflect"
+	"sort"
+
+	"github.com/mndrix/ps"
+)
+
 // EdgeMetadatas collect metadata about each edge in a topology. Keys are the
 // remote node IDs, as in Adjacency.
-type EdgeMetadatas map[string]EdgeMetadata
-
-// Copy returns a value copy of the EdgeMetadatas.
-func (e EdgeMetadatas) Copy() EdgeMetadatas {
-	cp := make(EdgeMetadatas, len(e))
-	for k, v := range e {
-		cp[k] = v.Copy()
-	}
-	return cp
+type EdgeMetadatas struct {
+	psMap ps.Map
 }
 
-// Merge merges the other object into this one, and returns the result object.
-// The original is not modified.
-func (e EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
-	cp := e.Copy()
-	for k, v := range other {
-		cp[k] = cp[k].Merge(v)
+// EmptyEdgeMetadatas is the set of empty EdgeMetadatas.
+var EmptyEdgeMetadatas = EdgeMetadatas{ps.NewMap()}
+
+// MakeEdgeMetadatas returns EmptyEdgeMetadatas
+func MakeEdgeMetadatas() EdgeMetadatas {
+	return EmptyEdgeMetadatas
+}
+
+// Copy is a noop
+func (c EdgeMetadatas) Copy() EdgeMetadatas {
+	return c
+}
+
+// Add value to the counter 'key'
+func (c EdgeMetadatas) Add(key string, value EdgeMetadata) EdgeMetadatas {
+	if existingValue, ok := c.psMap.Lookup(key); ok {
+		value.Merge(existingValue.(EdgeMetadata))
 	}
-	return cp
+	return EdgeMetadatas{
+		c.psMap.Set(key, value),
+	}
+}
+
+// Lookup the counter 'key'
+func (c EdgeMetadatas) Lookup(key string) (EdgeMetadata, bool) {
+	existingValue, ok := c.psMap.Lookup(key)
+	if ok {
+		return existingValue.(EdgeMetadata), true
+	}
+	return EdgeMetadata{}, false
+}
+
+// Merge produces a fresh Counters, container the keys from both inputs. When
+// both inputs container the same key, the latter value is used.
+func (c EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
+	output := c.psMap
+
+	other.psMap.ForEach(func(key string, otherVal interface{}) {
+		if val, ok := output.Lookup(key); ok {
+			output = output.Set(key, otherVal.(EdgeMetadata).Merge(val.(EdgeMetadata)))
+		} else {
+			output = output.Set(key, otherVal)
+		}
+	})
+
+	return EdgeMetadatas{output}
 }
 
 // Flatten flattens all the EdgeMetadatas in this set and returns the result.
 // The original is not modified.
-func (e EdgeMetadatas) Flatten() EdgeMetadata {
+func (c EdgeMetadatas) Flatten() EdgeMetadata {
 	result := EdgeMetadata{}
-	for _, v := range e {
-		result = result.Flatten(v)
-	}
+	c.psMap.ForEach(func(_ string, v interface{}) {
+		result = result.Flatten(v.(EdgeMetadata))
+	})
 	return result
+}
+
+// ForEach executes f on each key value pair in the map
+func (c EdgeMetadatas) ForEach(fn func(k string, v EdgeMetadata)) {
+	c.psMap.ForEach(func(key string, value interface{}) {
+		fn(key, value.(EdgeMetadata))
+	})
+}
+
+func (c EdgeMetadatas) String() string {
+	keys := []string{}
+	for _, k := range c.psMap.Keys() {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	buf := bytes.NewBufferString("{")
+	for _, key := range keys {
+		val, _ := c.psMap.Lookup(key)
+		fmt.Fprintf(buf, "%s: %v, ", key, val)
+	}
+	fmt.Fprintf(buf, "}\n")
+	return buf.String()
+}
+
+// DeepEqual tests equality with other Counters
+func (c EdgeMetadatas) DeepEqual(i interface{}) bool {
+	d, ok := i.(EdgeMetadatas)
+	if !ok {
+		return false
+	}
+
+	if c.psMap.Size() != d.psMap.Size() {
+		return false
+	}
+
+	equal := true
+	c.psMap.ForEach(func(k string, val interface{}) {
+		if otherValue, ok := d.psMap.Lookup(k); !ok {
+			equal = false
+		} else {
+			equal = equal && reflect.DeepEqual(val, otherValue)
+		}
+	})
+	return equal
+}
+
+func (c EdgeMetadatas) toIntermediate() map[string]EdgeMetadata {
+	intermediate := map[string]EdgeMetadata{}
+	c.psMap.ForEach(func(key string, val interface{}) {
+		intermediate[key] = val.(EdgeMetadata)
+	})
+	return intermediate
+}
+
+func (c EdgeMetadatas) fromIntermediate(in map[string]EdgeMetadata) EdgeMetadatas {
+	out := ps.NewMap()
+	for k, v := range in {
+		out = out.Set(k, v)
+	}
+	return EdgeMetadatas{out}
+}
+
+// MarshalJSON implements json.Marshaller
+func (c EdgeMetadatas) MarshalJSON() ([]byte, error) {
+	if c.psMap != nil {
+		return json.Marshal(c.toIntermediate())
+	}
+	return json.Marshal(nil)
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (c *EdgeMetadatas) UnmarshalJSON(input []byte) error {
+	in := map[string]EdgeMetadata{}
+	if err := json.Unmarshal(input, &in); err != nil {
+		return err
+	}
+	*c = EdgeMetadatas{}.fromIntermediate(in)
+	return nil
+}
+
+// GobEncode implements gob.Marshaller
+func (c EdgeMetadatas) GobEncode() ([]byte, error) {
+	buf := bytes.Buffer{}
+	err := gob.NewEncoder(&buf).Encode(c.toIntermediate())
+	return buf.Bytes(), err
+}
+
+// GobDecode implements gob.Unmarshaller
+func (c *EdgeMetadatas) GobDecode(input []byte) error {
+	in := map[string]EdgeMetadata{}
+	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
+		return err
+	}
+	*c = EdgeMetadatas{}.fromIntermediate(in)
+	return nil
 }
 
 // EdgeMetadata describes a superset of the metadata that probes can possibly

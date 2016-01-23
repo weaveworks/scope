@@ -56,7 +56,7 @@ func TestNode(t *testing.T) {
 		if node.Adjacency[0] != "foo" {
 			t.Errorf("want foo, have %v", node.Adjacency)
 		}
-		if *node.Edges["foo"].EgressPacketCount != 13 {
+		if v, ok := node.Edges.Lookup("foo"); ok && *v.EgressPacketCount != 13 {
 			t.Errorf("want 13, have %v", node.Edges)
 		}
 	}
