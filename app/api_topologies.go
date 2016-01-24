@@ -92,7 +92,7 @@ func init() {
 			id:       "containers-by-hostname",
 			parent:   "containers",
 			renderer: render.ContainerHostnameRenderer,
-			Name:     "by hostname",
+			Name:     "by DNS name",
 			Options:  containerFilters,
 		},
 		APITopologyDesc{
