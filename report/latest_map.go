@@ -24,9 +24,10 @@ type LatestEntry struct {
 }
 
 func (e LatestEntry) String() string {
-	return fmt.Sprintf("\"%s\" (%d)", e.Value, e.Timestamp.String())
+	return fmt.Sprintf("\"%s\" (%s)", e.Value, e.Timestamp.String())
 }
 
+// Equal returns true if the supplied LatestEntry is equal to this one.
 func (e LatestEntry) Equal(e2 LatestEntry) bool {
 	return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
 }
