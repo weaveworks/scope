@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"sort"
 	"time"
 
@@ -25,7 +24,11 @@ type LatestEntry struct {
 }
 
 func (e LatestEntry) String() string {
-	return fmt.Sprintf("\"%s\" (%d)", e.Value, e.Timestamp)
+	return fmt.Sprintf("\"%s\" (%d)", e.Value, e.Timestamp.String())
+}
+
+func (e LatestEntry) Equal(e2 LatestEntry) bool {
+	return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
 }
 
 // EmptyLatestMap is an empty LatestMap.  Start with this.
@@ -120,7 +123,7 @@ func (m LatestMap) DeepEqual(i interface{}) bool {
 		if otherValue, ok := n.Map.Lookup(k); !ok {
 			equal = false
 		} else {
-			equal = equal && reflect.DeepEqual(val, otherValue)
+			equal = equal && val.(LatestEntry).Equal(otherValue.(LatestEntry))
 		}
 	})
 	return equal
