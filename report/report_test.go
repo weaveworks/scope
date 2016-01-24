@@ -7,6 +7,8 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
+func newu64(value uint64) *uint64 { return &value }
+
 // Make sure we don't add a topology and miss it in the Topologies method.
 func TestReportTopologies(t *testing.T) {
 	var (

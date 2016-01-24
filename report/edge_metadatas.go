@@ -33,7 +33,7 @@ func (c EdgeMetadatas) Copy() EdgeMetadatas {
 // Add value to the counter 'key'
 func (c EdgeMetadatas) Add(key string, value EdgeMetadata) EdgeMetadatas {
 	if existingValue, ok := c.psMap.Lookup(key); ok {
-		value.Merge(existingValue.(EdgeMetadata))
+		value = value.Merge(existingValue.(EdgeMetadata))
 	}
 	return EdgeMetadatas{
 		c.psMap.Set(key, value),
