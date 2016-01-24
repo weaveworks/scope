@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -30,6 +31,8 @@ const (
 	ContainerHostname      = "docker_container_hostname"
 	ContainerIPsWithScopes = "docker_container_ips_with_scopes"
 	ContainerState         = "docker_container_state"
+	ContainerUptime        = "docker_container_uptime"
+	ContainerRestartCount  = "docker_container_restart_count"
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
@@ -331,12 +334,11 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
 		ImageID:           c.container.Image,
 		ContainerHostname: c.Hostname(),
+		ContainerState:    state,
 	}).WithSets(report.EmptySets.
 		Add(ContainerPorts, c.ports(localAddrs)).
 		Add(ContainerIPs, report.MakeStringSet(ips...)).
 		Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...)),
-	).WithLatest(
-		ContainerState, mtime.Now(), state,
 	).WithMetrics(
 		c.metrics(),
 	).WithParents(report.EmptySets.
@@ -346,6 +348,11 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	if c.container.State.Paused {
 		result = result.WithControls(UnpauseContainer)
 	} else if c.container.State.Running {
+		uptime := (mtime.Now().Sub(c.container.State.StartedAt) / time.Second) * time.Second
+		result = result.WithLatests(map[string]string{
+			ContainerUptime:       uptime.String(),
+			ContainerRestartCount: strconv.Itoa(c.container.RestartCount),
+		})
 		result = result.WithControls(
 			RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer,
 		)

@@ -158,11 +158,16 @@ func (m *mockDockerClient) send(event *client.APIEvents) {
 }
 
 var (
+	startTime  = time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 	container1 = &client.Container{
 		ID:    "ping",
 		Name:  "pong",
 		Image: "baz",
-		State: client.State{Pid: 2, Running: true},
+		State: client.State{
+			Pid:       2,
+			Running:   true,
+			StartedAt: startTime,
+		},
 		NetworkSettings: &client.NetworkSettings{
 			IPAddress: "1.2.3.4",
 			Ports: map[client.Port][]client.PortBinding{

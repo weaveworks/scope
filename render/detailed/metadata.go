@@ -24,6 +24,8 @@ var (
 		ltst(docker.ContainerID, "ID"),
 		ltst(docker.ImageID, "Image ID"),
 		ltst(docker.ContainerState, "State"),
+		ltst(docker.ContainerUptime, "Uptime"),
+		ltst(docker.ContainerRestartCount, "Restart #"),
 		sets(docker.ContainerIPs, "IPs"),
 		sets(docker.ContainerPorts, "Ports"),
 		ltst(docker.ContainerCreated, "Created"),
