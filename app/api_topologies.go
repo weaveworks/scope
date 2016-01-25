@@ -214,13 +214,13 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer) topologyStat
 		realNodes int
 		edges     int
 	)
-	for _, n := range renderer.Render(rpt) {
+	renderer.Render(rpt).ForEach(func(n render.RenderableNode) {
 		nodes++
 		if !n.Pseudo {
 			realNodes++
 		}
 		edges += len(n.Adjacency)
-	}
+	})
 	renderStats := renderer.Stats(rpt)
 	return topologyStats{
 		NodeCount:          nodes,

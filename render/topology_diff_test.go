@@ -35,14 +35,8 @@ func TestTopoDiff(t *testing.T) {
 		LabelMajor: "Node B",
 	}
 
-	// Helper to make RenderableNode maps.
-	nodes := func(ns ...render.RenderableNode) render.RenderableNodes {
-		r := render.RenderableNodes{}
-		for _, n := range ns {
-			r[n.ID] = n
-		}
-		return r
-	}
+	// Alias to make RenderableNode maps.
+	nodes := render.MakeRenderableNodes
 
 	for _, c := range []struct {
 		label      string

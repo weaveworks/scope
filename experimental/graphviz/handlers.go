@@ -20,17 +20,17 @@ func dot(w io.Writer, t render.RenderableNodes) {
 	fmt.Fprintf(w, "\toverlap=scale;\n")
 	fmt.Fprintf(w, "\tnode [style=filled];\n")
 	fmt.Fprintf(w, "\t\n")
-	for id, rn := range t {
+	t.ForEach(func(rn render.RenderableNode) {
 		label := rn.LabelMajor
 		if len(label) > 20 {
 			label = label[:20] + "..."
 		}
-		fmt.Fprintf(w, "\t%q [label=%q];\n", id, label)
+		fmt.Fprintf(w, "\t%q [label=%q];\n", rn.ID, label)
 		for _, other := range rn.Adjacency {
-			fmt.Fprintf(w, "\t%q -> %q;\n", id, other)
+			fmt.Fprintf(w, "\t%q -> %q;\n", rn.ID, other)
 		}
 		fmt.Fprintf(w, "\t\n")
-	}
+	})
 	fmt.Fprintf(w, "}\n")
 }
 
@@ -59,7 +59,7 @@ func handleDot(rpt report.Report) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		log.Printf("render %s to %d node(s)", topology, len(t))
+		log.Printf("render %s to %d node(s)", topology, t.Size())
 
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		dot(w, t)
@@ -83,7 +83,7 @@ func handleSVG(rpt report.Report) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		log.Printf("render %s to %d node(s)", topology, len(t))
+		log.Printf("render %s to %d node(s)", topology, t.Size())
 
 		vizcmd, err := exec.LookPath(engine)
 		if err != nil {

@@ -54,7 +54,7 @@ func handleNode(nodeID string) func(Reporter, render.Renderer, http.ResponseWrit
 	return func(rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
 		var (
 			rpt      = rep.Report()
-			node, ok = renderer.Render(rep.Report())[nodeID]
+			node, ok = renderer.Render(rep.Report()).Lookup(nodeID)
 		)
 		if !ok {
 			http.NotFound(w, r)

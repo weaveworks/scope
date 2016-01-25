@@ -13,7 +13,7 @@ import (
 
 var (
 	benchReportFile       = flag.String("bench-report-file", "", "json report file to use for benchmarking (relative to this package)")
-	benchmarkRenderResult map[string]render.RenderableNode
+	benchmarkRenderResult render.RenderableNodes
 	benchmarkStatsResult  render.Stats
 )
 
@@ -63,7 +63,7 @@ func benchmarkRender(b *testing.B, r render.Renderer) {
 	for i := 0; i < b.N; i++ {
 		render.ResetCache()
 		benchmarkRenderResult = r.Render(report)
-		if len(benchmarkRenderResult) == 0 {
+		if benchmarkRenderResult.Size() == 0 {
 			b.Errorf("Rendered topology contained no nodes")
 		}
 	}

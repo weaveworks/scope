@@ -40,22 +40,22 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 		SelectContainer,
 	).Render(rpt)
 
-	for id, p := range processes {
+	processes.ForEach(func(p RenderableNode) {
 		pid, ok := p.Node.Latest.Lookup(process.PID)
 		if !ok {
-			continue
+			return
 		}
 		containerID, ok := p.Node.Latest.Lookup(docker.ContainerID)
 		if !ok {
-			continue
+			return
 		}
-		container, ok := containers[MakeContainerID(containerID)]
+		container, ok := containers.Lookup(MakeContainerID(containerID))
 		if !ok {
-			continue
+			return
 		}
 		p.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(p.Node), container.LabelMajor, pid)
-		processes[id] = p
-	}
+		processes = processes.Add(p)
+	})
 
 	return processes
 }
@@ -130,19 +130,19 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 		SelectContainerImage,
 	).Render(rpt)
 
-	for id, c := range containers {
+	containers.ForEach(func(c RenderableNode) {
 		imageID, ok := c.Node.Latest.Lookup(docker.ImageID)
 		if !ok {
-			continue
+			return
 		}
-		image, ok := images[MakeContainerImageID(imageID)]
+		image, ok := images.Lookup(MakeContainerImageID(imageID))
 		if !ok {
-			continue
+			return
 		}
 		c.Rank = ImageNameWithoutVersion(image.LabelMajor)
 		c.Latest = image.Latest.Merge(c.Latest)
-		containers[id] = c
-	}
+		containers = containers.Add(c)
+	})
 
 	return containers
 }

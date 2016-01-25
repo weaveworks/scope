@@ -102,7 +102,7 @@ func testMap(t *testing.T, f render.MapFunc, input testcase) {
 		t.Fatalf(err.Error())
 	}
 	localNetworks := report.Networks([]*net.IPNet{ipNet})
-	if have := f(input.md, localNetworks); input.ok != (len(have) > 0) {
+	if have := f(input.md, localNetworks); input.ok != (have.Size() > 0) {
 		t.Errorf("%v: want %v, have %v", input.md, input.ok, have)
 	}
 }

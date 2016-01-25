@@ -54,8 +54,8 @@ var (
 	ServerProcessID       = render.MakeProcessID(fixture.ServerHostID, fixture.ServerPID)
 	nonContainerProcessID = render.MakeProcessID(fixture.ServerHostID, fixture.NonContainerPID)
 
-	RenderedProcesses = (render.RenderableNodes{
-		ClientProcess1ID: {
+	RenderedProcesses = (render.MakeRenderableNodes(
+		render.RenderableNode{
 			ID:         ClientProcess1ID,
 			LabelMajor: fixture.Client1Name,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ClientHostID, fixture.Client1PID),
@@ -67,7 +67,7 @@ var (
 				EgressByteCount:   newu64(100),
 			},
 		},
-		ClientProcess2ID: {
+		render.RenderableNode{
 			ID:         ClientProcess2ID,
 			LabelMajor: fixture.Client2Name,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ClientHostID, fixture.Client2PID),
@@ -79,7 +79,7 @@ var (
 				EgressByteCount:   newu64(200),
 			},
 		},
-		ServerProcessID: {
+		render.RenderableNode{
 			ID:         ServerProcessID,
 			LabelMajor: fixture.ServerName,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.ServerPID),
@@ -91,7 +91,7 @@ var (
 				IngressByteCount:   newu64(2100),
 			},
 		},
-		nonContainerProcessID: {
+		render.RenderableNode{
 			ID:           nonContainerProcessID,
 			LabelMajor:   fixture.NonContainerName,
 			LabelMinor:   fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.NonContainerPID),
@@ -100,17 +100,17 @@ var (
 			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		unknownPseudoNode1ID: unknownPseudoNode1(ServerProcessID),
-		unknownPseudoNode2ID: unknownPseudoNode2(ServerProcessID),
-		render.TheInternetID: theInternetNode(ServerProcessID),
-	}).Prune()
+		unknownPseudoNode1(ServerProcessID),
+		unknownPseudoNode2(ServerProcessID),
+		theInternetNode(ServerProcessID),
+	)).Prune()
 
 	ServerProcessRenderedID  = render.MakeProcessID(fixture.ServerHostID, fixture.ServerPID)
 	ClientProcess1RenderedID = render.MakeProcessID(fixture.ClientHostID, fixture.Client1PID)
 	ClientProcess2RenderedID = render.MakeProcessID(fixture.ClientHostID, fixture.Client2PID)
 
-	RenderedProcessNames = (render.RenderableNodes{
-		fixture.Client1Name: {
+	RenderedProcessNames = (render.MakeRenderableNodes(
+		render.RenderableNode{
 			ID:         fixture.Client1Name,
 			LabelMajor: fixture.Client1Name,
 			LabelMinor: "2 processes",
@@ -126,7 +126,7 @@ var (
 				EgressByteCount:   newu64(300),
 			},
 		},
-		fixture.ServerName: {
+		render.RenderableNode{
 			ID:         fixture.ServerName,
 			LabelMajor: fixture.ServerName,
 			LabelMinor: "1 process",
@@ -141,7 +141,7 @@ var (
 				IngressByteCount:   newu64(2100),
 			},
 		},
-		fixture.NonContainerName: {
+		render.RenderableNode{
 			ID:         fixture.NonContainerName,
 			LabelMajor: fixture.NonContainerName,
 			LabelMinor: "1 process",
@@ -153,16 +153,16 @@ var (
 			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		unknownPseudoNode1ID: unknownPseudoNode1(fixture.ServerName),
-		unknownPseudoNode2ID: unknownPseudoNode2(fixture.ServerName),
-		render.TheInternetID: theInternetNode(fixture.ServerName),
-	}).Prune()
+		unknownPseudoNode1(fixture.ServerName),
+		unknownPseudoNode2(fixture.ServerName),
+		theInternetNode(fixture.ServerName),
+	)).Prune()
 
 	ServerContainerRenderedID = render.MakeContainerID(fixture.ServerContainerID)
 	ClientContainerRenderedID = render.MakeContainerID(fixture.ClientContainerID)
 
-	RenderedContainers = (render.RenderableNodes{
-		ClientContainerRenderedID: {
+	RenderedContainers = (render.MakeRenderableNodes(
+		render.RenderableNode{
 			ID:         ClientContainerRenderedID,
 			LabelMajor: "client",
 			LabelMinor: fixture.ClientHostName,
@@ -179,7 +179,7 @@ var (
 			},
 			ControlNode: fixture.ClientContainerNodeID,
 		},
-		ServerContainerRenderedID: {
+		render.RenderableNode{
 			ID:         ServerContainerRenderedID,
 			LabelMajor: "server",
 			LabelMinor: fixture.ServerHostName,
@@ -195,7 +195,7 @@ var (
 			},
 			ControlNode: fixture.ServerContainerNodeID,
 		},
-		uncontainedServerID: {
+		render.RenderableNode{
 			ID:         uncontainedServerID,
 			LabelMajor: render.UncontainedMajor,
 			LabelMinor: fixture.ServerHostName,
@@ -207,14 +207,14 @@ var (
 			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		render.TheInternetID: theInternetNode(ServerContainerRenderedID),
-	}).Prune()
+		theInternetNode(ServerContainerRenderedID),
+	)).Prune()
 
 	ClientContainerImageRenderedName = render.MakeContainerImageID(fixture.ClientContainerImageName)
 	ServerContainerImageRenderedName = render.MakeContainerImageID(fixture.ServerContainerImageName)
 
-	RenderedContainerImages = (render.RenderableNodes{
-		ClientContainerImageRenderedName: {
+	RenderedContainerImages = (render.MakeRenderableNodes(
+		render.RenderableNode{
 			ID:         ClientContainerImageRenderedName,
 			LabelMajor: fixture.ClientContainerImageName,
 			LabelMinor: "1 container",
@@ -231,7 +231,7 @@ var (
 				EgressByteCount:   newu64(300),
 			},
 		},
-		ServerContainerImageRenderedName: {
+		render.RenderableNode{
 			ID:         ServerContainerImageRenderedName,
 			LabelMajor: fixture.ServerContainerImageName,
 			LabelMinor: "1 container",
@@ -247,7 +247,7 @@ var (
 				IngressByteCount:   newu64(2100),
 			},
 		},
-		uncontainedServerID: {
+		render.RenderableNode{
 			ID:         uncontainedServerID,
 			LabelMajor: render.UncontainedMajor,
 			LabelMinor: fixture.ServerHostName,
@@ -259,16 +259,16 @@ var (
 			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		render.TheInternetID: theInternetNode(ServerContainerImageRenderedName),
-	}).Prune()
+		theInternetNode(ServerContainerImageRenderedName),
+	)).Prune()
 
 	ServerHostRenderedID = render.MakeHostID(fixture.ServerHostID)
 	ClientHostRenderedID = render.MakeHostID(fixture.ClientHostID)
 	pseudoHostID1        = render.MakePseudoNodeID(fixture.UnknownClient1IP, fixture.ServerIP)
 	pseudoHostID2        = render.MakePseudoNodeID(fixture.UnknownClient3IP, fixture.ServerIP)
 
-	RenderedHosts = (render.RenderableNodes{
-		ServerHostRenderedID: {
+	RenderedHosts = (render.MakeRenderableNodes(
+		render.RenderableNode{
 			ID:         ServerHostRenderedID,
 			LabelMajor: "server",       // before first .
 			LabelMinor: "hostname.com", // after first .
@@ -285,7 +285,7 @@ var (
 				MaxConnCountTCP:    newu64(3),
 			},
 		},
-		ClientHostRenderedID: {
+		render.RenderableNode{
 			ID:         ClientHostRenderedID,
 			LabelMajor: "client",       // before first .
 			LabelMinor: "hostname.com", // after first .
@@ -303,7 +303,7 @@ var (
 				MaxConnCountTCP:   newu64(3),
 			},
 		},
-		pseudoHostID1: {
+		render.RenderableNode{
 			ID:           pseudoHostID1,
 			LabelMajor:   fixture.UnknownClient1IP,
 			Pseudo:       true,
@@ -314,27 +314,27 @@ var (
 				fixture.Report.Process.Nodes[fixture.ServerProcessNodeID],
 			),
 		},
-		pseudoHostID2: {
+		render.RenderableNode{
 			ID:           pseudoHostID2,
 			LabelMajor:   fixture.UnknownClient3IP,
 			Pseudo:       true,
 			Node:         report.MakeNode().WithAdjacent(ServerHostRenderedID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		render.TheInternetID: {
+		render.RenderableNode{
 			ID:           render.TheInternetID,
 			LabelMajor:   render.TheInternetMajor,
 			Pseudo:       true,
 			Node:         report.MakeNode().WithAdjacent(ServerHostRenderedID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-	}).Prune()
+	)).Prune()
 
 	ClientPodRenderedID = render.MakePodID("ping/pong-a")
 	ServerPodRenderedID = render.MakePodID("ping/pong-b")
 
-	RenderedPods = (render.RenderableNodes{
-		ClientPodRenderedID: {
+	RenderedPods = (render.MakeRenderableNodes(
+		render.RenderableNode{
 			ID:         ClientPodRenderedID,
 			LabelMajor: "pong-a",
 			LabelMinor: "1 container",
@@ -353,7 +353,7 @@ var (
 				EgressByteCount:   newu64(300),
 			},
 		},
-		ServerPodRenderedID: {
+		render.RenderableNode{
 			ID:         ServerPodRenderedID,
 			LabelMajor: "pong-b",
 			LabelMinor: "1 container",
@@ -371,7 +371,7 @@ var (
 				IngressByteCount:   newu64(2100),
 			},
 		},
-		uncontainedServerID: {
+		render.RenderableNode{
 			ID:         uncontainedServerID,
 			LabelMajor: render.UncontainedMajor,
 			LabelMinor: fixture.ServerHostName,
@@ -383,7 +383,7 @@ var (
 			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		render.TheInternetID: {
+		render.RenderableNode{
 			ID:         render.TheInternetID,
 			LabelMajor: render.TheInternetMajor,
 			Pseudo:     true,
@@ -393,12 +393,12 @@ var (
 				EgressByteCount:   newu64(600),
 			},
 		},
-	}).Prune()
+	)).Prune()
 
 	ServiceRenderedID = render.MakeServiceID("ping/pongservice")
 
-	RenderedPodServices = (render.RenderableNodes{
-		ServiceRenderedID: {
+	RenderedPodServices = (render.MakeRenderableNodes(
+		render.RenderableNode{
 			ID:         ServiceRenderedID,
 			LabelMajor: "pongservice",
 			LabelMinor: "2 pods",
@@ -423,7 +423,7 @@ var (
 				IngressByteCount:   newu64(2100),
 			},
 		},
-		uncontainedServerID: {
+		render.RenderableNode{
 			ID:         uncontainedServerID,
 			LabelMajor: render.UncontainedMajor,
 			LabelMinor: fixture.ServerHostName,
@@ -435,7 +435,7 @@ var (
 			Node:         report.MakeNode().WithAdjacent(render.TheInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		render.TheInternetID: {
+		render.RenderableNode{
 			ID:         render.TheInternetID,
 			LabelMajor: render.TheInternetMajor,
 			Pseudo:     true,
@@ -445,7 +445,7 @@ var (
 				EgressByteCount:   newu64(600),
 			},
 		},
-	}).Prune()
+	)).Prune()
 )
 
 func newu64(value uint64) *uint64 { return &value }

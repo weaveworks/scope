@@ -1,7 +1,16 @@
 package render
 
 import (
+	"bytes"
+	"encoding/gob"
+	"encoding/json"
+	"fmt"
+	"sort"
+
+	"github.com/mndrix/ps"
+
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 // RenderableNode is the data type that's yielded to the JavaScript layer as
@@ -90,6 +99,7 @@ func (rn RenderableNode) WithParents(p report.Sets) RenderableNode {
 }
 
 // Merge merges rn with other and returns a new RenderableNode
+// Note: This is non-commutative, due to ID and Topology fields.
 func (rn RenderableNode) Merge(other RenderableNode) RenderableNode {
 	result := rn.Copy()
 
@@ -146,39 +156,192 @@ func (rn RenderableNode) Prune() RenderableNode {
 }
 
 // RenderableNodes is a set of RenderableNodes
-type RenderableNodes map[string]RenderableNode
+type RenderableNodes struct {
+	psMap ps.Map
+}
 
-// Copy produces a deep copy of the RenderableNodes
-func (rns RenderableNodes) Copy() RenderableNodes {
-	result := RenderableNodes{}
-	for key, value := range rns {
-		result[key] = value.Copy()
+// EmptyRenderableNodes is an empty set of renderable nodes
+var EmptyRenderableNodes = RenderableNodes{ps.NewMap()}
+
+// MakeRenderableNodes makes a set with the given RenderableNodes
+func MakeRenderableNodes(nodes ...RenderableNode) RenderableNodes {
+	return EmptyRenderableNodes.Add(nodes...)
+}
+
+// Add adds each node into the set. Unlike merge, this overwrites existing
+// nodes with the same ID.
+func (rns RenderableNodes) Add(nodes ...RenderableNode) RenderableNodes {
+	if rns.psMap == nil {
+		rns = EmptyRenderableNodes
 	}
-	return result
+	psMap := rns.psMap
+	for _, node := range nodes {
+		psMap = psMap.Set(node.ID, node)
+	}
+	return RenderableNodes{psMap}
+}
+
+// Delete removes the node with id
+func (rns RenderableNodes) Delete(id string) RenderableNodes {
+	if rns.psMap == nil {
+		rns = EmptyRenderableNodes
+	}
+	return RenderableNodes{rns.psMap.Delete(id)}
+}
+
+// Copy is a noop
+func (rns RenderableNodes) Copy() RenderableNodes {
+	return rns
+}
+
+func (rns RenderableNodes) String() string {
+	if rns.psMap == nil {
+		return "{}"
+	}
+	buf := bytes.NewBufferString("{")
+	for _, key := range rns.Keys() {
+		val, _ := rns.psMap.Lookup(key)
+		fmt.Fprintf(buf, "%s: %v, ", key, val)
+	}
+	fmt.Fprintf(buf, "}\n")
+	return buf.String()
+}
+
+// Lookup looks up a renderable node by id
+func (rns RenderableNodes) Lookup(id string) (RenderableNode, bool) {
+	if rns.psMap == nil {
+		return RenderableNode{}, false
+	}
+	if val, ok := rns.psMap.Lookup(id); ok {
+		return val.(RenderableNode), true
+	}
+	return RenderableNode{}, false
+}
+
+// Keys returns the keys present in this set, in sorted order
+func (rns RenderableNodes) Keys() []string {
+	if rns.psMap == nil {
+		return nil
+	}
+	keys := rns.psMap.Keys()
+	sort.Strings(keys)
+	return keys
+}
+
+// Size returns the number of nodes
+func (rns RenderableNodes) Size() int {
+	if rns.psMap == nil {
+		return 0
+	}
+	return rns.psMap.Size()
+}
+
+// ForEach executes f for each node
+func (rns RenderableNodes) ForEach(f func(RenderableNode)) {
+	if rns.psMap != nil {
+		rns.psMap.ForEach(func(key string, val interface{}) {
+			f(val.(RenderableNode))
+		})
+	}
 }
 
 // Merge merges two sets of RenderableNodes, returning a new set.
+// Note: Because merging RenderableNodes is non-commutative, neither is this.
 func (rns RenderableNodes) Merge(other RenderableNodes) RenderableNodes {
-	result := RenderableNodes{}
-	for key, value := range rns {
-		result[key] = value
+	switch {
+	case rns.Size() == 0:
+		return other
+	case other.Size() == 0:
+		return rns
 	}
-	for key, value := range other {
-		existing, ok := result[key]
-		if ok {
-			value = value.Merge(existing)
+	result := rns.psMap
+	other.ForEach(func(node RenderableNode) {
+		if existing, ok := result.Lookup(node.ID); ok {
+			node = node.Merge(existing.(RenderableNode))
 		}
-		result[key] = value
-	}
-	return result
+		result = result.Set(node.ID, node)
+	})
+
+	return RenderableNodes{result}
 }
 
 // Prune returns a copy of the RenderableNodes with all information not
 // strictly necessary for rendering nodes and edges in the UI cut away.
 func (rns RenderableNodes) Prune() RenderableNodes {
-	cp := rns.Copy()
-	for id, rn := range cp {
-		cp[id] = rn.Prune()
+	result := ps.NewMap()
+	rns.ForEach(func(node RenderableNode) {
+		result = result.Set(node.ID, node.Prune())
+	})
+	return RenderableNodes{result}
+}
+
+// DeepEqual tests equality with other RenderableNodes
+func (rns RenderableNodes) DeepEqual(d RenderableNodes) bool {
+	if rns.Size() != d.Size() {
+		return false
 	}
-	return cp
+	if rns.Size() == 0 {
+		return true
+	}
+
+	equal := true
+	rns.psMap.ForEach(func(k string, val interface{}) {
+		if otherValue, ok := d.psMap.Lookup(k); !ok {
+			equal = false
+		} else {
+			equal = equal && reflect.DeepEqual(val, otherValue)
+		}
+	})
+	return equal
+}
+
+func (rns RenderableNodes) toIntermediate() map[string]RenderableNode {
+	intermediate := map[string]RenderableNode{}
+	rns.ForEach(func(node RenderableNode) {
+		intermediate[node.ID] = node
+	})
+	return intermediate
+}
+
+func (rns RenderableNodes) fromIntermediate(in map[string]RenderableNode) RenderableNodes {
+	out := ps.NewMap()
+	for k, v := range in {
+		out = out.Set(k, v)
+	}
+	return RenderableNodes{out}
+}
+
+// MarshalJSON implements json.Marshaller
+func (rns RenderableNodes) MarshalJSON() ([]byte, error) {
+	if rns.psMap != nil {
+		return json.Marshal(rns.toIntermediate())
+	}
+	return json.Marshal(nil)
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (rns *RenderableNodes) UnmarshalJSON(input []byte) error {
+	in := map[string]RenderableNode{}
+	if err := json.Unmarshal(input, &in); err != nil {
+		return err
+	}
+	*rns = RenderableNodes{}.fromIntermediate(in)
+	return nil
+}
+
+// GobEncode implements gob.Marshaller
+func (rns RenderableNodes) GobEncode() ([]byte, error) {
+	buf := bytes.Buffer{}
+	err := gob.NewEncoder(&buf).Encode(rns.toIntermediate())
+	return buf.Bytes(), err
+}
+
+// GobDecode implements gob.Unmarshaller
+func (rns *RenderableNodes) GobDecode(input []byte) error {
+	in := map[string]RenderableNode{}
+	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
+		return err
+	}
+	*rns = RenderableNodes{}.fromIntermediate(in)
+	return nil
 }

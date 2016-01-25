@@ -1,7 +1,6 @@
 package render_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -10,6 +9,7 @@ import (
 	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 func TestProcessRenderer(t *testing.T) {
@@ -44,8 +44,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
 	have := render.FilterSystem(render.ContainerWithImageNameRenderer).Render(input).Prune()
-	want := expected.RenderedContainers.Copy()
-	delete(want, expected.ClientContainerRenderedID)
+	want := expected.RenderedContainers.Copy().Delete(expected.ClientContainerRenderedID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -58,8 +57,7 @@ func TestContainerFilterRendererImageName(t *testing.T) {
 		docker.ImageName: "beta.gcr.io/google_containers/pause",
 	})
 	have := render.FilterSystem(render.ContainerWithImageNameRenderer).Render(input).Prune()
-	want := expected.RenderedContainers.Copy()
-	delete(want, expected.ClientContainerRenderedID)
+	want := expected.RenderedContainers.Copy().Delete(expected.ClientContainerRenderedID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -102,9 +100,7 @@ func TestPodFilterRenderer(t *testing.T) {
 		docker.LabelPrefix + "io.kubernetes.pod.name": "kube-system/foo",
 	})
 	have := render.FilterSystem(render.PodRenderer).Render(input).Prune()
-	want := expected.RenderedPods.Copy()
-	delete(want, expected.ClientPodRenderedID)
-	delete(want, expected.ClientContainerRenderedID)
+	want := expected.RenderedPods.Copy().Delete(expected.ClientPodRenderedID).Delete(expected.ClientContainerRenderedID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

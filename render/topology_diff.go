@@ -17,18 +17,18 @@ func TopoDiff(a, b RenderableNodes) Diff {
 	diff := Diff{}
 
 	notSeen := map[string]struct{}{}
-	for k := range a {
-		notSeen[k] = struct{}{}
-	}
+	a.ForEach(func(n RenderableNode) {
+		notSeen[n.ID] = struct{}{}
+	})
 
-	for k, node := range b {
-		if _, ok := a[k]; !ok {
+	b.ForEach(func(node RenderableNode) {
+		if aNode, ok := a.Lookup(node.ID); !ok {
 			diff.Add = append(diff.Add, node)
-		} else if !reflect.DeepEqual(node, a[k]) {
+		} else if !reflect.DeepEqual(node, aNode) {
 			diff.Update = append(diff.Update, node)
 		}
-		delete(notSeen, k)
-	}
+		delete(notSeen, node.ID)
+	})
 
 	// leftover keys
 	for k := range notSeen {
