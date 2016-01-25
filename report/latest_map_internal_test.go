@@ -43,6 +43,11 @@ func TestLatestMapDeepEquals(t *testing.T) {
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf(test.Diff(want, have))
 	}
+	notequal := EmptyLatestMap.
+		Set("foo", now, "Baz")
+	if reflect.DeepEqual(want, notequal) {
+		t.Errorf(test.Diff(want, have))
+	}
 }
 
 func TestLatestMapDelete(t *testing.T) {

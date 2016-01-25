@@ -31,6 +31,9 @@ func (c Counters) Copy() Counters {
 
 // Add value to the counter 'key'
 func (c Counters) Add(key string, value int) Counters {
+	if c.psMap == nil {
+		c = EmptyCounters
+	}
 	if existingValue, ok := c.psMap.Lookup(key); ok {
 		value += existingValue.(int)
 	}
@@ -41,15 +44,20 @@ func (c Counters) Add(key string, value int) Counters {
 
 // Lookup the counter 'key'
 func (c Counters) Lookup(key string) (int, bool) {
-	existingValue, ok := c.psMap.Lookup(key)
-	if ok {
-		return existingValue.(int), true
+	if c.psMap != nil {
+		existingValue, ok := c.psMap.Lookup(key)
+		if ok {
+			return existingValue.(int), true
+		}
 	}
 	return 0, false
 }
 
 // Size returns the number of counters
 func (c Counters) Size() int {
+	if c.psMap == nil {
+		return 0
+	}
 	return c.psMap.Size()
 }
 
@@ -81,6 +89,9 @@ func (c Counters) Merge(other Counters) Counters {
 }
 
 func (c Counters) String() string {
+	if c.psMap == nil {
+		return "{}"
+	}
 	keys := []string{}
 	for _, k := range c.psMap.Keys() {
 		keys = append(keys, k)
@@ -101,6 +112,12 @@ func (c Counters) DeepEqual(i interface{}) bool {
 	d, ok := i.(Counters)
 	if !ok {
 		return false
+	}
+
+	if (c.psMap == nil) != (d.psMap == nil) {
+		return false
+	} else if c.psMap == nil && d.psMap == nil {
+		return true
 	}
 
 	if c.psMap.Size() != d.psMap.Size() {

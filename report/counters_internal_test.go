@@ -27,6 +27,28 @@ func TestCountersDeepEquals(t *testing.T) {
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf(test.Diff(want, have))
 	}
+	notequal := EmptyCounters.
+		Add("foo", 4)
+	if reflect.DeepEqual(want, notequal) {
+		t.Errorf(test.Diff(want, have))
+	}
+}
+
+func TestCountersNil(t *testing.T) {
+	want := Counters{}
+	if want.Size() != 0 {
+		t.Errorf("nil.Size != 0")
+	}
+	if v, ok := want.Lookup("foo"); ok || v != 0 {
+		t.Errorf("nil.Lookup != false")
+	}
+	have := want.Add("foo", 1)
+	if v, ok := have.Lookup("foo"); !ok || v != 1 {
+		t.Errorf("nil.Add failed")
+	}
+	if have2 := want.Merge(have); !reflect.DeepEqual(have, have2) {
+		t.Errorf(test.Diff(have, have2))
+	}
 }
 
 func TestCountersMerge(t *testing.T) {
