@@ -30,6 +30,10 @@ func memoisedRender(r Renderer, rpt report.Report) RenderableNodes {
 	return output
 }
 
+func ResetCache() {
+	renderCache.Purge()
+}
+
 // Renderer is something that can render a report to a set of RenderableNodes.
 type Renderer interface {
 	Render(report.Report) RenderableNodes
