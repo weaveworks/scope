@@ -32,6 +32,9 @@ func (c EdgeMetadatas) Copy() EdgeMetadatas {
 
 // Add value to the counter 'key'
 func (c EdgeMetadatas) Add(key string, value EdgeMetadata) EdgeMetadatas {
+	if c.psMap == nil {
+		c = EmptyEdgeMetadatas
+	}
 	if existingValue, ok := c.psMap.Lookup(key); ok {
 		value = value.Merge(existingValue.(EdgeMetadata))
 	}
@@ -42,15 +45,20 @@ func (c EdgeMetadatas) Add(key string, value EdgeMetadata) EdgeMetadatas {
 
 // Lookup the counter 'key'
 func (c EdgeMetadatas) Lookup(key string) (EdgeMetadata, bool) {
-	existingValue, ok := c.psMap.Lookup(key)
-	if ok {
-		return existingValue.(EdgeMetadata), true
+	if c.psMap != nil {
+		existingValue, ok := c.psMap.Lookup(key)
+		if ok {
+			return existingValue.(EdgeMetadata), true
+		}
 	}
 	return EdgeMetadata{}, false
 }
 
 // Size is the number of elements
 func (c EdgeMetadatas) Size() int {
+	if c.psMap == nil {
+		return 0
+	}
 	return c.psMap.Size()
 }
 
@@ -85,21 +93,26 @@ func (c EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
 // The original is not modified.
 func (c EdgeMetadatas) Flatten() EdgeMetadata {
 	result := EdgeMetadata{}
-	c.psMap.ForEach(func(_ string, v interface{}) {
-		result = result.Flatten(v.(EdgeMetadata))
+	c.ForEach(func(_ string, e EdgeMetadata) {
+		result = result.Flatten(e)
 	})
 	return result
 }
 
 // ForEach executes f on each key value pair in the map
 func (c EdgeMetadatas) ForEach(fn func(k string, v EdgeMetadata)) {
-	c.psMap.ForEach(func(key string, value interface{}) {
-		fn(key, value.(EdgeMetadata))
-	})
+	if c.psMap != nil {
+		c.psMap.ForEach(func(key string, value interface{}) {
+			fn(key, value.(EdgeMetadata))
+		})
+	}
 }
 
 func (c EdgeMetadatas) String() string {
 	keys := []string{}
+	if c.psMap == nil {
+		c = EmptyEdgeMetadatas
+	}
 	for _, k := range c.psMap.Keys() {
 		keys = append(keys, k)
 	}
@@ -121,8 +134,11 @@ func (c EdgeMetadatas) DeepEqual(i interface{}) bool {
 		return false
 	}
 
-	if c.psMap.Size() != d.psMap.Size() {
+	if c.Size() != d.Size() {
 		return false
+	}
+	if c.Size() == 0 {
+		return true
 	}
 
 	equal := true
@@ -138,9 +154,11 @@ func (c EdgeMetadatas) DeepEqual(i interface{}) bool {
 
 func (c EdgeMetadatas) toIntermediate() map[string]EdgeMetadata {
 	intermediate := map[string]EdgeMetadata{}
-	c.psMap.ForEach(func(key string, val interface{}) {
-		intermediate[key] = val.(EdgeMetadata)
-	})
+	if c.psMap != nil {
+		c.psMap.ForEach(func(key string, val interface{}) {
+			intermediate[key] = val.(EdgeMetadata)
+		})
+	}
 	return intermediate
 }
 

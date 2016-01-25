@@ -38,10 +38,22 @@ func TestEdgeMetadatasAdd(t *testing.T) {
 	})
 }
 
+func TestEdgeMetadatasAddNil(t *testing.T) {
+	have := EdgeMetadatas{}.Add("foo", EdgeMetadata{EgressPacketCount: newu64(1)})
+	if have.Size() != 1 {
+		t.Errorf("Adding to a zero-value EdgeMetadatas failed, got: %v", have)
+	}
+}
+
 func TestEdgeMetadatasMerge(t *testing.T) {
 	for name, c := range map[string]struct {
 		a, b, want EdgeMetadatas
 	}{
+		"nils": {
+			a:    EdgeMetadatas{},
+			b:    EdgeMetadatas{},
+			want: EdgeMetadatas{},
+		},
 		"Empty a": {
 			a: EmptyEdgeMetadatas,
 			b: EmptyEdgeMetadatas.
@@ -171,6 +183,15 @@ func TestEdgeMetadataFlatten(t *testing.T) {
 			t.Error(test.Diff(want, have))
 		}
 	}
+
+	{
+		// Should not panic on nil
+		have := EdgeMetadatas{}.Flatten()
+		want := EdgeMetadata{}
+		if !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
+		}
+	}
 }
 
 func TestEdgeMetadataReversed(t *testing.T) {
@@ -185,7 +206,7 @@ func TestEdgeMetadataReversed(t *testing.T) {
 	}
 }
 
-func TestEdgeMetadataEncoding(t *testing.T) {
+func TestEdgeMetadatasEncoding(t *testing.T) {
 	want := EmptyEdgeMetadatas.
 		Add("foo", EdgeMetadata{
 		EgressPacketCount: newu64(1),
@@ -217,6 +238,34 @@ func TestEdgeMetadataEncoding(t *testing.T) {
 		have.UnmarshalJSON(json)
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
+		}
+	}
+}
+
+func TestEdgeMetadatasEncodingNil(t *testing.T) {
+	want := EdgeMetadatas{}
+
+	{
+		gobs, err := want.GobEncode()
+		if err != nil {
+			t.Fatal(err)
+		}
+		have := EmptyEdgeMetadatas
+		have.GobDecode(gobs)
+		if have.psMap == nil {
+			t.Error("needed to get back a non-nil psMap for EdgeMetadata")
+		}
+	}
+
+	{
+		json, err := want.MarshalJSON()
+		if err != nil {
+			t.Fatal(err)
+		}
+		have := EmptyEdgeMetadatas
+		have.UnmarshalJSON(json)
+		if have.psMap == nil {
+			t.Error("needed to get back a non-nil psMap for EdgeMetadata")
 		}
 	}
 }
