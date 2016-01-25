@@ -49,19 +49,35 @@ func (c EdgeMetadatas) Lookup(key string) (EdgeMetadata, bool) {
 	return EdgeMetadata{}, false
 }
 
+// Size is the number of elements
+func (c EdgeMetadatas) Size() int {
+	return c.psMap.Size()
+}
+
 // Merge produces a fresh Counters, container the keys from both inputs. When
 // both inputs container the same key, the latter value is used.
 func (c EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
-	output := c.psMap
-
-	other.psMap.ForEach(func(key string, otherVal interface{}) {
+	var (
+		cSize     = c.Size()
+		otherSize = other.Size()
+		output    = c.psMap
+		iter      = other.psMap
+	)
+	switch {
+	case cSize == 0:
+		return other
+	case otherSize == 0:
+		return c
+	case cSize < otherSize:
+		output, iter = iter, output
+	}
+	iter.ForEach(func(key string, otherVal interface{}) {
 		if val, ok := output.Lookup(key); ok {
 			output = output.Set(key, otherVal.(EdgeMetadata).Merge(val.(EdgeMetadata)))
 		} else {
 			output = output.Set(key, otherVal)
 		}
 	})
-
 	return EdgeMetadatas{output}
 }
 

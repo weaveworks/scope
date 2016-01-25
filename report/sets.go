@@ -48,12 +48,30 @@ func (s Sets) Lookup(key string) (StringSet, bool) {
 	return EmptyStringSet, false
 }
 
+// Size returns the number of elements
+func (s Sets) Size() int {
+	return s.psMap.Size()
+}
+
 // Merge merges two sets maps into a fresh set, performing set-union merges as
 // appropriate.
 func (s Sets) Merge(other Sets) Sets {
-	result := s.psMap
+	var (
+		sSize     = s.Size()
+		otherSize = other.Size()
+		result    = s.psMap
+		iter      = other.psMap
+	)
+	switch {
+	case sSize == 0:
+		return other
+	case otherSize == 0:
+		return s
+	case sSize < otherSize:
+		result, iter = iter, result
+	}
 
-	other.psMap.ForEach(func(key string, value interface{}) {
+	iter.ForEach(func(key string, value interface{}) {
 		set := value.(StringSet)
 		if existingSet, ok := result.Lookup(key); ok {
 			set = set.Merge(existingSet.(StringSet))

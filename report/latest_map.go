@@ -45,21 +45,36 @@ func (m LatestMap) Copy() LatestMap {
 	return m
 }
 
+// Size returns the number of elements
+func (m LatestMap) Size() int {
+	return m.Map.Size()
+}
+
 // Merge produces a fresh LatestMap, container the kers from both inputs. When
 // both inputs container the same key, the latter value is used.
-func (m LatestMap) Merge(newer LatestMap) LatestMap {
-	// expect people to do old.Merge(new), optimise for that.
-	// ie if you do {k: v}.Merge({k: v'}), we end up just returning
-	// newer, unmodified.
-	output := newer.Map
+func (m LatestMap) Merge(other LatestMap) LatestMap {
+	var (
+		mSize     = m.Size()
+		otherSize = other.Size()
+		output    = m.Map
+		iter      = other.Map
+	)
+	switch {
+	case mSize == 0:
+		return other
+	case otherSize == 0:
+		return m
+	case mSize < otherSize:
+		output, iter = iter, output
+	}
 
-	m.Map.ForEach(func(key string, olderVal interface{}) {
-		if newerVal, ok := newer.Map.Lookup(key); ok {
-			if newerVal.(LatestEntry).Timestamp.Before(olderVal.(LatestEntry).Timestamp) {
-				output = output.Set(key, olderVal)
+	iter.ForEach(func(key string, iterVal interface{}) {
+		if existingVal, ok := output.Lookup(key); ok {
+			if existingVal.(LatestEntry).Timestamp.Before(iterVal.(LatestEntry).Timestamp) {
+				output = output.Set(key, iterVal)
 			}
 		} else {
-			output = output.Set(key, olderVal)
+			output = output.Set(key, iterVal)
 		}
 	})
 

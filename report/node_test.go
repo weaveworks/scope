@@ -95,10 +95,9 @@ func TestMergeNodes(t *testing.T) {
 			},
 			b: report.Nodes{
 				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{ // <-- same ID
-					PID:    "0",
 					Name:   "curl",
 					Domain: "node-a.local",
-				}),
+				}).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
 			},
 			want: report.Nodes{
 				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
@@ -118,10 +117,9 @@ func TestMergeNodes(t *testing.T) {
 			},
 			b: report.Nodes{
 				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{ // <-- same ID
-					PID:    "0",
 					Name:   "curl",
 					Domain: "node-a.local",
-				}),
+				}).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
 			},
 			want: report.Nodes{
 				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
