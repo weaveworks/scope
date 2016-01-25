@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/bluele/gcache"
 
@@ -10,22 +11,30 @@ import (
 )
 
 var renderCache = gcache.New(100).LRU().Build()
+var depth = 0
 
 func memoisedRender(r Renderer, rpt report.Report) RenderableNodes {
+	fmt.Printf("%sRendering: %#v\n", strings.Repeat("  ", depth), r)
+
 	key := ""
 	v := reflect.ValueOf(r)
 	switch v.Kind() {
 	case reflect.Ptr, reflect.Func:
 		key = fmt.Sprintf("%s-%x", rpt.ID, v.Pointer())
 	default:
+		fmt.Printf("%s- Cannot memoise: %v\n", strings.Repeat("  ", depth), r)
 		return r.Render(rpt)
 	}
 	if result, err := renderCache.Get(key); err == nil {
-		//fmt.Println("Hit", key)
+		fmt.Printf("%s- Hit %s\n", strings.Repeat("  ", depth), key)
 		return result.(RenderableNodes)
 	}
-	//fmt.Println("Miss", key)
+	fmt.Printf("%s- Miss %s\n", strings.Repeat("  ", depth), key)
+
+	depth += 1
 	output := r.Render(rpt)
+	depth -= 1
+
 	renderCache.Set(key, output)
 	return output
 }
