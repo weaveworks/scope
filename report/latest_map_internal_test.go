@@ -10,14 +10,9 @@ import (
 
 func TestLatestMapAdd(t *testing.T) {
 	now := time.Now()
-	want := EmptyLatestMap.
-		Set("foo", now, "Bar")
 	have := EmptyLatestMap.
 		Set("foo", now.Add(-1), "Baz").
 		Set("foo", now, "Bar")
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf(test.Diff(want, have))
-	}
 	if v, ok := have.Lookup("foo"); !ok || v != "Bar" {
 		t.Errorf("v != Bar")
 	}
@@ -30,6 +25,18 @@ func TestLatestMapAdd(t *testing.T) {
 		}
 	})
 }
+
+func TestLatestMapDeepEquals(t *testing.T) {
+	now := time.Now()
+	want := EmptyLatestMap.
+		Set("foo", now, "Bar")
+	have := EmptyLatestMap.
+		Set("foo", now, "Bar")
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf(test.Diff(want, have))
+	}
+}
+
 func TestLatestMapDelete(t *testing.T) {
 	now := time.Now()
 	want := EmptyLatestMap
@@ -62,7 +69,7 @@ func TestLatestMapMerge(t *testing.T) {
 			want: EmptyLatestMap.
 				Set("foo", now, "bar"),
 		},
-		"Host merge": {
+		"Disjoint a & b": {
 			a: EmptyLatestMap.
 				Set("foo", now, "bar"),
 			b: EmptyLatestMap.
@@ -71,7 +78,7 @@ func TestLatestMapMerge(t *testing.T) {
 				Set("foo", now, "bar").
 				Set("baz", now, "bop"),
 		},
-		"Edge merge": {
+		"Common a & b": {
 			a: EmptyLatestMap.
 				Set("foo", now, "bar"),
 			b: EmptyLatestMap.

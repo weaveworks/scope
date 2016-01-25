@@ -8,19 +8,24 @@ import (
 )
 
 func TestCountersAdd(t *testing.T) {
-	want := EmptyCounters.
-		Add("foo", 3)
 	have := EmptyCounters.
 		Add("foo", 1).
 		Add("foo", 2)
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf(test.Diff(want, have))
-	}
 	if v, ok := have.Lookup("foo"); !ok || v != 3 {
 		t.Errorf("foo != 3")
 	}
 	if v, ok := have.Lookup("bar"); ok || v != 0 {
 		t.Errorf("bar != nil")
+	}
+}
+
+func TestCountersDeepEquals(t *testing.T) {
+	want := EmptyCounters.
+		Add("foo", 3)
+	have := EmptyCounters.
+		Add("foo", 3)
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf(test.Diff(want, have))
 	}
 }
 
@@ -42,7 +47,7 @@ func TestCountersMerge(t *testing.T) {
 			want: EmptyCounters.
 				Add("foo", 1),
 		},
-		"Disparate keys": {
+		"Disjoin a & b": {
 			a: EmptyCounters.
 				Add("foo", 1),
 			b: EmptyCounters.
@@ -51,7 +56,7 @@ func TestCountersMerge(t *testing.T) {
 				Add("foo", 1).
 				Add("bar", 2),
 		},
-		"Key merge": {
+		"Overlapping a & b": {
 			a: EmptyCounters.
 				Add("foo", 1),
 			b: EmptyCounters.

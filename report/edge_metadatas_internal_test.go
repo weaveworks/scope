@@ -8,11 +8,6 @@ import (
 )
 
 func TestEdgeMetadatasAdd(t *testing.T) {
-	want := EmptyEdgeMetadatas.
-		Add("foo",
-		EdgeMetadata{
-			EgressPacketCount: newu64(3),
-		})
 	have := EmptyEdgeMetadatas.
 		Add("foo",
 		EdgeMetadata{
@@ -22,9 +17,6 @@ func TestEdgeMetadatasAdd(t *testing.T) {
 		EdgeMetadata{
 			EgressPacketCount: newu64(2),
 		})
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf(test.Diff(want, have))
-	}
 	if emd, ok := have.Lookup("foo"); !ok || *emd.EgressPacketCount != 3 {
 		t.Errorf("foo.EgressPacketCount != 3")
 	}
@@ -42,6 +34,22 @@ func TestEdgeMetadatasAddNil(t *testing.T) {
 	have := EdgeMetadatas{}.Add("foo", EdgeMetadata{EgressPacketCount: newu64(1)})
 	if have.Size() != 1 {
 		t.Errorf("Adding to a zero-value EdgeMetadatas failed, got: %v", have)
+	}
+}
+
+func TestEdgeMetadatasDeepEquals(t *testing.T) {
+	want := EmptyEdgeMetadatas.
+		Add("foo",
+		EdgeMetadata{
+			EgressPacketCount: newu64(3),
+		})
+	have := EmptyEdgeMetadatas.
+		Add("foo",
+		EdgeMetadata{
+			EgressPacketCount: newu64(3),
+		})
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf(test.Diff(want, have))
 	}
 }
 
@@ -84,7 +92,7 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 					EgressByteCount:   newu64(999),
 				}),
 		},
-		"Host merge": {
+		"Disjoint a & b": {
 			a: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 				EdgeMetadata{
@@ -113,7 +121,7 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 					MaxConnCountTCP:   newu64(6),
 				}),
 		},
-		"Edge merge": {
+		"Overlapping a & b": {
 			a: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 				EdgeMetadata{
@@ -146,6 +154,7 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 }
 
 func TestEdgeMetadataFlatten(t *testing.T) {
+	// Test two EdgeMetadatas flatten to the correct values
 	{
 		have := (EdgeMetadata{
 			EgressPacketCount: newu64(1),
@@ -165,6 +174,8 @@ func TestEdgeMetadataFlatten(t *testing.T) {
 		}
 	}
 
+	// Test an EdgeMetadatas flatten to the correct value (should
+	// just sum)
 	{
 		have := EmptyEdgeMetadatas.
 			Add("foo", EdgeMetadata{
