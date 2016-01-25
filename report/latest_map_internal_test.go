@@ -26,6 +26,14 @@ func TestLatestMapAdd(t *testing.T) {
 	})
 }
 
+func TestLatestMapAddNil(t *testing.T) {
+	now := time.Now()
+	have := LatestMap{}.Set("foo", now, "Bar")
+	if v, ok := have.Lookup("foo"); !ok || v != "Bar" {
+		t.Errorf("v != Bar")
+	}
+}
+
 func TestLatestMapDeepEquals(t *testing.T) {
 	now := time.Now()
 	want := EmptyLatestMap.
@@ -48,6 +56,14 @@ func TestLatestMapDelete(t *testing.T) {
 	}
 }
 
+func TestLatestMapDeleteNil(t *testing.T) {
+	want := LatestMap{}
+	have := LatestMap{}.Delete("foo")
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf(test.Diff(want, have))
+	}
+}
+
 func TestLatestMapMerge(t *testing.T) {
 	now := time.Now()
 	then := now.Add(-1)
@@ -55,6 +71,11 @@ func TestLatestMapMerge(t *testing.T) {
 	for name, c := range map[string]struct {
 		a, b, want LatestMap
 	}{
+		"nils": {
+			a:    LatestMap{},
+			b:    LatestMap{},
+			want: LatestMap{},
+		},
 		"Empty a": {
 			a: EmptyLatestMap,
 			b: EmptyLatestMap.
@@ -120,6 +141,34 @@ func TestLatestMapEncoding(t *testing.T) {
 		have.UnmarshalJSON(json)
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
+		}
+	}
+}
+
+func TestLatestMapEncodingNil(t *testing.T) {
+	want := LatestMap{}
+
+	{
+		gobs, err := want.GobEncode()
+		if err != nil {
+			t.Fatal(err)
+		}
+		have := EmptyLatestMap
+		have.GobDecode(gobs)
+		if have.Map == nil {
+			t.Error("Decoded LatestMap.psMap should not be nil")
+		}
+	}
+
+	{
+		json, err := want.MarshalJSON()
+		if err != nil {
+			t.Fatal(err)
+		}
+		have := EmptyLatestMap
+		have.UnmarshalJSON(json)
+		if have.Map == nil {
+			t.Error("Decoded LatestMap.psMap should not be nil")
 		}
 	}
 }

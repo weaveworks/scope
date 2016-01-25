@@ -47,6 +47,9 @@ func (m LatestMap) Copy() LatestMap {
 
 // Size returns the number of elements
 func (m LatestMap) Size() int {
+	if m.Map == nil {
+		return 0
+	}
 	return m.Map.Size()
 }
 
@@ -83,6 +86,9 @@ func (m LatestMap) Merge(other LatestMap) LatestMap {
 
 // Lookup the value for the given key.
 func (m LatestMap) Lookup(key string) (string, bool) {
+	if m.Map == nil {
+		return "", false
+	}
 	value, ok := m.Map.Lookup(key)
 	if !ok {
 		return "", false
@@ -92,16 +98,25 @@ func (m LatestMap) Lookup(key string) (string, bool) {
 
 // Set the value for the given key.
 func (m LatestMap) Set(key string, timestamp time.Time, value string) LatestMap {
+	if m.Map == nil {
+		m = EmptyLatestMap
+	}
 	return LatestMap{m.Map.Set(key, LatestEntry{timestamp, value})}
 }
 
 // Delete the value for the given key.
 func (m LatestMap) Delete(key string) LatestMap {
+	if m.Map == nil {
+		m = EmptyLatestMap
+	}
 	return LatestMap{m.Map.Delete(key)}
 }
 
 // ForEach executes f on each key value pair in the map
 func (m LatestMap) ForEach(fn func(k, v string)) {
+	if m.Map == nil {
+		return
+	}
 	m.Map.ForEach(func(key string, value interface{}) {
 		fn(key, value.(LatestEntry).Value)
 	})
@@ -109,6 +124,9 @@ func (m LatestMap) ForEach(fn func(k, v string)) {
 
 func (m LatestMap) String() string {
 	keys := []string{}
+	if m.Map == nil {
+		m = EmptyLatestMap
+	}
 	for _, k := range m.Map.Keys() {
 		keys = append(keys, k)
 	}
@@ -130,8 +148,11 @@ func (m LatestMap) DeepEqual(i interface{}) bool {
 		return false
 	}
 
-	if m.Map.Size() != n.Map.Size() {
+	if m.Size() != n.Size() {
 		return false
+	}
+	if m.Size() == 0 {
+		return true
 	}
 
 	equal := true
@@ -147,9 +168,11 @@ func (m LatestMap) DeepEqual(i interface{}) bool {
 
 func (m LatestMap) toIntermediate() map[string]LatestEntry {
 	intermediate := map[string]LatestEntry{}
-	m.Map.ForEach(func(key string, val interface{}) {
-		intermediate[key] = val.(LatestEntry)
-	})
+	if m.Map != nil {
+		m.Map.ForEach(func(key string, val interface{}) {
+			intermediate[key] = val.(LatestEntry)
+		})
+	}
 	return intermediate
 }
 
