@@ -49,7 +49,7 @@ func (t *Tagger) Tag(r report.Report) (report.Report, error) {
 
 func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 	for nodeID, node := range topology.Nodes {
-		pidStr, ok := node.Metadata[process.PID]
+		pidStr, ok := node.Latest.Lookup(process.PID)
 		if !ok {
 			continue
 		}
@@ -84,9 +84,9 @@ func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 
 		topology.AddNode(nodeID, report.MakeNodeWith(map[string]string{
 			ContainerID: c.ID(),
-		}).WithParents(report.Sets{
-			report.Container:      report.MakeStringSet(report.MakeContainerNodeID(c.ID())),
-			report.ContainerImage: report.MakeStringSet(report.MakeContainerImageNodeID(c.Image())),
-		}))
+		}).WithParents(report.EmptySets.
+			Add(report.Container, report.MakeStringSet(report.MakeContainerNodeID(c.ID()))).
+			Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
+		))
 	}
 }

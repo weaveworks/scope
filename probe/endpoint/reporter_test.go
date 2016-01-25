@@ -86,7 +86,8 @@ func TestSpyNoProcesses(t *testing.T) {
 		scopedRemote = report.MakeAddressNodeID(nodeID, fixRemoteAddress.String())
 	)
 
-	if want, have := nodeName, r.Address.Nodes[scopedLocal].Metadata[docker.Name]; want != have {
+	have, _ := r.Address.Nodes[scopedLocal].Latest.Lookup(docker.Name)
+	if want, have := nodeName, have; want != have {
 		t.Fatalf("want %q, have %q", want, have)
 	}
 
@@ -127,7 +128,8 @@ func TestSpyWithProcesses(t *testing.T) {
 	for key, want := range map[string]string{
 		"pid": strconv.FormatUint(uint64(fixProcessPID), 10),
 	} {
-		if have := r.Endpoint.Nodes[scopedLocal].Metadata[key]; want != have {
+		have, _ := r.Endpoint.Nodes[scopedLocal].Latest.Lookup(key)
+		if want != have {
 			t.Errorf("Process.Nodes[%q][%q]: want %q, have %q", scopedLocal, key, want, have)
 		}
 	}

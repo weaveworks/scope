@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"reflect"
 	"testing"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 type mockConnection struct {
@@ -71,7 +71,7 @@ func TestContainer(t *testing.T) {
 	}
 
 	// Now see if we go them
-	want := report.MakeNode().WithMetadata(map[string]string{
+	want := report.MakeNode().WithLatests(map[string]string{
 		"docker_container_command": " ",
 		"docker_container_created": "01 Jan 01 00:00 UTC",
 		"docker_container_id":      "ping",
@@ -80,11 +80,11 @@ func TestContainer(t *testing.T) {
 		"docker_label_foo1":        "bar1",
 		"docker_label_foo2":        "bar2",
 		"docker_memory_usage":      "12345",
-	}).WithSets(report.Sets{
-		"docker_container_ports":           report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp"),
-		"docker_container_ips":             report.MakeStringSet("1.2.3.4"),
-		"docker_container_ips_with_scopes": report.MakeStringSet("scope;1.2.3.4"),
-	}).WithControls(
+	}).WithSets(report.EmptySets.
+		Add("docker_container_ports", report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp")).
+		Add("docker_container_ips", report.MakeStringSet("1.2.3.4")).
+		Add("docker_container_ips_with_scopes", report.MakeStringSet("scope;1.2.3.4")),
+	).WithControls(
 		docker.RestartContainer, docker.StopContainer, docker.PauseContainer,
 		docker.AttachContainer, docker.ExecContainer,
 	).WithLatest(
@@ -92,16 +92,17 @@ func TestContainer(t *testing.T) {
 	).WithMetrics(report.Metrics{
 		"docker_cpu_total_usage": report.MakeMetric(),
 		"docker_memory_usage":    report.MakeMetric().Add(now, 12345),
-	}).WithParents(report.Sets{
-		report.ContainerImage: report.MakeStringSet(report.MakeContainerImageNodeID("baz")),
-	})
+	}).WithParents(report.EmptySets.
+		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID("baz"))),
+	)
+
 	test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 		node := c.GetNode("scope", []net.IP{})
-		for k, v := range node.Metadata {
+		node.Latest.ForEach(func(k, v string) {
 			if v == "0" || v == "" {
-				delete(node.Metadata, k)
+				node.Latest = node.Latest.Delete(k)
 			}
-		}
+		})
 		return node
 	})
 

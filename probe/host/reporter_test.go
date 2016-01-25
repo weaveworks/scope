@@ -2,7 +2,6 @@ package host_test
 
 import (
 	"net"
-	"reflect"
 	"runtime"
 	"testing"
 	"time"
@@ -10,7 +9,6 @@ import (
 	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 )
 
 func TestReporter(t *testing.T) {
@@ -21,7 +19,7 @@ func TestReporter(t *testing.T) {
 		hostID    = "hostid"
 		hostname  = "hostname"
 		timestamp = time.Now()
-		load      = report.Metrics{
+		metrics   = report.Metrics{
 			host.Load1:       report.MakeMetric().Add(timestamp, 1.0),
 			host.Load5:       report.MakeMetric().Add(timestamp, 5.0),
 			host.Load15:      report.MakeMetric().Add(timestamp, 15.0),
@@ -52,23 +50,51 @@ func TestReporter(t *testing.T) {
 		host.GetMemoryUsageBytes = oldGetMemoryUsageBytes
 	}()
 	host.GetKernelVersion = func() (string, error) { return release + " " + version, nil }
-	host.GetLoad = func(time.Time) report.Metrics { return load }
+	host.GetLoad = func(time.Time) report.Metrics { return metrics }
 	host.GetUptime = func() (time.Duration, error) { return time.ParseDuration(uptime) }
 	host.GetCPUUsagePercent = func() (float64, float64) { return 30.0, 100.0 }
 	host.GetMemoryUsageBytes = func() (float64, float64) { return 60.0, 100.0 }
 
-	want := report.MakeReport()
-	want.Host.AddNode(report.MakeHostNodeID(hostID), report.MakeNodeWith(map[string]string{
-		host.Timestamp:     timestamp.UTC().Format(time.RFC3339Nano),
-		host.HostName:      hostname,
-		host.OS:            runtime.GOOS,
-		host.Uptime:        uptime,
-		host.KernelVersion: kernel,
-	}).WithSets(report.Sets{
-		host.LocalNetworks: report.MakeStringSet(network),
-	}).WithMetrics(load))
-	have, _ := host.NewReporter(hostID, hostname, localNets).Report()
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf("%s", test.Diff(want, have))
+	rpt, err := host.NewReporter(hostID, hostname, localNets).Report()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nodeID := report.MakeHostNodeID(hostID)
+	node, ok := rpt.Host.Nodes[nodeID]
+	if !ok {
+		t.Errorf("Expected host node %q, but not found", nodeID)
+	}
+
+	// Should have a bunch of expected latest keys
+	for _, tuple := range []struct {
+		key, want string
+	}{
+		{host.Timestamp, timestamp.UTC().Format(time.RFC3339Nano)},
+		{host.HostName, hostname},
+		{host.OS, runtime.GOOS},
+		{host.Uptime, uptime},
+		{host.KernelVersion, kernel},
+	} {
+		if have, ok := node.Latest.Lookup(tuple.key); !ok || have != tuple.want {
+			t.Errorf("Expected %s %q, got %q", tuple.key, tuple.want, have)
+		}
+	}
+
+	// Should have the local network
+	if have, ok := node.Sets.Lookup(host.LocalNetworks); !ok || !have.Contains(network) {
+		t.Errorf("Expected host.LocalNetworks to include %q, got %q", network, have)
+	}
+
+	// Should have metrics
+	for key, want := range metrics {
+		wantSample := want.LastSample()
+		if metric, ok := node.Metrics[key]; !ok {
+			t.Errorf("Expected %s metric, but not found", key)
+		} else if sample := metric.LastSample(); sample == nil {
+			t.Errorf("Expected %s metric to have a sample, but there were none", key)
+		} else if sample.Value != wantSample.Value {
+			t.Errorf("Expected %s metric sample %f, got %f", key, wantSample, sample.Value)
+		}
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/mndrix/ps"
@@ -23,12 +24,20 @@ type LatestEntry struct {
 }
 
 func (e LatestEntry) String() string {
-	return fmt.Sprintf("\"%s\" (%d)", e.Value, e.Timestamp)
+	return fmt.Sprintf("\"%s\" (%s)", e.Value, e.Timestamp.String())
 }
+
+// Equal returns true if the supplied LatestEntry is equal to this one.
+func (e LatestEntry) Equal(e2 LatestEntry) bool {
+	return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
+}
+
+// EmptyLatestMap is an empty LatestMap.  Start with this.
+var EmptyLatestMap = LatestMap{ps.NewMap()}
 
 // MakeLatestMap makes an empty LatestMap
 func MakeLatestMap() LatestMap {
-	return LatestMap{ps.NewMap()}
+	return EmptyLatestMap
 }
 
 // Copy is a noop, as LatestMaps are immutable.
@@ -36,21 +45,39 @@ func (m LatestMap) Copy() LatestMap {
 	return m
 }
 
+// Size returns the number of elements
+func (m LatestMap) Size() int {
+	if m.Map == nil {
+		return 0
+	}
+	return m.Map.Size()
+}
+
 // Merge produces a fresh LatestMap, container the kers from both inputs. When
 // both inputs container the same key, the latter value is used.
-func (m LatestMap) Merge(newer LatestMap) LatestMap {
-	// expect people to do old.Merge(new), optimise for that.
-	// ie if you do {k: v}.Merge({k: v'}), we end up just returning
-	// newer, unmodified.
-	output := newer.Map
+func (m LatestMap) Merge(other LatestMap) LatestMap {
+	var (
+		mSize     = m.Size()
+		otherSize = other.Size()
+		output    = m.Map
+		iter      = other.Map
+	)
+	switch {
+	case mSize == 0:
+		return other
+	case otherSize == 0:
+		return m
+	case mSize < otherSize:
+		output, iter = iter, output
+	}
 
-	m.Map.ForEach(func(key string, olderVal interface{}) {
-		if newerVal, ok := newer.Map.Lookup(key); ok {
-			if newerVal.(LatestEntry).Timestamp.Before(olderVal.(LatestEntry).Timestamp) {
-				output = output.Set(key, olderVal)
+	iter.ForEach(func(key string, iterVal interface{}) {
+		if existingVal, ok := output.Lookup(key); ok {
+			if existingVal.(LatestEntry).Timestamp.Before(iterVal.(LatestEntry).Timestamp) {
+				output = output.Set(key, iterVal)
 			}
 		} else {
-			output = output.Set(key, olderVal)
+			output = output.Set(key, iterVal)
 		}
 	})
 
@@ -59,6 +86,9 @@ func (m LatestMap) Merge(newer LatestMap) LatestMap {
 
 // Lookup the value for the given key.
 func (m LatestMap) Lookup(key string) (string, bool) {
+	if m.Map == nil {
+		return "", false
+	}
 	value, ok := m.Map.Lookup(key)
 	if !ok {
 		return "", false
@@ -68,14 +98,81 @@ func (m LatestMap) Lookup(key string) (string, bool) {
 
 // Set the value for the given key.
 func (m LatestMap) Set(key string, timestamp time.Time, value string) LatestMap {
+	if m.Map == nil {
+		m = EmptyLatestMap
+	}
 	return LatestMap{m.Map.Set(key, LatestEntry{timestamp, value})}
+}
+
+// Delete the value for the given key.
+func (m LatestMap) Delete(key string) LatestMap {
+	if m.Map == nil {
+		m = EmptyLatestMap
+	}
+	return LatestMap{m.Map.Delete(key)}
+}
+
+// ForEach executes f on each key value pair in the map
+func (m LatestMap) ForEach(fn func(k, v string)) {
+	if m.Map == nil {
+		return
+	}
+	m.Map.ForEach(func(key string, value interface{}) {
+		fn(key, value.(LatestEntry).Value)
+	})
+}
+
+func (m LatestMap) String() string {
+	keys := []string{}
+	if m.Map == nil {
+		m = EmptyLatestMap
+	}
+	for _, k := range m.Map.Keys() {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	buf := bytes.NewBufferString("{")
+	for _, key := range keys {
+		val, _ := m.Map.Lookup(key)
+		fmt.Fprintf(buf, "%s: %s, ", key, val)
+	}
+	fmt.Fprintf(buf, "}\n")
+	return buf.String()
+}
+
+// DeepEqual tests equality with other LatestMap
+func (m LatestMap) DeepEqual(i interface{}) bool {
+	n, ok := i.(LatestMap)
+	if !ok {
+		return false
+	}
+
+	if m.Size() != n.Size() {
+		return false
+	}
+	if m.Size() == 0 {
+		return true
+	}
+
+	equal := true
+	m.Map.ForEach(func(k string, val interface{}) {
+		if otherValue, ok := n.Map.Lookup(k); !ok {
+			equal = false
+		} else {
+			equal = equal && val.(LatestEntry).Equal(otherValue.(LatestEntry))
+		}
+	})
+	return equal
 }
 
 func (m LatestMap) toIntermediate() map[string]LatestEntry {
 	intermediate := map[string]LatestEntry{}
-	m.ForEach(func(key string, val interface{}) {
-		intermediate[key] = val.(LatestEntry)
-	})
+	if m.Map != nil {
+		m.Map.ForEach(func(key string, val interface{}) {
+			intermediate[key] = val.(LatestEntry)
+		})
+	}
 	return intermediate
 }
 

@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 func TestMetricsMerge(t *testing.T) {

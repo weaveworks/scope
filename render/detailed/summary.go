@@ -75,15 +75,15 @@ func (n NodeSummary) Copy() NodeSummary {
 func processNodeSummary(nmd report.Node) NodeSummary {
 	var (
 		id               string
-		label, nameFound = nmd.Metadata[process.Name]
+		label, nameFound = nmd.Latest.Lookup(process.Name)
 	)
-	if pid, ok := nmd.Metadata[process.PID]; ok {
+	if pid, ok := nmd.Latest.Lookup(process.PID); ok {
 		if !nameFound {
 			label = fmt.Sprintf("(%s)", pid)
 		}
 		id = render.MakeProcessID(report.ExtractHostID(nmd), pid)
 	}
-	_, isConnected := nmd.Metadata[render.IsConnected]
+	_, isConnected := nmd.Latest.Lookup(render.IsConnected)
 	return NodeSummary{
 		ID:       id,
 		Label:    label,
@@ -95,8 +95,9 @@ func processNodeSummary(nmd report.Node) NodeSummary {
 
 func containerNodeSummary(nmd report.Node) NodeSummary {
 	label, _ := render.GetRenderableContainerName(nmd)
+	containerID, _ := nmd.Latest.Lookup(docker.ContainerID)
 	return NodeSummary{
-		ID:       render.MakeContainerID(nmd.Metadata[docker.ContainerID]),
+		ID:       render.MakeContainerID(containerID),
 		Label:    label,
 		Linkable: true,
 		Metadata: containerNodeMetadata(nmd),
@@ -105,7 +106,7 @@ func containerNodeSummary(nmd report.Node) NodeSummary {
 }
 
 func containerImageNodeSummary(nmd report.Node) NodeSummary {
-	imageName := nmd.Metadata[docker.ImageName]
+	imageName, _ := nmd.Latest.Lookup(docker.ImageName)
 	return NodeSummary{
 		ID:       render.MakeContainerImageID(render.ImageNameWithoutVersion(imageName)),
 		Label:    imageName,
@@ -115,18 +116,21 @@ func containerImageNodeSummary(nmd report.Node) NodeSummary {
 }
 
 func podNodeSummary(nmd report.Node) NodeSummary {
+	podID, _ := nmd.Latest.Lookup(kubernetes.PodID)
+	podName, _ := nmd.Latest.Lookup(kubernetes.PodName)
 	return NodeSummary{
-		ID:       render.MakePodID(nmd.Metadata[kubernetes.PodID]),
-		Label:    nmd.Metadata[kubernetes.PodName],
+		ID:       render.MakePodID(podID),
+		Label:    podName,
 		Linkable: true,
 		Metadata: podNodeMetadata(nmd),
 	}
 }
 
 func hostNodeSummary(nmd report.Node) NodeSummary {
+	hostName, _ := nmd.Latest.Lookup(host.HostName)
 	return NodeSummary{
-		ID:       render.MakeHostID(nmd.Metadata[host.HostName]),
-		Label:    nmd.Metadata[host.HostName],
+		ID:       render.MakeHostID(hostName),
+		Label:    hostName,
 		Linkable: true,
 		Metadata: hostNodeMetadata(nmd),
 		Metrics:  hostNodeMetrics(nmd),

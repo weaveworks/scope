@@ -41,11 +41,11 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 	}.Render(rpt)
 
 	for id, p := range processes {
-		pid, ok := p.Node.Metadata[process.PID]
+		pid, ok := p.Node.Latest.Lookup(process.PID)
 		if !ok {
 			continue
 		}
-		containerID, ok := p.Node.Metadata[docker.ContainerID]
+		containerID, ok := p.Node.Latest.Lookup(docker.ContainerID)
 		if !ok {
 			continue
 		}
@@ -82,8 +82,8 @@ var ProcessNameRenderer = Map{
 var ContainerRenderer = MakeReduce(
 	Filter{
 		FilterFunc: func(n RenderableNode) bool {
-			_, inContainer := n.Node.Metadata[docker.ContainerID]
-			_, isConnected := n.Node.Metadata[IsConnected]
+			_, inContainer := n.Node.Latest.Lookup(docker.ContainerID)
+			_, isConnected := n.Node.Latest.Lookup(IsConnected)
 			return inContainer || isConnected
 		},
 		Renderer: Map{
@@ -131,7 +131,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 	}.Render(rpt)
 
 	for id, c := range containers {
-		imageID, ok := c.Node.Metadata[docker.ImageID]
+		imageID, ok := c.Node.Latest.Lookup(docker.ImageID)
 		if !ok {
 			continue
 		}
@@ -140,7 +140,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 			continue
 		}
 		c.Rank = ImageNameWithoutVersion(image.LabelMajor)
-		c.Metadata = image.Metadata.Merge(c.Metadata)
+		c.Latest = c.Latest.Merge(c.Latest)
 		containers[id] = c
 	}
 

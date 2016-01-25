@@ -1,6 +1,6 @@
 .PHONY: all test clean
 
-DIRS=$(shell find . -maxdepth 2 -name *.go -printf "%h\n" | sort -u)
+DIRS=$(shell find . -maxdepth 2 -name *.go | xargs -n1 dirname | sort -u)
 TARGETS=$(join $(patsubst %,%/,$(DIRS)),$(patsubst ./%,%,$(DIRS)))
 BUILD_IN_CONTAINER=true
 RM=--rm

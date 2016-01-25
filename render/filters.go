@@ -45,9 +45,9 @@ func ColorConnected(r Renderer) Renderer {
 			}
 
 			for id := range connected {
-				node := input[id]
-				node.Metadata[IsConnected] = "true"
-				input[id] = node
+				input[id] = input[id].WithNode(report.MakeNodeWith(map[string]string{
+					IsConnected: "true",
+				}))
 			}
 			return input
 		},
@@ -136,7 +136,7 @@ func FilterUnconnected(r Renderer) Renderer {
 	return Filter{
 		Renderer: ColorConnected(r),
 		FilterFunc: func(node RenderableNode) bool {
-			_, ok := node.Metadata[IsConnected]
+			_, ok := node.Latest.Lookup(IsConnected)
 			return ok
 		},
 	}
@@ -163,21 +163,25 @@ func FilterSystem(r Renderer) Renderer {
 	return Filter{
 		Renderer: r,
 		FilterFunc: func(node RenderableNode) bool {
-			containerName := node.Metadata[docker.ContainerName]
+			containerName, _ := node.Latest.Lookup(docker.ContainerName)
 			if _, ok := systemContainerNames[containerName]; ok {
 				return false
 			}
-			imagePrefix := strings.SplitN(node.Metadata[docker.ImageName], ":", 2)[0] // :(
+			imageName, _ := node.Latest.Lookup(docker.ImageName)
+			imagePrefix := strings.SplitN(imageName, ":", 2)[0] // :(
 			if _, ok := systemImagePrefixes[imagePrefix]; ok {
 				return false
 			}
-			if node.Metadata[docker.LabelPrefix+"works.weave.role"] == "system" {
+			roleLabel, _ := node.Latest.Lookup(docker.LabelPrefix + "works.weave.role")
+			if roleLabel == "system" {
 				return false
 			}
-			if node.Metadata[kubernetes.Namespace] == "kube-system" {
+			namespace, _ := node.Latest.Lookup(kubernetes.Namespace)
+			if namespace == "kube-system" {
 				return false
 			}
-			if strings.HasPrefix(node.Metadata[docker.LabelPrefix+"io.kubernetes.pod.name"], "kube-system/") {
+			podName, _ := node.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.name")
+			if strings.HasPrefix(podName, "kube-system/") {
 				return false
 			}
 			return true

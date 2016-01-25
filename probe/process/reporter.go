@@ -70,12 +70,12 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 			{Threads, strconv.Itoa(p.Threads)},
 		} {
 			if tuple.value != "" {
-				node.Metadata[tuple.key] = tuple.value
+				node = node.WithLatests(map[string]string{tuple.key: tuple.value})
 			}
 		}
 
 		if p.PPID > 0 {
-			node.Metadata[PPID] = strconv.Itoa(p.PPID)
+			node = node.WithLatests(map[string]string{PPID: strconv.Itoa(p.PPID)})
 		}
 
 		if deltaTotal > 0 {

@@ -79,7 +79,7 @@ func TestPipes(t *testing.T) {
 				RawTTY: true,
 			}
 			if !reflect.DeepEqual(result, want) {
-				t.Errorf("diff: %s", test.Diff(want, result))
+				t.Errorf("diff %s: %s", tc, test.Diff(want, result))
 			}
 		}
 	})

@@ -8,7 +8,7 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-// Keys for use in Node.Metadata.
+// Keys for use in Node.Latest.
 const (
 	Timestamp     = "ts"
 	HostName      = "host_name"
@@ -85,9 +85,9 @@ func (r *Reporter) Report() (report.Report, error) {
 		OS:            runtime.GOOS,
 		KernelVersion: kernel,
 		Uptime:        uptime.String(),
-	}).WithSets(report.Sets{
-		LocalNetworks: report.MakeStringSet(localCIDRs...),
-	}).WithMetrics(metrics))
+	}).WithSets(report.EmptySets.
+		Add(LocalNetworks, report.MakeStringSet(localCIDRs...)),
+	).WithMetrics(metrics))
 
 	return rep, nil
 }

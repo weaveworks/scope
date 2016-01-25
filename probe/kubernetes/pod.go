@@ -82,16 +82,16 @@ func (p *pod) GetNode() report.Node {
 		PodContainerIDs: strings.Join(p.ContainerIDs(), " "),
 	})
 	if len(p.serviceIDs) > 0 {
-		n.Metadata[ServiceIDs] = strings.Join(p.serviceIDs, " ")
+		n = n.WithLatests(map[string]string{ServiceIDs: strings.Join(p.serviceIDs, " ")})
 	}
 	for _, serviceID := range p.serviceIDs {
 		segments := strings.SplitN(serviceID, "/", 2)
 		if len(segments) != 2 {
 			continue
 		}
-		n = n.WithParents(report.Sets{
-			report.Service: report.MakeStringSet(report.MakeServiceNodeID(p.Namespace(), segments[1])),
-		})
+		n = n.WithParents(report.EmptySets.
+			Add(report.Service, report.MakeStringSet(report.MakeServiceNodeID(p.Namespace(), segments[1]))),
+		)
 	}
 	return n
 }

@@ -2,11 +2,11 @@ package report_test
 
 import (
 	"net"
-	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 func TestContains(t *testing.T) {

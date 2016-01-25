@@ -84,7 +84,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		if err != nil {
 			return rpt, err
 		}
-		commonNodeInfo := report.MakeNode().WithMetadata(report.Metadata{
+		commonNodeInfo := report.MakeNode().WithLatests(map[string]string{
 			Procspied: "true",
 		})
 		for conn := conns.Next(); conn != nil; conn = conns.Next() {
@@ -96,7 +96,7 @@ func (r *Reporter) Report() (report.Report, error) {
 			)
 			extraNodeInfo := commonNodeInfo.Copy()
 			if conn.Proc.PID > 0 {
-				extraNodeInfo = extraNodeInfo.WithMetadata(report.Metadata{
+				extraNodeInfo = extraNodeInfo.WithLatests(map[string]string{
 					process.PID:       strconv.FormatUint(uint64(conn.Proc.PID), 10),
 					report.HostNodeID: hostNodeID,
 				})
@@ -107,7 +107,7 @@ func (r *Reporter) Report() (report.Report, error) {
 
 	// Consult the flowWalker for short-live connections
 	{
-		extraNodeInfo := report.MakeNode().WithMetadata(report.Metadata{
+		extraNodeInfo := report.MakeNode().WithLatests(map[string]string{
 			Conntracked: "true",
 		})
 		r.flowWalker.walkFlows(func(f flow) {
