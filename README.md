@@ -1,6 +1,6 @@
 # Scope
 
-[![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master) [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope)
+[![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master) [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope) <script async defer src="https://weave-scope-slack.herokuapp.com/slackin.js"></script>
 
 ![Weave Scope Screenshot](http://blog.weave.works/wp-content/uploads/2015/11/0.10-Deailts-Panel-2-1.png)
 
@@ -27,6 +27,7 @@ boot2docker, replace localhost with the output of `boot2docker ip`.)
 
 If you have any questions about, feedback for or problem with Scope we invite
 you to:
+- <a href="https://weave-scope-slack.herokuapp.com">join out public slack channel</a>
 - send an email to <a href="mailto:weave-users@weave.works">weave-users@weave.works</a>
 - <a href="https://github.com/weaveworks/scope/issues/new">file an issue</a>
 
@@ -163,7 +164,7 @@ in your Kubernetes cluster using
    [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md)
    in your cluster. DaemonSets are needed to ensure that each Kubernetes node
    runs a Scope Probe:
-   
+
    * To enable them in an existing cluster, make sure to add a
      `--runtime-config=extensions/v1beta1/daemonsets=true` argument to the
      [apiserver](https://github.com/kubernetes/kubernetes/blob/master/docs/admin/kube-apiserver.md)'s configuration
@@ -186,7 +187,7 @@ for I in app-rc app-svc probe-ds; do curl -s -L https://raw.githubusercontent.co
      `$(WEAVE_SCOPE_APP_SERVICE_HOST):$(WEAVE_SCOPE_APP_SERVICE_PORT)` argument.
 
 5. Install Scope in your cluster (order is important):
-   
+
    ```
 kubectl create -f scope-app-rc.yaml  # Only if you want to run Scope in Standalone Mode
 kubectl create -f scope-app-svc.yaml # Only if you want to run Scope in Standalone Mode
@@ -230,25 +231,25 @@ pkill -SIGUSR1 scope-probe
 docker logs weavescope
 ```
 
-- Both the Scope App and the Scope Probe offer 
-  [http endpoints with profiling information](https://golang.org/pkg/net/http/pprof/). 
+- Both the Scope App and the Scope Probe offer
+  [http endpoints with profiling information](https://golang.org/pkg/net/http/pprof/).
   These cover things such as CPU usage and memory consumption:
-  * The Scope App enables its http profiling endpoints by default, which 
+  * The Scope App enables its http profiling endpoints by default, which
     are accessible on the same port the Scope UI is served (4040).
-  * The Scope Probe doesn't enable its profiling endpoints by default. 
-    To enable them, you must launch Scope with `--probe.http.listen addr:port`. 
-    For instance, launching scope with `scope launch --probe.http.listen :4041`, will 
+  * The Scope Probe doesn't enable its profiling endpoints by default.
+    To enable them, you must launch Scope with `--probe.http.listen addr:port`.
+    For instance, launching scope with `scope launch --probe.http.listen :4041`, will
     allow you access the Scope Probe's profiling endpoints on port 4041.
 
   Then, you can collect profiles in the usual way. For instance:
-  
+
   * To collect the Memory profile of the Scope App:
-  
+
     ```
 go tool pprof http://localhost:4040/debug/pprof/heap
 ```
   * To collect the CPU profile of the Scope Probe:
-  
+
     ```
 go tool pprof http://localhost:4041/debug/pprof/profile
 ```
