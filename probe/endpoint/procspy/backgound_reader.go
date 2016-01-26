@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	timeout   = 60                     // keep contents for 60 seconds
-	size      = 10 * 1024 * 1024       // keep upto 10MB worth
-	ratelimit = 100 * time.Millisecond // read 10 files per second
+	timeout   = 60                    // keep contents for 60 seconds
+	size      = 10 * 1024 * 1024      // keep upto 10MB worth
+	ratelimit = 20 * time.Millisecond // read 50 files per second
 )
 
 type backgroundReader struct {
@@ -89,6 +89,8 @@ func (br *backgroundReader) readFile(filename string, buf *bytes.Buffer) (int64,
 	if err != nil {
 		return 0, nil
 	}
+	// race!
+	br.cache.Del([]byte(filename))
 	n, err := buf.Write(v)
 	return int64(n), err
 }
