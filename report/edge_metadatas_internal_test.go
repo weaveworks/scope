@@ -282,3 +282,34 @@ func TestEdgeMetadatasEncodingNil(t *testing.T) {
 }
 
 func newu64(value uint64) *uint64 { return &value }
+
+func TestEdgeMetadataDeepEquals(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		a, b interface{}
+		want bool
+	}{
+		{
+			name: "zero values",
+			a:    EdgeMetadata{},
+			b:    EdgeMetadata{},
+			want: true,
+		},
+		{
+			name: "matching, but different pointers",
+			a:    EdgeMetadata{EgressPacketCount: newu64(3)},
+			b:    EdgeMetadata{EgressPacketCount: newu64(3)},
+			want: true,
+		},
+		{
+			name: "mismatching",
+			a:    EdgeMetadata{EgressPacketCount: newu64(3)},
+			b:    EdgeMetadata{EgressPacketCount: newu64(4)},
+			want: false,
+		},
+	} {
+		if have := reflect.DeepEqual(c.a, c.b); have != c.want {
+			t.Errorf("reflect.DeepEqual(%v, %v) != %v", c.a, c.b, c.want)
+		}
+	}
+}
