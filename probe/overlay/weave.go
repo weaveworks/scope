@@ -200,16 +200,18 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 		if !ok {
 			continue
 		}
-		hostnames := report.IDList(strings.Fields(node.Metadata[WeaveDNSHostname]))
+		w, _ := node.Latest.Lookup(WeaveDNSHostname)
+		hostnames := report.IDList(strings.Fields(w))
 		hostnames = hostnames.Add(strings.TrimSuffix(entry.Hostname, "."))
-		node.Metadata[WeaveDNSHostname] = strings.Join(hostnames, " ")
+		r.Container.Nodes[nodeID] = node.WithLatests(map[string]string{WeaveDNSHostname: strings.Join(hostnames, " ")})
 	}
 
 	// Put information from weave ps on the container nodes
 	w.mtx.RLock()
 	defer w.mtx.RUnlock()
 	for id, node := range r.Container.Nodes {
-		prefix := node.Metadata[docker.ContainerID][:12]
+		prefix, _ := node.Latest.Lookup(docker.ContainerID)
+		prefix = prefix[:12]
 		entry, ok := w.ps[prefix]
 		if !ok {
 			continue
@@ -221,7 +223,7 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 		}
 		node = node.WithSet(docker.ContainerIPs, report.MakeStringSet(entry.ips...))
 		node = node.WithSet(docker.ContainerIPsWithScopes, ipsWithScope)
-		node.Metadata[WeaveMACAddress] = entry.macAddress
+		node = node.WithLatests(map[string]string{WeaveMACAddress: entry.macAddress})
 		r.Container.Nodes[id] = node
 	}
 	return r, nil

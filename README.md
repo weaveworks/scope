@@ -217,23 +217,38 @@ Then, run the local build via
 
 Scope has a collection of built in debugging tools to aid Scope delevopers.
 
-- To have the app or probe dump their goroutine stacks, run:
+- To have the Scope App or Scope Probe dump their goroutine stacks, run:
 ```
 pkill -SIGQUIT scope-(app|probe)
 docker logs weavescope
 ```
 
-- The probe is instrumented with various counters and timers. To have it dump
+- The Scope Probe is instrumented with various counters and timers. To have it dump
   those values, run:
 ```
 pkill -SIGUSR1 scope-probe
 docker logs weavescope
 ```
 
-- The app and probe both include golang's pprof integration for gathering CPU
-  and memory profiles.  To use these with the probe, you must launch Scope with
-  the following arguments `scope launch --probe.http.listen :4041`.  You can
-  then collect profiles in the usual way:
+- Both the Scope App and the Scope Probe offer 
+  [http endpoints with profiling information](https://golang.org/pkg/net/http/pprof/). 
+  These cover things such as CPU usage and memory consumption:
+  * The Scope App enables its http profiling endpoints by default, which 
+    are accessible on the same port the Scope UI is served (4040).
+  * The Scope Probe doesn't enable its profiling endpoints by default. 
+    To enable them, you must launch Scope with `--probe.http.listen addr:port`. 
+    For instance, launching scope with `scope launch --probe.http.listen :4041`, will 
+    allow you access the Scope Probe's profiling endpoints on port 4041.
+
+  Then, you can collect profiles in the usual way. For instance:
+  
+  * To collect the Memory profile of the Scope App:
+  
+    ```
+go tool pprof http://localhost:4040/debug/pprof/heap
 ```
-go tool pprof http://localhost:(4040|4041)/debug/pprof/profile
+  * To collect the CPU profile of the Scope Probe:
+  
+    ```
+go tool pprof http://localhost:4041/debug/pprof/profile
 ```

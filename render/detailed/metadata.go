@@ -15,37 +15,37 @@ import (
 
 var (
 	processNodeMetadata = renderMetadata(
-		meta(process.PID, "PID"),
-		meta(process.PPID, "Parent PID"),
-		meta(process.Cmdline, "Command"),
-		meta(process.Threads, "# Threads"),
+		ltst(process.PID, "PID"),
+		ltst(process.PPID, "Parent PID"),
+		ltst(process.Cmdline, "Command"),
+		ltst(process.Threads, "# Threads"),
 	)
 	containerNodeMetadata = renderMetadata(
-		meta(docker.ContainerID, "ID"),
-		meta(docker.ImageID, "Image ID"),
+		ltst(docker.ContainerID, "ID"),
+		ltst(docker.ImageID, "Image ID"),
 		ltst(docker.ContainerState, "State"),
 		sets(docker.ContainerIPs, "IPs"),
 		sets(docker.ContainerPorts, "Ports"),
-		meta(docker.ContainerCreated, "Created"),
-		meta(docker.ContainerCommand, "Command"),
-		meta(overlay.WeaveMACAddress, "Weave MAC"),
-		meta(overlay.WeaveDNSHostname, "Weave DNS Hostname"),
+		ltst(docker.ContainerCreated, "Created"),
+		ltst(docker.ContainerCommand, "Command"),
+		ltst(overlay.WeaveMACAddress, "Weave MAC"),
+		ltst(overlay.WeaveDNSHostname, "Weave DNS Hostname"),
 		getDockerLabelRows,
 	)
 	containerImageNodeMetadata = renderMetadata(
-		meta(docker.ImageID, "Image ID"),
+		ltst(docker.ImageID, "Image ID"),
 		getDockerLabelRows,
 	)
 	podNodeMetadata = renderMetadata(
-		meta(kubernetes.PodID, "ID"),
-		meta(kubernetes.Namespace, "Namespace"),
-		meta(kubernetes.PodCreated, "Created"),
+		ltst(kubernetes.PodID, "ID"),
+		ltst(kubernetes.Namespace, "Namespace"),
+		ltst(kubernetes.PodCreated, "Created"),
 	)
 	hostNodeMetadata = renderMetadata(
-		meta(host.HostName, "Hostname"),
-		meta(host.OS, "Operating system"),
-		meta(host.KernelVersion, "Kernel version"),
-		meta(host.Uptime, "Uptime"),
+		ltst(host.HostName, "Hostname"),
+		ltst(host.OS, "Operating system"),
+		ltst(host.KernelVersion, "Kernel version"),
+		ltst(host.Uptime, "Uptime"),
 		sets(host.LocalNetworks, "Local Networks"),
 	)
 )
@@ -92,18 +92,9 @@ func renderMetadata(templates ...func(report.Node) []MetadataRow) func(report.No
 	}
 }
 
-func meta(id, label string) func(report.Node) []MetadataRow {
-	return func(n report.Node) []MetadataRow {
-		if val, ok := n.Metadata[id]; ok {
-			return []MetadataRow{{ID: id, Label: label, Value: val}}
-		}
-		return nil
-	}
-}
-
 func sets(id, label string) func(report.Node) []MetadataRow {
 	return func(n report.Node) []MetadataRow {
-		if val, ok := n.Sets[id]; ok && len(val) > 0 {
+		if val, ok := n.Sets.Lookup(id); ok && len(val) > 0 {
 			return []MetadataRow{{ID: id, Label: label, Value: strings.Join(val, ", ")}}
 		}
 		return nil

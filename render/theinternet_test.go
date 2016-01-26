@@ -16,10 +16,10 @@ func TestReportLocalNetworks(t *testing.T) {
 		Host: report.Topology{
 			Nodes: report.Nodes{
 				"nonets": report.MakeNode(),
-				"foo": report.MakeNode().WithSets(report.Sets{
-					host.LocalNetworks: report.MakeStringSet(
-						"10.0.0.1/8", "192.168.1.1/24", "10.0.0.1/8", "badnet/33"),
-				}),
+				"foo": report.MakeNode().WithSets(report.EmptySets.
+					Add(host.LocalNetworks, report.MakeStringSet(
+					"10.0.0.1/8", "192.168.1.1/24", "10.0.0.1/8", "badnet/33")),
+				),
 			},
 		},
 	})

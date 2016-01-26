@@ -40,7 +40,9 @@ func TestContainerFilterRenderer(t *testing.T) {
 	// tag on of the containers in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
-	input.Container.Nodes[fixture.ClientContainerNodeID].Metadata[docker.LabelPrefix+"works.weave.role"] = "system"
+	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
+		docker.LabelPrefix + "works.weave.role": "system",
+	})
 	have := render.FilterSystem(render.ContainerWithImageNameRenderer).Render(input).Prune()
 	want := expected.RenderedContainers.Copy()
 	delete(want, expected.ClientContainerRenderedID)
@@ -77,10 +79,14 @@ func TestPodFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
-	input.Pod.Nodes[fixture.ClientPodNodeID].Metadata[kubernetes.PodID] = "pod:kube-system/foo"
-	input.Pod.Nodes[fixture.ClientPodNodeID].Metadata[kubernetes.Namespace] = "kube-system"
-	input.Pod.Nodes[fixture.ClientPodNodeID].Metadata[kubernetes.PodName] = "foo"
-	input.Container.Nodes[fixture.ClientContainerNodeID].Metadata[docker.LabelPrefix+"io.kubernetes.pod.name"] = "kube-system/foo"
+	input.Pod.Nodes[fixture.ClientPodNodeID] = input.Pod.Nodes[fixture.ClientPodNodeID].WithLatests(map[string]string{
+		kubernetes.PodID:     "pod:kube-system/foo",
+		kubernetes.Namespace: "kube-system",
+		kubernetes.PodName:   "foo",
+	})
+	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
+		docker.LabelPrefix + "io.kubernetes.pod.name": "kube-system/foo",
+	})
 	have := render.FilterSystem(render.PodRenderer).Render(input).Prune()
 	want := expected.RenderedPods.Copy()
 	delete(want, expected.ClientPodRenderedID)

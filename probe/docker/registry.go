@@ -100,6 +100,7 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient) (Registry, e
 
 // Stop stops the Docker registry's event subscriber.
 func (r *registry) Stop() {
+	r.deregisterControls()
 	ch := make(chan struct{})
 	r.quit <- ch
 	<-ch

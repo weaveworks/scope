@@ -2,10 +2,10 @@ package report_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 var benchmarkResult report.NodeSet
@@ -58,7 +58,7 @@ func TestMakeNodeSet(t *testing.T) {
 func BenchmarkMakeNodeSet(b *testing.B) {
 	nodes := []report.Node{}
 	for i := 1000; i >= 0; i-- {
-		node := report.MakeNode().WithID(fmt.Sprint(i)).WithMetadata(map[string]string{
+		node := report.MakeNode().WithID(fmt.Sprint(i)).WithLatests(map[string]string{
 			"a": "1",
 			"b": "2",
 		})
@@ -129,14 +129,14 @@ func BenchmarkNodeSetAdd(b *testing.B) {
 	n := report.MakeNodeSet()
 	for i := 0; i < 600; i++ {
 		n = n.Add(
-			report.MakeNode().WithID(fmt.Sprint(i)).WithMetadata(map[string]string{
+			report.MakeNode().WithID(fmt.Sprint(i)).WithLatests(map[string]string{
 				"a": "1",
 				"b": "2",
 			}),
 		)
 	}
 
-	node := report.MakeNode().WithID("401.5").WithMetadata(map[string]string{
+	node := report.MakeNode().WithID("401.5").WithLatests(map[string]string{
 		"a": "1",
 		"b": "2",
 	})
@@ -207,7 +207,7 @@ func BenchmarkNodeSetMerge(b *testing.B) {
 	n, other := report.MakeNodeSet(), report.MakeNodeSet()
 	for i := 0; i < 600; i++ {
 		n = n.Add(
-			report.MakeNode().WithID(fmt.Sprint(i)).WithMetadata(map[string]string{
+			report.MakeNode().WithID(fmt.Sprint(i)).WithLatests(map[string]string{
 				"a": "1",
 				"b": "2",
 			}),
@@ -216,7 +216,7 @@ func BenchmarkNodeSetMerge(b *testing.B) {
 
 	for i := 400; i < 1000; i++ {
 		other = other.Add(
-			report.MakeNode().WithID(fmt.Sprint(i)).WithMetadata(map[string]string{
+			report.MakeNode().WithID(fmt.Sprint(i)).WithLatests(map[string]string{
 				"c": "1",
 				"d": "2",
 			}),

@@ -1,12 +1,10 @@
 package host_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 )
 
 func TestTagger(t *testing.T) {
@@ -14,20 +12,34 @@ func TestTagger(t *testing.T) {
 		hostID         = "foo"
 		probeID        = "a1b2c3d4"
 		endpointNodeID = report.MakeEndpointNodeID(hostID, "1.2.3.4", "56789") // hostID ignored
-		nodeMetadata   = report.MakeNodeWith(map[string]string{"foo": "bar"})
+		node           = report.MakeNodeWith(map[string]string{"foo": "bar"})
 	)
 
 	r := report.MakeReport()
-	r.Process.AddNode(endpointNodeID, nodeMetadata)
-	want := nodeMetadata.Merge(report.MakeNodeWith(map[string]string{
-		report.HostNodeID: report.MakeHostNodeID(hostID),
-		report.ProbeID:    probeID,
-	}).WithParents(report.Sets{
-		report.Host: report.MakeStringSet(report.MakeHostNodeID(hostID)),
-	}))
+	r.Process.AddNode(endpointNodeID, node)
 	rpt, _ := host.NewTagger(hostID, probeID).Tag(r)
 	have := rpt.Process.Nodes[endpointNodeID].Copy()
-	if !reflect.DeepEqual(want, have) {
-		t.Error(test.Diff(want, have))
+
+	// It should now have the host ID
+	wantHostID := report.MakeHostNodeID(hostID)
+	if hostID, ok := have.Latest.Lookup(report.HostNodeID); !ok || hostID != wantHostID {
+		t.Errorf("Expected %q got %q", wantHostID, report.MakeHostNodeID(hostID))
+	}
+
+	// It should now have the probe ID
+	if haveProbeID, ok := have.Latest.Lookup(report.ProbeID); !ok || haveProbeID != probeID {
+		t.Errorf("Expected %q got %q", probeID, haveProbeID)
+	}
+
+	// It should still have the other keys
+	want := "bar"
+	if have, ok := have.Latest.Lookup("foo"); !ok || have != want {
+		t.Errorf("Expected %q got %q", want, have)
+	}
+
+	// It should have the host as a parent
+	wantParent := report.MakeHostNodeID(hostID)
+	if have, ok := have.Parents.Lookup(report.Host); !ok || len(have) != 1 || have[0] != wantParent {
+		t.Errorf("Expected %q got %q", report.MakeStringSet(wantParent), have)
 	}
 }

@@ -12,20 +12,24 @@ import (
 const LabelPrefix = "docker_label_"
 
 // AddLabels appends Docker labels to the Node from a topology.
-func AddLabels(nmd report.Node, labels map[string]string) {
+func AddLabels(node report.Node, labels map[string]string) report.Node {
+	node = node.Copy()
 	for key, value := range labels {
-		nmd.Metadata[LabelPrefix+key] = value
+		node = node.WithLatests(map[string]string{
+			LabelPrefix + key: value,
+		})
 	}
+	return node
 }
 
 // ExtractLabels returns the list of Docker labels given a Node from a topology.
-func ExtractLabels(nmd report.Node) map[string]string {
+func ExtractLabels(node report.Node) map[string]string {
 	result := map[string]string{}
-	for key, value := range nmd.Metadata {
+	node.Latest.ForEach(func(key, value string) {
 		if strings.HasPrefix(key, LabelPrefix) {
 			label := key[len(LabelPrefix):]
 			result[label] = value
 		}
-	}
+	})
 	return result
 }

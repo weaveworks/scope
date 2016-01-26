@@ -1,14 +1,12 @@
 package docker_test
 
 import (
-	"reflect"
 	"testing"
 
 	client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 )
 
 type mockRegistry struct {
@@ -52,66 +50,60 @@ var (
 )
 
 func TestReporter(t *testing.T) {
-	want := report.MakeReport()
-	want.Container = report.Topology{
-		Nodes: report.Nodes{
-			report.MakeContainerNodeID("ping"): report.MakeNodeWith(map[string]string{
-				docker.ContainerID:   "ping",
-				docker.ContainerName: "pong",
-				docker.ImageID:       "baz",
-			}),
-		},
-		Controls: report.Controls{
-			docker.RestartContainer: report.Control{
-				ID:    docker.RestartContainer,
-				Human: "Restart",
-				Icon:  "fa-repeat",
-			},
-			docker.StartContainer: report.Control{
-				ID:    docker.StartContainer,
-				Human: "Start",
-				Icon:  "fa-play",
-			},
-			docker.StopContainer: report.Control{
-				ID:    docker.StopContainer,
-				Human: "Stop",
-				Icon:  "fa-stop",
-			},
-			docker.PauseContainer: report.Control{
-				ID:    docker.PauseContainer,
-				Human: "Pause",
-				Icon:  "fa-pause",
-			},
-			docker.UnpauseContainer: report.Control{
-				ID:    docker.UnpauseContainer,
-				Human: "Unpause",
-				Icon:  "fa-play",
-			},
-			docker.AttachContainer: report.Control{
-				ID:    docker.AttachContainer,
-				Human: "Attach",
-				Icon:  "fa-desktop",
-			},
-			docker.ExecContainer: report.Control{
-				ID:    docker.ExecContainer,
-				Human: "Exec /bin/sh",
-				Icon:  "fa-terminal",
-			},
-		},
-	}
-	want.ContainerImage = report.Topology{
-		Nodes: report.Nodes{
-			report.MakeContainerImageNodeID("baz"): report.MakeNodeWith(map[string]string{
-				docker.ImageID:   "baz",
-				docker.ImageName: "bang",
-			}),
-		},
-		Controls: report.Controls{},
+	containerImageNodeID := report.MakeContainerImageNodeID("baz")
+	rpt, err := docker.NewReporter(mockRegistryInstance, "host1", nil).Report()
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	reporter := docker.NewReporter(mockRegistryInstance, "host1", nil)
-	have, _ := reporter.Report()
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf("%s", test.Diff(want, have))
+	// Reporter should add a container
+	{
+		containerNodeID := report.MakeContainerNodeID("ping")
+		node, ok := rpt.Container.Nodes[containerNodeID]
+		if !ok {
+			t.Fatalf("Expected report to have container image %q, but not found", containerNodeID)
+		}
+
+		for k, want := range map[string]string{
+			docker.ContainerID:   "ping",
+			docker.ContainerName: "pong",
+			docker.ImageID:       "baz",
+		} {
+			if have, ok := node.Latest.Lookup(k); !ok || have != want {
+				t.Errorf("Expected container %s latest %q: %q, got %q", containerNodeID, k, want, have)
+			}
+		}
+
+		// container should have controls
+		if len(rpt.Container.Controls) == 0 {
+			t.Errorf("Container should have some controls")
+		}
+
+		// container should have the image as a parent
+		if parents, ok := node.Parents.Lookup(report.ContainerImage); !ok || !parents.Contains(containerImageNodeID) {
+			t.Errorf("Expected container %s to have parent container image %q, got %q", containerNodeID, containerImageNodeID, parents)
+		}
+	}
+
+	// Reporter should add a container image
+	{
+		node, ok := rpt.ContainerImage.Nodes[containerImageNodeID]
+		if !ok {
+			t.Fatalf("Expected report to have container image %q, but not found", containerImageNodeID)
+		}
+
+		for k, want := range map[string]string{
+			docker.ImageID:   "baz",
+			docker.ImageName: "bang",
+		} {
+			if have, ok := node.Latest.Lookup(k); !ok || have != want {
+				t.Errorf("Expected container image %s latest %q: %q, got %q", containerImageNodeID, k, want, have)
+			}
+		}
+
+		// container image should have no controls
+		if len(rpt.ContainerImage.Controls) != 0 {
+			t.Errorf("Container images should not have any controls")
+		}
 	}
 }

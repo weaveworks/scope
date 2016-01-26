@@ -18,7 +18,8 @@ func LocalNetworks(r report.Report) report.Networks {
 	)
 
 	for _, md := range r.Host.Nodes {
-		for _, s := range md.Sets[host.LocalNetworks] {
+		nets, _ := md.Sets.Lookup(host.LocalNetworks)
+		for _, s := range nets {
 			_, ipNet, err := net.ParseCIDR(s)
 			if err != nil {
 				continue

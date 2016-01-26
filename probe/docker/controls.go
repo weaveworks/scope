@@ -159,3 +159,13 @@ func (r *registry) registerControls() {
 	controls.Register(AttachContainer, captureContainerID(r.attachContainer))
 	controls.Register(ExecContainer, captureContainerID(r.execContainer))
 }
+
+func (r *registry) deregisterControls() {
+	controls.Rm(StopContainer)
+	controls.Rm(StartContainer)
+	controls.Rm(RestartContainer)
+	controls.Rm(PauseContainer)
+	controls.Rm(UnpauseContainer)
+	controls.Rm(AttachContainer)
+	controls.Rm(ExecContainer)
+}
