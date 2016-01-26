@@ -51,6 +51,20 @@ func TestContainerFilterRenderer(t *testing.T) {
 	}
 }
 
+func TestContainerFilterRendererImageName(t *testing.T) {
+	// Test nodes are filtered by image name as well.
+	input := fixture.Report.Copy()
+	input.ContainerImage.Nodes[fixture.ClientContainerImageNodeID] = input.ContainerImage.Nodes[fixture.ClientContainerImageNodeID].WithLatests(map[string]string{
+		docker.ImageName: "beta.gcr.io/google_containers/pause",
+	})
+	have := render.FilterSystem(render.ContainerWithImageNameRenderer).Render(input).Prune()
+	want := expected.RenderedContainers.Copy()
+	delete(want, expected.ClientContainerRenderedID)
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
 func TestContainerImageRenderer(t *testing.T) {
 	have := render.ContainerImageRenderer.Render(fixture.Report).Prune()
 	want := expected.RenderedContainerImages
