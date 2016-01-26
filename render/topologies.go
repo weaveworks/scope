@@ -140,7 +140,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 			continue
 		}
 		c.Rank = ImageNameWithoutVersion(image.LabelMajor)
-		c.Latest = c.Latest.Merge(c.Latest)
+		c.Latest = image.Latest.Merge(c.Latest)
 		containers[id] = c
 	}
 
