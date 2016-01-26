@@ -27,11 +27,17 @@ func MakeSets() Sets {
 
 // Keys returns the keys for this set
 func (s Sets) Keys() []string {
+	if s.psMap == nil {
+		return nil
+	}
 	return s.psMap.Keys()
 }
 
 // Add the given value to the Sets.
 func (s Sets) Add(key string, value StringSet) Sets {
+	if s.psMap == nil {
+		s = EmptySets
+	}
 	if existingValue, ok := s.psMap.Lookup(key); ok {
 		value = value.Merge(existingValue.(StringSet))
 	}
@@ -42,6 +48,9 @@ func (s Sets) Add(key string, value StringSet) Sets {
 
 // Lookup returns the sets stored under key.
 func (s Sets) Lookup(key string) (StringSet, bool) {
+	if s.psMap == nil {
+		return EmptyStringSet, false
+	}
 	if value, ok := s.psMap.Lookup(key); ok {
 		return value.(StringSet), true
 	}
@@ -50,6 +59,9 @@ func (s Sets) Lookup(key string) (StringSet, bool) {
 
 // Size returns the number of elements
 func (s Sets) Size() int {
+	if s.psMap == nil {
+		return 0
+	}
 	return s.psMap.Size()
 }
 
@@ -88,6 +100,9 @@ func (s Sets) Copy() Sets {
 }
 
 func (s Sets) String() string {
+	if s.psMap == nil {
+		s = EmptySets
+	}
 	keys := []string{}
 	for _, k := range s.psMap.Keys() {
 		keys = append(keys, k)
@@ -105,8 +120,11 @@ func (s Sets) String() string {
 
 // DeepEqual tests equality with other Sets
 func (s Sets) DeepEqual(t Sets) bool {
-	if s.psMap.Size() != t.psMap.Size() {
+	if s.Size() != t.Size() {
 		return false
+	}
+	if s.Size() == 0 {
+		return true
 	}
 
 	equal := true
@@ -122,9 +140,11 @@ func (s Sets) DeepEqual(t Sets) bool {
 
 func (s Sets) toIntermediate() map[string]StringSet {
 	intermediate := map[string]StringSet{}
-	s.psMap.ForEach(func(key string, val interface{}) {
-		intermediate[key] = val.(StringSet)
-	})
+	if s.psMap != nil {
+		s.psMap.ForEach(func(key string, val interface{}) {
+			intermediate[key] = val.(StringSet)
+		})
+	}
 	return intermediate
 }
 
