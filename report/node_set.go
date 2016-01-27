@@ -33,7 +33,7 @@ func (n NodeSet) Add(nodes ...Node) NodeSet {
 		result = ps.NewMap()
 	}
 	for _, node := range nodes {
-		result = result.Set(fmt.Sprintf("%s %s", node.Topology, node.ID), node)
+		result = result.Set(fmt.Sprintf("%s|%s", node.Topology, node.ID), node)
 	}
 	return NodeSet{result}
 }
