@@ -1,20 +1,20 @@
 ## Release 0.12.0
 
 New features and enhancements:
-- Details panel redesign
+- New, interactive contextual details panel
   [#752](https://github.com/weaveworks/scope/pull/752)
+- Gather per-process CPU and memory metrics
+  [#767](https://github.com/weaveworks/scope/pull/767)
 - k8s: Use service account token by default and improve error logging
   [#808](https://github.com/weaveworks/scope/pull/808)
-- Probes now use TLS against scope.weave.works by default
-  [#785](https://github.com/weaveworks/scope/pull/785)
-- Gather per-process CPU and memory metrics.
-  [#767](https://github.com/weaveworks/scope/pull/767)
-- Allow dismissing a disconnected terminal w/ \<esc\>
-  [#819](https://github.com/weaveworks/scope/pull/819)
-- k8s: Filter out pause as a system container
+- k8s: Filter out pause as a system container to declutter view
   [#823](https://github.com/weaveworks/scope/pull/823)
 - k8s: Render container names from label "io.kubernetes.container.name"
   [#810](https://github.com/weaveworks/scope/pull/810)
+- Probes now use TLS against scope.weave.works by default
+  [#785](https://github.com/weaveworks/scope/pull/785)
+- Allow dismissing a disconnected terminal w/ \<esc\>
+  [#819](https://github.com/weaveworks/scope/pull/819)
 
 Bug fixes:
 - General k8s fixups
