@@ -1,3 +1,62 @@
+## Release 0.12.0
+
+New features and enhancements:
+- Details panel redesign
+  [#752](https://github.com/weaveworks/scope/pull/752)
+- k8s: Use service account token by default and improve error logging
+  [#808](https://github.com/weaveworks/scope/pull/808)
+- Probes now use TLS against scope.weave.works by default
+  [#785](https://github.com/weaveworks/scope/pull/785)
+- Gather per-process CPU and memory metrics.
+  [#767](https://github.com/weaveworks/scope/pull/767)
+- Allow dismissing a disconnected terminal w/ \<esc\>
+  [#819](https://github.com/weaveworks/scope/pull/819)
+- k8s: Filter out pause as a system container
+  [#823](https://github.com/weaveworks/scope/pull/823)
+- k8s: Render container names from label "io.kubernetes.container.name"
+  [#810](https://github.com/weaveworks/scope/pull/810)
+
+Bug fixes:
+- General k8s fixups
+  [#834](https://github.com/weaveworks/scope/pull/834)
+- Use argv\[0\] for process name, differentiate scope app and probe.
+  [#796](https://github.com/weaveworks/scope/pull/796)
+- Don't panic if you don't understand the message on the control WS.
+  [#793](https://github.com/weaveworks/scope/pull/793)
+- Highlight a single unconnected node on hover.
+  [#790](https://github.com/weaveworks/scope/pull/790)
+- Fixes to Terminal resizing and key support
+  [#766](https://github.com/weaveworks/scope/pull/766)
+  [#780](https://github.com/weaveworks/scope/pull/780)
+  [#817](https://github.com/weaveworks/scope/pull/817)
+- Correctly collapse nodes in the Container Images view when they use non-standard port.
+  [#824](https://github.com/weaveworks/scope/pull/824)
+- Stop scope crashing chrome when we get "long" edges.
+  [#837](https://github.com/weaveworks/scope/pull/837)
+- Fix node controls so they behave independently across nodes
+  [#797](https://github.com/weaveworks/scope/pull/797)
+
+Build improvements and cleanup:
+- Update to latest tools.git
+  [#816](https://github.com/weaveworks/scope/pull/816)
+- Update to latest go-dockerclient
+  [#788](https://github.com/weaveworks/scope/pull/788)
+- Speed up builds
+  [#775](https://github.com/weaveworks/scope/pull/775)
+  [#789](https://github.com/weaveworks/scope/pull/789)
+- Speed up tests
+  [#799](https://github.com/weaveworks/scope/pull/799)
+  [#807](https://github.com/weaveworks/scope/pull/807)
+- Split and move xfer package.
+  [#794](https://github.com/weaveworks/scope/pull/794)
+- Add more tests to procspy
+  [#751](https://github.com/weaveworks/scope/pull/751)
+  [#781](https://github.com/weaveworks/scope/pull/781)
+- Build example app in container.
+  [#831](https://github.com/weaveworks/scope/pull/831)
+- Various improvements to build & test
+  [#829](https://github.com/weaveworks/scope/pull/829)
+
 ## Release 0.11.1
 
 Bug fix:
