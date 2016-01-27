@@ -1,37 +1,8 @@
 package render
 
 import (
-	"fmt"
-	"reflect"
-
-	"github.com/bluele/gcache"
-
 	"github.com/weaveworks/scope/report"
 )
-
-var renderCache = gcache.New(100).LRU().Build()
-
-func memoisedRender(r Renderer, rpt report.Report) RenderableNodes {
-	key := ""
-	v := reflect.ValueOf(r)
-	switch v.Kind() {
-	case reflect.Ptr, reflect.Func:
-		key = fmt.Sprintf("%s-%x", rpt.ID, v.Pointer())
-	default:
-		return r.Render(rpt)
-	}
-	if result, err := renderCache.Get(key); err == nil {
-		return result.(RenderableNodes)
-	}
-	output := r.Render(rpt)
-	renderCache.Set(key, output)
-	return output
-}
-
-// ResetCache blows away the rendered node cache.
-func ResetCache() {
-	renderCache.Purge()
-}
 
 // Renderer is something that can render a report to a set of RenderableNodes.
 type Renderer interface {
@@ -57,14 +28,14 @@ type Reduce []Renderer
 // MakeReduce is the only sane way to produce a Reduce Renderer.
 func MakeReduce(renderers ...Renderer) Renderer {
 	r := Reduce(renderers)
-	return &r
+	return Memoise(&r)
 }
 
 // Render produces a set of RenderableNodes given a Report.
 func (r *Reduce) Render(rpt report.Report) RenderableNodes {
 	result := RenderableNodes{}
 	for _, renderer := range *r {
-		result = result.Merge(memoisedRender(renderer, rpt))
+		result = result.Merge(renderer.Render(rpt))
 	}
 	return result
 }
@@ -87,7 +58,7 @@ type Map struct {
 
 // MakeMap makes a new Map
 func MakeMap(f MapFunc, r Renderer) Renderer {
-	return &Map{f, r}
+	return Memoise(&Map{f, r})
 }
 
 // Render transforms a set of RenderableNodes produces by another Renderer.
@@ -107,7 +78,7 @@ func (m *Map) Stats(rpt report.Report) Stats {
 
 func (m *Map) render(rpt report.Report) (RenderableNodes, map[string]report.IDList) {
 	var (
-		input         = memoisedRender(m.Renderer, rpt)
+		input         = m.Renderer.Render(rpt)
 		output        = RenderableNodes{}
 		mapped        = map[string]report.IDList{} // input node ID -> output node IDs
 		adjacencies   = map[string]report.IDList{} // output node ID -> input node Adjacencies

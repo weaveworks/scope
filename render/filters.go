@@ -62,7 +62,7 @@ type Filter struct {
 
 // MakeFilter makes a new Filter.
 func MakeFilter(f func(RenderableNode) bool, r Renderer) Renderer {
-	return &Filter{r, f}
+	return Memoise(&Filter{r, f})
 }
 
 // Render implements Renderer
@@ -75,7 +75,7 @@ func (f *Filter) render(rpt report.Report) (RenderableNodes, int) {
 	output := RenderableNodes{}
 	inDegrees := map[string]int{}
 	filtered := 0
-	for id, node := range memoisedRender(f.Renderer, rpt) {
+	for id, node := range f.Renderer.Render(rpt) {
 		if f.FilterFunc(node) {
 			output[id] = node
 			inDegrees[id] = 0
