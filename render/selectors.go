@@ -26,7 +26,12 @@ func Topology2RenderableNodes(t report.Topology) RenderableNodes {
 	}
 
 	// Push EdgeMetadata to both ends of the edges
-	result.ForEach(func(srcNode RenderableNode) {
+	// We cannot (and should not) use ForEach here, as this loop depends on
+	// adding and modifying entries of the set while iterating over it.
+	// TODO: refactor this.
+	keys := result.Keys()
+	for _, srcNodeID := range keys {
+		srcNode, _ := result.Lookup(srcNodeID)
 		srcNode.Edges.ForEach(func(dstID string, emd report.EdgeMetadata) {
 			srcNode.EdgeMetadata = srcNode.EdgeMetadata.Flatten(emd)
 
@@ -38,7 +43,7 @@ func Topology2RenderableNodes(t report.Topology) RenderableNodes {
 			result = result.Add(dstNode)
 		})
 		result = result.Add(srcNode)
-	})
+	}
 	return result
 }
 
