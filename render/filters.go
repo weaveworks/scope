@@ -31,23 +31,25 @@ func ColorConnected(r Renderer) Renderer {
 			connected := map[string]struct{}{}
 			void := struct{}{}
 
-			for id, node := range input {
+			input.ForEach(func(node RenderableNode) {
 				if len(node.Adjacency) == 0 {
-					continue
+					return
 				}
 
 				for _, adj := range node.Adjacency {
-					if adj != id {
-						connected[id] = void
+					if adj != node.ID {
+						connected[node.ID] = void
 						connected[adj] = void
 					}
 				}
-			}
+			})
 
 			for id := range connected {
-				input[id] = input[id].WithNode(report.MakeNodeWith(map[string]string{
-					IsConnected: "true",
-				}))
+				if existing, ok := input.Lookup(id); ok {
+					input = input.Add(existing.WithNode(report.MakeNodeWith(map[string]string{
+						IsConnected: "true",
+					})))
+				}
 			}
 			return input
 		},
@@ -72,41 +74,41 @@ func (f *Filter) Render(rpt report.Report) RenderableNodes {
 }
 
 func (f *Filter) render(rpt report.Report) (RenderableNodes, int) {
-	output := RenderableNodes{}
+	output := EmptyRenderableNodes
 	inDegrees := map[string]int{}
 	filtered := 0
-	for id, node := range memoisedRender(f.Renderer, rpt) {
+	memoisedRender(f.Renderer, rpt).ForEach(func(node RenderableNode) {
 		if f.FilterFunc(node) {
-			output[id] = node
-			inDegrees[id] = 0
+			output = output.Add(node)
+			inDegrees[node.ID] = 0
 		} else {
 			filtered++
 		}
-	}
+	})
 
 	// Deleted nodes also need to be cut as destinations in adjacency lists.
-	for id, node := range output {
+	output.ForEach(func(node RenderableNode) {
 		newAdjacency := report.MakeIDList()
 		for _, dstID := range node.Adjacency {
-			if _, ok := output[dstID]; ok {
+			if _, ok := output.Lookup(dstID); ok {
 				newAdjacency = newAdjacency.Add(dstID)
 				inDegrees[dstID]++
 			}
 		}
 		node.Adjacency = newAdjacency
-		output[id] = node
-	}
+		output = output.Add(node)
+	})
 
 	// Remove unconnected pseudo nodes, see #483.
 	for id, inDegree := range inDegrees {
 		if inDegree > 0 {
 			continue
 		}
-		node := output[id]
+		node, _ := output.Lookup(id)
 		if !node.Pseudo || len(node.Adjacency) > 0 {
 			continue
 		}
-		delete(output, id)
+		output = output.Delete(id)
 		filtered++
 	}
 	return output, filtered

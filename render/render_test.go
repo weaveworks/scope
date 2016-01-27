@@ -22,14 +22,11 @@ func (m mockRenderer) Stats(rpt report.Report) render.Stats {
 
 func TestReduceRender(t *testing.T) {
 	renderer := render.Reduce([]render.Renderer{
-		mockRenderer{RenderableNodes: render.RenderableNodes{"foo": render.NewRenderableNode("foo")}},
-		mockRenderer{RenderableNodes: render.RenderableNodes{"bar": render.NewRenderableNode("bar")}},
+		mockRenderer{RenderableNodes: render.MakeRenderableNodes(render.NewRenderableNode("foo"))},
+		mockRenderer{RenderableNodes: render.MakeRenderableNodes(render.NewRenderableNode("bar"))},
 	})
 
-	want := render.RenderableNodes{
-		"foo": render.NewRenderableNode("foo"),
-		"bar": render.NewRenderableNode("bar"),
-	}
+	want := render.MakeRenderableNodes(render.NewRenderableNode("foo"), render.NewRenderableNode("bar"))
 	have := renderer.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want %+v, have %+v", want, have)
@@ -40,13 +37,11 @@ func TestMapRender1(t *testing.T) {
 	// 1. Check when we return false, the node gets filtered out
 	mapper := render.Map{
 		MapFunc: func(nodes render.RenderableNode, _ report.Networks) render.RenderableNodes {
-			return render.RenderableNodes{}
+			return render.EmptyRenderableNodes
 		},
-		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": render.NewRenderableNode("foo"),
-		}},
+		Renderer: mockRenderer{RenderableNodes: render.MakeRenderableNodes(render.NewRenderableNode("foo"))},
 	}
-	want := render.RenderableNodes{}
+	want := render.EmptyRenderableNodes
 	have := mapper.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want %+v, have %+v", want, have)
@@ -57,18 +52,11 @@ func TestMapRender2(t *testing.T) {
 	// 2. Check we can remap two nodes into one
 	mapper := render.Map{
 		MapFunc: func(nodes render.RenderableNode, _ report.Networks) render.RenderableNodes {
-			return render.RenderableNodes{
-				"bar": render.NewRenderableNode("bar"),
-			}
+			return render.MakeRenderableNodes(render.NewRenderableNode("bar"))
 		},
-		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": render.NewRenderableNode("foo"),
-			"baz": render.NewRenderableNode("baz"),
-		}},
+		Renderer: mockRenderer{RenderableNodes: render.MakeRenderableNodes(render.NewRenderableNode("foo"), render.NewRenderableNode("baz"))},
 	}
-	want := render.RenderableNodes{
-		"bar": render.NewRenderableNode("bar"),
-	}
+	want := render.MakeRenderableNodes(render.NewRenderableNode("bar"))
 	have := mapper.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -80,17 +68,17 @@ func TestMapRender3(t *testing.T) {
 	mapper := render.Map{
 		MapFunc: func(nodes render.RenderableNode, _ report.Networks) render.RenderableNodes {
 			id := "_" + nodes.ID
-			return render.RenderableNodes{id: render.NewRenderableNode(id)}
+			return render.MakeRenderableNodes(render.NewRenderableNode(id))
 		},
-		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": render.NewRenderableNode("foo").WithNode(report.MakeNode().WithAdjacent("baz")),
-			"baz": render.NewRenderableNode("baz").WithNode(report.MakeNode().WithAdjacent("foo")),
-		}},
+		Renderer: mockRenderer{RenderableNodes: render.MakeRenderableNodes(
+			render.NewRenderableNode("foo").WithNode(report.MakeNode().WithAdjacent("baz")),
+			render.NewRenderableNode("baz").WithNode(report.MakeNode().WithAdjacent("foo")),
+		)},
 	}
-	want := render.RenderableNodes{
-		"_foo": render.NewRenderableNode("_foo").WithNode(report.MakeNode().WithAdjacent("_baz")),
-		"_baz": render.NewRenderableNode("_baz").WithNode(report.MakeNode().WithAdjacent("_foo")),
-	}
+	want := render.MakeRenderableNodes(
+		render.NewRenderableNode("_foo").WithNode(report.MakeNode().WithAdjacent("_baz")),
+		render.NewRenderableNode("_baz").WithNode(report.MakeNode().WithAdjacent("_foo")),
+	)
 	have := mapper.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))

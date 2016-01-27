@@ -16,7 +16,7 @@ func renderTo(rpt report.Report, topology string) (render.RenderableNodes, error
 		"hosts":                render.HostRenderer,
 	}[topology]
 	if !ok {
-		return render.RenderableNodes{}, fmt.Errorf("unknown topology %v", topology)
+		return render.MakeRenderableNodes(), fmt.Errorf("unknown topology %v", topology)
 	}
 	return renderer.Render(rpt), nil
 }

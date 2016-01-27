@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"reflect"
 	"testing"
 
 	"github.com/gorilla/websocket"
@@ -14,6 +13,7 @@ import (
 	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 func TestAll(t *testing.T) {
@@ -33,13 +33,13 @@ func TestAll(t *testing.T) {
 			t.Fatalf("JSON parse error: %s", err)
 		}
 
-		for _, node := range topology.Nodes {
-			body := getRawJSON(t, ts, fmt.Sprintf("%s/%s", topologyURL, url.QueryEscape(node.ID)))
+		topology.Nodes.ForEach(func(n render.RenderableNode) {
+			body := getRawJSON(t, ts, fmt.Sprintf("%s/%s", topologyURL, url.QueryEscape(n.ID)))
 			var node app.APINode
 			if err := json.Unmarshal(body, &node); err != nil {
 				t.Fatalf("JSON parse error: %s", err)
 			}
-		}
+		})
 	}
 
 	for _, topology := range topologies {
@@ -60,10 +60,10 @@ func TestAPITopologyContainers(t *testing.T) {
 			t.Fatal(err)
 		}
 		want := expected.RenderedContainers.Copy()
-		for id, node := range want {
+		want.ForEach(func(node render.RenderableNode) {
 			node.ControlNode = ""
-			want[id] = node
-		}
+			want = want.Add(node)
+		})
 
 		if have := topo.Nodes.Prune(); !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))

@@ -128,12 +128,7 @@ func (c EdgeMetadatas) String() string {
 }
 
 // DeepEqual tests equality with other Counters
-func (c EdgeMetadatas) DeepEqual(i interface{}) bool {
-	d, ok := i.(EdgeMetadatas)
-	if !ok {
-		return false
-	}
-
+func (c EdgeMetadatas) DeepEqual(d EdgeMetadatas) bool {
 	if c.Size() != d.Size() {
 		return false
 	}

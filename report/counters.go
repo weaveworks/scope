@@ -108,12 +108,7 @@ func (c Counters) String() string {
 }
 
 // DeepEqual tests equality with other Counters
-func (c Counters) DeepEqual(i interface{}) bool {
-	d, ok := i.(Counters)
-	if !ok {
-		return false
-	}
-
+func (c Counters) DeepEqual(d Counters) bool {
 	if (c.psMap == nil) != (d.psMap == nil) {
 		return false
 	} else if c.psMap == nil && d.psMap == nil {

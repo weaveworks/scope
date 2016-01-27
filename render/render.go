@@ -62,7 +62,7 @@ func MakeReduce(renderers ...Renderer) Renderer {
 
 // Render produces a set of RenderableNodes given a Report.
 func (r *Reduce) Render(rpt report.Report) RenderableNodes {
-	result := RenderableNodes{}
+	result := EmptyRenderableNodes
 	for _, renderer := range *r {
 		result = result.Merge(memoisedRender(renderer, rpt))
 	}
@@ -108,25 +108,25 @@ func (m *Map) Stats(rpt report.Report) Stats {
 func (m *Map) render(rpt report.Report) (RenderableNodes, map[string]report.IDList) {
 	var (
 		input         = memoisedRender(m.Renderer, rpt)
-		output        = RenderableNodes{}
+		output        = EmptyRenderableNodes
 		mapped        = map[string]report.IDList{} // input node ID -> output node IDs
 		adjacencies   = map[string]report.IDList{} // output node ID -> input node Adjacencies
 		localNetworks = LocalNetworks(rpt)
 	)
 
 	// Rewrite all the nodes according to the map function
-	for _, inRenderable := range input {
-		for _, outRenderable := range m.MapFunc(inRenderable, localNetworks) {
-			existing, ok := output[outRenderable.ID]
+	input.ForEach(func(inRenderable RenderableNode) {
+		m.MapFunc(inRenderable, localNetworks).ForEach(func(outRenderable RenderableNode) {
+			existing, ok := output.Lookup(outRenderable.ID)
 			if ok {
 				outRenderable = outRenderable.Merge(existing)
 			}
 
-			output[outRenderable.ID] = outRenderable
+			output = output.Add(outRenderable)
 			mapped[inRenderable.ID] = mapped[inRenderable.ID].Add(outRenderable.ID)
 			adjacencies[outRenderable.ID] = adjacencies[outRenderable.ID].Merge(inRenderable.Adjacency)
-		}
-	}
+		})
+	})
 
 	// Rewrite Adjacency for new node IDs.
 	for outNodeID, inAdjacency := range adjacencies {
@@ -136,9 +136,12 @@ func (m *Map) render(rpt report.Report) (RenderableNodes, map[string]report.IDLi
 				outAdjacency = outAdjacency.Add(outAdjacent)
 			}
 		}
-		outNode := output[outNodeID]
+		outNode, ok := output.Lookup(outNodeID)
+		if !ok {
+			outNode = NewRenderableNode(outNodeID)
+		}
 		outNode.Adjacency = outAdjacency
-		output[outNodeID] = outNode
+		output = output.Add(outNode)
 	}
 
 	return output, mapped

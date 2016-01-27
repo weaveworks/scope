@@ -18,23 +18,31 @@ func (t TopologySelector) Stats(r report.Report) Stats {
 	return Stats{}
 }
 
-// MakeRenderableNodes converts a topology to a set of RenderableNodes
-func MakeRenderableNodes(t report.Topology) RenderableNodes {
-	result := RenderableNodes{}
+// Topology2RenderableNodes converts a topology to a set of RenderableNodes
+func Topology2RenderableNodes(t report.Topology) RenderableNodes {
+	result := EmptyRenderableNodes
 	for id, nmd := range t.Nodes {
-		result[id] = NewRenderableNode(id).WithNode(nmd)
+		result = result.Add(NewRenderableNode(id).WithNode(nmd))
 	}
 
 	// Push EdgeMetadata to both ends of the edges
-	for srcID, srcNode := range result {
+	// We cannot (and should not) use ForEach here, as this loop depends on
+	// adding and modifying entries of the set while iterating over it.
+	// TODO: refactor this.
+	keys := result.Keys()
+	for _, srcNodeID := range keys {
+		srcNode, _ := result.Lookup(srcNodeID)
 		srcNode.Edges.ForEach(func(dstID string, emd report.EdgeMetadata) {
 			srcNode.EdgeMetadata = srcNode.EdgeMetadata.Flatten(emd)
 
-			dstNode := result[dstID]
+			dstNode, ok := result.Lookup(dstID)
+			if !ok {
+				dstNode = NewRenderableNode(dstID)
+			}
 			dstNode.EdgeMetadata = dstNode.EdgeMetadata.Flatten(emd.Reversed())
-			result[dstID] = dstNode
+			result = result.Add(dstNode)
 		})
-		result[srcID] = srcNode
+		result = result.Add(srcNode)
 	}
 	return result
 }
@@ -42,41 +50,41 @@ func MakeRenderableNodes(t report.Topology) RenderableNodes {
 var (
 	// SelectEndpoint selects the endpoint topology.
 	SelectEndpoint = TopologySelector(func(r report.Report) RenderableNodes {
-		return MakeRenderableNodes(r.Endpoint)
+		return Topology2RenderableNodes(r.Endpoint)
 	})
 
 	// SelectProcess selects the process topology.
 	SelectProcess = TopologySelector(func(r report.Report) RenderableNodes {
-		return MakeRenderableNodes(r.Process)
+		return Topology2RenderableNodes(r.Process)
 	})
 
 	// SelectContainer selects the container topology.
 	SelectContainer = TopologySelector(func(r report.Report) RenderableNodes {
-		return MakeRenderableNodes(r.Container)
+		return Topology2RenderableNodes(r.Container)
 	})
 
 	// SelectContainerImage selects the container image topology.
 	SelectContainerImage = TopologySelector(func(r report.Report) RenderableNodes {
-		return MakeRenderableNodes(r.ContainerImage)
+		return Topology2RenderableNodes(r.ContainerImage)
 	})
 
 	// SelectAddress selects the address topology.
 	SelectAddress = TopologySelector(func(r report.Report) RenderableNodes {
-		return MakeRenderableNodes(r.Address)
+		return Topology2RenderableNodes(r.Address)
 	})
 
 	// SelectHost selects the address topology.
 	SelectHost = TopologySelector(func(r report.Report) RenderableNodes {
-		return MakeRenderableNodes(r.Host)
+		return Topology2RenderableNodes(r.Host)
 	})
 
 	// SelectPod selects the pod topology.
 	SelectPod = TopologySelector(func(r report.Report) RenderableNodes {
-		return MakeRenderableNodes(r.Pod)
+		return Topology2RenderableNodes(r.Pod)
 	})
 
 	// SelectService selects the service topology.
 	SelectService = TopologySelector(func(r report.Report) RenderableNodes {
-		return MakeRenderableNodes(r.Service)
+		return Topology2RenderableNodes(r.Service)
 	})
 )

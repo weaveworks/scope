@@ -15,7 +15,7 @@ import (
 )
 
 func TestMakeDetailedHostNode(t *testing.T) {
-	renderableNode := render.HostRenderer.Render(fixture.Report)[render.MakeHostID(fixture.ClientHostID)]
+	renderableNode, _ := render.HostRenderer.Render(fixture.Report).Lookup(render.MakeHostID(fixture.ClientHostID))
 	have := detailed.MakeNode(fixture.Report, renderableNode)
 
 	containerImageNodeSummary, _ := detailed.MakeNodeSummary(fixture.Report.ContainerImage.Nodes[fixture.ClientContainerImageNodeID])
@@ -115,10 +115,11 @@ func TestMakeDetailedHostNode(t *testing.T) {
 
 func TestMakeDetailedContainerNode(t *testing.T) {
 	id := render.MakeContainerID(fixture.ServerContainerID)
-	renderableNode, ok := render.ContainerRenderer.Render(fixture.Report)[id]
+	renderableNode, ok := render.ContainerRenderer.Render(fixture.Report).Lookup(id)
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
 	}
+
 	have := detailed.MakeNode(fixture.Report, renderableNode)
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{

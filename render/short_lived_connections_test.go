@@ -2,7 +2,6 @@ package render_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -11,6 +10,7 @@ import (
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 var (
@@ -69,14 +69,14 @@ var (
 		},
 	}
 
-	want = (render.RenderableNodes{
-		render.TheInternetID: {
+	want = (render.MakeRenderableNodes(
+		render.RenderableNode{
 			ID:         render.TheInternetID,
 			LabelMajor: render.TheInternetMajor,
 			Pseudo:     true,
 			Node:       report.MakeNode().WithAdjacent(render.MakeContainerID(containerID)),
 		},
-		render.MakeContainerID(containerID): {
+		render.RenderableNode{
 			ID:          render.MakeContainerID(containerID),
 			LabelMajor:  containerName,
 			LabelMinor:  serverHostID,
@@ -85,7 +85,7 @@ var (
 			Node:        report.MakeNode(),
 			ControlNode: containerNodeID,
 		},
-	}).Prune()
+	)).Prune()
 )
 
 func TestShortLivedInternetNodeConnections(t *testing.T) {
