@@ -1,8 +1,11 @@
 package app
 
 import (
+	"fmt"
 	"sync"
 	"time"
+
+	"github.com/spaolacci/murmur3"
 
 	"github.com/weaveworks/scope/report"
 )
@@ -33,6 +36,7 @@ type collector struct {
 	mtx     sync.Mutex
 	reports []timestampReport
 	window  time.Duration
+	cached  *report.Report
 	waitableCondition
 }
 
@@ -83,6 +87,7 @@ func (c *collector) Add(rpt report.Report) {
 	defer c.mtx.Unlock()
 	c.reports = append(c.reports, timestampReport{now(), rpt})
 	c.reports = clean(c.reports, c.window)
+	c.cached = nil
 	if rpt.Shortcut {
 		c.Broadcast()
 	}
@@ -94,12 +99,24 @@ func (c *collector) Report() report.Report {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
+	// If the oldest report is still within range,
+	// and there is a cached report, return that.
+	if c.cached != nil && len(c.reports) > 0 {
+		oldest := now().Add(-c.window)
+		if c.reports[0].timestamp.Before(oldest) {
+			return *c.cached
+		}
+	}
 	c.reports = clean(c.reports, c.window)
 
 	rpt := report.MakeReport()
+	id := murmur3.New64()
 	for _, tr := range c.reports {
 		rpt = rpt.Merge(tr.report)
+		id.Write([]byte(tr.report.ID))
 	}
+	rpt.ID = fmt.Sprintf("%x", id.Sum64())
+	c.cached = &rpt
 	return rpt
 }
 

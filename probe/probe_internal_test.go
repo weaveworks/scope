@@ -4,12 +4,12 @@ import (
 	"compress/gzip"
 	"encoding/gob"
 	"io"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 func TestApply(t *testing.T) {

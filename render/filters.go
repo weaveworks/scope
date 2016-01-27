@@ -60,17 +60,22 @@ type Filter struct {
 	FilterFunc func(RenderableNode) bool
 }
 
+// MakeFilter makes a new Filter.
+func MakeFilter(f func(RenderableNode) bool, r Renderer) Renderer {
+	return &Filter{r, f}
+}
+
 // Render implements Renderer
-func (f Filter) Render(rpt report.Report) RenderableNodes {
+func (f *Filter) Render(rpt report.Report) RenderableNodes {
 	nodes, _ := f.render(rpt)
 	return nodes
 }
 
-func (f Filter) render(rpt report.Report) (RenderableNodes, int) {
+func (f *Filter) render(rpt report.Report) (RenderableNodes, int) {
 	output := RenderableNodes{}
 	inDegrees := map[string]int{}
 	filtered := 0
-	for id, node := range f.Renderer.Render(rpt) {
+	for id, node := range memoisedRender(f.Renderer, rpt) {
 		if f.FilterFunc(node) {
 			output[id] = node
 			inDegrees[id] = 0
@@ -122,24 +127,24 @@ const IsConnected = "is_connected"
 // FilterPseudo produces a renderer that removes pseudo nodes from the given
 // renderer
 func FilterPseudo(r Renderer) Renderer {
-	return Filter{
-		Renderer: r,
-		FilterFunc: func(node RenderableNode) bool {
+	return MakeFilter(
+		func(node RenderableNode) bool {
 			return !node.Pseudo
 		},
-	}
+		r,
+	)
 }
 
 // FilterUnconnected produces a renderer that filters unconnected nodes
 // from the given renderer
 func FilterUnconnected(r Renderer) Renderer {
-	return Filter{
-		Renderer: ColorConnected(r),
-		FilterFunc: func(node RenderableNode) bool {
+	return MakeFilter(
+		func(node RenderableNode) bool {
 			_, ok := node.Latest.Lookup(IsConnected)
 			return ok
 		},
-	}
+		ColorConnected(r),
+	)
 }
 
 // FilterNoop does nothing.
@@ -149,20 +154,19 @@ func FilterNoop(in Renderer) Renderer {
 
 // FilterStopped filters out stopped containers.
 func FilterStopped(r Renderer) Renderer {
-	return Filter{
-		Renderer: r,
-		FilterFunc: func(node RenderableNode) bool {
+	return MakeFilter(
+		func(node RenderableNode) bool {
 			containerState, ok := node.Latest.Lookup(docker.ContainerState)
 			return !ok || containerState != docker.StateStopped
 		},
-	}
+		r,
+	)
 }
 
 // FilterSystem is a Renderer which filters out system nodes.
 func FilterSystem(r Renderer) Renderer {
-	return Filter{
-		Renderer: r,
-		FilterFunc: func(node RenderableNode) bool {
+	return MakeFilter(
+		func(node RenderableNode) bool {
 			containerName, _ := node.Latest.Lookup(docker.ContainerName)
 			if _, ok := systemContainerNames[containerName]; ok {
 				return false
@@ -186,7 +190,8 @@ func FilterSystem(r Renderer) Renderer {
 			}
 			return true
 		},
-	}
+		r,
+	)
 }
 
 var systemContainerNames = map[string]struct{}{

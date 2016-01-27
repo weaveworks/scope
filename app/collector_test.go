@@ -1,13 +1,13 @@
 package app_test
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 func TestCollector(t *testing.T) {

@@ -189,21 +189,23 @@ func (r *registry) walk(f func(APITopologyDesc)) {
 // makeTopologyList returns a handler that yields an APITopologyList.
 func (r *registry) makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		var (
-			rpt        = rep.Report()
-			topologies = []APITopologyDesc{}
-		)
-		r.walk(func(desc APITopologyDesc) {
-			renderer := renderedForRequest(req, desc)
-			desc.Stats = decorateWithStats(rpt, renderer)
-			for i := range desc.SubTopologies {
-				renderer := renderedForRequest(req, desc.SubTopologies[i])
-				desc.SubTopologies[i].Stats = decorateWithStats(rpt, renderer)
-			}
-			topologies = append(topologies, desc)
-		})
+		topologies := r.renderTopologies(rep.Report(), req)
 		respondWith(w, http.StatusOK, topologies)
 	}
+}
+
+func (r *registry) renderTopologies(rpt report.Report, req *http.Request) []APITopologyDesc {
+	topologies := []APITopologyDesc{}
+	r.walk(func(desc APITopologyDesc) {
+		renderer := renderedForRequest(req, desc)
+		desc.Stats = decorateWithStats(rpt, renderer)
+		for i := range desc.SubTopologies {
+			renderer := renderedForRequest(req, desc.SubTopologies[i])
+			desc.SubTopologies[i].Stats = decorateWithStats(rpt, renderer)
+		}
+		topologies = append(topologies, desc)
+	})
+	return topologies
 }
 
 func decorateWithStats(rpt report.Report, renderer render.Renderer) topologyStats {

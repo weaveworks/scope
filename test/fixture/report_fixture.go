@@ -121,6 +121,7 @@ var (
 	ServerHostLoad15Metric = report.MakeMetric().Add(Now, 0.16).WithFirst(Now.Add(-16 * time.Second))
 
 	Report = report.Report{
+		ID: "test-report",
 		Endpoint: report.Topology{
 			Nodes: report.Nodes{
 				// Node is arbitrary. We're free to put only precisely what we
