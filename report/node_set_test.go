@@ -49,7 +49,7 @@ func TestMakeNodeSet(t *testing.T) {
 		for _, spec := range testcase.wants {
 			wants = append(wants, report.MakeNode().WithTopology(spec.topology).WithID(spec.id))
 		}
-		if want, have := report.NodeSet(wants), report.MakeNodeSet(inputs...); !reflect.DeepEqual(want, have) {
+		if want, have := report.MakeNodeSet(wants...), report.MakeNodeSet(inputs...); !reflect.DeepEqual(want, have) {
 			t.Errorf("%#v: want %#v, have %#v", inputs, wants, have)
 		}
 	}
@@ -78,11 +78,11 @@ func TestNodeSetAdd(t *testing.T) {
 		nodes []report.Node
 		want  report.NodeSet
 	}{
-		{input: report.NodeSet(nil), nodes: []report.Node{}, want: report.NodeSet(nil)},
+		{input: report.NodeSet{}, nodes: []report.Node{}, want: report.NodeSet{}},
 		{
-			input: report.MakeNodeSet(),
+			input: report.EmptyNodeSet,
 			nodes: []report.Node{},
-			want:  report.MakeNodeSet(),
+			want:  report.EmptyNodeSet,
 		},
 		{
 			input: report.MakeNodeSet(report.MakeNode().WithID("a")),
@@ -90,7 +90,7 @@ func TestNodeSetAdd(t *testing.T) {
 			want:  report.MakeNodeSet(report.MakeNode().WithID("a")),
 		},
 		{
-			input: report.MakeNodeSet(),
+			input: report.EmptyNodeSet,
 			nodes: []report.Node{report.MakeNode().WithID("a")},
 			want:  report.MakeNodeSet(report.MakeNode().WithID("a")),
 		},
@@ -115,18 +115,18 @@ func TestNodeSetAdd(t *testing.T) {
 			want:  report.MakeNodeSet(report.MakeNode().WithID("a"), report.MakeNode().WithID("b"), report.MakeNode().WithID("c")),
 		},
 	} {
-		originalLen := len(testcase.input)
+		originalLen := testcase.input.Size()
 		if want, have := testcase.want, testcase.input.Add(testcase.nodes...); !reflect.DeepEqual(want, have) {
 			t.Errorf("%v + %v: want %v, have %v", testcase.input, testcase.nodes, want, have)
 		}
-		if len(testcase.input) != originalLen {
+		if testcase.input.Size() != originalLen {
 			t.Errorf("%v + %v: modified the original input!", testcase.input, testcase.nodes)
 		}
 	}
 }
 
 func BenchmarkNodeSetAdd(b *testing.B) {
-	n := report.MakeNodeSet()
+	n := report.EmptyNodeSet
 	for i := 0; i < 600; i++ {
 		n = n.Add(
 			report.MakeNode().WithID(fmt.Sprint(i)).WithLatests(map[string]string{
@@ -155,15 +155,15 @@ func TestNodeSetMerge(t *testing.T) {
 		other report.NodeSet
 		want  report.NodeSet
 	}{
-		{input: report.NodeSet(nil), other: report.NodeSet(nil), want: report.NodeSet(nil)},
-		{input: report.MakeNodeSet(), other: report.MakeNodeSet(), want: report.MakeNodeSet()},
+		{input: report.NodeSet{}, other: report.NodeSet{}, want: report.NodeSet{}},
+		{input: report.EmptyNodeSet, other: report.EmptyNodeSet, want: report.EmptyNodeSet},
 		{
 			input: report.MakeNodeSet(report.MakeNode().WithID("a")),
-			other: report.MakeNodeSet(),
+			other: report.EmptyNodeSet,
 			want:  report.MakeNodeSet(report.MakeNode().WithID("a")),
 		},
 		{
-			input: report.MakeNodeSet(),
+			input: report.EmptyNodeSet,
 			other: report.MakeNodeSet(report.MakeNode().WithID("a")),
 			want:  report.MakeNodeSet(report.MakeNode().WithID("a")),
 		},
@@ -193,18 +193,18 @@ func TestNodeSetMerge(t *testing.T) {
 			want:  report.MakeNodeSet(report.MakeNode().WithID("a"), report.MakeNode().WithID("b")),
 		},
 	} {
-		originalLen := len(testcase.input)
+		originalLen := testcase.input.Size()
 		if want, have := testcase.want, testcase.input.Merge(testcase.other); !reflect.DeepEqual(want, have) {
 			t.Errorf("%v + %v: want %v, have %v", testcase.input, testcase.other, want, have)
 		}
-		if len(testcase.input) != originalLen {
+		if testcase.input.Size() != originalLen {
 			t.Errorf("%v + %v: modified the original input!", testcase.input, testcase.other)
 		}
 	}
 }
 
 func BenchmarkNodeSetMerge(b *testing.B) {
-	n, other := report.MakeNodeSet(), report.MakeNodeSet()
+	n, other := report.NodeSet{}, report.NodeSet{}
 	for i := 0; i < 600; i++ {
 		n = n.Add(
 			report.MakeNode().WithID(fmt.Sprint(i)).WithLatests(map[string]string{

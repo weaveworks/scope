@@ -101,15 +101,13 @@ var (
 
 func children(n render.RenderableNode) []NodeSummaryGroup {
 	summaries := map[string][]NodeSummary{}
-	for _, child := range n.Children {
-		if child.ID == n.ID {
-			continue
+	n.Children.ForEach(func(child report.Node) {
+		if child.ID != n.ID {
+			if summary, ok := MakeNodeSummary(child); ok {
+				summaries[child.Topology] = append(summaries[child.Topology], summary)
+			}
 		}
-
-		if summary, ok := MakeNodeSummary(child); ok {
-			summaries[child.Topology] = append(summaries[child.Topology], summary)
-		}
-	}
+	})
 
 	nodeSummaryGroups := []NodeSummaryGroup{}
 	for _, spec := range nodeSummaryGroupSpecs {

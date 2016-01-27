@@ -141,7 +141,7 @@ func (rn RenderableNode) Copy() RenderableNode {
 func (rn RenderableNode) Prune() RenderableNode {
 	cp := rn.Copy()
 	cp.Node = report.MakeNode().WithAdjacent(cp.Node.Adjacency...)
-	cp.Children = nil
+	cp.Children = report.EmptyNodeSet
 	return cp
 }
 

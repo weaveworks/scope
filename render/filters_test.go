@@ -1,12 +1,12 @@
 package render_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 func TestFilterRender(t *testing.T) {
