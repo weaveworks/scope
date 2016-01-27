@@ -1,8 +1,11 @@
 package app
 
 import (
+	"fmt"
 	"sync"
 	"time"
+
+	"github.com/spaolacci/murmur3"
 
 	"github.com/weaveworks/scope/report"
 )
@@ -97,9 +100,12 @@ func (c *collector) Report() report.Report {
 	c.reports = clean(c.reports, c.window)
 
 	rpt := report.MakeReport()
+	id := murmur3.New64()
 	for _, tr := range c.reports {
 		rpt = rpt.Merge(tr.report)
+		id.Write([]byte(tr.report.ID))
 	}
+	rpt.ID = fmt.Sprintf("%x", id.Sum64())
 	return rpt
 }
 
