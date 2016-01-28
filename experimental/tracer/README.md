@@ -1,3 +1,7 @@
+Tracer is an prototype app for doing distributed request tracing without applications modifications.
+
+It its very early.  Ask Tom for a demo.
+
 Run tracer:
 - make
 - ./tracer.sh start
