@@ -2,95 +2,77 @@ package procspy
 
 import (
 	"bytes"
+	"fmt"
 	"sync"
 	"time"
 
-	//"github.com/armon/go-metrics"
-	"github.com/coocood/freecache"
-
-	"github.com/weaveworks/scope/common/fs"
+	"github.com/weaveworks/scope/probe/process"
 )
 
 const (
-	timeout   = 60                    // keep contents for 60 seconds
-	size      = 10 * 1024 * 1024      // keep upto 10MB worth
-	ratelimit = 20 * time.Millisecond // read 50 files per second
+	ratelimit = 20 * time.Millisecond // read 50 namespaces per second
 )
 
 type backgroundReader struct {
-	mtx  sync.Mutex
-	cond *sync.Cond
+	walker       process.Walker
+	mtx          sync.Mutex
+	walkingBuf   *bytes.Buffer
+	readyBuf     *bytes.Buffer
+	readySockets map[uint64]*Proc
+}
 
-	queue      []string            // sorted list of files to fetch
-	queueIndex map[string]struct{} // entry here indicates file is already queued for fetching
-	cache      *freecache.Cache
+// HACK: Pretty ugly singleton interface (particularly the part part of passing
+// the walker to StartBackgroundReader() and ignoring it in in Connections() )
+// experimenting with this for now.
+var singleton *backgroundReader
+
+func getBackgroundReader() (*backgroundReader, error) {
+	var err error
+	if singleton == nil {
+		err = fmt.Errorf("background reader hasn't yet been started")
+	}
+	return singleton, err
 }
 
 // StartBackgroundReader starts a ratelimited background goroutine to
 // read the expensive files from proc.
-func StartBackgroundReader() {
-	br := &backgroundReader{
-		queueIndex: map[string]struct{}{},
-		cache:      freecache.NewCache(size),
+func StartBackgroundReader(walker process.Walker) {
+	if singleton != nil {
+		return
 	}
-	br.cond = sync.NewCond(&br.mtx)
-	go br.loop()
-	readFile = br.readFile
-}
-
-func (br *backgroundReader) next() string {
-	br.mtx.Lock()
-	defer br.mtx.Unlock()
-	for len(br.queue) == 0 {
-		br.cond.Wait()
+	singleton = &backgroundReader{
+		walker:     walker,
+		walkingBuf: bytes.NewBuffer(make([]byte, 0, 5000)),
+		readyBuf:   bytes.NewBuffer(make([]byte, 0, 5000)),
 	}
-	filename := br.queue[0]
-	br.queue = br.queue[1:]
-	delete(br.queueIndex, filename)
-	return filename
-}
-
-func (br *backgroundReader) enqueue(filename string) {
-	br.mtx.Lock()
-	defer br.mtx.Unlock()
-	if _, ok := br.queueIndex[filename]; !ok {
-		br.queue = append(br.queue, filename)
-		br.queueIndex[filename] = struct{}{}
-		br.cond.Broadcast()
-	}
-}
-
-func (br *backgroundReader) readFileIntoCache(filename string) error {
-	contents, err := fs.ReadFile(filename)
-	if err != nil {
-		return err
-	}
-	br.cache.Set([]byte(filename), contents, timeout)
-	return nil
+	go singleton.loop()
 }
 
 func (br *backgroundReader) loop() {
-	ticker := time.Tick(ratelimit)
+	namespaceTicker := time.Tick(ratelimit)
 	for {
-		err := br.readFileIntoCache(br.next())
-		// Only rate limit if we succesfully read a file
-		if err == nil {
-			<-ticker
+		sockets, err := walkProcPid(br.walkingBuf, br.walker, namespaceTicker)
+		if err != nil {
+			fmt.Printf("background reader: error reading walking /proc: %s\n", err)
+			continue
 		}
+
+		// Swap buffers
+		br.mtx.Lock()
+		br.readyBuf, br.walkingBuf = br.walkingBuf, br.readyBuf
+		br.readySockets = sockets
+		br.mtx.Unlock()
+
+		br.walkingBuf.Reset()
 	}
 }
 
-func (br *backgroundReader) readFile(filename string, buf *bytes.Buffer) (int64, error) {
-	// We always schedule the filename for reading, as on quiet systems
-	// we want to have a fresh as possible resuls
-	br.enqueue(filename)
+func (br *backgroundReader) getWalkedProcPid(buf *bytes.Buffer) map[uint64]*Proc {
+	br.mtx.Lock()
+	defer br.mtx.Unlock()
 
-	v, err := br.cache.Get([]byte(filename))
-	if err != nil {
-		return 0, nil
-	}
-	// race!
-	br.cache.Del([]byte(filename))
-	n, err := buf.Write(v)
-	return int64(n), err
+	reader := bytes.NewReader(br.readyBuf.Bytes())
+	buf.ReadFrom(reader)
+
+	return br.readySockets
 }

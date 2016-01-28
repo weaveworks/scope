@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/weaveworks/scope/common/fs"
 	"github.com/weaveworks/scope/probe/process"
@@ -24,7 +25,7 @@ func SetProcRoot(root string) {
 // walkProcPid walks over all numerical (PID) /proc entries, and sees if their
 // ./fd/* files are symlink to sockets. Returns a map from socket ID (inode)
 // to PID. Will return an error if /proc isn't there.
-func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, error) {
+func walkProcPid(buf *bytes.Buffer, walker process.Walker, namespaceTicker <-chan time.Time) (map[uint64]*Proc, error) {
 	var (
 		res        = map[uint64]*Proc{}              // map socket inode -> process
 		namespaces = map[uint64][]*process.Process{} // map network namespace id -> processes
@@ -55,6 +56,8 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, er
 	})
 
 	for _, procs := range namespaces {
+
+		<-namespaceTicker
 
 		// Read the namespace connections (i.e. read /proc/PID/net/tcp{,6} for
 		// any of the processes in the namespace)
