@@ -58,7 +58,7 @@ export default class Topologies extends React.Component {
 
   render() {
     const topologies = _.sortBy(this.props.topologies, function(topology) {
-      return topology.name;
+      return topology.rank;
     });
 
     return (

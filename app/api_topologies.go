@@ -22,6 +22,7 @@ var (
 			id:       "pods",
 			renderer: render.PodRenderer,
 			Name:     "Pods",
+			Rank:     3,
 			Options: map[string][]APITopologyOption{"system": {
 				{"show", "System pods shown", false, render.FilterNoop},
 				{"hide", "System pods hidden", true, render.FilterSystem},
@@ -56,9 +57,10 @@ func init() {
 	// be the verb to get to that state
 	topologyRegistry.add(
 		APITopologyDesc{
-			id:       "applications",
+			id:       "processes",
 			renderer: render.FilterUnconnected(render.ProcessWithContainerNameRenderer),
-			Name:     "Applications",
+			Name:     "Processes",
+			Rank:     1,
 			Options: map[string][]APITopologyOption{"unconnected": {
 				// Show the user why there are filtered nodes in this view.
 				// Don't give them the option to show those nodes.
@@ -66,8 +68,8 @@ func init() {
 			}},
 		},
 		APITopologyDesc{
-			id:       "applications-by-name",
-			parent:   "applications",
+			id:       "processes-by-name",
+			parent:   "processes",
 			renderer: render.FilterUnconnected(render.ProcessNameRenderer),
 			Name:     "by name",
 			Options: map[string][]APITopologyOption{"unconnected": {
@@ -79,6 +81,7 @@ func init() {
 			id:       "containers",
 			renderer: render.ContainerWithImageNameRenderer,
 			Name:     "Containers",
+			Rank:     2,
 			Options:  containerFilters,
 		},
 		APITopologyDesc{
@@ -99,6 +102,7 @@ func init() {
 			id:       "hosts",
 			renderer: render.HostRenderer,
 			Name:     "Hosts",
+			Rank:     4,
 			Options:  map[string][]APITopologyOption{},
 		},
 	)
@@ -117,6 +121,7 @@ type APITopologyDesc struct {
 	renderer render.Renderer
 
 	Name    string                         `json:"name"`
+	Rank    int                            `json:"rank"`
 	Options map[string][]APITopologyOption `json:"options"`
 
 	URL           string            `json:"url"`

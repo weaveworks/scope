@@ -71,12 +71,12 @@ func TestAPITopologyContainers(t *testing.T) {
 	}
 }
 
-func TestAPITopologyApplications(t *testing.T) {
+func TestAPITopologyProcesses(t *testing.T) {
 	ts := topologyServer()
 	defer ts.Close()
-	is404(t, ts, "/api/topology/applications/foobar")
+	is404(t, ts, "/api/topology/processes/foobar")
 	{
-		body := getRawJSON(t, ts, "/api/topology/applications/"+expected.ServerProcessID)
+		body := getRawJSON(t, ts, "/api/topology/processes/"+expected.ServerProcessID)
 		var node app.APINode
 		if err := json.Unmarshal(body, &node); err != nil {
 			t.Fatal(err)
@@ -88,7 +88,7 @@ func TestAPITopologyApplications(t *testing.T) {
 	}
 
 	{
-		body := getRawJSON(t, ts, "/api/topology/applications-by-name/"+
+		body := getRawJSON(t, ts, "/api/topology/processes-by-name/"+
 			url.QueryEscape(fixture.Client1Name))
 		var node app.APINode
 		if err := json.Unmarshal(body, &node); err != nil {
@@ -133,7 +133,7 @@ func TestAPITopologyHosts(t *testing.T) {
 func TestAPITopologyWebsocket(t *testing.T) {
 	ts := topologyServer()
 	defer ts.Close()
-	url := "/api/topology/applications/ws"
+	url := "/api/topology/processes/ws"
 
 	// Not a websocket request
 	res, _ := checkGet(t, ts, url)
