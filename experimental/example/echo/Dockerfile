@@ -1,4 +1,4 @@
-FROM python:2.7
+FROM tatsushid/tinycore-python:2.7
 MAINTAINER Weaveworks Inc <help@weave.works>
 WORKDIR /home/weave
 ADD requirements.txt /home/weave/
