@@ -1,4 +1,4 @@
-Tracer is an prototype app for doing distributed request tracing without applications modifications.
+Tracer is an prototype for doing container-centric distributed request tracing without applications modifications.
 
 It its very early.  Ask Tom for a demo.
 
