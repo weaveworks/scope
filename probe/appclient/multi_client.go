@@ -73,6 +73,7 @@ func (c *multiClient) Set(hostname string, endpoints []string) {
 		go func(endpoint string) {
 			c.sema.acquire()
 			defer c.sema.release()
+			defer wg.Done()
 
 			client, err := c.clientFactory(hostname, endpoint)
 			if err != nil {
@@ -83,10 +84,10 @@ func (c *multiClient) Set(hostname string, endpoints []string) {
 			details, err := client.Details()
 			if err != nil {
 				log.Errorf("Error fetching app details: %v", err)
+				return
 			}
 
 			clients <- clientTuple{details, client}
-			wg.Done()
 		}(endpoint)
 	}
 

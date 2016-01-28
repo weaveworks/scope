@@ -192,7 +192,6 @@ func (c *appClient) controlConnection() (bool, error) {
 		return false, err
 	}
 	defer func() {
-		log.Infof("Closing control connection to %s", c.target)
 		conn.Close()
 	}()
 

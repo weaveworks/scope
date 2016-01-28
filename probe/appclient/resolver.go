@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/miekg/dns"
 
 	"github.com/weaveworks/scope/common/xfer"
 )
@@ -16,8 +17,7 @@ const (
 )
 
 var (
-	tick     = time.Tick
-	lookupIP = net.LookupIP
+	tick = time.Tick
 )
 
 type setter func(string, []string)
@@ -31,23 +31,47 @@ type staticResolver struct {
 	setters []setter
 	targets []target
 	quit    chan struct{}
+	lookup  LookupIP
 }
+
+// LookupIP type is used for looking up IPs.
+type LookupIP func(host string) (ips []net.IP, err error)
 
 type target struct{ host, port string }
 
 func (t target) String() string { return net.JoinHostPort(t.host, t.port) }
 
-// NewStaticResolver periodically resolves the targets, and calls the set
+// NewResolver periodically resolves the targets, and calls the set
 // function with all the resolved IPs. It explictiy supports targets which
-// resolve to multiple IPs.
-func NewStaticResolver(targets []string, setters ...setter) Resolver {
+// resolve to multiple IPs.  It uses the supplied DNS server name.
+func NewResolver(targets []string, lookup LookupIP, setters ...setter) Resolver {
 	r := staticResolver{
 		targets: prepare(targets),
 		setters: setters,
 		quit:    make(chan struct{}),
+		lookup:  lookup,
 	}
 	go r.loop()
 	return r
+}
+
+// LookupUsing produces a LookupIP function for the given DNS server.
+func LookupUsing(dnsServer string) func(host string) (ips []net.IP, err error) {
+	return func(host string) (ips []net.IP, err error) {
+		m := &dns.Msg{}
+		m.SetQuestion(dns.Fqdn(host), dns.TypeA)
+		in, err := dns.Exchange(m, dnsServer)
+		if err != nil {
+			return nil, err
+		}
+		result := []net.IP{}
+		for _, answer := range in.Answer {
+			if a, ok := answer.(*dns.A); ok {
+				result = append(result, a.A)
+			}
+		}
+		return result, nil
+	}
 }
 
 func (r staticResolver) loop() {
@@ -87,28 +111,28 @@ func prepare(strs []string) []target {
 }
 
 func (r staticResolver) resolve() {
-	for t, endpoints := range resolveMany(r.targets) {
+	for t, endpoints := range r.resolveMany(r.targets) {
 		for _, setter := range r.setters {
 			setter(t.String(), endpoints)
 		}
 	}
 }
 
-func resolveMany(targets []target) map[target][]string {
+func (r staticResolver) resolveMany(targets []target) map[target][]string {
 	result := map[target][]string{}
 	for _, t := range targets {
-		result[t] = resolveOne(t)
+		result[t] = r.resolveOne(t)
 	}
 	return result
 }
 
-func resolveOne(t target) []string {
+func (r staticResolver) resolveOne(t target) []string {
 	var addrs []net.IP
 	if addr := net.ParseIP(t.host); addr != nil {
 		addrs = []net.IP{addr}
 	} else {
 		var err error
-		addrs, err = lookupIP(t.host)
+		addrs, err = r.lookup(t.host)
 		if err != nil {
 			return []string{}
 		}

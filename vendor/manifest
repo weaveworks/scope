@@ -638,6 +638,12 @@
 			"path": "/pbutil"
 		},
 		{
+			"importpath": "github.com/miekg/dns",
+			"repository": "https://github.com/miekg/dns",
+			"revision": "3d66e3747d22a77b24b119eb66e9d574ed99f86c",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/mndrix/ps",
 			"repository": "https://github.com/mndrix/ps",
 			"revision": "35fef6f28be7e47a87d8a71ef5b80cbf2c4c167a",

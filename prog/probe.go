@@ -18,6 +18,8 @@ import (
 	"github.com/weaveworks/weave/common"
 
 	"github.com/weaveworks/scope/common/hostname"
+	"github.com/weaveworks/scope/common/sanitize"
+	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/appclient"
@@ -61,24 +63,28 @@ func check() {
 // Main runs the probe
 func probeMain() {
 	var (
-		targets            = []string{fmt.Sprintf("localhost:%d", xfer.AppPort), fmt.Sprintf("scope.weave.local:%d", xfer.AppPort)}
-		token              = flag.String("token", "default-token", "probe token")
-		httpListen         = flag.String("http.listen", "", "listen address for HTTP profiling and instrumentation server")
-		publishInterval    = flag.Duration("publish.interval", 3*time.Second, "publish (output) interval")
-		spyInterval        = flag.Duration("spy.interval", time.Second, "spy (scan) interval")
-		spyProcs           = flag.Bool("processes", true, "report processes (needs root)")
-		dockerEnabled      = flag.Bool("docker", false, "collect Docker-related attributes for processes")
-		dockerInterval     = flag.Duration("docker.interval", 10*time.Second, "how often to update Docker attributes")
-		dockerBridge       = flag.String("docker.bridge", "docker0", "the docker bridge name")
+		targets         = []string{fmt.Sprintf("localhost:%d", xfer.AppPort)}
+		token           = flag.String("token", "default-token", "probe token")
+		httpListen      = flag.String("http.listen", "", "listen address for HTTP profiling and instrumentation server")
+		publishInterval = flag.Duration("publish.interval", 3*time.Second, "publish (output) interval")
+		spyInterval     = flag.Duration("spy.interval", time.Second, "spy (scan) interval")
+		spyProcs        = flag.Bool("processes", true, "report processes (needs root)")
+		procRoot        = flag.String("proc.root", "/proc", "location of the proc filesystem")
+		useConntrack    = flag.Bool("conntrack", true, "also use conntrack to track connections")
+		insecure        = flag.Bool("insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
+		logPrefix       = flag.String("log.prefix", "<probe>", "prefix for each log line")
+		logLevel        = flag.String("log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
+
+		dockerEnabled  = flag.Bool("docker", false, "collect Docker-related attributes for processes")
+		dockerInterval = flag.Duration("docker.interval", 10*time.Second, "how often to update Docker attributes")
+		dockerBridge   = flag.String("docker.bridge", "docker0", "the docker bridge name")
+
 		kubernetesEnabled  = flag.Bool("kubernetes", false, "collect kubernetes-related attributes for containers, should only be enabled on the master node")
 		kubernetesAPI      = flag.String("kubernetes.api", "", "Address of kubernetes master api")
 		kubernetesInterval = flag.Duration("kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
-		weaveRouterAddr    = flag.String("weave.router.addr", "", "IP address or FQDN of the Weave router")
-		procRoot           = flag.String("proc.root", "/proc", "location of the proc filesystem")
-		useConntrack       = flag.Bool("conntrack", true, "also use conntrack to track connections")
-		insecure           = flag.Bool("insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
-		logPrefix          = flag.String("log.prefix", "<probe>", "prefix for each log line")
-		logLevel           = flag.String("log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
+
+		weaveRouterAddr = flag.String("weave.router.addr", "127.0.0.1:6784", "IP address & port of the Weave router")
+		weaveDNSTarget  = flag.String("weave.hostname", fmt.Sprintf("scope.weave.local:%d", xfer.AppPort), "Hostname to lookup in weaveDNS")
 	)
 	flag.Parse()
 
@@ -106,18 +112,6 @@ func probeMain() {
 	log.Infof("probe starting, version %s, ID %s", version, probeID)
 	go check()
 
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		log.Fatal(err)
-	}
-	localNets := report.Networks{}
-	for _, addr := range addrs {
-		// Not all addrs are IPNets.
-		if ipNet, ok := addr.(*net.IPNet); ok {
-			localNets = append(localNets, ipNet)
-		}
-	}
-
 	if len(flag.Args()) > 0 {
 		targets = flag.Args()
 	}
@@ -136,7 +130,7 @@ func probeMain() {
 	})
 	defer clients.Stop()
 
-	resolver := appclient.NewStaticResolver(targets, clients.Set)
+	resolver := appclient.NewResolver(targets, net.LookupIP, clients.Set)
 	defer resolver.Stop()
 
 	processCache := process.NewCachingWalker(process.NewWalker(*procRoot))
@@ -149,7 +143,7 @@ func probeMain() {
 	p.AddTicker(processCache)
 	p.AddReporter(
 		endpointReporter,
-		host.NewReporter(hostID, hostName, localNets),
+		host.NewReporter(hostID, hostName),
 		process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies),
 	)
 	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID, probeID))
@@ -178,11 +172,20 @@ func probeMain() {
 	}
 
 	if *weaveRouterAddr != "" {
-		weave := overlay.NewWeave(hostID, *weaveRouterAddr)
+		client := weave.NewClient(sanitize.URL("http://", 6784, "")(*weaveRouterAddr))
+		weave := overlay.NewWeave(hostID, client)
 		defer weave.Stop()
-		p.AddTicker(weave)
 		p.AddTagger(weave)
 		p.AddReporter(weave)
+
+		dockerBridgeIP, err := getFirstAddressOf(*dockerBridge)
+		if err != nil {
+			log.Println("Error getting docker bridge ip:", err)
+		} else {
+			weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
+			weaveResolver := appclient.NewResolver([]string{*weaveDNSTarget}, weaveDNSLookup, clients.Set)
+			defer weaveResolver.Stop()
+		}
 	}
 
 	if *httpListen != "" {
@@ -197,4 +200,26 @@ func probeMain() {
 	defer p.Stop()
 
 	common.SignalHandlerLoop()
+}
+
+func getFirstAddressOf(name string) (string, error) {
+	inf, err := net.InterfaceByName(name)
+	if err != nil {
+		return "", err
+	}
+
+	addrs, err := inf.Addrs()
+	if err != nil {
+		return "", err
+	}
+	if len(addrs) <= 0 {
+		return "", fmt.Errorf("No address found for %s", name)
+	}
+
+	switch v := addrs[0].(type) {
+	case *net.IPNet:
+		return v.IP.String(), nil
+	default:
+		return "", fmt.Errorf("No address found for %s", name)
+	}
 }
