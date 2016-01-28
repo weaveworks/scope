@@ -24,6 +24,7 @@ const (
 	TheInternetMajor = "The Internet"
 
 	containersKey = "containers"
+	ipsKey        = "ips"
 	podsKey       = "pods"
 	processesKey  = "processes"
 	servicesKey   = "services"
@@ -330,7 +331,7 @@ func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 			}
 			id := report.MakeScopedEndpointNodeID(scope, addr, "")
 			node := NewRenderableNodeWith(id, "", "", "", m)
-			node.Counters = node.Counters.Add(containersKey, 1)
+			node.Counters = node.Counters.Add(ipsKey, 1)
 			result[id] = node
 		}
 	}
@@ -343,7 +344,7 @@ func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 			ip, port := mapping[1], mapping[2]
 			id := report.MakeScopedEndpointNodeID("", ip, port)
 			node := NewRenderableNodeWith(id, "", "", "", m.WithParents(report.EmptySets))
-			node.Counters = node.Counters.Add(containersKey, 1)
+			node.Counters = node.Counters.Add(ipsKey, 1)
 			result[id] = node
 		}
 	}
@@ -357,7 +358,7 @@ func MapContainer2IP(m RenderableNode, _ report.Networks) RenderableNodes {
 func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 	// If an IP is shared between multiple containers, we can't
 	// reliably attribute an connection based on its IP
-	if count, _ := n.Node.Counters.Lookup(containersKey); count > 1 {
+	if count, _ := n.Node.Counters.Lookup(ipsKey); count > 1 {
 		return RenderableNodes{}
 	}
 
