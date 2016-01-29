@@ -47,6 +47,7 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 		-v $(shell pwd):/go/src/github.com/weaveworks/scope \
 		-v $(shell pwd)/.pkg:/go/pkg \
+		--net=host \
 		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL \
 		-e CIRCLE_NODE_INDEX -e COVERDIR -e SLOW \
 		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@

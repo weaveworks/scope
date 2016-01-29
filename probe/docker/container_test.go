@@ -79,7 +79,6 @@ func TestContainer(t *testing.T) {
 		"docker_image_id":          "baz",
 		"docker_label_foo1":        "bar1",
 		"docker_label_foo2":        "bar2",
-		"docker_memory_usage":      "12345",
 	}).WithSets(report.EmptySets.
 		Add("docker_container_ports", report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp")).
 		Add("docker_container_ips", report.MakeStringSet("1.2.3.4")).
