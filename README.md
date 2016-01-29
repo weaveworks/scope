@@ -220,14 +220,14 @@ Scope has a collection of built in debugging tools to aid Scope delevopers.
 
 - To have the Scope App or Scope Probe dump their goroutine stacks, run:
 ```
-pkill -SIGQUIT scope-(app|probe)
+kill -QUIT $(pgrep -f scope-(app|probe))
 docker logs weavescope
 ```
 
 - The Scope Probe is instrumented with various counters and timers. To have it dump
   those values, run:
 ```
-pkill -SIGUSR1 scope-probe
+kill -USR1 $(pgrep -f scope-probe)
 docker logs weavescope
 ```
 
