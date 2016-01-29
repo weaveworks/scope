@@ -4,6 +4,7 @@ package procspy
 
 import (
 	"bytes"
+	"log"
 	"path/filepath"
 	"strconv"
 	"syscall"
@@ -54,6 +55,8 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker, namespaceTicker <-cha
 			namespaces[statT.Ino] = []*process.Process{&p}
 		}
 	})
+
+	log.Printf("debug: walkProcPid: found %d namespaces\n", len(namespaces))
 
 	for _, procs := range namespaces {
 
