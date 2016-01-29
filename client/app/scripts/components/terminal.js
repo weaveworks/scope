@@ -184,6 +184,14 @@ export default class Terminal extends React.Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    const containerMarginChanged = nextProps.containerMargin !== this.props.containerMargin;
+    log(nextProps.containerMargin);
+    if (containerMarginChanged) {
+      this.handleResize();
+    }
+  }
+
   componentDidUpdate(prevProps, prevState) {
     const sizeChanged = (
       prevState.cols !== this.state.cols ||
