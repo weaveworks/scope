@@ -44,12 +44,15 @@ export function getNeutralColor() {
   return PSEUDO_COLOR;
 }
 
-export function getNodeColor(text, secondText) {
+export function getNodeColor(text, secondText, isPseudo = false) {
+  if (isPseudo) {
+    return PSEUDO_COLOR;
+  }
   return colors(text, secondText).toString();
 }
 
-export function getNodeColorDark(text, secondText) {
-  if (!text) {
+export function getNodeColorDark(text = '', secondText = '', isPseudo = false) {
+  if (isPseudo) {
     return PSEUDO_COLOR;
   }
   const color = d3.rgb(colors(text, secondText));
