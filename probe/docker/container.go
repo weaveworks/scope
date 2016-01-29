@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -95,8 +94,9 @@ type container struct {
 	sync.RWMutex
 	container    *docker.Container
 	statsConn    ClientConn
-	latestStats  *docker.Stats
-	pendingStats []*docker.Stats
+	latestStats  docker.Stats
+	pendingStats [20]docker.Stats
+	numPending   int
 }
 
 // NewContainer creates a new Container
@@ -185,6 +185,7 @@ func (c *container) StartGatheringStats() error {
 			log.Printf("docker container: %v", err)
 			return
 		}
+		defer resp.Body.Close()
 
 		c.Lock()
 		c.statsConn = conn
@@ -196,12 +197,10 @@ func (c *container) StartGatheringStats() error {
 
 			log.Printf("docker container: stopped collecting stats for %s", c.container.ID)
 			c.statsConn = nil
-			c.latestStats = nil
 		}()
 
-		stats := &docker.Stats{}
+		var stats docker.Stats
 		decoder := json.NewDecoder(resp.Body)
-
 		for err := decoder.Decode(&stats); err != io.EOF; err = decoder.Decode(&stats) {
 			if err != nil {
 				log.Printf("docker container: error reading event, did container stop? %v", err)
@@ -209,11 +208,16 @@ func (c *container) StartGatheringStats() error {
 			}
 
 			c.Lock()
-			c.latestStats = stats
-			c.pendingStats = append(c.pendingStats, stats)
+			if c.numPending >= len(c.pendingStats) {
+				log.Printf("docker container: dropping stats.")
+			} else {
+				c.latestStats = stats
+				c.pendingStats[c.numPending] = stats
+				c.numPending++
+			}
 			c.Unlock()
 
-			stats = &docker.Stats{}
+			stats = docker.Stats{}
 		}
 	}()
 
@@ -230,7 +234,6 @@ func (c *container) StopGatheringStats() {
 
 	c.statsConn.Close()
 	c.statsConn = nil
-	c.latestStats = nil
 	return
 }
 
@@ -259,22 +262,22 @@ func (c *container) ports(localAddrs []net.IP) report.StringSet {
 	return report.MakeStringSet(ports...)
 }
 
-func (c *container) memoryUsageMetric() report.Metric {
+func (c *container) memoryUsageMetric(stats []docker.Stats) report.Metric {
 	result := report.MakeMetric()
-	for _, s := range c.pendingStats {
+	for _, s := range stats {
 		result = result.Add(s.Read, float64(s.MemoryStats.Usage))
 	}
 	return result
 }
 
-func (c *container) cpuPercentMetric() report.Metric {
+func (c *container) cpuPercentMetric(stats []docker.Stats) report.Metric {
 	result := report.MakeMetric()
-	if len(c.pendingStats) < 2 {
+	if len(stats) < 2 {
 		return result
 	}
 
-	previous := c.pendingStats[0]
-	for _, s := range c.pendingStats[1:] {
+	previous := stats[0]
+	for _, s := range stats[1:] {
 		// Copies from docker/api/client/stats.go#L205
 		cpuDelta := float64(s.CPUStats.CPUUsage.TotalUsage - previous.CPUStats.CPUUsage.TotalUsage)
 		systemDelta := float64(s.CPUStats.SystemCPUUsage - previous.CPUStats.SystemCPUUsage)
@@ -293,15 +296,18 @@ func (c *container) cpuPercentMetric() report.Metric {
 }
 
 func (c *container) metrics() report.Metrics {
+	if c.numPending == 0 {
+		return report.Metrics{}
+	}
+	pendingStats := c.pendingStats[:c.numPending]
 	result := report.Metrics{
-		MemoryUsage:   c.memoryUsageMetric(),
-		CPUTotalUsage: c.cpuPercentMetric(),
+		MemoryUsage:   c.memoryUsageMetric(pendingStats),
+		CPUTotalUsage: c.cpuPercentMetric(pendingStats),
 	}
 
-	// Keep the latest report to help with relative metric reporting.
-	if len(c.pendingStats) > 0 {
-		c.pendingStats = c.pendingStats[len(c.pendingStats)-1:]
-	}
+	// leave one stat to help with relative metrics
+	c.pendingStats[0] = c.pendingStats[c.numPending-1]
+	c.numPending = 1
 	return result
 }
 
@@ -348,23 +354,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	}
 
 	result = AddLabels(result, c.container.Config.Labels)
-
-	if c.latestStats == nil {
-		return result
-	}
-
-	result = result.WithLatests(map[string]string{
-		MemoryMaxUsage: strconv.FormatUint(c.latestStats.MemoryStats.MaxUsage, 10),
-		MemoryUsage:    strconv.FormatUint(c.latestStats.MemoryStats.Usage, 10),
-		MemoryFailcnt:  strconv.FormatUint(c.latestStats.MemoryStats.Failcnt, 10),
-		MemoryLimit:    strconv.FormatUint(c.latestStats.MemoryStats.Limit, 10),
-
-		//		CPUPercpuUsage:       strconv.FormatUint(stats.CPUStats.CPUUsage.PercpuUsage, 10),
-		CPUUsageInUsermode:   strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.UsageInUsermode, 10),
-		CPUTotalUsage:        strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.TotalUsage, 10),
-		CPUUsageInKernelmode: strconv.FormatUint(c.latestStats.CPUStats.CPUUsage.UsageInKernelmode, 10),
-		CPUSystemCPUUsage:    strconv.FormatUint(c.latestStats.CPUStats.SystemCPUUsage, 10),
-	}).WithMetrics(c.metrics())
+	result = result.WithMetrics(c.metrics())
 	return result
 }
 
