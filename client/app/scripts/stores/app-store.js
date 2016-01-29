@@ -110,7 +110,7 @@ function closeNodeDetails(nodeId) {
     const popNodeId = nodeId || nodeDetails.keySeq().last();
     // remove pipe if it belongs to the node being closed
     controlPipes = controlPipes.filter(pipe => {
-      return pipe.nodeId !== popNodeId;
+      return pipe.get('nodeId') !== popNodeId;
     });
     nodeDetails = nodeDetails.delete(popNodeId);
   }
