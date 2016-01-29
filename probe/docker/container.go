@@ -185,6 +185,7 @@ func (c *container) StartGatheringStats() error {
 			log.Printf("docker container: %v", err)
 			return
 		}
+		defer resp.Body.Close()
 
 		c.Lock()
 		c.statsConn = conn
@@ -201,7 +202,6 @@ func (c *container) StartGatheringStats() error {
 
 		stats := &docker.Stats{}
 		decoder := json.NewDecoder(resp.Body)
-
 		for err := decoder.Decode(&stats); err != io.EOF; err = decoder.Decode(&stats) {
 			if err != nil {
 				log.Printf("docker container: error reading event, did container stop? %v", err)
