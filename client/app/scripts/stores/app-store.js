@@ -362,6 +362,7 @@ export class AppStore extends Store {
 
     case ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE:
       nodeDetails = nodeDetails.filter((v, k) => k === payload.nodeId);
+      controlPipes = controlPipes.clear();
       selectedNodeId = payload.nodeId;
       if (payload.topologyId !== currentTopologyId) {
         setTopology(payload.topologyId);
