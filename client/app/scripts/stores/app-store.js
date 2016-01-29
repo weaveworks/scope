@@ -240,7 +240,7 @@ export class AppStore extends Store {
   }
 
   getTopCardNodeId() {
-    return nodeDetails.last().id;
+    return nodeDetails.last() && nodeDetails.last().id;
   }
 
   getNodes() {
