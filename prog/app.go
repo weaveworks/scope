@@ -23,6 +23,7 @@ func router(c app.Collector) http.Handler {
 	app.RegisterReportPostHandler(c, router)
 	app.RegisterControlRoutes(router)
 	app.RegisterPipeRoutes(router)
+	app.RegisterInstrumentationRoutes(c, router)
 	return app.TopologyHandler(c, router, http.FileServer(FS(false)))
 }
 
