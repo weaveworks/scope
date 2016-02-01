@@ -207,8 +207,6 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 	}
 
 	// Put information from weave ps on the container nodes
-	w.mtx.RLock()
-	defer w.mtx.RUnlock()
 	for id, node := range r.Container.Nodes {
 		prefix, _ := node.Latest.Lookup(docker.ContainerID)
 		prefix = prefix[:12]
