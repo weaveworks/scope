@@ -644,6 +644,8 @@ h2 {
       &-value {
         font-size: 105%;
         flex: 1;
+        // Now required (from chrome 48) to get overflow + flexbox behaving:
+        min-width: 0;
         color: @text-color;
       }
     }
