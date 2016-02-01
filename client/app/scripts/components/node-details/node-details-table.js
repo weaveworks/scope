@@ -52,7 +52,7 @@ export default class NodeDetailsTable extends React.Component {
         return field.value;
       }
     }
-    return 0;
+    return -1e-10; // just under 0 to treat missing values differently from 0
   }
 
   getValuesForNode(node) {
@@ -71,8 +71,16 @@ export default class NodeDetailsTable extends React.Component {
     if (this.props.nodes && this.props.nodes.length > 0) {
       let headers = [{id: 'label', label: this.props.label}];
       // gather header labels from metrics and metadata
-      const firstValues = this.getValuesForNode(this.props.nodes[0]);
-      headers = headers.concat(this.props.columns.map(column => ({id: column, label: firstValues[column].label})));
+      const nodeValues = this.props.nodes.map(this.getValuesForNode);
+      headers = headers.concat(this.props.columns.map(column => {
+        // look for a node that has the column label
+        const valuesWithField = nodeValues.find(values => values[column] !== undefined);
+        if (valuesWithField) {
+          return {id: column, label: valuesWithField[column].label};
+        }
+        // fall back on column id as label
+        return {id: column, label: column};
+      }));
       const defaultSortBy = this.getDefaultSortBy();
 
       return (
