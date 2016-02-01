@@ -52,16 +52,16 @@ function terminalCellSize(wrapperNode, rows, cols) {
   return {pixelPerCol, pixelPerRow};
 }
 
-function openNewWindow(url, minWidth = 200) {
+function openNewWindow(url, bcr, minWidth = 200) {
   const screenLeft = window.screenX || window.screenLeft;
   const screenTop = window.screenY || window.screenTop;
   const popoutWindowToolbarHeight = 51;
   // TODO replace this stuff w/ looking up bounding box.
   const windowOptions = {
-    width: Math.max(minWidth, window.innerWidth - 420 - 36 - 36 - 10),
-    height: window.innerHeight - 24 - 48 - popoutWindowToolbarHeight,
-    left: screenLeft + 36,
-    top: screenTop + (window.outerHeight - window.innerHeight) + 24,
+    width: Math.max(minWidth, bcr.width),
+    height: bcr.height - popoutWindowToolbarHeight,
+    left: screenLeft + bcr.left,
+    top: screenTop + (window.outerHeight - window.innerHeight) + bcr.top,
     location: 'no',
   };
 
@@ -184,6 +184,14 @@ export default class Terminal extends React.Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    const containerMarginChanged = nextProps.containerMargin !== this.props.containerMargin;
+    log(nextProps.containerMargin);
+    if (containerMarginChanged) {
+      this.handleResize();
+    }
+  }
+
   componentDidUpdate(prevProps, prevState) {
     const sizeChanged = (
       prevState.cols !== this.state.cols ||
@@ -211,8 +219,9 @@ export default class Terminal extends React.Component {
     const paramString = JSON.stringify(this.props);
     clickCloseTerminal(this.getPipeId());
 
+    const bcr = ReactDOM.findDOMNode(this).getBoundingClientRect();
     const minWidth = this.state.pixelPerCol * 80 + (8 * 2);
-    openNewWindow(`terminal.html#!/state/${paramString}`, minWidth);
+    openNewWindow(`terminal.html#!/state/${paramString}`, bcr, minWidth);
   }
 
   handleResize() {

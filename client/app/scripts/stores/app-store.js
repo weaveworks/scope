@@ -110,7 +110,7 @@ function closeNodeDetails(nodeId) {
     const popNodeId = nodeId || nodeDetails.keySeq().last();
     // remove pipe if it belongs to the node being closed
     controlPipes = controlPipes.filter(pipe => {
-      return pipe.nodeId !== popNodeId;
+      return pipe.get('nodeId') !== popNodeId;
     });
     nodeDetails = nodeDetails.delete(popNodeId);
   }
@@ -240,7 +240,7 @@ export class AppStore extends Store {
   }
 
   getTopCardNodeId() {
-    return nodeDetails.last().id;
+    return nodeDetails.last() && nodeDetails.last().id;
   }
 
   getNodes() {
@@ -362,6 +362,7 @@ export class AppStore extends Store {
 
     case ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE:
       nodeDetails = nodeDetails.filter((v, k) => k === payload.nodeId);
+      controlPipes = controlPipes.clear();
       selectedNodeId = payload.nodeId;
       if (payload.topologyId !== currentTopologyId) {
         setTopology(payload.topologyId);

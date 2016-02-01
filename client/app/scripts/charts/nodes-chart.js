@@ -5,6 +5,7 @@ import React from 'react';
 import { Map as makeMap } from 'immutable';
 import timely from 'timely';
 
+import { DETAILS_PANEL_WIDTH } from '../constants/styles';
 import { clickBackground } from '../actions/app-actions';
 import AppStore from '../stores/app-store';
 import Edge from './edge';
@@ -302,9 +303,8 @@ export default class NodesChart extends React.Component {
 
     // move origin node to center of viewport
     const zoomScale = state.scale;
-    const detailsWidth = 420;
     const translate = state.panTranslate;
-    const centerX = (-translate[0] + (props.width + MARGINS.left - detailsWidth) / 2) / zoomScale;
+    const centerX = (-translate[0] + (props.width + MARGINS.left - DETAILS_PANEL_WIDTH) / 2) / zoomScale;
     const centerY = (-translate[1] + (props.height + MARGINS.top) / 2) / zoomScale;
     stateNodes = stateNodes.mergeIn([props.selectedNodeId], {
       x: centerX,
