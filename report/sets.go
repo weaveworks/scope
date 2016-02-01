@@ -104,12 +104,7 @@ func (s Sets) String() string {
 }
 
 // DeepEqual tests equality with other Sets
-func (s Sets) DeepEqual(i interface{}) bool {
-	t, ok := i.(Sets)
-	if !ok {
-		return false
-	}
-
+func (s Sets) DeepEqual(t Sets) bool {
 	if s.psMap.Size() != t.psMap.Size() {
 		return false
 	}

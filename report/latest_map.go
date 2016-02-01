@@ -142,12 +142,7 @@ func (m LatestMap) String() string {
 }
 
 // DeepEqual tests equality with other LatestMap
-func (m LatestMap) DeepEqual(i interface{}) bool {
-	n, ok := i.(LatestMap)
-	if !ok {
-		return false
-	}
-
+func (m LatestMap) DeepEqual(n LatestMap) bool {
 	if m.Size() != n.Size() {
 		return false
 	}
