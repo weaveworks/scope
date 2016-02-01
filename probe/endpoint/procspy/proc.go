@@ -8,12 +8,15 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/armon/go-metrics"
+
 	"github.com/weaveworks/scope/common/fs"
 	"github.com/weaveworks/scope/probe/process"
 )
 
 var (
-	procRoot = "/proc"
+	procRoot     = "/proc"
+	namespaceKey = []string{"procspy", "namespaces"}
 )
 
 // SetProcRoot sets the location of the proc filesystem.
@@ -26,8 +29,8 @@ func SetProcRoot(root string) {
 // to PID. Will return an error if /proc isn't there.
 func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, error) {
 	var (
-		res        = map[uint64]*Proc{}
-		namespaces = map[uint64]bool{} // map namespace id -> has connections
+		res        = map[uint64]*Proc{} // map socket inode -> process
+		namespaces = map[uint64]bool{}  // map namespace id -> has connections
 		statT      syscall.Stat_t
 	)
 
@@ -37,7 +40,7 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, er
 
 		// Read network namespace, and if we haven't seen it before,
 		// read /proc/<pid>/net/tcp
-		if err := fs.Lstat(filepath.Join(procRoot, dirName, "/ns/net"), &statT); err != nil {
+		if err := fs.Stat(filepath.Join(procRoot, dirName, "/ns/net"), &statT); err != nil {
 			return
 		}
 		hasConns, ok := namespaces[statT.Ino]
@@ -63,7 +66,6 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, er
 			if err != nil {
 				continue
 			}
-
 			// We want sockets only.
 			if statT.Mode&syscall.S_IFMT != syscall.S_IFSOCK {
 				continue
@@ -78,6 +80,7 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, er
 		}
 	})
 
+	metrics.SetGauge(namespaceKey, float32(len(namespaces)))
 	return res, nil
 }
 
