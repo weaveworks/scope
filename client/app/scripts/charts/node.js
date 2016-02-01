@@ -25,8 +25,8 @@ export default class Node extends React.Component {
     }
     let labelOffsetY = 18;
     let subLabelOffsetY = 35;
-    const isPseudo = !!this.props.pseudo;
-    const color = isPseudo ? '' : getNodeColor(this.props.rank, this.props.label);
+    const color = getNodeColor(this.props.rank, this.props.label,
+                               this.props.pseudo);
     const onMouseEnter = this.handleMouseEnter;
     const onMouseLeave = this.handleMouseLeave;
     const onMouseClick = this.handleMouseClick;

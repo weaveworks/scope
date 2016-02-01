@@ -53,7 +53,9 @@ export default class NodeDetails extends React.Component {
   renderLoading() {
     const node = this.props.nodes.get(this.props.nodeId);
     const label = node ? node.get('label_major') : this.props.label;
-    const nodeColor = node ? getNodeColorDark(node.get('rank'), label) : getNeutralColor();
+    const nodeColor = (node ?
+                       getNodeColorDark(node.get('rank'), label, node.get('pseudo')) :
+                       getNeutralColor());
     const tools = this.renderTools();
     const styles = {
       header: {
@@ -129,7 +131,7 @@ export default class NodeDetails extends React.Component {
     const details = this.props.details;
     const showSummary = details.metadata !== undefined || details.metrics !== undefined;
     const showControls = details.controls && details.controls.length > 0;
-    const nodeColor = getNodeColorDark(details.rank, details.label_major);
+    const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
     const {error, pending} = (this.props.nodeControlStatus || {});
     const tools = this.renderTools();
     const styles = {
@@ -186,6 +188,6 @@ export default class NodeDetails extends React.Component {
   }
 
   updateTitle() {
-    setDocumentTitle(this.props.details && this.props.details.label_major);
+    setDocumentTitle(this.props.details && this.props.details.label);
   }
 }
