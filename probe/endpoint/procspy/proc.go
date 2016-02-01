@@ -58,6 +58,13 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker, namespaceTicker <-cha
 
 	log.Printf("debug: walkProcPid: found %d namespaces\n", len(namespaces))
 
+	keys := make([]uint64, 0, len(namespaces))
+	for k := range namespaces {
+		keys = append(keys, k)
+	}
+	// This should match: sudo readlink /proc/*/ns/net | sort | uniq
+	log.Printf("debug: walkProcPid: namespaces %v\n", keys)
+
 	for _, procs := range namespaces {
 
 		<-namespaceTicker
