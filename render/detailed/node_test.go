@@ -101,8 +101,8 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Nodes:      []detailed.NodeSummary{containerNodeSummary},
 			},
 			{
-				Label:      "Applications",
-				TopologyID: "applications",
+				Label:      "Processes",
+				TopologyID: "processes",
 				Columns:    []string{process.PID, process.CPUUsage, process.MemoryUsage},
 				Nodes:      []detailed.NodeSummary{process1NodeSummary, process2NodeSummary},
 			},
@@ -156,8 +156,8 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 		Controls: []detailed.ControlInstance{},
 		Children: []detailed.NodeSummaryGroup{
 			{
-				Label:      "Applications",
-				TopologyID: "applications",
+				Label:      "Processes",
+				TopologyID: "processes",
 				Columns:    []string{process.PID, process.CPUUsage, process.MemoryUsage},
 				Nodes: []detailed.NodeSummary{
 					{
