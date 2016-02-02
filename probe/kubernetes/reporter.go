@@ -38,7 +38,7 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 	var (
-		result   = report.MakeTopology()
+		result   = report.MakeTopology(report.Service)
 		services = []Service{}
 	)
 	err := r.client.WalkServices(func(s Service) error {
@@ -51,7 +51,7 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 }
 
 func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topology, error) {
-	pods, containers := report.MakeTopology(), report.MakeTopology()
+	pods, containers := report.MakeTopology(report.Pod), report.MakeTopology(report.Container)
 	err := r.client.WalkPods(func(p Pod) error {
 		for _, service := range services {
 			if service.Selector().Matches(p.Labels()) {

@@ -66,7 +66,7 @@ func (r *Reporter) Report() (report.Report, error) {
 }
 
 func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
-	result := report.MakeTopology()
+	result := report.MakeTopology(report.Container)
 	result.Controls.AddControl(report.Control{
 		ID:    StopContainer,
 		Human: "Stop",
@@ -112,7 +112,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 }
 
 func (r *Reporter) containerImageTopology() report.Topology {
-	result := report.MakeTopology()
+	result := report.MakeTopology(report.ContainerImage)
 
 	r.registry.WalkImages(func(image *docker_client.APIImages) {
 		node := report.MakeNodeWith(map[string]string{
