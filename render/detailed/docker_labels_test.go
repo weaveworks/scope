@@ -11,7 +11,7 @@ import (
 	"github.com/weaveworks/scope/test/fixture"
 )
 
-func TestNodeMetadata(t *testing.T) {
+func TestNodeDockerLabels(t *testing.T) {
 	inputs := []struct {
 		name string
 		node report.Node
@@ -27,9 +27,10 @@ func TestNodeMetadata(t *testing.T) {
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
 			want: []detailed.MetadataRow{
-				{ID: docker.ContainerID, Value: fixture.ClientContainerID},
-				{ID: docker.ContainerState, Value: "running"},
-				{ID: docker.ContainerIPs, Value: "10.10.10.0/24, 10.10.10.1/24"},
+				{
+					ID:    "label_label1",
+					Value: "label1value",
+				},
 			},
 		},
 		{
@@ -41,7 +42,7 @@ func TestNodeMetadata(t *testing.T) {
 		},
 	}
 	for _, input := range inputs {
-		have := detailed.NodeMetadata(input.node)
+		have := detailed.NodeDockerLabels(input.node)
 		if !reflect.DeepEqual(input.want, have) {
 			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
 		}

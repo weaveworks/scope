@@ -2,7 +2,6 @@ package detailed
 
 import (
 	"encoding/json"
-	"sort"
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -32,11 +31,9 @@ var (
 		ltst(docker.ContainerCommand),
 		ltst(overlay.WeaveMACAddress),
 		ltst(overlay.WeaveDNSHostname),
-		getDockerLabelRows,
 	)
 	containerImageNodeMetadata = renderMetadata(
 		ltst(docker.ImageID),
-		getDockerLabelRows,
 	)
 	podNodeMetadata = renderMetadata(
 		ltst(kubernetes.PodID),
@@ -122,19 +119,4 @@ func ltst(id string) func(report.Node) []MetadataRow {
 		}
 		return nil
 	}
-}
-
-func getDockerLabelRows(nmd report.Node) []MetadataRow {
-	rows := []MetadataRow{}
-	// Add labels in alphabetical order
-	labels := docker.ExtractLabels(nmd)
-	labelKeys := make([]string, 0, len(labels))
-	for k := range labels {
-		labelKeys = append(labelKeys, k)
-	}
-	sort.Strings(labelKeys)
-	for _, labelKey := range labelKeys {
-		rows = append(rows, MetadataRow{ID: "label_" + labelKey, Value: labels[labelKey]})
-	}
-	return rows
 }

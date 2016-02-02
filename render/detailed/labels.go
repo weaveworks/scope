@@ -1,7 +1,6 @@
 package detailed
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -54,7 +53,7 @@ func Label(key string) string {
 		return label
 	}
 	if strings.HasPrefix(key, "label_") {
-		return fmt.Sprintf("Label %q", strings.TrimPrefix(key, "label_"))
+		return strings.TrimPrefix(key, "label_")
 	}
 	return key
 }
