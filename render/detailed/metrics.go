@@ -18,19 +18,19 @@ const (
 
 var (
 	processNodeMetrics = renderMetrics(
-		MetricRow{ID: process.CPUUsage, Label: "CPU", Format: percentFormat},
-		MetricRow{ID: process.MemoryUsage, Label: "Memory", Format: filesizeFormat},
+		MetricRow{ID: process.CPUUsage, Format: percentFormat},
+		MetricRow{ID: process.MemoryUsage, Format: filesizeFormat},
 	)
 	containerNodeMetrics = renderMetrics(
-		MetricRow{ID: docker.CPUTotalUsage, Label: "CPU", Format: percentFormat},
-		MetricRow{ID: docker.MemoryUsage, Label: "Memory", Format: filesizeFormat},
+		MetricRow{ID: docker.CPUTotalUsage, Format: percentFormat},
+		MetricRow{ID: docker.MemoryUsage, Format: filesizeFormat},
 	)
 	hostNodeMetrics = renderMetrics(
-		MetricRow{ID: host.CPUUsage, Label: "CPU", Format: percentFormat},
-		MetricRow{ID: host.MemoryUsage, Label: "Memory", Format: filesizeFormat},
-		MetricRow{ID: host.Load1, Label: "Load (1m)", Format: defaultFormat, Group: "load"},
-		MetricRow{ID: host.Load5, Label: "Load (5m)", Format: defaultFormat, Group: "load"},
-		MetricRow{ID: host.Load15, Label: "Load (15m)", Format: defaultFormat, Group: "load"},
+		MetricRow{ID: host.CPUUsage, Format: percentFormat},
+		MetricRow{ID: host.MemoryUsage, Format: filesizeFormat},
+		MetricRow{ID: host.Load1, Format: defaultFormat, Group: "load"},
+		MetricRow{ID: host.Load5, Format: defaultFormat, Group: "load"},
+		MetricRow{ID: host.Load15, Format: defaultFormat, Group: "load"},
 	)
 )
 
@@ -38,7 +38,6 @@ var (
 // accoutrements.
 type MetricRow struct {
 	ID     string
-	Label  string
 	Format string
 	Group  string
 	Value  float64
@@ -49,7 +48,6 @@ type MetricRow struct {
 func (m MetricRow) Copy() MetricRow {
 	row := MetricRow{
 		ID:     m.ID,
-		Label:  m.Label,
 		Format: m.Format,
 		Group:  m.Group,
 		Value:  m.Value,
@@ -73,7 +71,7 @@ func (m MetricRow) MarshalJSON() ([]byte, error) {
 		report.WireMetrics
 	}{
 		ID:          m.ID,
-		Label:       m.Label,
+		Label:       Label(m.ID),
 		Format:      m.Format,
 		Group:       m.Group,
 		Value:       m.Value,

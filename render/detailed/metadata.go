@@ -1,7 +1,7 @@
 package detailed
 
 import (
-	"fmt"
+	"encoding/json"
 	"sort"
 	"strings"
 
@@ -15,57 +15,69 @@ import (
 
 var (
 	processNodeMetadata = renderMetadata(
-		ltst(process.PID, "PID"),
-		ltst(process.PPID, "Parent PID"),
-		ltst(process.Cmdline, "Command"),
-		ltst(process.Threads, "# Threads"),
+		ltst(process.PID),
+		ltst(process.PPID),
+		ltst(process.Cmdline),
+		ltst(process.Threads),
 	)
 	containerNodeMetadata = renderMetadata(
-		ltst(docker.ContainerID, "ID"),
-		ltst(docker.ImageID, "Image ID"),
-		ltst(docker.ContainerState, "State"),
-		ltst(docker.ContainerUptime, "Uptime"),
-		ltst(docker.ContainerRestartCount, "Restart #"),
-		sets(docker.ContainerIPs, "IPs"),
-		sets(docker.ContainerPorts, "Ports"),
-		ltst(docker.ContainerCreated, "Created"),
-		ltst(docker.ContainerCommand, "Command"),
-		ltst(overlay.WeaveMACAddress, "Weave MAC"),
-		ltst(overlay.WeaveDNSHostname, "Weave DNS Hostname"),
+		ltst(docker.ContainerID),
+		ltst(docker.ImageID),
+		ltst(docker.ContainerState),
+		ltst(docker.ContainerUptime),
+		ltst(docker.ContainerRestartCount),
+		sets(docker.ContainerIPs),
+		sets(docker.ContainerPorts),
+		ltst(docker.ContainerCreated),
+		ltst(docker.ContainerCommand),
+		ltst(overlay.WeaveMACAddress),
+		ltst(overlay.WeaveDNSHostname),
 		getDockerLabelRows,
 	)
 	containerImageNodeMetadata = renderMetadata(
-		ltst(docker.ImageID, "Image ID"),
+		ltst(docker.ImageID),
 		getDockerLabelRows,
 	)
 	podNodeMetadata = renderMetadata(
-		ltst(kubernetes.PodID, "ID"),
-		ltst(kubernetes.Namespace, "Namespace"),
-		ltst(kubernetes.PodCreated, "Created"),
+		ltst(kubernetes.PodID),
+		ltst(kubernetes.Namespace),
+		ltst(kubernetes.PodCreated),
 	)
 	hostNodeMetadata = renderMetadata(
-		ltst(host.HostName, "Hostname"),
-		ltst(host.OS, "Operating system"),
-		ltst(host.KernelVersion, "Kernel version"),
-		ltst(host.Uptime, "Uptime"),
-		sets(host.LocalNetworks, "Local Networks"),
+		ltst(host.HostName),
+		ltst(host.OS),
+		ltst(host.KernelVersion),
+		ltst(host.Uptime),
+		sets(host.LocalNetworks),
 	)
 )
 
 // MetadataRow is a row for the metadata table.
 type MetadataRow struct {
-	ID    string `json:"id"`
-	Label string `json:"label"`
-	Value string `json:"value"`
+	ID    string
+	Value string
 }
 
 // Copy returns a value copy of a metadata row.
 func (m MetadataRow) Copy() MetadataRow {
 	return MetadataRow{
 		ID:    m.ID,
-		Label: m.Label,
 		Value: m.Value,
 	}
+}
+
+// MarshalJSON marshals this MetadataRow to json. It adds a label before
+// rendering.
+func (m MetadataRow) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		ID    string `json:"id"`
+		Label string `json:"label"`
+		Value string `json:"value"`
+	}{
+		ID:    m.ID,
+		Label: Label(m.ID),
+		Value: m.Value,
+	})
 }
 
 // NodeMetadata produces a table (to be consumed directly by the UI) based on
@@ -94,19 +106,19 @@ func renderMetadata(templates ...func(report.Node) []MetadataRow) func(report.No
 	}
 }
 
-func sets(id, label string) func(report.Node) []MetadataRow {
+func sets(id string) func(report.Node) []MetadataRow {
 	return func(n report.Node) []MetadataRow {
 		if val, ok := n.Sets.Lookup(id); ok && len(val) > 0 {
-			return []MetadataRow{{ID: id, Label: label, Value: strings.Join(val, ", ")}}
+			return []MetadataRow{{ID: id, Value: strings.Join(val, ", ")}}
 		}
 		return nil
 	}
 }
 
-func ltst(id, label string) func(report.Node) []MetadataRow {
+func ltst(id string) func(report.Node) []MetadataRow {
 	return func(n report.Node) []MetadataRow {
 		if val, ok := n.Latest.Lookup(id); ok {
-			return []MetadataRow{{ID: id, Label: label, Value: val}}
+			return []MetadataRow{{ID: id, Value: val}}
 		}
 		return nil
 	}
@@ -122,7 +134,7 @@ func getDockerLabelRows(nmd report.Node) []MetadataRow {
 	}
 	sort.Strings(labelKeys)
 	for _, labelKey := range labelKeys {
-		rows = append(rows, MetadataRow{ID: "label_" + labelKey, Label: fmt.Sprintf("Label %q", labelKey), Value: labels[labelKey]})
+		rows = append(rows, MetadataRow{ID: "label_" + labelKey, Value: labels[labelKey]})
 	}
 	return rows
 }
