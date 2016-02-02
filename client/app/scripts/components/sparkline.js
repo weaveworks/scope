@@ -62,11 +62,16 @@ export default class Sparkline extends React.Component {
       ', max: ' + d3.round(d3.max(data, d => d.value), 2) +
       ', mean: ' + d3.round(d3.mean(data, d => d.value), 2);
 
-    return {title, lastValue, lastX, lastY, data};
+    return {title, lastX, lastY, data};
   }
 
   render() {
-    const {lastValue, lastX, lastY, title, data} = this.getGraphData();
+    // Do nothing if no data or data w/o date are passed in.
+    if (this.props.data.length === 0 || this.props.data[0].date === undefined) {
+      return <div />;
+    }
+
+    const {lastX, lastY, title, data} = this.getGraphData();
 
     return (
       <div title={title}>
@@ -76,7 +81,6 @@ export default class Sparkline extends React.Component {
           <circle className="sparkcircle" cx={lastX} cy={lastY} fill="#46466a"
             fillOpacity="0.6" stroke="none" r={this.props.circleDiameter} />
         </svg>
-        {lastValue}
       </div>
     );
   }

@@ -7,6 +7,7 @@ import Sparkline from './sparkline';
 
 const makeOrderedMap = OrderedMap;
 const parseDate = d3.time.format.iso.parse;
+const sortDate = (v, d) => d;
 
 export default class AnimatedSparkline extends React.Component {
 
@@ -16,8 +17,8 @@ export default class AnimatedSparkline extends React.Component {
     this.tickTimer = null;
     this.state = {
       buffer: makeOrderedMap(),
-      first: null,
-      last: null
+      movingFirst: null,
+      movingLast: null
     };
   }
 
@@ -44,79 +45,89 @@ export default class AnimatedSparkline extends React.Component {
     // merge new samples into buffer
     let buffer = this.state.buffer;
     const nextSamples = makeOrderedMap(props.data.map(d => [d.date, d.value]));
-    buffer = buffer.merge(nextSamples);
+    buffer = buffer.merge(nextSamples).sortBy(sortDate);
     const state = {};
 
     // set first/last marker of sliding window
     if (buffer.size > 0) {
       const bufferKeys = buffer.keySeq();
-      if (this.state.first === null) {
-        state.first = bufferKeys.first();
+      if (this.state.movingFirst === null) {
+        state.movingFirst = bufferKeys.first();
       }
-      if (this.state.last === null) {
-        state.last = bufferKeys.last();
+      if (this.state.movingLast === null) {
+        state.movingLast = bufferKeys.last();
       }
     }
 
     // remove old values from buffer
-    const first = this.state.first ? this.state.first : state.first;
-    state.buffer = buffer.skipWhile((v, d) => d < first);
+    const movingFirst = this.state.movingFirst ? this.state.movingFirst : state.movingFirst;
+    state.buffer = buffer.filter((v, d) => d >= movingFirst);
 
     return state;
   }
 
   tick() {
-    if (this.state.last < this.state.buffer.keySeq().last()) {
-      const dates = this.state.buffer.keySeq();
-      let firstIndex = dates.indexOf(this.state.first);
-      if (firstIndex > -1 && firstIndex < dates.size - 1) {
+    const { buffer } = this.state;
+    let { movingFirst, movingLast } = this.state;
+    const bufferKeys = buffer.keySeq();
+
+    if (movingLast < bufferKeys.last()) {
+      let firstIndex = bufferKeys.indexOf(movingFirst);
+      if (firstIndex > -1 && firstIndex < bufferKeys.size - 1) {
         firstIndex++;
       } else {
         firstIndex = 0;
       }
-      const first = dates.get(firstIndex);
+      movingFirst = bufferKeys.get(firstIndex);
 
-      let lastIndex = dates.indexOf(this.state.last);
+      let lastIndex = bufferKeys.indexOf(movingLast);
       if (lastIndex > -1) {
         lastIndex++;
       } else {
-        lastIndex = dates.length - 1;
+        lastIndex = bufferKeys.length - 1;
       }
-      const last = dates.get(lastIndex);
+      movingLast = bufferKeys.get(lastIndex);
 
       this.tickTimer = setTimeout(() => {
         this.tickTimer = null;
-        this.setState({first, last});
+        this.setState({movingFirst, movingLast});
       }, 900);
     }
   }
 
   getGraphData() {
-    let first = this.state.first;
-    if (this.props.first && this.props.first < this.state.first) {
-      // first prop date is way before buffer, keeping it
-      first = this.props.first;
-    }
-    let last = this.state.last;
-    if (this.props.last && this.props.last > this.state.buffer.keySeq().last()) {
-      // prop last is after buffer values, need to shift dates
-      const skip = parseDate(this.props.last) - parseDate(this.state.buffer.keySeq().last());
-      last -= skip;
-      first -= skip;
-    }
-    const dateFilter = d => d.date >= first && d.date <= last;
-    const data = this.state.buffer.map((v, k) => {
-      return {value: v, date: k};
-    }).toIndexedSeq().toJS().filter(dateFilter);
+    const firstDate = parseDate(this.props.first);
+    const lastDate = parseDate(this.props.last);
+    const { buffer } = this.state;
+    let movingFirstDate = parseDate(this.state.movingFirst);
+    let movingLastDate = parseDate(this.state.movingLast);
+    const lastBufferDate = parseDate(buffer.keySeq().last());
 
-    return {first, last, data};
+    if (firstDate && movingFirstDate && firstDate < movingFirstDate) {
+      // first prop date is way before buffer, keeping it
+      movingFirstDate = firstDate;
+    }
+    if (lastDate && lastBufferDate && lastDate > lastBufferDate) {
+      // prop last is after buffer values, need to shift dates
+      const skip = lastDate - lastBufferDate;
+      movingLastDate -= skip;
+      movingFirstDate -= skip;
+    }
+    const dateFilter = d => d.date >= movingFirstDate && d.date <= movingLastDate;
+    const data = this.state.buffer
+      .map((v, k) => ({value: v, date: +parseDate(k)}))
+      .toIndexedSeq()
+      .toJS()
+      .filter(dateFilter);
+
+    return {movingFirstDate, movingLastDate, data};
   }
 
   render() {
-    const {data, first, last} = this.getGraphData();
+    const {data, movingFirstDate, movingLastDate} = this.getGraphData();
 
     return (
-      <Sparkline data={data} first={first} last={last} min={this.props.min} />
+      <Sparkline data={data} first={movingFirstDate} last={movingLastDate} min={this.props.min} />
     );
   }
 
