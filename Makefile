@@ -54,6 +54,9 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 
 else
 
+# This is set in backend/Dockerfile when building inside a container.
+export GO15VENDOREXPERIMENT=1
+
 $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time go build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
