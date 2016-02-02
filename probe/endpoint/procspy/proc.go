@@ -44,7 +44,7 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker, namespaceTicker <-cha
 	walker.Walk(func(p, _ process.Process) {
 		dirName := strconv.Itoa(p.PID)
 
-		if err := fs.Lstat(filepath.Join(procRoot, dirName, "/ns/net"), &statT); err != nil {
+		if err := fs.Stat(filepath.Join(procRoot, dirName, "/ns/net"), &statT); err != nil {
 			return
 		}
 
