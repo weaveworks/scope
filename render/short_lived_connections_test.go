@@ -74,6 +74,7 @@ var (
 			ID:         render.TheInternetID,
 			LabelMajor: render.TheInternetMajor,
 			Pseudo:     true,
+			Shape:      "cloud",
 			Node:       report.MakeNode().WithAdjacent(render.MakeContainerID(containerID)),
 		},
 		render.MakeContainerID(containerID): {
@@ -82,6 +83,7 @@ var (
 			LabelMinor:  serverHostID,
 			Rank:        "",
 			Pseudo:      false,
+			Shape:       "hexagon",
 			Node:        report.MakeNode(),
 			ControlNode: containerNodeID,
 		},
