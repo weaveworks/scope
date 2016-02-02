@@ -1,8 +1,8 @@
-// +build !arm
+package marshal
 
-package host
-
-func charsToString(ca [65]int8) string {
+// FromUtsname reads the C-strings from syscall.Utsname and transforms them to Go
+// strings
+func FromUtsname(ca [65]uint8) string {
 	s := make([]byte, len(ca))
 	var lens int
 	for ; lens < len(ca); lens++ {

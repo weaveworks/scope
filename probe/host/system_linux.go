@@ -10,6 +10,7 @@ import (
 
 	linuxproc "github.com/c9s/goprocinfo/linux"
 
+	"github.com/weaveworks/scope/common/marshal"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -24,7 +25,9 @@ var GetKernelVersion = func() (string, error) {
 	if err := Uname(&utsname); err != nil {
 		return "unknown", err
 	}
-	return fmt.Sprintf("%s %s", charsToString(utsname.Release), charsToString(utsname.Version)), nil
+	release := marshal.FromUtsname(utsname.Release)
+	version := marshal.FromUtsname(utsname.Version)
+	return fmt.Sprintf("%s %s", release, version), nil
 }
 
 // GetLoad returns the current load averages as metrics.
