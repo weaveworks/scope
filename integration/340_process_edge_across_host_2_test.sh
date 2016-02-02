@@ -16,7 +16,7 @@ weave_on $HOST2 run -dti --name client alpine /bin/sh -c "while true; do \
 	sleep 1; \
 done"
 
-sleep 30 # need to allow the scopes to poll dns, resolve the other app ids, and send them reports
+sleep 60 # need to allow the scopes to poll dns, resolve the other app ids, and send them reports
 
 check() {
     has processes $1 "nginx: worker process"

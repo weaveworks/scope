@@ -33,17 +33,18 @@ func (c *pnConnIter) Next() *Connection {
 }
 
 // cbConnections sets Connections()
-var cbConnections = func(processes bool, walker process.Walker) (ConnIter, error) {
+var cbConnections = func(processes bool, _ process.Walker) (ConnIter, error) {
 	// buffer for contents of /proc/<pid>/net/tcp
 	buf := bufPool.Get().(*bytes.Buffer)
 	buf.Reset()
 
 	var procs map[uint64]*Proc
 	if processes {
-		var err error
-		if procs, err = walkProcPid(buf, walker); err != nil {
+		br, err := getBackgroundReader()
+		if err != nil {
 			return nil, err
 		}
+		procs = br.getWalkedProcPid(buf)
 	}
 
 	if buf.Len() == 0 {
