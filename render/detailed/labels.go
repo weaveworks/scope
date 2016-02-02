@@ -37,12 +37,12 @@ var labels = map[string]string{
 	kubernetes.PodID:         "ID",
 	overlay.WeaveDNSHostname: "Weave DNS Hostname",
 	overlay.WeaveMACAddress:  "Weave MAC",
-	// process.CPUUsage:         "CPU", // Duplicate key!
-	process.Cmdline:     "Command",
-	process.MemoryUsage: "Memory",
-	process.PID:         "PID",
-	process.PPID:        "Parent PID",
-	process.Threads:     "# Threads",
+	process.CPUUsage:         "CPU",
+	process.Cmdline:          "Command",
+	process.MemoryUsage:      "Memory",
+	process.PID:              "PID",
+	process.PPID:             "Parent PID",
+	process.Threads:          "# Threads",
 }
 
 // Label maps from the internal keys to the human-readable label for a piece
