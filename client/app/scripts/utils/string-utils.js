@@ -1,5 +1,8 @@
 import React from 'react';
 import filesize from 'filesize';
+import d3 from 'd3';
+
+const formatLargeValue = d3.format('s');
 
 const formatters = {
   filesize(value) {
@@ -8,11 +11,14 @@ const formatters = {
   },
 
   number(value) {
-    return value;
+    if (value < 1100 && value >= 0) {
+      return Number(value).toFixed(2);
+    }
+    return formatLargeValue(value);
   },
 
   percent(value) {
-    return formatters.metric(value, '%');
+    return formatters.metric(formatters.number(value), '%');
   },
 
   metric(text, unit) {

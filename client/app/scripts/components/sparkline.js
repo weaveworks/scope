@@ -93,7 +93,7 @@ Sparkline.propTypes = {
 
 Sparkline.defaultProps = {
   width: 80,
-  height: 16,
+  height: 24,
   strokeColor: '#7d7da8',
   strokeWidth: '0.5px',
   interpolate: 'none',
