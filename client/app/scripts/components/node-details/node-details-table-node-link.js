@@ -17,22 +17,16 @@ export default class NodeDetailsTableNodeLink extends React.Component {
   }
 
   render() {
-    const titleLines = [`${this.props.label} (${this.props.topologyId})`];
-    this.props.metadata.forEach(data => {
-      titleLines.push(`${data.label}: ${data.value}`);
-    });
-    const title = titleLines.join('\n');
-
     if (this.props.linkable) {
       return (
-        <span className="node-details-table-node-link truncate" title={title}
+        <span className="node-details-table-node-link truncate" title={this.props.label}
           onClick={this.handleClick}>
           {this.props.label}
         </span>
       );
     }
     return (
-      <span className="node-details-table-node truncate" title={title}>
+      <span className="node-details-table-node truncate" title={this.props.label}>
         {this.props.label}
       </span>
     );
