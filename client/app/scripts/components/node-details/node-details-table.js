@@ -60,6 +60,7 @@ export default class NodeDetailsTable extends React.Component {
     ['metrics', 'metadata'].forEach(collection => {
       if (node[collection]) {
         node[collection].forEach(field => {
+          field.valueType = collection;
           values[field.id] = field;
         });
       }
@@ -118,7 +119,7 @@ export default class NodeDetailsTable extends React.Component {
       if (field) {
         return (
           <td className="node-details-table-node-value" key={field.id}>
-            {formatMetric(field.value, field)}
+            {field.valueType === 'metadata' ? field.value : formatMetric(field.value, field)}
           </td>
         );
       }
