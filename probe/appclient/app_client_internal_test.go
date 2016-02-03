@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -19,14 +18,6 @@ import (
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 )
-
-type publisherFunc func(io.Reader) error
-
-func (p publisherFunc) Publish(r io.Reader) error {
-	return p(r)
-}
-
-func (publisherFunc) Stop() {}
 
 func dummyServer(t *testing.T, expectedToken, expectedID string, expectedReport report.Report, done chan struct{}) *httptest.Server {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -60,57 +51,18 @@ func dummyServer(t *testing.T, expectedToken, expectedID string, expectedReport 
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		close(done)
+		done <- struct{}{}
 	})
 
 	return httptest.NewServer(handlers.CompressHandler(handler))
 }
 
-func TestAppClientPublishInternal(t *testing.T) {
+func TestAppClientPublish(t *testing.T) {
 	var (
 		token = "abcdefg"
 		id    = "1234567"
 		rpt   = report.MakeReport()
-		done  = make(chan struct{})
-	)
-
-	s := dummyServer(t, token, id, rpt, done)
-	defer s.Close()
-
-	u, err := url.Parse(s.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	pc := ProbeConfig{
-		Token:    token,
-		ProbeID:  id,
-		Insecure: false,
-	}
-
-	p, err := NewAppClient(pc, u.Host, s.URL, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer p.Stop()
-	rp := NewReportPublisher(publisherFunc(p.(*appClient).publish))
-	if err := rp.Publish(rpt); err != nil {
-		t.Error(err)
-	}
-
-	select {
-	case <-done:
-	case <-time.After(100 * time.Millisecond):
-		t.Error("timeout")
-	}
-}
-
-func TestAppClientDetails(t *testing.T) {
-	var (
-		token = "abcdefg"
-		id    = "1234567"
-		rpt   = report.MakeReport()
-		done  = make(chan struct{})
+		done  = make(chan struct{}, 10)
 	)
 
 	s := dummyServer(t, token, id, rpt, done)
@@ -135,10 +87,11 @@ func TestAppClientDetails(t *testing.T) {
 
 	// First few reports might be dropped as the client is spinning up.
 	rp := NewReportPublisher(p)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 10; i++ {
 		if err := rp.Publish(rpt); err != nil {
 			t.Error(err)
 		}
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	select {
@@ -148,7 +101,7 @@ func TestAppClientDetails(t *testing.T) {
 	}
 }
 
-func TestAppClientPublish(t *testing.T) {
+func TestAppClientDetails(t *testing.T) {
 	var (
 		id      = "foobarbaz"
 		version = "imalittleteapot"
