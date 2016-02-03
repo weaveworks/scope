@@ -4,7 +4,7 @@ export default class NodeDetailsInfo extends React.Component {
   render() {
     return (
       <div className="node-details-info">
-        {this.props.metadata && this.props.metadata.map(field => {
+        {this.props.rows && this.props.rows.map(field => {
           return (
             <div className="node-details-info-field" key={field.id}>
               <div className="node-details-info-field-label truncate" title={field.label}>

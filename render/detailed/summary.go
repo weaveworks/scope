@@ -34,11 +34,12 @@ func (g NodeSummaryGroup) Copy() NodeSummaryGroup {
 
 // NodeSummary is summary information about a child for a Node.
 type NodeSummary struct {
-	ID       string        `json:"id"`
-	Label    string        `json:"label"`
-	Linkable bool          `json:"linkable"` // Whether this node can be linked-to
-	Metadata []MetadataRow `json:"metadata,omitempty"`
-	Metrics  []MetricRow   `json:"metrics,omitempty"`
+	ID           string        `json:"id"`
+	Label        string        `json:"label"`
+	Linkable     bool          `json:"linkable"` // Whether this node can be linked-to
+	Metadata     []MetadataRow `json:"metadata,omitempty"`
+	DockerLabels []MetadataRow `json:"docker_labels,omitempty"`
+	Metrics      []MetricRow   `json:"metrics,omitempty"`
 }
 
 // MakeNodeSummary summarizes a node, if possible.
@@ -66,10 +67,24 @@ func (n NodeSummary) Copy() NodeSummary {
 	for _, row := range n.Metadata {
 		result.Metadata = append(result.Metadata, row.Copy())
 	}
+	for _, row := range n.DockerLabels {
+		result.DockerLabels = append(result.DockerLabels, row.Copy())
+	}
 	for _, row := range n.Metrics {
 		result.Metrics = append(result.Metrics, row.Copy())
 	}
 	return result
+}
+
+func baseNodeSummary(id, label string, linkable bool, nmd report.Node) NodeSummary {
+	return NodeSummary{
+		ID:           id,
+		Label:        label,
+		Linkable:     linkable,
+		Metadata:     NodeMetadata(nmd),
+		DockerLabels: NodeDockerLabels(nmd),
+		Metrics:      NodeMetrics(nmd),
+	}
 }
 
 func processNodeSummary(nmd report.Node) NodeSummary {
@@ -84,57 +99,29 @@ func processNodeSummary(nmd report.Node) NodeSummary {
 		id = render.MakeProcessID(report.ExtractHostID(nmd), pid)
 	}
 	_, isConnected := nmd.Latest.Lookup(render.IsConnected)
-	return NodeSummary{
-		ID:       id,
-		Label:    label,
-		Linkable: isConnected,
-		Metadata: processNodeMetadata(nmd),
-		Metrics:  processNodeMetrics(nmd),
-	}
+	return baseNodeSummary(id, label, isConnected, nmd)
 }
 
 func containerNodeSummary(nmd report.Node) NodeSummary {
 	label, _ := render.GetRenderableContainerName(nmd)
 	containerID, _ := nmd.Latest.Lookup(docker.ContainerID)
-	return NodeSummary{
-		ID:       render.MakeContainerID(containerID),
-		Label:    label,
-		Linkable: true,
-		Metadata: containerNodeMetadata(nmd),
-		Metrics:  containerNodeMetrics(nmd),
-	}
+	return baseNodeSummary(render.MakeContainerID(containerID), label, true, nmd)
 }
 
 func containerImageNodeSummary(nmd report.Node) NodeSummary {
 	imageName, _ := nmd.Latest.Lookup(docker.ImageName)
-	return NodeSummary{
-		ID:       render.MakeContainerImageID(render.ImageNameWithoutVersion(imageName)),
-		Label:    imageName,
-		Linkable: true,
-		Metadata: containerImageNodeMetadata(nmd),
-	}
+	return baseNodeSummary(render.MakeContainerImageID(render.ImageNameWithoutVersion(imageName)), imageName, true, nmd)
 }
 
 func podNodeSummary(nmd report.Node) NodeSummary {
 	podID, _ := nmd.Latest.Lookup(kubernetes.PodID)
 	podName, _ := nmd.Latest.Lookup(kubernetes.PodName)
-	return NodeSummary{
-		ID:       render.MakePodID(podID),
-		Label:    podName,
-		Linkable: true,
-		Metadata: podNodeMetadata(nmd),
-	}
+	return baseNodeSummary(render.MakePodID(podID), podName, true, nmd)
 }
 
 func hostNodeSummary(nmd report.Node) NodeSummary {
 	hostName, _ := nmd.Latest.Lookup(host.HostName)
-	return NodeSummary{
-		ID:       render.MakeHostID(hostName),
-		Label:    hostName,
-		Linkable: true,
-		Metadata: hostNodeMetadata(nmd),
-		Metrics:  hostNodeMetrics(nmd),
-	}
+	return baseNodeSummary(render.MakeHostID(hostName), hostName, true, nmd)
 }
 
 type nodeSummariesByID []NodeSummary

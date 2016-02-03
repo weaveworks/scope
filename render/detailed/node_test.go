@@ -121,6 +121,8 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				{ID: "docker_container_id", Value: fixture.ServerContainerID},
 				{ID: "docker_image_id", Value: fixture.ServerContainerImageID},
 				{ID: "docker_container_state", Value: "running"},
+			},
+			DockerLabels: []detailed.MetadataRow{
 				{ID: "label_" + render.AmazonECSContainerNameLabel, Value: `server`},
 				{ID: "label_foo1", Value: `bar1`},
 				{ID: "label_foo2", Value: `bar2`},
