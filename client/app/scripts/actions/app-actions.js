@@ -250,6 +250,15 @@ export function showMetrics(nodeId) {
   updateRoute();
 }
 
+export function selectMetric(nodeId, metricId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.SELECT_METRIC,
+    nodeId: nodeId,
+    metricId: metricId
+  });
+  updateRoute();
+}
+
 export function clickCloseMetrics(nodeId) {
   AppDispatcher.dispatch({
     type: ActionTypes.CLICK_CLOSE_METRICS,

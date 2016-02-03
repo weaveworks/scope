@@ -134,7 +134,7 @@ export class AppStore extends Store {
   getAppState() {
     return {
       controlPipe: this.getControlPipe(),
-      metricsWindow: this.getMetricsWindow().toJS(),
+      metricsWindow: this.getMetricsWindow() && this.getMetricsWindow().toJS(),
       nodeDetails: this.getNodeDetailsState(),
       selectedNodeId: selectedNodeId,
       topologyId: currentTopologyId,
@@ -323,11 +323,6 @@ export class AppStore extends Store {
       this.__emitChange();
       break;
 
-    case ActionTypes.CLICK_CLOSE_METRICS:
-      metricsWindow = null;
-      this.__emitChange();
-      break;
-
     case ActionTypes.CLICK_NODE:
       const prevSelectedNodeId = selectedNodeId;
       const prevDetailsStackSize = nodeDetails.size;
@@ -429,8 +424,18 @@ export class AppStore extends Store {
       this.__emitChange();
       break;
 
+    case ActionTypes.CLICK_CLOSE_METRICS:
+      metricsWindow = null;
+      this.__emitChange();
+      break;
+
     case ActionTypes.SHOW_METRICS_WINDOW:
       metricsWindow = makeMap({nodeId: payload.nodeId});
+      this.__emitChange();
+      break;
+
+    case ActionTypes.SELECT_METRIC:
+      metricsWindow = metricsWindow.set('id', payload.metricId);
       this.__emitChange();
       break;
 

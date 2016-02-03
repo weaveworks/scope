@@ -759,6 +759,14 @@ h2 {
   right: (@details-window-width + @details-window-padding-left + 10px);
 }
 
+.fill-parent {
+  position: absolute;
+  bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
 .chart-panel {
   position: absolute;
   bottom: 0;
@@ -773,6 +781,25 @@ h2 {
 
   .fa {
     color: black;
+  }
+
+  &-title {
+    height: 100px;
+    padding: 20px;
+  }
+
+  &-charts {
+    top: 100px;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    position: absolute;
+  }
+
+  &-tools {
+    position: absolute;
+    right: 8px;
+    top: 6px;
   }
 }
 

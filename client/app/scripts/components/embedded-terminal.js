@@ -4,7 +4,8 @@ import { getNodeColor, getNodeColorDark } from '../utils/color-utils';
 import Terminal from './terminal';
 
 export default function EmeddedTerminal({pipe, nodeId, details, containerMargin}) {
-  const d = details.get(nodeId);
+  const node = details.get(nodeId);
+  const d = node && node.details;
   const titleBarColor = d && getNodeColorDark(d.rank, d.label);
   const statusBarColor = d && getNodeColor(d.rank, d.label);
   const title = d && d.label;
