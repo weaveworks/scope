@@ -1,31 +1,32 @@
-import React from 'react';
-import filesize from 'filesize';
+import d3 from 'd3';
 
-const formatters = {
-  filesize(value) {
-    const obj = filesize(value, {output: 'object'});
-    return formatters.metric(obj.value, obj.suffix);
-  },
+export const formatLargeValue = d3.format('s');
 
-  number(value) {
-    return value;
-  },
+export function labels(kv) {
+  const s = [];
+  Object.keys(kv).forEach(k => {
+    s.push(k + '=' + kv[k]);
+  });
+  return s.join(', ');
+}
 
-  percent(value) {
-    return formatters.metric(value, '%');
-  },
-
-  metric(text, unit) {
-    return (
-      <span className="metric-formatted">
-        <span className="metric-value">{text}</span>
-        <span className="metric-unit">{unit}</span>
-      </span>
-    );
+export function maybeTruncate(id) {
+  if (id.length > 12) {
+    return id.substr(0, 12) + '...';
   }
-};
+  return id;
+}
 
-export function formatMetric(value, opts) {
-  const formatter = opts && formatters[opts.format] ? opts.format : 'number';
-  return formatters[formatter](value);
+export function plural(text, count) {
+  if (count === 1) {
+    return text;
+  }
+  return `${text}s`;
+}
+
+export function formatMetric(val) {
+  if (val < 1100 && val >= 0) {
+    return Number(val).toFixed(2);
+  }
+  return formatLargeValue(val);
 }

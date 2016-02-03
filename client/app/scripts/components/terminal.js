@@ -185,9 +185,8 @@ export default class Terminal extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const containerMarginChanged = nextProps.containerMargin !== this.props.containerMargin;
-    log(nextProps.containerMargin);
-    if (containerMarginChanged) {
+    const widthChanged = nextProps.containerWidth !== this.props.containerWidth;
+    if (widthChanged) {
       this.handleResize();
     }
   }

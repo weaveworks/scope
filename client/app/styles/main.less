@@ -12,6 +12,8 @@
   padding: 0.2em 0;
 }
 
+@import "chart";
+
 /* weave company colours */
 @weave-gray-blue: rgb(85,105,145);
 @weave-blue: rgb(0,210,255);
@@ -748,6 +750,32 @@ h2 {
   }
 }
 
+.main-window {
+  z-index: 512;
+  position: fixed;
+  top: 24px;
+  bottom: 48px;
+  left: 36px;
+  right: (@details-window-width + @details-window-padding-left + 10px);
+}
+
+.chart-panel {
+  position: absolute;
+  bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  border: 0px solid #000000;
+  border-radius: 4px;
+  background-color: white;
+  color: #f0f0f0;
+  .shadow-2;
+
+  .fa {
+    color: black;
+  }
+}
+
 .terminal {
 
   &-app {
@@ -758,15 +786,6 @@ h2 {
     right: 0;
     display: flex;
     flex-flow: column;
-  }
-
-  &-embedded {
-    z-index: 512;
-    position: fixed;
-    top: 24px;
-    bottom: 48px;
-    left: 36px;
-    right: (@details-window-width + @details-window-padding-left + 10px);
   }
 
   &-wrapper {
@@ -816,7 +835,7 @@ h2 {
     }
   }
 
-  &-embedded &-inner { top: @terminal-header-height; }
+  .main-window &-inner { top: @terminal-header-height; }
   &-app &-inner { top: 0; }
   &-inner {
     position: absolute;

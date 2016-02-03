@@ -242,6 +242,22 @@ export function receiveControlPipeFromParams(pipeId, rawTty) {
   });
 }
 
+export function showMetrics(nodeId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.SHOW_METRICS_WINDOW,
+    nodeId: nodeId
+  });
+  updateRoute();
+}
+
+export function clickCloseMetrics(nodeId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_CLOSE_METRICS,
+    nodeId: nodeId
+  });
+  updateRoute();
+}
+
 export function receiveControlPipe(pipeId, nodeId, rawTty) {
   if (nodeId !== AppStore.getTopCardNodeId()) {
     log('Node was deselected before we could set up control!');
