@@ -90,8 +90,10 @@ check_not_running() {
 }
 
 launch_command() {
-    echo docker run --privileged -d --name=$SCOPE_CONTAINER_NAME --net=host --pid=host \
+    echo docker run --privileged -d --name=$SCOPE_CONTAINER_NAME \
+            --net=host --pid=host \
             -v /var/run/docker.sock:/var/run/docker.sock \
+            -v /etc/scope/plugins:/etc/scope/plugins \
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --probe.docker true "$@"
 }
 
