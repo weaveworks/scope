@@ -56,6 +56,13 @@ such, the Scope app endpoint (port 4040) should not be made accessible on
 the Internet.  Additionally traffic between the app and the probe is currently
 insecure and should not traverse the internet.
 
+Scope will periodically check with our servers to see if a new version is
+availible.  To disable this, run:
+
+```
+CHECKPOINT_DISABLE=true scope launch
+```
+
 ## <a name="architecture"></a>Architecture
 
 Weave Scope consists of two components: the app and the probe. These two

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/armon/go-metrics"
+	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
 
 	"github.com/weaveworks/scope/common/hostname"
@@ -29,6 +30,32 @@ import (
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
+
+const (
+	signatureFile      = "/etc/weave/signature"
+	versionCheckPeriod = 6 * 60 * time.Minute
+)
+
+func check() {
+	handleResponse := func(r *checkpoint.CheckResponse, err error) {
+		if err != nil {
+			log.Printf("Error checking version: %v", err)
+		} else if r.Outdated {
+			log.Printf("Scope version %s is available; please update at %s",
+				r.CurrentVersion, r.CurrentDownloadURL)
+		}
+	}
+
+	// Start background version checking
+	params := checkpoint.CheckParams{
+		Product:       "scope-probe",
+		Version:       version,
+		SignatureFile: signatureFile,
+	}
+	resp, err := checkpoint.Check(&params)
+	handleResponse(resp, err)
+	checkpoint.CheckInterval(&params, versionCheckPeriod, handleResponse)
+}
 
 // Main runs the probe
 func probeMain() {
@@ -77,6 +104,7 @@ func probeMain() {
 		hostID   = hostName // TODO(pb): we should sanitize the hostname
 	)
 	log.Printf("probe starting, version %s, ID %s", version, probeID)
+	go check()
 
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
