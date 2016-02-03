@@ -1,0 +1,83 @@
+/* weave company colours */
+@weave-gray-blue: rgb(85,105,145);
+@weave-blue: rgb(0,210,255);
+@weave-orange: rgb(255,75,25);
+@weave-charcoal-blue: rgb(50,50,75); // #32324B
+@primary-color: @weave-charcoal-blue;
+@text-secondary-color: lighten(@primary-color, 33%);
+@background-color: lighten(@primary-color, 66%);
+
+.chart {
+  font-size: 11px;
+  border-radius: 4px;
+  background-color: lighten(@background-color, 5%);
+
+  text {
+    fill: @text-secondary-color;
+  }
+
+  path.series {
+    fill: none;
+    stroke-width: 1.5px;
+  }
+
+  circle {
+    stroke: white;
+    stroke-width: 1px;
+  }
+
+  .selected {
+    .time {
+      font-weight: bold;
+      text-anchor: left;
+    }
+    .timeFlag {
+      fill: white;
+      opacity: 1;
+    }
+    line {
+      shape-rendering: crispEdges;
+      stroke: #aaa;
+    }
+    rect {
+      opacity: 0.2;
+    }
+  }
+
+  .axis {
+    shape-rendering: crispEdges;
+    line {
+      stroke: #f6f6f6;
+    }
+  }
+
+  .axis.y {
+    // dont show top label
+    .tick:nth-last-child(2) {
+      text, line {
+        opacity: 0;
+      }
+    }
+  }
+
+  path.voro {
+    // debug colors
+    // stroke: red;
+    // stroke-width: 0.1px;
+    // fill: pink;
+    // fill-opacity: 0.3;
+    fill-opacity: 0;
+    stroke: none;
+  }
+
+  path.domain {
+    stroke: none;
+    fill: none;
+  }
+
+  .background {
+    fill: none;
+  }
+}
+
+
