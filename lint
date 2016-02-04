@@ -35,7 +35,7 @@ function spell_check {
 	filename="$1"
 	local lint_result=0
 
-	if grep -iH --color=always psueod "${filename}"; then
+	if grep -iH --color=always psueod availible "${filename}"; then
 		echo "${filename}: spelling mistake"
 		lint_result=1
 	fi
