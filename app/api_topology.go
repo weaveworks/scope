@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
 
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
 )
@@ -108,7 +110,9 @@ func handleWebsocket(
 		if err := conn.SetWriteDeadline(time.Now().Add(websocketTimeout)); err != nil {
 			return
 		}
-		if err := conn.WriteJSON(diff); err != nil {
+
+		if err := xfer.WriteJSONtoWS(conn, diff); err != nil {
+			log.Errorf("cannot serialize topology diff: %s", err)
 			return
 		}
 

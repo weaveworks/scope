@@ -2,7 +2,6 @@ package docker_test
 
 import (
 	"bufio"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net"
@@ -12,6 +11,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	client "github.com/fsouza/go-dockerclient"
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
@@ -66,7 +66,8 @@ func TestContainer(t *testing.T) {
 	stats := &client.Stats{}
 	stats.Read = now
 	stats.MemoryStats.Usage = 12345
-	if err = json.NewEncoder(writer).Encode(&stats); err != nil {
+	encoder := codec.NewEncoder(writer, &codec.JsonHandle{})
+	if err = encoder.Encode(&stats); err != nil {
 		t.Error(err)
 	}
 

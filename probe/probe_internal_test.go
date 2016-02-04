@@ -2,11 +2,11 @@ package probe
 
 import (
 	"compress/gzip"
-	"encoding/gob"
 	"io"
 	"testing"
 	"time"
 
+	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
@@ -60,7 +60,7 @@ func (m mockPublisher) Publish(in io.Reader) error {
 	var r report.Report
 	if reader, err := gzip.NewReader(in); err != nil {
 		return err
-	} else if err := gob.NewDecoder(reader).Decode(&r); err != nil {
+	} else if err := codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode(&r); err != nil {
 		return err
 	}
 	m.have <- r
@@ -72,10 +72,26 @@ func (m mockPublisher) Stop() {
 }
 
 func TestProbe(t *testing.T) {
+	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
+	// tags, transforming empty slices into nils. So, we make DeepEqual
+	// happy by setting empty `json:"omitempty"` entries to nil
+
 	want := report.MakeReport()
 	node := report.MakeNodeWith(map[string]string{"b": "c"})
+	node.Metrics = nil // omitempty
 	want.Endpoint.AddNode("a", node)
 	pub := mockPublisher{make(chan report.Report)}
+
+	// omitempty
+	want.Endpoint.Controls = nil
+	want.Address.Controls = nil
+	want.Process.Controls = nil
+	want.Container.Controls = nil
+	want.ContainerImage.Controls = nil
+	want.Pod.Controls = nil
+	want.Service.Controls = nil
+	want.Host.Controls = nil
+	want.Overlay.Controls = nil
 
 	p := New(10*time.Millisecond, 100*time.Millisecond, pub)
 	p.AddReporter(mockReporter{want})

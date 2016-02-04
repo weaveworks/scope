@@ -3,16 +3,17 @@ package report
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
 
 	"github.com/mndrix/ps"
+	"github.com/ugorji/go/codec"
 )
 
 // NodeSet is a set of nodes keyed on (Topology, ID). Clients must use
 // the Add method to add nodes
+// codecgen: skip
 type NodeSet struct {
 	psMap ps.Map
 }
@@ -161,22 +162,32 @@ func (n NodeSet) fromIntermediate(nodes []Node) NodeSet {
 	return MakeNodeSet(nodes...)
 }
 
-// MarshalJSON implements json.Marshaller
-func (n NodeSet) MarshalJSON() ([]byte, error) {
+// CodecEncodeSelf implements codec.Selfer
+func (n *NodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
 	if n.psMap != nil {
-		return json.Marshal(n.toIntermediate())
+		encoder.Encode(n.toIntermediate())
+	} else {
+		encoder.Encode(nil)
 	}
-	return json.Marshal(nil)
 }
 
-// UnmarshalJSON implements json.Unmarshaler
-func (n *NodeSet) UnmarshalJSON(input []byte) error {
+// CodecDecodeSelf implements codec.Selfer
+func (n *NodeSet) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := []Node{}
-	if err := json.Unmarshal(input, &in); err != nil {
-		return err
+	if err := decoder.Decode(&in); err != nil {
+		return
 	}
 	*n = NodeSet{}.fromIntermediate(in)
-	return nil
+}
+
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (NodeSet) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*NodeSet) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
 // GobEncode implements gob.Marshaller

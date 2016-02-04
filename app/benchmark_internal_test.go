@@ -1,12 +1,13 @@
 package app
 
 import (
-	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -34,7 +35,8 @@ func loadReport() (report.Report, error) {
 		return fixture.Report, err
 	}
 	rpt := report.MakeReport()
-	err = json.Unmarshal(b, &rpt)
+	decoder := codec.NewDecoderBytes(b, &codec.JsonHandle{})
+	err = decoder.Decode(&rpt)
 	return rpt, err
 }
 

@@ -1,9 +1,11 @@
 package detailed
 
 import (
-	"encoding/json"
+	"bytes"
 	"strconv"
 	"strings"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
@@ -120,7 +122,9 @@ func (m MetadataRow) Copy() MetadataRow {
 // MarshalJSON marshals this MetadataRow to json. It adds a label before
 // rendering.
 func (m MetadataRow) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+	buf := bytes.Buffer{}
+	encoder := codec.NewEncoder(&buf, &codec.JsonHandle{})
+	err := encoder.Encode(struct {
 		ID    string `json:"id"`
 		Label string `json:"label"`
 		Value string `json:"value"`
@@ -131,6 +135,7 @@ func (m MetadataRow) MarshalJSON() ([]byte, error) {
 		Value: m.Value,
 		Prime: m.Prime,
 	})
+	return buf.Bytes(), err
 }
 
 // NodeMetadata produces a table (to be consumed directly by the UI) based on

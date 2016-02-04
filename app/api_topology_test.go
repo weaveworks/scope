@@ -1,13 +1,13 @@
 package app_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"reflect"
 	"testing"
 
 	"github.com/gorilla/websocket"
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/render"
@@ -22,21 +22,24 @@ func TestAll(t *testing.T) {
 
 	body := getRawJSON(t, ts, "/api/topology")
 	var topologies []app.APITopologyDesc
-	if err := json.Unmarshal(body, &topologies); err != nil {
+	decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
+	if err := decoder.Decode(&topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
 
 	getTopology := func(topologyURL string) {
 		body := getRawJSON(t, ts, topologyURL)
 		var topology app.APITopology
-		if err := json.Unmarshal(body, &topology); err != nil {
+		decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
+		if err := decoder.Decode(&topology); err != nil {
 			t.Fatalf("JSON parse error: %s", err)
 		}
 
 		for _, node := range topology.Nodes {
 			body := getRawJSON(t, ts, fmt.Sprintf("%s/%s", topologyURL, url.QueryEscape(node.ID)))
 			var node app.APINode
-			if err := json.Unmarshal(body, &node); err != nil {
+			decoder = codec.NewDecoderBytes(body, &codec.JsonHandle{})
+			if err := decoder.Decode(&node); err != nil {
 				t.Fatalf("JSON parse error: %s", err)
 			}
 		}
@@ -56,7 +59,8 @@ func TestAPITopologyContainers(t *testing.T) {
 	{
 		body := getRawJSON(t, ts, "/api/topology/containers")
 		var topo app.APITopology
-		if err := json.Unmarshal(body, &topo); err != nil {
+		decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
+		if err := decoder.Decode(&topo); err != nil {
 			t.Fatal(err)
 		}
 		want := expected.RenderedContainers.Copy()
@@ -78,7 +82,8 @@ func TestAPITopologyProcesses(t *testing.T) {
 	{
 		body := getRawJSON(t, ts, "/api/topology/processes/"+expected.ServerProcessID)
 		var node app.APINode
-		if err := json.Unmarshal(body, &node); err != nil {
+		decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
+		if err := decoder.Decode(&node); err != nil {
 			t.Fatal(err)
 		}
 		equals(t, expected.ServerProcessID, node.Node.ID)
@@ -91,7 +96,8 @@ func TestAPITopologyProcesses(t *testing.T) {
 		body := getRawJSON(t, ts, "/api/topology/processes-by-name/"+
 			url.QueryEscape(fixture.Client1Name))
 		var node app.APINode
-		if err := json.Unmarshal(body, &node); err != nil {
+		decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
+		if err := decoder.Decode(&node); err != nil {
 			t.Fatal(err)
 		}
 		equals(t, fixture.Client1Name, node.Node.ID)
@@ -108,7 +114,8 @@ func TestAPITopologyHosts(t *testing.T) {
 	{
 		body := getRawJSON(t, ts, "/api/topology/hosts")
 		var topo app.APITopology
-		if err := json.Unmarshal(body, &topo); err != nil {
+		decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
+		if err := decoder.Decode(&topo); err != nil {
 			t.Fatal(err)
 		}
 
@@ -119,7 +126,8 @@ func TestAPITopologyHosts(t *testing.T) {
 	{
 		body := getRawJSON(t, ts, "/api/topology/hosts/"+expected.ServerHostRenderedID)
 		var node app.APINode
-		if err := json.Unmarshal(body, &node); err != nil {
+		decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
+		if err := decoder.Decode(&node); err != nil {
 			t.Fatal(err)
 		}
 		equals(t, expected.ServerHostRenderedID, node.Node.ID)
@@ -155,7 +163,8 @@ func TestAPITopologyWebsocket(t *testing.T) {
 	_, p, err := ws.ReadMessage()
 	ok(t, err)
 	var d render.Diff
-	if err := json.Unmarshal(p, &d); err != nil {
+	decoder := codec.NewDecoderBytes(p, &codec.JsonHandle{})
+	if err := decoder.Decode(&d); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
 	equals(t, 7, len(d.Add))

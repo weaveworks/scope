@@ -1,9 +1,10 @@
 package detailed
 
 import (
-	"encoding/json"
+	"bytes"
 	"math"
 
+	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
@@ -62,7 +63,9 @@ func (m MetricRow) Copy() MetricRow {
 // MarshalJSON marshals this MetricRow to json. It takes the basic Metric
 // rendering, then adds some row-specific fields.
 func (m MetricRow) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+	buf := bytes.Buffer{}
+	encoder := codec.NewEncoder(&buf, &codec.JsonHandle{})
+	err := encoder.Encode(struct {
 		ID     string  `json:"id"`
 		Label  string  `json:"label"`
 		Format string  `json:"format,omitempty"`
@@ -77,6 +80,7 @@ func (m MetricRow) MarshalJSON() ([]byte, error) {
 		Value:       m.Value,
 		WireMetrics: m.Metric.ToIntermediate(),
 	})
+	return buf.Bytes(), err
 }
 
 // NodeMetrics produces a table (to be consumed directly by the UI) based on

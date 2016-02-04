@@ -1,7 +1,10 @@
 package report
 
 import (
+	"bytes"
 	"testing"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
@@ -111,14 +114,21 @@ func TestCountersEncoding(t *testing.T) {
 	}
 
 	{
-		json, err := want.MarshalJSON()
-		if err != nil {
-			t.Fatal(err)
-		}
-		have := EmptyCounters
-		have.UnmarshalJSON(json)
-		if !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+
+		for _, h := range []codec.Handle{
+			codec.Handle(&codec.MsgpackHandle{}),
+			codec.Handle(&codec.JsonHandle{}),
+		} {
+			buf := &bytes.Buffer{}
+			encoder := codec.NewEncoder(buf, h)
+			want.CodecEncodeSelf(encoder)
+			decoder := codec.NewDecoder(buf, h)
+			have := EmptyCounters
+			have.CodecDecodeSelf(decoder)
+			if !reflect.DeepEqual(want, have) {
+				t.Error(test.Diff(want, have))
+			}
 		}
 	}
+
 }

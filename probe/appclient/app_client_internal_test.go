@@ -2,8 +2,6 @@ package appclient
 
 import (
 	"compress/gzip"
-	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
+	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -42,7 +41,8 @@ func dummyServer(t *testing.T, expectedToken, expectedID string, expectedReport 
 			defer reader.Close()
 		}
 
-		if err := gob.NewDecoder(reader).Decode(&have); err != nil {
+		decoder := codec.NewDecoder(reader, &codec.MsgpackHandle{})
+		if err := decoder.Decode(&have); err != nil {
 			t.Error(err)
 			return
 		}
@@ -64,6 +64,19 @@ func TestAppClientPublish(t *testing.T) {
 		rpt   = report.MakeReport()
 		done  = make(chan struct{}, 10)
 	)
+
+	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
+	// tags, transforming empty slices into nils. So, we make DeepEqual
+	// happy by setting empty `json:"omitempty"` entries to nil
+	rpt.Endpoint.Controls = nil
+	rpt.Address.Controls = nil
+	rpt.Process.Controls = nil
+	rpt.Container.Controls = nil
+	rpt.ContainerImage.Controls = nil
+	rpt.Pod.Controls = nil
+	rpt.Service.Controls = nil
+	rpt.Host.Controls = nil
+	rpt.Overlay.Controls = nil
 
 	s := dummyServer(t, token, id, rpt, done)
 	defer s.Close()
@@ -109,7 +122,8 @@ func TestAppClientDetails(t *testing.T) {
 	)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := json.NewEncoder(w).Encode(want); err != nil {
+		encoder := codec.NewEncoder(w, &codec.JsonHandle{})
+		if err := encoder.Encode(want); err != nil {
 			t.Fatal(err)
 		}
 	})

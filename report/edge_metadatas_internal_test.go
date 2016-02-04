@@ -1,7 +1,10 @@
 package report
 
 import (
+	"bytes"
 	"testing"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
@@ -241,14 +244,19 @@ func TestEdgeMetadatasEncoding(t *testing.T) {
 	}
 
 	{
-		json, err := want.MarshalJSON()
-		if err != nil {
-			t.Fatal(err)
-		}
-		have := EmptyEdgeMetadatas
-		have.UnmarshalJSON(json)
-		if !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+		for _, h := range []codec.Handle{
+			codec.Handle(&codec.MsgpackHandle{}),
+			codec.Handle(&codec.JsonHandle{}),
+		} {
+			buf := &bytes.Buffer{}
+			encoder := codec.NewEncoder(buf, h)
+			want.CodecEncodeSelf(encoder)
+			decoder := codec.NewDecoder(buf, h)
+			have := EmptyEdgeMetadatas
+			have.CodecDecodeSelf(decoder)
+			if !reflect.DeepEqual(want, have) {
+				t.Error(test.Diff(want, have))
+			}
 		}
 	}
 }
@@ -269,14 +277,20 @@ func TestEdgeMetadatasEncodingNil(t *testing.T) {
 	}
 
 	{
-		json, err := want.MarshalJSON()
-		if err != nil {
-			t.Fatal(err)
-		}
-		have := EmptyEdgeMetadatas
-		have.UnmarshalJSON(json)
-		if have.psMap == nil {
-			t.Error("needed to get back a non-nil psMap for EdgeMetadata")
+
+		for _, h := range []codec.Handle{
+			codec.Handle(&codec.MsgpackHandle{}),
+			codec.Handle(&codec.JsonHandle{}),
+		} {
+			buf := &bytes.Buffer{}
+			encoder := codec.NewEncoder(buf, h)
+			want.CodecEncodeSelf(encoder)
+			decoder := codec.NewDecoder(buf, h)
+			have := EmptyEdgeMetadatas
+			have.CodecDecodeSelf(decoder)
+			if !reflect.DeepEqual(want, have) {
+				t.Error(test.Diff(want, have))
+			}
 		}
 	}
 }

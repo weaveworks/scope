@@ -1,9 +1,9 @@
 package appclient
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/rpc"
 	"sync"
@@ -11,6 +11,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/sanitize"
 	"github.com/weaveworks/scope/common/xfer"
@@ -149,7 +150,7 @@ func (c *appClient) Details() (xfer.Details, error) {
 		return result, err
 	}
 	defer resp.Body.Close()
-	return result, json.NewDecoder(resp.Body).Decode(&result)
+	return result, codec.NewDecoder(resp.Body, &codec.JsonHandle{}).Decode(&result)
 }
 
 func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
@@ -226,6 +227,7 @@ func (c *appClient) publish(r io.Reader) error {
 		return err
 	}
 	req.Header.Set("Content-Encoding", "gzip")
+	req.Header.Set("Content-Type", "application/msgpack")
 	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -234,7 +236,8 @@ func (c *appClient) publish(r io.Reader) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf(resp.Status)
+		text, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf(resp.Status + ": " + string(text))
 	}
 	return nil
 }

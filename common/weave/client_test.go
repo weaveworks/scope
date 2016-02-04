@@ -32,7 +32,7 @@ var (
 		"Router": {
 			"Peers": [{
 				"Name": "%s",
-				"Nickname": "%s"
+				"NickName": "%s"
 			}]
 		},
 		"DNS": {

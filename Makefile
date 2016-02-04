@@ -15,12 +15,16 @@ DOCKER_VERSION=1.6.2
 DOCKER_DISTRIB=.pkg/docker-$(DOCKER_VERSION).tgz
 DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
 RUNSVINIT=vendor/runsvinit/runsvinit
+CODECGEN_DIR=vendor/github.com/2opremio/go-1/codec/codecgen
+CODECGEN_EXE=$(CODECGEN_DIR)/codecgen
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
 GO ?= env GO15VENDOREXPERIMENT=1 go
+GO_HOST_ENV=GOARCH=$(shell go env GOHOSTARCH) GOOS=$(shell go env GOHOSTOS)
 GO_BUILD_INSTALL_DEPS=-i
-GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags netgo
+GO_BUILD_TAGS=-tags netgo
+GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" $(GO_BUILD_TAGS)
 
 all: $(SCOPE_EXPORT)
 
@@ -40,6 +44,7 @@ $(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker
 $(RUNSVINIT): vendor/runsvinit/*.go
 
 $(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name *.go) prog/static.go
+
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 
@@ -65,6 +70,15 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	        echo "    sudo go install -tags netgo std"; \
 	        false; \
 	    }
+
+$(SCOPE_EXE): report/report.codecgen.go
+
+CODECGEN_REPORT_SOURCES=$(shell find report/ -type f -name '*.go' -not -name '*_test.go' -not -name '*.codecgen.go' -not -name '*.generated.go')
+report/report.codecgen.go: $(CODECGEN_EXE) $(CODECGEN_REPORT_SOURCES)
+	cd report && $(GO_HOST_ENV) ../$(CODECGEN_EXE) -u -o $(@F) $(notdir $(CODECGEN_REPORT_SOURCES))
+
+$(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
+	$(GO_HOST_ENV) $(GO) build $(GO_BUILD_TAGS) -o $@ ./$(@D)
 
 $(RUNSVINIT):
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
@@ -126,7 +140,7 @@ clean:
 		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave .pkg
 
 deps:
-	$(GO) get -u -f -tags netgo \
+	$(GO) get -u -f $(GO_BUILD_TAGS) \
 		github.com/FiloSottile/gvt \
 		github.com/mattn/goveralls \
 		github.com/mjibson/esc \

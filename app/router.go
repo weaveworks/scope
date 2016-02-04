@@ -3,13 +3,13 @@ package app
 import (
 	"compress/gzip"
 	"encoding/gob"
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/ghost/handlers"
 	"github.com/gorilla/mux"
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/xfer"
@@ -133,8 +133,11 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 
 		decoder := gob.NewDecoder(reader).Decode
 		if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-			decoder = json.NewDecoder(reader).Decode
+			decoder = codec.NewDecoder(reader, &codec.JsonHandle{}).Decode
+		} else if strings.HasPrefix(r.Header.Get("Content-Type"), "application/msgpack") {
+			decoder = codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode
 		}
+
 		if err := decoder(&rpt); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

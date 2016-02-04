@@ -1,11 +1,11 @@
 package app_test
 
 import (
-	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/report"
@@ -25,8 +25,9 @@ func TestAPIReport(t *testing.T) {
 	var body = getRawJSON(t, ts, "/api/report")
 	// fmt.Printf("Body: %v\n", string(body))
 	var r report.Report
-	err := json.Unmarshal(body, &r)
-	if err != nil {
+
+	decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
+	if err := decoder.Decode(&r); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
 }

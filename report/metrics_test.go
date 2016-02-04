@@ -2,10 +2,10 @@ package report_test
 
 import (
 	"bytes"
-	"encoding/gob"
-	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -205,13 +205,6 @@ func TestMetricDiv(t *testing.T) {
 	checkMetric(t, beforeDiv, t1, t2, -2048, 2048)
 }
 
-type codec struct {
-	name        string
-	encode      func(interface{}) ([]byte, error)
-	decode      func([]byte, interface{}) error
-	extraChecks func(*testing.T, codec, []byte)
-}
-
 func TestMetricMarshalling(t *testing.T) {
 	t1 := time.Now().UTC()
 	t2 := time.Now().UTC().Add(1 * time.Minute)
@@ -230,54 +223,51 @@ func TestMetricMarshalling(t *testing.T) {
 		want = want.Add(sample.Timestamp, sample.Value)
 	}
 
-	codecs := []codec{
-		{
-			"json",
-			json.Marshal,
-			json.Unmarshal,
-			func(t *testing.T, codec codec, b []byte) {
-				var wire struct {
-					Samples []report.Sample `json:"samples"`
-				}
-				if err := codec.decode(b, &wire); err != nil {
-					t.Fatalf("[%s] %s", codec.name, err)
-				}
-				if !reflect.DeepEqual(wantSamples, wire.Samples) {
-					t.Errorf("[%s] diff: %sencoded: %s", codec.name, test.Diff(wantSamples, wire.Samples), b)
-				}
-			},
-		},
-		{
-			"gob",
-			func(v interface{}) ([]byte, error) {
-				buf := &bytes.Buffer{}
-				err := gob.NewEncoder(buf).Encode(v)
-				return buf.Bytes(), err
-			},
-			func(b []byte, v interface{}) error {
-				return gob.NewDecoder(bytes.NewReader(b)).Decode(v)
-			},
-			nil,
-		},
-	}
-	for _, codec := range codecs {
-		b, err := codec.encode(want)
+	// gob
+	{
+		gobs, err := want.GobEncode()
 		if err != nil {
-			t.Fatalf("[%s] %s", codec.name, err)
+			t.Fatal(err)
 		}
-
 		var have report.Metric
-		err = codec.decode(b, &have)
-		if err != nil {
-			t.Fatalf("[%s] %s", codec.name, err)
-		}
-
+		have.GobDecode(gobs)
 		if !reflect.DeepEqual(want, have) {
-			t.Errorf("[%s] diff: %sencoded: %s", codec.name, test.Diff(want, have), b)
-		}
-
-		if codec.extraChecks != nil {
-			codec.extraChecks(t, codec, b)
+			t.Error(test.Diff(want, have))
 		}
 	}
+
+	// others
+	{
+
+		for _, h := range []codec.Handle{
+			codec.Handle(&codec.MsgpackHandle{}),
+			codec.Handle(&codec.JsonHandle{}),
+		} {
+			buf := &bytes.Buffer{}
+			encoder := codec.NewEncoder(buf, h)
+			want.CodecEncodeSelf(encoder)
+			bufCopy := bytes.NewBuffer(buf.Bytes())
+
+			decoder := codec.NewDecoder(buf, h)
+			var have report.Metric
+			have.CodecDecodeSelf(decoder)
+
+			if !reflect.DeepEqual(want, have) {
+				t.Error(test.Diff(want, have))
+			}
+
+			// extra check for samples
+			decoder = codec.NewDecoder(bufCopy, h)
+			var wire struct {
+				Samples []report.Sample `json:"samples"`
+			}
+			if err := decoder.Decode(&wire); err != nil {
+				t.Error(err)
+			}
+			if !reflect.DeepEqual(wantSamples, wire.Samples) {
+				t.Error(test.Diff(wantSamples, wire.Samples))
+			}
+		}
+	}
+
 }

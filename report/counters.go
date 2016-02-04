@@ -3,15 +3,16 @@ package report
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
 
 	"github.com/mndrix/ps"
+	"github.com/ugorji/go/codec"
 )
 
 // Counters is a string->int map.
+// codecgen: skip
 type Counters struct {
 	psMap ps.Map
 }
@@ -146,22 +147,28 @@ func (c Counters) fromIntermediate(in map[string]int) Counters {
 	return Counters{out}
 }
 
-// MarshalJSON implements json.Marshaller
-func (c Counters) MarshalJSON() ([]byte, error) {
-	if c.psMap != nil {
-		return json.Marshal(c.toIntermediate())
-	}
-	return json.Marshal(nil)
+// CodecEncodeSelf implements codec.Selfer
+func (c *Counters) CodecEncodeSelf(encoder *codec.Encoder) {
+	encoder.Encode(c.toIntermediate())
 }
 
-// UnmarshalJSON implements json.Unmarshaler
-func (c *Counters) UnmarshalJSON(input []byte) error {
+// CodecDecodeSelf implements codec.Selfer
+func (c *Counters) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := map[string]int{}
-	if err := json.Unmarshal(input, &in); err != nil {
-		return err
+	if err := decoder.Decode(&in); err != nil {
+		return
 	}
 	*c = Counters{}.fromIntermediate(in)
-	return nil
+}
+
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (Counters) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*Counters) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
 // GobEncode implements gob.Marshaller
