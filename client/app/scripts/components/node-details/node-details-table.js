@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React from 'react';
 
 import NodeDetailsTableNodeLink from './node-details-table-node-link';
-import { formatMetric } from '../../utils/string-utils';
+import NodeDetailsTableNodeMetric from './node-details-table-node-metric';
 
 export default class NodeDetailsTable extends React.Component {
 
@@ -117,11 +117,14 @@ export default class NodeDetailsTable extends React.Component {
     return this.props.columns.map(col => {
       const field = fields[col];
       if (field) {
-        return (
-          <td className="node-details-table-node-value" key={field.id}>
-            {field.valueType === 'metadata' ? field.value : formatMetric(field.value, field)}
-          </td>
-        );
+        if (field.valueType === 'metadata') {
+          return (
+            <td className="node-details-table-node-value" key={field.id}>
+              {field.value}
+            </td>
+          );
+        }
+        return <NodeDetailsTableNodeMetric key={field.id} {...field} />;
       }
     });
   }

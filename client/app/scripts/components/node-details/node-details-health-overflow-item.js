@@ -1,8 +1,9 @@
 import React from 'react';
 
+import metricFeeder from '../../hoc/metric-feeder';
 import { formatMetric } from '../../utils/string-utils';
 
-export default class NodeDetailsHealthOverflowItem extends React.Component {
+class NodeDetailsHealthOverflowItem extends React.Component {
   render() {
     return (
       <div className="node-details-health-overflow-item">
@@ -12,3 +13,5 @@ export default class NodeDetailsHealthOverflowItem extends React.Component {
     );
   }
 }
+
+export default metricFeeder(NodeDetailsHealthOverflowItem);
