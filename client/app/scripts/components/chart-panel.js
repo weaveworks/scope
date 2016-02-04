@@ -47,7 +47,7 @@ function onChangeSelectedMetric(nodeId, metricId) {
 export default function ChartPanel({metrics, details}) {
   const nodeId = metrics.get('nodeId');
   const node = details.get(nodeId);
-  const metricId = metrics.get('id') || _.first(getAvailableMetrics(node));
+  const metricId = metrics.get('id') || _.get(getAvailableMetrics(node), [0, 'id']);
   const metric = getAvailableMetrics(node).find(m => m.id === metricId) || {};
   const d = node && node.details || {};
 

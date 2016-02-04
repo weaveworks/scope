@@ -25,11 +25,11 @@ export default class NodeDetailsControls extends React.Component {
                 pending={this.props.pending} key={control.id} />
             );
           })}
-          <span
+          {this.props.metrics && <span
             className="node-control-button fa fa-line-chart"
             title="Show Metrics"
-            onClick={() => showMetrics(this.props.nodeId)} />
-        </span>
+            onClick={() => showMetrics(this.props.nodeId)} />}
+          </span>
         {this.props.controls && <span title="Applying..." className={spinnerClassName}></span>}
       </div>
     );
