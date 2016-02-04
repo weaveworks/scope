@@ -17,9 +17,9 @@ type Parent struct {
 	TopologyID string `json:"topologyId"`
 }
 
-// parents renders the parents of this report.Node, which have been aggregated
+// Parents renders the parents of this report.Node, which have been aggregated
 // from the probe reports.
-func parents(r report.Report, n render.RenderableNode) (result []Parent) {
+func Parents(r report.Report, n render.RenderableNode) (result []Parent) {
 	topologies := map[string]struct {
 		report.Topology
 		render func(report.Node) Parent
@@ -39,7 +39,7 @@ func parents(r report.Report, n render.RenderableNode) (result []Parent) {
 		t := topologies[topologyID]
 		parents, _ := n.Node.Parents.Lookup(topologyID)
 		for _, id := range parents {
-			if topologyID == n.Node.Topology && id == n.ID {
+			if topologyID == n.Node.Topology && id == n.Node.ID {
 				continue
 			}
 
