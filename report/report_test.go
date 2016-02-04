@@ -13,7 +13,7 @@ func newu64(value uint64) *uint64 { return &value }
 func TestReportTopologies(t *testing.T) {
 	var (
 		reportType   = reflect.TypeOf(report.MakeReport())
-		topologyType = reflect.TypeOf(report.MakeTopology())
+		topologyType = reflect.TypeOf(report.MakeTopology(report.Container))
 	)
 
 	var want int

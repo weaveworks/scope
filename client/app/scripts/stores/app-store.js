@@ -66,6 +66,7 @@ let topologyUrlsById = makeOrderedMap(); // topologyId -> topologyUrl
 let routeSet = false;
 let controlPipes = makeOrderedMap(); // pipeId -> controlPipe
 let websocketClosed = true;
+let metricsWindow = null;
 
 // adds ID field to topology (based on last part of URL path) and save urls in
 // map for easy lookup
@@ -133,6 +134,7 @@ export class AppStore extends Store {
   getAppState() {
     return {
       controlPipe: this.getControlPipe(),
+      metricsWindow: this.getMetricsWindow() && this.getMetricsWindow().toJS(),
       nodeDetails: this.getNodeDetailsState(),
       selectedNodeId: selectedNodeId,
       topologyId: currentTopologyId,
@@ -261,6 +263,10 @@ export class AppStore extends Store {
 
   getVersion() {
     return version;
+  }
+
+  getMetricsWindow() {
+    return metricsWindow;
   }
 
   isRouteSet() {
@@ -418,6 +424,21 @@ export class AppStore extends Store {
       this.__emitChange();
       break;
 
+    case ActionTypes.CLICK_CLOSE_METRICS:
+      metricsWindow = null;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.SHOW_METRICS_WINDOW:
+      metricsWindow = makeMap({nodeId: payload.nodeId});
+      this.__emitChange();
+      break;
+
+    case ActionTypes.SELECT_METRIC:
+      metricsWindow = metricsWindow.set('id', payload.metricId);
+      this.__emitChange();
+      break;
+
     case ActionTypes.OPEN_WEBSOCKET:
       // flush nodes cache after re-connect
       nodes = nodes.clear();
@@ -561,6 +582,11 @@ export class AppStore extends Store {
         });
       } else {
         controlPipes = controlPipes.clear();
+      }
+      if (payload.state.metricsWindow) {
+        metricsWindow = makeMap(payload.state.metricsWindow);
+      } else {
+        metricsWindow = null;
       }
       if (payload.state.nodeDetails) {
         nodeDetails = makeOrderedMap(payload.state.nodeDetails.map(obj => [obj.id, obj]));

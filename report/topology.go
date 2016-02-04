@@ -10,13 +10,15 @@ import (
 // EdgeMetadatas and Nodes respectively. Edges are directional, and embedded
 // in the Node struct.
 type Topology struct {
+	Name     string `json:"name"`
 	Nodes    `json:"nodes"`
 	Controls `json:"controls,omitempty"`
 }
 
 // MakeTopology gives you a Topology.
-func MakeTopology() Topology {
+func MakeTopology(name string) Topology {
 	return Topology{
+		Name:     name,
 		Nodes:    map[string]Node{},
 		Controls: Controls{},
 	}
@@ -38,6 +40,7 @@ func (t Topology) AddNode(nodeID string, node Node) Topology {
 // Copy returns a value copy of the Topology.
 func (t Topology) Copy() Topology {
 	return Topology{
+		Name:     t.Name,
 		Nodes:    t.Nodes.Copy(),
 		Controls: t.Controls.Copy(),
 	}
@@ -46,7 +49,11 @@ func (t Topology) Copy() Topology {
 // Merge merges the other object into this one, and returns the result object.
 // The original is not modified.
 func (t Topology) Merge(other Topology) Topology {
+	if t.Name != other.Name {
+		panic(fmt.Sprintf("Cannot merge topologies of different types: %q and %q", t.Name, other.Name))
+	}
 	return Topology{
+		Name:     t.Name,
 		Nodes:    t.Nodes.Merge(other.Nodes),
 		Controls: t.Controls.Merge(other.Controls),
 	}

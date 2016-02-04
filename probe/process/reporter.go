@@ -52,7 +52,7 @@ func (r *Reporter) Report() (report.Report, error) {
 }
 
 func (r *Reporter) processTopology() (report.Topology, error) {
-	t := report.MakeTopology()
+	t := report.MakeTopology(report.Process)
 	now := mtime.Now()
 	deltaTotal, maxCPU, err := r.jiffies()
 	if err != nil {

@@ -11,6 +11,8 @@ import { hitEsc } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import EmbeddedTerminal from './embedded-terminal';
+import ChartPanel from './chart-panel';
+import MainWindow from './main-window';
 import { getRouter } from '../utils/router-utils';
 import { showingDebugToolbar, DebugToolbar } from './debug-toolbar.js';
 
@@ -28,6 +30,7 @@ function getStateFromStores() {
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
     hostname: AppStore.getHostname(),
+    metricsWindow: AppStore.getMetricsWindow(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     selectedNodeId: AppStore.getSelectedNodeId(),
@@ -72,6 +75,7 @@ export default class App extends React.Component {
   render() {
     const showingDetails = this.state.nodeDetails.size > 0;
     const showingTerminal = this.state.controlPipe;
+    const showingMetrics = this.state.metricsWindow;
     const footer = `Version ${this.state.version} on ${this.state.hostname}`;
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 450 : 0;
@@ -84,10 +88,20 @@ export default class App extends React.Component {
           controlStatus={this.state.controlStatus}
           details={this.state.nodeDetails} />}
 
-        {showingTerminal && <EmbeddedTerminal
-          pipe={this.state.controlPipe}
-          nodeId={this.state.controlPipe.nodeId}
-          details={this.state.nodeDetails} />}
+        {showingMetrics &&
+          <MainWindow cardsCount={this.state.nodeDetails.size} >
+            <ChartPanel
+              details={this.state.nodeDetails}
+              metrics={this.state.metricsWindow} />
+          </MainWindow>}
+
+        {showingTerminal &&
+          <MainWindow cardsCount={this.state.nodeDetails.size} >
+            <EmbeddedTerminal
+              pipe={this.state.controlPipe}
+              nodeId={this.state.controlPipe.nodeId}
+              details={this.state.nodeDetails} />
+          </MainWindow>}
 
         <div className="header">
           <Logo />

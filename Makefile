@@ -89,22 +89,22 @@ client/build/app.js: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_U
 	mkdir -p client/build
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
-		$(SCOPE_UI_BUILD_IMAGE) npm run build
+		$(SCOPE_UI_BUILD_IMAGE) time npm run build
 
 client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
-		$(SCOPE_UI_BUILD_IMAGE) npm test
+		$(SCOPE_UI_BUILD_IMAGE) time npm test
 
 client-lint: $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
-		$(SCOPE_UI_BUILD_IMAGE) npm run lint
+		$(SCOPE_UI_BUILD_IMAGE) time npm run lint
 
 client-start: $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
-		$(SCOPE_UI_BUILD_IMAGE) npm start
+		$(SCOPE_UI_BUILD_IMAGE) time npm start
 else
 client/build/app.js:
 	cd client && npm run build

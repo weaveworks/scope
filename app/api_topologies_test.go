@@ -68,7 +68,7 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 
 	// Enable the kubernetes topologies
 	rpt := report.MakeReport()
-	rpt.Pod = report.MakeTopology()
+	rpt.Pod = report.MakeTopology(report.Pod)
 	rpt.Pod.Nodes[fixture.ClientPodNodeID] = kubernetes.NewPod(&api.Pod{
 		ObjectMeta: api.ObjectMeta{
 			Name:      "pong-a",
