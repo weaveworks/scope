@@ -149,9 +149,6 @@ export default ComposedComponent => class extends React.Component {
 
     const lastValue = samples.length > 0 ? samples[samples.length - 1].value : null;
     const slidingWindow = {first: movingFirstDate, last: movingLastDate, max, samples, value: lastValue};
-    if (this.props.label === 'CPU') {
-      console.log(lastValue, movingLastDate);
-    }
 
     return <ComposedComponent {...this.props} {...slidingWindow} />;
   }
