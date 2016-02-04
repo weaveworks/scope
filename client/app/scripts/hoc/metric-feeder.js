@@ -6,7 +6,7 @@ const makeOrderedMap = OrderedMap;
 const parseDate = d3.time.format.iso.parse;
 const sortDate = (v, d) => d;
 const DEFAULT_TICK_INTERVAL = 1000; // DEFAULT_TICK_INTERVAL + renderTime < 1000ms
-const WINDOW_LENGTH = 30;
+const WINDOW_LENGTH = 60;
 
 /**
  * Higher-order component that buffers a metrics series and feeds a sliding
@@ -19,7 +19,9 @@ const WINDOW_LENGTH = 30;
  *  The window slides between the dates provided by the first date of the buffer
  *  and `this.props.last` so that the following invariant is true:
  * `this.state.movingFirst <= this.props.first < this.state.movingLast <= this.props.last`.
+ *
  * Samples have to be of type `[{date: String, value: Number}, ...]`.
+ * This component also keeps a historic max of all samples it sees over time.
  */
 export default ComposedComponent => class extends React.Component {
 
@@ -29,6 +31,7 @@ export default ComposedComponent => class extends React.Component {
     this.tickTimer = null;
     this.state = {
       buffer: makeOrderedMap(),
+      max: 0,
       movingFirst: null,
       movingLast: null
     };
@@ -47,10 +50,11 @@ export default ComposedComponent => class extends React.Component {
   }
 
   componentDidUpdate() {
-    // move sliding window one tick
-    if (!this.tickTimer && this.state.buffer.size > 0) {
-      this.tick();
-    }
+    this.tick();
+  }
+
+  componentDidMount() {
+    this.tick();
   }
 
   updateBuffer(props) {
@@ -67,16 +71,19 @@ export default ComposedComponent => class extends React.Component {
     }
     state.buffer = buffer;
 
+    // set historic max
+    state.max = Math.max(buffer.max(), this.state.max);
+
     // set first/last marker of sliding window
     if (buffer.size > 1) {
       const bufferKeys = buffer.keySeq();
-      // const firstHalf = bufferKeys.slice(0, Math.floor(buffer.size / 2));
+      const firstPart = bufferKeys.slice(0, Math.floor(buffer.size / 3));
 
       if (this.state.movingFirst === null) {
-        state.movingFirst = bufferKeys.first();
+        state.movingFirst = firstPart.first();
       }
       if (this.state.movingLast === null) {
-        state.movingLast = bufferKeys.last();
+        state.movingLast = firstPart.last();
       }
     }
 
@@ -84,49 +91,52 @@ export default ComposedComponent => class extends React.Component {
   }
 
   tick() {
-    const { buffer } = this.state;
-    let { movingFirst, movingLast } = this.state;
-    const bufferKeys = buffer.keySeq();
+    // only tick after setTimeout -> setState -> componentDidUpdate
+    if (!this.tickTimer) {
+      const { buffer } = this.state;
+      let { movingFirst, movingLast } = this.state;
+      const bufferKeys = buffer.keySeq();
 
-    // move the sliding window one tick, make sure to keep WINDOW_LENGTH values
-    if (movingLast < bufferKeys.last()) {
-      let firstIndex = bufferKeys.indexOf(movingFirst);
-      let lastIndex = bufferKeys.indexOf(movingLast);
+      // move the sliding window one tick, make sure to keep WINDOW_LENGTH values
+      if (buffer.size > 0 && movingLast < bufferKeys.last()) {
+        let firstIndex = bufferKeys.indexOf(movingFirst);
+        let lastIndex = bufferKeys.indexOf(movingLast);
 
-      // speed up the window if it falls behind
-      const step = lastIndex > 0 ? Math.round(buffer.size / lastIndex) : 1;
+        // speed up the window if it falls behind
+        const step = lastIndex > 0 ? Math.round(buffer.size / lastIndex) : 1;
 
-      // only move first if we have enough values in window
-      const windowLength = lastIndex - firstIndex;
-      if (firstIndex > -1 && firstIndex < bufferKeys.size - 1 && windowLength >= WINDOW_LENGTH) {
-        firstIndex += step + (windowLength - WINDOW_LENGTH);
-      } else {
-        firstIndex = 0;
+        // only move first if we have enough values in window
+        const windowLength = lastIndex - firstIndex;
+        if (firstIndex > -1 && firstIndex < bufferKeys.size - 1 && windowLength >= WINDOW_LENGTH) {
+          firstIndex += step + (windowLength - WINDOW_LENGTH);
+        } else {
+          firstIndex = 0;
+        }
+        movingFirst = bufferKeys.get(firstIndex);
+        if (!movingFirst) {
+          movingFirst = bufferKeys.first();
+        }
+
+        if (lastIndex > -1) {
+          lastIndex += step;
+        } else {
+          lastIndex = bufferKeys.size - 1;
+        }
+        movingLast = bufferKeys.get(lastIndex);
+        if (!movingLast) {
+          movingLast = bufferKeys.last();
+        }
+
+        this.tickTimer = setTimeout(() => {
+          this.tickTimer = null;
+          this.setState({movingFirst, movingLast});
+        }, DEFAULT_TICK_INTERVAL);
       }
-      movingFirst = bufferKeys.get(firstIndex);
-      if (!movingFirst) {
-        movingFirst = bufferKeys.first();
-      }
-
-      if (lastIndex > -1) {
-        lastIndex += step;
-      } else {
-        lastIndex = bufferKeys.size - 1;
-      }
-      movingLast = bufferKeys.get(lastIndex);
-      if (!movingLast) {
-        movingLast = bufferKeys.last();
-      }
-
-      this.tickTimer = setTimeout(() => {
-        this.tickTimer = null;
-        this.setState({movingFirst, movingLast});
-      }, DEFAULT_TICK_INTERVAL);
     }
   }
 
   render() {
-    const { buffer } = this.state;
+    const { buffer, max } = this.state;
     const movingFirstDate = parseDate(this.state.movingFirst);
     const movingLastDate = parseDate(this.state.movingLast);
 
@@ -138,7 +148,7 @@ export default ComposedComponent => class extends React.Component {
       .filter(dateFilter);
 
     const lastValue = samples.length > 0 ? samples[samples.length - 1].value : null;
-    const slidingWindow = {first: movingFirstDate, last: movingLastDate, samples, value: lastValue};
+    const slidingWindow = {first: movingFirstDate, last: movingLastDate, max, samples, value: lastValue};
 
     return <ComposedComponent {...this.props} {...slidingWindow} />;
   }
