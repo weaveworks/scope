@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	initialRateLimit = 100 * time.Millisecond // read 10 namespaces per second
-	maxRateLimit     = 250 * time.Millisecond // lead at least 4 namespaces per second
-	targetWalkTime   = 10 * time.Second
+	initialRateLimit = 50 * time.Millisecond  // Read 20 * fdBlockSize file descriptors (/proc/PID/fd/*) per namespace per second
+	maxRateLimit     = 250 * time.Millisecond // Read at least 4 * fdBlockSize file descriptors per namespace per second
+	fdBlockSize      = 100
+	targetWalkTime   = 10 * time.Second // Aim at walking all files in 10 seconds
 
 	maxRateLimitF   = float64(maxRateLimit)
 	targetWalkTimeF = float64(targetWalkTime)
@@ -58,11 +59,11 @@ func StartBackgroundReader(walker process.Walker) {
 func (br *backgroundReader) loop() {
 	rateLimit := initialRateLimit
 
-	namespaceTicker := time.Tick(rateLimit)
+	ticker := time.Tick(rateLimit)
 
 	for {
 		start := time.Now()
-		sockets, err := walkProcPid(br.walkingBuf, br.walker, namespaceTicker)
+		sockets, err := walkProcPid(br.walkingBuf, br.walker, ticker, fdBlockSize)
 		if err != nil {
 			log.Printf("background reader: error walking /proc: %s\n", err)
 			continue
@@ -84,7 +85,7 @@ func (br *backgroundReader) loop() {
 		rateLimit = time.Duration(math.Min(scaledRateLimit, maxRateLimitF))
 		log.Printf("debug: background reader: new rate limit %s\n", rateLimit)
 
-		namespaceTicker = time.Tick(rateLimit)
+		ticker = time.Tick(rateLimit)
 
 		// Swap buffers
 		br.mtx.Lock()

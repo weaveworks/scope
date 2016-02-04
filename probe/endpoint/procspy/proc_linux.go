@@ -69,46 +69,82 @@ func getNetNamespacePathSuffix() string {
 	return netNamespacePathSuffix
 }
 
-// walkNamespacePid does the work of walkProcPid for a single namespace
-func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process) {
+// Read the connections for a group of processes living in the same namespace,
+// which are found (identically) in /proc/PID/net/tcp{,6} for any of the
+// processes.
+func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process) (bool, error) {
+	var (
+		errRead  error
+		errRead6 error
+		read     int64
+		read6    int64
+	)
 
-	// Read the connections for the namespace, which are found (identically) in
-	// /proc/PID/net/tcp{,6} for any of the processes in the namespace.
-	var tcpSuccess bool
 	for _, p := range namespaceProcs {
 		dirName := strconv.Itoa(p.PID)
 
-		read, errRead := readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
-		read6, errRead6 := readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
+		read, errRead = readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
+		read6, errRead6 = readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
 
 		if errRead != nil || errRead6 != nil {
 			// try next process
 			continue
 		}
-
-		if read+read6 == 0 {
-			// No connections, don't bother reading /fd/*
-			return
-		}
-
-		tcpSuccess = true
-		break
+		return read+read6 > 0, nil
 	}
 
-	if !tcpSuccess {
+	// would be cool to have an or operation between errors
+	if errRead != nil {
+		return false, errRead
+	}
+	if errRead6 != nil {
+		return false, errRead6
+	}
+
+	return false, nil
+
+}
+
+// walkNamespacePid does the work of walkProcPid for a single namespace
+func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process, ticker <-chan time.Time, fdBlockSize int) error {
+
+	found, err := readProcessConnections(buf, namespaceProcs)
+	if err != nil {
+		return err
+	}
+	if !found {
 		// There's no point in reading /fd/*
-		return
+		return nil
 	}
 
-	// Get the sockets for all the processes in the namespace
 	var statT syscall.Stat_t
-	for _, p := range namespaceProcs {
+	var fdBlockCount int
+	for i, p := range namespaceProcs {
+
+		// Get the sockets for all the processes in the namespace
 		dirName := strconv.Itoa(p.PID)
 		fdBase := filepath.Join(procRoot, dirName, "fd")
 
+		if fdBlockCount > fdBlockSize {
+			// we surpased the filedescriptor rate limit
+			<-ticker
+			fdBlockCount = 0
+			// read the connections again to
+			// avoid the race between between /net/tcp{,6} and /proc/PID/fd/*
+			// FIXME:refactor this
+			found, err := readProcessConnections(buf, namespaceProcs[i:])
+			if err != nil {
+				return err
+			}
+			if !found {
+				// There's no point in reading /fd/*
+				return nil
+			}
+		}
+
 		fds, err := fs.ReadDirNames(fdBase)
 		if err != nil {
-			// Process is be gone by now, or we don't have access.
+			// Process is gone by now, or we don't have access.
 			continue
 		}
 
@@ -135,16 +171,20 @@ func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProc
 			}
 
 			sockets[statT.Ino] = proc
+
+			fdBlockCount += 1
 		}
 
 	}
+
+	return nil
 }
 
 // walkProcPid walks over all numerical (PID) /proc entries. It reads
 // /proc/PID/net/tcp{,6} for each namespace and sees if the ./fd/* files of each
 // process in that namespace are symlinks to sockets. Returns a map from socket
 // ID (inode) to PID.
-func walkProcPid(buf *bytes.Buffer, walker process.Walker, namespaceTicker <-chan time.Time) (map[uint64]*Proc, error) {
+func walkProcPid(buf *bytes.Buffer, walker process.Walker, ticker <-chan time.Time, fdBlockSize int) (map[uint64]*Proc, error) {
 	var (
 		sockets    = map[uint64]*Proc{}              // map socket inode -> process
 		namespaces = map[uint64][]*process.Process{} // map network namespace id -> processes
@@ -172,8 +212,8 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker, namespaceTicker <-cha
 	})
 
 	for _, procs := range namespaces {
-		<-namespaceTicker
-		walkNamespacePid(buf, sockets, procs)
+		<-ticker
+		walkNamespacePid(buf, sockets, procs, ticker, fdBlockSize)
 	}
 
 	metrics.SetGauge(namespaceKey, float32(len(namespaces)))
