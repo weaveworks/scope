@@ -63,10 +63,10 @@ func (ts tests) Less(i, j int) bool {
 	return ts[i].name < ts[j].name
 }
 
-func (ts *tests) pick(availible int) (test, bool) {
-	// pick the first test that fits in the availible hosts
+func (ts *tests) pick(available int) (test, bool) {
+	// pick the first test that fits in the available hosts
 	for i, test := range *ts {
-		if test.hosts <= availible {
+		if test.hosts <= available {
 			*ts = append((*ts)[:i], (*ts)[i+1:]...)
 			return test, true
 		}

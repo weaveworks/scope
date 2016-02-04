@@ -607,6 +607,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/hashicorp/go-cleanhttp",
+			"repository": "https://github.com/hashicorp/go-cleanhttp",
+			"revision": "ce617e79981a8fff618bb643d155133a8f38db96",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/hashicorp/go-version",
 			"repository": "https://github.com/hashicorp/go-version",
 			"revision": "7e3c02b30806fa5779d3bdfc152ce4c6f40e7b38",
@@ -733,6 +739,12 @@
 			"revision": "8a2a3a8c488c3ebd98f422a965260278267a0551",
 			"branch": "master",
 			"path": "/codec"
+		},
+		{
+			"importpath": "github.com/weaveworks/go-checkpoint",
+			"repository": "https://github.com/weaveworks/go-checkpoint",
+			"revision": "285991b3508f51033aa288a38d242b9ad26c5274",
+			"branch": "master"
 		},
 		{
 			"importpath": "github.com/weaveworks/go-odp/odp",

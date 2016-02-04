@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
 
 	"github.com/weaveworks/scope/app"
@@ -41,6 +42,18 @@ func appMain() {
 	log.SetPrefix(*logPrefix)
 
 	defer log.Print("app exiting")
+
+	// Start background version checking
+	checkpoint.CheckInterval(&checkpoint.CheckParams{
+		Product:       "scope-app",
+		Version:       app.Version,
+		SignatureFile: signatureFile,
+	}, versionCheckPeriod, func(r *checkpoint.CheckResponse, err error) {
+		if r.Outdated {
+			log.Printf("Scope version %s is available; please update at %s",
+				r.CurrentVersion, r.CurrentDownloadURL)
+		}
+	})
 
 	rand.Seed(time.Now().UnixNano())
 	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
