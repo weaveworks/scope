@@ -33,7 +33,7 @@ import (
 
 const (
 	signatureFile      = "/etc/weave/signature"
-	versionCheckPeriod = 6 * 60 * time.Minute
+	versionCheckPeriod = 6 * time.Hour
 )
 
 func check() {

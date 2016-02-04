@@ -57,7 +57,7 @@ the Internet.  Additionally traffic between the app and the probe is currently
 insecure and should not traverse the internet.
 
 Scope will periodically check with our servers to see if a new version is
-availible.  To disable this, run:
+available.  To disable this, run:
 
 ```
 CHECKPOINT_DISABLE=true scope launch

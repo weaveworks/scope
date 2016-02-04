@@ -44,14 +44,13 @@ func appMain() {
 	defer log.Print("app exiting")
 
 	// Start background version checking
-	params := checkpoint.CheckParams{
+	checkpoint.CheckInterval(&checkpoint.CheckParams{
 		Product:       "scope-app",
 		Version:       app.Version,
 		SignatureFile: signatureFile,
-	}
-	checkpoint.CheckInterval(&params, versionCheckPeriod, func(r *checkpoint.CheckResponse, err error) {
+	}, versionCheckPeriod, func(r *checkpoint.CheckResponse, err error) {
 		if r.Outdated {
-			log.Printf("Scope version %s is availible; please update at %s",
+			log.Printf("Scope version %s is available; please update at %s",
 				r.CurrentVersion, r.CurrentDownloadURL)
 		}
 	})
