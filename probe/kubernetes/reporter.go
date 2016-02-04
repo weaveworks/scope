@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"github.com/weaveworks/scope/report"
+	"k8s.io/kubernetes/pkg/labels"
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
@@ -52,10 +53,14 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 
 func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topology, error) {
 	pods, containers := report.MakeTopology(), report.MakeTopology()
+	selectors := map[string]labels.Selector{}
+	for _, service := range services {
+		selectors[service.ID()] = service.Selector()
+	}
 	err := r.client.WalkPods(func(p Pod) error {
-		for _, service := range services {
-			if service.Selector().Matches(p.Labels()) {
-				p.AddServiceID(service.ID())
+		for serviceID, selector := range selectors {
+			if selector.Matches(p.Labels()) {
+				p.AddServiceID(serviceID)
 			}
 		}
 		nodeID := report.MakePodNodeID(p.Namespace(), p.Name())
