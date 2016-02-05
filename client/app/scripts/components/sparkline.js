@@ -1,126 +1,101 @@
 // Forked from: https://github.com/KyleAMathews/react-sparkline at commit a9d7c5203d8f240938b9f2288287aaf0478df013
 import React from 'react';
-import ReactDOM from 'react-dom';
 import d3 from 'd3';
 
+const parseDate = d3.time.format.iso.parse;
+
 export default class Sparkline extends React.Component {
-  componentDidMount() {
-    return this.renderSparkline();
+
+  constructor(props, context) {
+    super(props, context);
+    this.x = d3.scale.linear();
+    this.y = d3.scale.linear();
+    this.line = d3.svg.line()
+      .x(d => this.x(d.date))
+      .y(d => this.y(d.value));
   }
 
-  renderSparkline() {
-    // If the sparkline has already been rendered, remove it.
-    const el = ReactDOM.findDOMNode(this);
-    while (el.firstChild) {
-      el.removeChild(el.firstChild);
+  getGraphData() {
+    // data is of shape [{date, value}, ...] and is sorted by date (ASC)
+    let data = this.props.data;
+
+    // Do nothing if no data or data w/o date are passed in.
+    if (data.length === 0 || data[0].date === undefined) {
+      return <div />;
     }
 
-    const data = this.props.data.slice();
+    // adjust scales
+    this.x.range([2, this.props.width - 2]);
+    this.y.range([this.props.height - 2, 2]);
+    this.line.interpolate(this.props.interpolate);
 
-    // Do nothing if no data is passed in.
-    if (data.length === 0) {
-      return;
+    // Convert dates into D3 dates
+    data = data.map(d => {
+      return {
+        date: parseDate(d.date),
+        value: d.value
+      };
+    });
+
+    // determine date range
+    let firstDate = this.props.first ? parseDate(this.props.first) : data[0].date;
+    let lastDate = this.props.last ? parseDate(this.props.last) : data[data.length - 1].date;
+    // if last prop is after last value, we need to add that difference as
+    // padding before first value to right-align sparkline
+    const skip = lastDate - data[data.length - 1].date;
+    if (skip > 0) {
+      firstDate -= skip;
+      lastDate -= skip;
     }
+    this.x.domain([firstDate, lastDate]);
 
-    const x = d3.scale.linear().range([2, this.props.width - 2]);
-    const y = d3.scale.linear().range([this.props.height - 2, 2]);
+    // determine value range
+    const minValue = this.props.min !== undefined ? this.props.min : d3.min(data, d => d.value);
+    const maxValue = this.props.max !== undefined ? Math.max(this.props.max, d3.max(data, d => d.value)) : d3.max(data, d => d.value);
+    this.y.domain([minValue, maxValue]);
 
-    // react-sparkline allows you to pass in two types of data.
-    // Data tied to dates and linear data. We need to change our line and x/y
-    // functions depending on the type of data.
+    const lastValue = data[data.length - 1].value;
+    const lastX = this.x(lastDate);
+    const lastY = this.y(lastValue);
+    const title = 'Last ' + d3.round((lastDate - firstDate) / 1000) + ' seconds, ' +
+      data.length + ' samples, min: ' + d3.round(d3.min(data, d => d.value), 2) +
+      ', max: ' + d3.round(d3.max(data, d => d.value), 2) +
+      ', mean: ' + d3.round(d3.mean(data, d => d.value), 2);
 
-    // These are objects with a date key
-    let line;
-    let lastX;
-    let lastY;
-    let title;
-    if (data[0].date) {
-      // Convert dates into D3 dates
-      data.forEach(d => {
-        d.date = d3.time.format.iso.parse(d.date);
-      });
-
-      line = d3.svg.line().
-        interpolate(this.props.interpolate).
-        x(d => x(d.date)).
-        y(d => y(d.value));
-
-      const first = this.props.first ? d3.time.format.iso.parse(this.props.first) : d3.min(data, d => d.date);
-      const last = this.props.last ? d3.time.format.iso.parse(this.props.last) : d3.max(data, d => d.date);
-      x.domain([first, last]);
-
-      y.domain([
-        this.props.min || d3.min(data, d => d.value),
-        this.props.max || d3.max(data, d => d.value)
-      ]);
-
-      lastX = x(data[data.length - 1].date);
-      lastY = y(data[data.length - 1].value);
-      title = 'Last ' + d3.round((last - first) / 1000) + ' seconds, ' + data.length + ' samples, min: ' + d3.round(d3.min(data, d => d.value), 2) + ', max: ' + d3.round(d3.max(data, d => d.value), 2) + ', mean: ' + d3.round(d3.mean(data, d => d.value), 2);
-    } else {
-      line = d3.svg.line().
-        interpolate(this.props.interpolate).
-        x((d, i) => x(i)).
-        y(d => y(d));
-
-      x.domain([
-        this.props.first || 0,
-        this.props.last || data.length
-      ]);
-
-      y.domain([
-        this.props.min || d3.min(data),
-        this.props.max || d3.max(data)
-      ]);
-
-      lastX = x(data.length - 1);
-      lastY = y(data[data.length - 1]);
-      title = data.length + ' samples, min: ' + d3.round(d3.min(data), 2) + ', max: ' + d3.round(d3.max(data), 2) + ', mean: ' + d3.round(d3.mean(data), 2);
-    }
-
-    d3.select(ReactDOM.findDOMNode(this)).attr('title', title);
-
-    const svg = d3.select(ReactDOM.findDOMNode(this)).
-      append('svg').
-      attr('width', this.props.width).
-      attr('height', this.props.height).
-      append('g');
-
-    svg.append('path').
-      datum(data).
-      attr('class', 'sparkline').
-      style('fill', 'none').
-      style('stroke', this.props.strokeColor).
-      style('stroke-width', this.props.strokeWidth).
-      attr('d', line);
-
-    svg.append('circle').
-      attr('class', 'sparkcircle').
-      attr('cx', lastX).
-      attr('cy', lastY).
-      attr('fill', '#46466a').
-      attr('fill-opacity', 0.6).
-      attr('stroke', 'none').
-      attr('r', this.props.circleDiameter);
+    return {title, lastX, lastY, data};
   }
 
   render() {
+    // Do nothing if no data or data w/o date are passed in.
+    if (this.props.data.length === 0 || this.props.data[0].date === undefined) {
+      return <div />;
+    }
+
+    const {lastX, lastY, title, data} = this.getGraphData();
+
     return (
-      <div/>
+      <div title={title}>
+        <svg width={this.props.width} height={this.props.height}>
+          <path className="sparkline" fill="none" stroke={this.props.strokeColor}
+            strokeWidth={this.props.strokeWidth} ref="path" d={this.line(data)} />
+          <circle className="sparkcircle" cx={lastX} cy={lastY} fill="#46466a"
+            fillOpacity="0.6" stroke="none" r={this.props.circleDiameter} />
+        </svg>
+      </div>
     );
   }
 
-  componentDidUpdate() {
-    return this.renderSparkline();
-  }
 }
+
+Sparkline.propTypes = {
+  data: React.PropTypes.array.isRequired
+};
 
 Sparkline.defaultProps = {
   width: 80,
-  height: 16,
+  height: 24,
   strokeColor: '#7d7da8',
   strokeWidth: '0.5px',
-  interpolate: 'basis',
-  circleDiameter: 1.75,
-  data: [1, 23, 5, 5, 23, 0, 0, 0, 4, 32, 3, 12, 3, 1, 24, 1, 5, 5, 24, 23] // Some semi-random data.
+  interpolate: 'none',
+  circleDiameter: 1.75
 };

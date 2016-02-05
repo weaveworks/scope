@@ -8,7 +8,7 @@ export default class NodeDetailsHealthOverflow extends React.Component {
 
     return (
       <div className="node-details-health-overflow" onClick={this.props.handleClickMore}>
-        {items.map(item => <NodeDetailsHealthOverflowItem key={item.id} item={item} />)}
+        {items.map(item => <NodeDetailsHealthOverflowItem key={item.id} {...item} />)}
         <div className="node-details-health-overflow-expand">
           Show more
         </div>

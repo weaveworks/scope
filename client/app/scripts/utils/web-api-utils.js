@@ -6,13 +6,13 @@ import { clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveControlPipe, receiveControlPipeStatus, receiveControlSuccess,
   receiveTopologies, receiveNotFound } from '../actions/app-actions';
 
+import { API_INTERVAL, TOPOLOGY_INTERVAL } from '../constants/timer';
+
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = wsProto + '://' + location.host + location.pathname.replace(/\/$/, '');
 const log = debug('scope:web-api-utils');
 
-const apiTimerInterval = 10000;
 const reconnectTimerInterval = 5000;
-const topologyTimerInterval = apiTimerInterval;
 const updateFrequency = '5s';
 
 let socket;
@@ -95,14 +95,14 @@ export function getTopologies(options) {
       receiveTopologies(res);
       topologyTimer = setTimeout(function() {
         getTopologies(options);
-      }, topologyTimerInterval / 2);
+      }, TOPOLOGY_INTERVAL);
     },
     error: function(err) {
       log('Error in topology request: ' + err);
       receiveError(url);
       topologyTimer = setTimeout(function() {
         getTopologies(options);
-      }, topologyTimerInterval / 2);
+      }, TOPOLOGY_INTERVAL / 2);
     }
   });
 }
@@ -155,12 +155,12 @@ export function getApiDetails() {
     url: url,
     success: function(res) {
       receiveApiDetails(res);
-      apiDetailsTimer = setTimeout(getApiDetails, apiTimerInterval);
+      apiDetailsTimer = setTimeout(getApiDetails, API_INTERVAL);
     },
     error: function(err) {
       log('Error in api details request: ' + err);
       receiveError(url);
-      apiDetailsTimer = setTimeout(getApiDetails, apiTimerInterval / 2);
+      apiDetailsTimer = setTimeout(getApiDetails, API_INTERVAL / 2);
     }
   });
 }
