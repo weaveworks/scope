@@ -5,8 +5,6 @@ package procspy
 
 import (
 	"net"
-
-	"github.com/weaveworks/scope/probe/process"
 )
 
 const (
@@ -35,11 +33,13 @@ type ConnIter interface {
 	Next() *Connection
 }
 
-// Connections returns all established (TCP) connections.  If processes is
-// false we'll just list all TCP connections, and there is no need to be root.
-// If processes is true it'll additionally try to lookup the process owning the
-// connection, filling in the Proc field. You will need to run this as root to
-// find all processes.
-func Connections(processes bool, walker process.Walker) (ConnIter, error) {
-	return cbConnections(processes, walker)
+type ConnectionScanner interface {
+	// Connections returns all established (TCP) connections.  If processes is
+	// false we'll just list all TCP connections, and there is no need to be root.
+	// If processes is true it'll additionally try to lookup the process owning the
+	// connection, filling in the Proc field. You will need to run this as root to
+	// find all processes.
+	Connections(processes bool) (ConnIter, error)
+	// Stops the scanning
+	Stop()
 }

@@ -21,36 +21,43 @@ const (
 type backgroundReader struct {
 	walker       process.Walker
 	mtx          sync.Mutex
+	running      bool
+	pleaseStop   bool
 	walkingBuf   *bytes.Buffer
 	readyBuf     *bytes.Buffer
 	readySockets map[uint64]*Proc
 }
 
-// HACK: Pretty ugly singleton interface (particularly the part of passing
-// the walker to StartBackgroundReader() and ignoring it in in Connections() )
-// experimenting with this for now.
-var singleton *backgroundReader
-
-func getBackgroundReader() (*backgroundReader, error) {
-	var err error
-	if singleton == nil {
-		err = fmt.Errorf("background reader hasn't yet been started")
-	}
-	return singleton, err
-}
-
-// StartBackgroundReader starts a ratelimited background goroutine to
-// read the expensive files from proc.
-func StartBackgroundReader(walker process.Walker) {
-	if singleton != nil {
-		return
-	}
-	singleton = &backgroundReader{
+// starts a rate-limited background goroutine to read the expensive files from
+// proc.
+func newBackgroundReader(walker process.Walker) *backgroundReader {
+	br := &backgroundReader{
 		walker:     walker,
 		walkingBuf: bytes.NewBuffer(make([]byte, 0, 5000)),
 		readyBuf:   bytes.NewBuffer(make([]byte, 0, 5000)),
 	}
-	go singleton.loop()
+	return br
+}
+
+func (br *backgroundReader) start() error {
+	br.mtx.Lock()
+	defer br.mtx.Unlock()
+	if br.running {
+		return fmt.Errorf("background reader already running")
+	}
+	br.running = true
+	go br.loop()
+	return nil
+}
+
+func (br *backgroundReader) stop() error {
+	br.mtx.Lock()
+	defer br.mtx.Unlock()
+	if !br.running {
+		return fmt.Errorf("background reader already not running")
+	}
+	br.pleaseStop = true
+	return nil
 }
 
 func (br *backgroundReader) loop() {
@@ -87,8 +94,17 @@ func (br *backgroundReader) loop() {
 
 		ticker = time.Tick(rateLimit)
 
-		// Swap buffers
 		br.mtx.Lock()
+
+		// Should we stop?
+		if br.pleaseStop {
+			br.pleaseStop = false
+			br.running = false
+			br.mtx.Unlock()
+			return
+		}
+
+		// Swap buffers
 		br.readyBuf, br.walkingBuf = br.walkingBuf, br.readyBuf
 		br.readySockets = sockets
 		br.mtx.Unlock()

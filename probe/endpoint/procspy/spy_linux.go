@@ -32,19 +32,24 @@ func (c *pnConnIter) Next() *Connection {
 	return n
 }
 
-// cbConnections sets Connections()
-var cbConnections = func(processes bool, _ process.Walker) (ConnIter, error) {
+func NewConnectionScanner(walker process.Walker) ConnectionScanner {
+	br := newBackgroundReader(walker)
+	br.start()
+	return &linuxScanner{br}
+}
+
+type linuxScanner struct {
+	br *backgroundReader
+}
+
+func (s *linuxScanner) Connections(processes bool) (ConnIter, error) {
 	// buffer for contents of /proc/<pid>/net/tcp
 	buf := bufPool.Get().(*bytes.Buffer)
 	buf.Reset()
 
 	var procs map[uint64]*Proc
 	if processes {
-		br, err := getBackgroundReader()
-		if err != nil {
-			return nil, err
-		}
-		procs = br.getWalkedProcPid(buf)
+		procs = s.br.getWalkedProcPid(buf)
 	}
 
 	if buf.Len() == 0 {
@@ -57,4 +62,8 @@ var cbConnections = func(processes bool, _ process.Walker) (ConnIter, error) {
 		buf:   buf,
 		procs: procs,
 	}, nil
+}
+
+func (s *linuxScanner) Stop() {
+	s.br.stop()
 }

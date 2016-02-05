@@ -1,13 +1,5 @@
 package procspy
 
-import (
-	"github.com/weaveworks/scope/probe/process"
-)
-
-// SetFixtures declares constant Connection and ConnectionProcs which will
-// always be returned by the package-level Connections and Processes
-// functions. It's designed to be used in tests.
-
 type fixedConnIter []Connection
 
 func (f *fixedConnIter) Next() *Connection {
@@ -21,10 +13,13 @@ func (f *fixedConnIter) Next() *Connection {
 	return &car
 }
 
-// SetFixtures is used in test scenarios to have known output.
-func SetFixtures(c []Connection) {
-	cbConnections = func(bool, process.Walker) (ConnIter, error) {
-		f := fixedConnIter(c)
-		return &f, nil
-	}
+// fixedScanner implements ConnectionScanner and uses constant Connection and
+// ConnectionProcs.  It's designed to be used in tests.
+type fixedScanner []Connection
+
+func (s fixedScanner) Connections() (ConnIter, error) {
+	iter := fixedConnIter(s)
+	return &iter, nil
 }
+
+func (s fixedScanner) Stop() {}
