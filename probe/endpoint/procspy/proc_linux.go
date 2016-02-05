@@ -108,13 +108,8 @@ func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process
 // walkNamespacePid does the work of walkProcPid for a single namespace
 func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process, ticker <-chan time.Time, fdBlockSize int) error {
 
-	found, err := readProcessConnections(buf, namespaceProcs)
-	if err != nil {
+	if found, err := readProcessConnections(buf, namespaceProcs); err != nil || !found {
 		return err
-	}
-	if !found {
-		// There's no point in reading /fd/*
-		return nil
 	}
 
 	var statT syscall.Stat_t
@@ -126,19 +121,14 @@ func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProc
 		fdBase := filepath.Join(procRoot, dirName, "fd")
 
 		if fdBlockCount > fdBlockSize {
-			// we surpased the filedescriptor rate limit
+			// we surpassed the filedescriptor rate limit
 			<-ticker
 			fdBlockCount = 0
+
 			// read the connections again to
 			// avoid the race between between /net/tcp{,6} and /proc/PID/fd/*
-			// FIXME:refactor this
-			found, err := readProcessConnections(buf, namespaceProcs[i:])
-			if err != nil {
+			if found, err := readProcessConnections(buf, namespaceProcs[i:]); err != nil || !found {
 				return err
-			}
-			if !found {
-				// There's no point in reading /fd/*
-				return nil
 			}
 		}
 
@@ -150,6 +140,8 @@ func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProc
 
 		var proc *Proc
 		for _, fd := range fds {
+			fdBlockCount++
+
 			// Direct use of syscall.Stat() to save garbage.
 			err = fs.Stat(filepath.Join(fdBase, fd), &statT)
 			if err != nil {
@@ -171,8 +163,6 @@ func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProc
 			}
 
 			sockets[statT.Ino] = proc
-
-			fdBlockCount += 1
 		}
 
 	}

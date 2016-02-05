@@ -16,9 +16,6 @@ const (
 	maxRateLimit     = 250 * time.Millisecond // Read at least 4 * fdBlockSize file descriptors per namespace per second
 	fdBlockSize      = 100
 	targetWalkTime   = 10 * time.Second // Aim at walking all files in 10 seconds
-
-	maxRateLimitF   = float64(maxRateLimit)
-	targetWalkTimeF = float64(targetWalkTime)
 )
 
 type backgroundReader struct {
@@ -57,10 +54,13 @@ func StartBackgroundReader(walker process.Walker) {
 }
 
 func (br *backgroundReader) loop() {
+	const (
+		maxRateLimitF   = float64(maxRateLimit)
+		targetWalkTimeF = float64(targetWalkTime)
+	)
+
 	rateLimit := initialRateLimit
-
 	ticker := time.Tick(rateLimit)
-
 	for {
 		start := time.Now()
 		sockets, err := walkProcPid(br.walkingBuf, br.walker, ticker, fdBlockSize)
