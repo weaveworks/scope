@@ -23,7 +23,7 @@ const (
 	TheInternetID    = "theinternet"
 	TheInternetMajor = "The Internet"
 
-	containersKey = "containers"
+	ContainersKey = "containers"
 	ipsKey        = "ips"
 	podsKey       = "pods"
 	processesKey  = "processes"
@@ -520,7 +520,7 @@ func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) Renderable
 	// Add container id key to the counters, which will later be counted to produce the minor label
 	id := MakeContainerImageID(imageID)
 	result := NewDerivedNode(id, n.WithParents(report.EmptySets))
-	result.Node.Counters = result.Node.Counters.Add(containersKey, 1)
+	result.Node.Counters = result.Node.Counters.Add(ContainersKey, 1)
 
 	// Add the container as a child of the new image node
 	result.Children = result.Children.Add(n.Node)
@@ -653,7 +653,7 @@ func MapContainer2Pod(n RenderableNode, _ report.Networks) RenderableNodes {
 	// Add container-<id> key to NMD, which will later be counted to produce the
 	// minor label
 	result := NewRenderableNodeWith(id, "", "", podID, n.WithParents(report.EmptySets))
-	result.Counters = result.Counters.Add(containersKey, 1)
+	result.Counters = result.Counters.Add(ContainersKey, 1)
 
 	// Due to a bug in kubernetes, addon pods on the master node are not returned
 	// from the API. This is a workaround until
@@ -690,7 +690,7 @@ func MapContainer2Hostname(n RenderableNode, _ report.Networks) RenderableNodes 
 	result.Rank = id
 
 	// Add container id key to the counters, which will later be counted to produce the minor label
-	result.Counters = result.Counters.Add(containersKey, 1)
+	result.Counters = result.Counters.Add(ContainersKey, 1)
 
 	result.Node.Topology = "container_hostname"
 	result.Node.ID = id
@@ -708,7 +708,7 @@ func MapCountContainers(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{n.ID: n}
 	}
 
-	containers, _ := n.Node.Counters.Lookup(containersKey)
+	containers, _ := n.Node.Counters.Lookup(ContainersKey)
 	if containers == 1 {
 		n.LabelMinor = "1 container"
 	} else {
