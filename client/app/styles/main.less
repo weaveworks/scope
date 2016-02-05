@@ -24,6 +24,8 @@
 @primary-color: @weave-charcoal-blue;
 @background-color: lighten(@primary-color, 66%);
 @background-secondary-color: lighten(@background-color, 8%);
+@background-tertiary-color: lighten(@background-color, 10%);
+@background-dark-secondary-color: darken(@background-color, 2%);
 @background-dark-color: @primary-color;
 @background-medium-color: lighten(@background-dark-color, 55%);
 @text-color: lighten(@primary-color, 10%);
@@ -50,8 +52,7 @@
 }
 
 .palable {
-  transition: opacity .2s ease-in-out;
-  transition: border-color .2s ease-in-out;
+  transition: all .2s ease-in-out;
 }
 
 .hideable {
@@ -164,26 +165,23 @@ h2 {
 .topologies {
   float: left;
   margin: 4px 64px;
+  display: flex;
 
   .topologies-item {
-    margin: 0px 16px;
-    float: left;
+    margin: 0px 12px;
 
     &-label {
-      color: @text-secondary-color;
-      font-size: 16px;
+      color: @text-color;
+      font-size: 13px;
       text-transform: uppercase;
     }
 
   }
 
   .topologies-sub {
-    margin-top: 4px;
-
     &-item {
       &-label {
-        color: @text-secondary-color;
-        font-size: 12px;
+        font-size: 11px;
         text-transform: uppercase;
       }
     }
@@ -191,15 +189,31 @@ h2 {
 
   .topologies-item-main,
   .topologies-sub-item {
+    .palable;
     cursor: pointer;
+    padding: 4px 8px;
+    opacity: 0.7;
+    border-radius: 4px;
+    border: 1px solid @background-dark-secondary-color;
+    opacity: 0.7;
+    margin-bottom: 4px;
 
     &-active, &:hover {
-      .topologies-sub-item-label,
-      .topologies-item-label {
-        color: @text-color;
-      }
+      background-color: @background-tertiary-color;
+
     }
 
+    &-active {
+      opacity: 0.85;
+    }
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  .topologies-sub-item {
+    padding: 2px 8px;
   }
 
 }
