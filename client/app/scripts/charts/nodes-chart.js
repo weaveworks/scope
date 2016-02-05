@@ -143,6 +143,8 @@ export default class NodesChart extends React.Component {
             focused={node.get('focused')}
             highlighted={node.get('highlighted')}
             topologyId={this.props.topologyId}
+            shape={node.get('shape')}
+            stack={node.get('stack')}
             onClick={onNodeClick}
             key={node.get('id')}
             id={node.get('id')}
@@ -245,6 +247,8 @@ export default class NodesChart extends React.Component {
         pseudo: node.get('pseudo'),
         subLabel: node.get('label_minor'),
         rank: node.get('rank'),
+        shape: node.get('shape'),
+        stack: node.get('stack'),
         x: 0,
         y: 0
       });

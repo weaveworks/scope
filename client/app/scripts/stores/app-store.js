@@ -41,6 +41,8 @@ function makeNode(node) {
     label_minor: node.label_minor,
     rank: node.rank,
     pseudo: node.pseudo,
+    stack: node.stack,
+    shape: node.shape,
     adjacency: node.adjacency
   };
 }

@@ -20,25 +20,18 @@ function stackedShape(Shape) {
 }
 
 const nodeShapes = {
-  'hosts': NodeShapeCircle,
-  'containers': NodeShapeHex,
-  'containers-by-hostname': stackedShape(NodeShapeHex),
-  'containers-by-image': stackedShape(NodeShapeHex),
-  'applications': NodeShapeRoundedSquare,
-  'applications-by-name': stackedShape(NodeShapeRoundedSquare)
+  'circle': NodeShapeCircle,
+  'hexagon': NodeShapeHex,
+  'square': NodeShapeRoundedSquare,
+  'cloud': NodeShapeCloud
 };
 
-function isTheInternet(id) {
-  return id === 'theinternet';
-}
-
-function getNodeShape({id, pseudo, topologyId}) {
-  if (isTheInternet(id)) {
-    return NodeShapeCloud;
-  } else if (pseudo) {
-    return NodeShapeCircle;
+function getNodeShape({shape, stack}) {
+  const nodeShape = nodeShapes[shape];
+  if (!nodeShape) {
+    throw new Error(`Unkown shape: ${shape}!`);
   }
-  return nodeShapes[topologyId];
+  return stack ? stackedShape(nodeShape) : nodeShape;
 }
 
 export default class Node extends React.Component {
