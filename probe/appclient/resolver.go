@@ -1,11 +1,12 @@
 package appclient
 
 import (
-	"log"
 	"net"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 )
@@ -74,7 +75,7 @@ func prepare(strs []string) []target {
 			var err error
 			host, port, err = net.SplitHostPort(s)
 			if err != nil {
-				log.Printf("invalid address %s: %v", s, err)
+				log.Errorf("invalid address %s: %v", s, err)
 				continue
 			}
 		} else {

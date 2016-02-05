@@ -1,10 +1,10 @@
 package docker
 
 import (
-	"log"
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe/controls"
@@ -139,22 +139,22 @@ func (r *registry) listenForEvents() bool {
 	// after listing but before listening for events.
 	events := make(chan *docker_client.APIEvents)
 	if err := r.client.AddEventListener(events); err != nil {
-		log.Printf("docker registry: %s", err)
+		log.Errorf("docker registry: %s", err)
 		return true
 	}
 	defer func() {
 		if err := r.client.RemoveEventListener(events); err != nil {
-			log.Printf("docker registry: %s", err)
+			log.Errorf("docker registry: %s", err)
 		}
 	}()
 
 	if err := r.updateContainers(); err != nil {
-		log.Printf("docker registry: %s", err)
+		log.Errorf("docker registry: %s", err)
 		return true
 	}
 
 	if err := r.updateImages(); err != nil {
-		log.Printf("docker registry: %s", err)
+		log.Errorf("docker registry: %s", err)
 		return true
 	}
 
@@ -166,7 +166,7 @@ func (r *registry) listenForEvents() bool {
 
 		case <-otherUpdates:
 			if err := r.updateImages(); err != nil {
-				log.Printf("docker registry: %s", err)
+				log.Errorf("docker registry: %s", err)
 				return true
 			}
 
@@ -241,7 +241,7 @@ func (r *registry) updateContainerState(containerID string) {
 	if err != nil {
 		// Don't spam the logs if the container was short lived
 		if _, ok := err.(*docker_client.NoSuchContainer); !ok {
-			log.Printf("Error processing event for container %s: %v", containerID, err)
+			log.Errorf("Error processing event for container %s: %v", containerID, err)
 			return
 		}
 
@@ -281,7 +281,7 @@ func (r *registry) updateContainerState(containerID string) {
 	// And finally, ensure we gather stats for it
 	if dockerContainer.State.Running {
 		if err := c.StartGatheringStats(); err != nil {
-			log.Printf("Error gather stats for container: %s", containerID)
+			log.Errorf("Error gather stats for container: %s", containerID)
 			return
 		}
 	} else {

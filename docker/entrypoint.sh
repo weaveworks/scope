@@ -88,6 +88,16 @@ while true; do
             fi
             APP_ARGS="$APP_ARGS -$ARG_NAME=$ARG_VALUE"
             ;;
+	--debug)
+            APP_ARGS="$APP_ARGS -log.level=debug"
+	    PROBE_ARGS="$PROBE_ARGS -log.level=debug"
+            ;;
+        --no-app)
+            touch /etc/service/app/down
+            ;;
+        --no-probe)
+            touch /etc/service/probe/down
+            ;;
         --probe.*)
             if echo "$1" | grep "=" 1>/dev/null; then
                 ARG_NAME=$(echo "$1" | sed 's/\-\-probe\.\([^=]*\)=\(.*\)/\1/')
@@ -111,12 +121,6 @@ while true; do
             PROBE_ARGS="$PROBE_ARGS -token=$ARG_VALUE"
             TOKEN_PROVIDED=true
             touch /etc/service/app/down
-            ;;
-        --no-app)
-            touch /etc/service/app/down
-            ;;
-        --no-probe)
-            touch /etc/service/probe/down
             ;;
         *)
             break

@@ -238,6 +238,12 @@ Then, run the local build via
 
 Scope has a collection of built in debugging tools to aid Scope delevopers.
 
+- To get debug information in the logs launch Scope with `--debug`:
+```
+scope launch --debug
+docker logs weavescope
+```
+
 - To have the Scope App or Scope Probe dump their goroutine stacks, run:
 ```
 kill -QUIT $(pgrep -f scope-(app|probe))

@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/rpc"
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
 
 	"github.com/weaveworks/scope/common/sanitize"
@@ -170,7 +170,7 @@ func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
 			continue
 		}
 
-		log.Printf("Error doing %s for %s, backing off %s: %v", msg, c.target, backoff, err)
+		log.Errorf("Error doing %s for %s, backing off %s: %v", msg, c.target, backoff, err)
 		select {
 		case <-time.After(backoff):
 		case <-c.quit:
@@ -192,7 +192,7 @@ func (c *appClient) controlConnection() (bool, error) {
 		return false, err
 	}
 	defer func() {
-		log.Printf("Closing control connection to %s", c.target)
+		log.Infof("Closing control connection to %s", c.target)
 		conn.Close()
 	}()
 
@@ -214,8 +214,8 @@ func (c *appClient) controlConnection() (bool, error) {
 
 func (c *appClient) ControlConnection() {
 	go func() {
-		log.Printf("Control connection to %s starting", c.target)
-		defer log.Printf("Control connection to %s exiting", c.target)
+		log.Infof("Control connection to %s starting", c.target)
+		defer log.Infof("Control connection to %s exiting", c.target)
 		c.doWithBackoff("controls", c.controlConnection)
 	}()
 }
@@ -242,8 +242,8 @@ func (c *appClient) publish(r io.Reader) error {
 
 func (c *appClient) startPublishing() {
 	go func() {
-		log.Printf("Publish loop for %s starting", c.target)
-		defer log.Printf("Publish loop for %s exiting", c.target)
+		log.Infof("Publish loop for %s starting", c.target)
+		defer log.Infof("Publish loop for %s exiting", c.target)
 		c.doWithBackoff("publish", func() (bool, error) {
 			r := <-c.readers
 			if r == nil {
@@ -291,8 +291,8 @@ func (c *appClient) pipeConnection(id string, pipe xfer.Pipe) (bool, error) {
 
 func (c *appClient) PipeConnection(id string, pipe xfer.Pipe) {
 	go func() {
-		log.Printf("Pipe %s connection to %s starting", id, c.target)
-		defer log.Printf("Pipe %s connection to %s exiting", id, c.target)
+		log.Infof("Pipe %s connection to %s starting", id, c.target)
+		defer log.Infof("Pipe %s connection to %s exiting", id, c.target)
 		c.doWithBackoff(id, func() (bool, error) {
 			return c.pipeConnection(id, pipe)
 		})

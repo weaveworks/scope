@@ -1,10 +1,10 @@
 package probe
 
 import (
-	"log"
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
 
 	"github.com/weaveworks/scope/probe/appclient"
@@ -123,7 +123,7 @@ func (p *Probe) tick() {
 		err := ticker.Tick()
 		metrics.MeasureSince([]string{ticker.Name(), "ticker"}, t)
 		if err != nil {
-			log.Printf("error doing ticker: %v", err)
+			log.Errorf("error doing ticker: %v", err)
 		}
 	}
 }
@@ -136,7 +136,7 @@ func (p *Probe) report() report.Report {
 			newReport, err := rep.Report()
 			metrics.MeasureSince([]string{rep.Name(), "reporter"}, t)
 			if err != nil {
-				log.Printf("error generating report: %v", err)
+				log.Errorf("error generating report: %v", err)
 				newReport = report.MakeReport() // empty is OK to merge
 			}
 			reports <- newReport
@@ -157,7 +157,7 @@ func (p *Probe) tag(r report.Report) report.Report {
 		r, err = tagger.Tag(r)
 		metrics.MeasureSince([]string{tagger.Name(), "tagger"}, t)
 		if err != nil {
-			log.Printf("error applying tagger: %v", err)
+			log.Errorf("error applying tagger: %v", err)
 		}
 	}
 	return r
@@ -175,7 +175,7 @@ ForLoop:
 	}
 
 	if err := p.publisher.Publish(rpt); err != nil {
-		log.Printf("publish: %v", err)
+		log.Infof("publish: %v", err)
 	}
 }
 

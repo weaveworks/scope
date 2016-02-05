@@ -2,14 +2,13 @@ package main
 
 import (
 	"flag"
-	"log"
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
 	"strconv"
-	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
@@ -32,16 +31,15 @@ func appMain() {
 	var (
 		window    = flag.Duration("window", 15*time.Second, "window")
 		listen    = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
+		logLevel  = flag.String("log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
 		logPrefix = flag.String("log.prefix", "<app>", "prefix for each log line")
 	)
 	flag.Parse()
 
-	if !strings.HasSuffix(*logPrefix, " ") {
-		*logPrefix += " "
-	}
-	log.SetPrefix(*logPrefix)
+	setLogLevel(*logLevel)
+	setLogFormatter(*logPrefix)
 
-	defer log.Print("app exiting")
+	defer log.Info("app exiting")
 
 	// Start background version checking
 	checkpoint.CheckInterval(&checkpoint.CheckParams{
@@ -50,7 +48,7 @@ func appMain() {
 		SignatureFile: signatureFile,
 	}, versionCheckPeriod, func(r *checkpoint.CheckResponse, err error) {
 		if r.Outdated {
-			log.Printf("Scope version %s is available; please update at %s",
+			log.Infof("Scope version %s is available; please update at %s",
 				r.CurrentVersion, r.CurrentDownloadURL)
 		}
 	})
@@ -58,11 +56,11 @@ func appMain() {
 	rand.Seed(time.Now().UnixNano())
 	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
 	app.Version = version
-	log.Printf("app starting, version %s, ID %s", app.Version, app.UniqueID)
+	log.Infof("app starting, version %s, ID %s", app.Version, app.UniqueID)
 	handler := router(app.NewCollector(*window))
 	go func() {
-		log.Printf("listening on %s", *listen)
-		log.Print(http.ListenAndServe(*listen, handler))
+		log.Infof("listening on %s", *listen)
+		log.Info(http.ListenAndServe(*listen, handler))
 	}()
 
 	common.SignalHandlerLoop()

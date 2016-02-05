@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"testing"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/common/mtime"
