@@ -18,7 +18,9 @@ func TestMakeDetailedHostNode(t *testing.T) {
 	renderableNode := render.HostRenderer.Render(fixture.Report)[render.MakeHostID(fixture.ClientHostID)]
 	have := detailed.MakeNode(fixture.Report, renderableNode)
 
-	containerImageNodeSummary, _ := detailed.MakeNodeSummary(fixture.Report.ContainerImage.Nodes[fixture.ClientContainerImageNodeID])
+	containerImageNodeSummary, _ := detailed.MakeNodeSummary(
+		render.ContainerImageRenderer.Render(fixture.Report)[render.MakeContainerImageID(fixture.ClientContainerImageName)].Node,
+	)
 	containerNodeSummary, _ := detailed.MakeNodeSummary(fixture.Report.Container.Nodes[fixture.ClientContainerNodeID])
 	process1NodeSummary, _ := detailed.MakeNodeSummary(fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID])
 	process1NodeSummary.Linkable = true
@@ -83,7 +85,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			{
 				Label:      "Container Images",
 				TopologyID: "containers-by-image",
-				Columns:    []string{},
+				Columns:    []string{render.ContainersKey},
 				Nodes:      []detailed.NodeSummary{containerImageNodeSummary},
 			},
 			{

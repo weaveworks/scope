@@ -192,14 +192,7 @@ var AddressRenderer = MakeMap(
 var HostRenderer = MakeReduce(
 	MakeMap(
 		MapX2Host,
-		MakeMap(
-			MapContainerImageIdentity,
-			SelectContainerImage,
-		),
-	),
-	MakeMap(
-		MapX2Host,
-		FilterPseudo(ContainerRenderer),
+		FilterPseudo(ContainerImageRenderer),
 	),
 	MakeMap(
 		MapX2Host,

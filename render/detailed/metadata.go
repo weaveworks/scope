@@ -2,6 +2,7 @@ package detailed
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -9,6 +10,7 @@ import (
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -34,6 +36,7 @@ var (
 	)
 	containerImageNodeMetadata = renderMetadata(
 		ltst(docker.ImageID),
+		counter(render.ContainersKey),
 	)
 	podNodeMetadata = renderMetadata(
 		ltst(kubernetes.PodID),
@@ -116,6 +119,15 @@ func ltst(id string) func(report.Node) []MetadataRow {
 	return func(n report.Node) []MetadataRow {
 		if val, ok := n.Latest.Lookup(id); ok {
 			return []MetadataRow{{ID: id, Value: val}}
+		}
+		return nil
+	}
+}
+
+func counter(id string) func(report.Node) []MetadataRow {
+	return func(n report.Node) []MetadataRow {
+		if val, ok := n.Counters.Lookup(id); ok {
+			return []MetadataRow{{ID: id, Value: strconv.Itoa(val)}}
 		}
 		return nil
 	}
