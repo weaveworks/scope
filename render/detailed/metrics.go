@@ -17,21 +17,21 @@ const (
 )
 
 var (
-	processNodeMetrics = renderMetrics(
-		MetricRow{ID: process.CPUUsage, Format: percentFormat},
-		MetricRow{ID: process.MemoryUsage, Format: filesizeFormat},
-	)
-	containerNodeMetrics = renderMetrics(
-		MetricRow{ID: docker.CPUTotalUsage, Format: percentFormat},
-		MetricRow{ID: docker.MemoryUsage, Format: filesizeFormat},
-	)
-	hostNodeMetrics = renderMetrics(
-		MetricRow{ID: host.CPUUsage, Format: percentFormat},
-		MetricRow{ID: host.MemoryUsage, Format: filesizeFormat},
-		MetricRow{ID: host.Load1, Format: defaultFormat, Group: "load"},
-		MetricRow{ID: host.Load5, Format: defaultFormat, Group: "load"},
-		MetricRow{ID: host.Load15, Format: defaultFormat, Group: "load"},
-	)
+	processNodeMetrics = []MetricRow{
+		{ID: process.CPUUsage, Format: percentFormat},
+		{ID: process.MemoryUsage, Format: filesizeFormat},
+	}
+	containerNodeMetrics = []MetricRow{
+		{ID: docker.CPUTotalUsage, Format: percentFormat},
+		{ID: docker.MemoryUsage, Format: filesizeFormat},
+	}
+	hostNodeMetrics = []MetricRow{
+		{ID: host.CPUUsage, Format: percentFormat},
+		{ID: host.MemoryUsage, Format: filesizeFormat},
+		{ID: host.Load1, Format: defaultFormat, Group: "load"},
+		{ID: host.Load5, Format: defaultFormat, Group: "load"},
+		{ID: host.Load15, Format: defaultFormat, Group: "load"},
+	}
 )
 
 // MetricRow is a tuple of data used to render a metric as a sparkline and
@@ -82,19 +82,12 @@ func (m MetricRow) MarshalJSON() ([]byte, error) {
 // NodeMetrics produces a table (to be consumed directly by the UI) based on
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
 func NodeMetrics(n report.Node) []MetricRow {
-	renderers := map[string]func(report.Node) []MetricRow{
+	renderers := map[string][]MetricRow{
 		report.Process:   processNodeMetrics,
 		report.Container: containerNodeMetrics,
 		report.Host:      hostNodeMetrics,
 	}
-	if renderer, ok := renderers[n.Topology]; ok {
-		return renderer(n)
-	}
-	return nil
-}
-
-func renderMetrics(templates ...MetricRow) func(report.Node) []MetricRow {
-	return func(n report.Node) []MetricRow {
+	if templates, ok := renderers[n.Topology]; ok {
 		rows := []MetricRow{}
 		for _, template := range templates {
 			metric, ok := n.Metrics[template.ID]
@@ -110,6 +103,7 @@ func renderMetrics(templates ...MetricRow) func(report.Node) []MetricRow {
 		}
 		return rows
 	}
+	return nil
 }
 
 // toFixed truncates decimals of float64 down to specified precision
