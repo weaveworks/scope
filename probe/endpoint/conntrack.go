@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"encoding/xml"
 	"io"
-	"log"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/exec"
 )
@@ -86,7 +87,7 @@ type conntrackWalker struct {
 // newConntracker creates and starts a new conntracker.
 func newConntrackFlowWalker(useConntrack bool, args ...string) flowWalker {
 	if !ConntrackModulePresent() {
-		log.Printf("Not using conntrack: module not present")
+		log.Info("Not using conntrack: module not present")
 		return nilFlowWalker{}
 	} else if !useConntrack {
 		return nilFlowWalker{}
@@ -117,10 +118,10 @@ var ConntrackModulePresent = func() bool {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Printf("conntrack error: %v", err)
+		log.Errorf("conntrack error: %v", err)
 	}
 
-	log.Printf("conntrack: failed to find module %s", conntrackModule)
+	log.Errorf("conntrack: failed to find module %s", conntrackModule)
 	return false
 }
 
@@ -156,10 +157,10 @@ func (c *conntrackWalker) clearFlows() {
 func logPipe(prefix string, reader io.Reader) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		log.Println(prefix, scanner.Text())
+		log.Error(prefix, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		log.Println(prefix, err)
+		log.Error(prefix, err)
 	}
 }
 
@@ -168,7 +169,7 @@ func (c *conntrackWalker) run() {
 	// for which we don't get events
 	existingFlows, err := c.existingConnections()
 	if err != nil {
-		log.Printf("conntrack existingConnections error: %v", err)
+		log.Errorf("conntrack existingConnections error: %v", err)
 		return
 	}
 	for _, flow := range existingFlows {
@@ -179,25 +180,25 @@ func (c *conntrackWalker) run() {
 	cmd := exec.Command("conntrack", args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Printf("conntrack error: %v", err)
+		log.Errorf("conntrack error: %v", err)
 		return
 	}
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		log.Printf("conntrack error: %v", err)
+		log.Errorf("conntrack error: %v", err)
 		return
 	}
 	go logPipe("conntrack stderr:", stderr)
 
 	if err := cmd.Start(); err != nil {
-		log.Printf("conntrack error: %v", err)
+		log.Errorf("conntrack error: %v", err)
 		return
 	}
 
 	defer func() {
 		if err := cmd.Wait(); err != nil {
-			log.Printf("conntrack error: %v", err)
+			log.Errorf("conntrack error: %v", err)
 		}
 	}()
 
@@ -216,28 +217,28 @@ func (c *conntrackWalker) run() {
 	// Swallow the first two lines
 	reader := bufio.NewReader(stdout)
 	if line, err := reader.ReadString('\n'); err != nil {
-		log.Printf("conntrack error: %v", err)
+		log.Errorf("conntrack error: %v", err)
 		return
 	} else if line != xmlHeader {
-		log.Printf("conntrack invalid output: '%s'", line)
+		log.Errorf("conntrack invalid output: '%s'", line)
 		return
 	}
 	if line, err := reader.ReadString('\n'); err != nil {
-		log.Printf("conntrack error: %v", err)
+		log.Errorf("conntrack error: %v", err)
 		return
 	} else if line != conntrackOpenTag {
-		log.Printf("conntrack invalid output: '%s'", line)
+		log.Errorf("conntrack invalid output: '%s'", line)
 		return
 	}
 
-	defer log.Printf("contrack exiting")
+	defer log.Infof("contrack exiting")
 
 	// Now loop on the output stream
 	decoder := xml.NewDecoder(reader)
 	for {
 		var f flow
 		if err := decoder.Decode(&f); err != nil {
-			log.Printf("conntrack error: %v", err)
+			log.Errorf("conntrack error: %v", err)
 			return
 		}
 		c.handleFlow(f, false)
@@ -256,7 +257,7 @@ func (c *conntrackWalker) existingConnections() ([]flow, error) {
 	}
 	defer func() {
 		if err := cmd.Wait(); err != nil {
-			log.Printf("conntrack existingConnections exit error: %v", err)
+			log.Errorf("conntrack existingConnections exit error: %v", err)
 		}
 	}()
 	var result conntrack

@@ -1,9 +1,9 @@
 package kubernetes
 
 import (
-	"log"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/client/cache"
 	"k8s.io/kubernetes/pkg/client/unversioned"
@@ -38,7 +38,7 @@ type client struct {
 func runReflectorUntil(r *cache.Reflector, resyncPeriod time.Duration, stopCh <-chan struct{}) {
 	loggingListAndWatch := func() {
 		if err := r.ListAndWatch(stopCh); err != nil {
-			log.Printf("Kubernetes reflector error: %v", err)
+			log.Errorf("Kubernetes reflector: %v", err)
 		}
 	}
 	go util.Until(loggingListAndWatch, resyncPeriod, stopCh)

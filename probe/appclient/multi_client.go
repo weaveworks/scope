@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"strings"
 	"sync"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/report"
@@ -75,13 +76,13 @@ func (c *multiClient) Set(hostname string, endpoints []string) {
 
 			client, err := c.clientFactory(hostname, endpoint)
 			if err != nil {
-				log.Printf("Error creating new app client: %v", err)
+				log.Errorf("Error creating new app client: %v", err)
 				return
 			}
 
 			details, err := client.Details()
 			if err != nil {
-				log.Printf("Error fetching app details: %v", err)
+				log.Errorf("Error fetching app details: %v", err)
 			}
 
 			clients <- clientTuple{details, client}

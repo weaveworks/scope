@@ -25,7 +25,7 @@ var cbConnections = func(processes bool, walker process.Walker) (ConnIter, error
 		"-p", "tcp", // only TCP
 	).CombinedOutput()
 	if err != nil {
-		// log.Printf("lsof error: %s", err)
+		// Log.Infof("lsof error: %s", err)
 		return nil, err
 	}
 	connections := parseDarwinNetstat(string(out))

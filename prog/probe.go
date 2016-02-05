@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"math/rand"
 	"net"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
@@ -39,9 +39,9 @@ const (
 func check() {
 	handleResponse := func(r *checkpoint.CheckResponse, err error) {
 		if err != nil {
-			log.Printf("Error checking version: %v", err)
+			log.Errorf("Error checking version: %v", err)
 		} else if r.Outdated {
-			log.Printf("Scope version %s is available; please update at %s",
+			log.Infof("Scope version %s is available; please update at %s",
 				r.CurrentVersion, r.CurrentDownloadURL)
 		}
 	}
@@ -77,8 +77,12 @@ func probeMain() {
 		useConntrack       = flag.Bool("conntrack", true, "also use conntrack to track connections")
 		insecure           = flag.Bool("insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
 		logPrefix          = flag.String("log.prefix", "<probe>", "prefix for each log line")
+		logLevel           = flag.String("log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
 	)
 	flag.Parse()
+
+	setLogLevel(*logLevel)
+	setLogFormatter(*logPrefix)
 
 	// Setup in memory metrics sink
 	inm := metrics.NewInmemSink(time.Minute, 2*time.Minute)
@@ -86,15 +90,10 @@ func probeMain() {
 	defer sig.Stop()
 	metrics.NewGlobal(metrics.DefaultConfig("scope-probe"), inm)
 
-	if !strings.HasSuffix(*logPrefix, " ") {
-		*logPrefix += " "
-	}
-	log.SetPrefix(*logPrefix)
-
-	defer log.Print("probe exiting")
+	defer log.Info("probe exiting")
 
 	if *spyProcs && os.Getegid() != 0 {
-		log.Printf("warning: -process=true, but that requires root to find everything")
+		log.Warn("-process=true, but that requires root to find everything")
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -103,7 +102,7 @@ func probeMain() {
 		hostName = hostname.Get()
 		hostID   = hostName // TODO(pb): we should sanitize the hostname
 	)
-	log.Printf("probe starting, version %s, ID %s", version, probeID)
+	log.Infof("probe starting, version %s, ID %s", version, probeID)
 	go check()
 
 	addrs, err := net.InterfaceAddrs()
@@ -121,7 +120,7 @@ func probeMain() {
 	if len(flag.Args()) > 0 {
 		targets = flag.Args()
 	}
-	log.Printf("publishing to: %s", strings.Join(targets, ", "))
+	log.Infof("publishing to: %s", strings.Join(targets, ", "))
 
 	probeConfig := appclient.ProbeConfig{
 		Token:    *token,
@@ -155,14 +154,14 @@ func probeMain() {
 
 	if *dockerEnabled {
 		if err := report.AddLocalBridge(*dockerBridge); err != nil {
-			log.Printf("Docker: problem with bridge %s: %v", *dockerBridge, err)
+			log.Errorf("Docker: problem with bridge %s: %v", *dockerBridge, err)
 		}
 		if registry, err := docker.NewRegistry(*dockerInterval, clients); err == nil {
 			defer registry.Stop()
 			p.AddTagger(docker.NewTagger(registry, processCache))
 			p.AddReporter(docker.NewReporter(registry, hostID, p))
 		} else {
-			log.Printf("Docker: failed to start registry: %v", err)
+			log.Errorf("Docker: failed to start registry: %v", err)
 		}
 	}
 
@@ -171,8 +170,8 @@ func probeMain() {
 			defer client.Stop()
 			p.AddReporter(kubernetes.NewReporter(client))
 		} else {
-			log.Printf("Kubernetes: failed to start client: %v", err)
-			log.Printf("Kubernetes: make sure to run Scope inside a POD with a service account or provide a valid kubernetes.api url")
+			log.Errorf("Kubernetes: failed to start client: %v", err)
+			log.Errorf("Kubernetes: make sure to run Scope inside a POD with a service account or provide a valid kubernetes.api url")
 		}
 	}
 
@@ -186,9 +185,9 @@ func probeMain() {
 
 	if *httpListen != "" {
 		go func() {
-			log.Printf("Profiling data being exported to %s", *httpListen)
-			log.Printf("go tool pprof http://%s/debug/pprof/{profile,heap,block}", *httpListen)
-			log.Printf("Profiling endpoint %s terminated: %v", *httpListen, http.ListenAndServe(*httpListen, nil))
+			log.Infof("Profiling data being exported to %s", *httpListen)
+			log.Infof("go tool pprof http://%s/debug/pprof/{profile,heap,block}", *httpListen)
+			log.Infof("Profiling endpoint %s terminated: %v", *httpListen, http.ListenAndServe(*httpListen, nil))
 		}()
 	}
 

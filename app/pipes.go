@@ -2,11 +2,11 @@ package app
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/common/mtime"
@@ -99,7 +99,7 @@ func (pr *PipeRouter) timeout() {
 
 		if (pipe.ui.refCount == 0 && now.Sub(pipe.ui.lastUsedTime) >= pipeTimeout) ||
 			(pipe.probe.refCount == 0 && now.Sub(pipe.probe.lastUsedTime) >= pipeTimeout) {
-			log.Printf("Timing out pipe %s", id)
+			log.Infof("Timing out pipe %s", id)
 			pipe.Close()
 			pipe.tombstoneTime = now
 		}
@@ -122,7 +122,7 @@ func (pr *PipeRouter) getOrCreate(id string) (*pipe, bool) {
 	defer pr.Unlock()
 	p, ok := pr.pipes[id]
 	if !ok {
-		log.Printf("Creating pipe id %s", id)
+		log.Infof("Creating pipe id %s", id)
 		p = &pipe{
 			ui:    end{lastUsedTime: mtime.Now()},
 			probe: end{lastUsedTime: mtime.Now()},
@@ -178,7 +178,7 @@ func (pr *PipeRouter) handleWs(endSelector func(*pipe) (*end, io.ReadWriter)) fu
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Printf("Error upgrading to websocket: %v", err)
+			log.Errorf("Error upgrading to websocket: %v", err)
 			return
 		}
 		defer conn.Close()
@@ -191,7 +191,7 @@ func (pr *PipeRouter) delete(w http.ResponseWriter, r *http.Request) {
 	pipeID := mux.Vars(r)["pipeID"]
 	pipe, ok := pr.getOrCreate(pipeID)
 	if ok && pr.retain(pipeID, pipe, &pipe.ui) {
-		log.Printf("Closing pipe %s", pipeID)
+		log.Infof("Closing pipe %s", pipeID)
 		pipe.Close()
 		pipe.tombstoneTime = mtime.Now()
 		pr.release(pipeID, pipe, &pipe.ui)

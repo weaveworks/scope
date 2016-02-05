@@ -1,9 +1,9 @@
 package docker
 
 import (
-	"log"
-
 	docker_client "github.com/fsouza/go-dockerclient"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
@@ -24,27 +24,27 @@ const (
 )
 
 func (r *registry) stopContainer(containerID string, _ xfer.Request) xfer.Response {
-	log.Printf("Stopping container %s", containerID)
+	log.Infof("Stopping container %s", containerID)
 	return xfer.ResponseError(r.client.StopContainer(containerID, waitTime))
 }
 
 func (r *registry) startContainer(containerID string, _ xfer.Request) xfer.Response {
-	log.Printf("Starting container %s", containerID)
+	log.Infof("Starting container %s", containerID)
 	return xfer.ResponseError(r.client.StartContainer(containerID, nil))
 }
 
 func (r *registry) restartContainer(containerID string, _ xfer.Request) xfer.Response {
-	log.Printf("Restarting container %s", containerID)
+	log.Infof("Restarting container %s", containerID)
 	return xfer.ResponseError(r.client.RestartContainer(containerID, waitTime))
 }
 
 func (r *registry) pauseContainer(containerID string, _ xfer.Request) xfer.Response {
-	log.Printf("Pausing container %s", containerID)
+	log.Infof("Pausing container %s", containerID)
 	return xfer.ResponseError(r.client.PauseContainer(containerID))
 }
 
 func (r *registry) unpauseContainer(containerID string, _ xfer.Request) xfer.Response {
-	log.Printf("Unpausing container %s", containerID)
+	log.Infof("Unpausing container %s", containerID)
 	return xfer.ResponseError(r.client.UnpauseContainer(containerID))
 }
 
@@ -76,14 +76,14 @@ func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Re
 	}
 	pipe.OnClose(func() {
 		if err := cw.Close(); err != nil {
-			log.Printf("Error closing attachment: %v", err)
+			log.Errorf("Error closing attachment: %v", err)
 			return
 		}
-		log.Printf("Attachment to container %s closed.", containerID)
+		log.Infof("Attachment to container %s closed.", containerID)
 	})
 	go func() {
 		if err := cw.Wait(); err != nil {
-			log.Printf("Error waiting on exec: %v", err)
+			log.Errorf("Error waiting on exec: %v", err)
 		}
 		pipe.Close()
 	}()
@@ -123,14 +123,14 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 	}
 	pipe.OnClose(func() {
 		if err := cw.Close(); err != nil {
-			log.Printf("Error closing exec: %v", err)
+			log.Errorf("Error closing exec: %v", err)
 			return
 		}
-		log.Printf("Exec on container %s closed.", containerID)
+		log.Infof("Exec on container %s closed.", containerID)
 	})
 	go func() {
 		if err := cw.Wait(); err != nil {
-			log.Printf("Error waiting on exec: %v", err)
+			log.Errorf("Error waiting on exec: %v", err)
 		}
 		pipe.Close()
 	}()

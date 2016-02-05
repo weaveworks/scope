@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -15,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	docker "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/common/mtime"
@@ -162,30 +162,30 @@ func (c *container) StartGatheringStats() error {
 	}
 
 	go func() {
-		log.Printf("docker container: collecting stats for %s", c.container.ID)
+		log.Infof("docker container: collecting stats for %s", c.container.ID)
 		req, err := http.NewRequest("GET", fmt.Sprintf("/containers/%s/stats", c.container.ID), nil)
 		if err != nil {
-			log.Printf("docker container: %v", err)
+			log.Errorf("docker container: %v", err)
 			return
 		}
 		req.Header.Set("User-Agent", "weavescope")
 
 		url, err := url.Parse(endpoint)
 		if err != nil {
-			log.Printf("docker container: %v", err)
+			log.Errorf("docker container: %v", err)
 			return
 		}
 
 		dial, err := DialStub(url.Scheme, url.Path)
 		if err != nil {
-			log.Printf("docker container: %v", err)
+			log.Errorf("docker container: %v", err)
 			return
 		}
 
 		conn := NewClientConnStub(dial, nil)
 		resp, err := conn.Do(req)
 		if err != nil {
-			log.Printf("docker container: %v", err)
+			log.Errorf("docker container: %v", err)
 			return
 		}
 		defer resp.Body.Close()
@@ -198,7 +198,7 @@ func (c *container) StartGatheringStats() error {
 			c.Lock()
 			defer c.Unlock()
 
-			log.Printf("docker container: stopped collecting stats for %s", c.container.ID)
+			log.Infof("docker container: stopped collecting stats for %s", c.container.ID)
 			c.statsConn = nil
 		}()
 
@@ -206,13 +206,13 @@ func (c *container) StartGatheringStats() error {
 		decoder := json.NewDecoder(resp.Body)
 		for err := decoder.Decode(&stats); err != io.EOF; err = decoder.Decode(&stats) {
 			if err != nil {
-				log.Printf("docker container: error reading event, did container stop? %v", err)
+				log.Errorf("docker container: error reading event, did container stop? %v", err)
 				return
 			}
 
 			c.Lock()
 			if c.numPending >= len(c.pendingStats) {
-				log.Printf("docker container: dropping stats.")
+				log.Warnf("docker container: dropping stats.")
 			} else {
 				c.latestStats = stats
 				c.pendingStats[c.numPending] = stats

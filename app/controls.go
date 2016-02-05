@@ -1,12 +1,12 @@
 package app
 
 import (
-	"log"
 	"math/rand"
 	"net/http"
 	"net/rpc"
 	"sync"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 
 	"github.com/weaveworks/scope/common/xfer"
@@ -73,7 +73,7 @@ func (cr *controlRouter) handleControl(w http.ResponseWriter, r *http.Request) {
 	)
 	handler, ok := cr.get(probeID)
 	if !ok {
-		log.Printf("Probe %s is not connected right now...", probeID)
+		log.Errorf("Probe %s is not connected right now...", probeID)
 		http.NotFound(w, r)
 		return
 	}
@@ -101,7 +101,7 @@ func (cr *controlRouter) handleProbeWS(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Error upgrading to websocket: %v", err)
+		log.Errorf("Error upgrading to websocket: %v", err)
 		return
 	}
 	defer conn.Close()

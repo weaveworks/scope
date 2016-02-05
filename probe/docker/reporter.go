@@ -1,9 +1,9 @@
 package docker
 
 import (
-	"log"
 	"net"
 
+	log "github.com/Sirupsen/logrus"
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe"
@@ -41,7 +41,7 @@ func (Reporter) Name() string { return "Docker" }
 func (r *Reporter) ContainerUpdated(c Container) {
 	localAddrs, err := report.LocalAddresses()
 	if err != nil {
-		log.Printf("Error getting local address: %v", err)
+		log.Errorf("Error getting local address: %v", err)
 		return
 	}
 

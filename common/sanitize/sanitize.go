@@ -2,10 +2,11 @@ package sanitize
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"net/url"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // URL returns a function that sanitizes a URL string. It lets underspecified
@@ -23,7 +24,7 @@ func URL(defaultScheme string, defaultPort int, defaultPath string) func(string)
 		}
 		u, err := url.Parse(s)
 		if err != nil {
-			log.Printf("%q: %v", s, err)
+			log.Errorf("%q: %v", s, err)
 			return s // oh well
 		}
 		if _, port, err := net.SplitHostPort(u.Host); err != nil && defaultPort > 0 {

@@ -4,11 +4,11 @@ package procspy
 
 import (
 	"bytes"
-	"log"
 	"path/filepath"
 	"strconv"
 	"syscall"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
 	"github.com/hashicorp/go-version"
 
@@ -54,7 +54,7 @@ func getNetNamespacePathSuffix() string {
 
 	v, err := getKernelVersion()
 	if err != nil {
-		log.Printf("error: getNeNameSpacePath: cannot get kernel version: %s\n", err)
+		log.Errorf("getNeNameSpacePath: cannot get kernel version: %s\n", err)
 		netNamespacePathSuffix = post38Path
 		return netNamespacePathSuffix
 	}

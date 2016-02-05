@@ -77,7 +77,7 @@ func handleWebsocket(
 ) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		// log.Println("Upgrade:", err)
+		// log.Info("Upgrade:", err)
 		return
 	}
 	defer conn.Close()

@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/weaveworks/scope/common/exec"
 	"github.com/weaveworks/scope/common/sanitize"
 	"github.com/weaveworks/scope/probe/docker"
@@ -99,7 +99,7 @@ func (w *Weave) loop() {
 	for {
 		psEntries, err := w.getPSEntries()
 		if err != nil {
-			log.Printf("Error running weave ps: %v", err)
+			log.Errorf("Error running weave ps: %v", err)
 			break
 		}
 
@@ -166,7 +166,7 @@ func (w *Weave) getPSEntries() ([]psEntry, error) {
 	}
 	defer func() {
 		if err := cmd.Wait(); err != nil {
-			log.Printf("Weave tagger, cmd failed: %v", err)
+			log.Errorf("Weave tagger, cmd failed: %v", err)
 		}
 	}()
 	scanner := bufio.NewScanner(out)
