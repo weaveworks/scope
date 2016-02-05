@@ -22,8 +22,8 @@ var (
 		Latest{ID: process.Threads},
 	}
 	containerNodeMetadata = []MetadataRowTemplate{
-		Latest{ID: docker.ContainerID},
-		Latest{ID: docker.ImageID},
+		Latest{ID: docker.ContainerID, Truncate: 12},
+		Latest{ID: docker.ImageID, Truncate: 12},
 		Latest{ID: docker.ContainerState},
 		Latest{ID: docker.ContainerUptime},
 		Latest{ID: docker.ContainerRestartCount},
@@ -35,7 +35,7 @@ var (
 		Latest{ID: overlay.WeaveDNSHostname},
 	}
 	containerImageNodeMetadata = []MetadataRowTemplate{
-		Latest{ID: docker.ImageID},
+		Latest{ID: docker.ImageID, Truncate: 12},
 		Counter{ID: render.ContainersKey},
 	}
 	podNodeMetadata = []MetadataRowTemplate{
@@ -59,12 +59,16 @@ type MetadataRowTemplate interface {
 
 // Latest extracts some metadata rows from a node's Latest
 type Latest struct {
-	ID string
+	ID       string
+	Truncate int
 }
 
 // MetadataRows implements MetadataRowTemplate
 func (l Latest) MetadataRows(n report.Node) []MetadataRow {
 	if val, ok := n.Latest.Lookup(l.ID); ok {
+		if l.Truncate > 0 && len(val) > l.Truncate {
+			val = val[:l.Truncate]
+		}
 		return []MetadataRow{{ID: l.ID, Value: val}}
 	}
 	return nil
