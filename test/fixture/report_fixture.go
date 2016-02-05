@@ -73,6 +73,7 @@ var (
 	NonContainerProcessNodeID = report.MakeProcessNodeID(ServerHostID, NonContainerPID)
 
 	ClientContainerID     = "a1b2c3d4e5"
+	ClientContainerName   = "client"
 	ServerContainerID     = "5e4d3c2b1a"
 	ClientContainerNodeID = report.MakeContainerNodeID(ClientContainerID)
 	ServerContainerNodeID = report.MakeContainerNodeID(ServerContainerID)
@@ -257,7 +258,7 @@ var (
 			Nodes: report.Nodes{
 				ClientContainerNodeID: report.MakeNodeWith(map[string]string{
 					docker.ContainerID:                            ClientContainerID,
-					docker.ContainerName:                          "client",
+					docker.ContainerName:                          ClientContainerName,
 					docker.ImageID:                                ClientContainerImageID,
 					report.HostNodeID:                             ClientHostNodeID,
 					docker.LabelPrefix + "io.kubernetes.pod.name": ClientPodID,
