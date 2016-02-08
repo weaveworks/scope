@@ -3,6 +3,7 @@ package procspy
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"math"
 	"sync"
 	"time"
@@ -122,12 +123,11 @@ func (br *backgroundReader) loop() {
 	}
 }
 
-func (br *backgroundReader) getWalkedProcPid(buf *bytes.Buffer) map[uint64]*Proc {
+func (br *backgroundReader) getWalkedProcPid(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 	br.mtx.Lock()
 	defer br.mtx.Unlock()
 
-	reader := bytes.NewReader(br.readyBuf.Bytes())
-	buf.ReadFrom(reader)
+	_, err := io.Copy(buf, br.readyBuf)
 
-	return br.readySockets
+	return br.readySockets, err
 }

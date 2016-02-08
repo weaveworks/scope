@@ -50,7 +50,10 @@ func (s *linuxScanner) Connections(processes bool) (ConnIter, error) {
 
 	var procs map[uint64]*Proc
 	if processes {
-		procs = s.br.getWalkedProcPid(buf)
+		var err error
+		if procs, err = s.br.getWalkedProcPid(buf); err != nil {
+			return nil, err
+		}
 	}
 
 	if buf.Len() == 0 {
