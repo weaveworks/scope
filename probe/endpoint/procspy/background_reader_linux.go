@@ -58,6 +58,7 @@ func (br *backgroundReader) loop(walker process.Walker) {
 		walkc           chan map[uint64]*Proc          // initially nil, i.e. off
 		walkBuf         = bytes.NewBuffer(make([]byte, 0, 5000))
 		rateLimitPeriod = initialRateLimitPeriod
+		nextInterval    time.Duration
 		ticker          = time.NewTicker(rateLimitPeriod)
 		pWalker         = newPidWalker(walker, ticker.C, fdBlockSize)
 	)
@@ -80,9 +81,9 @@ func (br *backgroundReader) loop(walker process.Walker) {
 
 			// Schedule next walk and adjust rate limit
 			walkTime := time.Since(begin)
-			rateLimitPeriod, nextInterval := scheduleNextWalk(rateLimitPeriod, walkTime)
+			rateLimitPeriod, nextInterval = scheduleNextWalk(rateLimitPeriod, walkTime)
 			ticker.Stop()
-			ticker := time.NewTicker(rateLimitPeriod)
+			ticker = time.NewTicker(rateLimitPeriod)
 			pWalker.ticker = ticker.C
 
 			walkc = nil                      // turn off until the next loop
