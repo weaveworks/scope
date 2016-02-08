@@ -139,8 +139,9 @@ func probeMain() {
 	defer resolver.Stop()
 
 	processCache := process.NewCachingWalker(process.NewWalker(*procRoot))
+	scanner := procspy.NewConnectionScanner(processCache)
 
-	endpointReporter := endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack, processCache)
+	endpointReporter := endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack, scanner)
 	defer endpointReporter.Stop()
 
 	p := probe.New(*spyInterval, *publishInterval, clients)

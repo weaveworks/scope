@@ -4,6 +4,7 @@ import (
 	"net"
 	"reflect"
 	"testing"
+	"time"
 
 	fs_hook "github.com/weaveworks/scope/common/fs"
 	"github.com/weaveworks/scope/probe/process"
@@ -13,8 +14,13 @@ import (
 func TestLinuxConnections(t *testing.T) {
 	fs_hook.Mock(mockFS)
 	defer fs_hook.Restore()
+	scanner := NewConnectionScanner(process.NewWalker("/proc"))
+	defer scanner.Stop()
 
-	iter, err := cbConnections(true, process.NewWalker("/proc"))
+	// let the background scanner finish its first pass
+	time.Sleep(1 * time.Second)
+
+	iter, err := scanner.Connections(true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,4 +43,5 @@ func TestLinuxConnections(t *testing.T) {
 	if have := iter.Next(); have != nil {
 		t.Fatal(have)
 	}
+
 }

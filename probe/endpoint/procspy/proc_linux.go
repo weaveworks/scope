@@ -210,10 +210,8 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker, ticker <-chan time.Ti
 	return sockets, nil
 }
 
-// readFile reads an arbitrary file into a buffer. It's a variable so it can
-// be overwritten for benchmarks. That's bad practice and we should change it
-// to be a dependency.
-var readFile = func(filename string, buf *bytes.Buffer) (int64, error) {
+// readFile reads an arbitrary file into a buffer.
+func readFile(filename string, buf *bytes.Buffer) (int64, error) {
 	f, err := fs.Open(filename)
 	if err != nil {
 		return -1, err

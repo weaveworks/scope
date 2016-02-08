@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"syscall"
 	"testing"
+	"time"
 
 	fs_hook "github.com/weaveworks/scope/common/fs"
 	"github.com/weaveworks/scope/probe/process"
@@ -57,7 +58,11 @@ func TestWalkProcPid(t *testing.T) {
 	defer fs_hook.Restore()
 
 	buf := bytes.Buffer{}
-	have, err := walkProcPid(&buf, process.NewWalker(procRoot))
+	walker := process.NewWalker(procRoot)
+	ticker := time.NewTicker(time.Millisecond)
+	defer ticker.Stop()
+	fdBlockSize := 1
+	have, err := walkProcPid(&buf, walker, ticker.C, fdBlockSize)
 	if err != nil {
 		t.Fatal(err)
 	}

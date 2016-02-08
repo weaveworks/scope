@@ -67,14 +67,32 @@ func (br *backgroundReader) loop() {
 	)
 
 	rateLimit := initialRateLimit
-	ticker := time.Tick(rateLimit)
+	ticker := time.NewTicker(rateLimit)
 	for {
 		start := time.Now()
-		sockets, err := walkProcPid(br.walkingBuf, br.walker, ticker, fdBlockSize)
+		sockets, err := walkProcPid(br.walkingBuf, br.walker, ticker.C, fdBlockSize)
 		if err != nil {
 			log.Printf("background reader: error walking /proc: %s\n", err)
 			continue
 		}
+
+		br.mtx.Lock()
+
+		// Should we stop?
+		if br.pleaseStop {
+			br.pleaseStop = false
+			br.running = false
+			ticker.Stop()
+			br.mtx.Unlock()
+			return
+		}
+
+		// Swap buffers
+		br.readyBuf, br.walkingBuf = br.walkingBuf, br.readyBuf
+		br.readySockets = sockets
+
+		br.mtx.Unlock()
+
 		walkTime := time.Now().Sub(start)
 		walkTimeF := float64(walkTime)
 
@@ -92,22 +110,8 @@ func (br *backgroundReader) loop() {
 		rateLimit = time.Duration(math.Min(scaledRateLimit, maxRateLimitF))
 		log.Printf("debug: background reader: new rate limit %s\n", rateLimit)
 
-		ticker = time.Tick(rateLimit)
-
-		br.mtx.Lock()
-
-		// Should we stop?
-		if br.pleaseStop {
-			br.pleaseStop = false
-			br.running = false
-			br.mtx.Unlock()
-			return
-		}
-
-		// Swap buffers
-		br.readyBuf, br.walkingBuf = br.walkingBuf, br.readyBuf
-		br.readySockets = sockets
-		br.mtx.Unlock()
+		ticker.Stop()
+		ticker = time.NewTicker(rateLimit)
 
 		br.walkingBuf.Reset()
 

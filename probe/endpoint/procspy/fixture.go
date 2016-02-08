@@ -13,13 +13,13 @@ func (f *fixedConnIter) Next() *Connection {
 	return &car
 }
 
-// fixedScanner implements ConnectionScanner and uses constant Connection and
+// FixedScanner implements ConnectionScanner and uses constant Connection and
 // ConnectionProcs.  It's designed to be used in tests.
-type fixedScanner []Connection
+type FixedScanner []Connection
 
-func (s fixedScanner) Connections() (ConnIter, error) {
+func (s FixedScanner) Connections(_ bool) (ConnIter, error) {
 	iter := fixedConnIter(s)
 	return &iter, nil
 }
 
-func (s fixedScanner) Stop() {}
+func (s FixedScanner) Stop() {}
