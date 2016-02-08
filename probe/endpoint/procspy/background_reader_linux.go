@@ -3,10 +3,11 @@ package procspy
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"math"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/weaveworks/scope/probe/process"
 )
@@ -28,8 +29,6 @@ type backgroundReader struct {
 	readySockets map[uint64]*Proc
 }
 
-// starts a rate-limited background goroutine to read the expensive files from
-// proc.
 func newBackgroundReader(walker process.Walker) *backgroundReader {
 	br := &backgroundReader{
 		walker:     walker,
@@ -39,6 +38,8 @@ func newBackgroundReader(walker process.Walker) *backgroundReader {
 	return br
 }
 
+// starts a rate-limited background goroutine to read the expensive files from
+// proc.
 func (br *backgroundReader) start() error {
 	br.mtx.Lock()
 	defer br.mtx.Unlock()
@@ -72,7 +73,7 @@ func (br *backgroundReader) loop() {
 		start := time.Now()
 		sockets, err := walkProcPid(br.walkingBuf, br.walker, ticker.C, fdBlockSize)
 		if err != nil {
-			log.Printf("background reader: error walking /proc: %s\n", err)
+			log.Errorf("background /proc reader: error walking /proc: %s", err)
 			continue
 		}
 
@@ -96,10 +97,10 @@ func (br *backgroundReader) loop() {
 		walkTime := time.Now().Sub(start)
 		walkTimeF := float64(walkTime)
 
-		log.Printf("debug: background reader: full pass took %s\n", walkTime)
+		log.Debugf("background /proc reader: full pass took %s", walkTime)
 		if walkTimeF/targetWalkTimeF > 1.5 {
-			log.Printf(
-				"warn: background reader: full pass took %s: 50%% more than expected (%s)\n",
+			log.Warnf(
+				"background /proc reader: full pass took %s: 50%% more than expected (%s)",
 				walkTime,
 				targetWalkTime,
 			)
@@ -108,7 +109,7 @@ func (br *backgroundReader) loop() {
 		// Adjust rate limit to more-accurately meet the target walk time in next iteration
 		scaledRateLimit := targetWalkTimeF / walkTimeF * float64(rateLimit)
 		rateLimit = time.Duration(math.Min(scaledRateLimit, maxRateLimitF))
-		log.Printf("debug: background reader: new rate limit %s\n", rateLimit)
+		log.Debugf("background /proc reader: new rate limit %s", rateLimit)
 
 		ticker.Stop()
 		ticker = time.NewTicker(rateLimit)
