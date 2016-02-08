@@ -7,6 +7,8 @@ jest.dontMock('../node-details.js');
 jest.dontMock('../node-details/node-details-controls.js');
 jest.dontMock('../node-details/node-details-relatives.js');
 jest.dontMock('../node-details/node-details-table.js');
+jest.dontMock('../node-details/node-details-health-overflow-item.js');
+jest.dontMock('../../hoc/metric-feeder.js');
 jest.dontMock('../../utils/color-utils');
 jest.dontMock('../../utils/title-utils');
 
