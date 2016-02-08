@@ -27,8 +27,8 @@ func TestNodeMetadata(t *testing.T) {
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
 			want: []detailed.MetadataRow{
-				{ID: docker.ContainerID, Value: fixture.ClientContainerID},
-				{ID: docker.ContainerState, Value: "running"},
+				{ID: docker.ContainerID, Value: fixture.ClientContainerID, Prime: true},
+				{ID: docker.ContainerState, Value: "running", Prime: true},
 				{ID: docker.ContainerIPs, Value: "10.10.10.0/24, 10.10.10.1/24"},
 			},
 		},
