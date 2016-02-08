@@ -23,15 +23,17 @@
 
 @primary-color: @weave-charcoal-blue;
 @background-color: lighten(@primary-color, 66%);
-@background-secondary-color: lighten(@background-color, 8%);
+@background-lighter-color: lighten(@background-color, 8%);
+@background-darker-color: darken(@background-color, 8%);
+@background-darker-secondary-color: darken(@background-color, 4%);
 @background-dark-color: @primary-color;
 @background-medium-color: lighten(@background-dark-color, 55%);
 @text-color: lighten(@primary-color, 10%);
-@text-secondary-color: lighten(@primary-color, 33%);
+@text-secondary-color: lighten(@primary-color, 27%);
 @text-tertiary-color: lighten(@primary-color, 50%);
 @border-light-color: lighten(@primary-color, 66%);
 @text-darker-color: @primary-color;
-@white: @background-secondary-color;
+@white: @background-lighter-color;
 
 @details-window-width: 420px;
 @details-window-padding-left: 36px;
@@ -50,8 +52,7 @@
 }
 
 .palable {
-  transition: opacity .2s ease-in-out;
-  transition: border-color .2s ease-in-out;
+  transition: all .2s ease-in-out;
 }
 
 .hideable {
@@ -72,6 +73,17 @@
 
 .shadow-3 {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 6px 10px rgba(0, 0, 0, 0.23);
+}
+
+.btn-opacity {
+  .palable;
+  opacity: 0.8;
+  &-selected {
+    opacity: 0.9;
+  }
+  &:hover {
+    opacity: 1;
+  }
 }
 
 * {
@@ -95,7 +107,7 @@ body {
 
 /* Space out content a bit */
 body {
-  background: linear-gradient(30deg, @background-color 0%, @background-secondary-color 100%);
+  background: linear-gradient(30deg, @background-color 0%, @background-lighter-color 100%);
   color: @text-color;
   line-height: 150%;
   font-family: @base-font;
@@ -135,6 +147,7 @@ h2 {
   width: 100%;
   height: 80px;
   z-index: 20;
+  display: flex;
 }
 
 .footer {
@@ -143,14 +156,20 @@ h2 {
   right: 48px;
   z-index: 20;
   color: @text-tertiary-color;
-  font-size: 85%;
+  font-size: 0.7rem;
+  opacity: 0.8;
 
   a {
     color: @text-secondary-color;
+    .btn-opacity;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 90%;
+  }
 
-    &:hover {
-      color: @text-color;
-    }
+  &-label {
+    text-transform: uppercase;
+    margin: 0 0.25em;
   }
 }
 
@@ -158,32 +177,26 @@ h2 {
   margin: -8px 0 0 64px;
   height: 64px;
   width: 250px;
-  float: left;
 }
 
 .topologies {
-  float: left;
-  margin: 4px 64px;
+  margin: 4px 0 0 128px;
+  display: flex;
 
   .topologies-item {
-    margin: 0px 16px;
-    float: left;
+    margin: 0px 8px;
 
     &-label {
-      color: @text-secondary-color;
-      font-size: 16px;
+      font-size: .8rem;
       text-transform: uppercase;
     }
 
   }
 
   .topologies-sub {
-    margin-top: 4px;
-
     &-item {
       &-label {
-        color: @text-secondary-color;
-        font-size: 12px;
+        font-size: .7rem;
         text-transform: uppercase;
       }
     }
@@ -191,33 +204,34 @@ h2 {
 
   .topologies-item-main,
   .topologies-sub-item {
+    // border: 1px solid @background-darker-secondary-color;
+    color: @text-secondary-color;
+    .palable;
     cursor: pointer;
+    padding: 4px 8px;
+    opacity: 0.7;
+    border-radius: 4px;
+    opacity: 0.8;
+    margin-bottom: 3px;
 
     &-active, &:hover {
-      .topologies-sub-item-label,
-      .topologies-item-label {
-        color: @text-color;
-      }
+      color: @text-color;
+      background-color: @background-darker-secondary-color;
     }
 
+    &-active {
+      opacity: 0.85;
+    }
+
+    &:hover {
+      opacity: 1;
+    }
   }
 
-}
-
-.topology-options {
-  margin-top: -16px;
-}
-
-.status {
-  &-icon {
-    font-size: 16px;
-    position: relative;
-    top: 1px;
+  .topologies-sub-item {
+    padding: 2px 8px;
   }
 
-  &-label {
-    margin-left: 0.5em;
-  }
 }
 
 .nodes-chart {
@@ -322,7 +336,7 @@ h2 {
 
   circle.shadow {
     stroke: none;
-    fill: @background-secondary-color;
+    fill: @background-lighter-color;
   }
 
   circle.node {
@@ -877,34 +891,31 @@ h2 {
 .sidebar {
   position: fixed;
   bottom: 16px;
-  left: 20px;
-  width: 18em;
-  font-size: 85%;
+  left: 24px;
+  font-size: .7rem;
 
   &-item {
-    background-color: darken(@background-color, 8%);
-    border-radius: 2px;
-    padding: 4px 8px;
-    width: 100%;
-    margin-top: 2px;
+    color: @text-secondary-color;
+    margin-top: 4px;
 
-    &.status {
-      background-color: darken(@background-color, 4%);
-      color: @text-secondary-color;
-    }
     &.status-loading {
       animation: status-loading 2.0s infinite ease-in-out;
     }
 
     &-action {
-      float: right;
+      .btn-opacity;
       text-transform: uppercase;
       font-weight: bold;
       color: darken(@weave-orange, 25%);
       cursor: pointer;
       font-size: 90%;
+      margin-left: 0.5em;
     }
   }
+}
+
+.status {
+  text-transform: uppercase;
 }
 
 @keyframes blinking {
@@ -917,10 +928,10 @@ h2 {
 
 @keyframes status-loading {
   0%, 100% {
-    background-color: darken(@background-color, 4%);
+    background-color: @background-darker-secondary-color;
     color: @text-secondary-color;
   } 50% {
-    background-color: darken(@background-color, 8%);
+    background-color: @background-darker-color;
     color: @text-color;
   }
 }
