@@ -133,7 +133,9 @@ func (p *Probe) report() report.Report {
 	for _, rep := range p.reporters {
 		go func(rep Reporter) {
 			t := time.Now()
+			timer := time.AfterFunc(p.spyInterval, func() { log.Warningf("%v reporter took longer than %v", rep.Name(), p.spyInterval) })
 			newReport, err := rep.Report()
+			timer.Stop()
 			metrics.MeasureSince([]string{rep.Name(), "reporter"}, t)
 			if err != nil {
 				log.Errorf("error generating report: %v", err)
@@ -154,7 +156,9 @@ func (p *Probe) tag(r report.Report) report.Report {
 	var err error
 	for _, tagger := range p.taggers {
 		t := time.Now()
+		timer := time.AfterFunc(p.spyInterval, func() { log.Warningf("%v tagger took longer than %v", tagger.Name(), p.spyInterval) })
 		r, err = tagger.Tag(r)
+		timer.Stop()
 		metrics.MeasureSince([]string{tagger.Name(), "tagger"}, t)
 		if err != nil {
 			log.Errorf("error applying tagger: %v", err)
