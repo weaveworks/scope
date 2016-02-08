@@ -15,7 +15,7 @@ import (
 const (
 	initialRateLimit = 50 * time.Millisecond  // Read 20 * fdBlockSize file descriptors (/proc/PID/fd/*) per namespace per second
 	maxRateLimit     = 250 * time.Millisecond // Read at least 4 * fdBlockSize file descriptors per namespace per second
-	fdBlockSize      = 100
+	fdBlockSize      = 300
 	targetWalkTime   = 10 * time.Second // Aim at walking all files in 10 seconds
 )
 
