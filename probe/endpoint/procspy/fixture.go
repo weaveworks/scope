@@ -14,7 +14,7 @@ func (f *fixedConnIter) Next() *Connection {
 }
 
 // FixedScanner implements ConnectionScanner and uses constant Connection and
-// ConnectionProcs.  It's designed to be used in tests.
+// ConnectionProcs.
 type FixedScanner []Connection
 
 // Connections implements ConnectionsScanner.Connections

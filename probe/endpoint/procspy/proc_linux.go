@@ -24,6 +24,23 @@ var (
 	netNamespacePathSuffix = ""
 )
 
+type pidWalker struct {
+	walker      process.Walker
+	ticker      <-chan time.Time
+	stopc       chan struct{}
+	fdBlockSize uint64
+}
+
+func newPidWalker(walker process.Walker, ticker <-chan time.Time, fdBlockSize uint64) pidWalker {
+	w := pidWalker{
+		walker:      walker,
+		ticker:      ticker,
+		fdBlockSize: fdBlockSize,
+		stopc:       make(chan struct{}),
+	}
+	return w
+}
+
 // SetProcRoot sets the location of the proc filesystem.
 func SetProcRoot(root string) {
 	procRoot = root
@@ -105,8 +122,8 @@ func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process
 
 }
 
-// walkNamespacePid does the work of walkProcPid for a single namespace
-func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process, ticker <-chan time.Time, fdBlockSize uint64) error {
+// walkNamespace does the work of walk for a single namespace
+func (w pidWalker) walkNamespace(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process) error {
 
 	if found, err := readProcessConnections(buf, namespaceProcs); err != nil || !found {
 		return err
@@ -120,9 +137,10 @@ func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProc
 		dirName := strconv.Itoa(p.PID)
 		fdBase := filepath.Join(procRoot, dirName, "fd")
 
-		if fdBlockCount > fdBlockSize {
+		if fdBlockCount > w.fdBlockSize {
 			// we surpassed the filedescriptor rate limit
-			<-ticker
+			// TODO: worth selecting on w.stopc?
+			<-w.ticker
 			fdBlockCount = 0
 
 			// read the connections again to
@@ -170,11 +188,11 @@ func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProc
 	return nil
 }
 
-// walkProcPid walks over all numerical (PID) /proc entries. It reads
+// walk walks over all numerical (PID) /proc entries. It reads
 // /proc/PID/net/tcp{,6} for each namespace and sees if the ./fd/* files of each
 // process in that namespace are symlinks to sockets. Returns a map from socket
 // ID (inode) to PID.
-func walkProcPid(buf *bytes.Buffer, walker process.Walker, ticker <-chan time.Time, fdBlockSize uint64) (map[uint64]*Proc, error) {
+func (w pidWalker) walk(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 	var (
 		sockets    = map[uint64]*Proc{}              // map socket inode -> process
 		namespaces = map[uint64][]*process.Process{} // map network namespace id -> processes
@@ -189,7 +207,7 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker, ticker <-chan time.Ti
 	// between reading /net/tcp{,6} of each namespace and /proc/PID/fd/* for
 	// the processes living in that namespace.
 
-	walker.Walk(func(p, _ process.Process) {
+	w.walker.Walk(func(p, _ process.Process) {
 		dirName := strconv.Itoa(p.PID)
 
 		netNamespacePath := filepath.Join(procRoot, dirName, getNetNamespacePathSuffix())
@@ -202,12 +220,20 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker, ticker <-chan time.Ti
 	})
 
 	for _, procs := range namespaces {
-		<-ticker
-		walkNamespacePid(buf, sockets, procs, ticker, fdBlockSize)
+		select {
+		case <-w.ticker:
+			w.walkNamespace(buf, sockets, procs)
+		case <-w.stopc:
+			break
+		}
 	}
 
 	metrics.SetGauge(namespaceKey, float32(len(namespaces)))
 	return sockets, nil
+}
+
+func (w pidWalker) stop() {
+	close(w.stopc)
 }
 
 // readFile reads an arbitrary file into a buffer.
