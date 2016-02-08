@@ -32,6 +32,7 @@ func (c *pnConnIter) Next() *Connection {
 	return n
 }
 
+// NewConnectionScanner creates a new Linux ConnectionScanner
 func NewConnectionScanner(walker process.Walker) ConnectionScanner {
 	br := newBackgroundReader(walker)
 	br.start()

@@ -33,6 +33,7 @@ type ConnIter interface {
 	Next() *Connection
 }
 
+// ConnectionScanner scans the system for established (TCP) connections
 type ConnectionScanner interface {
 	// Connections returns all established (TCP) connections.  If processes is
 	// false we'll just list all TCP connections, and there is no need to be root.

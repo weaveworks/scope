@@ -13,6 +13,7 @@ const (
 	lsofBinary    = "lsof"
 )
 
+// NewConnectionScanner creates a new Darwin ConnectionScanner
 func NewConnectionScanner(_ process.Walker) ConnectionScanner {
 	return &darwinScanner{}
 }
