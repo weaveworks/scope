@@ -85,9 +85,9 @@ var (
 	}{
 		{report.Host, NodeSummaryGroup{TopologyID: "hosts", Label: "Hosts", Columns: []string{host.CPUUsage, host.MemoryUsage}}},
 		{report.Pod, NodeSummaryGroup{TopologyID: "pods", Label: "Pods", Columns: []string{}}},
-		{report.ContainerImage, NodeSummaryGroup{TopologyID: "containers-by-image", Label: "Container Images", Columns: []string{render.ContainersKey}}},
 		{report.Container, NodeSummaryGroup{TopologyID: "containers", Label: "Containers", Columns: []string{docker.CPUTotalUsage, docker.MemoryUsage}}},
 		{report.Process, NodeSummaryGroup{TopologyID: "processes", Label: "Processes", Columns: []string{process.PID, process.CPUUsage, process.MemoryUsage}}},
+		{report.ContainerImage, NodeSummaryGroup{TopologyID: "containers-by-image", Label: "Container Images", Columns: []string{render.ContainersKey}}},
 	}
 )
 
