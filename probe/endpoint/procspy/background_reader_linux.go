@@ -14,7 +14,7 @@ import (
 
 const (
 	initialRateLimitPeriod = 50 * time.Millisecond  // Read 20 * fdBlockSize file descriptors (/proc/PID/fd/*) per namespace per second
-	maxRateLimitPeriod     = 250 * time.Millisecond // Read at least 4 * fdBlockSize file descriptors per namespace per second
+	maxRateLimitPeriod     = 500 * time.Millisecond // Read at least 2 * fdBlockSize file descriptors per namespace per second
 	fdBlockSize            = uint64(300)            // Maximum number of /proc/PID/fd/* files to stat per rate-limit period
 	// (as a rule of thumb going through each block should be more expensive than reading /proc/PID/tcp{,6})
 	targetWalkTime = 10 * time.Second // Aim at walking all files in 10 seconds
