@@ -72,7 +72,6 @@ export default class App extends React.Component {
   render() {
     const showingDetails = this.state.nodeDetails.size > 0;
     const showingTerminal = this.state.controlPipe;
-    const footer = `Version ${this.state.version} on ${this.state.hostname}`;
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 450 : 0;
     const topMargin = 100;
@@ -100,17 +99,23 @@ export default class App extends React.Component {
           topologyId={this.state.currentTopologyId} />
 
         <Sidebar>
-          <TopologyOptions options={this.state.currentTopologyOptions}
-            topologyId={this.state.currentTopologyId}
-            activeOptions={this.state.activeTopologyOptions} />
           <Status errorUrl={this.state.errorUrl} topology={this.state.currentTopology}
             topologiesLoaded={this.state.topologiesLoaded}
             websocketClosed={this.state.websocketClosed} />
+          <TopologyOptions options={this.state.currentTopologyOptions}
+            topologyId={this.state.currentTopologyId}
+            activeOptions={this.state.activeTopologyOptions} />
         </Sidebar>
 
         <div className="footer">
-          {footer}&nbsp;&nbsp;
-          <a href="https://gitreports.com/issue/weaveworks/scope" target="_blank">Report an issue</a>
+          <span className="footer-label">Version</span>
+          {this.state.version}
+          <span className="footer-label">on</span>
+          {this.state.hostname}
+          &nbsp;&nbsp;
+          <a className="footer-label" href="https://gitreports.com/issue/weaveworks/scope" target="_blank">
+            Report an issue
+          </a>
         </div>
       </div>
     );

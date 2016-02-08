@@ -156,14 +156,20 @@ h2 {
   right: 48px;
   z-index: 20;
   color: @text-tertiary-color;
-  font-size: 85%;
+  font-size: 0.7rem;
+  opacity: 0.8;
 
   a {
     color: @text-secondary-color;
+    .btn-opacity;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 90%;
+  }
 
-    &:hover {
-      color: @text-color;
-    }
+  &-label {
+    text-transform: uppercase;
+    margin: 0 0.25em;
   }
 }
 
@@ -181,7 +187,7 @@ h2 {
     margin: 0px 8px;
 
     &-label {
-      font-size: 13px;
+      font-size: .8rem;
       text-transform: uppercase;
     }
 
@@ -190,7 +196,7 @@ h2 {
   .topologies-sub {
     &-item {
       &-label {
-        font-size: 11px;
+        font-size: .7rem;
         text-transform: uppercase;
       }
     }
@@ -198,13 +204,13 @@ h2 {
 
   .topologies-item-main,
   .topologies-sub-item {
+    // border: 1px solid @background-darker-secondary-color;
     color: @text-secondary-color;
     .palable;
     cursor: pointer;
     padding: 4px 8px;
     opacity: 0.7;
     border-radius: 4px;
-    background-color: @background-lighter-color;
     opacity: 0.8;
     margin-bottom: 3px;
 
@@ -226,22 +232,6 @@ h2 {
     padding: 2px 8px;
   }
 
-}
-
-.topology-options {
-  margin-top: -16px;
-}
-
-.status {
-  &-icon {
-    font-size: 16px;
-    position: relative;
-    top: 1px;
-  }
-
-  &-label {
-    margin-left: 0.5em;
-  }
 }
 
 .nodes-chart {
@@ -901,17 +891,12 @@ h2 {
 .sidebar {
   position: fixed;
   bottom: 16px;
-  left: 20px;
-  width: 18em;
-  font-size: 85%;
+  left: 24px;
+  font-size: .7rem;
 
   &-item {
-    background-color: @background-darker-secondary-color;
-    border-radius: 2px;
-    padding: 4px 8px;
-    width: 100%;
-    margin-top: 2px;
     color: @text-secondary-color;
+    margin-top: 4px;
 
     &.status-loading {
       animation: status-loading 2.0s infinite ease-in-out;
@@ -919,14 +904,18 @@ h2 {
 
     &-action {
       .btn-opacity;
-      float: right;
       text-transform: uppercase;
       font-weight: bold;
       color: darken(@weave-orange, 25%);
       cursor: pointer;
       font-size: 90%;
+      margin-left: 0.5em;
     }
   }
+}
+
+.status {
+  text-transform: uppercase;
 }
 
 @keyframes blinking {
