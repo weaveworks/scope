@@ -7,7 +7,7 @@ describe('StringUtils', function() {
     const formatMetric = StringUtils.formatMetric;
 
     it('it should render 0', function() {
-      expect(formatMetric(0)).toBe(0);
+      expect(formatMetric(0)).toBe('0.00');
     });
   });
 });
