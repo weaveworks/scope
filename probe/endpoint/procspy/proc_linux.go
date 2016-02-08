@@ -106,14 +106,14 @@ func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process
 }
 
 // walkNamespacePid does the work of walkProcPid for a single namespace
-func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process, ticker <-chan time.Time, fdBlockSize int) error {
+func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process, ticker <-chan time.Time, fdBlockSize uint64) error {
 
 	if found, err := readProcessConnections(buf, namespaceProcs); err != nil || !found {
 		return err
 	}
 
 	var statT syscall.Stat_t
-	var fdBlockCount int
+	var fdBlockCount uint64
 	for i, p := range namespaceProcs {
 
 		// Get the sockets for all the processes in the namespace
@@ -174,7 +174,7 @@ func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProc
 // /proc/PID/net/tcp{,6} for each namespace and sees if the ./fd/* files of each
 // process in that namespace are symlinks to sockets. Returns a map from socket
 // ID (inode) to PID.
-func walkProcPid(buf *bytes.Buffer, walker process.Walker, ticker <-chan time.Time, fdBlockSize int) (map[uint64]*Proc, error) {
+func walkProcPid(buf *bytes.Buffer, walker process.Walker, ticker <-chan time.Time, fdBlockSize uint64) (map[uint64]*Proc, error) {
 	var (
 		sockets    = map[uint64]*Proc{}              // map socket inode -> process
 		namespaces = map[uint64][]*process.Process{} // map network namespace id -> processes
