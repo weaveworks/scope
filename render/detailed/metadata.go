@@ -15,42 +15,86 @@ import (
 )
 
 var (
-	processNodeMetadata = renderMetadata(
-		ltst(process.PID),
-		ltst(process.PPID),
-		ltst(process.Cmdline),
-		ltst(process.Threads),
-	)
-	containerNodeMetadata = renderMetadata(
-		ltst(docker.ContainerID),
-		ltst(docker.ImageID),
-		ltst(docker.ContainerState),
-		ltst(docker.ContainerUptime),
-		ltst(docker.ContainerRestartCount),
-		sets(docker.ContainerIPs),
-		sets(docker.ContainerPorts),
-		ltst(docker.ContainerCreated),
-		ltst(docker.ContainerCommand),
-		ltst(overlay.WeaveMACAddress),
-		ltst(overlay.WeaveDNSHostname),
-	)
-	containerImageNodeMetadata = renderMetadata(
-		ltst(docker.ImageID),
-		counter(render.ContainersKey),
-	)
-	podNodeMetadata = renderMetadata(
-		ltst(kubernetes.PodID),
-		ltst(kubernetes.Namespace),
-		ltst(kubernetes.PodCreated),
-	)
-	hostNodeMetadata = renderMetadata(
-		ltst(host.HostName),
-		ltst(host.OS),
-		ltst(host.KernelVersion),
-		ltst(host.Uptime),
-		sets(host.LocalNetworks),
-	)
+	processNodeMetadata = []MetadataRowTemplate{
+		Latest{ID: process.PID},
+		Latest{ID: process.PPID},
+		Latest{ID: process.Cmdline},
+		Latest{ID: process.Threads},
+	}
+	containerNodeMetadata = []MetadataRowTemplate{
+		Latest{ID: docker.ContainerID},
+		Latest{ID: docker.ImageID},
+		Latest{ID: docker.ContainerState},
+		Latest{ID: docker.ContainerUptime},
+		Latest{ID: docker.ContainerRestartCount},
+		Set{ID: docker.ContainerIPs},
+		Set{ID: docker.ContainerPorts},
+		Latest{ID: docker.ContainerCreated},
+		Latest{ID: docker.ContainerCommand},
+		Latest{ID: overlay.WeaveMACAddress},
+		Latest{ID: overlay.WeaveDNSHostname},
+	}
+	containerImageNodeMetadata = []MetadataRowTemplate{
+		Latest{ID: docker.ImageID},
+		Counter{ID: render.ContainersKey},
+	}
+	podNodeMetadata = []MetadataRowTemplate{
+		Latest{ID: kubernetes.PodID},
+		Latest{ID: kubernetes.Namespace},
+		Latest{ID: kubernetes.PodCreated},
+	}
+	hostNodeMetadata = []MetadataRowTemplate{
+		Latest{ID: host.HostName},
+		Latest{ID: host.OS},
+		Latest{ID: host.KernelVersion},
+		Latest{ID: host.Uptime},
+		Set{ID: host.LocalNetworks},
+	}
 )
+
+// MetadataRowTemplate extracts some metadata rows from a node
+type MetadataRowTemplate interface {
+	MetadataRows(report.Node) []MetadataRow
+}
+
+// Latest extracts some metadata rows from a node's Latest
+type Latest struct {
+	ID string
+}
+
+// MetadataRows implements MetadataRowTemplate
+func (l Latest) MetadataRows(n report.Node) []MetadataRow {
+	if val, ok := n.Latest.Lookup(l.ID); ok {
+		return []MetadataRow{{ID: l.ID, Value: val}}
+	}
+	return nil
+}
+
+// Set extracts some metadata rows from a node's Sets
+type Set struct {
+	ID string
+}
+
+// MetadataRows implements MetadataRowTemplate
+func (s Set) MetadataRows(n report.Node) []MetadataRow {
+	if val, ok := n.Sets.Lookup(s.ID); ok && len(val) > 0 {
+		return []MetadataRow{{ID: s.ID, Value: strings.Join(val, ", ")}}
+	}
+	return nil
+}
+
+// Counter extracts some metadata rows from a node's Counters
+type Counter struct {
+	ID string
+}
+
+// MetadataRows implements MetadataRowTemplate
+func (c Counter) MetadataRows(n report.Node) []MetadataRow {
+	if val, ok := n.Counters.Lookup(c.ID); ok {
+		return []MetadataRow{{ID: c.ID, Value: strconv.Itoa(val)}}
+	}
+	return nil
+}
 
 // MetadataRow is a row for the metadata table.
 type MetadataRow struct {
@@ -83,52 +127,19 @@ func (m MetadataRow) MarshalJSON() ([]byte, error) {
 // NodeMetadata produces a table (to be consumed directly by the UI) based on
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
 func NodeMetadata(n report.Node) []MetadataRow {
-	renderers := map[string]func(report.Node) []MetadataRow{
+	renderers := map[string][]MetadataRowTemplate{
 		report.Process:        processNodeMetadata,
 		report.Container:      containerNodeMetadata,
 		report.ContainerImage: containerImageNodeMetadata,
 		report.Pod:            podNodeMetadata,
 		report.Host:           hostNodeMetadata,
 	}
-	if renderer, ok := renderers[n.Topology]; ok {
-		return renderer(n)
-	}
-	return nil
-}
-
-func renderMetadata(templates ...func(report.Node) []MetadataRow) func(report.Node) []MetadataRow {
-	return func(nmd report.Node) []MetadataRow {
+	if templates, ok := renderers[n.Topology]; ok {
 		rows := []MetadataRow{}
 		for _, template := range templates {
-			rows = append(rows, template(nmd)...)
+			rows = append(rows, template.MetadataRows(n)...)
 		}
 		return rows
 	}
-}
-
-func sets(id string) func(report.Node) []MetadataRow {
-	return func(n report.Node) []MetadataRow {
-		if val, ok := n.Sets.Lookup(id); ok && len(val) > 0 {
-			return []MetadataRow{{ID: id, Value: strings.Join(val, ", ")}}
-		}
-		return nil
-	}
-}
-
-func ltst(id string) func(report.Node) []MetadataRow {
-	return func(n report.Node) []MetadataRow {
-		if val, ok := n.Latest.Lookup(id); ok {
-			return []MetadataRow{{ID: id, Value: val}}
-		}
-		return nil
-	}
-}
-
-func counter(id string) func(report.Node) []MetadataRow {
-	return func(n report.Node) []MetadataRow {
-		if val, ok := n.Counters.Lookup(id); ok {
-			return []MetadataRow{{ID: id, Value: strconv.Itoa(val)}}
-		}
-		return nil
-	}
+	return nil
 }
