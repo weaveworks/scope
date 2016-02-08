@@ -17,9 +17,11 @@ func (f *fixedConnIter) Next() *Connection {
 // ConnectionProcs.  It's designed to be used in tests.
 type FixedScanner []Connection
 
+// Connections implements ConnectionsScanner.Connections
 func (s FixedScanner) Connections(_ bool) (ConnIter, error) {
 	iter := fixedConnIter(s)
 	return &iter, nil
 }
 
+// Stop implements ConnectionsScanner.Stop (dummy since there is no background work)
 func (s FixedScanner) Stop() {}
