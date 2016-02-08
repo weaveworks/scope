@@ -13,10 +13,11 @@ import (
 )
 
 const (
-	initialRateLimit = 50 * time.Millisecond  // Read 20 * fdBlockSize file descriptors (/proc/PID/fd/*) per namespace per second
-	maxRateLimit     = 250 * time.Millisecond // Read at least 4 * fdBlockSize file descriptors per namespace per second
-	fdBlockSize      = uint64(300)
-	targetWalkTime   = 10 * time.Second // Aim at walking all files in 10 seconds
+	initialRateLimitPeriod = 50 * time.Millisecond  // Read 20 * fdBlockSize file descriptors (/proc/PID/fd/*) per namespace per second
+	maxRateLimitPeriod     = 250 * time.Millisecond // Read at least 4 * fdBlockSize file descriptors per namespace per second
+	fdBlockSize            = uint64(300)            // Maximum number of /proc/PID/fd/* files to stat per rate-limit period
+	// (as a rule of thumb going through each block should be more expensive than reading /proc/PID/tcp{,6})
+	targetWalkTime = 10 * time.Second // Aim at walking all files in 10 seconds
 )
 
 type backgroundReader struct {
@@ -63,12 +64,12 @@ func (br *backgroundReader) stop() error {
 
 func (br *backgroundReader) loop() {
 	const (
-		maxRateLimitF   = float64(maxRateLimit)
-		targetWalkTimeF = float64(targetWalkTime)
+		maxRateLimitPeriodF = float64(maxRateLimitPeriod)
+		targetWalkTimeF     = float64(targetWalkTime)
 	)
 
-	rateLimit := initialRateLimit
-	ticker := time.NewTicker(rateLimit)
+	rateLimitPeriod := initialRateLimitPeriod
+	ticker := time.NewTicker(rateLimitPeriod)
 	for {
 		start := time.Now()
 		sockets, err := walkProcPid(br.walkingBuf, br.walker, ticker.C, fdBlockSize)
@@ -107,12 +108,12 @@ func (br *backgroundReader) loop() {
 		}
 
 		// Adjust rate limit to more-accurately meet the target walk time in next iteration
-		scaledRateLimit := targetWalkTimeF / walkTimeF * float64(rateLimit)
-		rateLimit = time.Duration(math.Min(scaledRateLimit, maxRateLimitF))
-		log.Debugf("background /proc reader: new rate limit %s", rateLimit)
+		scaledRateLimitPeriod := targetWalkTimeF / walkTimeF * float64(rateLimitPeriod)
+		rateLimitPeriod = time.Duration(math.Min(scaledRateLimitPeriod, maxRateLimitPeriodF))
+		log.Debugf("background /proc reader: new rate limit %s", rateLimitPeriod)
 
 		ticker.Stop()
-		ticker = time.NewTicker(rateLimit)
+		ticker = time.NewTicker(rateLimitPeriod)
 
 		br.walkingBuf.Reset()
 

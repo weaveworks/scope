@@ -61,7 +61,7 @@ func TestWalkProcPid(t *testing.T) {
 	walker := process.NewWalker(procRoot)
 	ticker := time.NewTicker(time.Millisecond)
 	defer ticker.Stop()
-	fdBlockSize := 1
+	fdBlockSize := uint64(1)
 	have, err := walkProcPid(&buf, walker, ticker.C, fdBlockSize)
 	if err != nil {
 		t.Fatal(err)
