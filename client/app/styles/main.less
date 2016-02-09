@@ -596,6 +596,7 @@ h2 {
         bottom: -2px;
         left: 0;
         right: 0;
+        font-weight: bold;
       }
 
       &-item {
@@ -636,6 +637,17 @@ h2 {
 
   &-info {
     margin: 16px 0;
+
+    &-expand {
+      .btn-opacity;
+      text-align: center;
+      text-transform: uppercase;
+      font-size: 80%;
+      cursor: pointer;
+      color: @text-secondary-color;
+      padding: 2px 0;
+      font-weight: bold;
+    }
 
     &-field {
       display: flex;
@@ -698,18 +710,13 @@ h2 {
     }
 
     &-more {
-      .palable;
+      .btn-opacity;
       padding: 2px 0;
       text-transform: uppercase;
       cursor: pointer;
       color: @text-secondary-color;
-      opacity: 0.7;
       font-size: 80%;
       font-weight: bold;
-
-      &:hover {
-        opacity: 1;
-      }
     }
 
     &-node {

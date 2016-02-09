@@ -17,14 +17,18 @@ export default class NodeDetailsInfo extends React.Component {
   }
 
   render() {
-    const rows = (this.props.rows || []);
+    let rows = (this.props.rows || []);
     const prime = rows.filter(row => row.prime);
-    const overflow = rows.filter(row => !row.prime);
-    const showOverflow = overflow.length > 0 && !this.state.expanded;
-    const showLess = this.state.expanded;
+    let expandText = 'Show less';
+    let showExpand = this.state.expanded;
+    if (!this.state.expanded && prime.length < rows.length) {
+      expandText = 'Show more';
+      showExpand = true;
+      rows = prime;
+    }
     return (
       <div className="node-details-info">
-        {prime && prime.map(field => {
+        {rows.map(field => {
           return (
             <div className="node-details-info-field" key={field.id}>
               <div className="node-details-info-field-label truncate" title={field.label}>
@@ -38,22 +42,7 @@ export default class NodeDetailsInfo extends React.Component {
             </div>
           );
         })}
-        {this.state.expanded && overflow && overflow.map(field => {
-          return (
-            <div className="node-details-info-field" key={field.id}>
-              <div className="node-details-info-field-label truncate" title={field.label}>
-                {field.label}
-              </div>
-              <div className="node-details-info-field-value" title={field.value}>
-                <div className="truncate">
-                  {field.value}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-        {showOverflow && <div className="node-details-info-overflow-expand" onClick={this.handleClickMore}>Show more</div>}
-        {showLess && <div className="node-details-info-expand" onClick={this.handleClickMore}>Show less</div>}
+        {showExpand && <div className="node-details-info-expand" onClick={this.handleClickMore}>{expandText}</div>}
       </div>
     );
   }
