@@ -108,10 +108,10 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
     nodes = nodes.setIn([nodeId, 'y'], graphNode.y);
   });
 
-  graph.edges().forEach(id => {
-    const graphEdge = graph.edge(id);
-    const edge = edges.get(graphEdge.id);
-    const points = graphEdge.points;
+  graph.edges().forEach(graphEdge => {
+    const graphEdgeMeta = graph.edge(graphEdge);
+    const edge = edges.get(graphEdgeMeta.id);
+    const points = graphEdgeMeta.points;
 
     // set beginning and end points to node coordinates to ignore node bounding box
     const source = nodes.get(fromGraphNodeId(edge.get('source')));
@@ -119,7 +119,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
     points[0] = {x: source.get('x'), y: source.get('y')};
     points[points.length - 1] = {x: target.get('x'), y: target.get('y')};
 
-    edges = edges.setIn([graphEdge.id, 'points'], points);
+    edges = edges.setIn([graphEdgeMeta.id, 'points'], points);
   });
 
   // return object with the width and height of layout
