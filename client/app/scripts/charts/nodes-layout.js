@@ -18,6 +18,14 @@ const RANK_SEPARATION_FACTOR = 2.5;
 let layoutRuns = 0;
 let layoutRunsTrivial = 0;
 
+function graphNodeId(id) {
+  return id.replace('.', '<DOT>');
+}
+
+function fromGraphNodeId(encodedId) {
+  return encodedId.replace('<DOT>', '.');
+}
+
 /**
  * Layout engine runner
  * After the layout engine run nodes and edges have x-y-coordinates. Engine is
@@ -52,9 +60,9 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
 
   // add nodes to the graph if not already there
   nodes.forEach(node => {
-    if (!graph.hasNode(node.get('id'))) {
-      graph.setNode(node.get('id'), {
-        id: node.get('id'),
+    const gNodeId = graphNodeId(node.get('id'));
+    if (!graph.hasNode(gNodeId)) {
+      graph.setNode(gNodeId, {
         width: nodeWidth,
         height: nodeHeight
       });
@@ -62,27 +70,26 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   });
 
   // remove nodes that are no longer there or are 0-degree nodes
-  graph.nodes().forEach(nodeid => {
-    if (!nodes.has(nodeid) || nodes.get(nodeid).get('degree') === 0) {
-      graph.removeNode(nodeid);
+  graph.nodes().forEach(gNodeId => {
+    const nodeId = fromGraphNodeId(gNodeId);
+    if (!nodes.has(nodeId) || nodes.get(nodeId).get('degree') === 0) {
+      graph.removeNode(gNodeId);
     }
   });
 
   // add edges to the graph if not already there
   edges.forEach(edge => {
-    if (!graph.hasEdge(edge.get('source'), edge.get('target'))) {
-      const virtualNodes = edge.get('source') === edge.get('target') ? 1 : 0;
-      graph.setEdge(
-        edge.get('source'),
-        edge.get('target'),
-        {id: edge.get('id'), minlen: virtualNodes}
-      );
+    const s = graphNodeId(edge.get('source'));
+    const t = graphNodeId(edge.get('target'));
+    if (!graph.hasEdge(s, t)) {
+      const virtualNodes = s === t ? 1 : 0;
+      graph.setEdge(s, t, {id: edge.get('id'), minlen: virtualNodes});
     }
   });
 
   // remove edges that are no longer there
   graph.edges().forEach(edgeObj => {
-    const edge = [edgeObj.v, edgeObj.w];
+    const edge = [fromGraphNodeId(edgeObj.v), fromGraphNodeId(edgeObj.w)];
     const edgeId = edge.join(EDGE_ID_SEPARATOR);
     if (!edges.has(edgeId)) {
       graph.removeEdge(edgeObj.v, edgeObj.w);
@@ -94,10 +101,11 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
 
   // apply coordinates to nodes and edges
 
-  graph.nodes().forEach(id => {
-    const graphNode = graph.node(id);
-    nodes = nodes.setIn([id, 'x'], graphNode.x);
-    nodes = nodes.setIn([id, 'y'], graphNode.y);
+  graph.nodes().forEach(gNodeId => {
+    const graphNode = graph.node(gNodeId);
+    const nodeId = fromGraphNodeId(gNodeId);
+    nodes = nodes.setIn([nodeId, 'x'], graphNode.x);
+    nodes = nodes.setIn([nodeId, 'y'], graphNode.y);
   });
 
   graph.edges().forEach(id => {
@@ -106,8 +114,8 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
     const points = graphEdge.points;
 
     // set beginning and end points to node coordinates to ignore node bounding box
-    const source = nodes.get(edge.get('source'));
-    const target = nodes.get(edge.get('target'));
+    const source = nodes.get(fromGraphNodeId(edge.get('source')));
+    const target = nodes.get(fromGraphNodeId(edge.get('target')));
     points[0] = {x: source.get('x'), y: source.get('y')};
     points[points.length - 1] = {x: target.get('x'), y: target.get('y')};
 
@@ -115,9 +123,12 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   });
 
   // return object with the width and height of layout
-  layout.nodes = nodes;
-  layout.edges = edges;
-  return layout;
+  return {
+    width: layout.width,
+    height: layout.height,
+    nodes,
+    edges
+  };
 }
 
 /**
