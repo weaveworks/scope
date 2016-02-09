@@ -64,14 +64,13 @@ var (
 )
 
 func TestSpyNoProcesses(t *testing.T) {
-	procspy.SetFixtures(fixConnections)
-
 	const (
 		nodeID   = "heinz-tomato-ketchup" // TODO rename to hostID
 		nodeName = "frenchs-since-1904"   // TODO rename to hostNmae
 	)
 
-	reporter := endpoint.NewReporter(nodeID, nodeName, false, false, nil)
+	scanner := procspy.FixedScanner(fixConnections)
+	reporter := endpoint.NewReporter(nodeID, nodeName, false, false, scanner)
 	r, _ := reporter.Report()
 	//buf, _ := json.MarshalIndent(r, "", "    ")
 	//t.Logf("\n%s\n", buf)
@@ -101,14 +100,13 @@ func TestSpyNoProcesses(t *testing.T) {
 }
 
 func TestSpyWithProcesses(t *testing.T) {
-	procspy.SetFixtures(fixConnectionsWithProcesses)
-
 	const (
 		nodeID   = "nikon"             // TODO rename to hostID
 		nodeName = "fishermans-friend" // TODO rename to hostNmae
 	)
 
-	reporter := endpoint.NewReporter(nodeID, nodeName, true, false, nil)
+	scanner := procspy.FixedScanner(fixConnectionsWithProcesses)
+	reporter := endpoint.NewReporter(nodeID, nodeName, true, false, scanner)
 	r, _ := reporter.Report()
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
 

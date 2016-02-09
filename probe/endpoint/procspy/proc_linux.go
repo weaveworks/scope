@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
@@ -22,6 +23,23 @@ var (
 	namespaceKey           = []string{"procspy", "namespaces"}
 	netNamespacePathSuffix = ""
 )
+
+type pidWalker struct {
+	walker      process.Walker
+	tickc       <-chan time.Time // Rate-limit clock. Sets the pace when traversing namespaces and /proc/PID/fd/* files.
+	stopc       chan struct{}    // Abort walk
+	fdBlockSize uint64           // Maximum number of /proc/PID/fd/* files to stat() per tick
+}
+
+func newPidWalker(walker process.Walker, tickc <-chan time.Time, fdBlockSize uint64) pidWalker {
+	w := pidWalker{
+		walker:      walker,
+		tickc:       tickc,
+		fdBlockSize: fdBlockSize,
+		stopc:       make(chan struct{}),
+	}
+	return w
+}
 
 // SetProcRoot sets the location of the proc filesystem.
 func SetProcRoot(root string) {
@@ -54,7 +72,7 @@ func getNetNamespacePathSuffix() string {
 
 	v, err := getKernelVersion()
 	if err != nil {
-		log.Errorf("getNeNameSpacePath: cannot get kernel version: %s\n", err)
+		log.Errorf("getNamespacePathSuffix: cannot get kernel version: %s\n", err)
 		netNamespacePathSuffix = post38Path
 		return netNamespacePathSuffix
 	}
@@ -68,51 +86,83 @@ func getNetNamespacePathSuffix() string {
 	return netNamespacePathSuffix
 }
 
-// walkNamespacePid does the work of walkProcPid for a single namespace
-func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process) {
+// Read the connections for a group of processes living in the same namespace,
+// which are found (identically) in /proc/PID/net/tcp{,6} for any of the
+// processes.
+func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process) (bool, error) {
+	var (
+		errRead  error
+		errRead6 error
+		read     int64
+		read6    int64
+	)
 
-	// Read the connections for the namespace, which are found (identically) in
-	// /proc/PID/net/tcp{,6} for any of the processes in the namespace.
-	var tcpSuccess bool
 	for _, p := range namespaceProcs {
 		dirName := strconv.Itoa(p.PID)
 
-		read, errRead := readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
-		read6, errRead6 := readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
+		read, errRead = readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
+		read6, errRead6 = readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
 
 		if errRead != nil || errRead6 != nil {
 			// try next process
 			continue
 		}
-
-		if read+read6 == 0 {
-			// No connections, don't bother reading /fd/*
-			return
-		}
-
-		tcpSuccess = true
-		break
+		return read+read6 > 0, nil
 	}
 
-	if !tcpSuccess {
-		// There's no point in reading /fd/*
-		return
+	// would be cool to have an or operation between errors
+	if errRead != nil {
+		return false, errRead
+	}
+	if errRead6 != nil {
+		return false, errRead6
 	}
 
-	// Get the sockets for all the processes in the namespace
+	return false, nil
+
+}
+
+// walkNamespace does the work of walk for a single namespace
+func (w pidWalker) walkNamespace(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process) error {
+
+	if found, err := readProcessConnections(buf, namespaceProcs); err != nil || !found {
+		return err
+	}
+
 	var statT syscall.Stat_t
-	for _, p := range namespaceProcs {
+	var fdBlockCount uint64
+	for i, p := range namespaceProcs {
+
+		// Get the sockets for all the processes in the namespace
 		dirName := strconv.Itoa(p.PID)
 		fdBase := filepath.Join(procRoot, dirName, "fd")
 
+		if fdBlockCount > w.fdBlockSize {
+			// we surpassed the filedescriptor rate limit
+			select {
+			case <-w.tickc:
+			case <-w.stopc:
+				return nil // abort
+			}
+
+			fdBlockCount = 0
+			// read the connections again to
+			// avoid the race between between /net/tcp{,6} and /proc/PID/fd/*
+			if found, err := readProcessConnections(buf, namespaceProcs[i:]); err != nil || !found {
+				return err
+			}
+		}
+
 		fds, err := fs.ReadDirNames(fdBase)
 		if err != nil {
-			// Process is be gone by now, or we don't have access.
+			// Process is gone by now, or we don't have access.
 			continue
 		}
 
 		var proc *Proc
 		for _, fd := range fds {
+			fdBlockCount++
+
 			// Direct use of syscall.Stat() to save garbage.
 			err = fs.Stat(filepath.Join(fdBase, fd), &statT)
 			if err != nil {
@@ -137,13 +187,15 @@ func walkNamespacePid(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProc
 		}
 
 	}
+
+	return nil
 }
 
-// walkProcPid walks over all numerical (PID) /proc entries. It reads
+// walk walks over all numerical (PID) /proc entries. It reads
 // /proc/PID/net/tcp{,6} for each namespace and sees if the ./fd/* files of each
 // process in that namespace are symlinks to sockets. Returns a map from socket
 // ID (inode) to PID.
-func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, error) {
+func (w pidWalker) walk(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 	var (
 		sockets    = map[uint64]*Proc{}              // map socket inode -> process
 		namespaces = map[uint64][]*process.Process{} // map network namespace id -> processes
@@ -158,7 +210,7 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, er
 	// between reading /net/tcp{,6} of each namespace and /proc/PID/fd/* for
 	// the processes living in that namespace.
 
-	walker.Walk(func(p, _ process.Process) {
+	w.walker.Walk(func(p, _ process.Process) {
 		dirName := strconv.Itoa(p.PID)
 
 		netNamespacePath := filepath.Join(procRoot, dirName, getNetNamespacePathSuffix())
@@ -171,17 +223,24 @@ func walkProcPid(buf *bytes.Buffer, walker process.Walker) (map[uint64]*Proc, er
 	})
 
 	for _, procs := range namespaces {
-		walkNamespacePid(buf, sockets, procs)
+		select {
+		case <-w.tickc:
+			w.walkNamespace(buf, sockets, procs)
+		case <-w.stopc:
+			break // abort
+		}
 	}
 
 	metrics.SetGauge(namespaceKey, float32(len(namespaces)))
 	return sockets, nil
 }
 
-// readFile reads an arbitrary file into a buffer. It's a variable so it can
-// be overwritten for benchmarks. That's bad practice and we should change it
-// to be a dependency.
-var readFile = func(filename string, buf *bytes.Buffer) (int64, error) {
+func (w pidWalker) stop() {
+	close(w.stopc)
+}
+
+// readFile reads an arbitrary file into a buffer.
+func readFile(filename string, buf *bytes.Buffer) (int64, error) {
 	f, err := fs.Open(filename)
 	if err != nil {
 		return -1, err

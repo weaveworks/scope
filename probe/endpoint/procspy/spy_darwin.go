@@ -13,10 +13,17 @@ const (
 	lsofBinary    = "lsof"
 )
 
+// NewConnectionScanner creates a new Darwin ConnectionScanner
+func NewConnectionScanner(_ process.Walker) ConnectionScanner {
+	return &darwinScanner{}
+}
+
+type darwinScanner struct{}
+
 // Connections returns all established (TCP) connections. No need to be root
 // to run this. If processes is true it also tries to fill in the process
 // fields of the connection. You need to be root to find all processes.
-var cbConnections = func(processes bool, walker process.Walker) (ConnIter, error) {
+func (s *darwinScanner) Connections(processes bool) (ConnIter, error) {
 	out, err := exec.Command(
 		netstatBinary,
 		"-n", // no number resolving
@@ -62,3 +69,6 @@ var cbConnections = func(processes bool, walker process.Walker) (ConnIter, error
 	f := fixedConnIter(connections)
 	return &f, nil
 }
+
+// Nothing to stop since there's nothing running in the background
+func (s *darwinScanner) Stop() {}

@@ -24,6 +24,7 @@ import (
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
+	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
@@ -139,8 +140,9 @@ func probeMain() {
 	defer resolver.Stop()
 
 	processCache := process.NewCachingWalker(process.NewWalker(*procRoot))
+	scanner := procspy.NewConnectionScanner(processCache)
 
-	endpointReporter := endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack, processCache)
+	endpointReporter := endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack, scanner)
 	defer endpointReporter.Stop()
 
 	p := probe.New(*spyInterval, *publishInterval, clients)
