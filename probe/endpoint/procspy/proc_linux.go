@@ -26,15 +26,15 @@ var (
 
 type pidWalker struct {
 	walker      process.Walker
-	ticker      <-chan time.Time
-	stopc       chan struct{}
-	fdBlockSize uint64
+	tickc       <-chan time.Time // Rate-limit clock. Sets the pace when traversing namespaces and /proc/PID/fd/* files.
+	stopc       chan struct{}    // Abort walk
+	fdBlockSize uint64           // Maximum number of /proc/PID/fd/* files to stat() per tick
 }
 
-func newPidWalker(walker process.Walker, ticker <-chan time.Time, fdBlockSize uint64) pidWalker {
+func newPidWalker(walker process.Walker, tickc <-chan time.Time, fdBlockSize uint64) pidWalker {
 	w := pidWalker{
 		walker:      walker,
-		ticker:      ticker,
+		tickc:       tickc,
 		fdBlockSize: fdBlockSize,
 		stopc:       make(chan struct{}),
 	}
@@ -72,7 +72,7 @@ func getNetNamespacePathSuffix() string {
 
 	v, err := getKernelVersion()
 	if err != nil {
-		log.Errorf("getNeNameSpacePath: cannot get kernel version: %s\n", err)
+		log.Errorf("getNamespacePathSuffix: cannot get kernel version: %s\n", err)
 		netNamespacePathSuffix = post38Path
 		return netNamespacePathSuffix
 	}
@@ -139,10 +139,13 @@ func (w pidWalker) walkNamespace(buf *bytes.Buffer, sockets map[uint64]*Proc, na
 
 		if fdBlockCount > w.fdBlockSize {
 			// we surpassed the filedescriptor rate limit
-			// TODO: worth selecting on w.stopc?
-			<-w.ticker
-			fdBlockCount = 0
+			select {
+			case <-w.tickc:
+			case <-w.stopc:
+				return nil // abort
+			}
 
+			fdBlockCount = 0
 			// read the connections again to
 			// avoid the race between between /net/tcp{,6} and /proc/PID/fd/*
 			if found, err := readProcessConnections(buf, namespaceProcs[i:]); err != nil || !found {
@@ -221,10 +224,10 @@ func (w pidWalker) walk(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 
 	for _, procs := range namespaces {
 		select {
-		case <-w.ticker:
+		case <-w.tickc:
 			w.walkNamespace(buf, sockets, procs)
 		case <-w.stopc:
-			break
+			break // abort
 		}
 	}
 

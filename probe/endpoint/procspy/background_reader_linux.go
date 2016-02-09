@@ -3,7 +3,6 @@ package procspy
 import (
 	"bytes"
 	"io"
-	"math"
 	"sync"
 	"time"
 
@@ -15,7 +14,8 @@ import (
 const (
 	initialRateLimitPeriod = 50 * time.Millisecond  // Read 20 * fdBlockSize file descriptors (/proc/PID/fd/*) per namespace per second
 	maxRateLimitPeriod     = 500 * time.Millisecond // Read at least 2 * fdBlockSize file descriptors per namespace per second
-	fdBlockSize            = uint64(300)            // Maximum number of /proc/PID/fd/* files to stat per rate-limit period
+	minRateLimitPeriod     = initialRateLimitPeriod
+	fdBlockSize            = uint64(300) // Maximum number of /proc/PID/fd/* files to stat per rate-limit period
 	// (as a rule of thumb going through each block should be more expensive than reading /proc/PID/tcp{,6})
 	targetWalkTime = 10 * time.Second // Aim at walking all files in 10 seconds
 )
@@ -51,14 +51,35 @@ func (br *backgroundReader) getWalkedProcPid(buf *bytes.Buffer) (map[uint64]*Pro
 	return br.latestSockets, err
 }
 
+type walkResult struct {
+	buf     *bytes.Buffer
+	sockets map[uint64]*Proc
+}
+
+func performWalk(w pidWalker, c chan<- walkResult) {
+	var (
+		err    error
+		result = walkResult{
+			buf: bytes.NewBuffer(make([]byte, 0, 5000)),
+		}
+	)
+
+	result.sockets, err = w.walk(result.buf)
+	if err != nil {
+		log.Errorf("background /proc reader: error walking /proc: %s", err)
+		result.buf.Reset()
+		result.sockets = nil
+	}
+	c <- result
+}
+
 func (br *backgroundReader) loop(walker process.Walker) {
 	var (
 		begin           time.Time                      // when we started the last performWalk
 		tickc           = time.After(time.Millisecond) // fire immediately
-		walkc           chan map[uint64]*Proc          // initially nil, i.e. off
-		walkBuf         = bytes.NewBuffer(make([]byte, 0, 5000))
+		walkc           chan walkResult                // initially nil, i.e. off
 		rateLimitPeriod = initialRateLimitPeriod
-		nextInterval    time.Duration
+		restInterval    time.Duration
 		ticker          = time.NewTicker(rateLimitPeriod)
 		pWalker         = newPidWalker(walker, ticker.C, fdBlockSize)
 	)
@@ -66,28 +87,27 @@ func (br *backgroundReader) loop(walker process.Walker) {
 	for {
 		select {
 		case <-tickc:
-			tickc = nil                             // turn off until the next loop
-			walkc = make(chan map[uint64]*Proc, 1)  // turn on (need buffered so we don't leak performWalk)
-			begin = time.Now()                      // reset counter
-			go performWalk(pWalker, walkBuf, walkc) // do work
+			tickc = nil                      // turn off until the next loop
+			walkc = make(chan walkResult, 1) // turn on (need buffered so we don't leak performWalk)
+			begin = time.Now()               // reset counter
+			go performWalk(pWalker, walkc)   // do work
 
-		case sockets := <-walkc:
-			// Swap buffers
+		case result := <-walkc:
+			// Expose results
 			br.mtx.Lock()
-			br.latestBuf, walkBuf = walkBuf, br.latestBuf
-			br.latestSockets = sockets
+			br.latestBuf = result.buf
+			br.latestSockets = result.sockets
 			br.mtx.Unlock()
-			walkBuf.Reset()
 
-			// Schedule next walk and adjust rate limit
+			// Schedule next walk and adjust its rate limit
 			walkTime := time.Since(begin)
-			rateLimitPeriod, nextInterval = scheduleNextWalk(rateLimitPeriod, walkTime)
+			rateLimitPeriod, restInterval = scheduleNextWalk(rateLimitPeriod, walkTime)
 			ticker.Stop()
 			ticker = time.NewTicker(rateLimitPeriod)
-			pWalker.ticker = ticker.C
+			pWalker.tickc = ticker.C
 
 			walkc = nil                      // turn off until the next loop
-			tickc = time.After(nextInterval) // turn on
+			tickc = time.After(restInterval) // turn on
 
 		case <-br.stopc:
 			pWalker.stop()
@@ -97,9 +117,8 @@ func (br *backgroundReader) loop(walker process.Walker) {
 	}
 }
 
-// Adjust rate limit for next walk and calculate how long to wait until it should be started
-func scheduleNextWalk(rateLimitPeriod time.Duration, took time.Duration) (time.Duration, time.Duration) {
-
+// Adjust rate limit for next walk and calculate when it should be started
+func scheduleNextWalk(rateLimitPeriod time.Duration, took time.Duration) (newRateLimitPeriod time.Duration, restInterval time.Duration) {
 	log.Debugf("background /proc reader: full pass took %s", took)
 	if float64(took)/float64(targetWalkTime) > 1.5 {
 		log.Warnf(
@@ -110,21 +129,16 @@ func scheduleNextWalk(rateLimitPeriod time.Duration, took time.Duration) (time.D
 	}
 
 	// Adjust rate limit to more-accurately meet the target walk time in next iteration
-	scaledRateLimitPeriod := float64(targetWalkTime) / float64(took) * float64(rateLimitPeriod)
-	rateLimitPeriod = time.Duration(math.Min(scaledRateLimitPeriod, float64(maxRateLimitPeriod)))
-
-	log.Debugf("background /proc reader: new rate limit %s", rateLimitPeriod)
-
-	return rateLimitPeriod, targetWalkTime - took
-}
-
-func performWalk(w pidWalker, buf *bytes.Buffer, c chan<- map[uint64]*Proc) {
-	sockets, err := w.walk(buf)
-	if err != nil {
-		log.Errorf("background /proc reader: error walking /proc: %s", err)
-		buf.Reset()
-		c <- nil
-		return
+	newRateLimitPeriod = time.Duration(float64(targetWalkTime) / float64(took) * float64(rateLimitPeriod))
+	if newRateLimitPeriod > maxRateLimitPeriod {
+		newRateLimitPeriod = maxRateLimitPeriod
+	} else if newRateLimitPeriod < minRateLimitPeriod {
+		newRateLimitPeriod = minRateLimitPeriod
 	}
-	c <- sockets
+	log.Debugf("background /proc reader: new rate limit period %s", newRateLimitPeriod)
+
+	// when to start next walk
+	restInterval = targetWalkTime - took
+
+	return
 }
