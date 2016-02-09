@@ -31,8 +31,8 @@ type backgroundReader struct {
 // proc.
 func newBackgroundReader(walker process.Walker) *backgroundReader {
 	br := &backgroundReader{
-		latestBuf: bytes.NewBuffer(make([]byte, 0, 5000)),
-		stopc:     make(chan struct{}),
+		stopc:         make(chan struct{}),
+		latestSockets: map[uint64]*Proc{},
 	}
 	go br.loop(walker)
 	return br
@@ -137,8 +137,5 @@ func scheduleNextWalk(rateLimitPeriod time.Duration, took time.Duration) (newRat
 	}
 	log.Debugf("background /proc reader: new rate limit period %s", newRateLimitPeriod)
 
-	// when to start next walk
-	restInterval = targetWalkTime - took
-
-	return
+	return newRateLimitPeriod, targetWalkTime - took
 }
