@@ -17,11 +17,9 @@ func TestResolver(t *testing.T) {
 	c := make(chan time.Time)
 	tick = func(_ time.Duration) <-chan time.Time { return c }
 
-	oldLookupIP := lookupIP
-	defer func() { lookupIP = oldLookupIP }()
 	ipsLock := sync.Mutex{}
 	ips := map[string][]net.IP{}
-	lookupIP = func(host string) ([]net.IP, error) {
+	lookupIP := func(host string) ([]net.IP, error) {
 		ipsLock.Lock()
 		defer ipsLock.Unlock()
 		addrs, ok := ips[host]
@@ -46,7 +44,7 @@ func TestResolver(t *testing.T) {
 		}
 	}
 
-	r := NewStaticResolver([]string{"symbolic.name" + port, "namewithnoport", ip1 + port, ip2}, set)
+	r := NewResolver([]string{"symbolic.name" + port, "namewithnoport", ip1 + port, ip2}, lookupIP, set)
 
 	assertAdd := func(want ...string) {
 		remaining := map[string]struct{}{}

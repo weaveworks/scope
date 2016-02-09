@@ -60,6 +60,14 @@ func (c *mockCmd) Kill() error {
 	return nil
 }
 
+func (c *mockCmd) Output() ([]byte, error) {
+	return ioutil.ReadAll(c.ReadCloser)
+}
+
+func (c *mockCmd) Run() error {
+	return nil
+}
+
 func (b *blockingReader) Read(p []byte) (n int, err error) {
 	<-b.quit
 	return 0, nil

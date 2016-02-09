@@ -12,6 +12,8 @@ type Cmd interface {
 	Start() error
 	Wait() error
 	Kill() error
+	Output() ([]byte, error)
+	Run() error
 }
 
 // Command is a hook for mocking
