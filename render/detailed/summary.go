@@ -1,6 +1,7 @@
 package detailed
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -16,7 +17,7 @@ type NodeSummaryGroup struct {
 	Label      string        `json:"label"`
 	Nodes      []NodeSummary `json:"nodes"`
 	TopologyID string        `json:"topologyId"`
-	Columns    []string      `json:"columns"`
+	Columns    []Column      `json:"columns"`
 }
 
 // Copy returns a value copy of the NodeSummaryGroup
@@ -30,6 +31,25 @@ func (g NodeSummaryGroup) Copy() NodeSummaryGroup {
 		result.Nodes = append(result.Nodes, node.Copy())
 	}
 	return result
+}
+
+// Column provides special json serialization for column ids, so they include
+// their label for the frontend.
+type Column string
+
+// MarshalJSON serializes a column to json
+func (c Column) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]string{"id": string(c), "label": Label(string(c))})
+}
+
+// UnmarshalJSON deserializes a column from json
+func (c *Column) UnmarshalJSON(b []byte) error {
+	m := map[string]string{}
+	if err := json.Unmarshal(b, &m); err != nil {
+		return err
+	}
+	*c = Column(m["id"])
+	return nil
 }
 
 // NodeSummary is summary information about a child for a Node.
