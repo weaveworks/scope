@@ -1185,7 +1185,7 @@ func addContainers(server *DockerServer, n int) {
 					"Tcp": {"8888": fmt.Sprintf("%d", 49600+i)},
 				},
 				Ports: map[docker.Port][]docker.PortBinding{
-					"8888/tcp": []docker.PortBinding{
+					"8888/tcp": {
 						{HostIP: "0.0.0.0", HostPort: fmt.Sprintf("%d", 49600+i)},
 					},
 				},
@@ -1883,7 +1883,7 @@ func TestCreateNetworkDuplicateName(t *testing.T) {
 func TestListVolumes(t *testing.T) {
 	server := DockerServer{}
 	server.buildMuxer()
-	expected := []docker.Volume{docker.Volume{
+	expected := []docker.Volume{{
 		Name:       "test-vol-1",
 		Driver:     "local",
 		Mountpoint: "/var/lib/docker/volumes/test-vol-1",
@@ -2068,5 +2068,36 @@ func TestRemoveVolumeInuse(t *testing.T) {
 	server.ServeHTTP(recorder, request)
 	if recorder.Code != http.StatusConflict {
 		t.Errorf("RemoveVolume: wrong status.  Want %d.  Got %d.", http.StatusConflict, recorder.Code)
+	}
+}
+
+func TestUploadToContainer(t *testing.T) {
+	server := DockerServer{}
+	server.buildMuxer()
+	cont := &docker.Container{
+		ID: "id123",
+		State: docker.State{
+			Running:  true,
+			ExitCode: 0,
+		},
+	}
+	server.containers = append(server.containers, cont)
+	server.uploadedFiles = make(map[string]string)
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("PUT", fmt.Sprintf("/containers/%s/archive?path=abcd", cont.ID), nil)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Errorf("UploadToContainer: wrong status. Want %d. Got %d.", http.StatusOK, recorder.Code)
+	}
+}
+
+func TestUploadToContainerMissingContainer(t *testing.T) {
+	server := DockerServer{}
+	server.buildMuxer()
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("PUT", "/containers/missing-container/archive?path=abcd", nil)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusNotFound {
+		t.Errorf("UploadToContainer: wrong status. Want %d. Got %d.", http.StatusNotFound, recorder.Code)
 	}
 }

@@ -241,7 +241,8 @@ func TestInspectContainer(t *testing.T) {
                "CgroupParent": "/mesos",
                "Memory": 17179869184,
                "MemorySwap": 34359738368,
-               "GroupAdd": ["fake", "12345"]
+               "GroupAdd": ["fake", "12345"],
+               "OomScoreAdj": 642
              }
 }`
 	var expected Container
@@ -1924,6 +1925,16 @@ func TestStatsTimeout(t *testing.T) {
 func TestStats(t *testing.T) {
 	jsonStats1 := `{
        "read" : "2015-01-08T22:57:31.547920715Z",
+       "network" : {
+          "rx_dropped" : 0,
+          "rx_bytes" : 648,
+          "rx_errors" : 0,
+          "tx_packets" : 8,
+          "tx_dropped" : 0,
+          "rx_packets" : 8,
+          "tx_errors" : 0,
+          "tx_bytes" : 648
+       },
 	   "networks" : {
 		   "eth0":{
 			   "rx_dropped" : 0,
@@ -1966,7 +1977,9 @@ func TestStats(t *testing.T) {
              "active_file" : 0,
              "pgfault" : 964,
              "inactive_file" : 0,
-             "total_pgpgin" : 477
+             "total_pgpgin" : 477,
+             "swap" : 47312896,
+             "hierarchical_memsw_limit" : 1610612736
           },
           "max_usage" : 6651904,
           "usage" : 6537216,
@@ -2082,7 +2095,9 @@ func TestStats(t *testing.T) {
              "active_file" : 0,
              "pgfault" : 964,
              "inactive_file" : 0,
-             "total_pgpgin" : 477
+             "total_pgpgin" : 477,
+             "swap" : 47312896,
+             "hierarchical_memsw_limit" : 1610612736
           },
           "max_usage" : 6651904,
           "usage" : 6537216,
