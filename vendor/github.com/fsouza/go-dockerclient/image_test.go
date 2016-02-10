@@ -681,6 +681,8 @@ func TestBuildImageParameters(t *testing.T) {
 		Memory:              1024,
 		Memswap:             2048,
 		CPUShares:           10,
+		CPUQuota:            7500,
+		CPUPeriod:           100000,
 		CPUSetCPUs:          "0-3",
 		Ulimits:             []ULimit{{Name: "nofile", Soft: 100, Hard: 200}},
 		InputStream:         &buf,
@@ -701,6 +703,8 @@ func TestBuildImageParameters(t *testing.T) {
 		"memory":     {"1024"},
 		"memswap":    {"2048"},
 		"cpushares":  {"10"},
+		"cpuquota":   {"7500"},
+		"cpuperiod":  {"100000"},
 		"cpusetcpus": {"0-3"},
 		"ulimits":    {"[{\"Name\":\"nofile\",\"Soft\":100,\"Hard\":200}]"},
 	}

@@ -3,7 +3,6 @@ package opts
 import (
 	"fmt"
 	"os"
-	"runtime"
 	"strings"
 	"testing"
 )
@@ -245,86 +244,6 @@ func TestValidateAttach(t *testing.T) {
 	}
 }
 
-func TestValidateLink(t *testing.T) {
-	valid := []string{
-		"name",
-		"dcdfbe62ecd0:alias",
-		"7a67485460b7642516a4ad82ecefe7f57d0c4916f530561b71a50a3f9c4e33da",
-		"angry_torvalds:linus",
-	}
-	invalid := map[string]string{
-		"":               "empty string specified for links",
-		"too:much:of:it": "bad format for links: too:much:of:it",
-	}
-
-	for _, link := range valid {
-		if _, err := ValidateLink(link); err != nil {
-			t.Fatalf("ValidateLink(`%q`) should succeed: error %q", link, err)
-		}
-	}
-
-	for link, expectedError := range invalid {
-		if _, err := ValidateLink(link); err == nil {
-			t.Fatalf("ValidateLink(`%q`) should have failed validation", link)
-		} else {
-			if !strings.Contains(err.Error(), expectedError) {
-				t.Fatalf("ValidateLink(`%q`) error should contain %q", link, expectedError)
-			}
-		}
-	}
-}
-
-func TestValidateDevice(t *testing.T) {
-	valid := []string{
-		"/home",
-		"/home:/home",
-		"/home:/something/else",
-		"/with space",
-		"/home:/with space",
-		"relative:/absolute-path",
-		"hostPath:/containerPath:r",
-		"/hostPath:/containerPath:rw",
-		"/hostPath:/containerPath:mrw",
-	}
-	invalid := map[string]string{
-		"":        "bad format for path: ",
-		"./":      "./ is not an absolute path",
-		"../":     "../ is not an absolute path",
-		"/:../":   "../ is not an absolute path",
-		"/:path":  "path is not an absolute path",
-		":":       "bad format for path: :",
-		"/tmp:":   " is not an absolute path",
-		":test":   "bad format for path: :test",
-		":/test":  "bad format for path: :/test",
-		"tmp:":    " is not an absolute path",
-		":test:":  "bad format for path: :test:",
-		"::":      "bad format for path: ::",
-		":::":     "bad format for path: :::",
-		"/tmp:::": "bad format for path: /tmp:::",
-		":/tmp::": "bad format for path: :/tmp::",
-		"path:ro": "ro is not an absolute path",
-		"path:rr": "rr is not an absolute path",
-		"a:/b:ro": "bad mode specified: ro",
-		"a:/b:rr": "bad mode specified: rr",
-	}
-
-	for _, path := range valid {
-		if _, err := ValidateDevice(path); err != nil {
-			t.Fatalf("ValidateDevice(`%q`) should succeed: error %q", path, err)
-		}
-	}
-
-	for path, expectedError := range invalid {
-		if _, err := ValidateDevice(path); err == nil {
-			t.Fatalf("ValidateDevice(`%q`) should have failed validation", path)
-		} else {
-			if err.Error() != expectedError {
-				t.Fatalf("ValidateDevice(`%q`) error should contain %q, got %q", path, expectedError, err.Error())
-			}
-		}
-	}
-}
-
 func TestValidateEnv(t *testing.T) {
 	valids := map[string]string{
 		"a":                   "a",
@@ -369,51 +288,6 @@ func TestValidateLabel(t *testing.T) {
 	// Validate it's working with one more
 	if actual, err := ValidateLabel("key1=value1=value2=value3"); err != nil {
 		t.Fatalf("Expected [key1=value1=value2=value2], got [%v,%v]", actual, err)
-	}
-}
-
-func TestParseHost(t *testing.T) {
-	invalid := map[string]string{
-		"anything":              "Invalid bind address format: anything",
-		"something with spaces": "Invalid bind address format: something with spaces",
-		"://":                "Invalid bind address format: ://",
-		"unknown://":         "Invalid bind address format: unknown://",
-		"tcp://:port":        "Invalid bind address format: :port",
-		"tcp://invalid":      "Invalid bind address format: invalid",
-		"tcp://invalid:port": "Invalid bind address format: invalid:port",
-	}
-	const defaultHTTPHost = "tcp://127.0.0.1:2375"
-	var defaultHOST = "unix:///var/run/docker.sock"
-
-	if runtime.GOOS == "windows" {
-		defaultHOST = defaultHTTPHost
-	}
-	valid := map[string]string{
-		"":                         defaultHOST,
-		"fd://":                    "fd://",
-		"fd://something":           "fd://something",
-		"tcp://host:":              "tcp://host:2375",
-		"tcp://":                   "tcp://localhost:2375",
-		"tcp://:2375":              "tcp://localhost:2375", // default ip address
-		"tcp://:2376":              "tcp://localhost:2376", // default ip address
-		"tcp://0.0.0.0:8080":       "tcp://0.0.0.0:8080",
-		"tcp://192.168.0.0:12000":  "tcp://192.168.0.0:12000",
-		"tcp://192.168:8080":       "tcp://192.168:8080",
-		"tcp://0.0.0.0:1234567890": "tcp://0.0.0.0:1234567890", // yeah it's valid :P
-		"tcp://docker.com:2375":    "tcp://docker.com:2375",
-		"unix://":                  "unix:///var/run/docker.sock", // default unix:// value
-		"unix://path/to/socket":    "unix://path/to/socket",
-	}
-
-	for value, errorMessage := range invalid {
-		if _, err := ParseHost(defaultHTTPHost, value); err == nil || err.Error() != errorMessage {
-			t.Fatalf("Expected an error for %v with [%v], got [%v]", value, errorMessage, err)
-		}
-	}
-	for value, expected := range valid {
-		if actual, err := ParseHost(defaultHTTPHost, value); err != nil || actual != expected {
-			t.Fatalf("Expected for %v [%v], got [%v, %v]", value, expected, actual, err)
-		}
 	}
 }
 

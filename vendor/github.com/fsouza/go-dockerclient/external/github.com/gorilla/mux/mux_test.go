@@ -1077,7 +1077,7 @@ func TestWalkSingleDepth(t *testing.T) {
 			return SkipRouter
 		}
 		if len(ancestors) != depths[i] {
-			t.Errorf(`Expected depth of %d at i = %d; got "%s"`, depths[i], i, len(ancestors))
+			t.Errorf(`Expected depth of %d at i = %d; got "%d"`, depths[i], i, len(ancestors))
 		}
 		if matcher.template != "/"+paths[i] {
 			t.Errorf(`Expected "/%s" at i = %d; got "%s"`, paths[i], i, matcher.template)
@@ -1120,6 +1120,30 @@ func TestWalkNested(t *testing.T) {
 	}
 	if idx != len(paths) {
 		t.Errorf("Expected %d routes, found %d", len(paths), idx)
+	}
+}
+
+func TestSubrouterErrorHandling(t *testing.T) {
+	superRouterCalled := false
+	subRouterCalled := false
+
+	router := NewRouter()
+	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		superRouterCalled = true
+	})
+	subRouter := router.PathPrefix("/bign8").Subrouter()
+	subRouter.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		subRouterCalled = true
+	})
+
+	req, _ := http.NewRequest("GET", "http://localhost/bign8/was/here", nil)
+	router.ServeHTTP(NewRecorder(), req)
+
+	if superRouterCalled {
+		t.Error("Super router 404 handler called when sub-router 404 handler is available.")
+	}
+	if !subRouterCalled {
+		t.Error("Sub-router 404 handler was not called.")
 	}
 }
 

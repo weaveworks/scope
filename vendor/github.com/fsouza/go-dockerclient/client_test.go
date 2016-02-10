@@ -323,25 +323,6 @@ func TestQueryString(t *testing.T) {
 	}
 }
 
-func TestNewAPIVersionFailures(t *testing.T) {
-	var tests = []struct {
-		input         string
-		expectedError string
-	}{
-		{"1-0", `Unable to parse version "1-0"`},
-		{"1.0-beta", `Unable to parse version "1.0-beta": "0-beta" is not an integer`},
-	}
-	for _, tt := range tests {
-		v, err := NewAPIVersion(tt.input)
-		if v != nil {
-			t.Errorf("Expected <nil> version, got %v.", v)
-		}
-		if err.Error() != tt.expectedError {
-			t.Errorf("NewAPIVersion(%q): wrong error. Want %q. Got %q", tt.input, tt.expectedError, err.Error())
-		}
-	}
-}
-
 func TestAPIVersions(t *testing.T) {
 	var tests = []struct {
 		a                              string
@@ -354,6 +335,9 @@ func TestAPIVersions(t *testing.T) {
 		{"1.11", "1.11", false, true, false, true},
 		{"1.10", "1.11", true, true, false, false},
 		{"1.11", "1.10", false, false, true, true},
+
+		{"1.11-ubuntu0", "1.11", false, true, false, true},
+		{"1.10", "1.11-el7", true, true, false, false},
 
 		{"1.9", "1.11", true, true, false, false},
 		{"1.11", "1.9", false, false, true, true},
