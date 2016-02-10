@@ -70,18 +70,7 @@ export default class NodeDetailsTable extends React.Component {
 
   renderHeaders() {
     if (this.props.nodes && this.props.nodes.length > 0) {
-      let headers = [{id: 'label', label: this.props.label}];
-      // gather header labels from metrics and metadata
-      const nodeValues = this.props.nodes.map(this.getValuesForNode);
-      headers = headers.concat(this.props.columns.map(column => {
-        // look for a node that has the column label
-        const valuesWithField = nodeValues.find(values => values[column] !== undefined);
-        if (valuesWithField) {
-          return {id: column, label: valuesWithField[column].label};
-        }
-        // fall back on column id as label
-        return {id: column, label: column};
-      }));
+      const headers = [{id: 'label', label: this.props.label}].concat(this.props.columns);
       const defaultSortBy = this.getDefaultSortBy();
 
       return (
@@ -114,8 +103,8 @@ export default class NodeDetailsTable extends React.Component {
 
   renderValues(node) {
     const fields = this.getValuesForNode(node);
-    return this.props.columns.map(col => {
-      const field = fields[col];
+    return this.props.columns.map(({id}) => {
+      const field = fields[id];
       if (field) {
         if (field.valueType === 'metadata') {
           return (

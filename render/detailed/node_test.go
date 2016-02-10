@@ -85,19 +85,19 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			{
 				Label:      "Containers",
 				TopologyID: "containers",
-				Columns:    []string{docker.CPUTotalUsage, docker.MemoryUsage},
+				Columns:    []detailed.Column{docker.CPUTotalUsage, docker.MemoryUsage},
 				Nodes:      []detailed.NodeSummary{containerNodeSummary},
 			},
 			{
 				Label:      "Processes",
 				TopologyID: "processes",
-				Columns:    []string{process.PID, process.CPUUsage, process.MemoryUsage},
+				Columns:    []detailed.Column{process.PID, process.CPUUsage, process.MemoryUsage},
 				Nodes:      []detailed.NodeSummary{process1NodeSummary, process2NodeSummary},
 			},
 			{
 				Label:      "Container Images",
 				TopologyID: "containers-by-image",
-				Columns:    []string{render.ContainersKey},
+				Columns:    []detailed.Column{render.ContainersKey},
 				Nodes:      []detailed.NodeSummary{containerImageNodeSummary},
 			},
 		},
@@ -152,7 +152,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 			{
 				Label:      "Processes",
 				TopologyID: "processes",
-				Columns:    []string{process.PID, process.CPUUsage, process.MemoryUsage},
+				Columns:    []detailed.Column{process.PID, process.CPUUsage, process.MemoryUsage},
 				Nodes: []detailed.NodeSummary{
 					{
 						ID:       fmt.Sprintf("process:%s:%s", "server.hostname.com", fixture.ServerPID),
