@@ -8,7 +8,8 @@ import { getNodeColor } from '../utils/color-utils';
 import NodeShapeCircle from './node-shape-circle';
 import NodeShapeStack from './node-shape-stack';
 import NodeShapeRoundedSquare from './node-shape-rounded-square';
-import NodeShapeHex from './node-shape-hex';
+import NodeShapeCog from './node-shape-cog';
+// import NodeShapeHex from './node-shape-hex';
 import NodeShapeCloud from './node-shape-cloud';
 
 function stackedShape(Shape) {
@@ -21,8 +22,8 @@ function stackedShape(Shape) {
 
 const nodeShapes = {
   'circle': NodeShapeCircle,
-  'hexagon': NodeShapeHex,
-  'square': NodeShapeRoundedSquare,
+  'hexagon': NodeShapeRoundedSquare,
+  'square': NodeShapeCog,
   'cloud': NodeShapeCloud
 };
 
