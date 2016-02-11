@@ -120,9 +120,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 			Label:    "server",
 			Linkable: true,
 			Metadata: []detailed.MetadataRow{
-				{ID: "docker_container_id", Value: fixture.ServerContainerID},
+				{ID: "docker_container_id", Value: fixture.ServerContainerID, Prime: true},
+				{ID: "docker_container_state", Value: "running", Prime: true},
 				{ID: "docker_image_id", Value: fixture.ServerContainerImageID},
-				{ID: "docker_container_state", Value: "running"},
 			},
 			DockerLabels: []detailed.MetadataRow{
 				{ID: "label_" + render.AmazonECSContainerNameLabel, Value: `server`},
@@ -159,7 +159,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						Label:    "apache",
 						Linkable: true,
 						Metadata: []detailed.MetadataRow{
-							{ID: process.PID, Value: fixture.ServerPID},
+							{ID: process.PID, Value: fixture.ServerPID, Prime: true},
 						},
 						Metrics: []detailed.MetricRow{},
 					},

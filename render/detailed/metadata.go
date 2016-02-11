@@ -16,38 +16,38 @@ import (
 
 var (
 	processNodeMetadata = []MetadataRowTemplate{
-		Latest{ID: process.PID},
-		Latest{ID: process.PPID},
-		Latest{ID: process.Cmdline},
-		Latest{ID: process.Threads},
+		Latest{ID: process.PID, Prime: true},
+		Latest{ID: process.Cmdline, Prime: true},
+		Latest{ID: process.PPID, Prime: true},
+		Latest{ID: process.Threads, Prime: true},
 	}
 	containerNodeMetadata = []MetadataRowTemplate{
-		Latest{ID: docker.ContainerID, Truncate: 12},
+		Latest{ID: docker.ContainerID, Truncate: 12, Prime: true},
+		Latest{ID: docker.ContainerState, Prime: true},
+		Latest{ID: docker.ContainerCommand, Prime: true},
 		Latest{ID: docker.ImageID, Truncate: 12},
-		Latest{ID: docker.ContainerState},
 		Latest{ID: docker.ContainerUptime},
 		Latest{ID: docker.ContainerRestartCount},
 		Set{ID: docker.ContainerIPs},
 		Set{ID: docker.ContainerPorts},
 		Latest{ID: docker.ContainerCreated},
-		Latest{ID: docker.ContainerCommand},
 		Latest{ID: overlay.WeaveMACAddress},
 		Latest{ID: overlay.WeaveDNSHostname},
 	}
 	containerImageNodeMetadata = []MetadataRowTemplate{
-		Latest{ID: docker.ImageID, Truncate: 12},
-		Counter{ID: render.ContainersKey},
+		Latest{ID: docker.ImageID, Truncate: 12, Prime: true},
+		Counter{ID: render.ContainersKey, Prime: true},
 	}
 	podNodeMetadata = []MetadataRowTemplate{
-		Latest{ID: kubernetes.PodID},
-		Latest{ID: kubernetes.Namespace},
-		Latest{ID: kubernetes.PodCreated},
+		Latest{ID: kubernetes.PodID, Prime: true},
+		Latest{ID: kubernetes.Namespace, Prime: true},
+		Latest{ID: kubernetes.PodCreated, Prime: true},
 	}
 	hostNodeMetadata = []MetadataRowTemplate{
+		Latest{ID: host.KernelVersion, Prime: true},
+		Latest{ID: host.Uptime, Prime: true},
 		Latest{ID: host.HostName},
 		Latest{ID: host.OS},
-		Latest{ID: host.KernelVersion},
-		Latest{ID: host.Uptime},
 		Set{ID: host.LocalNetworks},
 	}
 )
@@ -60,7 +60,8 @@ type MetadataRowTemplate interface {
 // Latest extracts some metadata rows from a node's Latest
 type Latest struct {
 	ID       string
-	Truncate int
+	Truncate int  // If > 0, truncate the value to this length.
+	Prime    bool // Whether the row should be shown by default
 }
 
 // MetadataRows implements MetadataRowTemplate
@@ -69,7 +70,7 @@ func (l Latest) MetadataRows(n report.Node) []MetadataRow {
 		if l.Truncate > 0 && len(val) > l.Truncate {
 			val = val[:l.Truncate]
 		}
-		return []MetadataRow{{ID: l.ID, Value: val}}
+		return []MetadataRow{{ID: l.ID, Value: val, Prime: l.Prime}}
 	}
 	return nil
 }
@@ -89,13 +90,14 @@ func (s Set) MetadataRows(n report.Node) []MetadataRow {
 
 // Counter extracts some metadata rows from a node's Counters
 type Counter struct {
-	ID string
+	ID    string
+	Prime bool
 }
 
 // MetadataRows implements MetadataRowTemplate
 func (c Counter) MetadataRows(n report.Node) []MetadataRow {
 	if val, ok := n.Counters.Lookup(c.ID); ok {
-		return []MetadataRow{{ID: c.ID, Value: strconv.Itoa(val)}}
+		return []MetadataRow{{ID: c.ID, Value: strconv.Itoa(val), Prime: c.Prime}}
 	}
 	return nil
 }
@@ -104,6 +106,7 @@ func (c Counter) MetadataRows(n report.Node) []MetadataRow {
 type MetadataRow struct {
 	ID    string
 	Value string
+	Prime bool
 }
 
 // Copy returns a value copy of a metadata row.
@@ -121,10 +124,12 @@ func (m MetadataRow) MarshalJSON() ([]byte, error) {
 		ID    string `json:"id"`
 		Label string `json:"label"`
 		Value string `json:"value"`
+		Prime bool   `json:"prime,omitempty"`
 	}{
 		ID:    m.ID,
 		Label: Label(m.ID),
 		Value: m.Value,
+		Prime: m.Prime,
 	})
 }
 
