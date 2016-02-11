@@ -24,7 +24,7 @@ function getPoints(h) {
 }
 
 
-export default function NodeShapeHex({highlighted, size, color}) {
+export default function NodeShapeHex({onlyHighlight, highlighted, size, color}) {
   const pathProps = (v) => {
     return {
       d: getPoints(size * v * 2),
@@ -32,10 +32,19 @@ export default function NodeShapeHex({highlighted, size, color}) {
     };
   };
 
+  const hightlightNode = <path className="highlighted" {...pathProps(0.7)} />;
+
+  if (onlyHighlight) {
+    return (
+      <g className="shape">
+        {highlighted && hightlightNode}
+      </g>
+    );
+  }
+
   return (
     <g className="shape">
-      {highlighted &&
-        <path className="highlighted" {...pathProps(0.7)} />}
+      {highlighted && hightlightNode}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(0.45)} />
       <circle className="node" r={Math.max(2, (size * 0.125))} />
