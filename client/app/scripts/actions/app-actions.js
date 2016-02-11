@@ -244,6 +244,11 @@ export function hitEsc() {
     });
     updateRoute();
     // Don't deselect node on ESC if there is a controlPipe (keep terminal open)
+  } else if (AppStore.getMetricsWindow()) {
+    AppDispatcher.dispatch({
+      type: ActionTypes.CLICK_CLOSE_METRICS,
+    });
+    updateRoute();
   } else if (AppStore.getTopCardNodeId() && !controlPipe) {
     AppDispatcher.dispatch({ type: ActionTypes.DESELECT_NODE });
     updateRoute();

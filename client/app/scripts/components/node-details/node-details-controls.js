@@ -21,9 +21,12 @@ export default function NodeDetailsControls({controls, error, nodeId, pending}) 
         {controls && controls.map(control => <NodeDetailsControlButton
           nodeId={nodeId} control={control} pending={pending} key={control.id} />)}
         {this.props.metrics && <span
-            className="node-control-button fa fa-line-chart"
+            className="node-control-button"
             title="Show Metrics"
-            onClick={() => showMetrics(this.props.nodeId)} />}
+            onClick={() => showMetrics(this.props.nodeId)}>
+              <i className="fa fa-plus"></i>
+              <i className="fa fa-line-chart"></i>
+            </span>}
           </span>
       </span>
       {controls && <span title="Applying..." className={spinnerClassName}></span>}
