@@ -18,8 +18,8 @@ var (
 	processNodeMetadata = []MetadataRowTemplate{
 		Latest{ID: process.PID, Prime: true},
 		Latest{ID: process.Cmdline, Prime: true},
-		Latest{ID: process.PPID},
-		Latest{ID: process.Threads},
+		Latest{ID: process.PPID, Prime: true},
+		Latest{ID: process.Threads, Prime: true},
 	}
 	containerNodeMetadata = []MetadataRowTemplate{
 		Latest{ID: docker.ContainerID, Truncate: 12, Prime: true},
@@ -39,9 +39,9 @@ var (
 		Counter{ID: render.ContainersKey, Prime: true},
 	}
 	podNodeMetadata = []MetadataRowTemplate{
-		Latest{ID: kubernetes.PodID},
-		Latest{ID: kubernetes.Namespace},
-		Latest{ID: kubernetes.PodCreated},
+		Latest{ID: kubernetes.PodID, Prime: true},
+		Latest{ID: kubernetes.Namespace, Prime: true},
+		Latest{ID: kubernetes.PodCreated, Prime: true},
 	}
 	hostNodeMetadata = []MetadataRowTemplate{
 		Latest{ID: host.KernelVersion, Prime: true},
