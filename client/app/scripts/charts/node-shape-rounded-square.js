@@ -5,6 +5,6 @@ import NodeShapeSquare from './node-shape-square';
 
 export default function NodeShapeRoundedSquare(props) {
   return (
-    <NodeShapeSquare {...props} rx="0.2" ry="0.2" />
+    <NodeShapeSquare {...props} rx="0.4" ry="0.4" />
   );
 }
