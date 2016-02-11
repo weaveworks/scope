@@ -1,9 +1,9 @@
 package appclient
 
 import (
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/rpc"
 	"sync"
@@ -14,6 +14,7 @@ import (
 
 	"github.com/weaveworks/scope/common/sanitize"
 	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/report"
 )
 
 const (
@@ -27,7 +28,7 @@ type AppClient interface {
 	ControlConnection()
 	PipeConnection(string, xfer.Pipe)
 	PipeClose(string) error
-	Publish(r io.Reader) error
+	Publish(r report.Report) error
 	Stop()
 }
 
@@ -49,7 +50,7 @@ type appClient struct {
 
 	// For publish
 	publishLoop sync.Once
-	readers     chan io.Reader
+	reports     chan report.Report
 
 	// For controls
 	control xfer.ControlHandler
@@ -73,7 +74,7 @@ func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlH
 			TLSClientConfig: httpTransport.TLSClientConfig,
 		},
 		conns:   map[string]*websocket.Conn{},
-		readers: make(chan io.Reader),
+		reports: make(chan report.Report),
 		control: control,
 	}, nil
 }
@@ -124,7 +125,7 @@ func (c *appClient) releaseGoroutine() {
 // Stop stops the appClient.
 func (c *appClient) Stop() {
 	c.mtx.Lock()
-	close(c.readers)
+	close(c.reports)
 	close(c.quit)
 	for _, conn := range c.conns {
 		conn.Close()
@@ -220,46 +221,51 @@ func (c *appClient) ControlConnection() {
 	}()
 }
 
-func (c *appClient) publish(r io.Reader) error {
-	url := sanitize.URL("", 0, "/api/report")(c.target)
-	req, err := c.ProbeConfig.authorizedRequest("POST", url, r)
+func (c *appClient) publishConnection() (*websocket.Conn, error) {
+	headers := http.Header{}
+	c.ProbeConfig.authorizeHeaders(headers)
+	url := sanitize.URL("ws://", 0, "/api/report")(c.target)
+	// TODO: connection leak
+	conn, _, err := c.wsDialer.Dial(url, headers)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	req.Header.Set("Content-Encoding", "gzip")
-	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf(resp.Status)
-	}
-	return nil
+	return conn, err
 }
 
 func (c *appClient) startPublishing() {
 	go func() {
 		log.Infof("Publish loop for %s starting", c.target)
 		defer log.Infof("Publish loop for %s exiting", c.target)
+		// TODO: handle websocket reconnections
+		conn, err := c.publishConnection()
+		if err != nil {
+			log.Errorf("Publish connection error: %s", err)
+			return
+		}
+		defer conn.Close()
+		rawConn := conn.UnderlyingConn()
+		// No gzip for now
+		// gzwriter := gzip.NewWriter(rawConn)
+		// defer gzwriter.Close()
+		encoder := gob.NewEncoder(rawConn)
+
 		c.doWithBackoff("publish", func() (bool, error) {
-			r := <-c.readers
-			if r == nil {
+			r, more := <-c.reports
+			if !more {
 				return true, nil
 			}
-			return false, c.publish(r)
+			return false, encoder.Encode(r)
 		})
 	}()
 }
 
 // Publish implements Publisher
-func (c *appClient) Publish(r io.Reader) error {
+func (c *appClient) Publish(r report.Report) error {
 	// Lazily start the background publishing loop.
 	c.publishLoop.Do(c.startPublishing)
 	select {
-	case c.readers <- r:
+	case c.reports <- r:
 	default:
 	}
 	return nil
