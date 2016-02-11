@@ -133,7 +133,7 @@ export default class NodeDetails extends React.Component {
 
   renderDetails() {
     const details = this.props.details;
-    const showControls = details.controls && details.controls.length > 0;
+    const showControls = details.controls && details.controls.length > 0 || details.metrics;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
     const {error, pending} = this.props.nodeControlStatus
       ? this.props.nodeControlStatus.toJS() : {};
@@ -164,6 +164,7 @@ export default class NodeDetails extends React.Component {
         {showControls && <div className="node-details-controls-wrapper" style={styles.controls}>
           <NodeDetailsControls nodeId={this.props.nodeId}
             controls={details.controls}
+            metrics={details.metrics}
             pending={pending}
             error={error} />
         </div>}

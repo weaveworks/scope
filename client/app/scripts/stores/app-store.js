@@ -66,6 +66,7 @@ let pinnedMetric = selectedMetric;
 // allows us to keep the same metric "type" selected when the topology changes.
 let pinnedMetricType = null;
 let availableCanvasMetrics = makeList();
+let metricsWindow = null;
 
 
 const topologySorter = topology => topology.get('rank');
@@ -145,6 +146,7 @@ export class AppStore extends Store {
       nodeDetails: this.getNodeDetailsState().toJS(),
       selectedNodeId,
       pinnedMetricType,
+      metricsWindow: this.getMetricsWindow() && this.getMetricsWindow().toJS(),
       topologyId: currentTopologyId,
       topologyOptions: topologyOptions.toJS() // all options
     };
@@ -277,6 +279,10 @@ export class AppStore extends Store {
 
   isForceRelayout() {
     return forceRelayout;
+  }
+
+  getMetricsWindow() {
+    return metricsWindow;
   }
 
   isRouteSet() {
@@ -527,6 +533,30 @@ export class AppStore extends Store {
         this.__emitChange();
         break;
       }
+
+  	case ActionTypes.CLICK_CLOSE_METRICS:
+      metricsWindow = null;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.SHOW_METRICS_WINDOW:
+      metricsWindow = makeMap({nodeId: payload.nodeId});
+      this.__emitChange();
+      break;
+
+    case ActionTypes.SELECT_METRIC:
+      metricsWindow = metricsWindow.set('id', payload.metricId);
+      this.__emitChange();
+      break;
+
+    case ActionTypes.OPEN_WEBSOCKET:
+      // flush nodes cache after re-connect
+      nodes = nodes.clear();
+      websocketClosed = false;
+
+      this.__emitChange();
+      break;
+
       case ActionTypes.OPEN_WEBSOCKET: {
         // flush nodes cache after re-connect
         nodes = nodes.clear();
@@ -691,6 +721,11 @@ export class AppStore extends Store {
         setDefaultTopologyOptions(topologies);
         selectedNodeId = payload.state.selectedNodeId;
         pinnedMetricType = payload.state.pinnedMetricType;
+  if (payload.state.metricsWindow) {
+        metricsWindow = makeMap(payload.state.metricsWindow);
+      } else {
+        metricsWindow = null;
+      }
         if (payload.state.controlPipe) {
           controlPipes = makeOrderedMap({
             [payload.state.controlPipe.id]:

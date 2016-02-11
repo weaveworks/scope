@@ -18,6 +18,8 @@ import Details from './details';
 import Nodes from './nodes';
 import MetricSelector from './metric-selector';
 import EmbeddedTerminal from './embedded-terminal';
+import ChartPanel from './chart-panel';
+import MainWindow from './main-window';
 import { getRouter } from '../utils/router-utils';
 import { showingDebugToolbar, toggleDebugToolbar,
   DebugToolbar } from './debug-toolbar.js';
@@ -42,6 +44,7 @@ function getStateFromStores() {
     hostname: AppStore.getHostname(),
     pinnedMetric: AppStore.getPinnedMetric(),
     availableCanvasMetrics: AppStore.getAvailableCanvasMetrics(),
+    metricsWindow: AppStore.getMetricsWindow(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     showingHelp: AppStore.getShowingHelp(),
@@ -124,6 +127,7 @@ export default class App extends React.Component {
     const {nodeDetails, controlPipe } = this.state;
     const showingDetails = nodeDetails.size > 0;
     const showingTerminal = controlPipe;
+    const showingMetrics = this.state.metricsWindow;
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 450 : 0;
     const topMargin = 100;
@@ -141,6 +145,13 @@ export default class App extends React.Component {
         {showingTerminal && <EmbeddedTerminal
           pipe={this.state.controlPipe}
           details={this.state.nodeDetails} />}
+
+        {showingMetrics &&
+          <MainWindow cardsCount={this.state.nodeDetails.size} >
+            <ChartPanel
+              details={this.state.nodeDetails}
+              metrics={this.state.metricsWindow} />
+          </MainWindow>}
 
         <div className="header">
           <div className="logo">

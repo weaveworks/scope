@@ -1,4 +1,5 @@
 import React from 'react';
+import { showMetrics } from '../../actions/app-actions';
 
 import NodeDetailsControlButton from './node-details-control-button';
 
@@ -19,6 +20,11 @@ export default function NodeDetailsControls({controls, error, nodeId, pending}) 
       <span className="node-details-controls-buttons">
         {controls && controls.map(control => <NodeDetailsControlButton
           nodeId={nodeId} control={control} pending={pending} key={control.id} />)}
+        {this.props.metrics && <span
+            className="node-control-button fa fa-line-chart"
+            title="Show Metrics"
+            onClick={() => showMetrics(this.props.nodeId)} />}
+          </span>
       </span>
       {controls && <span title="Applying..." className={spinnerClassName}></span>}
     </div>

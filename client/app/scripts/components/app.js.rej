@@ -1,0 +1,16 @@
+***************
+*** 72,77 ****
+    render() {
+      const showingDetails = this.state.nodeDetails.size > 0;
+      const showingTerminal = this.state.controlPipe;
+      const footer = `Version ${this.state.version} on ${this.state.hostname}`;
+      // width of details panel blocking a view
+      const detailsWidth = showingDetails ? 450 : 0;
+--- 75,81 ----
+    render() {
+      const showingDetails = this.state.nodeDetails.size > 0;
+      const showingTerminal = this.state.controlPipe;
++     const showingMetrics = this.state.metricsWindow;
+      const footer = `Version ${this.state.version} on ${this.state.hostname}`;
+      // width of details panel blocking a view
+      const detailsWidth = showingDetails ? 450 : 0;

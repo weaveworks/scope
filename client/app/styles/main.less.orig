@@ -12,8 +12,6 @@
   padding: 0.2em 0;
 }
 
-@import "chart";
-
 /* weave company colours */
 @weave-gray-blue: rgb(85,105,145);
 @weave-blue: rgb(0,210,255);
@@ -23,43 +21,24 @@
 @base-font: "Roboto", sans-serif;
 @mono-font: "Menlo", "DejaVu Sans Mono", "Liberation Mono", monospace;
 
-@base-ease: ease-in-out;
-
 @primary-color: @weave-charcoal-blue;
 @background-color: lighten(@primary-color, 66%);
 @background-lighter-color: lighten(@background-color, 8%);
 @background-darker-color: darken(@background-color, 8%);
 @background-darker-secondary-color: darken(@background-color, 4%);
 @background-dark-color: @primary-color;
-@text-color: lighten(@primary-color, 5%);
-@text-secondary-color: lighten(@text-color, 15%);
-@text-tertiary-color: lighten(@text-color, 30%);
-@border-light-color: lighten(@text-color, 60%);
+@background-medium-color: lighten(@background-dark-color, 55%);
+@text-color: lighten(@primary-color, 10%);
+@text-secondary-color: lighten(@primary-color, 27%);
+@text-tertiary-color: lighten(@primary-color, 50%);
+@border-light-color: lighten(@primary-color, 66%);
 @text-darker-color: @primary-color;
 @white: @background-lighter-color;
 
 @details-window-width: 420px;
 @details-window-padding-left: 36px;
-@border-radius: 4px;
 
 @terminal-header-height: 34px;
-
-@node-opacity-blurred: 0.25;
-@node-highlight-fill-opacity: 0.1;
-@node-highlight-stroke-opacity: 0.4;
-@node-highlight-stroke-width: 1px;
-@node-border-stroke-width: 2.5px;
-@node-pseudo-opacity: 0.8;
-@edge-highlight-opacity: 0.1;
-@edge-opacity-blurred: 0.2;
-@edge-opacity: 0.5;
-@edge-link-stroke-width: 1px;
-
-@btn-opacity-default: 0.7;
-@btn-opacity-hover: 1;
-@btn-opacity-selected: 0.9;
-
-@link-opacity-default: 0.8;
 
 /* add this class to truncate text with ellipsis, container needs width */
 .truncate {
@@ -69,15 +48,15 @@
 }
 
 .colorable {
-  transition: background-color .3s @base-ease;
+  transition: background-color .3s ease-in-out;
 }
 
 .palable {
-  transition: all .2s @base-ease;
+  transition: all .2s ease-in-out;
 }
 
 .hideable {
-  transition: opacity .5s @base-ease;
+  transition: opacity .5s ease-in-out;
 }
 
 .hang-around {
@@ -98,12 +77,12 @@
 
 .btn-opacity {
   .palable;
-  opacity: @btn-opacity-default;
+  opacity: 0.8;
   &-selected {
-    opacity: @btn-opacity-selected;
+    opacity: 0.9;
   }
   &:hover {
-    opacity: @btn-opacity-hover;
+    opacity: 1;
   }
 }
 
@@ -169,12 +148,6 @@ h2 {
   height: 80px;
   z-index: 20;
   display: flex;
-
-  .logo {
-    margin: -8px 0 0 64px;
-    height: 64px;
-    width: 250px;
-  }
 }
 
 .footer {
@@ -184,7 +157,7 @@ h2 {
   z-index: 20;
   color: @text-tertiary-color;
   font-size: 0.7rem;
-  display: flex;
+  opacity: 0.8;
 
   a {
     color: @text-secondary-color;
@@ -192,46 +165,18 @@ h2 {
     text-decoration: none;
     font-weight: bold;
     font-size: 90%;
-    cursor: pointer;
-  }
-
-  &-status {
-    margin-right: 1em;
   }
 
   &-label {
     text-transform: uppercase;
     margin: 0 0.25em;
   }
+}
 
-  &-icon {
-    margin-left: 0.5em;
-    padding: 4px 3px;
-    color: @text-color;
-    position: relative;
-    top: -1px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-
-    &:hover {
-      border: 1px solid @text-tertiary-color;
-    }
-
-    .fa {
-      font-size: 150%;
-      position: relative;
-      top: 2px;
-    }
-
-    &-active {
-      border: 1px solid @text-tertiary-color;
-      animation: blinking 1.5s infinite @base-ease;
-    }
-  }
-
-  &-icon &-label {
-    margin-right: 0.5em;
-  }
+.logo {
+  margin: -8px 0 0 64px;
+  height: 64px;
+  width: 250px;
 }
 
 .topologies {
@@ -261,10 +206,11 @@ h2 {
   .topologies-sub-item {
     // border: 1px solid @background-darker-secondary-color;
     color: @text-secondary-color;
-    .btn-opacity;
+    .palable;
     cursor: pointer;
     padding: 4px 8px;
-    border-radius: @border-radius;
+    opacity: 0.7;
+    border-radius: 4px;
     opacity: 0.8;
     margin-bottom: 3px;
 
@@ -275,6 +221,10 @@ h2 {
 
     &-active {
       opacity: 0.85;
+    }
+
+    &:hover {
+      opacity: 1;
     }
   }
 
@@ -312,16 +262,6 @@ h2 {
     top: 0px;
   }
 
-  .logo {
-    display: none;
-  }
-
-  svg.exported {
-    .logo {
-      display: inline;
-    }
-  }
-
   text {
     font-family: @base-font;
     fill: @text-secondary-color;
@@ -335,11 +275,12 @@ h2 {
     }
   }
 
-  .nodes-chart-nodes > .node {
+  g.node {
     cursor: pointer;
-    transition: opacity .5s @base-ease;
+    transition: opacity .5s ease-in-out;
 
     &.pseudo {
+      opacity: 0.8;
       cursor: default;
 
       .node-label {
@@ -350,37 +291,29 @@ h2 {
         fill: @text-tertiary-color;
       }
 
-      .node {
-        opacity: @node-pseudo-opacity;
-      }
-
       .border {
-        opacity: @node-pseudo-opacity;
         stroke: @text-tertiary-color;
+        stroke-width: 1px;
       }
     }
 
     &.blurred {
-      opacity: @node-opacity-blurred;
+      opacity: 0.25;
     }
   }
 
   .edge {
-    transition: opacity .5s @base-ease;
+    transition: opacity .5s ease-in-out;
 
     &.blurred {
-      opacity: @edge-opacity-blurred;
-    }
-
-    &.focused {
-      animation: focusing 1.5s ease-in-out;
+      opacity: 0.2;
     }
 
     .link {
       stroke: @text-secondary-color;
-      stroke-width: @edge-link-stroke-width;
+      stroke-width: 1px;
       fill: none;
-      stroke-opacity: @edge-opacity;
+      stroke-opacity: 0.5;
     }
     .shadow {
       stroke: @weave-blue;
@@ -390,74 +323,32 @@ h2 {
     }
     &.highlighted {
       .shadow {
-        stroke-opacity: @edge-highlight-opacity;
+        stroke-opacity: 0.1;
       }
     }
   }
 
-  .stack .shape .highlighted {
-    display: none;
+
+  circle.border {
+    stroke-width: 3px;
+    fill: none;
   }
 
-  .stack .onlyHighlight .shape  {
-    .border { display: none; }
-    .shadow { display: none; }
-    .node { display: none; }
-    .highlighted { display: inline; }
+  circle.shadow {
+    stroke: none;
+    fill: @background-lighter-color;
   }
 
-  .stack .shape .metric-fill {
-    display: none;
+  circle.node {
+    fill: @text-color;
   }
 
-  .shape {
-    /* cloud paths have stroke-width set dynamically */
-    &:not(.shape-cloud) .border {
-      stroke-width: @node-border-stroke-width;
-      fill: @background-color;
-      transition: stroke-opacity 0.333s @base-ease, fill 0.333s @base-ease;
-      stroke-opacity: 1;
-    }
-
-    &.metrics .border {
-      fill: @background-lighter-color;
-      stroke-opacity: 0.3;
-    }
-
-    .metric-fill {
-      stroke: none;
-      fill: #A0BE7E;
-      fill-opacity: 0.7;
-    }
-
-    .shadow {
-      stroke: none;
-      fill: @background-lighter-color;
-    }
-
-    .node {
-      fill: @text-color;
-      stroke: @background-lighter-color;
-      stroke-width: 2px;
-    }
-
-    text {
-      font-size: 12px;
-      dominant-baseline: middle;
-      text-anchor: middle;
-    }
-
-    .highlighted {
-      fill: @weave-blue;
-      fill-opacity: @node-highlight-fill-opacity;
-      stroke: @weave-blue;
-      stroke-width: @node-highlight-stroke-width;
-      stroke-opacity: @node-highlight-stroke-opacity;
-    }
-  }
-
-  .stack .shape .border {
-    stroke-width: @node-border-stroke-width - 0.5;
+  circle.highlighted {
+    fill: @weave-blue;
+    fill-opacity: 0.1;
+    stroke: @weave-blue;
+    stroke-width: 1px;
+    stroke-opacity: 0.4;
   }
 
 }
@@ -499,16 +390,18 @@ h2 {
     right: 8px;
 
     span {
-      .btn-opacity;
+      .palable;
       padding: 4px 5px;
       margin-left: 2px;
       font-size: 110%;
       color: @white;
       cursor: pointer;
+      opacity: 0.7;
       border: 1px solid rgba(255, 255, 255, 0);
       border-radius: 10%;
 
       &:hover {
+        opacity: 1;
         border-color: rgba(255, 255, 255, 0.6);
       }
     }
@@ -547,25 +440,34 @@ h2 {
 
     &-link {
       .truncate;
-      .btn-opacity;
+      .palable;
       display: inline-block;
       margin-right: 0.5em;
       cursor: pointer;
       text-decoration: underline;
-      opacity: @link-opacity-default;
+      opacity: 0.8;
       max-width: 12em;
+
+      &:hover {
+        opacity: 1;
+      }
     }
 
     &-more {
-      .btn-opacity;
+      .palable;
       padding: 0 2px;
       text-transform: uppercase;
       cursor: pointer;
+      opacity: 0.7;
       font-size: 60%;
       font-weight: bold;
       display: inline-block;
       position: relative;
       top: -5px;
+
+      &:hover {
+        opacity: 1;
+      }
     }
   }
 
@@ -578,15 +480,17 @@ h2 {
     }
 
     .node-control-button {
-      .btn-opacity;
+      .palable;
       padding: 6px;
       margin-left: 2px;
       font-size: 110%;
       color: @white;
       cursor: pointer;
+      opacity: 0.7;
       border: 1px solid rgba(255, 255, 255, 0);
       border-radius: 10%;
       &:hover {
+        opacity: 1;
         border-color: rgba(255, 255, 255, 0.6);
       }
       &-pending, &-pending:hover {
@@ -612,7 +516,7 @@ h2 {
 
       &-icon {
         margin-right: 0.5em;
-        animation: blinking 2.0s infinite @base-ease;
+        animation: blinking 2.0s infinite ease-in-out;
       }
     }
   }
@@ -622,11 +526,16 @@ h2 {
     padding: 0 36px 0 36px;
     overflow-y: auto;
 
+    &-info {
+      margin-top: 16px;
+    }
+
     &-loading {
       margin-top: 48px;
       text-align: center;
       font-size: 48px;
-      color: @text-tertiary-color;
+      color: @background-medium-color;
+      opacity: 0.7;
     }
 
     &-section {
@@ -642,26 +551,53 @@ h2 {
   }
 
   &-health {
+    display: flex;
+    justify-content: space-around;
+    align-content: center;
+    text-align: center;
 
-    &-wrapper {
-      display: flex;
-      justify-content: space-around;
-      align-content: center;
-      text-align: center;
-      flex-wrap: wrap;
+    &-expand {
+      .palable;
+      margin: 4px 16px 0;
+      border-top: 1px solid @border-light-color;
+      text-transform: uppercase;
+      font-size: 80%;
+      color: @text-secondary-color;
+      width: 100%;
+      cursor: pointer;
+      opacity: 0.8;
+
+      &:hover {
+        opacity: 1.0;
+      }
     }
 
     &-overflow {
-      .btn-opacity;
-      flex-basis: 33%;
+      .palable;
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
       align-items: center;
+      border-left: 1px solid @border-light-color;
       opacity: 0.85;
       cursor: pointer;
       position: relative;
       padding-bottom: 16px;
+
+      &:hover {
+        opacity: 1;
+      }
+
+      &-expand {
+        text-transform: uppercase;
+        font-size: 70%;
+        color: @text-secondary-color;
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        font-weight: bold;
+      }
 
       &-item {
         padding: 4px 8px;
@@ -700,6 +636,18 @@ h2 {
   }
 
   &-info {
+    margin: 16px 0;
+
+    &-expand {
+      .btn-opacity;
+      text-align: center;
+      text-transform: uppercase;
+      font-size: 80%;
+      cursor: pointer;
+      color: @text-secondary-color;
+      padding: 2px 0;
+      font-weight: bold;
+    }
 
     &-field {
       display: flex;
@@ -729,35 +677,6 @@ h2 {
     }
   }
 
-  &-labels {
-    &-field {
-      display: flex;
-      align-items: baseline;
-
-      &-label {
-        text-align: right;
-        width: 50%;
-        color: @text-secondary-color;
-        padding: 0 0.5em 0 0;
-        white-space: nowrap;
-        text-transform: uppercase;
-        font-size: 80%;
-
-        &::after {
-          content: ':';
-        }
-      }
-
-      &-value {
-        font-size: 105%;
-        flex: 1;
-        // Now required (from chrome 48) to get overflow + flexbox behaving:
-        min-width: 0;
-        color: @text-color;
-      }
-    }
-  }
-
   &-table {
     width: 100%;
     border-spacing: 0;
@@ -765,7 +684,7 @@ h2 {
     table-layout: fixed;
 
     &-wrapper {
-      margin: 24px -4px;
+      margin: 24px 0;
     }
 
     &-header {
@@ -774,7 +693,7 @@ h2 {
       font-size: 90%;
       text-align: right;
       cursor: pointer;
-      padding: 0 4px;
+      padding: 0;
 
       &-sorted {
         color: @text-secondary-color;
@@ -790,23 +709,33 @@ h2 {
       }
     }
 
+    &-more {
+      .btn-opacity;
+      padding: 2px 0;
+      text-transform: uppercase;
+      cursor: pointer;
+      color: @text-secondary-color;
+      font-size: 80%;
+      font-weight: bold;
+    }
+
     &-node {
       font-size: 105%;
       line-height: 1.5;
 
-      &:hover {
-        background-color: lighten(@background-color, 5%);
-      }
-
       > * {
-        padding: 0 4px;
+        padding: 0;
       }
 
       &-link {
-        .btn-opacity;
+        .palable;
         text-decoration: underline;
         cursor: pointer;
-        opacity: @link-opacity-default;
+        opacity: 0.8;
+
+        &:hover {
+          opacity: 1;
+        }
       }
 
       &-value, &-metric {
@@ -840,59 +769,6 @@ h2 {
   }
 }
 
-.main-window {
-  z-index: 512;
-  position: fixed;
-  top: 24px;
-  bottom: 48px;
-  left: 36px;
-  right: (@details-window-width + @details-window-padding-left + 10px);
-}
-
-.fill-parent {
-  position: absolute;
-  bottom: 0;
-  top: 0;
-  left: 0;
-  right: 0;
-}
-
-.chart-panel {
-  position: absolute;
-  bottom: 0;
-  top: 0;
-  left: 0;
-  right: 0;
-  border: 0px solid #000000;
-  border-radius: 4px;
-  background-color: white;
-  color: #f0f0f0;
-  .shadow-2;
-
-  .fa {
-    color: black;
-  }
-
-  &-title {
-    height: 100px;
-    padding: 20px;
-  }
-
-  &-charts {
-    top: 100px;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
-    position: absolute;
-  }
-
-  &-tools {
-    position: absolute;
-    right: 8px;
-    top: 6px;
-  }
-}
-
 .terminal {
 
   &-app {
@@ -903,6 +779,15 @@ h2 {
     right: 0;
     display: flex;
     flex-flow: column;
+  }
+
+  &-embedded {
+    z-index: 512;
+    position: fixed;
+    top: 24px;
+    bottom: 48px;
+    left: 36px;
+    right: (@details-window-width + @details-window-padding-left + 10px);
   }
 
   &-wrapper {
@@ -952,7 +837,7 @@ h2 {
     }
   }
 
-  .main-window &-inner { top: @terminal-header-height; }
+  &-embedded &-inner { top: @terminal-header-height; }
   &-app &-inner { top: 0; }
   &-inner {
     position: absolute;
@@ -1010,183 +895,51 @@ h2 {
   }
 }
 
-.show-more {
-  .btn-opacity;
-  border-top: 1px dotted @border-light-color;
-  padding: 0px 0;
-  margin-top: 4px;
-  text-align: right;
-  text-transform: uppercase;
-  cursor: pointer;
-  color: @text-secondary-color;
-  font-size: 90%;
+.sidebar {
+  position: fixed;
+  bottom: 16px;
+  left: 24px;
+  font-size: .7rem;
 
-  &-icon {
-    color: @text-tertiary-color;
-    font-size: 120%;
-    position: relative;
-    top: 1px;
+  &-item {
+    color: @text-secondary-color;
+    margin-top: 4px;
+
+    &.status-loading {
+      animation: status-loading 2.0s infinite ease-in-out;
+    }
+
+    &-action {
+      .btn-opacity;
+      text-transform: uppercase;
+      font-weight: bold;
+      color: darken(@weave-orange, 25%);
+      cursor: pointer;
+      font-size: 90%;
+      margin-left: 0.5em;
+    }
   }
 }
 
 .status {
   text-transform: uppercase;
-  padding: 2px 12px;
-  border-radius: @border-radius;
-  color: @text-secondary-color;
-  display: inline-block;
-
-  &-icon {
-    font-size: 1rem;
-    position: relative;
-    top: 0.125rem;
-    margin-right: 0.25rem;
-  }
-
-  &.status-loading {
-    animation: blinking 2.0s 150 @base-ease; // keep blinking for 5 minutes
-    text-transform: none;
-    color: @text-color;
-  }
-}
-
-.topology-option, .metric-selector {
-  color: @text-secondary-color;
-  margin: 6px 0;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  .fa {
-    margin-left: 4px;
-    color: darkred;
-  }
-
-  &-wrapper {
-    border-radius: @border-radius;
-    border: 1px solid @background-darker-color;
-    display: inline-block;
-  }
-
-  &-action {
-    .btn-opacity;
-    padding: 3px 12px;
-    cursor: pointer;
-    display: inline-block;
-
-    &-selected, &:hover {
-      color: @text-darker-color;
-      background-color: @background-darker-color;
-    }
-
-    &:first-child {
-      border-left: none;
-      border-top-left-radius: @border-radius;
-      border-bottom-left-radius: @border-radius;
-    }
-
-    &:last-child {
-      border-top-right-radius: @border-radius;
-      border-bottom-right-radius: @border-radius;
-    }
-  }
-}
-
-.topology-option {
-  &-action {
-    &-selected {
-      cursor: default;
-    }
-  }
-}
-
-.sidebar {
-  position: fixed;
-  bottom: 16px;
-  left: 16px;
-  font-size: .7rem;
-}
-
-@keyframes focusing {
-  0% {
-    opacity: 0;
-  } 33% {
-    opacity: 0.2;
-  } 100% {
-    opacity: 1;
-  }
 }
 
 @keyframes blinking {
-  0%, 50%, 100% {
+  0%, 100% {
     opacity: 1.0;
-  } 25% {
+  } 50% {
     opacity: 0.5;
   }
 }
 
-//
-// Help panel!
-//
-
-@help-panel-width: 400px;
-@help-panel-height: 380px;
-.help-panel {
-  position: absolute;
-  -webkit-transform: translate3d(0, 0, 0);
-  top: 50%;
-  left: 50%;
-  width: @help-panel-width;
-  height: @help-panel-height;
-  margin-left: @help-panel-width / -2;
-  margin-top: @help-panel-height / -2;
-  z-index: 2048;
-  background-color: white;
-  .shadow-2;
-
-  &-header {
-    background-color: @weave-blue;
-    padding: 36px;
-    color: white;
-
-    h2 {
-      margin: 0;
-    }
-  }
-
-  &-main {
-    padding: 12px 36px 36px;
-  }
-
-  h3 {
-    text-transform: uppercase;
-    font-size: 90%;
-    color: #8383ac;
-    padding: 4px 0;
-  }
-
-  &-shortcut {
-    kbd {
-      display: inline-block;
-      padding: 3px 5px;
-      font-size: 11px;
-      line-height: 10px;
-      color: #555;
-      vertical-align: middle;
-      background-color: #fcfcfc;
-      border: solid 1px #ccc;
-      border-bottom-color: #bbb;
-      border-radius: 3px;
-      box-shadow: inset 0 -1px 0 #bbb;
-    }
-    div.key {
-      width: 100px;
-      display: inline-block;
-    }
-    div.label {
-      display: inline-block;
-    }
+@keyframes status-loading {
+  0%, 100% {
+    background-color: @background-darker-secondary-color;
+    color: @text-secondary-color;
+  } 50% {
+    background-color: @background-darker-color;
+    color: @text-color;
   }
 }
 
@@ -1197,26 +950,9 @@ h2 {
 .debug-panel {
   .shadow-2;
   background-color: #fff;
-  top: 80px;
+  top: 10px;
   position: absolute;
   padding: 10px;
   left: 10px;
   z-index: 10000;
-
-  opacity: 0.3;
-
-  &:hover {
-    opacity: 1;
-  }
-
-  table {
-    display: inline-block;
-    border-collapse: collapse;
-    margin: 4px 2px;
-
-    td {
-      width: 10px;
-      height: 10px;
-    }
-  }
 }

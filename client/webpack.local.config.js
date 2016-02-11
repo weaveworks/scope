@@ -39,6 +39,11 @@ module.exports = {
       'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
       'webpack/hot/only-dev-server'
     ],
+    'components-app': [
+      './app/scripts/components-main',
+      'webpack-dev-server/client?http://localhost:4041',
+      'webpack/hot/only-dev-server'
+    ],
     vendors: ['classnames', 'd3', 'dagre', 'flux', 'immutable',
       'lodash', 'page', 'react', 'react-dom', 'react-motion']
   },
