@@ -18,6 +18,7 @@ RUNSVINIT=vendor/runsvinit/runsvinit
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
+GO ?= env GO15VENDOREXPERIMENT=1 go
 GO_BUILD_INSTALL_DEPS=-i
 GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags netgo
 
@@ -54,11 +55,8 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 
 else
 
-# This is set in backend/Dockerfile when building inside a container.
-export GO15VENDOREXPERIMENT=1
-
 $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
-	time go build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
+	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
 	        echo "\nYour go standard library was built without the 'netgo' build tag."; \
@@ -69,7 +67,7 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	    }
 
 $(RUNSVINIT):
-	time go build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
+	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 
 shell:
 	/bin/bash
@@ -122,13 +120,13 @@ $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	touch $@
 
 clean:
-	go clean ./...
+	$(GO) clean ./...
 	$(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
 		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave .pkg
 
 deps:
-	go get -u -f -tags netgo \
+	$(GO) get -u -f -tags netgo \
 		github.com/FiloSottile/gvt \
 		github.com/mattn/goveralls \
 		github.com/mjibson/esc \
