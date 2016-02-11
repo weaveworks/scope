@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"fmt"
 	"net"
 	"testing"
 
@@ -18,12 +19,12 @@ func nrn(nmd report.Node) render.RenderableNode {
 
 func TestMapEndpointIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNode()), false},
-		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Procspied: "true"})), false},
-		{nrn(report.MakeNodeWith(map[string]string{endpoint.Port: "1234", endpoint.Procspied: "true"})), false},
-		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "1234", endpoint.Procspied: "true"})), true},
-		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "40000", endpoint.Procspied: "true"})), true},
-		{nrn(report.MakeNodeWith(map[string]string{report.HostNodeID: report.MakeHostNodeID("foo"), endpoint.Addr: "10.0.0.1", endpoint.Port: "20001", endpoint.Procspied: "true"})), true},
+		{"empty", nrn(report.MakeNode()), false},
+		{"", nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Procspied: "true"})), false},
+		{"", nrn(report.MakeNodeWith(map[string]string{endpoint.Port: "1234", endpoint.Procspied: "true"})), false},
+		{"", nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "1234", endpoint.Procspied: "true"})), true},
+		{"", nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "1.2.3.4", endpoint.Port: "40000", endpoint.Procspied: "true"})), true},
+		{"", nrn(report.MakeNodeWith(map[string]string{report.HostNodeID: report.MakeHostNodeID("foo"), endpoint.Addr: "10.0.0.1", endpoint.Port: "20001", endpoint.Procspied: "true"})), true},
 	} {
 		testMap(t, render.MapEndpointIdentity, input)
 	}
@@ -31,17 +32,27 @@ func TestMapEndpointIdentity(t *testing.T) {
 
 func TestMapProcessIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNode()), false},
-		{nrn(report.MakeNodeWith(map[string]string{process.PID: "201"})), true},
+		{"empty", nrn(report.MakeNode()), false},
+		{"basic process", nrn(report.MakeNodeWith(map[string]string{process.PID: "201"})), true},
 	} {
 		testMap(t, render.MapProcessIdentity, input)
 	}
 }
 
+func TestMapProcess2Container(t *testing.T) {
+	for _, input := range []testcase{
+		{"empty", nrn(report.MakeNode()), true},
+		{"basic process", nrn(report.MakeNodeWith(map[string]string{process.PID: "201", docker.ContainerID: "a1b2c3"})), true},
+		{"uncontained", nrn(report.MakeNodeWith(map[string]string{process.PID: "201", report.HostNodeID: report.MakeHostNodeID("foo")})), true},
+	} {
+		testMap(t, render.MapProcess2Container, input)
+	}
+}
+
 func TestMapContainerIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNode()), false},
-		{nrn(report.MakeNodeWith(map[string]string{docker.ContainerID: "a1b2c3"})), true},
+		{"empty", nrn(report.MakeNode()), false},
+		{"basic container", nrn(report.MakeNodeWith(map[string]string{docker.ContainerID: "a1b2c3"})), true},
 	} {
 		testMap(t, render.MapContainerIdentity, input)
 	}
@@ -49,8 +60,8 @@ func TestMapContainerIdentity(t *testing.T) {
 
 func TestMapContainerImageIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNode()), false},
-		{nrn(report.MakeNodeWith(map[string]string{docker.ImageID: "a1b2c3"})), true},
+		{"empty", nrn(report.MakeNode()), false},
+		{"basic image", nrn(report.MakeNodeWith(map[string]string{docker.ImageID: "a1b2c3"})), true},
 	} {
 		testMap(t, render.MapContainerImageIdentity, input)
 	}
@@ -58,8 +69,8 @@ func TestMapContainerImageIdentity(t *testing.T) {
 
 func TestMapAddressIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNode()), false},
-		{nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "192.168.1.1"})), true},
+		{"empty", nrn(report.MakeNode()), false},
+		{"basic address", nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "192.168.1.1"})), true},
 	} {
 		testMap(t, render.MapAddressIdentity, input)
 	}
@@ -67,7 +78,7 @@ func TestMapAddressIdentity(t *testing.T) {
 
 func TestMapHostIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNode()), true}, // TODO it's questionable if this is actually correct
+		{"empty", nrn(report.MakeNode()), true}, // TODO it's questionable if this is actually correct
 	} {
 		testMap(t, render.MapHostIdentity, input)
 	}
@@ -75,8 +86,8 @@ func TestMapHostIdentity(t *testing.T) {
 
 func TestMapPodIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNode()), false},
-		{nrn(report.MakeNodeWith(map[string]string{kubernetes.PodID: "ping/pong", kubernetes.PodName: "pong"})), true},
+		{"empty", nrn(report.MakeNode()), false},
+		{"basic pod", nrn(report.MakeNodeWith(map[string]string{kubernetes.PodID: "ping/pong", kubernetes.PodName: "pong"})), true},
 	} {
 		testMap(t, render.MapPodIdentity, input)
 	}
@@ -84,16 +95,17 @@ func TestMapPodIdentity(t *testing.T) {
 
 func TestMapServiceIdentity(t *testing.T) {
 	for _, input := range []testcase{
-		{nrn(report.MakeNode()), false},
-		{nrn(report.MakeNodeWith(map[string]string{kubernetes.ServiceID: "ping/pong", kubernetes.ServiceName: "pong"})), true},
+		{"empty", nrn(report.MakeNode()), false},
+		{"basic service", nrn(report.MakeNodeWith(map[string]string{kubernetes.ServiceID: "ping/pong", kubernetes.ServiceName: "pong"})), true},
 	} {
 		testMap(t, render.MapServiceIdentity, input)
 	}
 }
 
 type testcase struct {
-	md render.RenderableNode
-	ok bool
+	name string
+	n    render.RenderableNode
+	ok   bool
 }
 
 func testMap(t *testing.T, f render.MapFunc, input testcase) {
@@ -102,7 +114,11 @@ func testMap(t *testing.T, f render.MapFunc, input testcase) {
 		t.Fatalf(err.Error())
 	}
 	localNetworks := report.Networks([]*net.IPNet{ipNet})
-	if have := f(input.md, localNetworks); input.ok != (len(have) > 0) {
-		t.Errorf("%v: want %v, have %v", input.md, input.ok, have)
+	if have := f(input.n, localNetworks); input.ok != (len(have) > 0) {
+		name := input.name
+		if name == "" {
+			name = fmt.Sprintf("%v", input.n)
+		}
+		t.Errorf("%s: want %v, have %v", name, input.ok, have)
 	}
 }
