@@ -16,7 +16,9 @@ export function updateRoute() {
   const state = AppStore.getAppState();
   const stateUrl = JSON.stringify(state);
   const dispatch = false;
-  const urlStateString = window.location.hash.replace('#!/state/', '') || '{}';
+  const urlStateString = window.location.hash
+    .replace('#!/state/', '')
+    .replace('#!/', '') || '{}';
   const prevState = JSON.parse(urlStateString);
 
   if (shouldReplaceState(prevState, state)) {
@@ -36,6 +38,7 @@ page('/state/:state', function(ctx) {
   route(state);
 });
 
-export function getRouter() {
+export function getRouter(base) {
+  page.base(base);
   return page;
 }

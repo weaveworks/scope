@@ -8,8 +8,6 @@ import { clearControlError, closeWebsocket, openWebsocket, receiveError,
 
 import { API_INTERVAL, TOPOLOGY_INTERVAL } from '../constants/timer';
 
-const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = wsProto + '://' + location.host + location.pathname.replace(/\/$/, '');
 const log = debug('scope:web-api-utils');
 
 const reconnectTimerInterval = 5000;
@@ -46,6 +44,9 @@ export function basePath(urlPath) {
   }
   return parts.join('/').replace(/\/$/, '');
 }
+
+const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+const wsUrl = wsProto + '://' + location.host + basePath(location.pathname);
 
 function createWebsocket(topologyUrl, optionsQuery) {
   if (socket) {
