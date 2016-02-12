@@ -318,7 +318,10 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	c.RLock()
 	defer c.RUnlock()
 
-	ips := append(c.container.NetworkSettings.SecondaryIPAddresses, c.container.NetworkSettings.IPAddress)
+	ips := c.container.NetworkSettings.SecondaryIPAddresses
+	if c.container.NetworkSettings.IPAddress != "" {
+		ips = append(ips, c.container.NetworkSettings.IPAddress)
+	}
 	// Treat all Docker IPs as local scoped.
 	ipsWithScopes := []string{}
 	for _, ip := range ips {
