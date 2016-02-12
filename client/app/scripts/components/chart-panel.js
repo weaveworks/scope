@@ -1,6 +1,5 @@
 import debug from 'debug';
 import React from 'react';
-import _ from 'lodash';
 import d3 from 'd3';
 import { clickCloseMetrics, selectMetric } from '../actions/app-actions';
 import { getNodeColor } from '../utils/color-utils';
@@ -44,11 +43,15 @@ function onChangeSelectedMetric(nodeId, metricId) {
   selectMetric(nodeId, metricId);
 }
 
-export default function ChartPanel({metrics, details}) {
-  const nodeId = metrics.get('nodeId');
+export default function ChartPanel({metricQueries, metricData, details}) {
+  const queryId = metricQueries.keySeq().first();
+  const query = metricQueries.get(queryId);
+
+  const metricId = query.get('metricId');
+  const metric = metricData.get(queryId, {});
+
+  const nodeId = query.get('nodeId');
   const node = details.get(nodeId);
-  const metricId = metrics.get('id') || _.get(getAvailableMetrics(node), [0, 'id']);
-  const metric = getAvailableMetrics(node).find(m => m.id === metricId) || {};
   const d = node && node.details || {};
 
   const dataSet = {
@@ -67,7 +70,7 @@ export default function ChartPanel({metrics, details}) {
       <div className="chart-panel-tools">
         <span
           className="terminal-header-tools-icon fa fa-close"
-          onClick={() => clickCloseMetrics(nodeId)} />
+          onClick={() => clickCloseMetrics()} />
       </div>
 
       <div className="chart-panel-title">

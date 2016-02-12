@@ -8,7 +8,7 @@ import { updateRoute } from '../utils/router-utils';
 import { bufferDeltaUpdate, resumeUpdate,
   resetUpdateBuffer } from '../utils/update-buffer-utils';
 import { doControlRequest, getNodesDelta, getNodeDetails,
-  getTopologies, deletePipe } from '../utils/web-api-utils';
+  getTopologies, deletePipe, getQueryData } from '../utils/web-api-utils';
 import AppStore from '../stores/app-store';
 
 const log = debug('scope:app-actions');
@@ -244,7 +244,7 @@ export function hitEsc() {
     });
     updateRoute();
     // Don't deselect node on ESC if there is a controlPipe (keep terminal open)
-  } else if (AppStore.getMetricsWindow()) {
+  } else if (AppStore.getMetricQueries()) {
     AppDispatcher.dispatch({
       type: ActionTypes.CLICK_CLOSE_METRICS,
     });
@@ -335,12 +335,23 @@ export function receiveControlPipeFromParams(pipeId, rawTty) {
   });
 }
 
-export function showMetrics(nodeId) {
+export function receiveQueryData(queryId, data) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.RECEIVE_QUERY_DATA,
+    queryId,
+    data
+  });
+}
+
+export function addMetric(nodeId, nodeTopologyId, metricId) {
+  const queryId = [nodeId, metricId].join(',');
   AppDispatcher.dispatch({
     type: ActionTypes.SHOW_METRICS_WINDOW,
-    nodeId: nodeId
+    nodeId, metricId, queryId
   });
   updateRoute();
+  getQueryData(nodeTopologyId, AppStore.getTopologyUrlsById(),
+               nodeId, metricId, queryId);
 }
 
 export function selectMetric(nodeId, metricId) {
@@ -352,10 +363,9 @@ export function selectMetric(nodeId, metricId) {
   updateRoute();
 }
 
-export function clickCloseMetrics(nodeId) {
+export function clickCloseMetrics() {
   AppDispatcher.dispatch({
     type: ActionTypes.CLICK_CLOSE_METRICS,
-    nodeId: nodeId
   });
   updateRoute();
 }

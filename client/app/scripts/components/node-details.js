@@ -162,7 +162,9 @@ export default class NodeDetails extends React.Component {
         </div>
 
         {showControls && <div className="node-details-controls-wrapper" style={styles.controls}>
-          <NodeDetailsControls nodeId={this.props.nodeId}
+          <NodeDetailsControls
+            nodeId={this.props.nodeId}
+            nodeTopologyId={this.props.topologyId}
             controls={details.controls}
             metrics={details.metrics}
             pending={pending}

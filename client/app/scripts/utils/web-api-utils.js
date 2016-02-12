@@ -4,7 +4,7 @@ import reqwest from 'reqwest';
 import { clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
   receiveControlPipe, receiveControlPipeStatus, receiveControlSuccess,
-  receiveTopologies, receiveNotFound } from '../actions/app-actions';
+  receiveTopologies, receiveNotFound, receiveQueryData } from '../actions/app-actions';
 
 import { API_INTERVAL, TOPOLOGY_INTERVAL } from '../constants/timer';
 
@@ -175,6 +175,10 @@ export function getApiDetails() {
   });
 }
 
+//
+// pipes
+//
+
 export function doControlRequest(nodeId, control) {
   clearTimeout(controlErrorTimer);
   const url = `api/control/${encodeURIComponent(control.probeId)}/`
@@ -229,6 +233,28 @@ export function getPipeStatus(pipeId) {
       }
 
       receiveControlPipeStatus(pipeId, status);
+    }
+  });
+}
+
+//
+// metrics
+//
+
+export function getQueryData(nodeTopologyId, topologyUrlsById, nodeId, metricId, queryId) {
+  const topologyUrl = topologyUrlsById.get(nodeTopologyId);
+  const url = [topologyUrl, '/', encodeURIComponent(nodeId)].join('').substr(1);
+
+  reqwest({
+    url: url,
+    success: function(res) {
+      const data = res.node.metrics.find(m => m.id === metricId);
+      receiveQueryData(queryId, data);
+    },
+    error: function(err) {
+      log('Error in node details request: ' + err.responseText);
+      // dont treat missing node as error
+      throw new Error('getQueryData', err);
     }
   });
 }

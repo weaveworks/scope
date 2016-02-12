@@ -59,6 +59,8 @@ let controlPipes = makeOrderedMap(); // pipeId -> controlPipe
 let updatePausedAt = null; // Date
 let websocketClosed = true;
 let showingHelp = false;
+let metricQueries = null;
+let metricData = makeMap();
 
 let selectedMetric = null;
 let pinnedMetric = selectedMetric;
@@ -66,7 +68,6 @@ let pinnedMetric = selectedMetric;
 // allows us to keep the same metric "type" selected when the topology changes.
 let pinnedMetricType = null;
 let availableCanvasMetrics = makeList();
-let metricsWindow = null;
 
 
 const topologySorter = topology => topology.get('rank');
@@ -146,7 +147,7 @@ export class AppStore extends Store {
       nodeDetails: this.getNodeDetailsState().toJS(),
       selectedNodeId,
       pinnedMetricType,
-      metricsWindow: this.getMetricsWindow() && this.getMetricsWindow().toJS(),
+      metricQueries: this.getMetricQueries() && this.getMetricQueries().toJS(),
       topologyId: currentTopologyId,
       topologyOptions: topologyOptions.toJS() // all options
     };
@@ -281,8 +282,12 @@ export class AppStore extends Store {
     return forceRelayout;
   }
 
-  getMetricsWindow() {
-    return metricsWindow;
+  getMetricData() {
+    return metricData;
+  }
+
+  getMetricQueries() {
+    return metricQueries;
   }
 
   isRouteSet() {
@@ -535,17 +540,26 @@ export class AppStore extends Store {
       }
 
   	case ActionTypes.CLICK_CLOSE_METRICS:
-      metricsWindow = null;
+      metricQueries = null;
+      this.__emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_QUERY_DATA:
+      metricData = metricData.set(payload.queryId, payload.data);
       this.__emitChange();
       break;
 
     case ActionTypes.SHOW_METRICS_WINDOW:
-      metricsWindow = makeMap({nodeId: payload.nodeId});
+      metricQueries = makeMap({[payload.queryId]: makeMap({
+        queryId: payload.queryId,
+        nodeId: payload.nodeId,
+        metricId: payload.metricId
+      })});
       this.__emitChange();
       break;
 
     case ActionTypes.SELECT_METRIC:
-      metricsWindow = metricsWindow.set('id', payload.metricId);
+      metricQueries = metricQueries.set('id', payload.metricId);
       this.__emitChange();
       break;
 
@@ -721,10 +735,10 @@ export class AppStore extends Store {
         setDefaultTopologyOptions(topologies);
         selectedNodeId = payload.state.selectedNodeId;
         pinnedMetricType = payload.state.pinnedMetricType;
-  if (payload.state.metricsWindow) {
-        metricsWindow = makeMap(payload.state.metricsWindow);
+      if (payload.state.metricQueries) {
+        metricQueries = Immutable.fromJS(payload.state.metricQueries);
       } else {
-        metricsWindow = null;
+        metricQueries = null;
       }
         if (payload.state.controlPipe) {
           controlPipes = makeOrderedMap({

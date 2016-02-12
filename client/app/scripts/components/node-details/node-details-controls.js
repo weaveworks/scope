@@ -1,5 +1,5 @@
 import React from 'react';
-import { showMetrics } from '../../actions/app-actions';
+import { addMetric } from '../../actions/app-actions';
 
 import NodeDetailsControlButton from './node-details-control-button';
 
@@ -23,7 +23,9 @@ export default function NodeDetailsControls({controls, error, nodeId, pending}) 
         {this.props.metrics && <span
             className="node-control-button"
             title="Show Metrics"
-            onClick={() => showMetrics(this.props.nodeId)}>
+            onClick={() => addMetric(this.props.nodeId,
+                                     this.props.nodeTopologyId,
+                                     this.props.metrics[0].id)}>
               <i className="fa fa-plus"></i>
               <i className="fa fa-line-chart"></i>
             </span>}

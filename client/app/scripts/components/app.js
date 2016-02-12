@@ -44,7 +44,8 @@ function getStateFromStores() {
     hostname: AppStore.getHostname(),
     pinnedMetric: AppStore.getPinnedMetric(),
     availableCanvasMetrics: AppStore.getAvailableCanvasMetrics(),
-    metricsWindow: AppStore.getMetricsWindow(),
+    metricData: AppStore.getMetricData(),
+    metricQueries: AppStore.getMetricQueries(),   
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     showingHelp: AppStore.getShowingHelp(),
@@ -127,7 +128,7 @@ export default class App extends React.Component {
     const {nodeDetails, controlPipe } = this.state;
     const showingDetails = nodeDetails.size > 0;
     const showingTerminal = controlPipe;
-    const showingMetrics = this.state.metricsWindow;
+    const showingMetrics = this.state.metricQueries;
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 450 : 0;
     const topMargin = 100;
@@ -150,7 +151,8 @@ export default class App extends React.Component {
           <MainWindow cardsCount={this.state.nodeDetails.size} >
             <ChartPanel
               details={this.state.nodeDetails}
-              metrics={this.state.metricsWindow} />
+              metricData={this.state.metricData}
+              metricQueries={this.state.metricQueries} />
           </MainWindow>}
 
         <div className="header">
