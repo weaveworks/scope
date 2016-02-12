@@ -23,6 +23,11 @@ type LatestEntry struct {
 	Value     string    `json:"value"`
 }
 
+func init() {
+	gob.Register(LatestMap{})
+	gob.Register(LatestEntry{})
+}
+
 func (e LatestEntry) String() string {
 	return fmt.Sprintf("\"%s\" (%s)", e.Value, e.Timestamp.String())
 }
@@ -195,23 +200,6 @@ func (m LatestMap) MarshalJSON() ([]byte, error) {
 func (m *LatestMap) UnmarshalJSON(input []byte) error {
 	in := map[string]LatestEntry{}
 	if err := json.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
-	}
-	*m = LatestMap{}.fromIntermediate(in)
-	return nil
-}
-
-// GobEncode implements gob.Marshaller
-func (m LatestMap) GobEncode() ([]byte, error) {
-	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(m.toIntermediate())
-	return buf.Bytes(), err
-}
-
-// GobDecode implements gob.Unmarshaller
-func (m *LatestMap) GobDecode(input []byte) error {
-	in := map[string]LatestEntry{}
-	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
 		return err
 	}
 	*m = LatestMap{}.fromIntermediate(in)
