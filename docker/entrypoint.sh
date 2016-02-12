@@ -85,6 +85,6 @@ if [ "$MANUAL_APPS" = "" -a "$TOKEN_PROVIDED" = "true" ]; then
     MANUAL_APPS="scope.weave.works:443"
 fi
 
-echo "$MANUAL_APPS" >>/etc/weave/apps
+echo "$MANUAL_APPS" >/etc/weave/apps
 
 exec /home/weave/runsvinit
