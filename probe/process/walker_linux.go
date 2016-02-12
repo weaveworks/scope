@@ -62,6 +62,11 @@ func readStats(path string) (ppid, threads int, jiffies, rss uint64, err error) 
 	return
 }
 
+func readFileDescriptors(path string) (int, error) {
+	names, err := fs.ReadDirNames(path)
+	return len(names), err
+}
+
 // Walk walks the supplied directory (expecting it to look like /proc)
 // and marshalls the files into instances of Process, which it then
 // passes one-by-one to the supplied function. Walk is only made public
@@ -83,6 +88,11 @@ func (w *walker) Walk(f func(Process, Process)) error {
 			continue
 		}
 
+		fileDescriptors, err := readFileDescriptors(path.Join(w.procRoot, filename, "fd"))
+		if err != nil {
+			continue
+		}
+
 		cmdline, name := "", "(unknown)"
 		if cmdlineBuf, err := cachedReadFile(path.Join(w.procRoot, filename, "cmdline")); err == nil {
 			// like proc, treat name as the first element of command line
@@ -96,13 +106,14 @@ func (w *walker) Walk(f func(Process, Process)) error {
 		}
 
 		f(Process{
-			PID:      pid,
-			PPID:     ppid,
-			Name:     name,
-			Cmdline:  cmdline,
-			Threads:  threads,
-			Jiffies:  jiffies,
-			RSSBytes: rss,
+			PID:             pid,
+			PPID:            ppid,
+			Name:            name,
+			Cmdline:         cmdline,
+			Threads:         threads,
+			Jiffies:         jiffies,
+			RSSBytes:        rss,
+			FileDescriptors: fileDescriptors,
 		}, Process{})
 	}
 
