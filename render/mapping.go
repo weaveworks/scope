@@ -441,8 +441,10 @@ func MapProcess2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 		id = MakeContainerID(containerID)
 		node = NewDerivedNode(id, n)
 	} else {
+		nCopy := n.Copy()
+		nCopy.Node = nCopy.Node.WithID("").WithTopology("") // Wipe the ID so it cannot be rendered.
 		id = MakePseudoNodeID(UncontainedID, hostID)
-		node = newDerivedPseudoNode(id, UncontainedMajor, n)
+		node = newDerivedPseudoNode(id, UncontainedMajor, nCopy)
 		node.LabelMinor = hostID
 	}
 
