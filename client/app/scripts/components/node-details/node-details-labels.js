@@ -10,10 +10,8 @@ export default class NodeDetailsLabels extends React.Component {
               <div className="node-details-labels-field-label truncate" title={field.label}>
                 {field.label}
               </div>
-              <div className="node-details-labels-field-value" title={field.value}>
-                <div className="truncate">
-                  {field.value}
-                </div>
+              <div className="node-details-labels-field-value truncate" title={field.value}>
+                {field.value}
               </div>
             </div>
           );

@@ -34,10 +34,8 @@ export default class NodeDetailsInfo extends React.Component {
               <div className="node-details-info-field-label truncate" title={field.label}>
                 {field.label}
               </div>
-              <div className="node-details-info-field-value" title={field.value}>
-                <div className="truncate">
-                  {field.value}
-                </div>
+              <div className="node-details-info-field-value truncate" title={field.value}>
+                {field.value}
               </div>
             </div>
           );
