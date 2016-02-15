@@ -18,7 +18,7 @@ export default class NodeDetailsInfo extends React.Component {
 
   render() {
     let rows = (this.props.rows || []);
-    const prime = rows.filter(row => row.prime);
+    const prime = rows.filter(row => (this.props.show_all || row.prime));
     let expandText = 'Show less';
     let showExpand = this.state.expanded;
     if (!this.state.expanded && prime.length < rows.length) {

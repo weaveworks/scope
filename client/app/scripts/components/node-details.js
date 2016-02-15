@@ -129,7 +129,7 @@ export default class NodeDetails extends React.Component {
 
   renderDetails() {
     const details = this.props.details;
-    const showSummary = (details.metadata || details.metrics || details.docker_labels) !== undefined;
+    const showSummary = (details.metadata || details.metrics) !== undefined;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
     const {error, pending} = (this.props.nodeControlStatus || {});
@@ -169,8 +169,6 @@ export default class NodeDetails extends React.Component {
             <div className="node-details-content-section-header">Status</div>
             {details.metrics && <NodeDetailsHealth metrics={details.metrics} />}
             {details.metadata && <NodeDetailsInfo rows={details.metadata} />}
-            {details.docker_labels && <div className="node-details-content-section-header">Docker Labels</div>}
-            {details.docker_labels && <NodeDetailsInfo rows={details.docker_labels} />}
           </div>}
 
           {details.children && details.children.map(children => {
@@ -180,6 +178,11 @@ export default class NodeDetails extends React.Component {
               </div>
             );
           })}
+
+          {details.docker_labels && details.docker_labels.length > 0 && <div className="node-details-content-section">
+            <div className="node-details-content-section-header">Docker Labels</div>
+            <NodeDetailsInfo show_all rows={details.docker_labels} />
+          </div>}
         </div>
       </div>
     );
