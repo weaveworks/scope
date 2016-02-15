@@ -4,6 +4,7 @@ import React from 'react';
 import NodeDetailsControls from './node-details/node-details-controls';
 import NodeDetailsHealth from './node-details/node-details-health';
 import NodeDetailsInfo from './node-details/node-details-info';
+import NodeDetailsLabels from './node-details/node-details-labels';
 import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
@@ -169,8 +170,6 @@ export default class NodeDetails extends React.Component {
             <div className="node-details-content-section-header">Status</div>
             {details.metrics && <NodeDetailsHealth metrics={details.metrics} />}
             {details.metadata && <NodeDetailsInfo rows={details.metadata} />}
-            {details.docker_labels && <div className="node-details-content-section-header">Docker Labels</div>}
-            {details.docker_labels && <NodeDetailsInfo rows={details.docker_labels} />}
           </div>}
 
           {details.children && details.children.map(children => {
@@ -180,6 +179,11 @@ export default class NodeDetails extends React.Component {
               </div>
             );
           })}
+
+          {details.docker_labels && details.docker_labels.length > 0 && <div className="node-details-content-section">
+            <div className="node-details-content-section-header">Docker Labels</div>
+            <NodeDetailsLabels rows={details.docker_labels} />
+          </div>}
         </div>
       </div>
     );
