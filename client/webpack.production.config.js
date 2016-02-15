@@ -18,6 +18,7 @@ module.exports = {
 
   entry: {
     app: './app/scripts/main',
+    'contrast-app': './app/scripts/contrast-main',
     'terminal-app': './app/scripts/terminal-main',
     vendors: ['classnames', 'd3', 'dagre', 'flux', 'immutable',
       'lodash', 'page', 'react', 'react-dom', 'react-motion']

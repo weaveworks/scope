@@ -27,7 +27,6 @@
 @background-darker-color: darken(@background-color, 8%);
 @background-darker-secondary-color: darken(@background-color, 4%);
 @background-dark-color: @primary-color;
-@background-medium-color: lighten(@background-dark-color, 55%);
 @text-color: lighten(@primary-color, 10%);
 @text-secondary-color: lighten(@primary-color, 27%);
 @text-tertiary-color: lighten(@primary-color, 50%);
@@ -39,6 +38,24 @@
 @details-window-padding-left: 36px;
 
 @terminal-header-height: 34px;
+
+@node-opacity-blurred: 0.25;
+@node-highlight-fill-opacity: 0.1;
+@node-highlight-stroke-opacity: 0.4;
+@node-highlight-stroke-width: 1px;
+@node-border-stroke-width: 3px;
+@node-pseudo-border-stroke-width: 1px;
+@node-pseudo-opacity: 0.8;
+@edge-highlight-opacity: 0.1;
+@edge-opacity-blurred: 0.2;
+@edge-opacity: 0.5;
+@edge-link-stroke-width: 1px;
+
+@btn-opacity-default: 0.7;
+@btn-opacity-hover: 1;
+@btn-opacity-selected: 0.9;
+
+@link-opacity-default: 0.8;
 
 /* add this class to truncate text with ellipsis, container needs width */
 .truncate {
@@ -77,12 +94,12 @@
 
 .btn-opacity {
   .palable;
-  opacity: 0.8;
+  opacity: @btn-opacity-default;
   &-selected {
-    opacity: 0.9;
+    opacity: @btn-opacity-selected;
   }
   &:hover {
-    opacity: 1;
+    opacity: @btn-opacity-hover;
   }
 }
 
@@ -170,6 +187,23 @@ h2 {
   &-label {
     text-transform: uppercase;
     margin: 0 0.25em;
+
+    &-icon {
+      margin-left: 0.5em;
+      padding: 4px 3px;
+      color: @text-color;
+      position: relative;
+      border: 1px solid transparent;
+      border-radius: 10%;
+      &:hover {
+        border: 1px solid @text-secondary-color;
+      }
+      span {
+        font-size: 150%;
+        position: relative;
+        top: 2px;
+      }
+    }
   }
 }
 
@@ -206,10 +240,9 @@ h2 {
   .topologies-sub-item {
     // border: 1px solid @background-darker-secondary-color;
     color: @text-secondary-color;
-    .palable;
+    .btn-opacity;
     cursor: pointer;
     padding: 4px 8px;
-    opacity: 0.7;
     border-radius: 4px;
     opacity: 0.8;
     margin-bottom: 3px;
@@ -221,10 +254,6 @@ h2 {
 
     &-active {
       opacity: 0.85;
-    }
-
-    &:hover {
-      opacity: 1;
     }
   }
 
@@ -280,7 +309,7 @@ h2 {
     transition: opacity .5s ease-in-out;
 
     &.pseudo {
-      opacity: 0.8;
+      opacity: @node-pseudo-opacity;
       cursor: default;
 
       .node-label {
@@ -293,12 +322,12 @@ h2 {
 
       .border {
         stroke: @text-tertiary-color;
-        stroke-width: 1px;
+        stroke-width: @node-pseudo-border-stroke-width;
       }
     }
 
     &.blurred {
-      opacity: 0.25;
+      opacity: @node-opacity-blurred;
     }
   }
 
@@ -306,14 +335,14 @@ h2 {
     transition: opacity .5s ease-in-out;
 
     &.blurred {
-      opacity: 0.2;
+      opacity: @edge-opacity-blurred;
     }
 
     .link {
       stroke: @text-secondary-color;
-      stroke-width: 1px;
+      stroke-width: @edge-link-stroke-width;
       fill: none;
-      stroke-opacity: 0.5;
+      stroke-opacity: @edge-opacity;
     }
     .shadow {
       stroke: @weave-blue;
@@ -323,14 +352,14 @@ h2 {
     }
     &.highlighted {
       .shadow {
-        stroke-opacity: 0.1;
+        stroke-opacity: @edge-highlight-opacity;
       }
     }
   }
 
 
   circle.border {
-    stroke-width: 3px;
+    stroke-width: @node-border-stroke-width;
     fill: none;
   }
 
@@ -345,10 +374,10 @@ h2 {
 
   circle.highlighted {
     fill: @weave-blue;
-    fill-opacity: 0.1;
+    fill-opacity: @node-highlight-fill-opacity;
     stroke: @weave-blue;
-    stroke-width: 1px;
-    stroke-opacity: 0.4;
+    stroke-width: @node-highlight-stroke-width;
+    stroke-opacity: @node-highlight-stroke-opacity;
   }
 
 }
@@ -390,18 +419,16 @@ h2 {
     right: 8px;
 
     span {
-      .palable;
+      .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
       font-size: 110%;
       color: @white;
       cursor: pointer;
-      opacity: 0.7;
       border: 1px solid rgba(255, 255, 255, 0);
       border-radius: 10%;
 
       &:hover {
-        opacity: 1;
         border-color: rgba(255, 255, 255, 0.6);
       }
     }
@@ -440,34 +467,25 @@ h2 {
 
     &-link {
       .truncate;
-      .palable;
+      .btn-opacity;
       display: inline-block;
       margin-right: 0.5em;
       cursor: pointer;
       text-decoration: underline;
-      opacity: 0.8;
+      opacity: @link-opacity-default;
       max-width: 12em;
-
-      &:hover {
-        opacity: 1;
-      }
     }
 
     &-more {
-      .palable;
+      .btn-opacity;
       padding: 0 2px;
       text-transform: uppercase;
       cursor: pointer;
-      opacity: 0.7;
       font-size: 60%;
       font-weight: bold;
       display: inline-block;
       position: relative;
       top: -5px;
-
-      &:hover {
-        opacity: 1;
-      }
     }
   }
 
@@ -480,17 +498,15 @@ h2 {
     }
 
     .node-control-button {
-      .palable;
+      .btn-opacity;
       padding: 6px;
       margin-left: 2px;
       font-size: 110%;
       color: @white;
       cursor: pointer;
-      opacity: 0.7;
       border: 1px solid rgba(255, 255, 255, 0);
       border-radius: 10%;
       &:hover {
-        opacity: 1;
         border-color: rgba(255, 255, 255, 0.6);
       }
       &-pending, &-pending:hover {
@@ -534,8 +550,7 @@ h2 {
       margin-top: 48px;
       text-align: center;
       font-size: 48px;
-      color: @background-medium-color;
-      opacity: 0.7;
+      color: @text-tertiary-color;
     }
 
     &-section {
@@ -557,7 +572,7 @@ h2 {
     text-align: center;
 
     &-expand {
-      .palable;
+      .btn-opacity;
       margin: 4px 16px 0;
       border-top: 1px solid @border-light-color;
       text-transform: uppercase;
@@ -565,15 +580,11 @@ h2 {
       color: @text-secondary-color;
       width: 100%;
       cursor: pointer;
-      opacity: 0.8;
-
-      &:hover {
-        opacity: 1.0;
-      }
+      opacity: @link-opacity-default;
     }
 
     &-overflow {
-      .palable;
+      .btn-opacity;
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
@@ -583,10 +594,6 @@ h2 {
       cursor: pointer;
       position: relative;
       padding-bottom: 16px;
-
-      &:hover {
-        opacity: 1;
-      }
 
       &-expand {
         text-transform: uppercase;
@@ -728,14 +735,10 @@ h2 {
       }
 
       &-link {
-        .palable;
+        .btn-opacity;
         text-decoration: underline;
         cursor: pointer;
-        opacity: 0.8;
-
-        &:hover {
-          opacity: 1;
-        }
+        opacity: @link-opacity-default;
       }
 
       &-value, &-metric {
@@ -917,6 +920,7 @@ h2 {
       cursor: pointer;
       font-size: 90%;
       margin-left: 0.5em;
+      opacity: @link-opacity-default;
     }
   }
 }

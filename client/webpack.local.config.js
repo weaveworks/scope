@@ -28,6 +28,11 @@ module.exports = {
       'webpack-dev-server/client?http://localhost:4041',
       'webpack/hot/only-dev-server'
     ],
+    'contrast-app': [
+      './app/scripts/contrast-main',
+      'webpack-dev-server/client?http://localhost:4041',
+      'webpack/hot/only-dev-server'
+    ],
     'terminal-app': [
       './app/scripts/terminal-main',
       'webpack-dev-server/client?http://localhost:4041',

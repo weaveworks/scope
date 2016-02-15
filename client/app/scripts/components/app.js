@@ -51,7 +51,7 @@ export default class App extends React.Component {
     AppStore.addListener(this.onChange);
     window.addEventListener('keyup', this.onKeyPress);
 
-    getRouter().start({hashbang: true});
+    getRouter(this.props.base).start({hashbang: true});
     if (!AppStore.isRouteSet()) {
       // dont request topologies when already done via router
       getTopologies(AppStore.getActiveTopologyOptions());
@@ -75,6 +75,10 @@ export default class App extends React.Component {
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 450 : 0;
     const topMargin = 100;
+    const contrastMode = this.props.base.indexOf('contrast') > -1;
+    // link url to switch contrast with current UI state
+    const otherContrastModeUrl = contrastMode ? '/' : '/contrast.html';
+    const otherContrastModeTitle = contrastMode ? 'Switch to normal contrast' : 'Switch to high contrast';
 
     return (
       <div className="app">
@@ -112,9 +116,12 @@ export default class App extends React.Component {
           {this.state.version}
           <span className="footer-label">on</span>
           {this.state.hostname}
-          &nbsp;&nbsp;
-          <a className="footer-label" href="https://gitreports.com/issue/weaveworks/scope" target="_blank">
-            Report an issue
+          &nbsp;
+          <a className="footer-label footer-label-icon" href={otherContrastModeUrl} title={otherContrastModeTitle}>
+            <span className="fa fa-adjust" />
+          </a>
+          <a className="footer-label footer-label-icon" href="https://gitreports.com/issue/weaveworks/scope" target="_blank" title="Report an issue">
+            <span className="fa fa-bug" />
           </a>
         </div>
       </div>

@@ -59,7 +59,9 @@ export function getNodeColorDark(text = '', secondText = '', isPseudo = false) {
   let hsl = color.hsl();
 
   // ensure darkness
-  if (hsl.l > 0.7) {
+  if (hsl.h > 20 && hsl.h < 120) {
+    hsl = hsl.darker(2);
+  } else if (hsl.l > 0.7) {
     hsl = hsl.darker(1.5);
   } else {
     hsl = hsl.darker(1);
