@@ -62,7 +62,9 @@ func benchmarkRender(b *testing.B, r render.Renderer) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		render.ResetCache()
+		b.StopTimer()
+		r.ResetCache()
+		b.StartTimer()
 		benchmarkRenderResult = r.Render(report)
 		if len(benchmarkRenderResult) == 0 {
 			b.Errorf("Rendered topology contained no nodes")
@@ -80,7 +82,9 @@ func benchmarkStats(b *testing.B, r render.Renderer) {
 
 	for i := 0; i < b.N; i++ {
 		// No way to tell if this was successful :(
-		render.ResetCache()
+		b.StopTimer()
+		r.ResetCache()
+		b.StartTimer()
 		benchmarkStatsResult = r.Stats(report)
 	}
 }

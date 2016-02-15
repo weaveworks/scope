@@ -1,44 +1,33 @@
 package render
 
 import (
-	"fmt"
-	"reflect"
-
 	"github.com/bluele/gcache"
 
 	"github.com/weaveworks/scope/report"
 )
 
-var renderCache = gcache.New(100).LRU().Build()
-
 type memoise struct {
 	Renderer
+	cache gcache.Cache
 }
 
 // Memoise wraps the renderer in a loving embrace of caching
-func Memoise(r Renderer) Renderer { return &memoise{r} }
+func Memoise(r Renderer) Renderer { return &memoise{r, gcache.New(10).LRU().Build()} }
 
 // Render produces a set of RenderableNodes given a Report.
 // Ideally, it just retrieves it from the cache, otherwise it calls through to
 // `r` and stores the result.
 func (m *memoise) Render(rpt report.Report) RenderableNodes {
-	key := ""
-	v := reflect.ValueOf(m.Renderer)
-	switch v.Kind() {
-	case reflect.Ptr, reflect.Func:
-		key = fmt.Sprintf("%s-%x", rpt.ID, v.Pointer())
-	default:
-		return m.Renderer.Render(rpt)
-	}
-	if result, err := renderCache.Get(key); err == nil {
+	if result, err := m.cache.Get(rpt.ID); err == nil {
 		return result.(RenderableNodes)
 	}
 	output := m.Renderer.Render(rpt)
-	renderCache.Set(key, output)
+	m.cache.Set(rpt.ID, output)
 	return output
 }
 
 // ResetCache blows away the rendered node cache.
-func ResetCache() {
-	renderCache.Purge()
+func (m *memoise) ResetCache() {
+	m.cache.Purge()
+	m.Renderer.ResetCache()
 }

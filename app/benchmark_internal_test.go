@@ -9,7 +9,6 @@ import (
 
 	"github.com/ugorji/go/codec"
 
-	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/fixture"
 )
@@ -51,7 +50,11 @@ func BenchmarkTopologyList(b *testing.B) {
 		Form: url.Values{},
 	}
 	for i := 0; i < b.N; i++ {
-		render.ResetCache()
+		b.StopTimer()
+		topologyRegistry.walk(func(t APITopologyDesc) {
+			t.renderer.ResetCache()
+		})
+		b.StartTimer()
 		topologyRegistry.renderTopologies(report, request)
 	}
 }

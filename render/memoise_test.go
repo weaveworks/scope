@@ -13,6 +13,7 @@ type renderFunc func(r report.Report) render.RenderableNodes
 
 func (f renderFunc) Render(r report.Report) render.RenderableNodes { return f(r) }
 func (f renderFunc) Stats(r report.Report) render.Stats            { return render.Stats{} }
+func (f renderFunc) ResetCache()                                   {}
 
 func TestMemoise(t *testing.T) {
 	calls := 0
@@ -47,5 +48,14 @@ func TestMemoise(t *testing.T) {
 	}
 	if calls != 2 {
 		t.Errorf("Expected renderer to have been called again for a different report")
+	}
+
+	m.ResetCache()
+	result4 := m.Render(rpt1)
+	if !reflect.DeepEqual(result1, result4) {
+		t.Errorf("Expected original result to be returned: %s", test.Diff(result1, result4))
+	}
+	if calls != 3 {
+		t.Errorf("Expected renderer to have been called again after cache reset")
 	}
 }
