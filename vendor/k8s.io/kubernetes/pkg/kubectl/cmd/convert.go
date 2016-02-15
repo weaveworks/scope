@@ -20,11 +20,13 @@ import (
 	"fmt"
 	"io"
 
-	"k8s.io/kubernetes/pkg/api/latest"
-	"k8s.io/kubernetes/pkg/api/registered"
+	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/kubectl"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
+	"k8s.io/kubernetes/pkg/runtime"
 
 	"github.com/spf13/cobra"
 )
@@ -86,26 +88,31 @@ type ConvertOptions struct {
 	filenames []string
 	local     bool
 
+	encoder runtime.Encoder
 	out     io.Writer
 	printer kubectl.ResourcePrinter
 
-	outputVersion string
+	outputVersion unversioned.GroupVersion
 }
 
 // Complete collects information required to run Convert command from command line.
 func (o *ConvertOptions) Complete(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []string) (err error) {
-	o.outputVersion = cmdutil.OutputVersion(cmd, latest.GroupOrDie("").Version)
-	if !registered.IsRegisteredAPIVersion(o.outputVersion) {
+	o.outputVersion, err = cmdutil.OutputVersion(cmd, &registered.EnabledVersionsForGroup(api.GroupName)[0])
+	if err != nil {
+		return err
+	}
+	if !registered.IsEnabledVersion(o.outputVersion) {
 		cmdutil.UsageError(cmd, "'%s' is not a registered version.", o.outputVersion)
 	}
 
 	// build the builder
 	mapper, typer := f.Object()
+	clientMapper := resource.ClientMapperFunc(f.ClientForMapping)
 	if o.local {
 		fmt.Fprintln(out, "running in local mode...")
-		o.builder = resource.NewBuilder(mapper, typer, f.NilClientMapperForCommand())
+		o.builder = resource.NewBuilder(mapper, typer, resource.DisabledClientForMapping{clientMapper}, f.Decoder(true))
 	} else {
-		o.builder = resource.NewBuilder(mapper, typer, f.ClientMapperForCommand())
+		o.builder = resource.NewBuilder(mapper, typer, clientMapper, f.Decoder(true))
 		schema, err := f.Validator(cmdutil.GetFlagBool(cmd, "validate"), cmdutil.GetFlagString(cmd, "schema-cache-dir"))
 		if err != nil {
 			return err
@@ -132,6 +139,7 @@ func (o *ConvertOptions) Complete(f *cmdutil.Factory, out io.Writer, cmd *cobra.
 			outputFormat = "template"
 		}
 	}
+	o.encoder = f.JSONEncoder()
 	o.printer, _, err = kubectl.GetPrinter(outputFormat, templateFile)
 	if err != nil {
 		return err
@@ -147,7 +155,7 @@ func (o *ConvertOptions) RunConvert() error {
 		return err
 	}
 
-	objects, err := resource.AsVersionedObject(infos, false, o.outputVersion)
+	objects, err := resource.AsVersionedObject(infos, false, o.outputVersion.String(), o.encoder)
 	if err != nil {
 		return err
 	}

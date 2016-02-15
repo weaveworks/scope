@@ -19,17 +19,19 @@ package runtime
 import (
 	"fmt"
 	"io"
+	"log"
 	"path"
 	"reflect"
+	goruntime "runtime"
 	"sort"
 	"strings"
 
-	"k8s.io/kubernetes/pkg/conversion"
+	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/util/sets"
 )
 
 type ConversionGenerator interface {
-	GenerateConversionsForType(version string, reflection reflect.Type) error
+	GenerateConversionsForType(groupVersion unversioned.GroupVersion, reflection reflect.Type) error
 	WriteConversionFunctions(w io.Writer) error
 	RegisterConversionFunctions(w io.Writer, pkg string) error
 	AddImport(pkg string) string
@@ -39,10 +41,15 @@ type ConversionGenerator interface {
 	AssumePrivateConversions()
 }
 
-func NewConversionGenerator(scheme *conversion.Scheme, targetPkg string) ConversionGenerator {
+func NewConversionGenerator(scheme *Scheme, targetPkg string) ConversionGenerator {
 	g := &conversionGenerator{
-		scheme:        scheme,
-		targetPkg:     targetPkg,
+		scheme: scheme,
+
+		nameFormat:          "Convert_%s_%s_To_%s_%s",
+		generatedNamePrefix: "auto",
+		targetPkg:           targetPkg,
+
+		publicFuncs:   make(map[typePair]functionName),
 		convertibles:  make(map[reflect.Type]reflect.Type),
 		overridden:    make(map[reflect.Type]bool),
 		pkgOverwrites: make(map[string]string),
@@ -57,9 +64,19 @@ func NewConversionGenerator(scheme *conversion.Scheme, targetPkg string) Convers
 
 var complexTypes []reflect.Kind = []reflect.Kind{reflect.Map, reflect.Ptr, reflect.Slice, reflect.Interface, reflect.Struct}
 
+type functionName struct {
+	name        string
+	packageName string
+}
+
 type conversionGenerator struct {
-	scheme       *conversion.Scheme
-	targetPkg    string
+	scheme *Scheme
+
+	nameFormat          string
+	generatedNamePrefix string
+	targetPkg           string
+
+	publicFuncs  map[typePair]functionName
 	convertibles map[reflect.Type]reflect.Type
 	overridden   map[reflect.Type]bool
 	// If pkgOverwrites is set for a given package name, that package name
@@ -86,9 +103,13 @@ func (g *conversionGenerator) AddImport(pkg string) string {
 	return g.addImportByPath(pkg)
 }
 
-func (g *conversionGenerator) GenerateConversionsForType(version string, reflection reflect.Type) error {
+func (g *conversionGenerator) GenerateConversionsForType(gv unversioned.GroupVersion, reflection reflect.Type) error {
 	kind := reflection.Name()
-	internalObj, err := g.scheme.NewObject(g.scheme.InternalVersion, kind)
+	// TODO this is equivalent to what it did before, but it needs to be fixed for the proper group
+	internalVersion := gv
+	internalVersion.Version = APIVersionInternal
+
+	internalObj, err := g.scheme.New(internalVersion.WithKind(kind))
 	if err != nil {
 		return fmt.Errorf("cannot create an object of type %v in internal version", kind)
 	}
@@ -104,6 +125,22 @@ func (g *conversionGenerator) GenerateConversionsForType(version string, reflect
 	return nil
 }
 
+// primitiveConversion returns true if the two types can be converted via a cast.
+func primitiveConversion(inType, outType reflect.Type) (string, bool) {
+	switch inType.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		switch outType.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+			reflect.Float32, reflect.Float64:
+			return outType.Name(), true
+		}
+	}
+	return "", false
+}
+
 func (g *conversionGenerator) generateConversionsBetween(inType, outType reflect.Type) error {
 	existingConversion := g.scheme.Converter().HasConversionFunc(inType, outType) && g.scheme.Converter().HasConversionFunc(outType, inType)
 
@@ -115,12 +152,26 @@ func (g *conversionGenerator) generateConversionsBetween(inType, outType reflect
 		return nil
 	}
 	if inType == outType {
+		switch inType.Kind() {
+		case reflect.Ptr:
+			return g.generateConversionsBetween(inType.Elem(), inType.Elem())
+		case reflect.Struct:
+			// pointers to structs invoke new(inType)
+			g.addImportByPath(inType.PkgPath())
+		}
+		g.rememberConversionFunction(inType, inType, false)
 		// Don't generate conversion methods for the same type.
+		return nil
+	}
+
+	if _, ok := primitiveConversion(inType, outType); ok {
 		return nil
 	}
 
 	if inType.Kind() != outType.Kind() {
 		if existingConversion {
+			g.rememberConversionFunction(inType, outType, false)
+			g.rememberConversionFunction(outType, inType, false)
 			return nil
 		}
 		return fmt.Errorf("cannot convert types of different kinds: %v %v", inType, outType)
@@ -167,6 +218,7 @@ func (g *conversionGenerator) generateConversionsBetween(inType, outType reflect
 		if !existingConversion && (inErr != nil || outErr != nil) {
 			return inErr
 		}
+		g.rememberConversionFunction(inType, outType, true)
 		if existingConversion {
 			g.overridden[inType] = true
 		}
@@ -185,6 +237,39 @@ func isComplexType(reflection reflect.Type) bool {
 		}
 	}
 	return false
+}
+
+func (g *conversionGenerator) rememberConversionFunction(inType, outType reflect.Type, willGenerate bool) {
+	if _, ok := g.publicFuncs[typePair{inType, outType}]; ok {
+		return
+	}
+
+	if v, ok := g.scheme.Converter().ConversionFuncValue(inType, outType); ok {
+		if fn := goruntime.FuncForPC(v.Pointer()); fn != nil {
+			name := fn.Name()
+			var p, n string
+			if last := strings.LastIndex(name, "."); last != -1 {
+				p = name[:last]
+				n = name[last+1:]
+			} else {
+				n = name
+			}
+			if isPublic(n) {
+				g.AddImport(p)
+				g.publicFuncs[typePair{inType, outType}] = functionName{name: n, packageName: p}
+			} else {
+				log.Printf("WARNING: Cannot generate conversion %v -> %v, method %q is private", inType, outType, fn.Name())
+			}
+		} else {
+			log.Printf("WARNING: Cannot generate conversion %v -> %v, method is not accessible", inType, outType)
+		}
+	} else if willGenerate {
+		g.publicFuncs[typePair{inType, outType}] = functionName{name: g.conversionFunctionName(inType, outType)}
+	}
+}
+
+func isPublic(name string) bool {
+	return strings.ToUpper(name[:1]) == name[:1]
 }
 
 func (g *conversionGenerator) generateConversionsForMap(inType, outType reflect.Type) error {
@@ -208,6 +293,8 @@ func (g *conversionGenerator) generateConversionsForMap(inType, outType reflect.
 func (g *conversionGenerator) generateConversionsForSlice(inType, outType reflect.Type) error {
 	inElem := inType.Elem()
 	outElem := outType.Elem()
+	// slice conversion requires the package for the destination type in order to instantiate the map
+	g.addImportByPath(outElem.PkgPath())
 	if err := g.generateConversionsBetween(inElem, outElem); err != nil {
 		return err
 	}
@@ -478,15 +565,32 @@ func packageForName(inType reflect.Type) string {
 }
 
 func (g *conversionGenerator) conversionFunctionName(inType, outType reflect.Type) string {
-	funcNameFormat := "convert_%s_%s_To_%s_%s"
+	funcNameFormat := g.nameFormat
 	inPkg := packageForName(inType)
 	outPkg := packageForName(outType)
 	funcName := fmt.Sprintf(funcNameFormat, inPkg, inType.Name(), outPkg, outType.Name())
 	return funcName
 }
 
+func (g *conversionGenerator) conversionFunctionCall(inType, outType reflect.Type, scopeName string, args ...string) string {
+	if named, ok := g.publicFuncs[typePair{inType, outType}]; ok {
+		args[len(args)-1] = scopeName
+		name := named.name
+		localPackageName, ok := g.imports[named.packageName]
+		if !ok {
+			panic(fmt.Sprintf("have not defined an import for %s", named.packageName))
+		}
+		if len(named.packageName) > 0 && len(localPackageName) > 0 {
+			name = localPackageName + "." + name
+		}
+		return fmt.Sprintf("%s(%s)", name, strings.Join(args, ", "))
+	}
+	log.Printf("WARNING: Using reflection to convert %v -> %v (no public conversion)", inType, outType)
+	return fmt.Sprintf("%s.Convert(%s)", scopeName, strings.Join(args, ", "))
+}
+
 func (g *conversionGenerator) generatedFunctionName(inType, outType reflect.Type) string {
-	return "auto" + g.conversionFunctionName(inType, outType)
+	return g.generatedNamePrefix + g.conversionFunctionName(inType, outType)
 }
 
 func (g *conversionGenerator) writeHeader(b *buffer, name, inType, outType string, indent int) {
@@ -518,7 +622,8 @@ func (g *conversionGenerator) writeConversionForMap(b *buffer, inField, outField
 		newFormat := "newVal := %s{}\n"
 		newStmt := fmt.Sprintf(newFormat, g.typeName(outField.Type.Elem()))
 		b.addLine(newStmt, indent+2)
-		convertStmt := "if err := s.Convert(&val, &newVal, 0); err != nil {\n"
+		call := g.conversionFunctionCall(inField.Type.Elem(), outField.Type.Elem(), "s", "&val", "&newVal", "0")
+		convertStmt := fmt.Sprintf("if err := %s; err != nil {\n", call)
 		b.addLine(convertStmt, indent+2)
 		b.addLine("return err\n", indent+3)
 		b.addLine("}\n", indent+2)
@@ -578,15 +683,8 @@ func (g *conversionGenerator) writeConversionForSlice(b *buffer, inField, outFie
 		}
 	}
 	if !assigned {
-		assignStmt := ""
-		if g.existsDedicatedConversionFunction(inField.Type.Elem(), outField.Type.Elem()) {
-			assignFormat := "if err := %s(&in.%s[i], &out.%s[i], s); err != nil {\n"
-			funcName := g.conversionFunctionName(inField.Type.Elem(), outField.Type.Elem())
-			assignStmt = fmt.Sprintf(assignFormat, funcName, inField.Name, outField.Name)
-		} else {
-			assignFormat := "if err := s.Convert(&in.%s[i], &out.%s[i], 0); err != nil {\n"
-			assignStmt = fmt.Sprintf(assignFormat, inField.Name, outField.Name)
-		}
+		call := g.conversionFunctionCall(inField.Type.Elem(), outField.Type.Elem(), "s", "&in."+inField.Name+"[i]", "&out."+outField.Name+"[i]", "0")
+		assignStmt := fmt.Sprintf("if err := %s; err != nil {\n", call)
 		b.addLine(assignStmt, indent+2)
 		b.addLine("return err\n", indent+3)
 		b.addLine("}\n", indent+2)
@@ -635,20 +733,20 @@ func (g *conversionGenerator) writeConversionForPtr(b *buffer, inField, outField
 		}
 	}
 
+	b.addLine(fmt.Sprintf("// unable to generate simple pointer conversion for %v -> %v\n", inField.Type.Elem(), outField.Type.Elem()), indent)
 	ifFormat := "if in.%s != nil {\n"
 	ifStmt := fmt.Sprintf(ifFormat, inField.Name)
 	b.addLine(ifStmt, indent)
 	assignStmt := ""
-	if g.existsDedicatedConversionFunction(inField.Type.Elem(), outField.Type.Elem()) {
+	if _, ok := g.publicFuncs[typePair{inField.Type.Elem(), outField.Type.Elem()}]; ok {
 		newFormat := "out.%s = new(%s)\n"
 		newStmt := fmt.Sprintf(newFormat, outField.Name, g.typeName(outField.Type.Elem()))
 		b.addLine(newStmt, indent+1)
-		assignFormat := "if err := %s(in.%s, out.%s, s); err != nil {\n"
-		funcName := g.conversionFunctionName(inField.Type.Elem(), outField.Type.Elem())
-		assignStmt = fmt.Sprintf(assignFormat, funcName, inField.Name, outField.Name)
+		call := g.conversionFunctionCall(inField.Type.Elem(), outField.Type.Elem(), "s", "in."+inField.Name, "out."+outField.Name, "0")
+		assignStmt = fmt.Sprintf("if err := %s; err != nil {\n", call)
 	} else {
-		assignFormat := "if err := s.Convert(&in.%s, &out.%s, 0); err != nil {\n"
-		assignStmt = fmt.Sprintf(assignFormat, inField.Name, outField.Name)
+		call := g.conversionFunctionCall(inField.Type.Elem(), outField.Type.Elem(), "s", "&in."+inField.Name, "&out."+outField.Name, "0")
+		assignStmt = fmt.Sprintf("if err := %s; err != nil {\n", call)
 	}
 	b.addLine(assignStmt, indent+1)
 	b.addLine("return err\n", indent+2)
@@ -684,11 +782,19 @@ func (g *conversionGenerator) writeConversionForStruct(b *buffer, inType, outTyp
 			continue
 		}
 
+		if g.scheme.Converter().IsConversionIgnored(inField.Type, outField.Type) {
+			continue
+		}
+
 		existsConversion := g.scheme.Converter().HasConversionFunc(inField.Type, outField.Type)
-		if existsConversion && !g.existsDedicatedConversionFunction(inField.Type, outField.Type) {
+		_, hasPublicConversion := g.publicFuncs[typePair{inField.Type, outField.Type}]
+		// TODO: This allows a private conversion for a slice to take precedence over a public
+		// conversion for the field, even though that is technically slower. We should report when
+		// we generate an inefficient conversion.
+		if existsConversion || hasPublicConversion {
 			// Use the conversion method that is already defined.
-			assignFormat := "if err := s.Convert(&in.%s, &out.%s, 0); err != nil {\n"
-			assignStmt := fmt.Sprintf(assignFormat, inField.Name, outField.Name)
+			call := g.conversionFunctionCall(inField.Type, outField.Type, "s", "&in."+inField.Name, "&out."+outField.Name, "0")
+			assignStmt := fmt.Sprintf("if err := %s; err != nil {\n", call)
 			b.addLine(assignStmt, indent)
 			b.addLine("return err\n", indent+1)
 			b.addLine("}\n", indent)
@@ -744,15 +850,8 @@ func (g *conversionGenerator) writeConversionForStruct(b *buffer, inType, outTyp
 			}
 		}
 
-		assignStmt := ""
-		if g.existsDedicatedConversionFunction(inField.Type, outField.Type) {
-			assignFormat := "if err := %s(&in.%s, &out.%s, s); err != nil {\n"
-			funcName := g.conversionFunctionName(inField.Type, outField.Type)
-			assignStmt = fmt.Sprintf(assignFormat, funcName, inField.Name, outField.Name)
-		} else {
-			assignFormat := "if err := s.Convert(&in.%s, &out.%s, 0); err != nil {\n"
-			assignStmt = fmt.Sprintf(assignFormat, inField.Name, outField.Name)
-		}
+		call := g.conversionFunctionCall(inField.Type, outField.Type, "s", "&in."+inField.Name, "&out."+outField.Name, "0")
+		assignStmt := fmt.Sprintf("if err := %s; err != nil {\n", call)
 		b.addLine(assignStmt, indent)
 		b.addLine("return err\n", indent+1)
 		b.addLine("}\n", indent)
@@ -807,39 +906,7 @@ type typePair struct {
 	outType reflect.Type
 }
 
-var defaultConversions []typePair = []typePair{
-	{reflect.TypeOf([]RawExtension{}), reflect.TypeOf([]Object{})},
-	{reflect.TypeOf([]Object{}), reflect.TypeOf([]RawExtension{})},
-	{reflect.TypeOf(RawExtension{}), reflect.TypeOf(EmbeddedObject{})},
-	{reflect.TypeOf(EmbeddedObject{}), reflect.TypeOf(RawExtension{})},
-}
-
-func (g *conversionGenerator) existsDedicatedConversionFunction(inType, outType reflect.Type) bool {
-	if inType == outType {
-		// Assume that conversion are not defined for "deep copies".
-		return false
-	}
-
-	if g.existsConversionFunction(inType, outType) {
-		return true
-	}
-
-	for _, conv := range defaultConversions {
-		if conv.inType == inType && conv.outType == outType {
-			return false
-		}
-	}
-	if inType.Kind() != outType.Kind() {
-		// TODO(wojtek-t): Currently all conversions between types of different kinds are
-		// unnamed. Thus we return false here.
-		return false
-	}
-	// TODO: no way to handle private conversions in different packages
-	if g.assumePrivateConversions {
-		return false
-	}
-	return g.scheme.Converter().HasConversionFunc(inType, outType)
-}
+var defaultConversions []typePair = []typePair{}
 
 func (g *conversionGenerator) OverwritePackage(pkg, overwrite string) {
 	g.pkgOverwrites[pkg] = overwrite

@@ -23,6 +23,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/kubectl"
@@ -39,10 +40,18 @@ type AnnotateOptions struct {
 	removeAnnotations []string
 	builder           *resource.Builder
 	filenames         []string
+	selector          string
 
 	overwrite       bool
 	all             bool
 	resourceVersion string
+
+	changeCause       string
+	recordChangeCause bool
+
+	f   *cmdutil.Factory
+	out io.Writer
+	cmd *cobra.Command
 }
 
 const (
@@ -56,7 +65,7 @@ If --resource-version is specified, then updates will use this resource version,
 Possible resources include (case insensitive): pods (po), services (svc),
 replicationcontrollers (rc), nodes (no), events (ev), componentstatuses (cs),
 limitranges (limits), persistentvolumes (pv), persistentvolumeclaims (pvc),
-resourcequotas (quota) or secrets.`
+horizontalpodautoscalers (hpa), resourcequotas (quota) or secrets.`
 	annotate_example = `# Update pod 'foo' with the annotation 'description' and the value 'my frontend'.
 # If the same annotation is set multiple times, only the last value will be applied
 $ kubectl annotate pods foo description='my frontend'
@@ -87,27 +96,31 @@ func NewCmdAnnotate(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 		Long:    annotate_long,
 		Example: annotate_example,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := options.Complete(f, args); err != nil {
+			if err := options.Complete(f, out, cmd, args); err != nil {
 				cmdutil.CheckErr(err)
 			}
 			if err := options.Validate(args); err != nil {
 				cmdutil.CheckErr(cmdutil.UsageError(cmd, err.Error()))
 			}
-			if err := options.RunAnnotate(f); err != nil {
+			if err := options.RunAnnotate(); err != nil {
 				cmdutil.CheckErr(err)
 			}
 		},
 	}
+	cmdutil.AddPrinterFlags(cmd)
+	cmd.Flags().StringVarP(&options.selector, "selector", "l", "", "Selector (label query) to filter on")
 	cmd.Flags().BoolVar(&options.overwrite, "overwrite", false, "If true, allow annotations to be overwritten, otherwise reject annotation updates that overwrite existing annotations.")
 	cmd.Flags().BoolVar(&options.all, "all", false, "select all resources in the namespace of the specified resource types")
 	cmd.Flags().StringVar(&options.resourceVersion, "resource-version", "", "If non-empty, the annotation update will only succeed if this is the current resource-version for the object. Only valid when specifying a single resource.")
 	usage := "Filename, directory, or URL to a file identifying the resource to update the annotation"
 	kubectl.AddJsonFilenameFlag(cmd, &options.filenames, usage)
+	cmdutil.AddRecordFlag(cmd)
 	return cmd
 }
 
 // Complete adapts from the command line args and factory to the data required.
-func (o *AnnotateOptions) Complete(f *cmdutil.Factory, args []string) (err error) {
+func (o *AnnotateOptions) Complete(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []string) (err error) {
+
 	namespace, enforceNamespace, err := f.DefaultNamespace()
 	if err != nil {
 		return err
@@ -142,14 +155,22 @@ func (o *AnnotateOptions) Complete(f *cmdutil.Factory, args []string) (err error
 		return err
 	}
 
+	o.recordChangeCause = cmdutil.GetRecordFlag(cmd)
+	o.changeCause = f.Command()
+
 	mapper, typer := f.Object()
-	o.builder = resource.NewBuilder(mapper, typer, f.ClientMapperForCommand()).
+	o.builder = resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.ClientForMapping), f.Decoder(true)).
 		ContinueOnError().
 		NamespaceParam(namespace).DefaultNamespace().
 		FilenameParam(enforceNamespace, o.filenames...).
+		SelectorParam(o.selector).
 		ResourceTypeOrNameArgs(o.all, o.resources...).
 		Flatten().
 		Latest()
+
+	o.f = f
+	o.out = out
+	o.cmd = cmd
 
 	return nil
 }
@@ -169,7 +190,7 @@ func (o AnnotateOptions) Validate(args []string) error {
 }
 
 // RunAnnotate does the work
-func (o AnnotateOptions) RunAnnotate(f *cmdutil.Factory) error {
+func (o AnnotateOptions) RunAnnotate() error {
 	r := o.builder.Do()
 	if err := r.Err(); err != nil {
 		return err
@@ -185,6 +206,10 @@ func (o AnnotateOptions) RunAnnotate(f *cmdutil.Factory) error {
 		if err != nil {
 			return err
 		}
+		// If we should record change-cause, add it to new annotations
+		if cmdutil.ContainsChangeCause(info) || o.recordChangeCause {
+			o.newAnnotations[kubectl.ChangeCauseAnnotation] = o.changeCause
+		}
 		if err := o.updateAnnotations(obj); err != nil {
 			return err
 		}
@@ -193,19 +218,34 @@ func (o AnnotateOptions) RunAnnotate(f *cmdutil.Factory) error {
 			return err
 		}
 		patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, obj)
+		createdPatch := err == nil
 		if err != nil {
-			return err
+			glog.V(2).Infof("couldn't compute patch: %v", err)
 		}
 
 		mapping := info.ResourceMapping()
-		client, err := f.RESTClient(mapping)
+		client, err := o.f.ClientForMapping(mapping)
 		if err != nil {
 			return err
 		}
 		helper := resource.NewHelper(client, mapping)
 
-		_, err = helper.Patch(namespace, name, api.StrategicMergePatchType, patchBytes)
-		return err
+		var outputObj runtime.Object
+		if createdPatch {
+			outputObj, err = helper.Patch(namespace, name, api.StrategicMergePatchType, patchBytes)
+		} else {
+			outputObj, err = helper.Replace(namespace, name, false, obj)
+		}
+		if err != nil {
+			return err
+		}
+		outputFormat := cmdutil.GetFlagString(o.cmd, "output")
+		if outputFormat != "" {
+			return o.f.PrintObject(o.cmd, outputObj, o.out)
+		}
+		mapper, _ := o.f.Object()
+		cmdutil.PrintSuccess(mapper, false, o.out, info.Mapping.Resource, info.Name, "annotated")
+		return nil
 	})
 }
 
@@ -263,6 +303,10 @@ func validateAnnotations(removeAnnotations []string, newAnnotations map[string]s
 func validateNoAnnotationOverwrites(meta *api.ObjectMeta, annotations map[string]string) error {
 	var buf bytes.Buffer
 	for key := range annotations {
+		// change-cause annotation can always be overwritten
+		if key == kubectl.ChangeCauseAnnotation {
+			continue
+		}
 		if value, found := meta.Annotations[key]; found {
 			if buf.Len() > 0 {
 				buf.WriteString("; ")

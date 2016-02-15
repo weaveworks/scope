@@ -19,12 +19,16 @@ package clientcmd
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/url"
 	"os"
+	"strings"
 
+	"github.com/golang/glog"
 	"github.com/imdario/mergo"
 
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/unversioned"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	clientauth "k8s.io/kubernetes/pkg/client/unversioned/auth"
 	clientcmdapi "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api"
@@ -92,13 +96,17 @@ func (config DirectClientConfig) ClientConfig() (*client.Config, error) {
 	clientConfig := &client.Config{}
 	clientConfig.Host = configClusterInfo.Server
 	if u, err := url.ParseRequestURI(clientConfig.Host); err == nil && u.Opaque == "" && len(u.Path) > 1 {
-		clientConfig.Prefix = u.Path
-		u.Path = ""
 		u.RawQuery = ""
 		u.Fragment = ""
 		clientConfig.Host = u.String()
 	}
-	clientConfig.Version = configClusterInfo.APIVersion
+	if len(configClusterInfo.APIVersion) != 0 {
+		gv, err := unversioned.ParseGroupVersion(configClusterInfo.APIVersion)
+		if err != nil {
+			return nil, err
+		}
+		clientConfig.GroupVersion = &gv
+	}
 
 	// only try to read the auth information if we are secure
 	if client.IsConfigTransportTLS(*clientConfig) {
@@ -233,7 +241,11 @@ func (config DirectClientConfig) ConfirmUsable() error {
 	validationErrors := make([]error, 0)
 	validationErrors = append(validationErrors, validateAuthInfo(config.getAuthInfoName(), config.getAuthInfo())...)
 	validationErrors = append(validationErrors, validateClusterInfo(config.getClusterName(), config.getCluster())...)
-
+	// when direct client config is specified, and our only error is that no server is defined, we should
+	// return a standard "no config" error
+	if len(validationErrors) == 1 && validationErrors[0] == ErrEmptyCluster {
+		return newErrConfigurationInvalid([]error{ErrEmptyConfig})
+	}
 	return newErrConfigurationInvalid(validationErrors)
 }
 
@@ -315,12 +327,19 @@ func (inClusterClientConfig) ClientConfig() (*client.Config, error) {
 }
 
 func (inClusterClientConfig) Namespace() (string, error) {
-	// TODO: generic way to figure out what namespace you are running in?
-	// This way assumes you've set the POD_NAMESPACE environment variable
-	// using the downward API.
+	// This way assumes you've set the POD_NAMESPACE environment variable using the downward API.
+	// This check has to be done first for backwards compatibility with the way InClusterConfig was originally set up
 	if ns := os.Getenv("POD_NAMESPACE"); ns != "" {
 		return ns, nil
 	}
+
+	// Fall back to the namespace associated with the service account token, if available
+	if data, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
+		if ns := strings.TrimSpace(string(data)); len(ns) > 0 {
+			return ns, nil
+		}
+	}
+
 	return "default", nil
 }
 
@@ -330,4 +349,24 @@ func (inClusterClientConfig) Possible() bool {
 	return os.Getenv("KUBERNETES_SERVICE_HOST") != "" &&
 		os.Getenv("KUBERNETES_SERVICE_PORT") != "" &&
 		err == nil && !fi.IsDir()
+}
+
+// BuildConfigFromFlags is a helper function that builds configs from a master
+// url or a kubeconfig filepath. These are passed in as command line flags for cluster
+// components. Warnings should reflect this usage. If neither masterUrl or kubeconfigPath
+// are passed in we fallback to inClusterConfig. If inClusterConfig fails, we fallback
+// to the default config.
+func BuildConfigFromFlags(masterUrl, kubeconfigPath string) (*client.Config, error) {
+	if kubeconfigPath == "" && masterUrl == "" {
+		glog.Warningf("Neither --kubeconfig nor --master was specified.  Using the inClusterConfig.  This might not work.")
+		kubeconfig, err := client.InClusterConfig()
+		if err == nil {
+			return kubeconfig, nil
+		}
+		glog.Warning("error creating inClusterConfig, falling back to default config: ", err)
+	}
+
+	return NewNonInteractiveDeferredLoadingClientConfig(
+		&ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
+		&ConfigOverrides{ClusterInfo: clientcmdapi.Cluster{Server: masterUrl}}).ClientConfig()
 }

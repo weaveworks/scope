@@ -451,7 +451,7 @@ func TestGetIptablesHasCheckCommand(t *testing.T) {
 				func(cmd string, args ...string) exec.Cmd { return exec.InitFakeCmd(&fcmd, cmd, args...) },
 			},
 		}
-		version, err := GetIptablesVersionString(&fexec)
+		version, err := getIptablesVersionString(&fexec)
 		if (err != nil) != testCase.Err {
 			t.Errorf("Expected error: %v, Got error: %v", testCase.Err, err)
 		}
@@ -673,7 +673,7 @@ func TestReload(t *testing.T) {
 			// EnsureChain
 			func() ([]byte, error) { return []byte{}, nil },
 			// EnsureRule abc check
-			func() ([]byte, error) { return []byte{}, &exec.FakeExitError{1} },
+			func() ([]byte, error) { return []byte{}, &exec.FakeExitError{Status: 1} },
 			// EnsureRule abc
 			func() ([]byte, error) { return []byte{}, nil },
 
@@ -681,7 +681,7 @@ func TestReload(t *testing.T) {
 			// EnsureChain
 			func() ([]byte, error) { return []byte{}, nil },
 			// EnsureRule abc check
-			func() ([]byte, error) { return []byte{}, &exec.FakeExitError{1} },
+			func() ([]byte, error) { return []byte{}, &exec.FakeExitError{Status: 1} },
 			// EnsureRule abc
 			func() ([]byte, error) { return []byte{}, nil },
 		},

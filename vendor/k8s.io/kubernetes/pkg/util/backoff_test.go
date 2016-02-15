@@ -32,7 +32,7 @@ func NewFakeBackOff(initial, max time.Duration, tc *FakeClock) *Backoff {
 
 func TestSlowBackoff(t *testing.T) {
 	id := "_idSlow"
-	tc := &FakeClock{Time: time.Now()}
+	tc := NewFakeClock(time.Now())
 	step := time.Second
 	maxDuration := 50 * step
 
@@ -46,11 +46,19 @@ func TestSlowBackoff(t *testing.T) {
 		}
 		b.Next(id, tc.Now())
 	}
+
+	//Now confirm that the Reset cancels backoff.
+	b.Next(id, tc.Now())
+	b.Reset(id)
+	if b.Get(id) != 0 {
+		t.Errorf("Reset didn't clear the backoff.")
+	}
+
 }
 
 func TestBackoffReset(t *testing.T) {
 	id := "_idReset"
-	tc := &FakeClock{Time: time.Now()}
+	tc := NewFakeClock(time.Now())
 	step := time.Second
 	maxDuration := step * 5
 	b := NewFakeBackOff(step, maxDuration, tc)
@@ -76,7 +84,7 @@ func TestBackoffReset(t *testing.T) {
 
 func TestBackoffHightWaterMark(t *testing.T) {
 	id := "_idHiWaterMark"
-	tc := &FakeClock{Time: time.Now()}
+	tc := NewFakeClock(time.Now())
 	step := time.Second
 	maxDuration := 5 * step
 	b := NewFakeBackOff(step, maxDuration, tc)
@@ -98,7 +106,7 @@ func TestBackoffHightWaterMark(t *testing.T) {
 
 func TestBackoffGC(t *testing.T) {
 	id := "_idGC"
-	tc := &FakeClock{Time: time.Now()}
+	tc := NewFakeClock(time.Now())
 	step := time.Second
 	maxDuration := 5 * step
 
@@ -126,7 +134,7 @@ func TestBackoffGC(t *testing.T) {
 
 func TestIsInBackOffSinceUpdate(t *testing.T) {
 	id := "_idIsInBackOffSinceUpdate"
-	tc := &FakeClock{Time: time.Now()}
+	tc := NewFakeClock(time.Now())
 	step := time.Second
 	maxDuration := 10 * step
 	b := NewFakeBackOff(step, maxDuration, tc)
@@ -178,7 +186,7 @@ func TestIsInBackOffSinceUpdate(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		tc.Time = startTime.Add(c.tick * step)
+		tc.SetTime(startTime.Add(c.tick * step))
 		if c.inBackOff != b.IsInBackOffSinceUpdate(id, tc.Now()) {
 			t.Errorf("expected IsInBackOffSinceUpdate %v got %v at tick %s", c.inBackOff, b.IsInBackOffSinceUpdate(id, tc.Now()), c.tick*step)
 		}

@@ -30,10 +30,11 @@ import (
 	"k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/api/meta"
 	"k8s.io/kubernetes/pkg/api/v1"
+	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/kubectl"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
-	"k8s.io/kubernetes/pkg/util"
+	"k8s.io/kubernetes/pkg/util/intstr"
 )
 
 // RollingUpdateOptions is the start of the data required to perform the operation.  As new fields are added, add them here instead of
@@ -58,8 +59,11 @@ $ cat frontend-v2.json | kubectl rolling-update frontend-v1 -f -
 # name of the replication controller.
 $ kubectl rolling-update frontend-v1 frontend-v2 --image=image:v2
 
-# Update the pods of frontend by just changing the image, and keeping the old name
+# Update the pods of frontend by just changing the image, and keeping the old name.
 $ kubectl rolling-update frontend --image=image:v2
+
+# Abort and reverse an existing rollout in progress (from frontend-v1 to frontend-v2).
+$ kubectl rolling-update frontend-v1 frontend-v2 --rollback
 `
 )
 
@@ -93,6 +97,7 @@ func NewCmdRollingUpdate(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 	cmd.Flags().String("image", "", "Image to use for upgrading the replication controller. Must be distinct from the existing image (either new image or new image tag).  Can not be used with --filename/-f")
 	cmd.MarkFlagRequired("image")
 	cmd.Flags().String("deployment-label-key", "deployment", "The key to use to differentiate between two different controllers, default 'deployment'.  Only relevant when --image is specified, ignored otherwise")
+	cmd.Flags().String("container", "", "Container name which will have its image upgraded. Only relevant when --image is specified, ignored otherwise. Required when using --image on a multi-container pod")
 	cmd.Flags().Bool("dry-run", false, "If true, print out the changes that would be made, but don't actually make them.")
 	cmd.Flags().Bool("rollback", false, "If true, this is a request to abort an existing rollout that is partially rolled out. It effectively reverses current and next and runs a rollout")
 	cmdutil.AddValidateFlags(cmd)
@@ -151,6 +156,7 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 	timeout := cmdutil.GetFlagDuration(cmd, "timeout")
 	dryrun := cmdutil.GetFlagBool(cmd, "dry-run")
 	outputFormat := cmdutil.GetFlagString(cmd, "output")
+	container := cmdutil.GetFlagString(cmd, "container")
 
 	if len(options.Filenames) > 0 {
 		filename = options.Filenames[0]
@@ -192,7 +198,7 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 			return err
 		}
 
-		request := resource.NewBuilder(mapper, typer, f.ClientMapperForCommand()).
+		request := resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.ClientForMapping), f.Decoder(true)).
 			Schema(schema).
 			NamespaceParam(cmdNamespace).DefaultNamespace().
 			FilenameParam(enforceNamespace, filename).
@@ -212,8 +218,8 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 		}
 		newRc, ok = obj.(*api.ReplicationController)
 		if !ok {
-			if _, kind, err := typer.ObjectVersionAndKind(obj); err == nil {
-				return cmdutil.UsageError(cmd, "%s contains a %s not a ReplicationController", filename, kind)
+			if gvk, err := typer.ObjectKind(obj); err == nil {
+				return cmdutil.UsageError(cmd, "%s contains a %v not a ReplicationController", filename, gvk)
 			}
 			glog.V(4).Infof("Object %#v is not a ReplicationController", obj)
 			return cmdutil.UsageError(cmd, "%s does not specify a valid ReplicationController", filename)
@@ -229,6 +235,7 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 	// than the old rc. This selector is the hash of the rc, which will differ because the new rc has a
 	// different image.
 	if len(image) != 0 {
+		codec := registered.GroupOrDie(client.APIVersion().Group).Codec
 		keepOldName = len(args) == 1
 		newName := findNewName(args, oldRc)
 		if newRc, err = kubectl.LoadExistingNextReplicationController(client, cmdNamespace, newName); err != nil {
@@ -243,14 +250,14 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 			if oldRc.Spec.Template.Spec.Containers[0].Image == image {
 				return cmdutil.UsageError(cmd, "Specified --image must be distinct from existing container image")
 			}
-			newRc, err = kubectl.CreateNewControllerFromCurrentController(client, cmdNamespace, oldName, newName, image, deploymentKey)
+			newRc, err = kubectl.CreateNewControllerFromCurrentController(client, codec, cmdNamespace, oldName, newName, image, container, deploymentKey)
 			if err != nil {
 				return err
 			}
 		}
 		// Update the existing replication controller with pointers to the 'next' controller
 		// and adding the <deploymentKey> label if necessary to distinguish it from the 'next' controller.
-		oldHash, err := api.HashObject(oldRc, client.Codec)
+		oldHash, err := api.HashObject(oldRc, codec)
 		if err != nil {
 			return err
 		}
@@ -326,8 +333,8 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 		Interval:       interval,
 		Timeout:        timeout,
 		CleanupPolicy:  updateCleanupPolicy,
-		MaxUnavailable: util.NewIntOrStringFromInt(0),
-		MaxSurge:       util.NewIntOrStringFromInt(1),
+		MaxUnavailable: intstr.FromInt(1),
+		MaxSurge:       intstr.FromInt(1),
 	}
 	if rollback {
 		err = kubectl.AbortRollingUpdate(config)
@@ -354,12 +361,12 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 	if outputFormat != "" {
 		return f.PrintObject(cmd, newRc, out)
 	}
-	_, kind, err := api.Scheme.ObjectVersionAndKind(newRc)
+	kind, err := api.Scheme.ObjectKind(newRc)
 	if err != nil {
 		return err
 	}
-	_, res := meta.KindToResource(kind, false)
-	cmdutil.PrintSuccess(mapper, false, out, res, oldName, message)
+	_, res := meta.KindToResource(kind)
+	cmdutil.PrintSuccess(mapper, false, out, res.Resource, oldName, message)
 	return nil
 }
 
@@ -379,11 +386,9 @@ func isReplicasDefaulted(info *resource.Info) bool {
 		// was unable to recover versioned info
 		return false
 	}
-	switch info.Mapping.APIVersion {
-	case "v1":
-		if rc, ok := info.VersionedObject.(*v1.ReplicationController); ok {
-			return rc.Spec.Replicas == nil
-		}
+	switch t := info.VersionedObject.(type) {
+	case *v1.ReplicationController:
+		return t.Spec.Replicas == nil
 	}
 	return false
 }

@@ -19,14 +19,17 @@ package kubectl
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/client/unversioned/testclient"
 	"k8s.io/kubernetes/pkg/runtime"
+	deploymentutil "k8s.io/kubernetes/pkg/util/deployment"
 )
 
 func TestReplicationControllerStop(t *testing.T) {
@@ -36,7 +39,6 @@ func TestReplicationControllerStop(t *testing.T) {
 		Name            string
 		Objs            []runtime.Object
 		StopError       error
-		StopMessage     string
 		ExpectedActions []string
 	}{
 		{
@@ -66,7 +68,6 @@ func TestReplicationControllerStop(t *testing.T) {
 				},
 			},
 			StopError:       nil,
-			StopMessage:     "foo stopped",
 			ExpectedActions: []string{"get", "list", "get", "update", "get", "get", "delete"},
 		},
 		{
@@ -105,7 +106,6 @@ func TestReplicationControllerStop(t *testing.T) {
 				},
 			},
 			StopError:       nil,
-			StopMessage:     "foo stopped",
 			ExpectedActions: []string{"get", "list", "get", "update", "get", "get", "delete"},
 		},
 		{
@@ -145,7 +145,6 @@ func TestReplicationControllerStop(t *testing.T) {
 				},
 			},
 			StopError:       fmt.Errorf("Detected overlapping controllers for rc foo: baz, please manage deletion individually with --cascade=false."),
-			StopMessage:     "",
 			ExpectedActions: []string{"get", "list"},
 		},
 
@@ -196,7 +195,6 @@ func TestReplicationControllerStop(t *testing.T) {
 			},
 
 			StopError:       fmt.Errorf("Detected overlapping controllers for rc foo: baz,zaz, please manage deletion individually with --cascade=false."),
-			StopMessage:     "",
 			ExpectedActions: []string{"get", "list"},
 		},
 
@@ -238,7 +236,6 @@ func TestReplicationControllerStop(t *testing.T) {
 			},
 
 			StopError:       nil,
-			StopMessage:     "foo stopped",
 			ExpectedActions: []string{"get", "list", "delete"},
 		},
 	}
@@ -246,16 +243,12 @@ func TestReplicationControllerStop(t *testing.T) {
 	for _, test := range tests {
 		fake := testclient.NewSimpleFake(test.Objs...)
 		reaper := ReplicationControllerReaper{fake, time.Millisecond, time.Millisecond}
-		s, err := reaper.Stop(ns, name, 0, nil)
+		err := reaper.Stop(ns, name, 0, nil)
 		if !reflect.DeepEqual(err, test.StopError) {
 			t.Errorf("%s unexpected error: %v", test.Name, err)
 			continue
 		}
 
-		if s != test.StopMessage {
-			t.Errorf("%s expected '%s', got '%s'", test.Name, test.StopMessage, s)
-			continue
-		}
 		actions := fake.Actions()
 		if len(actions) != len(test.ExpectedActions) {
 			t.Errorf("%s unexpected actions: %v, expected %d actions got %d", test.Name, actions, len(test.ExpectedActions), len(actions))
@@ -272,6 +265,116 @@ func TestReplicationControllerStop(t *testing.T) {
 	}
 }
 
+func TestReplicaSetStop(t *testing.T) {
+	name := "foo"
+	ns := "default"
+	tests := []struct {
+		Name            string
+		Objs            []runtime.Object
+		StopError       error
+		ExpectedActions []string
+	}{
+		{
+			Name: "OnlyOneRS",
+			Objs: []runtime.Object{
+				&extensions.ReplicaSet{ // GET
+					ObjectMeta: api.ObjectMeta{
+						Name:      name,
+						Namespace: ns,
+					},
+					Spec: extensions.ReplicaSetSpec{
+						Replicas: 0,
+						Selector: &unversioned.LabelSelector{MatchLabels: map[string]string{"k1": "v1"}},
+					},
+				},
+				&extensions.ReplicaSetList{ // LIST
+					Items: []extensions.ReplicaSet{
+						{
+							ObjectMeta: api.ObjectMeta{
+								Name:      name,
+								Namespace: ns,
+							},
+							Spec: extensions.ReplicaSetSpec{
+								Replicas: 0,
+								Selector: &unversioned.LabelSelector{MatchLabels: map[string]string{"k1": "v1"}},
+							},
+						},
+					},
+				},
+			},
+			StopError:       nil,
+			ExpectedActions: []string{"get", "get", "update", "get", "get", "delete"},
+		},
+		{
+			Name: "NoOverlapping",
+			Objs: []runtime.Object{
+				&extensions.ReplicaSet{ // GET
+					ObjectMeta: api.ObjectMeta{
+						Name:      name,
+						Namespace: ns,
+					},
+					Spec: extensions.ReplicaSetSpec{
+						Replicas: 0,
+						Selector: &unversioned.LabelSelector{MatchLabels: map[string]string{"k1": "v1"}},
+					},
+				},
+				&extensions.ReplicaSetList{ // LIST
+					Items: []extensions.ReplicaSet{
+						{
+							ObjectMeta: api.ObjectMeta{
+								Name:      "baz",
+								Namespace: ns,
+							},
+							Spec: extensions.ReplicaSetSpec{
+								Replicas: 0,
+								Selector: &unversioned.LabelSelector{MatchLabels: map[string]string{"k3": "v3"}},
+							},
+						},
+						{
+							ObjectMeta: api.ObjectMeta{
+								Name:      name,
+								Namespace: ns,
+							},
+							Spec: extensions.ReplicaSetSpec{
+								Replicas: 0,
+								Selector: &unversioned.LabelSelector{MatchLabels: map[string]string{"k1": "v1"}},
+							},
+						},
+					},
+				},
+			},
+			StopError:       nil,
+			ExpectedActions: []string{"get", "get", "update", "get", "get", "delete"},
+		},
+		// TODO: Implement tests for overlapping replica sets, similar to replication controllers,
+		// when the overlapping checks are implemented for replica sets.
+	}
+
+	for _, test := range tests {
+		fake := testclient.NewSimpleFake(test.Objs...)
+		reaper := ReplicaSetReaper{fake, time.Millisecond, time.Millisecond}
+		err := reaper.Stop(ns, name, 0, nil)
+		if !reflect.DeepEqual(err, test.StopError) {
+			t.Errorf("%s unexpected error: %v", test.Name, err)
+			continue
+		}
+
+		actions := fake.Actions()
+		if len(actions) != len(test.ExpectedActions) {
+			t.Errorf("%s unexpected actions: %v, expected %d actions got %d", test.Name, actions, len(test.ExpectedActions), len(actions))
+			continue
+		}
+		for i, verb := range test.ExpectedActions {
+			if actions[i].GetResource() != "replicasets" {
+				t.Errorf("%s unexpected action: %+v, expected %s-replicaSet", test.Name, actions[i], verb)
+			}
+			if actions[i].GetVerb() != verb {
+				t.Errorf("%s unexpected action: %+v, expected %s-replicaSet", test.Name, actions[i], verb)
+			}
+		}
+	}
+}
+
 func TestJobStop(t *testing.T) {
 	name := "foo"
 	ns := "default"
@@ -280,7 +383,6 @@ func TestJobStop(t *testing.T) {
 		Name            string
 		Objs            []runtime.Object
 		StopError       error
-		StopMessage     string
 		ExpectedActions []string
 	}{
 		{
@@ -293,7 +395,7 @@ func TestJobStop(t *testing.T) {
 					},
 					Spec: extensions.JobSpec{
 						Parallelism: &zero,
-						Selector: &extensions.PodSelector{
+						Selector: &unversioned.LabelSelector{
 							MatchLabels: map[string]string{"k1": "v1"},
 						},
 					},
@@ -307,7 +409,7 @@ func TestJobStop(t *testing.T) {
 							},
 							Spec: extensions.JobSpec{
 								Parallelism: &zero,
-								Selector: &extensions.PodSelector{
+								Selector: &unversioned.LabelSelector{
 									MatchLabels: map[string]string{"k1": "v1"},
 								},
 							},
@@ -315,36 +417,181 @@ func TestJobStop(t *testing.T) {
 					},
 				},
 			},
-			StopError:       nil,
-			StopMessage:     "foo stopped",
-			ExpectedActions: []string{"get", "get", "update", "get", "get", "delete"},
+			StopError: nil,
+			ExpectedActions: []string{"get:jobs", "get:jobs", "update:jobs",
+				"get:jobs", "get:jobs", "list:pods", "delete:jobs"},
+		},
+		{
+			Name: "JobWithDeadPods",
+			Objs: []runtime.Object{
+				&extensions.Job{ // GET
+					ObjectMeta: api.ObjectMeta{
+						Name:      name,
+						Namespace: ns,
+					},
+					Spec: extensions.JobSpec{
+						Parallelism: &zero,
+						Selector: &unversioned.LabelSelector{
+							MatchLabels: map[string]string{"k1": "v1"},
+						},
+					},
+				},
+				&extensions.JobList{ // LIST
+					Items: []extensions.Job{
+						{
+							ObjectMeta: api.ObjectMeta{
+								Name:      name,
+								Namespace: ns,
+							},
+							Spec: extensions.JobSpec{
+								Parallelism: &zero,
+								Selector: &unversioned.LabelSelector{
+									MatchLabels: map[string]string{"k1": "v1"},
+								},
+							},
+						},
+					},
+				},
+				&api.PodList{ // LIST
+					Items: []api.Pod{
+						{
+							ObjectMeta: api.ObjectMeta{
+								Name:      "pod1",
+								Namespace: ns,
+								Labels:    map[string]string{"k1": "v1"},
+							},
+						},
+					},
+				},
+			},
+			StopError: nil,
+			ExpectedActions: []string{"get:jobs", "get:jobs", "update:jobs",
+				"get:jobs", "get:jobs", "list:pods", "delete:pods", "delete:jobs"},
 		},
 	}
 
 	for _, test := range tests {
 		fake := testclient.NewSimpleFake(test.Objs...)
 		reaper := JobReaper{fake, time.Millisecond, time.Millisecond}
-		s, err := reaper.Stop(ns, name, 0, nil)
+		err := reaper.Stop(ns, name, 0, nil)
 		if !reflect.DeepEqual(err, test.StopError) {
 			t.Errorf("%s unexpected error: %v", test.Name, err)
 			continue
 		}
 
-		if s != test.StopMessage {
-			t.Errorf("%s expected '%s', got '%s'", test.Name, test.StopMessage, s)
-			continue
-		}
 		actions := fake.Actions()
 		if len(actions) != len(test.ExpectedActions) {
 			t.Errorf("%s unexpected actions: %v, expected %d actions got %d", test.Name, actions, len(test.ExpectedActions), len(actions))
 			continue
 		}
-		for i, verb := range test.ExpectedActions {
-			if actions[i].GetResource() != "jobs" {
-				t.Errorf("%s unexpected action: %+v, expected %s-job", test.Name, actions[i], verb)
+		for i, expAction := range test.ExpectedActions {
+			action := strings.Split(expAction, ":")
+			if actions[i].GetVerb() != action[0] {
+				t.Errorf("%s unexpected verb: %+v, expected %s", test.Name, actions[i], expAction)
 			}
-			if actions[i].GetVerb() != verb {
-				t.Errorf("%s unexpected action: %+v, expected %s-job", test.Name, actions[i], verb)
+			if actions[i].GetResource() != action[1] {
+				t.Errorf("%s unexpected resource: %+v, expected %s", test.Name, actions[i], expAction)
+			}
+		}
+	}
+}
+
+func TestDeploymentStop(t *testing.T) {
+	name := "foo"
+	ns := "default"
+	deployment := extensions.Deployment{
+		ObjectMeta: api.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+		Spec: extensions.DeploymentSpec{
+			Replicas: 0,
+			Selector: &unversioned.LabelSelector{MatchLabels: map[string]string{"k1": "v1"}},
+		},
+		Status: extensions.DeploymentStatus{
+			Replicas: 0,
+		},
+	}
+	template := deploymentutil.GetNewReplicaSetTemplate(deployment)
+	tests := []struct {
+		Name            string
+		Objs            []runtime.Object
+		StopError       error
+		ExpectedActions []string
+	}{
+		{
+			Name: "SimpleDeployment",
+			Objs: []runtime.Object{
+				&extensions.Deployment{ // GET
+					ObjectMeta: api.ObjectMeta{
+						Name:      name,
+						Namespace: ns,
+					},
+					Spec: extensions.DeploymentSpec{
+						Replicas: 0,
+						Selector: &unversioned.LabelSelector{MatchLabels: map[string]string{"k1": "v1"}},
+					},
+					Status: extensions.DeploymentStatus{
+						Replicas: 0,
+					},
+				},
+			},
+			StopError: nil,
+			ExpectedActions: []string{"get:deployments", "update:deployments",
+				"get:deployments", "get:deployments", "update:deployments",
+				"list:replicasets", "delete:deployments"},
+		},
+		{
+			Name: "Deployment with single replicaset",
+			Objs: []runtime.Object{
+				&deployment, // GET
+				&extensions.ReplicaSetList{ // LIST
+					Items: []extensions.ReplicaSet{
+						{
+							ObjectMeta: api.ObjectMeta{
+								Name:      name,
+								Namespace: ns,
+							},
+							Spec: extensions.ReplicaSetSpec{
+								Template: &template,
+							},
+						},
+					},
+				},
+			},
+			StopError: nil,
+			ExpectedActions: []string{"get:deployments", "update:deployments",
+				"get:deployments", "get:deployments", "update:deployments",
+				"list:replicasets", "get:replicasets", "get:replicasets",
+				"update:replicasets", "get:replicasets", "get:replicasets",
+				"delete:replicasets", "delete:deployments"},
+		},
+	}
+
+	for _, test := range tests {
+		fake := testclient.NewSimpleFake(test.Objs...)
+		reaper := DeploymentReaper{fake, time.Millisecond, time.Millisecond}
+		err := reaper.Stop(ns, name, 0, nil)
+		if !reflect.DeepEqual(err, test.StopError) {
+			t.Errorf("%s unexpected error: %v", test.Name, err)
+			continue
+		}
+
+		actions := fake.Actions()
+		if len(actions) != len(test.ExpectedActions) {
+			t.Errorf("%s unexpected actions: %v, expected %d actions got %d", test.Name, actions, len(test.ExpectedActions), len(actions))
+			continue
+		}
+		for i, expAction := range test.ExpectedActions {
+			action := strings.Split(expAction, ":")
+			if actions[i].GetVerb() != action[0] {
+				t.Errorf("%s unexpected verb: %+v, expected %s", test.Name, actions[i], expAction)
+			}
+			if actions[i].GetResource() != action[1] {
+				t.Errorf("%s unexpected resource: %+v, expected %s", test.Name, actions[i], expAction)
+			}
+			if len(action) == 3 && actions[i].GetSubresource() != action[2] {
+				t.Errorf("%s unexpected subresource: %+v, expected %s", test.Name, actions[i], expAction)
 			}
 		}
 	}
@@ -390,7 +637,7 @@ func (c *reaperFake) Services(namespace string) client.ServiceInterface {
 func TestSimpleStop(t *testing.T) {
 	tests := []struct {
 		fake        *reaperFake
-		kind        string
+		kind        unversioned.GroupKind
 		actions     []testclient.Action
 		expectError bool
 		test        string
@@ -399,7 +646,7 @@ func TestSimpleStop(t *testing.T) {
 			fake: &reaperFake{
 				Fake: &testclient.Fake{},
 			},
-			kind: "Pod",
+			kind: api.Kind("Pod"),
 			actions: []testclient.Action{
 				testclient.NewGetAction("pods", api.NamespaceDefault, "foo"),
 				testclient.NewDeleteAction("pods", api.NamespaceDefault, "foo"),
@@ -411,7 +658,7 @@ func TestSimpleStop(t *testing.T) {
 			fake: &reaperFake{
 				Fake: &testclient.Fake{},
 			},
-			kind: "Service",
+			kind: api.Kind("Service"),
 			actions: []testclient.Action{
 				testclient.NewGetAction("services", api.NamespaceDefault, "foo"),
 				testclient.NewDeleteAction("services", api.NamespaceDefault, "foo"),
@@ -424,7 +671,7 @@ func TestSimpleStop(t *testing.T) {
 				Fake:      &testclient.Fake{},
 				noSuchPod: true,
 			},
-			kind:        "Pod",
+			kind:        api.Kind("Pod"),
 			actions:     []testclient.Action{},
 			expectError: true,
 			test:        "stop pod fails, no pod",
@@ -434,7 +681,7 @@ func TestSimpleStop(t *testing.T) {
 				Fake:            &testclient.Fake{},
 				noDeleteService: true,
 			},
-			kind: "Service",
+			kind: api.Kind("Service"),
 			actions: []testclient.Action{
 				testclient.NewGetAction("services", api.NamespaceDefault, "foo"),
 			},
@@ -448,16 +695,13 @@ func TestSimpleStop(t *testing.T) {
 		if err != nil {
 			t.Errorf("unexpected error: %v (%s)", err, test.test)
 		}
-		s, err := reaper.Stop("default", "foo", 0, nil)
+		err = reaper.Stop("default", "foo", 0, nil)
 		if err != nil && !test.expectError {
 			t.Errorf("unexpected error: %v (%s)", err, test.test)
 		}
 		if err == nil {
 			if test.expectError {
 				t.Errorf("unexpected non-error: %v (%s)", err, test.test)
-			}
-			if s != "foo stopped" {
-				t.Errorf("unexpected return: %s (%s)", s, test.test)
 			}
 		}
 		actions := fake.Actions()
