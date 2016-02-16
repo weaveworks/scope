@@ -217,6 +217,10 @@ kubectl create -f scope-probe-ds.yaml
 
 ## <a name="developing"></a>Developing
 
+Building Scope from source depends on the latest version of
+[docker](https://www.docker.com/), so please install that before
+proceeding.
+
 The build is in two stages. `make deps` installs some tools we use later in
 the build. `make` builds the UI build container, builds the UI in said
 container, builds the backend build container, builds the app and probe in a
