@@ -1,11 +1,8 @@
 package appclient
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"strings"
 	"sync"
 
@@ -38,7 +35,7 @@ type clientTuple struct {
 // Publisher is something which can send a stream of data somewhere, probably
 // to a remote collector.
 type Publisher interface {
-	Publish(io.Reader) error
+	Publish(report.Report) error
 	Stop()
 }
 
@@ -49,7 +46,7 @@ type MultiAppClient interface {
 	PipeConnection(appID, pipeID string, pipe xfer.Pipe) error
 	PipeClose(appID, pipeID string) error
 	Stop()
-	Publish(io.Reader) error
+	Publish(report.Report) error
 }
 
 // NewMultiAppClient creates a new MultiAppClient.
@@ -155,22 +152,13 @@ func (c *multiClient) Stop() {
 	c.clients = map[string]AppClient{}
 	close(c.quit)
 }
-
-// Publish implements Publisher by publishing the reader to all of the
-// underlying publishers sequentially. To do that, it needs to drain the
-// reader, and recreate new readers for each publisher. Note that it will
-// publish to one endpoint for each unique ID. Failed publishes don't count.
-func (c *multiClient) Publish(r io.Reader) error {
-	buf, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
+func (c *multiClient) Publish(r report.Report) error {
 
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	errs := []string{}
 	for _, c := range c.clients {
-		if err := c.Publish(bytes.NewReader(buf)); err != nil {
+		if err := c.Publish(r); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

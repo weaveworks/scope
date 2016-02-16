@@ -1,9 +1,7 @@
 package app
 
 import (
-	"compress/gzip"
 	"encoding/gob"
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
@@ -11,6 +9,7 @@ import (
 	"github.com/PuerkitoBio/ghost/handlers"
 	"github.com/gorilla/mux"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/report"
@@ -82,7 +81,6 @@ func TopologyHandler(c Reporter, preRoutes *mux.Router, postRoutes http.Handler)
 		gzipHandler(topologyRegistry.captureRenderer(c, handleTopology)))
 	get.HandleFunc("/api/topology/{topology}/ws",
 		topologyRegistry.captureRenderer(c, handleWs)) // NB not gzip!
-	get.HandleFunc("/api/report", gzipHandler(makeRawReportHandler(c)))
 
 	// We pull in the http.DefaultServeMux to get the pprof routes
 	preRoutes.PathPrefix("/debug/pprof").Handler(http.DefaultServeMux)
@@ -116,34 +114,33 @@ func TopologyHandler(c Reporter, preRoutes *mux.Router, postRoutes http.Handler)
 
 // RegisterReportPostHandler registers the handler for report submission
 func RegisterReportPostHandler(a Adder, router *mux.Router) {
-	post := router.Methods("POST").Subrouter()
+	post := router.Methods("GET").Subrouter()
 	post.HandleFunc("/api/report", func(w http.ResponseWriter, r *http.Request) {
-		var (
-			rpt    report.Report
-			reader = r.Body
-			err    error
-		)
-		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
-			reader, err = gzip.NewReader(r.Body)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-		}
+		var rpt report.Report
 
-		decoder := gob.NewDecoder(reader).Decode
-		if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-			decoder = json.NewDecoder(reader).Decode
-		}
-		if err := decoder(&rpt); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Debug("Entering report endpoint")
+
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Errorf("Error upgrading report websocket: %s", err)
 			return
 		}
-		a.Add(rpt)
-		if len(rpt.Pod.Nodes) > 0 {
-			topologyRegistry.enableKubernetesTopologies()
+		defer conn.Close()
+
+		rawConn := conn.UnderlyingConn()
+		// no gzip for now
+		decoder := gob.NewDecoder(rawConn)
+		for {
+			if err = decoder.Decode(&rpt); err != nil {
+				log.Errorf("Error decoding report, probe died?: %s", err)
+				return
+			}
+			a.Add(rpt)
+			if len(rpt.Pod.Nodes) > 0 {
+				topologyRegistry.enableKubernetesTopologies()
+			}
+
 		}
-		w.WriteHeader(http.StatusOK)
 	})
 }
 

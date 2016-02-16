@@ -1,10 +1,6 @@
 package appclient
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/gob"
-
 	"github.com/weaveworks/scope/report"
 )
 
@@ -23,12 +19,5 @@ func NewReportPublisher(publisher Publisher) *ReportPublisher {
 
 // Publish serialises and compresses a report, then passes it to a publisher
 func (p *ReportPublisher) Publish(r report.Report) error {
-	buf := &bytes.Buffer{}
-	gzwriter := gzip.NewWriter(buf)
-	if err := gob.NewEncoder(gzwriter).Encode(r); err != nil {
-		return err
-	}
-	gzwriter.Close() // otherwise the content won't get flushed to the output stream
-
-	return p.publisher.Publish(buf)
+	return p.publisher.Publish(r)
 }

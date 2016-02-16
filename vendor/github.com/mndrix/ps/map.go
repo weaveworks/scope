@@ -11,6 +11,7 @@ package ps
 
 import (
 	"bytes"
+	"encoding/gob"
 	"fmt"
 )
 
@@ -53,11 +54,15 @@ const childCount = 8
 const shiftSize = 3
 
 type tree struct {
-	count    int
-	hash     uint64 // hash of the key (used for tree balancing)
-	key      string
-	value    interface{}
-	children [childCount]*tree
+	Count    int
+	Hash     uint64 // hash of the key (used for tree balancing)
+	Key      string
+	Value    interface{}
+	Children [childCount]*tree
+}
+
+func init() {
+	gob.Register(tree{})
 }
 
 var nilMap = &tree{}
@@ -67,8 +72,8 @@ var nilMap = &tree{}
 // All map nodes are created by cloning this structure so
 // they avoid the problem too.
 func init() {
-	for i := range nilMap.children {
-		nilMap.children[i] = nilMap
+	for i := range nilMap.Children {
+		nilMap.Children[i] = nilMap
 	}
 }
 
@@ -117,30 +122,30 @@ func (self *tree) Set(key string, value interface{}) Map {
 func setLowLevel(self *tree, partialHash, hash uint64, key string, value interface{}) *tree {
 	if self.IsNil() { // an empty tree is easy
 		m := self.clone()
-		m.count = 1
-		m.hash = hash
-		m.key = key
-		m.value = value
+		m.Count = 1
+		m.Hash = hash
+		m.Key = key
+		m.Value = value
 		return m
 	}
 
-	if hash != self.hash {
+	if hash != self.Hash {
 		m := self.clone()
 		i := partialHash % childCount
-		m.children[i] = setLowLevel(self.children[i], partialHash>>shiftSize, hash, key, value)
+		m.Children[i] = setLowLevel(self.Children[i], partialHash>>shiftSize, hash, key, value)
 		recalculateCount(m)
 		return m
 	}
 
 	// did we find a hash collision?
-	if key != self.key {
-		oops := fmt.Sprintf("Hash collision between: '%s' and '%s'.  Please report to https://github.com/mndrix/ps/issues/new", self.key, key)
+	if key != self.Key {
+		oops := fmt.Sprintf("Hash collision between: '%s' and '%s'.  Please report to https://github.com/mndrix/ps/issues/new", self.Key, key)
 		panic(oops)
 	}
 
 	// replacing a key's previous value
 	m := self.clone()
-	m.value = value
+	m.Value = value
 	return m
 }
 
@@ -148,10 +153,10 @@ func setLowLevel(self *tree, partialHash, hash uint64, key string, value interfa
 // of its subtrees
 func recalculateCount(m *tree) {
 	count := 0
-	for _, t := range m.children {
+	for _, t := range m.Children {
 		count += t.Size()
 	}
-	m.count = count + 1 // add one to count ourself
+	m.Count = count + 1 // add one to count ourself
 }
 
 func (m *tree) Delete(key string) Map {
@@ -166,14 +171,14 @@ func deleteLowLevel(self *tree, partialHash, hash uint64) (*tree, bool) {
 		return self, false
 	}
 
-	if hash != self.hash {
+	if hash != self.Hash {
 		i := partialHash % childCount
-		child, found := deleteLowLevel(self.children[i], partialHash>>shiftSize, hash)
+		child, found := deleteLowLevel(self.Children[i], partialHash>>shiftSize, hash)
 		if !found {
 			return self, false
 		}
 		newMap := self.clone()
-		newMap.children[i] = child
+		newMap.Children[i] = child
 		recalculateCount(newMap)
 		return newMap, true // ? this wasn't in the original code
 	}
@@ -184,7 +189,7 @@ func deleteLowLevel(self *tree, partialHash, hash uint64) (*tree, bool) {
 	}
 	/*
 	   if self.subtreeCount() == 1 { // only one subtree
-	       for _, t := range self.children {
+	       for _, t := range self.Children {
 	           if t != nilMap {
 	               return t, true
 	           }
@@ -196,7 +201,7 @@ func deleteLowLevel(self *tree, partialHash, hash uint64) (*tree, bool) {
 	// find a node to replace us
 	i := -1
 	size := -1
-	for j, t := range self.children {
+	for j, t := range self.Children {
 		if t.Size() > size {
 			i = j
 			size = t.Size()
@@ -204,13 +209,13 @@ func deleteLowLevel(self *tree, partialHash, hash uint64) (*tree, bool) {
 	}
 
 	// make chosen leaf smaller
-	replacement, child := self.children[i].deleteLeftmost()
+	replacement, child := self.Children[i].deleteLeftmost()
 	newMap := replacement.clone()
-	for j := range self.children {
+	for j := range self.Children {
 		if j == i {
-			newMap.children[j] = child
+			newMap.Children[j] = child
 		} else {
-			newMap.children[j] = self.children[j]
+			newMap.Children[j] = self.Children[j]
 		}
 	}
 	recalculateCount(newMap)
@@ -224,11 +229,11 @@ func (m *tree) deleteLeftmost() (*tree, *tree) {
 		return m, nilMap
 	}
 
-	for i, t := range m.children {
+	for i, t := range m.Children {
 		if t != nilMap {
 			deleted, child := t.deleteLeftmost()
 			newMap := m.clone()
-			newMap.children[i] = child
+			newMap.Children[i] = child
 			recalculateCount(newMap)
 			return deleted, newMap
 		}
@@ -244,7 +249,7 @@ func (m *tree) isLeaf() bool {
 // returns the number of child subtrees we have
 func (m *tree) subtreeCount() int {
 	count := 0
-	for _, t := range m.children {
+	for _, t := range m.Children {
 		if t != nilMap {
 			count++
 		}
@@ -262,17 +267,17 @@ func lookupLowLevel(self *tree, partialHash, hash uint64) (interface{}, bool) {
 		return nil, false
 	}
 
-	if hash != self.hash {
+	if hash != self.Hash {
 		i := partialHash % childCount
-		return lookupLowLevel(self.children[i], partialHash>>shiftSize, hash)
+		return lookupLowLevel(self.Children[i], partialHash>>shiftSize, hash)
 	}
 
 	// we found it
-	return self.value, true
+	return self.Value, true
 }
 
 func (m *tree) Size() int {
-	return m.count
+	return m.Count
 }
 
 func (m *tree) ForEach(f func(key string, val interface{})) {
@@ -281,10 +286,10 @@ func (m *tree) ForEach(f func(key string, val interface{})) {
 	}
 
 	// ourself
-	f(m.key, m.value)
+	f(m.Key, m.Value)
 
 	// children
-	for _, t := range m.children {
+	for _, t := range m.Children {
 		if t != nilMap {
 			t.ForEach(f)
 		}
