@@ -17,6 +17,7 @@ type RenderableNode struct {
 	ControlNode string         `json:"-"`                     // ID of node from which to show the controls in the UI
 	Shape       string         `json:"shape"`                 // Shape node should be rendered as
 	Stack       bool           `json:"stack"`                 // Should UI render this node as a stack?
+	NodeCount   int            `json:"node_count,omitempty"`  // Number of nodes represented by this stack.
 
 	report.EdgeMetadata `json:"metadata"` // Numeric sums
 	report.Node
@@ -42,6 +43,7 @@ func NewRenderableNode(id string) RenderableNode {
 		EdgeMetadata: report.EdgeMetadata{},
 		Node:         report.MakeNode(),
 		Shape:        Circle,
+		NodeCount:    0,
 	}
 }
 
@@ -57,6 +59,7 @@ func NewRenderableNodeWith(id, major, minor, rank string, node RenderableNode) R
 		EdgeMetadata: node.EdgeMetadata.Copy(),
 		Node:         node.Node.Copy(),
 		Shape:        Circle,
+		NodeCount:    0,
 	}
 }
 
@@ -73,6 +76,7 @@ func NewDerivedNode(id string, node RenderableNode) RenderableNode {
 		Node:         node.Node.Copy(),
 		ControlNode:  "", // Do not propagate ControlNode when making a derived node!
 		Shape:        Circle,
+		NodeCount:    0,
 	}
 }
 
@@ -87,6 +91,7 @@ func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode 
 		EdgeMetadata: node.EdgeMetadata.Copy(),
 		Node:         node.Node.Copy(),
 		Shape:        Circle,
+		NodeCount:    0,
 	}
 }
 
@@ -128,6 +133,10 @@ func (rn RenderableNode) Merge(other RenderableNode) RenderableNode {
 		panic(result.ID)
 	}
 
+	if result.NodeCount == 0 {
+		result.NodeCount = other.NodeCount
+	}
+
 	result.Stack = result.Stack || rn.Stack
 	result.Children = rn.Children.Merge(other.Children)
 	result.EdgeMetadata = rn.EdgeMetadata.Merge(other.EdgeMetadata)
@@ -150,6 +159,7 @@ func (rn RenderableNode) Copy() RenderableNode {
 		ControlNode:  rn.ControlNode,
 		Shape:        rn.Shape,
 		Stack:        rn.Stack,
+		NodeCount:    rn.NodeCount,
 	}
 }
 

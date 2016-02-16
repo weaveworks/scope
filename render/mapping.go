@@ -514,6 +514,7 @@ func MapCountProcessName(n RenderableNode, _ report.Networks) RenderableNodes {
 	}
 
 	processes, _ := n.Node.Counters.Lookup(processesKey)
+	n.NodeCount = processes
 	if processes == 1 {
 		n.LabelMinor = "1 process"
 	} else {
@@ -744,6 +745,7 @@ func MapCountContainers(n RenderableNode, _ report.Networks) RenderableNodes {
 	}
 
 	containers, _ := n.Node.Counters.Lookup(ContainersKey)
+	n.NodeCount = containers
 	if containers == 1 {
 		n.LabelMinor = "1 container"
 	} else {
@@ -760,6 +762,7 @@ func MapCountPods(n RenderableNode, _ report.Networks) RenderableNodes {
 	}
 
 	pods, _ := n.Node.Counters.Lookup(podsKey)
+	n.NodeCount = pods
 	if pods == 1 {
 		n.LabelMinor = "1 pod"
 	} else {
