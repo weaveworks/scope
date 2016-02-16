@@ -5,7 +5,7 @@ usage() {
 	exit 1
 }
 
-mkdir -p /etc/weave
+mkdir -p /var/run/weave
 APP_ARGS=""
 PROBE_ARGS=""
 TOKEN_PROVIDED=false
@@ -70,12 +70,12 @@ while true; do
     shift
 done
 
-echo "$APP_ARGS" >/etc/weave/scope-app.args
-echo "$PROBE_ARGS" >/etc/weave/scope-probe.args
+echo "$APP_ARGS" >/var/run/weave/scope-app.args
+echo "$PROBE_ARGS" >/var/run/weave/scope-probe.args
 
 # End of the command line can optionally be some
 # addresses of apps to connect to, for people not
-# using Weave DNS. We stick these in /etc/weave/apps
+# using Weave DNS. We stick these in /var/run/weave/apps
 # for the run-probe script to pick up.
 MANUAL_APPS=$@
 
@@ -85,6 +85,6 @@ if [ "$MANUAL_APPS" = "" -a "$TOKEN_PROVIDED" = "true" ]; then
     MANUAL_APPS="scope.weave.works:443"
 fi
 
-echo "$MANUAL_APPS" >>/etc/weave/apps
+echo "$MANUAL_APPS" >/var/run/weave/apps
 
 exec /home/weave/runsvinit
