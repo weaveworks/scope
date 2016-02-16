@@ -9,14 +9,14 @@ import (
 
 // We use these keys in node metadata
 const (
-	PID             = "pid"
-	Name            = "name"
-	PPID            = "ppid"
-	Cmdline         = "cmdline"
-	Threads         = "threads"
-	CPUUsage        = "process_cpu_usage_percent"
-	MemoryUsage     = "process_memory_usage_bytes"
-	FileDescriptors = "file_descriptors"
+	PID            = "pid"
+	Name           = "name"
+	PPID           = "ppid"
+	Cmdline        = "cmdline"
+	Threads        = "threads"
+	CPUUsage       = "process_cpu_usage_percent"
+	MemoryUsage    = "process_memory_usage_bytes"
+	OpenFilesCount = "open_files_count"
 )
 
 // Reporter generates Reports containing the Process topology.
@@ -85,7 +85,7 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 		}
 
 		node = node.WithMetric(MemoryUsage, report.MakeMetric().Add(now, float64(p.RSSBytes)))
-		node = node.WithMetric(FileDescriptors, report.MakeMetric().Add(now, float64(p.FileDescriptors)))
+		node = node.WithMetric(OpenFilesCount, report.MakeMetric().Add(now, float64(p.OpenFilesCount)))
 
 		t.AddNode(nodeID, node)
 	})
