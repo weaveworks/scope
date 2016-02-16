@@ -217,7 +217,6 @@ type EdgeMetadata struct {
 	IngressPacketCount *uint64 `json:"ingress_packet_count,omitempty"`
 	EgressByteCount    *uint64 `json:"egress_byte_count,omitempty"`  // Transport layer
 	IngressByteCount   *uint64 `json:"ingress_byte_count,omitempty"` // Transport layer
-	MaxConnCountTCP    *uint64 `json:"max_conn_count_tcp,omitempty"`
 }
 
 // Copy returns a value copy of the EdgeMetadata.
@@ -227,7 +226,6 @@ func (e EdgeMetadata) Copy() EdgeMetadata {
 		IngressPacketCount: cpu64ptr(e.IngressPacketCount),
 		EgressByteCount:    cpu64ptr(e.EgressByteCount),
 		IngressByteCount:   cpu64ptr(e.IngressByteCount),
-		MaxConnCountTCP:    cpu64ptr(e.MaxConnCountTCP),
 	}
 }
 
@@ -238,7 +236,6 @@ func (e EdgeMetadata) Reversed() EdgeMetadata {
 		IngressPacketCount: cpu64ptr(e.EgressPacketCount),
 		EgressByteCount:    cpu64ptr(e.IngressByteCount),
 		IngressByteCount:   cpu64ptr(e.EgressByteCount),
-		MaxConnCountTCP:    cpu64ptr(e.MaxConnCountTCP),
 	}
 }
 
@@ -259,7 +256,6 @@ func (e EdgeMetadata) Merge(other EdgeMetadata) EdgeMetadata {
 	cp.IngressPacketCount = merge(cp.IngressPacketCount, other.IngressPacketCount, sum)
 	cp.EgressByteCount = merge(cp.EgressByteCount, other.EgressByteCount, sum)
 	cp.IngressByteCount = merge(cp.IngressByteCount, other.IngressByteCount, sum)
-	cp.MaxConnCountTCP = merge(cp.MaxConnCountTCP, other.MaxConnCountTCP, max)
 	return cp
 }
 
@@ -272,9 +268,6 @@ func (e EdgeMetadata) Flatten(other EdgeMetadata) EdgeMetadata {
 	cp.IngressPacketCount = merge(cp.IngressPacketCount, other.IngressPacketCount, sum)
 	cp.EgressByteCount = merge(cp.EgressByteCount, other.EgressByteCount, sum)
 	cp.IngressByteCount = merge(cp.IngressByteCount, other.IngressByteCount, sum)
-	// Note that summing of two maximums doesn't always give us the true
-	// maximum. But it's a best effort.
-	cp.MaxConnCountTCP = merge(cp.MaxConnCountTCP, other.MaxConnCountTCP, sum)
 	return cp
 }
 

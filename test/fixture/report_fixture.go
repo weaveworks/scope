@@ -320,9 +320,7 @@ var (
 				ClientAddressNodeID: report.MakeNode().WithLatests(map[string]string{
 					endpoint.Addr:     ClientIP,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithEdge(ServerAddressNodeID, report.EdgeMetadata{
-					MaxConnCountTCP: newu64(3),
-				}),
+				}).WithEdge(ServerAddressNodeID, report.EdgeMetadata{}),
 
 				ServerAddressNodeID: report.MakeNode().WithLatests(map[string]string{
 					endpoint.Addr:     ServerIP,
