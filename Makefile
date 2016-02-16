@@ -17,6 +17,7 @@ DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VE
 RUNSVINIT=vendor/runsvinit/runsvinit
 CODECGEN_DIR=vendor/github.com/2opremio/go-1/codec/codecgen
 CODECGEN_EXE=$(CODECGEN_DIR)/codecgen
+CODECGEN_TARGETS=report/report.codecgen.go render/render.codecgen.go render/detailed/detailed.codecgen.go
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
@@ -60,7 +61,7 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 
 else
 
-$(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS)
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
@@ -71,11 +72,10 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	        false; \
 	    }
 
-$(SCOPE_EXE): report/report.codecgen.go
-
-CODECGEN_REPORT_SOURCES=$(shell find report/ -type f -name '*.go' -not -name '*_test.go' -not -name '*.codecgen.go' -not -name '*.generated.go')
-report/report.codecgen.go: $(CODECGEN_EXE) $(CODECGEN_REPORT_SOURCES)
-	cd report && $(GO_HOST_ENV) ../$(CODECGEN_EXE) -u -o $(@F) $(notdir $(CODECGEN_REPORT_SOURCES))
+# Enable second  expansion to automatically generate the dependencies of codecgen
+.SECONDEXPANSION:
+%.codecgen.go: $(CODECGEN_EXE) $$(shell find $$(@D) -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name '*.codecgen.go' -not -name '*.generated.go')
+	cd $(@D) && $(GO_HOST_ENV) $(shell pwd)/$(CODECGEN_EXE) -u -o $(@F) $(notdir $(filter-out $<,$^))
 
 $(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
 	$(GO_HOST_ENV) $(GO) build $(GO_BUILD_TAGS) -o $@ ./$(@D)
@@ -137,7 +137,8 @@ clean:
 	$(GO) clean ./...
 	$(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
-		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave .pkg
+		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave .pkg \
+		$(CODECGEN_TARGETS) $(CODECGEN_EXE)
 
 deps:
 	$(GO) get -u -f $(GO_BUILD_TAGS) \

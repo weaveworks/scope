@@ -254,7 +254,9 @@ func (m Metric) ToIntermediate() WireMetrics {
 	}
 }
 
-func (m WireMetrics) fromIntermediate() Metric {
+// FromIntermediate obtains the metric from a representation suitable
+// for serialization.
+func (m WireMetrics) FromIntermediate() Metric {
 	samples := ps.NewList()
 	for _, s := range m.Samples {
 		samples = samples.Cons(s)
@@ -280,7 +282,7 @@ func (m *Metric) CodecDecodeSelf(decoder *codec.Decoder) {
 	if err := decoder.Decode(&in); err != nil {
 		return
 	}
-	*m = in.fromIntermediate()
+	*m = in.FromIntermediate()
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
@@ -306,6 +308,6 @@ func (m *Metric) GobDecode(input []byte) error {
 	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
 		return err
 	}
-	*m = in.fromIntermediate()
+	*m = in.FromIntermediate()
 	return nil
 }

@@ -36,6 +36,7 @@ func (g NodeSummaryGroup) Copy() NodeSummaryGroup {
 
 // Column provides special json serialization for column ids, so they include
 // their label for the frontend.
+// codecgen: skip
 type Column string
 
 // CodecEncodeSelf implements codec.Selfer

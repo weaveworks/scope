@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ugorji/go/codec"
+
 	"github.com/weaveworks/scope/common/mtime"
 )
 

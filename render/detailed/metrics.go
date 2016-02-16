@@ -1,7 +1,6 @@
 package detailed
 
 import (
-	"bytes"
 	"math"
 
 	"github.com/ugorji/go/codec"
@@ -37,6 +36,7 @@ var (
 
 // MetricRow is a tuple of data used to render a metric as a sparkline and
 // accoutrements.
+// codecgen: skip
 type MetricRow struct {
 	ID     string
 	Format string
@@ -60,19 +60,29 @@ func (m MetricRow) Copy() MetricRow {
 	return row
 }
 
-// MarshalJSON marshals this MetricRow to json. It takes the basic Metric
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (MetricRow) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*MetricRow) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
+}
+
+type wiredMetricRow struct {
+	ID     string  `json:"id"`
+	Label  string  `json:"label"`
+	Format string  `json:"format,omitempty"`
+	Group  string  `json:"group,omitempty"`
+	Value  float64 `json:"value"`
+	report.WireMetrics
+}
+
+// CodecEncodeSelf marshals this MetricRow. It takes the basic Metric
 // rendering, then adds some row-specific fields.
-func (m MetricRow) MarshalJSON() ([]byte, error) {
-	buf := bytes.Buffer{}
-	encoder := codec.NewEncoder(&buf, &codec.JsonHandle{})
-	err := encoder.Encode(struct {
-		ID     string  `json:"id"`
-		Label  string  `json:"label"`
-		Format string  `json:"format,omitempty"`
-		Group  string  `json:"group,omitempty"`
-		Value  float64 `json:"value"`
-		report.WireMetrics
-	}{
+func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
+	encoder.Encode(wiredMetricRow{
 		ID:          m.ID,
 		Label:       Label(m.ID),
 		Format:      m.Format,
@@ -80,7 +90,21 @@ func (m MetricRow) MarshalJSON() ([]byte, error) {
 		Value:       m.Value,
 		WireMetrics: m.Metric.ToIntermediate(),
 	})
-	return buf.Bytes(), err
+}
+
+// CodecDecodeSelf implements codec.Selfer
+func (m *MetricRow) CodecDecodeSelf(decoder *codec.Decoder) {
+	var in wiredMetricRow
+	decoder.Decode(&in)
+
+	metric := in.WireMetrics.FromIntermediate()
+	*m = MetricRow{
+		ID:     in.ID,
+		Format: in.Format,
+		Group:  in.Group,
+		Value:  in.Value,
+		Metric: &metric,
+	}
 }
 
 // NodeMetrics produces a table (to be consumed directly by the UI) based on

@@ -56,4 +56,4 @@ experimental/_integration/_integration
 app/static.go
 prog/static.go
 vendor/github.com/2opremio/go-1/codec/codecgen/codecgen
-report/report.codecgen.go
+*.codecgen.go
