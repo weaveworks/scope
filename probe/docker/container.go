@@ -33,6 +33,7 @@ const (
 	ContainerState         = "docker_container_state"
 	ContainerUptime        = "docker_container_uptime"
 	ContainerRestartCount  = "docker_container_restart_count"
+	ContainerNetworkMode   = "docker_container_network_mode"
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
@@ -57,6 +58,8 @@ const (
 	StateRunning = "running"
 	StateStopped = "stopped"
 	StatePaused  = "paused"
+
+	NetworkModeHost = "host"
 
 	stopTimeout = 10
 )
@@ -355,6 +358,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		result = result.WithLatests(map[string]string{
 			ContainerUptime:       uptime.String(),
 			ContainerRestartCount: strconv.Itoa(c.container.RestartCount),
+			ContainerNetworkMode:  c.container.HostConfig.NetworkMode,
 		})
 		result = result.WithControls(
 			RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer,

@@ -2,8 +2,10 @@ package render
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -116,6 +118,56 @@ var ContainerRenderer = MakeReduce(
 	),
 )
 
+type containerWithHostIPsRenderer struct {
+	Renderer
+}
+
+// Render produces a process graph where the ips for host network mode are set
+// to the host's IPs.
+func (r containerWithHostIPsRenderer) Render(rpt report.Report) RenderableNodes {
+	containers := r.Renderer.Render(rpt)
+	hosts := MakeMap(
+		MapHostIdentity,
+		SelectHost,
+	).Render(rpt)
+
+	for id, c := range containers {
+		networkMode, ok := c.Node.Latest.Lookup(docker.ContainerNetworkMode)
+		if !ok || networkMode != docker.NetworkModeHost {
+			continue
+		}
+
+		ips, ok := c.Node.Sets.Lookup(docker.ContainerIPs)
+		if ok && len(ips) > 0 {
+			continue
+		}
+
+		h, ok := hosts[MakeHostID(report.ExtractHostID(c.Node))]
+		if !ok {
+			continue
+		}
+
+		hostNetworks, ok := h.Sets.Lookup(host.LocalNetworks)
+		if !ok {
+			continue
+		}
+
+		hostIPs := report.MakeStringSet()
+		for _, cidr := range hostNetworks {
+			if ip, _, err := net.ParseCIDR(cidr); err == nil {
+				hostIPs = hostIPs.Add(ip.String())
+			}
+		}
+
+		c.Sets = c.Sets.Add(docker.ContainerIPs, hostIPs)
+		containers[id] = c
+	}
+
+	return containers
+}
+
+var ContainerWithHostIPsRenderer = containerWithHostIPsRenderer{ContainerRenderer}
+
 type containerWithImageNameRenderer struct {
 	Renderer
 }
@@ -149,7 +201,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container
 // graph where the ranks are the image names, not their IDs
-var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerRenderer}
+var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerWithHostIPsRenderer}
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
