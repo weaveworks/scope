@@ -134,9 +134,15 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 	}
 
 	// Put information from weave ps on the container nodes
+	const maxPrefixSize = 12
 	for id, node := range r.Container.Nodes {
-		prefix, _ := node.Latest.Lookup(docker.ContainerID)
-		prefix = prefix[:12]
+		prefix, ok := node.Latest.Lookup(docker.ContainerID)
+		if !ok {
+			continue
+		}
+		if len(prefix) > maxPrefixSize {
+			prefix = prefix[:maxPrefixSize]
+		}
 		entry, ok := w.psCache[prefix]
 		if !ok {
 			continue
