@@ -1,7 +1,6 @@
 package app_test
 
 import (
-	"encoding/json"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/common/xfer"
@@ -59,9 +59,11 @@ func TestControl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer resp.Body.Close()
 
 	var response xfer.Response
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	decoder := codec.NewDecoder(resp.Body, &codec.JsonHandle{})
+	if err := decoder.Decode(&response); err != nil {
 		t.Fatal(err)
 	}
 

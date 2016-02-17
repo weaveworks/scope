@@ -33,15 +33,17 @@ import (
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	kubectltesting "k8s.io/kubernetes/pkg/kubectl/testing"
 	"k8s.io/kubernetes/pkg/runtime"
+	yamlserializer "k8s.io/kubernetes/pkg/runtime/serializer/yaml"
 	"k8s.io/kubernetes/pkg/util"
+	"k8s.io/kubernetes/pkg/util/intstr"
 	"k8s.io/kubernetes/pkg/util/sets"
 
 	"github.com/ghodss/yaml"
 )
 
 func init() {
-	api.Scheme.AddKnownTypes("", &kubectltesting.TestStruct{})
-	api.Scheme.AddKnownTypes(testapi.Default.Version(), &kubectltesting.TestStruct{})
+	api.Scheme.AddKnownTypes(testapi.Default.InternalGroupVersion(), &kubectltesting.TestStruct{})
+	api.Scheme.AddKnownTypes(*testapi.Default.GroupVersion(), &kubectltesting.TestStruct{})
 }
 
 var testData = kubectltesting.TestStruct{
@@ -64,7 +66,7 @@ func TestVersionedPrinter(t *testing.T) {
 			return nil
 		}),
 		api.Scheme,
-		testapi.Default.Version(),
+		*testapi.Default.GroupVersion(),
 	)
 	if err := p.PrintObj(original, nil); err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -85,11 +87,11 @@ type TestPrintType struct {
 	Data string
 }
 
-func (*TestPrintType) IsAnAPIObject() {}
+func (obj *TestPrintType) GetObjectKind() unversioned.ObjectKind { return unversioned.EmptyObjectKind }
 
 type TestUnknownType struct{}
 
-func (*TestUnknownType) IsAnAPIObject() {}
+func (obj *TestUnknownType) GetObjectKind() unversioned.ObjectKind { return unversioned.EmptyObjectKind }
 
 func TestPrinter(t *testing.T) {
 	//test inputs
@@ -102,7 +104,7 @@ func TestPrinter(t *testing.T) {
 		},
 	}
 	emptyListTest := &api.PodList{}
-	testapi, err := api.Scheme.ConvertToVersion(podTest, testapi.Default.Version())
+	testapi, err := api.Scheme.ConvertToVersion(podTest, testapi.Default.GroupVersion().String())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -121,17 +123,17 @@ func TestPrinter(t *testing.T) {
 		{"test jsonpath", "jsonpath", "{.metadata.name}", podTest, "foo"},
 		{"test jsonpath list", "jsonpath", "{.items[*].metadata.name}", podListTest, "foo bar"},
 		{"test jsonpath empty list", "jsonpath", "{.items[*].metadata.name}", emptyListTest, ""},
-		{"test name", "name", "", podTest, "/foo\n"},
+		{"test name", "name", "", podTest, "pod/foo\n"},
 		{"emits versioned objects", "template", "{{.kind}}", testapi, "Pod"},
 	}
 	for _, test := range printerTests {
 		buf := bytes.NewBuffer([]byte{})
 		printer, found, err := GetPrinter(test.Format, test.FormatArgument)
 		if err != nil || !found {
-			t.Errorf("unexpected error: %#v", err)
+			t.Errorf("in %s, unexpected error: %#v", test.Name, err)
 		}
 		if err := printer.PrintObj(test.Input, buf); err != nil {
-			t.Errorf("unexpected error: %#v", err)
+			t.Errorf("in %s, unexpected error: %#v", test.Name, err)
 		}
 		if buf.String() != test.Expect {
 			t.Errorf("in %s, expect %q, got %q", test.Name, test.Expect, buf.String())
@@ -175,8 +177,8 @@ func testPrinter(t *testing.T, printer ResourcePrinter, unmarshalFunc func(data 
 	}
 	// Use real decode function to undo the versioning process.
 	poutput = kubectltesting.TestStruct{}
-	err = runtime.YAMLDecoder(testapi.Default.Codec()).DecodeInto(buf.Bytes(), &poutput)
-	if err != nil {
+	s := yamlserializer.NewDecodingSerializer(testapi.Default.Codec())
+	if err := runtime.DecodeInto(s, buf.Bytes(), &poutput); err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(testData, poutput) {
@@ -196,8 +198,7 @@ func testPrinter(t *testing.T, printer ResourcePrinter, unmarshalFunc func(data 
 	}
 	// Use real decode function to undo the versioning process.
 	objOut = api.Pod{}
-	err = runtime.YAMLDecoder(testapi.Default.Codec()).DecodeInto(buf.Bytes(), &objOut)
-	if err != nil {
+	if err := runtime.DecodeInto(s, buf.Bytes(), &objOut); err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(obj, &objOut) {
@@ -213,18 +214,18 @@ func TestJSONPrinter(t *testing.T) {
 	testPrinter(t, &JSONPrinter{}, json.Unmarshal)
 }
 
-func PrintCustomType(obj *TestPrintType, w io.Writer, withNamespace bool, wide bool, showAll bool, columnLabels []string) error {
+func PrintCustomType(obj *TestPrintType, w io.Writer, options PrintOptions) error {
 	_, err := fmt.Fprintf(w, "%s", obj.Data)
 	return err
 }
 
-func ErrorPrintHandler(obj *TestPrintType, w io.Writer, withNamespace bool, wide bool, showAll bool, columnLabels []string) error {
+func ErrorPrintHandler(obj *TestPrintType, w io.Writer, options PrintOptions) error {
 	return fmt.Errorf("ErrorPrintHandler error")
 }
 
 func TestCustomTypePrinting(t *testing.T) {
 	columns := []string{"Data"}
-	printer := NewHumanReadablePrinter(false, false, false, false, []string{})
+	printer := NewHumanReadablePrinter(false, false, false, false, false, false, []string{})
 	printer.Handler(columns, PrintCustomType)
 
 	obj := TestPrintType{"test object"}
@@ -241,7 +242,7 @@ func TestCustomTypePrinting(t *testing.T) {
 
 func TestPrintHandlerError(t *testing.T) {
 	columns := []string{"Data"}
-	printer := NewHumanReadablePrinter(false, false, false, false, []string{})
+	printer := NewHumanReadablePrinter(false, false, false, false, false, false, []string{})
 	printer.Handler(columns, ErrorPrintHandler)
 	obj := TestPrintType{"test object"}
 	buffer := &bytes.Buffer{}
@@ -252,7 +253,7 @@ func TestPrintHandlerError(t *testing.T) {
 }
 
 func TestUnknownTypePrinting(t *testing.T) {
-	printer := NewHumanReadablePrinter(false, false, false, false, []string{})
+	printer := NewHumanReadablePrinter(false, false, false, false, false, false, []string{})
 	buffer := &bytes.Buffer{}
 	err := printer.PrintObj(&TestUnknownType{}, buffer)
 	if err == nil {
@@ -422,7 +423,7 @@ func TestTemplateStrings(t *testing.T) {
 		t.Fatalf("tmpl fail: %v", err)
 	}
 
-	printer := NewVersionedPrinter(p, api.Scheme, testapi.Default.Version())
+	printer := NewVersionedPrinter(p, api.Scheme, *testapi.Default.GroupVersion())
 
 	for name, item := range table {
 		buffer := &bytes.Buffer{}
@@ -456,14 +457,17 @@ func TestPrinters(t *testing.T) {
 		t.Fatal(err)
 	}
 	printers := map[string]ResourcePrinter{
-		"humanReadable":        NewHumanReadablePrinter(true, false, false, false, []string{}),
-		"humanReadableHeaders": NewHumanReadablePrinter(false, false, false, false, []string{}),
+		"humanReadable":        NewHumanReadablePrinter(true, false, false, false, false, false, []string{}),
+		"humanReadableHeaders": NewHumanReadablePrinter(false, false, false, false, false, false, []string{}),
 		"json":                 &JSONPrinter{},
 		"yaml":                 &YAMLPrinter{},
 		"template":             templatePrinter,
 		"template2":            templatePrinter2,
 		"jsonpath":             jsonpathPrinter,
-		"name":                 &NamePrinter{},
+		"name": &NamePrinter{
+			Typer:   runtime.ObjectTyperToTyper(api.Scheme),
+			Decoder: api.Codecs.UniversalDecoder(),
+		},
 	}
 	objects := map[string]runtime.Object{
 		"pod":             &api.Pod{ObjectMeta: om("pod")},
@@ -497,7 +501,7 @@ func TestPrinters(t *testing.T) {
 
 func TestPrintEventsResultSorted(t *testing.T) {
 	// Arrange
-	printer := NewHumanReadablePrinter(false /* noHeaders */, false, false, false, []string{})
+	printer := NewHumanReadablePrinter(false /* noHeaders */, false, false, false, false, false, []string{})
 
 	obj := api.EventList{
 		Items: []api.Event{
@@ -507,6 +511,7 @@ func TestPrintEventsResultSorted(t *testing.T) {
 				FirstTimestamp: unversioned.NewTime(time.Date(2014, time.January, 15, 0, 0, 0, 0, time.UTC)),
 				LastTimestamp:  unversioned.NewTime(time.Date(2014, time.January, 15, 0, 0, 0, 0, time.UTC)),
 				Count:          1,
+				Type:           api.EventTypeNormal,
 			},
 			{
 				Source:         api.EventSource{Component: "scheduler"},
@@ -514,6 +519,7 @@ func TestPrintEventsResultSorted(t *testing.T) {
 				FirstTimestamp: unversioned.NewTime(time.Date(1987, time.June, 17, 0, 0, 0, 0, time.UTC)),
 				LastTimestamp:  unversioned.NewTime(time.Date(1987, time.June, 17, 0, 0, 0, 0, time.UTC)),
 				Count:          1,
+				Type:           api.EventTypeNormal,
 			},
 			{
 				Source:         api.EventSource{Component: "kubelet"},
@@ -521,6 +527,7 @@ func TestPrintEventsResultSorted(t *testing.T) {
 				FirstTimestamp: unversioned.NewTime(time.Date(2002, time.December, 25, 0, 0, 0, 0, time.UTC)),
 				LastTimestamp:  unversioned.NewTime(time.Date(2002, time.December, 25, 0, 0, 0, 0, time.UTC)),
 				Count:          1,
+				Type:           api.EventTypeNormal,
 			},
 		},
 	}
@@ -538,7 +545,7 @@ func TestPrintEventsResultSorted(t *testing.T) {
 }
 
 func TestPrintNodeStatus(t *testing.T) {
-	printer := NewHumanReadablePrinter(false, false, false, false, []string{})
+	printer := NewHumanReadablePrinter(false, false, false, false, false, false, []string{})
 	table := []struct {
 		node   api.Node
 		status string
@@ -633,6 +640,41 @@ func contains(fields []string, field string) bool {
 		}
 	}
 	return false
+}
+
+func TestPrintHunmanReadableIngressWithColumnLabels(t *testing.T) {
+	ingress := extensions.Ingress{
+		ObjectMeta: api.ObjectMeta{
+			Name:              "test1",
+			CreationTimestamp: unversioned.Time{Time: time.Now().AddDate(-10, 0, 0)},
+			Labels: map[string]string{
+				"app_name": "kubectl_test_ingress",
+			},
+		},
+		Spec: extensions.IngressSpec{
+			Backend: &extensions.IngressBackend{
+				ServiceName: "svc",
+				ServicePort: intstr.FromInt(93),
+			},
+		},
+		Status: extensions.IngressStatus{
+			LoadBalancer: api.LoadBalancerStatus{
+				Ingress: []api.LoadBalancerIngress{
+					{
+						IP:       "2.3.4.5",
+						Hostname: "localhost.localdomain",
+					},
+				},
+			},
+		},
+	}
+	buff := bytes.Buffer{}
+	printIngress(&ingress, &buff, PrintOptions{false, false, false, false, false, false, []string{"app_name"}})
+	output := string(buff.Bytes())
+	appName := ingress.ObjectMeta.Labels["app_name"]
+	if !strings.Contains(output, appName) {
+		t.Errorf("expected to container app_name label value %s, but doesn't %s", appName, output)
+	}
 }
 
 func TestPrintHumanReadableService(t *testing.T) {
@@ -749,7 +791,7 @@ func TestPrintHumanReadableService(t *testing.T) {
 
 	for _, svc := range tests {
 		buff := bytes.Buffer{}
-		printService(&svc, &buff, false, false, false, []string{})
+		printService(&svc, &buff, PrintOptions{false, false, false, false, false, false, []string{}})
 		output := string(buff.Bytes())
 		ip := svc.Spec.ClusterIP
 		if !strings.Contains(output, ip) {
@@ -902,6 +944,7 @@ func TestPrintHumanReadableWithNamespace(t *testing.T) {
 				FirstTimestamp: unversioned.NewTime(time.Date(2014, time.January, 15, 0, 0, 0, 0, time.UTC)),
 				LastTimestamp:  unversioned.NewTime(time.Date(2014, time.January, 15, 0, 0, 0, 0, time.UTC)),
 				Count:          1,
+				Type:           api.EventTypeNormal,
 			},
 			isNamespaced: true,
 		},
@@ -930,7 +973,7 @@ func TestPrintHumanReadableWithNamespace(t *testing.T) {
 	for _, test := range table {
 		if test.isNamespaced {
 			// Expect output to include namespace when requested.
-			printer := NewHumanReadablePrinter(false, true, false, false, []string{})
+			printer := NewHumanReadablePrinter(false, true, false, false, false, false, []string{})
 			buffer := &bytes.Buffer{}
 			err := printer.PrintObj(test.obj, buffer)
 			if err != nil {
@@ -942,7 +985,7 @@ func TestPrintHumanReadableWithNamespace(t *testing.T) {
 			}
 		} else {
 			// Expect error when trying to get all namespaces for un-namespaced object.
-			printer := NewHumanReadablePrinter(false, true, false, false, []string{})
+			printer := NewHumanReadablePrinter(false, true, false, false, false, false, []string{})
 			buffer := &bytes.Buffer{}
 			err := printer.PrintObj(test.obj, buffer)
 			if err == nil {
@@ -1037,7 +1080,7 @@ func TestPrintPod(t *testing.T) {
 
 	buf := bytes.NewBuffer([]byte{})
 	for _, test := range tests {
-		printPod(&test.pod, buf, false, false, true, []string{})
+		printPod(&test.pod, buf, PrintOptions{false, false, false, true, false, false, []string{}})
 		// We ignore time
 		if !strings.HasPrefix(buf.String(), test.expect) {
 			t.Fatalf("Expected: %s, got: %s", test.expect, buf.String())
@@ -1130,7 +1173,7 @@ func TestPrintNonTerminatedPod(t *testing.T) {
 
 	buf := bytes.NewBuffer([]byte{})
 	for _, test := range tests {
-		printPod(&test.pod, buf, false, false, false, []string{})
+		printPod(&test.pod, buf, PrintOptions{false, false, false, false, false, false, []string{}})
 		// We ignore time
 		if !strings.HasPrefix(buf.String(), test.expect) {
 			t.Fatalf("Expected: %s, got: %s", test.expect, buf.String())
@@ -1190,7 +1233,7 @@ func TestPrintPodWithLabels(t *testing.T) {
 
 	buf := bytes.NewBuffer([]byte{})
 	for _, test := range tests {
-		printPod(&test.pod, buf, false, false, false, test.labelColumns)
+		printPod(&test.pod, buf, PrintOptions{false, false, false, false, false, false, test.labelColumns})
 		// We ignore time
 		if !strings.HasPrefix(buf.String(), test.startsWith) || !strings.HasSuffix(buf.String(), test.endsWith) {
 			t.Fatalf("Expected to start with: %s and end with: %s, but got: %s", test.startsWith, test.endsWith, buf.String())
@@ -1213,7 +1256,7 @@ func TestTranslateTimestamp(t *testing.T) {
 		{"5 minutes ago", translateTimestamp(unversioned.Time{Time: time.Now().Add(-3e11)}), "5m"},
 		{"an hour ago", translateTimestamp(unversioned.Time{Time: time.Now().Add(-6e12)}), "1h"},
 		{"2 days ago", translateTimestamp(unversioned.Time{Time: time.Now().AddDate(0, 0, -2)}), "2d"},
-		{"months ago", translateTimestamp(unversioned.Time{Time: time.Now().AddDate(0, -3, 0)}), "92d"},
+		{"months ago", translateTimestamp(unversioned.Time{Time: time.Now().AddDate(0, 0, -90)}), "90d"},
 		{"10 years ago", translateTimestamp(unversioned.Time{Time: time.Now().AddDate(-10, 0, 0)}), "10y"},
 	}
 	for _, test := range tl {
@@ -1237,24 +1280,86 @@ func TestPrintDeployment(t *testing.T) {
 				},
 				Spec: extensions.DeploymentSpec{
 					Replicas: 5,
-					Template: &api.PodTemplateSpec{
+					Template: api.PodTemplateSpec{
 						Spec: api.PodSpec{Containers: make([]api.Container, 2)},
 					},
 				},
 				Status: extensions.DeploymentStatus{
-					Replicas:        10,
-					UpdatedReplicas: 2,
+					Replicas:            10,
+					UpdatedReplicas:     2,
+					AvailableReplicas:   1,
+					UnavailableReplicas: 4,
 				},
 			},
-			"test1\t2/5\t0s\n",
+			"test1\t5\t10\t2\t1\t0s\n",
 		},
 	}
 
 	buf := bytes.NewBuffer([]byte{})
 	for _, test := range tests {
-		printDeployment(&test.deployment, buf, false, false, true, []string{})
+		printDeployment(&test.deployment, buf, PrintOptions{false, false, false, true, false, false, []string{}})
 		if buf.String() != test.expect {
 			t.Fatalf("Expected: %s, got: %s", test.expect, buf.String())
+		}
+		buf.Reset()
+	}
+}
+
+func TestPrintPodShowLabels(t *testing.T) {
+	tests := []struct {
+		pod        api.Pod
+		startsWith string
+		endsWith   string
+		showLabels bool
+	}{
+		{
+			// Test name, num of containers, restarts, container ready status
+			api.Pod{
+				ObjectMeta: api.ObjectMeta{
+					Name:   "test1",
+					Labels: map[string]string{"col1": "asd", "COL2": "zxc"},
+				},
+				Spec: api.PodSpec{Containers: make([]api.Container, 2)},
+				Status: api.PodStatus{
+					Phase: "podPhase",
+					ContainerStatuses: []api.ContainerStatus{
+						{Ready: true, RestartCount: 3, State: api.ContainerState{Running: &api.ContainerStateRunning{}}},
+						{RestartCount: 3},
+					},
+				},
+			},
+			"test1\t1/2\tpodPhase\t6\t",
+			"\tCOL2=zxc,col1=asd\n",
+			true,
+		},
+		{
+			// Test name, num of containers, restarts, container ready status
+			api.Pod{
+				ObjectMeta: api.ObjectMeta{
+					Name:   "test1",
+					Labels: map[string]string{"col3": "asd", "COL4": "zxc"},
+				},
+				Spec: api.PodSpec{Containers: make([]api.Container, 2)},
+				Status: api.PodStatus{
+					Phase: "podPhase",
+					ContainerStatuses: []api.ContainerStatus{
+						{Ready: true, RestartCount: 3, State: api.ContainerState{Running: &api.ContainerStateRunning{}}},
+						{RestartCount: 3},
+					},
+				},
+			},
+			"test1\t1/2\tpodPhase\t6\t",
+			"\n",
+			false,
+		},
+	}
+
+	buf := bytes.NewBuffer([]byte{})
+	for _, test := range tests {
+		printPod(&test.pod, buf, PrintOptions{false, false, false, false, test.showLabels, false, []string{}})
+		// We ignore time
+		if !strings.HasPrefix(buf.String(), test.startsWith) || !strings.HasSuffix(buf.String(), test.endsWith) {
+			t.Fatalf("Expected to start with: %s and end with: %s, but got: %s", test.startsWith, test.endsWith, buf.String())
 		}
 		buf.Reset()
 	}

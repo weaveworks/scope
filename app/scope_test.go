@@ -52,6 +52,7 @@ func checkRequest(t *testing.T, ts *httptest.Server, method, path string, body [
 	if err != nil {
 		t.Fatalf("Error getting %s: %s %s", method, path, err)
 	}
+	req.Header.Set("Content-Type", "application/msgpack")
 
 	client := &http.Client{}
 	res, err := client.Do(req)

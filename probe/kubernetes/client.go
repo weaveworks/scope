@@ -9,7 +9,7 @@ import (
 	"k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/fields"
 	"k8s.io/kubernetes/pkg/labels"
-	"k8s.io/kubernetes/pkg/util"
+	"k8s.io/kubernetes/pkg/util/wait"
 )
 
 // These constants are keys used in node metadata
@@ -41,7 +41,7 @@ func runReflectorUntil(r *cache.Reflector, resyncPeriod time.Duration, stopCh <-
 			log.Errorf("Kubernetes reflector: %v", err)
 		}
 	}
-	go util.Until(loggingListAndWatch, resyncPeriod, stopCh)
+	go wait.Until(loggingListAndWatch, resyncPeriod, stopCh)
 }
 
 // NewClient returns a usable Client. Don't forget to Stop it.

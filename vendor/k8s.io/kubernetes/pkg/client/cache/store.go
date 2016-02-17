@@ -80,10 +80,10 @@ func MetaNamespaceKeyFunc(obj interface{}) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("object has no meta: %v", err)
 	}
-	if len(meta.Namespace()) > 0 {
-		return meta.Namespace() + "/" + meta.Name(), nil
+	if len(meta.GetNamespace()) > 0 {
+		return meta.GetNamespace() + "/" + meta.GetName(), nil
 	}
-	return meta.Name(), nil
+	return meta.GetName(), nil
 }
 
 // SplitMetaNamespaceKey returns the namespace and name that
@@ -115,6 +115,8 @@ type cache struct {
 	// should be deterministic.
 	keyFunc KeyFunc
 }
+
+var _ Store = &cache{}
 
 // Add inserts an item into the cache.
 func (c *cache) Add(obj interface{}) error {

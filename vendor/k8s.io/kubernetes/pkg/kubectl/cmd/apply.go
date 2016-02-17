@@ -23,9 +23,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/kubectl"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
+	"k8s.io/kubernetes/pkg/runtime"
 	"k8s.io/kubernetes/pkg/util/strategicpatch"
 )
 
@@ -37,6 +39,7 @@ type ApplyOptions struct {
 
 const (
 	apply_long = `Apply a configuration to a resource by filename or stdin.
+The resource will be created if it doesn't exist yet. 
 
 JSON and YAML formats are accepted.`
 	apply_example = `# Apply the configuration in pod.json to a pod.
@@ -66,6 +69,7 @@ func NewCmdApply(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 	cmd.MarkFlagRequired("filename")
 	cmdutil.AddValidateFlags(cmd)
 	cmdutil.AddOutputFlagsForMutation(cmd)
+	cmdutil.AddRecordFlag(cmd)
 	return cmd
 }
 
@@ -90,7 +94,7 @@ func RunApply(f *cmdutil.Factory, cmd *cobra.Command, out io.Writer, options *Ap
 	}
 
 	mapper, typer := f.Object()
-	r := resource.NewBuilder(mapper, typer, f.ClientMapperForCommand()).
+	r := resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.ClientForMapping), f.Decoder(true)).
 		Schema(schema).
 		ContinueOnError().
 		NamespaceParam(cmdNamespace).DefaultNamespace().
@@ -101,6 +105,9 @@ func RunApply(f *cmdutil.Factory, cmd *cobra.Command, out io.Writer, options *Ap
 	if err != nil {
 		return err
 	}
+
+	encoder := f.JSONEncoder()
+	decoder := f.Decoder(false)
 
 	count := 0
 	err = r.Visit(func(info *resource.Info, err error) error {
@@ -113,17 +120,38 @@ func RunApply(f *cmdutil.Factory, cmd *cobra.Command, out io.Writer, options *Ap
 		// Get the modified configuration of the object. Embed the result
 		// as an annotation in the modified configuration, so that it will appear
 		// in the patch sent to the server.
-		modified, err := kubectl.GetModifiedConfiguration(info, true)
+		modified, err := kubectl.GetModifiedConfiguration(info, true, encoder)
 		if err != nil {
 			return cmdutil.AddSourceToErr(fmt.Sprintf("retrieving modified configuration from:\n%v\nfor:", info), info.Source, err)
 		}
 
 		if err := info.Get(); err != nil {
-			return cmdutil.AddSourceToErr(fmt.Sprintf("retrieving current configuration of:\n%v\nfrom server for:", info), info.Source, err)
+			if !errors.IsNotFound(err) {
+				return cmdutil.AddSourceToErr(fmt.Sprintf("retrieving current configuration of:\n%v\nfrom server for:", info), info.Source, err)
+			}
+			// Create the resource if it doesn't exist
+			// First, update the annotation used by kubectl apply
+			if err := kubectl.CreateApplyAnnotation(info, encoder); err != nil {
+				return cmdutil.AddSourceToErr("creating", info.Source, err)
+			}
+
+			if cmdutil.ShouldRecord(cmd, info) {
+				if err := cmdutil.RecordChangeCause(info.Object, f.Command()); err != nil {
+					return cmdutil.AddSourceToErr("creating", info.Source, err)
+				}
+			}
+
+			// Then create the resource and skip the three-way merge
+			if err := createAndRefresh(info); err != nil {
+				return cmdutil.AddSourceToErr("creating", info.Source, err)
+			}
+			count++
+			cmdutil.PrintSuccess(mapper, shortOutput, out, info.Mapping.Resource, info.Name, "created")
+			return nil
 		}
 
 		// Serialize the current configuration of the object from the server.
-		current, err := info.Mapping.Codec.Encode(info.Object)
+		current, err := runtime.Encode(encoder, info.Object)
 		if err != nil {
 			return cmdutil.AddSourceToErr(fmt.Sprintf("serializing current configuration from:\n%v\nfor:", info), info.Source, err)
 		}
@@ -134,8 +162,18 @@ func RunApply(f *cmdutil.Factory, cmd *cobra.Command, out io.Writer, options *Ap
 			return cmdutil.AddSourceToErr(fmt.Sprintf("retrieving original configuration from:\n%v\nfor:", info), info.Source, err)
 		}
 
+		// Create the versioned struct from the original from the server for
+		// strategic patch.
+		// TODO: Move all structs in apply to use raw data. Can be done once
+		// builder has a RawResult method which delivers raw data instead of
+		// internal objects.
+		versionedObject, _, err := decoder.Decode(current, nil, nil)
+		if err != nil {
+			return cmdutil.AddSourceToErr(fmt.Sprintf("converting encoded server-side object back to versioned struct:\n%v\nfor:", info), info.Source, err)
+		}
+
 		// Compute a three way strategic merge patch to send to server.
-		patch, err := strategicpatch.CreateThreeWayMergePatch(original, modified, current, info.VersionedObject, false)
+		patch, err := strategicpatch.CreateThreeWayMergePatch(original, modified, current, versionedObject, true)
 		if err != nil {
 			format := "creating patch with:\noriginal:\n%s\nmodified:\n%s\ncurrent:\n%s\nfrom:\n%v\nfor:"
 			return cmdutil.AddSourceToErr(fmt.Sprintf(format, original, modified, current, info), info.Source, err)
@@ -145,6 +183,17 @@ func RunApply(f *cmdutil.Factory, cmd *cobra.Command, out io.Writer, options *Ap
 		_, err = helper.Patch(info.Namespace, info.Name, api.StrategicMergePatchType, patch)
 		if err != nil {
 			return cmdutil.AddSourceToErr(fmt.Sprintf("applying patch:\n%s\nto:\n%v\nfor:", patch, info), info.Source, err)
+		}
+
+		if cmdutil.ShouldRecord(cmd, info) {
+			patch, err = cmdutil.ChangeResourcePatch(info, f.Command())
+			if err != nil {
+				return err
+			}
+			_, err = helper.Patch(info.Namespace, info.Name, api.StrategicMergePatchType, patch)
+			if err != nil {
+				return cmdutil.AddSourceToErr(fmt.Sprintf("applying patch:\n%s\nto:\n%v\nfor:", patch, info), info.Source, err)
+			}
 		}
 
 		count++

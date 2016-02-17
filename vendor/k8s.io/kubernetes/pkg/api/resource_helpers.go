@@ -30,7 +30,7 @@ func (self *ResourceList) Cpu() *resource.Quantity {
 	if val, ok := (*self)[ResourceCPU]; ok {
 		return &val
 	}
-	return &resource.Quantity{}
+	return &resource.Quantity{Format: resource.DecimalSI}
 }
 
 // Returns the Memory limit if specified.
@@ -38,7 +38,7 @@ func (self *ResourceList) Memory() *resource.Quantity {
 	if val, ok := (*self)[ResourceMemory]; ok {
 		return &val
 	}
-	return &resource.Quantity{}
+	return &resource.Quantity{Format: resource.BinarySI}
 }
 
 func (self *ResourceList) Pods() *resource.Quantity {
@@ -86,4 +86,37 @@ func GetPodReadyCondition(status PodStatus) *PodCondition {
 		}
 	}
 	return nil
+}
+
+// IsNodeReady returns true if a node is ready; false otherwise.
+func IsNodeReady(node *Node) bool {
+	for _, c := range node.Status.Conditions {
+		if c.Type == NodeReady {
+			return c.Status == ConditionTrue
+		}
+	}
+	return false
+}
+
+// PodRequestsAndLimits returns a dictionary of all defined resources summed up for all
+// containers of the pod.
+func PodRequestsAndLimits(pod *Pod) (reqs map[ResourceName]resource.Quantity, limits map[ResourceName]resource.Quantity, err error) {
+	reqs, limits = map[ResourceName]resource.Quantity{}, map[ResourceName]resource.Quantity{}
+	for _, container := range pod.Spec.Containers {
+		for name, quantity := range container.Resources.Requests {
+			if value, ok := reqs[name]; !ok {
+				reqs[name] = *quantity.Copy()
+			} else if err = value.Add(quantity); err != nil {
+				return nil, nil, err
+			}
+		}
+		for name, quantity := range container.Resources.Limits {
+			if value, ok := limits[name]; !ok {
+				limits[name] = *quantity.Copy()
+			} else if err = value.Add(quantity); err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+	return
 }

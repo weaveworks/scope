@@ -3,16 +3,17 @@ package report
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
 
 	"github.com/mndrix/ps"
+	"github.com/ugorji/go/codec"
 )
 
 // LatestMap is a persitent map which support latest-win merges. We have to
 // embed ps.Map as its an interface.  LatestMaps are immutable.
+// codecgen: skip
 type LatestMap struct {
 	ps.Map
 }
@@ -179,26 +180,32 @@ func (m LatestMap) fromIntermediate(in map[string]LatestEntry) LatestMap {
 	return LatestMap{out}
 }
 
-// MarshalJSON implements json.Marshaller
-func (m LatestMap) MarshalJSON() ([]byte, error) {
-	buf := bytes.Buffer{}
-	var err error
+// CodecEncodeSelf implements codec.Selfer
+func (m *LatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
 	if m.Map != nil {
-		err = json.NewEncoder(&buf).Encode(m.toIntermediate())
+		encoder.Encode(m.toIntermediate())
 	} else {
-		err = json.NewEncoder(&buf).Encode(nil)
+		encoder.Encode(nil)
 	}
-	return buf.Bytes(), err
 }
 
-// UnmarshalJSON implements json.Unmarshaler
-func (m *LatestMap) UnmarshalJSON(input []byte) error {
+// CodecDecodeSelf implements codec.Selfer
+func (m *LatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := map[string]LatestEntry{}
-	if err := json.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
+	if err := decoder.Decode(&in); err != nil {
+		return
 	}
 	*m = LatestMap{}.fromIntermediate(in)
-	return nil
+}
+
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (LatestMap) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*LatestMap) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
 // GobEncode implements gob.Marshaller

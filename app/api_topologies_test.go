@@ -2,13 +2,12 @@ package app_test
 
 import (
 	"bytes"
-	"encoding/gob"
-	"encoding/json"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/ugorji/go/codec"
 	"k8s.io/kubernetes/pkg/api"
 
 	"github.com/weaveworks/scope/app"
@@ -24,7 +23,8 @@ func TestAPITopology(t *testing.T) {
 	body := getRawJSON(t, ts, "/api/topology")
 
 	var topologies []app.APITopologyDesc
-	if err := json.Unmarshal(body, &topologies); err != nil {
+	decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
+	if err := decoder.Decode(&topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
 	equals(t, 3, len(topologies))
@@ -61,7 +61,8 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 	body := getRawJSON(t, ts, "/api/topology")
 
 	var topologies []app.APITopologyDesc
-	if err := json.Unmarshal(body, &topologies); err != nil {
+	decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
+	if err := decoder.Decode(&topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
 	equals(t, 3, len(topologies))
@@ -84,13 +85,15 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 		},
 	}).GetNode()
 	buf := &bytes.Buffer{}
-	if err := gob.NewEncoder(buf).Encode(rpt); err != nil {
+	encoder := codec.NewEncoder(buf, &codec.MsgpackHandle{})
+	if err := encoder.Encode(rpt); err != nil {
 		t.Fatalf("GOB encoding error: %s", err)
 	}
 	checkRequest(t, ts, "POST", "/api/report", buf.Bytes())
 
 	body = getRawJSON(t, ts, "/api/topology")
-	if err := json.Unmarshal(body, &topologies); err != nil {
+	decoder = codec.NewDecoderBytes(body, &codec.JsonHandle{})
+	if err := decoder.Decode(&topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
 	equals(t, 4, len(topologies))

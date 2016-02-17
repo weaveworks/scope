@@ -2,7 +2,6 @@ package docker
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -16,6 +15,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	docker "github.com/fsouza/go-dockerclient"
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/report"
@@ -203,7 +203,7 @@ func (c *container) StartGatheringStats() error {
 		}()
 
 		var stats docker.Stats
-		decoder := json.NewDecoder(resp.Body)
+		decoder := codec.NewDecoder(resp.Body, &codec.JsonHandle{})
 		for err := decoder.Decode(&stats); err != io.EOF; err = decoder.Decode(&stats) {
 			if err != nil {
 				log.Errorf("docker container: error reading event, did container stop? %v", err)

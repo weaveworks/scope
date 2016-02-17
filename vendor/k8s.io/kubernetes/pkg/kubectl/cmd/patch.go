@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -26,8 +27,11 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
+	"k8s.io/kubernetes/pkg/util/sets"
 	"k8s.io/kubernetes/pkg/util/yaml"
 )
+
+var patchTypes = map[string]api.PatchType{"json": api.JSONPatchType, "merge": api.MergePatchType, "strategic": api.StrategicMergePatchType}
 
 // PatchOptions is the start of the data required to perform the operation.  As new fields are added, add them here instead of
 // referencing the cmd.Flags()
@@ -40,7 +44,7 @@ const (
 
 JSON and YAML formats are accepted.
 
-Please refer to the models in https://htmlpreview.github.io/?https://github.com/kubernetes/kubernetes/HEAD/docs/api-reference/definitions.html to find if a field is mutable.`
+Please refer to the models in https://htmlpreview.github.io/?https://github.com/kubernetes/kubernetes/blob/HEAD/docs/api-reference/v1/definitions.html to find if a field is mutable.`
 	patch_example = `
 # Partially update a node using strategic merge patch
 kubectl patch node k8s-node-1 -p '{"spec":{"unschedulable":true}}'
@@ -49,7 +53,10 @@ kubectl patch node k8s-node-1 -p '{"spec":{"unschedulable":true}}'
 kubectl patch -f node.json -p '{"spec":{"unschedulable":true}}'
 
 # Update a container's image; spec.containers[*].name is required because it's a merge key
-kubectl patch pod valid-pod -p '{"spec":{"containers":[{"name":"kubernetes-serve-hostname","image":"new image"}]}}'`
+kubectl patch pod valid-pod -p '{"spec":{"containers":[{"name":"kubernetes-serve-hostname","image":"new image"}]}}'
+
+# Update a container's image using a json patch with positional arrays
+kubectl patch pod valid-pod -type='json' -p='[{"op": "replace", "path": "/spec/containers/0/image", "value":"new image"}]'`
 )
 
 func NewCmdPatch(f *cmdutil.Factory, out io.Writer) *cobra.Command {
@@ -57,7 +64,7 @@ func NewCmdPatch(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "patch (-f FILENAME | TYPE NAME) -p PATCH",
-		Short:   "Update field(s) of a resource by stdin.",
+		Short:   "Update field(s) of a resource using strategic merge patch.",
 		Long:    patch_long,
 		Example: patch_example,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -69,7 +76,9 @@ func NewCmdPatch(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 	}
 	cmd.Flags().StringP("patch", "p", "", "The patch to be applied to the resource JSON file.")
 	cmd.MarkFlagRequired("patch")
+	cmd.Flags().String("type", "strategic", fmt.Sprintf("The type of patch being provided; one of %v", sets.StringKeySet(patchTypes).List()))
 	cmdutil.AddOutputFlagsForMutation(cmd)
+	cmdutil.AddRecordFlag(cmd)
 
 	usage := "Filename, directory, or URL to a file identifying the resource to update"
 	kubectl.AddJsonFilenameFlag(cmd, &options.Filenames, usage)
@@ -82,6 +91,16 @@ func RunPatch(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []stri
 		return err
 	}
 
+	patchType := api.StrategicMergePatchType
+	patchTypeString := strings.ToLower(cmdutil.GetFlagString(cmd, "type"))
+	if len(patchTypeString) != 0 {
+		ok := false
+		patchType, ok = patchTypes[patchTypeString]
+		if !ok {
+			return cmdutil.UsageError(cmd, fmt.Sprintf("--type must be one of %v, not %q", sets.StringKeySet(patchTypes).List(), patchTypeString))
+		}
+	}
+
 	patch := cmdutil.GetFlagString(cmd, "patch")
 	if len(patch) == 0 {
 		return cmdutil.UsageError(cmd, "Must specify -p to patch")
@@ -92,7 +111,7 @@ func RunPatch(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []stri
 	}
 
 	mapper, typer := f.Object()
-	r := resource.NewBuilder(mapper, typer, f.ClientMapperForCommand()).
+	r := resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.ClientForMapping), f.Decoder(true)).
 		ContinueOnError().
 		NamespaceParam(cmdNamespace).DefaultNamespace().
 		FilenameParam(enforceNamespace, options.Filenames...).
@@ -114,15 +133,25 @@ func RunPatch(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []stri
 	info := infos[0]
 	name, namespace := info.Name, info.Namespace
 	mapping := info.ResourceMapping()
-	client, err := f.RESTClient(mapping)
+	client, err := f.ClientForMapping(mapping)
 	if err != nil {
 		return err
 	}
 
 	helper := resource.NewHelper(client, mapping)
-	_, err = helper.Patch(namespace, name, api.StrategicMergePatchType, patchBytes)
+	_, err = helper.Patch(namespace, name, patchType, patchBytes)
 	if err != nil {
 		return err
+	}
+	if cmdutil.ShouldRecord(cmd, info) {
+		patchBytes, err = cmdutil.ChangeResourcePatch(info, f.Command())
+		if err != nil {
+			return err
+		}
+		_, err = helper.Patch(namespace, name, api.StrategicMergePatchType, patchBytes)
+		if err != nil {
+			return err
+		}
 	}
 	cmdutil.PrintSuccess(mapper, shortOutput, out, "", name, "patched")
 	return nil

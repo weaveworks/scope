@@ -1,8 +1,9 @@
 package detailed
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
@@ -13,6 +14,8 @@ import (
 )
 
 // NodeSummaryGroup is a topology-typed group of children for a Node.
+// Skip codec-generation for this type to circumvent render/detailed/summary.go
+// codecgen: skip
 type NodeSummaryGroup struct {
 	Label      string        `json:"label"`
 	Nodes      []NodeSummary `json:"nodes"`
@@ -35,21 +38,30 @@ func (g NodeSummaryGroup) Copy() NodeSummaryGroup {
 
 // Column provides special json serialization for column ids, so they include
 // their label for the frontend.
+// codecgen: skip
 type Column string
 
-// MarshalJSON serializes a column to json
-func (c Column) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]string{"id": string(c), "label": Label(string(c))})
+// CodecEncodeSelf implements codec.Selfer
+func (c *Column) CodecEncodeSelf(encoder *codec.Encoder) {
+	in := map[string]string{"id": string(*c), "label": Label(string(*c))}
+	encoder.Encode(in)
 }
 
-// UnmarshalJSON deserializes a column from json
-func (c *Column) UnmarshalJSON(b []byte) error {
+// CodecDecodeSelf implements codec.Selfer
+func (c *Column) CodecDecodeSelf(decoder *codec.Decoder) {
 	m := map[string]string{}
-	if err := json.Unmarshal(b, &m); err != nil {
-		return err
-	}
+	decoder.Decode(&m)
 	*c = Column(m["id"])
-	return nil
+}
+
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (Column) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*Column) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
 // NodeSummary is summary information about a child for a Node.

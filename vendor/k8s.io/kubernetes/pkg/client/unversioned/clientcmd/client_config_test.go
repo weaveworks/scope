@@ -34,7 +34,7 @@ func createValidTestConfig() *clientcmdapi.Config {
 	config := clientcmdapi.NewConfig()
 	config.Clusters["clean"] = &clientcmdapi.Cluster{
 		Server:     server,
-		APIVersion: testapi.Default.Version(),
+		APIVersion: testapi.Default.GroupVersion().String(),
 	}
 	config.AuthInfos["clean"] = &clientcmdapi.AuthInfo{
 		Token: token,
@@ -89,7 +89,7 @@ func TestCertificateData(t *testing.T) {
 	config := clientcmdapi.NewConfig()
 	config.Clusters["clean"] = &clientcmdapi.Cluster{
 		Server:                   "https://localhost:8443",
-		APIVersion:               testapi.Default.Version(),
+		APIVersion:               testapi.Default.GroupVersion().String(),
 		CertificateAuthorityData: caData,
 	}
 	config.AuthInfos["clean"] = &clientcmdapi.AuthInfo{
@@ -122,7 +122,7 @@ func TestBasicAuthData(t *testing.T) {
 	config := clientcmdapi.NewConfig()
 	config.Clusters["clean"] = &clientcmdapi.Cluster{
 		Server:     "https://localhost:8443",
-		APIVersion: testapi.Default.Version(),
+		APIVersion: testapi.Default.GroupVersion().String(),
 	}
 	config.AuthInfos["clean"] = &clientcmdapi.AuthInfo{
 		Username: username,
@@ -156,8 +156,8 @@ func TestCreateClean(t *testing.T) {
 	}
 
 	matchStringArg(config.Clusters["clean"].Server, clientConfig.Host, t)
-	matchStringArg("", clientConfig.Prefix, t)
-	matchStringArg(config.Clusters["clean"].APIVersion, clientConfig.Version, t)
+	matchStringArg("", clientConfig.APIPath, t)
+	matchStringArg(config.Clusters["clean"].APIVersion, clientConfig.GroupVersion.String(), t)
 	matchBoolArg(config.Clusters["clean"].InsecureSkipTLSVerify, clientConfig.Insecure, t)
 	matchStringArg(config.AuthInfos["clean"].Token, clientConfig.BearerToken, t)
 }
@@ -166,22 +166,21 @@ func TestCreateCleanWithPrefix(t *testing.T) {
 	tt := []struct {
 		server string
 		host   string
-		prefix string
 	}{
-		{"https://anything.com:8080/foo/bar", "https://anything.com:8080", "/foo/bar"},
-		{"http://anything.com:8080/foo/bar", "http://anything.com:8080", "/foo/bar"},
-		{"http://anything.com:8080/foo/bar/", "http://anything.com:8080", "/foo/bar/"},
-		{"http://anything.com:8080/", "http://anything.com:8080/", ""},
-		{"http://anything.com:8080//", "http://anything.com:8080", "//"},
-		{"anything.com:8080/foo/bar", "anything.com:8080/foo/bar", ""},
-		{"anything.com:8080", "anything.com:8080", ""},
-		{"anything.com", "anything.com", ""},
-		{"anything", "anything", ""},
+		{"https://anything.com:8080/foo/bar", "https://anything.com:8080/foo/bar"},
+		{"http://anything.com:8080/foo/bar", "http://anything.com:8080/foo/bar"},
+		{"http://anything.com:8080/foo/bar/", "http://anything.com:8080/foo/bar/"},
+		{"http://anything.com:8080/", "http://anything.com:8080/"},
+		{"http://anything.com:8080//", "http://anything.com:8080//"},
+		{"anything.com:8080/foo/bar", "anything.com:8080/foo/bar"},
+		{"anything.com:8080", "anything.com:8080"},
+		{"anything.com", "anything.com"},
+		{"anything", "anything"},
 	}
 
 	// WARNING: EnvVarCluster.Server is set during package loading time and can not be overriden by os.Setenv inside this test
 	EnvVarCluster.Server = ""
-	tt = append(tt, struct{ server, host, prefix string }{"", "http://localhost:8080", ""})
+	tt = append(tt, struct{ server, host string }{"", "http://localhost:8080"})
 
 	for _, tc := range tt {
 		config := createValidTestConfig()
@@ -198,7 +197,6 @@ func TestCreateCleanWithPrefix(t *testing.T) {
 		}
 
 		matchStringArg(tc.host, clientConfig.Host, t)
-		matchStringArg(tc.prefix, clientConfig.Prefix, t)
 	}
 }
 
@@ -212,7 +210,7 @@ func TestCreateCleanDefault(t *testing.T) {
 	}
 
 	matchStringArg(config.Clusters["clean"].Server, clientConfig.Host, t)
-	matchStringArg(config.Clusters["clean"].APIVersion, clientConfig.Version, t)
+	matchStringArg(config.Clusters["clean"].APIVersion, clientConfig.GroupVersion.String(), t)
 	matchBoolArg(config.Clusters["clean"].InsecureSkipTLSVerify, clientConfig.Insecure, t)
 	matchStringArg(config.AuthInfos["clean"].Token, clientConfig.BearerToken, t)
 }

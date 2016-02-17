@@ -20,12 +20,39 @@ import (
 	"reflect"
 	"testing"
 
+	internal "k8s.io/kubernetes/pkg/api"
 	api "k8s.io/kubernetes/pkg/api/v1"
 	"k8s.io/kubernetes/pkg/runtime"
 )
 
+func encodeOrDie(obj runtime.Object) []byte {
+	data, err := runtime.Encode(internal.Codecs.LegacyCodec(api.SchemeGroupVersion), obj)
+	if err != nil {
+		panic(err.Error())
+	}
+	return data
+}
+
 func TestSortingPrinter(t *testing.T) {
-	intPtr := func(val int) *int { return &val }
+	intPtr := func(val int32) *int32 { return &val }
+
+	a := &api.Pod{
+		ObjectMeta: api.ObjectMeta{
+			Name: "a",
+		},
+	}
+
+	b := &api.Pod{
+		ObjectMeta: api.ObjectMeta{
+			Name: "b",
+		},
+	}
+
+	c := &api.Pod{
+		ObjectMeta: api.ObjectMeta{
+			Name: "c",
+		},
+	}
 
 	tests := []struct {
 		obj   runtime.Object
@@ -159,9 +186,45 @@ func TestSortingPrinter(t *testing.T) {
 			},
 			field: "{.spec.replicas}",
 		},
+		{
+			name: "v1.List in order",
+			obj: &api.List{
+				Items: []runtime.RawExtension{
+					{RawJSON: encodeOrDie(a)},
+					{RawJSON: encodeOrDie(b)},
+					{RawJSON: encodeOrDie(c)},
+				},
+			},
+			sort: &api.List{
+				Items: []runtime.RawExtension{
+					{RawJSON: encodeOrDie(a)},
+					{RawJSON: encodeOrDie(b)},
+					{RawJSON: encodeOrDie(c)},
+				},
+			},
+			field: "{.metadata.name}",
+		},
+		{
+			name: "v1.List in reverse",
+			obj: &api.List{
+				Items: []runtime.RawExtension{
+					{RawJSON: encodeOrDie(c)},
+					{RawJSON: encodeOrDie(b)},
+					{RawJSON: encodeOrDie(a)},
+				},
+			},
+			sort: &api.List{
+				Items: []runtime.RawExtension{
+					{RawJSON: encodeOrDie(a)},
+					{RawJSON: encodeOrDie(b)},
+					{RawJSON: encodeOrDie(c)},
+				},
+			},
+			field: "{.metadata.name}",
+		},
 	}
 	for _, test := range tests {
-		sort := &SortingPrinter{SortField: test.field}
+		sort := &SortingPrinter{SortField: test.field, Decoder: internal.Codecs.UniversalDecoder()}
 		if err := sort.sortObj(test.obj); err != nil {
 			t.Errorf("unexpected error: %v (%s)", err, test.name)
 			continue

@@ -3,16 +3,17 @@ package report
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
 
 	"github.com/mndrix/ps"
+	"github.com/ugorji/go/codec"
 )
 
 // EdgeMetadatas collect metadata about each edge in a topology. Keys are the
 // remote node IDs, as in Adjacency.
+// codecgen: skip
 type EdgeMetadatas struct {
 	psMap ps.Map
 }
@@ -165,22 +166,32 @@ func (c EdgeMetadatas) fromIntermediate(in map[string]EdgeMetadata) EdgeMetadata
 	return EdgeMetadatas{out}
 }
 
-// MarshalJSON implements json.Marshaller
-func (c EdgeMetadatas) MarshalJSON() ([]byte, error) {
+// CodecEncodeSelf implements codec.Selfer
+func (c *EdgeMetadatas) CodecEncodeSelf(encoder *codec.Encoder) {
 	if c.psMap != nil {
-		return json.Marshal(c.toIntermediate())
+		encoder.Encode(c.toIntermediate())
+	} else {
+		encoder.Encode(nil)
 	}
-	return json.Marshal(nil)
 }
 
-// UnmarshalJSON implements json.Unmarshaler
-func (c *EdgeMetadatas) UnmarshalJSON(input []byte) error {
+// CodecDecodeSelf implements codec.Selfer
+func (c *EdgeMetadatas) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := map[string]EdgeMetadata{}
-	if err := json.Unmarshal(input, &in); err != nil {
-		return err
+	if err := decoder.Decode(&in); err != nil {
+		return
 	}
 	*c = EdgeMetadatas{}.fromIntermediate(in)
-	return nil
+}
+
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (EdgeMetadatas) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*EdgeMetadatas) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
 // GobEncode implements gob.Marshaller

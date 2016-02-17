@@ -3,7 +3,6 @@ package app_test
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/test"
@@ -83,5 +83,14 @@ func TestReportPostHandler(t *testing.T) {
 		err := gob.NewEncoder(buf).Encode(v)
 		return buf.Bytes(), err
 	})
-	test("application/json", json.Marshal)
+	test("application/json", func(v interface{}) ([]byte, error) {
+		buf := &bytes.Buffer{}
+		err := codec.NewEncoder(buf, &codec.JsonHandle{}).Encode(v)
+		return buf.Bytes(), err
+	})
+	test("application/msgpack", func(v interface{}) ([]byte, error) {
+		buf := &bytes.Buffer{}
+		err := codec.NewEncoder(buf, &codec.MsgpackHandle{}).Encode(v)
+		return buf.Bytes(), err
+	})
 }

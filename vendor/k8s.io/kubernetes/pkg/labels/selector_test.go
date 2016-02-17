@@ -34,11 +34,14 @@ func TestSelectorParse(t *testing.T) {
 		"x=,z= ",
 		"x= ,z= ",
 		"!x",
+		"x>1.1",
+		"x>1.1,z<5.3",
 	}
 	testBadStrings := []string{
 		"x=a||y=b",
 		"x==a==b",
 		"!x=a",
+		"x<a",
 	}
 	for _, test := range testGoodStrings {
 		lq, err := Parse(test)
@@ -107,12 +110,16 @@ func TestSelectorMatches(t *testing.T) {
 	expectMatch(t, "notin=in", Set{"notin": "in"}) // in and notin in exactMatch
 	expectMatch(t, "x", Set{"x": "z"})
 	expectMatch(t, "!x", Set{"y": "z"})
+	expectMatch(t, "x>1.1", Set{"x": "1.2"})
+	expectMatch(t, "x<1.1", Set{"x": "0.8"})
 	expectNoMatch(t, "x=z", Set{})
 	expectNoMatch(t, "x=y", Set{"x": "z"})
 	expectNoMatch(t, "x=y,z=w", Set{"x": "w", "z": "w"})
 	expectNoMatch(t, "x!=y,z!=w", Set{"x": "z", "z": "w"})
 	expectNoMatch(t, "x", Set{"y": "z"})
 	expectNoMatch(t, "!x", Set{"x": "z"})
+	expectNoMatch(t, "x>1.1", Set{"x": "0.8"})
+	expectNoMatch(t, "x<1.1", Set{"x": "1.1"})
 
 	labelset := Set{
 		"foo": "bar",
@@ -168,8 +175,8 @@ func TestSetIsEmpty(t *testing.T) {
 	if !(Set{}).AsSelector().Empty() {
 		t.Errorf("Empty set should be empty")
 	}
-	if !(LabelSelector(nil)).Empty() {
-		t.Errorf("Nil LabelSelector should be empty")
+	if !(NewSelector()).Empty() {
+		t.Errorf("Nil Selector should be empty")
 	}
 }
 
@@ -184,6 +191,8 @@ func TestLexer(t *testing.T) {
 		{"in", InToken},
 		{"=", EqualsToken},
 		{"==", DoubleEqualsToken},
+		{">", GreaterThanToken},
+		{"<", LessThanToken},
 		//Note that Lex returns the longest valid token found
 		{"!", DoesNotExistToken},
 		{"!=", NotEqualsToken},
@@ -226,6 +235,8 @@ func TestLexerSequence(t *testing.T) {
 		{"()", []Token{OpenParToken, ClosedParToken}},
 		{"x in (),y", []Token{IdentifierToken, InToken, OpenParToken, ClosedParToken, CommaToken, IdentifierToken}},
 		{"== != (), = notin", []Token{DoubleEqualsToken, NotEqualsToken, OpenParToken, ClosedParToken, CommaToken, EqualsToken, NotInToken}},
+		{"key>1.1", []Token{IdentifierToken, GreaterThanToken, IdentifierToken}},
+		{"key<0.8", []Token{IdentifierToken, LessThanToken, IdentifierToken}},
 	}
 	for _, v := range testcases {
 		var literals []string
@@ -263,6 +274,8 @@ func TestParserLookahead(t *testing.T) {
 		{"", []Token{EndOfStringToken}},
 		{"x in (),y", []Token{IdentifierToken, InToken, OpenParToken, ClosedParToken, CommaToken, IdentifierToken, EndOfStringToken}},
 		{"== != (), = notin", []Token{DoubleEqualsToken, NotEqualsToken, OpenParToken, ClosedParToken, CommaToken, EqualsToken, NotInToken, EndOfStringToken}},
+		{"key>1.1", []Token{IdentifierToken, GreaterThanToken, IdentifierToken, EndOfStringToken}},
+		{"key<0.8", []Token{IdentifierToken, LessThanToken, IdentifierToken, EndOfStringToken}},
 	}
 	for _, v := range testcases {
 		p := &Parser{l: &Lexer{s: v.s, pos: 0}, position: 0}
@@ -299,6 +312,10 @@ func TestRequirementConstructor(t *testing.T) {
 		{"x", DoesNotExistOperator, nil, true},
 		{"1foo", InOperator, sets.NewString("bar"), true},
 		{"1234", InOperator, sets.NewString("bar"), true},
+		{"y", GreaterThanOperator, sets.NewString("1.1"), true},
+		{"z", LessThanOperator, sets.NewString("5.3"), true},
+		{"foo", GreaterThanOperator, sets.NewString("bar"), false},
+		{"barz", LessThanOperator, sets.NewString("blah"), false},
 		{strings.Repeat("a", 254), ExistsOperator, nil, false}, //breaks DNS rule that len(key) <= 253
 	}
 	for _, rc := range requirementConstructorTests {
@@ -313,35 +330,41 @@ func TestRequirementConstructor(t *testing.T) {
 func TestToString(t *testing.T) {
 	var req Requirement
 	toStringTests := []struct {
-		In    *LabelSelector
+		In    *internalSelector
 		Out   string
 		Valid bool
 	}{
-		{&LabelSelector{
+
+		{&internalSelector{
 			getRequirement("x", InOperator, sets.NewString("abc", "def"), t),
 			getRequirement("y", NotInOperator, sets.NewString("jkl"), t),
 			getRequirement("z", ExistsOperator, nil, t)},
 			"x in (abc,def),y notin (jkl),z", true},
-		{&LabelSelector{
+		{&internalSelector{
 			getRequirement("x", NotInOperator, sets.NewString("abc", "def"), t),
 			getRequirement("y", NotEqualsOperator, sets.NewString("jkl"), t),
 			getRequirement("z", DoesNotExistOperator, nil, t)},
 			"x notin (abc,def),y!=jkl,!z", true},
-		{&LabelSelector{
+		{&internalSelector{
 			getRequirement("x", InOperator, sets.NewString("abc", "def"), t),
 			req}, // adding empty req for the trailing ','
 			"x in (abc,def),", false},
-		{&LabelSelector{
+		{&internalSelector{
 			getRequirement("x", NotInOperator, sets.NewString("abc"), t),
 			getRequirement("y", InOperator, sets.NewString("jkl", "mno"), t),
 			getRequirement("z", NotInOperator, sets.NewString(""), t)},
 			"x notin (abc),y in (jkl,mno),z notin ()", true},
-		{&LabelSelector{
+		{&internalSelector{
 			getRequirement("x", EqualsOperator, sets.NewString("abc"), t),
 			getRequirement("y", DoubleEqualsOperator, sets.NewString("jkl"), t),
 			getRequirement("z", NotEqualsOperator, sets.NewString("a"), t),
 			getRequirement("z", ExistsOperator, nil, t)},
 			"x=abc,y==jkl,z!=a,z", true},
+		{&internalSelector{
+			getRequirement("x", GreaterThanOperator, sets.NewString("2.4"), t),
+			getRequirement("y", LessThanOperator, sets.NewString("7.1"), t),
+			getRequirement("z", ExistsOperator, nil, t)},
+			"x>2.4,y<7.1,z", true},
 	}
 	for _, ts := range toStringTests {
 		if out := ts.In.String(); out == "" && ts.Valid {
@@ -352,38 +375,44 @@ func TestToString(t *testing.T) {
 	}
 }
 
-func TestRequirementLabelSelectorMatching(t *testing.T) {
+func TestRequirementSelectorMatching(t *testing.T) {
 	var req Requirement
 	labelSelectorMatchingTests := []struct {
 		Set   Set
-		Sel   *LabelSelector
+		Sel   Selector
 		Match bool
 	}{
-		{Set{"x": "foo", "y": "baz"}, &LabelSelector{
+		{Set{"x": "foo", "y": "baz"}, &internalSelector{
 			req,
 		}, false},
-		{Set{"x": "foo", "y": "baz"}, &LabelSelector{
+		{Set{"x": "foo", "y": "baz"}, &internalSelector{
 			getRequirement("x", InOperator, sets.NewString("foo"), t),
 			getRequirement("y", NotInOperator, sets.NewString("alpha"), t),
 		}, true},
-		{Set{"x": "foo", "y": "baz"}, &LabelSelector{
+		{Set{"x": "foo", "y": "baz"}, &internalSelector{
 			getRequirement("x", InOperator, sets.NewString("foo"), t),
 			getRequirement("y", InOperator, sets.NewString("alpha"), t),
 		}, false},
-		{Set{"y": ""}, &LabelSelector{
+		{Set{"y": ""}, &internalSelector{
 			getRequirement("x", NotInOperator, sets.NewString(""), t),
 			getRequirement("y", ExistsOperator, nil, t),
 		}, true},
-		{Set{"y": ""}, &LabelSelector{
+		{Set{"y": ""}, &internalSelector{
 			getRequirement("x", DoesNotExistOperator, nil, t),
 			getRequirement("y", ExistsOperator, nil, t),
 		}, true},
-		{Set{"y": ""}, &LabelSelector{
+		{Set{"y": ""}, &internalSelector{
 			getRequirement("x", NotInOperator, sets.NewString(""), t),
 			getRequirement("y", DoesNotExistOperator, nil, t),
 		}, false},
-		{Set{"y": "baz"}, &LabelSelector{
+		{Set{"y": "baz"}, &internalSelector{
 			getRequirement("x", InOperator, sets.NewString(""), t),
+		}, false},
+		{Set{"z": "1.2"}, &internalSelector{
+			getRequirement("z", GreaterThanOperator, sets.NewString("1.0"), t),
+		}, true},
+		{Set{"z": "v1.2"}, &internalSelector{
+			getRequirement("z", GreaterThanOperator, sets.NewString("1.0"), t),
 		}, false},
 	}
 	for _, lsm := range labelSelectorMatchingTests {
@@ -400,75 +429,81 @@ func TestSetSelectorParser(t *testing.T) {
 		Match bool
 		Valid bool
 	}{
-		{"", LabelSelector(nil), true, true},
-		{"\rx", LabelSelector{
+		{"", NewSelector(), true, true},
+		{"\rx", internalSelector{
 			getRequirement("x", ExistsOperator, nil, t),
 		}, true, true},
-		{"this-is-a-dns.domain.com/key-with-dash", LabelSelector{
+		{"this-is-a-dns.domain.com/key-with-dash", internalSelector{
 			getRequirement("this-is-a-dns.domain.com/key-with-dash", ExistsOperator, nil, t),
 		}, true, true},
-		{"this-is-another-dns.domain.com/key-with-dash in (so,what)", LabelSelector{
+		{"this-is-another-dns.domain.com/key-with-dash in (so,what)", internalSelector{
 			getRequirement("this-is-another-dns.domain.com/key-with-dash", InOperator, sets.NewString("so", "what"), t),
 		}, true, true},
-		{"0.1.2.domain/99 notin (10.10.100.1, tick.tack.clock)", LabelSelector{
+		{"0.1.2.domain/99 notin (10.10.100.1, tick.tack.clock)", internalSelector{
 			getRequirement("0.1.2.domain/99", NotInOperator, sets.NewString("10.10.100.1", "tick.tack.clock"), t),
 		}, true, true},
-		{"foo  in	 (abc)", LabelSelector{
+		{"foo  in	 (abc)", internalSelector{
 			getRequirement("foo", InOperator, sets.NewString("abc"), t),
 		}, true, true},
-		{"x notin\n (abc)", LabelSelector{
+		{"x notin\n (abc)", internalSelector{
 			getRequirement("x", NotInOperator, sets.NewString("abc"), t),
 		}, true, true},
-		{"x  notin	\t	(abc,def)", LabelSelector{
+		{"x  notin	\t	(abc,def)", internalSelector{
 			getRequirement("x", NotInOperator, sets.NewString("abc", "def"), t),
 		}, true, true},
-		{"x in (abc,def)", LabelSelector{
+		{"x in (abc,def)", internalSelector{
 			getRequirement("x", InOperator, sets.NewString("abc", "def"), t),
 		}, true, true},
-		{"x in (abc,)", LabelSelector{
+		{"x in (abc,)", internalSelector{
 			getRequirement("x", InOperator, sets.NewString("abc", ""), t),
 		}, true, true},
-		{"x in ()", LabelSelector{
+		{"x in ()", internalSelector{
 			getRequirement("x", InOperator, sets.NewString(""), t),
 		}, true, true},
-		{"x notin (abc,,def),bar,z in (),w", LabelSelector{
+		{"x notin (abc,,def),bar,z in (),w", internalSelector{
 			getRequirement("bar", ExistsOperator, nil, t),
 			getRequirement("w", ExistsOperator, nil, t),
 			getRequirement("x", NotInOperator, sets.NewString("abc", "", "def"), t),
 			getRequirement("z", InOperator, sets.NewString(""), t),
 		}, true, true},
-		{"x,y in (a)", LabelSelector{
+		{"x,y in (a)", internalSelector{
 			getRequirement("y", InOperator, sets.NewString("a"), t),
 			getRequirement("x", ExistsOperator, nil, t),
 		}, false, true},
-		{"x=a", LabelSelector{
+		{"x=a", internalSelector{
 			getRequirement("x", EqualsOperator, sets.NewString("a"), t),
 		}, true, true},
-		{"x=a,y!=b", LabelSelector{
+		{"x>1.1", internalSelector{
+			getRequirement("x", GreaterThanOperator, sets.NewString("1.1"), t),
+		}, true, true},
+		{"x<7.1", internalSelector{
+			getRequirement("x", LessThanOperator, sets.NewString("7.1"), t),
+		}, true, true},
+		{"x=a,y!=b", internalSelector{
 			getRequirement("x", EqualsOperator, sets.NewString("a"), t),
 			getRequirement("y", NotEqualsOperator, sets.NewString("b"), t),
 		}, true, true},
-		{"x=a,y!=b,z in (h,i,j)", LabelSelector{
+		{"x=a,y!=b,z in (h,i,j)", internalSelector{
 			getRequirement("x", EqualsOperator, sets.NewString("a"), t),
 			getRequirement("y", NotEqualsOperator, sets.NewString("b"), t),
 			getRequirement("z", InOperator, sets.NewString("h", "i", "j"), t),
 		}, true, true},
-		{"x=a||y=b", LabelSelector{}, false, false},
+		{"x=a||y=b", internalSelector{}, false, false},
 		{"x,,y", nil, true, false},
 		{",x,y", nil, true, false},
 		{"x nott in (y)", nil, true, false},
-		{"x notin ( )", LabelSelector{
+		{"x notin ( )", internalSelector{
 			getRequirement("x", NotInOperator, sets.NewString(""), t),
 		}, true, true},
-		{"x notin (, a)", LabelSelector{
+		{"x notin (, a)", internalSelector{
 			getRequirement("x", NotInOperator, sets.NewString("", "a"), t),
 		}, true, true},
 		{"a in (xyz),", nil, true, false},
 		{"a in (xyz)b notin ()", nil, true, false},
-		{"a ", LabelSelector{
+		{"a ", internalSelector{
 			getRequirement("a", ExistsOperator, nil, t),
 		}, true, true},
-		{"a in (x,y,notin, z,in)", LabelSelector{
+		{"a in (x,y,notin, z,in)", internalSelector{
 			getRequirement("a", InOperator, sets.NewString("in", "notin", "x", "y", "z"), t),
 		}, true, true}, // operator 'in' inside list of identifiers
 		{"a in (xyz abc)", nil, false, false}, // no comma
@@ -483,7 +518,7 @@ func TestSetSelectorParser(t *testing.T) {
 		} else if err == nil && !ssp.Valid {
 			t.Errorf("Parse(%s) => %+v expected error", ssp.In, sel)
 		} else if ssp.Match && !reflect.DeepEqual(sel, ssp.Out) {
-			t.Errorf("Parse(%s) => parse output '%v' doesn't match '%v' expected match", ssp.In, sel, ssp.Out)
+			t.Errorf("Parse(%s) => parse output '%#v' doesn't match '%#v' expected match", ssp.In, sel, ssp.Out)
 		}
 	}
 }
@@ -499,6 +534,7 @@ func getRequirement(key string, op Operator, vals sets.String, t *testing.T) Req
 
 func TestAdd(t *testing.T) {
 	testCases := []struct {
+		name        string
 		sel         Selector
 		key         string
 		operator    Operator
@@ -506,27 +542,33 @@ func TestAdd(t *testing.T) {
 		refSelector Selector
 	}{
 		{
-			LabelSelector{},
+			"keyInOperator",
+			internalSelector{},
 			"key",
 			InOperator,
 			[]string{"value"},
-			LabelSelector{Requirement{"key", InOperator, sets.NewString("value")}},
+			internalSelector{Requirement{"key", InOperator, sets.NewString("value")}},
 		},
 		{
-			LabelSelector{Requirement{"key", InOperator, sets.NewString("value")}},
+			"keyEqualsOperator",
+			internalSelector{Requirement{"key", InOperator, sets.NewString("value")}},
 			"key2",
 			EqualsOperator,
 			[]string{"value2"},
-			LabelSelector{
+			internalSelector{
 				Requirement{"key", InOperator, sets.NewString("value")},
 				Requirement{"key2", EqualsOperator, sets.NewString("value2")},
 			},
 		},
 	}
 	for _, ts := range testCases {
-		ts.sel = ts.sel.Add(ts.key, ts.operator, ts.values)
+		req, err := NewRequirement(ts.key, ts.operator, sets.NewString(ts.values...))
+		if err != nil {
+			t.Errorf("%s - Unable to create labels.Requirement", ts.name)
+		}
+		ts.sel = ts.sel.Add(*req)
 		if !reflect.DeepEqual(ts.sel, ts.refSelector) {
-			t.Errorf("Expected %v found %v", ts.refSelector, ts.sel)
+			t.Errorf("%s - Expected %v found %v", ts.name, ts.refSelector, ts.sel)
 		}
 	}
 }

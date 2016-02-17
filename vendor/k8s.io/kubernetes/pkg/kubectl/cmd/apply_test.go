@@ -52,8 +52,9 @@ func validateApplyArgs(cmd *cobra.Command, args []string) error {
 }
 
 const (
-	filenameRC  = "../../../examples/guestbook/redis-master-controller.yaml"
-	filenameSVC = "../../../examples/guestbook/frontend-service.yaml"
+	filenameRC    = "../../../test/fixtures/pkg/kubectl/cmd/apply/rc.yaml"
+	filenameSVC   = "../../../test/fixtures/pkg/kubectl/cmd/apply/service.yaml"
+	filenameRCSVC = "../../../test/fixtures/pkg/kubectl/cmd/apply/rc-service.yaml"
 )
 
 func readBytesFromFile(t *testing.T, filename string) []byte {
@@ -170,6 +171,7 @@ func walkMapPath(t *testing.T, start map[string]interface{}, path []string) map[
 }
 
 func TestApplyObject(t *testing.T) {
+	initTestErrorHandler(t)
 	nameRC, currentRC := readAndAnnotateReplicationController(t, filenameRC)
 	pathRC := "/namespaces/test/replicationcontrollers/" + nameRC
 
@@ -177,7 +179,7 @@ func TestApplyObject(t *testing.T) {
 	tf.Printer = &testPrinter{}
 	tf.Client = &fake.RESTClient{
 		Codec: codec,
-		Client: fake.HTTPClientFunc(func(req *http.Request) (*http.Response, error) {
+		Client: fake.CreateHTTPClient(func(req *http.Request) (*http.Response, error) {
 			switch p, m := req.URL.Path, req.Method; {
 			case p == pathRC && m == "GET":
 				bodyRC := ioutil.NopCloser(bytes.NewReader(currentRC))
@@ -207,7 +209,52 @@ func TestApplyObject(t *testing.T) {
 	}
 }
 
-func TestApplyMultipleObject(t *testing.T) {
+func TestApplyNonExistObject(t *testing.T) {
+	nameRC, currentRC := readAndAnnotateReplicationController(t, filenameRC)
+	pathRC := "/namespaces/test/replicationcontrollers"
+	pathNameRC := pathRC + "/" + nameRC
+
+	f, tf, codec := NewAPIFactory()
+	tf.Printer = &testPrinter{}
+	tf.Client = &fake.RESTClient{
+		Codec: codec,
+		Client: fake.CreateHTTPClient(func(req *http.Request) (*http.Response, error) {
+			switch p, m := req.URL.Path, req.Method; {
+			case p == pathNameRC && m == "GET":
+				return &http.Response{StatusCode: 404, Body: ioutil.NopCloser(bytes.NewReader(nil))}, nil
+			case p == pathRC && m == "POST":
+				bodyRC := ioutil.NopCloser(bytes.NewReader(currentRC))
+				return &http.Response{StatusCode: 201, Body: bodyRC}, nil
+			default:
+				t.Fatalf("unexpected request: %#v\n%#v", req.URL, req)
+				return nil, nil
+			}
+		}),
+	}
+	tf.Namespace = "test"
+	buf := bytes.NewBuffer([]byte{})
+
+	cmd := NewCmdApply(f, buf)
+	cmd.Flags().Set("filename", filenameRC)
+	cmd.Flags().Set("output", "name")
+	cmd.Run(cmd, []string{})
+
+	// uses the name from the file, not the response
+	expectRC := "replicationcontroller/" + nameRC + "\n"
+	if buf.String() != expectRC {
+		t.Errorf("unexpected output: %s\nexpected: %s", buf.String(), expectRC)
+	}
+}
+
+func TestApplyMultipleObjectsAsList(t *testing.T) {
+	testApplyMultipleObjects(t, true)
+}
+
+func TestApplyMultipleObjectsAsFiles(t *testing.T) {
+	testApplyMultipleObjects(t, false)
+}
+
+func testApplyMultipleObjects(t *testing.T, asList bool) {
 	nameRC, currentRC := readAndAnnotateReplicationController(t, filenameRC)
 	pathRC := "/namespaces/test/replicationcontrollers/" + nameRC
 
@@ -218,7 +265,7 @@ func TestApplyMultipleObject(t *testing.T) {
 	tf.Printer = &testPrinter{}
 	tf.Client = &fake.RESTClient{
 		Codec: codec,
-		Client: fake.HTTPClientFunc(func(req *http.Request) (*http.Response, error) {
+		Client: fake.CreateHTTPClient(func(req *http.Request) (*http.Response, error) {
 			switch p, m := req.URL.Path, req.Method; {
 			case p == pathRC && m == "GET":
 				bodyRC := ioutil.NopCloser(bytes.NewReader(currentRC))
@@ -244,8 +291,12 @@ func TestApplyMultipleObject(t *testing.T) {
 	buf := bytes.NewBuffer([]byte{})
 
 	cmd := NewCmdApply(f, buf)
-	cmd.Flags().Set("filename", filenameRC)
-	cmd.Flags().Set("filename", filenameSVC)
+	if asList {
+		cmd.Flags().Set("filename", filenameRCSVC)
+	} else {
+		cmd.Flags().Set("filename", filenameRC)
+		cmd.Flags().Set("filename", filenameSVC)
+	}
 	cmd.Flags().Set("output", "name")
 
 	cmd.Run(cmd, []string{})
@@ -253,8 +304,10 @@ func TestApplyMultipleObject(t *testing.T) {
 	// Names should come from the REST response, NOT the files
 	expectRC := "replicationcontroller/" + nameRC + "\n"
 	expectSVC := "service/" + nameSVC + "\n"
-	expect := expectRC + expectSVC
-	if buf.String() != expect {
-		t.Fatalf("unexpected output: %s\nexpected: %s", buf.String(), expect)
+	// Test both possible orders since output is non-deterministic.
+	expectOne := expectRC + expectSVC
+	expectTwo := expectSVC + expectRC
+	if buf.String() != expectOne && buf.String() != expectTwo {
+		t.Fatalf("unexpected output: %s\nexpected: %s OR %s", buf.String(), expectOne, expectTwo)
 	}
 }

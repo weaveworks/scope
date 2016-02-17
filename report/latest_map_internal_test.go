@@ -1,8 +1,11 @@
 package report
 
 import (
+	"bytes"
 	"testing"
 	"time"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
@@ -138,14 +141,20 @@ func TestLatestMapEncoding(t *testing.T) {
 	}
 
 	{
-		json, err := want.MarshalJSON()
-		if err != nil {
-			t.Fatal(err)
-		}
-		have := EmptyLatestMap
-		have.UnmarshalJSON(json)
-		if !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+
+		for _, h := range []codec.Handle{
+			codec.Handle(&codec.MsgpackHandle{}),
+			codec.Handle(&codec.JsonHandle{}),
+		} {
+			buf := &bytes.Buffer{}
+			encoder := codec.NewEncoder(buf, h)
+			want.CodecEncodeSelf(encoder)
+			decoder := codec.NewDecoder(buf, h)
+			have := EmptyLatestMap
+			have.CodecDecodeSelf(decoder)
+			if !reflect.DeepEqual(want, have) {
+				t.Error(test.Diff(want, have))
+			}
 		}
 	}
 }
@@ -166,14 +175,20 @@ func TestLatestMapEncodingNil(t *testing.T) {
 	}
 
 	{
-		json, err := want.MarshalJSON()
-		if err != nil {
-			t.Fatal(err)
-		}
-		have := EmptyLatestMap
-		have.UnmarshalJSON(json)
-		if have.Map == nil {
-			t.Error("Decoded LatestMap.psMap should not be nil")
+
+		for _, h := range []codec.Handle{
+			codec.Handle(&codec.MsgpackHandle{}),
+			codec.Handle(&codec.JsonHandle{}),
+		} {
+			buf := &bytes.Buffer{}
+			encoder := codec.NewEncoder(buf, h)
+			want.CodecEncodeSelf(encoder)
+			decoder := codec.NewDecoder(buf, h)
+			have := EmptyLatestMap
+			have.CodecDecodeSelf(decoder)
+			if !reflect.DeepEqual(want, have) {
+				t.Error(test.Diff(want, have))
+			}
 		}
 	}
 }

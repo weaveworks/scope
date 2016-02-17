@@ -93,10 +93,10 @@ func (j *JSONWebsocketCodec) WriteRequest(r *rpc.Request, v interface{}) error {
 	j.Lock()
 	defer j.Unlock()
 
-	if err := j.conn.WriteJSON(Message{Request: r}); err != nil {
+	if err := WriteJSONtoWS(j.conn, Message{Request: r}); err != nil {
 		return err
 	}
-	return j.conn.WriteJSON(Message{Value: v})
+	return WriteJSONtoWS(j.conn, Message{Value: v})
 }
 
 // WriteResponse implements rpc.ServerCodec
@@ -104,15 +104,15 @@ func (j *JSONWebsocketCodec) WriteResponse(r *rpc.Response, v interface{}) error
 	j.Lock()
 	defer j.Unlock()
 
-	if err := j.conn.WriteJSON(Message{Response: r}); err != nil {
+	if err := WriteJSONtoWS(j.conn, Message{Response: r}); err != nil {
 		return err
 	}
-	return j.conn.WriteJSON(Message{Value: v})
+	return WriteJSONtoWS(j.conn, Message{Value: v})
 }
 
 func (j *JSONWebsocketCodec) readMessage(v interface{}) (*Message, error) {
 	m := Message{Value: v}
-	if err := j.conn.ReadJSON(&m); err != nil {
+	if err := ReadJSONfromWS(j.conn, &m); err != nil {
 		close(j.err)
 		return nil, err
 	}

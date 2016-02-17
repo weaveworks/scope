@@ -21,12 +21,20 @@ import (
 	"sort"
 	"strconv"
 	"sync"
+	"time"
 
 	"k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/api/meta"
 	"k8s.io/kubernetes/pkg/client/cache"
 	"k8s.io/kubernetes/pkg/runtime"
+	"k8s.io/kubernetes/pkg/util"
 	"k8s.io/kubernetes/pkg/watch"
+)
+
+const (
+	// MaximumListWait determines how long we're willing to wait for a
+	// list if a client specified a resource version in the future.
+	MaximumListWait = 60 * time.Second
 )
 
 // watchCacheEvent is a single "watch event" that is send to users of
@@ -50,10 +58,14 @@ type watchCacheElement struct {
 // watchCache implements a Store interface.
 // However, it depends on the elements implementing runtime.Object interface.
 //
-// watchCache is a "sliding window" (with a limitted capacity) of objects
+// watchCache is a "sliding window" (with a limited capacity) of objects
 // observed from a watch.
 type watchCache struct {
 	sync.RWMutex
+
+	// Condition on which lists are waiting for the fresh enough
+	// resource version.
+	cond *sync.Cond
 
 	// Maximum size of history window.
 	capacity int
@@ -81,17 +93,23 @@ type watchCache struct {
 	// This handler is run at the end of every Add/Update/Delete method
 	// and additionally gets the previous value of the object.
 	onEvent func(watchCacheEvent)
+
+	// for testing timeouts.
+	clock util.Clock
 }
 
 func newWatchCache(capacity int) *watchCache {
-	return &watchCache{
+	wc := &watchCache{
 		capacity:        capacity,
 		cache:           make([]watchCacheElement, capacity),
 		startIndex:      0,
 		endIndex:        0,
 		store:           cache.NewStore(cache.MetaNamespaceKeyFunc),
 		resourceVersion: 0,
+		clock:           util.RealClock{},
 	}
+	wc.cond = sync.NewCond(wc.RLocker())
+	return wc
 }
 
 func (w *watchCache) Add(obj interface{}) error {
@@ -136,7 +154,7 @@ func objectToVersionedRuntimeObject(obj interface{}) (runtime.Object, uint64, er
 	if err != nil {
 		return nil, 0, err
 	}
-	resourceVersion, err := parseResourceVersion(meta.ResourceVersion())
+	resourceVersion, err := parseResourceVersion(meta.GetResourceVersion())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -160,8 +178,6 @@ func (w *watchCache) processEvent(event watch.Event, resourceVersion uint64, upd
 	var prevObject runtime.Object
 	if exists {
 		prevObject = previous.(runtime.Object)
-	} else {
-		prevObject = nil
 	}
 	watchCacheEvent := watchCacheEvent{event.Type, event.Object, prevObject}
 	if w.onEvent != nil {
@@ -169,6 +185,7 @@ func (w *watchCache) processEvent(event watch.Event, resourceVersion uint64, upd
 	}
 	w.updateCache(resourceVersion, watchCacheEvent)
 	w.resourceVersion = resourceVersion
+	w.cond.Broadcast()
 	return updateFunc(event.Object)
 }
 
@@ -188,10 +205,29 @@ func (w *watchCache) List() []interface{} {
 	return w.store.List()
 }
 
-func (w *watchCache) ListWithVersion() ([]interface{}, uint64) {
+func (w *watchCache) WaitUntilFreshAndList(resourceVersion uint64) ([]interface{}, uint64, error) {
+	startTime := w.clock.Now()
+	go func() {
+		// Wake us up when the time limit has expired.  The docs
+		// promise that time.After (well, NewTimer, which it calls)
+		// will wait *at least* the duration given. Since this go
+		// routine starts sometime after we record the start time, and
+		// it will wake up the loop below sometime after the broadcast,
+		// we don't need to worry about waking it up before the time
+		// has expired accidentally.
+		<-w.clock.After(MaximumListWait)
+		w.cond.Broadcast()
+	}()
+
 	w.RLock()
 	defer w.RUnlock()
-	return w.store.List(), w.resourceVersion
+	for w.resourceVersion < resourceVersion {
+		if w.clock.Since(startTime) >= MaximumListWait {
+			return nil, 0, fmt.Errorf("time limit exceeded while waiting for resource version %v (current value: %v)", resourceVersion, w.resourceVersion)
+		}
+		w.cond.Wait()
+	}
+	return w.store.List(), w.resourceVersion, nil
 }
 
 func (w *watchCache) ListKeys() []string {
@@ -230,6 +266,7 @@ func (w *watchCache) Replace(objs []interface{}, resourceVersion string) error {
 	if w.onReplace != nil {
 		w.onReplace()
 	}
+	w.cond.Broadcast()
 	return nil
 }
 
@@ -266,10 +303,10 @@ func (w *watchCache) GetAllEventsSinceThreadUnsafe(resourceVersion uint64) ([]wa
 		return result, nil
 	}
 	if resourceVersion < oldest {
-		return nil, errors.NewInternalError(fmt.Errorf("too old resource version: %d (%d)", resourceVersion, oldest))
+		return nil, errors.NewGone(fmt.Sprintf("too old resource version: %d (%d)", resourceVersion, oldest))
 	}
 
-	// Binary seatch the smallest index at which resourceVersion is not smaller than
+	// Binary search the smallest index at which resourceVersion is not smaller than
 	// the given one.
 	f := func(i int) bool {
 		return w.cache[(w.startIndex+i)%w.capacity].resourceVersion >= resourceVersion

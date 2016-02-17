@@ -3,7 +3,6 @@ package weave
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -11,6 +10,8 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/exec"
 )
@@ -84,7 +85,8 @@ func (c *client) Status() (Status, error) {
 	}
 
 	var status Status
-	if err := json.NewDecoder(resp.Body).Decode(&status); err != nil {
+	decoder := codec.NewDecoder(resp.Body, &codec.JsonHandle{})
+	if err := decoder.Decode(&status); err != nil {
 		return Status{}, err
 	}
 	return status, nil

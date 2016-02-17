@@ -8,6 +8,12 @@
 			"branch": "default"
 		},
 		{
+			"importpath": "github.com/2opremio/go-1",
+			"repository": "https://github.com/2opremio/go-1",
+			"revision": "32b0ef002162cc29601c7aad0bda2ff16afb7243",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/DataDog/datadog-go/statsd",
 			"repository": "https://github.com/DataDog/datadog-go",
 			"revision": "b050cd8f4d7c394545fd7d966c8e2909ce89d552",
@@ -45,6 +51,12 @@
 			"revision": "b965b613227fddccbfffe13eae360ed3fa822f8d",
 			"branch": "master",
 			"path": "/quantile"
+		},
+		{
+			"importpath": "github.com/blang/semver",
+			"repository": "https://github.com/blang/semver",
+			"revision": "aea32c919a18e5ef4537bbd283ff29594b1b0165",
+			"branch": "master"
 		},
 		{
 			"importpath": "github.com/bluele/gcache",
@@ -471,11 +483,24 @@
 			"path": "/pkg/mount"
 		},
 		{
+			"importpath": "github.com/docker/docker/pkg/parsers",
+			"repository": "https://github.com/docker/docker",
+			"revision": "0f5c9d301b9b1cca66b3ea0f9dec3b5317d3686d",
+			"branch": "HEAD",
+			"path": "/pkg/parsers"
+		},
+		{
 			"importpath": "github.com/docker/docker/pkg/units",
 			"repository": "https://github.com/docker/docker",
 			"revision": "60ea37d56f15d64961f0bc59dd2db1c968c80288",
 			"branch": "master",
 			"path": "/pkg/units"
+		},
+		{
+			"importpath": "github.com/docker/go-units",
+			"repository": "https://github.com/docker/go-units",
+			"revision": "5d2041e26a699eaca682e2ea41c8f891e1060444",
+			"branch": "master"
 		},
 		{
 			"importpath": "github.com/docker/libcontainer/cgroups",
@@ -627,7 +652,7 @@
 		{
 			"importpath": "github.com/juju/ratelimit",
 			"repository": "https://github.com/juju/ratelimit",
-			"revision": "772f5c38e468398c4511514f4f6aa9a4185bc0a0",
+			"revision": "77ed1c8a01217656d2080ad51981f6e99adaa177",
 			"branch": "master"
 		},
 		{
@@ -656,11 +681,46 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/opencontainers/runc/libcontainer/cgroups",
+			"repository": "https://github.com/opencontainers/runc",
+			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
+			"branch": "master",
+			"path": "/libcontainer/cgroups"
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/libcontainer/cgroups/fs",
+			"repository": "https://github.com/opencontainers/runc",
+			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
+			"branch": "master",
+			"path": "/libcontainer/cgroups/fs"
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/libcontainer/configs",
+			"repository": "https://github.com/opencontainers/runc",
+			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
+			"branch": "master",
+			"path": "/libcontainer/configs"
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/libcontainer/system",
+			"repository": "https://github.com/opencontainers/runc",
+			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
+			"branch": "master",
+			"path": "/libcontainer/system"
+		},
+		{
 			"importpath": "github.com/opencontainers/runc/libcontainer/user",
 			"repository": "https://github.com/opencontainers/runc",
 			"revision": "3317785f562b363eb386a2fa4909a55f267088c8",
 			"branch": "master",
 			"path": "/libcontainer/user"
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/libcontainer/utils",
+			"repository": "https://github.com/opencontainers/runc",
+			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
+			"branch": "master",
+			"path": "/libcontainer/utils"
 		},
 		{
 			"importpath": "github.com/pborman/uuid",
@@ -742,7 +802,7 @@
 		{
 			"importpath": "github.com/ugorji/go/codec",
 			"repository": "https://github.com/ugorji/go",
-			"revision": "8a2a3a8c488c3ebd98f422a965260278267a0551",
+			"revision": "f4485b318aadd133842532f841dc205a8e339d74",
 			"branch": "master",
 			"path": "/codec"
 		},
@@ -796,161 +856,245 @@
 		{
 			"importpath": "k8s.io/kubernetes/pkg/api",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/api"
 		},
 		{
+			"importpath": "k8s.io/kubernetes/pkg/api/unversioned",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/api/unversioned"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/apimachinery",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/apimachinery"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/apis/authorization",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/apis/authorization"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/apis/authorization/install",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/apis/authorization/install"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/apis/componentconfig",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/apis/componentconfig"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/apis/componentconfig/install",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/apis/componentconfig/install"
+		},
+		{
 			"importpath": "k8s.io/kubernetes/pkg/apis/extensions",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/apis/extensions"
 		},
 		{
+			"importpath": "k8s.io/kubernetes/pkg/apis/metrics",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/apis/metrics"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/apis/metrics/install",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/apis/metrics/install"
+		},
+		{
 			"importpath": "k8s.io/kubernetes/pkg/auth/user",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/auth/user"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg/capabilities",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/capabilities"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg/client/cache",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/client/cache"
 		},
 		{
+			"importpath": "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/client/clientset_generated/internalclientset"
+		},
+		{
 			"importpath": "k8s.io/kubernetes/pkg/client/metrics",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/client/metrics"
 		},
 		{
+			"importpath": "k8s.io/kubernetes/pkg/client/transport",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/client/transport"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/client/typed/generated/core/unversioned",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/client/typed/generated/core/unversioned"
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/client/typed/generated/extensions/unversioned",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/client/typed/generated/extensions/unversioned"
+		},
+		{
 			"importpath": "k8s.io/kubernetes/pkg/client/unversioned",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/client/unversioned"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg/conversion",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/conversion"
 		},
 		{
+			"importpath": "k8s.io/kubernetes/pkg/credentialprovider",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/credentialprovider"
+		},
+		{
 			"importpath": "k8s.io/kubernetes/pkg/fieldpath",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/fieldpath"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg/fields",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/fields"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg/kubectl",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/kubectl"
 		},
 		{
-			"importpath": "k8s.io/kubernetes/pkg/kubelet/qos/util",
+			"importpath": "k8s.io/kubernetes/pkg/kubelet/qos",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
-			"path": "/pkg/kubelet/qos/util"
+			"path": "/pkg/kubelet/qos"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg/labels",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/labels"
 		},
 		{
+			"importpath": "k8s.io/kubernetes/pkg/master/ports",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
+			"branch": "master",
+			"path": "/pkg/master/ports"
+		},
+		{
 			"importpath": "k8s.io/kubernetes/pkg/runtime",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/runtime"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg/storage",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/storage"
 		},
 		{
-			"importpath": "k8s.io/kubernetes/pkg/storage/etcd",
-			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
-			"branch": "master",
-			"path": "/pkg/storage/etcd"
-		},
-		{
-			"importpath": "k8s.io/kubernetes/pkg/tools",
-			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
-			"branch": "master",
-			"path": "/pkg/tools"
-		},
-		{
 			"importpath": "k8s.io/kubernetes/pkg/types",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/types"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg/util",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/util"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg/version",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/version"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg/watch",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/pkg/watch"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/third_party/forked/reflect",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/third_party/forked/reflect"
 		},
 		{
 			"importpath": "k8s.io/kubernetes/third_party/golang/template",
 			"repository": "https://github.com/kubernetes/kubernetes",
-			"revision": "165169ab1c18f0a6df60505a1bdc7783e56b303e",
+			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
 			"branch": "master",
 			"path": "/third_party/golang/template"
 		},

@@ -205,14 +205,15 @@ func (s *SpdyRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 func (s *SpdyRoundTripper) NewConnection(resp *http.Response) (httpstream.Connection, error) {
 	connectionHeader := strings.ToLower(resp.Header.Get(httpstream.HeaderConnection))
 	upgradeHeader := strings.ToLower(resp.Header.Get(httpstream.HeaderUpgrade))
-	if !strings.Contains(connectionHeader, strings.ToLower(httpstream.HeaderUpgrade)) || !strings.Contains(upgradeHeader, strings.ToLower(HeaderSpdy31)) {
+	if (resp.StatusCode != http.StatusSwitchingProtocols) || !strings.Contains(connectionHeader, strings.ToLower(httpstream.HeaderUpgrade)) || !strings.Contains(upgradeHeader, strings.ToLower(HeaderSpdy31)) {
 		defer resp.Body.Close()
 		responseError := ""
 		responseErrorBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			responseError = "unable to read error from server response"
 		} else {
-			if obj, err := api.Scheme.Decode(responseErrorBytes); err == nil {
+			// TODO: I don't belong here, I should be abstracted from this class
+			if obj, _, err := api.Codecs.UniversalDecoder().Decode(responseErrorBytes, nil, &unversioned.Status{}); err == nil {
 				if status, ok := obj.(*unversioned.Status); ok {
 					return nil, &apierrors.StatusError{ErrStatus: *status}
 				}

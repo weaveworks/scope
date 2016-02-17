@@ -154,6 +154,38 @@ func TestIsValidPortNum(t *testing.T) {
 	}
 }
 
+func TestIsValidGroupId(t *testing.T) {
+	goodValues := []int64{0, 1, 1000, 65535, 2147483647}
+	for _, val := range goodValues {
+		if !IsValidGroupId(val) {
+			t.Errorf("expected true for '%d'", val)
+		}
+	}
+
+	badValues := []int64{-1, -1003, 2147483648, 4147483647}
+	for _, val := range badValues {
+		if IsValidGroupId(val) {
+			t.Errorf("expected false for '%d'", val)
+		}
+	}
+}
+
+func TestIsValidUserId(t *testing.T) {
+	goodValues := []int64{0, 1, 1000, 65535, 2147483647}
+	for _, val := range goodValues {
+		if !IsValidUserId(val) {
+			t.Errorf("expected true for '%d'", val)
+		}
+	}
+
+	badValues := []int64{-1, -1003, 2147483648, 4147483647}
+	for _, val := range badValues {
+		if IsValidUserId(val) {
+			t.Errorf("expected false for '%d'", val)
+		}
+	}
+}
+
 func TestIsValidPortName(t *testing.T) {
 	goodValues := []string{"telnet", "re-mail-ck", "pop3", "a", "a-1", "1-a", "a-1-b-2-c", "1-a-2-b-3"}
 	for _, val := range goodValues {
@@ -273,6 +305,33 @@ func TestIsValidIP(t *testing.T) {
 	for _, val := range badValues {
 		if IsValidIPv4(val) {
 			t.Errorf("expected false for %q", val)
+		}
+	}
+}
+
+func TestIsHTTPHeaderName(t *testing.T) {
+	goodValues := []string{
+		// Common ones
+		"Accept-Encoding", "Host", "If-Modified-Since", "X-Forwarded-For",
+		// Weirdo, but still conforming names
+		"a", "ab", "abc", "a1", "-a", "a-", "a-b", "a-1", "a--1--2--b", "--abc-123",
+		"A", "AB", "AbC", "A1", "-A", "A-", "A-B", "A-1", "A--1--2--B", "--123-ABC",
+	}
+	for _, val := range goodValues {
+		if !IsHTTPHeaderName(val) {
+			t.Errorf("expected true for '%s'", val)
+		}
+	}
+
+	badValues := []string{
+		"Host:", "X-Forwarded-For:", "X-@Home",
+		"", "_", "a_", "_a", "1_", "1_2", ".", "a.", ".a", "a.b", "1.", ".1", "1.2",
+		" ", "a ", " a", "a b", "1 ", " 1", "1 2", "#a#", "^", ",", ";", "=", "<",
+		"?", "@", "{",
+	}
+	for _, val := range badValues {
+		if IsHTTPHeaderName(val) {
+			t.Errorf("expected false for '%s'", val)
 		}
 	}
 }

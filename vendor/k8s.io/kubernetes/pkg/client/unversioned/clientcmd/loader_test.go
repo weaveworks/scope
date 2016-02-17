@@ -30,6 +30,7 @@ import (
 
 	clientcmdapi "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api"
 	clientcmdlatest "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api/latest"
+	"k8s.io/kubernetes/pkg/runtime"
 )
 
 var (
@@ -171,6 +172,32 @@ func TestConflictingCurrentContext(t *testing.T) {
 
 	if mergedConfig.CurrentContext != mockCommandLineConfig.CurrentContext {
 		t.Errorf("expected %v, got %v", mockCommandLineConfig.CurrentContext, mergedConfig.CurrentContext)
+	}
+}
+
+func TestLoadingEmptyMaps(t *testing.T) {
+	configFile, _ := ioutil.TempFile("", "")
+	defer os.Remove(configFile.Name())
+
+	mockConfig := clientcmdapi.Config{
+		CurrentContext: "any-context-value",
+	}
+
+	WriteToFile(mockConfig, configFile.Name())
+
+	config, err := LoadFromFile(configFile.Name())
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	if config.Clusters == nil {
+		t.Error("expected config.Clusters to be non-nil")
+	}
+	if config.AuthInfos == nil {
+		t.Error("expected config.AuthInfos to be non-nil")
+	}
+	if config.Contexts == nil {
+		t.Error("expected config.Contexts to be non-nil")
 	}
 }
 
@@ -365,7 +392,7 @@ func ExampleNoMergingOnExplicitPaths() {
 
 	mergedConfig, err := loadingRules.Load()
 
-	json, err := clientcmdlatest.Codec.Encode(mergedConfig)
+	json, err := runtime.Encode(clientcmdlatest.Codec, mergedConfig)
 	if err != nil {
 		fmt.Printf("Unexpected error: %v", err)
 	}
@@ -411,7 +438,7 @@ func ExampleMergingSomeWithConflict() {
 
 	mergedConfig, err := loadingRules.Load()
 
-	json, err := clientcmdlatest.Codec.Encode(mergedConfig)
+	json, err := runtime.Encode(clientcmdlatest.Codec, mergedConfig)
 	if err != nil {
 		fmt.Printf("Unexpected error: %v", err)
 	}
@@ -470,7 +497,7 @@ func ExampleMergingEverythingNoConflicts() {
 
 	mergedConfig, err := loadingRules.Load()
 
-	json, err := clientcmdlatest.Codec.Encode(mergedConfig)
+	json, err := runtime.Encode(clientcmdlatest.Codec, mergedConfig)
 	if err != nil {
 		fmt.Printf("Unexpected error: %v", err)
 	}

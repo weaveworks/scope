@@ -52,7 +52,7 @@ func testJSONPath(tests []jsonpathTest, t *testing.T) {
 	}
 }
 
-// testJSONPathSortOutput test testcases related to map, the results may print in random order
+// testJSONPathSortOutput test cases related to map, the results may print in random order
 func testJSONPathSortOutput(tests []jsonpathTest, t *testing.T) {
 	for _, test := range tests {
 		j := New(test.name)
@@ -66,7 +66,7 @@ func testJSONPathSortOutput(tests []jsonpathTest, t *testing.T) {
 			t.Errorf("in %s, execute error %v", test.name, err)
 		}
 		out := buf.String()
-		//since map is itereated in random order, we need to sort the results.
+		//since map is visited in random order, we need to sort the results.
 		sortedOut := strings.Fields(out)
 		sort.Strings(sortedOut)
 		sortedExpect := strings.Fields(test.expect)
@@ -93,7 +93,7 @@ func testFailJSONPath(tests []jsonpathTest, t *testing.T) {
 			out = err.Error()
 		}
 		if out != test.expect {
-			t.Errorf("in %s, expect to get error %s, got %s", test.name, test.expect, out)
+			t.Errorf("in %s, expect to get error %q, got %q", test.name, test.expect, out)
 		}
 	}
 }
@@ -160,7 +160,7 @@ func TestStructInput(t *testing.T) {
 	testJSONPath(storeTests, t)
 
 	failStoreTests := []jsonpathTest{
-		{"invalid identfier", "{hello}", storeData, "unrecongnized identifier hello"},
+		{"invalid identfier", "{hello}", storeData, "unrecognized identifier hello"},
 		{"nonexistent field", "{.hello}", storeData, "hello is not found"},
 		{"invalid array", "{.Labels[0]}", storeData, "map[string]int is not array or slice"},
 		{"invalid filter operator", "{.Book[?(@.Price<>10)]}", storeData, "unrecognized filter operator <>"},
@@ -233,16 +233,17 @@ func TestKubernetes(t *testing.T) {
 	}
 
 	nodesTests := []jsonpathTest{
-		{"range item", "{range .items[*]}{.metadata.name}, {end}{.kind}", nodesData, `127.0.0.1, 127.0.0.2, List`},
-		{"range addresss", "{.items[*].status.addresses[*].address}", nodesData,
-			`127.0.0.1 127.0.0.2 127.0.0.3`},
-		{"double range", "{range .items[*]}{range .status.addresses[*]}{.address}, {end}{end}", nodesData,
-			`127.0.0.1, 127.0.0.2, 127.0.0.3, `},
-		{"item name", "{.items[*].metadata.name}", nodesData, `127.0.0.1 127.0.0.2`},
-		{"union nodes capacity", "{.items[*]['metadata.name', 'status.capacity']}", nodesData,
-			`127.0.0.1 127.0.0.2 map[cpu:4] map[cpu:8]`},
-		{"range nodes capacity", "{range .items[*]}[{.metadata.name}, {.status.capacity}] {end}", nodesData,
-			`[127.0.0.1, map[cpu:4]] [127.0.0.2, map[cpu:8]] `},
+		{"range item", `{range .items[*]}{.metadata.name}, {end}{.kind}`, nodesData, "127.0.0.1, 127.0.0.2, List"},
+		{"range item with quote", `{range .items[*]}{.metadata.name}{"\t"}{end}`, nodesData, "127.0.0.1\t127.0.0.2\t"},
+		{"range addresss", `{.items[*].status.addresses[*].address}`, nodesData,
+			"127.0.0.1 127.0.0.2 127.0.0.3"},
+		{"double range", `{range .items[*]}{range .status.addresses[*]}{.address}, {end}{end}`, nodesData,
+			"127.0.0.1, 127.0.0.2, 127.0.0.3, "},
+		{"item name", `{.items[*].metadata.name}`, nodesData, "127.0.0.1 127.0.0.2"},
+		{"union nodes capacity", `{.items[*]['metadata.name', 'status.capacity']}`, nodesData,
+			"127.0.0.1 127.0.0.2 map[cpu:4] map[cpu:8]"},
+		{"range nodes capacity", `{range .items[*]}[{.metadata.name}, {.status.capacity}] {end}`, nodesData,
+			"[127.0.0.1, map[cpu:4]] [127.0.0.2, map[cpu:8]] "},
 		{"user password", `{.users[?(@.name=="e2e")].user.password}`, &nodesData, "secret"},
 	}
 	testJSONPath(nodesTests, t)

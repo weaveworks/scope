@@ -3,16 +3,17 @@ package report
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
 
 	"github.com/mndrix/ps"
+	"github.com/ugorji/go/codec"
 )
 
 // Sets is a string->set-of-strings map.
 // It is immutable.
+// codecgen: skip
 type Sets struct {
 	psMap ps.Map
 }
@@ -156,22 +157,32 @@ func (s Sets) fromIntermediate(in map[string]StringSet) Sets {
 	return Sets{out}
 }
 
-// MarshalJSON implements json.Marshaller
-func (s Sets) MarshalJSON() ([]byte, error) {
+// CodecEncodeSelf implements codec.Selfer
+func (s *Sets) CodecEncodeSelf(encoder *codec.Encoder) {
 	if s.psMap != nil {
-		return json.Marshal(s.toIntermediate())
+		encoder.Encode(s.toIntermediate())
+	} else {
+		encoder.Encode(nil)
 	}
-	return json.Marshal(nil)
 }
 
-// UnmarshalJSON implements json.Unmarshaler
-func (s *Sets) UnmarshalJSON(input []byte) error {
+// CodecDecodeSelf implements codec.Selfer
+func (s *Sets) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := map[string]StringSet{}
-	if err := json.Unmarshal(input, &in); err != nil {
-		return err
+	if err := decoder.Decode(&in); err != nil {
+		return
 	}
 	*s = Sets{}.fromIntermediate(in)
-	return nil
+}
+
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (Sets) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*Sets) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
 // GobEncode implements gob.Marshaller

@@ -3,11 +3,11 @@ package report
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
 	"math"
 	"time"
 
 	"github.com/mndrix/ps"
+	"github.com/ugorji/go/codec"
 )
 
 // Metrics is a string->metric map.
@@ -34,6 +34,7 @@ func (m Metrics) Copy() Metrics {
 
 // Metric is a list of timeseries data with some metadata. Clients must use the
 // Add method to add values.  Metrics are immutable.
+// codecgen: skip
 type Metric struct {
 	Samples     ps.List
 	Min, Max    float64
@@ -253,7 +254,9 @@ func (m Metric) ToIntermediate() WireMetrics {
 	}
 }
 
-func (m WireMetrics) fromIntermediate() Metric {
+// FromIntermediate obtains the metric from a representation suitable
+// for serialization.
+func (m WireMetrics) FromIntermediate() Metric {
 	samples := ps.NewList()
 	for _, s := range m.Samples {
 		samples = samples.Cons(s)
@@ -267,22 +270,29 @@ func (m WireMetrics) fromIntermediate() Metric {
 	}
 }
 
-// MarshalJSON implements json.Marshaller
-func (m Metric) MarshalJSON() ([]byte, error) {
-	buf := bytes.Buffer{}
+// CodecEncodeSelf implements codec.Selfer
+func (m *Metric) CodecEncodeSelf(encoder *codec.Encoder) {
 	in := m.ToIntermediate()
-	err := json.NewEncoder(&buf).Encode(in)
-	return buf.Bytes(), err
+	encoder.Encode(in)
 }
 
-// UnmarshalJSON implements json.Unmarshaler
-func (m *Metric) UnmarshalJSON(input []byte) error {
+// CodecDecodeSelf implements codec.Selfer
+func (m *Metric) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := WireMetrics{}
-	if err := json.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
+	if err := decoder.Decode(&in); err != nil {
+		return
 	}
-	*m = in.fromIntermediate()
-	return nil
+	*m = in.FromIntermediate()
+}
+
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (Metric) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*Metric) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
 // GobEncode implements gob.Marshaller
@@ -298,6 +308,6 @@ func (m *Metric) GobDecode(input []byte) error {
 	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
 		return err
 	}
-	*m = in.fromIntermediate()
+	*m = in.FromIntermediate()
 	return nil
 }

@@ -1,10 +1,11 @@
 package render_test
 
 import (
-	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"testing"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -94,6 +95,6 @@ func loadReport() (report.Report, error) {
 		return rpt, err
 	}
 	rpt := report.MakeReport()
-	err = json.Unmarshal(b, &rpt)
+	err = codec.NewDecoderBytes(b, &codec.JsonHandle{}).Decode(&rpt)
 	return rpt, err
 }

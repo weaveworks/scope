@@ -28,10 +28,12 @@ import (
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/errors"
+	"k8s.io/kubernetes/pkg/api/meta"
 	"k8s.io/kubernetes/pkg/api/testapi"
 	apitesting "k8s.io/kubernetes/pkg/api/testing"
+	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/runtime"
-	"k8s.io/kubernetes/pkg/util/fielderrors"
+	"k8s.io/kubernetes/pkg/util/validation/field"
 )
 
 func TestMerge(t *testing.T) {
@@ -50,7 +52,7 @@ func TestMerge(t *testing.T) {
 					Name: "foo",
 				},
 			},
-			fragment: fmt.Sprintf(`{ "apiVersion": "%s" }`, testapi.Default.Version()),
+			fragment: fmt.Sprintf(`{ "apiVersion": "%s" }`, testapi.Default.GroupVersion().String()),
 			expected: &api.Pod{
 				ObjectMeta: api.ObjectMeta{
 					Name: "foo",
@@ -79,7 +81,7 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			fragment: fmt.Sprintf(`{ "apiVersion": "%s", "spec": { "containers": [ { "name": "c1", "image": "green-image" } ] } }`, testapi.Default.Version()),
+			fragment: fmt.Sprintf(`{ "apiVersion": "%s", "spec": { "containers": [ { "name": "c1", "image": "green-image" } ] } }`, testapi.Default.GroupVersion().String()),
 			expected: &api.Pod{
 				ObjectMeta: api.ObjectMeta{
 					Name: "foo",
@@ -105,7 +107,7 @@ func TestMerge(t *testing.T) {
 					Name: "foo",
 				},
 			},
-			fragment: fmt.Sprintf(`{ "apiVersion": "%s", "spec": { "volumes": [ {"name": "v1"}, {"name": "v2"} ] } }`, testapi.Default.Version()),
+			fragment: fmt.Sprintf(`{ "apiVersion": "%s", "spec": { "volumes": [ {"name": "v1"}, {"name": "v2"} ] } }`, testapi.Default.GroupVersion().String()),
 			expected: &api.Pod{
 				ObjectMeta: api.ObjectMeta{
 					Name: "foo",
@@ -146,7 +148,7 @@ func TestMerge(t *testing.T) {
 			obj: &api.Service{
 				Spec: api.ServiceSpec{},
 			},
-			fragment: fmt.Sprintf(`{ "apiVersion": "%s", "spec": { "ports": [ { "port": 0 } ] } }`, testapi.Default.Version()),
+			fragment: fmt.Sprintf(`{ "apiVersion": "%s", "spec": { "ports": [ { "port": 0 } ] } }`, testapi.Default.GroupVersion().String()),
 			expected: &api.Service{
 				Spec: api.ServiceSpec{
 					SessionAffinity: "None",
@@ -169,7 +171,7 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			fragment: fmt.Sprintf(`{ "apiVersion": "%s", "spec": { "selector": { "version": "v2" } } }`, testapi.Default.Version()),
+			fragment: fmt.Sprintf(`{ "apiVersion": "%s", "spec": { "selector": { "version": "v2" } } }`, testapi.Default.GroupVersion().String()),
 			expected: &api.Service{
 				Spec: api.ServiceSpec{
 					SessionAffinity: "None",
@@ -183,7 +185,7 @@ func TestMerge(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		out, err := Merge(test.obj, test.fragment, test.kind)
+		out, err := Merge(testapi.Default.Codec(), test.obj, test.fragment, test.kind)
 		if !test.expectErr {
 			if err != nil {
 				t.Errorf("testcase[%d], unexpected error: %v", i, err)
@@ -212,6 +214,7 @@ func (f *fileHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 func TestReadConfigData(t *testing.T) {
 	httpData := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	// TODO: Close() this server when fix #19254
 	server := httptest.NewServer(&fileHandler{data: httpData})
 
 	fileData := []byte{11, 12, 13, 14, 15, 16, 17, 18, 19}
@@ -274,16 +277,53 @@ func TestCheckInvalidErr(t *testing.T) {
 		expected string
 	}{
 		{
-			errors.NewInvalid("Invalid1", "invalidation", fielderrors.ValidationErrorList{fielderrors.NewFieldInvalid("Cause", "single", "details")}),
-			`Error from server: Invalid1 "invalidation" is invalid: Cause: invalid value 'single', Details: details`,
+			errors.NewInvalid(api.Kind("Invalid1"), "invalidation", field.ErrorList{field.Invalid(field.NewPath("field"), "single", "details")}),
+			`Error from server: Invalid1 "invalidation" is invalid: field: Invalid value: "single": details`,
 		},
 		{
-			errors.NewInvalid("Invalid2", "invalidation", fielderrors.ValidationErrorList{fielderrors.NewFieldInvalid("Cause", "multi1", "details"), fielderrors.NewFieldInvalid("Cause", "multi2", "details")}),
-			`Error from server: Invalid2 "invalidation" is invalid: [Cause: invalid value 'multi1', Details: details, Cause: invalid value 'multi2', Details: details]`,
+			errors.NewInvalid(api.Kind("Invalid2"), "invalidation", field.ErrorList{field.Invalid(field.NewPath("field1"), "multi1", "details"), field.Invalid(field.NewPath("field2"), "multi2", "details")}),
+			`Error from server: Invalid2 "invalidation" is invalid: [field1: Invalid value: "multi1": details, field2: Invalid value: "multi2": details]`,
 		},
 		{
-			errors.NewInvalid("Invalid3", "invalidation", fielderrors.ValidationErrorList{}),
+			errors.NewInvalid(api.Kind("Invalid3"), "invalidation", field.ErrorList{}),
 			`Error from server: Invalid3 "invalidation" is invalid: <nil>`,
+		},
+	}
+
+	var errReturned string
+	errHandle := func(err string) {
+		errReturned = err
+	}
+
+	for _, test := range tests {
+		checkErr(test.err, errHandle)
+
+		if errReturned != test.expected {
+			t.Fatalf("Got: %s, expected: %s", errReturned, test.expected)
+		}
+	}
+}
+
+func TestCheckNoResourceMatchError(t *testing.T) {
+	tests := []struct {
+		err      error
+		expected string
+	}{
+		{
+			&meta.NoResourceMatchError{PartialResource: unversioned.GroupVersionResource{Resource: "foo"}},
+			`the server doesn't have a resource type "foo"`,
+		},
+		{
+			&meta.NoResourceMatchError{PartialResource: unversioned.GroupVersionResource{Version: "theversion", Resource: "foo"}},
+			`the server doesn't have a resource type "foo" in version "theversion"`,
+		},
+		{
+			&meta.NoResourceMatchError{PartialResource: unversioned.GroupVersionResource{Group: "thegroup", Version: "theversion", Resource: "foo"}},
+			`the server doesn't have a resource type "foo" in group "thegroup" and version "theversion"`,
+		},
+		{
+			&meta.NoResourceMatchError{PartialResource: unversioned.GroupVersionResource{Group: "thegroup", Resource: "foo"}},
+			`the server doesn't have a resource type "foo" in group "thegroup"`,
 		},
 	}
 

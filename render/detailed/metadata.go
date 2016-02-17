@@ -1,9 +1,10 @@
 package detailed
 
 import (
-	"encoding/json"
 	"strconv"
 	"strings"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
@@ -103,6 +104,7 @@ func (c Counter) MetadataRows(n report.Node) []MetadataRow {
 }
 
 // MetadataRow is a row for the metadata table.
+// codecgen: skip
 type MetadataRow struct {
 	ID    string
 	Value string
@@ -117,20 +119,44 @@ func (m MetadataRow) Copy() MetadataRow {
 	}
 }
 
-// MarshalJSON marshals this MetadataRow to json. It adds a label before
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (MetadataRow) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*MetadataRow) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
+}
+
+type labelledMetadataRow struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
+	Value string `json:"value"`
+	Prime bool   `json:"prime,omitempty"`
+}
+
+// CodecEncodeSelf marshals this MetadataRow. It adds a label before
 // rendering.
-func (m MetadataRow) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		ID    string `json:"id"`
-		Label string `json:"label"`
-		Value string `json:"value"`
-		Prime bool   `json:"prime,omitempty"`
-	}{
+func (m *MetadataRow) CodecEncodeSelf(encoder *codec.Encoder) {
+	in := labelledMetadataRow{
 		ID:    m.ID,
 		Label: Label(m.ID),
 		Value: m.Value,
 		Prime: m.Prime,
-	})
+	}
+	encoder.Encode(in)
+}
+
+// CodecDecodeSelf implements codec.Selfer
+func (m *MetadataRow) CodecDecodeSelf(decoder *codec.Decoder) {
+	var in labelledMetadataRow
+	decoder.Decode(&in)
+	*m = MetadataRow{
+		ID:    in.ID,
+		Value: in.Value,
+		Prime: in.Prime,
+	}
 }
 
 // NodeMetadata produces a table (to be consumed directly by the UI) based on

@@ -52,7 +52,8 @@ exists, it will output details for every resource that has a name prefixed with 
 Possible resource types include (case insensitive): pods (po), services (svc),
 replicationcontrollers (rc), nodes (no), events (ev), limitranges (limits),
 persistentvolumes (pv), persistentvolumeclaims (pvc), resourcequotas (quota),
-namespaces (ns), serviceaccounts or secrets.`
+namespaces (ns), serviceaccounts, horizontalpodautoscalers (hpa),
+endpoints (ep) or secrets.`
 	describe_example = `# Describe a node
 $ kubectl describe nodes kubernetes-minion-emt8.c.myproject.internal
 
@@ -105,7 +106,7 @@ func RunDescribe(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []s
 	}
 
 	mapper, typer := f.Object()
-	r := resource.NewBuilder(mapper, typer, f.ClientMapperForCommand()).
+	r := resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.ClientForMapping), f.Decoder(true)).
 		ContinueOnError().
 		NamespaceParam(cmdNamespace).DefaultNamespace().
 		FilenameParam(enforceNamespace, options.Filenames...).
@@ -146,7 +147,7 @@ func RunDescribe(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []s
 }
 
 func DescribeMatchingResources(mapper meta.RESTMapper, typer runtime.ObjectTyper, f *cmdutil.Factory, namespace, rsrc, prefix string, out io.Writer, originalError error) error {
-	r := resource.NewBuilder(mapper, typer, f.ClientMapperForCommand()).
+	r := resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.ClientForMapping), f.Decoder(true)).
 		NamespaceParam(namespace).DefaultNamespace().
 		ResourceTypeOrNameArgs(true, rsrc).
 		SingleResourceType().
