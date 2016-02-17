@@ -57,3 +57,4 @@ app/static.go
 prog/static.go
 vendor/github.com/2opremio/go-1/codec/codecgen/codecgen
 *.codecgen.go
+*.generated.go
