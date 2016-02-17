@@ -2,12 +2,13 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
-	"os"
 	"time"
+
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/appclient"
@@ -25,15 +26,16 @@ func main() {
 		log.Fatal("usage: fixprobe [--args] report.json")
 	}
 
-	f, err := os.Open(flag.Arg(0))
+	b, err := ioutil.ReadFile(flag.Arg(0))
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	var fixedReport report.Report
-	if err := json.NewDecoder(f).Decode(&fixedReport); err != nil {
+	decoder := codec.NewDecoderBytes(b, &codec.JsonHandle{})
+	if err := decoder.Decode(&fixedReport); err != nil {
 		log.Fatal(err)
 	}
-	f.Close()
 
 	client, err := appclient.NewAppClient(appclient.ProbeConfig{
 		Token:    "fixprobe",
