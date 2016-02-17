@@ -8,7 +8,6 @@ import (
 type Renderer interface {
 	Render(report.Report) RenderableNodes
 	Stats(report.Report) Stats
-	ResetCache()
 }
 
 // Stats is the type returned by Renderer.Stats
@@ -48,13 +47,6 @@ func (r *Reduce) Stats(rpt report.Report) Stats {
 		result = result.merge(renderer.Stats(rpt))
 	}
 	return result
-}
-
-// ResetCache blows away the rendered node cache.
-func (r *Reduce) ResetCache() {
-	for _, renderer := range *r {
-		renderer.ResetCache()
-	}
 }
 
 // Map is a Renderer which produces a set of RenderableNodes from the set of

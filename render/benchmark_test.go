@@ -63,7 +63,7 @@ func benchmarkRender(b *testing.B, r render.Renderer) {
 
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
-		r.ResetCache()
+		render.ResetCache()
 		b.StartTimer()
 		benchmarkRenderResult = r.Render(report)
 		if len(benchmarkRenderResult) == 0 {
@@ -83,7 +83,7 @@ func benchmarkStats(b *testing.B, r render.Renderer) {
 	for i := 0; i < b.N; i++ {
 		// No way to tell if this was successful :(
 		b.StopTimer()
-		r.ResetCache()
+		render.ResetCache()
 		b.StartTimer()
 		benchmarkStatsResult = r.Stats(report)
 	}

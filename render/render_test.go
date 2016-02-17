@@ -15,7 +15,6 @@ type mockRenderer struct {
 
 func (m mockRenderer) Render(rpt report.Report) render.RenderableNodes { return m.RenderableNodes }
 func (m mockRenderer) Stats(rpt report.Report) render.Stats            { return render.Stats{} }
-func (m mockRenderer) ResetCache()                                     {}
 
 func TestReduceRender(t *testing.T) {
 	renderer := render.Reduce([]render.Renderer{

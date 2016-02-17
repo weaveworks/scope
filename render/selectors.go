@@ -18,9 +18,6 @@ func (t TopologySelector) Stats(r report.Report) Stats {
 	return Stats{}
 }
 
-// ResetCache implements Renderer
-func (t TopologySelector) ResetCache() {}
-
 // MakeRenderableNodes converts a topology to a set of RenderableNodes
 func MakeRenderableNodes(t report.Topology) RenderableNodes {
 	result := RenderableNodes{}
