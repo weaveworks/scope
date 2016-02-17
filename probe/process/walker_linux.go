@@ -83,6 +83,11 @@ func (w *walker) Walk(f func(Process, Process)) error {
 			continue
 		}
 
+		openFiles, err := fs.ReadDirNames(path.Join(w.procRoot, filename, "fd"))
+		if err != nil {
+			continue
+		}
+
 		cmdline, name := "", "(unknown)"
 		if cmdlineBuf, err := cachedReadFile(path.Join(w.procRoot, filename, "cmdline")); err == nil {
 			// like proc, treat name as the first element of command line
@@ -96,13 +101,14 @@ func (w *walker) Walk(f func(Process, Process)) error {
 		}
 
 		f(Process{
-			PID:      pid,
-			PPID:     ppid,
-			Name:     name,
-			Cmdline:  cmdline,
-			Threads:  threads,
-			Jiffies:  jiffies,
-			RSSBytes: rss,
+			PID:            pid,
+			PPID:           ppid,
+			Name:           name,
+			Cmdline:        cmdline,
+			Threads:        threads,
+			Jiffies:        jiffies,
+			RSSBytes:       rss,
+			OpenFilesCount: len(openFiles),
 		}, Process{})
 	}
 

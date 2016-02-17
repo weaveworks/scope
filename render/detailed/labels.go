@@ -42,6 +42,7 @@ var labels = map[string]string{
 	process.CPUUsage:             "CPU",
 	process.Cmdline:              "Command",
 	process.MemoryUsage:          "Memory",
+	process.OpenFilesCount:       "Open Files",
 	process.PID:                  "PID",
 	process.PPID:                 "Parent PID",
 	process.Threads:              "# Threads",

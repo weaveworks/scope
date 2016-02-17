@@ -10,6 +10,13 @@ const formatters = {
     return formatters.metric(obj.value, obj.suffix);
   },
 
+  integer(value) {
+    if (value < 1100 && value >= 0) {
+      return Number(value).toFixed(0);
+    }
+    return formatLargeValue(value);
+  },
+
   number(value) {
     if (value < 1100 && value >= 0) {
       return Number(value).toFixed(2);

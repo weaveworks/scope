@@ -13,6 +13,7 @@ import (
 const (
 	defaultFormat  = ""
 	filesizeFormat = "filesize"
+	integerFormat  = "integer"
 	percentFormat  = "percent"
 )
 
@@ -20,6 +21,7 @@ var (
 	processNodeMetrics = []MetricRow{
 		{ID: process.CPUUsage, Format: percentFormat},
 		{ID: process.MemoryUsage, Format: filesizeFormat},
+		{ID: process.OpenFilesCount, Format: integerFormat},
 	}
 	containerNodeMetrics = []MetricRow{
 		{ID: docker.CPUTotalUsage, Format: percentFormat},
