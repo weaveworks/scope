@@ -17,12 +17,12 @@ DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VE
 RUNSVINIT=vendor/runsvinit/runsvinit
 CODECGEN_DIR=vendor/github.com/2opremio/go-1/codec/codecgen
 CODECGEN_EXE=$(CODECGEN_DIR)/codecgen
+GET_CODECGEN_DEPS=$(shell find $(1) -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name '*.codecgen.go' -not -name '*.generated.go')
 CODECGEN_TARGETS=report/report.codecgen.go render/render.codecgen.go render/detailed/detailed.codecgen.go
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
 GO ?= env GO15VENDOREXPERIMENT=1 go
-GO_HOST_ENV=GOARCH=$(shell go env GOHOSTARCH) GOOS=$(shell go env GOHOSTOS)
 GO_BUILD_INSTALL_DEPS=-i
 GO_BUILD_TAGS=-tags netgo
 GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" $(GO_BUILD_TAGS)
@@ -72,13 +72,14 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS)
 	        false; \
 	    }
 
-# Enable second  expansion to automatically generate the dependencies of codecgen
-.SECONDEXPANSION:
-%.codecgen.go: $(CODECGEN_EXE) $$(shell find $$(@D) -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name '*.codecgen.go' -not -name '*.generated.go')
-	cd $(@D) && $(GO_HOST_ENV) $(shell pwd)/$(CODECGEN_EXE) -u -o $(@F) $(notdir $(filter-out $<,$^))
+report/report.codecgen.go: $(call GET_CODECGEN_DEPS,report/)
+render/render.codecgen.go: $(call GET_CODECGEN_DEPS,render/)
+render/detailed/detailed.codecgen.go: $(call GET_CODECGEN_DEPS,render/detailed/)
+%.codecgen.go: $(CODECGEN_EXE)
+	cd $(@D) && env -u GOARCH -u GOOS $(shell pwd)/$(CODECGEN_EXE) -u -o $(@F) $(notdir $(filter-out $<,$^))
 
 $(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
-	$(GO_HOST_ENV) $(GO) build $(GO_BUILD_TAGS) -o $@ ./$(@D)
+	env -u GOARCH -u GOOS $(GO) build $(GO_BUILD_TAGS) -o $@ ./$(@D)
 
 $(RUNSVINIT):
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
