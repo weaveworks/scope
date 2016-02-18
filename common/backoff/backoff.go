@@ -1,8 +1,9 @@
 package backoff
 
 import (
-	"log"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type backoff struct {
@@ -69,10 +70,10 @@ func (b *backoff) Start() {
 
 		if shouldLog {
 			if err != nil {
-				log.Printf("Error %s, backing off %s: %s",
+				log.Errorf("Error %s, backing off %s: %s",
 					b.msg, backoff, err)
 			} else {
-				log.Printf("Success %s", b.msg)
+				log.Infof("Success %s", b.msg)
 			}
 		}
 

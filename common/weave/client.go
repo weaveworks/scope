@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/exec"
@@ -127,7 +127,7 @@ func (c *client) PS() (map[string]PSEntry, error) {
 	}
 	defer func() {
 		if err := cmd.Wait(); err != nil {
-			log.Printf("'weave ps' cmd failed: %v", err)
+			log.Errorf("'weave ps' cmd failed: %v", err)
 		}
 	}()
 
