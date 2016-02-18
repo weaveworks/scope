@@ -27,10 +27,10 @@
 @background-darker-color: darken(@background-color, 8%);
 @background-darker-secondary-color: darken(@background-color, 4%);
 @background-dark-color: @primary-color;
-@text-color: lighten(@primary-color, 10%);
-@text-secondary-color: lighten(@primary-color, 27%);
-@text-tertiary-color: lighten(@primary-color, 50%);
-@border-light-color: lighten(@primary-color, 66%);
+@text-color: lighten(@primary-color, 5%);
+@text-secondary-color: lighten(@text-color, 15%);
+@text-tertiary-color: lighten(@text-color, 30%);
+@border-light-color: lighten(@text-color, 60%);
 @text-darker-color: @primary-color;
 @white: @background-lighter-color;
 
@@ -174,7 +174,6 @@ h2 {
   z-index: 20;
   color: @text-tertiary-color;
   font-size: 0.7rem;
-  opacity: 0.8;
 
   a {
     color: @text-secondary-color;
@@ -196,7 +195,7 @@ h2 {
       border: 1px solid transparent;
       border-radius: 10%;
       &:hover {
-        border: 1px solid @text-secondary-color;
+        border: 1px solid @text-tertiary-color;
       }
       span {
         font-size: 150%;
