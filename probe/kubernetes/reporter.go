@@ -1,10 +1,10 @@
 package kubernetes
 
 import (
+	"k8s.io/kubernetes/pkg/labels"
+
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
-
-	"k8s.io/kubernetes/pkg/labels"
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
