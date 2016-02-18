@@ -33,6 +33,7 @@ export default class Nodes extends React.Component {
         nodes={this.props.nodes}
         width={this.state.width}
         height={this.state.height}
+        forceRelayout={this.props.forceRelayout}
         topologyId={this.props.topologyId}
         detailsWidth={this.props.detailsWidth}
         topMargin={this.props.topMargin}

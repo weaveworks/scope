@@ -7,7 +7,7 @@ import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies, basePathSlash } from '../utils/web-api-utils';
-import { hitEsc } from '../actions/app-actions';
+import { clickForceRelayout, hitEsc } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import EmbeddedTerminal from './embedded-terminal';
@@ -25,6 +25,7 @@ function getStateFromStores() {
     currentTopologyId: AppStore.getCurrentTopologyId(),
     currentTopologyOptions: AppStore.getCurrentTopologyOptions(),
     errorUrl: AppStore.getErrorUrl(),
+    forceRelayout: AppStore.isForceRelayout(),
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
     hostname: AppStore.getHostname(),
@@ -79,6 +80,8 @@ export default class App extends React.Component {
     // link url to switch contrast with current UI state
     const otherContrastModeUrl = contrastMode ? basePathSlash(window.location.pathname) : 'contrast.html';
     const otherContrastModeTitle = contrastMode ? 'Switch to normal contrast' : 'Switch to high contrast';
+    const forceRelayoutClassName = 'footer-label footer-label-icon';
+    const forceRelayoutTitle = 'Force re-layout (might reduce edge crossings, but may shift nodes around)';
 
     return (
       <div className="app">
@@ -100,6 +103,7 @@ export default class App extends React.Component {
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
           highlightedEdgeIds={this.state.highlightedEdgeIds} detailsWidth={detailsWidth}
           selectedNodeId={this.state.selectedNodeId} topMargin={topMargin}
+          forceRelayout={this.state.forceRelayout}
           topologyId={this.state.currentTopologyId} />
 
         <Sidebar>
@@ -117,6 +121,9 @@ export default class App extends React.Component {
           <span className="footer-label">on</span>
           {this.state.hostname}
           &nbsp;
+          <a className={forceRelayoutClassName} onClick={clickForceRelayout} title={forceRelayoutTitle}>
+            <span className="fa fa-refresh" />
+          </a>
           <a className="footer-label footer-label-icon" href={otherContrastModeUrl} title={otherContrastModeTitle}>
             <span className="fa fa-adjust" />
           </a>

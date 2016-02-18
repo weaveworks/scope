@@ -56,6 +56,7 @@ let controlStatus = makeMap();
 let currentTopology = null;
 let currentTopologyId = 'containers';
 let errorUrl = null;
+let forceRelayout = false;
 let hostname = '...';
 let version = '...';
 let mouseOverEdgeId = null;
@@ -266,6 +267,10 @@ export class AppStore extends Store {
     return version;
   }
 
+  isForceRelayout() {
+    return forceRelayout;
+  }
+
   isRouteSet() {
     return routeSet;
   }
@@ -317,6 +322,15 @@ export class AppStore extends Store {
 
     case ActionTypes.CLICK_CLOSE_TERMINAL:
       controlPipes = controlPipes.clear();
+      this.__emitChange();
+      break;
+
+    case ActionTypes.CLICK_FORCE_RELAYOUT:
+      forceRelayout = true;
+      // fire only once, reset after emitChange
+      setTimeout(() => {
+        forceRelayout = false;
+      }, 0);
       this.__emitChange();
       break;
 
@@ -482,6 +496,8 @@ export class AppStore extends Store {
     case ActionTypes.RECEIVE_NODES_DELTA:
       const emptyMessage = !payload.delta.add && !payload.delta.remove
         && !payload.delta.update;
+      // this action is called frequently, good to check if something changed
+      const emitChange = !emptyMessage || errorUrl !== null;
 
       if (!emptyMessage) {
         log('RECEIVE_NODES_DELTA',
@@ -516,7 +532,9 @@ export class AppStore extends Store {
         nodes = nodes.set(node.id, Immutable.fromJS(makeNode(node)));
       });
 
-      this.__emitChange();
+      if (emitChange) {
+        this.__emitChange();
+      }
       break;
 
     case ActionTypes.RECEIVE_NOT_FOUND:

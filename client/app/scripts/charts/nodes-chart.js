@@ -74,7 +74,7 @@ export default class NodesChart extends React.Component {
       });
     }
     // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
-    if (nextProps.nodes !== this.props.nodes) {
+    if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
       _.assign(state, this.updateGraphState(nextProps, state));
     }
     if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
@@ -411,6 +411,7 @@ export default class NodesChart extends React.Component {
       height: props.height,
       scale: nodeScale,
       margins: MARGINS,
+      forceRelayout: props.forceRelayout,
       topologyId: this.props.topologyId
     };
 

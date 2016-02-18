@@ -57,6 +57,12 @@ export function clickCloseTerminal(pipeId, closePipe) {
   updateRoute();
 }
 
+export function clickForceRelayout() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_FORCE_RELAYOUT
+  });
+}
+
 export function clickNode(nodeId, label, origin) {
   AppDispatcher.dispatch({
     type: ActionTypes.CLICK_NODE,

@@ -361,7 +361,7 @@ export function doLayout(immNodes, immEdges, opts) {
   let layout;
 
   ++layoutRuns;
-  if (cachedLayout && nodeCache && edgeCache && !hasUnseenNodes(immNodes, nodeCache)) {
+  if (!options.forceRelayout && cachedLayout && nodeCache && edgeCache && !hasUnseenNodes(immNodes, nodeCache)) {
     log('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
     layout = cloneLayout(cachedLayout, immNodes, immEdges);
     // copy old properties, works also if nodes get re-added
