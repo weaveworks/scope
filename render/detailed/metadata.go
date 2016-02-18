@@ -104,7 +104,6 @@ func (c Counter) MetadataRows(n report.Node) []MetadataRow {
 }
 
 // MetadataRow is a row for the metadata table.
-// codecgen: skip
 type MetadataRow struct {
 	ID    string
 	Value string

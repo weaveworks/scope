@@ -12,7 +12,6 @@ import (
 )
 
 // Counters is a string->int map.
-// codecgen: skip
 type Counters struct {
 	psMap ps.Map
 }

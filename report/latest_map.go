@@ -13,7 +13,6 @@ import (
 
 // LatestMap is a persitent map which support latest-win merges. We have to
 // embed ps.Map as its an interface.  LatestMaps are immutable.
-// codecgen: skip
 type LatestMap struct {
 	ps.Map
 }

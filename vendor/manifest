@@ -8,12 +8,6 @@
 			"branch": "default"
 		},
 		{
-			"importpath": "github.com/2opremio/go-1",
-			"repository": "https://github.com/2opremio/go-1",
-			"revision": "32b0ef002162cc29601c7aad0bda2ff16afb7243",
-			"branch": "master"
-		},
-		{
 			"importpath": "github.com/DataDog/datadog-go/statsd",
 			"repository": "https://github.com/DataDog/datadog-go",
 			"revision": "b050cd8f4d7c394545fd7d966c8e2909ce89d552",
@@ -802,7 +796,7 @@
 		{
 			"importpath": "github.com/ugorji/go/codec",
 			"repository": "https://github.com/ugorji/go",
-			"revision": "f4485b318aadd133842532f841dc205a8e339d74",
+			"revision": "9f21f8ea305046b8d17a799e2c73069533a99d24",
 			"branch": "master",
 			"path": "/codec"
 		},

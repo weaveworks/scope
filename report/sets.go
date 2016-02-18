@@ -13,7 +13,6 @@ import (
 
 // Sets is a string->set-of-strings map.
 // It is immutable.
-// codecgen: skip
 type Sets struct {
 	psMap ps.Map
 }

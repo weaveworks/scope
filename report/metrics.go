@@ -34,7 +34,6 @@ func (m Metrics) Copy() Metrics {
 
 // Metric is a list of timeseries data with some metadata. Clients must use the
 // Add method to add values.  Metrics are immutable.
-// codecgen: skip
 type Metric struct {
 	Samples     ps.List
 	Min, Max    float64

@@ -44,7 +44,6 @@ func (cs Controls) AddControl(c Control) {
 // NodeControls represent the individual controls that are valid for a given
 // node at a given point in time.  Its is immutable. A zero-value for Timestamp
 // indicated this NodeControls is 'not set'.
-// codecgen: skip
 type NodeControls struct {
 	Timestamp time.Time
 	Controls  StringSet
