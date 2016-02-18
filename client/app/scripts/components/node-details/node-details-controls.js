@@ -21,7 +21,7 @@ export default class NodeDetailsControls extends React.Component {
           {this.props.controls && this.props.controls.map(control => {
             return (
               <NodeDetailsControlButton nodeId={this.props.nodeId} control={control}
-                pending={this.props.pending} key={control.control.id} />
+                pending={this.props.pending} key={control.id} />
             );
           })}
         </span>

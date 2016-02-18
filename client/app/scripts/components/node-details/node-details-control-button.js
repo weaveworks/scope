@@ -9,12 +9,12 @@ export default class NodeDetailsControlButton extends React.Component {
   }
 
   render() {
-    let className = `node-control-button fa ${this.props.control.control.icon}`;
+    let className = `node-control-button fa ${this.props.control.icon}`;
     if (this.props.pending) {
       className += ' node-control-button-pending';
     }
     return (
-      <span className={className} title={this.props.control.control.human} onClick={this.handleClick} />
+      <span className={className} title={this.props.control.human} onClick={this.handleClick} />
     );
   }
 

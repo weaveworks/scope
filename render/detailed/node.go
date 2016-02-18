@@ -3,6 +3,8 @@ package detailed
 import (
 	"sort"
 
+	"github.com/ugorji/go/codec"
+
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
@@ -24,9 +26,54 @@ type Node struct {
 // ControlInstance contains a control description, and all the info
 // needed to execute it.
 type ControlInstance struct {
-	ProbeID string         `json:"probeId"`
-	NodeID  string         `json:"nodeId"`
-	Control report.Control `json:"control"`
+	ProbeID string
+	NodeID  string
+	Control report.Control
+}
+
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (ControlInstance) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*ControlInstance) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
+}
+
+type wiredControlInstance struct {
+	ProbeID string `json:"probeId"`
+	NodeID  string `json:"nodeId"`
+	ID      string `json:"id"`
+	Human   string `json:"human"`
+	Icon    string `json:"icon"`
+}
+
+// CodecEncodeSelf marshals this MetricRow. It takes the basic Metric
+// rendering, then adds some row-specific fields.
+func (c *ControlInstance) CodecEncodeSelf(encoder *codec.Encoder) {
+	encoder.Encode(wiredControlInstance{
+		ProbeID: c.ProbeID,
+		NodeID:  c.NodeID,
+		ID:      c.Control.ID,
+		Human:   c.Control.Human,
+		Icon:    c.Control.Icon,
+	})
+}
+
+// CodecDecodeSelf implements codec.Selfer
+func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
+	var in wiredControlInstance
+	decoder.Decode(&in)
+	*c = ControlInstance{
+		ProbeID: in.ProbeID,
+		NodeID:  in.NodeID,
+		Control: report.Control{
+			ID:    in.ID,
+			Human: in.Human,
+			Icon:  in.Icon,
+		},
+	}
 }
 
 // MakeNode transforms a renderable node to a detailed node. It uses

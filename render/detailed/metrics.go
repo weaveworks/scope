@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/ugorji/go/codec"
+
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
@@ -72,24 +73,33 @@ func (*MetricRow) UnmarshalJSON(b []byte) error {
 }
 
 type wiredMetricRow struct {
-	ID          string             `json:"id"`
-	Label       string             `json:"label"`
-	Format      string             `json:"format,omitempty"`
-	Group       string             `json:"group,omitempty"`
-	Value       float64            `json:"value"`
-	WireMetrics report.WireMetrics `json:"wire_metrics"`
+	ID      string          `json:"id"`
+	Label   string          `json:"label"`
+	Format  string          `json:"format,omitempty"`
+	Group   string          `json:"group,omitempty"`
+	Value   float64         `json:"value"`
+	Samples []report.Sample `json:"samples"`
+	Min     float64         `json:"min"`
+	Max     float64         `json:"max"`
+	First   string          `json:"first,omitempty"`
+	Last    string          `json:"last,omitempty"`
 }
 
 // CodecEncodeSelf marshals this MetricRow. It takes the basic Metric
 // rendering, then adds some row-specific fields.
 func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
+	in := m.Metric.ToIntermediate()
 	encoder.Encode(wiredMetricRow{
-		ID:          m.ID,
-		Label:       Label(m.ID),
-		Format:      m.Format,
-		Group:       m.Group,
-		Value:       m.Value,
-		WireMetrics: m.Metric.ToIntermediate(),
+		ID:      m.ID,
+		Label:   Label(m.ID),
+		Format:  m.Format,
+		Group:   m.Group,
+		Value:   m.Value,
+		Samples: in.Samples,
+		Min:     in.Min,
+		Max:     in.Max,
+		First:   in.First,
+		Last:    in.Last,
 	})
 }
 
@@ -97,8 +107,14 @@ func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
 func (m *MetricRow) CodecDecodeSelf(decoder *codec.Decoder) {
 	var in wiredMetricRow
 	decoder.Decode(&in)
-
-	metric := in.WireMetrics.FromIntermediate()
+	w := report.WireMetrics{
+		Samples: in.Samples,
+		Min:     in.Min,
+		Max:     in.Max,
+		First:   in.First,
+		Last:    in.Last,
+	}
+	metric := w.FromIntermediate()
 	*m = MetricRow{
 		ID:     in.ID,
 		Format: in.Format,

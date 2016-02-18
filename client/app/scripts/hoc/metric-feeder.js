@@ -18,7 +18,7 @@ const WINDOW_LENGTH = 60;
  * `[t1, t2, t3, ...]` will be fed to the wrapped component.
  *  The window slides between the dates provided by the first date of the buffer
  *  and `this.props.last` so that the following invariant is true:
- * `this.state.movingFirst <= this.props.wire_metrics.first < this.state.movingLast <= this.props.wire_metrics.last`.
+ * `this.state.movingFirst <= this.props.first < this.state.movingLast <= this.props.last`.
  *
  * Samples have to be of type `[{date: String, value: Number}, ...]`.
  * This component also keeps a historic max of all samples it sees over time.
@@ -60,7 +60,7 @@ export default ComposedComponent => class extends React.Component {
   updateBuffer(props) {
     // merge new samples into buffer
     let buffer = this.state.buffer;
-    const nextSamples = makeOrderedMap(props.wire_metrics.samples.map(d => [d.date, d.value]));
+    const nextSamples = makeOrderedMap(props.samples.map(d => [d.date, d.value]));
     // need to sort again after merge, some new data may have different times for old values
     buffer = buffer.merge(nextSamples).sortBy(sortDate);
     const state = {};
