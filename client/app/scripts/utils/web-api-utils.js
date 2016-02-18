@@ -45,6 +45,16 @@ export function basePath(urlPath) {
   return parts.join('/').replace(/\/$/, '');
 }
 
+export function basePathSlash(urlPath) {
+  //
+  // "/scope/terminal.html" -> "/scope/"
+  // "/scope/" -> "/scope/"
+  // "/scope" -> "/scope/"
+  // "/" -> "/"
+  //
+  return basePath(urlPath) + '/';
+}
+
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = wsProto + '://' + location.host + basePath(location.pathname);
 

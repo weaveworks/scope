@@ -42,6 +42,7 @@
     "eslint-plugin-jasmine": "1.6.0",
     "eslint-plugin-react": "3.8.0",
     "file-loader": "0.8.4",
+    "http-proxy-rules": "^1.0.1",
     "jest-cli": "~0.7.1",
     "json-loader": "0.5.3",
     "less": "~2.5.1",
