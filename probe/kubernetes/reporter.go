@@ -1,7 +1,9 @@
 package kubernetes
 
 import (
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
+
 	"k8s.io/kubernetes/pkg/labels"
 )
 
@@ -66,11 +68,12 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 		nodeID := report.MakePodNodeID(p.Namespace(), p.Name())
 		pods = pods.AddNode(nodeID, p.GetNode())
 
-		container := report.MakeNodeWith(map[string]string{
-			PodID:     p.ID(),
-			Namespace: p.Namespace(),
-		}).WithParents(report.EmptySets.Add(report.Pod, report.MakeStringSet(nodeID)))
 		for _, containerID := range p.ContainerIDs() {
+			container := report.MakeNodeWith(map[string]string{
+				PodID:              p.ID(),
+				Namespace:          p.Namespace(),
+				docker.ContainerID: containerID,
+			}).WithParents(report.EmptySets.Add(report.Pod, report.MakeStringSet(nodeID)))
 			containers.AddNode(report.MakeContainerNodeID(containerID), container)
 		}
 		return nil
