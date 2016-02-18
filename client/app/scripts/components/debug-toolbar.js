@@ -42,8 +42,6 @@ function addAllVariants() {
     });
   }));
 
-  console.log(newNodes);
-
   receiveNodesDelta({
     add: newNodes
   });
