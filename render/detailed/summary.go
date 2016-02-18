@@ -14,8 +14,6 @@ import (
 )
 
 // NodeSummaryGroup is a topology-typed group of children for a Node.
-// Skip codec-generation for this type to circumvent render/detailed/summary.go
-// codecgen: skip
 type NodeSummaryGroup struct {
 	Label      string        `json:"label"`
 	Nodes      []NodeSummary `json:"nodes"`
@@ -38,7 +36,6 @@ func (g NodeSummaryGroup) Copy() NodeSummaryGroup {
 
 // Column provides special json serialization for column ids, so they include
 // their label for the frontend.
-// codecgen: skip
 type Column string
 
 // CodecEncodeSelf implements codec.Selfer

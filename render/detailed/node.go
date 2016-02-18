@@ -24,9 +24,9 @@ type Node struct {
 // ControlInstance contains a control description, and all the info
 // needed to execute it.
 type ControlInstance struct {
-	ProbeID string `json:"probeId"`
-	NodeID  string `json:"nodeId"`
-	report.Control
+	ProbeID string         `json:"probeId"`
+	NodeID  string         `json:"nodeId"`
+	Control report.Control `json:"control"`
 }
 
 // MakeNode transforms a renderable node to a detailed node. It uses

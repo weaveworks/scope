@@ -13,7 +13,6 @@ import (
 
 // NodeSet is a set of nodes keyed on (Topology, ID). Clients must use
 // the Add method to add nodes
-// codecgen: skip
 type NodeSet struct {
 	psMap ps.Map
 }

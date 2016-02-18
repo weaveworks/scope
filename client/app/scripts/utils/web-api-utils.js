@@ -169,7 +169,7 @@ export function getApiDetails() {
 export function doControlRequest(nodeId, control) {
   clearTimeout(controlErrorTimer);
   const url = `api/control/${encodeURIComponent(control.probeId)}/`
-    + `${encodeURIComponent(control.nodeId)}/${control.id}`;
+    + `${encodeURIComponent(control.nodeId)}/${control.control.id}`;
   reqwest({
     method: 'POST',
     url: url,

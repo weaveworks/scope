@@ -13,7 +13,6 @@ import (
 
 // EdgeMetadatas collect metadata about each edge in a topology. Keys are the
 // remote node IDs, as in Adjacency.
-// codecgen: skip
 type EdgeMetadatas struct {
 	psMap ps.Map
 }

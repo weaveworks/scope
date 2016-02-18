@@ -38,7 +38,6 @@ var (
 
 // MetricRow is a tuple of data used to render a metric as a sparkline and
 // accoutrements.
-// codecgen: skip
 type MetricRow struct {
 	ID     string
 	Format string
@@ -73,12 +72,12 @@ func (*MetricRow) UnmarshalJSON(b []byte) error {
 }
 
 type wiredMetricRow struct {
-	ID     string  `json:"id"`
-	Label  string  `json:"label"`
-	Format string  `json:"format,omitempty"`
-	Group  string  `json:"group,omitempty"`
-	Value  float64 `json:"value"`
-	report.WireMetrics
+	ID          string             `json:"id"`
+	Label       string             `json:"label"`
+	Format      string             `json:"format,omitempty"`
+	Group       string             `json:"group,omitempty"`
+	Value       float64            `json:"value"`
+	WireMetrics report.WireMetrics `json:"wire_metrics"`
 }
 
 // CodecEncodeSelf marshals this MetricRow. It takes the basic Metric
