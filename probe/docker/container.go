@@ -33,6 +33,7 @@ const (
 	ContainerState         = "docker_container_state"
 	ContainerUptime        = "docker_container_uptime"
 	ContainerRestartCount  = "docker_container_restart_count"
+	ContainerNetworkMode   = "docker_container_network_mode"
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
@@ -57,6 +58,8 @@ const (
 	StateRunning = "running"
 	StateStopped = "stopped"
 	StatePaused  = "paused"
+
+	NetworkModeHost = "host"
 
 	stopTimeout = 10
 )
@@ -320,7 +323,10 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	c.RLock()
 	defer c.RUnlock()
 
-	ips := append(c.container.NetworkSettings.SecondaryIPAddresses, c.container.NetworkSettings.IPAddress)
+	ips := c.container.NetworkSettings.SecondaryIPAddresses
+	if c.container.NetworkSettings.IPAddress != "" {
+		ips = append(ips, c.container.NetworkSettings.IPAddress)
+	}
 	// Treat all Docker IPs as local scoped.
 	ipsWithScopes := []string{}
 	for _, ip := range ips {
@@ -351,9 +357,14 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		result = result.WithControls(UnpauseContainer)
 	} else if c.container.State.Running {
 		uptime := (mtime.Now().Sub(c.container.State.StartedAt) / time.Second) * time.Second
+		networkMode := ""
+		if c.container.HostConfig != nil {
+			networkMode = c.container.HostConfig.NetworkMode
+		}
 		result = result.WithLatests(map[string]string{
 			ContainerUptime:       uptime.String(),
 			ContainerRestartCount: strconv.Itoa(c.container.RestartCount),
+			ContainerNetworkMode:  networkMode,
 		})
 		result = result.WithControls(
 			RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer,

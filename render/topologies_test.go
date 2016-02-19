@@ -8,6 +8,7 @@ import (
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
+	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 )
@@ -46,6 +47,25 @@ func TestContainerFilterRenderer(t *testing.T) {
 	have := render.FilterSystem(render.ContainerWithImageNameRenderer).Render(input).Prune()
 	want := expected.RenderedContainers.Copy()
 	delete(want, expected.ClientContainerRenderedID)
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
+func TestContainerWithHostIPsRenderer(t *testing.T) {
+	input := fixture.Report.Copy()
+	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
+		docker.ContainerNetworkMode: "host",
+	})
+	nodes := render.ContainerWithHostIPsRenderer.Render(input)
+
+	// Test host network nodes get the host IPs added.
+	haveNode, ok := nodes[render.MakeContainerID(fixture.ClientContainerID)]
+	if !ok {
+		t.Fatal("Expected output to have the client container node")
+	}
+	have, _ := haveNode.Sets.Lookup(docker.ContainerIPs)
+	want := report.MakeStringSet("10.10.10.0")
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
