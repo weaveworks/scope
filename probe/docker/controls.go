@@ -99,7 +99,7 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 		AttachStdout: true,
 		AttachStderr: true,
 		Tty:          true,
-		Cmd:          []string{"/bin/sh"},
+		Cmd:          []string{"/bin/sh", "-c", "TERM=xterm exec /bin/sh"},
 		Container:    containerID,
 	})
 	if err != nil {
