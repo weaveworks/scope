@@ -355,10 +355,14 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		result = result.WithControls(UnpauseContainer)
 	} else if c.container.State.Running {
 		uptime := (mtime.Now().Sub(c.container.State.StartedAt) / time.Second) * time.Second
+		networkMode := ""
+		if c.container.HostConfig != nil {
+			networkMode = c.container.HostConfig.NetworkMode
+		}
 		result = result.WithLatests(map[string]string{
 			ContainerUptime:       uptime.String(),
 			ContainerRestartCount: strconv.Itoa(c.container.RestartCount),
-			ContainerNetworkMode:  c.container.HostConfig.NetworkMode,
+			ContainerNetworkMode:  networkMode,
 		})
 		result = result.WithControls(
 			RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer,

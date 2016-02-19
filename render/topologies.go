@@ -137,35 +137,28 @@ func (r containerWithHostIPsRenderer) Render(rpt report.Report) RenderableNodes 
 			continue
 		}
 
-		ips, ok := c.Node.Sets.Lookup(docker.ContainerIPs)
-		if ok && len(ips) > 0 {
-			continue
-		}
-
 		h, ok := hosts[MakeHostID(report.ExtractHostID(c.Node))]
 		if !ok {
 			continue
 		}
 
-		hostNetworks, ok := h.Sets.Lookup(host.LocalNetworks)
-		if !ok {
-			continue
-		}
-
-		hostIPs := report.MakeStringSet()
+		newIPs := report.MakeStringSet()
+		hostNetworks, _ := h.Sets.Lookup(host.LocalNetworks)
 		for _, cidr := range hostNetworks {
 			if ip, _, err := net.ParseCIDR(cidr); err == nil {
-				hostIPs = hostIPs.Add(ip.String())
+				newIPs = newIPs.Add(ip.String())
 			}
 		}
 
-		c.Sets = c.Sets.Add(docker.ContainerIPs, hostIPs)
+		c.Sets = c.Sets.Add(docker.ContainerIPs, newIPs)
 		containers[id] = c
 	}
 
 	return containers
 }
 
+// ContainerWithHostIPsRenderer is a Renderer which produces a container graph
+// enriched with host IPs on containers where NetworkMode is Host
 var ContainerWithHostIPsRenderer = containerWithHostIPsRenderer{ContainerRenderer}
 
 type containerWithImageNameRenderer struct {
