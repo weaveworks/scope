@@ -12,22 +12,21 @@ export default function NodeShapeStack(props) {
   const propsOnlyHighlight = Object.assign({}, props, {onlyHighlight: true});
 
   const Shape = props.shape;
-  const [dx, dy] = [0, 6];
-  const ds = 0.075;
-  const dsx = (props.size * 2 + dx) / (props.size * 2);
-  const dsy = (props.size * 2 + dy) / (props.size * 2);
+  const [dx, dy] = [0, 4];
+  const dsx = (props.size * 2 + (dx * 2)) / (props.size * 2);
+  const dsy = (props.size * 2 + (dy * 2)) / (props.size * 2);
   const hls = [dsx, dsy];
 
   return (
     <g transform={`translate(${dx * -1}, ${dy * -1})`} className="stack">
-      <g transform={`translate(${dx * 2}, ${dy * 2}) scale(${1 - (2 * ds)}, ${1 - (2 * ds)})`}>
-        <Shape {...propsNoHighlight} />
-      </g>
-      <g transform={`translate(${dx * 1}, ${dy * 1}) scale(${1 - (1 * ds)}, ${1 - (1 * ds)})`}>
-        <Shape {...propsNoHighlight} />
-      </g>
-      <g transform={`translate(${dx * 0.5}, ${dy * 0.5}) scale(${hls})`} className="stack">
+      <g transform={`scale(${hls})translate(${dx}, ${dy}) `} className="stack">
         <Shape {...propsOnlyHighlight} />
+      </g>
+      <g transform={`translate(${dx * 2}, ${dy * 2})`}>
+        <Shape {...propsNoHighlight} />
+      </g>
+      <g transform={`translate(${dx * 1}, ${dy * 1})`}>
+        <Shape {...propsNoHighlight} />
       </g>
       <Shape {...propsNoHighlight} />
     </g>
