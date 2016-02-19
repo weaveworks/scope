@@ -203,7 +203,9 @@ func (c *container) StartGatheringStats() error {
 		}()
 
 		var stats docker.Stats
-		decoder := codec.NewDecoder(resp.Body, &codec.JsonHandle{})
+		// Use a buffer since the codec library doesn't implicitly do it
+		bufReader := bufio.NewReader(resp.Body)
+		decoder := codec.NewDecoder(bufReader, &codec.JsonHandle{})
 		for err := decoder.Decode(&stats); err != io.EOF; err = decoder.Decode(&stats) {
 			if err != nil {
 				log.Errorf("docker container: error reading event, did container stop? %v", err)
