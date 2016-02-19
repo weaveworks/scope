@@ -97,9 +97,6 @@ endif
 
 static: prog/static.go
 
-prog/static.go: client/build/app.js
-	esc -o $@ -prefix client/build client/build
-
 ifeq ($(BUILD_IN_CONTAINER),true)
 client/build/app.js: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	mkdir -p client/build
@@ -121,9 +118,21 @@ client-start: $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm start
+
+prog/static.go: client/build/app.js $(SCOPE_BACKEND_BUILD_UPTODATE)
+	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host \
+		-v $(shell pwd):/go/src/github.com/weaveworks/scope \
+		-v $(shell pwd)/.pkg:/go/pkg \
+		-w /go/src/github.com/weaveworks/scope \
+		--entrypoint=make \
+		$(SCOPE_BACKEND_BUILD_IMAGE) BUILD_IN_CONTAINER=false prog/static.go
+
 else
 client/build/app.js:
 	cd client && npm run build
+
+prog/static.go: client/build/app.js
+	esc -o $@ -prefix client/build client/build
 endif
 
 $(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
@@ -145,5 +154,4 @@ deps:
 	$(GO) get -u -f $(GO_BUILD_TAGS) \
 		github.com/FiloSottile/gvt \
 		github.com/mattn/goveralls \
-		github.com/mjibson/esc \
 		github.com/weaveworks/github-release

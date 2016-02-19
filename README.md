@@ -217,14 +217,16 @@ kubectl create -f scope-probe-ds.yaml
 
 ## <a name="developing"></a>Developing
 
-The build is in two stages. `make deps` installs some tools we use later in
-the build. `make` builds the UI build container, builds the UI in said
-container, builds the backend build container, builds the app and probe in a
-said container, and finally pushes the lot into a Docker image called
-**weaveworks/scope**.
+Building Scope from source depends on the latest version of
+[docker](https://www.docker.com/), so please install that before
+proceeding.
+
+The main build is `make`, which builds the UI build container, builds
+the UI in said container, builds the backend build container, builds
+the app and probe in a said container, and finally pushes the lot into
+a Docker image called **weaveworks/scope**.
 
 ```
-make deps
 make
 ```
 
@@ -233,6 +235,15 @@ Then, run the local build via
 ```
 ./scope launch
 ```
+
+If needed, install tools used for managing dependencies, managing releases, and doing coverage analysis via
+
+```
+make deps
+```
+
+Note that the tools from `make deps` will depend on a local install of
+[go](https://golang.org).
 
 ## <a name="developing"></a>Debugging
 
