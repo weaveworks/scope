@@ -48,4 +48,13 @@ func TestMemoise(t *testing.T) {
 	if calls != 2 {
 		t.Errorf("Expected renderer to have been called again for a different report")
 	}
+
+	render.ResetCache()
+	result4 := m.Render(rpt1)
+	if !reflect.DeepEqual(result1, result4) {
+		t.Errorf("Expected original result to be returned: %s", test.Diff(result1, result4))
+	}
+	if calls != 3 {
+		t.Errorf("Expected renderer to have been called again after cache reset")
+	}
 }

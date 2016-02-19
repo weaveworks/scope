@@ -51,7 +51,9 @@ func BenchmarkTopologyList(b *testing.B) {
 		Form: url.Values{},
 	}
 	for i := 0; i < b.N; i++ {
+		b.StopTimer()
 		render.ResetCache()
+		b.StartTimer()
 		topologyRegistry.renderTopologies(report, request)
 	}
 }
