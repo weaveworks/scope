@@ -131,7 +131,6 @@ var (
 			Pseudo:     false,
 			Shape:      square,
 			Stack:      true,
-			NodeCount:  2,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID],
 				fixture.Report.Process.Nodes[fixture.ClientProcess2NodeID],
@@ -150,7 +149,6 @@ var (
 			Pseudo:     false,
 			Shape:      square,
 			Stack:      true,
-			NodeCount:  1,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ServerProcessNodeID],
 			),
@@ -168,7 +166,6 @@ var (
 			Pseudo:     false,
 			Shape:      square,
 			Stack:      true,
-			NodeCount:  1,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.NonContainerProcessNodeID],
 			),
@@ -248,7 +245,6 @@ var (
 			Pseudo:     false,
 			Shape:      hexagon,
 			Stack:      true,
-			NodeCount:  1,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID],
 				fixture.Report.Process.Nodes[fixture.ClientProcess2NodeID],
@@ -268,7 +264,6 @@ var (
 			Pseudo:     false,
 			Shape:      hexagon,
 			Stack:      true,
-			NodeCount:  1,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ServerProcessNodeID],
 				fixture.Report.Container.Nodes[fixture.ServerContainerNodeID],
@@ -380,7 +375,6 @@ var (
 			Rank:       "ping/pong-a",
 			Pseudo:     false,
 			Shape:      pentagon,
-			NodeCount:  1,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID],
 				fixture.Report.Process.Nodes[fixture.ClientProcess2NodeID],
@@ -401,7 +395,6 @@ var (
 			Rank:       "ping/pong-b",
 			Pseudo:     false,
 			Shape:      pentagon,
-			NodeCount:  1,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ServerProcessNodeID],
 				fixture.Report.Container.Nodes[fixture.ServerContainerNodeID],
@@ -452,7 +445,6 @@ var (
 			Pseudo:     false,
 			Shape:      pentagon,
 			Stack:      true,
-			NodeCount:  2,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID],
 				fixture.Report.Process.Nodes[fixture.ClientProcess2NodeID],
