@@ -18,7 +18,7 @@ export default function NodeShapeStack(props) {
   const hls = [dsx, dsy];
 
   return (
-    <g transform={`translate(${dx * -1}, ${dy * -1})`} className="stack">
+    <g transform={`translate(${dx * -1}, ${dy * -2})`} className="stack">
       <g transform={`scale(${hls})translate(${dx}, ${dy}) `} className="stack">
         <Shape {...propsOnlyHighlight} />
       </g>
