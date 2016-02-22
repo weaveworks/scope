@@ -38,7 +38,8 @@ page('/state/:state', function(ctx) {
   route(state);
 });
 
-export function getRouter(base) {
-  page.base(base);
+export function getRouter() {
+  // strip any trailing '/'s.
+  page.base(window.location.pathname.replace(/\/$/, ''));
   return page;
 }

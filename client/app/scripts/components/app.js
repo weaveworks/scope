@@ -6,7 +6,7 @@ import Sidebar from './sidebar.js';
 import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
-import { getApiDetails, getTopologies } from '../utils/web-api-utils';
+import { getApiDetails, getTopologies, basePathSlash } from '../utils/web-api-utils';
 import { hitEsc } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
@@ -51,7 +51,7 @@ export default class App extends React.Component {
     AppStore.addListener(this.onChange);
     window.addEventListener('keyup', this.onKeyPress);
 
-    getRouter(this.props.base).start({hashbang: true});
+    getRouter().start({hashbang: true});
     if (!AppStore.isRouteSet()) {
       // dont request topologies when already done via router
       getTopologies(AppStore.getActiveTopologyOptions());
@@ -75,9 +75,9 @@ export default class App extends React.Component {
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 450 : 0;
     const topMargin = 100;
-    const contrastMode = this.props.base.indexOf('contrast') > -1;
+    const contrastMode = window.location.pathname.indexOf('contrast') > -1;
     // link url to switch contrast with current UI state
-    const otherContrastModeUrl = contrastMode ? '/' : '/contrast.html';
+    const otherContrastModeUrl = contrastMode ? basePathSlash(window.location.pathname) : 'contrast.html';
     const otherContrastModeTitle = contrastMode ? 'Switch to normal contrast' : 'Switch to high contrast';
 
     return (

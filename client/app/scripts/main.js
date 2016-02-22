@@ -6,4 +6,4 @@ import ReactDOM from 'react-dom';
 
 import App from './components/app.js';
 
-ReactDOM.render(<App base="" />, document.getElementById('app'));
+ReactDOM.render(<App />, document.getElementById('app'));
