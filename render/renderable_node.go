@@ -15,10 +15,21 @@ type RenderableNode struct {
 	Pseudo      bool           `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
 	Children    report.NodeSet `json:"children,omitempty"`    // Nodes which have been grouped into this one
 	ControlNode string         `json:"-"`                     // ID of node from which to show the controls in the UI
+	Shape       string         `json:"shape"`                 // Shape node should be rendered as
+	Stack       bool           `json:"stack"`                 // Should UI render this node as a stack?
 
 	report.EdgeMetadata `json:"metadata"` // Numeric sums
 	report.Node
 }
+
+// Shapes that are allowed
+const (
+	Circle   = "circle"
+	Square   = "square"
+	Pentagon = "pentagon"
+	Hexagon  = "hexagon"
+	Cloud    = "cloud"
+)
 
 // NewRenderableNode makes a new RenderableNode
 func NewRenderableNode(id string) RenderableNode {
@@ -30,6 +41,7 @@ func NewRenderableNode(id string) RenderableNode {
 		Pseudo:       false,
 		EdgeMetadata: report.EdgeMetadata{},
 		Node:         report.MakeNode(),
+		Shape:        Circle,
 	}
 }
 
@@ -44,6 +56,7 @@ func NewRenderableNodeWith(id, major, minor, rank string, node RenderableNode) R
 		Children:     node.Children.Copy(),
 		EdgeMetadata: node.EdgeMetadata.Copy(),
 		Node:         node.Node.Copy(),
+		Shape:        Circle,
 	}
 }
 
@@ -59,6 +72,7 @@ func NewDerivedNode(id string, node RenderableNode) RenderableNode {
 		EdgeMetadata: node.EdgeMetadata.Copy(),
 		Node:         node.Node.Copy(),
 		ControlNode:  "", // Do not propagate ControlNode when making a derived node!
+		Shape:        Circle,
 	}
 }
 
@@ -72,6 +86,7 @@ func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode 
 		Children:     node.Children.Copy(),
 		EdgeMetadata: node.EdgeMetadata.Copy(),
 		Node:         node.Node.Copy(),
+		Shape:        Circle,
 	}
 }
 
@@ -113,6 +128,7 @@ func (rn RenderableNode) Merge(other RenderableNode) RenderableNode {
 		panic(result.ID)
 	}
 
+	result.Stack = result.Stack || rn.Stack
 	result.Children = rn.Children.Merge(other.Children)
 	result.EdgeMetadata = rn.EdgeMetadata.Merge(other.EdgeMetadata)
 	result.Node = rn.Node.Merge(other.Node)
@@ -132,6 +148,8 @@ func (rn RenderableNode) Copy() RenderableNode {
 		EdgeMetadata: rn.EdgeMetadata.Copy(),
 		Node:         rn.Node.Copy(),
 		ControlNode:  rn.ControlNode,
+		Shape:        rn.Shape,
+		Stack:        rn.Stack,
 	}
 }
 

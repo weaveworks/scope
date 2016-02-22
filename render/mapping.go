@@ -39,6 +39,12 @@ const (
 // If the output is empty, the node shall be omitted from the rendered topology.
 type MapFunc func(RenderableNode, report.Networks) RenderableNodes
 
+func theInternetNode(m RenderableNode) RenderableNode {
+	r := newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)
+	r.Shape = Cloud
+	return r
+}
+
 // MapEndpointIdentity maps an endpoint topology node to a single endpoint
 // renderable node. As it is only ever run on endpoint topology nodes, we
 // expect that certain keys are present.
@@ -64,7 +70,7 @@ func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNode
 		// If the dstNodeAddr is not in a network local to this report, we emit an
 		// internet node
 		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-			return RenderableNodes{TheInternetID: newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)}
+			return RenderableNodes{TheInternetID: theInternetNode(m)}
 		}
 
 		// We are a 'client' pseudo node if the port is in the ephemeral port range.
@@ -117,7 +123,9 @@ func MapProcessIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 		rank, _  = m.Latest.Lookup(process.Name)
 	)
 
-	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
+	node := NewRenderableNodeWith(id, major, minor, rank, m)
+	node.Shape = Square
+	return RenderableNodes{id: node}
 }
 
 // MapContainerIdentity maps a container topology node to a container
@@ -138,6 +146,7 @@ func MapContainerIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 
 	node := NewRenderableNodeWith(id, major, minor, rank, m)
 	node.ControlNode = m.ID
+	node.Shape = Hexagon
 	return RenderableNodes{id: node}
 }
 
@@ -180,7 +189,10 @@ func MapContainerImageIdentity(m RenderableNode, _ report.Networks) RenderableNo
 		rank     = imageID
 	)
 
-	return RenderableNodes{id: NewRenderableNodeWith(id, major, "", rank, m)}
+	node := NewRenderableNodeWith(id, major, "", rank, m)
+	node.Shape = Hexagon
+	node.Stack = true
+	return RenderableNodes{id: node}
 }
 
 // MapPodIdentity maps a pod topology node to pod renderable node. As it is
@@ -198,7 +210,9 @@ func MapPodIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 		rank, _  = m.Latest.Lookup(kubernetes.PodID)
 	)
 
-	return RenderableNodes{id: NewRenderableNodeWith(id, major, "", rank, m)}
+	node := NewRenderableNodeWith(id, major, "", rank, m)
+	node.Shape = Pentagon
+	return RenderableNodes{id: node}
 }
 
 // MapServiceIdentity maps a service topology node to service renderable node. As it is
@@ -216,7 +230,10 @@ func MapServiceIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 		rank, _  = m.Latest.Lookup(kubernetes.ServiceID)
 	)
 
-	return RenderableNodes{id: NewRenderableNodeWith(id, major, "", rank, m)}
+	node := NewRenderableNodeWith(id, major, "", rank, m)
+	node.Shape = Pentagon
+	node.Stack = true
+	return RenderableNodes{id: node}
 }
 
 // MapAddressIdentity maps an address topology node to an address renderable
@@ -242,7 +259,7 @@ func MapAddressIdentity(m RenderableNode, local report.Networks) RenderableNodes
 		// If the addr is not in a network local to this report, we emit an
 		// internet node
 		if !local.Contains(net.ParseIP(addr)) {
-			return RenderableNodes{TheInternetID: newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)}
+			return RenderableNodes{TheInternetID: theInternetNode(m)}
 		}
 
 		// Otherwise generate a pseudo node for every
@@ -281,7 +298,9 @@ func MapHostIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 		major = hostname
 	}
 
-	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
+	node := NewRenderableNodeWith(id, major, minor, rank, m)
+	node.Shape = Circle
+	return RenderableNodes{id: node}
 }
 
 // MapEndpoint2IP maps endpoint nodes to their IP address, for joining
@@ -299,7 +318,7 @@ func MapEndpoint2IP(m RenderableNode, local report.Networks) RenderableNodes {
 		return RenderableNodes{}
 	}
 	if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-		return RenderableNodes{TheInternetID: newDerivedPseudoNode(TheInternetID, TheInternetMajor, m)}
+		return RenderableNodes{TheInternetID: theInternetNode(m)}
 	}
 
 	// We don't always know what port a container is listening on, and
@@ -376,8 +395,9 @@ func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 	}
 
 	id := MakeContainerID(containerID)
-
-	return RenderableNodes{id: NewDerivedNode(id, n.WithParents(report.EmptySets))}
+	node := NewDerivedNode(id, n.WithParents(report.EmptySets))
+	node.Shape = Hexagon
+	return RenderableNodes{id: node}
 }
 
 // MapEndpoint2Process maps endpoint RenderableNodes to process
@@ -402,7 +422,9 @@ func MapEndpoint2Process(n RenderableNode, _ report.Networks) RenderableNodes {
 	}
 
 	id := MakeProcessID(report.ExtractHostID(n.Node), pid)
-	return RenderableNodes{id: NewDerivedNode(id, n.WithParents(report.EmptySets))}
+	node := NewDerivedNode(id, n.WithParents(report.EmptySets))
+	node.Shape = Square
+	return RenderableNodes{id: node}
 }
 
 // MapProcess2Container maps process RenderableNodes to container
@@ -440,12 +462,15 @@ func MapProcess2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 	if containerID, ok := n.Node.Latest.Lookup(docker.ContainerID); ok {
 		id = MakeContainerID(containerID)
 		node = NewDerivedNode(id, n)
+		node.Shape = Hexagon
 	} else {
 		nCopy := n.Copy()
 		nCopy.Node = nCopy.Node.WithID("").WithTopology("") // Wipe the ID so it cannot be rendered.
 		id = MakePseudoNodeID(UncontainedID, hostID)
 		node = newDerivedPseudoNode(id, UncontainedMajor, nCopy)
 		node.LabelMinor = hostID
+		node.Shape = Square
+		node.Stack = true
 	}
 
 	node.Children = node.Children.Add(n.Node)
@@ -475,6 +500,8 @@ func MapProcess2Name(n RenderableNode, _ report.Networks) RenderableNodes {
 	node.Node.Topology = "process_name"
 	node.Node.ID = name
 	node.Children = node.Children.Add(n.Node)
+	node.Shape = Square
+	node.Stack = true
 	return RenderableNodes{name: node}
 }
 
@@ -529,6 +556,8 @@ func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) Renderable
 
 	result.Node.Topology = "container_image"
 	result.Node.ID = report.MakeContainerImageNodeID(imageID)
+	result.Shape = Hexagon
+	result.Stack = true
 	return RenderableNodes{id: result}
 }
 
@@ -561,6 +590,8 @@ func MapPod2Service(n RenderableNode, _ report.Networks) RenderableNodes {
 		n := NewDerivedNode(id, n.WithParents(report.EmptySets))
 		n.Node.Counters = n.Node.Counters.Add(podsKey, 1)
 		n.Children = n.Children.Add(n.Node)
+		n.Shape = Pentagon
+		n.Stack = true
 		result[id] = n
 	}
 	return result
@@ -600,6 +631,8 @@ func MapContainerImage2Name(n RenderableNode, _ report.Networks) RenderableNodes
 	node.LabelMajor = name
 	node.Rank = name
 	node.Node = n.Node.Copy() // Propagate NMD for container counting.
+	node.Shape = Hexagon
+	node.Stack = true
 	return RenderableNodes{id: node}
 }
 
@@ -624,6 +657,7 @@ func MapX2Host(n RenderableNode, _ report.Networks) RenderableNodes {
 	id := MakeHostID(report.ExtractHostID(n.Node))
 	result := NewDerivedNode(id, n.WithParents(report.EmptySets))
 	result.Children = result.Children.Add(n.Node)
+	result.Shape = Circle
 	return RenderableNodes{id: result}
 }
 
@@ -669,7 +703,7 @@ func MapContainer2Pod(n RenderableNode, _ report.Networks) RenderableNodes {
 	}
 
 	result.Children = result.Children.Add(n.Node)
-
+	result.Shape = Pentagon
 	return RenderableNodes{id: result}
 }
 
@@ -693,12 +727,11 @@ func MapContainer2Hostname(n RenderableNode, _ report.Networks) RenderableNodes 
 
 	// Add container id key to the counters, which will later be counted to produce the minor label
 	result.Counters = result.Counters.Add(ContainersKey, 1)
-
 	result.Node.Topology = "container_hostname"
 	result.Node.ID = id
-
 	result.Children = result.Children.Add(n.Node)
-
+	result.Shape = Hexagon
+	result.Stack = true
 	return RenderableNodes{id: result}
 }
 

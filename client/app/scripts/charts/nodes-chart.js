@@ -142,11 +142,15 @@ export default class NodesChart extends React.Component {
             blurred={node.get('blurred')}
             focused={node.get('focused')}
             highlighted={node.get('highlighted')}
+            topologyId={this.props.topologyId}
+            shape={node.get('shape')}
+            stack={node.get('stack')}
             onClick={onNodeClick}
             key={node.get('id')}
             id={node.get('id')}
             label={node.get('label')}
             pseudo={node.get('pseudo')}
+            nodeCount={node.get('nodeCount')}
             subLabel={node.get('subLabel')}
             rank={node.get('rank')}
             selectedNodeScale={selectedNodeScale}
@@ -243,7 +247,10 @@ export default class NodesChart extends React.Component {
         label: node.get('label_major'),
         pseudo: node.get('pseudo'),
         subLabel: node.get('label_minor'),
+        nodeCount: node.get('node_count'),
         rank: node.get('rank'),
+        shape: node.get('shape'),
+        stack: node.get('stack'),
         x: 0,
         y: 0
       });
