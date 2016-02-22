@@ -11,7 +11,7 @@ import (
 // to the UI.
 type Pipe interface {
 	Ends() (io.ReadWriter, io.ReadWriter)
-	CopyToWebsocket(io.ReadWriter, *websocket.Conn) error
+	CopyToWebsocket(io.ReadWriter, Websocket) error
 
 	Close() error
 	Closed() bool
@@ -83,7 +83,7 @@ func (p *pipe) OnClose(f func()) {
 }
 
 // CopyToWebsocket copies pipe data to/from a websocket.  It blocks.
-func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn *websocket.Conn) error {
+func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) error {
 	p.mtx.Lock()
 	if p.closed {
 		p.mtx.Unlock()

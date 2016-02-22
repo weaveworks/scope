@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	websocketLoop    = 1 * time.Second
-	websocketTimeout = 10 * time.Second
+	websocketLoop = 1 * time.Second
 )
 
 // APITopology is returned by the /api/topology/{name} handler.
@@ -79,17 +78,18 @@ func handleWebsocket(
 	renderer render.Renderer,
 	loop time.Duration,
 ) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	wsConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		// log.Info("Upgrade:", err)
 		return
 	}
+	conn := xfer.Ping(wsConn)
 	defer conn.Close()
 
 	quit := make(chan struct{})
-	go func(c *websocket.Conn) {
+	go func(c xfer.Websocket) {
 		for { // just discard everything the browser sends
-			if _, _, err := c.NextReader(); err != nil {
+			if _, _, err := c.ReadMessage(); err != nil {
 				if !xfer.IsExpectedWSCloseError(err) {
 					log.Println("err:", err)
 				}
@@ -112,15 +112,10 @@ func handleWebsocket(
 		diff := render.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
-		if err := conn.SetWriteDeadline(time.Now().Add(websocketTimeout)); err != nil {
+		if err := conn.WriteJSON(diff); err != nil {
 			if !xfer.IsExpectedWSCloseError(err) {
-				log.Println("err:", err)
+				log.Errorf("cannot serialize topology diff: %s", err)
 			}
-			return
-		}
-
-		if err := xfer.WriteJSONtoWS(conn, diff); err != nil {
-			log.Errorf("cannot serialize topology diff: %s", err)
 			return
 		}
 

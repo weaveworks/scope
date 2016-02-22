@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/websocket"
-
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
@@ -43,11 +41,11 @@ func TestControls(t *testing.T) {
 
 type mockPipe struct{}
 
-func (mockPipe) Ends() (io.ReadWriter, io.ReadWriter)                 { return nil, nil }
-func (mockPipe) CopyToWebsocket(io.ReadWriter, *websocket.Conn) error { return nil }
-func (mockPipe) Close() error                                         { return nil }
-func (mockPipe) Closed() bool                                         { return false }
-func (mockPipe) OnClose(func())                                       {}
+func (mockPipe) Ends() (io.ReadWriter, io.ReadWriter)                { return nil, nil }
+func (mockPipe) CopyToWebsocket(io.ReadWriter, xfer.Websocket) error { return nil }
+func (mockPipe) Close() error                                        { return nil }
+func (mockPipe) Closed() bool                                        { return false }
+func (mockPipe) OnClose(func())                                      {}
 
 func TestPipes(t *testing.T) {
 	oldNewPipe := controls.NewPipe
