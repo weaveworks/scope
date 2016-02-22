@@ -148,7 +148,7 @@ function lint_files {
 
 function list_files {
 	if [ $# -gt 0 ]; then
-		find "$@" -type f | grep -vE '(^\./\.git|^\./\.pkg|/vendor/|/client/node_modules/)'
+		find "$@" -type f | grep -vE '(^\./\.git|^\./\.pkg|/vendor/)'
 	else
 		git diff --cached --name-only
 	fi
