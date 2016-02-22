@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/net/context"
+
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -11,6 +13,7 @@ import (
 )
 
 func TestCollector(t *testing.T) {
+	ctx := context.Background()
 	window := time.Millisecond
 	c := app.NewCollector(window)
 
@@ -20,32 +23,33 @@ func TestCollector(t *testing.T) {
 	r2 := report.MakeReport()
 	r2.Endpoint.AddNode("bar", report.MakeNode())
 
-	if want, have := report.MakeReport(), c.Report(); !reflect.DeepEqual(want, have) {
+	if want, have := report.MakeReport(), c.Report(ctx); !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 
-	c.Add(r1)
-	if want, have := r1, c.Report(); !reflect.DeepEqual(want, have) {
+	c.Add(ctx, r1)
+	if want, have := r1, c.Report(ctx); !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 
-	c.Add(r2)
+	c.Add(ctx, r2)
 
 	merged := report.MakeReport()
 	merged = merged.Merge(r1)
 	merged = merged.Merge(r2)
-	if want, have := merged, c.Report(); !reflect.DeepEqual(want, have) {
+	if want, have := merged, c.Report(ctx); !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestCollectorWait(t *testing.T) {
+	ctx := context.Background()
 	window := time.Millisecond
 	c := app.NewCollector(window)
 
 	waiter := make(chan struct{}, 1)
-	c.WaitOn(waiter)
-	defer c.UnWait(waiter)
+	c.WaitOn(ctx, waiter)
+	defer c.UnWait(ctx, waiter)
 	c.(interface {
 		Broadcast()
 	}).Broadcast()

@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ugorji/go/codec"
+	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/test"
@@ -73,7 +74,8 @@ func TestReportPostHandler(t *testing.T) {
 			t.Fatalf("Error posting report: %d", resp.StatusCode)
 		}
 
-		if want, have := fixture.Report.Endpoint.Nodes, c.Report().Endpoint.Nodes; len(have) == 0 || len(want) != len(have) {
+		ctx := context.Background()
+		if want, have := fixture.Report.Endpoint.Nodes, c.Report(ctx).Endpoint.Nodes; len(have) == 0 || len(want) != len(have) {
 			t.Fatalf("Content-Type %s: %v", contentType, test.Diff(have, want))
 		}
 	}

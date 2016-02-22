@@ -23,8 +23,8 @@ import (
 func router(c app.Collector) http.Handler {
 	router := mux.NewRouter()
 	app.RegisterReportPostHandler(c, router)
-	app.RegisterControlRoutes(router)
-	app.RegisterPipeRoutes(router)
+	app.RegisterControlRoutes(router, app.NewLocalControlRouter())
+	app.RegisterPipeRoutes(router, app.NewLocalPipeRouter())
 	return app.TopologyHandler(c, router, http.FileServer(FS(false)))
 }
 

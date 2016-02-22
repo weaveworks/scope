@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/mux"
+	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -192,9 +193,9 @@ func (r *registry) walk(f func(APITopologyDesc)) {
 }
 
 // makeTopologyList returns a handler that yields an APITopologyList.
-func (r *registry) makeTopologyList(rep Reporter) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		topologies := r.renderTopologies(rep.Report(), req)
+func (r *registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		topologies := r.renderTopologies(rep.Report(ctx), req)
 		respondWith(w, http.StatusOK, topologies)
 	}
 }
@@ -252,27 +253,27 @@ func renderedForRequest(r *http.Request, topology APITopologyDesc) render.Render
 	return renderer
 }
 
-type reportRenderHandler func(Reporter, render.Renderer, http.ResponseWriter, *http.Request)
+type reportRenderHandler func(context.Context, Reporter, render.Renderer, http.ResponseWriter, *http.Request)
 
-func (r *registry) captureRenderer(rep Reporter, f reportRenderHandler) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
+func (r *registry) captureRenderer(rep Reporter, f reportRenderHandler) CtxHandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		topology, ok := r.get(mux.Vars(req)["topology"])
 		if !ok {
 			http.NotFound(w, req)
 			return
 		}
 		renderer := renderedForRequest(req, topology)
-		f(rep, renderer, w, req)
+		f(ctx, rep, renderer, w, req)
 	}
 }
 
-func (r *registry) captureRendererWithoutFilters(rep Reporter, topologyID string, f reportRenderHandler) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
+func (r *registry) captureRendererWithoutFilters(rep Reporter, topologyID string, f reportRenderHandler) CtxHandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		topology, ok := r.get(topologyID)
 		if !ok {
 			http.NotFound(w, req)
 			return
 		}
-		f(rep, topology.renderer, w, req)
+		f(ctx, rep, topology.renderer, w, req)
 	}
 }

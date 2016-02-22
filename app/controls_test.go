@@ -18,7 +18,7 @@ import (
 
 func TestControl(t *testing.T) {
 	router := mux.NewRouter()
-	app.RegisterControlRoutes(router)
+	app.RegisterControlRoutes(router, app.NewLocalControlRouter())
 	server := httptest.NewServer(router)
 	defer server.Close()
 

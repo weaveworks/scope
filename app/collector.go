@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/spaolacci/murmur3"
+	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/report"
 )
@@ -13,15 +14,15 @@ import (
 // Reporter is something that can produce reports on demand. It's a convenient
 // interface for parts of the app, and several experimental components.
 type Reporter interface {
-	Report() report.Report
-	WaitOn(chan struct{})
-	UnWait(chan struct{})
+	Report(context.Context) report.Report
+	WaitOn(context.Context, chan struct{})
+	UnWait(context.Context, chan struct{})
 }
 
 // Adder is something that can accept reports. It's a convenient interface for
 // parts of the app, and several experimental components.
 type Adder interface {
-	Add(report.Report)
+	Add(context.Context, report.Report)
 }
 
 // A Collector is a Reporter and an Adder
@@ -45,13 +46,13 @@ type waitableCondition struct {
 	waiters map[chan struct{}]struct{}
 }
 
-func (wc *waitableCondition) WaitOn(waiter chan struct{}) {
+func (wc *waitableCondition) WaitOn(_ context.Context, waiter chan struct{}) {
 	wc.Lock()
 	wc.waiters[waiter] = struct{}{}
 	wc.Unlock()
 }
 
-func (wc *waitableCondition) UnWait(waiter chan struct{}) {
+func (wc *waitableCondition) UnWait(_ context.Context, waiter chan struct{}) {
 	wc.Lock()
 	delete(wc.waiters, waiter)
 	wc.Unlock()
@@ -82,7 +83,7 @@ func NewCollector(window time.Duration) Collector {
 var now = time.Now
 
 // Add adds a report to the collector's internal state. It implements Adder.
-func (c *collector) Add(rpt report.Report) {
+func (c *collector) Add(_ context.Context, rpt report.Report) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	c.reports = append(c.reports, timestampReport{now(), rpt})
@@ -95,7 +96,7 @@ func (c *collector) Add(rpt report.Report) {
 
 // Report returns a merged report over all added reports. It implements
 // Reporter.
-func (c *collector) Report() report.Report {
+func (c *collector) Report(_ context.Context) report.Report {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
