@@ -85,7 +85,7 @@ function lint_go {
 		if [ -z "$IGNORE_LINT_COMMENT"  ]; then
 			lintoutput=$(golint "${filename}")
 		else
-			lintoutput=$(golint "${filename}" | grep -vE 'comment|dot imports')
+			lintoutput=$(golint "${filename}" | grep -vE 'comment|dot imports|ALL_CAPS')
 		fi
 		if [ -n "$lintoutput" ]; then
 			lint_result=1
@@ -148,7 +148,7 @@ function lint_files {
 
 function list_files {
 	if [ $# -gt 0 ]; then
-		find "$@" -type f | grep -vE '(^\./\.git|^\./\.pkg|/vendor/|/client/node_modules/)'
+		find "$@" -type f | grep -vE '(^\./\.git|^\./\.pkg|/vendor/|/node_modules/|\.codecgen\.go$|\.generated\.go$)'
 	else
 		git diff --cached --name-only
 	fi
