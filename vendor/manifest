@@ -40,6 +40,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/aws/aws-sdk-go",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "9e7816464bb6044ae17fff44ce59387d2658e2cb",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/beorn7/perks/quantile",
 			"repository": "https://github.com/beorn7/perks",
 			"revision": "b965b613227fddccbfffe13eae360ed3fa822f8d",
@@ -564,6 +570,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/go-ini/ini",
+			"repository": "https://github.com/go-ini/ini",
+			"revision": "467243bad6cb295e0fe72366da5ba85b069874cb",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/golang/glog",
 			"repository": "https://github.com/golang/glog",
 			"revision": "fca8c8854093a154ff1eb580aae10276ad6b1b5f",
@@ -638,9 +650,21 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/jmespath/go-jmespath",
+			"repository": "https://github.com/jmespath/go-jmespath",
+			"revision": "c01cf91b011868172fdcd9f41838e80c9d716264",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/juju/ratelimit",
 			"repository": "https://github.com/juju/ratelimit",
 			"revision": "77ed1c8a01217656d2080ad51981f6e99adaa177",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/lsegal/gucumber",
+			"repository": "https://github.com/lsegal/gucumber",
+			"revision": "e8116c9c66e641e9f81fc0a79fac923dfc646378",
 			"branch": "master"
 		},
 		{
@@ -764,6 +788,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/shiena/ansicolor",
+			"repository": "https://github.com/shiena/ansicolor",
+			"revision": "a422bbe96644373c5753384a59d678f7d261ff10",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/shurcooL/sanitized_anchor_name",
 			"repository": "https://github.com/shurcooL/sanitized_anchor_name",
 			"revision": "244f5ac324cb97e1987ef901a0081a77bfd8e845",
@@ -786,6 +816,13 @@
 			"repository": "https://github.com/spf13/pflag",
 			"revision": "08b1a584251b5b62f458943640fc8ebd4d50aaa5",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/stretchr/testify/assert",
+			"repository": "https://github.com/stretchr/testify",
+			"revision": "e3a8ff8ce36581f87a15341206f205b1da467059",
+			"branch": "master",
+			"path": "/assert"
 		},
 		{
 			"importpath": "github.com/ugorji/go/codec",
@@ -848,6 +885,41 @@
 			"revision": "2cba614e8ff920c60240d2677bc019af32ee04e5",
 			"branch": "master",
 			"path": "/context"
+		},
+		{
+			"importpath": "golang.org/x/tools/go/ast/astutil",
+			"repository": "https://go.googlesource.com/tools",
+			"revision": "1cdaff4a02c554c9fb39dda0b56241c5f0949d91",
+			"branch": "master",
+			"path": "/go/ast/astutil"
+		},
+		{
+			"importpath": "golang.org/x/tools/go/buildutil",
+			"repository": "https://go.googlesource.com/tools",
+			"revision": "1cdaff4a02c554c9fb39dda0b56241c5f0949d91",
+			"branch": "master",
+			"path": "/go/buildutil"
+		},
+		{
+			"importpath": "golang.org/x/tools/go/exact",
+			"repository": "https://go.googlesource.com/tools",
+			"revision": "1cdaff4a02c554c9fb39dda0b56241c5f0949d91",
+			"branch": "master",
+			"path": "/go/exact"
+		},
+		{
+			"importpath": "golang.org/x/tools/go/loader",
+			"repository": "https://go.googlesource.com/tools",
+			"revision": "1cdaff4a02c554c9fb39dda0b56241c5f0949d91",
+			"branch": "master",
+			"path": "/go/loader"
+		},
+		{
+			"importpath": "golang.org/x/tools/go/types",
+			"repository": "https://go.googlesource.com/tools",
+			"revision": "1cdaff4a02c554c9fb39dda0b56241c5f0949d91",
+			"branch": "master",
+			"path": "/go/types"
 		},
 		{
 			"importpath": "gopkg.in/yaml.v2",
