@@ -44,12 +44,18 @@ $(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
-$(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name *.go) prog/static.go
+$(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name *.go) prog/static.go $(CODECGEN_TARGETS)
 
+report/report.codecgen.go: $(call GET_CODECGEN_DEPS,report/) $(CODECGEN_EXE)
+render/render.codecgen.go: $(call GET_CODECGEN_DEPS,render/) $(CODECGEN_EXE)
+render/detailed/detailed.codecgen.go: $(call GET_CODECGEN_DEPS,render/detailed/) $(CODECGEN_EXE)
+$(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
+static: prog/static.go
+prog/static.go: client/build/app.js
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 
-$(SCOPE_EXE) $(RUNSVINIT) lint tests shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(SCOPE_EXE) $(RUNSVINIT) $(CODECGEN_TARGETS) $(CODECGEN_EXE) lint tests shell prog/static.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	@mkdir -p $(shell pwd)/.pkg
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 		-v $(shell pwd):/go/src/github.com/weaveworks/scope \
@@ -61,7 +67,7 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 
 else
 
-$(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS)
+$(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
@@ -72,32 +78,31 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS)
 	        false; \
 	    }
 
-report/report.codecgen.go: $(call GET_CODECGEN_DEPS,report/)
-render/render.codecgen.go: $(call GET_CODECGEN_DEPS,render/)
-render/detailed/detailed.codecgen.go: $(call GET_CODECGEN_DEPS,render/detailed/)
-%.codecgen.go: $(CODECGEN_EXE)
-	cd $(@D) && env -u GOARCH -u GOOS $(shell pwd)/$(CODECGEN_EXE) -u -o $(@F) $(notdir $(filter-out $<,$^))
+%.codecgen.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
+	cd $(@D) && env -u GOARCH -u GOOS $(shell pwd)/$(CODECGEN_EXE) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
 
-$(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
+$(CODECGEN_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	env -u GOARCH -u GOOS $(GO) build $(GO_BUILD_TAGS) -o $@ ./$(@D)
 
-$(RUNSVINIT):
+$(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 
-shell:
+shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	/bin/bash
 
-tests:
+tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	./tools/test -no-go-get
 
-lint:
+lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	./tools/lint .
+
+prog/static.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
+	esc -o $@ -prefix client/build client/build
 
 endif
 
-static: prog/static.go
-
 ifeq ($(BUILD_IN_CONTAINER),true)
+
 client/build/app.js: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	mkdir -p client/build
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
@@ -119,20 +124,11 @@ client-start: $(SCOPE_UI_BUILD_UPTODATE)
 		-v $(shell pwd)/client/build:/home/weave/build \
 		$(SCOPE_UI_BUILD_IMAGE) npm start
 
-prog/static.go: client/build/app.js $(SCOPE_BACKEND_BUILD_UPTODATE)
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host \
-		-v $(shell pwd):/go/src/github.com/weaveworks/scope \
-		-v $(shell pwd)/.pkg:/go/pkg \
-		-w /go/src/github.com/weaveworks/scope \
-		--entrypoint=make \
-		$(SCOPE_BACKEND_BUILD_IMAGE) BUILD_IN_CONTAINER=false prog/static.go
-
 else
+
 client/build/app.js:
 	cd client && npm run build
 
-prog/static.go: client/build/app.js
-	esc -o $@ -prefix client/build client/build
 endif
 
 $(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
