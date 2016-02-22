@@ -2,12 +2,13 @@ package app
 
 import (
 	"net/http"
+
+	"golang.org/x/net/context"
 )
 
 // Raw report handler
-func makeRawReportHandler(rep Reporter) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// r.ParseForm()
-		respondWith(w, http.StatusOK, rep.Report())
+func makeRawReportHandler(rep Reporter) CtxHandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		respondWith(w, http.StatusOK, rep.Report(ctx))
 	}
 }

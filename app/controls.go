@@ -1,122 +1,84 @@
 package app
 
 import (
-	"math/rand"
 	"net/http"
 	"net/rpc"
-	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/xfer"
 )
 
 // RegisterControlRoutes registers the various control routes with a http mux.
-func RegisterControlRoutes(router *mux.Router) {
-	controlRouter := &controlRouter{
-		probes: map[string]controlHandler{},
-	}
-	router.Methods("GET").Path("/api/control/ws").HandlerFunc(controlRouter.handleProbeWS)
-	router.Methods("POST").MatcherFunc(URLMatcher("/api/control/{probeID}/{nodeID}/{control}")).HandlerFunc(controlRouter.handleControl)
-}
-
-type controlHandler struct {
-	id     int64
-	client *rpc.Client
-}
-
-type controlRouter struct {
-	sync.Mutex
-	probes map[string]controlHandler
-}
-
-func (ch *controlHandler) handle(req xfer.Request) xfer.Response {
-	var res xfer.Response
-	if err := ch.client.Call("control.Handle", req, &res); err != nil {
-		return xfer.ResponseError(err)
-	}
-	return res
-}
-
-func (cr *controlRouter) get(probeID string) (controlHandler, bool) {
-	cr.Lock()
-	defer cr.Unlock()
-	handler, ok := cr.probes[probeID]
-	return handler, ok
-}
-
-func (cr *controlRouter) set(probeID string, handler controlHandler) {
-	cr.Lock()
-	defer cr.Unlock()
-	cr.probes[probeID] = handler
-}
-
-func (cr *controlRouter) rm(probeID string, handler controlHandler) {
-	cr.Lock()
-	defer cr.Unlock()
-	// NB probe might have reconnected in the mean time, need to ensure we do not
-	// delete new connection!  Also, it might have connected then deleted itself!
-	if cr.probes[probeID].id == handler.id {
-		delete(cr.probes, probeID)
-	}
+func RegisterControlRoutes(router *mux.Router, cr ControlRouter) {
+	router.Methods("GET").Path("/api/control/ws").
+		HandlerFunc(requestContextDecorator(handleProbeWS(cr)))
+	router.Methods("POST").MatcherFunc(URLMatcher("/api/control/{probeID}/{nodeID}/{control}")).
+		HandlerFunc(requestContextDecorator(handleControl(cr)))
 }
 
 // handleControl routes control requests from the client to the appropriate
 // probe.  Its is blocking.
-func (cr *controlRouter) handleControl(w http.ResponseWriter, r *http.Request) {
-	var (
-		vars    = mux.Vars(r)
-		probeID = vars["probeID"]
-		nodeID  = vars["nodeID"]
-		control = vars["control"]
-	)
-	handler, ok := cr.get(probeID)
-	if !ok {
-		log.Errorf("Probe %s is not connected right now...", probeID)
-		http.NotFound(w, r)
-		return
+func handleControl(cr ControlRouter) CtxHandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		var (
+			vars    = mux.Vars(r)
+			probeID = vars["probeID"]
+			nodeID  = vars["nodeID"]
+			control = vars["control"]
+		)
+		result, err := cr.Handle(ctx, probeID, xfer.Request{
+			AppID:   UniqueID,
+			NodeID:  nodeID,
+			Control: control,
+		})
+		if err != nil {
+			respondWith(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if result.Error != "" {
+			respondWith(w, http.StatusBadRequest, result.Error)
+			return
+		}
+		respondWith(w, http.StatusOK, result)
 	}
-
-	result := handler.handle(xfer.Request{
-		AppID:   UniqueID,
-		NodeID:  nodeID,
-		Control: control,
-	})
-	if result.Error != "" {
-		respondWith(w, http.StatusBadRequest, result.Error)
-		return
-	}
-	respondWith(w, http.StatusOK, result)
 }
 
 // handleProbeWS accepts websocket connections from the probe and registers
 // them in the control router, such that HandleControl calls can find them.
-func (cr *controlRouter) handleProbeWS(w http.ResponseWriter, r *http.Request) {
-	probeID := r.Header.Get(xfer.ScopeProbeIDHeader)
-	if probeID == "" {
-		respondWith(w, http.StatusBadRequest, xfer.ScopeProbeIDHeader)
-		return
+func handleProbeWS(cr ControlRouter) CtxHandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		probeID := r.Header.Get(xfer.ScopeProbeIDHeader)
+		if probeID == "" {
+			respondWith(w, http.StatusBadRequest, xfer.ScopeProbeIDHeader)
+			return
+		}
+
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Printf("Error upgrading control websocket: %v", err)
+			return
+		}
+		defer conn.Close()
+
+		codec := xfer.NewJSONWebsocketCodec(conn)
+		client := rpc.NewClientWithCodec(codec)
+		defer client.Close()
+
+		id, err := cr.Register(ctx, probeID, func(req xfer.Request) xfer.Response {
+			var res xfer.Response
+			if err := client.Call("control.Handle", req, &res); err != nil {
+				return xfer.ResponseError(err)
+			}
+			return res
+		})
+		if err != nil {
+			respondWith(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		defer cr.Deregister(ctx, probeID, id)
+		codec.WaitForReadError()
 	}
-
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Errorf("Error upgrading to websocket: %v", err)
-		return
-	}
-	defer conn.Close()
-
-	codec := xfer.NewJSONWebsocketCodec(conn)
-	client := rpc.NewClientWithCodec(codec)
-	handler := controlHandler{
-		id:     rand.Int63(),
-		client: client,
-	}
-
-	cr.set(probeID, handler)
-
-	codec.WaitForReadError()
-
-	cr.rm(probeID, handler)
-	client.Close()
 }

@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/common/xfer"
@@ -22,7 +23,8 @@ import (
 
 func TestPipeTimeout(t *testing.T) {
 	router := mux.NewRouter()
-	pr := RegisterPipeRoutes(router)
+	pr := NewLocalPipeRouter().(*localPipeRouter)
+	RegisterPipeRoutes(router, pr)
 	pr.Stop() // we don't want the loop running in the background
 
 	mtime.NowForce(time.Now())
@@ -30,7 +32,8 @@ func TestPipeTimeout(t *testing.T) {
 
 	// create a new pipe.
 	id := "foo"
-	pipe, ok := pr.getOrCreate(id)
+	ctx := context.Background()
+	pipe, _, ok := pr.Get(ctx, id, UIEnd)
 	if !ok {
 		t.Fatalf("not ok")
 	}
@@ -65,7 +68,8 @@ func (a adapter) PipeClose(_, pipeID string) error {
 
 func TestPipeClose(t *testing.T) {
 	router := mux.NewRouter()
-	pr := RegisterPipeRoutes(router)
+	pr := NewLocalPipeRouter()
+	RegisterPipeRoutes(router, pr)
 	defer pr.Stop()
 
 	server := httptest.NewServer(router)
