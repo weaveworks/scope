@@ -24,8 +24,8 @@ RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
 GO ?= env GO15VENDOREXPERIMENT=1 go
 GO_BUILD_INSTALL_DEPS=-i
-GO_BUILD_TAGS=-tags 'netgo unsafe'
-GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" $(GO_BUILD_TAGS)
+GO_BUILD_TAGS='netgo unsafe'
+GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags $(GO_BUILD_TAGS)
 
 all: $(SCOPE_EXPORT)
 
@@ -79,10 +79,10 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	    }
 
 %.codecgen.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	cd $(@D) && env -u GOARCH -u GOOS $(shell pwd)/$(CODECGEN_EXE) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
+	cd $(@D) && env -u GOARCH -u GOOS $(shell pwd)/$(CODECGEN_EXE) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
 
 $(CODECGEN_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
-	env -u GOARCH -u GOOS $(GO) build $(GO_BUILD_TAGS) -o $@ ./$(@D)
+	env -u GOARCH -u GOOS $(GO) build -tags $(GO_BUILD_TAGS) -o $@ ./$(@D)
 
 $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
@@ -147,7 +147,7 @@ clean:
 		$(CODECGEN_TARGETS) $(CODECGEN_EXE)
 
 deps:
-	$(GO) get -u -f $(GO_BUILD_TAGS) \
+	$(GO) get -u -f -tags $(GO_BUILD_TAGS) \
 		github.com/FiloSottile/gvt \
 		github.com/mattn/goveralls \
 		github.com/weaveworks/github-release
