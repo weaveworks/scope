@@ -24,7 +24,7 @@ RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
 GO ?= env GO15VENDOREXPERIMENT=1 go
 GO_BUILD_INSTALL_DEPS=-i
-GO_BUILD_TAGS=-tags netgo
+GO_BUILD_TAGS=-tags 'netgo unsafe'
 GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" $(GO_BUILD_TAGS)
 
 all: $(SCOPE_EXPORT)
