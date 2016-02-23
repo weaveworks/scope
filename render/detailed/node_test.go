@@ -10,21 +10,29 @@ import (
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
+	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 )
 
 func TestMakeDetailedHostNode(t *testing.T) {
-	renderableNode := render.HostRenderer.Render(fixture.Report)[render.MakeHostID(fixture.ClientHostID)]
-	have := detailed.MakeNode(fixture.Report, renderableNode)
+	renderableNodes := render.HostRenderer.Render(fixture.Report)
+	renderableNode := renderableNodes[render.MakeHostID(fixture.ClientHostID)]
+	have := detailed.MakeNode("hosts", fixture.Report, renderableNodes, renderableNode)
 
 	containerImageNodeSummary, _ := detailed.MakeNodeSummary(
-		render.ContainerImageRenderer.Render(fixture.Report)[render.MakeContainerImageID(fixture.ClientContainerImageName)].Node,
+		render.ContainerImageRenderer.Render(fixture.Report)[expected.ClientContainerImageID],
 	)
-	containerNodeSummary, _ := detailed.MakeNodeSummary(fixture.Report.Container.Nodes[fixture.ClientContainerNodeID])
-	process1NodeSummary, _ := detailed.MakeNodeSummary(fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID])
+	containerNodeSummary, _ := detailed.MakeNodeSummary(
+		render.ContainerRenderer.Render(fixture.Report)[expected.ClientContainerID],
+	)
+	process1NodeSummary, _ := detailed.MakeNodeSummary(
+		render.ProcessRenderer.Render(fixture.Report)[expected.ClientProcess1ID],
+	)
 	process1NodeSummary.Linkable = true
-	process2NodeSummary, _ := detailed.MakeNodeSummary(fixture.Report.Process.Nodes[fixture.ClientProcess2NodeID])
+	process2NodeSummary, _ := detailed.MakeNodeSummary(
+		render.ProcessRenderer.Render(fixture.Report)[expected.ClientProcess2ID],
+	)
 	process2NodeSummary.Linkable = true
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
@@ -85,20 +93,54 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			{
 				Label:      "Containers",
 				TopologyID: "containers",
-				Columns:    []detailed.Column{docker.CPUTotalUsage, docker.MemoryUsage},
+				Columns:    []detailed.Column{detailed.MakeColumn(docker.CPUTotalUsage), detailed.MakeColumn(docker.MemoryUsage)},
 				Nodes:      []detailed.NodeSummary{containerNodeSummary},
 			},
 			{
 				Label:      "Processes",
 				TopologyID: "processes",
-				Columns:    []detailed.Column{process.PID, process.CPUUsage, process.MemoryUsage},
+				Columns:    []detailed.Column{detailed.MakeColumn(process.PID), detailed.MakeColumn(process.CPUUsage), detailed.MakeColumn(process.MemoryUsage)},
 				Nodes:      []detailed.NodeSummary{process1NodeSummary, process2NodeSummary},
 			},
 			{
 				Label:      "Container Images",
 				TopologyID: "containers-by-image",
-				Columns:    []detailed.Column{render.ContainersKey},
+				Columns:    []detailed.Column{detailed.MakeColumn(render.ContainersKey)},
 				Nodes:      []detailed.NodeSummary{containerImageNodeSummary},
+			},
+		},
+		Connections: []detailed.NodeSummaryGroup{
+			{
+				ID:         "incoming-connections",
+				TopologyID: "hosts",
+				Label:      "Inbound",
+				Columns:    detailed.NormalColumns,
+				Nodes:      []detailed.NodeSummary{},
+			},
+			{
+				ID:         "outgoing-connections",
+				TopologyID: "hosts",
+				Label:      "Outbound",
+				Columns:    detailed.NormalColumns,
+				Nodes: []detailed.NodeSummary{
+					{
+						ID:       "host:server.hostname.com",
+						Label:    "server",
+						Linkable: true,
+						Metadata: []detailed.MetadataRow{
+							{
+								ID:       "port",
+								Value:    "80",
+								Datatype: "number",
+							},
+							{
+								ID:       "count",
+								Value:    "2",
+								Datatype: "number",
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -109,11 +151,12 @@ func TestMakeDetailedHostNode(t *testing.T) {
 
 func TestMakeDetailedContainerNode(t *testing.T) {
 	id := render.MakeContainerID(fixture.ServerContainerID)
-	renderableNode, ok := render.ContainerRenderer.Render(fixture.Report)[id]
+	renderableNodes := render.ContainerRenderer.Render(fixture.Report)
+	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
 	}
-	have := detailed.MakeNode(fixture.Report, renderableNode)
+	have := detailed.MakeNode("containers", fixture.Report, renderableNodes, renderableNode)
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
 			ID:       id,
@@ -145,14 +188,13 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				},
 			},
 		},
-		Rank:     "imageid456",
 		Pseudo:   false,
 		Controls: []detailed.ControlInstance{},
 		Children: []detailed.NodeSummaryGroup{
 			{
 				Label:      "Processes",
 				TopologyID: "processes",
-				Columns:    []detailed.Column{process.PID, process.CPUUsage, process.MemoryUsage},
+				Columns:    []detailed.Column{detailed.MakeColumn(process.PID), detailed.MakeColumn(process.CPUUsage), detailed.MakeColumn(process.MemoryUsage)},
 				Nodes: []detailed.NodeSummary{
 					{
 						ID:       fmt.Sprintf("process:%s:%s", "server.hostname.com", fixture.ServerPID),
@@ -176,6 +218,91 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				ID:         render.MakeHostID(fixture.ServerHostName),
 				Label:      fixture.ServerHostName,
 				TopologyID: "hosts",
+			},
+		},
+		Connections: []detailed.NodeSummaryGroup{
+			{
+				ID:         "incoming-connections",
+				TopologyID: "containers",
+				Label:      "Inbound",
+				Columns:    detailed.NormalColumns,
+				Nodes: []detailed.NodeSummary{
+					{
+						ID:       "container:a1b2c3d4e5",
+						Label:    "client",
+						Linkable: true,
+						Metadata: []detailed.MetadataRow{
+							{
+								ID:       "port",
+								Value:    "80",
+								Datatype: "number",
+							},
+							{
+								ID:       "count",
+								Value:    "2",
+								Datatype: "number",
+							},
+						},
+					},
+					{
+						ID:       "in-theinternet",
+						Label:    "The Internet",
+						Linkable: true,
+						Metadata: []detailed.MetadataRow{
+							{
+								ID:       "port",
+								Value:    "80",
+								Datatype: "number",
+							},
+							{
+								ID:       "count",
+								Value:    "1",
+								Datatype: "number",
+							},
+						},
+					},
+					{
+						ID:       "pseudo:10.10.10.10:192.168.1.1:80",
+						Label:    "10.10.10.10",
+						Linkable: true,
+						Metadata: []detailed.MetadataRow{
+							{
+								ID:       "port",
+								Value:    "80",
+								Datatype: "number",
+							},
+							{
+								ID:       "count",
+								Value:    "2",
+								Datatype: "number",
+							},
+						},
+					},
+					{
+						ID:       "pseudo:10.10.10.11:192.168.1.1:80",
+						Label:    "10.10.10.11",
+						Linkable: true,
+						Metadata: []detailed.MetadataRow{
+							{
+								ID:       "port",
+								Value:    "80",
+								Datatype: "number",
+							},
+							{
+								ID:       "count",
+								Value:    "1",
+								Datatype: "number",
+							},
+						},
+					},
+				},
+			},
+			{
+				ID:         "outgoing-connections",
+				TopologyID: "containers",
+				Label:      "Outbound",
+				Columns:    detailed.NormalColumns,
+				Nodes:      []detailed.NodeSummary{},
 			},
 		},
 	}

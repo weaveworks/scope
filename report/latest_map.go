@@ -137,7 +137,7 @@ func (m LatestMap) String() string {
 		val, _ := m.Map.Lookup(key)
 		fmt.Fprintf(buf, "%s: %s,\n", key, val)
 	}
-	fmt.Fprintf(buf, "}\n")
+	fmt.Fprintf(buf, "}")
 	return buf.String()
 }
 

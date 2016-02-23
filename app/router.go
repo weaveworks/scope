@@ -122,7 +122,7 @@ func TopologyHandler(c Reporter, preRoutes *mux.Router, postRoutes http.Handler)
 		}
 
 		handler := gzipHandler(requestContextDecorator(topologyRegistry.captureRendererWithoutFilters(
-			c, topologyID, handleNode(nodeID),
+			c, topologyID, handleNode(topologyID, nodeID),
 		)))
 		handler.ServeHTTP(w, r)
 	})

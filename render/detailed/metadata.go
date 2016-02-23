@@ -98,16 +98,22 @@ type Counter struct {
 // MetadataRows implements MetadataRowTemplate
 func (c Counter) MetadataRows(n report.Node) []MetadataRow {
 	if val, ok := n.Counters.Lookup(c.ID); ok {
-		return []MetadataRow{{ID: c.ID, Value: strconv.Itoa(val), Prime: c.Prime}}
+		return []MetadataRow{{
+			ID:       c.ID,
+			Value:    strconv.Itoa(val),
+			Prime:    c.Prime,
+			Datatype: number,
+		}}
 	}
 	return nil
 }
 
 // MetadataRow is a row for the metadata table.
 type MetadataRow struct {
-	ID    string
-	Value string
-	Prime bool
+	ID       string
+	Value    string
+	Prime    bool
+	Datatype string
 }
 
 // Copy returns a value copy of a metadata row.
@@ -129,20 +135,22 @@ func (*MetadataRow) UnmarshalJSON(b []byte) error {
 }
 
 type labelledMetadataRow struct {
-	ID    string `json:"id"`
-	Label string `json:"label"`
-	Value string `json:"value"`
-	Prime bool   `json:"prime,omitempty"`
+	ID       string `json:"id"`
+	Label    string `json:"label"`
+	Value    string `json:"value"`
+	Prime    bool   `json:"prime,omitempty"`
+	Datatype string `json:"dataType,omitempty"`
 }
 
 // CodecEncodeSelf marshals this MetadataRow. It adds a label before
 // rendering.
 func (m *MetadataRow) CodecEncodeSelf(encoder *codec.Encoder) {
 	in := labelledMetadataRow{
-		ID:    m.ID,
-		Label: Label(m.ID),
-		Value: m.Value,
-		Prime: m.Prime,
+		ID:       m.ID,
+		Label:    Label(m.ID),
+		Value:    m.Value,
+		Prime:    m.Prime,
+		Datatype: m.Datatype,
 	}
 	encoder.Encode(in)
 }
@@ -152,9 +160,10 @@ func (m *MetadataRow) CodecDecodeSelf(decoder *codec.Decoder) {
 	var in labelledMetadataRow
 	decoder.Decode(&in)
 	*m = MetadataRow{
-		ID:    in.ID,
-		Value: in.Value,
-		Prime: in.Prime,
+		ID:       in.ID,
+		Value:    in.Value,
+		Prime:    in.Prime,
+		Datatype: in.Datatype,
 	}
 }
 

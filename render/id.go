@@ -4,6 +4,16 @@ import (
 	"strings"
 )
 
+// ParseEndpointID parses endpoint IDs
+func ParseEndpointID(id string) (host, ip, port string, ok bool) {
+	parts := strings.SplitN(id, ":", 4)
+	if len(parts) != 4 || parts[0] != "endpoint" {
+		return
+	}
+	host, ip, port, ok = parts[1], parts[2], parts[3], true
+	return
+}
+
 // makeID is the generic ID maker
 func makeID(prefix string, parts ...string) string {
 	return strings.Join(append([]string{prefix}, parts...), ":")
@@ -12,6 +22,11 @@ func makeID(prefix string, parts ...string) string {
 // MakeEndpointID makes an endpoint node ID for rendered nodes.
 func MakeEndpointID(hostID, addr, port string) string {
 	return makeID("endpoint", hostID, addr, port)
+}
+
+// MakePseudoEndpointID makes a pseudo endpoint node ID for rendered nodes.
+func MakePseudoEndpointID(hostID, addr, port string) string {
+	return makeID("pseudo-endpoint", hostID, addr, port)
 }
 
 // MakeProcessID makes a process node ID for rendered nodes.

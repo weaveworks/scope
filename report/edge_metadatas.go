@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 
 	"github.com/mndrix/ps"
 	"github.com/ugorji/go/codec"
@@ -123,7 +124,7 @@ func (c EdgeMetadatas) String() string {
 		val, _ := c.psMap.Lookup(key)
 		fmt.Fprintf(buf, "%s: %v, ", key, val)
 	}
-	fmt.Fprintf(buf, "}\n")
+	fmt.Fprintf(buf, "}")
 	return buf.String()
 }
 
@@ -217,6 +218,28 @@ type EdgeMetadata struct {
 	IngressPacketCount *uint64 `json:"ingress_packet_count,omitempty"`
 	EgressByteCount    *uint64 `json:"egress_byte_count,omitempty"`  // Transport layer
 	IngressByteCount   *uint64 `json:"ingress_byte_count,omitempty"` // Transport layer
+}
+
+// String returns a string representation of this EdgeMetadata
+// Helps with our use of Spew and diff.
+func (e EdgeMetadata) String() string {
+	f := func(i *uint64) string {
+		if i == nil {
+			return "nil"
+		}
+		return strconv.FormatUint(*i, 10)
+	}
+
+	return fmt.Sprintf(`{
+EgressPacketCount:  %v,
+IngressPacketCount: %v,
+EgressByteCount:    %v,
+IngressByteCount:   %v,
+}`,
+		f(e.EgressPacketCount),
+		f(e.IngressPacketCount),
+		f(e.EgressByteCount),
+		f(e.IngressByteCount))
 }
 
 // Copy returns a value copy of the EdgeMetadata.

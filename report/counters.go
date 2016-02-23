@@ -103,7 +103,7 @@ func (c Counters) String() string {
 		val, _ := c.psMap.Lookup(key)
 		fmt.Fprintf(buf, "%s: %d, ", key, val)
 	}
-	fmt.Fprintf(buf, "}\n")
+	fmt.Fprintf(buf, "}")
 	return buf.String()
 }
 
