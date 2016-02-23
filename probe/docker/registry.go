@@ -161,7 +161,11 @@ func (r *registry) listenForEvents() bool {
 	otherUpdates := time.Tick(r.interval)
 	for {
 		select {
-		case event := <-events:
+		case event, ok := <-events:
+			if !ok {
+				log.Errorf("docker registry: event listener unexpectedly disconnected")
+				return true
+			}
 			r.handleEvent(event)
 
 		case <-otherUpdates:
