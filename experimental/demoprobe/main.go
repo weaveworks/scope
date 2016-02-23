@@ -94,16 +94,12 @@ func demoReport(nodeCount int) report.Report {
 			process.PID: "4000",
 			"name":      c.srcProc,
 			"domain":    "node-" + src,
-		}).WithEdge(dstPortID, report.EdgeMetadata{
-			MaxConnCountTCP: newu64(uint64(rand.Intn(100) + 10)),
-		}))
+		}).WithEdge(dstPortID, report.EdgeMetadata{}))
 		r.Endpoint = r.Endpoint.AddNode(dstPortID, report.MakeNode().WithLatests(map[string]string{
 			process.PID: "4000",
 			"name":      c.dstProc,
 			"domain":    "node-" + dst,
-		}).WithEdge(srcPortID, report.EdgeMetadata{
-			MaxConnCountTCP: newu64(uint64(rand.Intn(100) + 10)),
-		}))
+		}).WithEdge(srcPortID, report.EdgeMetadata{}))
 
 		// Address topology
 		r.Address = r.Address.AddNode(srcAddressID, report.MakeNode().WithLatests(map[string]string{

@@ -71,13 +71,11 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 				EdgeMetadata{
 					EgressPacketCount: newu64(1),
-					MaxConnCountTCP:   newu64(2),
 				}),
 			want: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 				EdgeMetadata{
 					EgressPacketCount: newu64(1),
-					MaxConnCountTCP:   newu64(2),
 				}),
 		},
 		"Empty b": {
@@ -101,27 +99,23 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 				EdgeMetadata{
 					EgressPacketCount: newu64(12),
 					EgressByteCount:   newu64(500),
-					MaxConnCountTCP:   newu64(4),
 				}),
 			b: EmptyEdgeMetadatas.
 				Add("hostQ|:192.168.1.1:12345|:192.168.1.2:80",
 				EdgeMetadata{
 					EgressPacketCount: newu64(1),
 					EgressByteCount:   newu64(2),
-					MaxConnCountTCP:   newu64(6),
 				}),
 			want: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 				EdgeMetadata{
 					EgressPacketCount: newu64(12),
 					EgressByteCount:   newu64(500),
-					MaxConnCountTCP:   newu64(4),
 				}).
 				Add("hostQ|:192.168.1.1:12345|:192.168.1.2:80",
 				EdgeMetadata{
 					EgressPacketCount: newu64(1),
 					EgressByteCount:   newu64(2),
-					MaxConnCountTCP:   newu64(6),
 				}),
 		},
 		"Overlapping a & b": {
@@ -130,7 +124,6 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 				EdgeMetadata{
 					EgressPacketCount: newu64(12),
 					EgressByteCount:   newu64(1000),
-					MaxConnCountTCP:   newu64(7),
 				}),
 			b: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
@@ -138,7 +131,6 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 					EgressPacketCount: newu64(1),
 					IngressByteCount:  newu64(123),
 					EgressByteCount:   newu64(2),
-					MaxConnCountTCP:   newu64(9),
 				}),
 			want: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
@@ -146,7 +138,6 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 					EgressPacketCount: newu64(13),
 					IngressByteCount:  newu64(123),
 					EgressByteCount:   newu64(1002),
-					MaxConnCountTCP:   newu64(9),
 				}),
 		},
 	} {
@@ -161,16 +152,13 @@ func TestEdgeMetadataFlatten(t *testing.T) {
 	{
 		have := (EdgeMetadata{
 			EgressPacketCount: newu64(1),
-			MaxConnCountTCP:   newu64(2),
 		}).Flatten(EdgeMetadata{
 			EgressPacketCount: newu64(4),
 			EgressByteCount:   newu64(8),
-			MaxConnCountTCP:   newu64(16),
 		})
 		want := EdgeMetadata{
 			EgressPacketCount: newu64(1 + 4),
 			EgressByteCount:   newu64(8),
-			MaxConnCountTCP:   newu64(2 + 16), // flatten should sum MaxConnCountTCP
 		}
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
@@ -183,15 +171,12 @@ func TestEdgeMetadataFlatten(t *testing.T) {
 		have := EmptyEdgeMetadatas.
 			Add("foo", EdgeMetadata{
 			EgressPacketCount: newu64(1),
-			MaxConnCountTCP:   newu64(2),
 		}).
 			Add("bar", EdgeMetadata{
 			EgressPacketCount: newu64(3),
-			MaxConnCountTCP:   newu64(5),
 		}).Flatten()
 		want := EdgeMetadata{
 			EgressPacketCount: newu64(1 + 3),
-			MaxConnCountTCP:   newu64(2 + 5),
 		}
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
@@ -224,11 +209,9 @@ func TestEdgeMetadatasEncoding(t *testing.T) {
 	want := EmptyEdgeMetadatas.
 		Add("foo", EdgeMetadata{
 		EgressPacketCount: newu64(1),
-		MaxConnCountTCP:   newu64(2),
 	}).
 		Add("bar", EdgeMetadata{
 		EgressPacketCount: newu64(3),
-		MaxConnCountTCP:   newu64(5),
 	})
 
 	{

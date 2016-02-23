@@ -312,7 +312,6 @@ var (
 			EdgeMetadata: report.EdgeMetadata{
 				IngressPacketCount: newu64(210),
 				IngressByteCount:   newu64(2100),
-				MaxConnCountTCP:    newu64(3),
 			},
 		},
 		ClientHostRenderedID: {
@@ -331,7 +330,6 @@ var (
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(30),
 				EgressByteCount:   newu64(300),
-				MaxConnCountTCP:   newu64(3),
 			},
 		},
 		pseudoHostID1: {

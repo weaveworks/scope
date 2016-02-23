@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/report"
@@ -84,11 +83,6 @@ func TestSpyNoProcesses(t *testing.T) {
 		scopedLocal  = report.MakeAddressNodeID(nodeID, fixLocalAddress.String())
 		scopedRemote = report.MakeAddressNodeID(nodeID, fixRemoteAddress.String())
 	)
-
-	have, _ := r.Address.Nodes[scopedLocal].Latest.Lookup(docker.Name)
-	if want, have := nodeName, have; want != have {
-		t.Fatalf("want %q, have %q", want, have)
-	}
 
 	if want, have := 1, len(r.Address.Nodes[scopedRemote].Adjacency); want != have {
 		t.Fatalf("want %d, have %d", want, have)

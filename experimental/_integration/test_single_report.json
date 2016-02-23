@@ -12,7 +12,6 @@
     "EdgeMetadatas": {
         ";192.168.1.1;10746|theinternet": {
             "WithConnCountTCP": true,
-            "MaxConnCountTCP": 19
         }
     },
     "NodeMetadatas": {
@@ -43,7 +42,6 @@
     "EdgeMetadatas": {
         ";192.168.1.1|theinternet": {
             "WithConnCountTCP": true,
-            "MaxConnCountTCP": 12
         }
     },
     "NodeMetadatas": {
