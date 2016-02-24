@@ -90,7 +90,9 @@ func handleWebsocket(
 	go func(c *websocket.Conn) {
 		for { // just discard everything the browser sends
 			if _, _, err := c.NextReader(); err != nil {
-				log.Println("err:", err)
+				if !xfer.IsExpectedWSCloseError(err) {
+					log.Println("err:", err)
+				}
 				close(quit)
 				break
 			}
@@ -111,7 +113,9 @@ func handleWebsocket(
 		previousTopo = newTopo
 
 		if err := conn.SetWriteDeadline(time.Now().Add(websocketTimeout)); err != nil {
-			log.Println("err:", err)
+			if !xfer.IsExpectedWSCloseError(err) {
+				log.Println("err:", err)
+			}
 			return
 		}
 
