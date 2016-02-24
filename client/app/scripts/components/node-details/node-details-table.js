@@ -5,6 +5,10 @@ import ShowMore from '../show-more';
 import NodeDetailsTableNodeLink from './node-details-table-node-link';
 import NodeDetailsTableNodeMetric from './node-details-table-node-metric';
 
+function isNumberField(field) {
+  return field.dataType && field.dataType === 'number';
+}
+
 export default class NodeDetailsTable extends React.Component {
 
   constructor(props, context) {
@@ -39,7 +43,16 @@ export default class NodeDetailsTable extends React.Component {
   getMetaDataSorters() {
     // returns an array of sorters that will take a node
     return _.get(this.props.nodes, [0, 'metadata'], []).map((field, index) => {
-      return node => node.metadata[index] ? node.metadata[index].value : null;
+      return node => {
+        const nodeMetadataField = node.metadata[index];
+        if (nodeMetadataField) {
+          if (isNumberField(nodeMetadataField)) {
+            return parseFloat(nodeMetadataField.value);
+          }
+          return nodeMetadataField.value;
+        }
+        return null;
+      };
     });
   }
 
@@ -49,6 +62,9 @@ export default class NodeDetailsTable extends React.Component {
     if (sortBy !== null) {
       const field = _.union(node.metrics, node.metadata).find(f => f.id === sortBy);
       if (field) {
+        if (isNumberField(field)) {
+          return parseFloat(field.value);
+        }
         return field.value;
       }
     }
