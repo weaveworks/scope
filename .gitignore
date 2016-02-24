@@ -55,6 +55,6 @@ experimental/_integration/_integration
 *npm-debug.log
 app/static.go
 prog/static.go
-vendor/github.com/ugorji/go/codec/codecgen/codecgen
+vendor/github.com/ugorji/go/codec/codecgen/bin/*
 *.codecgen.go
 *.generated.go

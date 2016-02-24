@@ -16,7 +16,7 @@ DOCKER_DISTRIB=.pkg/docker-$(DOCKER_VERSION).tgz
 DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
 RUNSVINIT=vendor/runsvinit/runsvinit
 CODECGEN_DIR=vendor/github.com/ugorji/go/codec/codecgen
-CODECGEN_EXE=$(CODECGEN_DIR)/codecgen
+CODECGEN_EXE=$(CODECGEN_DIR)/bin/codecgen_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)
 GET_CODECGEN_DEPS=$(shell find $(1) -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name '*.codecgen.go' -not -name '*.generated.go')
 CODECGEN_TARGETS=report/report.codecgen.go render/render.codecgen.go render/detailed/detailed.codecgen.go
 RM=--rm
@@ -83,7 +83,8 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	cd $(@D) && env -u GOARCH -u GOOS GOGC=off $(shell pwd)/$(CODECGEN_EXE) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
 
 $(CODECGEN_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
-	env -u GOARCH -u GOOS $(GO) build -i -tags $(GO_BUILD_TAGS) -o $@ ./$(@D)
+	mkdir -p $(@D)
+	env -u GOARCH -u GOOS $(GO) build -i -tags $(GO_BUILD_TAGS) -o $@ ./$(CODECGEN_DIR)
 
 $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
@@ -147,7 +148,7 @@ clean:
 	# $(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
 		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave .pkg \
-		$(CODECGEN_TARGETS) $(CODECGEN_EXE)
+		$(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin/*
 
 deps:
 	$(GO) get -u -f -tags $(GO_BUILD_TAGS) \
