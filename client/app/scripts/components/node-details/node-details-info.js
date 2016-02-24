@@ -1,5 +1,7 @@
 import React from 'react';
 
+import ShowMore from '../show-more';
+
 export default class NodeDetailsInfo extends React.Component {
 
   constructor(props, context) {
@@ -10,8 +12,7 @@ export default class NodeDetailsInfo extends React.Component {
     this.handleClickMore = this.handleClickMore.bind(this);
   }
 
-  handleClickMore(ev) {
-    ev.preventDefault();
+  handleClickMore() {
     const expanded = !this.state.expanded;
     this.setState({expanded});
   }
@@ -19,11 +20,9 @@ export default class NodeDetailsInfo extends React.Component {
   render() {
     let rows = (this.props.rows || []);
     const prime = rows.filter(row => row.prime);
-    let expandText = 'Show less';
-    let showExpand = this.state.expanded;
+    let notShown = 0;
     if (!this.state.expanded && prime.length < rows.length) {
-      expandText = 'Show more';
-      showExpand = true;
+      notShown = rows.length - prime.length;
       rows = prime;
     }
     return (
@@ -40,7 +39,8 @@ export default class NodeDetailsInfo extends React.Component {
             </div>
           );
         })}
-        {showExpand && <div className="node-details-info-expand" onClick={this.handleClickMore}>{expandText}</div>}
+        <ShowMore handleClick={() => this.handleClickMore()} collection={this.props.rows}
+          expanded={this.state.expanded} notShown={notShown} />
       </div>
     );
   }

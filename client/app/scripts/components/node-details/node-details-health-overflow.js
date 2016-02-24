@@ -7,11 +7,8 @@ export default class NodeDetailsHealthOverflow extends React.Component {
     const items = this.props.items.slice(0, 4);
 
     return (
-      <div className="node-details-health-overflow" onClick={this.props.handleClickMore}>
+      <div className="node-details-health-overflow">
         {items.map(item => <NodeDetailsHealthOverflowItem key={item.id} {...item} />)}
-        <div className="node-details-health-overflow-expand">
-          Show more
-        </div>
       </div>
     );
   }

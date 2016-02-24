@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 
+import ShowMore from '../show-more';
 import NodeDetailsTableNodeLink from './node-details-table-node-link';
 import NodeDetailsTableNodeMetric from './node-details-table-node-metric';
 
@@ -25,8 +26,7 @@ export default class NodeDetailsTable extends React.Component {
     this.setState({sortBy, sortedDesc});
   }
 
-  handleLimitClick(ev) {
-    ev.preventDefault();
+  handleLimitClick() {
     const limit = this.state.limit ? 0 : this.DEFAULT_LIMIT;
     this.setState({limit});
   }
@@ -122,8 +122,8 @@ export default class NodeDetailsTable extends React.Component {
     const headers = this.renderHeaders();
     let nodes = _.sortByAll(this.props.nodes, this.getValueForSortBy, 'label', this.getMetaDataSorters());
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
-    const showLimitAction = nodes && (limited || (this.state.limit === 0 && nodes.length > this.DEFAULT_LIMIT));
-    const limitActionText = limited ? 'Show more' : 'Show less';
+    const expanded = this.state.limit === 0;
+    const notShown = nodes.length - this.DEFAULT_LIMIT;
     if (this.state.sortedDesc) {
       nodes.reverse();
     }
@@ -151,7 +151,7 @@ export default class NodeDetailsTable extends React.Component {
           })}
           </tbody>
         </table>
-        {showLimitAction && <div className="node-details-table-more" onClick={this.handleLimitClick}>{limitActionText}</div>}
+        <ShowMore handleClick={() => this.handleLimitClick()} collection={this.props.nodes} expanded={expanded} notShown={notShown} />
       </div>
     );
   }

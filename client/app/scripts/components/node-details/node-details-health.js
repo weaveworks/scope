@@ -1,5 +1,6 @@
 import React from 'react';
 
+import ShowMore from '../show-more';
 import NodeDetailsHealthOverflow from './node-details-health-overflow';
 import NodeDetailsHealthItem from './node-details-health-item';
 
@@ -13,8 +14,7 @@ export default class NodeDetailsHealth extends React.Component {
     this.handleClickMore = this.handleClickMore.bind(this);
   }
 
-  handleClickMore(ev) {
-    ev.preventDefault();
+  handleClickMore() {
     const expanded = !this.state.expanded;
     this.setState({expanded});
   }
@@ -25,17 +25,20 @@ export default class NodeDetailsHealth extends React.Component {
     const primeMetrics = metrics.slice(0, primeCutoff);
     const overflowMetrics = metrics.slice(primeCutoff);
     const showOverflow = overflowMetrics.length > 0 && !this.state.expanded;
-    const showLess = this.state.expanded;
     const flexWrap = showOverflow || !this.state.expanded ? 'nowrap' : 'wrap';
     const justifyContent = showOverflow || !this.state.expanded ? 'space-around' : 'flex-start';
+    const notShown = overflowMetrics.length;
 
     return (
       <div className="node-details-health" style={{flexWrap, justifyContent}}>
-          {primeMetrics.map(item => {
-            return <NodeDetailsHealthItem key={item.id} {...item} />;
-          })}
-        {showOverflow && <NodeDetailsHealthOverflow items={overflowMetrics} handleClickMore={this.handleClickMore} />}
-        {showLess && <div className="node-details-health-expand" onClick={this.handleClickMore}>show less</div>}
+        <div className="node-details-health-wrapper">
+            {primeMetrics.map(item => {
+              return <NodeDetailsHealthItem key={item.id} {...item} />;
+            })}
+          {showOverflow && <NodeDetailsHealthOverflow items={overflowMetrics} />}
+        </div>
+        <ShowMore handleClick={() => this.handleClickMore()} collection={this.props.metrics}
+          expanded={this.state.expanded} notShown={notShown} hideNumber />
       </div>
     );
   }
