@@ -36,7 +36,12 @@ export default class NodeDetailsTable extends React.Component {
   }
 
   getDefaultSortBy() {
-    // first metric
+    // default sorter specified by columns
+    const defaultSortColumn = _.find(this.props.columns, {defaultSort: true});
+    if (defaultSortColumn) {
+      return defaultSortColumn.id;
+    }
+    // otherwise choose first metric
     return _.get(this.props.nodes, [0, 'metrics', 0, 'id']);
   }
 
