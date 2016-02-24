@@ -13,6 +13,7 @@ import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { doLayout } from './nodes-layout';
 import Node from './node';
 import NodesError from './nodes-error';
+import Logo from '../components/logo';
 
 const log = debug('scope:nodes-chart');
 
@@ -226,6 +227,7 @@ export default class NodesChart extends React.Component {
         {errorEmpty}
         {errorMaxNodesExceeded}
         <svg width="100%" height="100%" id="nodes-chart-canvas" className={svgClassNames} onClick={this.handleMouseClick}>
+          <Logo/>
           <g className="canvas" transform={transform}>
             <g className="edges">
               {edgeElements}

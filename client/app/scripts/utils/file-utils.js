@@ -43,28 +43,31 @@ function setInlineStyles(svg, emptySvgDeclarationComputed) {
     return tree;
   }
 
+  // make sure logo shows up
+  svg.setAttribute('class', 'exported');
+
   // hardcode computed css styles inside svg
   const allElements = traverse(svg);
   let i = allElements.length;
   while (i--) {
     explicitlySetStyle(allElements[i]);
   }
+
   // set font
   svg.setAttribute('style', 'font-family: "Roboto", sans-serif;');
 }
 
-function download(source) {
+function download(source, name) {
   let filename = 'untitled';
 
-  if (source.id) {
-    filename = source.id;
-  } else if (source.class) {
-    filename = source.class;
+  if (name) {
+    filename = name;
   } else if (window.document.title) {
-    filename = window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    filename = window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()
+      + '-' + (+new Date);
   }
 
-  const url = window.URL.createObjectURL(new Blob(source.source,
+  const url = window.URL.createObjectURL(new Blob(source,
     {'type': 'text\/xml'}
   ));
 
@@ -103,12 +106,7 @@ function getSVG(doc, emptySvgDeclarationComputed) {
 
   const source = (new XMLSerializer()).serializeToString(svg);
 
-  return {
-    class: svg.getAttribute('class'),
-    id: svg.getAttribute('id'),
-    childElementCount: svg.childElementCount,
-    source: [doctype + source]
-  };
+  return [doctype + source];
 }
 
 function cleanup() {
@@ -117,9 +115,13 @@ function cleanup() {
   [].forEach.call(crowbarElements, function(el) {
     el.parentNode.removeChild(el);
   });
+
+  // hide embedded logo
+  const svg = document.getElementById('nodes-chart-canvas');
+  svg.setAttribute('class', '');
 }
 
-export function saveGraph() {
+export function saveGraph(filename) {
   window.URL = (window.URL || window.webkitURL);
 
   // add empty svg element
@@ -128,7 +130,7 @@ export function saveGraph() {
   const emptySvgDeclarationComputed = getComputedStyle(emptySvg);
 
   const svgSource = getSVG(document, emptySvgDeclarationComputed);
-  download(svgSource);
+  download(svgSource, filename);
 
   cleanup();
 }

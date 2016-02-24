@@ -96,7 +96,11 @@ export default class App extends React.Component {
           details={this.state.nodeDetails} />}
 
         <div className="header">
-          <Logo />
+          <div className="logo">
+            <svg width="100%" height="100%" viewBox="0 0 1089 217">
+              <Logo />
+            </svg>
+          </div>
           <Topologies topologies={this.state.topologies} currentTopology={this.state.currentTopology} />
         </div>
 
