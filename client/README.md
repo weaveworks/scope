@@ -1,12 +1,17 @@
 # Scope UI
 
+## Requirements
+
+- nodejs 4.2.2
+- running `weavescope` container
+
 ## Getting Started
 
 - Setup: `npm install`
 - Build: `npm run build`, output will be in `build/`
-- Develop: `npm start` and then open `http://localhost:4042/`
+- Develop: `BACKEND_HOST=<dockerhost-ip>:4040 npm start` and then open `http://localhost:4042/`
 
-To see a topology, `../app/app` needs to be running, as well as a probe.
+This will start a webpack-dev-server that serves the UI and proxies API requests to the container.
 
 ## Coding
 
