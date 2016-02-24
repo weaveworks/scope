@@ -22,7 +22,7 @@ CODECGEN_TARGETS=report/report.codecgen.go render/render.codecgen.go render/deta
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
-GO ?= env GO15VENDOREXPERIMENT=1 go
+GO ?= env GO15VENDOREXPERIMENT=1 GOGC=off go
 GO_BUILD_INSTALL_DEPS=-i
 GO_BUILD_TAGS='netgo unsafe'
 GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags $(GO_BUILD_TAGS)
@@ -79,7 +79,7 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	    }
 
 %.codecgen.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	cd $(@D) && env -u GOARCH -u GOOS $(shell pwd)/$(CODECGEN_EXE) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
+	cd $(@D) && env -u GOARCH -u GOOS GOGC=off $(shell pwd)/$(CODECGEN_EXE) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
 
 $(CODECGEN_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	env -u GOARCH -u GOOS $(GO) build -tags $(GO_BUILD_TAGS) -o $@ ./$(@D)
@@ -141,7 +141,9 @@ $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 
 clean:
 	$(GO) clean ./...
-	$(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
+	# Don't actually rmi the build images - rm'ing the .uptodate files is enough to ensure
+	# we rebuild the images, and rmi'ing the images causes us to have to redownload a lot of stuff.
+	# $(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
 		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave .pkg \
 		$(CODECGEN_TARGETS) $(CODECGEN_EXE)
