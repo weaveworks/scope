@@ -79,6 +79,8 @@ func handleProbeWS(cr ControlRouter) CtxHandlerFunc {
 			return
 		}
 		defer cr.Deregister(ctx, probeID, id)
-		codec.WaitForReadError()
+		if err := codec.WaitForReadError(); err != nil && !xfer.IsExpectedWSCloseError(err) {
+			log.Printf("Error reading from probe %s control websocket: %v", probeID, err)
+		}
 	}
 }

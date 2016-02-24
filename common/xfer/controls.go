@@ -71,21 +71,21 @@ func ResponseError(err error) Response {
 type JSONWebsocketCodec struct {
 	sync.Mutex
 	conn *websocket.Conn
-	err  chan struct{}
+	err  chan error
 }
 
 // NewJSONWebsocketCodec makes a new JSONWebsocketCodec
 func NewJSONWebsocketCodec(conn *websocket.Conn) *JSONWebsocketCodec {
 	return &JSONWebsocketCodec{
 		conn: conn,
-		err:  make(chan struct{}),
+		err:  make(chan error, 1),
 	}
 }
 
 // WaitForReadError blocks until any read on this codec returns an error.
 // This is useful to know when the server has disconnected from the client.
-func (j *JSONWebsocketCodec) WaitForReadError() {
-	<-j.err
+func (j *JSONWebsocketCodec) WaitForReadError() error {
+	return <-j.err
 }
 
 // WriteRequest implements rpc.ClientCodec
@@ -113,6 +113,7 @@ func (j *JSONWebsocketCodec) WriteResponse(r *rpc.Response, v interface{}) error
 func (j *JSONWebsocketCodec) readMessage(v interface{}) (*Message, error) {
 	m := Message{Value: v}
 	if err := ReadJSONfromWS(j.conn, &m); err != nil {
+		j.err <- err
 		close(j.err)
 		return nil, err
 	}

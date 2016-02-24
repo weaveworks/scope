@@ -6,6 +6,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
+
+	"github.com/weaveworks/scope/common/xfer"
 )
 
 // RegisterPipeRoutes registers the pipe routes
@@ -41,7 +43,9 @@ func handlePipeWs(pr PipeRouter, end End) CtxHandlerFunc {
 		defer conn.Close()
 
 		log.Infof("Pipe success %s (%d)", id, end)
-		pipe.CopyToWebsocket(endIO, conn)
+		if err := pipe.CopyToWebsocket(endIO, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
+			log.Printf("Error copying to pipe %s (%d) websocket: %v", id, end, err)
+		}
 	}
 }
 
