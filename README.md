@@ -26,8 +26,7 @@ Interact with your containers directly: pause, restart and stop containers. Laun
 ## <a name="getting-started"></a>Getting started
 
 ```
-sudo wget -O /usr/local/bin/scope \
-  https://github.com/weaveworks/scope/releases/download/latest_release/scope
+sudo wget -O /usr/local/bin/scope https://git.io/scope
 sudo chmod a+x /usr/local/bin/scope
 sudo scope launch
 ```
