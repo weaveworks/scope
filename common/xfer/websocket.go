@@ -7,6 +7,17 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
+// IsExpectedWSCloseError returns boolean indicating whether the error is a
+// clean disconnection.
+func IsExpectedWSCloseError(err error) bool {
+	return websocket.IsCloseError(
+		err,
+		websocket.CloseNormalClosure,
+		websocket.CloseGoingAway,
+		websocket.CloseNoStatusReceived,
+	)
+}
+
 // WriteJSONtoWS writes the JSON encoding of v to the connection.
 func WriteJSONtoWS(c *websocket.Conn, v interface{}) error {
 	w, err := c.NextWriter(websocket.TextMessage)
