@@ -546,10 +546,6 @@ h2 {
     padding: 0 36px 0 36px;
     overflow-y: auto;
 
-    &-info {
-      margin-top: 16px;
-    }
-
     &-loading {
       margin-top: 48px;
       text-align: center;
@@ -570,45 +566,26 @@ h2 {
   }
 
   &-health {
-    display: flex;
-    justify-content: space-around;
-    align-content: center;
-    text-align: center;
 
-    &-expand {
-      .btn-opacity;
-      margin: 4px 16px 0;
-      border-top: 1px solid @border-light-color;
-      text-transform: uppercase;
-      font-size: 80%;
-      color: @text-secondary-color;
-      width: 100%;
-      cursor: pointer;
-      opacity: @link-opacity-default;
+    &-wrapper {
+      display: flex;
+      justify-content: space-around;
+      align-content: center;
+      text-align: center;
+      flex-wrap: wrap;
     }
 
     &-overflow {
       .btn-opacity;
+      flex-basis: 33%;
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
       align-items: center;
-      border-left: 1px solid @border-light-color;
       opacity: 0.85;
       cursor: pointer;
       position: relative;
       padding-bottom: 16px;
-
-      &-expand {
-        text-transform: uppercase;
-        font-size: 70%;
-        color: @text-secondary-color;
-        position: absolute;
-        bottom: -2px;
-        left: 0;
-        right: 0;
-        font-weight: bold;
-      }
 
       &-item {
         padding: 4px 8px;
@@ -647,18 +624,6 @@ h2 {
   }
 
   &-info {
-    margin: 16px 0;
-
-    &-expand {
-      .btn-opacity;
-      text-align: center;
-      text-transform: uppercase;
-      font-size: 80%;
-      cursor: pointer;
-      color: @text-secondary-color;
-      padding: 2px 0;
-      font-weight: bold;
-    }
 
     &-field {
       display: flex;
@@ -724,7 +689,7 @@ h2 {
     table-layout: fixed;
 
     &-wrapper {
-      margin: 24px 0;
+      margin: 24px -4px;
     }
 
     &-header {
@@ -733,7 +698,7 @@ h2 {
       font-size: 90%;
       text-align: right;
       cursor: pointer;
-      padding: 0;
+      padding: 0 4px;
 
       &-sorted {
         color: @text-secondary-color;
@@ -749,23 +714,16 @@ h2 {
       }
     }
 
-    &-more {
-      .btn-opacity;
-      padding: 2px 0;
-      text-align: center;
-      text-transform: uppercase;
-      cursor: pointer;
-      color: @text-secondary-color;
-      font-size: 80%;
-      font-weight: bold;
-    }
-
     &-node {
       font-size: 105%;
       line-height: 1.5;
 
+      &:hover {
+        background-color: lighten(@background-color, 5%);
+      }
+
       > * {
-        padding: 0;
+        padding: 0 4px;
       }
 
       &-link {
@@ -929,6 +887,25 @@ h2 {
 .metric {
   &-unit {
     padding-left: 0.25em;
+  }
+}
+
+.show-more {
+  .btn-opacity;
+  border-top: 1px dotted @border-light-color;
+  padding: 0px 0;
+  margin-top: 4px;
+  text-align: right;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: @text-secondary-color;
+  font-size: 90%;
+
+  &-icon {
+    color: @text-tertiary-color;
+    font-size: 120%;
+    position: relative;
+    top: 1px;
   }
 }
 
