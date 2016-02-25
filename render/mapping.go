@@ -211,7 +211,7 @@ func MapPodIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	)
 
 	node := NewRenderableNodeWith(id, major, "", rank, m)
-	node.Shape = Pentagon
+	node.Shape = Heptagon
 	return RenderableNodes{id: node}
 }
 
@@ -231,7 +231,7 @@ func MapServiceIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	)
 
 	node := NewRenderableNodeWith(id, major, "", rank, m)
-	node.Shape = Pentagon
+	node.Shape = Heptagon
 	node.Stack = true
 	return RenderableNodes{id: node}
 }
@@ -590,7 +590,7 @@ func MapPod2Service(n RenderableNode, _ report.Networks) RenderableNodes {
 		n := NewDerivedNode(id, n.WithParents(report.EmptySets))
 		n.Node.Counters = n.Node.Counters.Add(podsKey, 1)
 		n.Children = n.Children.Add(n.Node)
-		n.Shape = Pentagon
+		n.Shape = Heptagon
 		n.Stack = true
 		result[id] = n
 	}
@@ -703,7 +703,7 @@ func MapContainer2Pod(n RenderableNode, _ report.Networks) RenderableNodes {
 	}
 
 	result.Children = result.Children.Add(n.Node)
-	result.Shape = Pentagon
+	result.Shape = Heptagon
 	return RenderableNodes{id: result}
 }
 

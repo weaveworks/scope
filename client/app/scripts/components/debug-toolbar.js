@@ -7,7 +7,7 @@ const log = debug('scope:debug-panel');
 import { receiveNodesDelta } from '../actions/app-actions';
 import AppStore from '../stores/app-store';
 
-const SHAPES = ['circle', 'hexagon', 'square'];
+const SHAPES = ['circle', 'hexagon', 'square', 'heptagon'];
 const NODE_COUNTS = [1, 2, 3];
 const STACK_VARIANTS = [true, false];
 

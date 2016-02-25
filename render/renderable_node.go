@@ -26,7 +26,7 @@ type RenderableNode struct {
 const (
 	Circle   = "circle"
 	Square   = "square"
-	Pentagon = "pentagon"
+	Heptagon = "heptagon"
 	Hexagon  = "hexagon"
 	Cloud    = "cloud"
 )
