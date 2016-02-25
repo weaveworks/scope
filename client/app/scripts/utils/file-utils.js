@@ -7,19 +7,25 @@ const prefix = {
   xlink: 'http://www.w3.org/1999/xlink',
   svg: 'http://www.w3.org/2000/svg'
 };
+const cssSkipValues = {
+  'auto': true,
+  '0px 0px': true,
+  'visible': true,
+  'pointer': true
+};
 
-function setInlineStyles(svg, emptySvgDeclarationComputed) {
-  function explicitlySetStyle(element) {
+function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
+  function explicitlySetStyle(element, targetEl) {
     const cSSStyleDeclarationComputed = getComputedStyle(element);
     let value;
     let computedStyleStr = '';
     _.each(cSSStyleDeclarationComputed, key => {
       value = cSSStyleDeclarationComputed.getPropertyValue(key);
-      if (value !== emptySvgDeclarationComputed.getPropertyValue(key)) {
+      if (value !== emptySvgDeclarationComputed.getPropertyValue(key) && !cssSkipValues[value]) {
         computedStyleStr += key + ':' + value + ';';
       }
     });
-    element.setAttribute('style', computedStyleStr);
+    targetEl.setAttribute('style', computedStyleStr);
   }
 
   function traverse(obj) {
@@ -48,13 +54,14 @@ function setInlineStyles(svg, emptySvgDeclarationComputed) {
 
   // hardcode computed css styles inside svg
   const allElements = traverse(svg);
+  const allTargetElements = traverse(target);
   let i = allElements.length;
   while (i--) {
-    explicitlySetStyle(allElements[i]);
+    explicitlySetStyle(allElements[i], allTargetElements[i]);
   }
 
   // set font
-  svg.setAttribute('style', 'font-family: "Roboto", sans-serif;');
+  target.setAttribute('style', 'font-family: "Roboto", sans-serif;');
 }
 
 function download(source, name) {
@@ -86,25 +93,26 @@ function download(source, name) {
 
 function getSVG(doc, emptySvgDeclarationComputed) {
   const svg = document.getElementById('nodes-chart-canvas');
+  const target = svg.cloneNode(true);
 
-  svg.setAttribute('version', '1.1');
+  target.setAttribute('version', '1.1');
 
   // removing attributes so they aren't doubled up
-  svg.removeAttribute('xmlns');
-  svg.removeAttribute('xlink');
+  target.removeAttribute('xmlns');
+  target.removeAttribute('xlink');
 
   // These are needed for the svg
-  if (!svg.hasAttributeNS(prefix.xmlns, 'xmlns')) {
-    svg.setAttributeNS(prefix.xmlns, 'xmlns', prefix.svg);
+  if (!target.hasAttributeNS(prefix.xmlns, 'xmlns')) {
+    target.setAttributeNS(prefix.xmlns, 'xmlns', prefix.svg);
   }
 
-  if (!svg.hasAttributeNS(prefix.xmlns, 'xmlns:xlink')) {
-    svg.setAttributeNS(prefix.xmlns, 'xmlns:xlink', prefix.xlink);
+  if (!target.hasAttributeNS(prefix.xmlns, 'xmlns:xlink')) {
+    target.setAttributeNS(prefix.xmlns, 'xmlns:xlink', prefix.xlink);
   }
 
-  setInlineStyles(svg, emptySvgDeclarationComputed);
+  setInlineStyles(svg, target, emptySvgDeclarationComputed);
 
-  const source = (new XMLSerializer()).serializeToString(svg);
+  const source = (new XMLSerializer()).serializeToString(target);
 
   return [doctype + source];
 }
