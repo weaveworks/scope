@@ -115,6 +115,8 @@ export default class NodeDetailsTable extends React.Component {
         }
         return <NodeDetailsTableNodeMetric key={field.id} {...field} />;
       }
+      // empty cell to complete the row for proper hover
+      return <td className="node-details-table-node-value" key={id} />;
     });
   }
 

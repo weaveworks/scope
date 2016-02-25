@@ -546,10 +546,6 @@ h2 {
     padding: 0 36px 0 36px;
     overflow-y: auto;
 
-    &-info {
-      margin-top: 16px;
-    }
-
     &-loading {
       margin-top: 48px;
       text-align: center;
@@ -628,7 +624,6 @@ h2 {
   }
 
   &-info {
-    margin: 16px 0;
 
     &-field {
       display: flex;
@@ -694,7 +689,7 @@ h2 {
     table-layout: fixed;
 
     &-wrapper {
-      margin: 24px 0;
+      margin: 24px -4px;
     }
 
     &-header {
@@ -703,7 +698,7 @@ h2 {
       font-size: 90%;
       text-align: right;
       cursor: pointer;
-      padding: 0;
+      padding: 0 4px;
 
       &-sorted {
         color: @text-secondary-color;
@@ -728,7 +723,7 @@ h2 {
       }
 
       > * {
-        padding: 0;
+        padding: 0 4px;
       }
 
       &-link {
@@ -897,7 +892,7 @@ h2 {
 
 .show-more {
   .btn-opacity;
-  border-top: 1px solid lighten(@text-tertiary-color, 30%);
+  border-top: 1px dotted @border-light-color;
   padding: 0px 0;
   margin-top: 4px;
   text-align: right;
