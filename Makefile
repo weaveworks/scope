@@ -47,16 +47,15 @@ $(RUNSVINIT): vendor/runsvinit/*.go
 
 $(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name *.go) prog/static.go $(CODECGEN_TARGETS)
 
-report/report.codecgen.go: $(call GET_CODECGEN_DEPS,report/) $(CODECGEN_EXE)
-render/render.codecgen.go: $(call GET_CODECGEN_DEPS,render/) $(CODECGEN_EXE)
-render/detailed/detailed.codecgen.go: $(call GET_CODECGEN_DEPS,render/detailed/) $(CODECGEN_EXE)
-$(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
+report/report.codecgen.go: $(call GET_CODECGEN_DEPS,report/)
+render/render.codecgen.go: $(call GET_CODECGEN_DEPS,render/)
+render/detailed/detailed.codecgen.go: $(call GET_CODECGEN_DEPS,render/detailed/)
 static: prog/static.go
 prog/static.go: client/build/app.js
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 
-$(SCOPE_EXE) $(RUNSVINIT) $(CODECGEN_TARGETS) $(CODECGEN_EXE) lint tests shell prog/static.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/static.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	@mkdir -p $(shell pwd)/.pkg
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 		-v $(shell pwd):/go/src/github.com/weaveworks/scope \
@@ -79,11 +78,11 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	        false; \
 	    }
 
-%.codecgen.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
+%.codecgen.go: $(CODECGEN_EXE)
 	rm -f $@ && env -u GOARCH -u GOOS $(GO) build -i -tags $(GO_BUILD_TAGS) ./$(@D) # workaround for https://github.com/ugorji/go/issues/145
 	cd $(@D) && env -u GOARCH -u GOOS $(GO_ENVS) $(shell pwd)/$(CODECGEN_EXE) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
 
-$(CODECGEN_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
 	mkdir -p $(@D)
 	env -u GOARCH -u GOOS $(GO) build -i -tags $(GO_BUILD_TAGS) -o $@ ./$(CODECGEN_DIR)
 
