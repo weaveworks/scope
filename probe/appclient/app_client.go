@@ -188,11 +188,10 @@ func (c *appClient) controlConnection() (bool, error) {
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
 	url := sanitize.URL("ws://", 0, "/api/control/ws")(c.target)
-	wsConn, _, err := c.wsDialer.Dial(url, headers)
+	conn, _, err := xfer.DialWS(&c.wsDialer, url, headers)
 	if err != nil {
 		return false, err
 	}
-	conn := xfer.Ping(wsConn)
 	defer conn.Close()
 
 	codec := xfer.NewJSONWebsocketCodec(conn)
@@ -270,7 +269,7 @@ func (c *appClient) pipeConnection(id string, pipe xfer.Pipe) (bool, error) {
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
 	url := sanitize.URL("ws://", 0, fmt.Sprintf("/api/pipe/%s/probe", id))(c.target)
-	wsConn, resp, err := c.wsDialer.Dial(url, headers)
+	conn, resp, err := xfer.DialWS(&c.wsDialer, url, headers)
 	if resp != nil && resp.StatusCode == http.StatusNotFound {
 		// Special handling - 404 means the app/user has closed the pipe
 		pipe.Close()
@@ -279,7 +278,6 @@ func (c *appClient) pipeConnection(id string, pipe xfer.Pipe) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	conn := xfer.Ping(wsConn)
 
 	// Will return false if we are exiting
 	if !c.registerConn(id, conn) {

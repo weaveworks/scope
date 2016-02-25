@@ -35,12 +35,11 @@ func handlePipeWs(pr PipeRouter, end End) CtxHandlerFunc {
 		}
 		defer pr.Release(ctx, id, end)
 
-		wsConn, err := upgrader.Upgrade(w, r, nil)
+		conn, err := xfer.Upgrade(w, r, nil)
 		if err != nil {
 			log.Errorf("Error upgrading pipe %s (%d) websocket: %v", id, end, err)
 			return
 		}
-		conn := xfer.Ping(wsConn)
 		defer conn.Close()
 
 		log.Infof("Pipe success %s (%d)", id, end)

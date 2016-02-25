@@ -57,7 +57,7 @@ func handleProbeWS(cr ControlRouter) CtxHandlerFunc {
 			return
 		}
 
-		conn, err := upgrader.Upgrade(w, r, nil)
+		conn, err := xfer.Upgrade(w, r, nil)
 		if err != nil {
 			log.Printf("Error upgrading control websocket: %v", err)
 			return

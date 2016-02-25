@@ -5,7 +5,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/gorilla/websocket"
 	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/xfer"
@@ -66,10 +65,6 @@ func handleNode(nodeID string) func(context.Context, Reporter, render.Renderer, 
 	}
 }
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
-}
-
 func handleWebsocket(
 	ctx context.Context,
 	w http.ResponseWriter,
@@ -78,12 +73,11 @@ func handleWebsocket(
 	renderer render.Renderer,
 	loop time.Duration,
 ) {
-	wsConn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := xfer.Upgrade(w, r, nil)
 	if err != nil {
 		// log.Info("Upgrade:", err)
 		return
 	}
-	conn := xfer.Ping(wsConn)
 	defer conn.Close()
 
 	quit := make(chan struct{})

@@ -2,9 +2,11 @@ package xfer
 
 import (
 	"io"
+	"net/http"
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
 	"github.com/ugorji/go/codec"
 
@@ -44,12 +46,42 @@ type pingingWebsocket struct {
 	conn      *websocket.Conn
 }
 
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool { return true },
+}
+
+// Upgrade upgrades the HTTP server connection to the WebSocket protocol.
+func Upgrade(w http.ResponseWriter, r *http.Request, responseHeader http.Header) (Websocket, error) {
+	wsConn, err := upgrader.Upgrade(w, r, responseHeader)
+	if err != nil {
+		return nil, err
+	}
+	return Ping(wsConn), nil
+}
+
+// WSDialer can dial a new websocket
+type WSDialer interface {
+	Dial(urlStr string, requestHeader http.Header) (*websocket.Conn, *http.Response, error)
+}
+
+// DialWS creates a new client connection. Use requestHeader to specify the
+// origin (Origin), subprotocols (Sec-WebSocket-Protocol) and cookies (Cookie).
+// Use the response.Header to get the selected subprotocol
+// (Sec-WebSocket-Protocol) and cookies (Set-Cookie).
+func DialWS(d WSDialer, urlStr string, requestHeader http.Header) (Websocket, *http.Response, error) {
+	wsConn, resp, err := d.Dial(urlStr, requestHeader)
+	if err != nil {
+		return nil, nil, err
+	}
+	return Ping(wsConn), resp, nil
+}
+
 // Ping adds a periodic ping to a websocket connection.
 func Ping(c *websocket.Conn) Websocket {
 	p := &pingingWebsocket{conn: c}
 	p.conn.SetPongHandler(p.pong)
+	p.conn.SetReadDeadline(mtime.Now().Add(pongWait))
 	p.pinger = time.AfterFunc(pingPeriod, p.ping)
-	p.ping()
 	return p
 }
 
@@ -57,6 +89,7 @@ func (p *pingingWebsocket) ping() {
 	p.writeLock.Lock()
 	defer p.writeLock.Unlock()
 	if err := p.conn.WriteControl(websocket.PingMessage, nil, mtime.Now().Add(writeWait)); err != nil {
+		log.Errorf("websocket ping error: %v", err)
 		p.Close()
 	}
 	p.pinger.Reset(pingPeriod)
@@ -72,11 +105,7 @@ func (p *pingingWebsocket) pong(string) error {
 func (p *pingingWebsocket) ReadMessage() (int, []byte, error) {
 	p.readLock.Lock()
 	defer p.readLock.Unlock()
-	messageType, b, err := p.conn.ReadMessage()
-	if err == nil {
-		err = p.conn.SetReadDeadline(mtime.Now().Add(pongWait))
-	}
-	return messageType, b, err
+	return p.conn.ReadMessage()
 }
 
 // WriteMessage is a helper method for getting a writer using NextWriter,
@@ -98,8 +127,10 @@ func (p *pingingWebsocket) WriteJSON(v interface{}) error {
 	if err != nil {
 		return err
 	}
+	if err := p.conn.SetWriteDeadline(mtime.Now().Add(writeWait)); err != nil {
+		return err
+	}
 	err1 := codec.NewEncoder(w, &codec.JsonHandle{}).Encode(v)
-	p.conn.SetWriteDeadline(mtime.Now().Add(writeWait))
 	err2 := w.Close()
 	if err1 != nil {
 		return err1
@@ -120,9 +151,6 @@ func (p *pingingWebsocket) ReadJSON(v interface{}) error {
 	if err == io.EOF {
 		// One value is expected in the message.
 		err = io.ErrUnexpectedEOF
-	}
-	if err == nil {
-		p.conn.SetReadDeadline(mtime.Now().Add(pongWait))
 	}
 	return err
 }
