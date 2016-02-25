@@ -8,6 +8,7 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -19,23 +20,78 @@ const (
 )
 
 var (
-	processNodeMetrics = []MetricRow{
-		{ID: process.CPUUsage, Format: percentFormat},
-		{ID: process.MemoryUsage, Format: filesizeFormat},
-		{ID: process.OpenFilesCount, Format: integerFormat},
+	processNodeMetrics = []MetricRowTemplate{
+		metric{ID: process.CPUUsage, Format: percentFormat},
+		metric{ID: process.MemoryUsage, Format: filesizeFormat},
+		metric{ID: process.OpenFilesCount, Format: integerFormat},
 	}
-	containerNodeMetrics = []MetricRow{
-		{ID: docker.CPUTotalUsage, Format: percentFormat},
-		{ID: docker.MemoryUsage, Format: filesizeFormat},
+	containerNodeMetrics = []MetricRowTemplate{
+		metric{ID: docker.CPUTotalUsage, Format: percentFormat},
+		metric{ID: docker.MemoryUsage, Format: filesizeFormat},
 	}
-	hostNodeMetrics = []MetricRow{
-		{ID: host.CPUUsage, Format: percentFormat},
-		{ID: host.MemoryUsage, Format: filesizeFormat},
-		{ID: host.Load1, Format: defaultFormat, Group: "load"},
-		{ID: host.Load5, Format: defaultFormat, Group: "load"},
-		{ID: host.Load15, Format: defaultFormat, Group: "load"},
+	hostNodeMetrics = []MetricRowTemplate{
+		metric{ID: host.CPUUsage, Format: percentFormat},
+		metric{ID: host.MemoryUsage, Format: filesizeFormat},
+		metric{ID: host.Load1, Format: defaultFormat, Group: "load"},
+		metric{ID: host.Load5, Format: defaultFormat, Group: "load"},
+		metric{ID: host.Load15, Format: defaultFormat, Group: "load"},
+	}
+	containerImageNodeMetrics = []MetricRowTemplate{
+		counterMetric{ID: render.ContainersKey, Format: integerFormat},
 	}
 )
+
+// MetricRowTemplate extracts some metadata rows from a node
+type MetricRowTemplate interface {
+	MetricRows(report.Node) []MetricRow
+}
+
+// metric renders a single MetricRow from a single Metric
+type metric struct {
+	ID     string
+	Format string
+	Group  string
+}
+
+func (m metric) MetricRows(n report.Node) []MetricRow {
+	metric, ok := n.Metrics[m.ID]
+	if !ok {
+		return nil
+	}
+	row := MetricRow{
+		ID:     m.ID,
+		Format: m.Format,
+		Group:  m.Group,
+	}
+	if s := metric.LastSample(); s != nil {
+		row.Value = toFixed(s.Value, 2)
+	}
+	row.Metric = &metric
+	return []MetricRow{row}
+}
+
+// counterMetric renders a single MetricRow from a counter
+type counterMetric struct {
+	ID     string
+	Format string
+	Group  string
+}
+
+func (c counterMetric) MetricRows(n report.Node) []MetricRow {
+	counter, ok := n.Counters.Lookup(c.ID)
+	if !ok {
+		return nil
+	}
+	row := MetricRow{
+		ID:     c.ID,
+		Format: c.Format,
+		Group:  c.Group,
+		Value:  float64(counter),
+	}
+	metric := report.MakeMetric()
+	row.Metric = &metric
+	return []MetricRow{row}
+}
 
 // MetricRow is a tuple of data used to render a metric as a sparkline and
 // accoutrements.
@@ -127,24 +183,16 @@ func (m *MetricRow) CodecDecodeSelf(decoder *codec.Decoder) {
 // NodeMetrics produces a table (to be consumed directly by the UI) based on
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
 func NodeMetrics(n report.Node) []MetricRow {
-	renderers := map[string][]MetricRow{
-		report.Process:   processNodeMetrics,
-		report.Container: containerNodeMetrics,
-		report.Host:      hostNodeMetrics,
+	renderers := map[string][]MetricRowTemplate{
+		report.Process:        processNodeMetrics,
+		report.Container:      containerNodeMetrics,
+		report.Host:           hostNodeMetrics,
+		report.ContainerImage: containerImageNodeMetrics,
 	}
 	if templates, ok := renderers[n.Topology]; ok {
 		rows := []MetricRow{}
 		for _, template := range templates {
-			metric, ok := n.Metrics[template.ID]
-			if !ok {
-				continue
-			}
-			t := template.Copy()
-			if s := metric.LastSample(); s != nil {
-				t.Value = toFixed(s.Value, 2)
-			}
-			t.Metric = &metric
-			rows = append(rows, t)
+			rows = append(rows, template.MetricRows(n)...)
 		}
 		return rows
 	}

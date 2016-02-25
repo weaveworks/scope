@@ -11,7 +11,6 @@ import (
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -37,7 +36,6 @@ var (
 	}
 	containerImageNodeMetadata = []MetadataRowTemplate{
 		Latest{ID: docker.ImageID, Truncate: 12, Prime: true},
-		Counter{ID: render.ContainersKey, Prime: true},
 	}
 	podNodeMetadata = []MetadataRowTemplate{
 		Latest{ID: kubernetes.PodID, Prime: true},
