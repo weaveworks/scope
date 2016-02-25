@@ -2,6 +2,7 @@ import debug from 'debug';
 
 import AppDispatcher from '../dispatcher/app-dispatcher';
 import ActionTypes from '../constants/action-types';
+import { saveGraph } from '../utils/file-utils';
 import { updateRoute } from '../utils/router-utils';
 import { doControlRequest, getNodesDelta, getNodeDetails,
   getTopologies, deletePipe } from '../utils/web-api-utils';
@@ -55,6 +56,10 @@ export function clickCloseTerminal(pipeId, closePipe) {
     deletePipe(pipeId);
   }
   updateRoute();
+}
+
+export function clickDownloadGraph() {
+  saveGraph();
 }
 
 export function clickForceRelayout() {

@@ -7,7 +7,7 @@ import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies, basePathSlash } from '../utils/web-api-utils';
-import { clickForceRelayout, hitEsc } from '../actions/app-actions';
+import { clickDownloadGraph, clickForceRelayout, hitEsc } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import EmbeddedTerminal from './embedded-terminal';
@@ -96,7 +96,11 @@ export default class App extends React.Component {
           details={this.state.nodeDetails} />}
 
         <div className="header">
-          <Logo />
+          <div className="logo">
+            <svg width="100%" height="100%" viewBox="0 0 1089 217">
+              <Logo />
+            </svg>
+          </div>
           <Topologies topologies={this.state.topologies} currentTopology={this.state.currentTopology} />
         </div>
 
@@ -123,6 +127,9 @@ export default class App extends React.Component {
           &nbsp;
           <a className={forceRelayoutClassName} onClick={clickForceRelayout} title={forceRelayoutTitle}>
             <span className="fa fa-refresh" />
+          </a>
+          <a className="footer-label footer-label-icon" onClick={clickDownloadGraph} title="Save canvas as SVG">
+            <span className="fa fa-download" />
           </a>
           <a className="footer-label footer-label-icon" href={otherContrastModeUrl} title={otherContrastModeTitle}>
             <span className="fa fa-adjust" />
