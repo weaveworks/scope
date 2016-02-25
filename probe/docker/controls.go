@@ -57,7 +57,7 @@ func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Re
 	hasTTY := c.HasTTY()
 	id, pipe, err := controls.NewPipe(r.pipes, req.AppID)
 	if err != nil {
-		xfer.ResponseError(err)
+		return xfer.ResponseError(err)
 	}
 	local, _ := pipe.Ends()
 	cw, err := r.client.AttachToContainerNonBlocking(docker_client.AttachToContainerOptions{
@@ -103,12 +103,12 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 		Container:    containerID,
 	})
 	if err != nil {
-		xfer.ResponseError(err)
+		return xfer.ResponseError(err)
 	}
 
 	id, pipe, err := controls.NewPipe(r.pipes, req.AppID)
 	if err != nil {
-		xfer.ResponseError(err)
+		return xfer.ResponseError(err)
 	}
 	local, _ := pipe.Ends()
 	cw, err := r.client.StartExecNonBlocking(exec.ID, docker_client.StartExecOptions{
