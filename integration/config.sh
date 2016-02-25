@@ -16,7 +16,7 @@ scope_on() {
 	local host=$1
 	shift 1
 	[ -z "$DEBUG" ] || greyly echo "Scope on $host: $@" >&2
-	DOCKER_HOST=tcp://$host:$DOCKER_PORT $SCOPE "$@"
+	DOCKER_HOST=tcp://$host:$DOCKER_PORT CHECKPOINT_DISABLE=true $SCOPE "$@"
 }
 
 weave_on() {
