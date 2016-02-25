@@ -289,3 +289,18 @@ go tool pprof http://localhost:4040/debug/pprof/heap
     ```
 go tool pprof http://localhost:4041/debug/pprof/profile
 ```
+  
+  If you don't have `go` installed, you can use a docker container instead:
+  
+  * To collect the Memory profile of the Scope App:
+
+    ```
+docker run --net=host -v $PWD:/root/pprof golang go tool pprof http://localhost:4040/debug/pprof/heap
+```
+  * To collect the CPU profile of the Scope Probe:
+
+    ```
+docker run --net=host -v $PWD:/root/pprof golang go tool pprof http://localhost:4041/debug/pprof/profile
+```
+
+  You will find the output profiles in your working directory.
