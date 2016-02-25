@@ -1,19 +1,21 @@
 .PHONY: all vet lint build test clean
 
+GO ?= env GO15VENDOREXPERIMENT=1 GOGC=off go
+
 all: build test vet lint
 
 vet:
-	go vet ./...
+	$(GO) vet ./...
 
 lint:
 	golint .
 
 build:
-	go build
+	$(GO) build
 
 test:
-	go test
+	env -u GOGC $(GO) test
 
 clean:
-	go clean
+	$(GO) clean
 
