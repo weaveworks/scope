@@ -12,7 +12,7 @@ import (
 var (
 	circle   = "circle"
 	square   = "square"
-	pentagon = "pentagon"
+	heptagon = "heptagon"
 	hexagon  = "hexagon"
 	cloud    = "cloud"
 
@@ -372,7 +372,7 @@ var (
 			LabelMinor: "1 container",
 			Rank:       "ping/pong-a",
 			Pseudo:     false,
-			Shape:      pentagon,
+			Shape:      heptagon,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID],
 				fixture.Report.Process.Nodes[fixture.ClientProcess2NodeID],
@@ -392,7 +392,7 @@ var (
 			LabelMinor: "1 container",
 			Rank:       "ping/pong-b",
 			Pseudo:     false,
-			Shape:      pentagon,
+			Shape:      heptagon,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ServerProcessNodeID],
 				fixture.Report.Container.Nodes[fixture.ServerContainerNodeID],
@@ -441,7 +441,7 @@ var (
 			LabelMinor: "2 pods",
 			Rank:       fixture.ServiceID,
 			Pseudo:     false,
-			Shape:      pentagon,
+			Shape:      heptagon,
 			Stack:      true,
 			Children: report.MakeNodeSet(
 				fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID],

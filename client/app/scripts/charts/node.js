@@ -9,7 +9,7 @@ import NodeShapeCircle from './node-shape-circle';
 import NodeShapeStack from './node-shape-stack';
 import NodeShapeRoundedSquare from './node-shape-rounded-square';
 import NodeShapeHex from './node-shape-hex';
-import NodeShapeSeptagon from './node-shape-septagon';
+import NodeShapeHeptagon from './node-shape-heptagon';
 import NodeShapeCloud from './node-shape-cloud';
 
 function stackedShape(Shape) {
@@ -23,7 +23,7 @@ function stackedShape(Shape) {
 const nodeShapes = {
   'circle': NodeShapeCircle,
   'hexagon': NodeShapeHex,
-  'pentagon': NodeShapeSeptagon,
+  'heptagon': NodeShapeHeptagon,
   'square': NodeShapeRoundedSquare,
   'cloud': NodeShapeCloud
 };

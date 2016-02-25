@@ -14,7 +14,7 @@ function polygon(r, sides) {
   return points;
 }
 
-export default function NodeShapeSeptagon({onlyHighlight, highlighted, size, color}) {
+export default function NodeShapeHeptagon({onlyHighlight, highlighted, size, color}) {
   const scaledSize = size * 1.0;
   const pathProps = (v) => {
     return {
