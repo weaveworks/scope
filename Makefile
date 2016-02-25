@@ -79,10 +79,11 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	    }
 
 %.codecgen.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
+	env -u GOARCH -u GOOS $(GO) build -i -tags $(GO_BUILD_TAGS) ./$(@D)
 	cd $(@D) && env -u GOARCH -u GOOS GOGC=off $(shell pwd)/$(CODECGEN_EXE) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
 
 $(CODECGEN_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
-	env -u GOARCH -u GOOS $(GO) build -tags $(GO_BUILD_TAGS) -o $@ ./$(@D)
+	env -u GOARCH -u GOOS $(GO) build -i -tags $(GO_BUILD_TAGS) -o $@ ./$(@D)
 
 $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
