@@ -5,7 +5,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/gorilla/websocket"
 	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/xfer"
@@ -14,8 +13,7 @@ import (
 )
 
 const (
-	websocketLoop    = 1 * time.Second
-	websocketTimeout = 10 * time.Second
+	websocketLoop = 1 * time.Second
 )
 
 // APITopology is returned by the /api/topology/{name} handler.
@@ -67,10 +65,6 @@ func handleNode(nodeID string) func(context.Context, Reporter, render.Renderer, 
 	}
 }
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
-}
-
 func handleWebsocket(
 	ctx context.Context,
 	w http.ResponseWriter,
@@ -79,7 +73,7 @@ func handleWebsocket(
 	renderer render.Renderer,
 	loop time.Duration,
 ) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := xfer.Upgrade(w, r, nil)
 	if err != nil {
 		// log.Info("Upgrade:", err)
 		return
@@ -87,9 +81,9 @@ func handleWebsocket(
 	defer conn.Close()
 
 	quit := make(chan struct{})
-	go func(c *websocket.Conn) {
+	go func(c xfer.Websocket) {
 		for { // just discard everything the browser sends
-			if _, _, err := c.NextReader(); err != nil {
+			if _, _, err := c.ReadMessage(); err != nil {
 				if !xfer.IsExpectedWSCloseError(err) {
 					log.Println("err:", err)
 				}
@@ -112,15 +106,10 @@ func handleWebsocket(
 		diff := render.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
-		if err := conn.SetWriteDeadline(time.Now().Add(websocketTimeout)); err != nil {
+		if err := conn.WriteJSON(diff); err != nil {
 			if !xfer.IsExpectedWSCloseError(err) {
-				log.Println("err:", err)
+				log.Errorf("cannot serialize topology diff: %s", err)
 			}
-			return
-		}
-
-		if err := xfer.WriteJSONtoWS(conn, diff); err != nil {
-			log.Errorf("cannot serialize topology diff: %s", err)
 			return
 		}
 

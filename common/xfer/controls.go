@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/rpc"
 	"sync"
-
-	"github.com/gorilla/websocket"
 )
 
 // ErrInvalidMessage is the error returned when the on-wire message is unexpected.
@@ -70,12 +68,12 @@ func ResponseError(err error) Response {
 // that transmits and receives RPC messages over a websocker, as JSON.
 type JSONWebsocketCodec struct {
 	sync.Mutex
-	conn *websocket.Conn
+	conn Websocket
 	err  chan error
 }
 
 // NewJSONWebsocketCodec makes a new JSONWebsocketCodec
-func NewJSONWebsocketCodec(conn *websocket.Conn) *JSONWebsocketCodec {
+func NewJSONWebsocketCodec(conn Websocket) *JSONWebsocketCodec {
 	return &JSONWebsocketCodec{
 		conn: conn,
 		err:  make(chan error, 1),
@@ -93,10 +91,10 @@ func (j *JSONWebsocketCodec) WriteRequest(r *rpc.Request, v interface{}) error {
 	j.Lock()
 	defer j.Unlock()
 
-	if err := WriteJSONtoWS(j.conn, Message{Request: r}); err != nil {
+	if err := j.conn.WriteJSON(Message{Request: r}); err != nil {
 		return err
 	}
-	return WriteJSONtoWS(j.conn, Message{Value: v})
+	return j.conn.WriteJSON(Message{Value: v})
 }
 
 // WriteResponse implements rpc.ServerCodec
@@ -104,15 +102,15 @@ func (j *JSONWebsocketCodec) WriteResponse(r *rpc.Response, v interface{}) error
 	j.Lock()
 	defer j.Unlock()
 
-	if err := WriteJSONtoWS(j.conn, Message{Response: r}); err != nil {
+	if err := j.conn.WriteJSON(Message{Response: r}); err != nil {
 		return err
 	}
-	return WriteJSONtoWS(j.conn, Message{Value: v})
+	return j.conn.WriteJSON(Message{Value: v})
 }
 
 func (j *JSONWebsocketCodec) readMessage(v interface{}) (*Message, error) {
 	m := Message{Value: v}
-	if err := ReadJSONfromWS(j.conn, &m); err != nil {
+	if err := j.conn.ReadJSON(&m); err != nil {
 		j.err <- err
 		close(j.err)
 		return nil, err

@@ -46,7 +46,7 @@ type appClient struct {
 	backgroundWait sync.WaitGroup
 
 	// Track ongoing websocket connections
-	conns map[string]*websocket.Conn
+	conns map[string]xfer.Websocket
 
 	// For publish
 	publishLoop sync.Once
@@ -73,7 +73,7 @@ func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlH
 		wsDialer: websocket.Dialer{
 			TLSClientConfig: httpTransport.TLSClientConfig,
 		},
-		conns:   map[string]*websocket.Conn{},
+		conns:   map[string]xfer.Websocket{},
 		readers: make(chan io.Reader),
 		control: control,
 	}, nil
@@ -88,7 +88,7 @@ func (c *appClient) hasQuit() bool {
 	}
 }
 
-func (c *appClient) registerConn(id string, conn *websocket.Conn) bool {
+func (c *appClient) registerConn(id string, conn xfer.Websocket) bool {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	if c.hasQuit() {
@@ -130,7 +130,7 @@ func (c *appClient) Stop() {
 	for _, conn := range c.conns {
 		conn.Close()
 	}
-	c.conns = map[string]*websocket.Conn{}
+	c.conns = map[string]xfer.Websocket{}
 	c.mtx.Unlock()
 
 	c.backgroundWait.Wait()
@@ -188,13 +188,11 @@ func (c *appClient) controlConnection() (bool, error) {
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
 	url := sanitize.URL("ws://", 0, "/api/control/ws")(c.target)
-	conn, _, err := c.wsDialer.Dial(url, headers)
+	conn, _, err := xfer.DialWS(&c.wsDialer, url, headers)
 	if err != nil {
 		return false, err
 	}
-	defer func() {
-		conn.Close()
-	}()
+	defer conn.Close()
 
 	codec := xfer.NewJSONWebsocketCodec(conn)
 	server := rpc.NewServer()
@@ -271,7 +269,7 @@ func (c *appClient) pipeConnection(id string, pipe xfer.Pipe) (bool, error) {
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
 	url := sanitize.URL("ws://", 0, fmt.Sprintf("/api/pipe/%s/probe", id))(c.target)
-	conn, resp, err := c.wsDialer.Dial(url, headers)
+	conn, resp, err := xfer.DialWS(&c.wsDialer, url, headers)
 	if resp != nil && resp.StatusCode == http.StatusNotFound {
 		// Special handling - 404 means the app/user has closed the pipe
 		pipe.Close()

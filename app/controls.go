@@ -1,6 +1,7 @@
 package app
 
 import (
+	"io"
 	"net/http"
 	"net/rpc"
 
@@ -56,7 +57,7 @@ func handleProbeWS(cr ControlRouter) CtxHandlerFunc {
 			return
 		}
 
-		conn, err := upgrader.Upgrade(w, r, nil)
+		conn, err := xfer.Upgrade(w, r, nil)
 		if err != nil {
 			log.Printf("Error upgrading control websocket: %v", err)
 			return
@@ -79,8 +80,8 @@ func handleProbeWS(cr ControlRouter) CtxHandlerFunc {
 			return
 		}
 		defer cr.Deregister(ctx, probeID, id)
-		if err := codec.WaitForReadError(); err != nil && !xfer.IsExpectedWSCloseError(err) {
-			log.Printf("Error reading from probe %s control websocket: %v", probeID, err)
+		if err := codec.WaitForReadError(); err != nil && err != io.EOF && !xfer.IsExpectedWSCloseError(err) {
+			log.Errorf("Error on websocket: %v", err)
 		}
 	}
 }
