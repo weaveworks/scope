@@ -51,7 +51,7 @@ var (
 
 func TestReporter(t *testing.T) {
 	containerImageNodeID := report.MakeContainerImageNodeID("baz")
-	rpt, err := docker.NewReporter(mockRegistryInstance, "host1", nil).Report()
+	rpt, err := docker.NewReporter(mockRegistryInstance, "host1", "probeID", nil).Report()
 	if err != nil {
 		t.Fatal(err)
 	}

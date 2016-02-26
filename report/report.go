@@ -209,4 +209,6 @@ const (
 	HostNodeID = "host_node_id"
 	// ProbeID is the random ID of the probe which generated the specific node.
 	ProbeID = "probe_id"
+	// ControlProbeID is the random ID of the probe which controls the specific node.
+	ControlProbeID = "control_probe_id"
 )
