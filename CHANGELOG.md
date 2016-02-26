@@ -74,6 +74,8 @@ Performance enhancements:
 	[#898](https://github.com/weaveworks/scope/pull/898)
 
 Bug fixes:
+- Use TCP for weave dns to fix autoclustering
+  [#1038](https://github.com/weaveworks/scope/pull/1038)
 - Add ping/pong to websocket protocol
 	[#995](https://github.com/weaveworks/scope/pull/995)
 - Handle closing of docker events channel gracefully
