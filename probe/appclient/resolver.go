@@ -57,10 +57,13 @@ func NewResolver(targets []string, lookup LookupIP, setters ...setter) Resolver 
 
 // LookupUsing produces a LookupIP function for the given DNS server.
 func LookupUsing(dnsServer string) func(host string) (ips []net.IP, err error) {
+	client := dns.Client{
+		Net: "tcp",
+	}
 	return func(host string) (ips []net.IP, err error) {
 		m := &dns.Msg{}
 		m.SetQuestion(dns.Fqdn(host), dns.TypeA)
-		in, err := dns.Exchange(m, dnsServer)
+		in, _, err := client.Exchange(m, dnsServer)
 		if err != nil {
 			return nil, err
 		}
