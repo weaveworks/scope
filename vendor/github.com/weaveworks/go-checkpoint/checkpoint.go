@@ -3,10 +3,13 @@
 package checkpoint
 
 import (
+	"bytes"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/scrypt"
 	"io"
 	"io/ioutil"
 	mrand "math/rand"
@@ -116,11 +119,15 @@ func Check(p *CheckParams) (*CheckResponse, error) {
 		p.OS = runtime.GOOS
 	}
 
-	// If we're given a SignatureFile, then attempt to read that.
+	// If we're not given a Signature, then attempt to read one.
 	signature := p.Signature
-	if p.Signature == "" && p.SignatureFile != "" {
+	if p.Signature == "" {
 		var err error
-		signature, err = checkSignature(p.SignatureFile)
+		if p.SignatureFile == "" {
+			signature, err = getSystemUUID()
+		} else {
+			signature, err = checkSignature(p.SignatureFile)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -282,6 +289,31 @@ func checkResult(r io.Reader) (*CheckResponse, error) {
 	}
 
 	return &result, nil
+}
+
+// getSystemUUID returns the base64 encoded, scrypt hashed contents of
+// /sys/class/dmi/id/product_uuid (with some salt)
+func getSystemUUID() (string, error) {
+	uuid, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")
+	if err != nil {
+		return "", err
+	}
+	if len(uuid) <= 0 {
+		return "", fmt.Errorf("Empty system uuid")
+	}
+	hash, err := scrypt.Key(uuid, uuid, 16384, 8, 1, 32)
+	if err != nil {
+		return "", err
+	}
+	output := bytes.Buffer{}
+	encoder := base64.NewEncoder(base64.StdEncoding, &output)
+	if _, err := encoder.Write(hash); err != nil {
+		return "", err
+	}
+	if err := encoder.Close(); err != nil {
+		return "", err
+	}
+	return output.String(), nil
 }
 
 func checkSignature(path string) (string, error) {
