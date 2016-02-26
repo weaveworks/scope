@@ -53,7 +53,7 @@ New features and enhancements:
 	[#941](https://github.com/weaveworks/scope/pull/941)
 - Shorten docker container and image IDs in the details panel.
 	[#930](https://github.com/weaveworks/scope/pull/930)
-- shorten some details panel labels which were truncated
+- Shorten some details panel labels which were truncated
 	[#940](https://github.com/weaveworks/scope/pull/940)
 - Sparklines update every second and show 60sec history
 	[#795](https://github.com/weaveworks/scope/pull/795)
@@ -91,9 +91,9 @@ Bug fixes:
 	[#974](https://github.com/weaveworks/scope/pull/974)
 - Fix JSON encoding for fixedprobe
 	[#975](https://github.com/weaveworks/scope/pull/975)
-- don't render any metrics/metadata for uncontained node
+- Don't render any metrics/metadata for uncontained node
 	[#956](https://github.com/weaveworks/scope/pull/956)
-- update go-dockerclient to fix bug with docker 1.10
+- Update go-dockerclient to fix bug with docker 1.10
 	[#952](https://github.com/weaveworks/scope/pull/952)
 - Show nice column labels when no children have metrics
 	[#950](https://github.com/weaveworks/scope/pull/950)
@@ -119,9 +119,9 @@ Bug fixes:
 	[#1024](https://github.com/weaveworks/scope/pull/1024)
 - Overwrite /etc/weave/apps, because it might already exist
 	[#959](https://github.com/weaveworks/scope/pull/959)
-- log a warning when reporters or taggers take too long to generate
+- Log a warning when reporters or taggers take too long to generate
 	[#944](https://github.com/weaveworks/scope/pull/944)
-- minor refactor of backend metadata and metric rendering
+- Minor refactor of backend metadata and metric rendering
 	[#920](https://github.com/weaveworks/scope/pull/920)
 - Add some tests, and a zero-value for report.Sets
 	[#903](https://github.com/weaveworks/scope/pull/903)
@@ -139,7 +139,7 @@ Build improvements and cleanup:
 	[#888](https://github.com/weaveworks/scope/pull/888)
 - Disable npm progress to speed up build
 	[#894](https://github.com/weaveworks/scope/pull/894)
-- refactoring deepequal to satisfy linter
+- Refactoring deepequal to satisfy linter
 	[#890](https://github.com/weaveworks/scope/pull/890)
 
 Documentation:
@@ -147,7 +147,7 @@ Documentation:
 	[#993](https://github.com/weaveworks/scope/pull/993)
 - Use short URL for scope download
 	[#1018](https://github.com/weaveworks/scope/pull/1018)
-- added note about docker and go dependency to the readme
+- Added note about docker and go dependency to the readme
 	[#966](https://github.com/weaveworks/scope/pull/966)
 - Update readme and images.
 	[#885](https://github.com/weaveworks/scope/pull/885)
