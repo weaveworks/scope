@@ -50,9 +50,8 @@ func appMain() {
 
 	// Start background version checking
 	checkpoint.CheckInterval(&checkpoint.CheckParams{
-		Product:       "scope-app",
-		Version:       app.Version,
-		SignatureFile: signatureFile,
+		Product: "scope-app",
+		Version: app.Version,
 	}, versionCheckPeriod, func(r *checkpoint.CheckResponse, err error) {
 		if r.Outdated {
 			log.Infof("Scope version %s is available; please update at %s",
