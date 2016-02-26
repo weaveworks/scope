@@ -69,6 +69,8 @@ New features and enhancements:
 	[#853](https://github.com/weaveworks/scope/pull/853)
 - Use connection directions from conntrack for improved layout flow
 	[#967](https://github.com/weaveworks/scope/pull/967)
+- Support for container controls in Kubernetes
+  [#1043](https://github.com/weaveworks/scope/pull/1043)
 - Add debug logging
 	[#935](https://github.com/weaveworks/scope/pull/935)
 
