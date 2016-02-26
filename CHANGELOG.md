@@ -1,9 +1,29 @@
 ## Release 0.13.0
 
-Note: This release come with big performance improvements, cutting the probe's CPU usage by 70% and the app's CPU usage by up to 85%. See detailed performance improvements further below.
+Note: This release come with big performance improvements, cutting the probe's CPU usage by 70% and the app's CPU usage by up to 85%. See detailed performance improvement-related changes below:
+
+Performance improvements:
+- Improve codec performance
+	[#916](https://github.com/weaveworks/scope/pull/916)
+  [#1002](https://github.com/weaveworks/scope/pull/1002)
+  [#1005](https://github.com/weaveworks/scope/pull/1005)
+  [#980](https://github.com/weaveworks/scope/pull/980)
+- Reduce amount of objects allocated by the codec
+	[#1000](https://github.com/weaveworks/scope/pull/1000)
+- Refactor app for multitenancy
+	[#997](https://github.com/weaveworks/scope/pull/997)
+- Improve performance of docker stats obtention
+	[#989](https://github.com/weaveworks/scope/pull/989)
+- Rate-limit reading proc files
+	[#912](https://github.com/weaveworks/scope/pull/912)
+  [#905](https://github.com/weaveworks/scope/pull/905)
+- Compile k8s selectors once (not for each pod)
+	[#918](https://github.com/weaveworks/scope/pull/918)
+- Fix reading of network namespace inodes
+	[#898](https://github.com/weaveworks/scope/pull/898)
 
 New features and enhancements:
-- Node shapes for different topologies, e.g. heptagon for Kubernetes pods
+- Node shapes for different topologies, e.g. heptagons for Kubernetes pods
   [#884](https://github.com/weaveworks/scope/pull/884)
 	[#1006](https://github.com/weaveworks/scope/pull/1006)
 	[#1037](https://github.com/weaveworks/scope/pull/1037)
@@ -35,7 +55,7 @@ New features and enhancements:
 	[#930](https://github.com/weaveworks/scope/pull/930)
 - shorten some details panel labels which were truncated
 	[#940](https://github.com/weaveworks/scope/pull/940)
-- Feed sparkline data via buffer to keep them moving
+- Sparklines update every second and show 60sec history
 	[#795](https://github.com/weaveworks/scope/pull/795)
 - Add Container Count column to container images table
 	[#919](https://github.com/weaveworks/scope/pull/919)
@@ -47,36 +67,15 @@ New features and enhancements:
 	[#856](https://github.com/weaveworks/scope/pull/856)
 - Add container uptime and restart count to details panel.
 	[#853](https://github.com/weaveworks/scope/pull/853)
-- Use connection directions from conntrack (no UI support yet)
+- Use connection directions from conntrack for improved layout flow
 	[#967](https://github.com/weaveworks/scope/pull/967)
-
-Performance enhancements:
-- Improve codec performance
-	[#916](https://github.com/weaveworks/scope/pull/916)
-  [#1002](https://github.com/weaveworks/scope/pull/1002)
-  [#1005](https://github.com/weaveworks/scope/pull/1005)
-  [#980](https://github.com/weaveworks/scope/pull/980)
-- Reduce amount of objects allocated by the codec
-	[#1000](https://github.com/weaveworks/scope/pull/1000)
-- Refactor app for multitenancy
-	[#997](https://github.com/weaveworks/scope/pull/997)
-- Improve performance of docker stats obtention
-	[#989](https://github.com/weaveworks/scope/pull/989)
-- Rate-limit reading proc files
-	[#912](https://github.com/weaveworks/scope/pull/912)
 - Add debug logging
 	[#935](https://github.com/weaveworks/scope/pull/935)
-- Compile k8s selectors once (not for each pod)
-	[#918](https://github.com/weaveworks/scope/pull/918)
-- Minimize race between proc's net/tcp{,6} and fd/*
-	[#905](https://github.com/weaveworks/scope/pull/905)
-- Fix reading of network namespace inodes
-	[#898](https://github.com/weaveworks/scope/pull/898)
 
 Bug fixes:
 - Use TCP for weave dns to fix autoclustering
   [#1038](https://github.com/weaveworks/scope/pull/1038)
-- Add ping/pong to websocket protocol
+- Add ping/pong to websocket protocol to prevent websocket connections being dropped when traversing loadbalancers
 	[#995](https://github.com/weaveworks/scope/pull/995)
 - Handle closing of docker events channel gracefully
 	[#1014](https://github.com/weaveworks/scope/pull/1014)
@@ -100,14 +99,12 @@ Bug fixes:
 	[#950](https://github.com/weaveworks/scope/pull/950)
 - Fixes process-by-name layout with ./foo and /foo nodes
 	[#948](https://github.com/weaveworks/scope/pull/948)
-- Deal with starting / stopping weave
+- Deal with starting / stopping weave whilst scope is running
 	[#867](https://github.com/weaveworks/scope/pull/867)
 - Remove host links that link to themselves in details panel
 	[#917](https://github.com/weaveworks/scope/pull/917)
 - Just show the untruncated label in the tooltip on children
 	[#911](https://github.com/weaveworks/scope/pull/911)
-- Increase timeout, remove double close to fix TestAppClientDetails
-	[#899](https://github.com/weaveworks/scope/pull/899)
 - Taking a read lock twice only works most of the time.
 	[#889](https://github.com/weaveworks/scope/pull/889)
 - Details panel table header looks up label in all rows
@@ -118,40 +115,42 @@ Bug fixes:
 	[#882](https://github.com/weaveworks/scope/pull/882)
 - Fixes host node/details panel color mismatch
 	[#880](https://github.com/weaveworks/scope/pull/880)
-
-Build improvements and cleanup:
-- Disable checkpointing in tests.
-	[#1031](https://github.com/weaveworks/scope/pull/1031)
-- Document how to obtain profiles without `go tool pprof`
-	[#993](https://github.com/weaveworks/scope/pull/993)
 - Don't log expected websocket errors
 	[#1024](https://github.com/weaveworks/scope/pull/1024)
-- Turn off GC for builds.
-	[#1023](https://github.com/weaveworks/scope/pull/1023)
-- Use short URL for scope download
-	[#1018](https://github.com/weaveworks/scope/pull/1018)
-- Bump template name to get latest version of docker.
-	[#998](https://github.com/weaveworks/scope/pull/998)
-- added note about docker and go dependency to the readme
-	[#966](https://github.com/weaveworks/scope/pull/966)
 - Overwrite /etc/weave/apps, because it might already exist
 	[#959](https://github.com/weaveworks/scope/pull/959)
-- Fixes building scope outside of a container.
-	[#901](https://github.com/weaveworks/scope/pull/901)
 - log a warning when reporters or taggers take too long to generate
 	[#944](https://github.com/weaveworks/scope/pull/944)
 - minor refactor of backend metadata and metric rendering
 	[#920](https://github.com/weaveworks/scope/pull/920)
 - Add some tests, and a zero-value for report.Sets
 	[#903](https://github.com/weaveworks/scope/pull/903)
+
+Build improvements and cleanup:
+- Disable checkpointing in tests.
+	[#1031](https://github.com/weaveworks/scope/pull/1031)
+- Turn off GC for builds.
+	[#1023](https://github.com/weaveworks/scope/pull/1023)
+- Bump template name to get latest version of docker.
+	[#998](https://github.com/weaveworks/scope/pull/998)
+- Fixes building scope outside of a container.
+	[#901](https://github.com/weaveworks/scope/pull/901)
 - Don't need sudo when DOCKER_HOST is tcp.
 	[#888](https://github.com/weaveworks/scope/pull/888)
 - Disable npm progress to speed up build
 	[#894](https://github.com/weaveworks/scope/pull/894)
-- Update readme and images.
-	[#885](https://github.com/weaveworks/scope/pull/885)
 - refactoring deepequal to satisfy linter
 	[#890](https://github.com/weaveworks/scope/pull/890)
+
+Documentation:
+- Document how to obtain profiles without `go tool pprof`
+	[#993](https://github.com/weaveworks/scope/pull/993)
+- Use short URL for scope download
+	[#1018](https://github.com/weaveworks/scope/pull/1018)
+- added note about docker and go dependency to the readme
+	[#966](https://github.com/weaveworks/scope/pull/966)
+- Update readme and images.
+	[#885](https://github.com/weaveworks/scope/pull/885)
 - Update approach to trigger signal dumps
 	[#883](https://github.com/weaveworks/scope/pull/883)
 
