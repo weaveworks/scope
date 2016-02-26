@@ -146,7 +146,7 @@ func probeMain() {
 		host.NewReporter(hostID, hostName),
 		process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies),
 	)
-	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID, probeID))
+	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
 
 	if *dockerEnabled {
 		if err := report.AddLocalBridge(*dockerBridge); err != nil {

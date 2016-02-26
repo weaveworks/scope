@@ -50,8 +50,10 @@ var (
 )
 
 func TestReporter(t *testing.T) {
+	var controlProbeID = "a1b2c3d4"
+
 	containerImageNodeID := report.MakeContainerImageNodeID("baz")
-	rpt, err := docker.NewReporter(mockRegistryInstance, "host1", "probeID", nil).Report()
+	rpt, err := docker.NewReporter(mockRegistryInstance, "host1", controlProbeID, nil).Report()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,9 +67,10 @@ func TestReporter(t *testing.T) {
 		}
 
 		for k, want := range map[string]string{
-			docker.ContainerID:   "ping",
-			docker.ContainerName: "pong",
-			docker.ImageID:       "baz",
+			docker.ContainerID:    "ping",
+			docker.ContainerName:  "pong",
+			docker.ImageID:        "baz",
+			report.ControlProbeID: controlProbeID,
 		} {
 			if have, ok := node.Latest.Lookup(k); !ok || have != want {
 				t.Errorf("Expected container %s latest %q: %q, got %q", containerNodeID, k, want, have)

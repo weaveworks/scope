@@ -10,25 +10,19 @@ import (
 func TestTagger(t *testing.T) {
 	var (
 		hostID         = "foo"
-		probeID        = "a1b2c3d4"
 		endpointNodeID = report.MakeEndpointNodeID(hostID, "1.2.3.4", "56789") // hostID ignored
 		node           = report.MakeNodeWith(map[string]string{"foo": "bar"})
 	)
 
 	r := report.MakeReport()
 	r.Process.AddNode(endpointNodeID, node)
-	rpt, _ := host.NewTagger(hostID, probeID).Tag(r)
+	rpt, _ := host.NewTagger(hostID).Tag(r)
 	have := rpt.Process.Nodes[endpointNodeID].Copy()
 
 	// It should now have the host ID
 	wantHostID := report.MakeHostNodeID(hostID)
 	if hostID, ok := have.Latest.Lookup(report.HostNodeID); !ok || hostID != wantHostID {
 		t.Errorf("Expected %q got %q", wantHostID, report.MakeHostNodeID(hostID))
-	}
-
-	// It should now have the probe ID
-	if haveProbeID, ok := have.Latest.Lookup(report.ProbeID); !ok || haveProbeID != probeID {
-		t.Errorf("Expected %q got %q", probeID, haveProbeID)
 	}
 
 	// It should still have the other keys
