@@ -20,14 +20,16 @@ const (
 type Reporter struct {
 	registry Registry
 	hostID   string
+	probeID  string
 	probe    *probe.Probe
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(registry Registry, hostID string, probe *probe.Probe) *Reporter {
+func NewReporter(registry Registry, hostID string, probeID string, probe *probe.Probe) *Reporter {
 	reporter := &Reporter{
 		registry: registry,
 		hostID:   hostID,
+		probeID:  probeID,
 		probe:    probe,
 	}
 	registry.WatchContainerUpdates(reporter.ContainerUpdated)
@@ -103,9 +105,11 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 		Icon:  "fa-terminal",
 	})
 
+	metadata := map[string]string{report.ControlProbeID: r.probeID}
+
 	r.registry.WalkContainers(func(c Container) {
 		nodeID := report.MakeContainerNodeID(c.ID())
-		result.AddNode(nodeID, c.GetNode(r.hostID, localAddrs))
+		result.AddNode(nodeID, c.GetNode(r.hostID, localAddrs).WithLatests(metadata))
 	})
 
 	return result

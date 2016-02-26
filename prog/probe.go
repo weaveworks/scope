@@ -146,7 +146,7 @@ func probeMain() {
 		host.NewReporter(hostID, hostName),
 		process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies),
 	)
-	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID, probeID))
+	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
 
 	if *dockerEnabled {
 		if err := report.AddLocalBridge(*dockerBridge); err != nil {
@@ -155,7 +155,7 @@ func probeMain() {
 		if registry, err := docker.NewRegistry(*dockerInterval, clients); err == nil {
 			defer registry.Stop()
 			p.AddTagger(docker.NewTagger(registry, processCache))
-			p.AddReporter(docker.NewReporter(registry, hostID, p))
+			p.AddReporter(docker.NewReporter(registry, hostID, probeID, p))
 		} else {
 			log.Errorf("Docker: failed to start registry: %v", err)
 		}

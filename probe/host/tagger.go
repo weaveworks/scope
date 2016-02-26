@@ -9,15 +9,13 @@ import (
 // in every topology to an origin host node in the host topology.
 type Tagger struct {
 	hostNodeID string
-	probeID    string
 }
 
 // NewTagger tags each node with a foreign key linking it to its origin host
 // in the host topology.
-func NewTagger(hostID, probeID string) Tagger {
+func NewTagger(hostID string) Tagger {
 	return Tagger{
 		hostNodeID: report.MakeHostNodeID(hostID),
-		probeID:    probeID,
 	}
 }
 
@@ -27,11 +25,8 @@ func (Tagger) Name() string { return "Host" }
 // Tag implements Tagger.
 func (t Tagger) Tag(r report.Report) (report.Report, error) {
 	var (
-		metadata = map[string]string{
-			report.HostNodeID: t.hostNodeID,
-			report.ProbeID:    t.probeID,
-		}
-		parents = report.EmptySets.Add(report.Host, report.MakeStringSet(t.hostNodeID))
+		metadata = map[string]string{report.HostNodeID: t.hostNodeID}
+		parents  = report.EmptySets.Add(report.Host, report.MakeStringSet(t.hostNodeID))
 	)
 
 	// Explicity don't tag Endpoints and Addresses - These topologies include pseudo nodes,

@@ -101,7 +101,10 @@ func controlsFor(topology report.Topology, nodeID string) []ControlInstance {
 
 	for _, id := range node.Controls.Controls {
 		if control, ok := topology.Controls[id]; ok {
-			probeID, _ := node.Latest.Lookup(report.ProbeID)
+			probeID, ok := node.Latest.Lookup(report.ControlProbeID)
+			if !ok {
+				continue
+			}
 			result = append(result, ControlInstance{
 				ProbeID: probeID,
 				NodeID:  nodeID,
