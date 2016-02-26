@@ -62,6 +62,8 @@ available.  To disable this, run:
 CHECKPOINT_DISABLE=true scope launch
 ```
 
+For more information, [read this](https://github.com/weaveworks/go-checkpoint).
+
 ## <a name="architecture"></a>Architecture
 
 Weave Scope consists of two components: the app and the probe. These two
@@ -289,9 +291,9 @@ go tool pprof http://localhost:4040/debug/pprof/heap
     ```
 go tool pprof http://localhost:4041/debug/pprof/profile
 ```
-  
+
   If you don't have `go` installed, you can use a docker container instead:
-  
+
   * To collect the Memory profile of the Scope App:
 
     ```
