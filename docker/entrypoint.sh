@@ -33,10 +33,10 @@ while true; do
             APP_ARGS="$APP_ARGS -log.level=debug"
             PROBE_ARGS="$PROBE_ARGS -log.level=debug"
             ;;
-        --no-app|--app-only)
+        --no-app|--probe-only)
             touch /etc/service/app/down
             ;;
-        --no-probe|--probe-only)
+        --no-probe|--app-only)
             touch /etc/service/probe/down
             ;;
         --weave.hostname*)
