@@ -39,6 +39,17 @@ while true; do
         --no-probe|--probe-only)
             touch /etc/service/probe/down
             ;;
+        --weave.hostname*)
+            if echo "$1" | grep "=" 1>/dev/null; then
+                ARG_VALUE=$(echo "$1" | sed 's/\-\-weave.hostname=\(.*\)/\1/')
+            else
+                [ $# -gt 1 ] || usage
+                ARG_VALUE="$2"
+                shift
+            fi
+            PROBE_ARGS="$PROBE_ARGS -weave.hostname=$ARG_VALUE"
+            APP_ARGS="$APP_ARGS -weave.hostname=$ARG_VALUE"
+            ;;
         --probe.*)
             if echo "$1" | grep "=" 1>/dev/null; then
                 ARG_NAME=$(echo "$1" | sed 's/\-\-probe\.\([^=]*\)=\(.*\)/\1/')
