@@ -70,7 +70,8 @@ export default class NodeDetailsTable extends React.Component {
 
   renderHeaders() {
     if (this.props.nodes && this.props.nodes.length > 0) {
-      const headers = [{id: 'label', label: this.props.label}].concat(this.props.columns);
+      const columns = this.props.columns || [];
+      const headers = [{id: 'label', label: this.props.label}].concat(columns);
       const defaultSortBy = this.getDefaultSortBy();
 
       return (
@@ -103,7 +104,8 @@ export default class NodeDetailsTable extends React.Component {
 
   renderValues(node) {
     const fields = this.getValuesForNode(node);
-    return this.props.columns.map(({id}) => {
+    const columns = this.props.columns || [];
+    return columns.map(({id}) => {
       const field = fields[id];
       if (field) {
         if (field.valueType === 'metadata') {
