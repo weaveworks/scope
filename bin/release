@@ -9,6 +9,9 @@ RELEASE_NAME=${RELEASE_NAME:-"Weave Scope"}
 RELEASE_DESCRIPTION=${RELEASE_DESCRIPTION:-"Container Visibility"}
 
 PWD=`pwd`
+WC="wc"
+# Use GNU wc on Darwin
+case $OSTYPE in darwin*) WC="gwc" ;; esac
 
 infer_release_type() {
     if echo $1 | grep -qE '^v[0-9]+\.[0-9]+\.0+$' ; then
