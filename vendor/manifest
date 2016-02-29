@@ -638,10 +638,30 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/hashicorp/consul/api",
+			"repository": "https://github.com/hashicorp/consul",
+			"revision": "2a4436075dbb347f9d78ebfd6645d5c5898ad3aa",
+			"branch": "master",
+			"path": "/api"
+		},
+		{
 			"importpath": "github.com/hashicorp/go-cleanhttp",
 			"repository": "https://github.com/hashicorp/go-cleanhttp",
 			"revision": "ce617e79981a8fff618bb643d155133a8f38db96",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/hashicorp/go-version",
+			"repository": "https://github.com/hashicorp/go-version",
+			"revision": "7e3c02b30806fa5779d3bdfc152ce4c6f40e7b38",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/hashicorp/serf/coordinate",
+			"repository": "https://github.com/hashicorp/serf",
+			"revision": "b00b7b98ce2bfe59534177e56a8e7d12c4a0ca70",
+			"branch": "master",
+			"path": "/coordinate"
 		},
 		{
 			"importpath": "github.com/inconshreveable/mousetrap",
