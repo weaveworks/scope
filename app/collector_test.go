@@ -14,7 +14,7 @@ import (
 
 func TestCollector(t *testing.T) {
 	ctx := context.Background()
-	window := time.Millisecond
+	window := 10 * time.Second
 	c := app.NewCollector(window)
 
 	r1 := report.MakeReport()
@@ -33,7 +33,6 @@ func TestCollector(t *testing.T) {
 	}
 
 	c.Add(ctx, r2)
-
 	merged := report.MakeReport()
 	merged = merged.Merge(r1)
 	merged = merged.Merge(r2)
