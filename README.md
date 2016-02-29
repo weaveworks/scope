@@ -182,8 +182,8 @@ in your Kubernetes cluster using
    be provided with flag `--allow_privileged` at launch time.
 
 2. Make sure your cluster supports
-   [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md)
-   in your cluster. DaemonSets are needed to ensure that each Kubernetes node
+   [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md). 
+   DaemonSets are needed to ensure that each Kubernetes node
    runs a Scope Probe:
 
    * To enable them in an existing cluster, make sure to add a
