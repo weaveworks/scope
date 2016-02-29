@@ -35,7 +35,6 @@ import (
 )
 
 const (
-	signatureFile      = "/etc/weave/signature"
 	versionCheckPeriod = 6 * time.Hour
 )
 
@@ -51,9 +50,8 @@ func check() {
 
 	// Start background version checking
 	params := checkpoint.CheckParams{
-		Product:       "scope-probe",
-		Version:       version,
-		SignatureFile: signatureFile,
+		Product: "scope-probe",
+		Version: version,
 	}
 	resp, err := checkpoint.Check(&params)
 	handleResponse(resp, err)

@@ -803,7 +803,7 @@
 		{
 			"importpath": "github.com/weaveworks/go-checkpoint",
 			"repository": "https://github.com/weaveworks/go-checkpoint",
-			"revision": "285991b3508f51033aa288a38d242b9ad26c5274",
+			"revision": "a235d5b1d2bd7be80fa52ff681f6d6baa933f635",
 			"branch": "master"
 		},
 		{
@@ -826,6 +826,20 @@
 			"revision": "c8b9e6388ef638d5a8a9d865c634befdc46a6784",
 			"branch": "master",
 			"path": "/curve25519"
+		},
+		{
+			"importpath": "golang.org/x/crypto/pbkdf2",
+			"repository": "https://go.googlesource.com/crypto",
+			"revision": "1f22c0103821b9390939b6776727195525381532",
+			"branch": "master",
+			"path": "/pbkdf2"
+		},
+		{
+			"importpath": "golang.org/x/crypto/scrypt",
+			"repository": "https://go.googlesource.com/crypto",
+			"revision": "1f22c0103821b9390939b6776727195525381532",
+			"branch": "master",
+			"path": "/scrypt"
 		},
 		{
 			"importpath": "golang.org/x/crypto/ssh",
