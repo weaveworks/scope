@@ -62,7 +62,10 @@ test:
 deployment:
   hub:
     branch: master
-    owner: weaveworks
     commands:
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker push weaveworks/scope
+      - >
+        test -z "${DOCKER_USER}" || (
+          docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
+          (test "${DOCKER_USER}" == "weaveworks" || docker tag weaveworks/scope:latest $DOCKER_USER/scope:latest) &&
+          docker push $DOCKER_USER/scope
+        )
