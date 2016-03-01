@@ -227,7 +227,9 @@ export default class NodesChart extends React.Component {
         {errorEmpty}
         {errorMaxNodesExceeded}
         <svg width="100%" height="100%" id="nodes-chart-canvas" className={svgClassNames} onClick={this.handleMouseClick}>
-          <Logo/>
+          <g transform="translate(24,24) scale(0.25)">
+            <Logo/>
+          </g>
           <g className="canvas" transform={transform}>
             <g className="edges">
               {edgeElements}
