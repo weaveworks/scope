@@ -167,7 +167,7 @@ func TestAPITopologyWebsocket(t *testing.T) {
 	if err := decoder.Decode(&d); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
-	equals(t, 7, len(d.Add))
+	equals(t, 8, len(d.Add))
 	equals(t, 0, len(d.Update))
 	equals(t, 0, len(d.Remove))
 }
