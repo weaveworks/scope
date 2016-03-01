@@ -81,8 +81,8 @@ func probeMain() {
 		kubernetesAPI      = flag.String("kubernetes.api", "", "Address of kubernetes master api")
 		kubernetesInterval = flag.Duration("kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
 
-		weaveRouterAddr = flag.String("weave.router.addr", "127.0.0.1:6784", "IP address & port of the Weave router")
-		weaveDNSTarget  = flag.String("weave.hostname", fmt.Sprintf("scope.weave.local:%d", xfer.AppPort), "Hostname to lookup in weaveDNS")
+		weaveAddr      = flag.String("weave.addr", "127.0.0.1:6784", "IP address & port of the Weave router")
+		weaveDNSTarget = flag.String("weave.hostname", fmt.Sprintf("scope.weave.local:%d", xfer.AppPort), "Hostname to lookup in weaveDNS")
 	)
 	flag.Parse()
 
@@ -169,8 +169,8 @@ func probeMain() {
 		}
 	}
 
-	if *weaveRouterAddr != "" {
-		client := weave.NewClient(sanitize.URL("http://", 6784, "")(*weaveRouterAddr))
+	if *weaveAddr != "" {
+		client := weave.NewClient(sanitize.URL("http://", 6784, "")(*weaveAddr))
 		weave := overlay.NewWeave(hostID, client)
 		defer weave.Stop()
 		p.AddTagger(weave)
