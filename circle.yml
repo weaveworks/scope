@@ -66,6 +66,6 @@ deployment:
       - >
         test -z "${DOCKER_USER}" || (
           docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
-          (test "${DOCKER_USER}" == "weaveworks" || docker tag weaveworks/scope:latest $DOCKER_USER/scope:latest) &&
-          docker push $DOCKER_USER/scope
+          (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" == "weaveworks" || docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:latest) &&
+          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope
         )
