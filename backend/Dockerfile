@@ -1,4 +1,4 @@
-FROM golang:1.5.3
+FROM golang:1.6.0
 ENV GO15VENDOREXPERIMENT 1
 RUN apt-get update && apt-get install -y libpcap-dev python-requests time
 RUN go clean -i net && go install -tags netgo std &&  go install -race -tags netgo std
