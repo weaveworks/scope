@@ -13,13 +13,13 @@ import (
 func TestEdgeMetadatasAdd(t *testing.T) {
 	have := EmptyEdgeMetadatas.
 		Add("foo",
-		EdgeMetadata{
-			EgressPacketCount: newu64(1),
-		}).
+			EdgeMetadata{
+				EgressPacketCount: newu64(1),
+			}).
 		Add("foo",
-		EdgeMetadata{
-			EgressPacketCount: newu64(2),
-		})
+			EdgeMetadata{
+				EgressPacketCount: newu64(2),
+			})
 	if emd, ok := have.Lookup("foo"); !ok || *emd.EgressPacketCount != 3 {
 		t.Errorf("foo.EgressPacketCount != 3")
 	}
@@ -43,14 +43,14 @@ func TestEdgeMetadatasAddNil(t *testing.T) {
 func TestEdgeMetadatasDeepEquals(t *testing.T) {
 	want := EmptyEdgeMetadatas.
 		Add("foo",
-		EdgeMetadata{
-			EgressPacketCount: newu64(3),
-		})
+			EdgeMetadata{
+				EgressPacketCount: newu64(3),
+			})
 	have := EmptyEdgeMetadatas.
 		Add("foo",
-		EdgeMetadata{
-			EgressPacketCount: newu64(3),
-		})
+			EdgeMetadata{
+				EgressPacketCount: newu64(3),
+			})
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf(test.Diff(want, have))
 	}
@@ -69,76 +69,76 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 			a: EmptyEdgeMetadatas,
 			b: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(1),
-				}),
+					EdgeMetadata{
+						EgressPacketCount: newu64(1),
+					}),
 			want: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(1),
-				}),
+					EdgeMetadata{
+						EgressPacketCount: newu64(1),
+					}),
 		},
 		"Empty b": {
 			a: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(12),
-					EgressByteCount:   newu64(999),
-				}),
+					EdgeMetadata{
+						EgressPacketCount: newu64(12),
+						EgressByteCount:   newu64(999),
+					}),
 			b: EmptyEdgeMetadatas,
 			want: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(12),
-					EgressByteCount:   newu64(999),
-				}),
+					EdgeMetadata{
+						EgressPacketCount: newu64(12),
+						EgressByteCount:   newu64(999),
+					}),
 		},
 		"Disjoint a & b": {
 			a: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(12),
-					EgressByteCount:   newu64(500),
-				}),
+					EdgeMetadata{
+						EgressPacketCount: newu64(12),
+						EgressByteCount:   newu64(500),
+					}),
 			b: EmptyEdgeMetadatas.
 				Add("hostQ|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(1),
-					EgressByteCount:   newu64(2),
-				}),
+					EdgeMetadata{
+						EgressPacketCount: newu64(1),
+						EgressByteCount:   newu64(2),
+					}),
 			want: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(12),
-					EgressByteCount:   newu64(500),
-				}).
+					EdgeMetadata{
+						EgressPacketCount: newu64(12),
+						EgressByteCount:   newu64(500),
+					}).
 				Add("hostQ|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(1),
-					EgressByteCount:   newu64(2),
-				}),
+					EdgeMetadata{
+						EgressPacketCount: newu64(1),
+						EgressByteCount:   newu64(2),
+					}),
 		},
 		"Overlapping a & b": {
 			a: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(12),
-					EgressByteCount:   newu64(1000),
-				}),
+					EdgeMetadata{
+						EgressPacketCount: newu64(12),
+						EgressByteCount:   newu64(1000),
+					}),
 			b: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(1),
-					IngressByteCount:  newu64(123),
-					EgressByteCount:   newu64(2),
-				}),
+					EdgeMetadata{
+						EgressPacketCount: newu64(1),
+						IngressByteCount:  newu64(123),
+						EgressByteCount:   newu64(2),
+					}),
 			want: EmptyEdgeMetadatas.
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
-				EdgeMetadata{
-					EgressPacketCount: newu64(13),
-					IngressByteCount:  newu64(123),
-					EgressByteCount:   newu64(1002),
-				}),
+					EdgeMetadata{
+						EgressPacketCount: newu64(13),
+						IngressByteCount:  newu64(123),
+						EgressByteCount:   newu64(1002),
+					}),
 		},
 	} {
 		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
@@ -170,11 +170,11 @@ func TestEdgeMetadataFlatten(t *testing.T) {
 	{
 		have := EmptyEdgeMetadatas.
 			Add("foo", EdgeMetadata{
-			EgressPacketCount: newu64(1),
-		}).
+				EgressPacketCount: newu64(1),
+			}).
 			Add("bar", EdgeMetadata{
-			EgressPacketCount: newu64(3),
-		}).Flatten()
+				EgressPacketCount: newu64(3),
+			}).Flatten()
 		want := EdgeMetadata{
 			EgressPacketCount: newu64(1 + 3),
 		}
@@ -208,11 +208,11 @@ func TestEdgeMetadataReversed(t *testing.T) {
 func TestEdgeMetadatasEncoding(t *testing.T) {
 	want := EmptyEdgeMetadatas.
 		Add("foo", EdgeMetadata{
-		EgressPacketCount: newu64(1),
-	}).
+			EgressPacketCount: newu64(1),
+		}).
 		Add("bar", EdgeMetadata{
-		EgressPacketCount: newu64(3),
-	})
+			EgressPacketCount: newu64(3),
+		})
 
 	{
 		gobs, err := want.GobEncode()
