@@ -389,10 +389,27 @@ h2 {
 
   .shape {
 
+  .stack .shape .highlighted {
+    display: none;
+  }
+
+  .stack .onlyHighlight .shape  {
+    .border { display: none; }
+    .shadow { display: none; }
+    .node { display: none; }
+    .highlighted { display: inline; }
+  }
+
+  .shape {
     /* cloud paths have stroke-width set dynamically */
     &:not(.shape-cloud) .border {
       stroke-width: @node-border-stroke-width;
       fill: @background-color;
+    }
+
+    .metric-fill {
+      stroke: none;
+      fill: yellowgreen;
     }
 
     .shadow {
@@ -402,6 +419,12 @@ h2 {
 
     .node {
       fill: @text-color;
+      stroke: @background-lighter-color;
+      stroke-width: 2px;
+    }
+
+    text {
+      font-size: 12px;
     }
 
     .highlighted {

@@ -8,11 +8,20 @@ const log = debug('scope:debug-panel');
 import { receiveNodesDelta } from '../actions/app-actions';
 import AppStore from '../stores/app-store';
 
-const SHAPES = ['circle', 'hexagon', 'square', 'heptagon'];
+const SHAPES = ['square', 'hexagon', 'heptagon', 'circle'];
 const NODE_COUNTS = [1, 2, 3];
-const STACK_VARIANTS = [true, false];
+const STACK_VARIANTS = [false, true];
 
 const sample = (collection) => _.range(_.random(4)).map(() => _.sample(collection));
+
+const shapeTypes = {
+  square: ['Process', 'Processes'],
+  hexagon: ['Container', 'Containers'],
+  heptagon: ['Pod', 'Pods'],
+  circle: ['Host', 'Hosts']
+};
+
+const LABEL_PREFIXES = _.range('A'.charCodeAt(), 'Z'.charCodeAt() + 1).map(n => String.fromCharCode(n));
 
 const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, nodeCount = 1) => ({
   adjacency,
@@ -29,11 +38,20 @@ const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, nodeCou
   rank: 'alpine'
 });
 
+function label(shape, stacked) {
+  const type = shapeTypes[shape];
+  return stacked ? `Group of ${type[1]}` : type[0];
+}
+
 function addAllVariants() {
-  const newNodes = _.flattenDeep(SHAPES.map(s => STACK_VARIANTS.map(stack => {
-    if (!stack) return [deltaAdd([s, 1, stack].join('-'), [], s, stack, 1)];
-    return NODE_COUNTS.map(n => deltaAdd([s, n, stack].join('-'), [], s, stack, n));
-  })));
+  const newNodes = _.flattenDeep(STACK_VARIANTS.map(stack => {
+    return SHAPES.map(s => {
+      if (!stack) return [deltaAdd(label(s, stack), [], s, stack, 1)];
+      return NODE_COUNTS.map(n => {
+        return deltaAdd(label(s, stack), [], s, stack, n);
+      });
+    });
+  }));
 
   receiveNodesDelta({
     add: newNodes
@@ -43,15 +61,20 @@ function addAllVariants() {
 function addNodes(n) {
   const ns = AppStore.getNodes();
   const nodeNames = ns.keySeq().toJS();
-  const newNodeNames = _.range(ns.size, ns.size + n).map((i) => `zing${i}`);
+  const newNodeNames = _.range(ns.size, ns.size + n).map(() => {
+    return _.sample(LABEL_PREFIXES, 2).join('') + '-zing';
+  });
   const allNodes = _(nodeNames).concat(newNodeNames).value();
 
   receiveNodesDelta({
-    add: newNodeNames.map((name) => deltaAdd(name,
-                                             sample(allNodes)),
-                                             _.sample(SHAPES),
-                                             _.sample(STACK_VARIANTS),
-                                             _.sample(NODE_COUNTS))
+    add: newNodeNames.map((name) => {
+      return deltaAdd(
+        name,
+        sample(allNodes),
+        _.sample(SHAPES),
+        _.sample(STACK_VARIANTS),
+        _.sample(NODE_COUNTS));
+    })
   });
 }
 

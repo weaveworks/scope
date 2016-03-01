@@ -1,5 +1,6 @@
 import React from 'react';
 import d3 from 'd3';
+import {formatCanvasMetric, getMetricValue} from '../utils/data-utils.js';
 
 const line = d3.svg.line()
   .interpolate('cardinal-closed')
@@ -14,29 +15,37 @@ function polygon(r, sides) {
   return points;
 }
 
-export default function NodeShapeHeptagon({onlyHighlight, highlighted, size, color}) {
+export default function NodeShapeHeptagon({highlighted, size, color, metrics}) {
   const scaledSize = size * 1.0;
   const pathProps = v => ({
     d: line(polygon(scaledSize * v, 7)),
     transform: 'rotate(90)'
   });
 
-  const hightlightNode = <path className="highlighted" {...pathProps(0.7)} />;
-
-  if (onlyHighlight) {
-    return (
-      <g className="shape">
-        {highlighted && hightlightNode}
-      </g>
-    );
-  }
+  const clipId = `mask-${Math.random()}`;
+  const {height, vp} = getMetricValue(metrics, size);
 
   return (
     <g className="shape">
-      {highlighted && hightlightNode}
+      <defs>
+        <clipPath id={clipId}>
+          <rect
+            width={size}
+            height={size}
+            y={-size * 0.5}
+            x={size * 0.5 - height}
+            />
+        </clipPath>
+      </defs>
+      {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(0.45)} />
-      <circle className="node" r={Math.max(2, (scaledSize * 0.125))} />
+      <path className="metric-fill" clipPath={`url(#${clipId})`} {...pathProps(0.45)} />
+      {highlighted ?
+        <text dy="0.35em" style={{'textAnchor': 'middle'}}>
+          {formatCanvasMetric(vp)}
+        </text> :
+        <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );
 }

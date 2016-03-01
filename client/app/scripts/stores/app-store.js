@@ -29,7 +29,8 @@ function makeNode(node) {
     pseudo: node.pseudo,
     stack: node.stack,
     shape: node.shape,
-    adjacency: node.adjacency
+    adjacency: node.adjacency,
+    metrics: node.metrics
   };
 }
 
@@ -553,9 +554,9 @@ export class AppStore extends Store {
         });
 
         // update existing nodes
-        _.each(payload.delta.update, (node) => {
+        _.each(payload.delta.update, function(node) {
           if (nodes.has(node.id)) {
-            nodes = nodes.set(node.id, nodes.get(node.id).merge(makeNode(node)));
+            nodes = nodes.set(node.id, nodes.get(node.id).merge(Immutable.fromJS(node)));
           }
         });
 

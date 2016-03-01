@@ -1,5 +1,6 @@
 import React from 'react';
 import d3 from 'd3';
+import {formatCanvasMetric, getMetricValue} from '../utils/data-utils.js';
 
 const line = d3.svg.line()
   .interpolate('cardinal-closed')
@@ -24,28 +25,38 @@ function getPoints(h) {
 }
 
 
-export default function NodeShapeHex({onlyHighlight, highlighted, size, color}) {
+export default function NodeShapeHex({highlighted, size, color, metrics}) {
   const pathProps = v => ({
     d: getPoints(size * v * 2),
     transform: `rotate(90) translate(-${size * getWidth(v)}, -${size * v})`
   });
 
-  const hightlightNode = <path className="highlighted" {...pathProps(0.7)} />;
+  const shadowSize = 0.45;
+  const upperHexBitHeight = -0.25 * size * shadowSize;
 
-  if (onlyHighlight) {
-    return (
-      <g className="shape">
-        {highlighted && hightlightNode}
-      </g>
-    );
-  }
+  const clipId = `mask-${Math.random()}`;
+  const {height, vp} = getMetricValue(metrics, size);
 
   return (
     <g className="shape">
-      {highlighted && hightlightNode}
+      <defs>
+        <clipPath id={clipId}>
+          <rect
+            width={size}
+            height={size}
+            x={size - height + upperHexBitHeight}
+            />
+        </clipPath>
+      </defs>
+      {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
-      <path className="shadow" {...pathProps(0.45)} />
-      <circle className="node" r={Math.max(2, (size * 0.125))} />
+      <path className="shadow" {...pathProps(shadowSize)} />
+      <path className="metric-fill" clipPath={`url(#${clipId})`} {...pathProps(shadowSize)} />
+      {highlighted ?
+        <text dy="0.35em" style={{'textAnchor': 'middle'}}>
+          {formatCanvasMetric(vp)}
+        </text> :
+        <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );
 }

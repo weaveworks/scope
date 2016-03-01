@@ -1,30 +1,42 @@
 import React from 'react';
+import {formatCanvasMetric, getMetricValue} from '../utils/data-utils.js';
 
-export default function NodeShapeSquare({onlyHighlight, highlighted, size, color, rx = 0, ry = 0}) {
+export default function NodeShapeSquare({
+  highlighted, size, color, rx = 0, ry = 0, metrics
+}) {
   const rectProps = v => ({
     width: v * size * 2,
     height: v * size * 2,
     rx: v * size * rx,
     ry: v * size * ry,
-    transform: `translate(-${size * v}, -${size * v})`
+    x: -size * v,
+    y: -size * v
   });
 
-  const hightlightNode = <rect className="highlighted" {...rectProps(0.7)} />;
-
-  if (onlyHighlight) {
-    return (
-      <g className="shape">
-        {highlighted && hightlightNode}
-      </g>
-    );
-  }
+  const clipId = `mask-${Math.random()}`;
+  const {height, vp} = getMetricValue(metrics, size);
 
   return (
     <g className="shape">
-      {highlighted && hightlightNode}
+      <defs>
+        <clipPath id={clipId}>
+          <rect
+            width={size}
+            height={size}
+            x={-size * 0.5}
+            y={size * 0.5 - height}
+            />
+        </clipPath>
+      </defs>
+      {highlighted && <rect className="highlighted" {...rectProps(0.7)} />}
       <rect className="border" stroke={color} {...rectProps(0.5)} />
       <rect className="shadow" {...rectProps(0.45)} />
-      <circle className="node" r={Math.max(2, (size * 0.125))} />
+      <rect className="metric-fill" clipPath={`url(#${clipId})`} {...rectProps(0.45)} />
+      {highlighted ?
+        <text dy="0.35em" style={{'textAnchor': 'middle'}}>
+          {formatCanvasMetric(vp)}
+        </text> :
+        <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );
 }

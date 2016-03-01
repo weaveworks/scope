@@ -238,7 +238,7 @@ export function receiveNodesDelta(delta) {
   } else {
     AppDispatcher.dispatch({
       type: ActionTypes.RECEIVE_NODES_DELTA,
-      delta
+      delta: delta
     });
   }
 }

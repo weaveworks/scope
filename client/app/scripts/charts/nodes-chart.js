@@ -74,10 +74,10 @@ export default class NodesChart extends React.Component {
         edges: makeMap()
       });
     }
+    //
     // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
-    if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
-      _.assign(state, this.updateGraphState(nextProps, state));
-    }
+    _.assign(state, this.updateGraphState(nextProps, state));
+
     if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
       _.assign(state, this.restoreLayout(state));
     }
@@ -151,6 +151,7 @@ export default class NodesChart extends React.Component {
         pseudo={node.get('pseudo')}
         nodeCount={node.get('nodeCount')}
         subLabel={node.get('subLabel')}
+        metrics={node.get('metrics')}
         rank={node.get('rank')}
         selectedNodeScale={selectedNodeScale}
         nodeScale={nodeScale}
@@ -243,9 +244,10 @@ export default class NodesChart extends React.Component {
   initNodes(topology) {
     // copy relevant fields to state nodes
     return topology.map((node, id) => makeMap({
-      id,
+      id:
       label: node.get('label'),
       pseudo: node.get('pseudo'),
+      metrics: node.get('metrics'),
       subLabel: node.get('label_minor'),
       nodeCount: node.get('node_count'),
       rank: node.get('rank'),
@@ -423,7 +425,9 @@ export default class NodesChart extends React.Component {
     if (!graph) {
       return {maxNodesExceeded: true};
     }
-    stateNodes = graph.nodes;
+    stateNodes = graph.nodes.mergeDeep(stateNodes.map(node => {
+      return makeMap({metrics: node.get('metrics')});
+    }));
     stateEdges = graph.edges;
 
     // save coordinates for restore
