@@ -42,6 +42,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 		SelectContainer,
 	).Render(rpt)
 
+	outputs := RenderableNodes{}
 	for id, p := range processes {
 		pid, ok := p.Node.Latest.Lookup(process.PID)
 		if !ok {
@@ -55,11 +56,11 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 		if !ok {
 			continue
 		}
-		p.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(p.Node), container.LabelMajor, pid)
-		processes[id] = p
+		output := p.Copy()
+		output.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(p.Node), container.LabelMajor, pid)
+		outputs[id] = output
 	}
-
-	return processes
+	return outputs
 }
 
 // ProcessWithContainerNameRenderer is a Renderer which produces a process
@@ -131,6 +132,7 @@ func (r containerWithHostIPsRenderer) Render(rpt report.Report) RenderableNodes 
 		SelectHost,
 	).Render(rpt)
 
+	outputs := RenderableNodes{}
 	for id, c := range containers {
 		networkMode, ok := c.Node.Latest.Lookup(docker.ContainerNetworkMode)
 		if !ok || networkMode != docker.NetworkModeHost {
@@ -150,11 +152,11 @@ func (r containerWithHostIPsRenderer) Render(rpt report.Report) RenderableNodes 
 			}
 		}
 
-		c.Sets = c.Sets.Add(docker.ContainerIPs, newIPs)
-		containers[id] = c
+		output := c.Copy()
+		output.Sets = c.Sets.Add(docker.ContainerIPs, newIPs)
+		outputs[id] = output
 	}
-
-	return containers
+	return outputs
 }
 
 // ContainerWithHostIPsRenderer is a Renderer which produces a container graph
@@ -175,6 +177,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 		SelectContainerImage,
 	).Render(rpt)
 
+	outputs := RenderableNodes{}
 	for id, c := range containers {
 		imageID, ok := c.Node.Latest.Lookup(docker.ImageID)
 		if !ok {
@@ -184,12 +187,12 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 		if !ok {
 			continue
 		}
-		c.Rank = ImageNameWithoutVersion(image.LabelMajor)
-		c.Latest = image.Latest.Merge(c.Latest)
-		containers[id] = c
+		output := c.Copy()
+		output.Rank = ImageNameWithoutVersion(image.LabelMajor)
+		output.Latest = image.Latest.Merge(c.Latest)
+		outputs[id] = output
 	}
-
-	return containers
+	return outputs
 }
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container

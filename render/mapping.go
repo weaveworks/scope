@@ -527,13 +527,14 @@ func MapCountProcessName(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{n.ID: n}
 	}
 
+	output := n.Copy()
 	processes, _ := n.Node.Counters.Lookup(processesKey)
 	if processes == 1 {
-		n.LabelMinor = "1 process"
+		output.LabelMinor = "1 process"
 	} else {
-		n.LabelMinor = fmt.Sprintf("%d processes", processes)
+		output.LabelMinor = fmt.Sprintf("%d processes", processes)
 	}
-	return RenderableNodes{n.ID: n}
+	return RenderableNodes{output.ID: output}
 }
 
 // MapContainer2ContainerImage maps container RenderableNodes to container
@@ -757,13 +758,14 @@ func MapCountContainers(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{n.ID: n}
 	}
 
+	output := n.Copy()
 	containers, _ := n.Node.Counters.Lookup(ContainersKey)
 	if containers == 1 {
-		n.LabelMinor = "1 container"
+		output.LabelMinor = "1 container"
 	} else {
-		n.LabelMinor = fmt.Sprintf("%d containers", containers)
+		output.LabelMinor = fmt.Sprintf("%d containers", containers)
 	}
-	return RenderableNodes{n.ID: n}
+	return RenderableNodes{output.ID: output}
 }
 
 // MapCountPods maps 1:1 service nodes, counting the number of pods grouped
@@ -773,13 +775,14 @@ func MapCountPods(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{n.ID: n}
 	}
 
+	output := n.Copy()
 	pods, _ := n.Node.Counters.Lookup(podsKey)
 	if pods == 1 {
-		n.LabelMinor = "1 pod"
+		output.LabelMinor = "1 pod"
 	} else {
-		n.LabelMinor = fmt.Sprintf("%d pods", pods)
+		output.LabelMinor = fmt.Sprintf("%d pods", pods)
 	}
-	return RenderableNodes{n.ID: n}
+	return RenderableNodes{output.ID: output}
 }
 
 // trySplitAddr is basically ParseArbitraryNodeID, since its callsites
