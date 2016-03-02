@@ -152,4 +152,5 @@ deps:
 	$(GO) get -u -f -tags $(GO_BUILD_TAGS) \
 		github.com/FiloSottile/gvt \
 		github.com/mattn/goveralls \
-		github.com/weaveworks/github-release
+		github.com/weaveworks/github-release \
+		github.com/2opremio/trifles/wscat
