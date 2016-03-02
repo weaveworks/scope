@@ -44,6 +44,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 
 	outputs := RenderableNodes{}
 	for id, p := range processes {
+		outputs[id] = p
 		pid, ok := p.Node.Latest.Lookup(process.PID)
 		if !ok {
 			continue
@@ -134,6 +135,7 @@ func (r containerWithHostIPsRenderer) Render(rpt report.Report) RenderableNodes 
 
 	outputs := RenderableNodes{}
 	for id, c := range containers {
+		outputs[id] = c
 		networkMode, ok := c.Node.Latest.Lookup(docker.ContainerNetworkMode)
 		if !ok || networkMode != docker.NetworkModeHost {
 			continue
@@ -179,6 +181,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 
 	outputs := RenderableNodes{}
 	for id, c := range containers {
+		outputs[id] = c
 		imageID, ok := c.Node.Latest.Lookup(docker.ImageID)
 		if !ok {
 			continue
