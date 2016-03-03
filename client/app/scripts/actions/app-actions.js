@@ -4,6 +4,8 @@ import AppDispatcher from '../dispatcher/app-dispatcher';
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { updateRoute } from '../utils/router-utils';
+import { bufferDeltaUpdate, resumeUpdate,
+  resetUpdateBuffer } from '../utils/update-buffer-utils';
 import { doControlRequest, getNodesDelta, getNodeDetails,
   getTopologies, deletePipe } from '../utils/web-api-utils';
 import AppStore from '../stores/app-store';
@@ -19,6 +21,7 @@ export function changeTopologyOption(option, value, topologyId) {
   });
   updateRoute();
   // update all request workers with new options
+  resetUpdateBuffer();
   getTopologies(
     AppStore.getActiveTopologyOptions()
   );
@@ -82,6 +85,12 @@ export function clickNode(nodeId, label, origin) {
   );
 }
 
+export function clickPauseUpdate() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_PAUSE_UPDATE
+  });
+}
+
 export function clickRelative(nodeId, topologyId, label, origin) {
   AppDispatcher.dispatch({
     type: ActionTypes.CLICK_RELATIVE,
@@ -97,6 +106,13 @@ export function clickRelative(nodeId, topologyId, label, origin) {
   );
 }
 
+export function clickResumeUpdate() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.CLICK_RESUME_UPDATE
+  });
+  resumeUpdate();
+}
+
 export function clickShowTopologyForNode(topologyId, nodeId) {
   AppDispatcher.dispatch({
     type: ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE,
@@ -104,6 +120,7 @@ export function clickShowTopologyForNode(topologyId, nodeId) {
     nodeId
   });
   updateRoute();
+  resetUpdateBuffer();
   getNodesDelta(
     AppStore.getCurrentTopologyUrl(),
     AppStore.getActiveTopologyOptions()
@@ -116,6 +133,7 @@ export function clickTopology(topologyId) {
     topologyId: topologyId
   });
   updateRoute();
+  resetUpdateBuffer();
   getNodesDelta(
     AppStore.getCurrentTopologyUrl(),
     AppStore.getActiveTopologyOptions()
@@ -215,10 +233,14 @@ export function receiveNodeDetails(details) {
 }
 
 export function receiveNodesDelta(delta) {
-  AppDispatcher.dispatch({
-    type: ActionTypes.RECEIVE_NODES_DELTA,
-    delta: delta
-  });
+  if (AppStore.isUpdatePaused()) {
+    bufferDeltaUpdate(delta);
+  } else {
+    AppDispatcher.dispatch({
+      type: ActionTypes.RECEIVE_NODES_DELTA,
+      delta: delta
+    });
+  }
 }
 
 export function receiveTopologies(topologies) {

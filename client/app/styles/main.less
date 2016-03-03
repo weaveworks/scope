@@ -188,6 +188,10 @@ h2 {
     font-size: 90%;
   }
 
+  &-active {
+    animation: blinking 1.5s infinite ease-in-out;
+  }
+
   &-label {
     text-transform: uppercase;
     margin: 0 0.25em;
@@ -197,6 +201,7 @@ h2 {
       padding: 4px 3px;
       color: @text-color;
       position: relative;
+      top: -1px;
       border: 1px solid transparent;
       border-radius: 10%;
       &:hover {
