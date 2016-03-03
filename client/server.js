@@ -107,6 +107,7 @@ var proxyRules = new HttpProxyRules({
 });
 
 var pathProxy = httpProxy.createProxy({ws: true});
+pathProxy.on('error', function(err) { console.error('path proxy error', err); });
 var pathProxyPort = port + 1;
 const proxyPathServer = http.createServer(function(req, res) {
   var target = proxyRules.match(req);
