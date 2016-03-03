@@ -34,10 +34,10 @@ func checkPipe(pr PipeRouter, end End) CtxHandlerFunc {
 		id := mux.Vars(r)["pipeID"]
 		_, _, ok := pr.Get(ctx, id, end)
 		if !ok {
-			http.NotFound(w, r)
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-		defer pr.Release(ctx, id, end)
+		pr.Release(ctx, id, end)
 	}
 }
 

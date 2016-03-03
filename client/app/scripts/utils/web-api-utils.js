@@ -218,17 +218,17 @@ export function getPipeStatus(pipeId) {
   reqwest({
     method: 'GET',
     url: url,
-    success: function(res) {
-      log('ERROR: expected responses: [200, 404]. Got:', res);
-    },
     error: function(err) {
+      log('ERROR: unexpected response:', err);
+    },
+    success: function(res) {
       const status = {
         200: 'PIPE_ALIVE',
-        404: 'PIPE_DELETED'
-      }[err.status];
+        204: 'PIPE_DELETED'
+      }[res.status];
 
       if (!status) {
-        log('Unexpected pipe status:', err.status);
+        log('Unexpected pipe status:', res.status);
         return;
       }
 
