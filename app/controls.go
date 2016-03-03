@@ -31,7 +31,6 @@ func handleControl(cr ControlRouter) CtxHandlerFunc {
 			control = vars["control"]
 		)
 		result, err := cr.Handle(ctx, probeID, xfer.Request{
-			AppID:   UniqueID,
 			NodeID:  nodeID,
 			Control: control,
 		})

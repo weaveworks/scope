@@ -41,6 +41,7 @@ type appClient struct {
 	target   string
 	client   http.Client
 	wsDialer websocket.Dialer
+	appID    string
 
 	// Track all the background goroutines, ensure they all stop
 	backgroundWait sync.WaitGroup
@@ -150,7 +151,11 @@ func (c *appClient) Details() (xfer.Details, error) {
 		return result, err
 	}
 	defer resp.Body.Close()
-	return result, codec.NewDecoder(resp.Body, &codec.JsonHandle{}).Decode(&result)
+	if err := codec.NewDecoder(resp.Body, &codec.JsonHandle{}).Decode(&result); err != nil {
+		return result, err
+	}
+	c.appID = result.ID
+	return result, nil
 }
 
 func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
@@ -194,9 +199,16 @@ func (c *appClient) controlConnection() (bool, error) {
 	}
 	defer conn.Close()
 
+	doControl := func(req xfer.Request) xfer.Response {
+		req.AppID = c.appID
+		var res xfer.Response
+		c.control.Handle(req, &res)
+		return res
+	}
+
 	codec := xfer.NewJSONWebsocketCodec(conn)
 	server := rpc.NewServer()
-	if err := server.RegisterName("control", c.control); err != nil {
+	if err := server.RegisterName("control", xfer.ControlHandlerFunc(doControl)); err != nil {
 		return false, err
 	}
 
