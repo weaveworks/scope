@@ -214,7 +214,7 @@ export function deletePipe(pipeId) {
 }
 
 export function getPipeStatus(pipeId) {
-  const url = `/api/pipe/${encodeURIComponent(pipeId)}/check`;
+  const url = `api/pipe/${encodeURIComponent(pipeId)}/check`;
   reqwest({
     method: 'GET',
     url: url,
