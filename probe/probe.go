@@ -95,6 +95,7 @@ func (p *Probe) Stop() {
 // Publish will queue a report for immediate publication,
 // bypassing the spy tick
 func (p *Probe) Publish(rpt report.Report) {
+	rpt = p.tag(rpt)
 	p.shortcutReports <- rpt
 }
 
