@@ -29,76 +29,13 @@ var (
 	}
 )
 
-func endpointChildrenOf(n render.RenderableNode) []render.RenderableNode {
-	result := []render.RenderableNode{}
-	n.Children.ForEach(func(child render.RenderableNode) {
-		if _, _, _, ok := render.ParseEndpointID(child.ID); ok {
-			result = append(result, child)
-		}
-	})
-	return result
-}
-
-func endpointChildIDsOf(n render.RenderableNode) report.IDList {
-	result := report.MakeIDList()
-	n.Children.ForEach(func(child render.RenderableNode) {
-		if _, _, _, ok := render.ParseEndpointID(child.ID); ok {
-			result = append(result, child.ID)
-		}
-	})
-	return result
-}
-
 type connectionsRow struct {
 	remoteNode, localNode *render.RenderableNode
 	remoteAddr, localAddr string
 	port                  string // always the server-side port
 }
 
-func buildConnectionRows(in map[connectionsRow]int, includeLocal bool) []NodeSummary {
-	nodes := []NodeSummary{}
-	for row, count := range in {
-		id, label, linkable := row.remoteNode.ID, row.remoteNode.LabelMajor, true
-		if row.remoteAddr != "" {
-			id, label, linkable = row.remoteAddr+":"+row.port, row.remoteAddr, false
-		}
-		metadata := []MetadataRow{}
-		if includeLocal {
-			metadata = append(metadata,
-				MetadataRow{
-					ID:       "foo",
-					Value:    row.localAddr,
-					Datatype: number,
-				})
-		}
-		metadata = append(metadata,
-			MetadataRow{
-				ID:       portKey,
-				Value:    row.port,
-				Datatype: number,
-			},
-			MetadataRow{
-				ID:       countKey,
-				Value:    strconv.Itoa(count),
-				Datatype: number,
-			},
-		)
-		nodes = append(nodes, NodeSummary{
-			ID:       id,
-			Label:    label,
-			Linkable: linkable,
-			Metadata: metadata,
-		})
-	}
-	sort.Sort(nodeSummariesByID(nodes))
-	return nodes
-}
-
-func isInternetNode(n render.RenderableNode) bool {
-	return n.ID == render.IncomingInternetID || n.ID == render.OutgoingInternetID
-}
-
-func makeIncomingConnectionsTable(topologyID string, n render.RenderableNode, ns render.RenderableNodes) NodeSummaryGroup {
+func incomingConnectionsTable(topologyID string, n render.RenderableNode, ns render.RenderableNodes) NodeSummaryGroup {
 	localEndpointIDs := endpointChildIDsOf(n)
 
 	// For each node which has an edge TO me
@@ -143,11 +80,11 @@ func makeIncomingConnectionsTable(topologyID string, n render.RenderableNode, ns
 		TopologyID: topologyID,
 		Label:      "Inbound",
 		Columns:    columnHeaders,
-		Nodes:      buildConnectionRows(counts, isInternetNode(n)),
+		Nodes:      connectionRows(counts, isInternetNode(n)),
 	}
 }
 
-func makeOutgoingConnectionsTable(topologyID string, n render.RenderableNode, ns render.RenderableNodes) NodeSummaryGroup {
+func outgoingConnectionsTable(topologyID string, n render.RenderableNode, ns render.RenderableNodes) NodeSummaryGroup {
 	localEndpoints := endpointChildrenOf(n)
 
 	// For each node which has an edge FROM me
@@ -192,6 +129,69 @@ func makeOutgoingConnectionsTable(topologyID string, n render.RenderableNode, ns
 		TopologyID: topologyID,
 		Label:      "Outbound",
 		Columns:    columnHeaders,
-		Nodes:      buildConnectionRows(counts, isInternetNode(n)),
+		Nodes:      connectionRows(counts, isInternetNode(n)),
 	}
+}
+
+func endpointChildrenOf(n render.RenderableNode) []render.RenderableNode {
+	result := []render.RenderableNode{}
+	n.Children.ForEach(func(child render.RenderableNode) {
+		if _, _, _, ok := render.ParseEndpointID(child.ID); ok {
+			result = append(result, child)
+		}
+	})
+	return result
+}
+
+func endpointChildIDsOf(n render.RenderableNode) report.IDList {
+	result := report.MakeIDList()
+	n.Children.ForEach(func(child render.RenderableNode) {
+		if _, _, _, ok := render.ParseEndpointID(child.ID); ok {
+			result = append(result, child.ID)
+		}
+	})
+	return result
+}
+
+func isInternetNode(n render.RenderableNode) bool {
+	return n.ID == render.IncomingInternetID || n.ID == render.OutgoingInternetID
+}
+
+func connectionRows(in map[connectionsRow]int, includeLocal bool) []NodeSummary {
+	nodes := []NodeSummary{}
+	for row, count := range in {
+		id, label, linkable := row.remoteNode.ID, row.remoteNode.LabelMajor, true
+		if row.remoteAddr != "" {
+			id, label, linkable = row.remoteAddr+":"+row.port, row.remoteAddr, false
+		}
+		metadata := []MetadataRow{}
+		if includeLocal {
+			metadata = append(metadata,
+				MetadataRow{
+					ID:       "foo",
+					Value:    row.localAddr,
+					Datatype: number,
+				})
+		}
+		metadata = append(metadata,
+			MetadataRow{
+				ID:       portKey,
+				Value:    row.port,
+				Datatype: number,
+			},
+			MetadataRow{
+				ID:       countKey,
+				Value:    strconv.Itoa(count),
+				Datatype: number,
+			},
+		)
+		nodes = append(nodes, NodeSummary{
+			ID:       id,
+			Label:    label,
+			Linkable: linkable,
+			Metadata: metadata,
+		})
+	}
+	sort.Sort(nodeSummariesByID(nodes))
+	return nodes
 }

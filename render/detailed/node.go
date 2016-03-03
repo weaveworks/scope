@@ -92,8 +92,8 @@ func MakeNode(topologyID string, r report.Report, ns render.RenderableNodes, n r
 		Children:    children(n),
 		Parents:     Parents(r, n),
 		Connections: []NodeSummaryGroup{
-			makeIncomingConnectionsTable(topologyID, n, ns),
-			makeOutgoingConnectionsTable(topologyID, n, ns),
+			incomingConnectionsTable(topologyID, n, ns),
+			outgoingConnectionsTable(topologyID, n, ns),
 		},
 	}
 }

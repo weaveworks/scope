@@ -60,7 +60,10 @@ func theInternetNode(m RenderableNode) RenderableNode {
 	return node
 }
 
-// RemapEndpointIDs remaps endpoints to have the right id format.
+// RemapEndpointIDs remaps endpoints to have an id format consistent
+// with render/id.go; no pseudo nodes are introduced in this step, so
+// that pseudo nodes introduces later are guaranteed to have endpoints
+// as children.  This is needed to construct the connection details tables.
 func RemapEndpointIDs(m RenderableNode, _ report.Networks) RenderableNodes {
 	addr, ok := m.Latest.Lookup(endpoint.Addr)
 	if !ok {
@@ -414,7 +417,7 @@ func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{}
 	}
 
-	// Propogate the internet pseudo node
+	// Propagate the internet pseudo node
 	if strings.HasSuffix(n.ID, TheInternetID) {
 		return RenderableNodes{n.ID: n}
 	}
