@@ -44,7 +44,6 @@
 @node-highlight-stroke-opacity: 0.4;
 @node-highlight-stroke-width: 1px;
 @node-border-stroke-width: 3px;
-@node-pseudo-border-stroke-width: 1px;
 @node-pseudo-opacity: 0.8;
 @edge-highlight-opacity: 0.1;
 @edge-opacity-blurred: 0.2;
@@ -314,13 +313,19 @@ h2 {
     }
   }
 
-  g.stack g.shape .border {
-    stroke-width: @node-border-stroke-width - 1;
-  }
-
   g.node {
     cursor: pointer;
     transition: opacity .5s ease-in-out;
+
+    /* cloud paths have stroke-width set dynamically */
+    &:not(.cloud) .shape .border {
+      stroke-width: @node-border-stroke-width;
+      fill: @background-color;
+    }
+
+    &:not(.cloud) .stack .shape .border {
+      stroke-width: @node-border-stroke-width - 0.5;
+    }
 
     &.pseudo {
       opacity: @node-pseudo-opacity;
@@ -336,7 +341,6 @@ h2 {
 
       .border {
         stroke: @text-tertiary-color;
-        stroke-width: @node-pseudo-border-stroke-width;
       }
     }
 
@@ -373,10 +377,6 @@ h2 {
 
 
   .shape {
-    .border {
-      stroke-width: @node-border-stroke-width;
-      fill: @background-color;
-    }
 
     .shadow {
       stroke: none;

@@ -83,6 +83,9 @@ export default class Node extends React.Component {
     if (this.props.pseudo) {
       classNames.push('pseudo');
     }
+    if (this.props.shape === 'cloud') {
+      classNames.push('cloud');
+    }
 
     const classes = classNames.join(' ');
 
