@@ -17,7 +17,7 @@ import (
 
 var (
 	processNodeMetadata = []MetadataRowTemplate{
-		Latest{ID: process.PID, Prime: true},
+		Latest{ID: process.PID, Prime: true, Datatype: number},
 		Latest{ID: process.Cmdline, Prime: true},
 		Latest{ID: process.PPID, Prime: true},
 		Latest{ID: process.Threads, Prime: true},
@@ -63,6 +63,7 @@ type Latest struct {
 	ID       string
 	Truncate int  // If > 0, truncate the value to this length.
 	Prime    bool // Whether the row should be shown by default
+	Datatype string
 }
 
 // MetadataRows implements MetadataRowTemplate
@@ -71,7 +72,7 @@ func (l Latest) MetadataRows(n report.Node) []MetadataRow {
 		if l.Truncate > 0 && len(val) > l.Truncate {
 			val = val[:l.Truncate]
 		}
-		return []MetadataRow{{ID: l.ID, Value: val, Prime: l.Prime}}
+		return []MetadataRow{{ID: l.ID, Value: val, Prime: l.Prime, Datatype: l.Datatype}}
 	}
 	return nil
 }

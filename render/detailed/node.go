@@ -139,19 +139,55 @@ var (
 		topologyID string
 		NodeSummaryGroup
 	}{
-		{report.Host, NodeSummaryGroup{TopologyID: "hosts", Label: "Hosts", Columns: []Column{
-			MakeColumn(host.CPUUsage), MakeColumn(host.MemoryUsage),
-		}}},
-		{report.Pod, NodeSummaryGroup{TopologyID: "pods", Label: "Pods"}},
-		{report.Container, NodeSummaryGroup{TopologyID: "containers", Label: "Containers", Columns: []Column{
-			MakeColumn(docker.CPUTotalUsage), MakeColumn(docker.MemoryUsage),
-		}}},
-		{report.Process, NodeSummaryGroup{TopologyID: "processes", Label: "Processes", Columns: []Column{
-			MakeColumn(process.PID), MakeColumn(process.CPUUsage), MakeColumn(process.MemoryUsage),
-		}}},
-		{report.ContainerImage, NodeSummaryGroup{TopologyID: "containers-by-image", Label: "Container Images", Columns: []Column{
-			MakeColumn(render.ContainersKey),
-		}}},
+		{
+			topologyID: report.Host,
+			NodeSummaryGroup: NodeSummaryGroup{
+				TopologyID: "hosts",
+				Label:      "Hosts",
+				Columns: []Column{
+					MakeColumn(host.CPUUsage),
+					MakeColumn(host.MemoryUsage),
+				},
+			},
+		},
+		{
+			topologyID: report.Pod,
+			NodeSummaryGroup: NodeSummaryGroup{
+				TopologyID: "pods",
+				Label:      "Pods",
+			},
+		},
+		{
+			topologyID: report.Container,
+			NodeSummaryGroup: NodeSummaryGroup{
+				TopologyID: "containers",
+				Label:      "Containers", Columns: []Column{
+					MakeColumn(docker.CPUTotalUsage),
+					MakeColumn(docker.MemoryUsage),
+				},
+			},
+		},
+		{
+			topologyID: report.Process,
+			NodeSummaryGroup: NodeSummaryGroup{
+				TopologyID: "processes",
+				Label:      "Processes", Columns: []Column{
+					{ID: process.PID, Label: Label(process.PID)},
+					MakeColumn(process.CPUUsage),
+					MakeColumn(process.MemoryUsage),
+				},
+			},
+		},
+		{
+			topologyID: report.ContainerImage,
+			NodeSummaryGroup: NodeSummaryGroup{
+				TopologyID: "containers-by-image",
+				Label:      "Container Images",
+				Columns: []Column{
+					{ID: render.ContainersKey, Label: Label(render.ContainersKey), DefaultSort: true},
+				},
+			},
+		},
 	}
 )
 
