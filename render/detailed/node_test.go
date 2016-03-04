@@ -105,8 +105,10 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			{
 				Label:      "Container Images",
 				TopologyID: "containers-by-image",
-				Columns:    []detailed.Column{detailed.MakeColumn(render.ContainersKey)},
-				Nodes:      []detailed.NodeSummary{containerImageNodeSummary},
+				Columns: []detailed.Column{
+					{ID: render.ContainersKey, Label: detailed.Label(render.ContainersKey), DefaultSort: true},
+				},
+				Nodes: []detailed.NodeSummary{containerImageNodeSummary},
 			},
 		},
 		Connections: []detailed.NodeSummaryGroup{
@@ -201,7 +203,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						Label:    "apache",
 						Linkable: true,
 						Metadata: []detailed.MetadataRow{
-							{ID: process.PID, Value: fixture.ServerPID, Prime: true},
+							{ID: process.PID, Value: fixture.ServerPID, Prime: true, Datatype: "number"},
 						},
 						Metrics: []detailed.MetricRow{},
 					},
