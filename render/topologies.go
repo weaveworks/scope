@@ -13,10 +13,7 @@ import (
 // EndpointRenderer is a Renderer which produces a renderable endpoint graph.
 var EndpointRenderer = MakeMap(
 	MapEndpointIdentity,
-	MakeMap(
-		RemapEndpointIDs,
-		SelectEndpoint,
-	),
+	SelectEndpoint,
 )
 
 // ProcessRenderer is a Renderer which produces a renderable process

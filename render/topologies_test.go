@@ -13,17 +13,6 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
-func TestRemappedEndpoints(t *testing.T) {
-	have := render.MakeMap(
-		render.RemapEndpointIDs,
-		render.SelectEndpoint,
-	).Render(fixture.Report).Prune()
-	want := expected.RemappedEndpoints
-	if !reflect.DeepEqual(want, have) {
-		t.Error(test.Diff(want, have))
-	}
-}
-
 func TestEndpointRenderer(t *testing.T) {
 	have := render.EndpointRenderer.Render(fixture.Report).Prune()
 	want := expected.RenderedEndpoints

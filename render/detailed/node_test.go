@@ -261,40 +261,6 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 							},
 						},
 					},
-					{
-						ID:       "pseudo:10.10.10.10:192.168.1.1:80",
-						Label:    "10.10.10.10",
-						Linkable: true,
-						Metadata: []detailed.MetadataRow{
-							{
-								ID:       "port",
-								Value:    "80",
-								Datatype: "number",
-							},
-							{
-								ID:       "count",
-								Value:    "2",
-								Datatype: "number",
-							},
-						},
-					},
-					{
-						ID:       "pseudo:10.10.10.11:192.168.1.1:80",
-						Label:    "10.10.10.11",
-						Linkable: true,
-						Metadata: []detailed.MetadataRow{
-							{
-								ID:       "port",
-								Value:    "80",
-								Datatype: "number",
-							},
-							{
-								ID:       "count",
-								Value:    "1",
-								Datatype: "number",
-							},
-						},
-					},
 				},
 			},
 			{

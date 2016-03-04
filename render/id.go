@@ -24,11 +24,6 @@ func MakeEndpointID(hostID, addr, port string) string {
 	return makeID("endpoint", hostID, addr, port)
 }
 
-// MakePseudoEndpointID makes a pseudo endpoint node ID for rendered nodes.
-func MakePseudoEndpointID(hostID, addr, port string) string {
-	return makeID("pseudo-endpoint", hostID, addr, port)
-}
-
 // MakeProcessID makes a process node ID for rendered nodes.
 func MakeProcessID(hostID, pid string) string {
 	return makeID("process", hostID, pid)

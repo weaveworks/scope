@@ -2,7 +2,6 @@ package expected
 
 import (
 	"fmt"
-	"net"
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -27,7 +26,7 @@ var (
 	NonContainerEndpointID   = render.MakeEndpointID(fixture.ServerHostID, fixture.ServerIP, fixture.NonContainerClientPort)
 	GoogleEndpointID         = render.MakeEndpointID("", fixture.GoogleIP, fixture.GooglePort)
 
-	RemappedEndpoints = (render.RenderableNodes{
+	RenderedEndpoints = (render.RenderableNodes{
 		Client54001EndpointID: {
 			ID:    Client54001EndpointID,
 			Shape: circle,
@@ -104,12 +103,12 @@ var (
 		},
 	}).Prune()
 
-	Client54001PseudoEndpointID  = render.MakePseudoEndpointID(fixture.ClientHostID, fixture.ClientIP, fixture.ClientPort54001)
-	Client54002PseudoEndpointID  = render.MakePseudoEndpointID(fixture.ClientHostID, fixture.ClientIP, fixture.ClientPort54002)
-	ServerPseudoEndpointID       = render.MakePseudoEndpointID(fixture.ServerHostID, fixture.ServerIP, fixture.ServerPort)
-	NonContainerPseudoEndpointID = render.MakePseudoEndpointID(fixture.ServerHostID, fixture.ServerIP, fixture.NonContainerClientPort)
-	unknownPseudoNode1ID         = render.MakePseudoNodeID(fixture.UnknownClient1IP, fixture.ServerIP, fixture.ServerPort)
-	unknownPseudoNode2ID         = render.MakePseudoNodeID(fixture.UnknownClient3IP, fixture.ServerIP, fixture.ServerPort)
+	ClientProcess1ID      = render.MakeProcessID(fixture.ClientHostID, fixture.Client1PID)
+	ClientProcess2ID      = render.MakeProcessID(fixture.ClientHostID, fixture.Client2PID)
+	ServerProcessID       = render.MakeProcessID(fixture.ServerHostID, fixture.ServerPID)
+	nonContainerProcessID = render.MakeProcessID(fixture.ServerHostID, fixture.NonContainerPID)
+	unknownPseudoNode1ID  = render.MakePseudoNodeID(fixture.UnknownClient1IP, fixture.ServerIP, fixture.ServerPort)
+	unknownPseudoNode2ID  = render.MakePseudoNodeID(fixture.UnknownClient3IP, fixture.ServerIP, fixture.ServerPort)
 
 	unknownPseudoNode1 = func(adjacent string) render.RenderableNode {
 		return render.RenderableNode{
@@ -119,8 +118,8 @@ var (
 			Shape:      circle,
 			Node:       report.MakeNode().WithAdjacent(adjacent),
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[UnknownClient1EndpointID],
-				RemappedEndpoints[UnknownClient2EndpointID],
+				RenderedEndpoints[UnknownClient1EndpointID],
+				RenderedEndpoints[UnknownClient2EndpointID],
 			),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(70),
@@ -136,7 +135,7 @@ var (
 			Shape:      circle,
 			Node:       report.MakeNode().WithAdjacent(adjacent),
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[UnknownClient3EndpointID],
+				RenderedEndpoints[UnknownClient3EndpointID],
 			),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(50),
@@ -153,7 +152,7 @@ var (
 			Shape:      cloud,
 			Node:       report.MakeNode().WithAdjacent(adjacent),
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[RandomClientEndpointID],
+				RenderedEndpoints[RandomClientEndpointID],
 			),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(60),
@@ -170,73 +169,9 @@ var (
 		Node:         report.MakeNode(),
 		EdgeMetadata: report.EdgeMetadata{},
 		Children: render.MakeRenderableNodeSet(
-			RemappedEndpoints[GoogleEndpointID],
+			RenderedEndpoints[GoogleEndpointID],
 		),
 	}
-
-	RenderedEndpoints = (render.RenderableNodes{
-		Client54001PseudoEndpointID: {
-			ID:         Client54001PseudoEndpointID,
-			LabelMajor: net.JoinHostPort(fixture.ClientIP, fixture.ClientPort54001),
-			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ClientHostID, fixture.Client1PID),
-			Shape:      circle,
-			Node:       report.MakeNode().WithAdjacent(ServerPseudoEndpointID),
-			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[Client54001EndpointID],
-			),
-			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(10),
-				EgressByteCount:   newu64(100),
-			},
-		},
-		Client54002PseudoEndpointID: {
-			ID:         Client54002PseudoEndpointID,
-			LabelMajor: net.JoinHostPort(fixture.ClientIP, fixture.ClientPort54002),
-			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ClientHostID, fixture.Client2PID),
-			Shape:      circle,
-			Node:       report.MakeNode().WithAdjacent(ServerPseudoEndpointID),
-			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[Client54002EndpointID],
-			),
-			EdgeMetadata: report.EdgeMetadata{
-				EgressPacketCount: newu64(20),
-				EgressByteCount:   newu64(200),
-			},
-		},
-		ServerPseudoEndpointID: {
-			ID:         ServerPseudoEndpointID,
-			LabelMajor: net.JoinHostPort(fixture.ServerIP, fixture.ServerPort),
-			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.ServerPID),
-			Shape:      circle,
-			Node:       report.MakeNode(),
-			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[ServerEndpointID],
-			),
-			EdgeMetadata: report.EdgeMetadata{
-				IngressPacketCount: newu64(210),
-				IngressByteCount:   newu64(2100),
-			},
-		},
-		NonContainerPseudoEndpointID: {
-			ID:         NonContainerPseudoEndpointID,
-			LabelMajor: net.JoinHostPort(fixture.ServerIP, fixture.NonContainerClientPort),
-			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.NonContainerPID),
-			Shape:      circle,
-			Node:       report.MakeNode().WithAdjacent(render.OutgoingInternetID),
-			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[NonContainerEndpointID],
-			),
-		},
-		unknownPseudoNode1ID:      unknownPseudoNode1(ServerPseudoEndpointID),
-		unknownPseudoNode2ID:      unknownPseudoNode2(ServerPseudoEndpointID),
-		render.IncomingInternetID: theIncomingInternetNode(ServerPseudoEndpointID),
-		render.OutgoingInternetID: theOutgoingInternetNode,
-	}).Prune()
-
-	ClientProcess1ID      = render.MakeProcessID(fixture.ClientHostID, fixture.Client1PID)
-	ClientProcess2ID      = render.MakeProcessID(fixture.ClientHostID, fixture.Client2PID)
-	ServerProcessID       = render.MakeProcessID(fixture.ServerHostID, fixture.ServerPID)
-	nonContainerProcessID = render.MakeProcessID(fixture.ServerHostID, fixture.NonContainerPID)
 
 	RenderedProcesses = (render.RenderableNodes{
 		ClientProcess1ID: {
@@ -244,12 +179,10 @@ var (
 			LabelMajor: fixture.Client1Name,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ClientHostID, fixture.Client1PID),
 			Rank:       fixture.Client1Name,
-			Pseudo:     false,
 			Shape:      square,
 			Node:       report.MakeNode().WithAdjacent(ServerProcessID),
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[Client54001EndpointID],
-				RenderedEndpoints[Client54001PseudoEndpointID],
+				RenderedEndpoints[Client54001EndpointID],
 			),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(10),
@@ -261,12 +194,10 @@ var (
 			LabelMajor: fixture.Client2Name,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ClientHostID, fixture.Client2PID),
 			Rank:       fixture.Client2Name,
-			Pseudo:     false,
 			Shape:      square,
 			Node:       report.MakeNode().WithAdjacent(ServerProcessID),
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[Client54002EndpointID],
-				RenderedEndpoints[Client54002PseudoEndpointID],
+				RenderedEndpoints[Client54002EndpointID],
 			),
 			EdgeMetadata: report.EdgeMetadata{
 				EgressPacketCount: newu64(20),
@@ -278,12 +209,10 @@ var (
 			LabelMajor: fixture.ServerName,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.ServerPID),
 			Rank:       fixture.ServerName,
-			Pseudo:     false,
 			Shape:      square,
 			Node:       report.MakeNode(),
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[ServerEndpointID],
-				RenderedEndpoints[ServerPseudoEndpointID],
+				RenderedEndpoints[ServerEndpointID],
 			),
 			EdgeMetadata: report.EdgeMetadata{
 				IngressPacketCount: newu64(210),
@@ -295,12 +224,10 @@ var (
 			LabelMajor: fixture.NonContainerName,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.NonContainerPID),
 			Rank:       fixture.NonContainerName,
-			Pseudo:     false,
 			Shape:      square,
 			Node:       report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[NonContainerEndpointID],
-				RenderedEndpoints[NonContainerPseudoEndpointID],
+				RenderedEndpoints[NonContainerEndpointID],
 			),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
@@ -316,14 +243,11 @@ var (
 			LabelMajor: fixture.Client1Name,
 			LabelMinor: "2 processes",
 			Rank:       fixture.Client1Name,
-			Pseudo:     false,
 			Shape:      square,
 			Stack:      true,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[Client54001EndpointID],
-				RemappedEndpoints[Client54002EndpointID],
-				RenderedEndpoints[Client54001PseudoEndpointID],
-				RenderedEndpoints[Client54002PseudoEndpointID],
+				RenderedEndpoints[Client54001EndpointID],
+				RenderedEndpoints[Client54002EndpointID],
 				RenderedProcesses[ClientProcess1ID],
 				RenderedProcesses[ClientProcess2ID],
 			),
@@ -338,12 +262,10 @@ var (
 			LabelMajor: fixture.ServerName,
 			LabelMinor: "1 process",
 			Rank:       fixture.ServerName,
-			Pseudo:     false,
 			Shape:      square,
 			Stack:      true,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[ServerEndpointID],
-				RenderedEndpoints[ServerPseudoEndpointID],
+				RenderedEndpoints[ServerEndpointID],
 				RenderedProcesses[ServerProcessID],
 			),
 			Node: report.MakeNode(),
@@ -357,12 +279,10 @@ var (
 			LabelMajor: fixture.NonContainerName,
 			LabelMinor: "1 process",
 			Rank:       fixture.NonContainerName,
-			Pseudo:     false,
 			Shape:      square,
 			Stack:      true,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[NonContainerEndpointID],
-				RenderedEndpoints[NonContainerPseudoEndpointID],
+				RenderedEndpoints[NonContainerEndpointID],
 				RenderedProcesses[nonContainerProcessID],
 			),
 			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
@@ -383,13 +303,10 @@ var (
 			ID:         ClientContainerID,
 			LabelMajor: "client",
 			LabelMinor: fixture.ClientHostName,
-			Pseudo:     false,
 			Shape:      hexagon,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[Client54001EndpointID],
-				RemappedEndpoints[Client54002EndpointID],
-				RenderedEndpoints[Client54001PseudoEndpointID],
-				RenderedEndpoints[Client54002PseudoEndpointID],
+				RenderedEndpoints[Client54001EndpointID],
+				RenderedEndpoints[Client54002EndpointID],
 				RenderedProcesses[ClientProcess1ID],
 				RenderedProcesses[ClientProcess2ID],
 			),
@@ -404,11 +321,9 @@ var (
 			ID:         ServerContainerID,
 			LabelMajor: "server",
 			LabelMinor: fixture.ServerHostName,
-			Pseudo:     false,
 			Shape:      hexagon,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[ServerEndpointID],
-				RenderedEndpoints[ServerPseudoEndpointID],
+				RenderedEndpoints[ServerEndpointID],
 				RenderedProcesses[ServerProcessID],
 			),
 			Node: report.MakeNode(),
@@ -422,19 +337,18 @@ var (
 			ID:         uncontainedServerID,
 			LabelMajor: render.UncontainedMajor,
 			LabelMinor: fixture.ServerHostName,
-			Pseudo:     true,
 			Shape:      square,
 			Stack:      true,
+			Pseudo:     true,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[NonContainerEndpointID],
-				RenderedEndpoints[NonContainerPseudoEndpointID],
+				RenderedEndpoints[NonContainerEndpointID],
 				RenderedProcesses[nonContainerProcessID],
 			),
 			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		unknownPseudoNode1ID:      unknownPseudoNode1(ServerContainerID),
-		unknownPseudoNode2ID:      unknownPseudoNode2(ServerContainerID),
+		// unknownPseudoNode1ID:      unknownPseudoNode1(ServerContainerID),
+		// unknownPseudoNode2ID:      unknownPseudoNode2(ServerContainerID),
 		render.IncomingInternetID: theIncomingInternetNode(ServerContainerID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}).Prune()
@@ -448,14 +362,11 @@ var (
 			LabelMajor: fixture.ClientContainerImageName,
 			LabelMinor: "1 container",
 			Rank:       fixture.ClientContainerImageName,
-			Pseudo:     false,
 			Shape:      hexagon,
 			Stack:      true,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[Client54001EndpointID],
-				RemappedEndpoints[Client54002EndpointID],
-				RenderedEndpoints[Client54001PseudoEndpointID],
-				RenderedEndpoints[Client54002PseudoEndpointID],
+				RenderedEndpoints[Client54001EndpointID],
+				RenderedEndpoints[Client54002EndpointID],
 				RenderedProcesses[ClientProcess1ID],
 				RenderedProcesses[ClientProcess2ID],
 				RenderedContainers[ClientContainerID],
@@ -471,12 +382,10 @@ var (
 			LabelMajor: fixture.ServerContainerImageName,
 			LabelMinor: "1 container",
 			Rank:       fixture.ServerContainerImageName,
-			Pseudo:     false,
 			Shape:      hexagon,
 			Stack:      true,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[ServerEndpointID],
-				RenderedEndpoints[ServerPseudoEndpointID],
+				RenderedEndpoints[ServerEndpointID],
 				RenderedProcesses[ServerProcessID],
 				RenderedContainers[ServerContainerID],
 			),
@@ -490,19 +399,18 @@ var (
 			ID:         uncontainedServerID,
 			LabelMajor: render.UncontainedMajor,
 			LabelMinor: fixture.ServerHostName,
-			Pseudo:     true,
 			Shape:      square,
 			Stack:      true,
+			Pseudo:     true,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[NonContainerEndpointID],
-				RenderedEndpoints[NonContainerPseudoEndpointID],
+				RenderedEndpoints[NonContainerEndpointID],
 				RenderedProcesses[nonContainerProcessID],
 			),
 			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		unknownPseudoNode1ID:      unknownPseudoNode1(ServerContainerImageID),
-		unknownPseudoNode2ID:      unknownPseudoNode2(ServerContainerImageID),
+		// unknownPseudoNode1ID:      unknownPseudoNode1(ServerContainerImageID),
+		// unknownPseudoNode2ID:      unknownPseudoNode2(ServerContainerImageID),
 		render.IncomingInternetID: theIncomingInternetNode(ServerContainerImageID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}).Prune()
@@ -563,22 +471,14 @@ var (
 			LabelMajor: "client",       // before first .
 			LabelMinor: "hostname.com", // after first .
 			Rank:       "hostname.com",
-			Pseudo:     false,
 			Shape:      circle,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[Client54001EndpointID],
-				RemappedEndpoints[Client54002EndpointID],
-
-				RenderedEndpoints[Client54001PseudoEndpointID],
-				RenderedEndpoints[Client54002PseudoEndpointID],
-
+				RenderedEndpoints[Client54001EndpointID],
+				RenderedEndpoints[Client54002EndpointID],
 				RenderedProcesses[ClientProcess1ID],
 				RenderedProcesses[ClientProcess2ID],
-
 				RenderedContainers[ClientContainerID],
-
 				RenderedContainerImages[ClientContainerImageID],
-
 				RenderedAddresses[ClientAddressID],
 			),
 			Node: report.MakeNode().WithAdjacent(ServerHostID),
@@ -592,11 +492,9 @@ var (
 			LabelMajor: "server",       // before first .
 			LabelMinor: "hostname.com", // after first .
 			Rank:       "hostname.com",
-			Pseudo:     false,
 			Shape:      circle,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[ServerEndpointID],
-				RenderedEndpoints[ServerPseudoEndpointID],
+				RenderedEndpoints[ServerEndpointID],
 
 				RenderedProcesses[ServerProcessID],
 				RenderedContainers[ServerContainerID],
@@ -604,9 +502,10 @@ var (
 
 				RenderedAddresses[ServerAddressID],
 
-				//				RemappedEndpoints[NonContainerEndpointID],
-				//				RenderedEndpoints[NonContainerPseudoEndpointID],
-				//				RenderedProcesses[nonContainerProcessID],
+				// See #1102
+				// RemappedEndpoints[NonContainerEndpointID],
+				// RenderedEndpoints[NonContainerPseudoEndpointID],
+				// RenderedProcesses[nonContainerProcessID],
 			),
 			Node: report.MakeNode(),
 			EdgeMetadata: report.EdgeMetadata{
@@ -623,9 +522,8 @@ var (
 			Node:         report.MakeNode().WithAdjacent(ServerHostID),
 			EdgeMetadata: report.EdgeMetadata{},
 			Children:     render.MakeRenderableNodeSet(
-			//TODO
-			//RenderedEndpoints[unknownPseudoNode2ID],
-			//RenderedAddresses[unknownPseudoAddress1ID],
+			// RenderedEndpoints[unknownPseudoNode2ID],
+			// RenderedAddresses[unknownPseudoAddress1ID],
 			),
 		},
 		pseudoHostID2: {
@@ -636,8 +534,8 @@ var (
 			Node:         report.MakeNode().WithAdjacent(ServerHostID),
 			EdgeMetadata: report.EdgeMetadata{},
 			Children:     render.MakeRenderableNodeSet(
-			//RenderedEndpoints[unknownPseudoNode2ID],
-			//RenderedAddresses[unknownPseudoAddress2ID],
+			// RenderedEndpoints[unknownPseudoNode2ID],
+			// RenderedAddresses[unknownPseudoAddress2ID],
 			),
 		},
 		render.IncomingInternetID: {
@@ -649,7 +547,7 @@ var (
 			Node:         report.MakeNode().WithAdjacent(ServerHostID),
 			EdgeMetadata: report.EdgeMetadata{},
 			Children:     render.MakeRenderableNodeSet(
-			//RenderedEndpoints[render.TheInternetID],
+			// RenderedEndpoints[render.TheInternetID],
 			),
 		},
 	}).Prune()
@@ -663,13 +561,10 @@ var (
 			LabelMajor: "pong-a",
 			LabelMinor: "1 container",
 			Rank:       "ping/pong-a",
-			Pseudo:     false,
 			Shape:      heptagon,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[Client54001EndpointID],
-				RemappedEndpoints[Client54002EndpointID],
-				RenderedEndpoints[Client54001PseudoEndpointID],
-				RenderedEndpoints[Client54002PseudoEndpointID],
+				RenderedEndpoints[Client54001EndpointID],
+				RenderedEndpoints[Client54002EndpointID],
 				RenderedProcesses[ClientProcess1ID],
 				RenderedProcesses[ClientProcess2ID],
 				RenderedContainers[ClientContainerID],
@@ -685,11 +580,9 @@ var (
 			LabelMajor: "pong-b",
 			LabelMinor: "1 container",
 			Rank:       "ping/pong-b",
-			Pseudo:     false,
 			Shape:      heptagon,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[ServerEndpointID],
-				RenderedEndpoints[ServerPseudoEndpointID],
+				RenderedEndpoints[ServerEndpointID],
 				RenderedProcesses[ServerProcessID],
 				RenderedContainers[ServerContainerID],
 			),
@@ -707,15 +600,14 @@ var (
 			Shape:      square,
 			Stack:      true,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[NonContainerEndpointID],
-				RenderedEndpoints[NonContainerPseudoEndpointID],
+				RenderedEndpoints[NonContainerEndpointID],
 				RenderedProcesses[nonContainerProcessID],
 			),
 			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		unknownPseudoNode1ID:      unknownPseudoNode1(ServerPodRenderedID),
-		unknownPseudoNode2ID:      unknownPseudoNode2(ServerPodRenderedID),
+		// unknownPseudoNode1ID:      unknownPseudoNode1(ServerPodRenderedID),
+		// unknownPseudoNode2ID:      unknownPseudoNode2(ServerPodRenderedID),
 		render.IncomingInternetID: theIncomingInternetNode(ServerPodRenderedID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}).Prune()
@@ -728,16 +620,12 @@ var (
 			LabelMajor: "pongservice",
 			LabelMinor: "2 pods",
 			Rank:       fixture.ServiceID,
-			Pseudo:     false,
 			Shape:      heptagon,
 			Stack:      true,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[Client54001EndpointID],
-				RemappedEndpoints[Client54002EndpointID],
-				RemappedEndpoints[ServerEndpointID],
-				RenderedEndpoints[Client54001PseudoEndpointID],
-				RenderedEndpoints[Client54002PseudoEndpointID],
-				RenderedEndpoints[ServerPseudoEndpointID],
+				RenderedEndpoints[Client54001EndpointID],
+				RenderedEndpoints[Client54002EndpointID],
+				RenderedEndpoints[ServerEndpointID],
 				RenderedProcesses[ClientProcess1ID],
 				RenderedProcesses[ClientProcess2ID],
 				RenderedProcesses[ServerProcessID],
@@ -762,15 +650,14 @@ var (
 			Shape:      square,
 			Stack:      true,
 			Children: render.MakeRenderableNodeSet(
-				RemappedEndpoints[NonContainerEndpointID],
-				RenderedEndpoints[NonContainerPseudoEndpointID],
+				RenderedEndpoints[NonContainerEndpointID],
 				RenderedProcesses[nonContainerProcessID],
 			),
 			Node:         report.MakeNode().WithAdjacent(render.OutgoingInternetID),
 			EdgeMetadata: report.EdgeMetadata{},
 		},
-		unknownPseudoNode1ID:      unknownPseudoNode1(ServiceRenderedID),
-		unknownPseudoNode2ID:      unknownPseudoNode2(ServiceRenderedID),
+		// unknownPseudoNode1ID:      unknownPseudoNode1(ServiceRenderedID),
+		// unknownPseudoNode2ID:      unknownPseudoNode2(ServiceRenderedID),
 		render.IncomingInternetID: theIncomingInternetNode(ServiceRenderedID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}).Prune()
