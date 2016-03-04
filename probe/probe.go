@@ -43,6 +43,19 @@ type Reporter interface {
 	Report() (report.Report, error)
 }
 
+// ReporterFunc uses a function to implement a Reporter
+func ReporterFunc(name string, f func() (report.Report, error)) Reporter {
+	return reporterFunc{name, f}
+}
+
+type reporterFunc struct {
+	name string
+	f    func() (report.Report, error)
+}
+
+func (r reporterFunc) Name() string                   { return r.name }
+func (r reporterFunc) Report() (report.Report, error) { return r.f() }
+
 // Ticker is something which will be invoked every spyDuration.
 // It's useful for things that should be updated on that interval.
 // For example, cached shared state between Taggers and Reporters.

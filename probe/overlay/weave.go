@@ -168,6 +168,10 @@ func (w *Weave) Report() (report.Report, error) {
 	defer w.mtx.RUnlock()
 
 	r := report.MakeReport()
+	r.Container = r.Container.WithMetadataTemplates(report.MetadataTemplates{
+		WeaveMACAddress:  {ID: WeaveMACAddress, Label: "Weave MAC", From: report.FromLatest, Priority: 17},
+		WeaveDNSHostname: {ID: WeaveDNSHostname, Label: "Weave DNS Name", From: report.FromLatest, Priority: 18},
+	})
 	for _, peer := range w.statusCache.Router.Peers {
 		r.Overlay.AddNode(report.MakeOverlayNodeID(peer.Name), report.MakeNodeWith(map[string]string{
 			WeavePeerName:     peer.Name,

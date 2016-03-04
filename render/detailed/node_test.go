@@ -16,7 +16,7 @@ import (
 )
 
 func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
-	s, ok := detailed.MakeNodeSummary(r.Render(fixture.Report)[id])
+	s, ok := detailed.MakeNodeSummary(fixture.Report, r.Render(fixture.Report)[id])
 	if !ok {
 		t.Fatalf("Expected node %s to be summarizable, but wasn't", id)
 	}
@@ -44,50 +44,66 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			Shape:      "circle",
 			Linkable:   true,
 			Adjacency:  report.MakeIDList(fixture.ServerHostNodeID),
-			Metadata: []detailed.MetadataRow{
+			Metadata: []report.MetadataRow{
 				{
-					ID:    "host_name",
-					Value: "client.hostname.com",
+					ID:       "host_name",
+					Label:    "Hostname",
+					Value:    "client.hostname.com",
+					Priority: 11,
 				},
 				{
-					ID:    "os",
-					Value: "Linux",
+					ID:       "os",
+					Label:    "OS",
+					Value:    "Linux",
+					Priority: 12,
 				},
 				{
-					ID:    "local_networks",
-					Value: "10.10.10.0/24",
+					ID:       "local_networks",
+					Label:    "Local Networks",
+					Value:    "10.10.10.0/24",
+					Priority: 13,
 				},
 			},
-			Metrics: []detailed.MetricRow{
+			Metrics: []report.MetricRow{
 				{
-					ID:     host.CPUUsage,
-					Format: "percent",
-					Value:  0.07,
-					Metric: &fixture.ClientHostCPUMetric,
+					ID:       host.CPUUsage,
+					Label:    "CPU",
+					Format:   "percent",
+					Value:    0.07,
+					Priority: 1,
+					Metric:   &fixture.ClientHostCPUMetric,
 				},
 				{
-					ID:     host.MemoryUsage,
-					Format: "filesize",
-					Value:  0.08,
-					Metric: &fixture.ClientHostMemoryMetric,
+					ID:       host.MemoryUsage,
+					Label:    "Memory",
+					Format:   "filesize",
+					Value:    0.08,
+					Priority: 2,
+					Metric:   &fixture.ClientHostMemoryMetric,
 				},
 				{
-					ID:     host.Load1,
-					Group:  "load",
-					Value:  0.09,
-					Metric: &fixture.ClientHostLoad1Metric,
+					ID:       host.Load1,
+					Label:    "Load (1m)",
+					Group:    "load",
+					Value:    0.09,
+					Priority: 11,
+					Metric:   &fixture.ClientHostLoad1Metric,
 				},
 				{
-					ID:     host.Load5,
-					Group:  "load",
-					Value:  0.10,
-					Metric: &fixture.ClientHostLoad5Metric,
+					ID:       host.Load5,
+					Label:    "Load (5m)",
+					Group:    "load",
+					Value:    0.10,
+					Priority: 12,
+					Metric:   &fixture.ClientHostLoad5Metric,
 				},
 				{
-					ID:     host.Load15,
-					Group:  "load",
-					Value:  0.11,
-					Metric: &fixture.ClientHostLoad15Metric,
+					ID:       host.Load15,
+					Label:    "Load (15m)",
+					Group:    "load",
+					Value:    0.11,
+					Priority: 13,
+					Metric:   &fixture.ClientHostLoad15Metric,
 				},
 			},
 		},
@@ -133,7 +149,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 						NodeID:   fixture.ServerHostNodeID,
 						Label:    "server",
 						Linkable: true,
-						Metadata: []detailed.MetadataRow{
+						Metadata: []report.MetadataRow{
 							{
 								ID:       "port",
 								Value:    "80",
@@ -174,29 +190,33 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 			Shape:      "hexagon",
 			Linkable:   true,
 			Pseudo:     false,
-			Metadata: []detailed.MetadataRow{
-				{ID: "docker_container_id", Value: fixture.ServerContainerID, Prime: true},
-				{ID: "docker_container_state_human", Value: "running", Prime: true},
-				{ID: "docker_image_id", Value: fixture.ServerContainerImageID},
+			Metadata: []report.MetadataRow{
+				{ID: "docker_container_id", Label: "ID", Value: fixture.ServerContainerID, Priority: 1},
+				{ID: "docker_container_state_human", Label: "State", Value: "running", Priority: 2},
+				{ID: "docker_image_id", Label: "Image ID", Value: fixture.ServerContainerImageID, Priority: 11},
 			},
-			DockerLabels: []detailed.MetadataRow{
+			DockerLabels: []report.MetadataRow{
 				{ID: "label_" + detailed.AmazonECSContainerNameLabel, Value: `server`},
 				{ID: "label_foo1", Value: `bar1`},
 				{ID: "label_foo2", Value: `bar2`},
 				{ID: "label_io.kubernetes.pod.name", Value: "ping/pong-b"},
 			},
-			Metrics: []detailed.MetricRow{
+			Metrics: []report.MetricRow{
 				{
-					ID:     docker.CPUTotalUsage,
-					Format: "percent",
-					Value:  0.05,
-					Metric: &fixture.ServerContainerCPUMetric,
+					ID:       docker.CPUTotalUsage,
+					Label:    "CPU",
+					Format:   "percent",
+					Value:    0.05,
+					Priority: 1,
+					Metric:   &fixture.ServerContainerCPUMetric,
 				},
 				{
-					ID:     docker.MemoryUsage,
-					Format: "filesize",
-					Value:  0.06,
-					Metric: &fixture.ServerContainerMemoryMetric,
+					ID:       docker.MemoryUsage,
+					Label:    "Memory",
+					Format:   "filesize",
+					Value:    0.06,
+					Priority: 2,
+					Metric:   &fixture.ServerContainerMemoryMetric,
 				},
 			},
 		},
@@ -233,7 +253,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						NodeID:   fixture.ClientContainerNodeID,
 						Label:    "client",
 						Linkable: true,
-						Metadata: []detailed.MetadataRow{
+						Metadata: []report.MetadataRow{
 							{
 								ID:       "port",
 								Value:    "80",
@@ -251,7 +271,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						NodeID:   render.IncomingInternetID,
 						Label:    render.InboundMajor,
 						Linkable: true,
-						Metadata: []detailed.MetadataRow{
+						Metadata: []report.MetadataRow{
 							{
 								ID:       "port",
 								Value:    "80",

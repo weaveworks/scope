@@ -35,7 +35,7 @@ func handleTopology(ctx context.Context, rep Reporter, renderer render.Renderer,
 		return
 	}
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(renderer.Render(report)),
+		Nodes: detailed.Summaries(report, renderer.Render(report)),
 	})
 }
 
@@ -119,7 +119,7 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(renderer.Render(report))
+		newTopo := detailed.Summaries(report, renderer.Render(report))
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

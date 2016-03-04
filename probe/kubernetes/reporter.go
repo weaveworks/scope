@@ -7,6 +7,21 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
+// Exposed for testing
+var (
+	PodMetadataTemplates = report.MetadataTemplates{
+		PodID:      {ID: PodID, Label: "ID", From: report.FromLatest, Priority: 1},
+		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		PodCreated: {ID: PodCreated, Label: "Created", From: report.FromLatest, Priority: 3},
+	}
+
+	ServiceMetadataTemplates = report.MetadataTemplates{
+		ServiceID:      {ID: ServiceID, Label: "ID", From: report.FromLatest, Priority: 1},
+		Namespace:      {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		ServiceCreated: {ID: ServiceCreated, Label: "Created", From: report.FromLatest, Priority: 3},
+	}
+)
+
 // Reporter generate Reports containing Container and ContainerImage topologies
 type Reporter struct {
 	client Client
@@ -41,7 +56,7 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 	var (
-		result   = report.MakeTopology()
+		result   = report.MakeTopology().WithMetadataTemplates(ServiceMetadataTemplates)
 		services = []Service{}
 	)
 	err := r.client.WalkServices(func(s Service) error {
@@ -54,8 +69,11 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 }
 
 func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topology, error) {
-	pods, containers := report.MakeTopology(), report.MakeTopology()
-	selectors := map[string]labels.Selector{}
+	var (
+		pods       = report.MakeTopology().WithMetadataTemplates(PodMetadataTemplates)
+		containers = report.MakeTopology()
+		selectors  = map[string]labels.Selector{}
+	)
 	for _, service := range services {
 		selectors[service.ID()] = service.Selector()
 	}

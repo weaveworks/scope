@@ -15,7 +15,7 @@ func TestNodeDockerLabels(t *testing.T) {
 	inputs := []struct {
 		name string
 		node report.Node
-		want []detailed.MetadataRow
+		want []report.MetadataRow
 	}{
 		{
 			name: "container",
@@ -26,7 +26,7 @@ func TestNodeDockerLabels(t *testing.T) {
 			}).WithTopology(report.Container).WithSets(report.EmptySets.
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
-			want: []detailed.MetadataRow{
+			want: []report.MetadataRow{
 				{
 					ID:    "label_label1",
 					Value: "label1value",

@@ -13,7 +13,8 @@ const (
 
 // Details are some generic details that can be fetched from /api
 type Details struct {
-	ID       string `json:"id"`
-	Version  string `json:"version"`
-	Hostname string `json:"hostname"`
+	ID       string      `json:"id"`
+	Version  string      `json:"version"`
+	Hostname string      `json:"hostname"`
+	Plugins  PluginSpecs `json:"plugins,omitempty"`
 }

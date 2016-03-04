@@ -13,6 +13,12 @@ import (
 // Metrics is a string->metric map.
 type Metrics map[string]Metric
 
+// Lookup the metric for the given key
+func (m Metrics) Lookup(key string) (Metric, bool) {
+	v, ok := m[key]
+	return v, ok
+}
+
 // Merge merges two sets maps into a fresh set, performing set-union merges as
 // appropriate.
 func (m Metrics) Merge(other Metrics) Metrics {
