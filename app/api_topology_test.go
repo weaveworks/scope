@@ -54,27 +54,6 @@ func TestAll(t *testing.T) {
 	}
 }
 
-func TestAPITopologyContainers(t *testing.T) {
-	ts := topologyServer()
-	{
-		body := getRawJSON(t, ts, "/api/topology/containers")
-		var topo app.APITopology
-		decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
-		if err := decoder.Decode(&topo); err != nil {
-			t.Fatal(err)
-		}
-		want := expected.RenderedContainers.Copy()
-		for id, node := range want {
-			node.ControlNode = ""
-			want[id] = node
-		}
-
-		if have := topo.Nodes.Prune(); !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
-		}
-	}
-}
-
 func TestAPITopologyProcesses(t *testing.T) {
 	ts := topologyServer()
 	defer ts.Close()
@@ -124,13 +103,13 @@ func TestAPITopologyHosts(t *testing.T) {
 		}
 	}
 	{
-		body := getRawJSON(t, ts, "/api/topology/hosts/"+expected.ServerHostRenderedID)
+		body := getRawJSON(t, ts, "/api/topology/hosts/"+expected.ServerHostID)
 		var node app.APINode
 		decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
 		if err := decoder.Decode(&node); err != nil {
 			t.Fatal(err)
 		}
-		equals(t, expected.ServerHostRenderedID, node.Node.ID)
+		equals(t, expected.ServerHostID, node.Node.ID)
 		equals(t, "server", node.Node.Label)
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables

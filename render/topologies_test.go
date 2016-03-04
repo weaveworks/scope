@@ -1,7 +1,6 @@
 package render_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -11,7 +10,16 @@ import (
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
+	"github.com/weaveworks/scope/test/reflect"
 )
+
+func TestEndpointRenderer(t *testing.T) {
+	have := render.EndpointRenderer.Render(fixture.Report).Prune()
+	want := expected.RenderedEndpoints
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
 
 func TestProcessRenderer(t *testing.T) {
 	have := render.ProcessRenderer.Render(fixture.Report).Prune()
@@ -30,7 +38,7 @@ func TestProcessNameRenderer(t *testing.T) {
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := (render.ContainerWithImageNameRenderer.Render(fixture.Report)).Prune()
+	have := (render.ContainerRenderer.Render(fixture.Report)).Prune()
 	want := expected.RenderedContainers
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -44,9 +52,9 @@ func TestContainerFilterRenderer(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
-	have := render.FilterSystem(render.ContainerWithImageNameRenderer).Render(input).Prune()
+	have := render.FilterSystem(render.ContainerRenderer).Render(input).Prune()
 	want := expected.RenderedContainers.Copy()
-	delete(want, expected.ClientContainerRenderedID)
+	delete(want, expected.ClientContainerID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -71,23 +79,17 @@ func TestContainerWithHostIPsRenderer(t *testing.T) {
 	}
 }
 
-func TestContainerFilterRendererImageName(t *testing.T) {
-	// Test nodes are filtered by image name as well.
-	input := fixture.Report.Copy()
-	input.ContainerImage.Nodes[fixture.ClientContainerImageNodeID] = input.ContainerImage.Nodes[fixture.ClientContainerImageNodeID].WithLatests(map[string]string{
-		docker.ImageName: "beta.gcr.io/google_containers/pause",
-	})
-	have := render.FilterSystem(render.ContainerWithImageNameRenderer).Render(input).Prune()
-	want := expected.RenderedContainers.Copy()
-	delete(want, expected.ClientContainerRenderedID)
+func TestContainerImageRenderer(t *testing.T) {
+	have := render.ContainerImageRenderer.Render(fixture.Report).Prune()
+	want := expected.RenderedContainerImages
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }
 
-func TestContainerImageRenderer(t *testing.T) {
-	have := render.ContainerImageRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedContainerImages
+func TestAddressRenderer(t *testing.T) {
+	have := render.AddressRenderer.Render(fixture.Report).Prune()
+	want := expected.RenderedAddresses
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -124,7 +126,7 @@ func TestPodFilterRenderer(t *testing.T) {
 	have := render.FilterSystem(render.PodRenderer).Render(input).Prune()
 	want := expected.RenderedPods.Copy()
 	delete(want, expected.ClientPodRenderedID)
-	delete(want, expected.ClientContainerRenderedID)
+	delete(want, expected.ClientContainerID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

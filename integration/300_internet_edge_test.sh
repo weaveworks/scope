@@ -22,11 +22,9 @@ do_connections() {
 }
 do_connections&
 
-wait_for_containers $HOST1 60 nginx "Inbound"
+wait_for_containers $HOST1 60 nginx "The Internet"
 
-has_container $HOST1 nginx
-has_container $HOST1 "Inbound"
-has_connection containers $HOST1 "Inbound" nginx
+has_connection_by_id containers $HOST1 "in-theinternet" $(node_id containers $HOST1 nginx)
 
 kill %do_connections
 

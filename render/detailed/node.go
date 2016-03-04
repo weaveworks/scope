@@ -16,11 +16,12 @@ import (
 // we want deep information about an individual node.
 type Node struct {
 	NodeSummary
-	Rank     string             `json:"rank,omitempty"`
-	Pseudo   bool               `json:"pseudo,omitempty"`
-	Controls []ControlInstance  `json:"controls"`
-	Children []NodeSummaryGroup `json:"children,omitempty"`
-	Parents  []Parent           `json:"parents,omitempty"`
+	Rank        string             `json:"rank,omitempty"`
+	Pseudo      bool               `json:"pseudo,omitempty"`
+	Controls    []ControlInstance  `json:"controls"`
+	Children    []NodeSummaryGroup `json:"children,omitempty"`
+	Parents     []Parent           `json:"parents,omitempty"`
+	Connections []NodeSummaryGroup `json:"connections,omitempty"`
 }
 
 // ControlInstance contains a control description, and all the info
@@ -78,10 +79,11 @@ func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
 
 // MakeNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
-func MakeNode(r report.Report, n render.RenderableNode) Node {
-	summary, _ := MakeNodeSummary(n.Node)
+func MakeNode(topologyID string, r report.Report, ns render.RenderableNodes, n render.RenderableNode) Node {
+	summary, _ := MakeNodeSummary(n)
 	summary.ID = n.ID
 	summary.Label = n.LabelMajor
+
 	return Node{
 		NodeSummary: summary,
 		Rank:        n.Rank,
@@ -89,6 +91,10 @@ func MakeNode(r report.Report, n render.RenderableNode) Node {
 		Controls:    controls(r, n),
 		Children:    children(n),
 		Parents:     Parents(r, n),
+		Connections: []NodeSummaryGroup{
+			incomingConnectionsTable(topologyID, n, ns),
+			outgoingConnectionsTable(topologyID, n, ns),
+		},
 	}
 }
 
@@ -133,17 +139,25 @@ var (
 		topologyID string
 		NodeSummaryGroup
 	}{
-		{report.Host, NodeSummaryGroup{TopologyID: "hosts", Label: "Hosts", Columns: []Column{host.CPUUsage, host.MemoryUsage}}},
+		{report.Host, NodeSummaryGroup{TopologyID: "hosts", Label: "Hosts", Columns: []Column{
+			MakeColumn(host.CPUUsage), MakeColumn(host.MemoryUsage),
+		}}},
 		{report.Pod, NodeSummaryGroup{TopologyID: "pods", Label: "Pods"}},
-		{report.Container, NodeSummaryGroup{TopologyID: "containers", Label: "Containers", Columns: []Column{docker.CPUTotalUsage, docker.MemoryUsage}}},
-		{report.Process, NodeSummaryGroup{TopologyID: "processes", Label: "Processes", Columns: []Column{process.PID, process.CPUUsage, process.MemoryUsage}}},
-		{report.ContainerImage, NodeSummaryGroup{TopologyID: "containers-by-image", Label: "Container Images", Columns: []Column{render.ContainersKey}}},
+		{report.Container, NodeSummaryGroup{TopologyID: "containers", Label: "Containers", Columns: []Column{
+			MakeColumn(docker.CPUTotalUsage), MakeColumn(docker.MemoryUsage),
+		}}},
+		{report.Process, NodeSummaryGroup{TopologyID: "processes", Label: "Processes", Columns: []Column{
+			MakeColumn(process.PID), MakeColumn(process.CPUUsage), MakeColumn(process.MemoryUsage),
+		}}},
+		{report.ContainerImage, NodeSummaryGroup{TopologyID: "containers-by-image", Label: "Container Images", Columns: []Column{
+			MakeColumn(render.ContainersKey),
+		}}},
 	}
 )
 
 func children(n render.RenderableNode) []NodeSummaryGroup {
 	summaries := map[string][]NodeSummary{}
-	n.Children.ForEach(func(child report.Node) {
+	n.Children.ForEach(func(child render.RenderableNode) {
 		if child.ID != n.ID {
 			if summary, ok := MakeNodeSummary(child); ok {
 				summaries[child.Topology] = append(summaries[child.Topology], summary)
@@ -160,5 +174,6 @@ func children(n render.RenderableNode) []NodeSummaryGroup {
 			nodeSummaryGroups = append(nodeSummaryGroups, group)
 		}
 	}
+
 	return nodeSummaryGroups
 }

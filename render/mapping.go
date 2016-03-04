@@ -23,9 +23,10 @@ const (
 	TheInternetID      = "theinternet"
 	IncomingInternetID = "in-" + TheInternetID
 	OutgoingInternetID = "out-" + TheInternetID
-	InboundMajor       = "Inbound"
-	OutboundMajor      = "Outbound"
-	RequestsMinor      = "Requests"
+	InboundMajor       = "The Internet"
+	OutboundMajor      = "The Internet"
+	InboundMinor       = "Inbound connections"
+	OutboundMinor      = "Outbound connections"
 
 	ContainersKey = "containers"
 	ipsKey        = "ips"
@@ -50,19 +51,20 @@ func theInternetNode(m RenderableNode) RenderableNode {
 	if len(m.Adjacency) > 0 {
 		node.ID = IncomingInternetID
 		node.LabelMajor = InboundMajor
-		node.LabelMinor = RequestsMinor
+		node.LabelMinor = InboundMinor
 	} else {
 		node.ID = OutgoingInternetID
 		node.LabelMajor = OutboundMajor
-		node.LabelMinor = RequestsMinor
+		node.LabelMinor = OutboundMinor
 	}
 	return node
 }
 
-// MapEndpointIdentity maps an endpoint topology node to a single endpoint
-// renderable node. As it is only ever run on endpoint topology nodes, we
-// expect that certain keys are present.
-func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNodes {
+// MapEndpointIdentity remaps endpoints to have an id format consistent
+// with render/id.go; no pseudo nodes are introduced in this step, so
+// that pseudo nodes introduces later are guaranteed to have endpoints
+// as children.  This is needed to construct the connection details tables.
+func MapEndpointIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	addr, ok := m.Latest.Lookup(endpoint.Addr)
 	if !ok {
 		return RenderableNodes{}
@@ -79,46 +81,8 @@ func MapEndpointIdentity(m RenderableNode, local report.Networks) RenderableNode
 		return RenderableNodes{}
 	}
 
-	// Nodes without a hostid are treated as psuedo nodes
-	if _, ok = m.Latest.Lookup(report.HostNodeID); !ok {
-		// If the dstNodeAddr is not in a network local to this report, we emit an
-		// internet node
-		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-			return RenderableNodes{TheInternetID: theInternetNode(m)}
-		}
-
-		// We are a 'client' pseudo node if the port is in the ephemeral port range.
-		// Linux uses 32768 to 61000, IANA suggests 49152 to 65535.
-		if p, err := strconv.Atoi(port); err == nil && len(m.Adjacency) > 0 && p >= 32768 && p < 65535 {
-			// We only exist if there is something in our adjacency
-			// Generate a single pseudo node for every (client ip, server ip, server port)
-			dstNodeID := m.Adjacency[0]
-			serverIP, serverPort := trySplitAddr(dstNodeID)
-			outputID := MakePseudoNodeID(addr, serverIP, serverPort)
-			return RenderableNodes{outputID: newDerivedPseudoNode(outputID, addr, m)}
-		}
-
-		// Otherwise (the server node is missing), generate a pseudo node for every (server ip, server port)
-		outputID := MakePseudoNodeID(addr, port)
-		if port != "" {
-			return RenderableNodes{outputID: newDerivedPseudoNode(outputID, addr+":"+port, m)}
-		}
-		return RenderableNodes{outputID: newDerivedPseudoNode(outputID, addr, m)}
-	}
-
-	var (
-		id    = MakeEndpointID(report.ExtractHostID(m.Node), addr, port)
-		major = fmt.Sprintf("%s:%s", addr, port)
-		minor = report.ExtractHostID(m.Node)
-		rank  = major
-	)
-
-	pid, pidOK := m.Latest.Lookup(process.PID)
-	if pidOK {
-		minor = fmt.Sprintf("%s (%s)", minor, pid)
-	}
-
-	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
+	id := MakeEndpointID(report.ExtractHostID(m.Node), addr, port)
+	return RenderableNodes{id: NewRenderableNodeWith(id, "", "", "", m)}
 }
 
 // MapProcessIdentity maps a process topology node to a process renderable
@@ -155,10 +119,9 @@ func MapContainerIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 		id       = MakeContainerID(containerID)
 		major, _ = GetRenderableContainerName(m.Node)
 		minor    = report.ExtractHostID(m.Node)
-		rank, _  = m.Latest.Lookup(docker.ImageID)
 	)
 
-	node := NewRenderableNodeWith(id, major, minor, rank, m)
+	node := NewRenderableNodeWith(id, major, minor, "", m)
 	node.ControlNode = m.ID
 	node.Shape = Hexagon
 	return RenderableNodes{id: node}
@@ -289,10 +252,9 @@ func MapAddressIdentity(m RenderableNode, local report.Networks) RenderableNodes
 		id    = MakeAddressID(report.ExtractHostID(m.Node), addr)
 		major = addr
 		minor = report.ExtractHostID(m.Node)
-		rank  = major
 	)
 
-	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, rank, m)}
+	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, "", m)}
 }
 
 // MapHostIdentity maps a host topology node to a host renderable node. As it
@@ -395,7 +357,7 @@ func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 		return RenderableNodes{}
 	}
 
-	// Propogate the internet pseudo node
+	// Propagate the internet pseudo node
 	if strings.HasSuffix(n.ID, TheInternetID) {
 		return RenderableNodes{n.ID: n}
 	}
@@ -425,9 +387,45 @@ func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 // format for a process, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a process graph to get that info.
-func MapEndpoint2Process(n RenderableNode, _ report.Networks) RenderableNodes {
-	if n.Pseudo {
-		return RenderableNodes{n.ID: n}
+func MapEndpoint2Process(n RenderableNode, local report.Networks) RenderableNodes {
+	// Nodes without a hostid are treated as psuedo nodes
+	if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
+		var node RenderableNode
+
+		addr, ok := n.Latest.Lookup(endpoint.Addr)
+		if !ok {
+			return RenderableNodes{}
+		}
+
+		port, ok := n.Latest.Lookup(endpoint.Port)
+		if !ok {
+			return RenderableNodes{}
+		}
+
+		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
+			// If the dstNodeAddr is not in a network local to this report, we emit an
+			// internet node
+			node = theInternetNode(n)
+
+		} else if p, err := strconv.Atoi(port); err == nil && len(n.Adjacency) > 0 && p >= 32768 && p < 65535 {
+			// We are a 'client' pseudo node if the port is in the ephemeral port range.
+			// Linux uses 32768 to 61000, IANA suggests 49152 to 65535.
+			// We only exist if there is something in our adjacency
+			// Generate a single pseudo node for every (client ip, server ip, server port)
+			_, serverIP, serverPort, _ := ParseEndpointID(n.Adjacency[0])
+			node = newDerivedPseudoNode(MakePseudoNodeID(addr, serverIP, serverPort), addr, n)
+
+		} else if port != "" {
+			// Otherwise (the server node is missing), generate a pseudo node for every (server ip, server port)
+			node = newDerivedPseudoNode(MakePseudoNodeID(addr, port), addr+":"+port, n)
+
+		} else {
+			// Empty port for some reason...
+			node = newDerivedPseudoNode(MakePseudoNodeID(addr, port), addr, n)
+		}
+
+		node.Children = node.Children.Add(n)
+		return RenderableNodes{node.ID: node}
 	}
 
 	pid, ok := n.Node.Latest.Lookup(process.PID)
@@ -438,6 +436,7 @@ func MapEndpoint2Process(n RenderableNode, _ report.Networks) RenderableNodes {
 	id := MakeProcessID(report.ExtractHostID(n.Node), pid)
 	node := NewDerivedNode(id, n.WithParents(report.EmptySets))
 	node.Shape = Square
+	node.Children = node.Children.Add(n)
 	return RenderableNodes{id: node}
 }
 
@@ -487,7 +486,7 @@ func MapProcess2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 		node.Stack = true
 	}
 
-	node.Children = node.Children.Add(n.Node)
+	node.Children = node.Children.Add(n)
 	return RenderableNodes{id: node}
 }
 
@@ -513,7 +512,7 @@ func MapProcess2Name(n RenderableNode, _ report.Networks) RenderableNodes {
 	node.Counters = node.Node.Counters.Add(processesKey, 1)
 	node.Node.Topology = "process_name"
 	node.Node.ID = name
-	node.Children = node.Children.Add(n.Node)
+	node.Children = node.Children.Add(n)
 	node.Shape = Square
 	node.Stack = true
 	return RenderableNodes{name: node}
@@ -567,49 +566,13 @@ func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) Renderable
 	result.Node.Counters = result.Node.Counters.Add(ContainersKey, 1)
 
 	// Add the container as a child of the new image node
-	result.Children = result.Children.Add(n.Node)
+	result.Children = result.Children.Add(n)
 
 	result.Node.Topology = "container_image"
 	result.Node.ID = report.MakeContainerImageNodeID(imageID)
 	result.Shape = Hexagon
 	result.Stack = true
 	return RenderableNodes{id: result}
-}
-
-// MapPod2Service maps pod RenderableNodes to service RenderableNodes.
-//
-// If this function is given a node without a kubernetes_pod_id
-// (including other pseudo nodes), it will produce an "Uncontained"
-// pseudo node.
-//
-// Otherwise, this function will produce a node with the correct ID
-// format for a container, but without any Major or Minor labels.
-// It does not have enough info to do that, and the resulting graph
-// must be merged with a pod graph to get that info.
-func MapPod2Service(n RenderableNode, _ report.Networks) RenderableNodes {
-	// Propogate all pseudo nodes
-	if n.Pseudo {
-		return RenderableNodes{n.ID: n}
-	}
-
-	// Otherwise, if some some reason the pod doesn't have a service_ids (maybe
-	// slightly out of sync reports, or its not in a service), just drop it
-	ids, ok := n.Node.Latest.Lookup(kubernetes.ServiceIDs)
-	if !ok {
-		return RenderableNodes{}
-	}
-
-	result := RenderableNodes{}
-	for _, serviceID := range strings.Fields(ids) {
-		id := MakeServiceID(serviceID)
-		n := NewDerivedNode(id, n.WithParents(report.EmptySets))
-		n.Node.Counters = n.Node.Counters.Add(podsKey, 1)
-		n.Children = n.Children.Add(n.Node)
-		n.Shape = Heptagon
-		n.Stack = true
-		result[id] = n
-	}
-	return result
 }
 
 // ImageNameWithoutVersion splits the image name apart, returning the name
@@ -671,7 +634,7 @@ func MapX2Host(n RenderableNode, _ report.Networks) RenderableNodes {
 	}
 	id := MakeHostID(report.ExtractHostID(n.Node))
 	result := NewDerivedNode(id, n.WithParents(report.EmptySets))
-	result.Children = result.Children.Add(n.Node)
+	result.Children = result.Children.Add(n)
 	result.Shape = Circle
 	return RenderableNodes{id: result}
 }
@@ -717,9 +680,45 @@ func MapContainer2Pod(n RenderableNode, _ report.Networks) RenderableNodes {
 		})
 	}
 
-	result.Children = result.Children.Add(n.Node)
 	result.Shape = Heptagon
+	result.Children = result.Children.Add(n)
 	return RenderableNodes{id: result}
+}
+
+// MapPod2Service maps pod RenderableNodes to service RenderableNodes.
+//
+// If this function is given a node without a kubernetes_pod_id
+// (including other pseudo nodes), it will produce an "Uncontained"
+// pseudo node.
+//
+// Otherwise, this function will produce a node with the correct ID
+// format for a container, but without any Major or Minor labels.
+// It does not have enough info to do that, and the resulting graph
+// must be merged with a pod graph to get that info.
+func MapPod2Service(pod RenderableNode, _ report.Networks) RenderableNodes {
+	// Propogate all pseudo nodes
+	if pod.Pseudo {
+		return RenderableNodes{pod.ID: pod}
+	}
+
+	// Otherwise, if some some reason the pod doesn't have a service_ids (maybe
+	// slightly out of sync reports, or its not in a service), just drop it
+	ids, ok := pod.Node.Latest.Lookup(kubernetes.ServiceIDs)
+	if !ok {
+		return RenderableNodes{}
+	}
+
+	result := RenderableNodes{}
+	for _, serviceID := range strings.Fields(ids) {
+		id := MakeServiceID(serviceID)
+		node := NewDerivedNode(id, pod.WithParents(report.EmptySets))
+		node.Node.Counters = node.Node.Counters.Add(podsKey, 1)
+		node.Children = node.Children.Add(pod)
+		node.Shape = Heptagon
+		node.Stack = true
+		result[id] = node
+	}
+	return result
 }
 
 // MapContainer2Hostname maps container RenderableNodes to 'hostname' renderabled nodes..
@@ -744,7 +743,7 @@ func MapContainer2Hostname(n RenderableNode, _ report.Networks) RenderableNodes 
 	result.Counters = result.Counters.Add(ContainersKey, 1)
 	result.Node.Topology = "container_hostname"
 	result.Node.ID = id
-	result.Children = result.Children.Add(n.Node)
+	result.Children = result.Children.Add(n)
 	result.Shape = Hexagon
 	result.Stack = true
 	return RenderableNodes{id: result}
@@ -783,21 +782,4 @@ func MapCountPods(n RenderableNode, _ report.Networks) RenderableNodes {
 		output.LabelMinor = fmt.Sprintf("%d pods", pods)
 	}
 	return RenderableNodes{output.ID: output}
-}
-
-// trySplitAddr is basically ParseArbitraryNodeID, since its callsites
-// (pseudo funcs) just have opaque node IDs and don't know what topology they
-// come from. Without changing how pseudo funcs work, we can't make it much
-// smarter.
-//
-// TODO change how pseudofuncs work, and eliminate this helper.
-func trySplitAddr(addr string) (string, string) {
-	fields := strings.SplitN(addr, report.ScopeDelim, 3)
-	if len(fields) == 3 {
-		return fields[1], fields[2]
-	}
-	if len(fields) == 2 {
-		return fields[1], ""
-	}
-	panic(addr)
 }

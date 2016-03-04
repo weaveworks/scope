@@ -35,6 +35,22 @@ func (s StringSet) Contains(str string) bool {
 	return i < len(s) && s[i] == str
 }
 
+// Intersection returns the intersections of a and b
+func (s StringSet) Intersection(b StringSet) StringSet {
+	result, i, j := EmptyStringSet, 0, 0
+	for i < len(s) && j < len(b) {
+		if s[i] == b[j] {
+			result = result.Add(s[i])
+		}
+		if s[i] < b[j] {
+			i++
+		} else {
+			j++
+		}
+	}
+	return result
+}
+
 // Add adds the strings to the StringSet. Add is the only valid way to grow a
 // StringSet. Add returns the StringSet to enable chaining.
 func (s StringSet) Add(strs ...string) StringSet {

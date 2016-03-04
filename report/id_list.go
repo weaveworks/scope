@@ -1,7 +1,5 @@
 package report
 
-import "sort"
-
 // IDList is a list of string IDs, which are always sorted and unique.
 type IDList StringSet
 
@@ -35,6 +33,10 @@ func (a IDList) Merge(b IDList) IDList {
 
 // Contains returns true if id is in the list.
 func (a IDList) Contains(id string) bool {
-	i := sort.Search(len(a), func(i int) bool { return a[i] >= id })
-	return i < len(a) && a[i] == id
+	return StringSet(a).Contains(id)
+}
+
+// Intersection returns the intersection of a and b
+func (a IDList) Intersection(b IDList) IDList {
+	return IDList(StringSet(a).Intersection(StringSet(b)))
 }

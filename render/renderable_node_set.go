@@ -1,33 +1,35 @@
-package report
+package render
 
 import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"reflect"
 	"sort"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/mndrix/ps"
 	"github.com/ugorji/go/codec"
+
+	"github.com/weaveworks/scope/test/reflect"
 )
 
-// NodeSet is a set of nodes keyed on (Topology, ID). Clients must use
+// RenderableNodeSet is a set of nodes keyed on (Topology, ID). Clients must use
 // the Add method to add nodes
-type NodeSet struct {
+type RenderableNodeSet struct {
 	psMap ps.Map
 }
 
-// EmptyNodeSet is the empty set of nodes.
-var EmptyNodeSet = NodeSet{ps.NewMap()}
+// EmptyRenderableNodeSet is the empty set of nodes.
+var EmptyRenderableNodeSet = RenderableNodeSet{ps.NewMap()}
 
-// MakeNodeSet makes a new NodeSet with the given nodes.
-func MakeNodeSet(nodes ...Node) NodeSet {
-	return EmptyNodeSet.Add(nodes...)
+// MakeRenderableNodeSet makes a new RenderableNodeSet with the given nodes.
+func MakeRenderableNodeSet(nodes ...RenderableNode) RenderableNodeSet {
+	return EmptyRenderableNodeSet.Add(nodes...)
 }
 
-// Add adds the nodes to the NodeSet. Add is the only valid way to grow a
-// NodeSet. Add returns the NodeSet to enable chaining.
-func (n NodeSet) Add(nodes ...Node) NodeSet {
+// Add adds the nodes to the RenderableNodeSet. Add is the only valid way to grow a
+// RenderableNodeSet. Add returns the RenderableNodeSet to enable chaining.
+func (n RenderableNodeSet) Add(nodes ...RenderableNode) RenderableNodeSet {
 	result := n.psMap
 	if result == nil {
 		result = ps.NewMap()
@@ -35,11 +37,11 @@ func (n NodeSet) Add(nodes ...Node) NodeSet {
 	for _, node := range nodes {
 		result = result.Set(fmt.Sprintf("%s|%s", node.Topology, node.ID), node)
 	}
-	return NodeSet{result}
+	return RenderableNodeSet{result}
 }
 
-// Merge combines the two NodeSets and returns a new result.
-func (n NodeSet) Merge(other NodeSet) NodeSet {
+// Merge combines the two RenderableNodeSets and returns a new result.
+func (n RenderableNodeSet) Merge(other RenderableNodeSet) RenderableNodeSet {
 	nSize, otherSize := n.Size(), other.Size()
 	if nSize == 0 {
 		return other
@@ -54,22 +56,22 @@ func (n NodeSet) Merge(other NodeSet) NodeSet {
 	iter.ForEach(func(key string, otherVal interface{}) {
 		result = result.Set(key, otherVal)
 	})
-	return NodeSet{result}
+	return RenderableNodeSet{result}
 }
 
 // Lookup the node 'key'
-func (n NodeSet) Lookup(key string) (Node, bool) {
+func (n RenderableNodeSet) Lookup(key string) (RenderableNode, bool) {
 	if n.psMap != nil {
 		value, ok := n.psMap.Lookup(key)
 		if ok {
-			return value.(Node), true
+			return value.(RenderableNode), true
 		}
 	}
-	return Node{}, false
+	return RenderableNode{}, false
 }
 
 // Keys is a list of all the keys in this set.
-func (n NodeSet) Keys() []string {
+func (n RenderableNodeSet) Keys() []string {
 	if n.psMap == nil {
 		return nil
 	}
@@ -79,7 +81,7 @@ func (n NodeSet) Keys() []string {
 }
 
 // Size is the number of nodes in the set
-func (n NodeSet) Size() int {
+func (n RenderableNodeSet) Size() int {
 	if n.psMap == nil {
 		return 0
 	}
@@ -88,23 +90,23 @@ func (n NodeSet) Size() int {
 
 // ForEach executes f for each node in the set. Nodes are traversed in sorted
 // order.
-func (n NodeSet) ForEach(f func(Node)) {
+func (n RenderableNodeSet) ForEach(f func(RenderableNode)) {
 	for _, key := range n.Keys() {
 		if val, ok := n.psMap.Lookup(key); ok {
-			f(val.(Node))
+			f(val.(RenderableNode))
 		}
 	}
 }
 
 // Copy is a noop
-func (n NodeSet) Copy() NodeSet {
+func (n RenderableNodeSet) Copy() RenderableNodeSet {
 	return n
 }
 
-func (n NodeSet) String() string {
+func (n RenderableNodeSet) String() string {
 	keys := []string{}
 	if n.psMap == nil {
-		n = EmptyNodeSet
+		n = EmptyRenderableNodeSet
 	}
 	psMap := n.psMap
 	if psMap == nil {
@@ -118,15 +120,15 @@ func (n NodeSet) String() string {
 	buf := bytes.NewBufferString("{")
 	for _, key := range keys {
 		val, _ := psMap.Lookup(key)
-		fmt.Fprintf(buf, "%s: %v, ", key, val)
+		fmt.Fprintf(buf, "%s: %s, ", key, spew.Sdump(val))
 	}
-	fmt.Fprintf(buf, "}\n")
+	fmt.Fprintf(buf, "}")
 	return buf.String()
 }
 
-// DeepEqual tests equality with other NodeSets
-func (n NodeSet) DeepEqual(i interface{}) bool {
-	d, ok := i.(NodeSet)
+// DeepEqual tests equality with other RenderableNodeSets
+func (n RenderableNodeSet) DeepEqual(i interface{}) bool {
+	d, ok := i.(RenderableNodeSet)
 	if !ok {
 		return false
 	}
@@ -149,20 +151,20 @@ func (n NodeSet) DeepEqual(i interface{}) bool {
 	return equal
 }
 
-func (n NodeSet) toIntermediate() []Node {
-	intermediate := make([]Node, 0, n.Size())
-	n.ForEach(func(node Node) {
+func (n RenderableNodeSet) toIntermediate() []RenderableNode {
+	intermediate := make([]RenderableNode, 0, n.Size())
+	n.ForEach(func(node RenderableNode) {
 		intermediate = append(intermediate, node)
 	})
 	return intermediate
 }
 
-func (n NodeSet) fromIntermediate(nodes []Node) NodeSet {
-	return MakeNodeSet(nodes...)
+func (n RenderableNodeSet) fromIntermediate(nodes []RenderableNode) RenderableNodeSet {
+	return MakeRenderableNodeSet(nodes...)
 }
 
 // CodecEncodeSelf implements codec.Selfer
-func (n *NodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
+func (n *RenderableNodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
 	if n.psMap != nil {
 		encoder.Encode(n.toIntermediate())
 	} else {
@@ -171,37 +173,37 @@ func (n *NodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
 }
 
 // CodecDecodeSelf implements codec.Selfer
-func (n *NodeSet) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := []Node{}
+func (n *RenderableNodeSet) CodecDecodeSelf(decoder *codec.Decoder) {
+	in := []RenderableNode{}
 	if err := decoder.Decode(&in); err != nil {
 		return
 	}
-	*n = NodeSet{}.fromIntermediate(in)
+	*n = RenderableNodeSet{}.fromIntermediate(in)
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
-func (NodeSet) MarshalJSON() ([]byte, error) {
+func (RenderableNodeSet) MarshalJSON() ([]byte, error) {
 	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
 }
 
 // UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
-func (*NodeSet) UnmarshalJSON(b []byte) error {
+func (*RenderableNodeSet) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
 // GobEncode implements gob.Marshaller
-func (n NodeSet) GobEncode() ([]byte, error) {
+func (n RenderableNodeSet) GobEncode() ([]byte, error) {
 	buf := bytes.Buffer{}
 	err := gob.NewEncoder(&buf).Encode(n.toIntermediate())
 	return buf.Bytes(), err
 }
 
 // GobDecode implements gob.Unmarshaller
-func (n *NodeSet) GobDecode(input []byte) error {
-	in := []Node{}
+func (n *RenderableNodeSet) GobDecode(input []byte) error {
+	in := []RenderableNode{}
 	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
 		return err
 	}
-	*n = NodeSet{}.fromIntermediate(in)
+	*n = RenderableNodeSet{}.fromIntermediate(in)
 	return nil
 }

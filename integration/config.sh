@@ -59,14 +59,13 @@ container_id() {
 }
 
 # this checks we have an edge from container 1 to container 2
-has_connection() {
+has_connection_by_id() {
 	local view="$1"
 	local host="$2"
-	local from="$3"
-	local to="$4"
+	local from_id="$3"
+	local to_id="$4"
 	local timeout="${5:-60}"
-	local from_id=$(node_id "${view}" "${host}" "${from}")
-	local to_id=$(node_id "${view}" "${host}" "${to}")
+
 	for i in $(seq $timeout); do
 		local nodes="$(curl -s http://$host:4040/api/topology/${view}?system=show)"
 		local edge=$(echo "$nodes" |  jq -r ".nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])" 2>/dev/null)
@@ -80,6 +79,18 @@ has_connection() {
 
 	echo "Failed to find edge $from -> $to after $timeout secs"
 	assert "curl -s http://$host:4040/api/topology/${view}?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
+}
+
+has_connection() {
+	local view="$1"
+	local host="$2"
+	local from="$3"
+	local to="$4"
+	local timeout="${5:-60}"
+    local from_id="$(node_id "${view}" "${host}" "${from}")"
+    local to_id="$(node_id "${view}" "${host}" "${to}")"
+
+    has_connection_by_id "${view}" "${host}" "${from_id}" "${to_id}" "${timeout}"
 }
 
 wait_for() {

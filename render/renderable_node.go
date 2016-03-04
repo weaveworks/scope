@@ -8,15 +8,15 @@ import (
 // an element of a topology. It should contain information that's relevant
 // to rendering a node when there are many nodes visible at once.
 type RenderableNode struct {
-	ID          string         `json:"id"`                    //
-	LabelMajor  string         `json:"label_major"`           // e.g. "process", human-readable
-	LabelMinor  string         `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
-	Rank        string         `json:"rank"`                  // to help the layout engine
-	Pseudo      bool           `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
-	Children    report.NodeSet `json:"children,omitempty"`    // Nodes which have been grouped into this one
-	ControlNode string         `json:"-"`                     // ID of node from which to show the controls in the UI
-	Shape       string         `json:"shape"`                 // Shape node should be rendered as
-	Stack       bool           `json:"stack"`                 // Should UI render this node as a stack?
+	ID          string            `json:"id"`                    //
+	LabelMajor  string            `json:"label_major"`           // e.g. "process", human-readable
+	LabelMinor  string            `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
+	Rank        string            `json:"rank"`                  // to help the layout engine
+	Pseudo      bool              `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
+	Children    RenderableNodeSet `json:"children,omitempty"`    // Nodes which have been grouped into this one
+	ControlNode string            `json:"control_node"`          // ID of node from which to show the controls in the UI
+	Shape       string            `json:"shape"`                 // Shape node should be rendered as
+	Stack       bool              `json:"stack"`                 // Should UI render this node as a stack?
 
 	report.EdgeMetadata `json:"metadata"` // Numeric sums
 	report.Node
@@ -159,7 +159,10 @@ func (rn RenderableNode) Copy() RenderableNode {
 func (rn RenderableNode) Prune() RenderableNode {
 	cp := rn.Copy()
 	cp.Node = report.MakeNode().WithAdjacent(cp.Node.Adjacency...)
-	cp.Children = report.EmptyNodeSet
+	cp.Children = MakeRenderableNodeSet()
+	rn.Children.ForEach(func(n RenderableNode) {
+		cp.Children = cp.Children.Add(n.Prune())
+	})
 	return cp
 }
 

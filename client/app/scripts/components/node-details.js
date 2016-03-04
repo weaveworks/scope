@@ -174,6 +174,14 @@ export default class NodeDetails extends React.Component {
             <NodeDetailsInfo rows={details.metadata} />
           </div>}
 
+          {details.connections && details.connections.map(connections => {
+            return (
+              <div className="node-details-content-section" key={connections.id}>
+                <NodeDetailsTable {...connections} />
+              </div>
+            );
+          })}
+
           {details.children && details.children.map(children => {
             return (
               <div className="node-details-content-section" key={children.topologyId}>

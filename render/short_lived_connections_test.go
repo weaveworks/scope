@@ -73,7 +73,7 @@ var (
 		render.IncomingInternetID: {
 			ID:         render.IncomingInternetID,
 			LabelMajor: render.InboundMajor,
-			LabelMinor: render.RequestsMinor,
+			LabelMinor: render.InboundMinor,
 			Pseudo:     true,
 			Shape:      "cloud",
 			Node:       report.MakeNode().WithAdjacent(render.MakeContainerID(containerID)),

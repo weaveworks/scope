@@ -3,8 +3,6 @@ package detailed
 import (
 	"fmt"
 
-	"github.com/ugorji/go/codec"
-
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
@@ -15,6 +13,7 @@ import (
 
 // NodeSummaryGroup is a topology-typed group of children for a Node.
 type NodeSummaryGroup struct {
+	ID         string        `json:"id"`
 	Label      string        `json:"label"`
 	Nodes      []NodeSummary `json:"nodes"`
 	TopologyID string        `json:"topologyId"`
@@ -36,29 +35,18 @@ func (g NodeSummaryGroup) Copy() NodeSummaryGroup {
 
 // Column provides special json serialization for column ids, so they include
 // their label for the frontend.
-type Column string
-
-// CodecEncodeSelf implements codec.Selfer
-func (c *Column) CodecEncodeSelf(encoder *codec.Encoder) {
-	in := map[string]string{"id": string(*c), "label": Label(string(*c))}
-	encoder.Encode(in)
+type Column struct {
+	ID          string `json:"id"`
+	Label       string `json:"label"`
+	DefaultSort bool   `json:"defaultSort"`
 }
 
-// CodecDecodeSelf implements codec.Selfer
-func (c *Column) CodecDecodeSelf(decoder *codec.Decoder) {
-	m := map[string]string{}
-	decoder.Decode(&m)
-	*c = Column(m["id"])
-}
-
-// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
-func (Column) MarshalJSON() ([]byte, error) {
-	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
-}
-
-// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
-func (*Column) UnmarshalJSON(b []byte) error {
-	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
+// MakeColumn makes a Column by looking up the label by id.
+func MakeColumn(id string) Column {
+	return Column{
+		ID:    id,
+		Label: Label(id),
+	}
 }
 
 // NodeSummary is summary information about a child for a Node.
@@ -72,7 +60,7 @@ type NodeSummary struct {
 }
 
 // MakeNodeSummary summarizes a node, if possible.
-func MakeNodeSummary(n report.Node) (NodeSummary, bool) {
+func MakeNodeSummary(n render.RenderableNode) (NodeSummary, bool) {
 	renderers := map[string]func(report.Node) NodeSummary{
 		report.Process:        processNodeSummary,
 		report.Container:      containerNodeSummary,
@@ -81,7 +69,7 @@ func MakeNodeSummary(n report.Node) (NodeSummary, bool) {
 		report.Host:           hostNodeSummary,
 	}
 	if renderer, ok := renderers[n.Topology]; ok {
-		return renderer(n), true
+		return renderer(n.Node), true
 	}
 	return NodeSummary{}, false
 }
