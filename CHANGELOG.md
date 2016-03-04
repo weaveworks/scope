@@ -5,6 +5,8 @@ Bug Fixes:
   [#1099](https://github.com/weaveworks/scope/pull/1099)
   [#1085](https://github.com/weaveworks/scope/pull/1085)
   [#994](https://github.com/weaveworks/scope/pull/994)
+- Don't panic when checking the version fails
+  [#1117](https://github.com/weaveworks/scope/pull/1117)
 
 ## Release 0.13.0
 
