@@ -15,9 +15,7 @@ import (
 func TestApply(t *testing.T) {
 	var (
 		endpointNodeID = "c"
-		addressNodeID  = "d"
 		endpointNode   = report.MakeNodeWith(map[string]string{"5": "6"})
-		addressNode    = report.MakeNodeWith(map[string]string{"7": "8"})
 	)
 
 	p := New(0, 0, nil)
@@ -25,7 +23,6 @@ func TestApply(t *testing.T) {
 
 	r := report.MakeReport()
 	r.Endpoint.AddNode(endpointNodeID, endpointNode)
-	r.Address.AddNode(addressNodeID, addressNode)
 	r = p.tag(r)
 
 	for _, tuple := range []struct {
@@ -34,7 +31,6 @@ func TestApply(t *testing.T) {
 		via  string
 	}{
 		{endpointNode.Merge(report.MakeNode().WithID("c").WithTopology(report.Endpoint)), r.Endpoint, endpointNodeID},
-		{addressNode.Merge(report.MakeNode().WithID("d").WithTopology(report.Address)), r.Address, addressNodeID},
 	} {
 		if want, have := tuple.want, tuple.from.Nodes[tuple.via]; !reflect.DeepEqual(want, have) {
 			t.Errorf("want %+v, have %+v", want, have)
@@ -84,7 +80,6 @@ func TestProbe(t *testing.T) {
 
 	// omitempty
 	want.Endpoint.Controls = nil
-	want.Address.Controls = nil
 	want.Process.Controls = nil
 	want.Container.Controls = nil
 	want.ContainerImage.Controls = nil

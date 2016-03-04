@@ -69,7 +69,6 @@ func TestAppClientPublish(t *testing.T) {
 	// tags, transforming empty slices into nils. So, we make DeepEqual
 	// happy by setting empty `json:"omitempty"` entries to nil
 	rpt.Endpoint.Controls = nil
-	rpt.Address.Controls = nil
 	rpt.Process.Controls = nil
 	rpt.Container.Controls = nil
 	rpt.ContainerImage.Controls = nil

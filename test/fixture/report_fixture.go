@@ -85,13 +85,6 @@ var (
 	ClientContainerImageName   = "image/client"
 	ServerContainerImageName   = "image/server"
 
-	ClientAddressNodeID   = report.MakeAddressNodeID(ClientHostID, ClientIP)
-	ServerAddressNodeID   = report.MakeAddressNodeID(ServerHostID, ServerIP)
-	UnknownAddress1NodeID = report.MakeAddressNodeID(ServerHostID, UnknownClient1IP)
-	UnknownAddress2NodeID = report.MakeAddressNodeID(ServerHostID, UnknownClient2IP)
-	UnknownAddress3NodeID = report.MakeAddressNodeID(ServerHostID, UnknownClient3IP)
-	RandomAddressNodeID   = report.MakeAddressNodeID(ServerHostID, RandomClientIP) // this should become an internet node
-
 	KubernetesNamespace = "ping"
 	ClientPodID         = "ping/pong-a"
 	ServerPodID         = "ping/pong-b"
@@ -313,35 +306,6 @@ var (
 				}).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)),
 				).WithID(ServerContainerImageNodeID).WithTopology(report.ContainerImage),
-			},
-		},
-		Address: report.Topology{
-			Nodes: report.Nodes{
-				ClientAddressNodeID: report.MakeNode().WithLatests(map[string]string{
-					endpoint.Addr:     ClientIP,
-					report.HostNodeID: ClientHostNodeID,
-				}).WithEdge(ServerAddressNodeID, report.EdgeMetadata{}),
-
-				ServerAddressNodeID: report.MakeNode().WithLatests(map[string]string{
-					endpoint.Addr:     ServerIP,
-					report.HostNodeID: ServerHostNodeID,
-				}),
-
-				UnknownAddress1NodeID: report.MakeNode().WithLatests(map[string]string{
-					endpoint.Addr: UnknownClient1IP,
-				}).WithAdjacent(ServerAddressNodeID),
-
-				UnknownAddress2NodeID: report.MakeNode().WithLatests(map[string]string{
-					endpoint.Addr: UnknownClient2IP,
-				}).WithAdjacent(ServerAddressNodeID),
-
-				UnknownAddress3NodeID: report.MakeNode().WithLatests(map[string]string{
-					endpoint.Addr: UnknownClient3IP,
-				}).WithAdjacent(ServerAddressNodeID),
-
-				RandomAddressNodeID: report.MakeNode().WithLatests(map[string]string{
-					endpoint.Addr: RandomClientIP,
-				}).WithAdjacent(ServerAddressNodeID),
 			},
 		},
 		Host: report.Topology{

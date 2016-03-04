@@ -78,19 +78,6 @@ func TestSpyNoProcesses(t *testing.T) {
 	if want, have := 0, len(r.Endpoint.Nodes); want != have {
 		t.Fatalf("want %d, have %d", want, have)
 	}
-
-	var (
-		scopedLocal  = report.MakeAddressNodeID(nodeID, fixLocalAddress.String())
-		scopedRemote = report.MakeAddressNodeID(nodeID, fixRemoteAddress.String())
-	)
-
-	if want, have := 1, len(r.Address.Nodes[scopedRemote].Adjacency); want != have {
-		t.Fatalf("want %d, have %d", want, have)
-	}
-
-	if want, have := scopedLocal, r.Address.Nodes[scopedRemote].Adjacency[0]; want != have {
-		t.Fatalf("want %q, have %q", want, have)
-	}
 }
 
 func TestSpyWithProcesses(t *testing.T) {

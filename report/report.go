@@ -10,7 +10,6 @@ import (
 // Names of the various topologies.
 const (
 	Endpoint       = "endpoint"
-	Address        = "address"
 	Process        = "process"
 	Container      = "container"
 	Pod            = "pod"
@@ -28,11 +27,6 @@ type Report struct {
 	// They come from inspecting active connections and can (theoretically)
 	// be traced back to a process. Edges are present.
 	Endpoint Topology
-
-	// Address nodes are addresses (e.g. ifconfig) on each host. Certain
-	// information may be present in this topology that can't be mapped to
-	// endpoints (e.g. ICMP). Edges are present.
-	Address Topology
 
 	// Process nodes are processes on each host. Edges are not present.
 	Process Topology
@@ -93,7 +87,6 @@ type Report struct {
 func MakeReport() Report {
 	return Report{
 		Endpoint:       MakeTopology(),
-		Address:        MakeTopology(),
 		Process:        MakeTopology(),
 		Container:      MakeTopology(),
 		ContainerImage: MakeTopology(),
@@ -111,7 +104,6 @@ func MakeReport() Report {
 func (r Report) Copy() Report {
 	return Report{
 		Endpoint:       r.Endpoint.Copy(),
-		Address:        r.Address.Copy(),
 		Process:        r.Process.Copy(),
 		Container:      r.Container.Copy(),
 		ContainerImage: r.ContainerImage.Copy(),
@@ -130,7 +122,6 @@ func (r Report) Copy() Report {
 func (r Report) Merge(other Report) Report {
 	cp := r.Copy()
 	cp.Endpoint = r.Endpoint.Merge(other.Endpoint)
-	cp.Address = r.Address.Merge(other.Address)
 	cp.Process = r.Process.Merge(other.Process)
 	cp.Container = r.Container.Merge(other.Container)
 	cp.ContainerImage = r.ContainerImage.Merge(other.ContainerImage)
@@ -147,7 +138,6 @@ func (r Report) Merge(other Report) Report {
 func (r Report) Topologies() []Topology {
 	return []Topology{
 		r.Endpoint,
-		r.Address,
 		r.Process,
 		r.Container,
 		r.ContainerImage,

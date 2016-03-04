@@ -29,11 +29,6 @@ func MakeProcessID(hostID, pid string) string {
 	return makeID("process", hostID, pid)
 }
 
-// MakeAddressID makes an address node ID for rendered nodes.
-func MakeAddressID(hostID, addr string) string {
-	return makeID("address", hostID, addr)
-}
-
 // MakeContainerID makes a container node ID for rendered nodes.
 func MakeContainerID(containerID string) string {
 	return makeID("container", containerID)

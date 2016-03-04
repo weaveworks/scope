@@ -60,11 +60,6 @@ var (
 		return MakeRenderableNodes(r.ContainerImage)
 	})
 
-	// SelectAddress selects the address topology.
-	SelectAddress = TopologySelector(func(r report.Report) RenderableNodes {
-		return MakeRenderableNodes(r.Address)
-	})
-
 	// SelectHost selects the address topology.
 	SelectHost = TopologySelector(func(r report.Report) RenderableNodes {
 		return MakeRenderableNodes(r.Host)

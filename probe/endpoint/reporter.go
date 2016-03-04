@@ -165,62 +165,38 @@ func (r *Reporter) Report() (report.Report, error) {
 }
 
 func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode, extraToNode *report.Node) {
-	// Update address topology
-	{
-		var (
-			fromAddressNodeID = report.MakeAddressNodeID(r.hostID, t.fromAddr)
-			toAddressNodeID   = report.MakeAddressNodeID(r.hostID, t.toAddr)
-			fromNode          = report.MakeNodeWith(map[string]string{Addr: t.fromAddr}).WithEdge(toAddressNodeID, report.EdgeMetadata{})
-			toNode            = report.MakeNodeWith(map[string]string{Addr: t.toAddr})
-		)
-
-		// In case we have a reverse resolution for the IP, we can use it for
-		// the name...
-		if toNames, err := r.reverseResolver.get(t.toAddr); err == nil {
-			toNode = toNode.WithSet("name", report.MakeStringSet(toNames...))
-		}
-
-		if extraFromNode != nil {
-			fromNode = fromNode.Merge(*extraFromNode)
-		}
-		if extraToNode != nil {
-			toNode = toNode.Merge(*extraToNode)
-		}
-		rpt.Address = rpt.Address.AddNode(fromAddressNodeID, fromNode)
-		rpt.Address = rpt.Address.AddNode(toAddressNodeID, toNode)
-	}
-
 	// Update endpoint topology
-	if r.includeProcesses {
-		var (
-			fromEndpointNodeID = report.MakeEndpointNodeID(r.hostID, t.fromAddr, strconv.Itoa(int(t.fromPort)))
-			toEndpointNodeID   = report.MakeEndpointNodeID(r.hostID, t.toAddr, strconv.Itoa(int(t.toPort)))
-
-			fromNode = report.MakeNodeWith(map[string]string{
-				Addr: t.fromAddr,
-				Port: strconv.Itoa(int(t.fromPort)),
-			}).WithEdge(toEndpointNodeID, report.EdgeMetadata{})
-			toNode = report.MakeNodeWith(map[string]string{
-				Addr: t.toAddr,
-				Port: strconv.Itoa(int(t.toPort)),
-			})
-		)
-
-		// In case we have a reverse resolution for the IP, we can use it for
-		// the name...
-		if toNames, err := r.reverseResolver.get(t.toAddr); err == nil {
-			toNode = toNode.WithSet("name", report.MakeStringSet(toNames...))
-		}
-
-		if extraFromNode != nil {
-			fromNode = fromNode.Merge(*extraFromNode)
-		}
-		if extraToNode != nil {
-			toNode = toNode.Merge(*extraToNode)
-		}
-		rpt.Endpoint = rpt.Endpoint.AddNode(fromEndpointNodeID, fromNode)
-		rpt.Endpoint = rpt.Endpoint.AddNode(toEndpointNodeID, toNode)
+	if !r.includeProcesses {
+		return
 	}
+	var (
+		fromEndpointNodeID = report.MakeEndpointNodeID(r.hostID, t.fromAddr, strconv.Itoa(int(t.fromPort)))
+		toEndpointNodeID   = report.MakeEndpointNodeID(r.hostID, t.toAddr, strconv.Itoa(int(t.toPort)))
+
+		fromNode = report.MakeNodeWith(map[string]string{
+			Addr: t.fromAddr,
+			Port: strconv.Itoa(int(t.fromPort)),
+		}).WithEdge(toEndpointNodeID, report.EdgeMetadata{})
+		toNode = report.MakeNodeWith(map[string]string{
+			Addr: t.toAddr,
+			Port: strconv.Itoa(int(t.toPort)),
+		})
+	)
+
+	// In case we have a reverse resolution for the IP, we can use it for
+	// the name...
+	if toNames, err := r.reverseResolver.get(t.toAddr); err == nil {
+		toNode = toNode.WithSet("name", report.MakeStringSet(toNames...))
+	}
+
+	if extraFromNode != nil {
+		fromNode = fromNode.Merge(*extraFromNode)
+	}
+	if extraToNode != nil {
+		toNode = toNode.Merge(*extraToNode)
+	}
+	rpt.Endpoint = rpt.Endpoint.AddNode(fromEndpointNodeID, fromNode)
+	rpt.Endpoint = rpt.Endpoint.AddNode(toEndpointNodeID, toNode)
 }
 
 func newu64(i uint64) *uint64 {
