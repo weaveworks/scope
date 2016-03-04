@@ -214,21 +214,21 @@ export function deletePipe(pipeId) {
 }
 
 export function getPipeStatus(pipeId) {
-  const url = `/api/pipe/${encodeURIComponent(pipeId)}`;
+  const url = `api/pipe/${encodeURIComponent(pipeId)}/check`;
   reqwest({
     method: 'GET',
     url: url,
-    success: function(res) {
-      log('ERROR: expected responses: [400, 404]. Got:', res);
-    },
     error: function(err) {
+      log('ERROR: unexpected response:', err);
+    },
+    success: function(res) {
       const status = {
-        400: 'PIPE_ALIVE',
-        404: 'PIPE_DELETED'
-      }[err.status];
+        200: 'PIPE_ALIVE',
+        204: 'PIPE_DELETED'
+      }[res.status];
 
       if (!status) {
-        log('Unexpected pipe status:', err.status);
+        log('Unexpected pipe status:', res.status);
         return;
       }
 

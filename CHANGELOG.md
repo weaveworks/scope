@@ -1,3 +1,13 @@
+## Release 0.13.1
+
+Bug Fixes:
+- Make pipes work with scope.weave.works
+  [#1099](https://github.com/weaveworks/scope/pull/1099)
+  [#1085](https://github.com/weaveworks/scope/pull/1085)
+  [#994](https://github.com/weaveworks/scope/pull/994)
+- Don't panic when checking the version fails
+  [#1117](https://github.com/weaveworks/scope/pull/1117)
+
 ## Release 0.13.0
 
 Note: This release come with big performance improvements, cutting the probe's CPU usage by 70% and the app's CPU usage by up to 85%. See detailed performance improvement-related changes below:
