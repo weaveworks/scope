@@ -53,7 +53,9 @@ func appMain() {
 		Product: "scope-app",
 		Version: app.Version,
 	}, versionCheckPeriod, func(r *checkpoint.CheckResponse, err error) {
-		if r.Outdated {
+		if err != nil {
+			log.Errorf("Error checking version: %v", err)
+		} else if r.Outdated {
 			log.Infof("Scope version %s is available; please update at %s",
 				r.CurrentVersion, r.CurrentDownloadURL)
 		}
