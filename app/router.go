@@ -84,7 +84,7 @@ func gzipHandler(h http.HandlerFunc) http.HandlerFunc {
 func RegisterTopologyRoutes(router *mux.Router, r Reporter) {
 	get := router.Methods("GET").Subrouter()
 	get.HandleFunc("/api",
-		gzipHandler(requestContextDecorator(apiHandler)))
+		gzipHandler(requestContextDecorator(apiHandler(r))))
 	get.HandleFunc("/api/topology",
 		gzipHandler(requestContextDecorator(topologyRegistry.makeTopologyList(r))))
 	get.HandleFunc("/api/topology/{topology}",
@@ -130,10 +130,17 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	}))
 }
 
-func apiHandler(_ context.Context, w http.ResponseWriter, r *http.Request) {
-	respondWith(w, http.StatusOK, xfer.Details{
-		ID:       UniqueID,
-		Version:  Version,
-		Hostname: hostname.Get(),
-	})
+func apiHandler(rep Reporter) CtxHandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		report, err := rep.Report(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		respondWith(w, http.StatusOK, xfer.Details{
+			ID:       UniqueID,
+			Version:  Version,
+			Hostname: hostname.Get(),
+			Plugins:  report.Plugins,
+		})
+	}
 }

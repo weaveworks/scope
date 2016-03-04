@@ -27,6 +27,9 @@ type File struct {
 	mockInode
 	FName     string
 	FContents string
+	FReader   io.Reader
+	FWriter   io.Writer
+	FCloser   io.Closer
 	FStat     syscall.Stat_t
 }
 
@@ -34,6 +37,8 @@ type File struct {
 type Entry interface {
 	os.FileInfo
 	fs.Interface
+	Add(path string, e Entry) error
+	Remove(path string) error
 }
 
 // Dir creates a new directory with the given entries.
@@ -123,6 +128,7 @@ func (p dir) ReadFile(path string) ([]byte, error) {
 
 func (p dir) Lstat(path string, stat *syscall.Stat_t) error {
 	if path == "/" {
+		*stat = syscall.Stat_t{Mode: syscall.S_IFDIR}
 		return nil
 	}
 
@@ -137,6 +143,7 @@ func (p dir) Lstat(path string, stat *syscall.Stat_t) error {
 
 func (p dir) Stat(path string, stat *syscall.Stat_t) error {
 	if path == "/" {
+		*stat = syscall.Stat_t{Mode: syscall.S_IFDIR}
 		return nil
 	}
 
@@ -163,6 +170,36 @@ func (p dir) Open(path string) (io.ReadWriteCloser, error) {
 	return fs.Open(tail)
 }
 
+func (p dir) Add(path string, e Entry) error {
+	if path == "/" {
+		p.entries[e.Name()] = e
+		return nil
+	}
+
+	head, tail := split(path)
+	fs, ok := p.entries[head]
+	if !ok {
+		fs = Dir(head)
+		p.entries[head] = fs
+	}
+
+	return fs.Add(tail, e)
+}
+
+func (p dir) Remove(path string) error {
+	if _, ok := p.entries[strings.TrimPrefix(path, "/")]; ok {
+		delete(p.entries, strings.TrimPrefix(path, "/"))
+		return nil
+	}
+
+	head, tail := split(path)
+	fs, ok := p.entries[head]
+	if !ok {
+		return nil
+	}
+	return fs.Remove(tail)
+}
+
 // Name implements os.FileInfo
 func (p File) Name() string { return p.FName }
 
@@ -183,6 +220,9 @@ func (p File) ReadDirNames(path string) ([]string, error) {
 func (p File) ReadFile(path string) ([]byte, error) {
 	if path != "/" {
 		return nil, fmt.Errorf("I'm a file!")
+	}
+	if p.FReader != nil {
+		return ioutil.ReadAll(p.FReader)
 	}
 	return []byte(p.FContents), nil
 }
@@ -210,11 +250,38 @@ func (p File) Open(path string) (io.ReadWriteCloser, error) {
 	if path != "/" {
 		return nil, fmt.Errorf("I'm a file!")
 	}
-	return struct {
-		io.ReadWriter
+	buf := bytes.NewBuffer([]byte(p.FContents))
+	s := struct {
+		io.Reader
+		io.Writer
 		io.Closer
 	}{
-		bytes.NewBuffer([]byte(p.FContents)),
-		ioutil.NopCloser(nil),
-	}, nil
+		buf, buf, ioutil.NopCloser(nil),
+	}
+	if p.FReader != nil {
+		s.Reader = p.FReader
+	}
+	if p.FWriter != nil {
+		s.Writer = p.FWriter
+	}
+	if p.FCloser != nil {
+		s.Closer = p.FCloser
+	}
+	return s, nil
+}
+
+// Add adds a new node to the fs
+func (p File) Add(path string, e Entry) error {
+	if path != "/" {
+		return fmt.Errorf("I'm a file!")
+	}
+	return nil
+}
+
+// Remove removes a node from the fs
+func (p File) Remove(path string) error {
+	if path != "/" {
+		return fmt.Errorf("I'm a file!")
+	}
+	return nil
 }

@@ -19,6 +19,22 @@ const (
 	OpenFilesCount = "open_files_count"
 )
 
+// Exposed for testing
+var (
+	MetadataTemplates = report.MetadataTemplates{
+		PID:     {ID: PID, Label: "PID", From: report.FromLatest, Datatype: "number", Priority: 1},
+		Cmdline: {ID: Cmdline, Label: "Command", From: report.FromLatest, Priority: 2},
+		PPID:    {ID: PPID, Label: "Parent PID", From: report.FromLatest, Priority: 3},
+		Threads: {ID: Threads, Label: "# Threads", From: report.FromLatest, Priority: 4},
+	}
+
+	MetricTemplates = report.MetricTemplates{
+		CPUUsage:       {ID: CPUUsage, Label: "CPU", Format: report.PercentFormat, Priority: 1},
+		MemoryUsage:    {ID: MemoryUsage, Label: "Memory", Format: report.FilesizeFormat, Priority: 2},
+		OpenFilesCount: {ID: OpenFilesCount, Label: "Open Files", Format: report.IntegerFormat, Priority: 3},
+	}
+)
+
 // Reporter generates Reports containing the Process topology.
 type Reporter struct {
 	scope   string
@@ -53,7 +69,9 @@ func (r *Reporter) Report() (report.Report, error) {
 }
 
 func (r *Reporter) processTopology() (report.Topology, error) {
-	t := report.MakeTopology()
+	t := report.MakeTopology().
+		WithMetadataTemplates(MetadataTemplates).
+		WithMetricTemplates(MetricTemplates)
 	now := mtime.Now()
 	deltaTotal, maxCPU, err := r.jiffies()
 	if err != nil {

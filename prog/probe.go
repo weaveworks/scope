@@ -31,6 +31,7 @@ import (
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
+	"github.com/weaveworks/scope/probe/plugins"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -38,6 +39,8 @@ import (
 const (
 	versionCheckPeriod = 6 * time.Hour
 )
+
+var pluginAPIVersion = "1"
 
 func check() {
 	handleResponse := func(r *checkpoint.CheckResponse, err error) {
@@ -69,6 +72,7 @@ func probeMain() {
 		spyInterval     = flag.Duration("spy.interval", time.Second, "spy (scan) interval")
 		spyProcs        = flag.Bool("processes", true, "report processes (needs root)")
 		procRoot        = flag.String("proc.root", "/proc", "location of the proc filesystem")
+		pluginsRoot     = flag.String("plugins.root", "/var/run/scope/plugins", "Root directory to search for plugins")
 		useConntrack    = flag.Bool("conntrack", true, "also use conntrack to track connections")
 		insecure        = flag.Bool("insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
 		logPrefix       = flag.String("log.prefix", "<probe>", "prefix for each log line")
@@ -110,6 +114,19 @@ func probeMain() {
 	)
 	log.Infof("probe starting, version %s, ID %s", version, probeID)
 	go check()
+
+	pluginRegistry, err := plugins.NewRegistry(
+		*pluginsRoot,
+		pluginAPIVersion,
+		map[string]string{
+			"probe_id":    probeID,
+			"api_version": pluginAPIVersion,
+		},
+	)
+	if err != nil {
+		log.Errorf("plugins: problem loading: %v", err)
+	}
+	defer pluginRegistry.Close()
 
 	if len(flag.Args()) > 0 {
 		targets = flag.Args()
@@ -188,6 +205,8 @@ func probeMain() {
 			defer weaveResolver.Stop()
 		}
 	}
+
+	p.AddReporter(plugins.Reporter(pluginRegistry))
 
 	if *httpListen != "" {
 		go func() {

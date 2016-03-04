@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	weavecommon "github.com/weaveworks/weave/common"
+
+	"github.com/weaveworks/weave/common"
 )
 
 var version = "dev" // set at build time
@@ -31,7 +32,7 @@ func setLogFormatter(prefix string) {
 	f := prefixFormatter{
 		prefix: []byte(prefix),
 		// reuse weave's log format
-		next: weavecommon.Log.Formatter,
+		next: common.Log.Formatter,
 	}
 	log.SetFormatter(&f)
 }

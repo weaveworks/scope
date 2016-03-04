@@ -139,8 +139,8 @@ func (c Counters) DeepEqual(d Counters) bool {
 
 func (c Counters) toIntermediate() map[string]int {
 	intermediate := map[string]int{}
-	c.psMap.ForEach(func(key string, val interface{}) {
-		intermediate[key] = val.(int)
+	c.ForEach(func(key string, val int) {
+		intermediate[key] = val
 	})
 	return intermediate
 }

@@ -68,22 +68,22 @@ func MakeColumn(id string) Column {
 
 // NodeSummary is summary information about a child for a Node.
 type NodeSummary struct {
-	ID           string        `json:"id"`
-	Label        string        `json:"label"`
-	LabelMinor   string        `json:"label_minor"`
-	Rank         string        `json:"rank"`
-	Shape        string        `json:"shape,omitempty"`
-	Stack        bool          `json:"stack,omitempty"`
-	Linkable     bool          `json:"linkable,omitempty"` // Whether this node can be linked-to
-	Pseudo       bool          `json:"pseudo,omitempty"`
-	Metadata     []MetadataRow `json:"metadata,omitempty"`
-	DockerLabels []MetadataRow `json:"docker_labels,omitempty"`
-	Metrics      []MetricRow   `json:"metrics,omitempty"`
-	Adjacency    report.IDList `json:"adjacency,omitempty"`
+	ID           string               `json:"id"`
+	Label        string               `json:"label"`
+	LabelMinor   string               `json:"label_minor"`
+	Rank         string               `json:"rank"`
+	Shape        string               `json:"shape,omitempty"`
+	Stack        bool                 `json:"stack,omitempty"`
+	Linkable     bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
+	Pseudo       bool                 `json:"pseudo,omitempty"`
+	Metadata     []report.MetadataRow `json:"metadata,omitempty"`
+	DockerLabels []report.MetadataRow `json:"docker_labels,omitempty"`
+	Metrics      []report.MetricRow   `json:"metrics,omitempty"`
+	Adjacency    report.IDList        `json:"adjacency,omitempty"`
 }
 
 // MakeNodeSummary summarizes a node, if possible.
-func MakeNodeSummary(n report.Node) (NodeSummary, bool) {
+func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
 	renderers := map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
 		render.Pseudo:         pseudoNodeSummary,
 		report.Process:        processNodeSummary,
@@ -94,7 +94,7 @@ func MakeNodeSummary(n report.Node) (NodeSummary, bool) {
 		report.Host:           hostNodeSummary,
 	}
 	if renderer, ok := renderers[n.Topology]; ok {
-		return renderer(baseNodeSummary(n), n)
+		return renderer(baseNodeSummary(r, n), n)
 	}
 	return NodeSummary{}, false
 }
@@ -133,14 +133,14 @@ func (n NodeSummary) Copy() NodeSummary {
 	return result
 }
 
-func baseNodeSummary(n report.Node) NodeSummary {
+func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 	return NodeSummary{
 		ID:           n.ID,
 		Shape:        Circle,
 		Linkable:     true,
-		Metadata:     NodeMetadata(n),
+		Metadata:     NodeMetadata(r, n),
 		DockerLabels: NodeDockerLabels(n),
-		Metrics:      NodeMetrics(n),
+		Metrics:      NodeMetrics(r, n),
 		Adjacency:    n.Adjacency.Copy(),
 	}
 }
@@ -341,10 +341,10 @@ func (s nodeSummariesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
 type NodeSummaries map[string]NodeSummary
 
 // Summaries converts RenderableNodes into a set of NodeSummaries
-func Summaries(rns report.Nodes) NodeSummaries {
+func Summaries(r report.Report, rns report.Nodes) NodeSummaries {
 	result := NodeSummaries{}
 	for id, node := range rns {
-		if summary, ok := MakeNodeSummary(node); ok {
+		if summary, ok := MakeNodeSummary(r, node); ok {
 			for i, m := range summary.Metrics {
 				summary.Metrics[i] = m.Summary()
 			}

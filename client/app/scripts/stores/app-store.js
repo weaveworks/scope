@@ -46,6 +46,7 @@ let highlightedEdgeIds = makeSet();
 let highlightedNodeIds = makeSet();
 let hostname = '...';
 let version = '...';
+let plugins = null;
 let mouseOverEdgeId = null;
 let mouseOverNodeId = null;
 let nodeDetails = makeOrderedMap(); // nodeId -> details
@@ -274,6 +275,11 @@ export class AppStore extends Store {
   getVersion() {
     return version;
   }
+
+  getPlugins() {
+    return plugins;
+  }
+
 
   isForceRelayout() {
     return forceRelayout;
@@ -679,6 +685,7 @@ export class AppStore extends Store {
         errorUrl = null;
         hostname = payload.hostname;
         version = payload.version;
+        plugins = payload.plugins;
         this.__emitChange();
         break;
       }

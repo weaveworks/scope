@@ -26,8 +26,6 @@ const (
 	InboundMinor       = "Inbound connections"
 	OutboundMinor      = "Outbound connections"
 
-	ipsKey = "ips"
-
 	// Topology for pseudo-nodes and IPs so we can differentiate them at the end
 	Pseudo = "pseudo"
 	IP     = "IP"
@@ -46,7 +44,7 @@ func NewDerivedNode(id string, node report.Node) report.Node {
 
 // NewDerivedPseudoNode makes a new pseudo node with the node as a child
 func NewDerivedPseudoNode(id string, node report.Node) report.Node {
-	return node.WithID(id).WithTopology(Pseudo).WithChildren(report.MakeNodeSet(node)).PruneParents()
+	return NewDerivedNode(id, node).WithTopology(Pseudo)
 }
 
 func theInternetNode(m report.Node) report.Node {
@@ -110,7 +108,7 @@ func MapContainer2IP(m report.Node, _ report.Networks) report.Nodes {
 			result[id] = NewDerivedNode(id, m).
 				WithTopology(IP).
 				WithLatests(map[string]string{docker.ContainerID: containerID}).
-				WithCounters(map[string]int{ipsKey: 1})
+				WithCounters(map[string]int{IP: 1})
 
 		}
 	}
@@ -125,7 +123,7 @@ func MapContainer2IP(m report.Node, _ report.Networks) report.Nodes {
 			result[id] = NewDerivedNode(id, m).
 				WithTopology(IP).
 				WithLatests(map[string]string{docker.ContainerID: containerID}).
-				WithCounters(map[string]int{ipsKey: 1})
+				WithCounters(map[string]int{IP: 1})
 
 		}
 	}
@@ -139,7 +137,7 @@ func MapContainer2IP(m report.Node, _ report.Networks) report.Nodes {
 func MapIP2Container(n report.Node, _ report.Networks) report.Nodes {
 	// If an IP is shared between multiple containers, we can't
 	// reliably attribute an connection based on its IP
-	if count, _ := n.Counters.Lookup(ipsKey); count > 1 {
+	if count, _ := n.Counters.Lookup(IP); count > 1 {
 		return report.Nodes{}
 	}
 

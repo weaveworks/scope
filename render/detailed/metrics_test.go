@@ -18,71 +18,85 @@ func TestNodeMetrics(t *testing.T) {
 	inputs := []struct {
 		name string
 		node report.Node
-		want []detailed.MetricRow
+		want []report.MetricRow
 	}{
 		{
 			name: "process",
 			node: fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID],
-			want: []detailed.MetricRow{
+			want: []report.MetricRow{
 				{
-					ID:     process.CPUUsage,
-					Format: "percent",
-					Group:  "",
-					Value:  0.01,
-					Metric: &fixture.ClientProcess1CPUMetric,
+					ID:       process.CPUUsage,
+					Label:    "CPU",
+					Format:   "percent",
+					Group:    "",
+					Value:    0.01,
+					Priority: 1,
+					Metric:   &fixture.ClientProcess1CPUMetric,
 				},
 				{
-					ID:     process.MemoryUsage,
-					Format: "filesize",
-					Group:  "",
-					Value:  0.02,
-					Metric: &fixture.ClientProcess1MemoryMetric,
+					ID:       process.MemoryUsage,
+					Label:    "Memory",
+					Format:   "filesize",
+					Group:    "",
+					Value:    0.02,
+					Priority: 2,
+					Metric:   &fixture.ClientProcess1MemoryMetric,
 				},
 			},
 		},
 		{
 			name: "container",
 			node: fixture.Report.Container.Nodes[fixture.ClientContainerNodeID],
-			want: []detailed.MetricRow{
+			want: []report.MetricRow{
 				{
-					ID:     docker.CPUTotalUsage,
-					Format: "percent",
-					Group:  "",
-					Value:  0.03,
-					Metric: &fixture.ClientContainerCPUMetric,
+					ID:       docker.CPUTotalUsage,
+					Label:    "CPU",
+					Format:   "percent",
+					Group:    "",
+					Value:    0.03,
+					Priority: 1,
+					Metric:   &fixture.ClientContainerCPUMetric,
 				},
 				{
-					ID:     docker.MemoryUsage,
-					Format: "filesize",
-					Group:  "",
-					Value:  0.04,
-					Metric: &fixture.ClientContainerMemoryMetric,
+					ID:       docker.MemoryUsage,
+					Label:    "Memory",
+					Format:   "filesize",
+					Group:    "",
+					Value:    0.04,
+					Priority: 2,
+					Metric:   &fixture.ClientContainerMemoryMetric,
 				},
 			},
 		},
 		{
 			name: "host",
 			node: fixture.Report.Host.Nodes[fixture.ClientHostNodeID],
-			want: []detailed.MetricRow{
+			want: []report.MetricRow{
 				{
-					ID:     host.CPUUsage,
-					Format: "percent",
-					Group:  "",
-					Value:  0.07,
-					Metric: &fixture.ClientHostCPUMetric,
+					ID:       host.CPUUsage,
+					Label:    "CPU",
+					Format:   "percent",
+					Group:    "",
+					Value:    0.07,
+					Priority: 1,
+					Metric:   &fixture.ClientHostCPUMetric,
 				},
 				{
-					ID:     host.MemoryUsage,
-					Format: "filesize",
-					Group:  "",
-					Value:  0.08,
-					Metric: &fixture.ClientHostMemoryMetric,
+					ID:       host.MemoryUsage,
+					Label:    "Memory",
+					Format:   "filesize",
+					Group:    "",
+					Value:    0.08,
+					Priority: 2,
+					Metric:   &fixture.ClientHostMemoryMetric,
 				},
 				{
-					ID:     host.Load1,
-					Group:  "load",
-					Value:  0.09,
-					Metric: &fixture.ClientHostLoad1Metric,
+					ID:       host.Load1,
+					Label:    "Load (1m)",
+					Group:    "load",
+					Value:    0.09,
+					Priority: 11,
+					Metric:   &fixture.ClientHostLoad1Metric,
 				},
 			},
 		},
@@ -93,7 +107,7 @@ func TestNodeMetrics(t *testing.T) {
 		},
 	}
 	for _, input := range inputs {
-		have := detailed.NodeMetrics(input.node)
+		have := detailed.NodeMetrics(fixture.Report, input.node)
 		if !reflect.DeepEqual(input.want, have) {
 			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
 		}
@@ -104,19 +118,16 @@ func TestMetricRowSummary(t *testing.T) {
 	var (
 		now    = time.Now()
 		metric = report.MakeMetric().Add(now, 1.234)
-		row    = detailed.MetricRow{
-			ID:     "id",
-			Format: "format",
-			Group:  "group",
-			Value:  1.234,
-			Metric: &metric,
+		row    = report.MetricRow{
+			ID:       "id",
+			Format:   "format",
+			Group:    "group",
+			Value:    1.234,
+			Priority: 1,
+			Metric:   &metric,
 		}
 		summary = row.Summary()
 	)
-	// summary should have all the same fields
-	if row.ID != summary.ID || row.Format != summary.Format || row.Group != summary.Group || row.Value != summary.Value {
-		t.Errorf("Expected summary to have same fields as original: %#v, but had %#v", row, summary)
-	}
 	// summary should not have any samples
 	if summary.Metric.Len() != 0 {
 		t.Errorf("Expected summary to have no samples, but had %d", summary.Metric.Len())
@@ -124,5 +135,11 @@ func TestMetricRowSummary(t *testing.T) {
 	// original metric should still have its samples
 	if metric.Len() != 1 {
 		t.Errorf("Expected original metric to still have it's samples, but had %d", metric.Len())
+	}
+	// summary should have all the same fields (minus the metric)
+	summary.Metric = nil
+	row.Metric = nil
+	if !reflect.DeepEqual(summary, row) {
+		t.Errorf("Expected summary to have same fields as original: %s", test.Diff(summary, row))
 	}
 }
