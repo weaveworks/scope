@@ -328,7 +328,6 @@ h2 {
     }
 
     &.pseudo {
-      opacity: @node-pseudo-opacity;
       cursor: default;
 
       .node-label {
@@ -339,7 +338,12 @@ h2 {
         fill: @text-tertiary-color;
       }
 
+      .node {
+        opacity: @node-pseudo-opacity;
+      }
+
       .border {
+        opacity: @node-pseudo-opacity;
         stroke: @text-tertiary-color;
       }
     }
