@@ -179,6 +179,7 @@ h2 {
   z-index: 20;
   color: @text-tertiary-color;
   font-size: 0.7rem;
+  display: flex;
 
   a {
     color: @text-secondary-color;
@@ -186,33 +187,45 @@ h2 {
     text-decoration: none;
     font-weight: bold;
     font-size: 90%;
+    cursor: pointer;
   }
 
-  &-active {
-    animation: blinking 1.5s infinite ease-in-out;
+  &-status {
+    margin-right: 1em;
   }
 
   &-label {
     text-transform: uppercase;
     margin: 0 0.25em;
+  }
 
-    &-icon {
-      margin-left: 0.5em;
-      padding: 4px 3px;
-      color: @text-color;
-      position: relative;
-      top: -1px;
-      border: 1px solid transparent;
-      border-radius: 10%;
-      &:hover {
-        border: 1px solid @text-tertiary-color;
-      }
-      span {
-        font-size: 150%;
-        position: relative;
-        top: 2px;
-      }
+  &-icon {
+    margin-left: 0.5em;
+    padding: 4px 3px;
+    color: @text-color;
+    position: relative;
+    top: -1px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+
+    &:hover {
+      border: 1px solid @text-tertiary-color;
     }
+
+    .fa {
+      font-size: 150%;
+      position: relative;
+      top: 2px;
+    }
+
+    &-active {
+      border: 1px solid @text-tertiary-color;
+      animation: blinking 1.5s infinite ease-in-out;
+    }
+  }
+
+  &-icon &-label {
+    margin-right: 0.5em;
   }
 }
 

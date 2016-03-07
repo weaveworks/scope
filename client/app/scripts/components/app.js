@@ -2,19 +2,17 @@ import React from 'react';
 
 import Logo from './logo';
 import AppStore from '../stores/app-store';
+import Footer from './footer.js';
 import Sidebar from './sidebar.js';
 import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
-import { getUpdateBufferSize } from '../utils/update-buffer-utils';
-import { contrastModeUrl, isContrastMode } from '../utils/contrast-utils';
-import { getApiDetails, getTopologies, basePathSlash } from '../utils/web-api-utils';
-import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate, clickResumeUpdate, hitEsc } from '../actions/app-actions';
+import { getApiDetails, getTopologies } from '../utils/web-api-utils';
+import { hitEsc } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import EmbeddedTerminal from './embedded-terminal';
 import { getRouter } from '../utils/router-utils';
-import { formatDate } from '../utils/string-utils';
 import { showingDebugToolbar, DebugToolbar } from './debug-toolbar.js';
 
 const ESC_KEY_CODE = 27;
@@ -76,25 +74,12 @@ export default class App extends React.Component {
   }
 
   render() {
-    const {nodeDetails, updatePaused, updatePausedAt, controlPipe } = this.state;
+    const {nodeDetails, controlPipe } = this.state;
     const showingDetails = nodeDetails.size > 0;
     const showingTerminal = controlPipe;
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 450 : 0;
     const topMargin = 100;
-    const contrastMode = isContrastMode();
-    // link url to switch contrast with current UI state
-    const otherContrastModeUrl = contrastMode ? basePathSlash(window.location.pathname) : contrastModeUrl;
-    const otherContrastModeTitle = contrastMode ? 'Switch to normal contrast' : 'Switch to high contrast';
-    const forceRelayoutClassName = 'footer-label footer-label-icon';
-    const forceRelayoutTitle = 'Force re-layout (might reduce edge crossings, but may shift nodes around)';
-    const isPaused = updatePaused;
-    const pauseClassName = isPaused ? 'footer-label footer-label-icon footer-label-active' : 'footer-label footer-label-icon';
-    const updateCount = getUpdateBufferSize();
-    const hasUpdates = updateCount > 0;
-    const pauseTitle = isPaused ? `Paused on ${formatDate(updatePausedAt)}` : 'Pause updates';
-    const pauseAction = isPaused ? clickResumeUpdate : clickPauseUpdate;
-    const pauseWrapperClassName = isPaused ? 'footer-active' : '';
 
     return (
       <div className="app">
@@ -132,34 +117,7 @@ export default class App extends React.Component {
             activeOptions={this.state.activeTopologyOptions} />
         </Sidebar>
 
-        <div className="footer">
-          <span className="footer-label">Version</span>
-          {this.state.version}
-          <span className="footer-label">on</span>
-          {this.state.hostname}
-          &nbsp;
-          &nbsp;
-          <span className={pauseWrapperClassName}>
-            {!hasUpdates && isPaused && <span className="footer-label">Paused</span>}
-            {hasUpdates && isPaused && <span className="footer-label">Paused ({updateCount} updates waiting)</span>}
-            {hasUpdates && !isPaused && <span className="footer-label">Resuming ({updateCount} updates remaining)</span>}
-            <a className={pauseClassName} onClick={pauseAction} title={pauseTitle}>
-              <span className="fa fa-pause" />
-            </a>
-          </span>
-          <a className={forceRelayoutClassName} onClick={clickForceRelayout} title={forceRelayoutTitle}>
-            <span className="fa fa-refresh" />
-          </a>
-          <a className="footer-label footer-label-icon" onClick={clickDownloadGraph} title="Save canvas as SVG">
-            <span className="fa fa-download" />
-          </a>
-          <a className="footer-label footer-label-icon" href={otherContrastModeUrl} title={otherContrastModeTitle}>
-            <span className="fa fa-adjust" />
-          </a>
-          <a className="footer-label footer-label-icon" href="https://gitreports.com/issue/weaveworks/scope" target="_blank" title="Report an issue">
-            <span className="fa fa-bug" />
-          </a>
-        </div>
+        <Footer {...this.state} />
       </div>
     );
   }

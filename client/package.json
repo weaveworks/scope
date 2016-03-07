@@ -17,6 +17,7 @@
     "immutable": "~3.7.4",
     "lodash": "~3.10.1",
     "materialize-css": "0.97.2",
+    "moment": "2.12.0",
     "page": "1.6.4",
     "react": "0.14.3",
     "react-addons-pure-render-mixin": "0.14.3",
