@@ -6,6 +6,7 @@ import Sidebar from './sidebar.js';
 import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
+import { contrastModeUrl, isContrastMode } from '../utils/contrast-utils';
 import { getApiDetails, getTopologies, basePathSlash } from '../utils/web-api-utils';
 import { clickDownloadGraph, clickForceRelayout, hitEsc } from '../actions/app-actions';
 import Details from './details';
@@ -76,9 +77,9 @@ export default class App extends React.Component {
     // width of details panel blocking a view
     const detailsWidth = showingDetails ? 450 : 0;
     const topMargin = 100;
-    const contrastMode = window.location.pathname.indexOf('contrast') > -1;
+    const contrastMode = isContrastMode();
     // link url to switch contrast with current UI state
-    const otherContrastModeUrl = contrastMode ? basePathSlash(window.location.pathname) : 'contrast.html';
+    const otherContrastModeUrl = contrastMode ? basePathSlash(window.location.pathname) : contrastModeUrl;
     const otherContrastModeTitle = contrastMode ? 'Switch to normal contrast' : 'Switch to high contrast';
     const forceRelayoutClassName = 'footer-label footer-label-icon';
     const forceRelayoutTitle = 'Force re-layout (might reduce edge crossings, but may shift nodes around)';
