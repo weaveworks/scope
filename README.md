@@ -176,7 +176,8 @@ Scope comes with built-in Kubernetes support. We recommend to run Scope natively
 in your Kubernetes cluster using
 [these resource definitions](https://github.com/TheNewNormal/kube-charts/tree/master/weavescope/manifests).
 
-1. If you are running a Kubernetes version lower than 1.1, make sure your
+1. Make sure your cluster allows priviledged pods (allowed by default from Kubernetes 1.1). 
+   If you are running a Kubernetes version lower than 1.1, make sure your
    cluster allows running pods in privileged mode (required by the Scope
    probes). To allow privileged pods, your API Server and all your Kubelets must
    be provided with flag `--allow_privileged` at launch time.
