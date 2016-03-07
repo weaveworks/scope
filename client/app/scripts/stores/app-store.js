@@ -69,6 +69,7 @@ let topologiesLoaded = false;
 let topologyUrlsById = makeOrderedMap(); // topologyId -> topologyUrl
 let routeSet = false;
 let controlPipes = makeOrderedMap(); // pipeId -> controlPipe
+let updatePausedAt = null; // Date
 let websocketClosed = true;
 
 // adds ID field to topology (based on last part of URL path) and save urls in
@@ -127,6 +128,10 @@ function closeAllNodeDetails() {
   while (nodeDetails.size) {
     closeNodeDetails();
   }
+}
+
+function resumeUpdate() {
+  updatePausedAt = null;
 }
 
 // Store API
@@ -263,6 +268,10 @@ export class AppStore extends Store {
     return topologyUrlsById;
   }
 
+  getUpdatePausedAt() {
+    return updatePausedAt;
+  }
+
   getVersion() {
     return version;
   }
@@ -283,6 +292,10 @@ export class AppStore extends Store {
     return currentTopology && currentTopology.stats && currentTopology.stats.node_count === 0 && nodes.size === 0;
   }
 
+  isUpdatePaused() {
+    return updatePausedAt !== null;
+  }
+
   isWebsocketClosed() {
     return websocketClosed;
   }
@@ -294,6 +307,7 @@ export class AppStore extends Store {
 
     switch (payload.type) {
     case ActionTypes.CHANGE_TOPOLOGY_OPTION:
+      resumeUpdate();
       if (topologyOptions.getIn([payload.topologyId, payload.option])
         !== payload.value) {
         nodes = nodes.clear();
@@ -357,6 +371,11 @@ export class AppStore extends Store {
       this.__emitChange();
       break;
 
+    case ActionTypes.CLICK_PAUSE_UPDATE:
+      updatePausedAt = new Date;
+      this.__emitChange();
+      break;
+
     case ActionTypes.CLICK_RELATIVE:
       if (nodeDetails.has(payload.nodeId)) {
         // bring to front
@@ -377,7 +396,13 @@ export class AppStore extends Store {
       this.__emitChange();
       break;
 
+    case ActionTypes.CLICK_RESUME_UPDATE:
+      resumeUpdate();
+      this.__emitChange();
+      break;
+
     case ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE:
+      resumeUpdate();
       nodeDetails = nodeDetails.filter((v, k) => k === payload.nodeId);
       controlPipes = controlPipes.clear();
       selectedNodeId = payload.nodeId;
@@ -389,6 +414,7 @@ export class AppStore extends Store {
       break;
 
     case ActionTypes.CLICK_TOPOLOGY:
+      resumeUpdate();
       closeAllNodeDetails();
       if (payload.topologyId !== currentTopologyId) {
         setTopology(payload.topologyId);
@@ -482,6 +508,7 @@ export class AppStore extends Store {
 
     case ActionTypes.RECEIVE_NODE_DETAILS:
       errorUrl = null;
+
       // disregard if node is not selected anymore
       if (nodeDetails.has(payload.details.id)) {
         nodeDetails = nodeDetails.update(payload.details.id, obj => {

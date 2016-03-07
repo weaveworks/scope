@@ -42,3 +42,5 @@ export function formatMetric(value, opts) {
   const formatter = opts && formatters[opts.format] ? opts.format : 'number';
   return formatters[formatter](value);
 }
+
+export const formatDate = d3.time.format.iso;
