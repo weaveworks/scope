@@ -313,19 +313,9 @@ h2 {
     }
   }
 
-  g.node {
+  .nodes > .node {
     cursor: pointer;
     transition: opacity .5s ease-in-out;
-
-    /* cloud paths have stroke-width set dynamically */
-    &:not(.cloud) .shape .border {
-      stroke-width: @node-border-stroke-width;
-      fill: @background-color;
-    }
-
-    &:not(.cloud) .stack .shape .border {
-      stroke-width: @node-border-stroke-width - 0.5;
-    }
 
     &.pseudo {
       cursor: default;
@@ -379,8 +369,13 @@ h2 {
     }
   }
 
-
   .shape {
+
+    /* cloud paths have stroke-width set dynamically */
+    &:not(.shape-cloud) .border {
+      stroke-width: @node-border-stroke-width;
+      fill: @background-color;
+    }
 
     .shadow {
       stroke: none;
@@ -399,6 +394,11 @@ h2 {
       stroke-opacity: @node-highlight-stroke-opacity;
     }
   }
+
+  .stack .shape .border {
+    stroke-width: @node-border-stroke-width - 0.5;
+  }
+
 }
 
 .details {

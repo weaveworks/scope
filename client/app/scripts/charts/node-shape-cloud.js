@@ -34,7 +34,7 @@ export default function NodeShapeCloud({highlighted, size, color}) {
   };
 
   return (
-    <g className="shape">
+    <g className="shape shape-cloud">
       {highlighted &&
           <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />

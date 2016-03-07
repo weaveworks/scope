@@ -83,10 +83,6 @@ export default class Node extends React.Component {
     if (this.props.pseudo) {
       classNames.push('pseudo');
     }
-    if (this.props.shape === 'cloud') {
-      // need to identify cloud in CSS because it's stroke is not set via CSS
-      classNames.push('cloud');
-    }
 
     const classes = classNames.join(' ');
 
