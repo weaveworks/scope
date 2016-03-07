@@ -178,9 +178,9 @@ in your Kubernetes cluster using
 
 1. Make sure your cluster allows priviledged pods (required by the Scope
    probes). Priviledged pods are allowed by default from Kubernetes 1.1. 
-   If you are running an earlier version, or priviledged pods are not allowed 
-   for any other reason, make sure your API Server and all your Kubelets are provided with 
-   flag `--allow_privileged` at launch time.
+   If you are running an earlier version or a non-default configuration, 
+   make sure your API Server and all your Kubelets are provided with flag `--allow_privileged` 
+   at launch time.
 
 2. Make sure your cluster supports
    [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md). 
