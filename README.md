@@ -171,7 +171,9 @@ sudo scope launch --service-token=<token>
 
 ## <a name="launching-weave-scope-and-compose-in-cloud-service-mode"></a>Launching Weave Scope and Docker Compose in Cloud Service Mode
 
-In both blocks below, replace MY_SCOPE_SERVICE_TOKEN with the token you find when you [log in to the Scope service](https://scope.weave.works/).
+The SCOPE_SERVICE_TOKEN is found when you [log in to the Scope service](https://scope.weave.works/) - launch Docker Compose with one of the two fragments below and the value of the token set as an environment variable:
+
+    SCOPE_SERVICE_TOKEN=abcdef_my_token  docker-compose up -d
 
 ### Docker Compose format version 2:
 
@@ -190,7 +192,7 @@ In both blocks below, replace MY_SCOPE_SERVICE_TOKEN with the token you find whe
           - "--probe.docker"
           - "true"
           - "--service-token"
-          - "MY_SCOPE_SERVICE_TOKEN"
+          - "${SCOPE_SERVICE_TOKEN}"
 
 ### Docker Compose format version 1:
 
@@ -207,7 +209,7 @@ In both blocks below, replace MY_SCOPE_SERVICE_TOKEN with the token you find whe
         - "--probe.docker"
         - "true"
         - "--service-token"
-        - "MY_SCOPE_SERVICE_TOKEN" 
+        - "${SCOPE_SERVICE_TOKEN}" 
 
 ## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
 

@@ -13,4 +13,4 @@ services:
       - "--probe.docker"
       - "true"
       - "--service-token"
-      - "MY_SCOPE_SERVICE_TOKEN"
+      - "${SCOPE_SERVICE_TOKEN}"
