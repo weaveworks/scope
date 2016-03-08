@@ -25,7 +25,7 @@ function getPoints(h) {
 }
 
 
-export default function NodeShapeHex({highlighted, size, color, metrics}) {
+export default function NodeShapeHex({highlighted, size, color, metric}) {
   const pathProps = v => ({
     d: getPoints(size * v * 2),
     transform: `rotate(90) translate(-${size * getWidth(v)}, -${size * v})`
@@ -35,7 +35,7 @@ export default function NodeShapeHex({highlighted, size, color, metrics}) {
   const upperHexBitHeight = -0.25 * size * shadowSize;
 
   const clipId = `mask-${Math.random()}`;
-  const {height, vp} = getMetricValue(metrics, size);
+  const {height, v} = getMetricValue(metric, size);
 
   return (
     <g className="shape">
@@ -54,7 +54,7 @@ export default function NodeShapeHex({highlighted, size, color, metrics}) {
       <path className="metric-fill" clipPath={`url(#${clipId})`} {...pathProps(shadowSize)} />
       {highlighted ?
         <text dy="0.35em" style={{'textAnchor': 'middle'}}>
-          {formatCanvasMetric(vp)}
+          {formatCanvasMetric(v)}
         </text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>

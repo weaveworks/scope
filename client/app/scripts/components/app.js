@@ -11,6 +11,7 @@ import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { hitEsc } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
+import MetricSelector from './metric-selector';
 import EmbeddedTerminal from './embedded-terminal';
 import { getRouter } from '../utils/router-utils';
 import { showingDebugToolbar, DebugToolbar } from './debug-toolbar.js';
@@ -33,6 +34,7 @@ function getStateFromStores() {
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     selectedNodeId: AppStore.getSelectedNodeId(),
+    selectedMetric: AppStore.getSelectedMetric(),
     topologies: AppStore.getTopologies(),
     topologiesLoaded: AppStore.isTopologiesLoaded(),
     updatePaused: AppStore.isUpdatePaused(),
@@ -103,14 +105,20 @@ export default class App extends React.Component {
             currentTopology={this.state.currentTopology} />
         </div>
 
-        <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
-          highlightedEdgeIds={this.state.highlightedEdgeIds} detailsWidth={detailsWidth}
-          selectedNodeId={this.state.selectedNodeId} topMargin={topMargin}
+        <Nodes
+          nodes={this.state.nodes}
+          highlightedNodeIds={this.state.highlightedNodeIds}
+          highlightedEdgeIds={this.state.highlightedEdgeIds}
+          detailsWidth={detailsWidth}
+          selectedNodeId={this.state.selectedNodeId}
+          topMargin={topMargin}
+          selectedMetric={this.state.selectedMetric}
           forceRelayout={this.state.forceRelayout}
           topologyOptions={this.state.activeTopologyOptions}
           topologyId={this.state.currentTopologyId} />
 
         <Sidebar>
+          <MetricSelector selectedMetric={this.state.selectedMetric}/>
           <Status errorUrl={this.state.errorUrl} topology={this.state.currentTopology}
             topologiesLoaded={this.state.topologiesLoaded}
             websocketClosed={this.state.websocketClosed} />

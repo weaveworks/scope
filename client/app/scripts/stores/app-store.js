@@ -58,6 +58,7 @@ let routeSet = false;
 let controlPipes = makeOrderedMap(); // pipeId -> controlPipe
 let updatePausedAt = null; // Date
 let websocketClosed = true;
+let selectedMetric = 'process_cpu_usage_percent';
 
 const topologySorter = topology => topology.get('rank');
 
@@ -162,6 +163,10 @@ export class AppStore extends Store {
     }
 
     return adjacentNodes;
+  }
+
+  getSelectedMetric() {
+    return selectedMetric;
   }
 
   getControlStatus() {
@@ -399,6 +404,11 @@ export class AppStore extends Store {
           websocketClosed = true;
           this.__emitChange();
         }
+        break;
+      }
+      case ActionTypes.SELECT_METRIC: {
+        selectedMetric = payload.metricId;
+        this.__emitChange();
         break;
       }
       case ActionTypes.DESELECT_NODE: {

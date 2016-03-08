@@ -12,6 +12,13 @@ import AppStore from '../stores/app-store';
 
 const log = debug('scope:app-actions');
 
+export function selectMetric(metricId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.SELECT_METRIC,
+    metricId: metricId
+  });
+}
+
 export function changeTopologyOption(option, value, topologyId) {
   AppDispatcher.dispatch({
     type: ActionTypes.CHANGE_TOPOLOGY_OPTION,

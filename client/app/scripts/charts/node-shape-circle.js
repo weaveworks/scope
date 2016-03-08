@@ -1,10 +1,10 @@
 import React from 'react';
 import {formatCanvasMetric, getMetricValue} from '../utils/data-utils.js';
 
-export default function NodeShapeCircle({highlighted, size, color, metrics}) {
+export default function NodeShapeCircle({highlighted, size, color, metric}) {
   const hightlightNode = <circle r={size * 0.7} className="highlighted" />;
   const clipId = `mask-${Math.random()}`;
-  const {height, vp} = getMetricValue(metrics, size);
+  const {height, v} = getMetricValue(metric, size);
 
   return (
     <g className="shape">
@@ -24,7 +24,7 @@ export default function NodeShapeCircle({highlighted, size, color, metrics}) {
       <circle r={size * 0.45} className="metric-fill" clipPath={`url(#${clipId})`} />
       {highlighted ?
         <text dy="0.35em" style={{'textAnchor': 'middle'}}>
-          {formatCanvasMetric(vp)}
+          {formatCanvasMetric(v)}
         </text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>

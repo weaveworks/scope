@@ -78,19 +78,19 @@ export function addMetrics(delta, prevNodes) {
 }
 
 
-export function getMetricValue(metrics, size) {
-  if (!metrics) {
-    return {height: 0, vp: null};
+export function getMetricValue(metric, size) {
+  if (!metric) {
+    return {height: 0, v: null};
   }
 
-  const max = 100;
-  const v = metrics.getIn(['process_cpu_usage_percent', 'samples', 0, 'value']);
+  const max = metric.getIn(['max']);
+  const v = metric.getIn(['samples', 0, 'value']);
   const vp = v === 0 ? 0 : v / max;
-  const baseline = 0.00;
+  const baseline = 0.05;
   const displayedValue = vp * (1 - baseline) + baseline;
   const height = size * displayedValue;
 
-  return {height, vp};
+  return {height, v};
 }
 
 const formatLargeValue = d3.format('s');
@@ -98,5 +98,5 @@ export function formatCanvasMetric(v) {
   if (v === null) {
     return 'n/a';
   }
-  return formatLargeValue(Number(v * 100).toFixed(1)) + '%';
+  return formatLargeValue(Number(v).toFixed(1));
 }

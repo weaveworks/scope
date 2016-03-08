@@ -151,7 +151,7 @@ export default class NodesChart extends React.Component {
         pseudo={node.get('pseudo')}
         nodeCount={node.get('nodeCount')}
         subLabel={node.get('subLabel')}
-        metrics={node.get('metrics')}
+        metric={node.getIn(['metrics', this.props.selectedMetric])}
         rank={node.get('rank')}
         selectedNodeScale={selectedNodeScale}
         nodeScale={nodeScale}
