@@ -1,5 +1,5 @@
 import React from 'react';
-import {formatCanvasMetric, getMetricValue} from '../utils/data-utils.js';
+import {getMetricValue} from '../utils/data-utils.js';
 
 export default function NodeShapeSquare({
   highlighted, size, color, rx = 0, ry = 0, metric
@@ -14,7 +14,7 @@ export default function NodeShapeSquare({
   });
 
   const clipId = `mask-${Math.random()}`;
-  const {height, v} = getMetricValue(metric, size);
+  const {height, formattedValue} = getMetricValue(metric, size);
 
   return (
     <g className="shape">
@@ -33,9 +33,7 @@ export default function NodeShapeSquare({
       <rect className="shadow" {...rectProps(0.45)} />
       <rect className="metric-fill" clipPath={`url(#${clipId})`} {...rectProps(0.45)} />
       {highlighted ?
-        <text dy="0.35em" style={{'textAnchor': 'middle'}}>
-          {formatCanvasMetric(v)}
-        </text> :
+        <text dy="0.35em" style={{'textAnchor': 'middle'}}>{formattedValue}</text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );

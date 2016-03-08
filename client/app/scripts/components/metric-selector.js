@@ -1,6 +1,6 @@
 import React from 'react';
 import _ from 'lodash';
-import { selectMetric } from '../actions/app-actions';
+import { selectMetric, lockMetric } from '../actions/app-actions';
 import classNames from 'classnames';
 
 const METRICS = {
@@ -16,17 +16,30 @@ function onMouseOver(k) {
   return selectMetric(k);
 }
 
-export default function MetricSelector({selectedMetric}) {
+function onMouseClick(k) {
+  return lockMetric(k);
+}
+
+function onMouseOut(k) {
+  console.log('onMouseOut', k);
+  selectMetric(k);
+}
+
+export default function MetricSelector({selectedMetric, lockedMetric}) {
   return (
-    <div className="available-metrics">
+    <div
+      className="available-metrics"
+      onMouseLeave={() => onMouseOut(lockedMetric)}>
       {_.map(METRICS, (key, name) => {
         return (
           <div
             key={key}
             className={classNames('sidebar-item', {
+              'locked': (key === lockedMetric),
               'selected': (key === selectedMetric)
             })}
-            onMouseOver={() => onMouseOver(key)}>
+            onMouseOver={() => onMouseOver(key)}
+            onClick={() => onMouseClick(key)}>
             {name}
           </div>
         );

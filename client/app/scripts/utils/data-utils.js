@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import d3 from 'd3';
+import { formatMetric } from './string-utils';
 
 
 // Inspired by Lee Byron's test data generator.
@@ -80,23 +81,19 @@ export function addMetrics(delta, prevNodes) {
 
 export function getMetricValue(metric, size) {
   if (!metric) {
-    return {height: 0, v: null};
+    return {height: 0, value: null, formattedValue: 'n/a'};
   }
 
   const max = metric.getIn(['max']);
-  const v = metric.getIn(['samples', 0, 'value']);
-  const vp = v === 0 ? 0 : v / max;
+  const value = metric.getIn(['samples', 0, 'value']);
+  const valuePercentage = value === 0 ? 0 : value / max;
   const baseline = 0.05;
-  const displayedValue = vp * (1 - baseline) + baseline;
+  const displayedValue = valuePercentage * (1 - baseline) + baseline;
   const height = size * displayedValue;
 
-  return {height, v};
-}
-
-const formatLargeValue = d3.format('s');
-export function formatCanvasMetric(v) {
-  if (v === null) {
-    return 'n/a';
-  }
-  return formatLargeValue(Number(v).toFixed(1));
+  return {
+    height: height,
+    value: value,
+    formattedValue: formatMetric(value, metric.toJS(), true)
+  };
 }

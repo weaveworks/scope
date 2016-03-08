@@ -31,6 +31,7 @@ function getStateFromStores() {
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
     hostname: AppStore.getHostname(),
+    lockedMetric: AppStore.getLockedMetric(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     selectedNodeId: AppStore.getSelectedNodeId(),
@@ -118,7 +119,10 @@ export default class App extends React.Component {
           topologyId={this.state.currentTopologyId} />
 
         <Sidebar>
-          <MetricSelector selectedMetric={this.state.selectedMetric}/>
+          <MetricSelector
+            lockedMetric={this.state.lockedMetric}
+            selectedMetric={this.state.selectedMetric}
+            />
           <Status errorUrl={this.state.errorUrl} topology={this.state.currentTopology}
             topologiesLoaded={this.state.topologiesLoaded}
             websocketClosed={this.state.websocketClosed} />

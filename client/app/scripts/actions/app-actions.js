@@ -19,6 +19,13 @@ export function selectMetric(metricId) {
   });
 }
 
+export function lockMetric(metricId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.LOCK_METRIC,
+    metricId: metricId
+  });
+}
+
 export function changeTopologyOption(option, value, topologyId) {
   AppDispatcher.dispatch({
     type: ActionTypes.CHANGE_TOPOLOGY_OPTION,

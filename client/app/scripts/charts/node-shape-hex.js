@@ -1,6 +1,6 @@
 import React from 'react';
 import d3 from 'd3';
-import {formatCanvasMetric, getMetricValue} from '../utils/data-utils.js';
+import {getMetricValue} from '../utils/data-utils.js';
 
 const line = d3.svg.line()
   .interpolate('cardinal-closed')
@@ -35,7 +35,7 @@ export default function NodeShapeHex({highlighted, size, color, metric}) {
   const upperHexBitHeight = -0.25 * size * shadowSize;
 
   const clipId = `mask-${Math.random()}`;
-  const {height, v} = getMetricValue(metric, size);
+  const {height, formattedValue} = getMetricValue(metric, size);
 
   return (
     <g className="shape">
@@ -54,7 +54,7 @@ export default function NodeShapeHex({highlighted, size, color, metric}) {
       <path className="metric-fill" clipPath={`url(#${clipId})`} {...pathProps(shadowSize)} />
       {highlighted ?
         <text dy="0.35em" style={{'textAnchor': 'middle'}}>
-          {formatCanvasMetric(v)}
+          {formattedValue}
         </text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>

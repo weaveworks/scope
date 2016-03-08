@@ -1,6 +1,6 @@
 import React from 'react';
 import d3 from 'd3';
-import {formatCanvasMetric, getMetricValue} from '../utils/data-utils.js';
+import {getMetricValue} from '../utils/data-utils.js';
 
 const line = d3.svg.line()
   .interpolate('cardinal-closed')
@@ -23,7 +23,7 @@ export default function NodeShapeHeptagon({highlighted, size, color, metric}) {
   });
 
   const clipId = `mask-${Math.random()}`;
-  const {height, v} = getMetricValue(metric, size);
+  const {height, formattedValue} = getMetricValue(metric, size);
 
   return (
     <g className="shape">
@@ -42,9 +42,7 @@ export default function NodeShapeHeptagon({highlighted, size, color, metric}) {
       <path className="shadow" {...pathProps(0.45)} />
       <path className="metric-fill" clipPath={`url(#${clipId})`} {...pathProps(0.45)} />
       {highlighted ?
-        <text dy="0.35em" style={{'textAnchor': 'middle'}}>
-          {formatCanvasMetric(v)}
-        </text> :
+        <text dy="0.35em" style={{'textAnchor': 'middle'}}>{formattedValue}</text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );

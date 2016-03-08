@@ -4,43 +4,54 @@ import d3 from 'd3';
 
 const formatLargeValue = d3.format('s');
 
-const formatters = {
-  filesize(value) {
-    const obj = filesize(value, {output: 'object'});
-    return formatters.metric(obj.value, obj.suffix);
-  },
+function toHtml(text, unit) {
+  return (
+    <span className="metric-formatted">
+      <span className="metric-value">{text}</span>
+      <span className="metric-unit">{unit}</span>
+    </span>
+  );
+}
 
-  integer(value) {
-    if (value < 1100 && value >= 0) {
-      return Number(value).toFixed(0);
+
+function makeFormatters(renderFn) {
+  const formatters = {
+    filesize(value) {
+      const obj = filesize(value, {output: 'object'});
+      console.log('rendering', value);
+      return renderFn(obj.value, obj.suffix);
+    },
+
+    integer(value) {
+      if (value < 1100 && value >= 0) {
+        return Number(value).toFixed(0);
+      }
+      return formatLargeValue(value);
+    },
+
+    number(value) {
+      if (value < 1100 && value >= 0) {
+        return Number(value).toFixed(2);
+      }
+      return formatLargeValue(value);
+    },
+
+    percent(value) {
+      return renderFn(formatters.number(value), '%');
     }
-    return formatLargeValue(value);
-  },
+  };
 
-  number(value) {
-    if (value < 1100 && value >= 0) {
-      return Number(value).toFixed(2);
-    }
-    return formatLargeValue(value);
-  },
+  return formatters;
+}
 
-  percent(value) {
-    return formatters.metric(formatters.number(value), '%');
-  },
 
-  metric(text, unit) {
-    return (
-      <span className="metric-formatted">
-        <span className="metric-value">{text}</span>
-        <span className="metric-unit">{unit}</span>
-      </span>
-    );
-  }
-};
+const formatters = makeFormatters(toHtml);
+const svgFormatters = makeFormatters((text, unit) => `${text}${unit}`);
 
-export function formatMetric(value, opts) {
-  const formatter = opts && formatters[opts.format] ? opts.format : 'number';
-  return formatters[formatter](value);
+export function formatMetric(value, opts, svg) {
+  const formatterBase = svg ? svgFormatters : formatters;
+  const formatter = opts && formatterBase[opts.format] ? opts.format : 'number';
+  return formatterBase[formatter](value);
 }
 
 export const formatDate = d3.time.format.iso;
