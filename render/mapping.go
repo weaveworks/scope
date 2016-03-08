@@ -213,50 +213,6 @@ func MapServiceIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 	return RenderableNodes{id: node}
 }
 
-// MapAddressIdentity maps an address topology node to an address renderable
-// node. As it is only ever run on address topology nodes, we expect that
-// certain keys are present.
-func MapAddressIdentity(m RenderableNode, local report.Networks) RenderableNodes {
-	addr, ok := m.Latest.Lookup(endpoint.Addr)
-	if !ok {
-		return RenderableNodes{}
-	}
-
-	// Conntracked connections don't have a host id unless
-	// they were merged with a procspied connection.  Filter
-	// out those that weren't.
-	_, hasHostID := m.Latest.Lookup(report.HostNodeID)
-	_, conntracked := m.Latest.Lookup(endpoint.Conntracked)
-	if !hasHostID && conntracked {
-		return RenderableNodes{}
-	}
-
-	// Nodes without a hostid are treated as psuedo nodes
-	if !hasHostID {
-		// If the addr is not in a network local to this report, we emit an
-		// internet node
-		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-			return RenderableNodes{TheInternetID: theInternetNode(m)}
-		}
-
-		// Otherwise generate a pseudo node for every
-		outputID := MakePseudoNodeID(addr, "")
-		if len(m.Adjacency) > 0 {
-			_, dstAddr, _ := report.ParseAddressNodeID(m.Adjacency[0])
-			outputID = MakePseudoNodeID(addr, dstAddr)
-		}
-		return RenderableNodes{outputID: newDerivedPseudoNode(outputID, addr, m)}
-	}
-
-	var (
-		id    = MakeAddressID(report.ExtractHostID(m.Node), addr)
-		major = addr
-		minor = report.ExtractHostID(m.Node)
-	)
-
-	return RenderableNodes{id: NewRenderableNodeWith(id, major, minor, "", m)}
-}
-
 // MapHostIdentity maps a host topology node to a host renderable node. As it
 // is only ever run on host topology nodes, we expect that certain keys are
 // present.
@@ -376,6 +332,46 @@ func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 	return RenderableNodes{id: node}
 }
 
+// MapEndpoint2Pseudo makes internet of host pesudo nodes from a endpoint node.
+func MapEndpoint2Pseudo(n RenderableNode, local report.Networks) RenderableNodes {
+	var node RenderableNode
+
+	addr, ok := n.Latest.Lookup(endpoint.Addr)
+	if !ok {
+		return RenderableNodes{}
+	}
+
+	port, ok := n.Latest.Lookup(endpoint.Port)
+	if !ok {
+		return RenderableNodes{}
+	}
+
+	if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
+		// If the dstNodeAddr is not in a network local to this report, we emit an
+		// internet node
+		node = theInternetNode(n)
+
+	} else if p, err := strconv.Atoi(port); err == nil && len(n.Adjacency) > 0 && p >= 32768 && p < 65535 {
+		// We are a 'client' pseudo node if the port is in the ephemeral port range.
+		// Linux uses 32768 to 61000, IANA suggests 49152 to 65535.
+		// We only exist if there is something in our adjacency
+		// Generate a single pseudo node for every (client ip, server ip, server port)
+		_, serverIP, serverPort, _ := ParseEndpointID(n.Adjacency[0])
+		node = newDerivedPseudoNode(MakePseudoNodeID(addr, serverIP, serverPort), addr, n)
+
+	} else if port != "" {
+		// Otherwise (the server node is missing), generate a pseudo node for every (server ip, server port)
+		node = newDerivedPseudoNode(MakePseudoNodeID(addr, port), addr+":"+port, n)
+
+	} else {
+		// Empty port for some reason...
+		node = newDerivedPseudoNode(MakePseudoNodeID(addr, port), addr, n)
+	}
+
+	node.Children = node.Children.Add(n)
+	return RenderableNodes{node.ID: node}
+}
+
 // MapEndpoint2Process maps endpoint RenderableNodes to process
 // RenderableNodes.
 //
@@ -390,42 +386,7 @@ func MapIP2Container(n RenderableNode, _ report.Networks) RenderableNodes {
 func MapEndpoint2Process(n RenderableNode, local report.Networks) RenderableNodes {
 	// Nodes without a hostid are treated as psuedo nodes
 	if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
-		var node RenderableNode
-
-		addr, ok := n.Latest.Lookup(endpoint.Addr)
-		if !ok {
-			return RenderableNodes{}
-		}
-
-		port, ok := n.Latest.Lookup(endpoint.Port)
-		if !ok {
-			return RenderableNodes{}
-		}
-
-		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-			// If the dstNodeAddr is not in a network local to this report, we emit an
-			// internet node
-			node = theInternetNode(n)
-
-		} else if p, err := strconv.Atoi(port); err == nil && len(n.Adjacency) > 0 && p >= 32768 && p < 65535 {
-			// We are a 'client' pseudo node if the port is in the ephemeral port range.
-			// Linux uses 32768 to 61000, IANA suggests 49152 to 65535.
-			// We only exist if there is something in our adjacency
-			// Generate a single pseudo node for every (client ip, server ip, server port)
-			_, serverIP, serverPort, _ := ParseEndpointID(n.Adjacency[0])
-			node = newDerivedPseudoNode(MakePseudoNodeID(addr, serverIP, serverPort), addr, n)
-
-		} else if port != "" {
-			// Otherwise (the server node is missing), generate a pseudo node for every (server ip, server port)
-			node = newDerivedPseudoNode(MakePseudoNodeID(addr, port), addr+":"+port, n)
-
-		} else {
-			// Empty port for some reason...
-			node = newDerivedPseudoNode(MakePseudoNodeID(addr, port), addr, n)
-		}
-
-		node.Children = node.Children.Add(n)
-		return RenderableNodes{node.ID: node}
+		return MapEndpoint2Pseudo(n, local)
 	}
 
 	pid, ok := n.Node.Latest.Lookup(process.PID)
@@ -625,13 +586,29 @@ func MapContainerImage2Name(n RenderableNode, _ report.Networks) RenderableNodes
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapX2Host(n RenderableNode, _ report.Networks) RenderableNodes {
-	// Propogate all pseudo nodes
+	// Don't propogate all pseudo nodes - we do this in MapEndpoint2Host
 	if n.Pseudo {
-		return RenderableNodes{n.ID: n}
+		return RenderableNodes{}
 	}
 	if _, ok := n.Node.Latest.Lookup(report.HostNodeID); !ok {
 		return RenderableNodes{}
 	}
+	id := MakeHostID(report.ExtractHostID(n.Node))
+	result := NewDerivedNode(id, n.WithParents(report.EmptySets))
+	result.Children = result.Children.Add(n)
+	result.Shape = Circle
+	result.EdgeMetadata = report.EdgeMetadata{} // Don't double count edge metadata
+	return RenderableNodes{id: result}
+}
+
+// MapEndpoint2Host takes nodes from the endpoint topology and produces
+// host nodes or pseudo nodes.
+func MapEndpoint2Host(n RenderableNode, local report.Networks) RenderableNodes {
+	// Nodes without a hostid are treated as psuedo nodes
+	if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
+		return MapEndpoint2Pseudo(n, local)
+	}
+
 	id := MakeHostID(report.ExtractHostID(n.Node))
 	result := NewDerivedNode(id, n.WithParents(report.EmptySets))
 	result.Children = result.Children.Add(n)

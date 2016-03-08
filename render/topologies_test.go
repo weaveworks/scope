@@ -87,14 +87,6 @@ func TestContainerImageRenderer(t *testing.T) {
 	}
 }
 
-func TestAddressRenderer(t *testing.T) {
-	have := render.AddressRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedAddresses
-	if !reflect.DeepEqual(want, have) {
-		t.Error(test.Diff(want, have))
-	}
-}
-
 func TestHostRenderer(t *testing.T) {
 	have := render.HostRenderer.Render(fixture.Report).Prune()
 	want := expected.RenderedHosts

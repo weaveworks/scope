@@ -231,31 +231,33 @@ var ContainerHostnameRenderer = MakeMap(
 	),
 )
 
-// AddressRenderer is a Renderer which produces a renderable address
-// graph from the address topology.
-var AddressRenderer = MakeMap(
-	MapAddressIdentity,
-	SelectAddress,
-)
-
 // HostRenderer is a Renderer which produces a renderable host
-// graph from the host topology and address graph.
+// graph from the host topology.
 var HostRenderer = MakeReduce(
 	MakeMap(
-		MapX2Host,
-		FilterPseudo(ContainerImageRenderer),
+		MapEndpoint2Host,
+		EndpointRenderer,
 	),
 	MakeMap(
 		MapX2Host,
-		MakeMap(
-			MapPodIdentity,
-			SelectPod,
-		),
+		ColorConnected(ProcessRenderer),
 	),
 	MakeMap(
 		MapX2Host,
-		AddressRenderer,
+		ContainerRenderer,
 	),
+	MakeMap(
+		MapX2Host,
+		ContainerImageRenderer,
+	),
+	// Pods don't have a host id - #1142
+	// MakeMap(
+	// 	MapX2Host,
+	// 	MakeMap(
+	// 		MapPodIdentity,
+	// 		SelectPod,
+	// 	),
+	// ),
 	MakeMap(
 		MapHostIdentity,
 		SelectHost,

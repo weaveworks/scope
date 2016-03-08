@@ -297,39 +297,6 @@ func (s *Sniffer) Merge(p Packet, rpt *report.Report) {
 		return result
 	}
 
-	// For sure, we can add to the address topology.
-	{
-		var (
-			srcNodeID = report.MakeAddressNodeID(s.hostID, localIP)
-			dstNodeID = report.MakeAddressNodeID(s.hostID, remoteIP)
-		)
-
-		rpt.Address = addAdjacency(rpt.Address, srcNodeID, dstNodeID)
-
-		node := rpt.Address.Nodes[srcNodeID]
-		emd, _ := node.Edges.Lookup(dstNodeID)
-		if egress {
-			if emd.EgressPacketCount == nil {
-				emd.EgressPacketCount = new(uint64)
-			}
-			*emd.EgressPacketCount++
-			if emd.EgressByteCount == nil {
-				emd.EgressByteCount = new(uint64)
-			}
-			*emd.EgressByteCount += uint64(p.Network)
-		} else {
-			if emd.IngressPacketCount == nil {
-				emd.IngressPacketCount = new(uint64)
-			}
-			*emd.IngressPacketCount++
-			if emd.IngressByteCount == nil {
-				emd.IngressByteCount = new(uint64)
-			}
-			*emd.IngressByteCount += uint64(p.Network)
-		}
-		rpt.Address.Nodes[srcNodeID] = node.WithEdge(dstNodeID, emd)
-	}
-
 	// If we have ports, we can add to the endpoint topology, too.
 	if p.SrcPort != "" && p.DstPort != "" {
 		var (

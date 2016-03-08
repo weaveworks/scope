@@ -67,15 +67,6 @@ func TestMapContainerImageIdentity(t *testing.T) {
 	}
 }
 
-func TestMapAddressIdentity(t *testing.T) {
-	for _, input := range []testcase{
-		{"empty", nrn(report.MakeNode()), false},
-		{"basic address", nrn(report.MakeNodeWith(map[string]string{endpoint.Addr: "192.168.1.1"})), true},
-	} {
-		testMap(t, render.MapAddressIdentity, input)
-	}
-}
-
 func TestMapHostIdentity(t *testing.T) {
 	for _, input := range []testcase{
 		{"empty", nrn(report.MakeNode()), true}, // TODO it's questionable if this is actually correct

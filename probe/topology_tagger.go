@@ -18,7 +18,6 @@ func (topologyTagger) Name() string { return "Topology" }
 func (topologyTagger) Tag(r report.Report) (report.Report, error) {
 	for name, t := range map[string]*report.Topology{
 		report.Endpoint:       &(r.Endpoint),
-		report.Address:        &(r.Address),
 		report.Process:        &(r.Process),
 		report.Container:      &(r.Container),
 		report.ContainerImage: &(r.ContainerImage),

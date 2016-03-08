@@ -53,14 +53,12 @@ func DemoReport(nodeCount int) report.Report {
 	connectionCount := nodeCount * 8
 	for i := 0; i < connectionCount; i++ {
 		var (
-			c            = procPool[rand.Intn(len(procPool))]
-			src          = hosts[rand.Intn(len(hosts))]
-			dst          = hosts[rand.Intn(len(hosts))]
-			srcPort      = rand.Intn(50000) + 10000
-			srcPortID    = report.MakeEndpointNodeID("", src, strconv.Itoa(srcPort))
-			dstPortID    = report.MakeEndpointNodeID("", dst, strconv.Itoa(c.dstPort))
-			srcAddressID = report.MakeAddressNodeID("", src)
-			dstAddressID = report.MakeAddressNodeID("", dst)
+			c         = procPool[rand.Intn(len(procPool))]
+			src       = hosts[rand.Intn(len(hosts))]
+			dst       = hosts[rand.Intn(len(hosts))]
+			srcPort   = rand.Intn(50000) + 10000
+			srcPortID = report.MakeEndpointNodeID("", src, strconv.Itoa(srcPort))
+			dstPortID = report.MakeEndpointNodeID("", dst, strconv.Itoa(c.dstPort))
 		)
 
 		// Endpoint topology
@@ -74,14 +72,6 @@ func DemoReport(nodeCount int) report.Report {
 			"name":   c.dstProc,
 			"domain": "node-" + dst,
 		}).WithEdge(srcPortID, report.EdgeMetadata{}))
-
-		// Address topology
-		r.Address = r.Address.AddNode(srcAddressID, report.MakeNode().WithLatests(map[string]string{
-			"name": src,
-		}).WithAdjacent(dstAddressID))
-		r.Address = r.Address.AddNode(dstAddressID, report.MakeNode().WithLatests(map[string]string{
-			"name": dst,
-		}).WithAdjacent(srcAddressID))
 
 		// Host data
 		r.Host = r.Host.AddNode("hostX", report.MakeNodeWith(map[string]string{
