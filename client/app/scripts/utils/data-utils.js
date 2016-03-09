@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import d3 from 'd3';
 import { formatMetric } from './string-utils';
+import AppStore from '../stores/app-store';
 
 
 // Inspired by Lee Byron's test data generator.
@@ -78,6 +79,10 @@ export function addMetrics(delta, prevNodes) {
   });
 }
 
+const openFilesScale = d3.scale.log().domain([1, 100000]).range([0, 1]);
+//
+// loadScale(1) == 0.5; E.g. a nicely balanced system :).
+const loadScale = d3.scale.log().domain([0.01, 100]).range([0, 1]);
 
 export function getMetricValue(metric, size) {
   if (!metric) {
@@ -86,7 +91,14 @@ export function getMetricValue(metric, size) {
 
   const max = metric.getIn(['max']);
   const value = metric.getIn(['samples', 0, 'value']);
-  const valuePercentage = value === 0 ? 0 : value / max;
+
+  let valuePercentage = value === 0 ? 0 : value / max;
+  if (AppStore.getSelectedMetric() === 'open_files_count') {
+    valuePercentage = openFilesScale(value);
+  } else if (_.includes(['load1', 'load5', 'load15'], AppStore.getSelectedMetric())) {
+    valuePercentage = loadScale(value);
+  }
+
   const baseline = 0.05;
   const displayedValue = valuePercentage * (1 - baseline) + baseline;
   const height = size * displayedValue;
