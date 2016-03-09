@@ -195,7 +195,12 @@ func (r *registry) walk(f func(APITopologyDesc)) {
 // makeTopologyList returns a handler that yields an APITopologyList.
 func (r *registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		topologies := r.renderTopologies(rep.Report(ctx), req)
+		report, err := rep.Report(ctx)
+		if err != nil {
+			respondWith(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		topologies := r.renderTopologies(report, req)
 		respondWith(w, http.StatusOK, topologies)
 	}
 }

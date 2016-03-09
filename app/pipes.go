@@ -32,8 +32,8 @@ func RegisterPipeRoutes(router *mux.Router, pr PipeRouter) {
 func checkPipe(pr PipeRouter, end End) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["pipeID"]
-		_, _, ok := pr.Get(ctx, id, end)
-		if !ok {
+		_, _, err := pr.Get(ctx, id, end)
+		if err != nil {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
@@ -44,8 +44,9 @@ func checkPipe(pr PipeRouter, end End) CtxHandlerFunc {
 func handlePipeWs(pr PipeRouter, end End) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["pipeID"]
-		pipe, endIO, ok := pr.Get(ctx, id, end)
-		if !ok {
+		pipe, endIO, err := pr.Get(ctx, id, end)
+		if err != nil {
+			log.Errorf("Error getting pipe %s: %v", id, err)
 			http.NotFound(w, r)
 			return
 		}
@@ -69,6 +70,8 @@ func deletePipe(pr PipeRouter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		pipeID := mux.Vars(r)["pipeID"]
 		log.Infof("Closing pipe %s", pipeID)
-		pr.Delete(ctx, pipeID)
+		if err := pr.Delete(ctx, pipeID); err != nil {
+			respondWith(w, http.StatusInternalServerError, err.Error())
+		}
 	}
 }

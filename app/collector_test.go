@@ -23,12 +23,20 @@ func TestCollector(t *testing.T) {
 	r2 := report.MakeReport()
 	r2.Endpoint.AddNode("bar", report.MakeNode())
 
-	if want, have := report.MakeReport(), c.Report(ctx); !reflect.DeepEqual(want, have) {
+	have, err := c.Report(ctx)
+	if err != nil {
+		t.Error(err)
+	}
+	if want := report.MakeReport(); !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 
 	c.Add(ctx, r1)
-	if want, have := r1, c.Report(ctx); !reflect.DeepEqual(want, have) {
+	have, err = c.Report(ctx)
+	if err != nil {
+		t.Error(err)
+	}
+	if want := r1; !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 
@@ -36,7 +44,11 @@ func TestCollector(t *testing.T) {
 	merged := report.MakeReport()
 	merged = merged.Merge(r1)
 	merged = merged.Merge(r2)
-	if want, have := merged, c.Report(ctx); !reflect.DeepEqual(want, have) {
+	have, err = c.Report(ctx)
+	if err != nil {
+		t.Error(err)
+	}
+	if want := merged; !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }

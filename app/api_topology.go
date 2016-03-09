@@ -28,8 +28,13 @@ type APINode struct {
 
 // Full topology.
 func handleTopology(ctx context.Context, rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
+	report, err := rep.Report(ctx)
+	if err != nil {
+		respondWith(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: renderer.Render(rep.Report(ctx)).Prune(),
+		Nodes: renderer.Render(report).Prune(),
 	})
 }
 
@@ -54,15 +59,19 @@ func handleWs(ctx context.Context, rep Reporter, renderer render.Renderer, w htt
 func handleNode(topologyID, nodeID string) func(context.Context, Reporter, render.Renderer, http.ResponseWriter, *http.Request) {
 	return func(ctx context.Context, rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
 		var (
-			rpt      = rep.Report(ctx)
-			rendered = renderer.Render(rep.Report(ctx))
-			node, ok = rendered[nodeID]
+			report, err = rep.Report(ctx)
+			rendered    = renderer.Render(report)
+			node, ok    = rendered[nodeID]
 		)
+		if err != nil {
+			respondWith(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 		if !ok {
 			http.NotFound(w, r)
 			return
 		}
-		respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, rpt, rendered, node)})
+		respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, report, rendered, node)})
 	}
 }
 
@@ -103,7 +112,12 @@ func handleWebsocket(
 	defer rep.UnWait(ctx, wait)
 
 	for {
-		newTopo := renderer.Render(rep.Report(ctx)).Prune()
+		report, err := rep.Report(ctx)
+		if err != nil {
+			log.Errorf("Error generating report: %v", err)
+			return
+		}
+		newTopo := renderer.Render(report).Prune()
 		diff := render.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

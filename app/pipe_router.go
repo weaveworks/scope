@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -29,9 +30,9 @@ const (
 
 // PipeRouter stores pipes and allows you to connect to either end of them.
 type PipeRouter interface {
-	Get(context.Context, string, End) (xfer.Pipe, io.ReadWriter, bool)
-	Release(context.Context, string, End)
-	Delete(context.Context, string)
+	Get(context.Context, string, End) (xfer.Pipe, io.ReadWriter, error)
+	Release(context.Context, string, End) error
+	Delete(context.Context, string) error
 	Stop()
 }
 
@@ -77,7 +78,7 @@ func NewLocalPipeRouter() PipeRouter {
 	return pipeRouter
 }
 
-func (pr *localPipeRouter) Get(_ context.Context, id string, e End) (xfer.Pipe, io.ReadWriter, bool) {
+func (pr *localPipeRouter) Get(_ context.Context, id string, e End) (xfer.Pipe, io.ReadWriter, error) {
 	pr.Lock()
 	defer pr.Unlock()
 	p, ok := pr.pipes[id]
@@ -91,43 +92,45 @@ func (pr *localPipeRouter) Get(_ context.Context, id string, e End) (xfer.Pipe, 
 		pr.pipes[id] = p
 	}
 	if p.Closed() {
-		return nil, nil, false
+		return nil, nil, fmt.Errorf("Pipe %s closed", id)
 	}
 	end, endIO := p.end(e)
 	end.refCount++
-	return p, endIO, true
+	return p, endIO, nil
 }
 
-func (pr *localPipeRouter) Release(_ context.Context, id string, e End) {
+func (pr *localPipeRouter) Release(_ context.Context, id string, e End) error {
 	pr.Lock()
 	defer pr.Unlock()
 
 	p, ok := pr.pipes[id]
 	if !ok {
-		// uh oh
-		return
+		return fmt.Errorf("Pipe %s not found", id)
 	}
 
 	end, _ := p.end(e)
 	end.refCount--
 	if end.refCount > 0 {
-		return
+		return nil
 	}
 
 	if !p.Closed() {
 		end.lastUsedTime = mtime.Now()
 	}
+
+	return nil
 }
 
-func (pr *localPipeRouter) Delete(_ context.Context, id string) {
+func (pr *localPipeRouter) Delete(_ context.Context, id string) error {
 	pr.Lock()
 	defer pr.Unlock()
 	p, ok := pr.pipes[id]
 	if !ok {
-		return
+		return nil
 	}
 	p.Close()
 	p.tombstoneTime = mtime.Now()
+	return nil
 }
 
 func (pr *localPipeRouter) Stop() {

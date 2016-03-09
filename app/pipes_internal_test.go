@@ -33,9 +33,9 @@ func TestPipeTimeout(t *testing.T) {
 	// create a new pipe.
 	id := "foo"
 	ctx := context.Background()
-	pipe, _, ok := pr.Get(ctx, id, UIEnd)
-	if !ok {
-		t.Fatalf("not ok")
+	pipe, _, err := pr.Get(ctx, id, UIEnd)
+	if err != nil {
+		t.Fatalf("not ok: %v", err)
 	}
 
 	// move time forward such that the new pipe should timeout

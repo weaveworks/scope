@@ -14,7 +14,7 @@ import (
 // Reporter is something that can produce reports on demand. It's a convenient
 // interface for parts of the app, and several experimental components.
 type Reporter interface {
-	Report(context.Context) report.Report
+	Report(context.Context) (report.Report, error)
 	WaitOn(context.Context, chan struct{})
 	UnWait(context.Context, chan struct{})
 }
@@ -22,7 +22,7 @@ type Reporter interface {
 // Adder is something that can accept reports. It's a convenient interface for
 // parts of the app, and several experimental components.
 type Adder interface {
-	Add(context.Context, report.Report)
+	Add(context.Context, report.Report) error
 }
 
 // A Collector is a Reporter and an Adder
@@ -83,7 +83,7 @@ func NewCollector(window time.Duration) Collector {
 var now = time.Now
 
 // Add adds a report to the collector's internal state. It implements Adder.
-func (c *collector) Add(_ context.Context, rpt report.Report) {
+func (c *collector) Add(_ context.Context, rpt report.Report) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	c.reports = append(c.reports, timestampReport{now(), rpt})
@@ -92,11 +92,12 @@ func (c *collector) Add(_ context.Context, rpt report.Report) {
 	if rpt.Shortcut {
 		c.Broadcast()
 	}
+	return nil
 }
 
 // Report returns a merged report over all added reports. It implements
 // Reporter.
-func (c *collector) Report(_ context.Context) report.Report {
+func (c *collector) Report(_ context.Context) (report.Report, error) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -105,7 +106,7 @@ func (c *collector) Report(_ context.Context) report.Report {
 	if c.cached != nil && len(c.reports) > 0 {
 		oldest := now().Add(-c.window)
 		if c.reports[0].timestamp.Before(oldest) {
-			return *c.cached
+			return *c.cached, nil
 		}
 	}
 	c.reports = clean(c.reports, c.window)
@@ -118,7 +119,7 @@ func (c *collector) Report(_ context.Context) report.Report {
 	}
 	rpt.ID = fmt.Sprintf("%x", id.Sum64())
 	c.cached = &rpt
-	return rpt
+	return rpt, nil
 }
 
 type timestampReport struct {
