@@ -9,6 +9,11 @@ import (
 // Raw report handler
 func makeRawReportHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		respondWith(w, http.StatusOK, rep.Report(ctx))
+		report, err := rep.Report(ctx)
+		if err != nil {
+			respondWith(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		respondWith(w, http.StatusOK, report)
 	}
 }

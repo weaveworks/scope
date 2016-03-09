@@ -75,7 +75,11 @@ func TestReportPostHandler(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		if want, have := fixture.Report.Endpoint.Nodes, c.Report(ctx).Endpoint.Nodes; len(have) == 0 || len(want) != len(have) {
+		report, err := c.Report(ctx)
+		if err != nil {
+			t.Error(err)
+		}
+		if want, have := fixture.Report.Endpoint.Nodes, report.Endpoint.Nodes; len(have) == 0 || len(want) != len(have) {
 			t.Fatalf("Content-Type %s: %v", contentType, test.Diff(have, want))
 		}
 	}
