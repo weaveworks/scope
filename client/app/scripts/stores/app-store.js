@@ -61,11 +61,7 @@ let websocketClosed = true;
 
 let selectedMetric = 'process_cpu_usage_percent';
 let lockedMetric = selectedMetric;
-const availableCanvasMetrics = [
-  {label: 'CPU', id: 'process_cpu_usage_percent'},
-  {label: 'Memory', id: 'process_memory_usage_bytes'},
-  {label: 'Open Files', id: 'open_files_count'}
-];
+let availableCanvasMetrics = [];
 
 
 const topologySorter = topology => topology.get('rank');
@@ -402,6 +398,7 @@ export class AppStore extends Store {
           setTopology(payload.topologyId);
           nodes = nodes.clear();
         }
+        availableCanvasMetrics = [];
         this.__emitChange();
         break;
       }
@@ -412,6 +409,7 @@ export class AppStore extends Store {
           setTopology(payload.topologyId);
           nodes = nodes.clear();
         }
+        availableCanvasMetrics = [];
         this.__emitChange();
         break;
       }
@@ -430,6 +428,11 @@ export class AppStore extends Store {
       case ActionTypes.LOCK_METRIC: {
         lockedMetric = payload.metricId;
         selectedMetric = payload.metricId;
+        this.__emitChange();
+        break;
+      }
+      case ActionTypes.UNLOCK_METRIC: {
+        lockedMetric = null;
         this.__emitChange();
         break;
       }
@@ -623,6 +626,16 @@ export class AppStore extends Store {
           setDefaultTopologyOptions(topologies);
         }
         topologiesLoaded = true;
+
+        availableCanvasMetrics = nodes
+          .valueSeq()
+          .flatMap(n => (n.get('metrics') || makeMap()).keys())
+          .toSet()
+          .sort()
+          .toJS()
+          .map(v => {
+            return {id: v, label: v};
+          });
         this.__emitChange();
         break;
       }

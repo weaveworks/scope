@@ -38,6 +38,12 @@ export function lockMetric(metricId) {
   });
 }
 
+export function unlockMetric() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.UNLOCK_METRIC,
+  });
+}
+
 export function changeTopologyOption(option, value, topologyId) {
   AppDispatcher.dispatch({
     type: ActionTypes.CHANGE_TOPOLOGY_OPTION,

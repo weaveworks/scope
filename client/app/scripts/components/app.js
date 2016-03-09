@@ -14,9 +14,11 @@ import Nodes from './nodes';
 import MetricSelector from './metric-selector';
 import EmbeddedTerminal from './embedded-terminal';
 import { getRouter } from '../utils/router-utils';
-import { showingDebugToolbar, DebugToolbar } from './debug-toolbar.js';
+import { showingDebugToolbar, toggleDebugToolbar,
+  DebugToolbar } from './debug-toolbar.js';
 
 const ESC_KEY_CODE = 27;
+const D_KEY_CODE = 68;
 const RIGHT_ANGLE_KEY_IDENTIFIER = 'U+003C';
 const LEFT_ANGLE_KEY_IDENTIFIER = 'U+003E';
 
@@ -80,6 +82,9 @@ export default class App extends React.Component {
       lockNextMetric(-1);
     } else if (ev.keyIdentifier === LEFT_ANGLE_KEY_IDENTIFIER) {
       lockNextMetric(1);
+    } else if (ev.keyCode === D_KEY_CODE) {
+      toggleDebugToolbar();
+      this.forceUpdate();
     }
   }
 

@@ -8,11 +8,13 @@ const log = debug('scope:debug-panel');
 import { receiveNodesDelta } from '../actions/app-actions';
 import AppStore from '../stores/app-store';
 
+
 const SHAPES = ['square', 'hexagon', 'heptagon', 'circle'];
 const NODE_COUNTS = [1, 2, 3];
 const STACK_VARIANTS = [false, true];
 
 const sample = (collection) => _.range(_.random(4)).map(() => _.sample(collection));
+
 
 const shapeTypes = {
   square: ['Process', 'Processes'],
@@ -20,6 +22,7 @@ const shapeTypes = {
   heptagon: ['Pod', 'Pods'],
   circle: ['Host', 'Hosts']
 };
+
 
 const LABEL_PREFIXES = _.range('A'.charCodeAt(), 'Z'.charCodeAt() + 1).map(n => String.fromCharCode(n));
 
@@ -38,10 +41,12 @@ const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, nodeCou
   rank: 'alpine'
 });
 
+
 function label(shape, stacked) {
   const type = shapeTypes[shape];
   return stacked ? `Group of ${type[1]}` : type[0];
 }
+
 
 function addAllVariants() {
   const newNodes = _.flattenDeep(STACK_VARIANTS.map(stack => {
@@ -57,6 +62,7 @@ function addAllVariants() {
     add: newNodes
   });
 }
+
 
 function addNodes(n) {
   const ns = AppStore.getNodes();
@@ -78,8 +84,27 @@ function addNodes(n) {
   });
 }
 
+
 export function showingDebugToolbar() {
-  return Boolean(localStorage.debugToolbar);
+  return 'debugToolbar' in localStorage && JSON.parse(localStorage.debugToolbar);
+}
+
+
+export function toggleDebugToolbar() {
+  if ('debugToolbar' in localStorage) {
+    localStorage.debugToolbar = !showingDebugToolbar();
+  }
+}
+
+
+function enableLog(ns) {
+  debug.enable(`scope:${ns}`);
+  window.location.reload();
+}
+
+function disableLog() {
+  debug.disable();
+  window.location.reload();
 }
 
 export class DebugToolbar extends React.Component {
@@ -101,12 +126,21 @@ export class DebugToolbar extends React.Component {
 
     return (
       <div className="debug-panel">
-        <label>Add nodes </label>
-        <button onClick={() => addNodes(1)}>+1</button>
-        <button onClick={() => addNodes(10)}>+10</button>
-        <input type="number" onChange={this.onChange} value={this.state.nodesToAdd} />
-        <button onClick={() => addNodes(this.state.nodesToAdd)}>+</button>
-        <button onClick={() => addAllVariants()}>Variants</button>
+        <div>
+          <label>Add nodes </label>
+          <button onClick={() => addNodes(1)}>+1</button>
+          <button onClick={() => addNodes(10)}>+10</button>
+          <input type="number" onChange={this.onChange} value={this.state.nodesToAdd} />
+          <button onClick={() => addNodes(this.state.nodesToAdd)}>+</button>
+          <button onClick={() => addAllVariants()}>Variants</button>
+        </div>
+
+        <div>
+          <label>Logging</label>
+          <button onClick={() => enableLog('*')}>scope:*</button>
+          <button onClick={() => enableLog('dispatcher')}>scope:dispatcher</button>
+          <button onClick={() => disableLog()}>Disable log</button>
+        </div>
       </div>
     );
   }

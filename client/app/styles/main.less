@@ -409,7 +409,7 @@ h2 {
 
     .metric-fill {
       stroke: none;
-      fill: yellowgreen;
+      fill: @background-darker-color;
     }
 
     .shadow {
@@ -1054,9 +1054,15 @@ h2 {
 .debug-panel {
   .shadow-2;
   background-color: #fff;
-  top: 10px;
+  top: 80px;
   position: absolute;
   padding: 10px;
   left: 10px;
   z-index: 10000;
+
+  opacity: 0.3;
+
+  &:hover {
+    opacity: 1;
+  }
 }

@@ -35,7 +35,7 @@ export default function NodeShapeHex({highlighted, size, color, metric}) {
   const upperHexBitHeight = -0.25 * size * shadowSize;
 
   const clipId = `mask-${Math.random()}`;
-  const {height, formattedValue} = getMetricValue(metric, size);
+  const {height, value, formattedValue} = getMetricValue(metric, size);
 
   return (
     <g className="shape">
@@ -52,7 +52,7 @@ export default function NodeShapeHex({highlighted, size, color, metric}) {
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(shadowSize)} />
       <path className="metric-fill" clipPath={`url(#${clipId})`} {...pathProps(shadowSize)} />
-      {highlighted ?
+      {highlighted && value !== null ?
         <text dy="0.35em" style={{'textAnchor': 'middle'}}>
           {formattedValue}
         </text> :

@@ -23,7 +23,7 @@ export default function NodeShapeHeptagon({highlighted, size, color, metric}) {
   });
 
   const clipId = `mask-${Math.random()}`;
-  const {height, formattedValue} = getMetricValue(metric, size);
+  const {height, value, formattedValue} = getMetricValue(metric, size);
 
   return (
     <g className="shape">
@@ -41,7 +41,7 @@ export default function NodeShapeHeptagon({highlighted, size, color, metric}) {
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(0.45)} />
       <path className="metric-fill" clipPath={`url(#${clipId})`} {...pathProps(0.45)} />
-      {highlighted ?
+      {highlighted && value !== null ?
         <text dy="0.35em" style={{'textAnchor': 'middle'}}>{formattedValue}</text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
