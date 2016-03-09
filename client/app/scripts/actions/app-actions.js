@@ -3,6 +3,7 @@ import debug from 'debug';
 import AppDispatcher from '../dispatcher/app-dispatcher';
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
+import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
 import { bufferDeltaUpdate, resumeUpdate,
   resetUpdateBuffer } from '../utils/update-buffer-utils';
@@ -16,6 +17,17 @@ export function selectMetric(metricId) {
   AppDispatcher.dispatch({
     type: ActionTypes.SELECT_METRIC,
     metricId: metricId
+  });
+}
+
+export function lockNextMetric(delta) {
+  const metrics = AppStore.getAvailableCanvasMetrics().map(m => m.id);
+  const currentIndex = metrics.indexOf(AppStore.getSelectedMetric());
+  const nextMetric = metrics[modulo(currentIndex + delta, metrics.length)];
+
+  AppDispatcher.dispatch({
+    type: ActionTypes.LOCK_METRIC,
+    metricId: nextMetric
   });
 }
 

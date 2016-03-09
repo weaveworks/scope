@@ -4,7 +4,7 @@ import d3 from 'd3';
 
 const formatLargeValue = d3.format('s');
 
-function toHtml(text, unit) {
+function renderHtml(text, unit) {
   return (
     <span className="metric-formatted">
       <span className="metric-value">{text}</span>
@@ -18,7 +18,6 @@ function makeFormatters(renderFn) {
   const formatters = {
     filesize(value) {
       const obj = filesize(value, {output: 'object'});
-      console.log('rendering', value);
       return renderFn(obj.value, obj.suffix);
     },
 
@@ -45,7 +44,7 @@ function makeFormatters(renderFn) {
 }
 
 
-const formatters = makeFormatters(toHtml);
+const formatters = makeFormatters(renderHtml);
 const svgFormatters = makeFormatters((text, unit) => `${text}${unit}`);
 
 export function formatMetric(value, opts, svg) {

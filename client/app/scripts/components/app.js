@@ -8,7 +8,7 @@ import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
-import { hitEsc } from '../actions/app-actions';
+import { lockNextMetric, hitEsc } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import MetricSelector from './metric-selector';
@@ -17,6 +17,8 @@ import { getRouter } from '../utils/router-utils';
 import { showingDebugToolbar, DebugToolbar } from './debug-toolbar.js';
 
 const ESC_KEY_CODE = 27;
+const RIGHT_ANGLE_KEY_IDENTIFIER = 'U+003C';
+const LEFT_ANGLE_KEY_IDENTIFIER = 'U+003E';
 
 function getStateFromStores() {
   return {
@@ -32,6 +34,7 @@ function getStateFromStores() {
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
     hostname: AppStore.getHostname(),
     lockedMetric: AppStore.getLockedMetric(),
+    availableCanvasMetrics: AppStore.getAvailableCanvasMetrics(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     selectedNodeId: AppStore.getSelectedNodeId(),
@@ -73,6 +76,10 @@ export default class App extends React.Component {
   onKeyPress(ev) {
     if (ev.keyCode === ESC_KEY_CODE) {
       hitEsc();
+    } else if (ev.keyIdentifier === RIGHT_ANGLE_KEY_IDENTIFIER) {
+      lockNextMetric(-1);
+    } else if (ev.keyIdentifier === LEFT_ANGLE_KEY_IDENTIFIER) {
+      lockNextMetric(1);
     }
   }
 
@@ -120,6 +127,7 @@ export default class App extends React.Component {
 
         <Sidebar>
           <MetricSelector
+            availableCanvasMetrics={this.state.availableCanvasMetrics}
             lockedMetric={this.state.lockedMetric}
             selectedMetric={this.state.selectedMetric}
             />

@@ -1,13 +1,6 @@
 import React from 'react';
-import _ from 'lodash';
 import { selectMetric, lockMetric } from '../actions/app-actions';
 import classNames from 'classnames';
-
-const METRICS = {
-  'CPU': 'process_cpu_usage_percent',
-  'Memory': 'process_memory_usage_bytes',
-  'Open Files': 'open_files_count'
-};
 
 // docker_cpu_total_usage
 // docker_memory_usage
@@ -21,26 +14,25 @@ function onMouseClick(k) {
 }
 
 function onMouseOut(k) {
-  console.log('onMouseOut', k);
   selectMetric(k);
 }
 
-export default function MetricSelector({selectedMetric, lockedMetric}) {
+export default function MetricSelector({availableCanvasMetrics, selectedMetric, lockedMetric}) {
   return (
     <div
       className="available-metrics"
       onMouseLeave={() => onMouseOut(lockedMetric)}>
-      {_.map(METRICS, (key, name) => {
+      {availableCanvasMetrics.map(({id, label}) => {
         return (
           <div
-            key={key}
+            key={id}
             className={classNames('sidebar-item', {
-              'locked': (key === lockedMetric),
-              'selected': (key === selectedMetric)
+              'locked': (id === lockedMetric),
+              'selected': (id === selectedMetric)
             })}
-            onMouseOver={() => onMouseOver(key)}
-            onClick={() => onMouseClick(key)}>
-            {name}
+            onMouseOver={() => onMouseOver(id)}
+            onClick={() => onMouseClick(id)}>
+            {label}
           </div>
         );
       })}

@@ -61,6 +61,12 @@ let websocketClosed = true;
 
 let selectedMetric = 'process_cpu_usage_percent';
 let lockedMetric = selectedMetric;
+const availableCanvasMetrics = [
+  {label: 'CPU', id: 'process_cpu_usage_percent'},
+  {label: 'Memory', id: 'process_memory_usage_bytes'},
+  {label: 'Open Files', id: 'open_files_count'}
+];
+
 
 const topologySorter = topology => topology.get('rank');
 
@@ -173,6 +179,10 @@ export class AppStore extends Store {
 
   getSelectedMetric() {
     return selectedMetric;
+  }
+
+  getAvailableCanvasMetrics() {
+    return availableCanvasMetrics;
   }
 
   getControlStatus() {
@@ -419,6 +429,7 @@ export class AppStore extends Store {
       }
       case ActionTypes.LOCK_METRIC: {
         lockedMetric = payload.metricId;
+        selectedMetric = payload.metricId;
         this.__emitChange();
         break;
       }
