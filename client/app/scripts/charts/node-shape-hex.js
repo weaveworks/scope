@@ -1,5 +1,6 @@
 import React from 'react';
 import d3 from 'd3';
+import classNames from 'classnames';
 import {getMetricValue} from '../utils/data-utils.js';
 
 const line = d3.svg.line()
@@ -36,9 +37,12 @@ export default function NodeShapeHex({highlighted, size, color, metric}) {
 
   const clipId = `mask-${Math.random()}`;
   const {height, value, formattedValue} = getMetricValue(metric, size);
+  const className = classNames('shape', {
+    'metrics': value !== null
+  });
 
   return (
-    <g className="shape">
+    <g className={className}>
       <defs>
         <clipPath id={clipId}>
           <rect

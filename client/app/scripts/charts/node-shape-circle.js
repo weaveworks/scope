@@ -1,4 +1,5 @@
 import React from 'react';
+import classNames from 'classnames';
 import {getMetricValue} from '../utils/data-utils.js';
 
 export default function NodeShapeCircle({highlighted, size, color, metric}) {
@@ -6,8 +7,12 @@ export default function NodeShapeCircle({highlighted, size, color, metric}) {
   const clipId = `mask-${Math.random()}`;
   const {height, value, formattedValue} = getMetricValue(metric, size);
 
+  const className = classNames('shape', {
+    'metrics': value !== null
+  });
+
   return (
-    <g className="shape">
+    <g className={className}>
       <defs>
         <clipPath id={clipId}>
           <rect

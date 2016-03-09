@@ -2,12 +2,9 @@ import React from 'react';
 import { selectMetric, lockMetric, unlockMetric } from '../actions/app-actions';
 import classNames from 'classnames';
 
-const CROSS = '\u274C';
+// const CROSS = '\u274C';
 // const MINUS = '\u2212';
 // const DOT = '\u2022';
-
-// docker_cpu_total_usage
-// docker_memory_usage
 
 function onMouseOver(k) {
   selectMetric(k);
@@ -30,6 +27,9 @@ export default function MetricSelector({availableCanvasMetrics, selectedMetric, 
     <div
       className="available-metrics"
       onMouseLeave={() => onMouseOut(lockedMetric)}>
+      <div className="sidebar-item">
+        METRICS
+      </div>
       {availableCanvasMetrics.map(({id, label}) => {
         const isLocked = (id === lockedMetric);
         const isSelected = (id === selectedMetric);
@@ -46,9 +46,7 @@ export default function MetricSelector({availableCanvasMetrics, selectedMetric, 
             onClick={() => onMouseClick(id, lockedMetric)}>
             {label}
             {isLocked && <span className="sidebar-item-actions">
-              <span className="sidebar-item-action">
-                {CROSS}
-              </span>
+              <span className="sidebar-item-action fa fa-thumb-tack"></span>
             </span>}
           </div>
         );
