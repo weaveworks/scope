@@ -93,7 +93,7 @@ func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) error {
 	p.mtx.Unlock()
 	defer p.wg.Done()
 
-	errors := make(chan error, 1)
+	errors := make(chan error, 2)
 
 	// Read-from-UI loop
 	go func() {

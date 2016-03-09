@@ -18,6 +18,7 @@ import (
 	"github.com/weaveworks/weave/common"
 
 	"github.com/weaveworks/scope/common/hostname"
+	"github.com/weaveworks/scope/common/network"
 	"github.com/weaveworks/scope/common/sanitize"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/common/xfer"
@@ -176,7 +177,7 @@ func probeMain() {
 		p.AddTagger(weave)
 		p.AddReporter(weave)
 
-		dockerBridgeIP, err := getFirstAddressOf(*dockerBridge)
+		dockerBridgeIP, err := network.GetFirstAddressOf(*dockerBridge)
 		if err != nil {
 			log.Println("Error getting docker bridge ip:", err)
 		} else {
@@ -198,26 +199,4 @@ func probeMain() {
 	defer p.Stop()
 
 	common.SignalHandlerLoop()
-}
-
-func getFirstAddressOf(name string) (string, error) {
-	inf, err := net.InterfaceByName(name)
-	if err != nil {
-		return "", err
-	}
-
-	addrs, err := inf.Addrs()
-	if err != nil {
-		return "", err
-	}
-	if len(addrs) <= 0 {
-		return "", fmt.Errorf("No address found for %s", name)
-	}
-
-	switch v := addrs[0].(type) {
-	case *net.IPNet:
-		return v.IP.String(), nil
-	default:
-		return "", fmt.Errorf("No address found for %s", name)
-	}
 }
