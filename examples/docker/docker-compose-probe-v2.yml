@@ -1,0 +1,16 @@
+version: '2'
+services:
+  probe:
+    image: weaveworks/scope:0.13.1
+    network_mode: "host"
+    pid: "host"
+    privileged: true
+    labels:
+      - "works.weave.role=system"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:rw"
+    command:
+      - "--probe.docker"
+      - "true"
+      - "--service-token"
+      - "${SCOPE_SERVICE_TOKEN}"

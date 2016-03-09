@@ -39,7 +39,7 @@ boot2docker, replace localhost with the output of `boot2docker ip`.)
 
 If you have any questions about, feedback for or problem with Scope we invite
 you to:
-- <a href="https://weave-scope-slack.herokuapp.com">join our  public slack channel</a>
+- <a href="https://weave-scope-slack.herokuapp.com">join our public slack channel</a>
 - send an email to <a href="mailto:weave-users@weave.works">weave-users@weave.works</a>
 - <a href="https://github.com/weaveworks/scope/issues/new">file an issue</a>
 
@@ -169,6 +169,47 @@ sudo scope launch --service-token=<token>
 +-----------------------+      +-----------------------+
 ```
 
+## <a name="launching-weave-scope-and-compose-in-cloud-service-mode"></a>Launching Weave Scope and Docker Compose in Cloud Service Mode
+
+The SCOPE_SERVICE_TOKEN is found when you [log in to the Scope service](https://scope.weave.works/) - launch Docker Compose with one of the two fragments below and the value of the token set as an environment variable:
+
+    SCOPE_SERVICE_TOKEN=abcdef_my_token  docker-compose up -d
+
+### Docker Compose format version 2:
+
+    version: '2'
+    services:
+      probe:
+        image: weaveworks/scope:0.13.1
+        network_mode: "host"
+        pid: "host"
+        privileged: true
+        labels:
+          - "works.weave.role=system"
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock:rw"
+        command:
+          - "--probe.docker"
+          - "true"
+          - "--service-token"
+          - "${SCOPE_SERVICE_TOKEN}"
+
+### Docker Compose format version 1:
+
+    probe:
+      image: weaveworks/scope:0.13.1
+      net: "host"
+      pid: "host"
+      privileged: true
+      labels:
+        - "works.weave.role=system"
+      volumes:
+        - "/var/run/docker.sock:/var/run/docker.sock:rw"
+      command:
+        - "--probe.docker"
+        - "true"
+        - "--service-token"
+        - "${SCOPE_SERVICE_TOKEN}" 
 
 ## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
 
