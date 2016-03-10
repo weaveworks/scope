@@ -253,7 +253,7 @@ func allImages(r docker.Registry) []*client.APIImages {
 func TestRegistry(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil)
+		registry, _ := docker.NewRegistry(10*time.Second, nil, true)
 		defer registry.Stop()
 		runtime.Gosched()
 
@@ -276,7 +276,7 @@ func TestRegistry(t *testing.T) {
 func TestLookupByPID(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil)
+		registry, _ := docker.NewRegistry(10*time.Second, nil, true)
 		defer registry.Stop()
 
 		want := docker.Container(&mockContainer{container1})
@@ -293,7 +293,7 @@ func TestLookupByPID(t *testing.T) {
 func TestRegistryEvents(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil)
+		registry, _ := docker.NewRegistry(10*time.Second, nil, true)
 		defer registry.Stop()
 		runtime.Gosched()
 

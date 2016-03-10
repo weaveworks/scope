@@ -32,7 +32,7 @@ func (t *tracer) Stop() {
 }
 
 func main() {
-	dockerRegistry, err := docker.NewRegistry(pollInterval, nil)
+	dockerRegistry, err := docker.NewRegistry(pollInterval, nil, false)
 	if err != nil {
 		log.Fatalf("Could start docker watcher: %v", err)
 	}

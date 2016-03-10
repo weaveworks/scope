@@ -1,8 +1,8 @@
 BUILD_IN_CONTAINER=true
 
 tracer.tar: main/main main/Dockerfile
-	docker build -t weaveworks/tracer main/
-	docker save weaveworks/tracer:latest >$@
+	docker build -t tomwilkie/tracer main/
+	docker save tomwilkie/tracer:latest >$@
 
 main/main: main/*.go main/static.go ptrace/*.go
 
