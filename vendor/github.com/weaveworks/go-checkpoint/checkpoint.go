@@ -293,9 +293,13 @@ func checkResult(r io.Reader) (*CheckResponse, error) {
 }
 
 // getSystemUUID returns the base64 encoded, scrypt hashed contents of
-// /sys/class/dmi/id/product_uuid.
+// /sys/class/dmi/id/product_uuid, or, if that is not available,
+// sys/hypervisor/uuid.
 func getSystemUUID() (string, error) {
 	uuid, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")
+	if os.IsNotExist(err) {
+		uuid, err = ioutil.ReadFile("/sys/hypervisor/uuid")
+	}
 	if err != nil {
 		return "", err
 	}
