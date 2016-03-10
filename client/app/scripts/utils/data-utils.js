@@ -79,6 +79,19 @@ export function addMetrics(delta, prevNodes) {
   });
 }
 
+const METRIC_FORMATS = {
+  docker_cpu_total_usage: 'percent',
+  docker_memory_usage: 'filesize',
+  host_cpu_usage_percent: 'percent',
+  host_mem_usage_bytes: 'filesize',
+  load1: 'number',
+  load15: 'number',
+  load5: 'number',
+  open_files_count: 'number',
+  process_cpu_usage_percent: 'percent',
+  process_memory_usage_bytes: 'filesize'
+};
+
 const openFilesScale = d3.scale.log().domain([1, 100000]).range([0, 1]);
 //
 // loadScale(1) == 0.5; E.g. a nicely balanced system :).
@@ -91,21 +104,27 @@ export function getMetricValue(metric, size) {
 
   const max = metric.getIn(['max']);
   const value = metric.getIn(['samples', 0, 'value']);
+  const selectedMetric = AppStore.getSelectedMetric();
 
   let valuePercentage = value === 0 ? 0 : value / max;
-  if (AppStore.getSelectedMetric() === 'open_files_count') {
+  if (selectedMetric === 'open_files_count') {
     valuePercentage = openFilesScale(value);
-  } else if (_.includes(['load1', 'load5', 'load15'], AppStore.getSelectedMetric())) {
+  } else if (_.includes(['load1', 'load5', 'load15'], selectedMetric)) {
     valuePercentage = loadScale(value);
   }
 
-  const baseline = 0.05;
-  const displayedValue = valuePercentage * (1 - baseline) + baseline;
+  let displayedValue = value;
+  if (displayedValue > 0) {
+    const baseline = 0.1;
+    displayedValue = valuePercentage * (1 - baseline) + baseline;
+  }
   const height = size * displayedValue;
+  const metricWithFormat = Object.assign(
+    {}, {format: METRIC_FORMATS[selectedMetric]}, metric.toJS());
 
   return {
     height: height,
     value: value,
-    formattedValue: formatMetric(value, metric.toJS(), true)
+    formattedValue: formatMetric(value, metricWithFormat, true)
   };
 }

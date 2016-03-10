@@ -17,7 +17,7 @@ function renderHtml(text, unit) {
 function makeFormatters(renderFn) {
   const formatters = {
     filesize(value) {
-      const obj = filesize(value, {output: 'object'});
+      const obj = filesize(value, {output: 'object', round: 1});
       return renderFn(obj.value, obj.suffix);
     },
 
