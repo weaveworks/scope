@@ -26,6 +26,17 @@ function fromGraphNodeId(encodedId) {
   return encodedId.replace('<DOT>', '.');
 }
 
+function buildCacheIdFromOptions(options) {
+  if (options) {
+    let id = options.topologyId;
+    if (options.topologyOptions) {
+      id += JSON.stringify(options.topologyOptions);
+    }
+    return id;
+  }
+  return '';
+}
+
 /**
  * Layout engine runner
  * After the layout engine run nodes and edges have x-y-coordinates. Engine is
@@ -343,18 +354,18 @@ function copyLayoutProperties(layout, nodeCache, edgeCache) {
  */
 export function doLayout(immNodes, immEdges, opts) {
   const options = opts || {};
-  const topologyId = options.topologyId || 'noId';
+  const cacheId = buildCacheIdFromOptions(options);
 
   // one engine and node and edge caches per topology, to keep renderings similar
-  if (!topologyCaches[topologyId]) {
-    topologyCaches[topologyId] = {
+  if (!topologyCaches[cacheId]) {
+    topologyCaches[cacheId] = {
       nodeCache: makeMap(),
       edgeCache: makeMap(),
       graph: new dagre.graphlib.Graph({})
     };
   }
 
-  const cache = topologyCaches[topologyId];
+  const cache = topologyCaches[cacheId];
   const cachedLayout = options.cachedLayout || cache.cachedLayout;
   const nodeCache = options.nodeCache || cache.nodeCache;
   const edgeCache = options.edgeCache || cache.edgeCache;

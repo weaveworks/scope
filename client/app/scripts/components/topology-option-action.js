@@ -3,6 +3,7 @@ import React from 'react';
 import { changeTopologyOption } from '../actions/app-actions';
 
 export default class TopologyOptionAction extends React.Component {
+
   constructor(props, context) {
     super(props, context);
     this.onClick = this.onClick.bind(this);
@@ -10,14 +11,18 @@ export default class TopologyOptionAction extends React.Component {
 
   onClick(ev) {
     ev.preventDefault();
-    changeTopologyOption(this.props.option, this.props.value, this.props.topologyId);
+    const { optionId, topologyId, item } = this.props;
+    changeTopologyOption(optionId, item.get('value'), topologyId);
   }
 
   render() {
+    const { activeValue, item } = this.props;
+    const className = activeValue === item.get('value')
+      ? 'topology-option-action topology-option-action-selected' : 'topology-option-action';
     return (
-      <span className="sidebar-item-action" onClick={this.onClick}>
-        {this.props.value}
-      </span>
+      <div className={className} onClick={this.onClick}>
+        {item.get('label')}
+      </div>
     );
   }
 }

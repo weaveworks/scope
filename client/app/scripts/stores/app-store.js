@@ -84,13 +84,11 @@ function setTopology(topologyId) {
 function setDefaultTopologyOptions(topologyList) {
   topologyList.forEach(topology => {
     let defaultOptions = makeOrderedMap();
-    if (topology.has('options')) {
-      topology.get('options').forEach((items, option) => {
-        items.forEach(item => {
-          if (item.get('default') === true) {
-            defaultOptions = defaultOptions.set(option, item.get('value'));
-          }
-        });
+    if (topology.has('options') && topology.get('options')) {
+      topology.get('options').forEach((option) => {
+        const optionId = option.get('id');
+        const defaultValue = option.get('defaultValue');
+        defaultOptions = defaultOptions.set(optionId, defaultValue);
       });
     }
 

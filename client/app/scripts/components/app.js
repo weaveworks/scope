@@ -107,6 +107,7 @@ export default class App extends React.Component {
           highlightedEdgeIds={this.state.highlightedEdgeIds} detailsWidth={detailsWidth}
           selectedNodeId={this.state.selectedNodeId} topMargin={topMargin}
           forceRelayout={this.state.forceRelayout}
+          topologyOptions={this.state.activeTopologyOptions}
           topologyId={this.state.currentTopologyId} />
 
         <Sidebar>
