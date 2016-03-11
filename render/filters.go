@@ -1,10 +1,6 @@
 package render
 
 import (
-	"strings"
-
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -125,6 +121,12 @@ func (f Filter) Stats(rpt report.Report) Stats {
 // to indicate a node has an edge pointing to it or from it
 const IsConnected = "is_connected"
 
+// Complement takes a FilterFunc f and returns a FilterFunc that has the same
+// effects, if any, and returns the opposite truth value.
+func Complement(f func(RenderableNode) bool) func(RenderableNode) bool {
+	return func(node RenderableNode) bool { return !f(node) }
+}
+
 // FilterPseudo produces a renderer that removes pseudo nodes from the given
 // renderer
 func FilterPseudo(r Renderer) Renderer {
@@ -155,44 +157,22 @@ func FilterNoop(in Renderer) Renderer {
 
 // FilterStopped filters out stopped containers.
 func FilterStopped(r Renderer) Renderer {
-	return MakeFilter(
-		func(node RenderableNode) bool {
-			containerState, ok := node.Latest.Lookup(docker.ContainerState)
-			return !ok || containerState != docker.StateStopped
-		},
-		r,
-	)
+	return MakeFilter(RenderableNode.IsStopped, r)
+}
+
+// FilterRunning filters out running containers.
+func FilterRunning(r Renderer) Renderer {
+	return MakeFilter(Complement(RenderableNode.IsStopped), r)
 }
 
 // FilterSystem is a Renderer which filters out system nodes.
 func FilterSystem(r Renderer) Renderer {
-	return MakeFilter(
-		func(node RenderableNode) bool {
-			containerName, _ := node.Latest.Lookup(docker.ContainerName)
-			if _, ok := systemContainerNames[containerName]; ok {
-				return false
-			}
-			imageName, _ := node.Latest.Lookup(docker.ImageName)
-			imagePrefix := strings.SplitN(imageName, ":", 2)[0] // :(
-			if _, ok := systemImagePrefixes[imagePrefix]; ok {
-				return false
-			}
-			roleLabel, _ := node.Latest.Lookup(docker.LabelPrefix + "works.weave.role")
-			if roleLabel == "system" {
-				return false
-			}
-			namespace, _ := node.Latest.Lookup(kubernetes.Namespace)
-			if namespace == "kube-system" {
-				return false
-			}
-			podName, _ := node.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.name")
-			if strings.HasPrefix(podName, "kube-system/") {
-				return false
-			}
-			return true
-		},
-		r,
-	)
+	return MakeFilter(RenderableNode.IsSystem, r)
+}
+
+// FilterApplication is a Renderer which filters out system nodes.
+func FilterApplication(r Renderer) Renderer {
+	return MakeFilter(Complement(RenderableNode.IsSystem), r)
 }
 
 var systemContainerNames = map[string]struct{}{

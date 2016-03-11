@@ -21,14 +21,60 @@ var (
 )
 
 func init() {
-	containerFilters := map[string][]APITopologyOption{
-		"system": {
-			{"show", "System containers shown", false, render.FilterNoop},
-			{"hide", "System containers hidden", true, render.FilterSystem},
+	serviceFilters := []APITopologyOptionGroup{
+		{
+			ID:      "system",
+			Default: "application",
+			Options: []APITopologyOption{
+				{"system", "System services", render.FilterApplication},
+				{"application", "Application services", render.FilterSystem},
+				{"both", "Both", render.FilterNoop},
+			},
 		},
-		"stopped": {
-			{"show", "Stopped containers shown", false, render.FilterNoop},
-			{"hide", "Stopped containers hidden", true, render.FilterStopped},
+	}
+
+	podFilters := []APITopologyOptionGroup{
+		{
+			ID:      "system",
+			Default: "application",
+			Options: []APITopologyOption{
+				{"system", "System pods", render.FilterApplication},
+				{"application", "Application pods", render.FilterSystem},
+				{"both", "Both", render.FilterNoop},
+			},
+		},
+	}
+
+	containerFilters := []APITopologyOptionGroup{
+		{
+			ID:      "system",
+			Default: "application",
+			Options: []APITopologyOption{
+				{"system", "System containers", render.FilterApplication},
+				{"application", "Application containers", render.FilterSystem},
+				{"both", "Both", render.FilterNoop},
+			},
+		},
+		{
+			ID:      "stopped",
+			Default: "running",
+			Options: []APITopologyOption{
+				{"stopped", "Stopped containers", render.FilterRunning},
+				{"running", "Running containers", render.FilterStopped},
+				{"both", "Both", render.FilterNoop},
+			},
+		},
+	}
+
+	unconnectedFilter := []APITopologyOptionGroup{
+		{
+			ID:      "unconnected",
+			Default: "hide",
+			Options: []APITopologyOption{
+				// Show the user why there are filtered nodes in this view.
+				// Don't give them the option to show those nodes.
+				{"hide", "Unconnected nodes hidden", render.FilterNoop},
+			},
 		},
 	}
 
@@ -40,21 +86,14 @@ func init() {
 			renderer: render.FilterUnconnected(render.ProcessWithContainerNameRenderer),
 			Name:     "Processes",
 			Rank:     1,
-			Options: map[string][]APITopologyOption{"unconnected": {
-				// Show the user why there are filtered nodes in this view.
-				// Don't give them the option to show those nodes.
-				{"hide", "Unconnected nodes hidden", true, render.FilterNoop},
-			}},
+			Options:  unconnectedFilter,
 		},
 		APITopologyDesc{
 			id:       "processes-by-name",
 			parent:   "processes",
 			renderer: render.FilterUnconnected(render.ProcessNameRenderer),
 			Name:     "by name",
-			Options: map[string][]APITopologyOption{"unconnected": {
-				// Ditto above.
-				{"hide", "Unconnected nodes hidden", true, render.FilterNoop},
-			}},
+			Options:  unconnectedFilter,
 		},
 		APITopologyDesc{
 			id:       "containers",
@@ -82,7 +121,6 @@ func init() {
 			renderer: render.HostRenderer,
 			Name:     "Hosts",
 			Rank:     4,
-			Options:  map[string][]APITopologyOption{},
 		},
 		APITopologyDesc{
 			id:          "pods",
@@ -90,10 +128,7 @@ func init() {
 			Name:        "Pods",
 			Rank:        3,
 			HideIfEmpty: true,
-			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System pods shown", false, render.FilterNoop},
-				{"hide", "System pods hidden", true, render.FilterSystem},
-			}},
+			Options:     podFilters,
 		},
 		APITopologyDesc{
 			id:          "pods-by-service",
@@ -101,10 +136,7 @@ func init() {
 			renderer:    render.PodServiceRenderer,
 			Name:        "by service",
 			HideIfEmpty: true,
-			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System services shown", false, render.FilterNoop},
-				{"hide", "System services hidden", true, render.FilterSystem},
-			}},
+			Options:     serviceFilters,
 		},
 	)
 }
@@ -121,10 +153,10 @@ type APITopologyDesc struct {
 	parent   string
 	renderer render.Renderer
 
-	Name        string                         `json:"name"`
-	Rank        int                            `json:"rank"`
-	HideIfEmpty bool                           `json:"hide_if_empty"`
-	Options     map[string][]APITopologyOption `json:"options"`
+	Name        string                   `json:"name"`
+	Rank        int                      `json:"rank"`
+	HideIfEmpty bool                     `json:"hide_if_empty"`
+	Options     []APITopologyOptionGroup `json:"options"`
 
 	URL           string            `json:"url"`
 	SubTopologies []APITopologyDesc `json:"sub_topologies,omitempty"`
@@ -137,11 +169,17 @@ func (a byName) Len() int           { return len(a) }
 func (a byName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byName) Less(i, j int) bool { return a[i].Name < a[j].Name }
 
+// APITopologyOptionGroup describes a group of APITopologyOptions
+type APITopologyOptionGroup struct {
+	ID      string              `json:"id"`
+	Default string              `json:"defaultValue,omitempty"`
+	Options []APITopologyOption `json:"options,omitempty"`
+}
+
 // APITopologyOption describes a &param=value to a given topology.
 type APITopologyOption struct {
-	Value   string `json:"value"`
-	Display string `json:"display"`
-	Default bool   `json:"default,omitempty"`
+	Value string `json:"value"`
+	Label string `json:"label"`
 
 	decorator func(render.Renderer) render.Renderer
 }
@@ -244,10 +282,10 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer) topologyStat
 
 func renderedForRequest(r *http.Request, topology APITopologyDesc) render.Renderer {
 	renderer := topology.renderer
-	for param, opts := range topology.Options {
-		value := r.FormValue(param)
-		for _, opt := range opts {
-			if (value == "" && opt.Default) || (opt.Value != "" && opt.Value == value) {
+	for _, group := range topology.Options {
+		value := r.FormValue(group.ID)
+		for _, opt := range group.Options {
+			if (value == "" && group.Default == opt.Value) || (opt.Value != "" && opt.Value == value) {
 				renderer = opt.decorator(renderer)
 			}
 		}
