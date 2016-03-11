@@ -123,7 +123,7 @@ func (c *container) ID() string {
 }
 
 func (c *container) Image() string {
-	return c.container.Image
+	return trimImageID(c.container.Image)
 }
 
 func (c *container) PID() int {
@@ -340,7 +340,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ContainerName:     strings.TrimPrefix(c.container.Name, "/"),
 		ContainerCreated:  c.container.Created.Format(time.RFC822),
 		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
-		ImageID:           c.container.Image,
+		ImageID:           c.Image(),
 		ContainerHostname: c.Hostname(),
 		ContainerState:    state,
 	}).WithSets(report.EmptySets.
@@ -350,7 +350,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	).WithMetrics(
 		c.metrics(),
 	).WithParents(report.EmptySets.
-		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.container.Image))),
+		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
 	)
 
 	if c.container.State.Paused {
