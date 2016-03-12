@@ -22,8 +22,11 @@ CODECGEN_TARGETS=report/report.codecgen.go render/render.codecgen.go render/deta
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
-GO_ENVS=GO15VENDOREXPERIMENT=1 GOGC=off
-GO ?= env $(GO_ENVS) go
+GO_ENV=GOGC=off
+GO=env $(GO_ENV) go
+NO_CROSS_COMP=unset GOOS GOHOST
+GO_HOST=$(NO_CROSS_COMP); $(GO)
+WITH_GO_HOST_ENV=$(NO_CROSS_COMP); $(GO_ENV)
 GO_BUILD_INSTALL_DEPS=-i
 GO_BUILD_TAGS='netgo unsafe'
 GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION)" -tags $(GO_BUILD_TAGS)
@@ -68,15 +71,6 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/static.go: $(SCOPE_BACKEND_BUILD
 
 else
 
-UNAME := $(shell uname)
-ifeq ($(UNAME), Darwin)
-	UNSET_GOARCH_GOOS=unset GOARCH GOOS;
-	UNSET_GOGC=unset GOGC;
-else
-	UNSET_GOARCH_GOOS=env -u GOGC -u GOOS
-	UNSET_GOGC=env -u GOGC
-endif
-
 $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
@@ -89,12 +83,12 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	    }
 
 %.codecgen.go: $(CODECGEN_EXE)
-	rm -f $@ && $(UNSET_GOARCH_GOOS) $(GO) build -i -tags $(GO_BUILD_TAGS) ./$(@D) # workaround for https://github.com/ugorji/go/issues/145
-	cd $(@D) && $(UNSET_GOARCH_GOOS) $(GO_ENVS) $(shell pwd)/$(CODECGEN_EXE) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
+	rm -f $@; $(GO_HOST) build $(GO_BUILD_FLAGS) ./$(@D) # workaround for https://github.com/ugorji/go/issues/145
+	cd $(@D) && $(WITH_GO_HOST_ENV) $(shell pwd)/$(CODECGEN_EXE) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
 
 $(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
 	mkdir -p $(@D)
-	$(UNSET_GOARCH_GOOS) $(GO) build -i -tags $(GO_BUILD_TAGS) -o $@ ./$(CODECGEN_DIR)
+	$(GO_HOST) build $(GO_BUILD_FLAGS) -o $@ ./$(CODECGEN_DIR)
 
 $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
@@ -103,7 +97,7 @@ shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	/bin/bash
 
 tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	$(UNSET_GOGC) $(GO_ENVS) ./tools/test -no-go-get
+	./tools/test -no-go-get
 
 lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	./tools/lint .
