@@ -48,6 +48,11 @@ func appMain() {
 
 	defer log.Info("app exiting")
 
+	rand.Seed(time.Now().UnixNano())
+	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
+	app.Version = version
+	log.Infof("app starting, version %s, ID %s", app.Version, app.UniqueID)
+
 	// Start background version checking
 	checkpoint.CheckInterval(&checkpoint.CheckParams{
 		Product: "scope-app",
@@ -60,11 +65,6 @@ func appMain() {
 				r.CurrentVersion, r.CurrentDownloadURL)
 		}
 	})
-
-	rand.Seed(time.Now().UnixNano())
-	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
-	app.Version = version
-	log.Infof("app starting, version %s, ID %s", app.Version, app.UniqueID)
 
 	// If user supplied a weave router address, periodically try and register
 	// out IP address in WeaveDNS.
