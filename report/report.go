@@ -148,6 +148,21 @@ func (r Report) Topologies() []Topology {
 	}
 }
 
+// Topology gets a topology by name
+func (r Report) Topology(name string) (Topology, bool) {
+	t, ok := map[string]Topology{
+		Endpoint:       r.Endpoint,
+		Process:        r.Process,
+		Container:      r.Container,
+		ContainerImage: r.ContainerImage,
+		Pod:            r.Pod,
+		Service:        r.Service,
+		Host:           r.Host,
+		Overlay:        r.Overlay,
+	}[name]
+	return t, ok
+}
+
 // Validate checks the report for various inconsistencies.
 func (r Report) Validate() error {
 	var errs []string

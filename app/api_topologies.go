@@ -266,7 +266,7 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer) topologyStat
 	)
 	for _, n := range renderer.Render(rpt) {
 		nodes++
-		if !n.Pseudo {
+		if n.Topology != render.Pseudo {
 			realNodes++
 		}
 		edges += len(n.Adjacency)

@@ -3,16 +3,14 @@ package app_test
 import (
 	"fmt"
 	"net/url"
-	"reflect"
 	"testing"
 
 	"github.com/gorilla/websocket"
 	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/scope/render/expected"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 )
 
@@ -59,13 +57,13 @@ func TestAPITopologyProcesses(t *testing.T) {
 	defer ts.Close()
 	is404(t, ts, "/api/topology/processes/foobar")
 	{
-		body := getRawJSON(t, ts, "/api/topology/processes/"+expected.ServerProcessID)
+		body := getRawJSON(t, ts, "/api/topology/processes/"+fixture.ServerProcessNodeID)
 		var node app.APINode
 		decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
 		if err := decoder.Decode(&node); err != nil {
 			t.Fatal(err)
 		}
-		equals(t, expected.ServerProcessID, node.Node.ID)
+		equals(t, fixture.ServerProcessNodeID, node.Node.ID)
 		equals(t, "apache", node.Node.Label)
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables
@@ -98,18 +96,21 @@ func TestAPITopologyHosts(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if want, have := expected.RenderedHosts, topo.Nodes.Prune(); !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+		// Should have the rendered host nodes
+		for id := range expected.RenderedHosts {
+			if _, ok := topo.Nodes[id]; !ok {
+				t.Errorf("Expected output to include node: %s, but wasn't found", id)
+			}
 		}
 	}
 	{
-		body := getRawJSON(t, ts, "/api/topology/hosts/"+expected.ServerHostID)
+		body := getRawJSON(t, ts, "/api/topology/hosts/"+fixture.ServerHostNodeID)
 		var node app.APINode
 		decoder := codec.NewDecoderBytes(body, &codec.JsonHandle{})
 		if err := decoder.Decode(&node); err != nil {
 			t.Fatal(err)
 		}
-		equals(t, expected.ServerHostID, node.Node.ID)
+		equals(t, fixture.ServerHostNodeID, node.Node.ID)
 		equals(t, "server", node.Node.Label)
 		equals(t, false, node.Node.Pseudo)
 		// Let's not unit-test the specific content of the detail tables
@@ -141,7 +142,7 @@ func TestAPITopologyWebsocket(t *testing.T) {
 
 	_, p, err := ws.ReadMessage()
 	ok(t, err)
-	var d render.Diff
+	var d detailed.Diff
 	decoder := codec.NewDecoderBytes(p, &codec.JsonHandle{})
 	if err := decoder.Decode(&d); err != nil {
 		t.Fatalf("JSON parse error: %s", err)

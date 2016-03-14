@@ -1,6 +1,11 @@
 package render
 
 import (
+	"strings"
+
+	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/endpoint"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -8,12 +13,12 @@ import (
 // in one call - useful for functions that need to consider the entire graph.
 // We should minimise the use of this renderer type, as it is very inflexible.
 type CustomRenderer struct {
-	RenderFunc func(RenderableNodes) RenderableNodes
+	RenderFunc func(report.Nodes) report.Nodes
 	Renderer
 }
 
 // Render implements Renderer
-func (c CustomRenderer) Render(rpt report.Report) RenderableNodes {
+func (c CustomRenderer) Render(rpt report.Report) report.Nodes {
 	return c.RenderFunc(c.Renderer.Render(rpt))
 }
 
@@ -23,7 +28,7 @@ func (c CustomRenderer) Render(rpt report.Report) RenderableNodes {
 func ColorConnected(r Renderer) Renderer {
 	return CustomRenderer{
 		Renderer: r,
-		RenderFunc: func(input RenderableNodes) RenderableNodes {
+		RenderFunc: func(input report.Nodes) report.Nodes {
 			connected := map[string]struct{}{}
 			void := struct{}{}
 
@@ -42,9 +47,7 @@ func ColorConnected(r Renderer) Renderer {
 
 			output := input.Copy()
 			for id := range connected {
-				output[id] = output[id].WithNode(report.MakeNodeWith(map[string]string{
-					IsConnected: "true",
-				}))
+				output[id] = output[id].WithLatests(map[string]string{IsConnected: "true"})
 			}
 			return output
 		},
@@ -54,22 +57,22 @@ func ColorConnected(r Renderer) Renderer {
 // Filter removes nodes from a view based on a predicate.
 type Filter struct {
 	Renderer
-	FilterFunc func(RenderableNode) bool
+	FilterFunc func(report.Node) bool
 }
 
 // MakeFilter makes a new Filter.
-func MakeFilter(f func(RenderableNode) bool, r Renderer) Renderer {
+func MakeFilter(f func(report.Node) bool, r Renderer) Renderer {
 	return Memoise(&Filter{r, f})
 }
 
 // Render implements Renderer
-func (f *Filter) Render(rpt report.Report) RenderableNodes {
+func (f *Filter) Render(rpt report.Report) report.Nodes {
 	nodes, _ := f.render(rpt)
 	return nodes
 }
 
-func (f *Filter) render(rpt report.Report) (RenderableNodes, int) {
-	output := RenderableNodes{}
+func (f *Filter) render(rpt report.Report) (report.Nodes, int) {
+	output := report.Nodes{}
 	inDegrees := map[string]int{}
 	filtered := 0
 	for id, node := range f.Renderer.Render(rpt) {
@@ -100,7 +103,7 @@ func (f *Filter) render(rpt report.Report) (RenderableNodes, int) {
 			continue
 		}
 		node := output[id]
-		if !node.Pseudo || len(node.Adjacency) > 0 {
+		if node.Topology != Pseudo || len(node.Adjacency) > 0 {
 			continue
 		}
 		delete(output, id)
@@ -123,16 +126,16 @@ const IsConnected = "is_connected"
 
 // Complement takes a FilterFunc f and returns a FilterFunc that has the same
 // effects, if any, and returns the opposite truth value.
-func Complement(f func(RenderableNode) bool) func(RenderableNode) bool {
-	return func(node RenderableNode) bool { return !f(node) }
+func Complement(f func(report.Node) bool) func(report.Node) bool {
+	return func(node report.Node) bool { return !f(node) }
 }
 
 // FilterPseudo produces a renderer that removes pseudo nodes from the given
 // renderer
 func FilterPseudo(r Renderer) Renderer {
 	return MakeFilter(
-		func(node RenderableNode) bool {
-			return !node.Pseudo
+		func(node report.Node) bool {
+			return node.Topology != Pseudo
 		},
 		r,
 	)
@@ -142,7 +145,7 @@ func FilterPseudo(r Renderer) Renderer {
 // from the given renderer
 func FilterUnconnected(r Renderer) Renderer {
 	return MakeFilter(
-		func(node RenderableNode) bool {
+		func(node report.Node) bool {
 			_, ok := node.Latest.Lookup(IsConnected)
 			return ok
 		},
@@ -157,22 +160,65 @@ func FilterNoop(in Renderer) Renderer {
 
 // FilterStopped filters out stopped containers.
 func FilterStopped(r Renderer) Renderer {
-	return MakeFilter(RenderableNode.IsStopped, r)
+	return MakeFilter(IsStopped, r)
+}
+
+// IsStopped checks if the node is a stopped docker container
+func IsStopped(n report.Node) bool {
+	containerState, ok := n.Latest.Lookup(docker.ContainerState)
+	return !ok || containerState != docker.StateStopped
 }
 
 // FilterRunning filters out running containers.
 func FilterRunning(r Renderer) Renderer {
-	return MakeFilter(Complement(RenderableNode.IsStopped), r)
+	return MakeFilter(Complement(IsStopped), r)
+}
+
+// FilterNonProcspied removes endpoints which were not found in procspy.
+func FilterNonProcspied(r Renderer) Renderer {
+	return MakeFilter(
+		func(node report.Node) bool {
+			_, ok := node.Latest.Lookup(endpoint.Procspied)
+			return ok
+		},
+		r,
+	)
+}
+
+// IsSystem checks if the node is a "system" node
+func IsSystem(n report.Node) bool {
+	containerName, _ := n.Latest.Lookup(docker.ContainerName)
+	if _, ok := systemContainerNames[containerName]; ok {
+		return false
+	}
+	imageName, _ := n.Latest.Lookup(docker.ImageName)
+	imagePrefix := strings.SplitN(imageName, ":", 2)[0] // :(
+	if _, ok := systemImagePrefixes[imagePrefix]; ok {
+		return false
+	}
+	roleLabel, _ := n.Latest.Lookup(docker.LabelPrefix + "works.weave.role")
+	if roleLabel == "system" {
+		return false
+	}
+	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
+	if namespace == "kube-system" {
+		return false
+	}
+	podName, _ := n.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.name")
+	if strings.HasPrefix(podName, "kube-system/") {
+		return false
+	}
+	return true
 }
 
 // FilterSystem is a Renderer which filters out system nodes.
 func FilterSystem(r Renderer) Renderer {
-	return MakeFilter(RenderableNode.IsSystem, r)
+	return MakeFilter(IsSystem, r)
 }
 
 // FilterApplication is a Renderer which filters out system nodes.
 func FilterApplication(r Renderer) Renderer {
-	return MakeFilter(Complement(RenderableNode.IsSystem), r)
+	return MakeFilter(Complement(IsSystem), r)
 }
 
 var systemContainerNames = map[string]struct{}{

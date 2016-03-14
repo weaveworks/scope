@@ -8,7 +8,7 @@ import (
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/report"
 )
 
 var labels = map[string]string{
@@ -46,7 +46,7 @@ var labels = map[string]string{
 	process.PID:                  "PID",
 	process.PPID:                 "Parent PID",
 	process.Threads:              "# Threads",
-	render.ContainersKey:         "# Containers",
+	report.Container:             "# Containers",
 }
 
 // Label maps from the internal keys to the human-readable label for a piece

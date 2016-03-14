@@ -61,9 +61,9 @@ func TestMultipleProbes(t *testing.T) {
 	})
 }
 
-func parseTopology(t *testing.T, p []byte) map[string]report.RenderableNode {
+func parseTopology(t *testing.T, p []byte) map[string]report.Node {
 	var r struct {
-		Nodes map[string]report.RenderableNode `json:"nodes"`
+		Nodes map[string]report.Node `json:"nodes"`
 	}
 
 	if err := json.Unmarshal(p, &r); err != nil {
@@ -85,7 +85,7 @@ func parseEdge(t *testing.T, p []byte) map[string]interface{} {
 	return edge.Metadata
 }
 
-func assertAdjacent(t *testing.T, n report.RenderableNode, ids ...string) {
+func assertAdjacent(t *testing.T, n report.Node, ids ...string) {
 	want := report.MakeIDList(ids...)
 
 	if have := n.Adjacency; !reflect.DeepEqual(want, have) {

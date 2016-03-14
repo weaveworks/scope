@@ -96,6 +96,18 @@ func (m LatestMap) Lookup(key string) (string, bool) {
 	return value.(LatestEntry).Value, true
 }
 
+// LookupEntry returns the raw entry for the given key.
+func (m LatestMap) LookupEntry(key string) (LatestEntry, bool) {
+	if m.Map == nil {
+		return LatestEntry{}, false
+	}
+	value, ok := m.Map.Lookup(key)
+	if !ok {
+		return LatestEntry{}, false
+	}
+	return value.(LatestEntry), true
+}
+
 // Set the value for the given key.
 func (m LatestMap) Set(key string, timestamp time.Time, value string) LatestMap {
 	if m.Map == nil {

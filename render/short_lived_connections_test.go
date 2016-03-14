@@ -69,30 +69,19 @@ var (
 		},
 	}
 
-	want = (render.RenderableNodes{
-		render.IncomingInternetID: {
-			ID:         render.IncomingInternetID,
-			Label:      render.InboundMajor,
-			LabelMinor: render.InboundMinor,
-			Pseudo:     true,
-			Shape:      "cloud",
-			Node:       report.MakeNode().WithAdjacent(render.MakeContainerID(containerID)),
-		},
-		render.MakeContainerID(containerID): {
-			ID:          render.MakeContainerID(containerID),
-			Label:       containerName,
-			LabelMinor:  serverHostID,
-			Rank:        "",
-			Pseudo:      false,
-			Shape:       "hexagon",
-			Node:        report.MakeNode(),
-			ControlNode: containerNodeID,
-		},
-	}).Prune()
+	want = (report.Nodes{
+		render.IncomingInternetID: report.MakeNode().
+			WithID(render.IncomingInternetID).
+			WithTopology(render.Pseudo).
+			WithAdjacent(report.MakeContainerNodeID(containerID)),
+		report.MakeContainerNodeID(containerID): report.MakeNode().
+			WithID(report.MakeContainerNodeID(containerID)).
+			WithTopology(report.Container),
+	})
 )
 
 func TestShortLivedInternetNodeConnections(t *testing.T) {
-	have := (render.ContainerWithImageNameRenderer.Render(rpt)).Prune()
+	have := render.ContainerWithImageNameRenderer.Render(rpt).Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

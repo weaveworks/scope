@@ -88,6 +88,8 @@ func (c Counters) Merge(other Counters) Counters {
 	return Counters{output}
 }
 
+// ForEach calls f for each k/v pair of counters. Keys are iterated in
+// lexicographical order.
 func (c Counters) ForEach(f func(key string, val int)) {
 	if c.psMap != nil {
 		keys := c.psMap.Keys()
@@ -100,6 +102,7 @@ func (c Counters) ForEach(f func(key string, val int)) {
 	}
 }
 
+// String serializes Counters into a string.
 func (c Counters) String() string {
 	buf := bytes.NewBufferString("{")
 	prefix := ""

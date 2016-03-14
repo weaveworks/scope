@@ -121,7 +121,7 @@ var (
 				// Node is arbitrary. We're free to put only precisely what we
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
-				Client54001NodeID: report.MakeNode().WithLatests(map[string]string{
+				Client54001NodeID: report.MakeNode().WithID(Client54001NodeID).WithLatests(map[string]string{
 					endpoint.Addr:      ClientIP,
 					endpoint.Port:      ClientPort54001,
 					process.PID:        Client1PID,
@@ -132,7 +132,7 @@ var (
 					EgressByteCount:   newu64(100),
 				}),
 
-				Client54002NodeID: report.MakeNode().WithLatests(map[string]string{
+				Client54002NodeID: report.MakeNode().WithID(Client54002NodeID).WithLatests(map[string]string{
 					endpoint.Addr:      ClientIP,
 					endpoint.Port:      ClientPort54002,
 					process.PID:        Client2PID,
@@ -143,7 +143,7 @@ var (
 					EgressByteCount:   newu64(200),
 				}),
 
-				Server80NodeID: report.MakeNode().WithLatests(map[string]string{
+				Server80NodeID: report.MakeNode().WithID(Server80NodeID).WithLatests(map[string]string{
 					endpoint.Addr:      ServerIP,
 					endpoint.Port:      ServerPort,
 					process.PID:        ServerPID,
@@ -151,7 +151,7 @@ var (
 					endpoint.Procspied: True,
 				}),
 
-				NonContainerNodeID: report.MakeNode().WithLatests(map[string]string{
+				NonContainerNodeID: report.MakeNode().WithID(NonContainerNodeID).WithLatests(map[string]string{
 					endpoint.Addr:      ServerIP,
 					endpoint.Port:      NonContainerClientPort,
 					process.PID:        NonContainerPID,
@@ -160,7 +160,7 @@ var (
 				}).WithAdjacent(GoogleEndpointNodeID),
 
 				// Probe pseudo nodes
-				UnknownClient1NodeID: report.MakeNode().WithLatests(map[string]string{
+				UnknownClient1NodeID: report.MakeNode().WithID(UnknownClient1NodeID).WithLatests(map[string]string{
 					endpoint.Addr:      UnknownClient1IP,
 					endpoint.Port:      UnknownClient1Port,
 					endpoint.Procspied: True,
@@ -169,7 +169,7 @@ var (
 					EgressByteCount:   newu64(300),
 				}),
 
-				UnknownClient2NodeID: report.MakeNode().WithLatests(map[string]string{
+				UnknownClient2NodeID: report.MakeNode().WithID(UnknownClient2NodeID).WithLatests(map[string]string{
 					endpoint.Addr:      UnknownClient2IP,
 					endpoint.Port:      UnknownClient2Port,
 					endpoint.Procspied: True,
@@ -178,7 +178,7 @@ var (
 					EgressByteCount:   newu64(400),
 				}),
 
-				UnknownClient3NodeID: report.MakeNode().WithLatests(map[string]string{
+				UnknownClient3NodeID: report.MakeNode().WithID(UnknownClient3NodeID).WithLatests(map[string]string{
 					endpoint.Addr:      UnknownClient3IP,
 					endpoint.Port:      UnknownClient3Port,
 					endpoint.Procspied: True,
@@ -187,7 +187,7 @@ var (
 					EgressByteCount:   newu64(500),
 				}),
 
-				RandomClientNodeID: report.MakeNode().WithLatests(map[string]string{
+				RandomClientNodeID: report.MakeNode().WithID(RandomClientNodeID).WithLatests(map[string]string{
 					endpoint.Addr:      RandomClientIP,
 					endpoint.Port:      RandomClientPort,
 					endpoint.Procspied: True,
@@ -196,7 +196,7 @@ var (
 					EgressByteCount:   newu64(600),
 				}),
 
-				GoogleEndpointNodeID: report.MakeNode().WithLatests(map[string]string{
+				GoogleEndpointNodeID: report.MakeNode().WithID(GoogleEndpointNodeID).WithLatests(map[string]string{
 					endpoint.Addr:      GoogleIP,
 					endpoint.Port:      GooglePort,
 					endpoint.Procspied: True,

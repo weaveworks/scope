@@ -11,7 +11,6 @@ import (
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -37,7 +36,7 @@ var (
 	}
 	containerImageNodeMetadata = []MetadataRowTemplate{
 		Latest{ID: docker.ImageID, Truncate: 12, Prime: true},
-		Counter{ID: render.ContainersKey, Prime: true},
+		Counter{ID: report.Container, Prime: true},
 	}
 	podNodeMetadata = []MetadataRowTemplate{
 		Latest{ID: kubernetes.PodID, Prime: true},
@@ -119,10 +118,7 @@ type MetadataRow struct {
 
 // Copy returns a value copy of a metadata row.
 func (m MetadataRow) Copy() MetadataRow {
-	return MetadataRow{
-		ID:    m.ID,
-		Value: m.Value,
-	}
+	return m
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
@@ -171,6 +167,11 @@ func (m *MetadataRow) CodecDecodeSelf(decoder *codec.Decoder) {
 // NodeMetadata produces a table (to be consumed directly by the UI) based on
 // an origin ID, which is (optimistically) a node ID in one of our topologies.
 func NodeMetadata(n report.Node) []MetadataRow {
+	if _, ok := n.Counters.Lookup(n.Topology); ok {
+		// This is a group of nodes, so no metadata!
+		return nil
+	}
+
 	renderers := map[string][]MetadataRowTemplate{
 		report.Process:        processNodeMetadata,
 		report.Container:      containerNodeMetadata,
