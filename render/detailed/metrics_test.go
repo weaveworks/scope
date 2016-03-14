@@ -3,6 +3,7 @@ package detailed_test
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
@@ -108,5 +109,32 @@ func TestNodeMetrics(t *testing.T) {
 		if !reflect.DeepEqual(input.want, have) {
 			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
 		}
+	}
+}
+
+func TestMetricRowSummary(t *testing.T) {
+	var (
+		now    = time.Now()
+		metric = report.MakeMetric().Add(now, 1.234)
+		row    = detailed.MetricRow{
+			ID:     "id",
+			Format: "format",
+			Group:  "group",
+			Value:  1.234,
+			Metric: &metric,
+		}
+		summary = row.Summary()
+	)
+	// summary should have all the same fields
+	if row.ID != summary.ID || row.Format != summary.Format || row.Group != summary.Group || row.Value != summary.Value {
+		t.Errorf("Expected summary to have same fields as original: %#v, but had %#v", row, summary)
+	}
+	// summary should not have any samples
+	if summary.Metric.Len() != 0 {
+		t.Errorf("Expected summary to have no samples, but had %d", summary.Metric.Len())
+	}
+	// original metric should still have its samples
+	if metric.Len() != 1 {
+		t.Errorf("Expected original metric to still have it's samples, but had %d", metric.Len())
 	}
 }

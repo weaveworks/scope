@@ -21,19 +21,18 @@ func TestMakeDetailedHostNode(t *testing.T) {
 	renderableNode := renderableNodes[render.MakeHostID(fixture.ClientHostID)]
 	have := detailed.MakeNode("hosts", fixture.Report, renderableNodes, renderableNode)
 
-	containerImageNodeSummary, _ := detailed.MakeNodeSummary(
-		render.ContainerImageRenderer.Render(fixture.Report)[expected.ClientContainerImageID],
-	)
-	containerNodeSummary, _ := detailed.MakeNodeSummary(
-		render.ContainerRenderer.Render(fixture.Report)[expected.ClientContainerID],
-	)
-	process1NodeSummary, _ := detailed.MakeNodeSummary(
-		render.ProcessRenderer.Render(fixture.Report)[expected.ClientProcess1ID],
-	)
+	child := func(r render.Renderer, id string) detailed.NodeSummary {
+		s, ok := detailed.MakeNodeSummary(r.Render(fixture.Report)[id])
+		if !ok {
+			t.Fatalf("Expected node %s to be summarizable, but wasn't", id)
+		}
+		return s.SummarizeMetrics()
+	}
+	containerImageNodeSummary := child(render.ContainerImageRenderer, expected.ClientContainerImageID)
+	containerNodeSummary := child(render.ContainerRenderer, expected.ClientContainerID)
+	process1NodeSummary := child(render.ProcessRenderer, expected.ClientProcess1ID)
 	process1NodeSummary.Linkable = true
-	process2NodeSummary, _ := detailed.MakeNodeSummary(
-		render.ProcessRenderer.Render(fixture.Report)[expected.ClientProcess2ID],
-	)
+	process2NodeSummary := child(render.ProcessRenderer, expected.ClientProcess2ID)
 	process2NodeSummary.Linkable = true
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
@@ -214,7 +213,6 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						Metadata: []detailed.MetadataRow{
 							{ID: process.PID, Value: fixture.ServerPID, Prime: true, Datatype: "number"},
 						},
-						Metrics: []detailed.MetricRow{},
 					},
 				},
 			},

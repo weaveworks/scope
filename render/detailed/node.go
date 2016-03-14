@@ -1,7 +1,6 @@
 package detailed
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/ugorji/go/codec"
@@ -79,10 +78,7 @@ func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
 // MakeNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
 func MakeNode(topologyID string, r report.Report, ns render.RenderableNodes, n render.RenderableNode) Node {
-	summary, ok := MakeNodeSummary(n)
-	if !ok {
-		fmt.Printf("[DEBUG] MakeNodeSummary(%#v) !ok\n", n)
-	}
+	summary, _ := MakeNodeSummary(n)
 	summary.ID = n.ID
 	summary.Label = n.Label
 
@@ -196,7 +192,7 @@ func children(n render.RenderableNode) []NodeSummaryGroup {
 	n.Children.ForEach(func(child render.RenderableNode) {
 		if child.ID != n.ID {
 			if summary, ok := MakeNodeSummary(child); ok {
-				summaries[child.Topology] = append(summaries[child.Topology], summary)
+				summaries[child.Topology] = append(summaries[child.Topology], summary.SummarizeMetrics())
 			}
 		}
 	})

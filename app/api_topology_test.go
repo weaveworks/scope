@@ -9,7 +9,7 @@ import (
 	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/test/fixture"
 )
@@ -142,7 +142,7 @@ func TestAPITopologyWebsocket(t *testing.T) {
 
 	_, p, err := ws.ReadMessage()
 	ok(t, err)
-	var d render.Diff
+	var d detailed.Diff
 	decoder := codec.NewDecoderBytes(p, &codec.JsonHandle{})
 	if err := decoder.Decode(&d); err != nil {
 		t.Fatalf("JSON parse error: %s", err)

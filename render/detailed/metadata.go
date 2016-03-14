@@ -119,10 +119,7 @@ type MetadataRow struct {
 
 // Copy returns a value copy of a metadata row.
 func (m MetadataRow) Copy() MetadataRow {
-	return MetadataRow{
-		ID:    m.ID,
-		Value: m.Value,
-	}
+	return m
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead

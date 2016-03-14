@@ -86,6 +86,16 @@ func MakeNodeSummary(n render.RenderableNode) (NodeSummary, bool) {
 	return summary, true
 }
 
+// SummarizeMetrics returns a copy of the NodeSummary where the metrics are
+// replaced with their summaries
+func (n NodeSummary) SummarizeMetrics() NodeSummary {
+	cp := n.Copy()
+	for i, m := range cp.Metrics {
+		cp.Metrics[i] = m.Summary()
+	}
+	return cp
+}
+
 // Copy returns a value copy of the NodeSummary
 func (n NodeSummary) Copy() NodeSummary {
 	result := NodeSummary{
@@ -147,6 +157,9 @@ func Summaries(rns render.RenderableNodes) NodeSummaries {
 	result := NodeSummaries{}
 	for id, node := range rns {
 		if summary, ok := MakeNodeSummary(node); ok {
+			for i, m := range summary.Metrics {
+				summary.Metrics[i] = m.Summary()
+			}
 			result[id] = summary
 		}
 	}

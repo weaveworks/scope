@@ -104,7 +104,7 @@ func handleWebsocket(
 	}(conn)
 
 	var (
-		previousTopo render.RenderableNodes
+		previousTopo detailed.NodeSummaries
 		tick         = time.Tick(loop)
 		wait         = make(chan struct{}, 1)
 	)
@@ -117,8 +117,8 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := renderer.Render(report).Prune()
-		diff := render.TopoDiff(previousTopo, newTopo)
+		newTopo := detailed.Summaries(renderer.Render(report))
+		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
 		if err := conn.WriteJSON(diff); err != nil {
