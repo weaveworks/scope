@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import {getMetricValue} from '../utils/data-utils.js';
+import {getMetricValue, getMetricColor} from '../utils/data-utils.js';
 
 export default function NodeShapeCircle({highlighted, size, color, metric}) {
   const hightlightNode = <circle r={size * 0.7} className="highlighted" />;
@@ -12,7 +12,7 @@ export default function NodeShapeCircle({highlighted, size, color, metric}) {
   });
   const metricStyle = {
     fillOpacity: 0.5,
-    fill: color
+    fill: getMetricColor()
   };
 
   return (

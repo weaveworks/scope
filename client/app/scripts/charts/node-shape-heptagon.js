@@ -1,7 +1,7 @@
 import React from 'react';
 import d3 from 'd3';
 import classNames from 'classnames';
-import {getMetricValue} from '../utils/data-utils.js';
+import {getMetricValue, getMetricColor} from '../utils/data-utils.js';
 
 const line = d3.svg.line()
   .interpolate('cardinal-closed')
@@ -29,6 +29,10 @@ export default function NodeShapeHeptagon({highlighted, size, color, metric}) {
   const className = classNames('shape', {
     'metrics': value !== null
   });
+  const metricStyle = {
+    fillOpacity: 0.5,
+    fill: getMetricColor()
+  };
 
   return (
     <g className={className}>
@@ -45,7 +49,7 @@ export default function NodeShapeHeptagon({highlighted, size, color, metric}) {
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(0.45)} />
-      <path className="metric-fill" clipPath={`url(#${clipId})`} {...pathProps(0.45)} />
+      <path className="metric-fill" clipPath={`url(#${clipId})`} style={metricStyle} {...pathProps(0.45)} />
       {highlighted && value !== null ?
         <text dy="0.35em" style={{'textAnchor': 'middle'}}>{formattedValue}</text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}

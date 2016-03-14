@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import {getMetricValue} from '../utils/data-utils.js';
+import {getMetricValue, getMetricColor} from '../utils/data-utils.js';
 
 export default function NodeShapeSquare({
   highlighted, size, color, rx = 0, ry = 0, metric
@@ -22,7 +22,7 @@ export default function NodeShapeSquare({
 
   const metricStyle = {
     fillOpacity: 0.5,
-    fill: color
+    fill: getMetricColor()
   };
 
   return (

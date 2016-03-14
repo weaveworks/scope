@@ -1,7 +1,7 @@
 import React from 'react';
 import d3 from 'd3';
 import classNames from 'classnames';
-import {getMetricValue} from '../utils/data-utils.js';
+import {getMetricValue, getMetricColor} from '../utils/data-utils.js';
 
 const line = d3.svg.line()
   .interpolate('cardinal-closed')
@@ -42,7 +42,7 @@ export default function NodeShapeHex({highlighted, size, color, metric}) {
   });
   const metricStyle = {
     fillOpacity: 0.5,
-    fill: color
+    fill: getMetricColor()
   };
 
   return (

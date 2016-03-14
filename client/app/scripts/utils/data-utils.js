@@ -87,7 +87,7 @@ const METRIC_FORMATS = {
   load1: 'number',
   load15: 'number',
   load5: 'number',
-  open_files_count: 'number',
+  open_files_count: 'integer',
   process_cpu_usage_percent: 'percent',
   process_memory_usage_bytes: 'filesize'
 };
@@ -127,4 +127,18 @@ export function getMetricValue(metric, size) {
     value: value,
     formattedValue: formatMetric(value, metricWithFormat, true)
   };
+}
+
+export function getMetricColor() {
+  const selectedMetric = AppStore.getSelectedMetric();
+  if (/memory/.test(selectedMetric)) {
+    return '#1f77b4';
+  } else if (/cpu/.test(selectedMetric)) {
+    return '#2ca02c';
+  } else if (/files/.test(selectedMetric)) {
+    return '#9467bd';
+  } else if (/load/.test(selectedMetric)) {
+    return '#17becf';
+  }
+  return 'steelBlue';
 }
