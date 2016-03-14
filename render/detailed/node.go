@@ -1,6 +1,7 @@
 package detailed
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/ugorji/go/codec"
@@ -16,8 +17,6 @@ import (
 // we want deep information about an individual node.
 type Node struct {
 	NodeSummary
-	Rank        string             `json:"rank,omitempty"`
-	Pseudo      bool               `json:"pseudo,omitempty"`
 	Controls    []ControlInstance  `json:"controls"`
 	Children    []NodeSummaryGroup `json:"children,omitempty"`
 	Parents     []Parent           `json:"parents,omitempty"`
@@ -80,14 +79,15 @@ func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
 // MakeNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
 func MakeNode(topologyID string, r report.Report, ns render.RenderableNodes, n render.RenderableNode) Node {
-	summary, _ := MakeNodeSummary(n)
+	summary, ok := MakeNodeSummary(n)
+	if !ok {
+		fmt.Printf("[DEBUG] MakeNodeSummary(%#v) !ok\n", n)
+	}
 	summary.ID = n.ID
 	summary.Label = n.Label
 
 	return Node{
 		NodeSummary: summary,
-		Rank:        n.Rank,
-		Pseudo:      n.Pseudo,
 		Controls:    controls(r, n),
 		Children:    children(n),
 		Parents:     Parents(r, n),

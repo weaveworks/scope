@@ -18,7 +18,7 @@ const (
 
 // APITopology is returned by the /api/topology/{name} handler.
 type APITopology struct {
-	Nodes render.RenderableNodes `json:"nodes"`
+	Nodes detailed.NodeSummaries `json:"nodes"`
 }
 
 // APINode is returned by the /api/topology/{name}/{id} handler.
@@ -34,7 +34,7 @@ func handleTopology(ctx context.Context, rep Reporter, renderer render.Renderer,
 		return
 	}
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: renderer.Render(report).Prune(),
+		Nodes: detailed.Summaries(renderer.Render(report)),
 	})
 }
 

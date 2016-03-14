@@ -3,7 +3,6 @@ package app_test
 import (
 	"fmt"
 	"net/url"
-	"reflect"
 	"testing"
 
 	"github.com/gorilla/websocket"
@@ -12,7 +11,6 @@ import (
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 )
 
@@ -98,8 +96,11 @@ func TestAPITopologyHosts(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if want, have := expected.RenderedHosts, topo.Nodes.Prune(); !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+		// Should have the rendered host nodes
+		for id := range expected.RenderedHosts {
+			if _, ok := topo.Nodes[id]; !ok {
+				t.Errorf("Expected output to include node: %s, but wasn't found", id)
+			}
 		}
 	}
 	{

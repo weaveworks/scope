@@ -11,6 +11,7 @@ import (
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/scope/render/expected"
+	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 )
@@ -36,9 +37,14 @@ func TestMakeDetailedHostNode(t *testing.T) {
 	process2NodeSummary.Linkable = true
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
-			ID:       render.MakeHostID(fixture.ClientHostID),
-			Label:    "client",
-			Linkable: true,
+			ID:         render.MakeHostID(fixture.ClientHostID),
+			Label:      "client",
+			LabelMinor: "hostname.com",
+			Rank:       "hostname.com",
+			Pseudo:     false,
+			Shape:      "circle",
+			Linkable:   true,
+			Adjacency:  report.MakeIDList("host:server.hostname.com"),
 			Metadata: []detailed.MetadataRow{
 				{
 					ID:    "host_name",
@@ -86,8 +92,6 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				},
 			},
 		},
-		Rank:     "hostname.com",
-		Pseudo:   false,
 		Controls: []detailed.ControlInstance{},
 		Children: []detailed.NodeSummaryGroup{
 			{
@@ -161,9 +165,12 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 	have := detailed.MakeNode("containers", fixture.Report, renderableNodes, renderableNode)
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
-			ID:       id,
-			Label:    "server",
-			Linkable: true,
+			ID:         id,
+			Label:      "server",
+			LabelMinor: "server.hostname.com",
+			Shape:      "hexagon",
+			Linkable:   true,
+			Pseudo:     false,
 			Metadata: []detailed.MetadataRow{
 				{ID: "docker_container_id", Value: fixture.ServerContainerID, Prime: true},
 				{ID: "docker_container_state", Value: "running", Prime: true},
@@ -190,7 +197,6 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				},
 			},
 		},
-		Pseudo:   false,
 		Controls: []detailed.ControlInstance{},
 		Children: []detailed.NodeSummaryGroup{
 			{
@@ -199,9 +205,12 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Columns:    []detailed.Column{detailed.MakeColumn(process.PID), detailed.MakeColumn(process.CPUUsage), detailed.MakeColumn(process.MemoryUsage)},
 				Nodes: []detailed.NodeSummary{
 					{
-						ID:       fmt.Sprintf("process:%s:%s", "server.hostname.com", fixture.ServerPID),
-						Label:    "apache",
-						Linkable: true,
+						ID:         fmt.Sprintf("process:%s:%s", "server.hostname.com", fixture.ServerPID),
+						Label:      "apache",
+						LabelMinor: "server.hostname.com (215)",
+						Rank:       "apache",
+						Shape:      "square",
+						Linkable:   true,
 						Metadata: []detailed.MetadataRow{
 							{ID: process.PID, Value: fixture.ServerPID, Prime: true, Datatype: "number"},
 						},

@@ -1,12 +1,6 @@
 package detailed
 
 import (
-	"fmt"
-
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/probe/kubernetes"
-	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
@@ -53,10 +47,16 @@ func MakeColumn(id string) Column {
 type NodeSummary struct {
 	ID           string        `json:"id"`
 	Label        string        `json:"label"`
-	Linkable     bool          `json:"linkable"` // Whether this node can be linked-to
+	LabelMinor   string        `json:"label_minor"`
+	Rank         string        `json:"rank,omitempty"`
+	Shape        string        `json:"shape,omitempty"`
+	Stack        bool          `json:"stack,omitempty"`
+	Linkable     bool          `json:"linkable,omitempty"` // Whether this node can be linked-to
+	Pseudo       bool          `json:"pseudo,omitempty"`
 	Metadata     []MetadataRow `json:"metadata,omitempty"`
 	DockerLabels []MetadataRow `json:"docker_labels,omitempty"`
 	Metrics      []MetricRow   `json:"metrics,omitempty"`
+	Adjacency    report.IDList `json:"adjacency,omitempty"`
 }
 
 // MakeNodeSummary summarizes a node, if possible.
@@ -68,18 +68,35 @@ func MakeNodeSummary(n render.RenderableNode) (NodeSummary, bool) {
 		report.Pod:            podNodeSummary,
 		report.Host:           hostNodeSummary,
 	}
+	var summary NodeSummary
 	if renderer, ok := renderers[n.Topology]; ok {
-		return renderer(n.Node), true
+		summary = renderer(n.Node)
+	} else if n.Pseudo {
+		summary = pseudoNodeSummary(n.Node)
+	} else {
+		return NodeSummary{}, false
 	}
-	return NodeSummary{}, false
+	summary.ID = n.ID
+	summary.Label = n.Label
+	summary.LabelMinor = n.LabelMinor
+	summary.Rank = n.Rank
+	summary.Shape = n.Shape
+	summary.Stack = n.Stack
+	summary.Adjacency = n.Node.Adjacency.Copy()
+	return summary, true
 }
 
 // Copy returns a value copy of the NodeSummary
 func (n NodeSummary) Copy() NodeSummary {
 	result := NodeSummary{
-		ID:       n.ID,
-		Label:    n.Label,
-		Linkable: n.Linkable,
+		ID:         n.ID,
+		Label:      n.Label,
+		LabelMinor: n.LabelMinor,
+		Rank:       n.Rank,
+		Shape:      n.Shape,
+		Stack:      n.Stack,
+		Linkable:   n.Linkable,
+		Adjacency:  n.Adjacency.Copy(),
 	}
 	for _, row := range n.Metadata {
 		result.Metadata = append(result.Metadata, row.Copy())
@@ -93,10 +110,8 @@ func (n NodeSummary) Copy() NodeSummary {
 	return result
 }
 
-func baseNodeSummary(id, label string, linkable bool, nmd report.Node) NodeSummary {
+func baseNodeSummary(linkable bool, nmd report.Node) NodeSummary {
 	return NodeSummary{
-		ID:           id,
-		Label:        label,
 		Linkable:     linkable,
 		Metadata:     NodeMetadata(nmd),
 		DockerLabels: NodeDockerLabels(nmd),
@@ -104,45 +119,36 @@ func baseNodeSummary(id, label string, linkable bool, nmd report.Node) NodeSumma
 	}
 }
 
+func pseudoNodeSummary(nmd report.Node) NodeSummary {
+	n := baseNodeSummary(true, nmd)
+	n.Pseudo = true
+	return n
+}
+
 func processNodeSummary(nmd report.Node) NodeSummary {
-	var (
-		id               string
-		label, nameFound = nmd.Latest.Lookup(process.Name)
-	)
-	if pid, ok := nmd.Latest.Lookup(process.PID); ok {
-		if !nameFound {
-			label = fmt.Sprintf("(%s)", pid)
-		}
-		id = render.MakeProcessID(report.ExtractHostID(nmd), pid)
-	}
 	_, isConnected := nmd.Latest.Lookup(render.IsConnected)
-	return baseNodeSummary(id, label, isConnected, nmd)
+	return baseNodeSummary(isConnected, nmd)
 }
 
-func containerNodeSummary(nmd report.Node) NodeSummary {
-	label, _ := render.GetRenderableContainerName(nmd)
-	containerID, _ := nmd.Latest.Lookup(docker.ContainerID)
-	return baseNodeSummary(render.MakeContainerID(containerID), label, true, nmd)
-}
-
-func containerImageNodeSummary(nmd report.Node) NodeSummary {
-	imageName, _ := nmd.Latest.Lookup(docker.ImageName)
-	return baseNodeSummary(render.MakeContainerImageID(render.ImageNameWithoutVersion(imageName)), imageName, true, nmd)
-}
-
-func podNodeSummary(nmd report.Node) NodeSummary {
-	podID, _ := nmd.Latest.Lookup(kubernetes.PodID)
-	podName, _ := nmd.Latest.Lookup(kubernetes.PodName)
-	return baseNodeSummary(render.MakePodID(podID), podName, true, nmd)
-}
-
-func hostNodeSummary(nmd report.Node) NodeSummary {
-	hostName, _ := nmd.Latest.Lookup(host.HostName)
-	return baseNodeSummary(render.MakeHostID(hostName), hostName, true, nmd)
-}
+func containerNodeSummary(nmd report.Node) NodeSummary      { return baseNodeSummary(true, nmd) }
+func containerImageNodeSummary(nmd report.Node) NodeSummary { return baseNodeSummary(true, nmd) }
+func podNodeSummary(nmd report.Node) NodeSummary            { return baseNodeSummary(true, nmd) }
+func hostNodeSummary(nmd report.Node) NodeSummary           { return baseNodeSummary(true, nmd) }
 
 type nodeSummariesByID []NodeSummary
 
 func (s nodeSummariesByID) Len() int           { return len(s) }
 func (s nodeSummariesByID) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s nodeSummariesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
+
+type NodeSummaries map[string]NodeSummary
+
+func Summaries(rns render.RenderableNodes) NodeSummaries {
+	result := NodeSummaries{}
+	for id, node := range rns {
+		if summary, ok := MakeNodeSummary(node); ok {
+			result[id] = summary
+		}
+	}
+	return result
+}
