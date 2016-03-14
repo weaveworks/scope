@@ -1,4 +1,5 @@
 import React from 'react';
+import debug from 'debug';
 
 import Logo from './logo';
 import AppStore from '../stores/app-store';
@@ -8,7 +9,8 @@ import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
-import { lockNextMetric, hitEsc } from '../actions/app-actions';
+import { lockNextMetric, hitEsc, unlockMetric,
+  selectMetric } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import MetricSelector from './metric-selector';
@@ -19,8 +21,10 @@ import { showingDebugToolbar, toggleDebugToolbar,
 
 const ESC_KEY_CODE = 27;
 const D_KEY_CODE = 68;
+const Q_KEY_CODE = 81;
 const RIGHT_ANGLE_KEY_IDENTIFIER = 'U+003C';
 const LEFT_ANGLE_KEY_IDENTIFIER = 'U+003E';
+const keyPressLog = debug('scope:app-key-press');
 
 function getStateFromStores() {
   return {
@@ -76,12 +80,16 @@ export default class App extends React.Component {
   }
 
   onKeyPress(ev) {
+    keyPressLog('onKeyPress', 'keyCode', ev.keyCode, ev);
     if (ev.keyCode === ESC_KEY_CODE) {
       hitEsc();
     } else if (ev.keyIdentifier === RIGHT_ANGLE_KEY_IDENTIFIER) {
       lockNextMetric(-1);
     } else if (ev.keyIdentifier === LEFT_ANGLE_KEY_IDENTIFIER) {
       lockNextMetric(1);
+    } else if (ev.keyCode === Q_KEY_CODE) {
+      unlockMetric();
+      selectMetric(null);
     } else if (ev.keyCode === D_KEY_CODE) {
       toggleDebugToolbar();
       this.forceUpdate();

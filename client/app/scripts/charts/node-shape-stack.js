@@ -20,7 +20,9 @@ export default function NodeShapeStack(props) {
       <g transform={`translate(${dx * 1}, ${dy * 1})`}>
         <Shape {...props} />
       </g>
-      <Shape {...props} />
+      <g className="onlyMetrics">
+        <Shape {...props} />
+      </g>
     </g>
   );
 }
