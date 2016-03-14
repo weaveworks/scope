@@ -761,6 +761,12 @@
 			"path": "/libcontainer/utils"
 		},
 		{
+			"importpath": "github.com/paypal/ionet",
+			"repository": "https://github.com/paypal/ionet",
+			"revision": "ed0aaebc541736bab972353125af442dcf829af2",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/pborman/uuid",
 			"repository": "https://github.com/pborman/uuid",
 			"revision": "cccd189d45f7ac3368a0d127efb7f4d08ae0b655",
