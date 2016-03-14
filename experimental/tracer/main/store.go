@@ -168,5 +168,13 @@ func (s *store) Traces() []*trace {
 	}
 
 	sort.Sort(byKey(traces))
+
+	// only return last 15 traces
+	start := 0
+	if len(traces) > 15 {
+		start = len(traces) - 15
+	}
+	traces = traces[start:]
+
 	return traces
 }

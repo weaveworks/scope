@@ -1,3 +1,4 @@
+import argparse
 import requests
 import random
 import threading
@@ -6,21 +7,25 @@ import logging
 import socket
 import sys
 
-frontend = 'frontend'
-concurrency = 2
-
-def do_request(s):
-  addrs = socket.getaddrinfo(frontend, 80)
+def do_request(s, args):
+  addrs = socket.getaddrinfo(args.target, 80)
+  addrs = [a
+    for a in addrs
+    if a[0] == socket.AF_INET]
+  logging.info("got %s", addrs)
   if len(addrs) <= 0:
     return
   addr = random.choice(addrs)
   s.get("http://%s:%d" % addr[4], timeout=1.0)
 
-def do_requests():
+def do_requests(args):
   s = requests.Session()
   while True:
     try:
-      do_request(s)
+      if args.persist:
+        do_request(s, args)
+      else:
+        do_request(requests.Session(), args)
     except:
       logging.error("Error doing request", exc_info=sys.exc_info())
 
@@ -28,8 +33,15 @@ def do_requests():
     logging.info("Did request")
 
 def main():
-  logging.info("Starting %d threads", concurrency)
-  threads = [threading.Thread(target=do_requests) for i in range(concurrency)]
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-target', default="frontend")
+  parser.add_argument('-concurrency', default=2, type=int)
+  parser.add_argument('-persist', default=True, type=bool)
+  args = parser.parse_args()
+
+  logging.info("Starting %d threads, targeting %s", args.concurrency, args.target)
+  threads = [threading.Thread(target=do_requests, args=(args,))
+    for i in range(args.concurrency)]
   for thread in threads:
     thread.start()
   for thread in threads:

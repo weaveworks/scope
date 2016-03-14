@@ -42,10 +42,11 @@ type ContainerUpdateWatcher func(c Container)
 
 type registry struct {
 	sync.RWMutex
-	quit     chan chan struct{}
-	interval time.Duration
-	client   Client
-	pipes    controls.PipeClient
+	quit         chan chan struct{}
+	interval     time.Duration
+	collectStats bool
+	client       Client
+	pipes        controls.PipeClient
 
 	watchers        []ContainerUpdateWatcher
 	containers      map[string]Container
@@ -76,7 +77,7 @@ func newDockerClient(endpoint string) (Client, error) {
 }
 
 // NewRegistry returns a usable Registry. Don't forget to Stop it.
-func NewRegistry(interval time.Duration, pipes controls.PipeClient) (Registry, error) {
+func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool) (Registry, error) {
 	client, err := NewDockerClientStub(endpoint)
 	if err != nil {
 		return nil, err
@@ -87,10 +88,11 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient) (Registry, e
 		containersByPID: map[int]Container{},
 		images:          map[string]*docker_client.APIImages{},
 
-		client:   client,
-		pipes:    pipes,
-		interval: interval,
-		quit:     make(chan chan struct{}),
+		client:       client,
+		pipes:        pipes,
+		interval:     interval,
+		collectStats: collectStats,
+		quit:         make(chan chan struct{}),
 	}
 
 	r.registerControls()
@@ -178,8 +180,10 @@ func (r *registry) listenForEvents() bool {
 			r.Lock()
 			defer r.Unlock()
 
-			for _, c := range r.containers {
-				c.StopGatheringStats()
+			if r.collectStats {
+				for _, c := range r.containers {
+					c.StopGatheringStats()
+				}
 			}
 			close(ch)
 			return false
@@ -191,8 +195,10 @@ func (r *registry) reset() {
 	r.Lock()
 	defer r.Unlock()
 
-	for _, c := range r.containers {
-		c.StopGatheringStats()
+	if r.collectStats {
+		for _, c := range r.containers {
+			c.StopGatheringStats()
+		}
 	}
 
 	r.containers = map[string]Container{}
@@ -257,7 +263,9 @@ func (r *registry) updateContainerState(containerID string) {
 
 		delete(r.containers, containerID)
 		delete(r.containersByPID, container.PID())
-		container.StopGatheringStats()
+		if r.collectStats {
+			container.StopGatheringStats()
+		}
 		return
 	}
 
@@ -283,13 +291,15 @@ func (r *registry) updateContainerState(containerID string) {
 	}
 
 	// And finally, ensure we gather stats for it
-	if dockerContainer.State.Running {
-		if err := c.StartGatheringStats(); err != nil {
-			log.Errorf("Error gather stats for container: %s", containerID)
-			return
+	if r.collectStats {
+		if dockerContainer.State.Running {
+			if err := c.StartGatheringStats(); err != nil {
+				log.Errorf("Error gather stats for container: %s", containerID)
+				return
+			}
+		} else {
+			c.StopGatheringStats()
 		}
-	} else {
-		c.StopGatheringStats()
 	}
 }
 

@@ -8,6 +8,7 @@ usage() {
 
 PORT=6060
 CONTAINER_NAME=weavetracer
+IMAGE_NAME=tomwilkie/tracer
 
 [ $# -gt 0 ] || usage
 COMMAND=$1
@@ -16,8 +17,9 @@ shift 1
 case "$COMMAND" in
 
     launch)
+        docker rm -f $CONTAINER_NAME || true
         docker run --privileged --net=host --pid=host -ti -v /var/run/docker.sock:/var/run/docker.sock \
-            --name $CONTAINER_NAME weaveworks/tracer
+            --name $CONTAINER_NAME $IMAGE_NAME
         ;;
 
     stop)

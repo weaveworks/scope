@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-g -lpthread
 BUILD_IN_CONTAINER=true
 
-all: qotd.marker app.marker client.marker searchapp.marker shout.marker frontend.marker echo.marker
+all: .qotd.marker .app.marker .client.marker .searchapp.marker .shout.marker .frontend.marker .echo.marker .trace_app.marker
 
 searchapp/searchapp: searchapp/app.go
 shout/shout: shout/shout.go
@@ -23,14 +23,15 @@ shout/shout searchapp/searchapp:
 	go build -ldflags "-extldflags \"-static\"" -tags netgo -o $@ ./$(@D)
 endif
 
-qotd.marker: qotd/* qotd/qotd
-app.marker: app/*
-client.marker: client/*
-searchapp.marker: searchapp/* searchapp/searchapp
-shout.marker: shout/* shout/shout
-frontend.marker: frontend/*
-echo.marker: echo/*
-%.marker:
+.qotd.marker: qotd/* qotd/qotd
+.app.marker: app/*
+.client.marker: client/*
+.searchapp.marker: searchapp/* searchapp/searchapp
+.shout.marker: shout/* shout/shout
+.frontend.marker: frontend/*
+.echo.marker: echo/*
+.trace_app.marker: trace_app/*
+.%.marker:
 	docker build -t tomwilkie/$(<D) $(<D)/
 	touch $@
 
