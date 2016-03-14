@@ -424,8 +424,10 @@ export class AppStore extends Store {
       break;
 
     case ActionTypes.CLOSE_WEBSOCKET:
-      websocketClosed = true;
-      this.__emitChange();
+      if (!websocketClosed) {
+        websocketClosed = true;
+        this.__emitChange();
+      }
       break;
 
     case ActionTypes.DESELECT_NODE:
@@ -502,8 +504,10 @@ export class AppStore extends Store {
       break;
 
     case ActionTypes.RECEIVE_ERROR:
-      errorUrl = payload.errorUrl;
-      this.__emitChange();
+      if (errorUrl !== null) {
+        errorUrl = payload.errorUrl;
+        this.__emitChange();
+      }
       break;
 
     case ActionTypes.RECEIVE_NODE_DETAILS:

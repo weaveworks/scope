@@ -63,6 +63,8 @@ function createWebsocket(topologyUrl, optionsQuery) {
     socket.onclose = null;
     socket.onerror = null;
     socket.close();
+    // onclose() is not called, but that's fine since we're opening a new one
+    // right away
   }
 
   socket = new WebSocket(wsUrl + topologyUrl
@@ -74,9 +76,9 @@ function createWebsocket(topologyUrl, optionsQuery) {
 
   socket.onclose = function() {
     clearTimeout(reconnectTimer);
+    log('Closing websocket to ' + topologyUrl, socket.readyState);
     socket = null;
     closeWebsocket();
-    log('Closed websocket to ' + topologyUrl);
 
     reconnectTimer = setTimeout(function() {
       createWebsocket(topologyUrl, optionsQuery);
@@ -109,7 +111,7 @@ export function getTopologies(options) {
       }, TOPOLOGY_INTERVAL);
     },
     error: function(err) {
-      log('Error in topology request: ' + err);
+      log('Error in topology request: ' + err.responseText);
       receiveError(url);
       topologyTimer = setTimeout(function() {
         getTopologies(options);
@@ -169,7 +171,7 @@ export function getApiDetails() {
       apiDetailsTimer = setTimeout(getApiDetails, API_INTERVAL);
     },
     error: function(err) {
-      log('Error in api details request: ' + err);
+      log('Error in api details request: ' + err.responseText);
       receiveError(url);
       apiDetailsTimer = setTimeout(getApiDetails, API_INTERVAL / 2);
     }

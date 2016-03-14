@@ -12,9 +12,9 @@ export default class Status extends React.Component {
       classNames += ' status-loading';
       showWarningIcon = true;
     } else if (!this.props.topologiesLoaded) {
-      text = 'Loading topologies...';
+      text = 'Connecting to Scope...';
       classNames += ' status-loading';
-      showWarningIcon = false;
+      showWarningIcon = true;
     } else if (this.props.websocketClosed) {
       classNames += ' status-loading';
       showWarningIcon = true;
