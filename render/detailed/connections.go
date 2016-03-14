@@ -160,7 +160,7 @@ func isInternetNode(n render.RenderableNode) bool {
 func connectionRows(in map[connectionsRow]int, includeLocal bool) []NodeSummary {
 	nodes := []NodeSummary{}
 	for row, count := range in {
-		id, label, linkable := row.remoteNode.ID, row.remoteNode.LabelMajor, true
+		id, label, linkable := row.remoteNode.ID, row.remoteNode.Label, true
 		if row.remoteAddr != "" {
 			id, label, linkable = row.remoteAddr+":"+row.port, row.remoteAddr, false
 		}

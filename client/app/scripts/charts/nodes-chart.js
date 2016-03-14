@@ -244,7 +244,7 @@ export default class NodesChart extends React.Component {
     // copy relevant fields to state nodes
     return topology.map((node, id) => makeMap({
       id,
-      label: node.get('label_major'),
+      label: node.get('label'),
       pseudo: node.get('pseudo'),
       subLabel: node.get('label_minor'),
       nodeCount: node.get('node_count'),
