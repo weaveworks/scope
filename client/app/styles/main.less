@@ -403,10 +403,13 @@ h2 {
     &:not(.shape-cloud) .border {
       stroke-width: @node-border-stroke-width;
       fill: @background-color;
+      transition: stroke-opacity 0.5s cubic-bezier(0,0,0.21,1), fill 0.5s cubic-bezier(0,0,0.21,1);
+      stroke-opacity: 1;
     }
 
     &.metrics .border {
       fill: @background-lighter-color;
+      stroke-opacity: 0.3;
     }
 
     .metric-fill {

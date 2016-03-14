@@ -53,7 +53,7 @@ export default class Node extends React.Component {
     }
     let labelOffsetY = 18;
     let subLabelOffsetY = 35;
-    // const color = this.props.metric ?  '#e2e2ec' : getNodeColor(
+    // const color = this.props.metric ? '#e2e2ec' : getNodeColor(
     const color = getNodeColor(
       this.props.rank, this.props.label, this.props.pseudo);
     const onMouseEnter = this.handleMouseEnter;

@@ -138,7 +138,7 @@ export function getMetricColor() {
   } else if (/files/.test(selectedMetric)) {
     return '#9467bd';
   } else if (/load/.test(selectedMetric)) {
-    return '#17becf';
+    return '#e6550d';
   }
   return 'steelBlue';
 }
