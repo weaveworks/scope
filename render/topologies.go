@@ -58,7 +58,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNo
 			continue
 		}
 		output := p.Copy()
-		output.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(p.Node), container.LabelMajor, pid)
+		output.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(p.Node), container.Label, pid)
 		outputs[id] = output
 	}
 	return outputs
@@ -191,7 +191,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNode
 			continue
 		}
 		output := c.Copy()
-		output.Rank = ImageNameWithoutVersion(image.LabelMajor)
+		output.Rank = ImageNameWithoutVersion(image.Label)
 		output.Latest = image.Latest.Merge(c.Latest)
 		outputs[id] = output
 	}

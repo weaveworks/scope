@@ -8,9 +8,9 @@ import { DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS,
 export default function EmeddedTerminal({pipe, nodeId, details}) {
   const node = details.get(nodeId);
   const d = node && node.details;
-  const titleBarColor = d && getNodeColorDark(d.rank, d.label_major);
-  const statusBarColor = d && getNodeColor(d.rank, d.label_major);
-  const title = d && d.label_major;
+  const titleBarColor = d && getNodeColorDark(d.rank, d.label);
+  const statusBarColor = d && getNodeColor(d.rank, d.label);
+  const title = d && d.label;
 
   const style = {
     right: DETAILS_PANEL_MARGINS.right + DETAILS_PANEL_WIDTH + 10 +

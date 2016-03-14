@@ -20,7 +20,7 @@ func (r ByID) Less(i, j int) bool { return r[i].ID < r[j].ID }
 func TestTopoDiff(t *testing.T) {
 	nodea := render.RenderableNode{
 		ID:         "nodea",
-		LabelMajor: "Node A",
+		Label:      "Node A",
 		LabelMinor: "'ts an a",
 		Pseudo:     false,
 		Node:       report.MakeNode().WithAdjacent("nodeb"),
@@ -31,8 +31,8 @@ func TestTopoDiff(t *testing.T) {
 		"nodeq", // not the same anymore
 	}
 	nodeb := render.RenderableNode{
-		ID:         "nodeb",
-		LabelMajor: "Node B",
+		ID:    "nodeb",
+		Label: "Node B",
 	}
 
 	// Helper to make RenderableNode maps.

@@ -50,11 +50,11 @@ func theInternetNode(m RenderableNode) RenderableNode {
 	// emit one internet node for incoming, one for outgoing
 	if len(m.Adjacency) > 0 {
 		node.ID = IncomingInternetID
-		node.LabelMajor = InboundMajor
+		node.Label = InboundMajor
 		node.LabelMinor = InboundMinor
 	} else {
 		node.ID = OutgoingInternetID
-		node.LabelMajor = OutboundMajor
+		node.Label = OutboundMajor
 		node.LabelMinor = OutboundMinor
 	}
 	return node
@@ -96,12 +96,12 @@ func MapProcessIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 
 	var (
 		id       = MakeProcessID(report.ExtractHostID(m.Node), pid)
-		major, _ = m.Latest.Lookup(process.Name)
+		label, _ = m.Latest.Lookup(process.Name)
 		minor    = fmt.Sprintf("%s (%s)", report.ExtractHostID(m.Node), pid)
 		rank, _  = m.Latest.Lookup(process.Name)
 	)
 
-	node := NewRenderableNodeWith(id, major, minor, rank, m)
+	node := NewRenderableNodeWith(id, label, minor, rank, m)
 	node.Shape = Square
 	return RenderableNodes{id: node}
 }
@@ -117,11 +117,11 @@ func MapContainerIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 
 	var (
 		id       = MakeContainerID(containerID)
-		major, _ = GetRenderableContainerName(m.Node)
+		label, _ = GetRenderableContainerName(m.Node)
 		minor    = report.ExtractHostID(m.Node)
 	)
 
-	node := NewRenderableNodeWith(id, major, minor, "", m)
+	node := NewRenderableNodeWith(id, label, minor, "", m)
 	node.ControlNode = m.ID
 	node.Shape = Hexagon
 	return RenderableNodes{id: node}
@@ -162,11 +162,11 @@ func MapContainerImageIdentity(m RenderableNode, _ report.Networks) RenderableNo
 
 	var (
 		id       = MakeContainerImageID(imageID)
-		major, _ = m.Latest.Lookup(docker.ImageName)
+		label, _ = m.Latest.Lookup(docker.ImageName)
 		rank     = imageID
 	)
 
-	node := NewRenderableNodeWith(id, major, "", rank, m)
+	node := NewRenderableNodeWith(id, label, "", rank, m)
 	node.Shape = Hexagon
 	node.Stack = true
 	return RenderableNodes{id: node}
@@ -183,11 +183,11 @@ func MapPodIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 
 	var (
 		id       = MakePodID(podID)
-		major, _ = m.Latest.Lookup(kubernetes.PodName)
+		label, _ = m.Latest.Lookup(kubernetes.PodName)
 		rank, _  = m.Latest.Lookup(kubernetes.PodID)
 	)
 
-	node := NewRenderableNodeWith(id, major, "", rank, m)
+	node := NewRenderableNodeWith(id, label, "", rank, m)
 	node.Shape = Heptagon
 	return RenderableNodes{id: node}
 }
@@ -203,11 +203,11 @@ func MapServiceIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 
 	var (
 		id       = MakeServiceID(serviceID)
-		major, _ = m.Latest.Lookup(kubernetes.ServiceName)
+		label, _ = m.Latest.Lookup(kubernetes.ServiceName)
 		rank, _  = m.Latest.Lookup(kubernetes.ServiceID)
 	)
 
-	node := NewRenderableNodeWith(id, major, "", rank, m)
+	node := NewRenderableNodeWith(id, label, "", rank, m)
 	node.Shape = Heptagon
 	node.Stack = true
 	return RenderableNodes{id: node}
@@ -221,16 +221,16 @@ func MapHostIdentity(m RenderableNode, _ report.Networks) RenderableNodes {
 		id                 = MakeHostID(report.ExtractHostID(m.Node))
 		hostname, _        = m.Latest.Lookup(host.HostName)
 		parts              = strings.SplitN(hostname, ".", 2)
-		major, minor, rank = "", "", ""
+		label, minor, rank = "", "", ""
 	)
 
 	if len(parts) == 2 {
-		major, minor, rank = parts[0], parts[1], parts[1]
+		label, minor, rank = parts[0], parts[1], parts[1]
 	} else {
-		major = hostname
+		label = hostname
 	}
 
-	node := NewRenderableNodeWith(id, major, minor, rank, m)
+	node := NewRenderableNodeWith(id, label, minor, rank, m)
 	node.Shape = Circle
 	return RenderableNodes{id: node}
 }
@@ -468,7 +468,7 @@ func MapProcess2Name(n RenderableNode, _ report.Networks) RenderableNodes {
 	}
 
 	node := NewDerivedNode(name, n)
-	node.LabelMajor = name
+	node.Label = name
 	node.Rank = name
 	node.Counters = node.Node.Counters.Add(processesKey, 1)
 	node.Node.Topology = "process_name"
@@ -567,7 +567,7 @@ func MapContainerImage2Name(n RenderableNode, _ report.Networks) RenderableNodes
 	id := MakeContainerImageID(name)
 
 	node := NewDerivedNode(id, n)
-	node.LabelMajor = name
+	node.Label = name
 	node.Rank = name
 	node.Node = n.Node.Copy() // Propagate NMD for container counting.
 	node.Shape = Hexagon
@@ -650,7 +650,7 @@ func MapContainer2Pod(n RenderableNode, _ report.Networks) RenderableNodes {
 	// from the API. This is a workaround until
 	// https://github.com/kubernetes/kubernetes/issues/14738 is fixed.
 	if s := strings.SplitN(podID, "/", 2); len(s) == 2 {
-		result.LabelMajor = s[1]
+		result.Label = s[1]
 		result.Node = result.Node.WithLatests(map[string]string{
 			kubernetes.Namespace: s[0],
 			kubernetes.PodName:   s[1],
@@ -713,7 +713,7 @@ func MapContainer2Hostname(n RenderableNode, _ report.Networks) RenderableNodes 
 	}
 
 	result := NewDerivedNode(id, n)
-	result.LabelMajor = id
+	result.Label = id
 	result.Rank = id
 
 	// Add container id key to the counters, which will later be counted to produce the minor label

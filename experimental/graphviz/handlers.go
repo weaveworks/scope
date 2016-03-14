@@ -21,7 +21,7 @@ func dot(w io.Writer, t render.RenderableNodes) {
 	fmt.Fprintf(w, "\tnode [style=filled];\n")
 	fmt.Fprintf(w, "\t\n")
 	for id, rn := range t {
-		label := rn.LabelMajor
+		label := rn.Label
 		if len(label) > 20 {
 			label = label[:20] + "..."
 		}

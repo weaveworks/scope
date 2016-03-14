@@ -82,7 +82,7 @@ func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
 func MakeNode(topologyID string, r report.Report, ns render.RenderableNodes, n render.RenderableNode) Node {
 	summary, _ := MakeNodeSummary(n)
 	summary.ID = n.ID
-	summary.Label = n.LabelMajor
+	summary.Label = n.Label
 
 	return Node{
 		NodeSummary: summary,

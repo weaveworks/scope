@@ -54,7 +54,7 @@ export default class NodeDetails extends React.Component {
 
   renderLoading() {
     const node = this.props.nodes.get(this.props.nodeId);
-    const label = node ? node.get('label_major') : this.props.label;
+    const label = node ? node.get('label') : this.props.label;
     const nodeColor = (node ?
                        getNodeColorDark(node.get('rank'), label, node.get('pseudo')) :
                        getNeutralColor());
