@@ -72,7 +72,7 @@ func getNetNamespacePathSuffix() string {
 
 	v, err := getKernelVersion()
 	if err != nil {
-		log.Errorf("getNamespacePathSuffix: cannot get kernel version: %s\n", err)
+		log.Errorf("getNamespacePathSuffix: cannot get kernel version: %s", err)
 		netNamespacePathSuffix = post38Path
 		return netNamespacePathSuffix
 	}
