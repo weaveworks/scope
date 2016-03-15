@@ -790,7 +790,7 @@
 		{
 			"importpath": "github.com/ugorji/go/codec",
 			"repository": "https://github.com/ugorji/go",
-			"revision": "03b46f3d7a8e0457836a5ecd906b4961a5815a63",
+			"revision": "c062049c1793b01a3cc3fe786108edabbaf7756b",
 			"branch": "master",
 			"path": "/codec"
 		},
