@@ -151,8 +151,10 @@ func (s nodeSummariesByID) Len() int           { return len(s) }
 func (s nodeSummariesByID) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s nodeSummariesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
 
+// NodeSummaries is a set of NodeSummaries indexed by ID.
 type NodeSummaries map[string]NodeSummary
 
+// Summaries converts RenderableNodes into a set of NodeSummaries
 func Summaries(rns render.RenderableNodes) NodeSummaries {
 	result := NodeSummaries{}
 	for id, node := range rns {
