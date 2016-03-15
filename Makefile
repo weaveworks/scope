@@ -152,7 +152,7 @@ clean:
 	# $(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
 		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/app.js docker/weave .pkg \
-		$(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin/*
+		$(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin
 
 deps:
 	$(GO) get -u -f -tags $(GO_BUILD_TAGS) \
