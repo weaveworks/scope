@@ -4,6 +4,7 @@ package procspy
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"syscall"
@@ -11,7 +12,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
-	"github.com/hashicorp/go-version"
 
 	"github.com/weaveworks/scope/common/fs"
 	"github.com/weaveworks/scope/common/marshal"
@@ -46,14 +46,18 @@ func SetProcRoot(root string) {
 	procRoot = root
 }
 
-func getKernelVersion() (*version.Version, error) {
+func getKernelVersion() (major, minor int, err error) {
 	var u syscall.Utsname
-	if err := syscall.Uname(&u); err != nil {
-		return nil, err
+	if err = syscall.Uname(&u); err != nil {
+		return
 	}
 
+	// Kernel versions are not always a semver, so we have to do minimal parsing.
 	release := marshal.FromUtsname(u.Release)
-	return version.NewVersion(release)
+	if n, err := fmt.Sscanf(release, "%d.%d", &major, &minor); err != nil || n != 2 {
+		return 0, 0, fmt.Errorf("Malformed version: %s", release)
+	}
+	return
 }
 
 func getNetNamespacePathSuffix() string {
@@ -70,15 +74,14 @@ func getNetNamespacePathSuffix() string {
 		return netNamespacePathSuffix
 	}
 
-	v, err := getKernelVersion()
+	major, minor, err := getKernelVersion()
 	if err != nil {
 		log.Errorf("getNamespacePathSuffix: cannot get kernel version: %s", err)
 		netNamespacePathSuffix = post38Path
 		return netNamespacePathSuffix
 	}
 
-	v38, _ := version.NewVersion("3.8")
-	if v.LessThan(v38) {
+	if major < 3 || (major == 3 && minor < 8) {
 		netNamespacePathSuffix = pre38Path
 	} else {
 		netNamespacePathSuffix = post38Path
