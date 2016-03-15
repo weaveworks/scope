@@ -48,7 +48,7 @@ type NodeSummary struct {
 	ID           string        `json:"id"`
 	Label        string        `json:"label"`
 	LabelMinor   string        `json:"label_minor"`
-	Rank         string        `json:"rank,omitempty"`
+	Rank         string        `json:"rank"`
 	Shape        string        `json:"shape,omitempty"`
 	Stack        bool          `json:"stack,omitempty"`
 	Linkable     bool          `json:"linkable,omitempty"` // Whether this node can be linked-to
