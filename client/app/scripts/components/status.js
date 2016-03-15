@@ -19,10 +19,10 @@ export default class Status extends React.Component {
       classNames += ' status-loading';
       showWarningIcon = true;
     } else if (this.props.topology) {
-      const stats = this.props.topology.stats;
-      text = `${stats.node_count} nodes`;
-      if (stats.filtered_nodes) {
-        text = `${text} (${stats.filtered_nodes} filtered)`;
+      const stats = this.props.topology.get('stats');
+      text = `${stats.get('node_count')} nodes`;
+      if (stats.get('filtered_nodes')) {
+        text = `${text} (${stats.get('filtered_nodes')} filtered)`;
       }
       classNames += ' status-stats';
       showWarningIcon = false;

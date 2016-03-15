@@ -3,7 +3,7 @@ import debug from 'debug';
 import { Map as makeMap, Set as ImmSet } from 'immutable';
 
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
-import { updateNodeDegrees } from './topology-utils';
+import { updateNodeDegrees } from '../utils/topology-utils';
 
 const log = debug('scope:nodes-layout');
 

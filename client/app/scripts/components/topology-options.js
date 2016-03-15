@@ -1,5 +1,4 @@
 import React from 'react';
-import _ from 'lodash';
 
 import TopologyOptionAction from './topology-option-action';
 
@@ -21,7 +20,7 @@ export default class TopologyOptions extends React.Component {
     const actions = [];
     const activeOptions = this.props.activeOptions;
     const topologyId = this.props.topologyId;
-    const option = items[0].option;
+    const option = items.first().get('option');
 
     // find active option value
     if (activeOptions && activeOptions.has(option)) {
@@ -29,18 +28,18 @@ export default class TopologyOptions extends React.Component {
     } else {
       // get default value
       items.forEach(function(item) {
-        if (item.default) {
-          activeValue = item.value;
+        if (item.get('default')) {
+          activeValue = item.get('value');
         }
       });
     }
 
     // render active option as text, add other options as actions
     items.forEach(function(item) {
-      if (item.value === activeValue) {
-        activeText = item.display;
+      if (item.get('value') === activeValue) {
+        activeText = item.get('display');
       } else {
-        actions.push(this.renderAction(item.value, item.option, topologyId));
+        actions.push(this.renderAction(item.get('value'), item.get('option'), topologyId));
       }
     }, this);
 
@@ -55,20 +54,15 @@ export default class TopologyOptions extends React.Component {
   }
 
   render() {
-    const options = _.sortBy(
-      _.map(this.props.options, function(items, optionId) {
-        _.each(items, function(item) {
-          item.option = optionId;
-        });
-        items.option = optionId;
-        return items;
-      }),
-      'option'
-    );
+    const options = this.props.options.map((items, optionId) => {
+      let itemsMap = items.map(item => item.set('option', optionId));
+      itemsMap = itemsMap.set('option', optionId);
+      return itemsMap;
+    });
 
     return (
       <div className="topology-options">
-        {options.map(function(items) {
+        {options.toIndexedSeq().map(function(items) {
           return this.renderOption(items);
         }, this)}
       </div>

@@ -1,9 +1,9 @@
 import React from 'react';
-import _ from 'lodash';
 
 import { clickTopology } from '../actions/app-actions';
 
 export default class Topologies extends React.Component {
+
   constructor(props, context) {
     super(props, context);
     this.onTopologyClick = this.onTopologyClick.bind(this);
@@ -16,8 +16,8 @@ export default class Topologies extends React.Component {
   }
 
   renderSubTopology(subTopology) {
-    const isActive = subTopology.name === this.props.currentTopology.name;
-    const topologyId = subTopology.id;
+    const isActive = subTopology === this.props.currentTopology;
+    const topologyId = subTopology.get('id');
     const title = this.renderTitle(subTopology);
     const className = isActive ? 'topologies-sub-item topologies-sub-item-active' : 'topologies-sub-item';
 
@@ -25,47 +25,43 @@ export default class Topologies extends React.Component {
       <div className={className} title={title} key={topologyId} rel={topologyId}
         onClick={this.onTopologyClick}>
         <div className="topologies-sub-item-label">
-          {subTopology.name}
+          {subTopology.get('name')}
         </div>
       </div>
     );
   }
 
   renderTitle(topology) {
-    return ['Nodes: ' + topology.stats.node_count,
-      'Connections: ' + topology.stats.node_count].join('\n');
+    return ['Nodes: ' + topology.getIn(['stats', 'node_count']),
+      'Connections: ' + topology.getIn(['stats', 'node_count'])].join('\n');
   }
 
   renderTopology(topology) {
-    const isActive = topology.name === this.props.currentTopology.name;
+    const isActive = topology === this.props.currentTopology;
     const className = isActive ? 'topologies-item-main topologies-item-main-active' : 'topologies-item-main';
-    const topologyId = topology.id;
+    const topologyId = topology.get('id');
     const title = this.renderTitle(topology);
 
     return (
       <div className="topologies-item" key={topologyId}>
         <div className={className} title={title} rel={topologyId} onClick={this.onTopologyClick}>
           <div className="topologies-item-label">
-            {topology.name}
+            {topology.get('name')}
           </div>
         </div>
         <div className="topologies-sub">
-          {topology.sub_topologies && topology.sub_topologies.map(this.renderSubTopology)}
+          {topology.has('sub_topologies') && topology.get('sub_topologies').map(this.renderSubTopology)}
         </div>
       </div>
     );
   }
 
   render() {
-    const topologies = _.sortBy(this.props.topologies, function(topology) {
-      return topology.rank;
-    });
-
     return (
       <div className="topologies">
-        {this.props.currentTopology && topologies.map(function(topology) {
-          return this.renderTopology(topology);
-        }, this)}
+        {this.props.currentTopology && this.props.topologies.map(
+          topology => this.renderTopology(topology)
+        )}
       </div>
     );
   }

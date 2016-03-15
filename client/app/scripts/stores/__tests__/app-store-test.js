@@ -1,3 +1,4 @@
+jest.dontMock('../../utils/topology-utils');
 jest.dontMock('../../constants/action-types');
 jest.dontMock('../app-store');
 
@@ -160,7 +161,7 @@ describe('AppStore', function() {
 
   it('init with no topologies', function() {
     const topos = AppStore.getTopologies();
-    expect(topos.length).toBe(0);
+    expect(topos.size).toBe(0);
     expect(AppStore.getCurrentTopology()).toBeUndefined();
   });
 
@@ -168,20 +169,20 @@ describe('AppStore', function() {
     registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveTopologiesAction);
 
-    expect(AppStore.getTopologies().length).toBe(2);
-    expect(AppStore.getCurrentTopology().name).toBe('Topo1');
+    expect(AppStore.getTopologies().size).toBe(2);
+    expect(AppStore.getCurrentTopology().get('name')).toBe('Topo1');
     expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1');
-    expect(AppStore.getCurrentTopologyOptions().option1).toBeDefined();
+    expect(AppStore.getCurrentTopologyOptions().get('option1')).toBeDefined();
   });
 
   it('get sub-topology', function() {
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickSubTopologyAction);
 
-    expect(AppStore.getTopologies().length).toBe(2);
-    expect(AppStore.getCurrentTopology().name).toBe('topo 1 grouped');
+    expect(AppStore.getTopologies().size).toBe(2);
+    expect(AppStore.getCurrentTopology().get('name')).toBe('topo 1 grouped');
     expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1-grouped');
-    expect(AppStore.getCurrentTopologyOptions()).toBeUndefined();
+    expect(AppStore.getCurrentTopologyOptions().size).toBe(0);
   });
 
   // topology options
@@ -402,7 +403,7 @@ describe('AppStore', function() {
   it('selectes relatives topology while keeping node selected', function() {
     registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveTopologiesAction);
-    expect(AppStore.getCurrentTopology().name).toBe('Topo1');
+    expect(AppStore.getCurrentTopology().get('name')).toBe('Topo1');
 
     registeredCallback(ClickNodeAction);
     expect(AppStore.getSelectedNodeId()).toBe('n1');
@@ -422,6 +423,6 @@ describe('AppStore', function() {
     expect(AppStore.getSelectedNodeId()).toBe('rel1');
     expect(AppStore.getNodeDetails().keySeq().last()).toEqual('rel1');
     expect(AppStore.getNodeDetails().size).toEqual(1);
-    expect(AppStore.getCurrentTopology().name).toBe('Topo2');
+    expect(AppStore.getCurrentTopology().get('name')).toBe('Topo2');
   });
 });

@@ -1,38 +1,22 @@
 import _ from 'lodash';
 import debug from 'debug';
-import Immutable from 'immutable';
+import { fromJS, List, Map, OrderedMap, Set } from 'immutable';
 import { Store } from 'flux/utils';
 
 import AppDispatcher from '../dispatcher/app-dispatcher';
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
+import { findTopologyById, setTopologyUrlsById, updateTopologyIds } from '../utils/topology-utils';
 
-const makeMap = Immutable.Map;
-const makeOrderedMap = Immutable.OrderedMap;
-const makeSet = Immutable.Set;
+const makeList = List;
+const makeMap = Map;
+const makeOrderedMap = OrderedMap;
+const makeSet = Set;
 const log = debug('scope:app-store');
 
 const error = debug('scope:error');
 
 // Helpers
-
-function findTopologyById(subTree, topologyId) {
-  let foundTopology;
-
-  _.each(subTree, function(topology) {
-    if (_.endsWith(topology.url, topologyId)) {
-      foundTopology = topology;
-    }
-    if (!foundTopology) {
-      foundTopology = findTopologyById(topology.sub_topologies, topologyId);
-    }
-    if (foundTopology) {
-      return false;
-    }
-  });
-
-  return foundTopology;
-}
 
 function makeNode(node) {
   return {
@@ -64,7 +48,7 @@ let mouseOverNodeId = null;
 let nodeDetails = makeOrderedMap(); // nodeId -> details
 let nodes = makeOrderedMap(); // nodeId -> node
 let selectedNodeId = null;
-let topologies = [];
+let topologies = makeList();
 let topologiesLoaded = false;
 let topologyUrlsById = makeOrderedMap(); // topologyId -> topologyUrl
 let routeSet = false;
@@ -72,15 +56,19 @@ let controlPipes = makeOrderedMap(); // pipeId -> controlPipe
 let updatePausedAt = null; // Date
 let websocketClosed = true;
 
+const topologySorter = topology => topology.get('rank');
+
 // adds ID field to topology (based on last part of URL path) and save urls in
 // map for easy lookup
-function processTopologies(topologyList) {
-  _.each(topologyList, function(topology) {
-    topology.id = topology.url.split('/').pop();
-    topologyUrlsById = topologyUrlsById.set(topology.id, topology.url);
-    processTopologies(topology.sub_topologies);
-  });
-  return topologyList;
+function processTopologies(nextTopologies) {
+  // add IDs to topology objects in-place
+  updateTopologyIds(nextTopologies);
+
+  // cache URLs by ID
+  topologyUrlsById = setTopologyUrlsById(topologyUrlsById, nextTopologies);
+
+  const immNextTopologies = fromJS(nextTopologies).sortBy(topologySorter);
+  topologies = topologies.mergeDeep(immNextTopologies);
 }
 
 function setTopology(topologyId) {
@@ -89,24 +77,28 @@ function setTopology(topologyId) {
 }
 
 function setDefaultTopologyOptions(topologyList) {
-  _.each(topologyList, function(topology) {
+  topologyList.forEach(topology => {
     let defaultOptions = makeOrderedMap();
-    _.each(topology.options, function(items, option) {
-      _.each(items, function(item) {
-        if (item.default === true) {
-          defaultOptions = defaultOptions.set(option, item.value);
-        }
+    if (topology.has('options')) {
+      topology.get('options').forEach(function(items, option) {
+        items.forEach(item => {
+          if (item.get('default') === true) {
+            defaultOptions = defaultOptions.set(option, item.get('value'));
+          }
+        });
       });
-    });
+    }
 
     if (defaultOptions.size) {
       topologyOptions = topologyOptions.set(
-        topology.id,
+        topology.get('id'),
         defaultOptions
       );
     }
 
-    setDefaultTopologyOptions(topology.sub_topologies);
+    if (topology.has('sub_topologies')) {
+      setDefaultTopologyOptions(topology.get('sub_topologies'));
+    }
   });
 }
 
@@ -191,11 +183,11 @@ export class AppStore extends Store {
   }
 
   getCurrentTopologyOptions() {
-    return currentTopology && currentTopology.options;
+    return currentTopology && currentTopology.get('options') || makeOrderedMap();
   }
 
   getCurrentTopologyUrl() {
-    return currentTopology && currentTopology.url;
+    return currentTopology && currentTopology.get('url');
   }
 
   getErrorUrl() {
@@ -289,7 +281,7 @@ export class AppStore extends Store {
   }
 
   isTopologyEmpty() {
-    return currentTopology && currentTopology.stats && currentTopology.stats.node_count === 0 && nodes.size === 0;
+    return currentTopology && currentTopology.get('stats') && currentTopology.get('stats').get('node_count') === 0 && nodes.size === 0;
   }
 
   isUpdatePaused() {
@@ -560,7 +552,7 @@ export class AppStore extends Store {
 
       // add new nodes
       _.each(payload.delta.add, function(node) {
-        nodes = nodes.set(node.id, Immutable.fromJS(makeNode(node)));
+        nodes = nodes.set(node.id, fromJS(makeNode(node)));
       });
 
       if (emitChange) {
@@ -581,7 +573,7 @@ export class AppStore extends Store {
     case ActionTypes.RECEIVE_TOPOLOGIES:
       errorUrl = null;
       topologyUrlsById = topologyUrlsById.clear();
-      topologies = processTopologies(payload.topologies);
+      processTopologies(payload.topologies);
       setTopology(currentTopologyId);
       // only set on first load, if options are not already set via route
       if (!topologiesLoaded && topologyOptions.size === 0) {
@@ -619,7 +611,7 @@ export class AppStore extends Store {
       } else {
         nodeDetails = nodeDetails.clear();
       }
-      topologyOptions = Immutable.fromJS(payload.state.topologyOptions)
+      topologyOptions = fromJS(payload.state.topologyOptions)
         || topologyOptions;
       this.__emitChange();
       break;

@@ -1,5 +1,5 @@
 jest.dontMock('../nodes-layout');
-jest.dontMock('../topology-utils');
+jest.dontMock('../../utils/topology-utils');
 jest.dontMock('../../constants/naming'); // edge naming: 'source-target'
 
 import { fromJS, Map } from 'immutable';
