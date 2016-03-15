@@ -225,8 +225,8 @@ export function getPipeStatus(pipeId) {
     },
     success: function(res) {
       const status = {
-        200: 'PIPE_ALIVE',
-        204: 'PIPE_DELETED'
+        204: 'PIPE_ALIVE',
+        404: 'PIPE_DELETED'
       }[res.status];
 
       if (!status) {
