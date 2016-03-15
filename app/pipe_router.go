@@ -28,8 +28,16 @@ const (
 	ProbeEnd
 )
 
+func (e End) String() string {
+	if e == UIEnd {
+		return "ui"
+	}
+	return "probe"
+}
+
 // PipeRouter stores pipes and allows you to connect to either end of them.
 type PipeRouter interface {
+	Exists(context.Context, string) (bool, error)
 	Get(context.Context, string, End) (xfer.Pipe, io.ReadWriter, error)
 	Release(context.Context, string, End) error
 	Delete(context.Context, string) error
@@ -76,6 +84,16 @@ func NewLocalPipeRouter() PipeRouter {
 	pipeRouter.wait.Add(1)
 	go pipeRouter.gcLoop()
 	return pipeRouter
+}
+
+func (pr *localPipeRouter) Exists(_ context.Context, id string) (bool, error) {
+	pr.Lock()
+	defer pr.Unlock()
+	p, ok := pr.pipes[id]
+	if !ok {
+		return true, nil
+	}
+	return !p.Closed(), nil
 }
 
 func (pr *localPipeRouter) Get(_ context.Context, id string, e End) (xfer.Pipe, io.ReadWriter, error) {

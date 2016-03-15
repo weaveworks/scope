@@ -71,7 +71,7 @@ type WSDialer interface {
 func DialWS(d WSDialer, urlStr string, requestHeader http.Header) (Websocket, *http.Response, error) {
 	wsConn, resp, err := d.Dial(urlStr, requestHeader)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 	return Ping(wsConn), resp, nil
 }
@@ -91,6 +91,7 @@ func (p *pingingWebsocket) ping() {
 	if err := p.conn.WriteControl(websocket.PingMessage, nil, mtime.Now().Add(writeWait)); err != nil {
 		log.Errorf("websocket ping error: %v", err)
 		p.Close()
+		return
 	}
 	p.pinger.Reset(pingPeriod)
 }
