@@ -537,7 +537,7 @@ export class AppStore extends Store {
         if (mouseOverNodeId === nodeId) {
           mouseOverNodeId = null;
         }
-        if (nodes.has(nodeId) && _.contains(mouseOverEdgeId, nodeId)) {
+        if (nodes.has(nodeId) && _.includes(mouseOverEdgeId, nodeId)) {
           mouseOverEdgeId = null;
         }
         nodes = nodes.delete(nodeId);

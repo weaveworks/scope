@@ -145,7 +145,7 @@ export default class NodeDetailsTable extends React.Component {
 
   render() {
     const headers = this.renderHeaders();
-    let nodes = _.sortByAll(this.props.nodes, this.getValueForSortBy, 'label', this.getMetaDataSorters());
+    let nodes = _.sortBy(this.props.nodes, this.getValueForSortBy, 'label', this.getMetaDataSorters());
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
     const expanded = this.state.limit === 0;
     const notShown = nodes.length - this.DEFAULT_LIMIT;

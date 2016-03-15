@@ -62,7 +62,7 @@ export default class Node extends React.Component {
     const onMouseLeave = this.handleMouseLeave;
     const onMouseClick = this.handleMouseClick;
     const classNames = ['node'];
-    const animConfig = [80, 20]; // stiffness, bounce
+    const animConfig = {stiffness: 80, damping: 20};
     const label = this.ellipsis(props.label, 14, nodeScale(4 * scaleFactor));
     const subLabel = this.ellipsis(props.subLabel, 12, nodeScale(4 * scaleFactor));
     let labelFontSize = 14;

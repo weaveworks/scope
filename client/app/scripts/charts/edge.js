@@ -10,7 +10,7 @@ const line = d3.svg.line()
   .x(function(d) { return d.x; })
   .y(function(d) { return d.y; });
 
-const animConfig = [80, 20];// stiffness, bounce
+const animConfig = {stiffness: 80, damping: 20};
 
 const flattenPoints = function(points) {
   const flattened = {};
