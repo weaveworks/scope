@@ -15,9 +15,9 @@ const log = debug('scope:app-actions');
 export function changeTopologyOption(option, value, topologyId) {
   AppDispatcher.dispatch({
     type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
-    topologyId: topologyId,
-    option: option,
-    value: value
+    topologyId,
+    option,
+    value
   });
   updateRoute();
   // update all request workers with new options
@@ -53,7 +53,7 @@ export function clickCloseDetails(nodeId) {
 export function clickCloseTerminal(pipeId, closePipe) {
   AppDispatcher.dispatch({
     type: ActionTypes.CLICK_CLOSE_TERMINAL,
-    pipeId: pipeId
+    pipeId
   });
   if (closePipe) {
     deletePipe(pipeId);
@@ -130,7 +130,7 @@ export function clickShowTopologyForNode(topologyId, nodeId) {
 export function clickTopology(topologyId) {
   AppDispatcher.dispatch({
     type: ActionTypes.CLICK_TOPOLOGY,
-    topologyId: topologyId
+    topologyId
   });
   updateRoute();
   resetUpdateBuffer();
@@ -149,7 +149,7 @@ export function openWebsocket() {
 export function clearControlError(nodeId) {
   AppDispatcher.dispatch({
     type: ActionTypes.CLEAR_CONTROL_ERROR,
-    nodeId: nodeId
+    nodeId
   });
 }
 
@@ -162,7 +162,7 @@ export function closeWebsocket() {
 export function doControl(nodeId, control) {
   AppDispatcher.dispatch({
     type: ActionTypes.DO_CONTROL,
-    nodeId: nodeId
+    nodeId
   });
   doControlRequest(nodeId, control);
 }
@@ -170,14 +170,14 @@ export function doControl(nodeId, control) {
 export function enterEdge(edgeId) {
   AppDispatcher.dispatch({
     type: ActionTypes.ENTER_EDGE,
-    edgeId: edgeId
+    edgeId
   });
 }
 
 export function enterNode(nodeId) {
   AppDispatcher.dispatch({
     type: ActionTypes.ENTER_NODE,
-    nodeId: nodeId
+    nodeId
   });
 }
 
@@ -191,7 +191,7 @@ export function hitEsc() {
     updateRoute();
     // Dont deselect node on ESC if there is a controlPipe (keep terminal open)
   } else if (AppStore.getTopCardNodeId() && !controlPipe) {
-    AppDispatcher.dispatch({type: ActionTypes.DESELECT_NODE});
+    AppDispatcher.dispatch({ type: ActionTypes.DESELECT_NODE });
     updateRoute();
   }
 }
@@ -199,21 +199,21 @@ export function hitEsc() {
 export function leaveEdge(edgeId) {
   AppDispatcher.dispatch({
     type: ActionTypes.LEAVE_EDGE,
-    edgeId: edgeId
+    edgeId
   });
 }
 
 export function leaveNode(nodeId) {
   AppDispatcher.dispatch({
     type: ActionTypes.LEAVE_NODE,
-    nodeId: nodeId
+    nodeId
   });
 }
 
 export function receiveControlError(nodeId, err) {
   AppDispatcher.dispatch({
     type: ActionTypes.DO_CONTROL_ERROR,
-    nodeId: nodeId,
+    nodeId,
     error: err
   });
 }
@@ -221,14 +221,14 @@ export function receiveControlError(nodeId, err) {
 export function receiveControlSuccess(nodeId) {
   AppDispatcher.dispatch({
     type: ActionTypes.DO_CONTROL_SUCCESS,
-    nodeId: nodeId
+    nodeId
   });
 }
 
 export function receiveNodeDetails(details) {
   AppDispatcher.dispatch({
     type: ActionTypes.RECEIVE_NODE_DETAILS,
-    details: details
+    details
   });
 }
 
@@ -238,7 +238,7 @@ export function receiveNodesDelta(delta) {
   } else {
     AppDispatcher.dispatch({
       type: ActionTypes.RECEIVE_NODES_DELTA,
-      delta: delta
+      delta
     });
   }
 }
@@ -246,7 +246,7 @@ export function receiveNodesDelta(delta) {
 export function receiveTopologies(topologies) {
   AppDispatcher.dispatch({
     type: ActionTypes.RECEIVE_TOPOLOGIES,
-    topologies: topologies
+    topologies
   });
   getNodesDelta(
     AppStore.getCurrentTopologyUrl(),
@@ -270,8 +270,8 @@ export function receiveControlPipeFromParams(pipeId, rawTty) {
   // TODO add nodeId
   AppDispatcher.dispatch({
     type: ActionTypes.RECEIVE_CONTROL_PIPE,
-    pipeId: pipeId,
-    rawTty: rawTty
+    pipeId,
+    rawTty
   });
 }
 
@@ -289,9 +289,9 @@ export function receiveControlPipe(pipeId, nodeId, rawTty) {
 
   AppDispatcher.dispatch({
     type: ActionTypes.RECEIVE_CONTROL_PIPE,
-    nodeId: nodeId,
-    pipeId: pipeId,
-    rawTty: rawTty
+    nodeId,
+    pipeId,
+    rawTty
   });
 
   updateRoute();
@@ -300,14 +300,14 @@ export function receiveControlPipe(pipeId, nodeId, rawTty) {
 export function receiveControlPipeStatus(pipeId, status) {
   AppDispatcher.dispatch({
     type: ActionTypes.RECEIVE_CONTROL_PIPE_STATUS,
-    pipeId: pipeId,
-    status: status
+    pipeId,
+    status
   });
 }
 
 export function receiveError(errorUrl) {
   AppDispatcher.dispatch({
-    errorUrl: errorUrl,
+    errorUrl,
     type: ActionTypes.RECEIVE_ERROR
   });
 }
@@ -321,7 +321,7 @@ export function receiveNotFound(nodeId) {
 
 export function route(state) {
   AppDispatcher.dispatch({
-    state: state,
+    state,
     type: ActionTypes.ROUTE_TOPOLOGY
   });
   getTopologies(

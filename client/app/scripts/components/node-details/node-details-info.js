@@ -27,19 +27,16 @@ export default class NodeDetailsInfo extends React.Component {
     }
     return (
       <div className="node-details-info">
-        {rows.map(field => {
-          return (
-            <div className="node-details-info-field" key={field.id}>
-              <div className="node-details-info-field-label truncate" title={field.label}>
-                {field.label}
-              </div>
-              <div className="node-details-info-field-value truncate" title={field.value}>
-                {field.value}
-              </div>
+        {rows.map(field => (<div className="node-details-info-field" key={field.id}>
+            <div className="node-details-info-field-label truncate" title={field.label}>
+              {field.label}
             </div>
-          );
-        })}
-        <ShowMore handleClick={() => this.handleClickMore()} collection={this.props.rows}
+            <div className="node-details-info-field-value truncate" title={field.value}>
+              {field.value}
+            </div>
+          </div>
+        ))}
+        <ShowMore handleClick={this.handleClickMore} collection={this.props.rows}
           expanded={this.state.expanded} notShown={notShown} />
       </div>
     );

@@ -14,18 +14,15 @@ import NodeShapeCloud from './node-shape-cloud';
 
 function stackedShape(Shape) {
   const factory = React.createFactory(NodeShapeStack);
-
-  return function(props) {
-    return factory(Object.assign({}, props, {shape: Shape}));
-  };
+  return props => factory(Object.assign({}, props, {shape: Shape}));
 }
 
 const nodeShapes = {
-  'circle': NodeShapeCircle,
-  'hexagon': NodeShapeHex,
-  'heptagon': NodeShapeHeptagon,
-  'square': NodeShapeRoundedSquare,
-  'cloud': NodeShapeCloud
+  circle: NodeShapeCircle,
+  hexagon: NodeShapeHex,
+  heptagon: NodeShapeHeptagon,
+  square: NodeShapeRoundedSquare,
+  cloud: NodeShapeCloud
 };
 
 function getNodeShape({shape, stack}) {
@@ -98,7 +95,7 @@ export default class Node extends React.Component {
         labelOffsetY: spring(labelOffsetY, animConfig),
         subLabelOffsetY: spring(subLabelOffsetY, animConfig)
       }}>
-        {function(interpolated) {
+        {(interpolated) => {
           const transform = `translate(${interpolated.x},${interpolated.y})`;
           return (
             <g className={classes} transform={transform} id={props.id}
@@ -107,11 +104,13 @@ export default class Node extends React.Component {
                 size={nodeScale(interpolated.f)}
                 color={color}
                 {...props} />
-              <text className="node-label" textAnchor="middle" style={{fontSize: interpolated.labelFontSize}}
+              <text className="node-label" textAnchor="middle"
+                style={{fontSize: interpolated.labelFontSize}}
                 x="0" y={interpolated.labelOffsetY + nodeScale(0.5 * interpolated.f)}>
                 {label}
               </text>
-              <text className="node-sublabel" textAnchor="middle" style={{fontSize: interpolated.subLabelFontSize}}
+              <text className="node-sublabel" textAnchor="middle"
+                style={{fontSize: interpolated.subLabelFontSize}}
                 x="0" y={interpolated.subLabelOffsetY + nodeScale(0.5 * interpolated.f)}>
                 {subLabel}
               </text>
@@ -127,7 +126,7 @@ export default class Node extends React.Component {
     const allowedChars = maxWidth / averageCharLength;
     let truncatedText = text;
     if (text && text.length > allowedChars) {
-      truncatedText = text.slice(0, allowedChars) + '...';
+      truncatedText = `${text.slice(0, allowedChars)}...`;
     }
     return truncatedText;
   }

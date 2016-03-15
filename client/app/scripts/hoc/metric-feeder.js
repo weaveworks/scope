@@ -148,7 +148,8 @@ export default ComposedComponent => class extends React.Component {
       .filter(dateFilter);
 
     const lastValue = samples.length > 0 ? samples[samples.length - 1].value : null;
-    const slidingWindow = {first: movingFirstDate, last: movingLastDate, max, samples, value: lastValue};
+    const slidingWindow = {first: movingFirstDate,
+      last: movingLastDate, max, samples, value: lastValue};
 
     return <ComposedComponent {...this.props} {...slidingWindow} />;
   }

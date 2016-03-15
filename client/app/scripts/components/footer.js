@@ -7,21 +7,25 @@ import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
   clickResumeUpdate } from '../actions/app-actions';
 import { basePathSlash } from '../utils/web-api-utils';
 
-export default (props) => {
+export default function Footer(props) {
   const { hostname, updatePaused, updatePausedAt, version } = props;
   const contrastMode = isContrastMode();
 
   // link url to switch contrast with current UI state
-  const otherContrastModeUrl = contrastMode ? basePathSlash(window.location.pathname) : contrastModeUrl;
-  const otherContrastModeTitle = contrastMode ? 'Switch to normal contrast' : 'Switch to high contrast';
-  const forceRelayoutTitle = 'Force re-layout (might reduce edge crossings, but may shift nodes around)';
+  const otherContrastModeUrl = contrastMode
+    ? basePathSlash(window.location.pathname) : contrastModeUrl;
+  const otherContrastModeTitle = contrastMode
+    ? 'Switch to normal contrast' : 'Switch to high contrast';
+  const forceRelayoutTitle = 'Force re-layout (might reduce edge crossings, '
+    + 'but may shift nodes around)';
 
   // pause button
   const isPaused = updatePaused;
   const updateCount = getUpdateBufferSize();
   const hasUpdates = updateCount > 0;
   const pausedAgo = moment(updatePausedAt).fromNow();
-  const pauseTitle = isPaused ? `Paused ${pausedAgo}` : 'Pause updates (freezes the nodes in their current layout)';
+  const pauseTitle = isPaused
+    ? `Paused ${pausedAgo}` : 'Pause updates (freezes the nodes in their current layout)';
   const pauseAction = isPaused ? clickResumeUpdate : clickPauseUpdate;
   const pauseClassName = isPaused ? 'footer-icon footer-icon-active' : 'footer-icon';
   let pauseLabel = '';
@@ -64,4 +68,4 @@ export default (props) => {
 
     </div>
   );
-};
+}

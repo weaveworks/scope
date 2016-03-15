@@ -32,13 +32,11 @@ export default class NodeDetailsHealth extends React.Component {
     return (
       <div className="node-details-health" style={{flexWrap, justifyContent}}>
         <div className="node-details-health-wrapper">
-            {primeMetrics.map(item => {
-              return <NodeDetailsHealthItem key={item.id} {...item} />;
-            })}
+          {primeMetrics.map(item => <NodeDetailsHealthItem key={item.id} {...item} />)}
           {showOverflow && <NodeDetailsHealthOverflow items={overflowMetrics}
-            handleClick={() => this.handleClickMore()} />}
+            handleClick={this.handleClickMore} />}
         </div>
-        <ShowMore handleClick={() => this.handleClickMore()} collection={this.props.metrics}
+        <ShowMore handleClick={this.handleClickMore} collection={this.props.metrics}
           expanded={this.state.expanded} notShown={notShown} hideNumber />
       </div>
     );

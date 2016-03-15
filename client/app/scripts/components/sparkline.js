@@ -30,12 +30,10 @@ export default class Sparkline extends React.Component {
     this.line.interpolate(this.props.interpolate);
 
     // Convert dates into D3 dates
-    data = data.map(d => {
-      return {
-        date: parseDate(d.date),
-        value: d.value
-      };
-    });
+    data = data.map(d => ({
+      date: parseDate(d.date),
+      value: d.value
+    }));
 
     // determine date range
     let firstDate = this.props.first ? parseDate(this.props.first) : data[0].date;
@@ -51,16 +49,17 @@ export default class Sparkline extends React.Component {
 
     // determine value range
     const minValue = this.props.min !== undefined ? this.props.min : d3.min(data, d => d.value);
-    const maxValue = this.props.max !== undefined ? Math.max(this.props.max, d3.max(data, d => d.value)) : d3.max(data, d => d.value);
+    const maxValue = this.props.max !== undefined
+      ? Math.max(this.props.max, d3.max(data, d => d.value)) : d3.max(data, d => d.value);
     this.y.domain([minValue, maxValue]);
 
     const lastValue = data[data.length - 1].value;
     const lastX = this.x(lastDate);
     const lastY = this.y(lastValue);
-    const title = 'Last ' + d3.round((lastDate - firstDate) / 1000) + ' seconds, ' +
-      data.length + ' samples, min: ' + d3.round(d3.min(data, d => d.value), 2) +
-      ', max: ' + d3.round(d3.max(data, d => d.value), 2) +
-      ', mean: ' + d3.round(d3.mean(data, d => d.value), 2);
+    const title = `Last ${d3.round((lastDate - firstDate) / 1000)} seconds, ` +
+      `${data.length} samples, min: ${d3.round(d3.min(data, d => d.value), 2)}` +
+      `, max: ${d3.round(d3.max(data, d => d.value), 2)}` +
+      `, mean: ${d3.round(d3.mean(data, d => d.value), 2)}`;
 
     return {title, lastX, lastY, data};
   }

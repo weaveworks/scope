@@ -44,7 +44,8 @@ export default class NodeDetails extends React.Component {
     return (
       <div className="node-details-tools-wrapper">
         <div className="node-details-tools">
-          {showSwitchTopology && <span title={topologyTitle} className="fa fa-exchange" onClick={this.handleShowTopologyForNode} />}
+          {showSwitchTopology && <span title={topologyTitle}
+            className="fa fa-exchange" onClick={this.handleShowTopologyForNode} />}
           <span title="Close details" className="fa fa-close" onClick={this.handleClickClose} />
         </div>
       </div>
@@ -60,7 +61,7 @@ export default class NodeDetails extends React.Component {
     const tools = this.renderTools();
     const styles = {
       header: {
-        'backgroundColor': nodeColor
+        backgroundColor: nodeColor
       }
     };
 
@@ -103,7 +104,8 @@ export default class NodeDetails extends React.Component {
         </div>
         <div className="node-details-content">
           <p className="node-details-content-info">
-            <strong>{this.props.label}</strong> is not visible to Scope when it is not communicating.
+            <strong>{this.props.label}</strong> is not visible to Scope when it
+             is not communicating.
             Details will become available here when it communicates again.
           </p>
         </div>
@@ -113,7 +115,8 @@ export default class NodeDetails extends React.Component {
 
   renderTable(table) {
     const key = _.snakeCase(table.title);
-    return <NodeDetailsTable title={table.title} key={key} rows={table.rows} isNumeric={table.numeric} />;
+    return (<NodeDetailsTable title={table.title} key={key} rows={table.rows}
+      isNumeric={table.numeric} />);
   }
 
   render() {
@@ -136,10 +139,10 @@ export default class NodeDetails extends React.Component {
     const tools = this.renderTools();
     const styles = {
       controls: {
-        'backgroundColor': brightenColor(nodeColor)
+        backgroundColor: brightenColor(nodeColor)
       },
       header: {
-        'backgroundColor': nodeColor
+        backgroundColor: nodeColor
       }
     };
 
@@ -174,23 +177,20 @@ export default class NodeDetails extends React.Component {
             <NodeDetailsInfo rows={details.metadata} />
           </div>}
 
-          {details.connections && details.connections.map(connections => {
-            return (
-              <div className="node-details-content-section" key={connections.id}>
-                <NodeDetailsTable {...connections} />
-              </div>
-            );
-          })}
+          {details.connections && details.connections.map(connections => <div
+            className="node-details-content-section" key={connections.id}>
+              <NodeDetailsTable {...connections} />
+            </div>
+          )}
 
-          {details.children && details.children.map(children => {
-            return (
-              <div className="node-details-content-section" key={children.topologyId}>
-                <NodeDetailsTable {...children} />
-              </div>
-            );
-          })}
+          {details.children && details.children.map(children => <div
+            className="node-details-content-section" key={children.topologyId}>
+              <NodeDetailsTable {...children} />
+            </div>
+          )}
 
-          {details.docker_labels && details.docker_labels.length > 0 && <div className="node-details-content-section">
+          {details.docker_labels && details.docker_labels.length > 0
+            && <div className="node-details-content-section">
             <div className="node-details-content-section-header">Docker Labels</div>
             <NodeDetailsLabels rows={details.docker_labels} />
           </div>}

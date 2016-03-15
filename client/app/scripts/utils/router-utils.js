@@ -23,17 +23,17 @@ export function updateRoute() {
 
   if (shouldReplaceState(prevState, state)) {
     // Replace the top of the history rather than pushing on a new item.
-    page.replace('/state/' + stateUrl, state, dispatch);
+    page.replace(`/state/${stateUrl}`, state, dispatch);
   } else {
-    page.show('/state/' + stateUrl, state, dispatch);
+    page.show(`/state/${stateUrl}`, state, dispatch);
   }
 }
 
-page('/', function() {
+page('/', () => {
   updateRoute();
 });
 
-page('/state/:state', function(ctx) {
+page('/state/:state', (ctx) => {
   const state = JSON.parse(ctx.params.state);
   route(state);
 });

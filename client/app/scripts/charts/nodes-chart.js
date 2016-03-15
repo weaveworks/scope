@@ -100,7 +100,8 @@ export default class NodesChart extends React.Component {
   }
 
   renderGraphNodes(nodes, nodeScale) {
-    const hasSelectedNode = this.props.selectedNodeId && this.props.nodes.has(this.props.selectedNodeId);
+    const hasSelectedNode = this.props.selectedNodeId
+      && this.props.nodes.has(this.props.selectedNodeId);
     const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes(this.props.selectedNodeId) : null;
     const onNodeClick = this.props.onNodeClick;
     const zoomScale = this.state.scale;
@@ -117,9 +118,7 @@ export default class NodesChart extends React.Component {
         && (this.props.selectedNodeId === node.get('id') || adjacency.includes(node.get('id')));
       return node.set('focused', focused);
     };
-    const setBlurred = node => {
-      return node.set('blurred', hasSelectedNode && !node.get('focused'));
-    };
+    const setBlurred = node => node.set('blurred', hasSelectedNode && !node.get('focused'));
 
     // make sure blurred nodes are in the background
     const sortNodes = node => {
@@ -138,55 +137,49 @@ export default class NodesChart extends React.Component {
       .map(setFocused)
       .map(setBlurred)
       .sortBy(sortNodes)
-      .map(node => {
-        return (<Node
-            blurred={node.get('blurred')}
-            focused={node.get('focused')}
-            highlighted={node.get('highlighted')}
-            topologyId={this.props.topologyId}
-            shape={node.get('shape')}
-            stack={node.get('stack')}
-            onClick={onNodeClick}
-            key={node.get('id')}
-            id={node.get('id')}
-            label={node.get('label')}
-            pseudo={node.get('pseudo')}
-            nodeCount={node.get('nodeCount')}
-            subLabel={node.get('subLabel')}
-            rank={node.get('rank')}
-            selectedNodeScale={selectedNodeScale}
-            nodeScale={nodeScale}
-            zoomScale={zoomScale}
-            dx={node.get('x')}
-            dy={node.get('y')}
-          />
-        );
-      });
+      .map(node => <Node
+        blurred={node.get('blurred')}
+        focused={node.get('focused')}
+        highlighted={node.get('highlighted')}
+        topologyId={this.props.topologyId}
+        shape={node.get('shape')}
+        stack={node.get('stack')}
+        onClick={onNodeClick}
+        key={node.get('id')}
+        id={node.get('id')}
+        label={node.get('label')}
+        pseudo={node.get('pseudo')}
+        nodeCount={node.get('nodeCount')}
+        subLabel={node.get('subLabel')}
+        rank={node.get('rank')}
+        selectedNodeScale={selectedNodeScale}
+        nodeScale={nodeScale}
+        zoomScale={zoomScale}
+        dx={node.get('x')}
+        dy={node.get('y')}
+      />);
   }
 
   renderGraphEdges(edges) {
     const selectedNodeId = this.props.selectedNodeId;
     const hasSelectedNode = selectedNodeId && this.props.nodes.has(selectedNodeId);
 
-    const setHighlighted = edge => {
-      return edge.set('highlighted', _.includes(this.props.highlightedEdgeIds, edge.get('id')));
-    };
-    const setBlurred = edge => {
-      return (edge.set('blurred', hasSelectedNode
-        && edge.get('source') !== selectedNodeId
-        && edge.get('target') !== selectedNodeId));
-    };
+    const setHighlighted = edge => edge.set('highlighted', _.includes(this.props.highlightedEdgeIds,
+      edge.get('id')));
+
+    const setBlurred = edge => edge.set('blurred', hasSelectedNode
+      && edge.get('source') !== selectedNodeId
+      && edge.get('target') !== selectedNodeId);
 
     return edges
       .toIndexedSeq()
       .map(setHighlighted)
       .map(setBlurred)
-      .map(edge => {
-        return (
-          <Edge key={edge.get('id')} id={edge.get('id')} points={edge.get('points')}
-            blurred={edge.get('blurred')} highlighted={edge.get('highlighted')} />
-        );
-      });
+      .map(edge => <Edge key={edge.get('id')} id={edge.get('id')}
+        points={edge.get('points')}
+        blurred={edge.get('blurred')} highlighted={edge.get('highlighted')}
+      />
+    );
   }
 
   renderMaxNodesError(show) {
@@ -203,9 +196,12 @@ export default class NodesChart extends React.Component {
       <NodesError faIconClass="fa-circle-thin" hidden={!show}>
         <div className="heading">Nothing to show. This can have any of these reasons:</div>
         <ul>
-          <li>We haven't received any reports from probes recently. Are the probes properly configured?</li>
-          <li>There are nodes, but they're currently hidden. Check the view options in the bottom-left if they allow for showing hidden nodes.</li>
-          <li>Containers view only: you're not running Docker, or you don't have any containers.</li>
+          <li>We haven't received any reports from probes recently.
+           Are the probes properly configured?</li>
+          <li>There are nodes, but they're currently hidden. Check the view options
+           in the bottom-left if they allow for showing hidden nodes.</li>
+          <li>Containers view only: you're not running Docker,
+           or you don't have any containers.</li>
         </ul>
       </NodesError>
     );
@@ -217,7 +213,7 @@ export default class NodesChart extends React.Component {
     const scale = this.state.scale;
 
     const translate = this.state.panTranslate;
-    const transform = 'translate(' + translate + ') scale(' + scale + ')';
+    const transform = `translate(${translate}) scale(${scale})`;
     const svgClassNames = this.state.maxNodesExceeded || nodeElements.size === 0 ? 'hide' : '';
     const errorEmpty = this.renderEmptyTopologyError(AppStore.isTopologyEmpty());
     const errorMaxNodesExceeded = this.renderMaxNodesError(this.state.maxNodesExceeded);
@@ -226,9 +222,10 @@ export default class NodesChart extends React.Component {
       <div className="nodes-chart">
         {errorEmpty}
         {errorMaxNodesExceeded}
-        <svg width="100%" height="100%" id="nodes-chart-canvas" className={svgClassNames} onClick={this.handleMouseClick}>
+        <svg width="100%" height="100%" id="nodes-chart-canvas"
+          className={svgClassNames} onClick={this.handleMouseClick}>
           <g transform="translate(24,24) scale(0.25)">
-            <Logo/>
+            <Logo />
           </g>
           <g className="canvas" transform={transform}>
             <g className="edges">
@@ -244,30 +241,28 @@ export default class NodesChart extends React.Component {
   }
 
   initNodes(topology) {
-    return topology.map((node, id) => {
-      // copy relevant fields to state nodes
-      return makeMap({
-        id: id,
-        label: node.get('label_major'),
-        pseudo: node.get('pseudo'),
-        subLabel: node.get('label_minor'),
-        nodeCount: node.get('node_count'),
-        rank: node.get('rank'),
-        shape: node.get('shape'),
-        stack: node.get('stack'),
-        x: 0,
-        y: 0
-      });
-    });
+    // copy relevant fields to state nodes
+    return topology.map((node, id) => makeMap({
+      id,
+      label: node.get('label_major'),
+      pseudo: node.get('pseudo'),
+      subLabel: node.get('label_minor'),
+      nodeCount: node.get('node_count'),
+      rank: node.get('rank'),
+      shape: node.get('shape'),
+      stack: node.get('stack'),
+      x: 0,
+      y: 0
+    }));
   }
 
   initEdges(topology, stateNodes) {
     let edges = makeMap();
 
-    topology.forEach(function(node, nodeId) {
+    topology.forEach((node, nodeId) => {
       const adjacency = node.get('adjacency');
       if (adjacency) {
-        adjacency.forEach(function(adjacent) {
+        adjacency.forEach(adjacent => {
           const edge = [nodeId, adjacent];
           const edgeId = edge.join(EDGE_ID_SEPARATOR);
 
@@ -282,8 +277,8 @@ export default class NodesChart extends React.Component {
             edges = edges.set(edgeId, makeMap({
               id: edgeId,
               value: 1,
-              source: source,
-              target: target
+              source,
+              target
             }));
           }
         });
@@ -305,7 +300,7 @@ export default class NodesChart extends React.Component {
     const adjacency = AppStore.getAdjacentNodes(props.selectedNodeId);
     const adjacentLayoutNodeIds = [];
 
-    adjacency.forEach(function(adjacentId) {
+    adjacency.forEach(adjacentId => {
       // filter loopback
       if (adjacentId !== props.selectedNodeId) {
         adjacentLayoutNodeIds.push(adjacentId);
@@ -315,7 +310,8 @@ export default class NodesChart extends React.Component {
     // move origin node to center of viewport
     const zoomScale = state.scale;
     const translate = state.panTranslate;
-    const centerX = (-translate[0] + (props.width + MARGINS.left - DETAILS_PANEL_WIDTH) / 2) / zoomScale;
+    const centerX = (-translate[0] + (props.width + MARGINS.left
+      - DETAILS_PANEL_WIDTH) / 2) / zoomScale;
     const centerY = (-translate[1] + (props.height + MARGINS.top) / 2) / zoomScale;
     stateNodes = stateNodes.mergeIn([props.selectedNodeId], {
       x: centerX,
@@ -379,12 +375,10 @@ export default class NodesChart extends React.Component {
     this.zoom.scale(state.scale);
     this.zoom.translate(state.panTranslate);
 
-    const nodes = state.nodes.map(node => {
-      return node.merge({
-        x: node.get('px'),
-        y: node.get('py')
-      });
-    });
+    const nodes = state.nodes.map(node => node.merge({
+      x: node.get('px'),
+      y: node.get('py')
+    }));
 
     const edges = state.edges.map(edge => {
       if (edge.has('ppoints')) {
@@ -422,7 +416,7 @@ export default class NodesChart extends React.Component {
     const timedLayouter = timely(doLayout);
     const graph = timedLayouter(stateNodes, stateEdges, options);
 
-    log('graph layout took ' + timedLayouter.time + 'ms');
+    log(`graph layout took ${timedLayouter.time}ms`);
 
     // layout was aborted
     if (!graph) {
@@ -432,15 +426,11 @@ export default class NodesChart extends React.Component {
     stateEdges = graph.edges;
 
     // save coordinates for restore
-    stateNodes = stateNodes.map(node => {
-      return node.merge({
-        px: node.get('x'),
-        py: node.get('y')
-      });
-    });
-    stateEdges = stateEdges.map(edge => {
-      return edge.set('ppoints', edge.get('points'));
-    });
+    stateNodes = stateNodes.map(node => node.merge({
+      px: node.get('x'),
+      py: node.get('y')
+    }));
+    stateEdges = stateEdges.map(edge => edge.set('ppoints', edge.get('points')));
 
     // adjust layout based on viewport
     const xFactor = (props.width - MARGINS.left - MARGINS.right) / graph.width;
@@ -458,7 +448,7 @@ export default class NodesChart extends React.Component {
       nodes: stateNodes,
       edges: stateEdges,
       scale: zoomScale,
-      nodeScale: nodeScale,
+      nodeScale,
       maxNodesExceeded: false
     };
   }

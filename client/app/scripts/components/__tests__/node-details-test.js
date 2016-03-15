@@ -28,7 +28,8 @@ describe('NodeDetails', () => {
 
   it('shows n/a when node was not found', () => {
     const c = TestUtils.renderIntoDocument(<NodeDetails notFound />);
-    const notFound = TestUtils.findRenderedDOMComponentWithClass(c, 'node-details-header-notavailable');
+    const notFound = TestUtils.findRenderedDOMComponentWithClass(c,
+      'node-details-header-notavailable');
     expect(notFound).toBeDefined();
   });
 

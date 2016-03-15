@@ -7,23 +7,23 @@ import { enterEdge, leaveEdge } from '../actions/app-actions';
 
 const line = d3.svg.line()
   .interpolate('basis')
-  .x(function(d) { return d.x; })
-  .y(function(d) { return d.y; });
+  .x(d => d.x)
+  .y(d => d.y);
 
 const animConfig = {stiffness: 80, damping: 20};
 
-const flattenPoints = function(points) {
+const flattenPoints = points => {
   const flattened = {};
-  points.forEach(function(point, i) {
-    flattened['x' + i] = spring(point.x, animConfig);
-    flattened['y' + i] = spring(point.y, animConfig);
+  points.forEach((point, i) => {
+    flattened[`x${i}`] = spring(point.x, animConfig);
+    flattened[`y${i}`] = spring(point.y, animConfig);
   });
   return flattened;
 };
 
-const extractPoints = function(points) {
+const extractPoints = points => {
   const extracted = [];
-  _.each(points, function(value, key) {
+  _.each(points, (value, key) => {
     const axis = key[0];
     const index = key.slice(1);
     if (!extracted[index]) {
@@ -70,10 +70,11 @@ export default class Edge extends React.Component {
 
     return (
       <Motion style={points}>
-        {function(interpolated) {
+        {(interpolated) => {
           const path = line(extractPoints(interpolated));
           return (
-            <g className={classes} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} id={props.id}>
+            <g className={classes} onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave} id={props.id}>
               <path d={path} className="shadow" />
               <path d={path} className="link" />
             </g>

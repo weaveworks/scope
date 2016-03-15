@@ -2,7 +2,8 @@ import React from 'react';
 
 import { getNodeColor, getNodeColorDark } from '../utils/color-utils';
 import Terminal from './terminal';
-import { DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS, DETAILS_PANEL_OFFSET } from '../constants/styles';
+import { DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS,
+  DETAILS_PANEL_OFFSET } from '../constants/styles';
 
 export default function EmeddedTerminal({pipe, nodeId, details}) {
   const node = details.get(nodeId);

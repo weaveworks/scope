@@ -25,7 +25,8 @@ export default class NodeDetailsTable extends React.Component {
 
   handleHeaderClick(ev, headerId) {
     ev.preventDefault();
-    const sortedDesc = headerId === this.state.sortBy ? !this.state.sortedDesc : this.state.sortedDesc;
+    const sortedDesc = headerId === this.state.sortBy
+      ? !this.state.sortedDesc : this.state.sortedDesc;
     const sortBy = headerId;
     this.setState({sortBy, sortedDesc});
   }
@@ -47,17 +48,15 @@ export default class NodeDetailsTable extends React.Component {
 
   getMetaDataSorters() {
     // returns an array of sorters that will take a node
-    return _.get(this.props.nodes, [0, 'metadata'], []).map((field, index) => {
-      return node => {
-        const nodeMetadataField = node.metadata[index];
-        if (nodeMetadataField) {
-          if (isNumberField(nodeMetadataField)) {
-            return parseFloat(nodeMetadataField.value);
-          }
-          return nodeMetadataField.value;
+    return _.get(this.props.nodes, [0, 'metadata'], []).map((field, index) => node => {
+      const nodeMetadataField = node.metadata[index];
+      if (nodeMetadataField) {
+        if (isNumberField(nodeMetadataField)) {
+          return parseFloat(nodeMetadataField.value);
         }
-        return null;
-      };
+        return nodeMetadataField.value;
+      }
+      return null;
     });
   }
 
@@ -81,8 +80,9 @@ export default class NodeDetailsTable extends React.Component {
     ['metrics', 'metadata'].forEach(collection => {
       if (node[collection]) {
         node[collection].forEach(field => {
-          field.valueType = collection;
-          values[field.id] = field;
+          const result = Object.assign({}, field);
+          result.valueType = collection;
+          values[field.id] = result;
         });
       }
     });
@@ -103,7 +103,8 @@ export default class NodeDetailsTable extends React.Component {
               this.handleHeaderClick(ev, header.id);
             };
             // sort by first metric by default
-            const isSorted = this.state.sortBy !== null ? header.id === this.state.sortBy : header.id === defaultSortBy;
+            const isSorted = this.state.sortBy !== null
+              ? header.id === this.state.sortBy : header.id === defaultSortBy;
             const isSortedDesc = isSorted && this.state.sortedDesc;
             const isSortedAsc = isSorted && !isSortedDesc;
             if (isSorted) {
@@ -111,8 +112,10 @@ export default class NodeDetailsTable extends React.Component {
             }
             return (
               <td className={headerClasses.join(' ')} onClick={onHeaderClick} key={header.id}>
-                {isSortedAsc && <span className="node-details-table-header-sorter fa fa-caret-up" />}
-                {isSortedDesc && <span className="node-details-table-header-sorter fa fa-caret-down" />}
+                {isSortedAsc
+                  && <span className="node-details-table-header-sorter fa fa-caret-up" />}
+                {isSortedDesc
+                  && <span className="node-details-table-header-sorter fa fa-caret-down" />}
                 {header.label}
               </td>
             );
@@ -145,7 +148,8 @@ export default class NodeDetailsTable extends React.Component {
 
   render() {
     const headers = this.renderHeaders();
-    let nodes = _.sortBy(this.props.nodes, this.getValueForSortBy, 'label', this.getMetaDataSorters());
+    let nodes = _.sortBy(this.props.nodes, this.getValueForSortBy, 'label',
+      this.getMetaDataSorters());
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
     const expanded = this.state.limit === 0;
     const notShown = nodes.length - this.DEFAULT_LIMIT;
@@ -176,7 +180,8 @@ export default class NodeDetailsTable extends React.Component {
           })}
           </tbody>
         </table>
-        <ShowMore handleClick={() => this.handleLimitClick()} collection={this.props.nodes} expanded={expanded} notShown={notShown} />
+        <ShowMore handleClick={this.handleLimitClick} collection={this.props.nodes}
+          expanded={expanded} notShown={notShown} />
       </div>
     );
   }

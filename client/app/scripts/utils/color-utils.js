@@ -15,9 +15,8 @@ const letterRange = endLetterRange - startLetterRange;
 function text2degree(text) {
   const input = text.substr(0, 2).toUpperCase();
   let num = 0;
-  let charCode;
   for (let i = 0; i < input.length; i++) {
-    charCode = Math.max(Math.min(input[i].charCodeAt(), endLetterRange), startLetterRange);
+    const charCode = Math.max(Math.min(input[i].charCodeAt(), endLetterRange), startLetterRange);
     num += Math.pow(letterRange, input.length - i - 1) * (charCode - startLetterRange);
   }
   hueScale.domain([0, Math.pow(letterRange, input.length)]);

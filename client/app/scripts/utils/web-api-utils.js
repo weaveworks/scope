@@ -23,9 +23,7 @@ let controlErrorTimer = 0;
 
 function buildOptionsQuery(options) {
   if (options) {
-    return options.reduce(function(query, value, param) {
-      return `${query}&${param}=${value}`;
-    }, '');
+    return options.reduce((query, value, param) => `${query}&${param}=${value}`, '');
   }
   return '';
 }
@@ -52,11 +50,11 @@ export function basePathSlash(urlPath) {
   // "/scope" -> "/scope/"
   // "/" -> "/"
   //
-  return basePath(urlPath) + '/';
+  return `${basePath(urlPath)}/`;
 }
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = wsProto + '://' + location.host + basePath(location.pathname);
+const wsUrl = `${wsProto}://${location.host}${basePath(location.pathname)}`;
 
 function createWebsocket(topologyUrl, optionsQuery) {
   if (socket) {
@@ -67,30 +65,29 @@ function createWebsocket(topologyUrl, optionsQuery) {
     // right away
   }
 
-  socket = new WebSocket(wsUrl + topologyUrl
-    + '/ws?t=' + updateFrequency + '&' + optionsQuery);
+  socket = new WebSocket(`${wsUrl}${topologyUrl}/ws?t=${updateFrequency}&${optionsQuery}`);
 
-  socket.onopen = function() {
+  socket.onopen = () => {
     openWebsocket();
   };
 
-  socket.onclose = function() {
+  socket.onclose = () => {
     clearTimeout(reconnectTimer);
-    log('Closing websocket to ' + topologyUrl, socket.readyState);
+    log(`Closing websocket to ${topologyUrl}`, socket.readyState);
     socket = null;
     closeWebsocket();
 
-    reconnectTimer = setTimeout(function() {
+    reconnectTimer = setTimeout(() => {
       createWebsocket(topologyUrl, optionsQuery);
     }, reconnectTimerInterval);
   };
 
-  socket.onerror = function() {
-    log('Error in websocket to ' + topologyUrl);
+  socket.onerror = () => {
+    log(`Error in websocket to ${topologyUrl}`);
     receiveError(currentUrl);
   };
 
-  socket.onmessage = function(event) {
+  socket.onmessage = (event) => {
     const msg = JSON.parse(event.data);
     receiveNodesDelta(msg);
   };
@@ -103,17 +100,17 @@ export function getTopologies(options) {
   const optionsQuery = buildOptionsQuery(options);
   const url = `api/topology?${optionsQuery}`;
   reqwest({
-    url: url,
-    success: function(res) {
+    url,
+    success: (res) => {
       receiveTopologies(res);
-      topologyTimer = setTimeout(function() {
+      topologyTimer = setTimeout(() => {
         getTopologies(options);
       }, TOPOLOGY_INTERVAL);
     },
-    error: function(err) {
-      log('Error in topology request: ' + err.responseText);
+    error: (err) => {
+      log(`Error in topology request: ${err.responseText}`);
       receiveError(url);
-      topologyTimer = setTimeout(function() {
+      topologyTimer = setTimeout(() => {
         getTopologies(options);
       }, TOPOLOGY_INTERVAL / 2);
     }
@@ -139,15 +136,15 @@ export function getNodeDetails(topologyUrlsById, nodeMap) {
     const url = [topologyUrl, '/', encodeURIComponent(obj.id)]
       .join('').substr(1);
     reqwest({
-      url: url,
-      success: function(res) {
+      url,
+      success: (res) => {
         // make sure node is still selected
         if (nodeMap.has(res.node.id)) {
           receiveNodeDetails(res.node);
         }
       },
-      error: function(err) {
-        log('Error in node details request: ' + err.responseText);
+      error: (err) => {
+        log(`Error in node details request: ${err.responseText}`);
         // dont treat missing node as error
         if (err.status === 404) {
           receiveNotFound(obj.id);
@@ -165,13 +162,13 @@ export function getApiDetails() {
   clearTimeout(apiDetailsTimer);
   const url = 'api';
   reqwest({
-    url: url,
-    success: function(res) {
+    url,
+    success: (res) => {
       receiveApiDetails(res);
       apiDetailsTimer = setTimeout(getApiDetails, API_INTERVAL);
     },
-    error: function(err) {
-      log('Error in api details request: ' + err.responseText);
+    error: (err) => {
+      log(`Error in api details request: ${err.responseText}`);
       receiveError(url);
       apiDetailsTimer = setTimeout(getApiDetails, API_INTERVAL / 2);
     }
@@ -184,16 +181,16 @@ export function doControlRequest(nodeId, control) {
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
   reqwest({
     method: 'POST',
-    url: url,
-    success: function(res) {
+    url,
+    success: (res) => {
       receiveControlSuccess(nodeId);
       if (res && res.pipe) {
         receiveControlPipe(res.pipe, nodeId, res.raw_tty, true);
       }
     },
-    error: function(err) {
+    error: (err) => {
       receiveControlError(nodeId, err.response);
-      controlErrorTimer = setTimeout(function() {
+      controlErrorTimer = setTimeout(() => {
         clearControlError(nodeId);
       }, 10000);
     }
@@ -204,12 +201,12 @@ export function deletePipe(pipeId) {
   const url = `api/pipe/${encodeURIComponent(pipeId)}`;
   reqwest({
     method: 'DELETE',
-    url: url,
-    success: function() {
+    url,
+    success: () => {
       log('Closed the pipe!');
     },
-    error: function(err) {
-      log('Error closing pipe:' + err);
+    error: (err) => {
+      log(`Error closing pipe:${err}`);
       receiveError(url);
     }
   });
@@ -219,11 +216,11 @@ export function getPipeStatus(pipeId) {
   const url = `api/pipe/${encodeURIComponent(pipeId)}/check`;
   reqwest({
     method: 'GET',
-    url: url,
-    error: function(err) {
+    url,
+    error: (err) => {
       log('ERROR: unexpected response:', err);
     },
-    success: function(res) {
+    success: (res) => {
       const status = {
         200: 'PIPE_ALIVE',
         204: 'PIPE_DELETED'

@@ -10,34 +10,30 @@ export function findTopologyById(subTree, topologyId) {
     if (!foundTopology && topology.has('sub_topologies')) {
       foundTopology = findTopologyById(topology.get('sub_topologies'), topologyId);
     }
-    if (foundTopology) {
-      return false;
-    }
   });
 
   return foundTopology;
 }
 
-
 export function updateNodeDegrees(nodes, edges) {
   return nodes.map(node => {
     const nodeId = node.get('id');
-    const degree = edges.count(edge => {
-      return edge.get('source') === nodeId || edge.get('target') === nodeId;
-    });
+    const degree = edges.count(edge => edge.get('source') === nodeId
+      || edge.get('target') === nodeId);
     return node.set('degree', degree);
   });
 }
 
 /* set topology.id in place on each topology */
 export function updateTopologyIds(topologies) {
-  topologies.forEach(topology => {
-    topology.id = topology.url.split('/').pop();
+  return topologies.map(topology => {
+    const result = Object.assign({}, topology);
+    result.id = topology.url.split('/').pop();
     if (topology.sub_topologies) {
-      updateTopologyIds(topology.sub_topologies);
+      result.sub_topologies = updateTopologyIds(topology.sub_topologies);
     }
+    return result;
   });
-  return topologies;
 }
 
 // adds ID field to topology (based on last part of URL path) and save urls in

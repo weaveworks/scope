@@ -5,11 +5,9 @@ const log = debug('scope:dispatcher');
 
 const instance = new Dispatcher();
 
-instance.dispatch = _.wrap(Dispatcher.prototype.dispatch, function(func) {
-  const args = Array.prototype.slice.call(arguments, 1);
-  const type = args[0] && args[0].type;
-  log(type, args[0]);
-  func.apply(this, args);
+instance.dispatch = _.wrap(Dispatcher.prototype.dispatch, (func, payload) => {
+  log(payload.type, payload);
+  func.call(instance, payload);
 });
 
 export default instance;
