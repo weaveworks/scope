@@ -35,12 +35,13 @@ function makeNode(node) {
 // Initial values
 
 let topologyOptions = makeOrderedMap(); // topologyId -> options
-let adjacentNodes = makeSet();
 let controlStatus = makeMap();
 let currentTopology = null;
 let currentTopologyId = 'containers';
 let errorUrl = null;
 let forceRelayout = false;
+let highlightedEdgeIds = makeSet();
+let highlightedNodeIds = makeSet();
 let hostname = '...';
 let version = '...';
 let mouseOverEdgeId = null;
@@ -145,10 +146,10 @@ export class AppStore extends Store {
   }
 
   getAdjacentNodes(nodeId) {
-    adjacentNodes = adjacentNodes.clear();
+    let adjacentNodes = makeSet();
 
     if (nodes.has(nodeId)) {
-      adjacentNodes = makeSet(nodes.get(nodeId).get('adjacency'));
+      adjacentNodes = makeSet(nodes.getIn([nodeId, 'adjacency']));
       // fill up set with reverse edges
       nodes.forEach((node, id) => {
         if (node.get('adjacency') && node.get('adjacency').includes(nodeId)) {
@@ -193,33 +194,11 @@ export class AppStore extends Store {
   }
 
   getHighlightedEdgeIds() {
-    if (mouseOverNodeId && nodes.has(mouseOverNodeId)) {
-      // all neighbour combinations because we dont know which direction exists
-      const adjacency = nodes.get(mouseOverNodeId).get('adjacency');
-      if (adjacency) {
-        return _.flatten(
-          adjacency.map((nodeId) => [
-            [nodeId, mouseOverNodeId].join(EDGE_ID_SEPARATOR),
-            [mouseOverNodeId, nodeId].join(EDGE_ID_SEPARATOR)
-          ]).toJS()
-        );
-      }
-    }
-    if (mouseOverEdgeId) {
-      return mouseOverEdgeId;
-    }
-    return null;
+    return highlightedEdgeIds;
   }
 
   getHighlightedNodeIds() {
-    if (mouseOverNodeId) {
-      const adjacency = this.getAdjacentNodes(mouseOverNodeId);
-      return _.union(adjacency.toJS(), [mouseOverNodeId]);
-    }
-    if (mouseOverEdgeId) {
-      return mouseOverEdgeId.split(EDGE_ID_SEPARATOR);
-    }
-    return null;
+    return highlightedNodeIds;
   }
 
   getHostname() {
@@ -433,22 +412,53 @@ export class AppStore extends Store {
         break;
       }
       case ActionTypes.ENTER_EDGE: {
-        mouseOverEdgeId = payload.edgeId;
+        // clear old highlights
+        highlightedNodeIds = highlightedNodeIds.clear();
+        highlightedEdgeIds = highlightedEdgeIds.clear();
+
+        // highlight edge
+        highlightedEdgeIds = highlightedEdgeIds.add(payload.edgeId);
+
+        // highlight adjacent nodes
+        highlightedNodeIds = highlightedNodeIds.union(payload.edgeId.split(EDGE_ID_SEPARATOR));
+
         this.__emitChange();
         break;
       }
       case ActionTypes.ENTER_NODE: {
-        mouseOverNodeId = payload.nodeId;
+        const nodeId = payload.nodeId;
+
+        // clear old highlights
+        highlightedNodeIds = highlightedNodeIds.clear();
+        highlightedEdgeIds = highlightedEdgeIds.clear();
+
+        // highlight nodes
+        highlightedNodeIds = highlightedNodeIds.add(nodeId);
+        const adjacencNodes = this.getAdjacentNodes(nodeId);
+        highlightedNodeIds = highlightedNodeIds.union(adjacencNodes);
+
+        // highlight edges
+        const adjacency = nodes.getIn([nodeId, 'adjacency']);
+        if (adjacency) {
+          // all neighbour combinations because we dont know which direction exists
+          highlightedEdgeIds = highlightedEdgeIds.union(adjacency.flatMap((adjacentId) => [
+            [adjacentId, nodeId].join(EDGE_ID_SEPARATOR),
+            [nodeId, adjacentId].join(EDGE_ID_SEPARATOR)
+          ]));
+        }
+
         this.__emitChange();
         break;
       }
       case ActionTypes.LEAVE_EDGE: {
-        mouseOverEdgeId = null;
+        highlightedEdgeIds = highlightedEdgeIds.clear();
+        highlightedNodeIds = highlightedNodeIds.clear();
         this.__emitChange();
         break;
       }
       case ActionTypes.LEAVE_NODE: {
-        mouseOverNodeId = null;
+        highlightedEdgeIds = highlightedEdgeIds.clear();
+        highlightedNodeIds = highlightedNodeIds.clear();
         this.__emitChange();
         break;
       }

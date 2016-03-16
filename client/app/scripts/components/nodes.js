@@ -25,20 +25,7 @@ export default class Nodes extends React.Component {
   }
 
   render() {
-    return (
-      <NodesChart
-        highlightedEdgeIds={this.props.highlightedEdgeIds}
-        highlightedNodeIds={this.props.highlightedNodeIds}
-        selectedNodeId={this.props.selectedNodeId}
-        nodes={this.props.nodes}
-        width={this.state.width}
-        height={this.state.height}
-        forceRelayout={this.props.forceRelayout}
-        topologyId={this.props.topologyId}
-        detailsWidth={this.props.detailsWidth}
-        topMargin={this.props.topMargin}
-      />
-    );
+    return <NodesChart {...this.props} {...this.state} />;
   }
 
   handleResize() {
