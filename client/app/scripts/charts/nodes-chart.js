@@ -109,7 +109,7 @@ export default class NodesChart extends React.Component {
 
     // highlighter functions
     const setHighlighted = node => {
-      const highlighted = _.includes(this.props.highlightedNodeIds, node.get('id'))
+      const highlighted = this.props.highlightedNodeIds.has(node.get('id'))
         || this.props.selectedNodeId === node.get('id');
       return node.set('highlighted', highlighted);
     };
@@ -164,7 +164,7 @@ export default class NodesChart extends React.Component {
     const selectedNodeId = this.props.selectedNodeId;
     const hasSelectedNode = selectedNodeId && this.props.nodes.has(selectedNodeId);
 
-    const setHighlighted = edge => edge.set('highlighted', _.includes(this.props.highlightedEdgeIds,
+    const setHighlighted = edge => edge.set('highlighted', this.props.highlightedEdgeIds.has(
       edge.get('id')));
 
     const setBlurred = edge => edge.set('blurred', hasSelectedNode
