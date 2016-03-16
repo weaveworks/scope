@@ -5,6 +5,7 @@ import AppStore from '../stores/app-store';
 
 
 // Inspired by Lee Byron's test data generator.
+/*eslint-disable */
 function bumpLayer(n, maxValue) {
   function bump(a) {
     const x = 1 / (0.1 + Math.random());
@@ -24,6 +25,7 @@ function bumpLayer(n, maxValue) {
   const s = d3.scale.linear().domain(d3.extent(values)).range([0, maxValue]);
   return values.map(s);
 }
+/*eslint-enable */
 
 
 const nodeData = {};
@@ -40,17 +42,56 @@ function getNextValue(keyValues, maxValue) {
 }
 
 
+const METRIC_FORMATS = {
+  docker_cpu_total_usage: 'percent',
+  docker_memory_usage: 'filesize',
+  host_cpu_usage_percent: 'percent',
+  host_mem_usage_bytes: 'filesize',
+  load1: 'number',
+  load15: 'number',
+  load5: 'number',
+  open_files_count: 'integer',
+  process_cpu_usage_percent: 'percent',
+  process_memory_usage_bytes: 'filesize'
+};
+
+
+const memoryMetric = (node, name, max = 1024 * 1024 * 1024) => ({
+  samples: [{value: getNextValue([node.id, name], max)}],
+  max
+});
+
+const cpuMetric = (node, name, max = 100) => ({
+  samples: [{value: getNextValue([node.id, name], max)}],
+  max
+});
+
+const fileMetric = (node, name, max = 10000) => ({
+  samples: [{value: getNextValue([node.id, name], max)}],
+  max
+});
+
+const loadMetric = (node, name, max = 10) => ({
+  samples: [{value: getNextValue([node.id, name], max)}],
+  max
+});
+
 function mergeMetrics(node) {
+  if (node.pseudo) {
+    return node;
+  }
   return Object.assign({}, node, {
     metrics: {
-      'process_cpu_usage_percent': {
-        samples: [{value: getNextValue([node.id, 'cpu'], 100)}],
-        max: 100
-      },
-      'memory': {
-        samples: [{value: getNextValue([node.id, 'memory'], 1024)}],
-        max: 1024
-      }
+      process_cpu_usage_percent: cpuMetric(node, 'process_cpu_usage_percent'),
+      process_memory_usage_bytes: memoryMetric(node, 'process_memory_usage_bytes'),
+      open_files_count: fileMetric(node, 'open_files_count'),
+      load1: loadMetric(node, 'load1'),
+      load5: loadMetric(node, 'load5'),
+      load15: loadMetric(node, 'load15'),
+      docker_cpu_total_usage: cpuMetric(node, 'docker_cpu_total_usage'),
+      docker_memory_usage: memoryMetric(node, 'docker_memory_usage'),
+      host_cpu_usage_percent: cpuMetric(node, 'host_cpu_usage_percent'),
+      host_mem_usage_bytes: memoryMetric(node, 'host_mem_usage_bytes')
     }
   });
 }
@@ -66,9 +107,9 @@ function handleAdd(nodes) {
 
 function handleUpdated(updatedNodes, prevNodes) {
   const modifiedNodesIndex = _.zipObject((updatedNodes || []).map(n => [n.id, n]));
-  return prevNodes.toIndexedSeq().toJS().map(n => {
-    return Object.assign({}, mergeMetrics(n), modifiedNodesIndex[n.id]);
-  });
+  return prevNodes.toIndexedSeq().toJS().map(n => (
+    Object.assign({}, mergeMetrics(n), modifiedNodesIndex[n.id])
+  ));
 }
 
 
@@ -78,19 +119,6 @@ export function addMetrics(delta, prevNodes) {
     update: handleUpdated(delta.update, prevNodes)
   });
 }
-
-const METRIC_FORMATS = {
-  docker_cpu_total_usage: 'percent',
-  docker_memory_usage: 'filesize',
-  host_cpu_usage_percent: 'percent',
-  host_mem_usage_bytes: 'filesize',
-  load1: 'number',
-  load15: 'number',
-  load5: 'number',
-  open_files_count: 'integer',
-  process_cpu_usage_percent: 'percent',
-  process_memory_usage_bytes: 'filesize'
-};
 
 const openFilesScale = d3.scale.log().domain([1, 100000]).range([0, 1]);
 //
@@ -123,8 +151,8 @@ export function getMetricValue(metric, size) {
     {}, {format: METRIC_FORMATS[selectedMetric]}, metric.toJS());
 
   return {
-    height: height,
-    value: value,
+    height,
+    value,
     formattedValue: formatMetric(value, metricWithFormat, true)
   };
 }

@@ -17,7 +17,7 @@ export default function NodeShapeSquare({
   const clipId = `mask-${Math.random()}`;
   const {height, value, formattedValue} = getMetricValue(metric, size);
   const className = classNames('shape', {
-    'metrics': value !== null
+    metrics: value !== null
   });
 
   const metricStyle = {
@@ -40,9 +40,10 @@ export default function NodeShapeSquare({
       {highlighted && <rect className="highlighted" {...rectProps(0.7)} />}
       <rect className="border" stroke={color} {...rectProps(0.5, 0.5)} />
       <rect className="shadow" {...rectProps(0.45, 0.39)} />
-      <rect className="metric-fill" style={metricStyle} clipPath={`url(#${clipId})`} {...rectProps(0.45, 0.39)} />
+      <rect className="metric-fill" style={metricStyle}
+        clipPath={`url(#${clipId})`} {...rectProps(0.45, 0.39)} />
       {highlighted && value !== null ?
-        <text dy="0.35em" style={{'textAnchor': 'middle'}}>{formattedValue}</text> :
+        <text dy="0.35em" style={{textAnchor: 'middle'}}>{formattedValue}</text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );

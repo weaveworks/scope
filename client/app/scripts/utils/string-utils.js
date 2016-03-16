@@ -22,10 +22,11 @@ function makeFormatters(renderFn) {
     },
 
     integer(value) {
+      const intNumber = Number(value).toFixed(0);
       if (value < 1100 && value >= 0) {
-        return Number(value).toFixed(0);
+        return intNumber;
       }
-      return formatLargeValue(value);
+      return formatLargeValue(intNumber);
     },
 
     number(value) {

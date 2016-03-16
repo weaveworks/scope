@@ -44,6 +44,7 @@
     "eslint-plugin-react": "4.2.2",
     "file-loader": "0.8.5",
     "http-proxy-rules": "^1.0.1",
+    "immutable-devtools": "0.0.6",
     "jest-cli": "~0.9.2",
     "json-loader": "0.5.4",
     "less": "~2.6.1",

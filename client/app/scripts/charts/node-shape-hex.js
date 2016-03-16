@@ -38,7 +38,7 @@ export default function NodeShapeHex({highlighted, size, color, metric}) {
   const clipId = `mask-${Math.random()}`;
   const {height, value, formattedValue} = getMetricValue(metric, size);
   const className = classNames('shape', {
-    'metrics': value !== null
+    metrics: value !== null
   });
   const metricStyle = {
     fillOpacity: 0.5,
@@ -59,9 +59,10 @@ export default function NodeShapeHex({highlighted, size, color, metric}) {
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(shadowSize)} />
-      <path className="metric-fill" style={metricStyle} clipPath={`url(#${clipId})`} {...pathProps(shadowSize)} />
+      <path className="metric-fill" style={metricStyle}
+        clipPath={`url(#${clipId})`} {...pathProps(shadowSize)} />
       {highlighted && value !== null ?
-        <text dy="0.35em" style={{'textAnchor': 'middle'}}>
+        <text dy="0.35em" style={{textAnchor: 'middle'}}>
           {formattedValue}
         </text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}

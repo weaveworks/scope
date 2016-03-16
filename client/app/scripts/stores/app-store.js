@@ -589,9 +589,9 @@ export class AppStore extends Store {
         });
 
         // update existing nodes
-        _.each(payload.delta.update, function(node) {
+        _.each(payload.delta.update, (node) => {
           if (nodes.has(node.id)) {
-            nodes = nodes.set(node.id, nodes.get(node.id).merge(Immutable.fromJS(node)));
+            nodes = nodes.set(node.id, nodes.get(node.id).merge(fromJS(node)));
           }
         });
 
@@ -599,6 +599,14 @@ export class AppStore extends Store {
         _.each(payload.delta.add, (node) => {
           nodes = nodes.set(node.id, fromJS(makeNode(node)));
         });
+
+        availableCanvasMetrics = nodes
+          .valueSeq()
+          .flatMap(n => (n.get('metrics') || makeMap()).keys())
+          .toSet()
+          .sort()
+          .toJS()
+          .map(v => ({id: v, label: v}));
 
         if (emitChange) {
           this.__emitChange();
@@ -627,15 +635,6 @@ export class AppStore extends Store {
         }
         topologiesLoaded = true;
 
-        availableCanvasMetrics = nodes
-          .valueSeq()
-          .flatMap(n => (n.get('metrics') || makeMap()).keys())
-          .toSet()
-          .sort()
-          .toJS()
-          .map(v => {
-            return {id: v, label: v};
-          });
         this.__emitChange();
         break;
       }

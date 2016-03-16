@@ -8,7 +8,7 @@ export default function NodeShapeCircle({highlighted, size, color, metric}) {
   const {height, value, formattedValue} = getMetricValue(metric, size);
 
   const className = classNames('shape', {
-    'metrics': value !== null
+    metrics: value !== null
   });
   const metricStyle = {
     fillOpacity: 0.5,
@@ -30,9 +30,10 @@ export default function NodeShapeCircle({highlighted, size, color, metric}) {
       {highlighted && hightlightNode}
       <circle r={size * 0.5} className="border" stroke={color} />
       <circle r={size * 0.45} className="shadow" />
-      <circle r={size * 0.45} className="metric-fill" style={metricStyle} clipPath={`url(#${clipId})`} />
+      <circle r={size * 0.45} className="metric-fill" style={metricStyle}
+        clipPath={`url(#${clipId})`} />
       {highlighted && value !== null ?
-        <text dy="0.35em" style={{'textAnchor': 'middle'}}>{formattedValue}</text> :
+        <text dy="0.35em" style={{textAnchor: 'middle'}}>{formattedValue}</text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );

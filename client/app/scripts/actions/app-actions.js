@@ -5,6 +5,7 @@ import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
+import { addMetrics } from '../utils/data-utils';
 import { bufferDeltaUpdate, resumeUpdate,
   resetUpdateBuffer } from '../utils/update-buffer-utils';
 import { doControlRequest, getNodesDelta, getNodeDetails,
@@ -16,7 +17,7 @@ const log = debug('scope:app-actions');
 export function selectMetric(metricId) {
   AppDispatcher.dispatch({
     type: ActionTypes.SELECT_METRIC,
-    metricId: metricId
+    metricId
   });
 }
 
@@ -34,7 +35,7 @@ export function lockNextMetric(delta) {
 export function lockMetric(metricId) {
   AppDispatcher.dispatch({
     type: ActionTypes.LOCK_METRIC,
-    metricId: metricId
+    metricId
   });
 }
 
@@ -265,15 +266,17 @@ export function receiveNodeDetails(details) {
 }
 
 export function receiveNodesDelta(delta) {
+  const deltaWithMetrics = addMetrics(delta, AppStore.getNodes());
   if (AppStore.isUpdatePaused()) {
-    bufferDeltaUpdate(delta);
+    bufferDeltaUpdate(deltaWithMetrics);
   } else {
     AppDispatcher.dispatch({
       type: ActionTypes.RECEIVE_NODES_DELTA,
-      delta: delta
+      delta: deltaWithMetrics
     });
   }
 }
+
 
 export function receiveTopologies(topologies) {
   AppDispatcher.dispatch({

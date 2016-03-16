@@ -244,7 +244,7 @@ export default class NodesChart extends React.Component {
   initNodes(topology) {
     // copy relevant fields to state nodes
     return topology.map((node, id) => makeMap({
-      id:
+      id,
       label: node.get('label'),
       pseudo: node.get('pseudo'),
       metrics: node.get('metrics'),
@@ -425,9 +425,9 @@ export default class NodesChart extends React.Component {
     if (!graph) {
       return {maxNodesExceeded: true};
     }
-    stateNodes = graph.nodes.mergeDeep(stateNodes.map(node => {
-      return makeMap({metrics: node.get('metrics')});
-    }));
+    stateNodes = graph.nodes.mergeDeep(stateNodes.map(node => makeMap({
+      metrics: node.get('metrics')
+    })));
     stateEdges = graph.edges;
 
     // save coordinates for restore
