@@ -2,6 +2,7 @@ package docker
 
 import (
 	"net"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	docker_client "github.com/fsouza/go-dockerclient"
@@ -119,8 +120,9 @@ func (r *Reporter) containerImageTopology() report.Topology {
 	result := report.MakeTopology()
 
 	r.registry.WalkImages(func(image *docker_client.APIImages) {
+		imageID := trimImageID(image.ID)
 		node := report.MakeNodeWith(map[string]string{
-			ImageID: image.ID,
+			ImageID: imageID,
 		})
 		node = AddLabels(node, image.Labels)
 
@@ -128,9 +130,15 @@ func (r *Reporter) containerImageTopology() report.Topology {
 			node = node.WithLatests(map[string]string{ImageName: image.RepoTags[0]})
 		}
 
-		nodeID := report.MakeContainerImageNodeID(image.ID)
+		nodeID := report.MakeContainerImageNodeID(imageID)
 		result.AddNode(nodeID, node)
 	})
 
 	return result
+}
+
+// Docker sometimes prefixes ids with a "type" annotation, but it renders a bit
+// ugly and isn't necessary, so we should strip it off
+func trimImageID(id string) string {
+	return strings.TrimPrefix(id, "sha256:")
 }
