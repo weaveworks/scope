@@ -3,7 +3,11 @@ import d3 from 'd3';
 
 import { isContrastMode } from '../utils/contrast-utils';
 
-const CLOUD_PATH = 'M 1920,384 Q 1920,225 1807.5,112.5 1695,0 1536,0 H 448 Q 263,0 131.5,131.5 0,263 0,448 0,580 71,689.5 142,799 258,853 q -2,28 -2,43 0,212 150,362 150,150 362,150 158,0 286.5,-88 128.5,-88 187.5,-230 70,62 166,62 106,0 181,-75 75,-75 75,-181 0,-75 -41,-138 129,-30 213,-134.5 84,-104.5 84,-239.5 z';
+const CLOUD_PATH = 'M 1920,384 Q 1920,225 1807.5,112.5 1695,0 1536,0 H 448 '
+  + 'Q 263,0 131.5,131.5 0,263 0,448 0,580 71,689.5 142,799 258,853 '
+  + 'q -2,28 -2,43 0,212 150,362 150,150 362,150 158,0 286.5,-88 128.5,-88 '
+  + '187.5,-230 70,62 166,62 106,0 181,-75 75,-75 75,-181 0,-75 -41,-138 '
+  + '129,-30 213,-134.5 84,-104.5 84,-239.5 z';
 
 function toPoint(stringPair) {
   return stringPair.split(',').map(p => parseFloat(p, 10));
@@ -24,14 +28,12 @@ export default function NodeShapeCloud({highlighted, size, color}) {
   const baseScale = (size * 2) / pathSize;
   const strokeWidth = isContrastMode() ? 6 / baseScale : 4 / baseScale;
 
-  const pathProps = (v) => {
-    return {
-      d: CLOUD_PATH,
-      fill: 'none',
-      transform: `scale(-${v * baseScale}) translate(-${cx},-${cy})`,
-      strokeWidth
-    };
-  };
+  const pathProps = v => ({
+    d: CLOUD_PATH,
+    fill: 'none',
+    transform: `scale(-${v * baseScale}) translate(-${cx},-${cy})`,
+    strokeWidth
+  });
 
   return (
     <g className="shape shape-cloud">

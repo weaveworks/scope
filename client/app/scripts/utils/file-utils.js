@@ -8,21 +8,20 @@ const prefix = {
   svg: 'http://www.w3.org/2000/svg'
 };
 const cssSkipValues = {
-  'auto': true,
+  auto: true,
   '0px 0px': true,
-  'visible': true,
-  'pointer': true
+  visible: true,
+  pointer: true
 };
 
 function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
   function explicitlySetStyle(element, targetEl) {
     const cSSStyleDeclarationComputed = getComputedStyle(element);
-    let value;
     let computedStyleStr = '';
     _.each(cSSStyleDeclarationComputed, key => {
-      value = cSSStyleDeclarationComputed.getPropertyValue(key);
+      const value = cSSStyleDeclarationComputed.getPropertyValue(key);
       if (value !== emptySvgDeclarationComputed.getPropertyValue(key) && !cssSkipValues[value]) {
-        computedStyleStr += key + ':' + value + ';';
+        computedStyleStr += `${key}:${value};`;
       }
     });
     targetEl.setAttribute('style', computedStyleStr);
@@ -70,23 +69,22 @@ function download(source, name) {
   if (name) {
     filename = name;
   } else if (window.document.title) {
-    filename = window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()
-      + '-' + (+new Date);
+    filename = `${window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${(+new Date)}`;
   }
 
   const url = window.URL.createObjectURL(new Blob(source,
-    {'type': 'text\/xml'}
+    {type: 'text\/xml'}
   ));
 
   const a = document.createElement('a');
   document.body.appendChild(a);
   a.setAttribute('class', 'svg-crowbar');
-  a.setAttribute('download', filename + '.svg');
+  a.setAttribute('download', `${filename}.svg`);
   a.setAttribute('href', url);
   a.style.display = 'none';
   a.click();
 
-  setTimeout(function() {
+  setTimeout(() => {
     window.URL.revokeObjectURL(url);
   }, 10);
 }
@@ -120,7 +118,7 @@ function getSVG(doc, emptySvgDeclarationComputed) {
 function cleanup() {
   const crowbarElements = document.querySelectorAll('.svg-crowbar');
 
-  [].forEach.call(crowbarElements, function(el) {
+  [].forEach.call(crowbarElements, (el) => {
     el.parentNode.removeChild(el);
   });
 

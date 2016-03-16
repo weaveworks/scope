@@ -1,3 +1,4 @@
+/* eslint react/jsx-no-bind: "off" */
 import React from 'react';
 import _ from 'lodash';
 
@@ -11,36 +12,28 @@ const SHAPES = ['circle', 'hexagon', 'square', 'heptagon'];
 const NODE_COUNTS = [1, 2, 3];
 const STACK_VARIANTS = [true, false];
 
-const sample = function(collection) {
-  return _.range(_.random(4)).map(() => _.sample(collection));
-};
+const sample = (collection) => _.range(_.random(4)).map(() => _.sample(collection));
 
-const deltaAdd = function(name, adjacency = [], shape = 'circle', stack = false, nodeCount = 1) {
-  return {
-    'adjacency': adjacency,
-    'controls': {},
-    'shape': shape,
-    'stack': stack,
-    'node_count': nodeCount,
-    'id': name,
-    'label_major': name,
-    'label_minor': 'weave-1',
-    'latest': {},
-    'metadata': {},
-    'origins': [],
-    'rank': 'alpine'
-  };
-};
+const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, nodeCount = 1) => ({
+  adjacency,
+  controls: {},
+  shape,
+  stack,
+  node_count: nodeCount,
+  id: name,
+  label_major: name,
+  label_minor: 'weave-1',
+  latest: {},
+  metadata: {},
+  origins: [],
+  rank: 'alpine'
+});
 
 function addAllVariants() {
-  const newNodes = _.flattenDeep(SHAPES.map(s => {
-    return STACK_VARIANTS.map(stack => {
-      if (!stack) return [deltaAdd([s, 1, stack].join('-'), [], s, stack, 1)];
-      return NODE_COUNTS.map(n => {
-        return deltaAdd([s, n, stack].join('-'), [], s, stack, n);
-      });
-    });
-  }));
+  const newNodes = _.flattenDeep(SHAPES.map(s => STACK_VARIANTS.map(stack => {
+    if (!stack) return [deltaAdd([s, 1, stack].join('-'), [], s, stack, 1)];
+    return NODE_COUNTS.map(n => deltaAdd([s, n, stack].join('-'), [], s, stack, n));
+  })));
 
   receiveNodesDelta({
     add: newNodes
@@ -50,7 +43,7 @@ function addAllVariants() {
 function addNodes(n) {
   const ns = AppStore.getNodes();
   const nodeNames = ns.keySeq().toJS();
-  const newNodeNames = _.range(ns.size, ns.size + n).map((i) => 'zing' + i);
+  const newNodeNames = _.range(ns.size, ns.size + n).map((i) => `zing${i}`);
   const allNodes = _(nodeNames).concat(newNodeNames).value();
 
   receiveNodesDelta({

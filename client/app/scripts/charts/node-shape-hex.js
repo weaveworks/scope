@@ -25,12 +25,10 @@ function getPoints(h) {
 
 
 export default function NodeShapeHex({onlyHighlight, highlighted, size, color}) {
-  const pathProps = (v) => {
-    return {
-      d: getPoints(size * v * 2),
-      transform: `rotate(90) translate(-${size * getWidth(v)}, -${size * v})`
-    };
-  };
+  const pathProps = v => ({
+    d: getPoints(size * v * 2),
+    transform: `rotate(90) translate(-${size * getWidth(v)}, -${size * v})`
+  });
 
   const hightlightNode = <path className="highlighted" {...pathProps(0.7)} />;
 

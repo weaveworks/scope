@@ -19,11 +19,11 @@ export default class ShowMore extends React.Component {
     const limitActionIcon = !expanded && notShown > 0 ? 'fa fa-caret-down' : 'fa fa-caret-up';
 
     if (!showLimitAction) {
-      return <span/>;
+      return <span />;
     }
     return (
       <div className="show-more" onClick={this.handleClick}>
-        {limitActionText} <span className={'show-more-icon ' + limitActionIcon}/>
+        {limitActionText} <span className={`show-more-icon ${limitActionIcon}`} />
       </div>
     );
   }

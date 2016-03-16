@@ -4,9 +4,8 @@ jest.dontMock('../app-store');
 
 // Appstore test suite using Jasmine matchers
 
-describe('AppStore', function() {
+describe('AppStore', () => {
   const ActionTypes = require('../../constants/action-types').default;
-  let AppDispatcher;
   let AppStore;
   let registeredCallback;
 
@@ -150,22 +149,22 @@ describe('AppStore', function() {
     state: {}
   };
 
-  beforeEach(function() {
+  beforeEach(() => {
     AppStore = require('../app-store').default;
-    AppDispatcher = AppStore.getDispatcher();
+    const AppDispatcher = AppStore.getDispatcher();
     const callback = AppDispatcher.dispatch.bind(AppDispatcher);
     registeredCallback = callback;
   });
 
   // topology tests
 
-  it('init with no topologies', function() {
+  it('init with no topologies', () => {
     const topos = AppStore.getTopologies();
     expect(topos.size).toBe(0);
     expect(AppStore.getCurrentTopology()).toBeUndefined();
   });
 
-  it('get current topology', function() {
+  it('get current topology', () => {
     registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveTopologiesAction);
 
@@ -175,7 +174,7 @@ describe('AppStore', function() {
     expect(AppStore.getCurrentTopologyOptions().get('option1')).toBeDefined();
   });
 
-  it('get sub-topology', function() {
+  it('get sub-topology', () => {
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickSubTopologyAction);
 
@@ -187,7 +186,7 @@ describe('AppStore', function() {
 
   // topology options
 
-  it('changes topology option', function() {
+  it('changes topology option', () => {
     // default options
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickTopologyAction);
@@ -211,11 +210,11 @@ describe('AppStore', function() {
     expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('off');
   });
 
-  it('sets topology options from route', function() {
+  it('sets topology options from route', () => {
     RouteAction.state = {
-      'topologyId': 'topo1',
-      'selectedNodeId': null,
-      'topologyOptions': {'topo1': {'option1': 'on'}}};
+      topologyId: 'topo1',
+      selectedNodeId: null,
+      topologyOptions: {topo1: {option1: 'on'}}};
     registeredCallback(RouteAction);
     expect(AppStore.getActiveTopologyOptions().get('option1')).toBe('on');
     expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('on');
@@ -227,11 +226,11 @@ describe('AppStore', function() {
     expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('on');
   });
 
-  it('uses default topology options from route', function() {
+  it('uses default topology options from route', () => {
     RouteAction.state = {
-      'topologyId': 'topo1',
-      'selectedNodeId': null,
-      'topologyOptions': null};
+      topologyId: 'topo1',
+      selectedNodeId: null,
+      topologyOptions: null};
     registeredCallback(RouteAction);
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickTopologyAction);
@@ -241,7 +240,7 @@ describe('AppStore', function() {
 
   // nodes delta
 
-  it('replaces adjacency on update', function() {
+  it('replaces adjacency on update', () => {
     registeredCallback(ReceiveNodesDeltaAction);
     expect(AppStore.getNodes().toJS().n1.adjacency).toEqual(['n1', 'n2']);
     registeredCallback(ReceiveNodesDeltaUpdateAction);
@@ -250,18 +249,18 @@ describe('AppStore', function() {
 
   // browsing
 
-  it('shows nodes that were received', function() {
+  it('shows nodes that were received', () => {
     registeredCallback(ReceiveNodesDeltaAction);
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
   });
 
-  it('knows a route was set', function() {
+  it('knows a route was set', () => {
     expect(AppStore.isRouteSet()).toBeFalsy();
     registeredCallback(RouteAction);
     expect(AppStore.isRouteSet()).toBeTruthy();
   });
 
-  it('gets selected node after click', function() {
+  it('gets selected node after click', () => {
     registeredCallback(ReceiveNodesDeltaAction);
 
     registeredCallback(ClickNodeAction);
@@ -273,7 +272,7 @@ describe('AppStore', function() {
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
   });
 
-  it('keeps showing nodes on navigating back after node click', function() {
+  it('keeps showing nodes on navigating back after node click', () => {
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveNodesDeltaAction);
@@ -284,13 +283,13 @@ describe('AppStore', function() {
     expect(AppStore.getAppState().selectedNodeId).toEqual('n1');
 
     // go back in browsing
-    RouteAction.state = {'topologyId': 'topo1', 'selectedNodeId': null};
+    RouteAction.state = {topologyId: 'topo1', selectedNodeId: null};
     registeredCallback(RouteAction);
     expect(AppStore.getSelectedNodeId()).toBe(null);
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
   });
 
-  it('closes details when changing topologies', function() {
+  it('closes details when changing topologies', () => {
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveNodesDeltaAction);
@@ -309,7 +308,7 @@ describe('AppStore', function() {
 
   // connection errors
 
-  it('resets topology on websocket reconnect', function() {
+  it('resets topology on websocket reconnect', () => {
     registeredCallback(ReceiveNodesDeltaAction);
     expect(AppStore.getNodes().toJS()).toEqual(NODE_SET);
 
@@ -326,7 +325,7 @@ describe('AppStore', function() {
 
   // adjacency test
 
-  it('returns the correct adjacency set for a node', function() {
+  it('returns the correct adjacency set for a node', () => {
     registeredCallback(ReceiveNodesDeltaAction);
     expect(AppStore.getAdjacentNodes().size).toEqual(0);
 
@@ -341,7 +340,7 @@ describe('AppStore', function() {
 
   // empty topology
 
-  it('detects that the topology is empty', function() {
+  it('detects that the topology is empty', () => {
     registeredCallback(ReceiveTopologiesAction);
     registeredCallback(ClickTopologyAction);
     expect(AppStore.isTopologyEmpty()).toBeFalsy();
@@ -355,7 +354,7 @@ describe('AppStore', function() {
 
   // selection of relatives
 
-  it('keeps relatives as a stack', function() {
+  it('keeps relatives as a stack', () => {
     registeredCallback(ClickNodeAction);
     expect(AppStore.getSelectedNodeId()).toBe('n1');
     expect(AppStore.getNodeDetails().size).toEqual(1);
@@ -377,7 +376,7 @@ describe('AppStore', function() {
     expect(AppStore.getNodeDetails().has('rel1')).toBeFalsy();
   });
 
-  it('keeps clears stack when sibling is clicked', function() {
+  it('keeps clears stack when sibling is clicked', () => {
     registeredCallback(ClickNodeAction);
     expect(AppStore.getSelectedNodeId()).toBe('n1');
     expect(AppStore.getNodeDetails().size).toEqual(1);
@@ -400,7 +399,7 @@ describe('AppStore', function() {
     expect(AppStore.getNodeDetails().has('rel1')).toBeFalsy();
   });
 
-  it('selectes relatives topology while keeping node selected', function() {
+  it('selectes relatives topology while keeping node selected', () => {
     registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveTopologiesAction);
     expect(AppStore.getCurrentTopology().get('name')).toBe('Topo1');

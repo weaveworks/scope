@@ -1,3 +1,4 @@
+/* eslint no-return-assign: "off", react/jsx-no-bind: "off" */
 import debug from 'debug';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -10,7 +11,7 @@ import { getPipeStatus, basePath } from '../utils/web-api-utils';
 import Term from '../vendor/term.js';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = wsProto + '://' + location.host + basePath(location.pathname);
+const wsUrl = `${wsProto}://${location.host}${basePath(location.pathname)}`;
 const log = debug('scope:terminal');
 
 const DEFAULT_COLS = 80;
@@ -66,7 +67,7 @@ function openNewWindow(url, bcr, minWidth = 200) {
   };
 
   const windowOptionsString = Object.keys(windowOptions)
-    .map((k) => k + '=' + windowOptions[k])
+    .map((k) => `${k}=${windowOptions[k]}`)
     .join(',');
 
   window.open(url, '', windowOptionsString);
@@ -92,7 +93,7 @@ export default class Terminal extends React.Component {
   }
 
   createWebsocket(term) {
-    const socket = new WebSocket(wsUrl + '/api/pipe/' + this.getPipeId());
+    const socket = new WebSocket(`${wsUrl}/api/pipe/${this.getPipeId()}`);
     socket.binaryType = 'arraybuffer';
 
     getPipeStatus(this.getPipeId());
@@ -157,8 +158,8 @@ export default class Terminal extends React.Component {
 
     this.resizeTimeout = setTimeout(() => {
       this.setState({
-        pixelPerCol: pixelPerCol,
-        pixelPerRow: pixelPerRow
+        pixelPerCol,
+        pixelPerRow
       });
       this.handleResize();
     }, 10);

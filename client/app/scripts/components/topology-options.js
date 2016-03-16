@@ -27,7 +27,7 @@ export default class TopologyOptions extends React.Component {
       activeValue = activeOptions.get(option);
     } else {
       // get default value
-      items.forEach(function(item) {
+      items.forEach(item => {
         if (item.get('default')) {
           activeValue = item.get('value');
         }
@@ -35,7 +35,7 @@ export default class TopologyOptions extends React.Component {
     }
 
     // render active option as text, add other options as actions
-    items.forEach(function(item) {
+    items.forEach(item => {
       if (item.get('value') === activeValue) {
         activeText = item.get('display');
       } else {
@@ -62,9 +62,7 @@ export default class TopologyOptions extends React.Component {
 
     return (
       <div className="topology-options">
-        {options.toIndexedSeq().map(function(items) {
-          return this.renderOption(items);
-        }, this)}
+        {options.toIndexedSeq().map(items => this.renderOption(items))}
       </div>
     );
   }

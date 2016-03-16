@@ -99,7 +99,8 @@ export default class App extends React.Component {
               <Logo />
             </svg>
           </div>
-          <Topologies topologies={this.state.topologies} currentTopology={this.state.currentTopology} />
+          <Topologies topologies={this.state.topologies}
+            currentTopology={this.state.currentTopology} />
         </div>
 
         <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}

@@ -19,7 +19,8 @@ export default class Topologies extends React.Component {
     const isActive = subTopology === this.props.currentTopology;
     const topologyId = subTopology.get('id');
     const title = this.renderTitle(subTopology);
-    const className = isActive ? 'topologies-sub-item topologies-sub-item-active' : 'topologies-sub-item';
+    const className = isActive
+      ? 'topologies-sub-item topologies-sub-item-active' : 'topologies-sub-item';
 
     return (
       <div className={className} title={title} key={topologyId} rel={topologyId}
@@ -32,13 +33,14 @@ export default class Topologies extends React.Component {
   }
 
   renderTitle(topology) {
-    return ['Nodes: ' + topology.getIn(['stats', 'node_count']),
-      'Connections: ' + topology.getIn(['stats', 'node_count'])].join('\n');
+    return `Nodes: ${topology.getIn(['stats', 'node_count'])}\n`
+      + `Connections: ${topology.getIn(['stats', 'node_count'])}`;
   }
 
   renderTopology(topology) {
     const isActive = topology === this.props.currentTopology;
-    const className = isActive ? 'topologies-item-main topologies-item-main-active' : 'topologies-item-main';
+    const className = isActive
+      ? 'topologies-item-main topologies-item-main-active' : 'topologies-item-main';
     const topologyId = topology.get('id');
     const title = this.renderTitle(topology);
 
@@ -50,7 +52,8 @@ export default class Topologies extends React.Component {
           </div>
         </div>
         <div className="topologies-sub">
-          {topology.has('sub_topologies') && topology.get('sub_topologies').map(this.renderSubTopology)}
+          {topology.has('sub_topologies')
+            && topology.get('sub_topologies').map(this.renderSubTopology)}
         </div>
       </div>
     );

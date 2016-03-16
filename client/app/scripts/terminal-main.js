@@ -5,4 +5,4 @@ import ReactDOM from 'react-dom';
 
 import { TerminalApp } from './components/terminal-app.js';
 
-ReactDOM.render(<TerminalApp/>, document.getElementById('app'));
+ReactDOM.render(<TerminalApp />, document.getElementById('app'));

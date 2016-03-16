@@ -16,12 +16,10 @@ function polygon(r, sides) {
 
 export default function NodeShapeHeptagon({onlyHighlight, highlighted, size, color}) {
   const scaledSize = size * 1.0;
-  const pathProps = (v) => {
-    return {
-      d: line(polygon(scaledSize * v, 7)),
-      transform: `rotate(90)`
-    };
-  };
+  const pathProps = v => ({
+    d: line(polygon(scaledSize * v, 7)),
+    transform: 'rotate(90)'
+  });
 
   const hightlightNode = <path className="highlighted" {...pathProps(0.7)} />;
 
@@ -42,4 +40,3 @@ export default function NodeShapeHeptagon({onlyHighlight, highlighted, size, col
     </g>
   );
 }
-

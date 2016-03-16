@@ -41,7 +41,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   let edges = imEdges;
 
   if (nodes.size > MAX_NODES) {
-    log('Too many nodes for graph layout engine. Limit: ' + MAX_NODES);
+    log(`Too many nodes for graph layout engine. Limit: ${MAX_NODES}`);
     return null;
   }
 
@@ -54,8 +54,8 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
 
   // configure node margins
   graph.setGraph({
-    nodesep: nodesep,
-    ranksep: ranksep
+    nodesep,
+    ranksep
   });
 
   // add nodes to the graph if not already there
@@ -140,6 +140,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
  * @return {Object}        modified layout
  */
 function layoutSingleNodes(layout, opts) {
+  const result = Object.assign({}, layout);
   const options = opts || {};
   const margins = options.margins || DEFAULT_MARGINS;
   const scale = options.scale || DEFAULT_SCALE;
@@ -203,12 +204,12 @@ function layoutSingleNodes(layout, opts) {
     });
 
     // adjust layout dimensions if graph is now bigger
-    layout.width = Math.max(layout.width, singleX + nodeWidth / 2 + nodesep);
-    layout.height = Math.max(layout.height, singleY + nodeHeight / 2 + ranksep);
-    layout.nodes = nodes;
+    result.width = Math.max(layout.width, singleX + nodeWidth / 2 + nodesep);
+    result.height = Math.max(layout.height, singleY + nodeHeight / 2 + ranksep);
+    result.nodes = nodes;
   }
 
-  return layout;
+  return result;
 }
 
 /**
@@ -218,6 +219,7 @@ function layoutSingleNodes(layout, opts) {
  * @return {Object}        modified layout
  */
 function shiftLayoutToCenter(layout, opts) {
+  const result = Object.assign({}, layout);
   const options = opts || {};
   const margins = options.margins || DEFAULT_MARGINS;
   const width = options.width || DEFAULT_WIDTH;
@@ -233,14 +235,12 @@ function shiftLayoutToCenter(layout, opts) {
     offsetY = (height - layout.height) / 2 + margins.top;
   }
 
-  layout.nodes = layout.nodes.map(node => {
-    return node.merge({
-      x: node.get('x') + offsetX,
-      y: node.get('y') + offsetY
-    });
-  });
+  result.nodes = layout.nodes.map(node => node.merge({
+    x: node.get('x') + offsetX,
+    y: node.get('y') + offsetY
+  }));
 
-  layout.edges = layout.edges.map(edge => {
+  result.edges = layout.edges.map(edge => {
     const points = edge.get('points').map(point => ({
       x: point.x + offsetX,
       y: point.y + offsetY
@@ -248,7 +248,7 @@ function shiftLayoutToCenter(layout, opts) {
     return edge.set('points', points);
   });
 
-  return layout;
+  return result;
 }
 
 /**
@@ -320,16 +320,16 @@ function cloneLayout(layout, nodes, edges) {
  * @return {Object}        modified layout
  */
 function copyLayoutProperties(layout, nodeCache, edgeCache) {
-  layout.nodes = layout.nodes.map(node => {
-    return node.merge(nodeCache.get(node.get('id')));
-  });
-  layout.edges = layout.edges.map(edge => {
-    if (edgeCache.has(edge.get('id')) && hasSameEndpoints(edgeCache.get(edge.get('id')), layout.nodes)) {
+  const result = Object.assign({}, layout);
+  result.nodes = layout.nodes.map(node => node.merge(nodeCache.get(node.get('id'))));
+  result.edges = layout.edges.map(edge => {
+    if (edgeCache.has(edge.get('id'))
+      && hasSameEndpoints(edgeCache.get(edge.get('id')), result.nodes)) {
       return edge.merge(edgeCache.get(edge.get('id')));
     }
     return setSimpleEdgePoints(edge, nodeCache);
   });
-  return layout;
+  return result;
 }
 
 /**
@@ -361,7 +361,8 @@ export function doLayout(immNodes, immEdges, opts) {
   let layout;
 
   ++layoutRuns;
-  if (!options.forceRelayout && cachedLayout && nodeCache && edgeCache && !hasUnseenNodes(immNodes, nodeCache)) {
+  if (!options.forceRelayout && cachedLayout && nodeCache && edgeCache
+    && !hasUnseenNodes(immNodes, nodeCache)) {
     log('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
     layout = cloneLayout(cachedLayout, immNodes, immEdges);
     // copy old properties, works also if nodes get re-added
