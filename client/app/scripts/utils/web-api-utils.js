@@ -217,10 +217,7 @@ export function getPipeStatus(pipeId) {
   reqwest({
     method: 'GET',
     url,
-    error: (err) => {
-      log('ERROR: unexpected response:', err);
-    },
-    success: (res) => {
+    complete: (res) => {
       const status = {
         204: 'PIPE_ALIVE',
         404: 'PIPE_DELETED'
