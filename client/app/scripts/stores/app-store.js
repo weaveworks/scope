@@ -427,6 +427,7 @@ export class AppStore extends Store {
       }
       case ActionTypes.ENTER_NODE: {
         const nodeId = payload.nodeId;
+        let adjacentNodes = this.getAdjacentNodes(nodeId);
 
         // clear old highlights
         highlightedNodeIds = highlightedNodeIds.clear();
@@ -434,14 +435,16 @@ export class AppStore extends Store {
 
         // highlight nodes
         highlightedNodeIds = highlightedNodeIds.add(nodeId);
-        const adjacencNodes = this.getAdjacentNodes(nodeId);
-        highlightedNodeIds = highlightedNodeIds.union(adjacencNodes);
+        highlightedNodeIds = highlightedNodeIds.union(adjacentNodes);
 
         // highlight edges
-        const adjacency = nodes.getIn([nodeId, 'adjacency']);
-        if (adjacency) {
+        const ownAdjacency = nodes.getIn([nodeId, 'adjacency']);
+        if (ownAdjacency) {
+          adjacentNodes = adjacentNodes.union(ownAdjacency);
+        }
+        if (adjacentNodes.size > 0) {
           // all neighbour combinations because we dont know which direction exists
-          highlightedEdgeIds = highlightedEdgeIds.union(adjacency.flatMap((adjacentId) => [
+          highlightedEdgeIds = highlightedEdgeIds.union(adjacentNodes.flatMap((adjacentId) => [
             [adjacentId, nodeId].join(EDGE_ID_SEPARATOR),
             [nodeId, adjacentId].join(EDGE_ID_SEPARATOR)
           ]));
