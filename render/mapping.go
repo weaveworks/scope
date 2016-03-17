@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -341,31 +340,14 @@ func MapEndpoint2Pseudo(n RenderableNode, local report.Networks) RenderableNodes
 		return RenderableNodes{}
 	}
 
-	port, ok := n.Latest.Lookup(endpoint.Port)
-	if !ok {
-		return RenderableNodes{}
-	}
-
 	if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
 		// If the dstNodeAddr is not in a network local to this report, we emit an
 		// internet node
 		node = theInternetNode(n)
 
-	} else if p, err := strconv.Atoi(port); err == nil && len(n.Adjacency) > 0 && p >= 32768 && p < 65535 {
-		// We are a 'client' pseudo node if the port is in the ephemeral port range.
-		// Linux uses 32768 to 61000, IANA suggests 49152 to 65535.
-		// We only exist if there is something in our adjacency
-		// Generate a single pseudo node for every (client ip, server ip, server port)
-		_, serverIP, serverPort, _ := ParseEndpointID(n.Adjacency[0])
-		node = newDerivedPseudoNode(MakePseudoNodeID(addr, serverIP, serverPort), addr, n)
-
-	} else if port != "" {
-		// Otherwise (the server node is missing), generate a pseudo node for every (server ip, server port)
-		node = newDerivedPseudoNode(MakePseudoNodeID(addr, port), addr+":"+port, n)
-
 	} else {
-		// Empty port for some reason...
-		node = newDerivedPseudoNode(MakePseudoNodeID(addr, port), addr, n)
+
+		node = newDerivedPseudoNode(MakePseudoNodeID(addr), addr, n)
 	}
 
 	node.Children = node.Children.Add(n)
