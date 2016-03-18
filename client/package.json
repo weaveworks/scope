@@ -24,7 +24,7 @@
     "react-addons-transition-group": "^0.14.7",
     "react-addons-update": "^0.14.7",
     "react-dom": "^0.14.7",
-    "react-motion": "0.4.2",
+    "react-motion": "0.3.1",
     "reqwest": "~2.0.5",
     "timely": "0.1.0"
   },
