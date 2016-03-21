@@ -8,6 +8,7 @@ import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { findTopologyById, setTopologyUrlsById, updateTopologyIds,
   filterHiddenTopologies } from '../utils/topology-utils';
+import { METRIC_LABELS } from '../utils/data-utils';
 
 const makeList = List;
 const makeMap = Map;
@@ -59,7 +60,7 @@ let controlPipes = makeOrderedMap(); // pipeId -> controlPipe
 let updatePausedAt = null; // Date
 let websocketClosed = true;
 
-let selectedMetric = 'process_cpu_usage_percent';
+let selectedMetric = null;
 let lockedMetric = selectedMetric;
 let availableCanvasMetrics = [];
 
@@ -604,7 +605,7 @@ export class AppStore extends Store {
           .valueSeq()
           .flatMap(n => (n.get('metrics') || makeMap()).keys())
           .toSet()
-          .sort()
+          .sortBy(n => METRIC_LABELS[n])
           .toJS()
           .map(v => ({id: v, label: v}));
 

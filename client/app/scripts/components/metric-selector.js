@@ -1,7 +1,6 @@
 import React from 'react';
-import _ from 'lodash';
 import { selectMetric } from '../actions/app-actions';
-import { MetricSelectorItem, label } from './metric-selector-item';
+import { MetricSelectorItem } from './metric-selector-item';
 
 // const CROSS = '\u274C';
 // const MINUS = '\u2212';
@@ -23,7 +22,7 @@ export default class MetricSelector extends React.Component {
   render() {
     const {availableCanvasMetrics} = this.props;
 
-    const items = _.sortBy(availableCanvasMetrics, label).map(metric => (
+    const items = availableCanvasMetrics.map(metric => (
       <MetricSelectorItem key={metric.id} metric={metric} {...this.props} />
     ));
 
