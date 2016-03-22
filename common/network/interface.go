@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-// GetFirstAddressOf returns the first address of the supplied interface name.
+// GetFirstAddressOf returns the first IPv4 address of the supplied interface name.
 func GetFirstAddressOf(name string) (string, error) {
 	inf, err := net.InterfaceByName(name)
 	if err != nil {
@@ -20,10 +20,14 @@ func GetFirstAddressOf(name string) (string, error) {
 		return "", fmt.Errorf("No address found for %s", name)
 	}
 
-	switch v := addrs[0].(type) {
-	case *net.IPNet:
-		return v.IP.String(), nil
-	default:
-		return "", fmt.Errorf("No address found for %s", name)
+	for _, addr := range addrs {
+		switch v := addr.(type) {
+		case *net.IPNet:
+			if ip := v.IP.To4(); ip != nil {
+				return v.IP.String(), nil
+			}
+		}
 	}
+
+	return "", fmt.Errorf("No address found for %s", name)
 }

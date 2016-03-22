@@ -93,6 +93,9 @@ func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) error {
 	p.mtx.Unlock()
 	defer p.wg.Done()
 
+	// The goroutines below both post their errors to the channel, but if you close()
+	// the pipe before any errors then the pipe may not get read from. Therefore it
+	// needs up to 2 slots free.
 	errors := make(chan error, 2)
 
 	// Read-from-UI loop

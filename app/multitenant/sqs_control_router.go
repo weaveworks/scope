@@ -30,9 +30,9 @@ var (
 // probe queue.  When probe recieves a request, handles it and posts the
 // response back to the response queue.
 type sqsControlRouter struct {
-	service  *sqs.SQS
-	queueURL *string
-	userIDer UserIDer
+	service          *sqs.SQS
+	responseQueueURL *string
+	userIDer         UserIDer
 
 	mtx          sync.Mutex
 	responses    map[string]chan xfer.Response
@@ -57,10 +57,10 @@ func NewSQSControlRouter(url, region string, creds *credentials.Credentials, use
 			WithEndpoint(url).
 			WithRegion(region).
 			WithCredentials(creds))),
-		queueURL:     nil,
-		userIDer:     userIDer,
-		responses:    map[string]chan xfer.Response{},
-		probeWorkers: map[int64]*probeWorker{},
+		responseQueueURL: nil,
+		userIDer:         userIDer,
+		responses:        map[string]chan xfer.Response{},
+		probeWorkers:     map[int64]*probeWorker{},
 	}
 	go result.loop()
 	return result
@@ -70,26 +70,20 @@ func (cr *sqsControlRouter) Stop() error {
 	return nil
 }
 
-func (cr *sqsControlRouter) setQueueURL(url *string) {
+func (cr *sqsControlRouter) setResponseQueueURL(url *string) {
 	cr.mtx.Lock()
 	defer cr.mtx.Unlock()
-	cr.queueURL = url
+	cr.responseQueueURL = url
 }
 
-func (cr *sqsControlRouter) getQueueURL() *string {
+func (cr *sqsControlRouter) getResponseQueueURL() *string {
 	cr.mtx.Lock()
 	defer cr.mtx.Unlock()
-	return cr.queueURL
+	return cr.responseQueueURL
 }
 
 func (cr *sqsControlRouter) getOrCreateQueue(name string) (*string, error) {
-	getQueueURLRes, err := cr.service.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: aws.String(name),
-	})
-	if err == nil {
-		return getQueueURLRes.QueueUrl, nil
-	}
-
+	// CreateQueue creates a queue or if it already exists, returns url of said queue
 	createQueueRes, err := cr.service.CreateQueue(&sqs.CreateQueueInput{
 		QueueName: aws.String(name),
 	})
@@ -100,35 +94,39 @@ func (cr *sqsControlRouter) getOrCreateQueue(name string) (*string, error) {
 }
 
 func (cr *sqsControlRouter) loop() {
+	var (
+		responseQueueURL *string
+		err              error
+	)
 	for {
 		// This app has a random id and uses this as a return path for all responses from probes.
 		name := fmt.Sprintf("control-app-%d", rand.Int63())
-		queueURL, err := cr.getOrCreateQueue(name)
+		responseQueueURL, err = cr.getOrCreateQueue(name)
 		if err != nil {
 			log.Errorf("Failed to create queue: %v", err)
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		cr.setQueueURL(queueURL)
+		cr.setResponseQueueURL(responseQueueURL)
 		break
 	}
 
 	for {
 		res, err := cr.service.ReceiveMessage(&sqs.ReceiveMessageInput{
-			QueueUrl:        cr.queueURL,
+			QueueUrl:        responseQueueURL,
 			WaitTimeSeconds: longPollTime,
 		})
 		if err != nil {
-			log.Errorf("Error recieving message from %s: %v", *cr.queueURL, err)
+			log.Errorf("Error receiving message from %s: %v", *responseQueueURL, err)
 			continue
 		}
 		if len(res.Messages) == 0 {
 			continue
 		}
-		cr.handleResponses(res)
-		if err := cr.deleteMessages(cr.queueURL, res.Messages); err != nil {
-			log.Errorf("Error deleting message from %s: %v", *cr.queueURL, err)
+		if err := cr.deleteMessages(responseQueueURL, res.Messages); err != nil {
+			log.Errorf("Error deleting message from %s: %v", *responseQueueURL, err)
 		}
+		cr.handleResponses(res)
 	}
 }
 
@@ -148,21 +146,17 @@ func (cr *sqsControlRouter) deleteMessages(queueURL *string, messages []*sqs.Mes
 }
 
 func (cr *sqsControlRouter) handleResponses(res *sqs.ReceiveMessageOutput) {
-	sqsResponses := []sqsResponseMessage{}
+	cr.mtx.Lock()
+	defer cr.mtx.Unlock()
+
 	for _, message := range res.Messages {
 		var sqsResponse sqsResponseMessage
 		if err := json.NewDecoder(bytes.NewBufferString(*message.Body)).Decode(&sqsResponse); err != nil {
 			log.Errorf("Error decoding message: %v", err)
 			continue
 		}
-		sqsResponses = append(sqsResponses, sqsResponse)
-	}
 
-	for _, sqsResponse := range sqsResponses {
-		cr.mtx.Lock()
 		waiter, ok := cr.responses[sqsResponse.ID]
-		cr.mtx.Unlock()
-
 		if !ok {
 			log.Errorf("Dropping response %s - no one waiting for it!", sqsResponse.ID)
 			continue
@@ -192,10 +186,11 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 	}
 
 	// Get the queue url for the local (control app) queue, and for the probe.
-	queueURL := cr.getQueueURL()
-	if queueURL == nil {
+	responseQueueURL := cr.getResponseQueueURL()
+	if responseQueueURL == nil {
 		return xfer.Response{}, fmt.Errorf("No SQS queue yet!")
 	}
+
 	probeQueueName := fmt.Sprintf("probe-%s-%s", userID, probeID)
 	probeQueueURL, err := cr.service.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: aws.String(probeQueueName),
@@ -204,7 +199,7 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 		return xfer.Response{}, err
 	}
 
-	// Wait for a response befor we send the request, to prevent races
+	// Add a response channel before we send the request, to prevent races
 	id := fmt.Sprintf("request-%s-%d", userID, rand.Int63())
 	waiter := make(chan xfer.Response, 1)
 	cr.mtx.Lock()
@@ -220,7 +215,7 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 	if err := cr.sendMessage(probeQueueURL.QueueUrl, sqsRequestMessage{
 		ID:               id,
 		Request:          req,
-		ResponseQueueURL: *queueURL,
+		ResponseQueueURL: *responseQueueURL,
 	}); err != nil {
 		return xfer.Response{}, err
 	}
@@ -248,10 +243,10 @@ func (cr *sqsControlRouter) Register(ctx context.Context, probeID string, handle
 
 	pwID := rand.Int63()
 	pw := &probeWorker{
-		router:   cr,
-		queueURL: queueURL,
-		handler:  handler,
-		quit:     make(chan struct{}),
+		router:          cr,
+		requestQueueURL: queueURL,
+		handler:         handler,
+		quit:            make(chan struct{}),
 	}
 	pw.done.Add(1)
 	go pw.loop()
@@ -273,12 +268,13 @@ func (cr *sqsControlRouter) Deregister(_ context.Context, probeID string, id int
 	return nil
 }
 
+// a probeWorker encapsulates a goroutine serving a probe's websocket connection.
 type probeWorker struct {
-	router   *sqsControlRouter
-	queueURL *string
-	handler  xfer.ControlHandlerFunc
-	quit     chan struct{}
-	done     sync.WaitGroup
+	router          *sqsControlRouter
+	requestQueueURL *string
+	handler         xfer.ControlHandlerFunc
+	quit            chan struct{}
+	done            sync.WaitGroup
 }
 
 func (pw *probeWorker) stop() {
@@ -296,7 +292,7 @@ func (pw *probeWorker) loop() {
 		}
 
 		res, err := pw.router.service.ReceiveMessage(&sqs.ReceiveMessageInput{
-			QueueUrl:        pw.queueURL,
+			QueueUrl:        pw.requestQueueURL,
 			WaitTimeSeconds: longPollTime,
 		})
 		if err != nil {
@@ -306,8 +302,10 @@ func (pw *probeWorker) loop() {
 		if len(res.Messages) == 0 {
 			continue
 		}
+		if err := pw.router.deleteMessages(pw.requestQueueURL, res.Messages); err != nil {
+			log.Errorf("Error deleting message from %s: %v", *pw.requestQueueURL, err)
+		}
 
-		// TODO do we need to parallelise the handling of requests?
 		for _, message := range res.Messages {
 			var sqsRequest sqsRequestMessage
 			if err := json.NewDecoder(bytes.NewBufferString(*message.Body)).Decode(&sqsRequest); err != nil {
@@ -315,16 +313,14 @@ func (pw *probeWorker) loop() {
 				continue
 			}
 
+			response := pw.handler(sqsRequest.Request)
+
 			if err := pw.router.sendMessage(&sqsRequest.ResponseQueueURL, sqsResponseMessage{
 				ID:       sqsRequest.ID,
-				Response: pw.handler(sqsRequest.Request),
+				Response: response,
 			}); err != nil {
 				log.Errorf("Error sending response: %v", err)
 			}
-		}
-
-		if err := pw.router.deleteMessages(pw.queueURL, res.Messages); err != nil {
-			log.Errorf("Error deleting message from %s: %v", *pw.queueURL, err)
 		}
 	}
 }

@@ -106,8 +106,11 @@ func appMain() {
 	if *pipeRouterType == "local" {
 		pipeRouter = app.NewLocalPipeRouter()
 	} else if *pipeRouterType == "consul" {
-		var err error
-		pipeRouter, err = multitenant.NewConsulPipeRouter(*consulAddr, *consulPrefix, *consulInf, userIDer)
+		consulClient, err := multitenant.NewConsulClient(*consulAddr)
+		if err != nil {
+			log.Fatalf("Error createing consul client: %v", err)
+		}
+		pipeRouter, err = multitenant.NewConsulPipeRouter(consulClient, *consulPrefix, *consulInf, userIDer)
 		if err != nil {
 			log.Fatalf("Error createing consul pipe router: %v", err)
 		}

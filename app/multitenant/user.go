@@ -9,9 +9,9 @@ import (
 	"github.com/weaveworks/scope/app"
 )
 
-// ErrNotFound should be returned by a UserIDer when it fails to ID the
+// ErrUserIDNotFound should be returned by a UserIDer when it fails to ID the
 // user for a request.
-var ErrNotFound = fmt.Errorf("User ID not found")
+var ErrUserIDNotFound = fmt.Errorf("User ID not found")
 
 // UserIDer identifies users given a request context.
 type UserIDer func(context.Context) (string, error)
@@ -21,11 +21,11 @@ func UserIDHeader(headerName string) UserIDer {
 	return func(ctx context.Context) (string, error) {
 		request, ok := ctx.Value(app.RequestCtxKey).(*http.Request)
 		if !ok || request == nil {
-			return "", ErrNotFound
+			return "", ErrUserIDNotFound
 		}
 		userID := request.Header.Get(headerName)
 		if userID == "" {
-			return "", ErrNotFound
+			return "", ErrUserIDNotFound
 		}
 		return userID, nil
 	}
