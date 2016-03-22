@@ -44,12 +44,13 @@ func ColorConnected(r Renderer) Renderer {
 				}
 			}
 
+			output := input.Copy()
 			for id := range connected {
-				input[id] = input[id].WithNode(report.MakeNodeWith(map[string]string{
+				output[id] = output[id].WithNode(report.MakeNodeWith(map[string]string{
 					IsConnected: "true",
 				}))
 			}
-			return input
+			return output
 		},
 	}
 }
