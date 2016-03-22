@@ -230,7 +230,7 @@ func (r *registry) updateImages() error {
 
 	for i := range images {
 		image := &images[i]
-		r.images[image.ID] = image
+		r.images[trimImageID(image.ID)] = image
 	}
 
 	return nil
