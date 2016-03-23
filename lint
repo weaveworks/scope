@@ -54,7 +54,7 @@ function spell_check {
 		return $lint_result
 	fi
 
-	if misspell -i "$IGNORE_SPELLINGS" "${filename}"; then
+	if ! misspell -error -i "$IGNORE_SPELLINGS" "${filename}"; then
 		lint_result=1
 	fi
 
