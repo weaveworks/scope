@@ -33,6 +33,7 @@ export default function NodeShapeHeptagon({highlighted, size, color, metric}) {
     fillOpacity: 0.5,
     fill: getMetricColor()
   };
+  const fontSize = size * 0.19;
 
   return (
     <g className={className}>
@@ -52,7 +53,7 @@ export default function NodeShapeHeptagon({highlighted, size, color, metric}) {
       <path className="metric-fill" clipPath={`url(#${clipId})`}
         style={metricStyle} {...pathProps(0.45)} />
       {highlighted && value !== null ?
-        <text dy="0.35em" style={{textAnchor: 'middle'}}>{formattedValue}</text> :
+        <text style={{fontSize}}>{formattedValue}</text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );

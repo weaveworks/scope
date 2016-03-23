@@ -14,6 +14,7 @@ export default function NodeShapeCircle({highlighted, size, color, metric}) {
     fillOpacity: 0.5,
     fill: getMetricColor()
   };
+  const fontSize = size * 0.19;
 
   return (
     <g className={className}>
@@ -33,7 +34,7 @@ export default function NodeShapeCircle({highlighted, size, color, metric}) {
       <circle r={size * 0.45} className="metric-fill" style={metricStyle}
         clipPath={`url(#${clipId})`} />
       {highlighted && value !== null ?
-        <text dy="0.35em" style={{textAnchor: 'middle'}}>{formattedValue}</text> :
+        <text style={{fontSize}}>{formattedValue}</text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );

@@ -68,7 +68,10 @@
     "test": "jest",
     "coveralls": "cat coverage/lcov.info | coveralls",
     "lint": "eslint app",
-    "clean": "rm build/app.js"
+    "clean": "rm build/app.js",
+    "noprobe": "../scope stop && ../scope launch --no-probe --app.window 24h",
+    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report",
+    "loadreportjson": "npm run loadreport -- -d @../k8s_report.json"
   },
   "jest": {
     "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",

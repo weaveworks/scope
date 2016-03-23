@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import d3 from 'd3';
 import { formatMetric } from './string-utils';
+import { colors } from './color-utils';
 import AppStore from '../stores/app-store';
 
 
@@ -172,7 +173,7 @@ export function getMetricValue(metric, size) {
     valuePercentage = loadScale(value);
   }
 
-  let displayedValue = value;
+  let displayedValue = Number(value).toFixed(1);
   if (displayedValue > 0) {
     const baseline = 0.1;
     displayedValue = valuePercentage * (1 - baseline) + baseline;
@@ -190,14 +191,17 @@ export function getMetricValue(metric, size) {
 
 export function getMetricColor() {
   const selectedMetric = AppStore.getSelectedMetric();
+  // bluey
   if (/memory/.test(selectedMetric)) {
     return '#1f77b4';
   } else if (/cpu/.test(selectedMetric)) {
-    return '#2ca02c';
+    return colors('cpu');
   } else if (/files/.test(selectedMetric)) {
+    // return colors('files');
+    // purple
     return '#9467bd';
   } else if (/load/.test(selectedMetric)) {
-    return '#e6550d';
+    return colors('load');
   }
   return 'steelBlue';
 }

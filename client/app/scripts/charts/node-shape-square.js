@@ -19,6 +19,7 @@ export default function NodeShapeSquare({
   const className = classNames('shape', {
     metrics: value !== null
   });
+  const fontSize = size * 0.19;
 
   const metricStyle = {
     fillOpacity: 0.5,
@@ -43,7 +44,9 @@ export default function NodeShapeSquare({
       <rect className="metric-fill" style={metricStyle}
         clipPath={`url(#${clipId})`} {...rectProps(0.45, 0.39)} />
       {highlighted && value !== null ?
-        <text dy="0.35em" style={{textAnchor: 'middle'}}>{formattedValue}</text> :
+        <text style={{fontSize}}>
+          {formattedValue}
+        </text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );
