@@ -11,6 +11,7 @@ import (
 	socks5 "github.com/armon/go-socks5"
 	"github.com/docker/docker/pkg/mflag"
 	"github.com/weaveworks/weave/common/mflagext"
+	"golang.org/x/net/context"
 )
 
 type pacFileParameters struct {
@@ -72,11 +73,11 @@ type aliasingResolver struct {
 	socks5.NameResolver
 }
 
-func (r aliasingResolver) Resolve(name string) (net.IP, error) {
+func (r aliasingResolver) Resolve(ctx context.Context, name string) (context.Context, net.IP, error) {
 	if alias, ok := r.aliases[name]; ok {
-		return r.NameResolver.Resolve(alias)
+		return r.NameResolver.Resolve(ctx, alias)
 	}
-	return r.NameResolver.Resolve(name)
+	return r.NameResolver.Resolve(ctx, name)
 }
 
 func socksProxy(aliases map[string]string) {

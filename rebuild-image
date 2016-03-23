@@ -25,7 +25,7 @@ cached_image_rev() {
 	find $CACHEDIR -name "$SAVEDNAME-*" -type f | sed -n 's/^[^\-]*\-\([a-z0-9]*\).gz$/\1/p'
 }
 
-# Have there been any revision beween $1 and $2
+# Have there been any revision between $1 and $2
 has_changes() {
 	local rev1=$1
 	local rev2=$2
