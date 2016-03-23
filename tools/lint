@@ -15,6 +15,7 @@ set -e
 
 IGNORE_LINT_COMMENT=
 IGNORE_TEST_PACKAGES=
+IGNORE_SPELLINGS=
 while true; do
 	case "$1" in
 		-nocomment)
@@ -25,6 +26,10 @@ while true; do
 		IGNORE_TEST_PACKAGES=1
 		shift 1
 		;;
+        -ignorespelling)
+        IGNORE_SPELLINGS="$2,$IGNORE_SPELLINGS"
+        shift 2
+        ;;
 		*)
 		break
 	esac
@@ -35,8 +40,21 @@ function spell_check {
 	filename="$1"
 	local lint_result=0
 
-	if grep -iH --color=always 'psueod\|availible' "${filename}"; then
-		echo "${filename}: spelling mistake"
+	# we don't want to spell check tar balls or binaries
+	if file $filename | grep executable >/dev/null 2>&1; then
+		return $lint_result
+	fi
+	if [[ $filename == *".tar" ]]; then
+		return $lint_result
+	fi
+
+	# misspell is completely optional.  If you don't like it
+	# don't have it installed.
+	if ! type misspell >/dev/null 2>&1; then
+		return $lint_result
+	fi
+
+	if ! misspell -error -i "$IGNORE_SPELLINGS" "${filename}"; then
 		lint_result=1
 	fi
 
