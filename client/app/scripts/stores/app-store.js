@@ -6,7 +6,8 @@ import { Store } from 'flux/utils';
 import AppDispatcher from '../dispatcher/app-dispatcher';
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
-import { findTopologyById, setTopologyUrlsById, updateTopologyIds } from '../utils/topology-utils';
+import { findTopologyById, setTopologyUrlsById, updateTopologyIds,
+  filterHiddenTopologies } from '../utils/topology-utils';
 
 const makeList = List;
 const makeMap = Map;
@@ -62,8 +63,11 @@ const topologySorter = topology => topology.get('rank');
 // adds ID field to topology (based on last part of URL path) and save urls in
 // map for easy lookup
 function processTopologies(nextTopologies) {
+  // filter out hidden topos
+  const visibleTopologies = filterHiddenTopologies(nextTopologies);
+
   // add IDs to topology objects in-place
-  const topologiesWithId = updateTopologyIds(nextTopologies);
+  const topologiesWithId = updateTopologyIds(visibleTopologies);
 
   // cache URLs by ID
   topologyUrlsById = setTopologyUrlsById(topologyUrlsById, topologiesWithId);
