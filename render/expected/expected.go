@@ -107,8 +107,8 @@ var (
 	ClientProcess2ID      = render.MakeProcessID(fixture.ClientHostID, fixture.Client2PID)
 	ServerProcessID       = render.MakeProcessID(fixture.ServerHostID, fixture.ServerPID)
 	nonContainerProcessID = render.MakeProcessID(fixture.ServerHostID, fixture.NonContainerPID)
-	unknownPseudoNode1ID  = render.MakePseudoNodeID(fixture.UnknownClient1IP, fixture.ServerIP, fixture.ServerPort)
-	unknownPseudoNode2ID  = render.MakePseudoNodeID(fixture.UnknownClient3IP, fixture.ServerIP, fixture.ServerPort)
+	unknownPseudoNode1ID  = render.MakePseudoNodeID(fixture.UnknownClient1IP)
+	unknownPseudoNode2ID  = render.MakePseudoNodeID(fixture.UnknownClient3IP)
 
 	unknownPseudoNode1 = func(adjacent string) render.RenderableNode {
 		return render.RenderableNode{
