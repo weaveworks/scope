@@ -43,20 +43,16 @@ start_container 1 progrium/consul consul -p 8400:8400 -p 8500:8500 -p 8600:53/ud
 
 # These are the micro services
 common_args="--no-probe --app.weave.addr= --app.http.address=:80"
-aws_args="--app.aws.region=us-east-1 --app.aws.id=abc --app.aws.secret=123 --app.aws.token=xyz"
-start_container 2 weaveworks/scope collection -- ${common_args} --app.collector=dynamodb \
-                                                 ${aws_args} \
-                                                 --app.aws.dynamodb=http://dynamodb.weave.local:8000 \
+start_container 2 weaveworks/scope collection -- ${common_args} \
+                                                 --app.collector=dynamodb://abc:123@dynamodb.weave.local:8000 \
                                                  --app.aws.create.tables=true
-start_container 2 weaveworks/scope query      -- ${common_args} --app.collector=dynamodb \
-                                                 ${aws_args} \
-                                                 --app.aws.dynamodb=http://dynamodb.weave.local:8000
-start_container 2 weaveworks/scope controls   -- ${common_args} --app.control.router=sqs \
-                                                 ${aws_args} \
-                                                 --app.aws.sqs=http://sqs.weave.local:9324
-start_container 2 weaveworks/scope pipes      -- ${common_args} --app.pipe.router=consul \
-                                                 --app.consul.addr=consul.weave.local:8500 --app.consul.inf=ethwe \
-                                                 --app.consul.prefix=pipes/
+start_container 2 weaveworks/scope query      -- ${common_args} \
+                                                 --app.collector=dynamodb://abc:123@dynamodb.weave.local:8000
+start_container 2 weaveworks/scope controls   -- ${common_args} \
+                                                 --app.control.router=sqs://abc:123@sqs.weave.local:9324
+start_container 2 weaveworks/scope pipes      -- ${common_args} \
+                                                 --app.pipe.router=consul://consul.weave.local:8500/pipes/ \
+                                                 --app.consul.inf=ethwe
 
 # And we bring it all together with a reverse proxy
 start_container 1 weaveworks/scope-frontend frontend --add-host=dns.weave.local:$(weave docker-bridge-ip) --publish=4040:80

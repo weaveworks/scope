@@ -2,13 +2,17 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gorilla/mux"
 	"github.com/weaveworks/go-checkpoint"
@@ -30,6 +34,79 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	return app.TopologyHandler(collector, router, http.FileServer(FS(false)))
 }
 
+func awsConfigFromURL(url *url.URL) *aws.Config {
+	password, _ := url.User.Password()
+	creds := credentials.NewStaticCredentials(url.User.Username(), password, "")
+	config := aws.NewConfig().WithCredentials(creds)
+	if strings.Contains(url.Host, ".") {
+		config = config.WithEndpoint(fmt.Sprintf("http://%s", url.Host)).WithRegion("dummy")
+	} else {
+		config = config.WithRegion(url.Host)
+	}
+	return config
+}
+
+func collectorFactory(userIDer multitenant.UserIDer, collectorURL string, window time.Duration, createTables bool) (app.Collector, error) {
+	if collectorURL == "local" {
+		return app.NewCollector(window), nil
+	}
+
+	parsed, err := url.Parse(collectorURL)
+	if err != nil {
+		return nil, err
+	}
+
+	if parsed.Scheme == "dynamodb" {
+		dynamoCollector := multitenant.NewDynamoDBCollector(awsConfigFromURL(parsed), userIDer)
+		if createTables {
+			if err := dynamoCollector.CreateTables(); err != nil {
+				return nil, err
+			}
+		}
+		return dynamoCollector, nil
+	}
+
+	return nil, fmt.Errorf("Invalid collector '%s'", collectorURL)
+}
+
+func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string) (app.ControlRouter, error) {
+	if controlRouterURL == "local" {
+		return app.NewLocalControlRouter(), nil
+	}
+
+	parsed, err := url.Parse(controlRouterURL)
+	if err != nil {
+		return nil, err
+	}
+
+	if parsed.Scheme == "sqs" {
+		return multitenant.NewSQSControlRouter(awsConfigFromURL(parsed), userIDer), nil
+	}
+
+	return nil, fmt.Errorf("Invalid control router '%s'", controlRouterURL)
+}
+
+func pipeRouterFactory(userIDer multitenant.UserIDer, pipeRouterURL, consulInf string) (app.PipeRouter, error) {
+	if pipeRouterURL == "local" {
+		return app.NewLocalPipeRouter(), nil
+	}
+
+	parsed, err := url.Parse(pipeRouterURL)
+	if err != nil {
+		return nil, err
+	}
+
+	if parsed.Scheme == "consul" {
+		consulClient, err := multitenant.NewConsulClient(parsed.Host)
+		if err != nil {
+			return nil, err
+		}
+		return multitenant.NewConsulPipeRouter(consulClient, strings.TrimPrefix(parsed.Path, "/"), consulInf, userIDer)
+	}
+
+	return nil, fmt.Errorf("Invalid pipe router '%s'", pipeRouterURL)
+}
+
 // Main runs the app
 func appMain() {
 	var (
@@ -43,79 +120,39 @@ func appMain() {
 		containerName  = flag.String("container.name", app.DefaultContainerName, "Name of this container (to lookup container ID)")
 		dockerEndpoint = flag.String("docker", app.DefaultDockerEndpoint, "Location of docker endpoint (to lookup container ID)")
 
-		collectorType     = flag.String("collector", "local", "Collector to use (local of dynamodb)")
-		controlRouterType = flag.String("control.router", "local", "Control router to use (local or sqs)")
-		pipeRouterType    = flag.String("pipe.router", "local", "Pipe router to use (local)")
-		userIDHeader      = flag.String("userid.header", "", "HTTP header to use as userid")
+		collectorURL     = flag.String("collector", "local", "Collector to use (local of dynamodb)")
+		controlRouterURL = flag.String("control.router", "local", "Control router to use (local or sqs)")
+		pipeRouterURL    = flag.String("pipe.router", "local", "Pipe router to use (local)")
+		userIDHeader     = flag.String("userid.header", "", "HTTP header to use as userid")
 
-		awsDynamoDB     = flag.String("aws.dynamodb", "", "URL of DynamoDB instance")
 		awsCreateTables = flag.Bool("aws.create.tables", false, "Create the tables in DynamoDB")
-		awsSQS          = flag.String("aws.sqs", "", "URL of SQS instance")
-		awsRegion       = flag.String("aws.region", "", "AWS Region")
-		awsID           = flag.String("aws.id", "", "AWS Account ID")
-		awsSecret       = flag.String("aws.secret", "", "AWS Account Secret")
-		awsToken        = flag.String("aws.token", "", "AWS Account Token")
-
-		consulPrefix = flag.String("consul.prefix", "", "Prefix for keys in consul")
-		consulAddr   = flag.String("consul.addr", "", "Address of consul instance")
-		consulInf    = flag.String("consul.inf", "", "The interface who's address I should advertise myself under in consul")
+		consulInf       = flag.String("consul.inf", "", "The interface who's address I should advertise myself under in consul")
 	)
 	flag.Parse()
 
 	setLogLevel(*logLevel)
 	setLogFormatter(*logPrefix)
 
-	// Do we need a user IDer?
-	var userIDer = multitenant.NoopUserIDer
+	userIDer := multitenant.NoopUserIDer
 	if *userIDHeader != "" {
 		userIDer = multitenant.UserIDHeader(*userIDHeader)
 	}
 
-	// Create a collector
-	var collector app.Collector
-	if *collectorType == "local" {
-		collector = app.NewCollector(*window)
-	} else if *collectorType == "dynamodb" {
-		creds := credentials.NewStaticCredentials(*awsID, *awsSecret, *awsToken)
-		dynamoCollector := multitenant.NewDynamoDBCollector(*awsDynamoDB, *awsRegion, creds, userIDer)
-		collector = dynamoCollector
-		if *awsCreateTables {
-			if err := dynamoCollector.CreateTables(); err != nil {
-				log.Fatalf("Error createing DynamoDB tables: %v", err)
-			}
-		}
-	} else {
-		log.Fatalf("Invalid collector '%s'", *collectorType)
+	collector, err := collectorFactory(userIDer, *collectorURL, *window, *awsCreateTables)
+	if err != nil {
+		log.Fatalf("Error creating collector: %v", err)
 		return
 	}
 
-	// Create a control router
-	var controlRouter app.ControlRouter
-	if *controlRouterType == "local" {
-		controlRouter = app.NewLocalControlRouter()
-	} else if *controlRouterType == "sqs" {
-		creds := credentials.NewStaticCredentials(*awsID, *awsSecret, *awsToken)
-		controlRouter = multitenant.NewSQSControlRouter(*awsSQS, *awsRegion, creds, userIDer)
-	} else {
-		log.Fatalf("Invalid control router '%s'", *controlRouterType)
+	controlRouter, err := controlRouterFactory(userIDer, *controlRouterURL)
+	if err != nil {
+		log.Fatalf("Error creating control router: %v", err)
 		return
 	}
 
-	// Create a pipe router
-	var pipeRouter app.PipeRouter
-	if *pipeRouterType == "local" {
-		pipeRouter = app.NewLocalPipeRouter()
-	} else if *pipeRouterType == "consul" {
-		consulClient, err := multitenant.NewConsulClient(*consulAddr)
-		if err != nil {
-			log.Fatalf("Error createing consul client: %v", err)
-		}
-		pipeRouter, err = multitenant.NewConsulPipeRouter(consulClient, *consulPrefix, *consulInf, userIDer)
-		if err != nil {
-			log.Fatalf("Error createing consul pipe router: %v", err)
-		}
-	} else {
-		log.Fatalf("Invalid pipe router '%s'", *pipeRouterType)
+	pipeRouter, err := pipeRouterFactory(userIDer, *pipeRouterURL, *consulInf)
+	if err != nil {
+		log.Fatalf("Error creating pipe router: %v", err)
 		return
 	}
 

@@ -10,7 +10,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"golang.org/x/net/context"
@@ -51,12 +50,9 @@ type sqsResponseMessage struct {
 }
 
 // NewSQSControlRouter the harbinger of death
-func NewSQSControlRouter(url, region string, creds *credentials.Credentials, userIDer UserIDer) app.ControlRouter {
+func NewSQSControlRouter(config *aws.Config, userIDer UserIDer) app.ControlRouter {
 	result := &sqsControlRouter{
-		service: sqs.New(session.New(aws.NewConfig().
-			WithEndpoint(url).
-			WithRegion(region).
-			WithCredentials(creds))),
+		service:          sqs.New(session.New(config)),
 		responseQueueURL: nil,
 		userIDer:         userIDer,
 		responses:        map[string]chan xfer.Response{},

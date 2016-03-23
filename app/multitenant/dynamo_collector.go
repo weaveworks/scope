@@ -9,7 +9,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/ugorji/go/codec"
@@ -39,12 +38,9 @@ type dynamoDBCollector struct {
 
 // NewDynamoDBCollector the reaper of souls
 // https://github.com/aws/aws-sdk-go/wiki/common-examples
-func NewDynamoDBCollector(url, region string, creds *credentials.Credentials, userIDer UserIDer) DynamoDBCollector {
+func NewDynamoDBCollector(config *aws.Config, userIDer UserIDer) DynamoDBCollector {
 	return &dynamoDBCollector{
-		db: dynamodb.New(session.New(aws.NewConfig().
-			WithEndpoint(url).
-			WithRegion(region).
-			WithCredentials(creds))),
+		db:       dynamodb.New(session.New(config)),
 		userIDer: userIDer,
 	}
 }
