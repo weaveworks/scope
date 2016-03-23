@@ -42,16 +42,16 @@ function getNextValue(keyValues, maxValue) {
 }
 
 export const METRIC_LABELS = {
-  docker_cpu_total_usage: 'Container CPU',
-  docker_memory_usage: 'Container Memory',
-  host_cpu_usage_percent: 'Host CPU',
-  host_mem_usage_bytes: 'Host Memory',
-  load1: 'Host Load 1',
-  load15: 'Host Load 15',
-  load5: 'Host Load 5',
-  open_files_count: 'Process Open files',
-  process_cpu_usage_percent: 'Process CPU',
-  process_memory_usage_bytes: 'Process Memory'
+  docker_cpu_total_usage: 'CPU',
+  docker_memory_usage: 'Memory',
+  host_cpu_usage_percent: 'CPU',
+  host_mem_usage_bytes: 'Memory',
+  load1: 'Load 1',
+  load15: 'Load 15',
+  load5: 'Load 5',
+  open_files_count: 'Open files',
+  process_cpu_usage_percent: 'CPU',
+  process_memory_usage_bytes: 'Memory'
 };
 
 
@@ -84,7 +84,7 @@ const cpuMetric = (node, name, max = 100) => ({
   max
 });
 
-const fileMetric = (node, name, max = 10000) => ({
+const fileMetric = (node, name, max = 1000) => ({
   samples: [{value: getNextValue([node.id, name], max)}],
   max
 });
@@ -94,23 +94,36 @@ const loadMetric = (node, name, max = 10) => ({
   max
 });
 
+const metrics = {
+  // process
+  square: {
+    process_cpu_usage_percent: cpuMetric,
+    process_memory_usage_bytes: memoryMetric,
+    open_files_count: fileMetric
+  },
+  // container
+  hexagon: {
+    docker_cpu_total_usage: cpuMetric,
+    docker_memory_usage: memoryMetric
+  },
+  // host
+  circle: {
+    load5: loadMetric,
+    host_cpu_usage_percent: cpuMetric,
+    host_mem_usage_bytes: memoryMetric
+  }
+};
+
+
 function mergeMetrics(node) {
-  if (node.pseudo) {
+  if (node.pseudo || node.stack) {
     return node;
   }
   return Object.assign({}, node, {
-    metrics: {
-      process_cpu_usage_percent: cpuMetric(node, 'process_cpu_usage_percent'),
-      process_memory_usage_bytes: memoryMetric(node, 'process_memory_usage_bytes'),
-      open_files_count: fileMetric(node, 'open_files_count'),
-      load1: loadMetric(node, 'load1'),
-      load5: loadMetric(node, 'load5'),
-      load15: loadMetric(node, 'load15'),
-      docker_cpu_total_usage: cpuMetric(node, 'docker_cpu_total_usage'),
-      docker_memory_usage: memoryMetric(node, 'docker_memory_usage'),
-      host_cpu_usage_percent: cpuMetric(node, 'host_cpu_usage_percent'),
-      host_mem_usage_bytes: memoryMetric(node, 'host_mem_usage_bytes')
-    }
+    metrics: _(metrics[node.shape])
+      .map((fn, name) => [name, fn(node)])
+      .fromPairs()
+      .value()
   });
 }
 

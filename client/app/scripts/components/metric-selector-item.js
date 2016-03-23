@@ -1,7 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
 import { selectMetric, lockMetric, unlockMetric } from '../actions/app-actions';
-import { label } from '../utils/data-utils';
 
 
 export class MetricSelectorItem extends React.Component {
@@ -45,7 +44,7 @@ export class MetricSelectorItem extends React.Component {
         className={className}
         onMouseOver={this.onMouseOver}
         onClick={this.onMouseClick}>
-        {label(metric)}
+        {metric.label}
         {isLocked && <span className="sidebar-item-actions">
           <span className="sidebar-item-action fa fa-thumb-tack"></span>
         </span>}

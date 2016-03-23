@@ -139,11 +139,11 @@ export default class App extends React.Component {
           topologyId={this.state.currentTopologyId} />
 
         <Sidebar>
-          <MetricSelector
+          {this.state.availableCanvasMetrics.length > 0 && <MetricSelector
             availableCanvasMetrics={this.state.availableCanvasMetrics}
             lockedMetric={this.state.lockedMetric}
             selectedMetric={this.state.selectedMetric}
-            />
+            />}
           <Status errorUrl={this.state.errorUrl} topology={this.state.currentTopology}
             topologiesLoaded={this.state.topologiesLoaded}
             websocketClosed={this.state.websocketClosed} />

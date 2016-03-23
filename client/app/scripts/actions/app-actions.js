@@ -28,21 +28,26 @@ export function lockNextMetric(delta) {
 
   AppDispatcher.dispatch({
     type: ActionTypes.LOCK_METRIC,
-    metricId: nextMetric
+    metricId: nextMetric,
+    metricType: AppStore.getAvailableCanvasMetricsTypes()[nextMetric]
   });
+  updateRoute();
 }
 
 export function lockMetric(metricId) {
   AppDispatcher.dispatch({
     type: ActionTypes.LOCK_METRIC,
-    metricId
+    metricId,
+    metricType: AppStore.getAvailableCanvasMetricsTypes()[metricId]
   });
+  updateRoute();
 }
 
 export function unlockMetric() {
   AppDispatcher.dispatch({
     type: ActionTypes.UNLOCK_METRIC,
   });
+  updateRoute();
 }
 
 export function changeTopologyOption(option, value, topologyId) {

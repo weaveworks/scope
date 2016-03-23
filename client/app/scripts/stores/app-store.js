@@ -62,6 +62,7 @@ let websocketClosed = true;
 
 let selectedMetric = null;
 let lockedMetric = selectedMetric;
+let lockedMetricType = null;
 let availableCanvasMetrics = [];
 
 
@@ -144,6 +145,7 @@ export class AppStore extends Store {
       controlPipe: this.getControlPipe(),
       nodeDetails: this.getNodeDetailsState(),
       selectedNodeId,
+      lockedMetricType,
       topologyId: currentTopologyId,
       topologyOptions: topologyOptions.toJS() // all options
     };
@@ -180,6 +182,10 @@ export class AppStore extends Store {
 
   getAvailableCanvasMetrics() {
     return availableCanvasMetrics;
+  }
+
+  getAvailableCanvasMetricsTypes() {
+    return _.fromPairs(this.getAvailableCanvasMetrics().map(m => [m.id, m.label]));
   }
 
   getControlStatus() {
@@ -428,12 +434,14 @@ export class AppStore extends Store {
       }
       case ActionTypes.LOCK_METRIC: {
         lockedMetric = payload.metricId;
+        lockedMetricType = payload.metricType;
         selectedMetric = payload.metricId;
         this.__emitChange();
         break;
       }
       case ActionTypes.UNLOCK_METRIC: {
         lockedMetric = null;
+        lockedMetricType = null;
         this.__emitChange();
         break;
       }
@@ -607,7 +615,13 @@ export class AppStore extends Store {
           .toSet()
           .sortBy(n => METRIC_LABELS[n])
           .toJS()
-          .map(v => ({id: v, label: v}));
+          .map(v => ({id: v, label: METRIC_LABELS[v]}));
+
+        const similarTypeMetric = availableCanvasMetrics.find(m => m.label === lockedMetricType);
+        lockedMetric = similarTypeMetric && similarTypeMetric.id;
+        if (!availableCanvasMetrics.map(m => m.id).includes(selectedMetric)) {
+          selectedMetric = lockedMetric;
+        }
 
         if (emitChange) {
           this.__emitChange();
@@ -654,6 +668,7 @@ export class AppStore extends Store {
         setTopology(payload.state.topologyId);
         setDefaultTopologyOptions(topologies);
         selectedNodeId = payload.state.selectedNodeId;
+        lockedMetricType = payload.state.lockedMetricType;
         if (payload.state.controlPipe) {
           controlPipes = makeOrderedMap({
             [payload.state.controlPipe.id]:
