@@ -76,15 +76,16 @@ func (t *PTracer) Stop() {
 }
 
 // TraceProcess starts tracing the given pid
-func (t *PTracer) TraceProcess(pid int) *process {
-	result := make(chan *process)
+func (t *PTracer) TraceProcess(pid int) {
+	result := make(chan struct{})
 	t.ops <- func() {
 		process := newProcess(pid, t)
 		t.processes[pid] = process
 		process.trace()
-		result <- process
+		result <- struct{}{}
 	}
-	return <-result
+	<-result
+	return
 }
 
 // StopTracing stops tracing all threads for the given pid
