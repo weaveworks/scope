@@ -36,14 +36,16 @@ const (
 type Reporter struct {
 	hostID   string
 	hostName string
+	probeID  string
 }
 
 // NewReporter returns a Reporter which produces a report containing host
 // topology for this host.
-func NewReporter(hostID, hostName string) *Reporter {
+func NewReporter(hostID, hostName, probeID string) *Reporter {
 	return &Reporter{
 		hostID:   hostID,
 		hostName: hostName,
+		probeID:  probeID,
 	}
 }
 
@@ -98,6 +100,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	memoryUsage, max := GetMemoryUsageBytes()
 	metrics[MemoryUsage] = report.MakeMetric().Add(now, memoryUsage).WithMax(max)
 
+	metadata := map[string]string{report.ControlProbeID: r.probeID}
 	rep.Host.AddNode(report.MakeHostNodeID(r.hostID), report.MakeNodeWith(map[string]string{
 		Timestamp:     mtime.Now().UTC().Format(time.RFC3339Nano),
 		HostName:      r.hostName,
@@ -106,7 +109,13 @@ func (r *Reporter) Report() (report.Report, error) {
 		Uptime:        uptime.String(),
 	}).WithSets(report.EmptySets.
 		Add(LocalNetworks, report.MakeStringSet(localCIDRs...)),
-	).WithMetrics(metrics))
+	).WithMetrics(metrics).WithControls(ExecHost).WithLatests(metadata))
+
+	rep.Host.Controls.AddControl(report.Control{
+		ID:    ExecHost,
+		Human: "Exec shell",
+		Icon:  "fa-terminal",
+	})
 
 	return rep, nil
 }

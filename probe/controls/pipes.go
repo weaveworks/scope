@@ -2,6 +2,7 @@ package controls
 
 import (
 	"fmt"
+	"io"
 	"math/rand"
 
 	"github.com/weaveworks/scope/common/xfer"
@@ -21,11 +22,10 @@ type pipe struct {
 	client    PipeClient
 }
 
-// NewPipe creats a new pipe and connects it to the app.
-var NewPipe = func(c PipeClient, appID string) (string, xfer.Pipe, error) {
+func newPipe(p xfer.Pipe, c PipeClient, appID string) (string, xfer.Pipe, error) {
 	pipeID := fmt.Sprintf("pipe-%d", rand.Int63())
 	pipe := &pipe{
-		Pipe:   xfer.NewPipe(),
+		Pipe:   p,
 		appID:  appID,
 		id:     pipeID,
 		client: c,
@@ -34,6 +34,16 @@ var NewPipe = func(c PipeClient, appID string) (string, xfer.Pipe, error) {
 		return "", nil, err
 	}
 	return pipeID, pipe, nil
+}
+
+// NewPipe creates a new pipe and connects it to the app.
+var NewPipe = func(c PipeClient, appID string) (string, xfer.Pipe, error) {
+	return newPipe(xfer.NewPipe(), c, appID)
+}
+
+// NewPipeFromEnds creates a new pipe from its ends and connects it to the app.
+func NewPipeFromEnds(local, remote io.ReadWriter, c PipeClient, appID string) (string, xfer.Pipe, error) {
+	return newPipe(xfer.NewPipeFromEnds(local, remote), c, appID)
 }
 
 func (p *pipe) Close() error {
