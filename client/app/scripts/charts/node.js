@@ -28,7 +28,7 @@ const nodeShapes = {
 function getNodeShape({shape, stack}) {
   const nodeShape = nodeShapes[shape];
   if (!nodeShape) {
-    throw new Error(`Unkown shape: ${shape}!`);
+    throw new Error(`Unknown shape: ${shape}!`);
   }
   return stack ? stackedShape(nodeShape) : nodeShape;
 }

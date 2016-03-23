@@ -238,7 +238,7 @@ func (t *PTracer) handleStopped(pid int, status syscall.WaitStatus) {
 		t.threadExited(target)
 		return
 	} else if status.Stopped() {
-		// tracee recieved a non-trace related signal
+		// tracee received a non-trace related signal
 		signal = status.StopSignal()
 
 		if signal == syscall.SIGSTOP && target.process.detaching {

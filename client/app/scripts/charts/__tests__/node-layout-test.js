@@ -193,7 +193,7 @@ describe('NodesLayout', () => {
     expect(resultCoords).toEqual(coords);
   });
 
-  it('keeps nodes in rectangle after node dissappears', () => {
+  it('keeps nodes in rectangle after node disappears', () => {
     let result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
       nodeSets.initial4.edges);

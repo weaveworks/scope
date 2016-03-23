@@ -189,7 +189,7 @@ export function hitEsc() {
       pipeId: controlPipe.id
     });
     updateRoute();
-    // Dont deselect node on ESC if there is a controlPipe (keep terminal open)
+    // Don't deselect node on ESC if there is a controlPipe (keep terminal open)
   } else if (AppStore.getTopCardNodeId() && !controlPipe) {
     AppDispatcher.dispatch({ type: ActionTypes.DESELECT_NODE });
     updateRoute();

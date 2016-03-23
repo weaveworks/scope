@@ -65,7 +65,7 @@ var (
 func TestSpyNoProcesses(t *testing.T) {
 	const (
 		nodeID   = "heinz-tomato-ketchup" // TODO rename to hostID
-		nodeName = "frenchs-since-1904"   // TODO rename to hostNmae
+		nodeName = "frenchs-since-1904"   // TODO rename to hostName
 	)
 
 	scanner := procspy.FixedScanner(fixConnections)
@@ -83,7 +83,7 @@ func TestSpyNoProcesses(t *testing.T) {
 func TestSpyWithProcesses(t *testing.T) {
 	const (
 		nodeID   = "nikon"             // TODO rename to hostID
-		nodeName = "fishermans-friend" // TODO rename to hostNmae
+		nodeName = "fishermans-friend" // TODO rename to hostName
 	)
 
 	scanner := procspy.FixedScanner(fixConnectionsWithProcesses)

@@ -147,7 +147,7 @@ func (s *Sniffer) loop(src gopacket.ZeroCopyPacketDataSource, on, off time.Durat
 	}
 }
 
-// interpolateCounts compensates for sampling by artifically inflating counts
+// interpolateCounts compensates for sampling by artificially inflating counts
 // throughout the report. It should be run once for each report, within the
 // probe, before it gets emitted into the rest of the system.
 func interpolateCounts(r report.Report) {

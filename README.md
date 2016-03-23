@@ -116,7 +116,7 @@ You need to run Scope on every machine you want to monitor.
 ```
 
 If you run Scope on the same machine as the Weave Network, the probe will use
-weaveDNS to automatically discover other apps on your network. Scope acheives
+weaveDNS to automatically discover other apps on your network. Scope achieves
 this by registering itself under the address **scope.weave.local**. Each probe
 will send reports to every app registered under this address. Therefore, if
 you have a running weaveDNS setup, you do not need to take any further steps.
@@ -209,7 +209,7 @@ The SCOPE_SERVICE_TOKEN is found when you [log in to the Scope service](https://
         - "--probe.docker"
         - "true"
         - "--service-token"
-        - "${SCOPE_SERVICE_TOKEN}" 
+        - "${SCOPE_SERVICE_TOKEN}"
 
 ## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
 
@@ -217,14 +217,14 @@ Scope comes with built-in Kubernetes support. We recommend to run Scope natively
 in your Kubernetes cluster using
 [these resource definitions](https://github.com/TheNewNormal/kube-charts/tree/master/weavescope/manifests).
 
-1. Make sure your cluster allows priviledged pods (required by the Scope
-   probes). Priviledged pods are allowed by default from Kubernetes 1.1. 
-   If you are running an earlier version or a non-default configuration, 
-   make sure your API Server and all your Kubelets are provided with flag `--allow_privileged` 
+1. Make sure your cluster allows privileged pods (required by the Scope
+   probes). Privileged pods are allowed by default from Kubernetes 1.1.
+   If you are running an earlier version or a non-default configuration,
+   make sure your API Server and all your Kubelets are provided with flag `--allow_privileged`
    at launch time.
 
 2. Make sure your cluster supports
-   [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md). 
+   [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md).
    DaemonSets are needed to ensure that each Kubernetes node
    runs a Scope Probe:
 

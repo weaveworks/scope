@@ -100,7 +100,7 @@ tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	./tools/test -no-go-get
 
 lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	./tools/lint .
+	./tools/lint -ignorespelling "agre " -ignorespelling "AGRE " .
 
 prog/static.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	esc -o $@ -prefix client/build client/build

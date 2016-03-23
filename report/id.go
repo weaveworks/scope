@@ -64,7 +64,7 @@ func MakeEndpointNodeID(hostID, address, port string) string {
 func MakeAddressNodeID(hostID, address string) string {
 	var scope string
 
-	// Loopback addresses and addresses explicity marked as
+	// Loopback addresses and addresses explicitly marked as
 	// local get scoped by hostID
 	addressIP := net.ParseIP(address)
 	if addressIP != nil && LocalNetworks.Contains(addressIP) {
