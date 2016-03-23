@@ -8,7 +8,7 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-// CustomRenderer allow for mapping functions that recived the entire topology
+// CustomRenderer allow for mapping functions that received the entire topology
 // in one call - useful for functions that need to consider the entire graph.
 // We should minimise the use of this renderer type, as it is very inflexible.
 type CustomRenderer struct {

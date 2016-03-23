@@ -8,7 +8,7 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
-// Poll repeatedly evaluates condition until we either timeout, or it suceeds.
+// Poll repeatedly evaluates condition until we either timeout, or it succeeds.
 func Poll(t *testing.T, d time.Duration, want interface{}, have func() interface{}) {
 	deadline := time.Now().Add(d)
 	for {

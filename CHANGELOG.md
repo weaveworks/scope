@@ -274,7 +274,7 @@ Bug fixes:
   [#686](https://github.com/weaveworks/scope/pull/686)
 - Take default topology option if missing in URL
   [#678](https://github.com/weaveworks/scope/pull/678)
-- Dont treat missing node as UI error
+- Don't treat missing node as UI error
   [#677](https://github.com/weaveworks/scope/pull/677)
 - Unset previous details when deselecting a node
   [#675](https://github.com/weaveworks/scope/pull/675)

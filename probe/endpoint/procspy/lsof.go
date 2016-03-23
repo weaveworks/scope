@@ -15,7 +15,7 @@ var (
 // parseLsof parses lsof out with `-F cn` argument.
 //
 // Format description: the first letter is the type of record, records are
-// newline seperated, the record starting with 'p' (pid) is a new processid.
+// newline separated, the record starting with 'p' (pid) is a new processid.
 // There can be multiple connections for the same 'p' record in which case the
 // 'p' is not repeated.
 //

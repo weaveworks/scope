@@ -384,7 +384,7 @@ func MapEndpoint2Pseudo(n RenderableNode, local report.Networks) RenderableNodes
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a process graph to get that info.
 func MapEndpoint2Process(n RenderableNode, local report.Networks) RenderableNodes {
-	// Nodes without a hostid are treated as psuedo nodes
+	// Nodes without a hostid are treated as pseudo nodes
 	if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
 		return MapEndpoint2Pseudo(n, local)
 	}
@@ -413,12 +413,12 @@ func MapEndpoint2Process(n RenderableNode, local report.Networks) RenderableNode
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapProcess2Container(n RenderableNode, _ report.Networks) RenderableNodes {
-	// Propogate the internet pseudo node
+	// Propagate the internet pseudo node
 	if strings.HasSuffix(n.ID, TheInternetID) {
 		return RenderableNodes{n.ID: n}
 	}
 
-	// Don't propogate non-internet pseudo nodes
+	// Don't propagate non-internet pseudo nodes
 	if n.Pseudo {
 		return RenderableNodes{}
 	}
@@ -509,7 +509,7 @@ func MapCountProcessName(n RenderableNode, _ report.Networks) RenderableNodes {
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapContainer2ContainerImage(n RenderableNode, _ report.Networks) RenderableNodes {
-	// Propogate all pseudo nodes
+	// Propagate all pseudo nodes
 	if n.Pseudo {
 		return RenderableNodes{n.ID: n}
 	}
@@ -586,7 +586,7 @@ func MapContainerImage2Name(n RenderableNode, _ report.Networks) RenderableNodes
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapX2Host(n RenderableNode, _ report.Networks) RenderableNodes {
-	// Don't propogate all pseudo nodes - we do this in MapEndpoint2Host
+	// Don't propagate all pseudo nodes - we do this in MapEndpoint2Host
 	if n.Pseudo {
 		return RenderableNodes{}
 	}
@@ -604,7 +604,7 @@ func MapX2Host(n RenderableNode, _ report.Networks) RenderableNodes {
 // MapEndpoint2Host takes nodes from the endpoint topology and produces
 // host nodes or pseudo nodes.
 func MapEndpoint2Host(n RenderableNode, local report.Networks) RenderableNodes {
-	// Nodes without a hostid are treated as psuedo nodes
+	// Nodes without a hostid are treated as pseudo nodes
 	if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
 		return MapEndpoint2Pseudo(n, local)
 	}
@@ -628,7 +628,7 @@ func MapEndpoint2Host(n RenderableNode, local report.Networks) RenderableNodes {
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapContainer2Pod(n RenderableNode, _ report.Networks) RenderableNodes {
-	// Propogate all pseudo nodes
+	// Propagate all pseudo nodes
 	if n.Pseudo {
 		return RenderableNodes{n.ID: n}
 	}
@@ -673,7 +673,7 @@ func MapContainer2Pod(n RenderableNode, _ report.Networks) RenderableNodes {
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a pod graph to get that info.
 func MapPod2Service(pod RenderableNode, _ report.Networks) RenderableNodes {
-	// Propogate all pseudo nodes
+	// Propagate all pseudo nodes
 	if pod.Pseudo {
 		return RenderableNodes{pod.ID: pod}
 	}
@@ -700,7 +700,7 @@ func MapPod2Service(pod RenderableNode, _ report.Networks) RenderableNodes {
 
 // MapContainer2Hostname maps container RenderableNodes to 'hostname' renderabled nodes..
 func MapContainer2Hostname(n RenderableNode, _ report.Networks) RenderableNodes {
-	// Propogate all pseudo nodes
+	// Propagate all pseudo nodes
 	if n.Pseudo {
 		return RenderableNodes{n.ID: n}
 	}

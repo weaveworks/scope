@@ -8,7 +8,7 @@ Run tracer:
 
 TODO:
 - <s>need to stich traces together</s>
-- deal with persistant connections
+- deal with persistent connections
 - make it work for goroutines
 - test with jvm based app
 - find way to get local ip address for an incoming connection

@@ -72,7 +72,7 @@ type Report struct {
 	// before serving it to consumers.
 	Window time.Duration
 
-	// Shortcut reports should be propogated to the UI as quickly as possible,
+	// Shortcut reports should be propagated to the UI as quickly as possible,
 	// bypassing the usual spy interval, publish interval and app ws interval.
 	Shortcut bool
 

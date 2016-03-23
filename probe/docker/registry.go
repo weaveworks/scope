@@ -132,7 +132,7 @@ func (r *registry) loop() {
 
 func (r *registry) listenForEvents() bool {
 	// First we empty the store lists.
-	// This ensure any containers that went away inbetween calls to
+	// This ensure any containers that went away in between calls to
 	// listenForEvents don't hang around.
 	r.reset()
 
