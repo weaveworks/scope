@@ -25,8 +25,8 @@ var (
 
 // sqsControlRouter:
 // Creates a queue for every probe that connects to it, and a queue for
-// responses back to it.  When it recieves a request, posts it to the
-// probe queue.  When probe recieves a request, handles it and posts the
+// responses back to it.  When it receives a request, posts it to the
+// probe queue.  When probe receives a request, handles it and posts the
 // response back to the response queue.
 type sqsControlRouter struct {
 	service          *sqs.SQS
