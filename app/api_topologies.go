@@ -18,28 +18,6 @@ var (
 	topologyRegistry = &registry{
 		items: map[string]APITopologyDesc{},
 	}
-	kubernetesTopologies = []APITopologyDesc{
-		{
-			id:       "pods",
-			renderer: render.PodRenderer,
-			Name:     "Pods",
-			Rank:     3,
-			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System pods shown", false, render.FilterNoop},
-				{"hide", "System pods hidden", true, render.FilterSystem},
-			}},
-		},
-		{
-			id:       "pods-by-service",
-			parent:   "pods",
-			renderer: render.PodServiceRenderer,
-			Name:     "by service",
-			Options: map[string][]APITopologyOption{"system": {
-				{"show", "System services shown", false, render.FilterNoop},
-				{"hide", "System services hidden", true, render.FilterSystem},
-			}},
-		},
-	}
 )
 
 func init() {
@@ -106,6 +84,28 @@ func init() {
 			Rank:     4,
 			Options:  map[string][]APITopologyOption{},
 		},
+		APITopologyDesc{
+			id:          "pods",
+			renderer:    render.PodRenderer,
+			Name:        "Pods",
+			Rank:        3,
+			HideIfEmpty: true,
+			Options: map[string][]APITopologyOption{"system": {
+				{"show", "System pods shown", false, render.FilterNoop},
+				{"hide", "System pods hidden", true, render.FilterSystem},
+			}},
+		},
+		APITopologyDesc{
+			id:          "pods-by-service",
+			parent:      "pods",
+			renderer:    render.PodServiceRenderer,
+			Name:        "by service",
+			HideIfEmpty: true,
+			Options: map[string][]APITopologyOption{"system": {
+				{"show", "System services shown", false, render.FilterNoop},
+				{"hide", "System services hidden", true, render.FilterSystem},
+			}},
+		},
 	)
 }
 
@@ -121,9 +121,10 @@ type APITopologyDesc struct {
 	parent   string
 	renderer render.Renderer
 
-	Name    string                         `json:"name"`
-	Rank    int                            `json:"rank"`
-	Options map[string][]APITopologyOption `json:"options"`
+	Name        string                         `json:"name"`
+	Rank        int                            `json:"rank"`
+	HideIfEmpty bool                           `json:"hide_if_empty"`
+	Options     map[string][]APITopologyOption `json:"options"`
 
 	URL           string            `json:"url"`
 	SubTopologies []APITopologyDesc `json:"sub_topologies,omitempty"`
@@ -239,10 +240,6 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer) topologyStat
 		EdgeCount:          edges,
 		FilteredNodes:      renderStats.FilteredNodes,
 	}
-}
-
-func (r *registry) enableKubernetesTopologies() {
-	r.add(kubernetesTopologies...)
 }
 
 func renderedForRequest(r *http.Request, topology APITopologyDesc) render.Renderer {
