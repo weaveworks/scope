@@ -5,7 +5,6 @@ import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
-import { addMetrics } from '../utils/data-utils';
 import { bufferDeltaUpdate, resumeUpdate,
   resetUpdateBuffer } from '../utils/update-buffer-utils';
 import { doControlRequest, getNodesDelta, getNodeDetails,
@@ -271,13 +270,12 @@ export function receiveNodeDetails(details) {
 }
 
 export function receiveNodesDelta(delta) {
-  const deltaWithMetrics = addMetrics(delta, AppStore.getNodes());
   if (AppStore.isUpdatePaused()) {
-    bufferDeltaUpdate(deltaWithMetrics);
+    bufferDeltaUpdate(delta);
   } else {
     AppDispatcher.dispatch({
       type: ActionTypes.RECEIVE_NODES_DELTA,
-      delta: deltaWithMetrics
+      delta
     });
   }
 }

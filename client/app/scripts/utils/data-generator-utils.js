@@ -1,8 +1,5 @@
 import _ from 'lodash';
 import d3 from 'd3';
-import { formatMetric } from './string-utils';
-import { colors } from './color-utils';
-import AppStore from '../stores/app-store';
 
 
 // Inspired by Lee Byron's test data generator.
@@ -59,20 +56,6 @@ export const METRIC_LABELS = {
 export function label(m) {
   return METRIC_LABELS[m.id];
 }
-
-
-const METRIC_FORMATS = {
-  docker_cpu_total_usage: 'percent',
-  docker_memory_usage: 'filesize',
-  host_cpu_usage_percent: 'percent',
-  host_mem_usage_bytes: 'filesize',
-  load1: 'number',
-  load15: 'number',
-  load5: 'number',
-  open_files_count: 'integer',
-  process_cpu_usage_percent: 'percent',
-  process_memory_usage_bytes: 'filesize'
-};
 
 
 const memoryMetric = (node, name, max = 1024 * 1024 * 1024) => ({
@@ -150,58 +133,4 @@ export function addMetrics(delta, prevNodes) {
     add: handleAdd(delta.add),
     update: handleUpdated(delta.update, prevNodes)
   });
-}
-
-const openFilesScale = d3.scale.log().domain([1, 100000]).range([0, 1]);
-//
-// loadScale(1) == 0.5; E.g. a nicely balanced system :).
-const loadScale = d3.scale.log().domain([0.01, 100]).range([0, 1]);
-
-export function getMetricValue(metric, size) {
-  if (!metric) {
-    return {height: 0, value: null, formattedValue: 'n/a'};
-  }
-
-  const max = metric.getIn(['max']);
-  const value = metric.getIn(['samples', 0, 'value']);
-  const selectedMetric = AppStore.getSelectedMetric();
-
-  let valuePercentage = value === 0 ? 0 : value / max;
-  if (selectedMetric === 'open_files_count') {
-    valuePercentage = openFilesScale(value);
-  } else if (_.includes(['load1', 'load5', 'load15'], selectedMetric)) {
-    valuePercentage = loadScale(value);
-  }
-
-  let displayedValue = Number(value).toFixed(1);
-  if (displayedValue > 0) {
-    const baseline = 0.1;
-    displayedValue = valuePercentage * (1 - baseline) + baseline;
-  }
-  const height = size * displayedValue;
-  const metricWithFormat = Object.assign(
-    {}, {format: METRIC_FORMATS[selectedMetric]}, metric.toJS());
-
-  return {
-    height,
-    value,
-    formattedValue: formatMetric(value, metricWithFormat, true)
-  };
-}
-
-export function getMetricColor() {
-  const selectedMetric = AppStore.getSelectedMetric();
-  // bluey
-  if (/memory/.test(selectedMetric)) {
-    return '#1f77b4';
-  } else if (/cpu/.test(selectedMetric)) {
-    return colors('cpu');
-  } else if (/files/.test(selectedMetric)) {
-    // return colors('files');
-    // purple
-    return '#9467bd';
-  } else if (/load/.test(selectedMetric)) {
-    return colors('load');
-  }
-  return 'steelBlue';
 }

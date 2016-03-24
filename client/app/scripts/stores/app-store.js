@@ -8,7 +8,6 @@ import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { findTopologyById, setTopologyUrlsById, updateTopologyIds,
   filterHiddenTopologies } from '../utils/topology-utils';
-import { METRIC_LABELS } from '../utils/data-utils';
 
 const makeList = List;
 const makeMap = Map;
@@ -611,15 +610,17 @@ export class AppStore extends Store {
 
         availableCanvasMetrics = nodes
           .valueSeq()
-          .flatMap(n => (n.get('metrics') || makeMap()).keys())
+          .flatMap(n => (n.get('metrics') || makeList()).map(m => (
+            makeMap({id: m.get('id'), label: m.get('label')})
+          )))
           .toSet()
-          .sortBy(n => METRIC_LABELS[n])
-          .toJS()
-          .map(v => ({id: v, label: METRIC_LABELS[v]}));
+          .sortBy(m => m.get('label'))
+          .toJS();
 
         const similarTypeMetric = availableCanvasMetrics.find(m => m.label === lockedMetricType);
         lockedMetric = similarTypeMetric && similarTypeMetric.id;
-        if (!availableCanvasMetrics.map(m => m.id).includes(selectedMetric)) {
+        // if something in the current topo is not already selected, select it.
+        if (availableCanvasMetrics.map(m => m.id).indexOf(selectedMetric) === -1) {
           selectedMetric = lockedMetric;
         }
 

@@ -131,6 +131,14 @@ export default class NodesChart extends React.Component {
       return 1;
     };
 
+    const metric = node => {
+      const met = node.get('metrics') && node.get('metrics')
+        .filter(m => m.get('id') === this.props.selectedMetric)
+        .first();
+      console.log(met);
+      return met;
+    };
+
     return nodes
       .toIndexedSeq()
       .map(setHighlighted)
@@ -151,7 +159,7 @@ export default class NodesChart extends React.Component {
         pseudo={node.get('pseudo')}
         nodeCount={node.get('nodeCount')}
         subLabel={node.get('subLabel')}
-        metric={node.getIn(['metrics', this.props.selectedMetric])}
+        metric={metric(node)}
         rank={node.get('rank')}
         selectedNodeScale={selectedNodeScale}
         nodeScale={nodeScale}

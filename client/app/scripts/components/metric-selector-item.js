@@ -33,9 +33,9 @@ export class MetricSelectorItem extends React.Component {
     const id = metric.id;
     const isLocked = (id === lockedMetric);
     const isSelected = (id === selectedMetric);
-    const className = classNames('sidebar-item', {
-      locked: isLocked,
-      selected: isSelected
+    const className = classNames('metric-selector-action', {
+      'metric-selector-action-locked': isLocked,
+      'metric-selector-action-selected': isSelected
     });
 
     return (
@@ -45,9 +45,7 @@ export class MetricSelectorItem extends React.Component {
         onMouseOver={this.onMouseOver}
         onClick={this.onMouseClick}>
         {metric.label}
-        {isLocked && <span className="sidebar-item-actions">
-          <span className="sidebar-item-action fa fa-thumb-tack"></span>
-        </span>}
+        {isLocked && <span className="fa fa-thumb-tack"></span>}
       </div>
     );
   }

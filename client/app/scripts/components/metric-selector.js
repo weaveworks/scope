@@ -28,12 +28,10 @@ export default class MetricSelector extends React.Component {
 
     return (
       <div
-        className="available-metrics"
-        onMouseLeave={this.onMouseOut}>
-        <div className="sidebar-item">
-          METRICS
+        className="metric-selector">
+        <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
+          {items}
         </div>
-        {items}
       </div>
     );
   }

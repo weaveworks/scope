@@ -1,7 +1,8 @@
 import React from 'react';
 import d3 from 'd3';
 import classNames from 'classnames';
-import {getMetricValue, getMetricColor} from '../utils/data-utils.js';
+import {getMetricValue, getMetricColor} from '../utils/metric-utils.js';
+import {CANVAS_METRIC_FONT_SIZE} from '../constants/styles.js';
 
 const line = d3.svg.line()
   .interpolate('cardinal-closed')
@@ -16,24 +17,23 @@ function polygon(r, sides) {
   return points;
 }
 
-export default function NodeShapeHeptagon({highlighted, size, color, metric}) {
+export default function NodeShapeHeptagon({id, highlighted, size, color, metric}) {
   const scaledSize = size * 1.0;
   const pathProps = v => ({
     d: line(polygon(scaledSize * v, 7)),
     transform: 'rotate(90)'
   });
 
-  const clipId = `mask-${Math.random()}`;
+  const clipId = `mask-${id}`;
   const {height, value, formattedValue} = getMetricValue(metric, size);
 
   const className = classNames('shape', {
     metrics: value !== null
   });
+  const fontSize = size * CANVAS_METRIC_FONT_SIZE;
   const metricStyle = {
-    fillOpacity: 0.5,
-    fill: getMetricColor()
+    fill: getMetricColor(metric)
   };
-  const fontSize = size * 0.19;
 
   return (
     <g className={className}>

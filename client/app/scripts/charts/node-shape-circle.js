@@ -1,20 +1,20 @@
 import React from 'react';
 import classNames from 'classnames';
-import {getMetricValue, getMetricColor} from '../utils/data-utils.js';
+import {getMetricValue, getMetricColor} from '../utils/metric-utils.js';
+import {CANVAS_METRIC_FONT_SIZE} from '../constants/styles.js';
 
-export default function NodeShapeCircle({highlighted, size, color, metric}) {
+export default function NodeShapeCircle({id, highlighted, size, color, metric}) {
   const hightlightNode = <circle r={size * 0.7} className="highlighted" />;
-  const clipId = `mask-${Math.random()}`;
+  const clipId = `mask-${id}`;
   const {height, value, formattedValue} = getMetricValue(metric, size);
 
   const className = classNames('shape', {
     metrics: value !== null
   });
   const metricStyle = {
-    fillOpacity: 0.5,
-    fill: getMetricColor()
+    fill: getMetricColor(metric)
   };
-  const fontSize = size * 0.19;
+  const fontSize = size * CANVAS_METRIC_FONT_SIZE;
 
   return (
     <g className={className}>

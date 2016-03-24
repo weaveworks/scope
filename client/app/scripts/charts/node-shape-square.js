@@ -1,29 +1,28 @@
 import React from 'react';
 import classNames from 'classnames';
-import {getMetricValue, getMetricColor} from '../utils/data-utils.js';
+import {getMetricValue, getMetricColor} from '../utils/metric-utils.js';
+import {CANVAS_METRIC_FONT_SIZE} from '../constants/styles.js';
 
 export default function NodeShapeSquare({
-  highlighted, size, color, rx = 0, ry = 0, metric
+  id, highlighted, size, color, rx = 0, ry = 0, metric
 }) {
-  const rectProps = (v, vr) => ({
-    width: v * size * 2,
-    height: v * size * 2,
-    rx: (vr || v) * size * rx,
-    ry: (vr || v) * size * ry,
-    x: -size * v,
-    y: -size * v
+  const rectProps = (scale, radiusScale) => ({
+    width: scale * size * 2,
+    height: scale * size * 2,
+    rx: (radiusScale || scale) * size * rx,
+    ry: (radiusScale || scale) * size * ry,
+    x: -size * scale,
+    y: -size * scale
   });
 
-  const clipId = `mask-${Math.random()}`;
+  const clipId = `mask-${id}`;
   const {height, value, formattedValue} = getMetricValue(metric, size);
   const className = classNames('shape', {
     metrics: value !== null
   });
-  const fontSize = size * 0.19;
-
+  const fontSize = size * CANVAS_METRIC_FONT_SIZE;
   const metricStyle = {
-    fillOpacity: 0.5,
-    fill: getMetricColor()
+    fill: getMetricColor(metric)
   };
 
   return (
