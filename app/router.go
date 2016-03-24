@@ -157,9 +157,6 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 			return
 		}
 		a.Add(ctx, rpt)
-		if len(rpt.Pod.Nodes) > 0 {
-			topologyRegistry.enableKubernetesTopologies()
-		}
 		w.WriteHeader(http.StatusOK)
 	}))
 }
