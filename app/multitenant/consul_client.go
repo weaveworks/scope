@@ -1,0 +1,201 @@
+package multitenant
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"time"
+
+	log "github.com/Sirupsen/logrus"
+	consul "github.com/hashicorp/consul/api"
+
+	"github.com/weaveworks/scope/common/mtime"
+)
+
+const (
+	longPollDuration = 10 * time.Second
+)
+
+// ConsulClient is a high-level client for Consul, that exposes operations
+// such as CAS and Watch which take callbacks.  It also deals with serialisation.
+type ConsulClient interface {
+	Get(key string, out interface{}) error
+	CAS(key string, out interface{}, f CASCallback) error
+	Watch(key string, deadline time.Time, out interface{}, f func(interface{}) (bool, error)) error
+	WatchPrefix(prefix string, out interface{}, f func(string, interface{}) bool)
+}
+
+// CASCallback is the type of the callback to CAS.  If err is nil, out must be non-nil.
+type CASCallback func(in interface{}) (out interface{}, retry bool, err error)
+
+// NewConsulClient returns a new ConsulClient
+func NewConsulClient(addr string) (ConsulClient, error) {
+	client, err := consul.NewClient(&consul.Config{
+		Address: addr,
+		Scheme:  "http",
+	})
+	if err != nil {
+		return nil, err
+	}
+	return (*consulClient)(client), nil
+}
+
+var (
+	queryOptions = &consul.QueryOptions{
+		RequireConsistent: true,
+	}
+	writeOptions = &consul.WriteOptions{}
+
+	// ErrNotFound is returned by ConsulClient.Get
+	ErrNotFound = fmt.Errorf("Not found")
+)
+
+type consulClient consul.Client
+
+// Get and deserialise a JSON value from consul.
+func (c *consulClient) Get(key string, out interface{}) error {
+	kv := (*consul.Client)(c).KV()
+	kvp, _, err := kv.Get(key, queryOptions)
+	if err != nil {
+		return err
+	}
+	if kvp == nil {
+		return ErrNotFound
+	}
+	if err := json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out); err != nil {
+		return err
+	}
+	return nil
+}
+
+// CAS atomically modify a value in a callback.
+// If value doesn't exist you'll get nil as a argument to your callback.
+func (c *consulClient) CAS(key string, out interface{}, f CASCallback) error {
+	var (
+		index        = uint64(0)
+		kv           = (*consul.Client)(c).KV()
+		retries      = 10
+		retry        = true
+		intermediate interface{}
+	)
+	for i := 0; i < retries; i++ {
+		kvp, _, err := kv.Get(key, queryOptions)
+		if err != nil {
+			log.Errorf("Error getting %s: %v", key, err)
+			continue
+		}
+		if kvp != nil {
+			if err := json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out); err != nil {
+				log.Errorf("Error deserialising %s: %v", key, err)
+				continue
+			}
+			index = kvp.ModifyIndex // if key doesn't exist, index will be 0
+			intermediate = out
+		}
+
+		intermediate, retry, err = f(intermediate)
+		if err != nil {
+			log.Errorf("Error CASing %s: %v", key, err)
+			if !retry {
+				return err
+			}
+			continue
+		}
+
+		if intermediate == nil {
+			panic("Callback must instantiate value!")
+		}
+
+		value := bytes.Buffer{}
+		if err := json.NewEncoder(&value).Encode(intermediate); err != nil {
+			log.Errorf("Error serialising value for %s: %v", key, err)
+			continue
+		}
+		ok, _, err := kv.CAS(&consul.KVPair{
+			Key:         key,
+			Value:       value.Bytes(),
+			ModifyIndex: index,
+		}, writeOptions)
+		if err != nil {
+			log.Errorf("Error CASing %s: %v", key, err)
+			continue
+		}
+		if !ok {
+			log.Errorf("Error CASing %s, trying again %d", key, index)
+			continue
+		}
+		return nil
+	}
+	return fmt.Errorf("Failed to CAS %s", key)
+}
+
+// Watch a given key value and trigger a callback when it changes.
+// if callback returns false or error, exit (with the error).
+func (c *consulClient) Watch(key string, deadline time.Time, out interface{}, f func(interface{}) (bool, error)) error {
+	var (
+		index = uint64(0)
+		kv    = (*consul.Client)(c).KV()
+	)
+	for deadline.After(mtime.Now()) {
+		// Do a (blocking) long poll waiting for the entry to get updated. index here
+		// is really a version number; this call will wait for the key to be updated
+		// past said version.  As we always start from version 0, we're guaranteed
+		// not to miss any updates - in fact we will always call the callback with
+		// the current value of the key immediately.
+		kvp, meta, err := kv.Get(key, &consul.QueryOptions{
+			RequireConsistent: true,
+			WaitIndex:         index,
+			WaitTime:          longPollDuration,
+		})
+		if err != nil {
+			return fmt.Errorf("Error getting %s: %v", key, err)
+		}
+		if kvp == nil {
+			return ErrNotFound
+		}
+
+		if err := json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out); err != nil {
+			return err
+		}
+		if ok, err := f(out); !ok {
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		index = meta.LastIndex
+	}
+	return fmt.Errorf("Timed out waiting on %s", key)
+}
+
+func (c *consulClient) WatchPrefix(prefix string, out interface{}, f func(string, interface{}) bool) {
+	var (
+		index = uint64(0)
+		kv    = (*consul.Client)(c).KV()
+	)
+	for {
+		kvps, meta, err := kv.List(prefix, &consul.QueryOptions{
+			RequireConsistent: true,
+			WaitIndex:         index,
+			WaitTime:          longPollDuration,
+		})
+		if err != nil {
+			log.Errorf("Error getting path %s: %v", prefix, err)
+			continue
+		}
+		if index == meta.LastIndex {
+			continue
+		}
+		index = meta.LastIndex
+
+		for _, kvp := range kvps {
+			if err := json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out); err != nil {
+				log.Errorf("Error deserialising %s: %v", kvp.Key, err)
+				continue
+			}
+			if !f(kvp.Key, out) {
+				return
+			}
+		}
+	}
+}
