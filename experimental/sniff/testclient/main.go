@@ -62,6 +62,10 @@ func main() {
 			}
 			log.Println(ci.Timestamp.String())
 			err = parser.DecodeLayers(data, &decoded)
+			if err != nil {
+				log.Printf("Error in DecodeLayers: %v", err)
+				continue
+			}
 			for _, t := range decoded {
 				switch t {
 				case layers.LayerTypeEthernet:
