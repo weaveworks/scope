@@ -23,6 +23,7 @@ import (
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/app/multitenant"
 	"github.com/weaveworks/scope/common/middleware"
+	"github.com/weaveworks/scope/common/network"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/docker"
@@ -129,7 +130,12 @@ func pipeRouterFactory(userIDer multitenant.UserIDer, pipeRouterURL, consulInf s
 		if err != nil {
 			return nil, err
 		}
-		return multitenant.NewConsulPipeRouter(consulClient, strings.TrimPrefix(parsed.Path, "/"), consulInf, userIDer)
+		advertise, err := network.GetFirstAddressOf(consulInf)
+		if err != nil {
+			return nil, err
+		}
+		addr := fmt.Sprintf("%s:4444", advertise)
+		return multitenant.NewConsulPipeRouter(consulClient, strings.TrimPrefix(parsed.Path, "/"), addr, userIDer), nil
 	}
 
 	return nil, fmt.Errorf("Invalid pipe router '%s'", pipeRouterURL)

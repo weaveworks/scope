@@ -22,6 +22,7 @@ type pipe struct {
 	mtx             sync.Mutex
 	wg              sync.WaitGroup
 	port, starboard io.ReadWriter
+	closers         []io.Closer
 	quit            chan struct{}
 	closed          bool
 	onClose         func()
@@ -53,6 +54,9 @@ func NewPipe() Pipe {
 		}{
 			r2, w1,
 		},
+		closers: []io.Closer{
+			r1, r2, w1, w2,
+		},
 		quit: make(chan struct{}),
 	}
 }
@@ -67,6 +71,9 @@ func (p *pipe) Close() error {
 	if !p.closed {
 		p.closed = true
 		close(p.quit)
+		for _, c := range p.closers {
+			c.Close()
+		}
 		onClose = p.onClose
 	}
 	p.mtx.Unlock()
@@ -116,6 +123,10 @@ func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) error {
 				return
 			}
 
+			if p.Closed() {
+				return
+			}
+
 			if _, err := end.Write(buf); err != nil {
 				errors <- err
 				return
@@ -130,6 +141,10 @@ func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) error {
 			n, err := end.Read(buf)
 			if err != nil {
 				errors <- err
+				return
+			}
+
+			if p.Closed() {
 				return
 			}
 

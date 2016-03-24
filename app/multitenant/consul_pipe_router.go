@@ -15,7 +15,6 @@ import (
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/common/mtime"
-	"github.com/weaveworks/scope/common/network"
 	"github.com/weaveworks/scope/common/xfer"
 )
 
@@ -23,8 +22,6 @@ const (
 	gcInterval  = 30 * time.Second // we check all the pipes every 30s
 	pipeTimeout = 1 * time.Minute  // pipes are closed when a client hasn't been connected for 1 minute
 	gcTimeout   = 10 * time.Minute // after another 10 minutes, tombstoned pipes are forgotten
-
-	privateAPIPort = 4444
 )
 
 var (
@@ -84,6 +81,7 @@ type consulPipeRouter struct {
 	activePipes map[string]xfer.Pipe
 	bridges     map[string]*bridgeConnection
 	actorChan   chan func()
+	pipeWaiters map[string][]chan xfer.Pipe
 
 	// Used by Stop()
 	quit chan struct{}
@@ -91,11 +89,7 @@ type consulPipeRouter struct {
 }
 
 // NewConsulPipeRouter returns a new consul based router
-func NewConsulPipeRouter(client ConsulClient, prefix, inf string, userIDer UserIDer) (app.PipeRouter, error) {
-	advertise, err := network.GetFirstAddressOf(inf)
-	if err != nil {
-		return nil, err
-	}
+func NewConsulPipeRouter(client ConsulClient, prefix, advertise string, userIDer UserIDer) app.PipeRouter {
 	pipeRouter := &consulPipeRouter{
 		prefix:    prefix,
 		advertise: advertise,
@@ -105,13 +99,15 @@ func NewConsulPipeRouter(client ConsulClient, prefix, inf string, userIDer UserI
 		activePipes: map[string]xfer.Pipe{},
 		bridges:     map[string]*bridgeConnection{},
 		actorChan:   make(chan func()),
-		quit:        make(chan struct{}),
+		pipeWaiters: map[string][]chan xfer.Pipe{},
+
+		quit: make(chan struct{}),
 	}
 	pipeRouter.wait.Add(2)
 	go pipeRouter.watchAll()
-	go pipeRouter.privateAPI()
 	go pipeRouter.actor()
-	return pipeRouter, nil
+	go pipeRouter.privateAPI()
+	return pipeRouter
 }
 
 func (pr *consulPipeRouter) Stop() {
@@ -138,28 +134,25 @@ func (pr *consulPipeRouter) actor() {
 // trigger an event in this loop.
 func (pr *consulPipeRouter) watchAll() {
 	defer pr.wait.Done()
-	pr.client.WatchPrefix(pr.prefix, &consulPipe{}, func(key string, value interface{}) bool {
+	pr.client.WatchPrefix(pr.prefix, &consulPipe{}, pr.quit, func(key string, value interface{}) bool {
+		cp := *value.(*consulPipe)
 		select {
+		case pr.actorChan <- func() { pr.handlePipeUpdate(key, cp) }:
+			return true
 		case <-pr.quit:
 			return false
-		default:
 		}
-
-		pr.actorChan <- func() { pr.handlePipeUpdate(key, value.(*consulPipe)) }
-		return true
 	})
 }
 
-func (pr *consulPipeRouter) handlePipeUpdate(key string, cp *consulPipe) {
-	log.Infof("Got update to pipe %s", key)
-
+func (pr *consulPipeRouter) handlePipeUpdate(key string, cp consulPipe) {
 	// 1. If this pipe is closed, or we're not one of the ends, we
 	//    should ensure our local pipe (and bridge) is closed.
 	if !cp.DeletedAt.IsZero() || !cp.eitherEndFor(pr.advertise) {
-		log.Infof("Pipe %s not in use on this node.", key)
 		pipe, ok := pr.activePipes[key]
 		delete(pr.activePipes, key)
 		if ok {
+			log.Infof("Deleting pipe %s", key)
 			pipe.Close()
 		}
 
@@ -178,8 +171,13 @@ func (pr *consulPipeRouter) handlePipeUpdate(key string, cp *consulPipe) {
 	// 2. If this pipe if for us, we should have a pipe for it.
 	pipe, ok := pr.activePipes[key]
 	if !ok {
+		log.Infof("Creating pipe %s", key)
 		pipe = xfer.NewPipe()
 		pr.activePipes[key] = pipe
+		for _, pw := range pr.pipeWaiters[key] {
+			pw <- pipe
+		}
+		delete(pr.pipeWaiters, key)
 	}
 
 	// 3. Ensure there is a bridging connection for this pipe.
@@ -193,7 +191,6 @@ func (pr *consulPipeRouter) handlePipeUpdate(key string, cp *consulPipe) {
 	// If we shouldn't be bridging but are, or we should be bridging but are pointing
 	// at the wrong place, stop the current bridge.
 	if (!shouldBridge && ok) || (shouldBridge && ok && bridge.addr != cp.addrFor(app.ProbeEnd)) {
-		log.Infof("Stopping bridge connection for %s", key)
 		delete(pr.bridges, key)
 		bridge.stop()
 		ok = false
@@ -201,9 +198,35 @@ func (pr *consulPipeRouter) handlePipeUpdate(key string, cp *consulPipe) {
 
 	// If we should be bridging and are not, start a new bridge
 	if shouldBridge && !ok {
-		log.Infof("Starting bridge connection for %s", key)
 		bridge = newBridgeConnection(key, cp.addrFor(app.ProbeEnd), pipe)
 		pr.bridges[key] = bridge
+	}
+}
+
+func (pr *consulPipeRouter) getPipe(key string) xfer.Pipe {
+	pc := make(chan xfer.Pipe)
+	select {
+	case pr.actorChan <- func() { pc <- pr.activePipes[key] }:
+		return <-pc
+	case <-pr.quit:
+		return nil
+	}
+}
+
+func (pr *consulPipeRouter) waitForPipe(key string) xfer.Pipe {
+	pc := make(chan xfer.Pipe)
+	select {
+	case pr.actorChan <- func() {
+		pipe, ok := pr.activePipes[key]
+		if ok {
+			pc <- pipe
+		} else {
+			pr.pipeWaiters[key] = append(pr.pipeWaiters[key], pc)
+		}
+	}:
+		return <-pc
+	case <-pr.quit:
+		return nil
 	}
 }
 
@@ -212,35 +235,32 @@ func (pr *consulPipeRouter) privateAPI() {
 	router.Methods("GET").
 		MatcherFunc(app.URLMatcher("/private/api/pipe/{key}")).
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var (
-				key = mux.Vars(r)["key"]
-				pc  = make(chan xfer.Pipe)
-			)
-			pr.actorChan <- func() {
-				pc <- pr.activePipes[key]
-			}
-			pipe := <-pc
+			key := mux.Vars(r)["key"]
+			log.Infof("%s: Server bridge connection started", key)
+			defer log.Infof("%s: Server bridge connection stopped", key)
+
+			pipe := pr.getPipe(key)
 			if pipe == nil {
-				http.NotFound(w, r)
+				log.Errorf("%s: Server bridge connection; Unknown pipe!", key)
+				w.WriteHeader(http.StatusNotFound)
 				return
 			}
 
 			conn, err := xfer.Upgrade(w, r, nil)
 			if err != nil {
-				log.Errorf("Error upgrading pipe %s websocket: %v", key, err)
+				log.Errorf("%s: Server bridge connection; Error upgrading to websocket: %v", key, err)
 				return
 			}
 			defer conn.Close()
 
 			end, _ := pipe.Ends()
 			if err := pipe.CopyToWebsocket(end, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
-				log.Printf("Error copying to pipe %s websocket: %v", key, err)
+				log.Errorf("%s: Server bridge connection; Error copying pipe to websocket: %v", key, err)
 			}
 		})
 
-	addr := fmt.Sprintf("%s:%d", pr.advertise, privateAPIPort)
-	log.Infof("Serving private API on endpoint %s.", addr)
-	log.Infof("Private API terminated: %v", http.ListenAndServe(addr, router))
+	log.Infof("Serving private API on endpoint %s.", pr.advertise)
+	log.Infof("Private API terminated: %v", http.ListenAndServe(pr.advertise, router))
 }
 
 func (pr *consulPipeRouter) Exists(ctx context.Context, id string) (bool, error) {
@@ -293,18 +313,7 @@ func (pr *consulPipeRouter) Get(ctx context.Context, id string, e app.End) (xfer
 		return nil, nil, err
 	}
 
-	// next see if we already have a active pipe
-	pc := make(chan xfer.Pipe)
-	pr.actorChan <- func() {
-		pipe, ok := pr.activePipes[key]
-		if !ok {
-			pipe = xfer.NewPipe()
-			pr.activePipes[key] = pipe
-		}
-		pc <- pipe
-	}
-	pipe := <-pc
-
+	pipe := pr.waitForPipe(key)
 	myEnd, _ := pipe.Ends()
 	if e == app.ProbeEnd {
 		_, myEnd = pipe.Ends()
@@ -370,6 +379,7 @@ type bridgeConnection struct {
 }
 
 func newBridgeConnection(key, addr string, pipe xfer.Pipe) *bridgeConnection {
+	log.Infof("%s: Starting client bridge connection", key)
 	result := &bridgeConnection{
 		key:  key,
 		addr: addr,
@@ -381,22 +391,25 @@ func newBridgeConnection(key, addr string, pipe xfer.Pipe) *bridgeConnection {
 }
 
 func (bc *bridgeConnection) stop() {
+	log.Infof("%s: Stopping client bridge connection", bc.key)
 	bc.mtx.Lock()
 	bc.stopped = true
 	if bc.conn != nil {
 		bc.conn.Close()
+		end, _ := bc.pipe.Ends()
+		end.Write(nil) // this will cause the other end of wake up and exit
 	}
 	bc.mtx.Unlock()
 	bc.wait.Wait()
 }
 
 func (bc *bridgeConnection) loop() {
-	log.Infof("Making bridge connection for pipe %s to %s", bc.key, bc.addr)
+	log.Infof("%s: Client bridge connection started", bc.key)
 	defer bc.wait.Done()
-	defer log.Infof("Stopping bridge connection for pipe %s to %s", bc.key, bc.addr)
+	defer log.Infof("%s: Client bridge connection stopped", bc.key)
 
 	_, end := bc.pipe.Ends()
-	url := fmt.Sprintf("ws://%s:%d/private/api/pipe/%s", bc.addr, privateAPIPort, url.QueryEscape(bc.key))
+	url := fmt.Sprintf("ws://%s/private/api/pipe/%s", bc.addr, url.QueryEscape(bc.key))
 
 	for {
 		bc.mtx.Lock()
@@ -410,7 +423,7 @@ func (bc *bridgeConnection) loop() {
 		// connect to other pipes instance
 		conn, _, err := xfer.DialWS(wsDialer, url, http.Header{})
 		if err != nil {
-			log.Errorf("Error connecting to %s: %v", url, err)
+			log.Errorf("%s: Client bridge connection; Error connecting to %s: %v", bc.key, url, err)
 			time.Sleep(time.Second) // TODO backoff
 			continue
 		}
@@ -425,7 +438,8 @@ func (bc *bridgeConnection) loop() {
 		bc.mtx.Unlock()
 
 		if err := bc.pipe.CopyToWebsocket(end, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
-			log.Printf("Error copying to pipe %s websocket: %v", bc.key, err)
+			log.Errorf("%s: Client bridge connection; Error copying pipe to websocket: %v", bc.key, err)
 		}
+		conn.Close()
 	}
 }
