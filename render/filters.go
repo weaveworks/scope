@@ -3,6 +3,7 @@ package render
 import (
 	"strings"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/kubernetes"
@@ -47,7 +48,7 @@ func ColorConnected(r Renderer) Renderer {
 
 			output := input.Copy()
 			for id := range connected {
-				output[id] = output[id].WithLatests(map[string]string{IsConnected: "true"})
+				output[id] = output[id].WithLatest(IsConnected, mtime.Now(), "true")
 			}
 			return output
 		},

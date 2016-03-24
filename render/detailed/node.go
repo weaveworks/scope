@@ -181,11 +181,14 @@ var (
 func children(n report.Node) []NodeSummaryGroup {
 	summaries := map[string][]NodeSummary{}
 	n.Children.ForEach(func(child report.Node) {
-		if child.ID != n.ID {
-			if summary, ok := MakeNodeSummary(child); ok {
-				summaries[child.Topology] = append(summaries[child.Topology], summary.SummarizeMetrics())
-			}
+		if child.ID == n.ID {
+			return
 		}
+		summary, ok := MakeNodeSummary(child)
+		if !ok {
+			return
+		}
+		summaries[child.Topology] = append(summaries[child.Topology], summary.SummarizeMetrics())
 	})
 
 	nodeSummaryGroups := []NodeSummaryGroup{}

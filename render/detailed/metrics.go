@@ -141,7 +141,7 @@ func (m *MetricRow) CodecDecodeSelf(decoder *codec.Decoder) {
 }
 
 // NodeMetrics produces a table (to be consumed directly by the UI) based on
-// an origin ID, which is (optimistically) a node ID in one of our topologies.
+// an a report.Node, which is (hopefully) a node in one of our topologies.
 func NodeMetrics(n report.Node) []MetricRow {
 	if _, ok := n.Counters.Lookup(n.Topology); ok {
 		// This is a group of nodes, so no metrics!

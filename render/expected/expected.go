@@ -1,6 +1,9 @@
 package expected
 
 import (
+	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/fixture"
@@ -25,13 +28,41 @@ var (
 		}
 	}
 	pseudo         = node(render.Pseudo)
-	endpoint       = node("") // TODO: endpoints don't have a topology for some reason? Not being tagged?
-	process        = node(report.Process)
+	endpoint       = node(report.Endpoint)
+	processNode    = node(report.Process)
 	container      = node(report.Container)
 	containerImage = node(report.ContainerImage)
 	pod            = node(report.Pod)
 	service        = node(report.Service)
-	host           = node(report.Host)
+	hostNode       = node(report.Host)
+
+	UnknownPseudoNode1ID = render.MakePseudoNodeID(fixture.UnknownClient1IP)
+	UnknownPseudoNode2ID = render.MakePseudoNodeID(fixture.UnknownClient3IP)
+
+	unknownPseudoNode1 = func(adjacent ...string) report.Node {
+		return pseudo(UnknownPseudoNode1ID, adjacent...).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.UnknownClient1NodeID],
+				RenderedEndpoints[fixture.UnknownClient2NodeID],
+			))
+	}
+	unknownPseudoNode2 = func(adjacent ...string) report.Node {
+		return pseudo(UnknownPseudoNode2ID, adjacent...).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.UnknownClient3NodeID],
+			))
+	}
+
+	theIncomingInternetNode = func(adjacent ...string) report.Node {
+		return pseudo(render.IncomingInternetID, adjacent...).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.RandomClientNodeID],
+			))
+	}
+
+	theOutgoingInternetNode = pseudo(render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
+		RenderedEndpoints[fixture.GoogleEndpointNodeID],
+	))
 
 	RenderedEndpoints = report.Nodes{
 		fixture.Client54001NodeID:    endpoint(fixture.Client54001NodeID, fixture.Server80NodeID),
@@ -43,81 +74,203 @@ var (
 		fixture.RandomClientNodeID:   endpoint(fixture.RandomClientNodeID, fixture.Server80NodeID),
 		fixture.NonContainerNodeID:   endpoint(fixture.NonContainerNodeID, fixture.GoogleEndpointNodeID),
 		fixture.GoogleEndpointNodeID: endpoint(fixture.GoogleEndpointNodeID),
-	}.Prune()
+	}
 
 	RenderedProcesses = report.Nodes{
-		fixture.ClientProcess1NodeID:      process(fixture.ClientProcess1NodeID, fixture.ServerProcessNodeID),
-		fixture.ClientProcess2NodeID:      process(fixture.ClientProcess2NodeID, fixture.ServerProcessNodeID),
-		fixture.ServerProcessNodeID:       process(fixture.ServerProcessNodeID),
-		fixture.NonContainerProcessNodeID: process(fixture.NonContainerProcessNodeID, render.OutgoingInternetID),
-		unknownPseudoNode1ID:              pseudo(unknownPseudoNode1ID, fixture.ServerProcessNodeID),
-		unknownPseudoNode2ID:              pseudo(unknownPseudoNode2ID, fixture.ServerProcessNodeID),
-		render.IncomingInternetID:         pseudo(render.IncomingInternetID, fixture.ServerProcessNodeID),
-		render.OutgoingInternetID:         pseudo(render.OutgoingInternetID),
-	}.Prune()
+		fixture.ClientProcess1NodeID: processNode(fixture.ClientProcess1NodeID, fixture.ServerProcessNodeID).
+			WithLatests(map[string]string{
+				report.HostNodeID: fixture.ClientHostNodeID,
+				process.PID:       fixture.Client1PID,
+				process.Name:      fixture.Client1Name,
+			}).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Client54001NodeID],
+			)),
 
-	unknownPseudoNode1ID = render.MakePseudoNodeID(fixture.UnknownClient1IP)
-	unknownPseudoNode2ID = render.MakePseudoNodeID(fixture.UnknownClient3IP)
+		fixture.ClientProcess2NodeID: processNode(fixture.ClientProcess2NodeID, fixture.ServerProcessNodeID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Client54002NodeID],
+			)),
+
+		fixture.ServerProcessNodeID: processNode(fixture.ServerProcessNodeID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Server80NodeID],
+			)),
+
+		fixture.NonContainerProcessNodeID: processNode(fixture.NonContainerProcessNodeID, render.OutgoingInternetID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.NonContainerNodeID],
+			)),
+
+		UnknownPseudoNode1ID: unknownPseudoNode1(fixture.ServerProcessNodeID),
+		UnknownPseudoNode2ID: unknownPseudoNode2(fixture.ServerProcessNodeID),
+
+		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerProcessNodeID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
+	}
 
 	RenderedProcessNames = report.Nodes{
-		fixture.Client1Name:       process(fixture.Client1Name, fixture.ServerName),
-		fixture.ServerName:        process(fixture.ServerName),
-		fixture.NonContainerName:  process(fixture.NonContainerName, render.OutgoingInternetID),
-		unknownPseudoNode1ID:      pseudo(unknownPseudoNode1ID, fixture.ServerName),
-		unknownPseudoNode2ID:      pseudo(unknownPseudoNode2ID, fixture.ServerName),
-		render.IncomingInternetID: pseudo(render.IncomingInternetID, fixture.ServerName),
-		render.OutgoingInternetID: pseudo(render.OutgoingInternetID),
-	}.Prune()
+		fixture.Client1Name: processNode(fixture.Client1Name, fixture.ServerName).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Client54001NodeID],
+				RenderedEndpoints[fixture.Client54002NodeID],
+				RenderedProcesses[fixture.ClientProcess1NodeID],
+				RenderedProcesses[fixture.ClientProcess2NodeID],
+			)),
 
-	uncontainedServerID = render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID)
+		fixture.ServerName: processNode(fixture.ServerName).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Server80NodeID],
+				RenderedProcesses[fixture.ServerProcessNodeID],
+			)),
+
+		fixture.NonContainerName: processNode(fixture.NonContainerName, render.OutgoingInternetID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.NonContainerNodeID],
+				RenderedProcesses[fixture.NonContainerProcessNodeID],
+			)),
+
+		UnknownPseudoNode1ID:      unknownPseudoNode1(fixture.ServerName),
+		UnknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerName),
+		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerName),
+		render.OutgoingInternetID: theOutgoingInternetNode,
+	}
+
+	uncontainedServerID   = render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID)
+	uncontainedServerNode = pseudo(uncontainedServerID, render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
+		RenderedEndpoints[fixture.NonContainerNodeID],
+		RenderedProcesses[fixture.NonContainerProcessNodeID],
+	))
 
 	RenderedContainers = report.Nodes{
-		fixture.ClientContainerNodeID: container(fixture.ClientContainerNodeID, fixture.ServerContainerNodeID),
-		fixture.ServerContainerNodeID: container(fixture.ServerContainerNodeID),
-		uncontainedServerID:           pseudo(uncontainedServerID, render.OutgoingInternetID),
-		// unknownPseudoNode1ID:      pseudo(unknownPseudoNode1ID, fixture.ServerContainerNodeID),
-		// unknownPseudoNode2ID:      pseudo(unknownPseudoNode2ID, fixture.ServerContainerNodeID),
-		render.IncomingInternetID: pseudo(render.IncomingInternetID, fixture.ServerContainerNodeID),
-		render.OutgoingInternetID: pseudo(render.OutgoingInternetID),
-	}.Prune()
+		fixture.ClientContainerNodeID: container(fixture.ClientContainerNodeID, fixture.ServerContainerNodeID).
+			WithLatests(map[string]string{
+				report.HostNodeID:    fixture.ClientHostNodeID,
+				docker.ContainerID:   fixture.ClientContainerID,
+				docker.ContainerName: fixture.ClientContainerName,
+				docker.ImageName:     fixture.ClientContainerImageName,
+			}).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Client54001NodeID],
+				RenderedEndpoints[fixture.Client54002NodeID],
+				RenderedProcesses[fixture.ClientProcess1NodeID],
+				RenderedProcesses[fixture.ClientProcess2NodeID],
+			)),
+
+		fixture.ServerContainerNodeID: container(fixture.ServerContainerNodeID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Server80NodeID],
+				RenderedProcesses[fixture.ServerProcessNodeID],
+			)),
+
+		uncontainedServerID:       uncontainedServerNode,
+		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerContainerNodeID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
+	}
 
 	RenderedContainerImages = report.Nodes{
-		fixture.ClientContainerImageNodeID: containerImage(fixture.ClientContainerImageNodeID, fixture.ServerContainerImageNodeID),
-		fixture.ServerContainerImageNodeID: containerImage(fixture.ServerContainerImageNodeID),
-		uncontainedServerID:                pseudo(uncontainedServerID, render.OutgoingInternetID),
-		// unknownPseudoNode1ID:      pseudo(unknownPseudoNode1ID, fixture.ServerContainerImageNodeID),
-		// unknownPseudoNode2ID:      pseudo(unknownPseudoNode2ID, fixture.ServerContainerImageNodeID),
-		render.IncomingInternetID: pseudo(render.IncomingInternetID, fixture.ServerContainerImageNodeID),
-		render.OutgoingInternetID: pseudo(render.OutgoingInternetID),
-	}.Prune()
+		fixture.ClientContainerImageNodeID: containerImage(fixture.ClientContainerImageNodeID, fixture.ServerContainerImageNodeID).
+			WithLatests(map[string]string{
+				report.HostNodeID: fixture.ClientHostNodeID,
+				docker.ImageID:    fixture.ClientContainerImageID,
+				docker.ImageName:  fixture.ClientContainerImageName,
+			}).
+			WithCounters(map[string]int{
+				report.Container: 1,
+			}).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Client54001NodeID],
+				RenderedEndpoints[fixture.Client54002NodeID],
+				RenderedProcesses[fixture.ClientProcess1NodeID],
+				RenderedProcesses[fixture.ClientProcess2NodeID],
+				RenderedContainers[fixture.ClientContainerNodeID],
+			)),
 
-	RenderedPods = report.Nodes{
-		fixture.ClientPodNodeID: pod(fixture.ClientPodNodeID, fixture.ServerPodNodeID),
-		fixture.ServerPodNodeID: pod(fixture.ServerPodNodeID),
-		uncontainedServerID:     pseudo(uncontainedServerID, render.OutgoingInternetID),
-		// unknownPseudoNode1ID:      pseudo(unknownPseudoNode1ID, fixture.ServerPodNodeID),
-		// unknownPseudoNode2ID:      pseudo(unknownPseudoNode2ID, fixture.ServerPodNodeID),
-		render.IncomingInternetID: pseudo(render.IncomingInternetID, fixture.ServerPodNodeID),
-		render.OutgoingInternetID: pseudo(render.OutgoingInternetID),
-	}.Prune()
+		fixture.ServerContainerImageNodeID: containerImage(fixture.ServerContainerImageNodeID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Server80NodeID],
+				RenderedProcesses[fixture.ServerProcessNodeID],
+				RenderedContainers[fixture.ServerContainerNodeID],
+			)),
+
+		uncontainedServerID:       uncontainedServerNode,
+		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerContainerImageNodeID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
+	}
 
 	RenderedHosts = report.Nodes{
-		fixture.ClientHostNodeID:  host(fixture.ClientHostNodeID, fixture.ServerHostNodeID),
-		fixture.ServerHostNodeID:  host(fixture.ServerHostNodeID, render.OutgoingInternetID),
-		unknownPseudoNode1ID:      pseudo(unknownPseudoNode1ID, fixture.ServerHostNodeID),
-		unknownPseudoNode2ID:      pseudo(unknownPseudoNode2ID, fixture.ServerHostNodeID),
-		render.IncomingInternetID: pseudo(render.IncomingInternetID, fixture.ServerHostNodeID),
-		render.OutgoingInternetID: pseudo(render.OutgoingInternetID),
-	}.Prune()
+		fixture.ClientHostNodeID: hostNode(fixture.ClientHostNodeID, fixture.ServerHostNodeID).
+			WithLatests(map[string]string{
+				host.HostName: fixture.ClientHostName,
+			}).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Client54001NodeID],
+				RenderedEndpoints[fixture.Client54002NodeID],
+				RenderedProcesses[fixture.ClientProcess1NodeID],
+				RenderedProcesses[fixture.ClientProcess2NodeID],
+				RenderedContainers[fixture.ClientContainerNodeID],
+				RenderedContainerImages[fixture.ClientContainerImageNodeID],
+				//RenderedPods[fixture.ClientPodNodeID], #1142
+			)),
+
+		fixture.ServerHostNodeID: hostNode(fixture.ServerHostNodeID, render.OutgoingInternetID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Server80NodeID],
+				RenderedEndpoints[fixture.NonContainerNodeID],
+				RenderedProcesses[fixture.ServerProcessNodeID],
+				RenderedProcesses[fixture.NonContainerProcessNodeID],
+				RenderedContainers[fixture.ServerContainerNodeID],
+				RenderedContainerImages[fixture.ServerContainerImageNodeID],
+				//RenderedPods[fixture.ServerPodNodeID], #1142
+			)),
+
+		UnknownPseudoNode1ID:      unknownPseudoNode1(fixture.ServerHostNodeID),
+		UnknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerHostNodeID),
+		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerHostNodeID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
+	}
+
+	RenderedPods = report.Nodes{
+		fixture.ClientPodNodeID: pod(fixture.ClientPodNodeID, fixture.ServerPodNodeID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Client54001NodeID],
+				RenderedEndpoints[fixture.Client54002NodeID],
+				RenderedProcesses[fixture.ClientProcess1NodeID],
+				RenderedProcesses[fixture.ClientProcess2NodeID],
+				RenderedContainers[fixture.ClientContainerNodeID],
+			)),
+
+		fixture.ServerPodNodeID: pod(fixture.ServerPodNodeID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Server80NodeID],
+				RenderedProcesses[fixture.ServerProcessNodeID],
+				RenderedContainers[fixture.ServerContainerNodeID],
+			)),
+
+		uncontainedServerID:       uncontainedServerNode,
+		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerPodNodeID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
+	}
 
 	RenderedPodServices = report.Nodes{
-		fixture.ServiceNodeID: service(fixture.ServiceNodeID, fixture.ServiceNodeID),
-		uncontainedServerID:   pseudo(uncontainedServerID, render.OutgoingInternetID),
-		// unknownPseudoNode1ID:      pseudo(unknownPseudoNode1ID, fixture.ServiceID),
-		// unknownPseudoNode2ID:      pseudo(unknownPseudoNode2ID, fixture.ServiceID),
-		render.IncomingInternetID: pseudo(render.IncomingInternetID, fixture.ServiceNodeID),
-		render.OutgoingInternetID: pseudo(render.OutgoingInternetID),
-	}.Prune()
+		fixture.ServiceNodeID: service(fixture.ServiceNodeID, fixture.ServiceNodeID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Client54001NodeID],
+				RenderedEndpoints[fixture.Client54002NodeID],
+				RenderedEndpoints[fixture.Server80NodeID],
+				RenderedProcesses[fixture.ClientProcess1NodeID],
+				RenderedProcesses[fixture.ClientProcess2NodeID],
+				RenderedProcesses[fixture.ServerProcessNodeID],
+				RenderedContainers[fixture.ClientContainerNodeID],
+				RenderedContainers[fixture.ServerContainerNodeID],
+				RenderedPods[fixture.ClientPodNodeID],
+				RenderedPods[fixture.ServerPodNodeID],
+			)),
+
+		uncontainedServerID:       uncontainedServerNode,
+		render.IncomingInternetID: theIncomingInternetNode(fixture.ServiceNodeID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
+	}
 )
 
 func newu64(value uint64) *uint64 { return &value }

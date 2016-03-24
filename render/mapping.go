@@ -28,11 +28,9 @@ const (
 
 	ipsKey = "ips"
 
-	AmazonECSContainerNameLabel  = "com.amazonaws.ecs.container-name"
-	KubernetesContainerNameLabel = "io.kubernetes.container.name"
-
-	// Topology for pseudo-nodes so we can differentiate them at the end
+	// Topology for pseudo-nodes and IPs so we can differentiate them at the end
 	Pseudo = "pseudo"
+	IP     = "IP"
 )
 
 // MapFunc is anything which can take an arbitrary Node and
@@ -57,31 +55,6 @@ func theInternetNode(m report.Node) report.Node {
 		return NewDerivedPseudoNode(IncomingInternetID, m)
 	}
 	return NewDerivedPseudoNode(OutgoingInternetID, m)
-}
-
-// GetRenderableContainerName obtains a user-friendly container name, to render in the UI
-func GetRenderableContainerName(nmd report.Node) (string, bool) {
-	for _, key := range []string{
-		// Amazon's ecs-agent produces huge Docker container names, destructively
-		// derived from mangling Container Definition names in Task
-		// Definitions.
-		//
-		// However, the ecs-agent provides a label containing the original Container
-		// Definition name.
-		docker.LabelPrefix + AmazonECSContainerNameLabel,
-		// Kubernetes also mangles its Docker container names and provides a
-		// label with the original container name. However, note that this label
-		// is only provided by Kubernetes versions >= 1.2 (see
-		// https://github.com/kubernetes/kubernetes/pull/17234/ )
-		docker.LabelPrefix + KubernetesContainerNameLabel,
-		docker.ContainerName,
-		docker.ContainerHostname,
-	} {
-		if label, ok := nmd.Latest.Lookup(key); ok {
-			return label, true
-		}
-	}
-	return "", false
 }
 
 // MapEndpoint2IP maps endpoint nodes to their IP address, for joining
@@ -110,8 +83,8 @@ func MapEndpoint2IP(m report.Node, local report.Networks) report.Nodes {
 	id := report.MakeScopedEndpointNodeID(scope, addr, "")
 	idWithPort := report.MakeScopedEndpointNodeID(scope, addr, port)
 	return report.Nodes{
-		id:         NewDerivedNode(id, m).WithTopology("IP"),
-		idWithPort: NewDerivedNode(idWithPort, m).WithTopology("IP"),
+		id:         NewDerivedNode(id, m).WithTopology(IP),
+		idWithPort: NewDerivedNode(idWithPort, m).WithTopology(IP),
 	}
 }
 
@@ -135,7 +108,7 @@ func MapContainer2IP(m report.Node, _ report.Networks) report.Nodes {
 			}
 			id := report.MakeScopedEndpointNodeID(scope, addr, "")
 			result[id] = NewDerivedNode(id, m).
-				WithTopology("IP").
+				WithTopology(IP).
 				WithLatests(map[string]string{docker.ContainerID: containerID}).
 				WithCounters(map[string]int{ipsKey: 1})
 
@@ -150,7 +123,7 @@ func MapContainer2IP(m report.Node, _ report.Networks) report.Nodes {
 			ip, port := mapping[1], mapping[2]
 			id := report.MakeScopedEndpointNodeID("", ip, port)
 			result[id] = NewDerivedNode(id, m).
-				WithTopology("IP").
+				WithTopology(IP).
 				WithLatests(map[string]string{docker.ContainerID: containerID}).
 				WithCounters(map[string]int{ipsKey: 1})
 
@@ -226,41 +199,16 @@ func MapEndpoint2Process(n report.Node, local report.Networks) report.Nodes {
 		return MapEndpoint2Pseudo(n, local)
 	}
 
-	pid, ok := n.Latest.LookupEntry(process.PID)
+	pid, timestamp, ok := n.Latest.LookupEntry(process.PID)
 	if !ok {
 		return report.Nodes{}
 	}
 
-	id := report.MakeProcessNodeID(report.ExtractHostID(n), pid.Value)
+	id := report.MakeProcessNodeID(report.ExtractHostID(n), pid)
 	node := NewDerivedNode(id, n).WithTopology(report.Process)
-	node.Latest = node.Latest.Set(process.PID, pid.Timestamp, pid.Value)
+	node.Latest = node.Latest.Set(process.PID, timestamp, pid)
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: node}
-}
-
-// MapTo re-indexes a set of nodes by some key from Latest, changing the topology
-// TODO(paulbellamy): not sure this works, or is general enough
-func MapTo(topology, key string) func(report.Node, report.Networks) report.Nodes {
-	return func(n report.Node, local report.Networks) report.Nodes {
-		// Pass through pseudo nodes
-		if n.Topology == Pseudo {
-			fmt.Printf("[DEBUG] MapTo skipping %s %s", n.Topology, n.ID)
-			return report.Nodes{n.ID: n}
-		}
-
-		// Throw away any nodes not having this key
-		entry, ok := n.Latest.LookupEntry(key)
-		if !ok {
-			fmt.Printf("[DEBUG] MapTo skipping %s %s: no key %s", n.Topology, n.ID, key)
-			return report.Nodes{}
-		}
-
-		node := NewDerivedNode(entry.Value, n).WithTopology(topology)
-		node.Latest = node.Latest.Set(key, entry.Timestamp, entry.Value)
-		node.Counters = node.Counters.Add(n.Topology, 1)
-		fmt.Printf("[DEBUG] MapTo %s %s -> %s %s", n.Topology, n.ID, node.Topology, node.ID)
-		return report.Nodes{entry.Value: node}
-	}
 }
 
 // MapProcess2Container maps process Nodes to container
@@ -313,15 +261,15 @@ func MapProcess2Name(n report.Node, _ report.Networks) report.Nodes {
 		return report.Nodes{n.ID: n}
 	}
 
-	name, ok := n.Latest.LookupEntry(process.Name)
+	name, timestamp, ok := n.Latest.LookupEntry(process.Name)
 	if !ok {
 		return report.Nodes{}
 	}
 
-	node := NewDerivedNode(name.Value, n).WithTopology(report.Process)
-	node.Latest = node.Latest.Set(process.Name, name.Timestamp, name.Value)
+	node := NewDerivedNode(name, n).WithTopology(report.Process)
+	node.Latest = node.Latest.Set(process.Name, timestamp, name)
 	node.Counters = node.Counters.Add(n.Topology, 1)
-	return report.Nodes{name.Value: node}
+	return report.Nodes{name: node}
 }
 
 // MapContainer2ContainerImage maps container Nodes to container
@@ -343,15 +291,15 @@ func MapContainer2ContainerImage(n report.Node, _ report.Networks) report.Nodes 
 
 	// Otherwise, if some some reason the container doesn't have a image_id
 	// (maybe slightly out of sync reports), just drop it
-	imageID, ok := n.Latest.LookupEntry(docker.ImageID)
+	imageID, timestamp, ok := n.Latest.LookupEntry(docker.ImageID)
 	if !ok {
 		return report.Nodes{}
 	}
 
 	// Add container id key to the counters, which will later be counted to produce the minor label
-	id := report.MakeContainerImageNodeID(imageID.Value)
+	id := report.MakeContainerImageNodeID(imageID)
 	result := NewDerivedNode(id, n).WithTopology(report.ContainerImage)
-	result.Latest = result.Latest.Set(docker.ImageID, imageID.Timestamp, imageID.Value)
+	result.Latest = result.Latest.Set(docker.ImageID, timestamp, imageID)
 	result.Counters = result.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: result}
 }
@@ -382,13 +330,13 @@ func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 	if n.Topology == Pseudo {
 		return report.Nodes{}
 	}
-	hostNodeID, ok := n.Latest.LookupEntry(report.HostNodeID)
+	hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
 	if !ok {
 		return report.Nodes{}
 	}
 	id := report.MakeHostNodeID(report.ExtractHostID(n))
 	result := NewDerivedNode(id, n).WithTopology(report.Host)
-	result.Latest = result.Latest.Set(report.HostNodeID, hostNodeID.Timestamp, hostNodeID.Value)
+	result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
 	result.Counters = result.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: result}
 }
@@ -397,14 +345,14 @@ func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 // host nodes or pseudo nodes.
 func MapEndpoint2Host(n report.Node, local report.Networks) report.Nodes {
 	// Nodes without a hostid are treated as pseudo nodes
-	hostNodeID, ok := n.Latest.LookupEntry(report.HostNodeID)
+	hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
 	if !ok {
 		return MapEndpoint2Pseudo(n, local)
 	}
 
 	id := report.MakeHostNodeID(report.ExtractHostID(n))
 	result := NewDerivedNode(id, n).WithTopology(report.Host)
-	result.Latest = result.Latest.Set(report.HostNodeID, hostNodeID.Timestamp, hostNodeID.Value)
+	result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
 	result.Counters = result.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: result}
 }
@@ -497,15 +445,15 @@ func MapContainer2Hostname(n report.Node, _ report.Networks) report.Nodes {
 
 	// Otherwise, if some some reason the container doesn't have a hostname
 	// (maybe slightly out of sync reports), just drop it
-	id, ok := n.Latest.LookupEntry(docker.ContainerHostname)
+	id, timestamp, ok := n.Latest.LookupEntry(docker.ContainerHostname)
 	if !ok {
 		return report.Nodes{}
 	}
 
-	node := NewDerivedNode(id.Value, n)
+	node := NewDerivedNode(id, n)
 	node.Latest = node.Latest.
-		Set(docker.ContainerHostname, id.Timestamp, id.Value).
+		Set(docker.ContainerHostname, timestamp, id).
 		Delete(docker.ContainerName) // TODO(paulbellamy): total hack to render these by hostname instead.
 	node.Counters = node.Counters.Add(n.Topology, 1)
-	return report.Nodes{id.Value: node}
+	return report.Nodes{id: node}
 }

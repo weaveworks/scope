@@ -15,7 +15,7 @@ import (
 
 func TestEndpointRenderer(t *testing.T) {
 	have := render.EndpointRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedEndpoints
+	want := expected.RenderedEndpoints.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -23,7 +23,7 @@ func TestEndpointRenderer(t *testing.T) {
 
 func TestProcessRenderer(t *testing.T) {
 	have := render.ProcessRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedProcesses
+	want := expected.RenderedProcesses.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -31,7 +31,7 @@ func TestProcessRenderer(t *testing.T) {
 
 func TestProcessNameRenderer(t *testing.T) {
 	have := render.ProcessNameRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedProcessNames
+	want := expected.RenderedProcessNames.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -39,7 +39,7 @@ func TestProcessNameRenderer(t *testing.T) {
 
 func TestContainerRenderer(t *testing.T) {
 	have := render.ContainerRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedContainers
+	want := expected.RenderedContainers.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -53,7 +53,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
 	have := render.FilterSystem(render.ContainerRenderer).Render(input).Prune()
-	want := expected.RenderedContainers.Copy()
+	want := expected.RenderedContainers.Copy().Prune()
 	delete(want, fixture.ClientContainerNodeID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -84,7 +84,7 @@ func TestContainerWithHostIPsRenderer(t *testing.T) {
 
 func TestContainerImageRenderer(t *testing.T) {
 	have := render.ContainerImageRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedContainerImages
+	want := expected.RenderedContainerImages.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -92,7 +92,7 @@ func TestContainerImageRenderer(t *testing.T) {
 
 func TestHostRenderer(t *testing.T) {
 	have := render.HostRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedHosts
+	want := expected.RenderedHosts.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -100,7 +100,7 @@ func TestHostRenderer(t *testing.T) {
 
 func TestPodRenderer(t *testing.T) {
 	have := render.PodRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedPods
+	want := expected.RenderedPods.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -119,7 +119,7 @@ func TestPodFilterRenderer(t *testing.T) {
 		docker.LabelPrefix + "io.kubernetes.pod.name": "kube-system/foo",
 	})
 	have := render.FilterSystem(render.PodRenderer).Render(input).Prune()
-	want := expected.RenderedPods.Copy()
+	want := expected.RenderedPods.Copy().Prune()
 	delete(want, fixture.ClientPodNodeID)
 	delete(want, fixture.ClientContainerNodeID)
 	if !reflect.DeepEqual(want, have) {
@@ -129,7 +129,7 @@ func TestPodFilterRenderer(t *testing.T) {
 
 func TestPodServiceRenderer(t *testing.T) {
 	have := render.PodServiceRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedPodServices
+	want := expected.RenderedPodServices.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

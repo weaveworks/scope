@@ -20,6 +20,12 @@ const (
 	Heptagon = "heptagon"
 	Hexagon  = "hexagon"
 	Cloud    = "cloud"
+
+	ImageNameNone = "<none>"
+
+	// Keys we use to render container names
+	AmazonECSContainerNameLabel  = "com.amazonaws.ecs.container-name"
+	KubernetesContainerNameLabel = "io.kubernetes.container.name"
 )
 
 // NodeSummaryGroup is a topology-typed group of children for a Node.
@@ -88,9 +94,7 @@ func MakeNodeSummary(n report.Node) (NodeSummary, bool) {
 		report.Host:           hostNodeSummary,
 	}
 	if renderer, ok := renderers[n.Topology]; ok {
-		if summary, ok := baseNodeSummary(NodeSummary{}, n); ok {
-			return renderer(summary, n)
-		}
+		return renderer(baseNodeSummary(n), n)
 	}
 	return NodeSummary{}, false
 }
@@ -129,15 +133,16 @@ func (n NodeSummary) Copy() NodeSummary {
 	return result
 }
 
-func baseNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.ID = n.ID
-	base.Shape = Circle
-	base.Linkable = true
-	base.Metadata = NodeMetadata(n)
-	base.DockerLabels = NodeDockerLabels(n)
-	base.Metrics = NodeMetrics(n)
-	base.Adjacency = n.Adjacency.Copy()
-	return base, true
+func baseNodeSummary(n report.Node) NodeSummary {
+	return NodeSummary{
+		ID:           n.ID,
+		Shape:        Circle,
+		Linkable:     true,
+		Metadata:     NodeMetadata(n),
+		DockerLabels: NodeDockerLabels(n),
+		Metrics:      NodeMetrics(n),
+		Adjacency:    n.Adjacency.Copy(),
+	}
 }
 
 func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
@@ -158,7 +163,8 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	// try rendering it as an uncontained node
 	if strings.HasPrefix(n.ID, render.MakePseudoNodeID(render.UncontainedID)) {
 		base.Label = render.UncontainedMajor
-		base.Shape = Circle
+		base.Shape = Square
+		base.Stack = true
 		base.LabelMinor = report.ExtractHostID(n)
 		return base, true
 	}
@@ -202,7 +208,7 @@ func processNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 }
 
 func containerNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label, _ = render.GetRenderableContainerName(n)
+	base.Label = getRenderableContainerName(n)
 
 	if c, ok := n.Counters.Lookup(report.Container); ok {
 		base.Stack = true
@@ -235,7 +241,7 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 	base.Shape = Hexagon
 	base.Stack = true
 
-	if base.Label == "<none>" {
+	if base.Label == ImageNameNone {
 		base.Label, _ = n.Latest.Lookup(docker.ImageID)
 		if len(base.Label) > 12 {
 			base.Label = base.Label[:12]
@@ -355,4 +361,29 @@ func (n NodeSummaries) Copy() NodeSummaries {
 		result[k] = v.Copy()
 	}
 	return result
+}
+
+// getRenderableContainerName obtains a user-friendly container name, to render in the UI
+func getRenderableContainerName(nmd report.Node) string {
+	for _, key := range []string{
+		// Amazon's ecs-agent produces huge Docker container names, destructively
+		// derived from mangling Container Definition names in Task
+		// Definitions.
+		//
+		// However, the ecs-agent provides a label containing the original Container
+		// Definition name.
+		docker.LabelPrefix + AmazonECSContainerNameLabel,
+		// Kubernetes also mangles its Docker container names and provides a
+		// label with the original container name. However, note that this label
+		// is only provided by Kubernetes versions >= 1.2 (see
+		// https://github.com/kubernetes/kubernetes/pull/17234/ )
+		docker.LabelPrefix + KubernetesContainerNameLabel,
+		docker.ContainerName,
+		docker.ContainerHostname,
+	} {
+		if label, ok := nmd.Latest.Lookup(key); ok {
+			return label
+		}
+	}
+	return ""
 }

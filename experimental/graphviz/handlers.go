@@ -10,10 +10,11 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/scope/report"
 )
 
-func dot(w io.Writer, t report.Nodes) {
+func dot(w io.Writer, t detailed.NodeSummaries) {
 	fmt.Fprintf(w, "digraph G {\n")
 	fmt.Fprintf(w, "\toutputorder=edgesfirst;\n")
 	fmt.Fprintf(w, "\toverlap=scale;\n")

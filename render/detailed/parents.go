@@ -6,7 +6,6 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
-	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -55,7 +54,7 @@ func Parents(r report.Report, n report.Node) (result []Parent) {
 }
 
 func containerParent(n report.Node) Parent {
-	label, _ := render.GetRenderableContainerName(n)
+	label := getRenderableContainerName(n)
 	containerID, _ := n.Latest.Lookup(docker.ContainerID)
 	return Parent{
 		ID:         report.MakeContainerNodeID(containerID),
