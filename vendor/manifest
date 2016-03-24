@@ -682,6 +682,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/kr/pty",
+			"repository": "https://github.com/kr/pty",
+			"revision": "f7ee69f31298ecbe5d2b349c711e2547a617d398",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/lsegal/gucumber",
 			"repository": "https://github.com/lsegal/gucumber",
 			"revision": "e8116c9c66e641e9f81fc0a79fac923dfc646378",
@@ -870,6 +876,12 @@
 			"revision": "29f3d711c65121f436a9d191af4633ba4600d0fd",
 			"branch": "master",
 			"path": "/common"
+		},
+		{
+			"importpath": "github.com/willdonnelly/passwd",
+			"repository": "https://github.com/willdonnelly/passwd",
+			"revision": "7935dab3074ca1d47c8805e0230f8685116b6019",
+			"branch": "master"
 		},
 		{
 			"importpath": "golang.org/x/crypto/curve25519",

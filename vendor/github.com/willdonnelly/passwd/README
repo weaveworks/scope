@@ -1,0 +1,26 @@
+> godoc github.com/willdonnelly/passwd
+
+PACKAGE
+
+package passwd
+    import "github.com/willdonnelly/passwd"
+
+
+FUNCTIONS
+
+func Parse() (map[string]Entry, error)
+    Parse opens the '/etc/passwd' file and parses it into a map from
+    usernames to Entries
+
+
+TYPES
+
+type Entry struct {
+    Pass  string
+    Uid   string
+    Gid   string
+    Gecos string
+    Home  string
+    Shell string
+}
+    An Entry contains all the fields for a specific user
