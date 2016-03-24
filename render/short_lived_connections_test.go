@@ -72,7 +72,7 @@ var (
 	want = (render.RenderableNodes{
 		render.IncomingInternetID: {
 			ID:         render.IncomingInternetID,
-			LabelMajor: render.InboundMajor,
+			Label:      render.InboundMajor,
 			LabelMinor: render.InboundMinor,
 			Pseudo:     true,
 			Shape:      "cloud",
@@ -80,7 +80,7 @@ var (
 		},
 		render.MakeContainerID(containerID): {
 			ID:          render.MakeContainerID(containerID),
-			LabelMajor:  containerName,
+			Label:       containerName,
 			LabelMinor:  serverHostID,
 			Rank:        "",
 			Pseudo:      false,

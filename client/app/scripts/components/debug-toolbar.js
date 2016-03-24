@@ -21,7 +21,7 @@ const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, nodeCou
   stack,
   node_count: nodeCount,
   id: name,
-  label_major: name,
+  label: name,
   label_minor: 'weave-1',
   latest: {},
   metadata: {},

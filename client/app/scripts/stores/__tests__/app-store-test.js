@@ -17,7 +17,7 @@ describe('AppStore', () => {
       rank: undefined,
       adjacency: ['n1', 'n2'],
       pseudo: undefined,
-      label_major: undefined,
+      label: undefined,
       label_minor: undefined
     },
     n2: {
@@ -25,7 +25,7 @@ describe('AppStore', () => {
       rank: undefined,
       adjacency: undefined,
       pseudo: undefined,
-      label_major: undefined,
+      label: undefined,
       label_minor: undefined
     }
   };

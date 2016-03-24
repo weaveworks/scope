@@ -1,19 +1,19 @@
-package render
+package detailed
 
 import (
 	"reflect"
 )
 
 // Diff is returned by TopoDiff. It represents the changes between two
-// RenderableNode maps.
+// NodeSummary maps.
 type Diff struct {
-	Add    []RenderableNode `json:"add"`
-	Update []RenderableNode `json:"update"`
-	Remove []string         `json:"remove"`
+	Add    []NodeSummary `json:"add"`
+	Update []NodeSummary `json:"update"`
+	Remove []string      `json:"remove"`
 }
 
 // TopoDiff gives you the diff to get from A to B.
-func TopoDiff(a, b RenderableNodes) Diff {
+func TopoDiff(a, b NodeSummaries) Diff {
 	diff := Diff{}
 
 	notSeen := map[string]struct{}{}

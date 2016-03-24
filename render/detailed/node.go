@@ -16,8 +16,6 @@ import (
 // we want deep information about an individual node.
 type Node struct {
 	NodeSummary
-	Rank        string             `json:"rank,omitempty"`
-	Pseudo      bool               `json:"pseudo,omitempty"`
 	Controls    []ControlInstance  `json:"controls"`
 	Children    []NodeSummaryGroup `json:"children,omitempty"`
 	Parents     []Parent           `json:"parents,omitempty"`
@@ -82,12 +80,10 @@ func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
 func MakeNode(topologyID string, r report.Report, ns render.RenderableNodes, n render.RenderableNode) Node {
 	summary, _ := MakeNodeSummary(n)
 	summary.ID = n.ID
-	summary.Label = n.LabelMajor
+	summary.Label = n.Label
 
 	return Node{
 		NodeSummary: summary,
-		Rank:        n.Rank,
-		Pseudo:      n.Pseudo,
 		Controls:    controls(r, n),
 		Children:    children(n),
 		Parents:     Parents(r, n),
@@ -196,7 +192,7 @@ func children(n render.RenderableNode) []NodeSummaryGroup {
 	n.Children.ForEach(func(child render.RenderableNode) {
 		if child.ID != n.ID {
 			if summary, ok := MakeNodeSummary(child); ok {
-				summaries[child.Topology] = append(summaries[child.Topology], summary)
+				summaries[child.Topology] = append(summaries[child.Topology], summary.SummarizeMetrics())
 			}
 		}
 	})

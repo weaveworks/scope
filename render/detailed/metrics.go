@@ -47,6 +47,22 @@ type MetricRow struct {
 	Metric *report.Metric
 }
 
+// Summary returns a copy of the MetricRow, without the samples, just the value if there is one.
+func (m MetricRow) Summary() MetricRow {
+	row := MetricRow{
+		ID:     m.ID,
+		Format: m.Format,
+		Group:  m.Group,
+		Value:  m.Value,
+	}
+	if m.Metric != nil {
+		var metric = m.Metric.Copy()
+		metric.Samples = nil
+		row.Metric = &metric
+	}
+	return row
+}
+
 // Copy returns a value copy of the MetricRow
 func (m MetricRow) Copy() MetricRow {
 	row := MetricRow{

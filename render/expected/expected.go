@@ -112,11 +112,11 @@ var (
 
 	unknownPseudoNode1 = func(adjacent string) render.RenderableNode {
 		return render.RenderableNode{
-			ID:         unknownPseudoNode1ID,
-			LabelMajor: fixture.UnknownClient1IP,
-			Pseudo:     true,
-			Shape:      circle,
-			Node:       report.MakeNode().WithAdjacent(adjacent),
+			ID:     unknownPseudoNode1ID,
+			Label:  fixture.UnknownClient1IP,
+			Pseudo: true,
+			Shape:  circle,
+			Node:   report.MakeNode().WithAdjacent(adjacent),
 			Children: render.MakeRenderableNodeSet(
 				RenderedEndpoints[UnknownClient1EndpointID],
 				RenderedEndpoints[UnknownClient2EndpointID],
@@ -129,11 +129,11 @@ var (
 	}
 	unknownPseudoNode2 = func(adjacent string) render.RenderableNode {
 		return render.RenderableNode{
-			ID:         unknownPseudoNode2ID,
-			LabelMajor: fixture.UnknownClient3IP,
-			Pseudo:     true,
-			Shape:      circle,
-			Node:       report.MakeNode().WithAdjacent(adjacent),
+			ID:     unknownPseudoNode2ID,
+			Label:  fixture.UnknownClient3IP,
+			Pseudo: true,
+			Shape:  circle,
+			Node:   report.MakeNode().WithAdjacent(adjacent),
 			Children: render.MakeRenderableNodeSet(
 				RenderedEndpoints[UnknownClient3EndpointID],
 			),
@@ -146,7 +146,7 @@ var (
 	theIncomingInternetNode = func(adjacent string) render.RenderableNode {
 		return render.RenderableNode{
 			ID:         render.IncomingInternetID,
-			LabelMajor: render.InboundMajor,
+			Label:      render.InboundMajor,
 			LabelMinor: render.InboundMinor,
 			Pseudo:     true,
 			Shape:      cloud,
@@ -162,7 +162,7 @@ var (
 	}
 	theOutgoingInternetNode = render.RenderableNode{
 		ID:           render.OutgoingInternetID,
-		LabelMajor:   render.OutboundMajor,
+		Label:        render.OutboundMajor,
 		LabelMinor:   render.OutboundMinor,
 		Pseudo:       true,
 		Shape:        cloud,
@@ -176,7 +176,7 @@ var (
 	RenderedProcesses = (render.RenderableNodes{
 		ClientProcess1ID: {
 			ID:         ClientProcess1ID,
-			LabelMajor: fixture.Client1Name,
+			Label:      fixture.Client1Name,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ClientHostID, fixture.Client1PID),
 			Rank:       fixture.Client1Name,
 			Shape:      square,
@@ -191,7 +191,7 @@ var (
 		},
 		ClientProcess2ID: {
 			ID:         ClientProcess2ID,
-			LabelMajor: fixture.Client2Name,
+			Label:      fixture.Client2Name,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ClientHostID, fixture.Client2PID),
 			Rank:       fixture.Client2Name,
 			Shape:      square,
@@ -206,7 +206,7 @@ var (
 		},
 		ServerProcessID: {
 			ID:         ServerProcessID,
-			LabelMajor: fixture.ServerName,
+			Label:      fixture.ServerName,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.ServerPID),
 			Rank:       fixture.ServerName,
 			Shape:      square,
@@ -221,7 +221,7 @@ var (
 		},
 		nonContainerProcessID: {
 			ID:         nonContainerProcessID,
-			LabelMajor: fixture.NonContainerName,
+			Label:      fixture.NonContainerName,
 			LabelMinor: fmt.Sprintf("%s (%s)", fixture.ServerHostID, fixture.NonContainerPID),
 			Rank:       fixture.NonContainerName,
 			Shape:      square,
@@ -240,7 +240,7 @@ var (
 	RenderedProcessNames = (render.RenderableNodes{
 		fixture.Client1Name: {
 			ID:         fixture.Client1Name,
-			LabelMajor: fixture.Client1Name,
+			Label:      fixture.Client1Name,
 			LabelMinor: "2 processes",
 			Rank:       fixture.Client1Name,
 			Shape:      square,
@@ -259,7 +259,7 @@ var (
 		},
 		fixture.ServerName: {
 			ID:         fixture.ServerName,
-			LabelMajor: fixture.ServerName,
+			Label:      fixture.ServerName,
 			LabelMinor: "1 process",
 			Rank:       fixture.ServerName,
 			Shape:      square,
@@ -276,7 +276,7 @@ var (
 		},
 		fixture.NonContainerName: {
 			ID:         fixture.NonContainerName,
-			LabelMajor: fixture.NonContainerName,
+			Label:      fixture.NonContainerName,
 			LabelMinor: "1 process",
 			Rank:       fixture.NonContainerName,
 			Shape:      square,
@@ -301,7 +301,7 @@ var (
 	RenderedContainers = (render.RenderableNodes{
 		ClientContainerID: {
 			ID:         ClientContainerID,
-			LabelMajor: "client",
+			Label:      "client",
 			LabelMinor: fixture.ClientHostName,
 			Shape:      hexagon,
 			Children: render.MakeRenderableNodeSet(
@@ -319,7 +319,7 @@ var (
 		},
 		ServerContainerID: {
 			ID:         ServerContainerID,
-			LabelMajor: "server",
+			Label:      "server",
 			LabelMinor: fixture.ServerHostName,
 			Shape:      hexagon,
 			Children: render.MakeRenderableNodeSet(
@@ -335,7 +335,7 @@ var (
 		},
 		uncontainedServerID: {
 			ID:         uncontainedServerID,
-			LabelMajor: render.UncontainedMajor,
+			Label:      render.UncontainedMajor,
 			LabelMinor: fixture.ServerHostName,
 			Shape:      square,
 			Stack:      true,
@@ -359,7 +359,7 @@ var (
 	RenderedContainerImages = (render.RenderableNodes{
 		ClientContainerImageID: {
 			ID:         ClientContainerImageID,
-			LabelMajor: fixture.ClientContainerImageName,
+			Label:      fixture.ClientContainerImageName,
 			LabelMinor: "1 container",
 			Rank:       fixture.ClientContainerImageName,
 			Shape:      hexagon,
@@ -379,7 +379,7 @@ var (
 		},
 		ServerContainerImageID: {
 			ID:         ServerContainerImageID,
-			LabelMajor: fixture.ServerContainerImageName,
+			Label:      fixture.ServerContainerImageName,
 			LabelMinor: "1 container",
 			Rank:       fixture.ServerContainerImageName,
 			Shape:      hexagon,
@@ -397,7 +397,7 @@ var (
 		},
 		uncontainedServerID: {
 			ID:         uncontainedServerID,
-			LabelMajor: render.UncontainedMajor,
+			Label:      render.UncontainedMajor,
 			LabelMinor: fixture.ServerHostName,
 			Shape:      square,
 			Stack:      true,
@@ -421,7 +421,7 @@ var (
 	RenderedPods = (render.RenderableNodes{
 		ClientPodRenderedID: {
 			ID:         ClientPodRenderedID,
-			LabelMajor: "pong-a",
+			Label:      "pong-a",
 			LabelMinor: "1 container",
 			Rank:       "ping/pong-a",
 			Shape:      heptagon,
@@ -440,7 +440,7 @@ var (
 		},
 		ServerPodRenderedID: {
 			ID:         ServerPodRenderedID,
-			LabelMajor: "pong-b",
+			Label:      "pong-b",
 			LabelMinor: "1 container",
 			Rank:       "ping/pong-b",
 			Shape:      heptagon,
@@ -457,7 +457,7 @@ var (
 		},
 		uncontainedServerID: {
 			ID:         uncontainedServerID,
-			LabelMajor: render.UncontainedMajor,
+			Label:      render.UncontainedMajor,
 			LabelMinor: fixture.ServerHostName,
 			Pseudo:     true,
 			Shape:      square,
@@ -481,7 +481,7 @@ var (
 	RenderedHosts = (render.RenderableNodes{
 		ClientHostID: {
 			ID:         ClientHostID,
-			LabelMajor: "client",       // before first .
+			Label:      "client",       // before first .
 			LabelMinor: "hostname.com", // after first .
 			Rank:       "hostname.com",
 			Shape:      circle,
@@ -502,7 +502,7 @@ var (
 		},
 		ServerHostID: {
 			ID:         ServerHostID,
-			LabelMajor: "server",       // before first .
+			Label:      "server",       // before first .
 			LabelMinor: "hostname.com", // after first .
 			Rank:       "hostname.com",
 			Shape:      circle,
@@ -532,7 +532,7 @@ var (
 	RenderedPodServices = (render.RenderableNodes{
 		ServiceRenderedID: {
 			ID:         ServiceRenderedID,
-			LabelMajor: "pongservice",
+			Label:      "pongservice",
 			LabelMinor: "2 pods",
 			Rank:       fixture.ServiceID,
 			Shape:      heptagon,
@@ -559,7 +559,7 @@ var (
 		},
 		uncontainedServerID: {
 			ID:         uncontainedServerID,
-			LabelMajor: render.UncontainedMajor,
+			Label:      render.UncontainedMajor,
 			LabelMinor: fixture.ServerHostName,
 			Pseudo:     true,
 			Shape:      square,

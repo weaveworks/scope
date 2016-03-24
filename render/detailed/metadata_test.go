@@ -47,3 +47,29 @@ func TestNodeMetadata(t *testing.T) {
 		}
 	}
 }
+
+func TestMetadataRowCopy(t *testing.T) {
+	var (
+		row = detailed.MetadataRow{
+			ID:       "id",
+			Value:    "value",
+			Prime:    true,
+			Datatype: "datatype",
+		}
+		cp = row.Copy()
+	)
+
+	// copy should be identical
+	if !reflect.DeepEqual(row, cp) {
+		t.Error(test.Diff(row, cp))
+	}
+
+	// changing the copy should not change the original
+	cp.ID = ""
+	cp.Value = ""
+	cp.Prime = false
+	cp.Datatype = ""
+	if row.ID != "id" || row.Value != "value" || row.Prime != true || row.Datatype != "datatype" {
+		t.Errorf("Expected changing the copy not to modify the original")
+	}
+}

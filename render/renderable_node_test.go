@@ -32,7 +32,7 @@ func TestMergeRenderableNodes(t *testing.T) {
 func TestMergeRenderableNode(t *testing.T) {
 	node1 := render.RenderableNode{
 		ID:         "foo",
-		LabelMajor: "",
+		Label:      "",
 		LabelMinor: "minor",
 		Rank:       "",
 		Pseudo:     false,
@@ -41,7 +41,7 @@ func TestMergeRenderableNode(t *testing.T) {
 	}
 	node2 := render.RenderableNode{
 		ID:         "foo",
-		LabelMajor: "major",
+		Label:      "label",
 		LabelMinor: "",
 		Rank:       "rank",
 		Pseudo:     false,
@@ -50,7 +50,7 @@ func TestMergeRenderableNode(t *testing.T) {
 	}
 	want := render.RenderableNode{
 		ID:           "foo",
-		LabelMajor:   "major",
+		Label:        "label",
 		LabelMinor:   "minor",
 		Rank:         "rank",
 		Pseudo:       false,

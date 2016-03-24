@@ -11,6 +11,7 @@ import (
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/scope/render/expected"
+	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 )
@@ -20,25 +21,29 @@ func TestMakeDetailedHostNode(t *testing.T) {
 	renderableNode := renderableNodes[render.MakeHostID(fixture.ClientHostID)]
 	have := detailed.MakeNode("hosts", fixture.Report, renderableNodes, renderableNode)
 
-	containerImageNodeSummary, _ := detailed.MakeNodeSummary(
-		render.ContainerImageRenderer.Render(fixture.Report)[expected.ClientContainerImageID],
-	)
-	containerNodeSummary, _ := detailed.MakeNodeSummary(
-		render.ContainerRenderer.Render(fixture.Report)[expected.ClientContainerID],
-	)
-	process1NodeSummary, _ := detailed.MakeNodeSummary(
-		render.ProcessRenderer.Render(fixture.Report)[expected.ClientProcess1ID],
-	)
+	child := func(r render.Renderer, id string) detailed.NodeSummary {
+		s, ok := detailed.MakeNodeSummary(r.Render(fixture.Report)[id])
+		if !ok {
+			t.Fatalf("Expected node %s to be summarizable, but wasn't", id)
+		}
+		return s.SummarizeMetrics()
+	}
+	containerImageNodeSummary := child(render.ContainerImageRenderer, expected.ClientContainerImageID)
+	containerNodeSummary := child(render.ContainerRenderer, expected.ClientContainerID)
+	process1NodeSummary := child(render.ProcessRenderer, expected.ClientProcess1ID)
 	process1NodeSummary.Linkable = true
-	process2NodeSummary, _ := detailed.MakeNodeSummary(
-		render.ProcessRenderer.Render(fixture.Report)[expected.ClientProcess2ID],
-	)
+	process2NodeSummary := child(render.ProcessRenderer, expected.ClientProcess2ID)
 	process2NodeSummary.Linkable = true
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
-			ID:       render.MakeHostID(fixture.ClientHostID),
-			Label:    "client",
-			Linkable: true,
+			ID:         render.MakeHostID(fixture.ClientHostID),
+			Label:      "client",
+			LabelMinor: "hostname.com",
+			Rank:       "hostname.com",
+			Pseudo:     false,
+			Shape:      "circle",
+			Linkable:   true,
+			Adjacency:  report.MakeIDList("host:server.hostname.com"),
 			Metadata: []detailed.MetadataRow{
 				{
 					ID:    "host_name",
@@ -86,8 +91,6 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				},
 			},
 		},
-		Rank:     "hostname.com",
-		Pseudo:   false,
 		Controls: []detailed.ControlInstance{},
 		Children: []detailed.NodeSummaryGroup{
 			{
@@ -161,9 +164,12 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 	have := detailed.MakeNode("containers", fixture.Report, renderableNodes, renderableNode)
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
-			ID:       id,
-			Label:    "server",
-			Linkable: true,
+			ID:         id,
+			Label:      "server",
+			LabelMinor: "server.hostname.com",
+			Shape:      "hexagon",
+			Linkable:   true,
+			Pseudo:     false,
 			Metadata: []detailed.MetadataRow{
 				{ID: "docker_container_id", Value: fixture.ServerContainerID, Prime: true},
 				{ID: "docker_container_state", Value: "running", Prime: true},
@@ -190,7 +196,6 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				},
 			},
 		},
-		Pseudo:   false,
 		Controls: []detailed.ControlInstance{},
 		Children: []detailed.NodeSummaryGroup{
 			{
@@ -199,13 +204,15 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Columns:    []detailed.Column{detailed.MakeColumn(process.PID), detailed.MakeColumn(process.CPUUsage), detailed.MakeColumn(process.MemoryUsage)},
 				Nodes: []detailed.NodeSummary{
 					{
-						ID:       fmt.Sprintf("process:%s:%s", "server.hostname.com", fixture.ServerPID),
-						Label:    "apache",
-						Linkable: true,
+						ID:         fmt.Sprintf("process:%s:%s", "server.hostname.com", fixture.ServerPID),
+						Label:      "apache",
+						LabelMinor: "server.hostname.com (215)",
+						Rank:       "apache",
+						Shape:      "square",
+						Linkable:   true,
 						Metadata: []detailed.MetadataRow{
 							{ID: process.PID, Value: fixture.ServerPID, Prime: true, Datatype: "number"},
 						},
-						Metrics: []detailed.MetricRow{},
 					},
 				},
 			},

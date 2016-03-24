@@ -39,7 +39,7 @@ has() {
 	local host=$2
 	local name=$3
 	local count=${4:-1}
-	assert "curl -s http://${host}:4040/api/topology/${view}?system=show | jq -r '[.nodes[] | select(.label_major == \"${name}\")] | length'" $count
+	assert "curl -s http://${host}:4040/api/topology/${view}?system=show | jq -r '[.nodes[] | select(.label == \"${name}\")] | length'" $count
 }
 
 # this checks we have a named container
@@ -51,7 +51,7 @@ node_id() {
     local view="$1"
 	local host="$2"
 	local name="$3"
-	echo $(curl -s http://${host}:4040/api/topology/${view}?system=show | jq -r ".nodes[] | select(.label_major == \"${name}\") | .id")
+	echo $(curl -s http://${host}:4040/api/topology/${view}?system=show | jq -r ".nodes[] | select(.label == \"${name}\") | .id")
 }
 
 container_id() {
@@ -103,7 +103,7 @@ wait_for() {
 		local nodes="$(curl -s http://$host:4040/api/topology/${view}?system=show)"
 		local found=0
 		for name in "$@"; do
-			local count=$(echo "${nodes}" | jq -r "[.nodes[] | select(.label_major == \"${name}\")] | length")
+			local count=$(echo "${nodes}" | jq -r "[.nodes[] | select(.label == \"${name}\")] | length")
 			if [ -n "${count}" ] && [ "${count}" -ge 1 ]; then
 				found=$(( found + 1 ))
 			fi

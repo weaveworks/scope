@@ -21,7 +21,7 @@ const error = debug('scope:error');
 function makeNode(node) {
   return {
     id: node.id,
-    label_major: node.label_major,
+    label: node.label,
     label_minor: node.label_minor,
     node_count: node.node_count,
     rank: node.rank,

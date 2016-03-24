@@ -9,7 +9,7 @@ import (
 // to rendering a node when there are many nodes visible at once.
 type RenderableNode struct {
 	ID          string            `json:"id"`                    //
-	LabelMajor  string            `json:"label_major"`           // e.g. "process", human-readable
+	Label       string            `json:"label"`                 // e.g. "process", human-readable
 	LabelMinor  string            `json:"label_minor,omitempty"` // e.g. "hostname", human-readable, optional
 	Rank        string            `json:"rank"`                  // to help the layout engine
 	Pseudo      bool              `json:"pseudo,omitempty"`      // sort-of a placeholder node, for rendering purposes
@@ -35,7 +35,7 @@ const (
 func NewRenderableNode(id string) RenderableNode {
 	return RenderableNode{
 		ID:           id,
-		LabelMajor:   "",
+		Label:        "",
 		LabelMinor:   "",
 		Rank:         "",
 		Pseudo:       false,
@@ -46,10 +46,10 @@ func NewRenderableNode(id string) RenderableNode {
 }
 
 // NewRenderableNodeWith makes a new RenderableNode with some fields filled in
-func NewRenderableNodeWith(id, major, minor, rank string, node RenderableNode) RenderableNode {
+func NewRenderableNodeWith(id, label, minor, rank string, node RenderableNode) RenderableNode {
 	return RenderableNode{
 		ID:           id,
-		LabelMajor:   major,
+		Label:        label,
 		LabelMinor:   minor,
 		Rank:         rank,
 		Pseudo:       false,
@@ -64,7 +64,7 @@ func NewRenderableNodeWith(id, major, minor, rank string, node RenderableNode) R
 func NewDerivedNode(id string, node RenderableNode) RenderableNode {
 	return RenderableNode{
 		ID:           id,
-		LabelMajor:   "",
+		Label:        "",
 		LabelMinor:   "",
 		Rank:         "",
 		Pseudo:       node.Pseudo,
@@ -76,10 +76,10 @@ func NewDerivedNode(id string, node RenderableNode) RenderableNode {
 	}
 }
 
-func newDerivedPseudoNode(id, major string, node RenderableNode) RenderableNode {
+func newDerivedPseudoNode(id, label string, node RenderableNode) RenderableNode {
 	return RenderableNode{
 		ID:           id,
-		LabelMajor:   major,
+		Label:        label,
 		LabelMinor:   "",
 		Rank:         "",
 		Pseudo:       true,
@@ -108,8 +108,8 @@ func (rn RenderableNode) WithParents(p report.Sets) RenderableNode {
 func (rn RenderableNode) Merge(other RenderableNode) RenderableNode {
 	result := rn.Copy()
 
-	if result.LabelMajor == "" {
-		result.LabelMajor = other.LabelMajor
+	if result.Label == "" {
+		result.Label = other.Label
 	}
 
 	if result.LabelMinor == "" {
@@ -140,7 +140,7 @@ func (rn RenderableNode) Merge(other RenderableNode) RenderableNode {
 func (rn RenderableNode) Copy() RenderableNode {
 	return RenderableNode{
 		ID:           rn.ID,
-		LabelMajor:   rn.LabelMajor,
+		Label:        rn.Label,
 		LabelMinor:   rn.LabelMinor,
 		Rank:         rn.Rank,
 		Pseudo:       rn.Pseudo,
