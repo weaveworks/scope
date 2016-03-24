@@ -6,6 +6,8 @@ var url = require('url');
 
 var app = express();
 
+var BACKEND_HOST = process.env.BACKEND_HOST || 'localhost';
+var WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
 
 /************************************************************
  *
@@ -26,17 +28,15 @@ app.get(/(app|contrast-app|terminal-app|vendors).js/, function(req, res) {
   if (process.env.NODE_ENV === 'production') {
     res.sendFile(__dirname + '/build' + filename);
   } else {
-    res.redirect('//localhost:4041/build' + filename);
+    res.redirect('//' + WEBPACK_SERVER_HOST + ':4041/build' + filename);
   }
 });
 
 // Proxy to backend
 
-var BACKEND_HOST = process.env.BACKEND_HOST || 'localhost:4040';
-
 var proxy = httpProxy.createProxy({
   ws: true,
-  target: 'http://' + BACKEND_HOST
+  target: 'http://' + BACKEND_HOST + ':4040'
 });
 
 proxy.on('error', function(err) {
@@ -64,12 +64,12 @@ if (process.env.NODE_ENV !== 'production') {
   var config = require('./webpack.local.config');
 
   new WebpackDevServer(webpack(config), {
-    publicPath: config.output.publicPath,
+    publicPath: 'http://' + WEBPACK_SERVER_HOST + ':4041/build/',
     hot: true,
     noInfo: true,
     historyApiFallback: true,
     stats: { colors: true }
-  }).listen(4041, 'localhost', function (err, result) {
+  }).listen(4041, '0.0.0.0', function (err, result) {
     if (err) {
       console.log(err);
     }

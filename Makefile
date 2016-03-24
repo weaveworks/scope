@@ -127,7 +127,7 @@ client-lint: $(SCOPE_UI_BUILD_UPTODATE)
 
 client-start: $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host -v $(shell pwd)/client/app:/home/weave/app \
-		-v $(shell pwd)/client/build:/home/weave/build \
+		-v $(shell pwd)/client/build:/home/weave/build -e WEBPACK_SERVER_HOST \
 		$(SCOPE_UI_BUILD_IMAGE) npm start
 
 else

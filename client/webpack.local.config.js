@@ -14,7 +14,7 @@ var path = require('path');
  */
 
  // Inject websocket url to dev backend
-var BACKEND_HOST = process.env.BACKEND_HOST || 'localhost:4040';
+ var WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
 
 module.exports = {
 
@@ -25,18 +25,18 @@ module.exports = {
   entry: {
     'app': [
       './app/scripts/main',
-      'webpack-dev-server/client?http://localhost:4041',
+      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
       'webpack/hot/only-dev-server',
       './app/scripts/debug'
     ],
     'contrast-app': [
       './app/scripts/contrast-main',
-      'webpack-dev-server/client?http://localhost:4041',
+      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
       'webpack/hot/only-dev-server'
     ],
     'terminal-app': [
       './app/scripts/terminal-main',
-      'webpack-dev-server/client?http://localhost:4041',
+      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
       'webpack/hot/only-dev-server'
     ],
     vendors: ['classnames', 'd3', 'dagre', 'flux', 'immutable',
@@ -47,8 +47,7 @@ module.exports = {
   // by the dev server for dynamic hot loading.
   output: {
     path: path.join(__dirname, 'build/'),
-    filename: '[name].js',
-    publicPath: 'http://localhost:4041/build/'
+    filename: '[name].js'
   },
 
   // Necessary plugins for hot load
