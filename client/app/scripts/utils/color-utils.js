@@ -43,7 +43,7 @@ export function getNeutralColor() {
   return PSEUDO_COLOR;
 }
 
-export function getNodeColor(text, secondText, isPseudo = false) {
+export function getNodeColor(text = '', secondText = '', isPseudo = false) {
   if (isPseudo) {
     return PSEUDO_COLOR;
   }
