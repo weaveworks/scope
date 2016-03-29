@@ -86,14 +86,21 @@ func (m LatestMap) Merge(other LatestMap) LatestMap {
 
 // Lookup the value for the given key.
 func (m LatestMap) Lookup(key string) (string, bool) {
+	v, _, ok := m.LookupEntry(key)
+	return v, ok
+}
+
+// LookupEntry returns the raw entry for the given key.
+func (m LatestMap) LookupEntry(key string) (string, time.Time, bool) {
 	if m.Map == nil {
-		return "", false
+		return "", time.Time{}, false
 	}
 	value, ok := m.Map.Lookup(key)
 	if !ok {
-		return "", false
+		return "", time.Time{}, false
 	}
-	return value.(LatestEntry).Value, true
+	e := value.(LatestEntry)
+	return e.Value, e.Timestamp, true
 }
 
 // Set the value for the given key.

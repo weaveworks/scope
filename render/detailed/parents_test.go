@@ -15,33 +15,39 @@ import (
 func TestParents(t *testing.T) {
 	for _, c := range []struct {
 		name string
-		node render.RenderableNode
+		node report.Node
 		want []detailed.Parent
 	}{
 		{
 			name: "Node accidentally tagged with itself",
-			node: render.HostRenderer.Render(fixture.Report)[render.MakeHostID(fixture.ClientHostID)].WithParents(
+			node: render.HostRenderer.Render(fixture.Report)[fixture.ClientHostNodeID].WithParents(
 				report.EmptySets.Add(report.Host, report.MakeStringSet(fixture.ClientHostNodeID)),
 			),
 			want: nil,
 		},
 		{
-			node: render.HostRenderer.Render(fixture.Report)[render.MakeHostID(fixture.ClientHostID)],
+			node: render.HostRenderer.Render(fixture.Report)[fixture.ClientHostNodeID],
 			want: nil,
 		},
 		{
-			node: render.ContainerRenderer.Render(fixture.Report)[render.MakeContainerID(fixture.ClientContainerID)],
+			node: render.ContainerImageRenderer.Render(fixture.Report)[fixture.ClientContainerImageNodeID],
 			want: []detailed.Parent{
-				{ID: render.MakeContainerImageID(fixture.ClientContainerImageName), Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
-				{ID: render.MakeHostID(fixture.ClientHostID), Label: fixture.ClientHostName, TopologyID: "hosts"},
+				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
 			},
 		},
 		{
-			node: render.ProcessRenderer.Render(fixture.Report)[render.MakeProcessID(fixture.ClientHostID, fixture.Client1PID)],
+			node: render.ContainerRenderer.Render(fixture.Report)[fixture.ClientContainerNodeID],
 			want: []detailed.Parent{
-				{ID: render.MakeContainerID(fixture.ClientContainerID), Label: fixture.ClientContainerName, TopologyID: "containers"},
-				{ID: render.MakeContainerImageID(fixture.ClientContainerImageName), Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
-				{ID: render.MakeHostID(fixture.ClientHostID), Label: fixture.ClientHostName, TopologyID: "hosts"},
+				{ID: fixture.ClientContainerImageNodeID, Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
+				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
+			},
+		},
+		{
+			node: render.ProcessRenderer.Render(fixture.Report)[fixture.ClientProcess1NodeID],
+			want: []detailed.Parent{
+				{ID: fixture.ClientContainerNodeID, Label: fixture.ClientContainerName, TopologyID: "containers"},
+				{ID: fixture.ClientContainerImageNodeID, Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
+				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
 			},
 		},
 	} {

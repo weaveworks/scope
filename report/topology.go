@@ -78,6 +78,16 @@ func (n Nodes) Merge(other Nodes) Nodes {
 	return cp
 }
 
+// Prune returns a copy of the Nodes with all information not strictly
+// necessary for rendering nodes and edges in the UI cut away.
+func (n Nodes) Prune() Nodes {
+	result := Nodes{}
+	for id, node := range n {
+		result[id] = node.Prune()
+	}
+	return result
+}
+
 // Validate checks the topology for various inconsistencies.
 func (t Topology) Validate() error {
 	errs := []string{}

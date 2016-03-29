@@ -154,6 +154,9 @@ clean:
 		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/*.js docker/weave .pkg \
 		$(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin
 
+clean-codecgen:
+	rm -rf $(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin
+
 deps:
 	$(GO) get -u -f -tags $(GO_BUILD_TAGS) \
 		github.com/FiloSottile/gvt \

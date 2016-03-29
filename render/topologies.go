@@ -1,20 +1,15 @@
 package render
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
 
 // EndpointRenderer is a Renderer which produces a renderable endpoint graph.
-var EndpointRenderer = MakeMap(
-	MapEndpointIdentity,
-	SelectEndpoint,
-)
+var EndpointRenderer = FilterNonProcspied(SelectEndpoint)
 
 // ProcessRenderer is a Renderer which produces a renderable process
 // graph by merging the endpoint graph and the process topology.
@@ -23,10 +18,7 @@ var ProcessRenderer = MakeReduce(
 		MapEndpoint2Process,
 		EndpointRenderer,
 	),
-	MakeMap(
-		MapProcessIdentity,
-		SelectProcess,
-	),
+	SelectProcess,
 )
 
 // processWithContainerNameRenderer is a Renderer which produces a process
@@ -35,30 +27,26 @@ type processWithContainerNameRenderer struct {
 	Renderer
 }
 
-func (r processWithContainerNameRenderer) Render(rpt report.Report) RenderableNodes {
+func (r processWithContainerNameRenderer) Render(rpt report.Report) report.Nodes {
 	processes := r.Renderer.Render(rpt)
-	containers := MakeMap(
-		MapContainerIdentity,
-		SelectContainer,
-	).Render(rpt)
+	containers := SelectContainer.Render(rpt)
 
-	outputs := RenderableNodes{}
+	outputs := report.Nodes{}
 	for id, p := range processes {
 		outputs[id] = p
-		pid, ok := p.Node.Latest.Lookup(process.PID)
+		containerID, timestamp, ok := p.Latest.LookupEntry(docker.ContainerID)
 		if !ok {
 			continue
 		}
-		containerID, ok := p.Node.Latest.Lookup(docker.ContainerID)
-		if !ok {
-			continue
-		}
-		container, ok := containers[MakeContainerID(containerID)]
+		container, ok := containers[report.MakeContainerNodeID(containerID)]
 		if !ok {
 			continue
 		}
 		output := p.Copy()
-		output.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(p.Node), container.LabelMajor, pid)
+		output.Latest = output.Latest.Set(docker.ContainerID, timestamp, containerID)
+		if containerName, timestamp, ok := container.Latest.LookupEntry(docker.ContainerName); ok {
+			output.Latest = output.Latest.Set(docker.ContainerName, timestamp, containerName)
+		}
 		outputs[id] = output
 	}
 	return outputs
@@ -71,11 +59,8 @@ var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessR
 // ProcessNameRenderer is a Renderer which produces a renderable process
 // name graph by munging the progess graph.
 var ProcessNameRenderer = MakeMap(
-	MapCountProcessName,
-	MakeMap(
-		MapProcess2Name,
-		ProcessRenderer,
-	),
+	MapProcess2Name,
+	ProcessRenderer,
 )
 
 // ContainerRenderer is a Renderer which produces a renderable container
@@ -85,9 +70,9 @@ var ProcessNameRenderer = MakeMap(
 // including the ProcessRenderer once.
 var ContainerRenderer = MakeReduce(
 	MakeFilter(
-		func(n RenderableNode) bool {
-			_, inContainer := n.Node.Latest.Lookup(docker.ContainerID)
-			_, isConnected := n.Node.Latest.Lookup(IsConnected)
+		func(n report.Node) bool {
+			_, inContainer := n.Latest.Lookup(docker.ContainerID)
+			_, isConnected := n.Latest.Lookup(IsConnected)
 			return inContainer || isConnected
 		},
 		MakeMap(
@@ -114,10 +99,7 @@ var ContainerRenderer = MakeReduce(
 		),
 	)),
 
-	MakeMap(
-		MapContainerIdentity,
-		SelectContainer,
-	),
+	SelectContainer,
 )
 
 type containerWithHostIPsRenderer struct {
@@ -126,22 +108,19 @@ type containerWithHostIPsRenderer struct {
 
 // Render produces a process graph where the ips for host network mode are set
 // to the host's IPs.
-func (r containerWithHostIPsRenderer) Render(rpt report.Report) RenderableNodes {
+func (r containerWithHostIPsRenderer) Render(rpt report.Report) report.Nodes {
 	containers := r.Renderer.Render(rpt)
-	hosts := MakeMap(
-		MapHostIdentity,
-		SelectHost,
-	).Render(rpt)
+	hosts := SelectHost.Render(rpt)
 
-	outputs := RenderableNodes{}
+	outputs := report.Nodes{}
 	for id, c := range containers {
 		outputs[id] = c
-		networkMode, ok := c.Node.Latest.Lookup(docker.ContainerNetworkMode)
+		networkMode, ok := c.Latest.Lookup(docker.ContainerNetworkMode)
 		if !ok || networkMode != docker.NetworkModeHost {
 			continue
 		}
 
-		h, ok := hosts[MakeHostID(report.ExtractHostID(c.Node))]
+		h, ok := hosts[report.MakeHostNodeID(report.ExtractHostID(c))]
 		if !ok {
 			continue
 		}
@@ -172,26 +151,22 @@ type containerWithImageNameRenderer struct {
 // Render produces a process graph where the minor labels contain the
 // container name, if found.  It also merges the image node metadata into the
 // container metadata.
-func (r containerWithImageNameRenderer) Render(rpt report.Report) RenderableNodes {
+func (r containerWithImageNameRenderer) Render(rpt report.Report) report.Nodes {
 	containers := r.Renderer.Render(rpt)
-	images := MakeMap(
-		MapContainerImageIdentity,
-		SelectContainerImage,
-	).Render(rpt)
+	images := SelectContainerImage.Render(rpt)
 
-	outputs := RenderableNodes{}
+	outputs := report.Nodes{}
 	for id, c := range containers {
 		outputs[id] = c
-		imageID, ok := c.Node.Latest.Lookup(docker.ImageID)
+		imageID, ok := c.Latest.Lookup(docker.ImageID)
 		if !ok {
 			continue
 		}
-		image, ok := images[MakeContainerImageID(imageID)]
+		image, ok := images[report.MakeContainerImageNodeID(imageID)]
 		if !ok {
 			continue
 		}
 		output := c.Copy()
-		output.Rank = ImageNameWithoutVersion(image.LabelMajor)
 		output.Latest = image.Latest.Merge(c.Latest)
 		outputs[id] = output
 	}
@@ -204,31 +179,19 @@ var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerWit
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
-var ContainerImageRenderer = MakeMap(
-	MapCountContainers,
+var ContainerImageRenderer = MakeReduce(
 	MakeMap(
-		MapContainerImage2Name,
-		MakeReduce(
-			MakeMap(
-				MapContainer2ContainerImage,
-				ContainerRenderer,
-			),
-			MakeMap(
-				MapContainerImageIdentity,
-				SelectContainerImage,
-			),
-		),
+		MapContainer2ContainerImage,
+		ContainerRenderer,
 	),
+	SelectContainerImage,
 )
 
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
 // by hostname graph..
 var ContainerHostnameRenderer = MakeMap(
-	MapCountContainers,
-	MakeMap(
-		MapContainer2Hostname,
-		ContainerRenderer,
-	),
+	MapContainer2Hostname,
+	ContainerRenderer,
 )
 
 // HostRenderer is a Renderer which produces a renderable host
@@ -253,45 +216,27 @@ var HostRenderer = MakeReduce(
 	// Pods don't have a host id - #1142
 	// MakeMap(
 	// 	MapX2Host,
-	// 	MakeMap(
-	// 		MapPodIdentity,
 	// 		SelectPod,
-	// 	),
 	// ),
-	MakeMap(
-		MapHostIdentity,
-		SelectHost,
-	),
+	SelectHost,
 )
 
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
-var PodRenderer = MakeMap(
-	MapCountContainers,
-	MakeReduce(
-		MakeMap(
-			MapContainer2Pod,
-			ContainerRenderer,
-		),
-		MakeMap(
-			MapPodIdentity,
-			SelectPod,
-		),
+var PodRenderer = MakeReduce(
+	MakeMap(
+		MapContainer2Pod,
+		ContainerRenderer,
 	),
+	SelectPod,
 )
 
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
-var PodServiceRenderer = MakeMap(
-	MapCountPods,
-	MakeReduce(
-		MakeMap(
-			MapPod2Service,
-			PodRenderer,
-		),
-		MakeMap(
-			MapServiceIdentity,
-			SelectService,
-		),
+var PodServiceRenderer = MakeReduce(
+	MakeMap(
+		MapPod2Service,
+		PodRenderer,
 	),
+	SelectService,
 )

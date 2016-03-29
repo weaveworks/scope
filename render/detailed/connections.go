@@ -30,12 +30,12 @@ var (
 )
 
 type connectionsRow struct {
-	remoteNode, localNode *render.RenderableNode
+	remoteNode, localNode *report.Node
 	remoteAddr, localAddr string
 	port                  string // always the server-side port
 }
 
-func incomingConnectionsTable(topologyID string, n render.RenderableNode, ns render.RenderableNodes) NodeSummaryGroup {
+func incomingConnectionsTable(topologyID string, n report.Node, ns report.Nodes) NodeSummaryGroup {
 	localEndpointIDs := endpointChildIDsOf(n)
 
 	// For each node which has an edge TO me
@@ -54,7 +54,7 @@ func incomingConnectionsTable(topologyID string, n render.RenderableNode, ns ren
 		// details on the internet node)
 		for _, child := range endpointChildrenOf(node) {
 			for _, localEndpointID := range child.Adjacency.Intersection(localEndpointIDs) {
-				_, localAddr, port, ok := render.ParseEndpointID(localEndpointID)
+				_, localAddr, port, ok := report.ParseEndpointNodeID(localEndpointID)
 				if !ok {
 					continue
 				}
@@ -84,26 +84,27 @@ func incomingConnectionsTable(topologyID string, n render.RenderableNode, ns ren
 	}
 }
 
-func outgoingConnectionsTable(topologyID string, n render.RenderableNode, ns render.RenderableNodes) NodeSummaryGroup {
+func outgoingConnectionsTable(topologyID string, n report.Node, ns report.Nodes) NodeSummaryGroup {
 	localEndpoints := endpointChildrenOf(n)
 
 	// For each node which has an edge FROM me
 	counts := map[connectionsRow]int{}
-	for _, node := range ns {
-		if !n.Adjacency.Contains(node.ID) {
+	for _, id := range n.Adjacency {
+		node, ok := ns[id]
+		if !ok {
 			continue
 		}
 		remoteNode := node.Copy()
 		remoteEndpointIDs := endpointChildIDsOf(remoteNode)
 
 		for _, localEndpoint := range localEndpoints {
-			_, localAddr, _, ok := render.ParseEndpointID(localEndpoint.ID)
+			_, localAddr, _, ok := report.ParseEndpointNodeID(localEndpoint.ID)
 			if !ok {
 				continue
 			}
 
 			for _, remoteEndpointID := range localEndpoint.Adjacency.Intersection(remoteEndpointIDs) {
-				_, _, port, ok := render.ParseEndpointID(remoteEndpointID)
+				_, _, port, ok := report.ParseEndpointNodeID(remoteEndpointID)
 				if !ok {
 					continue
 				}
@@ -133,47 +134,54 @@ func outgoingConnectionsTable(topologyID string, n render.RenderableNode, ns ren
 	}
 }
 
-func endpointChildrenOf(n render.RenderableNode) []render.RenderableNode {
-	result := []render.RenderableNode{}
-	n.Children.ForEach(func(child render.RenderableNode) {
-		if _, _, _, ok := render.ParseEndpointID(child.ID); ok {
+func endpointChildrenOf(n report.Node) []report.Node {
+	result := []report.Node{}
+	n.Children.ForEach(func(child report.Node) {
+		if _, _, _, ok := report.ParseEndpointNodeID(child.ID); ok {
 			result = append(result, child)
 		}
 	})
 	return result
 }
 
-func endpointChildIDsOf(n render.RenderableNode) report.IDList {
+func endpointChildIDsOf(n report.Node) report.IDList {
 	result := report.MakeIDList()
-	n.Children.ForEach(func(child render.RenderableNode) {
-		if _, _, _, ok := render.ParseEndpointID(child.ID); ok {
-			result = append(result, child.ID)
+	n.Children.ForEach(func(child report.Node) {
+		if _, _, _, ok := report.ParseEndpointNodeID(child.ID); ok {
+			result = result.Add(child.ID)
 		}
 	})
 	return result
 }
 
-func isInternetNode(n render.RenderableNode) bool {
+func isInternetNode(n report.Node) bool {
 	return n.ID == render.IncomingInternetID || n.ID == render.OutgoingInternetID
 }
 
 func connectionRows(in map[connectionsRow]int, includeLocal bool) []NodeSummary {
 	nodes := []NodeSummary{}
 	for row, count := range in {
-		id, label, linkable := row.remoteNode.ID, row.remoteNode.LabelMajor, true
-		if row.remoteAddr != "" {
-			id, label, linkable = row.remoteAddr+":"+row.port, row.remoteAddr, false
+		// Use MakeNodeSummary to render the id and label of this node
+		// TODO(paulbellamy): Would be cleaner if we hade just a
+		// MakeNodeID(*row.remoteode). As we don't need the whole summary.
+		summary, ok := MakeNodeSummary(*row.remoteNode)
+		summary.Metadata, summary.Metrics, summary.DockerLabels = nil, nil, nil
+		if !ok && row.remoteAddr != "" {
+			summary = NodeSummary{
+				ID:       row.remoteAddr + ":" + row.port,
+				Label:    row.remoteAddr,
+				Linkable: false,
+			}
 		}
-		metadata := []MetadataRow{}
 		if includeLocal {
-			metadata = append(metadata,
+			summary.Metadata = append(summary.Metadata,
 				MetadataRow{
 					ID:       "foo",
 					Value:    row.localAddr,
 					Datatype: number,
 				})
 		}
-		metadata = append(metadata,
+		summary.Metadata = append(summary.Metadata,
 			MetadataRow{
 				ID:       portKey,
 				Value:    row.port,
@@ -185,12 +193,7 @@ func connectionRows(in map[connectionsRow]int, includeLocal bool) []NodeSummary 
 				Datatype: number,
 			},
 		)
-		nodes = append(nodes, NodeSummary{
-			ID:       id,
-			Label:    label,
-			Linkable: linkable,
-			Metadata: metadata,
-		})
+		nodes = append(nodes, summary)
 	}
 	sort.Sort(nodeSummariesByID(nodes))
 	return nodes

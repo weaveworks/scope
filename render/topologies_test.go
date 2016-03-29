@@ -15,7 +15,7 @@ import (
 
 func TestEndpointRenderer(t *testing.T) {
 	have := render.EndpointRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedEndpoints
+	want := expected.RenderedEndpoints.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -23,7 +23,7 @@ func TestEndpointRenderer(t *testing.T) {
 
 func TestProcessRenderer(t *testing.T) {
 	have := render.ProcessRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedProcesses
+	want := expected.RenderedProcesses.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -31,15 +31,15 @@ func TestProcessRenderer(t *testing.T) {
 
 func TestProcessNameRenderer(t *testing.T) {
 	have := render.ProcessNameRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedProcessNames
+	want := expected.RenderedProcessNames.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := (render.ContainerRenderer.Render(fixture.Report)).Prune()
-	want := expected.RenderedContainers
+	have := render.ContainerRenderer.Render(fixture.Report).Prune()
+	want := expected.RenderedContainers.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -53,8 +53,8 @@ func TestContainerFilterRenderer(t *testing.T) {
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
 	have := render.FilterSystem(render.ContainerRenderer).Render(input).Prune()
-	want := expected.RenderedContainers.Copy()
-	delete(want, expected.ClientContainerID)
+	want := expected.RenderedContainers.Copy().Prune()
+	delete(want, fixture.ClientContainerNodeID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -68,11 +68,14 @@ func TestContainerWithHostIPsRenderer(t *testing.T) {
 	nodes := render.ContainerWithHostIPsRenderer.Render(input)
 
 	// Test host network nodes get the host IPs added.
-	haveNode, ok := nodes[render.MakeContainerID(fixture.ClientContainerID)]
+	haveNode, ok := nodes[fixture.ClientContainerNodeID]
 	if !ok {
 		t.Fatal("Expected output to have the client container node")
 	}
-	have, _ := haveNode.Sets.Lookup(docker.ContainerIPs)
+	have, ok := haveNode.Sets.Lookup(docker.ContainerIPs)
+	if !ok {
+		t.Fatal("Container had no IPs set.")
+	}
 	want := report.MakeStringSet("10.10.10.0")
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -81,7 +84,7 @@ func TestContainerWithHostIPsRenderer(t *testing.T) {
 
 func TestContainerImageRenderer(t *testing.T) {
 	have := render.ContainerImageRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedContainerImages
+	want := expected.RenderedContainerImages.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -89,7 +92,7 @@ func TestContainerImageRenderer(t *testing.T) {
 
 func TestHostRenderer(t *testing.T) {
 	have := render.HostRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedHosts
+	want := expected.RenderedHosts.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -97,7 +100,7 @@ func TestHostRenderer(t *testing.T) {
 
 func TestPodRenderer(t *testing.T) {
 	have := render.PodRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedPods
+	want := expected.RenderedPods.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -116,9 +119,9 @@ func TestPodFilterRenderer(t *testing.T) {
 		docker.LabelPrefix + "io.kubernetes.pod.name": "kube-system/foo",
 	})
 	have := render.FilterSystem(render.PodRenderer).Render(input).Prune()
-	want := expected.RenderedPods.Copy()
-	delete(want, expected.ClientPodRenderedID)
-	delete(want, expected.ClientContainerID)
+	want := expected.RenderedPods.Copy().Prune()
+	delete(want, fixture.ClientPodNodeID)
+	delete(want, fixture.ClientContainerNodeID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -126,7 +129,7 @@ func TestPodFilterRenderer(t *testing.T) {
 
 func TestPodServiceRenderer(t *testing.T) {
 	have := render.PodServiceRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedPodServices
+	want := expected.RenderedPodServices.Prune()
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

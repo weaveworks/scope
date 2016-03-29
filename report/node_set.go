@@ -1,4 +1,4 @@
-package render
+package report
 
 import (
 	"bytes"
@@ -13,35 +13,35 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
-// RenderableNodeSet is a set of nodes keyed on (Topology, ID). Clients must use
+// NodeSet is a set of nodes keyed on ID. Clients must use
 // the Add method to add nodes
-type RenderableNodeSet struct {
+type NodeSet struct {
 	psMap ps.Map
 }
 
-// EmptyRenderableNodeSet is the empty set of nodes.
-var EmptyRenderableNodeSet = RenderableNodeSet{ps.NewMap()}
+// EmptyNodeSet is the empty set of nodes.
+var EmptyNodeSet = NodeSet{ps.NewMap()}
 
-// MakeRenderableNodeSet makes a new RenderableNodeSet with the given nodes.
-func MakeRenderableNodeSet(nodes ...RenderableNode) RenderableNodeSet {
-	return EmptyRenderableNodeSet.Add(nodes...)
+// MakeNodeSet makes a new NodeSet with the given nodes.
+func MakeNodeSet(nodes ...Node) NodeSet {
+	return EmptyNodeSet.Add(nodes...)
 }
 
-// Add adds the nodes to the RenderableNodeSet. Add is the only valid way to grow a
-// RenderableNodeSet. Add returns the RenderableNodeSet to enable chaining.
-func (n RenderableNodeSet) Add(nodes ...RenderableNode) RenderableNodeSet {
+// Add adds the nodes to the NodeSet. Add is the only valid way to grow a
+// NodeSet. Add returns the NodeSet to enable chaining.
+func (n NodeSet) Add(nodes ...Node) NodeSet {
 	result := n.psMap
 	if result == nil {
 		result = ps.NewMap()
 	}
 	for _, node := range nodes {
-		result = result.Set(fmt.Sprintf("%s|%s", node.Topology, node.ID), node)
+		result = result.Set(node.ID, node)
 	}
-	return RenderableNodeSet{result}
+	return NodeSet{result}
 }
 
-// Merge combines the two RenderableNodeSets and returns a new result.
-func (n RenderableNodeSet) Merge(other RenderableNodeSet) RenderableNodeSet {
+// Merge combines the two NodeSets and returns a new result.
+func (n NodeSet) Merge(other NodeSet) NodeSet {
 	nSize, otherSize := n.Size(), other.Size()
 	if nSize == 0 {
 		return other
@@ -56,22 +56,22 @@ func (n RenderableNodeSet) Merge(other RenderableNodeSet) RenderableNodeSet {
 	iter.ForEach(func(key string, otherVal interface{}) {
 		result = result.Set(key, otherVal)
 	})
-	return RenderableNodeSet{result}
+	return NodeSet{result}
 }
 
 // Lookup the node 'key'
-func (n RenderableNodeSet) Lookup(key string) (RenderableNode, bool) {
+func (n NodeSet) Lookup(key string) (Node, bool) {
 	if n.psMap != nil {
 		value, ok := n.psMap.Lookup(key)
 		if ok {
-			return value.(RenderableNode), true
+			return value.(Node), true
 		}
 	}
-	return RenderableNode{}, false
+	return Node{}, false
 }
 
 // Keys is a list of all the keys in this set.
-func (n RenderableNodeSet) Keys() []string {
+func (n NodeSet) Keys() []string {
 	if n.psMap == nil {
 		return nil
 	}
@@ -81,7 +81,7 @@ func (n RenderableNodeSet) Keys() []string {
 }
 
 // Size is the number of nodes in the set
-func (n RenderableNodeSet) Size() int {
+func (n NodeSet) Size() int {
 	if n.psMap == nil {
 		return 0
 	}
@@ -90,23 +90,23 @@ func (n RenderableNodeSet) Size() int {
 
 // ForEach executes f for each node in the set. Nodes are traversed in sorted
 // order.
-func (n RenderableNodeSet) ForEach(f func(RenderableNode)) {
+func (n NodeSet) ForEach(f func(Node)) {
 	for _, key := range n.Keys() {
 		if val, ok := n.psMap.Lookup(key); ok {
-			f(val.(RenderableNode))
+			f(val.(Node))
 		}
 	}
 }
 
 // Copy is a noop
-func (n RenderableNodeSet) Copy() RenderableNodeSet {
+func (n NodeSet) Copy() NodeSet {
 	return n
 }
 
-func (n RenderableNodeSet) String() string {
+func (n NodeSet) String() string {
 	keys := []string{}
 	if n.psMap == nil {
-		n = EmptyRenderableNodeSet
+		n = EmptyNodeSet
 	}
 	psMap := n.psMap
 	if psMap == nil {
@@ -126,9 +126,9 @@ func (n RenderableNodeSet) String() string {
 	return buf.String()
 }
 
-// DeepEqual tests equality with other RenderableNodeSets
-func (n RenderableNodeSet) DeepEqual(i interface{}) bool {
-	d, ok := i.(RenderableNodeSet)
+// DeepEqual tests equality with other NodeSets
+func (n NodeSet) DeepEqual(i interface{}) bool {
+	d, ok := i.(NodeSet)
 	if !ok {
 		return false
 	}
@@ -151,20 +151,20 @@ func (n RenderableNodeSet) DeepEqual(i interface{}) bool {
 	return equal
 }
 
-func (n RenderableNodeSet) toIntermediate() []RenderableNode {
-	intermediate := make([]RenderableNode, 0, n.Size())
-	n.ForEach(func(node RenderableNode) {
+func (n NodeSet) toIntermediate() []Node {
+	intermediate := make([]Node, 0, n.Size())
+	n.ForEach(func(node Node) {
 		intermediate = append(intermediate, node)
 	})
 	return intermediate
 }
 
-func (n RenderableNodeSet) fromIntermediate(nodes []RenderableNode) RenderableNodeSet {
-	return MakeRenderableNodeSet(nodes...)
+func (n NodeSet) fromIntermediate(nodes []Node) NodeSet {
+	return MakeNodeSet(nodes...)
 }
 
 // CodecEncodeSelf implements codec.Selfer
-func (n *RenderableNodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
+func (n *NodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
 	if n.psMap != nil {
 		encoder.Encode(n.toIntermediate())
 	} else {
@@ -173,37 +173,37 @@ func (n *RenderableNodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
 }
 
 // CodecDecodeSelf implements codec.Selfer
-func (n *RenderableNodeSet) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := []RenderableNode{}
+func (n *NodeSet) CodecDecodeSelf(decoder *codec.Decoder) {
+	in := []Node{}
 	if err := decoder.Decode(&in); err != nil {
 		return
 	}
-	*n = RenderableNodeSet{}.fromIntermediate(in)
+	*n = NodeSet{}.fromIntermediate(in)
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
-func (RenderableNodeSet) MarshalJSON() ([]byte, error) {
+func (NodeSet) MarshalJSON() ([]byte, error) {
 	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
 }
 
 // UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
-func (*RenderableNodeSet) UnmarshalJSON(b []byte) error {
+func (*NodeSet) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
 // GobEncode implements gob.Marshaller
-func (n RenderableNodeSet) GobEncode() ([]byte, error) {
+func (n NodeSet) GobEncode() ([]byte, error) {
 	buf := bytes.Buffer{}
 	err := gob.NewEncoder(&buf).Encode(n.toIntermediate())
 	return buf.Bytes(), err
 }
 
 // GobDecode implements gob.Unmarshaller
-func (n *RenderableNodeSet) GobDecode(input []byte) error {
-	in := []RenderableNode{}
+func (n *NodeSet) GobDecode(input []byte) error {
+	in := []Node{}
 	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
 		return err
 	}
-	*n = RenderableNodeSet{}.fromIntermediate(in)
+	*n = NodeSet{}.fromIntermediate(in)
 	return nil
 }

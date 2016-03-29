@@ -14,7 +14,7 @@ import (
 
 var (
 	benchReportFile       = flag.String("bench-report-file", "", "json report file to use for benchmarking (relative to this package)")
-	benchmarkRenderResult map[string]render.RenderableNode
+	benchmarkRenderResult map[string]report.Node
 	benchmarkStatsResult  render.Stats
 )
 

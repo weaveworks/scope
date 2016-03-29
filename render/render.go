@@ -4,9 +4,9 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-// Renderer is something that can render a report to a set of RenderableNodes.
+// Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
-	Render(report.Report) RenderableNodes
+	Render(report.Report) report.Nodes
 	Stats(report.Report) Stats
 }
 
@@ -31,9 +31,9 @@ func MakeReduce(renderers ...Renderer) Renderer {
 	return Memoise(&r)
 }
 
-// Render produces a set of RenderableNodes given a Report.
-func (r *Reduce) Render(rpt report.Report) RenderableNodes {
-	result := RenderableNodes{}
+// Render produces a set of Nodes given a Report.
+func (r *Reduce) Render(rpt report.Report) report.Nodes {
+	result := report.Nodes{}
 	for _, renderer := range *r {
 		result = result.Merge(renderer.Render(rpt))
 	}
@@ -49,8 +49,8 @@ func (r *Reduce) Stats(rpt report.Report) Stats {
 	return result
 }
 
-// Map is a Renderer which produces a set of RenderableNodes from the set of
-// RenderableNodes produced by another Renderer.
+// Map is a Renderer which produces a set of Nodes from the set of
+// Nodes produced by another Renderer.
 type Map struct {
 	MapFunc
 	Renderer
@@ -61,25 +61,12 @@ func MakeMap(f MapFunc, r Renderer) Renderer {
 	return Memoise(&Map{f, r})
 }
 
-// Render transforms a set of RenderableNodes produces by another Renderer.
+// Render transforms a set of Nodes produces by another Renderer.
 // using a map function
-func (m *Map) Render(rpt report.Report) RenderableNodes {
-	output, _ := m.render(rpt)
-	return output
-}
-
-// Stats implements Renderer
-func (m *Map) Stats(rpt report.Report) Stats {
-	// There doesn't seem to be an instance where we want stats to recurse
-	// through Maps - for instance we don't want to see the number of filtered
-	// processes in the container renderer.
-	return Stats{}
-}
-
-func (m *Map) render(rpt report.Report) (RenderableNodes, map[string]report.IDList) {
+func (m *Map) Render(rpt report.Report) report.Nodes {
 	var (
 		input         = m.Renderer.Render(rpt)
-		output        = RenderableNodes{}
+		output        = report.Nodes{}
 		mapped        = map[string]report.IDList{} // input node ID -> output node IDs
 		adjacencies   = map[string]report.IDList{} // output node ID -> input node Adjacencies
 		localNetworks = LocalNetworks(rpt)
@@ -112,5 +99,13 @@ func (m *Map) render(rpt report.Report) (RenderableNodes, map[string]report.IDLi
 		output[outNodeID] = outNode
 	}
 
-	return output, mapped
+	return output
+}
+
+// Stats implements Renderer
+func (m *Map) Stats(rpt report.Report) Stats {
+	// There doesn't seem to be an instance where we want stats to recurse
+	// through Maps - for instance we don't want to see the number of filtered
+	// processes in the container renderer.
+	return Stats{}
 }

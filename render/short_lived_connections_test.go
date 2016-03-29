@@ -2,7 +2,6 @@ package render_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -10,7 +9,6 @@ import (
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 )
 
 var (
@@ -68,32 +66,18 @@ var (
 			},
 		},
 	}
-
-	want = (render.RenderableNodes{
-		render.IncomingInternetID: {
-			ID:         render.IncomingInternetID,
-			LabelMajor: render.InboundMajor,
-			LabelMinor: render.InboundMinor,
-			Pseudo:     true,
-			Shape:      "cloud",
-			Node:       report.MakeNode().WithAdjacent(render.MakeContainerID(containerID)),
-		},
-		render.MakeContainerID(containerID): {
-			ID:          render.MakeContainerID(containerID),
-			LabelMajor:  containerName,
-			LabelMinor:  serverHostID,
-			Rank:        "",
-			Pseudo:      false,
-			Shape:       "hexagon",
-			Node:        report.MakeNode(),
-			ControlNode: containerNodeID,
-		},
-	}).Prune()
 )
 
 func TestShortLivedInternetNodeConnections(t *testing.T) {
-	have := (render.ContainerWithImageNameRenderer.Render(rpt)).Prune()
-	if !reflect.DeepEqual(want, have) {
-		t.Error(test.Diff(want, have))
+	have := render.ContainerWithImageNameRenderer.Render(rpt).Prune()
+
+	// Conntracked-only connections from the internet should be assigned to the internet pseudonode
+	internet, ok := have[render.IncomingInternetID]
+	if !ok {
+		t.Fatal("Expected output to have an incoming internet node")
+	}
+
+	if !internet.Adjacency.Contains(report.MakeContainerNodeID(containerID)) {
+		t.Errorf("Expected internet node to have adjacency to %s, but only had %v", report.MakeContainerNodeID(containerID), internet.Adjacency)
 	}
 }

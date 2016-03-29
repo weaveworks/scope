@@ -47,6 +47,22 @@ type MetricRow struct {
 	Metric *report.Metric
 }
 
+// Summary returns a copy of the MetricRow, without the samples, just the value if there is one.
+func (m MetricRow) Summary() MetricRow {
+	row := MetricRow{
+		ID:     m.ID,
+		Format: m.Format,
+		Group:  m.Group,
+		Value:  m.Value,
+	}
+	if m.Metric != nil {
+		var metric = m.Metric.Copy()
+		metric.Samples = nil
+		row.Metric = &metric
+	}
+	return row
+}
+
 // Copy returns a value copy of the MetricRow
 func (m MetricRow) Copy() MetricRow {
 	row := MetricRow{
@@ -125,8 +141,13 @@ func (m *MetricRow) CodecDecodeSelf(decoder *codec.Decoder) {
 }
 
 // NodeMetrics produces a table (to be consumed directly by the UI) based on
-// an origin ID, which is (optimistically) a node ID in one of our topologies.
+// an a report.Node, which is (hopefully) a node in one of our topologies.
 func NodeMetrics(n report.Node) []MetricRow {
+	if _, ok := n.Counters.Lookup(n.Topology); ok {
+		// This is a group of nodes, so no metrics!
+		return nil
+	}
+
 	renderers := map[string][]MetricRow{
 		report.Process:   processNodeMetrics,
 		report.Container: containerNodeMetrics,

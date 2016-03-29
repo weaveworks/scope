@@ -20,7 +20,7 @@ export default class Sparkline extends React.Component {
     let data = this.props.data;
 
     // Do nothing if no data or data w/o date are passed in.
-    if (data.length === 0 || data[0].date === undefined) {
+    if (data === undefined || data.length === 0 || data[0].date === undefined) {
       return <div />;
     }
 

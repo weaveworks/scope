@@ -11,6 +11,11 @@ import (
 // on an origin ID, which is (optimistically) a node ID in one of our
 // topologies.
 func NodeDockerLabels(nmd report.Node) []MetadataRow {
+	if _, ok := nmd.Counters.Lookup(nmd.Topology); ok {
+		// This is a group of nodes, so no docker labels!
+		return nil
+	}
+
 	if nmd.Topology != report.Container && nmd.Topology != report.ContainerImage {
 		return nil
 	}

@@ -8,7 +8,6 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -16,8 +15,6 @@ import (
 // we want deep information about an individual node.
 type Node struct {
 	NodeSummary
-	Rank        string             `json:"rank,omitempty"`
-	Pseudo      bool               `json:"pseudo,omitempty"`
 	Controls    []ControlInstance  `json:"controls"`
 	Children    []NodeSummaryGroup `json:"children,omitempty"`
 	Parents     []Parent           `json:"parents,omitempty"`
@@ -79,15 +76,10 @@ func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
 
 // MakeNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
-func MakeNode(topologyID string, r report.Report, ns render.RenderableNodes, n render.RenderableNode) Node {
+func MakeNode(topologyID string, r report.Report, ns report.Nodes, n report.Node) Node {
 	summary, _ := MakeNodeSummary(n)
-	summary.ID = n.ID
-	summary.Label = n.LabelMajor
-
 	return Node{
 		NodeSummary: summary,
-		Rank:        n.Rank,
-		Pseudo:      n.Pseudo,
 		Controls:    controls(r, n),
 		Children:    children(n),
 		Parents:     Parents(r, n),
@@ -121,15 +113,10 @@ func controlsFor(topology report.Topology, nodeID string) []ControlInstance {
 	return result
 }
 
-func controls(r report.Report, n render.RenderableNode) []ControlInstance {
-	if _, ok := r.Process.Nodes[n.ControlNode]; ok {
-		return controlsFor(r.Process, n.ControlNode)
-	} else if _, ok := r.Container.Nodes[n.ControlNode]; ok {
-		return controlsFor(r.Container, n.ControlNode)
-	} else if _, ok := r.ContainerImage.Nodes[n.ControlNode]; ok {
-		return controlsFor(r.ContainerImage, n.ControlNode)
-	} else if _, ok := r.Host.Nodes[n.ControlNode]; ok {
-		return controlsFor(r.Host, n.ControlNode)
+func controls(r report.Report, n report.Node) []ControlInstance {
+	// TODO(paulbellamy): this ID will have been munged in rendering, so we should stop doing that, so that this matches up.
+	if t, ok := r.Topology(n.Topology); ok {
+		return controlsFor(t, n.ID)
 	}
 	return []ControlInstance{}
 }
@@ -184,21 +171,24 @@ var (
 				TopologyID: "containers-by-image",
 				Label:      "Container Images",
 				Columns: []Column{
-					{ID: render.ContainersKey, Label: Label(render.ContainersKey), DefaultSort: true},
+					{ID: report.Container, Label: Label(report.Container), DefaultSort: true},
 				},
 			},
 		},
 	}
 )
 
-func children(n render.RenderableNode) []NodeSummaryGroup {
+func children(n report.Node) []NodeSummaryGroup {
 	summaries := map[string][]NodeSummary{}
-	n.Children.ForEach(func(child render.RenderableNode) {
-		if child.ID != n.ID {
-			if summary, ok := MakeNodeSummary(child); ok {
-				summaries[child.Topology] = append(summaries[child.Topology], summary)
-			}
+	n.Children.ForEach(func(child report.Node) {
+		if child.ID == n.ID {
+			return
 		}
+		summary, ok := MakeNodeSummary(child)
+		if !ok {
+			return
+		}
+		summaries[child.Topology] = append(summaries[child.Topology], summary.SummarizeMetrics())
 	})
 
 	nodeSummaryGroups := []NodeSummaryGroup{}

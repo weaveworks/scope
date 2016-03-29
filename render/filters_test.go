@@ -11,16 +11,17 @@ import (
 
 func TestFilterRender(t *testing.T) {
 	renderer := render.FilterUnconnected(
-		mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("bar")},
-			"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("foo")},
-			"baz": {ID: "baz", Node: report.MakeNode()},
+		mockRenderer{Nodes: report.Nodes{
+			"foo": report.MakeNode().WithID("foo").WithAdjacent("bar"),
+			"bar": report.MakeNode().WithID("bar").WithAdjacent("foo"),
+			"baz": report.MakeNode().WithID("baz"),
 		}})
-	want := render.RenderableNodes{
-		"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("bar")},
-		"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("foo")},
+
+	have := report.MakeIDList()
+	for id := range renderer.Render(report.MakeReport()) {
+		have = have.Add(id)
 	}
-	have := renderer.Render(report.MakeReport()).Prune()
+	want := report.MakeIDList("foo", "bar")
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -29,22 +30,19 @@ func TestFilterRender(t *testing.T) {
 func TestFilterRender2(t *testing.T) {
 	// Test adjacencies are removed for filtered nodes.
 	renderer := render.Filter{
-		FilterFunc: func(node render.RenderableNode) bool {
+		FilterFunc: func(node report.Node) bool {
 			return node.ID != "bar"
 		},
-		Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-			"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("bar")},
-			"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("foo")},
-			"baz": {ID: "baz", Node: report.MakeNode()},
+		Renderer: mockRenderer{Nodes: report.Nodes{
+			"foo": report.MakeNode().WithID("foo").WithAdjacent("bar"),
+			"bar": report.MakeNode().WithID("bar").WithAdjacent("foo"),
+			"baz": report.MakeNode().WithID("baz"),
 		}},
 	}
-	want := render.RenderableNodes{
-		"foo": {ID: "foo", Node: report.MakeNode()},
-		"baz": {ID: "baz", Node: report.MakeNode()},
-	}
-	have := renderer.Render(report.MakeReport()).Prune()
-	if !reflect.DeepEqual(want, have) {
-		t.Error(test.Diff(want, have))
+
+	have := renderer.Render(report.MakeReport())
+	if have["foo"].Adjacency.Contains("bar") {
+		t.Error("adjacencies for removed nodes should have been removed")
 	}
 }
 
@@ -52,59 +50,53 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 	// Test pseudo nodes that are made unconnected by filtering
 	// are also removed.
 	{
-		nodes := render.RenderableNodes{
-			"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("bar")},
-			"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("baz")},
-			"baz": {ID: "baz", Node: report.MakeNode(), Pseudo: true},
+		nodes := report.Nodes{
+			"foo": report.MakeNode().WithID("foo").WithAdjacent("bar"),
+			"bar": report.MakeNode().WithID("bar").WithAdjacent("baz"),
+			"baz": report.MakeNode().WithID("baz").WithTopology(render.Pseudo),
 		}
 		renderer := render.Filter{
-			FilterFunc: func(node render.RenderableNode) bool {
+			FilterFunc: func(node report.Node) bool {
 				return true
 			},
-			Renderer: mockRenderer{RenderableNodes: nodes},
+			Renderer: mockRenderer{Nodes: nodes},
 		}
-		want := nodes.Prune()
-		have := renderer.Render(report.MakeReport()).Prune()
+		want := nodes
+		have := renderer.Render(report.MakeReport())
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}
 	{
 		renderer := render.Filter{
-			FilterFunc: func(node render.RenderableNode) bool {
+			FilterFunc: func(node report.Node) bool {
 				return node.ID != "bar"
 			},
-			Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-				"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("bar")},
-				"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("baz")},
-				"baz": {ID: "baz", Node: report.MakeNode(), Pseudo: true},
+			Renderer: mockRenderer{Nodes: report.Nodes{
+				"foo": report.MakeNode().WithID("foo").WithAdjacent("bar"),
+				"bar": report.MakeNode().WithID("bar").WithAdjacent("baz"),
+				"baz": report.MakeNode().WithID("baz").WithTopology(render.Pseudo),
 			}},
 		}
-		want := render.RenderableNodes{
-			"foo": {ID: "foo", Node: report.MakeNode()},
-		}
-		have := renderer.Render(report.MakeReport()).Prune()
-		if !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+		have := renderer.Render(report.MakeReport())
+		if _, ok := have["baz"]; ok {
+			t.Error("expected the unconnected pseudonode baz to have been removed")
 		}
 	}
 	{
 		renderer := render.Filter{
-			FilterFunc: func(node render.RenderableNode) bool {
+			FilterFunc: func(node report.Node) bool {
 				return node.ID != "bar"
 			},
-			Renderer: mockRenderer{RenderableNodes: render.RenderableNodes{
-				"foo": {ID: "foo", Node: report.MakeNode()},
-				"bar": {ID: "bar", Node: report.MakeNode().WithAdjacent("foo")},
-				"baz": {ID: "baz", Node: report.MakeNode().WithAdjacent("bar"), Pseudo: true},
+			Renderer: mockRenderer{Nodes: report.Nodes{
+				"foo": report.MakeNode().WithID("foo"),
+				"bar": report.MakeNode().WithID("bar").WithAdjacent("foo"),
+				"baz": report.MakeNode().WithID("baz").WithTopology(render.Pseudo).WithAdjacent("bar"),
 			}},
 		}
-		want := render.RenderableNodes{
-			"foo": {ID: "foo", Node: report.MakeNode()},
-		}
-		have := renderer.Render(report.MakeReport()).Prune()
-		if !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+		have := renderer.Render(report.MakeReport())
+		if _, ok := have["baz"]; ok {
+			t.Error("expected the unconnected pseudonode baz to have been removed")
 		}
 	}
 }
@@ -112,14 +104,13 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 func TestFilterUnconnectedSelf(t *testing.T) {
 	// Test nodes that are only connected to themselves are filtered.
 	{
-		nodes := render.RenderableNodes{
-			"foo": {ID: "foo", Node: report.MakeNode().WithAdjacent("foo")},
+		nodes := report.Nodes{
+			"foo": report.MakeNode().WithID("foo").WithAdjacent("foo"),
 		}
-		renderer := render.FilterUnconnected(mockRenderer{RenderableNodes: nodes})
-		want := render.RenderableNodes{}
-		have := renderer.Render(report.MakeReport()).Prune()
-		if !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+		renderer := render.FilterUnconnected(mockRenderer{Nodes: nodes})
+		have := renderer.Render(report.MakeReport())
+		if len(have) > 0 {
+			t.Error("expected node only connected to self to be removed")
 		}
 	}
 }
@@ -127,17 +118,14 @@ func TestFilterUnconnectedSelf(t *testing.T) {
 func TestFilterPseudo(t *testing.T) {
 	// Test pseudonodes are removed
 	{
-		nodes := render.RenderableNodes{
-			"foo": {ID: "foo", Node: report.MakeNode()},
-			"bar": {ID: "bar", Pseudo: true, Node: report.MakeNode()},
+		nodes := report.Nodes{
+			"foo": report.MakeNode().WithID("foo"),
+			"bar": report.MakeNode().WithID("bar").WithTopology(render.Pseudo),
 		}
-		renderer := render.FilterPseudo(mockRenderer{RenderableNodes: nodes})
-		want := render.RenderableNodes{
-			"foo": {ID: "foo", Node: report.MakeNode()},
-		}
-		have := renderer.Render(report.MakeReport()).Prune()
-		if !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
+		renderer := render.FilterPseudo(mockRenderer{Nodes: nodes})
+		have := renderer.Render(report.MakeReport())
+		if _, ok := have["bar"]; ok {
+			t.Error("expected pseudonode to be removed")
 		}
 	}
 }

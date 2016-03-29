@@ -29,6 +29,18 @@ func TestLatestMapAdd(t *testing.T) {
 	})
 }
 
+func TestLatestMapLookupEntry(t *testing.T) {
+	now := time.Now()
+	entry := LatestEntry{Timestamp: now, Value: "Bar"}
+	have := EmptyLatestMap.Set("foo", entry.Timestamp, entry.Value)
+	if got, timestamp, ok := have.LookupEntry("foo"); !ok || got != entry.Value || !timestamp.Equal(entry.Timestamp) {
+		t.Errorf("got: %#v %v != expected %#v", got, timestamp, entry)
+	}
+	if got, timestamp, ok := have.LookupEntry("not found"); ok {
+		t.Errorf("found unexpected entry for %q: %#v %v", "not found", got, timestamp)
+	}
+}
+
 func TestLatestMapAddNil(t *testing.T) {
 	now := time.Now()
 	have := LatestMap{}.Set("foo", now, "Bar")

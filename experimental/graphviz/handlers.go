@@ -10,18 +10,18 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/scope/report"
 )
 
-func dot(w io.Writer, t render.RenderableNodes) {
+func dot(w io.Writer, t detailed.NodeSummaries) {
 	fmt.Fprintf(w, "digraph G {\n")
 	fmt.Fprintf(w, "\toutputorder=edgesfirst;\n")
 	fmt.Fprintf(w, "\toverlap=scale;\n")
 	fmt.Fprintf(w, "\tnode [style=filled];\n")
 	fmt.Fprintf(w, "\t\n")
 	for id, rn := range t {
-		label := rn.LabelMajor
+		label := rn.Label
 		if len(label) > 20 {
 			label = label[:20] + "..."
 		}

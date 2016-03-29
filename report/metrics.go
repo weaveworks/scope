@@ -216,8 +216,8 @@ func (m Metric) LastSample() *Sample {
 
 // WireMetrics is the on-the-wire representation of Metrics.
 type WireMetrics struct {
-	Samples []Sample `json:"samples"` // On the wire, samples are sorted oldest to newest,
-	Min     float64  `json:"min"`     // the opposite order to how we store them internally.
+	Samples []Sample `json:"samples,omitempty"` // On the wire, samples are sorted oldest to newest,
+	Min     float64  `json:"min"`               // the opposite order to how we store them internally.
 	Max     float64  `json:"max"`
 	First   string   `json:"first,omitempty"`
 	Last    string   `json:"last,omitempty"`

@@ -9,16 +9,16 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
-type renderFunc func(r report.Report) render.RenderableNodes
+type renderFunc func(r report.Report) report.Nodes
 
-func (f renderFunc) Render(r report.Report) render.RenderableNodes { return f(r) }
-func (f renderFunc) Stats(r report.Report) render.Stats            { return render.Stats{} }
+func (f renderFunc) Render(r report.Report) report.Nodes { return f(r) }
+func (f renderFunc) Stats(r report.Report) render.Stats  { return render.Stats{} }
 
 func TestMemoise(t *testing.T) {
 	calls := 0
-	r := renderFunc(func(rpt report.Report) render.RenderableNodes {
+	r := renderFunc(func(rpt report.Report) report.Nodes {
 		calls++
-		return render.RenderableNodes{rpt.ID: render.NewRenderableNode(rpt.ID)}
+		return report.Nodes{rpt.ID: report.MakeNode().WithID(rpt.ID)}
 	})
 	m := render.Memoise(r)
 	rpt1 := report.MakeReport()

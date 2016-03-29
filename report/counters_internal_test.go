@@ -132,3 +132,33 @@ func TestCountersEncoding(t *testing.T) {
 	}
 
 }
+
+func TestCountersString(t *testing.T) {
+	{
+		var c Counters
+		have := c.String()
+		want := `{}`
+		if want != have {
+			t.Errorf("Expected: %s, Got %s", want, have)
+		}
+	}
+
+	{
+		have := EmptyCounters.String()
+		want := `{}`
+		if want != have {
+			t.Errorf("Expected: %s, Got %s", want, have)
+		}
+	}
+
+	{
+		have := EmptyCounters.
+			Add("foo", 1).
+			Add("bar", 2).String()
+
+		want := `{bar: 2, foo: 1}`
+		if want != have {
+			t.Errorf("Expected: %s, Got %s", want, have)
+		}
+	}
+}

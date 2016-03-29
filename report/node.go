@@ -20,6 +20,7 @@ type Node struct {
 	Latest    LatestMap     `json:"latest,omitempty"`
 	Metrics   Metrics       `json:"metrics,omitempty"`
 	Parents   Sets          `json:"parents,omitempty"`
+	Children  NodeSet       `json:"children,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
@@ -152,6 +153,27 @@ func (n Node) WithParents(parents Sets) Node {
 	return result
 }
 
+// PruneParents returns a fresh copy of n, without any parents.
+func (n Node) PruneParents() Node {
+	result := n.Copy()
+	result.Parents = EmptySets
+	return result
+}
+
+// WithChildren returns a fresh copy of n, with children merged in.
+func (n Node) WithChildren(children NodeSet) Node {
+	result := n.Copy()
+	result.Children = result.Children.Merge(children)
+	return result
+}
+
+// WithChild returns a fresh copy of n, with one child merged in.
+func (n Node) WithChild(child Node) Node {
+	result := n.Copy()
+	result.Children = result.Children.Merge(MakeNodeSet(child))
+	return result
+}
+
 // Copy returns a value copy of the Node.
 func (n Node) Copy() Node {
 	cp := MakeNode()
@@ -165,6 +187,7 @@ func (n Node) Copy() Node {
 	cp.Latest = n.Latest.Copy()
 	cp.Metrics = n.Metrics.Copy()
 	cp.Parents = n.Parents.Copy()
+	cp.Children = n.Children.Copy()
 	return cp
 }
 
@@ -177,6 +200,8 @@ func (n Node) Merge(other Node) Node {
 	}
 	if cp.Topology == "" {
 		cp.Topology = other.Topology
+	} else if other.Topology != "" && cp.Topology != other.Topology {
+		panic("Cannot merge nodes with different topology types: " + cp.Topology + " != " + other.Topology)
 	}
 	cp.Counters = cp.Counters.Merge(other.Counters)
 	cp.Sets = cp.Sets.Merge(other.Sets)
@@ -186,5 +211,21 @@ func (n Node) Merge(other Node) Node {
 	cp.Latest = cp.Latest.Merge(other.Latest)
 	cp.Metrics = cp.Metrics.Merge(other.Metrics)
 	cp.Parents = cp.Parents.Merge(other.Parents)
+	cp.Children = cp.Children.Merge(other.Children)
 	return cp
+}
+
+// Prune returns a copy of the Node with all information not strictly necessary
+// for rendering nodes and edges stripped away. Specifically, that means
+// cutting out parts of the Node.
+func (n Node) Prune() Node {
+	prunedChildren := MakeNodeSet()
+	n.Children.ForEach(func(child Node) {
+		prunedChildren = prunedChildren.Add(child.Prune())
+	})
+	return MakeNode().
+		WithID(n.ID).
+		WithTopology(n.Topology).
+		WithAdjacent(n.Adjacency.Copy()...).
+		WithChildren(prunedChildren)
 }

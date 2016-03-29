@@ -28,6 +28,16 @@ func TestReportTopologies(t *testing.T) {
 	}
 }
 
+func TestReportTopology(t *testing.T) {
+	r := report.MakeReport()
+	if _, ok := r.Topology(report.Container); !ok {
+		t.Errorf("Expected %s topology to be found", report.Container)
+	}
+	if _, ok := r.Topology("foo"); ok {
+		t.Errorf("Expected %s topology not to be found", "foo")
+	}
+}
+
 func TestNode(t *testing.T) {
 	{
 		node := report.MakeNode().WithLatests(map[string]string{

@@ -18,7 +18,7 @@ const (
 
 // APITopology is returned by the /api/topology/{name} handler.
 type APITopology struct {
-	Nodes render.RenderableNodes `json:"nodes"`
+	Nodes detailed.NodeSummaries `json:"nodes"`
 }
 
 // APINode is returned by the /api/topology/{name}/{id} handler.
@@ -34,7 +34,7 @@ func handleTopology(ctx context.Context, rep Reporter, renderer render.Renderer,
 		return
 	}
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: renderer.Render(report).Prune(),
+		Nodes: detailed.Summaries(renderer.Render(report)),
 	})
 }
 
@@ -104,7 +104,7 @@ func handleWebsocket(
 	}(conn)
 
 	var (
-		previousTopo render.RenderableNodes
+		previousTopo detailed.NodeSummaries
 		tick         = time.Tick(loop)
 		wait         = make(chan struct{}, 1)
 	)
@@ -117,8 +117,8 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := renderer.Render(report).Prune()
-		diff := render.TopoDiff(previousTopo, newTopo)
+		newTopo := detailed.Summaries(renderer.Render(report))
+		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
 		if err := conn.WriteJSON(diff); err != nil {
