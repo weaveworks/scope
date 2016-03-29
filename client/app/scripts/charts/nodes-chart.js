@@ -410,7 +410,8 @@ export default class NodesChart extends React.Component {
       scale: nodeScale,
       margins: MARGINS,
       forceRelayout: props.forceRelayout,
-      topologyId: this.props.topologyId
+      topologyId: this.props.topologyId,
+      topologyOptions: this.props.topologyOptions
     };
 
     const timedLayouter = timely(doLayout);

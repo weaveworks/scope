@@ -122,12 +122,14 @@ describe('AppStore', () => {
     topologies: [{
       url: '/topo1',
       name: 'Topo1',
-      options: {
-        option1: [
+      options: [{
+        id: 'option1',
+        defaultValue: 'off',
+        options: [
           {value: 'on'},
-          {value: 'off', default: true}
+          {value: 'off'}
         ]
-      },
+      }],
       stats: {
         node_count: 1
       },
@@ -165,13 +167,13 @@ describe('AppStore', () => {
   });
 
   it('get current topology', () => {
-    registeredCallback(ClickTopologyAction);
     registeredCallback(ReceiveTopologiesAction);
+    registeredCallback(ClickTopologyAction);
 
     expect(AppStore.getTopologies().size).toBe(2);
     expect(AppStore.getCurrentTopology().get('name')).toBe('Topo1');
     expect(AppStore.getCurrentTopologyUrl()).toBe('/topo1');
-    expect(AppStore.getCurrentTopologyOptions().get('option1')).toBeDefined();
+    expect(AppStore.getCurrentTopologyOptions().first().get('id')).toBe('option1');
   });
 
   it('get sub-topology', () => {

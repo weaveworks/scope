@@ -1,6 +1,10 @@
 package render
 
 import (
+	"strings"
+
+	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -151,6 +155,38 @@ func (rn RenderableNode) Copy() RenderableNode {
 		Shape:        rn.Shape,
 		Stack:        rn.Stack,
 	}
+}
+
+// IsStopped checks if the RenderableNode is a stopped docker container.
+func (rn RenderableNode) IsStopped() bool {
+	containerState, ok := rn.Latest.Lookup(docker.ContainerState)
+	return !ok || containerState != docker.StateStopped
+}
+
+// IsSystem checks if the RenderableNode is a system container/pod/etc.
+func (rn RenderableNode) IsSystem() bool {
+	containerName, _ := rn.Latest.Lookup(docker.ContainerName)
+	if _, ok := systemContainerNames[containerName]; ok {
+		return false
+	}
+	imageName, _ := rn.Latest.Lookup(docker.ImageName)
+	imagePrefix := strings.SplitN(imageName, ":", 2)[0] // :(
+	if _, ok := systemImagePrefixes[imagePrefix]; ok {
+		return false
+	}
+	roleLabel, _ := rn.Latest.Lookup(docker.LabelPrefix + "works.weave.role")
+	if roleLabel == "system" {
+		return false
+	}
+	namespace, _ := rn.Latest.Lookup(kubernetes.Namespace)
+	if namespace == "kube-system" {
+		return false
+	}
+	podName, _ := rn.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.name")
+	if strings.HasPrefix(podName, "kube-system/") {
+		return false
+	}
+	return true
 }
 
 // Prune returns a copy of the RenderableNode with all information not
