@@ -58,7 +58,7 @@ func TestReporter(t *testing.T) {
 	host.GetMemoryUsageBytes = func() (float64, float64) { return 60.0, 100.0 }
 	host.GetLocalNetworks = func() ([]*net.IPNet, error) { return []*net.IPNet{ipnet}, nil }
 
-	rpt, err := host.NewReporter(hostID, hostname, probeID).Report()
+	rpt, err := host.NewReporter(hostID, hostname, probeID, nil).Report()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -37,16 +38,20 @@ type Reporter struct {
 	hostID   string
 	hostName string
 	probeID  string
+	pipes    controls.PipeClient
 }
 
 // NewReporter returns a Reporter which produces a report containing host
 // topology for this host.
-func NewReporter(hostID, hostName, probeID string) *Reporter {
-	return &Reporter{
+func NewReporter(hostID, hostName, probeID string, pipes controls.PipeClient) *Reporter {
+	r := &Reporter{
 		hostID:   hostID,
 		hostName: hostName,
 		probeID:  probeID,
+		pipes:    pipes,
 	}
+	r.registerControls()
+	return r
 }
 
 // Name of this reporter, for metrics gathering
@@ -118,4 +123,9 @@ func (r *Reporter) Report() (report.Report, error) {
 	})
 
 	return rep, nil
+}
+
+// Stop stops the reporter.
+func (r *Reporter) Stop() {
+	r.deregisterControls()
 }

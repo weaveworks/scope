@@ -129,9 +129,6 @@ func probeMain() {
 	})
 	defer clients.Stop()
 
-	hostControls := host.NewControls(clients)
-	defer hostControls.Stop()
-
 	resolver := appclient.NewResolver(targets, net.LookupIP, clients.Set)
 	defer resolver.Stop()
 
@@ -143,9 +140,11 @@ func probeMain() {
 
 	p := probe.New(*spyInterval, *publishInterval, clients)
 	p.AddTicker(processCache)
+	hostReporter := host.NewReporter(hostID, hostName, probeID, clients)
+	defer hostReporter.Stop()
 	p.AddReporter(
 		endpointReporter,
-		host.NewReporter(hostID, hostName, probeID),
+		hostReporter,
 		process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies),
 	)
 	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))

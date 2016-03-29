@@ -15,24 +15,15 @@ const (
 	ExecHost = "host_exec"
 )
 
-// Controls handles controls for a hosts.
-type Controls struct {
-	pipes controls.PipeClient
+func (r *Reporter) registerControls() {
+	controls.Register(ExecHost, r.execHost)
 }
 
-// NewControls creates new host controls.
-func NewControls(pipes controls.PipeClient) *Controls {
-	c := &Controls{pipes: pipes}
-	controls.Register(ExecHost, c.execHost)
-	return c
-}
-
-// Stop stops the host controls.
-func (*Controls) Stop() {
+func (*Reporter) deregisterControls() {
 	controls.Rm(ExecHost)
 }
 
-func (c *Controls) execHost(req xfer.Request) xfer.Response {
+func (r *Reporter) execHost(req xfer.Request) xfer.Response {
 	cmd := exec.Command(hostShellCmd[0], hostShellCmd[1:]...)
 	cmd.Env = []string{"TERM=xterm"}
 	ptyPipe, err := pty.Start(cmd)
@@ -40,7 +31,7 @@ func (c *Controls) execHost(req xfer.Request) xfer.Response {
 		return xfer.ResponseError(err)
 	}
 
-	id, pipe, err := controls.NewPipeFromEnds(nil, ptyPipe, c.pipes, req.AppID)
+	id, pipe, err := controls.NewPipeFromEnds(nil, ptyPipe, r.pipes, req.AppID)
 	if err != nil {
 		return xfer.ResponseError(err)
 	}
