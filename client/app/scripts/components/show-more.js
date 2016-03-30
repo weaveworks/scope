@@ -1,4 +1,6 @@
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import reactMixin from 'react-mixin';
 
 export default class ShowMore extends React.Component {
 
@@ -28,3 +30,5 @@ export default class ShowMore extends React.Component {
     );
   }
 }
+
+reactMixin.onClass(ShowMore, PureRenderMixin);

@@ -1,13 +1,12 @@
 import dagre from 'dagre';
 import debug from 'debug';
-import { Map as makeMap, Set as ImmSet } from 'immutable';
+import { fromJS, Map as makeMap, Set as ImmSet } from 'immutable';
 
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { updateNodeDegrees } from '../utils/topology-utils';
 
 const log = debug('scope:nodes-layout');
 
-const MAX_NODES = 100;
 const topologyCaches = {};
 const DEFAULT_WIDTH = 800;
 const DEFAULT_MARGINS = {top: 0, left: 0};
@@ -50,11 +49,6 @@ function buildCacheIdFromOptions(options) {
 function runLayoutEngine(graph, imNodes, imEdges, opts) {
   let nodes = imNodes;
   let edges = imEdges;
-
-  if (nodes.size > MAX_NODES) {
-    log(`Too many nodes for graph layout engine. Limit: ${MAX_NODES}`);
-    return null;
-  }
 
   const options = opts || {};
   const scale = options.scale || DEFAULT_SCALE;
@@ -122,13 +116,13 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   graph.edges().forEach(graphEdge => {
     const graphEdgeMeta = graph.edge(graphEdge);
     const edge = edges.get(graphEdgeMeta.id);
-    const points = graphEdgeMeta.points;
+    let points = fromJS(graphEdgeMeta.points);
 
     // set beginning and end points to node coordinates to ignore node bounding box
     const source = nodes.get(fromGraphNodeId(edge.get('source')));
     const target = nodes.get(fromGraphNodeId(edge.get('target')));
-    points[0] = {x: source.get('x'), y: source.get('y')};
-    points[points.length - 1] = {x: target.get('x'), y: target.get('y')};
+    points = points.mergeIn([0], {x: source.get('x'), y: source.get('y')});
+    points = points.mergeIn([points.size - 1], {x: target.get('x'), y: target.get('y')});
 
     edges = edges.setIn([graphEdgeMeta.id, 'points'], points);
   });
@@ -251,13 +245,12 @@ function shiftLayoutToCenter(layout, opts) {
     y: node.get('y') + offsetY
   }));
 
-  result.edges = layout.edges.map(edge => {
-    const points = edge.get('points').map(point => ({
-      x: point.x + offsetX,
-      y: point.y + offsetY
-    }));
-    return edge.set('points', points);
-  });
+  result.edges = layout.edges.map(edge => edge.update('points',
+    points => points.map(point => point.merge({
+      x: point.get('x') + offsetX,
+      y: point.get('y') + offsetY
+    }))
+  ));
 
   return result;
 }
@@ -271,10 +264,10 @@ function shiftLayoutToCenter(layout, opts) {
 function setSimpleEdgePoints(edge, nodeCache) {
   const source = nodeCache.get(edge.get('source'));
   const target = nodeCache.get(edge.get('target'));
-  return edge.set('points', [
+  return edge.set('points', fromJS([
     {x: source.get('x'), y: source.get('y')},
     {x: target.get('x'), y: target.get('y')}
-  ]);
+  ]));
 }
 
 /**
@@ -300,14 +293,14 @@ export function hasUnseenNodes(nodes, cache) {
  */
 function hasSameEndpoints(cachedEdge, nodes) {
   const oldPoints = cachedEdge.get('points');
-  const oldSourcePoint = oldPoints[0];
-  const oldTargetPoint = oldPoints[oldPoints.length - 1];
+  const oldSourcePoint = oldPoints.first();
+  const oldTargetPoint = oldPoints.last();
   const newSource = nodes.get(cachedEdge.get('source'));
   const newTarget = nodes.get(cachedEdge.get('target'));
-  return (oldSourcePoint.x === newSource.get('x')
-    && oldSourcePoint.y === newSource.get('y')
-    && oldTargetPoint.x === newTarget.get('x')
-    && oldTargetPoint.y === newTarget.get('y'));
+  return (oldSourcePoint.get('x') === newSource.get('x')
+    && oldSourcePoint.get('y') === newSource.get('y')
+    && oldTargetPoint.get('x') === newTarget.get('x')
+    && oldTargetPoint.get('y') === newTarget.get('y'));
 }
 
 /**

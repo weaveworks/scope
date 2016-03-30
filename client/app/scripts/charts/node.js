@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Motion, spring } from 'react-motion';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import reactMixin from 'react-mixin';
+import classNames from 'classnames';
 
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
 import { getNodeColor } from '../utils/color-utils';
@@ -33,7 +35,18 @@ function getNodeShape({shape, stack}) {
   return stack ? stackedShape(nodeShape) : nodeShape;
 }
 
+function ellipsis(text, fontSize, maxWidth) {
+  const averageCharLength = fontSize / 1.5;
+  const allowedChars = maxWidth / averageCharLength;
+  let truncatedText = text;
+  if (text && text.length > allowedChars) {
+    truncatedText = `${text.slice(0, allowedChars)}...`;
+  }
+  return truncatedText;
+}
+
 export default class Node extends React.Component {
+
   constructor(props, context) {
     super(props, context);
     this.handleMouseClick = this.handleMouseClick.bind(this);
@@ -42,93 +55,52 @@ export default class Node extends React.Component {
   }
 
   render() {
-    const props = this.props;
-    const nodeScale = props.focused ? props.selectedNodeScale : props.nodeScale;
-    const zoomScale = this.props.zoomScale;
-    let scaleFactor = 1;
-    if (props.focused) {
-      scaleFactor = 1.25 / zoomScale;
-    } else if (props.blurred) {
-      scaleFactor = 0.75;
-    }
+    const { blurred, focused, highlighted, label, nodeScale, pseudo, rank,
+      subLabel, scaleFactor, transform, zoomScale } = this.props;
+
+    const color = getNodeColor(rank, label, pseudo);
+    const labelText = ellipsis(label, 14, nodeScale(4 * scaleFactor));
+    const subLabelText = ellipsis(subLabel, 12, nodeScale(4 * scaleFactor));
+
     let labelOffsetY = 18;
     let subLabelOffsetY = 35;
-    const color = getNodeColor(this.props.rank, this.props.label,
-                               this.props.pseudo);
-    const onMouseEnter = this.handleMouseEnter;
-    const onMouseLeave = this.handleMouseLeave;
-    const onMouseClick = this.handleMouseClick;
-    const classNames = ['node'];
-    const animConfig = [80, 20]; // stiffness, damping
-    const label = this.ellipsis(props.label, 14, nodeScale(4 * scaleFactor));
-    const subLabel = this.ellipsis(props.subLabel, 12, nodeScale(4 * scaleFactor));
     let labelFontSize = 14;
     let subLabelFontSize = 12;
 
-    if (props.focused) {
+    // render focused nodes in normal size
+    if (focused) {
       labelFontSize /= zoomScale;
       subLabelFontSize /= zoomScale;
       labelOffsetY /= zoomScale;
       subLabelOffsetY /= zoomScale;
     }
-    if (this.props.highlighted) {
-      classNames.push('highlighted');
-    }
-    if (this.props.blurred) {
-      classNames.push('blurred');
-    }
-    if (this.props.pseudo) {
-      classNames.push('pseudo');
-    }
 
-    const classes = classNames.join(' ');
+    const className = classNames({
+      node: true,
+      highlighted,
+      blurred,
+      pseudo
+    });
 
     const NodeShapeType = getNodeShape(this.props);
 
     return (
-      <Motion style={{
-        x: spring(this.props.dx, animConfig),
-        y: spring(this.props.dy, animConfig),
-        f: spring(scaleFactor, animConfig),
-        labelFontSize: spring(labelFontSize, animConfig),
-        subLabelFontSize: spring(subLabelFontSize, animConfig),
-        labelOffsetY: spring(labelOffsetY, animConfig),
-        subLabelOffsetY: spring(subLabelOffsetY, animConfig)
-      }}>
-        {(interpolated) => {
-          const transform = `translate(${interpolated.x},${interpolated.y})`;
-          return (
-            <g className={classes} transform={transform} id={props.id}
-              onClick={onMouseClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-              <NodeShapeType
-                size={nodeScale(interpolated.f)}
-                color={color}
-                {...props} />
-              <text className="node-label" textAnchor="middle"
-                style={{fontSize: interpolated.labelFontSize}}
-                x="0" y={interpolated.labelOffsetY + nodeScale(0.5 * interpolated.f)}>
-                {label}
-              </text>
-              <text className="node-sublabel" textAnchor="middle"
-                style={{fontSize: interpolated.subLabelFontSize}}
-                x="0" y={interpolated.subLabelOffsetY + nodeScale(0.5 * interpolated.f)}>
-                {subLabel}
-              </text>
-            </g>
-          );
-        }}
-      </Motion>
+      <g className={className} transform={transform} onClick={this.handleMouseClick}
+        onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+        <NodeShapeType
+          size={nodeScale(scaleFactor)}
+          color={color}
+          {...this.props} />
+        <text className="node-label" textAnchor="middle" style={{fontSize: labelFontSize}}
+          x="0" y={labelOffsetY + nodeScale(0.5 * scaleFactor)}>
+          {labelText}
+        </text>
+        <text className="node-sublabel" textAnchor="middle" style={{fontSize: subLabelFontSize}}
+          x="0" y={subLabelOffsetY + nodeScale(0.5 * scaleFactor)}>
+          {subLabelText}
+        </text>
+      </g>
     );
-  }
-
-  ellipsis(text, fontSize, maxWidth) {
-    const averageCharLength = fontSize / 1.5;
-    const allowedChars = maxWidth / averageCharLength;
-    let truncatedText = text;
-    if (text && text.length > allowedChars) {
-      truncatedText = `${text.slice(0, allowedChars)}...`;
-    }
-    return truncatedText;
   }
 
   handleMouseClick(ev) {
@@ -144,3 +116,5 @@ export default class Node extends React.Component {
     leaveNode(this.props.id);
   }
 }
+
+reactMixin.onClass(Node, PureRenderMixin);

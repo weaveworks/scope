@@ -1,5 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import reactMixin from 'react-mixin';
 
 import { clickRelative } from '../../actions/app-actions';
 
@@ -32,3 +34,5 @@ export default class NodeDetailsTableNodeLink extends React.Component {
     );
   }
 }
+
+reactMixin.onClass(NodeDetailsTableNodeLink, PureRenderMixin);

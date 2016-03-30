@@ -1,4 +1,6 @@
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import reactMixin from 'react-mixin';
 
 import TopologyOptionAction from './topology-option-action';
 
@@ -29,3 +31,5 @@ export default class TopologyOptions extends React.Component {
     );
   }
 }
+
+reactMixin.onClass(TopologyOptions, PureRenderMixin);

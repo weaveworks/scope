@@ -142,9 +142,10 @@ export class AppStore extends Store {
 
   // keep at the top
   getAppState() {
+    const cp = this.getControlPipe();
     return {
-      controlPipe: this.getControlPipe(),
-      nodeDetails: this.getNodeDetailsState(),
+      controlPipe: cp ? cp.toJS() : null,
+      nodeDetails: this.getNodeDetailsState().toJS(),
       selectedNodeId,
       pinnedMetricType,
       topologyId: currentTopologyId,
@@ -190,12 +191,11 @@ export class AppStore extends Store {
   }
 
   getControlStatus() {
-    return controlStatus.toJS();
+    return controlStatus;
   }
 
   getControlPipe() {
-    const cp = controlPipes.last();
-    return cp && cp.toJS();
+    return controlPipes.last();
   }
 
   getCurrentTopology() {
@@ -240,7 +240,7 @@ export class AppStore extends Store {
   getNodeDetailsState() {
     return nodeDetails.toIndexedSeq().map(details => ({
       id: details.id, label: details.label, topologyId: details.topologyId
-    })).toJS();
+    }));
   }
 
   getTopCardNodeId() {

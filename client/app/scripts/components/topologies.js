@@ -1,4 +1,6 @@
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import reactMixin from 'react-mixin';
 
 import { clickTopology } from '../actions/app-actions';
 
@@ -69,3 +71,5 @@ export default class Topologies extends React.Component {
     );
   }
 }
+
+reactMixin.onClass(Topologies, PureRenderMixin);

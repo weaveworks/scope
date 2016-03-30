@@ -1,6 +1,7 @@
 /* eslint react/jsx-no-bind: "off" */
 import React from 'react';
 import _ from 'lodash';
+import Perf from 'react-addons-perf';
 
 import debug from 'debug';
 const log = debug('scope:debug-panel');
@@ -91,6 +92,19 @@ function addAllMetricVariants() {
 }
 
 
+function stopPerf() {
+  Perf.stop();
+  const measurements = Perf.getLastMeasurements();
+  Perf.printInclusive(measurements);
+  Perf.printWasted(measurements);
+}
+
+function startPerf(delay) {
+  Perf.start();
+  setTimeout(stopPerf, delay * 1000);
+}
+
+
 function addNodes(n) {
   const ns = AppStore.getNodes();
   const nodeNames = ns.keySeq().toJS();
@@ -110,9 +124,9 @@ function addNodes(n) {
   });
 }
 
-
 export function showingDebugToolbar() {
-  return 'debugToolbar' in localStorage && JSON.parse(localStorage.debugToolbar);
+  return (('debugToolbar' in localStorage && JSON.parse(localStorage.debugToolbar))
+    || location.pathname.indexOf('debug') > -1);
 }
 
 
@@ -196,6 +210,13 @@ export class DebugToolbar extends React.Component {
             </tbody>
           </table>
         ))}
+
+        <div>
+          <label>Measure React perf for </label>
+          <button onClick={() => startPerf(2)}>2s</button>
+          <button onClick={() => startPerf(5)}>5s</button>
+          <button onClick={() => startPerf(10)}>10s</button>
+        </div>
       </div>
     );
   }
