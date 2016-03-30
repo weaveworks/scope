@@ -35,20 +35,22 @@ const (
 
 // Reporter generates Reports containing the host topology.
 type Reporter struct {
-	hostID   string
-	hostName string
-	probeID  string
-	pipes    controls.PipeClient
+	hostID       string
+	hostName     string
+	probeID      string
+	pipes        controls.PipeClient
+	hostShellCmd []string
 }
 
 // NewReporter returns a Reporter which produces a report containing host
 // topology for this host.
 func NewReporter(hostID, hostName, probeID string, pipes controls.PipeClient) *Reporter {
 	r := &Reporter{
-		hostID:   hostID,
-		hostName: hostName,
-		probeID:  probeID,
-		pipes:    pipes,
+		hostID:       hostID,
+		hostName:     hostName,
+		probeID:      probeID,
+		pipes:        pipes,
+		hostShellCmd: getHostShellCmd(),
 	}
 	r.registerControls()
 	return r

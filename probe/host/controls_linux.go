@@ -3,14 +3,14 @@ package host
 import (
 	"bytes"
 	"os/exec"
+	"strings"
 	"syscall"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/willdonnelly/passwd"
 )
 
-var hostShellCmd []string
-
-func init() {
+func getHostShellCmd() []string {
 	if isProbeContainerized() {
 		// Escape the container namespaces and jump into the ones from
 		// the host's init process.
@@ -19,17 +19,16 @@ func init() {
 		// but it doesn't hurt.
 		readPasswdCmd := []string{"/usr/bin/nsenter", "-t1", "-m", "--no-fork", "cat", "/etc/passwd"}
 		uid, gid, shell := getRootUserDetails(readPasswdCmd)
-		hostShellCmd = []string{
+		return []string{
 			"/usr/bin/nsenter", "-t1", "-m", "-i", "-n", "-p", "--no-fork",
 			"--setuid", uid,
 			"--setgid", gid,
 			shell,
 		}
-		return
 	}
 
 	_, _, shell := getRootUserDetails([]string{"cat", "/etc/passwd"})
-	hostShellCmd = []string{shell}
+	return []string{shell}
 }
 
 func getRootUserDetails(readPasswdCmd []string) (uid, gid, shell string) {
@@ -41,16 +40,23 @@ func getRootUserDetails(readPasswdCmd []string) (uid, gid, shell string) {
 	cmdBuffer := &bytes.Buffer{}
 	cmd.Stdout = cmdBuffer
 	if err := cmd.Run(); err != nil {
+		log.Warnf(
+			"getRootUserDetails(): error running read passwd command %q: %s",
+			strings.Join(readPasswdCmd, " "),
+			err,
+		)
 		return
 	}
 
 	entries, err := passwd.ParseReader(cmdBuffer)
 	if err != nil {
+		log.Warnf("getRootUserDetails(): error parsing passwd: %s", err)
 		return
 	}
 
 	entry, ok := entries["root"]
 	if !ok {
+		log.Warnf("getRootUserDetails(): no root entry in passwd")
 		return
 	}
 
@@ -65,12 +71,16 @@ func isProbeContainerized() bool {
 	// wouldn't have a way to escape the container anyhow).
 	var statT syscall.Stat_t
 
-	if err := syscall.Stat("/proc/self/ns/mnt", &statT); err != nil {
+	path := "/proc/self/ns/mnt"
+	if err := syscall.Stat(path, &statT); err != nil {
+		log.Warnf("isProbeContainerized(): stat() error on %q: %s", path, err)
 		return false
 	}
 	selfMountNamespaceID := statT.Ino
 
-	if err := syscall.Stat("/proc/1/ns/mnt", &statT); err != nil {
+	path = "/proc/1/ns/mnt"
+	if err := syscall.Stat(path, &statT); err != nil {
+		log.Warnf("isProbeContainerized(): stat() error on %q: %s", path, err)
 		return false
 	}
 

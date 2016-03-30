@@ -1,3 +1,5 @@
 package host
 
-var hostShellCmd = []string{"/bin/bash"}
+func getHostShellCmd() []string {
+	return []string{"/bin/bash"}
+}

@@ -24,7 +24,7 @@ func (*Reporter) deregisterControls() {
 }
 
 func (r *Reporter) execHost(req xfer.Request) xfer.Response {
-	cmd := exec.Command(hostShellCmd[0], hostShellCmd[1:]...)
+	cmd := exec.Command(r.hostShellCmd[0], r.hostShellCmd[1:]...)
 	cmd.Env = []string{"TERM=xterm"}
 	ptyPipe, err := pty.Start(cmd)
 	if err != nil {
