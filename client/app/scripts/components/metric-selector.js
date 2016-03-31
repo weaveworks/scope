@@ -16,7 +16,7 @@ export default class MetricSelector extends React.Component {
   }
 
   onMouseOut() {
-    selectMetric(this.props.lockedMetric);
+    selectMetric(this.props.pinnedMetric);
   }
 
   render() {

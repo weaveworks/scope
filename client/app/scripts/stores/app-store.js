@@ -60,8 +60,8 @@ let updatePausedAt = null; // Date
 let websocketClosed = true;
 
 let selectedMetric = null;
-let lockedMetric = selectedMetric;
-let lockedMetricType = null;
+let pinnedMetric = selectedMetric;
+let pinnedMetricType = null;
 let availableCanvasMetrics = [];
 
 
@@ -144,7 +144,7 @@ export class AppStore extends Store {
       controlPipe: this.getControlPipe(),
       nodeDetails: this.getNodeDetailsState(),
       selectedNodeId,
-      lockedMetricType,
+      pinnedMetricType,
       topologyId: currentTopologyId,
       topologyOptions: topologyOptions.toJS() // all options
     };
@@ -171,8 +171,8 @@ export class AppStore extends Store {
     return adjacentNodes;
   }
 
-  getLockedMetric() {
-    return lockedMetric;
+  getPinnedMetric() {
+    return pinnedMetric;
   }
 
   getSelectedMetric() {
@@ -431,16 +431,16 @@ export class AppStore extends Store {
         this.__emitChange();
         break;
       }
-      case ActionTypes.LOCK_METRIC: {
-        lockedMetric = payload.metricId;
-        lockedMetricType = payload.metricType;
+      case ActionTypes.PIN_METRIC: {
+        pinnedMetric = payload.metricId;
+        pinnedMetricType = payload.metricType;
         selectedMetric = payload.metricId;
         this.__emitChange();
         break;
       }
-      case ActionTypes.UNLOCK_METRIC: {
-        lockedMetric = null;
-        lockedMetricType = null;
+      case ActionTypes.UNPIN_METRIC: {
+        pinnedMetric = null;
+        pinnedMetricType = null;
         this.__emitChange();
         break;
       }
@@ -617,11 +617,11 @@ export class AppStore extends Store {
           .sortBy(m => m.get('label'))
           .toJS();
 
-        const similarTypeMetric = availableCanvasMetrics.find(m => m.label === lockedMetricType);
-        lockedMetric = similarTypeMetric && similarTypeMetric.id;
+        const similarTypeMetric = availableCanvasMetrics.find(m => m.label === pinnedMetricType);
+        pinnedMetric = similarTypeMetric && similarTypeMetric.id;
         // if something in the current topo is not already selected, select it.
         if (availableCanvasMetrics.map(m => m.id).indexOf(selectedMetric) === -1) {
-          selectedMetric = lockedMetric;
+          selectedMetric = pinnedMetric;
         }
 
         if (emitChange) {
@@ -669,7 +669,7 @@ export class AppStore extends Store {
         setTopology(payload.state.topologyId);
         setDefaultTopologyOptions(topologies);
         selectedNodeId = payload.state.selectedNodeId;
-        lockedMetricType = payload.state.lockedMetricType;
+        pinnedMetricType = payload.state.pinnedMetricType;
         if (payload.state.controlPipe) {
           controlPipes = makeOrderedMap({
             [payload.state.controlPipe.id]:

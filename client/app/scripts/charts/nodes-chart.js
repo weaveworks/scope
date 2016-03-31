@@ -135,7 +135,6 @@ export default class NodesChart extends React.Component {
       const met = node.get('metrics') && node.get('metrics')
         .filter(m => m.get('id') === this.props.selectedMetric)
         .first();
-      console.log(met);
       return met;
     };
 

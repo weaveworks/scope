@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { selectMetric, lockMetric, unlockMetric } from '../actions/app-actions';
+import { selectMetric, pinMetric, unpinMetric } from '../actions/app-actions';
 
 
 export class MetricSelectorItem extends React.Component {
@@ -19,22 +19,21 @@ export class MetricSelectorItem extends React.Component {
 
   onMouseClick() {
     const k = this.props.metric.id;
-    const lockedMetric = this.props.lockedMetric;
+    const pinnedMetric = this.props.pinnedMetric;
 
-    if (k === lockedMetric) {
-      unlockMetric(k);
+    if (k === pinnedMetric) {
+      unpinMetric(k);
     } else {
-      lockMetric(k);
+      pinMetric(k);
     }
   }
 
   render() {
-    const {metric, selectedMetric, lockedMetric} = this.props;
+    const {metric, selectedMetric, pinnedMetric} = this.props;
     const id = metric.id;
-    const isLocked = (id === lockedMetric);
+    const isPinned = (id === pinnedMetric);
     const isSelected = (id === selectedMetric);
     const className = classNames('metric-selector-action', {
-      'metric-selector-action-locked': isLocked,
       'metric-selector-action-selected': isSelected
     });
 
@@ -45,7 +44,7 @@ export class MetricSelectorItem extends React.Component {
         onMouseOver={this.onMouseOver}
         onClick={this.onMouseClick}>
         {metric.label}
-        {isLocked && <span className="fa fa-thumb-tack"></span>}
+        {isPinned && <span className="fa fa-thumb-tack"></span>}
       </div>
     );
   }

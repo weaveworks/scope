@@ -20,31 +20,31 @@ export function selectMetric(metricId) {
   });
 }
 
-export function lockNextMetric(delta) {
+export function pinNextMetric(delta) {
   const metrics = AppStore.getAvailableCanvasMetrics().map(m => m.id);
   const currentIndex = metrics.indexOf(AppStore.getSelectedMetric());
   const nextMetric = metrics[modulo(currentIndex + delta, metrics.length)];
 
   AppDispatcher.dispatch({
-    type: ActionTypes.LOCK_METRIC,
+    type: ActionTypes.PIN_METRIC,
     metricId: nextMetric,
     metricType: AppStore.getAvailableCanvasMetricsTypes()[nextMetric]
   });
   updateRoute();
 }
 
-export function lockMetric(metricId) {
+export function pinMetric(metricId) {
   AppDispatcher.dispatch({
-    type: ActionTypes.LOCK_METRIC,
+    type: ActionTypes.PIN_METRIC,
     metricId,
     metricType: AppStore.getAvailableCanvasMetricsTypes()[metricId]
   });
   updateRoute();
 }
 
-export function unlockMetric() {
+export function unpinMetric() {
   AppDispatcher.dispatch({
-    type: ActionTypes.UNLOCK_METRIC,
+    type: ActionTypes.UNPIN_METRIC,
   });
   updateRoute();
 }

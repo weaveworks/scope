@@ -9,7 +9,7 @@ import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
-import { lockNextMetric, hitEsc, unlockMetric,
+import { pinNextMetric, hitEsc, unpinMetric,
   selectMetric } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
@@ -39,7 +39,7 @@ function getStateFromStores() {
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
     hostname: AppStore.getHostname(),
-    lockedMetric: AppStore.getLockedMetric(),
+    pinnedMetric: AppStore.getPinnedMetric(),
     availableCanvasMetrics: AppStore.getAvailableCanvasMetrics(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
@@ -84,11 +84,11 @@ export default class App extends React.Component {
     if (ev.keyCode === ESC_KEY_CODE) {
       hitEsc();
     } else if (ev.keyIdentifier === RIGHT_ANGLE_KEY_IDENTIFIER) {
-      lockNextMetric(-1);
+      pinNextMetric(-1);
     } else if (ev.keyIdentifier === LEFT_ANGLE_KEY_IDENTIFIER) {
-      lockNextMetric(1);
+      pinNextMetric(1);
     } else if (ev.keyCode === Q_KEY_CODE) {
-      unlockMetric();
+      unpinMetric();
       selectMetric(null);
     } else if (ev.keyCode === D_KEY_CODE) {
       toggleDebugToolbar();
@@ -144,7 +144,7 @@ export default class App extends React.Component {
             websocketClosed={this.state.websocketClosed} />
           {this.state.availableCanvasMetrics.length > 0 && <MetricSelector
             availableCanvasMetrics={this.state.availableCanvasMetrics}
-            lockedMetric={this.state.lockedMetric}
+            pinnedMetric={this.state.pinnedMetric}
             selectedMetric={this.state.selectedMetric}
             />}
           <TopologyOptions options={this.state.currentTopologyOptions}
