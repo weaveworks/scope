@@ -37,8 +37,10 @@ func (r *Reporter) execHost(req xfer.Request) xfer.Response {
 	}
 	pipe.OnClose(func() {
 		if err := cmd.Process.Kill(); err != nil {
-			log.Errorf("Error closing host shell: %v", err)
-			return
+			log.Errorf("Error stopping host shell: %v", err)
+		}
+		if err := ptyPipe.Close(); err != nil {
+			log.Errorf("Error closing host shell's pty: %v", err)
 		}
 		log.Info("Host shell closed.")
 	})
@@ -46,7 +48,6 @@ func (r *Reporter) execHost(req xfer.Request) xfer.Response {
 		if err := cmd.Wait(); err != nil {
 			log.Errorf("Error waiting on host shell: %v", err)
 		}
-		ptyPipe.Close()
 		pipe.Close()
 	}()
 
