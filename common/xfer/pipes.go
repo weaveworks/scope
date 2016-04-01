@@ -27,7 +27,16 @@ type pipe struct {
 	onClose         func()
 }
 
-// NewPipe makes a new... pipe.
+// NewPipeFromEnds makes a new pipe specifying its ends
+func NewPipeFromEnds(local io.ReadWriter, remote io.ReadWriter) Pipe {
+	return &pipe{
+		port:      local,
+		starboard: remote,
+		quit:      make(chan struct{}),
+	}
+}
+
+// NewPipe makes a new pipe
 func NewPipe() Pipe {
 	r1, w1 := io.Pipe()
 	r2, w2 := io.Pipe()

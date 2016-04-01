@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -34,17 +35,25 @@ const (
 
 // Reporter generates Reports containing the host topology.
 type Reporter struct {
-	hostID   string
-	hostName string
+	hostID       string
+	hostName     string
+	probeID      string
+	pipes        controls.PipeClient
+	hostShellCmd []string
 }
 
 // NewReporter returns a Reporter which produces a report containing host
 // topology for this host.
-func NewReporter(hostID, hostName string) *Reporter {
-	return &Reporter{
-		hostID:   hostID,
-		hostName: hostName,
+func NewReporter(hostID, hostName, probeID string, pipes controls.PipeClient) *Reporter {
+	r := &Reporter{
+		hostID:       hostID,
+		hostName:     hostName,
+		probeID:      probeID,
+		pipes:        pipes,
+		hostShellCmd: getHostShellCmd(),
 	}
+	r.registerControls()
+	return r
 }
 
 // Name of this reporter, for metrics gathering
@@ -98,6 +107,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	memoryUsage, max := GetMemoryUsageBytes()
 	metrics[MemoryUsage] = report.MakeMetric().Add(now, memoryUsage).WithMax(max)
 
+	metadata := map[string]string{report.ControlProbeID: r.probeID}
 	rep.Host.AddNode(report.MakeHostNodeID(r.hostID), report.MakeNodeWith(map[string]string{
 		Timestamp:     mtime.Now().UTC().Format(time.RFC3339Nano),
 		HostName:      r.hostName,
@@ -106,7 +116,18 @@ func (r *Reporter) Report() (report.Report, error) {
 		Uptime:        uptime.String(),
 	}).WithSets(report.EmptySets.
 		Add(LocalNetworks, report.MakeStringSet(localCIDRs...)),
-	).WithMetrics(metrics))
+	).WithMetrics(metrics).WithControls(ExecHost).WithLatests(metadata))
+
+	rep.Host.Controls.AddControl(report.Control{
+		ID:    ExecHost,
+		Human: "Exec shell",
+		Icon:  "fa-terminal",
+	})
 
 	return rep, nil
+}
+
+// Stop stops the reporter.
+func (r *Reporter) Stop() {
+	r.deregisterControls()
 }

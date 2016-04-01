@@ -10,7 +10,7 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-// Control IDs used by the docker intergation.
+// Control IDs used by the docker integration.
 const (
 	StopContainer    = "docker_stop_container"
 	StartContainer   = "docker_start_container"

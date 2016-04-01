@@ -102,7 +102,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	})
 	result.Controls.AddControl(report.Control{
 		ID:    ExecContainer,
-		Human: "Exec /bin/sh",
+		Human: "Exec shell",
 		Icon:  "fa-terminal",
 	})
 
