@@ -44,6 +44,7 @@
     "eslint-plugin-react": "4.2.2",
     "file-loader": "0.8.5",
     "http-proxy-rules": "^1.0.1",
+    "immutable-devtools": "0.0.6",
     "jest-cli": "~0.9.2",
     "json-loader": "0.5.4",
     "less": "~2.6.1",
@@ -67,7 +68,9 @@
     "test": "jest",
     "coveralls": "cat coverage/lcov.info | coveralls",
     "lint": "eslint app",
-    "clean": "rm build/app.js"
+    "clean": "rm build/app.js",
+    "noprobe": "../scope stop && ../scope launch --no-probe --app.window 8760h",
+    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d"
   },
   "jest": {
     "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",

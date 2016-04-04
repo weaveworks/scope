@@ -1,4 +1,5 @@
 import React from 'react';
+import debug from 'debug';
 
 import Logo from './logo';
 import AppStore from '../stores/app-store';
@@ -8,14 +9,22 @@ import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
-import { hitEsc } from '../actions/app-actions';
+import { pinNextMetric, hitEsc, unpinMetric,
+  selectMetric } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
+import MetricSelector from './metric-selector';
 import EmbeddedTerminal from './embedded-terminal';
 import { getRouter } from '../utils/router-utils';
-import { showingDebugToolbar, DebugToolbar } from './debug-toolbar.js';
+import { showingDebugToolbar, toggleDebugToolbar,
+  DebugToolbar } from './debug-toolbar.js';
 
 const ESC_KEY_CODE = 27;
+const D_KEY_CODE = 68;
+const Q_KEY_CODE = 81;
+const RIGHT_ANGLE_KEY_IDENTIFIER = 'U+003C';
+const LEFT_ANGLE_KEY_IDENTIFIER = 'U+003E';
+const keyPressLog = debug('scope:app-key-press');
 
 function getStateFromStores() {
   return {
@@ -30,9 +39,12 @@ function getStateFromStores() {
     highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
     highlightedNodeIds: AppStore.getHighlightedNodeIds(),
     hostname: AppStore.getHostname(),
+    pinnedMetric: AppStore.getPinnedMetric(),
+    availableCanvasMetrics: AppStore.getAvailableCanvasMetrics(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     selectedNodeId: AppStore.getSelectedNodeId(),
+    selectedMetric: AppStore.getSelectedMetric(),
     topologies: AppStore.getTopologies(),
     topologiesLoaded: AppStore.isTopologiesLoaded(),
     updatePaused: AppStore.isUpdatePaused(),
@@ -68,8 +80,19 @@ export default class App extends React.Component {
   }
 
   onKeyPress(ev) {
+    keyPressLog('onKeyPress', 'keyCode', ev.keyCode, ev);
     if (ev.keyCode === ESC_KEY_CODE) {
       hitEsc();
+    } else if (ev.keyIdentifier === RIGHT_ANGLE_KEY_IDENTIFIER) {
+      pinNextMetric(-1);
+    } else if (ev.keyIdentifier === LEFT_ANGLE_KEY_IDENTIFIER) {
+      pinNextMetric(1);
+    } else if (ev.keyCode === Q_KEY_CODE) {
+      unpinMetric();
+      selectMetric(null);
+    } else if (ev.keyCode === D_KEY_CODE) {
+      toggleDebugToolbar();
+      this.forceUpdate();
     }
   }
 
@@ -103,9 +126,14 @@ export default class App extends React.Component {
             currentTopology={this.state.currentTopology} />
         </div>
 
-        <Nodes nodes={this.state.nodes} highlightedNodeIds={this.state.highlightedNodeIds}
-          highlightedEdgeIds={this.state.highlightedEdgeIds} detailsWidth={detailsWidth}
-          selectedNodeId={this.state.selectedNodeId} topMargin={topMargin}
+        <Nodes
+          nodes={this.state.nodes}
+          highlightedNodeIds={this.state.highlightedNodeIds}
+          highlightedEdgeIds={this.state.highlightedEdgeIds}
+          detailsWidth={detailsWidth}
+          selectedNodeId={this.state.selectedNodeId}
+          topMargin={topMargin}
+          selectedMetric={this.state.selectedMetric}
           forceRelayout={this.state.forceRelayout}
           topologyOptions={this.state.activeTopologyOptions}
           topologyId={this.state.currentTopologyId} />
@@ -114,6 +142,11 @@ export default class App extends React.Component {
           <Status errorUrl={this.state.errorUrl} topology={this.state.currentTopology}
             topologiesLoaded={this.state.topologiesLoaded}
             websocketClosed={this.state.websocketClosed} />
+          {this.state.availableCanvasMetrics.count() > 0 && <MetricSelector
+            availableCanvasMetrics={this.state.availableCanvasMetrics}
+            pinnedMetric={this.state.pinnedMetric}
+            selectedMetric={this.state.selectedMetric}
+            />}
           <TopologyOptions options={this.state.currentTopologyOptions}
             topologyId={this.state.currentTopologyId}
             activeOptions={this.state.activeTopologyOptions} />

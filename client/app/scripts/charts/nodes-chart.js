@@ -74,10 +74,13 @@ export default class NodesChart extends React.Component {
         edges: makeMap()
       });
     }
+    //
     // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
+    // _.assign(state, this.updateGraphState(nextProps, state));
     if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
       _.assign(state, this.updateGraphState(nextProps, state));
     }
+
     if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
       _.assign(state, this.restoreLayout(state));
     }
@@ -131,6 +134,13 @@ export default class NodesChart extends React.Component {
       return 1;
     };
 
+    // TODO: think about pulling this up into the store.
+    const metric = node => (
+      node.get('metrics') && node.get('metrics')
+        .filter(m => m.get('id') === this.props.selectedMetric)
+        .first()
+    );
+
     return nodes
       .toIndexedSeq()
       .map(setHighlighted)
@@ -151,6 +161,7 @@ export default class NodesChart extends React.Component {
         pseudo={node.get('pseudo')}
         nodeCount={node.get('nodeCount')}
         subLabel={node.get('subLabel')}
+        metric={metric(node)}
         rank={node.get('rank')}
         selectedNodeScale={selectedNodeScale}
         nodeScale={nodeScale}
@@ -246,6 +257,7 @@ export default class NodesChart extends React.Component {
       id,
       label: node.get('label'),
       pseudo: node.get('pseudo'),
+      metrics: node.get('metrics'),
       subLabel: node.get('label_minor'),
       nodeCount: node.get('node_count'),
       rank: node.get('rank'),
@@ -423,7 +435,9 @@ export default class NodesChart extends React.Component {
     if (!graph) {
       return {maxNodesExceeded: true};
     }
-    stateNodes = graph.nodes;
+    stateNodes = graph.nodes.mergeDeep(stateNodes.map(node => makeMap({
+      metrics: node.get('metrics')
+    })));
     stateEdges = graph.edges;
 
     // save coordinates for restore

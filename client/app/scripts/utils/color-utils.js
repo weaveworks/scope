@@ -23,7 +23,7 @@ function text2degree(text) {
   return hueScale(num);
 }
 
-function colors(text, secondText) {
+export function colors(text, secondText) {
   let hue = text2degree(text);
   // skip green and shift to the end of the color wheel
   if (hue > 70 && hue < 150) {

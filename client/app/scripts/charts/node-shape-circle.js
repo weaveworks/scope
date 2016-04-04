@@ -1,22 +1,27 @@
 import React from 'react';
+import classNames from 'classnames';
+import {getMetricValue, getMetricColor, getClipPathDefinition} from '../utils/metric-utils.js';
+import {CANVAS_METRIC_FONT_SIZE} from '../constants/styles.js';
 
-export default function NodeShapeCircle({onlyHighlight, highlighted, size, color}) {
-  const hightlightNode = <circle r={size * 0.7} className="highlighted" />;
 
-  if (onlyHighlight) {
-    return (
-      <g className="shape">
-        {highlighted && hightlightNode}
-      </g>
-    );
-  }
+export default function NodeShapeCircle({id, highlighted, size, color, metric}) {
+  const clipId = `mask-${id}`;
+  const {height, hasMetric, formattedValue} = getMetricValue(metric, size);
+  const metricStyle = { fill: getMetricColor(metric) };
+  const className = classNames('shape', { metrics: hasMetric });
+  const fontSize = size * CANVAS_METRIC_FONT_SIZE;
 
   return (
-    <g className="shape">
-      {highlighted && hightlightNode}
+    <g className={className}>
+      {hasMetric && getClipPathDefinition(clipId, size, height)}
+      {highlighted && <circle r={size * 0.7} className="highlighted" />}
       <circle r={size * 0.5} className="border" stroke={color} />
       <circle r={size * 0.45} className="shadow" />
-      <circle r={Math.max(2, size * 0.125)} className="node" />
+      {hasMetric && <circle r={size * 0.45} className="metric-fill" style={metricStyle}
+        clipPath={`url(#${clipId})`} />}
+      {highlighted && hasMetric ?
+        <text style={{fontSize}}>{formattedValue}</text> :
+        <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );
 }

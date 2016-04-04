@@ -3,6 +3,7 @@ import debug from 'debug';
 import AppDispatcher from '../dispatcher/app-dispatcher';
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
+import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
 import { bufferDeltaUpdate, resumeUpdate,
   resetUpdateBuffer } from '../utils/update-buffer-utils';
@@ -11,6 +12,41 @@ import { doControlRequest, getNodesDelta, getNodeDetails,
 import AppStore from '../stores/app-store';
 
 const log = debug('scope:app-actions');
+
+export function selectMetric(metricId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.SELECT_METRIC,
+    metricId
+  });
+}
+
+export function pinNextMetric(delta) {
+  const metrics = AppStore.getAvailableCanvasMetrics().map(m => m.get('id'));
+  const currentIndex = metrics.indexOf(AppStore.getSelectedMetric());
+  const nextIndex = modulo(currentIndex + delta, metrics.count());
+  const nextMetric = metrics.get(nextIndex);
+
+  AppDispatcher.dispatch({
+    type: ActionTypes.PIN_METRIC,
+    metricId: nextMetric,
+  });
+  updateRoute();
+}
+
+export function pinMetric(metricId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.PIN_METRIC,
+    metricId,
+  });
+  updateRoute();
+}
+
+export function unpinMetric() {
+  AppDispatcher.dispatch({
+    type: ActionTypes.UNPIN_METRIC,
+  });
+  updateRoute();
+}
 
 export function changeTopologyOption(option, value, topologyId) {
   AppDispatcher.dispatch({
@@ -242,6 +278,7 @@ export function receiveNodesDelta(delta) {
     });
   }
 }
+
 
 export function receiveTopologies(topologies) {
   AppDispatcher.dispatch({

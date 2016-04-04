@@ -26,7 +26,8 @@ module.exports = {
     'app': [
       './app/scripts/main',
       'webpack-dev-server/client?http://localhost:4041',
-      'webpack/hot/only-dev-server'
+      'webpack/hot/only-dev-server',
+      './app/scripts/debug'
     ],
     'contrast-app': [
       './app/scripts/contrast-main',

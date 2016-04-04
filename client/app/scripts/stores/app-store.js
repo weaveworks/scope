@@ -29,7 +29,8 @@ function makeNode(node) {
     pseudo: node.pseudo,
     stack: node.stack,
     shape: node.shape,
-    adjacency: node.adjacency
+    adjacency: node.adjacency,
+    metrics: node.metrics
   };
 }
 
@@ -57,6 +58,14 @@ let routeSet = false;
 let controlPipes = makeOrderedMap(); // pipeId -> controlPipe
 let updatePausedAt = null; // Date
 let websocketClosed = true;
+
+let selectedMetric = null;
+let pinnedMetric = selectedMetric;
+// class of metric, e.g. 'cpu', rather than 'host_cpu' or 'process_cpu'.
+// allows us to keep the same metric "type" selected when the topology changes.
+let pinnedMetricType = null;
+let availableCanvasMetrics = makeList();
+
 
 const topologySorter = topology => topology.get('rank');
 
@@ -137,6 +146,7 @@ export class AppStore extends Store {
       controlPipe: this.getControlPipe(),
       nodeDetails: this.getNodeDetailsState(),
       selectedNodeId,
+      pinnedMetricType,
       topologyId: currentTopologyId,
       topologyOptions: topologyOptions.toJS() // all options
     };
@@ -161,6 +171,22 @@ export class AppStore extends Store {
     }
 
     return adjacentNodes;
+  }
+
+  getPinnedMetric() {
+    return pinnedMetric;
+  }
+
+  getSelectedMetric() {
+    return selectedMetric;
+  }
+
+  getAvailableCanvasMetrics() {
+    return availableCanvasMetrics;
+  }
+
+  getAvailableCanvasMetricsTypes() {
+    return makeMap(this.getAvailableCanvasMetrics().map(m => [m.get('id'), m.get('label')]));
   }
 
   getControlStatus() {
@@ -380,6 +406,7 @@ export class AppStore extends Store {
           setTopology(payload.topologyId);
           nodes = nodes.clear();
         }
+        availableCanvasMetrics = makeList();
         this.__emitChange();
         break;
       }
@@ -390,6 +417,7 @@ export class AppStore extends Store {
           setTopology(payload.topologyId);
           nodes = nodes.clear();
         }
+        availableCanvasMetrics = makeList();
         this.__emitChange();
         break;
       }
@@ -398,6 +426,24 @@ export class AppStore extends Store {
           websocketClosed = true;
           this.__emitChange();
         }
+        break;
+      }
+      case ActionTypes.SELECT_METRIC: {
+        selectedMetric = payload.metricId;
+        this.__emitChange();
+        break;
+      }
+      case ActionTypes.PIN_METRIC: {
+        pinnedMetric = payload.metricId;
+        pinnedMetricType = this.getAvailableCanvasMetricsTypes().get(payload.metricId);
+        selectedMetric = payload.metricId;
+        this.__emitChange();
+        break;
+      }
+      case ActionTypes.UNPIN_METRIC: {
+        pinnedMetric = null;
+        pinnedMetricType = null;
+        this.__emitChange();
         break;
       }
       case ActionTypes.DESELECT_NODE: {
@@ -555,7 +601,7 @@ export class AppStore extends Store {
         // update existing nodes
         _.each(payload.delta.update, (node) => {
           if (nodes.has(node.id)) {
-            nodes = nodes.set(node.id, nodes.get(node.id).merge(makeNode(node)));
+            nodes = nodes.set(node.id, nodes.get(node.id).merge(fromJS(node)));
           }
         });
 
@@ -563,6 +609,23 @@ export class AppStore extends Store {
         _.each(payload.delta.add, (node) => {
           nodes = nodes.set(node.id, fromJS(makeNode(node)));
         });
+
+        availableCanvasMetrics = nodes
+          .valueSeq()
+          .flatMap(n => (n.get('metrics') || makeList()).map(m => (
+            makeMap({id: m.get('id'), label: m.get('label')})
+          )))
+          .toSet()
+          .toList()
+          .sortBy(m => m.get('label'));
+
+        const similarTypeMetric = availableCanvasMetrics
+          .find(m => m.get('label') === pinnedMetricType);
+        pinnedMetric = similarTypeMetric && similarTypeMetric.get('id');
+        // if something in the current topo is not already selected, select it.
+        if (!availableCanvasMetrics.map(m => m.get('id')).toSet().has(selectedMetric)) {
+          selectedMetric = pinnedMetric;
+        }
 
         if (emitChange) {
           this.__emitChange();
@@ -590,6 +653,7 @@ export class AppStore extends Store {
           setDefaultTopologyOptions(topologies);
         }
         topologiesLoaded = true;
+
         this.__emitChange();
         break;
       }
@@ -608,6 +672,7 @@ export class AppStore extends Store {
         setTopology(payload.state.topologyId);
         setDefaultTopologyOptions(topologies);
         selectedNodeId = payload.state.selectedNodeId;
+        pinnedMetricType = payload.state.pinnedMetricType;
         if (payload.state.controlPipe) {
           controlPipes = makeOrderedMap({
             [payload.state.controlPipe.id]:
