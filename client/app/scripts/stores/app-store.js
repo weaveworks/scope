@@ -61,8 +61,10 @@ let websocketClosed = true;
 
 let selectedMetric = null;
 let pinnedMetric = selectedMetric;
+// class of metric, e.g. 'cpu', rather than 'host_cpu' or 'process_cpu'.
+// allows us to keep the same metric "type" selected when the topology changes.
 let pinnedMetricType = null;
-let availableCanvasMetrics = [];
+let availableCanvasMetrics = makeList();
 
 
 const topologySorter = topology => topology.get('rank');
@@ -184,7 +186,7 @@ export class AppStore extends Store {
   }
 
   getAvailableCanvasMetricsTypes() {
-    return _.fromPairs(this.getAvailableCanvasMetrics().map(m => [m.id, m.label]));
+    return makeMap(this.getAvailableCanvasMetrics().map(m => [m.get('id'), m.get('label')]));
   }
 
   getControlStatus() {
@@ -404,7 +406,7 @@ export class AppStore extends Store {
           setTopology(payload.topologyId);
           nodes = nodes.clear();
         }
-        availableCanvasMetrics = [];
+        availableCanvasMetrics = makeList();
         this.__emitChange();
         break;
       }
@@ -415,7 +417,7 @@ export class AppStore extends Store {
           setTopology(payload.topologyId);
           nodes = nodes.clear();
         }
-        availableCanvasMetrics = [];
+        availableCanvasMetrics = makeList();
         this.__emitChange();
         break;
       }
@@ -433,7 +435,7 @@ export class AppStore extends Store {
       }
       case ActionTypes.PIN_METRIC: {
         pinnedMetric = payload.metricId;
-        pinnedMetricType = payload.metricType;
+        pinnedMetricType = this.getAvailableCanvasMetricsTypes().get(payload.metricId);
         selectedMetric = payload.metricId;
         this.__emitChange();
         break;
@@ -614,13 +616,14 @@ export class AppStore extends Store {
             makeMap({id: m.get('id'), label: m.get('label')})
           )))
           .toSet()
-          .sortBy(m => m.get('label'))
-          .toJS();
+          .toList()
+          .sortBy(m => m.get('label'));
 
-        const similarTypeMetric = availableCanvasMetrics.find(m => m.label === pinnedMetricType);
-        pinnedMetric = similarTypeMetric && similarTypeMetric.id;
+        const similarTypeMetric = availableCanvasMetrics
+          .find(m => m.get('label') === pinnedMetricType);
+        pinnedMetric = similarTypeMetric && similarTypeMetric.get('id');
         // if something in the current topo is not already selected, select it.
-        if (availableCanvasMetrics.map(m => m.id).indexOf(selectedMetric) === -1) {
+        if (!availableCanvasMetrics.map(m => m.get('id')).toSet().has(selectedMetric)) {
           selectedMetric = pinnedMetric;
         }
 

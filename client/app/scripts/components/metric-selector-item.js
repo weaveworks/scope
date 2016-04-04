@@ -13,12 +13,12 @@ export class MetricSelectorItem extends React.Component {
   }
 
   onMouseOver() {
-    const k = this.props.metric.id;
+    const k = this.props.metric.get('id');
     selectMetric(k);
   }
 
   onMouseClick() {
-    const k = this.props.metric.id;
+    const k = this.props.metric.get('id');
     const pinnedMetric = this.props.pinnedMetric;
 
     if (k === pinnedMetric) {
@@ -30,7 +30,7 @@ export class MetricSelectorItem extends React.Component {
 
   render() {
     const {metric, selectedMetric, pinnedMetric} = this.props;
-    const id = metric.id;
+    const id = metric.get('id');
     const isPinned = (id === pinnedMetric);
     const isSelected = (id === selectedMetric);
     const className = classNames('metric-selector-action', {
@@ -43,7 +43,7 @@ export class MetricSelectorItem extends React.Component {
         className={className}
         onMouseOver={this.onMouseOver}
         onClick={this.onMouseClick}>
-        {metric.label}
+        {metric.get('label')}
         {isPinned && <span className="fa fa-thumb-tack"></span>}
       </div>
     );

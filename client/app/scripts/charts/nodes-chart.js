@@ -76,7 +76,10 @@ export default class NodesChart extends React.Component {
     }
     //
     // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
-    _.assign(state, this.updateGraphState(nextProps, state));
+    // _.assign(state, this.updateGraphState(nextProps, state));
+    if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
+      _.assign(state, this.updateGraphState(nextProps, state));
+    }
 
     if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
       _.assign(state, this.restoreLayout(state));
@@ -131,12 +134,12 @@ export default class NodesChart extends React.Component {
       return 1;
     };
 
-    const metric = node => {
-      const met = node.get('metrics') && node.get('metrics')
+    // TODO: think about pulling this up into the store.
+    const metric = node => (
+      node.get('metrics') && node.get('metrics')
         .filter(m => m.get('id') === this.props.selectedMetric)
-        .first();
-      return met;
-    };
+        .first()
+    );
 
     return nodes
       .toIndexedSeq()

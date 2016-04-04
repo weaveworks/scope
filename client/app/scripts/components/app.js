@@ -142,7 +142,7 @@ export default class App extends React.Component {
           <Status errorUrl={this.state.errorUrl} topology={this.state.currentTopology}
             topologiesLoaded={this.state.topologiesLoaded}
             websocketClosed={this.state.websocketClosed} />
-          {this.state.availableCanvasMetrics.length > 0 && <MetricSelector
+          {this.state.availableCanvasMetrics.count() > 0 && <MetricSelector
             availableCanvasMetrics={this.state.availableCanvasMetrics}
             pinnedMetric={this.state.pinnedMetric}
             selectedMetric={this.state.selectedMetric}

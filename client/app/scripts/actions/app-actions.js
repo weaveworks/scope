@@ -21,14 +21,14 @@ export function selectMetric(metricId) {
 }
 
 export function pinNextMetric(delta) {
-  const metrics = AppStore.getAvailableCanvasMetrics().map(m => m.id);
+  const metrics = AppStore.getAvailableCanvasMetrics().map(m => m.get('id'));
   const currentIndex = metrics.indexOf(AppStore.getSelectedMetric());
-  const nextMetric = metrics[modulo(currentIndex + delta, metrics.length)];
+  const nextIndex = modulo(currentIndex + delta, metrics.count());
+  const nextMetric = metrics.get(nextIndex);
 
   AppDispatcher.dispatch({
     type: ActionTypes.PIN_METRIC,
     metricId: nextMetric,
-    metricType: AppStore.getAvailableCanvasMetricsTypes()[nextMetric]
   });
   updateRoute();
 }
@@ -37,7 +37,6 @@ export function pinMetric(metricId) {
   AppDispatcher.dispatch({
     type: ActionTypes.PIN_METRIC,
     metricId,
-    metricType: AppStore.getAvailableCanvasMetricsTypes()[metricId]
   });
   updateRoute();
 }

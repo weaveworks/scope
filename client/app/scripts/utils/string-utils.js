@@ -2,7 +2,9 @@ import React from 'react';
 import filesize from 'filesize';
 import d3 from 'd3';
 
+
 const formatLargeValue = d3.format('s');
+
 
 function renderHtml(text, unit) {
   return (
@@ -11,6 +13,11 @@ function renderHtml(text, unit) {
       <span className="metric-unit">{unit}</span>
     </span>
   );
+}
+
+
+function renderSvg(text, unit) {
+  return `${text}${unit}`;
 }
 
 
@@ -45,13 +52,15 @@ function makeFormatters(renderFn) {
 }
 
 
-const formatters = makeFormatters(renderHtml);
-const svgFormatters = makeFormatters((text, unit) => `${text}${unit}`);
-
-export function formatMetric(value, opts, svg) {
-  const formatterBase = svg ? svgFormatters : formatters;
-  const formatter = opts && formatterBase[opts.format] ? opts.format : 'number';
-  return formatterBase[formatter](value);
+function makeFormatMetric(renderFn) {
+  const formatters = makeFormatters(renderFn);
+  return (value, opts) => {
+    const formatter = opts && formatters[opts.format] ? opts.format : 'number';
+    return formatters[formatter](value);
+  };
 }
 
+
+export const formatMetric = makeFormatMetric(renderHtml);
+export const formatMetricSvg = makeFormatMetric(renderSvg);
 export const formatDate = d3.time.format.iso;

@@ -1,16 +1,19 @@
 import React from 'react';
 import d3 from 'd3';
 import classNames from 'classnames';
-import {getMetricValue, getMetricColor} from '../utils/metric-utils.js';
+import {getMetricValue, getMetricColor, getClipPathDefinition} from '../utils/metric-utils.js';
 import {CANVAS_METRIC_FONT_SIZE} from '../constants/styles.js';
+
 
 const line = d3.svg.line()
   .interpolate('cardinal-closed')
   .tension(0.25);
 
+
 function getWidth(h) {
   return (Math.sqrt(3) / 2) * h;
 }
+
 
 function getPoints(h) {
   const w = getWidth(h);
@@ -35,34 +38,23 @@ export default function NodeShapeHex({id, highlighted, size, color, metric}) {
 
   const shadowSize = 0.45;
   const upperHexBitHeight = -0.25 * size * shadowSize;
-  const fontSize = size * CANVAS_METRIC_FONT_SIZE;
 
   const clipId = `mask-${id}`;
-  const {height, value, formattedValue} = getMetricValue(metric, size);
-  const className = classNames('shape', {
-    metrics: value !== null
-  });
-  const metricStyle = {
-    fill: getMetricColor(metric)
-  };
+  const {height, hasMetric, formattedValue} = getMetricValue(metric, size);
+  const metricStyle = { fill: getMetricColor(metric) };
+  const className = classNames('shape', { metrics: hasMetric });
+  const fontSize = size * CANVAS_METRIC_FONT_SIZE;
 
   return (
     <g className={className}>
-      <defs>
-        <clipPath id={clipId}>
-          <rect
-            width={size}
-            height={size}
-            x={size - height + upperHexBitHeight}
-            />
-        </clipPath>
-      </defs>
+      {hasMetric && getClipPathDefinition(clipId, size, height, size - height +
+                                          upperHexBitHeight, 0)}
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(shadowSize)} />
-      <path className="metric-fill" style={metricStyle}
-        clipPath={`url(#${clipId})`} {...pathProps(shadowSize)} />
-      {highlighted && value !== null ?
+      {hasMetric && <path className="metric-fill" style={metricStyle}
+        clipPath={`url(#${clipId})`} {...pathProps(shadowSize)} />}
+      {highlighted && hasMetric ?
         <text style={{fontSize}}>
           {formattedValue}
         </text> :

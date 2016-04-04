@@ -21,6 +21,8 @@
 @base-font: "Roboto", sans-serif;
 @mono-font: "Menlo", "DejaVu Sans Mono", "Liberation Mono", monospace;
 
+@base-ease: ease-in-out;
+
 @primary-color: @weave-charcoal-blue;
 @background-color: lighten(@primary-color, 66%);
 @background-lighter-color: lighten(@background-color, 8%);
@@ -65,15 +67,15 @@
 }
 
 .colorable {
-  transition: background-color .3s ease-in-out;
+  transition: background-color .3s @base-ease;
 }
 
 .palable {
-  transition: all .2s ease-in-out;
+  transition: all .2s @base-ease;
 }
 
 .hideable {
-  transition: opacity .5s ease-in-out;
+  transition: opacity .5s @base-ease;
 }
 
 .hang-around {
@@ -221,7 +223,7 @@ h2 {
 
     &-active {
       border: 1px solid @text-tertiary-color;
-      animation: blinking 1.5s infinite ease-in-out;
+      animation: blinking 1.5s infinite @base-ease;
     }
   }
 
@@ -333,7 +335,7 @@ h2 {
 
   .nodes > .node {
     cursor: pointer;
-    transition: opacity .5s ease-in-out;
+    transition: opacity .5s @base-ease;
 
     &.pseudo {
       cursor: default;
@@ -362,7 +364,7 @@ h2 {
   }
 
   .edge {
-    transition: opacity .5s ease-in-out;
+    transition: opacity .5s @base-ease;
 
     &.blurred {
       opacity: @edge-opacity-blurred;
@@ -402,16 +404,12 @@ h2 {
     display: none;
   }
 
-  .stack .onlyMetrics .shape .metric-fill {
-    display: inline-block;
-  }
-
   .shape {
     /* cloud paths have stroke-width set dynamically */
     &:not(.shape-cloud) .border {
       stroke-width: @node-border-stroke-width;
       fill: @background-color;
-      transition: stroke-opacity 0.5s cubic-bezier(0,0,0.21,1), fill 0.5s cubic-bezier(0,0,0.21,1);
+      transition: stroke-opacity 0.333s @base-ease, fill 0.333s @base-ease;
       stroke-opacity: 1;
     }
 
@@ -423,7 +421,7 @@ h2 {
     .metric-fill {
       stroke: none;
       fill: #A0BE7E;
-      fill-opacity: 0.7;
+      fill-opacity: 0.5;
     }
 
     .shadow {
@@ -608,7 +606,7 @@ h2 {
 
       &-icon {
         margin-right: 0.5em;
-        animation: blinking 2.0s infinite ease-in-out;
+        animation: blinking 2.0s infinite @base-ease;
       }
     }
   }
@@ -996,7 +994,7 @@ h2 {
   }
 
   &.status-loading {
-    animation: blinking 2.0s infinite ease-in-out;
+    animation: blinking 2.0s infinite @base-ease;
     text-transform: none;
     color: @text-color;
   }
@@ -1085,5 +1083,16 @@ h2 {
 
   &:hover {
     opacity: 1;
+  }
+
+  table {
+    display: inline-block;
+    border-collapse: collapse;
+    margin: 4px 2px;
+
+    td {
+      width: 10px;
+      height: 10px;
+    }
   }
 }
