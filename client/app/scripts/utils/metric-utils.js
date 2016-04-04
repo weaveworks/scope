@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import d3 from 'd3';
 import { formatMetricSvg } from './string-utils';
-import { getNodeColorDark as colors } from './color-utils';
+import { colors } from './color-utils';
 import React from 'react';
 
 
@@ -67,13 +67,14 @@ export function getMetricValue(metric, size) {
 export function getMetricColor(metric) {
   const selectedMetric = metric && metric.get('id');
   if (/mem/.test(selectedMetric)) {
-    return colors('p', 'a');
+    return 'steelBlue';
   } else if (/cpu/.test(selectedMetric)) {
-    return colors('z', 'a');
+    return colors('cpu');
   } else if (/files/.test(selectedMetric)) {
-    return colors('t', 'a');
+    // purple
+    return '#9467bd';
   } else if (/load/.test(selectedMetric)) {
-    return colors('a', 'a');
+    return colors('load');
   }
   return 'steelBlue';
 }
