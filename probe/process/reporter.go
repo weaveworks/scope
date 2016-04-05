@@ -84,8 +84,8 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 			node = node.WithMetric(CPUUsage, report.MakeMetric().Add(now, cpuUsage).WithMax(maxCPU))
 		}
 
-		node = node.WithMetric(MemoryUsage, report.MakeMetric().Add(now, float64(p.RSSBytes)))
-		node = node.WithMetric(OpenFilesCount, report.MakeMetric().Add(now, float64(p.OpenFilesCount)))
+		node = node.WithMetric(MemoryUsage, report.MakeMetric().Add(now, float64(p.RSSBytes)).WithMax(float64(p.RSSBytesLimit)))
+		node = node.WithMetric(OpenFilesCount, report.MakeMetric().Add(now, float64(p.OpenFilesCount)).WithMax(float64(p.OpenFilesLimit)))
 
 		t.AddNode(nodeID, node)
 	})

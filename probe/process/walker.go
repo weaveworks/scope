@@ -10,7 +10,9 @@ type Process struct {
 	Threads        int
 	Jiffies        uint64
 	RSSBytes       uint64
+	RSSBytesLimit  uint64
 	OpenFilesCount int
+	OpenFilesLimit uint64
 }
 
 // Walker is something that walks the /proc directory
