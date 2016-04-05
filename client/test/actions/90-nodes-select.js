@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 var fs = require('fs');
 var debug = require('debug')('scope:test:action:90-nodes-select');
 
@@ -31,7 +33,8 @@ module.exports = function(cfg) {
         return browser.sleep(2000);
       })
       .then(function() {
-        return browser.elementByCssSelector('.debug-panel div:nth-child(2) button:nth-child(9)');
+        return browser.elementByCssSelector('.debug-panel button:nth-child(5)');
+        // return browser.elementByCssSelector('.debug-panel div:nth-child(2) button:nth-child(9)');
       })
       .then(function(el) {
         debug('debug-panel found');
