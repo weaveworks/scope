@@ -131,8 +131,8 @@ var (
 				TopologyID: "hosts",
 				Label:      "Hosts",
 				Columns: []Column{
-					MakeColumn(host.CPUUsage),
-					MakeColumn(host.MemoryUsage),
+					{ID: host.CPUUsage, Label: "CPU"},
+					{ID: host.MemoryUsage, Label: "Memory"},
 				},
 			},
 		},
@@ -148,8 +148,8 @@ var (
 			NodeSummaryGroup: NodeSummaryGroup{
 				TopologyID: "containers",
 				Label:      "Containers", Columns: []Column{
-					MakeColumn(docker.CPUTotalUsage),
-					MakeColumn(docker.MemoryUsage),
+					{ID: docker.CPUTotalUsage, Label: "CPU"},
+					{ID: docker.MemoryUsage, Label: "Memory"},
 				},
 			},
 		},
@@ -158,9 +158,9 @@ var (
 			NodeSummaryGroup: NodeSummaryGroup{
 				TopologyID: "processes",
 				Label:      "Processes", Columns: []Column{
-					{ID: process.PID, Label: Label(process.PID)},
-					MakeColumn(process.CPUUsage),
-					MakeColumn(process.MemoryUsage),
+					{ID: process.PID, Label: "PID"},
+					{ID: process.CPUUsage, Label: "CPU"},
+					{ID: process.MemoryUsage, Label: "Memory"},
 				},
 			},
 		},
@@ -170,7 +170,7 @@ var (
 				TopologyID: "containers-by-image",
 				Label:      "Container Images",
 				Columns: []Column{
-					{ID: report.Container, Label: Label(report.Container), DefaultSort: true},
+					{ID: report.Container, Label: "# Containers", DefaultSort: true},
 				},
 			},
 		},

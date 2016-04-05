@@ -112,20 +112,27 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			{
 				Label:      "Containers",
 				TopologyID: "containers",
-				Columns:    []detailed.Column{detailed.MakeColumn(docker.CPUTotalUsage), detailed.MakeColumn(docker.MemoryUsage)},
-				Nodes:      []detailed.NodeSummary{containerNodeSummary},
+				Columns: []detailed.Column{
+					{ID: docker.CPUTotalUsage, Label: "CPU"},
+					{ID: docker.MemoryUsage, Label: "Memory"},
+				},
+				Nodes: []detailed.NodeSummary{containerNodeSummary},
 			},
 			{
 				Label:      "Processes",
 				TopologyID: "processes",
-				Columns:    []detailed.Column{detailed.MakeColumn(process.PID), detailed.MakeColumn(process.CPUUsage), detailed.MakeColumn(process.MemoryUsage)},
-				Nodes:      []detailed.NodeSummary{process1NodeSummary, process2NodeSummary},
+				Columns: []detailed.Column{
+					{ID: process.PID, Label: "PID"},
+					{ID: process.CPUUsage, Label: "CPU"},
+					{ID: process.MemoryUsage, Label: "Memory"},
+				},
+				Nodes: []detailed.NodeSummary{process1NodeSummary, process2NodeSummary},
 			},
 			{
 				Label:      "Container Images",
 				TopologyID: "containers-by-image",
 				Columns: []detailed.Column{
-					{ID: report.Container, Label: detailed.Label(report.Container), DefaultSort: true},
+					{ID: report.Container, Label: "# Containers", DefaultSort: true},
 				},
 				Nodes: []detailed.NodeSummary{containerImageNodeSummary},
 			},
@@ -225,8 +232,12 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 			{
 				Label:      "Processes",
 				TopologyID: "processes",
-				Columns:    []detailed.Column{detailed.MakeColumn(process.PID), detailed.MakeColumn(process.CPUUsage), detailed.MakeColumn(process.MemoryUsage)},
-				Nodes:      []detailed.NodeSummary{serverProcessNodeSummary},
+				Columns: []detailed.Column{
+					{ID: process.PID, Label: "PID"},
+					{ID: process.CPUUsage, Label: "CPU"},
+					{ID: process.MemoryUsage, Label: "Memory"},
+				},
+				Nodes: []detailed.NodeSummary{serverProcessNodeSummary},
 			},
 		},
 		Parents: []detailed.Parent{

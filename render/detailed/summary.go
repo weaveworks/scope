@@ -58,14 +58,6 @@ type Column struct {
 	DefaultSort bool   `json:"defaultSort"`
 }
 
-// MakeColumn makes a Column by looking up the label by id.
-func MakeColumn(id string) Column {
-	return Column{
-		ID:    id,
-		Label: Label(id),
-	}
-}
-
 // NodeSummary is summary information about a child for a Node.
 type NodeSummary struct {
 	ID           string               `json:"id"`
