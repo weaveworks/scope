@@ -1,5 +1,7 @@
-import React from 'react';
 import debug from 'debug';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import reactMixin from 'react-mixin';
 
 import Logo from './logo';
 import AppStore from '../stores/app-store';
@@ -26,9 +28,11 @@ const RIGHT_ANGLE_KEY_IDENTIFIER = 'U+003C';
 const LEFT_ANGLE_KEY_IDENTIFIER = 'U+003E';
 const keyPressLog = debug('scope:app-key-press');
 
+/* make sure these can all be shallow-checked for equality for PureRenderMixin */
 function getStateFromStores() {
   return {
     activeTopologyOptions: AppStore.getActiveTopologyOptions(),
+    adjacentNodes: AppStore.getAdjacentNodes(AppStore.getSelectedNodeId()),
     controlStatus: AppStore.getControlStatus(),
     controlPipe: AppStore.getControlPipe(),
     currentTopology: AppStore.getCurrentTopology(),
@@ -47,6 +51,7 @@ function getStateFromStores() {
     selectedMetric: AppStore.getSelectedMetric(),
     topologies: AppStore.getTopologies(),
     topologiesLoaded: AppStore.isTopologiesLoaded(),
+    topologyEmpty: AppStore.isTopologyEmpty(),
     updatePaused: AppStore.isUpdatePaused(),
     updatePausedAt: AppStore.getUpdatePausedAt(),
     version: AppStore.getVersion(),
@@ -136,6 +141,8 @@ export default class App extends React.Component {
           selectedMetric={this.state.selectedMetric}
           forceRelayout={this.state.forceRelayout}
           topologyOptions={this.state.activeTopologyOptions}
+          topologyEmpty={this.state.topologyEmpty}
+          adjacentNodes={this.state.adjacentNodes}
           topologyId={this.state.currentTopologyId} />
 
         <Sidebar>
@@ -157,3 +164,5 @@ export default class App extends React.Component {
     );
   }
 }
+
+reactMixin.onClass(App, PureRenderMixin);

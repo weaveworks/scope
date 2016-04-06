@@ -333,7 +333,7 @@ h2 {
     }
   }
 
-  .nodes > .node {
+  .nodes-chart-nodes > .node {
     cursor: pointer;
     transition: opacity .5s @base-ease;
 
@@ -368,6 +368,10 @@ h2 {
 
     &.blurred {
       opacity: @edge-opacity-blurred;
+    }
+
+    &.focused {
+      animation: focusing 1.5s ease-in-out;
     }
 
     .link {
@@ -1007,7 +1011,7 @@ h2 {
   &:last-child {
     margin-bottom: 0;
   }
-  
+
   .fa {
     margin-left: 4px;
     color: darkred;
@@ -1056,6 +1060,16 @@ h2 {
   bottom: 16px;
   left: 16px;
   font-size: .7rem;
+}
+
+@keyframes focusing {
+  0% {
+    opacity: 0;
+  } 33% {
+    opacity: 0.2;
+  } 100% {
+    opacity: 1;
+  }
 }
 
 @keyframes blinking {

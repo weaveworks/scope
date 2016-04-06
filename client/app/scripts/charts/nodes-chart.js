@@ -2,18 +2,17 @@ import _ from 'lodash';
 import d3 from 'd3';
 import debug from 'debug';
 import React from 'react';
-import { Map as makeMap } from 'immutable';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import reactMixin from 'react-mixin';
+import { Map as makeMap, fromJS, is as isDeepEqual } from 'immutable';
 import timely from 'timely';
 
-import { DETAILS_PANEL_WIDTH } from '../constants/styles';
 import { clickBackground } from '../actions/app-actions';
-import AppStore from '../stores/app-store';
-import Edge from './edge';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
-import { doLayout } from './nodes-layout';
-import Node from './node';
-import NodesError from './nodes-error';
+import { DETAILS_PANEL_WIDTH } from '../constants/styles';
 import Logo from '../components/logo';
+import { doLayout } from './nodes-layout';
+import NodesChartElements from './nodes-chart-elements';
 
 const log = debug('scope:nodes-chart');
 
@@ -29,38 +28,28 @@ const radiusDensity = d3.scale.threshold()
   .domain([3, 6]).range([2.5, 3.5, 3]);
 
 export default class NodesChart extends React.Component {
+
   constructor(props, context) {
     super(props, context);
+
     this.handleMouseClick = this.handleMouseClick.bind(this);
     this.zoomed = this.zoomed.bind(this);
 
     this.state = {
-      nodes: makeMap(),
       edges: makeMap(),
-      panTranslate: [0, 0],
-      scale: 1,
+      nodes: makeMap(),
       nodeScale: d3.scale.linear(),
+      panTranslateX: 0,
+      panTranslateY: 0,
+      scale: 1,
       selectedNodeScale: d3.scale.linear(),
-      hasZoomed: false,
-      maxNodesExceeded: false
+      hasZoomed: false
     };
   }
 
   componentWillMount() {
     const state = this.updateGraphState(this.props, this.state);
     this.setState(state);
-  }
-
-  componentDidMount() {
-    // distinguish pan/zoom from click
-    this.isZooming = false;
-
-    this.zoom = d3.behavior.zoom()
-      .scaleExtent([0.1, 2])
-      .on('zoom', this.zoomed);
-
-    d3.select('.nodes-chart svg')
-      .call(this.zoom);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -91,9 +80,20 @@ export default class NodesChart extends React.Component {
     this.setState(state);
   }
 
+  componentDidMount() {
+    // distinguish pan/zoom from click
+    this.isZooming = false;
+
+    this.zoom = d3.behavior.zoom()
+      .scaleExtent([0.1, 2])
+      .on('zoom', this.zoomed);
+
+    d3.select('.nodes-chart svg')
+      .call(this.zoom);
+  }
+
   componentWillUnmount() {
     // undoing .call(zoom)
-
     d3.select('.nodes-chart svg')
       .on('mousedown.zoom', null)
       .on('onwheel', null)
@@ -102,170 +102,75 @@ export default class NodesChart extends React.Component {
       .on('touchstart.zoom', null);
   }
 
-  renderGraphNodes(nodes, nodeScale) {
-    const hasSelectedNode = this.props.selectedNodeId
-      && this.props.nodes.has(this.props.selectedNodeId);
-    const adjacency = hasSelectedNode ? AppStore.getAdjacentNodes(this.props.selectedNodeId) : null;
-    const onNodeClick = this.props.onNodeClick;
-    const zoomScale = this.state.scale;
-    const selectedNodeScale = this.state.selectedNodeScale;
-
-    // highlighter functions
-    const setHighlighted = node => {
-      const highlighted = this.props.highlightedNodeIds.has(node.get('id'))
-        || this.props.selectedNodeId === node.get('id');
-      return node.set('highlighted', highlighted);
-    };
-    const setFocused = node => {
-      const focused = hasSelectedNode
-        && (this.props.selectedNodeId === node.get('id') || adjacency.includes(node.get('id')));
-      return node.set('focused', focused);
-    };
-    const setBlurred = node => node.set('blurred', hasSelectedNode && !node.get('focused'));
-
-    // make sure blurred nodes are in the background
-    const sortNodes = node => {
-      if (node.get('blurred')) {
-        return 0;
-      }
-      if (node.get('highlighted')) {
-        return 2;
-      }
-      return 1;
-    };
-
-    // TODO: think about pulling this up into the store.
-    const metric = node => (
-      node.get('metrics') && node.get('metrics')
-        .filter(m => m.get('id') === this.props.selectedMetric)
-        .first()
-    );
-
-    return nodes
-      .toIndexedSeq()
-      .map(setHighlighted)
-      .map(setFocused)
-      .map(setBlurred)
-      .sortBy(sortNodes)
-      .map(node => <Node
-        blurred={node.get('blurred')}
-        focused={node.get('focused')}
-        highlighted={node.get('highlighted')}
-        topologyId={this.props.topologyId}
-        shape={node.get('shape')}
-        stack={node.get('stack')}
-        onClick={onNodeClick}
-        key={node.get('id')}
-        id={node.get('id')}
-        label={node.get('label')}
-        pseudo={node.get('pseudo')}
-        nodeCount={node.get('nodeCount')}
-        subLabel={node.get('subLabel')}
-        metric={metric(node)}
-        rank={node.get('rank')}
-        selectedNodeScale={selectedNodeScale}
-        nodeScale={nodeScale}
-        zoomScale={zoomScale}
-        dx={node.get('x')}
-        dy={node.get('y')}
-      />);
-  }
-
-  renderGraphEdges(edges) {
-    const selectedNodeId = this.props.selectedNodeId;
-    const hasSelectedNode = selectedNodeId && this.props.nodes.has(selectedNodeId);
-
-    const setHighlighted = edge => edge.set('highlighted', this.props.highlightedEdgeIds.has(
-      edge.get('id')));
-
-    const setBlurred = edge => edge.set('blurred', hasSelectedNode
-      && edge.get('source') !== selectedNodeId
-      && edge.get('target') !== selectedNodeId);
-
-    return edges
-      .toIndexedSeq()
-      .map(setHighlighted)
-      .map(setBlurred)
-      .map(edge => <Edge key={edge.get('id')} id={edge.get('id')}
-        points={edge.get('points')}
-        blurred={edge.get('blurred')} highlighted={edge.get('highlighted')}
-      />
-    );
-  }
-
-  renderMaxNodesError(show) {
-    const errorHint = 'We\u0027re working on it, but for now, try a different view?';
-    return (
-      <NodesError faIconClass="fa-ban" hidden={!show}>
-        <div className="centered">Too many nodes to show in the browser.<br />{errorHint}</div>
-      </NodesError>
-    );
-  }
-
-  renderEmptyTopologyError(show) {
-    return (
-      <NodesError faIconClass="fa-circle-thin" hidden={!show}>
-        <div className="heading">Nothing to show. This can have any of these reasons:</div>
-        <ul>
-          <li>We haven't received any reports from probes recently.
-           Are the probes properly configured?</li>
-          <li>There are nodes, but they're currently hidden. Check the view options
-           in the bottom-left if they allow for showing hidden nodes.</li>
-          <li>Containers view only: you're not running Docker,
-           or you don't have any containers.</li>
-        </ul>
-      </NodesError>
-    );
-  }
-
   render() {
-    const nodeElements = this.renderGraphNodes(this.state.nodes, this.state.nodeScale);
-    const edgeElements = this.renderGraphEdges(this.state.edges, this.state.nodeScale);
-    const scale = this.state.scale;
+    const { edges, nodes, panTranslateX, panTranslateY, scale } = this.state;
 
-    const translate = this.state.panTranslate;
+    // not passing translates into child components for perf reasons, use getTranslate instead
+    const translate = [panTranslateX, panTranslateY];
     const transform = `translate(${translate}) scale(${scale})`;
-    const svgClassNames = this.state.maxNodesExceeded || nodeElements.size === 0 ? 'hide' : '';
-    const errorEmpty = this.renderEmptyTopologyError(AppStore.isTopologyEmpty());
-    const errorMaxNodesExceeded = this.renderMaxNodesError(this.state.maxNodesExceeded);
+    const svgClassNames = this.props.isEmpty ? 'hide' : '';
 
     return (
       <div className="nodes-chart">
-        {errorEmpty}
-        {errorMaxNodesExceeded}
         <svg width="100%" height="100%" id="nodes-chart-canvas"
           className={svgClassNames} onClick={this.handleMouseClick}>
           <g transform="translate(24,24) scale(0.25)">
             <Logo />
           </g>
-          <g className="canvas" transform={transform}>
-            <g className="edges">
-              {edgeElements}
-            </g>
-            <g className="nodes">
-              {nodeElements}
-            </g>
-          </g>
+          <NodesChartElements
+            edges={edges}
+            nodes={nodes}
+            transform={transform}
+            adjacentNodes={this.props.adjacentNodes}
+            layoutPrecision={this.props.layoutPrecision}
+            selectedMetric={this.props.selectedMetric}
+            selectedNodeId={this.props.selectedNodeId}
+            highlightedEdgeIds={this.props.highlightedEdgeIds}
+            highlightedNodeIds={this.props.highlightedNodeIds}
+            hasSelectedNode={this.props.hasSelectedNode}
+            nodeScale={this.state.nodeScale}
+            scale={this.state.scale}
+            selectedNodeScale={this.state.selectedNodeScale}
+            topologyId={this.props.topologyId} />
         </svg>
       </div>
     );
   }
 
-  initNodes(topology) {
+  handleMouseClick() {
+    if (!this.isZooming) {
+      clickBackground();
+    } else {
+      this.isZooming = false;
+    }
+  }
+
+  initNodes(topology, stateNodes) {
+    let nextStateNodes = stateNodes;
+
+    // remove nodes that have disappeared
+    stateNodes.forEach((node, id) => {
+      if (!topology.has(id)) {
+        nextStateNodes = nextStateNodes.delete(id);
+      }
+    });
+
     // copy relevant fields to state nodes
-    return topology.map((node, id) => makeMap({
-      id,
-      label: node.get('label'),
-      pseudo: node.get('pseudo'),
-      metrics: node.get('metrics'),
-      subLabel: node.get('label_minor'),
-      nodeCount: node.get('node_count'),
-      rank: node.get('rank'),
-      shape: node.get('shape'),
-      stack: node.get('stack'),
-      x: 0,
-      y: 0
-    }));
+    topology.forEach((node, id) => {
+      nextStateNodes = nextStateNodes.mergeIn([id], makeMap({
+        id,
+        label: node.get('label'),
+        pseudo: node.get('pseudo'),
+        subLabel: node.get('label_minor'),
+        nodeCount: node.get('node_count'),
+        metrics: node.get('metrics'),
+        rank: node.get('rank'),
+        shape: node.get('shape'),
+        stack: node.get('stack')
+      }));
+    });
+
+    return nextStateNodes;
   }
 
   initEdges(topology, stateNodes) {
@@ -309,10 +214,10 @@ export default class NodesChart extends React.Component {
       return {};
     }
 
-    const adjacency = AppStore.getAdjacentNodes(props.selectedNodeId);
+    const adjacentNodes = props.adjacentNodes;
     const adjacentLayoutNodeIds = [];
 
-    adjacency.forEach(adjacentId => {
+    adjacentNodes.forEach(adjacentId => {
       // filter loopback
       if (adjacentId !== props.selectedNodeId) {
         adjacentLayoutNodeIds.push(adjacentId);
@@ -321,7 +226,7 @@ export default class NodesChart extends React.Component {
 
     // move origin node to center of viewport
     const zoomScale = state.scale;
-    const translate = state.panTranslate;
+    const translate = [state.panTranslateX, state.panTranslateY];
     const centerX = (-translate[0] + (props.width + MARGINS.left
       - DETAILS_PANEL_WIDTH) / 2) / zoomScale;
     const centerY = (-translate[1] + (props.height + MARGINS.top) / 2) / zoomScale;
@@ -356,10 +261,10 @@ export default class NodesChart extends React.Component {
         || _.includes(adjacentLayoutNodeIds, edge.get('target'))) {
         const source = stateNodes.get(edge.get('source'));
         const target = stateNodes.get(edge.get('target'));
-        return edge.set('points', [
+        return edge.set('points', fromJS([
           {x: source.get('x'), y: source.get('y')},
           {x: target.get('x'), y: target.get('y')}
-        ]);
+        ]));
       }
       return edge;
     });
@@ -374,18 +279,10 @@ export default class NodesChart extends React.Component {
     };
   }
 
-  handleMouseClick() {
-    if (!this.isZooming) {
-      clickBackground();
-    } else {
-      this.isZooming = false;
-    }
-  }
-
   restoreLayout(state) {
     // undo any pan/zooming that might have happened
     this.zoom.scale(state.scale);
-    this.zoom.translate(state.panTranslate);
+    this.zoom.translate([state.panTranslateX, state.panTranslateY]);
 
     const nodes = state.nodes.map(node => node.merge({
       x: node.get('px'),
@@ -399,7 +296,7 @@ export default class NodesChart extends React.Component {
       return edge;
     });
 
-    return { edges, nodes};
+    return { edges, nodes };
   }
 
   updateGraphState(props, state) {
@@ -412,9 +309,13 @@ export default class NodesChart extends React.Component {
       };
     }
 
-    let stateNodes = this.initNodes(props.nodes, state.nodes);
-    let stateEdges = this.initEdges(props.nodes, stateNodes);
+    const stateNodes = this.initNodes(props.nodes, state.nodes);
+    const stateEdges = this.initEdges(props.nodes, stateNodes);
+    const nodeMetrics = stateNodes.map(node => makeMap({
+      metrics: node.get('metrics')
+    }));
     const nodeScale = this.getNodeScale(props);
+    const nextState = { nodeScale };
 
     const options = {
       width: props.width,
@@ -431,21 +332,15 @@ export default class NodesChart extends React.Component {
 
     log(`graph layout took ${timedLayouter.time}ms`);
 
-    // layout was aborted
-    if (!graph) {
-      return {maxNodesExceeded: true};
-    }
-    stateNodes = graph.nodes.mergeDeep(stateNodes.map(node => makeMap({
-      metrics: node.get('metrics')
-    })));
-    stateEdges = graph.edges;
-
-    // save coordinates for restore
-    stateNodes = stateNodes.map(node => node.merge({
-      px: node.get('x'),
-      py: node.get('y')
-    }));
-    stateEdges = stateEdges.map(edge => edge.set('ppoints', edge.get('points')));
+    // inject metrics and save coordinates for restore
+    const layoutNodes = graph.nodes
+      .mergeDeep(nodeMetrics)
+      .map(node => node.merge({
+        px: node.get('x'),
+        py: node.get('y')
+      }));
+    const layoutEdges = graph.edges
+      .map(edge => edge.set('ppoints', edge.get('points')));
 
     // adjust layout based on viewport
     const xFactor = (props.width - MARGINS.left - MARGINS.right) / graph.width;
@@ -453,19 +348,21 @@ export default class NodesChart extends React.Component {
     const zoomFactor = Math.min(xFactor, yFactor);
     let zoomScale = this.state.scale;
 
-    if (this.zoom && !this.state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
+    if (!this.props.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
       zoomScale = zoomFactor;
       // saving in d3's behavior cache
       this.zoom.scale(zoomFactor);
     }
 
-    return {
-      nodes: stateNodes,
-      edges: stateEdges,
-      scale: zoomScale,
-      nodeScale,
-      maxNodesExceeded: false
-    };
+    nextState.scale = zoomScale;
+    if (!isDeepEqual(stateNodes, state.nodes)) {
+      nextState.nodes = layoutNodes;
+    }
+    if (!isDeepEqual(stateEdges, state.edges)) {
+      nextState.edges = layoutEdges;
+    }
+
+    return nextState;
   }
 
   getNodeScale(props) {
@@ -483,9 +380,12 @@ export default class NodesChart extends React.Component {
     if (!this.props.selectedNodeId) {
       this.setState({
         hasZoomed: true,
-        panTranslate: d3.event.translate.slice(),
+        panTranslateX: d3.event.translate[0],
+        panTranslateY: d3.event.translate[1],
         scale: d3.event.scale
       });
     }
   }
 }
+
+reactMixin.onClass(NodesChart, PureRenderMixin);

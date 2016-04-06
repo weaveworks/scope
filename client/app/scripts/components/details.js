@@ -8,7 +8,7 @@ export default function Details({controlStatus, details, nodes}) {
     <div className="details">
       {details.toIndexedSeq().map((obj, index) => <DetailsCard key={obj.id}
         index={index} cardCount={details.size} nodes={nodes}
-        nodeControlStatus={controlStatus[obj.id]} {...obj} />
+        nodeControlStatus={controlStatus.get(obj.id)} {...obj} />
       )}
     </div>
   );

@@ -1,4 +1,6 @@
 import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import reactMixin from 'react-mixin';
 
 import NodeDetails from './node-details';
 import { DETAILS_PANEL_WIDTH as WIDTH, DETAILS_PANEL_OFFSET as OFFSET,
@@ -51,3 +53,5 @@ export default class DetailsCard extends React.Component {
     );
   }
 }
+
+reactMixin.onClass(DetailsCard, PureRenderMixin);
