@@ -32,7 +32,7 @@ const LABEL_PREFIXES = _.range('A'.charCodeAt(), 'Z'.charCodeAt() + 1)
   .map(n => String.fromCharCode(n));
 
 
-const randomLetter = () => _.sample(LABEL_PREFIXES);
+// const randomLetter = () => _.sample(LABEL_PREFIXES);
 
 
 const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, nodeCount = 1) => ({
@@ -108,8 +108,9 @@ function startPerf(delay) {
 function addNodes(n) {
   const ns = AppStore.getNodes();
   const nodeNames = ns.keySeq().toJS();
-  const newNodeNames = _.range(ns.size, ns.size + n).map(() => (
-    `${randomLetter()}${randomLetter()}-zing`
+  const newNodeNames = _.range(ns.size, ns.size + n).map(i => (
+    // `${randomLetter()}${randomLetter()}-zing`
+    `zing${i}`
   ));
   const allNodes = _(nodeNames).concat(newNodeNames).value();
 
