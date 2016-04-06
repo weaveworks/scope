@@ -11,11 +11,26 @@ export default class NodesChartEdges extends React.Component {
 
     return (
       <g className="nodes-chart-edges">
-        {layoutEdges.toIndexedSeq().map(edge => <EdgeContainer key={edge.get('id')}
-          id={edge.get('id')} source={edge.get('source')} target={edge.get('target')}
-          points={edge.get('points')} layoutPrecision={layoutPrecision}
-          highlightedEdgeIds={highlightedEdgeIds} hasSelectedNode={hasSelectedNode}
-          selectedNodeId={selectedNodeId} />)}
+        {layoutEdges.toIndexedSeq().map(edge => {
+          const sourceSelected = selectedNodeId === edge.get('source');
+          const targetSelected = selectedNodeId === edge.get('target');
+          const blurred = hasSelectedNode && !sourceSelected && !targetSelected;
+          const focused = hasSelectedNode && (sourceSelected || targetSelected);
+
+          return (
+            <EdgeContainer
+              key={edge.get('id')}
+              id={edge.get('id')}
+              source={edge.get('source')}
+              target={edge.get('target')}
+              points={edge.get('points')}
+              blurred={blurred}
+              focused={focused}
+              layoutPrecision={layoutPrecision}
+              highlighted={highlightedEdgeIds.has(edge.get('id'))}
+            />
+          );
+        })}
       </g>
     );
   }

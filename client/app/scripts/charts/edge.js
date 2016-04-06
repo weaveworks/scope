@@ -1,6 +1,7 @@
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import reactMixin from 'react-mixin';
+import classNames from 'classnames';
 
 import { enterEdge, leaveEdge } from '../actions/app-actions';
 
@@ -13,26 +14,11 @@ export default class Edge extends React.Component {
   }
 
   render() {
-    const { hasSelectedNode, highlightedEdgeIds, id, layoutPrecision,
-      path, selectedNodeId, source, target } = this.props;
-
-    const classNames = ['edge'];
-    if (highlightedEdgeIds.has(id)) {
-      classNames.push('highlighted');
-    }
-    if (hasSelectedNode
-      && source !== selectedNodeId
-      && target !== selectedNodeId) {
-      classNames.push('blurred');
-    }
-    if (hasSelectedNode && layoutPrecision === 0
-      && (source === selectedNodeId || target === selectedNodeId)) {
-      classNames.push('focused');
-    }
-    const classes = classNames.join(' ');
+    const { id, path, highlighted, blurred, focused } = this.props;
+    const className = classNames('edge', {highlighted, blurred, focused});
 
     return (
-      <g className={classes} onMouseEnter={this.handleMouseEnter}
+      <g className={className} onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave} id={id}>
         <path d={path} className="shadow" />
         <path d={path} className="link" />

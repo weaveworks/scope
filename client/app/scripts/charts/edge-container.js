@@ -43,7 +43,10 @@ export default class EdgeContainer extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    this.preparePoints(nextProps.points);
+    // immutablejs allows us to `===`! \o/
+    if (nextProps.points !== this.props.points) {
+      this.preparePoints(nextProps.points);
+    }
   }
 
   render() {
