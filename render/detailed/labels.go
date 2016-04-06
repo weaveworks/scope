@@ -20,7 +20,7 @@ var labels = map[string]string{
 	docker.ContainerIPs:          "IPs",
 	docker.ContainerPorts:        "Ports",
 	docker.ContainerRestartCount: "Restart #",
-	docker.ContainerState:        "State",
+	docker.ContainerStateHuman:   "State",
 	docker.ContainerUptime:       "Uptime",
 	docker.ImageID:               "Image ID",
 	docker.MemoryUsage:           "Memory",

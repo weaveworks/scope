@@ -31,6 +31,7 @@ const (
 	ContainerHostname      = "docker_container_hostname"
 	ContainerIPsWithScopes = "docker_container_ips_with_scopes"
 	ContainerState         = "docker_container_state"
+	ContainerStateHuman    = "docker_container_state_human"
 	ContainerUptime        = "docker_container_uptime"
 	ContainerRestartCount  = "docker_container_restart_count"
 	ContainerNetworkMode   = "docker_container_network_mode"
@@ -55,9 +56,12 @@ const (
 	CPUUsageInKernelmode = "docker_cpu_usage_in_kernelmode"
 	CPUSystemCPUUsage    = "docker_cpu_system_cpu_usage"
 
-	StateRunning = "running"
-	StateStopped = "stopped"
-	StatePaused  = "paused"
+	StateCreated    = "created"
+	StateDead       = "dead"
+	StateExited     = "exited"
+	StatePaused     = "paused"
+	StateRestarting = "restarting"
+	StateRunning    = "running"
 
 	NetworkModeHost = "host"
 
@@ -90,6 +94,7 @@ type Container interface {
 	Hostname() string
 	GetNode(string, []net.IP) report.Node
 	State() string
+	StateString() string
 	HasTTY() bool
 	Container() *docker.Container
 	StartGatheringStats() error
@@ -144,12 +149,11 @@ func (c *container) HasTTY() bool {
 }
 
 func (c *container) State() string {
-	if c.container.State.Paused {
-		return StatePaused
-	} else if c.container.State.Running {
-		return StateRunning
-	}
-	return StateStopped
+	return c.container.State.String()
+}
+
+func (c *container) StateString() string {
+	return c.container.State.StateString()
 }
 
 func (c *container) Container() *docker.Container {
@@ -333,16 +337,15 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ipsWithScopes = append(ipsWithScopes, report.MakeScopedAddressNodeID(hostID, ip))
 	}
 
-	state := c.State()
-
 	result := report.MakeNodeWith(map[string]string{
-		ContainerID:       c.ID(),
-		ContainerName:     strings.TrimPrefix(c.container.Name, "/"),
-		ContainerCreated:  c.container.Created.Format(time.RFC822),
-		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
-		ImageID:           c.Image(),
-		ContainerHostname: c.Hostname(),
-		ContainerState:    state,
+		ContainerID:         c.ID(),
+		ContainerName:       strings.TrimPrefix(c.container.Name, "/"),
+		ContainerCreated:    c.container.Created.Format(time.RFC822),
+		ContainerCommand:    c.container.Path + " " + strings.Join(c.container.Args, " "),
+		ImageID:             c.Image(),
+		ContainerHostname:   c.Hostname(),
+		ContainerState:      c.StateString(),
+		ContainerStateHuman: c.State(),
 	}).WithSets(report.EmptySets.
 		Add(ContainerPorts, c.ports(localAddrs)).
 		Add(ContainerIPs, report.MakeStringSet(ips...)).
@@ -389,4 +392,10 @@ func ExtractContainerIPs(nmd report.Node) []string {
 func ExtractContainerIPsWithScopes(nmd report.Node) []string {
 	v, _ := nmd.Sets.Lookup(ContainerIPsWithScopes)
 	return []string(v)
+}
+
+// ContainerIsStopped checks if the docker container is in one of our "stopped" states
+func ContainerIsStopped(c Container) bool {
+	state := c.StateString()
+	return (state != StateRunning && state != StateRestarting && state != StatePaused)
 }

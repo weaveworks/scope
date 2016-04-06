@@ -161,18 +161,18 @@ func FilterNoop(in Renderer) Renderer {
 
 // FilterStopped filters out stopped containers.
 func FilterStopped(r Renderer) Renderer {
-	return MakeFilter(IsStopped, r)
+	return MakeFilter(IsRunning, r)
 }
 
-// IsStopped checks if the node is a stopped docker container
-func IsStopped(n report.Node) bool {
-	containerState, ok := n.Latest.Lookup(docker.ContainerState)
-	return !ok || containerState != docker.StateStopped
+// IsRunning checks if the node is a running docker container
+func IsRunning(n report.Node) bool {
+	state, ok := n.Latest.Lookup(docker.ContainerState)
+	return !ok || (state == docker.StateRunning || state == docker.StateRestarting || state == docker.StatePaused)
 }
 
 // FilterRunning filters out running containers.
 func FilterRunning(r Renderer) Renderer {
-	return MakeFilter(Complement(IsStopped), r)
+	return MakeFilter(Complement(IsRunning), r)
 }
 
 // FilterNonProcspied removes endpoints which were not found in procspy.

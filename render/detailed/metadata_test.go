@@ -22,13 +22,13 @@ func TestNodeMetadata(t *testing.T) {
 			node: report.MakeNodeWith(map[string]string{
 				docker.ContainerID:            fixture.ClientContainerID,
 				docker.LabelPrefix + "label1": "label1value",
-				docker.ContainerState:         docker.StateRunning,
+				docker.ContainerStateHuman:    docker.StateRunning,
 			}).WithTopology(report.Container).WithSets(report.EmptySets.
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
 			want: []detailed.MetadataRow{
 				{ID: docker.ContainerID, Value: fixture.ClientContainerID, Prime: true},
-				{ID: docker.ContainerState, Value: "running", Prime: true},
+				{ID: docker.ContainerStateHuman, Value: "running", Prime: true},
 				{ID: docker.ContainerIPs, Value: "10.10.10.0/24, 10.10.10.1/24"},
 			},
 		},

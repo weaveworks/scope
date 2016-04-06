@@ -258,6 +258,7 @@ var (
 					kubernetes.PodID:                              ClientPodID,
 					kubernetes.Namespace:                          KubernetesNamespace,
 					docker.ContainerState:                         docker.StateRunning,
+					docker.ContainerStateHuman:                    docker.StateRunning,
 				}).WithID(ClientContainerNodeID).WithTopology(report.Container).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("container_image", report.MakeStringSet(ClientContainerImageNodeID)).
@@ -270,6 +271,7 @@ var (
 					docker.ContainerID:                                        ServerContainerID,
 					docker.ContainerName:                                      "task-name-5-server-aceb93e2f2b797caba01",
 					docker.ContainerState:                                     docker.StateRunning,
+					docker.ContainerStateHuman:                                docker.StateRunning,
 					docker.ImageID:                                            ServerContainerImageID,
 					report.HostNodeID:                                         ServerHostNodeID,
 					docker.LabelPrefix + detailed.AmazonECSContainerNameLabel: "server",

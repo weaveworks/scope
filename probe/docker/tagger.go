@@ -78,7 +78,7 @@ func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 			}
 		})
 
-		if c == nil || c.State() == StateStopped || c.PID() == 1 {
+		if c == nil || ContainerIsStopped(c) || c.PID() == 1 {
 			continue
 		}
 

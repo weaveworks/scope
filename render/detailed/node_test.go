@@ -178,7 +178,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 			Pseudo:     false,
 			Metadata: []detailed.MetadataRow{
 				{ID: "docker_container_id", Value: fixture.ServerContainerID, Prime: true},
-				{ID: "docker_container_state", Value: "running", Prime: true},
+				{ID: "docker_container_state_human", Value: "running", Prime: true},
 				{ID: "docker_image_id", Value: fixture.ServerContainerImageID},
 			},
 			DockerLabels: []detailed.MetadataRow{

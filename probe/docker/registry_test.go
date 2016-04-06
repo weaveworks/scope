@@ -39,6 +39,10 @@ func (c *mockContainer) Hostname() string {
 }
 
 func (c *mockContainer) State() string {
+	return "Up 3 minutes"
+}
+
+func (c *mockContainer) StateString() string {
 	return docker.StateRunning
 }
 
