@@ -12,8 +12,8 @@ import (
 )
 
 func topologyServer() *httptest.Server {
-	router := mux.NewRouter()
-	app.RegisterTopologyRoutes(StaticReport{}, router)
+	router := mux.NewRouter().SkipClean(true)
+	app.RegisterTopologyRoutes(router, StaticReport{})
 	return httptest.NewServer(router)
 }
 

@@ -9,16 +9,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// Instrument is a Middleware which records timings for every HTTP request
 type Instrument struct {
-	RouteMatcher RouteMatcher
-	Duration     *prometheus.SummaryVec
+	RouteMatcher interface {
+		Match(*http.Request, *mux.RouteMatch) bool
+	}
+	Duration *prometheus.SummaryVec
 }
 
-// RouteMatcher is implemented by mux.Router.
-type RouteMatcher interface {
-	Match(*http.Request, *mux.RouteMatch) bool
-}
-
+// Wrap implements middleware.Interface
 func (i Instrument) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		begin := time.Now()

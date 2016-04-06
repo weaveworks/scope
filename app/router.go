@@ -80,14 +80,7 @@ func gzipHandler(h http.HandlerFunc) http.HandlerFunc {
 	return handlers.GZIPHandlerFunc(h, nil)
 }
 
-// TopologyHandler registers the various topology routes with a http mux.
-//
-// The returned http.Handler has to be passed directly to http.ListenAndServe,
-// and cannot be nested inside another gorrilla.mux.
-//
-// Routes which should be matched before the topology routes should be added
-// to a router and passed in preRoutes.  Routes to be matches after topology
-// routes should be added to a router and passed to postRoutes.
+// RegisterTopologyRoutes registers the various topology routes with a http mux.
 func RegisterTopologyRoutes(router *mux.Router, r Reporter) {
 	get := router.Methods("GET").Subrouter()
 	get.HandleFunc("/api",
