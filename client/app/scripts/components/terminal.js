@@ -109,7 +109,7 @@ export default class Terminal extends React.Component {
       this.socket = null;
       const wereConnected = this.state.connected;
       this.setState({connected: false});
-      if (this.term && this.props.pipe.status !== 'PIPE_DELETED') {
+      if (this.term && this.props.pipe.get('status') !== 'PIPE_DELETED') {
         if (wereConnected) {
           this.createWebsocket(term);
         } else {
@@ -239,7 +239,7 @@ export default class Terminal extends React.Component {
   }
 
   getPipeId() {
-    return this.props.pipe.id;
+    return this.props.pipe.get('id');
   }
 
   getTitle() {
@@ -266,7 +266,7 @@ export default class Terminal extends React.Component {
   }
 
   getStatus() {
-    if (this.props.pipe.status === 'PIPE_DELETED') {
+    if (this.props.pipe.get('status') === 'PIPE_DELETED') {
       return (
         <div>
           <h3>Connection Closed</h3>

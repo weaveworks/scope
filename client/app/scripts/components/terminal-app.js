@@ -42,7 +42,6 @@ export class TerminalApp extends React.Component {
     return (
       <div className="terminal-app" style={style}>
         {this.state.controlPipe && <Terminal
-          key={this.state.controlPipe.id}
           pipe={this.state.controlPipe}
           titleBarColor={this.state.titleBarColor}
           statusBarColor={this.state.statusBarColor}
