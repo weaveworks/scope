@@ -2,6 +2,8 @@
 import React from 'react';
 import d3 from 'd3';
 
+import { formatMetricSvg } from '../utils/string-utils';
+
 const parseDate = d3.time.format.iso.parse;
 
 export default class Sparkline extends React.Component {
@@ -56,10 +58,11 @@ export default class Sparkline extends React.Component {
     const lastValue = data[data.length - 1].value;
     const lastX = this.x(lastDate);
     const lastY = this.y(lastValue);
+    const min = formatMetricSvg(d3.min(data, d => d.value), this.props);
+    const max = formatMetricSvg(d3.max(data, d => d.value), this.props);
+    const mean = formatMetricSvg(d3.mean(data, d => d.value), this.props);
     const title = `Last ${d3.round((lastDate - firstDate) / 1000)} seconds, ` +
-      `${data.length} samples, min: ${d3.round(d3.min(data, d => d.value), 2)}` +
-      `, max: ${d3.round(d3.max(data, d => d.value), 2)}` +
-      `, mean: ${d3.round(d3.mean(data, d => d.value), 2)}`;
+      `${data.length} samples, min: ${min}, max: ${max}, mean: ${mean}`;
 
     return {title, lastX, lastY, data};
   }

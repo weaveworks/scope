@@ -9,7 +9,7 @@ function NodeDetailsHealthItem(props) {
     <div className="node-details-health-item">
     <div className="node-details-health-item-value">{formatMetric(props.value, props)}</div>
       <div className="node-details-health-item-sparkline">
-        <Sparkline data={props.samples} max={props.max}
+        <Sparkline data={props.samples} max={props.max} format={props.format}
           first={props.first} last={props.last} />
       </div>
       <div className="node-details-health-item-label">{props.label}</div>
