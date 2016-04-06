@@ -65,7 +65,7 @@ func (c *dynamoDBCollector) CreateTables() error {
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
 				AttributeName: aws.String(hourField),
-				AttributeType: aws.String("N"),
+				AttributeType: aws.String("S"),
 			},
 			{
 				AttributeName: aws.String(tsField),
@@ -104,7 +104,7 @@ func (c *dynamoDBCollector) getRows(userid string, row int64, start, end time.Ti
 		KeyConditions: map[string]*dynamodb.Condition{
 			hourField: {
 				AttributeValueList: []*dynamodb.AttributeValue{
-					{N: aws.String(rowKey)},
+					{S: aws.String(rowKey)},
 				},
 				ComparisonOperator: aws.String("EQ"),
 			},
@@ -158,11 +158,11 @@ func (c *dynamoDBCollector) Report(ctx context.Context) (report.Report, error) {
 	// Queries will only every span 2 rows max.
 	if rowStart != rowEnd {
 		if result, err = c.getRows(userid, rowStart, start, now, result); err != nil {
-			return report.MakeReport(), nil
+			return report.MakeReport(), err
 		}
 	}
 	if result, err = c.getRows(userid, rowEnd, start, now, result); err != nil {
-		return report.MakeReport(), nil
+		return report.MakeReport(), err
 	}
 	return result, nil
 }
@@ -186,7 +186,7 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 		TableName: aws.String(tableName),
 		Item: map[string]*dynamodb.AttributeValue{
 			hourField: {
-				N: aws.String(rowKey),
+				S: aws.String(rowKey),
 			},
 			tsField: {
 				N: aws.String(strconv.FormatInt(now.UnixNano(), 10)),
