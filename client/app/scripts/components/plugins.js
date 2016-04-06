@@ -3,19 +3,21 @@ import React from 'react';
 export default class Plugins extends React.Component {
   renderPlugin(plugin) {
     return (
-      <div className="plugin" key={plugin.id} title={plugin.description}>
+      <span className="plugins-plugin" key={plugin.id} title={plugin.description}>
         {plugin.label || plugin.id}
-      </div>
+      </span>
     );
   }
 
   render() {
-    if (!this.props.plugins || this.props.plugins.length === 0) {
-      return <div className="plugins">No plugins loaded</div>;
-    }
+    const hasPlugins = this.props.plugins && this.props.plugins.length > 0;
     return (
       <div className="plugins">
-        Plugins: {this.props.plugins.map(plugin => this.renderPlugin(plugin))}
+        <span className="plugins-label">
+          Plugins:
+        </span>
+        {hasPlugins && this.props.plugins.map((plugin, index) => this.renderPlugin(plugin, index))}
+        {!hasPlugins && <span className="plugins-empty">n/a</span>}
       </div>
     );
   }
