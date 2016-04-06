@@ -7,6 +7,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -15,23 +16,50 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/app/multitenant"
+	"github.com/weaveworks/scope/common/middleware"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/docker"
 )
 
+var (
+	requestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Namespace: "scope",
+		Name:      "request_duration_nanoseconds",
+		Help:      "Time spent serving HTTP requests.",
+	}, []string{"method", "route", "status_code"})
+)
+
+func init() {
+	prometheus.MustRegister(requestDuration)
+}
+
 // Router creates the mux for all the various app components.
 func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter) http.Handler {
-	router := mux.NewRouter()
+	router := mux.NewRouter().SkipClean(true)
+
+	// We pull in the http.DefaultServeMux to get the pprof routes
+	router.PathPrefix("/debug/pprof").Handler(http.DefaultServeMux)
+	router.Path("/metrics").Handler(prometheus.Handler())
+
 	app.RegisterReportPostHandler(collector, router)
 	app.RegisterControlRoutes(router, controlRouter)
 	app.RegisterPipeRoutes(router, pipeRouter)
-	return app.TopologyHandler(collector, router, http.FileServer(FS(false)))
+	app.RegisterTopologyRoutes(router, collector)
+
+	router.PathPrefix("/").Handler(http.FileServer(FS(false)))
+
+	instrument := middleware.Instrument{
+		RouteMatcher: router,
+		Duration:     requestDuration,
+	}
+	return instrument.Wrap(router)
 }
 
 func awsConfigFromURL(url *url.URL) *aws.Config {
@@ -114,6 +142,7 @@ func appMain() {
 		listen    = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
 		logLevel  = flag.String("log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
 		logPrefix = flag.String("log.prefix", "<app>", "prefix for each log line")
+		logHTTP   = flag.Bool("log.http", false, "Log individual HTTP requests")
 
 		weaveAddr      = flag.String("weave.addr", app.DefaultWeaveURL, "Address on which to contact WeaveDNS")
 		weaveHostname  = flag.String("weave.hostname", app.DefaultHostname, "Hostname to advertise in WeaveDNS")
@@ -161,6 +190,7 @@ func appMain() {
 	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
 	app.Version = version
 	log.Infof("app starting, version %s, ID %s", app.Version, app.UniqueID)
+	log.Infof("command line: %v", os.Args)
 
 	// Start background version checking
 	checkpoint.CheckInterval(&checkpoint.CheckParams{
@@ -189,6 +219,9 @@ func appMain() {
 	}
 
 	handler := router(collector, controlRouter, pipeRouter)
+	if *logHTTP {
+		handler = middleware.Logging.Wrap(handler)
+	}
 	go func() {
 		log.Infof("listening on %s", *listen)
 		log.Info(http.ListenAndServe(*listen, handler))

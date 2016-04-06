@@ -54,8 +54,8 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 	router := mux.NewRouter()
 	c := app.NewCollector(1 * time.Minute)
 	app.RegisterReportPostHandler(c, router)
-	handler := app.TopologyHandler(c, router, nil)
-	ts := httptest.NewServer(handler)
+	app.RegisterTopologyRoutes(router, c)
+	ts := httptest.NewServer(router)
 	defer ts.Close()
 
 	body := getRawJSON(t, ts, "/api/topology")
