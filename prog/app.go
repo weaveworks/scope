@@ -7,6 +7,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -171,6 +172,7 @@ func appMain() {
 	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
 	app.Version = version
 	log.Infof("app starting, version %s, ID %s", app.Version, app.UniqueID)
+	log.Infof("command line: %v", os.Args)
 
 	// Start background version checking
 	checkpoint.CheckInterval(&checkpoint.CheckParams{
