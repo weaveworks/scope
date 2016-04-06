@@ -621,8 +621,8 @@
 		},
 		{
 			"importpath": "github.com/gorilla/mux",
-			"repository": "https://github.com/gorilla/mux",
-			"revision": "ad4d7a5882b961e07e2626045eb995c022ac6664",
+			"repository": "https://github.com/jingweno/mux",
+			"revision": "786d36e5ab042d67efe94022439cf6c91ee711dc",
 			"branch": "master"
 		},
 		{
