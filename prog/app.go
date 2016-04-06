@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
 
@@ -27,12 +28,25 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 )
 
+var (
+	requestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Namespace: "scope",
+		Name:      "request_duration_nanoseconds",
+		Help:      "Time spent serving HTTP requests.",
+	}, []string{"method", "route", "status_code"})
+)
+
+func init() {
+	prometheus.MustRegister(requestDuration)
+}
+
 // Router creates the mux for all the various app components.
 func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter) http.Handler {
 	router := mux.NewRouter().SkipClean(true)
 
 	// We pull in the http.DefaultServeMux to get the pprof routes
 	router.PathPrefix("/debug/pprof").Handler(http.DefaultServeMux)
+	router.Path("/metrics").Handler(prometheus.Handler())
 
 	app.RegisterReportPostHandler(collector, router)
 	app.RegisterControlRoutes(router, controlRouter)
@@ -41,7 +55,11 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 
 	router.PathPrefix("/").Handler(http.FileServer(FS(false)))
 
-	return router
+	instrument := middleware.Instrument{
+		RouteMatcher: router,
+		Duration:     requestDuration,
+	}
+	return instrument.Wrap(router)
 }
 
 func awsConfigFromURL(url *url.URL) *aws.Config {
