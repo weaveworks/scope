@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/xfer"
@@ -56,23 +57,24 @@ func handleWs(ctx context.Context, rep Reporter, renderer render.Renderer, w htt
 }
 
 // Individual nodes.
-func handleNode(topologyID, nodeID string) func(context.Context, Reporter, render.Renderer, http.ResponseWriter, *http.Request) {
-	return func(ctx context.Context, rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
-		var (
-			report, err = rep.Report(ctx)
-			rendered    = renderer.Render(report)
-			node, ok    = rendered[nodeID]
-		)
-		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		if !ok {
-			http.NotFound(w, r)
-			return
-		}
-		respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, report, rendered, node)})
+func handleNode(ctx context.Context, rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
+	var (
+		vars        = mux.Vars(r)
+		topologyID  = vars["topology"]
+		nodeID      = vars["id"]
+		report, err = rep.Report(ctx)
+		rendered    = renderer.Render(report)
+		node, ok    = rendered[nodeID]
+	)
+	if err != nil {
+		respondWith(w, http.StatusInternalServerError, err.Error())
+		return
 	}
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, report, rendered, node)})
 }
 
 func handleWebsocket(

@@ -88,44 +88,20 @@ func gzipHandler(h http.HandlerFunc) http.HandlerFunc {
 // Routes which should be matched before the topology routes should be added
 // to a router and passed in preRoutes.  Routes to be matches after topology
 // routes should be added to a router and passed to postRoutes.
-func TopologyHandler(c Reporter, preRoutes *mux.Router, postRoutes http.Handler) http.Handler {
-	get := preRoutes.Methods("GET").Subrouter()
-	get.HandleFunc("/api", gzipHandler(requestContextDecorator(apiHandler)))
-	get.HandleFunc("/api/topology", gzipHandler(requestContextDecorator(topologyRegistry.makeTopologyList(c))))
+func RegisterTopologyRoutes(router *mux.Router, r Reporter) {
+	get := router.Methods("GET").Subrouter()
+	get.HandleFunc("/api",
+		gzipHandler(requestContextDecorator(apiHandler)))
+	get.HandleFunc("/api/topology",
+		gzipHandler(requestContextDecorator(topologyRegistry.makeTopologyList(r))))
 	get.HandleFunc("/api/topology/{topology}",
-		gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(c, handleTopology))))
+		gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, handleTopology))))
 	get.HandleFunc("/api/topology/{topology}/ws",
-		requestContextDecorator(topologyRegistry.captureRenderer(c, handleWs))) // NB not gzip!
-	get.HandleFunc("/api/report", gzipHandler(requestContextDecorator(makeRawReportHandler(c))))
-
-	// We pull in the http.DefaultServeMux to get the pprof routes
-	preRoutes.PathPrefix("/debug/pprof").Handler(http.DefaultServeMux)
-
-	if postRoutes != nil {
-		preRoutes.PathPrefix("/").Handler(postRoutes)
-	}
-
-	// We have to handle the node details path manually due to
-	// various bugs in gorilla.mux and Go URL parsing.  See #804.
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars, match := matchURL(r, "/api/topology/{topology}/{id}")
-		if !match {
-			preRoutes.ServeHTTP(w, r)
-			return
-		}
-
-		topologyID := vars["topology"]
-		nodeID := vars["id"]
-		if nodeID == "ws" {
-			preRoutes.ServeHTTP(w, r)
-			return
-		}
-
-		handler := gzipHandler(requestContextDecorator(topologyRegistry.captureRendererWithoutFilters(
-			c, topologyID, handleNode(topologyID, nodeID),
-		)))
-		handler.ServeHTTP(w, r)
-	})
+		requestContextDecorator(topologyRegistry.captureRenderer(r, handleWs))) // NB not gzip!
+	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).HandlerFunc(
+		gzipHandler(requestContextDecorator(topologyRegistry.captureRendererWithoutFilters(r, handleNode))))
+	get.HandleFunc("/api/report",
+		gzipHandler(requestContextDecorator(makeRawReportHandler(r))))
 }
 
 // RegisterReportPostHandler registers the handler for report submission

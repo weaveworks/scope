@@ -28,11 +28,19 @@ import (
 
 // Router creates the mux for all the various app components.
 func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter) http.Handler {
-	router := mux.NewRouter()
+	router := mux.NewRouter().SkipClean(true)
+
+	// We pull in the http.DefaultServeMux to get the pprof routes
+	router.PathPrefix("/debug/pprof").Handler(http.DefaultServeMux)
+
 	app.RegisterReportPostHandler(collector, router)
 	app.RegisterControlRoutes(router, controlRouter)
 	app.RegisterPipeRoutes(router, pipeRouter)
-	return app.TopologyHandler(collector, router, http.FileServer(FS(false)))
+	app.RegisterTopologyRoutes(router, collector)
+
+	router.PathPrefix("/").Handler(http.FileServer(FS(false)))
+
+	return router
 }
 
 func awsConfigFromURL(url *url.URL) *aws.Config {
