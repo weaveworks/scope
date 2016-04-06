@@ -983,6 +983,23 @@ h2 {
   }
 }
 
+.plugins {
+  margin-right: 0.5em;
+
+  &-label {
+    text-transform: uppercase;
+    margin-right: 0.25em;
+  }
+
+  &-plugin + &-plugin:before {
+    content: ', ';
+  }
+
+  &-empty {
+    opacity: @text-secondary-color;
+  }
+}
+
 .status {
   text-transform: uppercase;
   padding: 2px 12px;

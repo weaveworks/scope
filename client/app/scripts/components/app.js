@@ -11,7 +11,6 @@ import HelpPanel from './help-panel';
 import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
-import Plugins from './plugins.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { pinNextMetric, hitEsc, unpinMetric,
   selectMetric, toggleHelp } from '../actions/app-actions';
@@ -180,7 +179,6 @@ export default class App extends React.Component {
           <TopologyOptions options={this.state.currentTopologyOptions}
             topologyId={this.state.currentTopologyId}
             activeOptions={this.state.activeTopologyOptions} />
-          <Plugins plugins={this.state.plugins} />
         </Sidebar>
 
         <Footer {...this.state} />

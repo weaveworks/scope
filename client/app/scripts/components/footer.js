@@ -1,6 +1,7 @@
 import React from 'react';
 import moment from 'moment';
 
+import Plugins from './plugins.js';
 import { getUpdateBufferSize } from '../utils/update-buffer-utils';
 import { contrastModeUrl, isContrastMode } from '../utils/contrast-utils';
 import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
@@ -8,7 +9,7 @@ import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
 import { basePathSlash } from '../utils/web-api-utils';
 
 export default function Footer(props) {
-  const { hostname, updatePaused, updatePausedAt, version } = props;
+  const { hostname, plugins, updatePaused, updatePausedAt, version } = props;
   const contrastMode = isContrastMode();
 
   // link url to switch contrast with current UI state
@@ -45,6 +46,10 @@ export default function Footer(props) {
         {version}
         <span className="footer-label">on</span>
         {hostname}
+      </div>
+
+      <div className="footer-plugins">
+        <Plugins plugins={plugins} />
       </div>
 
       <div className="footer-tools">
