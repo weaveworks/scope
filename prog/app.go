@@ -20,6 +20,7 @@ import (
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/app/multitenant"
+	"github.com/weaveworks/scope/common/middleware"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/docker"
@@ -110,10 +111,11 @@ func pipeRouterFactory(userIDer multitenant.UserIDer, pipeRouterURL, consulInf s
 // Main runs the app
 func appMain() {
 	var (
-		window    = flag.Duration("window", 15*time.Second, "window")
-		listen    = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
-		logLevel  = flag.String("log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
-		logPrefix = flag.String("log.prefix", "<app>", "prefix for each log line")
+		window      = flag.Duration("window", 15*time.Second, "window")
+		listen      = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
+		logLevel    = flag.String("log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
+		logPrefix   = flag.String("log.prefix", "<app>", "prefix for each log line")
+		logRequests = flag.Bool("log.requests", false, "Log individual HTTP requests")
 
 		weaveAddr      = flag.String("weave.addr", app.DefaultWeaveURL, "Address on which to contact WeaveDNS")
 		weaveHostname  = flag.String("weave.hostname", app.DefaultHostname, "Hostname to advertise in WeaveDNS")
@@ -189,6 +191,9 @@ func appMain() {
 	}
 
 	handler := router(collector, controlRouter, pipeRouter)
+	if *logRequests {
+		handler = middleware.Logging.Wrap(handler)
+	}
 	go func() {
 		log.Infof("listening on %s", *listen)
 		log.Info(http.ListenAndServe(*listen, handler))
