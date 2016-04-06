@@ -381,6 +381,9 @@ func TestCommitContainer(t *testing.T) {
 	if got := recorder.Body.String(); got != expected {
 		t.Errorf("CommitContainer: wrong response body. Want %q. Got %q.", expected, got)
 	}
+	if server.images[0].Config == nil {
+		t.Error("CommitContainer: image Config should not be nil.")
+	}
 }
 
 func TestCommitContainerComplete(t *testing.T) {
@@ -1058,6 +1061,9 @@ func TestPullImage(t *testing.T) {
 	}
 	if _, ok := server.imgIDs["base"]; !ok {
 		t.Error("PullImage: Repository should not be empty.")
+	}
+	if server.images[0].Config == nil {
+		t.Error("PullImage: Image Config should not be nil.")
 	}
 }
 
@@ -2099,5 +2105,28 @@ func TestUploadToContainerMissingContainer(t *testing.T) {
 	server.ServeHTTP(recorder, request)
 	if recorder.Code != http.StatusNotFound {
 		t.Errorf("UploadToContainer: wrong status. Want %d. Got %d.", http.StatusNotFound, recorder.Code)
+	}
+}
+
+func TestInfoDocker(t *testing.T) {
+	server, _ := NewServer("127.0.0.1:0", nil, nil)
+	addContainers(server, 1)
+	server.buildMuxer()
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/info", nil)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("InfoDocker: wrong status. Want %d. Got %d.", http.StatusOK, recorder.Code)
+	}
+	var infoData map[string]interface{}
+	err := json.Unmarshal(recorder.Body.Bytes(), &infoData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if infoData["Containers"].(float64) != 1.0 {
+		t.Fatalf("InfoDocker: wrong containers count. Want %f. Got %f.", 1.0, infoData["Containers"])
+	}
+	if infoData["DockerRootDir"].(string) != "/var/lib/docker" {
+		t.Fatalf("InfoDocker: wrong docker root. Want /var/lib/docker. Got %s.", infoData["DockerRootDir"])
 	}
 }

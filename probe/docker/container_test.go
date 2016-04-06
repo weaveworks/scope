@@ -74,15 +74,16 @@ func TestContainer(t *testing.T) {
 	// Now see if we go them
 	uptime := (now.Sub(startTime) / time.Second) * time.Second
 	want := report.MakeNode().WithLatests(map[string]string{
-		"docker_container_command": " ",
-		"docker_container_created": "01 Jan 01 00:00 UTC",
-		"docker_container_id":      "ping",
-		"docker_container_name":    "pong",
-		"docker_image_id":          "baz",
-		"docker_label_foo1":        "bar1",
-		"docker_label_foo2":        "bar2",
-		"docker_container_state":   "running",
-		"docker_container_uptime":  uptime.String(),
+		"docker_container_command":     " ",
+		"docker_container_created":     "01 Jan 01 00:00 UTC",
+		"docker_container_id":          "ping",
+		"docker_container_name":        "pong",
+		"docker_image_id":              "baz",
+		"docker_label_foo1":            "bar1",
+		"docker_label_foo2":            "bar2",
+		"docker_container_state":       "running",
+		"docker_container_state_human": "Up 6 years",
+		"docker_container_uptime":      uptime.String(),
 	}).WithSets(report.EmptySets.
 		Add("docker_container_ports", report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp")).
 		Add("docker_container_ips", report.MakeStringSet("1.2.3.4")).

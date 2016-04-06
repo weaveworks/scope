@@ -23,7 +23,7 @@ var (
 	}
 	containerNodeMetadata = []MetadataRowTemplate{
 		Latest{ID: docker.ContainerID, Truncate: 12, Prime: true},
-		Latest{ID: docker.ContainerState, Prime: true},
+		Latest{ID: docker.ContainerStateHuman, Prime: true},
 		Latest{ID: docker.ContainerCommand, Prime: true},
 		Latest{ID: docker.ImageID, Truncate: 12},
 		Latest{ID: docker.ContainerUptime},
