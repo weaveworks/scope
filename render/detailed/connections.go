@@ -137,7 +137,7 @@ func outgoingConnectionsTable(topologyID string, n report.Node, ns report.Nodes)
 func endpointChildrenOf(n report.Node) []report.Node {
 	result := []report.Node{}
 	n.Children.ForEach(func(child report.Node) {
-		if _, _, _, ok := report.ParseEndpointNodeID(child.ID); ok {
+		if child.Topology == report.Endpoint {
 			result = append(result, child)
 		}
 	})
@@ -147,7 +147,7 @@ func endpointChildrenOf(n report.Node) []report.Node {
 func endpointChildIDsOf(n report.Node) report.IDList {
 	result := report.MakeIDList()
 	n.Children.ForEach(func(child report.Node) {
-		if _, _, _, ok := report.ParseEndpointNodeID(child.ID); ok {
+		if child.Topology == report.Endpoint {
 			result = result.Add(child.ID)
 		}
 	})
