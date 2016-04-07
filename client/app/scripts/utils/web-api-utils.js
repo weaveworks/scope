@@ -112,7 +112,7 @@ export function getTopologies(options) {
       receiveError(url);
       topologyTimer = setTimeout(() => {
         getTopologies(options);
-      }, TOPOLOGY_INTERVAL / 2);
+      }, TOPOLOGY_INTERVAL);
     }
   });
 }

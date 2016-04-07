@@ -998,7 +998,7 @@ h2 {
   }
 
   &.status-loading {
-    animation: blinking 2.0s infinite @base-ease;
+    animation: blinking 2.0s 150 @base-ease; // keep blinking for 5 minutes
     text-transform: none;
     color: @text-color;
   }
@@ -1073,9 +1073,9 @@ h2 {
 }
 
 @keyframes blinking {
-  0%, 100% {
+  0%, 50%, 100% {
     opacity: 1.0;
-  } 50% {
+  } 25% {
     opacity: 0.5;
   }
 }
