@@ -108,12 +108,12 @@ describe('TopologyUtils', () => {
   });
 
   describe('filterHiddenTopologies', () => {
-    it('should filter out empty topos that set hidden_if_empty=true', () => {
+    it('should filter out empty topos that set hide_if_empty=true', () => {
       const topos = [
-        {id: 'a', hidden_if_empty: true, stats: {node_count: 0, filtered_nodes:0}},
-        {id: 'b', hidden_if_empty: true, stats: {node_count: 1, filtered_nodes:0}},
-        {id: 'c', hidden_if_empty: true, stats: {node_count: 0, filtered_nodes:1}},
-        {id: 'd', hidden_if_empty: false, stats: {node_count: 0, filtered_nodes:0}}
+        {id: 'a', hide_if_empty: true, stats: {node_count: 0, filtered_nodes:0}},
+        {id: 'b', hide_if_empty: true, stats: {node_count: 1, filtered_nodes:0}},
+        {id: 'c', hide_if_empty: true, stats: {node_count: 0, filtered_nodes:1}},
+        {id: 'd', hide_if_empty: false, stats: {node_count: 0, filtered_nodes:0}}
       ];
 
       const res = TopologyUtils.filterHiddenTopologies(topos);

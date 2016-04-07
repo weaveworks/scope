@@ -228,10 +228,10 @@ var PodRenderer = MakeReduce(
 			_, isConnected := n.Latest.Lookup(IsConnected)
 			return n.Topology != Pseudo || isConnected
 		},
-		MakeMap(
+		ColorConnected(MakeMap(
 			MapContainer2Pod,
-			ColorConnected(ContainerRenderer),
-		),
+			ContainerRenderer,
+		)),
 	),
 	SelectPod,
 )
