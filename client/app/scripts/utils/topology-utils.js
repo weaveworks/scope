@@ -55,6 +55,6 @@ export function setTopologyUrlsById(topologyUrlsById, topologies) {
 }
 
 export function filterHiddenTopologies(topologies) {
-  return topologies.filter(t => (!t.hidden_if_empty || t.stats.node_count > 0 ||
+  return topologies.filter(t => (!t.hide_if_empty || t.stats.node_count > 0 ||
                                t.stats.filtered_nodes > 0));
 }

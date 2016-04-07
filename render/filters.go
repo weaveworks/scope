@@ -58,12 +58,26 @@ func ColorConnected(r Renderer) Renderer {
 // Filter removes nodes from a view based on a predicate.
 type Filter struct {
 	Renderer
-	FilterFunc func(report.Node) bool
+	FilterFunc     func(report.Node) bool
+	ReportFiltered bool // false means we don't report stats for how many are filtered
 }
 
 // MakeFilter makes a new Filter.
 func MakeFilter(f func(report.Node) bool, r Renderer) Renderer {
-	return Memoise(&Filter{r, f})
+	return Memoise(&Filter{
+		Renderer:       r,
+		FilterFunc:     f,
+		ReportFiltered: true,
+	})
+}
+
+// MakeSilentFilter makes a new Filter which does not report how many nodes it filters in Stats.
+func MakeSilentFilter(f func(report.Node) bool, r Renderer) Renderer {
+	return Memoise(&Filter{
+		Renderer:       r,
+		FilterFunc:     f,
+		ReportFiltered: false,
+	})
 }
 
 // Render implements Renderer
@@ -115,9 +129,11 @@ func (f *Filter) render(rpt report.Report) (report.Nodes, int) {
 
 // Stats implements Renderer
 func (f Filter) Stats(rpt report.Report) Stats {
-	_, filtered := f.render(rpt)
 	var upstream = f.Renderer.Stats(rpt)
-	upstream.FilteredNodes += filtered
+	if f.ReportFiltered {
+		_, filtered := f.render(rpt)
+		upstream.FilteredNodes += filtered
+	}
 	return upstream
 }
 
