@@ -33,7 +33,6 @@ func readStats(path string) (ppid, threads int, jiffies, rss, rssLimit uint64, e
 		return
 	}
 	splits := strings.Fields(string(buf))
-	fmt.Printf("Got stats: %q, %d fields\n", splits, len(splits))
 	if len(splits) < 25 {
 		err = fmt.Errorf("Invalid /proc/PID/stat")
 		return
