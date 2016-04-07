@@ -169,6 +169,18 @@ func FilterUnconnected(r Renderer) Renderer {
 	)
 }
 
+// SilentFilterUnconnected produces a renderer that filters unconnected nodes
+// from the given renderer; nodes filtered by this are not reported in stats.
+func SilentFilterUnconnected(r Renderer) Renderer {
+	return MakeSilentFilter(
+		func(node report.Node) bool {
+			_, ok := node.Latest.Lookup(IsConnected)
+			return ok
+		},
+		ColorConnected(r),
+	)
+}
+
 // FilterNoop does nothing.
 func FilterNoop(in Renderer) Renderer {
 	return in

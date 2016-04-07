@@ -84,7 +84,7 @@ var ContainerRenderer = MakeReduce(
 	// We need to be careful to ensure we only include each edge once.  Edges brought in
 	// by the above renders will have a pid, so its enough to filter out any nodes with
 	// pids.
-	FilterUnconnected(MakeMap(
+	SilentFilterUnconnected(MakeMap(
 		MapIP2Container,
 		MakeReduce(
 			MakeMap(
