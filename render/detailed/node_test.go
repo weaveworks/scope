@@ -1,6 +1,7 @@
 package detailed_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -113,28 +114,25 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Nodes: []detailed.NodeSummary{containerImageNodeSummary},
 			},
 		},
-		Connections: []detailed.NodeSummaryGroup{
+		Connections: []detailed.ConnectionsTable{
 			{
 				ID:         "incoming-connections",
 				TopologyID: "hosts",
 				Label:      "Inbound",
 				Columns:    detailed.NormalColumns,
-				Nodes:      []detailed.NodeSummary{},
+				Rows:       []detailed.ConnectionsRow{},
 			},
 			{
 				ID:         "outgoing-connections",
 				TopologyID: "hosts",
 				Label:      "Outbound",
 				Columns:    detailed.NormalColumns,
-				Nodes: []detailed.NodeSummary{
+				Rows: []detailed.ConnectionsRow{
 					{
-						ID:         fixture.ServerHostNodeID,
-						Label:      "server",
-						LabelMinor: "hostname.com",
-						Rank:       "hostname.com",
-						Shape:      "circle",
-						Linkable:   true,
-						Adjacency:  report.MakeIDList(render.OutgoingInternetID),
+						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ServerHostNodeID, "", fixture.ClientHostNodeID, "", 80),
+						NodeID:   fixture.ServerHostNodeID,
+						Label:    "server",
+						Linkable: true,
 						Metadata: []detailed.MetadataRow{
 							{
 								ID:       "port",
@@ -223,20 +221,18 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				TopologyID: "hosts",
 			},
 		},
-		Connections: []detailed.NodeSummaryGroup{
+		Connections: []detailed.ConnectionsTable{
 			{
 				ID:         "incoming-connections",
 				TopologyID: "containers",
 				Label:      "Inbound",
 				Columns:    detailed.NormalColumns,
-				Nodes: []detailed.NodeSummary{
+				Rows: []detailed.ConnectionsRow{
 					{
-						ID:         fixture.ClientContainerNodeID,
-						Label:      "client",
-						LabelMinor: "client.hostname.com",
-						Shape:      "hexagon",
-						Linkable:   true,
-						Adjacency:  report.MakeIDList(fixture.ServerContainerNodeID),
+						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ClientContainerNodeID, "", fixture.ServerContainerNodeID, "", 80),
+						NodeID:   fixture.ClientContainerNodeID,
+						Label:    "client",
+						Linkable: true,
 						Metadata: []detailed.MetadataRow{
 							{
 								ID:       "port",
@@ -251,14 +247,10 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						},
 					},
 					{
-						ID:         render.IncomingInternetID,
-						Label:      render.InboundMajor,
-						LabelMinor: render.InboundMinor,
-						Rank:       render.IncomingInternetID,
-						Shape:      "cloud",
-						Linkable:   true,
-						Pseudo:     true,
-						Adjacency:  report.MakeIDList(fixture.ServerContainerNodeID),
+						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", render.IncomingInternetID, "", fixture.ServerContainerNodeID, "", 80),
+						NodeID:   render.IncomingInternetID,
+						Label:    render.InboundMajor,
+						Linkable: true,
 						Metadata: []detailed.MetadataRow{
 							{
 								ID:       "port",
@@ -279,7 +271,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				TopologyID: "containers",
 				Label:      "Outbound",
 				Columns:    detailed.NormalColumns,
-				Nodes:      []detailed.NodeSummary{},
+				Rows:       []detailed.ConnectionsRow{},
 			},
 		},
 	}

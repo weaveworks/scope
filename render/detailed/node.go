@@ -18,7 +18,7 @@ type Node struct {
 	Controls    []ControlInstance  `json:"controls"`
 	Children    []NodeSummaryGroup `json:"children,omitempty"`
 	Parents     []Parent           `json:"parents,omitempty"`
-	Connections []NodeSummaryGroup `json:"connections,omitempty"`
+	Connections []ConnectionsTable `json:"connections,omitempty"`
 }
 
 // ControlInstance contains a control description, and all the info
@@ -83,7 +83,7 @@ func MakeNode(topologyID string, r report.Report, ns report.Nodes, n report.Node
 		Controls:    controls(r, n),
 		Children:    children(n),
 		Parents:     Parents(r, n),
-		Connections: []NodeSummaryGroup{
+		Connections: []ConnectionsTable{
 			incomingConnectionsTable(topologyID, n, ns),
 			outgoingConnectionsTable(topologyID, n, ns),
 		},
