@@ -24,13 +24,16 @@ export function updateNodeDegrees(nodes, edges) {
   });
 }
 
-/* set topology.id in place on each topology */
-export function updateTopologyIds(topologies) {
+/* set topology.id and parentId for sub-topologies in place */
+export function updateTopologyIds(topologies, parentId) {
   return topologies.map(topology => {
     const result = Object.assign({}, topology);
     result.id = topology.url.split('/').pop();
+    if (parentId) {
+      result.parentId = parentId;
+    }
     if (topology.sub_topologies) {
-      result.sub_topologies = updateTopologyIds(topology.sub_topologies);
+      result.sub_topologies = updateTopologyIds(topology.sub_topologies, result.id);
     }
     return result;
   });

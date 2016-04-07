@@ -206,8 +206,13 @@ describe('AppStore', () => {
     expect(AppStore.getActiveTopologyOptions().get('option1')).toBe('off');
     expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('off');
 
-    // other topology w/o options dont return options, but keep in app state
+    // sub-topology should retain main topo options
     registeredCallback(ClickSubTopologyAction);
+    expect(AppStore.getActiveTopologyOptions().get('option1')).toBe('off');
+    expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('off');
+
+    // other topology w/o options dont return options, but keep in app state
+    registeredCallback(ClickTopology2Action);
     expect(AppStore.getActiveTopologyOptions()).toBeUndefined();
     expect(AppStore.getAppState().topologyOptions.topo1.option1).toBe('off');
   });

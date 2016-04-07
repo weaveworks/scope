@@ -86,8 +86,8 @@ function processTopologies(nextTopologies) {
 }
 
 function setTopology(topologyId) {
-  currentTopologyId = topologyId;
   currentTopology = findTopologyById(topologies, topologyId);
+  currentTopologyId = topologyId;
 }
 
 function setDefaultTopologyOptions(topologyList) {
@@ -106,10 +106,6 @@ function setDefaultTopologyOptions(topologyList) {
         topology.get('id'),
         defaultOptions
       );
-    }
-
-    if (topology.has('sub_topologies')) {
-      setDefaultTopologyOptions(topology.get('sub_topologies'));
     }
   });
 }
@@ -154,7 +150,10 @@ export class AppStore extends Store {
   }
 
   getActiveTopologyOptions() {
-    // options for current topology
+    // options for current topology, sub-topologies share options with parent
+    if (currentTopology && currentTopology.get('parentId')) {
+      return topologyOptions.get(currentTopology.get('parentId'));
+    }
     return topologyOptions.get(currentTopologyId);
   }
 
@@ -304,15 +303,19 @@ export class AppStore extends Store {
     switch (payload.type) {
       case ActionTypes.CHANGE_TOPOLOGY_OPTION: {
         resumeUpdate();
-        if (topologyOptions.getIn([payload.topologyId, payload.option])
-          !== payload.value) {
-          nodes = nodes.clear();
+        // set option on parent topology
+        const topology = findTopologyById(topologies, payload.topologyId);
+        if (topology) {
+          const topologyId = topology.get('parentId') || topology.get('id');
+          if (topologyOptions.getIn([topologyId, payload.option]) !== payload.value) {
+            nodes = nodes.clear();
+          }
+          topologyOptions = topologyOptions.setIn(
+            [topologyId, payload.option],
+            payload.value
+          );
+          this.__emitChange();
         }
-        topologyOptions = topologyOptions.setIn(
-          [payload.topologyId, payload.option],
-          payload.value
-        );
-        this.__emitChange();
         break;
       }
       case ActionTypes.CLEAR_CONTROL_ERROR: {
