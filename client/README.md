@@ -2,16 +2,22 @@
 
 ## Requirements
 
-- nodejs 4.2.2
-- running `weavescope` container
 
-## Getting Started
+## Getting Started (using local node)
 
+- You need nodejs 4.2.2 and a running `weavescope` container
 - Setup: `npm install`
 - Build: `npm run build`, output will be in `build/`
 - Develop: `BACKEND_HOST=<dockerhost-ip>:4040 npm start` and then open `http://localhost:4042/`
 
 This will start a webpack-dev-server that serves the UI and proxies API requests to the container.
+
+## Getting Started (using node in a container)
+
+- You need a running `weavescope` container
+- Develop: `make WEBPACK_SERVER_HOST=<dockerhost-ip> client-start` and then open `http://<dockerhost-ip>:4042/`
+
+This will start a webpack-dev-server that serves the UI from the UI build container and proxies API requests to the weavescope container.
 
 ## Coding
 
