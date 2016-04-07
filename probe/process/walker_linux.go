@@ -23,7 +23,7 @@ func NewWalker(procRoot string) Walker {
 	return &walker{procRoot: procRoot}
 }
 
-func readStats(path string) (ppid, threads int, jiffies, rss uint64, err error) {
+func readStats(path string) (ppid, threads int, jiffies, rss, rssLimit uint64, err error) {
 	var (
 		buf                               []byte
 		userJiffies, sysJiffies, rssPages uint64
@@ -33,7 +33,8 @@ func readStats(path string) (ppid, threads int, jiffies, rss uint64, err error) 
 		return
 	}
 	splits := strings.Fields(string(buf))
-	if len(splits) < 24 {
+	fmt.Printf("Got stats: %q, %d fields\n", splits, len(splits))
+	if len(splits) < 25 {
 		err = fmt.Errorf("Invalid /proc/PID/stat")
 		return
 	}
@@ -59,7 +60,26 @@ func readStats(path string) (ppid, threads int, jiffies, rss uint64, err error) 
 		return
 	}
 	rss = rssPages * uint64(os.Getpagesize())
+	rssLimit, err = strconv.ParseUint(splits[24], 10, 64)
 	return
+}
+
+func readLimits(path string) (openFilesLimit uint64, err error) {
+	buf, err := cachedReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+	for _, line := range strings.Split(string(buf), "\n") {
+		if strings.HasPrefix(line, "Max open files") {
+			splits := strings.Fields(line)
+			if len(splits) < 6 {
+				return 0, fmt.Errorf("Invalid /proc/PID/limits")
+			}
+			openFilesLimit, err := strconv.Atoi(splits[3])
+			return uint64(openFilesLimit), err
+		}
+	}
+	return 0, nil
 }
 
 // Walk walks the supplied directory (expecting it to look like /proc)
@@ -78,12 +98,17 @@ func (w *walker) Walk(f func(Process, Process)) error {
 			continue
 		}
 
-		ppid, threads, jiffies, rss, err := readStats(path.Join(w.procRoot, filename, "stat"))
+		ppid, threads, jiffies, rss, rssLimit, err := readStats(path.Join(w.procRoot, filename, "stat"))
 		if err != nil {
 			continue
 		}
 
 		openFiles, err := fs.ReadDirNames(path.Join(w.procRoot, filename, "fd"))
+		if err != nil {
+			continue
+		}
+
+		openFilesLimit, err := readLimits(path.Join(w.procRoot, filename, "limits"))
 		if err != nil {
 			continue
 		}
@@ -108,7 +133,9 @@ func (w *walker) Walk(f func(Process, Process)) error {
 			Threads:        threads,
 			Jiffies:        jiffies,
 			RSSBytes:       rss,
+			RSSBytesLimit:  rssLimit,
 			OpenFilesCount: len(openFiles),
+			OpenFilesLimit: openFilesLimit,
 		}, Process{})
 	}
 

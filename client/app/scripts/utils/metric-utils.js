@@ -23,9 +23,6 @@ export function getClipPathDefinition(clipId, size, height,
 
 
 //
-// Open files, 100k should be enought for anyone?
-const openFilesScale = d3.scale.log().domain([1, 100000]).range([0, 1]);
-//
 // loadScale(1) == 0.5; E.g. a nicely balanced system :).
 const loadScale = d3.scale.log().domain([0.01, 100]).range([0, 1]);
 
@@ -39,10 +36,7 @@ export function getMetricValue(metric, size) {
 
   let valuePercentage = value === 0 ? 0 : value / m.max;
   let max = m.max;
-  if (m.id === 'open_files_count') {
-    valuePercentage = openFilesScale(value);
-    max = null;
-  } else if (_.includes(['load1', 'load5', 'load15'], m.id)) {
+  if (_.includes(['load1', 'load5', 'load15'], m.id)) {
     valuePercentage = loadScale(value);
     max = null;
   }

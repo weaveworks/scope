@@ -66,6 +66,7 @@ func TestContainer(t *testing.T) {
 	stats := &client.Stats{}
 	stats.Read = now
 	stats.MemoryStats.Usage = 12345
+	stats.MemoryStats.Limit = 45678
 	encoder := codec.NewEncoder(writer, &codec.JsonHandle{})
 	if err = encoder.Encode(&stats); err != nil {
 		t.Error(err)
@@ -93,7 +94,7 @@ func TestContainer(t *testing.T) {
 		docker.AttachContainer, docker.ExecContainer,
 	).WithMetrics(report.Metrics{
 		"docker_cpu_total_usage": report.MakeMetric(),
-		"docker_memory_usage":    report.MakeMetric().Add(now, 12345),
+		"docker_memory_usage":    report.MakeMetric().Add(now, 12345).WithMax(45678),
 	}).WithParents(report.EmptySets.
 		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID("baz"))),
 	)

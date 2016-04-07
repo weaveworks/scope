@@ -277,7 +277,7 @@ func (c *container) ports(localAddrs []net.IP) report.StringSet {
 func (c *container) memoryUsageMetric(stats []docker.Stats) report.Metric {
 	result := report.MakeMetric()
 	for _, s := range stats {
-		result = result.Add(s.Read, float64(s.MemoryStats.Usage))
+		result = result.Add(s.Read, float64(s.MemoryStats.Usage)).WithMax(float64(s.MemoryStats.Limit))
 	}
 	return result
 }

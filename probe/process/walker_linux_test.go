@@ -19,7 +19,11 @@ var mockFS = fs.Dir("",
 			},
 			fs.File{
 				FName:     "stat",
-				FContents: "3 na R 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0",
+				FContents: "3 na R 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 2 2048",
+			},
+			fs.File{
+				FName:     "limits",
+				FContents: `Max open files 32768 65536 files`,
 			},
 			fs.Dir("fd", fs.File{FName: "0"}, fs.File{FName: "1"}, fs.File{FName: "2"}),
 		),
@@ -30,7 +34,11 @@ var mockFS = fs.Dir("",
 			},
 			fs.File{
 				FName:     "stat",
-				FContents: "2 na R 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0",
+				FContents: "2 na R 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0",
+			},
+			fs.File{
+				FName:     "limits",
+				FContents: ``,
 			},
 			fs.Dir("fd", fs.File{FName: "1"}, fs.File{FName: "2"}),
 		),
@@ -41,7 +49,11 @@ var mockFS = fs.Dir("",
 			},
 			fs.File{
 				FName:     "stat",
-				FContents: "4 na R 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0",
+				FContents: "4 na R 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0",
+			},
+			fs.File{
+				FName:     "limits",
+				FContents: ``,
 			},
 			fs.Dir("fd", fs.File{FName: "0"}),
 		),
@@ -53,7 +65,11 @@ var mockFS = fs.Dir("",
 			},
 			fs.File{
 				FName:     "stat",
-				FContents: "1 na R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0",
+				FContents: "1 na R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0",
+			},
+			fs.File{
+				FName:     "limits",
+				FContents: ``,
 			},
 			fs.Dir("fd"),
 		),
@@ -65,7 +81,7 @@ func TestWalker(t *testing.T) {
 	defer fs_hook.Restore()
 
 	want := map[int]process.Process{
-		3: {PID: 3, PPID: 2, Name: "curl", Cmdline: "curl google.com", Threads: 1, OpenFilesCount: 3},
+		3: {PID: 3, PPID: 2, Name: "curl", Cmdline: "curl google.com", Threads: 1, RSSBytes: 8192, RSSBytesLimit: 2048, OpenFilesCount: 3, OpenFilesLimit: 32768},
 		2: {PID: 2, PPID: 1, Name: "bash", Cmdline: "bash", Threads: 1, OpenFilesCount: 2},
 		4: {PID: 4, PPID: 3, Name: "apache", Cmdline: "apache", Threads: 1, OpenFilesCount: 1},
 		1: {PID: 1, PPID: 0, Name: "init", Cmdline: "init", Threads: 1, OpenFilesCount: 0},
