@@ -204,7 +204,7 @@ func FilterRunning(r Renderer) Renderer {
 
 // FilterNonProcspied removes endpoints which were not found in procspy.
 func FilterNonProcspied(r Renderer) Renderer {
-	return MakeFilter(
+	return MakeSilentFilter(
 		func(node report.Node) bool {
 			_, ok := node.Latest.Lookup(endpoint.Procspied)
 			return ok
