@@ -219,10 +219,10 @@ export function enterNode(nodeId) {
 
 export function hitEsc() {
   const controlPipe = AppStore.getControlPipe();
-  if (controlPipe && controlPipe.status === 'PIPE_DELETED') {
+  if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
     AppDispatcher.dispatch({
       type: ActionTypes.CLICK_CLOSE_TERMINAL,
-      pipeId: controlPipe.id
+      pipeId: controlPipe.get('id')
     });
     updateRoute();
     // Don't deselect node on ESC if there is a controlPipe (keep terminal open)
@@ -320,8 +320,8 @@ export function receiveControlPipe(pipeId, nodeId, rawTty) {
   }
 
   const controlPipe = AppStore.getControlPipe();
-  if (controlPipe && controlPipe.id !== pipeId) {
-    deletePipe(controlPipe.id);
+  if (controlPipe && controlPipe.get('id') !== pipeId) {
+    deletePipe(controlPipe.get('id'));
   }
 
   AppDispatcher.dispatch({

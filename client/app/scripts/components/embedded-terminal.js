@@ -5,7 +5,8 @@ import Terminal from './terminal';
 import { DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS,
   DETAILS_PANEL_OFFSET } from '../constants/styles';
 
-export default function EmeddedTerminal({pipe, nodeId, details}) {
+export default function EmeddedTerminal({pipe, details}) {
+  const nodeId = pipe.get('nodeId');
   const node = details.get(nodeId);
   const d = node && node.details;
   const titleBarColor = d && getNodeColorDark(d.rank, d.label);
@@ -21,7 +22,7 @@ export default function EmeddedTerminal({pipe, nodeId, details}) {
   // the term.js and creating a new one for the new pipe.
   return (
     <div className="terminal-embedded" style={style}>
-      <Terminal key={pipe.id} pipe={pipe} titleBarColor={titleBarColor}
+      <Terminal pipe={pipe} titleBarColor={titleBarColor}
         statusBarColor={statusBarColor} containerMargin={style.right} title={title} />
     </div>
   );

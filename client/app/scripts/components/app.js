@@ -118,7 +118,6 @@ export default class App extends React.Component {
 
         {showingTerminal && <EmbeddedTerminal
           pipe={this.state.controlPipe}
-          nodeId={this.state.controlPipe.nodeId}
           details={this.state.nodeDetails} />}
 
         <div className="header">
