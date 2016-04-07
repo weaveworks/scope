@@ -7,12 +7,13 @@ import Logo from './logo';
 import AppStore from '../stores/app-store';
 import Footer from './footer.js';
 import Sidebar from './sidebar.js';
+import HelpPanel from './help-panel';
 import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { pinNextMetric, hitEsc, unpinMetric,
-  selectMetric } from '../actions/app-actions';
+  selectMetric, toggleHelp } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import MetricSelector from './metric-selector';
@@ -43,6 +44,7 @@ function getStateFromStores() {
     availableCanvasMetrics: AppStore.getAvailableCanvasMetrics(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
+    showingHelp: AppStore.getShowingHelp(),
     selectedNodeId: AppStore.getSelectedNodeId(),
     selectedMetric: AppStore.getSelectedMetric(),
     topologies: AppStore.getTopologies(),
@@ -113,6 +115,8 @@ export default class App extends React.Component {
     } else if (char === 'd') {
       toggleDebugToolbar();
       this.forceUpdate();
+    } else if (char === '?') {
+      toggleHelp();
     }
   }
 
@@ -127,6 +131,9 @@ export default class App extends React.Component {
     return (
       <div className="app">
         {showingDebugToolbar() && <DebugToolbar />}
+
+        {this.state.showingHelp && <HelpPanel />}
+
         {showingDetails && <Details nodes={this.state.nodes}
           controlStatus={this.state.controlStatus}
           details={this.state.nodeDetails} />}

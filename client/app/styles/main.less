@@ -1081,6 +1081,64 @@ h2 {
 }
 
 //
+// Help panel!
+//
+
+.help-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2048;
+  .shadow-2;
+
+  &-header {
+    background-color: @weave-blue;
+    padding: 36px;
+    color: white;
+
+    h2 {
+      margin: 0;
+    }
+  }
+
+  &-main {
+    padding: 12px 36px 36px;
+    background-color: white;
+  }
+
+  h3 {
+    text-transform: uppercase;
+    font-size: 90%;
+    color: #8383ac;
+    padding: 4px 0;
+  }
+
+  &-shortcut {
+    kbd {
+      display: inline-block;
+      padding: 3px 5px;
+      font-size: 11px;
+      line-height: 10px;
+      color: #555;
+      vertical-align: middle;
+      background-color: #fcfcfc;
+      border: solid 1px #ccc;
+      border-bottom-color: #bbb;
+      border-radius: 3px;
+      box-shadow: inset 0 -1px 0 #bbb;
+    }
+    div.key {
+      width: 100px;
+      display: inline-block;
+    }
+    div.label {
+      display: inline-block;
+    }
+  }
+}
+
+//
 // Debug panel!
 //
 
