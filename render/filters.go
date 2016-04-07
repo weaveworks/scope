@@ -59,11 +59,24 @@ func ColorConnected(r Renderer) Renderer {
 type Filter struct {
 	Renderer
 	FilterFunc func(report.Node) bool
+	Silent     bool // true means we don't report stats for how many are filtered
 }
 
 // MakeFilter makes a new Filter.
 func MakeFilter(f func(report.Node) bool, r Renderer) Renderer {
-	return Memoise(&Filter{r, f})
+	return Memoise(&Filter{
+		Renderer:   r,
+		FilterFunc: f,
+	})
+}
+
+// MakeSilentFilter makes a new Filter which does not report how many nodes it filters in Stats.
+func MakeSilentFilter(f func(report.Node) bool, r Renderer) Renderer {
+	return Memoise(&Filter{
+		Renderer:   r,
+		FilterFunc: f,
+		Silent:     true,
+	})
 }
 
 // Render implements Renderer
@@ -115,9 +128,11 @@ func (f *Filter) render(rpt report.Report) (report.Nodes, int) {
 
 // Stats implements Renderer
 func (f Filter) Stats(rpt report.Report) Stats {
-	_, filtered := f.render(rpt)
 	var upstream = f.Renderer.Stats(rpt)
-	upstream.FilteredNodes += filtered
+	if !f.Silent {
+		_, filtered := f.render(rpt)
+		upstream.FilteredNodes += filtered
+	}
 	return upstream
 }
 
@@ -154,6 +169,18 @@ func FilterUnconnected(r Renderer) Renderer {
 	)
 }
 
+// SilentFilterUnconnected produces a renderer that filters unconnected nodes
+// from the given renderer; nodes filtered by this are not reported in stats.
+func SilentFilterUnconnected(r Renderer) Renderer {
+	return MakeSilentFilter(
+		func(node report.Node) bool {
+			_, ok := node.Latest.Lookup(IsConnected)
+			return ok
+		},
+		ColorConnected(r),
+	)
+}
+
 // FilterNoop does nothing.
 func FilterNoop(in Renderer) Renderer {
 	return in
@@ -177,7 +204,7 @@ func FilterRunning(r Renderer) Renderer {
 
 // FilterNonProcspied removes endpoints which were not found in procspy.
 func FilterNonProcspied(r Renderer) Renderer {
-	return MakeFilter(
+	return MakeSilentFilter(
 		func(node report.Node) bool {
 			_, ok := node.Latest.Lookup(endpoint.Procspied)
 			return ok

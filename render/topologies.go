@@ -69,11 +69,10 @@ var ProcessNameRenderer = MakeMap(
 // but we need to be careful to ensure we only include each edge once, by only
 // including the ProcessRenderer once.
 var ContainerRenderer = MakeReduce(
-	MakeFilter(
+	MakeSilentFilter(
 		func(n report.Node) bool {
-			_, inContainer := n.Latest.Lookup(docker.ContainerID)
 			_, isConnected := n.Latest.Lookup(IsConnected)
-			return inContainer || isConnected
+			return n.Topology != Pseudo || isConnected
 		},
 		MakeMap(
 			MapProcess2Container,
@@ -85,7 +84,7 @@ var ContainerRenderer = MakeReduce(
 	// We need to be careful to ensure we only include each edge once.  Edges brought in
 	// by the above renders will have a pid, so its enough to filter out any nodes with
 	// pids.
-	FilterUnconnected(MakeMap(
+	SilentFilterUnconnected(MakeMap(
 		MapIP2Container,
 		MakeReduce(
 			MakeMap(
@@ -224,9 +223,15 @@ var HostRenderer = MakeReduce(
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
 var PodRenderer = MakeReduce(
-	MakeMap(
-		MapContainer2Pod,
-		ContainerRenderer,
+	MakeSilentFilter(
+		func(n report.Node) bool {
+			_, isConnected := n.Latest.Lookup(IsConnected)
+			return n.Topology != Pseudo || isConnected
+		},
+		ColorConnected(MakeMap(
+			MapContainer2Pod,
+			ContainerRenderer,
+		)),
 	),
 	SelectPod,
 )
