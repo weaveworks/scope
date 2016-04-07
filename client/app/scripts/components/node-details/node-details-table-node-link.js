@@ -14,7 +14,7 @@ export default class NodeDetailsTableNodeLink extends React.Component {
 
   handleClick(ev) {
     ev.preventDefault();
-    clickRelative(this.props.id, this.props.topologyId, this.props.label,
+    clickRelative(this.props.nodeId, this.props.topologyId, this.props.label,
       ReactDOM.findDOMNode(this).getBoundingClientRect());
   }
 

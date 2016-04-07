@@ -180,7 +180,8 @@ export default class NodeDetails extends React.Component {
 
           {details.connections && details.connections.map(connections => <div
             className="node-details-content-section" key={connections.id}>
-              <NodeDetailsTable {...connections} />
+              <NodeDetailsTable {...connections} nodes={connections.rows}
+                topologyId={connections.topology_id} />
             </div>
           )}
 
