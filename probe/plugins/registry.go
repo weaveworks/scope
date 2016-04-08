@@ -171,6 +171,24 @@ func (r *Registry) Implementers(iface string, f func(p *Plugin)) {
 	})
 }
 
+// Name implements the Reporter interface
+func (r *Registry) Name() string { return "plugins" }
+
+// Report implements the Reporter interface
+func (r *Registry) Report() (report.Report, error) {
+	rpt := report.MakeReport()
+	r.Implementers("reporter", func(plugin *Plugin) {
+		pluginReport, err := plugin.Report()
+		if err != nil {
+			log.Errorf("plugins: error getting report from %s: %v", plugin.ID, err)
+			pluginReport = report.MakeReport()
+		}
+		pluginReport.Plugins = pluginReport.Plugins.Add(plugin.PluginSpec)
+		rpt = rpt.Merge(pluginReport)
+	})
+	return rpt, nil
+}
+
 // Close shuts down the registry. It can still be used after this, but will be
 // out of date.
 func (r *Registry) Close() {
@@ -219,7 +237,8 @@ type handshakeResponse struct {
 
 // handshake tries the handshake with this plugin.
 func (p *Plugin) handshake(ctx context.Context, expectedAPIVersion string, params url.Values) func() (bool, error) {
-	return func() (bool, error) {
+	return func() (ok bool, err error) {
+		defer func() { p.setStatus(err) }()
 		var resp handshakeResponse
 		if err := p.get("/", params, &resp); err != nil {
 			return err == context.Canceled, fmt.Errorf("plugins: error loading plugin %s: %v", p.socket, err)
@@ -243,7 +262,16 @@ func (p *Plugin) handshake(ctx context.Context, expectedAPIVersion string, param
 func (p *Plugin) Report() (report.Report, error) {
 	result := report.MakeReport()
 	err := p.get("/report", nil, &result)
+	p.setStatus(err)
 	return result, err
+}
+
+func (p *Plugin) setStatus(err error) {
+	if err == nil {
+		p.Status = "ok"
+	} else {
+		p.Status = fmt.Sprintf("error: %v", err)
+	}
 }
 
 // TODO(paulbellamy): better error handling on wrong status codes

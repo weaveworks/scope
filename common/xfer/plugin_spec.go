@@ -25,6 +25,8 @@ type PluginSpec struct {
 
 	// Interfaces is a list of things this plugin can be used for (e.g. "reporter")
 	Interfaces []string `json:"interfaces"`
+
+	Status string `json:"status,omitempty"`
 }
 
 // PluginSpecs is a set of plugin specs keyed on ID. Clients must use

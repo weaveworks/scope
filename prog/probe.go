@@ -206,7 +206,7 @@ func probeMain() {
 		}
 	}
 
-	p.AddReporter(plugins.Reporter(pluginRegistry))
+	p.AddReporter(pluginRegistry)
 
 	if *httpListen != "" {
 		go func() {
