@@ -290,7 +290,7 @@ func (p *Plugin) get(path string, params url.Values, result interface{}) error {
 	// Context here lets us either timeout req. or cancel it in Plugin.Close
 	ctx, cancel := context.WithTimeout(p.context, pluginTimeout)
 	defer cancel()
-	resp, err := ctxhttp.Get(ctx, p.client, fmt.Sprintf("unix://%s?%s", path, params.Encode()))
+	resp, err := ctxhttp.Get(ctx, p.client, fmt.Sprintf("http://plugin%s?%s", path, params.Encode()))
 	if err != nil {
 		return err
 	}
