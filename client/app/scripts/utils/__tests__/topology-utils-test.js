@@ -107,17 +107,27 @@ describe('TopologyUtils', () => {
     expect(nodes.n3.degree).toEqual(0);
   });
 
+  describe('buildTopologyCacheId', () => {
+    it('should generate a cache ID', () => {
+      const fun = TopologyUtils.buildTopologyCacheId;
+      expect(fun()).toEqual('');
+      expect(fun('test')).toEqual('test');
+      expect(fun(undefined, 'test')).toEqual('');
+      expect(fun('test', {a: 1})).toEqual('test{"a":1}');
+    });
+  });
+
   describe('filterHiddenTopologies', () => {
     it('should filter out empty topos that set hide_if_empty=true', () => {
       const topos = [
-        {id: 'a', hide_if_empty: true, stats: {node_count: 0, filtered_nodes:0}},
-        {id: 'b', hide_if_empty: true, stats: {node_count: 1, filtered_nodes:0}},
-        {id: 'c', hide_if_empty: true, stats: {node_count: 0, filtered_nodes:1}},
-        {id: 'd', hide_if_empty: false, stats: {node_count: 0, filtered_nodes:0}}
+        {id: 'a', hide_if_empty: true, stats: {node_count: 0, filtered_nodes: 0}},
+        {id: 'b', hide_if_empty: true, stats: {node_count: 1, filtered_nodes: 0}},
+        {id: 'c', hide_if_empty: true, stats: {node_count: 0, filtered_nodes: 1}},
+        {id: 'd', hide_if_empty: false, stats: {node_count: 0, filtered_nodes: 0}}
       ];
 
       const res = TopologyUtils.filterHiddenTopologies(topos);
       expect(res.map(t => t.id)).toEqual(['b', 'c', 'd']);
     });
-  })
+  });
 });

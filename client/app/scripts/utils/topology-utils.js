@@ -1,5 +1,28 @@
 import _ from 'lodash';
 
+/**
+ * Returns a cache ID based on the topologyId and optionsQuery
+ * @param  {String} topologyId
+ * @param  {object} topologyOptions (optional)
+ * @return {String}
+ */
+export function buildTopologyCacheId(topologyId, topologyOptions) {
+  let id = '';
+  if (topologyId) {
+    id = topologyId;
+    if (topologyOptions) {
+      id += JSON.stringify(topologyOptions);
+    }
+  }
+  return id;
+}
+
+/**
+ * Returns a topology object from the topology tree
+ * @param  {List} subTree
+ * @param  {String} topologyId
+ * @return {Map} topology if found
+ */
 export function findTopologyById(subTree, topologyId) {
   let foundTopology;
 

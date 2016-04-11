@@ -3,7 +3,7 @@ import debug from 'debug';
 import { fromJS, Map as makeMap, Set as ImmSet } from 'immutable';
 
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
-import { updateNodeDegrees } from '../utils/topology-utils';
+import { buildTopologyCacheId, updateNodeDegrees } from '../utils/topology-utils';
 
 const log = debug('scope:nodes-layout');
 
@@ -23,17 +23,6 @@ function graphNodeId(id) {
 
 function fromGraphNodeId(encodedId) {
   return encodedId.replace('<DOT>', '.');
-}
-
-function buildCacheIdFromOptions(options) {
-  if (options) {
-    let id = options.topologyId;
-    if (options.topologyOptions) {
-      id += JSON.stringify(options.topologyOptions);
-    }
-    return id;
-  }
-  return '';
 }
 
 /**
@@ -348,7 +337,7 @@ function copyLayoutProperties(layout, nodeCache, edgeCache) {
  */
 export function doLayout(immNodes, immEdges, opts) {
   const options = opts || {};
-  const cacheId = buildCacheIdFromOptions(options);
+  const cacheId = buildTopologyCacheId(options.topologyId, options.topologyOptions);
 
   // one engine and node and edge caches per topology, to keep renderings similar
   if (!topologyCaches[cacheId]) {
