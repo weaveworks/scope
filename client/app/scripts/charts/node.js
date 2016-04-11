@@ -27,7 +27,7 @@ const nodeShapes = {
   cloud: NodeShapeCloud
 };
 
-function getNodeShape({shape, stack}) {
+function getNodeShape({ shape, stack }) {
   const nodeShape = nodeShapes[shape];
   if (!nodeShape) {
     throw new Error(`Unknown shape: ${shape}!`);
@@ -59,8 +59,9 @@ export default class Node extends React.Component {
       subLabel, scaleFactor, transform, zoomScale } = this.props;
 
     const color = getNodeColor(rank, label, pseudo);
-    const labelText = ellipsis(label, 14, nodeScale(4 * scaleFactor));
-    const subLabelText = ellipsis(subLabel, 12, nodeScale(4 * scaleFactor));
+    const truncate = !focused && !highlighted;
+    const labelText = truncate ? ellipsis(label, 14, nodeScale(4 * scaleFactor)) : label;
+    const subLabelText = truncate ? ellipsis(subLabel, 12, nodeScale(4 * scaleFactor)) : subLabel;
 
     let labelOffsetY = 18;
     let subLabelOffsetY = 35;

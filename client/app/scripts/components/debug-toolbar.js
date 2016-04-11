@@ -16,6 +16,11 @@ const NODE_COUNTS = [1, 2, 3];
 const STACK_VARIANTS = [false, true];
 const METRIC_FILLS = [0, 0.1, 50, 99.9, 100];
 
+const LOREM = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
+voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`;
 
 const sample = (collection) => _.range(_.random(4)).map(() => _.sample(collection));
 
@@ -105,12 +110,12 @@ function startPerf(delay) {
 }
 
 
-function addNodes(n) {
+function addNodes(n, prefix = 'zing') {
   const ns = AppStore.getNodes();
   const nodeNames = ns.keySeq().toJS();
   const newNodeNames = _.range(ns.size, ns.size + n).map(i => (
     // `${randomLetter()}${randomLetter()}-zing`
-    `zing${i}`
+    `${prefix}${i}`
   ));
   const allNodes = _(nodeNames).concat(newNodeNames).value();
 
@@ -183,6 +188,7 @@ export class DebugToolbar extends React.Component {
           <button onClick={() => addNodes(this.state.nodesToAdd)}>+</button>
           <button onClick={() => addAllVariants()}>Variants</button>
           <button onClick={() => addAllMetricVariants()}>Metric Variants</button>
+          <button onClick={() => addNodes(1, LOREM)}>Long name</button>
         </div>
 
         <div>
