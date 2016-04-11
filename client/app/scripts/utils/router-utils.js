@@ -19,7 +19,7 @@ export function updateRoute() {
   const urlStateString = window.location.hash
     .replace('#!/state/', '')
     .replace('#!/', '') || '{}';
-  const prevState = JSON.parse(urlStateString);
+  const prevState = JSON.parse(decodeURIComponent(urlStateString));
 
   if (shouldReplaceState(prevState, state)) {
     // Replace the top of the history rather than pushing on a new item.

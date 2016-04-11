@@ -13,6 +13,22 @@ import AppStore from '../stores/app-store';
 
 const log = debug('scope:app-actions');
 
+export function showHelp() {
+  AppDispatcher.dispatch({type: ActionTypes.SHOW_HELP});
+}
+
+export function hideHelp() {
+  AppDispatcher.dispatch({type: ActionTypes.HIDE_HELP});
+}
+
+export function toggleHelp() {
+  if (AppStore.getShowingHelp()) {
+    hideHelp();
+  } else {
+    showHelp();
+  }
+}
+
 export function selectMetric(metricId) {
   AppDispatcher.dispatch({
     type: ActionTypes.SELECT_METRIC,
@@ -219,7 +235,9 @@ export function enterNode(nodeId) {
 
 export function hitEsc() {
   const controlPipe = AppStore.getControlPipe();
-  if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
+  if (AppStore.getShowingHelp()) {
+    hideHelp();
+  } else if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
     AppDispatcher.dispatch({
       type: ActionTypes.CLICK_CLOSE_TERMINAL,
       pipeId: controlPipe.get('id')

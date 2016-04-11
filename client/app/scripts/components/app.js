@@ -7,12 +7,13 @@ import Logo from './logo';
 import AppStore from '../stores/app-store';
 import Footer from './footer.js';
 import Sidebar from './sidebar.js';
+import HelpPanel from './help-panel';
 import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { pinNextMetric, hitEsc, unpinMetric,
-  selectMetric } from '../actions/app-actions';
+  selectMetric, toggleHelp } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import MetricSelector from './metric-selector';
@@ -22,10 +23,6 @@ import { showingDebugToolbar, toggleDebugToolbar,
   DebugToolbar } from './debug-toolbar.js';
 
 const ESC_KEY_CODE = 27;
-const D_KEY_CODE = 68;
-const Q_KEY_CODE = 81;
-const RIGHT_ANGLE_KEY_IDENTIFIER = 'U+003C';
-const LEFT_ANGLE_KEY_IDENTIFIER = 'U+003E';
 const keyPressLog = debug('scope:app-key-press');
 
 /* make sure these can all be shallow-checked for equality for PureRenderMixin */
@@ -47,6 +44,7 @@ function getStateFromStores() {
     availableCanvasMetrics: AppStore.getAvailableCanvasMetrics(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
+    showingHelp: AppStore.getShowingHelp(),
     selectedNodeId: AppStore.getSelectedNodeId(),
     selectedMetric: AppStore.getSelectedMetric(),
     topologies: AppStore.getTopologies(),
@@ -65,12 +63,14 @@ export default class App extends React.Component {
     super(props, context);
     this.onChange = this.onChange.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
+    this.onKeyUp = this.onKeyUp.bind(this);
     this.state = getStateFromStores();
   }
 
   componentDidMount() {
     AppStore.addListener(this.onChange);
-    window.addEventListener('keyup', this.onKeyPress);
+    window.addEventListener('keypress', this.onKeyPress);
+    window.addEventListener('keyup', this.onKeyUp);
 
     getRouter().start({hashbang: true});
     if (!AppStore.isRouteSet()) {
@@ -80,24 +80,43 @@ export default class App extends React.Component {
     getApiDetails();
   }
 
+  componentWillUnmount() {
+    window.removeEventListener('keypress', this.onKeyPress);
+    window.removeEventListener('keyup', this.onKeyUp);
+  }
+
   onChange() {
     this.setState(getStateFromStores());
   }
 
-  onKeyPress(ev) {
-    keyPressLog('onKeyPress', 'keyCode', ev.keyCode, ev);
+  onKeyUp(ev) {
+    // don't get esc in onKeyPress
     if (ev.keyCode === ESC_KEY_CODE) {
       hitEsc();
-    } else if (ev.keyIdentifier === RIGHT_ANGLE_KEY_IDENTIFIER) {
+    }
+  }
+
+  onKeyPress(ev) {
+    //
+    // keyup gives 'key'
+    // keypress gives 'char'
+    // Distinction is important for international keyboard layouts where there
+    // is often a different {key: char} mapping.
+    //
+    keyPressLog('onKeyPress', 'keyCode', ev.keyCode, ev);
+    const char = String.fromCharCode(ev.charCode);
+    if (char === '<') {
       pinNextMetric(-1);
-    } else if (ev.keyIdentifier === LEFT_ANGLE_KEY_IDENTIFIER) {
+    } else if (char === '>') {
       pinNextMetric(1);
-    } else if (ev.keyCode === Q_KEY_CODE) {
+    } else if (char === 'q') {
       unpinMetric();
       selectMetric(null);
-    } else if (ev.keyCode === D_KEY_CODE) {
+    } else if (char === 'd') {
       toggleDebugToolbar();
       this.forceUpdate();
+    } else if (char === '?') {
+      toggleHelp();
     }
   }
 
@@ -112,6 +131,9 @@ export default class App extends React.Component {
     return (
       <div className="app">
         {showingDebugToolbar() && <DebugToolbar />}
+
+        {this.state.showingHelp && <HelpPanel />}
+
         {showingDetails && <Details nodes={this.state.nodes}
           controlStatus={this.state.controlStatus}
           details={this.state.nodeDetails} />}

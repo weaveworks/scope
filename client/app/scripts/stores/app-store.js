@@ -58,6 +58,7 @@ let routeSet = false;
 let controlPipes = makeOrderedMap(); // pipeId -> controlPipe
 let updatePausedAt = null; // Date
 let websocketClosed = true;
+let showingHelp = false;
 
 let selectedMetric = null;
 let pinnedMetric = selectedMetric;
@@ -147,6 +148,10 @@ export class AppStore extends Store {
       topologyId: currentTopologyId,
       topologyOptions: topologyOptions.toJS() // all options
     };
+  }
+
+  getShowingHelp() {
+    return showingHelp;
   }
 
   getActiveTopologyOptions() {
@@ -446,6 +451,16 @@ export class AppStore extends Store {
       case ActionTypes.UNPIN_METRIC: {
         pinnedMetric = null;
         pinnedMetricType = null;
+        this.__emitChange();
+        break;
+      }
+      case ActionTypes.SHOW_HELP: {
+        showingHelp = true;
+        this.__emitChange();
+        break;
+      }
+      case ActionTypes.HIDE_HELP: {
+        showingHelp = false;
         this.__emitChange();
         break;
       }

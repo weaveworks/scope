@@ -175,6 +175,7 @@ export default class Terminal extends React.Component {
 
     if (this.term) {
       log('destroy terminal');
+      this.term.blur();
       this.term.destroy();
       this.term = null;
     }
