@@ -23,6 +23,8 @@ const MARGINS = {
   bottom: 0
 };
 
+const ZOOM_CACHE_FIELDS = ['scale', 'panTranslateX', 'panTranslateY'];
+
 // make sure circular layouts a bit denser with 3-6 nodes
 const radiusDensity = d3.scale.threshold()
   .domain([3, 6]).range([2.5, 3.5, 3]);
@@ -43,7 +45,8 @@ export default class NodesChart extends React.Component {
       panTranslateY: 0,
       scale: 1,
       selectedNodeScale: d3.scale.linear(),
-      hasZoomed: false
+      hasZoomed: false,
+      zoomCache: {}
     };
   }
 
@@ -58,13 +61,25 @@ export default class NodesChart extends React.Component {
 
     // wipe node states when showing different topology
     if (nextProps.topologyId !== this.props.topologyId) {
-      _.assign(state, {
+      // re-apply cached canvas zoom/pan to d3 behavior
+      const nextZoom = this.state.zoomCache[nextProps.topologyId];
+      if (nextZoom) {
+        this.zoom.scale(nextZoom.scale);
+        this.zoom.translate([nextZoom.panTranslateX, nextZoom.panTranslateY]);
+      }
+
+      // saving previous zoom state
+      const prevZoom = _.pick(this.state, ZOOM_CACHE_FIELDS);
+      const zoomCache = _.assign({}, this.state.zoomCache);
+      zoomCache[this.props.topologyId] = prevZoom;
+
+      // clear canvas and apply zoom state
+      _.assign(state, nextZoom, { zoomCache }, {
         nodes: makeMap(),
         edges: makeMap()
       });
     }
-    //
-    // FIXME add PureRenderMixin, Immutables, and move the following functions to render()
+
     // _.assign(state, this.updateGraphState(nextProps, state));
     if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
       _.assign(state, this.updateGraphState(nextProps, state));
