@@ -191,5 +191,5 @@ export default class NodeDetailsTable extends React.Component {
 }
 
 NodeDetailsTable.defaultProps = {
-  nodeIdKey: 'id'
+  nodeIdKey: 'id' // key to identify a node in a row (used for topology links)
 };
