@@ -55,8 +55,10 @@ export default class Node extends React.Component {
   }
 
   render() {
-    const { blurred, focused, highlighted, label, nodeScale, pseudo, rank,
+    const { blurred, focused, highlighted, label, pseudo, rank,
       subLabel, scaleFactor, transform, zoomScale } = this.props;
+
+    const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !highlighted;

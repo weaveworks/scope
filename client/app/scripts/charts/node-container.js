@@ -11,7 +11,7 @@ export default class NodeContainer extends React.Component {
   render() {
     const { dx, dy, focused, layoutPrecision, zoomScale } = this.props;
     const animConfig = [80, 20]; // stiffness, damping
-    const scaleFactor = focused ? (2 / zoomScale) : 1;
+    const scaleFactor = focused ? (1 / zoomScale) : 1;
     const other = _.omit(this.props, 'dx', 'dy');
 
     return (
