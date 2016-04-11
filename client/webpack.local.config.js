@@ -47,6 +47,7 @@ module.exports = {
   // by the dev server for dynamic hot loading.
   output: {
     path: path.join(__dirname, 'build/'),
+    publicPath: 'http://' + WEBPACK_SERVER_HOST + ':4041/build/',
     filename: '[name].js'
   },
 
