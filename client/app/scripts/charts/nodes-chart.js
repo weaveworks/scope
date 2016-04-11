@@ -355,10 +355,10 @@ export default class NodesChart extends React.Component {
     }
 
     nextState.scale = zoomScale;
-    if (!isDeepEqual(stateNodes, state.nodes)) {
+    if (!isDeepEqual(layoutNodes, state.nodes)) {
       nextState.nodes = layoutNodes;
     }
-    if (!isDeepEqual(stateEdges, state.edges)) {
+    if (!isDeepEqual(layoutEdges, state.edges)) {
       nextState.edges = layoutEdges;
     }
 
