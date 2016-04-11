@@ -297,7 +297,8 @@ function hasSameEndpoints(cachedEdge, nodes) {
   const oldTargetPoint = oldPoints.last();
   const newSource = nodes.get(cachedEdge.get('source'));
   const newTarget = nodes.get(cachedEdge.get('target'));
-  return (oldSourcePoint.get('x') === newSource.get('x')
+  return (oldSourcePoint && oldTargetPoint && newSource && newTarget
+    && oldSourcePoint.get('x') === newSource.get('x')
     && oldSourcePoint.get('y') === newSource.get('y')
     && oldTargetPoint.get('x') === newTarget.get('x')
     && oldTargetPoint.get('y') === newTarget.get('y'));
