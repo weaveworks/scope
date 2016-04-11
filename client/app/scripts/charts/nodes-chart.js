@@ -270,7 +270,7 @@ export default class NodesChart extends React.Component {
     });
 
     // auto-scale node size for selected nodes
-    const selectedNodeScale = this.getNodeScale(props);
+    const selectedNodeScale = this.getNodeScale(Object.assign({}, props, {nodes: adjacentNodes}));
 
     return {
       selectedNodeScale,
