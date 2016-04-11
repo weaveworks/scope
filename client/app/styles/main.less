@@ -1084,12 +1084,19 @@ h2 {
 // Help panel!
 //
 
+@help-panel-width: 400px;
+@help-panel-height: 380px;
 .help-panel {
   position: absolute;
+  -webkit-transform: translate3d(0, 0, 0);
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  width: @help-panel-width;
+  height: @help-panel-height;
+  margin-left: @help-panel-width / -2;
+  margin-top: @help-panel-height / -2;
   z-index: 2048;
+  background-color: white;
   .shadow-2;
 
   &-header {
@@ -1104,7 +1111,6 @@ h2 {
 
   &-main {
     padding: 12px 36px 36px;
-    background-color: white;
   }
 
   h3 {

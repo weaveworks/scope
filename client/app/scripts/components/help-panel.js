@@ -1,12 +1,13 @@
 import React from 'react';
 
 const GENERAL_SHORTCUTS = [
-  {key: 'esc', label: 'Close panel'},
+  {key: 'esc', label: 'Close active panel'},
+  {key: '?', label: 'Toggle shortcut menu'},
 ];
 
 const CANVAS_METRIC_SHORTCUTS = [
-  {key: '<', label: 'Pin previous metric'},
-  {key: '>', label: 'Pin next metric'},
+  {key: '<', label: 'Select and pin previous metric'},
+  {key: '>', label: 'Select and pin next metric'},
   {key: 'q', label: 'Unpin current metric'},
 ];
 
