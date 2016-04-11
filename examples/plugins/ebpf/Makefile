@@ -13,7 +13,7 @@ run: $(UPTODATE)
 	  --name $(IMAGE) \
 	  $(IMAGE)
 
-$(UPTODATE): Dockerfile
+$(UPTODATE): Dockerfile http-requests.py http-requests.c
 	docker build -t $(IMAGE) .
 	touch $@
 
