@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -31,6 +32,9 @@ const (
 	pluginTimeout   = 500 * time.Millisecond
 	pluginRetry     = 5 * time.Second
 	pollingInterval = 5 * time.Second
+
+	initialBackoff = 1 * time.Second
+	maxBackoff     = 15 * time.Second
 )
 
 // Registry maintains a list of available plugins by name.
@@ -222,9 +226,17 @@ func NewPlugin(ctx context.Context, socket string, client *http.Client, expected
 	ctx, cancel := context.WithCancel(ctx)
 	p := &Plugin{context: ctx, socket: socket, client: client, cancel: cancel}
 	f := p.handshake(ctx, expectedAPIVersion, params)
-	f() // try the first time synchronously
-	p.backoff = backoff.New(f, "plugin handshake")
-	go p.backoff.Start()
+	// try the first time synchronously (makes testing easier)
+	if ok, err := f(); !ok {
+		log.Errorf("Error plugin handshake, backing off 10s: %v", err)
+		p.backoff = backoff.New(f, "plugin handshake")
+		p.backoff.SetInitialBackoff(initialBackoff)
+		p.backoff.SetMaxBackoff(maxBackoff)
+		go func() {
+			time.Sleep(initialBackoff)
+			p.backoff.Start()
+		}()
+	}
 	return p
 }
 
@@ -274,20 +286,28 @@ func (p *Plugin) setStatus(err error) {
 	}
 }
 
-// TODO(paulbellamy): better error handling on wrong status codes
 func (p *Plugin) get(path string, params url.Values, result interface{}) error {
+	// Context here lets us either timeout req. or cancel it in Plugin.Close
 	ctx, cancel := context.WithTimeout(p.context, pluginTimeout)
 	defer cancel()
 	resp, err := ctxhttp.Get(ctx, p.client, fmt.Sprintf("unix://%s?%s", path, params.Encode()))
 	if err != nil {
 		return err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("plugin returned non-200 status code: %s", resp.Status)
+	}
 	defer resp.Body.Close()
-	return codec.NewDecoder(resp.Body, &codec.JsonHandle{}).Decode(&result)
+	if err := codec.NewDecoder(io.LimitReader(resp.Body, 50*1024*1024), &codec.JsonHandle{}).Decode(&result); err != nil {
+		return fmt.Errorf("decoding error: %s", err)
+	}
+	return nil
 }
 
 // Close closes the client
 func (p *Plugin) Close() {
-	p.backoff.Stop()
+	if p.backoff != nil {
+		p.backoff.Stop()
+	}
 	p.cancel()
 }

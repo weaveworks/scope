@@ -41,11 +41,11 @@ type ConnectionsSummary struct {
 
 // Connection is a row in the connections table.
 type Connection struct {
-	ID       string        `json:"id"`     // ID of this element in the UI.  Must be unique for a given ConnectionsSummary.
-	NodeID   string        `json:"nodeId"` // ID of a node in the topology. Optional, must be set if linkable is true.
-	Label    string        `json:"label"`
-	Linkable bool          `json:"linkable"`
-	Metadata []MetadataRow `json:"metadata,omitempty"`
+	ID       string               `json:"id"`     // ID of this element in the UI.  Must be unique for a given ConnectionsSummary.
+	NodeID   string               `json:"nodeId"` // ID of a node in the topology. Optional, must be set if linkable is true.
+	Label    string               `json:"label"`
+	Linkable bool                 `json:"linkable"`
+	Metadata []report.MetadataRow `json:"metadata,omitempty"`
 }
 
 type connectionsByID []Connection

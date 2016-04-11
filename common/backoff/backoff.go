@@ -22,6 +22,7 @@ type Interface interface {
 	Start()
 	Stop()
 	SetInitialBackoff(time.Duration)
+	SetMaxBackoff(time.Duration)
 }
 
 // New makes a new Interface
@@ -38,6 +39,10 @@ func New(f func() (bool, error), msg string) Interface {
 
 func (b *backoff) SetInitialBackoff(d time.Duration) {
 	b.initialBackoff = d
+}
+
+func (b *backoff) SetMaxBackoff(d time.Duration) {
+	b.maxBackoff = d
 }
 
 // Stop the backoff, and waits for it to stop.
