@@ -172,7 +172,7 @@ export default class NodeDetailsTable extends React.Component {
             const values = this.renderValues(node);
             const nodeId = node[nodeIdKey];
             return (
-              <tr className="node-details-table-node" key={nodeId}>
+              <tr className="node-details-table-node" key={node.id}>
                 <td className="node-details-table-node-label truncate">
                   <NodeDetailsTableNodeLink {...node} topologyId={this.props.topologyId}
                     nodeId={nodeId} />

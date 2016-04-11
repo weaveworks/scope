@@ -15,10 +15,10 @@ import (
 // we want deep information about an individual node.
 type Node struct {
 	NodeSummary
-	Controls    []ControlInstance  `json:"controls"`
-	Children    []NodeSummaryGroup `json:"children,omitempty"`
-	Parents     []Parent           `json:"parents,omitempty"`
-	Connections []ConnectionsTable `json:"connections,omitempty"`
+	Controls    []ControlInstance    `json:"controls"`
+	Children    []NodeSummaryGroup   `json:"children,omitempty"`
+	Parents     []Parent             `json:"parents,omitempty"`
+	Connections []ConnectionsSummary `json:"connections,omitempty"`
 }
 
 // ControlInstance contains a control description, and all the info
@@ -83,9 +83,9 @@ func MakeNode(topologyID string, r report.Report, ns report.Nodes, n report.Node
 		Controls:    controls(r, n),
 		Children:    children(n),
 		Parents:     Parents(r, n),
-		Connections: []ConnectionsTable{
-			incomingConnectionsTable(topologyID, n, ns),
-			outgoingConnectionsTable(topologyID, n, ns),
+		Connections: []ConnectionsSummary{
+			incomingConnectionsSummary(topologyID, n, ns),
+			outgoingConnectionsSummary(topologyID, n, ns),
 		},
 	}
 }

@@ -114,20 +114,20 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Nodes: []detailed.NodeSummary{containerImageNodeSummary},
 			},
 		},
-		Connections: []detailed.ConnectionsTable{
+		Connections: []detailed.ConnectionsSummary{
 			{
-				ID:         "incoming-connections",
-				TopologyID: "hosts",
-				Label:      "Inbound",
-				Columns:    detailed.NormalColumns,
-				Rows:       []detailed.ConnectionsRow{},
+				ID:          "incoming-connections",
+				TopologyID:  "hosts",
+				Label:       "Inbound",
+				Columns:     detailed.NormalColumns,
+				Connections: []detailed.Connection{},
 			},
 			{
 				ID:         "outgoing-connections",
 				TopologyID: "hosts",
 				Label:      "Outbound",
 				Columns:    detailed.NormalColumns,
-				Rows: []detailed.ConnectionsRow{
+				Connections: []detailed.Connection{
 					{
 						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ServerHostNodeID, "", fixture.ClientHostNodeID, "", 80),
 						NodeID:   fixture.ServerHostNodeID,
@@ -221,13 +221,13 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				TopologyID: "hosts",
 			},
 		},
-		Connections: []detailed.ConnectionsTable{
+		Connections: []detailed.ConnectionsSummary{
 			{
 				ID:         "incoming-connections",
 				TopologyID: "containers",
 				Label:      "Inbound",
 				Columns:    detailed.NormalColumns,
-				Rows: []detailed.ConnectionsRow{
+				Connections: []detailed.Connection{
 					{
 						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ClientContainerNodeID, "", fixture.ServerContainerNodeID, "", 80),
 						NodeID:   fixture.ClientContainerNodeID,
@@ -267,11 +267,11 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				},
 			},
 			{
-				ID:         "outgoing-connections",
-				TopologyID: "containers",
-				Label:      "Outbound",
-				Columns:    detailed.NormalColumns,
-				Rows:       []detailed.ConnectionsRow{},
+				ID:          "outgoing-connections",
+				TopologyID:  "containers",
+				Label:       "Outbound",
+				Columns:     detailed.NormalColumns,
+				Connections: []detailed.Connection{},
 			},
 		},
 	}
