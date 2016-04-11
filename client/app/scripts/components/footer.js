@@ -4,7 +4,7 @@ import moment from 'moment';
 import { getUpdateBufferSize } from '../utils/update-buffer-utils';
 import { contrastModeUrl, isContrastMode } from '../utils/contrast-utils';
 import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
-  clickResumeUpdate } from '../actions/app-actions';
+  clickResumeUpdate, toggleHelp } from '../actions/app-actions';
 import { basePathSlash } from '../utils/web-api-utils';
 
 export default function Footer(props) {
@@ -63,6 +63,9 @@ export default function Footer(props) {
         </a>
         <a className="footer-icon" href="https://gitreports.com/issue/weaveworks/scope" target="_blank" title="Report an issue">
           <span className="fa fa-bug" />
+        </a>
+        <a className="footer-icon" onClick={toggleHelp} title="Show help">
+          <span className="fa fa-question" />
         </a>
       </div>
 
