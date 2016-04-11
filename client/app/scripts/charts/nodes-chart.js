@@ -270,7 +270,7 @@ export default class NodesChart extends React.Component {
     });
 
     // auto-scale node size for selected nodes
-    const selectedNodeScale = this.getNodeScale(Object.assign({}, props, {nodes: adjacentNodes}));
+    const selectedNodeScale = this.getNodeScale(adjacentNodes, props.width, props.height);
 
     return {
       selectedNodeScale,
@@ -314,7 +314,7 @@ export default class NodesChart extends React.Component {
     const nodeMetrics = stateNodes.map(node => makeMap({
       metrics: node.get('metrics')
     }));
-    const nodeScale = this.getNodeScale(props);
+    const nodeScale = this.getNodeScale(props.nodes, props.width, props.height);
     const nextState = { nodeScale };
 
     const options = {
@@ -365,11 +365,11 @@ export default class NodesChart extends React.Component {
     return nextState;
   }
 
-  getNodeScale(props) {
-    const expanse = Math.min(props.height, props.width);
+  getNodeScale(nodes, width, height) {
+    const expanse = Math.min(height, width);
     const nodeSize = expanse / 3; // single node should fill a third of the screen
     const maxNodeSize = expanse / 10;
-    const normalizedNodeSize = Math.min(nodeSize / Math.sqrt(props.nodes.size), maxNodeSize);
+    const normalizedNodeSize = Math.min(nodeSize / Math.sqrt(nodes.size), maxNodeSize);
     return this.state.nodeScale.copy().range([0, normalizedNodeSize]);
   }
 
