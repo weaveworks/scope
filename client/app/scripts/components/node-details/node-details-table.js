@@ -148,6 +148,7 @@ export default class NodeDetailsTable extends React.Component {
 
   render() {
     const headers = this.renderHeaders();
+    const { nodeIdKey } = this.props;
     let nodes = _.sortBy(this.props.nodes, this.getValueForSortBy, 'label',
       this.getMetaDataSorters());
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
@@ -169,10 +170,12 @@ export default class NodeDetailsTable extends React.Component {
           <tbody>
           {nodes && nodes.map(node => {
             const values = this.renderValues(node);
+            const nodeId = node[nodeIdKey];
             return (
               <tr className="node-details-table-node" key={node.id}>
                 <td className="node-details-table-node-label truncate">
-                  <NodeDetailsTableNodeLink topologyId={this.props.topologyId} {...node} />
+                  <NodeDetailsTableNodeLink {...node} topologyId={this.props.topologyId}
+                    nodeId={nodeId} />
                 </td>
                 {values}
               </tr>
@@ -186,3 +189,7 @@ export default class NodeDetailsTable extends React.Component {
     );
   }
 }
+
+NodeDetailsTable.defaultProps = {
+  nodeIdKey: 'id' // key to identify a node in a row (used for topology links)
+};

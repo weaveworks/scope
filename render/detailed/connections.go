@@ -1,6 +1,7 @@
 package detailed
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 
@@ -29,17 +30,46 @@ var (
 	}
 )
 
-type connectionsRow struct {
+// ConnectionsSummary is the table of connection to/form a node
+type ConnectionsSummary struct {
+	ID          string       `json:"id"`
+	TopologyID  string       `json:"topologyId"`
+	Label       string       `json:"label"`
+	Columns     []Column     `json:"columns"`
+	Connections []Connection `json:"connections"`
+}
+
+// Connection is a row in the connections table.
+type Connection struct {
+	ID       string        `json:"id"`     // ID of this element in the UI.  Must be unique for a given ConnectionsSummary.
+	NodeID   string        `json:"nodeId"` // ID of a node in the topology. Optional, must be set if linkable is true.
+	Label    string        `json:"label"`
+	Linkable bool          `json:"linkable"`
+	Metadata []MetadataRow `json:"metadata,omitempty"`
+}
+
+type connectionsByID []Connection
+
+func (s connectionsByID) Len() int           { return len(s) }
+func (s connectionsByID) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s connectionsByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
+
+// Intermediate type used as a key to dedupe rows
+type connection struct {
 	remoteNode, localNode *report.Node
 	remoteAddr, localAddr string
 	port                  string // always the server-side port
 }
 
-func incomingConnectionsTable(topologyID string, n report.Node, ns report.Nodes) NodeSummaryGroup {
+func (row connection) ID() string {
+	return fmt.Sprintf("%s:%s-%s:%s-%s", row.remoteNode.ID, row.remoteAddr, row.localNode.ID, row.localAddr, row.port)
+}
+
+func incomingConnectionsSummary(topologyID string, n report.Node, ns report.Nodes) ConnectionsSummary {
 	localEndpointIDs := endpointChildIDsOf(n)
 
 	// For each node which has an edge TO me
-	counts := map[connectionsRow]int{}
+	counts := map[connection]int{}
 	for _, node := range ns {
 		if !node.Adjacency.Contains(n.ID) {
 			continue
@@ -58,7 +88,7 @@ func incomingConnectionsTable(topologyID string, n report.Node, ns report.Nodes)
 				if !ok {
 					continue
 				}
-				key := connectionsRow{
+				key := connection{
 					localNode:  &n,
 					remoteNode: &remoteNode,
 					port:       port,
@@ -75,20 +105,20 @@ func incomingConnectionsTable(topologyID string, n report.Node, ns report.Nodes)
 	if isInternetNode(n) {
 		columnHeaders = InternetColumns
 	}
-	return NodeSummaryGroup{
-		ID:         "incoming-connections",
-		TopologyID: topologyID,
-		Label:      "Inbound",
-		Columns:    columnHeaders,
-		Nodes:      connectionRows(counts, isInternetNode(n)),
+	return ConnectionsSummary{
+		ID:          "incoming-connections",
+		TopologyID:  topologyID,
+		Label:       "Inbound",
+		Columns:     columnHeaders,
+		Connections: connectionRows(counts, isInternetNode(n)),
 	}
 }
 
-func outgoingConnectionsTable(topologyID string, n report.Node, ns report.Nodes) NodeSummaryGroup {
+func outgoingConnectionsSummary(topologyID string, n report.Node, ns report.Nodes) ConnectionsSummary {
 	localEndpoints := endpointChildrenOf(n)
 
 	// For each node which has an edge FROM me
-	counts := map[connectionsRow]int{}
+	counts := map[connection]int{}
 	for _, id := range n.Adjacency {
 		node, ok := ns[id]
 		if !ok {
@@ -108,7 +138,7 @@ func outgoingConnectionsTable(topologyID string, n report.Node, ns report.Nodes)
 				if !ok {
 					continue
 				}
-				key := connectionsRow{
+				key := connection{
 					localNode:  &n,
 					remoteNode: &remoteNode,
 					port:       port,
@@ -125,12 +155,12 @@ func outgoingConnectionsTable(topologyID string, n report.Node, ns report.Nodes)
 	if isInternetNode(n) {
 		columnHeaders = InternetColumns
 	}
-	return NodeSummaryGroup{
-		ID:         "outgoing-connections",
-		TopologyID: topologyID,
-		Label:      "Outbound",
-		Columns:    columnHeaders,
-		Nodes:      connectionRows(counts, isInternetNode(n)),
+	return ConnectionsSummary{
+		ID:          "outgoing-connections",
+		TopologyID:  topologyID,
+		Label:       "Outbound",
+		Columns:     columnHeaders,
+		Connections: connectionRows(counts, isInternetNode(n)),
 	}
 }
 
@@ -158,30 +188,32 @@ func isInternetNode(n report.Node) bool {
 	return n.ID == render.IncomingInternetID || n.ID == render.OutgoingInternetID
 }
 
-func connectionRows(in map[connectionsRow]int, includeLocal bool) []NodeSummary {
-	nodes := []NodeSummary{}
+func connectionRows(in map[connection]int, includeLocal bool) []Connection {
+	output := []Connection{}
 	for row, count := range in {
 		// Use MakeNodeSummary to render the id and label of this node
 		// TODO(paulbellamy): Would be cleaner if we hade just a
 		// MakeNodeID(*row.remoteode). As we don't need the whole summary.
 		summary, ok := MakeNodeSummary(*row.remoteNode)
-		summary.Metadata, summary.Metrics, summary.DockerLabels = nil, nil, nil
+		connection := Connection{
+			ID:       row.ID(),
+			NodeID:   summary.ID,
+			Label:    summary.Label,
+			Linkable: true,
+		}
 		if !ok && row.remoteAddr != "" {
-			summary = NodeSummary{
-				ID:       row.remoteAddr + ":" + row.port,
-				Label:    row.remoteAddr,
-				Linkable: false,
-			}
+			connection.Label = row.remoteAddr
+			connection.Linkable = false
 		}
 		if includeLocal {
-			summary.Metadata = append(summary.Metadata,
+			connection.Metadata = append(connection.Metadata,
 				MetadataRow{
 					ID:       "foo",
 					Value:    row.localAddr,
 					Datatype: number,
 				})
 		}
-		summary.Metadata = append(summary.Metadata,
+		connection.Metadata = append(connection.Metadata,
 			MetadataRow{
 				ID:       portKey,
 				Value:    row.port,
@@ -193,8 +225,8 @@ func connectionRows(in map[connectionsRow]int, includeLocal bool) []NodeSummary 
 				Datatype: number,
 			},
 		)
-		nodes = append(nodes, summary)
+		output = append(output, connection)
 	}
-	sort.Sort(nodeSummariesByID(nodes))
-	return nodes
+	sort.Sort(connectionsByID(output))
+	return output
 }
