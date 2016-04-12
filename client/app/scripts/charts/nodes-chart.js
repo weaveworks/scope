@@ -46,6 +46,8 @@ export default class NodesChart extends React.Component {
       scale: 1,
       selectedNodeScale: d3.scale.linear(),
       hasZoomed: false,
+      height: 0,
+      width: 0,
       zoomCache: {}
     };
   }
@@ -79,6 +81,10 @@ export default class NodesChart extends React.Component {
         edges: makeMap()
       });
     }
+
+    // reset layout dimensions only when forced
+    state.height = nextProps.forceRelayout ? nextProps.height : (state.height || nextProps.height);
+    state.width = nextProps.forceRelayout ? nextProps.width : (state.width || nextProps.width);
 
     // _.assign(state, this.updateGraphState(nextProps, state));
     if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
@@ -242,9 +248,9 @@ export default class NodesChart extends React.Component {
     // move origin node to center of viewport
     const zoomScale = state.scale;
     const translate = [state.panTranslateX, state.panTranslateY];
-    const centerX = (-translate[0] + (props.width + MARGINS.left
+    const centerX = (-translate[0] + (state.width + MARGINS.left
       - DETAILS_PANEL_WIDTH) / 2) / zoomScale;
-    const centerY = (-translate[1] + (props.height + MARGINS.top) / 2) / zoomScale;
+    const centerY = (-translate[1] + (state.height + MARGINS.top) / 2) / zoomScale;
     stateNodes = stateNodes.mergeIn([props.selectedNodeId], {
       x: centerX,
       y: centerY
@@ -253,7 +259,7 @@ export default class NodesChart extends React.Component {
     // circle layout for adjacent nodes
     const adjacentCount = adjacentLayoutNodeIds.length;
     const density = radiusDensity(adjacentCount);
-    const radius = Math.min(props.width, props.height) / density / zoomScale;
+    const radius = Math.min(state.width, state.height) / density / zoomScale;
     const offsetAngle = Math.PI / 4;
 
     stateNodes = stateNodes.map((node) => {
@@ -285,7 +291,7 @@ export default class NodesChart extends React.Component {
     });
 
     // auto-scale node size for selected nodes
-    const selectedNodeScale = this.getNodeScale(adjacentNodes, props.width, props.height);
+    const selectedNodeScale = this.getNodeScale(adjacentNodes, state.width, state.height);
 
     return {
       selectedNodeScale,
@@ -329,12 +335,12 @@ export default class NodesChart extends React.Component {
     const nodeMetrics = stateNodes.map(node => makeMap({
       metrics: node.get('metrics')
     }));
-    const nodeScale = this.getNodeScale(props.nodes, props.width, props.height);
+    const nodeScale = this.getNodeScale(props.nodes, state.width, state.height);
     const nextState = { nodeScale };
 
     const options = {
-      width: props.width,
-      height: props.height,
+      width: state.width,
+      height: state.height,
       scale: nodeScale,
       margins: MARGINS,
       forceRelayout: props.forceRelayout,
@@ -358,8 +364,8 @@ export default class NodesChart extends React.Component {
       .map(edge => edge.set('ppoints', edge.get('points')));
 
     // adjust layout based on viewport
-    const xFactor = (props.width - MARGINS.left - MARGINS.right) / graph.width;
-    const yFactor = props.height / graph.height;
+    const xFactor = (state.width - MARGINS.left - MARGINS.right) / graph.width;
+    const yFactor = state.height / graph.height;
     const zoomFactor = Math.min(xFactor, yFactor);
     let zoomScale = this.state.scale;
 
