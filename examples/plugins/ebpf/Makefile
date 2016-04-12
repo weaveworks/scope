@@ -1,7 +1,7 @@
 .PHONY: run clean
 
 IMAGE=weavescope-http-requests-plugin
-UPTODATE=.$(EXE).uptodate
+UPTODATE=.uptodate
 
 run: $(UPTODATE)
 	docker run --rm -it \
