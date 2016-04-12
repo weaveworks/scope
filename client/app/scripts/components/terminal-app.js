@@ -17,7 +17,7 @@ export class TerminalApp extends React.Component {
     this.onChange = this.onChange.bind(this);
 
     const paramString = window.location.hash.split('/').pop();
-    const params = JSON.parse(paramString);
+    const params = JSON.parse(decodeURIComponent(paramString));
     receiveControlPipeFromParams(params.pipe.id, null, params.pipe.raw, false);
 
     this.state = {
