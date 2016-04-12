@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strconv"
 	"strings"
 	"time"
@@ -31,6 +32,14 @@ func main() {
 	}
 
 	os.Remove(*addr)
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+	go func() {
+		<-interrupt
+		os.Remove(*addr)
+		os.Exit(0)
+	}()
+
 	listener, err := net.Listen("unix", *addr)
 	if err != nil {
 		log.Fatal(err)

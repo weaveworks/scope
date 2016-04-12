@@ -102,6 +102,7 @@ func (r *Registry) scan() error {
 		}
 		client := &http.Client{Transport: tr, Timeout: pluginTimeout}
 		plugins[path] = NewPlugin(r.context, path, client, r.apiVersion, r.handshakeMetadata)
+		log.Infof("plugins: added plugin %s", path)
 	}
 	// remove plugins which weren't found
 	for path, plugin := range r.pluginsBySocket {
