@@ -90,7 +90,7 @@ func (p *pingingWebsocket) ping() {
 	defer p.writeLock.Unlock()
 	if err := p.conn.WriteControl(websocket.PingMessage, nil, mtime.Now().Add(writeWait)); err != nil {
 		log.Errorf("websocket ping error: %v", err)
-		p.Close()
+		p.conn.Close()
 		return
 	}
 	p.pinger.Reset(pingPeriod)
@@ -158,6 +158,8 @@ func (p *pingingWebsocket) ReadJSON(v interface{}) error {
 
 // Close closes the connection
 func (p *pingingWebsocket) Close() error {
+	p.writeLock.Lock()
+	defer p.writeLock.Unlock()
 	p.pinger.Stop()
 	return p.conn.Close()
 }

@@ -8,8 +8,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	consul "github.com/hashicorp/consul/api"
-
-	"github.com/weaveworks/scope/common/mtime"
 )
 
 const (
@@ -21,8 +19,7 @@ const (
 type ConsulClient interface {
 	Get(key string, out interface{}) error
 	CAS(key string, out interface{}, f CASCallback) error
-	Watch(key string, deadline time.Time, out interface{}, f func(interface{}) (bool, error)) error
-	WatchPrefix(prefix string, out interface{}, f func(string, interface{}) bool)
+	WatchPrefix(prefix string, out interface{}, done chan struct{}, f func(string, interface{}) bool)
 }
 
 // CASCallback is the type of the callback to CAS.  If err is nil, out must be non-nil.
@@ -37,7 +34,7 @@ func NewConsulClient(addr string) (ConsulClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return (*consulClient)(client), nil
+	return &consulClient{client.KV()}, nil
 }
 
 var (
@@ -50,12 +47,19 @@ var (
 	ErrNotFound = fmt.Errorf("Not found")
 )
 
-type consulClient consul.Client
+type kv interface {
+	CAS(p *consul.KVPair, q *consul.WriteOptions) (bool, *consul.WriteMeta, error)
+	Get(key string, q *consul.QueryOptions) (*consul.KVPair, *consul.QueryMeta, error)
+	List(prefix string, q *consul.QueryOptions) (consul.KVPairs, *consul.QueryMeta, error)
+}
+
+type consulClient struct {
+	kv
+}
 
 // Get and deserialise a JSON value from consul.
 func (c *consulClient) Get(key string, out interface{}) error {
-	kv := (*consul.Client)(c).KV()
-	kvp, _, err := kv.Get(key, queryOptions)
+	kvp, _, err := c.kv.Get(key, queryOptions)
 	if err != nil {
 		return err
 	}
@@ -73,13 +77,12 @@ func (c *consulClient) Get(key string, out interface{}) error {
 func (c *consulClient) CAS(key string, out interface{}, f CASCallback) error {
 	var (
 		index        = uint64(0)
-		kv           = (*consul.Client)(c).KV()
 		retries      = 10
 		retry        = true
 		intermediate interface{}
 	)
 	for i := 0; i < retries; i++ {
-		kvp, _, err := kv.Get(key, queryOptions)
+		kvp, _, err := c.kv.Get(key, queryOptions)
 		if err != nil {
 			log.Errorf("Error getting %s: %v", key, err)
 			continue
@@ -111,7 +114,7 @@ func (c *consulClient) CAS(key string, out interface{}, f CASCallback) error {
 			log.Errorf("Error serialising value for %s: %v", key, err)
 			continue
 		}
-		ok, _, err := kv.CAS(&consul.KVPair{
+		ok, _, err := c.kv.CAS(&consul.KVPair{
 			Key:         key,
 			Value:       value.Bytes(),
 			ModifyIndex: index,
@@ -129,52 +132,16 @@ func (c *consulClient) CAS(key string, out interface{}, f CASCallback) error {
 	return fmt.Errorf("Failed to CAS %s", key)
 }
 
-// Watch a given key value and trigger a callback when it changes.
-// if callback returns false or error, exit (with the error).
-func (c *consulClient) Watch(key string, deadline time.Time, out interface{}, f func(interface{}) (bool, error)) error {
-	var (
-		index = uint64(0)
-		kv    = (*consul.Client)(c).KV()
-	)
-	for deadline.After(mtime.Now()) {
-		// Do a (blocking) long poll waiting for the entry to get updated. index here
-		// is really a version number; this call will wait for the key to be updated
-		// past said version.  As we always start from version 0, we're guaranteed
-		// not to miss any updates - in fact we will always call the callback with
-		// the current value of the key immediately.
-		kvp, meta, err := kv.Get(key, &consul.QueryOptions{
-			RequireConsistent: true,
-			WaitIndex:         index,
-			WaitTime:          longPollDuration,
-		})
-		if err != nil {
-			return fmt.Errorf("Error getting %s: %v", key, err)
-		}
-		if kvp == nil {
-			return ErrNotFound
-		}
-
-		if err := json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out); err != nil {
-			return err
-		}
-		if ok, err := f(out); !ok {
-			return nil
-		} else if err != nil {
-			return err
-		}
-
-		index = meta.LastIndex
-	}
-	return fmt.Errorf("Timed out waiting on %s", key)
-}
-
-func (c *consulClient) WatchPrefix(prefix string, out interface{}, f func(string, interface{}) bool) {
-	var (
-		index = uint64(0)
-		kv    = (*consul.Client)(c).KV()
-	)
+func (c *consulClient) WatchPrefix(prefix string, out interface{}, done chan struct{}, f func(string, interface{}) bool) {
+	index := uint64(0)
 	for {
-		kvps, meta, err := kv.List(prefix, &consul.QueryOptions{
+		select {
+		case <-done:
+			return
+		default:
+		}
+
+		kvps, meta, err := c.kv.List(prefix, &consul.QueryOptions{
 			RequireConsistent: true,
 			WaitIndex:         index,
 			WaitTime:          longPollDuration,
