@@ -2,6 +2,7 @@
 import bcc
 
 import time
+import collections
 import datetime
 import os
 import signal
@@ -26,17 +27,20 @@ class KernelInspector(threading.Thread):
         self.lock = threading.Lock()
 
     def update_http_rate_per_pid(self, last_req_count_snapshot):
-        new_req_count_snapshot = dict()
-        new_http_rate_per_pid = dict()
+        # Aggregate per-task http request counts into per-process counts
         req_count_table = self.bpf.get_table(EBPF_TABLE_NAME)
-        for key, value in req_count_table.iteritems():
-            request_delta = value.value
-            if key.pid in last_req_count_snapshot:
-                 request_delta -= last_req_count_snapshot[key.pid]
-            if request_delta > 0:
-                new_http_rate_per_pid[key.pid] = request_delta
+        new_req_count_snapshot = collections.defaultdict(int)
+        for pid_tgid, req_count in req_count_table.iteritems():
+            pid = pid_tgid.value >> 32
+            new_req_count_snapshot[pid] += req_count.value
 
-            new_req_count_snapshot[key.pid] = value.value
+        # Compute request rate
+        new_http_rate_per_pid = dict()
+        for pid, req_count in new_req_count_snapshot.iteritems():
+            request_delta = req_count
+            if pid in last_req_count_snapshot:
+                 request_delta -= last_req_count_snapshot[pid]
+            new_http_rate_per_pid[pid] = request_delta
 
         self.lock.acquire()
         self.http_rate_per_pid = new_http_rate_per_pid
@@ -52,17 +56,11 @@ class KernelInspector(threading.Thread):
 
     def run(self):
         # Compute request rates based on the requests counts from the last
-        # second. It would be simpler to clear the table, wait one second
+        # second. It would be simpler to clear the table, wait one second but
         # clear() is expensive (each entry is individually cleared with a system
-        # call) and less robust (clearing contends with the increments done by
-        # the kernel probe).
-        # FIXME: we need a mechanism to garbage-collect old processes, either
-        #        here or on the probe. Some options are clearing the table once
-        #        in a while (not ideal for the reasons above) or adding another
-        #        probe to remove processes from the table when they die (this
-        #        will probably require keeping keeping track of tasks and not
-        #        just processes)
-        req_count_snapshot = dict()
+        # call) and less robust (it contends with the increments done by the
+        # kernel probe).
+        req_count_snapshot = collections.defaultdict(int)
         while True:
             time.sleep(1)
             req_count_snapshot = self.update_http_rate_per_pid(req_count_snapshot)
