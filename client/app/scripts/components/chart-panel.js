@@ -14,9 +14,7 @@ function generateDates(interval, n) {
 }
 
 function zipValsDates(values, dates) {
-  return values.map((v, i) => {
-    return {value: v, date: dates[i]};
-  });
+  return values.map((v, i) => ({value: v, date: dates[i]}));
 }
 
 function toDataSet(data) {
@@ -24,7 +22,7 @@ function toDataSet(data) {
     id: 'instance-01',
     color: 'steelBlue',
     label: 'CPU',
-    data: data
+    data
   }];
 }
 
@@ -53,6 +51,7 @@ export default function ChartPanel({metricQueries, metricData, details}) {
   const nodeId = query.get('nodeId');
   const node = details.get(nodeId);
   const d = node && node.details || {};
+  const onChange = ev => onChangeSelectedMetric(nodeId, ev.target.value);
 
   const dataSet = {
     id: metricId,
@@ -60,9 +59,9 @@ export default function ChartPanel({metricQueries, metricData, details}) {
     label: metric.label,
     min: metric.min,
     max: metric.max,
-    data: metric.samples && metric.samples.map(({date, value}) => {
-      return {date: new Date(date), value: value};
-    })
+    data: metric.samples && metric.samples.map(({date, value}) => (
+      {date: new Date(date), value}
+    ))
   };
 
   return (
@@ -70,7 +69,7 @@ export default function ChartPanel({metricQueries, metricData, details}) {
       <div className="chart-panel-tools">
         <span
           className="terminal-header-tools-icon fa fa-close"
-          onClick={() => clickCloseMetrics()} />
+          onClick={clickCloseMetrics} />
       </div>
 
       <div className="chart-panel-title">
@@ -79,10 +78,10 @@ export default function ChartPanel({metricQueries, metricData, details}) {
         </h1>
         <select
           value={metricId}
-          onChange={(ev) => onChangeSelectedMetric(nodeId, ev.target.value)}>
-          {getAvailableMetrics(node).map(m => {
-            return <option key={m.id} value={m.id}>{m.label}</option>;
-          })}
+          onChange={onChange}>
+          {getAvailableMetrics(node).map(m => (
+            <option key={m.id} value={m.id}>{m.label}</option>
+          ))}
         </select>
       </div>
 

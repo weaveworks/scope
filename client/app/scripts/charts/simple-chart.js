@@ -1,3 +1,5 @@
+/* eslint react/jsx-no-bind: "off", no-return-assign: "off" */
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import d3 from 'd3';
@@ -10,14 +12,14 @@ const log = debug('scope:chart');
 const MARGINS = {top: 0, bottom: 24, left: 48, right: 72};
 
 const customTimeFormat = d3.time.format.multi([
-  ['.%L', function(d) { return d.getMilliseconds(); }],
-  ['%H:%M:%S', function(d) { return d.getSeconds(); }],
-  ['%H:%M', function(d) { return d.getMinutes(); }],
-  ['%H:%M', function(d) { return d.getHours(); }],
-  ['%a %d', function(d) { return d.getDay() && d.getDate() !== 1; }],
-  ['%b %d', function(d) { return d.getDate() !== 1; }],
-  ['%B', function(d) { return d.getMonth(); }],
-  ['%Y', function() { return true; }]
+  ['.%L', d => d.getMilliseconds()],
+  ['%H:%M:%S', d => d.getSeconds()],
+  ['%H:%M', d => d.getMinutes()],
+  ['%H:%M', d => d.getHours()],
+  ['%a %d', d => d.getDay() && d.getDate() !== 1],
+  ['%b %d', d => d.getDate() !== 1],
+  ['%B', d => d.getMonth()],
+  ['%Y', () => true]
 ]);
 
 const customNumberFormatter = formatMetric;
@@ -68,8 +70,10 @@ export default class SimpleChart extends React.Component {
           const series = indexedSeries[seriesId];
           return (
             <g className="legend-item" key={seriesId}>
-              <rect style={{fill: series.color}} x={offsetX} y={offsetY + 20 * i} width="12" height="2" />
-              <text style={{fill: series.color}} x={offsetX + 16} y={offsetY + 20 * i} dy="0.42em">{series.label}</text>
+              <rect style={{fill: series.color}}
+                x={offsetX} y={offsetY + 20 * i} width="12" height="2" />
+              <text style={{fill: series.color}}
+                x={offsetX + 16} y={offsetY + 20 * i} dy="0.42em">{series.label}</text>
             </g>
           );
         })}
@@ -106,8 +110,8 @@ export default class SimpleChart extends React.Component {
           const selectedY = y(v);
           return (
             <circle key={k} style={{fill: color(k)}}
-            transform={`translate(${selectedX}, 0)`} cx="0" cy={selectedY}
-            r="4" />
+              transform={`translate(${selectedX}, 0)`} cx="0" cy={selectedY}
+              r="4" />
           );
         })}
       </g>
@@ -120,18 +124,16 @@ export default class SimpleChart extends React.Component {
       .y(0)
       // .y(d => y(d.value))
       .clipExtent([[0, 0], [w, h]]);
-    const toPath = (d) => ('M' + d.join('L') + 'Z');
-    const hoverPaths = voronoi(data).map((v, i) => {
-      return {date: data[i].date, path: toPath(v)};
-    });
+    const toPath = d => `M${d.join('L')}Z`;
+    const hoverPaths = voronoi(data).map((v, i) => (
+      {date: data[i].date, path: toPath(v)}
+    ));
 
     return (
-      hoverPaths.map(({date, path}, i) => {
-        return (
-          <path onMouseOver={() => this.selectTime(date)}
+      hoverPaths.map(({date, path}, i) => (
+        <path onMouseOver={() => this.selectTime(date)}
           className="voro" key={i} d={path} />
-        );
-      })
+      ))
     );
   }
 
@@ -144,9 +146,9 @@ export default class SimpleChart extends React.Component {
     }
     const ds0 = dataSet[0];
 
-    const indexedSeries = _.zipObject(dataSet.map(s => [s.id, s]));
+    const indexedSeries = _.fromPairs(dataSet.map(s => [s.id, s]));
     const toKeyValue = (s) => s.data.map(d => [d.date, {[s.id]: d.value}]);
-    const indexedData = _.merge.apply(_, dataSet.map(s => _.zipObject(toKeyValue(s))));
+    const indexedData = _.merge.apply(_, dataSet.map(s => _.fromPairs(toKeyValue(s))));
     const allTimes = Object.keys(indexedData).map(dateString => new Date(dateString));
     const allValues = _.flatten(_.values(indexedData).map(_.values));
 
@@ -200,12 +202,10 @@ export default class SimpleChart extends React.Component {
 
             <g className="y axis" ref={(ref) => this.yAxisRef = ref} />
 
-            {dataSet.map((s, i) => {
-              return (
-                <path key={i} style={{stroke: indexedSeries[s.id].color}}
-                  className="series" d={line(s.data)} />
-              );
-            })}
+            {dataSet.map((s, i) => (
+              <path key={i} style={{stroke: indexedSeries[s.id].color}}
+                className="series" d={line(s.data)} />
+            ))}
 
             {selectedData && this.renderSelected(x, y, w, h, selectedTime,
                                                  selectedData, indexedSeries)}

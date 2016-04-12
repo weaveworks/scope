@@ -246,13 +246,13 @@ export function getQueryData(nodeTopologyId, topologyUrlsById, nodeId, metricId,
   const url = [topologyUrl, '/', encodeURIComponent(nodeId)].join('').substr(1);
 
   reqwest({
-    url: url,
-    success: function(res) {
+    url,
+    success: (res) => {
       const data = res.node.metrics.find(m => m.id === metricId);
       receiveQueryData(queryId, data);
     },
-    error: function(err) {
-      log('Error in node details request: ' + err.responseText);
+    error: (err) => {
+      log(`Error in node details request: ${err.responseText}`);
       // dont treat missing node as error
       throw new Error('getQueryData', err);
     }

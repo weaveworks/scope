@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import React from 'react';
 import SimpleChart from '../../charts/simple-chart';
 import d3 from 'd3';

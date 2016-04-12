@@ -539,38 +539,30 @@ export class AppStore extends Store {
         break;
       }
 
-  	case ActionTypes.CLICK_CLOSE_METRICS:
-      metricQueries = null;
-      this.__emitChange();
-      break;
-
-    case ActionTypes.RECEIVE_QUERY_DATA:
-      metricData = metricData.set(payload.queryId, payload.data);
-      this.__emitChange();
-      break;
-
-    case ActionTypes.SHOW_METRICS_WINDOW:
-      metricQueries = makeMap({[payload.queryId]: makeMap({
-        queryId: payload.queryId,
-        nodeId: payload.nodeId,
-        metricId: payload.metricId
-      })});
-      this.__emitChange();
-      break;
-
-    case ActionTypes.SELECT_METRIC:
-      metricQueries = metricQueries.set('id', payload.metricId);
-      this.__emitChange();
-      break;
-
-    case ActionTypes.OPEN_WEBSOCKET:
-      // flush nodes cache after re-connect
-      nodes = nodes.clear();
-      websocketClosed = false;
-
-      this.__emitChange();
-      break;
-
+      case ActionTypes.CLICK_CLOSE_METRICS: {
+        metricQueries = null;
+        this.__emitChange();
+        break;
+      }
+      case ActionTypes.RECEIVE_QUERY_DATA: {
+        metricData = metricData.set(payload.queryId, payload.data);
+        this.__emitChange();
+        break;
+      }
+      case ActionTypes.SHOW_METRICS_WINDOW: {
+        metricQueries = makeMap({[payload.queryId]: makeMap({
+          queryId: payload.queryId,
+          nodeId: payload.nodeId,
+          metricId: payload.metricId
+        })});
+        this.__emitChange();
+        break;
+      }
+      case ActionTypes.SELECT_TIME_SERIES_METRIC: {
+        metricQueries = metricQueries.set('id', payload.metricId);
+        this.__emitChange();
+        break;
+      }
       case ActionTypes.OPEN_WEBSOCKET: {
         // flush nodes cache after re-connect
         nodes = nodes.clear();
@@ -735,11 +727,11 @@ export class AppStore extends Store {
         setDefaultTopologyOptions(topologies);
         selectedNodeId = payload.state.selectedNodeId;
         pinnedMetricType = payload.state.pinnedMetricType;
-      if (payload.state.metricQueries) {
-        metricQueries = Immutable.fromJS(payload.state.metricQueries);
-      } else {
-        metricQueries = null;
-      }
+        if (payload.state.metricQueries) {
+          metricQueries = fromJS(payload.state.metricQueries);
+        } else {
+          metricQueries = null;
+        }
         if (payload.state.controlPipe) {
           controlPipes = makeOrderedMap({
             [payload.state.controlPipe.id]:

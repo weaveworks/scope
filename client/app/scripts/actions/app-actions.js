@@ -354,11 +354,11 @@ export function addMetric(nodeId, nodeTopologyId, metricId) {
                nodeId, metricId, queryId);
 }
 
-export function selectMetric(nodeId, metricId) {
+export function selectTimeSeriesMetric(nodeId, metricId) {
   AppDispatcher.dispatch({
-    type: ActionTypes.SELECT_METRIC,
-    nodeId: nodeId,
-    metricId: metricId
+    type: ActionTypes.SELECT_TIME_SERIES_METRIC,
+    nodeId,
+    metricId
   });
   updateRoute();
 }

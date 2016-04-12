@@ -45,7 +45,7 @@ function getStateFromStores() {
     pinnedMetric: AppStore.getPinnedMetric(),
     availableCanvasMetrics: AppStore.getAvailableCanvasMetrics(),
     metricData: AppStore.getMetricData(),
-    metricQueries: AppStore.getMetricQueries(),   
+    metricQueries: AppStore.getMetricQueries(),
     nodeDetails: AppStore.getNodeDetails(),
     nodes: AppStore.getNodes(),
     showingHelp: AppStore.getShowingHelp(),

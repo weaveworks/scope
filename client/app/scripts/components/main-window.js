@@ -8,9 +8,9 @@ export default function MainWindow({children, cardsCount}) {
       (cardsCount * DETAILS_PANEL_OFFSET)
   };
 
-  const childrenWithProps = React.Children.map(children, (child) => {
-    return React.cloneElement(child, {containerMargin: style.right});
-  });
+  const childrenWithProps = React.Children.map(children, (child) => (
+    React.cloneElement(child, {containerMargin: style.right})
+  ));
 
   return (
     <div className="main-window" style={style}>

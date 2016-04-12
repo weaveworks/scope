@@ -16,7 +16,7 @@ export default class FlexChart extends React.Component {
 
   updateBCR() {
     const bcr = ReactDOM.findDOMNode(this).getBoundingClientRect();
-    this.setState({bcr: bcr});
+    this.setState({bcr});
   }
 
   componentDidMount() {

@@ -2,8 +2,6 @@ import React from 'react';
 
 import { getNodeColor, getNodeColorDark } from '../utils/color-utils';
 import Terminal from './terminal';
-import { DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS,
-  DETAILS_PANEL_OFFSET } from '../constants/styles';
 
 export default function EmeddedTerminal({pipe, details, containerMargin}) {
   const nodeId = pipe.get('nodeId');
@@ -16,7 +14,7 @@ export default function EmeddedTerminal({pipe, details, containerMargin}) {
   // React unmount/remounts when key changes, this is important for cleaning up
   // the term.js and creating a new one for the new pipe.
   return (
-    <div className="terminal-embedded" style={style}>
+    <div className="terminal-embedded">
       <Terminal pipe={pipe} titleBarColor={titleBarColor}
         statusBarColor={statusBarColor} containerMargin={containerMargin} title={title} />
     </div>
