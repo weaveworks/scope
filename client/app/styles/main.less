@@ -26,6 +26,7 @@
 @primary-color: @weave-charcoal-blue;
 @background-color: lighten(@primary-color, 66%);
 @background-lighter-color: lighten(@background-color, 8%);
+@background-average-color: mix(@background-color, @background-lighter-color);
 @background-darker-color: darken(@background-color, 8%);
 @background-darker-secondary-color: darken(@background-color, 4%);
 @background-dark-color: @primary-color;
@@ -336,6 +337,13 @@ h2 {
   .nodes-chart-nodes > .node {
     cursor: pointer;
     transition: opacity .5s @base-ease;
+
+    &.hovered text {
+      stroke: @background-average-color;
+      stroke-width: 8px;
+      stroke-opacity: 0.7;
+      paint-order: stroke;
+    }
 
     &.pseudo {
       cursor: default;

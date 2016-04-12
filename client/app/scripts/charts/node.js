@@ -52,16 +52,17 @@ export default class Node extends React.Component {
     this.handleMouseClick = this.handleMouseClick.bind(this);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
+    this.state = { hovered: false };
   }
 
   render() {
     const { blurred, focused, highlighted, label, pseudo, rank,
       subLabel, scaleFactor, transform, zoomScale } = this.props;
-
+    const { hovered } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
     const color = getNodeColor(rank, label, pseudo);
-    const truncate = !focused && !highlighted;
+    const truncate = !focused && !hovered;
     const labelText = truncate ? ellipsis(label, 14, nodeScale(4 * scaleFactor)) : label;
     const subLabelText = truncate ? ellipsis(subLabel, 12, nodeScale(4 * scaleFactor)) : subLabel;
 
@@ -82,6 +83,7 @@ export default class Node extends React.Component {
       node: true,
       highlighted,
       blurred,
+      hovered,
       pseudo
     });
 
@@ -90,10 +92,6 @@ export default class Node extends React.Component {
     return (
       <g className={className} transform={transform} onClick={this.handleMouseClick}
         onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
-        <NodeShapeType
-          size={nodeScale(scaleFactor)}
-          color={color}
-          {...this.props} />
         <text className="node-label" textAnchor="middle" style={{fontSize: labelFontSize}}
           x="0" y={labelOffsetY + nodeScale(0.5 * scaleFactor)}>
           {labelText}
@@ -102,6 +100,10 @@ export default class Node extends React.Component {
           x="0" y={subLabelOffsetY + nodeScale(0.5 * scaleFactor)}>
           {subLabelText}
         </text>
+        <NodeShapeType
+          size={nodeScale(scaleFactor)}
+          color={color}
+          {...this.props} />
       </g>
     );
   }
@@ -113,10 +115,12 @@ export default class Node extends React.Component {
 
   handleMouseEnter() {
     enterNode(this.props.id);
+    this.setState({ hovered: true });
   }
 
   handleMouseLeave() {
     leaveNode(this.props.id);
+    this.setState({ hovered: false });
   }
 }
 
