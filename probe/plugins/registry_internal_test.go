@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 	"path/filepath"
+	"sort"
 	"syscall"
 	"testing"
 	"time"
@@ -15,7 +16,10 @@ import (
 	"github.com/paypal/ionet"
 
 	fs_hook "github.com/weaveworks/scope/common/fs"
+	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fs"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 func stubTransport(fn func(socket string, timeout time.Duration) (http.RoundTripper, error)) {
@@ -49,10 +53,9 @@ func (c *closeableConn) Close() error {
 }
 
 type mockPlugin struct {
-	t        *testing.T
-	Name     string
-	Handler  http.Handler
-	Requests chan *http.Request
+	t       *testing.T
+	Name    string
+	Handler http.Handler
 }
 
 func (p mockPlugin) dir() string {
@@ -70,17 +73,22 @@ func (p mockPlugin) base() string {
 func (p mockPlugin) file() fs.File {
 	incomingR, incomingW := io.Pipe()
 	outgoingR, outgoingW := io.Pipe()
+	// TODO: This is a terrible hack of a little http server. Really, we should
+	// implement some sort of fs.File -> net.Listener bridge and run an net/http
+	// server on that.
 	go func() {
-		conn := httputil.NewServerConn(&ionet.Conn{R: incomingR, W: outgoingW}, nil)
-		req, err := conn.Read()
-		if err != nil {
-			p.t.Fatal(err)
-		}
-		resp := httptest.NewRecorder()
-		p.Handler.ServeHTTP(resp, req)
-		fmt.Fprintf(outgoingW, "HTTP/1.1 %d %s\nContent-Length: %d\n\n%s", resp.Code, http.StatusText(resp.Code), resp.Body.Len(), resp.Body.String())
-		if p.Requests != nil {
-			p.Requests <- req
+		for {
+			conn := httputil.NewServerConn(&ionet.Conn{R: incomingR, W: outgoingW}, nil)
+			req, err := conn.Read()
+			if err == io.EOF {
+				outgoingW.Close()
+				return
+			} else if err != nil {
+				p.t.Fatal(err)
+			}
+			resp := httptest.NewRecorder()
+			p.Handler.ServeHTTP(resp, req)
+			fmt.Fprintf(outgoingW, "HTTP/1.1 %d %s\nContent-Length: %d\n\n%s", resp.Code, http.StatusText(resp.Code), resp.Body.Len(), resp.Body.String())
 		}
 	}()
 	return fs.File{
@@ -123,13 +131,23 @@ func restore(t *testing.T) {
 
 type iterator func(func(*Plugin))
 
-func checkLoadedPlugins(t *testing.T, forEach iterator, expectedIDs []string) {
-	pluginIDs := []string{}
-	plugins := map[string]*Plugin{}
+func checkLoadedPlugins(t *testing.T, forEach iterator, expected []xfer.PluginSpec) {
+	var plugins []xfer.PluginSpec
+	forEach(func(p *Plugin) {
+		plugins = append(plugins, p.PluginSpec)
+	})
+	sort.Sort(xfer.PluginSpecsByID(plugins))
+	if !reflect.DeepEqual(plugins, expected) {
+		t.Fatalf(test.Diff(expected, plugins))
+	}
+}
+
+func checkLoadedPluginIDs(t *testing.T, forEach iterator, expectedIDs []string) {
+	var pluginIDs []string
 	forEach(func(p *Plugin) {
 		pluginIDs = append(pluginIDs, p.ID)
-		plugins[p.ID] = p
 	})
+	sort.Strings(pluginIDs)
 	if len(pluginIDs) != len(expectedIDs) {
 		t.Fatalf("Expected plugins %q, got: %q", expectedIDs, pluginIDs)
 	}
@@ -143,33 +161,23 @@ func checkLoadedPlugins(t *testing.T, forEach iterator, expectedIDs []string) {
 // stringHandler returns an http.Handler which just prints the given string
 func stringHandler(status int, j string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/report" {
+			http.NotFound(w, r)
+			return
+		}
 		w.WriteHeader(status)
 		fmt.Fprint(w, j)
 	})
 }
 
 func TestRegistryLoadsExistingPlugins(t *testing.T) {
-	setup(t, mockPlugin{t: t, Name: "testPlugin", Handler: stringHandler(http.StatusOK, `{"name":"testPlugin","interfaces":["reporter"],"api_version":"1"}`)}.file())
-	defer restore(t)
-
-	root := "/plugins"
-	r, err := NewRegistry(root, "1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Close()
-
-	checkLoadedPlugins(t, r.ForEach, []string{"testPlugin"})
-}
-
-func TestRegistryLoadsExistingPluginsEvenWhenOneFails(t *testing.T) {
 	setup(
 		t,
-		// TODO: This first one needs to fail
-		fs.Dir("fail",
-			mockPlugin{t: t, Name: "aFailure", Handler: stringHandler(http.StatusOK, `{"name":"aFailure","interfaces":["reporter"],"api_version":"2"}`)}.file(),
-		),
-		mockPlugin{t: t, Name: "testPlugin", Handler: stringHandler(http.StatusOK, `{"name":"testPlugin","interfaces":["reporter"],"api_version":"1"}`)}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "testPlugin",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter"],"api_version":"1"}]}`),
+		}.file(),
 	)
 	defer restore(t)
 
@@ -180,7 +188,38 @@ func TestRegistryLoadsExistingPluginsEvenWhenOneFails(t *testing.T) {
 	}
 	defer r.Close()
 
-	checkLoadedPlugins(t, r.ForEach, []string{"", "testPlugin"})
+	r.Report()
+	checkLoadedPluginIDs(t, r.ForEach, []string{"testPlugin"})
+}
+
+func TestRegistryLoadsExistingPluginsEvenWhenOneFails(t *testing.T) {
+	setup(
+		t,
+		// TODO: This first one needs to fail
+		fs.Dir("fail",
+			mockPlugin{
+				t:       t,
+				Name:    "aFailure",
+				Handler: stringHandler(http.StatusInternalServerError, `Internal Server Error`),
+			}.file(),
+		),
+		mockPlugin{
+			t:       t,
+			Name:    "testPlugin",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter"],"api_version":"1"}]}`),
+		}.file(),
+	)
+	defer restore(t)
+
+	root := "/plugins"
+	r, err := NewRegistry(root, "1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+
+	r.Report()
+	checkLoadedPluginIDs(t, r.ForEach, []string{"", "testPlugin"})
 }
 
 func TestRegistryDiscoversNewPlugins(t *testing.T) {
@@ -194,29 +233,29 @@ func TestRegistryDiscoversNewPlugins(t *testing.T) {
 	}
 	defer r.Close()
 
-	checkLoadedPlugins(t, r.ForEach, []string{})
+	r.Report()
+	checkLoadedPluginIDs(t, r.ForEach, []string{})
 
 	// Add the new plugin
 	plugin := mockPlugin{
-		t:        t,
-		Name:     "testPlugin",
-		Requests: make(chan *http.Request),
-		Handler:  stringHandler(http.StatusOK, `{"name":"testPlugin","interfaces":["reporter"]}`),
+		t:       t,
+		Name:    "testPlugin",
+		Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter"]}]}`),
 	}
 	mockFS.Add(plugin.dir(), plugin.file())
 	if err := r.scan(); err != nil {
 		t.Fatal(err)
 	}
 
-	checkLoadedPlugins(t, r.ForEach, []string{"testPlugin"})
+	r.Report()
+	checkLoadedPluginIDs(t, r.ForEach, []string{"testPlugin"})
 }
 
 func TestRegistryRemovesPlugins(t *testing.T) {
 	plugin := mockPlugin{
-		t:        t,
-		Name:     "testPlugin",
-		Requests: make(chan *http.Request),
-		Handler:  stringHandler(http.StatusOK, `{"name":"testPlugin","interfaces":["reporter"]}`),
+		t:       t,
+		Name:    "testPlugin",
+		Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter"]}]}`),
 	}
 	mockFS := setup(t, plugin.file())
 	defer restore(t)
@@ -228,7 +267,8 @@ func TestRegistryRemovesPlugins(t *testing.T) {
 	}
 	defer r.Close()
 
-	checkLoadedPlugins(t, r.ForEach, []string{"testPlugin"})
+	r.Report()
+	checkLoadedPluginIDs(t, r.ForEach, []string{"testPlugin"})
 
 	// Remove the plugin
 	mockFS.Remove(plugin.path())
@@ -236,7 +276,37 @@ func TestRegistryRemovesPlugins(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	checkLoadedPlugins(t, r.ForEach, []string{})
+	checkLoadedPluginIDs(t, r.ForEach, []string{})
+}
+
+func TestRegistryUpdatesPluginsWhenTheyChange(t *testing.T) {
+	resp := `{"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter"]}]}`
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, resp)
+	})
+	plugin := mockPlugin{
+		t:       t,
+		Name:    "testPlugin",
+		Handler: handler,
+	}
+	setup(t, plugin.file())
+	defer restore(t)
+
+	root := "/plugins"
+	r, err := NewRegistry(root, "", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+
+	r.Report()
+	checkLoadedPluginIDs(t, r.ForEach, []string{"testPlugin"})
+
+	// Update the plugin. Just change what the handler will respond with.
+	resp = `{"Plugins":[{"id":"updatedPlugin","label":"updatedPlugin","interfaces":["reporter"]}]}`
+
+	r.Report()
+	checkLoadedPluginIDs(t, r.ForEach, []string{"updatedPlugin"})
 }
 
 func TestRegistryReturnsPluginsByInterface(t *testing.T) {
@@ -245,12 +315,12 @@ func TestRegistryReturnsPluginsByInterface(t *testing.T) {
 		mockPlugin{
 			t:       t,
 			Name:    "plugin1",
-			Handler: stringHandler(http.StatusOK, `{"name":"plugin1","interfaces":["reporter"]}`),
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"plugin1","label":"plugin1","interfaces":["reporter"]}]}`),
 		}.file(),
 		mockPlugin{
 			t:       t,
 			Name:    "plugin2",
-			Handler: stringHandler(http.StatusOK, `{"name":"plugin2","interfaces":["other"]}`),
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"plugin2","label":"plugin2","interfaces":["other"]}]}`),
 		}.file(),
 	)
 	defer restore(t)
@@ -262,9 +332,10 @@ func TestRegistryReturnsPluginsByInterface(t *testing.T) {
 	}
 	defer r.Close()
 
-	checkLoadedPlugins(t, r.ForEach, []string{"plugin1", "plugin2"})
-	checkLoadedPlugins(t, func(fn func(*Plugin)) { r.Implementers("reporter", fn) }, []string{"plugin1"})
-	checkLoadedPlugins(t, func(fn func(*Plugin)) { r.Implementers("other", fn) }, []string{"plugin2"})
+	r.Report()
+	checkLoadedPluginIDs(t, r.ForEach, []string{"plugin1", "plugin2"})
+	checkLoadedPluginIDs(t, func(fn func(*Plugin)) { r.Implementers("reporter", fn) }, []string{"plugin1"})
+	checkLoadedPluginIDs(t, func(fn func(*Plugin)) { r.Implementers("other", fn) }, []string{"plugin2"})
 }
 
 func TestRegistryHandlesConflictingPlugins(t *testing.T) {
@@ -273,12 +344,12 @@ func TestRegistryHandlesConflictingPlugins(t *testing.T) {
 		mockPlugin{
 			t:       t,
 			Name:    "plugin1",
-			Handler: stringHandler(http.StatusOK, `{"name":"plugin1","interfaces":["reporter"]}`),
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"plugin1","label":"plugin1","interfaces":["reporter"]}]}`),
 		}.file(),
 		mockPlugin{
 			t:       t,
 			Name:    "plugin1",
-			Handler: stringHandler(http.StatusOK, `{"name":"plugin2","interfaces":["other"]}`),
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"plugin1","label":"plugin2","interfaces":["reporter","other"]}]}`),
 		}.file(),
 	)
 	defer restore(t)
@@ -290,9 +361,10 @@ func TestRegistryHandlesConflictingPlugins(t *testing.T) {
 	}
 	defer r.Close()
 
+	r.Report()
 	// Should just have the second one (we just log conflicts)
-	checkLoadedPlugins(t, r.ForEach, []string{"plugin2"})
-	checkLoadedPlugins(t, func(fn func(*Plugin)) { r.Implementers("other", fn) }, []string{"plugin2"})
+	checkLoadedPluginIDs(t, r.ForEach, []string{"plugin1"})
+	checkLoadedPluginIDs(t, func(fn func(*Plugin)) { r.Implementers("other", fn) }, []string{"plugin1"})
 }
 
 func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
@@ -301,12 +373,27 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 		mockPlugin{
 			t:       t,
 			Name:    "okPlugin",
-			Handler: stringHandler(http.StatusOK, `{"name":"okPlugin","interfaces":["reporter"]}`),
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"okPlugin","label":"okPlugin","interfaces":["reporter"]}]}`),
 		}.file(),
 		mockPlugin{
 			t:       t,
 			Name:    "non200ResponseCode",
-			Handler: stringHandler(http.StatusInternalServerError, `{"name":"non200ResponseCode","interfaces":["reporter"]}`),
+			Handler: stringHandler(http.StatusInternalServerError, `{"Plugins":[{"id":"non200ResponseCode","label":"non200ResponseCode","interfaces":["reporter"]}]}`),
+		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "noLabel",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"noLabel","interfaces":["reporter"]}]}`),
+		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "noInterface",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"noInterface","label":"noInterface","interfaces":[]}]}`),
+		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "wrongApiVersion",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"wrongApiVersion","label":"wrongApiVersion","interfaces":["reporter"],"api_version":"foo"}]}`),
 		}.file(),
 		mockPlugin{
 			t:       t,
@@ -323,6 +410,33 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 	}
 	defer r.Close()
 
-	// Should have only okPlugin
-	checkLoadedPlugins(t, r.ForEach, []string{"", "", "okPlugin"})
+	r.Report()
+	checkLoadedPlugins(t, r.ForEach, []xfer.PluginSpec{
+		{ID: ""},
+		{ID: ""},
+		{
+			ID:         "noInterface",
+			Label:      "noInterface",
+			Interfaces: []string{},
+			Status:     `error: spec must implement the "reporter" interface`,
+		},
+		{
+			ID:         "noLabel",
+			Interfaces: []string{"reporter"},
+			Status:     `error: spec must contain a label`,
+		},
+		{
+			ID:         "okPlugin",
+			Label:      "okPlugin",
+			Interfaces: []string{"reporter"},
+			Status:     `ok`,
+		},
+		{
+			ID:         "wrongApiVersion",
+			Label:      "wrongApiVersion",
+			Interfaces: []string{"reporter"},
+			APIVersion: "foo",
+			Status:     `error: incorrect API version: expected "", got "foo"`,
+		},
+	})
 }

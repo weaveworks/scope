@@ -78,9 +78,7 @@ class PluginRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         self.log_extra  = ''
         path = urlparse.urlparse(self.path)[2].lower()
-        if path == '/':
-            self.do_handshake()
-        elif path == '/report':
+        if path == '/report':
             self.do_report()
         else:
             self.send_response(404)
@@ -120,22 +118,19 @@ class PluginRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         'priority': 0.1,
                     }
                 }
-            }
+            },
+            'Plugins': [
+              {
+                'id': 'http-requests',
+                'label': 'HTTP Requests',
+                'description': 'Adds http request metrics to processes',
+                'interfaces': ['reporter'],
+                'api_version': '1',
+              }
+            ]
         }
         body = json.dumps(report)
         self.request_log = "resp_size=%d, resp_entry_count=%d" % (len(body), len(process_nodes))
-        self.respond(body)
-
-    def do_handshake(self):
-        spec = {
-            'name': 'http-requests',
-            'description': 'Adds http request metrics to processes',
-            'interfaces': ['reporter'],
-            'api_version': '1',
-        }
-        self.respond(json.dumps(spec))
-
-    def respond(self, body):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.send_header('Content-length', len(body))

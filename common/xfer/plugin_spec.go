@@ -26,6 +26,8 @@ type PluginSpec struct {
 	// Interfaces is a list of things this plugin can be used for (e.g. "reporter")
 	Interfaces []string `json:"interfaces"`
 
+	APIVersion string `json:"api_version,omitempty"`
+
 	Status string `json:"status,omitempty"`
 }
 
@@ -222,4 +224,23 @@ func (n *PluginSpecs) GobDecode(input []byte) error {
 	}
 	*n = PluginSpecs{}.fromIntermediate(in)
 	return nil
+}
+
+// PluginSpecsByID implements sort.Interface, so we can sort the specs by the
+// ID field.
+type PluginSpecsByID []PluginSpec
+
+// Len is part of sort.Interface.
+func (p PluginSpecsByID) Len() int {
+	return len(p)
+}
+
+// Swap is part of sort.Interface.
+func (p PluginSpecsByID) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+// Less is part of sort.Interface.
+func (p PluginSpecsByID) Less(i, j int) bool {
+	return p[i].ID < p[j].ID
 }

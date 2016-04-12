@@ -43,7 +43,6 @@ func main() {
 	log.Printf("Listening on: unix://%s", *addr)
 
 	plugin := &Plugin{HostID: *hostID}
-	http.HandleFunc("/", plugin.Handshake)
 	http.HandleFunc("/report", plugin.Report)
 	if err := http.Serve(listener, nil); err != nil {
 		log.Printf("error: %v", err)
@@ -55,25 +54,10 @@ type Plugin struct {
 	HostID string
 }
 
-// Handshake is the first method that scope calls on this plugin. It is used
-// for the plugin to inform scope about the interfaces it fulfills, and to
-// ensure both scope and the plugin support the same api version.
-func (p *Plugin) Handshake(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Probe %s handshake", r.FormValue("probe_id"))
-	err := json.NewEncoder(w).Encode(map[string]interface{}{
-		"name":        "iowait",
-		"description": "Adds a graph of CPU IO Wait to hosts",
-		"interfaces":  []string{"reporter"},
-		"api_version": "1",
-	})
-	if err != nil {
-		log.Printf("error: %v", err)
-	}
-}
-
 // Report is called by scope when a new report is needed. It is part of the
-// "reporter" interface, which this plugin implements.
+// "reporter" interface, which all plugins must implement.
 func (p *Plugin) Report(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.URL.String())
 	now := time.Now()
 	nowISO := now.Format(time.RFC3339)
 	value, err := iowait()
@@ -105,6 +89,15 @@ func (p *Plugin) Report(w http.ResponseWriter, r *http.Request) {
 					"format":   "percent",
 					"priority": 0.1, // low number so it shows up first
 				},
+			},
+		},
+		"Plugins": []interface{}{
+			map[string]interface{}{
+				"id":          "iowait",
+				"label":       "iowait",
+				"description": "Adds a graph of CPU IO Wait to hosts",
+				"interfaces":  []string{"reporter"},
+				"api_version": "1",
 			},
 		},
 	})

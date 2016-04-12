@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"path/filepath"
 	"sort"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -29,12 +28,8 @@ var (
 )
 
 const (
-	pluginTimeout   = 500 * time.Millisecond
-	pluginRetry     = 5 * time.Second
-	pollingInterval = 5 * time.Second
-
-	initialBackoff = 1 * time.Second
-	maxBackoff     = 15 * time.Second
+	pluginTimeout    = 500 * time.Millisecond
+	scanningInterval = 5 * time.Second
 )
 
 // Registry maintains a list of available plugins by name.
@@ -70,7 +65,7 @@ func NewRegistry(rootPath, apiVersion string, handshakeMetadata map[string]strin
 
 // loop periodically rescans for plugins
 func (r *Registry) loop() {
-	ticker := time.NewTicker(pollingInterval)
+	ticker := time.NewTicker(scanningInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -181,13 +176,12 @@ func (r *Registry) Name() string { return "plugins" }
 // Report implements the Reporter interface
 func (r *Registry) Report() (report.Report, error) {
 	rpt := report.MakeReport()
-	r.Implementers("reporter", func(plugin *Plugin) {
+	// All plugins are assumed to (and must) implement reporter
+	r.ForEach(func(plugin *Plugin) {
 		pluginReport, err := plugin.Report()
 		if err != nil {
-			log.Errorf("plugins: error getting report from %s: %v", plugin.ID, err)
-			pluginReport = report.MakeReport()
+			log.Errorf("plugins: %s: /report error: %v", plugin.socket, err)
 		}
-		pluginReport.Plugins = pluginReport.Plugins.Add(plugin.PluginSpec)
 		rpt = rpt.Merge(pluginReport)
 	})
 	return rpt, nil
@@ -208,11 +202,13 @@ func (r *Registry) Close() {
 // plugin handshake, gathering reports, etc.
 type Plugin struct {
 	xfer.PluginSpec
-	context context.Context
-	socket  string
-	client  *http.Client
-	cancel  context.CancelFunc
-	backoff backoff.Interface
+	context            context.Context
+	socket             string
+	expectedAPIVersion string
+	handshakeMetadata  url.Values
+	client             *http.Client
+	cancel             context.CancelFunc
+	backoff            backoff.Interface
 }
 
 // NewPlugin loads and initializes a new plugin. If client is nil,
@@ -224,57 +220,56 @@ func NewPlugin(ctx context.Context, socket string, client *http.Client, expected
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
-	p := &Plugin{context: ctx, socket: socket, client: client, cancel: cancel}
-	f := p.handshake(ctx, expectedAPIVersion, params)
-	// try the first time synchronously (makes testing easier)
-	if ok, err := f(); !ok {
-		log.Errorf("Error plugin handshake, backing off 10s: %v", err)
-		p.backoff = backoff.New(f, "plugin handshake")
-		p.backoff.SetInitialBackoff(initialBackoff)
-		p.backoff.SetMaxBackoff(maxBackoff)
-		go func() {
-			time.Sleep(initialBackoff)
-			p.backoff.Start()
-		}()
-	}
-	return p
-}
-
-type handshakeResponse struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description,omitempty"`
-	Interfaces  []string `json:"interfaces"`
-	APIVersion  string   `json:"api_version,omitempty"`
-}
-
-// handshake tries the handshake with this plugin.
-func (p *Plugin) handshake(ctx context.Context, expectedAPIVersion string, params url.Values) func() (bool, error) {
-	return func() (ok bool, err error) {
-		defer func() { p.setStatus(err) }()
-		var resp handshakeResponse
-		if err := p.get("/", params, &resp); err != nil {
-			return err == context.Canceled, fmt.Errorf("plugins: error loading plugin %s: %v", p.socket, err)
-		}
-
-		if resp.Name == "" {
-			return false, fmt.Errorf("plugins: error loading plugin %s: plugin did not provide a name", p.socket)
-		}
-		if resp.APIVersion != expectedAPIVersion {
-			return false, fmt.Errorf("plugins: error loading plugin %s: plugin did not provide correct API version: expected %q, got %q", p.socket, expectedAPIVersion, resp.APIVersion)
-		}
-		p.ID, p.Label = resp.Name, resp.Name
-		p.Description = resp.Description
-		p.Interfaces = resp.Interfaces
-		log.Infof("plugins: loaded plugin %s: %s", p.ID, strings.Join(p.Interfaces, ", "))
-		return true, nil
+	return &Plugin{
+		context:            ctx,
+		socket:             socket,
+		expectedAPIVersion: expectedAPIVersion,
+		handshakeMetadata:  params,
+		client:             client,
+		cancel:             cancel,
 	}
 }
 
 // Report gets the latest report from the plugin
-func (p *Plugin) Report() (report.Report, error) {
-	result := report.MakeReport()
-	err := p.get("/report", nil, &result)
-	p.setStatus(err)
+func (p *Plugin) Report() (result report.Report, err error) {
+	result = report.MakeReport()
+	if err := p.get("/report", p.handshakeMetadata, &result); err != nil {
+		return result, err
+	}
+	if result.Plugins.Size() != 1 {
+		return result, fmt.Errorf("plugins: %s report must contain exactly one plugin (found %d)", p.socket, result.Plugins.Size())
+	}
+
+	key := result.Plugins.Keys()[0]
+	spec, _ := result.Plugins.Lookup(key)
+	p.PluginSpec = spec
+	defer func() {
+		p.setStatus(err)
+		result.Plugins = result.Plugins.Add(p.PluginSpec)
+		if err != nil {
+			result = report.MakeReport()
+			result.Plugins = xfer.MakePluginSpecs(p.PluginSpec)
+		}
+	}()
+
+	foundReporter := false
+	for _, i := range spec.Interfaces {
+		if i == "reporter" {
+			foundReporter = true
+			break
+		}
+	}
+	switch {
+	case spec.APIVersion != p.expectedAPIVersion:
+		err = fmt.Errorf("incorrect API version: expected %q, got %q", p.expectedAPIVersion, spec.APIVersion)
+	case spec.ID == "":
+		err = fmt.Errorf("spec must contain an id")
+	case spec.Label == "":
+		err = fmt.Errorf("spec must contain a label")
+	case !foundReporter:
+		err = fmt.Errorf("spec must implement the \"reporter\" interface")
+	}
+
 	return result, err
 }
 
