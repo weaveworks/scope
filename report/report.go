@@ -81,6 +81,9 @@ type Report struct {
 	// must be equal, but we don't require that equal reports have
 	// the same id.
 	ID string `deepequal:"skip"`
+
+	// Probes is the details of the probes who reported this report
+	Probes Probes
 }
 
 // MakeReport makes a clean report, ready to Merge() other reports into.
@@ -97,6 +100,7 @@ func MakeReport() Report {
 		Sampling:       Sampling{},
 		Window:         0,
 		ID:             fmt.Sprintf("%d", rand.Int63()),
+		Probes:         Probes{},
 	}
 }
 
@@ -114,6 +118,7 @@ func (r Report) Copy() Report {
 		Sampling:       r.Sampling,
 		Window:         r.Window,
 		ID:             fmt.Sprintf("%d", rand.Int63()),
+		Probes:         r.Probes.Copy(),
 	}
 }
 
@@ -130,6 +135,7 @@ func (r Report) Merge(other Report) Report {
 	cp.Service = r.Service.Merge(other.Service)
 	cp.Overlay = r.Overlay.Merge(other.Overlay)
 	cp.Sampling = r.Sampling.Merge(other.Sampling)
+	cp.Probes = r.Probes.Merge(other.Probes)
 	cp.Window += other.Window
 	return cp
 }

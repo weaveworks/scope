@@ -95,6 +95,8 @@ func RegisterTopologyRoutes(router *mux.Router, r Reporter) {
 		gzipHandler(requestContextDecorator(topologyRegistry.captureRendererWithoutFilters(r, handleNode))))
 	get.HandleFunc("/api/report",
 		gzipHandler(requestContextDecorator(makeRawReportHandler(r))))
+	get.HandleFunc("/api/probes",
+		gzipHandler(requestContextDecorator(makeProbeHandler(r))))
 }
 
 // RegisterReportPostHandler registers the handler for report submission
