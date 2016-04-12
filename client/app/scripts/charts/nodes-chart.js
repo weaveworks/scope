@@ -80,9 +80,10 @@ export default class NodesChart extends React.Component {
       });
     }
 
-    // _.assign(state, this.updateGraphState(nextProps, state));
-    if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
-      _.assign(state, this.updateGraphState(nextProps, state));
+    const needsLayout = nextProps.forceRelayout
+      || nextProps.width !== this.props.width || nextProps.height !== this.props.height;
+    if (needsLayout || nextProps.nodes !== this.props.nodes) {
+      _.assign(state, this.updateGraphState(nextProps, state, needsLayout));
     }
 
     if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
@@ -314,7 +315,7 @@ export default class NodesChart extends React.Component {
     return { edges, nodes };
   }
 
-  updateGraphState(props, state) {
+  updateGraphState(props, state, needsLayout = false) {
     const n = props.nodes.size;
 
     if (n === 0) {
@@ -337,7 +338,7 @@ export default class NodesChart extends React.Component {
       height: props.height,
       scale: nodeScale,
       margins: MARGINS,
-      forceRelayout: props.forceRelayout,
+      forceRelayout: needsLayout,
       topologyId: this.props.topologyId,
       topologyOptions: this.props.topologyOptions
     };
