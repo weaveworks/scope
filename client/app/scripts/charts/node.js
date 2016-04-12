@@ -92,6 +92,12 @@ export default class Node extends React.Component {
     return (
       <g className={className} transform={transform} onClick={this.handleMouseClick}
         onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+        <rect className="hover-box"
+          x={-nodeScale(scaleFactor * 0.5)}
+          y={-nodeScale(scaleFactor * 0.5)}
+          width={nodeScale(scaleFactor)}
+          height={nodeScale(scaleFactor) + subLabelOffsetY}
+          />
         <text className="node-label" textAnchor="middle" style={{fontSize: labelFontSize}}
           x="0" y={labelOffsetY + nodeScale(0.5 * scaleFactor)}>
           {labelText}
