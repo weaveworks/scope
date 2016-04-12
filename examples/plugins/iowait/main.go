@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -75,41 +74,36 @@ func (p *Plugin) Report(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = json.NewEncoder(w).Encode(map[string]interface{}{
-		"Host": map[string]interface{}{
-			"nodes": map[string]interface{}{
-				p.HostID + ";<host>": map[string]interface{}{
-					"metrics": map[string]interface{}{
-						"iowait": map[string]interface{}{
-							"samples": []interface{}{
-								map[string]interface{}{
-									"date":  nowISO,
-									"value": value,
-								},
-							},
-						},
-					},
-				},
-			},
-			"metric_templates": map[string]interface{}{
-				"iowait": map[string]interface{}{
-					"id":       "iowait",
-					"label":    "IO Wait",
-					"format":   "percent",
-					"priority": 0.1, // low number so it shows up first
-				},
-			},
-		},
-		"Plugins": []interface{}{
-			map[string]interface{}{
-				"id":          "iowait",
-				"label":       "iowait",
-				"description": "Adds a graph of CPU IO Wait to hosts",
-				"interfaces":  []string{"reporter"},
-				"api_version": "1",
-			},
-		},
-	})
+	fmt.Fprintf(w, `{
+		 "Host": {
+			 "nodes": {
+				 %q: {
+					 "metrics": {
+						 "iowait": {
+							 "samples": [ {"date": %q, "value": %f} ]
+						 }
+					 }
+				 }
+			 },
+			 "metric_templates": {
+				 "iowait": {
+					 "id":       "iowait",
+					 "label":    "IO Wait",
+					 "format":   "percent",
+					 "priority": 0.1
+				 }
+			 }
+		 },
+		 "Plugins": [
+			 {
+				 "id":          "iowait",
+				 "label":       "iowait",
+				 "description": "Adds a graph of CPU IO Wait to hosts",
+				 "interfaces":  ["reporter"],
+				 "api_version": "1"
+			 }
+		 ]
+	 }`, p.HostID+";<host>", nowISO, value)
 	if err != nil {
 		log.Printf("error: %v", err)
 	}
