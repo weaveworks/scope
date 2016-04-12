@@ -95,6 +95,16 @@ export default class NodeDetailsTable extends React.Component {
       const headers = [{id: 'label', label: this.props.label}].concat(columns);
       const defaultSortBy = this.getDefaultSortBy();
 
+      // Beauty hack: adjust first column width if there are only few columns;
+      // this assumes the other columns are narrow metric columns of 20% table width
+      if (headers.length === 2) {
+        headers[0].width = 66;
+      } else if (headers.length === 3) {
+        headers[0].width = 50;
+      } else if (headers.length >= 3) {
+        headers[0].width = 33;
+      }
+
       return (
         <tr>
           {headers.map(header => {
@@ -102,6 +112,7 @@ export default class NodeDetailsTable extends React.Component {
             const onHeaderClick = ev => {
               this.handleHeaderClick(ev, header.id);
             };
+
             // sort by first metric by default
             const isSorted = this.state.sortBy !== null
               ? header.id === this.state.sortBy : header.id === defaultSortBy;
@@ -110,8 +121,16 @@ export default class NodeDetailsTable extends React.Component {
             if (isSorted) {
               headerClasses.push('node-details-table-header-sorted');
             }
+
+            // set header width in percent
+            const style = {};
+            if (header.width) {
+              style.width = `${header.width}%`;
+            }
+
             return (
-              <td className={headerClasses.join(' ')} onClick={onHeaderClick} key={header.id}>
+              <td className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
+                key={header.id}>
                 {isSortedAsc
                   && <span className="node-details-table-header-sorter fa fa-caret-up" />}
                 {isSortedDesc
