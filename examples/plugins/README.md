@@ -30,7 +30,7 @@ For example:
 
 ```json
 {
-  "Processes: { ... }
+  "Processes: { ... },
   ...
   "Plugins": [
     {
