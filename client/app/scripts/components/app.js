@@ -53,6 +53,7 @@ function getStateFromStores() {
     updatePaused: AppStore.isUpdatePaused(),
     updatePausedAt: AppStore.getUpdatePausedAt(),
     version: AppStore.getVersion(),
+    plugins: AppStore.getPlugins(),
     websocketClosed: AppStore.isWebsocketClosed()
   };
 }

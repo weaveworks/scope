@@ -10,7 +10,7 @@ import (
 // NodeDockerLabels produces a table (to be consumed directly by the UI) based
 // on an origin ID, which is (optimistically) a node ID in one of our
 // topologies.
-func NodeDockerLabels(nmd report.Node) []MetadataRow {
+func NodeDockerLabels(nmd report.Node) []report.MetadataRow {
 	if _, ok := nmd.Counters.Lookup(nmd.Topology); ok {
 		// This is a group of nodes, so no docker labels!
 		return nil
@@ -20,7 +20,7 @@ func NodeDockerLabels(nmd report.Node) []MetadataRow {
 		return nil
 	}
 
-	var rows []MetadataRow
+	var rows []report.MetadataRow
 	// Add labels in alphabetical order
 	labels := docker.ExtractLabels(nmd)
 	labelKeys := make([]string, 0, len(labels))
@@ -29,7 +29,7 @@ func NodeDockerLabels(nmd report.Node) []MetadataRow {
 	}
 	sort.Strings(labelKeys)
 	for _, labelKey := range labelKeys {
-		rows = append(rows, MetadataRow{ID: "label_" + labelKey, Value: labels[labelKey]})
+		rows = append(rows, report.MetadataRow{ID: "label_" + labelKey, Value: labels[labelKey]})
 	}
 	return rows
 }

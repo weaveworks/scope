@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/weaveworks/scope/common/xfer"
 )
 
 // Names of the various topologies.
@@ -17,6 +19,9 @@ const (
 	ContainerImage = "container_image"
 	Host           = "host"
 	Overlay        = "overlay"
+
+	// Used when counting the number of containers
+	ContainersKey = "containers"
 )
 
 // Report is the core data type. It's produced by probes, and consumed and
@@ -76,6 +81,8 @@ type Report struct {
 	// bypassing the usual spy interval, publish interval and app ws interval.
 	Shortcut bool
 
+	Plugins xfer.PluginSpecs
+
 	// ID a random identifier for this report, used when caching
 	// rendered views of the report.  Reports with the same id
 	// must be equal, but we don't require that equal reports have
@@ -99,6 +106,7 @@ func MakeReport() Report {
 		Overlay:        MakeTopology(),
 		Sampling:       Sampling{},
 		Window:         0,
+		Plugins:        xfer.MakePluginSpecs(),
 		ID:             fmt.Sprintf("%d", rand.Int63()),
 		Probes:         Probes{},
 	}
@@ -117,6 +125,7 @@ func (r Report) Copy() Report {
 		Overlay:        r.Overlay.Copy(),
 		Sampling:       r.Sampling,
 		Window:         r.Window,
+		Plugins:        r.Plugins.Copy(),
 		ID:             fmt.Sprintf("%d", rand.Int63()),
 		Probes:         r.Probes.Copy(),
 	}
@@ -137,6 +146,7 @@ func (r Report) Merge(other Report) Report {
 	cp.Sampling = r.Sampling.Merge(other.Sampling)
 	cp.Probes = r.Probes.Merge(other.Probes)
 	cp.Window += other.Window
+	cp.Plugins = r.Plugins.Merge(other.Plugins)
 	return cp
 }
 

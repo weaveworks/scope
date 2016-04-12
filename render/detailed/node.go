@@ -47,7 +47,7 @@ type wiredControlInstance struct {
 	Icon    string `json:"icon"`
 }
 
-// CodecEncodeSelf marshals this MetricRow. It takes the basic Metric
+// CodecEncodeSelf marshals this ControlInstance. It takes the basic Metric
 // rendering, then adds some row-specific fields.
 func (c *ControlInstance) CodecEncodeSelf(encoder *codec.Encoder) {
 	encoder.Encode(wiredControlInstance{
@@ -77,15 +77,15 @@ func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
 // MakeNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
 func MakeNode(topologyID string, r report.Report, ns report.Nodes, n report.Node) Node {
-	summary, _ := MakeNodeSummary(n)
+	summary, _ := MakeNodeSummary(r, n)
 	return Node{
 		NodeSummary: summary,
 		Controls:    controls(r, n),
-		Children:    children(n),
+		Children:    children(r, n),
 		Parents:     Parents(r, n),
 		Connections: []ConnectionsSummary{
-			incomingConnectionsSummary(topologyID, n, ns),
-			outgoingConnectionsSummary(topologyID, n, ns),
+			incomingConnectionsSummary(topologyID, r, n, ns),
+			outgoingConnectionsSummary(topologyID, r, n, ns),
 		},
 	}
 }
@@ -114,7 +114,6 @@ func controlsFor(topology report.Topology, nodeID string) []ControlInstance {
 }
 
 func controls(r report.Report, n report.Node) []ControlInstance {
-	// TODO(paulbellamy): this ID will have been munged in rendering, so we should stop doing that, so that this matches up.
 	if t, ok := r.Topology(n.Topology); ok {
 		return controlsFor(t, n.ID)
 	}
@@ -132,8 +131,8 @@ var (
 				TopologyID: "hosts",
 				Label:      "Hosts",
 				Columns: []Column{
-					MakeColumn(host.CPUUsage),
-					MakeColumn(host.MemoryUsage),
+					{ID: host.CPUUsage, Label: "CPU"},
+					{ID: host.MemoryUsage, Label: "Memory"},
 				},
 			},
 		},
@@ -149,8 +148,8 @@ var (
 			NodeSummaryGroup: NodeSummaryGroup{
 				TopologyID: "containers",
 				Label:      "Containers", Columns: []Column{
-					MakeColumn(docker.CPUTotalUsage),
-					MakeColumn(docker.MemoryUsage),
+					{ID: docker.CPUTotalUsage, Label: "CPU"},
+					{ID: docker.MemoryUsage, Label: "Memory"},
 				},
 			},
 		},
@@ -159,9 +158,9 @@ var (
 			NodeSummaryGroup: NodeSummaryGroup{
 				TopologyID: "processes",
 				Label:      "Processes", Columns: []Column{
-					{ID: process.PID, Label: Label(process.PID)},
-					MakeColumn(process.CPUUsage),
-					MakeColumn(process.MemoryUsage),
+					{ID: process.PID, Label: "PID"},
+					{ID: process.CPUUsage, Label: "CPU"},
+					{ID: process.MemoryUsage, Label: "Memory"},
 				},
 			},
 		},
@@ -171,20 +170,20 @@ var (
 				TopologyID: "containers-by-image",
 				Label:      "Container Images",
 				Columns: []Column{
-					{ID: report.Container, Label: Label(report.Container), DefaultSort: true},
+					{ID: report.Container, Label: "# Containers", DefaultSort: true},
 				},
 			},
 		},
 	}
 )
 
-func children(n report.Node) []NodeSummaryGroup {
+func children(r report.Report, n report.Node) []NodeSummaryGroup {
 	summaries := map[string][]NodeSummary{}
 	n.Children.ForEach(func(child report.Node) {
 		if child.ID == n.ID {
 			return
 		}
-		summary, ok := MakeNodeSummary(child)
+		summary, ok := MakeNodeSummary(r, child)
 		if !ok {
 			return
 		}

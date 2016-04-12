@@ -21,7 +21,7 @@ import (
 func TestSummaries(t *testing.T) {
 	{
 		// Just a convenient source of some rendered nodes
-		have := detailed.Summaries(render.ProcessRenderer.Render(fixture.Report))
+		have := detailed.Summaries(fixture.Report, render.ProcessRenderer.Render(fixture.Report))
 		// The ids of the processes rendered above
 		expectedIDs := []string{
 			fixture.ClientProcess1NodeID,
@@ -53,14 +53,14 @@ func TestSummaries(t *testing.T) {
 		input := fixture.Report.Copy()
 
 		input.Process.Nodes[fixture.ClientProcess1NodeID] = input.Process.Nodes[fixture.ClientProcess1NodeID].WithMetrics(report.Metrics{process.CPUUsage: metric})
-		have := detailed.Summaries(render.ProcessRenderer.Render(input))
+		have := detailed.Summaries(input, render.ProcessRenderer.Render(input))
 
 		node, ok := have[fixture.ClientProcess1NodeID]
 		if !ok {
 			t.Fatalf("Expected output to have the node we added the metric to")
 		}
 
-		var row detailed.MetricRow
+		var row report.MetricRow
 		ok = false
 		for _, metric := range node.Metrics {
 			if metric.ID == process.CPUUsage {
@@ -74,10 +74,12 @@ func TestSummaries(t *testing.T) {
 		}
 
 		// Our summarized MetricRow
-		want := detailed.MetricRow{
-			ID:     process.CPUUsage,
-			Format: "percent",
-			Value:  2,
+		want := report.MetricRow{
+			ID:       process.CPUUsage,
+			Label:    "CPU",
+			Format:   "percent",
+			Value:    2,
+			Priority: 1,
 			Metric: &report.Metric{
 				Samples: nil,
 				Min:     metric.Min,
@@ -109,10 +111,9 @@ func TestMakeNodeSummary(t *testing.T) {
 				LabelMinor: "client.hostname.com (10001)",
 				Rank:       fixture.Client1Name,
 				Shape:      "square",
-				Metadata: []detailed.MetadataRow{
-					{ID: process.PID, Value: fixture.Client1PID, Prime: true, Datatype: "number"},
+				Metadata: []report.MetadataRow{
+					{ID: process.PID, Label: "PID", Value: fixture.Client1PID, Priority: 1, Datatype: "number"},
 				},
-				Metrics:   []detailed.MetricRow{},
 				Adjacency: report.MakeIDList(fixture.ServerProcessNodeID),
 			},
 		},
@@ -127,10 +128,9 @@ func TestMakeNodeSummary(t *testing.T) {
 				Rank:       fixture.ClientContainerImageName,
 				Shape:      "hexagon",
 				Linkable:   true,
-				Metadata: []detailed.MetadataRow{
-					{ID: docker.ContainerID, Value: fixture.ClientContainerID, Prime: true},
+				Metadata: []report.MetadataRow{
+					{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 1},
 				},
-				Metrics:   []detailed.MetricRow{},
 				Adjacency: report.MakeIDList(fixture.ServerContainerNodeID),
 			},
 		},
@@ -146,9 +146,9 @@ func TestMakeNodeSummary(t *testing.T) {
 				Shape:      "hexagon",
 				Linkable:   true,
 				Stack:      true,
-				Metadata: []detailed.MetadataRow{
-					{ID: docker.ImageID, Value: fixture.ClientContainerImageID, Prime: true},
-					{ID: report.Container, Value: "1", Prime: true, Datatype: "number"},
+				Metadata: []report.MetadataRow{
+					{ID: docker.ImageID, Label: "Image ID", Value: fixture.ClientContainerImageID, Priority: 1},
+					{ID: report.Container, Label: "# Containers", Value: "1", Priority: 2, Datatype: "number"},
 				},
 				Adjacency: report.MakeIDList(fixture.ServerContainerImageNodeID),
 			},
@@ -164,16 +164,15 @@ func TestMakeNodeSummary(t *testing.T) {
 				Rank:       "hostname.com",
 				Shape:      "circle",
 				Linkable:   true,
-				Metadata: []detailed.MetadataRow{
-					{ID: host.HostName, Value: fixture.ClientHostName, Prime: false},
+				Metadata: []report.MetadataRow{
+					{ID: host.HostName, Label: "Hostname", Value: fixture.ClientHostName, Priority: 11},
 				},
-				Metrics:   []detailed.MetricRow{},
 				Adjacency: report.MakeIDList(fixture.ServerHostNodeID),
 			},
 		},
 	}
 	for _, testcase := range testcases {
-		have, ok := detailed.MakeNodeSummary(testcase.input)
+		have, ok := detailed.MakeNodeSummary(fixture.Report, testcase.input)
 		if ok != testcase.ok {
 			t.Errorf("%s: MakeNodeSummary failed: expected ok value to be: %v", testcase.name, testcase.ok)
 			continue

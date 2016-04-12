@@ -41,11 +41,11 @@ type ConnectionsSummary struct {
 
 // Connection is a row in the connections table.
 type Connection struct {
-	ID       string        `json:"id"`     // ID of this element in the UI.  Must be unique for a given ConnectionsSummary.
-	NodeID   string        `json:"nodeId"` // ID of a node in the topology. Optional, must be set if linkable is true.
-	Label    string        `json:"label"`
-	Linkable bool          `json:"linkable"`
-	Metadata []MetadataRow `json:"metadata,omitempty"`
+	ID       string               `json:"id"`     // ID of this element in the UI.  Must be unique for a given ConnectionsSummary.
+	NodeID   string               `json:"nodeId"` // ID of a node in the topology. Optional, must be set if linkable is true.
+	Label    string               `json:"label"`
+	Linkable bool                 `json:"linkable"`
+	Metadata []report.MetadataRow `json:"metadata,omitempty"`
 }
 
 type connectionsByID []Connection
@@ -65,7 +65,7 @@ func (row connection) ID() string {
 	return fmt.Sprintf("%s:%s-%s:%s-%s", row.remoteNode.ID, row.remoteAddr, row.localNode.ID, row.localAddr, row.port)
 }
 
-func incomingConnectionsSummary(topologyID string, n report.Node, ns report.Nodes) ConnectionsSummary {
+func incomingConnectionsSummary(topologyID string, r report.Report, n report.Node, ns report.Nodes) ConnectionsSummary {
 	localEndpointIDs := endpointChildIDsOf(n)
 
 	// For each node which has an edge TO me
@@ -110,11 +110,11 @@ func incomingConnectionsSummary(topologyID string, n report.Node, ns report.Node
 		TopologyID:  topologyID,
 		Label:       "Inbound",
 		Columns:     columnHeaders,
-		Connections: connectionRows(counts, isInternetNode(n)),
+		Connections: connectionRows(r, counts, isInternetNode(n)),
 	}
 }
 
-func outgoingConnectionsSummary(topologyID string, n report.Node, ns report.Nodes) ConnectionsSummary {
+func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Node, ns report.Nodes) ConnectionsSummary {
 	localEndpoints := endpointChildrenOf(n)
 
 	// For each node which has an edge FROM me
@@ -160,7 +160,7 @@ func outgoingConnectionsSummary(topologyID string, n report.Node, ns report.Node
 		TopologyID:  topologyID,
 		Label:       "Outbound",
 		Columns:     columnHeaders,
-		Connections: connectionRows(counts, isInternetNode(n)),
+		Connections: connectionRows(r, counts, isInternetNode(n)),
 	}
 }
 
@@ -188,13 +188,13 @@ func isInternetNode(n report.Node) bool {
 	return n.ID == render.IncomingInternetID || n.ID == render.OutgoingInternetID
 }
 
-func connectionRows(in map[connection]int, includeLocal bool) []Connection {
+func connectionRows(r report.Report, in map[connection]int, includeLocal bool) []Connection {
 	output := []Connection{}
 	for row, count := range in {
 		// Use MakeNodeSummary to render the id and label of this node
 		// TODO(paulbellamy): Would be cleaner if we hade just a
 		// MakeNodeID(*row.remoteode). As we don't need the whole summary.
-		summary, ok := MakeNodeSummary(*row.remoteNode)
+		summary, ok := MakeNodeSummary(r, *row.remoteNode)
 		connection := Connection{
 			ID:       row.ID(),
 			NodeID:   summary.ID,
@@ -207,19 +207,19 @@ func connectionRows(in map[connection]int, includeLocal bool) []Connection {
 		}
 		if includeLocal {
 			connection.Metadata = append(connection.Metadata,
-				MetadataRow{
+				report.MetadataRow{
 					ID:       "foo",
 					Value:    row.localAddr,
 					Datatype: number,
 				})
 		}
 		connection.Metadata = append(connection.Metadata,
-			MetadataRow{
+			report.MetadataRow{
 				ID:       portKey,
 				Value:    row.port,
 				Datatype: number,
 			},
-			MetadataRow{
+			report.MetadataRow{
 				ID:       countKey,
 				Value:    strconv.Itoa(count),
 				Datatype: number,

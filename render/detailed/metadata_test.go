@@ -15,7 +15,7 @@ func TestNodeMetadata(t *testing.T) {
 	inputs := []struct {
 		name string
 		node report.Node
-		want []detailed.MetadataRow
+		want []report.MetadataRow
 	}{
 		{
 			name: "container",
@@ -26,10 +26,10 @@ func TestNodeMetadata(t *testing.T) {
 			}).WithTopology(report.Container).WithSets(report.EmptySets.
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
-			want: []detailed.MetadataRow{
-				{ID: docker.ContainerID, Value: fixture.ClientContainerID, Prime: true},
-				{ID: docker.ContainerStateHuman, Value: "running", Prime: true},
-				{ID: docker.ContainerIPs, Value: "10.10.10.0/24, 10.10.10.1/24"},
+			want: []report.MetadataRow{
+				{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 1},
+				{ID: docker.ContainerStateHuman, Label: "State", Value: "running", Priority: 2},
+				{ID: docker.ContainerIPs, Label: "IPs", Value: "10.10.10.0/24, 10.10.10.1/24", Priority: 14},
 			},
 		},
 		{
@@ -41,7 +41,7 @@ func TestNodeMetadata(t *testing.T) {
 		},
 	}
 	for _, input := range inputs {
-		have := detailed.NodeMetadata(input.node)
+		have := detailed.NodeMetadata(fixture.Report, input.node)
 		if !reflect.DeepEqual(input.want, have) {
 			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
 		}
@@ -50,10 +50,10 @@ func TestNodeMetadata(t *testing.T) {
 
 func TestMetadataRowCopy(t *testing.T) {
 	var (
-		row = detailed.MetadataRow{
+		row = report.MetadataRow{
 			ID:       "id",
 			Value:    "value",
-			Prime:    true,
+			Priority: 1,
 			Datatype: "datatype",
 		}
 		cp = row.Copy()
@@ -67,9 +67,9 @@ func TestMetadataRowCopy(t *testing.T) {
 	// changing the copy should not change the original
 	cp.ID = ""
 	cp.Value = ""
-	cp.Prime = false
+	cp.Priority = 2
 	cp.Datatype = ""
-	if row.ID != "id" || row.Value != "value" || row.Prime != true || row.Datatype != "datatype" {
+	if row.ID != "id" || row.Value != "value" || row.Priority != 1 || row.Datatype != "datatype" {
 		t.Errorf("Expected changing the copy not to modify the original")
 	}
 }
