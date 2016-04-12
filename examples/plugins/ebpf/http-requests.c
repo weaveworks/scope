@@ -18,7 +18,7 @@ BPF_HASH(received_http_requests, struct received_http_requests_key_t, u64);
 int kprobe__skb_copy_datagram_iter(struct pt_regs *ctx, const struct sk_buff *skb, int offset, void *unused_iovec, int len)
 {
 
-  /* Inspect the beginning of docket buffers copied to user-space to determine if they
+  /* Inspect the beginning of socket buffers copied to user-space to determine if they
      correspond to http requests.
 
      Caveats:
@@ -49,7 +49,7 @@ int kprobe__skb_copy_datagram_iter(struct pt_regs *ctx, const struct sk_buff *sk
   bpf_probe_read(&data, sizeof(data), skb->data + offset);
 
   /* TODO: support other methods and optimize lookups */
-  if ((data[0] == 'G') && (data[1] == 'E') && (data[2] == 'T')) {
+  if ((data[0] == 'G') && (data[1] == 'E') && (data[2] == 'T') && (data[3] == ' ')) {
     /* Record request */
     struct received_http_requests_key_t key = {};
     key.pid = bpf_get_current_pid_tgid() >> 32;
