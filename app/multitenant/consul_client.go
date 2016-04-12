@@ -8,8 +8,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	consul "github.com/hashicorp/consul/api"
-
-	"github.com/weaveworks/scope/common/mtime"
 )
 
 const (
@@ -21,7 +19,6 @@ const (
 type ConsulClient interface {
 	Get(key string, out interface{}) error
 	CAS(key string, out interface{}, f CASCallback) error
-	Watch(key string, deadline time.Time, out interface{}, f func(interface{}) (bool, error)) error
 	WatchPrefix(prefix string, out interface{}, done chan struct{}, f func(string, interface{}) bool)
 }
 
@@ -133,41 +130,6 @@ func (c *consulClient) CAS(key string, out interface{}, f CASCallback) error {
 		return nil
 	}
 	return fmt.Errorf("Failed to CAS %s", key)
-}
-
-// Watch a given key value and trigger a callback when it changes.
-// if callback returns false or error, exit (with the error).
-func (c *consulClient) Watch(key string, deadline time.Time, out interface{}, f func(interface{}) (bool, error)) error {
-	index := uint64(0)
-	for deadline.After(mtime.Now()) {
-		// Do a (blocking) long poll waiting for the entry to get updated. index here
-		// is really a version number; this call will wait for the key to be updated
-		// past said version.  As we always start from version 0, we're guaranteed
-		// not to miss any updates - in fact we will always call the callback with
-		// the current value of the key immediately.
-		kvp, _, err := c.kv.Get(key, &consul.QueryOptions{
-			RequireConsistent: true,
-			WaitIndex:         index,
-			WaitTime:          longPollDuration,
-		})
-		if err != nil {
-			return fmt.Errorf("Error getting %s: %v", key, err)
-		}
-		if kvp == nil {
-			return ErrNotFound
-		}
-
-		if err := json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out); err != nil {
-			return err
-		}
-		if ok, err := f(out); !ok {
-			return nil
-		} else if err != nil {
-			return err
-		}
-		index = kvp.ModifyIndex
-	}
-	return fmt.Errorf("Timed out waiting on %s", key)
 }
 
 func (c *consulClient) WatchPrefix(prefix string, out interface{}, done chan struct{}, f func(string, interface{}) bool) {
