@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ugorji/go/codec"
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
@@ -18,7 +19,7 @@ func TestApply(t *testing.T) {
 		endpointNode   = report.MakeNodeWith(map[string]string{"5": "6"})
 	)
 
-	p := New(0, 0, nil)
+	p := New("", 0, 0, nil)
 	p.AddTagger(NewTopologyTagger())
 
 	r := report.MakeReport()
@@ -71,11 +72,20 @@ func TestProbe(t *testing.T) {
 	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
 	// tags, transforming empty slices into nils. So, we make DeepEqual
 	// happy by setting empty `json:"omitempty"` entries to nil
+	const probeID = "probeid"
+	now := time.Now()
+	mtime.NowForce(now)
+	defer mtime.NowReset()
 
 	want := report.MakeReport()
 	node := report.MakeNodeWith(map[string]string{"b": "c"})
 	node.Metrics = nil // omitempty
 	want.Endpoint.AddNode("a", node)
+	want.Probes[probeID] = report.Probe{
+		ID:       probeID,
+		LastSeen: now,
+	}
+
 	pub := mockPublisher{make(chan report.Report)}
 
 	// omitempty
@@ -88,7 +98,7 @@ func TestProbe(t *testing.T) {
 	want.Host.Controls = nil
 	want.Overlay.Controls = nil
 
-	p := New(10*time.Millisecond, 100*time.Millisecond, pub)
+	p := New(probeID, 10*time.Millisecond, 100*time.Millisecond, pub)
 	p.AddReporter(mockReporter{want})
 	p.Start()
 	defer p.Stop()

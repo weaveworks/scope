@@ -455,6 +455,12 @@
 			"path": "/md2man"
 		},
 		{
+			"importpath": "github.com/davecgh/go-spew",
+			"repository": "https://github.com/davecgh/go-spew",
+			"revision": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/davecgh/go-spew/spew",
 			"repository": "https://github.com/davecgh/go-spew",
 			"revision": "2df174808ee097f90d259e432cc04442cf60be21",
@@ -653,7 +659,7 @@
 		{
 			"importpath": "github.com/hashicorp/go-version",
 			"repository": "https://github.com/hashicorp/go-version",
-			"revision": "7e3c02b30806fa5779d3bdfc152ce4c6f40e7b38",
+			"revision": "2e7f5ea8e27bb3fdf9baa0881d16757ac4637332",
 			"branch": "master"
 		},
 		{
