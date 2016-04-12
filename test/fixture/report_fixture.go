@@ -105,14 +105,10 @@ var (
 	ClientHostCPUMetric    = report.MakeMetric().Add(Now, 0.07).WithFirst(Now.Add(-7 * time.Second))
 	ClientHostMemoryMetric = report.MakeMetric().Add(Now, 0.08).WithFirst(Now.Add(-8 * time.Second))
 	ClientHostLoad1Metric  = report.MakeMetric().Add(Now, 0.09).WithFirst(Now.Add(-9 * time.Second))
-	ClientHostLoad5Metric  = report.MakeMetric().Add(Now, 0.10).WithFirst(Now.Add(-10 * time.Second))
-	ClientHostLoad15Metric = report.MakeMetric().Add(Now, 0.11).WithFirst(Now.Add(-11 * time.Second))
 
 	ServerHostCPUMetric    = report.MakeMetric().Add(Now, 0.12).WithFirst(Now.Add(-12 * time.Second))
 	ServerHostMemoryMetric = report.MakeMetric().Add(Now, 0.13).WithFirst(Now.Add(-13 * time.Second))
 	ServerHostLoad1Metric  = report.MakeMetric().Add(Now, 0.14).WithFirst(Now.Add(-14 * time.Second))
-	ServerHostLoad5Metric  = report.MakeMetric().Add(Now, 0.15).WithFirst(Now.Add(-15 * time.Second))
-	ServerHostLoad15Metric = report.MakeMetric().Add(Now, 0.16).WithFirst(Now.Add(-16 * time.Second))
 
 	Report = report.Report{
 		ID: "test-report",
@@ -322,8 +318,6 @@ var (
 					host.CPUUsage:    ClientHostCPUMetric,
 					host.MemoryUsage: ClientHostMemoryMetric,
 					host.Load1:       ClientHostLoad1Metric,
-					host.Load5:       ClientHostLoad5Metric,
-					host.Load15:      ClientHostLoad15Metric,
 				}),
 				ServerHostNodeID: report.MakeNodeWith(map[string]string{
 					"host_name":       ServerHostName,
@@ -335,8 +329,6 @@ var (
 					host.CPUUsage:    ServerHostCPUMetric,
 					host.MemoryUsage: ServerHostMemoryMetric,
 					host.Load1:       ServerHostLoad1Metric,
-					host.Load5:       ServerHostLoad5Metric,
-					host.Load15:      ServerHostLoad15Metric,
 				}),
 			},
 		},

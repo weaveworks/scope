@@ -19,8 +19,6 @@ const (
 	KernelVersion = "kernel_version"
 	Uptime        = "uptime"
 	Load1         = "load1"
-	Load5         = "load5"
-	Load15        = "load15"
 	CPUUsage      = "host_cpu_usage_percent"
 	MemoryUsage   = "host_mem_usage_bytes"
 )

@@ -32,8 +32,6 @@ var (
 		{ID: host.CPUUsage, Format: percentFormat},
 		{ID: host.MemoryUsage, Format: filesizeFormat},
 		{ID: host.Load1, Format: defaultFormat, Group: "load"},
-		{ID: host.Load5, Format: defaultFormat, Group: "load"},
-		{ID: host.Load15, Format: defaultFormat, Group: "load"},
 	}
 )
 
