@@ -21,8 +21,8 @@ func TestGetKernelVersion(t *testing.T) {
 
 func TestGetLoad(t *testing.T) {
 	have := host.GetLoad(time.Now())
-	if len(have) != 3 {
-		t.Fatalf("Expected 3 metrics, but got: %v", have)
+	if len(have) != 1 {
+		t.Fatalf("Expected 1 metrics, but got: %v", have)
 	}
 	for key, metric := range have {
 		if metric.Len() != 1 {

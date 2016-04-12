@@ -44,18 +44,8 @@ var GetLoad = func(now time.Time) report.Metrics {
 	if err != nil {
 		return nil
 	}
-	five, err := strconv.ParseFloat(matches[0][2], 64)
-	if err != nil {
-		return nil
-	}
-	fifteen, err := strconv.ParseFloat(matches[0][3], 64)
-	if err != nil {
-		return nil
-	}
 	return report.Metrics{
-		Load1:  report.MakeMetric().Add(now, one),
-		Load5:  report.MakeMetric().Add(now, five),
-		Load15: report.MakeMetric().Add(now, fifteen),
+		Load1: report.MakeMetric().Add(now, one),
 	}
 }
 

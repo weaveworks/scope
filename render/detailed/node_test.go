@@ -77,18 +77,6 @@ func TestMakeDetailedHostNode(t *testing.T) {
 					Value:  0.09,
 					Metric: &fixture.ClientHostLoad1Metric,
 				},
-				{
-					ID:     host.Load5,
-					Group:  "load",
-					Value:  0.10,
-					Metric: &fixture.ClientHostLoad5Metric,
-				},
-				{
-					ID:     host.Load15,
-					Group:  "load",
-					Value:  0.11,
-					Metric: &fixture.ClientHostLoad15Metric,
-				},
 			},
 		},
 		Controls: []detailed.ControlInstance{},
