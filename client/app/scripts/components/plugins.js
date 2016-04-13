@@ -1,10 +1,20 @@
 import React from 'react';
+import classNames from 'classnames';
 
 export default class Plugins extends React.Component {
-  renderPlugin(plugin) {
+  renderPlugin({id, label, description, status}) {
+    const error = status !== 'ok';
+    const className = classNames({ error });
+    const title = error ?
+      `Status: ${status}. (Plugin description: ${description})` :
+      description;
+
+    // Inner span to hold styling so we don't effect the "before:content"
     return (
-      <span className="plugins-plugin" key={plugin.id} title={plugin.description}>
-        {plugin.label || plugin.id}
+      <span className="plugins-plugin" key={id}>
+        <span className={className} title={title}>
+          {label || id}
+        </span>
       </span>
     );
   }
