@@ -8,6 +8,7 @@ import (
 	"github.com/spaolacci/murmur3"
 	"golang.org/x/net/context"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -80,13 +81,11 @@ func NewCollector(window time.Duration) Collector {
 	}
 }
 
-var now = time.Now
-
 // Add adds a report to the collector's internal state. It implements Adder.
 func (c *collector) Add(_ context.Context, rpt report.Report) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
-	c.reports = append(c.reports, timestampReport{now(), rpt})
+	c.reports = append(c.reports, timestampReport{mtime.Now(), rpt})
 	c.reports = clean(c.reports, c.window)
 	c.cached = nil
 	if rpt.Shortcut {
@@ -104,8 +103,8 @@ func (c *collector) Report(_ context.Context) (report.Report, error) {
 	// If the oldest report is still within range,
 	// and there is a cached report, return that.
 	if c.cached != nil && len(c.reports) > 0 {
-		oldest := now().Add(-c.window)
-		if c.reports[0].timestamp.Before(oldest) {
+		oldest := mtime.Now().Add(-c.window)
+		if c.reports[0].timestamp.After(oldest) {
 			return *c.cached, nil
 		}
 	}
@@ -130,13 +129,12 @@ type timestampReport struct {
 func clean(reports []timestampReport, window time.Duration) []timestampReport {
 	var (
 		cleaned = make([]timestampReport, 0, len(reports))
-		oldest  = now().Add(-window)
+		oldest  = mtime.Now().Add(-window)
 	)
 	for _, tr := range reports {
-		if tr.timestamp.Before(oldest) {
-			continue
+		if tr.timestamp.After(oldest) {
+			cleaned = append(cleaned, tr)
 		}
-		cleaned = append(cleaned, tr)
 	}
 	return cleaned
 }
