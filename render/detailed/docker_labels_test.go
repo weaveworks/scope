@@ -29,6 +29,7 @@ func TestNodeDockerLabels(t *testing.T) {
 			want: []report.MetadataRow{
 				{
 					ID:    "label_label1",
+					Label: "label1",
 					Value: "label1value",
 				},
 			},
