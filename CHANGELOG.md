@@ -1,3 +1,192 @@
+## Release 0.14.0
+
+Highlights:
+
+This release comes with two main new features.
+  * Probe plugins: Now you can create your HTTP-based plugin to provide new metrics
+    and display them in Scope. You can read more about it and see some examples
+    [here](https://github.com/weaveworks/scope/tree/master/examples/plugins).
+  * Metrics on canvas: Metrics are now displayed on the nodes and not just on
+    the details panel, starting with CPU and memory consumption.
+
+Also, the performance of the UI has been considerably improved and the 100-node
+rendering limit has been lifted.
+
+
+New features and enhancements:
+- Probe plugins
+	[#1126](https://github.com/weaveworks/scope/pull/1126)
+	[#1277](https://github.com/weaveworks/scope/pull/1277)
+	[#1280](https://github.com/weaveworks/scope/pull/1280)
+	[#1283](https://github.com/weaveworks/scope/pull/1283)
+- Metrics on canvas
+	[#1105](https://github.com/weaveworks/scope/pull/1105)
+	[#1204](https://github.com/weaveworks/scope/pull/1204)
+	[#1225](https://github.com/weaveworks/scope/pull/1225)
+	[#1243](https://github.com/weaveworks/scope/issues/1243)
+- Node details panel improvements
+  - Add connection tables
+	[#1017](https://github.com/weaveworks/scope/pull/1017)
+	[#1248](https://github.com/weaveworks/scope/pull/1248)
+  - Layout: make better use of column space
+		[#1272](https://github.com/weaveworks/scope/pull/1272)
+  - Sparklines
+    - Update every second and show 60sec history
+			[#795](https://github.com/weaveworks/scope/pull/795)
+    - Apply format to tooltips in hovers
+			[#1230](https://github.com/weaveworks/scope/pull/1230)
+  - Sort numerical entries (e.g. image counts, process IDs) as expected
+		[#1125](https://github.com/weaveworks/scope/pull/1125)
+  - Remove load5 and load15 metrics
+		[#1274](https://github.com/weaveworks/scope/pull/1274)
+- Graph view improvements
+  - Node filtering improvements
+      - Introduce three-way filtering selectors (e.g. choose from _System containers_, _Application containers_ or _Both_)
+			[#1159](https://github.com/weaveworks/scope/pull/1159)
+      - Maintain node-filtering selection across subviews (e.g. _Containers by ID_ and _Containers by Image_)
+			[#1237](https://github.com/weaveworks/scope/pull/1237)
+  - Refine maximum length of node names
+		[#1263](https://github.com/weaveworks/scope/issues/1263)
+		[#1255](https://github.com/weaveworks/scope/pull/1255)
+  - Refine border-width of nodes
+		[#1138](https://github.com/weaveworks/scope/pull/1138)
+		[#1120](https://github.com/weaveworks/scope/pull/1120)
+  - Cache pan/zoom per topology
+	[#1261](https://github.com/weaveworks/scope/pull/1261)
+- Enable launching terminals in hosts
+	[#1208](https://github.com/weaveworks/scope/pull/1208)
+- Allow pausing the UI through a button
+	[#1106](https://github.com/weaveworks/scope/pull/1106)
+- Split the internet node for incoming vs outgoing connections.
+	[#566](https://github.com/weaveworks/scope/pull/566)
+- Show k8s pod status
+	[#1289](https://github.com/weaveworks/scope/pull/1289)
+- Allow customizing Scope's hostname in Weave Net with `scope launch --weave.hostname`
+	[#1041](https://github.com/weaveworks/scope/pull/1041)
+- Rename `--weave.router.addr` to `--weave.addr` in the probe for consistency with the app
+	[#1060](https://github.com/weaveworks/scope/issues/1060)
+- Support new `sha256:` Docker image identifiers
+	[#1161](https://github.com/weaveworks/scope/pull/1161)
+	[#1184](https://github.com/weaveworks/scope/pull/1184)
+- Handle server disconnects gracefully in the UI
+	[#1140](https://github.com/weaveworks/scope/pull/1140)
+
+
+Performance improvements:
+  - Performance improvements for UI canvas
+	[#1186](https://github.com/weaveworks/scope/pull/1186)
+	[#1236](https://github.com/weaveworks/scope/pull/1236)
+	[#1239](https://github.com/weaveworks/scope/pull/1239)
+	[#1262](https://github.com/weaveworks/scope/pull/1262)
+	[#1259](https://github.com/weaveworks/scope/pull/1259)
+  - Reduce CPU consumption if UI cannot connect to backend
+	[#1229](https://github.com/weaveworks/scope/pull/1229)
+
+
+Bug Fixes:
+- Scope app doesn't correctly expire old reports
+	[#1286](https://github.com/weaveworks/scope/issues/1286)
+- Container nodes appear without a host label
+	[#1065](https://github.com/weaveworks/scope/issues/1065)
+- Resizing the window and zooming in/out can confuse window size
+	[#1180](https://github.com/weaveworks/scope/issues/1096)
+- Link from container -> Pod doesn't work
+    [#1180](https://github.com/weaveworks/scope/issues/1293)
+- Various websocket and pipe fixes.
+	[#1172](https://github.com/weaveworks/scope/pull/1172)
+	[#1175](https://github.com/weaveworks/scope/pull/1175)
+- Make `--app-only` only run the app and not probe
+	[#1067](https://github.com/weaveworks/scope/pull/1067)
+- Exported SVG file throws "CANT" error in Adobe Illustrator
+	[#1144](https://github.com/weaveworks/scope/issues/1144)
+- Docker labels not rendering correctly
+	[#1284](https://github.com/weaveworks/scope/issues/1284)
+- Error when parsing kernel version in `/proc` background reader
+	[#1136](https://github.com/weaveworks/scope/issues/1136)
+- Opening the terminal doesn't open work for some containers
+	[#1195](https://github.com/weaveworks/scope/issues/1195)
+- Terminals: Try to figure what shell to use instead of simply running `/sh/bin`
+	[#1069](https://github.com/weaveworks/scope/pull/1069)
+- Fix embedded logo size for Safari
+	[#1084](https://github.com/weaveworks/scope/pull/1084)
+- Don't read from app.Version before we initialise it
+	[#1163](https://github.com/weaveworks/scope/pull/1163)
+- Don't show multiple pseudo nodes in the host view for the same IP
+	[#1155](https://github.com/weaveworks/scope/issues/1155)
+- Fix race conditions detected by race detector from Go 1.6
+	[#1192](https://github.com/weaveworks/scope/issues/1192)
+	[#1087](https://github.com/weaveworks/scope/issues/1087)
+
+
+Documentation:
+- Provide Docker Compose examples for launching the Scope probe with the Scope Cloud Service
+	[#1146](https://github.com/weaveworks/scope/pull/1146)
+
+Experimental features:
+- Update demo for tracer
+	[#1157](https://github.com/weaveworks/scope/pull/1157)
+
+
+Service-mode related changes:
+- Add `/api/probes` endpoint
+	[#1265](https://github.com/weaveworks/scope/pull/1265)
+- Multitenancy-support improvements
+	[#996](https://github.com/weaveworks/scope/pull/996)
+	[#1150](https://github.com/weaveworks/scope/pull/1150)
+	[#1200](https://github.com/weaveworks/scope/pull/1200)
+	[#1241](https://github.com/weaveworks/scope/pull/1241)
+	[#1209](https://github.com/weaveworks/scope/pull/1209)
+	[#1232](https://github.com/weaveworks/scope/pull/1232)
+
+
+Internal improvements and cleanup:
+- Make node/edge highlighter objects immutable in app store
+	[#1173](https://github.com/weaveworks/scope/pull/1173)
+- Make cached edge processing more robust
+	[#1254](https://github.com/weaveworks/scope/pull/1254)
+- Make app-store's topologies object immutable
+	[#1167](https://github.com/weaveworks/scope/pull/1167)
+- Fix TestCollector test
+	[#1070](https://github.com/weaveworks/scope/pull/1070)
+- Update docker client, to get better state strings in the UI
+	[#1235](https://github.com/weaveworks/scope/pull/1235)
+- Upgrade to go1.6
+	[#1077](https://github.com/weaveworks/scope/pull/1077)
+- React/lodash/babel upgrades + updated linting (linted)
+	[#1171](https://github.com/weaveworks/scope/pull/1171)
+- Remove address topology
+	[#1127](https://github.com/weaveworks/scope/pull/1127)
+- Add vendoring docs
+	[#1180](https://github.com/weaveworks/scope/pull/1180)
+- Fix make client-start
+	[#1210](https://github.com/weaveworks/scope/pull/1210)
+- Downgrade react-motion
+	[#1183](https://github.com/weaveworks/scope/pull/1183)
+- Make bin/release work on a mac.
+	[#887](https://github.com/weaveworks/scope/pull/887)
+- Add various middleware to app.
+	[#1234](https://github.com/weaveworks/scope/pull/1234)
+- Make unconteinerized build work on OSX
+	[#1028](https://github.com/weaveworks/scope/pull/1028)
+- Remove codecgen-generated file before building package
+	[#1135](https://github.com/weaveworks/scope/pull/1135)
+- Build/install packages before invoking codecgen
+	[#1042](https://github.com/weaveworks/scope/pull/1042)
+- circle.yml: add variable $DOCKER_ORGANIZATION
+	[#1083](https://github.com/weaveworks/scope/pull/1083)
+- circle.yml: deploy on a personal hub account
+	[#1055](https://github.com/weaveworks/scope/pull/1055)
+- circle.yml: disable GCE builds when credentials are missing
+	[#1054](https://github.com/weaveworks/scope/pull/1054)
+- Clean out all the JS in the client build dir.
+	[#1205](https://github.com/weaveworks/scope/pull/1205)
+- Remove temporary files in the build container to shrink it down by ~100MB
+	[#1206](https://github.com/weaveworks/scope/pull/1206)
+- Update tools & build container to check for spelling mistakes
+	[#1199](https://github.com/weaveworks/scope/pull/1199)
+- Fix a couple of minor issue for goreportcard and add badge for it.
+	[#1203](https://github.com/weaveworks/scope/pull/1203)
+
 ## Release 0.13.1
 
 Bug Fixes:
@@ -65,8 +254,6 @@ New features and enhancements:
 	[#930](https://github.com/weaveworks/scope/pull/930)
 - Shorten some details panel labels which were truncated
 	[#940](https://github.com/weaveworks/scope/pull/940)
-- Sparklines update every second and show 60sec history
-	[#795](https://github.com/weaveworks/scope/pull/795)
 - Add Container Count column to container images table
 	[#919](https://github.com/weaveworks/scope/pull/919)
 - Periodically check for newer versions of scope.
@@ -385,9 +572,9 @@ Bug fixes:
 - Sort reverse-DNS-resolved names to mitigate some UI fluttering
   [#562](https://github.com/weaveworks/scope/pull/562)
 - Don't leak goroutines in the probe
-  [#531](https://github.com/weaveworks/scope/issue/531)
+  [#531](https://github.com/weaveworks/scope/issues/531)
 - Rerun background conntrack processes if they fail
-  [#581](https://github.com/weaveworks/scope/issue/581)
+  [#581](https://github.com/weaveworks/scope/issues/581)
 - Build and test using Go 1.5 and vendor all dependencies
   [#584](https://github.com/weaveworks/scope/pull/584)
 - Fix "close on nil channel" error on shutdown
