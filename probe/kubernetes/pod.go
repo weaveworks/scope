@@ -15,6 +15,7 @@ const (
 	PodName         = "kubernetes_pod_name"
 	PodCreated      = "kubernetes_pod_created"
 	PodContainerIDs = "kubernetes_pod_container_ids"
+	PodState        = "kubernetes_pod_state"
 	ServiceIDs      = "kubernetes_service_ids"
 )
 
@@ -73,6 +74,10 @@ func (p *pod) AddServiceID(id string) {
 	p.serviceIDs = append(p.serviceIDs, id)
 }
 
+func (p *pod) State() string {
+	return string(p.Status.Phase)
+}
+
 func (p *pod) GetNode() report.Node {
 	n := report.MakeNodeWith(map[string]string{
 		PodID:           p.ID(),
@@ -80,6 +85,7 @@ func (p *pod) GetNode() report.Node {
 		Namespace:       p.Namespace(),
 		PodCreated:      p.Created(),
 		PodContainerIDs: strings.Join(p.ContainerIDs(), " "),
+		PodState:        p.State(),
 	})
 	if len(p.serviceIDs) > 0 {
 		n = n.WithLatests(map[string]string{ServiceIDs: strings.Join(p.serviceIDs, " ")})
