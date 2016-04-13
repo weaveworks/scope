@@ -25,6 +25,7 @@ function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
       }
     });
     targetEl.setAttribute('style', computedStyleStr);
+    targetEl.removeAttribute('data-reactid');
   }
 
   function traverse(obj) {
@@ -60,7 +61,11 @@ function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
   }
 
   // set font
-  target.setAttribute('style', 'font-family: "Roboto", sans-serif;');
+  target.setAttribute('style', 'font-family: Arial;');
+
+  // set view box
+  target.setAttribute('width', svg.clientWidth);
+  target.setAttribute('height', svg.clientHeight);
 }
 
 function download(source, name) {
