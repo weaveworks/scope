@@ -355,6 +355,7 @@ var (
 					kubernetes.PodID:           ServerPodID,
 					kubernetes.PodName:         "pong-b",
 					kubernetes.Namespace:       KubernetesNamespace,
+					kubernetes.PodState:        "running",
 					kubernetes.PodContainerIDs: ServerContainerID,
 					kubernetes.ServiceIDs:      ServiceID,
 				}).WithID(ServerPodNodeID).WithTopology(report.Pod).WithParents(report.EmptySets.

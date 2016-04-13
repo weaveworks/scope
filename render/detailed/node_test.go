@@ -294,3 +294,117 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 		t.Errorf("%s", test.Diff(want, have))
 	}
 }
+
+func TestMakeDetailedPodNode(t *testing.T) {
+	id := fixture.ServerPodNodeID
+	renderableNodes := render.PodRenderer.Render(fixture.Report)
+	renderableNode, ok := renderableNodes[id]
+	if !ok {
+		t.Fatalf("Node not found: %s", id)
+	}
+	have := detailed.MakeNode("pods", fixture.Report, renderableNodes, renderableNode)
+
+	containerNodeSummary := child(t, render.ContainerRenderer, fixture.ServerContainerNodeID)
+	serverProcessNodeSummary := child(t, render.ProcessRenderer, fixture.ServerProcessNodeID)
+	serverProcessNodeSummary.Linkable = true // Temporary workaround for: https://github.com/weaveworks/scope/issues/1295
+	want := detailed.Node{
+		NodeSummary: detailed.NodeSummary{
+			ID:       id,
+			Label:    "pong-b",
+			Rank:     "ping/pong-b",
+			Shape:    "heptagon",
+			Linkable: true,
+			Pseudo:   false,
+			Metadata: []report.MetadataRow{
+				{ID: "kubernetes_pod_id", Label: "ID", Value: "ping/pong-b", Priority: 1},
+				{ID: "kubernetes_pod_state", Label: "State", Value: "running", Priority: 2},
+				{ID: "kubernetes_namespace", Label: "Namespace", Value: "ping", Priority: 3},
+			},
+		},
+		Controls: []detailed.ControlInstance{},
+		Children: []detailed.NodeSummaryGroup{
+			{
+				Label:      "Containers",
+				TopologyID: "containers",
+				Columns: []detailed.Column{
+					{ID: docker.CPUTotalUsage, Label: "CPU"},
+					{ID: docker.MemoryUsage, Label: "Memory"},
+				},
+				Nodes: []detailed.NodeSummary{containerNodeSummary},
+			},
+			{
+				Label:      "Processes",
+				TopologyID: "processes",
+				Columns: []detailed.Column{
+					{ID: process.PID, Label: "PID"},
+					{ID: process.CPUUsage, Label: "CPU"},
+					{ID: process.MemoryUsage, Label: "Memory"},
+				},
+				Nodes: []detailed.NodeSummary{serverProcessNodeSummary},
+			},
+		},
+		Parents: []detailed.Parent{
+			{
+				ID:         fixture.ServerHostNodeID,
+				Label:      fixture.ServerHostName,
+				TopologyID: "hosts",
+			},
+		},
+		Connections: []detailed.ConnectionsSummary{
+			{
+				ID:         "incoming-connections",
+				TopologyID: "pods",
+				Label:      "Inbound",
+				Columns:    detailed.NormalColumns,
+				Connections: []detailed.Connection{
+					{
+						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", render.IncomingInternetID, "", fixture.ServerPodNodeID, "", 80),
+						NodeID:   render.IncomingInternetID,
+						Label:    render.InboundMajor,
+						Linkable: true,
+						Metadata: []report.MetadataRow{
+							{
+								ID:       "port",
+								Value:    "80",
+								Datatype: "number",
+							},
+							{
+								ID:       "count",
+								Value:    "1",
+								Datatype: "number",
+							},
+						},
+					},
+					{
+						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ClientPodNodeID, "", fixture.ServerPodNodeID, "", 80),
+						NodeID:   fixture.ClientPodNodeID,
+						Label:    "pong-a",
+						Linkable: true,
+						Metadata: []report.MetadataRow{
+							{
+								ID:       "port",
+								Value:    "80",
+								Datatype: "number",
+							},
+							{
+								ID:       "count",
+								Value:    "2",
+								Datatype: "number",
+							},
+						},
+					},
+				},
+			},
+			{
+				ID:          "outgoing-connections",
+				TopologyID:  "pods",
+				Label:       "Outbound",
+				Columns:     detailed.NormalColumns,
+				Connections: []detailed.Connection{},
+			},
+		},
+	}
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("%s", test.Diff(want, have))
+	}
+}
