@@ -5,12 +5,14 @@ import (
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/kubernetes/pkg/client/restclient"
 
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
 
 var (
+	nodeName    = "nodename"
 	podTypeMeta = unversioned.TypeMeta{
 		Kind:       "Pod",
 		APIVersion: "v1",
@@ -30,6 +32,9 @@ var (
 				{ContainerID: "container2"},
 			},
 		},
+		Spec: api.PodSpec{
+			NodeName: nodeName,
+		},
 	}
 	apiPod2 = api.Pod{
 		TypeMeta: podTypeMeta,
@@ -45,6 +50,9 @@ var (
 				{ContainerID: "container3"},
 				{ContainerID: "container4"},
 			},
+		},
+		Spec: api.PodSpec{
+			NodeName: nodeName,
 		},
 	}
 	apiService1 = api.Service{
@@ -104,12 +112,24 @@ func (c *mockClient) WalkServices(f func(kubernetes.Service) error) error {
 	}
 	return nil
 }
+func (*mockClient) WalkNodes(f func(*api.Node) error) error {
+	return nil
+}
+func (*mockClient) RESTClient() *restclient.RESTClient {
+	return nil
+}
 
 func TestReporter(t *testing.T) {
+	oldGetNodeName := kubernetes.GetNodeName
+	defer func() { kubernetes.GetNodeName = oldGetNodeName }()
+	kubernetes.GetNodeName = func(*kubernetes.Reporter) (string, error) {
+		return nodeName, nil
+	}
+
 	pod1ID := report.MakePodNodeID("ping", "pong-a")
 	pod2ID := report.MakePodNodeID("ping", "pong-b")
 	serviceID := report.MakeServiceNodeID("ping", "pongservice")
-	rpt, _ := kubernetes.NewReporter(mockClientInstance).Report()
+	rpt, _ := kubernetes.NewReporter(mockClientInstance, nil, "").Report()
 
 	// Reporter should have added the following pods
 	for _, pod := range []struct {

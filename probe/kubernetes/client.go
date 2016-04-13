@@ -6,6 +6,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/client/cache"
+	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/fields"
 	"k8s.io/kubernetes/pkg/labels"
@@ -22,15 +23,19 @@ type Client interface {
 	Stop()
 	WalkPods(f func(Pod) error) error
 	WalkServices(f func(Service) error) error
+	WalkNodes(f func(*api.Node) error) error
+	RESTClient() *restclient.RESTClient
 }
 
 type client struct {
 	quit             chan struct{}
-	client           cache.Getter
+	client           *unversioned.Client
 	podReflector     *cache.Reflector
 	serviceReflector *cache.Reflector
+	nodeReflector    *cache.Reflector
 	podStore         *cache.StoreToPodLister
 	serviceStore     *cache.StoreToServiceLister
+	nodeStore        *cache.StoreToNodeLister
 }
 
 // runReflectorUntil is equivalent to cache.Reflector.RunUntil, but it also logs
@@ -46,16 +51,16 @@ func runReflectorUntil(r *cache.Reflector, resyncPeriod time.Duration, stopCh <-
 
 // NewClient returns a usable Client. Don't forget to Stop it.
 func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
-	var config *unversioned.Config
+	var config *restclient.Config
 	if addr != "" {
-		config = &unversioned.Config{Host: addr}
+		config = &restclient.Config{Host: addr}
 	} else {
 		// If no API server address was provided, assume we are running
 		// inside a pod. Try to connect to the API server through its
 		// Service environment variables, using the default Service
 		// Account Token.
 		var err error
-		if config, err = unversioned.InClusterConfig(); err != nil {
+		if config, err = restclient.InClusterConfig(); err != nil {
 			return nil, err
 		}
 	}
@@ -73,9 +78,14 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 	serviceStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
 	serviceReflector := cache.NewReflector(serviceListWatch, &api.Service{}, serviceStore, resyncPeriod)
 
+	nodeListWatch := cache.NewListWatchFromClient(c, "nodes", api.NamespaceAll, fields.Everything())
+	nodeStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
+	nodeReflector := cache.NewReflector(nodeListWatch, &api.Node{}, nodeStore, resyncPeriod)
+
 	quit := make(chan struct{})
 	runReflectorUntil(podReflector, resyncPeriod, quit)
 	runReflectorUntil(serviceReflector, resyncPeriod, quit)
+	runReflectorUntil(nodeReflector, resyncPeriod, quit)
 
 	return &client{
 		quit:             quit,
@@ -84,7 +94,13 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 		podStore:         &cache.StoreToPodLister{Store: podStore},
 		serviceReflector: serviceReflector,
 		serviceStore:     &cache.StoreToServiceLister{Store: serviceStore},
+		nodeReflector:    nodeReflector,
+		nodeStore:        &cache.StoreToNodeLister{Store: nodeStore},
 	}, nil
+}
+
+func (c *client) RESTClient() *restclient.RESTClient {
+	return c.client.RESTClient
 }
 
 func (c *client) WalkPods(f func(Pod) error) error {
@@ -107,6 +123,19 @@ func (c *client) WalkServices(f func(Service) error) error {
 	}
 	for i := range list.Items {
 		if err := f(NewService(&(list.Items[i]))); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *client) WalkNodes(f func(*api.Node) error) error {
+	list, err := c.nodeStore.List()
+	if err != nil {
+		return err
+	}
+	for i := range list.Items {
+		if err := f(&(list.Items[i])); err != nil {
 			return err
 		}
 	}

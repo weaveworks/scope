@@ -1,8 +1,14 @@
 package kubernetes
 
 import (
+	"io/ioutil"
+	"os"
+	"strings"
+
+	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/labels"
 
+	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
@@ -34,14 +40,25 @@ var (
 
 // Reporter generate Reports containing Container and ContainerImage topologies
 type Reporter struct {
-	client Client
+	client  Client
+	pipes   controls.PipeClient
+	probeID string
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(client Client) *Reporter {
-	return &Reporter{
-		client: client,
+func NewReporter(client Client, pipes controls.PipeClient, probeID string) *Reporter {
+	reporter := &Reporter{
+		client:  client,
+		pipes:   pipes,
+		probeID: probeID,
 	}
+	reporter.registerControls()
+	return reporter
+}
+
+// Stop unregisters controls.
+func (r *Reporter) Stop() {
+	r.deregisterControls()
 }
 
 // Name of this reporter, for metrics gathering
@@ -79,6 +96,27 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 	return result, services, err
 }
 
+// GetNodeName return the k8s node name for the current machine.
+// It is exported for testing.
+var GetNodeName = func(r *Reporter) (string, error) {
+	uuidBytes, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")
+	if os.IsNotExist(err) {
+		uuidBytes, err = ioutil.ReadFile("/sys/hypervisor/uuid")
+	}
+	if err != nil {
+		return "", err
+	}
+	uuid := strings.Trim(string(uuidBytes), "\n")
+	nodeName := ""
+	err = r.client.WalkNodes(func(node *api.Node) error {
+		if node.Status.NodeInfo.SystemUUID == string(uuid) {
+			nodeName = node.ObjectMeta.Name
+		}
+		return nil
+	})
+	return nodeName, err
+}
+
 func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
@@ -87,17 +125,30 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 		containers = report.MakeTopology()
 		selectors  = map[string]labels.Selector{}
 	)
+	pods.Controls.AddControl(report.Control{
+		ID:    GetLogs,
+		Human: "Get logs",
+		Icon:  "fa-desktop",
+	})
 	for _, service := range services {
 		selectors[service.ID()] = service.Selector()
 	}
-	err := r.client.WalkPods(func(p Pod) error {
+
+	thisNodeName, err := GetNodeName(r)
+	if err != nil {
+		return pods, containers, err
+	}
+	err = r.client.WalkPods(func(p Pod) error {
+		if p.NodeName() != thisNodeName {
+			return nil
+		}
 		for serviceID, selector := range selectors {
 			if selector.Matches(p.Labels()) {
 				p.AddServiceID(serviceID)
 			}
 		}
 		nodeID := report.MakePodNodeID(p.Namespace(), p.Name())
-		pods = pods.AddNode(p.GetNode())
+		pods = pods.AddNode(p.GetNode(r.probeID))
 
 		for _, containerID := range p.ContainerIDs() {
 			container := report.MakeNodeWith(report.MakeContainerNodeID(containerID), map[string]string{

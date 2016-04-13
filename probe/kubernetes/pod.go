@@ -29,7 +29,8 @@ type Pod interface {
 	Created() string
 	AddServiceID(id string)
 	Labels() labels.Labels
-	GetNode() report.Node
+	NodeName() string
+	GetNode(probeID string) report.Node
 }
 
 type pod struct {
@@ -79,14 +80,19 @@ func (p *pod) State() string {
 	return string(p.Status.Phase)
 }
 
-func (p *pod) GetNode() report.Node {
+func (p *pod) NodeName() string {
+	return p.Spec.NodeName
+}
+
+func (p *pod) GetNode(probeID string) report.Node {
 	n := report.MakeNodeWith(report.MakePodNodeID(p.Namespace(), p.Name()), map[string]string{
-		PodID:           p.ID(),
-		PodName:         p.Name(),
-		Namespace:       p.Namespace(),
-		PodCreated:      p.Created(),
-		PodContainerIDs: strings.Join(p.ContainerIDs(), " "),
-		PodState:        p.State(),
+		PodID:                 p.ID(),
+		PodName:               p.Name(),
+		Namespace:             p.Namespace(),
+		PodCreated:            p.Created(),
+		PodContainerIDs:       strings.Join(p.ContainerIDs(), " "),
+		PodState:              p.State(),
+		report.ControlProbeID: probeID,
 	})
 	if len(p.serviceIDs) > 0 {
 		n = n.WithLatests(map[string]string{ServiceIDs: strings.Join(p.serviceIDs, " ")})
@@ -100,5 +106,7 @@ func (p *pod) GetNode() report.Node {
 			Add(report.Service, report.MakeStringSet(report.MakeServiceNodeID(p.Namespace(), segments[1]))),
 		)
 	}
-	return n.AddTable(PodLabelPrefix, p.ObjectMeta.Labels)
+	n = n.AddTable(PodLabelPrefix, p.ObjectMeta.Labels)
+	n = n.WithControls(GetLogs)
+	return n
 }

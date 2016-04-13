@@ -166,6 +166,15 @@ func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) 
 	return fields[0], fields[1], true
 }
 
+// ParsePodNodeID produces the namespace ID and pod ID from an pod node ID.
+func ParsePodNodeID(podNodeID string) (namespaceID, podID string, ok bool) {
+	fields := strings.SplitN(podNodeID, ScopeDelim, 2)
+	if len(fields) != 2 {
+		return "", "", false
+	}
+	return fields[0], fields[1], true
+}
+
 // ExtractHostID extracts the host id from Node
 func ExtractHostID(m Node) string {
 	hostNodeID, _ := m.Latest.Lookup(HostNodeID)
