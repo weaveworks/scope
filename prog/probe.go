@@ -115,19 +115,6 @@ func probeMain() {
 	log.Infof("probe starting, version %s, ID %s", version, probeID)
 	go check()
 
-	pluginRegistry, err := plugins.NewRegistry(
-		*pluginsRoot,
-		pluginAPIVersion,
-		map[string]string{
-			"probe_id":    probeID,
-			"api_version": pluginAPIVersion,
-		},
-	)
-	if err != nil {
-		log.Errorf("plugins: problem loading: %v", err)
-	}
-	defer pluginRegistry.Close()
-
 	if len(flag.Args()) > 0 {
 		targets = flag.Args()
 	}
@@ -206,7 +193,20 @@ func probeMain() {
 		}
 	}
 
-	p.AddReporter(pluginRegistry)
+	pluginRegistry, err := plugins.NewRegistry(
+		*pluginsRoot,
+		pluginAPIVersion,
+		map[string]string{
+			"probe_id":    probeID,
+			"api_version": pluginAPIVersion,
+		},
+	)
+	if err != nil {
+		log.Errorf("plugins: problem loading: %v", err)
+	} else {
+		defer pluginRegistry.Close()
+		p.AddReporter(pluginRegistry)
+	}
 
 	if *httpListen != "" {
 		go func() {
