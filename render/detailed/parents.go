@@ -55,41 +55,35 @@ func Parents(r report.Report, n report.Node) (result []Parent) {
 
 func containerParent(n report.Node) Parent {
 	label := getRenderableContainerName(n)
-	containerID, _ := n.Latest.Lookup(docker.ContainerID)
 	return Parent{
-		ID:         report.MakeContainerNodeID(containerID),
+		ID:         n.ID,
 		Label:      label,
 		TopologyID: "containers",
 	}
 }
 
 func podParent(n report.Node) Parent {
-	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
-	podID, _ := n.Latest.Lookup(kubernetes.PodID)
 	podName, _ := n.Latest.Lookup(kubernetes.PodName)
 	return Parent{
-		ID:         report.MakePodNodeID(namespace, podID),
+		ID:         n.ID,
 		Label:      podName,
 		TopologyID: "pods",
 	}
 }
 
 func serviceParent(n report.Node) Parent {
-	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
-	serviceID, _ := n.Latest.Lookup(kubernetes.ServiceID)
 	serviceName, _ := n.Latest.Lookup(kubernetes.ServiceName)
 	return Parent{
-		ID:         report.MakeServiceNodeID(namespace, serviceID),
+		ID:         n.ID,
 		Label:      serviceName,
 		TopologyID: "pods-by-service",
 	}
 }
 
 func containerImageParent(n report.Node) Parent {
-	imageID, _ := n.Latest.Lookup(docker.ImageID)
 	imageName, _ := n.Latest.Lookup(docker.ImageName)
 	return Parent{
-		ID:         report.MakeContainerImageNodeID(imageID),
+		ID:         n.ID,
 		Label:      imageName,
 		TopologyID: "containers-by-image",
 	}
@@ -98,7 +92,7 @@ func containerImageParent(n report.Node) Parent {
 func hostParent(n report.Node) Parent {
 	hostName, _ := n.Latest.Lookup(host.HostName)
 	return Parent{
-		ID:         report.MakeHostNodeID(hostName),
+		ID:         n.ID,
 		Label:      hostName,
 		TopologyID: "hosts",
 	}
