@@ -17,6 +17,7 @@ const (
 	RestartContainer = "docker_restart_container"
 	PauseContainer   = "docker_pause_container"
 	UnpauseContainer = "docker_unpause_container"
+	RemoveContainer  = "docker_remove_container"
 	AttachContainer  = "docker_attach_container"
 	ExecContainer    = "docker_exec_container"
 
@@ -46,6 +47,13 @@ func (r *registry) pauseContainer(containerID string, _ xfer.Request) xfer.Respo
 func (r *registry) unpauseContainer(containerID string, _ xfer.Request) xfer.Response {
 	log.Infof("Unpausing container %s", containerID)
 	return xfer.ResponseError(r.client.UnpauseContainer(containerID))
+}
+
+func (r *registry) removeContainer(containerID string, _ xfer.Request) xfer.Response {
+	log.Infof("Removing container %s", containerID)
+	return xfer.ResponseError(r.client.RemoveContainer(docker_client.RemoveContainerOptions{
+		ID: containerID,
+	}))
 }
 
 func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Response {
@@ -156,6 +164,7 @@ func (r *registry) registerControls() {
 	controls.Register(RestartContainer, captureContainerID(r.restartContainer))
 	controls.Register(PauseContainer, captureContainerID(r.pauseContainer))
 	controls.Register(UnpauseContainer, captureContainerID(r.unpauseContainer))
+	controls.Register(RemoveContainer, captureContainerID(r.removeContainer))
 	controls.Register(AttachContainer, captureContainerID(r.attachContainer))
 	controls.Register(ExecContainer, captureContainerID(r.execContainer))
 }
@@ -166,6 +175,7 @@ func (r *registry) deregisterControls() {
 	controls.Rm(RestartContainer)
 	controls.Rm(PauseContainer)
 	controls.Rm(UnpauseContainer)
+	controls.Rm(RemoveContainer)
 	controls.Rm(AttachContainer)
 	controls.Rm(ExecContainer)
 }

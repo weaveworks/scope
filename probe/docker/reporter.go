@@ -133,6 +133,11 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 		Icon:  "fa-play",
 	})
 	result.Controls.AddControl(report.Control{
+		ID:    RemoveContainer,
+		Human: "Remove",
+		Icon:  "fa-trash-o",
+	})
+	result.Controls.AddControl(report.Control{
 		ID:    AttachContainer,
 		Human: "Attach",
 		Icon:  "fa-desktop",

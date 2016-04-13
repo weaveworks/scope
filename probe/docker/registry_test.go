@@ -136,6 +136,10 @@ func (m *mockDockerClient) UnpauseContainer(_ string) error {
 	return fmt.Errorf("unpaused")
 }
 
+func (m *mockDockerClient) RemoveContainer(_ client.RemoveContainerOptions) error {
+	return fmt.Errorf("remove")
+}
+
 type mockCloseWaiter struct{}
 
 func (mockCloseWaiter) Close() error { return nil }

@@ -68,6 +68,7 @@ type Client interface {
 	RestartContainer(string, uint) error
 	PauseContainer(string) error
 	UnpauseContainer(string) error
+	RemoveContainer(docker_client.RemoveContainerOptions) error
 	AttachToContainerNonBlocking(docker_client.AttachToContainerOptions) (docker_client.CloseWaiter, error)
 	CreateExec(docker_client.CreateExecOptions) (*docker_client.Exec, error)
 	StartExecNonBlocking(string, docker_client.StartExecOptions) (docker_client.CloseWaiter, error)
