@@ -59,4 +59,3 @@ app/static.go
 prog/static.go
 vendor/github.com/ugorji/go/codec/codecgen/bin/*
 *.codecgen.go
-*.generated.go
