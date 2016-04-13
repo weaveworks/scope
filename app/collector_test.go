@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/app"
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
@@ -49,6 +50,47 @@ func TestCollector(t *testing.T) {
 		t.Error(err)
 	}
 	if want := merged; !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
+func TestCollectorExpire(t *testing.T) {
+	now := time.Now()
+	mtime.NowForce(now)
+	defer mtime.NowReset()
+
+	ctx := context.Background()
+	window := 10 * time.Second
+	c := app.NewCollector(window)
+
+	// 1st check the collector is empty
+	have, err := c.Report(ctx)
+	if err != nil {
+		t.Error(err)
+	}
+	if want := report.MakeReport(); !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+
+	// Now check an added report is returned
+	r1 := report.MakeReport()
+	r1.Endpoint.AddNode("foo", report.MakeNode())
+	c.Add(ctx, r1)
+	have, err = c.Report(ctx)
+	if err != nil {
+		t.Error(err)
+	}
+	if want := r1; !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+
+	// Finally move time forward to expire the report
+	mtime.NowForce(now.Add(window))
+	have, err = c.Report(ctx)
+	if err != nil {
+		t.Error(err)
+	}
+	if want := report.MakeReport(); !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }
