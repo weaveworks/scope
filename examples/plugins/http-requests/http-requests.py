@@ -27,10 +27,14 @@ class KernelInspector(threading.Thread):
         self.lock = threading.Lock()
 
     def update_http_rate_per_pid(self, last_req_count_snapshot):
-        # Aggregate per-task http request counts into per-process counts
+        # Aggregate the kernel's per-task http request counts into userland's
+        # per-process counts
         req_count_table = self.bpf.get_table(EBPF_TABLE_NAME)
         new_req_count_snapshot = collections.defaultdict(int)
         for pid_tgid, req_count in req_count_table.iteritems():
+            # Note that the kernel's tgid maps into userland's pid
+            # (not to be confused by the kernel's pid, which is
+            #  the unique identifier of a kernel task)
             pid = pid_tgid.value >> 32
             new_req_count_snapshot[pid] += req_count.value
 

@@ -1,7 +1,11 @@
 #include <linux/skbuff.h>
 #include <net/sock.h>
 
-/* Table from (Process id|Task id) to (Number of received http requests) */
+/* Table from (Task group id|Task id) to (Number of received http requests).
+   We need to gather requests per task and not only per task group (i.e. userspace pid)
+   so that entries can be cleared up independently when a task exists.
+   This implies that userspace needs to do the per-process aggregation.
+ */
 BPF_HASH(received_http_requests, u64, u64);
 
 
