@@ -29,7 +29,11 @@ func NodeDockerLabels(nmd report.Node) []report.MetadataRow {
 	}
 	sort.Strings(labelKeys)
 	for _, labelKey := range labelKeys {
-		rows = append(rows, report.MetadataRow{ID: "label_" + labelKey, Value: labels[labelKey]})
+		rows = append(rows, report.MetadataRow{
+			ID:    "label_" + labelKey,
+			Label: labelKey,
+			Value: labels[labelKey],
+		})
 	}
 	return rows
 }
