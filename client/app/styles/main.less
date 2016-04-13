@@ -1007,9 +1007,16 @@ h2 {
     content: ', ';
   }
 
+  &-plugin-icon {
+    top: 1px;
+    position: relative;
+    font-size: 120%;
+    margin-right: 2px;
+  }
+
   .error {
-    animation: blinking 2.0s 30 @base-ease; // blink for 1 minute;
-    color: darkred;
+    animation: blinking 2.0s 60 @base-ease; // blink for 2 minute;
+    color: @text-secondary-color;
   }
 
   &-empty {
