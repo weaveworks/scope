@@ -3,7 +3,7 @@
 Highlights:
 
 This release comes with two main new features.
-  * Plugins: Now you can create your HTTP-based plugin to provide new metrics
+  * Probe plugins: Now you can create your HTTP-based plugin to provide new metrics
     and display them in Scope. You can read more about it and see some examples
     [here](https://github.com/weaveworks/scope/tree/master/examples/plugins).
   * Metrics on canvas: Metrics are now displayed on the nodes and not just on
@@ -14,15 +14,15 @@ rendering limit has been lifted.
 
 
 New features and enhancements:
-- Metrics on canvas
-	[#1105](https://github.com/weaveworks/scope/pull/1105)
-	[#1204](https://github.com/weaveworks/scope/pull/1204)
-	[#1225](https://github.com/weaveworks/scope/pull/1225)
-- Scope Plugins
+- Probe plugins
 	[#1126](https://github.com/weaveworks/scope/pull/1126)
 	[#1277](https://github.com/weaveworks/scope/pull/1277)
 	[#1280](https://github.com/weaveworks/scope/pull/1280)
 	[#1283](https://github.com/weaveworks/scope/pull/1283)
+- Metrics on canvas
+	[#1105](https://github.com/weaveworks/scope/pull/1105)
+	[#1204](https://github.com/weaveworks/scope/pull/1204)
+	[#1225](https://github.com/weaveworks/scope/pull/1225)
 - Node details panel improvements
   - Add connection tables
 	[#1017](https://github.com/weaveworks/scope/pull/1017)
@@ -62,33 +62,23 @@ New features and enhancements:
 	[#1041](https://github.com/weaveworks/scope/pull/1041)
 - Rename `--weave.router.addr` to `--weave.addr` in the probe for consistency with the app
 	[#1060](https://github.com/weaveworks/scope/issues/1060)
-- Add `/api/probes` endpoint
-	[#1265](https://github.com/weaveworks/scope/pull/1265)
 - Support new `sha256:` Docker image identifiers
 	[#1161](https://github.com/weaveworks/scope/pull/1161)
 	[#1184](https://github.com/weaveworks/scope/pull/1184)
 - Handle server disconnects gracefully in the UI
 	[#1140](https://github.com/weaveworks/scope/pull/1140)
-- Multitenancy-support improvements
-	[#996](https://github.com/weaveworks/scope/pull/996)
-	[#1150](https://github.com/weaveworks/scope/pull/1150)
-	[#1200](https://github.com/weaveworks/scope/pull/1200)
-	[#1241](https://github.com/weaveworks/scope/pull/1241)
-	[#1209](https://github.com/weaveworks/scope/pull/1209)
-	[#1232](https://github.com/weaveworks/scope/pull/1232)
 
 
 Performance improvements:
-- UI performance improvements
-  - Performance improvements for canvas
-		[#1186](https://github.com/weaveworks/scope/pull/1186)
-		[#1236](https://github.com/weaveworks/scope/pull/1236)
-		[#1239](https://github.com/weaveworks/scope/pull/1239)
-		[#1262](https://github.com/weaveworks/scope/pull/1262)
+  - Performance improvements for UI canvas
+	[#1186](https://github.com/weaveworks/scope/pull/1186)
+	[#1236](https://github.com/weaveworks/scope/pull/1236)
+	[#1239](https://github.com/weaveworks/scope/pull/1239)
+	[#1262](https://github.com/weaveworks/scope/pull/1262)
   - Reduce CPU consumption if UI cannot connect to backend
-		[#1229](https://github.com/weaveworks/scope/pull/1229)
+	[#1229](https://github.com/weaveworks/scope/pull/1229)
   - Cache pan/zoom per topology
-		[#1261](https://github.com/weaveworks/scope/pull/1261)
+	[#1261](https://github.com/weaveworks/scope/pull/1261)
 
 
 Bug Fixes:
@@ -137,6 +127,19 @@ Documentation:
 Experimental features:
 - Update demo for tracer
 	[#1157](https://github.com/weaveworks/scope/pull/1157)
+
+
+Service-mode related changes:
+- Add `/api/probes` endpoint
+	[#1265](https://github.com/weaveworks/scope/pull/1265)
+- Multitenancy-support improvements
+	[#996](https://github.com/weaveworks/scope/pull/996)
+	[#1150](https://github.com/weaveworks/scope/pull/1150)
+	[#1200](https://github.com/weaveworks/scope/pull/1200)
+	[#1241](https://github.com/weaveworks/scope/pull/1241)
+	[#1209](https://github.com/weaveworks/scope/pull/1209)
+	[#1232](https://github.com/weaveworks/scope/pull/1232)
+
 
 Internal improvements and cleanup:
 - Make node/edge highlighter objects immutable in app store
