@@ -157,8 +157,10 @@ clean:
 clean-codecgen:
 	rm -rf $(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin
 
+# Dependencies are intentionally build without enforcing any tags
+# since they are build on the host
 deps:
-	$(GO) get -u -f -tags $(GO_BUILD_TAGS) \
+	$(GO) get -u -f \
 		github.com/FiloSottile/gvt \
 		github.com/mattn/goveralls \
 		github.com/weaveworks/github-release \
