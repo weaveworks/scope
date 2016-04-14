@@ -2,10 +2,11 @@
 
 Highlights:
 
-This release comes with two main new features:
-  * Plugins. Now you can create your http-based plugin to provide new metrics
-    and display them in Scope. You can read more about it and see some examples [here]().
-  * _Metrics on canvas_: Metrics are now displayed on the nodes and not just on
+This release comes with two main new features.
+  * Plugins: Now you can create your HTTP-based plugin to provide new metrics
+    and display them in Scope. You can read more about it and see some examples
+    [here](https://github.com/weaveworks/scope/tree/master/examples/plugins).
+  * Metrics on canvas: Metrics are now displayed on the nodes and not just on
     the details panel, starting with CPU and memory consumption.
 
 Also, the performance of the UI has been considerably improved and the 100-node
@@ -33,15 +34,15 @@ New features and enhancements:
 			[#795](https://github.com/weaveworks/scope/pull/795)
     - Apply format to tooltips in hovers
 			[#1230](https://github.com/weaveworks/scope/pull/1230)
-  - Sort numerical entries (e.g. image counts, Process Ids) as expected
+  - Sort numerical entries (e.g. image counts, process IDs) as expected
 		[#1125](https://github.com/weaveworks/scope/pull/1125)
   - Remove load5 and load15 metrics
 		[#1274](https://github.com/weaveworks/scope/pull/1274)
 - Graph view improvements
   - Node filtering improvements
-      - Introduce three-way filtering selectors (e.g. choose from `System containers`, `Application containers` or `Both`)
+      - Introduce three-way filtering selectors (e.g. choose from _System containers_, _Application containers_ or _Both_)
 			[#1159](https://github.com/weaveworks/scope/pull/1159)
-      - Maintain node-filtering selection across subviews (e.g. `Containers by ID` and `Containers by Image`)
+      - Maintain node-filtering selection across subviews (e.g. _Containers by ID_ and _Containers by Image_)
 			[#1237](https://github.com/weaveworks/scope/pull/1237)
   - Refine maximum length of node names
 		[#1263](https://github.com/weaveworks/scope/issues/1263)
