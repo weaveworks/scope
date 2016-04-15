@@ -8,12 +8,13 @@ import (
 
 // Constants used for testing
 const (
-	MockWeavePeerName     = "winnebago"
-	MockWeavePeerNickName = "winny"
-	MockContainerID       = "83183a667c01"
-	MockContainerMAC      = "d6:f2:5a:12:36:a8"
-	MockContainerIP       = "10.0.0.123"
-	MockHostname          = "hostname.weave.local"
+	MockWeavePeerName      = "winnebago"
+	MockWeavePeerNickName  = "winny"
+	MockWeaveDefaultSubnet = "10.32.0.1/12"
+	MockContainerID        = "83183a667c01"
+	MockContainerMAC       = "d6:f2:5a:12:36:a8"
+	MockContainerIP        = "10.0.0.123"
+	MockHostname           = "hostname.weave.local"
 )
 
 // MockClient is a mock version of weave.Client
@@ -23,6 +24,7 @@ type MockClient struct{}
 func (MockClient) Status() (weave.Status, error) {
 	return weave.Status{
 		Router: weave.Router{
+			Name: MockWeavePeerName,
 			Peers: []struct {
 				Name     string
 				NickName string
@@ -45,6 +47,9 @@ func (MockClient) Status() (weave.Status, error) {
 					Tombstone:   0,
 				},
 			},
+		},
+		IPAM: weave.IPAM{
+			DefaultSubnet: MockWeaveDefaultSubnet,
 		},
 	}, nil
 }

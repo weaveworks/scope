@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/reflect"
 	"github.com/weaveworks/scope/test/weave"
 )
 
@@ -43,6 +45,9 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 		}
 		if peerNick, ok := node.Latest.Lookup(overlay.WeavePeerNickName); !ok || peerNick != weave.MockWeavePeerNickName {
 			t.Errorf("Expected weave peer nickname %q, got %q", weave.MockWeavePeerNickName, peerNick)
+		}
+		if localNetworks, ok := node.Sets.Lookup(host.LocalNetworks); !ok || !reflect.DeepEqual(localNetworks, report.MakeStringSet(weave.MockWeaveDefaultSubnet)) {
+			t.Errorf("Expected weave node local_networks %q, got %q", report.MakeStringSet(weave.MockWeaveDefaultSubnet), localNetworks)
 		}
 	}
 
