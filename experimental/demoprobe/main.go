@@ -87,13 +87,14 @@ func demoReport(nodeCount int) report.Report {
 		)
 
 		// Endpoint topology
-		r.Endpoint = r.Endpoint.AddNode(srcPortID, report.MakeNodeWith(srcPortID, map[string]string{
+		r.Endpoint = r.Endpoint.AddNode(report.MakeNodeWith(srcPortID, map[string]string{
 			process.PID: "4000",
 			"name":      c.srcProc,
 			"domain":    "node-" + src,
 		}).
 			WithEdge(dstPortID, report.EdgeMetadata{}))
-		r.Endpoint = r.Endpoint.AddNode(dstPortID, report.MakeNodeWith(dstPortID, map[string]string{
+
+		r.Endpoint = r.Endpoint.AddNode(report.MakeNodeWith(dstPortID, map[string]string{
 			process.PID: "4000",
 			"name":      c.dstProc,
 			"domain":    "node-" + dst,
@@ -101,12 +102,13 @@ func demoReport(nodeCount int) report.Report {
 			WithEdge(srcPortID, report.EdgeMetadata{}))
 
 		// Host data
-		r.Host = r.Host.AddNode("hostX", report.MakeNodeWith("hostX", map[string]string{
+		r.Host = r.Host.AddNode(report.MakeNodeWith("hostX", map[string]string{
 			"ts":             time.Now().UTC().Format(time.RFC3339Nano),
 			"host_name":      "host-x",
 			"local_networks": localNet.String(),
 			"os":             "linux",
 		}))
+
 	}
 
 	return r

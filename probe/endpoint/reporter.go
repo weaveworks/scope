@@ -191,8 +191,8 @@ func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode,
 	if extraToNode != nil {
 		toNode = toNode.WithLatests(extraToNode)
 	}
-	rpt.Endpoint = rpt.Endpoint.AddNode(fromEndpointNodeID, fromNode)
-	rpt.Endpoint = rpt.Endpoint.AddNode(toEndpointNodeID, toNode)
+	rpt.Endpoint = rpt.Endpoint.AddNode(fromNode)
+	rpt.Endpoint = rpt.Endpoint.AddNode(toNode)
 }
 
 func newu64(i uint64) *uint64 {

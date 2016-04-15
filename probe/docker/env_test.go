@@ -15,7 +15,7 @@ func TestEnv(t *testing.T) {
 		"FOO1=\"foo=bar\"",
 		"FOO2",
 	}
-	nmd := report.MakeNode()
+	nmd := report.MakeNode("foo")
 
 	nmd = docker.AddEnv(nmd, given)
 	have := docker.ExtractEnv(nmd)

@@ -61,10 +61,11 @@ func (n natMapper) applyNAT(rpt report.Report, scope string) {
 			return
 		}
 
-		rpt.Endpoint.AddNode(copyEndpointID, node.WithID(copyEndpointID).WithLatests(map[string]string{
+		rpt.Endpoint.AddNode(node.WithID(copyEndpointID).WithLatests(map[string]string{
 			Addr:      mapping.rewrittenIP,
 			Port:      copyEndpointPort,
 			"copy_of": realEndpointID,
 		}))
+
 	})
 }

@@ -23,7 +23,7 @@ func TestApply(t *testing.T) {
 	p.AddTagger(NewTopologyTagger())
 
 	r := report.MakeReport()
-	r.Endpoint.AddNode(endpointNodeID, endpointNode)
+	r.Endpoint.AddNode(endpointNode)
 	r = p.tag(r)
 
 	for _, tuple := range []struct {
@@ -80,7 +80,7 @@ func TestProbe(t *testing.T) {
 	want := report.MakeReport()
 	node := report.MakeNodeWith("a", map[string]string{"b": "c"})
 	node.Metrics = nil // omitempty
-	want.Endpoint.AddNode("a", node)
+	want.Endpoint.AddNode(node)
 	want.Probes[probeID] = report.Probe{
 		ID:       probeID,
 		LastSeen: now,

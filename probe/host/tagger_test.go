@@ -15,7 +15,7 @@ func TestTagger(t *testing.T) {
 	)
 
 	r := report.MakeReport()
-	r.Process.AddNode(endpointNodeID, node)
+	r.Process.AddNode(node)
 	rpt, _ := host.NewTagger(hostID).Tag(r)
 	have := rpt.Process.Nodes[endpointNodeID].Copy()
 

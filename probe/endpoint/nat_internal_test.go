@@ -44,7 +44,7 @@ func TestNat(t *testing.T) {
 
 		have := report.MakeReport()
 		originalID := report.MakeEndpointNodeID("host1", "10.0.47.1", "80")
-		have.Endpoint.AddNode(originalID, report.MakeNodeWith(originalID, map[string]string{
+		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
 			Addr:  "10.0.47.1",
 			Port:  "80",
 			"foo": "bar",
@@ -52,7 +52,7 @@ func TestNat(t *testing.T) {
 
 		want := have.Copy()
 		wantID := report.MakeEndpointNodeID("host1", "1.2.3.4", "80")
-		want.Endpoint.AddNode(wantID, report.MakeNodeWith(wantID, map[string]string{
+		want.Endpoint.AddNode(report.MakeNodeWith(wantID, map[string]string{
 			Addr:      "1.2.3.4",
 			Port:      "80",
 			"copy_of": originalID,
@@ -77,14 +77,14 @@ func TestNat(t *testing.T) {
 
 		have := report.MakeReport()
 		originalID := report.MakeEndpointNodeID("host2", "10.0.47.2", "22222")
-		have.Endpoint.AddNode(originalID, report.MakeNodeWith(originalID, map[string]string{
+		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
 			Addr:  "10.0.47.2",
 			Port:  "22222",
 			"foo": "baz",
 		}))
 
 		want := have.Copy()
-		want.Endpoint.AddNode(report.MakeEndpointNodeID("host2", "2.3.4.5", "22223"), report.MakeNodeWith(report.MakeEndpointNodeID("host2", "2.3.4.5", "22223"), map[string]string{
+		want.Endpoint.AddNode(report.MakeNodeWith(report.MakeEndpointNodeID("host2", "2.3.4.5", "22223"), map[string]string{
 			Addr:      "2.3.4.5",
 			Port:      "22223",
 			"copy_of": originalID,

@@ -174,15 +174,15 @@ func (w *Weave) Report() (report.Report, error) {
 		WeaveDNSHostname: {ID: WeaveDNSHostname, Label: "Weave DNS Name", From: report.FromLatest, Priority: 18},
 	})
 	for _, peer := range w.statusCache.Router.Peers {
-		r.Overlay.AddNode(report.MakeOverlayNodeID(peer.Name), report.MakeNodeWith(report.MakeOverlayNodeID(peer.Name), map[string]string{
+		r.Overlay.AddNode(report.MakeNodeWith(report.MakeOverlayNodeID(peer.Name), map[string]string{
 			WeavePeerName:     peer.Name,
 			WeavePeerNickName: peer.NickName,
 		}))
+
 	}
 	if w.statusCache.IPAM.DefaultSubnet != "" {
 		r.Overlay.AddNode(
-			report.MakeOverlayNodeID(w.statusCache.Router.Name),
-			report.MakeNode().WithSets(
+			report.MakeNode(report.MakeOverlayNodeID(w.statusCache.Router.Name)).WithSets(
 				report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(w.statusCache.IPAM.DefaultSubnet)),
 			),
 		)

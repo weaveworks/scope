@@ -20,7 +20,7 @@ func TestInterpolateCounts(t *testing.T) {
 	r := report.MakeReport()
 	r.Sampling.Count = samplingCount
 	r.Sampling.Total = samplingTotal
-	r.Endpoint.AddNode(srcNodeID, report.MakeNode(srcNodeID).WithEdge(dstNodeID, report.EdgeMetadata{
+	r.Endpoint.AddNode(report.MakeNode(srcNodeID).WithEdge(dstNodeID, report.EdgeMetadata{
 		EgressPacketCount:  newu64(packetCount),
 		IngressPacketCount: newu64(packetCount),
 		EgressByteCount:    newu64(byteCount),
