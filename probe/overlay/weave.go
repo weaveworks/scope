@@ -8,6 +8,7 @@ import (
 	"github.com/weaveworks/scope/common/backoff"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -177,6 +178,14 @@ func (w *Weave) Report() (report.Report, error) {
 			WeavePeerName:     peer.Name,
 			WeavePeerNickName: peer.NickName,
 		}))
+	}
+	if w.statusCache.IPAM.DefaultSubnet != "" {
+		r.Overlay.AddNode(
+			report.MakeOverlayNodeID(w.statusCache.Router.Name),
+			report.MakeNode().WithSets(
+				report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(w.statusCache.IPAM.DefaultSubnet)),
+			),
+		)
 	}
 	return r, nil
 }

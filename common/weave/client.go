@@ -28,23 +28,30 @@ type Client interface {
 type Status struct {
 	Router Router
 	DNS    DNS
+	IPAM   IPAM
 }
 
 // Router describes the status of the Weave Router
 type Router struct {
+	Name  string
 	Peers []struct {
 		Name     string
 		NickName string
 	}
 }
 
-// DNS descirbes the status of Weave DNS
+// DNS describes the status of Weave DNS
 type DNS struct {
 	Entries []struct {
 		Hostname    string
 		ContainerID string
 		Tombstone   int64
 	}
+}
+
+// IPAM describes the status of Weave IPAM
+type IPAM struct {
+	DefaultSubnet string
 }
 
 var weavePsMatch = regexp.MustCompile(`^([0-9a-f]{12}) ((?:[0-9a-f][0-9a-f]\:){5}(?:[0-9a-f][0-9a-f]))(.*)$`)
