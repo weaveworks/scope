@@ -19,6 +19,8 @@ func main() {
 	var (
 		publish         = flag.String("publish", fmt.Sprintf("localhost:%d", xfer.AppPort), "publish target")
 		publishInterval = flag.Duration("publish.interval", 1*time.Second, "publish (output) interval")
+		publishToken    = flag.String("publish.token", "fixprobe", "publish token, for if we are talking to the service")
+		publishID       = flag.String("publish.id", "fixprobe", "publisher ID used to identify publishers")
 	)
 	flag.Parse()
 
@@ -38,8 +40,8 @@ func main() {
 	}
 
 	client, err := appclient.NewAppClient(appclient.ProbeConfig{
-		Token:    "fixprobe",
-		ProbeID:  "fixprobe",
+		Token:    *publishToken,
+		ProbeID:  *publishID,
 		Insecure: false,
 	}, *publish, *publish, nil)
 	if err != nil {
