@@ -23,6 +23,7 @@ New features and enhancements:
 	[#1105](https://github.com/weaveworks/scope/pull/1105)
 	[#1204](https://github.com/weaveworks/scope/pull/1204)
 	[#1225](https://github.com/weaveworks/scope/pull/1225)
+	[#1243](https://github.com/weaveworks/scope/issues/1243)
 - Node details panel improvements
   - Add connection tables
 	[#1017](https://github.com/weaveworks/scope/pull/1017)
@@ -50,6 +51,8 @@ New features and enhancements:
   - Refine border-width of nodes
 		[#1138](https://github.com/weaveworks/scope/pull/1138)
 		[#1120](https://github.com/weaveworks/scope/pull/1120)
+  - Cache pan/zoom per topology
+	[#1261](https://github.com/weaveworks/scope/pull/1261)
 - Enable launching terminals in hosts
 	[#1208](https://github.com/weaveworks/scope/pull/1208)
 - Allow pausing the UI through a button
@@ -75,10 +78,9 @@ Performance improvements:
 	[#1236](https://github.com/weaveworks/scope/pull/1236)
 	[#1239](https://github.com/weaveworks/scope/pull/1239)
 	[#1262](https://github.com/weaveworks/scope/pull/1262)
+	[#1259](https://github.com/weaveworks/scope/pull/1259)
   - Reduce CPU consumption if UI cannot connect to backend
 	[#1229](https://github.com/weaveworks/scope/pull/1229)
-  - Cache pan/zoom per topology
-	[#1261](https://github.com/weaveworks/scope/pull/1261)
 
 
 Bug Fixes:
@@ -109,10 +111,6 @@ Bug Fixes:
 	[#1084](https://github.com/weaveworks/scope/pull/1084)
 - Don't read from app.Version before we initialise it
 	[#1163](https://github.com/weaveworks/scope/pull/1163)
-- Hotkeys for metrics are not working in Firefox and are hard to find
-	[#1228](https://github.com/weaveworks/scope/issues/1228)
-- Focus makes nodes huge; previously it shrank other nodes
-	[#1244](https://github.com/weaveworks/scope/issues/1244)
 - Don't show multiple pseudo nodes in the host view for the same IP
 	[#1155](https://github.com/weaveworks/scope/issues/1155)
 - Fix race conditions detected by race detector from Go 1.6
