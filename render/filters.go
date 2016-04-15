@@ -267,4 +267,6 @@ var systemImagePrefixes = map[string]struct{}{
 	"amazon/amazon-ecs-agent":             {},
 	"beta.gcr.io/google_containers/pause": {},
 	"gcr.io/google_containers/pause":      {},
+	"openshift/origin-pod":                {},
+	"docker.io/openshift/origin-pod":      {},
 }
