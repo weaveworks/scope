@@ -44,8 +44,8 @@ func TestTagger(t *testing.T) {
 	)
 
 	input := report.MakeReport()
-	input.Process.AddNode(pid1NodeID, report.MakeNodeWith(map[string]string{process.PID: "2"}))
-	input.Process.AddNode(pid2NodeID, report.MakeNodeWith(map[string]string{process.PID: "3"}))
+	input.Process.AddNode(pid1NodeID, report.MakeNodeWith(pid1NodeID, map[string]string{process.PID: "2"}))
+	input.Process.AddNode(pid2NodeID, report.MakeNodeWith(pid2NodeID, map[string]string{process.PID: "3"}))
 
 	have, err := docker.NewTagger(mockRegistryInstance, nil).Tag(input)
 	if err != nil {

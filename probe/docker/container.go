@@ -337,7 +337,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		ipsWithScopes = append(ipsWithScopes, report.MakeScopedAddressNodeID(hostID, ip))
 	}
 
-	result := report.MakeNodeWith(map[string]string{
+	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{
 		ContainerID:         c.ID(),
 		ContainerName:       strings.TrimPrefix(c.container.Name, "/"),
 		ContainerCreated:    c.container.Created.Format(time.RFC822),

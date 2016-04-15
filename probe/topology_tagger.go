@@ -27,7 +27,7 @@ func (topologyTagger) Tag(r report.Report) (report.Report, error) {
 		report.Overlay:        &(r.Overlay),
 	} {
 		for id, node := range t.Nodes {
-			t.AddNode(id, node.WithID(id).WithTopology(name))
+			t.AddNode(id, node.WithTopology(name))
 		}
 	}
 	return r, nil

@@ -92,7 +92,7 @@ func TestNodeOrdering(t *testing.T) {
 	ids := [][2]string{{}, {"a", "0"}, {"a", "1"}, {"b", "0"}, {"b", "1"}, {"c", "3"}}
 	nodes := []report.Node{}
 	for _, id := range ids {
-		nodes = append(nodes, report.MakeNode().WithTopology(id[0]).WithID(id[1]))
+		nodes = append(nodes, report.MakeNode(id[1]).WithTopology(id[0]))
 	}
 
 	for i, node := range nodes {

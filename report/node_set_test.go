@@ -35,7 +35,7 @@ func TestMakeNodeSet(t *testing.T) {
 	} {
 		var inputs []report.Node
 		for _, id := range testcase.inputs {
-			inputs = append(inputs, report.MakeNode().WithID(id))
+			inputs = append(inputs, report.MakeNode(id))
 		}
 		set := report.MakeNodeSet(inputs...)
 		var have []string
@@ -49,7 +49,7 @@ func TestMakeNodeSet(t *testing.T) {
 func BenchmarkMakeNodeSet(b *testing.B) {
 	nodes := []report.Node{}
 	for i := 1000; i >= 0; i-- {
-		nodes = append(nodes, report.MakeNode().WithID(fmt.Sprint(i)).WithLatests(map[string]string{
+		nodes = append(nodes, report.MakeNodeWith(fmt.Sprint(i), map[string]string{
 			"a": "1",
 			"b": "2",
 		}))
@@ -79,57 +79,57 @@ func TestNodeSetAdd(t *testing.T) {
 			want:  report.EmptyNodeSet,
 		},
 		{
-			input: report.MakeNodeSet(report.MakeNode().WithID("a")),
+			input: report.MakeNodeSet(report.MakeNode("a")),
 			nodes: []report.Node{},
-			want:  report.MakeNodeSet(report.MakeNode().WithID("a")),
+			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},
 		{
 			input: report.EmptyNodeSet,
-			nodes: []report.Node{report.MakeNode().WithID("a")},
-			want:  report.MakeNodeSet(report.MakeNode().WithID("a")),
+			nodes: []report.Node{report.MakeNode("a")},
+			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},
 		{
-			input: report.MakeNodeSet(report.MakeNode().WithID("a")),
-			nodes: []report.Node{report.MakeNode().WithID("a")},
-			want:  report.MakeNodeSet(report.MakeNode().WithID("a")),
+			input: report.MakeNodeSet(report.MakeNode("a")),
+			nodes: []report.Node{report.MakeNode("a")},
+			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},
 		{
-			input: report.MakeNodeSet(report.MakeNode().WithID("b")),
+			input: report.MakeNodeSet(report.MakeNode("b")),
 			nodes: []report.Node{
-				report.MakeNode().WithID("a"),
-				report.MakeNode().WithID("b"),
+				report.MakeNode("a"),
+				report.MakeNode("b"),
 			},
 			want: report.MakeNodeSet(
-				report.MakeNode().WithID("a"),
-				report.MakeNode().WithID("b"),
+				report.MakeNode("a"),
+				report.MakeNode("b"),
 			),
 		},
 		{
-			input: report.MakeNodeSet(report.MakeNode().WithID("a")),
+			input: report.MakeNodeSet(report.MakeNode("a")),
 			nodes: []report.Node{
-				report.MakeNode().WithID("c"),
-				report.MakeNode().WithID("b"),
+				report.MakeNode("c"),
+				report.MakeNode("b"),
 			},
 			want: report.MakeNodeSet(
-				report.MakeNode().WithID("a"),
-				report.MakeNode().WithID("b"),
-				report.MakeNode().WithID("c"),
+				report.MakeNode("a"),
+				report.MakeNode("b"),
+				report.MakeNode("c"),
 			),
 		},
 		{
 			input: report.MakeNodeSet(
-				report.MakeNode().WithID("a"),
-				report.MakeNode().WithID("c"),
+				report.MakeNode("a"),
+				report.MakeNode("c"),
 			),
 			nodes: []report.Node{
-				report.MakeNode().WithID("b"),
-				report.MakeNode().WithID("b"),
-				report.MakeNode().WithID("b"),
+				report.MakeNode("b"),
+				report.MakeNode("b"),
+				report.MakeNode("b"),
 			},
 			want: report.MakeNodeSet(
-				report.MakeNode().WithID("a"),
-				report.MakeNode().WithID("b"),
-				report.MakeNode().WithID("c"),
+				report.MakeNode("a"),
+				report.MakeNode("b"),
+				report.MakeNode("c"),
 			),
 		},
 	} {
@@ -147,14 +147,14 @@ func BenchmarkNodeSetAdd(b *testing.B) {
 	n := report.EmptyNodeSet
 	for i := 0; i < 600; i++ {
 		n = n.Add(
-			report.MakeNode().WithID(fmt.Sprint(i)).WithLatests(map[string]string{
+			report.MakeNodeWith(fmt.Sprint(i), map[string]string{
 				"a": "1",
 				"b": "2",
 			}),
 		)
 	}
 
-	node := report.MakeNode().WithID("401.5").WithLatests(map[string]string{
+	node := report.MakeNodeWith("401.5", map[string]string{
 		"a": "1",
 		"b": "2",
 	})
@@ -176,39 +176,39 @@ func TestNodeSetMerge(t *testing.T) {
 		{input: report.NodeSet{}, other: report.NodeSet{}, want: report.NodeSet{}},
 		{input: report.EmptyNodeSet, other: report.EmptyNodeSet, want: report.EmptyNodeSet},
 		{
-			input: report.MakeNodeSet(report.MakeNode().WithID("a")),
+			input: report.MakeNodeSet(report.MakeNode("a")),
 			other: report.EmptyNodeSet,
-			want:  report.MakeNodeSet(report.MakeNode().WithID("a")),
+			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},
 		{
 			input: report.EmptyNodeSet,
-			other: report.MakeNodeSet(report.MakeNode().WithID("a")),
-			want:  report.MakeNodeSet(report.MakeNode().WithID("a")),
+			other: report.MakeNodeSet(report.MakeNode("a")),
+			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},
 		{
-			input: report.MakeNodeSet(report.MakeNode().WithID("a")),
-			other: report.MakeNodeSet(report.MakeNode().WithID("b")),
-			want:  report.MakeNodeSet(report.MakeNode().WithID("a"), report.MakeNode().WithID("b")),
+			input: report.MakeNodeSet(report.MakeNode("a")),
+			other: report.MakeNodeSet(report.MakeNode("b")),
+			want:  report.MakeNodeSet(report.MakeNode("a"), report.MakeNode("b")),
 		},
 		{
-			input: report.MakeNodeSet(report.MakeNode().WithID("b")),
-			other: report.MakeNodeSet(report.MakeNode().WithID("a")),
-			want:  report.MakeNodeSet(report.MakeNode().WithID("a"), report.MakeNode().WithID("b")),
+			input: report.MakeNodeSet(report.MakeNode("b")),
+			other: report.MakeNodeSet(report.MakeNode("a")),
+			want:  report.MakeNodeSet(report.MakeNode("a"), report.MakeNode("b")),
 		},
 		{
-			input: report.MakeNodeSet(report.MakeNode().WithID("a")),
-			other: report.MakeNodeSet(report.MakeNode().WithID("a")),
-			want:  report.MakeNodeSet(report.MakeNode().WithID("a")),
+			input: report.MakeNodeSet(report.MakeNode("a")),
+			other: report.MakeNodeSet(report.MakeNode("a")),
+			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},
 		{
-			input: report.MakeNodeSet(report.MakeNode().WithID("a"), report.MakeNode().WithID("c")),
-			other: report.MakeNodeSet(report.MakeNode().WithID("a"), report.MakeNode().WithID("b")),
-			want:  report.MakeNodeSet(report.MakeNode().WithID("a"), report.MakeNode().WithID("b"), report.MakeNode().WithID("c")),
+			input: report.MakeNodeSet(report.MakeNode("a"), report.MakeNode("c")),
+			other: report.MakeNodeSet(report.MakeNode("a"), report.MakeNode("b")),
+			want:  report.MakeNodeSet(report.MakeNode("a"), report.MakeNode("b"), report.MakeNode("c")),
 		},
 		{
-			input: report.MakeNodeSet(report.MakeNode().WithID("b")),
-			other: report.MakeNodeSet(report.MakeNode().WithID("a")),
-			want:  report.MakeNodeSet(report.MakeNode().WithID("a"), report.MakeNode().WithID("b")),
+			input: report.MakeNodeSet(report.MakeNode("b")),
+			other: report.MakeNodeSet(report.MakeNode("a")),
+			want:  report.MakeNodeSet(report.MakeNode("a"), report.MakeNode("b")),
 		},
 	} {
 		originalLen := testcase.input.Size()
@@ -225,7 +225,7 @@ func BenchmarkNodeSetMerge(b *testing.B) {
 	n, other := report.NodeSet{}, report.NodeSet{}
 	for i := 0; i < 600; i++ {
 		n = n.Add(
-			report.MakeNode().WithID(fmt.Sprint(i)).WithLatests(map[string]string{
+			report.MakeNodeWith(fmt.Sprint(i), map[string]string{
 				"a": "1",
 				"b": "2",
 			}),
@@ -234,7 +234,7 @@ func BenchmarkNodeSetMerge(b *testing.B) {
 
 	for i := 400; i < 1000; i++ {
 		other = other.Add(
-			report.MakeNode().WithID(fmt.Sprint(i)).WithLatests(map[string]string{
+			report.MakeNodeWith(fmt.Sprint(i), map[string]string{
 				"c": "1",
 				"d": "2",
 			}),

@@ -81,7 +81,7 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 	err = r.walker.Walk(func(p, prev Process) {
 		pidstr := strconv.Itoa(p.PID)
 		nodeID := report.MakeProcessNodeID(r.scope, pidstr)
-		node := report.MakeNode()
+		node := report.MakeNode(nodeID)
 		for _, tuple := range []struct{ key, value string }{
 			{PID, pidstr},
 			{Name, p.Name},

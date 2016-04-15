@@ -40,15 +40,16 @@ func TestReportTopology(t *testing.T) {
 
 func TestNode(t *testing.T) {
 	{
-		node := report.MakeNode().WithLatests(map[string]string{
+		node := report.MakeNodeWith("foo", map[string]string{
 			"foo": "bar",
 		})
+
 		if v, _ := node.Latest.Lookup("foo"); v != "bar" {
 			t.Errorf("want foo, have %s", v)
 		}
 	}
 	{
-		node := report.MakeNode().WithCounters(
+		node := report.MakeNode("foo").WithCounters(
 			map[string]int{"foo": 1},
 		)
 		if value, _ := node.Counters.Lookup("foo"); value != 1 {
@@ -56,13 +57,13 @@ func TestNode(t *testing.T) {
 		}
 	}
 	{
-		node := report.MakeNode().WithAdjacent("foo")
+		node := report.MakeNode("foo").WithAdjacent("foo")
 		if node.Adjacency[0] != "foo" {
 			t.Errorf("want foo, have %v", node.Adjacency)
 		}
 	}
 	{
-		node := report.MakeNode().WithEdge("foo", report.EdgeMetadata{
+		node := report.MakeNode("foo").WithEdge("foo", report.EdgeMetadata{
 			EgressPacketCount: newu64(13),
 		})
 		if node.Adjacency[0] != "foo" {

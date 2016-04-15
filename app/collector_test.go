@@ -19,10 +19,10 @@ func TestCollector(t *testing.T) {
 	c := app.NewCollector(window)
 
 	r1 := report.MakeReport()
-	r1.Endpoint.AddNode("foo", report.MakeNode())
+	r1.Endpoint.AddNode("foo", report.MakeNode("foo"))
 
 	r2 := report.MakeReport()
-	r2.Endpoint.AddNode("bar", report.MakeNode())
+	r2.Endpoint.AddNode("bar", report.MakeNode("foo"))
 
 	have, err := c.Report(ctx)
 	if err != nil {
@@ -74,7 +74,7 @@ func TestCollectorExpire(t *testing.T) {
 
 	// Now check an added report is returned
 	r1 := report.MakeReport()
-	r1.Endpoint.AddNode("foo", report.MakeNode())
+	r1.Endpoint.AddNode("foo", report.MakeNode("foo"))
 	c.Add(ctx, r1)
 	have, err = c.Report(ctx)
 	if err != nil {

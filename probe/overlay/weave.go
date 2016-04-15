@@ -174,7 +174,7 @@ func (w *Weave) Report() (report.Report, error) {
 		WeaveDNSHostname: {ID: WeaveDNSHostname, Label: "Weave DNS Name", From: report.FromLatest, Priority: 18},
 	})
 	for _, peer := range w.statusCache.Router.Peers {
-		r.Overlay.AddNode(report.MakeOverlayNodeID(peer.Name), report.MakeNodeWith(map[string]string{
+		r.Overlay.AddNode(report.MakeOverlayNodeID(peer.Name), report.MakeNodeWith(report.MakeOverlayNodeID(peer.Name), map[string]string{
 			WeavePeerName:     peer.Name,
 			WeavePeerNickName: peer.NickName,
 		}))

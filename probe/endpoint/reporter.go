@@ -107,9 +107,9 @@ func (r *Reporter) Report() (report.Report, error) {
 
 	// Consult the flowWalker for short-live connections
 	{
-		extraNodeInfo := report.MakeNode().WithLatests(map[string]string{
+		extraNodeInfo := map[string]string{
 			Conntracked: "true",
-		})
+		}
 		r.flowWalker.walkFlows(func(f flow) {
 			tuple := fourTuple{
 				f.Original.Layer3.SrcIP,
@@ -118,7 +118,7 @@ func (r *Reporter) Report() (report.Report, error) {
 				uint16(f.Original.Layer4.DstPort),
 			}
 			seenTuples[tuple.key()] = tuple
-			r.addConnection(&rpt, tuple, &extraNodeInfo, &extraNodeInfo)
+			r.addConnection(&rpt, tuple, extraNodeInfo, extraNodeInfo)
 		})
 	}
 
@@ -127,9 +127,6 @@ func (r *Reporter) Report() (report.Report, error) {
 		if err != nil {
 			return rpt, err
 		}
-		extraNodeInfo := report.MakeNode().WithLatests(map[string]string{
-			Procspied: "true",
-		})
 		for conn := conns.Next(); conn != nil; conn = conns.Next() {
 			var (
 				tuple = fourTuple{
@@ -138,13 +135,12 @@ func (r *Reporter) Report() (report.Report, error) {
 					conn.LocalPort,
 					conn.RemotePort,
 				}
-				toNodeInfo, fromNodeInfo = extraNodeInfo.Copy(), extraNodeInfo.Copy()
+				toNodeInfo   = map[string]string{Procspied: "true"}
+				fromNodeInfo = map[string]string{Procspied: "true"}
 			)
 			if conn.Proc.PID > 0 {
-				fromNodeInfo = fromNodeInfo.WithLatests(map[string]string{
-					process.PID:       strconv.FormatUint(uint64(conn.Proc.PID), 10),
-					report.HostNodeID: hostNodeID,
-				})
+				fromNodeInfo[process.PID] = strconv.FormatUint(uint64(conn.Proc.PID), 10)
+				fromNodeInfo[report.HostNodeID] = hostNodeID
 			}
 
 			// If we've already seen this connection, we should know the direction
@@ -156,7 +152,7 @@ func (r *Reporter) Report() (report.Report, error) {
 				tuple.reverse()
 				toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
 			}
-			r.addConnection(&rpt, tuple, &fromNodeInfo, &toNodeInfo)
+			r.addConnection(&rpt, tuple, fromNodeInfo, toNodeInfo)
 		}
 	}
 
@@ -164,7 +160,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	return rpt, nil
 }
 
-func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode, extraToNode *report.Node) {
+func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode, extraToNode map[string]string) {
 	// Update endpoint topology
 	if !r.includeProcesses {
 		return
@@ -173,11 +169,11 @@ func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode,
 		fromEndpointNodeID = report.MakeEndpointNodeID(r.hostID, t.fromAddr, strconv.Itoa(int(t.fromPort)))
 		toEndpointNodeID   = report.MakeEndpointNodeID(r.hostID, t.toAddr, strconv.Itoa(int(t.toPort)))
 
-		fromNode = report.MakeNodeWith(map[string]string{
+		fromNode = report.MakeNodeWith(fromEndpointNodeID, map[string]string{
 			Addr: t.fromAddr,
 			Port: strconv.Itoa(int(t.fromPort)),
 		}).WithEdge(toEndpointNodeID, report.EdgeMetadata{})
-		toNode = report.MakeNodeWith(map[string]string{
+		toNode = report.MakeNodeWith(toEndpointNodeID, map[string]string{
 			Addr: t.toAddr,
 			Port: strconv.Itoa(int(t.toPort)),
 		})
@@ -190,10 +186,10 @@ func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode,
 	}
 
 	if extraFromNode != nil {
-		fromNode = fromNode.Merge(*extraFromNode)
+		fromNode = fromNode.WithLatests(extraFromNode)
 	}
 	if extraToNode != nil {
-		toNode = toNode.Merge(*extraToNode)
+		toNode = toNode.WithLatests(extraToNode)
 	}
 	rpt.Endpoint = rpt.Endpoint.AddNode(fromEndpointNodeID, fromNode)
 	rpt.Endpoint = rpt.Endpoint.AddNode(toEndpointNodeID, toNode)

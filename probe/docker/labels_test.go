@@ -14,7 +14,7 @@ func TestLabels(t *testing.T) {
 		"foo1": "bar1",
 		"foo2": "bar2",
 	}
-	nmd := report.MakeNode()
+	nmd := report.MakeNode("foo1")
 
 	nmd = docker.AddLabels(nmd, want)
 	have := docker.ExtractLabels(nmd)

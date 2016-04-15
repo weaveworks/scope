@@ -79,7 +79,7 @@ func (p *pod) State() string {
 }
 
 func (p *pod) GetNode() report.Node {
-	n := report.MakeNodeWith(map[string]string{
+	n := report.MakeNodeWith(report.MakePodNodeID(p.Namespace(), p.Name()), map[string]string{
 		PodID:           p.ID(),
 		PodName:         p.Name(),
 		Namespace:       p.Namespace(),

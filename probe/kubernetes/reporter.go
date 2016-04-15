@@ -88,7 +88,7 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 		pods = pods.AddNode(nodeID, p.GetNode())
 
 		for _, containerID := range p.ContainerIDs() {
-			container := report.MakeNodeWith(map[string]string{
+			container := report.MakeNodeWith(report.MakeContainerNodeID(containerID), map[string]string{
 				PodID:              p.ID(),
 				Namespace:          p.Namespace(),
 				docker.ContainerID: containerID,

@@ -117,7 +117,7 @@ var (
 				// Node is arbitrary. We're free to put only precisely what we
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
-				Client54001NodeID: report.MakeNode().WithID(Client54001NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
+				Client54001NodeID: report.MakeNode(Client54001NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					endpoint.Addr:      ClientIP,
 					endpoint.Port:      ClientPort54001,
 					process.PID:        Client1PID,
@@ -128,7 +128,7 @@ var (
 					EgressByteCount:   newu64(100),
 				}),
 
-				Client54002NodeID: report.MakeNode().WithID(Client54002NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
+				Client54002NodeID: report.MakeNode(Client54002NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					endpoint.Addr:      ClientIP,
 					endpoint.Port:      ClientPort54002,
 					process.PID:        Client2PID,
@@ -139,7 +139,7 @@ var (
 					EgressByteCount:   newu64(200),
 				}),
 
-				Server80NodeID: report.MakeNode().WithID(Server80NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
+				Server80NodeID: report.MakeNode(Server80NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					endpoint.Addr:      ServerIP,
 					endpoint.Port:      ServerPort,
 					process.PID:        ServerPID,
@@ -147,7 +147,7 @@ var (
 					endpoint.Procspied: True,
 				}),
 
-				NonContainerNodeID: report.MakeNode().WithID(NonContainerNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
+				NonContainerNodeID: report.MakeNode(NonContainerNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					endpoint.Addr:      ServerIP,
 					endpoint.Port:      NonContainerClientPort,
 					process.PID:        NonContainerPID,
@@ -156,7 +156,7 @@ var (
 				}).WithAdjacent(GoogleEndpointNodeID),
 
 				// Probe pseudo nodes
-				UnknownClient1NodeID: report.MakeNode().WithID(UnknownClient1NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
+				UnknownClient1NodeID: report.MakeNode(UnknownClient1NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					endpoint.Addr:      UnknownClient1IP,
 					endpoint.Port:      UnknownClient1Port,
 					endpoint.Procspied: True,
@@ -165,7 +165,7 @@ var (
 					EgressByteCount:   newu64(300),
 				}),
 
-				UnknownClient2NodeID: report.MakeNode().WithID(UnknownClient2NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
+				UnknownClient2NodeID: report.MakeNode(UnknownClient2NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					endpoint.Addr:      UnknownClient2IP,
 					endpoint.Port:      UnknownClient2Port,
 					endpoint.Procspied: True,
@@ -174,7 +174,7 @@ var (
 					EgressByteCount:   newu64(400),
 				}),
 
-				UnknownClient3NodeID: report.MakeNode().WithID(UnknownClient3NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
+				UnknownClient3NodeID: report.MakeNode(UnknownClient3NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					endpoint.Addr:      UnknownClient3IP,
 					endpoint.Port:      UnknownClient3Port,
 					endpoint.Procspied: True,
@@ -183,7 +183,7 @@ var (
 					EgressByteCount:   newu64(500),
 				}),
 
-				RandomClientNodeID: report.MakeNode().WithID(RandomClientNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
+				RandomClientNodeID: report.MakeNode(RandomClientNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					endpoint.Addr:      RandomClientIP,
 					endpoint.Port:      RandomClientPort,
 					endpoint.Procspied: True,
@@ -192,7 +192,7 @@ var (
 					EgressByteCount:   newu64(600),
 				}),
 
-				GoogleEndpointNodeID: report.MakeNode().WithID(GoogleEndpointNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
+				GoogleEndpointNodeID: report.MakeNode(GoogleEndpointNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					endpoint.Addr:      GoogleIP,
 					endpoint.Port:      GooglePort,
 					endpoint.Procspied: True,
@@ -201,12 +201,13 @@ var (
 		},
 		Process: report.Topology{
 			Nodes: report.Nodes{
-				ClientProcess1NodeID: report.MakeNodeWith(map[string]string{
+				ClientProcess1NodeID: report.MakeNodeWith(ClientProcess1NodeID, map[string]string{
 					process.PID:        Client1PID,
 					process.Name:       Client1Name,
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
-				}).WithID(ClientProcess1NodeID).WithTopology(report.Process).WithParents(report.EmptySets.
+				}).
+					WithTopology(report.Process).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("container", report.MakeStringSet(ClientContainerNodeID)).
 					Add("container_image", report.MakeStringSet(ClientContainerImageNodeID)),
@@ -214,31 +215,34 @@ var (
 					process.CPUUsage:    ClientProcess1CPUMetric,
 					process.MemoryUsage: ClientProcess1MemoryMetric,
 				}),
-				ClientProcess2NodeID: report.MakeNodeWith(map[string]string{
+				ClientProcess2NodeID: report.MakeNodeWith(ClientProcess2NodeID, map[string]string{
 					process.PID:        Client2PID,
 					process.Name:       Client2Name,
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
-				}).WithID(ClientProcess2NodeID).WithTopology(report.Process).WithParents(report.EmptySets.
+				}).
+					WithTopology(report.Process).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("container", report.MakeStringSet(ClientContainerNodeID)).
 					Add("container_image", report.MakeStringSet(ClientContainerImageNodeID)),
 				),
-				ServerProcessNodeID: report.MakeNodeWith(map[string]string{
+				ServerProcessNodeID: report.MakeNodeWith(ServerProcessNodeID, map[string]string{
 					process.PID:        ServerPID,
 					process.Name:       ServerName,
 					docker.ContainerID: ServerContainerID,
 					report.HostNodeID:  ServerHostNodeID,
-				}).WithID(ServerProcessNodeID).WithTopology(report.Process).WithParents(report.EmptySets.
+				}).
+					WithTopology(report.Process).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
 					Add("container", report.MakeStringSet(ServerContainerNodeID)).
 					Add("container_image", report.MakeStringSet(ServerContainerImageNodeID)),
 				),
-				NonContainerProcessNodeID: report.MakeNodeWith(map[string]string{
+				NonContainerProcessNodeID: report.MakeNodeWith(NonContainerProcessNodeID, map[string]string{
 					process.PID:       NonContainerPID,
 					process.Name:      NonContainerName,
 					report.HostNodeID: ServerHostNodeID,
-				}).WithID(NonContainerProcessNodeID).WithTopology(report.Process).WithParents(report.EmptySets.
+				}).
+					WithTopology(report.Process).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)),
 				),
 			},
@@ -247,17 +251,20 @@ var (
 		},
 		Container: report.Topology{
 			Nodes: report.Nodes{
-				ClientContainerNodeID: report.MakeNodeWith(map[string]string{
-					docker.ContainerID:                            ClientContainerID,
-					docker.ContainerName:                          ClientContainerName,
-					docker.ImageID:                                ClientContainerImageID,
-					report.HostNodeID:                             ClientHostNodeID,
-					docker.LabelPrefix + "io.kubernetes.pod.name": ClientPodID,
-					kubernetes.PodID:                              ClientPodID,
-					kubernetes.Namespace:                          KubernetesNamespace,
-					docker.ContainerState:                         docker.StateRunning,
-					docker.ContainerStateHuman:                    docker.StateRunning,
-				}).WithID(ClientContainerNodeID).WithTopology(report.Container).WithParents(report.EmptySets.
+				ClientContainerNodeID: report.MakeNodeWith(
+
+					ClientContainerNodeID, map[string]string{
+						docker.ContainerID:                            ClientContainerID,
+						docker.ContainerName:                          ClientContainerName,
+						docker.ImageID:                                ClientContainerImageID,
+						report.HostNodeID:                             ClientHostNodeID,
+						docker.LabelPrefix + "io.kubernetes.pod.name": ClientPodID,
+						kubernetes.PodID:                              ClientPodID,
+						kubernetes.Namespace:                          KubernetesNamespace,
+						docker.ContainerState:                         docker.StateRunning,
+						docker.ContainerStateHuman:                    docker.StateRunning,
+					}).
+					WithTopology(report.Container).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("container_image", report.MakeStringSet(ClientContainerImageNodeID)).
 					Add("pod", report.MakeStringSet(ClientPodID)),
@@ -265,20 +272,23 @@ var (
 					docker.CPUTotalUsage: ClientContainerCPUMetric,
 					docker.MemoryUsage:   ClientContainerMemoryMetric,
 				}),
-				ServerContainerNodeID: report.MakeNodeWith(map[string]string{
-					docker.ContainerID:                                        ServerContainerID,
-					docker.ContainerName:                                      "task-name-5-server-aceb93e2f2b797caba01",
-					docker.ContainerState:                                     docker.StateRunning,
-					docker.ContainerStateHuman:                                docker.StateRunning,
-					docker.ImageID:                                            ServerContainerImageID,
-					report.HostNodeID:                                         ServerHostNodeID,
-					docker.LabelPrefix + detailed.AmazonECSContainerNameLabel: "server",
-					docker.LabelPrefix + "foo1":                               "bar1",
-					docker.LabelPrefix + "foo2":                               "bar2",
-					docker.LabelPrefix + "io.kubernetes.pod.name":             ServerPodID,
-					kubernetes.PodID:                                          ServerPodID,
-					kubernetes.Namespace:                                      KubernetesNamespace,
-				}).WithID(ServerContainerNodeID).WithTopology(report.Container).WithParents(report.EmptySets.
+				ServerContainerNodeID: report.MakeNodeWith(
+
+					ServerContainerNodeID, map[string]string{
+						docker.ContainerID:                                        ServerContainerID,
+						docker.ContainerName:                                      "task-name-5-server-aceb93e2f2b797caba01",
+						docker.ContainerState:                                     docker.StateRunning,
+						docker.ContainerStateHuman:                                docker.StateRunning,
+						docker.ImageID:                                            ServerContainerImageID,
+						report.HostNodeID:                                         ServerHostNodeID,
+						docker.LabelPrefix + detailed.AmazonECSContainerNameLabel: "server",
+						docker.LabelPrefix + "foo1":                               "bar1",
+						docker.LabelPrefix + "foo2":                               "bar2",
+						docker.LabelPrefix + "io.kubernetes.pod.name":             ServerPodID,
+						kubernetes.PodID:                                          ServerPodID,
+						kubernetes.Namespace:                                      KubernetesNamespace,
+					}).
+					WithTopology(report.Container).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
 					Add("container_image", report.MakeStringSet(ServerContainerImageNodeID)).
 					Add("pod", report.MakeStringSet(ServerPodID)),
@@ -292,43 +302,51 @@ var (
 		},
 		ContainerImage: report.Topology{
 			Nodes: report.Nodes{
-				ClientContainerImageNodeID: report.MakeNodeWith(map[string]string{
+				ClientContainerImageNodeID: report.MakeNodeWith(ClientContainerImageNodeID, map[string]string{
 					docker.ImageID:    ClientContainerImageID,
 					docker.ImageName:  ClientContainerImageName,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithParents(report.EmptySets.
-					Add("host", report.MakeStringSet(ClientHostNodeID)),
-				).WithID(ClientContainerImageNodeID).WithTopology(report.ContainerImage),
-				ServerContainerImageNodeID: report.MakeNodeWith(map[string]string{
+				}).
+					WithParents(report.EmptySets.
+						Add("host", report.MakeStringSet(ClientHostNodeID)),
+					).WithTopology(report.ContainerImage),
+				ServerContainerImageNodeID: report.MakeNodeWith(ServerContainerImageNodeID, map[string]string{
 					docker.ImageID:              ServerContainerImageID,
 					docker.ImageName:            ServerContainerImageName,
 					report.HostNodeID:           ServerHostNodeID,
 					docker.LabelPrefix + "foo1": "bar1",
 					docker.LabelPrefix + "foo2": "bar2",
-				}).WithParents(report.EmptySets.
-					Add("host", report.MakeStringSet(ServerHostNodeID)),
-				).WithID(ServerContainerImageNodeID).WithTopology(report.ContainerImage),
+				}).
+					WithParents(report.EmptySets.
+						Add("host", report.MakeStringSet(ServerHostNodeID)),
+					).WithTopology(report.ContainerImage),
 			},
 			MetadataTemplates: docker.ContainerImageMetadataTemplates,
 		},
 		Host: report.Topology{
 			Nodes: report.Nodes{
-				ClientHostNodeID: report.MakeNodeWith(map[string]string{
-					"host_name":       ClientHostName,
-					"os":              "Linux",
-					report.HostNodeID: ClientHostNodeID,
-				}).WithID(ClientHostNodeID).WithTopology(report.Host).WithSets(report.EmptySets.
+				ClientHostNodeID: report.MakeNodeWith(
+
+					ClientHostNodeID, map[string]string{
+						"host_name":       ClientHostName,
+						"os":              "Linux",
+						report.HostNodeID: ClientHostNodeID,
+					}).
+					WithTopology(report.Host).WithSets(report.EmptySets.
 					Add(host.LocalNetworks, report.MakeStringSet("10.10.10.0/24")),
 				).WithMetrics(report.Metrics{
 					host.CPUUsage:    ClientHostCPUMetric,
 					host.MemoryUsage: ClientHostMemoryMetric,
 					host.Load1:       ClientHostLoad1Metric,
 				}),
-				ServerHostNodeID: report.MakeNodeWith(map[string]string{
-					"host_name":       ServerHostName,
-					"os":              "Linux",
-					report.HostNodeID: ServerHostNodeID,
-				}).WithID(ServerHostNodeID).WithTopology(report.Host).WithSets(report.EmptySets.
+				ServerHostNodeID: report.MakeNodeWith(
+
+					ServerHostNodeID, map[string]string{
+						"host_name":       ServerHostName,
+						"os":              "Linux",
+						report.HostNodeID: ServerHostNodeID,
+					}).
+					WithTopology(report.Host).WithSets(report.EmptySets.
 					Add(host.LocalNetworks, report.MakeStringSet("10.10.10.0/24")),
 				).WithMetrics(report.Metrics{
 					host.CPUUsage:    ServerHostCPUMetric,
@@ -341,24 +359,30 @@ var (
 		},
 		Pod: report.Topology{
 			Nodes: report.Nodes{
-				ClientPodNodeID: report.MakeNodeWith(map[string]string{
-					kubernetes.PodID:           ClientPodID,
-					kubernetes.PodName:         "pong-a",
-					kubernetes.Namespace:       KubernetesNamespace,
-					kubernetes.PodContainerIDs: ClientContainerID,
-					kubernetes.ServiceIDs:      ServiceID,
-				}).WithID(ClientPodNodeID).WithTopology(report.Pod).WithParents(report.EmptySets.
+				ClientPodNodeID: report.MakeNodeWith(
+
+					ClientPodNodeID, map[string]string{
+						kubernetes.PodID:           ClientPodID,
+						kubernetes.PodName:         "pong-a",
+						kubernetes.Namespace:       KubernetesNamespace,
+						kubernetes.PodContainerIDs: ClientContainerID,
+						kubernetes.ServiceIDs:      ServiceID,
+					}).
+					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("service", report.MakeStringSet(ServiceID)),
 				),
-				ServerPodNodeID: report.MakeNodeWith(map[string]string{
-					kubernetes.PodID:           ServerPodID,
-					kubernetes.PodName:         "pong-b",
-					kubernetes.Namespace:       KubernetesNamespace,
-					kubernetes.PodState:        "running",
-					kubernetes.PodContainerIDs: ServerContainerID,
-					kubernetes.ServiceIDs:      ServiceID,
-				}).WithID(ServerPodNodeID).WithTopology(report.Pod).WithParents(report.EmptySets.
+				ServerPodNodeID: report.MakeNodeWith(
+
+					ServerPodNodeID, map[string]string{
+						kubernetes.PodID:           ServerPodID,
+						kubernetes.PodName:         "pong-b",
+						kubernetes.Namespace:       KubernetesNamespace,
+						kubernetes.PodState:        "running",
+						kubernetes.PodContainerIDs: ServerContainerID,
+						kubernetes.ServiceIDs:      ServiceID,
+					}).
+					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
 					Add("service", report.MakeStringSet(ServiceID)),
 				),
@@ -367,11 +391,14 @@ var (
 		},
 		Service: report.Topology{
 			Nodes: report.Nodes{
-				ServiceNodeID: report.MakeNodeWith(map[string]string{
-					kubernetes.ServiceID:   ServiceID,
-					kubernetes.ServiceName: "pongservice",
-					kubernetes.Namespace:   "ping",
-				}).WithID(ServiceNodeID).WithTopology(report.Service),
+				ServiceNodeID: report.MakeNodeWith(
+
+					ServiceNodeID, map[string]string{
+						kubernetes.ServiceID:   ServiceID,
+						kubernetes.ServiceName: "pongservice",
+						kubernetes.Namespace:   "ping",
+					}).
+					WithTopology(report.Service),
 			},
 		},
 		Sampling: report.Sampling{
