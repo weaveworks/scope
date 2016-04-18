@@ -219,7 +219,20 @@ func TestRegistryLoadsExistingPluginsEvenWhenOneFails(t *testing.T) {
 	defer r.Close()
 
 	r.Report()
-	checkLoadedPluginIDs(t, r.ForEach, []string{"", "testPlugin"})
+	checkLoadedPlugins(t, r.ForEach, []xfer.PluginSpec{
+		{
+			ID:     "aFailure",
+			Label:  "aFailure",
+			Status: "error: plugin returned non-200 status code: 500 Internal Server Error",
+		},
+		{
+			ID:         "testPlugin",
+			Label:      "testPlugin",
+			Interfaces: []string{"reporter"},
+			APIVersion: "1",
+			Status:     "ok",
+		},
+	})
 }
 
 func TestRegistryDiscoversNewPlugins(t *testing.T) {
@@ -412,8 +425,6 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 
 	r.Report()
 	checkLoadedPlugins(t, r.ForEach, []xfer.PluginSpec{
-		{ID: ""},
-		{ID: ""},
 		{
 			ID:         "noInterface",
 			Label:      "noInterface",
@@ -424,6 +435,16 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 			ID:         "noLabel",
 			Interfaces: []string{"reporter"},
 			Status:     `error: spec must contain a label`,
+		},
+		{
+			ID:     "non200ResponseCode",
+			Label:  "non200ResponseCode",
+			Status: "error: plugin returned non-200 status code: 500 Internal Server Error",
+		},
+		{
+			ID:     "nonJSONResponseBody",
+			Label:  "nonJSONResponseBody",
+			Status: "error: decoding error: [pos 4]: json: expecting ull: got otJ",
 		},
 		{
 			ID:         "okPlugin",
@@ -438,5 +459,45 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 			APIVersion: "foo",
 			Status:     `error: incorrect API version: expected "", got "foo"`,
 		},
+	})
+}
+
+func TestRegistryRejectsPluginResponsesWhichAreTooLarge(t *testing.T) {
+	description := ""
+	for i := 0; i < 129; i++ {
+		description += "a"
+	}
+	response := fmt.Sprintf(
+		`{
+			"Plugins": [
+				{
+					"id": "foo",
+					"label": "foo",
+					"description": %q,
+					"interfaces": ["reporter"]
+				}
+			]
+		}`,
+		description,
+	)
+	setup(t, mockPlugin{t: t, Name: "foo", Handler: stringHandler(http.StatusOK, response)}.file())
+	oldMaxResponseBytes := maxResponseBytes
+	maxResponseBytes = 128
+
+	defer func() {
+		maxResponseBytes = oldMaxResponseBytes
+		restore(t)
+	}()
+
+	root := "/plugins"
+	r, err := NewRegistry(root, "", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+
+	r.Report()
+	checkLoadedPlugins(t, r.ForEach, []xfer.PluginSpec{
+		{ID: "foo", Label: "foo", Status: `error: response must be shorter than 50MB`},
 	})
 }
