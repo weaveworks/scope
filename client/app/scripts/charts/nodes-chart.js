@@ -153,6 +153,7 @@ export default class NodesChart extends React.Component {
             nodeScale={this.state.nodeScale}
             scale={this.state.scale}
             selectedNodeScale={this.state.selectedNodeScale}
+            topCardNode={this.props.topCardNode}
             topologyId={this.props.topologyId} />
         </svg>
       </div>
