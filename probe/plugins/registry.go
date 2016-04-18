@@ -2,11 +2,11 @@ package plugins
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -24,7 +24,9 @@ import (
 
 // Exposed for testing
 var (
-	transport = makeUnixRoundTripper
+	transport                 = makeUnixRoundTripper
+	maxResponseBytes    int64 = 50 * 1024 * 1024
+	errResponseTooLarge       = fmt.Errorf("response must be shorter than 50MB")
 )
 
 const (
@@ -220,8 +222,11 @@ func NewPlugin(ctx context.Context, socket string, client *http.Client, expected
 		params.Add(k, v)
 	}
 
+	id := strings.TrimSuffix(filepath.Base(socket), filepath.Ext(socket))
+
 	ctx, cancel := context.WithCancel(ctx)
 	return &Plugin{
+		PluginSpec:         xfer.PluginSpec{ID: id, Label: id},
 		context:            ctx,
 		socket:             socket,
 		expectedAPIVersion: expectedAPIVersion,
@@ -234,16 +239,6 @@ func NewPlugin(ctx context.Context, socket string, client *http.Client, expected
 // Report gets the latest report from the plugin
 func (p *Plugin) Report() (result report.Report, err error) {
 	result = report.MakeReport()
-	if err := p.get("/report", p.handshakeMetadata, &result); err != nil {
-		return result, err
-	}
-	if result.Plugins.Size() != 1 {
-		return result, fmt.Errorf("plugins: %s report must contain exactly one plugin (found %d)", p.socket, result.Plugins.Size())
-	}
-
-	key := result.Plugins.Keys()[0]
-	spec, _ := result.Plugins.Lookup(key)
-	p.PluginSpec = spec
 	defer func() {
 		p.setStatus(err)
 		result.Plugins = result.Plugins.Add(p.PluginSpec)
@@ -252,6 +247,17 @@ func (p *Plugin) Report() (result report.Report, err error) {
 			result.Plugins = xfer.MakePluginSpecs(p.PluginSpec)
 		}
 	}()
+
+	if err := p.get("/report", p.handshakeMetadata, &result); err != nil {
+		return result, err
+	}
+	if result.Plugins.Size() != 1 {
+		return result, fmt.Errorf("report must contain exactly one plugin (found %d)", result.Plugins.Size())
+	}
+
+	key := result.Plugins.Keys()[0]
+	spec, _ := result.Plugins.Lookup(key)
+	p.PluginSpec = spec
 
 	foundReporter := false
 	for _, i := range spec.Interfaces {
@@ -294,7 +300,11 @@ func (p *Plugin) get(path string, params url.Values, result interface{}) error {
 		return fmt.Errorf("plugin returned non-200 status code: %s", resp.Status)
 	}
 	defer resp.Body.Close()
-	if err := codec.NewDecoder(io.LimitReader(resp.Body, 50*1024*1024), &codec.JsonHandle{}).Decode(&result); err != nil {
+	err = codec.NewDecoder(MaxBytesReader(resp.Body, maxResponseBytes, errResponseTooLarge), &codec.JsonHandle{}).Decode(&result)
+	if err == errResponseTooLarge {
+		return err
+	}
+	if err != nil {
 		return fmt.Errorf("decoding error: %s", err)
 	}
 	return nil
