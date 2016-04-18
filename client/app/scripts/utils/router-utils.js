@@ -3,6 +3,12 @@ import page from 'page';
 import { route } from '../actions/app-actions';
 import AppStore from '../stores/app-store';
 
+//
+// page.js won't match the routes below if ":state" has a slash in it, so replace those before we
+// load the state into the URL.
+//
+const SLASH_REPLACEMENT = '<SLASH>';
+
 function shouldReplaceState(prevState, nextState) {
   // Opening a new terminal while an existing one is open.
   const terminalToTerminal = (prevState.controlPipe && nextState.controlPipe);
@@ -14,12 +20,12 @@ function shouldReplaceState(prevState, nextState) {
 
 export function updateRoute() {
   const state = AppStore.getAppState();
-  const stateUrl = encodeURIComponent(encodeURIComponent(JSON.stringify(state)));
+  const stateUrl = JSON.stringify(state).replace('/', SLASH_REPLACEMENT);
   const dispatch = false;
   const urlStateString = window.location.hash
     .replace('#!/state/', '')
     .replace('#!/', '') || '{}';
-  const prevState = JSON.parse(decodeURIComponent(decodeURIComponent(urlStateString)));
+  const prevState = JSON.parse(decodeURIComponent(urlStateString.replace(SLASH_REPLACEMENT, '/')));
 
   if (shouldReplaceState(prevState, state)) {
     // Replace the top of the history rather than pushing on a new item.
