@@ -28,8 +28,6 @@ func TestSummaries(t *testing.T) {
 			fixture.ClientProcess2NodeID,
 			fixture.ServerProcessNodeID,
 			fixture.NonContainerProcessNodeID,
-			expected.UnknownPseudoNode1ID,
-			expected.UnknownPseudoNode2ID,
 			render.IncomingInternetID,
 			render.OutgoingInternetID,
 		}

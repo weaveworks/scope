@@ -102,9 +102,10 @@ var (
 				RenderedEndpoints[fixture.NonContainerNodeID],
 			)),
 
-		UnknownPseudoNode1ID: unknownPseudoNode1(fixture.ServerProcessNodeID),
-		UnknownPseudoNode2ID: unknownPseudoNode2(fixture.ServerProcessNodeID),
-
+		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
+		// all non-internet pseudo nodes for now.
+		// UnknownPseudoNode1ID: unknownPseudoNode1(fixture.ServerProcessNodeID),
+		// UnknownPseudoNode2ID: unknownPseudoNode2(fixture.ServerProcessNodeID),
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerProcessNodeID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
@@ -130,8 +131,10 @@ var (
 				RenderedProcesses[fixture.NonContainerProcessNodeID],
 			)),
 
-		UnknownPseudoNode1ID:      unknownPseudoNode1(fixture.ServerName),
-		UnknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerName),
+		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
+		// all non-internet pseudo nodes for now.
+		// UnknownPseudoNode1ID:      unknownPseudoNode1(fixture.ServerName),
+		// UnknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerName),
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerName),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
@@ -224,8 +227,10 @@ var (
 				//RenderedPods[fixture.ServerPodNodeID], #1142
 			)),
 
-		UnknownPseudoNode1ID:      unknownPseudoNode1(fixture.ServerHostNodeID),
-		UnknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerHostNodeID),
+		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
+		// all non-internet pseudo nodes for now.
+		// UnknownPseudoNode1ID:      unknownPseudoNode1(fixture.ServerHostNodeID),
+		// UnknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerHostNodeID),
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerHostNodeID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
