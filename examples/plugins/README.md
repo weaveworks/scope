@@ -1,4 +1,24 @@
-# Scope Plugins
+# Scope Probe Plugins
+
+Scope probe plugins let you insert your own custom metrics into Scope and get them displayed in the UI.
+
+You can find some examples at the
+[the example plugins](https://github.com/weaveworks/scope/tree/master/examples/plugins)
+directory. We currently provide two examples:
+* A
+  [Python plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/http-requests)
+  using [bcc](http://iovisor.github.io/bcc/) to extract incoming HTTP request
+  rates per process, without any application-level instrumentation requirements.
+* A
+  [Go plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/iovisor),
+  using [iostat](https://en.wikipedia.org/wiki/Iostat) to provide host-level CPU IO wait
+  metrics.
+
+The example plugins can be run by calling `make` in their directory.
+This will build the plugin, and immediately run it in the foreground.
+To run the plugin in the background, see the `Makefile` for examples
+of the `docker run ...` command.
+
 
 ## <a id="protocol"></a>Protocol
 
@@ -12,8 +32,6 @@ When a new plugin is detected, the scope probe will begin requesting
 reports from it via `GET /report`.
 
 All plugin endpoints are expected to respond within 500ms, and respond in the JSON format.
-
-For more information see [the example plugins.](https://github.com/weaveworks/scope/tree/master/example/plugins)
 
 ### <a id="report"></a>Report
 

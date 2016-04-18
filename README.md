@@ -259,6 +259,19 @@ kubectl create -f scope-app-svc.yaml # Only if you want to run Scope in Standalo
 kubectl create -f scope-probe-ds.yaml
 ```
 
+## <a name="probe_plugins"></a>Scope Probe Plugins
+
+Scope allows you to create plugins generating custom
+metrics. Those metrics will be displayed in the Scope UI.
+
+Here is an annotated screenshot of Scope while executing a plugin which extracts
+incoming HTTP request rates of your application without instrumenting it.
+
+<img src="imgs/plugin.png" width="400" alt="Scope Probe plugin screenshot" align="center">
+
+
+You can read more about Scope Probe plugins and find some examples
+[here](https://github.com/weaveworks/scope/tree/master/examples/plugins).
 
 ## <a name="developing"></a>Developing
 
