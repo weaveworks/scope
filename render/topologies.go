@@ -71,6 +71,7 @@ var ProcessNameRenderer = MakeMap(
 var ContainerRenderer = MakeReduce(
 	MakeSilentFilter(
 		func(n report.Node) bool {
+			// Drop unconnected pseudo nodes (could appear due to filtering)
 			_, isConnected := n.Latest.Lookup(IsConnected)
 			return n.Topology != Pseudo || isConnected
 		},
@@ -225,6 +226,7 @@ var HostRenderer = MakeReduce(
 var PodRenderer = MakeReduce(
 	MakeSilentFilter(
 		func(n report.Node) bool {
+			// Drop unconnected pseudo nodes (could appear due to filtering)
 			_, isConnected := n.Latest.Lookup(IsConnected)
 			return n.Topology != Pseudo || isConnected
 		},

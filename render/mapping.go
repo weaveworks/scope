@@ -175,7 +175,10 @@ func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
 		// internet node
 		node = theInternetNode(n)
 	} else {
-		node = NewDerivedPseudoNode(MakePseudoNodeID(addr), n)
+		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
+		// all non-internet pseudo nodes for now.
+		// node = NewDerivedPseudoNode(MakePseudoNodeID(addr), n)
+		return report.Nodes{}
 	}
 	return report.Nodes{node.ID: node}
 }
@@ -221,14 +224,9 @@ func MapEndpoint2Process(n report.Node, local report.Networks) report.Nodes {
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapProcess2Container(n report.Node, _ report.Networks) report.Nodes {
-	// Propagate the internet pseudo node
-	if strings.HasSuffix(n.ID, TheInternetID) {
-		return report.Nodes{n.ID: n}
-	}
-
-	// Don't propagate non-internet pseudo nodes
+	// Propagate pseudo nodes
 	if n.Topology == Pseudo {
-		return report.Nodes{}
+		return report.Nodes{n.ID: n}
 	}
 
 	// Otherwise, if the process is not in a container, group it
@@ -313,8 +311,7 @@ func ImageNameWithoutVersion(name string) string {
 	return parts[0]
 }
 
-// MapX2Host maps any Nodes to host
-// Nodes.
+// MapX2Host maps any Nodes to host Nodes.
 //
 // If this function is given a node without a hostname
 // (including other pseudo nodes), it will drop the node.
