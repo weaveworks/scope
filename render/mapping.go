@@ -265,7 +265,7 @@ func MapProcess2Name(n report.Node, _ report.Networks) report.Nodes {
 		return report.Nodes{}
 	}
 
-	node := NewDerivedNode(name, n).WithTopology(report.Process)
+	node := NewDerivedNode(name, n).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name))
 	node.Latest = node.Latest.Set(process.Name, timestamp, name)
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return report.Nodes{name: node}
@@ -461,7 +461,7 @@ func MapContainer2Hostname(n report.Node, _ report.Networks) report.Nodes {
 		return report.Nodes{}
 	}
 
-	node := NewDerivedNode(id, n)
+	node := NewDerivedNode(id, n).WithTopology(MakeGroupNodeTopology(n.Topology, docker.ContainerHostname))
 	node.Latest = node.Latest.
 		Set(docker.ContainerHostname, timestamp, id).
 		Delete(docker.ContainerName) // TODO(paulbellamy): total hack to render these by hostname instead.

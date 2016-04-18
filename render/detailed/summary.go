@@ -29,6 +29,18 @@ const (
 	MarathonAppIDEnv             = "MARATHON_APP_ID"
 )
 
+var (
+	shapesByTopology = map[string]string{
+		report.Host:           Circle,
+		report.Process:        Square,
+		report.Pod:            Heptagon,
+		report.Service:        Heptagon,
+		report.Container:      Hexagon,
+		report.ContainerImage: Hexagon,
+		render.Pseudo:         Circle,
+	}
+)
+
 // NodeSummaryGroup is a topology-typed group of children for a Node.
 type NodeSummaryGroup struct {
 	ID         string        `json:"id"`
@@ -89,6 +101,9 @@ func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
 	if renderer, ok := renderers[n.Topology]; ok {
 		return renderer(baseNodeSummary(r, n), n)
 	}
+	if strings.HasPrefix(n.Topology, "group:") {
+		return groupNodeSummary(baseNodeSummary(r, n), n)
+	}
 	return NodeSummary{}, false
 }
 
@@ -127,9 +142,13 @@ func (n NodeSummary) Copy() NodeSummary {
 }
 
 func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
+	shape, ok := shapesByTopology[n.Topology]
+	if !ok {
+		shape = Circle
+	}
 	return NodeSummary{
 		ID:        n.ID,
-		Shape:     Circle,
+		Shape:     shape,
 		Linkable:  true,
 		Metadata:  NodeMetadata(r, n),
 		Metrics:   NodeMetrics(r, n),
@@ -142,23 +161,23 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Pseudo = true
 	base.Rank = n.ID
 
-	if template, ok := map[string]struct{ Label, LabelMinor, Shape string }{
-		render.TheInternetID:      {render.InboundMajor, "", Cloud},
-		render.IncomingInternetID: {render.InboundMajor, render.InboundMinor, Cloud},
-		render.OutgoingInternetID: {render.OutboundMajor, render.OutboundMinor, Cloud},
+	if template, ok := map[string]struct{ Label, LabelMinor string }{
+		render.TheInternetID:      {render.InboundMajor, ""},
+		render.IncomingInternetID: {render.InboundMajor, render.InboundMinor},
+		render.OutgoingInternetID: {render.OutboundMajor, render.OutboundMinor},
 	}[n.ID]; ok {
 		base.Label = template.Label
 		base.LabelMinor = template.LabelMinor
-		base.Shape = template.Shape
+		base.Shape = Cloud
 		return base, true
 	}
 
 	// try rendering it as an uncontained node
 	if strings.HasPrefix(n.ID, render.MakePseudoNodeID(render.UncontainedID)) {
 		base.Label = render.UncontainedMajor
+		base.LabelMinor = report.ExtractHostID(n)
 		base.Shape = Square
 		base.Stack = true
-		base.LabelMinor = report.ExtractHostID(n)
 		return base, true
 	}
 
@@ -174,6 +193,7 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	// try rendering it as an endpoint
 	if addr, ok := n.Latest.Lookup(endpoint.Addr); ok {
 		base.Label = addr
+		base.Shape = Circle
 		return base, true
 	}
 
@@ -183,25 +203,15 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 func processNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Label, _ = n.Latest.Lookup(process.Name)
 	base.Rank, _ = n.Latest.Lookup(process.Name)
-	base.Shape = Square
 
-	if p, ok := n.Counters.Lookup(report.Process); ok {
-		base.Stack = true
-		if p == 1 {
-			base.LabelMinor = fmt.Sprintf("%d process", p)
-		} else {
-			base.LabelMinor = fmt.Sprintf("%d processes", p)
-		}
+	pid, ok := n.Latest.Lookup(process.PID)
+	if !ok {
+		return NodeSummary{}, false
+	}
+	if containerName, ok := n.Latest.Lookup(docker.ContainerName); ok {
+		base.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(n), containerName, pid)
 	} else {
-		pid, ok := n.Latest.Lookup(process.PID)
-		if !ok {
-			return NodeSummary{}, false
-		}
-		if containerName, ok := n.Latest.Lookup(docker.ContainerName); ok {
-			base.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(n), containerName, pid)
-		} else {
-			base.LabelMinor = fmt.Sprintf("%s (%s)", report.ExtractHostID(n), pid)
-		}
+		base.LabelMinor = fmt.Sprintf("%s (%s)", report.ExtractHostID(n), pid)
 	}
 
 	_, isConnected := n.Latest.Lookup(render.IsConnected)
@@ -211,23 +221,12 @@ func processNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 
 func containerNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Label = getRenderableContainerName(n)
-
-	if c, ok := n.Counters.Lookup(report.Container); ok {
-		base.Stack = true
-		if c == 1 {
-			base.LabelMinor = fmt.Sprintf("%d container", c)
-		} else {
-			base.LabelMinor = fmt.Sprintf("%d containers", c)
-		}
-	} else {
-		base.LabelMinor = report.ExtractHostID(n)
-	}
+	base.LabelMinor = report.ExtractHostID(n)
 
 	if imageName, ok := n.Latest.Lookup(docker.ImageName); ok {
 		base.Rank = render.ImageNameWithoutVersion(imageName)
 	}
 
-	base.Shape = Hexagon
 	return base, true
 }
 
@@ -240,7 +239,6 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 	imageNameWithoutVersion := render.ImageNameWithoutVersion(imageName)
 	base.Label = imageNameWithoutVersion
 	base.Rank = imageNameWithoutVersion
-	base.Shape = Hexagon
 	base.Stack = true
 
 	if base.Label == ImageNameNone {
@@ -250,13 +248,7 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 		}
 	}
 
-	if i, ok := n.Counters.Lookup(report.ContainerImage); ok {
-		if i == 1 {
-			base.LabelMinor = fmt.Sprintf("%d image", i)
-		} else {
-			base.LabelMinor = fmt.Sprintf("%d images", i)
-		}
-	} else if c, ok := n.Counters.Lookup(report.Container); ok {
+	if c, ok := n.Counters.Lookup(report.Container); ok {
 		if c == 1 {
 			base.LabelMinor = fmt.Sprintf("%d container", c)
 		} else {
@@ -269,16 +261,8 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Label, _ = n.Latest.Lookup(kubernetes.PodName)
 	base.Rank, _ = n.Latest.Lookup(kubernetes.PodID)
-	base.Shape = Heptagon
 
-	if p, ok := n.Counters.Lookup(report.Pod); ok {
-		base.Stack = true
-		if p == 1 {
-			base.LabelMinor = fmt.Sprintf("%d pod", p)
-		} else {
-			base.LabelMinor = fmt.Sprintf("%d pods", p)
-		}
-	} else if c, ok := n.Counters.Lookup(report.Container); ok {
+	if c, ok := n.Counters.Lookup(report.Container); ok {
 		if c == 1 {
 			base.LabelMinor = fmt.Sprintf("%d container", c)
 		} else {
@@ -292,7 +276,6 @@ func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 func serviceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Label, _ = n.Latest.Lookup(kubernetes.ServiceName)
 	base.Rank, _ = n.Latest.Lookup(kubernetes.ServiceID)
-	base.Shape = Heptagon
 	base.Stack = true
 
 	// Services are always just a group of pods, so there's no counting multiple
@@ -320,16 +303,38 @@ func hostNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 		base.Label = hostname
 	}
 
-	if h, ok := n.Counters.Lookup(report.Host); ok {
-		base.Stack = true
-		if h == 1 {
-			base.LabelMinor = fmt.Sprintf("%d host", h)
-		} else {
-			base.LabelMinor = fmt.Sprintf("%d hosts", h)
+	return base, true
+}
+
+// groupNodeSummary renders the summary for a group node. n.Topology is
+// expected to be of the form: group:container:hostname
+func groupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+	parts := strings.Split(n.Topology, ":")
+	if len(parts) != 3 {
+		return NodeSummary{}, false
+	}
+
+	label, ok := n.Latest.Lookup(parts[2])
+	if !ok {
+		return NodeSummary{}, false
+	}
+	base.Label, base.Rank = label, label
+
+	if count, ok := n.Counters.Lookup(parts[1]); ok {
+		base.LabelMinor = fmt.Sprintf("%d %s", count, parts[1])
+		if count != 1 {
+			if strings.HasSuffix(parts[1], "s") {
+				base.LabelMinor += "es"
+			} else {
+				base.LabelMinor += "s"
+			}
 		}
 	}
 
-	base.Shape = Circle
+	if base.Shape, ok = shapesByTopology[parts[1]]; !ok {
+		base.Shape = Circle
+	}
+	base.Stack = true
 	return base, true
 }
 

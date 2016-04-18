@@ -168,6 +168,20 @@ func TestMakeNodeSummary(t *testing.T) {
 				Adjacency: report.MakeIDList(fixture.ServerHostNodeID),
 			},
 		},
+		{
+			name:  "group node rendering",
+			input: expected.RenderedProcessNames[fixture.ServerName],
+			ok:    true,
+			want: detailed.NodeSummary{
+				ID:         "apache",
+				Label:      "apache",
+				LabelMinor: "1 process",
+				Rank:       "apache",
+				Shape:      "square",
+				Stack:      true,
+				Linkable:   true,
+			},
+		},
 	}
 	for _, testcase := range testcases {
 		have, ok := detailed.MakeNodeSummary(fixture.Report, testcase.input)
