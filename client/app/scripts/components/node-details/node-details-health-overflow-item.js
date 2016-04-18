@@ -1,6 +1,5 @@
 import React from 'react';
 
-import metricFeeder from '../../hoc/metric-feeder';
 import { formatMetric } from '../../utils/string-utils';
 
 function NodeDetailsHealthOverflowItem(props) {
@@ -14,4 +13,4 @@ function NodeDetailsHealthOverflowItem(props) {
   );
 }
 
-export default metricFeeder(NodeDetailsHealthOverflowItem);
+export default NodeDetailsHealthOverflowItem;
