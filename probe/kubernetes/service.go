@@ -13,6 +13,7 @@ const (
 	ServiceID      = "kubernetes_service_id"
 	ServiceName    = "kubernetes_service_name"
 	ServiceCreated = "kubernetes_service_created"
+	ServiceIP      = "kubernetes_service_ip"
 )
 
 // Service represents a Kubernetes service
@@ -58,5 +59,6 @@ func (s *service) GetNode() report.Node {
 		ServiceName:    s.Name(),
 		ServiceCreated: s.ObjectMeta.CreationTimestamp.Format(time.RFC822),
 		Namespace:      s.Namespace(),
+		ServiceIP:      s.Spec.ClusterIP,
 	})
 }
