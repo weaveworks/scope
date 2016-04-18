@@ -16,6 +16,7 @@ export default class NodesChartElements extends React.Component {
           layoutPrecision={props.layoutPrecision} />
         <NodesChartNodes layoutNodes={props.nodes} selectedNodeId={props.selectedNodeId}
           selectedMetric={props.selectedMetric}
+          topCardNode={props.topCardNode}
           highlightedNodeIds={props.highlightedNodeIds}
           hasSelectedNode={props.hasSelectedNode}
           adjacentNodes={props.adjacentNodes}

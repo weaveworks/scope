@@ -1,6 +1,7 @@
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import reactMixin from 'react-mixin';
+import { fromJS } from 'immutable';
 
 import NodeContainer from './node-container';
 
@@ -8,7 +9,7 @@ export default class NodesChartNodes extends React.Component {
   render() {
     const {adjacentNodes, highlightedNodeIds,
       layoutNodes, layoutPrecision, nodeScale, onNodeClick, scale,
-      selectedMetric, selectedNodeScale, selectedNodeId, topologyId} = this.props;
+      selectedMetric, selectedNodeScale, selectedNodeId, topologyId, topCardNode} = this.props;
 
     const zoomScale = scale;
 
@@ -32,11 +33,13 @@ export default class NodesChartNodes extends React.Component {
     };
 
     // TODO: think about pulling this up into the store.
-    const metric = node => (
-      node.get('metrics') && node.get('metrics')
+    const metric = node => {
+      const isHighlighted = topCardNode && topCardNode.details && topCardNode.id === node.get('id');
+      const sourceNode = isHighlighted ? fromJS(topCardNode.details) : node;
+      return sourceNode.get('metrics') && sourceNode.get('metrics')
         .filter(m => m.get('id') === selectedMetric)
-        .first()
-    );
+        .first();
+    };
 
     const nodesToRender = layoutNodes.toIndexedSeq()
       .map(setHighlighted)

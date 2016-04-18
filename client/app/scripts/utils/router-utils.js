@@ -14,12 +14,12 @@ function shouldReplaceState(prevState, nextState) {
 
 export function updateRoute() {
   const state = AppStore.getAppState();
-  const stateUrl = JSON.stringify(state);
+  const stateUrl = encodeURIComponent(encodeURIComponent(JSON.stringify(state)));
   const dispatch = false;
   const urlStateString = window.location.hash
     .replace('#!/state/', '')
     .replace('#!/', '') || '{}';
-  const prevState = JSON.parse(decodeURIComponent(urlStateString));
+  const prevState = JSON.parse(decodeURIComponent(decodeURIComponent(urlStateString)));
 
   if (shouldReplaceState(prevState, state)) {
     // Replace the top of the history rather than pushing on a new item.

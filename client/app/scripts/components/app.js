@@ -122,7 +122,8 @@ export default class App extends React.Component {
   }
 
   render() {
-    const {nodeDetails, controlPipe } = this.state;
+    const { nodeDetails, controlPipe } = this.state;
+    const topCardNode = nodeDetails.last();
     const showingDetails = nodeDetails.size > 0;
     const showingTerminal = controlPipe;
     // width of details panel blocking a view
@@ -160,6 +161,7 @@ export default class App extends React.Component {
           detailsWidth={detailsWidth}
           selectedNodeId={this.state.selectedNodeId}
           topMargin={topMargin}
+          topCardNode={topCardNode}
           selectedMetric={this.state.selectedMetric}
           forceRelayout={this.state.forceRelayout}
           topologyOptions={this.state.activeTopologyOptions}
