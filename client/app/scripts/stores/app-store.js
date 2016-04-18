@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import debug from 'debug';
-import { fromJS, List, Map, OrderedMap, Set } from 'immutable';
+import { fromJS, is as isDeepEqual, List, Map, OrderedMap, Set } from 'immutable';
 import { Store } from 'flux/utils';
 
 import AppDispatcher from '../dispatcher/app-dispatcher';
@@ -707,7 +707,12 @@ export class AppStore extends Store {
           controlPipes = controlPipes.clear();
         }
         if (payload.state.nodeDetails) {
-          nodeDetails = makeOrderedMap(payload.state.nodeDetails.map(obj => [obj.id, obj]));
+          const payloadNodeDetails = makeOrderedMap(
+            payload.state.nodeDetails.map(obj => [obj.id, obj]));
+          // check if detail IDs have changed
+          if (!isDeepEqual(nodeDetails.keySeq(), payloadNodeDetails.keySeq())) {
+            nodeDetails = payloadNodeDetails;
+          }
         } else {
           nodeDetails = nodeDetails.clear();
         }
