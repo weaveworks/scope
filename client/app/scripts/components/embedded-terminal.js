@@ -22,7 +22,7 @@ export default function EmeddedTerminal({pipe, details}) {
   // the term.js and creating a new one for the new pipe.
   return (
     <div className="terminal-embedded" style={style}>
-      <Terminal pipe={pipe} titleBarColor={titleBarColor}
+      <Terminal key={pipe.get('id')} pipe={pipe} titleBarColor={titleBarColor}
         statusBarColor={statusBarColor} containerMargin={style.right} title={title} />
     </div>
   );
