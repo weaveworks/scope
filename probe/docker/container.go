@@ -377,6 +377,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	}
 
 	result = AddLabels(result, c.container.Config.Labels)
+	result = AddEnv(result, c.container.Config.Env)
 	result = result.WithMetrics(c.metrics())
 	return result
 }

@@ -26,6 +26,7 @@ const (
 	// Keys we use to render container names
 	AmazonECSContainerNameLabel  = "com.amazonaws.ecs.container-name"
 	KubernetesContainerNameLabel = "io.kubernetes.container.name"
+	MarathonAppIDEnv             = "MARATHON_APP_ID"
 )
 
 // NodeSummaryGroup is a topology-typed group of children for a Node.
@@ -370,6 +371,9 @@ func getRenderableContainerName(nmd report.Node) string {
 		// is only provided by Kubernetes versions >= 1.2 (see
 		// https://github.com/kubernetes/kubernetes/pull/17234/ )
 		docker.LabelPrefix + KubernetesContainerNameLabel,
+		// Marathon doesn't set any Docker labels and this is the only meaningful
+		// attribute we can find to make Scope useful without Mesos plugin
+		docker.EnvPrefix + MarathonAppIDEnv,
 		docker.ContainerName,
 		docker.ContainerHostname,
 	} {
