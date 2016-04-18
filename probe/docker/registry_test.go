@@ -203,9 +203,22 @@ var (
 			},
 		},
 	}
-	apiContainer1 = client.APIContainers{ID: "ping"}
-	apiContainer2 = client.APIContainers{ID: "wiff"}
-	apiImage1     = client.APIImages{ID: "baz", RepoTags: []string{"bang", "not-chosen"}}
+	renamedContainer = &client.Container{
+		ID:    "renamed",
+		Name:  "renamed",
+		Image: "baz",
+		State: client.State{Pid: 1, Running: true},
+		Config: &client.Config{
+			Labels: map[string]string{
+				"foo1": "bar1",
+				"foo2": "bar2",
+			},
+		},
+	}
+	apiContainer1       = client.APIContainers{ID: "ping"}
+	apiContainer2       = client.APIContainers{ID: "wiff"}
+	renamedAPIContainer = client.APIContainers{ID: "renamed"}
+	apiImage1           = client.APIImages{ID: "baz", RepoTags: []string{"bang", "not-chosen"}}
 )
 
 func newMockClient() *mockDockerClient {
@@ -348,6 +361,18 @@ func TestRegistryEvents(t *testing.T) {
 			runtime.Gosched()
 
 			want := []docker.Container{}
+			check(want)
+		}
+
+		{
+			mdc.Lock()
+			mdc.apiContainers = []client.APIContainers{renamedAPIContainer}
+			mdc.containers[renamedContainer.ID] = renamedContainer
+			mdc.Unlock()
+			mdc.send(&client.APIEvents{Status: docker.RenameEvent, ID: renamedContainer.ID})
+			runtime.Gosched()
+
+			want := []docker.Container{&mockContainer{renamedContainer}}
 			check(want)
 		}
 	})
