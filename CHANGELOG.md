@@ -105,7 +105,7 @@ Bug Fixes:
 	[#1136](https://github.com/weaveworks/scope/issues/1136)
 - Opening the terminal doesn't open work for some containers
 	[#1195](https://github.com/weaveworks/scope/issues/1195)
-- Terminals: Try to figure what shell to use instead of simply running `/sh/bin`
+- Terminals: Try to figure what shell to use instead of simply running `/bin/sh`
 	[#1069](https://github.com/weaveworks/scope/pull/1069)
 - Fix embedded logo size for Safari
 	[#1084](https://github.com/weaveworks/scope/pull/1084)
