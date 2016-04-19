@@ -426,7 +426,9 @@ func MapPod2Service(pod report.Node, _ report.Networks) report.Nodes {
 	for _, serviceID := range strings.Fields(ids) {
 		serviceName := strings.TrimPrefix(serviceID, namespace+"/")
 		id := report.MakeServiceNodeID(namespace, serviceName)
-		result[id] = NewDerivedNode(id, pod).WithTopology(report.Service)
+		node := NewDerivedNode(id, pod).WithTopology(report.Service)
+		node.Counters = node.Counters.Add(pod.Topology, 1)
+		result[id] = node
 	}
 	return result
 }
