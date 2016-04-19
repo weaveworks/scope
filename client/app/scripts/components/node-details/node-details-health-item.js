@@ -1,7 +1,6 @@
 import React from 'react';
 
 import Sparkline from '../sparkline';
-import metricFeeder from '../../hoc/metric-feeder';
 import { formatMetric } from '../../utils/string-utils';
 
 function NodeDetailsHealthItem(props) {
@@ -17,4 +16,4 @@ function NodeDetailsHealthItem(props) {
   );
 }
 
-export default metricFeeder(NodeDetailsHealthItem);
+export default NodeDetailsHealthItem;
