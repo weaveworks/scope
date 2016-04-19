@@ -333,9 +333,6 @@ export default class NodesChart extends React.Component {
 
     const stateNodes = this.initNodes(props.nodes, state.nodes);
     const stateEdges = this.initEdges(props.nodes, stateNodes);
-    const nodeMetrics = stateNodes.map(node => makeMap({
-      metrics: node.get('metrics')
-    }));
     const nodeScale = this.getNodeScale(props.nodes, state.width, state.height);
     const nextState = { nodeScale };
 
@@ -356,7 +353,7 @@ export default class NodesChart extends React.Component {
 
     // inject metrics and save coordinates for restore
     const layoutNodes = graph.nodes
-      .mergeDeep(nodeMetrics)
+      .mergeDeep(stateNodes)
       .map(node => node.merge({
         px: node.get('x'),
         py: node.get('y')
