@@ -186,12 +186,6 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				{ID: "docker_container_state_human", Label: "State", Value: "running", Priority: 2},
 				{ID: "docker_image_id", Label: "Image ID", Value: fixture.ServerContainerImageID, Priority: 11},
 			},
-			DockerLabels: []report.MetadataRow{
-				{ID: "label_" + detailed.AmazonECSContainerNameLabel, Label: detailed.AmazonECSContainerNameLabel, Value: `server`},
-				{ID: "label_foo1", Label: "foo1", Value: `bar1`},
-				{ID: "label_foo2", Label: "foo2", Value: `bar2`},
-				{ID: "label_io.kubernetes.pod.name", Label: "io.kubernetes.pod.name", Value: "ping/pong-b"},
-			},
 			Metrics: []report.MetricRow{
 				{
 					ID:       docker.CPUTotalUsage,

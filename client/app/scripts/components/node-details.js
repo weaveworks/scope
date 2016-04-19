@@ -191,11 +191,11 @@ export default class NodeDetails extends React.Component {
             </div>
           )}
 
-          {details.docker_labels && details.docker_labels.length > 0
-            && <div className="node-details-content-section">
-            <div className="node-details-content-section-header">Docker Labels</div>
-            <NodeDetailsLabels rows={details.docker_labels} />
-          </div>}
+          {details.tables && details.tables.length > 0
+            && details.tables.map(table => (<div className="node-details-content-section">
+            <div className="node-details-content-section-header">{table.label}</div>
+            <NodeDetailsLabels rows={table.rows} />
+          </div>))}
         </div>
       </div>
     );

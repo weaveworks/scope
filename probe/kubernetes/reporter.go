@@ -22,6 +22,14 @@ var (
 		ServiceCreated: {ID: ServiceCreated, Label: "Created", From: report.FromLatest, Priority: 3},
 		ServiceIP:      {ID: ServiceIP, Label: "Internal IP", From: report.FromLatest, Priority: 4},
 	}
+
+	PodTableTemplates = report.TableTemplates{
+		PodLabelPrefix: {ID: PodLabelPrefix, Label: "Kubernetes Labels", Prefix: PodLabelPrefix},
+	}
+
+	ServiceTableTemplates = report.TableTemplates{
+		ServiceLabelPrefix: {ID: ServiceLabelPrefix, Label: "Kubernetes Labels", Prefix: ServiceLabelPrefix},
+	}
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
@@ -58,7 +66,9 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 	var (
-		result   = report.MakeTopology().WithMetadataTemplates(ServiceMetadataTemplates)
+		result = report.MakeTopology().
+			WithMetadataTemplates(ServiceMetadataTemplates).
+			WithTableTemplates(ServiceTableTemplates)
 		services = []Service{}
 	)
 	err := r.client.WalkServices(func(s Service) error {
@@ -71,7 +81,9 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 
 func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topology, error) {
 	var (
-		pods       = report.MakeTopology().WithMetadataTemplates(PodMetadataTemplates)
+		pods = report.MakeTopology().
+			WithMetadataTemplates(PodMetadataTemplates).
+			WithTableTemplates(PodTableTemplates)
 		containers = report.MakeTopology()
 		selectors  = map[string]labels.Selector{}
 	)

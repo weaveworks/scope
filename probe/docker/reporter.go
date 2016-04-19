@@ -40,6 +40,15 @@ var (
 		ImageID:          {ID: ImageID, Label: "Image ID", From: report.FromLatest, Truncate: 12, Priority: 1},
 		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: "number", Priority: 2},
 	}
+
+	ContainerTableTemplates = report.TableTemplates{
+		LabelPrefix: {ID: LabelPrefix, Label: "Docker Labels", Prefix: LabelPrefix},
+		EnvPrefix:   {ID: EnvPrefix, Label: "Environment Variables", Prefix: EnvPrefix},
+	}
+
+	ContainerImageTableTemplates = report.TableTemplates{
+		LabelPrefix: {ID: LabelPrefix, Label: "Docker Labels", Prefix: LabelPrefix},
+	}
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
@@ -96,7 +105,8 @@ func (r *Reporter) Report() (report.Report, error) {
 func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	result := report.MakeTopology().
 		WithMetadataTemplates(ContainerMetadataTemplates).
-		WithMetricTemplates(ContainerMetricTemplates)
+		WithMetricTemplates(ContainerMetricTemplates).
+		WithTableTemplates(ContainerTableTemplates)
 	result.Controls.AddControl(report.Control{
 		ID:    StopContainer,
 		Human: "Stop",
@@ -143,7 +153,9 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 }
 
 func (r *Reporter) containerImageTopology() report.Topology {
-	result := report.MakeTopology().WithMetadataTemplates(ContainerImageMetadataTemplates)
+	result := report.MakeTopology().
+		WithMetadataTemplates(ContainerImageMetadataTemplates).
+		WithTableTemplates(ContainerImageTableTemplates)
 
 	r.registry.WalkImages(func(image *docker_client.APIImages) {
 		imageID := trimImageID(image.ID)
@@ -151,7 +163,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 		node := report.MakeNodeWith(nodeID, map[string]string{
 			ImageID: imageID,
 		})
-		node = AddLabels(node, image.Labels)
+		node = node.AddTable(LabelPrefix, image.Labels)
 
 		if len(image.RepoTags) > 0 {
 			node = node.WithLatests(map[string]string{ImageName: image.RepoTags[0]})
