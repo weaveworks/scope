@@ -194,7 +194,7 @@ export default class NodeDetails extends React.Component {
           {details.tables && details.tables.length > 0
             && details.tables.map(table => (<div className="node-details-content-section">
             <div className="node-details-content-section-header">{table.label}</div>
-            <NodeDetailsLabels rows={table.rows} />
+            <NodeDetailsLabels rows={table.rows} key={table.id} />
           </div>))}
         </div>
       </div>
