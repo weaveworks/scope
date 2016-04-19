@@ -16,14 +16,14 @@ import (
 func TestApply(t *testing.T) {
 	var (
 		endpointNodeID = "c"
-		endpointNode   = report.MakeNodeWith(map[string]string{"5": "6"})
+		endpointNode   = report.MakeNodeWith(endpointNodeID, map[string]string{"5": "6"})
 	)
 
 	p := New("", 0, 0, nil)
 	p.AddTagger(NewTopologyTagger())
 
 	r := report.MakeReport()
-	r.Endpoint.AddNode(endpointNodeID, endpointNode)
+	r.Endpoint.AddNode(endpointNode)
 	r = p.tag(r)
 
 	for _, tuple := range []struct {
@@ -31,7 +31,7 @@ func TestApply(t *testing.T) {
 		from report.Topology
 		via  string
 	}{
-		{endpointNode.Merge(report.MakeNode().WithID("c").WithTopology(report.Endpoint)), r.Endpoint, endpointNodeID},
+		{endpointNode.Merge(report.MakeNode("c").WithTopology(report.Endpoint)), r.Endpoint, endpointNodeID},
 	} {
 		if want, have := tuple.want, tuple.from.Nodes[tuple.via]; !reflect.DeepEqual(want, have) {
 			t.Errorf("want %+v, have %+v", want, have)
@@ -78,9 +78,9 @@ func TestProbe(t *testing.T) {
 	defer mtime.NowReset()
 
 	want := report.MakeReport()
-	node := report.MakeNodeWith(map[string]string{"b": "c"})
+	node := report.MakeNodeWith("a", map[string]string{"b": "c"})
 	node.Metrics = nil // omitempty
-	want.Endpoint.AddNode("a", node)
+	want.Endpoint.AddNode(node)
 	want.Probes[probeID] = report.Probe{
 		ID:       probeID,
 		LastSeen: now,

@@ -81,7 +81,7 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 	err = r.walker.Walk(func(p, prev Process) {
 		pidstr := strconv.Itoa(p.PID)
 		nodeID := report.MakeProcessNodeID(r.scope, pidstr)
-		node := report.MakeNode()
+		node := report.MakeNode(nodeID)
 		for _, tuple := range []struct{ key, value string }{
 			{PID, pidstr},
 			{Name, p.Name},
@@ -105,7 +105,7 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 		node = node.WithMetric(MemoryUsage, report.MakeMetric().Add(now, float64(p.RSSBytes)).WithMax(float64(p.RSSBytesLimit)))
 		node = node.WithMetric(OpenFilesCount, report.MakeMetric().Add(now, float64(p.OpenFilesCount)).WithMax(float64(p.OpenFilesLimit)))
 
-		t.AddNode(nodeID, node)
+		t.AddNode(node)
 	})
 
 	return t, err

@@ -24,8 +24,9 @@ type Node struct {
 }
 
 // MakeNode creates a new Node with no initial metadata.
-func MakeNode() Node {
+func MakeNode(id string) Node {
 	return Node{
+		ID:        id,
 		Counters:  EmptyCounters,
 		Sets:      EmptySets,
 		Adjacency: EmptyIDList,
@@ -38,8 +39,8 @@ func MakeNode() Node {
 }
 
 // MakeNodeWith creates a new Node with the supplied map.
-func MakeNodeWith(m map[string]string) Node {
-	return MakeNode().WithLatests(m)
+func MakeNodeWith(id string, m map[string]string) Node {
+	return MakeNode(id).WithLatests(m)
 }
 
 // WithID returns a fresh copy of n, with ID changed.
@@ -176,8 +177,7 @@ func (n Node) WithChild(child Node) Node {
 
 // Copy returns a value copy of the Node.
 func (n Node) Copy() Node {
-	cp := MakeNode()
-	cp.ID = n.ID
+	cp := MakeNode(n.ID)
 	cp.Topology = n.Topology
 	cp.Counters = n.Counters.Copy()
 	cp.Sets = n.Sets.Copy()
@@ -223,8 +223,8 @@ func (n Node) Prune() Node {
 	n.Children.ForEach(func(child Node) {
 		prunedChildren = prunedChildren.Add(child.Prune())
 	})
-	return MakeNode().
-		WithID(n.ID).
+	return MakeNode(
+		n.ID).
 		WithTopology(n.Topology).
 		WithAdjacent(n.Adjacency.Copy()...).
 		WithChildren(prunedChildren)

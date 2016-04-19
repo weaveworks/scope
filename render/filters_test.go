@@ -12,9 +12,9 @@ import (
 func TestFilterRender(t *testing.T) {
 	renderer := render.FilterUnconnected(
 		mockRenderer{Nodes: report.Nodes{
-			"foo": report.MakeNode().WithID("foo").WithAdjacent("bar"),
-			"bar": report.MakeNode().WithID("bar").WithAdjacent("foo"),
-			"baz": report.MakeNode().WithID("baz"),
+			"foo": report.MakeNode("foo").WithAdjacent("bar"),
+			"bar": report.MakeNode("bar").WithAdjacent("foo"),
+			"baz": report.MakeNode("baz"),
 		}})
 
 	have := report.MakeIDList()
@@ -34,9 +34,9 @@ func TestFilterRender2(t *testing.T) {
 			return node.ID != "bar"
 		},
 		Renderer: mockRenderer{Nodes: report.Nodes{
-			"foo": report.MakeNode().WithID("foo").WithAdjacent("bar"),
-			"bar": report.MakeNode().WithID("bar").WithAdjacent("foo"),
-			"baz": report.MakeNode().WithID("baz"),
+			"foo": report.MakeNode("foo").WithAdjacent("bar"),
+			"bar": report.MakeNode("bar").WithAdjacent("foo"),
+			"baz": report.MakeNode("baz"),
 		}},
 	}
 
@@ -51,9 +51,9 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 	// are also removed.
 	{
 		nodes := report.Nodes{
-			"foo": report.MakeNode().WithID("foo").WithAdjacent("bar"),
-			"bar": report.MakeNode().WithID("bar").WithAdjacent("baz"),
-			"baz": report.MakeNode().WithID("baz").WithTopology(render.Pseudo),
+			"foo": report.MakeNode("foo").WithAdjacent("bar"),
+			"bar": report.MakeNode("bar").WithAdjacent("baz"),
+			"baz": report.MakeNode("baz").WithTopology(render.Pseudo),
 		}
 		renderer := render.Filter{
 			FilterFunc: func(node report.Node) bool {
@@ -73,9 +73,9 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 				return node.ID != "bar"
 			},
 			Renderer: mockRenderer{Nodes: report.Nodes{
-				"foo": report.MakeNode().WithID("foo").WithAdjacent("bar"),
-				"bar": report.MakeNode().WithID("bar").WithAdjacent("baz"),
-				"baz": report.MakeNode().WithID("baz").WithTopology(render.Pseudo),
+				"foo": report.MakeNode("foo").WithAdjacent("bar"),
+				"bar": report.MakeNode("bar").WithAdjacent("baz"),
+				"baz": report.MakeNode("baz").WithTopology(render.Pseudo),
 			}},
 		}
 		have := renderer.Render(report.MakeReport())
@@ -89,9 +89,9 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 				return node.ID != "bar"
 			},
 			Renderer: mockRenderer{Nodes: report.Nodes{
-				"foo": report.MakeNode().WithID("foo"),
-				"bar": report.MakeNode().WithID("bar").WithAdjacent("foo"),
-				"baz": report.MakeNode().WithID("baz").WithTopology(render.Pseudo).WithAdjacent("bar"),
+				"foo": report.MakeNode("foo"),
+				"bar": report.MakeNode("bar").WithAdjacent("foo"),
+				"baz": report.MakeNode("baz").WithTopology(render.Pseudo).WithAdjacent("bar"),
 			}},
 		}
 		have := renderer.Render(report.MakeReport())
@@ -105,7 +105,7 @@ func TestFilterUnconnectedSelf(t *testing.T) {
 	// Test nodes that are only connected to themselves are filtered.
 	{
 		nodes := report.Nodes{
-			"foo": report.MakeNode().WithID("foo").WithAdjacent("foo"),
+			"foo": report.MakeNode("foo").WithAdjacent("foo"),
 		}
 		renderer := render.FilterUnconnected(mockRenderer{Nodes: nodes})
 		have := renderer.Render(report.MakeReport())
@@ -119,8 +119,8 @@ func TestFilterPseudo(t *testing.T) {
 	// Test pseudonodes are removed
 	{
 		nodes := report.Nodes{
-			"foo": report.MakeNode().WithID("foo"),
-			"bar": report.MakeNode().WithID("bar").WithTopology(render.Pseudo),
+			"foo": report.MakeNode("foo"),
+			"bar": report.MakeNode("bar").WithTopology(render.Pseudo),
 		}
 		renderer := render.FilterPseudo(mockRenderer{Nodes: nodes})
 		have := renderer.Render(report.MakeReport())

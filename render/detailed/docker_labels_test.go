@@ -19,7 +19,7 @@ func TestNodeDockerLabels(t *testing.T) {
 	}{
 		{
 			name: "container",
-			node: report.MakeNodeWith(map[string]string{
+			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
 				docker.ContainerID:            fixture.ClientContainerID,
 				docker.LabelPrefix + "label1": "label1value",
 				docker.ContainerState:         docker.StateRunning,
@@ -36,9 +36,9 @@ func TestNodeDockerLabels(t *testing.T) {
 		},
 		{
 			name: "unknown topology",
-			node: report.MakeNodeWith(map[string]string{
+			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
 				docker.ContainerID: fixture.ClientContainerID,
-			}).WithTopology("foobar").WithID(fixture.ClientContainerNodeID),
+			}).WithTopology("foobar"),
 			want: nil,
 		},
 	}

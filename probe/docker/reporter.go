@@ -76,7 +76,7 @@ func (r *Reporter) ContainerUpdated(c Container) {
 	// Publish a 'short cut' report container just this container
 	rpt := report.MakeReport()
 	rpt.Shortcut = true
-	rpt.Container.AddNode(report.MakeContainerNodeID(c.ID()), c.GetNode(r.hostID, localAddrs))
+	rpt.Container.AddNode(c.GetNode(r.hostID, localAddrs))
 	r.probe.Publish(rpt)
 }
 
@@ -136,8 +136,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	metadata := map[string]string{report.ControlProbeID: r.probeID}
 
 	r.registry.WalkContainers(func(c Container) {
-		nodeID := report.MakeContainerNodeID(c.ID())
-		result.AddNode(nodeID, c.GetNode(r.hostID, localAddrs).WithLatests(metadata))
+		result.AddNode(c.GetNode(r.hostID, localAddrs).WithLatests(metadata))
 	})
 
 	return result
@@ -148,7 +147,8 @@ func (r *Reporter) containerImageTopology() report.Topology {
 
 	r.registry.WalkImages(func(image *docker_client.APIImages) {
 		imageID := trimImageID(image.ID)
-		node := report.MakeNodeWith(map[string]string{
+		nodeID := report.MakeContainerImageNodeID(imageID)
+		node := report.MakeNodeWith(nodeID, map[string]string{
 			ImageID: imageID,
 		})
 		node = AddLabels(node, image.Labels)
@@ -157,8 +157,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 			node = node.WithLatests(map[string]string{ImageName: image.RepoTags[0]})
 		}
 
-		nodeID := report.MakeContainerImageNodeID(imageID)
-		result.AddNode(nodeID, node)
+		result.AddNode(node)
 	})
 
 	return result

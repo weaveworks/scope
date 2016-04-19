@@ -26,14 +26,14 @@ func TestMergeNodes(t *testing.T) {
 		"Empty a": {
 			a: report.Nodes{},
 			b: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
 			},
 			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
@@ -42,7 +42,7 @@ func TestMergeNodes(t *testing.T) {
 		},
 		"Empty b": {
 			a: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
@@ -50,7 +50,7 @@ func TestMergeNodes(t *testing.T) {
 			},
 			b: report.Nodes{},
 			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
@@ -59,26 +59,26 @@ func TestMergeNodes(t *testing.T) {
 		},
 		"Simple merge": {
 			a: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
 			},
 			b: report.Nodes{
-				":192.168.1.2:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.2:12345": report.MakeNodeWith(":192.168.1.2:12345", map[string]string{
 					PID:    "42",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
 			},
 			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
-				":192.168.1.2:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.2:12345": report.MakeNodeWith(":192.168.1.2:12345", map[string]string{
 					PID:    "42",
 					Name:   "curl",
 					Domain: "node-a.local",
@@ -87,20 +87,20 @@ func TestMergeNodes(t *testing.T) {
 		},
 		"Merge conflict with rank difference": {
 			a: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
 			},
 			b: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{ // <-- same ID
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{ // <-- same ID
 					Name:   "curl",
 					Domain: "node-a.local",
 				}).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
 			},
 			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
@@ -109,20 +109,20 @@ func TestMergeNodes(t *testing.T) {
 		},
 		"Merge conflict with no rank difference": {
 			a: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
 				}),
 			},
 			b: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{ // <-- same ID
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{ // <-- same ID
 					Name:   "curl",
 					Domain: "node-a.local",
 				}).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
 			},
 			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(map[string]string{
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
@@ -131,21 +131,21 @@ func TestMergeNodes(t *testing.T) {
 		},
 		"Counters": {
 			a: report.Nodes{
-				"1": report.MakeNode().WithCounters(map[string]int{
+				"1": report.MakeNode("1").WithCounters(map[string]int{
 					"a": 13,
 					"b": 57,
 					"c": 89,
 				}),
 			},
 			b: report.Nodes{
-				"1": report.MakeNode().WithCounters(map[string]int{
+				"1": report.MakeNode("1").WithCounters(map[string]int{
 					"a": 78,
 					"b": 3,
 					"d": 47,
 				}),
 			},
 			want: report.Nodes{
-				"1": report.MakeNode().WithCounters(map[string]int{
+				"1": report.MakeNode("1").WithCounters(map[string]int{
 					"a": 91,
 					"b": 60,
 					"c": 89,

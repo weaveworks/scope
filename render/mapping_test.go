@@ -13,9 +13,9 @@ import (
 
 func TestMapProcess2Container(t *testing.T) {
 	for _, input := range []testcase{
-		{"empty", report.MakeNode(), true},
-		{"basic process", report.MakeNodeWith(map[string]string{process.PID: "201", docker.ContainerID: "a1b2c3"}), true},
-		{"uncontained", report.MakeNodeWith(map[string]string{process.PID: "201", report.HostNodeID: report.MakeHostNodeID("foo")}), true},
+		{"empty", report.MakeNode("empty"), true},
+		{"basic process", report.MakeNodeWith("basic", map[string]string{process.PID: "201", docker.ContainerID: "a1b2c3"}), true},
+		{"uncontained", report.MakeNodeWith("uncontained", map[string]string{process.PID: "201", report.HostNodeID: report.MakeHostNodeID("foo")}), true},
 	} {
 		testMap(t, render.MapProcess2Container, input)
 	}

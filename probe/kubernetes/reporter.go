@@ -62,8 +62,7 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 		services = []Service{}
 	)
 	err := r.client.WalkServices(func(s Service) error {
-		nodeID := report.MakeServiceNodeID(s.Namespace(), s.Name())
-		result = result.AddNode(nodeID, s.GetNode())
+		result = result.AddNode(s.GetNode())
 		services = append(services, s)
 		return nil
 	})
@@ -86,15 +85,15 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 			}
 		}
 		nodeID := report.MakePodNodeID(p.Namespace(), p.Name())
-		pods = pods.AddNode(nodeID, p.GetNode())
+		pods = pods.AddNode(p.GetNode())
 
 		for _, containerID := range p.ContainerIDs() {
-			container := report.MakeNodeWith(map[string]string{
+			container := report.MakeNodeWith(report.MakeContainerNodeID(containerID), map[string]string{
 				PodID:              p.ID(),
 				Namespace:          p.Namespace(),
 				docker.ContainerID: containerID,
 			}).WithParents(report.EmptySets.Add(report.Pod, report.MakeStringSet(nodeID)))
-			containers.AddNode(report.MakeContainerNodeID(containerID), container)
+			containers.AddNode(container)
 		}
 		return nil
 	})

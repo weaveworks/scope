@@ -54,7 +54,7 @@ func (s *service) Selector() labels.Selector {
 }
 
 func (s *service) GetNode() report.Node {
-	return report.MakeNodeWith(map[string]string{
+	return report.MakeNodeWith(report.MakeServiceNodeID(s.Namespace(), s.Name()), map[string]string{
 		ServiceID:      s.ID(),
 		ServiceName:    s.Name(),
 		ServiceCreated: s.ObjectMeta.CreationTimestamp.Format(time.RFC822),

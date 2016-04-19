@@ -20,7 +20,7 @@ var (
 	// Helper to make a report.node with some common options
 	node = func(topology string) func(id string, adjacent ...string) report.Node {
 		return func(id string, adjacent ...string) report.Node {
-			n := report.MakeNode().WithID(id).WithTopology(topology)
+			n := report.MakeNode(id).WithTopology(topology)
 			for _, a := range adjacent {
 				n = n.WithAdjacent(a)
 			}

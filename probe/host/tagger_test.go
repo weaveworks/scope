@@ -11,11 +11,11 @@ func TestTagger(t *testing.T) {
 	var (
 		hostID         = "foo"
 		endpointNodeID = report.MakeEndpointNodeID(hostID, "1.2.3.4", "56789") // hostID ignored
-		node           = report.MakeNodeWith(map[string]string{"foo": "bar"})
+		node           = report.MakeNodeWith(endpointNodeID, map[string]string{"foo": "bar"})
 	)
 
 	r := report.MakeReport()
-	r.Process.AddNode(endpointNodeID, node)
+	r.Process.AddNode(node)
 	rpt, _ := host.NewTagger(hostID).Tag(r)
 	have := rpt.Process.Nodes[endpointNodeID].Copy()
 

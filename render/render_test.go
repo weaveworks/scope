@@ -18,13 +18,13 @@ func (m mockRenderer) Stats(rpt report.Report) render.Stats  { return render.Sta
 
 func TestReduceRender(t *testing.T) {
 	renderer := render.Reduce([]render.Renderer{
-		mockRenderer{Nodes: report.Nodes{"foo": report.MakeNode().WithID("foo")}},
-		mockRenderer{Nodes: report.Nodes{"bar": report.MakeNode().WithID("bar")}},
+		mockRenderer{Nodes: report.Nodes{"foo": report.MakeNode("foo")}},
+		mockRenderer{Nodes: report.Nodes{"bar": report.MakeNode("bar")}},
 	})
 
 	want := report.Nodes{
-		"foo": report.MakeNode().WithID("foo"),
-		"bar": report.MakeNode().WithID("bar"),
+		"foo": report.MakeNode("foo"),
+		"bar": report.MakeNode("bar"),
 	}
 	have := renderer.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {
@@ -39,7 +39,7 @@ func TestMapRender1(t *testing.T) {
 			return report.Nodes{}
 		},
 		Renderer: mockRenderer{Nodes: report.Nodes{
-			"foo": report.MakeNode().WithID("foo"),
+			"foo": report.MakeNode("foo"),
 		}},
 	}
 	want := report.Nodes{}
@@ -54,16 +54,16 @@ func TestMapRender2(t *testing.T) {
 	mapper := render.Map{
 		MapFunc: func(nodes report.Node, _ report.Networks) report.Nodes {
 			return report.Nodes{
-				"bar": report.MakeNode().WithID("bar"),
+				"bar": report.MakeNode("bar"),
 			}
 		},
 		Renderer: mockRenderer{Nodes: report.Nodes{
-			"foo": report.MakeNode().WithID("foo"),
-			"baz": report.MakeNode().WithID("baz"),
+			"foo": report.MakeNode("foo"),
+			"baz": report.MakeNode("baz"),
 		}},
 	}
 	want := report.Nodes{
-		"bar": report.MakeNode().WithID("bar"),
+		"bar": report.MakeNode("bar"),
 	}
 	have := mapper.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {
@@ -76,16 +76,16 @@ func TestMapRender3(t *testing.T) {
 	mapper := render.Map{
 		MapFunc: func(nodes report.Node, _ report.Networks) report.Nodes {
 			id := "_" + nodes.ID
-			return report.Nodes{id: report.MakeNode().WithID(id)}
+			return report.Nodes{id: report.MakeNode(id)}
 		},
 		Renderer: mockRenderer{Nodes: report.Nodes{
-			"foo": report.MakeNode().WithID("foo").WithAdjacent("baz"),
-			"baz": report.MakeNode().WithID("baz").WithAdjacent("foo"),
+			"foo": report.MakeNode("foo").WithAdjacent("baz"),
+			"baz": report.MakeNode("baz").WithAdjacent("foo"),
 		}},
 	}
 	want := report.Nodes{
-		"_foo": report.MakeNode().WithID("_foo").WithAdjacent("_baz"),
-		"_baz": report.MakeNode().WithID("_baz").WithAdjacent("_foo"),
+		"_foo": report.MakeNode("_foo").WithAdjacent("_baz"),
+		"_baz": report.MakeNode("_baz").WithAdjacent("_foo"),
 	}
 	have := mapper.Render(report.MakeReport())
 	if !reflect.DeepEqual(want, have) {

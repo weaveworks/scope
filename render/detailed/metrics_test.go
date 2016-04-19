@@ -102,7 +102,7 @@ func TestNodeMetrics(t *testing.T) {
 		},
 		{
 			name: "unknown topology",
-			node: report.MakeNode().WithTopology("foobar").WithID(fixture.ClientContainerNodeID),
+			node: report.MakeNode(fixture.ClientContainerNodeID).WithTopology("foobar"),
 			want: nil,
 		},
 	}

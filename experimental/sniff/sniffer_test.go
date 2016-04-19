@@ -66,11 +66,11 @@ func TestMerge(t *testing.T) {
 	)
 	if want, have := (report.Topology{
 		Nodes: report.Nodes{
-			srcEndpointNodeID: report.MakeNode().WithEdge(dstEndpointNodeID, report.EdgeMetadata{
+			srcEndpointNodeID: report.MakeNode(srcEndpointNodeID).WithEdge(dstEndpointNodeID, report.EdgeMetadata{
 				EgressPacketCount: newu64(1),
 				EgressByteCount:   newu64(256),
 			}),
-			dstEndpointNodeID: report.MakeNode(),
+			dstEndpointNodeID: report.MakeNode(dstEndpointNodeID),
 		},
 	}), rpt.Endpoint; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))
@@ -82,11 +82,11 @@ func TestMerge(t *testing.T) {
 	)
 	if want, have := (report.Topology{
 		Nodes: report.Nodes{
-			srcAddressNodeID: report.MakeNode().WithEdge(dstAddressNodeID, report.EdgeMetadata{
+			srcAddressNodeID: report.MakeNode(srcAddressNodeID).WithEdge(dstAddressNodeID, report.EdgeMetadata{
 				EgressPacketCount: newu64(1),
 				EgressByteCount:   newu64(512),
 			}),
-			dstAddressNodeID: report.MakeNode(),
+			dstAddressNodeID: report.MakeNode(dstAddressNodeID),
 		},
 	}), rpt.Address; !reflect.DeepEqual(want, have) {
 		t.Errorf("%s", test.Diff(want, have))

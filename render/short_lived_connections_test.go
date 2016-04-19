@@ -31,38 +31,42 @@ var (
 	rpt = report.Report{
 		Endpoint: report.Topology{
 			Nodes: report.Nodes{
-				randomEndpointNodeID: report.MakeNode().WithLatests(map[string]string{
+				randomEndpointNodeID: report.MakeNodeWith(randomEndpointNodeID, map[string]string{
 					endpoint.Addr:        randomIP,
 					endpoint.Port:        randomPort,
 					endpoint.Conntracked: "true",
-				}).WithAdjacent(serverEndpointNodeID).WithID(randomEndpointNodeID).WithTopology(report.Endpoint),
+				}).
+					WithAdjacent(serverEndpointNodeID).WithTopology(report.Endpoint),
 
-				serverEndpointNodeID: report.MakeNode().WithLatests(map[string]string{
+				serverEndpointNodeID: report.MakeNodeWith(serverEndpointNodeID, map[string]string{
 					endpoint.Addr:        serverIP,
 					endpoint.Port:        serverPort,
 					endpoint.Conntracked: "true",
-				}).WithID(serverEndpointNodeID).WithTopology(report.Endpoint),
+				}).
+					WithTopology(report.Endpoint),
 			},
 		},
 		Container: report.Topology{
 			Nodes: report.Nodes{
-				containerNodeID: report.MakeNode().WithLatests(map[string]string{
+				containerNodeID: report.MakeNodeWith(containerNodeID, map[string]string{
 					docker.ContainerID:   containerID,
 					docker.ContainerName: containerName,
 					report.HostNodeID:    serverHostNodeID,
-				}).WithSets(report.EmptySets.
-					Add(docker.ContainerIPs, report.MakeStringSet(containerIP)).
-					Add(docker.ContainerPorts, report.MakeStringSet(fmt.Sprintf("%s:%s->%s/tcp", serverIP, serverPort, serverPort))),
-				).WithID(containerNodeID).WithTopology(report.Container),
+				}).
+					WithSets(report.EmptySets.
+						Add(docker.ContainerIPs, report.MakeStringSet(containerIP)).
+						Add(docker.ContainerPorts, report.MakeStringSet(fmt.Sprintf("%s:%s->%s/tcp", serverIP, serverPort, serverPort))),
+					).WithTopology(report.Container),
 			},
 		},
 		Host: report.Topology{
 			Nodes: report.Nodes{
-				serverHostNodeID: report.MakeNodeWith(map[string]string{
+				serverHostNodeID: report.MakeNodeWith(serverHostNodeID, map[string]string{
 					report.HostNodeID: serverHostNodeID,
-				}).WithSets(report.EmptySets.
-					Add(host.LocalNetworks, report.MakeStringSet("192.168.0.0/16")),
-				).WithID(serverHostNodeID).WithTopology(report.Host),
+				}).
+					WithSets(report.EmptySets.
+						Add(host.LocalNetworks, report.MakeStringSet("192.168.0.0/16")),
+					).WithTopology(report.Host),
 			},
 		},
 	}

@@ -18,7 +18,7 @@ func TestMemoise(t *testing.T) {
 	calls := 0
 	r := renderFunc(func(rpt report.Report) report.Nodes {
 		calls++
-		return report.Nodes{rpt.ID: report.MakeNode().WithID(rpt.ID)}
+		return report.Nodes{rpt.ID: report.MakeNode(rpt.ID)}
 	})
 	m := render.Memoise(r)
 	rpt1 := report.MakeReport()

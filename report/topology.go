@@ -51,11 +51,11 @@ func (t Topology) WithMetricTemplates(other MetricTemplates) Topology {
 // The same topology is returned to enable chaining.
 // This method is different from all the other similar methods
 // in that it mutates the Topology, to solve issues of GC pressure.
-func (t Topology) AddNode(nodeID string, node Node) Topology {
-	if existing, ok := t.Nodes[nodeID]; ok {
+func (t Topology) AddNode(node Node) Topology {
+	if existing, ok := t.Nodes[node.ID]; ok {
 		node = node.Merge(existing)
 	}
-	t.Nodes[nodeID] = node
+	t.Nodes[node.ID] = node
 	return t
 }
 

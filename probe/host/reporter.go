@@ -126,7 +126,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	metrics[MemoryUsage] = report.MakeMetric().Add(now, memoryUsage).WithMax(max)
 
 	metadata := map[string]string{report.ControlProbeID: r.probeID}
-	rep.Host.AddNode(report.MakeHostNodeID(r.hostID), report.MakeNodeWith(map[string]string{
+	rep.Host.AddNode(report.MakeNodeWith(report.MakeHostNodeID(r.hostID), map[string]string{
 		Timestamp:     mtime.Now().UTC().Format(time.RFC3339Nano),
 		HostName:      r.hostName,
 		OS:            runtime.GOOS,
