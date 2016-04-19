@@ -2,6 +2,8 @@
 
 Scope probe plugins let you insert your own custom metrics into Scope and get them displayed in the UI.
 
+<img src="../../imgs/plugin.png" width="800" alt="Scope Probe plugin screenshot" align="center">
+
 You can find some examples at the
 [the example plugins](https://github.com/weaveworks/scope/tree/master/examples/plugins)
 directory. We currently provide two examples:
@@ -9,6 +11,7 @@ directory. We currently provide two examples:
   [Python plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/http-requests)
   using [bcc](http://iovisor.github.io/bcc/) to extract incoming HTTP request
   rates per process, without any application-level instrumentation requirements.
+  **Note:** This plugin needs a kernel version 4.3+. It will not compile on current [dlite](https://github.com/nlf/dlite) and boot2docker hosts.
 * A
   [Go plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/iovisor),
   using [iostat](https://en.wikipedia.org/wiki/Iostat) to provide host-level CPU IO wait
@@ -18,6 +21,9 @@ The example plugins can be run by calling `make` in their directory.
 This will build the plugin, and immediately run it in the foreground.
 To run the plugin in the background, see the `Makefile` for examples
 of the `docker run ...` command.
+
+If the running plugin was picked up by Scope, you will see it in the list of `PLUGINS`
+in the bottom right of the UI.
 
 
 ## <a id="protocol"></a>Protocol
@@ -42,14 +48,13 @@ probe's report and sent to the app. An example of the report structure
 can be viewed at the `/api/report` endpoint of any scope app.
 
 In addition to any data about the topology nodes, the report returned
-from the plugin must include some information about the plugin.
+from the plugin must include some metadata about the plugin itself.
 
 For example:
 
 ```json
 {
-  "Processes: { ... },
-  ...
+  "Processes": {},
   "Plugins": [
     {
       "id":          "iowait",
@@ -62,9 +67,9 @@ For example:
 }
 ```
 
-Note that the "Plugins" section includes exactly one plugin
+Note that the `Plugins` section includes exactly one plugin
 description. The plugin description fields are:
-"interfaces" including "reporter".
+`interfaces` including `reporter`.
 
 The fields are:
 
