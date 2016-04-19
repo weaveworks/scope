@@ -10,8 +10,8 @@ directory. We currently provide two examples:
 * A
   [Python plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/http-requests)
   using [bcc](http://iovisor.github.io/bcc/) to extract incoming HTTP request
-  rates per process, without any application-level instrumentation requirements.
-  **Note:** This plugin needs a kernel version 4.3+. It will not compile on current [dlite](https://github.com/nlf/dlite) and boot2docker hosts.
+  rates per process, without any application-level instrumentation requirements and negligible performance toll (metrics are obtained in-kernel without any packet copying to userspace).
+  **Note:** This plugin needs a [recent kernel version with ebpf support](https://github.com/iovisor/bcc/blob/master/INSTALL.md#kernel-configuration). It will not compile on current [dlite](https://github.com/nlf/dlite) and boot2docker hosts.
 * A
   [Go plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/iovisor),
   using [iostat](https://en.wikipedia.org/wiki/Iostat) to provide host-level CPU IO wait
