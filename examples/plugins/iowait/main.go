@@ -22,7 +22,7 @@ func main() {
 	)
 	flag.Parse()
 
-	log.Println("Starting...")
+	log.Printf("Starting on %s...\n", *hostID)
 
 	// Check we can get the iowait for the system
 	_, err := iowait()
@@ -80,7 +80,9 @@ func (p *Plugin) Report(w http.ResponseWriter, r *http.Request) {
 				 %q: {
 					 "metrics": {
 						 "iowait": {
-							 "samples": [ {"date": %q, "value": %f} ]
+							 "samples": [ {"date": %q, "value": %f} ],
+							 "min": 0,
+							 "max": 100
 						 }
 					 }
 				 }
