@@ -162,6 +162,15 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 		return base, true
 	}
 
+	// try rendering it as an unmanaged node
+	if strings.HasPrefix(n.ID, render.MakePseudoNodeID(render.UnmanagedID)) {
+		base.Label = render.UnmanagedMajor
+		base.Shape = Square
+		base.Stack = true
+		base.LabelMinor = report.ExtractHostID(n)
+		return base, true
+	}
+
 	// try rendering it as an endpoint
 	if addr, ok := n.Latest.Lookup(endpoint.Addr); ok {
 		base.Label = addr
