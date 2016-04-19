@@ -5,7 +5,12 @@ IMAGE=weavescope-iowait-plugin
 UPTODATE=.$(EXE).uptodate
 
 run: $(UPTODATE)
-	docker run --rm -it --privileged -v /var/run/scope/plugins:/var/run/scope/plugins --name $(IMAGE) $(IMAGE) -hostname=$(shell hostname)
+	# --net=host gives us the remote hostname, in case we're being launched against a non-local docker host.
+	# We could also pass in the `-hostname=foo` flag, but that doesn't work against a remote docker host.
+	docker run --rm -it \
+		--net=host \
+		-v /var/run/scope/plugins:/var/run/scope/plugins \
+		--name $(IMAGE) $(IMAGE)
 
 $(UPTODATE): $(EXE) Dockerfile
 	docker build -t $(IMAGE) .
