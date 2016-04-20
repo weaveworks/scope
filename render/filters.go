@@ -250,12 +250,14 @@ func FilterApplication(r Renderer) Renderer {
 }
 
 var systemContainerNames = map[string]struct{}{
-	"weavescope": {},
-	"weavedns":   {},
-	"weave":      {},
-	"weaveproxy": {},
-	"weaveexec":  {},
-	"ecs-agent":  {},
+	"weavescope":        {},
+	"weavedns":          {},
+	"weave":             {},
+	"weaveproxy":        {},
+	"weaveexec":         {},
+	"ecs-agent":         {},
+	"swarm-agent"        {},
+	"swarm-agent-master" {},
 }
 
 var systemImagePrefixes = map[string]struct{}{
