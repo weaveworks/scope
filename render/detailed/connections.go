@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
@@ -94,6 +95,8 @@ func incomingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 					port:       port,
 				}
 				if isInternetNode(n) {
+					endpointNode := r.Endpoint.Nodes[localEndpointID]
+					key.localNode = &endpointNode
 					key.localAddr = localAddr
 				}
 				counts[key] = counts[key] + 1
@@ -144,6 +147,8 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 					port:       port,
 				}
 				if isInternetNode(n) {
+					endpointNode := r.Endpoint.Nodes[remoteEndpointID]
+					key.localNode = &endpointNode
 					key.localAddr = localAddr
 				}
 				counts[key] = counts[key] + 1
@@ -206,10 +211,15 @@ func connectionRows(r report.Report, in map[connection]int, includeLocal bool) [
 			connection.Linkable = false
 		}
 		if includeLocal {
+			// Does localNode have a DNS record in it?
+			label := row.localAddr
+			if set, ok := row.localNode.Sets.Lookup(endpoint.ReverseDNSNames); ok && len(set) > 0 {
+				label = set[0]
+			}
 			connection.Metadata = append(connection.Metadata,
 				report.MetadataRow{
 					ID:       "foo",
-					Value:    row.localAddr,
+					Value:    label,
 					Datatype: number,
 				})
 		}

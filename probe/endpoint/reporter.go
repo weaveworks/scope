@@ -16,10 +16,11 @@ import (
 
 // Node metadata keys.
 const (
-	Addr        = "addr" // typically IPv4
-	Port        = "port"
-	Conntracked = "conntracked"
-	Procspied   = "procspied"
+	Addr            = "addr" // typically IPv4
+	Port            = "port"
+	Conntracked     = "conntracked"
+	Procspied       = "procspied"
+	ReverseDNSNames = "reverse_dns_names"
 )
 
 // Reporter generates Reports containing the Endpoint topology.
@@ -182,7 +183,7 @@ func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode,
 	// In case we have a reverse resolution for the IP, we can use it for
 	// the name...
 	if toNames, err := r.reverseResolver.get(t.toAddr); err == nil {
-		toNode = toNode.WithSet("name", report.MakeStringSet(toNames...))
+		toNode = toNode.WithSet(ReverseDNSNames, report.MakeStringSet(toNames...))
 	}
 
 	if extraFromNode != nil {
