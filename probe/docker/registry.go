@@ -14,6 +14,7 @@ import (
 const (
 	CreateEvent  = "create"
 	DestroyEvent = "destroy"
+	RenameEvent  = "rename"
 	StartEvent   = "start"
 	DieEvent     = "die"
 	PauseEvent   = "pause"
@@ -238,7 +239,7 @@ func (r *registry) updateImages() error {
 
 func (r *registry) handleEvent(event *docker_client.APIEvents) {
 	switch event.Status {
-	case CreateEvent, StartEvent, DieEvent, DestroyEvent, PauseEvent, UnpauseEvent:
+	case CreateEvent, RenameEvent, StartEvent, DieEvent, DestroyEvent, PauseEvent, UnpauseEvent:
 		r.updateContainerState(event.ID)
 	}
 }

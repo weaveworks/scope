@@ -334,9 +334,6 @@ export default class NodesChart extends React.Component {
 
     const stateNodes = this.initNodes(props.nodes, state.nodes);
     const stateEdges = this.initEdges(props.nodes, stateNodes);
-    const nodeMetrics = stateNodes.map(node => makeMap({
-      metrics: node.get('metrics')
-    }));
     const nodeScale = this.getNodeScale(props.nodes, state.width, state.height);
     const nextState = { nodeScale };
 
@@ -356,12 +353,15 @@ export default class NodesChart extends React.Component {
     log(`graph layout took ${timedLayouter.time}ms`);
 
     // inject metrics and save coordinates for restore
-    const layoutNodes = graph.nodes
-      .mergeDeep(nodeMetrics)
+    let layoutNodes = graph.nodes
       .map(node => node.merge({
         px: node.get('x'),
         py: node.get('y')
       }));
+
+    // Re-apply in case layout runner's node cache applied stale node metadata
+    layoutNodes = layoutNodes.mergeDeep(stateNodes);
+
     const layoutEdges = graph.edges
       .map(edge => edge.set('ppoints', edge.get('points')));
 
