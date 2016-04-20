@@ -94,7 +94,7 @@ launch_command() {
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v /var/run/scope/plugins:/var/run/scope/plugins \
             -e CHECKPOINT_DISABLE \
-            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --probe.docker true "$@"
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --probe.docker=true "$@"
 }
 
 check_docker_version
@@ -105,7 +105,26 @@ case "$COMMAND" in
         ;;
 
     version)
-        docker run $SCOPE_IMAGE version
+        docker run --rm -e CHECKPOINT_DISABLE $SCOPE_IMAGE version
+        ;;
+
+    help)
+        cat >&2 <<EOF
+Usage:
+
+scope help     - Print this
+
+scope launch   - Launch Scope
+EOF
+        docker run --rm -e CHECKPOINT_DISABLE $SCOPE_IMAGE help
+
+        cat >&2 <<EOF
+
+scope stop     - Stop Scope
+
+scope command  - Print the docker command used to start Scope
+
+EOF
         ;;
 
     launch)

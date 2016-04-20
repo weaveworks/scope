@@ -63,36 +63,9 @@ func check() {
 }
 
 // Main runs the probe
-func probeMain() {
-	var (
-		targets         = []string{fmt.Sprintf("localhost:%d", xfer.AppPort)}
-		token           = flag.String("token", "default-token", "probe token")
-		httpListen      = flag.String("http.listen", "", "listen address for HTTP profiling and instrumentation server")
-		publishInterval = flag.Duration("publish.interval", 3*time.Second, "publish (output) interval")
-		spyInterval     = flag.Duration("spy.interval", time.Second, "spy (scan) interval")
-		spyProcs        = flag.Bool("processes", true, "report processes (needs root)")
-		procRoot        = flag.String("proc.root", "/proc", "location of the proc filesystem")
-		pluginsRoot     = flag.String("plugins.root", "/var/run/scope/plugins", "Root directory to search for plugins")
-		useConntrack    = flag.Bool("conntrack", true, "also use conntrack to track connections")
-		insecure        = flag.Bool("insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
-		logPrefix       = flag.String("log.prefix", "<probe>", "prefix for each log line")
-		logLevel        = flag.String("log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
-
-		dockerEnabled  = flag.Bool("docker", false, "collect Docker-related attributes for processes")
-		dockerInterval = flag.Duration("docker.interval", 10*time.Second, "how often to update Docker attributes")
-		dockerBridge   = flag.String("docker.bridge", "docker0", "the docker bridge name")
-
-		kubernetesEnabled  = flag.Bool("kubernetes", false, "collect kubernetes-related attributes for containers, should only be enabled on the master node")
-		kubernetesAPI      = flag.String("kubernetes.api", "", "Address of kubernetes master api")
-		kubernetesInterval = flag.Duration("kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
-
-		weaveAddr      = flag.String("weave.addr", "127.0.0.1:6784", "IP address & port of the Weave router")
-		weaveDNSTarget = flag.String("weave.hostname", fmt.Sprintf("scope.weave.local:%d", xfer.AppPort), "Hostname to lookup in weaveDNS")
-	)
-	flag.Parse()
-
-	setLogLevel(*logLevel)
-	setLogFormatter(*logPrefix)
+func probeMain(flags probeFlags) {
+	setLogLevel(flags.logLevel)
+	setLogFormatter(flags.logPrefix)
 
 	// Setup in memory metrics sink
 	inm := metrics.NewInmemSink(time.Minute, 2*time.Minute)
@@ -102,28 +75,30 @@ func probeMain() {
 
 	defer log.Info("probe exiting")
 
-	if *spyProcs && os.Getegid() != 0 {
-		log.Warn("-process=true, but that requires root to find everything")
+	if flags.spyProcs && os.Getegid() != 0 {
+		log.Warn("--probe.process=true, but that requires root to find everything")
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	probeID := strconv.FormatInt(rand.Int63(), 16)
 	var (
+		probeID  = strconv.FormatInt(rand.Int63(), 16)
 		hostName = hostname.Get()
 		hostID   = hostName // TODO(pb): we should sanitize the hostname
 	)
 	log.Infof("probe starting, version %s, ID %s", version, probeID)
+	log.Infof("command line: %v", os.Args)
 	go check()
 
+	var targets = []string{fmt.Sprintf("localhost:%d", xfer.AppPort)}
 	if len(flag.Args()) > 0 {
 		targets = flag.Args()
 	}
 	log.Infof("publishing to: %s", strings.Join(targets, ", "))
 
 	probeConfig := appclient.ProbeConfig{
-		Token:    *token,
+		Token:    flags.token,
 		ProbeID:  probeID,
-		Insecure: *insecure,
+		Insecure: flags.insecure,
 	}
 	clients := appclient.NewMultiAppClient(func(hostname, endpoint string) (appclient.AppClient, error) {
 		return appclient.NewAppClient(
@@ -136,13 +111,13 @@ func probeMain() {
 	resolver := appclient.NewResolver(targets, net.LookupIP, clients.Set)
 	defer resolver.Stop()
 
-	processCache := process.NewCachingWalker(process.NewWalker(*procRoot))
+	processCache := process.NewCachingWalker(process.NewWalker(flags.procRoot))
 	scanner := procspy.NewConnectionScanner(processCache)
 
-	endpointReporter := endpoint.NewReporter(hostID, hostName, *spyProcs, *useConntrack, scanner)
+	endpointReporter := endpoint.NewReporter(hostID, hostName, flags.spyProcs, flags.useConntrack, scanner)
 	defer endpointReporter.Stop()
 
-	p := probe.New(probeID, *spyInterval, *publishInterval, clients)
+	p := probe.New(probeID, flags.spyInterval, flags.publishInterval, clients)
 	p.AddTicker(processCache)
 	hostReporter := host.NewReporter(hostID, hostName, probeID, clients)
 	defer hostReporter.Stop()
@@ -153,11 +128,11 @@ func probeMain() {
 	)
 	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
 
-	if *dockerEnabled {
-		if err := report.AddLocalBridge(*dockerBridge); err != nil {
-			log.Errorf("Docker: problem with bridge %s: %v", *dockerBridge, err)
+	if flags.dockerEnabled {
+		if err := report.AddLocalBridge(flags.dockerBridge); err != nil {
+			log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
 		}
-		if registry, err := docker.NewRegistry(*dockerInterval, clients, true); err == nil {
+		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true); err == nil {
 			defer registry.Stop()
 			p.AddTagger(docker.NewTagger(registry, processCache))
 			p.AddReporter(docker.NewReporter(registry, hostID, probeID, p))
@@ -166,8 +141,8 @@ func probeMain() {
 		}
 	}
 
-	if *kubernetesEnabled {
-		if client, err := kubernetes.NewClient(*kubernetesAPI, *kubernetesInterval); err == nil {
+	if flags.kubernetesEnabled {
+		if client, err := kubernetes.NewClient(flags.kubernetesAPI, flags.kubernetesInterval); err == nil {
 			defer client.Stop()
 			p.AddReporter(kubernetes.NewReporter(client))
 		} else {
@@ -176,25 +151,25 @@ func probeMain() {
 		}
 	}
 
-	if *weaveAddr != "" {
-		client := weave.NewClient(sanitize.URL("http://", 6784, "")(*weaveAddr))
+	if flags.weaveAddr != "" {
+		client := weave.NewClient(sanitize.URL("http://", 6784, "")(flags.weaveAddr))
 		weave := overlay.NewWeave(hostID, client)
 		defer weave.Stop()
 		p.AddTagger(weave)
 		p.AddReporter(weave)
 
-		dockerBridgeIP, err := network.GetFirstAddressOf(*dockerBridge)
+		dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
 		if err != nil {
 			log.Println("Error getting docker bridge ip:", err)
 		} else {
 			weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
-			weaveResolver := appclient.NewResolver([]string{*weaveDNSTarget}, weaveDNSLookup, clients.Set)
+			weaveResolver := appclient.NewResolver([]string{flags.weaveHostname}, weaveDNSLookup, clients.Set)
 			defer weaveResolver.Stop()
 		}
 	}
 
 	pluginRegistry, err := plugins.NewRegistry(
-		*pluginsRoot,
+		flags.pluginsRoot,
 		pluginAPIVersion,
 		map[string]string{
 			"probe_id":    probeID,
@@ -208,11 +183,11 @@ func probeMain() {
 		p.AddReporter(pluginRegistry)
 	}
 
-	if *httpListen != "" {
+	if flags.httpListen != "" {
 		go func() {
-			log.Infof("Profiling data being exported to %s", *httpListen)
-			log.Infof("go tool pprof http://%s/debug/pprof/{profile,heap,block}", *httpListen)
-			log.Infof("Profiling endpoint %s terminated: %v", *httpListen, http.ListenAndServe(*httpListen, nil))
+			log.Infof("Profiling data being exported to %s", flags.httpListen)
+			log.Infof("go tool pprof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
+			log.Infof("Profiling endpoint %s terminated: %v", flags.httpListen, http.ListenAndServe(flags.httpListen, nil))
 		}()
 	}
 
