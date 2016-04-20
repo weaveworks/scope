@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -25,7 +24,6 @@ import (
 	"github.com/weaveworks/scope/common/middleware"
 	"github.com/weaveworks/scope/common/network"
 	"github.com/weaveworks/scope/common/weave"
-	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/docker"
 )
 
@@ -142,50 +140,28 @@ func pipeRouterFactory(userIDer multitenant.UserIDer, pipeRouterURL, consulInf s
 }
 
 // Main runs the app
-func appMain() {
-	var (
-		window    = flag.Duration("window", 15*time.Second, "window")
-		listen    = flag.String("http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
-		logLevel  = flag.String("log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
-		logPrefix = flag.String("log.prefix", "<app>", "prefix for each log line")
-		logHTTP   = flag.Bool("log.http", false, "Log individual HTTP requests")
-
-		weaveAddr      = flag.String("weave.addr", app.DefaultWeaveURL, "Address on which to contact WeaveDNS")
-		weaveHostname  = flag.String("weave.hostname", app.DefaultHostname, "Hostname to advertise in WeaveDNS")
-		containerName  = flag.String("container.name", app.DefaultContainerName, "Name of this container (to lookup container ID)")
-		dockerEndpoint = flag.String("docker", app.DefaultDockerEndpoint, "Location of docker endpoint (to lookup container ID)")
-
-		collectorURL     = flag.String("collector", "local", "Collector to use (local of dynamodb)")
-		controlRouterURL = flag.String("control.router", "local", "Control router to use (local or sqs)")
-		pipeRouterURL    = flag.String("pipe.router", "local", "Pipe router to use (local)")
-		userIDHeader     = flag.String("userid.header", "", "HTTP header to use as userid")
-
-		awsCreateTables = flag.Bool("aws.create.tables", false, "Create the tables in DynamoDB")
-		consulInf       = flag.String("consul.inf", "", "The interface who's address I should advertise myself under in consul")
-	)
-	flag.Parse()
-
-	setLogLevel(*logLevel)
-	setLogFormatter(*logPrefix)
+func appMain(flags appFlags) {
+	setLogLevel(flags.logLevel)
+	setLogFormatter(flags.logPrefix)
 
 	userIDer := multitenant.NoopUserIDer
-	if *userIDHeader != "" {
-		userIDer = multitenant.UserIDHeader(*userIDHeader)
+	if flags.userIDHeader != "" {
+		userIDer = multitenant.UserIDHeader(flags.userIDHeader)
 	}
 
-	collector, err := collectorFactory(userIDer, *collectorURL, *window, *awsCreateTables)
+	collector, err := collectorFactory(userIDer, flags.collectorURL, flags.window, flags.awsCreateTables)
 	if err != nil {
 		log.Fatalf("Error creating collector: %v", err)
 		return
 	}
 
-	controlRouter, err := controlRouterFactory(userIDer, *controlRouterURL)
+	controlRouter, err := controlRouterFactory(userIDer, flags.controlRouterURL)
 	if err != nil {
 		log.Fatalf("Error creating control router: %v", err)
 		return
 	}
 
-	pipeRouter, err := pipeRouterFactory(userIDer, *pipeRouterURL, *consulInf)
+	pipeRouter, err := pipeRouterFactory(userIDer, flags.pipeRouterURL, flags.consulInf)
 	if err != nil {
 		log.Fatalf("Error creating pipe router: %v", err)
 		return
@@ -213,10 +189,10 @@ func appMain() {
 
 	// If user supplied a weave router address, periodically try and register
 	// out IP address in WeaveDNS.
-	if *weaveAddr != "" {
+	if flags.weaveAddr != "" {
 		weave, err := newWeavePublisher(
-			*dockerEndpoint, *weaveAddr,
-			*weaveHostname, *containerName)
+			flags.dockerEndpoint, flags.weaveAddr,
+			flags.weaveHostname, flags.containerName)
 		if err != nil {
 			log.Println("Failed to start weave integration:", err)
 		} else {
@@ -225,12 +201,12 @@ func appMain() {
 	}
 
 	handler := router(collector, controlRouter, pipeRouter)
-	if *logHTTP {
+	if flags.logHTTP {
 		handler = middleware.Logging.Wrap(handler)
 	}
 	go func() {
-		log.Infof("listening on %s", *listen)
-		log.Info(http.ListenAndServe(*listen, handler))
+		log.Infof("listening on %s", flags.listen)
+		log.Info(http.ListenAndServe(flags.listen, handler))
 	}()
 
 	common.SignalHandlerLoop()
