@@ -96,7 +96,7 @@ func TestProbe(t *testing.T) {
 		LastSeen: now,
 	}
 
-	pub := mockPublisher{make(chan report.Report)}
+	pub := mockPublisher{make(chan report.Report, 10)}
 
 	p := New(probeID, 10*time.Millisecond, 100*time.Millisecond, pub)
 	p.AddReporter(mockReporter{want})
