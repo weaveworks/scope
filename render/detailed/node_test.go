@@ -34,6 +34,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 	process1NodeSummary.Linkable = true
 	process2NodeSummary := child(t, render.ProcessRenderer, fixture.ClientProcess2NodeID)
 	process2NodeSummary.Linkable = true
+	podNodeSummary := child(t, render.PodRenderer, fixture.ClientPodNodeID)
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
 			ID:         fixture.ClientHostNodeID,
@@ -93,6 +94,12 @@ func TestMakeDetailedHostNode(t *testing.T) {
 		},
 		Controls: []detailed.ControlInstance{},
 		Children: []detailed.NodeSummaryGroup{
+			{
+				Label:      "Pods",
+				TopologyID: "pods",
+				Columns:    nil,
+				Nodes:      []detailed.NodeSummary{podNodeSummary},
+			},
 			{
 				Label:      "Containers",
 				TopologyID: "containers",
