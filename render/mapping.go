@@ -18,6 +18,9 @@ const (
 	UncontainedID    = "uncontained"
 	UncontainedMajor = "Uncontained"
 
+	UnmanagedID    = "unmanaged"
+	UnmanagedMajor = "Unmanaged"
+
 	TheInternetID      = "theinternet"
 	IncomingInternetID = "in-" + TheInternetID
 	OutgoingInternetID = "out-" + TheInternetID
@@ -364,6 +367,13 @@ func MapEndpoint2Host(n report.Node, local report.Networks) report.Nodes {
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapContainer2Pod(n report.Node, _ report.Networks) report.Nodes {
+	// Uncontainerd becomes unmanaged in the pods view
+	if strings.HasPrefix(n.ID, MakePseudoNodeID(UncontainedID)) {
+		id := MakePseudoNodeID(UnmanagedID, report.ExtractHostID(n))
+		node := NewDerivedPseudoNode(id, n)
+		return report.Nodes{id: node}
+	}
+
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
 		return report.Nodes{n.ID: n}
@@ -373,11 +383,15 @@ func MapContainer2Pod(n report.Node, _ report.Networks) report.Nodes {
 	// slightly out of sync reports, or its not in a pod), just drop it
 	namespace, ok := n.Latest.Lookup(kubernetes.Namespace)
 	if !ok {
-		return report.Nodes{}
+		id := MakePseudoNodeID(UnmanagedID, report.ExtractHostID(n))
+		node := NewDerivedPseudoNode(id, n)
+		return report.Nodes{id: node}
 	}
 	podID, ok := n.Latest.Lookup(kubernetes.PodID)
 	if !ok {
-		return report.Nodes{}
+		id := MakePseudoNodeID(UnmanagedID, report.ExtractHostID(n))
+		node := NewDerivedPseudoNode(id, n)
+		return report.Nodes{id: node}
 	}
 	podName := strings.TrimPrefix(podID, namespace+"/")
 	id := report.MakePodNodeID(namespace, podName)
