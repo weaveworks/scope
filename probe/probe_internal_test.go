@@ -80,14 +80,6 @@ func TestProbe(t *testing.T) {
 	want := report.MakeReport()
 	node := report.MakeNodeWith("a", map[string]string{"b": "c"})
 	node.Metrics = nil // omitempty
-	want.Endpoint.AddNode(node)
-	want.Probes[probeID] = report.Probe{
-		ID:       probeID,
-		LastSeen: now,
-	}
-
-	pub := mockPublisher{make(chan report.Report)}
-
 	// omitempty
 	want.Endpoint.Controls = nil
 	want.Process.Controls = nil
@@ -97,6 +89,14 @@ func TestProbe(t *testing.T) {
 	want.Service.Controls = nil
 	want.Host.Controls = nil
 	want.Overlay.Controls = nil
+
+	want.Endpoint.AddNode(node)
+	want.Probes[probeID] = report.Probe{
+		ID:       probeID,
+		LastSeen: now,
+	}
+
+	pub := mockPublisher{make(chan report.Report)}
 
 	p := New(probeID, 10*time.Millisecond, 100*time.Millisecond, pub)
 	p.AddReporter(mockReporter{want})
