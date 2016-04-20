@@ -10,10 +10,11 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	ServiceID      = "kubernetes_service_id"
-	ServiceName    = "kubernetes_service_name"
-	ServiceCreated = "kubernetes_service_created"
-	ServiceIP      = "kubernetes_service_ip"
+	ServiceID          = "kubernetes_service_id"
+	ServiceName        = "kubernetes_service_name"
+	ServiceCreated     = "kubernetes_service_created"
+	ServiceIP          = "kubernetes_service_ip"
+	ServiceLabelPrefix = "kubernetes_service_label_"
 )
 
 // Service represents a Kubernetes service
@@ -60,5 +61,5 @@ func (s *service) GetNode() report.Node {
 		ServiceCreated: s.ObjectMeta.CreationTimestamp.Format(time.RFC822),
 		Namespace:      s.Namespace(),
 		ServiceIP:      s.Spec.ClusterIP,
-	})
+	}).AddTable(ServiceLabelPrefix, s.Labels)
 }

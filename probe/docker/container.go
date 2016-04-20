@@ -65,6 +65,9 @@ const (
 
 	NetworkModeHost = "host"
 
+	LabelPrefix = "docker_label_"
+	EnvPrefix   = "docker_env_"
+
 	stopTimeout = 10
 )
 
@@ -323,6 +326,18 @@ func (c *container) metrics() report.Metrics {
 	return result
 }
 
+func (c *container) env() map[string]string {
+	result := map[string]string{}
+	for _, value := range c.container.Config.Env {
+		v := strings.SplitN(value, "=", 2)
+		if len(v) != 2 {
+			continue
+		}
+		result[v[0]] = v[1]
+	}
+	return result
+}
+
 func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	c.RLock()
 	defer c.RUnlock()
@@ -376,8 +391,8 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 		result = result.WithControls(StartContainer)
 	}
 
-	result = AddLabels(result, c.container.Config.Labels)
-	result = AddEnv(result, c.container.Config.Env)
+	result = result.AddTable(LabelPrefix, c.container.Config.Labels)
+	result = result.AddTable(EnvPrefix, c.env())
 	result = result.WithMetrics(c.metrics())
 	return result
 }

@@ -14,6 +14,7 @@ type Topology struct {
 	Controls          `json:"controls,omitempty"`
 	MetadataTemplates `json:"metadata_templates,omitempty"`
 	MetricTemplates   `json:"metric_templates,omitempty"`
+	TableTemplates    `json:"table_templates,omitempty"`
 }
 
 // MakeTopology gives you a Topology.
@@ -32,6 +33,7 @@ func (t Topology) WithMetadataTemplates(other MetadataTemplates) Topology {
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Merge(other),
 		MetricTemplates:   t.MetricTemplates.Copy(),
+		TableTemplates:    t.TableTemplates.Copy(),
 	}
 }
 
@@ -43,6 +45,19 @@ func (t Topology) WithMetricTemplates(other MetricTemplates) Topology {
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Copy(),
 		MetricTemplates:   t.MetricTemplates.Merge(other),
+		TableTemplates:    t.TableTemplates.Copy(),
+	}
+}
+
+// WithTableTemplates merges some table templates into this topology,
+// returning a new topology.
+func (t Topology) WithTableTemplates(other TableTemplates) Topology {
+	return Topology{
+		Nodes:             t.Nodes.Copy(),
+		Controls:          t.Controls.Copy(),
+		MetadataTemplates: t.MetadataTemplates.Copy(),
+		MetricTemplates:   t.MetricTemplates.Copy(),
+		TableTemplates:    t.TableTemplates.Merge(other),
 	}
 }
 
@@ -66,6 +81,7 @@ func (t Topology) Copy() Topology {
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Copy(),
 		MetricTemplates:   t.MetricTemplates.Copy(),
+		TableTemplates:    t.TableTemplates.Copy(),
 	}
 }
 
@@ -77,6 +93,7 @@ func (t Topology) Merge(other Topology) Topology {
 		Controls:          t.Controls.Merge(other.Controls),
 		MetadataTemplates: t.MetadataTemplates.Merge(other.MetadataTemplates),
 		MetricTemplates:   t.MetricTemplates.Merge(other.MetricTemplates),
+		TableTemplates:    t.TableTemplates.Merge(other.TableTemplates),
 	}
 }
 

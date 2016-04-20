@@ -61,18 +61,18 @@ type Column struct {
 
 // NodeSummary is summary information about a child for a Node.
 type NodeSummary struct {
-	ID           string               `json:"id"`
-	Label        string               `json:"label"`
-	LabelMinor   string               `json:"label_minor"`
-	Rank         string               `json:"rank"`
-	Shape        string               `json:"shape,omitempty"`
-	Stack        bool                 `json:"stack,omitempty"`
-	Linkable     bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
-	Pseudo       bool                 `json:"pseudo,omitempty"`
-	Metadata     []report.MetadataRow `json:"metadata,omitempty"`
-	DockerLabels []report.MetadataRow `json:"docker_labels,omitempty"`
-	Metrics      []report.MetricRow   `json:"metrics,omitempty"`
-	Adjacency    report.IDList        `json:"adjacency,omitempty"`
+	ID         string               `json:"id"`
+	Label      string               `json:"label"`
+	LabelMinor string               `json:"label_minor"`
+	Rank       string               `json:"rank"`
+	Shape      string               `json:"shape,omitempty"`
+	Stack      bool                 `json:"stack,omitempty"`
+	Linkable   bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
+	Pseudo     bool                 `json:"pseudo,omitempty"`
+	Metadata   []report.MetadataRow `json:"metadata,omitempty"`
+	Metrics    []report.MetricRow   `json:"metrics,omitempty"`
+	Tables     []report.Table       `json:"tables,omitempty"`
+	Adjacency  report.IDList        `json:"adjacency,omitempty"`
 }
 
 // MakeNodeSummary summarizes a node, if possible.
@@ -117,8 +117,8 @@ func (n NodeSummary) Copy() NodeSummary {
 	for _, row := range n.Metadata {
 		result.Metadata = append(result.Metadata, row.Copy())
 	}
-	for _, row := range n.DockerLabels {
-		result.DockerLabels = append(result.DockerLabels, row.Copy())
+	for _, table := range n.Tables {
+		result.Tables = append(result.Tables, table.Copy())
 	}
 	for _, row := range n.Metrics {
 		result.Metrics = append(result.Metrics, row.Copy())
@@ -128,13 +128,13 @@ func (n NodeSummary) Copy() NodeSummary {
 
 func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 	return NodeSummary{
-		ID:           n.ID,
-		Shape:        Circle,
-		Linkable:     true,
-		Metadata:     NodeMetadata(r, n),
-		DockerLabels: NodeDockerLabels(n),
-		Metrics:      NodeMetrics(r, n),
-		Adjacency:    n.Adjacency.Copy(),
+		ID:        n.ID,
+		Shape:     Circle,
+		Linkable:  true,
+		Metadata:  NodeMetadata(r, n),
+		Metrics:   NodeMetrics(r, n),
+		Tables:    NodeTables(r, n),
+		Adjacency: n.Adjacency.Copy(),
 	}
 }
 

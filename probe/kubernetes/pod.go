@@ -16,6 +16,7 @@ const (
 	PodCreated      = "kubernetes_pod_created"
 	PodContainerIDs = "kubernetes_pod_container_ids"
 	PodState        = "kubernetes_pod_state"
+	PodLabelPrefix  = "kubernetes_pod_labels_"
 	ServiceIDs      = "kubernetes_service_ids"
 )
 
@@ -99,5 +100,5 @@ func (p *pod) GetNode() report.Node {
 			Add(report.Service, report.MakeStringSet(report.MakeServiceNodeID(p.Namespace(), segments[1]))),
 		)
 	}
-	return n
+	return n.AddTable(PodLabelPrefix, p.ObjectMeta.Labels)
 }
