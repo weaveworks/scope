@@ -68,6 +68,14 @@ func TestAppClientPublish(t *testing.T) {
 	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
 	// tags, transforming empty slices into nils. So, we make DeepEqual
 	// happy by setting empty `json:"omitempty"` entries to nil
+	rpt.Endpoint = report.MakeTopology()
+	rpt.Process = report.MakeTopology()
+	rpt.Container = report.MakeTopology()
+	rpt.ContainerImage = report.MakeTopology()
+	rpt.Pod = report.MakeTopology()
+	rpt.Service = report.MakeTopology()
+	rpt.Host = report.MakeTopology()
+	rpt.Overlay = report.MakeTopology()
 	rpt.Endpoint.Controls = nil
 	rpt.Process.Controls = nil
 	rpt.Container.Controls = nil

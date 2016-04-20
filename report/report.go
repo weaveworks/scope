@@ -20,6 +20,13 @@ const (
 	Host           = "host"
 	Overlay        = "overlay"
 
+	// Shapes used for different nodes
+	Circle   = "circle"
+	Square   = "square"
+	Heptagon = "heptagon"
+	Hexagon  = "hexagon"
+	Cloud    = "cloud"
+
 	// Used when counting the number of containers
 	ContainersKey = "containers"
 )
@@ -96,19 +103,39 @@ type Report struct {
 // MakeReport makes a clean report, ready to Merge() other reports into.
 func MakeReport() Report {
 	return Report{
-		Endpoint:       MakeTopology(),
-		Process:        MakeTopology(),
-		Container:      MakeTopology(),
-		ContainerImage: MakeTopology(),
-		Host:           MakeTopology(),
-		Pod:            MakeTopology(),
-		Service:        MakeTopology(),
-		Overlay:        MakeTopology(),
-		Sampling:       Sampling{},
-		Window:         0,
-		Plugins:        xfer.MakePluginSpecs(),
-		ID:             fmt.Sprintf("%d", rand.Int63()),
-		Probes:         Probes{},
+		Endpoint: MakeTopology(),
+
+		Process: MakeTopology().
+			WithShape(Square).
+			WithLabel("process", "processes"),
+
+		Container: MakeTopology().
+			WithShape(Hexagon).
+			WithLabel("container", "containers"),
+
+		ContainerImage: MakeTopology().
+			WithShape(Hexagon).
+			WithLabel("image", "images"),
+
+		Host: MakeTopology().
+			WithShape(Circle).
+			WithLabel("host", "hosts"),
+
+		Pod: MakeTopology().
+			WithShape(Heptagon).
+			WithLabel("pod", "pods"),
+
+		Service: MakeTopology().
+			WithShape(Heptagon).
+			WithLabel("service", "services"),
+
+		Overlay: MakeTopology(),
+
+		Sampling: Sampling{},
+		Window:   0,
+		Plugins:  xfer.MakePluginSpecs(),
+		ID:       fmt.Sprintf("%d", rand.Int63()),
+		Probes:   Probes{},
 	}
 }
 

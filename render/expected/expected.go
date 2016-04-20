@@ -27,14 +27,15 @@ var (
 			return n
 		}
 	}
-	pseudo         = node(render.Pseudo)
-	endpoint       = node(report.Endpoint)
-	processNode    = node(report.Process)
-	container      = node(report.Container)
-	containerImage = node(report.ContainerImage)
-	pod            = node(report.Pod)
-	service        = node(report.Service)
-	hostNode       = node(report.Host)
+	pseudo          = node(render.Pseudo)
+	endpoint        = node(report.Endpoint)
+	processNode     = node(report.Process)
+	processNameNode = node(render.MakeGroupNodeTopology(report.Process, process.Name))
+	container       = node(report.Container)
+	containerImage  = node(report.ContainerImage)
+	pod             = node(report.Pod)
+	service         = node(report.Service)
+	hostNode        = node(report.Host)
 
 	UnknownPseudoNode1ID = render.MakePseudoNodeID(fixture.UnknownClient1IP)
 	UnknownPseudoNode2ID = render.MakePseudoNodeID(fixture.UnknownClient3IP)
@@ -111,7 +112,9 @@ var (
 	}
 
 	RenderedProcessNames = report.Nodes{
-		fixture.Client1Name: processNode(fixture.Client1Name, fixture.ServerName).
+		fixture.Client1Name: processNameNode(fixture.Client1Name, fixture.ServerName).
+			WithLatests(map[string]string{process.Name: fixture.Client1Name}).
+			WithCounters(map[string]int{report.Process: 2}).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],
@@ -119,13 +122,15 @@ var (
 				RenderedProcesses[fixture.ClientProcess2NodeID],
 			)),
 
-		fixture.ServerName: processNode(fixture.ServerName).
+		fixture.ServerName: processNameNode(fixture.ServerName).
+			WithLatests(map[string]string{process.Name: fixture.ServerName}).
+			WithCounters(map[string]int{report.Process: 1}).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
 			)),
 
-		fixture.NonContainerName: processNode(fixture.NonContainerName, render.OutgoingInternetID).
+		fixture.NonContainerName: processNameNode(fixture.NonContainerName, render.OutgoingInternetID).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.NonContainerNodeID],
 				RenderedProcesses[fixture.NonContainerProcessNodeID],

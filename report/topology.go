@@ -10,6 +10,9 @@ import (
 // EdgeMetadatas and Nodes respectively. Edges are directional, and embedded
 // in the Node struct.
 type Topology struct {
+	Shape             string `json:"shape,omitempty"`
+	Label             string `json:"label,omitempty"`
+	LabelPlural       string `json:"label_plural,omitempty"`
 	Nodes             `json:"nodes"`
 	Controls          `json:"controls,omitempty"`
 	MetadataTemplates `json:"metadata_templates,omitempty"`
@@ -29,6 +32,9 @@ func MakeTopology() Topology {
 // returning a new topology.
 func (t Topology) WithMetadataTemplates(other MetadataTemplates) Topology {
 	return Topology{
+		Shape:             t.Shape,
+		Label:             t.Label,
+		LabelPlural:       t.LabelPlural,
 		Nodes:             t.Nodes.Copy(),
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Merge(other),
@@ -41,6 +47,9 @@ func (t Topology) WithMetadataTemplates(other MetadataTemplates) Topology {
 // returning a new topology.
 func (t Topology) WithMetricTemplates(other MetricTemplates) Topology {
 	return Topology{
+		Shape:             t.Shape,
+		Label:             t.Label,
+		LabelPlural:       t.LabelPlural,
 		Nodes:             t.Nodes.Copy(),
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Copy(),
@@ -53,11 +62,42 @@ func (t Topology) WithMetricTemplates(other MetricTemplates) Topology {
 // returning a new topology.
 func (t Topology) WithTableTemplates(other TableTemplates) Topology {
 	return Topology{
+		Shape:             t.Shape,
+		Label:             t.Label,
+		LabelPlural:       t.LabelPlural,
 		Nodes:             t.Nodes.Copy(),
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Copy(),
 		MetricTemplates:   t.MetricTemplates.Copy(),
 		TableTemplates:    t.TableTemplates.Merge(other),
+	}
+}
+
+// WithShape sets the shape of nodes from this topology, returning a new topology.
+func (t Topology) WithShape(shape string) Topology {
+	return Topology{
+		Shape:             shape,
+		Label:             t.Label,
+		LabelPlural:       t.LabelPlural,
+		Nodes:             t.Nodes.Copy(),
+		Controls:          t.Controls.Copy(),
+		MetadataTemplates: t.MetadataTemplates.Copy(),
+		MetricTemplates:   t.MetricTemplates.Copy(),
+		TableTemplates:    t.TableTemplates.Copy(),
+	}
+}
+
+// WithLabel sets the label terminology of this topology, returning a new topology.
+func (t Topology) WithLabel(label, labelPlural string) Topology {
+	return Topology{
+		Shape:             t.Shape,
+		Label:             label,
+		LabelPlural:       labelPlural,
+		Nodes:             t.Nodes.Copy(),
+		Controls:          t.Controls.Copy(),
+		MetadataTemplates: t.MetadataTemplates.Copy(),
+		MetricTemplates:   t.MetricTemplates.Copy(),
+		TableTemplates:    t.TableTemplates.Copy(),
 	}
 }
 
@@ -74,9 +114,20 @@ func (t Topology) AddNode(node Node) Topology {
 	return t
 }
 
+// GetShape returns the current topology shape, or the default if there isn't one.
+func (t Topology) GetShape() string {
+	if t.Shape == "" {
+		return Circle
+	}
+	return t.Shape
+}
+
 // Copy returns a value copy of the Topology.
 func (t Topology) Copy() Topology {
 	return Topology{
+		Shape:             t.Shape,
+		Label:             t.Label,
+		LabelPlural:       t.LabelPlural,
 		Nodes:             t.Nodes.Copy(),
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Copy(),
@@ -88,7 +139,18 @@ func (t Topology) Copy() Topology {
 // Merge merges the other object into this one, and returns the result object.
 // The original is not modified.
 func (t Topology) Merge(other Topology) Topology {
+	shape := t.Shape
+	if shape == "" {
+		shape = other.Shape
+	}
+	label, labelPlural := t.Label, t.LabelPlural
+	if label == "" {
+		label, labelPlural = other.Label, other.LabelPlural
+	}
 	return Topology{
+		Shape:             shape,
+		Label:             label,
+		LabelPlural:       labelPlural,
 		Nodes:             t.Nodes.Merge(other.Nodes),
 		Controls:          t.Controls.Merge(other.Controls),
 		MetadataTemplates: t.MetadataTemplates.Merge(other.MetadataTemplates),

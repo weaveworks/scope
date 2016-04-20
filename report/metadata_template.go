@@ -30,13 +30,7 @@ type MetadataTemplate struct {
 
 // Copy returns a value-copy of the template
 func (t MetadataTemplate) Copy() MetadataTemplate {
-	return MetadataTemplate{
-		ID:       t.ID,
-		Label:    t.Label,
-		Truncate: t.Truncate,
-		Priority: t.Priority,
-		From:     t.From,
-	}
+	return t
 }
 
 // MetadataRows returns the rows for a node
