@@ -20,6 +20,13 @@ const (
 	Host           = "host"
 	Overlay        = "overlay"
 
+	// Shapes used for different nodes
+	Circle   = "circle"
+	Square   = "square"
+	Heptagon = "heptagon"
+	Hexagon  = "hexagon"
+	Cloud    = "cloud"
+
 	// Used when counting the number of containers
 	ContainersKey = "containers"
 )
@@ -97,12 +104,12 @@ type Report struct {
 func MakeReport() Report {
 	return Report{
 		Endpoint:       MakeTopology(),
-		Process:        MakeTopology(),
-		Container:      MakeTopology(),
-		ContainerImage: MakeTopology(),
-		Host:           MakeTopology(),
-		Pod:            MakeTopology(),
-		Service:        MakeTopology(),
+		Process:        MakeTopology().WithShape(Square),
+		Container:      MakeTopology().WithShape(Hexagon),
+		ContainerImage: MakeTopology().WithShape(Hexagon),
+		Host:           MakeTopology().WithShape(Circle),
+		Pod:            MakeTopology().WithShape(Heptagon),
+		Service:        MakeTopology().WithShape(Heptagon),
 		Overlay:        MakeTopology(),
 		Sampling:       Sampling{},
 		Window:         0,

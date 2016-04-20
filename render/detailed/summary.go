@@ -15,30 +15,12 @@ import (
 
 // Shapes that are allowed
 const (
-	Circle   = "circle"
-	Square   = "square"
-	Heptagon = "heptagon"
-	Hexagon  = "hexagon"
-	Cloud    = "cloud"
-
 	ImageNameNone = "<none>"
 
 	// Keys we use to render container names
 	AmazonECSContainerNameLabel  = "com.amazonaws.ecs.container-name"
 	KubernetesContainerNameLabel = "io.kubernetes.container.name"
 	MarathonAppIDEnv             = "MARATHON_APP_ID"
-)
-
-var (
-	shapesByTopology = map[string]string{
-		report.Host:           Circle,
-		report.Process:        Square,
-		report.Pod:            Heptagon,
-		report.Service:        Heptagon,
-		report.Container:      Hexagon,
-		report.ContainerImage: Hexagon,
-		render.Pseudo:         Circle,
-	}
 )
 
 // NodeSummaryGroup is a topology-typed group of children for a Node.
@@ -102,7 +84,7 @@ func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
 		return renderer(baseNodeSummary(r, n), n)
 	}
 	if strings.HasPrefix(n.Topology, "group:") {
-		return groupNodeSummary(baseNodeSummary(r, n), n)
+		return groupNodeSummary(baseNodeSummary(r, n), r, n)
 	}
 	return NodeSummary{}, false
 }
@@ -142,13 +124,9 @@ func (n NodeSummary) Copy() NodeSummary {
 }
 
 func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
-	shape, ok := shapesByTopology[n.Topology]
-	if !ok {
-		shape = Circle
-	}
 	return NodeSummary{
 		ID:        n.ID,
-		Shape:     shape,
+		Shape:     topologyShape(r, n.Topology),
 		Linkable:  true,
 		Metadata:  NodeMetadata(r, n),
 		Metrics:   NodeMetrics(r, n),
@@ -168,7 +146,7 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	}[n.ID]; ok {
 		base.Label = template.Label
 		base.LabelMinor = template.LabelMinor
-		base.Shape = Cloud
+		base.Shape = report.Cloud
 		return base, true
 	}
 
@@ -176,7 +154,7 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	if strings.HasPrefix(n.ID, render.MakePseudoNodeID(render.UncontainedID)) {
 		base.Label = render.UncontainedMajor
 		base.LabelMinor = report.ExtractHostID(n)
-		base.Shape = Square
+		base.Shape = report.Square
 		base.Stack = true
 		return base, true
 	}
@@ -184,7 +162,7 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	// try rendering it as an unmanaged node
 	if strings.HasPrefix(n.ID, render.MakePseudoNodeID(render.UnmanagedID)) {
 		base.Label = render.UnmanagedMajor
-		base.Shape = Square
+		base.Shape = report.Square
 		base.Stack = true
 		base.LabelMinor = report.ExtractHostID(n)
 		return base, true
@@ -193,7 +171,7 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	// try rendering it as an endpoint
 	if addr, ok := n.Latest.Lookup(endpoint.Addr); ok {
 		base.Label = addr
-		base.Shape = Circle
+		base.Shape = report.Circle
 		return base, true
 	}
 
@@ -308,7 +286,7 @@ func hostNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 
 // groupNodeSummary renders the summary for a group node. n.Topology is
 // expected to be of the form: group:container:hostname
-func groupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) (NodeSummary, bool) {
 	parts := strings.Split(n.Topology, ":")
 	if len(parts) != 3 {
 		return NodeSummary{}, false
@@ -331,9 +309,7 @@ func groupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 		}
 	}
 
-	if base.Shape, ok = shapesByTopology[parts[1]]; !ok {
-		base.Shape = Circle
-	}
+	base.Shape = topologyShape(r, parts[1])
 	base.Stack = true
 	return base, true
 }
@@ -396,4 +372,11 @@ func getRenderableContainerName(nmd report.Node) string {
 		}
 	}
 	return ""
+}
+
+func topologyShape(r report.Report, topology string) string {
+	if t, ok := r.Topology(topology); ok && t.Shape != "" {
+		return t.Shape
+	}
+	return report.Circle
 }

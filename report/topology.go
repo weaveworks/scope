@@ -10,6 +10,7 @@ import (
 // EdgeMetadatas and Nodes respectively. Edges are directional, and embedded
 // in the Node struct.
 type Topology struct {
+	Shape             string `json:"shape,omitempty"`
 	Nodes             `json:"nodes"`
 	Controls          `json:"controls,omitempty"`
 	MetadataTemplates `json:"metadata_templates,omitempty"`
@@ -20,6 +21,7 @@ type Topology struct {
 // MakeTopology gives you a Topology.
 func MakeTopology() Topology {
 	return Topology{
+		Shape:    Circle,
 		Nodes:    map[string]Node{},
 		Controls: Controls{},
 	}
@@ -29,6 +31,7 @@ func MakeTopology() Topology {
 // returning a new topology.
 func (t Topology) WithMetadataTemplates(other MetadataTemplates) Topology {
 	return Topology{
+		Shape:             t.Shape,
 		Nodes:             t.Nodes.Copy(),
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Merge(other),
@@ -41,6 +44,7 @@ func (t Topology) WithMetadataTemplates(other MetadataTemplates) Topology {
 // returning a new topology.
 func (t Topology) WithMetricTemplates(other MetricTemplates) Topology {
 	return Topology{
+		Shape:             t.Shape,
 		Nodes:             t.Nodes.Copy(),
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Copy(),
@@ -53,11 +57,24 @@ func (t Topology) WithMetricTemplates(other MetricTemplates) Topology {
 // returning a new topology.
 func (t Topology) WithTableTemplates(other TableTemplates) Topology {
 	return Topology{
+		Shape:             t.Shape,
 		Nodes:             t.Nodes.Copy(),
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Copy(),
 		MetricTemplates:   t.MetricTemplates.Copy(),
 		TableTemplates:    t.TableTemplates.Merge(other),
+	}
+}
+
+// WithShape sets the shape nodes of this topology, returning a new topology.
+func (t Topology) WithShape(shape string) Topology {
+	return Topology{
+		Shape:             shape,
+		Nodes:             t.Nodes.Copy(),
+		Controls:          t.Controls.Copy(),
+		MetadataTemplates: t.MetadataTemplates.Copy(),
+		MetricTemplates:   t.MetricTemplates.Copy(),
+		TableTemplates:    t.TableTemplates.Copy(),
 	}
 }
 
@@ -77,6 +94,7 @@ func (t Topology) AddNode(node Node) Topology {
 // Copy returns a value copy of the Topology.
 func (t Topology) Copy() Topology {
 	return Topology{
+		Shape:             t.Shape,
 		Nodes:             t.Nodes.Copy(),
 		Controls:          t.Controls.Copy(),
 		MetadataTemplates: t.MetadataTemplates.Copy(),
@@ -88,7 +106,13 @@ func (t Topology) Copy() Topology {
 // Merge merges the other object into this one, and returns the result object.
 // The original is not modified.
 func (t Topology) Merge(other Topology) Topology {
+	shape := t.Shape
+	// A circle is the lowliest shape.
+	if shape == Circle {
+		shape = other.Shape
+	}
 	return Topology{
+		Shape:             t.Shape,
 		Nodes:             t.Nodes.Merge(other.Nodes),
 		Controls:          t.Controls.Merge(other.Controls),
 		MetadataTemplates: t.MetadataTemplates.Merge(other.MetadataTemplates),
