@@ -21,34 +21,33 @@ var WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
  *
  ************************************************************/
 
-
-// Serve application file depending on environment
-app.get(/(app|contrast-app|terminal-app|vendors).js/, function(req, res) {
-  var filename = req.originalUrl;
-  if (process.env.NODE_ENV === 'production') {
-    res.sendFile(__dirname + '/build' + filename);
-  } else {
-    res.redirect('//' + WEBPACK_SERVER_HOST + ':4041/build' + filename);
-  }
-});
-
 // Proxy to backend
 
-var proxy = httpProxy.createProxy({
+var backendProxy = httpProxy.createProxy({
   ws: true,
   target: 'http://' + BACKEND_HOST + ':4040'
 });
-
-proxy.on('error', function(err) {
+backendProxy.on('error', function(err) {
   console.error('Proxy error', err);
 });
+app.all('/api*', backendProxy.web.bind(backendProxy));
 
-app.all('/api*', proxy.web.bind(proxy));
+// Serve application file depending on environment
 
-// Serve index page
-
-app.use(express.static('build'));
-
+if (process.env.NODE_ENV === 'production') {
+  // serve all precompiled content from build/
+  app.use(express.static('build'));
+} else {
+  // redirect the JS bundles
+  app.get(/.*js/, function(req, res) {
+    res.redirect('//' + WEBPACK_SERVER_HOST + ':4041' + req.originalUrl);
+  });
+  // proxy everything else
+  var staticProxy = httpProxy.createProxy({
+    target: 'http://' + WEBPACK_SERVER_HOST + ':4041'
+  });
+  app.all('*', staticProxy.web.bind(staticProxy));
+}
 
 /*************************************************************
  *
@@ -64,7 +63,6 @@ if (process.env.NODE_ENV !== 'production') {
   var config = require('./webpack.local.config');
 
   new WebpackDevServer(webpack(config), {
-    publicPath: 'http://' + WEBPACK_SERVER_HOST + ':4041/build/',
     hot: true,
     noInfo: true,
     historyApiFallback: true,
@@ -91,7 +89,7 @@ var server = app.listen(port, function () {
   console.log('Scope UI listening at http://%s:%s', host, port);
 });
 
-server.on('upgrade', proxy.ws.bind(proxy));
+server.on('upgrade', backendProxy.ws.bind(backendProxy));
 
 
 /*************************************************************

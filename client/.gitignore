@@ -1,5 +1,4 @@
 node_modules
-build/app.js
-build/*[woff2?|ttf|eot|svg]
+build/
 coverage/
 test/*png

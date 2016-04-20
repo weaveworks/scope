@@ -1,5 +1,6 @@
 require('font-awesome-webpack');
 require('../styles/main.less');
+require('../images/favicon.ico');
 
 import React from 'react';
 import ReactDOM from 'react-dom';
