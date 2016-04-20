@@ -206,40 +206,6 @@ var (
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
 
-	RenderedHosts = report.Nodes{
-		fixture.ClientHostNodeID: hostNode(fixture.ClientHostNodeID, fixture.ServerHostNodeID).
-			WithLatests(map[string]string{
-				host.HostName: fixture.ClientHostName,
-			}).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Client54001NodeID],
-				RenderedEndpoints[fixture.Client54002NodeID],
-				RenderedProcesses[fixture.ClientProcess1NodeID],
-				RenderedProcesses[fixture.ClientProcess2NodeID],
-				RenderedContainers[fixture.ClientContainerNodeID],
-				RenderedContainerImages[fixture.ClientContainerImageNodeID],
-				RenderedPods[fixture.ClientPodNodeID],
-			)),
-
-		fixture.ServerHostNodeID: hostNode(fixture.ServerHostNodeID, render.OutgoingInternetID).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Server80NodeID],
-				RenderedEndpoints[fixture.NonContainerNodeID],
-				RenderedProcesses[fixture.ServerProcessNodeID],
-				RenderedProcesses[fixture.NonContainerProcessNodeID],
-				RenderedContainers[fixture.ServerContainerNodeID],
-				RenderedContainerImages[fixture.ServerContainerImageNodeID],
-				RenderedPods[fixture.ServerPodNodeID],
-			)),
-
-		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
-		// all non-internet pseudo nodes for now.
-		// UnknownPseudoNode1ID:      unknownPseudoNode1(fixture.ServerHostNodeID),
-		// UnknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerHostNodeID),
-		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerHostNodeID),
-		render.OutgoingInternetID: theOutgoingInternetNode,
-	}
-
 	unmanagedServerID   = render.MakePseudoNodeID(render.UnmanagedID, fixture.ServerHostID)
 	unmanagedServerNode = pseudo(unmanagedServerID, render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
 		uncontainedServerNode,
@@ -286,6 +252,40 @@ var (
 
 		unmanagedServerID:         unmanagedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServiceNodeID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
+	}
+
+	RenderedHosts = report.Nodes{
+		fixture.ClientHostNodeID: hostNode(fixture.ClientHostNodeID, fixture.ServerHostNodeID).
+			WithLatests(map[string]string{
+				host.HostName: fixture.ClientHostName,
+			}).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Client54001NodeID],
+				RenderedEndpoints[fixture.Client54002NodeID],
+				RenderedProcesses[fixture.ClientProcess1NodeID],
+				RenderedProcesses[fixture.ClientProcess2NodeID],
+				RenderedContainers[fixture.ClientContainerNodeID],
+				RenderedContainerImages[fixture.ClientContainerImageNodeID],
+				RenderedPods[fixture.ClientPodNodeID],
+			)),
+
+		fixture.ServerHostNodeID: hostNode(fixture.ServerHostNodeID, render.OutgoingInternetID).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Server80NodeID],
+				RenderedEndpoints[fixture.NonContainerNodeID],
+				RenderedProcesses[fixture.ServerProcessNodeID],
+				RenderedProcesses[fixture.NonContainerProcessNodeID],
+				RenderedContainers[fixture.ServerContainerNodeID],
+				RenderedContainerImages[fixture.ServerContainerImageNodeID],
+				RenderedPods[fixture.ServerPodNodeID],
+			)),
+
+		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
+		// all non-internet pseudo nodes for now.
+		// UnknownPseudoNode1ID:      unknownPseudoNode1(fixture.ServerHostNodeID),
+		// UnknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerHostNodeID),
+		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerHostNodeID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
 )

@@ -4,6 +4,12 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
+// MapFunc is anything which can take an arbitrary Node and
+// return a set of other Nodes.
+//
+// If the output is empty, the node shall be omitted from the rendered topology.
+type MapFunc func(report.Node, report.Networks) report.Nodes
+
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
 	Render(report.Report) report.Nodes
