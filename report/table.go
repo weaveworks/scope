@@ -60,13 +60,9 @@ type TableTemplate struct {
 	Prefix string `json:"prefix"`
 }
 
-// Copy returns a copy of the TableTemplate
+// Copy returns a value-copy of the TableTemplate
 func (t TableTemplate) Copy() TableTemplate {
-	return TableTemplate{
-		ID:     t.ID,
-		Label:  t.Label,
-		Prefix: t.Prefix,
-	}
+	return t
 }
 
 // Merge other into t, returning a fresh copy.  Does fieldwise max -

@@ -124,9 +124,10 @@ func (n NodeSummary) Copy() NodeSummary {
 }
 
 func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
+	t, _ := r.Topology(n.Topology)
 	return NodeSummary{
 		ID:        n.ID,
-		Shape:     topologyShape(r, n.Topology),
+		Shape:     t.GetShape(),
 		Linkable:  true,
 		Metadata:  NodeMetadata(r, n),
 		Metrics:   NodeMetrics(r, n),
@@ -298,18 +299,18 @@ func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) (NodeSum
 	}
 	base.Label, base.Rank = label, label
 
-	if count, ok := n.Counters.Lookup(parts[1]); ok {
-		base.LabelMinor = fmt.Sprintf("%d %s", count, parts[1])
-		if count != 1 {
-			if strings.HasSuffix(parts[1], "s") {
-				base.LabelMinor += "es"
+	t, ok := r.Topology(parts[1])
+	if ok && t.Label != "" {
+		if count, ok := n.Counters.Lookup(parts[1]); ok {
+			if count == 1 {
+				base.LabelMinor = fmt.Sprintf("%d %s", count, t.Label)
 			} else {
-				base.LabelMinor += "s"
+				base.LabelMinor = fmt.Sprintf("%d %s", count, t.LabelPlural)
 			}
 		}
 	}
 
-	base.Shape = topologyShape(r, parts[1])
+	base.Shape = t.GetShape()
 	base.Stack = true
 	return base, true
 }
@@ -372,11 +373,4 @@ func getRenderableContainerName(nmd report.Node) string {
 		}
 	}
 	return ""
-}
-
-func topologyShape(r report.Report, topology string) string {
-	if t, ok := r.Topology(topology); ok && t.Shape != "" {
-		return t.Shape
-	}
-	return report.Circle
 }

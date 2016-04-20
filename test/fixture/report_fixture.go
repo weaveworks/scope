@@ -248,7 +248,7 @@ var (
 			},
 			MetadataTemplates: process.MetadataTemplates,
 			MetricTemplates:   process.MetricTemplates,
-		},
+		}.WithShape(report.Square).WithLabel("process", "processes"),
 		Container: report.Topology{
 			Nodes: report.Nodes{
 				ClientContainerNodeID: report.MakeNodeWith(
@@ -299,7 +299,7 @@ var (
 			},
 			MetadataTemplates: docker.ContainerMetadataTemplates,
 			MetricTemplates:   docker.ContainerMetricTemplates,
-		},
+		}.WithShape(report.Hexagon).WithLabel("container", "containers"),
 		ContainerImage: report.Topology{
 			Nodes: report.Nodes{
 				ClientContainerImageNodeID: report.MakeNodeWith(ClientContainerImageNodeID, map[string]string{
@@ -322,7 +322,7 @@ var (
 					).WithTopology(report.ContainerImage),
 			},
 			MetadataTemplates: docker.ContainerImageMetadataTemplates,
-		},
+		}.WithShape(report.Hexagon).WithLabel("image", "images"),
 		Host: report.Topology{
 			Nodes: report.Nodes{
 				ClientHostNodeID: report.MakeNodeWith(
@@ -356,7 +356,7 @@ var (
 			},
 			MetadataTemplates: host.MetadataTemplates,
 			MetricTemplates:   host.MetricTemplates,
-		},
+		}.WithShape(report.Circle).WithLabel("host", "hosts"),
 		Pod: report.Topology{
 			Nodes: report.Nodes{
 				ClientPodNodeID: report.MakeNodeWith(
@@ -388,7 +388,7 @@ var (
 				),
 			},
 			MetadataTemplates: kubernetes.PodMetadataTemplates,
-		},
+		}.WithShape(report.Heptagon).WithLabel("pod", "pods"),
 		Service: report.Topology{
 			Nodes: report.Nodes{
 				ServiceNodeID: report.MakeNodeWith(
@@ -400,7 +400,7 @@ var (
 					}).
 					WithTopology(report.Service),
 			},
-		},
+		}.WithShape(report.Heptagon).WithLabel("service", "services"),
 		Sampling: report.Sampling{
 			Count: 1024,
 			Total: 4096,

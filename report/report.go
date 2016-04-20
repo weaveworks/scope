@@ -103,19 +103,39 @@ type Report struct {
 // MakeReport makes a clean report, ready to Merge() other reports into.
 func MakeReport() Report {
 	return Report{
-		Endpoint:       MakeTopology(),
-		Process:        MakeTopology().WithShape(Square),
-		Container:      MakeTopology().WithShape(Hexagon),
-		ContainerImage: MakeTopology().WithShape(Hexagon),
-		Host:           MakeTopology().WithShape(Circle),
-		Pod:            MakeTopology().WithShape(Heptagon),
-		Service:        MakeTopology().WithShape(Heptagon),
-		Overlay:        MakeTopology(),
-		Sampling:       Sampling{},
-		Window:         0,
-		Plugins:        xfer.MakePluginSpecs(),
-		ID:             fmt.Sprintf("%d", rand.Int63()),
-		Probes:         Probes{},
+		Endpoint: MakeTopology(),
+
+		Process: MakeTopology().
+			WithShape(Square).
+			WithLabel("process", "processes"),
+
+		Container: MakeTopology().
+			WithShape(Hexagon).
+			WithLabel("container", "containers"),
+
+		ContainerImage: MakeTopology().
+			WithShape(Hexagon).
+			WithLabel("image", "images"),
+
+		Host: MakeTopology().
+			WithShape(Circle).
+			WithLabel("host", "hosts"),
+
+		Pod: MakeTopology().
+			WithShape(Heptagon).
+			WithLabel("pod", "pods"),
+
+		Service: MakeTopology().
+			WithShape(Heptagon).
+			WithLabel("service", "services"),
+
+		Overlay: MakeTopology(),
+
+		Sampling: Sampling{},
+		Window:   0,
+		Plugins:  xfer.MakePluginSpecs(),
+		ID:       fmt.Sprintf("%d", rand.Int63()),
+		Probes:   Probes{},
 	}
 }
 
