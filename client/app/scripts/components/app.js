@@ -53,6 +53,7 @@ function getStateFromStores() {
     updatePaused: AppStore.isUpdatePaused(),
     updatePausedAt: AppStore.getUpdatePausedAt(),
     version: AppStore.getVersion(),
+    versionUpdate: AppStore.getVersionUpdate(),
     plugins: AppStore.getPlugins(),
     websocketClosed: AppStore.isWebsocketClosed()
   };
@@ -183,7 +184,9 @@ export default class App extends React.Component {
             activeOptions={this.state.activeTopologyOptions} />
         </Sidebar>
 
-        <Footer {...this.state} />
+        <Footer hostname={this.state.hostname} plugins={this.state.plugins}
+          updatePaused={this.state.updatePaused} updatePausedAt={this.state.updatePausedAt}
+          version={this.state.version} versionUpdate={this.state.versionUpdate} />
       </div>
     );
   }
