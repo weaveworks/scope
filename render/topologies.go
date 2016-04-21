@@ -213,11 +213,10 @@ var HostRenderer = MakeReduce(
 		MapX2Host,
 		ContainerImageRenderer,
 	),
-	// Pods don't have a host id - #1142
-	// MakeMap(
-	// 	MapX2Host,
-	// 		SelectPod,
-	// ),
+	MakeMap(
+		MapX2Host,
+		PodRenderer,
+	),
 	SelectHost,
 )
 

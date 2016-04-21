@@ -83,7 +83,7 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 				{ContainerID: "container2"},
 			},
 		},
-	}).GetNode()
+	}).GetNode("")
 	buf := &bytes.Buffer{}
 	encoder := codec.NewEncoder(buf, &codec.MsgpackHandle{})
 	if err := encoder.Encode(rpt); err != nil {

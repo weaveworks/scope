@@ -239,7 +239,7 @@ func TestSortMergeLists(t *testing.T) {
 		original := testObjectToJSONOrFail(t, c.Original, c.Description)
 		sorted := testObjectToJSONOrFail(t, c.Sorted, c.Description)
 		if !reflect.DeepEqual(original, sorted) {
-			t.Errorf("error in test case: %s\ncannot sort object:\n%s\n%sexpected:\n%s\ngot:\n%s\n",
+			t.Errorf("error in test case: %s\ncannot sort object:\n%s\nexpected:\n%s\ngot:\n%s\n",
 				c.Description, toYAMLOrError(c.Original), toYAMLOrError(c.Sorted), jsonToYAMLOrError(original))
 		}
 	}
@@ -1814,7 +1814,7 @@ func testTwoWayPatch(t *testing.T, c StrategicMergePatchTestCase) {
 	actual, err := CreateTwoWayMergePatch(original, modified, mergeItem)
 	if err != nil {
 		t.Errorf("error: %s\nin test case: %s\ncannot create two way patch: %s:\n%s\n",
-			err, c.Description, toYAMLOrError(c.StrategicMergePatchTestCaseData))
+			err, c.Description, original, toYAMLOrError(c.StrategicMergePatchTestCaseData))
 		return
 	}
 
@@ -2021,6 +2021,90 @@ func TestHasConflicts(t *testing.T) {
 		}
 		if out != testCase.Ret {
 			t.Errorf("%d: expected reversed %t got %t", i, testCase.Ret, out)
+		}
+	}
+}
+
+type PrecisionItem struct {
+	Name    string
+	Int32   int32
+	Int64   int64
+	Float32 float32
+	Float64 float64
+}
+
+var precisionItem PrecisionItem
+
+func TestNumberConversion(t *testing.T) {
+	testcases := map[string]struct {
+		Old            string
+		New            string
+		ExpectedPatch  string
+		ExpectedResult string
+	}{
+		"empty": {
+			Old:            `{}`,
+			New:            `{}`,
+			ExpectedPatch:  `{}`,
+			ExpectedResult: `{}`,
+		},
+		"int32 medium": {
+			Old:            `{"int32":1000000}`,
+			New:            `{"int32":1000000,"name":"newname"}`,
+			ExpectedPatch:  `{"name":"newname"}`,
+			ExpectedResult: `{"int32":1000000,"name":"newname"}`,
+		},
+		"int32 max": {
+			Old:            `{"int32":2147483647}`,
+			New:            `{"int32":2147483647,"name":"newname"}`,
+			ExpectedPatch:  `{"name":"newname"}`,
+			ExpectedResult: `{"int32":2147483647,"name":"newname"}`,
+		},
+		"int64 medium": {
+			Old:            `{"int64":1000000}`,
+			New:            `{"int64":1000000,"name":"newname"}`,
+			ExpectedPatch:  `{"name":"newname"}`,
+			ExpectedResult: `{"int64":1000000,"name":"newname"}`,
+		},
+		"int64 max": {
+			Old:            `{"int64":9223372036854775807}`,
+			New:            `{"int64":9223372036854775807,"name":"newname"}`,
+			ExpectedPatch:  `{"name":"newname"}`,
+			ExpectedResult: `{"int64":9223372036854775807,"name":"newname"}`,
+		},
+		"float32 max": {
+			Old:            `{"float32":3.4028234663852886e+38}`,
+			New:            `{"float32":3.4028234663852886e+38,"name":"newname"}`,
+			ExpectedPatch:  `{"name":"newname"}`,
+			ExpectedResult: `{"float32":3.4028234663852886e+38,"name":"newname"}`,
+		},
+		"float64 max": {
+			Old:            `{"float64":1.7976931348623157e+308}`,
+			New:            `{"float64":1.7976931348623157e+308,"name":"newname"}`,
+			ExpectedPatch:  `{"name":"newname"}`,
+			ExpectedResult: `{"float64":1.7976931348623157e+308,"name":"newname"}`,
+		},
+	}
+
+	for k, tc := range testcases {
+		patch, err := CreateTwoWayMergePatch([]byte(tc.Old), []byte(tc.New), precisionItem)
+		if err != nil {
+			t.Errorf("%s: unexpected error %v", k, err)
+			continue
+		}
+		if tc.ExpectedPatch != string(patch) {
+			t.Errorf("%s: expected %s, got %s", k, tc.ExpectedPatch, string(patch))
+			continue
+		}
+
+		result, err := StrategicMergePatch([]byte(tc.Old), patch, precisionItem)
+		if err != nil {
+			t.Errorf("%s: unexpected error %v", k, err)
+			continue
+		}
+		if tc.ExpectedResult != string(result) {
+			t.Errorf("%s: expected %s, got %s", k, tc.ExpectedResult, string(result))
+			continue
 		}
 	}
 }

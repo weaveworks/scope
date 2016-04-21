@@ -30,7 +30,6 @@ import (
 	"k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/api/meta"
 	"k8s.io/kubernetes/pkg/api/v1"
-	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/kubectl"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
@@ -50,20 +49,20 @@ Replaces the specified replication controller with a new replication controller 
 new PodTemplate. The new-controller.json must specify the same namespace as the
 existing replication controller and overwrite at least one (common) label in its replicaSelector.`
 	rollingUpdate_example = `# Update pods of frontend-v1 using new replication controller data in frontend-v2.json.
-$ kubectl rolling-update frontend-v1 -f frontend-v2.json
+kubectl rolling-update frontend-v1 -f frontend-v2.json
 
 # Update pods of frontend-v1 using JSON data passed into stdin.
-$ cat frontend-v2.json | kubectl rolling-update frontend-v1 -f -
+cat frontend-v2.json | kubectl rolling-update frontend-v1 -f -
 
 # Update the pods of frontend-v1 to frontend-v2 by just changing the image, and switching the
 # name of the replication controller.
-$ kubectl rolling-update frontend-v1 frontend-v2 --image=image:v2
+kubectl rolling-update frontend-v1 frontend-v2 --image=image:v2
 
 # Update the pods of frontend by just changing the image, and keeping the old name.
-$ kubectl rolling-update frontend --image=image:v2
+kubectl rolling-update frontend --image=image:v2
 
 # Abort and reverse an existing rollout in progress (from frontend-v1 to frontend-v2).
-$ kubectl rolling-update frontend-v1 frontend-v2 --rollback
+kubectl rolling-update frontend-v1 frontend-v2 --rollback
 `
 )
 
@@ -102,6 +101,8 @@ func NewCmdRollingUpdate(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 	cmd.Flags().Bool("rollback", false, "If true, this is a request to abort an existing rollout that is partially rolled out. It effectively reverses current and next and runs a rollout")
 	cmdutil.AddValidateFlags(cmd)
 	cmdutil.AddPrinterFlags(cmd)
+	cmdutil.AddInclude3rdPartyFlags(cmd)
+
 	return cmd
 }
 
@@ -190,7 +191,7 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 	var keepOldName bool
 	var replicasDefaulted bool
 
-	mapper, typer := f.Object()
+	mapper, typer := f.Object(cmdutil.GetIncludeThirdPartyAPIs(cmd))
 
 	if len(filename) != 0 {
 		schema, err := f.Validator(cmdutil.GetFlagBool(cmd, "validate"), cmdutil.GetFlagString(cmd, "schema-cache-dir"))
@@ -201,7 +202,7 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 		request := resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.ClientForMapping), f.Decoder(true)).
 			Schema(schema).
 			NamespaceParam(cmdNamespace).DefaultNamespace().
-			FilenameParam(enforceNamespace, filename).
+			FilenameParam(enforceNamespace, false, filename).
 			Do()
 		obj, err := request.Object()
 		if err != nil {
@@ -235,7 +236,7 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 	// than the old rc. This selector is the hash of the rc, which will differ because the new rc has a
 	// different image.
 	if len(image) != 0 {
-		codec := registered.GroupOrDie(client.APIVersion().Group).Codec
+		codec := api.Codecs.LegacyCodec(client.APIVersion())
 		keepOldName = len(args) == 1
 		newName := findNewName(args, oldRc)
 		if newRc, err = kubectl.LoadExistingNextReplicationController(client, cmdNamespace, newName); err != nil {
@@ -311,10 +312,10 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 			oldRcData.WriteString(oldRc.Name)
 			newRcData.WriteString(newRc.Name)
 		} else {
-			if err := f.PrintObject(cmd, oldRc, oldRcData); err != nil {
+			if err := f.PrintObject(cmd, mapper, oldRc, oldRcData); err != nil {
 				return err
 			}
-			if err := f.PrintObject(cmd, newRc, newRcData); err != nil {
+			if err := f.PrintObject(cmd, mapper, newRc, newRcData); err != nil {
 				return err
 			}
 		}
@@ -333,7 +334,7 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 		Interval:       interval,
 		Timeout:        timeout,
 		CleanupPolicy:  updateCleanupPolicy,
-		MaxUnavailable: intstr.FromInt(1),
+		MaxUnavailable: intstr.FromInt(0),
 		MaxSurge:       intstr.FromInt(1),
 	}
 	if rollback {
@@ -359,7 +360,7 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 		return err
 	}
 	if outputFormat != "" {
-		return f.PrintObject(cmd, newRc, out)
+		return f.PrintObject(cmd, mapper, newRc, out)
 	}
 	kind, err := api.Scheme.ObjectKind(newRc)
 	if err != nil {

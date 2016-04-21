@@ -218,7 +218,7 @@ var (
 				RenderedProcesses[fixture.ClientProcess2NodeID],
 				RenderedContainers[fixture.ClientContainerNodeID],
 				RenderedContainerImages[fixture.ClientContainerImageNodeID],
-				//RenderedPods[fixture.ClientPodNodeID], #1142
+				RenderedPods[fixture.ClientPodNodeID],
 			)),
 
 		fixture.ServerHostNodeID: hostNode(fixture.ServerHostNodeID, render.OutgoingInternetID).
@@ -229,7 +229,7 @@ var (
 				RenderedProcesses[fixture.NonContainerProcessNodeID],
 				RenderedContainers[fixture.ServerContainerNodeID],
 				RenderedContainerImages[fixture.ServerContainerImageNodeID],
-				//RenderedPods[fixture.ServerPodNodeID], #1142
+				RenderedPods[fixture.ServerPodNodeID],
 			)),
 
 		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping

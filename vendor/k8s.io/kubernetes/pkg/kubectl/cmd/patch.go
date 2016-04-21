@@ -37,6 +37,7 @@ var patchTypes = map[string]api.PatchType{"json": api.JSONPatchType, "merge": ap
 // referencing the cmd.Flags()
 type PatchOptions struct {
 	Filenames []string
+	Recursive bool
 }
 
 const (
@@ -79,9 +80,11 @@ func NewCmdPatch(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 	cmd.Flags().String("type", "strategic", fmt.Sprintf("The type of patch being provided; one of %v", sets.StringKeySet(patchTypes).List()))
 	cmdutil.AddOutputFlagsForMutation(cmd)
 	cmdutil.AddRecordFlag(cmd)
+	cmdutil.AddInclude3rdPartyFlags(cmd)
 
 	usage := "Filename, directory, or URL to a file identifying the resource to update"
 	kubectl.AddJsonFilenameFlag(cmd, &options.Filenames, usage)
+	cmdutil.AddRecursiveFlag(cmd, &options.Recursive)
 	return cmd
 }
 
@@ -110,11 +113,11 @@ func RunPatch(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []stri
 		return fmt.Errorf("unable to parse %q: %v", patch, err)
 	}
 
-	mapper, typer := f.Object()
+	mapper, typer := f.Object(cmdutil.GetIncludeThirdPartyAPIs(cmd))
 	r := resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.ClientForMapping), f.Decoder(true)).
 		ContinueOnError().
 		NamespaceParam(cmdNamespace).DefaultNamespace().
-		FilenameParam(enforceNamespace, options.Filenames...).
+		FilenameParam(enforceNamespace, options.Recursive, options.Filenames...).
 		ResourceTypeOrNameArgs(false, args...).
 		Flatten().
 		Do()
@@ -139,18 +142,17 @@ func RunPatch(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []stri
 	}
 
 	helper := resource.NewHelper(client, mapping)
-	_, err = helper.Patch(namespace, name, patchType, patchBytes)
+	patchedObject, err := helper.Patch(namespace, name, patchType, patchBytes)
 	if err != nil {
 		return err
 	}
 	if cmdutil.ShouldRecord(cmd, info) {
-		patchBytes, err = cmdutil.ChangeResourcePatch(info, f.Command())
-		if err != nil {
-			return err
-		}
-		_, err = helper.Patch(namespace, name, api.StrategicMergePatchType, patchBytes)
-		if err != nil {
-			return err
+		if err := cmdutil.RecordChangeCause(patchedObject, f.Command()); err == nil {
+			// don't return an error on failure.  The patch itself succeeded, its only the hint for that change that failed
+			// don't bother checking for failures of this replace, because a failure to indicate the hint doesn't fail the command
+			// also, don't force the replacement.  If the replacement fails on a resourceVersion conflict, then it means this
+			// record hint is likely to be invalid anyway, so avoid the bad hint
+			resource.NewHelper(client, mapping).Replace(namespace, name, false, patchedObject)
 		}
 	}
 	cmdutil.PrintSuccess(mapper, shortOutput, out, "", name, "patched")

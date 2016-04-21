@@ -17,7 +17,9 @@ limitations under the License.
 package storage_test
 
 import (
+	"fmt"
 	"reflect"
+	goruntime "runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -106,17 +108,25 @@ func TestList(t *testing.T) {
 	_ = updatePod(t, etcdStorage, podFooPrime, fooCreated)
 
 	deleted := api.Pod{}
-	if err := etcdStorage.Delete(context.TODO(), etcdtest.AddPrefix("pods/ns/bar"), &deleted); err != nil {
+	if err := etcdStorage.Delete(context.TODO(), etcdtest.AddPrefix("pods/ns/bar"), &deleted, nil); err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	result := &api.PodList{}
-	// TODO: We need to pass ResourceVersion of barPod deletion operation.
-	// However, there is no easy way to get it, so it is hardcoded to 8.
-	if err := cacher.List(context.TODO(), "pods/ns", "8", storage.Everything, result); err != nil {
+	// We first List directly from etcd by passing empty resourceVersion,
+	// to get the current etcd resourceVersion.
+	rvResult := &api.PodList{}
+	if err := cacher.List(context.TODO(), "pods/ns", "", storage.Everything, rvResult); err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	if result.ListMeta.ResourceVersion != "8" {
+	deletedPodRV := rvResult.ListMeta.ResourceVersion
+
+	result := &api.PodList{}
+	// We pass the current etcd ResourceVersion received from the above List() operation,
+	// since there is not easy way to get ResourceVersion of barPod deletion operation.
+	if err := cacher.List(context.TODO(), "pods/ns", deletedPodRV, storage.Everything, result); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if result.ListMeta.ResourceVersion != deletedPodRV {
 		t.Errorf("Incorrect resource version: %v", result.ListMeta.ResourceVersion)
 	}
 	if len(result.Items) != 2 {
@@ -150,21 +160,40 @@ func TestList(t *testing.T) {
 }
 
 func verifyWatchEvent(t *testing.T, w watch.Interface, eventType watch.EventType, eventObject runtime.Object) {
+	_, _, line, _ := goruntime.Caller(1)
 	select {
 	case event := <-w.ResultChan():
 		if e, a := eventType, event.Type; e != a {
+			t.Logf("(called from line %d)", line)
 			t.Errorf("Expected: %s, got: %s", eventType, event.Type)
 		}
 		if e, a := eventObject, event.Object; !api.Semantic.DeepDerivative(e, a) {
+			t.Logf("(called from line %d)", line)
 			t.Errorf("Expected (%s): %#v, got: %#v", eventType, e, a)
 		}
 	case <-time.After(wait.ForeverTestTimeout):
+		t.Logf("(called from line %d)", line)
 		t.Errorf("Timed out waiting for an event")
 	}
 }
 
+type injectListError struct {
+	errors int
+	storage.Interface
+}
+
+func (self *injectListError) List(ctx context.Context, key string, resourceVersion string, filter storage.FilterFunc, listObj runtime.Object) error {
+	if self.errors > 0 {
+		self.errors--
+		return fmt.Errorf("injected error")
+	}
+	return self.Interface.List(ctx, key, resourceVersion, filter, listObj)
+}
+
 func TestWatch(t *testing.T) {
 	server, etcdStorage := newEtcdTestStorage(t, testapi.Default.Codec(), etcdtest.PathPrefix())
+	// Inject one list error to make sure we test the relist case.
+	etcdStorage = &injectListError{errors: 1, Interface: etcdStorage}
 	defer server.Terminate(t)
 	cacher := newTestCacher(etcdStorage)
 	defer cacher.Stop()
@@ -212,7 +241,6 @@ func TestWatch(t *testing.T) {
 	}
 	defer initialWatcher.Stop()
 
-	verifyWatchEvent(t, initialWatcher, watch.Added, podFoo)
 	verifyWatchEvent(t, initialWatcher, watch.Modified, podFooPrime)
 
 	// Now test watch from "now".
@@ -291,7 +319,7 @@ func TestFiltering(t *testing.T) {
 	_ = updatePod(t, etcdStorage, podFooPrime, fooUnfiltered)
 
 	deleted := api.Pod{}
-	if err := etcdStorage.Delete(context.TODO(), etcdtest.AddPrefix("pods/ns/foo"), &deleted); err != nil {
+	if err := etcdStorage.Delete(context.TODO(), etcdtest.AddPrefix("pods/ns/foo"), &deleted, nil); err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
@@ -311,7 +339,6 @@ func TestFiltering(t *testing.T) {
 	}
 	defer watcher.Stop()
 
-	verifyWatchEvent(t, watcher, watch.Added, podFoo)
 	verifyWatchEvent(t, watcher, watch.Deleted, podFooFiltered)
 	verifyWatchEvent(t, watcher, watch.Added, podFoo)
 	verifyWatchEvent(t, watcher, watch.Modified, podFooPrime)

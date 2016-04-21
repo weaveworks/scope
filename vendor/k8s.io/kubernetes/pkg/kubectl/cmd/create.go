@@ -35,6 +35,7 @@ import (
 // referencing the cmd.Flags()
 type CreateOptions struct {
 	Filenames []string
+	Recursive bool
 }
 
 const (
@@ -42,10 +43,10 @@ const (
 
 JSON and YAML formats are accepted.`
 	create_example = `# Create a pod using the data in pod.json.
-$ kubectl create -f ./pod.json
+kubectl create -f ./pod.json
 
 # Create a pod based on the JSON passed into stdin.
-$ cat pod.json | kubectl create -f -`
+cat pod.json | kubectl create -f -`
 )
 
 func NewCmdCreate(f *cmdutil.Factory, out io.Writer) *cobra.Command {
@@ -71,13 +72,17 @@ func NewCmdCreate(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 	kubectl.AddJsonFilenameFlag(cmd, &options.Filenames, usage)
 	cmd.MarkFlagRequired("filename")
 	cmdutil.AddValidateFlags(cmd)
+	cmdutil.AddRecursiveFlag(cmd, &options.Recursive)
 	cmdutil.AddOutputFlagsForMutation(cmd)
 	cmdutil.AddApplyAnnotationFlags(cmd)
 	cmdutil.AddRecordFlag(cmd)
+	cmdutil.AddInclude3rdPartyFlags(cmd)
 
 	// create subcommands
 	cmd.AddCommand(NewCmdCreateNamespace(f, out))
 	cmd.AddCommand(NewCmdCreateSecret(f, out))
+	cmd.AddCommand(NewCmdCreateConfigMap(f, out))
+	cmd.AddCommand(NewCmdCreateServiceAccount(f, out))
 	return cmd
 }
 
@@ -99,12 +104,12 @@ func RunCreate(f *cmdutil.Factory, cmd *cobra.Command, out io.Writer, options *C
 		return err
 	}
 
-	mapper, typer := f.Object()
+	mapper, typer := f.Object(cmdutil.GetIncludeThirdPartyAPIs(cmd))
 	r := resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.ClientForMapping), f.Decoder(true)).
 		Schema(schema).
 		ContinueOnError().
 		NamespaceParam(cmdNamespace).DefaultNamespace().
-		FilenameParam(enforceNamespace, options.Filenames...).
+		FilenameParam(enforceNamespace, options.Recursive, options.Filenames...).
 		Flatten().
 		Do()
 	err = r.Err()
@@ -219,7 +224,7 @@ func RunCreateSubcommand(f *cmdutil.Factory, cmd *cobra.Command, out io.Writer, 
 	if err != nil {
 		return err
 	}
-	mapper, typer := f.Object()
+	mapper, typer := f.Object(cmdutil.GetIncludeThirdPartyAPIs(cmd))
 	gvk, err := typer.ObjectKind(obj)
 	mapping, err := mapper.RESTMapping(unversioned.GroupKind{Group: gvk.Group, Kind: gvk.Kind}, gvk.Version)
 	if err != nil {
@@ -234,7 +239,7 @@ func RunCreateSubcommand(f *cmdutil.Factory, cmd *cobra.Command, out io.Writer, 
 		RESTMapper:   mapper,
 		ClientMapper: resource.ClientMapperFunc(f.ClientForMapping),
 	}
-	info, err := resourceMapper.InfoForObject(obj)
+	info, err := resourceMapper.InfoForObject(obj, nil)
 	if err != nil {
 		return err
 	}
@@ -253,5 +258,5 @@ func RunCreateSubcommand(f *cmdutil.Factory, cmd *cobra.Command, out io.Writer, 
 		return nil
 	}
 
-	return f.PrintObject(cmd, obj, out)
+	return f.PrintObject(cmd, mapper, obj, out)
 }

@@ -53,14 +53,14 @@ const (
 	cordon_long = `Mark node as unschedulable.
 `
 	cordon_example = `# Mark node "foo" as unschedulable.
-$ kubectl cordon foo
+kubectl cordon foo
 `
 )
 
 func NewCmdCordon(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 	options := &DrainOptions{factory: f, out: out}
 
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:     "cordon NODE",
 		Short:   "Mark node as unschedulable",
 		Long:    cordon_long,
@@ -70,6 +70,7 @@ func NewCmdCordon(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 			cmdutil.CheckErr(options.RunCordonOrUncordon(true))
 		},
 	}
+	return cmd
 }
 
 const (
@@ -83,7 +84,7 @@ $ kubectl uncordon foo
 func NewCmdUncordon(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 	options := &DrainOptions{factory: f, out: out}
 
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:     "uncordon NODE",
 		Short:   "Mark node as schedulable",
 		Long:    uncordon_long,
@@ -93,6 +94,7 @@ func NewCmdUncordon(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 			cmdutil.CheckErr(options.RunCordonOrUncordon(false))
 		},
 	}
+	return cmd
 }
 
 const (
@@ -103,7 +105,7 @@ Then drain deletes all pods except mirror pods (which cannot be deleted through
 the API server).  If there are DaemonSet-managed pods, drain will not proceed
 without --ignore-daemonsets, and regardless it will not delete any
 DaemonSet-managed pods, because those pods would be immediately replaced by the
-DaemonSet controller, which ignores unschedulable marknigs.  If there are any
+DaemonSet controller, which ignores unschedulable markings.  If there are any
 pods that are neither mirror pods nor managed--by ReplicationController,
 DaemonSet or Job--, then drain will not delete any pods unless you use --force.
 
@@ -149,14 +151,14 @@ func (o *DrainOptions) SetupDrain(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	o.mapper, o.typer = o.factory.Object()
+	o.mapper, o.typer = o.factory.Object(false)
 
 	cmdNamespace, _, err := o.factory.DefaultNamespace()
 	if err != nil {
 		return err
 	}
 
-	r := o.factory.NewBuilder().
+	r := o.factory.NewBuilder(cmdutil.GetIncludeThirdPartyAPIs(cmd)).
 		NamespaceParam(cmdNamespace).DefaultNamespace().
 		ResourceNames("node", args[0]).
 		Do()
@@ -242,7 +244,7 @@ func (o *DrainOptions) getPodsForDeletion() ([]api.Pod, error) {
 					daemonset_pod = true
 				}
 			} else if sr.Reference.Kind == "Job" {
-				job, err := o.client.Jobs(sr.Reference.Namespace).Get(sr.Reference.Name)
+				job, err := o.client.ExtensionsClient.Jobs(sr.Reference.Namespace).Get(sr.Reference.Name)
 
 				// Assume the only reason for an error is because the Job is
 				// gone/missing, not for any other cause.  TODO(mml): something more
