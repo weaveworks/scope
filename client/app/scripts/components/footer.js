@@ -63,6 +63,9 @@ export default function Footer(props) {
         <a className="footer-icon" onClick={clickDownloadGraph} title="Save canvas as SVG">
           <span className="fa fa-download" />
         </a>
+        <a className="footer-icon" href="api/report" download title="Save raw data as JSON">
+          <span className="fa fa-code" />
+        </a>
         <a className="footer-icon" href={otherContrastModeUrl} title={otherContrastModeTitle}>
           <span className="fa fa-adjust" />
         </a>
