@@ -322,6 +322,14 @@ export function receiveApiDetails(apiDetails) {
   });
 }
 
+export function receiveControlNodeRemoved(nodeId) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.RECEIVE_CONTROL_NODE_REMOVED,
+    nodeId
+  });
+  updateRoute();
+}
+
 export function receiveControlPipeFromParams(pipeId, rawTty) {
   // TODO add nodeId
   AppDispatcher.dispatch({

@@ -3,8 +3,8 @@ import reqwest from 'reqwest';
 
 import { clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
-  receiveControlPipe, receiveControlPipeStatus, receiveControlSuccess,
-  receiveTopologies, receiveNotFound } from '../actions/app-actions';
+  receiveControlNodeRemoved, receiveControlPipe, receiveControlPipeStatus,
+  receiveControlSuccess, receiveTopologies, receiveNotFound } from '../actions/app-actions';
 
 import { API_INTERVAL, TOPOLOGY_INTERVAL } from '../constants/timer';
 
@@ -184,8 +184,13 @@ export function doControlRequest(nodeId, control) {
     url,
     success: (res) => {
       receiveControlSuccess(nodeId);
-      if (res && res.pipe) {
-        receiveControlPipe(res.pipe, nodeId, res.raw_tty, true);
+      if (res) {
+        if (res.pipe) {
+          receiveControlPipe(res.pipe, nodeId, res.raw_tty, true);
+        }
+        if (res.removedNode) {
+          receiveControlNodeRemoved(nodeId);
+        }
       }
     },
     error: (err) => {

@@ -25,7 +25,8 @@ type Response struct {
 	Pipe   string `json:"pipe,omitempty"`
 	RawTTY bool   `json:"raw_tty,omitempty"`
 
-	CloseDetails bool `json:"closeDetails,omitempty"` // True will cause the UI to close the details panel.
+	// Remove specific fields
+	RemovedNode string `json:"removedNode,omitempty"` // Set if node was removed
 }
 
 // Message is the unions of Request, Response and arbitrary Value.

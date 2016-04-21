@@ -57,7 +57,7 @@ func (r *registry) removeContainer(containerID string, _ xfer.Request) xfer.Resp
 		return xfer.ResponseError(err)
 	}
 	return xfer.Response{
-		CloseDetails: true,
+		RemovedNode: containerID,
 	}
 }
 
