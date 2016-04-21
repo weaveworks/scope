@@ -17,4 +17,11 @@ type Details struct {
 	Version  string      `json:"version"`
 	Hostname string      `json:"hostname"`
 	Plugins  PluginSpecs `json:"plugins,omitempty"`
+
+	NewVersion *NewVersionInfo `json:"newVersion,omitempty"`
+}
+
+type NewVersionInfo struct {
+	Version     string `json:"version"`
+	DownloadURL string `json:"downloadUrl"`
 }
