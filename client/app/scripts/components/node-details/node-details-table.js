@@ -153,7 +153,8 @@ export default class NodeDetailsTable extends React.Component {
       if (field) {
         if (field.valueType === 'metadata') {
           return (
-            <td className="node-details-table-node-value" key={field.id}>
+            <td className="node-details-table-node-value truncate" title={field.value}
+              key={field.id}>
               {field.value}
             </td>
           );
