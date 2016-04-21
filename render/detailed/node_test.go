@@ -28,13 +28,13 @@ func TestMakeDetailedHostNode(t *testing.T) {
 	renderableNode := renderableNodes[fixture.ClientHostNodeID]
 	have := detailed.MakeNode("hosts", fixture.Report, renderableNodes, renderableNode)
 
-	containerImageNodeSummary := child(t, render.ContainerImageRenderer, fixture.ClientContainerImageNodeID)
+	containerImageNodeSummary := child(t, render.ContainerImageRenderer(render.FilterNoop), fixture.ClientContainerImageNodeID)
 	containerNodeSummary := child(t, render.ContainerRenderer, fixture.ClientContainerNodeID)
 	process1NodeSummary := child(t, render.ProcessRenderer, fixture.ClientProcess1NodeID)
 	process1NodeSummary.Linkable = true
 	process2NodeSummary := child(t, render.ProcessRenderer, fixture.ClientProcess2NodeID)
 	process2NodeSummary.Linkable = true
-	podNodeSummary := child(t, render.PodRenderer, fixture.ClientPodNodeID)
+	podNodeSummary := child(t, render.PodRenderer(render.FilterNoop), fixture.ClientPodNodeID)
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
 			ID:         fixture.ClientHostNodeID,
@@ -298,7 +298,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 
 func TestMakeDetailedPodNode(t *testing.T) {
 	id := fixture.ServerPodNodeID
-	renderableNodes := render.PodRenderer.Render(fixture.Report)
+	renderableNodes := render.PodRenderer(render.FilterNoop).Render(fixture.Report)
 	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)

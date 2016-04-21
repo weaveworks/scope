@@ -38,22 +38,31 @@ func BenchmarkContainerWithImageNameRender(b *testing.B) {
 func BenchmarkContainerWithImageNameStats(b *testing.B) {
 	benchmarkStats(b, render.ContainerWithImageNameRenderer)
 }
-func BenchmarkContainerImageRender(b *testing.B) { benchmarkRender(b, render.ContainerImageRenderer) }
-func BenchmarkContainerImageStats(b *testing.B)  { benchmarkStats(b, render.ContainerImageRenderer) }
+func BenchmarkContainerImageRender(b *testing.B) {
+	benchmarkRender(b, render.ContainerImageRenderer(render.FilterNoop))
+}
+func BenchmarkContainerImageStats(b *testing.B) {
+	benchmarkStats(b, render.ContainerImageRenderer(render.FilterNoop))
+}
 func BenchmarkContainerHostnameRender(b *testing.B) {
-	benchmarkRender(b, render.ContainerHostnameRenderer)
+	benchmarkRender(b, render.ContainerHostnameRenderer(render.FilterNoop))
 }
 func BenchmarkContainerHostnameStats(b *testing.B) {
-	benchmarkStats(b, render.ContainerHostnameRenderer)
+	benchmarkStats(b, render.ContainerHostnameRenderer(render.FilterNoop))
 }
-func BenchmarkHostRender(b *testing.B)       { benchmarkRender(b, render.HostRenderer) }
-func BenchmarkHostStats(b *testing.B)        { benchmarkStats(b, render.HostRenderer) }
-func BenchmarkPodRender(b *testing.B)        { benchmarkRender(b, render.PodRenderer) }
-func BenchmarkPodStats(b *testing.B)         { benchmarkStats(b, render.PodRenderer) }
-func BenchmarkPodServiceRender(b *testing.B) { benchmarkRender(b, render.PodServiceRenderer) }
-func BenchmarkPodServiceStats(b *testing.B)  { benchmarkStats(b, render.PodServiceRenderer) }
+func BenchmarkHostRender(b *testing.B) { benchmarkRender(b, render.HostRenderer) }
+func BenchmarkHostStats(b *testing.B)  { benchmarkStats(b, render.HostRenderer) }
+func BenchmarkPodRender(b *testing.B)  { benchmarkRender(b, render.PodRenderer(render.FilterNoop)) }
+func BenchmarkPodStats(b *testing.B)   { benchmarkStats(b, render.PodRenderer(render.FilterNoop)) }
+func BenchmarkPodServiceRender(b *testing.B) {
+	benchmarkRender(b, render.PodServiceRenderer(render.FilterNoop))
+}
+func BenchmarkPodServiceStats(b *testing.B) {
+	benchmarkStats(b, render.PodServiceRenderer(render.FilterNoop))
+}
 
 func benchmarkRender(b *testing.B, r render.Renderer) {
+
 	report, err := loadReport()
 	if err != nil {
 		b.Fatal(err)

@@ -30,7 +30,7 @@ func TestParents(t *testing.T) {
 			want: nil,
 		},
 		{
-			node: render.ContainerImageRenderer.Render(fixture.Report)[fixture.ClientContainerImageNodeID],
+			node: render.ContainerImageRenderer(render.FilterNoop).Render(fixture.Report)[fixture.ClientContainerImageNodeID],
 			want: []detailed.Parent{
 				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
 			},

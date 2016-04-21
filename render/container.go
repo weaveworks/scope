@@ -144,20 +144,26 @@ var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerWit
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
-var ContainerImageRenderer = MakeReduce(
-	MakeMap(
-		MapContainer2ContainerImage,
-		ContainerRenderer,
-	),
-	SelectContainerImage,
-)
+func ContainerImageRenderer(filter Decorator) Renderer {
+	return FilterEmpty(report.Container,
+		MakeReduce(
+			MakeMap(
+				MapContainer2ContainerImage,
+				filter(ContainerRenderer),
+			),
+			SelectContainerImage,
+		),
+	)
+}
 
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
 // by hostname graph..
-var ContainerHostnameRenderer = MakeMap(
-	MapContainer2Hostname,
-	ContainerRenderer,
-)
+func ContainerHostnameRenderer(filter Decorator) Renderer {
+	return MakeMap(
+		MapContainer2Hostname,
+		filter(ContainerRenderer),
+	)
+}
 
 var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}):([0-9]+)->([0-9]+)/tcp`)
 

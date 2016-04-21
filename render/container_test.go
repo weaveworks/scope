@@ -92,7 +92,7 @@ func TestContainerWithHostIPsRenderer(t *testing.T) {
 }
 
 func TestContainerImageRenderer(t *testing.T) {
-	have := Prune(render.ContainerImageRenderer.Render(fixture.Report))
+	have := Prune(render.ContainerImageRenderer(render.FilterNoop).Render(fixture.Report))
 	want := Prune(expected.RenderedContainerImages)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -106,8 +106,8 @@ func TestContainerImageFilterRenderer(t *testing.T) {
 
 	// TODO: Add a process and endpoint here to make this test fail, so we can fix it.
 
-	clientContainer2ID = "f6g7h8i9j1"
-	clientContainer2NodeID = report.MakeContainerNodeID(fixture.ClientContainerID)
+	clientContainer2ID := "f6g7h8i9j1"
+	clientContainer2NodeID := report.MakeContainerNodeID(clientContainer2ID)
 	input.Container.AddNode(report.MakeNodeWith(clientContainer2NodeID, map[string]string{
 		docker.LabelPrefix + "works.weave.role": "system",
 
@@ -119,7 +119,7 @@ func TestContainerImageFilterRenderer(t *testing.T) {
 			Add("host", report.MakeStringSet(fixture.ClientHostNodeID)),
 		).WithTopology(report.ContainerImage))
 
-	have := Prune(render.FilterSystem(render.ContainerImageRenderer).Render(input))
+	have := Prune(render.ContainerImageRenderer(render.FilterSystem).Render(input))
 	want := Prune(expected.RenderedContainerImages.Copy())
 	// Test works by virtue of the RenderedContainerImage only having a container
 	// counter == 1

@@ -188,7 +188,7 @@ func FilterNoop(in Renderer) Renderer {
 
 // FilterStopped filters out stopped containers.
 func FilterStopped(r Renderer) Renderer {
-	return MakeFilter(IsRunning, r)
+	return MakeSilentFilter(IsRunning, r)
 }
 
 // IsRunning checks if the node is a running docker container
@@ -199,7 +199,7 @@ func IsRunning(n report.Node) bool {
 
 // FilterRunning filters out running containers.
 func FilterRunning(r Renderer) Renderer {
-	return MakeFilter(Complement(IsRunning), r)
+	return MakeSilentFilter(Complement(IsRunning), r)
 }
 
 // FilterNonProcspied removes endpoints which were not found in procspy.
@@ -241,12 +241,35 @@ func IsSystem(n report.Node) bool {
 
 // FilterSystem is a Renderer which filters out system nodes.
 func FilterSystem(r Renderer) Renderer {
-	return MakeFilter(IsSystem, r)
+	return MakeSilentFilter(IsSystem, r)
 }
 
-// FilterApplication is a Renderer which filters out system nodes.
+// FilterApplication is a Renderer which filters out application nodes.
 func FilterApplication(r Renderer) Renderer {
-	return MakeFilter(Complement(IsSystem), r)
+	return MakeSilentFilter(Complement(IsSystem), r)
+}
+
+// FilterEmpty is a Renderer which filters out nodes which have no children
+// from the specified topology.
+func FilterEmpty(topology string, r Renderer) Renderer {
+	return MakeFilter(HasChildren(topology), r)
+}
+
+// HasChildren returns true if the node has no children from the specified
+// topology.
+func HasChildren(topology string) func(report.Node) bool {
+	return func(n report.Node) bool {
+		if n.Topology == Pseudo {
+			return true
+		}
+		count := 0
+		n.Children.ForEach(func(child report.Node) {
+			if child.Topology == topology {
+				count++
+			}
+		})
+		return count > 0
+	}
 }
 
 var systemContainerNames = map[string]struct{}{

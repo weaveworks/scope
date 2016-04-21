@@ -115,3 +115,14 @@ func (m *Map) Stats(rpt report.Report) Stats {
 	// processes in the container renderer.
 	return Stats{}
 }
+
+type Decorator func(Renderer) Renderer
+
+func ComposeDecorators(decorators ...Decorator) Decorator {
+	return func(r Renderer) Renderer {
+		for _, decorator := range decorators {
+			r = decorator(r)
+		}
+		return r
+	}
+}
