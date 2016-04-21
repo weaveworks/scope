@@ -45,6 +45,7 @@ type wiredControlInstance struct {
 	ID      string `json:"id"`
 	Human   string `json:"human"`
 	Icon    string `json:"icon"`
+	Rank    int    `json:"rank"`
 }
 
 // CodecEncodeSelf marshals this ControlInstance. It takes the basic Metric
@@ -56,6 +57,7 @@ func (c *ControlInstance) CodecEncodeSelf(encoder *codec.Encoder) {
 		ID:      c.Control.ID,
 		Human:   c.Control.Human,
 		Icon:    c.Control.Icon,
+		Rank:    c.Control.Rank,
 	})
 }
 
@@ -70,6 +72,7 @@ func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
 			ID:    in.ID,
 			Human: in.Human,
 			Icon:  in.Icon,
+			Rank:  in.Rank,
 		},
 	}
 }

@@ -129,6 +129,7 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 		ID:    GetLogs,
 		Human: "Get logs",
 		Icon:  "fa-desktop",
+		Rank:  0,
 	})
 	for _, service := range services {
 		selectors[service.ID()] = service.Selector()
