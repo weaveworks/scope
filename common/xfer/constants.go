@@ -21,6 +21,8 @@ type Details struct {
 	NewVersion *NewVersionInfo `json:"newVersion,omitempty"`
 }
 
+// NewVersionInfo is the struct exposed in /api when there is a new
+// version of Scope available.
 type NewVersionInfo struct {
 	Version     string `json:"version"`
 	DownloadURL string `json:"downloadUrl"`

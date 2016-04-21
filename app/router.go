@@ -138,6 +138,7 @@ var newVersion = struct {
 	*xfer.NewVersionInfo
 }{}
 
+// NewVersion is called to expose new version information to /api
 func NewVersion(version, downloadURL string) {
 	newVersion.Lock()
 	defer newVersion.Unlock()
