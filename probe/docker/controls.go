@@ -51,9 +51,14 @@ func (r *registry) unpauseContainer(containerID string, _ xfer.Request) xfer.Res
 
 func (r *registry) removeContainer(containerID string, _ xfer.Request) xfer.Response {
 	log.Infof("Removing container %s", containerID)
-	return xfer.ResponseError(r.client.RemoveContainer(docker_client.RemoveContainerOptions{
+	if err := r.client.RemoveContainer(docker_client.RemoveContainerOptions{
 		ID: containerID,
-	}))
+	}); err != nil {
+		return xfer.ResponseError(err)
+	}
+	return xfer.Response{
+		CloseDetails: true,
+	}
 }
 
 func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Response {
