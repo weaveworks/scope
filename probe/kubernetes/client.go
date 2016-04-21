@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"io"
+	"strconv"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -24,7 +26,7 @@ type Client interface {
 	WalkPods(f func(Pod) error) error
 	WalkServices(f func(Service) error) error
 	WalkNodes(f func(*api.Node) error) error
-	RESTClient() *restclient.RESTClient
+	GetLogs(namespaceID, podID string) (io.ReadCloser, error)
 }
 
 type client struct {
@@ -99,10 +101,6 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 	}, nil
 }
 
-func (c *client) RESTClient() *restclient.RESTClient {
-	return c.client.RESTClient
-}
-
 func (c *client) WalkPods(f func(Pod) error) error {
 	pods, err := c.podStore.List(labels.Everything())
 	if err != nil {
@@ -140,6 +138,18 @@ func (c *client) WalkNodes(f func(*api.Node) error) error {
 		}
 	}
 	return nil
+}
+
+func (c *client) GetLogs(namespaceID, podID string) (io.ReadCloser, error) {
+	return c.client.RESTClient.Get().
+		Namespace(namespaceID).
+		Name(podID).
+		Resource("pods").
+		SubResource("log").
+		Param("follow", strconv.FormatBool(true)).
+		Param("previous", strconv.FormatBool(false)).
+		Param("timestamps", strconv.FormatBool(true)).
+		Stream()
 }
 
 func (c *client) Stop() {
