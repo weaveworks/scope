@@ -19,8 +19,8 @@ type CustomRenderer struct {
 }
 
 // Render implements Renderer
-func (c CustomRenderer) Render(rpt report.Report) report.Nodes {
-	return c.RenderFunc(c.Renderer.Render(rpt))
+func (c CustomRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+	return c.RenderFunc(c.Renderer.Render(rpt, dct))
 }
 
 // ColorConnected colors nodes with the IsConnected key if
@@ -55,41 +55,46 @@ func ColorConnected(r Renderer) Renderer {
 	}
 }
 
+// FilterFunc is the function type used by Filters
+type FilterFunc func(report.Node) bool
+
+// ComposeFilterFuncs composes filterfuncs into a single FilterFunc checking all.
+func ComposeFilterFuncs(fs ...FilterFunc) FilterFunc {
+	return func(n report.Node) bool {
+		for _, f := range fs {
+			if !f(n) {
+				return false
+			}
+		}
+		return true
+	}
+}
+
 // Filter removes nodes from a view based on a predicate.
 type Filter struct {
 	Renderer
-	FilterFunc func(report.Node) bool
-	Silent     bool // true means we don't report stats for how many are filtered
+	FilterFunc FilterFunc
 }
 
 // MakeFilter makes a new Filter.
-func MakeFilter(f func(report.Node) bool, r Renderer) Renderer {
+func MakeFilter(f FilterFunc, r Renderer) Renderer {
 	return Memoise(&Filter{
 		Renderer:   r,
 		FilterFunc: f,
-	})
-}
-
-// MakeSilentFilter makes a new Filter which does not report how many nodes it filters in Stats.
-func MakeSilentFilter(f func(report.Node) bool, r Renderer) Renderer {
-	return Memoise(&Filter{
-		Renderer:   r,
-		FilterFunc: f,
-		Silent:     true,
 	})
 }
 
 // Render implements Renderer
-func (f *Filter) Render(rpt report.Report) report.Nodes {
-	nodes, _ := f.render(rpt)
+func (f *Filter) Render(rpt report.Report, dct Decorator) report.Nodes {
+	nodes, _ := f.render(rpt, dct)
 	return nodes
 }
 
-func (f *Filter) render(rpt report.Report) (report.Nodes, int) {
+func (f *Filter) render(rpt report.Report, dct Decorator) (report.Nodes, int) {
 	output := report.Nodes{}
 	inDegrees := map[string]int{}
 	filtered := 0
-	for id, node := range f.Renderer.Render(rpt) {
+	for id, node := range f.Renderer.Render(rpt, dct) {
 		if f.FilterFunc(node) {
 			output[id] = node
 			inDegrees[id] = 0
@@ -126,14 +131,13 @@ func (f *Filter) render(rpt report.Report) (report.Nodes, int) {
 	return output, filtered
 }
 
-// Stats implements Renderer
-func (f Filter) Stats(rpt report.Report) Stats {
-	var upstream = f.Renderer.Stats(rpt)
-	if !f.Silent {
-		_, filtered := f.render(rpt)
-		upstream.FilteredNodes += filtered
-	}
-	return upstream
+// Stats implements Renderer. General logic is to take the first (i.e.
+// highest-level) stats we find, so upstream stats are ignored. This means that
+// if we want to count the stats from multiple filters we need to compose their
+// FilterFuncs, into a single Filter.
+func (f Filter) Stats(rpt report.Report, dct Decorator) Stats {
+	_, filtered := f.render(rpt, dct)
+	return Stats{FilteredNodes: filtered}
 }
 
 // IsConnected is the key added to Node.Metadata by ColorConnected
@@ -142,7 +146,7 @@ const IsConnected = "is_connected"
 
 // Complement takes a FilterFunc f and returns a FilterFunc that has the same
 // effects, if any, and returns the opposite truth value.
-func Complement(f func(report.Node) bool) func(report.Node) bool {
+func Complement(f FilterFunc) FilterFunc {
 	return func(node report.Node) bool { return !f(node) }
 }
 
@@ -169,27 +173,11 @@ func FilterUnconnected(r Renderer) Renderer {
 	)
 }
 
-// SilentFilterUnconnected produces a renderer that filters unconnected nodes
-// from the given renderer; nodes filtered by this are not reported in stats.
-func SilentFilterUnconnected(r Renderer) Renderer {
-	return MakeSilentFilter(
-		func(node report.Node) bool {
-			_, ok := node.Latest.Lookup(IsConnected)
-			return ok
-		},
-		ColorConnected(r),
-	)
-}
+// Noop allows all nodes through
+func Noop(_ report.Node) bool { return true }
 
 // FilterNoop does nothing.
-func FilterNoop(in Renderer) Renderer {
-	return in
-}
-
-// FilterStopped filters out stopped containers.
-func FilterStopped(r Renderer) Renderer {
-	return MakeFilter(IsRunning, r)
-}
+func FilterNoop(r Renderer) Renderer { return r }
 
 // IsRunning checks if the node is a running docker container
 func IsRunning(n report.Node) bool {
@@ -197,14 +185,22 @@ func IsRunning(n report.Node) bool {
 	return !ok || (state == docker.StateRunning || state == docker.StateRestarting || state == docker.StatePaused)
 }
 
+// IsStopped checks if the node is *not* a running docker container
+var IsStopped = Complement(IsRunning)
+
+// FilterStopped filters out stopped containers.
+func FilterStopped(r Renderer) Renderer {
+	return MakeFilter(IsStopped, r)
+}
+
 // FilterRunning filters out running containers.
 func FilterRunning(r Renderer) Renderer {
-	return MakeFilter(Complement(IsRunning), r)
+	return MakeFilter(IsRunning, r)
 }
 
 // FilterNonProcspied removes endpoints which were not found in procspy.
 func FilterNonProcspied(r Renderer) Renderer {
-	return MakeSilentFilter(
+	return MakeFilter(
 		func(node report.Node) bool {
 			_, ok := node.Latest.Lookup(endpoint.Procspied)
 			return ok
@@ -213,8 +209,8 @@ func FilterNonProcspied(r Renderer) Renderer {
 	)
 }
 
-// IsSystem checks if the node is a "system" node
-func IsSystem(n report.Node) bool {
+// IsApplication checks if the node is an "application" node
+func IsApplication(n report.Node) bool {
 	containerName, _ := n.Latest.Lookup(docker.ContainerName)
 	if _, ok := systemContainerNames[containerName]; ok {
 		return false
@@ -239,14 +235,40 @@ func IsSystem(n report.Node) bool {
 	return true
 }
 
+// IsSystem checks if the node is a "system" node
+var IsSystem = Complement(IsApplication)
+
 // FilterSystem is a Renderer which filters out system nodes.
 func FilterSystem(r Renderer) Renderer {
 	return MakeFilter(IsSystem, r)
 }
 
-// FilterApplication is a Renderer which filters out system nodes.
+// FilterApplication is a Renderer which filters out application nodes.
 func FilterApplication(r Renderer) Renderer {
-	return MakeFilter(Complement(IsSystem), r)
+	return MakeFilter(IsApplication, r)
+}
+
+// FilterEmpty is a Renderer which filters out nodes which have no children
+// from the specified topology.
+func FilterEmpty(topology string, r Renderer) Renderer {
+	return MakeFilter(HasChildren(topology), r)
+}
+
+// HasChildren returns true if the node has no children from the specified
+// topology.
+func HasChildren(topology string) FilterFunc {
+	return func(n report.Node) bool {
+		if n.Topology == Pseudo {
+			return true
+		}
+		count := 0
+		n.Children.ForEach(func(child report.Node) {
+			if child.Topology == topology {
+				count++
+			}
+		})
+		return count > 0
+	}
 }
 
 var systemContainerNames = map[string]struct{}{

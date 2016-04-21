@@ -40,6 +40,22 @@ func (n NodeSet) Add(nodes ...Node) NodeSet {
 	return NodeSet{result}
 }
 
+// Delete deletes the nodes from the NodeSet by ID. Delete is the only valid
+// way to shrink a NodeSet. Delete returns the NodeSet to enable chaining.
+func (n NodeSet) Delete(ids ...string) NodeSet {
+	if n.Size() == 0 {
+		return n
+	}
+	result := n.psMap
+	for _, id := range ids {
+		result = result.Delete(id)
+	}
+	if result.Size() == 0 {
+		return EmptyNodeSet
+	}
+	return NodeSet{result}
+}
+
 // Merge combines the two NodeSets and returns a new result.
 func (n NodeSet) Merge(other NodeSet) NodeSet {
 	nSize, otherSize := n.Size(), other.Size()

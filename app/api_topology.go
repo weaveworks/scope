@@ -28,19 +28,27 @@ type APINode struct {
 }
 
 // Full topology.
-func handleTopology(ctx context.Context, rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
+func handleTopology(
+	ctx context.Context,
+	rep Reporter, renderer render.Renderer, decorator render.Decorator,
+	w http.ResponseWriter, r *http.Request,
+) {
 	report, err := rep.Report(ctx)
 	if err != nil {
 		respondWith(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(report, renderer.Render(report)),
+		Nodes: detailed.Summaries(report, renderer.Render(report, decorator)),
 	})
 }
 
 // Websocket for the full topology. This route overlaps with the next.
-func handleWs(ctx context.Context, rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
+func handleWs(
+	ctx context.Context,
+	rep Reporter, renderer render.Renderer, decorator render.Decorator,
+	w http.ResponseWriter, r *http.Request,
+) {
 	if err := r.ParseForm(); err != nil {
 		respondWith(w, http.StatusInternalServerError, err.Error())
 		return
@@ -53,17 +61,21 @@ func handleWs(ctx context.Context, rep Reporter, renderer render.Renderer, w htt
 			return
 		}
 	}
-	handleWebsocket(ctx, w, r, rep, renderer, loop)
+	handleWebsocket(ctx, w, r, rep, renderer, decorator, loop)
 }
 
 // Individual nodes.
-func handleNode(ctx context.Context, rep Reporter, renderer render.Renderer, w http.ResponseWriter, r *http.Request) {
+func handleNode(
+	ctx context.Context,
+	rep Reporter, renderer render.Renderer, _ render.Decorator,
+	w http.ResponseWriter, r *http.Request,
+) {
 	var (
 		vars        = mux.Vars(r)
 		topologyID  = vars["topology"]
 		nodeID      = vars["id"]
 		report, err = rep.Report(ctx)
-		rendered    = renderer.Render(report)
+		rendered    = renderer.Render(report, render.FilterNoop)
 		node, ok    = rendered[nodeID]
 	)
 	if err != nil {
@@ -83,6 +95,7 @@ func handleWebsocket(
 	r *http.Request,
 	rep Reporter,
 	renderer render.Renderer,
+	decorator render.Decorator,
 	loop time.Duration,
 ) {
 	conn, err := xfer.Upgrade(w, r, nil)
@@ -119,7 +132,7 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(report, renderer.Render(report))
+		newTopo := detailed.Summaries(report, renderer.Render(report, decorator))
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
