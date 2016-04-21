@@ -11,8 +11,8 @@ import (
 )
 
 func TestHostRenderer(t *testing.T) {
-	have := render.HostRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedHosts.Prune()
+	have := Prune(render.HostRenderer.Render(fixture.Report))
+	want := Prune(expected.RenderedHosts)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

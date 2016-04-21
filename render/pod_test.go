@@ -13,8 +13,8 @@ import (
 )
 
 func TestPodRenderer(t *testing.T) {
-	have := render.PodRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedPods.Prune()
+	have := Prune(render.PodRenderer.Render(fixture.Report))
+	want := Prune(expected.RenderedPods)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -32,8 +32,8 @@ func TestPodFilterRenderer(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "io.kubernetes.pod.name": "kube-system/foo",
 	})
-	have := render.FilterSystem(render.PodRenderer).Render(input).Prune()
-	want := expected.RenderedPods.Copy().Prune()
+	have := Prune(render.FilterSystem(render.PodRenderer).Render(input))
+	want := Prune(expected.RenderedPods.Copy())
 	delete(want, fixture.ClientPodNodeID)
 	delete(want, fixture.ClientContainerNodeID)
 	if !reflect.DeepEqual(want, have) {
@@ -42,8 +42,8 @@ func TestPodFilterRenderer(t *testing.T) {
 }
 
 func TestPodServiceRenderer(t *testing.T) {
-	have := render.PodServiceRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedPodServices.Prune()
+	have := Prune(render.PodServiceRenderer.Render(fixture.Report))
+	want := Prune(expected.RenderedPodServices)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

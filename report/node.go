@@ -214,18 +214,3 @@ func (n Node) Merge(other Node) Node {
 	cp.Children = cp.Children.Merge(other.Children)
 	return cp
 }
-
-// Prune returns a copy of the Node with all information not strictly necessary
-// for rendering nodes and edges stripped away. Specifically, that means
-// cutting out parts of the Node.
-func (n Node) Prune() Node {
-	prunedChildren := MakeNodeSet()
-	n.Children.ForEach(func(child Node) {
-		prunedChildren = prunedChildren.Add(child.Prune())
-	})
-	return MakeNode(
-		n.ID).
-		WithTopology(n.Topology).
-		WithAdjacent(n.Adjacency.Copy()...).
-		WithChildren(prunedChildren)
-}
