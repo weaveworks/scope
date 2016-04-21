@@ -15,7 +15,12 @@ const (
 
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
-var PodRenderer = FilterEmpty(report.Container,
+var PodRenderer = MakeFilter(
+	func(n report.Node) bool {
+		// Drop deleted containers
+		state, ok := n.Latest.Lookup(kubernetes.PodState)
+		return HasChildren(report.Container)(n) && (!ok || state != kubernetes.StateDeleted)
+	},
 	MakeReduce(
 		MakeFilter(
 			func(n report.Node) bool {

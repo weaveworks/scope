@@ -49,7 +49,7 @@ func (r *registry) unpauseContainer(containerID string, _ xfer.Request) xfer.Res
 	return xfer.ResponseError(r.client.UnpauseContainer(containerID))
 }
 
-func (r *registry) removeContainer(containerID string, _ xfer.Request) xfer.Response {
+func (r *registry) removeContainer(containerID string, req xfer.Request) xfer.Response {
 	log.Infof("Removing container %s", containerID)
 	if err := r.client.RemoveContainer(docker_client.RemoveContainerOptions{
 		ID: containerID,
@@ -57,7 +57,7 @@ func (r *registry) removeContainer(containerID string, _ xfer.Request) xfer.Resp
 		return xfer.ResponseError(err)
 	}
 	return xfer.Response{
-		RemovedNode: containerID,
+		RemovedNode: req.NodeID,
 	}
 }
 

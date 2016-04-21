@@ -66,5 +66,9 @@ func (s *service) GetNode() report.Node {
 	if s.Spec.LoadBalancerIP != "" {
 		latest[ServicePublicIP] = s.Spec.LoadBalancerIP
 	}
-	return report.MakeNodeWith(report.MakeServiceNodeID(s.Namespace(), s.Name()), latest).AddTable(ServiceLabelPrefix, s.Labels)
+	return report.MakeNodeWith(
+		report.MakeServiceNodeID(s.Namespace(), s.Name()),
+		latest,
+	).
+		AddTable(ServiceLabelPrefix, s.Labels)
 }

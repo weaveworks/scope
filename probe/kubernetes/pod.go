@@ -18,6 +18,8 @@ const (
 	PodState        = "kubernetes_pod_state"
 	PodLabelPrefix  = "kubernetes_pod_labels_"
 	ServiceIDs      = "kubernetes_service_ids"
+
+	StateDeleted = "deleted"
 )
 
 // Pod represents a Kubernetes pod
@@ -107,6 +109,6 @@ func (p *pod) GetNode(probeID string) report.Node {
 		)
 	}
 	n = n.AddTable(PodLabelPrefix, p.ObjectMeta.Labels)
-	n = n.WithControls(GetLogs)
+	n = n.WithControls(GetLogs, DeletePod)
 	return n
 }
