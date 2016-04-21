@@ -52,7 +52,7 @@ func (c *mockContainer) StartGatheringStats() error {
 
 func (c *mockContainer) StopGatheringStats() {}
 
-func (c *mockContainer) GetNode(_ string, _ []net.IP) report.Node {
+func (c *mockContainer) GetNode(_ []net.IP) report.Node {
 	return report.MakeNodeWith(report.MakeContainerNodeID(c.c.ID), map[string]string{
 		docker.ContainerID:   c.c.ID,
 		docker.ContainerName: c.c.Name,
@@ -237,7 +237,7 @@ func setupStubs(mdc *mockDockerClient, f func()) {
 		return mdc, nil
 	}
 
-	docker.NewContainerStub = func(c *client.Container) docker.Container {
+	docker.NewContainerStub = func(c *client.Container, _ string) docker.Container {
 		return &mockContainer{c}
 	}
 
@@ -270,7 +270,7 @@ func allImages(r docker.Registry) []*client.APIImages {
 func TestRegistry(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil, true)
+		registry, _ := docker.NewRegistry(10*time.Second, nil, true, "")
 		defer registry.Stop()
 		runtime.Gosched()
 
@@ -293,7 +293,7 @@ func TestRegistry(t *testing.T) {
 func TestLookupByPID(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil, true)
+		registry, _ := docker.NewRegistry(10*time.Second, nil, true, "")
 		defer registry.Stop()
 
 		want := docker.Container(&mockContainer{container1})
@@ -310,7 +310,7 @@ func TestLookupByPID(t *testing.T) {
 func TestRegistryEvents(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil, true)
+		registry, _ := docker.NewRegistry(10*time.Second, nil, true, "")
 		defer registry.Stop()
 		runtime.Gosched()
 

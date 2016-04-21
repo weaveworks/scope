@@ -68,38 +68,45 @@ var ProcessNameRenderer = MakeMap(
 // NB We only want processes in container _or_ processes with network connections
 // but we need to be careful to ensure we only include each edge once, by only
 // including the ProcessRenderer once.
-var ContainerRenderer = MakeReduce(
-	MakeSilentFilter(
-		func(n report.Node) bool {
-			// Drop unconnected pseudo nodes (could appear due to filtering)
-			_, isConnected := n.Latest.Lookup(IsConnected)
-			return n.Topology != Pseudo || isConnected
-		},
-		MakeMap(
-			MapProcess2Container,
-			ColorConnected(ProcessRenderer),
+var ContainerRenderer = MakeSilentFilter(
+	func(n report.Node) bool {
+		// Drop deleted containers
+		state, ok := n.Latest.Lookup(docker.ContainerState)
+		return !ok || state != docker.StateDeleted
+	},
+	MakeReduce(
+		MakeSilentFilter(
+			func(n report.Node) bool {
+				// Drop unconnected pseudo nodes (could appear due to filtering)
+				_, isConnected := n.Latest.Lookup(IsConnected)
+				return n.Topology != Pseudo || isConnected
+			},
+			MakeMap(
+				MapProcess2Container,
+				ColorConnected(ProcessRenderer),
+			),
 		),
+
+		// This mapper brings in short lived connections by joining with container IPs.
+		// We need to be careful to ensure we only include each edge once.  Edges brought in
+		// by the above renders will have a pid, so its enough to filter out any nodes with
+		// pids.
+		SilentFilterUnconnected(MakeMap(
+			MapIP2Container,
+			MakeReduce(
+				MakeMap(
+					MapContainer2IP,
+					SelectContainer,
+				),
+				MakeMap(
+					MapEndpoint2IP,
+					SelectEndpoint,
+				),
+			),
+		)),
+
+		SelectContainer,
 	),
-
-	// This mapper brings in short lived connections by joining with container IPs.
-	// We need to be careful to ensure we only include each edge once.  Edges brought in
-	// by the above renders will have a pid, so its enough to filter out any nodes with
-	// pids.
-	SilentFilterUnconnected(MakeMap(
-		MapIP2Container,
-		MakeReduce(
-			MakeMap(
-				MapContainer2IP,
-				SelectContainer,
-			),
-			MakeMap(
-				MapEndpoint2IP,
-				SelectEndpoint,
-			),
-		),
-	)),
-
-	SelectContainer,
 )
 
 type containerWithHostIPsRenderer struct {
