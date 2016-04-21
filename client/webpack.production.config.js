@@ -91,7 +91,7 @@ module.exports = {
         warnings: false
       }
     }),
-    new ExtractTextPlugin('style.css'),
+    new ExtractTextPlugin('style-[name].css'),
     new HtmlWebpackPlugin({
       hash: true,
       chunks: ['vendors', 'contrast-app'],
