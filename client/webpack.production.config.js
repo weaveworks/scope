@@ -2,6 +2,10 @@ var webpack = require('webpack');
 var autoprefixer = require('autoprefixer');
 var path = require('path');
 
+var CleanWebpackPlugin = require('clean-webpack-plugin');
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var HtmlWebpackPlugin = require('html-webpack-plugin');
+
 var GLOBALS = {
   'process.env': {NODE_ENV: '"production"'}
 };
@@ -43,15 +47,20 @@ module.exports = {
     loaders: [
       {
         test: /\.less$/,
-        loader: 'style-loader!css-loader?minimize!postcss-loader!less-loader'
+        loader: ExtractTextPlugin.extract('style-loader',
+          'css-loader?minimize!postcss-loader!less-loader')
       },
       {
         test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
         loader: 'url-loader?limit=10000&minetype=application/font-woff'
       },
       {
-        test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+        test: /\.(ttf|eot|svg|ico)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
         loader: 'file-loader'
+      },
+      {
+        test: /\.ico$/,
+        loader: 'file-loader?name=[name].[ext]'
       },
       { test: /\.jsx?$/, exclude: /node_modules|vendor/, loader: 'babel' }
     ]
@@ -72,6 +81,7 @@ module.exports = {
   },
 
   plugins: [
+    new CleanWebpackPlugin(['build']),
     new webpack.DefinePlugin(GLOBALS),
     new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
     new webpack.optimize.OccurenceOrderPlugin(true),
@@ -80,6 +90,25 @@ module.exports = {
       compress: {
         warnings: false
       }
+    }),
+    new ExtractTextPlugin('style-[name].css'),
+    new HtmlWebpackPlugin({
+      hash: true,
+      chunks: ['vendors', 'contrast-app'],
+      template: 'app/html/index.html',
+      filename: 'contrast.html'
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      chunks: ['vendors', 'terminal-app'],
+      template: 'app/html/index.html',
+      filename: 'terminal.html'
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      chunks: ['vendors', 'app'],
+      template: 'app/html/index.html',
+      filename: 'index.html'
     })
   ]
 };

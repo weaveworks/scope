@@ -1,6 +1,7 @@
 var webpack = require('webpack');
 var autoprefixer = require('autoprefixer');
 var path = require('path');
+var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 /**
  * This is the Webpack configuration file for local development. It contains
@@ -47,7 +48,6 @@ module.exports = {
   // by the dev server for dynamic hot loading.
   output: {
     path: path.join(__dirname, 'build/'),
-    publicPath: 'http://' + WEBPACK_SERVER_HOST + ':4041/build/',
     filename: '[name].js'
   },
 
@@ -55,7 +55,22 @@ module.exports = {
   plugins: [
     new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoErrorsPlugin()
+    new webpack.NoErrorsPlugin(),
+    new HtmlWebpackPlugin({
+      chunks: ['vendors', 'contrast-app'],
+      template: 'app/html/index.html',
+      filename: 'contrast.html'
+    }),
+    new HtmlWebpackPlugin({
+      chunks: ['vendors', 'terminal-app'],
+      template: 'app/html/index.html',
+      filename: 'terminal.html'
+    }),
+    new HtmlWebpackPlugin({
+      chunks: ['vendors', 'app'],
+      template: 'app/html/index.html',
+      filename: 'index.html'
+    })
   ],
 
   // Transform source code using Babel and React Hot Loader
@@ -85,7 +100,7 @@ module.exports = {
         loader: 'url-loader?limit=10000&minetype=application/font-woff'
       },
       {
-        test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+        test: /\.(ttf|eot|svg|ico)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
         loader: 'file-loader'
       },
       {
