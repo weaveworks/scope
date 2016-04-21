@@ -214,7 +214,7 @@ func connectionRows(r report.Report, in map[connection]int, includeLocal bool) [
 			// Does localNode have a DNS record in it?
 			label := row.localAddr
 			if set, ok := row.localNode.Sets.Lookup(endpoint.ReverseDNSNames); ok && len(set) > 0 {
-				label = set[0]
+				label = fmt.Sprintf("%s (%s)", set[0], label)
 			}
 			connection.Metadata = append(connection.Metadata,
 				report.MetadataRow{
