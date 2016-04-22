@@ -13,7 +13,7 @@ func renderTo(rpt report.Report, topology string) (detailed.NodeSummaries, error
 		"processes":           render.FilterUnconnected(render.ProcessWithContainerNameRenderer),
 		"processes-by-name":   render.FilterUnconnected(render.ProcessNameRenderer),
 		"containers":          render.ContainerWithImageNameRenderer,
-		"containers-by-image": render.ContainerImageRenderer,
+		"containers-by-image": render.ContainerImageRenderer(render.FilterNoop),
 		"hosts":               render.HostRenderer,
 	}[topology]
 	if !ok {
