@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/ghost/handlers"
 	"github.com/gorilla/mux"
@@ -132,17 +133,35 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	}))
 }
 
+var newVersion = struct {
+	sync.Mutex
+	*xfer.NewVersionInfo
+}{}
+
+// NewVersion is called to expose new version information to /api
+func NewVersion(version, downloadURL string) {
+	newVersion.Lock()
+	defer newVersion.Unlock()
+	newVersion.NewVersionInfo = &xfer.NewVersionInfo{
+		Version:     version,
+		DownloadURL: downloadURL,
+	}
+}
+
 func apiHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		report, err := rep.Report(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+		newVersion.Lock()
+		defer newVersion.Unlock()
 		respondWith(w, http.StatusOK, xfer.Details{
-			ID:       UniqueID,
-			Version:  Version,
-			Hostname: hostname.Get(),
-			Plugins:  report.Plugins,
+			ID:         UniqueID,
+			Version:    Version,
+			Hostname:   hostname.Get(),
+			Plugins:    report.Plugins,
+			NewVersion: newVersion.NewVersionInfo,
 		})
 	}
 }

@@ -9,7 +9,7 @@ import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
 import { basePathSlash } from '../utils/web-api-utils';
 
 export default function Footer(props) {
-  const { hostname, plugins, updatePaused, updatePausedAt, version } = props;
+  const { hostname, plugins, updatePaused, updatePausedAt, version, versionUpdate } = props;
   const contrastMode = isContrastMode();
 
   // link url to switch contrast with current UI state
@@ -38,10 +38,18 @@ export default function Footer(props) {
     pauseLabel = 'Paused';
   }
 
+  const versionUpdateTitle = versionUpdate
+    ? `New version available: ${versionUpdate.version}. Click to download`
+    : '';
+
   return (
     <div className="footer">
 
       <div className="footer-status">
+        {versionUpdate && <a className="footer-versionupdate"
+          title={versionUpdateTitle} href={versionUpdate.downloadUrl} target="_blank">
+          Update available: {versionUpdate.version}
+        </a>}
         <span className="footer-label">Version</span>
         {version}
         <span className="footer-label">on</span>

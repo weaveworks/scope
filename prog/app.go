@@ -184,6 +184,7 @@ func appMain(flags appFlags) {
 		} else if r.Outdated {
 			log.Infof("Scope version %s is available; please update at %s",
 				r.CurrentVersion, r.CurrentDownloadURL)
+			app.NewVersion(r.CurrentVersion, r.CurrentDownloadURL)
 		}
 	})
 

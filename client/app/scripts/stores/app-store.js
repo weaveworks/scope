@@ -46,6 +46,7 @@ let highlightedEdgeIds = makeSet();
 let highlightedNodeIds = makeSet();
 let hostname = '...';
 let version = '...';
+let versionUpdate = null;
 let plugins = [];
 let mouseOverEdgeId = null;
 let mouseOverNodeId = null;
@@ -276,10 +277,13 @@ export class AppStore extends Store {
     return version;
   }
 
+  getVersionUpdate() {
+    return versionUpdate;
+  }
+
   getPlugins() {
     return plugins;
   }
-
 
   isForceRelayout() {
     return forceRelayout;
@@ -686,6 +690,7 @@ export class AppStore extends Store {
         hostname = payload.hostname;
         version = payload.version;
         plugins = payload.plugins;
+        versionUpdate = payload.newVersion;
         this.__emitChange();
         break;
       }
