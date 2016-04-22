@@ -394,7 +394,7 @@ func (c *container) GetNode(localAddrs []net.IP) report.Node {
 			RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer,
 		)
 	} else {
-		result = result.WithControls(StartContainer)
+		result = result.WithControls(StartContainer, RemoveContainer)
 	}
 
 	result = result.AddTable(LabelPrefix, c.container.Config.Labels)

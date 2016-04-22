@@ -561,6 +561,11 @@ export class AppStore extends Store {
         this.__emitChange();
         break;
       }
+      case ActionTypes.RECEIVE_CONTROL_NODE_REMOVED: {
+        closeNodeDetails(payload.nodeId);
+        this.__emitChange();
+        break;
+      }
       case ActionTypes.RECEIVE_CONTROL_PIPE: {
         controlPipes = controlPipes.set(payload.pipeId, makeOrderedMap({
           id: payload.pipeId,

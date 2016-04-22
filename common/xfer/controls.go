@@ -18,10 +18,15 @@ type Request struct {
 
 // Response is the Probe -> App -> UI message type for the control RPCs.
 type Response struct {
-	Value  interface{} `json:"value,omitempty"`
-	Error  string      `json:"error,omitempty"`
-	Pipe   string      `json:"pipe,omitempty"`
-	RawTTY bool        `json:"raw_tty,omitempty"`
+	Value interface{} `json:"value,omitempty"`
+	Error string      `json:"error,omitempty"`
+
+	// Pipe specific fields
+	Pipe   string `json:"pipe,omitempty"`
+	RawTTY bool   `json:"raw_tty,omitempty"`
+
+	// Remove specific fields
+	RemovedNode string `json:"removedNode,omitempty"` // Set if node was removed
 }
 
 // Message is the unions of Request, Response and arbitrary Value.

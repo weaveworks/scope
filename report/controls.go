@@ -16,6 +16,7 @@ type Control struct {
 	ID    string `json:"id"`
 	Human string `json:"human"`
 	Icon  string `json:"icon"` // from https://fortawesome.github.io/Font-Awesome/cheatsheet/ please
+	Rank  int    `json:"rank"`
 }
 
 // Merge merges other with cs, returning a fresh Controls.

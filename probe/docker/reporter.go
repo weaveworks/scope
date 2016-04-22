@@ -101,39 +101,52 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 		WithMetricTemplates(ContainerMetricTemplates).
 		WithTableTemplates(ContainerTableTemplates)
 	result.Controls.AddControl(report.Control{
-		ID:    StopContainer,
-		Human: "Stop",
-		Icon:  "fa-stop",
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    StartContainer,
-		Human: "Start",
-		Icon:  "fa-play",
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    RestartContainer,
-		Human: "Restart",
-		Icon:  "fa-repeat",
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    PauseContainer,
-		Human: "Pause",
-		Icon:  "fa-pause",
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    UnpauseContainer,
-		Human: "Unpause",
-		Icon:  "fa-play",
-	})
-	result.Controls.AddControl(report.Control{
 		ID:    AttachContainer,
 		Human: "Attach",
 		Icon:  "fa-desktop",
+		Rank:  1,
 	})
 	result.Controls.AddControl(report.Control{
 		ID:    ExecContainer,
 		Human: "Exec shell",
 		Icon:  "fa-terminal",
+		Rank:  2,
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    StartContainer,
+		Human: "Start",
+		Icon:  "fa-play",
+		Rank:  3,
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    RestartContainer,
+		Human: "Restart",
+		Icon:  "fa-repeat",
+		Rank:  4,
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    PauseContainer,
+		Human: "Pause",
+		Icon:  "fa-pause",
+		Rank:  5,
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    UnpauseContainer,
+		Human: "Unpause",
+		Icon:  "fa-play",
+		Rank:  6,
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    StopContainer,
+		Human: "Stop",
+		Icon:  "fa-stop",
+		Rank:  7,
+	})
+	result.Controls.AddControl(report.Control{
+		ID:    RemoveContainer,
+		Human: "Remove",
+		Icon:  "fa-trash-o",
+		Rank:  8,
 	})
 
 	metadata := map[string]string{report.ControlProbeID: r.probeID}
