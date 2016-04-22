@@ -367,6 +367,7 @@ var (
 						kubernetes.Namespace:       KubernetesNamespace,
 						kubernetes.PodContainerIDs: ClientContainerID,
 						kubernetes.ServiceIDs:      ServiceID,
+						report.HostNodeID:          ClientHostNodeID,
 					}).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
@@ -381,6 +382,7 @@ var (
 						kubernetes.PodState:        "running",
 						kubernetes.PodContainerIDs: ServerContainerID,
 						kubernetes.ServiceIDs:      ServiceID,
+						report.HostNodeID:          ServerHostNodeID,
 					}).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
