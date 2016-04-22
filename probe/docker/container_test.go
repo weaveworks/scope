@@ -51,7 +51,8 @@ func TestContainer(t *testing.T) {
 		return connection
 	}
 
-	c := docker.NewContainer(container1)
+	const hostID = "scope"
+	c := docker.NewContainer(container1, hostID)
 	err := c.StartGatheringStats()
 	if err != nil {
 		t.Errorf("%v", err)
@@ -101,7 +102,7 @@ func TestContainer(t *testing.T) {
 	)
 
 	test.Poll(t, 100*time.Millisecond, want, func() interface{} {
-		node := c.GetNode("scope", []net.IP{})
+		node := c.GetNode([]net.IP{})
 		node.Latest.ForEach(func(k, v string) {
 			if v == "0" || v == "" {
 				node.Latest = node.Latest.Delete(k)
@@ -116,7 +117,7 @@ func TestContainer(t *testing.T) {
 	if c.PID() != 2 {
 		t.Errorf("%d != 2", c.PID())
 	}
-	if have := docker.ExtractContainerIPs(c.GetNode("", []net.IP{})); !reflect.DeepEqual(have, []string{"1.2.3.4"}) {
+	if have := docker.ExtractContainerIPs(c.GetNode([]net.IP{})); !reflect.DeepEqual(have, []string{"1.2.3.4"}) {
 		t.Errorf("%v != %v", have, []string{"1.2.3.4"})
 	}
 }

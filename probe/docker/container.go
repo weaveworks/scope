@@ -56,19 +56,24 @@ const (
 	CPUUsageInKernelmode = "docker_cpu_usage_in_kernelmode"
 	CPUSystemCPUUsage    = "docker_cpu_system_cpu_usage"
 
-	StateCreated    = "created"
-	StateDead       = "dead"
-	StateExited     = "exited"
-	StatePaused     = "paused"
-	StateRestarting = "restarting"
-	StateRunning    = "running"
-
 	NetworkModeHost = "host"
 
 	LabelPrefix = "docker_label_"
 	EnvPrefix   = "docker_env_"
 
 	stopTimeout = 10
+)
+
+// These 'constants' are used for node states.
+// We need to take pointers to them, so they are vars...
+var (
+	StateCreated    = "created"
+	StateDead       = "dead"
+	StateExited     = "exited"
+	StatePaused     = "paused"
+	StateRestarting = "restarting"
+	StateRunning    = "running"
+	StateDeleted    = "deleted"
 )
 
 // Exported for testing
@@ -95,7 +100,7 @@ type Container interface {
 	Image() string
 	PID() int
 	Hostname() string
-	GetNode(string, []net.IP) report.Node
+	GetNode([]net.IP) report.Node
 	State() string
 	StateString() string
 	HasTTY() bool
@@ -111,12 +116,14 @@ type container struct {
 	latestStats  docker.Stats
 	pendingStats [20]docker.Stats
 	numPending   int
+	hostID       string
 }
 
 // NewContainer creates a new Container
-func NewContainer(c *docker.Container) Container {
+func NewContainer(c *docker.Container, hostID string) Container {
 	return &container{
 		container: c,
+		hostID:    hostID,
 	}
 }
 
@@ -338,10 +345,9 @@ func (c *container) env() map[string]string {
 	return result
 }
 
-func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
+func (c *container) GetNode(localAddrs []net.IP) report.Node {
 	c.RLock()
 	defer c.RUnlock()
-
 	ips := c.container.NetworkSettings.SecondaryIPAddresses
 	if c.container.NetworkSettings.IPAddress != "" {
 		ips = append(ips, c.container.NetworkSettings.IPAddress)
@@ -349,7 +355,7 @@ func (c *container) GetNode(hostID string, localAddrs []net.IP) report.Node {
 	// Treat all Docker IPs as local scoped.
 	ipsWithScopes := []string{}
 	for _, ip := range ips {
-		ipsWithScopes = append(ipsWithScopes, report.MakeScopedAddressNodeID(hostID, ip))
+		ipsWithScopes = append(ipsWithScopes, report.MakeScopedAddressNodeID(c.hostID, ip))
 	}
 
 	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{

@@ -132,7 +132,7 @@ func probeMain(flags probeFlags) {
 		if err := report.AddLocalBridge(flags.dockerBridge); err != nil {
 			log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
 		}
-		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true); err == nil {
+		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID); err == nil {
 			defer registry.Stop()
 			p.AddTagger(docker.NewTagger(registry, processCache))
 			p.AddReporter(docker.NewReporter(registry, hostID, probeID, p))

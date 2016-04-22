@@ -8,6 +8,7 @@ import (
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe/controls"
+	"github.com/weaveworks/scope/report"
 )
 
 // Consts exported for testing.
@@ -39,7 +40,7 @@ type Registry interface {
 }
 
 // ContainerUpdateWatcher is the type of functions that get called when containers are updated.
-type ContainerUpdateWatcher func(c Container)
+type ContainerUpdateWatcher func(report.Node)
 
 type registry struct {
 	sync.RWMutex
@@ -48,6 +49,7 @@ type registry struct {
 	collectStats bool
 	client       Client
 	pipes        controls.PipeClient
+	hostID       string
 
 	watchers        []ContainerUpdateWatcher
 	containers      map[string]Container
@@ -78,7 +80,7 @@ func newDockerClient(endpoint string) (Client, error) {
 }
 
 // NewRegistry returns a usable Registry. Don't forget to Stop it.
-func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool) (Registry, error) {
+func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool, hostID string) (Registry, error) {
 	client, err := NewDockerClientStub(endpoint)
 	if err != nil {
 		return nil, err
@@ -93,6 +95,7 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats
 		pipes:        pipes,
 		interval:     interval,
 		collectStats: collectStats,
+		hostID:       hostID,
 		quit:         make(chan chan struct{}),
 	}
 
@@ -214,7 +217,7 @@ func (r *registry) updateContainers() error {
 	}
 
 	for _, apiContainer := range apiContainers {
-		r.updateContainerState(apiContainer.ID)
+		r.updateContainerState(apiContainer.ID, nil)
 	}
 
 	return nil
@@ -240,11 +243,20 @@ func (r *registry) updateImages() error {
 func (r *registry) handleEvent(event *docker_client.APIEvents) {
 	switch event.Status {
 	case CreateEvent, RenameEvent, StartEvent, DieEvent, DestroyEvent, PauseEvent, UnpauseEvent:
-		r.updateContainerState(event.ID)
+		r.updateContainerState(event.ID, stateAfterEvent(event.Status))
 	}
 }
 
-func (r *registry) updateContainerState(containerID string) {
+func stateAfterEvent(event string) *string {
+	switch event {
+	case DestroyEvent:
+		return &StateDeleted
+	default:
+		return nil
+	}
+}
+
+func (r *registry) updateContainerState(containerID string, intendedState *string) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -267,13 +279,24 @@ func (r *registry) updateContainerState(containerID string) {
 		if r.collectStats {
 			container.StopGatheringStats()
 		}
+
+		if intendedState != nil {
+			node := report.MakeNodeWith(report.MakeContainerNodeID(containerID), map[string]string{
+				ContainerID:    containerID,
+				ContainerState: *intendedState,
+			})
+			// Trigger anyone watching for updates
+			for _, f := range r.watchers {
+				f(node)
+			}
+		}
 		return
 	}
 
 	// Container exists, ensure we have it
 	c, ok := r.containers[containerID]
 	if !ok {
-		c = NewContainerStub(dockerContainer)
+		c = NewContainerStub(dockerContainer, r.hostID)
 		r.containers[containerID] = c
 	} else {
 		// potentially remove existing pid mapping.
@@ -287,8 +310,12 @@ func (r *registry) updateContainerState(containerID string) {
 	}
 
 	// Trigger anyone watching for updates
-	for _, f := range r.watchers {
-		f(c)
+	localAddrs, err := report.LocalAddresses()
+	if err != nil {
+		node := c.GetNode(localAddrs)
+		for _, f := range r.watchers {
+			f(node)
+		}
 	}
 
 	// And finally, ensure we gather stats for it

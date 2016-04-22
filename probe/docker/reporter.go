@@ -4,7 +4,6 @@ import (
 	"net"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe"
@@ -75,17 +74,11 @@ func NewReporter(registry Registry, hostID string, probeID string, probe *probe.
 func (Reporter) Name() string { return "Docker" }
 
 // ContainerUpdated should be called whenever a container is updated.
-func (r *Reporter) ContainerUpdated(c Container) {
-	localAddrs, err := report.LocalAddresses()
-	if err != nil {
-		log.Errorf("Error getting local address: %v", err)
-		return
-	}
-
+func (r *Reporter) ContainerUpdated(n report.Node) {
 	// Publish a 'short cut' report container just this container
 	rpt := report.MakeReport()
 	rpt.Shortcut = true
-	rpt.Container.AddNode(c.GetNode(r.hostID, localAddrs))
+	rpt.Container.AddNode(n)
 	r.probe.Publish(rpt)
 }
 
@@ -146,7 +139,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	metadata := map[string]string{report.ControlProbeID: r.probeID}
 
 	r.registry.WalkContainers(func(c Container) {
-		result.AddNode(c.GetNode(r.hostID, localAddrs).WithLatests(metadata))
+		result.AddNode(c.GetNode(localAddrs).WithLatests(metadata))
 	})
 
 	return result
