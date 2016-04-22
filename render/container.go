@@ -159,9 +159,22 @@ func ContainerImageRenderer(filter Decorator) Renderer {
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
 // by hostname graph..
 func ContainerHostnameRenderer(filter Decorator) Renderer {
-	return MakeMap(
-		MapContainer2Hostname,
-		filter(ContainerRenderer),
+	return FilterEmpty(report.Container,
+		MakeReduce(
+			MakeMap(
+				MapContainer2Hostname,
+				filter(ContainerRenderer),
+			),
+			// Grab *all* the hostnames, so we can count the number which were empty
+			// for accurate stats.
+			MakeMap(
+				MapToEmpty,
+				MakeMap(
+					MapContainer2Hostname,
+					ContainerRenderer,
+				),
+			),
+		),
 	)
 }
 
@@ -369,4 +382,10 @@ func ImageNameWithoutVersion(name string) string {
 	}
 	parts = strings.SplitN(name, ":", 2)
 	return parts[0]
+}
+
+// MapToEmpty removes all the attributes, children, etc, of a node. Useful when
+// we just want to count the presence of nodes.
+func MapToEmpty(n report.Node, _ report.Networks) report.Nodes {
+	return report.Nodes{n.ID: report.MakeNode(n.ID).WithTopology(n.Topology)}
 }
