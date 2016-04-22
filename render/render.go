@@ -116,8 +116,10 @@ func (m *Map) Stats(rpt report.Report) Stats {
 	return Stats{}
 }
 
+// Decorator transforms one renderer to another. e.g. Filters.
 type Decorator func(Renderer) Renderer
 
+// ComposeDecorators composes decorators into one.
 func ComposeDecorators(decorators ...Decorator) Decorator {
 	return func(r Renderer) Renderer {
 		for _, decorator := range decorators {
