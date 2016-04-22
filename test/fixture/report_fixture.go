@@ -75,8 +75,12 @@ var (
 	ClientContainerID     = "a1b2c3d4e5"
 	ClientContainerName   = "client"
 	ServerContainerID     = "5e4d3c2b1a"
+	ServerContainerName   = "task-name-5-server-aceb93e2f2b797caba01"
 	ClientContainerNodeID = report.MakeContainerNodeID(ClientContainerID)
 	ServerContainerNodeID = report.MakeContainerNodeID(ServerContainerID)
+
+	ClientContainerHostname = ClientContainerName + ".hostname.com"
+	ServerContainerHostname = ServerContainerName + ".hostname.com"
 
 	ClientContainerImageID     = "imageid123"
 	ServerContainerImageID     = "imageid456"
@@ -256,6 +260,7 @@ var (
 					ClientContainerNodeID, map[string]string{
 						docker.ContainerID:                            ClientContainerID,
 						docker.ContainerName:                          ClientContainerName,
+						docker.ContainerHostname:                      ClientContainerHostname,
 						docker.ImageID:                                ClientContainerImageID,
 						report.HostNodeID:                             ClientHostNodeID,
 						docker.LabelPrefix + "io.kubernetes.pod.name": ClientPodID,
@@ -276,7 +281,8 @@ var (
 
 					ServerContainerNodeID, map[string]string{
 						docker.ContainerID:                                        ServerContainerID,
-						docker.ContainerName:                                      "task-name-5-server-aceb93e2f2b797caba01",
+						docker.ContainerName:                                      ServerContainerName,
+						docker.ContainerHostname:                                  ServerContainerHostname,
 						docker.ContainerState:                                     docker.StateRunning,
 						docker.ContainerStateHuman:                                docker.StateRunning,
 						docker.ImageID:                                            ServerContainerImageID,

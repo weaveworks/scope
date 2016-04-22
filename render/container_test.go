@@ -91,6 +91,40 @@ func TestContainerWithHostIPsRenderer(t *testing.T) {
 	}
 }
 
+func TestContainerHostnameRenderer(t *testing.T) {
+	have := Prune(render.ContainerHostnameRenderer(render.FilterNoop).Render(fixture.Report))
+	want := Prune(expected.RenderedContainerHostnames)
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
+func TestContainerHostnameFilterRenderer(t *testing.T) {
+	// add a system container into the topology and ensure
+	// it is filtered out correctly.
+	input := fixture.Report.Copy()
+
+	clientContainer2ID := "f6g7h8i9j1"
+	clientContainer2NodeID := report.MakeContainerNodeID(clientContainer2ID)
+	input.Container.AddNode(report.MakeNodeWith(clientContainer2NodeID, map[string]string{
+		docker.LabelPrefix + "works.weave.role": "system",
+		docker.ContainerHostname:                fixture.ClientContainerHostname,
+		report.HostNodeID:                       fixture.ClientHostNodeID,
+	}).
+		WithParents(report.EmptySets.
+			Add("host", report.MakeStringSet(fixture.ClientHostNodeID)),
+		).WithTopology(report.Container))
+
+	have := Prune(render.ContainerHostnameRenderer(render.FilterSystem).Render(input))
+	want := Prune(expected.RenderedContainerHostnames)
+	// Test works by virtue of the RenderedContainerHostname only having a container
+	// counter == 1
+
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
 func TestContainerImageRenderer(t *testing.T) {
 	have := Prune(render.ContainerImageRenderer(render.FilterNoop).Render(fixture.Report))
 	want := Prune(expected.RenderedContainerImages)
@@ -103,8 +137,6 @@ func TestContainerImageFilterRenderer(t *testing.T) {
 	// add a system container into the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
-
-	// TODO: Add a process and endpoint here to make this test fail, so we can fix it.
 
 	clientContainer2ID := "f6g7h8i9j1"
 	clientContainer2NodeID := report.MakeContainerNodeID(clientContainer2ID)

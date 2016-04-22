@@ -7,6 +7,7 @@ import (
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
+	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 	"github.com/weaveworks/scope/test/reflect"
@@ -44,6 +45,34 @@ func TestPodFilterRenderer(t *testing.T) {
 func TestPodServiceRenderer(t *testing.T) {
 	have := Prune(render.PodServiceRenderer(render.FilterNoop).Render(fixture.Report))
 	want := Prune(expected.RenderedPodServices)
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
+func TestPodServiceFilterRenderer(t *testing.T) {
+	// tag on containers or pod namespace in the topology and ensure
+	// it is filtered out correctly.
+	input := fixture.Report.Copy()
+	input.Pod.Nodes[fixture.ClientPodNodeID] = input.Pod.Nodes[fixture.ClientPodNodeID].WithLatests(map[string]string{
+		kubernetes.PodID:     "pod:kube-system/foo",
+		kubernetes.Namespace: "kube-system",
+		kubernetes.PodName:   "foo",
+	})
+	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
+		docker.LabelPrefix + "io.kubernetes.pod.name": "kube-system/foo",
+	})
+	have := Prune(render.PodServiceRenderer(render.FilterSystem).Render(input))
+	want := Prune(expected.RenderedPodServices.Copy())
+	wantNode := want[fixture.ServiceNodeID]
+	wantNode.Adjacency = nil
+	wantNode.Children = report.MakeNodeSet(
+		expected.RenderedEndpoints[fixture.Server80NodeID],
+		expected.RenderedProcesses[fixture.ServerProcessNodeID],
+		expected.RenderedContainers[fixture.ServerContainerNodeID],
+		expected.RenderedPods[fixture.ServerPodNodeID],
+	)
+	want[fixture.ServiceNodeID] = wantNode
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
