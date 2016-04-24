@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
@@ -121,12 +120,6 @@ export class NodeDetails extends React.Component {
         </div>
       </div>
     );
-  }
-
-  renderTable(table) {
-    const key = _.snakeCase(table.title);
-    return (<NodeDetailsTable title={table.title} key={key} rows={table.rows}
-      isNumeric={table.numeric} />);
   }
 
   render() {

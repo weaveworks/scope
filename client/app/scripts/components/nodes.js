@@ -1,11 +1,13 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import NodesChart from '../charts/nodes-chart';
+// import NodesChart from '../charts/nodes-chart';
+import NodesGrid from '../charts/nodes-grid';
 import NodesError from '../charts/nodes-error';
 import { DelayedShow } from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
+import { CANVAS_MARGINS } from '../constants/styles';
 
 const navbarHeight = 160;
 const marginTop = 0;
@@ -80,7 +82,11 @@ class Nodes extends React.Component {
             show={topologiesLoaded && !nodesLoaded} />
         </DelayedShow>
         {this.renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
-        <NodesChart {...this.state}
+        <NodesGrid {...this.state}
+          nodeSize="24"
+          width={1300}
+          height={780}
+          margins={CANVAS_MARGINS}
           detailsWidth={detailsWidth}
           layoutPrecision={layoutPrecision}
           hasSelectedNode={hasSelectedNode}

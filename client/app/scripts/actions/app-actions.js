@@ -78,6 +78,13 @@ export function unpinNetwork(networkId) {
   };
 }
 
+export function sortOrderChanged(newOrder) {
+  AppDispatcher.dispatch({
+    type: ActionTypes.SORT_ORDER_CHANGED,
+    newOrder
+  });
+}
+
 
 //
 // Metrics

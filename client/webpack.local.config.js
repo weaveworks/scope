@@ -15,7 +15,13 @@ var HtmlWebpackPlugin = require('html-webpack-plugin');
  */
 
  // Inject websocket url to dev backend
- var WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
+
+var WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
+var COMMON_DEPS = [
+  'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
+  'webpack/hot/only-dev-server',
+  './app/scripts/debug'
+];
 
 module.exports = {
 
@@ -64,6 +70,11 @@ module.exports = {
     new webpack.NoErrorsPlugin(),
     new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
     new HtmlWebpackPlugin({
+      chunks: ['vendors', 'examples-app'],
+      template: 'app/html/index.html',
+      filename: 'examples.html'
+    }),
+    new HtmlWebpackPlugin({
       chunks: ['vendors', 'contrast-app'],
       template: 'app/html/index.html',
       filename: 'contrast.html'
@@ -104,7 +115,7 @@ module.exports = {
         loader: 'json-loader'
       },
       {
-        test: /\.less$/,
+        test: /(\.css|\.less)$/,
         loader: 'style-loader!css-loader!postcss-loader!less-loader'
       },
       {
