@@ -12,8 +12,9 @@ import (
 
 // Keys for use in Node
 const (
-	ImageID   = "docker_image_id"
-	ImageName = "docker_image_name"
+	ImageID          = "docker_image_id"
+	ImageName        = "docker_image_name"
+	ImageLabelPrefix = "docker_image_label_"
 )
 
 // Exposed for testing
@@ -46,7 +47,7 @@ var (
 	}
 
 	ContainerImageTableTemplates = report.TableTemplates{
-		LabelPrefix: {ID: LabelPrefix, Label: "Docker Labels", Prefix: LabelPrefix},
+		ImageLabelPrefix: {ID: ImageLabelPrefix, Label: "Docker Labels", Prefix: ImageLabelPrefix},
 	}
 )
 
@@ -169,7 +170,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 		node := report.MakeNodeWith(nodeID, map[string]string{
 			ImageID: imageID,
 		})
-		node = node.AddTable(LabelPrefix, image.Labels)
+		node = node.AddTable(ImageLabelPrefix, image.Labels)
 
 		if len(image.RepoTags) > 0 {
 			node = node.WithLatests(map[string]string{ImageName: image.RepoTags[0]})

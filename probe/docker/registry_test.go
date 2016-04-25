@@ -224,7 +224,14 @@ var (
 	apiContainer1       = client.APIContainers{ID: "ping"}
 	apiContainer2       = client.APIContainers{ID: "wiff"}
 	renamedAPIContainer = client.APIContainers{ID: "renamed"}
-	apiImage1           = client.APIImages{ID: "baz", RepoTags: []string{"bang", "not-chosen"}}
+	apiImage1           = client.APIImages{
+		ID:       "baz",
+		RepoTags: []string{"bang", "not-chosen"},
+		Labels: map[string]string{
+			"imgfoo1": "bar1",
+			"imgfoo2": "bar2",
+		},
+	}
 )
 
 func newMockClient() *mockDockerClient {

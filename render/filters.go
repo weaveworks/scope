@@ -228,6 +228,10 @@ func IsSystem(n report.Node) bool {
 	if roleLabel == "system" {
 		return false
 	}
+	roleLabel, _ = n.Latest.Lookup(docker.ImageLabelPrefix + "works.weave.role")
+	if roleLabel == "system" {
+		return false
+	}
 	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
 	if namespace == "kube-system" {
 		return false
