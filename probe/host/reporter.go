@@ -21,6 +21,7 @@ const (
 	Load1         = "load1"
 	CPUUsage      = "host_cpu_usage_percent"
 	MemoryUsage   = "host_mem_usage_bytes"
+	ScopeVersion  = "host_scope_version"
 )
 
 // Exposed for testing.
@@ -39,6 +40,7 @@ var (
 		HostName:      {ID: HostName, Label: "Hostname", From: report.FromLatest, Priority: 11},
 		OS:            {ID: OS, Label: "OS", From: report.FromLatest, Priority: 12},
 		LocalNetworks: {ID: LocalNetworks, Label: "Local Networks", From: report.FromSets, Priority: 13},
+		ScopeVersion:  {ID: ScopeVersion, Label: "Scope Version", From: report.FromLatest, Priority: 14},
 	}
 
 	MetricTemplates = report.MetricTemplates{
@@ -53,18 +55,20 @@ type Reporter struct {
 	hostID       string
 	hostName     string
 	probeID      string
+	version      string
 	pipes        controls.PipeClient
 	hostShellCmd []string
 }
 
 // NewReporter returns a Reporter which produces a report containing host
 // topology for this host.
-func NewReporter(hostID, hostName, probeID string, pipes controls.PipeClient) *Reporter {
+func NewReporter(hostID, hostName, probeID, version string, pipes controls.PipeClient) *Reporter {
 	r := &Reporter{
 		hostID:       hostID,
 		hostName:     hostName,
 		probeID:      probeID,
 		pipes:        pipes,
+		version:      version,
 		hostShellCmd: getHostShellCmd(),
 	}
 	r.registerControls()
@@ -125,16 +129,22 @@ func (r *Reporter) Report() (report.Report, error) {
 	memoryUsage, max := GetMemoryUsageBytes()
 	metrics[MemoryUsage] = report.MakeMetric().Add(now, memoryUsage).WithMax(max)
 
-	metadata := map[string]string{report.ControlProbeID: r.probeID}
-	rep.Host.AddNode(report.MakeNodeWith(report.MakeHostNodeID(r.hostID), map[string]string{
-		Timestamp:     mtime.Now().UTC().Format(time.RFC3339Nano),
-		HostName:      r.hostName,
-		OS:            runtime.GOOS,
-		KernelVersion: kernel,
-		Uptime:        uptime.String(),
-	}).WithSets(report.EmptySets.
-		Add(LocalNetworks, report.MakeStringSet(localCIDRs...)),
-	).WithMetrics(metrics).WithControls(ExecHost).WithLatests(metadata))
+	rep.Host.AddNode(
+		report.MakeNodeWith(report.MakeHostNodeID(r.hostID), map[string]string{
+			report.ControlProbeID: r.probeID,
+			Timestamp:             mtime.Now().UTC().Format(time.RFC3339Nano),
+			HostName:              r.hostName,
+			OS:                    runtime.GOOS,
+			KernelVersion:         kernel,
+			Uptime:                uptime.String(),
+			ScopeVersion:          r.version,
+		}).
+			WithSets(report.EmptySets.
+				Add(LocalNetworks, report.MakeStringSet(localCIDRs...)),
+			).
+			WithMetrics(metrics).
+			WithControls(ExecHost),
+	)
 
 	rep.Host.Controls.AddControl(report.Control{
 		ID:    ExecHost,

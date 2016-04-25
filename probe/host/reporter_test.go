@@ -18,7 +18,6 @@ func TestReporter(t *testing.T) {
 		network   = "192.168.0.0/16"
 		hostID    = "hostid"
 		hostname  = "hostname"
-		probeID   = "abcdeadbeef"
 		timestamp = time.Now()
 		metrics   = report.Metrics{
 			host.Load1:       report.MakeMetric().Add(timestamp, 1.0),
@@ -56,7 +55,7 @@ func TestReporter(t *testing.T) {
 	host.GetMemoryUsageBytes = func() (float64, float64) { return 60.0, 100.0 }
 	host.GetLocalNetworks = func() ([]*net.IPNet, error) { return []*net.IPNet{ipnet}, nil }
 
-	rpt, err := host.NewReporter(hostID, hostname, probeID, nil).Report()
+	rpt, err := host.NewReporter(hostID, hostname, "", "", nil).Report()
 	if err != nil {
 		t.Fatal(err)
 	}

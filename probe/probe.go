@@ -7,7 +7,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
 
-	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/report"
 )
@@ -18,7 +17,6 @@ const (
 
 // Probe sits there, generating and publishing reports.
 type Probe struct {
-	id                           string
 	spyInterval, publishInterval time.Duration
 	publisher                    *appclient.ReportPublisher
 
@@ -67,9 +65,11 @@ type Ticker interface {
 }
 
 // New makes a new Probe.
-func New(id string, spyInterval, publishInterval time.Duration, publisher appclient.Publisher) *Probe {
+func New(
+	spyInterval, publishInterval time.Duration,
+	publisher appclient.Publisher,
+) *Probe {
 	result := &Probe{
-		id:              id,
 		spyInterval:     spyInterval,
 		publishInterval: publishInterval,
 		publisher:       appclient.NewReportPublisher(publisher),
@@ -165,10 +165,6 @@ func (p *Probe) report() report.Report {
 	result := report.MakeReport()
 	for i := 0; i < cap(reports); i++ {
 		result = result.Merge(<-reports)
-	}
-	result.Probes[p.id] = report.Probe{
-		ID:       p.id,
-		LastSeen: mtime.Now(),
 	}
 	return result
 }
