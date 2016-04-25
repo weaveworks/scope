@@ -96,8 +96,10 @@ func TestReporter(t *testing.T) {
 		}
 
 		for k, want := range map[string]string{
-			docker.ImageID:   "baz",
-			docker.ImageName: "bang",
+			docker.ImageID:                      "baz",
+			docker.ImageName:                    "bang",
+			docker.ImageLabelPrefix + "imgfoo1": "bar1",
+			docker.ImageLabelPrefix + "imgfoo2": "bar2",
 		} {
 			if have, ok := node.Latest.Lookup(k); !ok || have != want {
 				t.Errorf("Expected container image %s latest %q: %q, got %q", containerImageNodeID, k, want, have)
