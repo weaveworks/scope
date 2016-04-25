@@ -70,8 +70,9 @@ var (
 			CreationTimestamp: unversioned.Now(),
 		},
 		Spec: api.ServiceSpec{
-			Type:      api.ServiceTypeLoadBalancer,
-			ClusterIP: "10.0.1.1",
+			Type:           api.ServiceTypeLoadBalancer,
+			ClusterIP:      "10.0.1.1",
+			LoadBalancerIP: "10.0.1.2",
 			Ports: []api.ServicePort{
 				{Protocol: "TCP", Port: 6379},
 			},

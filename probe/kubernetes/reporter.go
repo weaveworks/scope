@@ -23,10 +23,11 @@ var (
 	}
 
 	ServiceMetadataTemplates = report.MetadataTemplates{
-		ServiceID:      {ID: ServiceID, Label: "ID", From: report.FromLatest, Priority: 1},
-		Namespace:      {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		ServiceCreated: {ID: ServiceCreated, Label: "Created", From: report.FromLatest, Priority: 3},
-		ServiceIP:      {ID: ServiceIP, Label: "Internal IP", From: report.FromLatest, Priority: 4},
+		ServiceID:       {ID: ServiceID, Label: "ID", From: report.FromLatest, Priority: 1},
+		Namespace:       {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		ServiceCreated:  {ID: ServiceCreated, Label: "Created", From: report.FromLatest, Priority: 3},
+		ServicePublicIP: {ID: ServicePublicIP, Label: "Public IP", From: report.FromLatest, Priority: 4},
+		ServiceIP:       {ID: ServiceIP, Label: "Internal IP", From: report.FromLatest, Priority: 5},
 	}
 
 	PodTableTemplates = report.TableTemplates{

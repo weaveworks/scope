@@ -14,6 +14,7 @@ const (
 	ServiceName        = "kubernetes_service_name"
 	ServiceCreated     = "kubernetes_service_created"
 	ServiceIP          = "kubernetes_service_ip"
+	ServicePublicIP    = "kubernetes_service_public_ip"
 	ServiceLabelPrefix = "kubernetes_service_label_"
 )
 
@@ -55,11 +56,15 @@ func (s *service) Selector() labels.Selector {
 }
 
 func (s *service) GetNode() report.Node {
-	return report.MakeNodeWith(report.MakeServiceNodeID(s.Namespace(), s.Name()), map[string]string{
+	latest := map[string]string{
 		ServiceID:      s.ID(),
 		ServiceName:    s.Name(),
 		ServiceCreated: s.ObjectMeta.CreationTimestamp.Format(time.RFC822),
 		Namespace:      s.Namespace(),
 		ServiceIP:      s.Spec.ClusterIP,
-	}).AddTable(ServiceLabelPrefix, s.Labels)
+	}
+	if s.Spec.LoadBalancerIP != "" {
+		latest[ServicePublicIP] = s.Spec.LoadBalancerIP
+	}
+	return report.MakeNodeWith(report.MakeServiceNodeID(s.Namespace(), s.Name()), latest).AddTable(ServiceLabelPrefix, s.Labels)
 }
