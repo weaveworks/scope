@@ -26,7 +26,7 @@ func PodRenderer(filter Decorator) Renderer {
 				},
 				ColorConnected(MakeMap(
 					MapContainer2Pod,
-					filter(ContainerRenderer),
+					filter(ContainerWithImageNameRenderer),
 				)),
 			),
 			SelectPod,

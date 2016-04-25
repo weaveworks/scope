@@ -149,7 +149,7 @@ func ContainerImageRenderer(filter Decorator) Renderer {
 		MakeReduce(
 			MakeMap(
 				MapContainer2ContainerImage,
-				filter(ContainerRenderer),
+				filter(ContainerWithImageNameRenderer),
 			),
 			SelectContainerImage,
 		),
@@ -163,7 +163,7 @@ func ContainerHostnameRenderer(filter Decorator) Renderer {
 		MakeReduce(
 			MakeMap(
 				MapContainer2Hostname,
-				filter(ContainerRenderer),
+				filter(ContainerWithImageNameRenderer),
 			),
 			// Grab *all* the hostnames, so we can count the number which were empty
 			// for accurate stats.

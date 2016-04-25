@@ -305,7 +305,7 @@ func TestMakeDetailedPodNode(t *testing.T) {
 	}
 	have := detailed.MakeNode("pods", fixture.Report, renderableNodes, renderableNode)
 
-	containerNodeSummary := child(t, render.ContainerRenderer, fixture.ServerContainerNodeID)
+	containerNodeSummary := child(t, render.ContainerWithImageNameRenderer, fixture.ServerContainerNodeID)
 	serverProcessNodeSummary := child(t, render.ProcessRenderer, fixture.ServerProcessNodeID)
 	serverProcessNodeSummary.Linkable = true // Temporary workaround for: https://github.com/weaveworks/scope/issues/1295
 	want := detailed.Node{
