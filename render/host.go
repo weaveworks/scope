@@ -21,11 +21,11 @@ var HostRenderer = MakeReduce(
 	),
 	MakeMap(
 		MapX2Host,
-		ContainerImageRenderer(FilterNoop),
+		ContainerImageRenderer,
 	),
 	MakeMap(
 		MapX2Host,
-		PodRenderer(FilterNoop),
+		PodRenderer,
 	),
 	SelectHost,
 )

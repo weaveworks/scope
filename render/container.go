@@ -73,9 +73,9 @@ type containerWithHostIPsRenderer struct {
 
 // Render produces a process graph where the ips for host network mode are set
 // to the host's IPs.
-func (r containerWithHostIPsRenderer) Render(rpt report.Report) report.Nodes {
-	containers := r.Renderer.Render(rpt)
-	hosts := SelectHost.Render(rpt)
+func (r containerWithHostIPsRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+	containers := r.Renderer.Render(rpt, dct)
+	hosts := SelectHost.Render(rpt, dct)
 
 	outputs := report.Nodes{}
 	for id, c := range containers {
@@ -116,9 +116,9 @@ type containerWithImageNameRenderer struct {
 // Render produces a process graph where the minor labels contain the
 // container name, if found.  It also merges the image node metadata into the
 // container metadata.
-func (r containerWithImageNameRenderer) Render(rpt report.Report) report.Nodes {
-	containers := r.Renderer.Render(rpt)
-	images := SelectContainerImage.Render(rpt)
+func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+	containers := r.Renderer.Render(rpt, dct)
+	images := SelectContainerImage.Render(rpt, dct)
 
 	outputs := report.Nodes{}
 	for id, c := range containers {
@@ -140,43 +140,39 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) report.Nodes {
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container
 // graph where the ranks are the image names, not their IDs
-var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerWithHostIPsRenderer}
+var ContainerWithImageNameRenderer = ApplyDecorators(containerWithImageNameRenderer{ContainerWithHostIPsRenderer})
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
-func ContainerImageRenderer(filter Decorator) Renderer {
-	return FilterEmpty(report.Container,
-		MakeReduce(
-			MakeMap(
-				MapContainer2ContainerImage,
-				filter(ContainerWithImageNameRenderer),
-			),
-			SelectContainerImage,
+var ContainerImageRenderer = FilterEmpty(report.Container,
+	MakeReduce(
+		MakeMap(
+			MapContainer2ContainerImage,
+			ContainerWithImageNameRenderer,
 		),
-	)
-}
+		SelectContainerImage,
+	),
+)
 
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
 // by hostname graph..
-func ContainerHostnameRenderer(filter Decorator) Renderer {
-	return FilterEmpty(report.Container,
-		MakeReduce(
+var ContainerHostnameRenderer = FilterEmpty(report.Container,
+	MakeReduce(
+		MakeMap(
+			MapContainer2Hostname,
+			ContainerWithImageNameRenderer,
+		),
+		// Grab *all* the hostnames, so we can count the number which were empty
+		// for accurate stats.
+		MakeMap(
+			MapToEmpty,
 			MakeMap(
 				MapContainer2Hostname,
-				filter(ContainerWithImageNameRenderer),
-			),
-			// Grab *all* the hostnames, so we can count the number which were empty
-			// for accurate stats.
-			MakeMap(
-				MapToEmpty,
-				MakeMap(
-					MapContainer2Hostname,
-					ContainerRenderer,
-				),
+				ContainerRenderer,
 			),
 		),
-	)
-}
+	),
+)
 
 var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}):([0-9]+)->([0-9]+)/tcp`)
 

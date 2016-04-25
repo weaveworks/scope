@@ -12,8 +12,8 @@ type MapFunc func(report.Node, report.Networks) report.Nodes
 
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
-	Render(report.Report) report.Nodes
-	Stats(report.Report) Stats
+	Render(report.Report, Decorator) report.Nodes
+	Stats(report.Report, Decorator) Stats
 }
 
 // Stats is the type returned by Renderer.Stats
@@ -38,19 +38,19 @@ func MakeReduce(renderers ...Renderer) Renderer {
 }
 
 // Render produces a set of Nodes given a Report.
-func (r *Reduce) Render(rpt report.Report) report.Nodes {
+func (r *Reduce) Render(rpt report.Report, dct Decorator) report.Nodes {
 	result := report.Nodes{}
 	for _, renderer := range *r {
-		result = result.Merge(renderer.Render(rpt))
+		result = result.Merge(renderer.Render(rpt, dct))
 	}
 	return result
 }
 
 // Stats implements Renderer
-func (r *Reduce) Stats(rpt report.Report) Stats {
+func (r *Reduce) Stats(rpt report.Report, dct Decorator) Stats {
 	var result Stats
 	for _, renderer := range *r {
-		result = result.merge(renderer.Stats(rpt))
+		result = result.merge(renderer.Stats(rpt, dct))
 	}
 	return result
 }
@@ -69,9 +69,9 @@ func MakeMap(f MapFunc, r Renderer) Renderer {
 
 // Render transforms a set of Nodes produces by another Renderer.
 // using a map function
-func (m *Map) Render(rpt report.Report) report.Nodes {
+func (m *Map) Render(rpt report.Report, dct Decorator) report.Nodes {
 	var (
-		input         = m.Renderer.Render(rpt)
+		input         = m.Renderer.Render(rpt, dct)
 		output        = report.Nodes{}
 		mapped        = map[string]report.IDList{} // input node ID -> output node IDs
 		adjacencies   = map[string]report.IDList{} // output node ID -> input node Adjacencies
@@ -109,7 +109,7 @@ func (m *Map) Render(rpt report.Report) report.Nodes {
 }
 
 // Stats implements Renderer
-func (m *Map) Stats(rpt report.Report) Stats {
+func (m *Map) Stats(_ report.Report, _ Decorator) Stats {
 	// There doesn't seem to be an instance where we want stats to recurse
 	// through Maps - for instance we don't want to see the number of filtered
 	// processes in the container renderer.
@@ -127,4 +127,45 @@ func ComposeDecorators(decorators ...Decorator) Decorator {
 		}
 		return r
 	}
+}
+
+type applyDecorator struct {
+	Renderer
+}
+
+func (ad applyDecorator) Render(rpt report.Report, dct Decorator) report.Nodes {
+	if dct != nil {
+		return dct(ad.Renderer).Render(rpt, nil)
+	}
+	return ad.Renderer.Render(rpt, nil)
+}
+func (ad applyDecorator) Stats(rpt report.Report, dct Decorator) Stats {
+	if dct != nil {
+		return dct(ad.Renderer).Stats(rpt, nil)
+	}
+	return ad.Renderer.Stats(rpt, nil)
+}
+
+// ApplyDecorators returns a renderer which will apply the given decorators
+// to the child render.
+func ApplyDecorators(renderer Renderer) Renderer {
+	return applyDecorator{renderer}
+}
+
+type withDecorator struct {
+	Decorator
+	Renderer
+}
+
+func (wd withDecorator) Render(rpt report.Report, _ Decorator) report.Nodes {
+	return wd.Renderer.Render(rpt, wd.Decorator)
+}
+func (wd withDecorator) Stats(rpt report.Report, _ Decorator) Stats {
+	return wd.Renderer.Stats(rpt, wd.Decorator)
+}
+
+// WithDecorators returns a renderer which ignores the decorators it is given,
+// insteads using the ones specified here.
+func WithDecorators(renderer Renderer, dct Decorator) Renderer {
+	return withDecorator{dct, renderer}
 }

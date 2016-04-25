@@ -103,18 +103,18 @@ func init() {
 			Options:  containerFilters,
 		},
 		APITopologyDesc{
-			id:               "containers-by-image",
-			parent:           "containers",
-			filteredRenderer: render.ContainerImageRenderer,
-			Name:             "by image",
-			Options:          containerFilters,
+			id:       "containers-by-image",
+			parent:   "containers",
+			renderer: render.ContainerImageRenderer,
+			Name:     "by image",
+			Options:  containerFilters,
 		},
 		APITopologyDesc{
-			id:               "containers-by-hostname",
-			parent:           "containers",
-			filteredRenderer: render.ContainerHostnameRenderer,
-			Name:             "by DNS name",
-			Options:          containerFilters,
+			id:       "containers-by-hostname",
+			parent:   "containers",
+			renderer: render.ContainerHostnameRenderer,
+			Name:     "by DNS name",
+			Options:  containerFilters,
 		},
 		APITopologyDesc{
 			id:       "hosts",
@@ -123,20 +123,20 @@ func init() {
 			Rank:     4,
 		},
 		APITopologyDesc{
-			id:               "pods",
-			filteredRenderer: render.PodRenderer,
-			Name:             "Pods",
-			Rank:             3,
-			HideIfEmpty:      true,
-			Options:          podFilters,
+			id:          "pods",
+			renderer:    render.PodRenderer,
+			Name:        "Pods",
+			Rank:        3,
+			HideIfEmpty: true,
+			Options:     podFilters,
 		},
 		APITopologyDesc{
-			id:               "pods-by-service",
-			parent:           "pods",
-			filteredRenderer: render.PodServiceRenderer,
-			Name:             "by service",
-			HideIfEmpty:      true,
-			Options:          serviceFilters,
+			id:          "pods-by-service",
+			parent:      "pods",
+			renderer:    render.PodServiceRenderer,
+			Name:        "by service",
+			HideIfEmpty: true,
+			Options:     serviceFilters,
 		},
 	)
 }
@@ -149,10 +149,9 @@ type registry struct {
 
 // APITopologyDesc is returned in a list by the /api/topology handler.
 type APITopologyDesc struct {
-	id               string
-	parent           string
-	renderer         render.Renderer
-	filteredRenderer func(render.Decorator) render.Renderer
+	id       string
+	parent   string
+	renderer render.Renderer
 
 	Name        string                   `json:"name"`
 	Rank        int                      `json:"rank"`
@@ -265,14 +264,14 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer) topologyStat
 		realNodes int
 		edges     int
 	)
-	for _, n := range renderer.Render(rpt) {
+	for _, n := range renderer.Render(rpt, nil) {
 		nodes++
 		if n.Topology != render.Pseudo {
 			realNodes++
 		}
 		edges += len(n.Adjacency)
 	}
-	renderStats := renderer.Stats(rpt)
+	renderStats := renderer.Stats(rpt, nil)
 	return topologyStats{
 		NodeCount:          nodes,
 		NonpseudoNodeCount: realNodes,
@@ -292,10 +291,7 @@ func renderedForRequest(r *http.Request, topology APITopologyDesc) render.Render
 		}
 	}
 	decorate := render.ComposeDecorators(filters...)
-	if topology.filteredRenderer != nil {
-		return topology.filteredRenderer(decorate)
-	}
-	return decorate(topology.renderer)
+	return render.WithDecorators(topology.renderer, decorate)
 }
 
 type reportRenderHandler func(context.Context, Reporter, render.Renderer, http.ResponseWriter, *http.Request)
@@ -319,10 +315,6 @@ func (r *registry) captureRendererWithoutFilters(rep Reporter, f reportRenderHan
 			http.NotFound(w, req)
 			return
 		}
-		renderer := topology.renderer
-		if topology.filteredRenderer != nil {
-			renderer = topology.filteredRenderer(render.FilterNoop)
-		}
-		f(ctx, rep, renderer, w, req)
+		f(ctx, rep, topology.renderer, w, req)
 	}
 }

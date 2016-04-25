@@ -19,8 +19,8 @@ type CustomRenderer struct {
 }
 
 // Render implements Renderer
-func (c CustomRenderer) Render(rpt report.Report) report.Nodes {
-	return c.RenderFunc(c.Renderer.Render(rpt))
+func (c CustomRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+	return c.RenderFunc(c.Renderer.Render(rpt, dct))
 }
 
 // ColorConnected colors nodes with the IsConnected key if
@@ -80,16 +80,16 @@ func MakeSilentFilter(f func(report.Node) bool, r Renderer) Renderer {
 }
 
 // Render implements Renderer
-func (f *Filter) Render(rpt report.Report) report.Nodes {
-	nodes, _ := f.render(rpt)
+func (f *Filter) Render(rpt report.Report, dct Decorator) report.Nodes {
+	nodes, _ := f.render(rpt, dct)
 	return nodes
 }
 
-func (f *Filter) render(rpt report.Report) (report.Nodes, int) {
+func (f *Filter) render(rpt report.Report, dct Decorator) (report.Nodes, int) {
 	output := report.Nodes{}
 	inDegrees := map[string]int{}
 	filtered := 0
-	for id, node := range f.Renderer.Render(rpt) {
+	for id, node := range f.Renderer.Render(rpt, dct) {
 		if f.FilterFunc(node) {
 			output[id] = node
 			inDegrees[id] = 0
@@ -127,10 +127,10 @@ func (f *Filter) render(rpt report.Report) (report.Nodes, int) {
 }
 
 // Stats implements Renderer
-func (f Filter) Stats(rpt report.Report) Stats {
-	var upstream = f.Renderer.Stats(rpt)
+func (f Filter) Stats(rpt report.Report, dct Decorator) Stats {
+	var upstream = f.Renderer.Stats(rpt, dct)
 	if !f.Silent {
-		_, filtered := f.render(rpt)
+		_, filtered := f.render(rpt, dct)
 		upstream.FilteredNodes += filtered
 	}
 	return upstream

@@ -42,9 +42,9 @@ type processWithContainerNameRenderer struct {
 	Renderer
 }
 
-func (r processWithContainerNameRenderer) Render(rpt report.Report) report.Nodes {
-	processes := r.Renderer.Render(rpt)
-	containers := SelectContainer.Render(rpt)
+func (r processWithContainerNameRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+	processes := r.Renderer.Render(rpt, dct)
+	containers := SelectContainer.Render(rpt, dct)
 
 	outputs := report.Nodes{}
 	for id, p := range processes {

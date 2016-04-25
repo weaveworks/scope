@@ -15,38 +15,34 @@ const (
 
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
-func PodRenderer(filter Decorator) Renderer {
-	return FilterEmpty(report.Container,
-		MakeReduce(
-			MakeSilentFilter(
-				func(n report.Node) bool {
-					// Drop unconnected pseudo nodes (could appear due to filtering)
-					_, isConnected := n.Latest.Lookup(IsConnected)
-					return n.Topology != Pseudo || isConnected
-				},
-				ColorConnected(MakeMap(
-					MapContainer2Pod,
-					filter(ContainerWithImageNameRenderer),
-				)),
-			),
-			SelectPod,
+var PodRenderer = FilterEmpty(report.Container,
+	MakeReduce(
+		MakeSilentFilter(
+			func(n report.Node) bool {
+				// Drop unconnected pseudo nodes (could appear due to filtering)
+				_, isConnected := n.Latest.Lookup(IsConnected)
+				return n.Topology != Pseudo || isConnected
+			},
+			ColorConnected(MakeMap(
+				MapContainer2Pod,
+				ContainerWithImageNameRenderer,
+			)),
 		),
-	)
-}
+		SelectPod,
+	),
+)
 
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
-func PodServiceRenderer(filter Decorator) Renderer {
-	return FilterEmpty(report.Pod,
-		MakeReduce(
-			MakeMap(
-				MapPod2Service,
-				PodRenderer(filter),
-			),
-			SelectService,
+var PodServiceRenderer = FilterEmpty(report.Pod,
+	MakeReduce(
+		MakeMap(
+			MapPod2Service,
+			PodRenderer,
 		),
-	)
-}
+		SelectService,
+	),
+)
 
 // MapContainer2Pod maps container Nodes to pod
 // Nodes.

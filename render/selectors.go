@@ -9,13 +9,13 @@ import (
 type TopologySelector string
 
 // Render implements Renderer
-func (t TopologySelector) Render(r report.Report) report.Nodes {
+func (t TopologySelector) Render(r report.Report, _ Decorator) report.Nodes {
 	topology, _ := r.Topology(string(t))
 	return topology.Nodes
 }
 
 // Stats implements Renderer
-func (t TopologySelector) Stats(r report.Report) Stats {
+func (t TopologySelector) Stats(r report.Report, _ Decorator) Stats {
 	return Stats{}
 }
 
