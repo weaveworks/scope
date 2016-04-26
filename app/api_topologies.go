@@ -247,31 +247,31 @@ func (r *registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 func (r *registry) renderTopologies(rpt report.Report, req *http.Request) []APITopologyDesc {
 	topologies := []APITopologyDesc{}
 	r.walk(func(desc APITopologyDesc) {
-		renderer := renderedForRequest(req, desc)
-		desc.Stats = decorateWithStats(rpt, renderer)
+		renderer, decorator := renderedForRequest(req, desc)
+		desc.Stats = decorateWithStats(rpt, renderer, decorator)
 		for i := range desc.SubTopologies {
-			renderer := renderedForRequest(req, desc.SubTopologies[i])
-			desc.SubTopologies[i].Stats = decorateWithStats(rpt, renderer)
+			renderer, decorator := renderedForRequest(req, desc.SubTopologies[i])
+			desc.SubTopologies[i].Stats = decorateWithStats(rpt, renderer, decorator)
 		}
 		topologies = append(topologies, desc)
 	})
 	return topologies
 }
 
-func decorateWithStats(rpt report.Report, renderer render.Renderer) topologyStats {
+func decorateWithStats(rpt report.Report, renderer render.Renderer, decorator render.Decorator) topologyStats {
 	var (
 		nodes     int
 		realNodes int
 		edges     int
 	)
-	for _, n := range renderer.Render(rpt, nil) {
+	for _, n := range renderer.Render(rpt, decorator) {
 		nodes++
 		if n.Topology != render.Pseudo {
 			realNodes++
 		}
 		edges += len(n.Adjacency)
 	}
-	renderStats := renderer.Stats(rpt, nil)
+	renderStats := renderer.Stats(rpt, decorator)
 	return topologyStats{
 		NodeCount:          nodes,
 		NonpseudoNodeCount: realNodes,
@@ -280,7 +280,7 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer) topologyStat
 	}
 }
 
-func renderedForRequest(r *http.Request, topology APITopologyDesc) render.Renderer {
+func renderedForRequest(r *http.Request, topology APITopologyDesc) (render.Renderer, render.Decorator) {
 	var filters []render.Decorator
 	for _, group := range topology.Options {
 		value := r.FormValue(group.ID)
@@ -290,11 +290,14 @@ func renderedForRequest(r *http.Request, topology APITopologyDesc) render.Render
 			}
 		}
 	}
-	decorate := render.ComposeDecorators(filters...)
-	return render.WithDecorators(topology.renderer, decorate)
+	return topology.renderer, render.ComposeDecorators(filters...)
 }
 
-type reportRenderHandler func(context.Context, Reporter, render.Renderer, http.ResponseWriter, *http.Request)
+type reportRenderHandler func(
+	context.Context,
+	Reporter, render.Renderer, render.Decorator,
+	http.ResponseWriter, *http.Request,
+)
 
 func (r *registry) captureRenderer(rep Reporter, f reportRenderHandler) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
@@ -303,18 +306,7 @@ func (r *registry) captureRenderer(rep Reporter, f reportRenderHandler) CtxHandl
 			http.NotFound(w, req)
 			return
 		}
-		renderer := renderedForRequest(req, topology)
-		f(ctx, rep, renderer, w, req)
-	}
-}
-
-func (r *registry) captureRendererWithoutFilters(rep Reporter, f reportRenderHandler) CtxHandlerFunc {
-	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		topology, ok := r.get(mux.Vars(req)["topology"])
-		if !ok {
-			http.NotFound(w, req)
-			return
-		}
-		f(ctx, rep, topology.renderer, w, req)
+		renderer, decorator := renderedForRequest(req, topology)
+		f(ctx, rep, renderer, decorator, w, req)
 	}
 }

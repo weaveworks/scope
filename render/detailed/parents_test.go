@@ -20,30 +20,30 @@ func TestParents(t *testing.T) {
 	}{
 		{
 			name: "Node accidentally tagged with itself",
-			node: render.HostRenderer.Render(fixture.Report)[fixture.ClientHostNodeID].WithParents(
+			node: render.HostRenderer.Render(fixture.Report, render.FilterNoop)[fixture.ClientHostNodeID].WithParents(
 				report.EmptySets.Add(report.Host, report.MakeStringSet(fixture.ClientHostNodeID)),
 			),
 			want: nil,
 		},
 		{
-			node: render.HostRenderer.Render(fixture.Report)[fixture.ClientHostNodeID],
+			node: render.HostRenderer.Render(fixture.Report, render.FilterNoop)[fixture.ClientHostNodeID],
 			want: nil,
 		},
 		{
-			node: render.ContainerImageRenderer(render.FilterNoop).Render(fixture.Report)[fixture.ClientContainerImageNodeID],
+			node: render.ContainerImageRenderer.Render(fixture.Report, render.FilterNoop)[fixture.ClientContainerImageNodeID],
 			want: []detailed.Parent{
 				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
 			},
 		},
 		{
-			node: render.ContainerRenderer.Render(fixture.Report)[fixture.ClientContainerNodeID],
+			node: render.ContainerRenderer.Render(fixture.Report, render.FilterNoop)[fixture.ClientContainerNodeID],
 			want: []detailed.Parent{
 				{ID: fixture.ClientContainerImageNodeID, Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
 				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
 			},
 		},
 		{
-			node: render.ProcessRenderer.Render(fixture.Report)[fixture.ClientProcess1NodeID],
+			node: render.ProcessRenderer.Render(fixture.Report, render.FilterNoop)[fixture.ClientProcess1NodeID],
 			want: []detailed.Parent{
 				{ID: fixture.ClientContainerNodeID, Label: fixture.ClientContainerName, TopologyID: "containers"},
 				{ID: fixture.ClientContainerImageNodeID, Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},

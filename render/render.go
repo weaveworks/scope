@@ -151,21 +151,3 @@ func (ad applyDecorator) Stats(rpt report.Report, dct Decorator) Stats {
 func ApplyDecorators(renderer Renderer) Renderer {
 	return applyDecorator{renderer}
 }
-
-type withDecorator struct {
-	Decorator
-	Renderer
-}
-
-func (wd withDecorator) Render(rpt report.Report, _ Decorator) report.Nodes {
-	return wd.Renderer.Render(rpt, wd.Decorator)
-}
-func (wd withDecorator) Stats(rpt report.Report, _ Decorator) Stats {
-	return wd.Renderer.Stats(rpt, wd.Decorator)
-}
-
-// WithDecorators returns a renderer which ignores the decorators it is given,
-// insteads using the ones specified here.
-func WithDecorators(renderer Renderer, dct Decorator) Renderer {
-	return withDecorator{dct, renderer}
-}
