@@ -47,7 +47,7 @@ func testMap(t *testing.T, f render.MapFunc, input testcase) {
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := Prune(render.ContainerRenderer.Render(fixture.Report))
+	have := Prune(render.ContainerRenderer.Render(fixture.Report, render.FilterNoop))
 	want := Prune(expected.RenderedContainers)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -61,7 +61,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
-	have := Prune(render.FilterSystem(render.ContainerRenderer).Render(input))
+	have := Prune(render.ContainerRenderer.Render(input, render.FilterSystem))
 	want := Prune(expected.RenderedContainers.Copy())
 	delete(want, fixture.ClientContainerNodeID)
 	if !reflect.DeepEqual(want, have) {
@@ -74,7 +74,7 @@ func TestContainerWithHostIPsRenderer(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.ContainerNetworkMode: "host",
 	})
-	nodes := render.ContainerWithHostIPsRenderer.Render(input)
+	nodes := render.ContainerWithHostIPsRenderer.Render(input, render.FilterNoop)
 
 	// Test host network nodes get the host IPs added.
 	haveNode, ok := nodes[fixture.ClientContainerNodeID]
@@ -92,7 +92,7 @@ func TestContainerWithHostIPsRenderer(t *testing.T) {
 }
 
 func TestContainerHostnameRenderer(t *testing.T) {
-	have := Prune(render.ContainerHostnameRenderer(render.FilterNoop).Render(fixture.Report))
+	have := Prune(render.ContainerHostnameRenderer.Render(fixture.Report, render.FilterNoop))
 	want := Prune(expected.RenderedContainerHostnames)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -115,7 +115,7 @@ func TestContainerHostnameFilterRenderer(t *testing.T) {
 			Add("host", report.MakeStringSet(fixture.ClientHostNodeID)),
 		).WithTopology(report.Container))
 
-	have := Prune(render.ContainerHostnameRenderer(render.FilterSystem).Render(input))
+	have := Prune(render.ContainerHostnameRenderer.Render(input, render.FilterSystem))
 	want := Prune(expected.RenderedContainerHostnames)
 	// Test works by virtue of the RenderedContainerHostname only having a container
 	// counter == 1
@@ -126,7 +126,7 @@ func TestContainerHostnameFilterRenderer(t *testing.T) {
 }
 
 func TestContainerImageRenderer(t *testing.T) {
-	have := Prune(render.ContainerImageRenderer(render.FilterNoop).Render(fixture.Report))
+	have := Prune(render.ContainerImageRenderer.Render(fixture.Report, render.FilterNoop))
 	want := Prune(expected.RenderedContainerImages)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -151,7 +151,7 @@ func TestContainerImageFilterRenderer(t *testing.T) {
 			Add("host", report.MakeStringSet(fixture.ClientHostNodeID)),
 		).WithTopology(report.ContainerImage))
 
-	have := Prune(render.ContainerImageRenderer(render.FilterSystem).Render(input))
+	have := Prune(render.ContainerImageRenderer.Render(input, render.FilterSystem))
 	want := Prune(expected.RenderedContainerImages.Copy())
 	// Test works by virtue of the RenderedContainerImage only having a container
 	// counter == 1

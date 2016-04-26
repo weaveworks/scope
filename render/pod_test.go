@@ -14,7 +14,7 @@ import (
 )
 
 func TestPodRenderer(t *testing.T) {
-	have := Prune(render.PodRenderer(render.FilterNoop).Render(fixture.Report))
+	have := Prune(render.PodRenderer.Render(fixture.Report, render.FilterNoop))
 	want := Prune(expected.RenderedPods)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -33,7 +33,7 @@ func TestPodFilterRenderer(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "io.kubernetes.pod.name": "kube-system/foo",
 	})
-	have := Prune(render.PodRenderer(render.FilterSystem).Render(input))
+	have := Prune(render.PodRenderer.Render(input, render.FilterSystem))
 	want := Prune(expected.RenderedPods.Copy())
 	delete(want, fixture.ClientPodNodeID)
 	delete(want, fixture.ClientContainerNodeID)
@@ -43,7 +43,7 @@ func TestPodFilterRenderer(t *testing.T) {
 }
 
 func TestPodServiceRenderer(t *testing.T) {
-	have := Prune(render.PodServiceRenderer(render.FilterNoop).Render(fixture.Report))
+	have := Prune(render.PodServiceRenderer.Render(fixture.Report, render.FilterNoop))
 	want := Prune(expected.RenderedPodServices)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -62,7 +62,7 @@ func TestPodServiceFilterRenderer(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "io.kubernetes.pod.name": "kube-system/foo",
 	})
-	have := Prune(render.PodServiceRenderer(render.FilterSystem).Render(input))
+	have := Prune(render.PodServiceRenderer.Render(input, render.FilterSystem))
 	want := Prune(expected.RenderedPodServices.Copy())
 	wantNode := want[fixture.ServiceNodeID]
 	wantNode.Adjacency = nil
