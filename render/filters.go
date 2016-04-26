@@ -263,6 +263,7 @@ var systemContainerNames = map[string]struct{}{
 }
 
 var systemImagePrefixes = map[string]struct{}{
+	"swarm":                               {},
 	"weaveworks/scope":                    {},
 	"weaveworks/weavedns":                 {},
 	"weaveworks/weave":                    {},
