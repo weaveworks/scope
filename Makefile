@@ -1,7 +1,7 @@
 .PHONY: all deps static clean client-lint client-test client-sync backend frontend shell lint
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
-SUDO=$(shell (echo "$$DOCKER_HOST" | grep "tcp://" >/dev/null) || echo "sudo -E")
+SUDO=$(shell docker info >/dev/null 2>&1 || echo "sudo -E")
 DOCKERHUB_USER=weaveworks
 SCOPE_EXE=prog/scope
 SCOPE_IMAGE=$(DOCKERHUB_USER)/scope

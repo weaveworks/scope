@@ -117,9 +117,9 @@ func probeMain(flags probeFlags) {
 	endpointReporter := endpoint.NewReporter(hostID, hostName, flags.spyProcs, flags.useConntrack, scanner)
 	defer endpointReporter.Stop()
 
-	p := probe.New(probeID, flags.spyInterval, flags.publishInterval, clients)
+	p := probe.New(flags.spyInterval, flags.publishInterval, clients)
 	p.AddTicker(processCache)
-	hostReporter := host.NewReporter(hostID, hostName, probeID, clients)
+	hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients)
 	defer hostReporter.Stop()
 	p.AddReporter(
 		endpointReporter,
