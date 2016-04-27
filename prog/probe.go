@@ -42,7 +42,7 @@ const (
 
 var pluginAPIVersion = "1"
 
-func check() {
+func check(flags map[string]string) {
 	handleResponse := func(r *checkpoint.CheckResponse, err error) {
 		if err != nil {
 			log.Errorf("Error checking version: %v", err)
@@ -56,6 +56,7 @@ func check() {
 	params := checkpoint.CheckParams{
 		Product: "scope-probe",
 		Version: version,
+		Flags:   flags,
 	}
 	resp, err := checkpoint.Check(&params)
 	handleResponse(resp, err)
@@ -87,7 +88,11 @@ func probeMain(flags probeFlags) {
 	)
 	log.Infof("probe starting, version %s, ID %s", version, probeID)
 	log.Infof("command line: %v", os.Args)
-	go check()
+	checkpointFlags := map[string]string{}
+	if flags.kubernetesEnabled {
+		checkpointFlags["kubernetes_enabled"] = "true"
+	}
+	go check(checkpointFlags)
 
 	var targets = []string{fmt.Sprintf("localhost:%d", xfer.AppPort)}
 	if len(flag.Args()) > 0 {
