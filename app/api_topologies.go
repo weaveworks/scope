@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 	"sync"
@@ -8,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
@@ -21,30 +23,6 @@ var (
 )
 
 func init() {
-	serviceFilters := []APITopologyOptionGroup{
-		{
-			ID:      "system",
-			Default: "application",
-			Options: []APITopologyOption{
-				{"system", "System services", render.IsSystem},
-				{"application", "Application services", render.IsApplication},
-				{"both", "Both", render.Noop},
-			},
-		},
-	}
-
-	podFilters := []APITopologyOptionGroup{
-		{
-			ID:      "system",
-			Default: "application",
-			Options: []APITopologyOption{
-				{"system", "System pods", render.IsSystem},
-				{"application", "Application pods", render.IsApplication},
-				{"both", "Both", render.Noop},
-			},
-		},
-	}
-
 	containerFilters := []APITopologyOptionGroup{
 		{
 			ID:      "system",
@@ -117,18 +95,11 @@ func init() {
 			Options:  containerFilters,
 		},
 		APITopologyDesc{
-			id:       "hosts",
-			renderer: render.HostRenderer,
-			Name:     "Hosts",
-			Rank:     4,
-		},
-		APITopologyDesc{
 			id:          "pods",
 			renderer:    render.PodRenderer,
 			Name:        "Pods",
 			Rank:        3,
 			HideIfEmpty: true,
-			Options:     podFilters,
 		},
 		APITopologyDesc{
 			id:          "pods-by-service",
@@ -136,9 +107,58 @@ func init() {
 			renderer:    render.PodServiceRenderer,
 			Name:        "by service",
 			HideIfEmpty: true,
-			Options:     serviceFilters,
+		},
+		APITopologyDesc{
+			id:       "hosts",
+			renderer: render.HostRenderer,
+			Name:     "Hosts",
+			Rank:     4,
 		},
 	)
+}
+
+// kubernetesFilters generates the current kubernetes filters based on the
+// available k8s topologies.
+func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
+	options := APITopologyOptionGroup{ID: "namespace", Default: "all"}
+	for _, namespace := range namespaces {
+		options.Options = append(options.Options, APITopologyOption{namespace, namespace, render.IsNamespace(namespace)})
+	}
+	options.Options = append(options.Options, APITopologyOption{"all", "All Namespaces", render.Noop})
+	return options
+}
+
+// updateFilters updates the available filters based on the current report.
+// Currently only kubernetes changes.
+func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
+	namespaces := map[string]struct{}{}
+	for _, t := range []report.Topology{rpt.Pod, rpt.Service} {
+		for _, n := range t.Nodes {
+			if namespace, ok := n.Latest.Lookup(kubernetes.Namespace); ok {
+				namespaces[namespace] = struct{}{}
+			}
+		}
+	}
+	var ns []string
+	for namespace := range namespaces {
+		ns = append(ns, namespace)
+	}
+	sort.Strings(ns)
+	for i, t := range topologies {
+		if t.id == "pods" || t.id == "pods-by-service" {
+			topologies[i] = updateTopologyFilters(t, []APITopologyOptionGroup{kubernetesFilters(ns...)})
+		}
+	}
+	return topologies
+}
+
+// updateTopologyFilters recursively sets the options on a topology description
+func updateTopologyFilters(t APITopologyDesc, options []APITopologyOptionGroup) APITopologyDesc {
+	t.Options = options
+	for i, sub := range t.SubTopologies {
+		t.SubTopologies[i] = updateTopologyFilters(sub, options)
+	}
+	return t
 }
 
 // registry is a threadsafe store of the available topologies
@@ -239,23 +259,27 @@ func (r *registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 			respondWith(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		topologies := r.renderTopologies(report, req)
-		respondWith(w, http.StatusOK, topologies)
+		respondWith(w, http.StatusOK, r.renderTopologies(report, req))
 	}
 }
 
 func (r *registry) renderTopologies(rpt report.Report, req *http.Request) []APITopologyDesc {
 	topologies := []APITopologyDesc{}
+	req.ParseForm()
+	values := map[string]string{}
+	for k, vs := range req.Form {
+		values[k] = vs[0]
+	}
 	r.walk(func(desc APITopologyDesc) {
-		renderer, decorator := renderedForRequest(req, desc)
+		renderer, decorator, _ := r.rendererForTopology(desc.id, values, rpt)
 		desc.Stats = decorateWithStats(rpt, renderer, decorator)
 		for i := range desc.SubTopologies {
-			renderer, decorator := renderedForRequest(req, desc.SubTopologies[i])
+			renderer, decorator, _ := r.rendererForTopology(desc.id, values, rpt)
 			desc.SubTopologies[i].Stats = decorateWithStats(rpt, renderer, decorator)
 		}
 		topologies = append(topologies, desc)
 	})
-	return topologies
+	return updateFilters(rpt, topologies)
 }
 
 func decorateWithStats(rpt report.Report, renderer render.Renderer, decorator render.Decorator) topologyStats {
@@ -280,10 +304,16 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer, decorator re
 	}
 }
 
-func renderedForRequest(r *http.Request, topology APITopologyDesc) (render.Renderer, render.Decorator) {
+func (r *registry) rendererForTopology(id string, values map[string]string, rpt report.Report) (render.Renderer, render.Decorator, error) {
+	topology, ok := r.get(id)
+	if !ok {
+		return nil, nil, fmt.Errorf("topology not found: %s", id)
+	}
+	topology = updateFilters(rpt, []APITopologyDesc{topology})[0]
+
 	var filters []render.FilterFunc
 	for _, group := range topology.Options {
-		value := r.FormValue(group.ID)
+		value := values[group.ID]
 		for _, opt := range group.Options {
 			if opt.filter == nil {
 				continue
@@ -299,23 +329,22 @@ func renderedForRequest(r *http.Request, topology APITopologyDesc) (render.Rende
 			return render.MakeFilter(render.ComposeFilterFuncs(filters...), renderer)
 		}
 	}
-	return topology.renderer, decorator
+	return topology.renderer, decorator, nil
 }
 
-type reportRenderHandler func(
-	context.Context,
-	Reporter, render.Renderer, render.Decorator,
-	http.ResponseWriter, *http.Request,
-)
+type reportRenderHandler func(context.Context, Reporter, http.ResponseWriter, *http.Request)
 
-func (r *registry) captureRenderer(rep Reporter, f reportRenderHandler) CtxHandlerFunc {
-	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		topology, ok := r.get(mux.Vars(req)["topology"])
-		if !ok {
-			http.NotFound(w, req)
-			return
-		}
-		renderer, decorator := renderedForRequest(req, topology)
-		f(ctx, rep, renderer, decorator, w, req)
+func (r *registry) rendererForRequest(req *http.Request, rpt report.Report) (render.Renderer, render.Decorator, error) {
+	req.ParseForm()
+	values := map[string]string{}
+	for k, vs := range req.Form {
+		values[k] = vs[0]
+	}
+	return r.rendererForTopology(mux.Vars(req)["topology"], values, rpt)
+}
+
+func captureReporter(rep Reporter, f reportRenderHandler) CtxHandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		f(ctx, rep, w, r)
 	}
 }

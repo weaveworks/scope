@@ -9,7 +9,6 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
 )
 
@@ -28,14 +27,15 @@ type APINode struct {
 }
 
 // Full topology.
-func handleTopology(
-	ctx context.Context,
-	rep Reporter, renderer render.Renderer, decorator render.Decorator,
-	w http.ResponseWriter, r *http.Request,
-) {
+func handleTopology(ctx context.Context, rep Reporter, w http.ResponseWriter, r *http.Request) {
 	report, err := rep.Report(ctx)
 	if err != nil {
 		respondWith(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	renderer, decorator, err := topologyRegistry.rendererForRequest(r, report)
+	if err != nil {
+		http.NotFound(w, r)
 		return
 	}
 	respondWith(w, http.StatusOK, APITopology{
@@ -44,11 +44,7 @@ func handleTopology(
 }
 
 // Websocket for the full topology. This route overlaps with the next.
-func handleWs(
-	ctx context.Context,
-	rep Reporter, renderer render.Renderer, decorator render.Decorator,
-	w http.ResponseWriter, r *http.Request,
-) {
+func handleWs(ctx context.Context, rep Reporter, w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		respondWith(w, http.StatusInternalServerError, err.Error())
 		return
@@ -61,22 +57,31 @@ func handleWs(
 			return
 		}
 	}
-	handleWebsocket(ctx, w, r, rep, renderer, decorator, loop)
+	handleWebsocket(ctx, w, r, rep, loop)
 }
 
 // Individual nodes.
-func handleNode(
-	ctx context.Context,
-	rep Reporter, renderer render.Renderer, _ render.Decorator,
-	w http.ResponseWriter, r *http.Request,
-) {
+func handleNode(ctx context.Context, rep Reporter, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars        = mux.Vars(r)
 		topologyID  = vars["topology"]
 		nodeID      = vars["id"]
 		report, err = rep.Report(ctx)
-		rendered    = renderer.Render(report, render.FilterNoop)
-		node, ok    = rendered[nodeID]
+	)
+	if err != nil {
+		respondWith(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	renderer, _, err := topologyRegistry.rendererForRequest(r, report)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	var (
+		rendered = renderer.Render(report, nil)
+		node, ok = rendered[nodeID]
 	)
 	if err != nil {
 		respondWith(w, http.StatusInternalServerError, err.Error())
@@ -94,8 +99,6 @@ func handleWebsocket(
 	w http.ResponseWriter,
 	r *http.Request,
 	rep Reporter,
-	renderer render.Renderer,
-	decorator render.Decorator,
 	loop time.Duration,
 ) {
 	conn, err := xfer.Upgrade(w, r, nil)
@@ -128,6 +131,11 @@ func handleWebsocket(
 
 	for {
 		report, err := rep.Report(ctx)
+		if err != nil {
+			log.Errorf("Error generating report: %v", err)
+			return
+		}
+		renderer, decorator, err := topologyRegistry.rendererForRequest(r, report)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return
