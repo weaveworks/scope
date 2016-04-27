@@ -1,6 +1,6 @@
 # Weave Scope - Monitoring, visualisation & management for Docker & Kubernetes
 
-[![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master) [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope) [![Slack Status](https://weave-scope-slack.herokuapp.com/badge.svg)](https://weave-scope-slack.herokuapp.com) [![Go Report Card](https://goreportcard.com/badge/github.com/weaveworks/scope)](https://goreportcard.com/report/github.com/weaveworks/scope)
+[![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master) [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope) [![Slack Status](https://weave-scope-slack.herokuapp.com/badge.svg)](https://weave-scope-slack.herokuapp.com) [![Go Report Card](https://goreportcard.com/badge/github.com/weaveworks/scope)](https://goreportcard.com/report/github.com/weaveworks/scope) [<img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png" height="20">](https://www.weave.works/deploy-weave-aws-cloudformation-template/)
 
 Weave Scope automatically generates a map of your application, enabling you to
 intuitively understand, monitor, and control your containerized, microservices based application.
@@ -210,6 +210,14 @@ The SCOPE_SERVICE_TOKEN is found when you [log in to the Scope service](https://
         - "true"
         - "--service-token"
         - "${SCOPE_SERVICE_TOKEN}"
+
+## <a name="using-weave-scope-with-amazon-ecs"></a>Using Weave Scope with Amazon's EC2 Container Service
+
+We currently provide three options for launching Weave Scope in ECS:
+
+* A [CloudFormation template](https://www.weave.works/deploy-weave-aws-cloudformation-template/) to launch and easily evaluate Scope directly from your browser.
+* An [Amazon Machine Image (AMI)](https://github.com/weaveworks/integrations/tree/master/aws/ecs#weaves-ecs-amis) for each ECS region.
+* [A simple way to tailor the AMIs to your needs](https://github.com/weaveworks/integrations/tree/master/aws/ecs#creating-your-own-customized-weave-ecs-ami). 
 
 ## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
 
