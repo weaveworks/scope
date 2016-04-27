@@ -2,8 +2,7 @@ import _ from 'lodash';
 import d3 from 'd3';
 import debug from 'debug';
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 import { Map as makeMap, fromJS, is as isDeepEqual } from 'immutable';
 import timely from 'timely';
 
@@ -13,6 +12,8 @@ import { DETAILS_PANEL_WIDTH } from '../constants/styles';
 import Logo from '../components/logo';
 import { doLayout } from './nodes-layout';
 import NodesChartElements from './nodes-chart-elements';
+import { getActiveTopologyOptions, getAdjacentNodes,
+  isSameTopology } from '../utils/topology-utils';
 
 const log = debug('scope:nodes-chart');
 
@@ -29,7 +30,7 @@ const ZOOM_CACHE_FIELDS = ['scale', 'panTranslateX', 'panTranslateY'];
 const radiusDensity = d3.scale.threshold()
   .domain([3, 6]).range([2.5, 3.5, 3]);
 
-export default class NodesChart extends React.Component {
+class NodesChart extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -88,7 +89,7 @@ export default class NodesChart extends React.Component {
     state.width = nextProps.forceRelayout ? nextProps.width : (state.width || nextProps.width);
 
     // _.assign(state, this.updateGraphState(nextProps, state));
-    if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
+    if (nextProps.forceRelayout || !isSameTopology(nextProps.nodes, this.props.nodes)) {
       _.assign(state, this.updateGraphState(nextProps, state));
     }
 
@@ -139,22 +140,10 @@ export default class NodesChart extends React.Component {
           <g transform="translate(24,24) scale(0.25)">
             <Logo />
           </g>
-          <NodesChartElements
-            edges={edges}
-            nodes={nodes}
-            transform={transform}
-            adjacentNodes={this.props.adjacentNodes}
-            layoutPrecision={this.props.layoutPrecision}
-            selectedMetric={this.props.selectedMetric}
-            selectedNodeId={this.props.selectedNodeId}
-            highlightedEdgeIds={this.props.highlightedEdgeIds}
-            highlightedNodeIds={this.props.highlightedNodeIds}
-            hasSelectedNode={this.props.hasSelectedNode}
-            nodeScale={this.state.nodeScale}
-            scale={this.state.scale}
+          <NodesChartElements layoutNodes={nodes} layoutEdges={edges}
+            nodeScale={this.state.nodeScale} scale={scale} transform={transform}
             selectedNodeScale={this.state.selectedNodeScale}
-            topCardNode={this.props.topCardNode}
-            topologyId={this.props.topologyId} />
+            layoutPrecision={this.props.layoutPrecision} />
         </svg>
       </div>
     );
@@ -162,7 +151,7 @@ export default class NodesChart extends React.Component {
 
   handleMouseClick() {
     if (!this.isZooming) {
-      clickBackground();
+      this.props.clickBackground();
     } else {
       this.isZooming = false;
     }
@@ -411,4 +400,18 @@ export default class NodesChart extends React.Component {
   }
 }
 
-reactMixin.onClass(NodesChart, PureRenderMixin);
+function mapStateToProps(state) {
+  return {
+    adjacentNodes: getAdjacentNodes(state),
+    forceRelayout: state.get('forceRelayout'),
+    nodes: state.get('nodes'),
+    selectedNodeId: state.get('selectedNodeId'),
+    topologyId: state.get('topologyId'),
+    topologyOptions: getActiveTopologyOptions(state)
+  };
+}
+
+export default connect(
+  mapStateToProps,
+  { clickBackground }
+)(NodesChart);

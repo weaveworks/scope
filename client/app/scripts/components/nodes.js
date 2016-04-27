@@ -1,12 +1,13 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesError from '../charts/nodes-error';
+import { isTopologyEmpty } from '../utils/topology-utils';
 
 const navbarHeight = 160;
 const marginTop = 0;
+const detailsWidth = 450;
 
 /**
  * dynamic coords precision based on topology size
@@ -26,7 +27,7 @@ function getLayoutPrecision(nodesCount) {
   return precision;
 }
 
-export default class Nodes extends React.Component {
+class Nodes extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.handleResize = this.handleResize.bind(this);
@@ -70,7 +71,8 @@ export default class Nodes extends React.Component {
     return (
       <div className="nodes-wrapper">
         {topologyEmpty && errorEmpty}
-        <NodesChart {...this.props} {...this.state}
+        <NodesChart {...this.state}
+          detailsWidth={detailsWidth}
           layoutPrecision={layoutPrecision}
           hasSelectedNode={hasSelectedNode}
         />
@@ -90,4 +92,14 @@ export default class Nodes extends React.Component {
   }
 }
 
-reactMixin.onClass(Nodes, PureRenderMixin);
+function mapStateToProps(state) {
+  return {
+    nodes: state.get('nodes'),
+    selectedNodeId: state.get('selectedNodeId'),
+    topologyEmpty: isTopologyEmpty(state),
+  };
+}
+
+export default connect(
+  mapStateToProps
+)(Nodes);

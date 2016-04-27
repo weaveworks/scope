@@ -24,8 +24,9 @@ module.exports = {
     app: './app/scripts/main',
     'contrast-app': './app/scripts/contrast-main',
     'terminal-app': './app/scripts/terminal-main',
-    vendors: ['classnames', 'd3', 'dagre', 'flux', 'immutable',
-      'lodash', 'page', 'react', 'react-dom', 'react-motion']
+    vendors: ['babel-polyfill', 'classnames', 'd3', 'dagre', 'immutable',
+      'lodash', 'page', 'react', 'react-dom', 'react-redux', 'react-motion',
+      'redux', 'redux-thunk']
   },
 
   output: {

@@ -27,8 +27,7 @@ module.exports = {
     'app': [
       './app/scripts/main',
       'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
-      'webpack/hot/only-dev-server',
-      './app/scripts/debug'
+      'webpack/hot/only-dev-server'
     ],
     'contrast-app': [
       './app/scripts/contrast-main',
@@ -40,8 +39,9 @@ module.exports = {
       'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
       'webpack/hot/only-dev-server'
     ],
-    vendors: ['classnames', 'd3', 'dagre', 'flux', 'immutable',
-      'lodash', 'page', 'react', 'react-dom', 'react-motion']
+    vendors: ['babel-polyfill', 'classnames', 'd3', 'dagre', 'immutable',
+      'lodash', 'page', 'react', 'react-dom', 'react-redux', 'react-motion',
+      'redux', 'redux-thunk']
   },
 
   // This will not actually create a app.js file in ./build. It is used

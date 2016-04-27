@@ -2,6 +2,7 @@
 import debug from 'debug';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { connect } from 'react-redux';
 import classNames from 'classnames';
 
 import { clickCloseTerminal } from '../actions/app-actions';
@@ -73,7 +74,7 @@ function openNewWindow(url, bcr, minWidth = 200) {
   window.open(url, '', windowOptionsString);
 }
 
-export default class Terminal extends React.Component {
+class Terminal extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -96,7 +97,7 @@ export default class Terminal extends React.Component {
     const socket = new WebSocket(`${wsUrl}/api/pipe/${this.getPipeId()}`);
     socket.binaryType = 'arraybuffer';
 
-    getPipeStatus(this.getPipeId());
+    getPipeStatus(this.getPipeId(), this.props.dispatch);
 
     socket.onopen = () => {
       clearTimeout(this.reconnectTimeout);
@@ -210,7 +211,7 @@ export default class Terminal extends React.Component {
   handleCloseClick(ev) {
     ev.preventDefault();
     if (this.isEmbedded()) {
-      clickCloseTerminal(this.getPipeId(), true);
+      this.props.dispatch(clickCloseTerminal(this.getPipeId(), true));
     } else {
       window.close();
     }
@@ -219,7 +220,7 @@ export default class Terminal extends React.Component {
   handlePopoutTerminal(ev) {
     ev.preventDefault();
     const paramString = JSON.stringify(this.props);
-    clickCloseTerminal(this.getPipeId());
+    this.props.dispatch(clickCloseTerminal(this.getPipeId()));
 
     const bcr = ReactDOM.findDOMNode(this).getBoundingClientRect();
     const minWidth = this.state.pixelPerCol * 80 + (8 * 2);
@@ -322,3 +323,5 @@ export default class Terminal extends React.Component {
     );
   }
 }
+
+export default connect()(Terminal);

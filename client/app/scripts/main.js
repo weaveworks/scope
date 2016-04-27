@@ -1,10 +1,5 @@
-require('font-awesome-webpack');
-require('../styles/main.less');
-require('../images/favicon.ico');
-
-import React from 'react';
-import ReactDOM from 'react-dom';
-
-import App from './components/app.js';
-
-ReactDOM.render(<App />, document.getElementById('app'));
+if (process.env.NODE_ENV === 'production') {
+  module.exports = require('./main.prod');
+} else {
+  module.exports = require('./main.dev');
+}

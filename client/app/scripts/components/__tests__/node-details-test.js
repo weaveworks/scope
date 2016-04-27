@@ -2,7 +2,6 @@ import React from 'react';
 import Immutable from 'immutable';
 import TestUtils from 'react/lib/ReactTestUtils';
 
-jest.dontMock('../../dispatcher/app-dispatcher');
 jest.dontMock('../node-details.js');
 jest.dontMock('../node-details/node-details-controls.js');
 jest.dontMock('../node-details/node-details-relatives.js');
@@ -13,7 +12,7 @@ jest.dontMock('../../utils/color-utils');
 jest.dontMock('../../utils/title-utils');
 
 // need ES5 require to keep automocking off
-const NodeDetails = require('../node-details.js').default;
+const NodeDetails = require('../node-details.js').NodeDetails;
 
 describe('NodeDetails', () => {
   let nodes;

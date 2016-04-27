@@ -2,12 +2,13 @@
 import React from 'react';
 import _ from 'lodash';
 import Perf from 'react-addons-perf';
+import { connect } from 'react-redux';
+import { fromJS } from 'immutable';
 
 import debug from 'debug';
 const log = debug('scope:debug-panel');
 
 import { receiveNodesDelta } from '../actions/app-actions';
-import AppStore from '../stores/app-store';
 import { getNodeColor, getNodeColorDark } from '../utils/color-utils';
 
 
@@ -56,11 +57,10 @@ const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, nodeCou
 });
 
 
-function addMetrics(node, v) {
-  const availableMetrics = AppStore.getAvailableCanvasMetrics().toJS();
-  const metrics = availableMetrics.length > 0 ? availableMetrics : [
+function addMetrics(availableMetrics, node, v) {
+  const metrics = availableMetrics.size > 0 ? availableMetrics : fromJS([
     {id: 'host_cpu_usage_percent', label: 'CPU'}
-  ];
+  ]);
 
   return Object.assign({}, node, {
     metrics: metrics.map(m => Object.assign({}, m, {max: 100, value: v}))
@@ -74,26 +74,26 @@ function label(shape, stacked) {
 }
 
 
-function addAllVariants() {
+function addAllVariants(dispatch) {
   const newNodes = _.flattenDeep(STACK_VARIANTS.map(stack => (SHAPES.map(s => {
     if (!stack) return [deltaAdd(label(s, stack), [], s, stack, 1)];
     return NODE_COUNTS.map(n => deltaAdd(label(s, stack), [], s, stack, n));
   }))));
 
-  receiveNodesDelta({
+  dispatch(receiveNodesDelta({
     add: newNodes
-  });
+  }));
 }
 
 
-function addAllMetricVariants() {
+function addAllMetricVariants(availableMetrics, dispatch) {
   const newNodes = _.flattenDeep(METRIC_FILLS.map((v, i) => (
-    SHAPES.map(s => [addMetrics(deltaAdd(label(s) + i, [], s), v)])
+    SHAPES.map(s => [addMetrics(availableMetrics, deltaAdd(label(s) + i, [], s), v)])
   )));
 
-  receiveNodesDelta({
+  dispatch(receiveNodesDelta({
     add: newNodes
-  });
+  }));
 }
 
 
@@ -107,27 +107,6 @@ function stopPerf() {
 function startPerf(delay) {
   Perf.start();
   setTimeout(stopPerf, delay * 1000);
-}
-
-
-function addNodes(n, prefix = 'zing') {
-  const ns = AppStore.getNodes();
-  const nodeNames = ns.keySeq().toJS();
-  const newNodeNames = _.range(ns.size, ns.size + n).map(i => (
-    // `${randomLetter()}${randomLetter()}-zing`
-    `${prefix}${i}`
-  ));
-  const allNodes = _(nodeNames).concat(newNodeNames).value();
-
-  receiveNodesDelta({
-    add: newNodeNames.map((name) => deltaAdd(
-      name,
-      sample(allNodes),
-      _.sample(SHAPES),
-      _.sample(STACK_VARIANTS),
-      _.sample(NODE_COUNTS)
-    ))
-  });
 }
 
 export function showingDebugToolbar() {
@@ -153,12 +132,13 @@ function disableLog() {
   window.location.reload();
 }
 
-export class DebugToolbar extends React.Component {
+class DebugToolbar extends React.Component {
 
   constructor(props, context) {
     super(props, context);
     this.onChange = this.onChange.bind(this);
     this.toggleColors = this.toggleColors.bind(this);
+    this.addNodes = this.addNodes.bind(this);
     this.state = {
       nodesToAdd: 30,
       showColors: false
@@ -175,20 +155,44 @@ export class DebugToolbar extends React.Component {
     });
   }
 
+  addNodes(n, prefix = 'zing') {
+    const ns = this.props.nodes;
+    const nodeNames = ns.keySeq().toJS();
+    const newNodeNames = _.range(ns.size, ns.size + n).map(i => (
+      // `${randomLetter()}${randomLetter()}-zing`
+      `${prefix}${i}`
+    ));
+    const allNodes = _(nodeNames).concat(newNodeNames).value();
+
+    this.props.dispatch(receiveNodesDelta({
+      add: newNodeNames.map((name) => deltaAdd(
+        name,
+        sample(allNodes),
+        _.sample(SHAPES),
+        _.sample(STACK_VARIANTS),
+        _.sample(NODE_COUNTS)
+      ))
+    }));
+
+    log('added nodes', n);
+  }
+
   render() {
-    log('rending debug panel');
+    const { availableCanvasMetrics } = this.props;
 
     return (
       <div className="debug-panel">
         <div>
           <label>Add nodes </label>
-          <button onClick={() => addNodes(1)}>+1</button>
-          <button onClick={() => addNodes(10)}>+10</button>
+          <button onClick={() => this.addNodes(1)}>+1</button>
+          <button onClick={() => this.addNodes(10)}>+10</button>
           <input type="number" onChange={this.onChange} value={this.state.nodesToAdd} />
-          <button onClick={() => addNodes(this.state.nodesToAdd)}>+</button>
-          <button onClick={() => addAllVariants()}>Variants</button>
-          <button onClick={() => addAllMetricVariants()}>Metric Variants</button>
-          <button onClick={() => addNodes(1, LOREM)}>Long name</button>
+          <button onClick={() => this.addNodes(this.state.nodesToAdd)}>+</button>
+          <button onClick={() => addAllVariants(this.props.dispatch)}>Variants</button>
+          <button onClick={() => addAllMetricVariants(availableCanvasMetrics, this.props.dispatch)}>
+            Metric Variants
+          </button>
+          <button onClick={() => this.addNodes(1, LOREM)}>Long name</button>
         </div>
 
         <div>
@@ -228,3 +232,14 @@ export class DebugToolbar extends React.Component {
     );
   }
 }
+
+function mapStateToProps(state) {
+  return {
+    nodes: state.get('nodes'),
+    availableCanvasMetrics: state.get('availableCanvasMetrics')
+  };
+}
+
+export default connect(
+  mapStateToProps
+)(DebugToolbar);

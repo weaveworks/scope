@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 import classNames from 'classnames';
 
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
@@ -45,7 +44,7 @@ function ellipsis(text, fontSize, maxWidth) {
   return truncatedText;
 }
 
-export default class Node extends React.Component {
+class Node extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -116,18 +115,22 @@ export default class Node extends React.Component {
 
   handleMouseClick(ev) {
     ev.stopPropagation();
-    clickNode(this.props.id, this.props.label, ReactDOM.findDOMNode(this).getBoundingClientRect());
+    this.props.clickNode(this.props.id, this.props.label,
+      ReactDOM.findDOMNode(this).getBoundingClientRect());
   }
 
   handleMouseEnter() {
-    enterNode(this.props.id);
+    this.props.enterNode(this.props.id);
     this.setState({ hovered: true });
   }
 
   handleMouseLeave() {
-    leaveNode(this.props.id);
+    this.props.leaveNode(this.props.id);
     this.setState({ hovered: false });
   }
 }
 
-reactMixin.onClass(Node, PureRenderMixin);
+export default connect(
+  null,
+  { clickNode, enterNode, leaveNode }
+)(Node);

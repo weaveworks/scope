@@ -1,9 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
+import { connect } from 'react-redux';
+
 import { selectMetric, pinMetric, unpinMetric } from '../actions/app-actions';
 
-
-export class MetricSelectorItem extends React.Component {
+class MetricSelectorItem extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -14,7 +15,7 @@ export class MetricSelectorItem extends React.Component {
 
   onMouseOver() {
     const k = this.props.metric.get('id');
-    selectMetric(k);
+    this.props.selectMetric(k);
   }
 
   onMouseClick() {
@@ -22,9 +23,9 @@ export class MetricSelectorItem extends React.Component {
     const pinnedMetric = this.props.pinnedMetric;
 
     if (k === pinnedMetric) {
-      unpinMetric(k);
+      this.props.unpinMetric(k);
     } else {
-      pinMetric(k);
+      this.props.pinMetric(k);
     }
   }
 
@@ -49,3 +50,15 @@ export class MetricSelectorItem extends React.Component {
     );
   }
 }
+
+function mapStateToProps(state) {
+  return {
+    selectedMetric: state.get('selectedMetric'),
+    pinnedMetric: state.get('pinnedMetric')
+  };
+}
+
+export default connect(
+  mapStateToProps,
+  { selectMetric, pinMetric, unpinMetric }
+)(MetricSelectorItem);

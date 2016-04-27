@@ -3,7 +3,6 @@ import debug from 'debug';
 import Immutable from 'immutable';
 
 import { receiveNodesDelta } from '../actions/app-actions';
-import AppStore from '../stores/app-store';
 
 const log = debug('scope:update-buffer-utils');
 const makeList = Immutable.List;
@@ -13,8 +12,8 @@ const bufferLength = 100;
 let deltaBuffer = makeList();
 let updateTimer = null;
 
-function isPaused() {
-  return AppStore.isUpdatePaused();
+function isPaused(getState) {
+  return getState().get('updatePausedAt') !== null;
 }
 
 export function resetUpdateBuffer() {
@@ -22,8 +21,8 @@ export function resetUpdateBuffer() {
   deltaBuffer = deltaBuffer.clear();
 }
 
-function maybeUpdate() {
-  if (isPaused()) {
+function maybeUpdate(getState) {
+  if (isPaused(getState)) {
     clearTimeout(updateTimer);
     resetUpdateBuffer();
   } else {
@@ -110,6 +109,6 @@ export function getUpdateBufferSize() {
   return deltaBuffer.size;
 }
 
-export function resumeUpdate() {
-  maybeUpdate();
+export function resumeUpdate(getState) {
+  maybeUpdate(getState);
 }

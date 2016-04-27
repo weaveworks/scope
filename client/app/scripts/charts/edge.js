@@ -1,11 +1,10 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 import classNames from 'classnames';
 
 import { enterEdge, leaveEdge } from '../actions/app-actions';
 
-export default class Edge extends React.Component {
+class Edge extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -27,12 +26,15 @@ export default class Edge extends React.Component {
   }
 
   handleMouseEnter(ev) {
-    enterEdge(ev.currentTarget.id);
+    this.props.enterEdge(ev.currentTarget.id);
   }
 
   handleMouseLeave(ev) {
-    leaveEdge(ev.currentTarget.id);
+    this.props.leaveEdge(ev.currentTarget.id);
   }
 }
 
-reactMixin.onClass(Edge, PureRenderMixin);
+export default connect(
+  null,
+  { enterEdge, leaveEdge }
+)(Edge);
