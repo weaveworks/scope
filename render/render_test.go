@@ -16,9 +16,8 @@ type mockRenderer struct {
 func (m mockRenderer) Render(rpt report.Report, d render.Decorator) report.Nodes {
 	if d != nil {
 		return d(mockRenderer{m.Nodes}).Render(rpt, nil)
-	} else {
-		return m.Nodes
 	}
+	return m.Nodes
 }
 func (m mockRenderer) Stats(rpt report.Report, _ render.Decorator) render.Stats { return render.Stats{} }
 

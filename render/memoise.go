@@ -29,11 +29,15 @@ func Memoise(r Renderer) Renderer {
 // `r` and stores the result.
 func (m *memoise) Render(rpt report.Report, dct Decorator) report.Nodes {
 	key := fmt.Sprintf("%s-%s", rpt.ID, m.id)
-	if result, err := renderCache.Get(key); err == nil {
-		return result.(report.Nodes)
+	if dct == nil {
+		if result, err := renderCache.Get(key); err == nil {
+			return result.(report.Nodes)
+		}
 	}
 	output := m.Renderer.Render(rpt, dct)
-	renderCache.Set(key, output)
+	if dct == nil {
+		renderCache.Set(key, output)
+	}
 	return output
 }
 
