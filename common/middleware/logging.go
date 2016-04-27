@@ -14,9 +14,10 @@ import (
 var Logging = Func(func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		begin := time.Now()
+		uri := r.RequestURI // capture the URI before running next, as it may get rewritten
 		i := &interceptor{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(i, r)
-		log.Infof("%s %s (%d) %s", r.Method, r.RequestURI, i.statusCode, time.Since(begin))
+		log.Infof("%s %s (%d) %s", r.Method, uri, i.statusCode, time.Since(begin))
 	})
 })
 
