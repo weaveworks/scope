@@ -28,13 +28,13 @@ var EndpointRenderer = FilterNonProcspied(SelectEndpoint)
 
 // ProcessRenderer is a Renderer which produces a renderable process
 // graph by merging the endpoint graph and the process topology.
-var ProcessRenderer = MakeReduce(
+var ProcessRenderer = ColorConnected(MakeReduce(
 	MakeMap(
 		MapEndpoint2Process,
 		EndpointRenderer,
 	),
 	SelectProcess,
-)
+))
 
 // processWithContainerNameRenderer is a Renderer which produces a process
 // graph enriched with container names where appropriate

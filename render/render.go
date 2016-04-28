@@ -151,3 +151,10 @@ func (ad applyDecorator) Stats(rpt report.Report, dct Decorator) Stats {
 func ApplyDecorators(renderer Renderer) Renderer {
 	return applyDecorator{renderer}
 }
+
+func propagateLatest(key string, from, to report.Node) report.Node {
+	if value, timestamp, ok := from.Latest.LookupEntry(key); ok {
+		to.Latest = to.Latest.Set(key, timestamp, value)
+	}
+	return to
+}

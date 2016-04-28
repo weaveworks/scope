@@ -18,10 +18,11 @@ func MakeGroupNodeTopology(originalTopology, key string) string {
 
 // NewDerivedNode makes a node based on node, but with a new ID
 func NewDerivedNode(id string, node report.Node) report.Node {
-	return node.WithID(id).WithChildren(report.MakeNodeSet(node)).PruneParents()
+	return report.MakeNode(id).WithChildren(node.Children.Add(node))
 }
 
 // NewDerivedPseudoNode makes a new pseudo node with the node as a child
 func NewDerivedPseudoNode(id string, node report.Node) report.Node {
-	return NewDerivedNode(id, node).WithTopology(Pseudo)
+	output := NewDerivedNode(id, node).WithTopology(Pseudo)
+	return output
 }
