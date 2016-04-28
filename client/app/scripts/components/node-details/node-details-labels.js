@@ -1,5 +1,7 @@
 import React from 'react';
+import { Map as makeMap } from 'immutable';
 
+import MatchedText from '../matched-text';
 import ShowMore from '../show-more';
 
 export default class NodeDetailsLabels extends React.Component {
@@ -19,12 +21,18 @@ export default class NodeDetailsLabels extends React.Component {
   }
 
   render() {
+    const { matches = makeMap() } = this.props;
     let rows = this.props.rows;
+    let notShown = 0;
     const limited = rows && this.state.limit > 0 && rows.length > this.state.limit;
     const expanded = this.state.limit === 0;
-    const notShown = rows.length - this.DEFAULT_LIMIT;
     if (rows && limited) {
-      rows = rows.slice(0, this.state.limit);
+      const hasNotShownMatch = rows.filter((row, index) => index >= this.state.limit
+        && matches.has(row.id)).length > 0;
+      if (!hasNotShownMatch) {
+        notShown = rows.length - this.DEFAULT_LIMIT;
+        rows = rows.slice(0, this.state.limit);
+      }
     }
 
     return (
@@ -35,7 +43,7 @@ export default class NodeDetailsLabels extends React.Component {
               {field.label}
             </div>
             <div className="node-details-labels-field-value truncate" title={field.value}>
-              {field.value}
+              <MatchedText text={field.value} matches={matches} fieldId={field.id} />
             </div>
           </div>
         ))}

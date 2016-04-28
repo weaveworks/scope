@@ -5,6 +5,7 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
 
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
+import { updateNodeMatches } from '../utils/search-utils';
 import { findTopologyById, getAdjacentNodes, setTopologyUrlsById,
   updateTopologyIds, filterHiddenTopologies } from '../utils/topology-utils';
 
@@ -33,7 +34,8 @@ const topologySorter = topology => topology.get('rank');
 // Initial values
 
 export const initialState = makeMap({
-  topologyOptions: makeOrderedMap(), // topologyId -> options
+  availableCanvasMetrics: makeList(),
+  controlPipes: makeOrderedMap(), // pipeId -> controlPipe
   controlStatus: makeMap(),
   currentTopology: null,
   currentTopologyId: 'containers',
@@ -42,29 +44,32 @@ export const initialState = makeMap({
   highlightedEdgeIds: makeSet(),
   highlightedNodeIds: makeSet(),
   hostname: '...',
-  version: '...',
-  versionUpdate: null,
-  plugins: makeList(),
   mouseOverEdgeId: null,
   mouseOverNodeId: null,
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
-  selectedNodeId: null,
-  topologies: makeList(),
-  topologiesLoaded: false,
-  topologyUrlsById: makeOrderedMap(), // topologyId -> topologyUrl
-  routeSet: false,
-  controlPipes: makeOrderedMap(), // pipeId -> controlPipe
-  updatePausedAt: null, // Date
-  websocketClosed: true,
-  showingHelp: false,
-
-  selectedMetric: null,
+  // nodes cache, infrequently updated, used for search
+  nodesByTopology: makeMap(), // topologyId -> nodes
   pinnedMetric: null,
   // class of metric, e.g. 'cpu', rather than 'host_cpu' or 'process_cpu'.
   // allows us to keep the same metric "type" selected when the topology changes.
   pinnedMetricType: null,
-  availableCanvasMetrics: makeList()
+  plugins: makeList(),
+  routeSet: false,
+  searchFocused: false,
+  searchNodeMatches: makeMap(),
+  searchQuery: null,
+  selectedMetric: null,
+  selectedNodeId: null,
+  showingHelp: false,
+  topologies: makeList(),
+  topologiesLoaded: false,
+  topologyOptions: makeOrderedMap(), // topologyId -> options
+  topologyUrlsById: makeOrderedMap(), // topologyId -> topologyUrl
+  updatePausedAt: null, // Date
+  version: '...',
+  versionUpdate: null,
+  websocketClosed: true
 });
 
 // adds ID field to topology (based on last part of URL path) and save urls in
@@ -142,6 +147,10 @@ export function rootReducer(state = initialState, action) {
   }
 
   switch (action.type) {
+    case ActionTypes.BLUR_SEARCH: {
+      return state.set('searchFocused', false);
+    }
+
     case ActionTypes.CHANGE_TOPOLOGY_OPTION: {
       state = resumeUpdate(state);
       // set option on parent topology
@@ -305,6 +314,11 @@ export function rootReducer(state = initialState, action) {
       }));
     }
 
+    case ActionTypes.DO_SEARCH: {
+      state = state.set('searchQuery', action.searchQuery);
+      return updateNodeMatches(state);
+    }
+
     case ActionTypes.ENTER_EDGE: {
       // highlight adjacent nodes
       state = state.update('highlightedNodeIds', highlightedNodeIds => {
@@ -378,6 +392,10 @@ export function rootReducer(state = initialState, action) {
         pending: false,
         error: null
       }));
+    }
+
+    case ActionTypes.FOCUS_SEARCH: {
+      return state.set('searchFocused', true);
     }
 
     case ActionTypes.RECEIVE_CONTROL_NODE_REMOVED: {
@@ -478,7 +496,16 @@ export function rootReducer(state = initialState, action) {
         state = state.set('selectedMetric', state.get('pinnedMetric'));
       }
 
+      // update nodes cache and search results
+      state = state.setIn(['nodesByTopology', state.get('currentTopologyId')], state.get('nodes'));
+      state = updateNodeMatches(state);
+
       return state;
+    }
+
+    case ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY: {
+      // not sure if mergeDeep() brings any benefit here
+      return state.setIn(['nodesByTopology', action.topologyId], fromJS(action.nodes));
     }
 
     case ActionTypes.RECEIVE_NOT_FOUND: {

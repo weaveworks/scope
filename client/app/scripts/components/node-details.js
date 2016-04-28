@@ -1,11 +1,13 @@
 import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
+import { Map as makeMap } from 'immutable';
 
 import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
 import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
 
+import MatchedText from './matched-text';
 import NodeDetailsControls from './node-details/node-details-controls';
 import NodeDetailsHealth from './node-details/node-details-health';
 import NodeDetailsInfo from './node-details/node-details-info';
@@ -140,11 +142,10 @@ export class NodeDetails extends React.Component {
   }
 
   renderDetails() {
-    const details = this.props.details;
+    const { details, nodeControlStatus, nodeMatches = makeMap() } = this.props;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
-    const {error, pending} = this.props.nodeControlStatus
-      ? this.props.nodeControlStatus.toJS() : {};
+    const {error, pending} = nodeControlStatus ? nodeControlStatus.toJS() : {};
     const tools = this.renderTools();
     const styles = {
       controls: {
@@ -161,7 +162,7 @@ export class NodeDetails extends React.Component {
         <div className="node-details-header" style={styles.header}>
           <div className="node-details-header-wrapper">
             <h2 className="node-details-header-label truncate" title={details.label}>
-              {details.label}
+              <MatchedText text={details.label} matches={nodeMatches} fieldId="label" />
             </h2>
             <div className="node-details-header-relatives">
               {details.parents && <NodeDetailsRelatives relatives={details.parents} />}
@@ -183,7 +184,7 @@ export class NodeDetails extends React.Component {
           </div>}
           {details.metadata && <div className="node-details-content-section">
             <div className="node-details-content-section-header">Info</div>
-            <NodeDetailsInfo rows={details.metadata} />
+            <NodeDetailsInfo rows={details.metadata} matches={nodeMatches.get('metadata')} />
           </div>}
 
           {details.connections && details.connections.map(connections => <div
@@ -210,7 +211,8 @@ export class NodeDetails extends React.Component {
                       <Warning text={getTruncationText(table.truncationCount)} />
                     </span>}
                   </div>
-                  <NodeDetailsLabels rows={table.rows} />
+                  <NodeDetailsLabels rows={table.rows}
+                    matches={nodeMatches.get('metadata')} />
                 </div>
               );
             }
@@ -230,8 +232,10 @@ export class NodeDetails extends React.Component {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state, ownProps) {
+  const currentTopologyId = state.get('currentTopologyId');
   return {
+    nodeMatches: state.getIn(['searchNodeMatches', currentTopologyId, ownProps.id]),
     nodes: state.get('nodes')
   };
 }

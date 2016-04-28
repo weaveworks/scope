@@ -137,3 +137,7 @@ export function isSameTopology(nodes, nextNodes) {
   const nextTopology = nextNodes.map(mapper);
   return isDeepEqual(topology, nextTopology);
 }
+
+export function isNodeMatchingQuery(node, query) {
+  return node.get('label').includes(query) || node.get('subLabel').includes(query);
+}

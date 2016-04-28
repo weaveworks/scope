@@ -6,6 +6,7 @@ import Logo from './logo';
 import Footer from './footer.js';
 import Sidebar from './sidebar.js';
 import HelpPanel from './help-panel';
+import Search from './search';
 import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
@@ -104,6 +105,7 @@ class App extends React.Component {
               <Logo />
             </svg>
           </div>
+          <Search />
           <Topologies />
         </div>
 

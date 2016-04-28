@@ -1,5 +1,6 @@
 import React from 'react';
 
+import MatchedText from '../matched-text';
 import ShowMore from '../show-more';
 
 export default class NodeDetailsInfo extends React.Component {
@@ -18,13 +19,21 @@ export default class NodeDetailsInfo extends React.Component {
   }
 
   render() {
+    const { matches } = this.props;
     let rows = (this.props.rows || []);
-    const prime = rows.filter(row => row.priority < 10);
     let notShown = 0;
+
+    const prime = rows.filter(row => row.priority < 10);
     if (!this.state.expanded && prime.length < rows.length) {
-      notShown = rows.length - prime.length;
-      rows = prime;
+      // check if there is a search match in non-prime fields
+      const hasNonPrimeMatch = matches && rows.filter(row => row.priority >= 10
+        && matches.has(row.id)).length > 0;
+      if (!hasNonPrimeMatch) {
+        notShown = rows.length - prime.length;
+        rows = prime;
+      }
     }
+
     return (
       <div className="node-details-info">
         {rows.map(field => (<div className="node-details-info-field" key={field.id}>
@@ -32,7 +41,7 @@ export default class NodeDetailsInfo extends React.Component {
               {field.label}
             </div>
             <div className="node-details-info-field-value truncate" title={field.value}>
-              {field.value}
+              <MatchedText text={field.value} matches={matches} fieldId={field.id} />
             </div>
           </div>
         ))}

@@ -5,6 +5,8 @@ import classNames from 'classnames';
 
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
 import { getNodeColor } from '../utils/color-utils';
+import MatchedText from '../components/matched-text';
+import MatchedResults from '../components/matched-results';
 
 import NodeShapeCircle from './node-shape-circle';
 import NodeShapeStack from './node-shape-stack';
@@ -55,7 +57,7 @@ class Node extends React.Component {
   }
 
   render() {
-    const { blurred, focused, highlighted, label, pseudo, rank,
+    const { blurred, focused, highlighted, label, matched, matches, pseudo, rank,
       subLabel, scaleFactor, transform, zoomScale } = this.props;
     const { hovered } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
@@ -83,6 +85,7 @@ class Node extends React.Component {
       highlighted,
       blurred,
       hovered,
+      matched,
       pseudo
     });
 
@@ -97,14 +100,17 @@ class Node extends React.Component {
           width={nodeScale(scaleFactor)}
           height={nodeScale(scaleFactor) + subLabelOffsetY}
           />
-        <text className="node-label" textAnchor="middle" style={{fontSize: labelFontSize}}
-          x="0" y={labelOffsetY + nodeScale(0.5 * scaleFactor)}>
-          {labelText}
-        </text>
-        <text className="node-sublabel" textAnchor="middle" style={{fontSize: subLabelFontSize}}
-          x="0" y={subLabelOffsetY + nodeScale(0.5 * scaleFactor)}>
-          {subLabelText}
-        </text>
+        <foreignObject x={-nodeScale(2 * scaleFactor)}
+          y={labelOffsetY + nodeScale(0.5 * scaleFactor)}
+          width={nodeScale(scaleFactor * 4)} height={subLabelOffsetY}>
+          <div className="node-label" style={{fontSize: labelFontSize}}>
+            <MatchedText text={labelText} matches={matches} fieldId="label" />
+          </div>
+          <div className="node-sublabel" style={{fontSize: subLabelFontSize}}>
+            <MatchedText text={subLabelText} matches={matches} fieldId="sublabel" />
+          </div>
+          <MatchedResults matches={matches && matches.get('metadata')} />
+        </foreignObject>
         <NodeShapeType
           size={nodeScale(scaleFactor)}
           color={color}
