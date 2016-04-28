@@ -1,5 +1,5 @@
-// checkpoint is a package for checking version information and alerts
-// for a HashiCorp product.
+// Package checkpoint is a package for checking version information and alerts
+// for a Weaveworks product.
 package checkpoint
 
 import (
@@ -19,12 +19,13 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/go-cleanhttp"
 )
 
-var magicBytes [4]byte = [4]byte{0x35, 0x77, 0x69, 0xFB}
+var magicBytes = [4]byte{0x35, 0x77, 0x69, 0xFB}
 
 // CheckParams are the parameters for configuring a check request.
 type CheckParams struct {
@@ -33,6 +34,9 @@ type CheckParams struct {
 	// a version check.
 	Product string
 	Version string
+
+	// Generic product flags
+	Flags map[string]string
 
 	// Arch and OS are used to filter alerts potentially only to things
 	// affecting a specific os/arch combination. If these aren't specified,
@@ -95,9 +99,16 @@ type CheckAlert struct {
 	Level   string
 }
 
+// Checker is a state of a checker.
+type Checker struct {
+	doneCh          chan struct{}
+	nextCheckAt     time.Time
+	nextCheckAtLock sync.RWMutex
+}
+
 // Check checks for alerts and new version information.
 func Check(p *CheckParams) (*CheckResponse, error) {
-	if disabled := os.Getenv("CHECKPOINT_DISABLE"); disabled != "" && !p.Force {
+	if IsCheckDisabled() && !p.Force {
 		return &CheckResponse{}, nil
 	}
 
@@ -138,6 +149,9 @@ func Check(p *CheckParams) (*CheckResponse, error) {
 	v.Set("arch", p.Arch)
 	v.Set("os", p.OS)
 	v.Set("signature", signature)
+	for flag, value := range p.Flags {
+		v.Set("flag_"+flag, value)
+	}
 
 	u.Scheme = "https"
 	u.Host = "checkpoint-api.weave.works"
@@ -193,27 +207,56 @@ func Check(p *CheckParams) (*CheckResponse, error) {
 // CheckInterval is used to check for a response on a given interval duration.
 // The interval is not exact, and checks are randomized to prevent a thundering
 // herd. However, it is expected that on average one check is performed per
-// interval. The returned channel may be closed to stop background checks.
-func CheckInterval(p *CheckParams, interval time.Duration, cb func(*CheckResponse, error)) chan struct{} {
-	doneCh := make(chan struct{})
+// interval.
+// The first check happens immediately after a goroutine which is responsible for
+// making checks has been started.
+func CheckInterval(p *CheckParams, interval time.Duration,
+	cb func(*CheckResponse, error)) *Checker {
 
-	if disabled := os.Getenv("CHECKPOINT_DISABLE"); disabled != "" {
-		return doneCh
+	state := &Checker{
+		doneCh: make(chan struct{}),
+	}
+
+	if IsCheckDisabled() {
+		return state
 	}
 
 	go func() {
+		cb(Check(p))
+
 		for {
+			after := randomStagger(interval)
+			state.nextCheckAtLock.Lock()
+			state.nextCheckAt = time.Now().Add(after)
+			state.nextCheckAtLock.Unlock()
+
 			select {
-			case <-time.After(randomStagger(interval)):
-				resp, err := Check(p)
-				cb(resp, err)
-			case <-doneCh:
+			case <-time.After(after):
+				cb(Check(p))
+			case <-state.doneCh:
 				return
 			}
 		}
 	}()
 
-	return doneCh
+	return state
+}
+
+// NextCheckAt returns at what time next check will happen.
+func (c *Checker) NextCheckAt() time.Time {
+	c.nextCheckAtLock.RLock()
+	defer c.nextCheckAtLock.RUnlock()
+	return c.nextCheckAt
+}
+
+// Stop stops the checker.
+func (c *Checker) Stop() {
+	close(c.doneCh)
+}
+
+// IsCheckDisabled returns true if checks are disabled.
+func IsCheckDisabled() bool {
+	return os.Getenv("CHECKPOINT_DISABLE") != ""
 }
 
 // randomStagger returns an interval that is between 3/4 and 5/4 of
@@ -369,7 +412,7 @@ func writeCacheHeader(f io.Writer, v string) error {
 	}
 
 	// Write out our current version length
-	var length uint32 = uint32(len(v))
+	var length = uint32(len(v))
 	if err := binary.Write(f, binary.LittleEndian, length); err != nil {
 		return err
 	}
