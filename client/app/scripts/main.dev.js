@@ -7,7 +7,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 
-import configureStore from './stores/configureStore';
+import configureStore from './stores/configureStore.dev';
 import App from './components/app';
 
 import DevTools from './components/dev-tools';

@@ -24,8 +24,9 @@ module.exports = {
     app: './app/scripts/main',
     'contrast-app': './app/scripts/contrast-main',
     'terminal-app': './app/scripts/terminal-main',
-    vendors: ['babel-polyfill', 'classnames', 'd3', 'dagre', 'immutable',
-      'lodash', 'page', 'react', 'react-dom', 'react-redux', 'react-motion',
+    // keep only some in here, to make vendors and app bundles roughly same size
+    vendors: ['babel-polyfill', 'classnames', 'd3', 'immutable',
+      'lodash', 'react', 'react-dom', 'react-redux',
       'redux', 'redux-thunk']
   },
 
