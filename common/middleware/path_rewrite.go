@@ -24,3 +24,17 @@ func (p pathRewrite) Wrap(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// PathReplace replcase Request.RequestURI with the specified string.
+func PathReplace(replacement string) Interface {
+	return pathReplace(replacement)
+}
+
+type pathReplace string
+
+func (p pathReplace) Wrap(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.RequestURI = string(p)
+		next.ServeHTTP(w, r)
+	})
+}
