@@ -325,40 +325,47 @@ kill -USR1 $(pgrep -f scope-probe)
 docker logs weavescope
 ```
 
-- Both the Scope App and the Scope Probe offer
-  [HTTP endpoints with profiling information](https://golang.org/pkg/net/http/pprof/).
-  These cover things such as CPU usage and memory consumption:
-  * The Scope App enables its HTTP profiling endpoints by default, which
-    are accessible on the same port the Scope UI is served (4040).
-  * The Scope Probe doesn't enable its profiling endpoints by default.
-    To enable them, you must launch Scope with `--probe.http.listen addr:port`.
-    For instance, launching Scope with `scope launch --probe.http.listen :4041`, will
-    allow you access the Scope Probe's profiling endpoints on port 4041.
+Both the Scope App and the Scope Probe offer [HTTP endpoints with profiling information](https://golang.org/pkg/net/http/pprof/).
+These cover things such as CPU usage and memory consumption:
+- The Scope App enables its HTTP profiling endpoints by default, which
+  are accessible on the same port the Scope UI is served (4040).
+- The Scope Probe doesn't enable its profiling endpoints by default.
+  To enable them, you must launch Scope with `--probe.http.listen addr:port`.
+  For instance, launching Scope with `scope launch --probe.http.listen :4041`, will
+  allow you access the Scope Probe's profiling endpoints on port 4041.
 
-  Then, you can collect profiles in the usual way. For instance:
+Then, you can collect profiles in the usual way. For instance:
 
-  * To collect the memory profile of the Scope App:
+- To collect the memory profile of the Scope App:
 
-    ```
+```
 go tool pprof http://localhost:4040/debug/pprof/heap
 ```
-  * To collect the CPU profile of the Scope Probe:
 
-    ```
+- To collect the CPU profile of the Scope Probe:
+
+```
 go tool pprof http://localhost:4041/debug/pprof/profile
 ```
 
-  If you don't have `go` installed, you can use a Docker container instead:
+If you don't have `go` installed, you can use a Docker container instead:
 
-  * To collect the memory profile of the Scope App:
+- To collect the memory profile of the Scope App:
 
-    ```
+```
 docker run --net=host -v $PWD:/root/pprof golang go tool pprof http://localhost:4040/debug/pprof/heap
 ```
-  * To collect the CPU profile of the Scope Probe:
 
-    ```
+- To collect the CPU profile of the Scope Probe:
+
+```
 docker run --net=host -v $PWD:/root/pprof golang go tool pprof http://localhost:4041/debug/pprof/profile
 ```
 
-  You will find the output profiles in your working directory.
+You will find the output profiles in your working directory.  To analyse the dump, do something like:
+
+```
+go tool pprof prog/scope pprof.localhost\:4040.samples.cpu.001.pb.gz
+Entering interactive mode (type "help" for commands)
+(pprof) pdf >cpu.pdf
+```

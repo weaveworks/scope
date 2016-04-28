@@ -73,7 +73,7 @@ func init() {
 			Options: []APITopologyOption{
 				// Show the user why there are filtered nodes in this view.
 				// Don't give them the option to show those nodes.
-				{"hide", "Unconnected nodes hidden", render.Noop},
+				{"hide", "Unconnected nodes hidden", nil},
 			},
 		},
 	}
@@ -285,14 +285,21 @@ func renderedForRequest(r *http.Request, topology APITopologyDesc) (render.Rende
 	for _, group := range topology.Options {
 		value := r.FormValue(group.ID)
 		for _, opt := range group.Options {
+			if opt.filter == nil {
+				continue
+			}
 			if (value == "" && group.Default == opt.Value) || (opt.Value != "" && opt.Value == value) {
 				filters = append(filters, opt.filter)
 			}
 		}
 	}
-	return topology.renderer, func(renderer render.Renderer) render.Renderer {
-		return render.MakeFilter(render.ComposeFilterFuncs(filters...), renderer)
+	var decorator render.Decorator
+	if len(filters) > 0 {
+		decorator = func(renderer render.Renderer) render.Renderer {
+			return render.MakeFilter(render.ComposeFilterFuncs(filters...), renderer)
+		}
 	}
+	return topology.renderer, decorator
 }
 
 type reportRenderHandler func(
