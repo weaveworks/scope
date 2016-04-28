@@ -100,13 +100,15 @@ type Container interface {
 	Image() string
 	PID() int
 	Hostname() string
-	GetNode([]net.IP) report.Node
+	GetNode() report.Node
 	State() string
 	StateString() string
 	HasTTY() bool
 	Container() *docker.Container
 	StartGatheringStats() error
 	StopGatheringStats()
+	NetworkMode() (string, bool)
+	NetworkInfo([]net.IP) report.Sets
 }
 
 type container struct {
@@ -284,6 +286,39 @@ func (c *container) ports(localAddrs []net.IP) report.StringSet {
 	return report.MakeStringSet(ports...)
 }
 
+func (c *container) NetworkMode() (string, bool) {
+	c.RLock()
+	defer c.RUnlock()
+	if c.container.HostConfig != nil {
+		return c.container.HostConfig.NetworkMode, true
+	}
+	return "", false
+}
+
+func addScopeToIPs(hostID string, ips []string) []string {
+	ipsWithScopes := []string{}
+	for _, ip := range ips {
+		ipsWithScopes = append(ipsWithScopes, report.MakeScopedAddressNodeID(hostID, ip))
+	}
+	return ipsWithScopes
+}
+
+func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
+	c.RLock()
+	defer c.RUnlock()
+	ips := c.container.NetworkSettings.SecondaryIPAddresses
+	if c.container.NetworkSettings.IPAddress != "" {
+		ips = append(ips, c.container.NetworkSettings.IPAddress)
+	}
+	// Treat all Docker IPs as local scoped.
+	ipsWithScopes := addScopeToIPs(c.hostID, ips)
+	return report.EmptySets.
+		Add(ContainerPorts, c.ports(localAddrs)).
+		Add(ContainerIPs, report.MakeStringSet(ips...)).
+		Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...))
+
+}
+
 func (c *container) memoryUsageMetric(stats []docker.Stats) report.Metric {
 	result := report.MakeMetric()
 	for _, s := range stats {
@@ -345,19 +380,9 @@ func (c *container) env() map[string]string {
 	return result
 }
 
-func (c *container) GetNode(localAddrs []net.IP) report.Node {
+func (c *container) GetNode() report.Node {
 	c.RLock()
 	defer c.RUnlock()
-	ips := c.container.NetworkSettings.SecondaryIPAddresses
-	if c.container.NetworkSettings.IPAddress != "" {
-		ips = append(ips, c.container.NetworkSettings.IPAddress)
-	}
-	// Treat all Docker IPs as local scoped.
-	ipsWithScopes := []string{}
-	for _, ip := range ips {
-		ipsWithScopes = append(ipsWithScopes, report.MakeScopedAddressNodeID(c.hostID, ip))
-	}
-
 	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{
 		ContainerID:         c.ID(),
 		ContainerName:       strings.TrimPrefix(c.container.Name, "/"),
@@ -367,11 +392,7 @@ func (c *container) GetNode(localAddrs []net.IP) report.Node {
 		ContainerHostname:   c.Hostname(),
 		ContainerState:      c.StateString(),
 		ContainerStateHuman: c.State(),
-	}).WithSets(report.EmptySets.
-		Add(ContainerPorts, c.ports(localAddrs)).
-		Add(ContainerIPs, report.MakeStringSet(ips...)).
-		Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...)),
-	).WithMetrics(
+	}).WithMetrics(
 		c.metrics(),
 	).WithParents(report.EmptySets.
 		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),

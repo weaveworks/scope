@@ -38,6 +38,8 @@ func (r *mockRegistry) WatchContainerUpdates(_ docker.ContainerUpdateWatcher) {}
 
 func (r *mockRegistry) GetContainer(_ string) (docker.Container, bool) { return nil, false }
 
+func (r *mockRegistry) GetContainerByPrefix(_ string) (docker.Container, bool) { return nil, false }
+
 var (
 	mockRegistryInstance = &mockRegistry{
 		containersByPID: map[int]docker.Container{

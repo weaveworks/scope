@@ -8,7 +8,6 @@ import (
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -67,48 +66,6 @@ var ContainerRenderer = MakeFilter(
 	),
 )
 
-type containerWithHostIPsRenderer struct {
-	Renderer
-}
-
-// Render produces a process graph where the ips for host network mode are set
-// to the host's IPs.
-func (r containerWithHostIPsRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
-	containers := r.Renderer.Render(rpt, dct)
-	hosts := SelectHost.Render(rpt, dct)
-
-	outputs := report.Nodes{}
-	for id, c := range containers {
-		outputs[id] = c
-		networkMode, ok := c.Latest.Lookup(docker.ContainerNetworkMode)
-		if !ok || networkMode != docker.NetworkModeHost {
-			continue
-		}
-
-		h, ok := hosts[report.MakeHostNodeID(report.ExtractHostID(c))]
-		if !ok {
-			continue
-		}
-
-		newIPs := report.MakeStringSet()
-		hostNetworks, _ := h.Sets.Lookup(host.LocalNetworks)
-		for _, cidr := range hostNetworks {
-			if ip, _, err := net.ParseCIDR(cidr); err == nil {
-				newIPs = newIPs.Add(ip.String())
-			}
-		}
-
-		output := c.Copy()
-		output.Sets = c.Sets.Add(docker.ContainerIPs, newIPs)
-		outputs[id] = output
-	}
-	return outputs
-}
-
-// ContainerWithHostIPsRenderer is a Renderer which produces a container graph
-// enriched with host IPs on containers where NetworkMode is Host
-var ContainerWithHostIPsRenderer = containerWithHostIPsRenderer{ContainerRenderer}
-
 type containerWithImageNameRenderer struct {
 	Renderer
 }
@@ -140,7 +97,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator)
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container
 // graph where the ranks are the image names, not their IDs
-var ContainerWithImageNameRenderer = ApplyDecorators(containerWithImageNameRenderer{ContainerWithHostIPsRenderer})
+var ContainerWithImageNameRenderer = ApplyDecorators(containerWithImageNameRenderer{ContainerRenderer})
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.

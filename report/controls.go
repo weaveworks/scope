@@ -37,9 +37,16 @@ func (cs Controls) Copy() Controls {
 	return result
 }
 
-// AddControl returns a fresh Controls, c added to cs.
+// AddControl adds c added to cs.
 func (cs Controls) AddControl(c Control) {
 	cs[c.ID] = c
+}
+
+// AddControls adds a collection of controls to cs.
+func (cs Controls) AddControls(controls []Control) {
+	for _, c := range controls {
+		cs[c.ID] = c
+	}
 }
 
 // NodeControls represent the individual controls that are valid for a given
