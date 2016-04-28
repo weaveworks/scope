@@ -26,14 +26,14 @@ const (
 // NB We only want processes in container _or_ processes with network connections
 // but we need to be careful to ensure we only include each edge once, by only
 // including the ProcessRenderer once.
-var ContainerRenderer = MakeSilentFilter(
+var ContainerRenderer = MakeFilter(
 	func(n report.Node) bool {
 		// Drop deleted containers
 		state, ok := n.Latest.Lookup(docker.ContainerState)
 		return !ok || state != docker.StateDeleted
 	},
 	MakeReduce(
-		MakeSilentFilter(
+		MakeFilter(
 			func(n report.Node) bool {
 				// Drop unconnected pseudo nodes (could appear due to filtering)
 				_, isConnected := n.Latest.Lookup(IsConnected)
@@ -49,7 +49,7 @@ var ContainerRenderer = MakeSilentFilter(
 		// We need to be careful to ensure we only include each edge once.  Edges brought in
 		// by the above renders will have a pid, so its enough to filter out any nodes with
 		// pids.
-		SilentFilterUnconnected(MakeMap(
+		FilterUnconnected(MakeMap(
 			MapIP2Container,
 			MakeReduce(
 				MakeMap(
@@ -73,9 +73,9 @@ type containerWithHostIPsRenderer struct {
 
 // Render produces a process graph where the ips for host network mode are set
 // to the host's IPs.
-func (r containerWithHostIPsRenderer) Render(rpt report.Report) report.Nodes {
-	containers := r.Renderer.Render(rpt)
-	hosts := SelectHost.Render(rpt)
+func (r containerWithHostIPsRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+	containers := r.Renderer.Render(rpt, dct)
+	hosts := SelectHost.Render(rpt, dct)
 
 	outputs := report.Nodes{}
 	for id, c := range containers {
@@ -116,9 +116,9 @@ type containerWithImageNameRenderer struct {
 // Render produces a process graph where the minor labels contain the
 // container name, if found.  It also merges the image node metadata into the
 // container metadata.
-func (r containerWithImageNameRenderer) Render(rpt report.Report) report.Nodes {
-	containers := r.Renderer.Render(rpt)
-	images := SelectContainerImage.Render(rpt)
+func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+	containers := r.Renderer.Render(rpt, dct)
+	images := SelectContainerImage.Render(rpt, dct)
 
 	outputs := report.Nodes{}
 	for id, c := range containers {
@@ -140,23 +140,38 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) report.Nodes {
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container
 // graph where the ranks are the image names, not their IDs
-var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerWithHostIPsRenderer}
+var ContainerWithImageNameRenderer = ApplyDecorators(containerWithImageNameRenderer{ContainerWithHostIPsRenderer})
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
-var ContainerImageRenderer = MakeReduce(
-	MakeMap(
-		MapContainer2ContainerImage,
-		ContainerRenderer,
+var ContainerImageRenderer = FilterEmpty(report.Container,
+	MakeReduce(
+		MakeMap(
+			MapContainer2ContainerImage,
+			ContainerWithImageNameRenderer,
+		),
+		SelectContainerImage,
 	),
-	SelectContainerImage,
 )
 
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
 // by hostname graph..
-var ContainerHostnameRenderer = MakeMap(
-	MapContainer2Hostname,
-	ContainerRenderer,
+var ContainerHostnameRenderer = FilterEmpty(report.Container,
+	MakeReduce(
+		MakeMap(
+			MapContainer2Hostname,
+			ContainerWithImageNameRenderer,
+		),
+		// Grab *all* the hostnames, so we can count the number which were empty
+		// for accurate stats.
+		MakeMap(
+			MapToEmpty,
+			MakeMap(
+				MapContainer2Hostname,
+				ContainerRenderer,
+			),
+		),
+	),
 )
 
 var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}):([0-9]+)->([0-9]+)/tcp`)
@@ -363,4 +378,10 @@ func ImageNameWithoutVersion(name string) string {
 	}
 	parts = strings.SplitN(name, ":", 2)
 	return parts[0]
+}
+
+// MapToEmpty removes all the attributes, children, etc, of a node. Useful when
+// we just want to count the presence of nodes.
+func MapToEmpty(n report.Node, _ report.Networks) report.Nodes {
+	return report.Nodes{n.ID: report.MakeNode(n.ID).WithTopology(n.Topology)}
 }

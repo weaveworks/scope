@@ -27,13 +27,17 @@ func Memoise(r Renderer) Renderer {
 // Render produces a set of Nodes given a Report.
 // Ideally, it just retrieves it from the cache, otherwise it calls through to
 // `r` and stores the result.
-func (m *memoise) Render(rpt report.Report) report.Nodes {
+func (m *memoise) Render(rpt report.Report, dct Decorator) report.Nodes {
 	key := fmt.Sprintf("%s-%s", rpt.ID, m.id)
-	if result, err := renderCache.Get(key); err == nil {
-		return result.(report.Nodes)
+	if dct == nil {
+		if result, err := renderCache.Get(key); err == nil {
+			return result.(report.Nodes)
+		}
 	}
-	output := m.Renderer.Render(rpt)
-	renderCache.Set(key, output)
+	output := m.Renderer.Render(rpt, dct)
+	if dct == nil {
+		renderCache.Set(key, output)
+	}
 	return output
 }
 

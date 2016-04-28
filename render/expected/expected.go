@@ -27,15 +27,16 @@ var (
 			return n
 		}
 	}
-	pseudo          = node(render.Pseudo)
-	endpoint        = node(report.Endpoint)
-	processNode     = node(report.Process)
-	processNameNode = node(render.MakeGroupNodeTopology(report.Process, process.Name))
-	container       = node(report.Container)
-	containerImage  = node(report.ContainerImage)
-	pod             = node(report.Pod)
-	service         = node(report.Service)
-	hostNode        = node(report.Host)
+	pseudo                = node(render.Pseudo)
+	endpoint              = node(report.Endpoint)
+	processNode           = node(report.Process)
+	processNameNode       = node(render.MakeGroupNodeTopology(report.Process, process.Name))
+	container             = node(report.Container)
+	containerHostnameNode = node(render.MakeGroupNodeTopology(report.Container, docker.ContainerHostname))
+	containerImage        = node(report.ContainerImage)
+	pod                   = node(report.Pod)
+	service               = node(report.Service)
+	hostNode              = node(report.Host)
 
 	UnknownPseudoNode1ID = render.MakePseudoNodeID(fixture.UnknownClient1IP)
 	UnknownPseudoNode2ID = render.MakePseudoNodeID(fixture.UnknownClient3IP)
@@ -173,6 +174,37 @@ var (
 
 		uncontainedServerID:       uncontainedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerContainerNodeID),
+		render.OutgoingInternetID: theOutgoingInternetNode,
+	}
+
+	RenderedContainerHostnames = report.Nodes{
+		fixture.ClientContainerHostname: containerHostnameNode(fixture.ClientContainerHostname, fixture.ServerContainerHostname).
+			WithLatests(map[string]string{
+				docker.ContainerHostname: fixture.ClientContainerHostname,
+			}).
+			WithCounters(map[string]int{
+				report.Container: 1,
+			}).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Client54001NodeID],
+				RenderedEndpoints[fixture.Client54002NodeID],
+				RenderedProcesses[fixture.ClientProcess1NodeID],
+				RenderedProcesses[fixture.ClientProcess2NodeID],
+				RenderedContainers[fixture.ClientContainerNodeID],
+			)),
+
+		fixture.ServerContainerHostname: containerHostnameNode(fixture.ServerContainerHostname).
+			WithLatests(map[string]string{
+				docker.ContainerHostname: fixture.ServerContainerHostname,
+			}).
+			WithChildren(report.MakeNodeSet(
+				RenderedEndpoints[fixture.Server80NodeID],
+				RenderedProcesses[fixture.ServerProcessNodeID],
+				RenderedContainers[fixture.ServerContainerNodeID],
+			)),
+
+		uncontainedServerID:       uncontainedServerNode,
+		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerContainerHostname),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
 

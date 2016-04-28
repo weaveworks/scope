@@ -167,6 +167,63 @@ func BenchmarkNodeSetAdd(b *testing.B) {
 	}
 }
 
+func TestNodeSetDelete(t *testing.T) {
+	for _, testcase := range []struct {
+		input report.NodeSet
+		nodes []string
+		want  report.NodeSet
+	}{
+		{
+			input: report.NodeSet{},
+			nodes: []string{},
+			want:  report.NodeSet{},
+		},
+		{
+			input: report.EmptyNodeSet,
+			nodes: []string{},
+			want:  report.EmptyNodeSet,
+		},
+		{
+			input: report.MakeNodeSet(report.MakeNode("a")),
+			nodes: []string{},
+			want:  report.MakeNodeSet(report.MakeNode("a")),
+		},
+		{
+			input: report.EmptyNodeSet,
+			nodes: []string{"a"},
+			want:  report.EmptyNodeSet,
+		},
+		{
+			input: report.MakeNodeSet(report.MakeNode("a")),
+			nodes: []string{"a"},
+			want:  report.EmptyNodeSet,
+		},
+		{
+			input: report.MakeNodeSet(report.MakeNode("b")),
+			nodes: []string{"a", "b"},
+			want:  report.EmptyNodeSet,
+		},
+		{
+			input: report.MakeNodeSet(report.MakeNode("a")),
+			nodes: []string{"c", "b"},
+			want:  report.MakeNodeSet(report.MakeNode("a")),
+		},
+		{
+			input: report.MakeNodeSet(report.MakeNode("a"), report.MakeNode("c")),
+			nodes: []string{"a", "a", "a"},
+			want:  report.MakeNodeSet(report.MakeNode("c")),
+		},
+	} {
+		originalLen := testcase.input.Size()
+		if want, have := testcase.want, testcase.input.Delete(testcase.nodes...); !reflect.DeepEqual(want, have) {
+			t.Errorf("%v + %v: want %v, have %v", testcase.input, testcase.nodes, want, have)
+		}
+		if testcase.input.Size() != originalLen {
+			t.Errorf("%v + %v: modified the original input!", testcase.input, testcase.nodes)
+		}
+	}
+}
+
 func TestNodeSetMerge(t *testing.T) {
 	for _, testcase := range []struct {
 		input report.NodeSet

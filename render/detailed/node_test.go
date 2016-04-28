@@ -16,7 +16,7 @@ import (
 )
 
 func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
-	s, ok := detailed.MakeNodeSummary(fixture.Report, r.Render(fixture.Report)[id])
+	s, ok := detailed.MakeNodeSummary(fixture.Report, r.Render(fixture.Report, render.FilterNoop)[id])
 	if !ok {
 		t.Fatalf("Expected node %s to be summarizable, but wasn't", id)
 	}
@@ -24,7 +24,7 @@ func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
 }
 
 func TestMakeDetailedHostNode(t *testing.T) {
-	renderableNodes := render.HostRenderer.Render(fixture.Report)
+	renderableNodes := render.HostRenderer.Render(fixture.Report, render.FilterNoop)
 	renderableNode := renderableNodes[fixture.ClientHostNodeID]
 	have := detailed.MakeNode("hosts", fixture.Report, renderableNodes, renderableNode)
 
@@ -171,7 +171,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 
 func TestMakeDetailedContainerNode(t *testing.T) {
 	id := fixture.ServerContainerNodeID
-	renderableNodes := render.ContainerRenderer.Render(fixture.Report)
+	renderableNodes := render.ContainerRenderer.Render(fixture.Report, render.FilterNoop)
 	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
@@ -298,14 +298,14 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 
 func TestMakeDetailedPodNode(t *testing.T) {
 	id := fixture.ServerPodNodeID
-	renderableNodes := render.PodRenderer.Render(fixture.Report)
+	renderableNodes := render.PodRenderer.Render(fixture.Report, render.FilterNoop)
 	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
 	}
 	have := detailed.MakeNode("pods", fixture.Report, renderableNodes, renderableNode)
 
-	containerNodeSummary := child(t, render.ContainerRenderer, fixture.ServerContainerNodeID)
+	containerNodeSummary := child(t, render.ContainerWithImageNameRenderer, fixture.ServerContainerNodeID)
 	serverProcessNodeSummary := child(t, render.ProcessRenderer, fixture.ServerProcessNodeID)
 	serverProcessNodeSummary.Linkable = true // Temporary workaround for: https://github.com/weaveworks/scope/issues/1295
 	want := detailed.Node{

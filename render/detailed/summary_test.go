@@ -21,7 +21,7 @@ import (
 func TestSummaries(t *testing.T) {
 	{
 		// Just a convenient source of some rendered nodes
-		have := detailed.Summaries(fixture.Report, render.ProcessRenderer.Render(fixture.Report))
+		have := detailed.Summaries(fixture.Report, render.ProcessRenderer.Render(fixture.Report, render.FilterNoop))
 		// The ids of the processes rendered above
 		expectedIDs := []string{
 			fixture.ClientProcess1NodeID,
@@ -51,7 +51,7 @@ func TestSummaries(t *testing.T) {
 		input := fixture.Report.Copy()
 
 		input.Process.Nodes[fixture.ClientProcess1NodeID] = input.Process.Nodes[fixture.ClientProcess1NodeID].WithMetrics(report.Metrics{process.CPUUsage: metric})
-		have := detailed.Summaries(input, render.ProcessRenderer.Render(input))
+		have := detailed.Summaries(input, render.ProcessRenderer.Render(input, render.FilterNoop))
 
 		node, ok := have[fixture.ClientProcess1NodeID]
 		if !ok {

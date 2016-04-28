@@ -38,22 +38,31 @@ func BenchmarkContainerWithImageNameRender(b *testing.B) {
 func BenchmarkContainerWithImageNameStats(b *testing.B) {
 	benchmarkStats(b, render.ContainerWithImageNameRenderer)
 }
-func BenchmarkContainerImageRender(b *testing.B) { benchmarkRender(b, render.ContainerImageRenderer) }
-func BenchmarkContainerImageStats(b *testing.B)  { benchmarkStats(b, render.ContainerImageRenderer) }
+func BenchmarkContainerImageRender(b *testing.B) {
+	benchmarkRender(b, render.ContainerImageRenderer)
+}
+func BenchmarkContainerImageStats(b *testing.B) {
+	benchmarkStats(b, render.ContainerImageRenderer)
+}
 func BenchmarkContainerHostnameRender(b *testing.B) {
 	benchmarkRender(b, render.ContainerHostnameRenderer)
 }
 func BenchmarkContainerHostnameStats(b *testing.B) {
 	benchmarkStats(b, render.ContainerHostnameRenderer)
 }
-func BenchmarkHostRender(b *testing.B)       { benchmarkRender(b, render.HostRenderer) }
-func BenchmarkHostStats(b *testing.B)        { benchmarkStats(b, render.HostRenderer) }
-func BenchmarkPodRender(b *testing.B)        { benchmarkRender(b, render.PodRenderer) }
-func BenchmarkPodStats(b *testing.B)         { benchmarkStats(b, render.PodRenderer) }
-func BenchmarkPodServiceRender(b *testing.B) { benchmarkRender(b, render.PodServiceRenderer) }
-func BenchmarkPodServiceStats(b *testing.B)  { benchmarkStats(b, render.PodServiceRenderer) }
+func BenchmarkHostRender(b *testing.B) { benchmarkRender(b, render.HostRenderer) }
+func BenchmarkHostStats(b *testing.B)  { benchmarkStats(b, render.HostRenderer) }
+func BenchmarkPodRender(b *testing.B)  { benchmarkRender(b, render.PodRenderer) }
+func BenchmarkPodStats(b *testing.B)   { benchmarkStats(b, render.PodRenderer) }
+func BenchmarkPodServiceRender(b *testing.B) {
+	benchmarkRender(b, render.PodServiceRenderer)
+}
+func BenchmarkPodServiceStats(b *testing.B) {
+	benchmarkStats(b, render.PodServiceRenderer)
+}
 
 func benchmarkRender(b *testing.B, r render.Renderer) {
+
 	report, err := loadReport()
 	if err != nil {
 		b.Fatal(err)
@@ -65,7 +74,7 @@ func benchmarkRender(b *testing.B, r render.Renderer) {
 		b.StopTimer()
 		render.ResetCache()
 		b.StartTimer()
-		benchmarkRenderResult = r.Render(report)
+		benchmarkRenderResult = r.Render(report, render.FilterNoop)
 		if len(benchmarkRenderResult) == 0 {
 			b.Errorf("Rendered topology contained no nodes")
 		}
@@ -85,7 +94,7 @@ func benchmarkStats(b *testing.B, r render.Renderer) {
 		b.StopTimer()
 		render.ResetCache()
 		b.StartTimer()
-		benchmarkStatsResult = r.Stats(report)
+		benchmarkStatsResult = r.Stats(report, render.FilterNoop)
 	}
 }
 

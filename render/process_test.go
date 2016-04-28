@@ -11,24 +11,24 @@ import (
 )
 
 func TestEndpointRenderer(t *testing.T) {
-	have := render.EndpointRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedEndpoints.Prune()
+	have := Prune(render.EndpointRenderer.Render(fixture.Report, render.FilterNoop))
+	want := Prune(expected.RenderedEndpoints)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestProcessRenderer(t *testing.T) {
-	have := render.ProcessRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedProcesses.Prune()
+	have := Prune(render.ProcessRenderer.Render(fixture.Report, render.FilterNoop))
+	want := Prune(expected.RenderedProcesses)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestProcessNameRenderer(t *testing.T) {
-	have := render.ProcessNameRenderer.Render(fixture.Report).Prune()
-	want := expected.RenderedProcessNames.Prune()
+	have := Prune(render.ProcessNameRenderer.Render(fixture.Report, render.FilterNoop))
+	want := Prune(expected.RenderedProcessNames)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
