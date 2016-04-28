@@ -215,7 +215,7 @@ The SCOPE_SERVICE_TOKEN is found when you [log in to the Scope service](https://
 
 Scope comes with built-in Kubernetes support. We recommend to run Scope natively
 in your Kubernetes cluster using
-[these resource definitions](https://github.com/TheNewNormal/kube-charts/tree/master/weavescope/manifests).
+[these resource definitions](https://github.com/helm/charts/tree/master/weavescope/manifests).
 
 1. Make sure your cluster allows privileged pods (required by the Scope
    probes). Privileged pods are allowed by default from Kubernetes 1.1.
@@ -241,7 +241,7 @@ in your Kubernetes cluster using
 
    ```
 for I in app-rc app-svc probe-ds; do
-  curl -s -L https://raw.githubusercontent.com/TheNewNormal/kube-charts/master/weavescope/manifests/scope-$I.yaml -o scope-$I.yaml
+  curl -s -L https://raw.githubusercontent.com/helm/charts/master/weavescope/manifests/scope-$I.yaml -o scope-$I.yaml
 done
 ```
 
