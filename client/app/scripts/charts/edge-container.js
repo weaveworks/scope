@@ -1,9 +1,8 @@
 import _ from 'lodash';
 import d3 from 'd3';
 import React from 'react';
+import { connect } from 'react-redux';
 import { Motion, spring } from 'react-motion';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
 import { Map as makeMap } from 'immutable';
 
 import Edge from './edge';
@@ -29,7 +28,7 @@ const buildPath = (points, layoutPrecision) => {
   return extracted;
 };
 
-export default class EdgeContainer extends React.Component {
+class EdgeContainer extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -96,4 +95,4 @@ export default class EdgeContainer extends React.Component {
 
 }
 
-reactMixin.onClass(EdgeContainer, PureRenderMixin);
+export default connect()(EdgeContainer);

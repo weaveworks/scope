@@ -1,13 +1,12 @@
 import _ from 'lodash';
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 import d3 from 'd3';
 import { Motion, spring } from 'react-motion';
 
 import Node from './node';
 
-export default class NodeContainer extends React.Component {
+class NodeContainer extends React.Component {
   render() {
     const { dx, dy, focused, layoutPrecision, zoomScale } = this.props;
     const animConfig = [80, 20]; // stiffness, damping
@@ -30,4 +29,4 @@ export default class NodeContainer extends React.Component {
   }
 }
 
-reactMixin.onClass(NodeContainer, PureRenderMixin);
+export default connect()(NodeContainer);

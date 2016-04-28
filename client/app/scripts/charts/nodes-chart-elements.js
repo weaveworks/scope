@@ -1,11 +1,10 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 
 import NodesChartEdges from './nodes-chart-edges';
 import NodesChartNodes from './nodes-chart-nodes';
 
-export default class NodesChartElements extends React.Component {
+class NodesChartElements extends React.Component {
   render() {
     const props = this.props;
     return (
@@ -20,4 +19,4 @@ export default class NodesChartElements extends React.Component {
   }
 }
 
-reactMixin.onClass(NodesChartElements, PureRenderMixin);
+export default connect()(NodesChartElements);
