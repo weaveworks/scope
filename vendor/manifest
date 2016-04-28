@@ -872,7 +872,7 @@
 		{
 			"importpath": "github.com/weaveworks/go-checkpoint",
 			"repository": "https://github.com/weaveworks/go-checkpoint",
-			"revision": "d99cc14f13e7845b370a7dc81d47cafb29cdc97f",
+			"revision": "62324982ab514860761ec81e618664580513ffad",
 			"branch": "master"
 		},
 		{
