@@ -17,6 +17,7 @@ const (
 	PodContainerIDs = "kubernetes_pod_container_ids"
 	PodState        = "kubernetes_pod_state"
 	PodLabelPrefix  = "kubernetes_pod_labels_"
+	PodIP           = "kubernetes_pod_ip"
 	ServiceIDs      = "kubernetes_service_ids"
 )
 
@@ -86,12 +87,13 @@ func (p *pod) NodeName() string {
 
 func (p *pod) GetNode(probeID string) report.Node {
 	n := report.MakeNodeWith(report.MakePodNodeID(p.Namespace(), p.Name()), map[string]string{
-		PodID:                 p.ID(),
-		PodName:               p.Name(),
-		Namespace:             p.Namespace(),
-		PodCreated:            p.Created(),
-		PodContainerIDs:       strings.Join(p.ContainerIDs(), " "),
-		PodState:              p.State(),
+		PodID:           p.ID(),
+		PodName:         p.Name(),
+		Namespace:       p.Namespace(),
+		PodCreated:      p.Created(),
+		PodContainerIDs: strings.Join(p.ContainerIDs(), " "),
+		PodState:        p.State(),
+		PodIP:           p.Status.PodIP,
 		report.ControlProbeID: probeID,
 	})
 	if len(p.serviceIDs) > 0 {
