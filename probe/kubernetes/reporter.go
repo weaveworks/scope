@@ -19,8 +19,9 @@ var (
 	PodMetadataTemplates = report.MetadataTemplates{
 		PodID:      {ID: PodID, Label: "ID", From: report.FromLatest, Priority: 1},
 		PodState:   {ID: PodState, Label: "State", From: report.FromLatest, Priority: 2},
-		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 3},
-		PodCreated: {ID: PodCreated, Label: "Created", From: report.FromLatest, Priority: 4},
+		PodIP:      {ID: PodIP, Label: "IP", From: report.FromLatest, Priority: 3},
+		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 5},
+		PodCreated: {ID: PodCreated, Label: "Created", From: report.FromLatest, Priority: 6},
 	}
 
 	ServiceMetadataTemplates = report.MetadataTemplates{
