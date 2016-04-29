@@ -106,7 +106,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	rpt := report.MakeReport()
 	seenTuples := map[string]fourTuple{}
 
-	// Consult the flowWalker for short-live connections
+	// Consult the flowWalker for short-lived connections
 	{
 		extraNodeInfo := map[string]string{
 			Conntracked: "true",
@@ -120,6 +120,25 @@ func (r *Reporter) Report() (report.Report, error) {
 			}
 			seenTuples[tuple.key()] = tuple
 			r.addConnection(&rpt, tuple, extraNodeInfo, extraNodeInfo)
+
+			// Handle DNAT-ed short-lived connections.
+			// The NAT mapper won't help since it only runs periodically,
+			// missing the short-lived connections.
+			if f.Original.Layer3.DstIP != f.Reply.Layer3.SrcIP {
+				reply_tuple := fourTuple{
+					f.Reply.Layer3.DstIP,
+					f.Reply.Layer3.SrcIP,
+					uint16(f.Reply.Layer4.DstPort),
+					uint16(f.Reply.Layer4.SrcPort),
+				}
+				// FIXME: For DNAT-ed connections the
+				// f.Original.Layer3.SrcIP -> f.Original.Layer3.DstIP connection above
+				// results in a unattributed dangling-edge to the Internet node.
+				// It could be enough to simply not add that connection, but
+				// it may not be correct in general.
+				r.addConnection(&rpt, reply_tuple, extraNodeInfo, extraNodeInfo)
+			}
+
 		})
 	}
 
