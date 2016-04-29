@@ -17,7 +17,7 @@ const (
 // graph by merging the container graph and the pods topology.
 var PodRenderer = MakeFilter(
 	func(n report.Node) bool {
-		// Drop deleted containers
+		// Drop deleted or empty pods
 		state, ok := n.Latest.Lookup(kubernetes.PodState)
 		return HasChildren(report.Container)(n) && (!ok || state != kubernetes.StateDeleted)
 	},
