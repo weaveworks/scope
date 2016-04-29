@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/armon/go-radix"
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe/controls"
@@ -37,6 +38,7 @@ type Registry interface {
 	WalkImages(f func(*docker_client.APIImages))
 	WatchContainerUpdates(ContainerUpdateWatcher)
 	GetContainer(string) (Container, bool)
+	GetContainerByPrefix(string) (Container, bool)
 }
 
 // ContainerUpdateWatcher is the type of functions that get called when containers are updated.
@@ -52,7 +54,7 @@ type registry struct {
 	hostID       string
 
 	watchers        []ContainerUpdateWatcher
-	containers      map[string]Container
+	containers      *radix.Tree
 	containersByPID map[int]Container
 	images          map[string]*docker_client.APIImages
 }
@@ -88,7 +90,7 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats
 	}
 
 	r := &registry{
-		containers:      map[string]Container{},
+		containers:      radix.New(),
 		containersByPID: map[int]Container{},
 		images:          map[string]*docker_client.APIImages{},
 
@@ -186,9 +188,10 @@ func (r *registry) listenForEvents() bool {
 			defer r.Unlock()
 
 			if r.collectStats {
-				for _, c := range r.containers {
-					c.StopGatheringStats()
-				}
+				r.containers.Walk(func(_ string, c interface{}) bool {
+					c.(Container).StopGatheringStats()
+					return false
+				})
 			}
 			close(ch)
 			return false
@@ -201,12 +204,13 @@ func (r *registry) reset() {
 	defer r.Unlock()
 
 	if r.collectStats {
-		for _, c := range r.containers {
-			c.StopGatheringStats()
-		}
+		r.containers.Walk(func(_ string, c interface{}) bool {
+			c.(Container).StopGatheringStats()
+			return false
+		})
 	}
 
-	r.containers = map[string]Container{}
+	r.containers = radix.New()
 	r.containersByPID = map[int]Container{}
 	r.images = map[string]*docker_client.APIImages{}
 }
@@ -270,12 +274,13 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 		}
 
 		// Container doesn't exist anymore, so lets stop and remove it
-		container, ok := r.containers[containerID]
+		c, ok := r.containers.Get(containerID)
 		if !ok {
 			return
 		}
+		container := c.(Container)
 
-		delete(r.containers, containerID)
+		r.containers.Delete(containerID)
 		delete(r.containersByPID, container.PID())
 		if r.collectStats {
 			container.StopGatheringStats()
@@ -295,11 +300,13 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 	}
 
 	// Container exists, ensure we have it
-	c, ok := r.containers[containerID]
+	o, ok := r.containers.Get(containerID)
+	var c Container
 	if !ok {
 		c = NewContainerStub(dockerContainer, r.hostID)
-		r.containers[containerID] = c
+		r.containers.Insert(containerID, c)
 	} else {
+		c = o.(Container)
 		// potentially remove existing pid mapping.
 		delete(r.containersByPID, c.PID())
 		c.UpdateState(dockerContainer)
@@ -311,9 +318,8 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 	}
 
 	// Trigger anyone watching for updates
-	localAddrs, err := report.LocalAddresses()
 	if err != nil {
-		node := c.GetNode(localAddrs)
+		node := c.GetNode()
 		for _, f := range r.watchers {
 			f(node)
 		}
@@ -350,16 +356,34 @@ func (r *registry) WalkContainers(f func(Container)) {
 	r.RLock()
 	defer r.RUnlock()
 
-	for _, container := range r.containers {
-		f(container)
-	}
+	r.containers.Walk(func(_ string, c interface{}) bool {
+		f(c.(Container))
+		return false
+	})
 }
 
 func (r *registry) GetContainer(id string) (Container, bool) {
 	r.RLock()
 	defer r.RUnlock()
-	c, ok := r.containers[id]
-	return c, ok
+	c, ok := r.containers.Get(id)
+	if ok {
+		return c.(Container), true
+	}
+	return nil, false
+}
+
+func (r *registry) GetContainerByPrefix(prefix string) (Container, bool) {
+	r.RLock()
+	defer r.RUnlock()
+	out := []interface{}{}
+	r.containers.WalkPrefix(prefix, func(_ string, v interface{}) bool {
+		out = append(out, v)
+		return false
+	})
+	if len(out) == 1 {
+		return out[0].(Container), true
+	}
+	return nil, false
 }
 
 // WalkImages runs f on every image of running containers the registry
@@ -369,10 +393,11 @@ func (r *registry) WalkImages(f func(*docker_client.APIImages)) {
 	defer r.RUnlock()
 
 	// Loop over containers so we only emit images for running containers.
-	for _, container := range r.containers {
-		image, ok := r.images[container.Image()]
+	r.containers.Walk(func(_ string, c interface{}) bool {
+		image, ok := r.images[c.(Container).Image()]
 		if ok {
 			f(image)
 		}
-	}
+		return false
+	})
 }

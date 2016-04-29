@@ -54,7 +54,7 @@ func (c *mockContainer) StartGatheringStats() error {
 
 func (c *mockContainer) StopGatheringStats() {}
 
-func (c *mockContainer) GetNode(_ []net.IP) report.Node {
+func (c *mockContainer) GetNode() report.Node {
 	return report.MakeNodeWith(report.MakeContainerNodeID(c.c.ID), map[string]string{
 		docker.ContainerID:   c.c.ID,
 		docker.ContainerName: c.c.Name,
@@ -62,6 +62,13 @@ func (c *mockContainer) GetNode(_ []net.IP) report.Node {
 	}).WithParents(report.EmptySets.
 		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.c.Image))),
 	)
+}
+
+func (c *mockContainer) NetworkMode() (string, bool) {
+	return "", false
+}
+func (c *mockContainer) NetworkInfo([]net.IP) report.Sets {
+	return report.EmptySets
 }
 
 func (c *mockContainer) Container() *client.Container {

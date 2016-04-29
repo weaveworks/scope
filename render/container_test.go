@@ -69,28 +69,6 @@ func TestContainerFilterRenderer(t *testing.T) {
 	}
 }
 
-func TestContainerWithHostIPsRenderer(t *testing.T) {
-	input := fixture.Report.Copy()
-	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
-		docker.ContainerNetworkMode: "host",
-	})
-	nodes := render.ContainerWithHostIPsRenderer.Render(input, render.FilterNoop)
-
-	// Test host network nodes get the host IPs added.
-	haveNode, ok := nodes[fixture.ClientContainerNodeID]
-	if !ok {
-		t.Fatal("Expected output to have the client container node")
-	}
-	have, ok := haveNode.Sets.Lookup(docker.ContainerIPs)
-	if !ok {
-		t.Fatal("Container had no IPs set.")
-	}
-	want := report.MakeStringSet("10.10.10.0")
-	if !reflect.DeepEqual(want, have) {
-		t.Error(test.Diff(want, have))
-	}
-}
-
 func TestContainerHostnameRenderer(t *testing.T) {
 	have := Prune(render.ContainerHostnameRenderer.Render(fixture.Report, render.FilterNoop))
 	want := Prune(expected.RenderedContainerHostnames)
