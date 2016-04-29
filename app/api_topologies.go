@@ -276,8 +276,8 @@ func (r *registry) renderTopologies(rpt report.Report, req *http.Request) []APIT
 	r.walk(func(desc APITopologyDesc) {
 		renderer, decorator, _ := r.rendererForTopology(desc.id, values, rpt)
 		desc.Stats = decorateWithStats(rpt, renderer, decorator)
-		for i := range desc.SubTopologies {
-			renderer, decorator, _ := r.rendererForTopology(desc.id, values, rpt)
+		for i, sub := range desc.SubTopologies {
+			renderer, decorator, _ := r.rendererForTopology(sub.id, values, rpt)
 			desc.SubTopologies[i].Stats = decorateWithStats(rpt, renderer, decorator)
 		}
 		topologies = append(topologies, desc)
