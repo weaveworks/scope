@@ -6,7 +6,6 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
-	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -85,7 +84,7 @@ func containerImageParent(n report.Node) Parent {
 	imageName, _ := n.Latest.Lookup(docker.ImageName)
 	return Parent{
 		ID:         n.ID,
-		Label:      render.ImageNameWithoutVersion(imageName),
+		Label:      docker.ImageNameWithoutVersion(imageName),
 		TopologyID: "containers-by-image",
 	}
 }

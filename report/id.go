@@ -24,6 +24,9 @@ const (
 	// EdgeDelim separates two node IDs when they need to exist in the same key.
 	// Concretely, it separates node IDs in keys that represent edges.
 	EdgeDelim = "|"
+
+	// Key added to nodes to prevent them being joined with conntracked connections
+	DoesNotMakeConnections = "does_not_make_connections"
 )
 
 var (

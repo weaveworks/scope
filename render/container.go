@@ -1,7 +1,6 @@
 package render
 
 import (
-	"fmt"
 	"net"
 	"regexp"
 	"strings"
@@ -173,6 +172,12 @@ func MapContainer2IP(m report.Node, _ report.Networks) report.Nodes {
 		return report.Nodes{}
 	}
 
+	// if this container doesn't make connections, we can ignore it
+	_, doesntMakeConnections := m.Latest.Lookup(report.DoesNotMakeConnections)
+	if doesntMakeConnections {
+		return report.Nodes{}
+	}
+
 	result := report.Nodes{}
 	if addrs, ok := m.Sets.Lookup(docker.ContainerIPsWithScopes); ok {
 		for _, addr := range addrs {
@@ -324,17 +329,6 @@ func MapContainer2Hostname(n report.Node, _ report.Networks) report.Nodes {
 		Delete(docker.ContainerName) // TODO(paulbellamy): total hack to render these by hostname instead.
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: node}
-}
-
-// ImageNameWithoutVersion splits the image name apart, returning the name
-// without the version, if possible
-func ImageNameWithoutVersion(name string) string {
-	parts := strings.SplitN(name, "/", 3)
-	if len(parts) == 3 {
-		name = fmt.Sprintf("%s/%s", parts[1], parts[2])
-	}
-	parts = strings.SplitN(name, ":", 2)
-	return parts[0]
 }
 
 // MapToEmpty removes all the attributes, children, etc, of a node. Useful when
