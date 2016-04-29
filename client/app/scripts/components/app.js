@@ -75,7 +75,7 @@ class App extends React.Component {
     } else if (char === 'q') {
       dispatch(unpinMetric());
       dispatch(selectMetric(null));
-    } else if (char === 'd') {
+    } else if (ev.code === 'KeyD' && ev.ctrlKey) {
       toggleDebugToolbar();
       this.forceUpdate();
     } else if (char === '?') {
