@@ -174,20 +174,23 @@ func TestReporter(t *testing.T) {
 		id            string
 		parentService string
 		latest        map[string]string
+		sets          map[string]report.StringSet
 	}{
 		{pod1ID, serviceID, map[string]string{
 			kubernetes.PodID:      "ping/pong-a",
 			kubernetes.PodName:    "pong-a",
 			kubernetes.Namespace:  "ping",
 			kubernetes.PodCreated: pod1.Created(),
-			kubernetes.ServiceIDs: "ping/pongservice",
+		}, map[string]report.StringSet{
+			kubernetes.ServiceIDs: report.MakeStringSet("ping/pongservice"),
 		}},
 		{pod2ID, serviceID, map[string]string{
 			kubernetes.PodID:      "ping/pong-b",
 			kubernetes.PodName:    "pong-b",
 			kubernetes.Namespace:  "ping",
 			kubernetes.PodCreated: pod1.Created(),
-			kubernetes.ServiceIDs: "ping/pongservice",
+		}, map[string]report.StringSet{
+			kubernetes.ServiceIDs: report.MakeStringSet("ping/pongservice"),
 		}},
 	} {
 		node, ok := rpt.Pod.Nodes[pod.id]
@@ -202,6 +205,12 @@ func TestReporter(t *testing.T) {
 		for k, want := range pod.latest {
 			if have, ok := node.Latest.Lookup(k); !ok || have != want {
 				t.Errorf("Expected pod %s latest %q: %q, got %q", pod.id, k, want, have)
+			}
+		}
+
+		for k, want := range pod.sets {
+			if have, ok := node.Sets.Lookup(k); !ok || !reflect.DeepEqual(want, have) {
+				t.Errorf("Expected pod %s sets %q: %q, got %q", pod.id, k, want, have)
 			}
 		}
 	}

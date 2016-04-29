@@ -367,25 +367,27 @@ var (
 			Nodes: report.Nodes{
 				ClientPodNodeID: report.MakeNodeWith(
 					ClientPodNodeID, map[string]string{
-						kubernetes.PodID:      ClientPodID,
-						kubernetes.PodName:    "pong-a",
-						kubernetes.Namespace:  KubernetesNamespace,
-						kubernetes.ServiceIDs: ServiceID,
-						report.HostNodeID:     ClientHostNodeID,
+						kubernetes.PodID:     ClientPodID,
+						kubernetes.PodName:   "pong-a",
+						kubernetes.Namespace: KubernetesNamespace,
+						report.HostNodeID:    ClientHostNodeID,
 					}).
+					WithSets(report.EmptySets.
+						Add(kubernetes.ServiceIDs, report.MakeStringSet(ServiceID))).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("service", report.MakeStringSet(ServiceID)),
 				),
 				ServerPodNodeID: report.MakeNodeWith(
 					ServerPodNodeID, map[string]string{
-						kubernetes.PodID:      ServerPodID,
-						kubernetes.PodName:    "pong-b",
-						kubernetes.Namespace:  KubernetesNamespace,
-						kubernetes.PodState:   "running",
-						kubernetes.ServiceIDs: ServiceID,
-						report.HostNodeID:     ServerHostNodeID,
+						kubernetes.PodID:     ServerPodID,
+						kubernetes.PodName:   "pong-b",
+						kubernetes.Namespace: KubernetesNamespace,
+						kubernetes.PodState:  "running",
+						report.HostNodeID:    ServerHostNodeID,
 					}).
+					WithSets(report.EmptySets.
+						Add(kubernetes.ServiceIDs, report.MakeStringSet(ServiceID))).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
 					Add("service", report.MakeStringSet(ServiceID)),
