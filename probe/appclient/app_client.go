@@ -75,7 +75,7 @@ func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlH
 			TLSClientConfig: httpTransport.TLSClientConfig,
 		},
 		conns:   map[string]xfer.Websocket{},
-		readers: make(chan io.Reader),
+		readers: make(chan io.Reader, 2),
 		control: control,
 	}, nil
 }
@@ -273,6 +273,7 @@ func (c *appClient) Publish(r io.Reader) error {
 	select {
 	case c.readers <- r:
 	default:
+		log.Errorf("Dropping report to %s", c.target)
 	}
 	return nil
 }

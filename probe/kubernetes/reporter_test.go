@@ -125,12 +125,16 @@ func (c *mockClient) WalkServices(f func(kubernetes.Service) error) error {
 func (*mockClient) WalkNodes(f func(*api.Node) error) error {
 	return nil
 }
+func (*mockClient) WatchPods(func(kubernetes.Event, kubernetes.Pod)) {}
 func (c *mockClient) GetLogs(namespaceID, podName string) (io.ReadCloser, error) {
 	r, ok := c.logs[report.MakePodNodeID(namespaceID, podName)]
 	if !ok {
 		return nil, fmt.Errorf("Not found")
 	}
 	return r, nil
+}
+func (c *mockClient) DeletePod(namespaceID, podID string) error {
+	return nil
 }
 
 type mockPipeClient map[string]xfer.Pipe
@@ -156,7 +160,7 @@ func TestReporter(t *testing.T) {
 	pod1ID := report.MakePodNodeID("ping", "pong-a")
 	pod2ID := report.MakePodNodeID("ping", "pong-b")
 	serviceID := report.MakeServiceNodeID("ping", "pongservice")
-	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "").Report()
+	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", nil).Report()
 
 	// Reporter should have added the following pods
 	for _, pod := range []struct {
@@ -261,11 +265,11 @@ func TestReporterGetLogs(t *testing.T) {
 
 	client := newMockClient()
 	pipes := mockPipeClient{}
-	reporter := kubernetes.NewReporter(client, pipes, "")
+	reporter := kubernetes.NewReporter(client, pipes, "", nil)
 
 	// Should error on invalid IDs
 	{
-		resp := reporter.GetLogs(xfer.Request{
+		resp := kubernetes.CapturePod(reporter.GetLogs)(xfer.Request{
 			NodeID:  "invalidID",
 			Control: kubernetes.GetLogs,
 		})
@@ -276,7 +280,7 @@ func TestReporterGetLogs(t *testing.T) {
 
 	// Should pass through errors from k8s (e.g if pod does not exist)
 	{
-		resp := reporter.GetLogs(xfer.Request{
+		resp := kubernetes.CapturePod(reporter.GetLogs)(xfer.Request{
 			AppID:   "appID",
 			NodeID:  report.MakePodNodeID("not", "found"),
 			Control: kubernetes.GetLogs,
@@ -302,7 +306,7 @@ func TestReporterGetLogs(t *testing.T) {
 	}}
 
 	// Should create a new pipe for the stream
-	resp := reporter.GetLogs(pod1Request)
+	resp := kubernetes.CapturePod(reporter.GetLogs)(pod1Request)
 	if resp.Pipe == "" {
 		t.Errorf("Expected pipe id to be returned, but got %#v", resp)
 	}

@@ -8,6 +8,7 @@ import (
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/labels"
 
+	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
@@ -44,16 +45,19 @@ type Reporter struct {
 	client  Client
 	pipes   controls.PipeClient
 	probeID string
+	probe   *probe.Probe
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(client Client, pipes controls.PipeClient, probeID string) *Reporter {
+func NewReporter(client Client, pipes controls.PipeClient, probeID string, probe *probe.Probe) *Reporter {
 	reporter := &Reporter{
 		client:  client,
 		pipes:   pipes,
 		probeID: probeID,
+		probe:   probe,
 	}
 	reporter.registerControls()
+	client.WatchPods(reporter.podEvent)
 	return reporter
 }
 
@@ -64,6 +68,26 @@ func (r *Reporter) Stop() {
 
 // Name of this reporter, for metrics gathering
 func (Reporter) Name() string { return "K8s" }
+
+func (r *Reporter) podEvent(e Event, pod Pod) {
+	switch e {
+	case ADD:
+		rpt := report.MakeReport()
+		rpt.Shortcut = true
+		rpt.Pod.AddNode(pod.GetNode(r.probeID))
+		r.probe.Publish(rpt)
+	case DELETE:
+		rpt := report.MakeReport()
+		rpt.Shortcut = true
+		rpt.Pod.AddNode(
+			report.MakeNodeWith(
+				report.MakePodNodeID(pod.Namespace(), pod.Name()),
+				map[string]string{PodState: StateDeleted},
+			),
+		)
+		r.probe.Publish(rpt)
+	}
+}
 
 // Report generates a Report containing Container and ContainerImage topologies
 func (r *Reporter) Report() (report.Report, error) {
@@ -131,6 +155,12 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 		Human: "Get logs",
 		Icon:  "fa-desktop",
 		Rank:  0,
+	})
+	pods.Controls.AddControl(report.Control{
+		ID:    DeletePod,
+		Human: "Delete",
+		Icon:  "fa-trash-o",
+		Rank:  1,
 	})
 	for _, service := range services {
 		selectors[service.ID()] = service.Selector()
