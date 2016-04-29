@@ -40,6 +40,7 @@ func TestParents(t *testing.T) {
 			want: []detailed.Parent{
 				{ID: fixture.ClientContainerImageNodeID, Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
 				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
+				{ID: fixture.ClientPodNodeID, Label: "pong-a", TopologyID: "pods"},
 			},
 		},
 		{

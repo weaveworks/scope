@@ -20,6 +20,7 @@ const (
 
 // Service represents a Kubernetes service
 type Service interface {
+	UID() string
 	ID() string
 	Name() string
 	Namespace() string
@@ -34,6 +35,10 @@ type service struct {
 // NewService creates a new Service
 func NewService(s *api.Service) Service {
 	return &service{Service: s}
+}
+
+func (s *service) UID() string {
+	return string(s.ObjectMeta.UID)
 }
 
 func (s *service) ID() string {

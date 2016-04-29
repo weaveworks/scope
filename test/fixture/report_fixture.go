@@ -92,8 +92,10 @@ var (
 	KubernetesNamespace = "ping"
 	ClientPodID         = "ping/pong-a"
 	ServerPodID         = "ping/pong-b"
-	ClientPodNodeID     = report.MakePodNodeID(KubernetesNamespace, "pong-a")
-	ServerPodNodeID     = report.MakePodNodeID(KubernetesNamespace, "pong-b")
+	ClientPodUID        = "5d4c3b2a1"
+	ServerPodUID        = "i9h8g7f6e"
+	ClientPodNodeID     = report.MakePodNodeID(ClientPodUID)
+	ServerPodNodeID     = report.MakePodNodeID(ServerPodUID)
 	ServiceID           = "ping/pongservice"
 	ServiceNodeID       = report.MakeServiceNodeID(KubernetesNamespace, "pongservice")
 
@@ -258,21 +260,20 @@ var (
 				ClientContainerNodeID: report.MakeNodeWith(
 
 					ClientContainerNodeID, map[string]string{
-						docker.ContainerID:                            ClientContainerID,
-						docker.ContainerName:                          ClientContainerName,
-						docker.ContainerHostname:                      ClientContainerHostname,
-						docker.ImageID:                                ClientContainerImageID,
-						report.HostNodeID:                             ClientHostNodeID,
-						docker.LabelPrefix + "io.kubernetes.pod.name": ClientPodID,
-						kubernetes.PodID:                              ClientPodID,
-						kubernetes.Namespace:                          KubernetesNamespace,
-						docker.ContainerState:                         docker.StateRunning,
-						docker.ContainerStateHuman:                    docker.StateRunning,
+						docker.ContainerID:                           ClientContainerID,
+						docker.ContainerName:                         ClientContainerName,
+						docker.ContainerHostname:                     ClientContainerHostname,
+						docker.ImageID:                               ClientContainerImageID,
+						report.HostNodeID:                            ClientHostNodeID,
+						docker.LabelPrefix + "io.kubernetes.pod.uid": ClientPodUID,
+						kubernetes.Namespace:                         KubernetesNamespace,
+						docker.ContainerState:                        docker.StateRunning,
+						docker.ContainerStateHuman:                   docker.StateRunning,
 					}).
 					WithTopology(report.Container).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("container_image", report.MakeStringSet(ClientContainerImageNodeID)).
-					Add("pod", report.MakeStringSet(ClientPodID)),
+					Add("pod", report.MakeStringSet(ClientPodNodeID)),
 				).WithMetrics(report.Metrics{
 					docker.CPUTotalUsage: ClientContainerCPUMetric,
 					docker.MemoryUsage:   ClientContainerMemoryMetric,
@@ -290,14 +291,13 @@ var (
 						docker.LabelPrefix + detailed.AmazonECSContainerNameLabel: "server",
 						docker.LabelPrefix + "foo1":                               "bar1",
 						docker.LabelPrefix + "foo2":                               "bar2",
-						docker.LabelPrefix + "io.kubernetes.pod.name":             ServerPodID,
-						kubernetes.PodID:                                          ServerPodID,
+						docker.LabelPrefix + "io.kubernetes.pod.uid":              ServerPodUID,
 						kubernetes.Namespace:                                      KubernetesNamespace,
 					}).
 					WithTopology(report.Container).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
 					Add("container_image", report.MakeStringSet(ServerContainerImageNodeID)).
-					Add("pod", report.MakeStringSet(ServerPodID)),
+					Add("pod", report.MakeStringSet(ServerPodNodeID)),
 				).WithMetrics(report.Metrics{
 					docker.CPUTotalUsage: ServerContainerCPUMetric,
 					docker.MemoryUsage:   ServerContainerMemoryMetric,
@@ -366,29 +366,25 @@ var (
 		Pod: report.Topology{
 			Nodes: report.Nodes{
 				ClientPodNodeID: report.MakeNodeWith(
-
 					ClientPodNodeID, map[string]string{
-						kubernetes.PodID:           ClientPodID,
-						kubernetes.PodName:         "pong-a",
-						kubernetes.Namespace:       KubernetesNamespace,
-						kubernetes.PodContainerIDs: ClientContainerID,
-						kubernetes.ServiceIDs:      ServiceID,
-						report.HostNodeID:          ClientHostNodeID,
+						kubernetes.PodID:      ClientPodID,
+						kubernetes.PodName:    "pong-a",
+						kubernetes.Namespace:  KubernetesNamespace,
+						kubernetes.ServiceIDs: ServiceID,
+						report.HostNodeID:     ClientHostNodeID,
 					}).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("service", report.MakeStringSet(ServiceID)),
 				),
 				ServerPodNodeID: report.MakeNodeWith(
-
 					ServerPodNodeID, map[string]string{
-						kubernetes.PodID:           ServerPodID,
-						kubernetes.PodName:         "pong-b",
-						kubernetes.Namespace:       KubernetesNamespace,
-						kubernetes.PodState:        "running",
-						kubernetes.PodContainerIDs: ServerContainerID,
-						kubernetes.ServiceIDs:      ServiceID,
-						report.HostNodeID:          ServerHostNodeID,
+						kubernetes.PodID:      ServerPodID,
+						kubernetes.PodName:    "pong-b",
+						kubernetes.Namespace:  KubernetesNamespace,
+						kubernetes.PodState:   "running",
+						kubernetes.ServiceIDs: ServiceID,
+						report.HostNodeID:     ServerHostNodeID,
 					}).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)).

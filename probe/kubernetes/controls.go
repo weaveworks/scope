@@ -51,19 +51,30 @@ func (r *Reporter) deletePod(req xfer.Request, namespaceID, podID string) xfer.R
 }
 
 // CapturePod is exported for testing
-func CapturePod(f func(xfer.Request, string, string) xfer.Response) func(xfer.Request) xfer.Response {
+func (r *Reporter) CapturePod(f func(xfer.Request, string, string) xfer.Response) func(xfer.Request) xfer.Response {
 	return func(req xfer.Request) xfer.Response {
-		namespaceID, podID, ok := report.ParsePodNodeID(req.NodeID)
+		uid, ok := report.ParsePodNodeID(req.NodeID)
 		if !ok {
 			return xfer.ResponseErrorf("Invalid ID: %s", req.NodeID)
 		}
-		return f(req, namespaceID, podID)
+		// find pod by UID
+		var pod Pod
+		r.client.WalkPods(func(p Pod) error {
+			if p.UID() == uid {
+				pod = p
+			}
+			return nil
+		})
+		if pod == nil {
+			return xfer.ResponseErrorf("Pod not found: %s", uid)
+		}
+		return f(req, pod.Namespace(), pod.Name())
 	}
 }
 
 func (r *Reporter) registerControls() {
-	controls.Register(GetLogs, CapturePod(r.GetLogs))
-	controls.Register(DeletePod, CapturePod(r.deletePod))
+	controls.Register(GetLogs, r.CapturePod(r.GetLogs))
+	controls.Register(DeletePod, r.CapturePod(r.deletePod))
 }
 
 func (r *Reporter) deregisterControls() {

@@ -82,12 +82,27 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 		rpt.Shortcut = true
 		rpt.Pod.AddNode(
 			report.MakeNodeWith(
-				report.MakePodNodeID(pod.Namespace(), pod.Name()),
+				report.MakePodNodeID(pod.UID()),
 				map[string]string{PodState: StateDeleted},
 			),
 		)
 		r.probe.Publish(rpt)
 	}
+}
+
+// Tag adds pod parents to container nodes.
+func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
+	for id, n := range rpt.Container.Nodes {
+		uid, ok := n.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.uid")
+		if !ok {
+			continue
+		}
+		rpt.Container.Nodes[id] = n.WithParents(report.EmptySets.Add(
+			report.Pod,
+			report.EmptyStringSet.Add(report.MakePodNodeID(uid)),
+		))
+	}
+	return rpt, nil
 }
 
 // Report generates a Report containing Container and ContainerImage topologies
@@ -97,13 +112,12 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	podTopology, containerTopology, err := r.podTopology(services)
+	podTopology, err := r.podTopology(services)
 	if err != nil {
 		return result, err
 	}
 	result.Service = result.Service.Merge(serviceTopology)
 	result.Pod = result.Pod.Merge(podTopology)
-	result.Container = result.Container.Merge(containerTopology)
 	return result, nil
 }
 
@@ -143,13 +157,12 @@ var GetNodeName = func(r *Reporter) (string, error) {
 	return nodeName, err
 }
 
-func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topology, error) {
+func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
 			WithTableTemplates(PodTableTemplates)
-		containers = report.MakeTopology()
-		selectors  = map[string]labels.Selector{}
+		selectors = map[string]labels.Selector{}
 	)
 	pods.Controls.AddControl(report.Control{
 		ID:    GetLogs,
@@ -169,7 +182,7 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 
 	thisNodeName, err := GetNodeName(r)
 	if err != nil {
-		return pods, containers, err
+		return pods, err
 	}
 	err = r.client.WalkPods(func(p Pod) error {
 		if p.NodeName() != thisNodeName {
@@ -180,18 +193,8 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 				p.AddServiceID(serviceID)
 			}
 		}
-		nodeID := report.MakePodNodeID(p.Namespace(), p.Name())
 		pods = pods.AddNode(p.GetNode(r.probeID))
-
-		for _, containerID := range p.ContainerIDs() {
-			container := report.MakeNodeWith(report.MakeContainerNodeID(containerID), map[string]string{
-				PodID:              p.ID(),
-				Namespace:          p.Namespace(),
-				docker.ContainerID: containerID,
-			}).WithParents(report.EmptySets.Add(report.Pod, report.MakeStringSet(nodeID)))
-			containers.AddNode(container)
-		}
 		return nil
 	})
-	return pods, containers, err
+	return pods, err
 }
