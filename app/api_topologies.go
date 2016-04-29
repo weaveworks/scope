@@ -30,7 +30,7 @@ func init() {
 			Options: []APITopologyOption{
 				{"system", "System containers", render.IsSystem},
 				{"application", "Application containers", render.IsApplication},
-				{"both", "Both", render.Noop},
+				{"both", "Both", nil},
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func init() {
 			Options: []APITopologyOption{
 				{"stopped", "Stopped containers", render.IsStopped},
 				{"running", "Running containers", render.IsRunning},
-				{"both", "Both", render.Noop},
+				{"both", "Both", nil},
 			},
 		},
 	}
@@ -124,7 +124,7 @@ func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
 	for _, namespace := range namespaces {
 		options.Options = append(options.Options, APITopologyOption{namespace, namespace, render.IsNamespace(namespace)})
 	}
-	options.Options = append(options.Options, APITopologyOption{"all", "All Namespaces", render.Noop})
+	options.Options = append(options.Options, APITopologyOption{"all", "All Namespaces", nil})
 	return options
 }
 
