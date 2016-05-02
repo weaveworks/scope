@@ -87,6 +87,7 @@ module.exports = {
     new webpack.DefinePlugin(GLOBALS),
     new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
     new webpack.optimize.OccurenceOrderPlugin(true),
+    new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
     new webpack.optimize.UglifyJsPlugin({
       sourceMap: false,
       compress: {

@@ -25,8 +25,9 @@ export function toggleHelp() {
   return (dispatch, getState) => {
     if (getState().get('showingHelp')) {
       dispatch(hideHelp());
+    } else {
+      dispatch(showHelp());
     }
-    dispatch(showHelp());
   };
 }
 

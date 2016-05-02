@@ -62,6 +62,7 @@ module.exports = {
     new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin(),
+    new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'contrast-app'],
       template: 'app/html/index.html',
