@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { is as isDeepEqual, Map as makeMap, Set as makeSet } from 'immutable';
 
 /**
  * Returns a cache ID based on the topologyId and optionsQuery
@@ -66,18 +67,73 @@ export function updateTopologyIds(topologies, parentId) {
 // map for easy lookup
 export function setTopologyUrlsById(topologyUrlsById, topologies) {
   let urlMap = topologyUrlsById;
-  topologies.forEach(topology => {
-    urlMap = urlMap.set(topology.id, topology.url);
-    if (topology.sub_topologies) {
-      topology.sub_topologies.forEach(subTopology => {
-        urlMap = urlMap.set(subTopology.id, subTopology.url);
-      });
-    }
-  });
+  if (topologies) {
+    topologies.forEach(topology => {
+      urlMap = urlMap.set(topology.id, topology.url);
+      if (topology.sub_topologies) {
+        topology.sub_topologies.forEach(subTopology => {
+          urlMap = urlMap.set(subTopology.id, subTopology.url);
+        });
+      }
+    });
+  }
   return urlMap;
 }
 
 export function filterHiddenTopologies(topologies) {
   return topologies.filter(t => (!t.hide_if_empty || t.stats.node_count > 0 ||
                                t.stats.filtered_nodes > 0));
+}
+
+export function getActiveTopologyOptions(state) {
+  // options for current topology, sub-topologies share options with parent
+  const parentId = state.getIn(['currentTopology', 'parentId']);
+  if (parentId) {
+    return state.getIn(['topologyOptions', parentId]);
+  }
+  return state.getIn(['topologyOptions', state.get('currentTopologyId')]);
+}
+
+export function getCurrentTopologyOptions(state) {
+  return state.getIn(['currentTopology', 'options']);
+}
+
+export function isTopologyEmpty(state) {
+  return state.getIn(['currentTopology', 'stats', 'node_count'], 0) === 0
+    && state.get('nodes').size === 0;
+}
+
+export function getAdjacentNodes(state, originNodeId) {
+  let adjacentNodes = makeSet();
+  const nodeId = originNodeId || state.get('selectedNodeId');
+
+  if (nodeId) {
+    if (state.hasIn(['nodes', nodeId])) {
+      adjacentNodes = makeSet(state.getIn(['nodes', nodeId, 'adjacency']));
+      // fill up set with reverse edges
+      state.get('nodes').forEach((node, id) => {
+        if (node.get('adjacency') && node.get('adjacency').includes(nodeId)) {
+          adjacentNodes = adjacentNodes.add(id);
+        }
+      });
+    }
+  }
+
+  return adjacentNodes;
+}
+
+export function hasSelectedNode(state) {
+  const selectedNodeId = state.get('selectedNodeId');
+  return state.hasIn(['nodes', selectedNodeId]);
+}
+
+export function getCurrentTopologyUrl(state) {
+  return state.getIn(['currentTopology', 'url']);
+}
+
+export function isSameTopology(nodes, nextNodes) {
+  const mapper = node => makeMap({id: node.get('id'), adjacency: node.get('adjacency')});
+  const topology = nodes.map(mapper);
+  const nextTopology = nextNodes.map(mapper);
+  return isDeepEqual(topology, nextTopology);
 }

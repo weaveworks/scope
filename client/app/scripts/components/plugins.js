@@ -1,7 +1,8 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import classNames from 'classnames';
 
-export default class Plugins extends React.Component {
+class Plugins extends React.Component {
   renderPlugin({id, label, description, status}) {
     const error = status !== 'ok';
     const className = classNames({ error });
@@ -19,15 +20,26 @@ export default class Plugins extends React.Component {
   }
 
   render() {
-    const hasPlugins = this.props.plugins && this.props.plugins.length > 0;
+    const hasPlugins = this.props.plugins && this.props.plugins.size > 0;
     return (
       <div className="plugins">
         <span className="plugins-label">
           Plugins:
         </span>
-        {hasPlugins && this.props.plugins.map((plugin, index) => this.renderPlugin(plugin, index))}
+        {hasPlugins && this.props.plugins.toIndexedSeq()
+          .map((plugin, index) => this.renderPlugin(plugin, index))}
         {!hasPlugins && <span className="plugins-empty">n/a</span>}
       </div>
     );
   }
 }
+
+function mapStateToProps(state) {
+  return {
+    plugins: state.get('plugins')
+  };
+}
+
+export default connect(
+  mapStateToProps
+)(Plugins);

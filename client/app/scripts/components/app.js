@@ -1,10 +1,8 @@
 import debug from 'debug';
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 
 import Logo from './logo';
-import AppStore from '../stores/app-store';
 import Footer from './footer.js';
 import Sidebar from './sidebar.js';
 import HelpPanel from './help-panel';
@@ -19,67 +17,32 @@ import Nodes from './nodes';
 import MetricSelector from './metric-selector';
 import EmbeddedTerminal from './embedded-terminal';
 import { getRouter } from '../utils/router-utils';
-import { showingDebugToolbar, toggleDebugToolbar,
-  DebugToolbar } from './debug-toolbar.js';
+import DebugToolbar, { showingDebugToolbar,
+  toggleDebugToolbar } from './debug-toolbar.js';
+import { getUrlState } from '../utils/router-utils';
+import { getActiveTopologyOptions } from '../utils/topology-utils';
 
 const ESC_KEY_CODE = 27;
 const keyPressLog = debug('scope:app-key-press');
 
-/* make sure these can all be shallow-checked for equality for PureRenderMixin */
-function getStateFromStores() {
-  return {
-    activeTopologyOptions: AppStore.getActiveTopologyOptions(),
-    adjacentNodes: AppStore.getAdjacentNodes(AppStore.getSelectedNodeId()),
-    controlStatus: AppStore.getControlStatus(),
-    controlPipe: AppStore.getControlPipe(),
-    currentTopology: AppStore.getCurrentTopology(),
-    currentTopologyId: AppStore.getCurrentTopologyId(),
-    currentTopologyOptions: AppStore.getCurrentTopologyOptions(),
-    errorUrl: AppStore.getErrorUrl(),
-    forceRelayout: AppStore.isForceRelayout(),
-    highlightedEdgeIds: AppStore.getHighlightedEdgeIds(),
-    highlightedNodeIds: AppStore.getHighlightedNodeIds(),
-    hostname: AppStore.getHostname(),
-    pinnedMetric: AppStore.getPinnedMetric(),
-    availableCanvasMetrics: AppStore.getAvailableCanvasMetrics(),
-    nodeDetails: AppStore.getNodeDetails(),
-    nodes: AppStore.getNodes(),
-    showingHelp: AppStore.getShowingHelp(),
-    selectedNodeId: AppStore.getSelectedNodeId(),
-    selectedMetric: AppStore.getSelectedMetric(),
-    topologies: AppStore.getTopologies(),
-    topologiesLoaded: AppStore.isTopologiesLoaded(),
-    topologyEmpty: AppStore.isTopologyEmpty(),
-    updatePaused: AppStore.isUpdatePaused(),
-    updatePausedAt: AppStore.getUpdatePausedAt(),
-    version: AppStore.getVersion(),
-    versionUpdate: AppStore.getVersionUpdate(),
-    plugins: AppStore.getPlugins(),
-    websocketClosed: AppStore.isWebsocketClosed()
-  };
-}
-
-export default class App extends React.Component {
+class App extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-    this.onChange = this.onChange.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
-    this.state = getStateFromStores();
   }
 
   componentDidMount() {
-    AppStore.addListener(this.onChange);
     window.addEventListener('keypress', this.onKeyPress);
     window.addEventListener('keyup', this.onKeyUp);
 
-    getRouter().start({hashbang: true});
-    if (!AppStore.isRouteSet()) {
+    getRouter(this.props.dispatch, this.props.urlState).start({hashbang: true});
+    if (!this.props.routeSet) {
       // dont request topologies when already done via router
-      getTopologies(AppStore.getActiveTopologyOptions());
+      getTopologies(this.props.activeTopologyOptions, this.props.dispatch);
     }
-    getApiDetails();
+    getApiDetails(this.props.dispatch);
   }
 
   componentWillUnmount() {
@@ -87,18 +50,15 @@ export default class App extends React.Component {
     window.removeEventListener('keyup', this.onKeyUp);
   }
 
-  onChange() {
-    this.setState(getStateFromStores());
-  }
-
   onKeyUp(ev) {
     // don't get esc in onKeyPress
     if (ev.keyCode === ESC_KEY_CODE) {
-      hitEsc();
+      this.props.dispatch(hitEsc());
     }
   }
 
   onKeyPress(ev) {
+    const { dispatch } = this.props;
     //
     // keyup gives 'key'
     // keypress gives 'char'
@@ -108,42 +68,35 @@ export default class App extends React.Component {
     keyPressLog('onKeyPress', 'keyCode', ev.keyCode, ev);
     const char = String.fromCharCode(ev.charCode);
     if (char === '<') {
-      pinNextMetric(-1);
+      dispatch(pinNextMetric(-1));
     } else if (char === '>') {
-      pinNextMetric(1);
+      dispatch(pinNextMetric(1));
     } else if (char === 'q') {
-      unpinMetric();
-      selectMetric(null);
+      dispatch(unpinMetric());
+      dispatch(selectMetric(null));
     } else if (char === 'd') {
       toggleDebugToolbar();
       this.forceUpdate();
     } else if (char === '?') {
-      toggleHelp();
+      dispatch(toggleHelp());
     }
   }
 
   render() {
-    const { nodeDetails, controlPipe } = this.state;
-    const topCardNode = nodeDetails.last();
+    const { availableCanvasMetrics, nodeDetails, controlPipes, showingHelp } = this.props;
     const showingDetails = nodeDetails.size > 0;
-    const showingTerminal = controlPipe;
-    // width of details panel blocking a view
-    const detailsWidth = showingDetails ? 450 : 0;
-    const topMargin = 100;
+    const showingTerminal = controlPipes.size > 0;
+    const showingMetricsSelector = availableCanvasMetrics.count() > 0;
 
     return (
       <div className="app">
         {showingDebugToolbar() && <DebugToolbar />}
 
-        {this.state.showingHelp && <HelpPanel />}
+        {showingHelp && <HelpPanel />}
 
-        {showingDetails && <Details nodes={this.state.nodes}
-          controlStatus={this.state.controlStatus}
-          details={this.state.nodeDetails} />}
+        {showingDetails && <Details />}
 
-        {showingTerminal && <EmbeddedTerminal
-          pipe={this.state.controlPipe}
-          details={this.state.nodeDetails} />}
+        {showingTerminal && <EmbeddedTerminal />}
 
         <div className="header">
           <div className="logo">
@@ -151,45 +104,35 @@ export default class App extends React.Component {
               <Logo />
             </svg>
           </div>
-          <Topologies topologies={this.state.topologies}
-            currentTopology={this.state.currentTopology} />
+          <Topologies />
         </div>
 
-        <Nodes
-          nodes={this.state.nodes}
-          highlightedNodeIds={this.state.highlightedNodeIds}
-          highlightedEdgeIds={this.state.highlightedEdgeIds}
-          detailsWidth={detailsWidth}
-          selectedNodeId={this.state.selectedNodeId}
-          topMargin={topMargin}
-          topCardNode={topCardNode}
-          selectedMetric={this.state.selectedMetric}
-          forceRelayout={this.state.forceRelayout}
-          topologyOptions={this.state.activeTopologyOptions}
-          topologyEmpty={this.state.topologyEmpty}
-          adjacentNodes={this.state.adjacentNodes}
-          topologyId={this.state.currentTopologyId} />
+        <Nodes />
 
         <Sidebar>
-          <Status errorUrl={this.state.errorUrl} topology={this.state.currentTopology}
-            topologiesLoaded={this.state.topologiesLoaded}
-            websocketClosed={this.state.websocketClosed} />
-          {this.state.availableCanvasMetrics.count() > 0 && <MetricSelector
-            availableCanvasMetrics={this.state.availableCanvasMetrics}
-            pinnedMetric={this.state.pinnedMetric}
-            selectedMetric={this.state.selectedMetric}
-            />}
-          <TopologyOptions options={this.state.currentTopologyOptions}
-            topologyId={this.state.currentTopologyId}
-            activeOptions={this.state.activeTopologyOptions} />
+          <Status />
+          {showingMetricsSelector && <MetricSelector />}
+          <TopologyOptions />
         </Sidebar>
 
-        <Footer hostname={this.state.hostname} plugins={this.state.plugins}
-          updatePaused={this.state.updatePaused} updatePausedAt={this.state.updatePausedAt}
-          version={this.state.version} versionUpdate={this.state.versionUpdate} />
+        <Footer />
       </div>
     );
   }
 }
 
-reactMixin.onClass(App, PureRenderMixin);
+function mapStateToProps(state) {
+  return {
+    activeTopologyOptions: getActiveTopologyOptions(state),
+    availableCanvasMetrics: state.get('availableCanvasMetrics'),
+    controlPipes: state.get('controlPipes'),
+    nodeDetails: state.get('nodeDetails'),
+    routeSet: state.get('routeSet'),
+    showingHelp: state.get('showingHelp'),
+    urlState: getUrlState(state)
+  };
+}
+
+export default connect(
+  mapStateToProps
+)(App);

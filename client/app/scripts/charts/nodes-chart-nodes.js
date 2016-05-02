@@ -1,15 +1,15 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 import { fromJS } from 'immutable';
 
+import { getAdjacentNodes } from '../utils/topology-utils';
 import NodeContainer from './node-container';
 
-export default class NodesChartNodes extends React.Component {
+class NodesChartNodes extends React.Component {
   render() {
-    const {adjacentNodes, highlightedNodeIds,
-      layoutNodes, layoutPrecision, nodeScale, onNodeClick, scale,
-      selectedMetric, selectedNodeScale, selectedNodeId, topologyId, topCardNode} = this.props;
+    const { adjacentNodes, highlightedNodeIds, layoutNodes, layoutPrecision,
+      nodeScale, scale, selectedMetric, selectedNodeScale, selectedNodeId,
+      topologyId, topCardNode } = this.props;
 
     const zoomScale = scale;
 
@@ -56,7 +56,6 @@ export default class NodesChartNodes extends React.Component {
           topologyId={topologyId}
           shape={node.get('shape')}
           stack={node.get('stack')}
-          onClick={onNodeClick}
           key={node.get('id')}
           id={node.get('id')}
           label={node.get('label')}
@@ -76,4 +75,17 @@ export default class NodesChartNodes extends React.Component {
   }
 }
 
-reactMixin.onClass(NodesChartNodes, PureRenderMixin);
+function mapStateToProps(state) {
+  return {
+    adjacentNodes: getAdjacentNodes(state),
+    highlightedNodeIds: state.get('highlightedNodeIds'),
+    selectedMetric: state.get('selectedMetric'),
+    selectedNodeId: state.get('selectedNodeId'),
+    topologyId: state.get('topologyId'),
+    topCardNode: state.get('nodeDetails').last()
+  };
+}
+
+export default connect(
+  mapStateToProps
+)(NodesChartNodes);

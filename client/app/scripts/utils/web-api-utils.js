@@ -56,7 +56,7 @@ export function basePathSlash(urlPath) {
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = `${wsProto}://${location.host}${basePath(location.pathname)}`;
 
-function createWebsocket(topologyUrl, optionsQuery) {
+function createWebsocket(topologyUrl, optionsQuery, dispatch) {
   if (socket) {
     socket.onclose = null;
     socket.onerror = null;
@@ -68,67 +68,67 @@ function createWebsocket(topologyUrl, optionsQuery) {
   socket = new WebSocket(`${wsUrl}${topologyUrl}/ws?t=${updateFrequency}&${optionsQuery}`);
 
   socket.onopen = () => {
-    openWebsocket();
+    dispatch(openWebsocket());
   };
 
   socket.onclose = () => {
     clearTimeout(reconnectTimer);
     log(`Closing websocket to ${topologyUrl}`, socket.readyState);
     socket = null;
-    closeWebsocket();
+    dispatch(closeWebsocket());
 
     reconnectTimer = setTimeout(() => {
-      createWebsocket(topologyUrl, optionsQuery);
+      createWebsocket(topologyUrl, optionsQuery, dispatch);
     }, reconnectTimerInterval);
   };
 
   socket.onerror = () => {
     log(`Error in websocket to ${topologyUrl}`);
-    receiveError(currentUrl);
+    dispatch(receiveError(currentUrl));
   };
 
   socket.onmessage = (event) => {
     const msg = JSON.parse(event.data);
-    receiveNodesDelta(msg);
+    dispatch(receiveNodesDelta(msg));
   };
 }
 
 /* keep URLs relative */
 
-export function getTopologies(options) {
+export function getTopologies(options, dispatch) {
   clearTimeout(topologyTimer);
   const optionsQuery = buildOptionsQuery(options);
   const url = `api/topology?${optionsQuery}`;
   reqwest({
     url,
     success: (res) => {
-      receiveTopologies(res);
+      dispatch(receiveTopologies(res));
       topologyTimer = setTimeout(() => {
-        getTopologies(options);
+        getTopologies(options, dispatch);
       }, TOPOLOGY_INTERVAL);
     },
     error: (err) => {
       log(`Error in topology request: ${err.responseText}`);
-      receiveError(url);
+      dispatch(receiveError(url));
       topologyTimer = setTimeout(() => {
-        getTopologies(options);
+        getTopologies(options, dispatch);
       }, TOPOLOGY_INTERVAL);
     }
   });
 }
 
-export function getNodesDelta(topologyUrl, options) {
+export function getNodesDelta(topologyUrl, options, dispatch) {
   const optionsQuery = buildOptionsQuery(options);
 
   // only recreate websocket if url changed
   if (topologyUrl && (topologyUrl !== currentUrl || currentOptions !== optionsQuery)) {
-    createWebsocket(topologyUrl, optionsQuery);
+    createWebsocket(topologyUrl, optionsQuery, dispatch);
     currentUrl = topologyUrl;
     currentOptions = optionsQuery;
   }
 }
 
-export function getNodeDetails(topologyUrlsById, nodeMap) {
+export function getNodeDetails(topologyUrlsById, nodeMap, dispatch) {
   // get details for all opened nodes
   const obj = nodeMap.last();
   if (obj && topologyUrlsById.has(obj.topologyId)) {
@@ -140,42 +140,46 @@ export function getNodeDetails(topologyUrlsById, nodeMap) {
       success: (res) => {
         // make sure node is still selected
         if (nodeMap.has(res.node.id)) {
-          receiveNodeDetails(res.node);
+          dispatch(receiveNodeDetails(res.node));
         }
       },
       error: (err) => {
         log(`Error in node details request: ${err.responseText}`);
         // dont treat missing node as error
         if (err.status === 404) {
-          receiveNotFound(obj.id);
+          dispatch(receiveNotFound(obj.id));
         } else {
-          receiveError(topologyUrl);
+          dispatch(receiveError(topologyUrl));
         }
       }
     });
-  } else {
+  } else if (obj) {
     log('No details or url found for ', obj);
   }
 }
 
-export function getApiDetails() {
+export function getApiDetails(dispatch) {
   clearTimeout(apiDetailsTimer);
   const url = 'api';
   reqwest({
     url,
     success: (res) => {
-      receiveApiDetails(res);
-      apiDetailsTimer = setTimeout(getApiDetails, API_INTERVAL);
+      dispatch(receiveApiDetails(res));
+      apiDetailsTimer = setTimeout(() => {
+        getApiDetails(dispatch);
+      }, API_INTERVAL);
     },
     error: (err) => {
       log(`Error in api details request: ${err.responseText}`);
       receiveError(url);
-      apiDetailsTimer = setTimeout(getApiDetails, API_INTERVAL / 2);
+      apiDetailsTimer = setTimeout(() => {
+        getApiDetails(dispatch);
+      }, API_INTERVAL / 2);
     }
   });
 }
 
-export function doControlRequest(nodeId, control) {
+export function doControlRequest(nodeId, control, dispatch) {
   clearTimeout(controlErrorTimer);
   const url = `api/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
@@ -183,26 +187,26 @@ export function doControlRequest(nodeId, control) {
     method: 'POST',
     url,
     success: (res) => {
-      receiveControlSuccess(nodeId);
+      dispatch(receiveControlSuccess(nodeId));
       if (res) {
         if (res.pipe) {
-          receiveControlPipe(res.pipe, nodeId, res.raw_tty, true);
+          dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, true));
         }
         if (res.removedNode) {
-          receiveControlNodeRemoved(nodeId);
+          dispatch(receiveControlNodeRemoved(nodeId));
         }
       }
     },
     error: (err) => {
-      receiveControlError(nodeId, err.response);
+      dispatch(receiveControlError(nodeId, err.response));
       controlErrorTimer = setTimeout(() => {
-        clearControlError(nodeId);
+        dispatch(clearControlError(nodeId));
       }, 10000);
     }
   });
 }
 
-export function deletePipe(pipeId) {
+export function deletePipe(pipeId, dispatch) {
   const url = `api/pipe/${encodeURIComponent(pipeId)}`;
   reqwest({
     method: 'DELETE',
@@ -212,12 +216,12 @@ export function deletePipe(pipeId) {
     },
     error: (err) => {
       log(`Error closing pipe:${err}`);
-      receiveError(url);
+      dispatch(receiveError(url));
     }
   });
 }
 
-export function getPipeStatus(pipeId) {
+export function getPipeStatus(pipeId, dispatch) {
   const url = `api/pipe/${encodeURIComponent(pipeId)}/check`;
   reqwest({
     method: 'GET',
@@ -233,7 +237,7 @@ export function getPipeStatus(pipeId) {
         return;
       }
 
-      receiveControlPipeStatus(pipeId, status);
+      dispatch(receiveControlPipeStatus(pipeId, status));
     }
   });
 }

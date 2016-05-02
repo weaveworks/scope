@@ -1,12 +1,11 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 
 import NodeDetails from './node-details';
 import { DETAILS_PANEL_WIDTH as WIDTH, DETAILS_PANEL_OFFSET as OFFSET,
   DETAILS_PANEL_MARGINS as MARGINS } from '../constants/styles';
 
-export default class DetailsCard extends React.Component {
+class DetailsCard extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -54,4 +53,4 @@ export default class DetailsCard extends React.Component {
   }
 }
 
-reactMixin.onClass(DetailsCard, PureRenderMixin);
+export default connect()(DetailsCard);

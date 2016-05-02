@@ -27,8 +27,12 @@ module.exports = {
     'app': [
       './app/scripts/main',
       'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
-      'webpack/hot/only-dev-server',
-      './app/scripts/debug'
+      'webpack/hot/only-dev-server'
+    ],
+    'dev-app': [
+      './app/scripts/main.dev',
+      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
+      'webpack/hot/only-dev-server'
     ],
     'contrast-app': [
       './app/scripts/contrast-main',
@@ -40,8 +44,10 @@ module.exports = {
       'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
       'webpack/hot/only-dev-server'
     ],
-    vendors: ['classnames', 'd3', 'dagre', 'flux', 'immutable',
-      'lodash', 'page', 'react', 'react-dom', 'react-motion']
+    vendors: ['babel-polyfill', 'classnames', 'd3', 'dagre', 'filesize',
+      'immutable', 'lodash', 'moment', 'page', 'react',
+      'react-dom', 'react-motion', 'react-redux', 'redux', 'redux-thunk',
+      'reqwest']
   },
 
   // This will not actually create a app.js file in ./build. It is used
@@ -56,6 +62,7 @@ module.exports = {
     new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin(),
+    new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'contrast-app'],
       template: 'app/html/index.html',
@@ -65,6 +72,11 @@ module.exports = {
       chunks: ['vendors', 'terminal-app'],
       template: 'app/html/index.html',
       filename: 'terminal.html'
+    }),
+    new HtmlWebpackPlugin({
+      chunks: ['vendors', 'dev-app'],
+      template: 'app/html/index.html',
+      filename: 'dev.html'
     }),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'app'],

@@ -1,10 +1,9 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 
 import { changeTopologyOption } from '../actions/app-actions';
 
-export default class TopologyOptionAction extends React.Component {
+class TopologyOptionAction extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -14,7 +13,7 @@ export default class TopologyOptionAction extends React.Component {
   onClick(ev) {
     ev.preventDefault();
     const { optionId, topologyId, item } = this.props;
-    changeTopologyOption(optionId, item.get('value'), topologyId);
+    this.props.changeTopologyOption(optionId, item.get('value'), topologyId);
   }
 
   render() {
@@ -29,4 +28,7 @@ export default class TopologyOptionAction extends React.Component {
   }
 }
 
-reactMixin.onClass(TopologyOptionAction, PureRenderMixin);
+export default connect(
+  null,
+  { changeTopologyOption }
+)(TopologyOptionAction);
