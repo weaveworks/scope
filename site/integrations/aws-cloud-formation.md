@@ -16,7 +16,7 @@ The link below will launch a sample app using a Cloudformation template, but you
 
 **Ready to launch a stack?  Click here to launch a stack to AWS:**
 
-![](cloudformation-launch-stack.png)[1]
+[![](cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https:%2F%2Fs3.amazonaws.com%2Fweaveworks-cfn-public%2Fintegrations%2Fecs-identiorca.json)
 
 
 For step by step instructions on how to configure the stack, see: [Install Weave to AWS with One-Click](https://www.weave.works/deploy-weave-aws-cloudformation-template/)
@@ -61,4 +61,3 @@ For step by step instructions on how to configure the stack, see: [Install Weave
 
 
 
-[1]: https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https:%2F%2Fs3.amazonaws.com%2Fweaveworks-cfn-public%2Fintegrations%2Fecs-identiorca.json
