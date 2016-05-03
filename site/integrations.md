@@ -9,7 +9,7 @@ Weave Scope integrates with the following orchestrators and cloud environments:
  * [Launching Scope as a Service with Docker Compose](#launching-scope-as-a-service-and-docker-compose)
  * [Visualizing Kubernetes Clusters with Scope](/site/integrations/kubernetes.md)
  * [AWS Cloud Formation](/site/integrations/aws-cloud-formation.md)
- * [Installing Scope as a DC/OS Package](/site/dc-os.md)
+ * [Using Scope with DC/OS](https://www.weave.works/guides/deploy-weave-scope-dcos/)
  * [Weave Scope and Rancher Catalog](/site/integrations/rancher-scope.md)
  
 
@@ -17,7 +17,9 @@ Weave Scope integrates with the following orchestrators and cloud environments:
 
 To use Scope with Docker Compose, obtain your `SCOPE_SERVICE_TOKEN`. This is found in the console after you've logged in to the Scope service.
 
-Version 2 of this YAML file supports networks and volumes as defined by any of the plugins you might be using. See [Compose File Reference](https://docs.docker.com/compose/compose-file/) for more information. 
+Launch Docker Compose using one of the two fragments below and then set the value of the token as an environment variable. 
+
+Version 2 of this YAML file supports networks and volumes as defined by any plugins you might be using. See [Compose File Reference](https://docs.docker.com/compose/compose-file/) for more information. 
 
 Launch Docker Compose with one of the two fragments below and set the value of the Scope as a Service token in an environment variable:
 

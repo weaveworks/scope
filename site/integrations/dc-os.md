@@ -1,5 +1,5 @@
 ---
-title: Installing Scope as a DC-OS Package
+title: Installing Scope as a DC/OS Package
 menu_order: 30
 ---
 
