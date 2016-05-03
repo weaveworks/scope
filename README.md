@@ -211,6 +211,14 @@ The SCOPE_SERVICE_TOKEN is found when you [log in to the Scope service](https://
         - "--service-token"
         - "${SCOPE_SERVICE_TOKEN}"
 
+## <a name="using-weave-scope-with-amazon-ecs"></a>Using Weave Scope with Amazon's EC2 Container Service
+
+We currently provide three options for launching Weave Scope in ECS:
+
+* A [CloudFormation template](https://www.weave.works/deploy-weave-aws-cloudformation-template/) to launch and easily evaluate Scope directly from your browser.
+* An [Amazon Machine Image (AMI)](https://github.com/weaveworks/integrations/tree/master/aws/ecs#weaves-ecs-amis) for each ECS region.
+* [A simple way to tailor the AMIs to your needs](https://github.com/weaveworks/integrations/tree/master/aws/ecs#creating-your-own-customized-weave-ecs-ami). 
+
 ## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
 
 Scope comes with built-in Kubernetes support. We recommend to run Scope natively
