@@ -9,14 +9,19 @@ import (
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/kubernetes/pkg/types"
 
 	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 var (
 	nodeName    = "nodename"
+	pod1UID     = "a1b2c3d4e5"
+	pod2UID     = "f6g7h8i9j0"
 	podTypeMeta = unversioned.TypeMeta{
 		Kind:       "Pod",
 		APIVersion: "v1",
@@ -25,7 +30,7 @@ var (
 		TypeMeta: podTypeMeta,
 		ObjectMeta: api.ObjectMeta{
 			Name:              "pong-a",
-			UID:               "pong-a",
+			UID:               types.UID(pod1UID),
 			Namespace:         "ping",
 			CreationTimestamp: unversioned.Now(),
 			Labels:            map[string]string{"ponger": "true"},
@@ -45,7 +50,7 @@ var (
 		TypeMeta: podTypeMeta,
 		ObjectMeta: api.ObjectMeta{
 			Name:              "pong-b",
-			UID:               "pong-b",
+			UID:               types.UID(pod2UID),
 			Namespace:         "ping",
 			CreationTimestamp: unversioned.Now(),
 			Labels:            map[string]string{"ponger": "true"},
@@ -129,7 +134,6 @@ func (*mockClient) WalkNodes(f func(*api.Node) error) error {
 }
 func (*mockClient) WatchPods(func(kubernetes.Event, kubernetes.Pod)) {}
 func (c *mockClient) GetLogs(namespaceID, podName string) (io.ReadCloser, error) {
-	fmt.Println("here", namespaceID, podName)
 	r, ok := c.logs[namespaceID+";"+podName]
 	if !ok {
 		return nil, fmt.Errorf("Not found")
@@ -160,8 +164,8 @@ func TestReporter(t *testing.T) {
 		return nodeName, nil
 	}
 
-	pod1ID := report.MakePodNodeID("pong-a")
-	pod2ID := report.MakePodNodeID("pong-b")
+	pod1ID := report.MakePodNodeID(pod1UID)
+	pod2ID := report.MakePodNodeID(pod2UID)
 	serviceID := report.MakeServiceNodeID("ping", "pongservice")
 	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", nil).Report()
 
@@ -222,6 +226,24 @@ func TestReporter(t *testing.T) {
 	}
 }
 
+func TestTagger(t *testing.T) {
+	rpt := report.MakeReport()
+	rpt.Container.AddNode(report.MakeNodeWith("container1", map[string]string{
+		docker.LabelPrefix + "io.kubernetes.pod.uid": "123456",
+	}))
+
+	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", nil).Tag(rpt)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	have, ok := rpt.Container.Nodes["container1"].Parents.Lookup(report.Pod)
+	want := report.EmptyStringSet.Add(report.MakePodNodeID("123456"))
+	if !ok || !reflect.DeepEqual(have, want) {
+		t.Errorf("Expected container to have pod parent %v %v", have, want)
+	}
+}
+
 type callbackReadCloser struct {
 	io.Reader
 	close func() error
@@ -266,7 +288,7 @@ func TestReporterGetLogs(t *testing.T) {
 	podNamespaceAndID := "ping;pong-a"
 	pod1Request := xfer.Request{
 		AppID:   "appID",
-		NodeID:  report.MakePodNodeID("pong-a"),
+		NodeID:  report.MakePodNodeID(pod1UID),
 		Control: kubernetes.GetLogs,
 	}
 
