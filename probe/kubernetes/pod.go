@@ -37,13 +37,13 @@ type Pod interface {
 
 type pod struct {
 	*api.Pod
-	serviceIDs []string
+	serviceIDs report.StringSet
 	Node       *api.Node
 }
 
 // NewPod creates a new Pod
 func NewPod(p *api.Pod) Pod {
-	return &pod{Pod: p}
+	return &pod{Pod: p, serviceIDs: report.MakeStringSet()}
 }
 
 func (p *pod) UID() string {
@@ -75,7 +75,7 @@ func (p *pod) Labels() labels.Labels {
 }
 
 func (p *pod) AddServiceID(id string) {
-	p.serviceIDs = append(p.serviceIDs, id)
+	p.serviceIDs = p.serviceIDs.Add(id)
 }
 
 func (p *pod) State() string {
@@ -95,10 +95,7 @@ func (p *pod) GetNode(probeID string) report.Node {
 		PodState:   p.State(),
 		PodIP:      p.Status.PodIP,
 		report.ControlProbeID: probeID,
-	})
-	if len(p.serviceIDs) > 0 {
-		n = n.WithLatests(map[string]string{ServiceIDs: strings.Join(p.serviceIDs, " ")})
-	}
+	}).WithSets(report.EmptySets.Add(ServiceIDs, p.serviceIDs))
 	for _, serviceID := range p.serviceIDs {
 		segments := strings.SplitN(serviceID, "/", 2)
 		if len(segments) != 2 {

@@ -16,37 +16,40 @@ const (
 
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
-var PodRenderer = MakeFilter(
-	func(n report.Node) bool {
-		// Drop deleted or empty pods
-		state, ok := n.Latest.Lookup(kubernetes.PodState)
-		return HasChildren(report.Container)(n) && (!ok || state != kubernetes.StateDeleted)
-	},
-	MakeReduce(
-		MakeFilter(
-			func(n report.Node) bool {
-				// Drop unconnected pseudo nodes (could appear due to filtering)
-				_, isConnected := n.Latest.Lookup(IsConnected)
-				return n.Topology != Pseudo || isConnected
-			},
-			ColorConnected(MakeMap(
-				MapContainer2Pod,
-				ContainerWithImageNameRenderer,
-			)),
+var PodRenderer = ApplyDecorators(
+	MakeFilter(
+		func(n report.Node) bool {
+			state, ok := n.Latest.Lookup(kubernetes.PodState)
+			return (!ok || state != kubernetes.StateDeleted)
+		},
+		MakeReduce(
+			MakeFilter(
+				func(n report.Node) bool {
+					// Drop unconnected pseudo nodes (could appear due to filtering)
+					_, isConnected := n.Latest.Lookup(IsConnected)
+					return n.Topology != Pseudo || isConnected
+				},
+				ColorConnected(MakeMap(
+					MapContainer2Pod,
+					ContainerWithImageNameRenderer,
+				)),
+			),
+			SelectPod,
 		),
-		SelectPod,
 	),
 )
 
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
-var PodServiceRenderer = FilterEmpty(report.Pod,
-	MakeReduce(
-		MakeMap(
-			MapPod2Service,
-			PodRenderer,
+var PodServiceRenderer = ApplyDecorators(
+	FilterEmpty(report.Pod,
+		MakeReduce(
+			MakeMap(
+				MapPod2Service,
+				PodRenderer,
+			),
+			SelectService,
 		),
-		SelectService,
 	),
 )
 
@@ -117,13 +120,13 @@ func MapPod2Service(pod report.Node, _ report.Networks) report.Nodes {
 	if !ok {
 		return report.Nodes{}
 	}
-	ids, ok := pod.Latest.Lookup(kubernetes.ServiceIDs)
+	serviceIDs, ok := pod.Sets.Lookup(kubernetes.ServiceIDs)
 	if !ok {
 		return report.Nodes{}
 	}
 
 	result := report.Nodes{}
-	for _, serviceID := range strings.Fields(ids) {
+	for _, serviceID := range serviceIDs {
 		serviceName := strings.TrimPrefix(serviceID, namespace+"/")
 		id := report.MakeServiceNodeID(namespace, serviceName)
 		node := NewDerivedNode(id, pod).WithTopology(report.Service)

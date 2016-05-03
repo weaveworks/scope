@@ -275,6 +275,14 @@ func HasChildren(topology string) FilterFunc {
 	}
 }
 
+// IsNamespace checks if the node is a pod/service in the specified namespace
+func IsNamespace(namespace string) FilterFunc {
+	return func(n report.Node) bool {
+		gotNamespace, ok := n.Latest.Lookup(kubernetes.Namespace)
+		return !ok || namespace == gotNamespace
+	}
+}
+
 var systemContainerNames = map[string]struct{}{
 	"weavescope": {},
 	"weavedns":   {},

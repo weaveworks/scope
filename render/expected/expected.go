@@ -238,8 +238,8 @@ var (
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
 
-	unmanagedServerID   = render.MakePseudoNodeID(render.UnmanagedID, fixture.ServerHostID)
-	unmanagedServerNode = pseudo(unmanagedServerID, render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
+	UnmanagedServerID   = render.MakePseudoNodeID(render.UnmanagedID, fixture.ServerHostID)
+	unmanagedServerNode = pseudo(UnmanagedServerID, render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
 		uncontainedServerNode,
 		RenderedEndpoints[fixture.NonContainerNodeID],
 		RenderedProcesses[fixture.NonContainerProcessNodeID],
@@ -262,7 +262,7 @@ var (
 				RenderedContainers[fixture.ServerContainerNodeID],
 			)),
 
-		unmanagedServerID:         unmanagedServerNode,
+		UnmanagedServerID:         unmanagedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerPodNodeID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
@@ -282,7 +282,7 @@ var (
 				RenderedPods[fixture.ServerPodNodeID],
 			)),
 
-		unmanagedServerID:         unmanagedServerNode,
+		UnmanagedServerID:         unmanagedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServiceNodeID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
