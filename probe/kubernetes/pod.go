@@ -11,21 +11,23 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	PodID           = "kubernetes_pod_id"
-	PodName         = "kubernetes_pod_name"
-	PodCreated      = "kubernetes_pod_created"
-	PodContainerIDs = "kubernetes_pod_container_ids"
-	PodState        = "kubernetes_pod_state"
-	PodLabelPrefix  = "kubernetes_pod_labels_"
-	ServiceIDs      = "kubernetes_service_ids"
+	PodID          = "kubernetes_pod_id"
+	PodName        = "kubernetes_pod_name"
+	PodCreated     = "kubernetes_pod_created"
+	PodState       = "kubernetes_pod_state"
+	PodLabelPrefix = "kubernetes_pod_labels_"
+	PodIP          = "kubernetes_pod_ip"
+	ServiceIDs     = "kubernetes_service_ids"
+
+	StateDeleted = "deleted"
 )
 
 // Pod represents a Kubernetes pod
 type Pod interface {
+	UID() string
 	ID() string
 	Name() string
 	Namespace() string
-	ContainerIDs() []string
 	Created() string
 	AddServiceID(id string)
 	Labels() labels.Labels
@@ -44,6 +46,14 @@ func NewPod(p *api.Pod) Pod {
 	return &pod{Pod: p}
 }
 
+func (p *pod) UID() string {
+	// Work around for master pod not reporting the right UID.
+	if hash, ok := p.ObjectMeta.Annotations["kubernetes.io/config.hash"]; ok {
+		return hash
+	}
+	return string(p.ObjectMeta.UID)
+}
+
 func (p *pod) ID() string {
 	return p.ObjectMeta.Namespace + "/" + p.ObjectMeta.Name
 }
@@ -58,14 +68,6 @@ func (p *pod) Namespace() string {
 
 func (p *pod) Created() string {
 	return p.ObjectMeta.CreationTimestamp.Format(time.RFC822)
-}
-
-func (p *pod) ContainerIDs() []string {
-	ids := []string{}
-	for _, container := range p.Status.ContainerStatuses {
-		ids = append(ids, strings.TrimPrefix(container.ContainerID, "docker://"))
-	}
-	return ids
 }
 
 func (p *pod) Labels() labels.Labels {
@@ -85,13 +87,13 @@ func (p *pod) NodeName() string {
 }
 
 func (p *pod) GetNode(probeID string) report.Node {
-	n := report.MakeNodeWith(report.MakePodNodeID(p.Namespace(), p.Name()), map[string]string{
-		PodID:                 p.ID(),
-		PodName:               p.Name(),
-		Namespace:             p.Namespace(),
-		PodCreated:            p.Created(),
-		PodContainerIDs:       strings.Join(p.ContainerIDs(), " "),
-		PodState:              p.State(),
+	n := report.MakeNodeWith(report.MakePodNodeID(p.UID()), map[string]string{
+		PodID:      p.ID(),
+		PodName:    p.Name(),
+		Namespace:  p.Namespace(),
+		PodCreated: p.Created(),
+		PodState:   p.State(),
+		PodIP:      p.Status.PodIP,
 		report.ControlProbeID: probeID,
 	})
 	if len(p.serviceIDs) > 0 {
@@ -107,6 +109,6 @@ func (p *pod) GetNode(probeID string) report.Node {
 		)
 	}
 	n = n.AddTable(PodLabelPrefix, p.ObjectMeta.Labels)
-	n = n.WithControls(GetLogs)
+	n = n.WithControls(GetLogs, DeletePod)
 	return n
 }

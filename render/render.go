@@ -143,7 +143,7 @@ func (ad applyDecorator) Stats(rpt report.Report, dct Decorator) Stats {
 	if dct != nil {
 		return dct(ad.Renderer).Stats(rpt, nil)
 	}
-	return ad.Renderer.Stats(rpt, nil)
+	return Stats{}
 }
 
 // ApplyDecorators returns a renderer which will apply the given decorators

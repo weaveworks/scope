@@ -1,39 +1,23 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
-import AppStore from '../stores/app-store';
 import Terminal from './terminal';
 import { receiveControlPipeFromParams } from '../actions/app-actions';
 
-function getStateFromStores() {
-  return {
-    controlPipe: AppStore.getControlPipe()
-  };
-}
-
-export class TerminalApp extends React.Component {
+class TerminalApp extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-    this.onChange = this.onChange.bind(this);
 
     const paramString = window.location.hash.split('/').pop();
     const params = JSON.parse(decodeURIComponent(paramString));
-    receiveControlPipeFromParams(params.pipe.id, null, params.pipe.raw, false);
+    this.props.receiveControlPipeFromParams(params.pipe.id, null, params.pipe.raw, false);
 
     this.state = {
       title: params.title,
       titleBarColor: params.titleBarColor,
-      statusBarColor: params.statusBarColor,
-      controlPipe: AppStore.getControlPipe()
+      statusBarColor: params.statusBarColor
     };
-  }
-
-  componentDidMount() {
-    AppStore.addListener(this.onChange);
-  }
-
-  onChange() {
-    this.setState(getStateFromStores());
   }
 
   render() {
@@ -41,8 +25,8 @@ export class TerminalApp extends React.Component {
 
     return (
       <div className="terminal-app" style={style}>
-        {this.state.controlPipe && <Terminal
-          pipe={this.state.controlPipe}
+        {this.props.controlPipe && <Terminal
+          pipe={this.props.controlPipe}
           titleBarColor={this.state.titleBarColor}
           statusBarColor={this.state.statusBarColor}
           title={this.state.title}
@@ -51,3 +35,14 @@ export class TerminalApp extends React.Component {
     );
   }
 }
+
+function mapStateToProps(state) {
+  return {
+    controlPipe: state.get('controlPipes').last()
+  };
+}
+
+export default connect(
+  mapStateToProps,
+  { receiveControlPipeFromParams }
+)(TerminalApp);

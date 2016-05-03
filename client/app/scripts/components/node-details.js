@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import React from 'react';
+import { connect } from 'react-redux';
 
 import NodeDetailsControls from './node-details/node-details-controls';
 import NodeDetailsHealth from './node-details/node-details-health';
@@ -11,7 +12,7 @@ import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-acti
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
 import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
 
-export default class NodeDetails extends React.Component {
+export class NodeDetails extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -21,12 +22,12 @@ export default class NodeDetails extends React.Component {
 
   handleClickClose(ev) {
     ev.preventDefault();
-    clickCloseDetails(this.props.nodeId);
+    this.props.clickCloseDetails(this.props.nodeId);
   }
 
   handleShowTopologyForNode(ev) {
     ev.preventDefault();
-    clickShowTopologyForNode(this.props.topologyId, this.props.nodeId);
+    this.props.clickShowTopologyForNode(this.props.topologyId, this.props.nodeId);
   }
 
   componentDidMount() {
@@ -215,3 +216,14 @@ export default class NodeDetails extends React.Component {
     setDocumentTitle(this.props.details && this.props.details.label);
   }
 }
+
+function mapStateToProps(state) {
+  return {
+    nodes: state.get('nodes')
+  };
+}
+
+export default connect(
+  mapStateToProps,
+  { clickCloseDetails, clickShowTopologyForNode }
+)(NodeDetails);

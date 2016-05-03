@@ -1,20 +1,18 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 
 import { clickTopology } from '../actions/app-actions';
 
-export default class Topologies extends React.Component {
+class Topologies extends React.Component {
 
   constructor(props, context) {
     super(props, context);
     this.onTopologyClick = this.onTopologyClick.bind(this);
-    this.renderSubTopology = this.renderSubTopology.bind(this);
   }
 
   onTopologyClick(ev) {
     ev.preventDefault();
-    clickTopology(ev.currentTarget.getAttribute('rel'));
+    this.props.clickTopology(ev.currentTarget.getAttribute('rel'));
   }
 
   renderSubTopology(subTopology) {
@@ -55,7 +53,7 @@ export default class Topologies extends React.Component {
         </div>
         <div className="topologies-sub">
           {topology.has('sub_topologies')
-            && topology.get('sub_topologies').map(this.renderSubTopology)}
+            && topology.get('sub_topologies').map(subTop => this.renderSubTopology(subTop))}
         </div>
       </div>
     );
@@ -72,4 +70,14 @@ export default class Topologies extends React.Component {
   }
 }
 
-reactMixin.onClass(Topologies, PureRenderMixin);
+function mapStateToProps(state) {
+  return {
+    topologies: state.get('topologies'),
+    currentTopology: state.get('currentTopology')
+  };
+}
+
+export default connect(
+  mapStateToProps,
+  { clickTopology }
+)(Topologies);

@@ -54,7 +54,7 @@ func (c *mockContainer) StartGatheringStats() error {
 
 func (c *mockContainer) StopGatheringStats() {}
 
-func (c *mockContainer) GetNode(_ []net.IP) report.Node {
+func (c *mockContainer) GetNode() report.Node {
 	return report.MakeNodeWith(report.MakeContainerNodeID(c.c.ID), map[string]string{
 		docker.ContainerID:   c.c.ID,
 		docker.ContainerName: c.c.Name,
@@ -62,6 +62,13 @@ func (c *mockContainer) GetNode(_ []net.IP) report.Node {
 	}).WithParents(report.EmptySets.
 		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.c.Image))),
 	)
+}
+
+func (c *mockContainer) NetworkMode() (string, bool) {
+	return "", false
+}
+func (c *mockContainer) NetworkInfo([]net.IP) report.Sets {
+	return report.EmptySets
 }
 
 func (c *mockContainer) Container() *client.Container {
@@ -443,4 +450,19 @@ func TestRegistryDelete(t *testing.T) {
 			mtx.Unlock()
 		}
 	})
+}
+
+func TestDockerImageName(t *testing.T) {
+	for _, input := range []struct{ in, name string }{
+		{"foo/bar", "foo/bar"},
+		{"foo/bar:baz", "foo/bar"},
+		{"reg:123/foo/bar:baz", "foo/bar"},
+		{"docker-registry.domain.name:5000/repo/image1:ver", "repo/image1"},
+		{"foo", "foo"},
+	} {
+		name := docker.ImageNameWithoutVersion(input.in)
+		if name != input.name {
+			t.Fatalf("%s: %s != %s", input.in, name, input.name)
+		}
+	}
 }

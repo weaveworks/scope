@@ -1,10 +1,10 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 
+import { getActiveTopologyOptions, getCurrentTopologyOptions } from '../utils/topology-utils';
 import TopologyOptionAction from './topology-option-action';
 
-export default class TopologyOptions extends React.Component {
+class TopologyOptions extends React.Component {
 
   renderOption(option) {
     const { activeOptions, topologyId } = this.props;
@@ -26,10 +26,21 @@ export default class TopologyOptions extends React.Component {
   render() {
     return (
       <div className="topology-options">
-        {this.props.options.toIndexedSeq().map(option => this.renderOption(option))}
+        {this.props.options && this.props.options.toIndexedSeq().map(
+          option => this.renderOption(option))}
       </div>
     );
   }
 }
 
-reactMixin.onClass(TopologyOptions, PureRenderMixin);
+function mapStateToProps(state) {
+  return {
+    options: getCurrentTopologyOptions(state),
+    topologyId: state.get('currentTopologyId'),
+    activeOptions: getActiveTopologyOptions(state)
+  };
+}
+
+export default connect(
+  mapStateToProps
+)(TopologyOptions);

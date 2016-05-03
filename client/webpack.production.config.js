@@ -24,8 +24,10 @@ module.exports = {
     app: './app/scripts/main',
     'contrast-app': './app/scripts/contrast-main',
     'terminal-app': './app/scripts/terminal-main',
-    vendors: ['classnames', 'd3', 'dagre', 'flux', 'immutable',
-      'lodash', 'page', 'react', 'react-dom', 'react-motion']
+    // keep only some in here, to make vendors and app bundles roughly same size
+    vendors: ['babel-polyfill', 'classnames', 'd3', 'immutable',
+      'lodash', 'react', 'react-dom', 'react-redux',
+      'redux', 'redux-thunk']
   },
 
   output: {
@@ -85,6 +87,7 @@ module.exports = {
     new webpack.DefinePlugin(GLOBALS),
     new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
     new webpack.optimize.OccurenceOrderPlugin(true),
+    new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
     new webpack.optimize.UglifyJsPlugin({
       sourceMap: false,
       compress: {

@@ -1,7 +1,6 @@
 import page from 'page';
 
 import { route } from '../actions/app-actions';
-import AppStore from '../stores/app-store';
 
 //
 // page.js won't match the routes below if ":state" has a slash in it, so replace those before we
@@ -27,8 +26,24 @@ function shouldReplaceState(prevState, nextState) {
   return terminalToTerminal || closingTheTerminal;
 }
 
-export function updateRoute() {
-  const state = AppStore.getAppState();
+export function getUrlState(state) {
+  const cp = state.get('controlPipes').last();
+  const nodeDetails = state.get('nodeDetails').toIndexedSeq().map(details => ({
+    id: details.id, label: details.label, topologyId: details.topologyId
+  }));
+
+  return {
+    controlPipe: cp ? cp.toJS() : null,
+    nodeDetails: nodeDetails.toJS(),
+    selectedNodeId: state.get('selectedNodeId'),
+    pinnedMetricType: state.get('pinnedMetricType'),
+    topologyId: state.get('currentTopologyId'),
+    topologyOptions: state.get('topologyOptions').toJS() // all options
+  };
+}
+
+export function updateRoute(getState) {
+  const state = getUrlState(getState());
   const stateUrl = encodeURL(JSON.stringify(state));
   const dispatch = false;
   const urlStateString = window.location.hash
@@ -44,17 +59,19 @@ export function updateRoute() {
   }
 }
 
-page('/', () => {
-  updateRoute();
-});
 
-page('/state/:state', (ctx) => {
-  const state = JSON.parse(ctx.params.state);
-  route(state);
-});
-
-export function getRouter() {
+export function getRouter(dispatch, initialState) {
   // strip any trailing '/'s.
   page.base(window.location.pathname.replace(/\/$/, ''));
+
+  page('/', () => {
+    dispatch(route(initialState));
+  });
+
+  page('/state/:state', (ctx) => {
+    const state = JSON.parse(ctx.params.state);
+    dispatch(route(state));
+  });
+
   return page;
 }

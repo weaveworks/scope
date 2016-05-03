@@ -24,6 +24,9 @@ const (
 	// EdgeDelim separates two node IDs when they need to exist in the same key.
 	// Concretely, it separates node IDs in keys that represent edges.
 	EdgeDelim = "|"
+
+	// Key added to nodes to prevent them being joined with conntracked connections
+	DoesNotMakeConnections = "does_not_make_connections"
 )
 
 var (
@@ -112,8 +115,8 @@ func MakeContainerImageNodeID(containerImageID string) string {
 }
 
 // MakePodNodeID produces a pod node ID from its composite parts.
-func MakePodNodeID(namespaceID, podID string) string {
-	return namespaceID + ScopeDelim + podID
+func MakePodNodeID(uid string) string {
+	return uid + ScopeDelim + "<pod>"
 }
 
 // MakeServiceNodeID produces a service node ID from its composite parts.
@@ -167,12 +170,12 @@ func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) 
 }
 
 // ParsePodNodeID produces the namespace ID and pod ID from an pod node ID.
-func ParsePodNodeID(podNodeID string) (namespaceID, podID string, ok bool) {
+func ParsePodNodeID(podNodeID string) (uid string, ok bool) {
 	fields := strings.SplitN(podNodeID, ScopeDelim, 2)
-	if len(fields) != 2 {
-		return "", "", false
+	if len(fields) != 2 || fields[1] != "<pod>" {
+		return "", false
 	}
-	return fields[0], fields[1], true
+	return fields[0], true
 }
 
 // ExtractHostID extracts the host id from Node

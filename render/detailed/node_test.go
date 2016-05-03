@@ -236,6 +236,11 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Label:      fixture.ServerHostName,
 				TopologyID: "hosts",
 			},
+			{
+				ID:         fixture.ServerPodNodeID,
+				Label:      "pong-b",
+				TopologyID: "pods",
+			},
 		},
 		Connections: []detailed.ConnectionsSummary{
 			{
@@ -310,16 +315,17 @@ func TestMakeDetailedPodNode(t *testing.T) {
 	serverProcessNodeSummary.Linkable = true // Temporary workaround for: https://github.com/weaveworks/scope/issues/1295
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
-			ID:       id,
-			Label:    "pong-b",
-			Rank:     "ping/pong-b",
-			Shape:    "heptagon",
-			Linkable: true,
-			Pseudo:   false,
+			ID:         id,
+			Label:      "pong-b",
+			LabelMinor: "1 container",
+			Rank:       "ping/pong-b",
+			Shape:      "heptagon",
+			Linkable:   true,
+			Pseudo:     false,
 			Metadata: []report.MetadataRow{
 				{ID: "kubernetes_pod_id", Label: "ID", Value: "ping/pong-b", Priority: 1},
 				{ID: "kubernetes_pod_state", Label: "State", Value: "running", Priority: 2},
-				{ID: "kubernetes_namespace", Label: "Namespace", Value: "ping", Priority: 3},
+				{ID: "kubernetes_namespace", Label: "Namespace", Value: "ping", Priority: 5},
 			},
 		},
 		Controls: []detailed.ControlInstance{},
@@ -359,24 +365,6 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", render.IncomingInternetID, "", fixture.ServerPodNodeID, "", 80),
-						NodeID:   render.IncomingInternetID,
-						Label:    render.InboundMajor,
-						Linkable: true,
-						Metadata: []report.MetadataRow{
-							{
-								ID:       "port",
-								Value:    "80",
-								Datatype: "number",
-							},
-							{
-								ID:       "count",
-								Value:    "1",
-								Datatype: "number",
-							},
-						},
-					},
-					{
 						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ClientPodNodeID, "", fixture.ServerPodNodeID, "", 80),
 						NodeID:   fixture.ClientPodNodeID,
 						Label:    "pong-a",
@@ -390,6 +378,24 @@ func TestMakeDetailedPodNode(t *testing.T) {
 							{
 								ID:       "count",
 								Value:    "2",
+								Datatype: "number",
+							},
+						},
+					},
+					{
+						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", render.IncomingInternetID, "", fixture.ServerPodNodeID, "", 80),
+						NodeID:   render.IncomingInternetID,
+						Label:    render.InboundMajor,
+						Linkable: true,
+						Metadata: []report.MetadataRow{
+							{
+								ID:       "port",
+								Value:    "80",
+								Datatype: "number",
+							},
+							{
+								ID:       "count",
+								Value:    "1",
 								Datatype: "number",
 							},
 						},

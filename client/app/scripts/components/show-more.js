@@ -1,8 +1,7 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 
-export default class ShowMore extends React.Component {
+class ShowMore extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -31,4 +30,4 @@ export default class ShowMore extends React.Component {
   }
 }
 
-reactMixin.onClass(ShowMore, PureRenderMixin);
+export default connect()(ShowMore);

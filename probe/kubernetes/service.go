@@ -20,6 +20,7 @@ const (
 
 // Service represents a Kubernetes service
 type Service interface {
+	UID() string
 	ID() string
 	Name() string
 	Namespace() string
@@ -34,6 +35,10 @@ type service struct {
 // NewService creates a new Service
 func NewService(s *api.Service) Service {
 	return &service{Service: s}
+}
+
+func (s *service) UID() string {
+	return string(s.ObjectMeta.UID)
 }
 
 func (s *service) ID() string {
@@ -66,5 +71,9 @@ func (s *service) GetNode() report.Node {
 	if s.Spec.LoadBalancerIP != "" {
 		latest[ServicePublicIP] = s.Spec.LoadBalancerIP
 	}
-	return report.MakeNodeWith(report.MakeServiceNodeID(s.Namespace(), s.Name()), latest).AddTable(ServiceLabelPrefix, s.Labels)
+	return report.MakeNodeWith(
+		report.MakeServiceNodeID(s.Namespace(), s.Name()),
+		latest,
+	).
+		AddTable(ServiceLabelPrefix, s.Labels)
 }

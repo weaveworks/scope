@@ -8,6 +8,8 @@ import (
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/labels"
 
+	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
@@ -18,8 +20,9 @@ var (
 	PodMetadataTemplates = report.MetadataTemplates{
 		PodID:      {ID: PodID, Label: "ID", From: report.FromLatest, Priority: 1},
 		PodState:   {ID: PodState, Label: "State", From: report.FromLatest, Priority: 2},
-		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 3},
-		PodCreated: {ID: PodCreated, Label: "Created", From: report.FromLatest, Priority: 4},
+		PodIP:      {ID: PodIP, Label: "IP", From: report.FromLatest, Priority: 3},
+		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 5},
+		PodCreated: {ID: PodCreated, Label: "Created", From: report.FromLatest, Priority: 6},
 	}
 
 	ServiceMetadataTemplates = report.MetadataTemplates{
@@ -44,16 +47,19 @@ type Reporter struct {
 	client  Client
 	pipes   controls.PipeClient
 	probeID string
+	probe   *probe.Probe
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(client Client, pipes controls.PipeClient, probeID string) *Reporter {
+func NewReporter(client Client, pipes controls.PipeClient, probeID string, probe *probe.Probe) *Reporter {
 	reporter := &Reporter{
 		client:  client,
 		pipes:   pipes,
 		probeID: probeID,
+		probe:   probe,
 	}
 	reporter.registerControls()
+	client.WatchPods(reporter.podEvent)
 	return reporter
 }
 
@@ -65,6 +71,68 @@ func (r *Reporter) Stop() {
 // Name of this reporter, for metrics gathering
 func (Reporter) Name() string { return "K8s" }
 
+func (r *Reporter) podEvent(e Event, pod Pod) {
+	switch e {
+	case ADD:
+		rpt := report.MakeReport()
+		rpt.Shortcut = true
+		rpt.Pod.AddNode(pod.GetNode(r.probeID))
+		r.probe.Publish(rpt)
+	case DELETE:
+		rpt := report.MakeReport()
+		rpt.Shortcut = true
+		rpt.Pod.AddNode(
+			report.MakeNodeWith(
+				report.MakePodNodeID(pod.UID()),
+				map[string]string{PodState: StateDeleted},
+			),
+		)
+		r.probe.Publish(rpt)
+	}
+}
+
+func isPauseContainer(n report.Node, rpt report.Report) bool {
+	containerImageIDs, ok := n.Sets.Lookup(report.ContainerImage)
+	if !ok {
+		return false
+	}
+	for _, imageNodeID := range containerImageIDs {
+		imageNode, ok := rpt.ContainerImage.Nodes[imageNodeID]
+		if !ok {
+			continue
+		}
+		imageName, ok := imageNode.Latest.Lookup(docker.ImageName)
+		if !ok {
+			continue
+		}
+		if docker.ImageNameWithoutVersion(imageName) == "google_containers/pause" {
+			return true
+		}
+	}
+	return false
+}
+
+// Tag adds pod parents to container nodes.
+func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
+	for id, n := range rpt.Container.Nodes {
+		uid, ok := n.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.uid")
+		if !ok {
+			continue
+		}
+
+		// Tag the pause containers with "does-not-make-connections"
+		if isPauseContainer(n, rpt) {
+			n = n.WithLatest(report.DoesNotMakeConnections, mtime.Now(), "")
+		}
+
+		rpt.Container.Nodes[id] = n.WithParents(report.EmptySets.Add(
+			report.Pod,
+			report.EmptyStringSet.Add(report.MakePodNodeID(uid)),
+		))
+	}
+	return rpt, nil
+}
+
 // Report generates a Report containing Container and ContainerImage topologies
 func (r *Reporter) Report() (report.Report, error) {
 	result := report.MakeReport()
@@ -72,13 +140,12 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	podTopology, containerTopology, err := r.podTopology(services)
+	podTopology, err := r.podTopology(services)
 	if err != nil {
 		return result, err
 	}
 	result.Service = result.Service.Merge(serviceTopology)
 	result.Pod = result.Pod.Merge(podTopology)
-	result.Container = result.Container.Merge(containerTopology)
 	return result, nil
 }
 
@@ -118,13 +185,12 @@ var GetNodeName = func(r *Reporter) (string, error) {
 	return nodeName, err
 }
 
-func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topology, error) {
+func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
 			WithTableTemplates(PodTableTemplates)
-		containers = report.MakeTopology()
-		selectors  = map[string]labels.Selector{}
+		selectors = map[string]labels.Selector{}
 	)
 	pods.Controls.AddControl(report.Control{
 		ID:    GetLogs,
@@ -132,13 +198,19 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 		Icon:  "fa-desktop",
 		Rank:  0,
 	})
+	pods.Controls.AddControl(report.Control{
+		ID:    DeletePod,
+		Human: "Delete",
+		Icon:  "fa-trash-o",
+		Rank:  1,
+	})
 	for _, service := range services {
 		selectors[service.ID()] = service.Selector()
 	}
 
 	thisNodeName, err := GetNodeName(r)
 	if err != nil {
-		return pods, containers, err
+		return pods, err
 	}
 	err = r.client.WalkPods(func(p Pod) error {
 		if p.NodeName() != thisNodeName {
@@ -149,18 +221,8 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, report.Topo
 				p.AddServiceID(serviceID)
 			}
 		}
-		nodeID := report.MakePodNodeID(p.Namespace(), p.Name())
 		pods = pods.AddNode(p.GetNode(r.probeID))
-
-		for _, containerID := range p.ContainerIDs() {
-			container := report.MakeNodeWith(report.MakeContainerNodeID(containerID), map[string]string{
-				PodID:              p.ID(),
-				Namespace:          p.Namespace(),
-				docker.ContainerID: containerID,
-			}).WithParents(report.EmptySets.Add(report.Pod, report.MakeStringSet(nodeID)))
-			containers.AddNode(container)
-		}
 		return nil
 	})
-	return pods, containers, err
+	return pods, err
 }

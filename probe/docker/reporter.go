@@ -49,6 +49,57 @@ var (
 	ContainerImageTableTemplates = report.TableTemplates{
 		ImageLabelPrefix: {ID: ImageLabelPrefix, Label: "Docker Labels", Prefix: ImageLabelPrefix},
 	}
+
+	ContainerControls = []report.Control{
+		{
+			ID:    AttachContainer,
+			Human: "Attach",
+			Icon:  "fa-desktop",
+			Rank:  1,
+		},
+		{
+			ID:    ExecContainer,
+			Human: "Exec shell",
+			Icon:  "fa-terminal",
+			Rank:  2,
+		},
+		{
+			ID:    StartContainer,
+			Human: "Start",
+			Icon:  "fa-play",
+			Rank:  3,
+		},
+		{
+			ID:    RestartContainer,
+			Human: "Restart",
+			Icon:  "fa-repeat",
+			Rank:  4,
+		},
+		{
+			ID:    PauseContainer,
+			Human: "Pause",
+			Icon:  "fa-pause",
+			Rank:  5,
+		},
+		{
+			ID:    UnpauseContainer,
+			Human: "Unpause",
+			Icon:  "fa-play",
+			Rank:  6,
+		},
+		{
+			ID:    StopContainer,
+			Human: "Stop",
+			Icon:  "fa-stop",
+			Rank:  7,
+		},
+		{
+			ID:    RemoveContainer,
+			Human: "Remove",
+			Icon:  "fa-trash-o",
+			Rank:  8,
+		},
+	}
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
@@ -96,65 +147,72 @@ func (r *Reporter) Report() (report.Report, error) {
 	return result, nil
 }
 
+func getLocalIPs() ([]string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, err
+	}
+	ips := []string{}
+	for _, addr := range addrs {
+		// Not all addrs are IPNets.
+		if ipNet, ok := addr.(*net.IPNet); ok {
+			ips = append(ips, ipNet.IP.String())
+		}
+	}
+	return ips, nil
+}
+
 func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	result := report.MakeTopology().
 		WithMetadataTemplates(ContainerMetadataTemplates).
 		WithMetricTemplates(ContainerMetricTemplates).
 		WithTableTemplates(ContainerTableTemplates)
-	result.Controls.AddControl(report.Control{
-		ID:    AttachContainer,
-		Human: "Attach",
-		Icon:  "fa-desktop",
-		Rank:  1,
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    ExecContainer,
-		Human: "Exec shell",
-		Icon:  "fa-terminal",
-		Rank:  2,
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    StartContainer,
-		Human: "Start",
-		Icon:  "fa-play",
-		Rank:  3,
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    RestartContainer,
-		Human: "Restart",
-		Icon:  "fa-repeat",
-		Rank:  4,
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    PauseContainer,
-		Human: "Pause",
-		Icon:  "fa-pause",
-		Rank:  5,
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    UnpauseContainer,
-		Human: "Unpause",
-		Icon:  "fa-play",
-		Rank:  6,
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    StopContainer,
-		Human: "Stop",
-		Icon:  "fa-stop",
-		Rank:  7,
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    RemoveContainer,
-		Human: "Remove",
-		Icon:  "fa-trash-o",
-		Rank:  8,
-	})
+	result.Controls.AddControls(ContainerControls)
 
 	metadata := map[string]string{report.ControlProbeID: r.probeID}
-
+	nodes := []report.Node{}
 	r.registry.WalkContainers(func(c Container) {
-		result.AddNode(c.GetNode(localAddrs).WithLatests(metadata))
+		nodes = append(nodes, c.GetNode().WithLatests(metadata))
 	})
+
+	// Copy the IP addresses from other containers where they share network
+	// namespaces & deal with containers in the host net namespace.  This
+	// is recursive to deal with people who decide to be clever.
+	{
+		hostNetworkInfo := report.EmptySets
+		if hostIPs, err := getLocalIPs(); err == nil {
+			hostIPsWithScopes := addScopeToIPs(r.hostID, hostIPs)
+			hostNetworkInfo = hostNetworkInfo.
+				Add(ContainerIPs, report.MakeStringSet(hostIPs...)).
+				Add(ContainerIPsWithScopes, report.MakeStringSet(hostIPsWithScopes...))
+		}
+
+		var networkInfo func(prefix string) report.Sets
+		networkInfo = func(prefix string) report.Sets {
+			container, ok := r.registry.GetContainerByPrefix(prefix)
+			if !ok {
+				return report.EmptySets
+			}
+
+			networkMode, ok := container.NetworkMode()
+			if ok && strings.HasPrefix(networkMode, "container:") {
+				return networkInfo(networkMode[10:])
+			} else if ok && networkMode == NetworkModeHost {
+				return hostNetworkInfo
+			}
+
+			return container.NetworkInfo(localAddrs)
+		}
+
+		for _, node := range nodes {
+			id, ok := report.ParseContainerNodeID(node.ID)
+			if !ok {
+				continue
+			}
+			networkInfo := networkInfo(id)
+			result.AddNode(node.WithSets(networkInfo))
+		}
+	}
 
 	return result
 }

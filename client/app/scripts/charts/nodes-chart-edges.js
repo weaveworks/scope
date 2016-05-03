@@ -1,10 +1,10 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 
+import { hasSelectedNode as hasSelectedNodeFn } from '../utils/topology-utils';
 import EdgeContainer from './edge-container';
 
-export default class NodesChartEdges extends React.Component {
+class NodesChartEdges extends React.Component {
   render() {
     const {hasSelectedNode, highlightedEdgeIds, layoutEdges, layoutPrecision,
       selectedNodeId} = this.props;
@@ -36,4 +36,14 @@ export default class NodesChartEdges extends React.Component {
   }
 }
 
-reactMixin.onClass(NodesChartEdges, PureRenderMixin);
+function mapStateToProps(state) {
+  return {
+    hasSelectedNode: hasSelectedNodeFn(state),
+    selectedNodeId: state.get('selectedNodeId'),
+    highlightedEdgeIds: state.get('highlightedEdgeIds')
+  };
+}
+
+export default connect(
+  mapStateToProps
+)(NodesChartEdges);

@@ -1,9 +1,19 @@
 require('../styles/main.less');
 require('../images/favicon.ico');
 
+import 'babel-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Provider } from 'react-redux';
 
-import { TerminalApp } from './components/terminal-app.js';
+import configureStore from './stores/configureStore';
+import TerminalApp from './components/terminal-app.js';
 
-ReactDOM.render(<TerminalApp />, document.getElementById('app'));
+const store = configureStore();
+
+ReactDOM.render(
+  <Provider store={store}>
+    <TerminalApp />
+  </Provider>,
+  document.getElementById('app')
+);

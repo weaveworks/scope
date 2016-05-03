@@ -1,8 +1,9 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
 import { doControl } from '../../actions/app-actions';
 
-export default class NodeDetailsControlButton extends React.Component {
+class NodeDetailsControlButton extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.handleClick = this.handleClick.bind(this);
@@ -20,6 +21,8 @@ export default class NodeDetailsControlButton extends React.Component {
 
   handleClick(ev) {
     ev.preventDefault();
-    doControl(this.props.nodeId, this.props.control);
+    this.props.dispatch(doControl(this.props.nodeId, this.props.control));
   }
 }
+
+export default connect()(NodeDetailsControlButton);

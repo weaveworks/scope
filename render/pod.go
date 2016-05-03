@@ -3,6 +3,7 @@ package render
 import (
 	"strings"
 
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
@@ -15,7 +16,12 @@ const (
 
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
-var PodRenderer = FilterEmpty(report.Container,
+var PodRenderer = MakeFilter(
+	func(n report.Node) bool {
+		// Drop deleted or empty pods
+		state, ok := n.Latest.Lookup(kubernetes.PodState)
+		return HasChildren(report.Container)(n) && (!ok || state != kubernetes.StateDeleted)
+	},
 	MakeReduce(
 		MakeFilter(
 			func(n report.Node) bool {
@@ -56,7 +62,7 @@ var PodServiceRenderer = FilterEmpty(report.Pod,
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
 func MapContainer2Pod(n report.Node, _ report.Networks) report.Nodes {
-	// Uncontainerd becomes unmanaged in the pods view
+	// Uncontained becomes unmanaged in the pods view
 	if strings.HasPrefix(n.ID, MakePseudoNodeID(UncontainedID)) {
 		id := MakePseudoNodeID(UnmanagedID, report.ExtractHostID(n))
 		node := NewDerivedPseudoNode(id, n)
@@ -68,34 +74,25 @@ func MapContainer2Pod(n report.Node, _ report.Networks) report.Nodes {
 		return report.Nodes{n.ID: n}
 	}
 
-	// Otherwise, if some some reason the container doesn't have a pod_id (maybe
-	// slightly out of sync reports, or its not in a pod), just drop it
-	namespace, ok := n.Latest.Lookup(kubernetes.Namespace)
-	if !ok {
-		id := MakePseudoNodeID(UnmanagedID, report.ExtractHostID(n))
-		node := NewDerivedPseudoNode(id, n)
-		return report.Nodes{id: node}
+	// Ignore non-running containers
+	if state, ok := n.Latest.Lookup(docker.ContainerState); ok && state != docker.StateRunning {
+		return report.Nodes{}
 	}
-	podID, ok := n.Latest.Lookup(kubernetes.PodID)
-	if !ok {
-		id := MakePseudoNodeID(UnmanagedID, report.ExtractHostID(n))
-		node := NewDerivedPseudoNode(id, n)
-		return report.Nodes{id: node}
-	}
-	podName := strings.TrimPrefix(podID, namespace+"/")
-	id := report.MakePodNodeID(namespace, podName)
 
-	// Due to a bug in kubernetes, addon pods on the master node are not returned
-	// from the API. Adding the namespace and pod name is a workaround until
-	// https://github.com/kubernetes/kubernetes/issues/14738 is fixed.
-	return report.Nodes{
-		id: NewDerivedNode(id, n).
-			WithTopology(report.Pod).
-			WithLatests(map[string]string{
-				kubernetes.Namespace: namespace,
-				kubernetes.PodName:   podName,
-			}),
+	// Otherwise, if some some reason the container doesn't have a pod uid (maybe
+	// slightly out of sync reports, or its not in a pod), make it part of unmanaged.
+	uid, ok := n.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.uid")
+	if !ok {
+		id := MakePseudoNodeID(UnmanagedID, report.ExtractHostID(n))
+		node := NewDerivedPseudoNode(id, n)
+		return report.Nodes{id: node}
 	}
+
+	id := report.MakePodNodeID(uid)
+	node := NewDerivedNode(id, n).
+		WithTopology(report.Pod)
+	node.Counters = node.Counters.Add(n.Topology, 1)
+	return report.Nodes{id: node}
 }
 
 // MapPod2Service maps pod Nodes to service Nodes.

@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"io"
 	"strconv"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -26,7 +27,11 @@ type Client interface {
 	WalkPods(f func(Pod) error) error
 	WalkServices(f func(Service) error) error
 	WalkNodes(f func(*api.Node) error) error
+
+	WatchPods(f func(Event, Pod))
+
 	GetLogs(namespaceID, podID string) (io.ReadCloser, error)
+	DeletePod(namespaceID, podID string) error
 }
 
 type client struct {
@@ -38,6 +43,9 @@ type client struct {
 	podStore         *cache.StoreToPodLister
 	serviceStore     *cache.StoreToServiceLister
 	nodeStore        *cache.StoreToNodeLister
+
+	podWatchesMutex sync.Mutex
+	podWatches      []func(Event, Pod)
 }
 
 // runReflectorUntil is equivalent to cache.Reflector.RunUntil, but it also logs
@@ -72,33 +80,44 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 		return nil, err
 	}
 
+	result := &client{
+		quit:   make(chan struct{}),
+		client: c,
+	}
+
 	podListWatch := cache.NewListWatchFromClient(c, "pods", api.NamespaceAll, fields.Everything())
-	podStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
-	podReflector := cache.NewReflector(podListWatch, &api.Pod{}, podStore, resyncPeriod)
+	podStore := NewEventStore(result.triggerPodWatches, cache.MetaNamespaceKeyFunc)
+	result.podStore = &cache.StoreToPodLister{Store: podStore}
+	result.podReflector = cache.NewReflector(podListWatch, &api.Pod{}, podStore, resyncPeriod)
 
 	serviceListWatch := cache.NewListWatchFromClient(c, "services", api.NamespaceAll, fields.Everything())
 	serviceStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
-	serviceReflector := cache.NewReflector(serviceListWatch, &api.Service{}, serviceStore, resyncPeriod)
+	result.serviceStore = &cache.StoreToServiceLister{Store: serviceStore}
+	result.serviceReflector = cache.NewReflector(serviceListWatch, &api.Service{}, serviceStore, resyncPeriod)
 
 	nodeListWatch := cache.NewListWatchFromClient(c, "nodes", api.NamespaceAll, fields.Everything())
 	nodeStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
-	nodeReflector := cache.NewReflector(nodeListWatch, &api.Node{}, nodeStore, resyncPeriod)
+	result.nodeStore = &cache.StoreToNodeLister{Store: nodeStore}
+	result.nodeReflector = cache.NewReflector(nodeListWatch, &api.Node{}, nodeStore, resyncPeriod)
 
-	quit := make(chan struct{})
-	runReflectorUntil(podReflector, resyncPeriod, quit)
-	runReflectorUntil(serviceReflector, resyncPeriod, quit)
-	runReflectorUntil(nodeReflector, resyncPeriod, quit)
+	runReflectorUntil(result.podReflector, resyncPeriod, result.quit)
+	runReflectorUntil(result.serviceReflector, resyncPeriod, result.quit)
+	runReflectorUntil(result.nodeReflector, resyncPeriod, result.quit)
+	return result, nil
+}
 
-	return &client{
-		quit:             quit,
-		client:           c,
-		podReflector:     podReflector,
-		podStore:         &cache.StoreToPodLister{Store: podStore},
-		serviceReflector: serviceReflector,
-		serviceStore:     &cache.StoreToServiceLister{Store: serviceStore},
-		nodeReflector:    nodeReflector,
-		nodeStore:        &cache.StoreToNodeLister{Store: nodeStore},
-	}, nil
+func (c *client) WatchPods(f func(Event, Pod)) {
+	c.podWatchesMutex.Lock()
+	defer c.podWatchesMutex.Unlock()
+	c.podWatches = append(c.podWatches, f)
+}
+
+func (c *client) triggerPodWatches(e Event, pod interface{}) {
+	c.podWatchesMutex.Lock()
+	defer c.podWatchesMutex.Unlock()
+	for _, watch := range c.podWatches {
+		watch(e, NewPod(pod.(*api.Pod)))
+	}
 }
 
 func (c *client) WalkPods(f func(Pod) error) error {
@@ -150,6 +169,13 @@ func (c *client) GetLogs(namespaceID, podID string) (io.ReadCloser, error) {
 		Param("previous", strconv.FormatBool(false)).
 		Param("timestamps", strconv.FormatBool(true)).
 		Stream()
+}
+
+func (c *client) DeletePod(namespaceID, podID string) error {
+	return c.client.RESTClient.Delete().
+		Namespace(namespaceID).
+		Name(podID).
+		Resource("pods").Do().Error()
 }
 
 func (c *client) Stop() {

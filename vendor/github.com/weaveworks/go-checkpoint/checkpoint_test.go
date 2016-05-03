@@ -11,19 +11,47 @@ import (
 
 func TestCheck(t *testing.T) {
 	expected := &CheckResponse{
-		Product:             "test",
-		CurrentVersion:      "1.0",
-		CurrentReleaseDate:  0,
-		CurrentDownloadURL:  "http://www.hashicorp.com",
-		CurrentChangelogURL: "http://www.hashicorp.com",
-		ProjectWebsite:      "http://www.hashicorp.com",
+		CurrentVersion:      "1.0.0",
+		CurrentReleaseDate:  1460459932, // 2016-04-12 11:18:52
+		CurrentDownloadURL:  "https://test-app.used-for-testing",
+		CurrentChangelogURL: "https://test-app.used-for-testing",
+		ProjectWebsite:      "https://test-app.used-for-testing",
 		Outdated:            false,
-		Alerts:              []*CheckAlert{},
+		Alerts:              nil,
 	}
 
 	actual, err := Check(&CheckParams{
-		Product: "test",
-		Version: "1.0",
+		Product: "test-app",
+		Version: "1.0.0",
+	})
+
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("bad: %#v", actual)
+	}
+}
+
+func TestCheck_flags(t *testing.T) {
+	expected := &CheckResponse{
+		CurrentVersion:      "1.0.0",
+		CurrentReleaseDate:  1460459932, // 2016-04-12 11:18:52
+		CurrentDownloadURL:  "https://test-app.used-for-testing",
+		CurrentChangelogURL: "https://test-app.used-for-testing",
+		ProjectWebsite:      "https://test-app.used-for-testing",
+		Outdated:            false,
+		Alerts:              nil,
+	}
+
+	actual, err := Check(&CheckParams{
+		Product: "test-app",
+		Version: "1.0.0",
+		Flags: map[string]string{
+			"flag1": "value1",
+			"flag2": "value2",
+		},
 	})
 
 	if err != nil {
@@ -42,8 +70,8 @@ func TestCheck_disabled(t *testing.T) {
 	expected := &CheckResponse{}
 
 	actual, err := Check(&CheckParams{
-		Product: "test",
-		Version: "1.0",
+		Product: "test-app",
+		Version: "1.0.0",
 	})
 
 	if err != nil {
@@ -62,22 +90,21 @@ func TestCheck_cache(t *testing.T) {
 	}
 
 	expected := &CheckResponse{
-		Product:             "test",
-		CurrentVersion:      "1.0",
-		CurrentReleaseDate:  0,
-		CurrentDownloadURL:  "http://www.hashicorp.com",
-		CurrentChangelogURL: "http://www.hashicorp.com",
-		ProjectWebsite:      "http://www.hashicorp.com",
+		CurrentVersion:      "1.0.0",
+		CurrentReleaseDate:  1460459932, // 2016-04-12 11:18:52
+		CurrentDownloadURL:  "https://test-app.used-for-testing",
+		CurrentChangelogURL: "https://test-app.used-for-testing",
+		ProjectWebsite:      "https://test-app.used-for-testing",
 		Outdated:            false,
-		Alerts:              []*CheckAlert{},
+		Alerts:              nil,
 	}
 
 	var actual *CheckResponse
 	for i := 0; i < 5; i++ {
 		var err error
 		actual, err = Check(&CheckParams{
-			Product:   "test",
-			Version:   "1.0",
+			Product:   "test-app",
+			Version:   "1.0.0",
 			CacheFile: filepath.Join(dir, "cache"),
 		})
 		if err != nil {
@@ -86,7 +113,7 @@ func TestCheck_cache(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("bad: %#v", actual)
+		t.Fatalf("bad: %#v %#v", actual, expected)
 	}
 }
 
@@ -97,22 +124,21 @@ func TestCheck_cacheNested(t *testing.T) {
 	}
 
 	expected := &CheckResponse{
-		Product:             "test",
-		CurrentVersion:      "1.0",
-		CurrentReleaseDate:  0,
-		CurrentDownloadURL:  "http://www.hashicorp.com",
-		CurrentChangelogURL: "http://www.hashicorp.com",
-		ProjectWebsite:      "http://www.hashicorp.com",
+		CurrentVersion:      "1.0.0",
+		CurrentReleaseDate:  1460459932, // 2016-04-12 11:18:52
+		CurrentDownloadURL:  "https://test-app.used-for-testing",
+		CurrentChangelogURL: "https://test-app.used-for-testing",
+		ProjectWebsite:      "https://test-app.used-for-testing",
 		Outdated:            false,
-		Alerts:              []*CheckAlert{},
+		Alerts:              nil,
 	}
 
 	var actual *CheckResponse
 	for i := 0; i < 5; i++ {
 		var err error
 		actual, err = Check(&CheckParams{
-			Product:   "test",
-			Version:   "1.0",
+			Product:   "test-app",
+			Version:   "1.0.0",
 			CacheFile: filepath.Join(dir, "nested", "cache"),
 		})
 		if err != nil {
@@ -127,19 +153,18 @@ func TestCheck_cacheNested(t *testing.T) {
 
 func TestCheckInterval(t *testing.T) {
 	expected := &CheckResponse{
-		Product:             "test",
-		CurrentVersion:      "1.0",
-		CurrentReleaseDate:  0,
-		CurrentDownloadURL:  "http://www.hashicorp.com",
-		CurrentChangelogURL: "http://www.hashicorp.com",
-		ProjectWebsite:      "http://www.hashicorp.com",
+		CurrentVersion:      "1.0.0",
+		CurrentReleaseDate:  1460459932, // 2016-04-12 11:18:52
+		CurrentDownloadURL:  "https://test-app.used-for-testing",
+		CurrentChangelogURL: "https://test-app.used-for-testing",
+		ProjectWebsite:      "https://test-app.used-for-testing",
 		Outdated:            false,
-		Alerts:              []*CheckAlert{},
+		Alerts:              nil,
 	}
 
 	params := &CheckParams{
-		Product: "test",
-		Version: "1.0",
+		Product: "test-app",
+		Version: "1.0.0",
 	}
 
 	calledCh := make(chan struct{})
@@ -154,8 +179,8 @@ func TestCheckInterval(t *testing.T) {
 		}
 	}
 
-	doneCh := CheckInterval(params, 500*time.Millisecond, checkFn)
-	defer close(doneCh)
+	st := CheckInterval(params, 500*time.Millisecond, checkFn)
+	defer st.Stop()
 
 	select {
 	case <-calledCh:
@@ -169,8 +194,8 @@ func TestCheckInterval_disabled(t *testing.T) {
 	defer os.Setenv("CHECKPOINT_DISABLE", "")
 
 	params := &CheckParams{
-		Product: "test",
-		Version: "1.0",
+		Product: "test-app",
+		Version: "1.0.0",
 	}
 
 	calledCh := make(chan struct{})
@@ -178,13 +203,51 @@ func TestCheckInterval_disabled(t *testing.T) {
 		defer close(calledCh)
 	}
 
-	doneCh := CheckInterval(params, 500*time.Millisecond, checkFn)
-	defer close(doneCh)
+	st := CheckInterval(params, 500*time.Millisecond, checkFn)
+	defer st.Stop()
 
 	select {
 	case <-calledCh:
 		t.Fatal("expected callback to not invoke")
 	case <-time.After(time.Second):
+	}
+}
+
+func TestCheckInterval_immediate(t *testing.T) {
+	expected := &CheckResponse{
+		CurrentVersion:      "1.0.0",
+		CurrentReleaseDate:  1460459932, // 2016-04-12 11:18:52
+		CurrentDownloadURL:  "https://test-app.used-for-testing",
+		CurrentChangelogURL: "https://test-app.used-for-testing",
+		ProjectWebsite:      "https://test-app.used-for-testing",
+		Outdated:            false,
+		Alerts:              nil,
+	}
+
+	params := &CheckParams{
+		Product: "test-app",
+		Version: "1.0.0",
+	}
+
+	calledCh := make(chan struct{})
+	checkFn := func(actual *CheckResponse, err error) {
+		defer close(calledCh)
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if !reflect.DeepEqual(actual, expected) {
+			t.Fatalf("bad: %#v", actual)
+		}
+	}
+
+	st := CheckInterval(params, 500*time.Second, checkFn)
+	defer st.Stop()
+
+	select {
+	case <-calledCh:
+	case <-time.After(time.Second):
+		t.Fatalf("timeout")
 	}
 }
 

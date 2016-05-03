@@ -1,11 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import reactMixin from 'react-mixin';
+import { connect } from 'react-redux';
 
 import { clickRelative } from '../../actions/app-actions';
 
-export default class NodeDetailsTableNodeLink extends React.Component {
+class NodeDetailsTableNodeLink extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -14,8 +13,8 @@ export default class NodeDetailsTableNodeLink extends React.Component {
 
   handleClick(ev) {
     ev.preventDefault();
-    clickRelative(this.props.nodeId, this.props.topologyId, this.props.label,
-      ReactDOM.findDOMNode(this).getBoundingClientRect());
+    this.props.dispatch(clickRelative(this.props.nodeId, this.props.topologyId,
+      this.props.label, ReactDOM.findDOMNode(this).getBoundingClientRect()));
   }
 
   render() {
@@ -35,4 +34,4 @@ export default class NodeDetailsTableNodeLink extends React.Component {
   }
 }
 
-reactMixin.onClass(NodeDetailsTableNodeLink, PureRenderMixin);
+export default connect()(NodeDetailsTableNodeLink);
