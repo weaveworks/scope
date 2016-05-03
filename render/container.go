@@ -39,7 +39,7 @@ var ContainerRenderer = MakeFilter(
 			},
 			MakeMap(
 				MapProcess2Container,
-				ColorConnected(ProcessRenderer),
+				ProcessRenderer,
 			),
 		),
 
@@ -273,6 +273,8 @@ func MapProcess2Container(n report.Node, _ report.Networks) report.Nodes {
 	} else {
 		id = MakePseudoNodeID(UncontainedID, report.ExtractHostID(n))
 		node = NewDerivedPseudoNode(id, n)
+		node = propagateLatest(report.HostNodeID, n, node)
+		node = propagateLatest(IsConnected, n, node)
 	}
 	return report.Nodes{id: node}
 }
