@@ -64,3 +64,8 @@ function makeFormatMetric(renderFn) {
 export const formatMetric = makeFormatMetric(renderHtml);
 export const formatMetricSvg = makeFormatMetric(renderSvg);
 export const formatDate = d3.time.format.iso;
+
+const CLEAN_LABEL_REGEX = /\W/g;
+export function slugify(label) {
+  return label.replace(CLEAN_LABEL_REGEX, '');
+}

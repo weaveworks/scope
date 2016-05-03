@@ -67,8 +67,7 @@ class Node extends React.Component {
     const labelText = truncate ? ellipsis(label, 14, nodeScale(4 * scaleFactor)) : label;
     const subLabelText = truncate ? ellipsis(subLabel, 12, nodeScale(4 * scaleFactor)) : subLabel;
 
-    let labelOffsetY = 18;
-    let subLabelOffsetY = 35;
+    let labelOffsetY = 8;
     let labelFontSize = 14;
     let subLabelFontSize = 12;
 
@@ -77,7 +76,6 @@ class Node extends React.Component {
       labelFontSize /= zoomScale;
       subLabelFontSize /= zoomScale;
       labelOffsetY /= zoomScale;
-      subLabelOffsetY /= zoomScale;
     }
 
     const className = classNames({
@@ -98,11 +96,11 @@ class Node extends React.Component {
           x={-nodeScale(scaleFactor * 0.5)}
           y={-nodeScale(scaleFactor * 0.5)}
           width={nodeScale(scaleFactor)}
-          height={nodeScale(scaleFactor) + subLabelOffsetY}
+          height={nodeScale(scaleFactor)}
           />
         <foreignObject x={-nodeScale(2 * scaleFactor)}
           y={labelOffsetY + nodeScale(0.5 * scaleFactor)}
-          width={nodeScale(scaleFactor * 4)} height={subLabelOffsetY}>
+          width={nodeScale(scaleFactor * 4)}>
           <div className="node-label" style={{fontSize: labelFontSize}}>
             <MatchedText text={labelText} matches={matches} fieldId="label" />
           </div>

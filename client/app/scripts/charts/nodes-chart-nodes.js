@@ -8,7 +8,8 @@ import NodeContainer from './node-container';
 class NodesChartNodes extends React.Component {
   render() {
     const { adjacentNodes, highlightedNodeIds, layoutNodes, layoutPrecision,
-      nodeScale, scale, searchNodeMatches = makeMap(), selectedMetric, selectedNodeScale,
+      nodeScale, scale, searchNodeMatches = makeMap(), searchQuery,
+      selectedMetric, selectedNodeScale,
       selectedNodeId, topCardNode } = this.props;
 
     const zoomScale = scale;
@@ -21,7 +22,7 @@ class NodesChartNodes extends React.Component {
       || (adjacentNodes && adjacentNodes.includes(node.get('id')))));
     const setBlurred = node => node.set('blurred',
       selectedNodeId && !node.get('focused')
-      || searchNodeMatches.size > 0 && !searchNodeMatches.has(node.get('id')));
+      || searchQuery && !searchNodeMatches.has(node.get('id')));
 
     // make sure blurred nodes are in the background
     const sortNodes = node => {
@@ -86,6 +87,7 @@ function mapStateToProps(state) {
     selectedMetric: state.get('selectedMetric'),
     selectedNodeId: state.get('selectedNodeId'),
     searchNodeMatches: state.getIn(['searchNodeMatches', currentTopologyId]),
+    searchQuery: state.get('searchQuery'),
     topCardNode: state.get('nodeDetails').last()
   };
 }

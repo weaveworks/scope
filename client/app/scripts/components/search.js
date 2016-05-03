@@ -4,20 +4,26 @@ import cx from 'classnames';
 import _ from 'lodash';
 
 import { blurSearch, doSearch, focusSearch } from '../actions/app-actions';
+import { slugify } from '../utils/string-utils';
 import { isTopologyEmpty } from '../utils/topology-utils';
 
-const SEARCH_HINTS = [
-  'Try "db" or "app1" to search by node label or sublabel.',
-  'Try "sublabel:my-host" to search by node sublabel.',
-  'Try "label:my-node" to search by node name.',
-  'Try "metadata:my-node" to search through all node metadata.',
-  'Try "dockerenv:my-env-value" to search through all docker environment variables.',
-  'Try "all:my-value" to search through all metdata and labels.'
-];
+// dynamic hint based on node names
+function getHint(nodes) {
+  let label = 'mycontainer';
+  let metadataLabel = 'ip';
+  let metadataValue = '172.12';
 
-// every minute different hint
-function getHint() {
-  return SEARCH_HINTS[(new Date).getMinutes() % SEARCH_HINTS.length];
+  const node = nodes.last();
+  if (node) {
+    label = node.get('label');
+    if (node.get('metadata')) {
+      const metadataField = node.get('metadata').first();
+      metadataLabel = slugify(metadataField.get('label')).toLowerCase();
+      metadataValue = metadataField.get('value').toLowerCase();
+    }
+  }
+
+  return `Try "${label}" or "${metadataLabel}:${metadataValue}".`;
 }
 
 class Search extends React.Component {
@@ -84,7 +90,7 @@ class Search extends React.Component {
               <span className="search-input-label-text">Search</span>
             </label>
           </div>
-          <div className="search-hint">{getHint()}</div>
+          <div className="search-hint">{getHint(this.props.nodes)}</div>
         </div>
       </div>
     );
@@ -93,6 +99,7 @@ class Search extends React.Component {
 
 export default connect(
   state => ({
+    nodes: state.get('nodes'),
     isTopologyEmpty: isTopologyEmpty(state),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
