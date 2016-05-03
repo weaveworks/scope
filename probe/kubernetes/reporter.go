@@ -8,6 +8,7 @@ import (
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/labels"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
@@ -90,6 +91,27 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 	}
 }
 
+func isPauseContainer(n report.Node, rpt report.Report) bool {
+	containerImageIDs, ok := n.Sets.Lookup(report.ContainerImage)
+	if !ok {
+		return false
+	}
+	for _, imageNodeID := range containerImageIDs {
+		imageNode, ok := rpt.ContainerImage.Nodes[imageNodeID]
+		if !ok {
+			continue
+		}
+		imageName, ok := imageNode.Latest.Lookup(docker.ImageName)
+		if !ok {
+			continue
+		}
+		if docker.ImageNameWithoutVersion(imageName) == "google_containers/pause" {
+			return true
+		}
+	}
+	return false
+}
+
 // Tag adds pod parents to container nodes.
 func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
 	for id, n := range rpt.Container.Nodes {
@@ -97,6 +119,12 @@ func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
 		if !ok {
 			continue
 		}
+
+		// Tag the pause containers with "does-not-make-connections"
+		if isPauseContainer(n, rpt) {
+			n = n.WithLatest(report.DoesNotMakeConnections, mtime.Now(), "")
+		}
+
 		rpt.Container.Nodes[id] = n.WithParents(report.EmptySets.Add(
 			report.Pod,
 			report.EmptyStringSet.Add(report.MakePodNodeID(uid)),

@@ -203,7 +203,7 @@ func containerNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.LabelMinor = report.ExtractHostID(n)
 
 	if imageName, ok := n.Latest.Lookup(docker.ImageName); ok {
-		base.Rank = render.ImageNameWithoutVersion(imageName)
+		base.Rank = docker.ImageNameWithoutVersion(imageName)
 	}
 
 	return base, true
@@ -215,7 +215,7 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 		return NodeSummary{}, false
 	}
 
-	imageNameWithoutVersion := render.ImageNameWithoutVersion(imageName)
+	imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
 	base.Label = imageNameWithoutVersion
 	base.Rank = imageNameWithoutVersion
 	base.Stack = true
