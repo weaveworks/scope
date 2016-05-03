@@ -362,9 +362,7 @@ func MapContainer2Hostname(n report.Node, _ report.Networks) report.Nodes {
 	}
 
 	node := NewDerivedNode(id, n).WithTopology(MakeGroupNodeTopology(n.Topology, docker.ContainerHostname))
-	node.Latest = node.Latest.
-		Set(docker.ContainerHostname, timestamp, id).
-		Delete(docker.ContainerName) // TODO(paulbellamy): total hack to render these by hostname instead.
+	node.Latest = node.Latest.Set(docker.ContainerHostname, timestamp, id)
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: node}
 }
