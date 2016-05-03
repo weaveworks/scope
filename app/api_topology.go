@@ -9,7 +9,9 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
+	"github.com/weaveworks/scope/report"
 )
 
 const (
@@ -27,24 +29,35 @@ type APINode struct {
 }
 
 // Full topology.
-func handleTopology(ctx context.Context, rep Reporter, w http.ResponseWriter, r *http.Request) {
-	report, err := rep.Report(ctx)
-	if err != nil {
-		respondWith(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	renderer, decorator, err := topologyRegistry.rendererForRequest(r, report)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
+func handleTopology(ctx context.Context, renderer render.Renderer, decorator render.Decorator, report report.Report, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
 		Nodes: detailed.Summaries(report, renderer.Render(report, decorator)),
 	})
 }
 
-// Websocket for the full topology. This route overlaps with the next.
-func handleWs(ctx context.Context, rep Reporter, w http.ResponseWriter, r *http.Request) {
+// Individual nodes.
+func handleNode(ctx context.Context, renderer render.Renderer, _ render.Decorator, report report.Report, w http.ResponseWriter, r *http.Request) {
+	var (
+		vars       = mux.Vars(r)
+		topologyID = vars["topology"]
+		nodeID     = vars["id"]
+		rendered   = renderer.Render(report, nil)
+		node, ok   = rendered[nodeID]
+	)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, report, rendered, node)})
+}
+
+// Websocket for the full topology.
+func handleWebsocket(
+	ctx context.Context,
+	rep Reporter,
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	if err := r.ParseForm(); err != nil {
 		respondWith(w, http.StatusInternalServerError, err.Error())
 		return
@@ -57,50 +70,7 @@ func handleWs(ctx context.Context, rep Reporter, w http.ResponseWriter, r *http.
 			return
 		}
 	}
-	handleWebsocket(ctx, w, r, rep, loop)
-}
 
-// Individual nodes.
-func handleNode(ctx context.Context, rep Reporter, w http.ResponseWriter, r *http.Request) {
-	var (
-		vars        = mux.Vars(r)
-		topologyID  = vars["topology"]
-		nodeID      = vars["id"]
-		report, err = rep.Report(ctx)
-	)
-	if err != nil {
-		respondWith(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	renderer, _, err := topologyRegistry.rendererForRequest(r, report)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	var (
-		rendered = renderer.Render(report, nil)
-		node, ok = rendered[nodeID]
-	)
-	if err != nil {
-		respondWith(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, report, rendered, node)})
-}
-
-func handleWebsocket(
-	ctx context.Context,
-	w http.ResponseWriter,
-	r *http.Request,
-	rep Reporter,
-	loop time.Duration,
-) {
 	conn, err := xfer.Upgrade(w, r, nil)
 	if err != nil {
 		// log.Info("Upgrade:", err)
@@ -125,6 +95,7 @@ func handleWebsocket(
 		previousTopo detailed.NodeSummaries
 		tick         = time.Tick(loop)
 		wait         = make(chan struct{}, 1)
+		topologyID   = mux.Vars(r)["topology"]
 	)
 	rep.WaitOn(ctx, wait)
 	defer rep.UnWait(ctx, wait)
@@ -135,7 +106,7 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		renderer, decorator, err := topologyRegistry.rendererForRequest(r, report)
+		renderer, decorator, err := topologyRegistry.rendererForTopology(topologyID, r.Form, report)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return

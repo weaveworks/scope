@@ -19,9 +19,8 @@ const (
 var PodRenderer = ApplyDecorators(
 	MakeFilter(
 		func(n report.Node) bool {
-			// Drop deleted or empty pods
 			state, ok := n.Latest.Lookup(kubernetes.PodState)
-			return HasChildren(report.Container)(n) && (!ok || state != kubernetes.StateDeleted)
+			return (!ok || state != kubernetes.StateDeleted)
 		},
 		MakeReduce(
 			MakeFilter(

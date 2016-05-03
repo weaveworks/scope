@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"sync"
 
@@ -269,15 +270,11 @@ func (r *registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 func (r *registry) renderTopologies(rpt report.Report, req *http.Request) []APITopologyDesc {
 	topologies := []APITopologyDesc{}
 	req.ParseForm()
-	values := map[string]string{}
-	for k, vs := range req.Form {
-		values[k] = vs[0]
-	}
 	r.walk(func(desc APITopologyDesc) {
-		renderer, decorator, _ := r.rendererForTopology(desc.id, values, rpt)
+		renderer, decorator, _ := r.rendererForTopology(desc.id, req.Form, rpt)
 		desc.Stats = decorateWithStats(rpt, renderer, decorator)
 		for i, sub := range desc.SubTopologies {
-			renderer, decorator, _ := r.rendererForTopology(sub.id, values, rpt)
+			renderer, decorator, _ := r.rendererForTopology(sub.id, req.Form, rpt)
 			desc.SubTopologies[i].Stats = decorateWithStats(rpt, renderer, decorator)
 		}
 		topologies = append(topologies, desc)
@@ -307,16 +304,16 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer, decorator re
 	}
 }
 
-func (r *registry) rendererForTopology(id string, values map[string]string, rpt report.Report) (render.Renderer, render.Decorator, error) {
-	topology, ok := r.get(id)
+func (r *registry) rendererForTopology(topologyID string, values url.Values, rpt report.Report) (render.Renderer, render.Decorator, error) {
+	topology, ok := r.get(topologyID)
 	if !ok {
-		return nil, nil, fmt.Errorf("topology not found: %s", id)
+		return nil, nil, fmt.Errorf("topology not found: %s", topologyID)
 	}
 	topology = updateFilters(rpt, []APITopologyDesc{topology})[0]
 
 	var filters []render.FilterFunc
 	for _, group := range topology.Options {
-		value := values[group.ID]
+		value := values.Get(group.ID)
 		for _, opt := range group.Options {
 			if opt.filter == nil {
 				continue
@@ -335,19 +332,34 @@ func (r *registry) rendererForTopology(id string, values map[string]string, rpt 
 	return topology.renderer, decorator, nil
 }
 
-type reportRenderHandler func(context.Context, Reporter, http.ResponseWriter, *http.Request)
+type reporterHandler func(context.Context, Reporter, http.ResponseWriter, *http.Request)
 
-func (r *registry) rendererForRequest(req *http.Request, rpt report.Report) (render.Renderer, render.Decorator, error) {
-	req.ParseForm()
-	values := map[string]string{}
-	for k, vs := range req.Form {
-		values[k] = vs[0]
-	}
-	return r.rendererForTopology(mux.Vars(req)["topology"], values, rpt)
-}
-
-func captureReporter(rep Reporter, f reportRenderHandler) CtxHandlerFunc {
+func captureReporter(rep Reporter, f reporterHandler) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		f(ctx, rep, w, r)
+	}
+}
+
+type rendererHandler func(context.Context, render.Renderer, render.Decorator, report.Report, http.ResponseWriter, *http.Request)
+
+func (r *registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		topologyID := mux.Vars(req)["topology"]
+		if _, ok := r.get(topologyID); !ok {
+			http.NotFound(w, req)
+			return
+		}
+		rpt, err := rep.Report(ctx)
+		if err != nil {
+			respondWith(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		req.ParseForm()
+		renderer, decorator, err := r.rendererForTopology(topologyID, req.Form, rpt)
+		if err != nil {
+			respondWith(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		f(ctx, renderer, decorator, rpt, w, req)
 	}
 }
