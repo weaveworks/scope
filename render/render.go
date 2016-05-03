@@ -158,3 +158,30 @@ func propagateLatest(key string, from, to report.Node) report.Node {
 	}
 	return to
 }
+
+// Condition is a predecate over the entire report that can evaluate to true or false.
+type Condition func(report.Report) bool
+
+type conditionalRenderer struct {
+	Condition
+	Renderer
+}
+
+// ConditionalRenderer renders nothing if the condition is false, otherwise it defers
+// to the wrapped Renderer.
+func ConditionalRenderer(c Condition, r Renderer) Renderer {
+	return Memoise(conditionalRenderer{c, r})
+}
+
+func (cr conditionalRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+	if cr.Condition(rpt) {
+		return cr.Renderer.Render(rpt, dct)
+	}
+	return report.Nodes{}
+}
+func (cr conditionalRenderer) Stats(rpt report.Report, dct Decorator) Stats {
+	if cr.Condition(rpt) {
+		return cr.Renderer.Stats(rpt, dct)
+	}
+	return Stats{}
+}
