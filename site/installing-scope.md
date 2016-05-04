@@ -9,7 +9,6 @@ Weave Scope consists of three parts: the probe, the app and the user interface. 
 The following topics are discussed: 
 
  * [Weave Scope Cloud Service](#signing-up-for-weave-scope-cloud-service)
- * [Installing Weave Scope Standalone](#installing-weave-scope-standalone)
  * [Launching Scope as a Service with Docker Compose](#launching-scope-as-a-service-and-docker-compose)
  * [Launching a Stack with Scope to AWS](#launching-a-stack-with-scope-to-aws)
  * [Installing Scope as a DC/OS Package](#installing-scope-as-a-dc/os-package)
@@ -172,5 +171,5 @@ If you have an account at (scope.weave.works)[https://scope.weave.works] and wan
 
  * [Understanding Weave Scope](/site/how-it-works.md)
  * [Managing Clusters with Scope and weaveDNS](/site/how-it-works.md#managing-clusters-with-scope-and-weavedns)
- * [Installing Weave Scope in Stand-alone Mode](/site/how-it-works.md##installing-weave-scope-standalone)
+ * [Installing Weave Scope in Stand-alone Mode](/site/how-it-works.md#installing-weave-scope-standalone)
  
