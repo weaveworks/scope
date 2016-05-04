@@ -96,32 +96,28 @@ func MakeProcessNodeID(hostID, pid string) string {
 	return hostID + ScopeDelim + pid
 }
 
-// MakeHostNodeID produces a host node ID from its composite parts.
-func MakeHostNodeID(hostID string) string {
-	// hostIDs come from the probe and are presumed to be globally-unique.
-	// But, suffix something to elicit failures if we try to use probe host
-	// IDs directly as node IDs in the host topology.
-	return hostID + ScopeDelim + "<host>"
-}
+var (
+	// MakeHostNodeID produces a host node ID from its composite parts.
+	MakeHostNodeID = singleComponentID("host")
 
-// MakeContainerNodeID produces a container node ID from its composite parts.
-func MakeContainerNodeID(containerID string) string {
-	return containerID + ScopeDelim + "<container>"
-}
+	// MakeContainerNodeID produces a container node ID from its composite parts.
+	MakeContainerNodeID = singleComponentID("container")
 
-// MakeContainerImageNodeID produces a container image node ID from its composite parts.
-func MakeContainerImageNodeID(containerImageID string) string {
-	return containerImageID + ScopeDelim + "<container_image>"
-}
+	// MakeContainerImageNodeID produces a container image node ID from its composite parts.
+	MakeContainerImageNodeID = singleComponentID("container_image")
 
-// MakePodNodeID produces a pod node ID from its composite parts.
-func MakePodNodeID(uid string) string {
-	return uid + ScopeDelim + "<pod>"
-}
+	// MakePodNodeID produces a pod node ID from its composite parts.
+	MakePodNodeID = singleComponentID("pod")
 
-// MakeServiceNodeID produces a service node ID from its composite parts.
-func MakeServiceNodeID(namespaceID, serviceID string) string {
-	return namespaceID + ScopeDelim + serviceID
+	// MakeServiceNodeID produces a service node ID from its composite parts.
+	MakeServiceNodeID = singleComponentID("service")
+)
+
+// singleComponentID makes a
+func singleComponentID(tag string) func(string) string {
+	return func(id string) string {
+		return id + ScopeDelim + "<" + tag + ">"
+	}
 }
 
 // MakeOverlayNodeID produces an overlay topology node ID from a router peer's

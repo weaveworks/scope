@@ -1,12 +1,8 @@
 package kubernetes
 
 import (
-	"strings"
-	"time"
-
 	"github.com/weaveworks/scope/report"
 	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/labels"
 )
 
 // These constants are keys used in node metadata
@@ -24,26 +20,22 @@ const (
 
 // Pod represents a Kubernetes pod
 type Pod interface {
-	UID() string
-	ID() string
-	Name() string
-	Namespace() string
-	Created() string
+	Meta
 	AddServiceID(id string)
-	Labels() labels.Labels
 	NodeName() string
 	GetNode(probeID string) report.Node
 }
 
 type pod struct {
 	*api.Pod
+	Meta
 	serviceIDs report.StringSet
 	Node       *api.Node
 }
 
 // NewPod creates a new Pod
 func NewPod(p *api.Pod) Pod {
-	return &pod{Pod: p, serviceIDs: report.MakeStringSet()}
+	return &pod{Pod: p, Meta: meta{p.ObjectMeta}, serviceIDs: report.MakeStringSet()}
 }
 
 func (p *pod) UID() string {
@@ -51,27 +43,7 @@ func (p *pod) UID() string {
 	if hash, ok := p.ObjectMeta.Annotations["kubernetes.io/config.hash"]; ok {
 		return hash
 	}
-	return string(p.ObjectMeta.UID)
-}
-
-func (p *pod) ID() string {
-	return p.ObjectMeta.Namespace + "/" + p.ObjectMeta.Name
-}
-
-func (p *pod) Name() string {
-	return p.ObjectMeta.Name
-}
-
-func (p *pod) Namespace() string {
-	return p.ObjectMeta.Namespace
-}
-
-func (p *pod) Created() string {
-	return p.ObjectMeta.CreationTimestamp.Format(time.RFC822)
-}
-
-func (p *pod) Labels() labels.Labels {
-	return labels.Set(p.ObjectMeta.Labels)
+	return p.Meta.UID()
 }
 
 func (p *pod) AddServiceID(id string) {
@@ -97,12 +69,8 @@ func (p *pod) GetNode(probeID string) report.Node {
 		report.ControlProbeID: probeID,
 	}).WithSets(report.EmptySets.Add(ServiceIDs, p.serviceIDs))
 	for _, serviceID := range p.serviceIDs {
-		segments := strings.SplitN(serviceID, "/", 2)
-		if len(segments) != 2 {
-			continue
-		}
 		n = n.WithParents(report.EmptySets.
-			Add(report.Service, report.MakeStringSet(report.MakeServiceNodeID(p.Namespace(), segments[1]))),
+			Add(report.Service, report.MakeStringSet(report.MakeServiceNodeID(serviceID))),
 		)
 	}
 	n = n.AddTable(PodLabelPrefix, p.ObjectMeta.Labels)

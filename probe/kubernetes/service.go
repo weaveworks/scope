@@ -1,8 +1,6 @@
 package kubernetes
 
 import (
-	"time"
-
 	"github.com/weaveworks/scope/report"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/labels"
@@ -20,37 +18,19 @@ const (
 
 // Service represents a Kubernetes service
 type Service interface {
-	UID() string
-	ID() string
-	Name() string
-	Namespace() string
+	Meta
 	GetNode() report.Node
 	Selector() labels.Selector
 }
 
 type service struct {
 	*api.Service
+	Meta
 }
 
 // NewService creates a new Service
 func NewService(s *api.Service) Service {
-	return &service{Service: s}
-}
-
-func (s *service) UID() string {
-	return string(s.ObjectMeta.UID)
-}
-
-func (s *service) ID() string {
-	return s.ObjectMeta.Namespace + "/" + s.ObjectMeta.Name
-}
-
-func (s *service) Name() string {
-	return s.ObjectMeta.Name
-}
-
-func (s *service) Namespace() string {
-	return s.ObjectMeta.Namespace
+	return &service{Service: s, Meta: meta{s.ObjectMeta}}
 }
 
 func (s *service) Selector() labels.Selector {
@@ -64,7 +44,7 @@ func (s *service) GetNode() report.Node {
 	latest := map[string]string{
 		ServiceID:      s.ID(),
 		ServiceName:    s.Name(),
-		ServiceCreated: s.ObjectMeta.CreationTimestamp.Format(time.RFC822),
+		ServiceCreated: s.Created(),
 		Namespace:      s.Namespace(),
 		ServiceIP:      s.Spec.ClusterIP,
 	}
@@ -72,8 +52,8 @@ func (s *service) GetNode() report.Node {
 		latest[ServicePublicIP] = s.Spec.LoadBalancerIP
 	}
 	return report.MakeNodeWith(
-		report.MakeServiceNodeID(s.Namespace(), s.Name()),
+		report.MakeServiceNodeID(s.UID()),
 		latest,
 	).
-		AddTable(ServiceLabelPrefix, s.Labels)
+		AddTable(ServiceLabelPrefix, s.ObjectMeta.Labels)
 }

@@ -192,7 +192,14 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
 			WithTableTemplates(PodTableTemplates)
-		selectors = map[string]labels.Selector{}
+		selectors = []func(Pod){}
+		match     = func(selector labels.Selector, f func(Pod, string), id string) func(Pod) {
+			return func(p Pod) {
+				if selector.Matches(p.Labels()) {
+					f(p, id)
+				}
+			}
+		}
 	)
 	pods.Controls.AddControl(report.Control{
 		ID:    GetLogs,
@@ -207,7 +214,7 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
 		Rank:  1,
 	})
 	for _, service := range services {
-		selectors[service.ID()] = service.Selector()
+		selectors = append(selectors, match(service.Selector(), Pod.AddServiceID, service.UID()))
 	}
 
 	thisNodeName, err := GetNodeName(r)
@@ -218,10 +225,8 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
 		if p.NodeName() != thisNodeName {
 			return nil
 		}
-		for serviceID, selector := range selectors {
-			if selector.Matches(p.Labels()) {
-				p.AddServiceID(serviceID)
-			}
+		for _, selector := range selectors {
+			selector(p)
 		}
 		pods = pods.AddNode(p.GetNode(r.probeID))
 		return nil

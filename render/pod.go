@@ -95,40 +95,34 @@ func MapContainer2Pod(n report.Node, _ report.Networks) report.Nodes {
 	return report.Nodes{id: node}
 }
 
-// MapPod2Service maps pod Nodes to service Nodes.
-//
-// If this function is given a node without a kubernetes_pod_id
-// (including other pseudo nodes), it will produce an "Uncontained"
-// pseudo node.
-//
-// Otherwise, this function will produce a node with the correct ID
-// format for a container, but without any Major or Minor labels.
-// It does not have enough info to do that, and the resulting graph
-// must be merged with a pod graph to get that info.
-func MapPod2Service(pod report.Node, _ report.Networks) report.Nodes {
-	// Propagate all pseudo nodes
-	if pod.Topology == Pseudo {
-		return report.Nodes{pod.ID: pod}
-	}
+// The various ways of grouping pods
+var (
+	MapPod2Service    = MapPod2Grouping(report.Service, kubernetes.ServiceIDs, report.MakeServiceNodeID)
+)
 
-	// Otherwise, if some some reason the pod doesn't have a service_ids (maybe
-	// slightly out of sync reports, or its not in a service), just drop it
-	namespace, ok := pod.Latest.Lookup(kubernetes.Namespace)
-	if !ok {
-		return report.Nodes{}
-	}
-	serviceIDs, ok := pod.Sets.Lookup(kubernetes.ServiceIDs)
-	if !ok {
-		return report.Nodes{}
-	}
+// MapPod2Grouping maps pod Nodes to some kubernetes grouping.
+func MapPod2Grouping(topology, setKey string, idMaker func(uid string) string) func(pod report.Node, _ report.Networks) report.Nodes {
+	return func(pod report.Node, _ report.Networks) report.Nodes {
+		// Propagate all pseudo nodes
+		if pod.Topology == Pseudo {
+			return report.Nodes{pod.ID: pod}
+		}
 
-	result := report.Nodes{}
-	for _, serviceID := range serviceIDs {
-		serviceName := strings.TrimPrefix(serviceID, namespace+"/")
-		id := report.MakeServiceNodeID(namespace, serviceName)
-		node := NewDerivedNode(id, pod).WithTopology(report.Service)
-		node.Counters = node.Counters.Add(pod.Topology, 1)
-		result[id] = node
+		// Otherwise, if some some reason the pod doesn't have any of these ids
+		// (maybe slightly out of sync reports, or its not in this group), just
+		// drop it
+		groupIDs, ok := pod.Sets.Lookup(setKey)
+		if !ok {
+			return report.Nodes{}
+		}
+
+		result := report.Nodes{}
+		for _, groupID := range groupIDs {
+			id := idMaker(groupID)
+			node := NewDerivedNode(id, pod).WithTopology(topology)
+			node.Counters = node.Counters.Add(pod.Topology, 1)
+			result[id] = node
+		}
+		return result
 	}
-	return result
 }

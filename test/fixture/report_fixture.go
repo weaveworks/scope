@@ -97,7 +97,8 @@ var (
 	ClientPodNodeID     = report.MakePodNodeID(ClientPodUID)
 	ServerPodNodeID     = report.MakePodNodeID(ServerPodUID)
 	ServiceID           = "ping/pongservice"
-	ServiceNodeID       = report.MakeServiceNodeID(KubernetesNamespace, "pongservice")
+	ServiceUID          = "service1234"
+	ServiceNodeID       = report.MakeServiceNodeID(ServiceUID)
 
 	ClientProcess1CPUMetric    = report.MakeMetric().Add(Now, 0.01).WithFirst(Now.Add(-1 * time.Second))
 	ClientProcess1MemoryMetric = report.MakeMetric().Add(Now, 0.02).WithFirst(Now.Add(-2 * time.Second))
@@ -373,7 +374,7 @@ var (
 						report.HostNodeID:    ClientHostNodeID,
 					}).
 					WithSets(report.EmptySets.
-						Add(kubernetes.ServiceIDs, report.MakeStringSet(ServiceID))).
+						Add(kubernetes.ServiceIDs, report.MakeStringSet(ServiceUID))).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("service", report.MakeStringSet(ServiceID)),
@@ -387,7 +388,7 @@ var (
 						report.HostNodeID:    ServerHostNodeID,
 					}).
 					WithSets(report.EmptySets.
-						Add(kubernetes.ServiceIDs, report.MakeStringSet(ServiceID))).
+						Add(kubernetes.ServiceIDs, report.MakeStringSet(ServiceUID))).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
 					Add("service", report.MakeStringSet(ServiceID)),

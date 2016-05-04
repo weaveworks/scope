@@ -22,6 +22,7 @@ var (
 	nodeName    = "nodename"
 	pod1UID     = "a1b2c3d4e5"
 	pod2UID     = "f6g7h8i9j0"
+	serviceUID  = "service1234"
 	podTypeMeta = unversioned.TypeMeta{
 		Kind:       "Pod",
 		APIVersion: "v1",
@@ -73,6 +74,7 @@ var (
 		},
 		ObjectMeta: api.ObjectMeta{
 			Name:              "pongservice",
+			UID:               types.UID(serviceUID),
 			Namespace:         "ping",
 			CreationTimestamp: unversioned.Now(),
 		},
@@ -166,7 +168,7 @@ func TestReporter(t *testing.T) {
 
 	pod1ID := report.MakePodNodeID(pod1UID)
 	pod2ID := report.MakePodNodeID(pod2UID)
-	serviceID := report.MakeServiceNodeID("ping", "pongservice")
+	serviceID := report.MakeServiceNodeID(serviceUID)
 	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", nil).Report()
 
 	// Reporter should have added the following pods
@@ -182,7 +184,7 @@ func TestReporter(t *testing.T) {
 			kubernetes.Namespace:  "ping",
 			kubernetes.PodCreated: pod1.Created(),
 		}, map[string]report.StringSet{
-			kubernetes.ServiceIDs: report.MakeStringSet("ping/pongservice"),
+			kubernetes.ServiceIDs: report.MakeStringSet(serviceUID),
 		}},
 		{pod2ID, serviceID, map[string]string{
 			kubernetes.PodID:      "ping/pong-b",
@@ -190,7 +192,7 @@ func TestReporter(t *testing.T) {
 			kubernetes.Namespace:  "ping",
 			kubernetes.PodCreated: pod1.Created(),
 		}, map[string]report.StringSet{
-			kubernetes.ServiceIDs: report.MakeStringSet("ping/pongservice"),
+			kubernetes.ServiceIDs: report.MakeStringSet(serviceUID),
 		}},
 	} {
 		node, ok := rpt.Pod.Nodes[pod.id]
