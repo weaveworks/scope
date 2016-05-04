@@ -90,7 +90,7 @@ func TestContainer(t *testing.T) {
 		}).
 			WithControls(
 				docker.RestartContainer, docker.StopContainer, docker.PauseContainer,
-				docker.AttachContainer, docker.ExecContainer,
+				docker.AttachContainer, docker.ExecContainer, docker.AnalyzeTraffic,
 			).WithMetrics(report.Metrics{
 			"docker_cpu_total_usage": report.MakeMetric(),
 			"docker_memory_usage":    report.MakeMetric().Add(now, 12345).WithMax(45678),

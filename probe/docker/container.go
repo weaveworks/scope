@@ -419,7 +419,7 @@ func (c *container) GetNode() report.Node {
 		latest[ContainerUptime] = uptime.String()
 		latest[ContainerRestartCount] = strconv.Itoa(c.container.RestartCount)
 		latest[ContainerNetworkMode] = networkMode
-		controls = append(controls, RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer)
+		controls = append(controls, RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer, AnalyzeTraffic)
 	} else {
 		controls = append(controls, StartContainer, RemoveContainer)
 	}

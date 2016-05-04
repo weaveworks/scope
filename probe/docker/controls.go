@@ -1,9 +1,10 @@
 package docker
 
 import (
-	docker_client "github.com/fsouza/go-dockerclient"
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
+	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
@@ -20,6 +21,7 @@ const (
 	RemoveContainer  = "docker_remove_container"
 	AttachContainer  = "docker_attach_container"
 	ExecContainer    = "docker_exec_container"
+	AnalyzeTraffic   = "docker_analyze_traffic"
 
 	waitTime = 10
 )
@@ -153,6 +155,21 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 	}
 }
 
+func (r *registry) analyzeTraffic(containerID string, req xfer.Request) xfer.Response {
+	dockerContainer, err := r.client.InspectContainer(containerID)
+	if err != nil {
+		return xfer.ResponseError(err)
+	}
+	if !dockerContainer.State.Running {
+		return xfer.ResponseError(fmt.Errorf("Container not running"))
+	}
+	pid := fmt.Sprintf("%d", dockerContainer.State.Pid)
+	// TODO: better defaults for tshark?
+	cmd := []string{"nsenter", "-t", pid, "-n", "tshark", "-i", "any"}
+	handler := controls.MakeTTYCommandHandler("traffic analyzer", r.pipes, cmd)
+	return handler(req)
+}
+
 func captureContainerID(f func(string, xfer.Request) xfer.Response) func(xfer.Request) xfer.Response {
 	return func(req xfer.Request) xfer.Response {
 		containerID, ok := report.ParseContainerNodeID(req.NodeID)
@@ -172,6 +189,7 @@ func (r *registry) registerControls() {
 	controls.Register(RemoveContainer, captureContainerID(r.removeContainer))
 	controls.Register(AttachContainer, captureContainerID(r.attachContainer))
 	controls.Register(ExecContainer, captureContainerID(r.execContainer))
+	controls.Register(AnalyzeTraffic, captureContainerID(r.analyzeTraffic))
 }
 
 func (r *registry) deregisterControls() {
@@ -183,4 +201,5 @@ func (r *registry) deregisterControls() {
 	controls.Rm(RemoveContainer)
 	controls.Rm(AttachContainer)
 	controls.Rm(ExecContainer)
+	controls.Rm(AnalyzeTraffic)
 }
