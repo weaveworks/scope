@@ -198,17 +198,14 @@ class NodesChart extends React.Component {
           if (!edges.has(edgeId)) {
             const source = edge[0];
             const target = edge[1];
-
-            if (!stateNodes.has(source) || !stateNodes.has(target)) {
-              log('Missing edge node', edge[0], edge[1]);
+            if (stateNodes.has(source) && stateNodes.has(target)) {
+              edges = edges.set(edgeId, makeMap({
+                id: edgeId,
+                value: 1,
+                source,
+                target
+              }));
             }
-
-            edges = edges.set(edgeId, makeMap({
-              id: edgeId,
-              value: 1,
-              source,
-              target
-            }));
           }
         });
       }
@@ -404,7 +401,7 @@ function mapStateToProps(state) {
   return {
     adjacentNodes: getAdjacentNodes(state),
     forceRelayout: state.get('forceRelayout'),
-    nodes: state.get('nodes'),
+    nodes: state.get('nodes').filter(node => !node.get('filtered')),
     selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('topologyId'),
     topologyOptions: getActiveTopologyOptions(state)

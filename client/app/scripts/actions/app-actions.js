@@ -4,6 +4,7 @@ import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
+import { parseQuery } from '../utils/search-utils';
 import { bufferDeltaUpdate, resumeUpdate,
   resetUpdateBuffer } from '../utils/update-buffer-utils';
 import { doControlRequest, getAllNodes, getNodesDelta, getNodeDetails,
@@ -66,6 +67,20 @@ export function pinNextMetric(delta) {
     const nextMetric = metrics.get(nextIndex);
 
     dispatch(pinMetric(nextMetric));
+  };
+}
+
+export function pinSearch(query) {
+  return {
+    type: ActionTypes.PIN_SEARCH,
+    query
+  };
+}
+
+export function unpinSearch(query) {
+  return {
+    type: ActionTypes.UNPIN_SEARCH,
+    query
   };
 }
 
@@ -298,6 +313,22 @@ export function focusSearch() {
     setTimeout(() => {
       getAllNodes(getState, dispatch);
     }, 1200);
+  };
+}
+
+export function hitEnter() {
+  return (dispatch, getState) => {
+    const state = getState();
+    // pin query based on current search field
+    if (state.get('searchFocused')) {
+      const query = state.get('searchQuery');
+      if (query && parseQuery(query)) {
+        dispatch({
+          type: ActionTypes.PIN_SEARCH,
+          query
+        });
+      }
+    }
   };
 }
 

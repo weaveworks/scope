@@ -1213,7 +1213,7 @@ h2 {
   &-hint {
     font-size: 0.7rem;
     position: absolute;
-    padding: 0 1em 0 3em;
+    padding: 0 1em;
     color: @text-tertiary-color;
     top: 0;
     opacity: 0;
@@ -1226,89 +1226,76 @@ h2 {
     background: #fff;
     position: relative;
     z-index: 1;
-    display: inline-block;
+    display: flex;
     border-radius: @border-radius;
     width: 100%;
     border: 1px solid transparent;
+    padding: 2px 4px;
+    text-align: left;
+
+    &-items {
+      padding: 2px 4px;
+    }
 
     &-field {
       font-size: 0.8rem;
       line-height: 150%;
       position: relative;
-      display: block;
-      float: right;
-      padding: 4px 8px 4px 32px;
-      width: 100%;
+      padding: 1px 4px 1px 0.75em;
       border: none;
       border-radius: 0;
       background: transparent;
       color: @text-color;
+      flex: 1;
 
       &:focus {
         outline: none;
       }
     }
 
+    &-icon {
+      position: relative;
+      width: 1.285em;
+      text-align: center;
+      color: @text-secondary-color;
+      position: relative;
+      top: 4px;
+      left: 4px;
+    }
+
     &-label {
       user-select: none;
       display: inline-block;
-      float: right;
-      padding: 0 0.75em;
+      padding: 2px 1em;
       font-size: 0.8rem;
       position: absolute;
-      top: -10px;
-      width: 100%;
       text-align: left;
       pointer-events: none;
       color: @text-secondary-color;
-
-      &-icon {
-        top: 10px;
-        position: relative;
-        width: 1.285em;
-        text-align: center;
-        color: @text-secondary-color;
-        transition: opacity 0.3s 0.4s @base-ease;
-        opacity: 0;
-        display: inline-block;
-      }
-
-      &-text {
-        color: @text-secondary-color;
-        text-align: left;
-        padding: 4px 0;
-        top: 10px;
-        position: relative;
-        left: -1.2em;
-        transition: opacity 0.3s 0.5s @base-ease;
-        opacity: 1;
-        display: inline-block;
-        text-transform: uppercase;
-      }
+      text-transform: uppercase;
+      transition: opacity 0.3s 0.5s @base-ease;
+      opacity: 1;
     }
   }
 
-  &-focused &-input-label-icon,
-  &-filled &-input-label-icon {
-    transition: opacity 0.3s 0s @base-ease;
-    opacity: 1;
-  }
-
-  &-focused &-input-label-text,
-  &-filled &-input-label-text {
+  &-focused &-input-label,
+  &-pinned &-input-label,
+  &-filled &-input-label {
     transition: opacity 0.1s 0s @base-ease;
     opacity: 0;
   }
 
   &-focused &-hint,
-  &-filled &-hint {
+  &-filled &-hint,
+  &-pinned &-hint {
     opacity: 1;
     transform: translate3d(0, 2.75em, 0);
     transition: transform 0.3s 0.3s @base-ease, opacity 0.3s 0.3s @base-ease;
   }
 
   &-focused,
-  &-filled {
+  &-filled,
+  &-pinned {
     width: 100%;
   }
 
@@ -1316,6 +1303,25 @@ h2 {
     border-color: @weave-blue;
   }
 
+}
+
+.search-item {
+  background-color: fade(@weave-blue, 20%);
+  border-radius: @border-radius / 2;
+  margin-left: 4px;
+
+  &-label {
+    padding: 2px 4px;
+  }
+
+  &-icon {
+    .btn-opacity;
+    padding: 2px 4px 2px 2px;
+    cursor: pointer;
+    font-size: 80%;
+    position: relative;
+    top: -1px;
+  }
 }
 
 @keyframes focusing {

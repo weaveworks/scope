@@ -7,10 +7,10 @@ import NodeContainer from './node-container';
 
 class NodesChartNodes extends React.Component {
   render() {
-    const { adjacentNodes, highlightedNodeIds, layoutNodes, layoutPrecision,
-      nodeScale, scale, searchNodeMatches = makeMap(), searchQuery,
-      selectedMetric, selectedNodeScale,
-      selectedNodeId, topCardNode } = this.props;
+    const { adjacentNodes, highlightedNodeIds, layoutNodes,
+      layoutPrecision, nodeScale, scale, searchNodeMatches = makeMap(),
+      searchQuery, selectedMetric, selectedNodeScale, selectedNodeId,
+      topCardNode } = this.props;
 
     const zoomScale = scale;
 

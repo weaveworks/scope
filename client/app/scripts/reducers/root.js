@@ -5,7 +5,7 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
 
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
-import { updateNodeMatches } from '../utils/search-utils';
+import { applyPinnedSearches, updateNodeMatches } from '../utils/search-utils';
 import { findTopologyById, getAdjacentNodes, setTopologyUrlsById,
   updateTopologyIds, filterHiddenTopologies } from '../utils/topology-utils';
 
@@ -55,6 +55,7 @@ export const initialState = makeMap({
   // allows us to keep the same metric "type" selected when the topology changes.
   pinnedMetricType: null,
   plugins: makeList(),
+  pinnedSearches: makeList(), // list of node filters
   routeSet: false,
   searchFocused: false,
   searchNodeMatches: makeMap(),
@@ -398,6 +399,13 @@ export function rootReducer(state = initialState, action) {
       return state.set('searchFocused', true);
     }
 
+    case ActionTypes.PIN_SEARCH: {
+      state = state.set('searchQuery', '');
+      const pinnedSearches = state.get('pinnedSearches');
+      state = state.setIn(['pinnedSearches', pinnedSearches.size], action.query);
+      return applyPinnedSearches(state);
+    }
+
     case ActionTypes.RECEIVE_CONTROL_NODE_REMOVED: {
       return closeNodeDetails(state, action.nodeId);
     }
@@ -475,6 +483,9 @@ export function rootReducer(state = initialState, action) {
       _.each(action.delta.add, (node) => {
         state = state.setIn(['nodes', node.id], fromJS(makeNode(node)));
       });
+
+      // apply pinned searches, filters nodes that dont match
+      state = applyPinnedSearches(state);
 
       state = state.set('availableCanvasMetrics', state.get('nodes')
         .valueSeq()
@@ -576,6 +587,12 @@ export function rootReducer(state = initialState, action) {
       state = state.set('topologyOptions',
         fromJS(action.state.topologyOptions) || state.get('topologyOptions'));
       return state;
+    }
+
+    case ActionTypes.UNPIN_SEARCH: {
+      const pinnedSearches = state.get('pinnedSearches').filter(query => query !== action.query);
+      state = state.set('pinnedSearches', pinnedSearches);
+      return applyPinnedSearches(state);
     }
 
     default: {

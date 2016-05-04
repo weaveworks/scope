@@ -31,7 +31,7 @@ function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label) {
   return nodeMatches;
 }
 
-function searchTopology(nodes, prefix, query) {
+export function searchTopology(nodes, { prefix, query }) {
   let nodeMatches = makeMap();
   nodes.forEach((node, nodeId) => {
     // top level fields
@@ -67,29 +67,68 @@ function searchTopology(nodes, prefix, query) {
   return nodeMatches;
 }
 
+export function parseQuery(query) {
+  if (query) {
+    const prefixQuery = query.split(PREFIX_DELIMITER);
+    const isPrefixQuery = prefixQuery && prefixQuery.length === 2;
+    const valid = !isPrefixQuery || prefixQuery.every(s => s);
+    if (valid) {
+      let prefix = null;
+      if (isPrefixQuery) {
+        prefix = prefixQuery[0];
+        query = prefixQuery[1];
+      }
+      return {
+        query,
+        prefix
+      };
+    }
+  }
+  return null;
+}
+
 /**
  * Returns {topologyId: {nodeId: matches}}
  */
 export function updateNodeMatches(state) {
-  let query = state.get('searchQuery');
-  const prefixQuery = query && query.split(PREFIX_DELIMITER);
-  const isPrefixQuery = prefixQuery && prefixQuery.length === 2;
-  const isValidPrefixQuery = isPrefixQuery && prefixQuery.every(s => s);
-
-  if (query && (isPrefixQuery === isValidPrefixQuery)) {
-    const prefix = isValidPrefixQuery ? prefixQuery[0] : null;
-    if (isPrefixQuery) {
-      query = prefixQuery[1];
-    }
+  const parsed = parseQuery(state.get('searchQuery'));
+  if (parsed) {
     state.get('topologyUrlsById').forEach((url, topologyId) => {
       const topologyNodes = state.getIn(['nodesByTopology', topologyId]);
       if (topologyNodes) {
-        const nodeMatches = searchTopology(topologyNodes, prefix, query);
+        const nodeMatches = searchTopology(topologyNodes, parsed);
         state = state.setIn(['searchNodeMatches', topologyId], nodeMatches);
       }
     });
   } else {
     state = state.update('searchNodeMatches', snm => snm.clear());
+  }
+
+  return state;
+}
+
+/**
+ * Set `filtered:true` in state's nodes if a pinned search matches
+ */
+export function applyPinnedSearches(state) {
+  // clear old filter state
+  state = state.update('nodes',
+    nodes => nodes.map(node => node.set('filtered', false)));
+
+  const pinnedSearches = state.get('pinnedSearches');
+  if (pinnedSearches.size > 0) {
+    state.get('pinnedSearches').forEach(query => {
+      const parsed = parseQuery(query);
+      if (parsed) {
+        const nodeMatches = searchTopology(state.get('nodes'), parsed);
+        const filteredNodes = state.get('nodes')
+          .map(node => node.set('filtered',
+            node.get('filtered') // matched by previous pinned search
+            || nodeMatches.size === 0 // no match, filter all nodes
+            || !nodeMatches.has(node.get('id')))); // filter matches
+        state = state.set('nodes', filteredNodes);
+      }
+    });
   }
 
   return state;

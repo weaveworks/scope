@@ -7,8 +7,9 @@ import EdgeContainer from './edge-container';
 
 class NodesChartEdges extends React.Component {
   render() {
-    const { hasSelectedNode, highlightedEdgeIds, layoutEdges, layoutPrecision,
-      searchNodeMatches = makeMap(), searchQuery, selectedNodeId } = this.props;
+    const { hasSelectedNode, highlightedEdgeIds, layoutEdges,
+      layoutPrecision, searchNodeMatches = makeMap(), searchQuery,
+      selectedNodeId } = this.props;
 
     return (
       <g className="nodes-chart-edges">

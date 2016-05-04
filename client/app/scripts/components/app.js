@@ -11,7 +11,7 @@ import Status from './status.js';
 import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
-import { pinNextMetric, hitEsc, unpinMetric,
+import { pinNextMetric, hitEnter, hitEsc, unpinMetric,
   selectMetric, toggleHelp } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
@@ -23,6 +23,7 @@ import DebugToolbar, { showingDebugToolbar,
 import { getUrlState } from '../utils/router-utils';
 import { getActiveTopologyOptions } from '../utils/topology-utils';
 
+const ENTER_KEY_CODE = 13;
 const ESC_KEY_CODE = 27;
 const keyPressLog = debug('scope:app-key-press');
 
@@ -55,6 +56,8 @@ class App extends React.Component {
     // don't get esc in onKeyPress
     if (ev.keyCode === ESC_KEY_CODE) {
       this.props.dispatch(hitEsc());
+    } else if (ev.keyCode === ENTER_KEY_CODE) {
+      this.props.dispatch(hitEnter());
     }
   }
 
