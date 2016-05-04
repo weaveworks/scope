@@ -9,7 +9,7 @@ Weave Scope integrates with the following orchestrators and cloud environments:
  * [Launching Scope as a Service with Docker Compose](#launching-scope-as-a-service-and-docker-compose)
  * [Visualizing Kubernetes Clusters with Scope](/site/integrations/kubernetes.md)
  * [AWS Cloud Formation](/site/integrations/aws-cloud-formation.md)
- * [Using Scope with DC/OS](https://www.weave.works/guides/deploy-weave-scope-dcos/)
+ * [Using Scope with DC/OS](/site/integrations/dc-os.md)
  * [Weave Scope and Rancher Catalog](/site/integrations/rancher-scope.md)
  
 
