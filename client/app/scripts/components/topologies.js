@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import cx from 'classnames';
+import classnames from 'classnames';
 
 import { clickTopology } from '../actions/app-actions';
 
@@ -22,7 +22,7 @@ class Topologies extends React.Component {
     const searchMatches = this.props.searchNodeMatches.get(subTopology.get('id'));
     const searchMatchCount = searchMatches ? searchMatches.size : 0;
     const title = this.renderTitle(subTopology, searchMatchCount);
-    const className = cx('topologies-sub-item', {
+    const className = classnames('topologies-sub-item', {
       'topologies-sub-item-active': isActive,
       'topologies-sub-item-matched': searchMatchCount
     });
@@ -50,7 +50,7 @@ class Topologies extends React.Component {
     const isActive = topology === this.props.currentTopology;
     const searchMatches = this.props.searchNodeMatches.get(topology.get('id'));
     const searchMatchCount = searchMatches ? searchMatches.size : 0;
-    const className = cx('topologies-item-main', {
+    const className = classnames('topologies-item-main', {
       'topologies-item-main-active': isActive,
       'topologies-item-main-matched': searchMatchCount
     });

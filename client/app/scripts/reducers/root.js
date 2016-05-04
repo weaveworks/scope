@@ -340,6 +340,8 @@ export function rootReducer(state = initialState, action) {
       const nodeId = action.nodeId;
       const adjacentNodes = getAdjacentNodes(state, nodeId);
 
+      state = state.set('mouseOverNodeId', nodeId);
+
       // highlight adjacent nodes
       state = state.update('highlightedNodeIds', highlightedNodeIds => {
         highlightedNodeIds = highlightedNodeIds.clear();
@@ -370,6 +372,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.LEAVE_NODE: {
+      state = state.set('mouseOverNodeId', null);
       state = state.update('highlightedEdgeIds', highlightedEdgeIds => highlightedEdgeIds.clear());
       state = state.update('highlightedNodeIds', highlightedNodeIds => highlightedNodeIds.clear());
       return state;
@@ -517,7 +520,9 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY: {
       // not sure if mergeDeep() brings any benefit here
-      return state.setIn(['nodesByTopology', action.topologyId], fromJS(action.nodes));
+      state = state.setIn(['nodesByTopology', action.topologyId], fromJS(action.nodes));
+      state = updateNodeMatches(state);
+      return state;
     }
 
     case ActionTypes.RECEIVE_NOT_FOUND: {

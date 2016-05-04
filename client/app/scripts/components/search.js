@@ -1,6 +1,7 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
-import cx from 'classnames';
+import classnames from 'classnames';
 import _ from 'lodash';
 
 import { blurSearch, doSearch, focusSearch } from '../actions/app-actions';
@@ -8,29 +9,32 @@ import { slugify } from '../utils/string-utils';
 import { isTopologyEmpty } from '../utils/topology-utils';
 import SearchItem from './search-item';
 
+function shortenHintLabel(text) {
+  return text
+    .split(' ')[0]
+    .toLowerCase()
+    .substr(0, 12);
+}
+
 // dynamic hint based on node names
 function getHint(nodes) {
   let label = 'mycontainer';
   let metadataLabel = 'ip';
-  let metadataValue = '172.12';
+  let metadataValue = '10.1.0.1';
 
-  const node = nodes.last();
+  const node = nodes.filter(n => !n.get('pseudo') && n.has('metadata')).last();
   if (node) {
-    label = node.get('label');
+    label = shortenHintLabel(node.get('label'))
+      .split('.')[0];
     if (node.get('metadata')) {
       const metadataField = node.get('metadata').first();
-      metadataLabel = slugify(metadataField.get('label'))
-        .split(' ')[0]
-        .split('.').pop()
-        .substr(0, 20);
-      metadataValue = metadataField.get('value')
-        .toLowerCase()
-        .split(' ')[0]
-        .substr(0, 12);
+      metadataLabel = shortenHintLabel(slugify(metadataField.get('label')))
+        .split('.').pop();
+      metadataValue = shortenHintLabel(metadataField.get('value'));
     }
   }
 
-  return `Try "${label}" or "${metadataLabel}:${metadataValue}".
+  return `Try "${label}", "${metadataLabel}:${metadataValue}", or "cpu > 2%".
    Hit enter to apply the search as a filter.`;
 }
 
@@ -38,7 +42,6 @@ class Search extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-    this.handleBlur = this.handleBlur.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
     this.doSearch = _.debounce(this.doSearch.bind(this), 200);
@@ -47,14 +50,19 @@ class Search extends React.Component {
     };
   }
 
-  handleBlur() {
-    this.props.blurSearch();
-  }
-
   handleChange(ev) {
-    const value = ev.target.value;
+    const inputValue = ev.target.value;
+    let value = inputValue;
+    // In render() props.searchQuery can be set from the outside, but state.value
+    // must have precendence for quick feedback. Now when the user backspaces
+    // quickly enough from `text`, a previouse doSearch(`text`) will come back
+    // via props and override the empty state.value. To detect this edge case
+    // we instead set value to null when backspacing.
+    if (this.state.value && value === '') {
+      value = null;
+    }
     this.setState({value});
-    this.doSearch(value);
+    this.doSearch(inputValue);
   }
 
   handleFocus() {
@@ -72,15 +80,25 @@ class Search extends React.Component {
     }
   }
 
+  componentDidUpdate() {
+    if (this.props.searchFocused) {
+      ReactDOM.findDOMNode(this.refs.queryInput).focus();
+    } else if (!this.state.value) {
+      ReactDOM.findDOMNode(this.refs.queryInput).blur();
+    }
+  }
+
   render() {
     const { inputId = 'search', nodes, pinnedSearches, searchFocused,
       searchNodeMatches, searchQuery, topologiesLoaded } = this.props;
-    const disabled = this.props.isTopologyEmpty || !topologiesLoaded;
+    const disabled = this.props.isTopologyEmpty;
     const matchCount = searchNodeMatches
       .reduce((count, topologyMatches) => count + topologyMatches.size, 0);
     const showPinnedSearches = pinnedSearches.size > 0;
-    const value = this.state.value || searchQuery || '';
-    const classNames = cx('search', {
+    // manual clear (null) has priority, then props, then state
+    const value = this.state.value === null ? '' : this.state.value || searchQuery || '';
+    const classNames = classnames('search', 'hideable', {
+      hide: !topologiesLoaded,
       'search-pinned': showPinnedSearches,
       'search-matched': matchCount,
       'search-filled': value,
@@ -97,14 +115,12 @@ class Search extends React.Component {
             <label className="search-input-label" htmlFor={inputId}>
               Search
             </label>
-            {showPinnedSearches && <span className="search-input-items">
-              {pinnedSearches.toIndexedSeq()
-                .map(query => <SearchItem query={query} key={query} />)}
-            </span>}
+            {showPinnedSearches && pinnedSearches.toIndexedSeq()
+              .map(query => <SearchItem query={query} key={query} />)}
             <input className="search-input-field" type="text" id={inputId}
               value={value} onChange={this.handleChange}
-              onBlur={this.handleBlur} onFocus={this.handleFocus}
-              disabled={disabled} />
+              onFocus={this.handleFocus}
+              disabled={disabled} ref="queryInput" />
           </div>
           {!showPinnedSearches && <div className="search-hint">
             {getHint(nodes)}

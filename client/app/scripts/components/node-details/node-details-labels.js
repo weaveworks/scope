@@ -43,7 +43,7 @@ export default class NodeDetailsLabels extends React.Component {
               {field.label}
             </div>
             <div className="node-details-labels-field-value truncate" title={field.value}>
-              <MatchedText text={field.value} matches={matches} fieldId={field.id} />
+              <MatchedText text={field.value} match={matches.get(field.id)} />
             </div>
           </div>
         ))}

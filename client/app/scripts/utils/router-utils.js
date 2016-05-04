@@ -8,13 +8,18 @@ import { route } from '../actions/app-actions';
 //
 const SLASH = '/';
 const SLASH_REPLACEMENT = '<SLASH>';
+const PERCENT = '%';
+const PERCENT_REPLACEMENT = '<PERCENT>';
 
 function encodeURL(url) {
-  return url.replace(new RegExp(SLASH, 'g'), SLASH_REPLACEMENT);
+  return url
+    .replace(new RegExp(PERCENT, 'g'), PERCENT_REPLACEMENT)
+    .replace(new RegExp(SLASH, 'g'), SLASH_REPLACEMENT);
 }
 
 function decodeURL(url) {
-  return decodeURIComponent(url.replace(new RegExp(SLASH_REPLACEMENT, 'g'), SLASH));
+  return decodeURIComponent(url.replace(new RegExp(SLASH_REPLACEMENT, 'g'), SLASH))
+    .replace(new RegExp(PERCENT_REPLACEMENT, 'g'), PERCENT);
 }
 
 function shouldReplaceState(prevState, nextState) {
@@ -71,7 +76,7 @@ export function getRouter(dispatch, initialState) {
   });
 
   page('/state/:state', (ctx) => {
-    const state = JSON.parse(ctx.params.state);
+    const state = JSON.parse(decodeURL(ctx.params.state));
     dispatch(route(state));
   });
 

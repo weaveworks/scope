@@ -162,7 +162,7 @@ export class NodeDetails extends React.Component {
         <div className="node-details-header" style={styles.header}>
           <div className="node-details-header-wrapper">
             <h2 className="node-details-header-label truncate" title={details.label}>
-              <MatchedText text={details.label} matches={nodeMatches} fieldId="label" />
+              <MatchedText text={details.label} match={nodeMatches.get('label')} />
             </h2>
             <div className="node-details-header-relatives">
               {details.parents && <NodeDetailsRelatives relatives={details.parents} />}

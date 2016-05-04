@@ -143,7 +143,9 @@ export function clickCloseTerminal(pipeId, closePipe) {
 }
 
 export function clickDownloadGraph() {
-  saveGraph();
+  return () => {
+    saveGraph();
+  };
 }
 
 export function clickForceRelayout() {
@@ -315,6 +317,23 @@ export function focusSearch() {
   };
 }
 
+export function hitBackspace() {
+  return (dispatch, getState) => {
+    const state = getState();
+    // remove last pinned query if search query is empty
+    if (state.get('searchFocused') && !state.get('searchQuery')) {
+      const query = state.get('pinnedSearches').last();
+      if (query) {
+        dispatch({
+          type: ActionTypes.UNPIN_SEARCH,
+          query
+        });
+        updateRoute(getState);
+      }
+    }
+  };
+}
+
 export function hitEnter() {
   return (dispatch, getState) => {
     const state = getState();
@@ -340,6 +359,8 @@ export function hitEsc() {
       dispatch(hideHelp());
     } else if (state.get('searchQuery')) {
       dispatch(doSearch(''));
+    } else if (state.get('searchFocused')) {
+      dispatch(blurSearch());
     } else if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
       dispatch({
         type: ActionTypes.CLICK_CLOSE_TERMINAL,
@@ -416,6 +437,7 @@ export function receiveNodesForTopology(nodes, topologyId) {
 
 export function receiveTopologies(topologies) {
   return (dispatch, getState) => {
+    const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies
@@ -431,6 +453,10 @@ export function receiveTopologies(topologies) {
       state.get('nodeDetails'),
       dispatch
     );
+    // populate search matches on first load
+    if (firstLoad && state.get('searchQuery')) {
+      dispatch(focusSearch());
+    }
   };
 }
 

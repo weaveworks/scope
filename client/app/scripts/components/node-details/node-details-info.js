@@ -1,4 +1,5 @@
 import React from 'react';
+import { Map as makeMap } from 'immutable';
 
 import MatchedText from '../matched-text';
 import ShowMore from '../show-more';
@@ -19,7 +20,7 @@ export default class NodeDetailsInfo extends React.Component {
   }
 
   render() {
-    const { matches } = this.props;
+    const { matches = makeMap() } = this.props;
     let rows = (this.props.rows || []);
     let notShown = 0;
 
@@ -41,7 +42,7 @@ export default class NodeDetailsInfo extends React.Component {
               {field.label}
             </div>
             <div className="node-details-info-field-value truncate" title={field.value}>
-              <MatchedText text={field.value} matches={matches} fieldId={field.id} />
+              <MatchedText text={field.value} match={matches.get(field.id)} />
             </div>
           </div>
         ))}

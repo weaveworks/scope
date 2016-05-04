@@ -3,19 +3,22 @@ import { connect } from 'react-redux';
 
 import MatchedText from './matched-text';
 
-const SHOW_ROW_COUNT = 3;
+const SHOW_ROW_COUNT = 2;
+const MAX_MATCH_LENGTH = 24;
 
 class MatchedResults extends React.Component {
 
   renderMatch(matches, field) {
     const match = matches.get(field);
+    const text = match.text;
+
     return (
       <div className="matched-results-match" key={match.label}>
         <div className="matched-results-match-wrapper">
           <span className="matched-results-match-label">
             {match.label}:
           </span>
-          <MatchedText text={match.text} matches={matches} fieldId={field} />
+          <MatchedText text={text} match={match} maxLength={MAX_MATCH_LENGTH} />
         </div>
       </div>
     );
@@ -41,9 +44,9 @@ class MatchedResults extends React.Component {
     return (
       <div className="matched-results">
         {matches.keySeq().take(SHOW_ROW_COUNT).map(fieldId => this.renderMatch(matches, fieldId))}
-        {moreFieldMatches && <span className="matched-results-more" title={moreFieldMatchesTitle}>
+        {moreFieldMatches && <div className="matched-results-more" title={moreFieldMatchesTitle}>
           {`${moreFieldMatches.size} more matches`}
-        </span>}
+        </div>}
       </div>
     );
   }

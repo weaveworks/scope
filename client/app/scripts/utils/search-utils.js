@@ -18,6 +18,10 @@ const COMPARISONS_REGEX = new RegExp(`[${COMPARISONS.keySeq().toJS().join('')}]`
 
 const PREFIX_DELIMITER = ':';
 
+/**
+ * Returns a RegExp from a given string. If the string is not a valid regexp,
+ * it is escaped. Returned regexp is case-insensitive.
+ */
 function makeRegExp(expression, options = 'i') {
   try {
     return new RegExp(expression, options);
@@ -26,20 +30,27 @@ function makeRegExp(expression, options = 'i') {
   }
 }
 
+/**
+ * Returns the float of a metric value string, e.g. 2 KB -> 2048
+ */
 function parseValue(value) {
   let parsed = parseFloat(value);
-  if (_.endsWith(value, 'KB')) {
+  if ((/k/i).test(value)) {
     parsed *= 1024;
-  } else if (_.endsWith(value, 'MB')) {
+  } else if ((/m/i).test(value)) {
     parsed *= 1024 * 1024;
-  } else if (_.endsWith(value, 'GB')) {
+  } else if ((/g/i).test(value)) {
     parsed *= 1024 * 1024 * 1024;
-  } else if (_.endsWith(value, 'TB')) {
+  } else if ((/t/i).test(value)) {
     parsed *= 1024 * 1024 * 1024 * 1024;
   }
   return parsed;
 }
 
+/**
+ * True if a prefix matches a field label
+ * Slugifies the label (removes all non-alphanumerical chars).
+ */
 function matchPrefix(label, prefix) {
   if (label && prefix) {
     return (makeRegExp(prefix)).test(slugify(label));
@@ -47,6 +58,12 @@ function matchPrefix(label, prefix) {
   return false;
 }
 
+/**
+ * Adds a match to nodeMatches under the keyPath. The text is matched against
+ * the query. If a prefix is given, it is matched against the label (skip on
+ * no match).
+ * Returns a new instance of nodeMatches.
+ */
 function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label) {
   if (!prefix || matchPrefix(label, prefix)) {
     const queryRe = makeRegExp(query);
@@ -55,7 +72,7 @@ function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label) {
       const firstMatch = matches[0];
       const index = text.search(queryRe);
       nodeMatches = nodeMatches.setIn(keyPath,
-        {text, label, matches: [{start: index, length: firstMatch.length}]});
+        {text, label, start: index, length: firstMatch.length});
     }
   }
   return nodeMatches;
@@ -99,6 +116,7 @@ function findNodeMatchMetric(nodeMatches, keyPath, fieldValue, fieldLabel, metri
   return nodeMatches;
 }
 
+
 export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
   let nodeMatches = makeMap();
   nodes.forEach((node, nodeId) => {
@@ -106,8 +124,10 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
       // top level fields
       SEARCH_FIELDS.forEach((field, label) => {
         const keyPath = [nodeId, label];
-        nodeMatches = findNodeMatch(nodeMatches, keyPath, node.get(field),
-          query, prefix, label);
+        if (node.has(field)) {
+          nodeMatches = findNodeMatch(nodeMatches, keyPath, node.get(field),
+            query, prefix, label);
+        }
       });
 
       // metadata
@@ -146,6 +166,12 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
   return nodeMatches;
 }
 
+/**
+ * Returns an object with fields depending on the query:
+ * parseQuery('text') -> {query: 'text'}
+ * parseQuery('p:text') -> {query: 'text', prefix: 'p'}
+ * parseQuery('cpu > 1') -> {metric: 'cpu', value: '1', comp: 'gt'}
+ */
 export function parseQuery(query) {
   if (query) {
     const prefixQuery = query.split(PREFIX_DELIMITER);
@@ -195,14 +221,17 @@ export function parseQuery(query) {
 export function updateNodeMatches(state) {
   const parsed = parseQuery(state.get('searchQuery'));
   if (parsed) {
-    state.get('topologyUrlsById').forEach((url, topologyId) => {
-      const topologyNodes = state.getIn(['nodesByTopology', topologyId]);
-      if (topologyNodes) {
-        const nodeMatches = searchTopology(topologyNodes, parsed);
-        state = state.setIn(['searchNodeMatches', topologyId], nodeMatches);
-      }
-    });
-  } else {
+    if (state.has('nodesByTopology')) {
+      state.get('nodesByTopology').forEach((nodes, topologyId) => {
+        const nodeMatches = searchTopology(nodes, parsed);
+        if (nodeMatches.size > 0) {
+          state = state.setIn(['searchNodeMatches', topologyId], nodeMatches);
+        } else {
+          state = state.deleteIn(['searchNodeMatches', topologyId]);
+        }
+      });
+    }
+  } else if (state.has('searchNodeMatches')) {
     state = state.update('searchNodeMatches', snm => snm.clear());
   }
 
@@ -235,3 +264,15 @@ export function applyPinnedSearches(state) {
 
   return state;
 }
+
+export const testable = {
+  applyPinnedSearches,
+  findNodeMatch,
+  findNodeMatchMetric,
+  matchPrefix,
+  makeRegExp,
+  parseQuery,
+  parseValue,
+  searchTopology,
+  updateNodeMatches
+};

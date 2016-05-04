@@ -1,67 +1,104 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+const TRUNCATE_CONTEXT = 6;
+const TRUNCATE_ELLIPSIS = '…';
+
 /**
  * Returns an array with chunks that cover the whole text via {start, length}
  * objects.
  *
- * `([{start: 2, length: 1}], "text") =>
- *   [{start: 0, length: 2}, {start: 2, length: 1, match: true}, {start: 3, length: 1}]`
+ * `('text', {start: 2, length: 1}) => [{text: 'te'}, {text: 'x', match: true}, {text: 't'}]`
  */
-function reduceMatchesToChunks(matches, text) {
-  if (text && matches && matches.length > 0) {
-    const result = matches.reduce((chunks, match) => {
-      const prev = chunks.length > 0 ? chunks[chunks.length - 1] : null;
-      const end = prev ? prev.start + prev.length : 0;
-      // skip non-matching chunk if first chunk is match
-      if (match.start > 0) {
-        chunks.push({start: end, length: match.start});
-      }
-      chunks.push(Object.assign({match: true}, match));
-      return chunks;
-    }, []);
-    const last = result[result.length - 1];
-    const remaining = last.start + last.length;
-    if (text && remaining < text.length) {
-      result.push({start: remaining, length: text.length - remaining});
+function chunkText(text, { start, length }) {
+  if (text && !isNaN(start) && !isNaN(length)) {
+    const chunks = [];
+    // text chunk before match
+    if (start > 0) {
+      chunks.push({text: text.substr(0, start)});
     }
-    return result;
+    // matching chunk
+    chunks.push({match: true, text: text.substr(start, length)});
+    // text after match
+    const remaining = start + length;
+    if (remaining < text.length) {
+      chunks.push({text: text.substr(remaining)});
+    }
+    return chunks;
   }
-  return [];
+  return [{ text }];
 }
 
 /**
- * Renders text with highlighted search matches.
+ * Truncates chunks with ellipsis
  *
- * `props.matches` must be an immutable.Map of match
- * objects, the match object for this component will be extracted
- * via `get(props.fieldId)`).
- * A match object is of shape `{text, label, matches}`.
- * `match.matches` is an array of text matches of shape `{start, length}`
+ * First chunk is truncated from left, second chunk (match) is truncated in the
+ * middle, last chunk is truncated at the end, e.g.
+ * `[{text: "...cation is a "}, {text: "useful...or not"}, {text: "tool..."}]`
+ */
+function truncateChunks(chunks, text, maxLength) {
+  if (chunks && chunks.length === 3 && maxLength && text && text.length > maxLength) {
+    const res = chunks.map(c => Object.assign({}, c));
+    let needToCut = text.length - maxLength;
+    // trucate end
+    const end = res[2];
+    if (end.text.length > TRUNCATE_CONTEXT) {
+      needToCut -= end.text.length - TRUNCATE_CONTEXT;
+      end.text = `${end.text.substr(0, TRUNCATE_CONTEXT)}${TRUNCATE_ELLIPSIS}`;
+    }
+
+    if (needToCut) {
+      // truncate front
+      const start = res[0];
+      if (start.text.length > TRUNCATE_CONTEXT) {
+        needToCut -= start.text.length - TRUNCATE_CONTEXT;
+        start.text = `${TRUNCATE_ELLIPSIS}`
+          + `${start.text.substr(start.text.length - TRUNCATE_CONTEXT)}`;
+      }
+    }
+
+    if (needToCut) {
+      // truncate match
+      const middle = res[1];
+      if (middle.text.length > 2 * TRUNCATE_CONTEXT) {
+        middle.text = `${middle.text.substr(0, TRUNCATE_CONTEXT)}`
+          + `${TRUNCATE_ELLIPSIS}`
+          + `${middle.text.substr(middle.text.length - TRUNCATE_CONTEXT)}`;
+      }
+    }
+
+    return res;
+  }
+  return chunks;
+}
+
+/**
+ * Renders text with highlighted search match.
+ *
+ * A match object is of shape `{text, label, match}`.
+ * `match` is a text match object of shape `{start, length}`
  * that delimit text matches in `text`. `label` shows the origin of the text.
  */
 class MatchedText extends React.Component {
 
   render() {
-    const { fieldId, matches, text } = this.props;
-    // match is a direct match object, or still need to extract the correct field
-    const fieldMatches = matches && matches.get(fieldId);
+    const { match, text, maxLength } = this.props;
 
-    if (!fieldMatches) {
+    if (!match) {
       return <span>{text}</span>;
     }
 
     return (
-      <span className="matched-text">
-        {reduceMatchesToChunks(fieldMatches.matches, text).map((chunk, index) => {
+      <span className="matched-text" title={text}>
+        {truncateChunks(chunkText(text, match), text, maxLength).map((chunk, index) => {
           if (chunk.match) {
             return (
-              <span className="match" key={index} title={`matched: ${fieldMatches.label}`}>
-                {text.substr(chunk.start, chunk.length)}
+              <span className="match" key={index}>
+                {chunk.text}
               </span>
             );
           }
-          return text.substr(chunk.start, chunk.length);
+          return chunk.text;
         })}
       </span>
     );
