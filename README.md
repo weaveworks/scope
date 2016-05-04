@@ -231,9 +231,10 @@ in your Kubernetes cluster using
    make sure your API Server and all your Kubelets are provided with flag `--allow_privileged`
    at launch time.
 
-2. Make sure your cluster supports
-   [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md).
-   DaemonSets are needed to ensure that each Kubernetes node
+2. Make sure
+   [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md)
+   are enabled in your cluster (enabled by default from
+   Kubernetes 1.2). DaemonSets are needed to ensure that each Kubernetes node
    runs a Scope Probe:
 
    * To enable them in an existing cluster, make sure to add a
@@ -254,10 +255,12 @@ done
 ```
 
 4. Tweak the Scope probe configuration at `scope-probe-ds.yaml`, namely:
-   * If you have an account at http://scope.weave.works and want to use Scope in
-     Cloud Service Mode, uncomment the `--probe.token=foo` argument, substitute `foo`
-     by the token found in your account page, and comment out the
-     `$(WEAVE_SCOPE_APP_SERVICE_HOST):$(WEAVE_SCOPE_APP_SERVICE_PORT)` argument.
+   * If you have an account at
+     [http://scope.weave.works](http://scope.weave.works) and want to use Scope
+     in Cloud Service Mode, uncomment the `--probe.token=foo` argument,
+     substitute `foo` by the token found in your account page, and comment out
+     the `$(WEAVE_SCOPE_APP_SERVICE_HOST):$(WEAVE_SCOPE_APP_SERVICE_PORT)`
+     argument.
 
 5. Install Scope in your cluster (order is important):
 
@@ -266,6 +269,20 @@ kubectl create -f scope-app-rc.yaml  # Only if you want to run Scope in Standalo
 kubectl create -f scope-app-svc.yaml # Only if you want to run Scope in Standalone Mode
 kubectl create -f scope-probe-ds.yaml
 ```
+
+6. Open Scope in your browser
+
+   * When running Scope in Standalone mode do:
+   
+     ```
+kubectl port-forward $(kubectl get pod --selector=provider=weave-scope-app -o jsonpath={.items..metadata.name}) 4040
+```
+
+     and open [http://localhost:4040](http://localhost:4040) in your browser. This allows you to access the Scope UI securely, without
+	 opening it to the Internet.
+
+	 
+   * When running Scope in Cloud Service mode, simply log in to [https://scope.weave.works](https://scope.weave.works)
 
 ## <a name="probe_plugins"></a>Scope Probe Plugins
 
