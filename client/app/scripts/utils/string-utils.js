@@ -67,5 +67,5 @@ export const formatDate = d3.time.format.iso;
 
 const CLEAN_LABEL_REGEX = /\W/g;
 export function slugify(label) {
-  return label.replace(CLEAN_LABEL_REGEX, '');
+  return label.replace(CLEAN_LABEL_REGEX, '').toLowerCase();
 }

@@ -1,4 +1,5 @@
 import { Map as makeMap } from 'immutable';
+import _ from 'lodash';
 
 import { slugify } from './string-utils';
 
@@ -8,7 +9,28 @@ const SEARCH_FIELDS = makeMap({
   sublabel: 'label_minor'
 });
 
+const COMPARISONS = makeMap({
+  '<': 'lt',
+  '>': 'gt',
+  '=': 'eq'
+});
+const COMPARISONS_REGEX = new RegExp(`[${COMPARISONS.keySeq().toJS().join('')}]`);
+
 const PREFIX_DELIMITER = ':';
+
+function parseValue(value) {
+  let parsed = parseFloat(value);
+  if (_.endsWith(value, 'KB')) {
+    parsed *= 1024;
+  } else if (_.endsWith(value, 'MB')) {
+    parsed *= 1024 * 1024;
+  } else if (_.endsWith(value, 'GB')) {
+    parsed *= 1024 * 1024 * 1024;
+  } else if (_.endsWith(value, 'TB')) {
+    parsed *= 1024 * 1024 * 1024 * 1024;
+  }
+  return parsed;
+}
 
 function matchPrefix(label, prefix) {
   if (label && prefix) {
@@ -31,37 +53,86 @@ function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label) {
   return nodeMatches;
 }
 
-export function searchTopology(nodes, { prefix, query }) {
+/**
+ * If the metric matches the field's label and the value compares positively
+ * with the comp operator, a nodeMatch is added
+ */
+function findNodeMatchMetric(nodeMatches, keyPath, fieldValue, fieldLabel, metric, comp, value) {
+  if (slugify(metric) === slugify(fieldLabel)) {
+    let matched = false;
+    switch (comp) {
+      case 'gt': {
+        if (fieldValue > value) {
+          matched = true;
+        }
+        break;
+      }
+      case 'lt': {
+        if (fieldValue < value) {
+          matched = true;
+        }
+        break;
+      }
+      case 'eq': {
+        if (fieldValue === value) {
+          matched = true;
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+    if (matched) {
+      nodeMatches = nodeMatches.setIn(keyPath,
+        {fieldLabel, metric: true});
+    }
+  }
+  return nodeMatches;
+}
+
+export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
   let nodeMatches = makeMap();
   nodes.forEach((node, nodeId) => {
-    // top level fields
-    SEARCH_FIELDS.forEach((field, label) => {
-      const keyPath = [nodeId, label];
-      nodeMatches = findNodeMatch(nodeMatches, keyPath, node.get(field),
-        query, prefix, label);
-    });
-
-    // metadata
-    if (node.get('metadata')) {
-      node.get('metadata').forEach(field => {
-        const keyPath = [nodeId, 'metadata', field.get('id')];
-        nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
-          query, prefix, field.get('label'));
+    if (query) {
+      // top level fields
+      SEARCH_FIELDS.forEach((field, label) => {
+        const keyPath = [nodeId, label];
+        nodeMatches = findNodeMatch(nodeMatches, keyPath, node.get(field),
+          query, prefix, label);
       });
-    }
 
-    // tables (envvars and labels)
-    const tables = node.get('tables');
-    if (tables) {
-      tables.forEach((table) => {
-        if (table.get('rows')) {
-          table.get('rows').forEach(field => {
-            const keyPath = [nodeId, 'metadata', field.get('id')];
-            nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
-              query, prefix, field.get('label'));
-          });
-        }
-      });
+      // metadata
+      if (node.get('metadata')) {
+        node.get('metadata').forEach(field => {
+          const keyPath = [nodeId, 'metadata', field.get('id')];
+          nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
+            query, prefix, field.get('label'));
+        });
+      }
+
+      // tables (envvars and labels)
+      const tables = node.get('tables');
+      if (tables) {
+        tables.forEach((table) => {
+          if (table.get('rows')) {
+            table.get('rows').forEach(field => {
+              const keyPath = [nodeId, 'metadata', field.get('id')];
+              nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
+                query, prefix, field.get('label'));
+            });
+          }
+        });
+      }
+    } else if (metric) {
+      const metrics = node.get('metrics');
+      if (metrics) {
+        metrics.forEach(field => {
+          const keyPath = [nodeId, 'metrics', field.get('id')];
+          nodeMatches = findNodeMatchMetric(nodeMatches, keyPath, field.get('value'),
+            field.get('label'), metric, comp, value);
+        });
+      }
     }
   });
   return nodeMatches;
@@ -71,17 +142,40 @@ export function parseQuery(query) {
   if (query) {
     const prefixQuery = query.split(PREFIX_DELIMITER);
     const isPrefixQuery = prefixQuery && prefixQuery.length === 2;
-    const valid = !isPrefixQuery || prefixQuery.every(s => s);
-    if (valid) {
-      let prefix = null;
-      if (isPrefixQuery) {
-        prefix = prefixQuery[0];
-        query = prefixQuery[1];
+
+    if (isPrefixQuery) {
+      const prefix = prefixQuery[0].trim();
+      query = prefixQuery[1].trim();
+      if (prefix && query) {
+        return {
+          query,
+          prefix
+        };
       }
-      return {
-        query,
-        prefix
-      };
+    } else if (COMPARISONS_REGEX.test(query)) {
+      // check for comparisons
+      let comparison;
+      COMPARISONS.forEach((comp, delim) => {
+        const comparisonQuery = query.split(delim);
+        if (comparisonQuery && comparisonQuery.length === 2) {
+          const value = parseValue(comparisonQuery[1]);
+          const metric = comparisonQuery[0].trim();
+          if (!isNaN(value) && metric) {
+            comparison = {
+              metric,
+              value,
+              comp
+            };
+            return false; // dont look further
+          }
+        }
+        return true;
+      });
+      if (comparison) {
+        return comparison;
+      }
+    } else {
+      return { query };
     }
   }
   return null;

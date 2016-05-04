@@ -20,7 +20,6 @@ function getHint(nodes) {
     if (node.get('metadata')) {
       const metadataField = node.get('metadata').first();
       metadataLabel = slugify(metadataField.get('label'))
-        .toLowerCase()
         .split(' ')[0]
         .split('.').pop()
         .substr(0, 20);
