@@ -6,8 +6,8 @@ menu_order: 70
 The following topics are discussed: 
 
 * [Scope Reporting in Service Mode](#scope-reporting-in-service-mode)
-* [Scope Reporting in Stand-alone Mode](#scope-reporting-in-stand-alone-mode)
-* [Installing Weave Scope in Stand-alone Mode](#installing-weave-scope-standalone)
+* [Scope Reporting in Standalone Mode](#scope-reporting-in-stand-alone-mode)
+* [Installing Weave Scope in Standalone Mode](#installing-weave-scope-standalone)
 * [Managing Clusters with Scope and weaveDNS](#managing-clusters-with-scope-and-weavedns)
 
 Weave Scope consists of two components: the app and the probe. The components are deployed as a single Docker container using the scope script. The probe is responsible for gathering information about the host on which it is running. This information is sent to the app in the form of a report. The app processes reports from the probe into usable topologies, serving the UI, as well as pushing these topologies to the UI.
@@ -19,7 +19,7 @@ Scope can also be used to feed reports to the Scope Service. The Scope Service a
 
 !['Service Mode Reporting'](service-mode.png)
 
-##<a name="scope-reporting-in-stand-alone-mode"></a>Scope Reporting in Stand-alone Mode
+##<a name="scope-reporting-in-stand-alone-mode"></a>Scope Reporting in Standalone Mode
 
 When running Scope in a cluster, each probe sends its reports to a dedicated app. The app merges the reports from its probe into a comprehensive report that is sent to the browser.  To visualize your entire infrastructure and apps running on that infrastructure, Scope must be launched on to every machine you are using.
 
