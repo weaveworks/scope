@@ -4,7 +4,6 @@ import { Map as makeMap } from 'immutable';
 
 import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
-import { sortOrderChanged } from '../../actions/app-actions';
 
 
 function isNumberField(field) {
@@ -95,7 +94,6 @@ export default class NodeDetailsTable extends React.Component {
       ? !this.state.sortedDesc : this.state.sortedDesc;
     const sortBy = headerId;
     this.setState({sortBy, sortedDesc});
-    sortOrderChanged({sortBy, sortedDesc});
   }
 
   handleLimitClick() {
@@ -185,8 +183,6 @@ export default class NodeDetailsTable extends React.Component {
       React.cloneElement(child, { nodeOrder })
     ));
 
-    console.log(this.props.selectedRowId);
-
     return (
       <div className="node-details-table-wrapper-wrapper" style={this.props.style}>
         <div className="node-details-table-wrapper" onMouseOut={this.props.onMouseOut}>
@@ -198,7 +194,8 @@ export default class NodeDetailsTable extends React.Component {
               {nodes && nodes.map(node => (
                 <NodeDetailsTableRow
                   key={node.id}
-                  selected={this.props.highlightedNodeIds.has(node.id)}
+                  selected={this.props.highlightedNodeIds &&
+                    this.props.highlightedNodeIds.has(node.id)}
                   node={node}
                   nodeIdKey={nodeIdKey}
                   columns={columns}

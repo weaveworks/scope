@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-// import NodesChart from '../charts/nodes-chart';
+import NodesChart from '../charts/nodes-chart';
 import NodesGrid from '../charts/nodes-grid';
 import NodesError from '../charts/nodes-error';
 import { DelayedShow } from '../utils/delayed-show';
@@ -11,7 +11,6 @@ import { CANVAS_MARGINS } from '../constants/styles';
 
 const navbarHeight = 160;
 const marginTop = 0;
-const detailsWidth = 450;
 
 
 /**
@@ -68,10 +67,9 @@ class Nodes extends React.Component {
   }
 
   render() {
-    const { nodes, selectedNodeId, topologyEmpty, topologiesLoaded, nodesLoaded, topologies,
-      topology } = this.props;
+    const { nodes, topologyEmpty, topologiesLoaded, nodesLoaded, topologies,
+      topology, highlightedNodeIds } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
-    const hasSelectedNode = selectedNodeId && nodes.has(selectedNodeId);
 
     return (
       <div className="nodes-wrapper">
@@ -82,15 +80,18 @@ class Nodes extends React.Component {
             show={topologiesLoaded && !nodesLoaded} />
         </DelayedShow>
         {this.renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
-        <NodesGrid {...this.state}
-          nodeSize="24"
-          width={1300}
-          height={780}
-          margins={CANVAS_MARGINS}
-          detailsWidth={detailsWidth}
-          layoutPrecision={layoutPrecision}
-          hasSelectedNode={hasSelectedNode}
-        />
+        {this.props.gridMode ?
+          <NodesGrid {...this.state}
+            nodeSize="24"
+            nodes={nodes}
+            margins={CANVAS_MARGINS}
+            layoutPrecision={layoutPrecision}
+            highlightedNodeIds={highlightedNodeIds}
+          /> :
+         <NodesChart {...this.state}
+           margins={CANVAS_MARGINS}
+           layoutPrecision={layoutPrecision}
+           />}
       </div>
     );
   }
@@ -109,13 +110,14 @@ class Nodes extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    gridMode: state.get('gridMode'),
     nodes: state.get('nodes'),
     nodesLoaded: state.get('nodesLoaded'),
-    selectedNodeId: state.get('selectedNodeId'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),
     topologyEmpty: isTopologyEmpty(state),
     topology: state.get('currentTopology'),
+    highlightedNodeIds: state.get('highlightedNodeIds')
   };
 }
 

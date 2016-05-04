@@ -2,19 +2,8 @@
 
 import React from 'react';
 import { Set as makeSet, List as makeList, Map as makeMap } from 'immutable';
-import NodesChart from './nodes-chart';
 import NodeDetailsTable from '../components/node-details/node-details-table';
 import { enterNode, leaveNode } from '../actions/app-actions';
-
-
-function MiniChart(props) {
-  const {width, height} = props;
-  return (
-    <div style={{height, width}} className="nodes-grid-graph">
-      <NodesChart {...props} />
-    </div>
-  );
-}
 
 
 const IGNORED_COLUMNS = ['docker_container_ports'];
@@ -43,17 +32,7 @@ export default class NodesGrid extends React.Component {
   }
 
   render() {
-    const {margins, nodes, height, nodeSize} = this.props;
-    const rowStyle = { height: nodeSize };
-    const tableHeight = nodes.size * rowStyle.height;
-    const graphProps = Object.assign({}, this.props, {
-      height: tableHeight,
-      width: 400,
-      noZoom: true,
-      nodeSize: nodeSize - 4,
-      margins: {top: 0, left: 0, right: 0, bottom: 0},
-      nodes: nodes.map(node => node.remove('label').remove('label_minor'))
-    });
+    const { margins, nodes, height } = this.props;
     const cmpStyle = {
       height,
       paddingTop: margins.top,
@@ -77,9 +56,7 @@ export default class NodesGrid extends React.Component {
           onMouseOverRow={this.onMouseOverRow}
           {...detailsData}
           highlightedNodeIds={this.props.highlightedNodeIds}
-          limit={1000}>
-          <MiniChart {...graphProps} />
-        </NodeDetailsTable>
+          limit={1000} />
       </div>
     );
   }

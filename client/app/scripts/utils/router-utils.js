@@ -39,6 +39,7 @@ export function getUrlState(state) {
 
   const urlState = {
     controlPipe: cp ? cp.toJS() : null,
+    mode: state.get('gridMode') ? 'grid' : 'topo',
     nodeDetails: nodeDetails.toJS(),
     pinnedMetricType: state.get('pinnedMetricType'),
     pinnedSearches: state.get('pinnedSearches').toJS(),

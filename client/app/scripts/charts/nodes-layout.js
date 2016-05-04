@@ -51,8 +51,8 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   graph.setGraph({
     nodesep,
     ranksep,
-    rankdir: 'LR',
-    align: 'UL'
+    // rankdir: 'LR',
+    // align: 'UL'
   });
 
   // add nodes to the graph if not already there
@@ -182,16 +182,14 @@ function layoutSingleNodes(layout, opts) {
     const rows = Math.ceil(singleNodes.size / columns);
     let row = 0;
     let col = 0;
-    let singleX;
-    let singleY;
     nodes = nodes.sortBy(node => node.get('rank')).map(node => {
       if (singleNodes.has(node.get('id'))) {
         if (col === columns) {
           col = 0;
           row++;
         }
-        singleX = col * (nodesep + nodeWidth) + offsetX;
-        singleY = row * (ranksep + nodeHeight) + offsetY;
+        const singleX = col * (nodesep + nodeWidth) + offsetX;
+        const singleY = row * (ranksep + nodeHeight) + offsetY;
         col++;
         return node.merge({
           x: singleX,
@@ -200,8 +198,6 @@ function layoutSingleNodes(layout, opts) {
       }
       return node;
     });
-
-    console.log(singleX, singleY);
 
     // adjust layout dimensions if graph is now bigger
     result.width = Math.max(layout.width, columns * nodeWidth + (columns - 1) * nodesep);
@@ -250,6 +246,7 @@ function shiftLayoutToCenter(layout, opts) {
   return result;
 }
 
+
 /**
  * Adds `points` array to edge based on location of source and target
  * @param {Map} edge           new edge
@@ -266,7 +263,7 @@ function setSimpleEdgePoints(edge, nodeCache) {
 }
 
 
-function uniqueRowConstraint(layout, options) {
+export function uniqueRowConstraint(layout, options) {
   const result = Object.assign({}, layout);
   const scale = options.scale || DEFAULT_SCALE;
   const nodeHeight = scale(NODE_SIZE_FACTOR);
@@ -285,7 +282,6 @@ function uniqueRowConstraint(layout, options) {
     .range([nodeWidth, options.width - nodeWidth])
     .clamp(false);
 
-  console.log('uniqueRowConstraint', options.height);
   result.nodes = layout.nodes.map(node => node.merge({
     x: xScale(node.get('x')),
     y: nodeOrder.get(node.get('id')) * rowHeight + nodeHeight * 0.5 + margins.top + 2
@@ -395,7 +391,8 @@ export function doLayout(immNodes, immEdges, opts) {
   let layout;
 
   ++layoutRuns;
-  if (false && !options.forceRelayout && cachedLayout && nodeCache && edgeCache
+  // if (false && !options.forceRelayout && cachedLayout && nodeCache && edgeCache
+  if (!options.forceRelayout && cachedLayout && nodeCache && edgeCache
     && !hasUnseenNodes(immNodes, nodeCache)) {
     log('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
     layout = cloneLayout(cachedLayout, immNodes, immEdges);
@@ -410,7 +407,7 @@ export function doLayout(immNodes, immEdges, opts) {
     }
     layout = layoutSingleNodes(layout, opts);
     layout = shiftLayoutToCenter(layout, opts);
-    layout = uniqueRowConstraint(layout, opts);
+    // layout = uniqueRowConstraint(layout, opts);
   }
 
   // cache results

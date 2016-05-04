@@ -15,6 +15,7 @@ import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric
   selectMetric, toggleHelp } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
+import GridModeSelector from './grid-mode-selector';
 import MetricSelector from './metric-selector';
 import NetworkSelector from './networks-selector';
 import EmbeddedTerminal from './embedded-terminal';
@@ -127,6 +128,7 @@ class App extends React.Component {
 
         <Sidebar>
           <Status />
+          <GridModeSelector />
           {showingMetricsSelector && <MetricSelector />}
           {showingNetworkSelector && <NetworkSelector />}
           <TopologyOptions />
