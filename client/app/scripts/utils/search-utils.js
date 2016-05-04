@@ -18,6 +18,14 @@ const COMPARISONS_REGEX = new RegExp(`[${COMPARISONS.keySeq().toJS().join('')}]`
 
 const PREFIX_DELIMITER = ':';
 
+function makeRegExp(expression, options = 'i') {
+  try {
+    return new RegExp(expression, options);
+  } catch (e) {
+    return new RegExp(_.escapeRegExp(expression), options);
+  }
+}
+
 function parseValue(value) {
   let parsed = parseFloat(value);
   if (_.endsWith(value, 'KB')) {
@@ -34,14 +42,14 @@ function parseValue(value) {
 
 function matchPrefix(label, prefix) {
   if (label && prefix) {
-    return (new RegExp(prefix, 'i')).test(slugify(label));
+    return (makeRegExp(prefix)).test(slugify(label));
   }
   return false;
 }
 
 function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label) {
   if (!prefix || matchPrefix(label, prefix)) {
-    const queryRe = new RegExp(query, 'i');
+    const queryRe = makeRegExp(query);
     const matches = text.match(queryRe);
     if (matches) {
       const firstMatch = matches[0];
