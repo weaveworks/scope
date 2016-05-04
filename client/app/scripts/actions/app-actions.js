@@ -274,13 +274,13 @@ export function closeWebsocket() {
   };
 }
 
-export function doControl(nodeId, control) {
+export function doControl(nodeId, control, args) {
   return (dispatch) => {
     dispatch({
       type: ActionTypes.DO_CONTROL,
       nodeId
     });
-    doControlRequest(nodeId, control, dispatch);
+    doControlRequest(nodeId, control, args, dispatch);
   };
 }
 

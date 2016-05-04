@@ -164,8 +164,23 @@ func (r *registry) analyzeTraffic(containerID string, req xfer.Request) xfer.Res
 		return xfer.ResponseError(fmt.Errorf("Container not running"))
 	}
 	pid := fmt.Sprintf("%d", dockerContainer.State.Pid)
+	cmd := []string{"nsenter", "-t", pid, "-n"}
+	if _, ok := req.ControlArgs["raw_pipe"]; ok {
+		// Analyze externally with wireshark
+		// TODO: It would be even better to expose rpcapd instead since we could apply filters remotely and reduce traffic.
+		//       Also, I think we would be able to associate the rpcap:// uri with wireshark, avoiding instructions templates.
+		//       How to proxy rpcap through websockets, though?
+		cmd = append(cmd, "dumpcap", "-i", "any", "-w", "-")
+		// TODO consider using a uri scheme, like weave://scope/wireshark/%pipeurl
+		//      instead of asking the user to type a command. It would require
+		//      registering a URL scheme handler, for instance see:
+		//      http://superuser.com/questions/548119/how-do-i-configure-custom-url-handlers-on-os-x
+		template := "wireshark -i <(scope grabpipe %pipe_url)"
+		handler := controls.MakeRawCommandHandler("raw traffic analyzer", r.pipes, cmd, template)
+		handler(req)
+	}
 	// TODO: better defaults for tshark?
-	cmd := []string{"nsenter", "-t", pid, "-n", "tshark", "-i", "any"}
+	cmd = append(cmd, "tshark", "-i", "any")
 	handler := controls.MakeTTYCommandHandler("traffic analyzer", r.pipes, cmd)
 	return handler(req)
 }

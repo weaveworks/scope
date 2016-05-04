@@ -100,10 +100,11 @@ var (
 			Rank:  8,
 		},
 		{
-			ID:    AnalyzeTraffic,
-			Human: "Analyze traffic",
-			Icon:  "fa-plug",
-			Rank:  9,
+			ID:         AnalyzeTraffic,
+			Human:      "Analyze traffic",
+			Icon:       "fa-plug",
+			Rank:       9,
+			CanRawPipe: true,
 		},
 	}
 )

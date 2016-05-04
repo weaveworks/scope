@@ -11,9 +11,10 @@ var ErrInvalidMessage = fmt.Errorf("Invalid Message")
 
 // Request is the UI -> App -> Probe message type for control RPCs
 type Request struct {
-	AppID   string // filled in by the probe on receiving this request
-	NodeID  string
-	Control string
+	AppID       string // filled in by the probe on receiving this request
+	NodeID      string
+	Control     string
+	ControlArgs map[string]string
 }
 
 // Response is the Probe -> App -> UI message type for the control RPCs.
@@ -22,8 +23,9 @@ type Response struct {
 	Error string      `json:"error,omitempty"`
 
 	// Pipe specific fields
-	Pipe   string `json:"pipe,omitempty"`
-	RawTTY bool   `json:"raw_tty,omitempty"`
+	Pipe            string `json:"pipe,omitempty"`
+	RawTTY          bool   `json:"raw_tty,omitempty"`
+	RawPipeTemplate string `json:"raw_pipe_template,omitempty"` // How to connect to the raw pipe
 
 	// Remove specific fields
 	RemovedNode string `json:"removedNode,omitempty"` // Set if node was removed

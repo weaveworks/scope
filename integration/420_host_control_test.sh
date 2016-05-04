@@ -13,7 +13,7 @@ PROBEID=$(docker_on $HOST1 logs weavescope 2>&1 | grep "probe starting" | sed -n
 HOSTID=$($SSH $HOST1 hostname)
 
 # Execute 'echo foo' in the host tty and check its output
-PIPEID=$(curl -s -f -X POST  "http://$HOST1:4040/api/control/$PROBEID/$HOSTID;<host>/host_exec" | jq -r '.pipe' )
+PIPEID=$(curl -s -f -X POST -d "{}" "http://$HOST1:4040/api/control/$PROBEID/$HOSTID;<host>/host_exec" | jq -r '.pipe' )
 assert "(sleep 1 && echo \"PS1=''; echo foo\" && sleep 1) | wscat -b 'ws://$HOST1:4040/api/pipe/$PIPEID' | col -pb | tail -n 1" "foo\n"
 
 scope_end_suite
