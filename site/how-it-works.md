@@ -17,14 +17,13 @@ Weave Scope consists of two components: the app and the probe. The components ar
 
 Scope can also be used to feed reports to the Scope Service. The Scope Service allows you centrally manage and share access to your Scope UI. In this configuration, the probe is run locally and the apps are hosted for you.
 
-[redo drawingXXX]
-
+!['Service Mode Reporting'](service-mode.png)
 
 ##<a name="scope-reporting-in-stand-alone-mode"></a>Scope Reporting in Stand-alone Mode
 
 When running Scope in a cluster, each probe sends its reports to a dedicated app. The app merges the reports from its probe into a comprehensive report that is sent to the browser.  To visualize your entire infrastructure and apps running on that infrastructure, Scope must be launched on to every machine you are using.
 
-[redo drawingXXX]
+!['Stand-alone Reporting'](stand-alone.png)
 
 ##<a name="installing-weave-scope-standalone"></a>Installing Weave Scope Standalone
 
