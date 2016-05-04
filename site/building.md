@@ -1,5 +1,5 @@
 ---
-title: Building and Developing
+title: Developing and Debugging
 menu_order: 90
 ---
 
