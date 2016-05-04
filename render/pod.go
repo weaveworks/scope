@@ -14,10 +14,14 @@ const (
 	UnmanagedMajor = "Unmanaged"
 )
 
+func renderKubernetesTopologies(rpt report.Report) bool {
+	return len(rpt.Pod.Nodes)+len(rpt.Service.Nodes) > 1
+}
+
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
-var PodRenderer = ApplyDecorators(
-	MakeFilter(
+var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
+	ApplyDecorators(MakeFilter(
 		func(n report.Node) bool {
 			state, ok := n.Latest.Lookup(kubernetes.PodState)
 			return (!ok || state != kubernetes.StateDeleted)
@@ -36,13 +40,13 @@ var PodRenderer = ApplyDecorators(
 			),
 			SelectPod,
 		),
-	),
+	)),
 )
 
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
-var PodServiceRenderer = ApplyDecorators(
-	FilterEmpty(report.Pod,
+var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
+	ApplyDecorators(FilterEmpty(report.Pod,
 		MakeReduce(
 			MakeMap(
 				MapPod2Service,
@@ -50,7 +54,7 @@ var PodServiceRenderer = ApplyDecorators(
 			),
 			SelectService,
 		),
-	),
+	)),
 )
 
 // MapContainer2Pod maps container Nodes to pod
