@@ -1,4 +1,6 @@
 jest.dontMock('../../utils/router-utils');
+jest.dontMock('../../utils/search-utils');
+jest.dontMock('../../utils/string-utils');
 jest.dontMock('../../utils/topology-utils');
 jest.dontMock('../../constants/action-types');
 jest.dontMock('../root');
@@ -27,7 +29,12 @@ describe('RootReducer', () => {
       adjacency: ['n1', 'n2'],
       pseudo: undefined,
       label: undefined,
-      label_minor: undefined
+      label_minor: undefined,
+      filtered: false,
+      metrics: undefined,
+      node_count: undefined,
+      shape: undefined,
+      stack: undefined
     },
     n2: {
       id: 'n2',
@@ -35,7 +42,12 @@ describe('RootReducer', () => {
       adjacency: undefined,
       pseudo: undefined,
       label: undefined,
-      label_minor: undefined
+      label_minor: undefined,
+      filtered: false,
+      metrics: undefined,
+      node_count: undefined,
+      shape: undefined,
+      stack: undefined
     }
   };
 
