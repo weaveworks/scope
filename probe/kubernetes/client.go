@@ -8,6 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/client/cache"
 	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/unversioned"
@@ -26,6 +27,8 @@ type Client interface {
 	Stop()
 	WalkPods(f func(Pod) error) error
 	WalkServices(f func(Service) error) error
+	WalkDeployments(f func(Deployment) error) error
+	WalkReplicaSets(f func(ReplicaSet) error) error
 	WalkNodes(f func(*api.Node) error) error
 
 	WatchPods(f func(Event, Pod))
@@ -35,14 +38,18 @@ type Client interface {
 }
 
 type client struct {
-	quit             chan struct{}
-	client           *unversioned.Client
-	podReflector     *cache.Reflector
-	serviceReflector *cache.Reflector
-	nodeReflector    *cache.Reflector
-	podStore         *cache.StoreToPodLister
-	serviceStore     *cache.StoreToServiceLister
-	nodeStore        *cache.StoreToNodeLister
+	quit                chan struct{}
+	client              *unversioned.Client
+	podReflector        *cache.Reflector
+	serviceReflector    *cache.Reflector
+	deploymentReflector *cache.Reflector
+	replicaSetReflector *cache.Reflector
+	nodeReflector       *cache.Reflector
+	podStore            *cache.StoreToPodLister
+	serviceStore        *cache.StoreToServiceLister
+	deploymentStore     *cache.StoreToDeploymentLister
+	replicaSetStore     *cache.StoreToReplicaSetLister
+	nodeStore           *cache.StoreToNodeLister
 
 	podWatchesMutex sync.Mutex
 	podWatches      []func(Event, Pod)
@@ -80,6 +87,11 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 		return nil, err
 	}
 
+	ec, err := unversioned.NewExtensions(config)
+	if err != nil {
+		return nil, err
+	}
+
 	result := &client{
 		quit:   make(chan struct{}),
 		client: c,
@@ -95,6 +107,16 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 	result.serviceStore = &cache.StoreToServiceLister{Store: serviceStore}
 	result.serviceReflector = cache.NewReflector(serviceListWatch, &api.Service{}, serviceStore, resyncPeriod)
 
+	deploymentListWatch := cache.NewListWatchFromClient(ec, "deployments", api.NamespaceAll, fields.Everything())
+	deploymentStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
+	result.deploymentStore = &cache.StoreToDeploymentLister{Store: deploymentStore}
+	result.deploymentReflector = cache.NewReflector(deploymentListWatch, &extensions.Deployment{}, deploymentStore, resyncPeriod)
+
+	replicaSetListWatch := cache.NewListWatchFromClient(ec, "replicasets", api.NamespaceAll, fields.Everything())
+	replicaSetStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
+	result.replicaSetStore = &cache.StoreToReplicaSetLister{Store: replicaSetStore}
+	result.replicaSetReflector = cache.NewReflector(replicaSetListWatch, &extensions.ReplicaSet{}, replicaSetStore, resyncPeriod)
+
 	nodeListWatch := cache.NewListWatchFromClient(c, "nodes", api.NamespaceAll, fields.Everything())
 	nodeStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
 	result.nodeStore = &cache.StoreToNodeLister{Store: nodeStore}
@@ -102,6 +124,8 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 
 	runReflectorUntil(result.podReflector, resyncPeriod, result.quit)
 	runReflectorUntil(result.serviceReflector, resyncPeriod, result.quit)
+	runReflectorUntil(result.deploymentReflector, resyncPeriod, result.quit)
+	runReflectorUntil(result.replicaSetReflector, resyncPeriod, result.quit)
 	runReflectorUntil(result.nodeReflector, resyncPeriod, result.quit)
 	return result, nil
 }
@@ -140,6 +164,32 @@ func (c *client) WalkServices(f func(Service) error) error {
 	}
 	for i := range list.Items {
 		if err := f(NewService(&(list.Items[i]))); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *client) WalkDeployments(f func(Deployment) error) error {
+	list, err := c.deploymentStore.List()
+	if err != nil {
+		return err
+	}
+	for i := range list {
+		if err := f(NewDeployment(&(list[i]))); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *client) WalkReplicaSets(f func(ReplicaSet) error) error {
+	list, err := c.replicaSetStore.List()
+	if err != nil {
+		return err
+	}
+	for i := range list {
+		if err := f(NewReplicaSet(&(list[i]))); err != nil {
 			return err
 		}
 	}

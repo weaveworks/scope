@@ -50,6 +50,34 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	)),
 )
 
+// DeploymentRenderer is a Renderer which produces a renderable kubernetes deployments
+// graph by merging the pods graph and the deployments topology.
+var DeploymentRenderer = ApplyDecorators(
+	FilterEmpty(report.Pod,
+		MakeReduce(
+			MakeMap(
+				MapPod2Deployment,
+				PodRenderer,
+			),
+			SelectDeployment,
+		),
+	),
+)
+
+// ReplicaSetRenderer is a Renderer which produces a renderable kubernetes replica sets
+// graph by merging the pods graph and the replica sets topology.
+var ReplicaSetRenderer = ApplyDecorators(
+	FilterEmpty(report.Pod,
+		MakeReduce(
+			MakeMap(
+				MapPod2ReplicaSet,
+				PodRenderer,
+			),
+			SelectReplicaSet,
+		),
+	),
+)
+
 // MapContainer2Pod maps container Nodes to pod
 // Nodes.
 //
@@ -97,11 +125,13 @@ func MapContainer2Pod(n report.Node, _ report.Networks) report.Nodes {
 
 // The various ways of grouping pods
 var (
-	MapPod2Service    = MapPod2Grouping(report.Service, kubernetes.ServiceIDs, report.MakeServiceNodeID)
+	MapPod2Service    = MapPod2Parent(report.Service)
+	MapPod2Deployment = MapPod2Parent(report.Deployment)
+	MapPod2ReplicaSet = MapPod2Parent(report.ReplicaSet)
 )
 
-// MapPod2Grouping maps pod Nodes to some kubernetes grouping.
-func MapPod2Grouping(topology, setKey string, idMaker func(uid string) string) func(pod report.Node, _ report.Networks) report.Nodes {
+// MapPod2Parent maps pod Nodes to some kubernetes grouping.
+func MapPod2Parent(topology string) func(pod report.Node, _ report.Networks) report.Nodes {
 	return func(pod report.Node, _ report.Networks) report.Nodes {
 		// Propagate all pseudo nodes
 		if pod.Topology == Pseudo {
@@ -111,14 +141,13 @@ func MapPod2Grouping(topology, setKey string, idMaker func(uid string) string) f
 		// Otherwise, if some some reason the pod doesn't have any of these ids
 		// (maybe slightly out of sync reports, or its not in this group), just
 		// drop it
-		groupIDs, ok := pod.Sets.Lookup(setKey)
+		groupIDs, ok := pod.Parents.Lookup(topology)
 		if !ok {
 			return report.Nodes{}
 		}
 
 		result := report.Nodes{}
-		for _, groupID := range groupIDs {
-			id := idMaker(groupID)
+		for _, id := range groupIDs {
 			node := NewDerivedNode(id, pod).WithTopology(topology)
 			node.Counters = node.Counters.Add(pod.Topology, 1)
 			result[id] = node

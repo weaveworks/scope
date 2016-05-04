@@ -87,6 +87,8 @@ func TestProbe(t *testing.T) {
 	want.ContainerImage.Controls = nil
 	want.Pod.Controls = nil
 	want.Service.Controls = nil
+	want.Deployment.Controls = nil
+	want.ReplicaSet.Controls = nil
 	want.Host.Controls = nil
 	want.Overlay.Controls = nil
 	want.Endpoint.AddNode(node)

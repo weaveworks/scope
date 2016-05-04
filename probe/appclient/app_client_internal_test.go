@@ -74,6 +74,8 @@ func TestAppClientPublish(t *testing.T) {
 	rpt.ContainerImage = report.MakeTopology()
 	rpt.Pod = report.MakeTopology()
 	rpt.Service = report.MakeTopology()
+	rpt.Deployment = report.MakeTopology()
+	rpt.ReplicaSet = report.MakeTopology()
 	rpt.Host = report.MakeTopology()
 	rpt.Overlay = report.MakeTopology()
 	rpt.Endpoint.Controls = nil
@@ -82,6 +84,8 @@ func TestAppClientPublish(t *testing.T) {
 	rpt.ContainerImage.Controls = nil
 	rpt.Pod.Controls = nil
 	rpt.Service.Controls = nil
+	rpt.Deployment.Controls = nil
+	rpt.ReplicaSet.Controls = nil
 	rpt.Host.Controls = nil
 	rpt.Overlay.Controls = nil
 

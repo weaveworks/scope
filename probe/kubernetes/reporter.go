@@ -35,12 +35,39 @@ var (
 		report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
 	}
 
+	DeploymentMetadataTemplates = report.MetadataTemplates{
+		DeploymentID:                 {ID: DeploymentID, Label: "ID", From: report.FromLatest, Priority: 1},
+		Namespace:                    {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		DeploymentCreated:            {ID: DeploymentCreated, Label: "Created", From: report.FromLatest, Priority: 3},
+		DeploymentObservedGeneration: {ID: DeploymentObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
+		DeploymentDesiredReplicas:    {ID: DeploymentDesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
+		report.Pod:                   {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+		DeploymentStrategy:           {ID: DeploymentStrategy, Label: "Strategy", From: report.FromLatest, Priority: 7},
+	}
+
+	ReplicaSetMetadataTemplates = report.MetadataTemplates{
+		ReplicaSetID:                 {ID: ReplicaSetID, Label: "ID", From: report.FromLatest, Priority: 1},
+		Namespace:                    {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		ReplicaSetCreated:            {ID: ReplicaSetCreated, Label: "Created", From: report.FromLatest, Priority: 3},
+		ReplicaSetObservedGeneration: {ID: ReplicaSetObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
+		ReplicaSetDesiredReplicas:    {ID: ReplicaSetDesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
+		report.Pod:                   {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+	}
+
 	PodTableTemplates = report.TableTemplates{
 		PodLabelPrefix: {ID: PodLabelPrefix, Label: "Kubernetes Labels", Prefix: PodLabelPrefix},
 	}
 
 	ServiceTableTemplates = report.TableTemplates{
 		ServiceLabelPrefix: {ID: ServiceLabelPrefix, Label: "Kubernetes Labels", Prefix: ServiceLabelPrefix},
+	}
+
+	DeploymentTableTemplates = report.TableTemplates{
+		DeploymentLabelPrefix: {ID: DeploymentLabelPrefix, Label: "Kubernetes Labels", Prefix: DeploymentLabelPrefix},
+	}
+
+	ReplicaSetTableTemplates = report.TableTemplates{
+		ReplicaSetLabelPrefix: {ID: ReplicaSetLabelPrefix, Label: "Kubernetes Labels", Prefix: ReplicaSetLabelPrefix},
 	}
 )
 
@@ -142,12 +169,22 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	podTopology, err := r.podTopology(services)
+	deploymentTopology, deployments, err := r.deploymentTopology(r.probeID)
 	if err != nil {
 		return result, err
 	}
-	result.Service = result.Service.Merge(serviceTopology)
+	replicaSetTopology, replicaSets, err := r.replicaSetTopology(r.probeID)
+	if err != nil {
+		return result, err
+	}
+	podTopology, err := r.podTopology(services, deployments, replicaSets)
+	if err != nil {
+		return result, err
+	}
 	result.Pod = result.Pod.Merge(podTopology)
+	result.Service = result.Service.Merge(serviceTopology)
+	result.Deployment = result.Deployment.Merge(deploymentTopology)
+	result.ReplicaSet = result.ReplicaSet.Merge(replicaSetTopology)
 	return result, nil
 }
 
@@ -164,6 +201,36 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 		return nil
 	})
 	return result, services, err
+}
+
+func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deployment, error) {
+	var (
+		result = report.MakeTopology().
+			WithMetadataTemplates(DeploymentMetadataTemplates).
+			WithTableTemplates(DeploymentTableTemplates)
+		deployments = []Deployment{}
+	)
+	err := r.client.WalkDeployments(func(d Deployment) error {
+		result = result.AddNode(d.GetNode(probeID))
+		deployments = append(deployments, d)
+		return nil
+	})
+	return result, deployments, err
+}
+
+func (r *Reporter) replicaSetTopology(probeID string) (report.Topology, []ReplicaSet, error) {
+	var (
+		result = report.MakeTopology().
+			WithMetadataTemplates(ReplicaSetMetadataTemplates).
+			WithTableTemplates(ReplicaSetTableTemplates)
+		replicaSets = []ReplicaSet{}
+	)
+	err := r.client.WalkReplicaSets(func(r ReplicaSet) error {
+		result = result.AddNode(r.GetNode(probeID))
+		replicaSets = append(replicaSets, r)
+		return nil
+	})
+	return result, replicaSets, err
 }
 
 // GetNodeName return the k8s node name for the current machine.
@@ -187,16 +254,16 @@ var GetNodeName = func(r *Reporter) (string, error) {
 	return nodeName, err
 }
 
-func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
+func (r *Reporter) podTopology(services []Service, deployments []Deployment, replicaSets []ReplicaSet) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
 			WithTableTemplates(PodTableTemplates)
 		selectors = []func(Pod){}
-		match     = func(selector labels.Selector, f func(Pod, string), id string) func(Pod) {
+		match     = func(selector labels.Selector, topology, id string) func(Pod) {
 			return func(p Pod) {
 				if selector.Matches(p.Labels()) {
-					f(p, id)
+					p.AddParent(topology, id)
 				}
 			}
 		}
@@ -214,7 +281,25 @@ func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
 		Rank:  1,
 	})
 	for _, service := range services {
-		selectors = append(selectors, match(service.Selector(), Pod.AddServiceID, service.UID()))
+		selectors = append(selectors, match(
+			service.Selector(),
+			report.Service,
+			report.MakeServiceNodeID(service.UID()),
+		))
+	}
+	for _, deployment := range deployments {
+		selectors = append(selectors, match(
+			deployment.Selector(),
+			report.Deployment,
+			report.MakeDeploymentNodeID(deployment.UID()),
+		))
+	}
+	for _, replicaSet := range replicaSets {
+		selectors = append(selectors, match(
+			replicaSet.Selector(),
+			report.ReplicaSet,
+			report.MakeReplicaSetNodeID(replicaSet.UID()),
+		))
 	}
 
 	thisNodeName, err := GetNodeName(r)

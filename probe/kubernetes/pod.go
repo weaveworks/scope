@@ -13,7 +13,6 @@ const (
 	PodState       = "kubernetes_pod_state"
 	PodLabelPrefix = "kubernetes_pod_labels_"
 	PodIP          = "kubernetes_pod_ip"
-	ServiceIDs     = "kubernetes_service_ids"
 
 	StateDeleted = "deleted"
 )
@@ -21,7 +20,7 @@ const (
 // Pod represents a Kubernetes pod
 type Pod interface {
 	Meta
-	AddServiceID(id string)
+	AddParent(topology, id string)
 	NodeName() string
 	GetNode(probeID string) report.Node
 }
@@ -29,13 +28,13 @@ type Pod interface {
 type pod struct {
 	*api.Pod
 	Meta
-	serviceIDs report.StringSet
-	Node       *api.Node
+	parents report.Sets
+	Node    *api.Node
 }
 
 // NewPod creates a new Pod
 func NewPod(p *api.Pod) Pod {
-	return &pod{Pod: p, Meta: meta{p.ObjectMeta}, serviceIDs: report.MakeStringSet()}
+	return &pod{Pod: p, Meta: meta{p.ObjectMeta}, parents: report.MakeSets()}
 }
 
 func (p *pod) UID() string {
@@ -46,8 +45,8 @@ func (p *pod) UID() string {
 	return p.Meta.UID()
 }
 
-func (p *pod) AddServiceID(id string) {
-	p.serviceIDs = p.serviceIDs.Add(id)
+func (p *pod) AddParent(topology, id string) {
+	p.parents = p.parents.Add(topology, report.MakeStringSet(id))
 }
 
 func (p *pod) State() string {
@@ -67,12 +66,7 @@ func (p *pod) GetNode(probeID string) report.Node {
 		PodState:   p.State(),
 		PodIP:      p.Status.PodIP,
 		report.ControlProbeID: probeID,
-	}).WithSets(report.EmptySets.Add(ServiceIDs, p.serviceIDs))
-	for _, serviceID := range p.serviceIDs {
-		n = n.WithParents(report.EmptySets.
-			Add(report.Service, report.MakeStringSet(report.MakeServiceNodeID(serviceID))),
-		)
-	}
+	}).WithParents(p.parents)
 	n = n.AddTable(PodLabelPrefix, p.ObjectMeta.Labels)
 	n = n.WithControls(GetLogs, DeletePod)
 	return n

@@ -131,6 +131,12 @@ func (c *mockClient) WalkServices(f func(kubernetes.Service) error) error {
 	}
 	return nil
 }
+func (c *mockClient) WalkDeployments(f func(kubernetes.Deployment) error) error {
+	return nil
+}
+func (c *mockClient) WalkReplicaSets(f func(kubernetes.ReplicaSet) error) error {
+	return nil
+}
 func (*mockClient) WalkNodes(f func(*api.Node) error) error {
 	return nil
 }
@@ -176,23 +182,18 @@ func TestReporter(t *testing.T) {
 		id            string
 		parentService string
 		latest        map[string]string
-		sets          map[string]report.StringSet
 	}{
 		{pod1ID, serviceID, map[string]string{
 			kubernetes.PodID:      "ping/pong-a",
 			kubernetes.PodName:    "pong-a",
 			kubernetes.Namespace:  "ping",
 			kubernetes.PodCreated: pod1.Created(),
-		}, map[string]report.StringSet{
-			kubernetes.ServiceIDs: report.MakeStringSet(serviceUID),
 		}},
 		{pod2ID, serviceID, map[string]string{
 			kubernetes.PodID:      "ping/pong-b",
 			kubernetes.PodName:    "pong-b",
 			kubernetes.Namespace:  "ping",
 			kubernetes.PodCreated: pod1.Created(),
-		}, map[string]report.StringSet{
-			kubernetes.ServiceIDs: report.MakeStringSet(serviceUID),
 		}},
 	} {
 		node, ok := rpt.Pod.Nodes[pod.id]
@@ -207,12 +208,6 @@ func TestReporter(t *testing.T) {
 		for k, want := range pod.latest {
 			if have, ok := node.Latest.Lookup(k); !ok || have != want {
 				t.Errorf("Expected pod %s latest %q: %q, got %q", pod.id, k, want, have)
-			}
-		}
-
-		for k, want := range pod.sets {
-			if have, ok := node.Sets.Lookup(k); !ok || !reflect.DeepEqual(want, have) {
-				t.Errorf("Expected pod %s sets %q: %q, got %q", pod.id, k, want, have)
 			}
 		}
 	}

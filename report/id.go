@@ -111,6 +111,12 @@ var (
 
 	// MakeServiceNodeID produces a service node ID from its composite parts.
 	MakeServiceNodeID = singleComponentID("service")
+
+	// MakeDeploymentNodeID produces a deployment node ID from its composite parts.
+	MakeDeploymentNodeID = singleComponentID("deployment")
+
+	// MakeReplicaSetNodeID produces a replica set node ID from its composite parts.
+	MakeReplicaSetNodeID = singleComponentID("replica_set")
 )
 
 // singleComponentID makes a
