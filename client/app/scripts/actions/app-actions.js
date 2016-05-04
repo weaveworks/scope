@@ -70,17 +70,13 @@ export function pinNextMetric(delta) {
   };
 }
 
-export function pinSearch(query) {
-  return {
-    type: ActionTypes.PIN_SEARCH,
-    query
-  };
-}
-
 export function unpinSearch(query) {
-  return {
-    type: ActionTypes.UNPIN_SEARCH,
-    query
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.UNPIN_SEARCH,
+      query
+    });
+    updateRoute(getState);
   };
 }
 
@@ -285,9 +281,12 @@ export function doControl(nodeId, control) {
 }
 
 export function doSearch(searchQuery) {
-  return {
-    type: ActionTypes.DO_SEARCH,
-    searchQuery
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.DO_SEARCH,
+      searchQuery
+    });
+    updateRoute(getState);
   };
 }
 
@@ -327,6 +326,7 @@ export function hitEnter() {
           type: ActionTypes.PIN_SEARCH,
           query
         });
+        updateRoute(getState);
       }
     }
   };

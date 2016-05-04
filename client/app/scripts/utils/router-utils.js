@@ -35,8 +35,10 @@ export function getUrlState(state) {
   return {
     controlPipe: cp ? cp.toJS() : null,
     nodeDetails: nodeDetails.toJS(),
-    selectedNodeId: state.get('selectedNodeId'),
     pinnedMetricType: state.get('pinnedMetricType'),
+    pinnedSearches: state.get('pinnedSearches').toJS(),
+    searchQuery: state.get('searchQuery'),
+    selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('currentTopologyId'),
     topologyOptions: state.get('topologyOptions').toJS() // all options
   };

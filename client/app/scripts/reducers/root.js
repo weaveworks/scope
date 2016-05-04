@@ -401,6 +401,7 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.PIN_SEARCH: {
       state = state.set('searchQuery', '');
+      state = updateNodeMatches(state);
       const pinnedSearches = state.get('pinnedSearches');
       state = state.setIn(['pinnedSearches', pinnedSearches.size], action.query);
       return applyPinnedSearches(state);
@@ -557,6 +558,8 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.ROUTE_TOPOLOGY: {
       state = state.set('routeSet', true);
+      state = state.set('pinnedSearches', makeList(action.state.pinnedSearches));
+      state = state.set('searchQuery', action.state.searchQuery || '');
       if (state.get('currentTopologyId') !== action.state.topologyId) {
         state = state.update('nodes', nodes => nodes.clear());
       }

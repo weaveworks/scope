@@ -74,15 +74,16 @@ class Search extends React.Component {
 
   render() {
     const { inputId = 'search', nodes, pinnedSearches, searchFocused,
-      searchNodeMatches, topologiesLoaded } = this.props;
+      searchNodeMatches, searchQuery, topologiesLoaded } = this.props;
     const disabled = this.props.isTopologyEmpty || !topologiesLoaded;
     const matchCount = searchNodeMatches
       .reduce((count, topologyMatches) => count + topologyMatches.size, 0);
     const showPinnedSearches = pinnedSearches.size > 0;
+    const value = this.state.value || searchQuery || '';
     const classNames = cx('search', {
       'search-pinned': showPinnedSearches,
       'search-matched': matchCount,
-      'search-filled': this.state.value,
+      'search-filled': value,
       'search-focused': searchFocused,
       'search-disabled': disabled
     });
@@ -101,7 +102,7 @@ class Search extends React.Component {
                 .map(query => <SearchItem query={query} key={query} />)}
             </span>}
             <input className="search-input-field" type="text" id={inputId}
-              value={this.state.value} onChange={this.handleChange}
+              value={value} onChange={this.handleChange}
               onBlur={this.handleBlur} onFocus={this.handleFocus}
               disabled={disabled} />
           </div>
