@@ -65,7 +65,7 @@ check_docker_version() {
 }
 
 check_probe_only() {
-  echo "${ARGS}" | grep -q -E "\-\-no\-app|\-\-service\-token"
+  echo "${ARGS}" | grep -q -E "\-\-no\-app|\-\-service\-token|\-\-probe\-only"
 }
 
 check_docker_for_mac() {
