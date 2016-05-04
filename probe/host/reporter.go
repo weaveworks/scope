@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
 )
@@ -22,6 +23,8 @@ const (
 	CPUUsage      = "host_cpu_usage_percent"
 	MemoryUsage   = "host_mem_usage_bytes"
 	ScopeVersion  = "host_scope_version"
+	// Control IDs used by the host integration.
+	ExecHost = "host_exec"
 )
 
 // Exposed for testing.
@@ -52,26 +55,24 @@ var (
 
 // Reporter generates Reports containing the host topology.
 type Reporter struct {
-	hostID       string
-	hostName     string
-	probeID      string
-	version      string
-	pipes        controls.PipeClient
-	hostShellCmd []string
+	hostID      string
+	hostName    string
+	probeID     string
+	version     string
+	execControl xfer.ControlHandlerFunc
 }
 
 // NewReporter returns a Reporter which produces a report containing host
 // topology for this host.
 func NewReporter(hostID, hostName, probeID, version string, pipes controls.PipeClient) *Reporter {
 	r := &Reporter{
-		hostID:       hostID,
-		hostName:     hostName,
-		probeID:      probeID,
-		pipes:        pipes,
-		version:      version,
-		hostShellCmd: getHostShellCmd(),
+		hostID:   hostID,
+		hostName: hostName,
+		probeID:  probeID,
+		version:  version,
 	}
-	r.registerControls()
+	shellHandler := controls.MakeTTYCommandHandler("host shell", pipes, getHostShellCmd())
+	controls.Register(ExecHost, shellHandler)
 	return r
 }
 
@@ -157,5 +158,5 @@ func (r *Reporter) Report() (report.Report, error) {
 
 // Stop stops the reporter.
 func (r *Reporter) Stop() {
-	r.deregisterControls()
+	controls.Rm(ExecHost)
 }
