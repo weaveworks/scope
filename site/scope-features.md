@@ -10,7 +10,6 @@ Browse the current feature set for Scope with links to relevant indepth topics:
  * [Real-time App and Container Metrics](#real-time-app-and-container-metrics)
  * [Interact With and Manage Containers](#interact-with-and-manage-containers)
  * [Troubleshoot Apps](#troubleshoot-apps)
- * [Weave Net Integration](#weave-net-integration)
  * [Interact with Kubernetes Clusters](#interact-with-kubernetes-clusters)
  * [Generate Custom Metrics with the Plugin API](#generate-custom-metrics-using-the-plugin-api)
 
@@ -29,7 +28,6 @@ The following views are provided:
 * Hosts
 * Kubernetes Name Space Label
 
-See [Managing Views](/site/manage-views.md) for more information. 
 
 ##<a name="flexible-view-filtering"></a> Flexible Filtering
 
