@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/weaveworks/scope/common/mtime"
+
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
@@ -23,10 +25,27 @@ var (
 	serverPort           = "80"
 	serverEndpointNodeID = report.MakeEndpointNodeID(serverHostID, serverIP, serverPort)
 
-	containerID     = "a1b2c3d4e5"
-	containerIP     = "192.168.0.1"
-	containerName   = "foo"
-	containerNodeID = report.MakeContainerNodeID(containerID)
+	container1ID     = "11b2c3d4e5"
+	container1IP     = "192.168.0.1"
+	container1Name   = "foo"
+	container1NodeID = report.MakeContainerNodeID(container1ID)
+
+	container1Port           = "16782"
+	container1EndpointNodeID = report.MakeEndpointNodeID(serverHostID, container1IP, container1Port)
+
+	duplicatedIP             = "192.168.0.2"
+	duplicatedPort           = "80"
+	duplicatedEndpointNodeID = report.MakeEndpointNodeID(serverHostID, duplicatedIP, duplicatedPort)
+
+	container2ID     = "21b2c3d4e5"
+	container2IP     = duplicatedIP
+	container2Name   = "bar"
+	container2NodeID = report.MakeContainerNodeID(container2ID)
+
+	pauseContainerID     = "31b2c3d4e5"
+	pauseContainerIP     = duplicatedIP
+	pauseContainerName   = "POD"
+	pauseContainerNodeID = report.MakeContainerNodeID(pauseContainerID)
 
 	rpt = report.Report{
 		Endpoint: report.Topology{
@@ -44,19 +63,52 @@ var (
 					endpoint.Conntracked: "true",
 				}).
 					WithTopology(report.Endpoint),
+
+				container1EndpointNodeID: report.MakeNodeWith(container1EndpointNodeID, map[string]string{
+					endpoint.Addr:        container1IP,
+					endpoint.Port:        container1Port,
+					endpoint.Conntracked: "true",
+				}).
+					WithAdjacent(duplicatedEndpointNodeID).WithTopology(report.Endpoint),
+
+				duplicatedEndpointNodeID: report.MakeNodeWith(duplicatedEndpointNodeID, map[string]string{
+					endpoint.Addr:        duplicatedIP,
+					endpoint.Port:        duplicatedPort,
+					endpoint.Conntracked: "true",
+				}).
+					WithTopology(report.Endpoint),
 			},
 		},
 		Container: report.Topology{
 			Nodes: report.Nodes{
-				containerNodeID: report.MakeNodeWith(containerNodeID, map[string]string{
-					docker.ContainerID:   containerID,
-					docker.ContainerName: containerName,
+				container1NodeID: report.MakeNodeWith(container1NodeID, map[string]string{
+					docker.ContainerID:   container1ID,
+					docker.ContainerName: container1Name,
 					report.HostNodeID:    serverHostNodeID,
 				}).
 					WithSets(report.EmptySets.
-						Add(docker.ContainerIPs, report.MakeStringSet(containerIP)).
+						Add(docker.ContainerIPs, report.MakeStringSet(container1IP)).
+						Add(docker.ContainerIPsWithScopes, report.MakeStringSet(report.MakeAddressNodeID("", container1IP))).
 						Add(docker.ContainerPorts, report.MakeStringSet(fmt.Sprintf("%s:%s->%s/tcp", serverIP, serverPort, serverPort))),
 					).WithTopology(report.Container),
+				container2NodeID: report.MakeNodeWith(container2NodeID, map[string]string{
+					docker.ContainerID:   container2ID,
+					docker.ContainerName: container2Name,
+					report.HostNodeID:    serverHostNodeID,
+				}).
+					WithSets(report.EmptySets.
+						Add(docker.ContainerIPs, report.MakeStringSet(container2IP)).
+						Add(docker.ContainerIPsWithScopes, report.MakeStringSet(report.MakeAddressNodeID("", container2IP))),
+					).WithTopology(report.Container),
+				pauseContainerNodeID: report.MakeNodeWith(pauseContainerNodeID, map[string]string{
+					docker.ContainerID:   pauseContainerID,
+					docker.ContainerName: pauseContainerName,
+					report.HostNodeID:    serverHostNodeID,
+				}).
+					WithSets(report.EmptySets.
+						Add(docker.ContainerIPs, report.MakeStringSet(pauseContainerIP)).
+						Add(docker.ContainerIPsWithScopes, report.MakeStringSet(report.MakeAddressNodeID("", pauseContainerIP))),
+					).WithTopology(report.Container).WithLatest(report.DoesNotMakeConnections, mtime.Now(), ""),
 			},
 		},
 		Host: report.Topology{
@@ -81,7 +133,21 @@ func TestShortLivedInternetNodeConnections(t *testing.T) {
 		t.Fatal("Expected output to have an incoming internet node")
 	}
 
-	if !internet.Adjacency.Contains(report.MakeContainerNodeID(containerID)) {
-		t.Errorf("Expected internet node to have adjacency to %s, but only had %v", report.MakeContainerNodeID(containerID), internet.Adjacency)
+	if !internet.Adjacency.Contains(container1NodeID) {
+		t.Errorf("Expected internet node to have adjacency to %s, but only had %v", container1NodeID, internet.Adjacency)
 	}
+}
+
+func TestPauseContainerDiscarded(t *testing.T) {
+	have := Prune(render.ContainerWithImageNameRenderer.Render(rpt, render.FilterNoop))
+	// There should be a single connection between from container1 and the destination should be container2
+	container1, ok := have[container1NodeID]
+	if !ok {
+		t.Fatal("Expected output to have container1")
+	}
+
+	if !container1.Adjacency.Contains(container2NodeID) {
+		t.Errorf("Expected container1 to have adjacency to %s, but only had %v", container2NodeID, container1.Adjacency)
+	}
+
 }
