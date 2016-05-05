@@ -18,6 +18,7 @@ Scope can also be used to feed reports to the Scope Service. The Scope Service a
 
 !['Service Mode Reporting'](service-mode.png)
 
+
 ##<a name="stand-alone-mode"></a>Standalone Mode
 
 When running Scope in a cluster, each probe sends its reports to a dedicated app. The app merges the reports from its probe into a comprehensive report that is sent to the browser.  To visualize your entire infrastructure and apps running on that infrastructure, Scope must be launched on to every machine you are using.
