@@ -45,6 +45,23 @@ up.
 
 Once the probes have been launched, log into the Scope service, and click on 'My Scope' in the top right-hand corner. 
 
+##<a name="installing-weave-scope-standalone"></a>Installing Weave Scope Standalone
+
+To install Scope in the standalone configuration, run the following:
+
+    sudo wget -O /usr/local/bin/scope https://git.io/scope
+    sudo chmod a+x /usr/local/bin/scope
+    sudo scope launch
+
+Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
+
+The script downloads and runs the latest released Scope image from the Docker Hub. After it’s been launched, open your browser to `http://localhost:4040`.
+
+>**Note:** If you're using boot2docker, replace localhost with the output of boot2docker IP.
+
+>  Scope allows anyone with access to the UI control over your containers: as such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally traffic between the app and the probe is currently insecure and should also not traverse the Internet.
+
+
 ###Disabling Automatic Updates
 
 Scope periodically checks with our servers to see if a new version is available. You can disable this by setting:
