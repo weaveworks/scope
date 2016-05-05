@@ -140,7 +140,7 @@ func TestShortLivedInternetNodeConnections(t *testing.T) {
 
 func TestPauseContainerDiscarded(t *testing.T) {
 	have := Prune(render.ContainerWithImageNameRenderer.Render(rpt, render.FilterNoop))
-	// There should be a single connection between from container1 and the destination should be container2
+	// There should only be a single connection from container1 and the destination should be container2
 	container1, ok := have[container1NodeID]
 	if !ok {
 		t.Fatal("Expected output to have container1")
