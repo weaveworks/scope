@@ -113,7 +113,11 @@ func probeMain(flags probeFlags) {
 	})
 	defer clients.Stop()
 
-	resolver := appclient.NewResolver(targets, net.LookupIP, clients.Set)
+	dnsLookupFn := net.LookupIP
+	if flags.resolver != "" {
+		dnsLookupFn = appclient.LookupUsing(flags.resolver)
+	}
+	resolver := appclient.NewResolver(targets, dnsLookupFn, clients.Set)
 	defer resolver.Stop()
 
 	processCache := process.NewCachingWalker(process.NewWalker(flags.procRoot))
