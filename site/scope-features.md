@@ -35,9 +35,6 @@ See [Managing Views](/site/manage-views.md) for more information.
 
 Nodes can be filtered by CPU, Memory and Open Files. From the Container view, additional filters enable you to sort by System Containers, Application Containers or by Stopped vs.Running Containers or Both. Easily find the container using the most CPU or memory for a given host or service. In Host view, filter by CPU, Load or Memory consumption. Mouse-over any of the nodes to view its filtered metric at a glance. 
 
-See [Node and Metrics Quick Reference](/site/manage-views/shape-metrics-reference.md).
-
-
 ##<a name="real-time-app-and-container-metrics"></a>Real-time App and Container Metrics
 
 View contextual metrics, tags and metadata for your containers.  Effortlessly navigate between processes inside your container to the hosts that your containers run on, arranged in expandable, sortable tables.  
@@ -51,12 +48,6 @@ Interact with your containers directly: pause, restart and stop containers witho
 ##<a name="troubleshoot-apps"></a>Troubleshoot Apps
 
 A convenient terminal window is provided that enables you to interact with your app and to troubleshoot and diagnose any issues all within the same context. 
-
-
-##<a name="weave-net-integration"></a>Weave Net Integration
-
-Visualize Weave Net as it gets deployed across your cloud environment, troubleshoot services and manage your networked containers all from a convenient graphical user interface. 
-
 
 ##<a name="interact-with-kubernetes-clusters"></a>Interact with Kubernetes Clusters
 
