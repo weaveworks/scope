@@ -140,14 +140,14 @@ func TestShortLivedInternetNodeConnections(t *testing.T) {
 
 func TestPauseContainerDiscarded(t *testing.T) {
 	have := Prune(render.ContainerWithImageNameRenderer.Render(rpt, render.FilterNoop))
-	// There should only be a single connection from container1 and the destination should be container2
+	// There should only be a connection from container1 and the destination should be container2
 	container1, ok := have[container1NodeID]
 	if !ok {
 		t.Fatal("Expected output to have container1")
 	}
 
-	if !container1.Adjacency.Contains(container2NodeID) {
-		t.Errorf("Expected container1 to have adjacency to %s, but only had %v", container2NodeID, container1.Adjacency)
+	if len(container1.Adjacency) != 1 || !container1.Adjacency.Contains(container2NodeID) {
+		t.Errorf("Expected container1 to have a unique adjacency to %s, but instead had %v", container2NodeID, container1.Adjacency)
 	}
 
 }
