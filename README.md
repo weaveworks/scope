@@ -217,7 +217,7 @@ We currently provide three options for launching Weave Scope in ECS:
 
 * A [CloudFormation template](https://www.weave.works/deploy-weave-aws-cloudformation-template/) to launch and easily evaluate Scope directly from your browser.
 * An [Amazon Machine Image (AMI)](https://github.com/weaveworks/integrations/tree/master/aws/ecs#weaves-ecs-amis) for each ECS region.
-* [A simple way to tailor the AMIs to your needs](https://github.com/weaveworks/integrations/tree/master/aws/ecs#creating-your-own-customized-weave-ecs-ami). 
+* [A simple way to tailor the AMIs to your needs](https://github.com/weaveworks/integrations/tree/master/aws/ecs#creating-your-own-customized-weave-ecs-ami).
 
 ## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
 
@@ -237,7 +237,7 @@ in your Kubernetes cluster using
    Kubernetes 1.2). DaemonSets are needed to ensure that each Kubernetes node
    runs a Scope Probe:
 
-   * To enable them in an existing cluster, make sure to add a
+   * To enable DaemonSets in an existing cluster, make sure to add a
      `--runtime-config=extensions/v1beta1/daemonsets=true` argument to the
      [apiserver](https://github.com/kubernetes/kubernetes/blob/master/docs/admin/kube-apiserver.md)'s configuration
      (normally found at `/etc/kubernetes/manifest/kube-apiserver.manifest`) followed by a
@@ -245,6 +245,11 @@ in your Kubernetes cluster using
 
    * If you are creating a new cluster, set `KUBE_ENABLE_DAEMONSETS=true` in
      your cluster configuration.
+
+   * Note that prior to Kubernetes version 1.2 DaemonSets would fail to schedule pods on
+     unschedulable nodes (typically the master).  This will result in the probe
+     not running on that node.  See [#1030](https://github.com/weaveworks/scope/issues/1030)
+     for more information.  We advise you to use Kubernetes version 1.2 or higher.
 
 3. Download the resource definitions:
 
@@ -273,7 +278,7 @@ kubectl create -f scope-probe-ds.yaml
 6. Open Scope in your browser
 
    * When running Scope in Standalone mode do:
-   
+
      ```
 kubectl port-forward $(kubectl get pod --selector=provider=weave-scope-app -o jsonpath={.items..metadata.name}) 4040
 ```
@@ -281,7 +286,7 @@ kubectl port-forward $(kubectl get pod --selector=provider=weave-scope-app -o js
      and open [http://localhost:4040](http://localhost:4040) in your browser. This allows you to access the Scope UI securely, without
 	 opening it to the Internet.
 
-	 
+
    * When running Scope in Cloud Service mode, simply log in to [https://scope.weave.works](https://scope.weave.works)
 
 ## <a name="probe_plugins"></a>Scope Probe Plugins
