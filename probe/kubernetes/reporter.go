@@ -18,11 +18,12 @@ import (
 // Exposed for testing
 var (
 	PodMetadataTemplates = report.MetadataTemplates{
-		PodID:      {ID: PodID, Label: "ID", From: report.FromLatest, Priority: 1},
-		PodState:   {ID: PodState, Label: "State", From: report.FromLatest, Priority: 2},
-		PodIP:      {ID: PodIP, Label: "IP", From: report.FromLatest, Priority: 3},
-		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 5},
-		PodCreated: {ID: PodCreated, Label: "Created", From: report.FromLatest, Priority: 6},
+		PodID:            {ID: PodID, Label: "ID", From: report.FromLatest, Priority: 1},
+		PodState:         {ID: PodState, Label: "State", From: report.FromLatest, Priority: 2},
+		PodIP:            {ID: PodIP, Label: "IP", From: report.FromLatest, Priority: 3},
+		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: "number", Priority: 4},
+		Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 5},
+		PodCreated:       {ID: PodCreated, Label: "Created", From: report.FromLatest, Priority: 6},
 	}
 
 	ServiceMetadataTemplates = report.MetadataTemplates{
@@ -31,6 +32,7 @@ var (
 		ServiceCreated:  {ID: ServiceCreated, Label: "Created", From: report.FromLatest, Priority: 3},
 		ServicePublicIP: {ID: ServicePublicIP, Label: "Public IP", From: report.FromLatest, Priority: 4},
 		ServiceIP:       {ID: ServiceIP, Label: "Internal IP", From: report.FromLatest, Priority: 5},
+		report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
 	}
 
 	PodTableTemplates = report.TableTemplates{

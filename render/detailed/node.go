@@ -7,6 +7,7 @@ import (
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -144,6 +145,22 @@ var (
 			NodeSummaryGroup: NodeSummaryGroup{
 				TopologyID: "pods",
 				Label:      "Pods",
+
+				Columns: []Column{
+					{ID: report.Container, Label: "# Containers"},
+					{ID: kubernetes.PodIP, Label: "IP"},
+				},
+			},
+		},
+		{
+			topologyID: report.Service,
+			NodeSummaryGroup: NodeSummaryGroup{
+				TopologyID: "pods-by-service",
+				Label:      "Services",
+				Columns: []Column{
+					{ID: report.Pod, Label: "# Pods"},
+					{ID: kubernetes.ServiceIP, Label: "IP"},
+				},
 			},
 		},
 		{

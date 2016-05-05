@@ -6,6 +6,7 @@ import (
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
@@ -97,8 +98,11 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			{
 				Label:      "Pods",
 				TopologyID: "pods",
-				Columns:    nil,
-				Nodes:      []detailed.NodeSummary{podNodeSummary},
+				Columns: []detailed.Column{
+					{ID: report.Container, Label: "# Containers"},
+					{ID: kubernetes.PodIP, Label: "IP"},
+				},
+				Nodes: []detailed.NodeSummary{podNodeSummary},
 			},
 			{
 				Label:      "Containers",
@@ -325,6 +329,7 @@ func TestMakeDetailedPodNode(t *testing.T) {
 			Metadata: []report.MetadataRow{
 				{ID: "kubernetes_pod_id", Label: "ID", Value: "ping/pong-b", Priority: 1},
 				{ID: "kubernetes_pod_state", Label: "State", Value: "running", Priority: 2},
+				{ID: "container", Label: "# Containers", Value: "1", Priority: 4, Datatype: "number"},
 				{ID: "kubernetes_namespace", Label: "Namespace", Value: "ping", Priority: 5},
 			},
 		},
