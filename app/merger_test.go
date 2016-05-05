@@ -1,0 +1,122 @@
+package app_test
+
+import (
+	"fmt"
+	"math/rand"
+	"testing"
+
+	"github.com/weaveworks/scope/app"
+	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test"
+	"github.com/weaveworks/scope/test/reflect"
+)
+
+func TestMerger(t *testing.T) {
+	// Use 3 reports to check the pair-wise merging in SmartMerger
+	report1 := report.MakeReport()
+	report1.Endpoint.AddNode(report.MakeNode("foo"))
+	report2 := report.MakeReport()
+	report2.Endpoint.AddNode(report.MakeNode("bar"))
+	report3 := report.MakeReport()
+	report3.Endpoint.AddNode(report.MakeNode("baz"))
+	reports := []report.Report{
+		report1, report2, report3,
+	}
+	want := report.MakeReport()
+	want.Endpoint.
+		AddNode(report.MakeNode("foo")).
+		AddNode(report.MakeNode("bar")).
+		AddNode(report.MakeNode("baz"))
+
+	for _, merger := range []app.Merger{app.MakeDumbMerger(), app.NewSmartMerger()} {
+		// Test the empty list case
+		if have := merger.Merge([]report.Report{}); !reflect.DeepEqual(have, report.MakeReport()) {
+			t.Errorf("Bad merge: %s", test.Diff(have, want))
+		}
+
+		if have := merger.Merge(reports); !reflect.DeepEqual(have, want) {
+			t.Errorf("Bad merge: %s", test.Diff(have, want))
+		}
+
+		// Repeat the above test to ensure caching works
+		if have := merger.Merge(reports); !reflect.DeepEqual(have, want) {
+			t.Errorf("Bad merge: %s", test.Diff(have, want))
+		}
+	}
+}
+
+func TestSmartMerger(t *testing.T) {
+	// Use 3 reports _WITH SAME ID_
+	report1 := report.MakeReport()
+	report1.Endpoint.AddNode(report.MakeNode("foo"))
+	report1.ID = "foo"
+	report2 := report.MakeReport()
+	report2.Endpoint.AddNode(report.MakeNode("bar"))
+	report2.ID = "foo"
+	report3 := report.MakeReport()
+	report3.Endpoint.AddNode(report.MakeNode("baz"))
+	report3.ID = "foo"
+	reports := []report.Report{
+		report1, report2, report3,
+	}
+	want := report.MakeReport()
+	want.Endpoint.AddNode(report.MakeNode("foo"))
+
+	merger := app.NewSmartMerger()
+	if have := merger.Merge(reports); !reflect.DeepEqual(have, want) {
+		t.Errorf("Bad merge: %s", test.Diff(have, want))
+	}
+}
+
+func BenchmarkSmartMerger(b *testing.B) {
+	benchmarkMerger(b, app.NewSmartMerger(), false)
+}
+
+func BenchmarkSmartMergerWithoutCaching(b *testing.B) {
+	benchmarkMerger(b, app.NewSmartMerger(), true)
+}
+
+func BenchmarkDumbMerger(b *testing.B) {
+	benchmarkMerger(b, app.MakeDumbMerger(), false)
+}
+
+const numHosts = 15
+
+func benchmarkMerger(b *testing.B, merger app.Merger, clearCache bool) {
+	makeReport := func() report.Report {
+		rpt := report.MakeReport()
+		for i := 0; i < 100; i++ {
+			rpt.Endpoint.AddNode(report.MakeNode(fmt.Sprintf("%x", rand.Int63())))
+		}
+		return rpt
+	}
+
+	reports := []report.Report{}
+	for i := 0; i < numHosts*5; i++ {
+		reports = append(reports, makeReport())
+	}
+	merger.Merge(reports) // prime the cache
+	if clearable, ok := merger.(interface {
+		ClearCache()
+	}); ok && clearCache {
+		clearable.ClearCache()
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		// replace 1/3 of hosts work of reports & merge them all
+		for i := 0; i < numHosts/3; i++ {
+			reports[rand.Intn(len(reports))] = makeReport()
+		}
+
+		merger.Merge(reports)
+
+		if clearable, ok := merger.(interface {
+			ClearCache()
+		}); ok && clearCache {
+			clearable.ClearCache()
+		}
+	}
+}

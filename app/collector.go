@@ -1,11 +1,9 @@
 package app
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
-	"github.com/spaolacci/murmur3"
 	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/mtime"
@@ -35,10 +33,12 @@ type Collector interface {
 // Collector receives published reports from multiple producers. It yields a
 // single merged report, representing all collected reports.
 type collector struct {
-	mtx     sync.Mutex
-	reports []timestampReport
-	window  time.Duration
-	cached  *report.Report
+	mtx        sync.Mutex
+	reports    []report.Report
+	timestamps []time.Time
+	window     time.Duration
+	cached     *report.Report
+	merger     Merger
 	waitableCondition
 }
 
@@ -78,6 +78,7 @@ func NewCollector(window time.Duration) Collector {
 		waitableCondition: waitableCondition{
 			waiters: map[chan struct{}]struct{}{},
 		},
+		merger: NewSmartMerger(),
 	}
 }
 
@@ -85,8 +86,10 @@ func NewCollector(window time.Duration) Collector {
 func (c *collector) Add(_ context.Context, rpt report.Report) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
-	c.reports = append(c.reports, timestampReport{mtime.Now(), rpt})
-	c.reports = clean(c.reports, c.window)
+	c.reports = append(c.reports, rpt)
+	c.timestamps = append(c.timestamps, mtime.Now())
+
+	c.clean()
 	c.cached = nil
 	if rpt.Shortcut {
 		c.Broadcast()
@@ -104,37 +107,27 @@ func (c *collector) Report(_ context.Context) (report.Report, error) {
 	// and there is a cached report, return that.
 	if c.cached != nil && len(c.reports) > 0 {
 		oldest := mtime.Now().Add(-c.window)
-		if c.reports[0].timestamp.After(oldest) {
+		if c.timestamps[0].After(oldest) {
 			return *c.cached, nil
 		}
 	}
-	c.reports = clean(c.reports, c.window)
 
-	rpt := report.MakeReport()
-	id := murmur3.New64()
-	for _, tr := range c.reports {
-		rpt = rpt.Merge(tr.report)
-		id.Write([]byte(tr.report.ID))
-	}
-	rpt.ID = fmt.Sprintf("%x", id.Sum64())
-	c.cached = &rpt
-	return rpt, nil
+	c.clean()
+	return c.merger.Merge(c.reports), nil
 }
 
-type timestampReport struct {
-	timestamp time.Time
-	report    report.Report
-}
-
-func clean(reports []timestampReport, window time.Duration) []timestampReport {
+func (c *collector) clean() {
 	var (
-		cleaned = make([]timestampReport, 0, len(reports))
-		oldest  = mtime.Now().Add(-window)
+		cleanedReports    = make([]report.Report, 0, len(c.reports))
+		cleanedTimestamps = make([]time.Time, 0, len(c.timestamps))
+		oldest            = mtime.Now().Add(-c.window)
 	)
-	for _, tr := range reports {
-		if tr.timestamp.After(oldest) {
-			cleaned = append(cleaned, tr)
+	for i, r := range c.reports {
+		if c.timestamps[i].After(oldest) {
+			cleanedReports = append(cleanedReports, r)
+			cleanedTimestamps = append(cleanedTimestamps, c.timestamps[i])
 		}
 	}
-	return cleaned
+	c.reports = cleanedReports
+	c.timestamps = cleanedTimestamps
 }
