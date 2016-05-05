@@ -69,7 +69,7 @@ check_probe_only() {
 }
 
 check_docker_for_mac() {
-  docker_for_mac_network_mode="~/Library/Containers/com.docker.docker/Data/database/com.docker.driver.amd64-linux/network"
+  docker_for_mac_network_mode="${HOME}/Library/Containers/com.docker.docker/Data/database/com.docker.driver.amd64-linux/network"
   [ "$(uname)" = "Darwin" ] \
     && [ -S /var/run/docker.sock ] \
     && grep -q hybrid $docker_for_mac_network_mode 2>/dev/null
