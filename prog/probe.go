@@ -138,8 +138,12 @@ func probeMain(flags probeFlags) {
 	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
 
 	if flags.dockerEnabled {
-		if err := report.AddLocalBridge(flags.dockerBridge); err != nil {
-			log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
+		// Don't add the bridge in Kubernetes since container IPs are global and
+		// shouldn't be scoped
+		if !flags.kubernetesEnabled {
+			if err := report.AddLocalBridge(flags.dockerBridge); err != nil {
+				log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
+			}
 		}
 		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID); err == nil {
 			defer registry.Stop()

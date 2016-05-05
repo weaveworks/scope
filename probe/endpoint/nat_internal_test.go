@@ -30,7 +30,7 @@ func TestNat(t *testing.T) {
 	// the setup is this:
 	//
 	// container2 (10.0.47.2:222222), host2 (2.3.4.5:22223) ->
-	//     host1 (1.2.3.4:80), container1 (10.0.47.2:80)
+	//     host1 (1.2.3.4:80), container1 (10.0.47.1:80)
 
 	// from the PoV of host1
 	{

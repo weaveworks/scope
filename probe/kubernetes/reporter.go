@@ -94,7 +94,7 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 }
 
 func isPauseContainer(n report.Node, rpt report.Report) bool {
-	containerImageIDs, ok := n.Sets.Lookup(report.ContainerImage)
+	containerImageIDs, ok := n.Parents.Lookup(report.ContainerImage)
 	if !ok {
 		return false
 	}

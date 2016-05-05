@@ -298,7 +298,7 @@ func (c *container) NetworkMode() (string, bool) {
 func addScopeToIPs(hostID string, ips []string) []string {
 	ipsWithScopes := []string{}
 	for _, ip := range ips {
-		ipsWithScopes = append(ipsWithScopes, report.MakeScopedAddressNodeID(hostID, ip))
+		ipsWithScopes = append(ipsWithScopes, report.MakeAddressNodeID(hostID, ip))
 	}
 	return ipsWithScopes
 }
