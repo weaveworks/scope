@@ -7,6 +7,7 @@ The following topics are discussed:
 
  * [Developing](#developing)
  * [Debugging](#debugging)
+ * [Profiling](#profiling)
 
 
 ## <a name="developing"></a>Developing
@@ -52,7 +53,9 @@ The Scope Probe is instrumented with various counters and timers. To have it dum
     kill -USR1 $(pgrep -f scope-probe)
     docker logs weavescope
 
- Both the Scope App and the Scope Probe offer [HTTP endpoints with profiling information](https://golang.org/pkg/net/http/pprof/).
+## <a name="profiling"></a>Profiling
+
+Both the Scope App and the Scope Probe offer [HTTP endpoints with profiling information](https://golang.org/pkg/net/http/pprof/).
 
 These cover things such as CPU usage and memory consumption:
 
