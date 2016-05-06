@@ -10,17 +10,15 @@ Browse the current feature set for Scope with links to relevant indepth topics:
  * [Real-time App and Container Metrics](#real-time-app-and-container-metrics)
  * [Interact With and Manage Containers](#interact-with-and-manage-containers)
  * [Troubleshoot Apps](#troubleshoot-apps)
- * [Interact with Kubernetes Clusters](#interact-with-kubernetes-clusters)
- * [Generate Custom Metrics with the Plugin API](#generate-custom-metrics-using-the-plugin-api)
 
 
-##<a name="topology-mapping"></a> Topology Mapping
+##<a name="topology-mapping"></a>Topology Mapping
 
-Scope builds logical topologies and node groups of your infrastructure. It displays an intelligent map of your app, so that different node types can be easily viewed and specific microservices can be drilled down on and inspected within your app.
+Scope builds logical topologies of your application and infrastructure.  A topology is a collection of nodes and edges, where nodes can represent objects like processes, container or hosts.  In Scope, edges represent TCP connections between nodes.  Scope displays an intelligent map of your app, so that different node types can be easily viewed and specific microservices can be drilled down on and inspected within your app.
 
-##<a name="flexible-view-filtering"></a> Flexible Filtering
+##<a name="flexible-view-filtering"></a>Flexible Filtering
 
-Nodes can be filtered by CPU, Memory and Open Files. From the Container view, additional filters enable you to sort by System Containers, Application Containers or by Stopped vs.Running Containers or Both. Easily find the container using the most CPU or memory for a given host or service. In Host view, filter by CPU, Load or Memory consumption. Mouse-over any of the nodes to view its filtered metric at a glance.
+Nodes can be filtered by various properties, for example in the Container view, you can filter by System Containers vs Application Containers or by Stopped vs. Running Containers. Scope can also display various metrics such as CPU and Memory usage in the nodes, for example allowing you to easily find the container using the most CPU or memory.  Mouse-over any of the nodes to view its filtered metric at a glance.
 
 ##<a name="real-time-app-and-container-metrics"></a>Real-time App and Container Metrics
 
@@ -35,9 +33,6 @@ Interact with your containers directly: pause, restart and stop containers witho
 ##<a name="troubleshoot-apps"></a>Troubleshoot Apps
 
 A convenient terminal window is provided that enables you to interact with your app and to troubleshoot and diagnose any issues all within the same context.
-
-##<a name="interact-with-kubernetes-clusters"></a>Interact with Kubernetes Clusters
-
 
 ##<a name="generate-custom-metrics-using-the-plugin-api"></a>Generate Custom Metrics using the Plugin API
 
