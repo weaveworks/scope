@@ -95,7 +95,7 @@ func (f *Filter) render(rpt report.Report, dct Decorator) (report.Nodes, int) {
 	inDegrees := map[string]int{}
 	filtered := 0
 	for id, node := range f.Renderer.Render(rpt, dct) {
-		if f.FilterFunc(node) {
+		if node.Topology == Pseudo || f.FilterFunc(node) {
 			output[id] = node
 			inDegrees[id] = 0
 		} else {
@@ -148,17 +148,6 @@ const IsConnected = "is_connected"
 // effects, if any, and returns the opposite truth value.
 func Complement(f FilterFunc) FilterFunc {
 	return func(node report.Node) bool { return !f(node) }
-}
-
-// FilterPseudo produces a renderer that removes pseudo nodes from the given
-// renderer
-func FilterPseudo(r Renderer) Renderer {
-	return MakeFilter(
-		func(node report.Node) bool {
-			return node.Topology != Pseudo
-		},
-		r,
-	)
 }
 
 // FilterUnconnected produces a renderer that filters unconnected nodes
@@ -228,7 +217,7 @@ func IsApplication(n report.Node) bool {
 	if roleLabel == "system" {
 		return false
 	}
-	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
+	namespace, _ := n.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.namespace")
 	if namespace == "kube-system" {
 		return false
 	}
@@ -262,9 +251,6 @@ func FilterEmpty(topology string, r Renderer) Renderer {
 // topology.
 func HasChildren(topology string) FilterFunc {
 	return func(n report.Node) bool {
-		if n.Topology == Pseudo {
-			return true
-		}
 		count := 0
 		n.Children.ForEach(func(child report.Node) {
 			if child.Topology == topology {
@@ -278,8 +264,8 @@ func HasChildren(topology string) FilterFunc {
 // IsNamespace checks if the node is a pod/service in the specified namespace
 func IsNamespace(namespace string) FilterFunc {
 	return func(n report.Node) bool {
-		gotNamespace, ok := n.Latest.Lookup(kubernetes.Namespace)
-		return !ok || namespace == gotNamespace
+		gotNamespace, _ := n.Latest.Lookup(kubernetes.Namespace)
+		return namespace == gotNamespace
 	}
 }
 

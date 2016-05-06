@@ -31,16 +31,9 @@ var ContainerRenderer = MakeFilter(
 		return !ok || state != docker.StateDeleted
 	},
 	MakeReduce(
-		MakeFilter(
-			func(n report.Node) bool {
-				// Drop unconnected pseudo nodes (could appear due to filtering)
-				_, isConnected := n.Latest.Lookup(IsConnected)
-				return n.Topology != Pseudo || isConnected
-			},
-			MakeMap(
-				MapProcess2Container,
-				ProcessRenderer,
-			),
+		MakeMap(
+			MapProcess2Container,
+			ProcessRenderer,
 		),
 
 		// This mapper brings in short lived connections by joining with container IPs.

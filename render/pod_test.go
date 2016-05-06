@@ -3,7 +3,6 @@ package render_test
 import (
 	"testing"
 
-	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
@@ -20,22 +19,20 @@ func TestPodRenderer(t *testing.T) {
 	}
 }
 
+func filterNonKubeSystem(renderer render.Renderer) render.Renderer {
+	return render.MakeFilter(render.Complement(render.IsNamespace("kube-system")), renderer)
+}
+
 func TestPodFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
 	input.Pod.Nodes[fixture.ClientPodNodeID] = input.Pod.Nodes[fixture.ClientPodNodeID].WithLatests(map[string]string{
-		kubernetes.PodID:     "kube-system/foo",
 		kubernetes.Namespace: "kube-system",
-		kubernetes.PodName:   "foo",
 	})
-	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
-		docker.LabelPrefix + "io.kubernetes.pod.name": "kube-system/foo",
-	})
-	have := Prune(render.PodRenderer.Render(input, render.FilterApplication))
+	have := Prune(render.PodRenderer.Render(input, filterNonKubeSystem))
 	want := Prune(expected.RenderedPods.Copy())
 	delete(want, fixture.ClientPodNodeID)
-	delete(want, fixture.ClientContainerNodeID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -53,12 +50,13 @@ func TestPodServiceFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
-	have := Prune(render.PodServiceRenderer.Render(input, render.FilterSystem))
+	input.Service.Nodes[fixture.ServiceNodeID] = input.Service.Nodes[fixture.ServiceNodeID].WithLatests(map[string]string{
+		kubernetes.Namespace: "kube-system",
+	})
+	have := Prune(render.PodServiceRenderer.Render(input, filterNonKubeSystem))
 	want := Prune(expected.RenderedPodServices.Copy())
 	delete(want, fixture.ServiceNodeID)
-	delete(want, expected.UnmanagedServerID)
 	delete(want, render.IncomingInternetID)
-	delete(want, render.OutgoingInternetID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
