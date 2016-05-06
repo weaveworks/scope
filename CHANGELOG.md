@@ -1,3 +1,134 @@
+## Release 0.15.0
+
+Highlights:
+
+This release comes with:
+  * Search: new smart search field that allows you to filter what you can see by
+    container names, all kinds of metadata, e.g., IP addresses, and metric
+    comparisons, e.g., CPU > 50%.
+  * Enhanced Kubernetes Visualization: namespace filters, ReplicaSet/Deployment
+    views, extra metadata, better navigation, show Pod logs, delete Pods,
+	bugfixes and more ...
+  * Scope App performance improvements: ~3X reduction in CPU consumption.
+
+
+New features and enhancements:
+- New search field
+	[#1429](https://github.com/weaveworks/scope/pull/1429)
+- Kubernetes improvements:
+  - Deployment and Replica Set views
+		[#1436](https://github.com/weaveworks/scope/pull/1436)
+  - Add scale up/down controls on deployments, replica sets, and replication controllers
+		[#1451](https://github.com/weaveworks/scope/pull/1451)
+  - Filter by Kubernetes Namespaces
+		[#1386](https://github.com/weaveworks/scope/pull/1386)
+  - Remove App->Probe deployment ordering restriction
+		[#1433](https://github.com/weaveworks/scope/pull/1433)
+  - Show Pod IP and # container in the children table in details panel.
+		[#1435](https://github.com/weaveworks/scope/pull/1435)
+		[#1409](https://github.com/weaveworks/scope/pull/1409)
+  - Add pod delete controls
+		[#1368](https://github.com/weaveworks/scope/pull/1368)
+  - Show the k8s load balancer IP if it is set
+		[#1378](https://github.com/weaveworks/scope/pull/1378)
+  - Show number of pods in service
+		[#1352](https://github.com/weaveworks/scope/pull/1352)
+  - Filter GKE system containers
+		[#1438](https://github.com/weaveworks/scope/pull/1438)
+- Show k8s labels and container env vars in the details panel
+	[#1342](https://github.com/weaveworks/scope/pull/1342)
+	[#1465](https://github.com/weaveworks/scope/pull/1465)
+- Implement `scope help`
+	[#1357](https://github.com/weaveworks/scope/pull/1357)
+	[#1419](https://github.com/weaveworks/scope/pull/1419)
+- Add swarm-agent, swarm-agent master to system container filter
+	[#1356](https://github.com/weaveworks/scope/pull/1356)
+- Add control for removing stopped docker containers.
+	[#1290](https://github.com/weaveworks/scope/pull/1290)
+- Add a button to download the report as JSON
+	[#1365](https://github.com/weaveworks/scope/pull/1365)
+- Use reverse-resolved DNS info in the connections table.
+	[#1359](https://github.com/weaveworks/scope/pull/1359)
+- Add a 'Unmanaged' node to k8s views which included non-k8s containers.
+	[#1350](https://github.com/weaveworks/scope/pull/1350)
+- Support docker rename events
+	[#1332](https://github.com/weaveworks/scope/pull/1332)
+- Strip image version from parent links
+	[#1348](https://github.com/weaveworks/scope/pull/1348)
+- Add Docker for Mac support
+	[#1448](https://github.com/weaveworks/scope/pull/1448)
+
+Performance improvements:
+- Scope App:
+  - A log(n) complexity report merger
+		[#1418](https://github.com/weaveworks/scope/pull/1418)
+        [#1447](https://github.com/weaveworks/scope/pull/1447)
+  - Don't merge nodes in the rendering pipeline
+		[#1398](https://github.com/weaveworks/scope/pull/1398)
+  - Pass nil for the decorator in the rendering pipeline when possible
+		[#1397](https://github.com/weaveworks/scope/pull/1397)
+- Scope Probe:
+  - Precompute base of the container nodes
+		[#1456](https://github.com/weaveworks/scope/pull/1456)
+
+Bug fixes:
+- Correctly attribute DNAT-ed short-lived connections
+	[#1410](https://github.com/weaveworks/scope/pull/1410)
+- Don't attribute conntracked connections to k8s pause containers.
+	[#1415](https://github.com/weaveworks/scope/pull/1415)
+- Don't show kubernetes views if not running kubernetes
+	[#1364](https://github.com/weaveworks/scope/issues/1364)
+- Missing pod names in kubernetes' pod view and Pause containers don't show as children of pods
+	[#1412](https://github.com/weaveworks/scope/pull/1412)
+- Fix grouped node count for filtered children nodes
+	[#1371](https://github.com/weaveworks/scope/pull/1371)
+- Don't show container labels on container images
+	[#1374](https://github.com/weaveworks/scope/pull/1374)
+- `docker rm -f`ed containers linger
+	[#1072](https://github.com/weaveworks/scope/issues/1072)
+- Somehow internet node goes missing, yet edges are there
+	[#1304](https://github.com/weaveworks/scope/pull/1304)
+- Node IDs with / leads to redirect loop when scope is mounted under a path with slash redirect
+	[#1335](https://github.com/weaveworks/scope/issues/1335)
+- Ignore conntracked connections on which we never saw an update
+	[#1466](https://github.com/weaveworks/scope/issues/1335)
+
+Documentation:
+- Restructured Scope Docs
+	[#1416](https://github.com/weaveworks/scope/pull/1416)
+	[#1479](https://github.com/weaveworks/scope/pull/1479)
+- Add ECS instructions and badge to README
+	[#1392](https://github.com/weaveworks/scope/pull/1392)
+- Document how to access the Scope UI in k8s
+	[#1426](https://github.com/weaveworks/scope/pull/1426)
+- Update readme to express that daemon sets won't schedule on unschedulable nodes prior to kubernetes 1.2
+	[#1434](https://github.com/weaveworks/scope/pull/1434)
+
+
+Internal improvements and cleanup:
+- Migrate from Flux to Redux
+	[#1388](https://github.com/weaveworks/scope/pull/1388)
+- Add kubernetes checkpoint flag
+	[#1391](https://github.com/weaveworks/scope/pull/1391)
+- Add generic path rewrite middleware
+	[#1381](https://github.com/weaveworks/scope/pull/1381)
+- Report hostname and version in probe struct, and version in host node.
+	[#1377](https://github.com/weaveworks/scope/pull/1377)
+- Reorganise the render/ package
+	[#1360](https://github.com/weaveworks/scope/pull/1360)
+- Asset fingerprinting
+	[#1354](https://github.com/weaveworks/scope/pull/1354)
+- Upgrade to go1.6.2
+	[#1362](https://github.com/weaveworks/scope/pull/1362)
+- Add buffer to mockPublisher channel to prevent deadlock between Publish() and Stop()
+	[#1358](https://github.com/weaveworks/scope/pull/1358)
+- Add explicit group node summariser instead of doing it in the other summaries
+	[#1327](https://github.com/weaveworks/scope/pull/1327)
+- Don't build codecs for render/ package anymore.
+	[#1345](https://github.com/weaveworks/scope/pull/1345)
+- Measure report sizes
+	[#1458](https://github.com/weaveworks/scope/pull/1458)
+
 ## Release 0.14.0
 
 Highlights:
