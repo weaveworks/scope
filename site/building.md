@@ -3,7 +3,7 @@ title: Developing and Debugging
 menu_order: 90
 ---
 
-The following topics are discussed: 
+The following topics are discussed:
 
  * [Developing](#developing)
  * [Debugging](#debugging)
