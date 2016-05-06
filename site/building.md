@@ -14,7 +14,7 @@ The following topics are discussed:
 
 Building Scope from source depends on the latest version of [docker](https://www.docker.com/), so please install that before proceeding.
 
-The main build is `make`, which builds the UI build container, builds the UI in said container, builds the backend build container, builds the app and probe in said container, and finally pushes the lot into a Docker image called **weaveworks/scope**.
+The build process is automated using `make`, which builds the UI build container, builds the UI in said container, builds the backend build container, builds the app and probe in said container, and finally pushes the lot into a Docker image called **weaveworks/scope**.
 
     make
 
