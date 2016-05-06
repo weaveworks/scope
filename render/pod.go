@@ -27,16 +27,9 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 			return (!ok || state != kubernetes.StateDeleted)
 		},
 		MakeReduce(
-			MakeFilter(
-				func(n report.Node) bool {
-					// Drop unconnected pseudo nodes (could appear due to filtering)
-					_, isConnected := n.Latest.Lookup(IsConnected)
-					return n.Topology != Pseudo || isConnected
-				},
-				ColorConnected(MakeMap(
-					MapContainer2Pod,
-					ContainerWithImageNameRenderer,
-				)),
+			MakeMap(
+				MapContainer2Pod,
+				ContainerWithImageNameRenderer,
 			),
 			SelectPod,
 		),

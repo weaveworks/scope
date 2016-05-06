@@ -124,18 +124,3 @@ func TestFilterUnconnectedSelf(t *testing.T) {
 		}
 	}
 }
-
-func TestFilterPseudo(t *testing.T) {
-	// Test pseudonodes are removed
-	{
-		nodes := report.Nodes{
-			"foo": report.MakeNode("foo"),
-			"bar": report.MakeNode("bar").WithTopology(render.Pseudo),
-		}
-		renderer := mockRenderer{Nodes: nodes}
-		have := renderer.Render(report.MakeReport(), render.FilterPseudo)
-		if _, ok := have["bar"]; ok {
-			t.Error("expected pseudonode to be removed")
-		}
-	}
-}
