@@ -212,8 +212,6 @@ DC/OS is short for Datacenter Operating System, a distributed operating system u
 
 For more information see, [Deploying Weave Scope on DC/OS](https://www.weave.works/guides/deploy-weave-scope-dcos/)
 
-###<a name="dcos-service">In Service Mode
-
 **See Also**
 
  * [Understanding Weave Scope](/site/how-it-works.md)
