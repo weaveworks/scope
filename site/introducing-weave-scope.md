@@ -6,7 +6,13 @@ menu_order: 10
 
 Weave Scope is a visualization, and monitoring tool for Docker and Kubernetes. It provides a top down view into your app as well as your entire infrastructure, and allows you to diagnose any problems with your distributed containerized app, in real time, as it being deployed to a cloud provider.
 
-Scope can be used in standalone mode, where you deploy it locally onto your hosts, or you can use Weave Scope as a Service, see [Installing Weave Scope](/site/installing-scope.md) for more information.
+To install Scope on your local Docker machine, run the following commands:
+
+    sudo wget -O /usr/local/bin/scope https://git.io/scope
+    sudo chmod a+x /usr/local/bin/scope
+    sudo scope launch
+
+Scope can be used in standalone mode, where you deploy it locally onto your hosts, or you can use Weave Scope in Service Mode.  Scope can be depoloyed to Kubernetes, DCOS and ECS cluster.  See [Installing Weave Scope](/site/installing-scope.md) for more information.
 
 ##Getting Microservices Under Control
 
@@ -52,7 +58,6 @@ Weave Scope can visualize your app within:
  * Docker Datacenter
  * Kubernetes
  * Amazon ECS
-
 
 **See Also**
 

@@ -14,15 +14,12 @@ The following topics are discussed:
    * [Using Docker Compose](#docker-compose)
    * [Using Docker Compose in Service Mode](#docker-compose-sercice)
  * [Installing Scope on Kubernetes](#k8s)
-   * [In Service Mode](#k8s-service)
  * [Installing Scope on Amazon ECS](#ecs)
-   * [In Service Mode](#ecs-service)
  * [Installing Scope on Mesosphere DC/OS](#dcos)
-   * [In Service Mode](#dcos-service)
 
 ##<a name="docker"></a>Installing Scope on Docker
 
-To install Scope on your local Docker machine in the Standalone Mode, run the following commands:
+To install Scope on your local Docker machine in Standalone Mode, run the following commands:
 
     sudo wget -O /usr/local/bin/scope https://git.io/scope
     sudo chmod a+x /usr/local/bin/scope
@@ -42,7 +39,7 @@ To install Scope on your local Docker machine in Service Mode, run the following
 
     sudo wget -O /usr/local/bin/scope https://git.io/scope
     sudo chmod a+x /usr/local/bin/scope
-    sudo scope launch --service-token=SCOPE_SERVICE_TOKEN
+    sudo scope launch --service-token=<token>
 
 Where `--service-token=<token>`  is the token that was sent to you when you signed up.
 
@@ -64,9 +61,13 @@ Hostnames will be regularly resolved as A records, and each answer used as a tar
 
 ###<a name="docker-compose">Using Docker Compose
 
-To install Scope on your local Docker machine using Docker Compose, run the following commands using one of the two fragments below.
+To install Scope on your local Docker machine in Standalone Mode using Docker Compose, run the following commands using one of the two fragments below.
 
     docker-compose up -d
+
+Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
+
+After it’s been launched, open your browser to `http://localhost:4040`.
 
 Docker Compose Format Version 1:
 
@@ -104,11 +105,15 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
 
 ###<a name="docker-compose"></a>Using Docker Compose in Service Mode
 
-To use Scope with Docker Compose, obtain your `SCOPE_SERVICE_TOKEN`. This is found in the console after you've logged in to the Scope service.
+To install Scope on your local Docker machine in Service Mode using Docker Compose, run the following commands using one of the two fragments below.
 
-Launch Docker Compose using one of the two fragments below and then set the value of the token as an environment variable.
+    SCOPE_SERVICE_TOKEN=<token>  docker-compose up -d
 
-    SCOPE_SERVICE_TOKEN=abcdef_my_token  docker-compose up -d
+Where `SCOPE_SERVICE_TOKEN=<token>` is the token that was sent to you when you signed up.
+
+Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
+
+After it’s been launched, open your web browser to [scope.weave.works](https://scope.weave.works) and login using your email.  Click on 'My Scope' in the top right-hand corner to see the Scope UI.
 
 Docker Compose Format Version 1:
 
@@ -150,37 +155,29 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
 
 ##<a name="k8s"></a>Installing Scope on Kubernetes
 
-Before visualizing Kubernetes clusters with Scope, it is recommended that you run Scope natively in your Kubernetes cluster using [these resource definitions](https://github.com/TheNewNormal/kube-charts/tree/master/weavescope/manifests).
+To installing Scope on a Kubernetes cluster in Standalone Mode, follow these instructions:
 
-**1. Ensure that the cluster allows privileged pods.**
+**Prerequisites**
 
-This is required by the Scope probes. By default, privileged pods are allowed from Kubernetes 1.1 and up. If you are running an earlier version or a non-default configuration, ensure that your API Server and all of your Kubelets are launched with the flag `--allow_privileged`.
+Ensure that the cluster allows privileged pods - this is required by the Scope probes. By default, privileged pods are allowed from Kubernetes 1.1 and up. If you are running an earlier version or a non-default configuration, ensure that your API Server and all of your Kubelets are launched with the flag `--allow_privileged`.
 
-**2. Your cluster must support [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md).**
-
-DaemonSets are necessary to ensure that each Kubernetes node can run a Scope Probe:
+Your cluster must support also [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md).  DaemonSets are necessary to ensure that each Kubernetes node can run a Scope Probe.
 
 To enable them in an existing cluster, add the `--runtime-config=extensions/v1beta1/daemonsets=true` argument to the [apiserver](https://github.com/kubernetes/kubernetes/blob/master/docs/admin/kube-apiserver.md)'s configuration. This is normally found in the `/etc/kubernetes/manifest/kube-apiserver.manifest`file after a restart of [the apiserver and controller manager](https://github.com/kubernetes/kubernetes/issues/18656) has occurred.
 
 If you are creating a new cluster, set `KUBE_ENABLE_DAEMONSETS=true` in your cluster configuration.
 
-**3. Download the resource definitions:**
+**Install Scope on your cluster**
 
-    for I in app-rc app-svc probe-ds; do
-     curl -s -L https://raw.githubusercontent.com/TheNewNormal/kube-charts/master/weavescope/manifests/scope-$I.yaml -o       scope-$I.yaml
-    done
+    kubectl create -f https://git.io/scope-k8s
 
-**4. Tweak the Scope probe configuration in `scope-probe-ds.yaml`, namely:**
+This run a recent Scope image from the Docker Hub.  It will run a probe on every node and a single app. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
-If you have an account at (scope.weave.works)[https://scope.weave.works] and want to use Scope in Cloud Service Mode, uncomment the `--probe.token=foo` argument, substitute `foo` by the token found in your account page, and comment out the `$(WEAVE_SCOPE_APP_SERVICE_HOST):$(WEAVE_SCOPE_APP_SERVICE_PORT)` argument.
+**Open Scope in your browser**
 
-**5. Finally, install Scope in your cluster (order is important):**
+    kubectl port-forward --namespace=kube-system $(kubectl get pod --namespace=kube-system --selector=name=weave-scope-app -o jsonpath={.items..metadata.name}) 4040
 
-    kubectl create -f scope-app-rc.yaml  # Only if you want to run Scope in Standalone Mode
-    kubectl create -f scope-app-svc.yaml # Only if you want to run Scope in Standalone Mode
-    kubectl create -f scope-probe-ds.yaml
-
-###<a name="k8s-service">In Service Mode
+Open http://localhost:4040 in your browser. This allows you to access the Scope UI securely, without opening it to the Internet.
 
 ##<a name="ecs"></a>Installing Scope on Amazon ECS
 
@@ -190,7 +187,7 @@ We currently provide three options for launching Weave Scope in ECS:
 * An [Amazon Machine Image (AMI)](https://github.com/weaveworks/integrations/tree/master/aws/ecs#weaves-ecs-amis) for each ECS region.
 * [A simple way to tailor the AMIs to your needs](https://github.com/weaveworks/integrations/tree/master/aws/ecs#creating-your-own-customized-weave-ecs-ami).
 
-The AWS CloudFormation template is the easiest way to get started with [Weave Net] and [Weave Scope]. CloudFormation templates provide developers and systems administrators a simple way to create a collection or a stack of related AWS resources, and it provisions and updates them in an orderly and predictable fashion.
+The AWS CloudFormation template is the easiest way to get started with Weave Net and Weave Scope. CloudFormation templates provide developers and systems administrators a simple way to create a collection or a stack of related AWS resources, and it provisions and updates them in an orderly and predictable fashion.
 
 Use this specially created Weaveworks CloudFormation template to create an EC2 instance with all of the resources you need, including Weave Net and Weave Scope.
 
@@ -205,18 +202,13 @@ The link below will launch a sample app using a Cloudformation template, but you
 
 [![](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https:%2F%2Fs3.amazonaws.com%2Fweaveworks-cfn-public%2Fintegrations%2Fecs-identiorca.json)
 
-
 For step by step instructions on how to configure the stack, see: [Install Weave to AWS with One-Click](https://www.weave.works/deploy-weave-aws-cloudformation-template/)
-
-###<a name="ecs-service">In Service Mode
 
 ##<a name="installing-scope-as-a-dc/os-package"></a>Installing Scope as a DC/OS Package
 
-Scope provides a simple live map of your application without requiring any instrumentation or coding, and can be installed as a DC/OS Package through the open Universe.
+Scope can be installed as a DC/OS Package through the open Universe.
 
 DC/OS is short for Datacenter Operating System, a distributed operating system using Apache Mesos as its kernel. The easiest way to get start with DC/OS in the public-cloud is to [deploy it on Amazon Web Services (AWS)](https://mesosphere.com/amazon/).
-
-How to install the Weave Scope packages on DC/OS and where it can be useful to you while developing a distributed application that targets DC/OS is described.
 
 For more information see, [Deploying Weave Scope on DC/OS](https://www.weave.works/guides/deploy-weave-scope-dcos/)
 
