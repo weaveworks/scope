@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"time"
 
 	"github.com/bluele/gcache"
 	"github.com/spaolacci/murmur3"
@@ -41,9 +42,13 @@ type smartMerger struct {
 // NewSmartMerger makes a Merger which merges together reports, caching intermediate merges
 // to accelerate future merges. Idea is to cache pair-wise merged reports, forming a merge
 // tree.  Merging a new report into this tree should be log(N).
-func NewSmartMerger() Merger {
+func NewSmartMerger(window time.Duration) Merger {
 	return &smartMerger{
-		cache: gcache.New(1000).LRU().Build(),
+		cache: gcache.New(200).
+			LRU().
+			Expiration(window).
+			EnableGC(2 * time.Second).
+			Build(),
 	}
 }
 
@@ -94,11 +99,9 @@ func (s *smartMerger) Merge(reports []report.Report) report.Report {
 	// two reports is cached.
 	merge := func(left, right *node) *node {
 		id := hash(left.rpt.ID, right.rpt.ID)
-
 		if result, err := s.cache.Get(id); err == nil {
 			return result.(*node)
 		}
-
 		n := &node{
 			id:  id,
 			rpt: report.MakeReport().Merge(left.rpt).Merge(right.rpt),

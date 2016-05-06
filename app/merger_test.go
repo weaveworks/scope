@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/report"
@@ -28,7 +29,7 @@ func TestMerger(t *testing.T) {
 		AddNode(report.MakeNode("bar")).
 		AddNode(report.MakeNode("baz"))
 
-	for _, merger := range []app.Merger{app.MakeDumbMerger(), app.NewSmartMerger()} {
+	for _, merger := range []app.Merger{app.MakeDumbMerger(), app.NewSmartMerger(10 * time.Second)} {
 		// Test the empty list case
 		if have := merger.Merge([]report.Report{}); !reflect.DeepEqual(have, report.MakeReport()) {
 			t.Errorf("Bad merge: %s", test.Diff(have, want))
@@ -62,18 +63,18 @@ func TestSmartMerger(t *testing.T) {
 	want := report.MakeReport()
 	want.Endpoint.AddNode(report.MakeNode("foo"))
 
-	merger := app.NewSmartMerger()
+	merger := app.NewSmartMerger(10 * time.Second)
 	if have := merger.Merge(reports); !reflect.DeepEqual(have, want) {
 		t.Errorf("Bad merge: %s", test.Diff(have, want))
 	}
 }
 
 func BenchmarkSmartMerger(b *testing.B) {
-	benchmarkMerger(b, app.NewSmartMerger(), false)
+	benchmarkMerger(b, app.NewSmartMerger(10*time.Second), false)
 }
 
 func BenchmarkSmartMergerWithoutCaching(b *testing.B) {
-	benchmarkMerger(b, app.NewSmartMerger(), true)
+	benchmarkMerger(b, app.NewSmartMerger(10*time.Second), true)
 }
 
 func BenchmarkDumbMerger(b *testing.B) {
