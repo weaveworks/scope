@@ -17,11 +17,6 @@ import (
 	"k8s.io/kubernetes/pkg/util/wait"
 )
 
-// These constants are keys used in node metadata
-const (
-	Namespace = "kubernetes_namespace"
-)
-
 // Client keeps track of running kubernetes pods and services
 type Client interface {
 	Stop()
@@ -38,18 +33,15 @@ type Client interface {
 }
 
 type client struct {
-	quit                chan struct{}
-	client              *unversioned.Client
-	podReflector        *cache.Reflector
-	serviceReflector    *cache.Reflector
-	deploymentReflector *cache.Reflector
-	replicaSetReflector *cache.Reflector
-	nodeReflector       *cache.Reflector
-	podStore            *cache.StoreToPodLister
-	serviceStore        *cache.StoreToServiceLister
-	deploymentStore     *cache.StoreToDeploymentLister
-	replicaSetStore     *cache.StoreToReplicaSetLister
-	nodeStore           *cache.StoreToNodeLister
+	quit                       chan struct{}
+	resyncPeriod               time.Duration
+	client                     *unversioned.Client
+	podStore                   *cache.StoreToPodLister
+	serviceStore               *cache.StoreToServiceLister
+	deploymentStore            *cache.StoreToDeploymentLister
+	replicaSetStore            *cache.StoreToReplicaSetLister
+	replicationControllerStore *cache.StoreToReplicationControllerLister
+	nodeStore                  *cache.StoreToNodeLister
 
 	podWatchesMutex sync.Mutex
 	podWatches      []func(Event, Pod)
@@ -93,41 +85,25 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 	}
 
 	result := &client{
-		quit:   make(chan struct{}),
-		client: c,
+		quit:         make(chan struct{}),
+		resyncPeriod: resyncPeriod,
+		client:       c,
 	}
 
-	podListWatch := cache.NewListWatchFromClient(c, "pods", api.NamespaceAll, fields.Everything())
-	podStore := NewEventStore(result.triggerPodWatches, cache.MetaNamespaceKeyFunc)
-	result.podStore = &cache.StoreToPodLister{Store: podStore}
-	result.podReflector = cache.NewReflector(podListWatch, &api.Pod{}, podStore, resyncPeriod)
-
-	serviceListWatch := cache.NewListWatchFromClient(c, "services", api.NamespaceAll, fields.Everything())
-	serviceStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
-	result.serviceStore = &cache.StoreToServiceLister{Store: serviceStore}
-	result.serviceReflector = cache.NewReflector(serviceListWatch, &api.Service{}, serviceStore, resyncPeriod)
-
-	deploymentListWatch := cache.NewListWatchFromClient(ec, "deployments", api.NamespaceAll, fields.Everything())
-	deploymentStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
-	result.deploymentStore = &cache.StoreToDeploymentLister{Store: deploymentStore}
-	result.deploymentReflector = cache.NewReflector(deploymentListWatch, &extensions.Deployment{}, deploymentStore, resyncPeriod)
-
-	replicaSetListWatch := cache.NewListWatchFromClient(ec, "replicasets", api.NamespaceAll, fields.Everything())
-	replicaSetStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
-	result.replicaSetStore = &cache.StoreToReplicaSetLister{Store: replicaSetStore}
-	result.replicaSetReflector = cache.NewReflector(replicaSetListWatch, &extensions.ReplicaSet{}, replicaSetStore, resyncPeriod)
-
-	nodeListWatch := cache.NewListWatchFromClient(c, "nodes", api.NamespaceAll, fields.Everything())
-	nodeStore := cache.NewStore(cache.MetaNamespaceKeyFunc)
-	result.nodeStore = &cache.StoreToNodeLister{Store: nodeStore}
-	result.nodeReflector = cache.NewReflector(nodeListWatch, &api.Node{}, nodeStore, resyncPeriod)
-
-	runReflectorUntil(result.podReflector, resyncPeriod, result.quit)
-	runReflectorUntil(result.serviceReflector, resyncPeriod, result.quit)
-	runReflectorUntil(result.deploymentReflector, resyncPeriod, result.quit)
-	runReflectorUntil(result.replicaSetReflector, resyncPeriod, result.quit)
-	runReflectorUntil(result.nodeReflector, resyncPeriod, result.quit)
+	result.podStore = &cache.StoreToPodLister{Store: result.setupStore(c, "pods", &api.Pod{})}
+	result.serviceStore = &cache.StoreToServiceLister{Store: result.setupStore(c, "services", &api.Service{})}
+	result.deploymentStore = &cache.StoreToDeploymentLister{Store: result.setupStore(ec, "deployments", &extensions.Deployment{})}
+	result.replicaSetStore = &cache.StoreToReplicaSetLister{Store: result.setupStore(ec, "replicasets", &extensions.ReplicaSet{})}
+	result.replicationControllerStore = &cache.StoreToReplicationControllerLister{Store: result.setupStore(c, "replicationcontrollers", &api.ReplicationController{})}
+	result.nodeStore = &cache.StoreToNodeLister{Store: result.setupStore(c, "nodes", &api.Node{})}
 	return result, nil
+}
+
+func (c *client) setupStore(kclient cache.Getter, resource string, itemType interface{}) cache.Store {
+	lw := cache.NewListWatchFromClient(kclient, resource, api.NamespaceAll, fields.Everything())
+	store := cache.NewStore(cache.MetaNamespaceKeyFunc)
+	runReflectorUntil(cache.NewReflector(lw, itemType, store, c.resyncPeriod), c.resyncPeriod, c.quit)
+	return store
 }
 
 func (c *client) WatchPods(f func(Event, Pod)) {
@@ -183,14 +159,29 @@ func (c *client) WalkDeployments(f func(Deployment) error) error {
 	return nil
 }
 
+// WalkReplicaSets calls f for each replica set (and replication controller)
 func (c *client) WalkReplicaSets(f func(ReplicaSet) error) error {
-	list, err := c.replicaSetStore.List()
-	if err != nil {
-		return err
-	}
-	for i := range list {
-		if err := f(NewReplicaSet(&(list[i]))); err != nil {
+	{
+		list, err := c.replicaSetStore.List()
+		if err != nil {
 			return err
+		}
+		for i := range list {
+			if err := f(NewReplicaSet(&(list[i]))); err != nil {
+				return err
+			}
+		}
+	}
+
+	{
+		list, err := c.replicationControllerStore.List()
+		if err != nil {
+			return err
+		}
+		for i := range list {
+			if err := f(NewReplicationController(&(list[i]))); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

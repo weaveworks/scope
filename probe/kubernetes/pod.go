@@ -7,12 +7,7 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	PodID          = "kubernetes_pod_id"
-	PodName        = "kubernetes_pod_name"
-	PodCreated     = "kubernetes_pod_created"
-	PodState       = "kubernetes_pod_state"
-	PodLabelPrefix = "kubernetes_pod_labels_"
-	PodIP          = "kubernetes_pod_ip"
+	State = "kubernetes_state"
 
 	StateDeleted = "deleted"
 )
@@ -34,7 +29,11 @@ type pod struct {
 
 // NewPod creates a new Pod
 func NewPod(p *api.Pod) Pod {
-	return &pod{Pod: p, Meta: meta{p.ObjectMeta}, parents: report.MakeSets()}
+	return &pod{
+		Pod:     p,
+		Meta:    meta{p.ObjectMeta},
+		parents: report.MakeSets(),
+	}
 }
 
 func (p *pod) UID() string {
@@ -58,16 +57,11 @@ func (p *pod) NodeName() string {
 }
 
 func (p *pod) GetNode(probeID string) report.Node {
-	n := report.MakeNodeWith(report.MakePodNodeID(p.UID()), map[string]string{
-		PodID:      p.ID(),
-		PodName:    p.Name(),
-		Namespace:  p.Namespace(),
-		PodCreated: p.Created(),
-		PodState:   p.State(),
-		PodIP:      p.Status.PodIP,
+	return p.MetaNode(report.MakePodNodeID(p.UID())).WithLatests(map[string]string{
+		State: p.State(),
+		IP:    p.Status.PodIP,
 		report.ControlProbeID: probeID,
-	}).WithParents(p.parents)
-	n = n.AddTable(PodLabelPrefix, p.ObjectMeta.Labels)
-	n = n.WithControls(GetLogs, DeletePod)
-	return n
+	}).
+		WithParents(p.parents).
+		WithControls(GetLogs, DeletePod)
 }

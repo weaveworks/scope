@@ -4,7 +4,17 @@ import (
 	"time"
 
 	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/labels"
+
+	"github.com/weaveworks/scope/report"
+)
+
+// These constants are keys used in node metadata
+const (
+	ID          = "kubernetes_id"
+	Name        = "kubernetes_name"
+	Namespace   = "kubernetes_namespace"
+	Created     = "kubernetes_created"
+	LabelPrefix = "kubernetes_labels_"
 )
 
 // Meta represents a metadata information about a Kubernetes object
@@ -14,7 +24,8 @@ type Meta interface {
 	Name() string
 	Namespace() string
 	Created() string
-	Labels() labels.Labels
+	Labels() map[string]string
+	MetaNode(id string) report.Node
 }
 
 type meta struct {
@@ -41,6 +52,16 @@ func (m meta) Created() string {
 	return m.ObjectMeta.CreationTimestamp.Format(time.RFC822)
 }
 
-func (m meta) Labels() labels.Labels {
-	return labels.Set(m.ObjectMeta.Labels)
+func (m meta) Labels() map[string]string {
+	return m.ObjectMeta.Labels
+}
+
+// MetaNode gets the node metadata
+func (m meta) MetaNode(id string) report.Node {
+	return report.MakeNodeWith(id, map[string]string{
+		ID:        m.ID(),
+		Name:      m.Name(),
+		Namespace: m.Namespace(),
+		Created:   m.Created(),
+	}).AddTable(LabelPrefix, m.Labels())
 }

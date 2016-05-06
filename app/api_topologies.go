@@ -152,7 +152,7 @@ func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopolog
 	namespaces := map[string]struct{}{}
 	for _, t := range []report.Topology{rpt.Pod, rpt.Service, rpt.Deployment, rpt.ReplicaSet} {
 		for _, n := range t.Nodes {
-			if state, ok := n.Latest.Lookup(kubernetes.PodState); ok && state == kubernetes.StateDeleted {
+			if state, ok := n.Latest.Lookup(kubernetes.State); ok && state == kubernetes.StateDeleted {
 				continue
 			}
 			if namespace, ok := n.Latest.Lookup(kubernetes.Namespace); ok {

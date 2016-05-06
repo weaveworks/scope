@@ -12,54 +12,52 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	ReplicaSetID                   = "kubernetes_replica_set_id"
-	ReplicaSetName                 = "kubernetes_replica_set_name"
-	ReplicaSetCreated              = "kubernetes_replica_set_created"
-	ReplicaSetObservedGeneration   = "kubernetes_replica_set_observed_generation"
-	ReplicaSetReplicas             = "kubernetes_replica_set_replicas"
-	ReplicaSetDesiredReplicas      = "kubernetes_replica_set_desired_replicas"
-	ReplicaSetFullyLabeledReplicas = "kubernetes_replica_set_fully_labeled_replicas"
-	ReplicaSetLabelPrefix          = "kubernetes_replica_set_labels_"
+	FullyLabeledReplicas = "kubernetes_fully_labeled_replicas"
 )
 
-// ReplicaSet represents a Kubernetes replica_set
+// ReplicaSet represents a Kubernetes replica set
 type ReplicaSet interface {
 	Meta
 	Selector() labels.Selector
+	AddParent(topology, id string)
 	GetNode(probeID string) report.Node
 }
 
 type replicaSet struct {
 	*extensions.ReplicaSet
 	Meta
-	Node *api.Node
+	parents report.Sets
+	Node    *api.Node
 }
 
 // NewReplicaSet creates a new ReplicaSet
-func NewReplicaSet(d *extensions.ReplicaSet) ReplicaSet {
-	return &replicaSet{ReplicaSet: d, Meta: meta{d.ObjectMeta}}
+func NewReplicaSet(r *extensions.ReplicaSet) ReplicaSet {
+	return &replicaSet{
+		ReplicaSet: r,
+		Meta:       meta{r.ObjectMeta},
+		parents:    report.MakeSets(),
+	}
 }
 
-func (d *replicaSet) Selector() labels.Selector {
-	selector, err := unversioned.LabelSelectorAsSelector(d.Spec.Selector)
+func (r *replicaSet) Selector() labels.Selector {
+	selector, err := unversioned.LabelSelectorAsSelector(r.Spec.Selector)
 	if err != nil {
+		// TODO(paulbellamy): Remove the panic!
 		panic(err)
 	}
 	return selector
 }
 
-func (d *replicaSet) GetNode(probeID string) report.Node {
-	n := report.MakeNodeWith(report.MakeReplicaSetNodeID(d.UID()), map[string]string{
-		ReplicaSetID:                   d.ID(),
-		ReplicaSetName:                 d.Name(),
-		Namespace:                      d.Namespace(),
-		ReplicaSetCreated:              d.Created(),
-		ReplicaSetObservedGeneration:   fmt.Sprint(d.Status.ObservedGeneration),
-		ReplicaSetReplicas:             fmt.Sprint(d.Status.Replicas),
-		ReplicaSetDesiredReplicas:      fmt.Sprint(d.Spec.Replicas),
-		ReplicaSetFullyLabeledReplicas: fmt.Sprint(d.Status.FullyLabeledReplicas),
-		report.ControlProbeID:          probeID,
-	})
-	n = n.AddTable(ReplicaSetLabelPrefix, d.ObjectMeta.Labels)
-	return n
+func (r *replicaSet) AddParent(topology, id string) {
+	r.parents = r.parents.Add(topology, report.MakeStringSet(id))
+}
+
+func (r *replicaSet) GetNode(probeID string) report.Node {
+	return r.MetaNode(report.MakeReplicaSetNodeID(r.UID())).WithLatests(map[string]string{
+		ObservedGeneration:    fmt.Sprint(r.Status.ObservedGeneration),
+		Replicas:              fmt.Sprint(r.Status.Replicas),
+		DesiredReplicas:       fmt.Sprint(r.Spec.Replicas),
+		FullyLabeledReplicas:  fmt.Sprint(r.Status.FullyLabeledReplicas),
+		report.ControlProbeID: probeID,
+	}).WithParents(r.parents)
 }

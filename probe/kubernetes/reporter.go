@@ -15,59 +15,55 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
+// These constants are keys used in node metadata
+const (
+	IP                 = "kubernetes_ip"
+	ObservedGeneration = "kubernetes_observed_generation"
+	Replicas           = "kubernetes_replicas"
+	DesiredReplicas    = "kubernetes_desired_replicas"
+)
+
 // Exposed for testing
 var (
 	PodMetadataTemplates = report.MetadataTemplates{
-		PodID:            {ID: PodID, Label: "ID", From: report.FromLatest, Priority: 1},
-		PodState:         {ID: PodState, Label: "State", From: report.FromLatest, Priority: 2},
-		PodIP:            {ID: PodIP, Label: "IP", From: report.FromLatest, Priority: 3},
+		ID:               {ID: ID, Label: "ID", From: report.FromLatest, Priority: 1},
+		State:            {ID: State, Label: "State", From: report.FromLatest, Priority: 2},
+		IP:               {ID: IP, Label: "IP", From: report.FromLatest, Priority: 3},
 		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: "number", Priority: 4},
 		Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 5},
-		PodCreated:       {ID: PodCreated, Label: "Created", From: report.FromLatest, Priority: 6},
+		Created:          {ID: Created, Label: "Created", From: report.FromLatest, Priority: 6},
 	}
 
 	ServiceMetadataTemplates = report.MetadataTemplates{
-		ServiceID:       {ID: ServiceID, Label: "ID", From: report.FromLatest, Priority: 1},
-		Namespace:       {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		ServiceCreated:  {ID: ServiceCreated, Label: "Created", From: report.FromLatest, Priority: 3},
-		ServicePublicIP: {ID: ServicePublicIP, Label: "Public IP", From: report.FromLatest, Priority: 4},
-		ServiceIP:       {ID: ServiceIP, Label: "Internal IP", From: report.FromLatest, Priority: 5},
-		report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+		ID:         {ID: ID, Label: "ID", From: report.FromLatest, Priority: 1},
+		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Created:    {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
+		PublicIP:   {ID: PublicIP, Label: "Public IP", From: report.FromLatest, Priority: 4},
+		IP:         {ID: IP, Label: "Internal IP", From: report.FromLatest, Priority: 5},
+		report.Pod: {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
 	}
 
 	DeploymentMetadataTemplates = report.MetadataTemplates{
-		DeploymentID:                 {ID: DeploymentID, Label: "ID", From: report.FromLatest, Priority: 1},
-		Namespace:                    {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		DeploymentCreated:            {ID: DeploymentCreated, Label: "Created", From: report.FromLatest, Priority: 3},
-		DeploymentObservedGeneration: {ID: DeploymentObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
-		DeploymentDesiredReplicas:    {ID: DeploymentDesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
-		report.Pod:                   {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
-		DeploymentStrategy:           {ID: DeploymentStrategy, Label: "Strategy", From: report.FromLatest, Priority: 7},
+		ID:                 {ID: ID, Label: "ID", From: report.FromLatest, Priority: 1},
+		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
+		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+		Strategy:           {ID: Strategy, Label: "Strategy", From: report.FromLatest, Priority: 7},
 	}
 
 	ReplicaSetMetadataTemplates = report.MetadataTemplates{
-		ReplicaSetID:                 {ID: ReplicaSetID, Label: "ID", From: report.FromLatest, Priority: 1},
-		Namespace:                    {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		ReplicaSetCreated:            {ID: ReplicaSetCreated, Label: "Created", From: report.FromLatest, Priority: 3},
-		ReplicaSetObservedGeneration: {ID: ReplicaSetObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
-		ReplicaSetDesiredReplicas:    {ID: ReplicaSetDesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
-		report.Pod:                   {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+		ID:                 {ID: ID, Label: "ID", From: report.FromLatest, Priority: 1},
+		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
+		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
 	}
 
-	PodTableTemplates = report.TableTemplates{
-		PodLabelPrefix: {ID: PodLabelPrefix, Label: "Kubernetes Labels", Prefix: PodLabelPrefix},
-	}
-
-	ServiceTableTemplates = report.TableTemplates{
-		ServiceLabelPrefix: {ID: ServiceLabelPrefix, Label: "Kubernetes Labels", Prefix: ServiceLabelPrefix},
-	}
-
-	DeploymentTableTemplates = report.TableTemplates{
-		DeploymentLabelPrefix: {ID: DeploymentLabelPrefix, Label: "Kubernetes Labels", Prefix: DeploymentLabelPrefix},
-	}
-
-	ReplicaSetTableTemplates = report.TableTemplates{
-		ReplicaSetLabelPrefix: {ID: ReplicaSetLabelPrefix, Label: "Kubernetes Labels", Prefix: ReplicaSetLabelPrefix},
+	TableTemplates = report.TableTemplates{
+		LabelPrefix: {ID: LabelPrefix, Label: "Kubernetes Labels", Prefix: LabelPrefix},
 	}
 )
 
@@ -113,7 +109,7 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 		rpt.Pod.AddNode(
 			report.MakeNodeWith(
 				report.MakePodNodeID(pod.UID()),
-				map[string]string{PodState: StateDeleted},
+				map[string]string{State: StateDeleted},
 			),
 		)
 		r.probe.Publish(rpt)
@@ -173,11 +169,11 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	replicaSetTopology, replicaSets, err := r.replicaSetTopology(r.probeID)
+	replicaSetTopology, replicaSets, err := r.replicaSetTopology(r.probeID, deployments)
 	if err != nil {
 		return result, err
 	}
-	podTopology, err := r.podTopology(services, deployments, replicaSets)
+	podTopology, err := r.podTopology(services, replicaSets)
 	if err != nil {
 		return result, err
 	}
@@ -192,7 +188,7 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 	var (
 		result = report.MakeTopology().
 			WithMetadataTemplates(ServiceMetadataTemplates).
-			WithTableTemplates(ServiceTableTemplates)
+			WithTableTemplates(TableTemplates)
 		services = []Service{}
 	)
 	err := r.client.WalkServices(func(s Service) error {
@@ -207,7 +203,7 @@ func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deploy
 	var (
 		result = report.MakeTopology().
 			WithMetadataTemplates(DeploymentMetadataTemplates).
-			WithTableTemplates(DeploymentTableTemplates)
+			WithTableTemplates(TableTemplates)
 		deployments = []Deployment{}
 	)
 	err := r.client.WalkDeployments(func(d Deployment) error {
@@ -218,14 +214,26 @@ func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deploy
 	return result, deployments, err
 }
 
-func (r *Reporter) replicaSetTopology(probeID string) (report.Topology, []ReplicaSet, error) {
+func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) (report.Topology, []ReplicaSet, error) {
 	var (
 		result = report.MakeTopology().
 			WithMetadataTemplates(ReplicaSetMetadataTemplates).
-			WithTableTemplates(ReplicaSetTableTemplates)
+			WithTableTemplates(TableTemplates)
 		replicaSets = []ReplicaSet{}
+		selectors   = []func(labelledChild){}
 	)
+	for _, deployment := range deployments {
+		selectors = append(selectors, match(
+			deployment.Selector(),
+			report.Deployment,
+			report.MakeDeploymentNodeID(deployment.UID()),
+		))
+	}
+
 	err := r.client.WalkReplicaSets(func(r ReplicaSet) error {
+		for _, selector := range selectors {
+			selector(r)
+		}
 		result = result.AddNode(r.GetNode(probeID))
 		replicaSets = append(replicaSets, r)
 		return nil
@@ -254,19 +262,26 @@ var GetNodeName = func(r *Reporter) (string, error) {
 	return nodeName, err
 }
 
-func (r *Reporter) podTopology(services []Service, deployments []Deployment, replicaSets []ReplicaSet) (report.Topology, error) {
+type labelledChild interface {
+	Labels() map[string]string
+	AddParent(string, string)
+}
+
+// Match parses the selectors and adds the target as a parent if the selector matches.
+func match(selector labels.Selector, topology, id string) func(labelledChild) {
+	return func(c labelledChild) {
+		if selector.Matches(labels.Set(c.Labels())) {
+			c.AddParent(topology, id)
+		}
+	}
+}
+
+func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
-			WithTableTemplates(PodTableTemplates)
-		selectors = []func(Pod){}
-		match     = func(selector labels.Selector, topology, id string) func(Pod) {
-			return func(p Pod) {
-				if selector.Matches(p.Labels()) {
-					p.AddParent(topology, id)
-				}
-			}
-		}
+			WithTableTemplates(TableTemplates)
+		selectors = []func(labelledChild){}
 	)
 	pods.Controls.AddControl(report.Control{
 		ID:    GetLogs,
@@ -285,13 +300,6 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, rep
 			service.Selector(),
 			report.Service,
 			report.MakeServiceNodeID(service.UID()),
-		))
-	}
-	for _, deployment := range deployments {
-		selectors = append(selectors, match(
-			deployment.Selector(),
-			report.Deployment,
-			report.MakeDeploymentNodeID(deployment.UID()),
 		))
 	}
 	for _, replicaSet := range replicaSets {

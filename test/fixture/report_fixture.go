@@ -369,8 +369,8 @@ var (
 			Nodes: report.Nodes{
 				ClientPodNodeID: report.MakeNodeWith(
 					ClientPodNodeID, map[string]string{
-						kubernetes.PodID:     ClientPodID,
-						kubernetes.PodName:   "pong-a",
+						kubernetes.ID:        ClientPodID,
+						kubernetes.Name:      "pong-a",
 						kubernetes.Namespace: KubernetesNamespace,
 						report.HostNodeID:    ClientHostNodeID,
 					}).
@@ -380,10 +380,10 @@ var (
 				),
 				ServerPodNodeID: report.MakeNodeWith(
 					ServerPodNodeID, map[string]string{
-						kubernetes.PodID:     ServerPodID,
-						kubernetes.PodName:   "pong-b",
+						kubernetes.ID:        ServerPodID,
+						kubernetes.Name:      "pong-b",
 						kubernetes.Namespace: KubernetesNamespace,
-						kubernetes.PodState:  "running",
+						kubernetes.State:     "running",
 						report.HostNodeID:    ServerHostNodeID,
 					}).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
@@ -398,9 +398,9 @@ var (
 				ServiceNodeID: report.MakeNodeWith(
 
 					ServiceNodeID, map[string]string{
-						kubernetes.ServiceID:   ServiceID,
-						kubernetes.ServiceName: "pongservice",
-						kubernetes.Namespace:   "ping",
+						kubernetes.ID:        ServiceID,
+						kubernetes.Name:      "pongservice",
+						kubernetes.Namespace: "ping",
 					}).
 					WithTopology(report.Service),
 			},

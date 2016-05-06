@@ -63,7 +63,7 @@ func containerParent(n report.Node) Parent {
 }
 
 func podParent(n report.Node) Parent {
-	podName, _ := n.Latest.Lookup(kubernetes.PodName)
+	podName, _ := n.Latest.Lookup(kubernetes.Name)
 	return Parent{
 		ID:         n.ID,
 		Label:      podName,
@@ -72,7 +72,7 @@ func podParent(n report.Node) Parent {
 }
 
 func serviceParent(n report.Node) Parent {
-	serviceName, _ := n.Latest.Lookup(kubernetes.ServiceName)
+	serviceName, _ := n.Latest.Lookup(kubernetes.Name)
 	return Parent{
 		ID:         n.ID,
 		Label:      serviceName,
