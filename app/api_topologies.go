@@ -123,6 +123,9 @@ func init() {
 func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
 	options := APITopologyOptionGroup{ID: "namespace", Default: "all"}
 	for _, namespace := range namespaces {
+		if namespace == "default" {
+			options.Default = namespace
+		}
 		options.Options = append(options.Options, APITopologyOption{namespace, namespace, render.IsNamespace(namespace)})
 	}
 	options.Options = append(options.Options, APITopologyOption{"all", "All Namespaces", nil})
