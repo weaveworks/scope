@@ -364,7 +364,7 @@ func TestMakeDetailedPodNode(t *testing.T) {
 			{
 				ID:         fixture.ServiceNodeID,
 				Label:      fixture.ServiceName,
-				TopologyID: "pods-by-service",
+				TopologyID: "services",
 			},
 		},
 		Connections: []detailed.ConnectionsSummary{

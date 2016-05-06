@@ -143,7 +143,7 @@ var (
 		{
 			topologyID: report.Service,
 			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "pods-by-service",
+				TopologyID: "services",
 				Label:      "Services",
 				Columns: []Column{
 					{ID: report.Pod, Label: "# Pods"},
