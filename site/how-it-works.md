@@ -88,5 +88,5 @@ For more information, see [Go Checkpoint](https://github.com/weaveworks/go-check
 
 **See Also**
 
- * [Installing Weave Scope](/site/installing-scope.md)
+ * [Installing Weave Scope](/site/installing.md)
 

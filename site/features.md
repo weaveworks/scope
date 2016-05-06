@@ -3,7 +3,7 @@ title: Feature Overview
 menu_order: 15
 ---
 
-Browse the current feature set for Scope with links to relevant indepth topics: 
+Browse the current feature set for Scope with links to relevant indepth topics:
 
  * [Topology Mapping](#topology-mapping)
  * [Flexible Filtering](#flexible-filtering)
@@ -16,7 +16,7 @@ Browse the current feature set for Scope with links to relevant indepth topics:
 
 ##<a name="topology-mapping"></a> Topology Mapping
 
-Scope builds logical topologies and node groups of your infrastructure. It displays an intelligent map of your app, so that different node types can be easily viewed and specific microservices can be drilled down on and inspected within your app.  
+Scope builds logical topologies and node groups of your infrastructure. It displays an intelligent map of your app, so that different node types can be easily viewed and specific microservices can be drilled down on and inspected within your app.
 
 The following views are provided:
 
@@ -31,11 +31,11 @@ The following views are provided:
 
 ##<a name="flexible-view-filtering"></a> Flexible Filtering
 
-Nodes can be filtered by CPU, Memory and Open Files. From the Container view, additional filters enable you to sort by System Containers, Application Containers or by Stopped vs.Running Containers or Both. Easily find the container using the most CPU or memory for a given host or service. In Host view, filter by CPU, Load or Memory consumption. Mouse-over any of the nodes to view its filtered metric at a glance. 
+Nodes can be filtered by CPU, Memory and Open Files. From the Container view, additional filters enable you to sort by System Containers, Application Containers or by Stopped vs.Running Containers or Both. Easily find the container using the most CPU or memory for a given host or service. In Host view, filter by CPU, Load or Memory consumption. Mouse-over any of the nodes to view its filtered metric at a glance.
 
 ##<a name="real-time-app-and-container-metrics"></a>Real-time App and Container Metrics
 
-View contextual metrics, tags and metadata for your containers.  Effortlessly navigate between processes inside your container to the hosts that your containers run on, arranged in expandable, sortable tables.  
+View contextual metrics, tags and metadata for your containers.  Effortlessly navigate between processes inside your container to the hosts that your containers run on, arranged in expandable, sortable tables.
 
 Choose an overview of your container infrastructure, or focus on a specific microservice. Identify and correct issues to ensure the stability and performance of your containerized applications.
 
@@ -45,13 +45,13 @@ Interact with your containers directly: pause, restart and stop containers witho
 
 ##<a name="troubleshoot-apps"></a>Troubleshoot Apps
 
-A convenient terminal window is provided that enables you to interact with your app and to troubleshoot and diagnose any issues all within the same context. 
+A convenient terminal window is provided that enables you to interact with your app and to troubleshoot and diagnose any issues all within the same context.
 
 ##<a name="interact-with-kubernetes-clusters"></a>Interact with Kubernetes Clusters
 
 
 ##<a name="generate-custom-metrics-using-the-plugin-api"></a>Generate Custom Metrics using the Plugin API
 
-Scope includes a Plugin API, so that custom metrics may be generated and integrated with the Scope UI. 
+Scope includes a Plugin API, so that custom metrics may be generated and integrated with the Scope UI.
 
-For information on how to generate your own metrics in Scope, see [Generating Custom Metrics with Plugins](/site/scope-plugins.md).
+For information on how to generate your own metrics in Scope, see [Generating Custom Metrics with Plugins](/site/plugins.md).

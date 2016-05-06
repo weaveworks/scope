@@ -12,7 +12,7 @@ To install Scope on your local Docker machine, run the following commands:
     sudo chmod a+x /usr/local/bin/scope
     sudo scope launch
 
-Scope can be used in standalone mode, where you deploy it locally onto your hosts, or you can use Weave Scope in Service Mode.  Scope can be depoloyed to Kubernetes, DCOS and ECS cluster.  See [Installing Weave Scope](/site/installing-scope.md) for more information.
+Scope can be used in standalone mode, where you deploy it locally onto your hosts, or you can use Weave Scope in Service Mode.  Scope can be depoloyed to Kubernetes, DCOS and ECS cluster.  See [Installing Weave Scope](/site/installing.md) for more information.
 
 ##Getting Microservices Under Control
 
@@ -61,6 +61,6 @@ Weave Scope can visualize your app within:
 
 **See Also**
 
- * [Installing Weave Scope](/site/installing-scope.md)
- * [Feature Overview](/site/scope-features.md)
+ * [Installing Weave Scope](/site/installing.md)
+ * [Feature Overview](/site/features.md)
 
