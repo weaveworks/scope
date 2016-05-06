@@ -18,17 +18,6 @@ Browse the current feature set for Scope with links to relevant indepth topics:
 
 Scope builds logical topologies and node groups of your infrastructure. It displays an intelligent map of your app, so that different node types can be easily viewed and specific microservices can be drilled down on and inspected within your app.
 
-The following views are provided:
-
-* Process type
-  * By Name
-* Container
-  * By DNS Name
-  * By Image
-* Hosts
-* Kubernetes Name Space Label
-
-
 ##<a name="flexible-view-filtering"></a> Flexible Filtering
 
 Nodes can be filtered by CPU, Memory and Open Files. From the Container view, additional filters enable you to sort by System Containers, Application Containers or by Stopped vs.Running Containers or Both. Easily find the container using the most CPU or memory for a given host or service. In Host view, filter by CPU, Load or Memory consumption. Mouse-over any of the nodes to view its filtered metric at a glance.
