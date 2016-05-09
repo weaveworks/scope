@@ -25,7 +25,7 @@ To install Scope on your local Docker machine in Standalone Mode, run the follow
     sudo chmod a+x /usr/local/bin/scope
     sudo scope launch
 
-This script will download and run a recent Scope image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
+This script downloads and runs a recent Scope image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
 After it’s been launched, open your browser to `http://localhost:4040`.
 
@@ -43,11 +43,11 @@ To install Scope on your local Docker machine in Service Mode, run the following
 
 Where `--service-token=<token>`  is the token that was sent to you when you signed up.
 
-This script will download and run a recent Scope image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
+This script downloads and runs a recent Scope docker image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
 After it’s been launched, open your web browser to [scope.weave.works](https://scope.weave.works) and login using your email.  Click on 'My Scope' in the top right-hand corner to see the Scope UI.
 
-###<a name="docker-weave">Using Weave Net
+###<a name="docker-weave"></a> Using Weave Net
 
 If Scope is running on the same machine as the Weave Network, then the probe uses weaveDNS to automatically discover any other apps on the network. Scope does this by registering itself under the address scope.weave.local.
 
@@ -59,7 +59,7 @@ If you don’t want to use weaveDNS, then Scope can be instructed to cluster wit
 
 Hostnames will be regularly resolved as A records, and each answer used as a target.
 
-###<a name="docker-compose">Using Docker Compose
+###<a name="docker-compose"></a>Using Docker Compose
 
 To install Scope on your local Docker machine in Standalone Mode using Docker Compose, run the following commands using one of the two fragments below.
 
@@ -155,25 +155,47 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
 
 ##<a name="k8s"></a>Installing Scope on Kubernetes
 
-To installing Scope on a Kubernetes cluster in Standalone Mode, follow these instructions:
+To install Scope on a Kubernetes cluster in Standalone Mode, follow these instructions:
 
 **Prerequisites**
 
 Ensure that the cluster allows privileged pods - this is required by the Scope probes. By default, privileged pods are allowed from Kubernetes 1.1 and up. If you are running an earlier version or a non-default configuration, ensure that your API Server and all of your Kubelets are launched with the flag `--allow_privileged`.
 
-Your cluster must support also [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md).  DaemonSets are necessary to ensure that each Kubernetes node can run a Scope Probe.
+Your cluster must also support [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md).  DaemonSets are necessary to ensure that each Kubernetes node can run a Scope Probe.
 
 To enable DaemonSets in an existing cluster, add the `--runtime-config=extensions/v1beta1/daemonsets=true` argument to the [apiserver](https://github.com/kubernetes/kubernetes/blob/master/docs/admin/kube-apiserver.md)'s configuration. This is normally found in the `/etc/kubernetes/manifest/kube-apiserver.manifest`file after a restart of [the apiserver and controller manager](https://github.com/kubernetes/kubernetes/issues/18656) has occurred.  If you are creating a new cluster, set `KUBE_ENABLE_DAEMONSETS=true` in your cluster configuration.
 
 Note that prior to Kubernetes version 1.2 DaemonSets would fail to schedule pods on unschedulable nodes (typically the master).  This will result in the probe not running on that node.  See [#1030](https://github.com/weaveworks/scope/issues/1030) for more information.  We advise you to use Kubernetes version 1.2 or higher.
 
-**Install Scope on your cluster**
+**Install Scope on Your Cluster**
+
+We recommend to run Scope natively in your Kubernetes cluster using the manifest generator service.
+ 
+The simplest way to get latest release of Scope deployed on a Kubernetes cluster:
+
+```
+kubectl create -f 'https://scope.weave.works/k8s-gen/weavescope.json' --validate=false
+```
+
+The following parameters can be specified:
+
+ - `v` - Weave Scope version or tag, e.g. `latest` or `0.15.0`, current release is the default
+
+- `service-token` - Weave Scope Cloud Service token
+
+- `k8s-service-type` - Kubernetes service type (for running Scope in Standalone mode), can be either
+`LoadBalancer` or `NodePort`, by default this is unspecifed (only internal access)
+
+If you wish to download Scope manifest, you can use YAML version of the manifest, as it's easier to read, i.e.:
+```
+curl --silent --remote-name https://scope.weave.works/k8s-gen/weavescope.yaml
+```
 
     kubectl create -f https://git.io/scope-k8s
 
-This run a recent Scope image from the Docker Hub.  It will run a probe on every node and a single app. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
+This runs a recent Scope image from the Docker Hub and will run a probe on every node and a single app. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
-**Open Scope in your browser**
+**Open Scope in Your Browser**
 
     kubectl port-forward --namespace=kube-system $(kubectl get pod --namespace=kube-system --selector=name=weave-scope-app -o jsonpath={.items..metadata.name}) 4040
 
