@@ -8,6 +8,14 @@ import (
 	"k8s.io/kubernetes/pkg/labels"
 )
 
+// ReplicationController represents a Kubernetes replication controller
+type ReplicationController interface {
+	Meta
+	Selector() labels.Selector
+	AddParent(topology, id string)
+	GetNode(probeID string) report.Node
+}
+
 type replicationController struct {
 	*api.ReplicationController
 	Meta
@@ -16,7 +24,7 @@ type replicationController struct {
 }
 
 // NewReplicationController creates a new ReplicationController
-func NewReplicationController(r *api.ReplicationController) ReplicaSet {
+func NewReplicationController(r *api.ReplicationController) ReplicationController {
 	return &replicationController{
 		ReplicationController: r,
 		Meta:    meta{r.ObjectMeta},
@@ -42,5 +50,5 @@ func (r *replicationController) GetNode(probeID string) report.Node {
 		DesiredReplicas:       fmt.Sprint(r.Spec.Replicas),
 		FullyLabeledReplicas:  fmt.Sprint(r.Status.FullyLabeledReplicas),
 		report.ControlProbeID: probeID,
-	}).WithParents(r.parents)
+	}).WithParents(r.parents).WithControls(ScaleUp, ScaleDown)
 }

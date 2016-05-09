@@ -98,31 +98,63 @@ func MakeProcessNodeID(hostID, pid string) string {
 
 var (
 	// MakeHostNodeID produces a host node ID from its composite parts.
-	MakeHostNodeID = singleComponentID("host")
+	MakeHostNodeID = makeSingleComponentID("host")
+
+	// ParseHostNodeID parses a host node ID
+	ParseHostNodeID = parseSingleComponentID("host")
 
 	// MakeContainerNodeID produces a container node ID from its composite parts.
-	MakeContainerNodeID = singleComponentID("container")
+	MakeContainerNodeID = makeSingleComponentID("container")
+
+	// ParseContainerNodeID parses a container node ID
+	ParseContainerNodeID = parseSingleComponentID("container")
 
 	// MakeContainerImageNodeID produces a container image node ID from its composite parts.
-	MakeContainerImageNodeID = singleComponentID("container_image")
+	MakeContainerImageNodeID = makeSingleComponentID("container_image")
+
+	// ParseContainerImageNodeID parses a container image node ID
+	ParseContainerImageNodeID = parseSingleComponentID("container_image")
 
 	// MakePodNodeID produces a pod node ID from its composite parts.
-	MakePodNodeID = singleComponentID("pod")
+	MakePodNodeID = makeSingleComponentID("pod")
+
+	// ParsePodNodeID parses a pod node ID
+	ParsePodNodeID = parseSingleComponentID("pod")
 
 	// MakeServiceNodeID produces a service node ID from its composite parts.
-	MakeServiceNodeID = singleComponentID("service")
+	MakeServiceNodeID = makeSingleComponentID("service")
+
+	// ParseServiceNodeID parses a service node ID
+	ParseServiceNodeID = parseSingleComponentID("service")
 
 	// MakeDeploymentNodeID produces a deployment node ID from its composite parts.
-	MakeDeploymentNodeID = singleComponentID("deployment")
+	MakeDeploymentNodeID = makeSingleComponentID("deployment")
+
+	// ParseDeploymentNodeID parses a deployment node ID
+	ParseDeploymentNodeID = parseSingleComponentID("deployment")
 
 	// MakeReplicaSetNodeID produces a replica set node ID from its composite parts.
-	MakeReplicaSetNodeID = singleComponentID("replica_set")
+	MakeReplicaSetNodeID = makeSingleComponentID("replica_set")
+
+	// ParseReplicaSetNodeID parses a replica set node ID
+	ParseReplicaSetNodeID = parseSingleComponentID("replica_set")
 )
 
-// singleComponentID makes a
-func singleComponentID(tag string) func(string) string {
+// makeSingleComponentID makes a single-component node id encoder
+func makeSingleComponentID(tag string) func(string) string {
 	return func(id string) string {
 		return id + ScopeDelim + "<" + tag + ">"
+	}
+}
+
+// parseSingleComponentID makes a single-component node id decoder
+func parseSingleComponentID(tag string) func(string) (string, bool) {
+	return func(id string) (string, bool) {
+		fields := strings.SplitN(id, ScopeDelim, 2)
+		if len(fields) != 2 || fields[1] != "<"+tag+">" {
+			return "", false
+		}
+		return fields[0], true
 	}
 }
 
@@ -153,15 +185,6 @@ func ParseEndpointNodeID(endpointNodeID string) (hostID, address, port string, o
 	return fields[0], fields[1], fields[2], true
 }
 
-// ParseContainerNodeID produces the container id from an container node ID.
-func ParseContainerNodeID(containerNodeID string) (containerID string, ok bool) {
-	fields := strings.SplitN(containerNodeID, ScopeDelim, 2)
-	if len(fields) != 2 || fields[1] != "<container>" {
-		return "", false
-	}
-	return fields[0], true
-}
-
 // ParseAddressNodeID produces the host ID, address from an address node ID.
 func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) {
 	fields := strings.SplitN(addressNodeID, ScopeDelim, 2)
@@ -169,15 +192,6 @@ func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) 
 		return "", "", false
 	}
 	return fields[0], fields[1], true
-}
-
-// ParsePodNodeID produces the namespace ID and pod ID from an pod node ID.
-func ParsePodNodeID(podNodeID string) (uid string, ok bool) {
-	fields := strings.SplitN(podNodeID, ScopeDelim, 2)
-	if len(fields) != 2 || fields[1] != "<pod>" {
-		return "", false
-	}
-	return fields[0], true
 }
 
 // ExtractHostID extracts the host id from Node

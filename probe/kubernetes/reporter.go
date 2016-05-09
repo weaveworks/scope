@@ -65,6 +65,21 @@ var (
 	TableTemplates = report.TableTemplates{
 		LabelPrefix: {ID: LabelPrefix, Label: "Kubernetes Labels", Prefix: LabelPrefix},
 	}
+
+	ScalingControls = []report.Control{
+		{
+			ID:    ScaleDown,
+			Human: "Scale Down",
+			Icon:  "fa-minus",
+			Rank:  0,
+		},
+		{
+			ID:    ScaleUp,
+			Human: "Scale Up",
+			Icon:  "fa-plus",
+			Rank:  1,
+		},
+	}
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
@@ -206,6 +221,8 @@ func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deploy
 			WithTableTemplates(TableTemplates)
 		deployments = []Deployment{}
 	)
+	result.Controls.AddControls(ScalingControls)
+
 	err := r.client.WalkDeployments(func(d Deployment) error {
 		result = result.AddNode(d.GetNode(probeID))
 		deployments = append(deployments, d)
@@ -222,6 +239,8 @@ func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) 
 		replicaSets = []ReplicaSet{}
 		selectors   = []func(labelledChild){}
 	)
+	result.Controls.AddControls(ScalingControls)
+
 	for _, deployment := range deployments {
 		selectors = append(selectors, match(
 			deployment.Selector(),
@@ -236,6 +255,18 @@ func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) 
 		}
 		result = result.AddNode(r.GetNode(probeID))
 		replicaSets = append(replicaSets, r)
+		return nil
+	})
+	if err != nil {
+		return result, replicaSets, err
+	}
+
+	err = r.client.WalkReplicationControllers(func(r ReplicationController) error {
+		for _, selector := range selectors {
+			selector(r)
+		}
+		result = result.AddNode(r.GetNode(probeID))
+		replicaSets = append(replicaSets, ReplicaSet(r))
 		return nil
 	})
 	return result, replicaSets, err
