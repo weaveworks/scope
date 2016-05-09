@@ -214,8 +214,48 @@ The SCOPE_SERVICE_TOKEN is found when you [log in to the Scope service](https://
 ## <a name="using-weave-scope-with-kubernetes"></a>Using Weave Scope with Kubernetes
 
 Scope comes with built-in Kubernetes support. We recommend to run Scope natively
-in your Kubernetes cluster using
-[these resource definitions](https://github.com/TheNewNormal/kube-charts/tree/master/weavescope/manifests).
+in your Kubernetes cluster using the manifest generator service.
+
+The simplest way to get latest release of Scope deployed on a Kubernetes cluster:
+
+```
+kubectl create -f 'https://scope.weave.works/k8s-gen/weavescope.json' --validate=false
+```
+
+There a few parameters you can specify:
+
+  - `v` - Weave Scope version or tag, e.g. `latest` or `0.15.0`, current release is the default
+
+  - `service-token` - Weave Scope Cloud Service token
+
+  - `k8s-service-type` - Kubernetes service type (for running Scope in Standalone mode), can be either
+    `LoadBalancer` or `NodePort`, by default this is unspecifed (only internal access)
+
+If you wish to download Scope manifest, you can use YAML version of the manifest, as it's easier to read, i.e.:
+```
+curl --silent --remote-name https://scope.weave.works/k8s-gen/weavescope.yaml
+```
+
+### Open Scope in your browser
+
+   * When running Scope in Standalone mode do (without `k8s-service-type`):
+
+     ```
+kubectl port-forward $(kubectl get pod --selector=weavescope-component=weavescope-app -o jsonpath={.items..metadata.name}) 4040
+```
+
+     and open [http://localhost:4040](http://localhost:4040) in your browser. This allows you to access the Scope UI securely, without
+         opening it to the Internet.
+
+   * When running Scope in Standalone mode with `k8s-service-type=(NodePort|LoadBalancer)`:
+
+     ```
+kubectl describe svc weavescope-app
+```
+
+   * When running Scope in Cloud Service mode, simply log in to [https://scope.weave.works](https://scope.weave.works)
+
+### Additional Notes
 
 1. Make sure your cluster allows privileged pods (required by the Scope
    probes). Privileged pods are allowed by default from Kubernetes 1.1.
@@ -237,27 +277,10 @@ in your Kubernetes cluster using
    * If you are creating a new cluster, set `KUBE_ENABLE_DAEMONSETS=true` in
      your cluster configuration.
 
-3. Download the resource definitions:
-
-   ```
-for I in app-rc app-svc probe-ds; do
-  curl -s -L https://raw.githubusercontent.com/TheNewNormal/kube-charts/master/weavescope/manifests/scope-$I.yaml -o scope-$I.yaml
-done
-```
-
-4. Tweak the Scope probe configuration at `scope-probe-ds.yaml`, namely:
-   * If you have an account at http://scope.weave.works and want to use Scope in
-     Cloud Service Mode, uncomment the `--probe.token=foo` argument, substitute `foo`
-     by the token found in your account page, and comment out the
-     `$(WEAVE_SCOPE_APP_SERVICE_HOST):$(WEAVE_SCOPE_APP_SERVICE_PORT)` argument.
-
-5. Install Scope in your cluster (order is important):
-
-   ```
-kubectl create -f scope-app-rc.yaml  # Only if you want to run Scope in Standalone Mode
-kubectl create -f scope-app-svc.yaml # Only if you want to run Scope in Standalone Mode
-kubectl create -f scope-probe-ds.yaml
-```
+   * Note that prior to Kubernetes version 1.2 DaemonSets would fail to schedule pods on
+     unschedulable nodes (typically the master).  This will result in the probe
+     not running on that node.  See [#1030](https://github.com/weaveworks/scope/issues/1030)
+     for more information.  We advise you to use Kubernetes version 1.2 or higher.
 
 ## <a name="probe_plugins"></a>Scope Probe Plugins
 
