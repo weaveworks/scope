@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
-	"time"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/report"
@@ -29,7 +28,7 @@ func TestMerger(t *testing.T) {
 		AddNode(report.MakeNode("bar")).
 		AddNode(report.MakeNode("baz"))
 
-	for _, merger := range []app.Merger{app.MakeDumbMerger(), app.NewSmartMerger(10 * time.Second)} {
+	for _, merger := range []app.Merger{app.MakeDumbMerger(), app.NewSmartMerger()} {
 		// Test the empty list case
 		if have := merger.Merge([]report.Report{}); !reflect.DeepEqual(have, report.MakeReport()) {
 			t.Errorf("Bad merge: %s", test.Diff(have, want))
@@ -63,27 +62,23 @@ func TestSmartMerger(t *testing.T) {
 	want := report.MakeReport()
 	want.Endpoint.AddNode(report.MakeNode("foo"))
 
-	merger := app.NewSmartMerger(10 * time.Second)
+	merger := app.NewSmartMerger()
 	if have := merger.Merge(reports); !reflect.DeepEqual(have, want) {
 		t.Errorf("Bad merge: %s", test.Diff(have, want))
 	}
 }
 
 func BenchmarkSmartMerger(b *testing.B) {
-	benchmarkMerger(b, app.NewSmartMerger(10*time.Second), false)
-}
-
-func BenchmarkSmartMergerWithoutCaching(b *testing.B) {
-	benchmarkMerger(b, app.NewSmartMerger(10*time.Second), true)
+	benchmarkMerger(b, app.NewSmartMerger())
 }
 
 func BenchmarkDumbMerger(b *testing.B) {
-	benchmarkMerger(b, app.MakeDumbMerger(), false)
+	benchmarkMerger(b, app.MakeDumbMerger())
 }
 
 const numHosts = 15
 
-func benchmarkMerger(b *testing.B, merger app.Merger, clearCache bool) {
+func benchmarkMerger(b *testing.B, merger app.Merger) {
 	makeReport := func() report.Report {
 		rpt := report.MakeReport()
 		for i := 0; i < 100; i++ {
@@ -96,12 +91,6 @@ func benchmarkMerger(b *testing.B, merger app.Merger, clearCache bool) {
 	for i := 0; i < numHosts*5; i++ {
 		reports = append(reports, makeReport())
 	}
-	merger.Merge(reports) // prime the cache
-	if clearable, ok := merger.(interface {
-		ClearCache()
-	}); ok && clearCache {
-		clearable.ClearCache()
-	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -113,11 +102,5 @@ func benchmarkMerger(b *testing.B, merger app.Merger, clearCache bool) {
 		}
 
 		merger.Merge(reports)
-
-		if clearable, ok := merger.(interface {
-			ClearCache()
-		}); ok && clearCache {
-			clearable.ClearCache()
-		}
 	}
 }

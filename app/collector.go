@@ -78,7 +78,7 @@ func NewCollector(window time.Duration) Collector {
 		waitableCondition: waitableCondition{
 			waiters: map[chan struct{}]struct{}{},
 		},
-		merger: NewSmartMerger(window),
+		merger: NewSmartMerger(),
 	}
 }
 

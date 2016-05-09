@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"sort"
-	"time"
 
 	"github.com/bluele/gcache"
 	"github.com/spaolacci/murmur3"
@@ -39,17 +38,11 @@ type smartMerger struct {
 	cache gcache.Cache
 }
 
-// NewSmartMerger makes a Merger which merges together reports, caching intermediate merges
-// to accelerate future merges. Idea is to cache pair-wise merged reports, forming a merge
-// tree.  Merging a new report into this tree should be log(N).
-func NewSmartMerger(window time.Duration) Merger {
-	return &smartMerger{
-		cache: gcache.New(200).
-			LRU().
-			Expiration(window).
-			EnableGC(2 * time.Second).
-			Build(),
-	}
+// NewSmartMerger makes a Merger which merges together reports as
+// a binary tree of reports.  Speed up comes from the fact that
+// most merges are between small reports.
+func NewSmartMerger() Merger {
+	return smartMerger{}
 }
 
 type node struct {
@@ -71,11 +64,7 @@ func hash(ids ...string) uint64 {
 	return id.Sum64()
 }
 
-func (s *smartMerger) ClearCache() {
-	s.cache.Purge()
-}
-
-func (s *smartMerger) Merge(reports []report.Report) report.Report {
+func (s smartMerger) Merge(reports []report.Report) report.Report {
 	// Start with a sorted list of leaves.
 	// Note we must dedupe reports with the same ID to ensure the
 	// algorithm below doesn't go into an infinite loop.  This is
@@ -98,16 +87,10 @@ func (s *smartMerger) Merge(reports []report.Report) report.Report {
 	// Define how to merge two nodes together.  The result of merging
 	// two reports is cached.
 	merge := func(left, right *node) *node {
-		id := hash(left.rpt.ID, right.rpt.ID)
-		if result, err := s.cache.Get(id); err == nil {
-			return result.(*node)
-		}
-		n := &node{
-			id:  id,
+		return &node{
+			id:  hash(left.rpt.ID, right.rpt.ID),
 			rpt: report.MakeReport().Merge(left.rpt).Merge(right.rpt),
 		}
-		s.cache.Set(id, n)
-		return n
 	}
 
 	// Define how to reduce n nodes to 1.
