@@ -165,11 +165,11 @@ Your cluster must also support [DaemonSets](https://github.com/kubernetes/kubern
 
 To enable DaemonSets in an existing cluster, add the `--runtime-config=extensions/v1beta1/daemonsets=true` argument to the [apiserver](https://github.com/kubernetes/kubernetes/blob/master/docs/admin/kube-apiserver.md)'s configuration. This is normally found in the `/etc/kubernetes/manifest/kube-apiserver.manifest`file after a restart of [the apiserver and controller manager](https://github.com/kubernetes/kubernetes/issues/18656) has occurred.  If you are creating a new cluster, set `KUBE_ENABLE_DAEMONSETS=true` in your cluster configuration.
 
-Note that prior to Kubernetes version 1.2 DaemonSets would fail to schedule pods on unschedulable nodes (typically the master).  This will result in the probe not running on that node.  See [#1030](https://github.com/weaveworks/scope/issues/1030) for more information.  We advise you to use Kubernetes version 1.2 or higher.
+>**Note:** Prior to Kubernetes version 1.2 DaemonSets would fail to schedule pods on unschedulable nodes (typically the master).  This will result in the probe not running on that node.  See [#1030](https://github.com/weaveworks/scope/issues/1030) for more information.  It is advised that you use Kubernetes version 1.2 or higher.
 
 **Install Scope on Your Cluster**
 
-We recommend to run Scope natively in your Kubernetes cluster using the manifest generator service.
+It is recommended that you run Scope natively in your Kubernetes cluster using the manifest generator service.
  
 The simplest way to get latest release of Scope deployed on a Kubernetes cluster:
 
@@ -186,7 +186,7 @@ The following parameters can be specified:
 - `k8s-service-type` - Kubernetes service type (for running Scope in Standalone mode), can be either
 `LoadBalancer` or `NodePort`, by default this is unspecifed (only internal access)
 
-If you wish to download Scope manifest, you can use YAML version of the manifest, as it's easier to read, i.e.:
+If you wish to download the Scope manifest, you can use YAML version of the manifest, since it is easier to read, for example:
 ```
 curl --silent --remote-name https://scope.weave.works/k8s-gen/weavescope.yaml
 ```
@@ -203,7 +203,7 @@ Open http://localhost:4040 in your browser. This allows you to access the Scope 
 
 ##<a name="ecs"></a>Installing Scope on Amazon ECS
 
-We currently provide three options for launching Weave Scope in ECS:
+There are currently three options for launching Weave Scope in ECS:
 
 * A [CloudFormation template](https://www.weave.works/deploy-weave-aws-cloudformation-template/) to launch and easily evaluate Scope directly from your browser.
 * An [Amazon Machine Image (AMI)](https://github.com/weaveworks/integrations/tree/master/aws/ecs#weaves-ecs-amis) for each ECS region.
