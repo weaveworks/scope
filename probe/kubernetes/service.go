@@ -1,8 +1,6 @@
 package kubernetes
 
 import (
-	"time"
-
 	"github.com/weaveworks/scope/report"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/labels"
@@ -10,47 +8,24 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	ServiceID          = "kubernetes_service_id"
-	ServiceName        = "kubernetes_service_name"
-	ServiceCreated     = "kubernetes_service_created"
-	ServiceIP          = "kubernetes_service_ip"
-	ServicePublicIP    = "kubernetes_service_public_ip"
-	ServiceLabelPrefix = "kubernetes_service_label_"
+	PublicIP = "kubernetes_public_ip"
 )
 
 // Service represents a Kubernetes service
 type Service interface {
-	UID() string
-	ID() string
-	Name() string
-	Namespace() string
+	Meta
 	GetNode() report.Node
 	Selector() labels.Selector
 }
 
 type service struct {
 	*api.Service
+	Meta
 }
 
 // NewService creates a new Service
 func NewService(s *api.Service) Service {
-	return &service{Service: s}
-}
-
-func (s *service) UID() string {
-	return string(s.ObjectMeta.UID)
-}
-
-func (s *service) ID() string {
-	return s.ObjectMeta.Namespace + "/" + s.ObjectMeta.Name
-}
-
-func (s *service) Name() string {
-	return s.ObjectMeta.Name
-}
-
-func (s *service) Namespace() string {
-	return s.ObjectMeta.Namespace
+	return &service{Service: s, Meta: meta{s.ObjectMeta}}
 }
 
 func (s *service) Selector() labels.Selector {
@@ -61,19 +36,9 @@ func (s *service) Selector() labels.Selector {
 }
 
 func (s *service) GetNode() report.Node {
-	latest := map[string]string{
-		ServiceID:      s.ID(),
-		ServiceName:    s.Name(),
-		ServiceCreated: s.ObjectMeta.CreationTimestamp.Format(time.RFC822),
-		Namespace:      s.Namespace(),
-		ServiceIP:      s.Spec.ClusterIP,
-	}
+	latest := map[string]string{IP: s.Spec.ClusterIP}
 	if s.Spec.LoadBalancerIP != "" {
-		latest[ServicePublicIP] = s.Spec.LoadBalancerIP
+		latest[PublicIP] = s.Spec.LoadBalancerIP
 	}
-	return report.MakeNodeWith(
-		report.MakeServiceNodeID(s.Namespace(), s.Name()),
-		latest,
-	).
-		AddTable(ServiceLabelPrefix, s.Labels)
+	return s.MetaNode(report.MakeServiceNodeID(s.UID())).WithLatests(latest)
 }

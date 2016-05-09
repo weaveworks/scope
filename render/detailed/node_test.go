@@ -100,7 +100,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				TopologyID: "pods",
 				Columns: []detailed.Column{
 					{ID: report.Container, Label: "# Containers"},
-					{ID: kubernetes.PodIP, Label: "IP"},
+					{ID: kubernetes.IP, Label: "IP"},
 				},
 				Nodes: []detailed.NodeSummary{podNodeSummary},
 			},
@@ -327,8 +327,8 @@ func TestMakeDetailedPodNode(t *testing.T) {
 			Linkable:   true,
 			Pseudo:     false,
 			Metadata: []report.MetadataRow{
-				{ID: "kubernetes_pod_id", Label: "ID", Value: "ping/pong-b", Priority: 1},
-				{ID: "kubernetes_pod_state", Label: "State", Value: "running", Priority: 2},
+				{ID: "kubernetes_id", Label: "ID", Value: "ping/pong-b", Priority: 1},
+				{ID: "kubernetes_state", Label: "State", Value: "running", Priority: 2},
 				{ID: "container", Label: "# Containers", Value: "1", Priority: 4, Datatype: "number"},
 				{ID: "kubernetes_namespace", Label: "Namespace", Value: "ping", Priority: 5},
 			},
@@ -360,6 +360,11 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				ID:         fixture.ServerHostNodeID,
 				Label:      fixture.ServerHostName,
 				TopologyID: "hosts",
+			},
+			{
+				ID:         fixture.ServiceNodeID,
+				Label:      fixture.ServiceName,
+				TopologyID: "services",
 			},
 		},
 		Connections: []detailed.ConnectionsSummary{

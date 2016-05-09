@@ -16,6 +16,8 @@ const (
 	Container      = "container"
 	Pod            = "pod"
 	Service        = "service"
+	Deployment     = "deployment"
+	ReplicaSet     = "replica_set"
 	ContainerImage = "container_image"
 	Host           = "host"
 	Overlay        = "overlay"
@@ -57,6 +59,16 @@ type Report struct {
 	// Metadata includes things like service id, name etc. Edges are not
 	// present.
 	Service Topology
+
+	// Deployment nodes represent all Kubernetes deployments running on hosts running probes.
+	// Metadata includes things like deployment id, name etc. Edges are not
+	// present.
+	Deployment Topology
+
+	// ReplicaSet nodes represent all Kubernetes replicasets running on hosts running probes.
+	// Metadata includes things like replicaset id, name etc. Edges are not
+	// present.
+	ReplicaSet Topology
 
 	// ContainerImages nodes represent all Docker containers images on
 	// hosts running probes. Metadata includes things like image id, name etc.
@@ -126,6 +138,14 @@ func MakeReport() Report {
 			WithShape(Heptagon).
 			WithLabel("service", "services"),
 
+		Deployment: MakeTopology().
+			WithShape(Heptagon).
+			WithLabel("deployment", "deployments"),
+
+		ReplicaSet: MakeTopology().
+			WithShape(Heptagon).
+			WithLabel("replica set", "replica sets"),
+
 		Overlay: MakeTopology(),
 
 		Sampling: Sampling{},
@@ -145,6 +165,8 @@ func (r Report) Copy() Report {
 		Host:           r.Host.Copy(),
 		Pod:            r.Pod.Copy(),
 		Service:        r.Service.Copy(),
+		Deployment:     r.Deployment.Copy(),
+		ReplicaSet:     r.ReplicaSet.Copy(),
 		Overlay:        r.Overlay.Copy(),
 		Sampling:       r.Sampling,
 		Window:         r.Window,
@@ -164,6 +186,8 @@ func (r Report) Merge(other Report) Report {
 	cp.Host = r.Host.Merge(other.Host)
 	cp.Pod = r.Pod.Merge(other.Pod)
 	cp.Service = r.Service.Merge(other.Service)
+	cp.Deployment = r.Deployment.Merge(other.Deployment)
+	cp.ReplicaSet = r.ReplicaSet.Merge(other.ReplicaSet)
 	cp.Overlay = r.Overlay.Merge(other.Overlay)
 	cp.Sampling = r.Sampling.Merge(other.Sampling)
 	cp.Window += other.Window
@@ -180,6 +204,8 @@ func (r Report) Topologies() []Topology {
 		r.ContainerImage,
 		r.Pod,
 		r.Service,
+		r.Deployment,
+		r.ReplicaSet,
 		r.Host,
 		r.Overlay,
 	}
@@ -194,6 +220,8 @@ func (r Report) Topology(name string) (Topology, bool) {
 		ContainerImage: r.ContainerImage,
 		Pod:            r.Pod,
 		Service:        r.Service,
+		Deployment:     r.Deployment,
+		ReplicaSet:     r.ReplicaSet,
 		Host:           r.Host,
 		Overlay:        r.Overlay,
 	}[name]

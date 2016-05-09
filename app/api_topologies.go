@@ -82,17 +82,17 @@ func init() {
 			Options:  containerFilters,
 		},
 		APITopologyDesc{
-			id:       "containers-by-image",
-			parent:   "containers",
-			renderer: render.ContainerImageRenderer,
-			Name:     "by image",
-			Options:  containerFilters,
-		},
-		APITopologyDesc{
 			id:       "containers-by-hostname",
 			parent:   "containers",
 			renderer: render.ContainerHostnameRenderer,
 			Name:     "by DNS name",
+			Options:  containerFilters,
+		},
+		APITopologyDesc{
+			id:       "containers-by-image",
+			parent:   "containers",
+			renderer: render.ContainerImageRenderer,
+			Name:     "by image",
 			Options:  containerFilters,
 		},
 		APITopologyDesc{
@@ -103,10 +103,24 @@ func init() {
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
-			id:          "pods-by-service",
+			id:          "replica-sets",
+			parent:      "pods",
+			renderer:    render.ReplicaSetRenderer,
+			Name:        "replica sets",
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          "deployments",
+			parent:      "pods",
+			renderer:    render.DeploymentRenderer,
+			Name:        "deployments",
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          "services",
 			parent:      "pods",
 			renderer:    render.PodServiceRenderer,
-			Name:        "by service",
+			Name:        "services",
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
@@ -136,9 +150,9 @@ func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
 // Currently only kubernetes changes.
 func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
 	namespaces := map[string]struct{}{}
-	for _, t := range []report.Topology{rpt.Pod, rpt.Service} {
+	for _, t := range []report.Topology{rpt.Pod, rpt.Service, rpt.Deployment, rpt.ReplicaSet} {
 		for _, n := range t.Nodes {
-			if state, ok := n.Latest.Lookup(kubernetes.PodState); ok && state == kubernetes.StateDeleted {
+			if state, ok := n.Latest.Lookup(kubernetes.State); ok && state == kubernetes.StateDeleted {
 				continue
 			}
 			if namespace, ok := n.Latest.Lookup(kubernetes.Namespace); ok {
@@ -152,7 +166,7 @@ func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopolog
 	}
 	sort.Strings(ns)
 	for i, t := range topologies {
-		if t.id == "pods" || t.id == "pods-by-service" {
+		if t.id == "pods" || t.id == "services" || t.id == "deployments" || t.id == "replica-sets" {
 			topologies[i] = updateTopologyFilters(t, []APITopologyOptionGroup{kubernetesFilters(ns...)})
 		}
 	}
@@ -227,7 +241,6 @@ func (r *registry) add(ts ...APITopologyDesc) {
 		if t.parent != "" {
 			parent := r.items[t.parent]
 			parent.SubTopologies = append(parent.SubTopologies, t)
-			sort.Sort(byName(parent.SubTopologies))
 			r.items[t.parent] = parent
 		}
 

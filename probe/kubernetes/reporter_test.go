@@ -22,6 +22,7 @@ var (
 	nodeName    = "nodename"
 	pod1UID     = "a1b2c3d4e5"
 	pod2UID     = "f6g7h8i9j0"
+	serviceUID  = "service1234"
 	podTypeMeta = unversioned.TypeMeta{
 		Kind:       "Pod",
 		APIVersion: "v1",
@@ -73,6 +74,7 @@ var (
 		},
 		ObjectMeta: api.ObjectMeta{
 			Name:              "pongservice",
+			UID:               types.UID(serviceUID),
 			Namespace:         "ping",
 			CreationTimestamp: unversioned.Now(),
 		},
@@ -129,6 +131,12 @@ func (c *mockClient) WalkServices(f func(kubernetes.Service) error) error {
 	}
 	return nil
 }
+func (c *mockClient) WalkDeployments(f func(kubernetes.Deployment) error) error {
+	return nil
+}
+func (c *mockClient) WalkReplicaSets(f func(kubernetes.ReplicaSet) error) error {
+	return nil
+}
 func (*mockClient) WalkNodes(f func(*api.Node) error) error {
 	return nil
 }
@@ -166,7 +174,7 @@ func TestReporter(t *testing.T) {
 
 	pod1ID := report.MakePodNodeID(pod1UID)
 	pod2ID := report.MakePodNodeID(pod2UID)
-	serviceID := report.MakeServiceNodeID("ping", "pongservice")
+	serviceID := report.MakeServiceNodeID(serviceUID)
 	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", nil).Report()
 
 	// Reporter should have added the following pods
@@ -174,23 +182,18 @@ func TestReporter(t *testing.T) {
 		id            string
 		parentService string
 		latest        map[string]string
-		sets          map[string]report.StringSet
 	}{
 		{pod1ID, serviceID, map[string]string{
-			kubernetes.PodID:      "ping/pong-a",
-			kubernetes.PodName:    "pong-a",
-			kubernetes.Namespace:  "ping",
-			kubernetes.PodCreated: pod1.Created(),
-		}, map[string]report.StringSet{
-			kubernetes.ServiceIDs: report.MakeStringSet("ping/pongservice"),
+			kubernetes.ID:        "ping/pong-a",
+			kubernetes.Name:      "pong-a",
+			kubernetes.Namespace: "ping",
+			kubernetes.Created:   pod1.Created(),
 		}},
 		{pod2ID, serviceID, map[string]string{
-			kubernetes.PodID:      "ping/pong-b",
-			kubernetes.PodName:    "pong-b",
-			kubernetes.Namespace:  "ping",
-			kubernetes.PodCreated: pod1.Created(),
-		}, map[string]report.StringSet{
-			kubernetes.ServiceIDs: report.MakeStringSet("ping/pongservice"),
+			kubernetes.ID:        "ping/pong-b",
+			kubernetes.Name:      "pong-b",
+			kubernetes.Namespace: "ping",
+			kubernetes.Created:   pod1.Created(),
 		}},
 	} {
 		node, ok := rpt.Pod.Nodes[pod.id]
@@ -207,12 +210,6 @@ func TestReporter(t *testing.T) {
 				t.Errorf("Expected pod %s latest %q: %q, got %q", pod.id, k, want, have)
 			}
 		}
-
-		for k, want := range pod.sets {
-			if have, ok := node.Sets.Lookup(k); !ok || !reflect.DeepEqual(want, have) {
-				t.Errorf("Expected pod %s sets %q: %q, got %q", pod.id, k, want, have)
-			}
-		}
 	}
 
 	// Reporter should have added a service
@@ -223,10 +220,10 @@ func TestReporter(t *testing.T) {
 		}
 
 		for k, want := range map[string]string{
-			kubernetes.ServiceID:      "ping/pongservice",
-			kubernetes.ServiceName:    "pongservice",
-			kubernetes.Namespace:      "ping",
-			kubernetes.ServiceCreated: pod1.Created(),
+			kubernetes.ID:        "ping/pongservice",
+			kubernetes.Name:      "pongservice",
+			kubernetes.Namespace: "ping",
+			kubernetes.Created:   pod1.Created(),
 		} {
 			if have, ok := node.Latest.Lookup(k); !ok || have != want {
 				t.Errorf("Expected service %s latest %q: %q, got %q", serviceID, k, want, have)

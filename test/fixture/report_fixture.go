@@ -96,8 +96,10 @@ var (
 	ServerPodUID        = "i9h8g7f6e"
 	ClientPodNodeID     = report.MakePodNodeID(ClientPodUID)
 	ServerPodNodeID     = report.MakePodNodeID(ServerPodUID)
+	ServiceName         = "pongservice"
 	ServiceID           = "ping/pongservice"
-	ServiceNodeID       = report.MakeServiceNodeID(KubernetesNamespace, "pongservice")
+	ServiceUID          = "service1234"
+	ServiceNodeID       = report.MakeServiceNodeID(ServiceUID)
 
 	ClientProcess1CPUMetric    = report.MakeMetric().Add(Now, 0.01).WithFirst(Now.Add(-1 * time.Second))
 	ClientProcess1MemoryMetric = report.MakeMetric().Add(Now, 0.02).WithFirst(Now.Add(-2 * time.Second))
@@ -367,30 +369,26 @@ var (
 			Nodes: report.Nodes{
 				ClientPodNodeID: report.MakeNodeWith(
 					ClientPodNodeID, map[string]string{
-						kubernetes.PodID:     ClientPodID,
-						kubernetes.PodName:   "pong-a",
+						kubernetes.ID:        ClientPodID,
+						kubernetes.Name:      "pong-a",
 						kubernetes.Namespace: KubernetesNamespace,
 						report.HostNodeID:    ClientHostNodeID,
 					}).
-					WithSets(report.EmptySets.
-						Add(kubernetes.ServiceIDs, report.MakeStringSet(ServiceID))).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
-					Add("service", report.MakeStringSet(ServiceID)),
+					Add("service", report.MakeStringSet(ServiceNodeID)),
 				),
 				ServerPodNodeID: report.MakeNodeWith(
 					ServerPodNodeID, map[string]string{
-						kubernetes.PodID:     ServerPodID,
-						kubernetes.PodName:   "pong-b",
+						kubernetes.ID:        ServerPodID,
+						kubernetes.Name:      "pong-b",
 						kubernetes.Namespace: KubernetesNamespace,
-						kubernetes.PodState:  "running",
+						kubernetes.State:     "running",
 						report.HostNodeID:    ServerHostNodeID,
 					}).
-					WithSets(report.EmptySets.
-						Add(kubernetes.ServiceIDs, report.MakeStringSet(ServiceID))).
 					WithTopology(report.Pod).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
-					Add("service", report.MakeStringSet(ServiceID)),
+					Add("service", report.MakeStringSet(ServiceNodeID)),
 				),
 			},
 			MetadataTemplates: kubernetes.PodMetadataTemplates,
@@ -400,9 +398,9 @@ var (
 				ServiceNodeID: report.MakeNodeWith(
 
 					ServiceNodeID, map[string]string{
-						kubernetes.ServiceID:   ServiceID,
-						kubernetes.ServiceName: "pongservice",
-						kubernetes.Namespace:   "ping",
+						kubernetes.ID:        ServiceID,
+						kubernetes.Name:      "pongservice",
+						kubernetes.Namespace: "ping",
 					}).
 					WithTopology(report.Service),
 			},

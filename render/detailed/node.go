@@ -141,6 +141,28 @@ var (
 			},
 		},
 		{
+			topologyID: report.Service,
+			NodeSummaryGroup: NodeSummaryGroup{
+				TopologyID: "services",
+				Label:      "Services",
+				Columns: []Column{
+					{ID: report.Pod, Label: "# Pods"},
+					{ID: kubernetes.IP, Label: "IP"},
+				},
+			},
+		},
+		{
+			topologyID: report.ReplicaSet,
+			NodeSummaryGroup: NodeSummaryGroup{
+				TopologyID: "replica-sets",
+				Label:      "Replica Sets",
+				Columns: []Column{
+					{ID: report.Pod, Label: "# Pods"},
+					{ID: kubernetes.ObservedGeneration, Label: "Observed Gen."},
+				},
+			},
+		},
+		{
 			topologyID: report.Pod,
 			NodeSummaryGroup: NodeSummaryGroup{
 				TopologyID: "pods",
@@ -148,18 +170,7 @@ var (
 
 				Columns: []Column{
 					{ID: report.Container, Label: "# Containers"},
-					{ID: kubernetes.PodIP, Label: "IP"},
-				},
-			},
-		},
-		{
-			topologyID: report.Service,
-			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "pods-by-service",
-				Label:      "Services",
-				Columns: []Column{
-					{ID: report.Pod, Label: "# Pods"},
-					{ID: kubernetes.ServiceIP, Label: "IP"},
+					{ID: kubernetes.IP, Label: "IP"},
 				},
 			},
 		},

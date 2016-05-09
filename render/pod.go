@@ -23,7 +23,7 @@ func renderKubernetesTopologies(rpt report.Report) bool {
 var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	ApplyDecorators(MakeFilter(
 		func(n report.Node) bool {
-			state, ok := n.Latest.Lookup(kubernetes.PodState)
+			state, ok := n.Latest.Lookup(kubernetes.State)
 			return (!ok || state != kubernetes.StateDeleted)
 		},
 		MakeReduce(
@@ -42,12 +42,40 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	ApplyDecorators(FilterEmpty(report.Pod,
 		MakeReduce(
 			MakeMap(
-				MapPod2Service,
+				Map2Service,
 				PodRenderer,
 			),
 			SelectService,
 		),
 	)),
+)
+
+// DeploymentRenderer is a Renderer which produces a renderable kubernetes deployments
+// graph by merging the pods graph and the deployments topology.
+var DeploymentRenderer = ApplyDecorators(
+	FilterEmpty(report.Pod,
+		MakeReduce(
+			MakeMap(
+				Map2Deployment,
+				ReplicaSetRenderer,
+			),
+			SelectDeployment,
+		),
+	),
+)
+
+// ReplicaSetRenderer is a Renderer which produces a renderable kubernetes replica sets
+// graph by merging the pods graph and the replica sets topology.
+var ReplicaSetRenderer = ApplyDecorators(
+	FilterEmpty(report.Pod,
+		MakeReduce(
+			MakeMap(
+				Map2ReplicaSet,
+				PodRenderer,
+			),
+			SelectReplicaSet,
+		),
+	),
 )
 
 // MapContainer2Pod maps container Nodes to pod
@@ -95,40 +123,35 @@ func MapContainer2Pod(n report.Node, _ report.Networks) report.Nodes {
 	return report.Nodes{id: node}
 }
 
-// MapPod2Service maps pod Nodes to service Nodes.
-//
-// If this function is given a node without a kubernetes_pod_id
-// (including other pseudo nodes), it will produce an "Uncontained"
-// pseudo node.
-//
-// Otherwise, this function will produce a node with the correct ID
-// format for a container, but without any Major or Minor labels.
-// It does not have enough info to do that, and the resulting graph
-// must be merged with a pod graph to get that info.
-func MapPod2Service(pod report.Node, _ report.Networks) report.Nodes {
-	// Propagate all pseudo nodes
-	if pod.Topology == Pseudo {
-		return report.Nodes{pod.ID: pod}
-	}
+// The various ways of grouping pods
+var (
+	Map2Service    = Map2Parent(report.Service)
+	Map2Deployment = Map2Parent(report.Deployment)
+	Map2ReplicaSet = Map2Parent(report.ReplicaSet)
+)
 
-	// Otherwise, if some some reason the pod doesn't have a service_ids (maybe
-	// slightly out of sync reports, or its not in a service), just drop it
-	namespace, ok := pod.Latest.Lookup(kubernetes.Namespace)
-	if !ok {
-		return report.Nodes{}
-	}
-	serviceIDs, ok := pod.Sets.Lookup(kubernetes.ServiceIDs)
-	if !ok {
-		return report.Nodes{}
-	}
+// Map2Parent maps Nodes to some parent grouping.
+func Map2Parent(topology string) func(n report.Node, _ report.Networks) report.Nodes {
+	return func(n report.Node, _ report.Networks) report.Nodes {
+		// Propagate all pseudo nodes
+		if n.Topology == Pseudo {
+			return report.Nodes{n.ID: n}
+		}
 
-	result := report.Nodes{}
-	for _, serviceID := range serviceIDs {
-		serviceName := strings.TrimPrefix(serviceID, namespace+"/")
-		id := report.MakeServiceNodeID(namespace, serviceName)
-		node := NewDerivedNode(id, pod).WithTopology(report.Service)
-		node.Counters = node.Counters.Add(pod.Topology, 1)
-		result[id] = node
+		// Otherwise, if some some reason the node doesn't have any of these ids
+		// (maybe slightly out of sync reports, or its not in this group), just
+		// drop it
+		groupIDs, ok := n.Parents.Lookup(topology)
+		if !ok {
+			return report.Nodes{}
+		}
+
+		result := report.Nodes{}
+		for _, id := range groupIDs {
+			node := NewDerivedNode(id, n).WithTopology(topology)
+			node.Counters = node.Counters.Add(n.Topology, 1)
+			result[id] = node
+		}
+		return result
 	}
-	return result
 }

@@ -78,6 +78,8 @@ func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
 		report.ContainerImage: containerImageNodeSummary,
 		report.Pod:            podNodeSummary,
 		report.Service:        serviceNodeSummary,
+		report.Deployment:     deploymentNodeSummary,
+		report.ReplicaSet:     replicaSetNodeSummary,
 		report.Host:           hostNodeSummary,
 	}
 	if renderer, ok := renderers[n.Topology]; ok {
@@ -238,8 +240,8 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 }
 
 func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label, _ = n.Latest.Lookup(kubernetes.PodName)
-	base.Rank, _ = n.Latest.Lookup(kubernetes.PodID)
+	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
+	base.Rank, _ = n.Latest.Lookup(kubernetes.ID)
 
 	if c, ok := n.Counters.Lookup(report.Container); ok {
 		if c == 1 {
@@ -253,12 +255,44 @@ func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 }
 
 func serviceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label, _ = n.Latest.Lookup(kubernetes.ServiceName)
-	base.Rank, _ = n.Latest.Lookup(kubernetes.ServiceID)
+	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
+	base.Rank, _ = n.Latest.Lookup(kubernetes.ID)
 	base.Stack = true
 
 	// Services are always just a group of pods, so there's no counting multiple
 	// services which might be grouped together.
+	if p, ok := n.Counters.Lookup(report.Pod); ok {
+		if p == 1 {
+			base.LabelMinor = fmt.Sprintf("%d pod", p)
+		} else {
+			base.LabelMinor = fmt.Sprintf("%d pods", p)
+		}
+	}
+
+	return base, true
+}
+
+func deploymentNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
+	base.Rank, _ = n.Latest.Lookup(kubernetes.ID)
+	base.Stack = true
+
+	if p, ok := n.Counters.Lookup(report.Pod); ok {
+		if p == 1 {
+			base.LabelMinor = fmt.Sprintf("%d pod", p)
+		} else {
+			base.LabelMinor = fmt.Sprintf("%d pods", p)
+		}
+	}
+
+	return base, true
+}
+
+func replicaSetNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
+	base.Rank, _ = n.Latest.Lookup(kubernetes.ID)
+	base.Stack = true
+
 	if p, ok := n.Counters.Lookup(report.Pod); ok {
 		if p == 1 {
 			base.LabelMinor = fmt.Sprintf("%d pod", p)

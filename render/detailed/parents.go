@@ -25,6 +25,8 @@ func Parents(r report.Report, n report.Node) (result []Parent) {
 	}{
 		report.Container:      {r.Container, containerParent},
 		report.Pod:            {r.Pod, podParent},
+		report.ReplicaSet:     {r.ReplicaSet, replicaSetParent},
+		report.Deployment:     {r.Deployment, deploymentParent},
 		report.Service:        {r.Service, serviceParent},
 		report.ContainerImage: {r.ContainerImage, containerImageParent},
 		report.Host:           {r.Host, hostParent},
@@ -62,21 +64,21 @@ func containerParent(n report.Node) Parent {
 	}
 }
 
-func podParent(n report.Node) Parent {
-	podName, _ := n.Latest.Lookup(kubernetes.PodName)
-	return Parent{
-		ID:         n.ID,
-		Label:      podName,
-		TopologyID: "pods",
-	}
-}
+var (
+	podParent        = kubernetesParent("pods")
+	replicaSetParent = kubernetesParent("replica-sets")
+	deploymentParent = kubernetesParent("deployments")
+	serviceParent    = kubernetesParent("services")
+)
 
-func serviceParent(n report.Node) Parent {
-	serviceName, _ := n.Latest.Lookup(kubernetes.ServiceName)
-	return Parent{
-		ID:         n.ID,
-		Label:      serviceName,
-		TopologyID: "pods-by-service",
+func kubernetesParent(topology string) func(report.Node) Parent {
+	return func(n report.Node) Parent {
+		name, _ := n.Latest.Lookup(kubernetes.Name)
+		return Parent{
+			ID:         n.ID,
+			Label:      name,
+			TopologyID: topology,
+		}
 	}
 }
 
