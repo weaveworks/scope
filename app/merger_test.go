@@ -69,20 +69,16 @@ func TestSmartMerger(t *testing.T) {
 }
 
 func BenchmarkSmartMerger(b *testing.B) {
-	benchmarkMerger(b, app.NewSmartMerger(), false)
-}
-
-func BenchmarkSmartMergerWithoutCaching(b *testing.B) {
-	benchmarkMerger(b, app.NewSmartMerger(), true)
+	benchmarkMerger(b, app.NewSmartMerger())
 }
 
 func BenchmarkDumbMerger(b *testing.B) {
-	benchmarkMerger(b, app.MakeDumbMerger(), false)
+	benchmarkMerger(b, app.MakeDumbMerger())
 }
 
 const numHosts = 15
 
-func benchmarkMerger(b *testing.B, merger app.Merger, clearCache bool) {
+func benchmarkMerger(b *testing.B, merger app.Merger) {
 	makeReport := func() report.Report {
 		rpt := report.MakeReport()
 		for i := 0; i < 100; i++ {
@@ -95,12 +91,6 @@ func benchmarkMerger(b *testing.B, merger app.Merger, clearCache bool) {
 	for i := 0; i < numHosts*5; i++ {
 		reports = append(reports, makeReport())
 	}
-	merger.Merge(reports) // prime the cache
-	if clearable, ok := merger.(interface {
-		ClearCache()
-	}); ok && clearCache {
-		clearable.ClearCache()
-	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -112,11 +102,5 @@ func benchmarkMerger(b *testing.B, merger app.Merger, clearCache bool) {
 		}
 
 		merger.Merge(reports)
-
-		if clearable, ok := merger.(interface {
-			ClearCache()
-		}); ok && clearCache {
-			clearable.ClearCache()
-		}
 	}
 }
