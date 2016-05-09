@@ -171,7 +171,7 @@ To enable DaemonSets in an existing cluster, add the `--runtime-config=extension
 
 It is recommended that you run Scope natively in your Kubernetes cluster using the manifest generator service.
  
-The simplest way to get latest release of Scope deployed on a Kubernetes cluster:
+The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is the following:
 
 ```
 kubectl create -f 'https://scope.weave.works/k8s-gen/weavescope.json' --validate=false
@@ -186,14 +186,15 @@ The following parameters can be specified:
 - `k8s-service-type` - Kubernetes service type (for running Scope in Standalone mode), can be either
 `LoadBalancer` or `NodePort`, by default this is unspecifed (only internal access)
 
-If you wish to download the Scope manifest, you can use YAML version of the manifest, since it is easier to read, for example:
+To download the Scope manifest, use the YAML version of the manifest, since it is easier to read, for example:
+
 ```
 curl --silent --remote-name https://scope.weave.works/k8s-gen/weavescope.yaml
 ```
 
     kubectl create -f https://git.io/scope-k8s
 
-This runs a recent Scope image from the Docker Hub and will run a probe on every node and a single app. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
+This runs a recent Scope image from the Docker Hub and will launch a probe onto every node as well as a single app. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
 **Open Scope in Your Browser**
 
