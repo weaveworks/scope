@@ -212,7 +212,7 @@ export class NodeDetails extends React.Component {
                     </span>}
                   </div>
                   <NodeDetailsLabels rows={table.rows}
-                    matches={nodeMatches.get('metadata')} />
+                    matches={nodeMatches.get('tables')} />
                 </div>
               );
             }

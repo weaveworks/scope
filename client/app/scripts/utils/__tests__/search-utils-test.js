@@ -244,7 +244,7 @@ describe('SearchUtils', () => {
       const nodes = nodeSets.someNodes;
       const matches = fun(nodes, {query: 'Row Value 1'});
       expect(matches.size).toEqual(1);
-      expect(matches.getIn(['n2', 'metadata', 'row1']).text).toBe('Row Value 1');
+      expect(matches.getIn(['n2', 'tables', 'row1']).text).toBe('Row Value 1');
     });
   });
 
