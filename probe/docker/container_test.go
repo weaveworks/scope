@@ -51,6 +51,10 @@ func TestContainer(t *testing.T) {
 		return connection
 	}
 
+	now := time.Unix(12345, 67890).UTC()
+	mtime.NowForce(now)
+	defer mtime.NowReset()
+
 	const hostID = "scope"
 	c := docker.NewContainer(container1, hostID)
 	err := c.StartGatheringStats()
@@ -58,10 +62,6 @@ func TestContainer(t *testing.T) {
 		t.Errorf("%v", err)
 	}
 	defer c.StopGatheringStats()
-
-	now := time.Unix(12345, 67890).UTC()
-	mtime.NowForce(now)
-	defer mtime.NowReset()
 
 	// Send some stats to the docker container
 	stats := &client.Stats{}

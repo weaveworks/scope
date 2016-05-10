@@ -119,14 +119,17 @@ type container struct {
 	pendingStats [20]docker.Stats
 	numPending   int
 	hostID       string
+	baseNode     report.Node
 }
 
 // NewContainer creates a new Container
 func NewContainer(c *docker.Container, hostID string) Container {
-	return &container{
+	result := &container{
 		container: c,
 		hostID:    hostID,
 	}
+	result.baseNode = result.getBaseNode()
+	return result
 }
 
 func (c *container) UpdateState(container *docker.Container) {
@@ -380,46 +383,49 @@ func (c *container) env() map[string]string {
 	return result
 }
 
+func (c *container) getBaseNode() report.Node {
+	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{
+		ContainerID:       c.ID(),
+		ContainerCreated:  c.container.Created.Format(time.RFC822),
+		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
+		ImageID:           c.Image(),
+		ContainerHostname: c.Hostname(),
+	}).WithParents(report.EmptySets.
+		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
+	)
+	result = result.AddTable(LabelPrefix, c.container.Config.Labels)
+	result = result.AddTable(EnvPrefix, c.env())
+	return result
+}
+
 func (c *container) GetNode() report.Node {
 	c.RLock()
 	defer c.RUnlock()
-	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{
-		ContainerID:         c.ID(),
-		ContainerName:       strings.TrimPrefix(c.container.Name, "/"),
-		ContainerCreated:    c.container.Created.Format(time.RFC822),
-		ContainerCommand:    c.container.Path + " " + strings.Join(c.container.Args, " "),
-		ImageID:             c.Image(),
-		ContainerHostname:   c.Hostname(),
+	latest := map[string]string{
 		ContainerState:      c.StateString(),
 		ContainerStateHuman: c.State(),
-	}).WithMetrics(
-		c.metrics(),
-	).WithParents(report.EmptySets.
-		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
-	)
+	}
+	controls := []string{}
 
 	if c.container.State.Paused {
-		result = result.WithControls(UnpauseContainer)
+		controls = append(controls, UnpauseContainer)
 	} else if c.container.State.Running {
 		uptime := (mtime.Now().Sub(c.container.State.StartedAt) / time.Second) * time.Second
 		networkMode := ""
 		if c.container.HostConfig != nil {
 			networkMode = c.container.HostConfig.NetworkMode
 		}
-		result = result.WithLatests(map[string]string{
-			ContainerUptime:       uptime.String(),
-			ContainerRestartCount: strconv.Itoa(c.container.RestartCount),
-			ContainerNetworkMode:  networkMode,
-		})
-		result = result.WithControls(
-			RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer,
-		)
+		latest[ContainerName] = strings.TrimPrefix(c.container.Name, "/")
+		latest[ContainerUptime] = uptime.String()
+		latest[ContainerRestartCount] = strconv.Itoa(c.container.RestartCount)
+		latest[ContainerNetworkMode] = networkMode
+		controls = append(controls, RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer)
 	} else {
-		result = result.WithControls(StartContainer, RemoveContainer)
+		controls = append(controls, StartContainer, RemoveContainer)
 	}
 
-	result = result.AddTable(LabelPrefix, c.container.Config.Labels)
-	result = result.AddTable(EnvPrefix, c.env())
+	result := c.baseNode.WithLatests(latest)
+	result = result.WithControls(controls...)
 	result = result.WithMetrics(c.metrics())
 	return result
 }
