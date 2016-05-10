@@ -227,7 +227,7 @@ The link below will launch a sample app using a Cloudformation template, but you
 
 For step by step instructions on how to configure the stack, see: [Install Weave to AWS with One-Click](https://www.weave.works/deploy-weave-aws-cloudformation-template/)
 
-##<a name="installing-scope-as-a-dc/os-package"></a>Installing Scope as a DC/OS Package
+##<a name="dcos"></a>Installing Scope as a DC/OS Package
 
 Scope can be installed as a DC/OS Package through the open Universe.
 
