@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: client
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        name: client
+    spec:
+      containers:
+      - name: client
+        image: tomwilkie/client
+        imagePullPolicy: IfNotPresent
+        args:
+          - -target=frontend.default.svc.cluster.local

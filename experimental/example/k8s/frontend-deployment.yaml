@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        name: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: tomwilkie/frontend-k8s
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80

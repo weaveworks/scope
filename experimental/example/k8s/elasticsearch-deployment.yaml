@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: elasticsearch
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: elasticsearch
+    spec:
+      containers:
+      - name: elasticsearch
+        image: elasticsearch
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9200

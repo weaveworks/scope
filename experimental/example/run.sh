@@ -4,6 +4,10 @@ set -ex
 
 readonly ARG="$1"
 
+if ! $(weave status 1>/dev/null 2>&1); then
+    weave launch
+fi
+
 eval $(weave env)
 
 start_container() {
@@ -24,7 +28,7 @@ start_container() {
 }
 
 start_container 1 elasticsearch elasticsearch
-start_container 2 tomwilkie/searchapp searchapp
+start_container 2 tomwilkie/searchapp search
 start_container 1 redis redis
 start_container 1 tomwilkie/qotd qotd
 start_container 1 tomwilkie/echo echo

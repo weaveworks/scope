@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-g -lpthread
 BUILD_IN_CONTAINER=true
 
-all: .qotd.marker .app.marker .client.marker .searchapp.marker .shout.marker .frontend.marker .echo.marker .trace_app.marker
+all: .qotd.marker .app.marker .client.marker .searchapp.marker .shout.marker .frontend.marker .frontend-k8s.marker .echo.marker .trace_app.marker
 
 searchapp/searchapp: searchapp/app.go
 shout/shout: shout/shout.go
@@ -29,6 +29,7 @@ endif
 .searchapp.marker: searchapp/* searchapp/searchapp
 .shout.marker: shout/* shout/shout
 .frontend.marker: frontend/*
+.frontend-k8s.marker: frontend-k8s/*
 .echo.marker: echo/*
 .trace_app.marker: trace_app/*
 .%.marker:
