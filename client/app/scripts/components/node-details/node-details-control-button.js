@@ -1,7 +1,26 @@
 import React from 'react';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 
 import { doControl } from '../../actions/app-actions';
+
+
+function renderButton({control, pending, optionKeyDown}, onClick) {
+  const altAction = optionKeyDown && control.can_raw_pipe;
+  const className = classNames('node-control-button', 'fa', control.icon, {
+    'node-control-button-pending': pending,
+    'node-control-button-alt': altAction
+  });
+  const title = altAction ? `${control.human} With RAW Pipe!` : control.human;
+
+  return (
+    <span
+      className={className}
+      title={title}
+      onClick={onClick} />
+  );
+}
+
 
 class NodeDetailsControlButton extends React.Component {
   constructor(props, context) {
@@ -10,28 +29,29 @@ class NodeDetailsControlButton extends React.Component {
   }
 
   render() {
-    let className = `node-control-button fa ${this.props.control.icon}`;
-    if (this.props.pending) {
-      className += ' node-control-button-pending';
-    }
-    // If the control allows raw pipes, let the user choose that option
-    // if (this.props.control.can_raw_pipe) {
-    //  className += ' node-control-raw';
-    // }
     return (
-      <span className={className} title={this.props.control.human} onClick={this.handleClick} />
+      <span>
+        {renderButton(this.props, this.handleClick)}
+      </span>
     );
   }
 
   handleClick(ev) {
     const args = {};
     ev.preventDefault();
-    // If the use chose the raw option include it in the request
-    // if (this.raw_pipe_chosen) {
-    //  args.raw_pipe = 'true';
-    // }
+    if (this.props.optionKeyDown && this.props.control.can_raw_pipe) {
+      args.raw_pipe = 'true';
+    }
     this.props.dispatch(doControl(this.props.nodeId, this.props.control, args));
   }
 }
 
-export default connect()(NodeDetailsControlButton);
+function mapStateToProps(state) {
+  return {
+    optionKeyDown: state.get('optionKeyDown')
+  };
+}
+
+export default connect(
+  mapStateToProps
+)(NodeDetailsControlButton);

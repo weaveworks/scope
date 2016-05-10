@@ -12,10 +12,11 @@ import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric,
-  selectMetric, toggleHelp } from '../actions/app-actions';
+  selectMetric, toggleHelp, setOptionKeyDown } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import MetricSelector from './metric-selector';
+import RawPipeDialog from './raw-pipe-dialog';
 import EmbeddedTerminal from './embedded-terminal';
 import { getRouter } from '../utils/router-utils';
 import DebugToolbar, { showingDebugToolbar,
@@ -26,6 +27,7 @@ import { getActiveTopologyOptions } from '../utils/topology-utils';
 const BACKSPACE_KEY_CODE = 8;
 const ENTER_KEY_CODE = 13;
 const ESC_KEY_CODE = 27;
+const ALT_KEY_CODE = 18;
 const keyPressLog = debug('scope:app-key-press');
 
 class App extends React.Component {
@@ -34,11 +36,13 @@ class App extends React.Component {
     super(props, context);
     this.onKeyPress = this.onKeyPress.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
   }
 
   componentDidMount() {
     window.addEventListener('keypress', this.onKeyPress);
     window.addEventListener('keyup', this.onKeyUp);
+    window.addEventListener('keydown', this.onKeyDown);
 
     getRouter(this.props.dispatch, this.props.urlState).start({hashbang: true});
     if (!this.props.routeSet) {
@@ -51,11 +55,13 @@ class App extends React.Component {
   componentWillUnmount() {
     window.removeEventListener('keypress', this.onKeyPress);
     window.removeEventListener('keyup', this.onKeyUp);
+    window.removeEventListener('keydown', this.onKeyDown);
   }
 
   onKeyUp(ev) {
     const { showingTerminal } = this.props;
 
+    keyPressLog('onKeyUp', 'keyCode', ev.keyCode, ev);
     // don't get esc in onKeyPress
     if (ev.keyCode === ESC_KEY_CODE) {
       this.props.dispatch(hitEsc());
@@ -66,6 +72,15 @@ class App extends React.Component {
     } else if (ev.code === 'KeyD' && ev.ctrlKey && !showingTerminal) {
       toggleDebugToolbar();
       this.forceUpdate();
+    } else if (ev.keyCode === ALT_KEY_CODE) {
+      this.props.dispatch(setOptionKeyDown(false));
+    }
+  }
+
+  onKeyDown(ev) {
+    keyPressLog('onKeyDown', 'keyCode', ev.keyCode, ev);
+    if (ev.keyCode === ALT_KEY_CODE) {
+      this.props.dispatch(setOptionKeyDown(true));
     }
   }
 
@@ -98,6 +113,7 @@ class App extends React.Component {
 
   render() {
     const { showingDetails, showingHelp, showingMetricsSelector, showingTerminal } = this.props;
+    const showingRawPipe = controlPipes.toIndexedSeq().getIn([0, 'rawPipeTemplate']);
 
     return (
       <div className="app">
@@ -108,6 +124,8 @@ class App extends React.Component {
         {showingDetails && <Details />}
 
         {showingTerminal && <EmbeddedTerminal />}
+
+        {showingRawPipe && <RawPipeDialog />}
 
         <div className="header">
           <div className="logo">

@@ -212,14 +212,15 @@ export function doControlRequest(nodeId, control, args, dispatch) {
       if (res) {
         if (res.pipe) {
           dispatch(blurSearch());
-          dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, true));
+          //
+          // Server is not responding w/ raw_pipe_template atm so we don't know if the response was
+          // raw or not so we pass args.raw_pipe back into the dispatch function for now. to be
+          // replaced w/ something like this in the future:
+          //
+          // dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, res.raw_pipe_template));
+          //
+          dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, args.raw_pipe));
         }
-        // TODO: If it's a raw pipe display a popup. The instructions template
-        //       (res.raw_pipe_template) will include a placeholder ('%pipe_url')
-        //       to fill in the pipe's websocket url.
-        // if (res.raw_pipe_template) {
-        //      ...
-        // }
         if (res.removedNode) {
           dispatch(receiveControlNodeRemoved(nodeId));
         }
