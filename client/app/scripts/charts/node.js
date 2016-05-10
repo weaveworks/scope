@@ -37,6 +37,17 @@ function getNodeShape({ shape, stack }) {
   return stack ? stackedShape(nodeShape) : nodeShape;
 }
 
+function svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) {
+  return (
+    <g className="node-label-svg">
+      <text className={labelClassName} y={labelOffsetY + 18} textAnchor="middle">{label}</text>
+      <text className={subLabelClassName} y={labelOffsetY + 35} textAnchor="middle">
+        {subLabel}
+      </text>
+    </g>
+  );
+}
+
 class Node extends React.Component {
 
   constructor(props, context) {
@@ -65,7 +76,7 @@ class Node extends React.Component {
 
   render() {
     const { blurred, focused, highlighted, label, matches = makeMap(),
-      pseudo, rank, subLabel, scaleFactor, transform, zoomScale } = this.props;
+      pseudo, rank, subLabel, scaleFactor, transform, zoomScale, exportingGraph } = this.props;
     const { hovered, matched } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
@@ -88,30 +99,29 @@ class Node extends React.Component {
     const subLabelClassName = classnames('node-sublabel', { truncate });
 
     const NodeShapeType = getNodeShape(this.props);
+    const useSvgLabels = exportingGraph;
 
     return (
       <g className={nodeClassName} transform={transform}
         onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
-        {/* For browser */}
-        <foreignObject x={labelOffsetX} y={labelOffsetY} width={labelWidth} height="10em"
-          transform={labelTransform}>
-          <div className="node-label-wrapper" onClick={this.handleMouseClick}>
-            <div className={labelClassName}>
-              <MatchedText text={label} match={matches.get('label')} />
+
+        {useSvgLabels ?
+
+          svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
+
+          <foreignObject x={labelOffsetX} y={labelOffsetY} width={labelWidth}
+            height="10em" transform={labelTransform}>
+            <div className="node-label-wrapper" onClick={this.handleMouseClick}>
+              <div className={labelClassName}>
+                <MatchedText text={label} match={matches.get('label')} />
+              </div>
+              <div className={subLabelClassName}>
+                <MatchedText text={subLabel} match={matches.get('sublabel')} />
+              </div>
+              {!blurred && <MatchedResults matches={matches.get('metadata')} />}
             </div>
-            <div className={subLabelClassName}>
-              <MatchedText text={subLabel} match={matches.get('sublabel')} />
-            </div>
-            {!blurred && <MatchedResults matches={matches.get('metadata')} />}
-          </div>
-        </foreignObject>
-        {/* For SVG export */}
-        <g className="node-label-svg">
-          <text className={labelClassName} y={labelOffsetY + 18} textAnchor="middle">{label}</text>
-          <text className={subLabelClassName} y={labelOffsetY + 35} textAnchor="middle">
-            {subLabel}
-          </text>
-        </g>
+          </foreignObject>}
+
         <g onClick={this.handleMouseClick}>
           <NodeShapeType
             size={nodeScale(scaleFactor)}
@@ -140,6 +150,9 @@ class Node extends React.Component {
 }
 
 export default connect(
-  state => ({ searchQuery: state.get('searchQuery') }),
+  state => ({
+    searchQuery: state.get('searchQuery'),
+    exportingGraph: state.get('exportingGraph')
+  }),
   { clickNode, enterNode, leaveNode }
 )(Node);

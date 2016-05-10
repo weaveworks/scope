@@ -46,7 +46,8 @@ const ACTION_TYPES = [
   'RECEIVE_ERROR',
   'ROUTE_TOPOLOGY',
   'SELECT_METRIC',
-  'SHOW_HELP'
+  'SHOW_HELP',
+  'SET_EXPORTING_GRAPH'
 ];
 
 export default _.zipObject(ACTION_TYPES, ACTION_TYPES);

@@ -70,7 +70,8 @@ export const initialState = makeMap({
   updatePausedAt: null, // Date
   version: '...',
   versionUpdate: null,
-  websocketClosed: true
+  websocketClosed: true,
+  exportingGraph: false
 });
 
 // adds ID field to topology (based on last part of URL path) and save urls in
@@ -167,6 +168,10 @@ export function rootReducer(state = initialState, action) {
         );
       }
       return state;
+    }
+
+    case ActionTypes.SET_EXPORTING_GRAPH: {
+      return state.set('exportingGraph', action.exporting);
     }
 
     case ActionTypes.CLEAR_CONTROL_ERROR: {

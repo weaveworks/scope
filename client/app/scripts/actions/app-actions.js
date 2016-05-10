@@ -143,8 +143,10 @@ export function clickCloseTerminal(pipeId, closePipe) {
 }
 
 export function clickDownloadGraph() {
-  return () => {
+  return (dispatch) => {
+    dispatch({ type: ActionTypes.SET_EXPORTING_GRAPH, exporting: true });
     saveGraph();
+    dispatch({ type: ActionTypes.SET_EXPORTING_GRAPH, exporting: false });
   };
 }
 
