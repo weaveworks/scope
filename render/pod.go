@@ -39,7 +39,7 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
 var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	ApplyDecorators(FilterEmpty(report.Pod,
+	ApplyDecorators(
 		MakeReduce(
 			MakeMap(
 				Map2Service,
@@ -47,13 +47,13 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 			),
 			SelectService,
 		),
-	)),
+	),
 )
 
 // DeploymentRenderer is a Renderer which produces a renderable kubernetes deployments
 // graph by merging the pods graph and the deployments topology.
-var DeploymentRenderer = ApplyDecorators(
-	FilterEmpty(report.Pod,
+var DeploymentRenderer = ConditionalRenderer(renderKubernetesTopologies,
+	ApplyDecorators(
 		MakeReduce(
 			MakeMap(
 				Map2Deployment,
@@ -66,8 +66,8 @@ var DeploymentRenderer = ApplyDecorators(
 
 // ReplicaSetRenderer is a Renderer which produces a renderable kubernetes replica sets
 // graph by merging the pods graph and the replica sets topology.
-var ReplicaSetRenderer = ApplyDecorators(
-	FilterEmpty(report.Pod,
+var ReplicaSetRenderer = ConditionalRenderer(renderKubernetesTopologies,
+	ApplyDecorators(
 		MakeReduce(
 			MakeMap(
 				Map2ReplicaSet,
