@@ -16,7 +16,11 @@ class RawPipeDialog extends React.Component {
 
   render() {
     const {controlPipes} = this.props;
-    const pipeDetails = controlPipes.first().get('rawPipeTemplate');
+    const controlPipe = controlPipes.first();
+    const template = controlPipe.get('rawPipeTemplate');
+    const pipeId = controlPipe.get('id');
+    const pipeUrl = `ws:\/\/${location.host}/api/pipe/${encodeURIComponent(pipeId)}`;
+    const instructions = template.replace('%pipe_url', pipeUrl);
     return (
       <div className="help-panel">
         <div className="help-panel-header">
@@ -24,7 +28,7 @@ class RawPipeDialog extends React.Component {
         <span title="Close details" className="fa fa-close" onClick={this.handleClickClose} />
         </div>
         <div className="help-panel-main">
-          {pipeDetails}
+          {instructions}
         </div>
       </div>
     );
