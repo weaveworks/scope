@@ -54,7 +54,7 @@ class Search extends React.Component {
     const inputValue = ev.target.value;
     let value = inputValue;
     // In render() props.searchQuery can be set from the outside, but state.value
-    // must have precendence for quick feedback. Now when the user backspaces
+    // must have precedence for quick feedback. Now when the user backspaces
     // quickly enough from `text`, a previouse doSearch(`text`) will come back
     // via props and override the empty state.value. To detect this edge case
     // we instead set value to null when backspacing.
