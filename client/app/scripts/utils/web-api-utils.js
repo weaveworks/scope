@@ -102,12 +102,15 @@ function createWebsocket(topologyUrl, optionsQuery, dispatch) {
 export function getAllNodes(getState, dispatch) {
   const state = getState();
   const topologyOptions = state.get('topologyOptions');
-  state.get('topologyUrlsById').forEach((topologyUrl, topologyId) => {
-    const optionsQuery = buildOptionsQuery(topologyOptions.get(topologyId));
-    fetch(`${topologyUrl}?${optionsQuery}`)
-      .then(response => response.json())
-      .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId)));
-  });
+  // fetch sequentially
+  state.get('topologyUrlsById')
+    .reduce((sequence, topologyUrl, topologyId) => sequence.then(() => {
+      const optionsQuery = buildOptionsQuery(topologyOptions.get(topologyId));
+      return fetch(`${topologyUrl}?${optionsQuery}`);
+    })
+    .then(response => response.json())
+    .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
+    Promise.resolve());
 }
 
 export function getTopologies(options, dispatch) {
