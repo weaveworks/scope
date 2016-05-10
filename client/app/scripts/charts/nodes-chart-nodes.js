@@ -22,7 +22,8 @@ class NodesChartNodes extends React.Component {
       || (adjacentNodes && adjacentNodes.includes(node.get('id')))));
     const setBlurred = node => node.set('blurred',
       selectedNodeId && !node.get('focused')
-      || searchQuery && !searchNodeMatches.has(node.get('id')));
+      || searchQuery && !searchNodeMatches.has(node.get('id'))
+        && !node.get('highlighted'));
 
     // make sure blurred nodes are in the background
     const sortNodes = node => {

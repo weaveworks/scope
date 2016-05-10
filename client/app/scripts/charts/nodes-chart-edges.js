@@ -16,10 +16,13 @@ class NodesChartEdges extends React.Component {
         {layoutEdges.toIndexedSeq().map(edge => {
           const sourceSelected = selectedNodeId === edge.get('source');
           const targetSelected = selectedNodeId === edge.get('target');
-          const blurred = hasSelectedNode && !sourceSelected && !targetSelected
-            || searchQuery && !(searchNodeMatches.has(edge.get('source'))
-              && searchNodeMatches.has(edge.get('target')));
+          const highlighted = highlightedEdgeIds.has(edge.get('id'));
           const focused = hasSelectedNode && (sourceSelected || targetSelected);
+          const blurred = !focused
+            && !highlighted
+            && (!searchQuery
+              || !(searchNodeMatches.has(edge.get('source'))
+              && searchNodeMatches.has(edge.get('target'))));
 
           return (
             <EdgeContainer
@@ -31,7 +34,7 @@ class NodesChartEdges extends React.Component {
               blurred={blurred}
               focused={focused}
               layoutPrecision={layoutPrecision}
-              highlighted={highlightedEdgeIds.has(edge.get('id'))}
+              highlighted={highlighted}
             />
           );
         })}
