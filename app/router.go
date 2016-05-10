@@ -3,12 +3,14 @@ package app
 import (
 	"compress/gzip"
 	"encoding/gob"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 
 	"github.com/PuerkitoBio/ghost/handlers"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
@@ -100,23 +102,46 @@ func RegisterTopologyRoutes(router *mux.Router, r Reporter) {
 		gzipHandler(requestContextDecorator(makeProbeHandler(r))))
 }
 
+type byteCounter struct {
+	next  io.ReadCloser
+	count *uint64
+}
+
+func (c byteCounter) Read(p []byte) (n int, err error) {
+	n, err = c.next.Read(p)
+	*c.count += uint64(n)
+	return n, err
+}
+
+func (c byteCounter) Close() error {
+	return c.next.Close()
+}
+
 // RegisterReportPostHandler registers the handler for report submission
 func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	post := router.Methods("POST").Subrouter()
 	post.HandleFunc("/api/report", requestContextDecorator(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		var (
-			rpt    report.Report
-			reader = r.Body
-			err    error
+			rpt                              report.Report
+			reader                           = r.Body
+			err                              error
+			compressedSize, uncompressedSize uint64
 		)
+
+		if log.GetLevel() == log.DebugLevel {
+			reader = byteCounter{next: reader, count: &compressedSize}
+		}
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
-			reader, err = gzip.NewReader(r.Body)
+			reader, err = gzip.NewReader(reader)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 		}
 
+		if log.GetLevel() == log.DebugLevel {
+			reader = byteCounter{next: reader, count: &uncompressedSize}
+		}
 		decoder := gob.NewDecoder(reader).Decode
 		if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 			decoder = codec.NewDecoder(reader, &codec.JsonHandle{}).Decode
@@ -128,6 +153,13 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		log.Debugf(
+			"Received report sizes: compressed %d bytes, uncompressed %d bytes (%.2f%%)",
+			compressedSize,
+			uncompressedSize,
+			float32(compressedSize)/float32(uncompressedSize)*100,
+		)
+
 		a.Add(ctx, rpt)
 		w.WriteHeader(http.StatusOK)
 	}))
