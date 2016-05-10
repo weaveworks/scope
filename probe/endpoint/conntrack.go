@@ -314,9 +314,13 @@ func (c *conntrackWalker) handleFlow(f flow, forceAdd bool) {
 			c.bufferedFlows = append(c.bufferedFlows, f)
 		}
 	case f.Type == destroyType:
-		if _, ok := c.activeFlows[f.Independent.ID]; ok {
+		if active, ok := c.activeFlows[f.Independent.ID]; ok {
 			delete(c.activeFlows, f.Independent.ID)
-			c.bufferedFlows = append(c.bufferedFlows, f)
+			// Ignore flows for which we never saw an update; they are likely
+			// incomplete or wrong.  See #1462.
+			if active.Type == updateType {
+				c.bufferedFlows = append(c.bufferedFlows, active)
+			}
 		}
 	}
 }

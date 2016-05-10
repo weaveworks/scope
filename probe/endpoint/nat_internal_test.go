@@ -34,7 +34,7 @@ func TestNat(t *testing.T) {
 
 	// from the PoV of host1
 	{
-		f := makeFlow("")
+		f := makeFlow(updateType)
 		addIndependant(&f, 1, "")
 		f.Original = addMeta(&f, "original", "2.3.4.5", "1.2.3.4", 222222, 80)
 		f.Reply = addMeta(&f, "reply", "10.0.47.1", "2.3.4.5", 80, 222222)
@@ -45,9 +45,10 @@ func TestNat(t *testing.T) {
 		have := report.MakeReport()
 		originalID := report.MakeEndpointNodeID("host1", "10.0.47.1", "80")
 		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
-			Addr:  "10.0.47.1",
-			Port:  "80",
-			"foo": "bar",
+			Addr:      "10.0.47.1",
+			Port:      "80",
+			"foo":     "bar",
+			Procspied: "true",
 		}))
 
 		want := have.Copy()
@@ -57,6 +58,7 @@ func TestNat(t *testing.T) {
 			Port:      "80",
 			"copy_of": originalID,
 			"foo":     "bar",
+			Procspied: "true",
 		}))
 
 		makeNATMapper(ct).applyNAT(have, "host1")
@@ -67,7 +69,7 @@ func TestNat(t *testing.T) {
 
 	// form the PoV of host2
 	{
-		f := makeFlow("")
+		f := makeFlow(updateType)
 		addIndependant(&f, 2, "")
 		f.Original = addMeta(&f, "original", "10.0.47.2", "1.2.3.4", 22222, 80)
 		f.Reply = addMeta(&f, "reply", "1.2.3.4", "2.3.4.5", 80, 22223)
@@ -78,9 +80,10 @@ func TestNat(t *testing.T) {
 		have := report.MakeReport()
 		originalID := report.MakeEndpointNodeID("host2", "10.0.47.2", "22222")
 		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
-			Addr:  "10.0.47.2",
-			Port:  "22222",
-			"foo": "baz",
+			Addr:      "10.0.47.2",
+			Port:      "22222",
+			"foo":     "baz",
+			Procspied: "true",
 		}))
 
 		want := have.Copy()
@@ -89,6 +92,7 @@ func TestNat(t *testing.T) {
 			Port:      "22223",
 			"copy_of": originalID,
 			"foo":     "baz",
+			Procspied: "true",
 		}))
 
 		makeNATMapper(ct).applyNAT(have, "host1")

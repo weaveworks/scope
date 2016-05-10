@@ -150,20 +150,22 @@ func TestConntracker(t *testing.T) {
 		}
 	}
 
-	flow1 := makeFlow(newType)
+	flow1 := makeFlow(updateType)
 	addMeta(&flow1, "original", "1.2.3.4", "2.3.4.5", 2, 3)
 	addIndependant(&flow1, 1, "")
 	writeFlow(flow1)
 	test.Poll(t, ts, []flow{flow1}, have)
 
 	// Now check when we remove the flow, we still get it in the next Walk
-	flow1.Type = destroyType
-	writeFlow(flow1)
+	flow2 := makeFlow(destroyType)
+	addMeta(&flow2, "original", "1.2.3.4", "2.3.4.5", 2, 3)
+	addIndependant(&flow2, 1, "")
+	writeFlow(flow2)
 	test.Poll(t, ts, []flow{flow1}, have)
 	test.Poll(t, ts, []flow{}, have)
 
 	// This time we're not going to remove it, but put it in state TIME_WAIT
-	flow1.Type = newType
+	flow1.Type = updateType
 	writeFlow(flow1)
 	test.Poll(t, ts, []flow{flow1}, have)
 
