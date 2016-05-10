@@ -386,7 +386,6 @@ func (c *container) env() map[string]string {
 func (c *container) getBaseNode() report.Node {
 	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{
 		ContainerID:       c.ID(),
-		ContainerName:     strings.TrimPrefix(c.container.Name, "/"),
 		ContainerCreated:  c.container.Created.Format(time.RFC822),
 		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
 		ImageID:           c.Image(),
@@ -416,6 +415,7 @@ func (c *container) GetNode() report.Node {
 		if c.container.HostConfig != nil {
 			networkMode = c.container.HostConfig.NetworkMode
 		}
+		latest[ContainerName] = strings.TrimPrefix(c.container.Name, "/")
 		latest[ContainerUptime] = uptime.String()
 		latest[ContainerRestartCount] = strconv.Itoa(c.container.RestartCount)
 		latest[ContainerNetworkMode] = networkMode
