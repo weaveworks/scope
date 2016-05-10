@@ -19,22 +19,10 @@ import (
 
 func main() {
 	var (
-		addr = flag.String("addr", ":8080", "HTTP listen address")
+		addr   = flag.String("addr", ":80", "HTTP listen address")
+		target = flag.String("target", "http://elasticsearch.weave.local:9200", "Elastic hostname")
 	)
 	flag.Parse()
-
-	var targets []string
-	for _, s := range os.Args[1:] {
-		target, err := normalize(s)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("target %s", target)
-		targets = append(targets, target)
-	}
-	if len(targets) <= 0 {
-		log.Fatal("no targets")
-	}
 
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -45,7 +33,7 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Handling %v", r)
-		read(targets, &reads)
+		read([]string{*target}, &reads)
 		fmt.Fprintf(w, "%s %d", hostname, atomic.LoadUint64(&reads))
 	})
 
