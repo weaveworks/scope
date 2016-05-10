@@ -1,57 +1,62 @@
 package report
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/weaveworks/scope/common/mtime"
 )
 
 // MaxTableRows sets the limit on the table size to render
 // TODO: this won't be needed once we send reports incrementally
-const MaxTableRows = 20
+const (
+	MaxTableRows          = 20
+	TruncationCountPrefix = "table_truncation_count_"
+)
 
 // AddTable appends arbirary key-value pairs to the Node, returning a new node.
 func (node Node) AddTable(prefix string, labels map[string]string) Node {
 	count := 0
 	for key, value := range labels {
-		// It's enough to only include MaxTableRows+1
-		// since they won't be rendered anyhow
-		if count > MaxTableRows {
+		if count >= MaxTableRows {
 			break
 		}
 		node = node.WithLatest(prefix+key, mtime.Now(), value)
 		count++
-
+	}
+	if len(labels) > MaxTableRows {
+		truncationCount := fmt.Sprintf("%d", len(labels)-MaxTableRows)
+		node = node.WithLatest(TruncationCountPrefix+prefix, mtime.Now(), truncationCount)
 	}
 	return node
 }
 
 // ExtractTable returns the key-value pairs with the given prefix from this Node,
-func (node Node) ExtractTable(prefix string) (rows map[string]string, truncated bool) {
+func (node Node) ExtractTable(prefix string) (rows map[string]string, truncationCount int) {
 	rows = map[string]string{}
-	truncated = false
-	count := 0
+	truncationCount = 0
 	node.Latest.ForEach(func(key, value string) {
 		if strings.HasPrefix(key, prefix) {
-			if count >= MaxTableRows {
-				truncated = true
-				return
-			}
 			label := key[len(prefix):]
 			rows[label] = value
-			count++
 		}
 	})
-	return rows, truncated
+	if str, ok := node.Latest.Lookup(TruncationCountPrefix + prefix); ok {
+		if n, err := fmt.Sscanf(str, "%d", &truncationCount); n != 1 || err != nil {
+			log.Warn("Unexpected truncation count format %q", str)
+		}
+	}
+	return rows, truncationCount
 }
 
 // Table is the type for a table in the UI.
 type Table struct {
-	ID           string        `json:"id"`
-	Label        string        `json:"label"`
-	Rows         []MetadataRow `json:"rows"`
-	WasTruncated bool          `json:"was_truncated"`
+	ID              string        `json:"id"`
+	Label           string        `json:"label"`
+	Rows            []MetadataRow `json:"rows"`
+	TruncationCount int           `json:"truncation_count,omitempty"`
 }
 
 type tablesByID []Table
@@ -110,12 +115,12 @@ type TableTemplates map[string]TableTemplate
 func (t TableTemplates) Tables(node Node) []Table {
 	var result []Table
 	for _, template := range t {
-		rows, truncated := node.ExtractTable(template.Prefix)
+		rows, truncationCount := node.ExtractTable(template.Prefix)
 		table := Table{
-			ID:           template.ID,
-			Label:        template.Label,
-			Rows:         []MetadataRow{},
-			WasTruncated: truncated,
+			ID:              template.ID,
+			Label:           template.Label,
+			Rows:            []MetadataRow{},
+			TruncationCount: truncationCount,
 		}
 		keys := make([]string, 0, len(rows))
 		for k := range rows {
