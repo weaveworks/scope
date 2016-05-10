@@ -24,18 +24,22 @@ type Client interface {
 	WalkServices(f func(Service) error) error
 	WalkDeployments(f func(Deployment) error) error
 	WalkReplicaSets(f func(ReplicaSet) error) error
+	WalkReplicationControllers(f func(ReplicationController) error) error
 	WalkNodes(f func(*api.Node) error) error
 
 	WatchPods(f func(Event, Pod))
 
 	GetLogs(namespaceID, podID string) (io.ReadCloser, error)
 	DeletePod(namespaceID, podID string) error
+	ScaleUp(resource, namespaceID, id string) error
+	ScaleDown(resource, namespaceID, id string) error
 }
 
 type client struct {
 	quit                       chan struct{}
 	resyncPeriod               time.Duration
 	client                     *unversioned.Client
+	extensionsClient           *unversioned.ExtensionsClient
 	podStore                   *cache.StoreToPodLister
 	serviceStore               *cache.StoreToServiceLister
 	deploymentStore            *cache.StoreToDeploymentLister
@@ -85,9 +89,10 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 	}
 
 	result := &client{
-		quit:         make(chan struct{}),
-		resyncPeriod: resyncPeriod,
-		client:       c,
+		quit:             make(chan struct{}),
+		resyncPeriod:     resyncPeriod,
+		client:           c,
+		extensionsClient: ec,
 	}
 
 	result.podStore = &cache.StoreToPodLister{Store: result.setupStore(c, "pods", &api.Pod{})}
@@ -159,29 +164,30 @@ func (c *client) WalkDeployments(f func(Deployment) error) error {
 	return nil
 }
 
-// WalkReplicaSets calls f for each replica set (and replication controller)
+// WalkReplicaSets calls f for each replica set
 func (c *client) WalkReplicaSets(f func(ReplicaSet) error) error {
-	{
-		list, err := c.replicaSetStore.List()
-		if err != nil {
+	list, err := c.replicaSetStore.List()
+	if err != nil {
+		return err
+	}
+	for i := range list {
+		if err := f(NewReplicaSet(&(list[i]))); err != nil {
 			return err
-		}
-		for i := range list {
-			if err := f(NewReplicaSet(&(list[i]))); err != nil {
-				return err
-			}
 		}
 	}
+	return nil
 
-	{
-		list, err := c.replicationControllerStore.List()
-		if err != nil {
+}
+
+// WalkReplicationcontrollers calls f for each replication controller
+func (c *client) WalkReplicationControllers(f func(ReplicationController) error) error {
+	list, err := c.replicationControllerStore.List()
+	if err != nil {
+		return err
+	}
+	for i := range list {
+		if err := f(NewReplicationController(&(list[i]))); err != nil {
 			return err
-		}
-		for i := range list {
-			if err := f(NewReplicationController(&(list[i]))); err != nil {
-				return err
-			}
 		}
 	}
 	return nil
@@ -217,6 +223,29 @@ func (c *client) DeletePod(namespaceID, podID string) error {
 		Namespace(namespaceID).
 		Name(podID).
 		Resource("pods").Do().Error()
+}
+
+func (c *client) ScaleUp(resource, namespaceID, id string) error {
+	return c.modifyScale(resource, namespaceID, id, func(scale *extensions.Scale) {
+		scale.Spec.Replicas++
+	})
+}
+
+func (c *client) ScaleDown(resource, namespaceID, id string) error {
+	return c.modifyScale(resource, namespaceID, id, func(scale *extensions.Scale) {
+		scale.Spec.Replicas--
+	})
+}
+
+func (c *client) modifyScale(resource, namespace, id string, f func(*extensions.Scale)) error {
+	scaler := c.extensionsClient.Scales(namespace)
+	scale, err := scaler.Get(resource, id)
+	if err != nil {
+		return err
+	}
+	f(scale)
+	_, err = scaler.Update(resource, scale)
+	return err
 }
 
 func (c *client) Stop() {

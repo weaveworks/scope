@@ -137,6 +137,9 @@ func (c *mockClient) WalkDeployments(f func(kubernetes.Deployment) error) error 
 func (c *mockClient) WalkReplicaSets(f func(kubernetes.ReplicaSet) error) error {
 	return nil
 }
+func (c *mockClient) WalkReplicationControllers(f func(kubernetes.ReplicationController) error) error {
+	return nil
+}
 func (*mockClient) WalkNodes(f func(*api.Node) error) error {
 	return nil
 }
@@ -149,6 +152,12 @@ func (c *mockClient) GetLogs(namespaceID, podName string) (io.ReadCloser, error)
 	return r, nil
 }
 func (c *mockClient) DeletePod(namespaceID, podID string) error {
+	return nil
+}
+func (c *mockClient) ScaleUp(resource, namespaceID, id string) error {
+	return nil
+}
+func (c *mockClient) ScaleDown(resource, namespaceID, id string) error {
 	return nil
 }
 
