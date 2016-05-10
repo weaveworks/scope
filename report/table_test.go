@@ -16,7 +16,11 @@ func TestTables(t *testing.T) {
 	nmd := report.MakeNode("foo1")
 
 	nmd = nmd.AddTable("foo_", want)
-	have := nmd.ExtractTable("foo_")
+	have, truncated := nmd.ExtractTable("foo_")
+
+	if truncated {
+		t.Error("Table shouldn't had been truncated")
+	}
 
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
