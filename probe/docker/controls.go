@@ -177,7 +177,7 @@ func (r *registry) analyzeTraffic(containerID string, req xfer.Request) xfer.Res
 		//      http://superuser.com/questions/548119/how-do-i-configure-custom-url-handlers-on-os-x
 		template := "wireshark -i <(scope grabpipe %pipe_url)"
 		handler := controls.MakeRawCommandHandler("raw traffic analyzer", r.pipes, cmd, template)
-		handler(req)
+		return handler(req)
 	}
 	// TODO: better defaults for tshark?
 	cmd = append(cmd, "tshark", "-i", "any")

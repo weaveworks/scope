@@ -212,14 +212,7 @@ export function doControlRequest(nodeId, control, args, dispatch) {
       if (res) {
         if (res.pipe) {
           dispatch(blurSearch());
-          //
-          // Server is not responding w/ raw_pipe_template atm so we don't know if the response was
-          // raw or not so we pass args.raw_pipe back into the dispatch function for now. to be
-          // replaced w/ something like this in the future:
-          //
-          // dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, res.raw_pipe_template));
-          //
-          dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, args.raw_pipe));
+          dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, res.raw_pipe_template));
         }
         if (res.removedNode) {
           dispatch(receiveControlNodeRemoved(nodeId));
