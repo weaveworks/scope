@@ -69,7 +69,7 @@ Scope needs to be installed onto every machine that you want to monitor. Once la
 
 After it’s been launched, open your browser to `http://localhost:4040`.
 
-Docker Compose Format Version 1:
+**Docker Compose Format Version 1:**
 
     probe:
       image: weaveworks/scope:0.15
@@ -84,7 +84,7 @@ Docker Compose Format Version 1:
         - "--probe.docker"
         - "true"
 
-Docker Compose Format Version 2:
+**Docker Compose Format Version 2:**
 
     version: '2'
     services:
@@ -115,7 +115,7 @@ Scope needs to be installed onto every machine that you want to monitor. Once la
 
 After it’s been launched, open your web browser to [scope.weave.works](https://scope.weave.works) and login using your email.  Click on 'My Scope' in the top right-hand corner to see the Scope UI.
 
-Docker Compose Format Version 1:
+**Docker Compose Format Version 1:**
 
     probe:
       image: weaveworks/scope:0.15
@@ -132,7 +132,7 @@ Docker Compose Format Version 1:
         - "--service-token"
         - "${SCOPE_SERVICE_TOKEN}"
 
-Docker Compose Format Version 2:
+**Docker Compose Format Version 2:**
 
     version: '2'
     services:
@@ -157,7 +157,7 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
 
 To install Scope on a Kubernetes cluster in Standalone Mode, follow these instructions:
 
-**Prerequisites**
+**Before You Begin**
 
 Ensure that the cluster allows privileged pods - this is required by the Scope probes. By default, privileged pods are allowed from Kubernetes 1.1 and up. If you are running an earlier version or a non-default configuration, ensure that your API Server and all of your Kubelets are launched with the flag `--allow_privileged`.
 
@@ -177,7 +177,7 @@ The simplest way to get the latest release of Scope deployed onto a Kubernetes c
 kubectl create -f 'https://scope.weave.works/k8s-gen/weavescope.json' --validate=false
 ```
 
-The following parameters can be specified:
+Allowable parameters:
 
  - `v` - Weave Scope version or tag, e.g. `latest` or `0.15.0`, current release is the default
 
