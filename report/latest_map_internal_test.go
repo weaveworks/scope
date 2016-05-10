@@ -2,6 +2,7 @@ package report
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 	"time"
 
@@ -131,6 +132,28 @@ func TestLatestMapMerge(t *testing.T) {
 		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s:\n%s", name, test.Diff(c.want, have))
 		}
+	}
+}
+
+func BenchmarkLatestMapMerge(b *testing.B) {
+	var (
+		left  = EmptyLatestMap
+		right = EmptyLatestMap
+		now   = time.Now()
+	)
+
+	// two large maps with some overlap
+	for i := 0; i < 1000; i++ {
+		left = left.Set(fmt.Sprint(i), now, "1")
+	}
+	for i := 700; i < 1700; i++ {
+		right = right.Set(fmt.Sprint(i), now.Add(1*time.Minute), "1")
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		left.Merge(right)
 	}
 }
 
