@@ -170,7 +170,7 @@ func (r *registry) analyzeTraffic(containerID string, req xfer.Request) xfer.Res
 		// TODO: It would be even better to expose rpcapd instead since we could apply filters remotely and reduce traffic.
 		//       Also, I think we would be able to associate the rpcap:// uri with wireshark, avoiding instructions templates.
 		//       How to proxy rpcap through websockets, though?
-		cmd = append(cmd, "dumpcap", "-i", "any", "-w", "-")
+		cmd = append(cmd, "dumpcap", "-P", "-i", "any", "-w", "-")
 		// TODO consider using a uri scheme, like weave://scope/wireshark/%pipeurl
 		//      instead of asking the user to type a command. It would require
 		//      registering a URL scheme handler, for instance see:
