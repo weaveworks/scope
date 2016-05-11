@@ -173,7 +173,7 @@ It is recommended that you run Scope natively in your Kubernetes cluster using t
 
 The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is the following:
 
-    kubectl create -f 'https://scope.weave.works/launch/k8s/weavescope.json' --validate=false
+    kubectl --namespace=kube-system create -f 'https://scope.weave.works/launch/k8s/weavescope.json' --validate=false
 
 Allowable parameters:
 
