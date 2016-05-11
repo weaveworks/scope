@@ -56,7 +56,7 @@ type Table struct {
 	ID              string        `json:"id"`
 	Label           string        `json:"label"`
 	Rows            []MetadataRow `json:"rows"`
-	TruncationCount int           `json:"truncation_count,omitempty"`
+	TruncationCount int           `json:"truncationCount,omitempty"`
 }
 
 type tablesByID []Table
