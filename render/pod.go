@@ -26,12 +26,15 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 			state, ok := n.Latest.Lookup(kubernetes.State)
 			return (!ok || state != kubernetes.StateDeleted)
 		},
-		MakeReduce(
-			MakeMap(
-				MapContainer2Pod,
-				ContainerWithImageNameRenderer,
+		MakeMap(
+			PropagateSingleMetrics(report.Container),
+			MakeReduce(
+				MakeMap(
+					MapContainer2Pod,
+					ContainerWithImageNameRenderer,
+				),
+				SelectPod,
 			),
-			SelectPod,
 		),
 	)),
 )
@@ -40,12 +43,15 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // graph by merging the pods graph and the services topology.
 var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	ApplyDecorators(
-		MakeReduce(
-			MakeMap(
-				Map2Service,
-				PodRenderer,
+		MakeMap(
+			PropagateSingleMetrics(report.Pod),
+			MakeReduce(
+				MakeMap(
+					Map2Service,
+					PodRenderer,
+				),
+				SelectService,
 			),
-			SelectService,
 		),
 	),
 )
@@ -54,12 +60,15 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // graph by merging the pods graph and the deployments topology.
 var DeploymentRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	ApplyDecorators(
-		MakeReduce(
-			MakeMap(
-				Map2Deployment,
-				ReplicaSetRenderer,
+		MakeMap(
+			PropagateSingleMetrics(report.ReplicaSet),
+			MakeReduce(
+				MakeMap(
+					Map2Deployment,
+					ReplicaSetRenderer,
+				),
+				SelectDeployment,
 			),
-			SelectDeployment,
 		),
 	),
 )
@@ -68,12 +77,15 @@ var DeploymentRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // graph by merging the pods graph and the replica sets topology.
 var ReplicaSetRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	ApplyDecorators(
-		MakeReduce(
-			MakeMap(
-				Map2ReplicaSet,
-				PodRenderer,
+		MakeMap(
+			PropagateSingleMetrics(report.Pod),
+			MakeReduce(
+				MakeMap(
+					Map2ReplicaSet,
+					PodRenderer,
+				),
+				SelectReplicaSet,
 			),
-			SelectReplicaSet,
 		),
 	),
 )
