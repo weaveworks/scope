@@ -173,7 +173,7 @@ It is recommended that you run Scope natively in your Kubernetes cluster using `
 
 The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is the following:
 
-    kubectl --namespace=kube-system create -f 'https://scope.weave.works/launch/k8s/weavescope.json' --validate=false
+    kubectl create -f 'https://scope.weave.works/launch/k8s/weavescope.json' --validate=false
 
 > The `--validate=false` flag is currently required due to a bug in Kubernetes (see
 [kubernetes/kubernetes#24089](https://github.com/kubernetes/kubernetes/issues/24089) for more details
@@ -193,7 +193,7 @@ This runs a recent Scope image from the Docker Hub and will launch a probe onto 
 
 **Open Scope in Your Browser**
 
-    kubectl port-forward --namespace=kube-system $(kubectl get pod --namespace=kube-system --selector=name=weave-scope-app -o jsonpath={.items..metadata.name}) 4040
+    kubectl port-forward $(kubectl get pod --selector=name=weave-scope-app -o jsonpath={.items..metadata.name}) 4040
 
 Open http://localhost:4040 in your browser. This allows you to access the Scope UI securely, without opening it to the Internet.
 
