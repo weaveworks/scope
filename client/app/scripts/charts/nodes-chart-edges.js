@@ -18,11 +18,10 @@ class NodesChartEdges extends React.Component {
           const targetSelected = selectedNodeId === edge.get('target');
           const highlighted = highlightedEdgeIds.has(edge.get('id'));
           const focused = hasSelectedNode && (sourceSelected || targetSelected);
-          const blurred = !focused
-            && !highlighted
-            && (!searchQuery
-              || !(searchNodeMatches.has(edge.get('source'))
-              && searchNodeMatches.has(edge.get('target'))));
+          const blurred = !(highlightedEdgeIds.size > 0 && highlighted)
+            && ((hasSelectedNode && !sourceSelected && !targetSelected)
+              || !focused && searchQuery && !(searchNodeMatches.has(edge.get('source'))
+                && searchNodeMatches.has(edge.get('target'))));
 
           return (
             <EdgeContainer
