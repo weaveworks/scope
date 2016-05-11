@@ -173,26 +173,18 @@ It is recommended that you run Scope natively in your Kubernetes cluster using t
 
 The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is the following:
 
-```
-kubectl create -f 'https://scope.weave.works/k8s-gen/weavescope.json' --validate=false
-```
+    kubectl create -f 'https://scope.weave.works/launch/k8s/weavescope.json' --validate=false
 
 Allowable parameters:
 
- - `v` - Weave Scope version or tag, e.g. `latest` or `0.15.0`, current release is the default
-
+- `v` - Weave Scope version or tag, e.g. `latest` or `0.15.0`, current release is the default
 - `service-token` - Weave Scope Cloud Service token
-
 - `k8s-service-type` - Kubernetes service type (for running Scope in Standalone mode), can be either
 `LoadBalancer` or `NodePort`, by default this is unspecified (only internal access)
 
 To download the Scope manifest, use the YAML version of the manifest, since it is easier to read, for example:
 
-```
-curl --silent --remote-name https://scope.weave.works/k8s-gen/weavescope.yaml
-```
-
-    kubectl create -f https://git.io/scope-k8s
+    curl --silent --remote-name https://scope.weave.works/launch/k8s/weavescope.yaml
 
 This runs a recent Scope image from the Docker Hub and will launch a probe onto every node as well as a single app. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
