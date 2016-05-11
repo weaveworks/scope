@@ -169,13 +169,16 @@ To enable DaemonSets in an existing cluster, add the `--runtime-config=extension
 
 **Install Scope on Your Cluster**
 
-It is recommended that you run Scope natively in your Kubernetes cluster using the manifest generator service.
+It is recommended that you run Scope natively in your Kubernetes cluster using `kubectl` with launch URL as show below.
 
 The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is the following:
 
     kubectl --namespace=kube-system create -f 'https://scope.weave.works/launch/k8s/weavescope.json' --validate=false
 
-Allowable parameters:
+> The `--validate=false` flag is currently required due to a bug in Kubernetes (see
+[kubernetes/kubernetes#24089](https://github.com/kubernetes/kubernetes/issues/24089) for more details
+
+Allowable parameters for the launcher URL:
 
 - `v` - Weave Scope version or tag, e.g. `latest` or `0.15.0`, current release is the default
 - `service-token` - Weave Scope Cloud Service token
