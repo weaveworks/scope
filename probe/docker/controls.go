@@ -175,7 +175,7 @@ func (r *registry) analyzeTraffic(containerID string, req xfer.Request) xfer.Res
 		//      instead of asking the user to type a command. It would require
 		//      registering a URL scheme handler, for instance see:
 		//      http://superuser.com/questions/548119/how-do-i-configure-custom-url-handlers-on-os-x
-		template := "wireshark -i <(scope grabpipe %pipe_url)"
+		template := "wscat -b %pipe_url | /Applications/Wireshark.app/Contents/MacOS/Wireshark -k -i -"
 		handler := controls.MakeRawCommandHandler("raw traffic analyzer", r.pipes, cmd, template)
 		return handler(req)
 	}
