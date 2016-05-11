@@ -5,7 +5,7 @@ set -ex
 readonly ARG="$1"
 
 if ! $(weave status 1>/dev/null 2>&1); then
-    weave launch
+    WEAVE_NO_PLUGIN=y weave launch
 fi
 
 eval $(weave env)

@@ -25,7 +25,7 @@ def do_redis():
 def do_qotd():
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   try:
-    s.connect(("qotd", 4446))
+    s.connect(("qotd.weave.local", 4446))
     s.send("Hello")
     return s.recv(1024)
   finally:
@@ -38,7 +38,7 @@ def do_search():
   return r.text
 
 def do_echo(text):
-  r = requests.get("http://echo/", data=text)
+  r = requests.get("http://echo.weave.local/", data=text)
   return r.text
 
 def ignore_error(f):
