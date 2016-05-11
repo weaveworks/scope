@@ -649,10 +649,6 @@ h2 {
         font-size: 90%;
         color: @text-tertiary-color;
         padding: 4px 0;
-
-        &-warning {
-          padding: 0 0.5em;
-        }
       }
     }
   }
@@ -1103,7 +1099,39 @@ h2 {
 }
 
 .warning {
-  .btn-opacity;
+  display: inline-block;
+  cursor: pointer;
+  border: 1px dashed transparent;
+  text-transform: none;
+  border-radius: @border-radius;
+  margin-left: 4px;
+
+  &-wrapper {
+    display: flex;
+  }
+
+  &-text {
+    display: inline-block;
+    color: @text-secondary-color;
+    padding-left: 0.5em;
+  }
+
+  &-icon {
+    .btn-opacity;
+  }
+
+  &-expanded {
+    margin-left: 0;
+    padding: 2px 4px;
+    border-color: @text-tertiary-color;
+  }
+
+  &-expanded &-icon {
+    position: relative;
+    top: 4px;
+    left: 2px;
+  }
+
 }
 
 .sidebar {

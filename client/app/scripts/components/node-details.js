@@ -14,10 +14,9 @@ import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import Warning from './warning';
 
-function getTruncationText(label, count) {
-  return `The section ${label} has been truncated because of too many entries.
-${count} entries are not shown.
-We are working on making this better.`;
+function getTruncationText(count) {
+  return 'This section was too long to be handled efficiently and has been truncated'
+  + ` (${count} extra entries not included). We are working to remove this limitation.`;
 }
 
 export class NodeDetails extends React.Component {
@@ -208,7 +207,7 @@ export class NodeDetails extends React.Component {
                     {table.label}
                     {table.truncationCount > 0 && <span
                       className="node-details-content-section-header-warning">
-                      <Warning text={getTruncationText(table.label, table.truncationCount)} />
+                      <Warning text={getTruncationText(table.truncationCount)} />
                     </span>}
                   </div>
                   <NodeDetailsLabels rows={table.rows} />
