@@ -97,10 +97,19 @@ func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
 
 	result.podStore = &cache.StoreToPodLister{Store: result.setupStore(c, "pods", &api.Pod{})}
 	result.serviceStore = &cache.StoreToServiceLister{Store: result.setupStore(c, "services", &api.Service{})}
-	result.deploymentStore = &cache.StoreToDeploymentLister{Store: result.setupStore(ec, "deployments", &extensions.Deployment{})}
-	result.replicaSetStore = &cache.StoreToReplicaSetLister{Store: result.setupStore(ec, "replicasets", &extensions.ReplicaSet{})}
 	result.replicationControllerStore = &cache.StoreToReplicationControllerLister{Store: result.setupStore(c, "replicationcontrollers", &api.ReplicationController{})}
 	result.nodeStore = &cache.StoreToNodeLister{Store: result.setupStore(c, "nodes", &api.Node{})}
+
+	// We list deployments here to check if this version of kubernetes is >= 1.2.
+	// We would use NegotiateVersion, but Kubernetes 1.1 "supports"
+	// extensions/v1beta1, but not deployments or replicasets.
+	if _, err := ec.Deployments(api.NamespaceAll).List(api.ListOptions{}); err != nil {
+		log.Infof("Deployments and ReplicaSets are not supported by this Kubernetes version")
+	} else {
+		result.deploymentStore = &cache.StoreToDeploymentLister{Store: result.setupStore(ec, "deployments", &extensions.Deployment{})}
+		result.replicaSetStore = &cache.StoreToReplicaSetLister{Store: result.setupStore(ec, "replicasets", &extensions.ReplicaSet{})}
+	}
+
 	return result, nil
 }
 
@@ -152,6 +161,9 @@ func (c *client) WalkServices(f func(Service) error) error {
 }
 
 func (c *client) WalkDeployments(f func(Deployment) error) error {
+	if c.deploymentStore == nil {
+		return nil
+	}
 	list, err := c.deploymentStore.List()
 	if err != nil {
 		return err
@@ -166,6 +178,9 @@ func (c *client) WalkDeployments(f func(Deployment) error) error {
 
 // WalkReplicaSets calls f for each replica set
 func (c *client) WalkReplicaSets(f func(ReplicaSet) error) error {
+	if c.replicaSetStore == nil {
+		return nil
+	}
 	list, err := c.replicaSetStore.List()
 	if err != nil {
 		return err
