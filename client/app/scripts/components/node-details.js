@@ -2,15 +2,22 @@ import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
+import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
+import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
+
 import NodeDetailsControls from './node-details/node-details-controls';
 import NodeDetailsHealth from './node-details/node-details-health';
 import NodeDetailsInfo from './node-details/node-details-info';
 import NodeDetailsLabels from './node-details/node-details-labels';
 import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
-import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
-import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
-import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
+import Warning from './warning';
+
+function getTruncationText(count) {
+  return 'This section was too long to be handled efficiently and has been truncated'
+  + ` (${count} extra entries not included). We are working to remove this limitation.`;
+}
 
 export class NodeDetails extends React.Component {
 
@@ -196,7 +203,13 @@ export class NodeDetails extends React.Component {
             if (table.rows.length > 0) {
               return (
                 <div className="node-details-content-section" key={table.id}>
-                  <div className="node-details-content-section-header">{table.label}</div>
+                  <div className="node-details-content-section-header">
+                    {table.label}
+                    {table.truncationCount > 0 && <span
+                      className="node-details-content-section-header-warning">
+                      <Warning text={getTruncationText(table.truncationCount)} />
+                    </span>}
+                  </div>
                   <NodeDetailsLabels rows={table.rows} />
                 </div>
               );
