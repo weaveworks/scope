@@ -1,4 +1,5 @@
 import React from 'react';
+import _ from 'lodash';
 import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
@@ -8,6 +9,19 @@ import { findTopologyById, isTopologyEmpty } from '../utils/topology-utils';
 const navbarHeight = 160;
 const marginTop = 0;
 const detailsWidth = 450;
+
+
+const APOLOGIES = [
+  "We're terribly sorry, the THINGS will be ready in a second!",
+  "Forgive us! We're just loading the THINGS...",
+  'A thousand apologies! Here come the THINGS!... any second now...'
+];
+
+
+function apologizeFor(nodeType, template) {
+  return template.replace('THINGS', nodeType);
+}
+
 
 /**
  * dynamic coords precision based on topology size
@@ -44,9 +58,12 @@ class Nodes extends React.Component {
     super(props, context);
     this.handleResize = this.handleResize.bind(this);
 
+    const [topologiesLoadingTemplate, nodeLoadingTemplate] = _.sampleSize(APOLOGIES, 2);
     this.state = {
       width: window.innerWidth,
-      height: window.innerHeight - navbarHeight - marginTop
+      height: window.innerHeight - navbarHeight - marginTop,
+      topologiesLoadingTemplate,
+      nodeLoadingTemplate,
     };
   }
 
@@ -87,12 +104,14 @@ class Nodes extends React.Component {
       topology } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
     const hasSelectedNode = selectedNodeId && nodes.has(selectedNodeId);
+    const topologyLoadingMessage = apologizeFor('toplogies', this.state.topologiesLoadingTemplate);
+    const nodeLoadingMessage = apologizeFor(getNodeType(topology, topologies),
+      this.state.nodeLoadingTemplate);
 
     return (
       <div className="nodes-wrapper">
-        {this.renderLoading('Loading topologies...', !topologiesLoaded)}
-        {this.renderLoading(`Loading ${getNodeType(topology, topologies)}...`,
-          topologiesLoaded && !nodesLoaded)}
+        {this.renderLoading(topologyLoadingMessage, !topologiesLoaded)}
+        {this.renderLoading(nodeLoadingMessage, topologiesLoaded && !nodesLoaded)}
         {this.renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
         <NodesChart {...this.state}
           detailsWidth={detailsWidth}
