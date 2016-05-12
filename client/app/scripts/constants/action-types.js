@@ -54,6 +54,7 @@ const ACTION_TYPES = [
   'PIN_NETWORK',
   'UNPIN_NETWORK',
   'SHOW_NETWORKS',
+  'SET_RECEIVED_NODES_DELTA',
 ];
 
 export default _.zipObject(ACTION_TYPES, ACTION_TYPES);

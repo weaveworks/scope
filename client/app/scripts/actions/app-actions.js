@@ -468,6 +468,8 @@ export function receiveNodeDetails(details) {
 
 export function receiveNodesDelta(delta) {
   return (dispatch, getState) => {
+    dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA });
+
     if (delta.add || delta.update || delta.remove) {
       const state = getState();
       if (state.get('updatePausedAt') !== null) {
