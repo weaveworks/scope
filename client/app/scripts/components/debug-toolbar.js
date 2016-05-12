@@ -8,6 +8,7 @@ import { fromJS } from 'immutable';
 import debug from 'debug';
 const log = debug('scope:debug-panel');
 
+import ActionTypes from '../constants/action-types';
 import { receiveNodesDelta } from '../actions/app-actions';
 import { getNodeColor, getNodeColorDark } from '../utils/color-utils';
 
@@ -104,10 +105,12 @@ function stopPerf() {
   Perf.printWasted(measurements);
 }
 
+
 function startPerf(delay) {
   Perf.start();
   setTimeout(stopPerf, delay * 1000);
 }
+
 
 export function showingDebugToolbar() {
   return (('debugToolbar' in localStorage && JSON.parse(localStorage.debugToolbar))
@@ -127,10 +130,22 @@ function enableLog(ns) {
   window.location.reload();
 }
 
+
 function disableLog() {
   debug.disable();
   window.location.reload();
 }
+
+
+function setAppState(fn) {
+  return (dispatch) => {
+    dispatch({
+      type: ActionTypes.DEBUG_TOOLBAR_INTERFERING,
+      fn
+    });
+  };
+}
+
 
 class DebugToolbar extends React.Component {
 
@@ -153,6 +168,10 @@ class DebugToolbar extends React.Component {
     this.setState({
       showColors: !this.state.showColors
     });
+  }
+
+  setLoading(loading) {
+    this.props.setAppState(state => state.set('topologiesLoaded', !loading));
   }
 
   addNodes(n, prefix = 'zing') {
@@ -223,6 +242,12 @@ class DebugToolbar extends React.Component {
         ))}
 
         <div>
+          <label>state</label>
+          <button onClick={() => this.setLoading(true)}>Set doing initial load</button>
+          <button onClick={() => this.setLoading(false)}>Stop</button>
+        </div>
+
+        <div>
           <label>Measure React perf for </label>
           <button onClick={() => startPerf(2)}>2s</button>
           <button onClick={() => startPerf(5)}>5s</button>
@@ -233,6 +258,7 @@ class DebugToolbar extends React.Component {
   }
 }
 
+
 function mapStateToProps(state) {
   return {
     nodes: state.get('nodes'),
@@ -240,6 +266,8 @@ function mapStateToProps(state) {
   };
 }
 
+
 export default connect(
-  mapStateToProps
+  mapStateToProps,
+  {setAppState}
 )(DebugToolbar);

@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 class Status extends React.Component {
   render() {
-    const {errorUrl, topologiesLoaded, topology, websocketClosed} = this.props;
+    const {errorUrl, topology, websocketClosed} = this.props;
 
     let title = '';
     let text = 'Trying to reconnect...';
@@ -12,10 +12,6 @@ class Status extends React.Component {
 
     if (errorUrl) {
       title = `Cannot reach Scope. Make sure the following URL is reachable: ${errorUrl}`;
-      classNames += ' status-loading';
-      showWarningIcon = true;
-    } else if (!topologiesLoaded) {
-      text = 'Connecting to Scope...';
       classNames += ' status-loading';
       showWarningIcon = true;
     } else if (websocketClosed) {
