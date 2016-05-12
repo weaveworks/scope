@@ -12,6 +12,7 @@ import (
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -88,15 +89,17 @@ type Reporter struct {
 	pipes   controls.PipeClient
 	probeID string
 	probe   *probe.Probe
+	hostID  string
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(client Client, pipes controls.PipeClient, probeID string, probe *probe.Probe) *Reporter {
+func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe) *Reporter {
 	reporter := &Reporter{
 		client:  client,
 		pipes:   pipes,
 		probeID: probeID,
 		probe:   probe,
+		hostID:  hostID,
 	}
 	reporter.registerControls()
 	client.WatchPods(reporter.podEvent)
@@ -180,6 +183,10 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
+	hostTopology := r.hostTopology(services)
+	if err != nil {
+		return result, err
+	}
 	deploymentTopology, deployments, err := r.deploymentTopology(r.probeID)
 	if err != nil {
 		return result, err
@@ -194,6 +201,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	}
 	result.Pod = result.Pod.Merge(podTopology)
 	result.Service = result.Service.Merge(serviceTopology)
+	result.Host = result.Host.Merge(hostTopology)
 	result.Deployment = result.Deployment.Merge(deploymentTopology)
 	result.ReplicaSet = result.ReplicaSet.Merge(replicaSetTopology)
 	return result, nil
@@ -212,6 +220,25 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 		return nil
 	})
 	return result, services, err
+}
+
+// FIXME: Hideous hack to remove persistent-connection edges to virtual service
+//        IPs attributed to the internet. We add each service IP as a /32 network
+//        (the global service-cluster-ip-range is not exposed by the API
+//        server so we treat each IP as a /32 network see
+//        https://github.com/kubernetes/kubernetes/issues/25533).
+//        The right way of fixing this is performing DNAT mapping on persistent
+//        connections for which we don't have a robust solution
+//        (see https://github.com/weaveworks/scope/issues/1491)
+func (r *Reporter) hostTopology(services []Service) report.Topology {
+	localNetworks := report.EmptyStringSet
+	for _, service := range services {
+		localNetworks = localNetworks.Add(service.ClusterIP() + "/32")
+	}
+	node := report.MakeNode(report.MakeHostNodeID(r.hostID))
+	node = node.WithSets(report.EmptySets.
+		Add(host.LocalNetworks, localNetworks))
+	return report.MakeTopology().AddNode(node)
 }
 
 func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deployment, error) {

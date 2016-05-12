@@ -184,7 +184,7 @@ func TestReporter(t *testing.T) {
 	pod1ID := report.MakePodNodeID(pod1UID)
 	pod2ID := report.MakePodNodeID(pod2UID)
 	serviceID := report.MakeServiceNodeID(serviceUID)
-	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", nil).Report()
+	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", "foo", nil).Report()
 
 	// Reporter should have added the following pods
 	for _, pod := range []struct {
@@ -247,7 +247,7 @@ func TestTagger(t *testing.T) {
 		docker.LabelPrefix + "io.kubernetes.pod.uid": "123456",
 	}))
 
-	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", nil).Tag(rpt)
+	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil).Tag(rpt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -275,7 +275,7 @@ func TestReporterGetLogs(t *testing.T) {
 
 	client := newMockClient()
 	pipes := mockPipeClient{}
-	reporter := kubernetes.NewReporter(client, pipes, "", nil)
+	reporter := kubernetes.NewReporter(client, pipes, "", "", nil)
 
 	// Should error on invalid IDs
 	{

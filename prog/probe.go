@@ -160,7 +160,7 @@ func probeMain(flags probeFlags) {
 	if flags.kubernetesEnabled {
 		if client, err := kubernetes.NewClient(flags.kubernetesAPI, flags.kubernetesInterval); err == nil {
 			defer client.Stop()
-			reporter := kubernetes.NewReporter(client, clients, probeID, p)
+			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p)
 			defer reporter.Stop()
 			p.AddReporter(reporter)
 			p.AddTagger(reporter)
