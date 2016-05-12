@@ -2,6 +2,7 @@ import React from 'react';
 
 const GENERAL_SHORTCUTS = [
   {key: 'esc', label: 'Close active panel'},
+  {key: '/', label: 'Activate search field'},
   {key: '?', label: 'Toggle shortcut menu'},
 ];
 
@@ -41,4 +42,3 @@ export default class HelpPanel extends React.Component {
     );
   }
 }
-

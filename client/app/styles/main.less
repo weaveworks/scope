@@ -60,6 +60,9 @@
 
 @link-opacity-default: 0.8;
 
+@search-border-color: transparent;
+@search-border-width: 1px;
+
 /* add this class to truncate text with ellipsis, container needs width */
 .truncate {
   white-space: nowrap;
@@ -170,7 +173,7 @@ h2 {
   display: flex;
 
   .logo {
-    margin: -8px 0 0 64px;
+    margin: -10px 0 0 64px;
     height: 64px;
     width: 250px;
   }
@@ -236,7 +239,7 @@ h2 {
 }
 
 .topologies {
-  margin: 4px 0 0 128px;
+  margin: 8px 4px;
   display: flex;
 
   .topologies-item {
@@ -268,6 +271,7 @@ h2 {
     border-radius: @border-radius;
     opacity: 0.8;
     margin-bottom: 3px;
+    border: 1px solid transparent;
 
     &-active, &:hover {
       color: @text-color;
@@ -277,6 +281,11 @@ h2 {
     &-active {
       opacity: 0.85;
     }
+
+    &-matched {
+      border-color: @weave-blue;
+    }
+
   }
 
   .topologies-sub-item {
@@ -326,29 +335,41 @@ h2 {
   text {
     font-family: @base-font;
     fill: @text-secondary-color;
-
-    &.node-label {
-      fill: @text-color;
-    }
-
-    &.node-sublabel {
-      fill: @text-secondary-color;
-    }
   }
 
   .nodes-chart-nodes > .node {
-    cursor: pointer;
     transition: opacity .5s @base-ease;
+    text-align: center;
 
-    .hover-box {
-      fill-opacity: 0;
+    .node-label,
+    .node-sublabel {
+      line-height: 125%;
     }
 
-    &.hovered .node-label, &.hovered .node-sublabel {
-      stroke: @background-average-color;
-      stroke-width: 8px;
-      stroke-opacity: 0.7;
-      paint-order: stroke;
+    .node-label {
+      color: @text-color;
+      font-size: 14px;
+    }
+
+    .node-label-wrapper {
+      cursor: pointer;
+      padding-top: 6px;
+    }
+
+    .node-sublabel {
+      color: @text-secondary-color;
+      font-size: 12px;
+    }
+
+    &.hovered {
+      .node-label, .node-sublabel {
+        span:not(.match) {
+          background-color: fade(@background-average-color, 70%);
+        }
+      }
+      .matched-results {
+        background-color: fade(@background-average-color, 70%);
+      }
     }
 
     &.pseudo {
@@ -374,6 +395,19 @@ h2 {
 
     &.blurred {
       opacity: @node-opacity-blurred;
+    }
+
+    &.matched .shape {
+      animation: throb 0.5s @base-ease;
+    }
+
+    .node-label, .node-sublabel {
+      text-align: center;
+    }
+
+    .match {
+      background-color: lighten(rgba(0, 210, 255, 0.5), 30%);
+      border: 1px solid @weave-blue;
     }
   }
 
@@ -423,6 +457,9 @@ h2 {
   }
 
   .shape {
+    transform: scale(1);
+    cursor: pointer;
+
     /* cloud paths have stroke-width set dynamically */
     &:not(.shape-cloud) .border {
       stroke-width: @node-border-stroke-width;
@@ -472,6 +509,33 @@ h2 {
     stroke-width: @node-border-stroke-width - 0.5;
   }
 
+}
+
+.matched-results {
+  text-align: center;
+
+  &-match {
+    font-size: 0.7rem;
+
+    &-wrapper {
+      display: inline-block;
+      margin: 1px;
+      padding: 2px 4px;
+      background-color: fade(@weave-blue, 10%);
+    }
+
+    &-label {
+      color: @text-secondary-color;
+      margin-right: 0.5em;
+    }
+  }
+
+  &-more {
+    text-transform: uppercase;
+    font-size: 0.6rem;
+    color: darken(@weave-blue, 10%);
+    margin-top: -2px;
+  }
 }
 
 .details {
@@ -524,6 +588,11 @@ h2 {
         border-color: rgba(255, 255, 255, 0.6);
       }
     }
+  }
+
+  .match {
+    background-color: fade(@weave-blue, 30%);
+    border: 1px solid @weave-blue;
   }
 
   &-header {
@@ -1141,6 +1210,141 @@ h2 {
   font-size: .7rem;
 }
 
+.search {
+  display: inline-block;
+  position: relative;
+  width: 10em;
+  transition: width 0.3s 0s @base-ease;
+
+  &-wrapper {
+    flex: 0 1 25%;
+    margin: 8px;
+    text-align: right;
+  }
+
+  &-disabled {
+    opacity: 0.5;
+    cursor: disabled;
+  }
+
+  &-hint {
+    font-size: 0.7rem;
+    position: absolute;
+    padding: 0 1em;
+    color: @text-tertiary-color;
+    top: 0;
+    opacity: 0;
+    transition: transform 0.3s 0s @base-ease, opacity 0.3s 0s @base-ease;
+    text-align: left;
+  }
+
+  &-input {
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    border-radius: @border-radius;
+    width: 100%;
+    border: @search-border-width solid @search-border-color;
+    padding: 2px 4px;
+    text-align: left;
+    flex-wrap: wrap;
+
+    &-field {
+      font-size: 0.8rem;
+      line-height: 150%;
+      position: relative;
+      padding: 1px 4px 1px 0.75em;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      color: @text-color;
+      flex: 1;
+      width: 60px;
+
+      &:focus {
+        outline: none;
+      }
+    }
+
+    &-icon {
+      position: relative;
+      width: 1.285em;
+      text-align: center;
+      color: @text-secondary-color;
+      position: relative;
+      top: 2px;
+      left: 4px;
+      padding: 2px;
+    }
+
+    &-label {
+      user-select: none;
+      display: inline-block;
+      padding: 2px 0.75em;
+      font-size: 0.8rem;
+      position: absolute;
+      text-align: left;
+      pointer-events: none;
+      color: @text-secondary-color;
+      text-transform: uppercase;
+      transition: opacity 0.3s 0.5s @base-ease;
+      opacity: 1;
+    }
+  }
+
+  &-focused &-input-label,
+  &-pinned &-input-label,
+  &-filled &-input-label {
+    transition: opacity 0.1s 0s @base-ease;
+    opacity: 0;
+  }
+
+  &-focused &-hint,
+  &-filled &-hint,
+  &-pinned &-hint {
+    opacity: 1;
+    transform: translate3d(0, 2.75em, 0);
+    transition: transform 0.3s 0.3s @base-ease, opacity 0.3s 0.3s @base-ease;
+  }
+
+  &-focused,
+  &-filled,
+  &-pinned {
+    width: 100%;
+  }
+
+  &-matched &-input {
+    border-color: @weave-blue;
+  }
+
+}
+
+.search-item {
+  background-color: fade(@weave-blue, 20%);
+  border-radius: @border-radius / 2;
+  margin: 1px 0 1px 8px;
+  display: inline-block;
+
+  & + .search-item {
+    margin-left: 4px;
+  }
+
+  &-label {
+    padding: 2px 4px;
+  }
+
+  &-icon {
+    .btn-opacity;
+    padding: 2px 4px 2px 2px;
+    cursor: pointer;
+    font-size: 80%;
+    position: relative;
+    top: -1px;
+  }
+}
+
 @keyframes focusing {
   0% {
     opacity: 0;
@@ -1156,6 +1360,14 @@ h2 {
     opacity: 1.0;
   } 25% {
     opacity: 0.5;
+  }
+}
+
+@keyframes throb {
+  0%, 50%, 100% {
+    transform: scale(1);
+  } 25%, 75% {
+    transform: scale(1.2);
   }
 }
 

@@ -4,9 +4,10 @@ import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
+import { parseQuery } from '../utils/search-utils';
 import { bufferDeltaUpdate, resumeUpdate,
   resetUpdateBuffer } from '../utils/update-buffer-utils';
-import { doControlRequest, getNodesDelta, getNodeDetails,
+import { doControlRequest, getAllNodes, getNodesDelta, getNodeDetails,
   getTopologies, deletePipe } from '../utils/web-api-utils';
 import { getActiveTopologyOptions,
   getCurrentTopologyUrl } from '../utils/topology-utils';
@@ -69,6 +70,20 @@ export function pinNextMetric(delta) {
   };
 }
 
+export function unpinSearch(query) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.UNPIN_SEARCH,
+      query
+    });
+    updateRoute(getState);
+  };
+}
+
+export function blurSearch() {
+  return { type: ActionTypes.BLUR_SEARCH };
+}
+
 export function changeTopologyOption(option, value, topologyId) {
   return (dispatch, getState) => {
     dispatch({
@@ -128,7 +143,11 @@ export function clickCloseTerminal(pipeId, closePipe) {
 }
 
 export function clickDownloadGraph() {
-  saveGraph();
+  return (dispatch) => {
+    dispatch({ type: ActionTypes.SET_EXPORTING_GRAPH, exporting: true });
+    saveGraph();
+    dispatch({ type: ActionTypes.SET_EXPORTING_GRAPH, exporting: false });
+  };
 }
 
 export function clickForceRelayout() {
@@ -265,6 +284,16 @@ export function doControl(nodeId, control) {
   };
 }
 
+export function doSearch(searchQuery) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.DO_SEARCH,
+      searchQuery
+    });
+    updateRoute(getState);
+  };
+}
+
 export function enterEdge(edgeId) {
   return {
     type: ActionTypes.ENTER_EDGE,
@@ -279,12 +308,61 @@ export function enterNode(nodeId) {
   };
 }
 
+export function focusSearch() {
+  return (dispatch, getState) => {
+    dispatch({ type: ActionTypes.FOCUS_SEARCH });
+    // update nodes cache to allow search across all topologies,
+    // wait a second until animation is over
+    setTimeout(() => {
+      getAllNodes(getState, dispatch);
+    }, 1200);
+  };
+}
+
+export function hitBackspace() {
+  return (dispatch, getState) => {
+    const state = getState();
+    // remove last pinned query if search query is empty
+    if (state.get('searchFocused') && !state.get('searchQuery')) {
+      const query = state.get('pinnedSearches').last();
+      if (query) {
+        dispatch({
+          type: ActionTypes.UNPIN_SEARCH,
+          query
+        });
+        updateRoute(getState);
+      }
+    }
+  };
+}
+
+export function hitEnter() {
+  return (dispatch, getState) => {
+    const state = getState();
+    // pin query based on current search field
+    if (state.get('searchFocused')) {
+      const query = state.get('searchQuery');
+      if (query && parseQuery(query)) {
+        dispatch({
+          type: ActionTypes.PIN_SEARCH,
+          query
+        });
+        updateRoute(getState);
+      }
+    }
+  };
+}
+
 export function hitEsc() {
   return (dispatch, getState) => {
     const state = getState();
     const controlPipe = state.get('controlPipes').last();
     if (state.get('showingHelp')) {
       dispatch(hideHelp());
+    } else if (state.get('searchQuery')) {
+      dispatch(doSearch(''));
+    } else if (state.get('searchFocused')) {
+      dispatch(blurSearch());
     } else if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
       dispatch({
         type: ActionTypes.CLICK_CLOSE_TERMINAL,
@@ -351,9 +429,17 @@ export function receiveNodesDelta(delta) {
   };
 }
 
+export function receiveNodesForTopology(nodes, topologyId) {
+  return {
+    type: ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY,
+    nodes,
+    topologyId
+  };
+}
 
 export function receiveTopologies(topologies) {
   return (dispatch, getState) => {
+    const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies
@@ -369,6 +455,10 @@ export function receiveTopologies(topologies) {
       state.get('nodeDetails'),
       dispatch
     );
+    // populate search matches on first load
+    if (firstLoad && state.get('searchQuery')) {
+      dispatch(focusSearch());
+    }
   };
 }
 

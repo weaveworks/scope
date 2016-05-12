@@ -4,7 +4,8 @@ import reqwest from 'reqwest';
 import { clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
   receiveControlNodeRemoved, receiveControlPipe, receiveControlPipeStatus,
-  receiveControlSuccess, receiveTopologies, receiveNotFound } from '../actions/app-actions';
+  receiveControlSuccess, receiveTopologies, receiveNotFound,
+  receiveNodesForTopology } from '../actions/app-actions';
 
 import { API_INTERVAL, TOPOLOGY_INTERVAL } from '../constants/timer';
 
@@ -94,6 +95,23 @@ function createWebsocket(topologyUrl, optionsQuery, dispatch) {
 }
 
 /* keep URLs relative */
+
+/**
+ * Gets nodes for all topologies (for search)
+ */
+export function getAllNodes(getState, dispatch) {
+  const state = getState();
+  const topologyOptions = state.get('topologyOptions');
+  // fetch sequentially
+  state.get('topologyUrlsById')
+    .reduce((sequence, topologyUrl, topologyId) => sequence.then(() => {
+      const optionsQuery = buildOptionsQuery(topologyOptions.get(topologyId));
+      return fetch(`${topologyUrl}?${optionsQuery}`);
+    })
+    .then(response => response.json())
+    .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
+    Promise.resolve());
+}
 
 export function getTopologies(options, dispatch) {
   clearTimeout(topologyTimer);

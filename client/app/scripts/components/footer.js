@@ -72,7 +72,7 @@ class Footer extends React.Component {
             <span className="fa fa-refresh" />
           </a>
           <a className="footer-icon" onClick={this.props.clickDownloadGraph}
-            title="Save canvas as SVG">
+            title="Save canvas as SVG (does not include search highlighting)">
             <span className="fa fa-download" />
           </a>
           <a className="footer-icon" href="api/report" download title="Save raw data as JSON">

@@ -1,10 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
+import classnames from 'classnames';
+import { Map as makeMap } from 'immutable';
 
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
 import { getNodeColor } from '../utils/color-utils';
+import MatchedText from '../components/matched-text';
+import MatchedResults from '../components/matched-results';
 
 import NodeShapeCircle from './node-shape-circle';
 import NodeShapeStack from './node-shape-stack';
@@ -34,14 +37,15 @@ function getNodeShape({ shape, stack }) {
   return stack ? stackedShape(nodeShape) : nodeShape;
 }
 
-function ellipsis(text, fontSize, maxWidth) {
-  const averageCharLength = fontSize / 1.5;
-  const allowedChars = maxWidth / averageCharLength;
-  let truncatedText = text;
-  if (text && text.length > allowedChars) {
-    truncatedText = `${text.slice(0, allowedChars)}...`;
-  }
-  return truncatedText;
+function svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) {
+  return (
+    <g className="node-label-svg">
+      <text className={labelClassName} y={labelOffsetY + 18} textAnchor="middle">{label}</text>
+      <text className={subLabelClassName} y={labelOffsetY + 35} textAnchor="middle">
+        {subLabel}
+      </text>
+    </g>
+  );
 }
 
 class Node extends React.Component {
@@ -51,64 +55,79 @@ class Node extends React.Component {
     this.handleMouseClick = this.handleMouseClick.bind(this);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
-    this.state = { hovered: false };
+    this.state = {
+      hovered: false,
+      matched: false
+    };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    // marks as matched only when search query changes
+    if (nextProps.searchQuery !== this.props.searchQuery) {
+      this.setState({
+        matched: nextProps.matched
+      });
+    } else {
+      this.setState({
+        matched: false
+      });
+    }
   }
 
   render() {
-    const { blurred, focused, highlighted, label, pseudo, rank,
-      subLabel, scaleFactor, transform, zoomScale } = this.props;
-    const { hovered } = this.state;
+    const { blurred, focused, highlighted, label, matches = makeMap(),
+      pseudo, rank, subLabel, scaleFactor, transform, zoomScale, exportingGraph } = this.props;
+    const { hovered, matched } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
-    const labelText = truncate ? ellipsis(label, 14, nodeScale(4 * scaleFactor)) : label;
-    const subLabelText = truncate ? ellipsis(subLabel, 12, nodeScale(4 * scaleFactor)) : subLabel;
+    const labelTransform = focused ? `scale(${1 / zoomScale})` : '';
+    const labelWidth = nodeScale(scaleFactor * 4);
+    const labelOffsetX = -labelWidth / 2;
+    const labelOffsetY = focused ? nodeScale(0.5) : nodeScale(0.5 * scaleFactor);
 
-    let labelOffsetY = 18;
-    let subLabelOffsetY = 35;
-    let labelFontSize = 14;
-    let subLabelFontSize = 12;
-
-    // render focused nodes in normal size
-    if (focused) {
-      labelFontSize /= zoomScale;
-      subLabelFontSize /= zoomScale;
-      labelOffsetY /= zoomScale;
-      subLabelOffsetY /= zoomScale;
-    }
-
-    const className = classNames({
-      node: true,
+    const nodeClassName = classnames('node', {
       highlighted,
-      blurred,
+      blurred: blurred && !focused,
       hovered,
+      matched,
       pseudo
     });
 
+    const labelClassName = classnames('node-label', { truncate });
+    const subLabelClassName = classnames('node-sublabel', { truncate });
+
     const NodeShapeType = getNodeShape(this.props);
+    const useSvgLabels = exportingGraph;
 
     return (
-      <g className={className} transform={transform} onClick={this.handleMouseClick}
+      <g className={nodeClassName} transform={transform}
         onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
-        <rect className="hover-box"
-          x={-nodeScale(scaleFactor * 0.5)}
-          y={-nodeScale(scaleFactor * 0.5)}
-          width={nodeScale(scaleFactor)}
-          height={nodeScale(scaleFactor) + subLabelOffsetY}
-          />
-        <text className="node-label" textAnchor="middle" style={{fontSize: labelFontSize}}
-          x="0" y={labelOffsetY + nodeScale(0.5 * scaleFactor)}>
-          {labelText}
-        </text>
-        <text className="node-sublabel" textAnchor="middle" style={{fontSize: subLabelFontSize}}
-          x="0" y={subLabelOffsetY + nodeScale(0.5 * scaleFactor)}>
-          {subLabelText}
-        </text>
-        <NodeShapeType
-          size={nodeScale(scaleFactor)}
-          color={color}
-          {...this.props} />
+
+        {useSvgLabels ?
+
+          svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
+
+          <foreignObject x={labelOffsetX} y={labelOffsetY} width={labelWidth}
+            height="10em" transform={labelTransform}>
+            <div className="node-label-wrapper" onClick={this.handleMouseClick}>
+              <div className={labelClassName}>
+                <MatchedText text={label} match={matches.get('label')} />
+              </div>
+              <div className={subLabelClassName}>
+                <MatchedText text={subLabel} match={matches.get('sublabel')} />
+              </div>
+              {!blurred && <MatchedResults matches={matches.get('metadata')} />}
+            </div>
+          </foreignObject>}
+
+        <g onClick={this.handleMouseClick}>
+          <NodeShapeType
+            size={nodeScale(scaleFactor)}
+            color={color}
+            {...this.props} />
+        </g>
       </g>
     );
   }
@@ -131,6 +150,9 @@ class Node extends React.Component {
 }
 
 export default connect(
-  null,
+  state => ({
+    searchQuery: state.get('searchQuery'),
+    exportingGraph: state.get('exportingGraph')
+  }),
   { clickNode, enterNode, leaveNode }
 )(Node);
