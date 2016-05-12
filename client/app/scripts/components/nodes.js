@@ -12,14 +12,17 @@ const detailsWidth = 450;
 
 
 const LOADING_TEMPLATES = [
-  'Just loading the THINGS... any second now...',
-  "Loading the THINGS. They'll be here in a jiffy...",
-  'Crunching the THINGS',
-  'Deleting all the THINGS',
-  'rm -rf *THINGS*',
-  'Waiting for all the THINGS',
-  'Containing the THINGS',
-  'Processing the THINGS',
+  'Loading THINGS',
+  'Verifying THINGS',
+  'Fetching THINGS',
+  'Processing THINGS',
+  'Reticulating THINGS',
+  'Decompressing THINGS',
+  'Compressing THINGS',
+  'Locating THINGS',
+  'Optimizing THINGS',
+  'Transporting THINGS',
+  'Double checking THINGS',
 ];
 
 
