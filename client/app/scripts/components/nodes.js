@@ -31,11 +31,12 @@ function getNodeType(topology, topologies) {
   if (!topology || topologies.size === 0) {
     return '';
   }
+  let name = topology.get('name');
   if (topology.get('parentId')) {
     const parentTopology = findTopologyById(topologies, topology.get('parentId'));
-    return parentTopology.get('name');
+    name = parentTopology.get('name');
   }
-  return topology.get('name');
+  return name.toLowerCase();
 }
 
 class Nodes extends React.Component {
