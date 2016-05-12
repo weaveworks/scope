@@ -16,6 +16,7 @@ app = Flask(__name__)
 redis = Redis(host='redis', port=6379)
 pool = ThreadPoolExecutor(max_workers=10)
 sessions = threading.local()
+args = None
 
 def do_redis():
   redis.incr('hits')
@@ -24,6 +25,7 @@ def do_redis():
 def do_qotd():
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   try:
+    s.settimeout(args.timeout)
     s.connect((args.qotd, 4446))
     s.send("Hello")
     return s.recv(1024)
@@ -33,13 +35,13 @@ def do_qotd():
 def do_search():
   if getattr(sessions, 'session', None) == None:
     sessions.session = requests.Session()
-  r = sessions.session.get(args.search)
+  r = sessions.session.get(args.search, timeout=args.timeout)
   return r.text
 
 def do_echo(text):
   if getattr(sessions, 'session', None) == None:
     sessions.session = requests.Session()
-  r = sessions.session.get(args.echo, data=text)
+  r = sessions.session.get(args.echo, data=text, timeout=args.timeout)
   return r.text
 
 def ignore_error(f):
@@ -75,6 +77,7 @@ if __name__ == "__main__":
   parser.add_argument('-search', default="http://search.weave.local:80/")
   parser.add_argument('-qotd', default="qotd.weave.local")
   parser.add_argument('-echo', default="http://echo.weave.local:80/")
+  parser.add_argument('-timeout', default=0.5, type=float)
   args = parser.parse_args()
 
   logging.basicConfig(format='%(asctime)s %(levelname)s %(filename)s:%(lineno)d - %(message)s', level=logging.INFO)

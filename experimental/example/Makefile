@@ -37,4 +37,4 @@ endif
 	touch $@
 
 clean:
-	rm -f qotd/*.o qotd/qotd searchapp/searchapp shout/shout *.marker
+	rm -f qotd/*.o qotd/qotd searchapp/searchapp shout/shout .*.marker

@@ -8,15 +8,17 @@ import socket
 import sys
 
 def do_request(s, args):
-  addrs = socket.getaddrinfo(args.target, 80)
+  addrs = socket.getaddrinfo(args.target, args.port)
   addrs = [a
     for a in addrs
     if a[0] == socket.AF_INET]
-  logging.info("got %s", addrs)
   if len(addrs) <= 0:
+    logging.info("Could not resolve %s", args.target)
     return
   addr = random.choice(addrs)
-  s.get("http://%s:%d" % addr[4], timeout=1.0)
+  url = "http://%s:%d%s" % (addr[4][0], args.port, args.path)
+  s.get(url, timeout=args.timeout)
+  logging.info("Did request %s", url)
 
 def do_requests(args):
   s = requests.Session()
@@ -29,14 +31,18 @@ def do_requests(args):
     except:
       logging.error("Error doing request", exc_info=sys.exc_info())
 
-    time.sleep(1)
-    logging.info("Did request")
+    time.sleep(args.period)
+
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument('-target', default="frontend")
-  parser.add_argument('-concurrency', default=2, type=int)
+  parser.add_argument('-target', default="frontend.weave.local")
+  parser.add_argument('-port', default=80, type=int)
+  parser.add_argument('-path', default="/")
+  parser.add_argument('-concurrency', default=1, type=int)
   parser.add_argument('-persist', default=True, type=bool)
+  parser.add_argument('-timeout', default=1.0, type=float)
+  parser.add_argument('-period', default=0.1, type=float)
   args = parser.parse_args()
 
   logging.info("Starting %d threads, targeting %s", args.concurrency, args.target)
