@@ -11,14 +11,19 @@ const marginTop = 0;
 const detailsWidth = 450;
 
 
-const APOLOGIES = [
-  "We're terribly sorry, the THINGS will be ready in a second!",
-  "Forgive us! We're just loading the THINGS...",
-  'A thousand apologies! Here come the THINGS!... any second now...'
+const LOADING_TEMPLATES = [
+  'Just loading the THINGS... any second now...',
+  "Loading the THINGS. They'll be here in a jiffy...",
+  'Crunching the THINGS',
+  'Deleting all the THINGS',
+  'rm -rf *THINGS*',
+  'Waiting for all the THINGS',
+  'Containing the THINGS',
+  'Processing the THINGS',
 ];
 
 
-function apologizeFor(nodeType, template) {
+function renderTemplate(nodeType, template) {
   return template.replace('THINGS', nodeType);
 }
 
@@ -58,7 +63,7 @@ class Nodes extends React.Component {
     super(props, context);
     this.handleResize = this.handleResize.bind(this);
 
-    const [topologiesLoadingTemplate, nodeLoadingTemplate] = _.sampleSize(APOLOGIES, 2);
+    const [topologiesLoadingTemplate, nodeLoadingTemplate] = _.sampleSize(LOADING_TEMPLATES, 2);
     this.state = {
       width: window.innerWidth,
       height: window.innerHeight - navbarHeight - marginTop,
@@ -104,8 +109,9 @@ class Nodes extends React.Component {
       topology } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
     const hasSelectedNode = selectedNodeId && nodes.has(selectedNodeId);
-    const topologyLoadingMessage = apologizeFor('toplogies', this.state.topologiesLoadingTemplate);
-    const nodeLoadingMessage = apologizeFor(getNodeType(topology, topologies),
+    const topologyLoadingMessage = renderTemplate('toplogies',
+      this.state.topologiesLoadingTemplate);
+    const nodeLoadingMessage = renderTemplate(getNodeType(topology, topologies),
       this.state.nodeLoadingTemplate);
 
     return (
