@@ -131,7 +131,7 @@ func (r *Reporter) Report() (report.Report, error) {
 			}
 
 			seenTuples[tuple.key()] = tuple
-			r.addConnection(&rpt, tuple, extraNodeInfo, extraNodeInfo)
+			r.addConnection(&rpt, tuple, extraNodeInfo, extraNodeInfo, report.Sets{}, report.Sets{})
 		})
 	}
 
@@ -148,12 +148,14 @@ func (r *Reporter) Report() (report.Report, error) {
 					conn.LocalPort,
 					conn.RemotePort,
 				}
-				toNodeInfo   = map[string]string{Procspied: "true"}
-				fromNodeInfo = map[string]string{Procspied: "true"}
+				toNodeInfo      = map[string]string{Procspied: "true"}
+				fromNodeInfo    = map[string]string{Procspied: "true"}
+				toNodeParents   report.Sets
+				fromNodeParents report.Sets
 			)
 			if conn.Proc.PID > 0 {
 				fromNodeInfo[process.PID] = strconv.FormatUint(uint64(conn.Proc.PID), 10)
-				fromNodeInfo[report.HostNodeID] = hostNodeID
+				fromNodeParents.Add(report.Host, report.MakeStringSet(hostNodeID))
 			}
 
 			// If we've already seen this connection, we should know the direction
@@ -164,8 +166,9 @@ func (r *Reporter) Report() (report.Report, error) {
 			if (ok && canonical != tuple) || (!ok && tuple.fromPort < tuple.toPort) {
 				tuple.reverse()
 				toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
+				toNodeParents, fromNodeParents = fromNodeParents, toNodeParents
 			}
-			r.addConnection(&rpt, tuple, fromNodeInfo, toNodeInfo)
+			r.addConnection(&rpt, tuple, fromNodeInfo, toNodeInfo, fromNodeParents, toNodeParents)
 		}
 	}
 
@@ -173,7 +176,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	return rpt, nil
 }
 
-func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode, extraToNode map[string]string) {
+func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode, extraToNode map[string]string, extraFromNodeParents, extraToNodeParents report.Sets) {
 	// Update endpoint topology
 	if !r.includeProcesses {
 		return
@@ -201,9 +204,11 @@ func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode,
 	if extraFromNode != nil {
 		fromNode = fromNode.WithLatests(extraFromNode)
 	}
+	fromNode = fromNode.WithParents(extraFromNodeParents)
 	if extraToNode != nil {
 		toNode = toNode.WithLatests(extraToNode)
 	}
+	toNode = toNode.WithParents(extraToNodeParents)
 	rpt.Endpoint = rpt.Endpoint.AddNode(fromNode)
 	rpt.Endpoint = rpt.Endpoint.AddNode(toNode)
 }

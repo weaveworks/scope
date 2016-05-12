@@ -273,10 +273,10 @@ func (s Sampling) Merge(other Sampling) Sampling {
 }
 
 const (
-	// HostNodeID is a metadata foreign key, linking a node in any topology to
+	// HostNodeIDs is a metadata foreign key, linking a node in any topology to
 	// a node in the host topology. That host node is the origin host, where
 	// the node was originally detected.
-	HostNodeID = "host_node_id"
+	HostNodeIDs = "host_node_ids"
 	// ControlProbeID is the random ID of the probe which controls the specific node.
 	ControlProbeID = "control_probe_id"
 )

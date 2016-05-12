@@ -194,10 +194,14 @@ func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) 
 	return fields[0], fields[1], true
 }
 
-// ExtractHostID extracts the host id from Node
+// ExtractHostID extracts the host id from Node. If a node has multiple host
+// parent nodes, we just return an empty string, as it's unclear.
 func ExtractHostID(m Node) string {
-	hostNodeID, _ := m.Latest.Lookup(HostNodeID)
-	hostID, _, _ := ParseNodeID(hostNodeID)
+	hostNodeIDs, _ := m.Sets.Lookup(HostNodeIDs)
+	if len(hostNodeIDs) != 1 {
+		return ""
+	}
+	hostID, _, _ := ParseNodeID(hostNodeIDs[0])
 	return hostID
 }
 

@@ -256,20 +256,18 @@ func MapProcess2Container(n report.Node, _ report.Networks) report.Nodes {
 	// into an per-host "Uncontained" node.  If for whatever reason
 	// this node doesn't have a host id in their nodemetadata, it'll
 	// all get grouped into a single uncontained node.
-	var (
-		id   string
-		node report.Node
-	)
+	results := report.Nodes{}
 	if containerID, ok := n.Latest.Lookup(docker.ContainerID); ok {
-		id = report.MakeContainerNodeID(containerID)
-		node = NewDerivedNode(id, n).WithTopology(report.Container)
+		id := report.MakeContainerNodeID(containerID)
+		results[id] = NewDerivedNode(id, n).WithTopology(report.Container)
 	} else {
-		id = MakePseudoNodeID(UncontainedID, report.ExtractHostID(n))
-		node = NewDerivedPseudoNode(id, n)
-		node = propagateLatest(report.HostNodeID, n, node)
+		id := MakePseudoNodeID(UncontainedID, report.ExtractHostID(n))
+		node := NewDerivedPseudoNode(id, n)
+		node = propagateParents(report.Host, n, node)
 		node = propagateLatest(IsConnected, n, node)
+		results[id] = node
 	}
-	return report.Nodes{id: node}
+	return results
 }
 
 // MapContainer2ContainerImage maps container Nodes to container

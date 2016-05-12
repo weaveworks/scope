@@ -159,6 +159,11 @@ func propagateLatest(key string, from, to report.Node) report.Node {
 	return to
 }
 
+func propagateParents(topology string, from, to report.Node) report.Node {
+	p, _ := from.Parents.Lookup(topology)
+	return to.WithParents(report.EmptySets.Add(topology, p))
+}
+
 // Condition is a predecate over the entire report that can evaluate to true or false.
 type Condition func(report.Report) bool
 

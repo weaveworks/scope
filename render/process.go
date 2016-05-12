@@ -112,8 +112,8 @@ func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a process graph to get that info.
 func MapEndpoint2Process(n report.Node, local report.Networks) report.Nodes {
-	// Nodes without a hostid are treated as pseudo nodes
-	if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
+	// Nodes without a host are treated as pseudo nodes
+	if _, ok := n.Parents.Lookup(report.Host); !ok {
 		return MapEndpoint2Pseudo(n, local)
 	}
 

@@ -44,30 +44,27 @@ func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 	if n.Topology == Pseudo {
 		return report.Nodes{}
 	}
-	hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
-	if !ok {
-		return report.Nodes{}
+	ids, _ := n.Parents.Lookup(report.Host)
+	results := report.Nodes{}
+	for _, id := range ids {
+		result := NewDerivedNode(id, n).
+			WithTopology(report.Host).
+			WithSet(report.HostNodeIDs, report.MakeStringSet(id)).
+			WithCounters(map[string]int{n.Topology: 1})
+		result.Children = report.MakeNodeSet(n)
+		results[id] = result
 	}
-	id := report.MakeHostNodeID(report.ExtractHostID(n))
-	result := NewDerivedNode(id, n).WithTopology(report.Host)
-	result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
-	result.Counters = result.Counters.Add(n.Topology, 1)
-	result.Children = report.MakeNodeSet(n)
-	return report.Nodes{id: result}
+	return results
 }
 
 // MapEndpoint2Host takes nodes from the endpoint topology and produces
 // host nodes or pseudo nodes.
 func MapEndpoint2Host(n report.Node, local report.Networks) report.Nodes {
-	// Nodes without a hostid are treated as pseudo nodes
-	hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
+	// Nodes without a host are treated as pseudo nodes
+	_, ok := n.Parents.Lookup(report.Host)
 	if !ok {
 		return MapEndpoint2Pseudo(n, local)
 	}
 
-	id := report.MakeHostNodeID(report.ExtractHostID(n))
-	result := NewDerivedNode(id, n).WithTopology(report.Host)
-	result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
-	result.Counters = result.Counters.Add(n.Topology, 1)
-	return report.Nodes{id: result}
+	return MapX2Host(n, local)
 }
