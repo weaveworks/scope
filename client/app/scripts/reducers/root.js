@@ -656,6 +656,10 @@ export function rootReducer(state = initialState, action) {
       return applyPinnedSearches(state);
     }
 
+    case ActionTypes.DEBUG_TOOLBAR_INTERFERING: {
+      return action.fn(state);
+    }
+
     default: {
       return state;
     }

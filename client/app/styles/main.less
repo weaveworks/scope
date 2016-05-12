@@ -296,7 +296,7 @@ h2 {
 
 .nodes-chart {
 
-  &-error {
+  &-error, &-loading {
     .hideable;
     position: absolute;
     left: 50%;
@@ -304,6 +304,7 @@ h2 {
     transform: translate(-50%, -50%);
     color: @text-secondary-color;
     width: 33%;
+    height: 550px;
 
     .heading {
       font-size: 125%;
@@ -314,6 +315,11 @@ h2 {
       opacity: 0.25;
       font-size: 320px;
     }
+  }
+
+  &-loading {
+    animation: blinking 2s infinite @base-ease;
+    text-align: center;
   }
 
   svg {

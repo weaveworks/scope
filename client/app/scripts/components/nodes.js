@@ -62,15 +62,24 @@ class Nodes extends React.Component {
     );
   }
 
+  renderLoading(show) {
+    return (
+      <NodesError mainClassName="nodes-chart-loading" faIconClass="fa-circle-thin" hidden={!show}>
+        <div className="heading">Loading Topologies</div>
+      </NodesError>
+    );
+  }
+
   render() {
-    const { nodes, selectedNodeId, topologyEmpty } = this.props;
+    const { nodes, selectedNodeId, topologyEmpty, topologiesLoaded } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
     const hasSelectedNode = selectedNodeId && nodes.has(selectedNodeId);
-    const errorEmpty = this.renderEmptyTopologyError(topologyEmpty);
 
     return (
       <div className="nodes-wrapper">
-        {topologyEmpty && errorEmpty}
+        {!topologiesLoaded ?
+          this.renderLoading(!topologiesLoaded) :
+          (topologyEmpty && this.renderEmptyTopologyError(topologyEmpty))}
         <NodesChart {...this.state}
           detailsWidth={detailsWidth}
           layoutPrecision={layoutPrecision}
@@ -97,6 +106,7 @@ function mapStateToProps(state) {
     nodes: state.get('nodes'),
     selectedNodeId: state.get('selectedNodeId'),
     topologyEmpty: isTopologyEmpty(state),
+    topologiesLoaded: state.get('topologiesLoaded')
   };
 }
 
