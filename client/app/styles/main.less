@@ -317,8 +317,11 @@ h2 {
     }
   }
 
+  &-loading &-error-icon-container {
+    animation: blinking 2.0s infinite @base-ease;
+  }
+
   &-loading {
-    animation: blinking 2s infinite @base-ease;
     text-align: center;
   }
 

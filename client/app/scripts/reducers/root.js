@@ -36,6 +36,7 @@ export const initialState = makeMap({
   networkNodes: makeMap(),
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
+  nodesLoaded: false,
   // nodes cache, infrequently updated, used for search
   nodesByTopology: makeMap(), // topologyId -> nodes
   pinnedMetric: null,
@@ -61,7 +62,7 @@ export const initialState = makeMap({
   updatePausedAt: null, // Date
   version: '...',
   versionUpdate: null,
-  websocketClosed: true,
+  websocketClosed: false,
   exportingGraph: false
 });
 
@@ -483,6 +484,7 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.RECEIVE_NODES_DELTA: {
       const emptyMessage = !action.delta.add && !action.delta.remove
         && !action.delta.update;
+      state = state.set('nodesLoaded', true);
 
       if (!emptyMessage) {
         log('RECEIVE_NODES_DELTA',

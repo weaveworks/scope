@@ -10,8 +10,10 @@ export default function NodesError({children, faIconClass, hidden,
 
   return (
     <div className={className}>
-      <div className="nodes-chart-error-icon">
-        <span className={iconClassName} />
+      <div className="nodes-chart-error-icon-container">
+        <div className="nodes-chart-error-icon">
+          <span className={iconClassName} />
+        </div>
       </div>
       {children}
     </div>

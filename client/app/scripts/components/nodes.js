@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesError from '../charts/nodes-error';
-import { isTopologyEmpty } from '../utils/topology-utils';
+import { findTopologyById, isTopologyEmpty } from '../utils/topology-utils';
 
 const navbarHeight = 160;
 const marginTop = 0;
@@ -25,6 +25,17 @@ function getLayoutPrecision(nodesCount) {
   }
 
   return precision;
+}
+
+function getNodeType(topology, topologies) {
+  if (!topology || topologies.size === 0) {
+    return '';
+  }
+  if (topology.get('parentId')) {
+    const parentTopology = findTopologyById(topologies, topology.get('parentId'));
+    return parentTopology.get('name');
+  }
+  return topology.get('name');
 }
 
 class Nodes extends React.Component {
@@ -62,24 +73,26 @@ class Nodes extends React.Component {
     );
   }
 
-  renderLoading(show) {
+  renderLoading(message, show) {
     return (
       <NodesError mainClassName="nodes-chart-loading" faIconClass="fa-circle-thin" hidden={!show}>
-        <div className="heading">Loading Topologies</div>
+        <div className="heading">{message}</div>
       </NodesError>
     );
   }
 
   render() {
-    const { nodes, selectedNodeId, topologyEmpty, topologiesLoaded } = this.props;
+    const { nodes, selectedNodeId, topologyEmpty, topologiesLoaded, nodesLoaded, topologies,
+      topology } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
     const hasSelectedNode = selectedNodeId && nodes.has(selectedNodeId);
 
     return (
       <div className="nodes-wrapper">
-        {!topologiesLoaded ?
-          this.renderLoading(!topologiesLoaded) :
-          (topologyEmpty && this.renderEmptyTopologyError(topologyEmpty))}
+        {this.renderLoading('Loading topologies...', !topologiesLoaded)}
+        {this.renderLoading(`Loading ${getNodeType(topology, topologies)}...`,
+          topologiesLoaded && !nodesLoaded)}
+        {this.renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
         <NodesChart {...this.state}
           detailsWidth={detailsWidth}
           layoutPrecision={layoutPrecision}
@@ -104,9 +117,12 @@ class Nodes extends React.Component {
 function mapStateToProps(state) {
   return {
     nodes: state.get('nodes'),
+    nodesLoaded: state.get('nodesLoaded'),
     selectedNodeId: state.get('selectedNodeId'),
+    topologies: state.get('topologies'),
+    topologiesLoaded: state.get('topologiesLoaded'),
     topologyEmpty: isTopologyEmpty(state),
-    topologiesLoaded: state.get('topologiesLoaded')
+    topology: state.get('currentTopology'),
   };
 }
 
