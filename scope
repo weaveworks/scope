@@ -69,11 +69,11 @@ check_probe_only() {
 }
 
 check_docker_for_mac() {
-  docker_for_mac_network_mode="${HOME}/Library/Containers/com.docker.docker/Data/database/com.docker.driver.amd64-linux/network"
   [ "$(uname)" = "Darwin" ] \
     && [ -S /var/run/docker.sock ] \
     && [ ! "${DOCKER_HOST+x}" = x ] \
-    && grep -q hybrid $docker_for_mac_network_mode 2>/dev/null
+    && [ ! "${HOME+x}" = x ] \
+    && grep -q hybrid "${HOME}/Library/Containers/com.docker.docker/Data/database/com.docker.driver.amd64-linux/network" 2>/dev/null
 }
 
 # Check that a container named $1 with image $2 is not running
