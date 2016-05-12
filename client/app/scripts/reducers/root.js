@@ -10,6 +10,7 @@ import { getNetworkNodes, getAvailableNetworks } from '../utils/network-view-uti
 import { findTopologyById, getAdjacentNodes, setTopologyUrlsById,
   updateTopologyIds, filterHiddenTopologies } from '../utils/topology-utils';
 
+const log = debug('scope:app-store');
 const error = debug('scope:error');
 
 // Helpers
@@ -485,6 +486,16 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_NODES_DELTA: {
+      const emptyMessage = !action.delta.add && !action.delta.remove
+        && !action.delta.update;
+
+      if (!emptyMessage) {
+        log('RECEIVE_NODES_DELTA',
+          'remove', _.size(action.delta.remove),
+          'update', _.size(action.delta.update),
+          'add', _.size(action.delta.add));
+      }
+
       state = state.set('errorUrl', null);
 
       // nodes that no longer exist
