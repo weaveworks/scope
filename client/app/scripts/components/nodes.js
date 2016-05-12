@@ -17,8 +17,6 @@ const LOADING_TEMPLATES = [
   'Fetching THINGS',
   'Processing THINGS',
   'Reticulating THINGS',
-  'Decompressing THINGS',
-  'Compressing THINGS',
   'Locating THINGS',
   'Optimizing THINGS',
   'Transporting THINGS',
@@ -112,7 +110,7 @@ class Nodes extends React.Component {
       topology } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
     const hasSelectedNode = selectedNodeId && nodes.has(selectedNodeId);
-    const topologyLoadingMessage = renderTemplate('toplogies',
+    const topologyLoadingMessage = renderTemplate('topologies',
       this.state.topologiesLoadingTemplate);
     const nodeLoadingMessage = renderTemplate(getNodeType(topology, topologies),
       this.state.nodeLoadingTemplate);
