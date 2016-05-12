@@ -68,6 +68,7 @@ type probeFlags struct {
 	logPrefix       string
 	logLevel        string
 	resolver        string
+	noApp           bool
 
 	dockerEnabled  bool
 	dockerInterval time.Duration
@@ -115,12 +116,13 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Force debug logging.")
 	flag.StringVar(&weaveHostname, "weave.hostname", "", "Hostname to advertise/lookup in WeaveDNS")
 
-	// We can ignore these - we need to know how to parse them, but they are interpreted by the entrypoint script.
-	// They are also here so they are included in usage.
-	flag.Bool("no-app", false, "Don't run the app.")
+	// We need to know how to parse them, but they are mainly interpreted by the entrypoint script.
+	// They are also here so they are included in usage, and the probe uses them to decide if to
+	// publish to localhost.
+	noApp := flag.Bool("no-app", false, "Don't run the app.")
+	probeOnly := flag.Bool("app-only", false, "Only run the app")
 	flag.Bool("probe-only", false, "Only run the probe.")
 	flag.Bool("no-probe", false, "Don't run the probe.")
-	flag.Bool("app-only", false, "Only run the app")
 
 	// Probe flags
 	flag.StringVar(&flags.probe.token, "service-token", "", "Token to use to authenticate with scope.weave.works")
@@ -176,6 +178,7 @@ func main() {
 		flags.probe.weaveHostname = weaveHostname
 		flags.app.weaveHostname = weaveHostname
 	}
+	flags.probe.noApp = *noApp || *probeOnly
 
 	switch mode {
 	case "app":

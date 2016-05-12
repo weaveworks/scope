@@ -1,7 +1,7 @@
 import debug from 'debug';
 import reqwest from 'reqwest';
 
-import { clearControlError, closeWebsocket, openWebsocket, receiveError,
+import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
   receiveControlNodeRemoved, receiveControlPipe, receiveControlPipeStatus,
   receiveControlSuccess, receiveTopologies, receiveNotFound,
@@ -208,6 +208,7 @@ export function doControlRequest(nodeId, control, dispatch) {
       dispatch(receiveControlSuccess(nodeId));
       if (res) {
         if (res.pipe) {
+          dispatch(blurSearch());
           dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, true));
         }
         if (res.removedNode) {

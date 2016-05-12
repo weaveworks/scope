@@ -94,9 +94,12 @@ func probeMain(flags probeFlags) {
 	}
 	go check(checkpointFlags)
 
-	var targets = []string{fmt.Sprintf("localhost:%d", xfer.AppPort)}
+	var targets = []string{}
+	if !flags.noApp {
+		targets = append(targets, fmt.Sprintf("localhost:%d", xfer.AppPort))
+	}
 	if len(flag.Args()) > 0 {
-		targets = flag.Args()
+		targets = append(targets, flag.Args()...)
 	}
 	log.Infof("publishing to: %s", strings.Join(targets, ", "))
 
@@ -157,7 +160,7 @@ func probeMain(flags probeFlags) {
 	if flags.kubernetesEnabled {
 		if client, err := kubernetes.NewClient(flags.kubernetesAPI, flags.kubernetesInterval); err == nil {
 			defer client.Stop()
-			reporter := kubernetes.NewReporter(client, clients, probeID, p)
+			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p)
 			defer reporter.Stop()
 			p.AddReporter(reporter)
 			p.AddTagger(reporter)

@@ -14,21 +14,6 @@ const error = debug('scope:error');
 
 // Helpers
 
-function makeNode(node) {
-  return {
-    id: node.id,
-    label: node.label,
-    label_minor: node.label_minor,
-    node_count: node.node_count,
-    rank: node.rank,
-    pseudo: node.pseudo,
-    stack: node.stack,
-    shape: node.shape,
-    adjacency: node.adjacency,
-    metrics: node.metrics
-  };
-}
-
 const topologySorter = topology => topology.get('rank');
 
 // Initial values
@@ -490,7 +475,7 @@ export function rootReducer(state = initialState, action) {
 
       // add new nodes
       _.each(action.delta.add, (node) => {
-        state = state.setIn(['nodes', node.id], fromJS(makeNode(node)));
+        state = state.setIn(['nodes', node.id], fromJS(node));
       });
 
       // apply pinned searches, filters nodes that dont match
