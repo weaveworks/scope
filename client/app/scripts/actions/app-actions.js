@@ -468,7 +468,12 @@ export function receiveNodeDetails(details) {
 
 export function receiveNodesDelta(delta) {
   return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA });
+    //
+    // allow css-animation to run smoothly by scheduling it to run on the
+    // next tick after any potentially expensive canvas re-draws have been
+    // completed.
+    //
+    setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
     if (delta.add || delta.update || delta.remove) {
       const state = getState();
