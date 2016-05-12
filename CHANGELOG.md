@@ -91,7 +91,13 @@ Bug fixes:
 - Node IDs with / leads to redirect loop when scope is mounted under a path with slash redirect
 	[#1335](https://github.com/weaveworks/scope/issues/1335)
 - Ignore conntracked connections on which we never saw an update
-	[#1466](https://github.com/weaveworks/scope/issues/1335)
+	[#1466](https://github.com/weaveworks/scope/issues/466)
+- Containers incorrectly attributed to host
+	[#1472](https://github.com/weaveworks/scope/issues/1472)
+- k8s: Unexpected edge to the Internet node
+	[#1469](https://github.com/weaveworks/scope/issues/1469)
+- When user supplies IP addr on command line, we don't try to connect to localhost
+	[#1477](https://github.com/weaveworks/scope/issues/1477)
 
 Documentation:
 - Restructured Scope Docs
