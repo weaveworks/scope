@@ -42,12 +42,17 @@ class Search extends React.Component {
 
   constructor(props, context) {
     super(props, context);
+    this.handleBlur = this.handleBlur.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
     this.doSearch = _.debounce(this.doSearch.bind(this), 200);
     this.state = {
       value: ''
     };
+  }
+
+  handleBlur() {
+    this.props.blurSearch();
   }
 
   handleChange(ev) {
@@ -119,7 +124,7 @@ class Search extends React.Component {
               .map(query => <SearchItem query={query} key={query} />)}
             <input className="search-input-field" type="text" id={inputId}
               value={value} onChange={this.handleChange}
-              onFocus={this.handleFocus}
+              onFocus={this.handleFocus} onBlur={this.handleBlur}
               disabled={disabled} ref="queryInput" />
           </div>
           {!showPinnedSearches && <div className="search-hint">

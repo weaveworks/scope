@@ -54,6 +54,8 @@ class App extends React.Component {
   }
 
   onKeyUp(ev) {
+    const { showingTerminal } = this.props;
+
     // don't get esc in onKeyPress
     if (ev.keyCode === ESC_KEY_CODE) {
       this.props.dispatch(hitEsc());
@@ -61,7 +63,7 @@ class App extends React.Component {
       this.props.dispatch(hitEnter());
     } else if (ev.keyCode === BACKSPACE_KEY_CODE) {
       this.props.dispatch(hitBackspace());
-    } else if (ev.code === 'KeyD' && ev.ctrlKey) {
+    } else if (ev.code === 'KeyD' && ev.ctrlKey && !showingTerminal) {
       toggleDebugToolbar();
       this.forceUpdate();
     }
@@ -95,10 +97,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { availableCanvasMetrics, nodeDetails, controlPipes, showingHelp } = this.props;
-    const showingDetails = nodeDetails.size > 0;
-    const showingTerminal = controlPipes.size > 0;
-    const showingMetricsSelector = availableCanvasMetrics.count() > 0;
+    const { showingDetails, showingHelp, showingMetricsSelector, showingTerminal } = this.props;
 
     return (
       <div className="app">
@@ -137,13 +136,13 @@ class App extends React.Component {
 function mapStateToProps(state) {
   return {
     activeTopologyOptions: getActiveTopologyOptions(state),
-    availableCanvasMetrics: state.get('availableCanvasMetrics'),
-    controlPipes: state.get('controlPipes'),
-    nodeDetails: state.get('nodeDetails'),
     routeSet: state.get('routeSet'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
+    showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
+    showingMetricsSelector: state.get('availableCanvasMetrics').count() > 0,
+    showingTerminal: state.get('controlPipes').size > 0,
     urlState: getUrlState(state)
   };
 }
