@@ -62,9 +62,8 @@ type containerWithImageNameRenderer struct {
 	Renderer
 }
 
-// Render produces a process graph where the minor labels contain the
-// container name, if found.  It also merges the image node metadata into the
-// container metadata.
+// Render produces a container graph where the the latest metadata contains the
+// container image name, if found.
 func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
 	containers := r.Renderer.Render(rpt, dct)
 	images := SelectContainerImage.Render(rpt, dct)
@@ -81,7 +80,8 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator)
 			continue
 		}
 		output := c.Copy()
-		output.Latest = image.Latest.Merge(c.Latest)
+		output = propagateLatest(docker.ImageName, image, output)
+		output = propagateLatest(docker.ImageLabelPrefix+"works.weave.role", image, output)
 		outputs[id] = output
 	}
 	return outputs

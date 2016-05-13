@@ -16,6 +16,7 @@ type Service interface {
 	Meta
 	GetNode() report.Node
 	Selector() labels.Selector
+	ClusterIP() string
 }
 
 type service struct {
@@ -41,4 +42,8 @@ func (s *service) GetNode() report.Node {
 		latest[PublicIP] = s.Spec.LoadBalancerIP
 	}
 	return s.MetaNode(report.MakeServiceNodeID(s.UID())).WithLatests(latest)
+}
+
+func (s *service) ClusterIP() string {
+	return s.Spec.ClusterIP
 }

@@ -52,6 +52,7 @@ func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 	result := NewDerivedNode(id, n).WithTopology(report.Host)
 	result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
 	result.Counters = result.Counters.Add(n.Topology, 1)
+	result.Children = report.MakeNodeSet(n)
 	return report.Nodes{id: result}
 }
 

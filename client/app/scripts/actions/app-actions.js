@@ -357,19 +357,21 @@ export function hitEsc() {
   return (dispatch, getState) => {
     const state = getState();
     const controlPipe = state.get('controlPipes').last();
-    if (state.get('showingHelp')) {
-      dispatch(hideHelp());
-    } else if (state.get('searchQuery')) {
-      dispatch(doSearch(''));
-    } else if (state.get('searchFocused')) {
-      dispatch(blurSearch());
-    } else if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
+    if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
       dispatch({
         type: ActionTypes.CLICK_CLOSE_TERMINAL,
         pipeId: controlPipe.get('id')
       });
       updateRoute(getState);
       // Don't deselect node on ESC if there is a controlPipe (keep terminal open)
+    } else if (state.get('searchFocused')) {
+      if (state.get('searchQuery')) {
+        dispatch(doSearch(''));
+      } else {
+        dispatch(blurSearch());
+      }
+    } else if (state.get('showingHelp')) {
+      dispatch(hideHelp());
     } else if (state.get('nodeDetails').last() && !controlPipe) {
       dispatch({ type: ActionTypes.DESELECT_NODE });
       updateRoute(getState);

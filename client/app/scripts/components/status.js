@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 
 class Status extends React.Component {
   render() {
-    const {errorUrl, topologiesLoaded, topology, websocketClosed} = this.props;
+    const {errorUrl, filteredNodeCount, topologiesLoaded, topology,
+      websocketClosed} = this.props;
 
     let title = '';
     let text = 'Trying to reconnect...';
@@ -23,9 +24,9 @@ class Status extends React.Component {
       showWarningIcon = true;
     } else if (topology) {
       const stats = topology.get('stats');
-      text = `${stats.get('node_count')} nodes`;
+      text = `${stats.get('node_count') - filteredNodeCount} nodes`;
       if (stats.get('filtered_nodes')) {
-        text = `${text} (${stats.get('filtered_nodes')} filtered)`;
+        text = `${text} (${stats.get('filtered_nodes') + filteredNodeCount} filtered)`;
       }
       classNames += ' status-stats';
       showWarningIcon = false;
@@ -43,6 +44,7 @@ class Status extends React.Component {
 function mapStateToProps(state) {
   return {
     errorUrl: state.get('errorUrl'),
+    filteredNodeCount: state.get('nodes').filter(node => node.get('filtered')).size,
     topologiesLoaded: state.get('topologiesLoaded'),
     topology: state.get('currentTopology'),
     websocketClosed: state.get('websocketClosed')
