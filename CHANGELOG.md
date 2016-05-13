@@ -15,6 +15,7 @@ This release comes with:
 New features and enhancements:
 - New search field
 	[#1429](https://github.com/weaveworks/scope/pull/1429)
+	[#1499](https://github.com/weaveworks/scope/pull/1499)
 - Kubernetes improvements:
   - Deployment and Replica Set views
 		[#1436](https://github.com/weaveworks/scope/pull/1436)
@@ -98,6 +99,8 @@ Bug fixes:
 	[#1469](https://github.com/weaveworks/scope/issues/1469)
 - When user supplies IP addr on command line, we don't try to connect to localhost
 	[#1477](https://github.com/weaveworks/scope/issues/1477)
+- Wrong host labels on container nodes
+	[#1501](https://github.com/weaveworks/scope/issues/1501)
 
 Documentation:
 - Restructured Scope Docs
