@@ -10,8 +10,8 @@ import (
 
 	linuxproc "github.com/c9s/goprocinfo/linux"
 
-	"github.com/weaveworks/scope/common/fs"
-	"github.com/weaveworks/scope/probe/host"
+	"$GITHUB_URI/common/fs"
+	"$GITHUB_URI/probe/host"
 )
 
 type walker struct {

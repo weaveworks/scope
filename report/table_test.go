@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
 )
 
 func TestTables(t *testing.T) {

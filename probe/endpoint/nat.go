@@ -3,7 +3,7 @@ package endpoint
 import (
 	"strconv"
 
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/report"
 )
 
 // This is our 'abstraction' of the endpoint that have been rewritten by NAT.

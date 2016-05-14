@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/test"
+	"$GITHUB_URI/probe/process"
+	"$GITHUB_URI/test"
 )
 
 func TestBasicWalk(t *testing.T) {

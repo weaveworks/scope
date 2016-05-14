@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/test"
+	"$GITHUB_URI/test"
 )
 
 func TestReverseResolver(t *testing.T) {

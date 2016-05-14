@@ -5,7 +5,7 @@ import (
 	"compress/gzip"
 	"github.com/ugorji/go/codec"
 
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/report"
 )
 
 // A ReportPublisher uses a buffer pool to serialise reports, which it

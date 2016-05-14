@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
-	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/probe/kubernetes"
-	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/probe/endpoint"
+	"$GITHUB_URI/probe/host"
+	"$GITHUB_URI/probe/kubernetes"
+	"$GITHUB_URI/probe/process"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/report"
 )
 
 // Shapes that are allowed

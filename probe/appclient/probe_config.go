@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/certifi/gocertifi"
-	"github.com/weaveworks/scope/common/xfer"
+	"$GITHUB_URI/common/xfer"
 )
 
 var certPool *x509.CertPool

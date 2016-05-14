@@ -8,10 +8,10 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/render/detailed"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/render/detailed"
+	"$GITHUB_URI/report"
 )
 
 const (

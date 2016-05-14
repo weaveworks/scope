@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/common/xfer"
+	"$GITHUB_URI/common/xfer"
 )
 
 func TestResolver(t *testing.T) {

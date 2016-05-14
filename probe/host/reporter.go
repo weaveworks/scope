@@ -5,9 +5,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/weaveworks/scope/common/mtime"
-	"github.com/weaveworks/scope/probe/controls"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/common/mtime"
+	"$GITHUB_URI/probe/controls"
+	"$GITHUB_URI/report"
 )
 
 // Keys for use in Node.Latest.

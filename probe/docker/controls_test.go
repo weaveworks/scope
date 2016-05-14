@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/probe/controls"
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/probe/controls"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
 )
 
 func TestControls(t *testing.T) {

@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/weaveworks/scope/probe/endpoint"
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/probe/endpoint"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/report"
 )
 
 const (

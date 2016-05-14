@@ -11,9 +11,9 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/probe/appclient"
+	"$GITHUB_URI/app"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/probe/appclient"
 )
 
 type adapter struct {

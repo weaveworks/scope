@@ -6,8 +6,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/kr/pty"
 
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/probe/controls"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/probe/controls"
 )
 
 // Control IDs used by the host integration.

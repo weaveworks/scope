@@ -10,9 +10,9 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/probe/kubernetes"
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/probe/kubernetes"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/report"
 )
 
 const apiTopologyURL = "/api/topology/"

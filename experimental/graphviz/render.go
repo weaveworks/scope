@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/render/detailed"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/render/detailed"
+	"$GITHUB_URI/report"
 )
 
 func renderTo(rpt report.Report, topology string) (detailed.NodeSummaries, error) {

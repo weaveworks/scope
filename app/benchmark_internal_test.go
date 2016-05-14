@@ -9,9 +9,9 @@ import (
 
 	"github.com/ugorji/go/codec"
 
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test/fixture"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test/fixture"
 )
 
 // StaticReport is used as a fixture in tests. It emulates an xfer.Collector.

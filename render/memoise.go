@@ -6,7 +6,7 @@ import (
 
 	"github.com/bluele/gcache"
 
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/report"
 )
 
 var renderCache = gcache.New(100).LRU().Build()

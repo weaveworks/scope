@@ -10,8 +10,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/weaveworks/scope/render/detailed"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/render/detailed"
+	"$GITHUB_URI/report"
 )
 
 func dot(w io.Writer, t detailed.NodeSummaries) {

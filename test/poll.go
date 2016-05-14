@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/test/reflect"
 )
 
 // Poll repeatedly evaluates condition until we either timeout, or it succeeds.

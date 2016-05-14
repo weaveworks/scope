@@ -5,8 +5,8 @@ import (
 
 	client "github.com/fsouza/go-dockerclient"
 
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/report"
 )
 
 type mockRegistry struct {

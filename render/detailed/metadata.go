@@ -1,7 +1,7 @@
 package detailed
 
 import (
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/report"
 )
 
 // NodeMetadata produces a table (to be consumed directly by the UI) based on

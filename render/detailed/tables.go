@@ -1,7 +1,7 @@
 package detailed
 
 import (
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/report"
 )
 
 // NodeTables produces a list of tables (to be consumed directly by the UI) based

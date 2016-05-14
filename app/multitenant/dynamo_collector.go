@@ -14,8 +14,8 @@ import (
 	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/app"
+	"$GITHUB_URI/report"
 )
 
 const (

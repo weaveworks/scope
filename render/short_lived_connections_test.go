@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"$GITHUB_URI/common/mtime"
 
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
-	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/probe/endpoint"
+	"$GITHUB_URI/probe/host"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/report"
 )
 
 var (

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/test/reflect"
 )
 
 var benchmarkResult PluginSpecs

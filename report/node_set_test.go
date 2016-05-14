@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test/reflect"
 )
 
 var benchmarkResult report.NodeSet

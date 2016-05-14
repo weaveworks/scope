@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/probe/kubernetes"
-	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/render/detailed"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/fixture"
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/probe/host"
+	"$GITHUB_URI/probe/kubernetes"
+	"$GITHUB_URI/probe/process"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/render/detailed"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
+	"$GITHUB_URI/test/fixture"
+	"$GITHUB_URI/test/reflect"
 )
 
 func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
@@ -316,7 +316,7 @@ func TestMakeDetailedPodNode(t *testing.T) {
 
 	containerNodeSummary := child(t, render.ContainerWithImageNameRenderer, fixture.ServerContainerNodeID)
 	serverProcessNodeSummary := child(t, render.ProcessRenderer, fixture.ServerProcessNodeID)
-	serverProcessNodeSummary.Linkable = true // Temporary workaround for: https://github.com/weaveworks/scope/issues/1295
+	serverProcessNodeSummary.Linkable = true // Temporary workaround for: https://$GITHUB_URI/issues/1295
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
 			ID:         id,

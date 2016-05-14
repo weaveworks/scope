@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/common/mtime"
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/common/mtime"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/probe/process"
+	"$GITHUB_URI/report"
 )
 
 type mockProcessTree struct {

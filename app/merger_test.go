@@ -5,10 +5,10 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/app"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
+	"$GITHUB_URI/test/reflect"
 )
 
 func TestMerger(t *testing.T) {

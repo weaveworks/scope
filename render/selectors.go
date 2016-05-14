@@ -1,7 +1,7 @@
 package render
 
 import (
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/report"
 )
 
 // TopologySelector selects a single topology from a report.

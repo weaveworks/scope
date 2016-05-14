@@ -5,17 +5,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/common/mtime"
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/render/detailed"
-	"github.com/weaveworks/scope/render/expected"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/fixture"
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/common/mtime"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/probe/host"
+	"$GITHUB_URI/probe/process"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/render/detailed"
+	"$GITHUB_URI/render/expected"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
+	"$GITHUB_URI/test/fixture"
+	"$GITHUB_URI/test/reflect"
 )
 
 func TestSummaries(t *testing.T) {

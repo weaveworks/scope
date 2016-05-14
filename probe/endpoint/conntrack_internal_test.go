@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/common/exec"
-	"github.com/weaveworks/scope/test"
-	testexec "github.com/weaveworks/scope/test/exec"
+	"$GITHUB_URI/common/exec"
+	"$GITHUB_URI/test"
+	testexec "$GITHUB_URI/test/exec"
 )
 
 const conntrackCloseTag = "</conntrack>\n"

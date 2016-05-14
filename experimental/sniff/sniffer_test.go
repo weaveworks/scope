@@ -10,9 +10,9 @@ import (
 
 	"github.com/google/gopacket"
 
-	"github.com/weaveworks/scope/experimental/sniff"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
+	"$GITHUB_URI/experimental/sniff"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
 )
 
 func TestSnifferShutdown(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/msackman/skiplist"
 
-	"github.com/weaveworks/scope/experimental/tracer/ptrace"
+	"$GITHUB_URI/experimental/tracer/ptrace"
 )
 
 const epsilon = int64(5) * 1000 // milliseconds

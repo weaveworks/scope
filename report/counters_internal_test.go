@@ -6,8 +6,8 @@ import (
 
 	"github.com/ugorji/go/codec"
 
-	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/test"
+	"$GITHUB_URI/test/reflect"
 )
 
 func TestCountersAdd(t *testing.T) {

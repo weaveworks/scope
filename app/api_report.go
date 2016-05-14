@@ -6,8 +6,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/probe/host"
+	"$GITHUB_URI/report"
 )
 
 // Raw report handler

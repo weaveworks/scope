@@ -10,10 +10,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/weaveworks/scope/common/exec"
-	"github.com/weaveworks/scope/common/weave"
-	"github.com/weaveworks/scope/test"
-	testExec "github.com/weaveworks/scope/test/exec"
+	"$GITHUB_URI/common/exec"
+	"$GITHUB_URI/common/weave"
+	"$GITHUB_URI/test"
+	testExec "$GITHUB_URI/test/exec"
 )
 
 const (

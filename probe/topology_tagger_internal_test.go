@@ -3,7 +3,7 @@ package probe
 import (
 	"testing"
 
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/report"
 )
 
 func TestTagMissingID(t *testing.T) {

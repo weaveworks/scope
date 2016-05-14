@@ -7,8 +7,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ugorji/go/codec"
 
-	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/app"
+	"$GITHUB_URI/report"
 )
 
 func topologyServer() *httptest.Server {
