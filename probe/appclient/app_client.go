@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/rpc"
 	"sync"
@@ -20,6 +21,7 @@ import (
 const (
 	initialBackoff = 1 * time.Second
 	maxBackoff     = 60 * time.Second
+	dialTimeout    = 5 * time.Second
 )
 
 // AppClient is a client to an app for dealing with controls.
@@ -62,6 +64,10 @@ func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlH
 	httpTransport, err := pc.getHTTPTransport(hostname)
 	if err != nil {
 		return nil, err
+	}
+
+	httpTransport.Dial = func(network, addr string) (net.Conn, error) {
+		return net.DialTimeout(network, addr, dialTimeout)
 	}
 
 	return &appClient{
