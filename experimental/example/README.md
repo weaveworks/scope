@@ -7,7 +7,6 @@ $ docker-machine create -d virtualbox --virtualbox-memory=4096 scope-tastic
 $ eval $(docker-machine env scope-tastic)
 $ sudo curl -L git.io/weave -o /usr/local/bin/weave
 $ sudo chmod +x /usr/local/bin/weave
-$ weave launch
 $ curl -o run.sh https://raw.githubusercontent.com/weaveworks/scope/master/experimental/example/run.sh
 $ ./run.sh
 $ sudo wget -O /usr/local/bin/scope https://github.com/weaveworks/scope/releases/download/latest_release/scope
@@ -18,9 +17,15 @@ $ scope launch
 # "architecture"
 
 ```
-curl -> frontend --> app --> searchapp -> elasticsearch
-         (nginx) |
-                 --> qotd -> internet
-                 |
-                 --> redis
+client -> frontend --> app --> searchapp -> elasticsearch
+           (nginx)         |
+                           --> qotd -> internet
+                           |
+                           --> redis
+```
+
+# To push new images
+
+```
+for img in $(docker images | grep tomwilkie | cut -d' ' -f1); do docker push $img:latest; done
 ```

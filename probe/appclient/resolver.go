@@ -17,8 +17,29 @@ const (
 )
 
 var (
-	tick = time.Tick
+	tick = fastStartTicker
 )
+
+// fastStartTicker is a ticker that 'ramps up' from 1 sec to duration.
+func fastStartTicker(duration time.Duration) <-chan time.Time {
+	c := make(chan time.Time, 1)
+	go func() {
+		d := 1 * time.Second
+		for {
+			time.Sleep(d)
+			d = d * 2
+			if d > duration {
+				d = duration
+			}
+
+			select {
+			case c <- time.Now():
+			default:
+			}
+		}
+	}()
+	return c
+}
 
 type setter func(string, []string)
 

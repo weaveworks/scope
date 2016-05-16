@@ -6,7 +6,6 @@ import time
 import threading
 import logging
 
-
 from flask import Flask
 from flask import request
 from werkzeug.serving import WSGIRequestHandler
@@ -14,11 +13,7 @@ from werkzeug.serving import WSGIRequestHandler
 app = Flask(__name__)
 
 @app.route('/')
-def hello():
-  if random.random() > 0.6:
-    time.sleep(2)
-  else:
-    time.sleep(0.5)
+def echo():
   return request.data
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: client
 spec:
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
