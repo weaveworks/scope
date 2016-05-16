@@ -23,7 +23,7 @@ weave_on() {
 	local host=$1
 	shift 1
 	[ -z "$DEBUG" ] || greyly echo "Weave on $host: $@" >&2
-	DOCKER_HOST=tcp://$host:$DOCKER_PORT $WEAVE "$@"
+	DOCKER_HOST=tcp://$host:$DOCKER_PORT CHECKPOINT_DISABLE=true $WEAVE "$@"
 }
 
 scope_end_suite() {
