@@ -25,14 +25,14 @@ const (
 
 // Reporter generates Reports containing the Endpoint topology.
 type Reporter struct {
-	hostID           string
-	hostName         string
-	includeProcesses bool
-	includeNAT       bool
-	flowWalker       flowWalker // interface
-	scanner          procspy.ConnectionScanner
-	natMapper        natMapper
-	reverseResolver  *reverseResolver
+	hostID          string
+	hostName        string
+	spyProcs        bool
+	walkProc        bool
+	flowWalker      flowWalker // interface
+	scanner         procspy.ConnectionScanner
+	natMapper       natMapper
+	reverseResolver *reverseResolver
 }
 
 // SpyDuration is an exported prometheus metric
@@ -52,15 +52,16 @@ var SpyDuration = prometheus.NewSummaryVec(
 // on the host machine, at the granularity of host and port. That information
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
-func NewReporter(hostID, hostName string, includeProcesses bool, useConntrack bool, scanner procspy.ConnectionScanner) *Reporter {
+func NewReporter(hostID, hostName string, spyProcs, useConntrack, walkProc bool, scanner procspy.ConnectionScanner) *Reporter {
 	return &Reporter{
-		hostID:           hostID,
-		hostName:         hostName,
-		includeProcesses: includeProcesses,
-		flowWalker:       newConntrackFlowWalker(useConntrack),
-		natMapper:        makeNATMapper(newConntrackFlowWalker(useConntrack, "--any-nat")),
-		reverseResolver:  newReverseResolver(),
-		scanner:          scanner,
+		hostID:          hostID,
+		hostName:        hostName,
+		spyProcs:        spyProcs,
+		walkProc:        walkProc,
+		flowWalker:      newConntrackFlowWalker(useConntrack),
+		natMapper:       makeNATMapper(newConntrackFlowWalker(useConntrack, "--any-nat")),
+		reverseResolver: newReverseResolver(),
+		scanner:         scanner,
 	}
 }
 
@@ -135,8 +136,8 @@ func (r *Reporter) Report() (report.Report, error) {
 		})
 	}
 
-	{
-		conns, err := r.scanner.Connections(r.includeProcesses)
+	if r.walkProc {
+		conns, err := r.scanner.Connections(r.spyProcs)
 		if err != nil {
 			return rpt, err
 		}
@@ -174,10 +175,6 @@ func (r *Reporter) Report() (report.Report, error) {
 }
 
 func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode, extraToNode map[string]string) {
-	// Update endpoint topology
-	if !r.includeProcesses {
-		return
-	}
 	var (
 		fromEndpointNodeID = report.MakeEndpointNodeID(r.hostID, t.fromAddr, strconv.Itoa(int(t.fromPort)))
 		toEndpointNodeID   = report.MakeEndpointNodeID(r.hostID, t.toAddr, strconv.Itoa(int(t.toPort)))

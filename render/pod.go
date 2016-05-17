@@ -15,7 +15,7 @@ const (
 )
 
 func renderKubernetesTopologies(rpt report.Report) bool {
-	return len(rpt.Pod.Nodes)+len(rpt.Service.Nodes) > 1
+	return len(rpt.Pod.Nodes)+len(rpt.Service.Nodes)+len(rpt.Deployment.Nodes)+len(rpt.ReplicaSet.Nodes) >= 1
 }
 
 // PodRenderer is a Renderer which produces a renderable kubernetes

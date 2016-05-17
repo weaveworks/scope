@@ -123,22 +123,25 @@ func probeMain(flags probeFlags) {
 	resolver := appclient.NewResolver(targets, dnsLookupFn, clients.Set)
 	defer resolver.Stop()
 
-	processCache := process.NewCachingWalker(process.NewWalker(flags.procRoot))
-	scanner := procspy.NewConnectionScanner(processCache)
-
-	endpointReporter := endpoint.NewReporter(hostID, hostName, flags.spyProcs, flags.useConntrack, scanner)
-	defer endpointReporter.Stop()
-
 	p := probe.New(flags.spyInterval, flags.publishInterval, clients)
-	p.AddTicker(processCache)
+
 	hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients)
 	defer hostReporter.Stop()
-	p.AddReporter(
-		endpointReporter,
-		hostReporter,
-		process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies),
-	)
+	p.AddReporter(hostReporter)
 	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
+
+	var processCache *process.CachingWalker
+	var scanner procspy.ConnectionScanner
+	if flags.procEnabled {
+		processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot))
+		scanner = procspy.NewConnectionScanner(processCache)
+		p.AddTicker(processCache)
+		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies))
+	}
+
+	endpointReporter := endpoint.NewReporter(hostID, hostName, flags.spyProcs, flags.useConntrack, flags.procEnabled, scanner)
+	defer endpointReporter.Stop()
+	p.AddReporter(endpointReporter)
 
 	if flags.dockerEnabled {
 		// Don't add the bridge in Kubernetes since container IPs are global and
@@ -150,7 +153,9 @@ func probeMain(flags probeFlags) {
 		}
 		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID); err == nil {
 			defer registry.Stop()
-			p.AddTagger(docker.NewTagger(registry, processCache))
+			if flags.procEnabled {
+				p.AddTagger(docker.NewTagger(registry, processCache))
+			}
 			p.AddReporter(docker.NewReporter(registry, hostID, probeID, p))
 		} else {
 			log.Errorf("Docker: failed to start registry: %v", err)

@@ -23,18 +23,24 @@ const (
 	Pseudo = "pseudo"
 )
 
+func renderProcesses(rpt report.Report) bool {
+	return len(rpt.Process.Nodes) >= 1
+}
+
 // EndpointRenderer is a Renderer which produces a renderable endpoint graph.
 var EndpointRenderer = FilterNonProcspied(SelectEndpoint)
 
 // ProcessRenderer is a Renderer which produces a renderable process
 // graph by merging the endpoint graph and the process topology.
-var ProcessRenderer = ColorConnected(MakeReduce(
-	MakeMap(
-		MapEndpoint2Process,
-		EndpointRenderer,
-	),
-	SelectProcess,
-))
+var ProcessRenderer = ConditionalRenderer(renderProcesses,
+	ColorConnected(MakeReduce(
+		MakeMap(
+			MapEndpoint2Process,
+			EndpointRenderer,
+		),
+		SelectProcess,
+	)),
+)
 
 // processWithContainerNameRenderer is a Renderer which produces a process
 // graph enriched with container names where appropriate
@@ -73,9 +79,11 @@ var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessR
 
 // ProcessNameRenderer is a Renderer which produces a renderable process
 // name graph by munging the progess graph.
-var ProcessNameRenderer = MakeMap(
-	MapProcess2Name,
-	ProcessRenderer,
+var ProcessNameRenderer = ConditionalRenderer(renderProcesses,
+	MakeMap(
+		MapProcess2Name,
+		ProcessRenderer,
+	),
 )
 
 // MapEndpoint2Pseudo makes internet of host pesudo nodes from a endpoint node.

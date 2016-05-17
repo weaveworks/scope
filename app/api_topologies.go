@@ -61,18 +61,20 @@ func init() {
 	// be the verb to get to that state
 	topologyRegistry.add(
 		APITopologyDesc{
-			id:       "processes",
-			renderer: render.FilterUnconnected(render.ProcessWithContainerNameRenderer),
-			Name:     "Processes",
-			Rank:     1,
-			Options:  unconnectedFilter,
+			id:          "processes",
+			renderer:    render.FilterUnconnected(render.ProcessWithContainerNameRenderer),
+			Name:        "Processes",
+			Rank:        1,
+			Options:     unconnectedFilter,
+			HideIfEmpty: true,
 		},
 		APITopologyDesc{
-			id:       "processes-by-name",
-			parent:   "processes",
-			renderer: render.FilterUnconnected(render.ProcessNameRenderer),
-			Name:     "by name",
-			Options:  unconnectedFilter,
+			id:          "processes-by-name",
+			parent:      "processes",
+			renderer:    render.FilterUnconnected(render.ProcessNameRenderer),
+			Name:        "by name",
+			Options:     unconnectedFilter,
+			HideIfEmpty: true,
 		},
 		APITopologyDesc{
 			id:       "containers",
