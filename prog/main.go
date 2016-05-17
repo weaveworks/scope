@@ -53,6 +53,7 @@ func setLogLevel(levelname string) {
 type flags struct {
 	probe probeFlags
 	app   appFlags
+	wscat wscatFlags
 }
 
 type probeFlags struct {
@@ -101,6 +102,10 @@ type appFlags struct {
 
 	awsCreateTables bool
 	consulInf       string
+}
+
+type wscatFlags struct {
+	blockOnEOF bool
 }
 
 func main() {
@@ -167,6 +172,8 @@ func main() {
 	flag.BoolVar(&flags.app.awsCreateTables, "app.aws.create.tables", false, "Create the tables in DynamoDB")
 	flag.StringVar(&flags.app.consulInf, "app.consul.inf", "", "The interface who's address I should advertise myself under in consul")
 
+	flag.BoolVar(&flags.wscat.blockOnEOF, "wscat.block", false, "Block on end of line (do not exit early of EOF is received)")
+
 	flag.Parse()
 
 	// Deal with common args
@@ -189,6 +196,8 @@ func main() {
 		fmt.Println("Weave Scope version", version)
 	case "help":
 		flag.PrintDefaults()
+	case "wscat":
+		wscat(flags.wscat)
 	default:
 		fmt.Printf("command '%s' not recognices", mode)
 		os.Exit(1)
