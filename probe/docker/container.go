@@ -27,6 +27,7 @@ const (
 	ContainerCommand       = "docker_container_command"
 	ContainerPorts         = "docker_container_ports"
 	ContainerCreated       = "docker_container_created"
+	ContainerNetworks      = "docker_container_networks"
 	ContainerIPs           = "docker_container_ips"
 	ContainerHostname      = "docker_container_hostname"
 	ContainerIPsWithScopes = "docker_container_ips_with_scopes"
@@ -309,17 +310,29 @@ func addScopeToIPs(hostID string, ips []string) []string {
 func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 	c.RLock()
 	defer c.RUnlock()
+
+	// For now, for the proof-of-concept, we just add networks as a set of
+	// names. For the next iteration, we will probably want to create a new
+	// Network topology, populate the network nodes with all of the details
+	// here, and provide foreign key links from nodes to networks.
+	networks := make([]string, 0, len(c.container.NetworkSettings.Networks))
+	for name := range c.container.NetworkSettings.Networks {
+		networks = append(networks, name)
+	}
+
 	ips := c.container.NetworkSettings.SecondaryIPAddresses
 	if c.container.NetworkSettings.IPAddress != "" {
 		ips = append(ips, c.container.NetworkSettings.IPAddress)
 	}
+
 	// Treat all Docker IPs as local scoped.
 	ipsWithScopes := addScopeToIPs(c.hostID, ips)
+
 	return report.EmptySets.
+		Add(ContainerNetworks, report.MakeStringSet(networks...)).
 		Add(ContainerPorts, c.ports(localAddrs)).
 		Add(ContainerIPs, report.MakeStringSet(ips...)).
 		Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...))
-
 }
 
 func (c *container) memoryUsageMetric(stats []docker.Stats) report.Metric {
