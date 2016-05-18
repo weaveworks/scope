@@ -99,7 +99,8 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Label:      "Pods",
 				TopologyID: "pods",
 				Columns: []detailed.Column{
-					{ID: report.Container, Label: "# Containers"},
+					{ID: kubernetes.State, Label: "State"},
+					{ID: report.Container, Label: "Containers"},
 					{ID: kubernetes.IP, Label: "IP"},
 				},
 				Nodes: []detailed.NodeSummary{podNodeSummary},

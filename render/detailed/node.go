@@ -169,7 +169,8 @@ var (
 				Label:      "Pods",
 
 				Columns: []Column{
-					{ID: report.Container, Label: "# Containers"},
+					{ID: kubernetes.State, Label: "State"},
+					{ID: report.Container, Label: "Containers"},
 					{ID: kubernetes.IP, Label: "IP"},
 				},
 			},
