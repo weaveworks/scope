@@ -112,8 +112,8 @@ class App extends React.Component {
   }
 
   render() {
-    const { showingDetails, showingHelp, showingMetricsSelector, showingTerminal } = this.props;
-    const showingRawPipe = controlPipes.toIndexedSeq().getIn([0, 'rawPipeTemplate']);
+    const { showingDetails, showingHelp, showingMetricsSelector,
+      showingTerminal, showingRawPipe } = this.props;
 
     return (
       <div className="app">
@@ -152,6 +152,7 @@ class App extends React.Component {
 }
 
 function mapStateToProps(state) {
+  const showingRawPipe = state.get('controlPipes').toIndexedSeq().getIn([0, 'rawPipeTemplate']);
   return {
     activeTopologyOptions: getActiveTopologyOptions(state),
     routeSet: state.get('routeSet'),
@@ -160,8 +161,9 @@ function mapStateToProps(state) {
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
     showingMetricsSelector: state.get('availableCanvasMetrics').count() > 0,
-    showingTerminal: state.get('controlPipes').size > 0,
-    urlState: getUrlState(state)
+    showingTerminal: !showingRawPipe && state.get('controlPipes').size > 0,
+    urlState: getUrlState(state),
+    showingRawPipe
   };
 }
 
