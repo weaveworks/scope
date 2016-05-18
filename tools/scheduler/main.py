@@ -15,12 +15,9 @@ app = flask.Flask('scheduler')
 app.debug = True
 
 # We use exponential moving average to record
-# test run times.  Higher alpha discounts historic
+# test run times.  Higher alpha discounts historic
 # observations faster.
 alpha = 0.3
-
-PROJECT = 'positive-cocoa-90213'
-ZONE = 'us-central1-a'
 
 class Test(ndb.Model):
   total_run_time = ndb.FloatProperty(default=0.) # Not total, but a EWMA
@@ -77,12 +74,28 @@ def schedule(test_run, shard_count, shard):
 
 NAME_RE = re.compile(r'^host(?P<index>\d+)-(?P<build>\d+)-(?P<shard>\d+)$')
 
+PROJECTS = [
+  ('weaveworks/weave', 'positive-cocoa-90213', 'us-central1-a'),
+  ('weaveworks/scope', 'scope-integration-tests', 'us-central1-a'),
+]
+
 @app.route('/tasks/gc')
 def gc():
   # Get list of running VMs, pick build id out of VM name
   credentials = GoogleCredentials.get_application_default()
   compute = discovery.build('compute', 'v1', credentials=credentials)
-  instances = compute.instances().list(project=PROJECT, zone=ZONE).execute()
+
+  for repo, project, zone in PROJECTS:
+    gc_project(compute, repo, project, zone)
+
+  return "Done"
+
+def gc_project(compute, repo, project, zone):
+  logging.info("GCing %s, %s, %s", repo, project, zone)
+  instances = compute.instances().list(project=project, zone=zone).execute()
+  if 'items' not in instances:
+    return
+
   host_by_build = collections.defaultdict(list)
   for instance in instances['items']:
     matches = NAME_RE.match(instance['name'])
@@ -92,7 +105,7 @@ def gc():
   logging.info("Running VMs by build: %r", host_by_build)
 
   # Get list of builds, filter down to runnning builds
-  result = urlfetch.fetch('https://circleci.com/api/v1/project/weaveworks/weave',
+  result = urlfetch.fetch('https://circleci.com/api/v1/project/%s' % repo,
     headers={'Accept': 'application/json'})
   assert result.status_code == 200
   builds = json.loads(result.content)
@@ -107,6 +120,6 @@ def gc():
     for name in names:
       stopped.append(name)
       logging.info("Stopping VM %s", name)
-      compute.instances().delete(project=PROJECT, zone=ZONE, instance=name).execute()
+      compute.instances().delete(project=project, zone=zone, instance=name).execute()
 
-  return (flask.json.jsonify(running=list(running), stopped=stopped), 200)
+  return
