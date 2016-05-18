@@ -60,15 +60,17 @@ type probeFlags struct {
 	httpListen      string
 	publishInterval time.Duration
 	spyInterval     time.Duration
-	spyProcs        bool
-	procRoot        string
 	pluginsRoot     string
-	useConntrack    bool
 	insecure        bool
 	logPrefix       string
 	logLevel        string
 	resolver        string
 	noApp           bool
+
+	useConntrack bool // Use conntrack for endpoint topo
+	spyProcs     bool // Associate endpoints with processes (must be root)
+	procEnabled  bool // Produce process topology & process nodes in endpoint
+	procRoot     string
 
 	dockerEnabled  bool
 	dockerInterval time.Duration
@@ -130,20 +132,30 @@ func main() {
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
 	flag.DurationVar(&flags.probe.publishInterval, "probe.publish.interval", 3*time.Second, "publish (output) interval")
 	flag.DurationVar(&flags.probe.spyInterval, "probe.spy.interval", time.Second, "spy (scan) interval")
-	flag.BoolVar(&flags.probe.spyProcs, "probe.processes", true, "report processes (needs root)")
-	flag.StringVar(&flags.probe.procRoot, "probe.proc.root", "/proc", "location of the proc filesystem")
 	flag.StringVar(&flags.probe.pluginsRoot, "probe.plugins.root", "/var/run/scope/plugins", "Root directory to search for plugins")
-	flag.BoolVar(&flags.probe.useConntrack, "probe.conntrack", true, "also use conntrack to track connections")
+
 	flag.BoolVar(&flags.probe.insecure, "probe.insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
 	flag.StringVar(&flags.probe.resolver, "probe.resolver", "", "IP address & port of resolver to use.  Default is to use system resolver.")
 	flag.StringVar(&flags.probe.logPrefix, "probe.log.prefix", "<probe>", "prefix for each log line")
 	flag.StringVar(&flags.probe.logLevel, "probe.log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
+
+	// Proc & endpoint
+	flag.BoolVar(&flags.probe.useConntrack, "probe.conntrack", true, "also use conntrack to track connections")
+	flag.BoolVar(&flags.probe.spyProcs, "probe.proc.spy", true, "associate endpoints with processes (needs root)")
+	flag.StringVar(&flags.probe.procRoot, "probe.proc.root", "/proc", "location of the proc filesystem")
+	flag.BoolVar(&flags.probe.procEnabled, "probe.processes", true, "produce process topology & include procspied connections")
+
+	// Docker
 	flag.BoolVar(&flags.probe.dockerEnabled, "probe.docker", false, "collect Docker-related attributes for processes")
 	flag.DurationVar(&flags.probe.dockerInterval, "probe.docker.interval", 10*time.Second, "how often to update Docker attributes")
 	flag.StringVar(&flags.probe.dockerBridge, "probe.docker.bridge", "docker0", "the docker bridge name")
+
+	// K8s
 	flag.BoolVar(&flags.probe.kubernetesEnabled, "probe.kubernetes", false, "collect kubernetes-related attributes for containers, should only be enabled on the master node")
 	flag.StringVar(&flags.probe.kubernetesAPI, "probe.kubernetes.api", "", "Address of kubernetes master api")
 	flag.DurationVar(&flags.probe.kubernetesInterval, "probe.kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
+
+	// Weave
 	flag.StringVar(&flags.probe.weaveAddr, "probe.weave.addr", "127.0.0.1:6784", "IP address & port of the Weave router")
 	flag.StringVar(&flags.probe.weaveHostname, "probe.weave.hostname", app.DefaultHostname, "Hostname to lookup in WeaveDNS")
 

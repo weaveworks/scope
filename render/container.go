@@ -140,7 +140,8 @@ func MapEndpoint2IP(m report.Node, local report.Networks) report.Nodes {
 		return report.Nodes{}
 	}
 	if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-		return report.Nodes{TheInternetID: theInternetNode(m)}
+		node := theInternetNode(m)
+		return report.Nodes{node.ID: node}
 	}
 
 	// We don't always know what port a container is listening on, and
