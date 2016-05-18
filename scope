@@ -9,6 +9,7 @@ usage() {
     echo "scope launch [<peer> ...]"
     echo "scope stop"
     echo "scope command"
+    echo "gettraffic pipeurl"
     echo
     echo "scope <peer>    is of the form <ip_address_or_fqdn>[:<port>]"
     exit 1
@@ -197,6 +198,25 @@ EOF
         fi
         ;;
 
+    gettraffic)
+	[ $# -eq 1 ] || usage
+	TRY_COMMANDS=wireshark
+	if [ "$(uname)" = "Darwin" ]; then
+	    TRY_COMMANDS="$TRY_COMMANDS /Applications/Wireshark.app/Contents/MacOS/Wireshark"
+	fi
+	COMMAND=""
+	for C in $TRY_COMMANDS; do
+	    if which $C > /dev/null; then
+		COMMAND=$C
+		break
+	    fi
+	done
+	if [ -z "$COMMAND" ]; then
+	    1>&2 echo "Error: cannot find a Wireshark installation."
+	    exit 1
+	fi  
+	echo "start" | docker run --rm -i --entrypoint /home/weave/scope $SCOPE_IMAGE --mode wscat --wscat.block $1 | $COMMAND -k -i - 
+	;;
     *)
         echo "Unknown scope command '$COMMAND'" >&2
         usage

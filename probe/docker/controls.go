@@ -1,9 +1,10 @@
 package docker
 
 import (
-	docker_client "github.com/fsouza/go-dockerclient"
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
+	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
@@ -20,6 +21,7 @@ const (
 	RemoveContainer  = "docker_remove_container"
 	AttachContainer  = "docker_attach_container"
 	ExecContainer    = "docker_exec_container"
+	AnalyzeTraffic   = "docker_analyze_traffic"
 
 	waitTime = 10
 )
@@ -153,6 +155,36 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 	}
 }
 
+func (r *registry) analyzeTraffic(containerID string, req xfer.Request) xfer.Response {
+	dockerContainer, err := r.client.InspectContainer(containerID)
+	if err != nil {
+		return xfer.ResponseError(err)
+	}
+	if !dockerContainer.State.Running {
+		return xfer.ResponseError(fmt.Errorf("Container not running"))
+	}
+	pid := fmt.Sprintf("%d", dockerContainer.State.Pid)
+	cmd := []string{"nsenter", "-t", pid, "-n"}
+	if _, ok := req.ControlArgs["raw_pipe"]; ok {
+		// Analyze externally with wireshark
+		// TODO: It would be even better to expose rpcapd instead since we could apply filters remotely and reduce traffic.
+		//       Also, I think we would be able to associate the rpcap:// uri with wireshark, avoiding instructions templates.
+		//       How to proxy rpcap through websockets, though?
+		cmd = append(cmd, "raw-pipe-trigger", "dumpcap", "-P", "-i", "any", "-w", "-")
+		// TODO consider using a uri scheme, like weave://scope/wireshark/%pipeurl
+		//      instead of asking the user to type a command. It would require
+		//      registering a URL scheme handler, for instance see:
+		//      http://superuser.com/questions/548119/how-do-i-configure-custom-url-handlers-on-os-x
+		template := "scope gettraffic %pipe_url"
+		handler := controls.MakeRawCommandHandler("raw traffic analyzer", r.pipes, cmd, template)
+		return handler(req)
+	}
+	// TODO: better defaults for tshark?
+	cmd = append(cmd, "tshark", "-i", "any")
+	handler := controls.MakeTTYCommandHandler("traffic analyzer", r.pipes, cmd)
+	return handler(req)
+}
+
 func captureContainerID(f func(string, xfer.Request) xfer.Response) func(xfer.Request) xfer.Response {
 	return func(req xfer.Request) xfer.Response {
 		containerID, ok := report.ParseContainerNodeID(req.NodeID)
@@ -172,6 +204,7 @@ func (r *registry) registerControls() {
 	controls.Register(RemoveContainer, captureContainerID(r.removeContainer))
 	controls.Register(AttachContainer, captureContainerID(r.attachContainer))
 	controls.Register(ExecContainer, captureContainerID(r.execContainer))
+	controls.Register(AnalyzeTraffic, captureContainerID(r.analyzeTraffic))
 }
 
 func (r *registry) deregisterControls() {
@@ -183,4 +216,5 @@ func (r *registry) deregisterControls() {
 	controls.Rm(RemoveContainer)
 	controls.Rm(AttachContainer)
 	controls.Rm(ExecContainer)
+	controls.Rm(AnalyzeTraffic)
 }

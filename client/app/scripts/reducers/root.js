@@ -56,7 +56,8 @@ export const initialState = makeMap({
   version: '...',
   versionUpdate: null,
   websocketClosed: true,
-  exportingGraph: false
+  exportingGraph: false,
+  optionKeyDown: false,
 });
 
 // adds ID field to topology (based on last part of URL path) and save urls in
@@ -157,6 +158,10 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.SET_EXPORTING_GRAPH: {
       return state.set('exportingGraph', action.exporting);
+    }
+
+    case ActionTypes.SET_OPTION_KEY_DOWN: {
+      return state.set('optionKeyDown', action.down);
     }
 
     case ActionTypes.CLEAR_CONTROL_ERROR: {
@@ -408,7 +413,8 @@ export function rootReducer(state = initialState, action) {
       return state.setIn(['controlPipes', action.pipeId], makeOrderedMap({
         id: action.pipeId,
         nodeId: action.nodeId,
-        raw: action.rawTty
+        raw: action.rawTty,
+        rawPipeTemplate: action.rawPipeTemplate
       }));
     }
 

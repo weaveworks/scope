@@ -274,13 +274,13 @@ export function closeWebsocket() {
   };
 }
 
-export function doControl(nodeId, control) {
+export function doControl(nodeId, control, args) {
   return (dispatch) => {
     dispatch({
       type: ActionTypes.DO_CONTROL,
       nodeId
     });
-    doControlRequest(nodeId, control, dispatch);
+    doControlRequest(nodeId, control, args, dispatch);
   };
 }
 
@@ -333,6 +333,13 @@ export function hitBackspace() {
         updateRoute(getState);
       }
     }
+  };
+}
+
+export function setOptionKeyDown(down) {
+  return {
+    type: ActionTypes.SET_OPTION_KEY_DOWN,
+    down
   };
 }
 
@@ -492,7 +499,7 @@ export function receiveControlPipeFromParams(pipeId, rawTty) {
   };
 }
 
-export function receiveControlPipe(pipeId, nodeId, rawTty) {
+export function receiveControlPipe(pipeId, nodeId, rawTty, rawPipeTemplate) {
   return (dispatch, getState) => {
     const state = getState();
     if (state.get('nodeDetails').last()
@@ -511,7 +518,8 @@ export function receiveControlPipe(pipeId, nodeId, rawTty) {
       type: ActionTypes.RECEIVE_CONTROL_PIPE,
       nodeId,
       pipeId,
-      rawTty
+      rawTty,
+      rawPipeTemplate
     });
 
     updateRoute(getState);

@@ -197,19 +197,22 @@ export function getApiDetails(dispatch) {
   });
 }
 
-export function doControlRequest(nodeId, control, dispatch) {
+export function doControlRequest(nodeId, control, args, dispatch) {
   clearTimeout(controlErrorTimer);
   const url = `api/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
   reqwest({
     method: 'POST',
     url,
+    type: 'json',
+    contentType: 'application/json',
+    data: JSON.stringify(args),
     success: (res) => {
       dispatch(receiveControlSuccess(nodeId));
       if (res) {
         if (res.pipe) {
           dispatch(blurSearch());
-          dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, true));
+          dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, res.raw_pipe_template));
         }
         if (res.removedNode) {
           dispatch(receiveControlNodeRemoved(nodeId));
