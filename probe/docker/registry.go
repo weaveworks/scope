@@ -16,14 +16,16 @@ import (
 
 // Consts exported for testing.
 const (
-	CreateEvent  = "create"
-	DestroyEvent = "destroy"
-	RenameEvent  = "rename"
-	StartEvent   = "start"
-	DieEvent     = "die"
-	PauseEvent   = "pause"
-	UnpauseEvent = "unpause"
-	endpoint     = "unix:///var/run/docker.sock"
+	CreateEvent            = "create"
+	DestroyEvent           = "destroy"
+	RenameEvent            = "rename"
+	StartEvent             = "start"
+	DieEvent               = "die"
+	PauseEvent             = "pause"
+	UnpauseEvent           = "unpause"
+	NetworkConnectEvent    = "network:connect"
+	NetworkDisconnectEvent = "network:disconnect"
+	endpoint               = "unix:///var/run/docker.sock"
 )
 
 // Vars exported for testing.
@@ -249,7 +251,7 @@ func (r *registry) updateImages() error {
 
 func (r *registry) handleEvent(event *docker_client.APIEvents) {
 	switch event.Status {
-	case CreateEvent, RenameEvent, StartEvent, DieEvent, DestroyEvent, PauseEvent, UnpauseEvent:
+	case CreateEvent, RenameEvent, StartEvent, DieEvent, DestroyEvent, PauseEvent, UnpauseEvent, NetworkConnectEvent, NetworkDisconnectEvent:
 		r.updateContainerState(event.ID, stateAfterEvent(event.Status))
 	}
 }
