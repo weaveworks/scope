@@ -169,7 +169,7 @@ func TestPipeRouter(t *testing.T) {
 	var (
 		consul     = newMockConsulClient()
 		replicas   = 2
-		iterations = 50
+		iterations = 10
 		pt         = pipeTest{}
 	)
 
