@@ -150,6 +150,15 @@ func Map2Parent(topology string) func(n report.Node, _ report.Networks) report.N
 		for _, id := range groupIDs {
 			node := NewDerivedNode(id, n).WithTopology(topology)
 			node.Counters = node.Counters.Add(n.Topology, 1)
+
+			// When mapping replica(tionController)s(ets) to deployments
+			// we must propagate the pod counter.
+			if n.Topology != report.Pod {
+				if count, ok := n.Counters.Lookup(report.Pod); ok {
+					node.Counters = node.Counters.Add(report.Pod, count)
+				}
+			}
+
 			result[id] = node
 		}
 		return result
