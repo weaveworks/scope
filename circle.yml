@@ -32,6 +32,12 @@ test:
       cd $SRCDIR;
       go get ./tools/thingdoer;
       thingdoer tasks.yml
+    - >
+      test "$CIRCLE_NODE_INDEX" != "0" || (
+        ./tools/cover/gather_coverage.sh ./coverage $SRCDIR/coverage &&
+        goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true &&
+        cp coverage.* scope.tar $CIRCLE_ARTIFACTS
+      )
 
 deployment:
   hub:

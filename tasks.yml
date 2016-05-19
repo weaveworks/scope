@@ -52,15 +52,6 @@
   after: [ui-build-image]
   command: make RM= RUN_FLAGS= client-test static
 
-- name: coverage
-  after: [test]
-  command: >
-    test "$CIRCLE_NODE_INDEX" != "0" || (
-      ./tools/cover/gather_coverage.sh ./coverage $SRCDIR/coverage;
-      goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true;
-      cp coverage.* scope.tar $CIRCLE_ARTIFACTS
-    )
-
 - name: experimental
   after: [build-image]
   command: cd experimental; ./build_on_circle.sh
