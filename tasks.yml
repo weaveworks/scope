@@ -2,13 +2,13 @@
   command: >
     cd backend;
     ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh &&
-    touch .scope_backend_build.uptodate
+    touch ../.scope_backend_build.uptodate
 
 - name: ui-build-image
   command: >
     cd client;
     ../tools/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc .babelrc &&
-    touch .scope_ui_build.uptodate
+    touch ../.scope_ui_build.uptodate
 
 - name: vm-template
   command: test -z "$SECRET_PASSWORD" || (cd integration; ./gce.sh make_template)
