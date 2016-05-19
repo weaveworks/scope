@@ -32,6 +32,53 @@ export function toggleHelp() {
   };
 }
 
+//
+// Networks
+//
+
+
+export function showNetworks(visible) {
+  return {
+    type: ActionTypes.SHOW_NETWORKS,
+    visible
+  };
+}
+
+
+export function selectNetwork(networkId) {
+  return {
+    type: ActionTypes.SELECT_NETWORK,
+    networkId
+  };
+}
+
+export function pinNetwork(networkId) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.PIN_NETWORK,
+      networkId,
+    });
+
+    updateRoute(getState);
+  };
+}
+
+export function unpinNetwork(networkId) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.UNPIN_NETWORK,
+      networkId,
+    });
+
+    updateRoute(getState);
+  };
+}
+
+
+//
+// Metrics
+//
+
 export function selectMetric(metricId) {
   return {
     type: ActionTypes.SELECT_METRIC,

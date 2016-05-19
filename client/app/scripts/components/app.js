@@ -16,6 +16,7 @@ import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric
 import Details from './details';
 import Nodes from './nodes';
 import MetricSelector from './metric-selector';
+import NetworkSelector from './networks-selector';
 import EmbeddedTerminal from './embedded-terminal';
 import { getRouter } from '../utils/router-utils';
 import DebugToolbar, { showingDebugToolbar,
@@ -97,7 +98,8 @@ class App extends React.Component {
   }
 
   render() {
-    const { showingDetails, showingHelp, showingMetricsSelector, showingTerminal } = this.props;
+    const { showingDetails, showingHelp, showingMetricsSelector, showingNetworkSelector,
+     showingTerminal } = this.props;
 
     return (
       <div className="app">
@@ -124,6 +126,7 @@ class App extends React.Component {
         <Sidebar>
           <Status />
           {showingMetricsSelector && <MetricSelector />}
+          {showingNetworkSelector && <NetworkSelector />}
           <TopologyOptions />
         </Sidebar>
 
@@ -142,6 +145,7 @@ function mapStateToProps(state) {
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
     showingMetricsSelector: state.get('availableCanvasMetrics').count() > 0,
+    showingNetworkSelector: state.get('availableNetworks').count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
     urlState: getUrlState(state)
   };

@@ -15,6 +15,7 @@ import NodeShapeRoundedSquare from './node-shape-rounded-square';
 import NodeShapeHex from './node-shape-hex';
 import NodeShapeHeptagon from './node-shape-heptagon';
 import NodeShapeCloud from './node-shape-cloud';
+import NodeNetworksOverlay from './node-networks-overlay';
 
 function stackedShape(Shape) {
   const factory = React.createFactory(NodeShapeStack);
@@ -75,8 +76,9 @@ class Node extends React.Component {
   }
 
   render() {
-    const { blurred, focused, highlighted, label, matches = makeMap(),
-      pseudo, rank, subLabel, scaleFactor, transform, zoomScale, exportingGraph } = this.props;
+    const { blurred, focused, highlighted, label, matches = makeMap(), networks,
+      pseudo, rank, subLabel, scaleFactor, transform, zoomScale, exportingGraph,
+      showingNetworks, stack } = this.props;
     const { hovered, matched } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
@@ -100,10 +102,13 @@ class Node extends React.Component {
 
     const NodeShapeType = getNodeShape(this.props);
     const useSvgLabels = exportingGraph;
-
+    const size = nodeScale(scaleFactor);
     return (
       <g className={nodeClassName} transform={transform}
         onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+
+        {showingNetworks && <NodeNetworksOverlay size={size} networks={networks}
+          stack={stack} />}
 
         {useSvgLabels ?
 
@@ -124,7 +129,7 @@ class Node extends React.Component {
 
         <g onClick={this.handleMouseClick}>
           <NodeShapeType
-            size={nodeScale(scaleFactor)}
+            size={size}
             color={color}
             {...this.props} />
         </g>
@@ -152,7 +157,8 @@ class Node extends React.Component {
 export default connect(
   state => ({
     searchQuery: state.get('searchQuery'),
-    exportingGraph: state.get('exportingGraph')
+    exportingGraph: state.get('exportingGraph'),
+    showingNetworks: state.get('showingNetworks'),
   }),
   { clickNode, enterNode, leaveNode }
 )(Node);

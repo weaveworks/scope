@@ -12,7 +12,7 @@ const letterRange = endLetterRange - startLetterRange;
 /**
  * Converts a text to a 360 degree value
  */
-function text2degree(text) {
+export function text2degree(text) {
   const input = text.substr(0, 2).toUpperCase();
   let num = 0;
   for (let i = 0; i < input.length; i++) {

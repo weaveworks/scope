@@ -179,7 +179,7 @@ class NodesChart extends React.Component {
         rank: node.get('rank'),
         shape: node.get('shape'),
         stack: node.get('stack'),
-        networks: node.get('networknetworks'),
+        networks: node.get('networks'),
       }));
     });
 

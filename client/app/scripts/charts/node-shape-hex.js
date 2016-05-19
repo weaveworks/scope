@@ -30,13 +30,11 @@ function getPoints(h) {
 }
 
 
-export default function NodeShapeHex({id, highlighted, size, color, metric, networks}) {
+export default function NodeShapeHex({id, highlighted, size, color, metric}) {
   const pathProps = v => ({
     d: getPoints(size * v * 2),
     transform: `rotate(90) translate(-${size * getWidth(v)}, -${size * v})`
   });
-
-  console.log('netz', networks);
 
   const shadowSize = 0.45;
   const upperHexBitHeight = -0.25 * size * shadowSize;
