@@ -1,0 +1,5 @@
+- name: one
+  command: echo one
+- name: two
+  after: [one]
+  command: echo two
