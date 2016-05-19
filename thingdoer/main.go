@@ -23,7 +23,7 @@ type thing struct {
 func (t *thing) run() {
 	var out bytes.Buffer
 
-	cmd := exec.Command("/bin/sh", "-c", t.Command)
+	cmd := exec.Command("/bin/bash", "-c", t.Command)
 	cmd.Env = os.Environ()
 	cmd.Stdout = &out
 	cmd.Stderr = &out
