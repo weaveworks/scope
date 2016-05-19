@@ -1,5 +1,5 @@
 - name: one
-  command: echo one
+  command: echo $PATH; which touch; foo
 - name: two
   after: [one]
   command: echo two
