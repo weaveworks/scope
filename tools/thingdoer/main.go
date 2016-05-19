@@ -37,10 +37,9 @@ func (t *thing) run() {
 	} else {
 		log.Printf(">>> %s finished with success after %0.1f secs\n", t.Name, duration)
 	}
-	if err != nil {
-		log.Print(out.String())
-		log.Println()
-	}
+
+	log.Print(out.String())
+	log.Println()
 
 	t.success = err == nil
 }
@@ -122,7 +121,7 @@ func main() {
 			break
 		}
 
-		// remove it as a dependancy from
+		// remove it as a dependency from
 		// other things
 		for _, t := range things {
 			t.After = remove(thing.Name, t.After)
