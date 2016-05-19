@@ -18,17 +18,18 @@
   command: >
     rm -f prog/scope;
     if [ "$CIRCLE_NODE_INDEX" = "0" ]; then
-      GOARCH=arm make GO_BUILD_INSTALL_DEPS= RM= prog/scope;
+      GOARCH=arm make GO_BUILD_INSTALL_DEPS= RM= RUN_FLAGS= prog/scope;
     else
-      GOOS=darwin make GO_BUILD_INSTALL_DEPS= RM= prog/scope;
+      GOOS=darwin make GO_BUILD_INSTALL_DEPS= RM= RUN_FLAGS= prog/scope;
     fi
 
 - name: build
   after: [arm-darwin-build, ui-build-image]
-  command: rm -f prog/scope; make RM=
+  command: rm -f prog/scope; make RM= RUN_FLAGS=
 
 - name: integration
   after: [build, vm-template]
+  unless:
   command: >
     test -z "$SECRET_PASSWORD" || (
       cd integration;
@@ -41,15 +42,15 @@
 
 - name: lint
   after: [build-image]
-  command: make RM= lint
+  command: make RM= RUN_FLAGS= lint
 
 - name: test
   after: [build-image]
-  command: COVERDIR=./coverage make RM= tests
+  command: COVERDIR=./coverage make RM= RUN_FLAGS= tests
 
 - name: client-test
   after: [ui-build-image]
-  command: make RM= client-test static
+  command: make RM= RUN_FLAGS= client-test static
 
 - name: coverage
   after: [test]
