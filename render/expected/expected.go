@@ -208,8 +208,11 @@ var (
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
 
+	ClientContainerImageNodeID = report.MakeContainerImageNodeID(fixture.ClientContainerImageName)
+	ServerContainerImageNodeID = report.MakeContainerImageNodeID(fixture.ServerContainerImageName)
+
 	RenderedContainerImages = report.Nodes{
-		fixture.ClientContainerImageNodeID: containerImage(fixture.ClientContainerImageNodeID, fixture.ServerContainerImageNodeID).
+		ClientContainerImageNodeID: containerImage(ClientContainerImageNodeID, ServerContainerImageNodeID).
 			WithLatests(map[string]string{
 				report.HostNodeID: fixture.ClientHostNodeID,
 				docker.ImageID:    fixture.ClientContainerImageID,
@@ -226,7 +229,7 @@ var (
 				RenderedContainers[fixture.ClientContainerNodeID],
 			)),
 
-		fixture.ServerContainerImageNodeID: containerImage(fixture.ServerContainerImageNodeID).
+		ServerContainerImageNodeID: containerImage(ServerContainerImageNodeID).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
@@ -234,7 +237,7 @@ var (
 			)),
 
 		uncontainedServerID:       uncontainedServerNode,
-		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerContainerImageNodeID),
+		render.IncomingInternetID: theIncomingInternetNode(ServerContainerImageNodeID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
 	}
 
@@ -298,7 +301,7 @@ var (
 				RenderedProcesses[fixture.ClientProcess1NodeID],
 				RenderedProcesses[fixture.ClientProcess2NodeID],
 				RenderedContainers[fixture.ClientContainerNodeID],
-				RenderedContainerImages[fixture.ClientContainerImageNodeID],
+				RenderedContainerImages[ClientContainerImageNodeID],
 				RenderedPods[fixture.ClientPodNodeID],
 			)),
 
@@ -309,7 +312,7 @@ var (
 				RenderedProcesses[fixture.ServerProcessNodeID],
 				RenderedProcesses[fixture.NonContainerProcessNodeID],
 				RenderedContainers[fixture.ServerContainerNodeID],
-				RenderedContainerImages[fixture.ServerContainerImageNodeID],
+				RenderedContainerImages[ServerContainerImageNodeID],
 				RenderedPods[fixture.ServerPodNodeID],
 			)),
 

@@ -217,8 +217,7 @@ var (
 				}).
 					WithTopology(report.Process).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
-					Add("container", report.MakeStringSet(ClientContainerNodeID)).
-					Add("container_image", report.MakeStringSet(ClientContainerImageNodeID)),
+					Add("container", report.MakeStringSet(ClientContainerNodeID)),
 				).WithMetrics(report.Metrics{
 					process.CPUUsage:    ClientProcess1CPUMetric,
 					process.MemoryUsage: ClientProcess1MemoryMetric,
@@ -231,8 +230,7 @@ var (
 				}).
 					WithTopology(report.Process).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
-					Add("container", report.MakeStringSet(ClientContainerNodeID)).
-					Add("container_image", report.MakeStringSet(ClientContainerImageNodeID)),
+					Add("container", report.MakeStringSet(ClientContainerNodeID)),
 				),
 				ServerProcessNodeID: report.MakeNodeWith(ServerProcessNodeID, map[string]string{
 					process.PID:        ServerPID,
@@ -242,8 +240,7 @@ var (
 				}).
 					WithTopology(report.Process).WithParents(report.EmptySets.
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
-					Add("container", report.MakeStringSet(ServerContainerNodeID)).
-					Add("container_image", report.MakeStringSet(ServerContainerImageNodeID)),
+					Add("container", report.MakeStringSet(ServerContainerNodeID)),
 				),
 				NonContainerProcessNodeID: report.MakeNodeWith(NonContainerProcessNodeID, map[string]string{
 					process.PID:       NonContainerPID,

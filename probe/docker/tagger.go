@@ -85,8 +85,7 @@ func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 		topology.AddNode(report.MakeNodeWith(nodeID, map[string]string{
 			ContainerID: c.ID(),
 		}).WithParents(report.EmptySets.
-			Add(report.Container, report.MakeStringSet(report.MakeContainerNodeID(c.ID()))).
-			Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
+			Add(report.Container, report.MakeStringSet(report.MakeContainerNodeID(c.ID()))),
 		))
 
 	}

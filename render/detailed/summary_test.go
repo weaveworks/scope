@@ -134,10 +134,10 @@ func TestMakeNodeSummary(t *testing.T) {
 		},
 		{
 			name:  "single container image rendering",
-			input: expected.RenderedContainerImages[fixture.ClientContainerImageNodeID],
+			input: expected.RenderedContainerImages[expected.ClientContainerImageNodeID],
 			ok:    true,
 			want: detailed.NodeSummary{
-				ID:         fixture.ClientContainerImageNodeID,
+				ID:         expected.ClientContainerImageNodeID,
 				Label:      fixture.ClientContainerImageName,
 				LabelMinor: "1 container",
 				Rank:       fixture.ClientContainerImageName,
@@ -145,10 +145,9 @@ func TestMakeNodeSummary(t *testing.T) {
 				Linkable:   true,
 				Stack:      true,
 				Metadata: []report.MetadataRow{
-					{ID: docker.ImageID, Label: "Image ID", Value: fixture.ClientContainerImageID, Priority: 1},
 					{ID: report.Container, Label: "# Containers", Value: "1", Priority: 2, Datatype: "number"},
 				},
-				Adjacency: report.MakeIDList(fixture.ServerContainerImageNodeID),
+				Adjacency: report.MakeIDList(expected.ServerContainerImageNodeID),
 			},
 		},
 		{
