@@ -63,6 +63,7 @@ class NodesChartNodes extends React.Component {
           matches={searchNodeMatches.get(node.get('id'))}
           highlighted={node.get('highlighted')}
           shape={node.get('shape')}
+          networks={node.get('networks')}
           stack={node.get('stack')}
           key={node.get('id')}
           id={node.get('id')}

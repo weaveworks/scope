@@ -51,9 +51,9 @@ const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, nodeCou
   label: name,
   label_minor: name,
   latest: {},
-  metadata: {},
   origins: [],
-  rank: name
+  rank: name,
+  networks: ['fe', 'be'],
 });
 
 
