@@ -185,6 +185,7 @@ func apiHandler(rep Reporter) CtxHandlerFunc {
 		report, err := rep.Report(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		newVersion.Lock()
 		defer newVersion.Unlock()
