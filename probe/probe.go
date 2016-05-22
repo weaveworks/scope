@@ -152,7 +152,9 @@ func (p *Probe) report() report.Report {
 			t := time.Now()
 			timer := time.AfterFunc(p.spyInterval, func() { log.Warningf("%v reporter took longer than %v", rep.Name(), p.spyInterval) })
 			newReport, err := rep.Report()
-			timer.Stop()
+			if !timer.Stop() {
+				log.Warningf("%v reporter took %v (longer than %v)", rep.Name(), time.Now().Sub(t), p.spyInterval)
+			}
 			metrics.MeasureSince([]string{rep.Name(), "reporter"}, t)
 			if err != nil {
 				log.Errorf("error generating report: %v", err)
@@ -175,7 +177,9 @@ func (p *Probe) tag(r report.Report) report.Report {
 		t := time.Now()
 		timer := time.AfterFunc(p.spyInterval, func() { log.Warningf("%v tagger took longer than %v", tagger.Name(), p.spyInterval) })
 		r, err = tagger.Tag(r)
-		timer.Stop()
+		if !timer.Stop() {
+			log.Warningf("%v tagger took %v (longer than %v)", tagger.Name(), time.Now().Sub(t), p.spyInterval)
+		}
 		metrics.MeasureSince([]string{tagger.Name(), "tagger"}, t)
 		if err != nil {
 			log.Errorf("error applying tagger: %v", err)

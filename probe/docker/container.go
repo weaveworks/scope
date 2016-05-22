@@ -116,7 +116,7 @@ type container struct {
 	container    *docker.Container
 	statsConn    ClientConn
 	latestStats  docker.Stats
-	pendingStats [20]docker.Stats
+	pendingStats [60]docker.Stats
 	numPending   int
 	hostID       string
 	baseNode     report.Node
