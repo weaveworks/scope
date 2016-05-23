@@ -135,9 +135,8 @@ func (c *dynamoDBCollector) getRows(userid string, row int64, start, end time.Ti
 	if err != nil {
 		dynamoRequestDuration.WithLabelValues("Query", "500").Observe(float64(duration.Nanoseconds()))
 		return report.MakeReport(), err
-	} else {
-		dynamoRequestDuration.WithLabelValues("Query", "200").Observe(float64(duration.Nanoseconds()))
 	}
+	dynamoRequestDuration.WithLabelValues("Query", "200").Observe(float64(duration.Nanoseconds()))
 	result := input
 	for _, item := range resp.Items {
 		b := item[reportField].B
