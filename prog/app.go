@@ -32,7 +32,7 @@ var (
 		Namespace: "scope",
 		Name:      "request_duration_nanoseconds",
 		Help:      "Time spent serving HTTP requests.",
-	}, []string{"method", "route", "status_code"})
+	}, []string{"method", "route", "status_code", "ws"})
 )
 
 func init() {
