@@ -39,7 +39,7 @@
     "true"
   ],
   "env": {
-    "CHECKPOINT_DISABLE": ""
+    "CHECKPOINT_DISABLE": "true"
   },
   "portDefinitions": [
     {
