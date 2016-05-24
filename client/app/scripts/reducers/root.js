@@ -106,46 +106,25 @@ function setDefaultTopologyOptions(state, topologyList) {
   return state;
 }
 
-function shouldCloseExisting(state) {
-  const nodeDetails = state.get('nodeDetails');
-  if (nodeDetails.size > 0 && nodeDetails.valueSeq().last().topologyId === 'networks') {
-    return false;
-  }
-  return true;
-}
-
 function closeNodeDetails(state, nodeId) {
   const nodeDetails = state.get('nodeDetails');
-  if (nodeDetails.size === 0) {
-    return state;
+  if (nodeDetails.size > 0) {
+    const popNodeId = nodeId || nodeDetails.keySeq().last();
+    // remove pipe if it belongs to the node being closed
+    state = state.update('controlPipes',
+      controlPipes => controlPipes.filter(pipe => pipe.get('nodeId') !== popNodeId));
+    state = state.deleteIn(['nodeDetails', popNodeId]);
   }
-  nodeId = nodeId || nodeDetails.keySeq().last();
-
-  // remove pipe if it belongs to the node being closed
-  state = state.update('controlPipes',
-    controlPipes => controlPipes.filter(pipe => pipe.get('nodeId') !== nodeId));
-  state = state.deleteIn(['nodeDetails', nodeId]);
-
-  // FIXME: duplicated state in a sense, look into reselect or something, we could derive the
-  // selectedNetwork from the contents of nodeDetails
-  //
-  // clear this additional state
-  if (state.get('selectedNetwork') === nodeId) {
-    state = state.set('selectedNetwork', null);
-    state = state.set('pinnedNetwork', null);
-  }
-
-  // TODO: could also be derived state.
-  if (state.get('selectedNodeId') === nodeId) {
+  if (state.get('nodeDetails').size === 0 || state.get('selectedNodeId') === nodeId) {
     state = state.set('selectedNodeId', null);
   }
   return state;
 }
 
 function closeAllNodeDetails(state) {
-  state.get('nodeDetails').keySeq().forEach(nodeId => {
-    state = closeNodeDetails(state, nodeId);
-  });
+  while (state.get('nodeDetails').size) {
+    state = closeNodeDetails(state);
+  }
   return state;
 }
 
@@ -208,10 +187,8 @@ export function rootReducer(state = initialState, action) {
       const prevSelectedNodeId = state.get('selectedNodeId');
       const prevDetailsStackSize = state.get('nodeDetails').size;
 
-      if (shouldCloseExisting(state)) {
       // click on sibling closes all
-        state = closeAllNodeDetails(state);
-      }
+      state = closeAllNodeDetails(state);
 
       // select new node if it's not the same (in that case just delesect)
       if (prevDetailsStackSize > 1 || prevSelectedNodeId !== action.nodeId) {
@@ -305,17 +282,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.PIN_NETWORK: {
-      state = closeAllNodeDetails(state);
-
-      state = state.setIn(['nodeDetails', action.networkId],
-        {
-          id: action.networkId,
-          label: action.networkId,
-          origin: null,
-          topologyId: 'networks'
-        }
-      );
-
       return state.merge({
         pinnedNetwork: action.networkId,
         selectedNetwork: action.networkId
@@ -323,7 +289,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.UNPIN_NETWORK: {
-      state = closeNodeDetails(state, action.networkId);
       return state.merge({
         pinnedNetwork: null,
       });
@@ -655,16 +620,6 @@ export function rootReducer(state = initialState, action) {
         // check if detail IDs have changed
         if (!isDeepEqual(state.get('nodeDetails').keySeq(), actionNodeDetails.keySeq())) {
           state = state.set('nodeDetails', actionNodeDetails);
-        }
-        //
-        // load up network view state
-        // TODO: cleanup/extract.
-        //
-        const networkNodes = action.state.nodeDetails.filter(n => n.topologyId === 'networks');
-        if (networkNodes.length > 0) {
-          state = state.set('pinnedNetwork', networkNodes[0].id);
-          state = state.set('selectedNetwork', networkNodes[0].id);
-          state = state.set('showingNetworks', true);
         }
       } else {
         state = state.update('nodeDetails', nodeDetails => nodeDetails.clear());
