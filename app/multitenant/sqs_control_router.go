@@ -222,7 +222,7 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 		return xfer.Response{}, fmt.Errorf("No SQS queue yet!")
 	}
 
-	probeQueueName := fmt.Sprintf("probe-%s-%s", userID, probeID)
+	probeQueueName := fmt.Sprintf("%sprobe-%s-%s", cr.prefix, userID, probeID)
 	start := time.Now()
 	probeQueueURL, err := cr.service.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: aws.String(probeQueueName),
