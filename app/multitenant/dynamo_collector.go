@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
 
@@ -24,6 +25,18 @@ const (
 	tsField     = "ts"
 	reportField = "report"
 )
+
+var (
+	dynamoRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Namespace: "scope",
+		Name:      "dynamo_request_duration_nanoseconds",
+		Help:      "Time spent doing DynamoDB requests.",
+	}, []string{"method", "status_code"})
+)
+
+func init() {
+	prometheus.MustRegister(dynamoRequestDuration)
+}
 
 // DynamoDBCollector is a Collector which can also CreateTables
 type DynamoDBCollector interface {
@@ -99,6 +112,7 @@ func (c *dynamoDBCollector) CreateTables() error {
 
 func (c *dynamoDBCollector) getRows(userid string, row int64, start, end time.Time, input report.Report) (report.Report, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
+	startTime := time.Now()
 	resp, err := c.db.Query(&dynamodb.QueryInput{
 		TableName: aws.String(tableName),
 		KeyConditions: map[string]*dynamodb.Condition{
@@ -117,9 +131,12 @@ func (c *dynamoDBCollector) getRows(userid string, row int64, start, end time.Ti
 			},
 		},
 	})
+	duration := time.Now().Sub(startTime)
 	if err != nil {
+		dynamoRequestDuration.WithLabelValues("Query", "500").Observe(float64(duration.Nanoseconds()))
 		return report.MakeReport(), err
 	}
+	dynamoRequestDuration.WithLabelValues("Query", "200").Observe(float64(duration.Nanoseconds()))
 	result := input
 	for _, item := range resp.Items {
 		b := item[reportField].B
@@ -182,6 +199,7 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 
 	now := time.Now()
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(now.UnixNano()/time.Hour.Nanoseconds(), 10))
+	startTime := time.Now()
 	_, err = c.db.PutItem(&dynamodb.PutItemInput{
 		TableName: aws.String(tableName),
 		Item: map[string]*dynamodb.AttributeValue{
@@ -196,9 +214,12 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 			},
 		},
 	})
+	duration := time.Now().Sub(startTime)
 	if err != nil {
+		dynamoRequestDuration.WithLabelValues("PutItem", "500").Observe(float64(duration.Nanoseconds()))
 		return err
 	}
+	dynamoRequestDuration.WithLabelValues("PutItem", "200").Observe(float64(duration.Nanoseconds()))
 	return nil
 }
 

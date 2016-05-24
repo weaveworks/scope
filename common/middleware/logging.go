@@ -30,10 +30,14 @@ var Logging = Func(func(next http.Handler) http.Handler {
 type interceptor struct {
 	http.ResponseWriter
 	statusCode int
+	recorded   bool
 }
 
 func (i *interceptor) WriteHeader(code int) {
-	i.statusCode = code
+	if !i.recorded {
+		i.statusCode = code
+		i.recorded = true
+	}
 	i.ResponseWriter.WriteHeader(code)
 }
 

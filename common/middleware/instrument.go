@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -17,10 +18,16 @@ type Instrument struct {
 	Duration *prometheus.SummaryVec
 }
 
+func isWSHandshakeRequest(req *http.Request) bool {
+	return strings.ToLower(req.Header.Get("Upgrade")) == "websocket" &&
+		strings.ToLower(req.Header.Get("Connection")) == "upgrade"
+}
+
 // Wrap implements middleware.Interface
 func (i Instrument) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		begin := time.Now()
+		isWS := strconv.FormatBool(isWSHandshakeRequest(r))
 		interceptor := &interceptor{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(interceptor, r)
 		var (
@@ -28,7 +35,7 @@ func (i Instrument) Wrap(next http.Handler) http.Handler {
 			status = strconv.Itoa(interceptor.statusCode)
 			took   = time.Since(begin)
 		)
-		i.Duration.WithLabelValues(r.Method, route, status).Observe(float64(took.Nanoseconds()))
+		i.Duration.WithLabelValues(r.Method, route, status, isWS).Observe(float64(took.Nanoseconds()))
 	})
 }
 
