@@ -33,7 +33,7 @@ func wscat(flags wscatFlags) {
 		for {
 			_, buf, err := conn.ReadMessage() // TODO type should be binary message
 			if err != nil {
-				if err != io.EOF {
+				if err != io.EOF && err != io.ErrUnexpectedEOF {
 					status = 1
 					log.Errorf("Error reading websocket: %s", err)
 				}
@@ -56,7 +56,7 @@ func wscat(flags wscatFlags) {
 		for {
 			n, err := os.Stdin.Read(buf)
 			if err != nil {
-				if err != io.EOF {
+				if err != io.EOF && err != io.ErrUnexpectedEOF {
 					log.Errorf("Error reading stdin: %s", err)
 				}
 				status = 1
