@@ -64,8 +64,16 @@ var (
 	// a struct with a repeated field containing a nil element.
 	errRepeatedHasNil = errors.New("proto: repeated field has nil element")
 
+	// errOneofHasNil is the error returned if Marshal is called with
+	// a struct with a oneof field containing a nil element.
+	errOneofHasNil = errors.New("proto: oneof field has nil value")
+
 	// ErrNil is the error returned if Marshal is called with nil.
 	ErrNil = errors.New("proto: Marshal called with nil")
+
+	// ErrTooLarge is the error returned if Marshal is called with a
+	// message that encodes to >2GB.
+	ErrTooLarge = errors.New("proto: message encodes to over 2 GB")
 )
 
 // The fundamental encoders that put bytes on the wire.
@@ -73,6 +81,10 @@ var (
 // therefore of type valueEncoder.
 
 const maxVarintBytes = 10 // maximum length of a varint
+
+// maxMarshalSize is the largest allowed size of an encoded protobuf,
+// since C++ and Java use signed int32s for the size.
+const maxMarshalSize = 1<<31 - 1
 
 // EncodeVarint returns the varint encoding of x.
 // This is the format for the
@@ -103,6 +115,11 @@ func (p *Buffer) EncodeVarint(x uint64) error {
 	}
 	p.buf = append(p.buf, uint8(x))
 	return nil
+}
+
+// SizeVarint returns the varint encoding size of an integer.
+func SizeVarint(x uint64) int {
+	return sizeVarint(x)
 }
 
 func sizeVarint(x uint64) (n int) {
@@ -268,6 +285,9 @@ func (p *Buffer) Marshal(pb Message) error {
 		stats.Encode++
 	}
 
+	if len(p.buf) > maxMarshalSize {
+		return ErrTooLarge
+	}
 	return err
 }
 
@@ -1115,9 +1135,8 @@ func (o *Buffer) enc_new_map(p *Properties, base structPointer) error {
 		return nil
 	}
 
-	keys := v.MapKeys()
-	sort.Sort(mapKeys(keys))
-	for _, key := range keys {
+	// Don't sort map keys. It is not required by the spec, and C++ doesn't do it.
+	for _, key := range v.MapKeys() {
 		val := v.MapIndex(key)
 
 		// The only illegal map entry values are nil message pointers.
@@ -1212,13 +1231,18 @@ func (o *Buffer) enc_struct(prop *StructProperties, base structPointer) error {
 					return err
 				}
 			}
+			if len(o.buf) > maxMarshalSize {
+				return ErrTooLarge
+			}
 		}
 	}
 
 	// Do oneof fields.
 	if prop.oneofMarshaler != nil {
 		m := structPointer_Interface(base, prop.stype).(Message)
-		if err := prop.oneofMarshaler(m, o); err != nil {
+		if err := prop.oneofMarshaler(m, o); err == ErrNil {
+			return errOneofHasNil
+		} else if err != nil {
 			return err
 		}
 	}
@@ -1226,6 +1250,9 @@ func (o *Buffer) enc_struct(prop *StructProperties, base structPointer) error {
 	// Add unrecognized fields at the end.
 	if prop.unrecField.IsValid() {
 		v := *structPointer_Bytes(base, prop.unrecField)
+		if len(o.buf)+len(v) > maxMarshalSize {
+			return ErrTooLarge
+		}
 		if len(v) > 0 {
 			o.buf = append(o.buf, v...)
 		}
@@ -1249,24 +1276,9 @@ func size_struct(prop *StructProperties, base structPointer) (n int) {
 	}
 
 	// Factor in any oneof fields.
-	// TODO: This could be faster and use less reflection.
-	if prop.oneofMarshaler != nil {
-		sv := reflect.ValueOf(structPointer_Interface(base, prop.stype)).Elem()
-		for i := 0; i < prop.stype.NumField(); i++ {
-			fv := sv.Field(i)
-			if fv.Kind() != reflect.Interface || fv.IsNil() {
-				continue
-			}
-			if prop.stype.Field(i).Tag.Get("protobuf_oneof") == "" {
-				continue
-			}
-			spv := fv.Elem()         // interface -> *T
-			sv := spv.Elem()         // *T -> T
-			sf := sv.Type().Field(0) // StructField inside T
-			var prop Properties
-			prop.Init(sf.Type, "whatever", sf.Tag.Get("protobuf"), &sf)
-			n += prop.size(&prop, toStructPointer(spv))
-		}
+	if prop.oneofSizer != nil {
+		m := structPointer_Interface(base, prop.stype).(Message)
+		n += prop.oneofSizer(m)
 	}
 
 	return

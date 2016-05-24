@@ -99,6 +99,24 @@ var (
 			Icon:  "fa-trash-o",
 			Rank:  8,
 		},
+		{
+			ID:    SpeedSlowContainer,
+			Human: "Traffic speed: slow",
+			Icon:  "fa-hourglass-1",
+			Rank:  9,
+		},
+		{
+			ID:    SpeedMediumContainer,
+			Human: "Traffic speed: medium",
+			Icon:  "fa-hourglass-2",
+			Rank:  10,
+		},
+		{
+			ID:    SpeedFastContainer,
+			Human: "Traffic speed: fast",
+			Icon:  "fa-hourglass-3",
+			Rank:  11,
+		},
 	}
 )
 
