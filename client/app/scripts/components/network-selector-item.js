@@ -35,11 +35,11 @@ class NetworkSelectorItem extends React.Component {
     const id = network.get('id');
     const isPinned = (id === pinnedNetwork);
     const isSelected = (id === selectedNetwork);
-    const className = classNames('metric-selector-action', {
-      'metric-selector-action-selected': isSelected
+    const className = classNames('network-selector-action', {
+      'network-selector-action-selected': isSelected
     });
     const style = {
-      backgroundColor: getNodeColor(id)
+      borderBottomColor: getNodeColor(id)
     };
 
     return (

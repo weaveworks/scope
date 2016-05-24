@@ -274,6 +274,10 @@ export function rootReducer(state = initialState, action) {
     //
 
     case ActionTypes.SHOW_NETWORKS: {
+      if (!action.visible) {
+        state = state.set('selectedNetwork', null);
+        state = state.set('pinnedNetwork', null);
+      }
       return state.set('showingNetworks', action.visible);
     }
 
@@ -606,6 +610,12 @@ export function rootReducer(state = initialState, action) {
         selectedNodeId: action.state.selectedNodeId,
         pinnedMetricType: action.state.pinnedMetricType
       });
+      if (action.state.showingNetworks) {
+        state = state.set('showingNetworks', action.state.showingNetworks);
+      }
+      if (action.state.pinnedNetwork) {
+        state = state.set('pinnedNetwork', action.state.pinnedNetwork);
+      }
       if (action.state.controlPipe) {
         state = state.set('controlPipes', makeOrderedMap({
           [action.state.controlPipe.id]:

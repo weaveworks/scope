@@ -38,9 +38,13 @@ export function toggleHelp() {
 
 
 export function showNetworks(visible) {
-  return {
-    type: ActionTypes.SHOW_NETWORKS,
-    visible
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.SHOW_NETWORKS,
+      visible
+    });
+
+    updateRoute(getState);
   };
 }
 

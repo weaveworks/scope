@@ -28,14 +28,18 @@ class NetworkSelector extends React.Component {
       <NetworkSelectorItem key={network.get('id')} network={network} />
     ));
 
-    const className = classNames('metric-selector-action', {
-      'metric-selector-action-selected': showingNetworks
+    const className = classNames('network-selector-action', {
+      'network-selector-action-selected': showingNetworks
     });
 
+    const style = {
+      borderBottomColor: 'transparent'
+    };
+
     return (
-      <div className="metric-selector">
-        <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
-          <div className={className} onClick={this.onClick}>
+      <div className="network-selector">
+        <div className="network-selector-wrapper" onMouseLeave={this.onMouseOut}>
+          <div className={className} onClick={this.onClick} style={style}>
             Networks
           </div>
           {showingNetworks && items}
