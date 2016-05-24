@@ -518,14 +518,26 @@ export function rootReducer(state = initialState, action) {
       // apply pinned searches, filters nodes that dont match
       state = applyPinnedSearches(state);
 
+      // TODO move this setting of networks as toplevel node field to backend,
+      // to not rely on field IDs here. should be determined by topology implementer
+      state = state.update('nodes', nodes => nodes.map(node => {
+        if (node.has('metadata')) {
+          const networks = node.get('metadata')
+            .find(field => field.get('id') === 'docker_container_networks');
+          if (networks) {
+            return node.set('networks', fromJS(networks.get('value').split(', ')));
+          }
+        }
+        return node;
+      }));
+
       state = state.set('availableNetworks', state.get('nodes')
-                        .valueSeq()
-                        .flatMap(node => (node.get('networks') || makeList()).map(n => (
-                          makeMap({id: n, label: n})
-                        )))
-                        .toSet()
-                        .toList()
-                        .sort());
+        .valueSeq()
+        .flatMap(node => node.get('networks') || makeList())
+        .toSet()
+        .toList()
+        .sort()
+        .map(n => makeMap({id: n, label: n})));
 
       state = state.set('availableCanvasMetrics', state.get('nodes')
         .valueSeq()
