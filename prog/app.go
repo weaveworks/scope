@@ -84,7 +84,7 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL string, window
 	}
 
 	if parsed.Scheme == "dynamodb" {
-		dynamoCollector := multitenant.NewDynamoDBCollector(awsConfigFromURL(parsed), userIDer)
+		dynamoCollector := multitenant.NewDynamoDBCollector(awsConfigFromURL(parsed), userIDer, parsed.Path)
 		if createTables {
 			if err := dynamoCollector.CreateTables(); err != nil {
 				return nil, err
@@ -107,7 +107,7 @@ func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string
 	}
 
 	if parsed.Scheme == "sqs" {
-		return multitenant.NewSQSControlRouter(awsConfigFromURL(parsed), userIDer), nil
+		return multitenant.NewSQSControlRouter(awsConfigFromURL(parsed), userIDer, parsed.Path), nil
 	}
 
 	return nil, fmt.Errorf("Invalid control router '%s'", controlRouterURL)
