@@ -42,6 +42,7 @@ type sqsControlRouter struct {
 	service          *sqs.SQS
 	responseQueueURL *string
 	userIDer         UserIDer
+	prefix           string
 
 	mtx          sync.Mutex
 	responses    map[string]chan xfer.Response
@@ -60,11 +61,12 @@ type sqsResponseMessage struct {
 }
 
 // NewSQSControlRouter the harbinger of death
-func NewSQSControlRouter(config *aws.Config, userIDer UserIDer) app.ControlRouter {
+func NewSQSControlRouter(config *aws.Config, userIDer UserIDer, prefix string) app.ControlRouter {
 	result := &sqsControlRouter{
 		service:          sqs.New(session.New(config)),
 		responseQueueURL: nil,
 		userIDer:         userIDer,
+		prefix:           prefix,
 		responses:        map[string]chan xfer.Response{},
 		probeWorkers:     map[int64]*probeWorker{},
 	}
@@ -110,7 +112,7 @@ func (cr *sqsControlRouter) loop() {
 	)
 	for {
 		// This app has a random id and uses this as a return path for all responses from probes.
-		name := fmt.Sprintf("control-app-%d", rand.Int63())
+		name := fmt.Sprintf("%scontrol-app-%d", cr.prefix, rand.Int63())
 		responseQueueURL, err = cr.getOrCreateQueue(name)
 		if err != nil {
 			log.Errorf("Failed to create queue: %v", err)
@@ -220,7 +222,7 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 		return xfer.Response{}, fmt.Errorf("No SQS queue yet!")
 	}
 
-	probeQueueName := fmt.Sprintf("probe-%s-%s", userID, probeID)
+	probeQueueName := fmt.Sprintf("%sprobe-%s-%s", cr.prefix, userID, probeID)
 	start := time.Now()
 	probeQueueURL, err := cr.service.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: aws.String(probeQueueName),
@@ -269,7 +271,7 @@ func (cr *sqsControlRouter) Register(ctx context.Context, probeID string, handle
 		return 0, err
 	}
 
-	name := fmt.Sprintf("probe-%s-%s", userID, probeID)
+	name := fmt.Sprintf("%sprobe-%s-%s", cr.prefix, userID, probeID)
 	queueURL, err := cr.getOrCreateQueue(name)
 	if err != nil {
 		return 0, err

@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	tableName   = "reports"
 	hourField   = "hour"
 	tsField     = "ts"
 	reportField = "report"
@@ -45,16 +44,18 @@ type DynamoDBCollector interface {
 }
 
 type dynamoDBCollector struct {
-	userIDer UserIDer
-	db       *dynamodb.DynamoDB
+	userIDer  UserIDer
+	db        *dynamodb.DynamoDB
+	tableName string
 }
 
 // NewDynamoDBCollector the reaper of souls
 // https://github.com/aws/aws-sdk-go/wiki/common-examples
-func NewDynamoDBCollector(config *aws.Config, userIDer UserIDer) DynamoDBCollector {
+func NewDynamoDBCollector(config *aws.Config, userIDer UserIDer, tableName string) DynamoDBCollector {
 	return &dynamoDBCollector{
-		db:       dynamodb.New(session.New(config)),
-		userIDer: userIDer,
+		db:        dynamodb.New(session.New(config)),
+		userIDer:  userIDer,
+		tableName: tableName,
 	}
 }
 
@@ -68,13 +69,13 @@ func (c *dynamoDBCollector) CreateTables() error {
 		return err
 	}
 	for _, s := range resp.TableNames {
-		if *s == tableName {
+		if *s == c.tableName {
 			return nil
 		}
 	}
 
 	params := &dynamodb.CreateTableInput{
-		TableName: aws.String(tableName),
+		TableName: aws.String(c.tableName),
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
 				AttributeName: aws.String(hourField),
@@ -105,7 +106,7 @@ func (c *dynamoDBCollector) CreateTables() error {
 			WriteCapacityUnits: aws.Int64(5),
 		},
 	}
-	log.Infof("Creating table %s", tableName)
+	log.Infof("Creating table %s", c.tableName)
 	_, err = c.db.CreateTable(params)
 	return err
 }
@@ -114,7 +115,7 @@ func (c *dynamoDBCollector) getRows(userid string, row int64, start, end time.Ti
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
 	startTime := time.Now()
 	resp, err := c.db.Query(&dynamodb.QueryInput{
-		TableName: aws.String(tableName),
+		TableName: aws.String(c.tableName),
 		KeyConditions: map[string]*dynamodb.Condition{
 			hourField: {
 				AttributeValueList: []*dynamodb.AttributeValue{
@@ -201,7 +202,7 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(now.UnixNano()/time.Hour.Nanoseconds(), 10))
 	startTime := time.Now()
 	_, err = c.db.PutItem(&dynamodb.PutItemInput{
-		TableName: aws.String(tableName),
+		TableName: aws.String(c.tableName),
 		Item: map[string]*dynamodb.AttributeValue{
 			hourField: {
 				S: aws.String(rowKey),
