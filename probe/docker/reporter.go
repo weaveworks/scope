@@ -26,9 +26,10 @@ var (
 		ImageID:               {ID: ImageID, Label: "Image ID", From: report.FromLatest, Truncate: 12, Priority: 11},
 		ContainerUptime:       {ID: ContainerUptime, Label: "Uptime", From: report.FromLatest, Priority: 12},
 		ContainerRestartCount: {ID: ContainerRestartCount, Label: "Restart #", From: report.FromLatest, Priority: 13},
-		ContainerIPs:          {ID: ContainerIPs, Label: "IPs", From: report.FromSets, Priority: 14},
-		ContainerPorts:        {ID: ContainerPorts, Label: "Ports", From: report.FromSets, Priority: 15},
-		ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Priority: 16},
+		ContainerNetworks:     {ID: ContainerNetworks, Label: "Networks", From: report.FromSets, Priority: 14},
+		ContainerIPs:          {ID: ContainerIPs, Label: "IPs", From: report.FromSets, Priority: 15},
+		ContainerPorts:        {ID: ContainerPorts, Label: "Ports", From: report.FromSets, Priority: 16},
+		ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Priority: 17},
 	}
 
 	ContainerMetricTemplates = report.MetricTemplates{
