@@ -6,6 +6,7 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { applyPinnedSearches, updateNodeMatches } from '../utils/search-utils';
+import { longestCommonPrefix } from '../utils/string-utils';
 import { findTopologyById, getAdjacentNodes, setTopologyUrlsById,
   updateTopologyIds, filterHiddenTopologies } from '../utils/topology-utils';
 
@@ -538,6 +539,20 @@ export function rootReducer(state = initialState, action) {
         .toList()
         .sort()
         .map(n => makeMap({id: n, label: n})));
+
+      // optimize color coding for networks
+      const networkPrefix = longestCommonPrefix(state.get('availableNetworks')
+        .map(n => n.get('id')).toJS());
+
+      if (networkPrefix) {
+        state = state.update('nodes',
+          nodes => nodes.map(node => node.update('networks',
+            networks => networks.map(n => n.substr(networkPrefix.length)))));
+
+        state = state.update('availableNetworks',
+          networks => networks.map(network => network
+            .set('colorKey', network.get('id').substr(networkPrefix.length))));
+      }
 
       state = state.set('availableCanvasMetrics', state.get('nodes')
         .valueSeq()

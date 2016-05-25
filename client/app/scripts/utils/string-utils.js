@@ -1,7 +1,7 @@
 import React from 'react';
 import filesize from 'filesize';
 import d3 from 'd3';
-
+import LCP from 'lcp';
 
 const formatLargeValue = d3.format('s');
 
@@ -68,4 +68,8 @@ export const formatDate = d3.time.format.iso;
 const CLEAN_LABEL_REGEX = /\W/g;
 export function slugify(label) {
   return label.replace(CLEAN_LABEL_REGEX, '').toLowerCase();
+}
+
+export function longestCommonPrefix(strArr) {
+  return (new LCP(strArr)).lcp();
 }

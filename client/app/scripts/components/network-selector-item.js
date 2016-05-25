@@ -39,7 +39,7 @@ class NetworkSelectorItem extends React.Component {
       'network-selector-action-selected': isSelected
     });
     const style = {
-      borderBottomColor: getNodeColor(id)
+      borderBottomColor: getNodeColor(network.get('colorKey', id))
     };
 
     return (
