@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Map as makeMap } from 'immutable';
+import { Map as makeMap, List as makeList } from 'immutable';
 
 import { hasSelectedNode as hasSelectedNodeFn } from '../utils/topology-utils';
 import EdgeContainer from './edge-container';
@@ -9,7 +9,7 @@ class NodesChartEdges extends React.Component {
   render() {
     const { hasSelectedNode, highlightedEdgeIds, layoutEdges,
       layoutPrecision, searchNodeMatches = makeMap(), searchQuery,
-      selectedNodeId } = this.props;
+      selectedNodeId, selectedNetwork, selectedNetworkNodes } = this.props;
 
     return (
       <g className="nodes-chart-edges">
@@ -18,10 +18,16 @@ class NodesChartEdges extends React.Component {
           const targetSelected = selectedNodeId === edge.get('target');
           const highlighted = highlightedEdgeIds.has(edge.get('id'));
           const focused = hasSelectedNode && (sourceSelected || targetSelected);
-          const blurred = !(highlightedEdgeIds.size > 0 && highlighted)
-            && ((hasSelectedNode && !sourceSelected && !targetSelected)
-              || !focused && searchQuery && !(searchNodeMatches.has(edge.get('source'))
-                && searchNodeMatches.has(edge.get('target'))));
+          const otherNodesSelected = hasSelectedNode && !sourceSelected && !targetSelected;
+          const noMatches = searchQuery &&
+            !(searchNodeMatches.has(edge.get('source')) &&
+              searchNodeMatches.has(edge.get('target')));
+          const noSelectedNetworks = selectedNetwork &&
+            !(selectedNetworkNodes.contains(edge.get('source')) &&
+              selectedNetworkNodes.contains(edge.get('target')));
+          const blurred = !highlighted && (otherNodesSelected ||
+                                           !focused && noMatches ||
+                                             !focused && noSelectedNetworks);
 
           return (
             <EdgeContainer
@@ -49,7 +55,9 @@ function mapStateToProps(state) {
     highlightedEdgeIds: state.get('highlightedEdgeIds'),
     searchNodeMatches: state.getIn(['searchNodeMatches', currentTopologyId]),
     searchQuery: state.get('searchQuery'),
-    selectedNodeId: state.get('selectedNodeId')
+    selectedNetwork: state.get('selectedNetwork'),
+    selectedNetworkNodes: state.get('networkNodes').get(state.get('selectedNetwork'), makeList()),
+    selectedNodeId: state.get('selectedNodeId'),
   };
 }
 

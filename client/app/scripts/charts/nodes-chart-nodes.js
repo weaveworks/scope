@@ -24,7 +24,8 @@ class NodesChartNodes extends React.Component {
       selectedNodeId && !node.get('focused')
       || searchQuery && !searchNodeMatches.has(node.get('id'))
         && !node.get('highlighted')
-      || selectedNetwork && !(node.get('networks') || makeList()).contains(selectedNetwork));
+      || selectedNetwork
+        && !(node.get('networks') || makeList()).find(n => n.get('id') === selectedNetwork));
 
     // make sure blurred nodes are in the background
     const sortNodes = node => {

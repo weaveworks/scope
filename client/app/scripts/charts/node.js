@@ -107,9 +107,6 @@ class Node extends React.Component {
       <g className={nodeClassName} transform={transform}
         onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
 
-        {showingNetworks && <NodeNetworksOverlay size={size} networks={networks}
-          stack={stack} />}
-
         {useSvgLabels ?
 
           svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
@@ -133,6 +130,9 @@ class Node extends React.Component {
             color={color}
             {...this.props} />
         </g>
+
+        {showingNetworks && <NodeNetworksOverlay id={this.props.id} size={size}
+          networks={networks} stack={stack} />}
       </g>
     );
   }

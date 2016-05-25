@@ -5,41 +5,46 @@ import { getNodeColor } from '../utils/color-utils';
 import { isContrastMode } from '../utils/contrast-utils';
 
 
+const h = 5;
 const padding = 0.05;
-const offset = Math.PI;
-const arc = d3.svg.arc()
-  .startAngle(d => d.startAngle + offset)
-  .endAngle(d => d.endAngle + offset);
-const arcScale = d3.scale.linear()
-  .range([Math.PI * 0.25 + padding, Math.PI * 1.75 - padding]);
-
+const rx = 1;
+const ry = rx;
+const labelOffset = 38;
 
 function NodeNetworksOverlay({size, stack, networks = makeList()}) {
-  arcScale.domain([0, networks.size]);
-  const radius = size * 0.9;
+  const r = size * 0.5;
+  const offset = r + labelOffset;
+  const w = Math.max(size, (size / 4) * networks.size);
+  const x = d3.scale.ordinal()
+    .domain(networks.map((n, i) => i).toJS())
+    .rangeBands([w * -0.5, w * 0.5], padding, 0);
 
-  const paths = networks.map((n, i) => {
-    const d = arc({
-      padAngle: 0.05,
-      innerRadius: radius,
-      outerRadius: radius + 4,
-      startAngle: arcScale(i),
-      endAngle: arcScale(i + 1)
-    });
-
-    return (<path d={d} style={{fill: getNodeColor(n)}} key={n} />);
-  });
+  const bars = networks.map((n, i) => (
+    <rect
+      x={x(i)}
+      y={offset}
+      width={x.rangeBand()}
+      height={h}
+      rx={rx}
+      ry={ry}
+      className="node-network"
+      style={{
+        fill: getNodeColor(n.get('colorKey'))
+      }}
+      key={n.get('id')}
+    />
+  ));
 
   let transform = '';
   if (stack) {
     const contrastMode = isContrastMode();
-    const [dx, dy] = contrastMode ? [0, 8] : [0, 5];
+    const [dx, dy] = contrastMode ? [0, 8] : [0, 0];
     transform = `translate(${dx}, ${dy * -1.5})`;
   }
 
   return (
     <g transform={transform}>
-      {paths.toJS()}
+      {bars.toJS()}
     </g>
   );
 }
