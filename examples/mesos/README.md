@@ -8,7 +8,13 @@ docker images, docker in Mesos Agent containers reuses `docker.sock` file of the
 containers are also seen on the host. This setup gives single Weave Scope container access to all containers running in 
 `minimesos` cluster. 
 
-Launching of Weave Scope by providing content `minimesos.json` file to Marathon is a part of default `minimesos` cluster. If
-removed from configuration, Weave Scope can be added to the running cluster by `minimesos install --marathonFile <URL or path to minimesos.json>` 
+Launching of Weave Scope by providing content `minimesos.json` file to Marathon is a part of default `minimesos` cluster. 
+If removed from configuration, Weave Scope can be added to the running cluster by 
+`minimesos install --marathonFile <URL or path to minimesos.json>`. Example for using the latest, not released yet, version 
+of Marathon task file
+
+```
+minimesos install --marathonFile https://raw.githubusercontent.com/weaveworks/scope/master/examples/mesos/minimesos.json
+```
 
 UI of Weave Scope can be accessed on http://172.17.0.1:4040/
