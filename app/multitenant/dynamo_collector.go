@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/bluele/gcache"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
@@ -20,9 +21,11 @@ import (
 )
 
 const (
-	hourField   = "hour"
-	tsField     = "ts"
-	reportField = "report"
+	hourField       = "hour"
+	tsField         = "ts"
+	reportField     = "report"
+	cacheSize       = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
+	cacheExpiration = 15 * time.Second
 )
 
 var (
@@ -31,10 +34,22 @@ var (
 		Name:      "dynamo_request_duration_nanoseconds",
 		Help:      "Time spent doing DynamoDB requests.",
 	}, []string{"method", "status_code"})
+	dynamoCacheHits = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "dynamo_cache_hits",
+		Help:      "Reports fetches that hit local cache.",
+	})
+	dynamoCacheMiss = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "dynamo_cache_miss",
+		Help:      "Reports fetches that miss local cache.",
+	})
 )
 
 func init() {
 	prometheus.MustRegister(dynamoRequestDuration)
+	prometheus.MustRegister(dynamoCacheHits)
+	prometheus.MustRegister(dynamoCacheMiss)
 }
 
 // DynamoDBCollector is a Collector which can also CreateTables
@@ -48,6 +63,7 @@ type dynamoDBCollector struct {
 	db        *dynamodb.DynamoDB
 	tableName string
 	merger    app.Merger
+	cache     gcache.Cache
 }
 
 // NewDynamoDBCollector the reaper of souls
@@ -58,6 +74,7 @@ func NewDynamoDBCollector(config *aws.Config, userIDer UserIDer, tableName strin
 		userIDer:  userIDer,
 		tableName: tableName,
 		merger:    app.NewSmartMerger(),
+		cache:     gcache.New(cacheSize).LRU().Expiration(cacheExpiration).Build(),
 	}
 }
 
@@ -113,8 +130,8 @@ func (c *dynamoDBCollector) CreateTables() error {
 	return err
 }
 
-func (c *dynamoDBCollector) getRows(userid string, row int64, start, end time.Time) ([]report.Report, error) {
-	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
+// getReportTimestamps gets the column keys for reports in this range
+func (c *dynamoDBCollector) getReportTimestamps(rowKey string, start, end time.Time) ([]string, error) {
 	startTime := time.Now()
 	resp, err := c.db.Query(&dynamodb.QueryInput{
 		TableName: aws.String(c.tableName),
@@ -133,6 +150,7 @@ func (c *dynamoDBCollector) getRows(userid string, row int64, start, end time.Ti
 				ComparisonOperator: aws.String("BETWEEN"),
 			},
 		},
+		ProjectionExpression: aws.String(tsField),
 	})
 	duration := time.Now().Sub(startTime)
 	if err != nil {
@@ -140,27 +158,112 @@ func (c *dynamoDBCollector) getRows(userid string, row int64, start, end time.Ti
 		return nil, err
 	}
 	dynamoRequestDuration.WithLabelValues("Query", "200").Observe(float64(duration.Nanoseconds()))
-	reports := []report.Report{}
+
+	result := []string{}
 	for _, item := range resp.Items {
-		b := item[reportField].B
-		if b == nil {
+		ts := item[tsField].N
+		if ts == nil {
 			log.Errorf("Empty row!")
 			continue
 		}
-		buf := bytes.NewBuffer(b)
-		reader, err := gzip.NewReader(buf)
-		if err != nil {
-			log.Errorf("Error gunzipping report: %v", err)
-			continue
+		result = append(result, *ts)
+	}
+	return result, nil
+}
+
+func (c *dynamoDBCollector) getCached(rowKey string, columnKeys []string) ([]report.Report, []string) {
+	foundReports := []report.Report{}
+	missingReports := []string{}
+	for _, columnKey := range columnKeys {
+		rpt, err := c.cache.Get(struct{ row, column string }{rowKey, columnKey})
+		if err == nil {
+			foundReports = append(foundReports, rpt.(report.Report))
+		} else {
+			missingReports = append(missingReports, columnKey)
 		}
-		rep := report.MakeReport()
-		if err := codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode(&rep); err != nil {
-			log.Errorf("Failed to decode report: %v", err)
-			continue
+	}
+	return foundReports, missingReports
+}
+
+func (c *dynamoDBCollector) getNonCached(rowKey string, columnKeys []string) ([]report.Report, error) {
+	keys := []map[string]*dynamodb.AttributeValue{}
+	for _, columnKey := range columnKeys {
+		keys = append(keys, map[string]*dynamodb.AttributeValue{
+			hourField: {S: aws.String(rowKey)},
+			tsField:   {N: aws.String(columnKey)},
+		})
+	}
+
+	startTime := time.Now()
+	resp, err := c.db.BatchGetItem(&dynamodb.BatchGetItemInput{
+		RequestItems: map[string]*dynamodb.KeysAndAttributes{
+			c.tableName: {
+				Keys: keys,
+			},
+		},
+	})
+	duration := time.Now().Sub(startTime)
+	if err != nil {
+		dynamoRequestDuration.WithLabelValues("BatchGetItem", "500").Observe(float64(duration.Nanoseconds()))
+		return nil, err
+	}
+	dynamoRequestDuration.WithLabelValues("BatchGetItem", "200").Observe(float64(duration.Nanoseconds()))
+
+	reports := []report.Report{}
+	for _, table := range resp.Responses {
+		for _, entry := range table {
+			columnKey, ok := entry[tsField]
+			if !ok {
+				log.Errorf("Entry doesn't contain columnKey!")
+				continue
+			}
+
+			b, ok := entry[reportField]
+			if !ok {
+				log.Errorf("Entry doesn't contain report!")
+				continue
+			}
+
+			buf := bytes.NewBuffer(b.B)
+			reader, err := gzip.NewReader(buf)
+			if err != nil {
+				log.Errorf("Error gunzipping report: %v", err)
+				continue
+			}
+			rep := report.MakeReport()
+			if err := codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode(&rep); err != nil {
+				log.Errorf("Failed to decode report: %v", err)
+				continue
+			}
+			reports = append(reports, rep)
+
+			c.cache.Set(struct{ row, column string }{rowKey, *columnKey.N}, rep)
 		}
-		reports = append(reports, rep)
 	}
 	return reports, nil
+}
+
+func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time.Time) ([]report.Report, error) {
+	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
+	cols, err := c.getReportTimestamps(rowKey, start, end)
+	if err != nil {
+		return nil, err
+	}
+
+	cachedReports, missing := c.getCached(rowKey, cols)
+	dynamoCacheHits.Add(float64(len(cachedReports)))
+	dynamoCacheMiss.Add(float64(len(missing)))
+	if len(missing) == 0 {
+		return cachedReports, nil
+	}
+
+	fetchedReport, err := c.getNonCached(rowKey, missing)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(cachedReports, fetchedReport...), nil
+
 }
 
 func (c *dynamoDBCollector) Report(ctx context.Context) (report.Report, error) {
@@ -177,19 +280,19 @@ func (c *dynamoDBCollector) Report(ctx context.Context) (report.Report, error) {
 
 	// Queries will only every span 2 rows max.
 	if rowStart != rowEnd {
-		reports1, err := c.getRows(userid, rowStart, start, now)
+		reports1, err := c.getReports(userid, rowStart, start, now)
 		if err != nil {
 			return report.MakeReport(), err
 		}
 
-		reports2, err := c.getRows(userid, rowEnd, start, now)
+		reports2, err := c.getReports(userid, rowEnd, start, now)
 		if err != nil {
 			return report.MakeReport(), err
 		}
 
 		reports = append(reports1, reports2...)
 	} else {
-		if reports, err = c.getRows(userid, rowEnd, start, now); err != nil {
+		if reports, err = c.getReports(userid, rowEnd, start, now); err != nil {
 			return report.MakeReport(), err
 		}
 	}
