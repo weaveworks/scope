@@ -11,11 +11,11 @@ import (
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/types"
 
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/kubernetes"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/probe/kubernetes"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test/reflect"
 )
 
 var (

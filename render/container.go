@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/probe/endpoint"
+	"$GITHUB_URI/report"
 )
 
 // Constants are used in the tests.

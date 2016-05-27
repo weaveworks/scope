@@ -10,7 +10,7 @@ import (
 	"github.com/mndrix/ps"
 	"github.com/ugorji/go/codec"
 
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/test/reflect"
 )
 
 // PluginSpec is shared between the Probe, App, and UI. It is the plugin's

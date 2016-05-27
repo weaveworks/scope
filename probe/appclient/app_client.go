@@ -14,8 +14,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/ugorji/go/codec"
 
-	"github.com/weaveworks/scope/common/sanitize"
-	"github.com/weaveworks/scope/common/xfer"
+	"$GITHUB_URI/common/sanitize"
+	"$GITHUB_URI/common/xfer"
 )
 
 const (

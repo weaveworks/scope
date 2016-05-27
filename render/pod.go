@@ -3,9 +3,9 @@ package render
 import (
 	"strings"
 
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/kubernetes"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/probe/kubernetes"
+	"$GITHUB_URI/report"
 )
 
 // Constants are used in the tests.

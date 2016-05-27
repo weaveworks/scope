@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/weaveworks/scope/experimental/tracer/ptrace"
-	"github.com/weaveworks/scope/probe/docker"
+	"$GITHUB_URI/experimental/tracer/ptrace"
+	"$GITHUB_URI/probe/docker"
 )
 
 const (

@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/probe/overlay"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/reflect"
-	"github.com/weaveworks/scope/test/weave"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/probe/host"
+	"$GITHUB_URI/probe/overlay"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
+	"$GITHUB_URI/test/reflect"
+	"$GITHUB_URI/test/weave"
 )
 
 const (

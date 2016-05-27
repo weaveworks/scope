@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/probe/host"
+	"$GITHUB_URI/probe/host"
 )
 
 func TestGetKernelVersion(t *testing.T) {

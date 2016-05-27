@@ -3,10 +3,10 @@ package render_test
 import (
 	"testing"
 
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
+	"$GITHUB_URI/test/reflect"
 )
 
 type renderFunc func(r report.Report) report.Nodes

@@ -14,11 +14,11 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/common/mtime"
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/probe/appclient"
-	"github.com/weaveworks/scope/probe/controls"
-	"github.com/weaveworks/scope/test"
+	"$GITHUB_URI/common/mtime"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/probe/appclient"
+	"$GITHUB_URI/probe/controls"
+	"$GITHUB_URI/test"
 )
 
 func TestPipeTimeout(t *testing.T) {

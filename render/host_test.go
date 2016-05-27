@@ -3,11 +3,11 @@ package render_test
 import (
 	"testing"
 
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/render/expected"
-	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/fixture"
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/render/expected"
+	"$GITHUB_URI/test"
+	"$GITHUB_URI/test/fixture"
+	"$GITHUB_URI/test/reflect"
 )
 
 func TestHostRenderer(t *testing.T) {

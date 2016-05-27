@@ -6,8 +6,8 @@ import (
 
 	docker_client "github.com/fsouza/go-dockerclient"
 
-	"github.com/weaveworks/scope/probe"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/probe"
+	"$GITHUB_URI/report"
 )
 
 // Keys for use in Node

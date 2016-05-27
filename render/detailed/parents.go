@@ -3,10 +3,10 @@ package detailed
 import (
 	"sort"
 
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/probe/kubernetes"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/probe/docker"
+	"$GITHUB_URI/probe/host"
+	"$GITHUB_URI/probe/kubernetes"
+	"$GITHUB_URI/report"
 )
 
 // Parent is the information needed to build a link to the parent of a Node.

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/weaveworks/scope/common/mtime"
+	"$GITHUB_URI/common/mtime"
 )
 
 // MaxTableRows sets the limit on the table size to render

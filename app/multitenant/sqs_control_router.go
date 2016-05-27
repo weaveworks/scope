@@ -15,8 +15,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/common/xfer"
+	"$GITHUB_URI/app"
+	"$GITHUB_URI/common/xfer"
 )
 
 var (

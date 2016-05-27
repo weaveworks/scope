@@ -8,7 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/weaveworks/scope/probe/process"
+	"$GITHUB_URI/probe/process"
 )
 
 const (

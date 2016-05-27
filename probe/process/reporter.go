@@ -3,8 +3,8 @@ package process
 import (
 	"strconv"
 
-	"github.com/weaveworks/scope/common/mtime"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/common/mtime"
+	"$GITHUB_URI/report"
 )
 
 // We use these keys in node metadata

@@ -9,7 +9,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/miekg/dns"
 
-	"github.com/weaveworks/scope/common/xfer"
+	"$GITHUB_URI/common/xfer"
 )
 
 const (

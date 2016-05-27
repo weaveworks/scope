@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/weaveworks/scope/probe/process"
+	"$GITHUB_URI/probe/process"
 )
 
 const (

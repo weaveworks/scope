@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/ugorji/go/codec"
-	"github.com/weaveworks/scope/common/mtime"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/common/mtime"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
+	"$GITHUB_URI/test/reflect"
 )
 
 func TestApply(t *testing.T) {

@@ -3,7 +3,7 @@ package sanitize_test
 import (
 	"testing"
 
-	"github.com/weaveworks/scope/common/sanitize"
+	"$GITHUB_URI/common/sanitize"
 )
 
 func TestSanitizeURL(t *testing.T) {

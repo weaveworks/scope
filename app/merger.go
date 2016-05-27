@@ -8,7 +8,7 @@ import (
 	"github.com/bluele/gcache"
 	"github.com/spaolacci/murmur3"
 
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/report"
 )
 
 // Merger is the type for a thing that can merge reports.

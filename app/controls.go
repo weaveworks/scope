@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/common/xfer"
+	"$GITHUB_URI/common/xfer"
 )
 
 // RegisterControlRoutes registers the various control routes with a http mux.

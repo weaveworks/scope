@@ -10,8 +10,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/common/xfer"
+	"$GITHUB_URI/app"
+	"$GITHUB_URI/common/xfer"
 	"github.com/weaveworks/weave/common"
 )
 

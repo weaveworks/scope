@@ -15,11 +15,11 @@ import (
 
 	"github.com/paypal/ionet"
 
-	fs_hook "github.com/weaveworks/scope/common/fs"
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/fs"
-	"github.com/weaveworks/scope/test/reflect"
+	fs_hook "$GITHUB_URI/common/fs"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/test"
+	"$GITHUB_URI/test/fs"
+	"$GITHUB_URI/test/reflect"
 )
 
 func stubTransport(fn func(socket string, timeout time.Duration) (http.RoundTripper, error)) {

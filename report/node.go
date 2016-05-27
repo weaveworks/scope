@@ -3,7 +3,7 @@ package report
 import (
 	"time"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"$GITHUB_URI/common/mtime"
 )
 
 // Node describes a superset of the metadata that probes can collect about a

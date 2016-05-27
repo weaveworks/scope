@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/probe/appclient"
-	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/probe/appclient"
+	"$GITHUB_URI/probe/process"
+	"$GITHUB_URI/report"
 )
 
 func main() {

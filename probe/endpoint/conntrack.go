@@ -11,7 +11,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/weaveworks/scope/common/exec"
+	"$GITHUB_URI/common/exec"
 )
 
 const (

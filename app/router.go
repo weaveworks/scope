@@ -15,9 +15,9 @@ import (
 	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/common/hostname"
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/common/hostname"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/report"
 )
 
 var (

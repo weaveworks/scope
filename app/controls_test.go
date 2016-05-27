@@ -11,9 +11,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ugorji/go/codec"
 
-	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/probe/appclient"
+	"$GITHUB_URI/app"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/probe/appclient"
 )
 
 func TestControl(t *testing.T) {

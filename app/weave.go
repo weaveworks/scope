@@ -7,7 +7,7 @@ import (
 
 	fsouza "github.com/fsouza/go-dockerclient"
 
-	"github.com/weaveworks/scope/common/backoff"
+	"$GITHUB_URI/common/backoff"
 )
 
 // Default values for weave app integration

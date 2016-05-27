@@ -6,8 +6,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/common/mtime"
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/common/mtime"
+	"$GITHUB_URI/report"
 )
 
 // Reporter is something that can produce reports on demand. It's a convenient

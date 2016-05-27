@@ -3,7 +3,7 @@ package sniff
 import (
 	"testing"
 
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/report"
 )
 
 func TestInterpolateCounts(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/weaveworks/scope/report"
+	"$GITHUB_URI/report"
 )
 
 func main() {

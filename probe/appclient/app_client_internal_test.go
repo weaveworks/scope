@@ -13,9 +13,9 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/ugorji/go/codec"
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
+	"$GITHUB_URI/common/xfer"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
 )
 
 func dummyServer(t *testing.T, expectedToken, expectedID string, expectedReport report.Report, done chan struct{}) *httptest.Server {

@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
+	"$GITHUB_URI/render"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test"
 )
 
 type mockRenderer struct {

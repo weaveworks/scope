@@ -3,8 +3,8 @@ package report_test
 import (
 	"testing"
 
-	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test/reflect"
+	"$GITHUB_URI/report"
+	"$GITHUB_URI/test/reflect"
 )
 
 func TestIDList(t *testing.T) {

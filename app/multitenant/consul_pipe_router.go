@@ -13,9 +13,9 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/common/mtime"
-	"github.com/weaveworks/scope/common/xfer"
+	"$GITHUB_URI/app"
+	"$GITHUB_URI/common/mtime"
+	"$GITHUB_URI/common/xfer"
 )
 
 const (
