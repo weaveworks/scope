@@ -305,8 +305,10 @@ func (c *conntrackWalker) handleFlow(f flow, forceAdd bool) {
 	c.Lock()
 	defer c.Unlock()
 
+	// Ignore flows for which we never saw an update; they are likely
+	// incomplete or wrong.  See #1462.
 	switch {
-	case forceAdd || f.Type == newType || f.Type == updateType:
+	case forceAdd || f.Type == updateType:
 		if f.Independent.State != timeWait {
 			c.activeFlows[f.Independent.ID] = f
 		} else if _, ok := c.activeFlows[f.Independent.ID]; ok {
@@ -316,11 +318,7 @@ func (c *conntrackWalker) handleFlow(f flow, forceAdd bool) {
 	case f.Type == destroyType:
 		if active, ok := c.activeFlows[f.Independent.ID]; ok {
 			delete(c.activeFlows, f.Independent.ID)
-			// Ignore flows for which we never saw an update; they are likely
-			// incomplete or wrong.  See #1462.
-			if active.Type == updateType {
-				c.bufferedFlows = append(c.bufferedFlows, active)
-			}
+			c.bufferedFlows = append(c.bufferedFlows, active)
 		}
 	}
 }
