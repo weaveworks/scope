@@ -44,12 +44,24 @@ var (
 		Name:      "dynamo_cache_miss",
 		Help:      "Reports fetches that miss local cache.",
 	})
+	dynamoConsumedCapacity = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "dynamo_consumed_capacity",
+		Help:      "The capacity units consumed by operation.",
+	}, []string{"method"})
+	dynamoReportSize = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "dynamo_report_size_bytes",
+		Help:      "Size of reports read / written from dynamodb.",
+	}, []string{"method"})
 )
 
 func init() {
 	prometheus.MustRegister(dynamoRequestDuration)
 	prometheus.MustRegister(dynamoCacheHits)
 	prometheus.MustRegister(dynamoCacheMiss)
+	prometheus.MustRegister(dynamoConsumedCapacity)
+	prometheus.MustRegister(dynamoReportSize)
 }
 
 // DynamoDBCollector is a Collector which can also CreateTables
@@ -130,6 +142,13 @@ func (c *dynamoDBCollector) CreateTables() error {
 	return err
 }
 
+func errorCode(err error) string {
+	if err == nil {
+		return "200"
+	}
+	return "500"
+}
+
 // getReportTimestamps gets the column keys for reports in this range
 func (c *dynamoDBCollector) getReportTimestamps(rowKey string, start, end time.Time) ([]string, error) {
 	startTime := time.Now()
@@ -150,14 +169,19 @@ func (c *dynamoDBCollector) getReportTimestamps(rowKey string, start, end time.T
 				ComparisonOperator: aws.String("BETWEEN"),
 			},
 		},
-		ProjectionExpression: aws.String(tsField),
+		ProjectionExpression:   aws.String(tsField),
+		ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
 	})
 	duration := time.Now().Sub(startTime)
+	dynamoRequestDuration.WithLabelValues("Query", errorCode(err)).
+		Observe(float64(duration.Nanoseconds()))
+	if resp.ConsumedCapacity != nil {
+		dynamoConsumedCapacity.WithLabelValues("Query").
+			Add(float64(*resp.ConsumedCapacity.CapacityUnits))
+	}
 	if err != nil {
-		dynamoRequestDuration.WithLabelValues("Query", "500").Observe(float64(duration.Nanoseconds()))
 		return nil, err
 	}
-	dynamoRequestDuration.WithLabelValues("Query", "200").Observe(float64(duration.Nanoseconds()))
 
 	result := []string{}
 	for _, item := range resp.Items {
@@ -201,13 +225,18 @@ func (c *dynamoDBCollector) getNonCached(rowKey string, columnKeys []string) ([]
 				Keys: keys,
 			},
 		},
+		ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
 	})
 	duration := time.Now().Sub(startTime)
+	dynamoRequestDuration.WithLabelValues("BatchGetItem", errorCode(err)).
+		Observe(float64(duration.Nanoseconds()))
+	for _, capacity := range resp.ConsumedCapacity {
+		dynamoConsumedCapacity.WithLabelValues("BatchGetItem").
+			Add(float64(*capacity.CapacityUnits))
+	}
 	if err != nil {
-		dynamoRequestDuration.WithLabelValues("BatchGetItem", "500").Observe(float64(duration.Nanoseconds()))
 		return nil, err
 	}
-	dynamoRequestDuration.WithLabelValues("BatchGetItem", "200").Observe(float64(duration.Nanoseconds()))
 
 	reports := []report.Report{}
 	for _, table := range resp.Responses {
@@ -224,6 +253,8 @@ func (c *dynamoDBCollector) getNonCached(rowKey string, columnKeys []string) ([]
 				continue
 			}
 
+			dynamoReportSize.WithLabelValues("BatchGetItem").
+				Add(float64(len(b.B)))
 			buf := bytes.NewBuffer(b.B)
 			reader, err := gzip.NewReader(buf)
 			if err != nil {
@@ -312,11 +343,13 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 		return err
 	}
 	writer.Close()
+	bytes := buf.Bytes()
+	dynamoReportSize.WithLabelValues("PutItem").Add(float64(len(bytes)))
 
 	now := time.Now()
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(now.UnixNano()/time.Hour.Nanoseconds(), 10))
 	startTime := time.Now()
-	_, err = c.db.PutItem(&dynamodb.PutItemInput{
+	resp, err := c.db.PutItem(&dynamodb.PutItemInput{
 		TableName: aws.String(c.tableName),
 		Item: map[string]*dynamodb.AttributeValue{
 			hourField: {
@@ -326,17 +359,19 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 				N: aws.String(strconv.FormatInt(now.UnixNano(), 10)),
 			},
 			reportField: {
-				B: buf.Bytes(),
+				B: bytes,
 			},
 		},
+		ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
 	})
 	duration := time.Now().Sub(startTime)
-	if err != nil {
-		dynamoRequestDuration.WithLabelValues("PutItem", "500").Observe(float64(duration.Nanoseconds()))
-		return err
+	dynamoRequestDuration.WithLabelValues("PutItem", errorCode(err)).
+		Observe(float64(duration.Nanoseconds()))
+	if resp.ConsumedCapacity != nil {
+		dynamoConsumedCapacity.WithLabelValues("PutItem").
+			Add(float64(*resp.ConsumedCapacity.CapacityUnits))
 	}
-	dynamoRequestDuration.WithLabelValues("PutItem", "200").Observe(float64(duration.Nanoseconds()))
-	return nil
+	return err
 }
 
 func (c *dynamoDBCollector) WaitOn(context.Context, chan struct{}) {}
