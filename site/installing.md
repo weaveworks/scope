@@ -225,22 +225,16 @@ For step by step instructions on how to configure the stack, see: [Install Weave
 
 ##<a name="minimesos"></a>Installing Scope on minimesos
 
-[minimesos](https://github.com/ContainerSolutions/minimesos) project enables running Apache Mesos cluster on a single machine for prototyping and unit testing of Mesos 
-frameworks. All running components of `minimesos` cluster are represented by docker containers. To enable reuse of local 
-docker images, docker in Mesos Agent containers reuses `docker.sock` file of the host. Therefore all started in Agents
-containers are also seen on the host. This setup gives single Weave Scope container access to all containers running in 
-`minimesos` cluster. 
+[minimesos](https://github.com/ContainerSolutions/minimesos) project enables running Apache Mesos cluster on a single
+machine, making it very easy to develop Mesos frameworks.
 
-Launching of Weave Scope by providing content `minimesos.json` file to Marathon is a part of default `minimesos` cluster. 
-If removed from its configuration file, Weave Scope can be added to the running cluster by 
-`minimesos install --marathonFile <URL or path to minimesos.json>`. Example for using the latest, not released yet, version 
-of Marathon task file
+Weave Scope is part of minimesos cluster by default can be accessed on `http://172.17.0.1:4040/`.
+
+If you have removed Weave Scope from your minimesos cluster, you can add it back with the following command:
 
 ```
 minimesos install --marathonFile https://raw.githubusercontent.com/weaveworks/scope/master/examples/mesos/minimesos.json
 ```
-
-UI of Weave Scope becomes accessible on http://172.17.0.1:4040/
 
 ##<a name="dcos"></a>Installing Scope as a DC/OS Package
 
