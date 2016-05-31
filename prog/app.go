@@ -61,7 +61,10 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	return instrument.Wrap(router)
 }
 
-func awsConfigFromURL(url *url.URL) *aws.Config {
+func awsConfigFromURL(url *url.URL) (*aws.Config, error) {
+	if url.User == nil {
+		return nil, fmt.Errorf("Must specify username & password in URL")
+	}
 	password, _ := url.User.Password()
 	creds := credentials.NewStaticCredentials(url.User.Username(), password, "")
 	config := aws.NewConfig().WithCredentials(creds)
@@ -70,10 +73,10 @@ func awsConfigFromURL(url *url.URL) *aws.Config {
 	} else {
 		config = config.WithRegion(url.Host)
 	}
-	return config
+	return config, nil
 }
 
-func collectorFactory(userIDer multitenant.UserIDer, collectorURL string, window time.Duration, createTables bool) (app.Collector, error) {
+func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL string, window time.Duration, createTables bool) (app.Collector, error) {
 	if collectorURL == "local" {
 		return app.NewCollector(window), nil
 	}
@@ -84,8 +87,22 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL string, window
 	}
 
 	if parsed.Scheme == "dynamodb" {
+		s3, err := url.Parse(s3URL)
+		if err != nil {
+			return nil, err
+		}
+		dynamoDBConfig, err := awsConfigFromURL(parsed)
+		if err != nil {
+			return nil, err
+		}
+		s3Config, err := awsConfigFromURL(s3)
+		if err != nil {
+			return nil, err
+		}
 		tableName := strings.TrimPrefix(parsed.Path, "/")
-		dynamoCollector := multitenant.NewDynamoDBCollector(awsConfigFromURL(parsed), userIDer, tableName)
+		bucketName := strings.TrimPrefix(s3.Path, "/")
+		dynamoCollector := multitenant.NewDynamoDBCollector(
+			dynamoDBConfig, s3Config, userIDer, tableName, bucketName)
 		if createTables {
 			if err := dynamoCollector.CreateTables(); err != nil {
 				return nil, err
@@ -109,7 +126,11 @@ func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string
 
 	if parsed.Scheme == "sqs" {
 		prefix := strings.TrimPrefix(parsed.Path, "/")
-		return multitenant.NewSQSControlRouter(awsConfigFromURL(parsed), userIDer, prefix), nil
+		sqsConfig, err := awsConfigFromURL(parsed)
+		if err != nil {
+			return nil, err
+		}
+		return multitenant.NewSQSControlRouter(sqsConfig, userIDer, prefix), nil
 	}
 
 	return nil, fmt.Errorf("Invalid control router '%s'", controlRouterURL)
@@ -151,7 +172,7 @@ func appMain(flags appFlags) {
 		userIDer = multitenant.UserIDHeader(flags.userIDHeader)
 	}
 
-	collector, err := collectorFactory(userIDer, flags.collectorURL, flags.window, flags.awsCreateTables)
+	collector, err := collectorFactory(userIDer, flags.collectorURL, flags.s3URL, flags.window, flags.awsCreateTables)
 	if err != nil {
 		log.Fatalf("Error creating collector: %v", err)
 		return
