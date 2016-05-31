@@ -228,7 +228,7 @@ For step by step instructions on how to configure the stack, see: [Install Weave
 The [minimesos](https://github.com/ContainerSolutions/minimesos) project enables you to run an Apache Mesos cluster on a single
 machine, which makes it very easy to develop Mesos frameworks.
 
-Weave Scope is part of minimesos cluster by default, and can be accessed at `http://172.17.0.1:4040/`.
+By default, Weave Scope is included in the minimesos cluster, and can be accessed at `http://172.17.0.1:4040/`.
 
 If Weave Scope is removed from your minimesos cluster, you can add it back with the following command:
 
