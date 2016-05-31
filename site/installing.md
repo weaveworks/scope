@@ -15,6 +15,7 @@ The following topics are discussed:
    * [Using Docker Compose in Service Mode](#docker-compose-sercice)
  * [Installing Scope on Kubernetes](#k8s)
  * [Installing Scope on Amazon ECS](#ecs)
+ * [Installing Scope on minimesos](#minimesos)
  * [Installing Scope on Mesosphere DC/OS](#dcos)
 
 ##<a name="docker"></a>Installing Scope on Docker
@@ -221,6 +222,25 @@ The link below will launch a sample app using a Cloudformation template, but you
 [![](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https:%2F%2Fs3.amazonaws.com%2Fweaveworks-cfn-public%2Fintegrations%2Fecs-identiorca.json)
 
 For step by step instructions on how to configure the stack, see: [Install Weave to AWS with One-Click](https://www.weave.works/deploy-weave-aws-cloudformation-template/)
+
+##<a name="minimesos"></a>Installing Scope on minimesos
+
+[minimesos](https://github.com/ContainerSolutions/minimesos) project enables running Apache Mesos cluster on a single machine for prototyping and unit testing of Mesos 
+frameworks. All running components of `minimesos` cluster are represented by docker containers. To enable reuse of local 
+docker images, docker in Mesos Agent containers reuses `docker.sock` file of the host. Therefore all started in Agents
+containers are also seen on the host. This setup gives single Weave Scope container access to all containers running in 
+`minimesos` cluster. 
+
+Launching of Weave Scope by providing content `minimesos.json` file to Marathon is a part of default `minimesos` cluster. 
+If removed from its configuration file, Weave Scope can be added to the running cluster by 
+`minimesos install --marathonFile <URL or path to minimesos.json>`. Example for using the latest, not released yet, version 
+of Marathon task file
+
+```
+minimesos install --marathonFile https://raw.githubusercontent.com/weaveworks/scope/master/examples/mesos/minimesos.json
+```
+
+UI of Weave Scope becomes accessible on http://172.17.0.1:4040/
 
 ##<a name="dcos"></a>Installing Scope as a DC/OS Package
 
