@@ -338,7 +338,10 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 	}
 
 	var buf bytes.Buffer
-	writer := gzip.NewWriter(&buf)
+	writer, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		return err
+	}
 	if err := codec.NewEncoder(writer, &codec.MsgpackHandle{}).Encode(&rep); err != nil {
 		return err
 	}
