@@ -20,7 +20,7 @@ The following topics are discussed:
 
 ##<a name="docker"></a>Installing Scope on Docker
 
-To install Scope on your local Docker machine in Standalone Mode, run the following commands:
+To install Scope on your local Docker machine in standalone mode, run the following commands:
 
     sudo wget -O /usr/local/bin/scope https://git.io/scope
     sudo chmod a+x /usr/local/bin/scope
@@ -225,12 +225,12 @@ For step by step instructions on how to configure the stack, see: [Install Weave
 
 ##<a name="minimesos"></a>Installing Scope on minimesos
 
-[minimesos](https://github.com/ContainerSolutions/minimesos) project enables running Apache Mesos cluster on a single
-machine, making it very easy to develop Mesos frameworks.
+The [minimesos](https://github.com/ContainerSolutions/minimesos) project enables you to run an Apache Mesos cluster on a single
+machine, which makes it very easy to develop Mesos frameworks.
 
-Weave Scope is part of minimesos cluster by default, and can be accessed on `http://172.17.0.1:4040/`.
+Weave Scope is part of minimesos cluster by default, and can be accessed at `http://172.17.0.1:4040/`.
 
-If you have removed Weave Scope from your minimesos cluster, you can add it back with the following command:
+If Weave Scope is removed from your minimesos cluster, you can add it back with the following command:
 
 ```
 minimesos install --marathonFile https://raw.githubusercontent.com/weaveworks/scope/master/examples/mesos/minimesos.json
