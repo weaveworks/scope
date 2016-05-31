@@ -160,7 +160,11 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 			float32(compressedSize)/float32(uncompressedSize)*100,
 		)
 
-		a.Add(ctx, rpt)
+		if err := a.Add(ctx, rpt); err != nil {
+			log.Errorf("Error Adding report: %v", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 	}))
 }
