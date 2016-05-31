@@ -3,7 +3,9 @@ package multitenant
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/md5"
 	"fmt"
+	"io"
 	"strconv"
 	"time"
 
@@ -59,7 +61,7 @@ var (
 	reportSize = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "scope",
 		Name:      "report_size_bytes",
-		Help:      "Size of reports written to s3.",
+		Help:      "Compressed size of reports received.",
 	})
 
 	s3RequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
@@ -347,7 +349,11 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 	now := time.Now()
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(now.UnixNano()/time.Hour.Nanoseconds(), 10))
 	colKey := strconv.FormatInt(now.UnixNano(), 10)
-	s3Key := fmt.Sprintf("%s/%s", rowKey, colKey)
+	rowKeyHash := md5.New()
+	if _, err := io.WriteString(rowKeyHash, rowKey); err != nil {
+		return err
+	}
+	s3Key := fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey)
 	err = timeRequest("Put", s3RequestDuration, func() error {
 		var err error
 		_, err = c.s3.PutObject(&s3.PutObjectInput{

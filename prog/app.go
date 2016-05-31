@@ -89,7 +89,7 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL string,
 	if parsed.Scheme == "dynamodb" {
 		s3, err := url.Parse(s3URL)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Valid URL for s3 required: %v", err)
 		}
 		dynamoDBConfig, err := awsConfigFromURL(parsed)
 		if err != nil {
