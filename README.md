@@ -3,7 +3,7 @@
 [![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master)
 [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope)
 [![Go Report Card](https://goreportcard.com/badge/github.com/weaveworks/scope)](https://goreportcard.com/report/github.com/weaveworks/scope)
-[![Slack Status](https://weave-scope-slack.herokuapp.com/badge.svg)](https://weave-scope-slack.herokuapp.com)
+[![Slack Status](https://slack.weave.works/badge.svg)](https://slack.weave.works)
 [![Docker Pulls](https://img.shields.io/docker/pulls/weaveworks/scope.svg?maxAge=604800)](https://hub.docker.com/r/weaveworks/scope/)
 
 Weave Scope automatically generates a map of your application, enabling you to
