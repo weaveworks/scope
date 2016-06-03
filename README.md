@@ -46,7 +46,7 @@ For instructions on installing Scope on [Kubernetes](site/installing.md#k8s), [D
 If you have any questions about, feedback for or problem with Scope we invite
 you to:
 - Read [our docs](site/introducing.md).
-- <a href="https://weave-scope-slack.herokuapp.com">join our public slack channel</a>
+- <a href="https://slack.weave.works/">join our public slack channel</a>
 - send an email to <a href="mailto:weave-users@weave.works">weave-users@weave.works</a>
 - <a href="https://github.com/weaveworks/scope/issues/new">file an issue</a>
 
