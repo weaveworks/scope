@@ -39,13 +39,13 @@ This script will download and run a recent Scope image from the Docker Hub.
 Now, open your web browser to **http://localhost:4040**. (If you're using
 boot2docker, replace localhost with the output of `boot2docker ip`.)
 
-For instructions on installing Scope on [Kubernetes](site/installing.md#k8s), [DCOS](site/installing.md#dcos) or [ECS](site/installing.md#ecs), see [our docs](site/introducing.md).
+For instructions on installing Scope on [Kubernetes](https://www.weave.works/docs/scope/latest/installing/#k8s), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos) or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 
 ## <a name="help"></a>Getting help
 
 If you have any questions about, feedback for or problem with Scope we invite
 you to:
-- Read [our docs](site/introducing.md).
+- Read [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 - <a href="https://slack.weave.works/">join our public slack channel</a>
 - send an email to <a href="mailto:weave-users@weave.works">weave-users@weave.works</a>
 - <a href="https://github.com/weaveworks/scope/issues/new">file an issue</a>
