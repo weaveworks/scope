@@ -72,7 +72,7 @@ check_docker_for_mac() {
   [ "$(uname)" = "Darwin" ] \
     && [ -S /var/run/docker.sock ] \
     && [ ! "${DOCKER_HOST+x}" = x ] \
-    && [ ! "${HOME+x}" = x ] \
+    && [ "${HOME+x}" = x ] \
     && grep -q hybrid "${HOME}/Library/Containers/com.docker.docker/Data/database/com.docker.driver.amd64-linux/network" 2>/dev/null
 }
 
