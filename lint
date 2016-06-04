@@ -44,7 +44,7 @@ function spell_check {
 	if file $filename | grep executable >/dev/null 2>&1; then
 		return $lint_result
 	fi
-	if [[ $filename == *".tar" ]]; then
+	if [[ $filename == *".tar" || $filename == *".gz" ]]; then
 		return $lint_result
 	fi
 
