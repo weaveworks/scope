@@ -56,7 +56,7 @@ function mapStateToProps(state) {
     searchNodeMatches: state.getIn(['searchNodeMatches', currentTopologyId]),
     searchQuery: state.get('searchQuery'),
     selectedNetwork: state.get('selectedNetwork'),
-    selectedNetworkNodes: state.get('networkNodes').get(state.get('selectedNetwork'), makeList()),
+    selectedNetworkNodes: state.getIn(['networkNodes', state.get('selectedNetwork')], makeList()),
     selectedNodeId: state.get('selectedNodeId'),
   };
 }

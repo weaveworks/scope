@@ -6,6 +6,7 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { applyPinnedSearches, updateNodeMatches } from '../utils/search-utils';
+import { getNetworkNodes, getAvailableNetworks } from '../utils/network-view-utils';
 import { longestCommonPrefix } from '../utils/string-utils';
 import { findTopologyById, getAdjacentNodes, setTopologyUrlsById,
   updateTopologyIds, filterHiddenTopologies } from '../utils/topology-utils';
@@ -80,24 +81,6 @@ function processTopologies(state, nextTopologies) {
 
   const immNextTopologies = fromJS(topologiesWithId).sortBy(topologySorter);
   return state.mergeDeepIn(['topologies'], immNextTopologies);
-}
-
-function getNetworkNodes(nodes) {
-  const networks = {};
-  nodes.forEach(node => (node.get('networks') || makeList()).forEach(n => {
-    const networkId = n.get('id');
-    networks[networkId] = (networks[networkId] || []).concat([node.get('id')]);
-  }));
-  return fromJS(networks);
-}
-
-function getAvailableNetworks(nodes) {
-  return nodes
-    .valueSeq()
-    .flatMap(node => node.get('networks') || makeList())
-    .toSet()
-    .toList()
-    .sortBy(m => m.get('label'));
 }
 
 function setTopology(state, topologyId) {

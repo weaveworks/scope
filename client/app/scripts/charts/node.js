@@ -99,6 +99,7 @@ class Node extends React.Component {
 
     const labelClassName = classnames('node-label', { truncate });
     const subLabelClassName = classnames('node-sublabel', { truncate });
+    const matchedResultsStyle = showingNetworks ? { marginTop: 6 } : null;
 
     const NodeShapeType = getNodeShape(this.props);
     const useSvgLabels = exportingGraph;
@@ -120,7 +121,8 @@ class Node extends React.Component {
               <div className={subLabelClassName}>
                 <MatchedText text={subLabel} match={matches.get('sublabel')} />
               </div>
-              {!blurred && <MatchedResults matches={matches.get('metadata')} />}
+              {!blurred && <MatchedResults matches={matches.get('metadata')}
+                style={matchedResultsStyle} />}
             </div>
           </foreignObject>}
 
@@ -131,8 +133,8 @@ class Node extends React.Component {
             {...this.props} />
         </g>
 
-        {showingNetworks && <NodeNetworksOverlay id={this.props.id} size={size}
-          networks={networks} stack={stack} />}
+        {showingNetworks && <NodeNetworksOverlay labelOffsetY={labelOffsetY}
+          size={size} networks={networks} stack={stack} />}
       </g>
     );
   }

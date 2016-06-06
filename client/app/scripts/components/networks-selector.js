@@ -33,7 +33,7 @@ class NetworkSelector extends React.Component {
     });
 
     const style = {
-      borderBottomColor: 'transparent'
+      borderBottomColor: showingNetworks ? '#A2A0B3' : 'transparent'
     };
 
     return (
