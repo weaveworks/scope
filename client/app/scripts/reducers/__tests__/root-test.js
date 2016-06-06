@@ -2,6 +2,7 @@ jest.dontMock('../../utils/router-utils');
 jest.dontMock('../../utils/search-utils');
 jest.dontMock('../../utils/string-utils');
 jest.dontMock('../../utils/topology-utils');
+jest.dontMock('../../utils/network-view-utils');
 jest.dontMock('../../constants/action-types');
 jest.dontMock('../root');
 
