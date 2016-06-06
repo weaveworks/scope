@@ -25,7 +25,7 @@ class MatchedResults extends React.Component {
   }
 
   render() {
-    const { matches } = this.props;
+    const { matches, style } = this.props;
 
     if (!matches) {
       return null;
@@ -42,7 +42,7 @@ class MatchedResults extends React.Component {
     }
 
     return (
-      <div className="matched-results">
+      <div className="matched-results" style={style}>
         {matches.keySeq().take(SHOW_ROW_COUNT).map(fieldId => this.renderMatch(matches, fieldId))}
         {moreFieldMatches && <div className="matched-results-more" title={moreFieldMatchesTitle}>
           {`${moreFieldMatches.size} more matches`}

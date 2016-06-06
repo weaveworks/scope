@@ -6,6 +6,8 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { applyPinnedSearches, updateNodeMatches } from '../utils/search-utils';
+import { getNetworkNodes, getAvailableNetworks } from '../utils/network-view-utils';
+import { longestCommonPrefix } from '../utils/string-utils';
 import { findTopologyById, getAdjacentNodes, setTopologyUrlsById,
   updateTopologyIds, filterHiddenTopologies } from '../utils/topology-utils';
 
@@ -20,6 +22,7 @@ const topologySorter = topology => topology.get('rank');
 
 export const initialState = makeMap({
   availableCanvasMetrics: makeList(),
+  availableNetworks: makeList(),
   controlPipes: makeOrderedMap(), // pipeId -> controlPipe
   controlStatus: makeMap(),
   currentTopology: null,
@@ -31,6 +34,7 @@ export const initialState = makeMap({
   hostname: '...',
   mouseOverEdgeId: null,
   mouseOverNodeId: null,
+  networkNodes: makeMap(),
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
   // nodes cache, infrequently updated, used for search
@@ -39,6 +43,7 @@ export const initialState = makeMap({
   // class of metric, e.g. 'cpu', rather than 'host_cpu' or 'process_cpu'.
   // allows us to keep the same metric "type" selected when the topology changes.
   pinnedMetricType: null,
+  pinnedNetwork: null,
   plugins: makeList(),
   pinnedSearches: makeList(), // list of node filters
   routeSet: false,
@@ -46,8 +51,10 @@ export const initialState = makeMap({
   searchNodeMatches: makeMap(),
   searchQuery: null,
   selectedMetric: null,
+  selectedNetwork: null,
   selectedNodeId: null,
   showingHelp: false,
+  showingNetworks: false,
   topologies: makeList(),
   topologiesLoaded: false,
   topologyOptions: makeOrderedMap(), // topologyId -> options
@@ -265,6 +272,39 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
+    //
+    // networks
+    //
+
+    case ActionTypes.SHOW_NETWORKS: {
+      if (!action.visible) {
+        state = state.set('selectedNetwork', null);
+        state = state.set('pinnedNetwork', null);
+      }
+      return state.set('showingNetworks', action.visible);
+    }
+
+    case ActionTypes.SELECT_NETWORK: {
+      return state.set('selectedNetwork', action.networkId);
+    }
+
+    case ActionTypes.PIN_NETWORK: {
+      return state.merge({
+        pinnedNetwork: action.networkId,
+        selectedNetwork: action.networkId
+      });
+    }
+
+    case ActionTypes.UNPIN_NETWORK: {
+      return state.merge({
+        pinnedNetwork: null,
+      });
+    }
+
+    //
+    // metrics
+    //
+
     case ActionTypes.SELECT_METRIC: {
       return state.set('selectedMetric', action.metricId);
     }
@@ -481,6 +521,38 @@ export function rootReducer(state = initialState, action) {
       // apply pinned searches, filters nodes that dont match
       state = applyPinnedSearches(state);
 
+      // TODO move this setting of networks as toplevel node field to backend,
+      // to not rely on field IDs here. should be determined by topology implementer
+      state = state.update('nodes', nodes => nodes.map(node => {
+        if (node.has('metadata')) {
+          const networks = node.get('metadata')
+            .find(field => field.get('id') === 'docker_container_networks');
+          if (networks) {
+            return node.set('networks', fromJS(
+              networks.get('value').split(', ').map(n => ({id: n, label: n, colorKey: n}))));
+          }
+        }
+        return node;
+      }));
+
+      state = state.set('networkNodes', getNetworkNodes(state.get('nodes')));
+      state = state.set('availableNetworks', getAvailableNetworks(state.get('nodes')));
+
+      // optimize color coding for networks
+      const networkPrefix = longestCommonPrefix(state.get('availableNetworks')
+        .map(n => n.get('id')).toJS());
+
+      if (networkPrefix) {
+        state = state.update('nodes',
+          nodes => nodes.map(node => node.update('networks',
+            networks => networks.map(n => n.set('colorKey',
+              n.get('colorKey').substr(networkPrefix.length))))));
+
+        state = state.update('availableNetworks',
+          networks => networks.map(network => network
+            .set('colorKey', network.get('id').substr(networkPrefix.length))));
+      }
+
       state = state.set('availableCanvasMetrics', state.get('nodes')
         .valueSeq()
         .flatMap(n => (n.get('metrics') || makeList()).map(m => (
@@ -564,6 +636,13 @@ export function rootReducer(state = initialState, action) {
         selectedNodeId: action.state.selectedNodeId,
         pinnedMetricType: action.state.pinnedMetricType
       });
+      if (action.state.showingNetworks) {
+        state = state.set('showingNetworks', action.state.showingNetworks);
+      }
+      if (action.state.pinnedNetwork) {
+        state = state.set('pinnedNetwork', action.state.pinnedNetwork);
+        state = state.set('selectedNetwork', action.state.pinnedNetwork);
+      }
       if (action.state.controlPipe) {
         state = state.set('controlPipes', makeOrderedMap({
           [action.state.controlPipe.id]:

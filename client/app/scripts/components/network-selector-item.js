@@ -1,0 +1,69 @@
+import React from 'react';
+import classNames from 'classnames';
+import { connect } from 'react-redux';
+
+import { selectNetwork, pinNetwork, unpinNetwork } from '../actions/app-actions';
+import { getNodeColor } from '../utils/color-utils';
+
+class NetworkSelectorItem extends React.Component {
+
+  constructor(props, context) {
+    super(props, context);
+
+    this.onMouseOver = this.onMouseOver.bind(this);
+    this.onMouseClick = this.onMouseClick.bind(this);
+  }
+
+  onMouseOver() {
+    const k = this.props.network.get('id');
+    this.props.selectNetwork(k);
+  }
+
+  onMouseClick() {
+    const k = this.props.network.get('id');
+    const pinnedNetwork = this.props.pinnedNetwork;
+
+    if (k === pinnedNetwork) {
+      this.props.unpinNetwork(k);
+    } else {
+      this.props.pinNetwork(k);
+    }
+  }
+
+  render() {
+    const {network, selectedNetwork, pinnedNetwork} = this.props;
+    const id = network.get('id');
+    const isPinned = (id === pinnedNetwork);
+    const isSelected = (id === selectedNetwork);
+    const className = classNames('network-selector-action', {
+      'network-selector-action-selected': isSelected
+    });
+    const style = {
+      borderBottomColor: getNodeColor(network.get('colorKey', id))
+    };
+
+    return (
+      <div
+        key={id}
+        className={className}
+        onMouseOver={this.onMouseOver}
+        onClick={this.onMouseClick}
+        style={style}>
+        {network.get('label')}
+        {isPinned && <span className="fa fa-thumb-tack"></span>}
+      </div>
+    );
+  }
+}
+
+function mapStateToProps(state) {
+  return {
+    selectedNetwork: state.get('selectedNetwork'),
+    pinnedNetwork: state.get('pinnedNetwork')
+  };
+}
+
+export default connect(
+  mapStateToProps,
+  { selectNetwork, pinNetwork, unpinNetwork }
+)(NetworkSelectorItem);

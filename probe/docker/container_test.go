@@ -112,6 +112,7 @@ func TestContainer(t *testing.T) {
 	{
 		want := report.EmptySets.
 			Add("docker_container_ports", report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp")).
+			Add("docker_container_networks", nil).
 			Add("docker_container_ips", report.MakeStringSet("1.2.3.4")).
 			Add("docker_container_ips_with_scopes", report.MakeStringSet(";1.2.3.4"))
 

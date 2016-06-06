@@ -15,6 +15,7 @@ import NodeShapeRoundedSquare from './node-shape-rounded-square';
 import NodeShapeHex from './node-shape-hex';
 import NodeShapeHeptagon from './node-shape-heptagon';
 import NodeShapeCloud from './node-shape-cloud';
+import NodeNetworksOverlay from './node-networks-overlay';
 
 function stackedShape(Shape) {
   const factory = React.createFactory(NodeShapeStack);
@@ -75,8 +76,9 @@ class Node extends React.Component {
   }
 
   render() {
-    const { blurred, focused, highlighted, label, matches = makeMap(),
-      pseudo, rank, subLabel, scaleFactor, transform, zoomScale, exportingGraph } = this.props;
+    const { blurred, focused, highlighted, label, matches = makeMap(), networks,
+      pseudo, rank, subLabel, scaleFactor, transform, zoomScale, exportingGraph,
+      showingNetworks, stack } = this.props;
     const { hovered, matched } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
@@ -97,10 +99,11 @@ class Node extends React.Component {
 
     const labelClassName = classnames('node-label', { truncate });
     const subLabelClassName = classnames('node-sublabel', { truncate });
+    const matchedResultsStyle = showingNetworks ? { marginTop: 6 } : null;
 
     const NodeShapeType = getNodeShape(this.props);
     const useSvgLabels = exportingGraph;
-
+    const size = nodeScale(scaleFactor);
     return (
       <g className={nodeClassName} transform={transform}
         onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
@@ -118,16 +121,20 @@ class Node extends React.Component {
               <div className={subLabelClassName}>
                 <MatchedText text={subLabel} match={matches.get('sublabel')} />
               </div>
-              {!blurred && <MatchedResults matches={matches.get('metadata')} />}
+              {!blurred && <MatchedResults matches={matches.get('metadata')}
+                style={matchedResultsStyle} />}
             </div>
           </foreignObject>}
 
         <g onClick={this.handleMouseClick}>
           <NodeShapeType
-            size={nodeScale(scaleFactor)}
+            size={size}
             color={color}
             {...this.props} />
         </g>
+
+        {showingNetworks && <NodeNetworksOverlay labelOffsetY={labelOffsetY}
+          size={size} networks={networks} stack={stack} />}
       </g>
     );
   }
@@ -152,7 +159,8 @@ class Node extends React.Component {
 export default connect(
   state => ({
     searchQuery: state.get('searchQuery'),
-    exportingGraph: state.get('exportingGraph')
+    exportingGraph: state.get('exportingGraph'),
+    showingNetworks: state.get('showingNetworks'),
   }),
   { clickNode, enterNode, leaveNode }
 )(Node);

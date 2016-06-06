@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { fromJS, Map as makeMap } from 'immutable';
+import { fromJS, Map as makeMap, List as makeList } from 'immutable';
 
 import { getAdjacentNodes } from '../utils/topology-utils';
 import NodeContainer from './node-container';
@@ -9,7 +9,7 @@ class NodesChartNodes extends React.Component {
   render() {
     const { adjacentNodes, highlightedNodeIds, layoutNodes, layoutPrecision,
       mouseOverNodeId, nodeScale, scale, searchNodeMatches = makeMap(),
-      searchQuery, selectedMetric, selectedNodeScale, selectedNodeId,
+      searchQuery, selectedMetric, selectedNetwork, selectedNodeScale, selectedNodeId,
       topCardNode } = this.props;
 
     const zoomScale = scale;
@@ -23,7 +23,9 @@ class NodesChartNodes extends React.Component {
     const setBlurred = node => node.set('blurred',
       selectedNodeId && !node.get('focused')
       || searchQuery && !searchNodeMatches.has(node.get('id'))
-        && !node.get('highlighted'));
+        && !node.get('highlighted')
+      || selectedNetwork
+        && !(node.get('networks') || makeList()).find(n => n.get('id') === selectedNetwork));
 
     // make sure blurred nodes are in the background
     const sortNodes = node => {
@@ -63,6 +65,7 @@ class NodesChartNodes extends React.Component {
           matches={searchNodeMatches.get(node.get('id'))}
           highlighted={node.get('highlighted')}
           shape={node.get('shape')}
+          networks={node.get('networks')}
           stack={node.get('stack')}
           key={node.get('id')}
           id={node.get('id')}
@@ -90,6 +93,7 @@ function mapStateToProps(state) {
     highlightedNodeIds: state.get('highlightedNodeIds'),
     mouseOverNodeId: state.get('mouseOverNodeId'),
     selectedMetric: state.get('selectedMetric'),
+    selectedNetwork: state.get('selectedNetwork'),
     selectedNodeId: state.get('selectedNodeId'),
     searchNodeMatches: state.getIn(['searchNodeMatches', currentTopologyId]),
     searchQuery: state.get('searchQuery'),

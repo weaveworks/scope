@@ -15,6 +15,7 @@
     "font-awesome": "4.5.0",
     "font-awesome-webpack": "0.0.4",
     "immutable": "~3.7.4",
+    "lcp": "1.0.0",
     "lodash": "~4.6.1",
     "materialize-css": "0.97.5",
     "moment": "2.12.0",

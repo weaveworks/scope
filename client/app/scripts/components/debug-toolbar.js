@@ -1,5 +1,6 @@
 /* eslint react/jsx-no-bind: "off" */
 import React from 'react';
+import d3 from 'd3';
 import _ from 'lodash';
 import Perf from 'react-addons-perf';
 import { connect } from 'react-redux';
@@ -9,13 +10,16 @@ import debug from 'debug';
 const log = debug('scope:debug-panel');
 
 import { receiveNodesDelta } from '../actions/app-actions';
-import { getNodeColor, getNodeColorDark } from '../utils/color-utils';
+import { getNodeColor, getNodeColorDark, text2degree } from '../utils/color-utils';
 
 
 const SHAPES = ['square', 'hexagon', 'heptagon', 'circle'];
 const NODE_COUNTS = [1, 2, 3];
 const STACK_VARIANTS = [false, true];
 const METRIC_FILLS = [0, 0.1, 50, 99.9, 100];
+const NETWORKS = [
+  'be', 'fe', 'zb', 'db', 're', 'gh', 'jk', 'lol', 'nw'
+].map(n => ({id: n, label: n, colorKey: n}));
 
 const LOREM = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
 incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
@@ -23,7 +27,7 @@ ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor i
 voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
 proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`;
 
-const sample = (collection) => _.range(_.random(4)).map(() => _.sample(collection));
+const sample = (collection, n = 4) => _.sampleSize(collection, _.random(n));
 
 
 const shapeTypes = {
@@ -41,7 +45,10 @@ const LABEL_PREFIXES = _.range('A'.charCodeAt(), 'Z'.charCodeAt() + 1)
 // const randomLetter = () => _.sample(LABEL_PREFIXES);
 
 
-const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, nodeCount = 1) => ({
+const deltaAdd = (
+  name, adjacency = [], shape = 'circle', stack = false, nodeCount = 1,
+    networks = NETWORKS
+) => ({
   adjacency,
   controls: {},
   shape,
@@ -51,9 +58,9 @@ const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, nodeCou
   label: name,
   label_minor: name,
   latest: {},
-  metadata: {},
   origins: [],
-  rank: name
+  rank: name,
+  networks
 });
 
 
@@ -170,7 +177,8 @@ class DebugToolbar extends React.Component {
         sample(allNodes),
         _.sample(SHAPES),
         _.sample(STACK_VARIANTS),
-        _.sample(NODE_COUNTS)
+        _.sample(NODE_COUNTS),
+        sample(NETWORKS, 10)
       ))
     }));
 
@@ -208,8 +216,21 @@ class DebugToolbar extends React.Component {
           <button onClick={this.toggleColors}>toggle</button>
         </div>
 
-        {this.state.showColors && [getNodeColor, getNodeColorDark].map(fn => (
-          <table>
+        {this.state.showColors &&
+        <table>
+          <tbody>
+            {LABEL_PREFIXES.map(r => (
+              <tr key={r}>
+                <td
+                  title={`${r}`}
+                  style={{backgroundColor: d3.hsl(text2degree(r), 0.5, 0.5).toString()}} />
+              </tr>
+            ))}
+          </tbody>
+        </table>}
+
+        {this.state.showColors && [getNodeColor, getNodeColorDark].map((fn, i) => (
+          <table key={i}>
             <tbody>
               {LABEL_PREFIXES.map(r => (
                 <tr key={r}>

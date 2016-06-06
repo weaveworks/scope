@@ -37,7 +37,7 @@ export function getUrlState(state) {
     id: details.id, label: details.label, topologyId: details.topologyId
   }));
 
-  return {
+  const urlState = {
     controlPipe: cp ? cp.toJS() : null,
     nodeDetails: nodeDetails.toJS(),
     pinnedMetricType: state.get('pinnedMetricType'),
@@ -47,6 +47,15 @@ export function getUrlState(state) {
     topologyId: state.get('currentTopologyId'),
     topologyOptions: state.get('topologyOptions').toJS() // all options
   };
+
+  if (state.get('showingNetworks')) {
+    urlState.showingNetworks = true;
+    if (state.get('pinnedNetwork')) {
+      urlState.pinnedNetwork = state.get('pinnedNetwork');
+    }
+  }
+
+  return urlState;
 }
 
 export function updateRoute(getState) {
