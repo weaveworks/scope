@@ -253,6 +253,7 @@ func (c *dynamoDBCollector) getNonCached(reportKeys []string) ([]report.Report, 
 	return reports, nil
 }
 
+// Fetch a single report from S3.
 func (c *dynamoDBCollector) getNonCachedReport(reportKey string) (report.Report, error) {
 	var resp *s3.GetObjectOutput
 	err := timeRequest("Get", s3RequestDuration, func() error {
@@ -263,19 +264,16 @@ func (c *dynamoDBCollector) getNonCachedReport(reportKey string) (report.Report,
 		})
 		return err
 	})
-	// XXX: Not sure why this one is returned out when the rest are logged.
 	if err != nil {
 		return report.Report{}, err
 	}
 	reader, err := gzip.NewReader(resp.Body)
 	if err != nil {
-		log.Errorf("Error gunzipping report: %v", err)
-		return report.Report{}, nil
+		return report.Report{}, err
 	}
 	rep := report.MakeReport()
 	if err := codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode(&rep); err != nil {
-		log.Errorf("Failed to decode report: %v", err)
-		return report.Report{}, nil
+		return report.Report{}, err
 	}
 	return rep, nil
 }
