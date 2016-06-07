@@ -243,32 +243,41 @@ func (c *dynamoDBCollector) getCached(reportKeys []string) ([]report.Report, []s
 func (c *dynamoDBCollector) getNonCached(reportKeys []string) ([]report.Report, error) {
 	reports := []report.Report{}
 	for _, reportKey := range reportKeys {
-		var resp *s3.GetObjectOutput
-		err := timeRequest("Get", s3RequestDuration, func() error {
-			var err error
-			resp, err = c.s3.GetObject(&s3.GetObjectInput{
-				Bucket: aws.String(c.bucketName),
-				Key:    aws.String(reportKey),
-			})
-			return err
-		})
+		rep, err := c.getNonCachedReport(reportKey)
 		if err != nil {
 			return nil, err
-		}
-		reader, err := gzip.NewReader(resp.Body)
-		if err != nil {
-			log.Errorf("Error gunzipping report: %v", err)
-			continue
-		}
-		rep := report.MakeReport()
-		if err := codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode(&rep); err != nil {
-			log.Errorf("Failed to decode report: %v", err)
-			continue
 		}
 		reports = append(reports, rep)
 		c.cache.Set(reportKey, rep)
 	}
 	return reports, nil
+}
+
+func (c *dynamoDBCollector) getNonCachedReport(reportKey string) (report.Report, error) {
+	var resp *s3.GetObjectOutput
+	err := timeRequest("Get", s3RequestDuration, func() error {
+		var err error
+		resp, err = c.s3.GetObject(&s3.GetObjectInput{
+			Bucket: aws.String(c.bucketName),
+			Key:    aws.String(reportKey),
+		})
+		return err
+	})
+	// XXX: Not sure why this one is returned out when the rest are logged.
+	if err != nil {
+		return report.Report{}, err
+	}
+	reader, err := gzip.NewReader(resp.Body)
+	if err != nil {
+		log.Errorf("Error gunzipping report: %v", err)
+		return report.Report{}, nil
+	}
+	rep := report.MakeReport()
+	if err := codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode(&rep); err != nil {
+		log.Errorf("Failed to decode report: %v", err)
+		return report.Report{}, nil
+	}
+	return rep, nil
 }
 
 func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time.Time) ([]report.Report, error) {
