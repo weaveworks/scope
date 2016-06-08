@@ -545,7 +545,7 @@ export function rootReducer(state = initialState, action) {
       if (networkPrefix) {
         state = state.update('nodes',
           nodes => nodes.map(node => node.update('networks',
-            networks => networks.map(n => n.set('colorKey',
+            networks => networks && networks.map(n => n.set('colorKey',
               n.get('colorKey').substr(networkPrefix.length))))));
 
         state = state.update('availableNetworks',
