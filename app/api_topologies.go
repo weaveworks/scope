@@ -278,7 +278,7 @@ func (r *registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		report, err := rep.Report(ctx)
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err.Error())
+			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
 		respondWith(w, http.StatusOK, r.renderTopologies(report, req))
@@ -369,13 +369,13 @@ func (r *registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFu
 		}
 		rpt, err := rep.Report(ctx)
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err.Error())
+			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
 		req.ParseForm()
 		renderer, decorator, err := r.rendererForTopology(topologyID, req.Form, rpt)
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err.Error())
+			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
 		f(ctx, renderer, decorator, rpt, w, req)
