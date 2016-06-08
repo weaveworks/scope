@@ -18,13 +18,17 @@ import (
 	"github.com/weaveworks/scope/test"
 )
 
-func dummyServer(t *testing.T, expectedToken, expectedID string, expectedReport report.Report, done chan struct{}) *httptest.Server {
+func dummyServer(t *testing.T, expectedToken, expectedID string, expectedVersion string, expectedReport report.Report, done chan struct{}) *httptest.Server {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if have := r.Header.Get("Authorization"); fmt.Sprintf("Scope-Probe token=%s", expectedToken) != have {
 			t.Errorf("want %q, have %q", expectedToken, have)
 		}
 
 		if have := r.Header.Get(xfer.ScopeProbeIDHeader); expectedID != have {
+			t.Errorf("want %q, have %q", expectedID, have)
+		}
+
+		if have := r.Header.Get(xfer.ScopeProbeVersionHeader); expectedVersion != have {
 			t.Errorf("want %q, have %q", expectedID, have)
 		}
 
@@ -59,10 +63,11 @@ func dummyServer(t *testing.T, expectedToken, expectedID string, expectedReport 
 
 func TestAppClientPublish(t *testing.T) {
 	var (
-		token = "abcdefg"
-		id    = "1234567"
-		rpt   = report.MakeReport()
-		done  = make(chan struct{}, 10)
+		token   = "abcdefg"
+		id      = "1234567"
+		version = "0.18"
+		rpt     = report.MakeReport()
+		done    = make(chan struct{}, 10)
 	)
 
 	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
@@ -89,7 +94,7 @@ func TestAppClientPublish(t *testing.T) {
 	rpt.Host.Controls = nil
 	rpt.Overlay.Controls = nil
 
-	s := dummyServer(t, token, id, rpt, done)
+	s := dummyServer(t, token, id, version, rpt, done)
 	defer s.Close()
 
 	u, err := url.Parse(s.URL)
@@ -98,9 +103,10 @@ func TestAppClientPublish(t *testing.T) {
 	}
 
 	pc := ProbeConfig{
-		Token:    token,
-		ProbeID:  id,
-		Insecure: false,
+		Token:        token,
+		ProbeVersion: version,
+		ProbeID:      id,
+		Insecure:     false,
 	}
 
 	p, err := NewAppClient(pc, u.Host, s.URL, nil)
