@@ -74,6 +74,7 @@ class NodesChartNodes extends React.Component {
           nodeCount={node.get('nodeCount')}
           subLabel={node.get('subLabel')}
           metric={metric(node)}
+          colorKey={node.get('colorKey')}
           rank={node.get('rank')}
           layoutPrecision={layoutPrecision}
           selectedNodeScale={selectedNodeScale}
