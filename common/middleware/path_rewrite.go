@@ -21,7 +21,7 @@ type pathRewrite struct {
 func (p pathRewrite) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.RequestURI = p.regexp.ReplaceAllString(r.RequestURI, p.replacement)
-		r.URL.Path = p.regexp.ReplaceAllString(r.RequestURI, p.replacement)
+		r.URL.Path = p.regexp.ReplaceAllString(r.URL.Path, p.replacement)
 		next.ServeHTTP(w, r)
 	})
 }
@@ -35,6 +35,7 @@ type pathReplace string
 
 func (p pathReplace) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = string(p)
 		r.RequestURI = string(p)
 		next.ServeHTTP(w, r)
 	})
