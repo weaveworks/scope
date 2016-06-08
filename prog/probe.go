@@ -104,9 +104,10 @@ func probeMain(flags probeFlags) {
 	log.Infof("publishing to: %s", strings.Join(targets, ", "))
 
 	probeConfig := appclient.ProbeConfig{
-		Token:    flags.token,
-		ProbeID:  probeID,
-		Insecure: flags.insecure,
+		Token:        flags.token,
+		ProbeVersion: version,
+		ProbeID:      probeID,
+		Insecure:     flags.insecure,
 	}
 	clients := appclient.NewMultiAppClient(func(hostname, endpoint string) (appclient.AppClient, error) {
 		return appclient.NewAppClient(

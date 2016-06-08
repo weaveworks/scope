@@ -9,6 +9,9 @@ const (
 	// ScopeProbeIDHeader is the header we use to carry the probe's unique ID. The
 	// ID is currently set to the a random string on probe startup.
 	ScopeProbeIDHeader = "X-Scope-Probe-ID"
+
+	// ScopeProbeVersionHeader is the header we use to carry the probe's version.
+	ScopeProbeVersionHeader = "X-Scope-Probe-Version"
 )
 
 // Details are some generic details that can be fetched from /api
