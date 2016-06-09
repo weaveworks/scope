@@ -52,7 +52,7 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	app.RegisterPipeRoutes(router, pipeRouter)
 	app.RegisterTopologyRoutes(router, collector)
 
-	router.PathPrefix("/").Handler(http.FileServer(FS(false)))
+	router.PathPrefix("/").Name("static").Handler(http.FileServer(FS(false)))
 
 	instrument := middleware.Instrument{
 		RouteMatcher: router,
