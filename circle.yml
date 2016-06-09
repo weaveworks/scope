@@ -68,6 +68,7 @@ deployment:
           docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
           (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" == "weaveworks" || docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:latest) &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope
+          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag)
         )
   hub-dev:
     branch: /^((?!master).)*$/  # not the master branch
