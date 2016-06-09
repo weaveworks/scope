@@ -40,19 +40,29 @@ func (i Instrument) Wrap(next http.Handler) http.Handler {
 	})
 }
 
-var invalidChars = regexp.MustCompile(`[^a-zA-Z0-9]+`)
-
+// Return a name identifier for ths request.  There are three options:
+//   1. The request matches a gorilla mux route, with a name.  Use that.
+//   2. The request matches an unamed gorilla mux router.  Munge the path
+//      template such that templates like '/api/{org}/foo' come out as
+//      'api_org_foo'.
+//   3. The request doesn't match a mux route.  Munge the Path in the same
+//      manner as (2).
+// We do all this as we do not wish to emit high cardinality labels to
+// prometheus.
 func (i Instrument) getRouteName(r *http.Request) string {
 	var routeMatch mux.RouteMatch
-	if !i.RouteMatcher.Match(r, &routeMatch) {
-		return MakeLabelValue(r.URL.Path)
+	if i.RouteMatcher.Match(r, &routeMatch) {
+		if name := routeMatch.Route.GetName(); name != "" {
+			return name
+		}
+		if tmpl, err := routeMatch.Route.GetPathTemplate(); err != nil {
+			return MakeLabelValue(tmpl)
+		}
 	}
-	name := routeMatch.Route.GetName()
-	if name == "" {
-		return MakeLabelValue(r.URL.Path)
-	}
-	return name
+	return MakeLabelValue(r.URL.Path)
 }
+
+var invalidChars = regexp.MustCompile(`[^a-zA-Z0-9]+`)
 
 // MakeLabelValue converts a Gorilla mux path to a string suitable for use in
 // a Prometheus label value.
@@ -62,6 +72,9 @@ func MakeLabelValue(path string) string {
 
 	// Trim leading and trailing underscores.
 	result = strings.Trim(result, "_")
+
+	// Make it all lowercase
+	result = strings.ToLower(result)
 
 	// Special case.
 	if result == "" {
