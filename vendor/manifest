@@ -24,14 +24,6 @@
 			"branch": "master"
 		},
 		{
-			"importpath": "github.com/PuerkitoBio/ghost/handlers",
-			"repository": "https://github.com/PuerkitoBio/ghost",
-			"vcs": "",
-			"revision": "a0146f2f931611b8bfe40f07018c97a7c881c76a",
-			"branch": "master",
-			"path": "/handlers"
-		},
-		{
 			"importpath": "github.com/Sirupsen/logrus",
 			"repository": "https://github.com/Sirupsen/logrus",
 			"vcs": "",
@@ -536,14 +528,6 @@
 			"branch": "master"
 		},
 		{
-			"importpath": "github.com/davecgh/go-spew/spew",
-			"repository": "https://github.com/davecgh/go-spew",
-			"vcs": "",
-			"revision": "2df174808ee097f90d259e432cc04442cf60be21",
-			"branch": "master",
-			"path": "/spew"
-		},
-		{
 			"importpath": "github.com/docker/docker/pkg/homedir",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "",
@@ -599,14 +583,6 @@
 			"path": "/cgroups"
 		},
 		{
-			"importpath": "github.com/docker/libcontainer/cgroups/fs",
-			"repository": "https://github.com/docker/libcontainer",
-			"vcs": "",
-			"revision": "83a102cc68a09d890cce3b6c2e5c14c49e6373a0",
-			"branch": "master",
-			"path": "/cgroups/fs"
-		},
-		{
 			"importpath": "github.com/docker/libcontainer/configs",
 			"repository": "https://github.com/docker/libcontainer",
 			"vcs": "",
@@ -628,14 +604,6 @@
 			"vcs": "",
 			"revision": "f3b10ff408486b3e248197254514778285fbdea1",
 			"branch": "master"
-		},
-		{
-			"importpath": "github.com/emicklei/go-restful/swagger",
-			"repository": "https://github.com/emicklei/go-restful",
-			"vcs": "",
-			"revision": "f3b10ff408486b3e248197254514778285fbdea1",
-			"branch": "master",
-			"path": "/swagger"
 		},
 		{
 			"importpath": "github.com/fsouza/go-dockerclient",
@@ -834,6 +802,85 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/nats-io/gnatsd/auth",
+			"repository": "https://github.com/nats-io/gnatsd",
+			"vcs": "git",
+			"revision": "f2c17eb159e1fcc5859b25b632a60c26506f0665",
+			"branch": "master",
+			"path": "auth",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/nats-io/gnatsd/conf",
+			"repository": "https://github.com/nats-io/gnatsd",
+			"vcs": "git",
+			"revision": "f2c17eb159e1fcc5859b25b632a60c26506f0665",
+			"branch": "master",
+			"path": "conf",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/nats-io/gnatsd/server",
+			"repository": "https://github.com/nats-io/gnatsd",
+			"vcs": "git",
+			"revision": "f2c17eb159e1fcc5859b25b632a60c26506f0665",
+			"branch": "master",
+			"path": "/server",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/nats-io/gnatsd/test",
+			"repository": "https://github.com/nats-io/gnatsd",
+			"vcs": "git",
+			"revision": "f2c17eb159e1fcc5859b25b632a60c26506f0665",
+			"branch": "master",
+			"path": "test",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/nats-io/gnatsd/vendor/github.com/nats-io/nuid",
+			"repository": "https://github.com/nats-io/gnatsd",
+			"vcs": "git",
+			"revision": "f2c17eb159e1fcc5859b25b632a60c26506f0665",
+			"branch": "master",
+			"path": "vendor/github.com/nats-io/nuid",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/nats-io/gnatsd/vendor/golang.org/x/crypto/bcrypt",
+			"repository": "https://github.com/nats-io/gnatsd",
+			"vcs": "git",
+			"revision": "f2c17eb159e1fcc5859b25b632a60c26506f0665",
+			"branch": "master",
+			"path": "vendor/golang.org/x/crypto/bcrypt",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/nats-io/gnatsd/vendor/golang.org/x/crypto/blowfish",
+			"repository": "https://github.com/nats-io/gnatsd",
+			"vcs": "git",
+			"revision": "f2c17eb159e1fcc5859b25b632a60c26506f0665",
+			"branch": "master",
+			"path": "vendor/golang.org/x/crypto/blowfish",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/nats-io/nats",
+			"repository": "https://github.com/nats-io/nats",
+			"vcs": "git",
+			"revision": "ce9cdc9addff268b4b75b72f7b6dcca012954c6a",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/nats-io/nuid",
+			"repository": "https://github.com/nats-io/nuid",
+			"vcs": "git",
+			"revision": "a5152d67cf63cbfb5d992a395458722a45194715",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/nu7hatch/gouuid",
 			"repository": "https://github.com/nu7hatch/gouuid",
 			"vcs": "",
@@ -847,14 +894,6 @@
 			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
 			"branch": "master",
 			"path": "/libcontainer/cgroups"
-		},
-		{
-			"importpath": "github.com/opencontainers/runc/libcontainer/cgroups/fs",
-			"repository": "https://github.com/opencontainers/runc",
-			"vcs": "",
-			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
-			"branch": "master",
-			"path": "/libcontainer/cgroups/fs"
 		},
 		{
 			"importpath": "github.com/opencontainers/runc/libcontainer/configs",

@@ -76,7 +76,7 @@ func awsConfigFromURL(url *url.URL) (*aws.Config, error) {
 	return config, nil
 }
 
-func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL string, window time.Duration, createTables bool) (app.Collector, error) {
+func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname string, window time.Duration, createTables bool) (app.Collector, error) {
 	if collectorURL == "local" {
 		return app.NewCollector(window), nil
 	}
@@ -101,8 +101,11 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL string,
 		}
 		tableName := strings.TrimPrefix(parsed.Path, "/")
 		bucketName := strings.TrimPrefix(s3.Path, "/")
-		dynamoCollector := multitenant.NewDynamoDBCollector(
-			dynamoDBConfig, s3Config, userIDer, tableName, bucketName)
+		dynamoCollector, err := multitenant.NewDynamoDBCollector(
+			userIDer, dynamoDBConfig, s3Config, tableName, bucketName, natsHostname)
+		if err != nil {
+			return nil, err
+		}
 		if createTables {
 			if err := dynamoCollector.CreateTables(); err != nil {
 				return nil, err
@@ -167,12 +170,20 @@ func appMain(flags appFlags) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 
+	defer log.Info("app exiting")
+	rand.Seed(time.Now().UnixNano())
+	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
+	app.Version = version
+	log.Infof("app starting, version %s, ID %s", app.Version, app.UniqueID)
+	log.Infof("command line: %v", os.Args)
+
 	userIDer := multitenant.NoopUserIDer
 	if flags.userIDHeader != "" {
 		userIDer = multitenant.UserIDHeader(flags.userIDHeader)
 	}
 
-	collector, err := collectorFactory(userIDer, flags.collectorURL, flags.s3URL, flags.window, flags.awsCreateTables)
+	collector, err := collectorFactory(
+		userIDer, flags.collectorURL, flags.s3URL, flags.natsHostname, flags.window, flags.awsCreateTables)
 	if err != nil {
 		log.Fatalf("Error creating collector: %v", err)
 		return
@@ -189,13 +200,6 @@ func appMain(flags appFlags) {
 		log.Fatalf("Error creating pipe router: %v", err)
 		return
 	}
-
-	defer log.Info("app exiting")
-	rand.Seed(time.Now().UnixNano())
-	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
-	app.Version = version
-	log.Infof("app starting, version %s, ID %s", app.Version, app.UniqueID)
-	log.Infof("command line: %v", os.Args)
 
 	// Start background version checking
 	checkpoint.CheckInterval(&checkpoint.CheckParams{

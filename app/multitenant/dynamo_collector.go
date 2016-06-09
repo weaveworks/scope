@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -15,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bluele/gcache"
+	"github.com/nats-io/nats"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
@@ -24,11 +26,12 @@ import (
 )
 
 const (
-	hourField       = "hour"
-	tsField         = "ts"
-	reportField     = "report"
-	cacheSize       = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
-	cacheExpiration = 15 * time.Second
+	hourField             = "hour"
+	tsField               = "ts"
+	reportField           = "report"
+	reportCacheSize       = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
+	reportCacheExpiration = 15 * time.Second
+	natsTimeout           = 10 * time.Second
 )
 
 var (
@@ -69,6 +72,12 @@ var (
 		Name:      "s3_request_duration_nanoseconds",
 		Help:      "Time spent doing S3 requests.",
 	}, []string{"method", "status_code"})
+
+	natsRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "nats_requests",
+		Help:      "Number of NATS requests.",
+	}, []string{"method", "status_code"})
 )
 
 func init() {
@@ -79,6 +88,7 @@ func init() {
 	prometheus.MustRegister(dynamoValueSize)
 	prometheus.MustRegister(reportSize)
 	prometheus.MustRegister(s3RequestDuration)
+	prometheus.MustRegister(natsRequests)
 }
 
 // DynamoDBCollector is a Collector which can also CreateTables
@@ -95,11 +105,42 @@ type dynamoDBCollector struct {
 	bucketName string
 	merger     app.Merger
 	cache      gcache.Cache
+
+	nats        *nats.Conn
+	waitersLock sync.Mutex
+	waiters     map[watchKey]*nats.Subscription
+}
+
+// Shortcut reports:
+// When the UI connects a WS to the query service, a goroutine periodically
+// published rendered reports to that ws.  This process can be interrupted by
+// "shortcut" reports, causing the query service to push a render report
+// immediately. This whole process is controlled by the aforementioned
+// goroutine registering a channel with the collector.  We store these
+// registered channels in a map keyed by the userid and the channel itself,
+// which in go is hashable.  We then listen on a NATS topic for any shortcut
+// reports coming from the collection service.
+type watchKey struct {
+	userid string
+	c      chan struct{}
 }
 
 // NewDynamoDBCollector the reaper of souls
 // https://github.com/aws/aws-sdk-go/wiki/common-examples
-func NewDynamoDBCollector(dynamoDBConfig, s3Config *aws.Config, userIDer UserIDer, tableName, bucketName string) DynamoDBCollector {
+func NewDynamoDBCollector(
+	userIDer UserIDer,
+	dynamoDBConfig, s3Config *aws.Config,
+	tableName, bucketName, natsHost string,
+) (DynamoDBCollector, error) {
+	var nc *nats.Conn
+	if natsHost != "" {
+		var err error
+		nc, err = nats.Connect(natsHost)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &dynamoDBCollector{
 		db:         dynamodb.New(session.New(dynamoDBConfig)),
 		s3:         s3.New(session.New(s3Config)),
@@ -107,8 +148,10 @@ func NewDynamoDBCollector(dynamoDBConfig, s3Config *aws.Config, userIDer UserIDe
 		tableName:  tableName,
 		bucketName: bucketName,
 		merger:     app.NewSmartMerger(),
-		cache:      gcache.New(cacheSize).LRU().Expiration(cacheExpiration).Build(),
-	}
+		cache:      gcache.New(reportCacheSize).LRU().Expiration(reportCacheExpiration).Build(),
+		nats:       nc,
+		waiters:    map[watchKey]*nats.Subscription{},
+	}, nil
 }
 
 // CreateDynamoDBTables creates the required tables in dynamodb
@@ -160,21 +203,6 @@ func (c *dynamoDBCollector) CreateTables() error {
 	}
 	log.Infof("Creating table %s", c.tableName)
 	_, err = c.db.CreateTable(params)
-	return err
-}
-
-func errorCode(err error) string {
-	if err == nil {
-		return "200"
-	}
-	return "500"
-}
-
-func timeRequest(method string, metric *prometheus.SummaryVec, f func() error) error {
-	startTime := time.Now()
-	err := f()
-	duration := time.Now().Sub(startTime)
-	metric.WithLabelValues(method, errorCode(err)).Observe(float64(duration.Nanoseconds()))
 	return err
 }
 
@@ -419,9 +447,82 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 		dynamoConsumedCapacity.WithLabelValues("PutItem").
 			Add(float64(*resp.ConsumedCapacity.CapacityUnits))
 	}
-	return err
+	if err != nil {
+		return err
+	}
+
+	if rep.Shortcut && c.nats != nil {
+		err := c.nats.Publish(userid, []byte(s3Key))
+		natsRequests.WithLabelValues("Publish", errorCode(err)).Add(1)
+		if err != nil {
+			log.Errorf("Error sending shortcut report: %v", err)
+		}
+	}
+
+	return nil
 }
 
-func (c *dynamoDBCollector) WaitOn(context.Context, chan struct{}) {}
+func (c *dynamoDBCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
+	userid, err := c.userIDer(ctx)
+	if err != nil {
+		log.Errorf("Error getting user id in WaitOn: %v", err)
+		return
+	}
 
-func (c *dynamoDBCollector) UnWait(context.Context, chan struct{}) {}
+	if c.nats == nil {
+		return
+	}
+
+	sub, err := c.nats.SubscribeSync(userid)
+	natsRequests.WithLabelValues("SubscribeSync", errorCode(err)).Add(1)
+	if err != nil {
+		log.Errorf("Error subscribing for shortcuts: %v", err)
+		return
+	}
+
+	c.waitersLock.Lock()
+	c.waiters[watchKey{userid, waiter}] = sub
+	c.waitersLock.Unlock()
+
+	go func() {
+		for {
+			_, err := sub.NextMsg(natsTimeout)
+			if err == nats.ErrTimeout {
+				continue
+			}
+			natsRequests.WithLabelValues("NextMsg", errorCode(err)).Add(1)
+			if err != nil {
+				log.Debugf("NextMsg error: %v", err)
+				return
+			}
+			select {
+			case waiter <- struct{}{}:
+			default:
+			}
+		}
+	}()
+}
+
+func (c *dynamoDBCollector) UnWait(ctx context.Context, waiter chan struct{}) {
+	userid, err := c.userIDer(ctx)
+	if err != nil {
+		log.Errorf("Error getting user id in WaitOn: %v", err)
+		return
+	}
+
+	if c.nats == nil {
+		return
+	}
+
+	c.waitersLock.Lock()
+	key := watchKey{userid, waiter}
+	sub := c.waiters[key]
+	delete(c.waiters, key)
+	c.waitersLock.Unlock()
+
+	err = sub.Unsubscribe()
+	natsRequests.WithLabelValues("Unsubscribe", errorCode(err)).Add(1)
+	if err != nil {
+		log.Errorf("Error on unsubscribe: %v", err)
+	}
+}
