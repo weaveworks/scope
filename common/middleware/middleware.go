@@ -18,6 +18,9 @@ func (m Func) Wrap(next http.Handler) http.Handler {
 	return m(next)
 }
 
+// Identity is an Interface which doesn't do anything.
+var Identity Interface = Func(func(h http.Handler) http.Handler { return h })
+
 // Merge produces a middleware that applies multiple middlesware in turn;
 // ie Merge(f,g,h).Wrap(handler) == f.Wrap(g.Wrap(h.Wrap(handler)))
 func Merge(middlesware ...Interface) Interface {
