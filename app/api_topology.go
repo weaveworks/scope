@@ -59,7 +59,7 @@ func handleWebsocket(
 	r *http.Request,
 ) {
 	if err := r.ParseForm(); err != nil {
-		respondWith(w, http.StatusInternalServerError, err.Error())
+		respondWith(w, http.StatusInternalServerError, err)
 		return
 	}
 	loop := websocketLoop

@@ -134,7 +134,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			reader, err = gzip.NewReader(reader)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				respondWith(w, http.StatusBadRequest, err)
 				return
 			}
 		}
@@ -150,7 +150,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 		}
 
 		if err := decoder(&rpt); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			respondWith(w, http.StatusBadRequest, err)
 			return
 		}
 		log.Debugf(
@@ -162,7 +162,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 
 		if err := a.Add(ctx, rpt); err != nil {
 			log.Errorf("Error Adding report: %v", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
@@ -188,7 +188,7 @@ func apiHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		report, err := rep.Report(ctx)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
 		newVersion.Lock()

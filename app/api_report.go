@@ -15,7 +15,7 @@ func makeRawReportHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		report, err := rep.Report(ctx)
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err.Error())
+			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
 		respondWith(w, http.StatusOK, report)
@@ -34,7 +34,7 @@ func makeProbeHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		rpt, err := rep.Report(ctx)
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err.Error())
+			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
 		result := []probeDesc{}

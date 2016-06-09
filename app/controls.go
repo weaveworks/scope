@@ -75,7 +75,7 @@ func handleProbeWS(cr ControlRouter) CtxHandlerFunc {
 			return res
 		})
 		if err != nil {
-			respondWith(w, http.StatusBadRequest, err.Error())
+			respondWith(w, http.StatusBadRequest, err)
 			return
 		}
 		defer cr.Deregister(ctx, probeID, id)
