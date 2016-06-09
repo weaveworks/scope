@@ -97,11 +97,6 @@ type DynamoDBCollector interface {
 	CreateTables() error
 }
 
-type watchKey struct {
-	userid string
-	c      chan struct{}
-}
-
 type dynamoDBCollector struct {
 	userIDer   UserIDer
 	db         *dynamodb.DynamoDB
@@ -116,6 +111,20 @@ type dynamoDBCollector struct {
 	waiters     map[watchKey]*nats.Subscription
 }
 
+// Shortcut reports:
+// When the UI connects a WS to the query service, a goroutine periodically
+// published rendered reports to that ws.  This process can be interrupted by
+// "shortcut" reports, causing the query service to push a render report
+// immediately. This whole process is controlled by the aforementioned
+// goroutine registering a channel with the collector.  We store these
+// registered channels in a map keyed by the userid and the channel itself,
+// which in go is hashable.  We then listen on a NATS topic for any shortcut
+// reports coming from the collection service.
+type watchKey struct {
+	userid string
+	c      chan struct{}
+}
+
 // NewDynamoDBCollector the reaper of souls
 // https://github.com/aws/aws-sdk-go/wiki/common-examples
 func NewDynamoDBCollector(
@@ -123,9 +132,13 @@ func NewDynamoDBCollector(
 	dynamoDBConfig, s3Config *aws.Config,
 	tableName, bucketName, natsHost string,
 ) (DynamoDBCollector, error) {
-	nc, err := nats.Connect(natsHost)
-	if err != nil {
-		return nil, err
+	var nc *nats.Conn
+	if natsHost != "" {
+		var err error
+		nc, err = nats.Connect(natsHost)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &dynamoDBCollector{
@@ -438,7 +451,7 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 		return err
 	}
 
-	if rep.Shortcut {
+	if rep.Shortcut && c.nats != nil {
 		err := c.nats.Publish(userid, []byte(s3Key))
 		natsRequests.WithLabelValues("Publish", errorCode(err)).Add(1)
 		if err != nil {
@@ -453,6 +466,10 @@ func (c *dynamoDBCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
 	userid, err := c.userIDer(ctx)
 	if err != nil {
 		log.Errorf("Error getting user id in WaitOn: %v", err)
+		return
+	}
+
+	if c.nats == nil {
 		return
 	}
 
@@ -479,6 +496,10 @@ func (c *dynamoDBCollector) UnWait(ctx context.Context, waiter chan struct{}) {
 	userid, err := c.userIDer(ctx)
 	if err != nil {
 		log.Errorf("Error getting user id in WaitOn: %v", err)
+		return
+	}
+
+	if c.nats == nil {
 		return
 	}
 
