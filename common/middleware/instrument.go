@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -39,14 +40,32 @@ func (i Instrument) Wrap(next http.Handler) http.Handler {
 	})
 }
 
+var invalidChars = regexp.MustCompile(`[^a-zA-Z0-9]+`)
+
 func (i Instrument) getRouteName(r *http.Request) string {
 	var routeMatch mux.RouteMatch
 	if !i.RouteMatcher.Match(r, &routeMatch) {
-		return "unmatched_path"
+		return MakeLabelValue(r.URL.Path)
 	}
 	name := routeMatch.Route.GetName()
 	if name == "" {
-		return "unnamed_path"
+		return MakeLabelValue(r.URL.Path)
 	}
 	return name
+}
+
+// MakeLabelValue converts a Gorilla mux path to a string suitable for use in
+// a Prometheus label value.
+func MakeLabelValue(path string) string {
+	// Convert non-alnums to underscores.
+	result := invalidChars.ReplaceAllString(path, "_")
+
+	// Trim leading and trailing underscores.
+	result = strings.Trim(result, "_")
+
+	// Special case.
+	if result == "" {
+		result = "root"
+	}
+	return result
 }
