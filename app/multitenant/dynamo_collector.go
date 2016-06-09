@@ -31,7 +31,7 @@ const (
 	reportField           = "report"
 	reportCacheSize       = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
 	reportCacheExpiration = 15 * time.Second
-	natsTimeout           = 2 * time.Second
+	natsTimeout           = 10 * time.Second
 )
 
 var (
@@ -485,10 +485,21 @@ func (c *dynamoDBCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
 	c.waitersLock.Unlock()
 
 	go func() {
-		_, err := sub.NextMsg(natsTimeout)
-		natsRequests.WithLabelValues("NextMsg", errorCode(err)).Add(1)
-		log.Debugf("NextMsg error: %v", err)
-		close(waiter)
+		for {
+			_, err := sub.NextMsg(natsTimeout)
+			if err == nats.ErrTimeout {
+				continue
+			}
+			natsRequests.WithLabelValues("NextMsg", errorCode(err)).Add(1)
+			if err != nil {
+				log.Debugf("NextMsg error: %v", err)
+				return
+			}
+			select {
+			case waiter <- struct{}{}:
+			default:
+			}
+		}
 	}()
 }
 
