@@ -311,18 +311,21 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 	c.RLock()
 	defer c.RUnlock()
 
+	ips := c.container.NetworkSettings.SecondaryIPAddresses
+	if c.container.NetworkSettings.IPAddress != "" {
+		ips = append(ips, c.container.NetworkSettings.IPAddress)
+	}
+
 	// For now, for the proof-of-concept, we just add networks as a set of
 	// names. For the next iteration, we will probably want to create a new
 	// Network topology, populate the network nodes with all of the details
 	// here, and provide foreign key links from nodes to networks.
 	networks := make([]string, 0, len(c.container.NetworkSettings.Networks))
-	for name := range c.container.NetworkSettings.Networks {
+	for name, settings := range c.container.NetworkSettings.Networks {
 		networks = append(networks, name)
-	}
-
-	ips := c.container.NetworkSettings.SecondaryIPAddresses
-	if c.container.NetworkSettings.IPAddress != "" {
-		ips = append(ips, c.container.NetworkSettings.IPAddress)
+		if settings.IPAddress != "" {
+			ips = append(ips, settings.IPAddress)
+		}
 	}
 
 	// Treat all Docker IPs as local scoped.
