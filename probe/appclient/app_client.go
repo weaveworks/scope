@@ -249,9 +249,7 @@ func (c *appClient) publish(r io.Reader) error {
 	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
 
 	// Make sure this request is cancelled when we stop the client
-	c.mtx.Lock()
 	req.Cancel = c.quit
-	c.mtx.Unlock()
 
 	resp, err := c.client.Do(req)
 	if err != nil {
