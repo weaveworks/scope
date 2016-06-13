@@ -173,3 +173,59 @@ func TestAppClientDetails(t *testing.T) {
 		return
 	}
 }
+
+// Make sure Stopping a client works even if the connection or the remote app
+// gets stuck for whatever reason.
+// See https://github.com/weaveworks/scope/issues/1576
+func TestStop(t *testing.T) {
+	var (
+		rpt            = report.MakeReport()
+		stopHanging    = make(chan struct{})
+		receivedReport = make(chan struct{})
+	)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(receivedReport)
+		<-stopHanging
+	})
+
+	s := httptest.NewServer(handlers.CompressHandler(handler))
+	defer s.Close()
+
+	u, err := url.Parse(s.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pc := ProbeConfig{
+		Token:    "",
+		ProbeID:  "",
+		Insecure: false,
+	}
+
+	p, err := NewAppClient(pc, u.Host, s.URL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rp := NewReportPublisher(p)
+
+	// Make sure the app received our report and is stuck
+	for done := false; !done; {
+		select {
+		case <-receivedReport:
+			done = true
+		default:
+			if err := rp.Publish(rpt); err != nil {
+				t.Error(err)
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
+
+	// Close the client while the app is stuck
+	p.Stop()
+
+	// Let the server go so that the test can end
+	close(stopHanging)
+}
