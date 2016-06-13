@@ -114,7 +114,10 @@ func TestContainer(t *testing.T) {
 			Add("docker_container_ports", report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp")).
 			Add("docker_container_networks", nil).
 			Add("docker_container_ips", report.MakeStringSet("1.2.3.4")).
-			Add("docker_container_ips_with_scopes", report.MakeStringSet(";1.2.3.4"))
+			Add("docker_container_ips", report.MakeStringSet("5.6.7.8")).
+			Add("docker_container_ips_with_scopes", report.MakeStringSet(";1.2.3.4")).
+			Add("docker_container_ips_with_scopes", report.MakeStringSet(";5.6.7.8")).
+			Add("docker_container_networks", report.MakeStringSet("network1"))
 
 		test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 			return c.NetworkInfo([]net.IP{})
@@ -128,7 +131,7 @@ func TestContainer(t *testing.T) {
 		t.Errorf("%d != 2", c.PID())
 	}
 	node := c.GetNode().WithSets(c.NetworkInfo([]net.IP{}))
-	if have := docker.ExtractContainerIPs(node); !reflect.DeepEqual(have, []string{"1.2.3.4"}) {
-		t.Errorf("%v != %v", have, []string{"1.2.3.4"})
+	if have := docker.ExtractContainerIPs(node); !reflect.DeepEqual(have, []string{"1.2.3.4", "5.6.7.8"}) {
+		t.Errorf("%v != %v", have, []string{"1.2.3.4", "5.6.7.8"})
 	}
 }
