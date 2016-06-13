@@ -118,18 +118,7 @@ var ReplicaSetRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	),
 )
 
-// MapContainer2Pod maps container Nodes to pod
-// Nodes.
-//
-// If this function is given a node without a kubernetes_pod_id
-// (including other pseudo nodes), it will produce an "Unmanaged"
-// pseudo node.
-//
-// Otherwise, this function will produce a node with the correct ID
-// format for a container, but without any Major or Minor labels.
-// It does not have enough info to do that, and the resulting graph
-// must be merged with a container graph to get that info.
-
+// MapContainer2PodPseudos propagates pseudo nodes from the Container topology.
 func MapContainer2PodPseudos(n report.Node, _ report.Networks) report.Nodes {
 	// Uncontained becomes unmanaged in the pods view
 	if strings.HasPrefix(n.ID, MakePseudoNodeID(UncontainedID)) {
@@ -165,6 +154,8 @@ func MapContainer2PodPseudos(n report.Node, _ report.Networks) report.Nodes {
 	return report.Nodes{id: node}
 }
 
+// MapContainer2PodUID maps container nodes to pods based on the pod uuid label,
+// which only appears in k8s 1.2.
 func MapContainer2PodUID(n report.Node, _ report.Networks) report.Nodes {
 	// Ignore all pseudo nodes
 	if n.Topology == Pseudo {
@@ -189,6 +180,8 @@ func MapContainer2PodUID(n report.Node, _ report.Networks) report.Nodes {
 	return report.Nodes{id: node}
 }
 
+// MapContainer2PodName maps container nodes to pods based on the pod name label,
+// which only appears in k8s <1.2.  We don't do this all the time as it is less precise.
 func MapContainer2PodName(n report.Node, _ report.Networks) report.Nodes {
 	// Ignore all pseudo nodes
 	if n.Topology == Pseudo {
@@ -197,6 +190,12 @@ func MapContainer2PodName(n report.Node, _ report.Networks) report.Nodes {
 
 	// Ignore non-running containers
 	if state, ok := n.Latest.Lookup(docker.ContainerState); ok && state != docker.StateRunning {
+		return report.Nodes{}
+	}
+
+	// Ignore container with a pod uid label
+	uid, ok := n.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.uid")
+	if ok {
 		return report.Nodes{}
 	}
 
@@ -215,6 +214,8 @@ func MapContainer2PodName(n report.Node, _ report.Networks) report.Nodes {
 
 const originalID = "original_id"
 
+// MapPodUID2PodName maps pods-by-uuid to pod-by-name, for joining with
+// containers from MapContainer2PodName.
 func MapPodUID2PodName(n report.Node, _ report.Networks) report.Nodes {
 	namespace, ok := n.Latest.Lookup(kubernetes.Namespace)
 	if !ok {
@@ -234,6 +235,7 @@ func MapPodUID2PodName(n report.Node, _ report.Networks) report.Nodes {
 	return report.Nodes{id: node}
 }
 
+// MapPodName2PodUID maps pod-by-name back to pods-by-uuid
 func MapPodName2PodUID(n report.Node, _ report.Networks) report.Nodes {
 	// If there were more than one pod with same name (ie it got
 	// deleted and recreated real quick) then ignore it, as container
