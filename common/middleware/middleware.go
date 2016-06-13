@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 // Interface is the shared contract for all middlesware, and allows middlesware
@@ -30,4 +32,13 @@ func Merge(middlesware ...Interface) Interface {
 		}
 		return next
 	})
+}
+
+// Gorilla Router with sensible defaults, namely:
+// - StrictSlash set to false
+// - SkipClean set to true
+//
+// This allows for /foo/bar/%2fbaz%2fqux URLs to be forwarded correctly.
+func NewRouter() *mux.Router {
+	return mux.NewRouter().StrictSlash(false).SkipClean(true)
 }
