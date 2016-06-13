@@ -19,9 +19,10 @@ import (
 )
 
 const (
-	initialBackoff = 1 * time.Second
-	maxBackoff     = 60 * time.Second
-	dialTimeout    = 5 * time.Second
+	httpClientTimeout = 4 * time.Second
+	initialBackoff    = 1 * time.Second
+	maxBackoff        = 60 * time.Second
+	dialTimeout       = 5 * time.Second
 )
 
 // AppClient is a client to an app for dealing with controls.
@@ -76,6 +77,7 @@ func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlH
 		target:      target,
 		client: http.Client{
 			Transport: httpTransport,
+			Timeout:   httpClientTimeout,
 		},
 		wsDialer: websocket.Dialer{
 			TLSClientConfig: httpTransport.TLSClientConfig,
@@ -245,6 +247,10 @@ func (c *appClient) publish(r io.Reader) error {
 	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Content-Type", "application/msgpack")
 	// req.Header.Set("Content-Type", "application/binary") // TODO: we should use http.DetectContentType(..) on the gob'ed
+
+	// Make sure this request is cancelled when we stop the client
+	req.Cancel = c.quit
+
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
