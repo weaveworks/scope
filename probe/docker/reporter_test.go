@@ -6,12 +6,14 @@ import (
 	client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
 type mockRegistry struct {
 	containersByPID map[int]docker.Container
 	images          map[string]*client.APIImages
+	networks        []*client.Network
 }
 
 func (r *mockRegistry) Stop() {}
@@ -34,6 +36,12 @@ func (r *mockRegistry) WalkImages(f func(*client.APIImages)) {
 	}
 }
 
+func (r *mockRegistry) WalkNetworks(f func(*client.Network)) {
+	for _, i := range r.networks {
+		f(i)
+	}
+}
+
 func (r *mockRegistry) WatchContainerUpdates(_ docker.ContainerUpdateWatcher) {}
 
 func (r *mockRegistry) GetContainer(_ string) (docker.Container, bool) { return nil, false }
@@ -41,20 +49,25 @@ func (r *mockRegistry) GetContainer(_ string) (docker.Container, bool) { return 
 func (r *mockRegistry) GetContainerByPrefix(_ string) (docker.Container, bool) { return nil, false }
 
 var (
+	imageID              = "baz"
 	mockRegistryInstance = &mockRegistry{
 		containersByPID: map[int]docker.Container{
 			2: &mockContainer{container1},
 		},
 		images: map[string]*client.APIImages{
-			"baz": &apiImage1,
+			imageID: &apiImage1,
 		},
+		networks: []*client.Network{&network1},
 	}
 )
 
 func TestReporter(t *testing.T) {
-	var controlProbeID = "a1b2c3d4"
+	var (
+		controlProbeID = "a1b2c3d4"
+		hostID         = "host1"
+	)
 
-	containerImageNodeID := report.MakeContainerImageNodeID("baz")
+	containerImageNodeID := report.MakeContainerImageNodeID(imageID)
 	rpt, err := docker.NewReporter(mockRegistryInstance, "host1", controlProbeID, nil).Report()
 	if err != nil {
 		t.Fatal(err)
@@ -71,7 +84,7 @@ func TestReporter(t *testing.T) {
 		for k, want := range map[string]string{
 			docker.ContainerID:    "ping",
 			docker.ContainerName:  "pong",
-			docker.ImageID:        "baz",
+			docker.ImageID:        imageID,
 			report.ControlProbeID: controlProbeID,
 		} {
 			if have, ok := node.Latest.Lookup(k); !ok || have != want {
@@ -98,7 +111,7 @@ func TestReporter(t *testing.T) {
 		}
 
 		for k, want := range map[string]string{
-			docker.ImageID:                      "baz",
+			docker.ImageID:                      imageID,
 			docker.ImageName:                    "bang",
 			docker.ImageLabelPrefix + "imgfoo1": "bar1",
 			docker.ImageLabelPrefix + "imgfoo2": "bar2",
@@ -112,5 +125,21 @@ func TestReporter(t *testing.T) {
 		if len(rpt.ContainerImage.Controls) != 0 {
 			t.Errorf("Container images should not have any controls")
 		}
+	}
+
+	// Reporter should add a container network
+	{
+		peerID := docker.OverlayPeerPrefix + hostID
+		overlayNodeID := report.MakeOverlayNodeID(peerID)
+		node, ok := rpt.Overlay.Nodes[overlayNodeID]
+		if !ok {
+			t.Fatalf("Expected report to have overlay node  %q, but not found", overlayNodeID)
+		}
+
+		want := "5.6.7.8/24"
+		if have, ok := node.Sets.Lookup(host.LocalNetworks); !ok || len(have) != 1 || have[0] != want {
+			t.Fatalf("Expected node to have exactly local network %v but found %v", want, have)
+		}
+
 	}
 }

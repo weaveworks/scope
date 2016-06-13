@@ -7,14 +7,16 @@ import (
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
 // Keys for use in Node
 const (
-	ImageID          = "docker_image_id"
-	ImageName        = "docker_image_name"
-	ImageLabelPrefix = "docker_image_label_"
+	ImageID           = "docker_image_id"
+	ImageName         = "docker_image_name"
+	ImageLabelPrefix  = "docker_image_label_"
+	OverlayPeerPrefix = "docker_peer_"
 )
 
 // Exposed for testing
@@ -145,6 +147,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	result := report.MakeReport()
 	result.Container = result.Container.Merge(r.containerTopology(localAddrs))
 	result.ContainerImage = result.ContainerImage.Merge(r.containerImageTopology())
+	result.Overlay = result.Overlay.Merge(r.overlayTopology())
 	return result, nil
 }
 
@@ -239,6 +242,21 @@ func (r *Reporter) containerImageTopology() report.Topology {
 	})
 
 	return result
+}
+
+func (r *Reporter) overlayTopology() report.Topology {
+	localSubnets := []string{}
+	r.registry.WalkNetworks(func(network *docker_client.Network) {
+		if network.Scope == "local" {
+			for _, config := range network.IPAM.Config {
+				localSubnets = append(localSubnets, config.Subnet)
+			}
+		}
+	})
+	peerID := OverlayPeerPrefix + r.hostID
+	node := report.MakeNode(report.MakeOverlayNodeID(peerID)).WithSets(
+		report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(localSubnets...)))
+	return report.MakeTopology().AddNode(node)
 }
 
 // Docker sometimes prefixes ids with a "type" annotation, but it renders a bit

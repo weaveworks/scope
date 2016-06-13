@@ -40,6 +40,7 @@ type Registry interface {
 	LockedPIDLookup(f func(func(int) Container))
 	WalkContainers(f func(Container))
 	WalkImages(f func(*docker_client.APIImages))
+	WalkNetworks(f func(*docker_client.Network))
 	WatchContainerUpdates(ContainerUpdateWatcher)
 	GetContainer(string) (Container, bool)
 	GetContainerByPrefix(string) (Container, bool)
@@ -61,6 +62,7 @@ type registry struct {
 	containers      *radix.Tree
 	containersByPID map[int]Container
 	images          map[string]*docker_client.APIImages
+	networks        []*docker_client.Network
 }
 
 // Client interface for mocking.
@@ -68,6 +70,7 @@ type Client interface {
 	ListContainers(docker_client.ListContainersOptions) ([]docker_client.APIContainers, error)
 	InspectContainer(string) (*docker_client.Container, error)
 	ListImages(docker_client.ListImagesOptions) ([]docker_client.APIImages, error)
+	ListNetworks() ([]docker_client.Network, error)
 	AddEventListener(chan<- *docker_client.APIEvents) error
 	RemoveEventListener(chan *docker_client.APIEvents) error
 
@@ -171,6 +174,11 @@ func (r *registry) listenForEvents() bool {
 		return true
 	}
 
+	if err := r.updateNetworks(); err != nil {
+		log.Errorf("docker registry: %s", err)
+		return true
+	}
+
 	otherUpdates := time.Tick(r.interval)
 	for {
 		select {
@@ -183,6 +191,10 @@ func (r *registry) listenForEvents() bool {
 
 		case <-otherUpdates:
 			if err := r.updateImages(); err != nil {
+				log.Errorf("docker registry: %s", err)
+				return true
+			}
+			if err := r.updateNetworks(); err != nil {
 				log.Errorf("docker registry: %s", err)
 				return true
 			}
@@ -217,6 +229,7 @@ func (r *registry) reset() {
 	r.containers = radix.New()
 	r.containersByPID = map[int]Container{}
 	r.images = map[string]*docker_client.APIImages{}
+	r.networks = r.networks[:0]
 }
 
 func (r *registry) updateContainers() error {
@@ -249,7 +262,26 @@ func (r *registry) updateImages() error {
 	return nil
 }
 
+func (r *registry) updateNetworks() error {
+	networks, err := r.client.ListNetworks()
+	if err != nil {
+		return err
+	}
+
+	r.Lock()
+	defer r.Unlock()
+
+	// reset
+	r.networks = r.networks[:0]
+	for i := range networks {
+		r.networks = append(r.networks, &networks[i])
+	}
+
+	return nil
+}
+
 func (r *registry) handleEvent(event *docker_client.APIEvents) {
+	// TODO: Send shortcut reports on networks being created/destroyed?
 	switch event.Status {
 	case CreateEvent, RenameEvent, StartEvent, DieEvent, DestroyEvent, PauseEvent, UnpauseEvent, NetworkConnectEvent, NetworkDisconnectEvent:
 		r.updateContainerState(event.ID, stateAfterEvent(event.Status))
@@ -404,6 +436,16 @@ func (r *registry) WalkImages(f func(*docker_client.APIImages)) {
 		}
 		return false
 	})
+}
+
+// WalkNetworks runs f on every network the registry knows of.
+func (r *registry) WalkNetworks(f func(*docker_client.Network)) {
+	r.RLock()
+	defer r.RUnlock()
+
+	for _, network := range r.networks {
+		f(network)
+	}
 }
 
 // ImageNameWithoutVersion splits the image name apart, returning the name
