@@ -196,6 +196,11 @@ var (
 				},
 				client.Port("81/tcp"): {},
 			},
+			Networks: map[string]client.ContainerNetwork{
+				"network1": {
+					IPAddress: "5.6.7.8",
+				},
+			},
 		},
 		Config: &client.Config{
 			Labels: map[string]string{
