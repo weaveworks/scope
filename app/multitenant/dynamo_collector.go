@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bluele/gcache"
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/nats-io/nats"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
@@ -103,6 +104,7 @@ type dynamoDBCollector struct {
 	bucketName string
 	merger     app.Merger
 	cache      gcache.Cache
+	memcache   *memcache.Client
 
 	nats        *nats.Conn
 	waitersLock sync.Mutex
@@ -128,7 +130,8 @@ type watchKey struct {
 func NewDynamoDBCollector(
 	userIDer UserIDer,
 	dynamoDBConfig, s3Config *aws.Config,
-	tableName, bucketName, natsHost string,
+	tableName, bucketName, natsHost, memcachedHost string,
+	memcachedTimeout time.Duration,
 ) (DynamoDBCollector, error) {
 	var nc *nats.Conn
 	if natsHost != "" {
@@ -139,6 +142,12 @@ func NewDynamoDBCollector(
 		}
 	}
 
+	var memcacheClient *memcache.Client
+	if memcachedHost != "" {
+		memcacheClient := memcache.New(memcachedHost)
+		memcacheClient.Timeout = memcachedTimeout
+	}
+
 	return &dynamoDBCollector{
 		db:         dynamodb.New(session.New(dynamoDBConfig)),
 		s3:         s3.New(session.New(s3Config)),
@@ -147,6 +156,7 @@ func NewDynamoDBCollector(
 		bucketName: bucketName,
 		merger:     app.NewSmartMerger(),
 		cache:      gcache.New(reportCacheSize).LRU().Expiration(reportCacheExpiration).Build(),
+		memcache:   memcacheClient,
 		nats:       nc,
 		waiters:    map[watchKey]*nats.Subscription{},
 	}, nil
@@ -320,9 +330,29 @@ func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time
 		return nil, err
 	}
 
+	// TODO(jml): Refactor this so that we have a standard interface
+	// IReportStore for "fetch :: [ReportKeys] -> ([Report], missing, error)"
+	// and a list of providers: in-memory cache, memcache, dynamo. Possibly
+	// also an "always everything missing" implementation to simplify logic.
 	cachedReports, missing := c.getCached(reportKeys)
 	dynamoCacheHits.Add(float64(len(cachedReports)))
 	dynamoCacheMiss.Add(float64(len(missing)))
+	if len(missing) == 0 {
+		return cachedReports, nil
+	}
+
+	if c.memcache != nil {
+		var memcachedReports []report.Report
+		memcachedReports, missing, err = c.fetchFromMemcache(missing)
+		if err != nil {
+			// XXX: jml is unclear whether we should abort in this case or
+			// just carry on. Aborting is easier to reason about for us, but
+			// suppressing is probably OK since failure just means we fetch
+			// from S3.
+			return nil, err
+		}
+		cachedReports = append(cachedReports, memcachedReports...)
+	}
 	if len(missing) == 0 {
 		return cachedReports, nil
 	}
@@ -333,6 +363,11 @@ func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time
 	}
 
 	return append(cachedReports, fetchedReport...), nil
+}
+
+func (c *dynamoDBCollector) fetchFromMemcache(reportKeys []string) ([]report.Report, []string, error) {
+	var reports []report.Report
+	return reports, reportKeys, nil
 }
 
 func (c *dynamoDBCollector) Report(ctx context.Context) (report.Report, error) {
