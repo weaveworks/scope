@@ -75,6 +75,15 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/bradfitz/gomemcache/memcache",
+			"repository": "https://github.com/bradfitz/gomemcache",
+			"vcs": "git",
+			"revision": "fb1f79c6b65acda83063cbc69f6bba1522558bfc",
+			"branch": "master",
+			"path": "/memcache",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/c9s/goprocinfo/linux",
 			"repository": "https://github.com/c9s/goprocinfo",
 			"vcs": "",
