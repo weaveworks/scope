@@ -77,6 +77,20 @@ var (
 		Name:      "nats_requests",
 		Help:      "Number of NATS requests.",
 	}, []string{"method", "status_code"})
+
+	// XXX: jml thinks that maybe there's a simpler way to do these cache
+	// hit/miss metrics but brain is too fuzzy right now.
+	memcacheHits = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "memcache_hits",
+		Help:      "Reports that missed our in-memory cache but went to our memcache",
+	})
+
+	memcacheMiss = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "memcache_miss",
+		Help:      "Reports that missed both our in-memory cache and our memcache",
+	})
 )
 
 func init() {
@@ -88,6 +102,8 @@ func init() {
 	prometheus.MustRegister(reportSize)
 	prometheus.MustRegister(s3RequestDuration)
 	prometheus.MustRegister(natsRequests)
+	prometheus.MustRegister(memcacheHits)
+	prometheus.MustRegister(memcacheMiss)
 }
 
 // DynamoDBCollector is a Collector which can also CreateTables
@@ -344,6 +360,8 @@ func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time
 	if c.memcache != nil {
 		var memcachedReports []report.Report
 		memcachedReports, missing, err = c.fetchFromMemcache(missing)
+		memcacheHits.Add(float64(len(memcachedReports)))
+		memcacheMiss.Add(float64(len(missing)))
 		if err != nil {
 			// XXX: jml is unclear whether we should abort in this case or
 			// just carry on. Aborting is easier to reason about for us, but
