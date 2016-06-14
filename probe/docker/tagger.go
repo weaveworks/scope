@@ -82,11 +82,21 @@ func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 			continue
 		}
 
-		topology.AddNode(report.MakeNodeWith(nodeID, map[string]string{
+		node := report.MakeNodeWith(nodeID, map[string]string{
 			ContainerID: c.ID(),
 		}).WithParents(report.EmptySets.
 			Add(report.Container, report.MakeStringSet(report.MakeContainerNodeID(c.ID()))),
-		))
+		)
 
+		// If we can work out the image name, add a parent tag for it
+		image, ok := t.registry.GetContainerImage(c.Image())
+		if ok && len(image.RepoTags) > 0 {
+			imageName := ImageNameWithoutVersion(image.RepoTags[0])
+			node = node.WithParents(report.EmptySets.
+				Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(imageName))),
+			)
+		}
+
+		topology.AddNode(node)
 	}
 }
