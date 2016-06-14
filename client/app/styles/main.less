@@ -1271,8 +1271,7 @@ h2 {
       border-radius: 0;
       background: transparent;
       color: @text-color;
-      flex: 1;
-      width: 60px;
+      width: 100px;
 
       &:focus {
         outline: none;
@@ -1318,6 +1317,12 @@ h2 {
     opacity: 1;
     transform: translate3d(0, 2.75em, 0);
     transition: transform 0.3s 0.3s @base-ease, opacity 0.3s 0.3s @base-ease;
+  }
+
+  &-focused &-input-field,
+  &-filled &-input-field,
+  &-pinned &-input-field {
+    flex: 1;
   }
 
   &-focused,
