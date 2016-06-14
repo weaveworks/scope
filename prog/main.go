@@ -96,12 +96,14 @@ type appFlags struct {
 	containerName  string
 	dockerEndpoint string
 
-	collectorURL     string
-	s3URL            string
-	controlRouterURL string
-	pipeRouterURL    string
-	natsHostname     string
-	userIDHeader     string
+	collectorURL      string
+	s3URL             string
+	controlRouterURL  string
+	pipeRouterURL     string
+	natsHostname      string
+	memcachedHostname string
+	memcachedTimeout  time.Duration
+	userIDHeader      string
 
 	awsCreateTables bool
 	consulInf       string
@@ -178,6 +180,9 @@ func main() {
 	flag.StringVar(&flags.app.controlRouterURL, "app.control.router", "local", "Control router to use (local or sqs)")
 	flag.StringVar(&flags.app.pipeRouterURL, "app.pipe.router", "local", "Pipe router to use (local)")
 	flag.StringVar(&flags.app.natsHostname, "app.nats", "", "Hostname for NATS service to use for shortcut reports.  If empty, shortcut reporting will be disabled.")
+	flag.StringVar(&flags.app.memcachedHostname, "app.memcached.hostname", "", "Hostname for memcached service to use when caching reports.  If empty, no memcached will be used.")
+	// XXX: 1 second is a stupidly long default timeout. Change before review.
+	flag.DurationVar(&flags.app.memcachedTimeout, "app.memcached.timeout", time.Second, "Maximum time to wait before giving up on memcached requests.")
 	flag.StringVar(&flags.app.userIDHeader, "app.userid.header", "", "HTTP header to use as userid")
 
 	flag.BoolVar(&flags.app.awsCreateTables, "app.aws.create.tables", false, "Create the tables in DynamoDB")
