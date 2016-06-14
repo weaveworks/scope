@@ -226,7 +226,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 		WithMetadataTemplates(ContainerImageMetadataTemplates).
 		WithTableTemplates(ContainerImageTableTemplates)
 
-	r.registry.WalkImages(func(image *docker_client.APIImages) {
+	r.registry.WalkImages(func(image docker_client.APIImages) {
 		imageID := trimImageID(image.ID)
 		nodeID := report.MakeContainerImageNodeID(imageID)
 		node := report.MakeNodeWith(nodeID, map[string]string{
@@ -246,7 +246,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 
 func (r *Reporter) overlayTopology() report.Topology {
 	localSubnets := []string{}
-	r.registry.WalkNetworks(func(network *docker_client.Network) {
+	r.registry.WalkNetworks(func(network docker_client.Network) {
 		if network.Scope == "local" {
 			for _, config := range network.IPAM.Config {
 				localSubnets = append(localSubnets, config.Subnet)

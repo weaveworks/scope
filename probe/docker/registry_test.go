@@ -300,17 +300,17 @@ func allContainers(r docker.Registry) []docker.Container {
 	return result
 }
 
-func allImages(r docker.Registry) []*client.APIImages {
-	result := []*client.APIImages{}
-	r.WalkImages(func(i *client.APIImages) {
+func allImages(r docker.Registry) []client.APIImages {
+	result := []client.APIImages{}
+	r.WalkImages(func(i client.APIImages) {
 		result = append(result, i)
 	})
 	return result
 }
 
-func allNetworks(r docker.Registry) []*client.Network {
-	result := []*client.Network{}
-	r.WalkNetworks(func(i *client.Network) {
+func allNetworks(r docker.Registry) []client.Network {
+	result := []client.Network{}
+	r.WalkNetworks(func(i client.Network) {
 		result = append(result, i)
 	})
 	return result
@@ -331,14 +331,14 @@ func TestRegistry(t *testing.T) {
 		}
 
 		{
-			want := []*client.APIImages{&apiImage1}
+			want := []client.APIImages{apiImage1}
 			test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 				return allImages(registry)
 			})
 		}
 
 		{
-			want := []*client.Network{&network1}
+			want := []client.Network{network1}
 			test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 				return allNetworks(registry)
 			})

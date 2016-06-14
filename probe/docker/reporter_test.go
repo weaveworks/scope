@@ -12,8 +12,8 @@ import (
 
 type mockRegistry struct {
 	containersByPID map[int]docker.Container
-	images          map[string]*client.APIImages
-	networks        []*client.Network
+	images          map[string]client.APIImages
+	networks        []client.Network
 }
 
 func (r *mockRegistry) Stop() {}
@@ -30,13 +30,13 @@ func (r *mockRegistry) WalkContainers(f func(docker.Container)) {
 	}
 }
 
-func (r *mockRegistry) WalkImages(f func(*client.APIImages)) {
+func (r *mockRegistry) WalkImages(f func(client.APIImages)) {
 	for _, i := range r.images {
 		f(i)
 	}
 }
 
-func (r *mockRegistry) WalkNetworks(f func(*client.Network)) {
+func (r *mockRegistry) WalkNetworks(f func(client.Network)) {
 	for _, i := range r.networks {
 		f(i)
 	}
@@ -54,10 +54,10 @@ var (
 		containersByPID: map[int]docker.Container{
 			2: &mockContainer{container1},
 		},
-		images: map[string]*client.APIImages{
-			imageID: &apiImage1,
+		images: map[string]client.APIImages{
+			imageID: apiImage1,
 		},
-		networks: []*client.Network{&network1},
+		networks: []client.Network{network1},
 	}
 )
 

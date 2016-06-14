@@ -39,8 +39,8 @@ type Registry interface {
 	Stop()
 	LockedPIDLookup(f func(func(int) Container))
 	WalkContainers(f func(Container))
-	WalkImages(f func(*docker_client.APIImages))
-	WalkNetworks(f func(*docker_client.Network))
+	WalkImages(f func(docker_client.APIImages))
+	WalkNetworks(f func(docker_client.Network))
 	WatchContainerUpdates(ContainerUpdateWatcher)
 	GetContainer(string) (Container, bool)
 	GetContainerByPrefix(string) (Container, bool)
@@ -61,8 +61,8 @@ type registry struct {
 	watchers        []ContainerUpdateWatcher
 	containers      *radix.Tree
 	containersByPID map[int]Container
-	images          map[string]*docker_client.APIImages
-	networks        []*docker_client.Network
+	images          map[string]docker_client.APIImages
+	networks        []docker_client.Network
 }
 
 // Client interface for mocking.
@@ -99,7 +99,7 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats
 	r := &registry{
 		containers:      radix.New(),
 		containersByPID: map[int]Container{},
-		images:          map[string]*docker_client.APIImages{},
+		images:          map[string]docker_client.APIImages{},
 
 		client:       client,
 		pipes:        pipes,
@@ -228,7 +228,7 @@ func (r *registry) reset() {
 
 	r.containers = radix.New()
 	r.containersByPID = map[int]Container{}
-	r.images = map[string]*docker_client.APIImages{}
+	r.images = map[string]docker_client.APIImages{}
 	r.networks = r.networks[:0]
 }
 
@@ -254,8 +254,7 @@ func (r *registry) updateImages() error {
 	r.Lock()
 	defer r.Unlock()
 
-	for i := range images {
-		image := &images[i]
+	for _, image := range images {
 		r.images[trimImageID(image.ID)] = image
 	}
 
@@ -269,13 +268,8 @@ func (r *registry) updateNetworks() error {
 	}
 
 	r.Lock()
-	defer r.Unlock()
-
-	// reset
-	r.networks = r.networks[:0]
-	for i := range networks {
-		r.networks = append(r.networks, &networks[i])
-	}
+	r.networks = networks
+	r.Unlock()
 
 	return nil
 }
@@ -424,7 +418,7 @@ func (r *registry) GetContainerByPrefix(prefix string) (Container, bool) {
 
 // WalkImages runs f on every image of running containers the registry
 // knows of.  f may be run on the same image more than once.
-func (r *registry) WalkImages(f func(*docker_client.APIImages)) {
+func (r *registry) WalkImages(f func(docker_client.APIImages)) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -439,7 +433,7 @@ func (r *registry) WalkImages(f func(*docker_client.APIImages)) {
 }
 
 // WalkNetworks runs f on every network the registry knows of.
-func (r *registry) WalkNetworks(f func(*docker_client.Network)) {
+func (r *registry) WalkNetworks(f func(docker_client.Network)) {
 	r.RLock()
 	defer r.RUnlock()
 
