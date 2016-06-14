@@ -160,9 +160,11 @@ To install Scope on a Kubernetes cluster in Standalone Mode, follow these instru
 
 **Before You Begin**
 
-Ensure that the cluster allows privileged pods - this is required by the Scope probes. By default, privileged pods are allowed from Kubernetes 1.1 and up. If you are running an earlier version or a non-default configuration, ensure that your API Server and all of your Kubelets are launched with the flag `--allow_privileged`.
+* Ensure that the cluster allows privileged pods - this is required by the Scope probes. By default, privileged pods are allowed from Kubernetes 1.1 and up. If you are running an earlier version or a non-default configuration, ensure that your API Server and all of your Kubelets are launched with the flag `--allow_privileged`.
 
-Your cluster must also support [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md).  DaemonSets are necessary to ensure that each Kubernetes node can run a Scope Probe.
+* The version of [kubectl](http://kubernetes.io/docs/user-guide/kubectl-overview/) must match the cluster version that you are using. 
+
+* The cluster must support [DaemonSets](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md).  DaemonSets are necessary to ensure that each Kubernetes node can run a Scope Probe. 
 
 To enable DaemonSets in an existing cluster, add the `--runtime-config=extensions/v1beta1/daemonsets=true` argument to the [apiserver](https://github.com/kubernetes/kubernetes/blob/master/docs/admin/kube-apiserver.md)'s configuration. This is normally found in the `/etc/kubernetes/manifest/kube-apiserver.manifest`file after a restart of [the apiserver and controller manager](https://github.com/kubernetes/kubernetes/issues/18656) has occurred.  If you are creating a new cluster, set `KUBE_ENABLE_DAEMONSETS=true` in your cluster configuration.
 
