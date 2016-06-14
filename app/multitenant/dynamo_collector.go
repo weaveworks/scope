@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bluele/gcache"
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/nats-io/nats"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
@@ -24,12 +25,16 @@ import (
 )
 
 const (
-	hourField             = "hour"
-	tsField               = "ts"
-	reportField           = "report"
-	reportCacheSize       = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
-	reportCacheExpiration = 15 * time.Second
-	natsTimeout           = 10 * time.Second
+	hourField              = "hour"
+	tsField                = "ts"
+	reportField            = "report"
+	reportCacheSize        = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
+	reportCacheExpiration  = 15 * time.Second
+	memcacheExpiration     = 15 // seconds
+	memcacheUpdateInterval = 1 * time.Minute
+	natsTimeout            = 10 * time.Second
+	hitLabel               = "hit"
+	missLabel              = "miss"
 )
 
 var (
@@ -38,16 +43,6 @@ var (
 		Name:      "dynamo_request_duration_nanoseconds",
 		Help:      "Time spent doing DynamoDB requests.",
 	}, []string{"method", "status_code"})
-	dynamoCacheHits = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: "scope",
-		Name:      "dynamo_cache_hits",
-		Help:      "Reports fetches that hit local cache.",
-	})
-	dynamoCacheMiss = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: "scope",
-		Name:      "dynamo_cache_miss",
-		Help:      "Reports fetches that miss local cache.",
-	})
 	dynamoConsumedCapacity = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "scope",
 		Name:      "dynamo_consumed_capacity",
@@ -58,6 +53,12 @@ var (
 		Name:      "dynamo_value_size_bytes",
 		Help:      "Size of data read / written from dynamodb.",
 	}, []string{"method"})
+
+	inProcessCacheCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "in_process_cache",
+		Help:      "Reports fetches that hit in-process cache.",
+	}, []string{"result"})
 
 	reportSize = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "scope",
@@ -80,10 +81,9 @@ var (
 
 func init() {
 	prometheus.MustRegister(dynamoRequestDuration)
-	prometheus.MustRegister(dynamoCacheHits)
-	prometheus.MustRegister(dynamoCacheMiss)
 	prometheus.MustRegister(dynamoConsumedCapacity)
 	prometheus.MustRegister(dynamoValueSize)
+	prometheus.MustRegister(inProcessCacheCounter)
 	prometheus.MustRegister(reportSize)
 	prometheus.MustRegister(s3RequestDuration)
 	prometheus.MustRegister(natsRequests)
@@ -95,6 +95,11 @@ type DynamoDBCollector interface {
 	CreateTables() error
 }
 
+// ReportStore is a thing that we can get reports from.
+type ReportStore interface {
+	FetchReports([]string) ([]report.Report, []string, error)
+}
+
 type dynamoDBCollector struct {
 	userIDer   UserIDer
 	db         *dynamodb.DynamoDB
@@ -102,7 +107,8 @@ type dynamoDBCollector struct {
 	tableName  string
 	bucketName string
 	merger     app.Merger
-	cache      gcache.Cache
+	inProcess  inProcessStore
+	memcache   *MemcacheClient
 
 	nats        *nats.Conn
 	waitersLock sync.Mutex
@@ -128,13 +134,30 @@ type watchKey struct {
 func NewDynamoDBCollector(
 	userIDer UserIDer,
 	dynamoDBConfig, s3Config *aws.Config,
-	tableName, bucketName, natsHost string,
+	tableName, bucketName, natsHost, memcachedHost string,
+	memcachedTimeout time.Duration, memcachedService string,
 ) (DynamoDBCollector, error) {
 	var nc *nats.Conn
 	if natsHost != "" {
 		var err error
 		nc, err = nats.Connect(natsHost)
 		if err != nil {
+			return nil, err
+		}
+	}
+
+	var memcacheClient *MemcacheClient
+	if memcachedHost != "" {
+		var err error
+		memcacheClient, err = NewMemcacheClient(memcachedHost, memcachedTimeout, memcachedService, memcacheUpdateInterval, memcacheExpiration)
+		if err != nil {
+			// TODO(jml): Ideally, we wouldn't abort here, we would instead
+			// log errors when we try to use the memcache & fail to do so, as
+			// aborting here introduces ordering dependencies into our
+			// deployment.
+			//
+			// Note: this error only happens when either the memcachedHost or
+			// any of the SRV records that it points to fail to resolve.
 			return nil, err
 		}
 	}
@@ -146,7 +169,8 @@ func NewDynamoDBCollector(
 		tableName:  tableName,
 		bucketName: bucketName,
 		merger:     app.NewSmartMerger(),
-		cache:      gcache.New(reportCacheSize).LRU().Expiration(reportCacheExpiration).Build(),
+		inProcess:  newInProcessStore(reportCacheSize, reportCacheExpiration),
+		memcache:   memcacheClient,
 		nats:       nc,
 		waiters:    map[watchKey]*nats.Subscription{},
 	}, nil
@@ -252,20 +276,6 @@ func (c *dynamoDBCollector) getReportKeys(rowKey string, start, end time.Time) (
 	return result, nil
 }
 
-func (c *dynamoDBCollector) getCached(reportKeys []string) ([]report.Report, []string) {
-	foundReports := []report.Report{}
-	missingReports := []string{}
-	for _, reportKey := range reportKeys {
-		rpt, err := c.cache.Get(reportKey)
-		if err == nil {
-			foundReports = append(foundReports, rpt.(report.Report))
-		} else {
-			missingReports = append(missingReports, reportKey)
-		}
-	}
-	return foundReports, missingReports
-}
-
 // Fetch multiple reports in parallel from S3.
 func (c *dynamoDBCollector) getNonCached(reportKeys []string) ([]report.Report, error) {
 	type result struct {
@@ -291,7 +301,7 @@ func (c *dynamoDBCollector) getNonCached(reportKeys []string) ([]report.Report, 
 			return nil, r.err
 		}
 		reports = append(reports, *r.report)
-		c.cache.Set(r.key, *r.report)
+		c.inProcess.StoreReport(r.key, *r.report)
 	}
 	return reports, nil
 }
@@ -315,24 +325,46 @@ func (c *dynamoDBCollector) getNonCachedReport(reportKey string) (*report.Report
 
 func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time.Time) ([]report.Report, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
-	reportKeys, err := c.getReportKeys(rowKey, start, end)
+	missing, err := c.getReportKeys(rowKey, start, end)
 	if err != nil {
 		return nil, err
 	}
 
-	cachedReports, missing := c.getCached(reportKeys)
-	dynamoCacheHits.Add(float64(len(cachedReports)))
-	dynamoCacheMiss.Add(float64(len(missing)))
-	if len(missing) == 0 {
-		return cachedReports, nil
+	var reports []report.Report
+	for _, store := range []ReportStore{c.inProcess, c.memcache} {
+		if store == nil {
+			continue
+		}
+		found, missing, err := store.FetchReports(missing)
+		if err != nil {
+			log.Warningf("Error fetching from cache: %v", err)
+		}
+		reports = append(reports, found...)
+		if len(missing) == 0 {
+			return reports, nil
+		}
 	}
 
-	fetchedReport, err := c.getNonCached(missing)
+	fetchedReports, err := c.getNonCached(missing)
 	if err != nil {
 		return nil, err
 	}
 
-	return append(cachedReports, fetchedReport...), nil
+	return append(reports, fetchedReports...), nil
+}
+
+func memcacheStatusCode(err error) string {
+	// See https://godoc.org/github.com/bradfitz/gomemcache/memcache#pkg-variables
+	switch err {
+	case nil:
+		return "200"
+	case memcache.ErrCacheMiss:
+		return "404"
+	case memcache.ErrMalformedKey:
+		return "400"
+	default:
+		return "500"
+	}
 }
 
 func (c *dynamoDBCollector) Report(ctx context.Context) (report.Report, error) {
@@ -402,7 +434,20 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 		return err
 	}
 
-	// third, put the key in dynamodb
+	// third, put it in memcache
+	if c.memcache != nil {
+		err = timeRequestStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
+			return c.memcache.StoreBytes(s3Key, buf.Bytes())
+		})
+		if err != nil {
+			// NOTE: We don't abort here because failing to store in memcache
+			// doesn't actually break anything else -- it's just an
+			// optimization.
+			log.Warningf("Could not store %v in memcache: %v", s3Key, err)
+		}
+	}
+
+	// fourth, put the key in dynamodb
 	dynamoValueSize.WithLabelValues("PutItem").
 		Add(float64(len(s3Key)))
 
@@ -508,4 +553,35 @@ func (c *dynamoDBCollector) UnWait(ctx context.Context, waiter chan struct{}) {
 	if err != nil {
 		log.Errorf("Error on unsubscribe: %v", err)
 	}
+}
+
+type inProcessStore struct {
+	cache gcache.Cache
+}
+
+// newInProcessStore creates an in-process store for reports.
+func newInProcessStore(size int, expiration time.Duration) inProcessStore {
+	return inProcessStore{gcache.New(size).LRU().Expiration(expiration).Build()}
+}
+
+// FetchReports retrieves the given reports from the store.
+func (c inProcessStore) FetchReports(keys []string) ([]report.Report, []string, error) {
+	found := []report.Report{}
+	missing := []string{}
+	for _, key := range keys {
+		rpt, err := c.cache.Get(key)
+		if err == nil {
+			found = append(found, rpt.(report.Report))
+		} else {
+			missing = append(missing, key)
+		}
+	}
+	inProcessCacheCounter.WithLabelValues(hitLabel).Add(float64(len(found)))
+	inProcessCacheCounter.WithLabelValues(missLabel).Add(float64(len(missing)))
+	return found, missing, nil
+}
+
+// StoreReport stores a report in the store.
+func (c inProcessStore) StoreReport(key string, report report.Report) {
+	c.cache.Set(key, report)
 }
