@@ -76,12 +76,38 @@ type Filter struct {
 	FilterFunc FilterFunc
 }
 
-// MakeFilter makes a new Filter.
+// MakeFilter makes a new Filter (that ignores pseudo nodes).
 func MakeFilter(f FilterFunc, r Renderer) Renderer {
+	return Memoise(&Filter{
+		Renderer: r,
+		FilterFunc: func(n report.Node) bool {
+			return n.Topology == Pseudo || f(n)
+		},
+	})
+}
+
+// MakeFilterPseudo makes a new Filter that will not ignore pseudo nodes.
+func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
 	return Memoise(&Filter{
 		Renderer:   r,
 		FilterFunc: f,
 	})
+}
+
+// MakeFilterDecorator makes a decorator that filters out non-pseudo nodes
+// which match the predicate.
+func MakeFilterDecorator(f FilterFunc) Decorator {
+	return func(renderer Renderer) Renderer {
+		return MakeFilter(f, renderer)
+	}
+}
+
+// MakeFilterPseudoDecorator makes a decorator that filters out all nodes
+// (including pseudo nodes) which match the predicate.
+func MakeFilterPseudoDecorator(f FilterFunc) Decorator {
+	return func(renderer Renderer) Renderer {
+		return MakeFilterPseudo(f, renderer)
+	}
 }
 
 // Render implements Renderer
@@ -95,7 +121,7 @@ func (f *Filter) render(rpt report.Report, dct Decorator) (report.Nodes, int) {
 	inDegrees := map[string]int{}
 	filtered := 0
 	for id, node := range f.Renderer.Render(rpt, dct) {
-		if node.Topology == Pseudo || f.FilterFunc(node) {
+		if f.FilterFunc(node) {
 			output[id] = node
 			inDegrees[id] = 0
 		} else {
@@ -165,9 +191,6 @@ func FilterUnconnected(r Renderer) Renderer {
 // Noop allows all nodes through
 func Noop(_ report.Node) bool { return true }
 
-// FilterNoop does nothing.
-func FilterNoop(r Renderer) Renderer { return r }
-
 // IsRunning checks if the node is a running docker container
 func IsRunning(n report.Node) bool {
 	state, ok := n.Latest.Lookup(docker.ContainerState)
@@ -176,16 +199,6 @@ func IsRunning(n report.Node) bool {
 
 // IsStopped checks if the node is *not* a running docker container
 var IsStopped = Complement(IsRunning)
-
-// FilterStopped filters out stopped containers.
-func FilterStopped(r Renderer) Renderer {
-	return MakeFilter(IsStopped, r)
-}
-
-// FilterRunning filters out running containers.
-func FilterRunning(r Renderer) Renderer {
-	return MakeFilter(IsRunning, r)
-}
 
 // FilterNonProcspied removes endpoints which were not found in procspy.
 func FilterNonProcspied(r Renderer) Renderer {
@@ -231,34 +244,10 @@ func IsApplication(n report.Node) bool {
 // IsSystem checks if the node is a "system" node
 var IsSystem = Complement(IsApplication)
 
-// FilterSystem is a Renderer which filters out system nodes.
-func FilterSystem(r Renderer) Renderer {
-	return MakeFilter(IsSystem, r)
-}
-
-// FilterApplication is a Renderer which filters out application nodes.
-func FilterApplication(r Renderer) Renderer {
-	return MakeFilter(IsApplication, r)
-}
-
-// FilterEmpty is a Renderer which filters out nodes which have no children
-// from the specified topology.
-func FilterEmpty(topology string, r Renderer) Renderer {
-	return MakeFilter(HasChildren(topology), r)
-}
-
-// HasChildren returns true if the node has no children from the specified
-// topology.
-func HasChildren(topology string) FilterFunc {
-	return func(n report.Node) bool {
-		count := 0
-		n.Children.ForEach(func(child report.Node) {
-			if child.Topology == topology {
-				count++
-			}
-		})
-		return count > 0
-	}
+// IsNotPseudo returns true if the node is not a pseudo node
+// or the internet nodes.
+func IsNotPseudo(n report.Node) bool {
+	return n.Topology != Pseudo || strings.HasSuffix(n.ID, TheInternetID)
 }
 
 // IsNamespace checks if the node is a pod/service in the specified namespace
