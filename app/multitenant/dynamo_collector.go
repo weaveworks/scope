@@ -233,7 +233,7 @@ func (c *dynamoDBCollector) CreateTables() error {
 // getReportKeys gets the s3 keys for reports in this range
 func (c *dynamoDBCollector) getReportKeys(rowKey string, start, end time.Time) ([]string, error) {
 	var resp *dynamodb.QueryOutput
-	err := timeRequest("Query", dynamoRequestDuration, func() error {
+	err := timeRequest("Query", dynamoRequestDuration, nil, func() error {
 		var err error
 		resp, err = c.db.Query(&dynamodb.QueryInput{
 			TableName: aws.String(c.tableName),
@@ -325,7 +325,7 @@ func (c *dynamoDBCollector) getNonCached(reportKeys []string) ([]report.Report, 
 // Fetch a single report from S3.
 func (c *dynamoDBCollector) getNonCachedReport(reportKey string) (*report.Report, error) {
 	var resp *s3.GetObjectOutput
-	err := timeRequest("Get", s3RequestDuration, func() error {
+	err := timeRequest("Get", s3RequestDuration, nil, func() error {
 		var err error
 		resp, err = c.s3.GetObject(&s3.GetObjectInput{
 			Bucket: aws.String(c.bucketName),
@@ -442,7 +442,7 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 		return err
 	}
 	s3Key := fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey)
-	err = timeRequest("Put", s3RequestDuration, func() error {
+	err = timeRequest("Put", s3RequestDuration, nil, func() error {
 		var err error
 		_, err = c.s3.PutObject(&s3.PutObjectInput{
 			Body:   bytes.NewReader(buf.Bytes()),
@@ -460,7 +460,7 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 		Add(float64(len(s3Key)))
 
 	var resp *dynamodb.PutItemOutput
-	err = timeRequest("PutItem", dynamoRequestDuration, func() error {
+	err = timeRequest("PutItem", dynamoRequestDuration, nil, func() error {
 		var err error
 		resp, err = c.db.PutItem(&dynamodb.PutItemInput{
 			TableName: aws.String(c.tableName),
