@@ -48,7 +48,7 @@ func (r *mockRegistry) GetContainer(_ string) (docker.Container, bool) { return 
 
 func (r *mockRegistry) GetContainerByPrefix(_ string) (docker.Container, bool) { return nil, false }
 
-func (r *mockRegistry) GetContainerImage(id string) (*client.APIImages, bool) {
+func (r *mockRegistry) GetContainerImage(id string) (client.APIImages, bool) {
 	image, ok := r.images[id]
 	return image, ok
 }

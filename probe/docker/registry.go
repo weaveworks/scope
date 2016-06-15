@@ -44,7 +44,7 @@ type Registry interface {
 	WatchContainerUpdates(ContainerUpdateWatcher)
 	GetContainer(string) (Container, bool)
 	GetContainerByPrefix(string) (Container, bool)
-	GetContainerImage(string) (*docker_client.APIImages, bool)
+	GetContainerImage(string) (docker_client.APIImages, bool)
 }
 
 // ContainerUpdateWatcher is the type of functions that get called when containers are updated.
@@ -417,7 +417,7 @@ func (r *registry) GetContainerByPrefix(prefix string) (Container, bool) {
 	return nil, false
 }
 
-func (r *registry) GetContainerImage(id string) (*docker_client.APIImages, bool) {
+func (r *registry) GetContainerImage(id string) (docker_client.APIImages, bool) {
 	r.RLock()
 	defer r.RUnlock()
 	image, ok := r.images[id]
