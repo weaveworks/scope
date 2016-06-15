@@ -9,7 +9,7 @@ Weave Scope consists of three parts: the probe, the app and the user interface. 
 The following topics are discussed:
 
  * [Installing Scope on Docker](#docker)
-   * [Enabling Weave Cloud](#docker-weave)
+   * [Enabling Weave Cloud](#weave-cloud)
    * [Weave Net and Scope](#net-scope)
    * [Using Docker Compose](#docker-compose)
    * [Using Docker Compose in Weave Cloud](#docker-compose-cloud)
