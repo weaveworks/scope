@@ -36,7 +36,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 
 ###<a name="weave-cloud"></a>Enabling Weave Cloud
 
-First, obtain a service-token from Weave Cloud by signing up at [http://cloud.weave.works](http://cloud.weave.works/)
+First, obtain a service-token from Weave Cloud by signing up at [https://cloud.weave.works](https://cloud.weave.works/)
 
 Then, install Scope onto your local Docker machine and start using Weave Cloud:
 
