@@ -528,12 +528,93 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/docker/distribution/digest",
+			"repository": "https://github.com/docker/distribution",
+			"vcs": "git",
+			"revision": "e4727588258350009f330f8599ec6358c7f84498",
+			"branch": "master",
+			"path": "digest",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/distribution/reference",
+			"repository": "https://github.com/docker/distribution",
+			"vcs": "git",
+			"revision": "e4727588258350009f330f8599ec6358c7f84498",
+			"branch": "master",
+			"path": "/reference",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/distribution/vendor/github.com/stevvooe/resumable",
+			"repository": "https://github.com/docker/distribution",
+			"vcs": "git",
+			"revision": "e4727588258350009f330f8599ec6358c7f84498",
+			"branch": "master",
+			"path": "vendor/github.com/stevvooe/resumable",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/opts",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"branch": "master",
+			"path": "/opts",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/archive",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"branch": "master",
+			"path": "pkg/archive",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/fileutils",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"branch": "master",
+			"path": "pkg/fileutils",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/docker/docker/pkg/homedir",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "",
 			"revision": "7c1c96551d41e369a588e365a9bb99acb5bc8fdb",
 			"branch": "master",
 			"path": "/pkg/homedir"
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/idtools",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"branch": "master",
+			"path": "pkg/idtools",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/ioutils",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"branch": "master",
+			"path": "pkg/ioutils",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/longpath",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"branch": "master",
+			"path": "pkg/longpath",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/docker/docker/pkg/mflag",
@@ -560,12 +641,66 @@
 			"path": "/pkg/parsers"
 		},
 		{
+			"importpath": "github.com/docker/docker/pkg/pools",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"branch": "master",
+			"path": "pkg/pools",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/promise",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"branch": "master",
+			"path": "pkg/promise",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/stdcopy",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"branch": "master",
+			"path": "pkg/stdcopy",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/system",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"branch": "master",
+			"path": "pkg/system",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/docker/docker/pkg/units",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "",
 			"revision": "60ea37d56f15d64961f0bc59dd2db1c968c80288",
 			"branch": "master",
 			"path": "/pkg/units"
+		},
+		{
+			"importpath": "github.com/docker/engine-api/types",
+			"repository": "https://github.com/docker/engine-api",
+			"vcs": "git",
+			"revision": "f50fbe5f9c4c8eeed591549d2c8187f4076f3717",
+			"branch": "master",
+			"path": "types",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/go-connections/nat",
+			"repository": "https://github.com/docker/go-connections",
+			"vcs": "git",
+			"revision": "990a1a1a70b0da4c4cb70e117971a4f0babfbf1a",
+			"branch": "master",
+			"path": "/nat",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/docker/go-units",
@@ -608,9 +743,10 @@
 		{
 			"importpath": "github.com/fsouza/go-dockerclient",
 			"repository": "https://github.com/fsouza/go-dockerclient",
-			"vcs": "",
-			"revision": "1b46a3bbaf08d19385915795bae730a318f3dd69",
-			"branch": "master"
+			"vcs": "git",
+			"revision": "3c8f092cb1e9d1e18a07c1d05d993e69a6676097",
+			"branch": "master",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/garyburd/redigo/internal",
