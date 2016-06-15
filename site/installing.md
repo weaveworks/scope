@@ -9,9 +9,10 @@ Weave Scope consists of three parts: the probe, the app and the user interface. 
 The following topics are discussed:
 
  * [Installing Scope on Docker](#docker)
-   * [Using Weave Net](#docker-weave)
+   * [Enabling Weave Cloud](#docker-weave)
+   * [Weave Net and Scope](#net-scope)
    * [Using Docker Compose](#docker-compose)
-   * [Using Docker Compose in Weave Cloud](#docker-compose-sercice)
+   * [Using Docker Compose in Weave Cloud](#docker-compose-cloud)
  * [Installing Scope on Kubernetes in Standalone Mode or in Weave Cloud](#k8s)
  * [Installing Scope on Amazon ECS](#ecs)
  * [Installing Scope on minimesos](#minimesos)
@@ -33,11 +34,11 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 
 >  Scope allows anyone with access to the UI control over your containers: as such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally traffic between the app and the probe is currently insecure and should also not traverse the Internet.
 
-###<a name="docker-service"></a>Enabling Weave Cloud
+###<a name="weave-cloud"></a>Enabling Weave Cloud
 
 First, obtain a service-token from Weave Cloud by signing up at [http://cloud.weave.works](http://cloud.weave.works/)
 
-Then, install Scope onto your local Docker machine and to start using Weave Cloud:
+Then, install Scope onto your local Docker machine and start using Weave Cloud:
 
     sudo wget -O /usr/local/bin/scope https://git.io/scope
     sudo chmod a+x /usr/local/bin/scope
@@ -51,7 +52,7 @@ This script downloads and runs a recent Scope docker image from the Docker Hub. 
 
 After Scope has been launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login using your email.  Click 'My Scope' in the top right-hand corner to see the Scope user interface.
 
-###<a name="docker-weave"></a> Using Weave Net
+###<a name="net-scope"></a> Weave Net and Scope
 
 If Scope is running on the same machine as the Weave Network, then the probe uses weaveDNS to automatically discover any other apps on the network. Scope does this by registering itself under the address scope.weave.local.
 
@@ -107,7 +108,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 
 Version 2 of this YAML file supports networks and volumes as defined by any plugins you might be using. See [Compose File Reference](https://docs.docker.com/compose/compose-file/) for more information.
 
-###<a name="docker-compose"></a>Using Docker Compose with Weave Cloud
+###<a name="docker-compose-cloud"></a>Using Docker Compose with Weave Cloud
 
 To install Scope on your local Docker machine with Weave Cloud and use Docker Compose, run the following commands, using one of the two fragments below.
 
