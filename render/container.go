@@ -79,9 +79,19 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator)
 		if !ok {
 			continue
 		}
+		imageName, ok := image.Latest.Lookup(docker.ImageName)
+		if !ok {
+			continue
+		}
+		imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
+		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutVersion)
+
 		output := c.Copy()
 		output = propagateLatest(docker.ImageName, image, output)
 		output = propagateLatest(docker.ImageLabelPrefix+"works.weave.role", image, output)
+		output.Parents = output.Parents.
+			Delete(report.ContainerImage).
+			Add(report.ContainerImage, report.MakeStringSet(imageNodeID))
 		outputs[id] = output
 	}
 	return outputs
@@ -94,12 +104,15 @@ var ContainerWithImageNameRenderer = ApplyDecorators(containerWithImageNameRende
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
 var ContainerImageRenderer = FilterEmpty(report.Container,
-	MakeReduce(
-		MakeMap(
-			MapContainer2ContainerImage,
-			ContainerWithImageNameRenderer,
+	MakeMap(
+		MapContainerImage2Name,
+		MakeReduce(
+			MakeMap(
+				MapContainer2ContainerImage,
+				ContainerWithImageNameRenderer,
+			),
+			SelectContainerImage,
 		),
-		SelectContainerImage,
 	),
 )
 
@@ -303,6 +316,29 @@ func MapContainer2ContainerImage(n report.Node, _ report.Networks) report.Nodes 
 	result.Latest = result.Latest.Set(docker.ImageID, timestamp, imageID)
 	result.Counters = result.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: result}
+}
+
+// MapContainerImage2Name ignores image versions
+func MapContainerImage2Name(n report.Node, _ report.Networks) report.Nodes {
+	// Propagate all pseudo nodes
+	if n.Topology == Pseudo {
+		return report.Nodes{n.ID: n}
+	}
+
+	imageName, ok := n.Latest.Lookup(docker.ImageName)
+	if !ok {
+		return report.Nodes{}
+	}
+
+	imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
+	output := n.Copy()
+	output.ID = report.MakeContainerImageNodeID(imageNameWithoutVersion)
+
+	if imageID, ok := report.ParseContainerImageNodeID(n.ID); ok {
+		output.Sets = output.Sets.Add(docker.ImageID, report.EmptyStringSet.Add(imageID))
+	}
+
+	return report.Nodes{output.ID: output}
 }
 
 // MapContainer2Hostname maps container Nodes to 'hostname' renderabled nodes..

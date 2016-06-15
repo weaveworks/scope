@@ -46,6 +46,16 @@ func (s Sets) Add(key string, value StringSet) Sets {
 	}
 }
 
+// Delete the given set from the Sets.
+func (s Sets) Delete(key string) Sets {
+	if s.psMap == nil {
+		return EmptySets
+	}
+	return Sets{
+		psMap: s.psMap.Delete(key),
+	}
+}
+
 // Lookup returns the sets stored under key.
 func (s Sets) Lookup(key string) (StringSet, bool) {
 	if s.psMap == nil {

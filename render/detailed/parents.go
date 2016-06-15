@@ -3,7 +3,6 @@ package detailed
 import (
 	"sort"
 
-	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
@@ -16,20 +15,31 @@ type Parent struct {
 	TopologyID string `json:"topologyId"`
 }
 
+func node(t report.Topology) func(string) (report.Node, bool) {
+	return func(id string) (report.Node, bool) {
+		n, ok := t.Nodes[id]
+		return n, ok
+	}
+}
+
+func fake(id string) (report.Node, bool) {
+	return report.MakeNode(id), true
+}
+
 // Parents renders the parents of this report.Node, which have been aggregated
 // from the probe reports.
 func Parents(r report.Report, n report.Node) (result []Parent) {
 	topologies := map[string]struct {
-		report.Topology
+		node   func(id string) (report.Node, bool)
 		render func(report.Node) Parent
 	}{
-		report.Container:      {r.Container, containerParent},
-		report.Pod:            {r.Pod, podParent},
-		report.ReplicaSet:     {r.ReplicaSet, replicaSetParent},
-		report.Deployment:     {r.Deployment, deploymentParent},
-		report.Service:        {r.Service, serviceParent},
-		report.ContainerImage: {r.ContainerImage, containerImageParent},
-		report.Host:           {r.Host, hostParent},
+		report.Container:      {node(r.Container), containerParent},
+		report.Pod:            {node(r.Pod), podParent},
+		report.ReplicaSet:     {node(r.ReplicaSet), replicaSetParent},
+		report.Deployment:     {node(r.Deployment), deploymentParent},
+		report.Service:        {node(r.Service), serviceParent},
+		report.ContainerImage: {fake, containerImageParent},
+		report.Host:           {node(r.Host), hostParent},
 	}
 	topologyIDs := []string{}
 	for topologyID := range topologies {
@@ -44,7 +54,7 @@ func Parents(r report.Report, n report.Node) (result []Parent) {
 				continue
 			}
 
-			parent, ok := t.Nodes[id]
+			parent, ok := t.node(id)
 			if !ok {
 				continue
 			}
@@ -83,10 +93,10 @@ func kubernetesParent(topology string) func(report.Node) Parent {
 }
 
 func containerImageParent(n report.Node) Parent {
-	imageName, _ := n.Latest.Lookup(docker.ImageName)
+	name, _ := report.ParseContainerImageNodeID(n.ID)
 	return Parent{
 		ID:         n.ID,
-		Label:      docker.ImageNameWithoutVersion(imageName),
+		Label:      name,
 		TopologyID: "containers-by-image",
 	}
 }

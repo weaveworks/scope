@@ -70,8 +70,8 @@ func TestTagger(t *testing.T) {
 		}
 
 		// node should have the container image as a parent
-		if have, ok := node.Parents.Lookup(report.ContainerImage); !ok || !have.Contains(report.MakeContainerImageNodeID("baz")) {
-			t.Errorf("Expected process node %s to have container image %q as a parent, got %q", nodeID, "baz", have)
+		if have, ok := node.Parents.Lookup(report.ContainerImage); !ok || !have.Contains(report.MakeContainerImageNodeID("bang")) {
+			t.Errorf("Expected process node %s to have container image %q as a parent, got %q", nodeID, "bang", have)
 		}
 	}
 }

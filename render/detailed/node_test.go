@@ -10,6 +10,7 @@ import (
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
+	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
@@ -29,7 +30,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 	renderableNode := renderableNodes[fixture.ClientHostNodeID]
 	have := detailed.MakeNode("hosts", fixture.Report, renderableNodes, renderableNode)
 
-	containerImageNodeSummary := child(t, render.ContainerImageRenderer, fixture.ClientContainerImageNodeID)
+	containerImageNodeSummary := child(t, render.ContainerImageRenderer, expected.ClientContainerImageNodeID)
 	containerNodeSummary := child(t, render.ContainerRenderer, fixture.ClientContainerNodeID)
 	process1NodeSummary := child(t, render.ProcessRenderer, fixture.ClientProcess1NodeID)
 	process1NodeSummary.Linkable = true
@@ -176,7 +177,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 
 func TestMakeDetailedContainerNode(t *testing.T) {
 	id := fixture.ServerContainerNodeID
-	renderableNodes := render.ContainerRenderer.Render(fixture.Report, render.FilterNoop)
+	renderableNodes := render.ContainerWithImageNameRenderer.Render(fixture.Report, render.FilterNoop)
 	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
@@ -190,6 +191,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 			ID:         id,
 			Label:      "server",
 			LabelMinor: "server.hostname.com",
+			Rank:       fixture.ServerContainerImageName,
 			Shape:      "hexagon",
 			Linkable:   true,
 			Pseudo:     false,
@@ -232,7 +234,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 		},
 		Parents: []detailed.Parent{
 			{
-				ID:         fixture.ServerContainerImageNodeID,
+				ID:         expected.ServerContainerImageNodeID,
 				Label:      fixture.ServerContainerImageName,
 				TopologyID: "containers-by-image",
 			},

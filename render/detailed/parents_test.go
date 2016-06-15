@@ -6,6 +6,7 @@ import (
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
+	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
@@ -30,15 +31,17 @@ func TestParents(t *testing.T) {
 			want: nil,
 		},
 		{
-			node: render.ContainerImageRenderer.Render(fixture.Report, render.FilterNoop)[fixture.ClientContainerImageNodeID],
+			name: "Container image",
+			node: render.ContainerImageRenderer.Render(fixture.Report, render.FilterNoop)[expected.ClientContainerImageNodeID],
 			want: []detailed.Parent{
 				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
 			},
 		},
 		{
-			node: render.ContainerRenderer.Render(fixture.Report, render.FilterNoop)[fixture.ClientContainerNodeID],
+			name: "Container",
+			node: render.ContainerWithImageNameRenderer.Render(fixture.Report, render.FilterNoop)[fixture.ClientContainerNodeID],
 			want: []detailed.Parent{
-				{ID: fixture.ClientContainerImageNodeID, Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
+				{ID: expected.ClientContainerImageNodeID, Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
 				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
 				{ID: fixture.ClientPodNodeID, Label: "pong-a", TopologyID: "pods"},
 			},
@@ -47,7 +50,6 @@ func TestParents(t *testing.T) {
 			node: render.ProcessRenderer.Render(fixture.Report, render.FilterNoop)[fixture.ClientProcess1NodeID],
 			want: []detailed.Parent{
 				{ID: fixture.ClientContainerNodeID, Label: fixture.ClientContainerName, TopologyID: "containers"},
-				{ID: fixture.ClientContainerImageNodeID, Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
 				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
 			},
 		},
