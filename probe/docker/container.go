@@ -277,12 +277,15 @@ func (c *container) ports(localAddrs []net.IP) report.StringSet {
 			continue
 		}
 		for _, b := range bindings {
-			if b.HostIP == "0.0.0.0" {
-				for _, ip := range localAddrs {
+			if b.HostIP != "0.0.0.0" {
+				ports = append(ports, fmt.Sprintf("%s:%s->%s", b.HostIP, b.HostPort, port))
+				continue
+			}
+
+			for _, ip := range localAddrs {
+				if ip.To4() != nil {
 					ports = append(ports, fmt.Sprintf("%s:%s->%s", ip, b.HostPort, port))
 				}
-			} else {
-				ports = append(ports, fmt.Sprintf("%s:%s->%s", b.HostIP, b.HostPort, port))
 			}
 		}
 	}
@@ -307,6 +310,11 @@ func addScopeToIPs(hostID string, ips []string) []string {
 	return ipsWithScopes
 }
 
+func isIPv4(addr string) bool {
+	ip := net.ParseIP(addr)
+	return ip != nil && ip.To4() != nil
+}
+
 func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 	c.RLock()
 	defer c.RUnlock()
@@ -328,13 +336,20 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 		}
 	}
 
+	// Filter out IPv6 addresses; nothing works with IPv6 yet
+	ipv4s := []string{}
+	for _, ip := range ips {
+		if isIPv4(ip) {
+			ipv4s = append(ipv4s, ip)
+		}
+	}
 	// Treat all Docker IPs as local scoped.
-	ipsWithScopes := addScopeToIPs(c.hostID, ips)
+	ipsWithScopes := addScopeToIPs(c.hostID, ipv4s)
 
 	return report.EmptySets.
 		Add(ContainerNetworks, report.MakeStringSet(networks...)).
 		Add(ContainerPorts, c.ports(localAddrs)).
-		Add(ContainerIPs, report.MakeStringSet(ips...)).
+		Add(ContainerIPs, report.MakeStringSet(ipv4s...)).
 		Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...))
 }
 
