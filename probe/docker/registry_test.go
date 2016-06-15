@@ -82,6 +82,7 @@ type mockDockerClient struct {
 	apiContainers []client.APIContainers
 	containers    map[string]*client.Container
 	apiImages     []client.APIImages
+	networks      []client.Network
 	events        []chan<- *client.APIEvents
 }
 
@@ -105,6 +106,12 @@ func (m *mockDockerClient) ListImages(client.ListImagesOptions) ([]client.APIIma
 	m.RLock()
 	defer m.RUnlock()
 	return m.apiImages, nil
+}
+
+func (m *mockDockerClient) ListNetworks() ([]client.Network, error) {
+	m.RLock()
+	defer m.RUnlock()
+	return m.networks, nil
 }
 
 func (m *mockDockerClient) AddEventListener(events chan<- *client.APIEvents) error {
@@ -244,6 +251,14 @@ var (
 			"imgfoo2": "bar2",
 		},
 	}
+	network1 = client.Network{
+		ID:    "deadbeef",
+		Name:  "network1",
+		Scope: "local",
+		IPAM: client.IPAMOptions{
+			Config: []client.IPAMConfig{{Subnet: "5.6.7.8/24"}},
+		},
+	}
 )
 
 func newMockClient() *mockDockerClient {
@@ -251,6 +266,7 @@ func newMockClient() *mockDockerClient {
 		apiContainers: []client.APIContainers{apiContainer1},
 		containers:    map[string]*client.Container{"ping": container1},
 		apiImages:     []client.APIImages{apiImage1},
+		networks:      []client.Network{network1},
 	}
 }
 
@@ -284,9 +300,17 @@ func allContainers(r docker.Registry) []docker.Container {
 	return result
 }
 
-func allImages(r docker.Registry) []*client.APIImages {
-	result := []*client.APIImages{}
-	r.WalkImages(func(i *client.APIImages) {
+func allImages(r docker.Registry) []client.APIImages {
+	result := []client.APIImages{}
+	r.WalkImages(func(i client.APIImages) {
+		result = append(result, i)
+	})
+	return result
+}
+
+func allNetworks(r docker.Registry) []client.Network {
+	result := []client.Network{}
+	r.WalkNetworks(func(i client.Network) {
 		result = append(result, i)
 	})
 	return result
@@ -307,11 +331,19 @@ func TestRegistry(t *testing.T) {
 		}
 
 		{
-			want := []*client.APIImages{&apiImage1}
+			want := []client.APIImages{apiImage1}
 			test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 				return allImages(registry)
 			})
 		}
+
+		{
+			want := []client.Network{network1}
+			test.Poll(t, 100*time.Millisecond, want, func() interface{} {
+				return allNetworks(registry)
+			})
+		}
+
 	})
 }
 
