@@ -245,17 +245,18 @@ func (r *Reporter) containerImageTopology() report.Topology {
 }
 
 func (r *Reporter) overlayTopology() report.Topology {
-	localSubnets := []string{}
+	subnets := []string{}
 	r.registry.WalkNetworks(func(network docker_client.Network) {
-		if network.Scope == "local" {
-			for _, config := range network.IPAM.Config {
-				localSubnets = append(localSubnets, config.Subnet)
-			}
+		for _, config := range network.IPAM.Config {
+			subnets = append(subnets, config.Subnet)
 		}
+
 	})
 	peerID := OverlayPeerPrefix + r.hostID
+	// Add both local and global networks to the LocalNetworks Set
+	// since we treat container IPs as local
 	node := report.MakeNode(report.MakeOverlayNodeID(peerID)).WithSets(
-		report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(localSubnets...)))
+		report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(subnets...)))
 	return report.MakeTopology().AddNode(node)
 }
 
