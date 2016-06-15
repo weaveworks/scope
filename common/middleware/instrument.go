@@ -30,9 +30,9 @@ func (i Instrument) Wrap(next http.Handler) http.Handler {
 		begin := time.Now()
 		isWS := strconv.FormatBool(isWSHandshakeRequest(r))
 		interceptor := &interceptor{ResponseWriter: w, statusCode: http.StatusOK}
+		route := i.getRouteName(r)
 		next.ServeHTTP(interceptor, r)
 		var (
-			route  = i.getRouteName(r)
 			status = strconv.Itoa(interceptor.statusCode)
 			took   = time.Since(begin)
 		)
