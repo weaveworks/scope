@@ -38,6 +38,7 @@ import (
 
 const (
 	versionCheckPeriod = 6 * time.Hour
+	defaultServiceHost = "cloud.weave.works:443"
 )
 
 var pluginAPIVersion = "1"
@@ -95,12 +96,15 @@ func probeMain(flags probeFlags) {
 	go check(checkpointFlags)
 
 	var targets = []string{}
-	if !flags.noApp {
+	if flags.token != "" {
+		// service mode
+		if len(flag.Args()) == 0 {
+			targets = append(targets, defaultServiceHost)
+		}
+	} else if !flags.noApp {
 		targets = append(targets, fmt.Sprintf("localhost:%d", xfer.AppPort))
 	}
-	if len(flag.Args()) > 0 {
-		targets = append(targets, flag.Args()...)
-	}
+	targets = append(targets, flag.Args()...)
 	log.Infof("publishing to: %s", strings.Join(targets, ", "))
 
 	probeConfig := appclient.ProbeConfig{

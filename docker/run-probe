@@ -1,3 +1,3 @@
 #!/bin/bash
 
-exec -a scope-probe /home/weave/scope --mode probe $(cat /var/run/weave/scope-probe.args) $(cat /var/run/weave/apps)
+exec -a scope-probe /home/weave/scope --mode probe $(cat /var/run/weave/scope-probe.args)
