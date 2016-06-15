@@ -2,7 +2,7 @@
 
 Highlights:
 
-* New network view to quickly ascertain to what networks your containers belong to.
+* New network view to quickly ascertain what networks your containers belong to.
 
 New features and enhancements:
 - Network view
@@ -39,7 +39,7 @@ Documentation:
 	[#1582](https://github.com/weaveworks/scope/pull/1582)
 
 Internal improvements and cleanup:
-- Add Indentity middleware
+- Add Identity middleware
 	[#1574](https://github.com/weaveworks/scope/pull/1574)
 - Rewrite net/http.Request.{URL.Path,RequestURI} consistently
 	[#1555](https://github.com/weaveworks/scope/pull/1555)
