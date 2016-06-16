@@ -40,23 +40,109 @@ var ContainerRenderer = MakeFilter(
 		// We need to be careful to ensure we only include each edge once.  Edges brought in
 		// by the above renders will have a pid, so its enough to filter out any nodes with
 		// pids.
-		FilterUnconnected(MakeMap(
-			MapIP2Container,
-			MakeReduce(
-				MakeMap(
-					MapContainer2IP,
-					SelectContainer,
-				),
-				MakeMap(
-					MapEndpoint2IP,
-					SelectEndpoint,
-				),
-			),
-		)),
+		ShortLivedConnectionJoin(SelectContainer, MapContainer2IP),
 
 		SelectContainer,
 	),
 )
+
+const originalNodeID = "original_node_id"
+const originalNodeTopology = "original_node_topology"
+
+// ShortLivedConnectionJoin joins the given renderer with short lived connections
+// from the endpoints topology, using the toIPs function to extract IPs from
+// the nodes.
+func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Renderer {
+	nodeToIP := func(n report.Node, _ report.Networks) report.Nodes {
+		result := report.Nodes{}
+		for _, ip := range toIPs(n) {
+			result[ip] = NewDerivedNode(ip, n).
+				WithTopology(IP).
+				WithLatests(map[string]string{
+					originalNodeID:       n.ID,
+					originalNodeTopology: n.Topology,
+				}).
+				WithCounters(map[string]int{IP: 1})
+		}
+		return result
+	}
+
+	ipToNode := func(n report.Node, _ report.Networks) report.Nodes {
+		// If an IP is shared between multiple containers, we can't
+		// reliably attribute an connection based on its IP
+		if count, _ := n.Counters.Lookup(IP); count > 1 {
+			return report.Nodes{}
+		}
+
+		// Propagate the internet pseudo node
+		if strings.HasSuffix(n.ID, TheInternetID) {
+			return report.Nodes{n.ID: n}
+		}
+
+		// If this node is not a container, exclude it.
+		// This excludes all the nodes we've dragged in from endpoint
+		// that we failed to join to a container.
+		id, ok := n.Latest.Lookup(originalNodeID)
+		if !ok {
+			return report.Nodes{}
+		}
+		topology, ok := n.Latest.Lookup(originalNodeTopology)
+		if !ok {
+			return report.Nodes{}
+		}
+
+		return report.Nodes{
+			id: NewDerivedNode(id, n).
+				WithTopology(topology),
+		}
+	}
+
+	// MapEndpoint2IP maps endpoint nodes to their IP address, for joining
+	// with container nodes.  We drop endpoint nodes with pids, as they
+	// will be joined to containers through the process topology, and we
+	// don't want to double count edges.
+	endpoint2IP := func(m report.Node, local report.Networks) report.Nodes {
+		// Don't include procspied connections, to prevent double counting
+		_, ok := m.Latest.Lookup(endpoint.Procspied)
+		if ok {
+			return report.Nodes{}
+		}
+		scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
+		if !ok {
+			return report.Nodes{}
+		}
+		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
+			node := theInternetNode(m)
+			return report.Nodes{node.ID: node}
+		}
+
+		// We don't always know what port a container is listening on, and
+		// container-to-container communications can be unambiguously identified
+		// without ports. OTOH, connections to the host IPs which have been port
+		// mapped to a container can only be unambiguously identified with the port.
+		// So we need to emit two nodes, for two different cases.
+		id := report.MakeScopedEndpointNodeID(scope, addr, "")
+		idWithPort := report.MakeScopedEndpointNodeID(scope, addr, port)
+		return report.Nodes{
+			id:         NewDerivedNode(id, m).WithTopology(IP),
+			idWithPort: NewDerivedNode(idWithPort, m).WithTopology(IP),
+		}
+	}
+
+	return FilterUnconnected(MakeMap(
+		ipToNode,
+		MakeReduce(
+			MakeMap(
+				nodeToIP,
+				r,
+			),
+			MakeMap(
+				endpoint2IP,
+				SelectEndpoint,
+			),
+		),
+	))
+}
 
 type containerWithImageNameRenderer struct {
 	Renderer
@@ -138,54 +224,17 @@ var ContainerHostnameRenderer = FilterEmpty(report.Container,
 
 var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}):([0-9]+)->([0-9]+)/tcp`)
 
-// MapEndpoint2IP maps endpoint nodes to their IP address, for joining
-// with container nodes.  We drop endpoint nodes with pids, as they
-// will be joined to containers through the process topology, and we
-// don't want to double count edges.
-func MapEndpoint2IP(m report.Node, local report.Networks) report.Nodes {
-	// Don't include procspied connections, to prevent double counting
-	_, ok := m.Latest.Lookup(endpoint.Procspied)
-	if ok {
-		return report.Nodes{}
-	}
-	scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
-	if !ok {
-		return report.Nodes{}
-	}
-	if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-		node := theInternetNode(m)
-		return report.Nodes{node.ID: node}
-	}
-
-	// We don't always know what port a container is listening on, and
-	// container-to-container communications can be unambiguously identified
-	// without ports. OTOH, connections to the host IPs which have been port
-	// mapped to a container can only be unambiguously identified with the port.
-	// So we need to emit two nodes, for two different cases.
-	id := report.MakeScopedEndpointNodeID(scope, addr, "")
-	idWithPort := report.MakeScopedEndpointNodeID(scope, addr, port)
-	return report.Nodes{
-		id:         NewDerivedNode(id, m).WithTopology(IP),
-		idWithPort: NewDerivedNode(idWithPort, m).WithTopology(IP),
-	}
-}
-
 // MapContainer2IP maps container nodes to their IP addresses (outputs
 // multiple nodes).  This allows container to be joined directly with
 // the endpoint topology.
-func MapContainer2IP(m report.Node, _ report.Networks) report.Nodes {
-	containerID, ok := m.Latest.Lookup(docker.ContainerID)
-	if !ok {
-		return report.Nodes{}
-	}
-
+func MapContainer2IP(m report.Node) []string {
 	// if this container doesn't make connections, we can ignore it
 	_, doesntMakeConnections := m.Latest.Lookup(report.DoesNotMakeConnections)
 	if doesntMakeConnections {
-		return report.Nodes{}
+		return nil
 	}
 
-	result := report.Nodes{}
+	result := []string{}
 	if addrs, ok := m.Sets.Lookup(docker.ContainerIPsWithScopes); ok {
 		for _, addr := range addrs {
 			scope, addr, ok := report.ParseAddressNodeID(addr)
@@ -193,11 +242,7 @@ func MapContainer2IP(m report.Node, _ report.Networks) report.Nodes {
 				continue
 			}
 			id := report.MakeScopedEndpointNodeID(scope, addr, "")
-			result[id] = NewDerivedNode(id, m).
-				WithTopology(IP).
-				WithLatests(map[string]string{docker.ContainerID: containerID}).
-				WithCounters(map[string]int{IP: 1})
-
+			result = append(result, id)
 		}
 	}
 
@@ -208,45 +253,11 @@ func MapContainer2IP(m report.Node, _ report.Networks) report.Nodes {
 		if mapping := portMappingMatch.FindStringSubmatch(portMapping); mapping != nil {
 			ip, port := mapping[1], mapping[2]
 			id := report.MakeScopedEndpointNodeID("", ip, port)
-			result[id] = NewDerivedNode(id, m).
-				WithTopology(IP).
-				WithLatests(map[string]string{docker.ContainerID: containerID}).
-				WithCounters(map[string]int{IP: 1})
-
+			result = append(result, id)
 		}
 	}
 
 	return result
-}
-
-// MapIP2Container maps IP nodes produced from MapContainer2IP back to
-// container nodes.  If there is more than one container with a given
-// IP, it is dropped.
-func MapIP2Container(n report.Node, _ report.Networks) report.Nodes {
-	// If an IP is shared between multiple containers, we can't
-	// reliably attribute an connection based on its IP
-	if count, _ := n.Counters.Lookup(IP); count > 1 {
-		return report.Nodes{}
-	}
-
-	// Propagate the internet pseudo node
-	if strings.HasSuffix(n.ID, TheInternetID) {
-		return report.Nodes{n.ID: n}
-	}
-
-	// If this node is not a container, exclude it.
-	// This excludes all the nodes we've dragged in from endpoint
-	// that we failed to join to a container.
-	containerID, ok := n.Latest.Lookup(docker.ContainerID)
-	if !ok {
-		return report.Nodes{}
-	}
-
-	id := report.MakeContainerNodeID(containerID)
-	return report.Nodes{
-		id: NewDerivedNode(id, n).
-			WithTopology(report.Container),
-	}
 }
 
 // MapProcess2Container maps process Nodes to container
