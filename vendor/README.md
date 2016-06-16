@@ -4,14 +4,21 @@ These operations result in uncommitted changes to your
 branch; you will need to commit them as normal. Execute them in the
 root of your checkout.
 
-## Adding a New Dependency
+For these changes to take effect, you'll have to `make clean` before running
+`make`.
 
-    ~/scope$ gvt fetch example.com/organisation/module vendor/example.com/organisation/module
+## Installing gvt
 
-## Updateing a Specific Dependancy
+    $ go get -u github.com/FileSottile/gvt
 
-    ~/scope$ gvt update example.com/organisation/module vendor/example.com/organisation/module
+## Adding a Dependency
 
-## Remove a Dependency
+    ~/service$ gvt fetch example.com/organisation/module
 
-    ~/scope$ gvt delete example.com/organisation/module vendor/example.com/organisation/module
+## Updating a Dependency
+
+    ~/service$ gvt update example.com/organisation/module
+
+## Removing a Dependency
+
+    ~/service$ gvt delete example.com/organisation/module
