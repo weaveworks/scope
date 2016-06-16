@@ -31,7 +31,7 @@ Bug fixes:
 	[#1551](https://github.com/weaveworks/scope/pull/1551)
 - If k8s objects only have one container, show that container's metrics on them
 	[#1473](https://github.com/weaveworks/scope/pull/1473)
-- Don't every store NEW conntrack flows (only every store updates).
+- Don't ever store NEW conntrack flows (only ever store updates).
 	[#1541](https://github.com/weaveworks/scope/pull/1541)
 
 Documentation:
