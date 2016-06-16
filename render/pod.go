@@ -33,6 +33,7 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 					MapContainer2Pod,
 					ContainerWithImageNameRenderer,
 				),
+				ShortLivedConnectionJoin(SelectPod, MapPod2IP),
 				SelectPod,
 			),
 		),
@@ -133,6 +134,16 @@ func MapContainer2Pod(n report.Node, _ report.Networks) report.Nodes {
 		WithTopology(report.Pod)
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: node}
+}
+
+// MapPod2IP maps pod nodes to their IP address.  This allows pods to
+// be joined directly with the endpoint topology.
+func MapPod2IP(m report.Node) []string {
+	ip, ok := m.Latest.Lookup(kubernetes.IP)
+	if !ok {
+		return nil
+	}
+	return []string{report.MakeScopedEndpointNodeID("", ip, "")}
 }
 
 // The various ways of grouping pods
