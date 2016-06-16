@@ -72,7 +72,7 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/static.go: $(SCOPE_BACKEND_BUILD
 
 else
 
-$(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(SCOPE_EXE):
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
@@ -91,19 +91,19 @@ $(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
 	mkdir -p $(@D)
 	$(GO_HOST) build $(GO_BUILD_FLAGS) -o $@ ./$(CODECGEN_DIR)
 
-$(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(RUNSVINIT):
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 
-shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
+shell:
 	/bin/bash
 
-tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
+tests:
 	./tools/test -no-go-get
 
-lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
+lint:
 	./tools/lint -ignorespelling "agre " -ignorespelling "AGRE " .
 
-prog/static.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
+prog/static.go:
 	esc -o $@ -prefix client/build client/build
 
 endif
