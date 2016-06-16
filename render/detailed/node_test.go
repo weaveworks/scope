@@ -18,7 +18,7 @@ import (
 )
 
 func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
-	s, ok := detailed.MakeNodeSummary(fixture.Report, r.Render(fixture.Report, render.FilterNoop)[id])
+	s, ok := detailed.MakeNodeSummary(fixture.Report, r.Render(fixture.Report, nil)[id])
 	if !ok {
 		t.Fatalf("Expected node %s to be summarizable, but wasn't", id)
 	}
@@ -26,7 +26,7 @@ func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
 }
 
 func TestMakeDetailedHostNode(t *testing.T) {
-	renderableNodes := render.HostRenderer.Render(fixture.Report, render.FilterNoop)
+	renderableNodes := render.HostRenderer.Render(fixture.Report, nil)
 	renderableNode := renderableNodes[fixture.ClientHostNodeID]
 	have := detailed.MakeNode("hosts", fixture.Report, renderableNodes, renderableNode)
 
@@ -177,7 +177,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 
 func TestMakeDetailedContainerNode(t *testing.T) {
 	id := fixture.ServerContainerNodeID
-	renderableNodes := render.ContainerWithImageNameRenderer.Render(fixture.Report, render.FilterNoop)
+	renderableNodes := render.ContainerWithImageNameRenderer.Render(fixture.Report, nil)
 	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
@@ -310,7 +310,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 
 func TestMakeDetailedPodNode(t *testing.T) {
 	id := fixture.ServerPodNodeID
-	renderableNodes := render.PodRenderer.Render(fixture.Report, render.FilterNoop)
+	renderableNodes := render.PodRenderer.Render(fixture.Report, nil)
 	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)

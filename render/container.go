@@ -143,6 +143,26 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 	))
 }
 
+// FilterEmpty is a Renderer which filters out nodes which have no children
+// from the specified topology.
+func FilterEmpty(topology string, r Renderer) Renderer {
+	return MakeFilter(HasChildren(topology), r)
+}
+
+// HasChildren returns true if the node has no children from the specified
+// topology.
+func HasChildren(topology string) FilterFunc {
+	return func(n report.Node) bool {
+		count := 0
+		n.Children.ForEach(func(child report.Node) {
+			if child.Topology == topology {
+				count++
+			}
+		})
+		return count > 0
+	}
+}
+
 type containerWithImageNameRenderer struct {
 	Renderer
 }

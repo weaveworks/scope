@@ -56,7 +56,7 @@ func TestReduceRender(t *testing.T) {
 		"foo": report.MakeNode("foo"),
 		"bar": report.MakeNode("bar"),
 	}
-	have := renderer.Render(report.MakeReport(), render.FilterNoop)
+	have := renderer.Render(report.MakeReport(), FilterNoop)
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want %+v, have %+v", want, have)
 	}
@@ -73,7 +73,7 @@ func TestMapRender1(t *testing.T) {
 		}},
 	}
 	want := report.Nodes{}
-	have := mapper.Render(report.MakeReport(), render.FilterNoop)
+	have := mapper.Render(report.MakeReport(), FilterNoop)
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("want %+v, have %+v", want, have)
 	}
@@ -95,7 +95,7 @@ func TestMapRender2(t *testing.T) {
 	want := report.Nodes{
 		"bar": report.MakeNode("bar"),
 	}
-	have := mapper.Render(report.MakeReport(), render.FilterNoop)
+	have := mapper.Render(report.MakeReport(), FilterNoop)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -117,7 +117,7 @@ func TestMapRender3(t *testing.T) {
 		"_foo": report.MakeNode("_foo").WithAdjacent("_baz"),
 		"_baz": report.MakeNode("_baz").WithAdjacent("_foo"),
 	}
-	have := mapper.Render(report.MakeReport(), render.FilterNoop)
+	have := mapper.Render(report.MakeReport(), FilterNoop)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}

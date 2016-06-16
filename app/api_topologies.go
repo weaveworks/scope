@@ -21,6 +21,14 @@ var (
 	topologyRegistry = &registry{
 		items: map[string]APITopologyDesc{},
 	}
+	k8sPseudoFilter = APITopologyOptionGroup{
+		ID:      "pseudo",
+		Default: "show",
+		Options: []APITopologyOption{
+			{"show", "Show Unmanaged", nil, false},
+			{"hide", "Hide Unmanaged", render.IsNotPseudo, true},
+		},
+	}
 )
 
 func init() {
@@ -29,18 +37,26 @@ func init() {
 			ID:      "system",
 			Default: "application",
 			Options: []APITopologyOption{
-				{"system", "System containers", render.IsSystem},
-				{"application", "Application containers", render.IsApplication},
-				{"both", "Both", nil},
+				{"system", "System containers", render.IsSystem, false},
+				{"application", "Application containers", render.IsApplication, false},
+				{"both", "Both", nil, false},
 			},
 		},
 		{
 			ID:      "stopped",
 			Default: "running",
 			Options: []APITopologyOption{
-				{"stopped", "Stopped containers", render.IsStopped},
-				{"running", "Running containers", render.IsRunning},
-				{"both", "Both", nil},
+				{"stopped", "Stopped containers", render.IsStopped, false},
+				{"running", "Running containers", render.IsRunning, false},
+				{"both", "Both", nil, false},
+			},
+		},
+		{
+			ID:      "pseudo",
+			Default: "show",
+			Options: []APITopologyOption{
+				{"show", "Show Uncontained", nil, false},
+				{"hide", "Hide Uncontained", render.IsNotPseudo, true},
 			},
 		},
 	}
@@ -52,7 +68,7 @@ func init() {
 			Options: []APITopologyOption{
 				// Show the user why there are filtered nodes in this view.
 				// Don't give them the option to show those nodes.
-				{"hide", "Unconnected nodes hidden", nil},
+				{"hide", "Unconnected nodes hidden", nil, false},
 			},
 		},
 	}
@@ -142,9 +158,11 @@ func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
 		if namespace == "default" {
 			options.Default = namespace
 		}
-		options.Options = append(options.Options, APITopologyOption{namespace, namespace, render.IsNamespace(namespace)})
+		options.Options = append(options.Options, APITopologyOption{
+			namespace, namespace, render.IsNamespace(namespace), false,
+		})
 	}
-	options.Options = append(options.Options, APITopologyOption{"all", "All Namespaces", nil})
+	options.Options = append(options.Options, APITopologyOption{"all", "All Namespaces", nil, false})
 	return options
 }
 
@@ -169,7 +187,9 @@ func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopolog
 	sort.Strings(ns)
 	for i, t := range topologies {
 		if t.id == "pods" || t.id == "services" || t.id == "deployments" || t.id == "replica-sets" {
-			topologies[i] = updateTopologyFilters(t, []APITopologyOptionGroup{kubernetesFilters(ns...)})
+			topologies[i] = updateTopologyFilters(t, []APITopologyOptionGroup{
+				kubernetesFilters(ns...), k8sPseudoFilter,
+			})
 		}
 	}
 	return topologies
@@ -224,7 +244,8 @@ type APITopologyOption struct {
 	Value string `json:"value"`
 	Label string `json:"label"`
 
-	filter render.FilterFunc
+	filter       render.FilterFunc
+	filterPseudo bool
 }
 
 type topologyStats struct {
@@ -329,7 +350,7 @@ func (r *registry) rendererForTopology(topologyID string, values url.Values, rpt
 	}
 	topology = updateFilters(rpt, []APITopologyDesc{topology})[0]
 
-	var filters []render.FilterFunc
+	var decorators []render.Decorator
 	for _, group := range topology.Options {
 		value := values.Get(group.ID)
 		for _, opt := range group.Options {
@@ -337,17 +358,18 @@ func (r *registry) rendererForTopology(topologyID string, values url.Values, rpt
 				continue
 			}
 			if (value == "" && group.Default == opt.Value) || (opt.Value != "" && opt.Value == value) {
-				filters = append(filters, opt.filter)
+				if opt.filterPseudo {
+					decorators = append(decorators, render.MakeFilterPseudoDecorator(opt.filter))
+				} else {
+					decorators = append(decorators, render.MakeFilterDecorator(opt.filter))
+				}
 			}
 		}
 	}
-	var decorator render.Decorator
-	if len(filters) > 0 {
-		decorator = func(renderer render.Renderer) render.Renderer {
-			return render.MakeFilter(render.ComposeFilterFuncs(filters...), renderer)
-		}
+	if len(decorators) > 0 {
+		return topology.renderer, render.ComposeDecorators(decorators...), nil
 	}
-	return topology.renderer, decorator, nil
+	return topology.renderer, nil, nil
 }
 
 type reporterHandler func(context.Context, Reporter, http.ResponseWriter, *http.Request)
