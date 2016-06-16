@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 
 import { selectNetwork, pinNetwork, unpinNetwork } from '../actions/app-actions';
-import { getNodeColor } from '../utils/color-utils';
+import { getNetworkColor } from '../utils/color-utils';
 
 class NetworkSelectorItem extends React.Component {
 
@@ -39,7 +39,7 @@ class NetworkSelectorItem extends React.Component {
       'network-selector-action-selected': isSelected
     });
     const style = {
-      borderBottomColor: getNodeColor(network.get('colorKey', id))
+      borderBottomColor: getNetworkColor(network.get('colorKey', id))
     };
 
     return (

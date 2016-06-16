@@ -1,7 +1,7 @@
 import React from 'react';
 import d3 from 'd3';
 import { List as makeList } from 'immutable';
-import { getNodeColor } from '../utils/color-utils';
+import { getNetworkColor } from '../utils/color-utils';
 import { isContrastMode } from '../utils/contrast-utils';
 
 
@@ -35,7 +35,7 @@ function NodeNetworksOverlay({labelOffsetY, size, stack, networks = makeList()})
       ry={ry}
       className="node-network"
       style={{
-        fill: getNodeColor(n.get('colorKey'))
+        fill: getNetworkColor(n.get('colorKey', n.get('id')))
       }}
       key={n.get('id')}
     />

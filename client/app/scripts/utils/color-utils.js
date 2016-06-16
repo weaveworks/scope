@@ -3,6 +3,7 @@ import d3 from 'd3';
 const PSEUDO_COLOR = '#b1b1cb';
 const hueRange = [20, 330]; // exclude red
 const hueScale = d3.scale.linear().range(hueRange);
+const networkColorScale = d3.scale.category10();
 // map hues to lightness
 const lightnessScale = d3.scale.linear().domain(hueRange).range([0.5, 0.7]);
 const startLetterRange = 'A'.charCodeAt();
@@ -67,6 +68,10 @@ export function getNodeColorDark(text = '', secondText = '', isPseudo = false) {
   }
 
   return hsl.toString();
+}
+
+export function getNetworkColor(text) {
+  return networkColorScale(text);
 }
 
 export function brightenColor(color) {
