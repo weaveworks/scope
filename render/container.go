@@ -68,7 +68,7 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 	}
 
 	ipToNode := func(n report.Node, _ report.Networks) report.Nodes {
-		// If an IP is shared between multiple containers, we can't
+		// If an IP is shared between multiple nodes, we can't
 		// reliably attribute an connection based on its IP
 		if count, _ := n.Counters.Lookup(IP); count > 1 {
 			return report.Nodes{}
@@ -79,9 +79,9 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 			return report.Nodes{n.ID: n}
 		}
 
-		// If this node is not a container, exclude it.
+		// If this node is not of the original type, exclude it.
 		// This excludes all the nodes we've dragged in from endpoint
-		// that we failed to join to a container.
+		// that we failed to join to a node.
 		id, ok := n.Latest.Lookup(originalNodeID)
 		if !ok {
 			return report.Nodes{}
@@ -116,9 +116,8 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 			return report.Nodes{node.ID: node}
 		}
 
-		// We don't always know what port a container is listening on, and
-		// container-to-container communications can be unambiguously identified
-		// without ports. OTOH, connections to the host IPs which have been port
+		// We also allow for joining on ip:port pairs.  This is useful
+		// for connections to the host IPs which have been port
 		// mapped to a container can only be unambiguously identified with the port.
 		// So we need to emit two nodes, for two different cases.
 		id := report.MakeScopedEndpointNodeID(scope, addr, "")
