@@ -7,12 +7,15 @@ Highlights:
 New features and enhancements:
 - Network view
 	[#1528](https://github.com/weaveworks/scope/pull/1528)
+	[#1593](https://github.com/weaveworks/scope/pull/1593)
 - Label deployment nodes with replica count
 	[#1530](https://github.com/weaveworks/scope/pull/1530)
 - Add flag to disable reporting of processes (and procspied endpoints)
 	[#1511](https://github.com/weaveworks/scope/pull/1511)
 - Add pod status to summary table
 	[#1523](https://github.com/weaveworks/scope/pull/1523)
+- Add filters for pseudo nodes.
+	[#1581](https://github.com/weaveworks/scope/pull/1581)
 
 Performance improvements:
 - Fast start the dns resolution ticker to improve first report latency.
@@ -33,10 +36,18 @@ Bug fixes:
 	[#1473](https://github.com/weaveworks/scope/pull/1473)
 - Don't ever store NEW conntrack flows (only ever store updates).
 	[#1541](https://github.com/weaveworks/scope/pull/1541)
+- Pods with > 1 container making connections do not show any connections
+	[#1494](https://github.com/weaveworks/scope/issues/1494)
+- Missing edges when using Docker's IPAM driver
+	[#1563](https://github.com/weaveworks/scope/issues/1563)
+- Duplicate stack in "by image" view
+	[#1521](https://github.com/weaveworks/scope/issues/1521)
 
 Documentation:
 - Clarify kubectl version matching
 	[#1582](https://github.com/weaveworks/scope/pull/1582)
+- updated Weave Cloud and clarified setup
+	[#1586](https://github.com/weaveworks/scope/pull/1586)
 
 Internal improvements and cleanup:
 - Add Identity middleware
@@ -57,8 +68,10 @@ Internal improvements and cleanup:
 	[#1540](https://github.com/weaveworks/scope/pull/1540)
 - Increase test replicas
 	[#1529](https://github.com/weaveworks/scope/pull/1529)
+- Ignore IPv6 addresses in Docker reporter
+	[#1552](https://github.com/weaveworks/scope/pull/1552)
 
-Service-mode related changes:
+Weave Cloud related changes:
 - Add probe version header to probe requests
 	[#1564](https://github.com/weaveworks/scope/pull/1564)
 - Fetch non-cached reports in parallel
@@ -77,6 +90,8 @@ Service-mode related changes:
 	[#1543](https://github.com/weaveworks/scope/pull/1543)
 - Allow user to specify table name and queue prefix.
 	[#1538](https://github.com/weaveworks/scope/pull/1538)
+- Get route name before munging request
+	[#1590](https://github.com/weaveworks/scope/pull/1590)
 
 
 ## Release 0.15.0
