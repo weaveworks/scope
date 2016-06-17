@@ -30,6 +30,7 @@ const (
 	reportField           = "report"
 	reportCacheSize       = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
 	reportCacheExpiration = 15 * time.Second
+	memcacheExpiration    = 15 // seconds
 	natsTimeout           = 10 * time.Second
 )
 
@@ -555,6 +556,22 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	// fourth, put it in memcache
+	if c.memcache != nil {
+		// XXX: Should we call this "Put" to be consistent with S3, or "Set"
+		// to be consistent with memcache?
+		err = timeRequest("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
+			item := memcache.Item{Key: s3Key, Value: buf.Bytes(), Expiration: memcacheExpiration}
+			return c.memcache.Set(&item)
+		})
+		if err != nil {
+			// NOTE: We don't abort here because failing to store in memcache
+			// doesn't actually break anything else -- it's just an
+			// optimization.
+			log.Warningf("Could not store %v in memcache: %v", s3Key, err)
+		}
 	}
 
 	if rep.Shortcut && c.nats != nil {
