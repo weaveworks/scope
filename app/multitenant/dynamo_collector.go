@@ -5,6 +5,8 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
+	"net"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -25,14 +27,19 @@ import (
 )
 
 const (
-	hourField             = "hour"
-	tsField               = "ts"
-	reportField           = "report"
-	reportCacheSize       = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
-	reportCacheExpiration = 15 * time.Second
-	memcacheExpiration    = 15 // seconds
-	natsTimeout           = 10 * time.Second
+	hourField              = "hour"
+	tsField                = "ts"
+	reportField            = "report"
+	reportCacheSize        = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
+	reportCacheExpiration  = 15 * time.Second
+	memcacheExpiration     = 15 // seconds
+	memcacheUpdateInterval = 1 * time.Minute
+	memcacheService        = "memcached" // SRV service we use to discover memcached servers.
+	natsTimeout            = 10 * time.Second
 )
+
+// XXX: "memcache" service string should be a flag or something, because it
+// has to be exactly the same as the port name in the svc file.
 
 var (
 	dynamoRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
@@ -121,14 +128,15 @@ type DynamoDBCollector interface {
 }
 
 type dynamoDBCollector struct {
-	userIDer   UserIDer
-	db         *dynamodb.DynamoDB
-	s3         *s3.S3
-	tableName  string
-	bucketName string
-	merger     app.Merger
-	cache      gcache.Cache
-	memcache   *memcache.Client
+	userIDer        UserIDer
+	db              *dynamodb.DynamoDB
+	s3              *s3.S3
+	tableName       string
+	bucketName      string
+	merger          app.Merger
+	cache           gcache.Cache
+	memcache        *memcache.Client
+	memcacheServers *memcache.ServerList
 
 	nats        *nats.Conn
 	waitersLock sync.Mutex
@@ -167,23 +175,56 @@ func NewDynamoDBCollector(
 	}
 
 	var memcacheClient *memcache.Client
+	var memcacheServers memcache.ServerList
 	if memcachedHost != "" {
-		memcacheClient = memcache.New(memcachedHost)
+		memcacheClient = memcache.NewFromSelector(&memcacheServers)
 		memcacheClient.Timeout = memcachedTimeout
+		err := updateMemcacheServers(memcachedHost, memcacheService, &memcacheServers)
+		if err != nil {
+			// XXX: Also maybe exit?
+			log.Errorf("Could not set memcache servers: %v", err)
+		}
+
+		// ticker := time.NewTicker(memcacheUpdateInterval)
+		// // go func() {
+		// 	// XXX: Is it OK that we never clean this up?
+		// 	for range ticker.C {
+		// 		updateMemcacheServers(memcachedHost, memcacheService, &memcacheServers)
+		// 	}
+		// }()
 	}
 
 	return &dynamoDBCollector{
-		db:         dynamodb.New(session.New(dynamoDBConfig)),
-		s3:         s3.New(session.New(s3Config)),
-		userIDer:   userIDer,
-		tableName:  tableName,
-		bucketName: bucketName,
-		merger:     app.NewSmartMerger(),
-		cache:      gcache.New(reportCacheSize).LRU().Expiration(reportCacheExpiration).Build(),
-		memcache:   memcacheClient,
-		nats:       nc,
-		waiters:    map[watchKey]*nats.Subscription{},
+		db:              dynamodb.New(session.New(dynamoDBConfig)),
+		s3:              s3.New(session.New(s3Config)),
+		userIDer:        userIDer,
+		tableName:       tableName,
+		bucketName:      bucketName,
+		merger:          app.NewSmartMerger(),
+		cache:           gcache.New(reportCacheSize).LRU().Expiration(reportCacheExpiration).Build(),
+		memcache:        memcacheClient,
+		memcacheServers: &memcacheServers, // XXX: Probably don't need to store this here any more.
+		nats:            nc,
+		waiters:         map[watchKey]*nats.Subscription{},
 	}, nil
+}
+
+// updateMemcacheServers sets a memcache server list from SRV records. SRV
+// priority & weight are ignored.
+func updateMemcacheServers(hostname, service string, serverList *memcache.ServerList) error {
+	_, addrs, err := net.LookupSRV(service, "tcp", hostname)
+	if err != nil {
+		return err
+	}
+	var servers []string
+	for _, srv := range addrs {
+		servers = append(servers, fmt.Sprintf("%s:%d", srv.Target, srv.Port))
+	}
+	// ServerList deterministically maps keys to _index_ of the server list.
+	// Since DNS returns records in different order each time, we sort to
+	// guarantee best possible match between nodes.
+	sort.Strings(servers)
+	return serverList.SetServers(servers...)
 }
 
 // CreateDynamoDBTables creates the required tables in dynamodb
