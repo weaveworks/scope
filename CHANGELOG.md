@@ -2,7 +2,7 @@
 
 Highlights:
 
-* New network view to quickly ascertain what networks your containers belong to.
+* New network filter to quickly ascertain what networks your containers belong to.
 
 New features and enhancements:
 - Network view
