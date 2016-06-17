@@ -91,6 +91,12 @@ var (
 		Name:      "memcache_miss",
 		Help:      "Reports that missed both our in-memory cache and our memcache",
 	})
+
+	memcacheRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Namespace: "scope",
+		Name:      "memcache_request_duration_nanoseconds",
+		Help:      "Time spent doing memcache requests.",
+	}, []string{"method", "status_code"})
 )
 
 func init() {
@@ -104,6 +110,7 @@ func init() {
 	prometheus.MustRegister(natsRequests)
 	prometheus.MustRegister(memcacheHits)
 	prometheus.MustRegister(memcacheMiss)
+	prometheus.MustRegister(memcacheRequestDuration)
 }
 
 // DynamoDBCollector is a Collector which can also CreateTables
@@ -160,7 +167,7 @@ func NewDynamoDBCollector(
 
 	var memcacheClient *memcache.Client
 	if memcachedHost != "" {
-		memcacheClient := memcache.New(memcachedHost)
+		memcacheClient = memcache.New(memcachedHost)
 		memcacheClient.Timeout = memcachedTimeout
 	}
 
@@ -383,8 +390,25 @@ func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time
 	return append(cachedReports, fetchedReport...), nil
 }
 
+func memcacheStatusCode(err error) string {
+	// See https://godoc.org/github.com/bradfitz/gomemcache/memcache#pkg-variables
+	switch err {
+	case nil:
+		return "200"
+	case memcache.ErrCacheMiss:
+		return "404"
+	case memcache.ErrMalformedKey:
+		return "400"
+	default:
+		return "500"
+	}
+}
+
 func (c *dynamoDBCollector) fetchFromMemcache(reportKeys []string) ([]report.Report, []string, error) {
 	var reports []report.Report
+	timeRequest("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
+		return nil
+	})
 	return reports, reportKeys, nil
 }
 
