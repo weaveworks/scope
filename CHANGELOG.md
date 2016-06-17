@@ -1,3 +1,99 @@
+## Release 0.16.0
+
+Highlights:
+
+* New network filter to quickly ascertain what networks your containers belong to.
+
+New features and enhancements:
+- Network view
+	[#1528](https://github.com/weaveworks/scope/pull/1528)
+	[#1593](https://github.com/weaveworks/scope/pull/1593)
+- Label deployment nodes with replica count
+	[#1530](https://github.com/weaveworks/scope/pull/1530)
+- Add flag to disable reporting of processes (and procspied endpoints)
+	[#1511](https://github.com/weaveworks/scope/pull/1511)
+- Add pod status to summary table
+	[#1523](https://github.com/weaveworks/scope/pull/1523)
+- Add filters for pseudo nodes.
+	[#1581](https://github.com/weaveworks/scope/pull/1581)
+
+Performance improvements:
+- Fast start the dns resolution ticker to improve first report latency.
+	[#1508](https://github.com/weaveworks/scope/pull/1508)
+
+Bug fixes:
+- Fix tall search box in Firefox
+	[#1583](https://github.com/weaveworks/scope/pull/1583)
+- Probe reporter stuck
+	[#1576](https://github.com/weaveworks/scope/issues/1576)
+- Container in multiple networks not showing all connections
+	[#1573](https://github.com/weaveworks/scope/issues/1573)
+- scope probe connects to localhost & prod even when given explicit hostnames
+	[#1566](https://github.com/weaveworks/scope/issues/1566)
+- Fix Docker for Mac check
+	[#1551](https://github.com/weaveworks/scope/pull/1551)
+- If k8s objects only have one container, show that container's metrics on them
+	[#1473](https://github.com/weaveworks/scope/pull/1473)
+- Don't ever store NEW conntrack flows (only ever store updates).
+	[#1541](https://github.com/weaveworks/scope/pull/1541)
+- Pods with > 1 container making connections do not show any connections
+	[#1494](https://github.com/weaveworks/scope/issues/1494)
+- Missing edges when using Docker's IPAM driver
+	[#1563](https://github.com/weaveworks/scope/issues/1563)
+- Duplicate stack in "by image" view
+	[#1521](https://github.com/weaveworks/scope/issues/1521)
+
+Documentation:
+- Clarify kubectl version matching
+	[#1582](https://github.com/weaveworks/scope/pull/1582)
+- updated Weave Cloud and clarified setup
+	[#1586](https://github.com/weaveworks/scope/pull/1586)
+
+Internal improvements and cleanup:
+- Add Identity middleware
+	[#1574](https://github.com/weaveworks/scope/pull/1574)
+- Rewrite net/http.Request.{URL.Path,RequestURI} consistently
+	[#1555](https://github.com/weaveworks/scope/pull/1555)
+- Add Marathon JSON for launching on minimesos cluster
+	[#1509](https://github.com/weaveworks/scope/pull/1509)
+- Circle integration for auto docs publishing.
+	[#1517](https://github.com/weaveworks/scope/pull/1517)
+- Tag scope images on docker hub as we do in service
+	[#1572](https://github.com/weaveworks/scope/pull/1572)
+- Scope slow: improve error messages for debugging
+	[#1534](https://github.com/weaveworks/scope/pull/1534)
+- circle.yml: deploy non-master branches
+	[#1535](https://github.com/weaveworks/scope/pull/1535)
+- Add docker hub badge
+	[#1540](https://github.com/weaveworks/scope/pull/1540)
+- Increase test replicas
+	[#1529](https://github.com/weaveworks/scope/pull/1529)
+- Ignore IPv6 addresses in Docker reporter
+	[#1552](https://github.com/weaveworks/scope/pull/1552)
+
+Weave Cloud related changes:
+- Add probe version header to probe requests
+	[#1564](https://github.com/weaveworks/scope/pull/1564)
+- Fetch non-cached reports in parallel
+	[#1554](https://github.com/weaveworks/scope/pull/1554)
+- Various fix ups for multitenancy
+	[#1533](https://github.com/weaveworks/scope/pull/1533)
+- Use NATS for shortcut reports in the service.
+	[#1568](https://github.com/weaveworks/scope/pull/1568)
+- If we don't get a path name from the router, make one up from the url.
+	[#1570](https://github.com/weaveworks/scope/pull/1570)
+- Log errors in response to http requests.
+	[#1569](https://github.com/weaveworks/scope/pull/1569)
+- Put reports in S3; add in process caching 
+	[#1545](https://github.com/weaveworks/scope/pull/1545)
+- Use smart merger in the DynamoDB collector.
+	[#1543](https://github.com/weaveworks/scope/pull/1543)
+- Allow user to specify table name and queue prefix.
+	[#1538](https://github.com/weaveworks/scope/pull/1538)
+- Get route name before munging request
+	[#1590](https://github.com/weaveworks/scope/pull/1590)
+
+
 ## Release 0.15.0
 
 Highlights:
