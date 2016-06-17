@@ -405,11 +405,57 @@ func memcacheStatusCode(err error) string {
 }
 
 func (c *dynamoDBCollector) fetchFromMemcache(reportKeys []string) ([]report.Report, []string, error) {
-	var reports []report.Report
-	timeRequest("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
+	var foundReports map[string]*memcache.Item
+	err := timeRequest("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
+		var err error
+		foundReports, err = c.memcache.GetMulti(reportKeys)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
-	return reports, reportKeys, nil
+	if err != nil {
+		// XXX: Maybe return ([], reportKeys, err) to more clearly signal that
+		// everything is "missing".
+		return nil, nil, err
+	}
+
+	// Decode all the reports in parallel.
+	type result struct {
+		key    string
+		report *report.Report
+	}
+	ch := make(chan result, len(reportKeys))
+	var missing []string
+	for _, reportKey := range reportKeys {
+		item, ok := foundReports[reportKey]
+		if ok {
+			go func(reportKey string) {
+				rep, err := report.MakeFromBinary(bytes.NewReader(item.Value))
+				if err != nil {
+					log.Warningf("Corrupt report in memcache %v: %v", reportKey, err)
+					ch <- result{key: reportKey}
+				} else {
+					ch <- result{report: rep}
+					c.cache.Set(reportKey, *rep)
+				}
+			}(reportKey)
+		} else {
+			missing = append(missing, reportKey)
+		}
+	}
+
+	var reports []report.Report
+
+	for i := 0; i < len(reportKeys)-len(missing); i++ {
+		r := <-ch
+		if r.report == nil {
+			missing = append(missing, r.key)
+		} else {
+			reports = append(reports, *r.report)
+		}
+	}
+	return reports, missing, nil
 }
 
 func (c *dynamoDBCollector) Report(ctx context.Context) (report.Report, error) {
