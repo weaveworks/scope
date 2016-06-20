@@ -1,8 +1,6 @@
 package app
 
 import (
-	"compress/gzip"
-	"encoding/gob"
 	"io"
 	"net/http"
 	"net/url"
@@ -122,43 +120,22 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	post := router.Methods("POST").Subrouter()
 	post.HandleFunc("/api/report", requestContextDecorator(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		var (
-			rpt                              report.Report
-			reader                           = r.Body
-			err                              error
-			compressedSize, uncompressedSize uint64
+			rpt    report.Report
+			reader = r.Body
 		)
 
-		if log.GetLevel() == log.DebugLevel {
-			reader = byteCounter{next: reader, count: &compressedSize}
-		}
-		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
-			reader, err = gzip.NewReader(reader)
-			if err != nil {
-				respondWith(w, http.StatusBadRequest, err)
-				return
-			}
-		}
-
-		if log.GetLevel() == log.DebugLevel {
-			reader = byteCounter{next: reader, count: &uncompressedSize}
-		}
-		decoder := gob.NewDecoder(reader).Decode
+		gzipped := strings.Contains(r.Header.Get("Content-Encoding"), "gzip")
+		var handle codec.Handle
 		if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-			decoder = codec.NewDecoder(reader, &codec.JsonHandle{}).Decode
+			handle = &codec.JsonHandle{}
 		} else if strings.HasPrefix(r.Header.Get("Content-Type"), "application/msgpack") {
-			decoder = codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode
+			handle = &codec.MsgpackHandle{}
 		}
 
-		if err := decoder(&rpt); err != nil {
+		if err := rpt.ReadBinary(reader, gzipped, handle); err != nil {
 			respondWith(w, http.StatusBadRequest, err)
 			return
 		}
-		log.Debugf(
-			"Received report sizes: compressed %d bytes, uncompressed %d bytes (%.2f%%)",
-			compressedSize,
-			uncompressedSize,
-			float32(compressedSize)/float32(uncompressedSize)*100,
-		)
 
 		if err := a.Add(ctx, rpt); err != nil {
 			log.Errorf("Error Adding report: %v", err)

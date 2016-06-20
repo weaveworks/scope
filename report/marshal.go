@@ -2,6 +2,7 @@ package report
 
 import (
 	"compress/gzip"
+	"encoding/gob"
 	"io"
 
 	"github.com/ugorji/go/codec"
@@ -21,12 +22,22 @@ func (rep Report) WriteBinary(w io.Writer) error {
 }
 
 // ReadBinary reads into a Report from a gzipped msgpack.
-func (rep *Report) ReadBinary(r io.Reader) error {
-	reader, err := gzip.NewReader(r)
-	if err != nil {
-		return err
+//
+// Will decompress the binary if gzipped is true, and will use the given
+// codecHandle to decode it. If codecHandle is nil, will decode as a gob.
+func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handle) error {
+	var err error
+	if gzipped {
+		r, err = gzip.NewReader(r)
+		if err != nil {
+			return err
+		}
 	}
-	if err := codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode(&rep); err != nil {
+	decoder := gob.NewDecoder(r).Decode
+	if codecHandle != nil {
+		decoder = codec.NewDecoder(r, codecHandle).Decode
+	}
+	if err := decoder(&rep); err != nil {
 		return err
 	}
 	return nil
@@ -35,7 +46,7 @@ func (rep *Report) ReadBinary(r io.Reader) error {
 // MakeFromBinary constructs a Report from a gzipped msgpack.
 func MakeFromBinary(r io.Reader) (*Report, error) {
 	rep := MakeReport()
-	if err := rep.ReadBinary(r); err != nil {
+	if err := rep.ReadBinary(r, true, &codec.MsgpackHandle{}); err != nil {
 		return nil, err
 	}
 	return &rep, nil
