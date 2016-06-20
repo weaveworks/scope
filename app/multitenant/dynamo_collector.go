@@ -34,12 +34,8 @@ const (
 	reportCacheExpiration  = 15 * time.Second
 	memcacheExpiration     = 15 // seconds
 	memcacheUpdateInterval = 1 * time.Minute
-	memcacheService        = "memcached" // SRV service we use to discover memcached servers.
 	natsTimeout            = 10 * time.Second
 )
-
-// XXX: "memcache" service string should be a flag or something, because it
-// has to be exactly the same as the port name in the svc file.
 
 var (
 	dynamoRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
@@ -86,8 +82,6 @@ var (
 		Help:      "Number of NATS requests.",
 	}, []string{"method", "status_code"})
 
-	// XXX: jml thinks that maybe there's a simpler way to do these cache
-	// hit/miss metrics but brain is too fuzzy right now.
 	memcacheHits = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "scope",
 		Name:      "memcache_hits",
@@ -128,15 +122,14 @@ type DynamoDBCollector interface {
 }
 
 type dynamoDBCollector struct {
-	userIDer        UserIDer
-	db              *dynamodb.DynamoDB
-	s3              *s3.S3
-	tableName       string
-	bucketName      string
-	merger          app.Merger
-	cache           gcache.Cache
-	memcache        *memcache.Client
-	memcacheServers *memcache.ServerList
+	userIDer   UserIDer
+	db         *dynamodb.DynamoDB
+	s3         *s3.S3
+	tableName  string
+	bucketName string
+	merger     app.Merger
+	cache      gcache.Cache
+	memcache   *memcache.Client
 
 	nats        *nats.Conn
 	waitersLock sync.Mutex
@@ -163,7 +156,7 @@ func NewDynamoDBCollector(
 	userIDer UserIDer,
 	dynamoDBConfig, s3Config *aws.Config,
 	tableName, bucketName, natsHost, memcachedHost string,
-	memcachedTimeout time.Duration,
+	memcachedTimeout time.Duration, memcachedService string,
 ) (DynamoDBCollector, error) {
 	var nc *nats.Conn
 	if natsHost != "" {
@@ -175,37 +168,35 @@ func NewDynamoDBCollector(
 	}
 
 	var memcacheClient *memcache.Client
-	var memcacheServers memcache.ServerList
 	if memcachedHost != "" {
+		var memcacheServers memcache.ServerList
 		memcacheClient = memcache.NewFromSelector(&memcacheServers)
 		memcacheClient.Timeout = memcachedTimeout
-		err := updateMemcacheServers(memcachedHost, memcacheService, &memcacheServers)
+		err := updateMemcacheServers(memcachedHost, memcachedService, &memcacheServers)
 		if err != nil {
-			// XXX: Also maybe exit?
+			// REVIEWER: Undecided whether this should exit or not. Thoughts?
 			log.Errorf("Could not set memcache servers: %v", err)
 		}
 
-		// ticker := time.NewTicker(memcacheUpdateInterval)
-		// // go func() {
-		// 	// XXX: Is it OK that we never clean this up?
-		// 	for range ticker.C {
-		// 		updateMemcacheServers(memcachedHost, memcacheService, &memcacheServers)
-		// 	}
-		// }()
+		ticker := time.NewTicker(memcacheUpdateInterval)
+		go func() {
+			for range ticker.C {
+				updateMemcacheServers(memcachedHost, memcachedService, &memcacheServers)
+			}
+		}()
 	}
 
 	return &dynamoDBCollector{
-		db:              dynamodb.New(session.New(dynamoDBConfig)),
-		s3:              s3.New(session.New(s3Config)),
-		userIDer:        userIDer,
-		tableName:       tableName,
-		bucketName:      bucketName,
-		merger:          app.NewSmartMerger(),
-		cache:           gcache.New(reportCacheSize).LRU().Expiration(reportCacheExpiration).Build(),
-		memcache:        memcacheClient,
-		memcacheServers: &memcacheServers, // XXX: Probably don't need to store this here any more.
-		nats:            nc,
-		waiters:         map[watchKey]*nats.Subscription{},
+		db:         dynamodb.New(session.New(dynamoDBConfig)),
+		s3:         s3.New(session.New(s3Config)),
+		userIDer:   userIDer,
+		tableName:  tableName,
+		bucketName: bucketName,
+		merger:     app.NewSmartMerger(),
+		cache:      gcache.New(reportCacheSize).LRU().Expiration(reportCacheExpiration).Build(),
+		memcache:   memcacheClient,
+		nats:       nc,
+		waiters:    map[watchKey]*nats.Subscription{},
 	}, nil
 }
 
@@ -412,7 +403,7 @@ func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time
 		memcacheHits.Add(float64(len(memcachedReports)))
 		memcacheMiss.Add(float64(len(missing)))
 		if err != nil {
-			// XXX: jml is unclear whether we should abort in this case or
+			// REVIEWER: jml is unclear whether we should abort in this case or
 			// just carry on. Aborting is easier to reason about for us, but
 			// suppressing is probably OK since failure just means we fetch
 			// from S3.
@@ -457,8 +448,6 @@ func (c *dynamoDBCollector) fetchFromMemcache(reportKeys []string) ([]report.Rep
 		return nil
 	})
 	if err != nil {
-		// XXX: Maybe return ([], reportKeys, err) to more clearly signal that
-		// everything is "missing".
 		return nil, nil, err
 	}
 
@@ -601,8 +590,8 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 
 	// fourth, put it in memcache
 	if c.memcache != nil {
-		// XXX: Should we call this "Put" to be consistent with S3, or "Set"
-		// to be consistent with memcache?
+		// REVIEWER: Should we call this "Put" to be consistent with S3, or
+		// "Set" to be consistent with memcache?
 		err = timeRequest("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
 			item := memcache.Item{Key: s3Key, Value: buf.Bytes(), Expiration: memcacheExpiration}
 			return c.memcache.Set(&item)

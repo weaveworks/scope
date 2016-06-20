@@ -76,7 +76,7 @@ func awsConfigFromURL(url *url.URL) (*aws.Config, error) {
 	return config, nil
 }
 
-func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname, memcachedHostname string, memcachedTimeout, window time.Duration, createTables bool) (app.Collector, error) {
+func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname, memcachedHostname string, memcachedTimeout time.Duration, memcachedService string, window time.Duration, createTables bool) (app.Collector, error) {
 	if collectorURL == "local" {
 		return app.NewCollector(window), nil
 	}
@@ -103,7 +103,7 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 		bucketName := strings.TrimPrefix(s3.Path, "/")
 		dynamoCollector, err := multitenant.NewDynamoDBCollector(
 			userIDer, dynamoDBConfig, s3Config, tableName, bucketName, natsHostname,
-			memcachedHostname, memcachedTimeout,
+			memcachedHostname, memcachedTimeout, memcachedService,
 		)
 		if err != nil {
 			return nil, err
@@ -186,7 +186,7 @@ func appMain(flags appFlags) {
 
 	collector, err := collectorFactory(
 		userIDer, flags.collectorURL, flags.s3URL, flags.natsHostname, flags.memcachedHostname,
-		flags.memcachedTimeout, flags.window, flags.awsCreateTables)
+		flags.memcachedTimeout, flags.memcachedService, flags.window, flags.awsCreateTables)
 	if err != nil {
 		log.Fatalf("Error creating collector: %v", err)
 		return

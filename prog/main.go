@@ -103,6 +103,7 @@ type appFlags struct {
 	natsHostname      string
 	memcachedHostname string
 	memcachedTimeout  time.Duration
+	memcachedService  string
 	userIDHeader      string
 
 	awsCreateTables bool
@@ -181,8 +182,8 @@ func main() {
 	flag.StringVar(&flags.app.pipeRouterURL, "app.pipe.router", "local", "Pipe router to use (local)")
 	flag.StringVar(&flags.app.natsHostname, "app.nats", "", "Hostname for NATS service to use for shortcut reports.  If empty, shortcut reporting will be disabled.")
 	flag.StringVar(&flags.app.memcachedHostname, "app.memcached.hostname", "", "Hostname for memcached service to use when caching reports.  If empty, no memcached will be used.")
-	// XXX: 1 second is a stupidly long default timeout. Change before review.
-	flag.DurationVar(&flags.app.memcachedTimeout, "app.memcached.timeout", time.Second, "Maximum time to wait before giving up on memcached requests.")
+	flag.DurationVar(&flags.app.memcachedTimeout, "app.memcached.timeout", 100*time.Millisecond, "Maximum time to wait before giving up on memcached requests.")
+	flag.StringVar(&flags.app.memcachedService, "app.memcached.service", "memcached", "SRV service used to discover memcache servers.")
 	flag.StringVar(&flags.app.userIDHeader, "app.userid.header", "", "HTTP header to use as userid")
 
 	flag.BoolVar(&flags.app.awsCreateTables, "app.aws.create.tables", false, "Create the tables in DynamoDB")
