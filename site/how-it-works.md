@@ -5,7 +5,7 @@ menu_order: 70
 
 The following topics are discussed:
 
-* [Weave Cloud Mode](#service-mode)
+* [Weave Cloud](#service-mode)
 * [Standalone Mode](#stand-alone-mode)
 * [Disabling Automatic Updates](#disable)
 
@@ -45,7 +45,7 @@ When running Scope in a cluster, each probe sends its reports to a dedicated app
     |  +-----------------+  |      |  +-----------------+  |
     +-----------------------+      +-----------------------+
 
-## <a name="service-mode"></a>Weave Cloud Mode
+## <a name="service-mode"></a>Weave Cloud
 
 Scope can also be used to feed reports to Weave Cloud. With Weave Cloud, you can centrally manage and share access to your Scope UI. In this configuration, the probe is run locally and the apps are hosted for you.
 
