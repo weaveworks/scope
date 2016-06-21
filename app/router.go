@@ -100,21 +100,6 @@ func RegisterTopologyRoutes(router *mux.Router, r Reporter) {
 		gzipHandler(requestContextDecorator(makeProbeHandler(r))))
 }
 
-type byteCounter struct {
-	next  io.ReadCloser
-	count *uint64
-}
-
-func (c byteCounter) Read(p []byte) (n int, err error) {
-	n, err = c.next.Read(p)
-	*c.count += uint64(n)
-	return n, err
-}
-
-func (c byteCounter) Close() error {
-	return c.next.Close()
-}
-
 // RegisterReportPostHandler registers the handler for report submission
 func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	post := router.Methods("POST").Subrouter()
