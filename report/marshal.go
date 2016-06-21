@@ -21,7 +21,7 @@ func (rep Report) WriteBinary(w io.Writer) error {
 	return nil
 }
 
-// ReadBinary reads into a Report from a gzipped msgpack.
+// ReadBinary reads bytes into a Report.
 //
 // Will decompress the binary if gzipped is true, and will use the given
 // codecHandle to decode it. If codecHandle is nil, will decode as a gob.
@@ -33,9 +33,11 @@ func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handl
 			return err
 		}
 	}
-	decoder := gob.NewDecoder(r).Decode
+	var decoder func(interface{}) error
 	if codecHandle != nil {
 		decoder = codec.NewDecoder(r, codecHandle).Decode
+	} else {
+		decoder = gob.NewDecoder(r).Decode
 	}
 	if err := decoder(&rep); err != nil {
 		return err
