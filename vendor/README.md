@@ -9,7 +9,7 @@ For these changes to take effect, you'll have to `make clean` before running
 
 ## Installing gvt
 
-    $ go get -u github.com/FileSottile/gvt
+    $ go get -u github.com/FiloSottile/gvt
 
 ## Adding a Dependency
 
