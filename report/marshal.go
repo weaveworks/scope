@@ -2,7 +2,6 @@ package report
 
 import (
 	"compress/gzip"
-	"encoding/gob"
 	"io"
 
 	log "github.com/Sirupsen/logrus"
@@ -36,7 +35,7 @@ func (c byteCounter) Read(p []byte) (n int, err error) {
 // ReadBinary reads bytes into a Report.
 //
 // Will decompress the binary if gzipped is true, and will use the given
-// codecHandle to decode it. If codecHandle is nil, will decode as a gob.
+// codecHandle to decode it.
 func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handle) error {
 	var err error
 	var compressedSize, uncompressedSize uint64
@@ -56,13 +55,7 @@ func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handl
 	if log.GetLevel() == log.DebugLevel {
 		r = byteCounter{next: r, count: &uncompressedSize}
 	}
-	var decoder func(interface{}) error
-	if codecHandle != nil {
-		decoder = codec.NewDecoder(r, codecHandle).Decode
-	} else {
-		decoder = gob.NewDecoder(r).Decode
-	}
-	if err := decoder(&rep); err != nil {
+	if err := codec.NewDecoder(r, codecHandle).Decode(&rep); err != nil {
 		return err
 	}
 	log.Debugf(
