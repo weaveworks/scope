@@ -84,7 +84,7 @@ Weave Cloud related changes:
 	[#1570](https://github.com/weaveworks/scope/pull/1570)
 - Log errors in response to http requests.
 	[#1569](https://github.com/weaveworks/scope/pull/1569)
-- Put reports in S3; add in process caching 
+- Put reports in S3; add in process caching
 	[#1545](https://github.com/weaveworks/scope/pull/1545)
 - Use smart merger in the DynamoDB collector.
 	[#1543](https://github.com/weaveworks/scope/pull/1543)
@@ -725,7 +725,7 @@ Build improvements and cleanup:
   [#730](https://github.com/weaveworks/scope/pull/730)
 - Make `make` build  the UI
   [#728](https://github.com/weaveworks/scope/pull/728)
-- Omit controls field from json if emtpy.
+- Omit controls field from json if empty.
   [#725](https://github.com/weaveworks/scope/pull/725)
 - JS to ES2015
   [#712](https://github.com/weaveworks/scope/pull/712)
