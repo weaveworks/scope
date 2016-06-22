@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -109,11 +110,16 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 		)
 
 		gzipped := strings.Contains(r.Header.Get("Content-Encoding"), "gzip")
+		contentType := r.Header.Get("Content-Type")
 		var handle codec.Handle
-		if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		switch {
+		case strings.HasPrefix(contentType, "application/json"):
 			handle = &codec.JsonHandle{}
-		} else if strings.HasPrefix(r.Header.Get("Content-Type"), "application/msgpack") {
+		case strings.HasPrefix(contentType, "application/msgpack"):
 			handle = &codec.MsgpackHandle{}
+		default:
+			respondWith(w, http.StatusBadRequest, fmt.Errorf("Unsupported Content-Type: %v", contentType))
+			return
 		}
 
 		if err := rpt.ReadBinary(reader, gzipped, handle); err != nil {
