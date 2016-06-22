@@ -2,7 +2,6 @@ package app_test
 
 import (
 	"bytes"
-	"encoding/gob"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -84,11 +83,6 @@ func TestReportPostHandler(t *testing.T) {
 		}
 	}
 
-	test("", func(v interface{}) ([]byte, error) {
-		buf := &bytes.Buffer{}
-		err := gob.NewEncoder(buf).Encode(v)
-		return buf.Bytes(), err
-	})
 	test("application/json", func(v interface{}) ([]byte, error) {
 		buf := &bytes.Buffer{}
 		err := codec.NewEncoder(buf, &codec.JsonHandle{}).Encode(v)

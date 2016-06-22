@@ -2,7 +2,6 @@ package multitenant
 
 import (
 	"bytes"
-	"compress/gzip"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -18,7 +17,6 @@ import (
 	"github.com/bluele/gcache"
 	"github.com/nats-io/nats"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/app"
@@ -312,15 +310,7 @@ func (c *dynamoDBCollector) getNonCachedReport(reportKey string) (*report.Report
 	if err != nil {
 		return nil, err
 	}
-	reader, err := gzip.NewReader(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	rep := report.MakeReport()
-	if err := codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode(&rep); err != nil {
-		return nil, err
-	}
-	return &rep, nil
+	return report.MakeFromBinary(resp.Body)
 }
 
 func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time.Time) ([]report.Report, error) {
@@ -387,14 +377,7 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 
 	// first, encode the report into a buffer and record its size
 	var buf bytes.Buffer
-	writer, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
-	if err != nil {
-		return err
-	}
-	if err := codec.NewEncoder(writer, &codec.MsgpackHandle{}).Encode(&rep); err != nil {
-		return err
-	}
-	writer.Close()
+	rep.WriteBinary(&buf)
 	reportSize.Add(float64(buf.Len()))
 
 	// second, put the report on s3
