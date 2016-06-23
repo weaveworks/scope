@@ -158,7 +158,7 @@ func (r staticResolver) resolveOne(t target) []string {
 		var err error
 		addrs, err = r.lookup(t.host)
 		if err != nil {
-			log.Debugf("Error resolving %s: %v", t.host, err)
+			log.Errorf("Error resolving %s: %v", t.host, err)
 			return []string{}
 		}
 	}
