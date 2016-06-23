@@ -127,7 +127,8 @@ case "$COMMAND" in
         ;;
 
     version)
-        docker run --rm -e CHECKPOINT_DISABLE $SCOPE_IMAGE version
+        docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --mode=version
         ;;
 
     help)
@@ -138,7 +139,8 @@ scope help     - Print this
 
 scope launch   - Launch Scope
 EOF
-        docker run --rm -e CHECKPOINT_DISABLE $SCOPE_IMAGE help
+        docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE -h
 
         cat >&2 <<EOF
 
@@ -150,6 +152,11 @@ EOF
         ;;
 
     launch)
+        # Do a dry run of scope in the foreground, so it can parse args etc
+        # avoiding the entrypoint script in the process.
+        docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --dry-run $@
+
         if ! check_docker_for_mac || check_probe_only ; then
             check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
             docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true

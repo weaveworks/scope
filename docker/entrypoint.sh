@@ -2,11 +2,6 @@
 
 mkdir -p /var/run/weave
 
-if [ "$1" = "version" -o "$1" = "help" ]; then
-    exec -a scope /home/weave/scope --mode $1
-    exit 0
-fi
-
 for arg in $@; do
     case "$arg" in
         --no-app|--probe-only|--service-token*|--probe.token*)
