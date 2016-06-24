@@ -171,7 +171,7 @@ func (c *client) Expose() error {
 		// Alread exposed!
 		return nil
 	}
-	if err := exec.Command("weave", "expose").Run(); err != nil {
+	if err := exec.Command("weave", "--local", "expose").Run(); err != nil {
 		return fmt.Errorf("Error running weave expose: %v", err)
 	}
 	return nil
