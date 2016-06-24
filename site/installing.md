@@ -4,10 +4,13 @@ menu_order: 20
 ---
 
 
-Weave Scope consists of three parts: the probe, the app and the user interface.  Scope can be deployed in either a standalone configuration, where you run everything yourself, or using Weave Cloud.  Weave Cloud is the recommended option when:
- * deploying to larger clusters
- * you require secure remote access
- * you wish to share access with your coworkers
+Weave Scope consists of three parts: the probe, the app and the user interface.  Scope can be deployed in either a standalone configuration, where you run everything yourself, or by using Weave Cloud.  
+
+Weave Cloud is the recommended option if:
+
+ * You are deploying to larger clusters.
+ * You require secure remote access.
+ * You wish to share access with your coworkers.
 
 The following topics are discussed:
 
@@ -40,7 +43,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 
 ###<a name="docker-weave-cloud"></a>Using Weave Cloud
 
-First you will need to obtain a service-token from Weave Cloud by signing up at [https://cloud.weave.works](https://cloud.weave.works/).
+First, obtain a service-token from Weave Cloud by signing up at [https://cloud.weave.works](https://cloud.weave.works/).
 
 Then, install Scope onto your local Docker machine and start using Weave Cloud:
 
@@ -58,9 +61,9 @@ After Scope has been launched, open your web browser to [https://cloud.weave.wor
 
 ###<a name="net-scope"></a> Weave Net and Scope
 
-If Scope is running on the same machine as the Weave Network, then the probe uses weaveDNS to automatically discover any other apps on the network. Scope does this by registering itself under the address scope.weave.local.
+If Scope is running on the same machine as the Weave Network, then the probe uses weaveDNS to automatically discover any other apps on the network. Scope does this by registering itself under the address `scope.weave.local`.
 
-Each probe sends its reports to every app registered at this address. If you have weaveDNS set up and running, no further steps are necessary.
+Each probe sends its reports to every app registered at this address. If you have weaveDNS set up and running, no further steps are required.
 
 If you don’t want to use weaveDNS, then Scope can be instructed to cluster with other Scope instances on the command line. Hostnames and IP addresses are acceptable, both with and without ports, for example:
 
@@ -114,7 +117,7 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
 
 ###<a name="docker-compose-cloud"></a>Using Docker Compose with Weave Cloud
 
-First you will need to obtain a service-token from Weave Cloud by signing up at [https://cloud.weave.works](https://cloud.weave.works/).
+First, obtain a service-token from Weave Cloud by signing up at [https://cloud.weave.works](https://cloud.weave.works/).
 
 To install Scope on your local Docker machine with Weave Cloud and use Docker Compose, run the following commands, using one of the two fragments below.
 
@@ -126,7 +129,7 @@ Where,
 
 Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
-After it’s been launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login using your email.  Click 'My Scope' in the top right-hand corner to see the Scope user interface.
+After it’s been launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login.  Click 'View Instance' in the top right-hand corner to see the Scope user interface.
 
 **Docker Compose Format Version 1:**
 
@@ -170,7 +173,7 @@ After Scope has been launched, open your web browser to [https://cloud.weave.wor
 
 ##<a name="k8s"></a>Installing Scope on Kubernetes
 
-To install Scope on a Kubernetes cluster in Standalone Mode, follow these instructions.
+To install Scope onto a Kubernetes cluster in Standalone Mode, follow these instructions.
 
 **Before You Begin**
 
@@ -186,13 +189,13 @@ To enable DaemonSets in an existing cluster, add the `--runtime-config=extension
 
 **Install Scope on Your Cluster**
 
-You can run Scope natively in your Kubernetes cluster using `kubectl` with launch URL as show below.
+You can run Scope natively in your Kubernetes cluster using `kubectl` with a launch URL as show below.
 
-The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is the following:
+The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is by running the following:
 
     kubectl create -f 'https://cloud.weave.works/launch/k8s/weavescope.yaml' --validate=false
 
-This runs a recent Scope image from the Docker Hub and will launch a probe onto every node as well as a single app. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
+This runs a recent Scope image from the Docker Hub and launches a probe onto every node as well as a single app. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
 Allowable parameters for the launcher URL:
 
@@ -203,7 +206,7 @@ Allowable parameters for the launcher URL:
 > **Note:**The `--validate=false` flag is currently required due to a bug in Kubernetes (see
 [kubernetes/kubernetes#24089](https://github.com/kubernetes/kubernetes/issues/24089) for more details
 
-To download and read the Scope manifest:
+To download and read the Scope manifest run:
 
     curl --silent --remote-name https://cloud.weave.works/launch/k8s/weavescope.yaml
 
@@ -219,22 +222,22 @@ Open http://localhost:4040 in your browser. This allows you to access the Scope 
 
 * All the prerequisites from above apply.
 
-* You will need to obtain a service-token from Weave Cloud by signing up at [https://cloud.weave.works](https://cloud.weave.works/).
+* Obtain a service-token from Weave Cloud by signing up at [https://cloud.weave.works](https://cloud.weave.works/).
 
 **Install Scope on Your Cluster**
 
-Then run the following command  to get the latest release of Scope deployed onto a Kubernetes cluster:
+To get the latest release of Scope deployed onto a Kubernetes cluster, run the following:
 
     kubectl create -f 'https://cloud.weave.works/launch/k8s/weavescope.yaml?servie-token=<token>' --validate=false
 
-Where:
+Where,
 
 * `service-token=<token>` is the token that you obtained when you signed up with Weave Cloud.
 
 > **Note:**The `--validate=false` flag is currently required due to a bug in Kubernetes (see
-[kubernetes/kubernetes#24089](https://github.com/kubernetes/kubernetes/issues/24089) for more details
+[kubernetes/kubernetes#24089](https://github.com/kubernetes/kubernetes/issues/24089) for details.
 
-This runs a recent Scope image from the Docker Hub and will launch a probe onto every node, pointing them at Weave Cloud. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
+This runs a recent Scope image from the Docker Hub and launches a probe onto every node, pointing them at Weave Cloud. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
 **Open Scope in Your Browser**
 
