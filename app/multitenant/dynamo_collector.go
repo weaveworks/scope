@@ -330,8 +330,12 @@ func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time
 		return nil, err
 	}
 
+	stores := []ReportStore{c.inProcess}
+	if c.memcache != nil {
+		stores = append(stores, c.memcache)
+	}
 	var reports []report.Report
-	for _, store := range []ReportStore{c.inProcess, c.memcache} {
+	for _, store := range stores {
 		if store == nil {
 			continue
 		}
