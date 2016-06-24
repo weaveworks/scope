@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -203,6 +204,18 @@ func main() {
 		flags.app.weaveHostname = weaveHostname
 	}
 	flags.probe.noApp = *noApp || *probeOnly
+
+	// Special case for #1191, check listen address is well formed
+	_, _, err := net.SplitHostPort(flags.app.listen)
+	if err != nil {
+		log.Errorf("Invalid value for -app.http.address: %v", err)
+	}
+	if flags.probe.httpListen != "" {
+		_, _, err := net.SplitHostPort(flags.probe.httpListen)
+		if err != nil {
+			log.Errorf("Invalid value for -app.http.address: %v", err)
+		}
+	}
 
 	if dryRun {
 		return
