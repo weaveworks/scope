@@ -41,7 +41,8 @@ type Weave struct {
 	statusCache weave.Status
 	psCache     map[string]weave.PSEntry
 
-	backoff backoff.Interface
+	backoff   backoff.Interface
+	psBackoff backoff.Interface
 }
 
 // NewWeave returns a new Weave tagger based on the Weave router at
@@ -53,9 +54,14 @@ func NewWeave(hostID string, client weave.Client) *Weave {
 		psCache: map[string]weave.PSEntry{},
 	}
 
-	w.backoff = backoff.New(w.collect, "collecting weave info")
+	w.backoff = backoff.New(w.status, "collecting weave status")
 	w.backoff.SetInitialBackoff(5 * time.Second)
 	go w.backoff.Start()
+
+	w.psBackoff = backoff.New(w.ps, "collecting weave ps")
+	w.psBackoff.SetInitialBackoff(10 * time.Second)
+	go w.psBackoff.Start()
+
 	return w
 }
 
@@ -65,52 +71,35 @@ func (*Weave) Name() string { return "Weave" }
 // Stop gathering weave ps output.
 func (w *Weave) Stop() {
 	w.backoff.Stop()
+	w.psBackoff.Stop()
 }
 
-func (w *Weave) collect() (done bool, err error) {
-	// If we fail to get info from weave
-	// we should wipe away stale data
-	defer func() {
-		if err != nil {
-			w.mtx.Lock()
-			defer w.mtx.Unlock()
-			w.statusCache = weave.Status{}
-			w.psCache = map[string]weave.PSEntry{}
-		}
-	}()
-
-	if err = w.ps(); err != nil {
-		return
-	}
-	if err = w.status(); err != nil {
-		return
-	}
-
-	return
-}
-
-func (w *Weave) ps() error {
+func (w *Weave) ps() (bool, error) {
 	psEntriesByPrefix, err := w.client.PS()
-	if err != nil {
-		return err
-	}
 
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
-	w.psCache = psEntriesByPrefix
-	return nil
+
+	if err != nil {
+		w.psCache = map[string]weave.PSEntry{}
+	} else {
+		w.psCache = psEntriesByPrefix
+	}
+	return false, err
 }
 
-func (w *Weave) status() error {
+func (w *Weave) status() (bool, error) {
 	status, err := w.client.Status()
-	if err != nil {
-		return err
-	}
 
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
-	w.statusCache = status
-	return nil
+
+	if err != nil {
+		w.statusCache = weave.Status{}
+	} else {
+		w.statusCache = status
+	}
+	return false, err
 }
 
 // Tag implements Tagger.

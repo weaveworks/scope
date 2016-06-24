@@ -180,7 +180,7 @@ func probeMain(flags probeFlags) {
 		}
 	}
 
-	if flags.weaveAddr != "" {
+	if flags.weaveEnabled {
 		client := weave.NewClient(sanitize.URL("http://", 6784, "")(flags.weaveAddr))
 		weave := overlay.NewWeave(hostID, client)
 		defer weave.Stop()
