@@ -123,7 +123,7 @@ func main() {
 	// Flags that apply to both probe and app
 	flag.StringVar(&mode, "mode", "help", "For internal use.")
 	flag.BoolVar(&debug, "debug", false, "Force debug logging.")
-	flag.BoolVar(&dryRun, "dry-run", false, "Don't start scope, just parse the arguments.")
+	flag.BoolVar(&dryRun, "dry-run", false, "Don't start scope, just parse the arguments.  For internal use only.")
 	flag.StringVar(&weaveHostname, "weave.hostname", "", "Hostname to advertise/lookup in WeaveDNS")
 
 	// We need to know how to parse them, but they are mainly interpreted by the entrypoint script.
