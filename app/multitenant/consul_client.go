@@ -169,9 +169,6 @@ func (c *consulClient) WatchPrefix(prefix string, out interface{}, done chan str
 		if index == meta.LastIndex {
 			continue
 		}
-		if index == meta.LastIndex {
-			continue
-		}
 		index = meta.LastIndex
 
 		for _, kvp := range kvps {
