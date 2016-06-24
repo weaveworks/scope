@@ -119,6 +119,20 @@ func (c *MemcacheClient) updateMemcacheServers() error {
 	return c.serverList.SetServers(servers...)
 }
 
+func memcacheStatusCode(err error) string {
+	// See https://godoc.org/github.com/bradfitz/gomemcache/memcache#pkg-variables
+	switch err {
+	case nil:
+		return "200"
+	case memcache.ErrCacheMiss:
+		return "404"
+	case memcache.ErrMalformedKey:
+		return "400"
+	default:
+		return "500"
+	}
+}
+
 // FetchReports gets reports from memcache.
 func (c *MemcacheClient) FetchReports(keys []string) ([]report.Report, []string, error) {
 	var found map[string]*memcache.Item
@@ -172,6 +186,8 @@ func (c *MemcacheClient) FetchReports(keys []string) ([]report.Report, []string,
 
 // StoreBytes stores a report, expecting the report to be serialized already.
 func (c *MemcacheClient) StoreBytes(key string, content []byte) error {
-	item := memcache.Item{Key: key, Value: content, Expiration: c.expiration}
-	return c.client.Set(&item)
+	return timeRequestStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
+		item := memcache.Item{Key: key, Value: content, Expiration: c.expiration}
+		return c.client.Set(&item)
+	})
 }

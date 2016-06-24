@@ -15,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/bluele/gcache"
-	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/nats-io/nats"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
@@ -362,20 +361,6 @@ func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time
 	return append(reports, fetchedReports...), nil
 }
 
-func memcacheStatusCode(err error) string {
-	// See https://godoc.org/github.com/bradfitz/gomemcache/memcache#pkg-variables
-	switch err {
-	case nil:
-		return "200"
-	case memcache.ErrCacheMiss:
-		return "404"
-	case memcache.ErrMalformedKey:
-		return "400"
-	default:
-		return "500"
-	}
-}
-
 func (c *dynamoDBCollector) Report(ctx context.Context) (report.Report, error) {
 	var (
 		now              = time.Now()
@@ -445,9 +430,7 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 
 	// third, put it in memcache
 	if c.memcache != nil {
-		err = timeRequestStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
-			return c.memcache.StoreBytes(s3Key, buf.Bytes())
-		})
+		err = c.memcache.StoreBytes(s3Key, buf.Bytes())
 		if err != nil {
 			// NOTE: We don't abort here because failing to store in memcache
 			// doesn't actually break anything else -- it's just an
