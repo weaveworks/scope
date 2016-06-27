@@ -49,10 +49,11 @@ type Resolver interface {
 }
 
 type staticResolver struct {
-	setters []setter
-	targets []target
-	quit    chan struct{}
-	lookup  LookupIP
+	setters           []setter
+	targets           []target
+	failedResolutions map[string]struct{}
+	quit              chan struct{}
+	lookup            LookupIP
 }
 
 // LookupIP type is used for looking up IPs.
@@ -67,10 +68,11 @@ func (t target) String() string { return net.JoinHostPort(t.host, t.port) }
 // resolve to multiple IPs.  It uses the supplied DNS server name.
 func NewResolver(targets []string, lookup LookupIP, setters ...setter) Resolver {
 	r := staticResolver{
-		targets: prepare(targets),
-		setters: setters,
-		quit:    make(chan struct{}),
-		lookup:  lookup,
+		targets:           prepare(targets),
+		setters:           setters,
+		failedResolutions: map[string]struct{}{},
+		quit:              make(chan struct{}),
+		lookup:            lookup,
 	}
 	go r.loop()
 	return r
@@ -158,9 +160,15 @@ func (r staticResolver) resolveOne(t target) []string {
 		var err error
 		addrs, err = r.lookup(t.host)
 		if err != nil {
-			log.Errorf("Error resolving %s: %v", t.host, err)
+			if _, ok := r.failedResolutions[t.host]; !ok {
+				log.Warnf("Cannot resolve %s: %v", t.host, err)
+				// Only log the error once
+				r.failedResolutions[t.host] = struct{}{}
+			}
 			return []string{}
 		}
+		// Allow logging errors in future resolutions
+		delete(r.failedResolutions, t.host)
 	}
 	endpoints := make([]string, 0, len(addrs))
 	for _, addr := range addrs {
