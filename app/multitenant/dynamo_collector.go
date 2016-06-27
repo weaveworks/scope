@@ -225,7 +225,8 @@ func (c *dynamoDBCollector) CreateTables() error {
 }
 
 // getReportKeys gets the s3 keys for reports in this range
-func (c *dynamoDBCollector) getReportKeys(rowKey string, start, end time.Time) ([]string, error) {
+func (c *dynamoDBCollector) getReportKeys(userid string, row int64, start, end time.Time) ([]string, error) {
+	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
 	var resp *dynamodb.QueryOutput
 	err := timeRequest("Query", dynamoRequestDuration, func() error {
 		var err error
@@ -272,12 +273,8 @@ func (c *dynamoDBCollector) getReportKeys(rowKey string, start, end time.Time) (
 	return result, nil
 }
 
-func (c *dynamoDBCollector) getReports(userid string, row int64, start, end time.Time) ([]report.Report, error) {
-	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
-	missing, err := c.getReportKeys(rowKey, start, end)
-	if err != nil {
-		return nil, err
-	}
+func (c *dynamoDBCollector) getReports(reportKeys []string) ([]report.Report, error) {
+	missing := reportKeys
 
 	stores := []ReportStore{c.inProcess}
 	if c.memcache != nil {
@@ -312,29 +309,35 @@ func (c *dynamoDBCollector) Report(ctx context.Context) (report.Report, error) {
 		start            = now.Add(-15 * time.Second)
 		rowStart, rowEnd = start.UnixNano() / time.Hour.Nanoseconds(), now.UnixNano() / time.Hour.Nanoseconds()
 		userid, err      = c.userIDer(ctx)
-		reports          []report.Report
 	)
 	if err != nil {
 		return report.MakeReport(), err
 	}
 
 	// Queries will only every span 2 rows max.
+	var reportKeys []string
 	if rowStart != rowEnd {
-		reports1, err := c.getReports(userid, rowStart, start, now)
+		reportKeys1, err := c.getReportKeys(userid, rowStart, start, now)
 		if err != nil {
 			return report.MakeReport(), err
 		}
 
-		reports2, err := c.getReports(userid, rowEnd, start, now)
+		reportKeys2, err := c.getReportKeys(userid, rowEnd, start, now)
 		if err != nil {
 			return report.MakeReport(), err
 		}
 
-		reports = append(reports1, reports2...)
+		reportKeys = append(reportKeys, reportKeys1...)
+		reportKeys = append(reportKeys, reportKeys2...)
 	} else {
-		if reports, err = c.getReports(userid, rowEnd, start, now); err != nil {
+		if reportKeys, err = c.getReportKeys(userid, rowEnd, start, now); err != nil {
 			return report.MakeReport(), err
 		}
+	}
+
+	reports, err := c.getReports(reportKeys)
+	if err != nil {
+		return report.MakeReport(), err
 	}
 
 	return c.merger.Merge(reports), nil
