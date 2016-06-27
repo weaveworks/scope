@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -116,11 +117,13 @@ func main() {
 		mode          string
 		debug         bool
 		weaveHostname string
+		dryRun        bool
 	)
 
 	// Flags that apply to both probe and app
 	flag.StringVar(&mode, "mode", "help", "For internal use.")
 	flag.BoolVar(&debug, "debug", false, "Force debug logging.")
+	flag.BoolVar(&dryRun, "dry-run", false, "Don't start scope, just parse the arguments.  For internal use only.")
 	flag.StringVar(&weaveHostname, "weave.hostname", "", "Hostname to advertise/lookup in WeaveDNS")
 
 	// We need to know how to parse them, but they are mainly interpreted by the entrypoint script.
@@ -201,6 +204,22 @@ func main() {
 		flags.app.weaveHostname = weaveHostname
 	}
 	flags.probe.noApp = *noApp || *probeOnly
+
+	// Special case for #1191, check listen address is well formed
+	_, _, err := net.SplitHostPort(flags.app.listen)
+	if err != nil {
+		log.Errorf("Invalid value for -app.http.address: %v", err)
+	}
+	if flags.probe.httpListen != "" {
+		_, _, err := net.SplitHostPort(flags.probe.httpListen)
+		if err != nil {
+			log.Errorf("Invalid value for -app.http.address: %v", err)
+		}
+	}
+
+	if dryRun {
+		return
+	}
 
 	switch mode {
 	case "app":
