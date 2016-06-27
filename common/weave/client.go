@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"strconv"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/exec"
@@ -132,11 +131,6 @@ func (c *client) PS() (map[string]PSEntry, error) {
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
-	defer func() {
-		if err := cmd.Wait(); err != nil {
-			log.Errorf("'weave ps' cmd failed: %v", err)
-		}
-	}()
 
 	psEntriesByPrefix := map[string]PSEntry{}
 	scanner := bufio.NewScanner(out)
@@ -156,10 +150,14 @@ func (c *client) PS() (map[string]PSEntry, error) {
 			IPs:               ips,
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
+	scannerErr := scanner.Err()
+	cmdErr := cmd.Wait()
+	if cmdErr != nil {
+		return nil, cmdErr
 	}
-
+	if scannerErr != nil {
+		return nil, scannerErr
+	}
 	return psEntriesByPrefix, nil
 }
 
@@ -173,7 +171,7 @@ func (c *client) Expose() error {
 		// Alread exposed!
 		return nil
 	}
-	if err := exec.Command("weave", "expose").Run(); err != nil {
+	if err := exec.Command("weave", "--local", "expose").Run(); err != nil {
 		return fmt.Errorf("Error running weave expose: %v", err)
 	}
 	return nil

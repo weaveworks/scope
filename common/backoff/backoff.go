@@ -75,7 +75,7 @@ func (b *backoff) Start() {
 
 		if shouldLog {
 			if err != nil {
-				log.Errorf("Error %s, backing off %s: %s",
+				log.Warnf("Error %s, backing off %s: %s",
 					b.msg, backoff, err)
 			} else {
 				log.Infof("Success %s", b.msg)

@@ -81,6 +81,7 @@ type probeFlags struct {
 	kubernetesAPI      string
 	kubernetesInterval time.Duration
 
+	weaveEnabled  bool
 	weaveAddr     string
 	weaveHostname string
 }
@@ -92,6 +93,7 @@ type appFlags struct {
 	logPrefix string
 	logHTTP   bool
 
+	weaveEnabled   bool
 	weaveAddr      string
 	weaveHostname  string
 	containerName  string
@@ -116,6 +118,7 @@ func main() {
 		flags         = flags{}
 		mode          string
 		debug         bool
+		weaveEnabled  bool
 		weaveHostname string
 		dryRun        bool
 	)
@@ -124,6 +127,7 @@ func main() {
 	flag.StringVar(&mode, "mode", "help", "For internal use.")
 	flag.BoolVar(&debug, "debug", false, "Force debug logging.")
 	flag.BoolVar(&dryRun, "dry-run", false, "Don't start scope, just parse the arguments.  For internal use only.")
+	flag.BoolVar(&weaveEnabled, "weave", true, "Enable Weave Net integrations.")
 	flag.StringVar(&weaveHostname, "weave.hostname", "", "Hostname to advertise/lookup in WeaveDNS")
 
 	// We need to know how to parse them, but they are mainly interpreted by the entrypoint script.
@@ -203,6 +207,8 @@ func main() {
 		flags.probe.weaveHostname = weaveHostname
 		flags.app.weaveHostname = weaveHostname
 	}
+	flags.probe.weaveEnabled = weaveEnabled
+	flags.app.weaveEnabled = weaveEnabled
 	flags.probe.noApp = *noApp || *probeOnly
 
 	// Special case for #1191, check listen address is well formed

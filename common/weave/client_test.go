@@ -177,7 +177,7 @@ func TestExpose(t *testing.T) {
 
 	psCalled, exposeCalled := false, false
 	exec.Command = func(name string, args ...string) exec.Cmd {
-		if args[0] == "expose" {
+		if len(args) >= 2 && args[1] == "expose" {
 			exposeCalled = true
 			return testExec.NewMockCmdString("")
 		}
