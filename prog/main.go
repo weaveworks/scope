@@ -135,8 +135,8 @@ func main() {
 	flag.Bool("no-probe", false, "Don't run the probe.")
 
 	// Probe flags
-	flag.StringVar(&flags.probe.token, "service-token", "", "Token to use to authenticate with scope.weave.works")
-	flag.StringVar(&flags.probe.token, "probe.token", "", "Token to use to authenticate with scope.weave.works")
+	flag.StringVar(&flags.probe.token, "service-token", "", "Token to use to authenticate with cloud.weave.works")
+	flag.StringVar(&flags.probe.token, "probe.token", "", "Token to use to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
 	flag.DurationVar(&flags.probe.publishInterval, "probe.publish.interval", 3*time.Second, "publish (output) interval")
 	flag.DurationVar(&flags.probe.spyInterval, "probe.spy.interval", time.Second, "spy (scan) interval")
