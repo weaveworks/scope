@@ -93,7 +93,7 @@ type DynamoDBCollector interface {
 
 // ReportStore is a thing that we can get reports from.
 type ReportStore interface {
-	FetchReports([]string) ([]report.Report, []string, error)
+	FetchReports([]string) (map[string]report.Report, []string, error)
 }
 
 type dynamoDBCollector struct {
@@ -291,7 +291,10 @@ func (c *dynamoDBCollector) getReports(reportKeys []string) ([]report.Report, er
 		if err != nil {
 			log.Warningf("Error fetching from cache: %v", err)
 		}
-		reports = append(reports, found...)
+		for key, report := range found {
+			c.inProcess.StoreReport(key, report)
+			reports = append(reports, report)
+		}
 		if len(missing) == 0 {
 			return reports, nil
 		}
@@ -497,13 +500,13 @@ func newInProcessStore(size int, expiration time.Duration) inProcessStore {
 }
 
 // FetchReports retrieves the given reports from the store.
-func (c inProcessStore) FetchReports(keys []string) ([]report.Report, []string, error) {
-	found := []report.Report{}
+func (c inProcessStore) FetchReports(keys []string) (map[string]report.Report, []string, error) {
+	found := map[string]report.Report{}
 	missing := []string{}
 	for _, key := range keys {
 		rpt, err := c.cache.Get(key)
 		if err == nil {
-			found = append(found, rpt.(report.Report))
+			found[key] = rpt.(report.Report)
 		} else {
 			missing = append(missing, key)
 		}

@@ -134,7 +134,7 @@ func memcacheStatusCode(err error) string {
 }
 
 // FetchReports gets reports from memcache.
-func (c *MemcacheClient) FetchReports(keys []string) ([]report.Report, []string, error) {
+func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, []string, error) {
 	var found map[string]*memcache.Item
 	err := timeRequestStatus("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
 		var err error
@@ -165,17 +165,17 @@ func (c *MemcacheClient) FetchReports(keys []string) ([]report.Report, []string,
 				ch <- result{key: key}
 				return
 			}
-			ch <- result{report: rep}
+			ch <- result{key: key, report: rep}
 		}(key)
 	}
 
-	var reports []report.Report
+	var reports map[string]report.Report
 	for i := 0; i < len(keys)-len(missing); i++ {
 		r := <-ch
 		if r.report == nil {
 			missing = append(missing, r.key)
 		} else {
-			reports = append(reports, *r.report)
+			reports[r.key] = *r.report
 		}
 	}
 

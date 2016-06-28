@@ -38,7 +38,7 @@ func NewS3Client(config *aws.Config, bucketName string) S3Store {
 }
 
 // FetchReports fetches multiple reports in parallel from S3.
-func (store *S3Store) FetchReports(keys []string) ([]report.Report, []string, error) {
+func (store *S3Store) FetchReports(keys []string) (map[string]report.Report, []string, error) {
 	type result struct {
 		key    string
 		report *report.Report
@@ -55,13 +55,13 @@ func (store *S3Store) FetchReports(keys []string) ([]report.Report, []string, er
 		}(key)
 	}
 
-	reports := []report.Report{}
+	reports := map[string]report.Report{}
 	for range keys {
 		r := <-ch
 		if r.err != nil {
 			return nil, []string{}, r.err
 		}
-		reports = append(reports, *r.report)
+		reports[r.key] = *r.report
 	}
 	return reports, []string{}, nil
 }
