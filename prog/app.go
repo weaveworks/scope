@@ -99,10 +99,11 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 		if err != nil {
 			return nil, err
 		}
-		tableName := strings.TrimPrefix(parsed.Path, "/")
 		bucketName := strings.TrimPrefix(s3.Path, "/")
+		s3Store := multitenant.NewS3Client(s3Config, bucketName)
+		tableName := strings.TrimPrefix(parsed.Path, "/")
 		dynamoCollector, err := multitenant.NewDynamoDBCollector(
-			userIDer, dynamoDBConfig, s3Config, tableName, bucketName, natsHostname,
+			userIDer, dynamoDBConfig, tableName, &s3Store, natsHostname,
 			memcachedHostname, memcachedTimeout, memcachedService,
 		)
 		if err != nil {

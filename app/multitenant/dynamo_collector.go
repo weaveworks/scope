@@ -128,9 +128,10 @@ type watchKey struct {
 // https://github.com/aws/aws-sdk-go/wiki/common-examples
 func NewDynamoDBCollector(
 	userIDer UserIDer,
-	dynamoDBConfig, s3Config *aws.Config,
-	tableName, bucketName, natsHost, memcachedHost string,
-	memcachedTimeout time.Duration, memcachedService string,
+	dynamoDBConfig *aws.Config, tableName string,
+	s3Store *S3Store,
+	natsHost,
+	memcachedHost string, memcachedTimeout time.Duration, memcachedService string,
 ) (DynamoDBCollector, error) {
 	var nc *nats.Conn
 	if natsHost != "" {
@@ -140,8 +141,6 @@ func NewDynamoDBCollector(
 			return nil, err
 		}
 	}
-
-	s3Store := NewS3Client(s3Config, bucketName)
 
 	var memcacheClient *MemcacheClient
 	if memcachedHost != "" {
@@ -161,7 +160,7 @@ func NewDynamoDBCollector(
 
 	return &dynamoDBCollector{
 		db:        dynamodb.New(session.New(dynamoDBConfig)),
-		s3:        &s3Store,
+		s3:        s3Store,
 		userIDer:  userIDer,
 		tableName: tableName,
 		merger:    app.NewSmartMerger(),
