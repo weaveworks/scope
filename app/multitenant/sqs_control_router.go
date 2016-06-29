@@ -24,8 +24,8 @@ var (
 	rpcTimeout         = time.Minute
 	sqsRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: "scope",
-		Name:      "sqs_request_duration_nanoseconds",
-		Help:      "Time spent doing SQS requests.",
+		Name:      "sqs_request_duration_seconds",
+		Help:      "Time in seconds spent doing SQS requests.",
 	}, []string{"method", "status_code"})
 )
 
@@ -98,10 +98,10 @@ func (cr *sqsControlRouter) getOrCreateQueue(name string) (*string, error) {
 	})
 	duration := time.Now().Sub(start)
 	if err != nil {
-		sqsRequestDuration.WithLabelValues("CreateQueue", "500").Observe(float64(duration.Nanoseconds()))
+		sqsRequestDuration.WithLabelValues("CreateQueue", "500").Observe(duration.Seconds())
 		return nil, err
 	}
-	sqsRequestDuration.WithLabelValues("CreateQueue", "200").Observe(float64(duration.Nanoseconds()))
+	sqsRequestDuration.WithLabelValues("CreateQueue", "200").Observe(duration.Seconds())
 	return createQueueRes.QueueUrl, nil
 }
 
@@ -131,11 +131,11 @@ func (cr *sqsControlRouter) loop() {
 		})
 		duration := time.Now().Sub(start)
 		if err != nil {
-			sqsRequestDuration.WithLabelValues("ReceiveMessage", "500").Observe(float64(duration.Nanoseconds()))
+			sqsRequestDuration.WithLabelValues("ReceiveMessage", "500").Observe(duration.Seconds())
 			log.Errorf("Error receiving message from %s: %v", *responseQueueURL, err)
 			continue
 		}
-		sqsRequestDuration.WithLabelValues("ReceiveMessage", "200").Observe(float64(duration.Nanoseconds()))
+		sqsRequestDuration.WithLabelValues("ReceiveMessage", "200").Observe(duration.Seconds())
 
 		if len(res.Messages) == 0 {
 			continue
@@ -162,9 +162,9 @@ func (cr *sqsControlRouter) deleteMessages(queueURL *string, messages []*sqs.Mes
 	})
 	duration := time.Now().Sub(start)
 	if err != nil {
-		sqsRequestDuration.WithLabelValues("DeleteMessageBatch", "500").Observe(float64(duration.Nanoseconds()))
+		sqsRequestDuration.WithLabelValues("DeleteMessageBatch", "500").Observe(duration.Seconds())
 	} else {
-		sqsRequestDuration.WithLabelValues("DeleteMessageBatch", "200").Observe(float64(duration.Nanoseconds()))
+		sqsRequestDuration.WithLabelValues("DeleteMessageBatch", "200").Observe(duration.Seconds())
 	}
 	return err
 }
@@ -202,9 +202,9 @@ func (cr *sqsControlRouter) sendMessage(queueURL *string, message interface{}) e
 	})
 	duration := time.Now().Sub(start)
 	if err != nil {
-		sqsRequestDuration.WithLabelValues("SendMessage", "500").Observe(float64(duration.Nanoseconds()))
+		sqsRequestDuration.WithLabelValues("SendMessage", "500").Observe(duration.Seconds())
 	} else {
-		sqsRequestDuration.WithLabelValues("SendMessage", "200").Observe(float64(duration.Nanoseconds()))
+		sqsRequestDuration.WithLabelValues("SendMessage", "200").Observe(duration.Seconds())
 	}
 	return err
 }
@@ -229,10 +229,10 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 	})
 	duration := time.Now().Sub(start)
 	if err != nil {
-		sqsRequestDuration.WithLabelValues("GetQueueUrl", "500").Observe(float64(duration.Nanoseconds()))
+		sqsRequestDuration.WithLabelValues("GetQueueUrl", "500").Observe(duration.Seconds())
 		return xfer.Response{}, err
 	}
-	sqsRequestDuration.WithLabelValues("GetQueueUrl", "200").Observe(float64(duration.Nanoseconds()))
+	sqsRequestDuration.WithLabelValues("GetQueueUrl", "200").Observe(duration.Seconds())
 
 	// Add a response channel before we send the request, to prevent races
 	id := fmt.Sprintf("request-%s-%d", userID, rand.Int63())
@@ -252,7 +252,7 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 		Request:          req,
 		ResponseQueueURL: *responseQueueURL,
 	}); err != nil {
-		sqsRequestDuration.WithLabelValues("GetQueueUrl", "500").Observe(float64(duration.Nanoseconds()))
+		sqsRequestDuration.WithLabelValues("GetQueueUrl", "500").Observe(duration.Seconds())
 		return xfer.Response{}, err
 	}
 
@@ -334,11 +334,11 @@ func (pw *probeWorker) loop() {
 		})
 		duration := time.Now().Sub(start)
 		if err != nil {
-			sqsRequestDuration.WithLabelValues("ReceiveMessage", "500").Observe(float64(duration.Nanoseconds()))
+			sqsRequestDuration.WithLabelValues("ReceiveMessage", "500").Observe(duration.Seconds())
 			log.Errorf("Error recieving message: %v", err)
 			continue
 		}
-		sqsRequestDuration.WithLabelValues("ReceiveMessage", "200").Observe(float64(duration.Nanoseconds()))
+		sqsRequestDuration.WithLabelValues("ReceiveMessage", "200").Observe(duration.Seconds())
 
 		if len(res.Messages) == 0 {
 			continue

@@ -36,7 +36,7 @@ func (i Instrument) Wrap(next http.Handler) http.Handler {
 			status = strconv.Itoa(interceptor.statusCode)
 			took   = time.Since(begin)
 		)
-		i.Duration.WithLabelValues(r.Method, route, status, isWS).Observe(float64(took.Nanoseconds()))
+		i.Duration.WithLabelValues(r.Method, route, status, isWS).Observe(took.Seconds())
 	})
 }
 
