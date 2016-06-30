@@ -1,0 +1,96 @@
+package multitenant
+
+import (
+	"bytes"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/weaveworks/scope/report"
+)
+
+var (
+	s3RequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Namespace: "scope",
+		Name:      "s3_request_duration_seconds",
+		Help:      "Time in seconds spent doing S3 requests.",
+	}, []string{"method", "status_code"})
+)
+
+// S3Store is an S3 client that stores and retrieves Reports.
+type S3Store struct {
+	s3         *s3.S3
+	bucketName string
+}
+
+func init() {
+	prometheus.MustRegister(s3RequestDuration)
+}
+
+// NewS3Client creates a new S3 client.
+func NewS3Client(config *aws.Config, bucketName string) S3Store {
+	return S3Store{
+		s3:         s3.New(session.New(config)),
+		bucketName: bucketName,
+	}
+}
+
+// FetchReports fetches multiple reports in parallel from S3.
+func (store *S3Store) FetchReports(keys []string) (map[string]report.Report, []string, error) {
+	type result struct {
+		key    string
+		report *report.Report
+		err    error
+	}
+
+	ch := make(chan result, len(keys))
+
+	for _, key := range keys {
+		go func(key string) {
+			r := result{key: key}
+			r.report, r.err = store.fetchReport(key)
+			ch <- r
+		}(key)
+	}
+
+	reports := map[string]report.Report{}
+	for range keys {
+		r := <-ch
+		if r.err != nil {
+			return nil, []string{}, r.err
+		}
+		reports[r.key] = *r.report
+	}
+	return reports, []string{}, nil
+}
+
+func (store *S3Store) fetchReport(key string) (*report.Report, error) {
+	var resp *s3.GetObjectOutput
+	err := timeRequest("Get", s3RequestDuration, func() error {
+		var err error
+		resp, err = store.s3.GetObject(&s3.GetObjectInput{
+			Bucket: aws.String(store.bucketName),
+			Key:    aws.String(key),
+		})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return report.MakeFromBinary(resp.Body)
+}
+
+// StoreBytes stores a report in S3, expecting the report to be serialized
+// already.
+func (store *S3Store) StoreBytes(key string, content []byte) error {
+	return timeRequest("Put", s3RequestDuration, func() error {
+		_, err := store.s3.PutObject(&s3.PutObjectInput{
+			Body:   bytes.NewReader(content),
+			Bucket: aws.String(store.bucketName),
+			Key:    aws.String(key),
+		})
+		return err
+	})
+}

@@ -27,6 +27,11 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 )
 
+const (
+	memcacheExpiration     = 15 // seconds
+	memcacheUpdateInterval = 1 * time.Minute
+)
+
 var (
 	requestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: "scope",
@@ -99,21 +104,46 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 		if err != nil {
 			return nil, err
 		}
-		tableName := strings.TrimPrefix(parsed.Path, "/")
 		bucketName := strings.TrimPrefix(s3.Path, "/")
-		dynamoCollector, err := multitenant.NewDynamoDBCollector(
-			userIDer, dynamoDBConfig, s3Config, tableName, bucketName, natsHostname,
-			memcachedHostname, memcachedTimeout, memcachedService,
+		tableName := strings.TrimPrefix(parsed.Path, "/")
+		s3Store := multitenant.NewS3Client(s3Config, bucketName)
+		var memcacheClient *multitenant.MemcacheClient
+		if memcachedHostname != "" {
+			memcacheClient, err = multitenant.NewMemcacheClient(
+				memcachedHostname, memcachedTimeout, memcachedService,
+				memcacheUpdateInterval, memcacheExpiration,
+			)
+			if err != nil {
+				// TODO(jml): Ideally, we wouldn't abort here, we would instead
+				// log errors when we try to use the memcache & fail to do so, as
+				// aborting here introduces ordering dependencies into our
+				// deployment.
+				//
+				// Note: this error only happens when either the memcachedHost
+				// or any of the SRV records that it points to fail to
+				// resolve.
+				return nil, err
+			}
+		}
+		awsCollector, err := multitenant.NewAWSCollector(
+			multitenant.AWSCollectorConfig{
+				UserIDer:       userIDer,
+				DynamoDBConfig: dynamoDBConfig,
+				DynamoTable:    tableName,
+				S3Store:        &s3Store,
+				NatsHost:       natsHostname,
+				MemcacheClient: memcacheClient,
+			},
 		)
 		if err != nil {
 			return nil, err
 		}
 		if createTables {
-			if err := dynamoCollector.CreateTables(); err != nil {
+			if err := awsCollector.CreateTables(); err != nil {
 				return nil, err
 			}
 		}
-		return dynamoCollector, nil
+		return awsCollector, nil
 	}
 
 	return nil, fmt.Errorf("Invalid collector '%s'", collectorURL)

@@ -119,8 +119,22 @@ func (c *MemcacheClient) updateMemcacheServers() error {
 	return c.serverList.SetServers(servers...)
 }
 
+func memcacheStatusCode(err error) string {
+	// See https://godoc.org/github.com/bradfitz/gomemcache/memcache#pkg-variables
+	switch err {
+	case nil:
+		return "200"
+	case memcache.ErrCacheMiss:
+		return "404"
+	case memcache.ErrMalformedKey:
+		return "400"
+	default:
+		return "500"
+	}
+}
+
 // FetchReports gets reports from memcache.
-func (c *MemcacheClient) FetchReports(keys []string) ([]report.Report, []string, error) {
+func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, []string, error) {
 	var found map[string]*memcache.Item
 	err := timeRequestStatus("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
 		var err error
@@ -151,17 +165,17 @@ func (c *MemcacheClient) FetchReports(keys []string) ([]report.Report, []string,
 				ch <- result{key: key}
 				return
 			}
-			ch <- result{report: rep}
+			ch <- result{key: key, report: rep}
 		}(key)
 	}
 
-	var reports []report.Report
+	var reports map[string]report.Report
 	for i := 0; i < len(keys)-len(missing); i++ {
 		r := <-ch
 		if r.report == nil {
 			missing = append(missing, r.key)
 		} else {
-			reports = append(reports, *r.report)
+			reports[r.key] = *r.report
 		}
 	}
 
@@ -172,6 +186,8 @@ func (c *MemcacheClient) FetchReports(keys []string) ([]report.Report, []string,
 
 // StoreBytes stores a report, expecting the report to be serialized already.
 func (c *MemcacheClient) StoreBytes(key string, content []byte) error {
-	item := memcache.Item{Key: key, Value: content, Expiration: c.expiration}
-	return c.client.Set(&item)
+	return timeRequestStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
+		item := memcache.Item{Key: key, Value: content, Expiration: c.expiration}
+		return c.client.Set(&item)
+	})
 }
