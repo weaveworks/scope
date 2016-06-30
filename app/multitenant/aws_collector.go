@@ -83,8 +83,8 @@ func init() {
 	prometheus.MustRegister(natsRequests)
 }
 
-// DynamoDBCollector is a Collector which can also CreateTables
-type DynamoDBCollector interface {
+// AWSCollector is a Collector which can also CreateTables
+type AWSCollector interface {
 	app.Collector
 	CreateTables() error
 }
@@ -94,7 +94,7 @@ type ReportStore interface {
 	FetchReports([]string) (map[string]report.Report, []string, error)
 }
 
-type dynamoDBCollector struct {
+type awsCollector struct {
 	userIDer  UserIDer
 	db        *dynamodb.DynamoDB
 	s3        *S3Store
@@ -122,15 +122,15 @@ type watchKey struct {
 	c      chan struct{}
 }
 
-// NewDynamoDBCollector the reaper of souls
+// NewAWSCollector the elastic reaper of souls
 // https://github.com/aws/aws-sdk-go/wiki/common-examples
-func NewDynamoDBCollector(
+func NewAWSCollector(
 	userIDer UserIDer,
 	dynamoDBConfig *aws.Config, tableName string,
 	s3Store *S3Store,
 	natsHost string,
 	memcacheClient *MemcacheClient,
-) (DynamoDBCollector, error) {
+) (AWSCollector, error) {
 	var nc *nats.Conn
 	if natsHost != "" {
 		var err error
@@ -140,7 +140,7 @@ func NewDynamoDBCollector(
 		}
 	}
 
-	return &dynamoDBCollector{
+	return &awsCollector{
 		db:        dynamodb.New(session.New(dynamoDBConfig)),
 		s3:        s3Store,
 		userIDer:  userIDer,
@@ -153,8 +153,8 @@ func NewDynamoDBCollector(
 	}, nil
 }
 
-// CreateDynamoDBTables creates the required tables in dynamodb
-func (c *dynamoDBCollector) CreateTables() error {
+// CreateTables creates the required tables in dynamodb
+func (c *awsCollector) CreateTables() error {
 	// see if tableName exists
 	resp, err := c.db.ListTables(&dynamodb.ListTablesInput{
 		Limit: aws.Int64(10),
@@ -206,7 +206,7 @@ func (c *dynamoDBCollector) CreateTables() error {
 }
 
 // getReportKeys gets the s3 keys for reports in this range
-func (c *dynamoDBCollector) getReportKeys(userid string, row int64, start, end time.Time) ([]string, error) {
+func (c *awsCollector) getReportKeys(userid string, row int64, start, end time.Time) ([]string, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
 	var resp *dynamodb.QueryOutput
 	err := timeRequest("Query", dynamoRequestDuration, func() error {
@@ -254,7 +254,7 @@ func (c *dynamoDBCollector) getReportKeys(userid string, row int64, start, end t
 	return result, nil
 }
 
-func (c *dynamoDBCollector) getReports(reportKeys []string) ([]report.Report, error) {
+func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) {
 	missing := reportKeys
 
 	stores := []ReportStore{c.inProcess}
@@ -287,7 +287,7 @@ func (c *dynamoDBCollector) getReports(reportKeys []string) ([]report.Report, er
 	return reports, nil
 }
 
-func (c *dynamoDBCollector) Report(ctx context.Context) (report.Report, error) {
+func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 	var (
 		now              = time.Now()
 		start            = now.Add(-15 * time.Second)
@@ -327,7 +327,7 @@ func (c *dynamoDBCollector) Report(ctx context.Context) (report.Report, error) {
 	return c.merger.Merge(reports), nil
 }
 
-func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
+func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 	userid, err := c.userIDer(ctx)
 	if err != nil {
 		return err
@@ -406,7 +406,7 @@ func (c *dynamoDBCollector) Add(ctx context.Context, rep report.Report) error {
 	return nil
 }
 
-func (c *dynamoDBCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
+func (c *awsCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
 	userid, err := c.userIDer(ctx)
 	if err != nil {
 		log.Errorf("Error getting user id in WaitOn: %v", err)
@@ -447,7 +447,7 @@ func (c *dynamoDBCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
 	}()
 }
 
-func (c *dynamoDBCollector) UnWait(ctx context.Context, waiter chan struct{}) {
+func (c *awsCollector) UnWait(ctx context.Context, waiter chan struct{}) {
 	userid, err := c.userIDer(ctx)
 	if err != nil {
 		log.Errorf("Error getting user id in WaitOn: %v", err)

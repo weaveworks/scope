@@ -125,7 +125,7 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 				return nil, err
 			}
 		}
-		dynamoCollector, err := multitenant.NewDynamoDBCollector(
+		awsCollector, err := multitenant.NewAWSCollector(
 			userIDer, dynamoDBConfig, tableName, &s3Store, natsHostname,
 			memcacheClient,
 		)
@@ -133,11 +133,11 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 			return nil, err
 		}
 		if createTables {
-			if err := dynamoCollector.CreateTables(); err != nil {
+			if err := awsCollector.CreateTables(); err != nil {
 				return nil, err
 			}
 		}
-		return dynamoCollector, nil
+		return awsCollector, nil
 	}
 
 	return nil, fmt.Errorf("Invalid collector '%s'", collectorURL)
