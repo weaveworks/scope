@@ -23,14 +23,12 @@ import (
 )
 
 const (
-	hourField              = "hour"
-	tsField                = "ts"
-	reportField            = "report"
-	reportCacheSize        = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
-	reportCacheExpiration  = 15 * time.Second
-	memcacheExpiration     = 15 // seconds
-	memcacheUpdateInterval = 1 * time.Minute
-	natsTimeout            = 10 * time.Second
+	hourField             = "hour"
+	tsField               = "ts"
+	reportField           = "report"
+	reportCacheSize       = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
+	reportCacheExpiration = 15 * time.Second
+	natsTimeout           = 10 * time.Second
 )
 
 var (
@@ -130,30 +128,14 @@ func NewDynamoDBCollector(
 	userIDer UserIDer,
 	dynamoDBConfig *aws.Config, tableName string,
 	s3Store *S3Store,
-	natsHost,
-	memcachedHost string, memcachedTimeout time.Duration, memcachedService string,
+	natsHost string,
+	memcacheClient *MemcacheClient,
 ) (DynamoDBCollector, error) {
 	var nc *nats.Conn
 	if natsHost != "" {
 		var err error
 		nc, err = nats.Connect(natsHost)
 		if err != nil {
-			return nil, err
-		}
-	}
-
-	var memcacheClient *MemcacheClient
-	if memcachedHost != "" {
-		var err error
-		memcacheClient, err = NewMemcacheClient(memcachedHost, memcachedTimeout, memcachedService, memcacheUpdateInterval, memcacheExpiration)
-		if err != nil {
-			// TODO(jml): Ideally, we wouldn't abort here, we would instead
-			// log errors when we try to use the memcache & fail to do so, as
-			// aborting here introduces ordering dependencies into our
-			// deployment.
-			//
-			// Note: this error only happens when either the memcachedHost or
-			// any of the SRV records that it points to fail to resolve.
 			return nil, err
 		}
 	}

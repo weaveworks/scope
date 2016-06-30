@@ -27,6 +27,11 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 )
 
+const (
+	memcacheExpiration     = 15 // seconds
+	memcacheUpdateInterval = 1 * time.Minute
+)
+
 var (
 	requestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: "scope",
@@ -100,11 +105,29 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 			return nil, err
 		}
 		bucketName := strings.TrimPrefix(s3.Path, "/")
-		s3Store := multitenant.NewS3Client(s3Config, bucketName)
 		tableName := strings.TrimPrefix(parsed.Path, "/")
+		s3Store := multitenant.NewS3Client(s3Config, bucketName)
+		var memcacheClient *multitenant.MemcacheClient
+		if memcachedHostname != "" {
+			memcacheClient, err = multitenant.NewMemcacheClient(
+				memcachedHostname, memcachedTimeout, memcachedService,
+				memcacheUpdateInterval, memcacheExpiration,
+			)
+			if err != nil {
+				// TODO(jml): Ideally, we wouldn't abort here, we would instead
+				// log errors when we try to use the memcache & fail to do so, as
+				// aborting here introduces ordering dependencies into our
+				// deployment.
+				//
+				// Note: this error only happens when either the memcachedHost
+				// or any of the SRV records that it points to fail to
+				// resolve.
+				return nil, err
+			}
+		}
 		dynamoCollector, err := multitenant.NewDynamoDBCollector(
 			userIDer, dynamoDBConfig, tableName, &s3Store, natsHostname,
-			memcachedHostname, memcachedTimeout, memcachedService,
+			memcacheClient,
 		)
 		if err != nil {
 			return nil, err
