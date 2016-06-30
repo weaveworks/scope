@@ -37,9 +37,13 @@ This script downloads and runs a recent Scope image from the Docker Hub. Scope n
 
 After it’s been launched, open your browser to `http://localhost:4040`.
 
-> **Note:** If you're using boot2docker, replace localhost with the output of boot2docker IP.
+If you are using docker-machine, replace localhost with the IP after you've run, `docker-machine ip <VM name>`.
 
-> Scope allows anyone with access to the UI control over your containers: as such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally traffic between the app and the probe is currently insecure and should also not traverse the Internet.
+Where, 
+
+ * `<VM name>` is the name you gave to your virtual machine with docker-machine.
+
+> **Note:** Scope allows anyone with access to the UI control over your containers: as such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally traffic between the app and the probe is currently insecure and should also not traverse the Internet.
 
 ###<a name="docker-weave-cloud"></a>Using Weave Cloud
 
@@ -53,11 +57,11 @@ Then, install Scope onto your local Docker machine and start using Weave Cloud:
 
 Where,
 
-* `--service-token=<token>` is the token that you obtained when you signed up.
+* `--service-token=<token>` is the token you obtained after you signed up for Weave Cloud.
 
 This script downloads and runs a recent Scope docker image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
-After Scope has been launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login.  Click 'View Instance' in the top right-hand corner to see the Scope user interface.
+After Scope has been launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login. Click 'View Instance' in the top right-hand corner to see the Scope user interface.
 
 ###<a name="net-scope"></a> Weave Net and Scope
 
