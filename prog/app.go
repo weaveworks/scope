@@ -126,8 +126,14 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 			}
 		}
 		awsCollector, err := multitenant.NewAWSCollector(
-			userIDer, dynamoDBConfig, tableName, &s3Store, natsHostname,
-			memcacheClient,
+			multitenant.AWSCollectorConfig{
+				UserIDer:       userIDer,
+				DynamoDBConfig: dynamoDBConfig,
+				DynamoTable:    tableName,
+				S3Store:        &s3Store,
+				NatsHost:       natsHostname,
+				MemcacheClient: memcacheClient,
+			},
 		)
 		if err != nil {
 			return nil, err

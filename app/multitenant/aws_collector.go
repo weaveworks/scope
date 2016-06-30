@@ -94,6 +94,16 @@ type ReportStore interface {
 	FetchReports([]string) (map[string]report.Report, []string, error)
 }
 
+// AWSCollectorConfig has everything we need to make an AWS collector.
+type AWSCollectorConfig struct {
+	UserIDer       UserIDer
+	DynamoDBConfig *aws.Config
+	DynamoTable    string
+	S3Store        *S3Store
+	NatsHost       string
+	MemcacheClient *MemcacheClient
+}
+
 type awsCollector struct {
 	userIDer  UserIDer
 	db        *dynamodb.DynamoDB
@@ -124,30 +134,24 @@ type watchKey struct {
 
 // NewAWSCollector the elastic reaper of souls
 // https://github.com/aws/aws-sdk-go/wiki/common-examples
-func NewAWSCollector(
-	userIDer UserIDer,
-	dynamoDBConfig *aws.Config, tableName string,
-	s3Store *S3Store,
-	natsHost string,
-	memcacheClient *MemcacheClient,
-) (AWSCollector, error) {
+func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 	var nc *nats.Conn
-	if natsHost != "" {
+	if config.NatsHost != "" {
 		var err error
-		nc, err = nats.Connect(natsHost)
+		nc, err = nats.Connect(config.NatsHost)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return &awsCollector{
-		db:        dynamodb.New(session.New(dynamoDBConfig)),
-		s3:        s3Store,
-		userIDer:  userIDer,
-		tableName: tableName,
+		db:        dynamodb.New(session.New(config.DynamoDBConfig)),
+		s3:        config.S3Store,
+		userIDer:  config.UserIDer,
+		tableName: config.DynamoTable,
 		merger:    app.NewSmartMerger(),
 		inProcess: newInProcessStore(reportCacheSize, reportCacheExpiration),
-		memcache:  memcacheClient,
+		memcache:  config.MemcacheClient,
 		nats:      nc,
 		waiters:   map[watchKey]*nats.Subscription{},
 	}, nil
