@@ -24,8 +24,8 @@ var (
 	rpcTimeout         = time.Minute
 	sqsRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: "scope",
-		Name:      "sqs_request_duration_nanoseconds",
-		Help:      "Time spent doing SQS requests.",
+		Name:      "sqs_request_duration_seconds",
+		Help:      "Time in seconds spent doing SQS requests.",
 	}, []string{"method", "status_code"})
 )
 
@@ -92,16 +92,17 @@ func (cr *sqsControlRouter) getResponseQueueURL() *string {
 
 func (cr *sqsControlRouter) getOrCreateQueue(name string) (*string, error) {
 	// CreateQueue creates a queue or if it already exists, returns url of said queue
-	start := time.Now()
-	createQueueRes, err := cr.service.CreateQueue(&sqs.CreateQueueInput{
-		QueueName: aws.String(name),
+	var createQueueRes *sqs.CreateQueueOutput
+	var err error
+	err = timeRequestStatus("CreateQueue", sqsRequestDuration, nil, func() error {
+		createQueueRes, err = cr.service.CreateQueue(&sqs.CreateQueueInput{
+			QueueName: aws.String(name),
+		})
+		return err
 	})
-	duration := time.Now().Sub(start)
 	if err != nil {
-		sqsRequestDuration.WithLabelValues("CreateQueue", "500").Observe(float64(duration.Nanoseconds()))
 		return nil, err
 	}
-	sqsRequestDuration.WithLabelValues("CreateQueue", "200").Observe(float64(duration.Nanoseconds()))
 	return createQueueRes.QueueUrl, nil
 }
 
@@ -124,18 +125,19 @@ func (cr *sqsControlRouter) loop() {
 	}
 
 	for {
-		start := time.Now()
-		res, err := cr.service.ReceiveMessage(&sqs.ReceiveMessageInput{
-			QueueUrl:        responseQueueURL,
-			WaitTimeSeconds: longPollTime,
+		var res *sqs.ReceiveMessageOutput
+		var err error
+		err = timeRequestStatus("ReceiveMessage", sqsRequestDuration, nil, func() error {
+			res, err = cr.service.ReceiveMessage(&sqs.ReceiveMessageInput{
+				QueueUrl:        responseQueueURL,
+				WaitTimeSeconds: longPollTime,
+			})
+			return err
 		})
-		duration := time.Now().Sub(start)
 		if err != nil {
-			sqsRequestDuration.WithLabelValues("ReceiveMessage", "500").Observe(float64(duration.Nanoseconds()))
 			log.Errorf("Error receiving message from %s: %v", *responseQueueURL, err)
 			continue
 		}
-		sqsRequestDuration.WithLabelValues("ReceiveMessage", "200").Observe(float64(duration.Nanoseconds()))
 
 		if len(res.Messages) == 0 {
 			continue
@@ -155,18 +157,13 @@ func (cr *sqsControlRouter) deleteMessages(queueURL *string, messages []*sqs.Mes
 			Id:            message.MessageId,
 		})
 	}
-	start := time.Now()
-	_, err := cr.service.DeleteMessageBatch(&sqs.DeleteMessageBatchInput{
-		QueueUrl: queueURL,
-		Entries:  entries,
+	return timeRequestStatus("DeleteMessageBatch", sqsRequestDuration, nil, func() error {
+		_, err := cr.service.DeleteMessageBatch(&sqs.DeleteMessageBatchInput{
+			QueueUrl: queueURL,
+			Entries:  entries,
+		})
+		return err
 	})
-	duration := time.Now().Sub(start)
-	if err != nil {
-		sqsRequestDuration.WithLabelValues("DeleteMessageBatch", "500").Observe(float64(duration.Nanoseconds()))
-	} else {
-		sqsRequestDuration.WithLabelValues("DeleteMessageBatch", "200").Observe(float64(duration.Nanoseconds()))
-	}
-	return err
 }
 
 func (cr *sqsControlRouter) handleResponses(res *sqs.ReceiveMessageOutput) {
@@ -195,18 +192,14 @@ func (cr *sqsControlRouter) sendMessage(queueURL *string, message interface{}) e
 		return err
 	}
 	log.Infof("sendMessage to %s: %s", *queueURL, buf.String())
-	start := time.Now()
-	_, err := cr.service.SendMessage(&sqs.SendMessageInput{
-		QueueUrl:    queueURL,
-		MessageBody: aws.String(buf.String()),
+
+	return timeRequestStatus("SendMessage", sqsRequestDuration, nil, func() error {
+		_, err := cr.service.SendMessage(&sqs.SendMessageInput{
+			QueueUrl:    queueURL,
+			MessageBody: aws.String(buf.String()),
+		})
+		return err
 	})
-	duration := time.Now().Sub(start)
-	if err != nil {
-		sqsRequestDuration.WithLabelValues("SendMessage", "500").Observe(float64(duration.Nanoseconds()))
-	} else {
-		sqsRequestDuration.WithLabelValues("SendMessage", "200").Observe(float64(duration.Nanoseconds()))
-	}
-	return err
 }
 
 func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer.Request) (xfer.Response, error) {
@@ -222,17 +215,17 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 		return xfer.Response{}, fmt.Errorf("No SQS queue yet!")
 	}
 
-	probeQueueName := fmt.Sprintf("%sprobe-%s-%s", cr.prefix, userID, probeID)
-	start := time.Now()
-	probeQueueURL, err := cr.service.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: aws.String(probeQueueName),
+	var probeQueueURL *sqs.GetQueueUrlOutput
+	err = timeRequestStatus("GetQueueUrl", sqsRequestDuration, nil, func() error {
+		probeQueueName := fmt.Sprintf("%sprobe-%s-%s", cr.prefix, userID, probeID)
+		probeQueueURL, err = cr.service.GetQueueUrl(&sqs.GetQueueUrlInput{
+			QueueName: aws.String(probeQueueName),
+		})
+		return err
 	})
-	duration := time.Now().Sub(start)
 	if err != nil {
-		sqsRequestDuration.WithLabelValues("GetQueueUrl", "500").Observe(float64(duration.Nanoseconds()))
 		return xfer.Response{}, err
 	}
-	sqsRequestDuration.WithLabelValues("GetQueueUrl", "200").Observe(float64(duration.Nanoseconds()))
 
 	// Add a response channel before we send the request, to prevent races
 	id := fmt.Sprintf("request-%s-%d", userID, rand.Int63())
@@ -247,12 +240,13 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 	}()
 
 	// Next, send the request to that queue
-	if err := cr.sendMessage(probeQueueURL.QueueUrl, sqsRequestMessage{
-		ID:               id,
-		Request:          req,
-		ResponseQueueURL: *responseQueueURL,
+	if err := timeRequestStatus("SendMessage", sqsRequestDuration, nil, func() error {
+		return cr.sendMessage(probeQueueURL.QueueUrl, sqsRequestMessage{
+			ID:               id,
+			Request:          req,
+			ResponseQueueURL: *responseQueueURL,
+		})
 	}); err != nil {
-		sqsRequestDuration.WithLabelValues("GetQueueUrl", "500").Observe(float64(duration.Nanoseconds()))
 		return xfer.Response{}, err
 	}
 
@@ -327,18 +321,19 @@ func (pw *probeWorker) loop() {
 		default:
 		}
 
-		start := time.Now()
-		res, err := pw.router.service.ReceiveMessage(&sqs.ReceiveMessageInput{
-			QueueUrl:        pw.requestQueueURL,
-			WaitTimeSeconds: longPollTime,
+		var res *sqs.ReceiveMessageOutput
+		var err error
+		err = timeRequestStatus("ReceiveMessage", sqsRequestDuration, nil, func() error {
+			res, err = pw.router.service.ReceiveMessage(&sqs.ReceiveMessageInput{
+				QueueUrl:        pw.requestQueueURL,
+				WaitTimeSeconds: longPollTime,
+			})
+			return err
 		})
-		duration := time.Now().Sub(start)
 		if err != nil {
-			sqsRequestDuration.WithLabelValues("ReceiveMessage", "500").Observe(float64(duration.Nanoseconds()))
 			log.Errorf("Error recieving message: %v", err)
 			continue
 		}
-		sqsRequestDuration.WithLabelValues("ReceiveMessage", "200").Observe(float64(duration.Nanoseconds()))
 
 		if len(res.Messages) == 0 {
 			continue

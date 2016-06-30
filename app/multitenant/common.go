@@ -35,6 +35,6 @@ func timeRequestStatus(method string, metric *prometheus.SummaryVec, toStatusCod
 	startTime := time.Now()
 	err := f()
 	duration := time.Now().Sub(startTime)
-	metric.WithLabelValues(method, toStatusCode(err)).Observe(float64(duration.Nanoseconds()))
+	metric.WithLabelValues(method, toStatusCode(err)).Observe(duration.Seconds())
 	return err
 }

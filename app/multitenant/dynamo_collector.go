@@ -33,49 +33,53 @@ const (
 	memcacheExpiration     = 15 // seconds
 	memcacheUpdateInterval = 1 * time.Minute
 	natsTimeout            = 10 * time.Second
-	hitLabel               = "hit"
-	missLabel              = "miss"
 )
 
 var (
 	dynamoRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: "scope",
-		Name:      "dynamo_request_duration_nanoseconds",
-		Help:      "Time spent doing DynamoDB requests.",
+		Name:      "dynamo_request_duration_seconds",
+		Help:      "Time in seconds spent doing DynamoDB requests.",
 	}, []string{"method", "status_code"})
 	dynamoConsumedCapacity = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "scope",
-		Name:      "dynamo_consumed_capacity",
-		Help:      "The capacity units consumed by operation.",
+		Name:      "dynamo_consumed_capacity_total",
+		Help:      "Total count of capacity units consumed per operation.",
 	}, []string{"method"})
 	dynamoValueSize = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "scope",
-		Name:      "dynamo_value_size_bytes",
-		Help:      "Size of data read / written from dynamodb.",
+		Name:      "dynamo_value_size_bytes_total",
+		Help:      "Total size of data read / written from DynamoDB in bytes.",
 	}, []string{"method"})
 
-	inProcessCacheCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+	inProcessCacheRequests = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "scope",
-		Name:      "in_process_cache",
-		Help:      "Reports fetches that hit in-process cache.",
-	}, []string{"result"})
+		Name:      "in_process_cache_requests_total",
+		Help:      "Total count of reports requested from the in-process cache.",
+	})
+
+	inProcessCacheHits = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "in_process_cache_hits_total",
+		Help:      "Total count of reports found in the in-process cache.",
+	})
 
 	reportSize = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "scope",
-		Name:      "report_size_bytes",
-		Help:      "Compressed size of reports received.",
+		Name:      "report_size_bytes_total",
+		Help:      "Total compressed size of reports received in bytes.",
 	})
 
 	s3RequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: "scope",
-		Name:      "s3_request_duration_nanoseconds",
-		Help:      "Time spent doing S3 requests.",
+		Name:      "s3_request_duration_seconds",
+		Help:      "Time in seconds spent doing S3 requests.",
 	}, []string{"method", "status_code"})
 
 	natsRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "scope",
-		Name:      "nats_requests",
-		Help:      "Number of NATS requests.",
+		Name:      "nats_requests_total",
+		Help:      "Total count of NATS requests.",
 	}, []string{"method", "status_code"})
 )
 
@@ -83,7 +87,8 @@ func init() {
 	prometheus.MustRegister(dynamoRequestDuration)
 	prometheus.MustRegister(dynamoConsumedCapacity)
 	prometheus.MustRegister(dynamoValueSize)
-	prometheus.MustRegister(inProcessCacheCounter)
+	prometheus.MustRegister(inProcessCacheRequests)
+	prometheus.MustRegister(inProcessCacheHits)
 	prometheus.MustRegister(reportSize)
 	prometheus.MustRegister(s3RequestDuration)
 	prometheus.MustRegister(natsRequests)
@@ -580,8 +585,8 @@ func (c inProcessStore) FetchReports(keys []string) ([]report.Report, []string, 
 			missing = append(missing, key)
 		}
 	}
-	inProcessCacheCounter.WithLabelValues(hitLabel).Add(float64(len(found)))
-	inProcessCacheCounter.WithLabelValues(missLabel).Add(float64(len(missing)))
+	inProcessCacheHits.Add(float64(len(found)))
+	inProcessCacheRequests.Add(float64(len(keys)))
 	return found, missing, nil
 }
 

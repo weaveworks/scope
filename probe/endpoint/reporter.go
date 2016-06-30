@@ -40,8 +40,8 @@ var SpyDuration = prometheus.NewSummaryVec(
 	prometheus.SummaryOpts{
 		Namespace: "scope",
 		Subsystem: "probe",
-		Name:      "spy_time_nanoseconds",
-		Help:      "Total time spent spying on active connections.",
+		Name:      "spy_duration_seconds",
+		Help:      "Time in seconds spent spying on active connections.",
 		MaxAge:    10 * time.Second, // like statsd
 	},
 	[]string{},
@@ -100,7 +100,7 @@ func (t *fourTuple) reverse() {
 // Report implements Reporter.
 func (r *Reporter) Report() (report.Report, error) {
 	defer func(begin time.Time) {
-		SpyDuration.WithLabelValues().Observe(float64(time.Since(begin)))
+		SpyDuration.WithLabelValues().Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	hostNodeID := report.MakeHostNodeID(r.hostID)

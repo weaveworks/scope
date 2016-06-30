@@ -15,21 +15,28 @@ import (
 )
 
 var (
-	memcacheCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+	memcacheRequests = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "scope",
-		Name:      "memcache",
-		Help:      "Reports that missed our in-memory cache but went to our memcache",
-	}, []string{"result"})
+		Name:      "memcache_requests_total",
+		Help:      "Total count of reports requested from memcache that were not found in our in-memory cache.",
+	})
+
+	memcacheHits = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "memcache_hits_total",
+		Help:      "Total count of reports found in memcache that were not found in our in-memory cache.",
+	})
 
 	memcacheRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: "scope",
-		Name:      "memcache_request_duration_nanoseconds",
-		Help:      "Time spent doing memcache requests.",
+		Name:      "memcache_request_duration_seconds",
+		Help:      "Total time spent in seconds doing memcache requests.",
 	}, []string{"method", "status_code"})
 )
 
 func init() {
-	prometheus.MustRegister(memcacheCounter)
+	prometheus.MustRegister(memcacheRequests)
+	prometheus.MustRegister(memcacheHits)
 	prometheus.MustRegister(memcacheRequestDuration)
 }
 
@@ -158,8 +165,8 @@ func (c *MemcacheClient) FetchReports(keys []string) ([]report.Report, []string,
 		}
 	}
 
-	memcacheCounter.WithLabelValues(hitLabel).Add(float64(len(reports)))
-	memcacheCounter.WithLabelValues(missLabel).Add(float64(len(missing)))
+	memcacheHits.Add(float64(len(reports)))
+	memcacheRequests.Add(float64(len(keys)))
 	return reports, missing, nil
 }
 
