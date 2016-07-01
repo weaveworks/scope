@@ -114,15 +114,7 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 				memcacheUpdateInterval, memcacheExpiration,
 			)
 			if err != nil {
-				// TODO(jml): Ideally, we wouldn't abort here, we would instead
-				// log errors when we try to use the memcache & fail to do so, as
-				// aborting here introduces ordering dependencies into our
-				// deployment.
-				//
-				// Note: this error only happens when either the memcachedHost
-				// or any of the SRV records that it points to fail to
-				// resolve.
-				return nil, err
+				log.Errorf("Error resolving memcache servers for '%v': %v", memcachedHostname, err)
 			}
 		}
 		awsCollector, err := multitenant.NewAWSCollector(

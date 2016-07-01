@@ -169,7 +169,7 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 		}(key)
 	}
 
-	var reports map[string]report.Report
+	reports := make(map[string]report.Report)
 	for i := 0; i < len(keys)-len(missing); i++ {
 		r := <-ch
 		if r.report == nil {
