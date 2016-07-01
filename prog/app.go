@@ -109,13 +109,10 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 		s3Store := multitenant.NewS3Client(s3Config, bucketName)
 		var memcacheClient *multitenant.MemcacheClient
 		if memcachedHostname != "" {
-			memcacheClient, err = multitenant.NewMemcacheClient(
+			memcacheClient = multitenant.NewMemcacheClient(
 				memcachedHostname, memcachedTimeout, memcachedService,
 				memcacheUpdateInterval, memcacheExpiration,
 			)
-			if err != nil {
-				log.Errorf("Error resolving memcache servers for '%v': %v", memcachedHostname, err)
-			}
 		}
 		awsCollector, err := multitenant.NewAWSCollector(
 			multitenant.AWSCollectorConfig{
