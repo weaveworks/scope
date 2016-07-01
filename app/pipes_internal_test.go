@@ -83,7 +83,7 @@ func TestPipeClose(t *testing.T) {
 	probeConfig := appclient.ProbeConfig{
 		ProbeID: "foo",
 	}
-	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, nil)
+	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}

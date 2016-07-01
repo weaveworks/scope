@@ -43,7 +43,7 @@ func TestControl(t *testing.T) {
 			Value: "foo",
 		}
 	})
-	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, controlHandler)
+	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, controlHandler, false)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -57,11 +57,12 @@ type appClient struct {
 	readers     chan io.Reader
 
 	// For controls
-	control xfer.ControlHandler
+	noControls bool
+	control    xfer.ControlHandler
 }
 
 // NewAppClient makes a new appClient.
-func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlHandler) (AppClient, error) {
+func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlHandler, noControls bool) (AppClient, error) {
 	httpTransport, err := pc.getHTTPTransport(hostname)
 	if err != nil {
 		return nil, err
@@ -82,9 +83,10 @@ func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlH
 		wsDialer: websocket.Dialer{
 			TLSClientConfig: httpTransport.TLSClientConfig,
 		},
-		conns:   map[string]xfer.Websocket{},
-		readers: make(chan io.Reader, 2),
-		control: control,
+		conns:      map[string]xfer.Websocket{},
+		readers:    make(chan io.Reader, 2),
+		noControls: noControls,
+		control:    control,
 	}, nil
 }
 
@@ -231,6 +233,9 @@ func (c *appClient) controlConnection() (bool, error) {
 }
 
 func (c *appClient) ControlConnection() {
+	if c.noControls {
+		return
+	}
 	go func() {
 		log.Infof("Control connection to %s starting", c.target)
 		defer log.Infof("Control connection to %s exiting", c.target)

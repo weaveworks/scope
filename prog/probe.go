@@ -117,6 +117,7 @@ func probeMain(flags probeFlags) {
 		return appclient.NewAppClient(
 			probeConfig, hostname, endpoint,
 			xfer.ControlHandlerFunc(controls.HandleControlRequest),
+			flags.noControls,
 		)
 	})
 	defer clients.Stop()
@@ -128,7 +129,7 @@ func probeMain(flags probeFlags) {
 	resolver := appclient.NewResolver(targets, dnsLookupFn, clients.Set)
 	defer resolver.Stop()
 
-	p := probe.New(flags.spyInterval, flags.publishInterval, clients)
+	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
 
 	hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients)
 	defer hostReporter.Stop()
