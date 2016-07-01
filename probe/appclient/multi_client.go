@@ -23,11 +23,12 @@ type ClientFactory func(string, string) (AppClient, error)
 type multiClient struct {
 	clientFactory ClientFactory
 
-	mtx     sync.Mutex
-	sema    semaphore
-	clients map[string]AppClient     // holds map from app id -> client
-	ids     map[string]report.IDList // holds map from hostname -> app ids
-	quit    chan struct{}
+	mtx        sync.Mutex
+	sema       semaphore
+	clients    map[string]AppClient     // holds map from app id -> client
+	ids        map[string]report.IDList // holds map from hostname -> app ids
+	quit       chan struct{}
+	noControls bool
 }
 
 type clientTuple struct {
@@ -53,14 +54,15 @@ type MultiAppClient interface {
 }
 
 // NewMultiAppClient creates a new MultiAppClient.
-func NewMultiAppClient(clientFactory ClientFactory) MultiAppClient {
+func NewMultiAppClient(clientFactory ClientFactory, noControls bool) MultiAppClient {
 	return &multiClient{
 		clientFactory: clientFactory,
 
-		sema:    newSemaphore(maxConcurrentGET),
-		clients: map[string]AppClient{},
-		ids:     map[string]report.IDList{},
-		quit:    make(chan struct{}),
+		sema:       newSemaphore(maxConcurrentGET),
+		clients:    map[string]AppClient{},
+		ids:        map[string]report.IDList{},
+		quit:       make(chan struct{}),
+		noControls: noControls,
 	}
 }
 
@@ -100,9 +102,7 @@ func (c *multiClient) Set(hostname string, endpoints []string) {
 	hostIDs := report.MakeIDList()
 	for tuple := range clients {
 		hostIDs = hostIDs.Add(tuple.ID)
-
-		_, ok := c.clients[tuple.ID]
-		if !ok {
+		if _, ok := c.clients[tuple.ID]; !ok && !c.noControls {
 			c.clients[tuple.ID] = tuple.AppClient
 			tuple.AppClient.ControlConnection()
 		}

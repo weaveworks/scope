@@ -113,13 +113,13 @@ func probeMain(flags probeFlags) {
 		ProbeID:      probeID,
 		Insecure:     flags.insecure,
 	}
-	clients := appclient.NewMultiAppClient(func(hostname, endpoint string) (appclient.AppClient, error) {
+	clientFactory := func(hostname, endpoint string) (appclient.AppClient, error) {
 		return appclient.NewAppClient(
 			probeConfig, hostname, endpoint,
 			xfer.ControlHandlerFunc(controls.HandleControlRequest),
-			flags.noControls,
 		)
-	})
+	}
+	clients := appclient.NewMultiAppClient(clientFactory, flags.noControls)
 	defer clients.Stop()
 
 	dnsLookupFn := net.LookupIP

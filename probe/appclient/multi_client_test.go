@@ -67,7 +67,7 @@ func TestMultiClient(t *testing.T) {
 		}
 	)
 
-	mp := appclient.NewMultiAppClient(factory)
+	mp := appclient.NewMultiAppClient(factory, false)
 	defer mp.Stop()
 
 	// Add two hostnames with overlapping apps, check we don't add the same app twice
@@ -89,7 +89,7 @@ func TestMultiClient(t *testing.T) {
 }
 
 func TestMultiClientPublish(t *testing.T) {
-	mp := appclient.NewMultiAppClient(factory)
+	mp := appclient.NewMultiAppClient(factory, false)
 	defer mp.Stop()
 
 	sum := func() int { return a1.publish + a2.publish + b2.publish + b3.publish }
