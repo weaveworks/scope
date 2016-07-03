@@ -35,7 +35,7 @@ To install Scope onto your local Docker machine in standalone mode, run the foll
 
 This script downloads and runs a recent Scope image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
-After it’s been launched, open your browser to `http://localhost:4040`.
+After it’s been launched, open your browser to `http://localhost:4040`. The URLs where you can point your browser are also printed by `scope launch`. 
 
 If you are using docker-machine, replace localhost with the IP after you've run, `docker-machine ip <VM name>`.
 
@@ -129,7 +129,7 @@ To install Scope on your local Docker machine with Weave Cloud and use Docker Co
 
 Where,
 
-* `SCOPE_SERVICE_TOKEN=<token>` is the token that you obtained when you signed up.
+* `SCOPE_SERVICE_TOKEN=<token>` is the token you obtained after you signed up for Weave Cloud.
 
 Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
@@ -236,7 +236,7 @@ To get the latest release of Scope deployed onto a Kubernetes cluster, run the f
 
 Where,
 
-* `service-token=<token>` is the token that you obtained when you signed up with Weave Cloud.
+* `service-token=<token>` is the token you obtained after you signed up for Weave Cloud.
 
 > **Note:**The `--validate=false` flag is currently required due to a bug in Kubernetes (see
 [kubernetes/kubernetes#24089](https://github.com/kubernetes/kubernetes/issues/24089) for details.
@@ -274,8 +274,7 @@ For step by step instructions on how to configure the stack, see: [Install Weave
 
 ##<a name="minimesos"></a>Installing Scope on minimesos
 
-The [minimesos](https://github.com/ContainerSolutions/minimesos) project enables you to run an Apache Mesos cluster on a single
-machine, which makes it very easy to develop Mesos frameworks.
+The [minimesos](https://github.com/ContainerSolutions/minimesos) project enables you to run an Apache Mesos cluster on a single machine, which makes it very easy to develop Mesos frameworks.
 
 By default, Weave Scope is included in the minimesos cluster, and can be accessed at `http://172.17.0.1:4040/`.
 
