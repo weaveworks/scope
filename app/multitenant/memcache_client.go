@@ -55,7 +55,7 @@ type MemcacheClient struct {
 
 // NewMemcacheClient creates a new MemcacheClient that gets its server list
 // from SRV and updates the server list on a regular basis.
-func NewMemcacheClient(host string, timeout time.Duration, service string, updateInterval time.Duration, expiration int32) (*MemcacheClient, error) {
+func NewMemcacheClient(host string, timeout time.Duration, service string, updateInterval time.Duration, expiration int32) *MemcacheClient {
 	var servers memcache.ServerList
 	client := memcache.NewFromSelector(&servers)
 	client.Timeout = timeout
@@ -70,12 +70,12 @@ func NewMemcacheClient(host string, timeout time.Duration, service string, updat
 	}
 	err := newClient.updateMemcacheServers()
 	if err != nil {
-		return nil, err
+		log.Errorf("Error setting memcache servers to '%v': %v", host, err)
 	}
 
 	newClient.wait.Add(1)
 	go newClient.updateLoop(updateInterval)
-	return newClient, nil
+	return newClient
 }
 
 // Stop the memcache client.
@@ -169,7 +169,7 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 		}(key)
 	}
 
-	var reports map[string]report.Report
+	reports := map[string]report.Report{}
 	for i := 0; i < len(keys)-len(missing); i++ {
 		r := <-ch
 		if r.report == nil {
