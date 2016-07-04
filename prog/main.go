@@ -191,7 +191,7 @@ func main() {
 	flag.StringVar(&flags.app.natsHostname, "app.nats", "", "Hostname for NATS service to use for shortcut reports.  If empty, shortcut reporting will be disabled.")
 	flag.StringVar(&flags.app.memcachedHostname, "app.memcached.hostname", "", "Hostname for memcached service to use when caching reports.  If empty, no memcached will be used.")
 	flag.DurationVar(&flags.app.memcachedTimeout, "app.memcached.timeout", 100*time.Millisecond, "Maximum time to wait before giving up on memcached requests.")
-	flag.DurationVar(&flags.app.memcachedExpiration, "app.memcached.expiration", 15*time.Second, "How long reports stay in the memcache.")
+	flag.DurationVar(&flags.app.memcachedExpiration, "app.memcached.expiration", 2*15*time.Second, "How long reports stay in the memcache.")
 	flag.StringVar(&flags.app.memcachedService, "app.memcached.service", "memcached", "SRV service used to discover memcache servers.")
 	flag.StringVar(&flags.app.userIDHeader, "app.userid.header", "", "HTTP header to use as userid")
 
