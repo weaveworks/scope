@@ -46,11 +46,10 @@ check_docker_access() {
 	    DOCKER_SOCK_FILE="$WITHOUT_PREFIX"
 	fi
     fi
-
     
     if [ \( -n "$DOCKER_SOCK_FILE" \) -a \( ! -w "$DOCKER_SOCK_FILE" \) ]; then
 	echo "ERROR: cannot write to docker socket: $DOCKER_SOCK_FILE" >&2
-	echo "change socket permissions or try using sudo"
+	echo "change socket permissions or try using sudo" >&2
 	exit 1
     fi
 }
@@ -141,7 +140,6 @@ launch_app_command() {
 }
 
 check_docker_access
-
 check_docker_version
 
 case "$COMMAND" in
