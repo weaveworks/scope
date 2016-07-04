@@ -326,6 +326,7 @@ func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 		}
 	}
 
+	log.Debugf("Fetching %d reports from %v to %v", len(reportKeys), start, now)
 	reports, err := c.getReports(reportKeys)
 	if err != nil {
 		return report.MakeReport(), err

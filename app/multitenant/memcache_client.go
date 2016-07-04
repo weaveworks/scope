@@ -188,6 +188,11 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 		}
 	}
 
+	if len(missing) > 0 {
+		sort.Strings(missing)
+		log.Warningf("Missing %d reports from memcache: %v", len(missing), missing)
+	}
+
 	memcacheHits.Add(float64(len(reports)))
 	memcacheRequests.Add(float64(len(keys)))
 	return reports, missing, nil
