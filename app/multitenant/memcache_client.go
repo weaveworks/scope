@@ -53,28 +53,37 @@ type MemcacheClient struct {
 	wait sync.WaitGroup
 }
 
+// MemcacheConfig defines how a MemcacheClient should be constructed.
+type MemcacheConfig struct {
+	Host           string
+	Timeout        time.Duration
+	Service        string
+	UpdateInterval time.Duration
+	Expiration     int32
+}
+
 // NewMemcacheClient creates a new MemcacheClient that gets its server list
 // from SRV and updates the server list on a regular basis.
-func NewMemcacheClient(host string, timeout time.Duration, service string, updateInterval time.Duration, expiration int32) *MemcacheClient {
+func NewMemcacheClient(config MemcacheConfig) *MemcacheClient {
 	var servers memcache.ServerList
 	client := memcache.NewFromSelector(&servers)
-	client.Timeout = timeout
+	client.Timeout = config.Timeout
 
 	newClient := &MemcacheClient{
 		client:     client,
 		serverList: &servers,
-		expiration: expiration,
-		hostname:   host,
-		service:    service,
+		expiration: config.Expiration,
+		hostname:   config.Host,
+		service:    config.Service,
 		quit:       make(chan struct{}),
 	}
 	err := newClient.updateMemcacheServers()
 	if err != nil {
-		log.Errorf("Error setting memcache servers to '%v': %v", host, err)
+		log.Errorf("Error setting memcache servers to '%v': %v", config.Host, err)
 	}
 
 	newClient.wait.Add(1)
-	go newClient.updateLoop(updateInterval)
+	go newClient.updateLoop(config.UpdateInterval)
 	return newClient
 }
 

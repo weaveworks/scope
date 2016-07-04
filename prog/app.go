@@ -110,8 +110,13 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 		var memcacheClient *multitenant.MemcacheClient
 		if memcachedHostname != "" {
 			memcacheClient = multitenant.NewMemcacheClient(
-				memcachedHostname, memcachedTimeout, memcachedService,
-				memcacheUpdateInterval, memcacheExpiration,
+				multitenant.MemcacheConfig{
+					Host:           memcachedHostname,
+					Timeout:        memcachedTimeout,
+					Expiration:     memcacheExpiration,
+					UpdateInterval: memcacheUpdateInterval,
+					Service:        memcachedService,
+				},
 			)
 		}
 		awsCollector, err := multitenant.NewAWSCollector(
