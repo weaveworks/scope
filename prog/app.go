@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	memcacheExpiration     = 15 // seconds
+	memcacheExpiration     = 15 * time.Second
 	memcacheUpdateInterval = 1 * time.Minute
 )
 

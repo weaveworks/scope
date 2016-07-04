@@ -56,10 +56,10 @@ type MemcacheClient struct {
 // MemcacheConfig defines how a MemcacheClient should be constructed.
 type MemcacheConfig struct {
 	Host           string
-	Timeout        time.Duration
 	Service        string
+	Timeout        time.Duration
 	UpdateInterval time.Duration
-	Expiration     int32
+	Expiration     time.Duration
 }
 
 // NewMemcacheClient creates a new MemcacheClient that gets its server list
@@ -72,7 +72,7 @@ func NewMemcacheClient(config MemcacheConfig) *MemcacheClient {
 	newClient := &MemcacheClient{
 		client:     client,
 		serverList: &servers,
-		expiration: config.Expiration,
+		expiration: int32(config.Expiration.Seconds()),
 		hostname:   config.Host,
 		service:    config.Service,
 		quit:       make(chan struct{}),
