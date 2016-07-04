@@ -34,6 +34,27 @@ WEAVESCOPE_DOCKER_ARGS=${WEAVESCOPE_DOCKER_ARGS:-}
 COMMAND=$1
 shift 1
 
+check_docker_access() {
+    
+    # Extract socket path    
+    DOCKER_SOCK_FILE=""
+    if [ -z "${DOCKER_HOST+x}" ]; then
+	DOCKER_SOCK_FILE="/var/run/docker.sock"
+    else
+	WITHOUT_PREFIX="${DOCKER_HOST#unix://}"
+	if [ "$WITHOUT_PREFIX" != "$DOCKER_HOST" ]; then
+	    DOCKER_SOCK_FILE="$WITHOUT_PREFIX"
+	fi
+    fi
+
+    
+    if [ \( -n "$DOCKER_SOCK_FILE" \) -a \( ! -w "$DOCKER_SOCK_FILE" \) ]; then
+	echo "ERROR: cannot write to docker socket: $DOCKER_SOCK_FILE" >&2
+	echo "change socket permissions or try using sudo"
+	exit 1
+    fi
+}
+
 # - The image embeds the weave script & Docker 1.3.1 client
 # - Docker versions prior to 1.5.0 do not support --pid=host
 # - Weave needs 1.6.0 now (image pulling changes)
@@ -118,6 +139,8 @@ launch_app_command() {
             -p 0.0.0.0:4040:4040 \
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --no-probe "$@"
 }
+
+check_docker_access
 
 check_docker_version
 
