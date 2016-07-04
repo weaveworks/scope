@@ -53,28 +53,37 @@ type MemcacheClient struct {
 	wait sync.WaitGroup
 }
 
+// MemcacheConfig defines how a MemcacheClient should be constructed.
+type MemcacheConfig struct {
+	Host           string
+	Service        string
+	Timeout        time.Duration
+	UpdateInterval time.Duration
+	Expiration     time.Duration
+}
+
 // NewMemcacheClient creates a new MemcacheClient that gets its server list
 // from SRV and updates the server list on a regular basis.
-func NewMemcacheClient(host string, timeout time.Duration, service string, updateInterval time.Duration, expiration int32) *MemcacheClient {
+func NewMemcacheClient(config MemcacheConfig) *MemcacheClient {
 	var servers memcache.ServerList
 	client := memcache.NewFromSelector(&servers)
-	client.Timeout = timeout
+	client.Timeout = config.Timeout
 
 	newClient := &MemcacheClient{
 		client:     client,
 		serverList: &servers,
-		expiration: expiration,
-		hostname:   host,
-		service:    service,
+		expiration: int32(config.Expiration.Seconds()),
+		hostname:   config.Host,
+		service:    config.Service,
 		quit:       make(chan struct{}),
 	}
 	err := newClient.updateMemcacheServers()
 	if err != nil {
-		log.Errorf("Error setting memcache servers to '%v': %v", host, err)
+		log.Errorf("Error setting memcache servers to '%v': %v", config.Host, err)
 	}
 
 	newClient.wait.Add(1)
-	go newClient.updateLoop(updateInterval)
+	go newClient.updateLoop(config.UpdateInterval)
 	return newClient
 }
 
@@ -177,6 +186,11 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 		} else {
 			reports[r.key] = *r.report
 		}
+	}
+
+	if len(missing) > 0 {
+		sort.Strings(missing)
+		log.Warningf("Missing %d reports from memcache: %v", len(missing), missing)
 	}
 
 	memcacheHits.Add(float64(len(reports)))
