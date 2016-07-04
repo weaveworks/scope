@@ -20,24 +20,12 @@ func NewReportPublisher(publisher Publisher, noControls bool) *ReportPublisher {
 	}
 }
 
-func removeControls(r report.Report) report.Report {
-	r.Endpoint.Controls = report.Controls{}
-	r.Process.Controls = report.Controls{}
-	r.Container.Controls = report.Controls{}
-	r.ContainerImage.Controls = report.Controls{}
-	r.Pod.Controls = report.Controls{}
-	r.Service.Controls = report.Controls{}
-	r.Deployment.Controls = report.Controls{}
-	r.ReplicaSet.Controls = report.Controls{}
-	r.Host.Controls = report.Controls{}
-	r.Overlay.Controls = report.Controls{}
-	return r
-}
-
 // Publish serialises and compresses a report, then passes it to a publisher
 func (p *ReportPublisher) Publish(r report.Report) error {
 	if p.noControls {
-		r = removeControls(r)
+		r.WalkTopologies(func(t *report.Topology) {
+			t.Controls = report.Controls{}
+		})
 	}
 	buf := &bytes.Buffer{}
 	r.WriteBinary(buf)
