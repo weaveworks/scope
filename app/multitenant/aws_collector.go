@@ -23,12 +23,10 @@ import (
 )
 
 const (
-	hourField             = "hour"
-	tsField               = "ts"
-	reportField           = "report"
-	reportCacheSize       = (15 / 3) * 10 * 5 // (window size * report rate) * number of hosts per user * number of users
-	reportCacheExpiration = 15 * time.Second
-	natsTimeout           = 10 * time.Second
+	hourField   = "hour"
+	tsField     = "ts"
+	reportField = "report"
+	natsTimeout = 10 * time.Second
 )
 
 var (
@@ -102,6 +100,7 @@ type AWSCollectorConfig struct {
 	S3Store        *S3Store
 	NatsHost       string
 	MemcacheClient *MemcacheClient
+	Window         time.Duration
 }
 
 type awsCollector struct {
@@ -112,6 +111,7 @@ type awsCollector struct {
 	merger    app.Merger
 	inProcess inProcessStore
 	memcache  *MemcacheClient
+	window    time.Duration
 
 	nats        *nats.Conn
 	waitersLock sync.Mutex
@@ -144,14 +144,17 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 		}
 	}
 
+	// (window * report rate) * number of hosts per user * number of users
+	reportCacheSize := (int(config.Window.Seconds()) / 3) * 10 * 5
 	return &awsCollector{
 		db:        dynamodb.New(session.New(config.DynamoDBConfig)),
 		s3:        config.S3Store,
 		userIDer:  config.UserIDer,
 		tableName: config.DynamoTable,
 		merger:    app.NewSmartMerger(),
-		inProcess: newInProcessStore(reportCacheSize, reportCacheExpiration),
+		inProcess: newInProcessStore(reportCacheSize, config.Window),
 		memcache:  config.MemcacheClient,
+		window:    config.Window,
 		nats:      nc,
 		waiters:   map[watchKey]*nats.Subscription{},
 	}, nil
@@ -294,7 +297,7 @@ func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) 
 func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 	var (
 		now              = time.Now()
-		start            = now.Add(-15 * time.Second)
+		start            = now.Add(-c.window)
 		rowStart, rowEnd = start.UnixNano() / time.Hour.Nanoseconds(), now.UnixNano() / time.Hour.Nanoseconds()
 		userid, err      = c.userIDer(ctx)
 	)

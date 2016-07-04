@@ -28,7 +28,6 @@ import (
 )
 
 const (
-	memcacheExpiration     = 15 * time.Second
 	memcacheUpdateInterval = 1 * time.Minute
 )
 
@@ -113,7 +112,7 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 				multitenant.MemcacheConfig{
 					Host:           memcachedHostname,
 					Timeout:        memcachedTimeout,
-					Expiration:     memcacheExpiration,
+					Expiration:     window,
 					UpdateInterval: memcacheUpdateInterval,
 					Service:        memcachedService,
 				},
@@ -127,6 +126,7 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 				S3Store:        &s3Store,
 				NatsHost:       natsHostname,
 				MemcacheClient: memcacheClient,
+				Window:         window,
 			},
 		)
 		if err != nil {
