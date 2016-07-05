@@ -19,6 +19,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/app"
+	"github.com/weaveworks/scope/common/instrument"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -213,7 +214,7 @@ func (c *awsCollector) CreateTables() error {
 func (c *awsCollector) getReportKeys(userid string, row int64, start, end time.Time) ([]string, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
 	var resp *dynamodb.QueryOutput
-	err := timeRequest("Query", dynamoRequestDuration, func() error {
+	err := instrument.TimeRequest("Query", dynamoRequestDuration, func() error {
 		var err error
 		resp, err = c.db.Query(&dynamodb.QueryInput{
 			TableName: aws.String(c.tableName),
@@ -372,7 +373,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 		Add(float64(len(s3Key)))
 
 	var resp *dynamodb.PutItemOutput
-	err = timeRequest("PutItem", dynamoRequestDuration, func() error {
+	err = instrument.TimeRequest("PutItem", dynamoRequestDuration, func() error {
 		var err error
 		resp, err = c.db.PutItem(&dynamodb.PutItemInput{
 			TableName: aws.String(c.tableName),
@@ -401,7 +402,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 
 	if rep.Shortcut && c.nats != nil {
 		err := c.nats.Publish(userid, []byte(s3Key))
-		natsRequests.WithLabelValues("Publish", errorCode(err)).Add(1)
+		natsRequests.WithLabelValues("Publish", instrument.ErrorCode(err)).Add(1)
 		if err != nil {
 			log.Errorf("Error sending shortcut report: %v", err)
 		}
@@ -422,7 +423,7 @@ func (c *awsCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
 	}
 
 	sub, err := c.nats.SubscribeSync(userid)
-	natsRequests.WithLabelValues("SubscribeSync", errorCode(err)).Add(1)
+	natsRequests.WithLabelValues("SubscribeSync", instrument.ErrorCode(err)).Add(1)
 	if err != nil {
 		log.Errorf("Error subscribing for shortcuts: %v", err)
 		return
@@ -438,7 +439,7 @@ func (c *awsCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
 			if err == nats.ErrTimeout {
 				continue
 			}
-			natsRequests.WithLabelValues("NextMsg", errorCode(err)).Add(1)
+			natsRequests.WithLabelValues("NextMsg", instrument.ErrorCode(err)).Add(1)
 			if err != nil {
 				log.Debugf("NextMsg error: %v", err)
 				return
@@ -469,7 +470,7 @@ func (c *awsCollector) UnWait(ctx context.Context, waiter chan struct{}) {
 	c.waitersLock.Unlock()
 
 	err = sub.Unsubscribe()
-	natsRequests.WithLabelValues("Unsubscribe", errorCode(err)).Add(1)
+	natsRequests.WithLabelValues("Unsubscribe", instrument.ErrorCode(err)).Add(1)
 	if err != nil {
 		log.Errorf("Error on unsubscribe: %v", err)
 	}

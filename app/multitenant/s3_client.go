@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/weaveworks/scope/common/instrument"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -68,7 +69,7 @@ func (store *S3Store) FetchReports(keys []string) (map[string]report.Report, []s
 
 func (store *S3Store) fetchReport(key string) (*report.Report, error) {
 	var resp *s3.GetObjectOutput
-	err := timeRequest("Get", s3RequestDuration, func() error {
+	err := instrument.TimeRequest("Get", s3RequestDuration, func() error {
 		var err error
 		resp, err = store.s3.GetObject(&s3.GetObjectInput{
 			Bucket: aws.String(store.bucketName),
@@ -85,7 +86,7 @@ func (store *S3Store) fetchReport(key string) (*report.Report, error) {
 // StoreBytes stores a report in S3, expecting the report to be serialized
 // already.
 func (store *S3Store) StoreBytes(key string, content []byte) error {
-	return timeRequest("Put", s3RequestDuration, func() error {
+	return instrument.TimeRequest("Put", s3RequestDuration, func() error {
 		_, err := store.s3.PutObject(&s3.PutObjectInput{
 			Body:   bytes.NewReader(content),
 			Bucket: aws.String(store.bucketName),
