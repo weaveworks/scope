@@ -5,9 +5,17 @@ import ShowMore from '../show-more';
 import NodeDetailsTableNodeLink from './node-details-table-node-link';
 import NodeDetailsTableNodeMetric from './node-details-table-node-metric';
 
+
 function isNumberField(field) {
   return field.dataType && field.dataType === 'number';
 }
+
+
+const COLUMN_WIDTHS = {
+  port: '44px',
+  count: '70px'
+};
+
 
 export default class NodeDetailsTable extends React.Component {
 
@@ -98,12 +106,20 @@ export default class NodeDetailsTable extends React.Component {
       // Beauty hack: adjust first column width if there are only few columns;
       // this assumes the other columns are narrow metric columns of 20% table width
       if (headers.length === 2) {
-        headers[0].width = 66;
+        headers[0].width = '66%';
       } else if (headers.length === 3) {
-        headers[0].width = 50;
+        headers[0].width = '50%';
       } else if (headers.length >= 3) {
-        headers[0].width = 33;
+        headers[0].width = '33%';
       }
+
+      //
+      // More beauty hacking, ports and counts can only get so big, free up WS for other longer
+      // fields like IPs!
+      //
+      headers.forEach(h => {
+        h.width = COLUMN_WIDTHS[h.id];
+      });
 
       return (
         <tr>
@@ -125,7 +141,7 @@ export default class NodeDetailsTable extends React.Component {
             // set header width in percent
             const style = {};
             if (header.width) {
-              style.width = `${header.width}%`;
+              style.width = header.width;
             }
 
             return (
@@ -209,6 +225,7 @@ export default class NodeDetailsTable extends React.Component {
     );
   }
 }
+
 
 NodeDetailsTable.defaultProps = {
   nodeIdKey: 'id' // key to identify a node in a row (used for topology links)
