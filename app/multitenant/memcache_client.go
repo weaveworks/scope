@@ -11,6 +11,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/weaveworks/scope/common/instrument"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -145,7 +147,7 @@ func memcacheStatusCode(err error) string {
 // FetchReports gets reports from memcache.
 func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, []string, error) {
 	var found map[string]*memcache.Item
-	err := timeRequestStatus("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
+	err := instrument.TimeRequestStatus("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
 		var err error
 		found, err = c.client.GetMulti(keys)
 		return err
@@ -200,7 +202,7 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 
 // StoreBytes stores a report, expecting the report to be serialized already.
 func (c *MemcacheClient) StoreBytes(key string, content []byte) error {
-	return timeRequestStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
+	return instrument.TimeRequestStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
 		item := memcache.Item{Key: key, Value: content, Expiration: c.expiration}
 		return c.client.Set(&item)
 	})

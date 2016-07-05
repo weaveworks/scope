@@ -1,4 +1,4 @@
-package multitenant
+package instrument
 
 import (
 	"time"
@@ -6,31 +6,32 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func errorCode(err error) string {
+// ErrorCode converts an error in to an http-style error-code.
+func ErrorCode(err error) string {
 	if err == nil {
 		return "200"
 	}
 	return "500"
 }
 
-// timeRequest runs 'f' and records how long it took in the given Prometheus
+// TimeRequest runs 'f' and records how long it took in the given Prometheus
 // metric. If 'f' returns successfully, record a "200". Otherwise, record
 // "500".
 //
 // If you want more complicated logic for translating errors into statuses,
-// use 'timeRequestStatus'.
-func timeRequest(method string, metric *prometheus.SummaryVec, f func() error) error {
-	return timeRequestStatus(method, metric, errorCode, f)
+// use 'TimeRequestStatus'.
+func TimeRequest(method string, metric *prometheus.SummaryVec, f func() error) error {
+	return TimeRequestStatus(method, metric, ErrorCode, f)
 }
 
-// timeRequestStatus runs 'f' and records how long it took in the given
+// TimeRequestStatus runs 'f' and records how long it took in the given
 // Prometheus metric.
 //
 // toStatusCode is a function that translates errors returned by 'f' into
 // HTTP-like status codes.
-func timeRequestStatus(method string, metric *prometheus.SummaryVec, toStatusCode func(error) string, f func() error) error {
+func TimeRequestStatus(method string, metric *prometheus.SummaryVec, toStatusCode func(error) string, f func() error) error {
 	if toStatusCode == nil {
-		toStatusCode = errorCode
+		toStatusCode = ErrorCode
 	}
 	startTime := time.Now()
 	err := f()
