@@ -31,7 +31,7 @@ To install Scope onto your local Docker machine in standalone mode, run the foll
 
     sudo wget -O /usr/local/bin/scope https://git.io/scope
     sudo chmod a+x /usr/local/bin/scope
-    sudo scope launch
+    scope launch
 
 This script downloads and runs a recent Scope image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
@@ -49,7 +49,7 @@ Then, install Scope onto your local Docker machine and start using Weave Cloud:
 
     sudo wget -O /usr/local/bin/scope https://git.io/scope
     sudo chmod a+x /usr/local/bin/scope
-    sudo scope launch --service-token=<token>
+    scope launch --service-token=<token>
 
 Where,
 

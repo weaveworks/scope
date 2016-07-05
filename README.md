@@ -32,7 +32,7 @@ Interact with your containers directly: pause, restart and stop containers. Laun
 ```
 sudo wget -O /usr/local/bin/scope https://git.io/scope
 sudo chmod a+x /usr/local/bin/scope
-sudo scope launch
+scope launch
 ```
 
 This script will download and run a recent Scope image from the Docker Hub.
