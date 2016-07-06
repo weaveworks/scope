@@ -2756,6 +2756,13 @@ Terminal.prototype.keyDown = function(ev) {
     case 123:
       key = '\x1b[24~';
       break;
+    // Special case for US-intl '/"
+    case 222:
+      key = '\'';
+      if (ev.shiftKey) {
+        key = '"';
+      }
+      break;
     default:
       // a-z and space
       if (ev.ctrlKey) {
