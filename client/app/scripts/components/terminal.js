@@ -229,10 +229,10 @@ class Terminal extends React.Component {
 
   handleResize() {
     const innerNode = ReactDOM.findDOMNode(this.innerFlex);
-    const width = innerNode.clientWidth - (2 * 8);
     const height = innerNode.clientHeight - (2 * 8);
-    const cols = Math.floor(width / this.state.pixelPerCol);
+    const cols = DEFAULT_COLS;
     const rows = Math.floor(height / this.state.pixelPerRow);
+
     this.setState({cols, rows});
   }
 
@@ -304,8 +304,12 @@ class Terminal extends React.Component {
   }
 
   render() {
+    const innerFlexStyle = {
+      opacity: this.state.connected ? 1 : 0.8,
+      overflow: 'hidden',
+    };
     const innerStyle = {
-      opacity: this.state.connected ? 1 : 0.8
+      width: (this.state.cols + 2) * this.state.pixelPerCol
     };
     const innerClassName = classNames('terminal-inner hideable', {
       'terminal-inactive': !this.state.connected
@@ -315,8 +319,8 @@ class Terminal extends React.Component {
       <div className="terminal-wrapper">
         {this.isEmbedded() && this.getTerminalHeader()}
         <div ref={(ref) => this.innerFlex = ref}
-          className={innerClassName} style={innerStyle} >
-          <div ref={(ref) => this.inner = ref} />
+          className={innerClassName} style={innerFlexStyle} >
+          <div style={innerStyle} ref={(ref) => this.inner = ref} />
         </div>
         {this.getTerminalStatusBar()}
       </div>
