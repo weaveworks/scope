@@ -9,4 +9,4 @@ WORKING_SUFFIX=$(if ! git diff --exit-code --quiet HEAD >&2; \
                  else echo ""; \
                  fi)
 BRANCH_PREFIX=$(git rev-parse --abbrev-ref HEAD)
-echo "$BRANCH_PREFIX-$(git rev-parse --short HEAD)$WORKING_SUFFIX"
+echo "${BRANCH_PREFIX//\//-}-$(git rev-parse --short HEAD)$WORKING_SUFFIX"
