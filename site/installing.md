@@ -35,9 +35,9 @@ To install Scope onto your local Docker machine in standalone mode, run the foll
 
 This script downloads and runs a recent Scope image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
-After it’s been launched, open your browser to `http://localhost:4040`. The URLs where you can point your browser are also printed by `scope launch`. 
+After it’s been launched, open your browser to `http://localhost:4040`. The URLs are also displayed to you in the terminal window after Weave Scope was launched. 
 
-If you are using docker-machine, replace localhost with the IP after you've run, `docker-machine ip <VM name>`.
+If you are using docker-machine, you can find the IP by running, `docker-machine ip <VM name>`.
 
 Where, 
 
