@@ -17,6 +17,7 @@ const (
 	ImageName         = "docker_image_name"
 	ImageLabelPrefix  = "docker_image_label_"
 	OverlayPeerPrefix = "docker_peer_"
+	IsInHostNetwork   = "docker_is_in_host_network"
 )
 
 // Exposed for testing
@@ -191,21 +192,21 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 				Add(ContainerIPsWithScopes, report.MakeStringSet(hostIPsWithScopes...))
 		}
 
-		var networkInfo func(prefix string) report.Sets
-		networkInfo = func(prefix string) report.Sets {
+		var networkInfo func(prefix string) (report.Sets, bool)
+		networkInfo = func(prefix string) (ips report.Sets, isInHostNamespace bool) {
 			container, ok := r.registry.GetContainerByPrefix(prefix)
 			if !ok {
-				return report.EmptySets
+				return report.EmptySets, false
 			}
 
 			networkMode, ok := container.NetworkMode()
 			if ok && strings.HasPrefix(networkMode, "container:") {
 				return networkInfo(networkMode[10:])
 			} else if ok && networkMode == NetworkModeHost {
-				return hostNetworkInfo
+				return hostNetworkInfo, true
 			}
 
-			return container.NetworkInfo(localAddrs)
+			return container.NetworkInfo(localAddrs), false
 		}
 
 		for _, node := range nodes {
@@ -213,8 +214,17 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 			if !ok {
 				continue
 			}
-			networkInfo := networkInfo(id)
-			result.AddNode(node.WithSets(networkInfo))
+			networkInfo, isInHostNamespace := networkInfo(id)
+			node = node.WithSets(networkInfo)
+			// Indicate whether the container is in the host network
+			// The container's NetworkMode is not enough due to
+			// delegation (e.g. NetworkMode="container:foo" where
+			// foo is a container in the host networking namespace)
+			if isInHostNamespace {
+				node = node.WithLatests(map[string]string{IsInHostNetwork: "true"})
+			}
+			result.AddNode(node)
+
 		}
 	}
 
