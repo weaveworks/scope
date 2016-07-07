@@ -249,7 +249,11 @@ var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.
 func MapContainer2IP(m report.Node) []string {
 	// if this container doesn't make connections, we can ignore it
 	_, doesntMakeConnections := m.Latest.Lookup(report.DoesNotMakeConnections)
-	if doesntMakeConnections {
+	// if this container belongs to the host's networking namespace
+	// we cannot use its IP to attribute connections
+	// (they could come from any other process on the host or DNAT-ed IPs)
+	_, isInHostNetwork := m.Latest.Lookup(docker.IsInHostNetwork)
+	if doesntMakeConnections || isInHostNetwork {
 		return nil
 	}
 
