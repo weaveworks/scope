@@ -54,7 +54,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rp := appclient.NewReportPublisher(client)
+	rp := appclient.NewReportPublisher(client, false)
 	for range time.Tick(*publishInterval) {
 		rp.Publish(fixedReport)
 	}

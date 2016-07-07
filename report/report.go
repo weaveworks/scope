@@ -197,18 +197,26 @@ func (r Report) Merge(other Report) Report {
 
 // Topologies returns a slice of Topologies in this report
 func (r Report) Topologies() []Topology {
-	return []Topology{
-		r.Endpoint,
-		r.Process,
-		r.Container,
-		r.ContainerImage,
-		r.Pod,
-		r.Service,
-		r.Deployment,
-		r.ReplicaSet,
-		r.Host,
-		r.Overlay,
-	}
+	result := []Topology{}
+	r.WalkTopologies(func(t *Topology) {
+		result = append(result, *t)
+	})
+	return result
+}
+
+// WalkTopologies iterates through the Topologies of the report,
+// potentially modifying them
+func (r *Report) WalkTopologies(f func(*Topology)) {
+	f(&r.Endpoint)
+	f(&r.Process)
+	f(&r.Container)
+	f(&r.ContainerImage)
+	f(&r.Pod)
+	f(&r.Service)
+	f(&r.Deployment)
+	f(&r.ReplicaSet)
+	f(&r.Host)
+	f(&r.Overlay)
 }
 
 // Topology gets a topology by name

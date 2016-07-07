@@ -31,7 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	rp := appclient.NewReportPublisher(client)
+	rp := appclient.NewReportPublisher(client, false)
 
 	rand.Seed(time.Now().UnixNano())
 	for range time.Tick(*publishInterval) {

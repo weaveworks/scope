@@ -67,6 +67,7 @@ type probeFlags struct {
 	logLevel        string
 	resolver        string
 	noApp           bool
+	noControls      bool
 
 	useConntrack bool // Use conntrack for endpoint topo
 	spyProcs     bool // Associate endpoints with processes (must be root)
@@ -146,6 +147,7 @@ func main() {
 	flag.DurationVar(&flags.probe.publishInterval, "probe.publish.interval", 3*time.Second, "publish (output) interval")
 	flag.DurationVar(&flags.probe.spyInterval, "probe.spy.interval", time.Second, "spy (scan) interval")
 	flag.StringVar(&flags.probe.pluginsRoot, "probe.plugins.root", "/var/run/scope/plugins", "Root directory to search for plugins")
+	flag.BoolVar(&flags.probe.noControls, "probe.no-controls", false, "Disable controls (e.g. start/stop containers, terminals, logs ...)")
 
 	flag.BoolVar(&flags.probe.insecure, "probe.insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
 	flag.StringVar(&flags.probe.resolver, "probe.resolver", "", "IP address & port of resolver to use.  Default is to use system resolver.")

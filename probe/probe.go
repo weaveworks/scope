@@ -68,11 +68,12 @@ type Ticker interface {
 func New(
 	spyInterval, publishInterval time.Duration,
 	publisher appclient.Publisher,
+	noControls bool,
 ) *Probe {
 	result := &Probe{
 		spyInterval:     spyInterval,
 		publishInterval: publishInterval,
-		publisher:       appclient.NewReportPublisher(publisher),
+		publisher:       appclient.NewReportPublisher(publisher, noControls),
 		quit:            make(chan struct{}),
 		spiedReports:    make(chan report.Report, reportBufferSize),
 		shortcutReports: make(chan report.Report, reportBufferSize),

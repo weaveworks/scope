@@ -113,12 +113,13 @@ func probeMain(flags probeFlags) {
 		ProbeID:      probeID,
 		Insecure:     flags.insecure,
 	}
-	clients := appclient.NewMultiAppClient(func(hostname, endpoint string) (appclient.AppClient, error) {
+	clientFactory := func(hostname, endpoint string) (appclient.AppClient, error) {
 		return appclient.NewAppClient(
 			probeConfig, hostname, endpoint,
 			xfer.ControlHandlerFunc(controls.HandleControlRequest),
 		)
-	})
+	}
+	clients := appclient.NewMultiAppClient(clientFactory, flags.noControls)
 	defer clients.Stop()
 
 	dnsLookupFn := net.LookupIP
@@ -128,7 +129,7 @@ func probeMain(flags probeFlags) {
 	resolver := appclient.NewResolver(targets, dnsLookupFn, clients.Set)
 	defer resolver.Stop()
 
-	p := probe.New(flags.spyInterval, flags.publishInterval, clients)
+	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
 
 	hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients)
 	defer hostReporter.Stop()
