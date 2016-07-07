@@ -193,7 +193,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 		}
 
 		var networkInfo func(prefix string) (report.Sets, bool)
-		networkInfo = func(prefix string) (ips report.Sets, isHostMapped bool) {
+		networkInfo = func(prefix string) (ips report.Sets, isInHostNamespace bool) {
 			container, ok := r.registry.GetContainerByPrefix(prefix)
 			if !ok {
 				return report.EmptySets, false
@@ -214,9 +214,13 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 			if !ok {
 				continue
 			}
-			networkInfo, isHostMapped := networkInfo(id)
+			networkInfo, isInHostNamespace := networkInfo(id)
 			node = node.WithSets(networkInfo)
-			if isHostMapped {
+			// Indicate whether the container is in the host network
+			// The container's NetworkMode is not enough due to
+			// delegation (e.g. NetworkMode="container:foo" where
+			// foo is a container in the host networking namespace)
+			if isInHostNamespace {
 				node = node.WithLatests(map[string]string{IsInHostNetwork: "true"})
 			}
 			result.AddNode(node)
