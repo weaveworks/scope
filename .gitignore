@@ -44,14 +44,8 @@ docker/scope
 docker/docker.tgz
 docker/weave
 docker/runsvinit
-experimental/bridge/bridge
-experimental/demoprobe/demoprobe
-experimental/fixprobe/fixprobe
-experimental/fixprobe/*.json
-experimental/genreport/genreport
-experimental/graphviz/graphviz
-experimental/oneshot/oneshot
-experimental/_integration/_integration
+extras/fixprobe/fixprobe
+extras/fixprobe/*.json
 *sublime-project
 *sublime-workspace
 *npm-debug.log
