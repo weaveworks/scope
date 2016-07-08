@@ -1,9 +1,9 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-GO_TEST_ARGS="-tags netgo -cpu 4 -timeout 8m"
+GO_TEST_ARGS=( -tags netgo -cpu 4 -timeout 8m )
 SLOW=
 NO_GO_GET=
 
@@ -28,66 +28,67 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-if [ -n "$SLOW" -o -n "$CIRCLECI" ]; then
+if [ -n "$SLOW" ] || [ -n "$CIRCLECI" ]; then
     SLOW=true
 fi
 
 if [ -n "$SLOW" ]; then
-    GO_TEST_ARGS="$GO_TEST_ARGS -race -covermode=atomic"
+    GO_TEST_ARGS=( "${GO_TEST_ARGS[@]}" -race -covermode=atomic )
 
+    # shellcheck disable=SC2153
     if [ -n "$COVERDIR" ] ; then
         coverdir="$COVERDIR"
     else
         coverdir=$(mktemp -d coverage.XXXXXXXXXX)
     fi
 
-    mkdir -p $coverdir
+    mkdir -p "$coverdir"
 fi
 
 fail=0
 
-TESTDIRS=$(find . -type f -name '*_test.go' | xargs -n1 dirname | grep -vE '^\./(\.git|vendor|prog|experimental)/' | sort -u)
+TESTDIRS=( $(find . -type f -name '*_test.go' -print0 | xargs -0 -n1 dirname | grep -vE '^\./(\.git|vendor|prog|experimental)/' | sort -u) )
 
 # If running on circle, use the scheduler to work out what tests to run on what shard
-if [ -n "$CIRCLECI" -a -z "$NO_SCHEDULER" -a -x "$DIR/sched" ]; then
+if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ] && [ -x "$DIR/sched" ]; then
     PREFIX=$(go list -e ./ | sed -e 's/\//-/g')
-    TESTDIRS=$(echo $TESTDIRS | "$DIR/sched" sched $PREFIX-$CIRCLE_BUILD_NUM $CIRCLE_NODE_TOTAL $CIRCLE_NODE_INDEX)
-    echo $TESTDIRS
+    TESTDIRS=( $(echo "${TESTDIRS[@]}" | "$DIR/sched" sched "$PREFIX-$CIRCLE_BUILD_NUM" "$CIRCLE_NODE_TOTAL" "$CIRCLE_NODE_INDEX") )
+    echo "${TESTDIRS[@]}"
 fi
 
 PACKAGE_BASE=$(go list -e ./)
 
-# Speed up the tests by compiling and installing their dependancies first.
-go test -i $GO_TEST_ARGS $TESTDIRS
+# Speed up the tests by compiling and installing their dependencies first.
+go test -i "${GO_TEST_ARGS[@]}" "${TESTDIRS[@]}"
 
-for dir in $TESTDIRS; do
+for dir in "${TESTDIRS[@]}"; do
     if [ -z "$NO_GO_GET" ]; then
-        go get -t -tags netgo $dir
+        go get -t -tags netgo "$dir"
     fi
 
-    GO_TEST_ARGS_RUN="$GO_TEST_ARGS"
+    GO_TEST_ARGS_RUN=( "${GO_TEST_ARGS[@]}" )
     if [ -n "$SLOW" ]; then
-        COVERPKGS=$( (go list $dir; go list -f '{{join .Deps "\n"}}' $dir | grep -v "vendor" | grep "^$PACKAGE_BASE/") | paste -s -d, -)
-        output=$(mktemp $coverdir/unit.XXXXXXXXXX)
-        GO_TEST_ARGS_RUN="$GO_TEST_ARGS -coverprofile=$output -coverpkg=$COVERPKGS"
+        COVERPKGS=$( (go list "$dir"; go list -f '{{join .Deps "\n"}}' "$dir" | grep -v "vendor" | grep "^$PACKAGE_BASE/") | paste -s -d, -)
+        output=$(mktemp "$coverdir/unit.XXXXXXXXXX")
+        GO_TEST_ARGS_RUN=( "${GO_TEST_ARGS[@]}" -coverprofile=$output -coverpkg=$COVERPKGS )
     fi
 
     START=$(date +%s)
-    if ! go test $GO_TEST_ARGS_RUN $dir; then
+    if ! go test "${GO_TEST_ARGS_RUN[@]}" "$dir"; then
         fail=1
     fi
-    RUNTIME=$(( $(date +%s) - $START ))
+    RUNTIME=$(( $(date +%s) - START ))
 
     # Report test runtime when running on circle, to help scheduler
-    if [ -n "$CIRCLECI" -a -z "$NO_SCHEDULER" -a -x "$DIR/sched" ]; then
-        "$DIR/sched" time $dir $RUNTIME
+    if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ] && [ -x "$DIR/sched" ]; then
+        "$DIR/sched" time "$dir" $RUNTIME
     fi
 done
 
-if [ -n "$SLOW" -a -z "$COVERDIR" ] ; then
+if [ -n "$SLOW" ] && [ -z "$COVERDIR" ] ; then
     go get github.com/weaveworks/tools/cover
-    cover $coverdir/* >profile.cov
-    rm -rf $coverdir
+    cover "$coverdir"/* >profile.cov
+    rm -rf "$coverdir"
     go tool cover -html=profile.cov -o=coverage.html
     go tool cover -func=profile.cov | tail -n1
 fi
