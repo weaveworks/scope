@@ -47,7 +47,7 @@ fi
 
 fail=0
 
-TESTDIRS=$(find . -print0 -type f -name '*_test.go' | xargs -0 -n1 dirname | grep -vE '^\./(\.git|vendor|prog|experimental)/' | sort -u)
+TESTDIRS=$(find . -type f -name '*_test.go' -print0 | xargs -0 -n1 dirname | grep -vE '^\./(\.git|vendor|prog|experimental)/' | sort -u)
 
 # If running on circle, use the scheduler to work out what tests to run on what shard
 if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ] && [ -x "$DIR/sched" ]; then
