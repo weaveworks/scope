@@ -2,3 +2,5 @@ cover/cover
 socks/proxy
 socks/image.tar
 runner/runner
+*.pyc
+*~
