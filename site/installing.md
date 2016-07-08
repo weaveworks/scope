@@ -35,11 +35,15 @@ To install Scope onto your local Docker machine in standalone mode, run the foll
 
 This script downloads and runs a recent Scope image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
-After it’s been launched, open your browser to `http://localhost:4040`.
+After it’s been launched, open your browser to `http://localhost:4040`. The URLs are also displayed to you in the terminal window after Weave Scope was launched. 
 
-> **Note:** If you're using boot2docker, replace localhost with the output of boot2docker IP.
+If you are using docker-machine, you can find the IP by running, `docker-machine ip <VM name>`.
 
-> Scope allows anyone with access to the UI control over your containers: as such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally traffic between the app and the probe is currently insecure and should also not traverse the Internet.
+Where, 
+
+ * `<VM name>` is the name you gave to your virtual machine with docker-machine.
+
+> **Note:** Scope allows anyone with access to the UI control over your containers: as such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally traffic between the app and the probe is currently insecure and should also not traverse the Internet.
 
 ###<a name="docker-weave-cloud"></a>Using Weave Cloud
 
@@ -53,11 +57,11 @@ Then, install Scope onto your local Docker machine and start using Weave Cloud:
 
 Where,
 
-* `--service-token=<token>` is the token that you obtained when you signed up.
+* `--service-token=<token>` is the token you obtained after you signed up for Weave Cloud.
 
 This script downloads and runs a recent Scope docker image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
-After Scope has been launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login.  Click 'View Instance' in the top right-hand corner to see the Scope user interface.
+After Scope has been launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login. Click 'View Instance' in the top right-hand corner to see the Scope user interface.
 
 ###<a name="net-scope"></a> Weave Net and Scope
 
@@ -125,7 +129,7 @@ To install Scope on your local Docker machine with Weave Cloud and use Docker Co
 
 Where,
 
-* `SCOPE_SERVICE_TOKEN=<token>` is the token that you obtained when you signed up.
+* `SCOPE_SERVICE_TOKEN=<token>` is the token you obtained after you signed up for Weave Cloud.
 
 Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
@@ -232,7 +236,7 @@ To get the latest release of Scope deployed onto a Kubernetes cluster, run the f
 
 Where,
 
-* `service-token=<token>` is the token that you obtained when you signed up with Weave Cloud.
+* `service-token=<token>` is the token you obtained after you signed up for Weave Cloud.
 
 > **Note:**The `--validate=false` flag is currently required due to a bug in Kubernetes (see
 [kubernetes/kubernetes#24089](https://github.com/kubernetes/kubernetes/issues/24089) for details.
@@ -270,8 +274,7 @@ For step by step instructions on how to configure the stack, see: [Install Weave
 
 ##<a name="minimesos"></a>Installing Scope on minimesos
 
-The [minimesos](https://github.com/ContainerSolutions/minimesos) project enables you to run an Apache Mesos cluster on a single
-machine, which makes it very easy to develop Mesos frameworks.
+The [minimesos](https://github.com/ContainerSolutions/minimesos) project enables you to run an Apache Mesos cluster on a single machine, which makes it very easy to develop Mesos frameworks.
 
 By default, Weave Scope is included in the minimesos cluster, and can be accessed at `http://172.17.0.1:4040/`.
 
