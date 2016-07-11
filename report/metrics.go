@@ -109,14 +109,14 @@ func last(t1, t2 time.Time) time.Time {
 	return t2
 }
 
-// revCons appends acc to the head of curr, where acc is in reverse order.
-// acc must never be nil, curr can be.
-func revCons(acc, curr ps.List) ps.List {
+// concat returns a new list formed by adding each element of acc to curr
+// acc or curr can be nil.
+func concat(acc []interface{}, curr ps.List) ps.List {
 	if curr == nil {
-		return acc.Reverse()
+		curr = ps.NewList()
 	}
-	for !acc.IsNil() {
-		acc, curr = acc.Tail(), curr.Cons(acc.Head())
+	for i := len(acc) - 1; i >= 0; i-- {
+		curr = curr.Cons(acc[i])
 	}
 	return curr
 }
@@ -128,29 +128,28 @@ func (m Metric) Add(t time.Time, v float64) Metric {
 	// your new element in the list.  NB we want to dedupe entries with
 	// equal timestamps.
 	// This should be O(1) to insert a latest element, and O(n) in general.
-	curr, acc := m.Samples, ps.NewList()
+	curr, acc := m.Samples, make([]interface{}, 0, m.Len()+1)
 	for {
 		if curr == nil || curr.IsNil() {
-			acc = acc.Cons(Sample{t, v})
 			break
 		}
 
 		currSample := curr.Head().(Sample)
 		if currSample.Timestamp.Equal(t) {
-			acc, curr = acc.Cons(Sample{t, v}), curr.Tail()
+			curr = curr.Tail()
 			break
 		}
 		if currSample.Timestamp.Before(t) {
-			acc = acc.Cons(Sample{t, v})
 			break
 		}
 
-		acc, curr = acc.Cons(curr.Head()), curr.Tail()
+		acc, curr = append(acc, curr.Head()), curr.Tail()
 	}
-	acc = revCons(acc, curr)
+	acc = append(acc, Sample{t, v})
+	curr = concat(acc, curr)
 
 	return Metric{
-		Samples: acc,
+		Samples: curr,
 		Max:     math.Max(m.Max, v),
 		Min:     math.Min(m.Min, v),
 		First:   first(m.First, t),
@@ -161,14 +160,15 @@ func (m Metric) Add(t time.Time, v float64) Metric {
 // Merge combines the two Metrics and returns a new result.
 func (m Metric) Merge(other Metric) Metric {
 	// Merge two lists of samples in O(n)
-	curr1, curr2, acc := m.Samples, other.Samples, ps.NewList()
+	curr1, curr2, acc := m.Samples, other.Samples, make([]interface{}, 0, m.Len()+other.Len())
+	var newSamples ps.List
 
 	for {
 		if curr1 == nil || curr1.IsNil() {
-			acc = revCons(acc, curr2)
+			newSamples = concat(acc, curr2)
 			break
 		} else if curr2 == nil || curr2.IsNil() {
-			acc = revCons(acc, curr1)
+			newSamples = concat(acc, curr1)
 			break
 		}
 
@@ -176,16 +176,16 @@ func (m Metric) Merge(other Metric) Metric {
 		s2 := curr2.Head().(Sample)
 
 		if s1.Timestamp.Equal(s2.Timestamp) {
-			curr1, curr2, acc = curr1.Tail(), curr2.Tail(), acc.Cons(s1)
+			curr1, curr2, acc = curr1.Tail(), curr2.Tail(), append(acc, s1)
 		} else if s1.Timestamp.After(s2.Timestamp) {
-			curr1, acc = curr1.Tail(), acc.Cons(s1)
+			curr1, acc = curr1.Tail(), append(acc, s1)
 		} else {
-			curr2, acc = curr2.Tail(), acc.Cons(s2)
+			curr2, acc = curr2.Tail(), append(acc, s2)
 		}
 	}
 
 	return Metric{
-		Samples: acc,
+		Samples: newSamples,
 		Max:     math.Max(m.Max, other.Max),
 		Min:     math.Min(m.Min, other.Min),
 		First:   first(m.First, other.First),
