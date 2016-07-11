@@ -9,11 +9,12 @@ import (
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test/fixture"
 )
 
 func topologyServer() *httptest.Server {
 	router := mux.NewRouter().SkipClean(true)
-	app.RegisterTopologyRoutes(router, StaticReport{})
+	app.RegisterTopologyRoutes(router, app.StaticCollector(fixture.Report))
 	return httptest.NewServer(router)
 }
 
