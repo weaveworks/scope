@@ -1,6 +1,6 @@
 FROM golang:1.6.2
 RUN apt-get update && \
-	apt-get install -y libpcap-dev python-requests time file && \
+	apt-get install -y libpcap-dev python-requests time file shellcheck && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN go clean -i net && \
 	go install -tags netgo std && \
