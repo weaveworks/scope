@@ -1,3 +1,79 @@
+## Release 0.16.1
+
+This is a bugfix release. In addition, the security of Scope probes can be
+hardened through the new flag `--probe.no-controls` with which controls will be
+disabled. Without controls, Scope users won't be able to open terminals,
+start/stop containers, show logs ...
+
+New features and enhancements:
+- Allow disabling controls in probes
+	[#1627](https://github.com/weaveworks/scope/pull/1627)
+
+Performance improvements:
+- Use a slice instead of a persistent list for temporary accumulation of lists
+	[#1660](https://github.com/weaveworks/scope/pull/1660)
+
+Bug fixes:
+- Fix ensure plugins dir exists (close #1649)
+	[#1649](https://github.com/weaveworks/scope/issue/1649)
+- Fixes terminal wrapping by syncing docker/term.js terminal widths.
+	[#1648](https://github.com/weaveworks/scope/pull/1648)
+- Wrongly attributed local side in outbound internet connections
+	[#1598](https://github.com/weaveworks/scope/issues/1598)
+- Cannot port-forward app from kubernetes with command in documentation
+	[#1526](https://github.com/weaveworks/scope/issues/1526)
+- Force some known column widths to prevent truncation of others
+	[#1641](https://github.com/weaveworks/scope/pull/1641)
+
+Documentation:
+- Don't prepend `scope launch` with sudo
+	[#1606](https://github.com/weaveworks/scope/pull/1606)
+- Clarify instructions for using Scope with Weave Cloud
+	[#1611](https://github.com/weaveworks/scope/pull/1611)
+- readded signup page
+	[#1604](https://github.com/weaveworks/scope/pull/1604)
+- weave cloud screen captures
+	[#1603](https://github.com/weaveworks/scope/pull/1603)
+
+Internal improvements and cleanup:
+- Promote fixprobe and delete rest of experimental
+	[#1646](https://github.com/weaveworks/scope/pull/1646)
+- refactor some timing helpers into a common lib
+	[#1642](https://github.com/weaveworks/scope/pull/1642)
+- Print DNS errors
+	[#1607](https://github.com/weaveworks/scope/pull/1607)
+- Make it easier to disable weave integrations
+	[#1610](https://github.com/weaveworks/scope/pull/1610)
+- Add dry run flag to scope, so when launched we can check the args are valid.
+	[#1609](https://github.com/weaveworks/scope/pull/1609)
+- Helper for reading & writing from binary
+	[#1600](https://github.com/weaveworks/scope/pull/1600)
+- Updates to vendoring document
+	[#1595](https://github.com/weaveworks/scope/pull/1595)
+
+Weave Cloud related changes:
+- Count memcache requests even if they time out
+	[#1662](https://github.com/weaveworks/scope/pull/1662)
+- Adding a static report file mode.
+	[#1659](https://github.com/weaveworks/scope/pull/1659)
+- Bump memcache expiration
+	[#1640](https://github.com/weaveworks/scope/pull/1640)
+- Fixes to memcache support
+	[#1628](https://github.com/weaveworks/scope/pull/1628)
+- Refactor caching layers in dynamo collector
+	[#1616](https://github.com/weaveworks/scope/pull/1616)
+- Rework Scope metrics according to Prometheus conventions.
+	[#1615](https://github.com/weaveworks/scope/pull/1615)
+- Fix nil pointer error when memcache not enabled
+	[#1612](https://github.com/weaveworks/scope/pull/1612)
+- Add backoff to the consul client
+	[#1608](https://github.com/weaveworks/scope/pull/1608)
+- Query memcached from dynamo db collector
+	[#1602](https://github.com/weaveworks/scope/pull/1602)
+- Use histograms over summaries
+	[#1665](https://github.com/weaveworks/scope/pull/1665)
+
+
 ## Release 0.16.0
 
 Highlights:
