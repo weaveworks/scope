@@ -6,6 +6,7 @@ RUN echo "http://dl-3.alpinelinux.org/alpine/edge/testing" >>/etc/apk/repositori
 	apk add --update bash runit conntrack-tools iproute2 util-linux curl && \
 	rm -rf /var/cache/apk/*
 ADD ./docker.tgz /
+ADD ./demo.json /
 ADD ./weave /usr/bin/
 COPY ./scope ./runsvinit ./entrypoint.sh /home/weave/
 COPY ./run-app /etc/service/app/run

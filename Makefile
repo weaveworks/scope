@@ -41,7 +41,7 @@ docker/weave:
 	curl -L git.io/weave -o docker/weave
 	chmod u+x docker/weave
 
-$(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/run-app docker/run-probe docker/entrypoint.sh
+$(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 	cp $(SCOPE_EXE) $(RUNSVINIT) docker/
 	cp $(DOCKER_DISTRIB) docker/docker.tgz
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
