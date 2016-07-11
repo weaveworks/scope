@@ -147,15 +147,15 @@ func (c StaticCollector) Report(context.Context) (report.Report, error) { return
 // Add adds a report to the collector's internal state. It implements Adder.
 func (c StaticCollector) Add(context.Context, report.Report) error { return nil }
 
-// WaitOn lets other conponents wait on a new report being received. It
+// WaitOn lets other components wait on a new report being received. It
 // implements Reporter.
 func (c StaticCollector) WaitOn(context.Context, chan struct{}) {}
 
-// UnWait lets other conponents stop waiting on a new report being received. It
+// UnWait lets other components stop waiting on a new report being received. It
 // implements Reporter.
 func (c StaticCollector) UnWait(context.Context, chan struct{}) {}
 
-// NewFileCollector reads and json parses the given path, returning a collector
+// NewFileCollector reads and parses the given path, returning a collector
 // which always returns that report.
 func NewFileCollector(path string) (Collector, error) {
 	f, err := os.Open(path)
