@@ -90,7 +90,10 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 		return nil, err
 	}
 
-	if parsed.Scheme == "dynamodb" {
+	switch parsed.Scheme {
+	case "file":
+		return app.NewFileCollector(parsed.Path)
+	case "dynamodb":
 		s3, err := url.Parse(s3URL)
 		if err != nil {
 			return nil, fmt.Errorf("Valid URL for s3 required: %v", err)
