@@ -146,6 +146,7 @@ func memcacheStatusCode(err error) string {
 
 // FetchReports gets reports from memcache.
 func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, []string, error) {
+	memcacheRequests.Add(float64(len(keys)))
 	var found map[string]*memcache.Item
 	err := instrument.TimeRequestStatus("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
 		var err error
@@ -196,7 +197,6 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 	}
 
 	memcacheHits.Add(float64(len(reports)))
-	memcacheRequests.Add(float64(len(keys)))
 	return reports, missing, nil
 }
 
