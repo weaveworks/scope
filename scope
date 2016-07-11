@@ -35,8 +35,8 @@ COMMAND=$1
 shift 1
 
 check_docker_access() {
-    
-    # Extract socket path    
+
+    # Extract socket path
     DOCKER_SOCK_FILE=""
     if [ -z "${DOCKER_HOST+x}" ]; then
 	DOCKER_SOCK_FILE="/var/run/docker.sock"
@@ -46,7 +46,7 @@ check_docker_access() {
 	    DOCKER_SOCK_FILE="$WITHOUT_PREFIX"
 	fi
     fi
-    
+
     if [ \( -n "$DOCKER_SOCK_FILE" \) -a \( ! -w "$DOCKER_SOCK_FILE" \) ]; then
 	echo "ERROR: cannot write to docker socket: $DOCKER_SOCK_FILE" >&2
 	echo "change socket permissions or try using sudo" >&2
@@ -124,6 +124,20 @@ check_not_running() {
     esac
 }
 
+create_plugins_dir() {
+   # Docker for Mac (as of beta18) looks for this path on VM first, and when it doesn't
+   # find it there, it assumes the user referes to the path on Mac OS. Firstly, in most
+   # cases user won't have /var/run/scope/plugins on their Mac OS filesystem, and
+   # secondly Docker for Mac would have to be configured to share this path. The result
+   # of this "feature" is an error message: "The path /var/run/scope/plugins
+   # is not shared from OS X and does not belong to the system."
+   # In any case, creating /var/run/scope/plugins on Mac OS would not work, as domain
+   # sockets do not cross VM boundaries. We need this directory to exits on the VM.
+   docker run --rm --entrypoint=/bin/sh \
+            -v /var/run:/var/run \
+            $SCOPE_IMAGE -c "mkdir -p /var/run/scope/plugins"
+}
+
 launch_command() {
     echo docker run --privileged -d --name=$SCOPE_CONTAINER_NAME --net=host --pid=host \
             -v /var/run/docker.sock:/var/run/docker.sock \
@@ -196,6 +210,7 @@ EOF
             app_ip=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' "${CONTAINER}")
             check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
             docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
+            create_plugins_dir
             CONTAINER=$($(launch_command --no-app "$@" "${app_ip}:4040"))
             echo $CONTAINER
         fi
