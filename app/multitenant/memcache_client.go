@@ -29,10 +29,11 @@ var (
 		Help:      "Total count of reports found in memcache that were not found in our in-memory cache.",
 	})
 
-	memcacheRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+	memcacheRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "scope",
 		Name:      "memcache_request_duration_seconds",
 		Help:      "Total time spent in seconds doing memcache requests.",
+		Buckets:   prometheus.DefBuckets,
 	}, []string{"method", "status_code"})
 )
 
@@ -148,7 +149,7 @@ func memcacheStatusCode(err error) string {
 func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, []string, error) {
 	memcacheRequests.Add(float64(len(keys)))
 	var found map[string]*memcache.Item
-	err := instrument.TimeRequestStatus("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
+	err := instrument.TimeRequestHistogramStatus("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
 		var err error
 		found, err = c.client.GetMulti(keys)
 		return err
@@ -202,7 +203,7 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 
 // StoreBytes stores a report, expecting the report to be serialized already.
 func (c *MemcacheClient) StoreBytes(key string, content []byte) error {
-	return instrument.TimeRequestStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
+	return instrument.TimeRequestHistogramStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
 		item := memcache.Item{Key: key, Value: content, Expiration: c.expiration}
 		return c.client.Set(&item)
 	})
