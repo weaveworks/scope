@@ -104,7 +104,7 @@ class Node extends React.Component {
     const useSvgLabels = exportingGraph;
     const size = nodeScale(scaleFactor);
     const networkOffset = nodeScale(scaleFactor * 0.65);
-    if (showingNetworks) {
+    if (showingNetworks && networks) {
       labelOffsetY += (focused ? 12 : 8);
     }
 
