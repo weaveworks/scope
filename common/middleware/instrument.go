@@ -16,7 +16,7 @@ type Instrument struct {
 	RouteMatcher interface {
 		Match(*http.Request, *mux.RouteMatch) bool
 	}
-	Duration *prometheus.SummaryVec
+	Duration *prometheus.HistogramVec
 }
 
 func isWSHandshakeRequest(req *http.Request) bool {

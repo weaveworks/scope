@@ -13,10 +13,11 @@ import (
 )
 
 var (
-	s3RequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+	s3RequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "scope",
 		Name:      "s3_request_duration_seconds",
 		Help:      "Time in seconds spent doing S3 requests.",
+		Buckets:   prometheus.DefBuckets,
 	}, []string{"method", "status_code"})
 )
 
@@ -69,7 +70,7 @@ func (store *S3Store) FetchReports(keys []string) (map[string]report.Report, []s
 
 func (store *S3Store) fetchReport(key string) (*report.Report, error) {
 	var resp *s3.GetObjectOutput
-	err := instrument.TimeRequest("Get", s3RequestDuration, func() error {
+	err := instrument.TimeRequestHistogram("Get", s3RequestDuration, func() error {
 		var err error
 		resp, err = store.s3.GetObject(&s3.GetObjectInput{
 			Bucket: aws.String(store.bucketName),
@@ -86,7 +87,7 @@ func (store *S3Store) fetchReport(key string) (*report.Report, error) {
 // StoreBytes stores a report in S3, expecting the report to be serialized
 // already.
 func (store *S3Store) StoreBytes(key string, content []byte) error {
-	return instrument.TimeRequest("Put", s3RequestDuration, func() error {
+	return instrument.TimeRequestHistogram("Put", s3RequestDuration, func() error {
 		_, err := store.s3.PutObject(&s3.PutObjectInput{
 			Body:   bytes.NewReader(content),
 			Bucket: aws.String(store.bucketName),

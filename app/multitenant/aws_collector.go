@@ -31,10 +31,11 @@ const (
 )
 
 var (
-	dynamoRequestDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+	dynamoRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "scope",
 		Name:      "dynamo_request_duration_seconds",
 		Help:      "Time in seconds spent doing DynamoDB requests.",
+		Buckets:   prometheus.DefBuckets,
 	}, []string{"method", "status_code"})
 	dynamoConsumedCapacity = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "scope",
@@ -217,7 +218,7 @@ func (c *awsCollector) CreateTables() error {
 func (c *awsCollector) getReportKeys(userid string, row int64, start, end time.Time) ([]string, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
 	var resp *dynamodb.QueryOutput
-	err := instrument.TimeRequest("Query", dynamoRequestDuration, func() error {
+	err := instrument.TimeRequestHistogram("Query", dynamoRequestDuration, func() error {
 		var err error
 		resp, err = c.db.Query(&dynamodb.QueryInput{
 			TableName: aws.String(c.tableName),
@@ -377,7 +378,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 		Add(float64(len(s3Key)))
 
 	var resp *dynamodb.PutItemOutput
-	err = instrument.TimeRequest("PutItem", dynamoRequestDuration, func() error {
+	err = instrument.TimeRequestHistogram("PutItem", dynamoRequestDuration, func() error {
 		var err error
 		resp, err = c.db.PutItem(&dynamodb.PutItemInput{
 			TableName: aws.String(c.tableName),
