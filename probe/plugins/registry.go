@@ -257,6 +257,9 @@ func (p *Plugin) Report() (result report.Report, err error) {
 
 	key := result.Plugins.Keys()[0]
 	spec, _ := result.Plugins.Lookup(key)
+	if spec.ID != p.PluginSpec.ID {
+		return result, fmt.Errorf("plugin must not change its id (is %q, should be %q)", spec.ID, p.PluginSpec.ID)
+	}
 	p.PluginSpec = spec
 
 	foundReporter := false
