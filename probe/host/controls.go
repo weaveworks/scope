@@ -16,11 +16,11 @@ const (
 )
 
 func (r *Reporter) registerControls() {
-	controls.Register(ExecHost, r.execHost)
+	r.handlerRegistry.Register(ExecHost, r.execHost)
 }
 
-func (*Reporter) deregisterControls() {
-	controls.Rm(ExecHost)
+func (r *Reporter) deregisterControls() {
+	r.handlerRegistry.Rm(ExecHost)
 }
 
 func (r *Reporter) execHost(req xfer.Request) xfer.Response {

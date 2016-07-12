@@ -52,12 +52,13 @@ type ContainerUpdateWatcher func(report.Node)
 
 type registry struct {
 	sync.RWMutex
-	quit         chan chan struct{}
-	interval     time.Duration
-	collectStats bool
-	client       Client
-	pipes        controls.PipeClient
-	hostID       string
+	quit            chan chan struct{}
+	interval        time.Duration
+	collectStats    bool
+	client          Client
+	pipes           controls.PipeClient
+	hostID          string
+	handlerRegistry *controls.HandlerRegistry
 
 	watchers        []ContainerUpdateWatcher
 	containers      *radix.Tree
@@ -91,7 +92,7 @@ func newDockerClient(endpoint string) (Client, error) {
 }
 
 // NewRegistry returns a usable Registry. Don't forget to Stop it.
-func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool, hostID string) (Registry, error) {
+func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool, hostID string, handlerRegistry *controls.HandlerRegistry) (Registry, error) {
 	client, err := NewDockerClientStub(endpoint)
 	if err != nil {
 		return nil, err
@@ -102,12 +103,13 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats
 		containersByPID: map[int]Container{},
 		images:          map[string]docker_client.APIImages{},
 
-		client:       client,
-		pipes:        pipes,
-		interval:     interval,
-		collectStats: collectStats,
-		hostID:       hostID,
-		quit:         make(chan chan struct{}),
+		client:          client,
+		pipes:           pipes,
+		interval:        interval,
+		collectStats:    collectStats,
+		hostID:          hostID,
+		handlerRegistry: handlerRegistry,
+		quit:            make(chan chan struct{}),
 	}
 
 	r.registerControls()

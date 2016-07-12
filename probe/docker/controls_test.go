@@ -16,7 +16,8 @@ import (
 func TestControls(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil, false, "")
+		hr := controls.NewDefaultHandlerRegistry()
+		registry, _ := docker.NewRegistry(10*time.Second, nil, false, "", hr)
 		defer registry.Stop()
 
 		for _, tc := range []struct{ command, result string }{
@@ -26,7 +27,7 @@ func TestControls(t *testing.T) {
 			{docker.PauseContainer, "paused"},
 			{docker.UnpauseContainer, "unpaused"},
 		} {
-			result := controls.HandleControlRequest(xfer.Request{
+			result := hr.HandleControlRequest(xfer.Request{
 				Control: tc.command,
 				NodeID:  report.MakeContainerNodeID("a1b2c3d4e5"),
 			})
@@ -56,7 +57,8 @@ func TestPipes(t *testing.T) {
 
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil, false, "")
+		hr := controls.NewDefaultHandlerRegistry()
+		registry, _ := docker.NewRegistry(10*time.Second, nil, false, "", hr)
 		defer registry.Stop()
 
 		test.Poll(t, 100*time.Millisecond, true, func() interface{} {
@@ -68,7 +70,7 @@ func TestPipes(t *testing.T) {
 			docker.AttachContainer,
 			docker.ExecContainer,
 		} {
-			result := controls.HandleControlRequest(xfer.Request{
+			result := hr.HandleControlRequest(xfer.Request{
 				Control: tc,
 				NodeID:  report.MakeContainerNodeID("ping"),
 			})
