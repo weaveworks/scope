@@ -14,7 +14,7 @@ PROXY_CONTAINER=$(ssh "$HOST" weave run -d weaveworks/socksproxy)
 
 function finish {
 	echo "Removing proxy container.."
-    # shellcheck disable=SC2029
+	# shellcheck disable=SC2029
 	ssh "$HOST" docker rm -f "$PROXY_CONTAINER"
 }
 trap finish EXIT

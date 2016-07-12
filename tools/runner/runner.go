@@ -155,18 +155,15 @@ func getSchedule(tests []string) ([]string, error) {
 		shardID     = os.Getenv("CIRCLE_NODE_INDEX")
 		requestBody = &bytes.Buffer{}
 	)
-	fmt.Printf("getSchedule: %v", tests)
 	if err := json.NewEncoder(requestBody).Encode(schedule{tests}); err != nil {
 		return []string{}, err
 	}
 	url := fmt.Sprintf("http://%s/schedule/%s/%s/%s", schedulerHost, testRun, shardCount, shardID)
-	fmt.Printf("POSTing to %v: %v", url, requestBody)
 	resp, err := http.Post(url, jsonContentType, requestBody)
 	if err != nil {
 		return []string{}, err
 	}
 	var sched schedule
-	fmt.Printf("Got response: %v", resp.Body)
 	if err := json.NewDecoder(resp.Body).Decode(&sched); err != nil {
 		return []string{}, err
 	}
