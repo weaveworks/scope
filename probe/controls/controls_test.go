@@ -10,17 +10,18 @@ import (
 )
 
 func TestControls(t *testing.T) {
-	controls.Register("foo", func(req xfer.Request) xfer.Response {
+	registry := controls.NewDefaultHandlerRegistry()
+	registry.Register("foo", func(req xfer.Request) xfer.Response {
 		return xfer.Response{
 			Value: "bar",
 		}
 	})
-	defer controls.Rm("foo")
+	defer registry.Rm("foo")
 
 	want := xfer.Response{
 		Value: "bar",
 	}
-	have := controls.HandleControlRequest(xfer.Request{
+	have := registry.HandleControlRequest(xfer.Request{
 		Control: "foo",
 	})
 	if !reflect.DeepEqual(want, have) {
@@ -29,10 +30,11 @@ func TestControls(t *testing.T) {
 }
 
 func TestControlsNotFound(t *testing.T) {
+	registry := controls.NewDefaultHandlerRegistry()
 	want := xfer.Response{
 		Error: "Control \"baz\" not recognised",
 	}
-	have := controls.HandleControlRequest(xfer.Request{
+	have := registry.HandleControlRequest(xfer.Request{
 		Control: "baz",
 	})
 	if !reflect.DeepEqual(want, have) {

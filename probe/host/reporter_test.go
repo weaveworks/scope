@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
@@ -55,7 +56,8 @@ func TestReporter(t *testing.T) {
 	host.GetMemoryUsageBytes = func() (float64, float64) { return 60.0, 100.0 }
 	host.GetLocalNetworks = func() ([]*net.IPNet, error) { return []*net.IPNet{ipnet}, nil }
 
-	rpt, err := host.NewReporter(hostID, hostname, "", "", nil).Report()
+	hr := controls.NewDefaultHandlerRegistry()
+	rpt, err := host.NewReporter(hostID, hostname, "", "", nil, hr).Report()
 	if err != nil {
 		t.Fatal(err)
 	}

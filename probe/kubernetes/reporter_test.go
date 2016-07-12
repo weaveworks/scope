@@ -12,6 +12,7 @@ import (
 	"k8s.io/kubernetes/pkg/types"
 
 	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
@@ -184,7 +185,8 @@ func TestReporter(t *testing.T) {
 	pod1ID := report.MakePodNodeID(pod1UID)
 	pod2ID := report.MakePodNodeID(pod2UID)
 	serviceID := report.MakeServiceNodeID(serviceUID)
-	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", "foo", nil).Report()
+	hr := controls.NewDefaultHandlerRegistry()
+	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", "foo", nil, hr).Report()
 
 	// Reporter should have added the following pods
 	for _, pod := range []struct {
@@ -244,7 +246,8 @@ func TestTagger(t *testing.T) {
 		docker.LabelPrefix + "io.kubernetes.pod.uid": "123456",
 	}))
 
-	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil).Tag(rpt)
+	hr := controls.NewDefaultHandlerRegistry()
+	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil, hr).Tag(rpt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -272,7 +275,8 @@ func TestReporterGetLogs(t *testing.T) {
 
 	client := newMockClient()
 	pipes := mockPipeClient{}
-	reporter := kubernetes.NewReporter(client, pipes, "", "", nil)
+	hr := controls.NewDefaultHandlerRegistry()
+	reporter := kubernetes.NewReporter(client, pipes, "", "", nil, hr)
 
 	// Should error on invalid IDs
 	{
