@@ -17,7 +17,8 @@ dependencies:
   cache_directories:
     - "~/docker"
   override:
-    - >
+    - |
+      go get -u github.com/weaveworks/build-tools/cmd/wcloud &&
       sudo apt-get update &&
       sudo apt-get install jq pv &&
       (curl https://sdk.cloud.google.com | bash) &&
@@ -63,12 +64,13 @@ deployment:
   hub:
     branch: master
     commands:
-      - >
+      - |
         test -z "${DOCKER_USER}" || (
           docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
           (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" == "weaveworks" || docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:latest) &&
-          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope
-          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag)
+          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope &&
+          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag) &&
+          wcloud deploy ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag)
         )
   hub-dev:
     branch: /^((?!master).)*$/  # not the master branch
