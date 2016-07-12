@@ -33,6 +33,7 @@ var (
 	useScheduler  = false
 	runParallel   = false
 	verbose       = false
+	timeout       = 180 // In seconds. Three minutes ought to be enough for any test
 
 	consoleLock = sync.Mutex{}
 )
@@ -96,7 +97,16 @@ func (t test) run(hosts []string) bool {
 	}
 
 	start := time.Now()
-	err := cmd.Run()
+	var err error
+
+	c := make(chan error, 1)
+	go func() { c <- cmd.Run() }()
+	select {
+	case err = <-c:
+	case <-time.After(time.Duration(timeout) * time.Second):
+		err = fmt.Errorf("timed out")
+	}
+
 	duration := float64(time.Now().Sub(start)) / float64(time.Second)
 
 	consoleLock.Lock()
@@ -145,15 +155,18 @@ func getSchedule(tests []string) ([]string, error) {
 		shardID     = os.Getenv("CIRCLE_NODE_INDEX")
 		requestBody = &bytes.Buffer{}
 	)
+	fmt.Printf("getSchedule: %v", tests)
 	if err := json.NewEncoder(requestBody).Encode(schedule{tests}); err != nil {
 		return []string{}, err
 	}
 	url := fmt.Sprintf("http://%s/schedule/%s/%s/%s", schedulerHost, testRun, shardCount, shardID)
+	fmt.Printf("POSTing to %v: %v", url, requestBody)
 	resp, err := http.Post(url, jsonContentType, requestBody)
 	if err != nil {
 		return []string{}, err
 	}
 	var sched schedule
+	fmt.Printf("Got response: %v", resp.Body)
 	if err := json.NewDecoder(resp.Body).Decode(&sched); err != nil {
 		return []string{}, err
 	}
@@ -245,15 +258,17 @@ func main() {
 	mflag.BoolVar(&runParallel, []string{"parallel"}, false, "Run tests in parallel on hosts where possible")
 	mflag.BoolVar(&verbose, []string{"v"}, false, "Print output from all tests (Also enabled via DEBUG=1)")
 	mflag.StringVar(&schedulerHost, []string{"scheduler-host"}, defaultSchedulerHost, "Hostname of scheduler.")
+	mflag.IntVar(&timeout, []string{"timeout"}, 180, "Max time to run one test for, in seconds")
 	mflag.Parse()
 
 	if len(os.Getenv("DEBUG")) > 0 {
 		verbose = true
 	}
 
-	tests, err := getTests(mflag.Args())
+	testArgs := mflag.Args()
+	tests, err := getTests(testArgs)
 	if err != nil {
-		fmt.Printf("Error parsing tests: %v\n", err)
+		fmt.Printf("Error parsing tests: %v (%v)\n", err, testArgs)
 		os.Exit(1)
 	}
 

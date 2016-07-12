@@ -23,6 +23,19 @@ class Test(ndb.Model):
   total_run_time = ndb.FloatProperty(default=0.) # Not total, but a EWMA
   total_runs = ndb.IntegerProperty(default=0)
 
+  def parallelism(self):
+    name = self.key.string_id()
+    m = re.search('(\d+)_test.sh$', name)
+    if m is None:
+      return 1
+    else:
+      return int(m.group(1))
+
+  def cost(self):
+    p = self.parallelism()
+    logging.info("Test %s has parallelism %d and avg run time %s", self.key.string_id(), p, self.total_run_time)
+    return self.parallelism() * self.total_run_time
+
 class Schedule(ndb.Model):
   shards = ndb.JsonProperty()
 
@@ -52,7 +65,7 @@ def schedule(test_run, shard_count, shard):
   test_times = ndb.get_multi(ndb.Key(Test, test_name) for test_name in test_names)
   def avg(test):
     if test is not None:
-      return test.total_run_time
+      return test.cost()
     return 1
   test_times = [(test_name, avg(test)) for test_name, test in zip(test_names, test_times)]
   test_times_dict = dict(test_times)
