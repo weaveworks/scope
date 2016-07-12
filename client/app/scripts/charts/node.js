@@ -104,6 +104,8 @@ class Node extends React.Component {
     const NodeShapeType = getNodeShape(this.props);
     const useSvgLabels = exportingGraph;
     const size = nodeScale(scaleFactor);
+    const networkOffset = focused ? size + size * 0.10 : size + size * 0.25;
+
     return (
       <g className={nodeClassName} transform={transform}
         onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
@@ -133,7 +135,7 @@ class Node extends React.Component {
             {...this.props} />
         </g>
 
-        {showingNetworks && <NodeNetworksOverlay labelOffsetY={labelOffsetY}
+        {showingNetworks && <NodeNetworksOverlay offset={networkOffset}
           size={size} networks={networks} stack={stack} />}
       </g>
     );

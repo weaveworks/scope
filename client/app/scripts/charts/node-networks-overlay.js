@@ -6,17 +6,13 @@ import { isContrastMode } from '../utils/contrast-utils';
 
 
 const barHeight = 5;
-const barMarginTop = 6;
-const labelHeight = 32;
 // Gap size between bar segments.
 const padding = 0.05;
 const rx = 1;
 const ry = rx;
 const x = d3.scale.ordinal();
 
-function NodeNetworksOverlay({labelOffsetY, size, stack, networks = makeList()}) {
-  const offset = labelOffsetY + labelHeight + barMarginTop;
-
+function NodeNetworksOverlay({offset, size, stack, networks = makeList()}) {
   // Min size is about a quarter of the width, feels about right.
   const minBarWidth = (size / 4);
   const barWidth = Math.max(size, minBarWidth * networks.size);
