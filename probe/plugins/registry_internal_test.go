@@ -9,18 +9,32 @@ import (
 	"net/http/httputil"
 	"path/filepath"
 	"sort"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
 
 	"github.com/paypal/ionet"
+	"github.com/ugorji/go/codec"
 
 	fs_hook "github.com/weaveworks/scope/common/fs"
 	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/probe/controls"
+	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fs"
 	"github.com/weaveworks/scope/test/reflect"
 )
+
+func testRegistry(t *testing.T, apiVersion string) *Registry {
+	handlerRegistry := controls.NewDefaultHandlerRegistry()
+	root := "/plugins"
+	r, err := NewRegistry(root, apiVersion, nil, handlerRegistry)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return r
+}
 
 func stubTransport(fn func(socket string, timeout time.Duration) (http.RoundTripper, error)) {
 	transport = fn
@@ -158,16 +172,68 @@ func checkLoadedPluginIDs(t *testing.T, forEach iterator, expectedIDs []string) 
 	}
 }
 
+type testResponse struct {
+	Status int
+	Body   string
+}
+
+type testResponseMap map[string]testResponse
+
+// mapStringHandler returns an http.Handler which just prints the given string for each path
+func mapStringHandler(responses testResponseMap) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if response, found := responses[r.URL.Path]; found {
+			w.WriteHeader(response.Status)
+			fmt.Fprint(w, response.Body)
+		} else {
+			http.NotFound(w, r)
+		}
+	})
+}
+
 // stringHandler returns an http.Handler which just prints the given string
 func stringHandler(status int, j string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/report" {
-			http.NotFound(w, r)
-			return
-		}
-		w.WriteHeader(status)
-		fmt.Fprint(w, j)
-	})
+	return mapStringHandler(testResponseMap{"/report": {status, j}})
+}
+
+type testHandlerRegistryBackend struct {
+	handlers map[string]xfer.ControlHandlerFunc
+	t        *testing.T
+	mtx      sync.Mutex
+}
+
+func newTestHandlerRegistryBackend(t *testing.T) *testHandlerRegistryBackend {
+	return &testHandlerRegistryBackend{
+		handlers: map[string]xfer.ControlHandlerFunc{},
+		t:        t,
+	}
+}
+
+// Lock locks the backend, so the batch insertions or removals can be
+// performed.
+func (b *testHandlerRegistryBackend) Lock() {
+	b.mtx.Lock()
+}
+
+// Unlock unlocks the backend.
+func (b *testHandlerRegistryBackend) Unlock() {
+	b.mtx.Unlock()
+}
+
+// Register a new control handler under a given id.
+func (b *testHandlerRegistryBackend) Register(control string, f xfer.ControlHandlerFunc) {
+	b.handlers[control] = f
+}
+
+// Rm deletes the handler for a given name.
+func (b *testHandlerRegistryBackend) Rm(control string) {
+	delete(b.handlers, control)
+}
+
+// Handler gets the handler for the given id.
+func (b *testHandlerRegistryBackend) Handler(control string) (xfer.ControlHandlerFunc, bool) {
+	handler, ok := b.handlers[control]
+	return handler, ok
 }
 
 func TestRegistryLoadsExistingPlugins(t *testing.T) {
@@ -181,11 +247,7 @@ func TestRegistryLoadsExistingPlugins(t *testing.T) {
 	)
 	defer restore(t)
 
-	root := "/plugins"
-	r, err := NewRegistry(root, "1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := testRegistry(t, "1")
 	defer r.Close()
 
 	r.Report()
@@ -211,11 +273,7 @@ func TestRegistryLoadsExistingPluginsEvenWhenOneFails(t *testing.T) {
 	)
 	defer restore(t)
 
-	root := "/plugins"
-	r, err := NewRegistry(root, "1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := testRegistry(t, "1")
 	defer r.Close()
 
 	r.Report()
@@ -239,11 +297,7 @@ func TestRegistryDiscoversNewPlugins(t *testing.T) {
 	mockFS := setup(t)
 	defer restore(t)
 
-	root := "/plugins"
-	r, err := NewRegistry(root, "", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := testRegistry(t, "")
 	defer r.Close()
 
 	r.Report()
@@ -273,11 +327,7 @@ func TestRegistryRemovesPlugins(t *testing.T) {
 	mockFS := setup(t, plugin.file())
 	defer restore(t)
 
-	root := "/plugins"
-	r, err := NewRegistry(root, "", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := testRegistry(t, "")
 	defer r.Close()
 
 	r.Report()
@@ -305,11 +355,7 @@ func TestRegistryUpdatesPluginsWhenTheyChange(t *testing.T) {
 	setup(t, plugin.file())
 	defer restore(t)
 
-	root := "/plugins"
-	r, err := NewRegistry(root, "", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := testRegistry(t, "")
 	defer r.Close()
 
 	r.Report()
@@ -345,11 +391,7 @@ func TestRegistryReturnsPluginsByInterface(t *testing.T) {
 	)
 	defer restore(t)
 
-	root := "/plugins"
-	r, err := NewRegistry(root, "", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := testRegistry(t, "")
 	defer r.Close()
 
 	r.Report()
@@ -374,11 +416,7 @@ func TestRegistryHandlesConflictingPlugins(t *testing.T) {
 	)
 	defer restore(t)
 
-	root := "/plugins"
-	r, err := NewRegistry(root, "", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := testRegistry(t, "")
 	defer r.Close()
 
 	r.Report()
@@ -422,8 +460,8 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 		}.file(),
 		mockPlugin{
 			t:       t,
-			Name:    "changedId",
-			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"differentId","label":"changedId","interfaces":["reporter"]}]}`),
+			Name:    "changedID",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"differentID","label":"changedID","interfaces":["reporter"]}]}`),
 		}.file(),
 		mockPlugin{
 			t:       t,
@@ -433,19 +471,15 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 	)
 	defer restore(t)
 
-	root := "/plugins"
-	r, err := NewRegistry(root, "", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := testRegistry(t, "")
 	defer r.Close()
 
 	r.Report()
 	checkLoadedPlugins(t, r.ForEach, []xfer.PluginSpec{
 		{
-			ID:     "changedId",
-			Label:  "changedId",
-			Status: `error: plugin must not change its id (is "differentId", should be "changedId")`,
+			ID:     "changedID",
+			Label:  "changedID",
+			Status: `error: plugin must not change its id (is "differentID", should be "changedID")`,
 		},
 		{
 			ID:     "moreThanOnePlugin",
@@ -516,11 +550,7 @@ func TestRegistryRejectsPluginResponsesWhichAreTooLarge(t *testing.T) {
 		restore(t)
 	}()
 
-	root := "/plugins"
-	r, err := NewRegistry(root, "", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r := testRegistry(t, "")
 	defer r.Close()
 
 	r.Report()
@@ -570,13 +600,150 @@ func TestRegistryChecksForValidPluginIDs(t *testing.T) {
 	)
 	defer restore(t)
 
+	r := testRegistry(t, "1")
+	defer r.Close()
+
+	r.Report()
+	checkLoadedPluginIDs(t, r.ForEach, []string{"P-L-U-G-I-N", "another-testPlugin", "testPlugin"})
+}
+
+func checkControls(t *testing.T, topology report.Topology, expectedControls, expectedNodeControls []string, nodeID string) {
+	controlsSet := report.MakeStringSet(expectedControls...)
+	for _, id := range controlsSet {
+		control, found := topology.Controls[id]
+		if !found {
+			t.Fatalf("Could not find an expected control %s in topology %s", id, topology.Label)
+		}
+		if control.ID != id {
+			t.Fatalf("Control ID mismatch, expected %s, got %s", id, control.ID)
+		}
+	}
+	if len(controlsSet) != len(topology.Controls) {
+		t.Fatalf("Expected exactly %d controls in topology, got %d", len(controlsSet), len(topology.Controls))
+	}
+
+	node, found := topology.Nodes[nodeID]
+	if !found {
+		t.Fatalf("expected a node %s in a topology", nodeID)
+	}
+	nodeControlsSet := report.MakeStringSet(expectedNodeControls...)
+	if !reflect.DeepEqual(nodeControlsSet, node.Controls.Controls) {
+		t.Fatalf("node controls in node %s in topology %s are not equal:\n%s", nodeID, topology.Label, test.Diff(nodeControlsSet, node.Controls.Controls))
+	}
+}
+
+func TestRegistryRewritesControlReports(t *testing.T) {
+	setup(
+		t,
+		mockPlugin{
+			t:    t,
+			Name: "testPlugin",
+			Handler: mapStringHandler(testResponseMap{
+				"/report":  {http.StatusOK, `{"Pod": {"label":"pod","controls": {"ctrl1":{"id": "ctrl1","human":"Ctrl 1","icon":"fa-at","rank":1}},"nodes":{"node1":{"id":"node1","adjacency":[], "controls":{"timestamp":"2006-01-02 15:04:05.999999999 -0700 MST","controls":["ctrl1", "ctrl2"]}}}},"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter", "controller"],"api_version":"1"}]}`},
+				"/control": {http.StatusOK, `{"value":"foo"}`},
+			}),
+		}.file(),
+		mockPlugin{
+			t:    t,
+			Name: "testPluginReporterOnly",
+			Handler: mapStringHandler(testResponseMap{
+				"/report": {http.StatusOK, `{"Host": {"label":"host","controls": {"ctrl1":{"id": "ctrl1","human":"Ctrl 1","icon":"fa-at","rank":1}},"nodes":{"node1":{"id":"node1","adjacency":[], "controls":{"timestamp":"2006-01-02 15:04:05.999999999 -0700 MST","controls":["ctrl1", "ctrl2"]}}}},"Plugins":[{"id":"testPluginReporterOnly","label":"testPluginReporterOnly","interfaces":["reporter"],"api_version":"1"}]}`},
+			}),
+		}.file(),
+	)
+	defer restore(t)
+
+	r := testRegistry(t, "1")
+	defer r.Close()
+
+	rpt, err := r.Report()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// in a Pod topology, ctrl1 should be faked, ctrl2 should be left intact
+	expectedPodControls := []string{fakeControlID("testPlugin", "ctrl1")}
+	expectedPodNodeControls := []string{fakeControlID("testPlugin", "ctrl1"), "ctrl2"}
+	checkControls(t, rpt.Pod, expectedPodControls, expectedPodNodeControls, "node1")
+	// in a Host topology, controls should be kept untouched
+	expectedHostControls := []string{"ctrl1"}
+	expectedHostNodeControls := []string{"ctrl1", "ctrl2"}
+	checkControls(t, rpt.Host, expectedHostControls, expectedHostNodeControls, "node1")
+}
+
+func TestRegistryRegistersHandlers(t *testing.T) {
+	setup(
+		t,
+		mockPlugin{
+			t:    t,
+			Name: "testPlugin",
+			Handler: mapStringHandler(testResponseMap{
+				"/report":  {http.StatusOK, `{"Pod": {"label":"pod","controls": {"ctrl1":{"id": "ctrl1","human":"Ctrl 1","icon":"fa-at","rank":1}},"nodes":{"node1":{"id":"node1","adjacency":[], "controls":{"timestamp":"2006-01-02 15:04:05.999999999 -0700 MST","controls":["ctrl1", "ctrl2"]}}}},"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter", "controller"],"api_version":"1"}]}`},
+				"/control": {http.StatusOK, `{"value":"foo"}`},
+			}),
+		}.file(),
+	)
+	defer restore(t)
+
+	testBackend := newTestHandlerRegistryBackend(t)
+	handlerRegistry := controls.NewHandlerRegistry(testBackend)
 	root := "/plugins"
-	r, err := NewRegistry(root, "1", nil)
+	r, err := NewRegistry(root, "1", nil, handlerRegistry)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer r.Close()
 
 	r.Report()
-	checkLoadedPluginIDs(t, r.ForEach, []string{"P-L-U-G-I-N", "another-testPlugin", "testPlugin"})
+	if len(testBackend.handlers) != 1 {
+		t.Fatalf("Expected only one registered handler, got %d", len(testBackend.handlers))
+	}
+	fakeID := fakeControlID("testPlugin", "ctrl1")
+	if _, found := testBackend.Handler(fakeID); !found {
+		t.Fatalf("Expected to have a handler for %s", fakeID)
+	}
+}
+
+func TestRegistryHandlersCallPlugins(t *testing.T) {
+	setup(
+		t,
+		mockPlugin{
+			t:    t,
+			Name: "testPlugin",
+			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.URL.Path {
+				case "/report":
+					w.WriteHeader(http.StatusOK)
+					fmt.Fprint(w, `{"Pod": {"label":"pod","controls": {"ctrl1":{"id": "ctrl1","human":"Ctrl 1","icon":"fa-at","rank":1}},"nodes":{"node1":{"id":"node1","adjacency":[], "controls":{"timestamp":"2006-01-02 15:04:05.999999999 -0700 MST","controls":["ctrl1", "ctrl2"]}}}},"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter", "controller"],"api_version":"1"}]}`)
+				case "/control":
+					xreq := xfer.Request{}
+					err := codec.NewDecoder(r.Body, &codec.JsonHandle{}).Decode(&xreq)
+					if err != nil {
+						w.WriteHeader(http.StatusBadRequest)
+						return
+					}
+					w.WriteHeader(http.StatusOK)
+					fmt.Fprintf(w, `{"value":"%s,%s"}`, xreq.NodeID, xreq.Control)
+				default:
+					http.NotFound(w, r)
+				}
+			}),
+		}.file(),
+	)
+	defer restore(t)
+
+	handlerRegistry := controls.NewDefaultHandlerRegistry()
+	root := "/plugins"
+	r, err := NewRegistry(root, "1", nil, handlerRegistry)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+
+	r.Report()
+	fakeID := fakeControlID("testPlugin", "ctrl1")
+	req := xfer.Request{NodeID: "node1", Control: fakeID}
+	res := handlerRegistry.HandleControlRequest(req)
+	if res.Value != "node1,ctrl1" {
+		t.Fatalf("Got unexpected response: %#v", res)
+	}
 }
