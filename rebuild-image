@@ -31,7 +31,7 @@ has_changes() {
 	local rev1=$1
 	local rev2=$2
 	local changes
-    changes=$(git diff --oneline "$rev1..$rev2" -- "${INPUTFILES[@]}" | wc -l)
+	changes=$(git diff --oneline "$rev1..$rev2" -- "${INPUTFILES[@]}" | wc -l)
 	[ "$changes" -gt 0 ]
 }
 
