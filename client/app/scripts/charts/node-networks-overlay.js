@@ -5,8 +5,8 @@ import { getNetworkColor } from '../utils/color-utils';
 import { isContrastMode } from '../utils/contrast-utils';
 
 
-const barHeight = 5;
 // Gap size between bar segments.
+const minBarHeight = 3;
 const padding = 0.05;
 const rx = 1;
 const ry = rx;
@@ -16,6 +16,7 @@ function NodeNetworksOverlay({offset, size, stack, networks = makeList()}) {
   // Min size is about a quarter of the width, feels about right.
   const minBarWidth = (size / 4);
   const barWidth = Math.max(size, minBarWidth * networks.size);
+  const barHeight = Math.max(size * 0.085, minBarHeight);
 
   // Update singleton scale.
   x.domain(networks.map((n, i) => i).toJS());
@@ -24,7 +25,7 @@ function NodeNetworksOverlay({offset, size, stack, networks = makeList()}) {
   const bars = networks.map((n, i) => (
     <rect
       x={x(i)}
-      y={offset}
+      y={offset - barHeight * 0.5}
       width={x.rangeBand()}
       height={barHeight}
       rx={rx}

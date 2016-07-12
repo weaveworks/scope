@@ -87,7 +87,8 @@ class Node extends React.Component {
     const labelTransform = focused ? `scale(${1 / zoomScale})` : '';
     const labelWidth = nodeScale(scaleFactor * 4);
     const labelOffsetX = -labelWidth / 2;
-    let labelOffsetY = focused ? nodeScale(0.5) : nodeScale(0.5 * scaleFactor);
+    const labelDy = (showingNetworks && networks) ? 0.75 : 0.60;
+    const labelOffsetY = focused ? nodeScale(labelDy) : nodeScale(labelDy * scaleFactor);
 
     const nodeClassName = classnames('node', {
       highlighted,
@@ -103,10 +104,7 @@ class Node extends React.Component {
     const NodeShapeType = getNodeShape(this.props);
     const useSvgLabels = exportingGraph;
     const size = nodeScale(scaleFactor);
-    const networkOffset = nodeScale(scaleFactor * 0.65);
-    if (showingNetworks && networks) {
-      labelOffsetY += (focused ? 12 : 8);
-    }
+    const networkOffset = focused ? nodeScale(scaleFactor * 0.67) : nodeScale(0.67);
 
     return (
       <g className={nodeClassName} transform={transform}
