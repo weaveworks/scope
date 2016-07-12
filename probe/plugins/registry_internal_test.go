@@ -316,10 +316,17 @@ func TestRegistryUpdatesPluginsWhenTheyChange(t *testing.T) {
 	checkLoadedPluginIDs(t, r.ForEach, []string{"testPlugin"})
 
 	// Update the plugin. Just change what the handler will respond with.
-	resp = `{"Plugins":[{"id":"updatedPlugin","label":"updatedPlugin","interfaces":["reporter"]}]}`
+	resp = `{"Plugins":[{"id":"testPlugin","label":"updatedPlugin","interfaces":["reporter"]}]}`
 
 	r.Report()
-	checkLoadedPluginIDs(t, r.ForEach, []string{"updatedPlugin"})
+	checkLoadedPlugins(t, r.ForEach, []xfer.PluginSpec{
+		{
+			ID:         "testPlugin",
+			Label:      "updatedPlugin",
+			Interfaces: []string{"reporter"},
+			Status:     "ok",
+		},
+	})
 }
 
 func TestRegistryReturnsPluginsByInterface(t *testing.T) {
@@ -413,6 +420,11 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 			Name:    "nonJSONResponseBody",
 			Handler: stringHandler(http.StatusOK, `notJSON`),
 		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "changedId",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"differentId","label":"changedId","interfaces":["reporter"]}]}`),
+		}.file(),
 	)
 	defer restore(t)
 
@@ -425,6 +437,11 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 
 	r.Report()
 	checkLoadedPlugins(t, r.ForEach, []xfer.PluginSpec{
+		{
+			ID:     "changedId",
+			Label:  "changedId",
+			Status: `error: plugin must not change its id (is "differentId", should be "changedId")`,
+		},
 		{
 			ID:         "noInterface",
 			Label:      "noInterface",
