@@ -518,3 +518,55 @@ func TestRegistryRejectsPluginResponsesWhichAreTooLarge(t *testing.T) {
 		{ID: "foo", Label: "foo", Status: `error: response must be shorter than 50MB`},
 	})
 }
+
+func TestRegistryChecksForValidPluginIDs(t *testing.T) {
+	setup(
+		t,
+		mockPlugin{
+			t:       t,
+			Name:    "testPlugin",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter"],"api_version":"1"}]}`),
+		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "P-L-U-G-I-N",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"P-L-U-G-I-N","label":"testPlugin","interfaces":["reporter"],"api_version":"1"}]}`),
+		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "another-testPlugin",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"another-testPlugin","label":"testPlugin","interfaces":["reporter"],"api_version":"1"}]}`),
+		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "testPlugin!",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"testPlugin!","label":"testPlugin","interfaces":["reporter"],"api_version":"1"}]}`),
+		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "test~plugin",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"test~plugin","label":"testPlugin","interfaces":["reporter"],"api_version":"1"}]}`),
+		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "testPlugin-",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"testPlugin-","label":"testPlugin","interfaces":["reporter"],"api_version":"1"}]}`),
+		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "-testPlugin",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"-testPlugin","label":"testPlugin","interfaces":["reporter"],"api_version":"1"}]}`),
+		}.file(),
+	)
+	defer restore(t)
+
+	root := "/plugins"
+	r, err := NewRegistry(root, "1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+
+	r.Report()
+	checkLoadedPluginIDs(t, r.ForEach, []string{"P-L-U-G-I-N", "another-testPlugin", "testPlugin"})
+}
