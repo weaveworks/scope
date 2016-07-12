@@ -65,6 +65,12 @@ var (
 		Name:      "report_size_bytes_total",
 		Help:      "Total compressed size of reports received in bytes.",
 	})
+	reportSizeHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: "scope",
+		Name:      "report_size_bytes",
+		Help:      "Distribution of memcache report sizes",
+		Buckets:   prometheus.ExponentialBuckets(4096, 2.0, 10),
+	})
 
 	natsRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "scope",
@@ -80,6 +86,7 @@ func init() {
 	prometheus.MustRegister(inProcessCacheRequests)
 	prometheus.MustRegister(inProcessCacheHits)
 	prometheus.MustRegister(reportSize)
+	prometheus.MustRegister(reportSizeHistogram)
 	prometheus.MustRegister(natsRequests)
 }
 
@@ -347,6 +354,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 	var buf bytes.Buffer
 	rep.WriteBinary(&buf)
 	reportSize.Add(float64(buf.Len()))
+	reportSizeHistogram.Observe(float64(buf.Len()))
 
 	// second, put the report on s3
 	now := time.Now()
