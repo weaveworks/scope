@@ -60,11 +60,6 @@ var (
 		Help:      "Total count of reports found in the in-process cache.",
 	})
 
-	reportSize = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: "scope",
-		Name:      "report_size_bytes_total",
-		Help:      "Total compressed size of reports received in bytes.",
-	})
 	reportSizeHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: "scope",
 		Name:      "report_size_bytes",
@@ -85,7 +80,6 @@ func init() {
 	prometheus.MustRegister(dynamoValueSize)
 	prometheus.MustRegister(inProcessCacheRequests)
 	prometheus.MustRegister(inProcessCacheHits)
-	prometheus.MustRegister(reportSize)
 	prometheus.MustRegister(reportSizeHistogram)
 	prometheus.MustRegister(natsRequests)
 }
@@ -353,7 +347,6 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 	// first, encode the report into a buffer and record its size
 	var buf bytes.Buffer
 	rep.WriteBinary(&buf)
-	reportSize.Add(float64(buf.Len()))
 	reportSizeHistogram.Observe(float64(buf.Len()))
 
 	// second, put the report on s3
