@@ -206,6 +206,7 @@ func probeMain(flags probeFlags) {
 			"probe_id":    probeID,
 			"api_version": pluginAPIVersion,
 		},
+		handlerRegistry,
 	)
 	if err != nil {
 		log.Errorf("plugins: problem loading: %v", err)
