@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -27,6 +28,7 @@ var (
 	transport                 = makeUnixRoundTripper
 	maxResponseBytes    int64 = 50 * 1024 * 1024
 	errResponseTooLarge       = fmt.Errorf("response must be shorter than 50MB")
+	validPluginName           = regexp.MustCompile("^[A-Za-z0-9]+([-][A-Za-z0-9]+)*$")
 )
 
 const (
@@ -103,7 +105,12 @@ func (r *Registry) scan() error {
 			continue
 		}
 		client := &http.Client{Transport: tr, Timeout: pluginTimeout}
-		plugins[path] = NewPlugin(r.context, path, client, r.apiVersion, r.handshakeMetadata)
+		plugin, err := NewPlugin(r.context, path, client, r.apiVersion, r.handshakeMetadata)
+		if err != nil {
+			log.Warningf("plugins: error loading plugin %s: %v", path, err)
+			continue
+		}
+		plugins[path] = plugin
 		log.Infof("plugins: added plugin %s", path)
 	}
 	// remove plugins which weren't found
@@ -216,16 +223,19 @@ type Plugin struct {
 
 // NewPlugin loads and initializes a new plugin. If client is nil,
 // http.DefaultClient will be used.
-func NewPlugin(ctx context.Context, socket string, client *http.Client, expectedAPIVersion string, handshakeMetadata map[string]string) *Plugin {
+func NewPlugin(ctx context.Context, socket string, client *http.Client, expectedAPIVersion string, handshakeMetadata map[string]string) (*Plugin, error) {
+	id := strings.TrimSuffix(filepath.Base(socket), filepath.Ext(socket))
+	if !validPluginName.MatchString(id) {
+		return nil, fmt.Errorf("invalid plugin id %q", id)
+	}
+
 	params := url.Values{}
 	for k, v := range handshakeMetadata {
 		params.Add(k, v)
 	}
 
-	id := strings.TrimSuffix(filepath.Base(socket), filepath.Ext(socket))
-
 	ctx, cancel := context.WithCancel(ctx)
-	return &Plugin{
+	plugin := &Plugin{
 		PluginSpec:         xfer.PluginSpec{ID: id, Label: id},
 		context:            ctx,
 		socket:             socket,
@@ -234,6 +244,7 @@ func NewPlugin(ctx context.Context, socket string, client *http.Client, expected
 		client:             client,
 		cancel:             cancel,
 	}
+	return plugin, nil
 }
 
 // Report gets the latest report from the plugin
