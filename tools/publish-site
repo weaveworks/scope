@@ -3,7 +3,7 @@
 set -e
 set -o pipefail
 
-: ${PRODUCT:=}
+: "${PRODUCT:=}"
 
 fatal() {
     echo "$@" >&2

@@ -24,14 +24,14 @@ export INVARIANT=${INVARIANT:-}
 export CONTINUE=${CONTINUE:-}
 
 args="$(getopt -n "$0" -l \
-    verbose,help,stop,discover,invariant,continue vhxdic $*)" \
+    verbose,help,stop,discover,invariant,continue vhxdic "$@")" \
 || exit -1
 for arg in $args; do
     case "$arg" in
         -h)
             echo "$0 [-vxidc]" \
                 "[--verbose] [--stop] [--invariant] [--discover] [--continue]"
-            echo "`sed 's/./ /g' <<< "$0"` [-h] [--help]"
+            echo "$(sed 's/./ /g' <<< "$0") [-h] [--help]"
             exit 0;;
         --help)
             cat <<EOF
@@ -83,17 +83,17 @@ assert_end() {
     # to get report_time split tests_time on 2 substrings:
     #   ${tests_time:0:${#tests_time}-9} - seconds
     #   ${tests_time:${#tests_time}-9:3} - milliseconds
-    [[ -z "$INVARIANT" ]] \
-        && report_time=" in ${tests_time:0:${#tests_time}-9}.${tests_time:${#tests_time}-9:3}s" \
-        || report_time=
-
+    if [[ -z "$INVARIANT" ]]; then
+        report_time=" in ${tests_time:0:${#tests_time}-9}.${tests_time:${#tests_time}-9:3}s"
+    else
+        report_time=
+    fi
     if [[ "$tests_failed" -eq 0 ]]; then
         echo "all $tests passed$report_time."
     else
         for error in "${tests_errors[@]}"; do echo "$error"; done
         echo "$tests_failed of $tests failed$report_time."
     fi
-    tests_failed_previous=$tests_failed
     [[ $tests_failed -gt 0 ]] && tests_suite_status=1
     _assert_reset
 }
@@ -103,7 +103,7 @@ assert() {
     (( tests_ran++ )) || :
     [[ -z "$DISCOVERONLY" ]] || return
     expected=$(echo -ne "${2:-}")
-    result="$(eval 2>/dev/null $1 <<< ${3:-})" || true
+    result="$(eval 2>/dev/null "$1" <<< "${3:-}")" || true
     if [[ "$result" == "$expected" ]]; then
         [[ -z "$DEBUG" ]] || echo -n .
         return
@@ -119,7 +119,7 @@ assert_raises() {
     (( tests_ran++ )) || :
     [[ -z "$DISCOVERONLY" ]] || return
     status=0
-    (eval $1 <<< ${3:-}) > /dev/null 2>&1 || status=$?
+    (eval "$1" <<< "${3:-}") > /dev/null 2>&1 || status=$?
     expected=${2:-0}
     if [[ "$status" -eq "$expected" ]]; then
         [[ -z "$DEBUG" ]] || echo -n .
@@ -143,7 +143,7 @@ _assert_fail() {
 
 skip_if() {
     # skip_if <command ..>
-    (eval $@) > /dev/null 2>&1 && status=0 || status=$?
+    (eval "$@") > /dev/null 2>&1 && status=0 || status=$?
     [[ "$status" -eq 0 ]] || return
     skip
 }
