@@ -8,7 +8,7 @@ Weave Scope is a visualization, and monitoring tool for Docker and Kubernetes. I
 
 To install Scope on your local Docker machine, run the following commands:
 
-    sudo wget -O /usr/local/bin/scope https://git.io/scope
+    sudo curl -L git.io/scope -o /usr/local/bin/scope
     sudo chmod a+x /usr/local/bin/scope
     scope launch
 

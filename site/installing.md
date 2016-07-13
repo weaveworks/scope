@@ -29,7 +29,7 @@ The following topics are discussed:
 
 To install Scope onto your local Docker machine in standalone mode, run the following commands:
 
-    sudo wget -O /usr/local/bin/scope https://git.io/scope
+    sudo curl -L git.io/scope -o /usr/local/bin/scope
     sudo chmod a+x /usr/local/bin/scope
     scope launch
 
@@ -51,7 +51,7 @@ First, obtain a service-token from Weave Cloud by signing up at [https://cloud.w
 
 Then, install Scope onto your local Docker machine and start using Weave Cloud:
 
-    sudo wget -O /usr/local/bin/scope https://git.io/scope
+    sudo curl -L git.io/scope -o /usr/local/bin/scope
     sudo chmod a+x /usr/local/bin/scope
     scope launch --service-token=<token>
 
