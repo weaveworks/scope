@@ -87,7 +87,8 @@ class Node extends React.Component {
     const labelTransform = focused ? `scale(${1 / zoomScale})` : '';
     const labelWidth = nodeScale(scaleFactor * 4);
     const labelOffsetX = -labelWidth / 2;
-    const labelOffsetY = focused ? nodeScale(0.5) : nodeScale(0.5 * scaleFactor);
+    const labelDy = (showingNetworks && networks) ? 0.75 : 0.60;
+    const labelOffsetY = focused ? nodeScale(labelDy) : nodeScale(labelDy * scaleFactor);
 
     const nodeClassName = classnames('node', {
       highlighted,
@@ -99,11 +100,12 @@ class Node extends React.Component {
 
     const labelClassName = classnames('node-label', { truncate });
     const subLabelClassName = classnames('node-sublabel', { truncate });
-    const matchedResultsStyle = showingNetworks ? { marginTop: 6 } : null;
 
     const NodeShapeType = getNodeShape(this.props);
     const useSvgLabels = exportingGraph;
     const size = nodeScale(scaleFactor);
+    const networkOffset = focused ? nodeScale(scaleFactor * 0.67) : nodeScale(0.67);
+
     return (
       <g className={nodeClassName} transform={transform}
         onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
@@ -121,8 +123,7 @@ class Node extends React.Component {
               <div className={subLabelClassName}>
                 <MatchedText text={subLabel} match={matches.get('sublabel')} />
               </div>
-              {!blurred && <MatchedResults matches={matches.get('metadata')}
-                style={matchedResultsStyle} />}
+              {!blurred && <MatchedResults matches={matches.get('metadata')} />}
             </div>
           </foreignObject>}
 
@@ -133,7 +134,7 @@ class Node extends React.Component {
             {...this.props} />
         </g>
 
-        {showingNetworks && <NodeNetworksOverlay labelOffsetY={labelOffsetY}
+        {showingNetworks && <NodeNetworksOverlay offset={networkOffset}
           size={size} networks={networks} stack={stack} />}
       </g>
     );
