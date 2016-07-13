@@ -153,7 +153,7 @@ launch_docker4mac_app_command() {
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --no-probe "$@"
 }
 
-launch_normally() {
+launch() {
     check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
     docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
     CONTAINER=$($(launch_command "$@"))
@@ -209,7 +209,7 @@ EOF
         if check_docker_for_mac ; then
             create_plugins_dir      
             if check_probe_only ; then
-                launch_normally "$@"
+                launch "$@"
                 return
             fi
             # Docker for Mac (as of beta9) does not ship vmnet driver and
@@ -229,7 +229,7 @@ EOF
             return
         fi
 
-        launch_normally "$@"
+        launch "$@"
         if ! check_probe_only ; then
             IP_ADDRS=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "$IP_ADDR_CMD")
             print_app_endpoints $IP_ADDRS
