@@ -195,6 +195,7 @@ EOF
         if ! check_docker_for_mac || check_probe_only ; then
             check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
             docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
+            create_plugins_dir
             CONTAINER=$($(launch_command "$@"))
             echo $CONTAINER
         elif check_docker_for_mac ; then
