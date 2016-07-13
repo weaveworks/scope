@@ -1,36 +1,38 @@
 #!/usr/bin/python
 import sys, string, json, urllib
 import requests
+import optparse
 
-BASE_URL="http://positive-cocoa-90213.appspot.com"
-
-def test_time(test_name, runtime):
-  r = requests.post(BASE_URL + "/record/%s/%f" % (urllib.quote(test_name, safe=""), runtime))
+def test_time(target, test_name, runtime):
+  r = requests.post(target + "/record/%s/%f" % (urllib.quote(test_name, safe=""), runtime))
   print r.text
   assert r.status_code == 204
 
-def test_sched(test_run, shard_count, shard_id):
+def test_sched(target, test_run, shard_count, shard_id):
   tests = json.dumps({'tests': string.split(sys.stdin.read())})
-  r = requests.post(BASE_URL + "/schedule/%s/%d/%d" % (test_run, shard_count, shard_id), data=tests)
+  r = requests.post(target + "/schedule/%s/%d/%d" % (test_run, shard_count, shard_id), data=tests)
   assert r.status_code == 200
   result = r.json()
   for test in sorted(result['tests']):
     print test
 
 def usage():
-  print "%s <cmd> <args..>" % sys.argv[0]
+  print "%s (--target=...) <cmd> <args..>" % sys.argv[0]
   print "   time <test name> <run time>"
   print "   sched <test run> <num shards> <shard id>"
 
 def main():
-  if len(sys.argv) < 4:
+  parser = optparse.OptionParser()
+  parser.add_option('--target', default="http://positive-cocoa-90213.appspot.com")
+  options, args = parser.parse_args()
+  if len(args) < 3:
     usage()
     sys.exit(1)
 
-  if sys.argv[1] == "time":
-    test_time(sys.argv[2], float(sys.argv[3]))
-  elif sys.argv[1] == "sched":
-    test_sched(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
+  if args[0] == "time":
+    test_time(options.target, args[1], float(args[2]))
+  elif args[0] == "sched":
+    test_sched(options.target, args[1], int(args[2]), int(args[3]))
   else:
     usage()
 
