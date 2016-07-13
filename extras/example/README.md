@@ -9,7 +9,7 @@ $ sudo curl -L git.io/weave -o /usr/local/bin/weave
 $ sudo chmod +x /usr/local/bin/weave
 $ curl -o run.sh https://raw.githubusercontent.com/weaveworks/scope/master/experimental/example/run.sh
 $ ./run.sh
-$ sudo wget -O /usr/local/bin/scope https://github.com/weaveworks/scope/releases/download/latest_release/scope
+$ sudo curl -L git.io/scope -o /usr/local/bin/scope
 $ sudo chmod a+x /usr/local/bin/scope
 $ scope launch
 ```
