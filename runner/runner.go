@@ -262,9 +262,10 @@ func main() {
 		verbose = true
 	}
 
-	tests, err := getTests(mflag.Args())
+	testArgs := mflag.Args()
+	tests, err := getTests(testArgs)
 	if err != nil {
-		fmt.Printf("Error parsing tests: %v\n", err)
+		fmt.Printf("Error parsing tests: %v (%v)\n", err, testArgs)
 		os.Exit(1)
 	}
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # This scipt lints go files for common errors.
 #
-# Its runs gofmt and go vet, and optionally golint and
+# It runs gofmt and go vet, and optionally golint and
 # gocyclo, if they are installed.
 #
 # With no arguments, it lints the current files staged
@@ -41,7 +41,7 @@ function spell_check {
 	local lint_result=0
 
 	# we don't want to spell check tar balls or binaries
-	if file $filename | grep executable >/dev/null 2>&1; then
+	if file "$filename" | grep executable >/dev/null 2>&1; then
 		return $lint_result
 	fi
 	if [[ $filename == *".tar" || $filename == *".gz" ]]; then
@@ -63,11 +63,11 @@ function spell_check {
 
 function test_mismatch {
 	filename="$1"
-	package=$(grep '^package ' $filename | awk '{print $2}')
+	package=$(grep '^package ' "$filename" | awk '{print $2}')
 	local lint_result=0
 
 	if [[ $package == "main" ]]; then
-		continue # in package main, all bets are off
+		return # in package main, all bets are off
 	fi
 
 	if [[ $filename == *"_internal_test.go" ]]; then
@@ -115,7 +115,7 @@ function lint_go {
 	# don't have it installed.  Also never blocks a commit,
 	# it just warns.
 	if type gocyclo >/dev/null 2>&1; then
-		gocyclo -over 25 "${filename}" | while read line; do
+		gocyclo -over 25 "${filename}" | while read -r line; do
 			echo "${filename}": higher than 25 cyclomatic complexity - "${line}"
 		done
 	fi
@@ -158,7 +158,7 @@ function lint {
 
 function lint_files {
 	local lint_result=0
-	while read filename; do
+	while read -r filename; do
 		lint "${filename}" || lint_result=1
 	done
 	exit $lint_result
