@@ -162,7 +162,7 @@ launch() {
 
 print_app_endpoints() {
     echo "Weave Scope is reachable at the following URL(s):" >&2
-    for ip in $@; do
+    for ip in "$@"; do
         echo "  * http://$ip:4040/" >&2
     done
 }
