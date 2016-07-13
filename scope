@@ -210,7 +210,7 @@ EOF
             create_plugins_dir      
             if check_probe_only ; then
                 launch "$@"
-                return
+                exit
             fi
             # Docker for Mac (as of beta9) does not ship vmnet driver and
             # thereby only access container ports via a tunnel, preventing
@@ -226,7 +226,7 @@ EOF
             docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
             CONTAINER=$($(launch_command --no-app "$@" "${app_ip}:4040"))
             print_app_endpoints "localhost"
-            return
+            exit
         fi
 
         launch "$@"
