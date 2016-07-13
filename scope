@@ -224,7 +224,6 @@ EOF
             app_ip=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' "${CONTAINER}")
             check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
             docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
-            create_plugins_dir
             CONTAINER=$($(launch_command --no-app "$@" "${app_ip}:4040"))
             print_app_endpoints "localhost"
             return
