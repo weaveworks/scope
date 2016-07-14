@@ -218,11 +218,11 @@ EOF
             # - https://github.com/weaveworks/scope/issues/1411
             # - https://forums.docker.com/t/ports-in-host-network-namespace-are-not-accessible/10789
             check_not_running $SCOPE_APP_CONTAINER_NAME $SCOPE_IMAGE_NAME
+            check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
             docker rm -f $SCOPE_APP_CONTAINER_NAME >/dev/null 2>&1 || true
             CONTAINER=$($(launch_docker4mac_app_command "$@"))
             echo $CONTAINER
             app_ip=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' "${CONTAINER}")
-            check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
             docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
             CONTAINER=$($(launch_command --no-app "$@" "${app_ip}:4040"))
             print_app_endpoints "localhost"
