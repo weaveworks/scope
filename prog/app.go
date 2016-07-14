@@ -7,6 +7,7 @@ import (
 	_ "net/http/pprof"
 	"net/url"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -199,6 +200,7 @@ func pipeRouterFactory(userIDer multitenant.UserIDer, pipeRouterURL, consulInf s
 func appMain(flags appFlags) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
+	runtime.SetBlockProfileRate(flags.blockProfileRate)
 
 	defer log.Info("app exiting")
 	rand.Seed(time.Now().UnixNano())
