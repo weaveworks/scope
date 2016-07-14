@@ -1,9 +1,8 @@
 # Release 0.16.1
 
-This is a bugfix release. In addition, the security of the Scope probe can be
-hardened by disabling controls with the new `--probe.no-controls` flag. Without
-controls, Scope users won't be able to open terminals, start/stop containers,
-view logs, etc.
+In addition, the security of the Scope probe can be hardened by disabling
+controls with the new `--probe.no-controls` flag, which prevents users from
+opening terminals, starting/stopping containers, viewing logs, etc.
 
 New features and enhancements:
 - Allow disabling controls in probes
