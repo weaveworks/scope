@@ -9,8 +9,8 @@ import (
 )
 
 // WriteBinary writes a Report as a gzipped msgpack.
-func (rep Report) WriteBinary(w io.Writer) error {
-	gzwriter, err := gzip.NewWriterLevel(w, gzip.BestCompression)
+func (rep Report) WriteBinary(w io.Writer, compressionLevel int) error {
+	gzwriter, err := gzip.NewWriterLevel(w, compressionLevel)
 	if err != nil {
 		return err
 	}

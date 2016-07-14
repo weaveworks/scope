@@ -2,6 +2,7 @@ package multitenant
 
 import (
 	"bytes"
+	"compress/gzip"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -346,7 +347,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 
 	// first, encode the report into a buffer and record its size
 	var buf bytes.Buffer
-	rep.WriteBinary(&buf)
+	rep.WriteBinary(&buf, gzip.BestCompression)
 	reportSizeHistogram.Observe(float64(buf.Len()))
 
 	// second, put the report on s3
