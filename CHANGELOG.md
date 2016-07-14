@@ -1,6 +1,6 @@
 # Release 0.16.1
 
-In addition, the security of the Scope probe can be hardened by disabling
+This is a bugfix release. In addition, the security of the Scope probe can be hardened by disabling
 controls with the new `--probe.no-controls` flag, which prevents users from
 opening terminals, starting/stopping containers, viewing logs, etc.
 
@@ -19,6 +19,8 @@ Performance improvements:
 	[#1660](https://github.com/weaveworks/scope/pull/1660)
 
 Bug fixes:
+- Should check if probe is already running when launch in standalone mode on Docker for Mac
+	[#1679](https://github.com/weaveworks/scope/issues/1679)
 - Fixes network bars position when a node is selected.
 	[#1667](https://github.com/weaveworks/scope/pull/1667)
 - Scope fails to launch on latest Docker for Mac (beta18)
@@ -32,8 +34,6 @@ Bug fixes:
 	[#1526](https://github.com/weaveworks/scope/issues/1526)
 - Force some known column widths to prevent truncation of others
 	[#1641](https://github.com/weaveworks/scope/pull/1641)
-- Check if app and probe are running first
-	[#1679](https://github.com/weaveworks/scope/issues/1679)
 
 Documentation:
 - Replace wget in instructions with curl, as it's more widely avail. on macs
