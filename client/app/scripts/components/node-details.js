@@ -47,7 +47,7 @@ export class NodeDetails extends React.Component {
   }
 
   renderTools() {
-    const showSwitchTopology = this.props.index > 0;
+    const showSwitchTopology = this.props.nodeId !== this.props.selectedNodeId;
     const topologyTitle = `View ${this.props.label} in ${this.props.topologyId}`;
 
     return (
@@ -229,7 +229,8 @@ function mapStateToProps(state, ownProps) {
   const currentTopologyId = state.get('currentTopologyId');
   return {
     nodeMatches: state.getIn(['searchNodeMatches', currentTopologyId, ownProps.id]),
-    nodes: state.get('nodes')
+    nodes: state.get('nodes'),
+    selectedNodeId: state.get('selectedNodeId'),
   };
 }
 

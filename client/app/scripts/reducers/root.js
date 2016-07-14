@@ -8,7 +8,7 @@ import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { applyPinnedSearches, updateNodeMatches } from '../utils/search-utils';
 import { getNetworkNodes, getAvailableNetworks } from '../utils/network-view-utils';
 import { findTopologyById, getAdjacentNodes, setTopologyUrlsById,
-  updateTopologyIds, filterHiddenTopologies } from '../utils/topology-utils';
+  updateTopologyIds, filterHiddenTopologies, addTopologyFullname } from '../utils/topology-utils';
 
 const log = debug('scope:app-store');
 const error = debug('scope:error');
@@ -29,6 +29,8 @@ export const initialState = makeMap({
   errorUrl: null,
   forceRelayout: false,
   gridMode: false,
+  gridSortBy: null,
+  gridSortedDesc: true,
   highlightedEdgeIds: makeSet(),
   highlightedNodeIds: makeSet(),
   hostname: '...',
@@ -80,7 +82,8 @@ function processTopologies(state, nextTopologies) {
   state = state.set('topologyUrlsById',
     setTopologyUrlsById(state.get('topologyUrlsById'), topologiesWithId));
 
-  const immNextTopologies = fromJS(topologiesWithId).sortBy(topologySorter);
+  const topologiesWithFullnames = addTopologyFullname(topologiesWithId);
+  const immNextTopologies = fromJS(topologiesWithFullnames).sortBy(topologySorter);
   return state.mergeDeepIn(['topologies'], immNextTopologies);
 }
 
@@ -165,6 +168,13 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.SET_EXPORTING_GRAPH: {
       return state.set('exportingGraph', action.exporting);
+    }
+
+    case ActionTypes.SORT_ORDER_CHANGED: {
+      return state.merge({
+        gridSortBy: action.sortBy,
+        gridSortedDesc: action.sortedDesc,
+      });
     }
 
     case ActionTypes.SET_GRID_MODE: {
@@ -631,6 +641,12 @@ export function rootReducer(state = initialState, action) {
         pinnedMetricType: action.state.pinnedMetricType
       });
       state = state.set('gridMode', action.state.mode === 'grid');
+      if (action.state.gridSortBy) {
+        state = state.set('gridSortBy', action.state.gridSortBy);
+      }
+      if (action.state.gridSortedDesc !== undefined) {
+        state = state.set('gridSortedDesc', action.state.gridSortedDesc);
+      }
       if (action.state.showingNetworks) {
         state = state.set('showingNetworks', action.state.showingNetworks);
       }

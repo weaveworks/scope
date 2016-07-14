@@ -36,14 +36,23 @@ export function toggleHelp() {
 
 
 export function toggleGridMode(enabled) {
-  return {type: ActionTypes.SET_GRID_MODE, enabled};
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.SET_GRID_MODE,
+      enabled
+    });
+    updateRoute(getState);
+  };
 }
 
 
-export function sortOrderChanged(newOrder) {
-  return {
-    type: ActionTypes.SORT_ORDER_CHANGED,
-    newOrder
+export function sortOrderChanged(sortBy, sortedDesc) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.SORT_ORDER_CHANGED,
+      sortBy, sortedDesc
+    });
+    updateRoute(getState);
   };
 }
 

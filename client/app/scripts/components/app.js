@@ -12,7 +12,7 @@ import Topologies from './topologies.js';
 import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric,
-  selectMetric, toggleHelp } from '../actions/app-actions';
+  selectMetric, toggleHelp, toggleGridMode } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import GridModeSelector from './grid-mode-selector';
@@ -87,6 +87,10 @@ class App extends React.Component {
         dispatch(pinNextMetric(-1));
       } else if (char === '>') {
         dispatch(pinNextMetric(1));
+      } else if (char === 'v') {
+        dispatch(toggleGridMode(false));
+      } else if (char === 't') {
+        dispatch(toggleGridMode(true));
       } else if (char === 'q') {
         dispatch(unpinMetric());
         dispatch(selectMetric(null));
@@ -100,8 +104,8 @@ class App extends React.Component {
   }
 
   render() {
-    const { showingDetails, showingHelp, showingMetricsSelector, showingNetworkSelector,
-     showingTerminal } = this.props;
+    const { gridMode, showingDetails, showingHelp, showingMetricsSelector,
+      showingNetworkSelector, showingTerminal } = this.props;
     const isIframe = window !== window.top;
 
     return (
@@ -126,11 +130,11 @@ class App extends React.Component {
 
         <Nodes />
 
-        <Sidebar>
+        <Sidebar classNames={gridMode ? 'sidebar-gridmode' : ''}>
+          {showingMetricsSelector && !gridMode && <MetricSelector />}
+          {showingNetworkSelector && !gridMode && <NetworkSelector />}
           <Status />
           <GridModeSelector />
-          {showingMetricsSelector && <MetricSelector />}
-          {showingNetworkSelector && <NetworkSelector />}
           <TopologyOptions />
         </Sidebar>
 
@@ -143,6 +147,7 @@ class App extends React.Component {
 function mapStateToProps(state) {
   return {
     activeTopologyOptions: getActiveTopologyOptions(state),
+    gridMode: state.get('gridMode'),
     routeSet: state.get('routeSet'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),

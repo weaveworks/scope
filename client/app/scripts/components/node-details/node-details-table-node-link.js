@@ -20,14 +20,14 @@ class NodeDetailsTableNodeLink extends React.Component {
   render() {
     if (this.props.linkable) {
       return (
-        <span className="node-details-table-node-link truncate" title={this.props.label}
+        <span className="node-details-table-node-link" title={this.props.label}
           onClick={this.handleClick}>
           {this.props.label}
         </span>
       );
     }
     return (
-      <span className="node-details-table-node truncate" title={this.props.label}>
+      <span className="node-details-table-node" title={this.props.label}>
         {this.props.label}
       </span>
     );

@@ -218,6 +218,23 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 					Metric:   &fixture.ServerContainerMemoryMetric,
 				},
 			},
+			Parents: []detailed.Parent{
+				{
+					ID:         expected.ServerContainerImageNodeID,
+					Label:      fixture.ServerContainerImageName,
+					TopologyID: "containers-by-image",
+				},
+				{
+					ID:         fixture.ServerHostNodeID,
+					Label:      fixture.ServerHostName,
+					TopologyID: "hosts",
+				},
+				{
+					ID:         fixture.ServerPodNodeID,
+					Label:      "pong-b",
+					TopologyID: "pods",
+				},
+			},
 		},
 		Controls: []detailed.ControlInstance{},
 		Children: []detailed.NodeSummaryGroup{
@@ -230,23 +247,6 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 					{ID: process.MemoryUsage, Label: "Memory"},
 				},
 				Nodes: []detailed.NodeSummary{serverProcessNodeSummary},
-			},
-		},
-		Parents: []detailed.Parent{
-			{
-				ID:         expected.ServerContainerImageNodeID,
-				Label:      fixture.ServerContainerImageName,
-				TopologyID: "containers-by-image",
-			},
-			{
-				ID:         fixture.ServerHostNodeID,
-				Label:      fixture.ServerHostName,
-				TopologyID: "hosts",
-			},
-			{
-				ID:         fixture.ServerPodNodeID,
-				Label:      "pong-b",
-				TopologyID: "pods",
 			},
 		},
 		Connections: []detailed.ConnectionsSummary{
@@ -335,6 +335,18 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				{ID: "container", Label: "# Containers", Value: "1", Priority: 4, Datatype: "number"},
 				{ID: "kubernetes_namespace", Label: "Namespace", Value: "ping", Priority: 5},
 			},
+			Parents: []detailed.Parent{
+				{
+					ID:         fixture.ServerHostNodeID,
+					Label:      fixture.ServerHostName,
+					TopologyID: "hosts",
+				},
+				{
+					ID:         fixture.ServiceNodeID,
+					Label:      fixture.ServiceName,
+					TopologyID: "services",
+				},
+			},
 		},
 		Controls: []detailed.ControlInstance{},
 		Children: []detailed.NodeSummaryGroup{
@@ -356,18 +368,6 @@ func TestMakeDetailedPodNode(t *testing.T) {
 					{ID: process.MemoryUsage, Label: "Memory"},
 				},
 				Nodes: []detailed.NodeSummary{serverProcessNodeSummary},
-			},
-		},
-		Parents: []detailed.Parent{
-			{
-				ID:         fixture.ServerHostNodeID,
-				Label:      fixture.ServerHostName,
-				TopologyID: "hosts",
-			},
-			{
-				ID:         fixture.ServiceNodeID,
-				Label:      fixture.ServiceName,
-				TopologyID: "services",
 			},
 		},
 		Connections: []detailed.ConnectionsSummary{

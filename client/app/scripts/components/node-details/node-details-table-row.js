@@ -16,57 +16,94 @@ function getValuesForNode(node) {
       });
     }
   });
+
+  (node.parents || []).forEach(p => {
+    values[p.topologyId] = {
+      id: p.topologyId,
+      label: p.topologyId,
+      value: p.label,
+      relative: p,
+      valueType: 'relatives',
+    };
+  });
+
   return values;
 }
 
 
-function renderValues(node, columns = []) {
+function renderValues(node, columns = [], columnWidths = []) {
   const fields = getValuesForNode(node);
-  return columns.map(({id}) => {
+  return columns.map(({id}, i) => {
     const field = fields[id];
+    const style = { width: columnWidths[i] };
     if (field) {
       if (field.valueType === 'metadata') {
         return (
           <td className="node-details-table-node-value truncate" title={field.value}
+            style={style}
             key={field.id}>
             {field.value}
           </td>
         );
       }
-      return <NodeDetailsTableNodeMetric key={field.id} {...field} />;
+      if (field.valueType === 'relatives') {
+        return (
+          <td className="node-details-table-node-value truncate" title={field.value}
+            style={style}
+            key={field.id}>
+            {<NodeDetailsTableNodeLink linkable nodeId={field.relative.id} {...field.relative} />}
+          </td>
+        );
+      }
+      return <NodeDetailsTableNodeMetric style={style} key={field.id} {...field} />;
     }
     // empty cell to complete the row for proper hover
-    return <td className="node-details-table-node-value" key={id} />;
+    return <td className="node-details-table-node-value" style={style} key={id} />;
   });
 }
 
-export default class NodeDetailsTableRow extends React.Component {
 
+export default class NodeDetailsTableRow extends React.Component {
   constructor(props, context) {
     super(props, context);
-    this.onMouseOver = this.onMouseOver.bind(this);
+    this.onMouseEnter = this.onMouseEnter.bind(this);
+    this.onMouseLeave = this.onMouseLeave.bind(this);
   }
 
-  onMouseOver() {
-    const { node, onMouseOverRow } = this.props;
-    onMouseOverRow(node);
+  onMouseEnter() {
+    const { node, onMouseEnterRow } = this.props;
+    onMouseEnterRow(node);
+  }
+
+  onMouseLeave() {
+    const { node, onMouseLeaveRow } = this.props;
+    onMouseLeaveRow(node);
   }
 
   render() {
-    const { node, nodeIdKey, topologyId, columns, onMouseOverRow, selected } = this.props;
-    const values = renderValues(node, columns);
+    const { node, nodeIdKey, topologyId, columns, onMouseEnterRow, onMouseLeaveRow, selected,
+      widths } = this.props;
+    const [firstColumnWidth, ...columnWidths] = widths;
+    const values = renderValues(node, columns, columnWidths);
     const nodeId = node[nodeIdKey];
     const className = classNames('node-details-table-node', { selected });
+
     return (
-      <tr onMouseOver={onMouseOverRow && this.onMouseOver} className={className}>
-        <td className="node-details-table-node-label truncate">
-          <NodeDetailsTableNodeLink
-            topologyId={topologyId}
-            nodeId={nodeId}
-            {...node} />
+      <tr
+        onMouseEnter={onMouseEnterRow && this.onMouseEnter}
+        onMouseLeave={onMouseLeaveRow && this.onMouseLeave}
+        className={className}>
+        <td className="node-details-table-node-label truncate"
+          style={{ width: firstColumnWidth }}>
+          {this.props.renderIdCell(Object.assign(node, {topologyId, nodeId}))}
         </td>
         {values}
       </tr>
     );
   }
 }
+
+
+NodeDetailsTableRow.defaultProps = {
+  renderIdCell: (props) => <NodeDetailsTableNodeLink {...props} />
+};

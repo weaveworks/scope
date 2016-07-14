@@ -15,6 +15,7 @@
 /* weave company colours */
 @weave-gray-blue: rgb(85,105,145);
 @weave-blue: rgb(0,210,255);
+@weave-blue-transparent: rgb(0,210,255, 0.1);
 @weave-orange: rgb(255,75,25);
 @weave-charcoal-blue: rgb(50,50,75); // #32324B
 
@@ -273,7 +274,6 @@ h2 {
     margin-bottom: 3px;
     border: 1px solid transparent;
 
-    background-color: #f7f7fa;
     &-active, &:hover {
       color: @text-color;
       background-color: @background-darker-secondary-color;
@@ -1131,7 +1131,7 @@ h2 {
   }
 }
 
-.topology-option, .metric-selector, .network-selector {
+.topology-option, .metric-selector, .network-selector, .grid-mode-selector {
   color: @text-secondary-color;
   margin: 6px 0;
 
@@ -1183,6 +1183,12 @@ h2 {
   }
 }
 
+.grid-mode-selector .fa {
+  margin-right: 4px;
+  margin-left: 0;
+  color: @text-secondary-color;
+}
+
 .network-selector-action {
   border-top: 3px solid transparent;
   border-bottom: 3px solid @background-dark-color;
@@ -1226,9 +1232,18 @@ h2 {
 
 .sidebar {
   position: fixed;
-  bottom: 16px;
-  left: 16px;
+  bottom: 12px;
+  left: 12px;
+  padding: 4px;
   font-size: .7rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.sidebar-gridmode {
+  background-color: #e9e9f1;
+  border-color: @background-darker-color;
+  opacity: 0.9;
 }
 
 .search {
@@ -1402,7 +1417,7 @@ h2 {
 //
 
 @help-panel-width: 400px;
-@help-panel-height: 380px;
+@help-panel-height: 420px;
 .help-panel {
   position: absolute;
   -webkit-transform: translate3d(0, 0, 0);
@@ -1512,16 +1527,63 @@ h2 {
 }
 
 .nodes-grid {
+
+  tr {
+    border-radius: 6px;
+  }
+
+  &-label-minor {
+    opacity: 0.7;
+  }
+
+  &-id-column {
+    margin: -3px -4px;
+    padding: 2px 2px;
+
+    .content {
+      padding: 1px 4px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      display: flex;
+
+      div {
+        flex: 1;
+      }
+    }
+
+    .selected &, &:hover {
+      .content {
+        background-color: #d7ecf5;
+      }
+    }
+    .selected & .content {
+      border: 1px solid @weave-blue;
+    }
+  }
+
+  /*
+  .node-details-relatives {
+    color: inherit;
+    font-size: 90%;
+    white-space: normal;
+    opacity: 0.8;
+    line-height: 110%;
+    text-align: right;
+
+    margin-left: 0;
+    // margin-top: 0;
+    // display: inline-block;
+    float: right;
+  }
+  */
+
   .node-details-table-wrapper-wrapper {
     flex: 1;
 
-    overflow: scroll;
     display: flex;
     flex-direction: row;
-    margin: 8px 16px;
     width: 100%;
-    // border: 1px solid @background-darker-color;
-    padding-bottom: 36px;
 
     .node-details-table-wrapper {
       margin: 0;
@@ -1533,15 +1595,56 @@ h2 {
       margin-top: 24px;
     }
 
+    .node-details-table-node > * {
+      padding: 3px 4px;
+    }
+
     .node-details-table-node, thead tr {
       height: 24px;
     }
 
     .node-details-table-node {
-      &:hover, &.selected {
-        background-color: @background-darker-color;
+      &.selected, &:hover {
+        background-color: @background-lighter-color;
       }
     }
+  }
 
+  .scroll-body {
+
+    table {
+      border-bottom: 1px solid #ccc;
+    }
+
+    thead {
+      // osx scrollbar width: 0
+      // linux scrollbar width: 16
+      // avg scrollbar width: 8
+      padding-right: 8px;
+    }
+
+    thead, tbody tr {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    tbody:after {
+      content: '';
+      display: block;
+      // height of the controls so you can scroll the last row up above them
+      // and have a good look.
+      height: 140px;
+    }
+
+    thead {
+      box-shadow: 0 4px 2px -2px rgba(0, 0, 0, 0.16);
+      border-bottom: 1px solid #aaa;
+    }
+
+    tbody {
+      display: block;
+      overflow-y: scroll;
+    }
   }
 }

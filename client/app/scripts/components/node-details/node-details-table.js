@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 import { Map as makeMap } from 'immutable';
+import classNames from 'classnames';
 
 import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
@@ -13,8 +14,22 @@ function isNumberField(field) {
 
 const COLUMN_WIDTHS = {
   port: '44px',
-  count: '70px'
+  count: '70px',
+  process_cpu_usage_percent: '80px',
+  threads: '80px',
+  process_memory_usage_bytes: '80px',
+  docker_cpu_total_usage: '80px',
+  docker_memory_usage: '80px',
+  docker_container_uptime: '85px',
+  docker_container_restart_count: '80px',
+  docker_container_ips: '80px',
+  docker_container_created: '110px',
+  docker_container_state_human: '120px',
+  open_files_count: '80px',
+  ppid: '80px',
+  pid: '80px',
 };
+
 
 function getDefaultSortBy(columns, nodes) {
   // default sorter specified by columns
@@ -31,7 +46,15 @@ function getValueForSortBy(sortBy) {
   // return the node's value based on the sortBy field
   return (node) => {
     if (sortBy !== null) {
-      const field = _.union(node.metrics, node.metadata).find(f => f.id === sortBy);
+      let field = _.union(node.metrics, node.metadata).find(f => f.id === sortBy);
+
+      if (!field && node.parents) {
+        field = node.parents.find(f => f.topologyId === sortBy);
+        if (field) {
+          return field.label;
+        }
+      }
+
       if (field) {
         if (isNumberField(field)) {
           return parseFloat(field.value);
@@ -39,7 +62,8 @@ function getValueForSortBy(sortBy) {
         return field.value;
       }
     }
-    return -1e-10; // just under 0 to treat missing values differently from 0
+
+    return '';
   };
 }
 
@@ -75,6 +99,33 @@ function getSortedNodes(nodes, columns, sortBy, sortedDesc) {
 }
 
 
+function getColumnsWidths(headers) {
+  return headers.map((h, i) => {
+    //
+    // Beauty hack: adjust first column width if there are only few columns;
+    // this assumes the other columns are narrow metric columns of 20% table width
+    //
+    if (i === 0) {
+      if (headers.length === 2) {
+        return '66%';
+      } else if (headers.length === 3) {
+        return '50%';
+      } else if (headers.length > 3 && headers.length <= 5) {
+        return '33%';
+      } else if (headers.length > 5) {
+        return '20%';
+      }
+    }
+
+    //
+    // More beauty hacking, ports and counts can only get so big, free up WS for other longer
+    // fields like IPs!
+    //
+    return COLUMN_WIDTHS[h.id];
+  });
+}
+
+
 export default class NodeDetailsTable extends React.Component {
 
   constructor(props, context) {
@@ -82,8 +133,8 @@ export default class NodeDetailsTable extends React.Component {
     this.DEFAULT_LIMIT = 5;
     this.state = {
       limit: props.limit || this.DEFAULT_LIMIT,
-      sortedDesc: true,
-      sortBy: null
+      sortedDesc: this.props.sortedDesc,
+      sortBy: this.props.sortBy
     };
     this.handleLimitClick = this.handleLimitClick.bind(this);
   }
@@ -94,6 +145,7 @@ export default class NodeDetailsTable extends React.Component {
       ? !this.state.sortedDesc : this.state.sortedDesc;
     const sortBy = headerId;
     this.setState({sortBy, sortedDesc});
+    this.props.onSortChange(sortBy, sortedDesc);
   }
 
   handleLimitClick() {
@@ -101,56 +153,42 @@ export default class NodeDetailsTable extends React.Component {
     this.setState({limit});
   }
 
+  getColumnHeaders() {
+    const columns = this.props.columns || [];
+    return [{id: 'label', label: this.props.label}].concat(columns);
+  }
+
   renderHeaders() {
     if (this.props.nodes && this.props.nodes.length > 0) {
-      const columns = this.props.columns || [];
-      const headers = [{id: 'label', label: this.props.label}].concat(columns);
-      const defaultSortBy = getDefaultSortBy(this.props);
-
-      // Beauty hack: adjust first column width if there are only few columns;
-      // this assumes the other columns are narrow metric columns of 20% table width
-      if (headers.length === 2) {
-        headers[0].width = '66%';
-      } else if (headers.length === 3) {
-        headers[0].width = '50%';
-      } else if (headers.length >= 3 && headers.length < 5) {
-        headers[0].width = '33%';
-      }
-
-      //
-      // More beauty hacking, ports and counts can only get so big, free up WS for other longer
-      // fields like IPs!
-      //
-      headers.forEach(h => {
-        h.width = COLUMN_WIDTHS[h.id];
-      });
+      const headers = this.getColumnHeaders();
+      const widths = getColumnsWidths(headers);
+      const defaultSortBy = getDefaultSortBy(this.props.columns, this.props.nodes);
 
       return (
         <tr>
-          {headers.map(header => {
+          {headers.map((header, i) => {
             const headerClasses = ['node-details-table-header', 'truncate'];
             const onHeaderClick = ev => {
               this.handleHeaderClick(ev, header.id);
             };
-
             // sort by first metric by default
-            const isSorted = this.state.sortBy !== null
-              ? header.id === this.state.sortBy : header.id === defaultSortBy;
+            const isSorted = header.id === (this.state.sortBy || defaultSortBy);
             const isSortedDesc = isSorted && this.state.sortedDesc;
             const isSortedAsc = isSorted && !isSortedDesc;
+
             if (isSorted) {
               headerClasses.push('node-details-table-header-sorted');
             }
 
             // set header width in percent
             const style = {};
-            if (header.width) {
-              style.width = header.width;
+            if (widths[i]) {
+              style.width = widths[i];
             }
 
             return (
               <td className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
-                key={header.id}>
+                title={header.label} key={header.id}>
                 {isSortedAsc
                   && <span className="node-details-table-header-sorter fa fa-caret-up" />}
                 {isSortedDesc
@@ -167,7 +205,8 @@ export default class NodeDetailsTable extends React.Component {
 
   render() {
     const headers = this.renderHeaders();
-    const { nodeIdKey, columns, topologyId, onMouseOverRow } = this.props;
+    const { nodeIdKey, columns, topologyId, onMouseEnter, onMouseLeave, onMouseEnterRow,
+      onMouseLeaveRow } = this.props;
     let nodes = getSortedNodes(this.props.nodes, this.props.columns, this.state.sortBy,
                                     this.state.sortedDesc);
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
@@ -183,23 +222,29 @@ export default class NodeDetailsTable extends React.Component {
       React.cloneElement(child, { nodeOrder })
     ));
 
+    const className = classNames('node-details-table-wrapper-wrapper', this.props.className);
+
     return (
-      <div className="node-details-table-wrapper-wrapper" style={this.props.style}>
-        <div className="node-details-table-wrapper" onMouseOut={this.props.onMouseOut}>
+      <div className={className}
+        style={this.props.style}>
+        <div className="node-details-table-wrapper">
           <table className="node-details-table">
             <thead>
               {headers}
             </thead>
-            <tbody>
+            <tbody style={this.props.tbodyStyle} onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}>
               {nodes && nodes.map(node => (
                 <NodeDetailsTableRow
                   key={node.id}
-                  selected={this.props.highlightedNodeIds &&
-                    this.props.highlightedNodeIds.has(node.id)}
+                  renderIdCell={this.props.renderIdCell}
+                  selected={this.props.selectedNodeId === node.id}
                   node={node}
                   nodeIdKey={nodeIdKey}
+                  widths={getColumnsWidths(this.getColumnHeaders())}
                   columns={columns}
-                  onMouseOverRow={onMouseOverRow}
+                  onMouseLeaveRow={onMouseLeaveRow}
+                  onMouseEnterRow={onMouseEnterRow}
                   topologyId={topologyId} />
               ))}
             </tbody>
@@ -218,5 +263,7 @@ export default class NodeDetailsTable extends React.Component {
 
 
 NodeDetailsTable.defaultProps = {
-  nodeIdKey: 'id' // key to identify a node in a row (used for topology links)
+  nodeIdKey: 'id',  // key to identify a node in a row (used for topology links)
+  onSortChange: () => {},
+  sortedDesc: true,
 };

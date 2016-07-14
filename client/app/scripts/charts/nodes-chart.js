@@ -368,7 +368,6 @@ class NodesChart extends React.Component {
 
     if (!this.props.noZoom && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
       zoomScale = zoomFactor;
-      console.log(zoomScale);
       // saving in d3's behavior cache
       if (this.zoom) {
         this.zoom.scale(zoomFactor);
@@ -413,7 +412,6 @@ function mapStateToProps(state) {
   return {
     adjacentNodes: getAdjacentNodes(state),
     forceRelayout: state.get('forceRelayout'),
-    nodes: state.get('nodes').filter(node => !node.get('filtered')),
     selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('currentTopologyId'),
     topologyOptions: getActiveTopologyOptions(state)
