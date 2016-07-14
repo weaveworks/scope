@@ -1,4 +1,4 @@
-## Release 0.16.1
+# Release 0.16.1
 
 This is a bugfix release. In addition, the security of the Scope probe can be
 hardened by disabling controls with the new `--probe.no-controls` flag. Without
@@ -20,8 +20,11 @@ Performance improvements:
 	[#1660](https://github.com/weaveworks/scope/pull/1660)
 
 Bug fixes:
-- Fix ensure plugins dir exists (close #1649)
-	[#1649](https://github.com/weaveworks/scope/issue/1649)
+- Fixes network bars position when a node is selected.
+	[#1667](https://github.com/weaveworks/scope/pull/1667)
+- Scope fails to launch on latest Docker for Mac (beta18)
+	[#1650](https://github.com/weaveworks/scope/pull/1650)
+	[#1669](https://github.com/weaveworks/scope/pull/1669)	
 - Fixes terminal wrapping by syncing docker/term.js terminal widths.
 	[#1648](https://github.com/weaveworks/scope/pull/1648)
 - Wrongly attributed local side in outbound internet connections
@@ -32,6 +35,8 @@ Bug fixes:
 	[#1641](https://github.com/weaveworks/scope/pull/1641)
 
 Documentation:
+- Replace wget in instructions with curl, as it's more widely avail. on macs
+	[#1670](https://github.com/weaveworks/scope/pull/1670)
 - Don't prepend `scope launch` with sudo
 	[#1606](https://github.com/weaveworks/scope/pull/1606)
 - Clarify instructions for using Scope with Weave Cloud
@@ -42,6 +47,8 @@ Documentation:
 	[#1603](https://github.com/weaveworks/scope/pull/1603)
 
 Internal improvements and cleanup:
+- Lint shellscripts from tools
+	[#1658](https://github.com/weaveworks/scope/pull/1658)
 - Promote fixprobe and delete rest of experimental
 	[#1646](https://github.com/weaveworks/scope/pull/1646)
 - refactor some timing helpers into a common lib
@@ -52,6 +59,10 @@ Internal improvements and cleanup:
 	[#1595](https://github.com/weaveworks/scope/pull/1595)
 
 Weave Cloud related changes:
+- Store a histogram of report sizes
+	[#1668](https://github.com/weaveworks/scope/pull/1668)
+- Wire up continuous delivery
+	[#1654](https://github.com/weaveworks/scope/pull/1654)
 - Count memcache requests even if they time out
 	[#1662](https://github.com/weaveworks/scope/pull/1662)
 - Adding a static report file mode.
