@@ -32,6 +32,8 @@ Bug fixes:
 	[#1526](https://github.com/weaveworks/scope/issues/1526)
 - Force some known column widths to prevent truncation of others
 	[#1641](https://github.com/weaveworks/scope/pull/1641)
+- Check if app and probe are running first
+	[#1679](https://github.com/weaveworks/scope/issues/1679)
 
 Documentation:
 - Replace wget in instructions with curl, as it's more widely avail. on macs
