@@ -1,13 +1,19 @@
 ## Release 0.16.1
 
-This is a bugfix release. In addition, the security of Scope probes can be
-hardened through the new flag `--probe.no-controls` with which controls will be
-disabled. Without controls, Scope users won't be able to open terminals,
-start/stop containers, show logs ...
+This is a bugfix release. In addition, the security of the Scope probe can be
+hardened by disabling controls with the new `--probe.no-controls` flag. Without
+controls, Scope users won't be able to open terminals, start/stop containers,
+view logs, etc.
 
 New features and enhancements:
 - Allow disabling controls in probes
 	[#1627](https://github.com/weaveworks/scope/pull/1627)
+- Make it easier to disable weave integrations
+	[#1610](https://github.com/weaveworks/scope/pull/1610)
+- Print DNS errors
+	[#1607](https://github.com/weaveworks/scope/pull/1607)
+- Add dry run flag to scope, so when launched we can check the args are valid.
+	[#1609](https://github.com/weaveworks/scope/pull/1609)
 
 Performance improvements:
 - Use a slice instead of a persistent list for temporary accumulation of lists
@@ -30,7 +36,7 @@ Documentation:
 	[#1606](https://github.com/weaveworks/scope/pull/1606)
 - Clarify instructions for using Scope with Weave Cloud
 	[#1611](https://github.com/weaveworks/scope/pull/1611)
-- readded signup page
+- Re-added signup page
 	[#1604](https://github.com/weaveworks/scope/pull/1604)
 - weave cloud screen captures
 	[#1603](https://github.com/weaveworks/scope/pull/1603)
@@ -40,12 +46,6 @@ Internal improvements and cleanup:
 	[#1646](https://github.com/weaveworks/scope/pull/1646)
 - refactor some timing helpers into a common lib
 	[#1642](https://github.com/weaveworks/scope/pull/1642)
-- Print DNS errors
-	[#1607](https://github.com/weaveworks/scope/pull/1607)
-- Make it easier to disable weave integrations
-	[#1610](https://github.com/weaveworks/scope/pull/1610)
-- Add dry run flag to scope, so when launched we can check the args are valid.
-	[#1609](https://github.com/weaveworks/scope/pull/1609)
 - Helper for reading & writing from binary
 	[#1600](https://github.com/weaveworks/scope/pull/1600)
 - Updates to vendoring document
