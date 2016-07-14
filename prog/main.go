@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"flag"
 	"fmt"
 	"net"
@@ -100,16 +101,17 @@ type appFlags struct {
 	containerName  string
 	dockerEndpoint string
 
-	collectorURL        string
-	s3URL               string
-	controlRouterURL    string
-	pipeRouterURL       string
-	natsHostname        string
-	memcachedHostname   string
-	memcachedTimeout    time.Duration
-	memcachedService    string
-	memcachedExpiration time.Duration
-	userIDHeader        string
+	collectorURL              string
+	s3URL                     string
+	controlRouterURL          string
+	pipeRouterURL             string
+	natsHostname              string
+	memcachedHostname         string
+	memcachedTimeout          time.Duration
+	memcachedService          string
+	memcachedExpiration       time.Duration
+	memcachedCompressionLevel int
+	userIDHeader              string
 
 	awsCreateTables bool
 	consulInf       string
@@ -195,6 +197,7 @@ func main() {
 	flag.DurationVar(&flags.app.memcachedTimeout, "app.memcached.timeout", 100*time.Millisecond, "Maximum time to wait before giving up on memcached requests.")
 	flag.DurationVar(&flags.app.memcachedExpiration, "app.memcached.expiration", 2*15*time.Second, "How long reports stay in the memcache.")
 	flag.StringVar(&flags.app.memcachedService, "app.memcached.service", "memcached", "SRV service used to discover memcache servers.")
+	flag.IntVar(&flags.app.memcachedCompressionLevel, "app.memcached.compression", gzip.DefaultCompression, "How much to compress reports stored in memcached.")
 	flag.StringVar(&flags.app.userIDHeader, "app.userid.header", "", "HTTP header to use as userid")
 
 	flag.BoolVar(&flags.app.awsCreateTables, "app.aws.create.tables", false, "Create the tables in DynamoDB")
