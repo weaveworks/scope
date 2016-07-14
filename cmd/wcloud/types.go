@@ -22,7 +22,7 @@ type Config struct {
 	RepoKey        string `json:"repo_key" yaml:"repo_key"`
 	KubeconfigPath string `json:"kubeconfig_path" yaml:"kubeconfig_path"`
 
-	Notifications []NotificationConfig `json:"notification" yaml:"notification"`
+	Notifications []NotificationConfig `json:"notifications" yaml:"notifications"`
 }
 
 // NotificationConfig describes how to send notifications
