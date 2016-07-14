@@ -58,11 +58,12 @@ type MemcacheClient struct {
 
 // MemcacheConfig defines how a MemcacheClient should be constructed.
 type MemcacheConfig struct {
-	Host           string
-	Service        string
-	Timeout        time.Duration
-	UpdateInterval time.Duration
-	Expiration     time.Duration
+	Host             string
+	Service          string
+	Timeout          time.Duration
+	UpdateInterval   time.Duration
+	Expiration       time.Duration
+	CompressionLevel int
 }
 
 // NewMemcacheClient creates a new MemcacheClient that gets its server list
