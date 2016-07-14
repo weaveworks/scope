@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GO_TEST_ARGS=( -tags netgo -cpu 4 -timeout 8m )
