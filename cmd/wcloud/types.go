@@ -21,4 +21,12 @@ type Config struct {
 	RepoPath       string `json:"repo_path" yaml:"repo_path"`
 	RepoKey        string `json:"repo_key" yaml:"repo_key"`
 	KubeconfigPath string `json:"kubeconfig_path" yaml:"kubeconfig_path"`
+
+	Notifications []NotificationConfig `json:"notifications" yaml:"notifications"`
+}
+
+// NotificationConfig describes how to send notifications
+type NotificationConfig struct {
+	SlackWebhookURL string `json:"slack_webhook_url" yaml:"slack_webhook_url"`
+	SlackUsername   string `json:"slack_username" yaml:"slack_username"`
 }
