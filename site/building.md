@@ -72,6 +72,12 @@ To collect the CPU profile of the Scope Probe:
 
     go tool pprof http://localhost:4041/debug/pprof/profile
 
+To collect a blocking profile of the Scope App, make sure you have launched
+Scope with `--app.block.profile.rate=N` (where `N` is the number of
+nanoseconds between samples) and then:
+
+    go tool pprof http://localhost:4040/debug/pprof/block
+
 If you don't have `go` installed, you can use a Docker container instead:
 
 To collect the memory profile of the Scope App:
