@@ -4,9 +4,21 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-WORKING_SUFFIX=$(if ! git diff --exit-code --quiet HEAD >&2; \
-                 then echo "-WIP"; \
-                 else echo ""; \
-                 fi)
-BRANCH_PREFIX=$(git rev-parse --abbrev-ref HEAD)
-echo "${BRANCH_PREFIX//\//-}-$(git rev-parse --short HEAD)$WORKING_SUFFIX"
+if [[ $# -gt 0 ]]; then
+    BRANCH_SUFFIX=""
+    BRANCH_PREFIX="${1}"
+else
+    WORKING_SUFFIX=$(if ! git diff --exit-code --quiet HEAD >&2; \
+                     then echo "-WIP"; \
+                     else echo ""; \
+                     fi)
+    BRANCH_SUFFIX="-$(git rev-parse --short HEAD)$WORKING_SUFFIX"
+    BRANCH_PREFIX=$(git rev-parse --abbrev-ref HEAD)
+fi
+
+PREFIX_LEN=$((127-$(echo -n $BRANCH_SUFFIX | wc -c)))
+BRANCH_PREFIX=$(echo "${BRANCH_PREFIX}" | \
+                sed -e 's/[^a-zA-Z0-9_.]\+/-/g' \
+                    -e 's/^[^a-zA-Z0-9_]*//g' | \
+                cut -c-${PREFIX_LEN})
+echo "$BRANCH_PREFIX$BRANCH_SUFFIX"
