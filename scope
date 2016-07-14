@@ -146,11 +146,25 @@ launch_command() {
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --probe.docker=true "$@"
 }
 
-launch_app_command() {
+launch_docker4mac_app_command() {
     echo docker run -d --name=$SCOPE_APP_CONTAINER_NAME \
             -e CHECKPOINT_DISABLE \
             -p 0.0.0.0:4040:4040 \
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --no-probe "$@"
+}
+
+launch() {
+    check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
+    docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
+    CONTAINER=$($(launch_command "$@"))
+    echo $CONTAINER    
+}
+
+print_app_endpoints() {
+    echo "Weave Scope is reachable at the following URL(s):" >&2
+    for ip in "$@"; do
+        echo "  * http://$ip:4040/" >&2
+    done
 }
 
 check_docker_access
@@ -192,12 +206,12 @@ EOF
         docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --dry-run $@
 
-        if ! check_docker_for_mac || check_probe_only ; then
-            check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
-            docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
-            CONTAINER=$($(launch_command "$@"))
-            echo $CONTAINER
-        elif check_docker_for_mac ; then
+        if check_docker_for_mac ; then
+            create_plugins_dir      
+            if check_probe_only ; then
+                launch "$@"
+                exit
+            fi
             # Docker for Mac (as of beta9) does not ship vmnet driver and
             # thereby only access container ports via a tunnel, preventing
             # access to host ports of the VM.
@@ -205,27 +219,22 @@ EOF
             # - https://forums.docker.com/t/ports-in-host-network-namespace-are-not-accessible/10789
             check_not_running $SCOPE_APP_CONTAINER_NAME $SCOPE_IMAGE_NAME
             docker rm -f $SCOPE_APP_CONTAINER_NAME >/dev/null 2>&1 || true
-            CONTAINER=$($(launch_app_command "$@"))
+            CONTAINER=$($(launch_docker4mac_app_command "$@"))
             echo $CONTAINER
             app_ip=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' "${CONTAINER}")
             check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
             docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
-            create_plugins_dir
             CONTAINER=$($(launch_command --no-app "$@" "${app_ip}:4040"))
-            echo $CONTAINER
+            print_app_endpoints "localhost"
+            exit
         fi
 
+        launch "$@"
         if ! check_probe_only ; then
             IP_ADDRS=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "$IP_ADDR_CMD")
-            echo "Weave Scope is reachable at the following URL(s):" >&2
-            if ! check_docker_for_mac ; then
-                for ip in $IP_ADDRS; do
-                    echo "  * http://$ip:4040/" >&2
-                done
-            else
-                echo "  * http://localhost:4040/" >&2
-            fi
+            print_app_endpoints $IP_ADDRS
         fi
+        
         ;;
 
     stop)
