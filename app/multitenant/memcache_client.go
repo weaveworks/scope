@@ -2,7 +2,6 @@ package multitenant
 
 import (
 	"bytes"
-	"compress/gzip"
 	"fmt"
 	"net"
 	"sort"
@@ -47,11 +46,12 @@ func init() {
 // MemcacheClient is a memcache client that gets its server list from SRV
 // records, and periodically updates that ServerList.
 type MemcacheClient struct {
-	client     *memcache.Client
-	serverList *memcache.ServerList
-	expiration int32
-	hostname   string
-	service    string
+	client           *memcache.Client
+	serverList       *memcache.ServerList
+	expiration       int32
+	hostname         string
+	service          string
+	compressionLevel int
 
 	quit chan struct{}
 	wait sync.WaitGroup
@@ -75,12 +75,13 @@ func NewMemcacheClient(config MemcacheConfig) *MemcacheClient {
 	client.Timeout = config.Timeout
 
 	newClient := &MemcacheClient{
-		client:     client,
-		serverList: &servers,
-		expiration: int32(config.Expiration.Seconds()),
-		hostname:   config.Host,
-		service:    config.Service,
-		quit:       make(chan struct{}),
+		client:           client,
+		serverList:       &servers,
+		expiration:       int32(config.Expiration.Seconds()),
+		hostname:         config.Host,
+		service:          config.Service,
+		compressionLevel: config.CompressionLevel,
+		quit:             make(chan struct{}),
 	}
 	err := newClient.updateMemcacheServers()
 	if err != nil {
@@ -206,7 +207,7 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 // StoreReport serializes and stores a report.
 func (c *MemcacheClient) StoreReport(key string, report *report.Report) (int, error) {
 	var buf bytes.Buffer
-	report.WriteBinary(&buf, gzip.BestCompression)
+	report.WriteBinary(&buf, c.compressionLevel)
 	err := c.StoreBytes(key, buf.Bytes())
 	return buf.Len(), err
 }
