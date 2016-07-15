@@ -204,10 +204,11 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 }
 
 // StoreReport serializes and stores a report.
-func (c *MemcacheClient) StoreReport(key string, report *report.Report) error {
+func (c *MemcacheClient) StoreReport(key string, report *report.Report) (int, error) {
 	var buf bytes.Buffer
 	report.WriteBinary(&buf, gzip.BestCompression)
-	return c.StoreBytes(key, buf.Bytes())
+	err := c.StoreBytes(key, buf.Bytes())
+	return buf.Len(), err
 }
 
 // StoreBytes stores a report, expecting the report to be serialized already.
