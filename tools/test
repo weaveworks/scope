@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GO_TEST_ARGS=( -tags netgo -cpu 4 -timeout 8m )
@@ -47,7 +47,8 @@ fi
 
 fail=0
 
-TESTDIRS=( $(find . -type f -name '*_test.go' -print0 | xargs -0 -n1 dirname | grep -vE '^\./(\.git|vendor|prog|experimental)/' | sort -u) )
+# NB: Relies on paths being prefixed with './'.
+TESTDIRS=( $(git ls-files -- '*_test.go' | grep -vE '^(vendor|prog|experimental)/' | xargs -n1 dirname  | sort -u | sed -e 's|^|./|') )
 
 # If running on circle, use the scheduler to work out what tests to run on what shard
 if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ] && [ -x "$DIR/sched" ]; then

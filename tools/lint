@@ -166,7 +166,7 @@ function lint_files {
 
 function list_files {
 	if [ $# -gt 0 ]; then
-		find "$@" -type f | grep -vE '(^\./\.git|^\./\.pkg|/vendor/|/node_modules/|\.codecgen\.go$|\.generated\.go$)'
+        git ls-files --exclude-standard | grep -vE '(^|/)vendor/'
 	else
 		git diff --cached --name-only
 	fi
