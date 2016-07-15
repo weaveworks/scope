@@ -425,6 +425,11 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 			Name:    "changedId",
 			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"differentId","label":"changedId","interfaces":["reporter"]}]}`),
 		}.file(),
+		mockPlugin{
+			t:       t,
+			Name:    "moreThanOnePlugin",
+			Handler: stringHandler(http.StatusOK, `{"Plugins":[{"id":"moreThanOnePlugin","label":"moreThanOnePlugin","interfaces":["reporter"]}, {"id":"haha","label":"haha","interfaces":["reporter"]}]}`),
+		}.file(),
 	)
 	defer restore(t)
 
@@ -441,6 +446,11 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 			ID:     "changedId",
 			Label:  "changedId",
 			Status: `error: plugin must not change its id (is "differentId", should be "changedId")`,
+		},
+		{
+			ID:     "moreThanOnePlugin",
+			Label:  "moreThanOnePlugin",
+			Status: `error: report must contain exactly one plugin (found 2)`,
 		},
 		{
 			ID:         "noInterface",
