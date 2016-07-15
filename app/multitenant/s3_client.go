@@ -40,10 +40,10 @@ func NewS3Client(config *aws.Config, bucketName string) S3Store {
 }
 
 // FetchReports fetches multiple reports in parallel from S3.
-func (store *S3Store) FetchReports(keys []string) (map[string]report.Report, []string, error) {
+func (store *S3Store) FetchReports(keys []string) (map[string]ReportWithStats, []string, error) {
 	type result struct {
 		key    string
-		report *report.Report
+		report ReportWithStats
 		err    error
 	}
 
@@ -52,23 +52,32 @@ func (store *S3Store) FetchReports(keys []string) (map[string]report.Report, []s
 	for _, key := range keys {
 		go func(key string) {
 			r := result{key: key}
-			r.report, r.err = store.fetchReport(key)
+			report, readStats, err := store.fetchReport(key)
+			r.err = err
+			stats := ReportStats{
+				ReadStats: readStats,
+				Origin:    "s3",
+			}
+			r.report = ReportWithStats{
+				Report:      *report,
+				ReportStats: stats,
+			}
 			ch <- r
 		}(key)
 	}
 
-	reports := map[string]report.Report{}
+	reports := map[string]ReportWithStats{}
 	for range keys {
 		r := <-ch
 		if r.err != nil {
 			return nil, []string{}, r.err
 		}
-		reports[r.key] = *r.report
+		reports[r.key] = r.report
 	}
 	return reports, []string{}, nil
 }
 
-func (store *S3Store) fetchReport(key string) (*report.Report, error) {
+func (store *S3Store) fetchReport(key string) (*report.Report, report.ReadStats, error) {
 	var resp *s3.GetObjectOutput
 	err := instrument.TimeRequestHistogram("Get", s3RequestDuration, func() error {
 		var err error
@@ -79,9 +88,9 @@ func (store *S3Store) fetchReport(key string) (*report.Report, error) {
 		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, report.ReadStats{}, err
 	}
-	return report.MakeFromBinary(resp.Body)
+	return report.MakeFromBinaryWithStats(resp.Body)
 }
 
 // StoreBytes stores a report in S3, expecting the report to be serialized

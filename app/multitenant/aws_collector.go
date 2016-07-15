@@ -90,9 +90,21 @@ type AWSCollector interface {
 	CreateTables() error
 }
 
+// ReportStats contains statistics about a report including its storage origin
+type ReportStats struct {
+	report.ReadStats
+	Origin string
+}
+
+// ReportWithStats is a report bundled with statistics
+type ReportWithStats struct {
+	report.Report
+	ReportStats
+}
+
 // ReportStore is a thing that we can get reports from.
 type ReportStore interface {
-	FetchReports([]string) (map[string]report.Report, []string, error)
+	FetchReports([]string) (map[string]ReportWithStats, []string, error)
 }
 
 // AWSCollectorConfig has everything we need to make an AWS collector.
@@ -264,7 +276,7 @@ func (c *awsCollector) getReportKeys(userid string, row int64, start, end time.T
 	return result, nil
 }
 
-func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) {
+func (c *awsCollector) getReports(reportKeys []string) ([]ReportWithStats, error) {
 	missing := reportKeys
 
 	stores := []ReportStore{c.inProcess}
@@ -273,7 +285,7 @@ func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) 
 	}
 	stores = append(stores, c.s3)
 
-	var reports []report.Report
+	var reports []ReportWithStats
 	for _, store := range stores {
 		if store == nil {
 			continue
@@ -282,9 +294,9 @@ func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) 
 		if err != nil {
 			log.Warningf("Error fetching from cache: %v", err)
 		}
-		for key, report := range found {
-			c.inProcess.StoreReport(key, report)
-			reports = append(reports, report)
+		for key, reportWithStats := range found {
+			c.inProcess.StoreReport(key, reportWithStats.Report)
+			reports = append(reports, reportWithStats)
 		}
 		if len(missing) == 0 {
 			return reports, nil
@@ -297,6 +309,34 @@ func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) 
 	return reports, nil
 }
 
+func logReportQuerySummary(
+	uri, userID string,
+	beginning, fetchedKeys, fetchedReports, mergedReports time.Time,
+	reports []ReportWithStats) {
+
+	totalDuration := mergedReports.Sub(beginning)
+	keyFetchDuration := fetchedKeys.Sub(beginning)
+	reportFetchDuration := fetchedReports.Sub(fetchedKeys)
+	reportMergeDuration := mergedReports.Sub(fetchedReports)
+
+	reportStats := make([]ReportStats, len(reports))
+	for i, rs := range reports {
+		reportStats[i] = rs.ReportStats
+	}
+
+	log.Debugf(
+		"Report query triggered through %q (user %q)\n"+
+			"\tTook %s (%s key fetch, %s report fetch, %s report merge)\n"+
+			"\tMerged %d reports with stats:\n"+
+			"\t%v",
+		uri, userID,
+		totalDuration, keyFetchDuration, reportFetchDuration, reportMergeDuration,
+		len(reports),
+		reportStats,
+	)
+
+}
+
 func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 	var (
 		now              = time.Now()
@@ -307,6 +347,8 @@ func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 	if err != nil {
 		return report.MakeReport(), err
 	}
+
+	beginning := time.Now()
 
 	// Queries will only every span 2 rows max.
 	var reportKeys []string
@@ -330,12 +372,34 @@ func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 	}
 
 	log.Debugf("Fetching %d reports from %v to %v", len(reportKeys), start, now)
-	reports, err := c.getReports(reportKeys)
+	fetchedKeys := time.Now()
+
+	reportsWithStats, err := c.getReports(reportKeys)
+
 	if err != nil {
 		return report.MakeReport(), err
 	}
 
-	return c.merger.Merge(reports), nil
+	reports := make([]report.Report, len(reportsWithStats))
+	for i := range reportsWithStats {
+		reports[i] = reportsWithStats[i].Report
+	}
+
+	fetchedReports := time.Now()
+
+	finalReport := c.merger.Merge(reports)
+
+	mergedReports := time.Now()
+
+	if log.GetLevel() == log.DebugLevel {
+		uri := app.GetRequestURI(ctx)
+		logReportQuerySummary(
+			uri, userid,
+			beginning, fetchedKeys, fetchedReports, mergedReports,
+			reportsWithStats)
+	}
+
+	return finalReport, nil
 }
 
 func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
@@ -492,13 +556,18 @@ func newInProcessStore(size int, expiration time.Duration) inProcessStore {
 }
 
 // FetchReports retrieves the given reports from the store.
-func (c inProcessStore) FetchReports(keys []string) (map[string]report.Report, []string, error) {
-	found := map[string]report.Report{}
+func (c inProcessStore) FetchReports(keys []string) (map[string]ReportWithStats, []string, error) {
+	found := map[string]ReportWithStats{}
 	missing := []string{}
 	for _, key := range keys {
 		rpt, err := c.cache.Get(key)
 		if err == nil {
-			found[key] = rpt.(report.Report)
+			stats := ReportStats{Origin: "in-process-store"}
+			rws := ReportWithStats{
+				Report:      rpt.(report.Report),
+				ReportStats: stats,
+			}
+			found[key] = rws
 		} else {
 			missing = append(missing, key)
 		}

@@ -146,7 +146,7 @@ func memcacheStatusCode(err error) string {
 }
 
 // FetchReports gets reports from memcache.
-func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, []string, error) {
+func (c *MemcacheClient) FetchReports(keys []string) (map[string]ReportWithStats, []string, error) {
 	memcacheRequests.Add(float64(len(keys)))
 	var found map[string]*memcache.Item
 	err := instrument.TimeRequestHistogramStatus("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
@@ -161,7 +161,7 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 	// Decode all the reports in parallel.
 	type result struct {
 		key    string
-		report *report.Report
+		report *ReportWithStats
 	}
 	ch := make(chan result, len(keys))
 	var missing []string
@@ -172,17 +172,25 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 			continue
 		}
 		go func(key string) {
-			rep, err := report.MakeFromBinary(bytes.NewReader(item.Value))
+			rep, readStats, err := report.MakeFromBinaryWithStats(bytes.NewReader(item.Value))
 			if err != nil {
 				log.Warningf("Corrupt report in memcache %v: %v", key, err)
 				ch <- result{key: key}
 				return
 			}
-			ch <- result{key: key, report: rep}
+			stats := ReportStats{
+				ReadStats: readStats,
+				Origin:    "memcached",
+			}
+			reportWithStats := &ReportWithStats{
+				Report:      *rep,
+				ReportStats: stats,
+			}
+			ch <- result{key: key, report: reportWithStats}
 		}(key)
 	}
 
-	reports := map[string]report.Report{}
+	reports := map[string]ReportWithStats{}
 	for i := 0; i < len(keys)-len(missing); i++ {
 		r := <-ch
 		if r.report == nil {
