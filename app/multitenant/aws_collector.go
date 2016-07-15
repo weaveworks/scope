@@ -276,28 +276,37 @@ func (c *awsCollector) getReportKeys(userid string, row int64, start, end time.T
 	return result, nil
 }
 
+type taggedStore struct {
+	ReportStore
+	name string
+}
+
 func (c *awsCollector) getReports(reportKeys []string) ([]ReportWithStats, error) {
 	missing := reportKeys
 
-	stores := []ReportStore{c.inProcess}
+	stores := []taggedStore{{c.inProcess, "in-process"}}
 	if c.memcache != nil {
-		stores = append(stores, c.memcache)
+		stores = append(stores, taggedStore{c.memcache, "memcached"})
 	}
-	stores = append(stores, c.s3)
+	stores = append(stores, taggedStore{c.s3, "s3"})
 
 	var reports []ReportWithStats
 	for _, store := range stores {
-		if store == nil {
+		if store.ReportStore == nil {
 			continue
 		}
-		found, missing, err := store.FetchReports(missing)
+		start := time.Now()
+		found, missing, err := store.ReportStore.FetchReports(missing)
 		if err != nil {
 			log.Warningf("Error fetching from cache: %v", err)
 		}
+		fetching := time.Now()
 		for key, reportWithStats := range found {
 			c.inProcess.StoreReport(key, reportWithStats.Report)
 			reports = append(reports, reportWithStats)
 		}
+		done := time.Now()
+		log.Debug("Fetching from store %s took %s ()", store.name, done.Sub(start), fetching.Sub(start))
 		if len(missing) == 0 {
 			return reports, nil
 		}

@@ -3,6 +3,7 @@ package report
 import (
 	"compress/gzip"
 	"io"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
@@ -35,6 +36,7 @@ func (c byteCounter) Read(p []byte) (n int, err error) {
 // ReadStats includes statistics related to unmarshalling a report
 type ReadStats struct {
 	CompressedSize, UncompressedSize uint64
+	ReadDuration                     time.Duration
 }
 
 // ReadBinaryWithStats reads bytes into a Report and obtains statistics when running in debug mode.
@@ -57,10 +59,11 @@ func (rep *Report) ReadBinaryWithStats(r io.Reader, gzipped bool, codecHandle co
 	if log.GetLevel() == log.DebugLevel {
 		r = byteCounter{next: r, count: &uncompressedSize}
 	}
+	start := time.Now()
 	if err := codec.NewDecoder(r, codecHandle).Decode(&rep); err != nil {
 		return ReadStats{}, err
 	}
-	return ReadStats{compressedSize, uncompressedSize}, nil
+	return ReadStats{compressedSize, uncompressedSize, time.Since(start)}, nil
 }
 
 // ReadBinary is identical to ReadBinaryWithStats without obtaining statistics
