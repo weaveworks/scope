@@ -368,30 +368,30 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 
 	// second, put the report on s3
 	rowKey, colKey := calculateDynamoKeys(userid, time.Now())
-	s3Key, err := calculateReportKey(rowKey, colKey)
+	reportKey, err := calculateReportKey(rowKey, colKey)
 	if err != nil {
 		return err
 	}
 
-	err = c.s3.StoreBytes(s3Key, buf.Bytes())
+	err = c.s3.StoreBytes(reportKey, buf.Bytes())
 	if err != nil {
 		return err
 	}
 
 	// third, put it in memcache
 	if c.memcache != nil {
-		err = c.memcache.StoreBytes(s3Key, buf.Bytes())
+		err = c.memcache.StoreBytes(reportKey, buf.Bytes())
 		if err != nil {
 			// NOTE: We don't abort here because failing to store in memcache
 			// doesn't actually break anything else -- it's just an
 			// optimization.
-			log.Warningf("Could not store %v in memcache: %v", s3Key, err)
+			log.Warningf("Could not store %v in memcache: %v", reportKey, err)
 		}
 	}
 
 	// fourth, put the key in dynamodb
 	dynamoValueSize.WithLabelValues("PutItem").
-		Add(float64(len(s3Key)))
+		Add(float64(len(reportKey)))
 
 	var resp *dynamodb.PutItemOutput
 	err = instrument.TimeRequestHistogram("PutItem", dynamoRequestDuration, func() error {
@@ -406,7 +406,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 					N: aws.String(colKey),
 				},
 				reportField: {
-					S: aws.String(s3Key),
+					S: aws.String(reportKey),
 				},
 			},
 			ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
@@ -422,7 +422,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 	}
 
 	if rep.Shortcut && c.nats != nil {
-		err := c.nats.Publish(userid, []byte(s3Key))
+		err := c.nats.Publish(userid, []byte(reportKey))
 		natsRequests.WithLabelValues("Publish", instrument.ErrorCode(err)).Add(1)
 		if err != nil {
 			log.Errorf("Error sending shortcut report: %v", err)
