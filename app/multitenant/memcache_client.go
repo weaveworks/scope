@@ -46,11 +46,12 @@ func init() {
 // MemcacheClient is a memcache client that gets its server list from SRV
 // records, and periodically updates that ServerList.
 type MemcacheClient struct {
-	client     *memcache.Client
-	serverList *memcache.ServerList
-	expiration int32
-	hostname   string
-	service    string
+	client           *memcache.Client
+	serverList       *memcache.ServerList
+	expiration       int32
+	hostname         string
+	service          string
+	compressionLevel int
 
 	quit chan struct{}
 	wait sync.WaitGroup
@@ -58,11 +59,12 @@ type MemcacheClient struct {
 
 // MemcacheConfig defines how a MemcacheClient should be constructed.
 type MemcacheConfig struct {
-	Host           string
-	Service        string
-	Timeout        time.Duration
-	UpdateInterval time.Duration
-	Expiration     time.Duration
+	Host             string
+	Service          string
+	Timeout          time.Duration
+	UpdateInterval   time.Duration
+	Expiration       time.Duration
+	CompressionLevel int
 }
 
 // NewMemcacheClient creates a new MemcacheClient that gets its server list
@@ -73,12 +75,13 @@ func NewMemcacheClient(config MemcacheConfig) *MemcacheClient {
 	client.Timeout = config.Timeout
 
 	newClient := &MemcacheClient{
-		client:     client,
-		serverList: &servers,
-		expiration: int32(config.Expiration.Seconds()),
-		hostname:   config.Host,
-		service:    config.Service,
-		quit:       make(chan struct{}),
+		client:           client,
+		serverList:       &servers,
+		expiration:       int32(config.Expiration.Seconds()),
+		hostname:         config.Host,
+		service:          config.Service,
+		compressionLevel: config.CompressionLevel,
+		quit:             make(chan struct{}),
 	}
 	err := newClient.updateMemcacheServers()
 	if err != nil {
@@ -201,10 +204,13 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 	return reports, missing, nil
 }
 
-// StoreBytes stores a report, expecting the report to be serialized already.
-func (c *MemcacheClient) StoreBytes(key string, content []byte) error {
-	return instrument.TimeRequestHistogramStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
-		item := memcache.Item{Key: key, Value: content, Expiration: c.expiration}
+// StoreReport serializes and stores a report.
+func (c *MemcacheClient) StoreReport(key string, report *report.Report) (int, error) {
+	var buf bytes.Buffer
+	report.WriteBinary(&buf, c.compressionLevel)
+	err := instrument.TimeRequestHistogramStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
+		item := memcache.Item{Key: key, Value: buf.Bytes(), Expiration: c.expiration}
 		return c.client.Set(&item)
 	})
+	return buf.Len(), err
 }

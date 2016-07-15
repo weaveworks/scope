@@ -2,6 +2,7 @@ package appclient
 
 import (
 	"bytes"
+	"compress/gzip"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -28,6 +29,6 @@ func (p *ReportPublisher) Publish(r report.Report) error {
 		})
 	}
 	buf := &bytes.Buffer{}
-	r.WriteBinary(buf)
+	r.WriteBinary(buf, gzip.BestCompression)
 	return p.publisher.Publish(buf)
 }

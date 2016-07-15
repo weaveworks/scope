@@ -1,7 +1,6 @@
 package multitenant
 
 import (
-	"bytes"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -338,45 +337,55 @@ func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 	return c.merger.Merge(reports), nil
 }
 
+// calculateDynamoKeys generates the row & column keys for Dynamo.
+func calculateDynamoKeys(userid string, now time.Time) (string, string) {
+	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(now.UnixNano()/time.Hour.Nanoseconds(), 10))
+	colKey := strconv.FormatInt(now.UnixNano(), 10)
+	return rowKey, colKey
+}
+
+// calculateReportKey determines the key we should use for a report.
+func calculateReportKey(rowKey, colKey string) (string, error) {
+	rowKeyHash := md5.New()
+	if _, err := io.WriteString(rowKeyHash, rowKey); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey), nil
+}
+
 func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 	userid, err := c.userIDer(ctx)
 	if err != nil {
 		return err
 	}
 
-	// first, encode the report into a buffer and record its size
-	var buf bytes.Buffer
-	rep.WriteBinary(&buf)
-	reportSizeHistogram.Observe(float64(buf.Len()))
-
-	// second, put the report on s3
-	now := time.Now()
-	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(now.UnixNano()/time.Hour.Nanoseconds(), 10))
-	colKey := strconv.FormatInt(now.UnixNano(), 10)
-	rowKeyHash := md5.New()
-	if _, err := io.WriteString(rowKeyHash, rowKey); err != nil {
-		return err
-	}
-	s3Key := fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey)
-	err = c.s3.StoreBytes(s3Key, buf.Bytes())
+	// first, put the report on s3
+	rowKey, colKey := calculateDynamoKeys(userid, time.Now())
+	reportKey, err := calculateReportKey(rowKey, colKey)
 	if err != nil {
 		return err
 	}
 
+	reportSize, err := c.s3.StoreReport(reportKey, &rep)
+	if err != nil {
+		return err
+	}
+	reportSizeHistogram.Observe(float64(reportSize))
+
 	// third, put it in memcache
 	if c.memcache != nil {
-		err = c.memcache.StoreBytes(s3Key, buf.Bytes())
+		_, err = c.memcache.StoreReport(reportKey, &rep)
 		if err != nil {
 			// NOTE: We don't abort here because failing to store in memcache
 			// doesn't actually break anything else -- it's just an
 			// optimization.
-			log.Warningf("Could not store %v in memcache: %v", s3Key, err)
+			log.Warningf("Could not store %v in memcache: %v", reportKey, err)
 		}
 	}
 
 	// fourth, put the key in dynamodb
 	dynamoValueSize.WithLabelValues("PutItem").
-		Add(float64(len(s3Key)))
+		Add(float64(len(reportKey)))
 
 	var resp *dynamodb.PutItemOutput
 	err = instrument.TimeRequestHistogram("PutItem", dynamoRequestDuration, func() error {
@@ -391,7 +400,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 					N: aws.String(colKey),
 				},
 				reportField: {
-					S: aws.String(s3Key),
+					S: aws.String(reportKey),
 				},
 			},
 			ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
@@ -407,7 +416,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 	}
 
 	if rep.Shortcut && c.nats != nil {
-		err := c.nats.Publish(userid, []byte(s3Key))
+		err := c.nats.Publish(userid, []byte(reportKey))
 		natsRequests.WithLabelValues("Publish", instrument.ErrorCode(err)).Add(1)
 		if err != nil {
 			log.Errorf("Error sending shortcut report: %v", err)
