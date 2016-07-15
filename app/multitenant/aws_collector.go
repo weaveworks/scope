@@ -1,8 +1,6 @@
 package multitenant
 
 import (
-	"bytes"
-	"compress/gzip"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -361,26 +359,22 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 		return err
 	}
 
-	// first, encode the report into a buffer and record its size
-	var buf bytes.Buffer
-	rep.WriteBinary(&buf, gzip.BestCompression)
-	reportSizeHistogram.Observe(float64(buf.Len()))
-
-	// second, put the report on s3
+	// first, put the report on s3
 	rowKey, colKey := calculateDynamoKeys(userid, time.Now())
 	reportKey, err := calculateReportKey(rowKey, colKey)
 	if err != nil {
 		return err
 	}
 
-	err = c.s3.StoreBytes(reportKey, buf.Bytes())
+	reportSize, err := c.s3.StoreReport(reportKey, &rep)
 	if err != nil {
 		return err
 	}
+	reportSizeHistogram.Observe(float64(reportSize))
 
 	// third, put it in memcache
 	if c.memcache != nil {
-		err = c.memcache.StoreBytes(reportKey, buf.Bytes())
+		_, err = c.memcache.StoreReport(reportKey, &rep)
 		if err != nil {
 			// NOTE: We don't abort here because failing to store in memcache
 			// doesn't actually break anything else -- it's just an

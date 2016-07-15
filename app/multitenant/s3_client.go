@@ -86,10 +86,13 @@ func (store *S3Store) fetchReport(key string) (*report.Report, error) {
 }
 
 // StoreReport serializes and stores a report.
-func (store *S3Store) StoreReport(key string, report *report.Report) error {
+//
+// Returns the size of the report. This only equals bytes written if err is nil.
+func (store *S3Store) StoreReport(key string, report *report.Report) (int, error) {
 	var buf bytes.Buffer
 	report.WriteBinary(&buf, gzip.BestCompression)
-	return store.StoreBytes(key, buf.Bytes())
+	err := store.StoreBytes(key, buf.Bytes())
+	return buf.Len(), err
 }
 
 // StoreBytes stores a report in S3, expecting the report to be serialized
