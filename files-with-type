@@ -4,8 +4,6 @@
 #
 # e.g.
 #     $ files-with-type text/x-shellscript k8s infra
-#
-# Assumes `find`, `xargs`, and `file` are all installed.
 
 mime_type=$1
 shift
