@@ -283,8 +283,6 @@ func (p *Plugin) Report() (result report.Report, err error) {
 	switch {
 	case spec.APIVersion != p.expectedAPIVersion:
 		err = fmt.Errorf("incorrect API version: expected %q, got %q", p.expectedAPIVersion, spec.APIVersion)
-	case spec.ID == "":
-		err = fmt.Errorf("spec must contain an id")
 	case spec.Label == "":
 		err = fmt.Errorf("spec must contain a label")
 	case !foundReporter:
