@@ -2,6 +2,7 @@ package multitenant
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"net"
 	"sort"
@@ -200,6 +201,13 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 
 	memcacheHits.Add(float64(len(reports)))
 	return reports, missing, nil
+}
+
+// StoreReport serializes and stores a report.
+func (c *MemcacheClient) StoreReport(key string, report *report.Report) error {
+	var buf bytes.Buffer
+	report.WriteBinary(&buf, gzip.BestCompression)
+	return c.StoreBytes(key, buf.Bytes())
 }
 
 // StoreBytes stores a report, expecting the report to be serialized already.
