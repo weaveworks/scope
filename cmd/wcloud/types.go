@@ -23,6 +23,9 @@ type Config struct {
 	KubeconfigPath string `json:"kubeconfig_path" yaml:"kubeconfig_path"`
 
 	Notifications []NotificationConfig `json:"notifications" yaml:"notifications"`
+
+	// Globs of files not to change, relative to the route of the repo
+	ConfigFileBlackList []string `json:"config_file_black_list" yaml:"config_file_black_list"`
 }
 
 // NotificationConfig describes how to send notifications
