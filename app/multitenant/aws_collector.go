@@ -339,6 +339,22 @@ func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 	return c.merger.Merge(reports), nil
 }
 
+// calculateDynamoKeys generates the row & column keys for Dynamo.
+func calculateDynamoKeys(userid string, now time.Time) (string, string) {
+	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(now.UnixNano()/time.Hour.Nanoseconds(), 10))
+	colKey := strconv.FormatInt(now.UnixNano(), 10)
+	return rowKey, colKey
+}
+
+// calculateReportKey determines the key we should use for a report.
+func calculateReportKey(rowKey, colKey string) (string, error) {
+	rowKeyHash := md5.New()
+	if _, err := io.WriteString(rowKeyHash, rowKey); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey), nil
+}
+
 func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 	userid, err := c.userIDer(ctx)
 	if err != nil {
@@ -351,14 +367,12 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 	reportSizeHistogram.Observe(float64(buf.Len()))
 
 	// second, put the report on s3
-	now := time.Now()
-	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(now.UnixNano()/time.Hour.Nanoseconds(), 10))
-	colKey := strconv.FormatInt(now.UnixNano(), 10)
-	rowKeyHash := md5.New()
-	if _, err := io.WriteString(rowKeyHash, rowKey); err != nil {
+	rowKey, colKey := calculateDynamoKeys(userid, time.Now())
+	s3Key, err := calculateReportKey(rowKey, colKey)
+	if err != nil {
 		return err
 	}
-	s3Key := fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey)
+
 	err = c.s3.StoreBytes(s3Key, buf.Bytes())
 	if err != nil {
 		return err
