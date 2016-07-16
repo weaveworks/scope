@@ -231,13 +231,13 @@ func (c *container) StartGatheringStats() error {
 		decoder := codec.NewDecoder(bufReader, &codec.JsonHandle{})
 		for err := decoder.Decode(&stats); err != io.EOF; err = decoder.Decode(&stats) {
 			if err != nil {
-				log.Errorf("docker container: error reading event, did container stop? %v", err)
+				log.Errorf("docker container: error reading event for %s, did container stop? %v", c.container.ID, err)
 				return
 			}
 
 			c.Lock()
 			if c.numPending >= len(c.pendingStats) {
-				log.Warnf("docker container: dropping stats.")
+				log.Warnf("docker container: dropping stats for %s", c.container.ID)
 			} else {
 				c.latestStats = stats
 				c.pendingStats[c.numPending] = stats
