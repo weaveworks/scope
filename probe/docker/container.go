@@ -225,16 +225,24 @@ func (c *container) StartGatheringStats() error {
 			c.statsConn = nil
 		}()
 
-		var stats docker.Stats
 		// Use a buffer since the codec library doesn't implicitly do it
 		bufReader := bufio.NewReader(resp.Body)
 		decoder := codec.NewDecoder(bufReader, &codec.JsonHandle{})
-		for err := decoder.Decode(&stats); err != io.EOF; err = decoder.Decode(&stats) {
-			if err != nil {
-				log.Errorf("docker container: error reading event for %s, did container stop? %v", c.container.ID, err)
-				return
+		for {
+			var stats docker.Stats
+			if err := decoder.Decode(&stats); err != nil {
+				if err == io.EOF {
+					break
+				}
+				// Unfortunately we typically get a different error
+				// than io.EOF. Yes, this is really the best we can do
+				// in go - https://github.com/golang/go/issues/4373
+				if opErr, ok := err.(*net.OpError); ok && opErr.Err.Error() == "use of closed network connection" {
+					break
+				}
+				log.Errorf("docker container: error reading event for %s: %v", c.container.ID, err)
+				break
 			}
-
 			c.Lock()
 			if c.numPending >= len(c.pendingStats) {
 				log.Warnf("docker container: dropping stats for %s", c.container.ID)
@@ -244,8 +252,6 @@ func (c *container) StartGatheringStats() error {
 				c.numPending++
 			}
 			c.Unlock()
-
-			stats = docker.Stats{}
 		}
 	}()
 
