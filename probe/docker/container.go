@@ -185,7 +185,7 @@ func (c *container) StartGatheringStats() error {
 	}
 
 	go func() {
-		log.Infof("docker container: collecting stats for %s", c.container.ID)
+		log.Debugf("docker container: collecting stats for %s", c.container.ID)
 		req, err := http.NewRequest("GET", fmt.Sprintf("/containers/%s/stats", c.container.ID), nil)
 		if err != nil {
 			log.Errorf("docker container: %v", err)
@@ -221,7 +221,7 @@ func (c *container) StartGatheringStats() error {
 			c.Lock()
 			defer c.Unlock()
 
-			log.Infof("docker container: stopped collecting stats for %s", c.container.ID)
+			log.Debugf("docker container: stopped collecting stats for %s", c.container.ID)
 			c.statsConn = nil
 		}()
 
