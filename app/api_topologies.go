@@ -23,7 +23,7 @@ var (
 	}
 	k8sPseudoFilter = APITopologyOptionGroup{
 		ID:      "pseudo",
-		Default: "show",
+		Default: "hide",
 		Options: []APITopologyOption{
 			{"show", "Show Unmanaged", nil, false},
 			{"hide", "Hide Unmanaged", render.IsNotPseudo, true},
@@ -53,7 +53,7 @@ func init() {
 		},
 		{
 			ID:      "pseudo",
-			Default: "show",
+			Default: "hide",
 			Options: []APITopologyOption{
 				{"show", "Show Uncontained", nil, false},
 				{"hide", "Hide Uncontained", render.IsNotPseudo, true},
