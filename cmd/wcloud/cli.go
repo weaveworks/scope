@@ -92,7 +92,7 @@ func list(c Client, args []string) {
 	}
 	through := time.Now()
 	from := through.Add(-*since)
-	deployments, err := c.GetDeployments(through.Unix(), from.Unix())
+	deployments, err := c.GetDeployments(from.Unix(), through.Unix())
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
@@ -125,7 +125,7 @@ func events(c Client, args []string) {
 	}
 	through := time.Now()
 	from := through.Add(-*since)
-	events, err := c.GetEvents(through.Unix(), from.Unix())
+	events, err := c.GetEvents(from.Unix(), through.Unix())
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)

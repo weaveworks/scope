@@ -76,7 +76,7 @@ func (c Client) GetDeployments(from, through int64) ([]Deployment, error) {
 
 // GetEvents returns the raw events.
 func (c Client) GetEvents(from, through int64) ([]byte, error) {
-	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy/from=%d&through=%d", from, through), nil)
+	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy/events?from=%d&through=%d", from, through), nil)
 	if err != nil {
 		return nil, err
 	}
