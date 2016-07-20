@@ -85,7 +85,7 @@ class Node extends React.Component {
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
     const labelTransform = focused ? `scale(${1 / zoomScale})` : '';
-    const labelWidth = nodeScale(scaleFactor * 4);
+    const labelWidth = nodeScale(scaleFactor * 3);
     const labelOffsetX = -labelWidth / 2;
     const labelDy = (showingNetworks && networks) ? 0.75 : 0.60;
     const labelOffsetY = focused ? nodeScale(labelDy) : nodeScale(labelDy * scaleFactor);

@@ -12,7 +12,7 @@ const DEFAULT_WIDTH = 800;
 const DEFAULT_MARGINS = {top: 0, left: 0};
 const DEFAULT_SCALE = val => val * 2;
 const NODE_SIZE_FACTOR = 1;
-const NODE_SEPARATION_FACTOR = 3.0;
+const NODE_SEPARATION_FACTOR = 2.0;
 const RANK_SEPARATION_FACTOR = 3.0;
 let layoutRuns = 0;
 let layoutRunsTrivial = 0;
