@@ -38,7 +38,7 @@ func (c Client) Deploy(deployment Deployment) error {
 	if err := json.NewEncoder(&buf).Encode(deployment); err != nil {
 		return err
 	}
-	req, err := c.newRequest("POST", "/api/deploy", &buf)
+	req, err := c.newRequest("POST", "/api/deploy/deploy", &buf)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (c Client) Deploy(deployment Deployment) error {
 
 // GetDeployments returns a list of deployments
 func (c Client) GetDeployments(from, through int64) ([]Deployment, error) {
-	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy?from=%d&through=%d", from, through), nil)
+	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy/deploy?from=%d&through=%d", from, through), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (c Client) GetDeployments(from, through int64) ([]Deployment, error) {
 
 // GetEvents returns the raw events.
 func (c Client) GetEvents(from, through int64) ([]byte, error) {
-	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy/events?from=%d&through=%d", from, through), nil)
+	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy/event?from=%d&through=%d", from, through), nil)
 	if err != nil {
 		return nil, err
 	}
