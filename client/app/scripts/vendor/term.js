@@ -2756,14 +2756,22 @@ Terminal.prototype.keyDown = function(ev) {
     case 123:
       key = '\x1b[24~';
       break;
-    // Special case for US-intl '/"
-    case 222:
-      key = '\'';
-      if (ev.shiftKey) {
-        key = '"';
-      }
-      break;
     default:
+      // Special case for US-intl
+      // Firefox leaves ev.key empty, Chrome sets it to "Dead"
+      if (!ev.key || ev.key === 'Dead') {
+        if (ev.keyCode === 54) {
+          key = ev.shiftKey ? '^' : '6';
+          break;
+        } else if (ev.keyCode === 192) {
+          key = ev.shiftKey ? '~' : '`';
+          break;
+        } else if (ev.keyCode === 222) {
+          key = ev.shiftKey ? '"' : "'";
+          break;
+        }
+      }
+
       // a-z and space
       if (ev.ctrlKey) {
         if (ev.keyCode >= 65 && ev.keyCode <= 90) {
