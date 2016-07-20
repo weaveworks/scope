@@ -56,6 +56,7 @@ class App extends React.Component {
 
   onKeyUp(ev) {
     const { showingTerminal } = this.props;
+    keyPressLog('onKeyUp', 'keyCode', ev.keyCode, ev);
 
     // don't get esc in onKeyPress
     if (ev.keyCode === ESC_KEY_CODE) {
