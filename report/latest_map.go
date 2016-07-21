@@ -237,7 +237,7 @@ func (m *LatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 		var value LatestEntry
 		z.DecSendContainerState(containerMapValue)
 		if !r.TryDecodeAsNil() {
-			value.CodecDecodeSelf(decoder)
+			decoder.Decode(&value)
 		}
 
 		out = out.Set(key, value)
