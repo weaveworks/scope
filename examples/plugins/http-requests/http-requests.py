@@ -123,7 +123,7 @@ class PluginRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             },
             'Plugins': [
               {
-                'id': 'http-requests',
+                'id': 'http_requests',
                 'label': 'HTTP Requests',
                 'description': 'Adds http request metrics to processes',
                 'interfaces': ['reporter'],
