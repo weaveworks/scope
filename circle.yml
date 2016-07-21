@@ -67,10 +67,12 @@ deployment:
       - |
         test -z "${DOCKER_USER}" || (
           docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
-          (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" == "weaveworks" || docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:latest) &&
+          (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" == "weaveworks" || (
+            docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:latest &&
+            docker tag weaveworks/scope:$(./image-tag) ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag)
+          )) &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope &&
-          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag) &&
-          wcloud deploy ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag)
+          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag)
         )
   hub-dev:
     branch: /^((?!master).)*$/  # not the master branch
@@ -81,6 +83,12 @@ deployment:
           docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-} &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-}
         )
+  wcloud-weaveworks:
+    branch: master
+    owner: weaveworks
+    commands:
+      - |
+        wcloud deploy weaveworks/scope:$(./image-tag)
 #  release:
 #    branch: /release-[0-9]+\.[0-9]+/
 #    owner: weaveworks
