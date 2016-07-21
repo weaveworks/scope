@@ -30,7 +30,7 @@ import (
 func testRegistry(t *testing.T, apiVersion string) *Registry {
 	handlerRegistry := controls.NewDefaultHandlerRegistry()
 	root := "/plugins"
-	r, err := NewRegistry(root, apiVersion, nil, handlerRegistry)
+	r, err := NewRegistry(root, apiVersion, nil, handlerRegistry, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -768,7 +768,7 @@ func TestRegistryRegistersHandlers(t *testing.T) {
 	testBackend := newTestHandlerRegistryBackend(t)
 	handlerRegistry := controls.NewHandlerRegistry(testBackend)
 	root := "/plugins"
-	r, err := NewRegistry(root, "1", nil, handlerRegistry)
+	r, err := NewRegistry(root, "1", nil, handlerRegistry, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -815,7 +815,7 @@ func TestRegistryHandlersCallPlugins(t *testing.T) {
 
 	handlerRegistry := controls.NewDefaultHandlerRegistry()
 	root := "/plugins"
-	r, err := NewRegistry(root, "1", nil, handlerRegistry)
+	r, err := NewRegistry(root, "1", nil, handlerRegistry, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
