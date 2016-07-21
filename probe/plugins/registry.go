@@ -39,6 +39,11 @@ const (
 	scanningInterval = 5 * time.Second
 )
 
+// ReportPublisher is an interface for publishing reports immediately
+type ReportPublisher interface {
+	Publish(rpt report.Report)
+}
+
 // Registry maintains a list of available plugins by name.
 type Registry struct {
 	rootPath          string
@@ -51,11 +56,12 @@ type Registry struct {
 	controlsByPlugin  map[string]report.StringSet
 	pluginsByID       map[string]*Plugin
 	handlerRegistry   *controls.HandlerRegistry
+	publisher         ReportPublisher
 }
 
 // NewRegistry creates a new registry which watches the given dir root for new
 // plugins, and adds them.
-func NewRegistry(rootPath, apiVersion string, handshakeMetadata map[string]string, handlerRegistry *controls.HandlerRegistry) (*Registry, error) {
+func NewRegistry(rootPath, apiVersion string, handshakeMetadata map[string]string, handlerRegistry *controls.HandlerRegistry, publisher ReportPublisher) (*Registry, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	r := &Registry{
 		rootPath:          rootPath,
@@ -67,6 +73,7 @@ func NewRegistry(rootPath, apiVersion string, handshakeMetadata map[string]strin
 		controlsByPlugin:  map[string]report.StringSet{},
 		pluginsByID:       map[string]*Plugin{},
 		handlerRegistry:   handlerRegistry,
+		publisher:         publisher,
 	}
 	if err := r.scan(); err != nil {
 		r.Close()
@@ -295,13 +302,26 @@ func (r *Registry) updatePluginControls(pluginID string, newPluginControls repor
 	r.controlsByPlugin[pluginID] = newPluginControls
 }
 
+// PluginResponse is an extension of xfer.Response that allows plugins
+// to send the shortcut reports
+type PluginResponse struct {
+	xfer.Response
+	ShortcutReport *report.Report `json:"shortcutReport,omitempty"`
+}
+
 func (r *Registry) pluginControlHandler(req xfer.Request) xfer.Response {
 	pluginID, controlID := realPluginAndControlID(req.Control)
 	req.Control = controlID
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 	if plugin, found := r.pluginsByID[pluginID]; found {
-		return plugin.Control(req)
+		response := plugin.Control(req)
+		if response.ShortcutReport != nil {
+			r.updateAndRegisterControlsInReport(response.ShortcutReport)
+			response.ShortcutReport.Shortcut = true
+			r.publisher.Publish(*response.ShortcutReport)
+		}
+		return response.Response
 	}
 	return xfer.ResponseErrorf("plugin %s not found", pluginID)
 }
@@ -424,12 +444,12 @@ func (p *Plugin) Report() (result report.Report, err error) {
 }
 
 // Control sends a control message to a plugin
-func (p *Plugin) Control(request xfer.Request) (res xfer.Response) {
+func (p *Plugin) Control(request xfer.Request) (res PluginResponse) {
 	var err error
 	defer func() {
 		p.setStatus(err)
 		if err != nil {
-			res = xfer.ResponseError(err)
+			res = PluginResponse{Response: xfer.ResponseError(err)}
 		}
 	}()
 
