@@ -193,15 +193,57 @@ func (m *LatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
 	} else {
 		encoder.Encode(nil)
 	}
+
+	//_, r := codec.GenHelperEncoder(encoder)
+	//if m.Map == nil {
+	//	r.EncodeNil()
+	//	return
+	//}
+	//
+	//r.EncodeMapStart(m.Map.Size())
+	//m.Map.ForEach(func(key string, value interface{}) {
+	//	r.EncodeString(1, key)
+	//	encoder.Encode(value.(LatestEntry))
+	//})
 }
+
+const (
+	containerMapKey   = 2
+	containerMapValue = 3
+	containerMapEnd   = 4
+)
 
 // CodecDecodeSelf implements codec.Selfer
 func (m *LatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := map[string]LatestEntry{}
-	if err := decoder.Decode(&in); err != nil {
+	z, r := codec.GenHelperDecoder(decoder)
+	if r.TryDecodeAsNil() {
+		*m = LatestMap{}
 		return
 	}
-	*m = LatestMap{}.fromIntermediate(in)
+
+	length := r.ReadMapStart()
+	out := ps.NewMap()
+	for i := 0; length < 0 || i < length; i++ {
+		if length < 0 && r.CheckBreak() {
+			break
+		}
+
+		var key string
+		z.DecSendContainerState(containerMapKey)
+		if !r.TryDecodeAsNil() {
+			key = r.DecodeString()
+		}
+
+		var value LatestEntry
+		z.DecSendContainerState(containerMapValue)
+		if !r.TryDecodeAsNil() {
+			value.CodecDecodeSelf(decoder)
+		}
+
+		out = out.Set(key, value)
+	}
+	z.DecSendContainerState(containerMapEnd)
+	*m = LatestMap{out}
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
