@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -61,56 +62,189 @@ func main() {
 
 // Plugin groups the methods a plugin needs
 type Plugin struct {
-	HostID     string
+	HostID string
+
+	lock       sync.Mutex
 	iowaitMode bool
+}
+
+type request struct {
+	NodeID  string
+	Control string
+}
+
+type response struct {
+	ShortcutReport *report `json:"shortcutReport,omitempty"`
+}
+
+type report struct {
+	Host    topology
+	Plugins []pluginSpec
+}
+
+type topology struct {
+	Nodes           map[string]node           `json:"nodes"`
+	MetricTemplates map[string]metricTemplate `json:"metric_templates"`
+	Controls        map[string]control        `json:"controls"`
+}
+
+type node struct {
+	Metrics  map[string]metric `json:"metrics"`
+	Controls nodeControls      `json:"controls"`
+}
+
+type metric struct {
+	Samples []sample `json:"samples,omitempty"`
+	Min     float64  `json:"min"`
+	Max     float64  `json:"max"`
+}
+
+type sample struct {
+	Date  time.Time `json:"date"`
+	Value float64   `json:"value"`
+}
+
+type nodeControls struct {
+	Timestamp time.Time `json:"timestamp,omitempty"`
+	Controls  []string  `json:"controls,omitempty"`
+}
+
+type metricTemplate struct {
+	ID       string  `json:"id"`
+	Label    string  `json:"label,omitempty"`
+	Format   string  `json:"format,omitempty"`
+	Priority float64 `json:"priority,omitempty"`
+}
+
+type control struct {
+	ID    string `json:"id"`
+	Human string `json:"human"`
+	Icon  string `json:"icon"`
+	Rank  int    `json:"rank"`
+}
+
+type pluginSpec struct {
+	ID          string   `json:"id"`
+	Label       string   `json:"label"`
+	Description string   `json:"description,omitempty"`
+	Interfaces  []string `json:"interfaces"`
+	APIVersion  string   `json:"api_version,omitempty"`
+}
+
+func (p *Plugin) makeReport() (*report, error) {
+	metrics, err := p.metrics()
+	if err != nil {
+		return nil, err
+	}
+	rpt := &report{
+		Host: topology{
+			Nodes: map[string]node{
+				p.getTopologyHost(): {
+					Metrics:  metrics,
+					Controls: p.nodeControls(),
+				},
+			},
+			MetricTemplates: p.metricTemplates(),
+			Controls:        p.controls(),
+		},
+		Plugins: []pluginSpec{
+			{
+				ID:          "iowait",
+				Label:       "iowait",
+				Description: "Adds a graph of CPU IO Wait to hosts",
+				Interfaces:  []string{"reporter", "controller"},
+				APIVersion:  "1",
+			},
+		},
+	}
+	return rpt, nil
+}
+
+func (p *Plugin) metrics() (map[string]metric, error) {
+	value, err := p.metricValue()
+	if err != nil {
+		return nil, err
+	}
+	id, _ := p.metricIDAndName()
+	metrics := map[string]metric{
+		id: {
+			Samples: []sample{
+				{
+					Date:  time.Now(),
+					Value: value,
+				},
+			},
+			Min: 0,
+			Max: 100,
+		},
+	}
+	return metrics, nil
+}
+
+// Get the topology controls and node's controls JSON snippet
+func (p *Plugin) nodeControls() nodeControls {
+	id, _, _ := p.controlDetails()
+	return nodeControls{
+		Timestamp: time.Now(),
+		Controls:  []string{id},
+	}
+}
+
+// Get the metrics and metric_templates JSON snippets
+func (p *Plugin) metricTemplates() map[string]metricTemplate {
+	id, name := p.metricIDAndName()
+	return map[string]metricTemplate{
+		id: {
+			ID:       id,
+			Label:    name,
+			Format:   "percent",
+			Priority: 0.1,
+		},
+	}
+}
+
+// Get the topology controls and node's controls JSON snippet
+func (p *Plugin) controls() map[string]control {
+	id, human, icon := p.controlDetails()
+	return map[string]control{
+		id: {
+			ID:    id,
+			Human: human,
+			Icon:  icon,
+			Rank:  1,
+		},
+	}
 }
 
 // Report is called by scope when a new report is needed. It is part of the
 // "reporter" interface, which all plugins must implement.
 func (p *Plugin) Report(w http.ResponseWriter, r *http.Request) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
 	log.Println(r.URL.String())
-	metric, metricTemplate, err := p.metricsSnippets()
+	rpt, err := p.makeReport()
 	if err != nil {
 		log.Printf("error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	topologyControl, nodeControl := p.controlsSnippets()
-	rpt := fmt.Sprintf(`{
-		 "Host": {
-			 "nodes": {
-				 %q: {
-					 "metrics": { %s },
-					 "controls": { %s }
-				 }
-			 },
-			 "metric_templates": { %s },
-			 "controls": { %s }
-		 },
-		 "Plugins": [
-			 {
-				 "id":          "iowait",
-				 "label":       "iowait",
-				 "description": "Adds a graph of CPU IO Wait to hosts",
-				 "interfaces":  ["reporter", "controller"],
-				 "api_version": "1"
-			 }
-		 ]
-	 }`, p.getTopologyHost(), metric, nodeControl, metricTemplate, topologyControl)
-	fmt.Fprintf(w, "%s", rpt)
-}
-
-// Request is just a trimmed down xfer.Request
-type Request struct {
-	NodeID  string
-	Control string
+	raw, err := json.Marshal(*rpt)
+	if err != nil {
+		log.Printf("error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(raw)
 }
 
 // Control is called by scope when a control is activated. It is part
 // of the "controller" interface.
 func (p *Plugin) Control(w http.ResponseWriter, r *http.Request) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
 	log.Println(r.URL.String())
-	xreq := Request{}
+	xreq := request{}
 	err := json.NewDecoder(r.Body).Decode(&xreq)
 	if err != nil {
 		log.Printf("Bad request: %v", err)
@@ -130,62 +264,25 @@ func (p *Plugin) Control(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p.iowaitMode = !p.iowaitMode
+	rpt, err := p.makeReport()
+	if err != nil {
+		log.Printf("error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	res := response{ShortcutReport: rpt}
+	raw, err := json.Marshal(res)
+	if err != nil {
+		log.Printf("error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "{}")
+	w.Write(raw)
 }
 
 func (p *Plugin) getTopologyHost() string {
 	return fmt.Sprintf("%s;<host>", p.HostID)
-}
-
-// Get the metrics and metric_templates JSON snippets
-func (p *Plugin) metricsSnippets() (string, string, error) {
-	id, name := p.metricIDAndName()
-	value, err := p.metricValue()
-	if err != nil {
-		return "", "", err
-	}
-	nowISO := rfcNow()
-	metric := fmt.Sprintf(`
-		 %q: {
-			 "samples": [ {"date": %q, "value": %f} ],
-			 "min": 0,
-			 "max": 100
-		 }
-`, id, nowISO, value)
-	metricTemplate := fmt.Sprintf(`
-		 %q: {
-			 "id":       %q,
-			 "label":    %q,
-			 "format":   "percent",
-			 "priority": 0.1
-		 }
-`, id, id, name)
-	return metric, metricTemplate, nil
-}
-
-// Get the topology controls and node's controls JSON snippet
-func (p *Plugin) controlsSnippets() (string, string) {
-	id, human, icon := p.controlDetails()
-	nowISO := rfcNow()
-	topologyControl := fmt.Sprintf(`
-		%q: {
-			"id": %q,
-			"human": %q,
-			"icon": %q,
-			"rank": 1
-		}
-`, id, id, human, icon)
-	nodeControl := fmt.Sprintf(`
-		"timestamp": %q,
-		"controls": [%q]
-`, nowISO, id)
-	return topologyControl, nodeControl
-}
-
-func rfcNow() string {
-	now := time.Now()
-	return now.Format(time.RFC3339)
 }
 
 func (p *Plugin) metricIDAndName() (string, string) {
@@ -209,7 +306,6 @@ func (p *Plugin) controlDetails() (string, string, string) {
 	return "switchToIOWait", "Switch to IO wait", "fa-hourglass"
 }
 
-// Get the latest iowait value
 func iowait() (float64, error) {
 	return iostatValue(3)
 }
