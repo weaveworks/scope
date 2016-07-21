@@ -195,13 +195,48 @@ func (m *LatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
 	}
 }
 
+// constants from https://github.com/ugorji/go/blob/master/codec/helper.go#L207
+const (
+	containerMapKey   = 2
+	containerMapValue = 3
+	containerMapEnd   = 4
+)
+
 // CodecDecodeSelf implements codec.Selfer
+// This implementation does not use the intermediate form as that was a
+// performance issue; skipping it saved almost 10% CPU.  Note this means
+// we are using undocumented, internal APIs, which could break in the future.
+// See https://github.com/weaveworks/scope/pull/1709 for more information.
 func (m *LatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := map[string]LatestEntry{}
-	if err := decoder.Decode(&in); err != nil {
+	z, r := codec.GenHelperDecoder(decoder)
+	if r.TryDecodeAsNil() {
+		*m = LatestMap{}
 		return
 	}
-	*m = LatestMap{}.fromIntermediate(in)
+
+	length := r.ReadMapStart()
+	out := ps.NewMap()
+	for i := 0; length < 0 || i < length; i++ {
+		if length < 0 && r.CheckBreak() {
+			break
+		}
+
+		var key string
+		z.DecSendContainerState(containerMapKey)
+		if !r.TryDecodeAsNil() {
+			key = r.DecodeString()
+		}
+
+		var value LatestEntry
+		z.DecSendContainerState(containerMapValue)
+		if !r.TryDecodeAsNil() {
+			decoder.Decode(&value)
+		}
+
+		out = out.Set(key, value)
+	}
+	z.DecSendContainerState(containerMapEnd)
+	*m = LatestMap{out}
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
