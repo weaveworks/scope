@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/weaveworks/scope/common/mtime"
@@ -37,7 +38,7 @@ func (node Node) AddTable(prefix string, labels map[string]string) Node {
 func (node Node) ExtractTable(prefix string) (rows map[string]string, truncationCount int) {
 	rows = map[string]string{}
 	truncationCount = 0
-	node.Latest.ForEach(func(key, value string) {
+	node.Latest.ForEach(func(key string, _ time.Time, value string) {
 		if strings.HasPrefix(key, prefix) {
 			label := key[len(prefix):]
 			rows[label] = value
