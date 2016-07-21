@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net"
@@ -632,6 +633,86 @@ func checkControls(t *testing.T, topology report.Topology, expectedControls, exp
 	}
 }
 
+func control(index int) (string, string) {
+	return fmt.Sprintf("ctrl%d", index), fmt.Sprintf("Ctrl %d", index)
+}
+
+func controlID(index int) string {
+	ID, _ := control(index)
+	return ID
+}
+
+func mustMarshal(value interface{}) string {
+	buf := &bytes.Buffer{}
+	codec.NewEncoder(buf, &codec.JsonHandle{}).MustEncode(value)
+	return buf.String()
+}
+
+func mustUnmarshal(r io.Reader, value interface{}) {
+	codec.NewDecoder(r, &codec.JsonHandle{}).MustDecode(value)
+}
+
+func topologyControls(indices []int) report.Controls {
+	var controls []report.Control
+	for _, index := range indices {
+		ID, name := control(index)
+		controls = append(controls, report.Control{
+			ID:    ID,
+			Human: name,
+			Icon:  "fa-at",
+			Rank:  index,
+		})
+	}
+	rptControls := report.Controls{}
+	rptControls.AddControls(controls)
+	return rptControls
+}
+
+func nodeControls(indices []int) []string {
+	var IDs []string
+	for _, index := range indices {
+		ID, _ := control(index)
+		IDs = append(IDs, ID)
+	}
+	return IDs
+}
+
+func topologyWithControls(label, nodeID string, controlIndices, nodeControlIndices []int) report.Topology {
+	topology := report.MakeTopology().WithLabel(label, "")
+	topology.Controls = topologyControls(controlIndices)
+	return topology.AddNode(report.MakeNode(nodeID).WithControls(nodeControls(nodeControlIndices)...))
+}
+
+func pluginSpec(ID string, interfaces ...string) xfer.PluginSpec {
+	return xfer.PluginSpec{
+		ID:         ID,
+		Label:      ID,
+		Interfaces: interfaces,
+		APIVersion: "1",
+	}
+}
+
+func testReport(topology report.Topology, spec xfer.PluginSpec) report.Report {
+	rpt := report.MakeReport()
+	set := false
+	f := func(t *report.Topology) {
+		if t.Label != topology.Label {
+			return
+		}
+		if set {
+			panic("Two topologies with the same label")
+		}
+		set = true
+		*t = t.Merge(topology)
+	}
+	rpt.WalkTopologies(f)
+	if !set {
+		panic(fmt.Sprintf("%s name is not a valid topology label", topology.Label))
+	}
+	rpt.Plugins = xfer.MakePluginSpecs(spec)
+	return rpt
+}
+
 func TestRegistryRewritesControlReports(t *testing.T) {
 	setup(
 		t,
@@ -639,15 +720,15 @@ func TestRegistryRewritesControlReports(t *testing.T) {
 			t:    t,
 			Name: "testPlugin",
 			Handler: mapStringHandler(testResponseMap{
-				"/report":  {http.StatusOK, `{"Pod": {"label":"pod","controls": {"ctrl1":{"id": "ctrl1","human":"Ctrl 1","icon":"fa-at","rank":1}},"nodes":{"node1":{"id":"node1","adjacency":[], "controls":{"timestamp":"2006-01-02 15:04:05.999999999 -0700 MST","controls":["ctrl1", "ctrl2"]}}}},"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter", "controller"],"api_version":"1"}]}`},
-				"/control": {http.StatusOK, `{"value":"foo"}`},
+				"/report":  {http.StatusOK, mustMarshal(testReport(topologyWithControls("pod", "node1", []int{1}, []int{1, 2}), pluginSpec("testPlugin", "reporter", "controller")))},
+				"/control": {http.StatusOK, mustMarshal(PluginResponse{})},
 			}),
 		}.file(),
 		mockPlugin{
 			t:    t,
 			Name: "testPluginReporterOnly",
 			Handler: mapStringHandler(testResponseMap{
-				"/report": {http.StatusOK, `{"Host": {"label":"host","controls": {"ctrl1":{"id": "ctrl1","human":"Ctrl 1","icon":"fa-at","rank":1}},"nodes":{"node1":{"id":"node1","adjacency":[], "controls":{"timestamp":"2006-01-02 15:04:05.999999999 -0700 MST","controls":["ctrl1", "ctrl2"]}}}},"Plugins":[{"id":"testPluginReporterOnly","label":"testPluginReporterOnly","interfaces":["reporter"],"api_version":"1"}]}`},
+				"/report": {http.StatusOK, mustMarshal(testReport(topologyWithControls("host", "node1", []int{1}, []int{1, 2}), pluginSpec("testPluginReporterOnly", "reporter")))},
 			}),
 		}.file(),
 	)
@@ -661,12 +742,12 @@ func TestRegistryRewritesControlReports(t *testing.T) {
 		t.Fatal(err)
 	}
 	// in a Pod topology, ctrl1 should be faked, ctrl2 should be left intact
-	expectedPodControls := []string{fakeControlID("testPlugin", "ctrl1")}
-	expectedPodNodeControls := []string{fakeControlID("testPlugin", "ctrl1"), "ctrl2"}
+	expectedPodControls := []string{fakeControlID("testPlugin", controlID(1))}
+	expectedPodNodeControls := []string{fakeControlID("testPlugin", controlID(1)), controlID(2)}
 	checkControls(t, rpt.Pod, expectedPodControls, expectedPodNodeControls, "node1")
 	// in a Host topology, controls should be kept untouched
-	expectedHostControls := []string{"ctrl1"}
-	expectedHostNodeControls := []string{"ctrl1", "ctrl2"}
+	expectedHostControls := []string{controlID(1)}
+	expectedHostNodeControls := []string{controlID(1), controlID(2)}
 	checkControls(t, rpt.Host, expectedHostControls, expectedHostNodeControls, "node1")
 }
 
@@ -677,8 +758,8 @@ func TestRegistryRegistersHandlers(t *testing.T) {
 			t:    t,
 			Name: "testPlugin",
 			Handler: mapStringHandler(testResponseMap{
-				"/report":  {http.StatusOK, `{"Pod": {"label":"pod","controls": {"ctrl1":{"id": "ctrl1","human":"Ctrl 1","icon":"fa-at","rank":1}},"nodes":{"node1":{"id":"node1","adjacency":[], "controls":{"timestamp":"2006-01-02 15:04:05.999999999 -0700 MST","controls":["ctrl1", "ctrl2"]}}}},"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter", "controller"],"api_version":"1"}]}`},
-				"/control": {http.StatusOK, `{"value":"foo"}`},
+				"/report":  {http.StatusOK, mustMarshal(testReport(topologyWithControls("pod", "node1", []int{1}, []int{1, 2}), pluginSpec("testPlugin", "reporter", "controller")))},
+				"/control": {http.StatusOK, mustMarshal(PluginResponse{})},
 			}),
 		}.file(),
 	)
@@ -697,9 +778,13 @@ func TestRegistryRegistersHandlers(t *testing.T) {
 	if len(testBackend.handlers) != 1 {
 		t.Fatalf("Expected only one registered handler, got %d", len(testBackend.handlers))
 	}
-	fakeID := fakeControlID("testPlugin", "ctrl1")
-	if _, found := testBackend.Handler(fakeID); !found {
-		t.Fatalf("Expected to have a handler for %s", fakeID)
+	fakeIDs := []string{
+		fakeControlID("testPlugin", controlID(1)),
+	}
+	for _, fakeID := range fakeIDs {
+		if _, found := testBackend.Handler(fakeID); !found {
+			t.Fatalf("Expected to have a handler for %s", fakeID)
+		}
 	}
 }
 
@@ -713,16 +798,13 @@ func TestRegistryHandlersCallPlugins(t *testing.T) {
 				switch r.URL.Path {
 				case "/report":
 					w.WriteHeader(http.StatusOK)
-					fmt.Fprint(w, `{"Pod": {"label":"pod","controls": {"ctrl1":{"id": "ctrl1","human":"Ctrl 1","icon":"fa-at","rank":1}},"nodes":{"node1":{"id":"node1","adjacency":[], "controls":{"timestamp":"2006-01-02 15:04:05.999999999 -0700 MST","controls":["ctrl1", "ctrl2"]}}}},"Plugins":[{"id":"testPlugin","label":"testPlugin","interfaces":["reporter", "controller"],"api_version":"1"}]}`)
+					rpt := mustMarshal(testReport(topologyWithControls("pod", "node1", []int{1}, []int{1}), pluginSpec("testPlugin", "reporter", "controller")))
+					fmt.Fprint(w, rpt)
 				case "/control":
 					xreq := xfer.Request{}
-					err := codec.NewDecoder(r.Body, &codec.JsonHandle{}).Decode(&xreq)
-					if err != nil {
-						w.WriteHeader(http.StatusBadRequest)
-						return
-					}
+					mustUnmarshal(r.Body, &xreq)
 					w.WriteHeader(http.StatusOK)
-					fmt.Fprintf(w, `{"value":"%s,%s"}`, xreq.NodeID, xreq.Control)
+					fmt.Fprint(w, mustMarshal(PluginResponse{Response: xfer.Response{Value: fmt.Sprintf("%s,%s", xreq.NodeID, xreq.Control)}}))
 				default:
 					http.NotFound(w, r)
 				}
@@ -740,10 +822,10 @@ func TestRegistryHandlersCallPlugins(t *testing.T) {
 	defer r.Close()
 
 	r.Report()
-	fakeID := fakeControlID("testPlugin", "ctrl1")
+	fakeID := fakeControlID("testPlugin", controlID(1))
 	req := xfer.Request{NodeID: "node1", Control: fakeID}
 	res := handlerRegistry.HandleControlRequest(req)
-	if res.Value != "node1,ctrl1" {
+	if res.Value != fmt.Sprintf("node1,%s", controlID(1)) {
 		t.Fatalf("Got unexpected response: %#v", res)
 	}
 }
