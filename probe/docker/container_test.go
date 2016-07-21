@@ -100,7 +100,7 @@ func TestContainer(t *testing.T) {
 
 		test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 			node := c.GetNode()
-			node.Latest.ForEach(func(k, v string) {
+			node.Latest.ForEach(func(k string, _ time.Time, v string) {
 				if v == "0" || v == "" {
 					node.Latest = node.Latest.Delete(k)
 				}

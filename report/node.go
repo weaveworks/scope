@@ -10,17 +10,17 @@ import (
 // given node in a given topology, along with the edges emanating from the
 // node and metadata about those edges.
 type Node struct {
-	ID        string        `json:"id,omitempty"`
-	Topology  string        `json:"topology,omitempty"`
-	Counters  Counters      `json:"counters,omitempty"`
-	Sets      Sets          `json:"sets,omitempty"`
-	Adjacency IDList        `json:"adjacency"`
-	Edges     EdgeMetadatas `json:"edges,omitempty"`
-	Controls  NodeControls  `json:"controls,omitempty"`
-	Latest    LatestMap     `json:"latest,omitempty"`
-	Metrics   Metrics       `json:"metrics,omitempty"`
-	Parents   Sets          `json:"parents,omitempty"`
-	Children  NodeSet       `json:"children,omitempty"`
+	ID        string          `json:"id,omitempty"`
+	Topology  string          `json:"topology,omitempty"`
+	Counters  Counters        `json:"counters,omitempty"`
+	Sets      Sets            `json:"sets,omitempty"`
+	Adjacency IDList          `json:"adjacency"`
+	Edges     EdgeMetadatas   `json:"edges,omitempty"`
+	Controls  NodeControls    `json:"controls,omitempty"`
+	Latest    StringLatestMap `json:"latest,omitempty"`
+	Metrics   Metrics         `json:"metrics,omitempty"`
+	Parents   Sets            `json:"parents,omitempty"`
+	Children  NodeSet         `json:"children,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
@@ -32,7 +32,7 @@ func MakeNode(id string) Node {
 		Adjacency: EmptyIDList,
 		Edges:     EmptyEdgeMetadatas,
 		Controls:  MakeNodeControls(),
-		Latest:    EmptyLatestMap,
+		Latest:    EmptyStringLatestMap,
 		Metrics:   Metrics{},
 		Parents:   EmptySets,
 	}
