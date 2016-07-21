@@ -10,20 +10,27 @@ import (
 	"github.com/weaveworks/ps"
 )
 
-// LatestMap is a persitent map which support latest-win merges. We have to
-// embed ps.Map as its an interface.  LatestMaps are immutable.
+// LatestEntryDecoder is an interface for decoding the LatestEntry instances.
+type LatestEntryDecoder interface {
+	Decode(decoder *codec.Decoder, entry *LatestEntry)
+}
+
+// LatestMap is a persistent map which support latest-win merges. We
+// have to embed ps.Map as its interface. LatestMaps are immutable.
 type LatestMap struct {
 	ps.Map
+	decoder LatestEntryDecoder
 }
 
 // LatestEntry represents a timestamped value inside the LatestMap.
 type LatestEntry struct {
-	Timestamp time.Time `json:"timestamp"`
-	Value     string    `json:"value"`
+	Timestamp time.Time   `json:"timestamp"`
+	Value     interface{} `json:"value"`
 }
 
+// String returns the LatestEntry's string representation.
 func (e LatestEntry) String() string {
-	return fmt.Sprintf("\"%s\" (%s)", e.Value, e.Timestamp.String())
+	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.String())
 }
 
 // Equal returns true if the supplied LatestEntry is equal to this one.
@@ -31,12 +38,9 @@ func (e LatestEntry) Equal(e2 LatestEntry) bool {
 	return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
 }
 
-// EmptyLatestMap is an empty LatestMap.  Start with this.
-var EmptyLatestMap = LatestMap{ps.NewMap()}
-
-// MakeLatestMap makes an empty LatestMap
-func MakeLatestMap() LatestMap {
-	return EmptyLatestMap
+// MakeLatestMapWithDecoder makes an empty LatestMap holding custom values.
+func MakeLatestMapWithDecoder(decoder LatestEntryDecoder) LatestMap {
+	return LatestMap{ps.NewMap(), decoder}
 }
 
 // Copy is a noop, as LatestMaps are immutable.
@@ -44,7 +48,7 @@ func (m LatestMap) Copy() LatestMap {
 	return m
 }
 
-// Size returns the number of elements
+// Size returns the number of elements.
 func (m LatestMap) Size() int {
 	if m.Map == nil {
 		return 0
@@ -52,8 +56,9 @@ func (m LatestMap) Size() int {
 	return m.Map.Size()
 }
 
-// Merge produces a fresh LatestMap, container the kers from both inputs. When
-// both inputs container the same key, the latter value is used.
+// Merge produces a fresh StringLatestMap containing the keys from
+// both inputs. When both inputs contain the same key, the newer value
+// is used.
 func (m LatestMap) Merge(other LatestMap) LatestMap {
 	var (
 		mSize     = m.Size()
@@ -69,6 +74,9 @@ func (m LatestMap) Merge(other LatestMap) LatestMap {
 	case mSize < otherSize:
 		output, iter = iter, output
 	}
+	if m.decoder != other.decoder {
+		panic(fmt.Sprintf("Cannot merge maps with different entry value types, this has %#v, other has %#v", m.decoder, other.decoder))
+	}
 
 	iter.ForEach(func(key string, iterVal interface{}) {
 		if existingVal, ok := output.Lookup(key); ok {
@@ -80,58 +88,59 @@ func (m LatestMap) Merge(other LatestMap) LatestMap {
 		}
 	})
 
-	return LatestMap{output}
+	return LatestMap{output, m.decoder}
 }
 
 // Lookup the value for the given key.
-func (m LatestMap) Lookup(key string) (string, bool) {
+func (m LatestMap) Lookup(key string) (interface{}, bool) {
 	v, _, ok := m.LookupEntry(key)
 	return v, ok
 }
 
 // LookupEntry returns the raw entry for the given key.
-func (m LatestMap) LookupEntry(key string) (string, time.Time, bool) {
+func (m LatestMap) LookupEntry(key string) (interface{}, time.Time, bool) {
 	if m.Map == nil {
-		return "", time.Time{}, false
+		return nil, time.Time{}, false
 	}
 	value, ok := m.Map.Lookup(key)
 	if !ok {
-		return "", time.Time{}, false
+		return nil, time.Time{}, false
 	}
 	e := value.(LatestEntry)
 	return e.Value, e.Timestamp, true
 }
 
-// Set the value for the given key.
-func (m LatestMap) Set(key string, timestamp time.Time, value string) LatestMap {
+// Set sets the value for the given key.
+func (m LatestMap) Set(key string, timestamp time.Time, value interface{}) LatestMap {
 	if m.Map == nil {
-		m = EmptyLatestMap
+		m = MakeLatestMapWithDecoder(m.decoder)
 	}
-	return LatestMap{m.Map.Set(key, LatestEntry{timestamp, value})}
+	return LatestMap{m.Map.Set(key, LatestEntry{timestamp, value}), m.decoder}
 }
 
 // Delete the value for the given key.
 func (m LatestMap) Delete(key string) LatestMap {
 	if m.Map == nil {
-		m = EmptyLatestMap
+		m = MakeLatestMapWithDecoder(m.decoder)
 	}
-	return LatestMap{m.Map.Delete(key)}
+	return LatestMap{m.Map.Delete(key), m.decoder}
 }
 
-// ForEach executes f on each key value pair in the map
-func (m LatestMap) ForEach(fn func(k, v string)) {
+// ForEach executes fn on each key, timestamp, value triple in the map.
+func (m LatestMap) ForEach(fn func(k string, ts time.Time, v interface{})) {
 	if m.Map == nil {
 		return
 	}
 	m.Map.ForEach(func(key string, value interface{}) {
-		fn(key, value.(LatestEntry).Value)
+		fn(key, value.(LatestEntry).Timestamp, value.(LatestEntry).Value)
 	})
 }
 
+// String returns the LatestMap's string representation.
 func (m LatestMap) String() string {
 	keys := []string{}
 	if m.Map == nil {
-		m = EmptyLatestMap
+		m = MakeLatestMapWithDecoder(m.decoder)
 	}
 	for _, k := range m.Map.Keys() {
 		keys = append(keys, k)
@@ -147,7 +156,7 @@ func (m LatestMap) String() string {
 	return buf.String()
 }
 
-// DeepEqual tests equality with other LatestMap
+// DeepEqual tests equality with other LatestMap.
 func (m LatestMap) DeepEqual(n LatestMap) bool {
 	if m.Size() != n.Size() {
 		return false
@@ -155,7 +164,9 @@ func (m LatestMap) DeepEqual(n LatestMap) bool {
 	if m.Size() == 0 {
 		return true
 	}
-
+	if m.decoder != n.decoder {
+		panic(fmt.Sprintf("Cannot check equality of maps with different entry value types, this has %#v, other has %#v", m.decoder, n.decoder))
+	}
 	equal := true
 	m.Map.ForEach(func(k string, val interface{}) {
 		if otherValue, ok := n.Map.Lookup(k); !ok {
@@ -177,7 +188,7 @@ func (m LatestMap) toIntermediate() map[string]LatestEntry {
 	return intermediate
 }
 
-// CodecEncodeSelf implements codec.Selfer
+// CodecEncodeSelf implements codec.Selfer.
 func (m *LatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
 	if m.Map != nil {
 		encoder.Encode(m.toIntermediate())
@@ -193,7 +204,7 @@ const (
 	containerMapEnd   = 4
 )
 
-// CodecDecodeSelf implements codec.Selfer
+// CodecDecodeSelf implements codec.Selfer.
 // This implementation does not use the intermediate form as that was a
 // performance issue; skipping it saved almost 10% CPU.  Note this means
 // we are using undocumented, internal APIs, which could break in the future.
@@ -201,7 +212,7 @@ const (
 func (m *LatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 	z, r := codec.GenHelperDecoder(decoder)
 	if r.TryDecodeAsNil() {
-		*m = LatestMap{}
+		*m = MakeLatestMapWithDecoder(m.decoder)
 		return
 	}
 
@@ -221,21 +232,21 @@ func (m *LatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 		var value LatestEntry
 		z.DecSendContainerState(containerMapValue)
 		if !r.TryDecodeAsNil() {
-			decoder.Decode(&value)
+			m.decoder.Decode(decoder, &value)
 		}
 
 		out = out.UnsafeMutableSet(key, value)
 	}
 	z.DecSendContainerState(containerMapEnd)
-	*m = LatestMap{out}
+	*m = LatestMap{out, m.decoder}
 }
 
-// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead.
 func (LatestMap) MarshalJSON() ([]byte, error) {
 	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
 }
 
-// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead.
 func (*LatestMap) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
