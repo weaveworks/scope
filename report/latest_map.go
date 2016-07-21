@@ -193,20 +193,9 @@ func (m *LatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
 	} else {
 		encoder.Encode(nil)
 	}
-
-	//_, r := codec.GenHelperEncoder(encoder)
-	//if m.Map == nil {
-	//	r.EncodeNil()
-	//	return
-	//}
-	//
-	//r.EncodeMapStart(m.Map.Size())
-	//m.Map.ForEach(func(key string, value interface{}) {
-	//	r.EncodeString(1, key)
-	//	encoder.Encode(value.(LatestEntry))
-	//})
 }
 
+// constants from https://github.com/ugorji/go/blob/master/codec/helper.go#L207
 const (
 	containerMapKey   = 2
 	containerMapValue = 3
@@ -214,6 +203,10 @@ const (
 )
 
 // CodecDecodeSelf implements codec.Selfer
+// This implementation does not use the intermediate form as that was a
+// performance issue; skipping it saved almost 10% CPU.  Note this means
+// we are using undocumented, internal APIs, which could break in the future.
+// See https://github.com/weaveworks/scope/pull/1709 for more information.
 func (m *LatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 	z, r := codec.GenHelperDecoder(decoder)
 	if r.TryDecodeAsNil() {
