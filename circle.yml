@@ -72,7 +72,10 @@ deployment:
             docker tag weaveworks/scope:$(./image-tag) ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag)
           )) &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope &&
-          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag)
+          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./image-tag) &&
+          (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" == "weaveworks" && (
+            wcloud deploy weaveworks/scope:$(./image-tag)
+          ))
         )
   hub-dev:
     branch: /^((?!master).)*$/  # not the master branch
@@ -83,12 +86,6 @@ deployment:
           docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-} &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-}
         )
-  wcloud-weaveworks:
-    branch: master
-    owner: weaveworks
-    commands:
-      - |
-        wcloud deploy weaveworks/scope:$(./image-tag)
 #  release:
 #    branch: /release-[0-9]+\.[0-9]+/
 #    owner: weaveworks
