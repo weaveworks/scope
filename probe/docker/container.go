@@ -439,6 +439,7 @@ func (c *container) GetNode() report.Node {
 	c.RLock()
 	defer c.RUnlock()
 	latest := map[string]string{
+		ContainerName:       strings.TrimPrefix(c.container.Name, "/"),
 		ContainerState:      c.StateString(),
 		ContainerStateHuman: c.State(),
 	}
@@ -452,7 +453,6 @@ func (c *container) GetNode() report.Node {
 		if c.container.HostConfig != nil {
 			networkMode = c.container.HostConfig.NetworkMode
 		}
-		latest[ContainerName] = strings.TrimPrefix(c.container.Name, "/")
 		latest[ContainerUptime] = uptime.String()
 		latest[ContainerRestartCount] = strconv.Itoa(c.container.RestartCount)
 		latest[ContainerNetworkMode] = networkMode
