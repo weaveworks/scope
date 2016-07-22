@@ -10,31 +10,33 @@ import (
 // given node in a given topology, along with the edges emanating from the
 // node and metadata about those edges.
 type Node struct {
-	ID        string          `json:"id,omitempty"`
-	Topology  string          `json:"topology,omitempty"`
-	Counters  Counters        `json:"counters,omitempty"`
-	Sets      Sets            `json:"sets,omitempty"`
-	Adjacency IDList          `json:"adjacency"`
-	Edges     EdgeMetadatas   `json:"edges,omitempty"`
-	Controls  NodeControls    `json:"controls,omitempty"`
-	Latest    StringLatestMap `json:"latest,omitempty"`
-	Metrics   Metrics         `json:"metrics,omitempty"`
-	Parents   Sets            `json:"parents,omitempty"`
-	Children  NodeSet         `json:"children,omitempty"`
+	ID             string                   `json:"id,omitempty"`
+	Topology       string                   `json:"topology,omitempty"`
+	Counters       Counters                 `json:"counters,omitempty"`
+	Sets           Sets                     `json:"sets,omitempty"`
+	Adjacency      IDList                   `json:"adjacency"`
+	Edges          EdgeMetadatas            `json:"edges,omitempty"`
+	Controls       NodeControls             `json:"controls,omitempty"`
+	LatestControls NodeControlDataLatestMap `json:"latestControls,omitempty"`
+	Latest         StringLatestMap          `json:"latest,omitempty"`
+	Metrics        Metrics                  `json:"metrics,omitempty"`
+	Parents        Sets                     `json:"parents,omitempty"`
+	Children       NodeSet                  `json:"children,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
 func MakeNode(id string) Node {
 	return Node{
-		ID:        id,
-		Counters:  EmptyCounters,
-		Sets:      EmptySets,
-		Adjacency: EmptyIDList,
-		Edges:     EmptyEdgeMetadatas,
-		Controls:  MakeNodeControls(),
-		Latest:    EmptyStringLatestMap,
-		Metrics:   Metrics{},
-		Parents:   EmptySets,
+		ID:             id,
+		Counters:       EmptyCounters,
+		Sets:           EmptySets,
+		Adjacency:      EmptyIDList,
+		Edges:          EmptyEdgeMetadatas,
+		Controls:       MakeNodeControls(),
+		LatestControls: EmptyNodeControlDataLatestMap,
+		Latest:         EmptyStringLatestMap,
+		Metrics:        Metrics{},
+		Parents:        EmptySets,
 	}
 }
 
@@ -136,6 +138,30 @@ func (n Node) WithControls(cs ...string) Node {
 	return n
 }
 
+// WithLatestActiveControls returns a fresh copy of n, with active controls cs added to LatestControls.
+func (n Node) WithLatestActiveControls(cs ...string) Node {
+	lcs := map[string]NodeControlData{}
+	for _, control := range cs {
+		lcs[control] = NodeControlData{}
+	}
+	return n.WithLatestControls(lcs)
+}
+
+// WithLatestControls returns a fresh copy of n, with lcs added to LatestControls.
+func (n Node) WithLatestControls(lcs map[string]NodeControlData) Node {
+	ts := mtime.Now()
+	for k, v := range lcs {
+		n.LatestControls = n.LatestControls.Set(k, ts, v)
+	}
+	return n
+}
+
+// WithLatestControl produces a new Node with control added to it
+func (n Node) WithLatestControl(control string, ts time.Time, data NodeControlData) Node {
+	n.LatestControls = n.LatestControls.Set(control, ts, data)
+	return n
+}
+
 // WithParents returns a fresh copy of n, with sets merged in.
 func (n Node) WithParents(parents Sets) Node {
 	n.Parents = n.Parents.Merge(parents)
@@ -174,16 +200,17 @@ func (n Node) Merge(other Node) Node {
 		panic("Cannot merge nodes with different topology types: " + topology + " != " + other.Topology)
 	}
 	return Node{
-		ID:        id,
-		Topology:  topology,
-		Counters:  n.Counters.Merge(other.Counters),
-		Sets:      n.Sets.Merge(other.Sets),
-		Adjacency: n.Adjacency.Merge(other.Adjacency),
-		Edges:     n.Edges.Merge(other.Edges),
-		Controls:  n.Controls.Merge(other.Controls),
-		Latest:    n.Latest.Merge(other.Latest),
-		Metrics:   n.Metrics.Merge(other.Metrics),
-		Parents:   n.Parents.Merge(other.Parents),
-		Children:  n.Children.Merge(other.Children),
+		ID:             id,
+		Topology:       topology,
+		Counters:       n.Counters.Merge(other.Counters),
+		Sets:           n.Sets.Merge(other.Sets),
+		Adjacency:      n.Adjacency.Merge(other.Adjacency),
+		Edges:          n.Edges.Merge(other.Edges),
+		Controls:       n.Controls.Merge(other.Controls),
+		LatestControls: n.LatestControls.Merge(other.LatestControls),
+		Latest:         n.Latest.Merge(other.Latest),
+		Metrics:        n.Metrics.Merge(other.Metrics),
+		Parents:        n.Parents.Merge(other.Parents),
+		Children:       n.Children.Merge(other.Children),
 	}
 }
