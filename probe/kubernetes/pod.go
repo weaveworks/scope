@@ -63,5 +63,5 @@ func (p *pod) GetNode(probeID string) report.Node {
 		report.ControlProbeID: probeID,
 	}).
 		WithParents(p.parents).
-		WithControls(GetLogs, DeletePod)
+		WithLatestActiveControls(GetLogs, DeletePod)
 }

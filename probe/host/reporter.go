@@ -145,7 +145,7 @@ func (r *Reporter) Report() (report.Report, error) {
 				Add(LocalNetworks, report.MakeStringSet(localCIDRs...)),
 			).
 			WithMetrics(metrics).
-			WithControls(ExecHost),
+			WithLatestActiveControls(ExecHost),
 	)
 
 	rep.Host.Controls.AddControl(report.Control{

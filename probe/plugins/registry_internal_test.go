@@ -627,9 +627,14 @@ func checkControls(t *testing.T, topology report.Topology, expectedControls, exp
 	if !found {
 		t.Fatalf("expected a node %s in a topology", nodeID)
 	}
+	actualNodeControls := []string{}
+	node.LatestControls.ForEach(func(controlID string, _ time.Time, _ report.NodeControlData) {
+		actualNodeControls = append(actualNodeControls, controlID)
+	})
 	nodeControlsSet := report.MakeStringSet(expectedNodeControls...)
-	if !reflect.DeepEqual(nodeControlsSet, node.Controls.Controls) {
-		t.Fatalf("node controls in node %s in topology %s are not equal:\n%s", nodeID, topology.Label, test.Diff(nodeControlsSet, node.Controls.Controls))
+	actualNodeControlsSet := report.MakeStringSet(actualNodeControls...)
+	if !reflect.DeepEqual(nodeControlsSet, actualNodeControlsSet) {
+		t.Fatalf("node controls in node %s in topology %s are not equal:\n%s", nodeID, topology.Label, test.Diff(nodeControlsSet, actualNodeControlsSet))
 	}
 }
 
@@ -680,7 +685,7 @@ func nodeControls(indices []int) []string {
 func topologyWithControls(label, nodeID string, controlIndices, nodeControlIndices []int) report.Topology {
 	topology := report.MakeTopology().WithLabel(label, "")
 	topology.Controls = topologyControls(controlIndices)
-	return topology.AddNode(report.MakeNode(nodeID).WithControls(nodeControls(nodeControlIndices)...))
+	return topology.AddNode(report.MakeNode(nodeID).WithLatestActiveControls(nodeControls(nodeControlIndices)...))
 }
 
 func pluginSpec(ID string, interfaces ...string) xfer.PluginSpec {
