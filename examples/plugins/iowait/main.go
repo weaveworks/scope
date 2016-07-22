@@ -89,8 +89,8 @@ type topology struct {
 }
 
 type node struct {
-	Metrics  map[string]metric `json:"metrics"`
-	Controls nodeControls      `json:"controls"`
+	Metrics        map[string]metric       `json:"metrics"`
+	LatestControls map[string]controlEntry `json:"latestControls,omitempty"`
 }
 
 type metric struct {
@@ -104,9 +104,13 @@ type sample struct {
 	Value float64   `json:"value"`
 }
 
-type nodeControls struct {
-	Timestamp time.Time `json:"timestamp,omitempty"`
-	Controls  []string  `json:"controls,omitempty"`
+type controlEntry struct {
+	Timestamp time.Time   `json:"timestamp"`
+	Value     controlData `json:"value"`
+}
+
+type controlData struct {
+	Dead bool `json:"dead"`
 }
 
 type metricTemplate struct {
@@ -140,8 +144,8 @@ func (p *Plugin) makeReport() (*report, error) {
 		Host: topology{
 			Nodes: map[string]node{
 				p.getTopologyHost(): {
-					Metrics:  metrics,
-					Controls: p.nodeControls(),
+					Metrics:        metrics,
+					LatestControls: p.latestControls(),
 				},
 			},
 			MetricTemplates: p.metricTemplates(),
@@ -181,16 +185,20 @@ func (p *Plugin) metrics() (map[string]metric, error) {
 	return metrics, nil
 }
 
-// Get the topology controls and node's controls JSON snippet
-func (p *Plugin) nodeControls() nodeControls {
-	id, _, _ := p.controlDetails()
-	return nodeControls{
-		Timestamp: time.Now(),
-		Controls:  []string{id},
+func (p *Plugin) latestControls() map[string]controlEntry {
+	ts := time.Now()
+	ctrls := map[string]controlEntry{}
+	for _, details := range p.allControlDetails() {
+		ctrls[details.id] = controlEntry{
+			Timestamp: ts,
+			Value: controlData{
+				Dead: details.dead,
+			},
+		}
 	}
+	return ctrls
 }
 
-// Get the metrics and metric_templates JSON snippets
 func (p *Plugin) metricTemplates() map[string]metricTemplate {
 	id, name := p.metricIDAndName()
 	return map[string]metricTemplate{
@@ -203,17 +211,17 @@ func (p *Plugin) metricTemplates() map[string]metricTemplate {
 	}
 }
 
-// Get the topology controls and node's controls JSON snippet
 func (p *Plugin) controls() map[string]control {
-	id, human, icon := p.controlDetails()
-	return map[string]control{
-		id: {
-			ID:    id,
-			Human: human,
-			Icon:  icon,
+	ctrls := map[string]control{}
+	for _, details := range p.allControlDetails() {
+		ctrls[details.id] = control{
+			ID:    details.id,
+			Human: details.human,
+			Icon:  details.icon,
 			Rank:  1,
-		},
+		}
 	}
+	return ctrls
 }
 
 // Report is called by scope when a new report is needed. It is part of the
@@ -299,11 +307,37 @@ func (p *Plugin) metricValue() (float64, error) {
 	return idle()
 }
 
-func (p *Plugin) controlDetails() (string, string, string) {
-	if p.iowaitMode {
-		return "switchToIdle", "Switch to idle", "fa-beer"
+type controlDetails struct {
+	id    string
+	human string
+	icon  string
+	dead  bool
+}
+
+func (p *Plugin) allControlDetails() []controlDetails {
+	return []controlDetails{
+		{
+			id:    "switchToIdle",
+			human: "Switch to idle",
+			icon:  "fa-beer",
+			dead:  !p.iowaitMode,
+		},
+		{
+			id:    "switchToIOWait",
+			human: "Switch to IO wait",
+			icon:  "fa-hourglass",
+			dead:  p.iowaitMode,
+		},
 	}
-	return "switchToIOWait", "Switch to IO wait", "fa-hourglass"
+}
+
+func (p *Plugin) controlDetails() (string, string, string) {
+	for _, details := range p.allControlDetails() {
+		if !details.dead {
+			return details.id, details.human, details.icon
+		}
+	}
+	return "", "", ""
 }
 
 func iowait() (float64, error) {

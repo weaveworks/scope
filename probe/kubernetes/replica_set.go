@@ -59,5 +59,5 @@ func (r *replicaSet) GetNode(probeID string) report.Node {
 		DesiredReplicas:       fmt.Sprint(r.Spec.Replicas),
 		FullyLabeledReplicas:  fmt.Sprint(r.Status.FullyLabeledReplicas),
 		report.ControlProbeID: probeID,
-	}).WithParents(r.parents).WithControls(ScaleUp, ScaleDown)
+	}).WithParents(r.parents).WithLatestActiveControls(ScaleUp, ScaleDown)
 }

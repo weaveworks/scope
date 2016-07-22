@@ -76,6 +76,16 @@ func TestContainer(t *testing.T) {
 	// Now see if we go them
 	{
 		uptime := (now.Sub(startTime) / time.Second) * time.Second
+		controls := map[string]report.NodeControlData{
+			docker.UnpauseContainer: {Dead: true},
+			docker.RestartContainer: {Dead: false},
+			docker.StopContainer:    {Dead: false},
+			docker.PauseContainer:   {Dead: false},
+			docker.AttachContainer:  {Dead: false},
+			docker.ExecContainer:    {Dead: false},
+			docker.StartContainer:   {Dead: true},
+			docker.RemoveContainer:  {Dead: true},
+		}
 		want := report.MakeNodeWith("ping;<container>", map[string]string{
 			"docker_container_command":     " ",
 			"docker_container_created":     "01 Jan 01 00:00 UTC",
@@ -87,11 +97,9 @@ func TestContainer(t *testing.T) {
 			"docker_container_state":       "running",
 			"docker_container_state_human": "Up 6 years",
 			"docker_container_uptime":      uptime.String(),
-		}).
-			WithControls(
-				docker.RestartContainer, docker.StopContainer, docker.PauseContainer,
-				docker.AttachContainer, docker.ExecContainer,
-			).WithMetrics(report.Metrics{
+		}).WithLatestControls(
+			controls,
+		).WithMetrics(report.Metrics{
 			"docker_cpu_total_usage": report.MakeMetric(nil),
 			"docker_memory_usage":    report.MakeSingletonMetric(now, 12345).WithMax(45678),
 		}).WithParents(report.EmptySets.

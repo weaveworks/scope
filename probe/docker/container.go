@@ -442,6 +442,22 @@ func (c *container) getBaseNode() report.Node {
 	return result
 }
 
+func (c *container) controlsMap() map[string]report.NodeControlData {
+	paused := c.container.State.Paused
+	running := !paused && c.container.State.Running
+	stopped := !paused && !running
+	return map[string]report.NodeControlData{
+		UnpauseContainer: {Dead: !paused},
+		RestartContainer: {Dead: !running},
+		StopContainer:    {Dead: !running},
+		PauseContainer:   {Dead: !running},
+		AttachContainer:  {Dead: !running},
+		ExecContainer:    {Dead: !running},
+		StartContainer:   {Dead: !stopped},
+		RemoveContainer:  {Dead: !stopped},
+	}
+}
+
 func (c *container) GetNode() report.Node {
 	c.RLock()
 	defer c.RUnlock()
@@ -450,11 +466,9 @@ func (c *container) GetNode() report.Node {
 		ContainerState:      c.StateString(),
 		ContainerStateHuman: c.State(),
 	}
-	controls := []string{}
+	controls := c.controlsMap()
 
-	if c.container.State.Paused {
-		controls = append(controls, UnpauseContainer)
-	} else if c.container.State.Running {
+	if !c.container.State.Paused && c.container.State.Running {
 		uptime := (mtime.Now().Sub(c.container.State.StartedAt) / time.Second) * time.Second
 		networkMode := ""
 		if c.container.HostConfig != nil {
@@ -463,13 +477,10 @@ func (c *container) GetNode() report.Node {
 		latest[ContainerUptime] = uptime.String()
 		latest[ContainerRestartCount] = strconv.Itoa(c.container.RestartCount)
 		latest[ContainerNetworkMode] = networkMode
-		controls = append(controls, RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer)
-	} else {
-		controls = append(controls, StartContainer, RemoveContainer)
 	}
 
 	result := c.baseNode.WithLatests(latest)
-	result = result.WithControls(controls...)
+	result = result.WithLatestControls(controls)
 	result = result.WithMetrics(c.metrics())
 	return result
 }
