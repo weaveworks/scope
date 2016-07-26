@@ -13,18 +13,22 @@ import (
 // RegisterPipeRoutes registers the pipe routes
 func RegisterPipeRoutes(router *mux.Router, pr PipeRouter) {
 	router.Methods("GET").
+		Name("api_pipe_pipeid_check").
 		Path("/api/pipe/{pipeID}/check").
 		HandlerFunc(requestContextDecorator(checkPipe(pr, UIEnd)))
 
 	router.Methods("GET").
+		Name("api_pipe_pipeid").
 		Path("/api/pipe/{pipeID}").
 		HandlerFunc(requestContextDecorator(handlePipeWs(pr, UIEnd)))
 
 	router.Methods("GET").
+		Name("api_pipe_pipeid_probe").
 		Path("/api/pipe/{pipeID}/probe").
 		HandlerFunc(requestContextDecorator(handlePipeWs(pr, ProbeEnd)))
 
 	router.Methods("DELETE", "POST").
+		Name("api_pipe_pipeid").
 		Path("/api/pipe/{pipeID}").
 		HandlerFunc(requestContextDecorator(deletePipe(pr)))
 }
