@@ -163,67 +163,39 @@ func TestLatestMapEncoding(t *testing.T) {
 		Set("foo", now, "bar").
 		Set("bar", now, "baz")
 
-	{
-		gobs, err := want.GobEncode()
-		if err != nil {
-			t.Fatal(err)
-		}
+	for _, h := range []codec.Handle{
+		codec.Handle(&codec.MsgpackHandle{}),
+		codec.Handle(&codec.JsonHandle{}),
+	} {
+		buf := &bytes.Buffer{}
+		encoder := codec.NewEncoder(buf, h)
+		want.CodecEncodeSelf(encoder)
+		decoder := codec.NewDecoder(buf, h)
 		have := EmptyLatestMap
-		have.GobDecode(gobs)
+		have.CodecDecodeSelf(decoder)
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}
 
-	{
-
-		for _, h := range []codec.Handle{
-			codec.Handle(&codec.MsgpackHandle{}),
-			codec.Handle(&codec.JsonHandle{}),
-		} {
-			buf := &bytes.Buffer{}
-			encoder := codec.NewEncoder(buf, h)
-			want.CodecEncodeSelf(encoder)
-			decoder := codec.NewDecoder(buf, h)
-			have := EmptyLatestMap
-			have.CodecDecodeSelf(decoder)
-			if !reflect.DeepEqual(want, have) {
-				t.Error(test.Diff(want, have))
-			}
-		}
-	}
 }
 
 func TestLatestMapEncodingNil(t *testing.T) {
 	want := LatestMap{}
 
-	{
-		gobs, err := want.GobEncode()
-		if err != nil {
-			t.Fatal(err)
-		}
+	for _, h := range []codec.Handle{
+		codec.Handle(&codec.MsgpackHandle{}),
+		codec.Handle(&codec.JsonHandle{}),
+	} {
+		buf := &bytes.Buffer{}
+		encoder := codec.NewEncoder(buf, h)
+		want.CodecEncodeSelf(encoder)
+		decoder := codec.NewDecoder(buf, h)
 		have := EmptyLatestMap
-		have.GobDecode(gobs)
-		if have.Map == nil {
-			t.Error("Decoded LatestMap.psMap should not be nil")
+		have.CodecDecodeSelf(decoder)
+		if !reflect.DeepEqual(want, have) {
+			t.Error(test.Diff(want, have))
 		}
 	}
 
-	{
-
-		for _, h := range []codec.Handle{
-			codec.Handle(&codec.MsgpackHandle{}),
-			codec.Handle(&codec.JsonHandle{}),
-		} {
-			buf := &bytes.Buffer{}
-			encoder := codec.NewEncoder(buf, h)
-			want.CodecEncodeSelf(encoder)
-			decoder := codec.NewDecoder(buf, h)
-			have := EmptyLatestMap
-			have.CodecDecodeSelf(decoder)
-			if !reflect.DeepEqual(want, have) {
-				t.Error(test.Diff(want, have))
-			}
-		}
-	}
 }
