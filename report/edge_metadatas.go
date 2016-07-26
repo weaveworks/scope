@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/mndrix/ps"
 	"github.com/ugorji/go/codec"
+	"github.com/weaveworks/ps"
 )
 
 // EdgeMetadatas collect metadata about each edge in a topology. Keys are the

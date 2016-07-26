@@ -940,13 +940,6 @@
 			"branch": "master"
 		},
 		{
-			"importpath": "github.com/mndrix/ps",
-			"repository": "https://github.com/mndrix/ps",
-			"vcs": "",
-			"revision": "35fef6f28be7e47a87d8a71ef5b80cbf2c4c167a",
-			"branch": "master"
-		},
-		{
 			"importpath": "github.com/nats-io/gnatsd/auth",
 			"repository": "https://github.com/nats-io/gnatsd",
 			"vcs": "git",
@@ -1205,6 +1198,14 @@
 			"revision": "f8c8c40c18898d7c4f6be33978d68f5d2810f373",
 			"branch": "master",
 			"path": "/odp"
+		},
+		{
+			"importpath": "github.com/weaveworks/ps",
+			"repository": "https://github.com/weaveworks/ps",
+			"vcs": "git",
+			"revision": "70d17b2d6f760345ef36a0748751eddf7290a92c",
+			"branch": "master",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/weaveworks/weave/common",

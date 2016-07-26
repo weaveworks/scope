@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/mndrix/ps"
 	"github.com/ugorji/go/codec"
+	"github.com/weaveworks/ps"
 )
 
 // Sets is a string->set-of-strings map.

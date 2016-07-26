@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/mndrix/ps"
 	"github.com/ugorji/go/codec"
+	"github.com/weaveworks/ps"
 )
 
 // Counters is a string->int map.
