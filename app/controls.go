@@ -14,9 +14,14 @@ import (
 
 // RegisterControlRoutes registers the various control routes with a http mux.
 func RegisterControlRoutes(router *mux.Router, cr ControlRouter) {
-	router.Methods("GET").Path("/api/control/ws").
+	router.
+		Methods("GET").
+		Path("/api/control/ws").
 		HandlerFunc(requestContextDecorator(handleProbeWS(cr)))
-	router.Methods("POST").MatcherFunc(URLMatcher("/api/control/{probeID}/{nodeID}/{control}")).
+	router.
+		Methods("POST").
+		Name("api_control_probeid_nodeid_control").
+		MatcherFunc(URLMatcher("/api/control/{probeID}/{nodeID}/{control}")).
 		HandlerFunc(requestContextDecorator(handleControl(cr)))
 }
 
