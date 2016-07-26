@@ -138,14 +138,14 @@ func (m ConstMap) DeepEqual(n ConstMap) bool {
 }
 
 type intermediateConstMap struct {
-	Map       map[string]string `json:"map"`
-	Timestamp time.Time         `json:"timestamp"`
+	Map       map[string]string `json:"map,omitempty"`
+	Timestamp int64             `json:"timestamp,omitempty"`
 }
 
 func (m ConstMap) toIntermediate() intermediateConstMap {
 	intermediate := intermediateConstMap{
-		Map:       map[string]string{},
-		Timestamp: m.Timestamp,
+		Map:       make(map[string]string, m.Map.Size()),
+		Timestamp: m.Timestamp.UnixNano(),
 	}
 	if m.Map != nil {
 		m.Map.ForEach(func(key string, val interface{}) {
@@ -157,9 +157,9 @@ func (m ConstMap) toIntermediate() intermediateConstMap {
 
 func (m *ConstMap) fromIntermediate(in intermediateConstMap) {
 	m.Map = ps.NewMap()
-	m.Timestamp = in.Timestamp
+	m.Timestamp = time.Unix(int64(0), in.Timestamp)
 	for k, v := range in.Map {
-		m.Map = m.Map.Set(k, v)
+		m.Map = m.Map.UnsafeMutableSet(k, v)
 	}
 }
 
