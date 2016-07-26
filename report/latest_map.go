@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/mndrix/ps"
+	"github.com/weaveworks/ps"
 	"github.com/ugorji/go/codec"
 )
 

@@ -7,8 +7,8 @@ import (
 	"sort"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/mndrix/ps"
 	"github.com/ugorji/go/codec"
+	"github.com/weaveworks/ps"
 
 	"github.com/weaveworks/scope/test/reflect"
 )

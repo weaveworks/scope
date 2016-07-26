@@ -6,8 +6,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/mndrix/ps"
 	"github.com/ugorji/go/codec"
+	"github.com/weaveworks/ps"
 )
 
 // Metrics is a string->metric map.

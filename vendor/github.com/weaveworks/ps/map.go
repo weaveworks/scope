@@ -12,6 +12,7 @@ package ps
 import (
 	"bytes"
 	"fmt"
+	"unsafe"
 )
 
 // A Map associates unique keys (type string) with values (type Any).
@@ -24,6 +25,13 @@ type Map interface {
 	// associated value is changed.
 	// This operation is O(log N) in the number of keys.
 	Set(key string, value interface{}) Map
+
+	// UnsafeMutableSet returns the same map in which key and value are associated in-place.
+	// If the key didn't exist before, it's created; otherwise, the
+	// associated value is changed.
+	// This operation is O(log N) in the number of keys.
+	// Only use UnsafeMutableSet if you are the only reference-holder of the Map.
+	UnsafeMutableSet(key string, value interface{}) Map
 
 	// Delete returns a new map with the association for key, if any, removed.
 	// This operation is O(log N) in the number of keys.
@@ -96,11 +104,38 @@ const (
 	prime64  uint64 = 1099511628211
 )
 
+type unsafeString struct {
+	Data uintptr
+	Len  int
+}
+
+type unsafeSlice struct {
+	Data uintptr
+	Len  int
+	Cap  int
+}
+
+var zeroByteSlice = []byte{}
+
+// bytesView returns a view of the string as a []byte.
+// It doesn't incur allocation and copying caused by conversion but it's
+// unsafe, use with care.
+func bytesView(v string) []byte {
+	if len(v) == 0 {
+		return zeroByteSlice
+	}
+
+	sx := (*unsafeString)(unsafe.Pointer(&v))
+	bx := unsafeSlice{sx.Data, sx.Len, sx.Len}
+	return *(*[]byte)(unsafe.Pointer(&bx))
+}
+
 // hashKey returns a hash code for a given string
 func hashKey(key string) uint64 {
 	hash := offset64
-	for _, codepoint := range key {
-		hash ^= uint64(codepoint)
+
+	for _, b := range bytesView(key) {
+		hash ^= uint64(b)
 		hash *= prime64
 	}
 	return hash
@@ -128,7 +163,10 @@ func setLowLevel(self *tree, partialHash, hash uint64, key string, value interfa
 		m := self.clone()
 		i := partialHash % childCount
 		m.children[i] = setLowLevel(self.children[i], partialHash>>shiftSize, hash, key, value)
-		recalculateCount(m)
+		// update count if we added a new object
+		if m.children[i].count > self.children[i].count {
+			m.count++
+		}
 		return m
 	}
 
@@ -142,6 +180,45 @@ func setLowLevel(self *tree, partialHash, hash uint64, key string, value interfa
 	m := self.clone()
 	m.value = value
 	return m
+}
+
+// UnsafeMutableSet is the in-place mutable version of Set. Only use if
+// you are the only reference-holder of the Map.
+func (self *tree) UnsafeMutableSet(key string, value interface{}) Map {
+	hash := hashKey(key)
+	return mutableSetLowLevel(self, hash, hash, key, value)
+}
+
+func mutableSetLowLevel(self *tree, partialHash, hash uint64, key string, value interface{}) *tree {
+	if self.IsNil() { // an empty tree is easy
+		m := self.clone()
+		m.count = 1
+		m.hash = hash
+		m.key = key
+		m.value = value
+		return m
+	}
+
+	if hash != self.hash {
+		i := partialHash % childCount
+		oldChildCount := self.children[i].count
+		self.children[i] = mutableSetLowLevel(self.children[i], partialHash>>shiftSize, hash, key, value)
+		// update count if we added a new object
+		if oldChildCount < self.children[i].count {
+			self.count++
+		}
+		return self
+	}
+
+	// did we find a hash collision?
+	if key != self.key {
+		oops := fmt.Sprintf("Hash collision between: '%s' and '%s'.  Please report to https://github.com/mndrix/ps/issues/new", self.key, key)
+		panic(oops)
+	}
+
+	// replacing a key's previous value
+	self.value = value
+	return self
 }
 
 // modifies a map by recalculating its key count based on the counts
