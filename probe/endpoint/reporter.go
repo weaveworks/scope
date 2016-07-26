@@ -184,11 +184,11 @@ func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, namespaceID st
 		fromEndpointNodeID = report.MakeEndpointNodeID(r.hostID, namespaceID, t.fromAddr, strconv.Itoa(int(t.fromPort)))
 		toEndpointNodeID   = report.MakeEndpointNodeID(r.hostID, namespaceID, t.toAddr, strconv.Itoa(int(t.toPort)))
 
-		fromNode = report.MakeNodeWith(fromEndpointNodeID, map[string]string{
+		fromNode = report.MakeNodeWithConsts(fromEndpointNodeID, map[string]string{
 			Addr: t.fromAddr,
 			Port: strconv.Itoa(int(t.fromPort)),
 		}).WithEdge(toEndpointNodeID, report.EdgeMetadata{})
-		toNode = report.MakeNodeWith(toEndpointNodeID, map[string]string{
+		toNode = report.MakeNodeWithConsts(toEndpointNodeID, map[string]string{
 			Addr: t.toAddr,
 			Port: strconv.Itoa(int(t.toPort)),
 		})
@@ -201,10 +201,10 @@ func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, namespaceID st
 	}
 
 	if extraFromNode != nil {
-		fromNode = fromNode.WithLatests(extraFromNode)
+		fromNode = fromNode.WithConsts(extraFromNode)
 	}
 	if extraToNode != nil {
-		toNode = toNode.WithLatests(extraToNode)
+		toNode = toNode.WithConsts(extraToNode)
 	}
 	rpt.Endpoint = rpt.Endpoint.AddNode(fromNode)
 	rpt.Endpoint = rpt.Endpoint.AddNode(toNode)

@@ -40,9 +40,14 @@ func MakeNode(id string) Node {
 	}
 }
 
-// MakeNodeWith creates a new Node with the supplied map.
+// MakeNodeWith creates a new Node with the supplied latest map.
 func MakeNodeWith(id string, m map[string]string) Node {
 	return MakeNode(id).WithLatests(m)
+}
+
+// MakeNodeWith creates a new Node with the supplied const map.
+func MakeNodeWithConsts(id string, m map[string]string) Node {
+	return MakeNode(id).WithConsts(m)
 }
 
 // WithID returns a fresh copy of n, with ID changed.

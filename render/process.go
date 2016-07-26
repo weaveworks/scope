@@ -89,7 +89,7 @@ var ProcessNameRenderer = ConditionalRenderer(renderProcesses,
 func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
 	var node report.Node
 
-	addr, ok := n.Latest.Lookup(endpoint.Addr)
+	addr, ok := n.Const.Lookup(endpoint.Addr)
 	if !ok {
 		return report.Nodes{}
 	}
@@ -120,18 +120,18 @@ func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
 // must be merged with a process graph to get that info.
 func MapEndpoint2Process(n report.Node, local report.Networks) report.Nodes {
 	// Nodes without a hostid are treated as pseudo nodes
-	if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
+	if _, ok := n.Const.Lookup(report.HostNodeID); !ok {
 		return MapEndpoint2Pseudo(n, local)
 	}
 
-	pid, timestamp, ok := n.Latest.LookupEntry(process.PID)
+	pid, ok := n.Const.Lookup(process.PID)
 	if !ok {
 		return report.Nodes{}
 	}
 
-	id := report.MakeProcessNodeID(report.ExtractHostID(n), pid)
+	id := report.MakeProcessNodeID(report.ExtractHostIDFromConst(n), pid)
 	node := NewDerivedNode(id, n).WithTopology(report.Process)
-	node.Latest = node.Latest.Set(process.PID, timestamp, pid)
+	node.Latest = node.Latest.Set(process.PID, n.Const.Timestamp, pid)
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: node}
 }

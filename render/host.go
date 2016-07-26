@@ -60,14 +60,14 @@ func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 // host nodes or pseudo nodes.
 func MapEndpoint2Host(n report.Node, local report.Networks) report.Nodes {
 	// Nodes without a hostid are treated as pseudo nodes
-	hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
+	hostNodeID, ok := n.Const.Lookup(report.HostNodeID)
 	if !ok {
 		return MapEndpoint2Pseudo(n, local)
 	}
 
-	id := report.MakeHostNodeID(report.ExtractHostID(n))
+	id := report.MakeHostNodeID(report.ExtractHostIDFromConst(n))
 	result := NewDerivedNode(id, n).WithTopology(report.Host)
-	result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
+	result.Latest = result.Latest.Set(report.HostNodeID, n.Const.Timestamp, hostNodeID)
 	result.Counters = result.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: result}
 }
