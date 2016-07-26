@@ -2,13 +2,12 @@ package report
 
 import (
 	"bytes"
-	"encoding/gob"
 	"fmt"
 	"sort"
 	"time"
 
-	"github.com/weaveworks/ps"
 	"github.com/ugorji/go/codec"
+	"github.com/weaveworks/ps"
 )
 
 // LatestMap is a persitent map which support latest-win merges. We have to
@@ -169,21 +168,13 @@ func (m LatestMap) DeepEqual(n LatestMap) bool {
 }
 
 func (m LatestMap) toIntermediate() map[string]LatestEntry {
-	intermediate := map[string]LatestEntry{}
+	intermediate := make(map[string]LatestEntry, m.Size())
 	if m.Map != nil {
 		m.Map.ForEach(func(key string, val interface{}) {
 			intermediate[key] = val.(LatestEntry)
 		})
 	}
 	return intermediate
-}
-
-func (m LatestMap) fromIntermediate(in map[string]LatestEntry) LatestMap {
-	out := ps.NewMap()
-	for k, v := range in {
-		out = out.Set(k, v)
-	}
-	return LatestMap{out}
 }
 
 // CodecEncodeSelf implements codec.Selfer
@@ -233,7 +224,7 @@ func (m *LatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 			decoder.Decode(&value)
 		}
 
-		out = out.Set(key, value)
+		out = out.UnsafeMutableSet(key, value)
 	}
 	z.DecSendContainerState(containerMapEnd)
 	*m = LatestMap{out}
@@ -247,21 +238,4 @@ func (LatestMap) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
 func (*LatestMap) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
-}
-
-// GobEncode implements gob.Marshaller
-func (m LatestMap) GobEncode() ([]byte, error) {
-	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(m.toIntermediate())
-	return buf.Bytes(), err
-}
-
-// GobDecode implements gob.Unmarshaller
-func (m *LatestMap) GobDecode(input []byte) error {
-	in := map[string]LatestEntry{}
-	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
-	}
-	*m = LatestMap{}.fromIntermediate(in)
-	return nil
 }
