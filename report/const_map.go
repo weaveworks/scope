@@ -43,6 +43,14 @@ func (m ConstMap) Size() int {
 // Merge produces a fresh ConstMap, container the kers from both inputs. When
 // both inputs container the same key, the latter value is used.
 func (m ConstMap) Merge(other ConstMap) ConstMap {
+	// Handle nil/empty maps
+	switch {
+	case m.Size() == 0:
+		return other
+	case other.Size() == 0:
+		return m
+	}
+
 	// Use the map with the latest timestamp as output
 	// to minimize garbage
 	latestTS, output, iter := m.Timestamp, m.Map, other.Map
