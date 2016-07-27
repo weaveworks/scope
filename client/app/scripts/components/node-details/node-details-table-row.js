@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 
 import NodeDetailsTableNodeLink from './node-details-table-node-link';
@@ -66,8 +67,18 @@ function renderValues(node, columns = [], columnWidths = []) {
 export default class NodeDetailsTableRow extends React.Component {
   constructor(props, context) {
     super(props, context);
+
+    this.mouseDragOrigin = [0, 0];
+
+    this.storeLabelRef = this.storeLabelRef.bind(this);
+    this.onMouseDown = this.onMouseDown.bind(this);
+    this.onMouseUp = this.onMouseUp.bind(this);
     this.onMouseEnter = this.onMouseEnter.bind(this);
     this.onMouseLeave = this.onMouseLeave.bind(this);
+  }
+
+  storeLabelRef(ref) {
+    this.labelEl = ref;
   }
 
   onMouseEnter() {
@@ -80,9 +91,30 @@ export default class NodeDetailsTableRow extends React.Component {
     onMouseLeaveRow(node);
   }
 
+  onMouseDown(ev) {
+    const { pageX, pageY } = ev;
+    this.mouseDragOrigin = [pageX, pageY];
+  }
+
+  onMouseUp(ev) {
+    const [originX, originY] = this.mouseDragOrigin;
+    const { pageX, pageY } = ev;
+    const thresholdPx = 2;
+    const movedTheMouseTooMuch = (
+      Math.abs(originX - pageX) > thresholdPx ||
+      Math.abs(originY - pageY) > thresholdPx
+    );
+    if (movedTheMouseTooMuch) {
+      return;
+    }
+
+    const { node, onClick } = this.props;
+    onClick(ev, node, ReactDOM.findDOMNode(this.labelEl));
+  }
+
   render() {
-    const { node, nodeIdKey, topologyId, columns, onMouseEnterRow, onMouseLeaveRow, selected,
-      widths } = this.props;
+    const { node, nodeIdKey, topologyId, columns, onClick, onMouseEnterRow, onMouseLeaveRow,
+      selected, widths } = this.props;
     const [firstColumnWidth, ...columnWidths] = widths;
     const values = renderValues(node, columns, columnWidths);
     const nodeId = node[nodeIdKey];
@@ -90,10 +122,12 @@ export default class NodeDetailsTableRow extends React.Component {
 
     return (
       <tr
+        onMouseDown={onClick && this.onMouseDown}
+        onMouseUp={onClick && this.onMouseUp}
         onMouseEnter={onMouseEnterRow && this.onMouseEnter}
         onMouseLeave={onMouseLeaveRow && this.onMouseLeave}
         className={className}>
-        <td className="node-details-table-node-label truncate"
+        <td ref={this.storeLabelRef} className="node-details-table-node-label truncate"
           style={{ width: firstColumnWidth }}>
           {this.props.renderIdCell(Object.assign(node, {topologyId, nodeId}))}
         </td>

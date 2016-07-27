@@ -23,8 +23,9 @@ const COLUMN_WIDTHS = {
   docker_container_uptime: '85px',
   docker_container_restart_count: '80px',
   docker_container_ips: '80px',
-  docker_container_created: '110px',
-  docker_container_state_human: '120px',
+  // 27 Jul 16 11:33 UTC
+  docker_container_created: '140px',
+  docker_container_state_human: '170px',
   open_files_count: '80px',
   ppid: '80px',
   pid: '80px',
@@ -63,7 +64,7 @@ function getValueForSortBy(sortBy) {
       }
     }
 
-    return '';
+    return null;
   };
 }
 
@@ -205,8 +206,8 @@ export default class NodeDetailsTable extends React.Component {
 
   render() {
     const headers = this.renderHeaders();
-    const { nodeIdKey, columns, topologyId, onMouseEnter, onMouseLeave, onMouseEnterRow,
-      onMouseLeaveRow } = this.props;
+    const { nodeIdKey, columns, topologyId, onClickRow, onMouseEnter, onMouseLeave,
+      onMouseEnterRow, onMouseLeaveRow } = this.props;
     let nodes = getSortedNodes(this.props.nodes, this.props.columns, this.state.sortBy,
                                     this.state.sortedDesc);
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
@@ -243,6 +244,7 @@ export default class NodeDetailsTable extends React.Component {
                   nodeIdKey={nodeIdKey}
                   widths={getColumnsWidths(this.getColumnHeaders())}
                   columns={columns}
+                  onClick={onClickRow}
                   onMouseLeaveRow={onMouseLeaveRow}
                   onMouseEnterRow={onMouseEnterRow}
                   topologyId={topologyId} />

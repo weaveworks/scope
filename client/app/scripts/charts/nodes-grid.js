@@ -53,7 +53,7 @@ function getColumns(nodes) {
 }
 
 
-function renderIdCell(props, onClick) {
+function renderIdCell(props) {
   const style = {
     width: 16,
     flex: 'none',
@@ -61,7 +61,7 @@ function renderIdCell(props, onClick) {
   };
 
   return (
-    <div className="nodes-grid-id-column" onClick={onClick}>
+    <div className="nodes-grid-id-column">
       <div className="content">
         <div style={style}><i className="fa fa-square" /></div>
         <div className="truncate">
@@ -87,15 +87,15 @@ class NodesGrid extends React.Component {
     this.onMouseLeaveRow = this.onMouseLeaveRow.bind(this);
   }
 
-  clickRow(ev, nodeId, nodeLabel) {
-    if (ev.target.className === 'node-details-relatives-link') {
+  clickRow(ev, node, el) {
+    if (ev.target.className === 'node-details-table-node-link') {
       return;
     }
-    this.props.clickNode(nodeId, nodeLabel);
+    this.props.clickNode(node.id, node.label, el.getBoundingClientRect());
   }
 
   renderIdCell(props) {
-    return renderIdCell(props, (ev) => this.clickRow(ev, props.id, props.label));
+    return renderIdCell(props);
   }
 
   onMouseEnterRow() {
@@ -144,6 +144,7 @@ class NodesGrid extends React.Component {
           tbodyStyle={tbodyStyle}
           topologyId={this.props.topologyId}
           onSortChange={this.onSortChange}
+          onClickRow={this.clickRow}
           {...detailsData}
           sortBy={gridSortBy}
           sortedDesc={gridSortedDesc}
