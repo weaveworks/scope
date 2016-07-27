@@ -173,10 +173,10 @@ func (m *ConstMap) fromIntermediate(in intermediateConstMap) {
 
 // CodecEncodeSelf implements codec.Selfer
 func (m *ConstMap) CodecEncodeSelf(encoder *codec.Encoder) {
-	if m.Map != nil {
+	if m.Size() > 0 {
 		encoder.Encode(m.toIntermediate())
 	} else {
-		encoder.Encode(nil)
+		encoder.Encode(intermediateConstMap{})
 	}
 }
 
