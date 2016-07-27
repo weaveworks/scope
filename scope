@@ -157,7 +157,7 @@ launch() {
     check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
     docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
     CONTAINER=$($(launch_command "$@"))
-    echo $CONTAINER    
+    echo $CONTAINER
 }
 
 print_app_endpoints() {
@@ -207,7 +207,7 @@ EOF
             $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --dry-run $@
 
         if check_docker_for_mac ; then
-            create_plugins_dir      
+            create_plugins_dir
             if check_probe_only ; then
                 launch "$@"
                 exit
@@ -234,7 +234,7 @@ EOF
             IP_ADDRS=$(docker run --rm --net=host --entrypoint /bin/sh $SCOPE_IMAGE -c "$IP_ADDR_CMD")
             print_app_endpoints $IP_ADDRS
         fi
-        
+
         ;;
 
     stop)
