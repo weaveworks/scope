@@ -37,13 +37,19 @@ func TestConstMapEncoding(t *testing.T) {
 func TestConstMapEncodingNil(t *testing.T) {
 	want := ConstMap{}
 
+	jsonHandle := codec.Handle(&codec.JsonHandle{})
 	for _, h := range []codec.Handle{
+		jsonHandle,
 		codec.Handle(&codec.MsgpackHandle{}),
-		codec.Handle(&codec.JsonHandle{}),
 	} {
 		buf := &bytes.Buffer{}
 		encoder := codec.NewEncoder(buf, h)
 		want.CodecEncodeSelf(encoder)
+
+		if h == jsonHandle && buf.String() != "{}" {
+			t.Error("Non-empty map when encoding empty ConstMap:", buf.String())
+		}
+
 		decoder := codec.NewDecoder(buf, h)
 		have := EmptyConstMap
 		have.CodecDecodeSelf(decoder)

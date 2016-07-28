@@ -145,38 +145,84 @@ func (m ConstMap) DeepEqual(n ConstMap) bool {
 	return equal
 }
 
+// Intermediate format for serialization/de-serialization. We encode timestamps as
+// nanoseconds since epoch to increase performance and use a type synonym for
+// ps.Map so that we can provide a custom CodecEncodeSelf()/CodecDecodeSelf()
+// just for the map without needing to worry about the timestamp field.
+type intermediateMap struct {
+	ps.Map
+}
+
 type intermediateConstMap struct {
-	Map       map[string]string `json:"map,omitempty"`
-	Timestamp int64             `json:"timestamp,omitempty"`
+	Map       intermediateMap `json:"map,omitempty"`
+	Timestamp int64           `json:"timestamp,omitempty"`
 }
 
-func (m ConstMap) toIntermediate() intermediateConstMap {
-	intermediate := intermediateConstMap{
-		Map:       make(map[string]string, m.Map.Size()),
-		Timestamp: m.Timestamp.UnixNano(),
+func (m *intermediateMap) CodecDecodeSelf(decoder *codec.Decoder) {
+	z, r := codec.GenHelperDecoder(decoder)
+	if r.TryDecodeAsNil() {
+		m = nil
+		return
 	}
+
+	length := r.ReadMapStart()
+	out := ps.NewMap()
+	for i := 0; length < 0 || i < length; i++ {
+		if length < 0 && r.CheckBreak() {
+			break
+		}
+
+		var key string
+		z.DecSendContainerState(containerMapKey)
+		if !r.TryDecodeAsNil() {
+			key = r.DecodeString()
+		}
+
+		var value string
+		z.DecSendContainerState(containerMapValue)
+		if !r.TryDecodeAsNil() {
+			value = r.DecodeString()
+		}
+
+		out = out.UnsafeMutableSet(key, value)
+	}
+	m.Map = out
+}
+
+func (m *intermediateMap) CodecEncodeSelf(encoder *codec.Encoder) {
+	z, r := codec.GenHelperEncoder(encoder)
+	var length int
 	if m.Map != nil {
-		m.Map.ForEach(func(key string, val interface{}) {
-			intermediate.Map[key] = val.(string)
-		})
+		length = m.Map.Size()
 	}
-	return intermediate
-}
-
-func (m *ConstMap) fromIntermediate(in intermediateConstMap) {
-	m.Map = ps.NewMap()
-	m.Timestamp = time.Unix(int64(0), in.Timestamp)
-	for k, v := range in.Map {
-		m.Map = m.Map.UnsafeMutableSet(k, v)
+	if length == 0 {
+		r.EncodeNil()
+		return
 	}
+	r.EncodeMapStart(length)
+	m.Map.ForEach(func(key string, iterVal interface{}) {
+		z.EncSendContainerState(containerMapKey)
+		r.EncodeString(cUTF83326, key)
+		z.EncSendContainerState(containerMapValue)
+		r.EncodeString(cUTF83326, iterVal.(string))
+	})
+	z.EncSendContainerState(containerMapEnd)
 }
 
 // CodecEncodeSelf implements codec.Selfer
 func (m *ConstMap) CodecEncodeSelf(encoder *codec.Encoder) {
+	// Only set the Timestamp field to non-zero if there is a map to
+	// serialize, otherwise we would just be wasting space serializing a
+	// non-zero timestamp.
 	if m.Size() > 0 {
-		encoder.Encode(m.toIntermediate())
+		var out intermediateConstMap
+		out.Map.Map = m.Map
+		out.Timestamp = m.Timestamp.UnixNano()
+		encoder.Encode(out)
 	} else {
-		encoder.Encode(intermediateConstMap{})
+		// Use an empty struct to avoid serializing the intermediate
+		// "map" key
+		encoder.Encode(struct{}{})
 	}
 }
 
@@ -186,7 +232,12 @@ func (m *ConstMap) CodecDecodeSelf(decoder *codec.Decoder) {
 	if err := decoder.Decode(&in); err != nil {
 		return
 	}
-	m.fromIntermediate(in)
+	if in.Map.Map == nil {
+		*m = EmptyConstMap
+	} else {
+		m.Map = in.Map
+		m.Timestamp = time.Unix(int64(0), in.Timestamp)
+	}
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
