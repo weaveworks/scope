@@ -47,8 +47,15 @@ fi
 
 fail=0
 
-# NB: Relies on paths being prefixed with './'.
-TESTDIRS=( $(git ls-files -- '*_test.go' | grep -vE '^(vendor|prog|experimental)/' | xargs -n1 dirname  | sort -u | sed -e 's|^|./|') )
+if [ -z "$TESTDIRS" ]; then
+    # NB: Relies on paths being prefixed with './'.
+    TESTDIRS=( $(git ls-files -- '*_test.go' | grep -vE '^(vendor|prog|experimental)/' | xargs -n1 dirname  | sort -u | sed -e 's|^|./|') )
+else
+    # TESTDIRS on the right side is not really an array variable, it
+    # is just a string with spaces, but it is written like that to
+    # shut up the shellcheck tool.
+    TESTDIRS=( $(for d in ${TESTDIRS[*]}; do echo "$d"; done) )
+fi
 
 # If running on circle, use the scheduler to work out what tests to run on what shard
 if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ] && [ -x "$DIR/sched" ]; then
