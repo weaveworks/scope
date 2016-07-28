@@ -194,23 +194,27 @@ func (n Node) Copy() Node {
 // Merge mergses the individual components of a node and returns a
 // fresh node.
 func (n Node) Merge(other Node) Node {
-	cp := n.Copy()
-	if cp.ID == "" {
-		cp.ID = other.ID
+	id := n.ID
+	if id == "" {
+		id = other.ID
 	}
-	if cp.Topology == "" {
-		cp.Topology = other.Topology
-	} else if other.Topology != "" && cp.Topology != other.Topology {
-		panic("Cannot merge nodes with different topology types: " + cp.Topology + " != " + other.Topology)
+	topology := n.Topology
+	if topology == "" {
+		topology = other.Topology
+	} else if other.Topology != "" && topology != other.Topology {
+		panic("Cannot merge nodes with different topology types: " + topology + " != " + other.Topology)
 	}
-	cp.Counters = cp.Counters.Merge(other.Counters)
-	cp.Sets = cp.Sets.Merge(other.Sets)
-	cp.Adjacency = cp.Adjacency.Merge(other.Adjacency)
-	cp.Edges = cp.Edges.Merge(other.Edges)
-	cp.Controls = cp.Controls.Merge(other.Controls)
-	cp.Latest = cp.Latest.Merge(other.Latest)
-	cp.Metrics = cp.Metrics.Merge(other.Metrics)
-	cp.Parents = cp.Parents.Merge(other.Parents)
-	cp.Children = cp.Children.Merge(other.Children)
-	return cp
+	return Node{
+		ID:        id,
+		Topology:  topology,
+		Counters:  n.Counters.Merge(other.Counters),
+		Sets:      n.Sets.Merge(other.Sets),
+		Adjacency: n.Adjacency.Merge(other.Adjacency),
+		Edges:     n.Edges.Merge(other.Edges),
+		Controls:  n.Controls.Merge(other.Controls),
+		Latest:    n.Latest.Merge(other.Latest),
+		Metrics:   n.Metrics.Merge(other.Metrics),
+		Parents:   n.Parents.Merge(other.Parents),
+		Children:  n.Children.Merge(other.Children),
+	}
 }

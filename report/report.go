@@ -178,21 +178,22 @@ func (r Report) Copy() Report {
 // Merge merges another Report into the receiver and returns the result. The
 // original is not modified.
 func (r Report) Merge(other Report) Report {
-	cp := r.Copy()
-	cp.Endpoint = r.Endpoint.Merge(other.Endpoint)
-	cp.Process = r.Process.Merge(other.Process)
-	cp.Container = r.Container.Merge(other.Container)
-	cp.ContainerImage = r.ContainerImage.Merge(other.ContainerImage)
-	cp.Host = r.Host.Merge(other.Host)
-	cp.Pod = r.Pod.Merge(other.Pod)
-	cp.Service = r.Service.Merge(other.Service)
-	cp.Deployment = r.Deployment.Merge(other.Deployment)
-	cp.ReplicaSet = r.ReplicaSet.Merge(other.ReplicaSet)
-	cp.Overlay = r.Overlay.Merge(other.Overlay)
-	cp.Sampling = r.Sampling.Merge(other.Sampling)
-	cp.Window += other.Window
-	cp.Plugins = r.Plugins.Merge(other.Plugins)
-	return cp
+	return Report{
+		Endpoint:       r.Endpoint.Merge(other.Endpoint),
+		Process:        r.Process.Merge(other.Process),
+		Container:      r.Container.Merge(other.Container),
+		ContainerImage: r.ContainerImage.Merge(other.ContainerImage),
+		Host:           r.Host.Merge(other.Host),
+		Pod:            r.Pod.Merge(other.Pod),
+		Service:        r.Service.Merge(other.Service),
+		Deployment:     r.Deployment.Merge(other.Deployment),
+		ReplicaSet:     r.ReplicaSet.Merge(other.ReplicaSet),
+		Overlay:        r.Overlay.Merge(other.Overlay),
+		Sampling:       r.Sampling.Merge(other.Sampling),
+		Window:         r.Window + other.Window,
+		Plugins:        r.Plugins.Merge(other.Plugins),
+		ID:             fmt.Sprintf("%d", rand.Int63()),
+	}
 }
 
 // Topologies returns a slice of Topologies in this report
