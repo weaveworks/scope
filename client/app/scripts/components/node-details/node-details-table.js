@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import React from 'react';
-import { Map as makeMap } from 'immutable';
 import classNames from 'classnames';
 
 import ShowMore from '../show-more';
@@ -69,7 +68,6 @@ function getValueForSortBy(sortBy) {
 }
 
 
-/*
 function getMetaDataSorters(nodes) {
   // returns an array of sorters that will take a node
   return _.get(nodes, [0, 'metadata'], []).map((field, index) => node => {
@@ -83,15 +81,14 @@ function getMetaDataSorters(nodes) {
     return null;
   });
 }
-*/
 
 
 function getSortedNodes(nodes, columns, sortBy, sortedDesc) {
   const sortedNodes = _.sortBy(
     nodes,
     getValueForSortBy(sortBy || getDefaultSortBy(columns, nodes)),
-    'label'
-    // getMetaDataSorters(nodes)
+    'label',
+    getMetaDataSorters(nodes)
   );
   if (sortedDesc) {
     sortedNodes.reverse();
@@ -217,12 +214,6 @@ export default class NodeDetailsTable extends React.Component {
       nodes = nodes.slice(0, this.state.limit);
     }
 
-    const nodeOrderJS = (nodes || []).map((n, i) => [n.id, i]);
-    const nodeOrder = makeMap(nodeOrderJS);
-    const childrenWithProps = React.Children.map(this.props.children, (child) => (
-      React.cloneElement(child, { nodeOrder })
-    ));
-
     const className = classNames('node-details-table-wrapper-wrapper', this.props.className);
 
     return (
@@ -257,7 +248,6 @@ export default class NodeDetailsTable extends React.Component {
             expanded={expanded}
             notShown={notShown} />
         </div>
-        {childrenWithProps}
       </div>
     );
   }

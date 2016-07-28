@@ -54,20 +54,19 @@ function getColumns(nodes) {
 
 
 function renderIdCell(props) {
-  const style = {
+  const iconStyle = {
     width: 16,
     flex: 'none',
     color: getNodeColor(props.rank, props.label_major)
   };
+  const showSubLabel = Boolean(props.pseudo);
 
   return (
     <div className="nodes-grid-id-column">
-      <div className="content">
-        <div style={style}><i className="fa fa-square" /></div>
-        <div className="truncate">
-          {props.label} {props.pseudo &&
-            <span className="nodes-grid-label-minor">{props.label_minor}</span>}
-        </div>
+      <div style={iconStyle}><i className="fa fa-square" /></div>
+      <div className="truncate">
+        {props.label} {showSubLabel &&
+          <span className="nodes-grid-label-minor">{props.label_minor}</span>}
       </div>
     </div>
   );
@@ -79,31 +78,16 @@ class NodesGrid extends React.Component {
   constructor(props, context) {
     super(props, context);
 
-    this.renderIdCell = this.renderIdCell.bind(this);
-    this.clickRow = this.clickRow.bind(this);
-
+    this.onClickRow = this.onClickRow.bind(this);
     this.onSortChange = this.onSortChange.bind(this);
-    this.onMouseEnterRow = this.onMouseEnterRow.bind(this);
-    this.onMouseLeaveRow = this.onMouseLeaveRow.bind(this);
   }
 
-  clickRow(ev, node, el) {
+  onClickRow(ev, node, el) {
+    // TODO: do this better
     if (ev.target.className === 'node-details-table-node-link') {
       return;
     }
     this.props.clickNode(node.id, node.label, el.getBoundingClientRect());
-  }
-
-  renderIdCell(props) {
-    return renderIdCell(props);
-  }
-
-  onMouseEnterRow() {
-    this.props.clickPauseUpdate();
-  }
-
-  onMouseLeaveRow() {
-    this.props.clickResumeUpdate();
   }
 
   onSortChange(sortBy, sortedDesc) {
@@ -140,16 +124,17 @@ class NodesGrid extends React.Component {
         <NodeDetailsTable
           style={cmpStyle}
           className={className}
-          renderIdCell={this.renderIdCell}
+          renderIdCell={renderIdCell}
           tbodyStyle={tbodyStyle}
           topologyId={this.props.topologyId}
           onSortChange={this.onSortChange}
-          onClickRow={this.clickRow}
-          {...detailsData}
+          onClickRow={this.onClickRow}
           sortBy={gridSortBy}
           sortedDesc={gridSortedDesc}
           selectedNodeId={this.props.selectedNodeId}
-          limit={1000} />
+          limit={1000}
+          {...detailsData}
+          />
       </div>
     );
   }

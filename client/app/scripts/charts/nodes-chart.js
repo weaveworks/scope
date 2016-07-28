@@ -12,7 +12,8 @@ import { DETAILS_PANEL_WIDTH } from '../constants/styles';
 import Logo from '../components/logo';
 import { doLayout } from './nodes-layout';
 import NodesChartElements from './nodes-chart-elements';
-import { getActiveTopologyOptions, getAdjacentNodes } from '../utils/topology-utils';
+import { getActiveTopologyOptions, getAdjacentNodes,
+  isSameTopology } from '../utils/topology-utils';
 
 const log = debug('scope:nodes-chart');
 
@@ -40,8 +41,8 @@ class NodesChart extends React.Component {
       scale: 1,
       selectedNodeScale: d3.scale.linear(),
       hasZoomed: false,
-      height: props.height || 0,
-      width: props.width || 0,
+      height: 0,
+      width: 0,
       zoomCache: {}
     };
   }
@@ -60,7 +61,7 @@ class NodesChart extends React.Component {
       // re-apply cached canvas zoom/pan to d3 behavior (or set defaul values)
       const defaultZoom = { scale: 1, panTranslateX: 0, panTranslateY: 0, hasZoomed: false };
       const nextZoom = this.state.zoomCache[nextProps.topologyId] || defaultZoom;
-      if (this.zoom && nextZoom) {
+      if (nextZoom) {
         this.zoom.scale(nextZoom.scale);
         this.zoom.translate([nextZoom.panTranslateX, nextZoom.panTranslateY]);
       }
@@ -78,13 +79,11 @@ class NodesChart extends React.Component {
     }
 
     // reset layout dimensions only when forced
-    // state.height = nextProps.height;
-    // state.width = nextProps.width;
     state.height = nextProps.forceRelayout ? nextProps.height : (state.height || nextProps.height);
     state.width = nextProps.forceRelayout ? nextProps.width : (state.width || nextProps.width);
 
     // _.assign(state, this.updateGraphState(nextProps, state));
-    if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
+    if (nextProps.forceRelayout || !isSameTopology(nextProps.nodes, this.props.nodes)) {
       _.assign(state, this.updateGraphState(nextProps, state));
     }
 
@@ -100,10 +99,6 @@ class NodesChart extends React.Component {
 
   componentDidMount() {
     // distinguish pan/zoom from click
-    if (this.props.noZoom) {
-      return;
-    }
-
     this.isZooming = false;
 
     this.zoom = d3.behavior.zoom()
@@ -115,10 +110,6 @@ class NodesChart extends React.Component {
   }
 
   componentWillUnmount() {
-    if (this.props.noZoom) {
-      return;
-    }
-
     // undoing .call(zoom)
     d3.select('.nodes-chart svg')
       .on('mousedown.zoom', null)
@@ -294,10 +285,8 @@ class NodesChart extends React.Component {
 
   restoreLayout(state) {
     // undo any pan/zooming that might have happened
-    if (this.zoom) {
-      this.zoom.scale(state.scale);
-      this.zoom.translate([state.panTranslateX, state.panTranslateY]);
-    }
+    this.zoom.scale(state.scale);
+    this.zoom.translate([state.panTranslateX, state.panTranslateY]);
 
     const nodes = state.nodes.map(node => node.merge({
       x: node.get('px'),
@@ -326,10 +315,6 @@ class NodesChart extends React.Component {
     const stateEdges = this.initEdges(props.nodes, stateNodes);
     const nodeScale = this.getNodeScale(props.nodes, state.width, state.height);
     const nextState = { nodeScale };
-    const nodeOrder = props.nodeOrder || makeMap(stateNodes
-      .toList()
-      .sortBy(n => n.get('label'))
-      .map((n, i) => [n.get('id'), i]));
 
     const options = {
       width: state.width,
@@ -338,8 +323,7 @@ class NodesChart extends React.Component {
       margins: props.margins,
       forceRelayout: props.forceRelayout,
       topologyId: this.props.topologyId,
-      topologyOptions: this.props.topologyOptions,
-      nodeOrder
+      topologyOptions: this.props.topologyOptions
     };
 
     const timedLayouter = timely(doLayout);
@@ -366,12 +350,10 @@ class NodesChart extends React.Component {
     const zoomFactor = Math.min(xFactor, yFactor);
     let zoomScale = this.state.scale;
 
-    if (!this.props.noZoom && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
+    if (!state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
       zoomScale = zoomFactor;
       // saving in d3's behavior cache
-      if (this.zoom) {
-        this.zoom.scale(zoomFactor);
-      }
+      this.zoom.scale(zoomFactor);
     }
 
     nextState.scale = zoomScale;
@@ -390,7 +372,7 @@ class NodesChart extends React.Component {
     const nodeSize = expanse / 3; // single node should fill a third of the screen
     const maxNodeSize = expanse / 10;
     const normalizedNodeSize = Math.min(nodeSize / Math.sqrt(nodes.size), maxNodeSize);
-    return this.state.nodeScale.copy().range([0, this.props.nodeSize || normalizedNodeSize]);
+    return this.state.nodeScale.copy().range([0, normalizedNodeSize]);
   }
 
   zoomed() {

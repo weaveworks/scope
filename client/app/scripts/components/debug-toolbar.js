@@ -184,7 +184,7 @@ class DebugToolbar extends React.Component {
   addNodes(n, prefix = 'zing') {
     const ns = this.props.nodes;
     const nodeNames = ns.keySeq().toJS();
-    const newNodeNames = _.range(nodeNames.length, nodeNames.length + n).map(i => (
+    const newNodeNames = _.range(ns.size, ns.size + n).map(i => (
       // `${randomLetter()}${randomLetter()}-zing`
       `${prefix}${i}`
     ));

@@ -1,6 +1,5 @@
 import dagre from 'dagre';
 import debug from 'debug';
-import d3 from 'd3';
 import { fromJS, Map as makeMap, Set as ImmSet } from 'immutable';
 
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
@@ -50,9 +49,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   // configure node margins
   graph.setGraph({
     nodesep,
-    ranksep,
-    // rankdir: 'LR',
-    // align: 'UL'
+    ranksep
   });
 
   // add nodes to the graph if not already there
@@ -179,17 +176,18 @@ function layoutSingleNodes(layout, opts) {
     offsetY = offsetY || margins.top + nodeHeight / 2;
 
     const columns = Math.ceil(Math.sqrt(singleNodes.size));
-    const rows = Math.ceil(singleNodes.size / columns);
     let row = 0;
     let col = 0;
+    let singleX;
+    let singleY;
     nodes = nodes.sortBy(node => node.get('rank')).map(node => {
       if (singleNodes.has(node.get('id'))) {
         if (col === columns) {
           col = 0;
           row++;
         }
-        const singleX = col * (nodesep + nodeWidth) + offsetX;
-        const singleY = row * (ranksep + nodeHeight) + offsetY;
+        singleX = col * (nodesep + nodeWidth) + offsetX;
+        singleY = row * (ranksep + nodeHeight) + offsetY;
         col++;
         return node.merge({
           x: singleX,
@@ -200,8 +198,8 @@ function layoutSingleNodes(layout, opts) {
     });
 
     // adjust layout dimensions if graph is now bigger
-    result.width = Math.max(layout.width, columns * nodeWidth + (columns - 1) * nodesep);
-    result.height = Math.max(layout.height, rows * nodeHeight + (rows - 1) * ranksep);
+    result.width = Math.max(layout.width, singleX + nodeWidth / 2 + nodesep);
+    result.height = Math.max(layout.height, singleY + nodeHeight / 2 + ranksep);
     result.nodes = nodes;
   }
 
@@ -246,7 +244,6 @@ function shiftLayoutToCenter(layout, opts) {
   return result;
 }
 
-
 /**
  * Adds `points` array to edge based on location of source and target
  * @param {Map} edge           new edge
@@ -261,39 +258,6 @@ function setSimpleEdgePoints(edge, nodeCache) {
     {x: target.get('x'), y: target.get('y')}
   ]));
 }
-
-
-export function uniqueRowConstraint(layout, options) {
-  const result = Object.assign({}, layout);
-  const scale = options.scale || DEFAULT_SCALE;
-  const nodeHeight = scale(NODE_SIZE_FACTOR);
-  const nodeWidth = scale(NODE_SIZE_FACTOR);
-  const margins = options.margins || DEFAULT_MARGINS;
-
-  const rowHeight = options.height / layout.nodes.size;
-  const nodeOrder = options.nodeOrder || makeMap(layout.nodes
-                            .toList()
-                            .sortBy(n => n.get('y'))
-                            .map((n, i) => [n.get('id'), i]));
-
-  const nodeXs = layout.nodes.map(n => n.get('x')).toList().toJS();
-  const xScale = d3.scale.linear()
-    .domain(d3.extent(nodeXs))
-    .range([nodeWidth, options.width - nodeWidth])
-    .clamp(false);
-
-  result.nodes = layout.nodes.map(node => node.merge({
-    x: xScale(node.get('x')),
-    y: nodeOrder.get(node.get('id')) * rowHeight + nodeHeight * 0.5 + margins.top + 2
-  }));
-
-  result.edges = layout.edges.map(edge => (
-    setSimpleEdgePoints(edge, result.nodes)
-  ));
-
-  return result;
-}
-
 
 /**
  * Determine if nodes were added between node sets
@@ -391,7 +355,6 @@ export function doLayout(immNodes, immEdges, opts) {
   let layout;
 
   ++layoutRuns;
-  // if (false && !options.forceRelayout && cachedLayout && nodeCache && edgeCache
   if (!options.forceRelayout && cachedLayout && nodeCache && edgeCache
     && !hasUnseenNodes(immNodes, nodeCache)) {
     log('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
@@ -407,7 +370,6 @@ export function doLayout(immNodes, immEdges, opts) {
     }
     layout = layoutSingleNodes(layout, opts);
     layout = shiftLayoutToCenter(layout, opts);
-    // layout = uniqueRowConstraint(layout, opts);
   }
 
   // cache results
