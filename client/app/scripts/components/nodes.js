@@ -1,32 +1,15 @@
 import React from 'react';
-import _ from 'lodash';
 import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesError from '../charts/nodes-error';
-import { findTopologyById, isTopologyEmpty } from '../utils/topology-utils';
+import { DelayedShow } from '../utils/delayed-show';
+import { Loading, getNodeType } from './loading';
+import { isTopologyEmpty } from '../utils/topology-utils';
 
 const navbarHeight = 160;
 const marginTop = 0;
 const detailsWidth = 450;
-
-
-const LOADING_TEMPLATES = [
-  'Loading THINGS',
-  'Verifying THINGS',
-  'Fetching THINGS',
-  'Processing THINGS',
-  'Reticulating THINGS',
-  'Locating THINGS',
-  'Optimizing THINGS',
-  'Transporting THINGS',
-  'Double checking THINGS',
-];
-
-
-function renderTemplate(nodeType, template) {
-  return template.replace('THINGS', nodeType);
-}
 
 
 /**
@@ -47,29 +30,14 @@ function getLayoutPrecision(nodesCount) {
   return precision;
 }
 
-function getNodeType(topology, topologies) {
-  if (!topology || topologies.size === 0) {
-    return '';
-  }
-  let name = topology.get('name');
-  if (topology.get('parentId')) {
-    const parentTopology = findTopologyById(topologies, topology.get('parentId'));
-    name = parentTopology.get('name');
-  }
-  return name.toLowerCase();
-}
-
 class Nodes extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.handleResize = this.handleResize.bind(this);
 
-    const [topologiesLoadingTemplate, nodeLoadingTemplate] = _.sampleSize(LOADING_TEMPLATES, 2);
     this.state = {
       width: window.innerWidth,
       height: window.innerHeight - navbarHeight - marginTop,
-      topologiesLoadingTemplate,
-      nodeLoadingTemplate,
     };
   }
 
@@ -97,28 +65,20 @@ class Nodes extends React.Component {
     );
   }
 
-  renderLoading(message, show) {
-    return (
-      <NodesError mainClassName="nodes-chart-loading" faIconClass="fa-circle-thin" hidden={!show}>
-        <div className="heading">{message}</div>
-      </NodesError>
-    );
-  }
-
   render() {
     const { nodes, selectedNodeId, topologyEmpty, topologiesLoaded, nodesLoaded, topologies,
       topology } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
     const hasSelectedNode = selectedNodeId && nodes.has(selectedNodeId);
-    const topologyLoadingMessage = renderTemplate('topologies',
-      this.state.topologiesLoadingTemplate);
-    const nodeLoadingMessage = renderTemplate(getNodeType(topology, topologies),
-      this.state.nodeLoadingTemplate);
 
     return (
       <div className="nodes-wrapper">
-        {this.renderLoading(topologyLoadingMessage, !topologiesLoaded)}
-        {this.renderLoading(nodeLoadingMessage, topologiesLoaded && !nodesLoaded)}
+        <DelayedShow delay={1000} show={!topologiesLoaded}>
+          <Loading itemType="topologies" show={!topologiesLoaded} />
+          <Loading
+            itemType={getNodeType(topology, topologies)}
+            show={topologiesLoaded && !nodesLoaded} />
+        </DelayedShow>
         {this.renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
         <NodesChart {...this.state}
           detailsWidth={detailsWidth}
