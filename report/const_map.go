@@ -186,6 +186,7 @@ func (m *intermediateMap) CodecDecodeSelf(decoder *codec.Decoder) {
 
 		out = out.UnsafeMutableSet(key, value)
 	}
+	z.DecSendContainerState(containerMapEnd)
 	m.Map = out
 }
 
