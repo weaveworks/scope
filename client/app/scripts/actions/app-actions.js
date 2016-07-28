@@ -35,17 +35,6 @@ export function toggleHelp() {
 }
 
 
-export function toggleGridMode(enabled) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.SET_GRID_MODE,
-      enabled
-    });
-    updateRoute(getState);
-  };
-}
-
-
 export function sortOrderChanged(sortBy, sortedDesc) {
   return (dispatch, getState) => {
     dispatch({
@@ -240,6 +229,19 @@ export function clickForceRelayout() {
         forceRelayout: false
       });
     }, 100);
+  };
+}
+
+export function toggleGridMode(enabled) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.SET_GRID_MODE,
+      enabled
+    });
+    updateRoute(getState);
+    if (!enabled) {
+      dispatch(clickForceRelayout());
+    }
   };
 }
 
