@@ -121,7 +121,7 @@ class NodesGrid extends React.Component {
 
     return (
       <div className="nodes-grid">
-        <NodeDetailsTable
+        {nodes.size > 0 && <NodeDetailsTable
           style={cmpStyle}
           className={className}
           renderIdCell={renderIdCell}
@@ -134,7 +134,7 @@ class NodesGrid extends React.Component {
           selectedNodeId={this.props.selectedNodeId}
           limit={1000}
           {...detailsData}
-          />
+          />}
       </div>
     );
   }

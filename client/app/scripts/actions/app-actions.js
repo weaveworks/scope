@@ -232,8 +232,11 @@ export function clickForceRelayout() {
   };
 }
 
-export function toggleGridMode(enabled) {
+export function toggleGridMode(enabledArgument) {
   return (dispatch, getState) => {
+    const enabled = (enabledArgument === undefined) ?
+      !getState().get('gridMode') :
+      enabledArgument;
     dispatch({
       type: ActionTypes.SET_GRID_MODE,
       enabled

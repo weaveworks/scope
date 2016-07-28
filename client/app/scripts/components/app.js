@@ -87,10 +87,8 @@ class App extends React.Component {
         dispatch(pinNextMetric(-1));
       } else if (char === '>') {
         dispatch(pinNextMetric(1));
-      } else if (char === 'v') {
-        dispatch(toggleGridMode(false));
       } else if (char === 't') {
-        dispatch(toggleGridMode(true));
+        dispatch(toggleGridMode());
       } else if (char === 'q') {
         dispatch(unpinMetric());
         dispatch(selectMetric(null));

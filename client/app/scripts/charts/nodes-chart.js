@@ -41,8 +41,8 @@ class NodesChart extends React.Component {
       scale: 1,
       selectedNodeScale: d3.scale.linear(),
       hasZoomed: false,
-      height: 0,
-      width: 0,
+      height: props.height || 0,
+      width: props.width || 0,
       zoomCache: {}
     };
   }
