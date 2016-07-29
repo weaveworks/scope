@@ -124,11 +124,14 @@ func (e MetadataTemplates) Copy() MetadataTemplates {
 // Merge merges two sets of MetadataTemplates so far just ignores based
 // on duplicate id key
 func (e MetadataTemplates) Merge(other MetadataTemplates) MetadataTemplates {
-	result := e.Copy()
+	if e == nil && other == nil {
+		return nil
+	}
+	result := make(MetadataTemplates, len(e))
+	for k, v := range e {
+		result[k] = v
+	}
 	for k, v := range other {
-		if result == nil {
-			result = MetadataTemplates{}
-		}
 		if existing, ok := result[k]; !ok || existing.Priority < v.Priority {
 			result[k] = v
 		}

@@ -175,7 +175,10 @@ func (n Nodes) Copy() Nodes {
 // Merge merges the other object into this one, and returns the result object.
 // The original is not modified.
 func (n Nodes) Merge(other Nodes) Nodes {
-	cp := n.Copy()
+	cp := make(Nodes, len(n))
+	for k, v := range n {
+		cp[k] = v
+	}
 	for k, v := range other {
 		if n, ok := cp[k]; ok { // don't overwrite
 			v = v.Merge(n)

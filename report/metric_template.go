@@ -67,11 +67,14 @@ func (e MetricTemplates) Copy() MetricTemplates {
 // Merge merges two sets of MetricTemplates so far just ignores based
 // on duplicate id key
 func (e MetricTemplates) Merge(other MetricTemplates) MetricTemplates {
-	result := e.Copy()
+	if e == nil && other == nil {
+		return nil
+	}
+	result := make(MetricTemplates, len(e))
+	for k, v := range e {
+		result[k] = v
+	}
 	for k, v := range other {
-		if result == nil {
-			result = MetricTemplates{}
-		}
 		if existing, ok := result[k]; !ok || existing.Priority < v.Priority {
 			result[k] = v
 		}
