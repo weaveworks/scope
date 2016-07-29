@@ -122,3 +122,9 @@ func (NodeControls) MarshalJSON() ([]byte, error) {
 func (*NodeControls) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
+
+// NodeControlData contains specific information about the control. It
+// is used as a Value field of LatestEntry in NodeControlDataLatestMap.
+type NodeControlData struct {
+	Dead bool `json:"dead"`
+}
