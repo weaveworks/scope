@@ -82,16 +82,16 @@ func TestContainer(t *testing.T) {
 			"docker_container_id":          "ping",
 			"docker_container_name":        "pong",
 			"docker_image_id":              "baz",
-			"docker_label_foo1":            "bar1",
-			"docker_label_foo2":            "bar2",
 			"docker_container_state":       "running",
 			"docker_container_state_human": "Up 6 years",
 			"docker_container_uptime":      uptime.String(),
-		}).
-			WithControls(
-				docker.RestartContainer, docker.StopContainer, docker.PauseContainer,
-				docker.AttachContainer, docker.ExecContainer,
-			).WithMetrics(report.Metrics{
+		}).WithConsts(map[string]string{
+			"docker_label_foo1": "bar1",
+			"docker_label_foo2": "bar2",
+		}).WithControls(
+			docker.RestartContainer, docker.StopContainer, docker.PauseContainer,
+			docker.AttachContainer, docker.ExecContainer,
+		).WithMetrics(report.Metrics{
 			"docker_cpu_total_usage": report.MakeMetric(nil),
 			"docker_memory_usage":    report.MakeSingletonMetric(now, 12345).WithMax(45678),
 		}).WithParents(report.EmptySets.

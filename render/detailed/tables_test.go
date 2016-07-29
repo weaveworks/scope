@@ -25,9 +25,10 @@ func TestNodeTables(t *testing.T) {
 					WithTableTemplates(docker.ContainerTableTemplates),
 			},
 			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
-				docker.ContainerID:            fixture.ClientContainerID,
+				docker.ContainerID:    fixture.ClientContainerID,
+				docker.ContainerState: docker.StateRunning,
+			}).WithConsts(map[string]string{
 				docker.LabelPrefix + "label1": "label1value",
-				docker.ContainerState:         docker.StateRunning,
 			}).WithTopology(report.Container).WithSets(report.EmptySets.
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
