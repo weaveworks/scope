@@ -154,11 +154,14 @@ func (t TableTemplates) Copy() TableTemplates {
 
 // Merge merges two sets of TableTemplates
 func (t TableTemplates) Merge(other TableTemplates) TableTemplates {
-	result := t.Copy()
+	if t == nil && other == nil {
+		return nil
+	}
+	result := make(TableTemplates, len(t))
+	for k, v := range t {
+		result[k] = v
+	}
 	for k, v := range other {
-		if result == nil {
-			result = TableTemplates{}
-		}
 		if existing, ok := result[k]; ok {
 			v = v.Merge(existing)
 		}
