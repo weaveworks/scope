@@ -163,9 +163,10 @@ func (t TableTemplates) Merge(other TableTemplates) TableTemplates {
 	}
 	for k, v := range other {
 		if existing, ok := result[k]; ok {
-			v = v.Merge(existing)
+			result[k] = v.Merge(existing)
+		} else {
+			result[k] = v
 		}
-		result[k] = v
 	}
 	return result
 }

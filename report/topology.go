@@ -181,9 +181,10 @@ func (n Nodes) Merge(other Nodes) Nodes {
 	}
 	for k, v := range other {
 		if n, ok := cp[k]; ok { // don't overwrite
-			v = v.Merge(n)
+			cp[k] = v.Merge(n)
+		} else {
+			cp[k] = v
 		}
-		cp[k] = v
 	}
 	return cp
 }
