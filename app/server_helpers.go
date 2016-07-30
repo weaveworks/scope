@@ -21,6 +21,6 @@ func respondWith(w http.ResponseWriter, code int, response interface{}) {
 	w.WriteHeader(code)
 	encoder := codec.NewEncoder(w, &codec.JsonHandle{})
 	if err := encoder.Encode(response); err != nil {
-		log.Errorf("Error encdoing response: %v", err)
+		log.Errorf("Error encoding response: %v", err)
 	}
 }

@@ -3,8 +3,6 @@ package report
 import (
 	"time"
 
-	"github.com/ugorji/go/codec"
-
 	"github.com/weaveworks/scope/common/mtime"
 )
 
@@ -50,11 +48,11 @@ func (cs Controls) AddControls(controls []Control) {
 }
 
 // NodeControls represent the individual controls that are valid for a given
-// node at a given point in time.  Its is immutable. A zero-value for Timestamp
+// node at a given point in time.  It's immutable. A zero-value for Timestamp
 // indicated this NodeControls is 'not set'.
 type NodeControls struct {
-	Timestamp time.Time
-	Controls  StringSet
+	Timestamp time.Time `json:"timestamp,omitempty"`
+	Controls  StringSet `json:"controls,omitempty"`
 }
 
 // MakeNodeControls makes a new NodeControls
@@ -84,40 +82,4 @@ func (nc NodeControls) Add(ids ...string) NodeControls {
 		Timestamp: mtime.Now(),
 		Controls:  nc.Controls.Add(ids...),
 	}
-}
-
-// WireNodeControls is the intermediate type for json encoding.
-type WireNodeControls struct {
-	Timestamp string    `json:"timestamp,omitempty"`
-	Controls  StringSet `json:"controls,omitempty"`
-}
-
-// CodecEncodeSelf implements codec.Selfer
-func (nc *NodeControls) CodecEncodeSelf(encoder *codec.Encoder) {
-	encoder.Encode(WireNodeControls{
-		Timestamp: renderTime(nc.Timestamp),
-		Controls:  nc.Controls,
-	})
-}
-
-// CodecDecodeSelf implements codec.Selfer
-func (nc *NodeControls) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := WireNodeControls{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
-	*nc = NodeControls{
-		Timestamp: parseTime(in.Timestamp),
-		Controls:  in.Controls,
-	}
-}
-
-// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
-func (NodeControls) MarshalJSON() ([]byte, error) {
-	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
-}
-
-// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
-func (*NodeControls) UnmarshalJSON(b []byte) error {
-	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }

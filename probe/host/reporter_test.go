@@ -88,10 +88,10 @@ func TestReporter(t *testing.T) {
 
 	// Should have metrics
 	for key, want := range metrics {
-		wantSample := want.LastSample()
+		wantSample, _ := want.LastSample()
 		if metric, ok := node.Metrics[key]; !ok {
 			t.Errorf("Expected %s metric, but not found", key)
-		} else if sample := metric.LastSample(); sample == nil {
+		} else if sample, ok := metric.LastSample(); !ok {
 			t.Errorf("Expected %s metric to have a sample, but there were none", key)
 		} else if sample.Value != wantSample.Value {
 			t.Errorf("Expected %s metric sample %f, got %f", key, wantSample, sample.Value)

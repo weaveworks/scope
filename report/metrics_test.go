@@ -223,50 +223,37 @@ func TestMetricMarshalling(t *testing.T) {
 		want = want.Add(sample.Timestamp, sample.Value)
 	}
 
-	// gob
-	{
-		gobs, err := want.GobEncode()
-		if err != nil {
+	for _, h := range []codec.Handle{
+		codec.Handle(&codec.MsgpackHandle{}),
+		codec.Handle(&codec.JsonHandle{}),
+	} {
+		buf := &bytes.Buffer{}
+		encoder := codec.NewEncoder(buf, h)
+		if err := encoder.Encode(want); err != nil {
 			t.Fatal(err)
 		}
+		bufCopy := bytes.NewBuffer(buf.Bytes())
+
+		decoder := codec.NewDecoder(buf, h)
 		var have report.Metric
-		have.GobDecode(gobs)
+		if err := decoder.Decode(&have); err != nil {
+			t.Fatal(err)
+		}
+
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
-	}
 
-	// others
-	{
-
-		for _, h := range []codec.Handle{
-			codec.Handle(&codec.MsgpackHandle{}),
-			codec.Handle(&codec.JsonHandle{}),
-		} {
-			buf := &bytes.Buffer{}
-			encoder := codec.NewEncoder(buf, h)
-			want.CodecEncodeSelf(encoder)
-			bufCopy := bytes.NewBuffer(buf.Bytes())
-
-			decoder := codec.NewDecoder(buf, h)
-			var have report.Metric
-			have.CodecDecodeSelf(decoder)
-
-			if !reflect.DeepEqual(want, have) {
-				t.Error(test.Diff(want, have))
-			}
-
-			// extra check for samples
-			decoder = codec.NewDecoder(bufCopy, h)
-			var wire struct {
-				Samples []report.Sample `json:"samples"`
-			}
-			if err := decoder.Decode(&wire); err != nil {
-				t.Error(err)
-			}
-			if !reflect.DeepEqual(wantSamples, wire.Samples) {
-				t.Error(test.Diff(wantSamples, wire.Samples))
-			}
+		// extra check for samples
+		decoder = codec.NewDecoder(bufCopy, h)
+		var wire struct {
+			Samples []report.Sample `json:"samples"`
+		}
+		if err := decoder.Decode(&wire); err != nil {
+			t.Error(err)
+		}
+		if !reflect.DeepEqual(wantSamples, wire.Samples) {
+			t.Error(test.Diff(wantSamples, wire.Samples))
 		}
 	}
 

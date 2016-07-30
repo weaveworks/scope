@@ -28,7 +28,7 @@ func (t MetricTemplate) MetricRows(n Node) []MetricRow {
 		Priority: t.Priority,
 		Metric:   &metric,
 	}
-	if s := metric.LastSample(); s != nil {
+	if s, ok := metric.LastSample(); ok {
 		row.Value = toFixed(s.Value, 2)
 	}
 	return []MetricRow{row}

@@ -1,13 +1,8 @@
 package report
 
 import (
-	"bytes"
-	"encoding/gob"
 	"math"
 	"time"
-
-	"github.com/ugorji/go/codec"
-	"github.com/weaveworks/ps"
 )
 
 // Metrics is a string->metric map.
@@ -41,9 +36,11 @@ func (m Metrics) Copy() Metrics {
 // Metric is a list of timeseries data with some metadata. Clients must use the
 // Add method to add values.  Metrics are immutable.
 type Metric struct {
-	Samples     ps.List
-	Min, Max    float64
-	First, Last time.Time
+	Samples []Sample  `json:"samples"`
+	Min     float64   `json:"min"`
+	Max     float64   `json:"max"`
+	First   time.Time `json:"first"`
+	Last    time.Time `json:"last"`
 }
 
 // Sample is a single datapoint of a metric.
@@ -52,20 +49,24 @@ type Sample struct {
 	Value     float64   `json:"value"`
 }
 
-var nilMetric = Metric{Samples: ps.NewList()}
-
 // MakeMetric makes a new Metric.
+// TODO: Specialized version adding the first sample to avoid generating garbage?
 func MakeMetric() Metric {
-	return nilMetric
+	return Metric{}
 }
 
-// Copy returns a value copy of the Metric. Metric is immutable, so we can skip
-// this.
+// Copy returns a copy of the Metric.
 func (m Metric) Copy() Metric {
-	return m
+	c := m
+	if c.Samples != nil {
+		c.Samples = make([]Sample, len(m.Samples))
+		copy(c.Samples, m.Samples)
+	}
+	return c
 }
 
-// WithFirst returns a fresh copy of m, with First set to t.
+// WithFirst returns a fresh copy of m, with first set to t.
+// TODO: This seems to be unused
 func (m Metric) WithFirst(t time.Time) Metric {
 	return Metric{
 		Samples: m.Samples,
@@ -89,10 +90,7 @@ func (m Metric) WithMax(max float64) Metric {
 
 // Len returns the number of samples in the metric.
 func (m Metric) Len() int {
-	if m.Samples == nil {
-		return 0
-	}
-	return m.Samples.Size()
+	return len(m.Samples)
 }
 
 func first(t1, t2 time.Time) time.Time {
@@ -109,47 +107,35 @@ func last(t1, t2 time.Time) time.Time {
 	return t2
 }
 
-// concat returns a new list formed by adding each element of acc to curr
-// acc or curr can be nil.
-func concat(acc []interface{}, curr ps.List) ps.List {
-	if curr == nil {
-		curr = ps.NewList()
-	}
-	for i := len(acc) - 1; i >= 0; i-- {
-		curr = curr.Cons(acc[i])
-	}
-	return curr
-}
-
 // Add returns a new Metric with (t, v) added to its Samples. Add is the only
 // valid way to grow a Metric.
+// TODO: join t and v into a Sample to avoid extra allocations?
+// TODO: This seems to be too elaborate, Add() only seems to be used to add ordered Samples.
+//       Replace this by a specialized version getting a slice of ordered Samples
+//       without duplicates?
 func (m Metric) Add(t time.Time, v float64) Metric {
 	// Find the first element which is before you element, and insert
 	// your new element in the list.  NB we want to dedupe entries with
 	// equal timestamps.
-	// This should be O(1) to insert a latest element, and O(n) in general.
-	curr, acc := m.Samples, make([]interface{}, 0, m.Len()+1)
-	for {
-		if curr == nil || curr.IsNil() {
+	samplesOut := make([]Sample, 0, len(m.Samples)+1)
+	var i int
+	// TODO: use binary search + copy() to improve performance
+	for i = 0; i < len(m.Samples); i++ {
+		if m.Samples[i].Timestamp.Equal(t) {
+			i++
 			break
 		}
-
-		currSample := curr.Head().(Sample)
-		if currSample.Timestamp.Equal(t) {
-			curr = curr.Tail()
+		if m.Samples[i].Timestamp.After(t) {
 			break
 		}
-		if currSample.Timestamp.Before(t) {
-			break
-		}
-
-		acc, curr = append(acc, curr.Head()), curr.Tail()
+		samplesOut = append(samplesOut, m.Samples[i])
 	}
-	acc = append(acc, Sample{t, v})
-	curr = concat(acc, curr)
-
+	samplesOut = append(samplesOut, Sample{t, v})
+	if i < len(m.Samples) {
+		samplesOut = append(samplesOut, m.Samples[i:]...)
+	}
 	return Metric{
-		Samples: curr,
+		Samples: samplesOut,
 		Max:     math.Max(m.Max, v),
 		Min:     math.Min(m.Min, v),
 		First:   first(m.First, t),
@@ -159,33 +145,36 @@ func (m Metric) Add(t time.Time, v float64) Metric {
 
 // Merge combines the two Metrics and returns a new result.
 func (m Metric) Merge(other Metric) Metric {
-	// Merge two lists of samples in O(n)
-	curr1, curr2, acc := m.Samples, other.Samples, make([]interface{}, 0, m.Len()+other.Len())
-	var newSamples ps.List
+	// Merge two lists of Samples in O(n)
 
+	// TODO: be smarter and check for non-overlapping metrics with first and last?
+	//       (copy() is much faster than checking every single sample)
+	samplesOut := make([]Sample, 0, len(m.Samples)+len(other.Samples))
+	mI, otherI := 0, 0
 	for {
-		if curr1 == nil || curr1.IsNil() {
-			newSamples = concat(acc, curr2)
+		if otherI >= len(other.Samples) {
+			samplesOut = append(samplesOut, m.Samples[mI:]...)
 			break
-		} else if curr2 == nil || curr2.IsNil() {
-			newSamples = concat(acc, curr1)
+		} else if mI >= len(m.Samples) {
+			samplesOut = append(samplesOut, other.Samples[otherI:]...)
 			break
 		}
 
-		s1 := curr1.Head().(Sample)
-		s2 := curr2.Head().(Sample)
-
-		if s1.Timestamp.Equal(s2.Timestamp) {
-			curr1, curr2, acc = curr1.Tail(), curr2.Tail(), append(acc, s1)
-		} else if s1.Timestamp.After(s2.Timestamp) {
-			curr1, acc = curr1.Tail(), append(acc, s1)
+		if m.Samples[mI].Timestamp.Equal(other.Samples[otherI].Timestamp) {
+			samplesOut = append(samplesOut, m.Samples[mI])
+			mI++
+			otherI++
+		} else if m.Samples[mI].Timestamp.Before(other.Samples[otherI].Timestamp) {
+			samplesOut = append(samplesOut, m.Samples[mI])
+			mI++
 		} else {
-			curr2, acc = curr2.Tail(), append(acc, s2)
+			samplesOut = append(samplesOut, other.Samples[otherI])
+			otherI++
 		}
 	}
 
 	return Metric{
-		Samples: newSamples,
+		Samples: samplesOut,
 		Max:     math.Max(m.Max, other.Max),
 		Min:     math.Min(m.Min, other.Min),
 		First:   first(m.First, other.First),
@@ -195,14 +184,14 @@ func (m Metric) Merge(other Metric) Metric {
 
 // Div returns a new copy of the metric, with each value divided by n.
 func (m Metric) Div(n float64) Metric {
-	curr, acc := m.Samples, ps.NewList()
-	for curr != nil && !curr.IsNil() {
-		s := curr.Head().(Sample)
-		curr, acc = curr.Tail(), acc.Cons(Sample{s.Timestamp, s.Value / n})
+	samplesOut := make([]Sample, len(m.Samples), len(m.Samples))
+
+	for i := range m.Samples {
+		samplesOut[i].Value = m.Samples[i].Value / n
+		samplesOut[i].Timestamp = m.Samples[i].Timestamp
 	}
-	acc = acc.Reverse()
 	return Metric{
-		Samples: acc,
+		Samples: samplesOut,
 		Max:     m.Max / n,
 		Min:     m.Min / n,
 		First:   m.First,
@@ -210,109 +199,10 @@ func (m Metric) Div(n float64) Metric {
 	}
 }
 
-// LastSample returns the last sample in the metric, or nil if there are no
-// samples.
-func (m Metric) LastSample() *Sample {
-	if m.Samples == nil || m.Samples.IsNil() {
-		return nil
+// LastSample obtains the last sample of the metric
+func (m Metric) LastSample() (Sample, bool) {
+	if m.Samples == nil {
+		return Sample{}, false
 	}
-	s := m.Samples.Head().(Sample)
-	return &s
-}
-
-// WireMetrics is the on-the-wire representation of Metrics.
-type WireMetrics struct {
-	Samples []Sample `json:"samples,omitempty"` // On the wire, samples are sorted oldest to newest,
-	Min     float64  `json:"min"`               // the opposite order to how we store them internally.
-	Max     float64  `json:"max"`
-	First   string   `json:"first,omitempty"`
-	Last    string   `json:"last,omitempty"`
-}
-
-func renderTime(t time.Time) string {
-	if t.IsZero() {
-		return ""
-	}
-	return t.Format(time.RFC3339Nano)
-}
-
-func parseTime(s string) time.Time {
-	t, _ := time.Parse(time.RFC3339Nano, s)
-	return t
-}
-
-// ToIntermediate converts the metric to a representation suitable
-// for serialization.
-func (m Metric) ToIntermediate() WireMetrics {
-	samples := []Sample{}
-	if m.Samples != nil {
-		m.Samples.Reverse().ForEach(func(s interface{}) {
-			samples = append(samples, s.(Sample))
-		})
-	}
-	return WireMetrics{
-		Samples: samples,
-		Max:     m.Max,
-		Min:     m.Min,
-		First:   renderTime(m.First),
-		Last:    renderTime(m.Last),
-	}
-}
-
-// FromIntermediate obtains the metric from a representation suitable
-// for serialization.
-func (m WireMetrics) FromIntermediate() Metric {
-	samples := ps.NewList()
-	for _, s := range m.Samples {
-		samples = samples.Cons(s)
-	}
-	return Metric{
-		Samples: samples,
-		Max:     m.Max,
-		Min:     m.Min,
-		First:   parseTime(m.First),
-		Last:    parseTime(m.Last),
-	}
-}
-
-// CodecEncodeSelf implements codec.Selfer
-func (m *Metric) CodecEncodeSelf(encoder *codec.Encoder) {
-	in := m.ToIntermediate()
-	encoder.Encode(in)
-}
-
-// CodecDecodeSelf implements codec.Selfer
-func (m *Metric) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := WireMetrics{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
-	*m = in.FromIntermediate()
-}
-
-// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
-func (Metric) MarshalJSON() ([]byte, error) {
-	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
-}
-
-// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
-func (*Metric) UnmarshalJSON(b []byte) error {
-	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
-}
-
-// GobEncode implements gob.Marshaller
-func (m Metric) GobEncode() ([]byte, error) {
-	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(m.ToIntermediate())
-	return buf.Bytes(), err
-}
-
-// GobDecode implements gob.Unmarshaller
-func (m *Metric) GobDecode(input []byte) error {
-	in := WireMetrics{}
-	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
-	}
-	*m = in.FromIntermediate()
-	return nil
+	return m.Samples[len(m.Samples)-1], true
 }

@@ -1,6 +1,8 @@
 package report
 
 import (
+	"time"
+
 	"github.com/ugorji/go/codec"
 )
 
@@ -55,23 +57,22 @@ func (*MetricRow) UnmarshalJSON(b []byte) error {
 }
 
 type wiredMetricRow struct {
-	ID       string   `json:"id"`
-	Label    string   `json:"label"`
-	Format   string   `json:"format,omitempty"`
-	Group    string   `json:"group,omitempty"`
-	Value    float64  `json:"value"`
-	Priority float64  `json:"priority,omitempty"`
-	Samples  []Sample `json:"samples"`
-	Min      float64  `json:"min"`
-	Max      float64  `json:"max"`
-	First    string   `json:"first,omitempty"`
-	Last     string   `json:"last,omitempty"`
+	ID       string    `json:"id"`
+	Label    string    `json:"label"`
+	Format   string    `json:"format,omitempty"`
+	Group    string    `json:"group,omitempty"`
+	Value    float64   `json:"value"`
+	Priority float64   `json:"priority,omitempty"`
+	Samples  []Sample  `json:"samples"`
+	Min      float64   `json:"min"`
+	Max      float64   `json:"max"`
+	First    time.Time `json:"first,omitempty"`
+	Last     time.Time `json:"last,omitempty"`
 }
 
 // CodecEncodeSelf marshals this MetricRow. It takes the basic Metric
 // rendering, then adds some row-specific fields.
 func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
-	in := m.Metric.ToIntermediate()
 	encoder.Encode(wiredMetricRow{
 		ID:       m.ID,
 		Label:    m.Label,
@@ -79,11 +80,11 @@ func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
 		Group:    m.Group,
 		Value:    m.Value,
 		Priority: m.Priority,
-		Samples:  in.Samples,
-		Min:      in.Min,
-		Max:      in.Max,
-		First:    in.First,
-		Last:     in.Last,
+		Samples:  m.Metric.Samples,
+		Min:      m.Metric.Min,
+		Max:      m.Metric.Max,
+		First:    m.Metric.First,
+		Last:     m.Metric.Last,
 	})
 }
 
@@ -91,14 +92,6 @@ func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
 func (m *MetricRow) CodecDecodeSelf(decoder *codec.Decoder) {
 	var in wiredMetricRow
 	decoder.Decode(&in)
-	w := WireMetrics{
-		Samples: in.Samples,
-		Min:     in.Min,
-		Max:     in.Max,
-		First:   in.First,
-		Last:    in.Last,
-	}
-	metric := w.FromIntermediate()
 	*m = MetricRow{
 		ID:       in.ID,
 		Label:    in.Label,
@@ -106,7 +99,13 @@ func (m *MetricRow) CodecDecodeSelf(decoder *codec.Decoder) {
 		Group:    in.Group,
 		Value:    in.Value,
 		Priority: in.Priority,
-		Metric:   &metric,
+		Metric: &Metric{
+			Samples: in.Samples,
+			Min:     in.Min,
+			Max:     in.Max,
+			First:   in.First,
+			Last:    in.Last,
+		},
 	}
 }
 

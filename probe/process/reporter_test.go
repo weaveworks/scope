@@ -62,7 +62,7 @@ func TestReporter(t *testing.T) {
 	}
 	if memoryUsage, ok := node.Metrics[process.MemoryUsage]; !ok {
 		t.Errorf("Expected memory usage metric, but not found")
-	} else if sample := memoryUsage.LastSample(); sample == nil {
+	} else if sample, ok := memoryUsage.LastSample(); !ok {
 		t.Errorf("Expected memory usage metric to have a sample, but there were none")
 	} else if sample.Value != 0. {
 		t.Errorf("Expected memory usage metric sample %f, got %f", 0., sample.Value)
