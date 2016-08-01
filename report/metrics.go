@@ -104,18 +104,6 @@ func (m Metric) Copy() Metric {
 	return c
 }
 
-// WithFirst returns a fresh copy of m, with first set to t.
-// TODO: This seems to be unused
-func (m Metric) WithFirst(t time.Time) Metric {
-	return Metric{
-		Samples: m.Samples,
-		Max:     m.Max,
-		Min:     m.Min,
-		First:   t,
-		Last:    m.Last,
-	}
-}
-
 // WithMax returns a fresh copy of m, with Max set to max
 func (m Metric) WithMax(max float64) Metric {
 	return Metric{
