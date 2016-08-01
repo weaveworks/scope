@@ -136,10 +136,38 @@ func last(t1, t2 time.Time) time.Time {
 
 // Merge combines the two Metrics and returns a new result.
 func (m Metric) Merge(other Metric) Metric {
-	// Merge two lists of Samples in O(n)
 
-	// TODO: be smarter and check for non-overlapping metrics with first and last?
-	//       (copy() is much faster than checking every single sample)
+	// Optimize the empty and non-overlapping case since they are very common
+	switch {
+	case len(m.Samples) == 0:
+		return other.Copy()
+	case len(other.Samples) == 0:
+		return m.Copy()
+	case other.First.After(m.Last):
+		samplesOut := make([]Sample, len(m.Samples)+len(other.Samples))
+		copy(samplesOut, m.Samples)
+		copy(samplesOut[len(m.Samples):], other.Samples)
+		return Metric{
+			Samples: samplesOut,
+			Max:     math.Max(m.Max, other.Max),
+			Min:     math.Min(m.Min, other.Min),
+			First:   m.First,
+			Last:    other.Last,
+		}
+	case m.First.After(other.Last):
+		samplesOut := make([]Sample, len(m.Samples)+len(other.Samples))
+		copy(samplesOut, other.Samples)
+		copy(samplesOut[len(other.Samples):], m.Samples)
+		return Metric{
+			Samples: samplesOut,
+			Max:     math.Max(m.Max, other.Max),
+			Min:     math.Min(m.Min, other.Min),
+			First:   other.First,
+			Last:    m.Last,
+		}
+	}
+
+	// Merge two lists of Samples in O(n)
 	samplesOut := make([]Sample, 0, len(m.Samples)+len(other.Samples))
 	mI, otherI := 0, 0
 	for {
