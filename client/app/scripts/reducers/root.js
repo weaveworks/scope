@@ -640,7 +640,7 @@ export function rootReducer(state = initialState, action) {
         selectedNodeId: action.state.selectedNodeId,
         pinnedMetricType: action.state.pinnedMetricType
       });
-      state = state.set('gridMode', action.state.mode === 'grid');
+      state = state.set('gridMode', action.state.topologyViewMode === 'grid');
       if (action.state.gridSortBy) {
         state = state.set('gridSortBy', action.state.gridSortBy);
       }

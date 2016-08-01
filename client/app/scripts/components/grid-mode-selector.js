@@ -41,7 +41,7 @@ class GridModeSelector extends React.Component {
     return (
       <div className="grid-mode-selector">
         <div className="grid-mode-selector-wrapper">
-          {this.renderItem('fa fa-share-alt', 'Visualization', !gridMode, this.disableGridMode)}
+          {this.renderItem('fa fa-share-alt', 'Graph', !gridMode, this.disableGridMode)}
           {this.renderItem('fa fa-table', 'Table', gridMode, this.enableGridMode)}
         </div>
       </div>

@@ -350,7 +350,7 @@ class NodesChart extends React.Component {
     const zoomFactor = Math.min(xFactor, yFactor);
     let zoomScale = this.state.scale;
 
-    if (!state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
+    if (this.zoom && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
       zoomScale = zoomFactor;
       // saving in d3's behavior cache
       this.zoom.scale(zoomFactor);

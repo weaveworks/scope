@@ -87,7 +87,7 @@ class App extends React.Component {
         dispatch(pinNextMetric(-1));
       } else if (char === '>') {
         dispatch(pinNextMetric(1));
-      } else if (char === 't') {
+      } else if (char === 't' || char === 'g') {
         dispatch(toggleGridMode());
       } else if (char === 'q') {
         dispatch(unpinMetric());
@@ -131,8 +131,8 @@ class App extends React.Component {
         <Sidebar classNames={gridMode ? 'sidebar-gridmode' : ''}>
           {showingMetricsSelector && !gridMode && <MetricSelector />}
           {showingNetworkSelector && !gridMode && <NetworkSelector />}
-          <Status />
           <GridModeSelector />
+          <Status />
           <TopologyOptions />
         </Sidebar>
 

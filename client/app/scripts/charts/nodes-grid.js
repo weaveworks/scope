@@ -4,8 +4,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { List as makeList, Map as makeMap } from 'immutable';
 import NodeDetailsTable from '../components/node-details/node-details-table';
-import { clickNode, sortOrderChanged, clickPauseUpdate,
-  clickResumeUpdate } from '../actions/app-actions';
+import { clickNode, sortOrderChanged } from '../actions/app-actions';
 
 import { getNodeColor } from '../utils/color-utils';
 
@@ -49,7 +48,7 @@ function getColumns(nodes) {
     .toList()
     .sortBy(m => m.get('label'));
 
-  return relativesColumns.concat(metadataColumns.concat(metricColumns)).toJS();
+  return relativesColumns.concat(metadataColumns, metricColumns).toJS();
 }
 
 
@@ -110,7 +109,7 @@ class NodesGrid extends React.Component {
     };
 
     const detailsData = {
-      label: this.props.topology && this.props.topology.get('fullName'),
+      label: this.props.currentTopology && this.props.currentTopology.get('fullName'),
       id: '',
       nodes: nodes
         .toList()
@@ -126,7 +125,7 @@ class NodesGrid extends React.Component {
           className={className}
           renderIdCell={renderIdCell}
           tbodyStyle={tbodyStyle}
-          topologyId={this.props.topologyId}
+          topologyId={this.props.currentTopologyId}
           onSortChange={this.onSortChange}
           onClickRow={this.onClickRow}
           sortBy={gridSortBy}
@@ -141,7 +140,20 @@ class NodesGrid extends React.Component {
 }
 
 
+function mapStateToProps(state) {
+  return {
+    gridSortBy: state.get('gridSortBy'),
+    gridSortedDesc: state.get('gridSortedDesc'),
+    currentTopology: state.get('currentTopology'),
+    currentTopologyId: state.get('currentTopologyId'),
+    searchNodeMatches: state.getIn(['searchNodeMatches', state.get('currentTopologyId')]),
+    searchQuery: state.get('searchQuery'),
+    selectedNodeId: state.get('selectedNodeId')
+  };
+}
+
+
 export default connect(
-  () => ({}),
-  { clickNode, sortOrderChanged, clickPauseUpdate, clickResumeUpdate }
+  mapStateToProps,
+  { clickNode, sortOrderChanged }
 )(NodesGrid);

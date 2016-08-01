@@ -68,6 +68,11 @@ export default class NodeDetailsTableRow extends React.Component {
   constructor(props, context) {
     super(props, context);
 
+    //
+    // We watch how far the mouse moves when click on a row, move to much and we assume that the
+    // user is selecting some data in the row. In this case don't trigger the onClick event which
+    // is most likely a details panel popping open.
+    //
     this.mouseDragOrigin = [0, 0];
 
     this.storeLabelRef = this.storeLabelRef.bind(this);

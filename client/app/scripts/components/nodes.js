@@ -85,15 +85,7 @@ class Nodes extends React.Component {
           <NodesGrid {...this.state}
             nodeSize="24"
             nodes={nodes}
-            topology={this.props.currentTopology}
-            topologyId={this.props.currentTopologyId}
             margins={CANVAS_MARGINS}
-            layoutPrecision={layoutPrecision}
-            selectedNodeId={selectedNodeId}
-            gridSortBy={gridSortBy}
-            gridSortedDesc={gridSortedDesc}
-            searchNodeMatches={searchNodeMatches}
-            searchQuery={searchQuery}
           /> :
          <NodesChart {...this.state}
            nodes={nodes}
@@ -122,17 +114,9 @@ function mapStateToProps(state) {
     nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),
-    gridSortBy: state.get('gridSortBy'),
-    gridSortedDesc: state.get('gridSortedDesc'),
-    nodes: state.get('nodes').filter(node => !node.get('filtered')),
-    currentTopology: state.get('currentTopology'),
-    currentTopologyId: state.get('currentTopologyId'),
-    topologyEmpty: isTopologyEmpty(state),
     topology: state.get('currentTopology'),
-    highlightedNodeIds: state.get('highlightedNodeIds')
-    searchNodeMatches: state.getIn(['searchNodeMatches', state.get('currentTopologyId')]),
-    searchQuery: state.get('searchQuery'),
-    selectedNodeId: state.get('selectedNodeId')
+    nodes: state.get('nodes').filter(node => !node.get('filtered')),
+    topologyEmpty: isTopologyEmpty(state),
   };
 }
 

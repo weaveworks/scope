@@ -10,24 +10,28 @@ function isNumberField(field) {
   return field.dataType && field.dataType === 'number';
 }
 
+const CW = {
+  S: '44px',
+  M: '80px',
+  L: '140px',
+  XL: '170px',
+};
 
 const COLUMN_WIDTHS = {
-  port: '44px',
   count: '70px',
-  process_cpu_usage_percent: '80px',
-  threads: '80px',
-  process_memory_usage_bytes: '80px',
-  docker_cpu_total_usage: '80px',
-  docker_memory_usage: '80px',
+  docker_container_created: CW.L,
+  docker_container_restart_count: CW.M,
+  docker_container_state_human: CW.XL,
   docker_container_uptime: '85px',
-  docker_container_restart_count: '80px',
-  docker_container_ips: '80px',
-  // 27 Jul 16 11:33 UTC
-  docker_container_created: '140px',
-  docker_container_state_human: '170px',
-  open_files_count: '80px',
-  ppid: '80px',
-  pid: '80px',
+  docker_cpu_total_usage: CW.M,
+  docker_memory_usage: CW.M,
+  open_files_count: CW.M,
+  pid: CW.M,
+  port: '44px',
+  ppid: CW.M,
+  process_cpu_usage_percent: CW.M,
+  process_memory_usage_bytes: CW.M,
+  threads: CW.M,
 };
 
 
@@ -110,8 +114,6 @@ function getColumnsWidths(headers) {
         return '50%';
       } else if (headers.length > 3 && headers.length <= 5) {
         return '33%';
-      } else if (headers.length > 5) {
-        return '20%';
       }
     }
 

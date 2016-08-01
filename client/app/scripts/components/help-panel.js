@@ -4,8 +4,8 @@ const GENERAL_SHORTCUTS = [
   {key: 'esc', label: 'Close active panel'},
   {key: '/', label: 'Activate search field'},
   {key: '?', label: 'Toggle shortcut menu'},
-  {key: 't', label: 'Activate Table mode'},
-  {key: 'v', label: 'Activate Visualization mode'},
+  {key: 't', label: 'Toggle Table mode'},
+  {key: 'g', label: 'Toggle Graph mode'},
 ];
 
 const CANVAS_METRIC_SHORTCUTS = [
