@@ -101,22 +101,22 @@ var (
 	ServiceUID          = "service1234"
 	ServiceNodeID       = report.MakeServiceNodeID(ServiceUID)
 
-	ClientProcess1CPUMetric    = report.MakeMetric().Add(Now, 0.01).WithFirst(Now.Add(-1 * time.Second))
-	ClientProcess1MemoryMetric = report.MakeMetric().Add(Now, 0.02).WithFirst(Now.Add(-2 * time.Second))
+	ClientProcess1CPUMetric    = report.MakeSingletonMetric(Now, 0.01).WithFirst(Now.Add(-1 * time.Second))
+	ClientProcess1MemoryMetric = report.MakeSingletonMetric(Now, 0.02).WithFirst(Now.Add(-2 * time.Second))
 
-	ClientContainerCPUMetric    = report.MakeMetric().Add(Now, 0.03).WithFirst(Now.Add(-3 * time.Second))
-	ClientContainerMemoryMetric = report.MakeMetric().Add(Now, 0.04).WithFirst(Now.Add(-4 * time.Second))
+	ClientContainerCPUMetric    = report.MakeSingletonMetric(Now, 0.03).WithFirst(Now.Add(-3 * time.Second))
+	ClientContainerMemoryMetric = report.MakeSingletonMetric(Now, 0.04).WithFirst(Now.Add(-4 * time.Second))
 
-	ServerContainerCPUMetric    = report.MakeMetric().Add(Now, 0.05).WithFirst(Now.Add(-5 * time.Second))
-	ServerContainerMemoryMetric = report.MakeMetric().Add(Now, 0.06).WithFirst(Now.Add(-6 * time.Second))
+	ServerContainerCPUMetric    = report.MakeSingletonMetric(Now, 0.05).WithFirst(Now.Add(-5 * time.Second))
+	ServerContainerMemoryMetric = report.MakeSingletonMetric(Now, 0.06).WithFirst(Now.Add(-6 * time.Second))
 
-	ClientHostCPUMetric    = report.MakeMetric().Add(Now, 0.07).WithFirst(Now.Add(-7 * time.Second))
-	ClientHostMemoryMetric = report.MakeMetric().Add(Now, 0.08).WithFirst(Now.Add(-8 * time.Second))
-	ClientHostLoad1Metric  = report.MakeMetric().Add(Now, 0.09).WithFirst(Now.Add(-9 * time.Second))
+	ClientHostCPUMetric    = report.MakeSingletonMetric(Now, 0.07).WithFirst(Now.Add(-7 * time.Second))
+	ClientHostMemoryMetric = report.MakeSingletonMetric(Now, 0.08).WithFirst(Now.Add(-8 * time.Second))
+	ClientHostLoad1Metric  = report.MakeSingletonMetric(Now, 0.09).WithFirst(Now.Add(-9 * time.Second))
 
-	ServerHostCPUMetric    = report.MakeMetric().Add(Now, 0.12).WithFirst(Now.Add(-12 * time.Second))
-	ServerHostMemoryMetric = report.MakeMetric().Add(Now, 0.13).WithFirst(Now.Add(-13 * time.Second))
-	ServerHostLoad1Metric  = report.MakeMetric().Add(Now, 0.14).WithFirst(Now.Add(-14 * time.Second))
+	ServerHostCPUMetric    = report.MakeSingletonMetric(Now, 0.12).WithFirst(Now.Add(-12 * time.Second))
+	ServerHostMemoryMetric = report.MakeSingletonMetric(Now, 0.13).WithFirst(Now.Add(-13 * time.Second))
+	ServerHostLoad1Metric  = report.MakeSingletonMetric(Now, 0.14).WithFirst(Now.Add(-14 * time.Second))
 
 	Report = report.Report{
 		ID: "test-report",

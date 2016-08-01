@@ -360,21 +360,27 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 }
 
 func (c *container) memoryUsageMetric(stats []docker.Stats) report.Metric {
-	result := report.MakeMetric()
-	for _, s := range stats {
-		result = result.Add(s.Read, float64(s.MemoryStats.Usage)).WithMax(float64(s.MemoryStats.Limit))
+	var max float64
+	samples := make([]report.Sample, len(stats))
+	for i, s := range stats {
+		samples[i].Timestamp = s.Read
+		samples[i].Value = float64(s.MemoryStats.Usage)
+		if float64(s.MemoryStats.Limit) > max {
+			max = float64(s.MemoryStats.Limit)
+		}
 	}
-	return result
+	return report.MakeMetric(samples).WithMax(max)
 }
 
 func (c *container) cpuPercentMetric(stats []docker.Stats) report.Metric {
-	result := report.MakeMetric()
 	if len(stats) < 2 {
-		return result
+		return report.MakeMetric(nil)
 	}
 
+	samples := make([]report.Sample, len(stats)-1)
+	var max float64
 	previous := stats[0]
-	for _, s := range stats[1:] {
+	for i, s := range stats[1:] {
 		// Copies from docker/api/client/stats.go#L205
 		cpuDelta := float64(s.CPUStats.CPUUsage.TotalUsage - previous.CPUStats.CPUUsage.TotalUsage)
 		systemDelta := float64(s.CPUStats.SystemCPUUsage - previous.CPUStats.SystemCPUUsage)
@@ -382,14 +388,15 @@ func (c *container) cpuPercentMetric(stats []docker.Stats) report.Metric {
 		if systemDelta > 0.0 && cpuDelta > 0.0 {
 			cpuPercent = (cpuDelta / systemDelta) * float64(len(s.CPUStats.CPUUsage.PercpuUsage)) * 100.0
 		}
-		result = result.Add(s.Read, cpuPercent)
+		samples[i].Timestamp = s.Read
+		samples[i].Value = cpuPercent
 		available := float64(len(s.CPUStats.CPUUsage.PercpuUsage)) * 100.0
-		if available >= result.Max {
-			result.Max = available
+		if available >= max {
+			max = available
 		}
 		previous = s
 	}
-	return result
+	return report.MakeMetric(samples).WithMax(max)
 }
 
 func (c *container) metrics() report.Metrics {

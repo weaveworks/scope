@@ -52,8 +52,8 @@ func (cs Controls) AddControls(controls []Control) {
 // node at a given point in time.  It's immutable. A zero-value for Timestamp
 // indicated this NodeControls is 'not set'.
 type NodeControls struct {
-	Timestamp time.Time `json:"timestamp,omitempty"`
-	Controls  StringSet `json:"controls,omitempty"`
+	Timestamp time.Time
+	Controls  StringSet
 }
 
 // MakeNodeControls makes a new NodeControls
@@ -85,15 +85,17 @@ func (nc NodeControls) Add(ids ...string) NodeControls {
 	}
 }
 
-// WireNodeControls is the intermediate type for json encoding.
-type WireNodeControls struct {
+// WireNodeControls is the intermediate type for encoding/decoding.
+// Only needed for backwards compatibility with probes
+// (time.Time is encoded in binary in MsgPack)
+type wireNodeControls struct {
 	Timestamp string    `json:"timestamp,omitempty"`
 	Controls  StringSet `json:"controls,omitempty"`
 }
 
 // CodecEncodeSelf implements codec.Selfer
 func (nc *NodeControls) CodecEncodeSelf(encoder *codec.Encoder) {
-	encoder.Encode(WireNodeControls{
+	encoder.Encode(wireNodeControls{
 		Timestamp: renderTime(nc.Timestamp),
 		Controls:  nc.Controls,
 	})
@@ -101,7 +103,7 @@ func (nc *NodeControls) CodecEncodeSelf(encoder *codec.Encoder) {
 
 // CodecDecodeSelf implements codec.Selfer
 func (nc *NodeControls) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := WireNodeControls{}
+	in := wireNodeControls{}
 	if err := decoder.Decode(&in); err != nil {
 		return
 	}

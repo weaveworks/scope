@@ -45,7 +45,7 @@ var GetLoad = func(now time.Time) report.Metrics {
 		return nil
 	}
 	return report.Metrics{
-		Load1: report.MakeMetric().Add(now, one),
+		Load1: report.MakeSingletonMetric(now, one),
 	}
 }
 

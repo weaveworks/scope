@@ -54,6 +54,8 @@ func (*MetricRow) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
+// Needed to flatten the fields for backwards compatibility with probes
+// (time.Time is encoded in binary in MsgPack)
 type wiredMetricRow struct {
 	ID       string   `json:"id"`
 	Label    string   `json:"label"`

@@ -20,9 +20,9 @@ func TestReporter(t *testing.T) {
 		hostname  = "hostname"
 		timestamp = time.Now()
 		metrics   = report.Metrics{
-			host.Load1:       report.MakeMetric().Add(timestamp, 1.0),
-			host.CPUUsage:    report.MakeMetric().Add(timestamp, 30.0).WithMax(100.0),
-			host.MemoryUsage: report.MakeMetric().Add(timestamp, 60.0).WithMax(100.0),
+			host.Load1:       report.MakeSingletonMetric(timestamp, 1.0),
+			host.CPUUsage:    report.MakeSingletonMetric(timestamp, 30.0).WithMax(100.0),
+			host.MemoryUsage: report.MakeSingletonMetric(timestamp, 60.0).WithMax(100.0),
 		}
 		uptime      = "278h55m43s"
 		kernel      = "release version"

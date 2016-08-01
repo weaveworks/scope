@@ -21,7 +21,11 @@ func (m Metrics) Lookup(key string) (Metric, bool) {
 func (m Metrics) Merge(other Metrics) Metrics {
 	result := m.Copy()
 	for k, v := range other {
-		result[k] = result[k].Merge(v)
+		if rv, ok := result[k]; ok {
+			result[k] = rv.Merge(v)
+		} else {
+			result[k] = v.Copy()
+		}
 	}
 	return result
 }
@@ -49,10 +53,45 @@ type Sample struct {
 	Value     float64   `json:"value"`
 }
 
-// MakeMetric makes a new Metric.
-// TODO: Specialized version adding the first sample to avoid generating garbage?
-func MakeMetric() Metric {
-	return Metric{}
+// MakeSingletonMetric makes a metric with a single value
+func MakeSingletonMetric(t time.Time, v float64) Metric {
+	return Metric{
+		Samples: []Sample{{t, v}},
+		Min:     v,
+		Max:     v,
+		First:   t,
+		Last:    t,
+	}
+
+}
+
+// MakeMetric makes a new Metric from unique samples incrementally ordered in
+// time.
+func MakeMetric(samples []Sample) Metric {
+	if len(samples) < 1 {
+		return Metric{}
+	}
+
+	var (
+		min = samples[0].Value
+		max = samples[0].Value
+	)
+
+	for i := 1; i < len(samples); i++ {
+		if samples[i].Value < min {
+			min = samples[i].Value
+		} else if samples[i].Value > max {
+			max = samples[i].Value
+		}
+	}
+
+	return Metric{
+		Samples: samples,
+		Min:     min,
+		Max:     max,
+		First:   samples[0].Timestamp,
+		Last:    samples[len(samples)-1].Timestamp,
+	}
 }
 
 // Copy returns a copy of the Metric.
@@ -105,42 +144,6 @@ func last(t1, t2 time.Time) time.Time {
 		return t1
 	}
 	return t2
-}
-
-// Add returns a new Metric with (t, v) added to its Samples. Add is the only
-// valid way to grow a Metric.
-// TODO: join t and v into a Sample to avoid extra allocations?
-// TODO: This seems to be too elaborate, Add() only seems to be used to add ordered Samples.
-//       Replace this by a specialized version getting a slice of ordered Samples
-//       without duplicates?
-func (m Metric) Add(t time.Time, v float64) Metric {
-	// Find the first element which is before you element, and insert
-	// your new element in the list.  NB we want to dedupe entries with
-	// equal timestamps.
-	samplesOut := make([]Sample, 0, len(m.Samples)+1)
-	var i int
-	// TODO: use binary search + copy() to improve performance
-	for i = 0; i < len(m.Samples); i++ {
-		if m.Samples[i].Timestamp.Equal(t) {
-			i++
-			break
-		}
-		if m.Samples[i].Timestamp.After(t) {
-			break
-		}
-		samplesOut = append(samplesOut, m.Samples[i])
-	}
-	samplesOut = append(samplesOut, Sample{t, v})
-	if i < len(m.Samples) {
-		samplesOut = append(samplesOut, m.Samples[i:]...)
-	}
-	return Metric{
-		Samples: samplesOut,
-		Max:     math.Max(m.Max, v),
-		Min:     math.Min(m.Min, v),
-		First:   first(m.First, t),
-		Last:    last(m.Last, t),
-	}
 }
 
 // Merge combines the two Metrics and returns a new result.
@@ -208,9 +211,11 @@ func (m Metric) LastSample() (Sample, bool) {
 }
 
 // WireMetrics is the on-the-wire representation of Metrics.
+// Only needed for backwards compatibility with probes
+// (time.Time is encoded in binary in MsgPack)
 type WireMetrics struct {
-	Samples []Sample `json:"samples,omitempty"` // On the wire, samples are sorted oldest to newest,
-	Min     float64  `json:"min"`               // the opposite order to how we store them internally.
+	Samples []Sample `json:"samples,omitempty"`
+	Min     float64  `json:"min"`
 	Max     float64  `json:"max"`
 	First   string   `json:"first,omitempty"`
 	Last    string   `json:"last,omitempty"`
