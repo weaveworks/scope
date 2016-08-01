@@ -3,6 +3,8 @@ package report
 import (
 	"math"
 	"time"
+
+	"github.com/ugorji/go/codec"
 )
 
 // Metrics is a string->metric map.
@@ -36,11 +38,9 @@ func (m Metrics) Copy() Metrics {
 // Metric is a list of timeseries data with some metadata. Clients must use the
 // Add method to add values.  Metrics are immutable.
 type Metric struct {
-	Samples []Sample  `json:"samples"`
-	Min     float64   `json:"min"`
-	Max     float64   `json:"max"`
-	First   time.Time `json:"first"`
-	Last    time.Time `json:"last"`
+	Samples     []Sample
+	Min, Max    float64
+	First, Last time.Time
 }
 
 // Sample is a single datapoint of a metric.
@@ -205,4 +205,74 @@ func (m Metric) LastSample() (Sample, bool) {
 		return Sample{}, false
 	}
 	return m.Samples[len(m.Samples)-1], true
+}
+
+// WireMetrics is the on-the-wire representation of Metrics.
+type WireMetrics struct {
+	Samples []Sample `json:"samples,omitempty"` // On the wire, samples are sorted oldest to newest,
+	Min     float64  `json:"min"`               // the opposite order to how we store them internally.
+	Max     float64  `json:"max"`
+	First   string   `json:"first,omitempty"`
+	Last    string   `json:"last,omitempty"`
+}
+
+func renderTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format(time.RFC3339Nano)
+}
+
+func parseTime(s string) time.Time {
+	t, _ := time.Parse(time.RFC3339Nano, s)
+	return t
+}
+
+// ToIntermediate converts the metric to a representation suitable
+// for serialization.
+func (m Metric) ToIntermediate() WireMetrics {
+	return WireMetrics{
+		Samples: m.Samples,
+		Max:     m.Max,
+		Min:     m.Min,
+		First:   renderTime(m.First),
+		Last:    renderTime(m.Last),
+	}
+}
+
+// FromIntermediate obtains the metric from a representation suitable
+// for serialization.
+func (m WireMetrics) FromIntermediate() Metric {
+	return Metric{
+		Samples: m.Samples,
+		Max:     m.Max,
+		Min:     m.Min,
+		First:   parseTime(m.First),
+		Last:    parseTime(m.Last),
+	}
+}
+
+// CodecEncodeSelf implements codec.Selfer
+func (m *Metric) CodecEncodeSelf(encoder *codec.Encoder) {
+	in := m.ToIntermediate()
+	encoder.Encode(in)
+}
+
+// CodecDecodeSelf implements codec.Selfer
+func (m *Metric) CodecDecodeSelf(decoder *codec.Decoder) {
+	in := WireMetrics{}
+	if err := decoder.Decode(&in); err != nil {
+		return
+	}
+	*m = in.FromIntermediate()
+}
+
+// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
+func (Metric) MarshalJSON() ([]byte, error) {
+	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+}
+
+// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
+func (*Metric) UnmarshalJSON(b []byte) error {
+	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }

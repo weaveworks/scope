@@ -77,10 +77,6 @@ func TestProbe(t *testing.T) {
 	want := report.MakeReport()
 	node := report.MakeNodeWith("a", map[string]string{"b": "c"})
 
-	// DeepEqual doesn't handle the location of timestamps correctly
-	// See https://github.com/golang/go/issues/10089
-	node.Controls.Timestamp = time.Now()
-
 	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
 	// tags, transforming empty slices into nils. So, we make DeepEqual
 	// happy by setting empty `json:"omitempty"` entries to nil
