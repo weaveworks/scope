@@ -101,6 +101,7 @@ class App extends React.Component {
   render() {
     const { showingDetails, showingHelp, showingMetricsSelector, showingNetworkSelector,
      showingTerminal } = this.props;
+    const isIframe = window !== window.top;
 
     return (
       <div className="app">
@@ -114,9 +115,9 @@ class App extends React.Component {
 
         <div className="header">
           <div className="logo">
-            <svg width="100%" height="100%" viewBox="0 0 1089 217">
+            {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
               <Logo />
-            </svg>
+            </svg>}
           </div>
           <Search />
           <Topologies />
