@@ -32,7 +32,7 @@ func (m Metrics) Merge(other Metrics) Metrics {
 
 // Copy returns a value copy of the sets map.
 func (m Metrics) Copy() Metrics {
-	result := Metrics{}
+	result := make(Metrics, len(m))
 	for k, v := range m {
 		result[k] = v
 	}
