@@ -24,7 +24,7 @@ func (m Metrics) Merge(other Metrics) Metrics {
 		if rv, ok := result[k]; ok {
 			result[k] = rv.Merge(v)
 		} else {
-			result[k] = v.Copy()
+			result[k] = v
 		}
 	}
 	return result
@@ -140,9 +140,9 @@ func (m Metric) Merge(other Metric) Metric {
 	// Optimize the empty and non-overlapping case since they are very common
 	switch {
 	case len(m.Samples) == 0:
-		return other.Copy()
+		return other
 	case len(other.Samples) == 0:
-		return m.Copy()
+		return m
 	case other.First.After(m.Last):
 		samplesOut := make([]Sample, len(m.Samples)+len(other.Samples))
 		copy(samplesOut, m.Samples)
