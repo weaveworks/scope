@@ -75,7 +75,7 @@ function getValueForSortBy(sortBy) {
 function getMetaDataSorters(nodes) {
   // returns an array of sorters that will take a node
   return _.get(nodes, [0, 'metadata'], []).map((field, index) => node => {
-    const nodeMetadataField = node.metadata[index];
+    const nodeMetadataField = node.metadata && node.metadata[index];
     if (nodeMetadataField) {
       if (isNumberField(nodeMetadataField)) {
         return parseFloat(nodeMetadataField.value);

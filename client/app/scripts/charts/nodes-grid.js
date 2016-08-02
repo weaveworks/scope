@@ -61,7 +61,7 @@ function renderIdCell(props) {
   const showSubLabel = Boolean(props.pseudo);
 
   return (
-    <div className="nodes-grid-id-column">
+    <div title={props.label} className="nodes-grid-id-column">
       <div style={iconStyle}><i className="fa fa-square" /></div>
       <div className="truncate">
         {props.label} {showSubLabel &&
