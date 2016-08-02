@@ -75,6 +75,9 @@ func incomingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		if !node.Adjacency.Contains(n.ID) {
 			continue
 		}
+		// Shallow-copy the node to obtain a different pointer
+		// on the remote side
+		remoteNode := node
 
 		// Work out what port they are talking to, and count the number of
 		// connections to that port.
@@ -90,7 +93,7 @@ func incomingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 				}
 				key := connection{
 					localNode:  &n,
-					remoteNode: &node,
+					remoteNode: &remoteNode,
 					port:       port,
 				}
 				if isInternetNode(n) {
@@ -126,7 +129,12 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		if !ok {
 			continue
 		}
+
 		remoteEndpointIDs := endpointChildIDsOf(node)
+
+		// Shallow-copy the node to obtain a different pointer
+		// on the remote side
+		remoteNode := node
 
 		for _, localEndpoint := range localEndpoints {
 			_, localAddr, _, ok := report.ParseEndpointNodeID(localEndpoint.ID)
@@ -141,7 +149,7 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 				}
 				key := connection{
 					localNode:  &n,
-					remoteNode: &node,
+					remoteNode: &remoteNode,
 					port:       port,
 				}
 				if isInternetNode(n) {
