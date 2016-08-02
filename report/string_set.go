@@ -54,33 +54,35 @@ func (s StringSet) Intersection(b StringSet) StringSet {
 // Add adds the strings to the StringSet. Add is the only valid way to grow a
 // StringSet. Add returns the StringSet to enable chaining.
 func (s StringSet) Add(strs ...string) StringSet {
+	r := s.Copy()
 	for _, str := range strs {
-		i := sort.Search(len(s), func(i int) bool { return s[i] >= str })
-		if i < len(s) && s[i] == str {
+		i := sort.Search(len(r), func(i int) bool { return r[i] >= str })
+		if i < len(r) && r[i] == str {
 			// The list already has the element.
 			continue
 		}
 		// It a new element, insert it in order.
-		s = append(s, "")
-		copy(s[i+1:], s[i:])
-		s[i] = str
+		r = append(r, "")
+		copy(r[i+1:], r[i:])
+		r[i] = str
 	}
-	return s
+	return r
 }
 
 // Remove removes the strings from the StringSet. Remove is the only valid way
 // to shrink a StringSet. Remove returns the StringSet to enable chaining.
 func (s StringSet) Remove(strs ...string) StringSet {
+	r := s.Copy()
 	for _, str := range strs {
-		i := sort.Search(len(s), func(i int) bool { return s[i] >= str })
-		if i >= len(s) || s[i] != str {
+		i := sort.Search(len(r), func(i int) bool { return r[i] >= str })
+		if i >= len(r) || r[i] != str {
 			// The list does not have the element.
 			continue
 		}
 		// has the element, remove it.
-		s = append(s[:i], s[i+1:]...)
+		r = append(r[:i], r[i+1:]...)
 	}
-	return s
+	return r
 }
 
 // Merge combines the two StringSets and returns a new result.
