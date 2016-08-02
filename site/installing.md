@@ -44,7 +44,8 @@ Where,
 
  * `<VM name>` is the name you gave to your virtual machine with docker-machine.
 
-**NB: Scope allows anyone with access to the UI control over your containers, and the hosts running them! **
+#### NB: Scope allows anyone with access to the UI control over your containers, and the hosts running them!
+
 Therefore, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally, traffic between the app and the probe is currently insecure and should also not traverse the Internet, meaning that you should either use the private / internal IP addresses of your nodes when setting it up, or route this traffic through weave net.  To put scope behind a very simple password, you can use [Caddy](https://github.com/mholt/caddy) to protect the endpoint by making the port 4040 available to localhost and using caddy to proxy it.... or, just use weave cloud.  
 
 ###<a name="docker-weave-cloud"></a>Using Weave Cloud
