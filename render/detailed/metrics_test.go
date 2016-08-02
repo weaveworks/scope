@@ -117,7 +117,7 @@ func TestNodeMetrics(t *testing.T) {
 func TestMetricRowSummary(t *testing.T) {
 	var (
 		now    = time.Now()
-		metric = report.MakeMetric().Add(now, 1.234)
+		metric = report.MakeSingletonMetric(now, 1.234)
 		row    = report.MetricRow{
 			ID:       "id",
 			Format:   "format",

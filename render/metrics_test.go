@@ -31,20 +31,20 @@ func TestPropagateSingleMetrics(t *testing.T) {
 					report.MakeNode("child1").
 						WithTopology(report.Container).
 						WithMetrics(report.Metrics{
-							"metric1": report.MakeMetric(),
+							"metric1": report.MakeMetric(nil),
 						}),
 				),
 			),
 			topology: report.Container,
 			output: report.Nodes{
 				"a": report.MakeNode("a").WithMetrics(report.Metrics{
-					"metric1": report.MakeMetric(),
+					"metric1": report.MakeMetric(nil),
 				}).WithChildren(
 					report.MakeNodeSet(
 						report.MakeNode("child1").
 							WithTopology(report.Container).
 							WithMetrics(report.Metrics{
-								"metric1": report.MakeMetric(),
+								"metric1": report.MakeMetric(nil),
 							}),
 					),
 				),
@@ -57,30 +57,30 @@ func TestPropagateSingleMetrics(t *testing.T) {
 					report.MakeNode("child1").
 						WithTopology(report.Container).
 						WithMetrics(report.Metrics{
-							"metric1": report.MakeMetric(),
+							"metric1": report.MakeMetric(nil),
 						}),
 					report.MakeNode("child2").
 						WithTopology("otherTopology").
 						WithMetrics(report.Metrics{
-							"metric2": report.MakeMetric(),
+							"metric2": report.MakeMetric(nil),
 						}),
 				),
 			),
 			topology: report.Container,
 			output: report.Nodes{
 				"a": report.MakeNode("a").WithMetrics(report.Metrics{
-					"metric1": report.MakeMetric(),
+					"metric1": report.MakeMetric(nil),
 				}).WithChildren(
 					report.MakeNodeSet(
 						report.MakeNode("child1").
 							WithTopology(report.Container).
 							WithMetrics(report.Metrics{
-								"metric1": report.MakeMetric(),
+								"metric1": report.MakeMetric(nil),
 							}),
 						report.MakeNode("child2").
 							WithTopology("otherTopology").
 							WithMetrics(report.Metrics{
-								"metric2": report.MakeMetric(),
+								"metric2": report.MakeMetric(nil),
 							}),
 					),
 				),
@@ -93,12 +93,12 @@ func TestPropagateSingleMetrics(t *testing.T) {
 					report.MakeNode("child1").
 						WithTopology(report.Container).
 						WithMetrics(report.Metrics{
-							"metric1": report.MakeMetric(),
+							"metric1": report.MakeMetric(nil),
 						}),
 					report.MakeNode("child2").
 						WithTopology(report.Container).
 						WithMetrics(report.Metrics{
-							"metric2": report.MakeMetric(),
+							"metric2": report.MakeMetric(nil),
 						}),
 				),
 			),
@@ -109,12 +109,12 @@ func TestPropagateSingleMetrics(t *testing.T) {
 						report.MakeNode("child1").
 							WithTopology(report.Container).
 							WithMetrics(report.Metrics{
-								"metric1": report.MakeMetric(),
+								"metric1": report.MakeMetric(nil),
 							}),
 						report.MakeNode("child2").
 							WithTopology(report.Container).
 							WithMetrics(report.Metrics{
-								"metric2": report.MakeMetric(),
+								"metric2": report.MakeMetric(nil),
 							}),
 					),
 				),
@@ -127,32 +127,32 @@ func TestPropagateSingleMetrics(t *testing.T) {
 					report.MakeNode("child1").
 						WithTopology(report.Container).
 						WithMetrics(report.Metrics{
-							"metric1": report.MakeMetric(),
+							"metric1": report.MakeMetric(nil),
 						}),
 					report.MakeNode("child2").
 						WithLatest(report.DoesNotMakeConnections, now, "").
 						WithTopology(report.Container).
 						WithMetrics(report.Metrics{
-							"metric2": report.MakeMetric(),
+							"metric2": report.MakeMetric(nil),
 						}),
 				),
 			),
 			topology: report.Container,
 			output: report.Nodes{
 				"a": report.MakeNode("a").WithMetrics(report.Metrics{
-					"metric1": report.MakeMetric(),
+					"metric1": report.MakeMetric(nil),
 				}).WithChildren(
 					report.MakeNodeSet(
 						report.MakeNode("child1").
 							WithTopology(report.Container).
 							WithMetrics(report.Metrics{
-								"metric1": report.MakeMetric(),
+								"metric1": report.MakeMetric(nil),
 							}),
 						report.MakeNode("child2").
 							WithLatest(report.DoesNotMakeConnections, now, "").
 							WithTopology(report.Container).
 							WithMetrics(report.Metrics{
-								"metric2": report.MakeMetric(),
+								"metric2": report.MakeMetric(nil),
 							}),
 					),
 				),

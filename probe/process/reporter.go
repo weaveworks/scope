@@ -99,11 +99,11 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 
 		if deltaTotal > 0 {
 			cpuUsage := float64(p.Jiffies-prev.Jiffies) / float64(deltaTotal) * 100.
-			node = node.WithMetric(CPUUsage, report.MakeMetric().Add(now, cpuUsage).WithMax(maxCPU))
+			node = node.WithMetric(CPUUsage, report.MakeSingletonMetric(now, cpuUsage).WithMax(maxCPU))
 		}
 
-		node = node.WithMetric(MemoryUsage, report.MakeMetric().Add(now, float64(p.RSSBytes)).WithMax(float64(p.RSSBytesLimit)))
-		node = node.WithMetric(OpenFilesCount, report.MakeMetric().Add(now, float64(p.OpenFilesCount)).WithMax(float64(p.OpenFilesLimit)))
+		node = node.WithMetric(MemoryUsage, report.MakeSingletonMetric(now, float64(p.RSSBytes)).WithMax(float64(p.RSSBytesLimit)))
+		node = node.WithMetric(OpenFilesCount, report.MakeSingletonMetric(now, float64(p.OpenFilesCount)).WithMax(float64(p.OpenFilesLimit)))
 
 		t.AddNode(node)
 	})

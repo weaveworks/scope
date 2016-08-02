@@ -125,9 +125,9 @@ func (r *Reporter) Report() (report.Report, error) {
 	now := mtime.Now()
 	metrics := GetLoad(now)
 	cpuUsage, max := GetCPUUsagePercent()
-	metrics[CPUUsage] = report.MakeMetric().Add(now, cpuUsage).WithMax(max)
+	metrics[CPUUsage] = report.MakeSingletonMetric(now, cpuUsage).WithMax(max)
 	memoryUsage, max := GetMemoryUsageBytes()
-	metrics[MemoryUsage] = report.MakeMetric().Add(now, memoryUsage).WithMax(max)
+	metrics[MemoryUsage] = report.MakeSingletonMetric(now, memoryUsage).WithMax(max)
 
 	rep.Host.AddNode(
 		report.MakeNodeWith(report.MakeHostNodeID(r.hostID), map[string]string{

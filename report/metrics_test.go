@@ -19,17 +19,17 @@ func TestMetricsMerge(t *testing.T) {
 	t4 := time.Now().Add(3 * time.Minute)
 
 	metrics1 := report.Metrics{
-		"metric1": report.MakeMetric().Add(t1, 0.1).Add(t2, 0.2),
-		"metric2": report.MakeMetric().Add(t3, 0.3),
+		"metric1": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
+		"metric2": report.MakeSingletonMetric(t3, 0.3),
 	}
 	metrics2 := report.Metrics{
-		"metric2": report.MakeMetric().Add(t4, 0.4),
-		"metric3": report.MakeMetric().Add(t1, 0.1).Add(t2, 0.2),
+		"metric2": report.MakeSingletonMetric(t4, 0.4),
+		"metric3": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
 	}
 	want := report.Metrics{
-		"metric1": report.MakeMetric().Add(t1, 0.1).Add(t2, 0.2),
-		"metric2": report.MakeMetric().Add(t3, 0.3).Add(t4, 0.4),
-		"metric3": report.MakeMetric().Add(t1, 0.1).Add(t2, 0.2),
+		"metric1": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
+		"metric2": report.MakeMetric([]report.Sample{{t3, 0.3}, {t4, 0.4}}),
+		"metric3": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
 	}
 	have := metrics1.Merge(metrics2)
 	if !reflect.DeepEqual(want, have) {
@@ -40,7 +40,7 @@ func TestMetricsMerge(t *testing.T) {
 func TestMetricsCopy(t *testing.T) {
 	t1 := time.Now()
 	want := report.Metrics{
-		"metric1": report.MakeMetric().Add(t1, 0.1),
+		"metric1": report.MakeSingletonMetric(t1, 0.1),
 	}
 	delete(want.Copy(), "metric1") // Modify a copy
 	have := want.Copy()            // Check the original wasn't affected
@@ -65,66 +65,24 @@ func checkMetric(t *testing.T, metric report.Metric, first, last time.Time, min,
 }
 
 func TestMetricFirstLastMinMax(t *testing.T) {
-	metric := report.MakeMetric()
-	var zero time.Time
+
+	checkMetric(t, report.MakeMetric(nil), time.Time{}, time.Time{}, 0.0, 0.0)
+
 	t1 := time.Now()
 	t2 := time.Now().Add(1 * time.Minute)
+
+	metric1 := report.MakeMetric([]report.Sample{{t1, -0.1}, {t2, 0.2}})
+
+	checkMetric(t, metric1, t1, t2, -0.1, 0.2)
+	checkMetric(t, metric1.Merge(metric1), t1, t2, -0.1, 0.2)
+
 	t3 := time.Now().Add(2 * time.Minute)
 	t4 := time.Now().Add(3 * time.Minute)
-	other := report.MakeMetric()
-	other.Max = 5
-	other.Min = -5
-	other.First = t1.Add(-1 * time.Minute)
-	other.Last = t4.Add(1 * time.Minute)
+	metric2 := report.MakeMetric([]report.Sample{{t3, 0.31}, {t4, 0.4}})
 
-	tests := []struct {
-		f           func(report.Metric) report.Metric
-		first, last time.Time
-		min, max    float64
-	}{
-		{nil, zero, zero, 0, 0},
-		{func(m report.Metric) report.Metric { return m.Add(t2, 2) }, t2, t2, 0, 2},
-		{func(m report.Metric) report.Metric { return m.Add(t1, 1) }, t1, t2, 0, 2},
-		{func(m report.Metric) report.Metric { return m.Add(t3, -1) }, t1, t3, -1, 2},
-		{func(m report.Metric) report.Metric { return m.Add(t4, 3) }, t1, t4, -1, 3},
-		{func(m report.Metric) report.Metric { return m.Merge(other) }, t1.Add(-1 * time.Minute), t4.Add(1 * time.Minute), -5, 5},
-	}
-	for _, test := range tests {
-		oldFirst, oldLast, oldMin, oldMax := metric.First, metric.Last, metric.Min, metric.Max
-		oldMetric := metric
-		if test.f != nil {
-			metric = test.f(metric)
-		}
-
-		// Check it didn't modify the old one
-		checkMetric(t, oldMetric, oldFirst, oldLast, oldMin, oldMax)
-
-		// Check the new one is as expected
-		checkMetric(t, metric, test.first, test.last, test.min, test.max)
-	}
-}
-
-func TestMetricAdd(t *testing.T) {
-	s := []report.Sample{
-		{time.Now(), 0.1},
-		{time.Now().Add(1 * time.Minute), 0.2},
-		{time.Now().Add(2 * time.Minute), 0.3},
-	}
-
-	have := report.MakeMetric().
-		Add(s[0].Timestamp, s[0].Value).
-		Add(s[2].Timestamp, s[2].Value). // Keeps sorted
-		Add(s[1].Timestamp, s[1].Value).
-		Add(s[2].Timestamp, 0.5) // Overwrites duplicate timestamps
-
-	want := report.MakeMetric().
-		Add(s[0].Timestamp, s[0].Value).
-		Add(s[1].Timestamp, s[1].Value).
-		Add(s[2].Timestamp, 0.5)
-
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf("diff: %s", test.Diff(want, have))
-	}
+	checkMetric(t, metric2, t3, t4, 0.31, 0.4)
+	checkMetric(t, metric1.Merge(metric2), t1, t4, -0.1, 0.4)
+	checkMetric(t, metric2.Merge(metric1), t1, t4, -0.1, 0.4)
 }
 
 func TestMetricMerge(t *testing.T) {
@@ -133,20 +91,12 @@ func TestMetricMerge(t *testing.T) {
 	t3 := time.Now().Add(2 * time.Minute)
 	t4 := time.Now().Add(3 * time.Minute)
 
-	metric1 := report.MakeMetric().
-		Add(t2, 0.2).
-		Add(t3, 0.31)
+	metric1 := report.MakeMetric([]report.Sample{{t2, 0.2}, {t3, 0.31}})
 
-	metric2 := report.MakeMetric().
-		Add(t1, -0.1).
-		Add(t3, 0.3).
-		Add(t4, 0.4)
+	metric2 := report.MakeMetric([]report.Sample{{t1, -0.1}, {t3, 0.3}, {t4, 0.4}})
 
-	want := report.MakeMetric().
-		Add(t1, -0.1).
-		Add(t2, 0.2).
-		Add(t3, 0.31).
-		Add(t4, 0.4)
+	want := report.MakeMetric([]report.Sample{{t1, -0.1}, {t2, 0.2}, {t3, 0.31}, {t4, 0.4}})
+
 	have := metric1.Merge(metric2)
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("diff: %s", test.Diff(want, have))
@@ -159,8 +109,8 @@ func TestMetricMerge(t *testing.T) {
 	if !metric1.Last.Equal(t3) {
 		t.Errorf("Expected metric1.Last == %q, but was: %q", t3, metric1.Last)
 	}
-	if metric1.Min != 0.0 {
-		t.Errorf("Expected metric1.Min == %f, but was: %f", 0.0, metric1.Min)
+	if metric1.Min != 0.2 {
+		t.Errorf("Expected metric1.Min == %f, but was: %f", 0.2, metric1.Min)
 	}
 	if metric1.Max != 0.31 {
 		t.Errorf("Expected metric1.Max == %f, but was: %f", 0.31, metric1.Max)
@@ -173,13 +123,13 @@ func TestMetricMerge(t *testing.T) {
 }
 
 func TestMetricCopy(t *testing.T) {
-	want := report.MakeMetric()
+	want := report.MakeMetric(nil)
 	have := want.Copy()
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("diff: %s", test.Diff(want, have))
 	}
 
-	want = report.MakeMetric().Add(time.Now(), 1)
+	want = report.MakeSingletonMetric(time.Now(), 1)
 	have = want.Copy()
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("diff: %s", test.Diff(want, have))
@@ -190,12 +140,8 @@ func TestMetricDiv(t *testing.T) {
 	t1 := time.Now()
 	t2 := time.Now().Add(1 * time.Minute)
 
-	want := report.MakeMetric().
-		Add(t1, -2).
-		Add(t2, 2)
-	beforeDiv := report.MakeMetric().
-		Add(t1, -2048).
-		Add(t2, 2048)
+	want := report.MakeMetric([]report.Sample{{t1, -2}, {t2, 2}})
+	beforeDiv := report.MakeMetric([]report.Sample{{t1, -2048}, {t2, 2048}})
 	have := beforeDiv.Div(1024)
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("diff: %s", test.Diff(want, have))
@@ -218,55 +164,39 @@ func TestMetricMarshalling(t *testing.T) {
 		{Timestamp: t4, Value: 0.4},
 	}
 
-	want := report.MakeMetric()
-	for _, sample := range wantSamples {
-		want = want.Add(sample.Timestamp, sample.Value)
-	}
+	want := report.MakeMetric(wantSamples)
 
-	// gob
-	{
-		gobs, err := want.GobEncode()
-		if err != nil {
+	for _, h := range []codec.Handle{
+		codec.Handle(&codec.MsgpackHandle{}),
+		codec.Handle(&codec.JsonHandle{}),
+	} {
+		buf := &bytes.Buffer{}
+		encoder := codec.NewEncoder(buf, h)
+		if err := encoder.Encode(want); err != nil {
 			t.Fatal(err)
 		}
+		bufCopy := bytes.NewBuffer(buf.Bytes())
+
+		decoder := codec.NewDecoder(buf, h)
 		var have report.Metric
-		have.GobDecode(gobs)
+		if err := decoder.Decode(&have); err != nil {
+			t.Fatal(err)
+		}
+
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
-	}
 
-	// others
-	{
-
-		for _, h := range []codec.Handle{
-			codec.Handle(&codec.MsgpackHandle{}),
-			codec.Handle(&codec.JsonHandle{}),
-		} {
-			buf := &bytes.Buffer{}
-			encoder := codec.NewEncoder(buf, h)
-			want.CodecEncodeSelf(encoder)
-			bufCopy := bytes.NewBuffer(buf.Bytes())
-
-			decoder := codec.NewDecoder(buf, h)
-			var have report.Metric
-			have.CodecDecodeSelf(decoder)
-
-			if !reflect.DeepEqual(want, have) {
-				t.Error(test.Diff(want, have))
-			}
-
-			// extra check for samples
-			decoder = codec.NewDecoder(bufCopy, h)
-			var wire struct {
-				Samples []report.Sample `json:"samples"`
-			}
-			if err := decoder.Decode(&wire); err != nil {
-				t.Error(err)
-			}
-			if !reflect.DeepEqual(wantSamples, wire.Samples) {
-				t.Error(test.Diff(wantSamples, wire.Samples))
-			}
+		// extra check for samples
+		decoder = codec.NewDecoder(bufCopy, h)
+		var wire struct {
+			Samples []report.Sample `json:"samples"`
+		}
+		if err := decoder.Decode(&wire); err != nil {
+			t.Error(err)
+		}
+		if !reflect.DeepEqual(wantSamples, wire.Samples) {
+			t.Error(test.Diff(wantSamples, wire.Samples))
 		}
 	}
 

@@ -69,9 +69,6 @@ func (m mockPublisher) Stop() {
 }
 
 func TestProbe(t *testing.T) {
-	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
-	// tags, transforming empty slices into nils. So, we make DeepEqual
-	// happy by setting empty `json:"omitempty"` entries to nil
 	const probeID = "probeid"
 	now := time.Now()
 	mtime.NowForce(now)
@@ -79,8 +76,11 @@ func TestProbe(t *testing.T) {
 
 	want := report.MakeReport()
 	node := report.MakeNodeWith("a", map[string]string{"b": "c"})
-	node.Metrics = nil // omitempty
-	// omitempty
+
+	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
+	// tags, transforming empty slices into nils. So, we make DeepEqual
+	// happy by setting empty `json:"omitempty"` entries to nil
+	node.Metrics = nil
 	want.Endpoint.Controls = nil
 	want.Process.Controls = nil
 	want.Container.Controls = nil

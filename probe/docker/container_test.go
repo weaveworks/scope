@@ -92,8 +92,8 @@ func TestContainer(t *testing.T) {
 				docker.RestartContainer, docker.StopContainer, docker.PauseContainer,
 				docker.AttachContainer, docker.ExecContainer,
 			).WithMetrics(report.Metrics{
-			"docker_cpu_total_usage": report.MakeMetric(),
-			"docker_memory_usage":    report.MakeMetric().Add(now, 12345).WithMax(45678),
+			"docker_cpu_total_usage": report.MakeMetric(nil),
+			"docker_memory_usage":    report.MakeSingletonMetric(now, 12345).WithMax(45678),
 		}).WithParents(report.EmptySets.
 			Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID("baz"))),
 		)

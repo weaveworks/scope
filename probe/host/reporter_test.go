@@ -20,9 +20,9 @@ func TestReporter(t *testing.T) {
 		hostname  = "hostname"
 		timestamp = time.Now()
 		metrics   = report.Metrics{
-			host.Load1:       report.MakeMetric().Add(timestamp, 1.0),
-			host.CPUUsage:    report.MakeMetric().Add(timestamp, 30.0).WithMax(100.0),
-			host.MemoryUsage: report.MakeMetric().Add(timestamp, 60.0).WithMax(100.0),
+			host.Load1:       report.MakeSingletonMetric(timestamp, 1.0),
+			host.CPUUsage:    report.MakeSingletonMetric(timestamp, 30.0).WithMax(100.0),
+			host.MemoryUsage: report.MakeSingletonMetric(timestamp, 60.0).WithMax(100.0),
 		}
 		uptime      = "278h55m43s"
 		kernel      = "release version"
@@ -88,10 +88,10 @@ func TestReporter(t *testing.T) {
 
 	// Should have metrics
 	for key, want := range metrics {
-		wantSample := want.LastSample()
+		wantSample, _ := want.LastSample()
 		if metric, ok := node.Metrics[key]; !ok {
 			t.Errorf("Expected %s metric, but not found", key)
-		} else if sample := metric.LastSample(); sample == nil {
+		} else if sample, ok := metric.LastSample(); !ok {
 			t.Errorf("Expected %s metric to have a sample, but there were none", key)
 		} else if sample.Value != wantSample.Value {
 			t.Errorf("Expected %s metric sample %f, got %f", key, wantSample, sample.Value)
