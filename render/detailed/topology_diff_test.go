@@ -25,7 +25,7 @@ func TestTopoDiff(t *testing.T) {
 		Pseudo:     false,
 		Adjacency:  report.MakeIDList("nodeb"),
 	}
-	nodeap := nodea.Copy()
+	nodeap := nodea
 	nodeap.Adjacency = report.MakeIDList("nodeb", "nodeq") // not the same anymore
 	nodeb := detailed.NodeSummary{
 		ID:    "nodeb",

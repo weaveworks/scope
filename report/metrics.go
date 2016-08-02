@@ -94,16 +94,6 @@ func MakeMetric(samples []Sample) Metric {
 	}
 }
 
-// Copy returns a copy of the Metric.
-func (m Metric) Copy() Metric {
-	c := m
-	if c.Samples != nil {
-		c.Samples = make([]Sample, len(m.Samples))
-		copy(c.Samples, m.Samples)
-	}
-	return c
-}
-
 // WithMax returns a fresh copy of m, with Max set to max
 func (m Metric) WithMax(max float64) Metric {
 	return Metric{
