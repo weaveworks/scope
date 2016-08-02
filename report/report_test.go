@@ -3,8 +3,12 @@ package report_test
 import (
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test"
+	s_reflect "github.com/weaveworks/scope/test/reflect"
 )
 
 func newu64(value uint64) *uint64 { return &value }
@@ -72,5 +76,48 @@ func TestNode(t *testing.T) {
 		if v, ok := node.Edges.Lookup("foo"); ok && *v.EgressPacketCount != 13 {
 			t.Errorf("want 13, have %v", node.Edges)
 		}
+	}
+}
+
+func TestReportBackwardCompatibility(t *testing.T) {
+	mtime.NowForce(time.Now())
+	defer mtime.NowReset()
+	rpt := report.MakeReport()
+	controls := map[string]report.NodeControlData{
+		"dead": {
+			Dead: true,
+		},
+		"alive": {
+			Dead: false,
+		},
+	}
+	node := report.MakeNode("foo").WithLatestControls(controls)
+	expectedNode := node.WithControls("alive")
+	rpt.Pod.AddNode(node)
+	expected := report.MakeReport()
+	expected.Pod.AddNode(expectedNode)
+	got := rpt.BackwardCompatible()
+	if !s_reflect.DeepEqual(expected, got) {
+		t.Error(test.Diff(expected, got))
+	}
+}
+
+func TestReportUpgrade(t *testing.T) {
+	mtime.NowForce(time.Now())
+	defer mtime.NowReset()
+	node := report.MakeNode("foo").WithControls("alive")
+	controls := map[string]report.NodeControlData{
+		"alive": {
+			Dead: false,
+		},
+	}
+	expectedNode := node.WithLatestControls(controls)
+	rpt := report.MakeReport()
+	rpt.Pod.AddNode(node)
+	expected := report.MakeReport()
+	expected.Pod.AddNode(expectedNode)
+	got := rpt.Upgrade()
+	if !s_reflect.DeepEqual(expected, got) {
+		t.Error(test.Diff(expected, got))
 	}
 }

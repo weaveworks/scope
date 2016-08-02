@@ -118,7 +118,9 @@ func (c *collector) Report(_ context.Context) (report.Report, error) {
 	}
 
 	c.clean()
-	return c.merger.Merge(c.reports), nil
+	rpt := c.merger.Merge(c.reports).Upgrade()
+	c.cached = &rpt
+	return rpt, nil
 }
 
 func (c *collector) clean() {
