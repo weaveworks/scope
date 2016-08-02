@@ -73,7 +73,7 @@ class Nodes extends React.Component {
 
     return (
       <div className="nodes-wrapper">
-        <DelayedShow delay={1000} show={!topologiesLoaded}>
+        <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>
           <Loading itemType="topologies" show={!topologiesLoaded} />
           <Loading
             itemType={getNodeType(topology, topologies)}

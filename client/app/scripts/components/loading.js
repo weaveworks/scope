@@ -14,7 +14,6 @@ const LOADING_TEMPLATES = [
   'Locating THINGS',
   'Optimizing THINGS',
   'Transporting THINGS',
-  'Double checking THINGS',
 ];
 
 

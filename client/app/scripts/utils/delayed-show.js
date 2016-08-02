@@ -7,18 +7,16 @@ export class DelayedShow extends React.Component {
     this.state = {
       show: false
     };
+  }
 
-    if (props.show) {
+  componentWillMount() {
+    if (this.props.show) {
       this.scheduleShow();
     }
   }
 
-  scheduleShow() {
-    this.showTimeout = setTimeout(() => this.setState({ show: true }), this.props.delay);
-  }
-
-  cancelShow() {
-    clearTimeout(this.showTimeout);
+  componentWillUnmount() {
+    this.cancelShow();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -32,6 +30,14 @@ export class DelayedShow extends React.Component {
       this.cancelShow();
       this.setState({ show: false });
     }
+  }
+
+  scheduleShow() {
+    this.showTimeout = setTimeout(() => this.setState({ show: true }), this.props.delay);
+  }
+
+  cancelShow() {
+    clearTimeout(this.showTimeout);
   }
 
   render() {
