@@ -44,7 +44,7 @@ Where,
 
  * `<VM name>` is the name you gave to your virtual machine with docker-machine.
 
-### Scope allows anyone with access to the UI control over your containers, and the hosts running them! 
+**NB: Scope allows anyone with access to the UI control over your containers, and the hosts running them! **
 Therefore, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally, traffic between the app and the probe is currently insecure and should also not traverse the Internet, meaning that you should either use the private / internal IP addresses of your nodes when setting it up, or route this traffic through weave net.  To put scope behind a very simple password, you can use [Caddy](https://github.com/mholt/caddy) to protect the endpoint by making the port 4040 available to localhost and using caddy to proxy it.... or, just use weave cloud.  
 
 ###<a name="docker-weave-cloud"></a>Using Weave Cloud
@@ -77,16 +77,27 @@ These are the directions for "Any Random Cluster," with no dependency on Weave N
 We'll assume that no special hostnames or DNS settings have been fiddled with, so we're going to use IP addresses only to configure scope on this cluster:
 
 **On Each Node, first run:**
+```
     sudo curl -L git.io/scope -o /usr/local/bin/scope
     sudo chmod a+x /usr/local/bin/scope
+```
 **Then Run on the first node**
+```
     scope launch 192.168.100.18 192.168.100.19 192.168.100.20
+```
 **Second node**
+```
     scope launch 192.168.100.17 192.168.100.20 192.168.100.21
+```
+**Third Node**
+```
     scope launch 192.168.100.17 192.168.100.18 192.168.100.21
+```
+**Fourth Node**
+```
     scope launch 192.168.100.17 192.198.100.19 192.168.100.20
-
-Key point here being that you need to make each node aware of the others.
+```
+Key point here being that you need to make each node aware of the others.  You can also configure a single "target" nodee that you point all the others at, and once again, the key is that they know each other exist.  
 
 ###<a name="net-scope"></a> Weave Net and Scope
 
