@@ -39,6 +39,15 @@ func requestContextDecorator(f CtxHandlerFunc) http.HandlerFunc {
 	}
 }
 
+// GetRequestURI obtains the request URI from the context
+func GetRequestURI(ctx context.Context) string {
+	request, ok := ctx.Value(RequestCtxKey).(*http.Request)
+	if ok && request != nil {
+		return request.RequestURI
+	}
+	return ""
+}
+
 // URLMatcher uses request.RequestURI (the raw, unparsed request) to attempt
 // to match pattern.  It does this as go's URL.Parse method is broken, and
 // mistakenly unescapes the Path before parsing it.  This breaks %2F (encoded

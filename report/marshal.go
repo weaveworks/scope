@@ -3,6 +3,7 @@ package report
 import (
 	"compress/gzip"
 	"io"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
@@ -32,39 +33,43 @@ func (c byteCounter) Read(p []byte) (n int, err error) {
 	return n, err
 }
 
-// ReadBinary reads bytes into a Report.
+// ReadStats includes statistics related to unmarshalling a report
+type ReadStats struct {
+	CompressedSize, UncompressedSize uint64
+	ReadDuration                     time.Duration
+}
+
+// ReadBinaryWithStats reads bytes into a Report and obtains statistics when running in debug mode.
 //
 // Will decompress the binary if gzipped is true, and will use the given
 // codecHandle to decode it.
-func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handle) error {
+func (rep *Report) ReadBinaryWithStats(r io.Reader, gzipped bool, codecHandle codec.Handle) (ReadStats, error) {
 	var err error
 	var compressedSize, uncompressedSize uint64
 
-	// We have historically had trouble with reports being too large. We are
-	// keeping this instrumentation around to help us implement
-	// weaveworks/scope#985.
 	if log.GetLevel() == log.DebugLevel {
 		r = byteCounter{next: r, count: &compressedSize}
 	}
 	if gzipped {
 		r, err = gzip.NewReader(r)
 		if err != nil {
-			return err
+			return ReadStats{}, err
 		}
 	}
 	if log.GetLevel() == log.DebugLevel {
 		r = byteCounter{next: r, count: &uncompressedSize}
 	}
+	start := time.Now()
 	if err := codec.NewDecoder(r, codecHandle).Decode(&rep); err != nil {
-		return err
+		return ReadStats{}, err
 	}
-	log.Debugf(
-		"Received report sizes: compressed %d bytes, uncompressed %d bytes (%.2f%%)",
-		compressedSize,
-		uncompressedSize,
-		float32(compressedSize)/float32(uncompressedSize)*100,
-	)
-	return nil
+	return ReadStats{compressedSize, uncompressedSize, time.Since(start)}, nil
+}
+
+// ReadBinary is identical to ReadBinaryWithStats without obtaining statistics
+func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handle) error {
+	_, err := rep.ReadBinaryWithStats(r, gzipped, codecHandle)
+	return err
 }
 
 // MakeFromBinary constructs a Report from a gzipped msgpack.
@@ -74,4 +79,15 @@ func MakeFromBinary(r io.Reader) (*Report, error) {
 		return nil, err
 	}
 	return &rep, nil
+}
+
+// MakeFromBinaryWithStats constructs a Report from a gzipped msgpack and provides
+// statistics when running in debug mode.
+func MakeFromBinaryWithStats(r io.Reader) (*Report, ReadStats, error) {
+	rep := MakeReport()
+	stats, err := rep.ReadBinaryWithStats(r, true, &codec.MsgpackHandle{})
+	if err != nil {
+		return nil, stats, err
+	}
+	return &rep, stats, nil
 }
