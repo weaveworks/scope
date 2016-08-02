@@ -40,7 +40,7 @@ func (s StringSet) Intersection(b StringSet) StringSet {
 	result, i, j := EmptyStringSet, 0, 0
 	for i < len(s) && j < len(b) {
 		if s[i] == b[j] {
-			result = result.Add(s[i])
+			result = result.UnsafeMutableAdd(s[i])
 		}
 		if s[i] < b[j] {
 			i++
@@ -51,9 +51,9 @@ func (s StringSet) Intersection(b StringSet) StringSet {
 	return result
 }
 
-// Add adds the strings to the StringSet. Add is the only valid way to grow a
-// StringSet. Add returns the StringSet to enable chaining.
-func (s StringSet) Add(strs ...string) StringSet {
+// UnsafeMutableAdd adds the strings to the StringSet in-place. UnsafeMutableAdd
+// is the only valid way to grow a StringSet. Add returns the StringSet to enable chaining.
+func (s StringSet) UnsafeMutableAdd(strs ...string) StringSet {
 	for _, str := range strs {
 		i := sort.Search(len(s), func(i int) bool { return s[i] >= str })
 		if i < len(s) && s[i] == str {
@@ -68,9 +68,10 @@ func (s StringSet) Add(strs ...string) StringSet {
 	return s
 }
 
-// Remove removes the strings from the StringSet. Remove is the only valid way
-// to shrink a StringSet. Remove returns the StringSet to enable chaining.
-func (s StringSet) Remove(strs ...string) StringSet {
+// UnsafeMutableRemove removes the strings from the
+// StringSet. UnsafeMutableRemove is the only valid way to shrink a
+// StringSet. UnsafeMutableRemove returns the StringSet to enable chaining.
+func (s StringSet) UnsafeMutableRemove(strs ...string) StringSet {
 	for _, str := range strs {
 		i := sort.Search(len(s), func(i int) bool { return s[i] >= str })
 		if i >= len(s) || s[i] != str {

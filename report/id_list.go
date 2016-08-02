@@ -13,12 +13,12 @@ func MakeIDList(ids ...string) IDList {
 
 // Add is the only correct way to add ids to an IDList.
 func (a IDList) Add(ids ...string) IDList {
-	return IDList(StringSet(a).Add(ids...))
+	return IDList(StringSet(a).UnsafeMutableAdd(ids...))
 }
 
 // Remove is the only correct way to remove IDs from an IDList.
 func (a IDList) Remove(ids ...string) IDList {
-	return IDList(StringSet(a).Remove(ids...))
+	return IDList(StringSet(a).UnsafeMutableRemove(ids...))
 }
 
 // Copy returns a copy of the IDList.

@@ -81,7 +81,7 @@ func (nc NodeControls) Merge(other NodeControls) NodeControls {
 func (nc NodeControls) Add(ids ...string) NodeControls {
 	return NodeControls{
 		Timestamp: mtime.Now(),
-		Controls:  nc.Controls.Add(ids...),
+		Controls:  nc.Controls.UnsafeMutableAdd(ids...),
 	}
 }
 

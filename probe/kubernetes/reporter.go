@@ -178,7 +178,7 @@ func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
 
 		rpt.Container.Nodes[id] = n.WithParents(report.EmptySets.Add(
 			report.Pod,
-			report.EmptyStringSet.Add(report.MakePodNodeID(uid)),
+			report.EmptyStringSet.UnsafeMutableAdd(report.MakePodNodeID(uid)),
 		))
 	}
 	return rpt, nil
@@ -242,7 +242,7 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 func (r *Reporter) hostTopology(services []Service) report.Topology {
 	localNetworks := report.EmptyStringSet
 	for _, service := range services {
-		localNetworks = localNetworks.Add(service.ClusterIP() + "/32")
+		localNetworks = localNetworks.UnsafeMutableAdd(service.ClusterIP() + "/32")
 	}
 	node := report.MakeNode(report.MakeHostNodeID(r.hostID))
 	node = node.WithSets(report.EmptySets.

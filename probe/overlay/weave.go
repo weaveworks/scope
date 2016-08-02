@@ -140,7 +140,7 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 
 		ipsWithScope := report.MakeStringSet()
 		for _, ip := range entry.IPs {
-			ipsWithScope = ipsWithScope.Add(report.MakeAddressNodeID("", ip))
+			ipsWithScope = ipsWithScope.UnsafeMutableAdd(report.MakeAddressNodeID("", ip))
 		}
 		node = node.WithSet(docker.ContainerIPs, report.MakeStringSet(entry.IPs...))
 		node = node.WithSet(docker.ContainerIPsWithScopes, ipsWithScope)
