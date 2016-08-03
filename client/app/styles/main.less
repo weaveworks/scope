@@ -296,14 +296,16 @@ h2 {
 
 .nodes-chart {
 
-  &-error {
+  &-error, &-loading {
     .hideable;
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%);
+    margin-left: -16.5%;
+    margin-top: -275px;
     color: @text-secondary-color;
     width: 33%;
+    height: 550px;
 
     .heading {
       font-size: 125%;
@@ -314,6 +316,14 @@ h2 {
       opacity: 0.25;
       font-size: 320px;
     }
+  }
+
+  &-loading &-error-icon-container {
+    animation: blinking 2.0s infinite @base-ease;
+  }
+
+  &-loading {
+    text-align: center;
   }
 
   svg {

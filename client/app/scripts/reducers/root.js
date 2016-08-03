@@ -36,6 +36,7 @@ export const initialState = makeMap({
   networkNodes: makeMap(),
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
+  nodesLoaded: false,
   // nodes cache, infrequently updated, used for search
   nodesByTopology: makeMap(), // topologyId -> nodes
   pinnedMetric: null,
@@ -61,7 +62,7 @@ export const initialState = makeMap({
   updatePausedAt: null, // Date
   version: '...',
   versionUpdate: null,
-  websocketClosed: true,
+  websocketClosed: false,
   exportingGraph: false
 });
 
@@ -480,6 +481,10 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
+    case ActionTypes.SET_RECEIVED_NODES_DELTA: {
+      return state.set('nodesLoaded', true);
+    }
+
     case ActionTypes.RECEIVE_NODES_DELTA: {
       const emptyMessage = !action.delta.add && !action.delta.remove
         && !action.delta.update;
@@ -654,6 +659,10 @@ export function rootReducer(state = initialState, action) {
       const pinnedSearches = state.get('pinnedSearches').filter(query => query !== action.query);
       state = state.set('pinnedSearches', pinnedSearches);
       return applyPinnedSearches(state);
+    }
+
+    case ActionTypes.DEBUG_TOOLBAR_INTERFERING: {
+      return action.fn(state);
     }
 
     default: {

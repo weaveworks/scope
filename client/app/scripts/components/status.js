@@ -3,8 +3,7 @@ import { connect } from 'react-redux';
 
 class Status extends React.Component {
   render() {
-    const {errorUrl, filteredNodeCount, topologiesLoaded, topology,
-      websocketClosed} = this.props;
+    const {errorUrl, topologiesLoaded, filteredNodeCount, topology, websocketClosed} = this.props;
 
     let title = '';
     let text = 'Trying to reconnect...';

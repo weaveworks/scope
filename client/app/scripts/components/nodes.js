@@ -3,11 +3,14 @@ import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesError from '../charts/nodes-error';
+import { DelayedShow } from '../utils/delayed-show';
+import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
 
 const navbarHeight = 160;
 const marginTop = 0;
 const detailsWidth = 450;
+
 
 /**
  * dynamic coords precision based on topology size
@@ -34,7 +37,7 @@ class Nodes extends React.Component {
 
     this.state = {
       width: window.innerWidth,
-      height: window.innerHeight - navbarHeight - marginTop
+      height: window.innerHeight - navbarHeight - marginTop,
     };
   }
 
@@ -63,14 +66,20 @@ class Nodes extends React.Component {
   }
 
   render() {
-    const { nodes, selectedNodeId, topologyEmpty } = this.props;
+    const { nodes, selectedNodeId, topologyEmpty, topologiesLoaded, nodesLoaded, topologies,
+      topology } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
     const hasSelectedNode = selectedNodeId && nodes.has(selectedNodeId);
-    const errorEmpty = this.renderEmptyTopologyError(topologyEmpty);
 
     return (
       <div className="nodes-wrapper">
-        {topologyEmpty && errorEmpty}
+        <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>
+          <Loading itemType="topologies" show={!topologiesLoaded} />
+          <Loading
+            itemType={getNodeType(topology, topologies)}
+            show={topologiesLoaded && !nodesLoaded} />
+        </DelayedShow>
+        {this.renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
         <NodesChart {...this.state}
           detailsWidth={detailsWidth}
           layoutPrecision={layoutPrecision}
@@ -95,8 +104,12 @@ class Nodes extends React.Component {
 function mapStateToProps(state) {
   return {
     nodes: state.get('nodes'),
+    nodesLoaded: state.get('nodesLoaded'),
     selectedNodeId: state.get('selectedNodeId'),
+    topologies: state.get('topologies'),
+    topologiesLoaded: state.get('topologiesLoaded'),
     topologyEmpty: isTopologyEmpty(state),
+    topology: state.get('currentTopology'),
   };
 }
 
