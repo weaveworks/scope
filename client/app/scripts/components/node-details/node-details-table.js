@@ -105,10 +105,10 @@ function getSortedNodes(nodes, columns, sortBy, sortedDesc) {
   const getValue = getValueForSortBy(sortBy || getDefaultSortBy(columns, nodes));
   const withAndWithoutValues = _.groupBy(nodes, (n) => {
     const v = getValue(n);
-    return v !== null && v !== undefined;
+    return v !== null && v !== undefined ? 'withValues' : 'withoutValues';
   });
-  const withValues = sortNodes(withAndWithoutValues.true, columns, sortBy, sortedDesc);
-  const withoutValues = sortNodes(withAndWithoutValues.false, columns, sortBy, sortedDesc);
+  const withValues = sortNodes(withAndWithoutValues.withValues, columns, sortBy, sortedDesc);
+  const withoutValues = sortNodes(withAndWithoutValues.withoutValues, columns, sortBy, sortedDesc);
 
   return _.concat(withValues, withoutValues);
 }
