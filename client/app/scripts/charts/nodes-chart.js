@@ -17,18 +17,12 @@ import { getActiveTopologyOptions, getAdjacentNodes,
 
 const log = debug('scope:nodes-chart');
 
-const MARGINS = {
-  top: 130,
-  left: 40,
-  right: 40,
-  bottom: 0
-};
-
 const ZOOM_CACHE_FIELDS = ['scale', 'panTranslateX', 'panTranslateY'];
 
 // make sure circular layouts a bit denser with 3-6 nodes
 const radiusDensity = d3.scale.threshold()
-  .domain([3, 6]).range([2.5, 3.5, 3]);
+  .domain([3, 6])
+  .range([2.5, 3.5, 3]);
 
 class NodesChart extends React.Component {
 
@@ -47,8 +41,8 @@ class NodesChart extends React.Component {
       scale: 1,
       selectedNodeScale: d3.scale.linear(),
       hasZoomed: false,
-      height: 0,
-      width: 0,
+      height: props.height || 0,
+      width: props.width || 0,
       zoomCache: {}
     };
   }
@@ -237,9 +231,9 @@ class NodesChart extends React.Component {
     // move origin node to center of viewport
     const zoomScale = state.scale;
     const translate = [state.panTranslateX, state.panTranslateY];
-    const centerX = (-translate[0] + (state.width + MARGINS.left
+    const centerX = (-translate[0] + (state.width + props.margins.left
       - DETAILS_PANEL_WIDTH) / 2) / zoomScale;
-    const centerY = (-translate[1] + (state.height + MARGINS.top) / 2) / zoomScale;
+    const centerY = (-translate[1] + (state.height + props.margins.top) / 2) / zoomScale;
     stateNodes = stateNodes.mergeIn([props.selectedNodeId], {
       x: centerX,
       y: centerY
@@ -310,9 +304,7 @@ class NodesChart extends React.Component {
   }
 
   updateGraphState(props, state) {
-    const n = props.nodes.size;
-
-    if (n === 0) {
+    if (props.nodes.size === 0) {
       return {
         nodes: makeMap(),
         edges: makeMap()
@@ -328,7 +320,7 @@ class NodesChart extends React.Component {
       width: state.width,
       height: state.height,
       scale: nodeScale,
-      margins: MARGINS,
+      margins: props.margins,
       forceRelayout: props.forceRelayout,
       topologyId: this.props.topologyId,
       topologyOptions: this.props.topologyOptions
@@ -353,12 +345,12 @@ class NodesChart extends React.Component {
       .map(edge => edge.set('ppoints', edge.get('points')));
 
     // adjust layout based on viewport
-    const xFactor = (state.width - MARGINS.left - MARGINS.right) / graph.width;
+    const xFactor = (state.width - props.margins.left - props.margins.right) / graph.width;
     const yFactor = state.height / graph.height;
     const zoomFactor = Math.min(xFactor, yFactor);
     let zoomScale = this.state.scale;
 
-    if (!state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
+    if (this.zoom && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
       zoomScale = zoomFactor;
       // saving in d3's behavior cache
       this.zoom.scale(zoomFactor);
@@ -402,7 +394,6 @@ function mapStateToProps(state) {
   return {
     adjacentNodes: getAdjacentNodes(state),
     forceRelayout: state.get('forceRelayout'),
-    nodes: state.get('nodes').filter(node => !node.get('filtered')),
     selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('currentTopologyId'),
     topologyOptions: getActiveTopologyOptions(state)

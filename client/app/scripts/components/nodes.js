@@ -2,14 +2,15 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
+import NodesGrid from '../charts/nodes-grid';
 import NodesError from '../charts/nodes-error';
 import { DelayedShow } from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
+import { CANVAS_MARGINS } from '../constants/styles';
 
-const navbarHeight = 160;
+const navbarHeight = 194;
 const marginTop = 0;
-const detailsWidth = 450;
 
 
 /**
@@ -66,25 +67,31 @@ class Nodes extends React.Component {
   }
 
   render() {
-    const { nodes, selectedNodeId, topologyEmpty, topologiesLoaded, nodesLoaded, topologies,
-      topology } = this.props;
+    const { nodes, topologyEmpty, gridMode, topologiesLoaded, nodesLoaded, topologies,
+      currentTopology } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
-    const hasSelectedNode = selectedNodeId && nodes.has(selectedNodeId);
 
     return (
       <div className="nodes-wrapper">
         <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>
           <Loading itemType="topologies" show={!topologiesLoaded} />
           <Loading
-            itemType={getNodeType(topology, topologies)}
+            itemType={getNodeType(currentTopology, topologies)}
             show={topologiesLoaded && !nodesLoaded} />
         </DelayedShow>
         {this.renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
-        <NodesChart {...this.state}
-          detailsWidth={detailsWidth}
-          layoutPrecision={layoutPrecision}
-          hasSelectedNode={hasSelectedNode}
-        />
+
+        {gridMode ?
+          <NodesGrid {...this.state}
+            nodeSize="24"
+            nodes={nodes}
+            margins={CANVAS_MARGINS}
+          /> :
+         <NodesChart {...this.state}
+           nodes={nodes}
+           margins={CANVAS_MARGINS}
+           layoutPrecision={layoutPrecision}
+           />}
       </div>
     );
   }
@@ -101,17 +108,19 @@ class Nodes extends React.Component {
   }
 }
 
+
 function mapStateToProps(state) {
   return {
-    nodes: state.get('nodes'),
+    currentTopology: state.get('currentTopology'),
+    gridMode: state.get('gridMode'),
+    nodes: state.get('nodes').filter(node => !node.get('filtered')),
     nodesLoaded: state.get('nodesLoaded'),
-    selectedNodeId: state.get('selectedNodeId'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),
     topologyEmpty: isTopologyEmpty(state),
-    topology: state.get('currentTopology'),
   };
 }
+
 
 export default connect(
   mapStateToProps

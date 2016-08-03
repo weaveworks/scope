@@ -63,6 +63,20 @@ export function updateTopologyIds(topologies, parentId) {
   });
 }
 
+export function addTopologyFullname(topologies) {
+  return topologies.map(t => {
+    if (!t.sub_topologies) {
+      return Object.assign({}, t, {fullName: t.name});
+    }
+    return Object.assign({}, t, {
+      fullName: t.name,
+      sub_topologies: t.sub_topologies.map(st => (
+        Object.assign({}, st, {fullName: `${t.name} ${st.name}`})
+      ))
+    });
+  });
+}
+
 // adds ID field to topology (based on last part of URL path) and save urls in
 // map for easy lookup
 export function setTopologyUrlsById(topologyUrlsById, topologies) {

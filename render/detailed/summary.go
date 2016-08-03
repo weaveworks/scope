@@ -64,6 +64,7 @@ type NodeSummary struct {
 	Linkable   bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
 	Pseudo     bool                 `json:"pseudo,omitempty"`
 	Metadata   []report.MetadataRow `json:"metadata,omitempty"`
+	Parents    []Parent             `json:"parents,omitempty"`
 	Metrics    []report.MetricRow   `json:"metrics,omitempty"`
 	Tables     []report.Table       `json:"tables,omitempty"`
 	Adjacency  report.IDList        `json:"adjacency,omitempty"`
@@ -133,6 +134,7 @@ func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 		Linkable:  true,
 		Metadata:  NodeMetadata(r, n),
 		Metrics:   NodeMetrics(r, n),
+		Parents:   Parents(r, n),
 		Tables:    NodeTables(r, n),
 		Adjacency: n.Adjacency.Copy(),
 	}

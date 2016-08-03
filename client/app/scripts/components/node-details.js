@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
@@ -48,7 +47,7 @@ export class NodeDetails extends React.Component {
   }
 
   renderTools() {
-    const showSwitchTopology = this.props.index > 0;
+    const showSwitchTopology = this.props.nodeId !== this.props.selectedNodeId;
     const topologyTitle = `View ${this.props.label} in ${this.props.topologyId}`;
 
     return (
@@ -121,12 +120,6 @@ export class NodeDetails extends React.Component {
         </div>
       </div>
     );
-  }
-
-  renderTable(table) {
-    const key = _.snakeCase(table.title);
-    return (<NodeDetailsTable title={table.title} key={key} rows={table.rows}
-      isNumeric={table.numeric} />);
   }
 
   render() {
@@ -236,7 +229,8 @@ function mapStateToProps(state, ownProps) {
   const currentTopologyId = state.get('currentTopologyId');
   return {
     nodeMatches: state.getIn(['searchNodeMatches', currentTopologyId, ownProps.id]),
-    nodes: state.get('nodes')
+    nodes: state.get('nodes'),
+    selectedNodeId: state.get('selectedNodeId'),
   };
 }
 

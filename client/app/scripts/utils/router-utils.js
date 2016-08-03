@@ -39,11 +39,14 @@ export function getUrlState(state) {
 
   const urlState = {
     controlPipe: cp ? cp.toJS() : null,
+    topologyViewMode: state.get('gridMode') ? 'grid' : 'topo',
     nodeDetails: nodeDetails.toJS(),
     pinnedMetricType: state.get('pinnedMetricType'),
     pinnedSearches: state.get('pinnedSearches').toJS(),
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId'),
+    gridSortBy: state.get('gridSortBy'),
+    gridSortedDesc: state.get('gridSortedDesc'),
     topologyId: state.get('currentTopologyId'),
     topologyOptions: state.get('topologyOptions').toJS() // all options
   };

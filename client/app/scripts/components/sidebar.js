@@ -1,8 +1,9 @@
 import React from 'react';
 
-export default function Sidebar({children}) {
+export default function Sidebar({children, classNames}) {
+  const className = `sidebar ${classNames}`;
   return (
-    <div className="sidebar">
+    <div className={className}>
       {children}
     </div>
   );

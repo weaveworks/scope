@@ -32,7 +32,7 @@ function maybeUpdate(getState) {
       receiveNodesDelta(delta);
     }
     if (deltaBuffer.size > 0) {
-      updateTimer = setTimeout(maybeUpdate, feedInterval);
+      updateTimer = setTimeout(() => maybeUpdate(getState), feedInterval);
     }
   }
 }

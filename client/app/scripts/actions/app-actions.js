@@ -18,9 +18,11 @@ export function showHelp() {
   return {type: ActionTypes.SHOW_HELP};
 }
 
+
 export function hideHelp() {
   return {type: ActionTypes.HIDE_HELP};
 }
+
 
 export function toggleHelp() {
   return (dispatch, getState) => {
@@ -31,6 +33,18 @@ export function toggleHelp() {
     }
   };
 }
+
+
+export function sortOrderChanged(sortBy, sortedDesc) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.SORT_ORDER_CHANGED,
+      sortBy, sortedDesc
+    });
+    updateRoute(getState);
+  };
+}
+
 
 //
 // Networks
@@ -82,6 +96,7 @@ export function unpinNetwork(networkId) {
 //
 // Metrics
 //
+
 
 export function selectMetric(metricId) {
   return {
@@ -214,6 +229,22 @@ export function clickForceRelayout() {
         forceRelayout: false
       });
     }, 100);
+  };
+}
+
+export function toggleGridMode(enabledArgument) {
+  return (dispatch, getState) => {
+    const enabled = (enabledArgument === undefined) ?
+      !getState().get('gridMode') :
+      enabledArgument;
+    dispatch({
+      type: ActionTypes.SET_GRID_MODE,
+      enabled
+    });
+    updateRoute(getState);
+    if (!enabled) {
+      dispatch(clickForceRelayout());
+    }
   };
 }
 
