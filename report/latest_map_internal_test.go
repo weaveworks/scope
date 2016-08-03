@@ -3,6 +3,7 @@ package report
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,30 +13,165 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
+var (
+	emptyString         = ""
+	subSlabStringA      = strings.Repeat("a", slabSize-1)
+	matchSlabStringA    = strings.Repeat("a", slabSize)
+	overSlabStringA     = strings.Repeat("a", slabSize+1)
+	subSlabStringB      = strings.Repeat("b", slabSize-1)
+	matchSlabStringB    = strings.Repeat("b", slabSize)
+	overSlabStringB     = strings.Repeat("b", slabSize+1)
+	commonPrefixString1 = strings.Repeat("b", slabSize) + "aaa"
+	commonPrefixString2 = strings.Repeat("b", slabSize) + "cc"
+	testStrings         = []string{
+		emptyString,
+		subSlabStringA,
+		matchSlabStringA, overSlabStringA,
+		subSlabStringB, matchSlabStringB, overSlabStringB,
+		commonPrefixString1, commonPrefixString2,
+	}
+)
+
+func TestSlabStringString(t *testing.T) {
+	for _, s := range testStrings {
+		var ss slabString
+		ss.fromString(s)
+		if ss.String() != s {
+			t.Errorf("%#q != %#q (expected)", ss, s)
+		}
+	}
+}
+
+func TestSlabStringBytes(t *testing.T) {
+	for _, s := range testStrings {
+		var ss slabString
+		ss.fromBytes([]byte(s))
+		if !bytes.Equal(ss.Bytes(), []byte(s)) {
+			t.Errorf("%#q != %#q (expected)", ss, s)
+		}
+	}
+}
+
+func TestSlabStringEqual(t *testing.T) {
+	for i := 0; i < len(testStrings); i++ {
+		for j := i; j < len(testStrings); j++ {
+			var a, b slabString
+			a.fromString(testStrings[i])
+			b.fromString(testStrings[j])
+			have := a.Equal(b)
+			want := bytes.Equal([]byte(testStrings[i]), []byte(testStrings[j]))
+			if have != want {
+				t.Errorf("Expected %#q == %#q to be %t", a, b, want)
+			}
+
+			// test commutativity
+			if a.Equal(b) != b.Equal(a) {
+				t.Errorf("Expected %#q == %#q to be commutative", a, b)
+			}
+
+		}
+	}
+
+}
+
+func TestSlabStringCompare(t *testing.T) {
+	for i := 0; i < len(testStrings); i++ {
+		for j := i; j < len(testStrings); j++ {
+			var a, b slabString
+			a.fromString(testStrings[i])
+			b.fromString(testStrings[j])
+			have := a.compare(b)
+			want := bytes.Compare([]byte(testStrings[i]), []byte(testStrings[j]))
+			if have != want {
+				t.Errorf("Expected Compare(%#q, %#q) to be %d (got %d)", a, b, want, have)
+			}
+
+			// test commutativity
+			if a.compare(b) != -b.compare(a) {
+				t.Errorf("Expected Compare(%#q, %#q) to be commutative", a, b)
+			}
+		}
+	}
+
+}
+
+func TestSlabStringCompareBytes(t *testing.T) {
+	for i := 0; i < len(testStrings); i++ {
+		for j := i; j < len(testStrings); j++ {
+			var a slabString
+			a.fromString(testStrings[i])
+			have := a.compareBytes([]byte(testStrings[j]))
+			want := bytes.Compare([]byte(testStrings[i]), []byte(testStrings[j]))
+			if have != want {
+				t.Errorf("Expected CompareBytes(%#q, %#q) to be %d (got %d)", a, testStrings[j], want, have)
+			}
+
+			// test commutativity
+			var b slabString
+			b.fromString(testStrings[j])
+			if a.compareBytes([]byte(testStrings[i])) != -b.compareBytes([]byte(testStrings[j])) {
+				t.Errorf("Expected Compare(%#q, %#q) to be commutative", a, b)
+			}
+		}
+	}
+
+}
+
+func TestLatestMapLookupIndex(t *testing.T) {
+	m := EmptyLatestMap
+	if i := m.lookupIndex([]byte("foo")); i != 0 {
+		t.Errorf("Unexpected index: %d", i)
+	}
+	m = m.Set("foo", time.Now(), "fooValue")
+	if i := m.lookupIndex([]byte("foo")); i != 0 {
+		t.Errorf("Unexpected index: %d", i)
+	}
+	if i := m.lookupIndex([]byte("bar")); i != 0 {
+		t.Errorf("Unexpected index: %d", i)
+	}
+	if i := m.lookupIndex([]byte("zaz")); i != 1 {
+		t.Errorf("Unexpected index: %d", i)
+	}
+
+}
+
 func TestLatestMapAdd(t *testing.T) {
 	now := time.Now()
 	have := EmptyLatestMap.
 		Set("foo", now.Add(-1), "Baz").
 		Set("foo", now, "Bar")
 	if v, ok := have.Lookup("foo"); !ok || v != "Bar" {
-		t.Errorf("v != Bar")
+		t.Errorf("v (%#q) != Bar", v)
 	}
 	if v, ok := have.Lookup("bar"); ok || v != "" {
 		t.Errorf("v != nil")
 	}
 	have.ForEach(func(k, v string) {
 		if k != "foo" || v != "Bar" {
-			t.Errorf("v != Bar")
+			t.Errorf("v (%#q) != Bar", v)
 		}
 	})
+
+	// Test commutativity
+	have = EmptyLatestMap.
+		Set("foo", now.Add(-1), "fooValue").
+		Set("bar", now, "barValue")
+	want := EmptyLatestMap.
+		Set("bar", now, "barValue").
+		Set("foo", now.Add(-1), "fooValue")
+
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf(test.Diff(want, have))
+	}
+
 }
 
 func TestLatestMapLookupEntry(t *testing.T) {
-	now := time.Now()
-	entry := LatestEntry{Timestamp: now, Value: "Bar"}
-	have := EmptyLatestMap.Set("foo", entry.Timestamp, entry.Value)
-	if got, timestamp, ok := have.LookupEntry("foo"); !ok || got != entry.Value || !timestamp.Equal(entry.Timestamp) {
-		t.Errorf("got: %#v %v != expected %#v", got, timestamp, entry)
+	haveT := time.Now()
+	haveV := "Bar"
+	have := EmptyLatestMap.Set("foo", haveT, haveV)
+	if got, timestamp, ok := have.LookupEntry("foo"); !ok || got != haveV || !timestamp.Equal(haveT) {
+		t.Errorf("got: %#v %v != expected %#v %v", got, timestamp, haveV, haveT)
 	}
 	if got, timestamp, ok := have.LookupEntry("not found"); ok {
 		t.Errorf("found unexpected entry for %q: %#v %v", "not found", got, timestamp)
