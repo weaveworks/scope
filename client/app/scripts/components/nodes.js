@@ -67,9 +67,8 @@ class Nodes extends React.Component {
   }
 
   render() {
-    const { nodes, topologyEmpty, selectedNodeId, gridMode, gridSortBy,
-      topologiesLoaded, nodesLoaded, topologies, topology,
-      gridSortedDesc, searchNodeMatches, searchQuery } = this.props;
+    const { nodes, topologyEmpty, gridMode, topologiesLoaded, nodesLoaded, topologies,
+      currentTopology } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
 
     return (
@@ -77,10 +76,11 @@ class Nodes extends React.Component {
         <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>
           <Loading itemType="topologies" show={!topologiesLoaded} />
           <Loading
-            itemType={getNodeType(topology, topologies)}
+            itemType={getNodeType(currentTopology, topologies)}
             show={topologiesLoaded && !nodesLoaded} />
         </DelayedShow>
         {this.renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
+
         {gridMode ?
           <NodesGrid {...this.state}
             nodeSize="24"
@@ -108,17 +108,19 @@ class Nodes extends React.Component {
   }
 }
 
+
 function mapStateToProps(state) {
   return {
+    currentTopology: state.get('currentTopology'),
     gridMode: state.get('gridMode'),
+    nodes: state.get('nodes').filter(node => !node.get('filtered')),
     nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),
-    topology: state.get('currentTopology'),
-    nodes: state.get('nodes').filter(node => !node.get('filtered')),
     topologyEmpty: isTopologyEmpty(state),
   };
 }
+
 
 export default connect(
   mapStateToProps
