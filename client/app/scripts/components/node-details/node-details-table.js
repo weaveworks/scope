@@ -87,7 +87,7 @@ function getMetaDataSorters(nodes) {
 }
 
 
-function getSortedNodes(nodes, columns, sortBy, sortedDesc) {
+function sortNodes(nodes, columns, sortBy, sortedDesc) {
   const sortedNodes = _.sortBy(
     nodes,
     getValueForSortBy(sortBy || getDefaultSortBy(columns, nodes)),
@@ -98,6 +98,19 @@ function getSortedNodes(nodes, columns, sortBy, sortedDesc) {
     sortedNodes.reverse();
   }
   return sortedNodes;
+}
+
+
+function getSortedNodes(nodes, columns, sortBy, sortedDesc) {
+  const getValue = getValueForSortBy(sortBy || getDefaultSortBy(columns, nodes));
+  const withAndWithoutValues = _.groupBy(nodes, (n) => {
+    const v = getValue(n);
+    return v !== null && v !== undefined;
+  });
+  const withValues = sortNodes(withAndWithoutValues.true, columns, sortBy, sortedDesc);
+  const withoutValues = sortNodes(withAndWithoutValues.false, columns, sortBy, sortedDesc);
+
+  return _.concat(withValues, withoutValues);
 }
 
 
