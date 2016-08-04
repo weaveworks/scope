@@ -540,6 +540,15 @@ export function rootReducer(state = initialState, action) {
       // apply pinned searches, filters nodes that dont match
       state = applyPinnedSearches(state);
 
+      // optimize color coding for nodes
+      const nodeRankPrefix = longestCommonPrefix(state.get('nodes')
+        .valueSeq()
+        .map(n => n.get('rank')).toJS());
+
+      state = state.update('nodes',
+        nodes => nodes.map(node => node.set('colorKey',
+          nodeRankPrefix ? node.get('rank').substr(nodeRankPrefix.length) : node.get('rank'))));
+
       // TODO move this setting of networks as toplevel node field to backend,
       // to not rely on field IDs here. should be determined by topology implementer
       state = state.update('nodes', nodes => nodes.map(node => {

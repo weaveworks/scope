@@ -76,13 +76,13 @@ class Node extends React.Component {
   }
 
   render() {
-    const { blurred, focused, highlighted, label, matches = makeMap(), networks,
-      pseudo, rank, subLabel, scaleFactor, transform, zoomScale, exportingGraph,
+    const { blurred, colorKey, focused, highlighted, label, matches = makeMap(), networks,
+      pseudo, subLabel, scaleFactor, transform, zoomScale, exportingGraph,
       showingNetworks, stack } = this.props;
     const { hovered, matched } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
-    const color = getNodeColor(rank, label, pseudo);
+    const color = getNodeColor(colorKey, label, pseudo);
     const truncate = !focused && !hovered;
     const labelTransform = focused ? `scale(${1 / zoomScale})` : '';
     const labelWidth = nodeScale(scaleFactor * 3);

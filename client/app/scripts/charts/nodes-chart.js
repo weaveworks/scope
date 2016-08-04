@@ -165,6 +165,7 @@ class NodesChart extends React.Component {
     topology.forEach((node, id) => {
       nextStateNodes = nextStateNodes.mergeIn([id], makeMap({
         id,
+        colorKey: node.get('colorKey'),
         label: node.get('label'),
         pseudo: node.get('pseudo'),
         subLabel: node.get('label_minor'),
