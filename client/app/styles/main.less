@@ -1175,6 +1175,24 @@ h2 {
   }
 }
 
+.grid-mode-selector {
+  margin-top: 8px;
+  margin-left: 8px;
+
+  &-wrapper {
+    border-color: @background-darker-secondary-color;
+  }
+
+  &-action {
+    background-color: transparent;
+    text-transform: uppercase;
+
+    &-selected, &:hover {
+      background-color: @background-darker-secondary-color;
+    }
+  }
+}
+
 .topology-option {
   &-action {
     &-selected {
@@ -1253,7 +1271,7 @@ h2 {
   transition: width 0.3s 0s @base-ease;
 
   &-wrapper {
-    flex: 0 1 25%;
+    flex: 0 1 20%;
     margin: 8px;
     text-align: right;
   }
