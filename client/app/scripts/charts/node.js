@@ -118,9 +118,9 @@ class Node extends React.Component {
 
           svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
 
-          <foreignObject x={labelOffsetX} y={labelOffsetY} width={labelWidth}
-            height="10em" transform={labelTransform}>
-            <div className="node-label-wrapper" {...mouseEvents}>
+          <foreignObject style={{pointerEvents: 'none'}} x={labelOffsetX} y={labelOffsetY}
+            width={labelWidth} height="100em" transform={labelTransform}>
+            <div className="node-label-wrapper" style={{pointerEvents: 'all'}} {...mouseEvents}>
               <div className={labelClassName}>
                 <MatchedText text={label} match={matches.get('label')} />
               </div>
