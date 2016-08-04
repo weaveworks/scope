@@ -368,6 +368,19 @@ h2 {
     }
 
     .node-label-wrapper {
+      //
+      // inline-block so wrapper is only as wide as content.
+      //
+      display: inline-block;
+
+      //
+      // - inline-block gets a different baseline depending on overflow value
+      // - this element gets its overflow value changed sometimes.
+      // - explicitly set the baseline so the text doesn't jump up and down.
+      // http://stackoverflow.com/questions/9273016
+      //
+      vertical-align: top;
+
       cursor: pointer;
     }
 
