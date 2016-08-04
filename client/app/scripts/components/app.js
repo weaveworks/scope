@@ -124,6 +124,7 @@ class App extends React.Component {
           </div>
           <Search />
           <Topologies />
+          <GridModeSelector />
         </div>
 
         <Nodes />
@@ -131,7 +132,6 @@ class App extends React.Component {
         <Sidebar classNames={gridMode ? 'sidebar-gridmode' : ''}>
           {showingMetricsSelector && !gridMode && <MetricSelector />}
           {showingNetworkSelector && !gridMode && <NetworkSelector />}
-          <GridModeSelector />
           <Status />
           <TopologyOptions />
         </Sidebar>
