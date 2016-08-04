@@ -11,27 +11,30 @@ function isNumberField(field) {
 }
 
 const CW = {
-  S: '44px',
+  S: '50px',
   M: '80px',
-  L: '140px',
-  XL: '170px',
+  L: '120px',
+  XL: '140px',
+  XXL: '170px',
 };
 
 const COLUMN_WIDTHS = {
   count: '70px',
-  docker_container_created: CW.L,
+  docker_container_created: CW.XL,
   docker_container_restart_count: CW.M,
-  docker_container_state_human: CW.XL,
+  docker_container_state_human: CW.XXL,
   docker_container_uptime: '85px',
   docker_cpu_total_usage: CW.M,
   docker_memory_usage: CW.M,
   open_files_count: CW.M,
   pid: CW.M,
-  port: '44px',
+  port: CW.S,
   ppid: CW.M,
   process_cpu_usage_percent: CW.M,
   process_memory_usage_bytes: CW.M,
   threads: CW.M,
+  // e.g. details panel > pods
+  kubernetes_ip: CW.L,
 };
 
 
