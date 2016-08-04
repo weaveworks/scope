@@ -7,6 +7,7 @@ import (
 	_ "net/http/pprof"
 	"net/url"
 	"os"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -58,7 +59,11 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	app.RegisterPipeRoutes(router, pipeRouter)
 	app.RegisterTopologyRoutes(router, collector)
 
-	router.PathPrefix("/").Name("static").Handler(http.FileServer(FS(false)))
+	uiHandler := http.FileServer(FS(false))
+	router.PathPrefix("/ui").Name("static").Handler(
+		middleware.PathRewrite(regexp.MustCompile("^/ui"), "").Wrap(
+			uiHandler))
+	router.PathPrefix("/").Name("static").Handler(uiHandler)
 
 	instrument := middleware.Instrument{
 		RouteMatcher: router,
