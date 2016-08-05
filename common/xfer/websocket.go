@@ -172,5 +172,6 @@ func IsExpectedWSCloseError(err error) bool {
 		websocket.CloseNormalClosure,
 		websocket.CloseGoingAway,
 		websocket.CloseNoStatusReceived,
+		websocket.CloseAbnormalClosure,
 	)
 }
