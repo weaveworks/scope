@@ -89,13 +89,13 @@ func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Re
 	}
 	pipe.OnClose(func() {
 		if err := cw.Close(); err != nil {
-			log.Errorf("Error closing attachment: %v", err)
+			log.Errorf("Error closing attachment to container %s: %v", containerID, err)
 			return
 		}
 	})
 	go func() {
 		if err := cw.Wait(); err != nil {
-			log.Errorf("Error waiting on exec: %v", err)
+			log.Errorf("Error waiting on attachment to container %s: %v", containerID, err)
 		}
 		pipe.Close()
 	}()
@@ -135,13 +135,13 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 	}
 	pipe.OnClose(func() {
 		if err := cw.Close(); err != nil {
-			log.Errorf("Error closing exec: %v", err)
+			log.Errorf("Error closing exec in container %s: %v", containerID, err)
 			return
 		}
 	})
 	go func() {
 		if err := cw.Wait(); err != nil {
-			log.Errorf("Error waiting on exec: %v", err)
+			log.Errorf("Error waiting on exec in container %s: %v", containerID, err)
 		}
 		pipe.Close()
 	}()
