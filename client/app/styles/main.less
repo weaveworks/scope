@@ -1313,6 +1313,28 @@ h2 {
     text-align: left;
   }
 
+  &-label {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    top: 0;
+    left: 4px;
+    z-index: 1024;
+    padding: 4px;
+    color: @text-secondary-color;
+
+    &-icon {
+      margin-right: 0.5em;
+    }
+
+    &-hint {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      transition: opacity 0.3s 0.5s @base-ease;
+      opacity: 1;
+    }
+  }
+
   &-input {
     overflow: hidden;
     background: #fff;
@@ -1330,7 +1352,7 @@ h2 {
       font-size: 0.8rem;
       line-height: 150%;
       position: relative;
-      padding: 1px 4px 1px 0.75em;
+      padding: 1px 4px 1px 1.5em;
       border: none;
       border-radius: 0;
       background: transparent;
@@ -1341,36 +1363,11 @@ h2 {
         outline: none;
       }
     }
-
-    &-icon {
-      position: relative;
-      width: 1.285em;
-      text-align: center;
-      color: @text-secondary-color;
-      position: relative;
-      top: 2px;
-      left: 4px;
-      padding: 2px;
-    }
-
-    &-label {
-      user-select: none;
-      display: inline-block;
-      padding: 2px 0.75em;
-      font-size: 0.8rem;
-      position: absolute;
-      text-align: left;
-      pointer-events: none;
-      color: @text-secondary-color;
-      text-transform: uppercase;
-      transition: opacity 0.3s 0.5s @base-ease;
-      opacity: 1;
-    }
   }
 
-  &-focused &-input-label,
-  &-pinned &-input-label,
-  &-filled &-input-label {
+  &-focused &-label-hint,
+  &-pinned &-label-hint,
+  &-filled &-label-hint {
     transition: opacity 0.1s 0s @base-ease;
     opacity: 0;
   }
@@ -1404,11 +1401,15 @@ h2 {
 .search-item {
   background-color: fade(@weave-blue, 20%);
   border-radius: @border-radius / 2;
-  margin: 1px 0 1px 8px;
+  margin: 1px 0 1px 1.5em;
   display: inline-block;
 
   & + .search-item {
     margin-left: 4px;
+  }
+
+  & + .search-input-field {
+    padding-left: 4px;
   }
 
   &-label {
