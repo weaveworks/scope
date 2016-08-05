@@ -66,7 +66,7 @@ func handlePipeWs(pr PipeRouter, end End) CtxHandlerFunc {
 		defer conn.Close()
 
 		if err := pipe.CopyToWebsocket(endIO, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
-			log.Printf("Error copying to pipe %s (%d) websocket: %v", id, end, err)
+			log.Errorf("Error copying to pipe %s (%d) websocket: %v", id, end, err)
 		}
 	}
 }
