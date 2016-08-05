@@ -92,7 +92,6 @@ func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Re
 			log.Errorf("Error closing attachment: %v", err)
 			return
 		}
-		log.Infof("Attachment to container %s closed.", containerID)
 	})
 	go func() {
 		if err := cw.Wait(); err != nil {
@@ -139,7 +138,6 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 			log.Errorf("Error closing exec: %v", err)
 			return
 		}
-		log.Infof("Exec on container %s closed.", containerID)
 	})
 	go func() {
 		if err := cw.Wait(); err != nil {
