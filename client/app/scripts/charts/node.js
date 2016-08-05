@@ -105,18 +105,22 @@ class Node extends React.Component {
     const useSvgLabels = exportingGraph;
     const size = nodeScale(scaleFactor);
     const networkOffset = focused ? nodeScale(scaleFactor * 0.67) : nodeScale(0.67);
+    const mouseEvents = {
+      onClick: this.handleMouseClick,
+      onMouseEnter: this.handleMouseEnter,
+      onMouseLeave: this.handleMouseLeave,
+    };
 
     return (
-      <g className={nodeClassName} transform={transform}
-        onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+      <g className={nodeClassName} transform={transform}>
 
         {useSvgLabels ?
 
           svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
 
-          <foreignObject x={labelOffsetX} y={labelOffsetY} width={labelWidth}
-            height="10em" transform={labelTransform}>
-            <div className="node-label-wrapper" onClick={this.handleMouseClick}>
+          <foreignObject style={{pointerEvents: 'none'}} x={labelOffsetX} y={labelOffsetY}
+            width={labelWidth} height="100em" transform={labelTransform}>
+            <div className="node-label-wrapper" style={{pointerEvents: 'all'}} {...mouseEvents}>
               <div className={labelClassName}>
                 <MatchedText text={label} match={matches.get('label')} />
               </div>
@@ -127,7 +131,7 @@ class Node extends React.Component {
             </div>
           </foreignObject>}
 
-        <g onClick={this.handleMouseClick}>
+        <g {...mouseEvents}>
           <NodeShapeType
             size={size}
             color={color}
