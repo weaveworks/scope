@@ -1,3 +1,9 @@
+## Release 0.16.2
+
+Bug fixes:
+- Scope fails to launch on fresh Docker for Mac installs
+	[#1755](https://github.com/weaveworks/scope/issues/1755)
+
 ## Release 0.16.1
 
 This is a bugfix release. In addition, the security of the Scope probe can be hardened by disabling
