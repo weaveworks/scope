@@ -52,7 +52,8 @@ func handlePipeWs(pr PipeRouter, end End) CtxHandlerFunc {
 		id := mux.Vars(r)["pipeID"]
 		pipe, endIO, err := pr.Get(ctx, id, end)
 		if err != nil {
-			log.Errorf("Error getting pipe %s: %v", id, err)
+			// this usually means the pipe has been closed
+			log.Debugf("Error getting pipe %s: %v", id, err)
 			http.NotFound(w, r)
 			return
 		}
