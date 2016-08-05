@@ -13,6 +13,7 @@ const log = debug('scope:web-api-utils');
 
 const reconnectTimerInterval = 5000;
 const updateFrequency = '5s';
+const FIRST_RENDER_TOO_LONG_THRESHOLD = 100; // ms
 
 let socket;
 let reconnectTimer = 0;
@@ -21,6 +22,8 @@ let currentOptions = null;
 let topologyTimer = 0;
 let apiDetailsTimer = 0;
 let controlErrorTimer = 0;
+let createWebsocketAt = 0;
+let firstMessageOnWebsocketAt = 0;
 
 function buildOptionsQuery(options) {
   if (options) {
@@ -66,6 +69,10 @@ function createWebsocket(topologyUrl, optionsQuery, dispatch) {
     // right away
   }
 
+  // profiling
+  createWebsocketAt = new Date();
+  firstMessageOnWebsocketAt = 0;
+
   socket = new WebSocket(`${wsUrl}${topologyUrl}/ws?t=${updateFrequency}&${optionsQuery}`);
 
   socket.onopen = () => {
@@ -91,6 +98,16 @@ function createWebsocket(topologyUrl, optionsQuery, dispatch) {
   socket.onmessage = (event) => {
     const msg = JSON.parse(event.data);
     dispatch(receiveNodesDelta(msg));
+
+    // profiling (receiveNodesDelta triggers synchronous render)
+    if (!firstMessageOnWebsocketAt) {
+      firstMessageOnWebsocketAt = new Date();
+      const timeToFirstMessage = firstMessageOnWebsocketAt - createWebsocketAt;
+      if (timeToFirstMessage > FIRST_RENDER_TOO_LONG_THRESHOLD) {
+        log('Time (ms) to first nodes render after websocket was created',
+          firstMessageOnWebsocketAt - createWebsocketAt);
+      }
+    }
   };
 }
 
