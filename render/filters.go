@@ -219,7 +219,7 @@ func IsApplication(n report.Node) bool {
 	}
 	imageName, _ := n.Latest.Lookup(docker.ImageName)
 	imagePrefix := strings.SplitN(imageName, ":", 2)[0] // :(
-	if _, ok := systemImagePrefixes[imagePrefix]; ok {
+	if _, ok := systemImagePrefixes[imagePrefix]; ok || kubernetes.IsPauseImageName(imagePrefix) {
 		return false
 	}
 	roleLabel, _ := n.Latest.Lookup(docker.LabelPrefix + "works.weave.role")
@@ -268,15 +268,13 @@ var systemContainerNames = map[string]struct{}{
 }
 
 var systemImagePrefixes = map[string]struct{}{
-	"swarm":                               {},
-	"weaveworks/scope":                    {},
-	"weaveworks/weavedns":                 {},
-	"weaveworks/weave":                    {},
-	"weaveworks/weaveproxy":               {},
-	"weaveworks/weaveexec":                {},
-	"amazon/amazon-ecs-agent":             {},
-	"beta.gcr.io/google_containers/pause": {},
-	"gcr.io/google_containers/pause":      {},
-	"openshift/origin-pod":                {},
-	"docker.io/openshift/origin-pod":      {},
+	"swarm":                          {},
+	"weaveworks/scope":               {},
+	"weaveworks/weavedns":            {},
+	"weaveworks/weave":               {},
+	"weaveworks/weaveproxy":          {},
+	"weaveworks/weaveexec":           {},
+	"amazon/amazon-ecs-agent":        {},
+	"openshift/origin-pod":           {},
+	"docker.io/openshift/origin-pod": {},
 }
