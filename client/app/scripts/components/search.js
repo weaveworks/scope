@@ -116,16 +116,18 @@ class Search extends React.Component {
       <div className="search-wrapper">
         <div className={classNames} title={title}>
           <div className="search-input">
-            <i className="fa fa-search search-input-icon"></i>
-            <label className="search-input-label" htmlFor={inputId}>
-              Search
-            </label>
             {showPinnedSearches && pinnedSearches.toIndexedSeq()
               .map(query => <SearchItem query={query} key={query} />)}
             <input className="search-input-field" type="text" id={inputId}
               value={value} onChange={this.handleChange}
               onFocus={this.handleFocus} onBlur={this.handleBlur}
               disabled={disabled} ref="queryInput" />
+          </div>
+          <div className="search-label">
+            <i className="fa fa-search search-label-icon"></i>
+            <label className="search-label-hint" htmlFor={inputId}>
+              Search
+            </label>
           </div>
           {!showPinnedSearches && <div className="search-hint">
             {getHint(nodes)}
