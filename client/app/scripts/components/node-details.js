@@ -158,7 +158,9 @@ export class NodeDetails extends React.Component {
               <MatchedText text={details.label} match={nodeMatches.get('label')} />
             </h2>
             <div className="node-details-header-relatives">
-              {details.parents && <NodeDetailsRelatives relatives={details.parents} />}
+              {details.parents && <NodeDetailsRelatives
+                matches={nodeMatches.get('parents')}
+                relatives={details.parents} />}
             </div>
           </div>
         </div>

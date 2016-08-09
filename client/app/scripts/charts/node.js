@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
-import { Map as makeMap } from 'immutable';
+import { Map as makeMap, List as makeList } from 'immutable';
 
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
 import { getNodeColor } from '../utils/color-utils';
@@ -110,6 +110,8 @@ class Node extends React.Component {
       onMouseEnter: this.handleMouseEnter,
       onMouseLeave: this.handleMouseLeave,
     };
+    const matchedNodeDetails = matches.get('metadata', makeList())
+      .concat(matches.get('parents', makeList()));
 
     return (
       <g className={nodeClassName} transform={transform}>
@@ -127,7 +129,7 @@ class Node extends React.Component {
               <div className={subLabelClassName}>
                 <MatchedText text={subLabel} match={matches.get('sublabel')} />
               </div>
-              {!blurred && <MatchedResults matches={matches.get('metadata')} />}
+              {!blurred && <MatchedResults matches={matchedNodeDetails} />}
             </div>
           </foreignObject>}
 

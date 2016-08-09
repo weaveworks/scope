@@ -139,6 +139,15 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
         });
       }
 
+      // parents and relatives
+      if (node.get('parents')) {
+        node.get('parents').forEach(parent => {
+          const keyPath = [nodeId, 'parents', parent.get('id')];
+          nodeMatches = findNodeMatch(nodeMatches, keyPath, parent.get('label'),
+            query, prefix, parent.get('topologyId'));
+        });
+      }
+
       // tables (envvars and labels)
       const tables = node.get('tables');
       if (tables) {
