@@ -142,6 +142,13 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 	}
 }
 
+// IsPauseImageName indicates whether an image name corresponds to a
+// kubernetes pause container image.
+func IsPauseImageName(imageName string) bool {
+	return strings.Contains(imageName, "google_containers/pause")
+
+}
+
 func isPauseContainer(n report.Node, rpt report.Report) bool {
 	containerImageIDs, ok := n.Parents.Lookup(report.ContainerImage)
 	if !ok {
@@ -156,9 +163,7 @@ func isPauseContainer(n report.Node, rpt report.Report) bool {
 		if !ok {
 			continue
 		}
-		if docker.ImageNameWithoutVersion(imageName) == "google_containers/pause" {
-			return true
-		}
+		return IsPauseImageName(imageName)
 	}
 	return false
 }
