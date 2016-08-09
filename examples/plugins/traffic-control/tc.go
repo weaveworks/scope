@@ -46,6 +46,67 @@ func DoTrafficControl(pid int, delay uint32) error {
 	return nil
 }
 
+func getLatency(pid int) (string, error) {
+	output := "-"
+	var err error
+	if output, err = getStatus(pid); err != nil {
+		return "-", err
+	} else if output == "" {
+		return "-", fmt.Errorf("Error: output is empty")
+	}
+	outputSplited := split(output)
+	for i, s := range outputSplited {
+		if s == "delay" {
+			if i < len(outputSplited)-1 {
+				output = outputSplited[i+1]
+			} else {
+				output = "-"
+			}
+			return output, nil
+		}
+	}
+	return output, fmt.Errorf("delay not found")
+}
+
+func getPktLoss(pid int) (string, error) {
+	output := "-"
+	var err error
+	if output, err = getStatus(pid); err != nil {
+		return "-", err
+	} else if output == "" {
+		return "-", fmt.Errorf("Error: output is empty")
+	}
+	outputSplited := split(output)
+	for i, s := range outputSplited {
+		if s == "loss" {
+			if i < len(outputSplited)-1 {
+				output = outputSplited[i+1]
+			} else {
+				output = "-"
+			}
+			return output, nil
+		}
+	}
+	return output, fmt.Errorf("delay not found")
+}
+
+func getStatus(pid int) (string, error) {
+	cmd := split("tc qdisc show dev eth0")
+	netNS := fmt.Sprintf("/proc/%d/ns/net", pid)
+	var output string
+	err := ns.WithNetNSPath(netNS, func(hostNS ns.NetNS) error {
+		if cmdOut, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput(); err != nil {
+			log.Error(string(cmdOut))
+			output = "-"
+			return fmt.Errorf("failed to execute command: tc qdisc show dev eth0: %v", err)
+		} else {
+			output = string(cmdOut)
+		}
+		return nil
+	})
+	return output, err
+}
+
 func split(cmd string) []string {
 	return strings.Split(cmd, " ")
 }

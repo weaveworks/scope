@@ -13,12 +13,23 @@ type report struct {
 }
 
 type topology struct {
-	Nodes    map[string]node    `json:"nodes"`
-	Controls map[string]control `json:"controls"`
+	Nodes             map[string]node             `json:"nodes"`
+	Controls          map[string]control          `json:"controls"`
+	MetadataTemplates map[string]metadataTemplate `json:"metadata_templates,omitempty"`
+}
+
+type metadataTemplate struct {
+	ID       string  `json:"id"`
+	Label    string  `json:"label,omitempty"`    // Human-readable descriptor for this row
+	Truncate int     `json:"truncate,omitempty"` // If > 0, truncate the value to this length.
+	Datatype string  `json:"dataType,omitempty"`
+	Priority float64 `json:"priority,omitempty"`
+	From     string  `json:"from,omitempty"` // Defines how to get the value from a report node
 }
 
 type node struct {
 	LatestControls map[string]controlEntry `json:"latestControls,omitempty"`
+	Latest         map[string]stringEntry  `json:"latest,omitempty"`
 }
 
 type controlEntry struct {
@@ -35,6 +46,11 @@ type control struct {
 	Human string `json:"human"`
 	Icon  string `json:"icon"`
 	Rank  int    `json:"rank"`
+}
+
+type stringEntry struct {
+	Timestamp time.Time `json:"timestamp"`
+	Value     string    `json:"value"`
 }
 
 type pluginSpec struct {
@@ -58,8 +74,9 @@ func NewReporter(store *Store) *Reporter {
 func (r *Reporter) RawReport() ([]byte, error) {
 	rpt := &report{
 		Container: topology{
-			Nodes:    r.getContainerNodes(),
-			Controls: getTrafficControls(),
+			Nodes:             r.getContainerNodes(),
+			Controls:          getTrafficControls(),
+			MetadataTemplates: getMetadataTemplate(),
 		},
 		Plugins: []pluginSpec{
 			{
@@ -120,12 +137,32 @@ func (r *Reporter) getContainerNodes() map[string]node {
 			fallthrough
 		case Running:
 			nodeID := containerIDToNodeID(containerID)
+			latency, _ := getLatency(container.PID)
 			nodes[nodeID] = node{
 				LatestControls: getTrafficNodeControls(timestamp, dead),
+				Latest: map[string]stringEntry{
+					"traffic-control-latency": {
+						Timestamp: timestamp,
+						Value:     latency,
+					},
+				},
 			}
 		}
 	})
 	return nodes
+}
+
+func getMetadataTemplate() map[string]metadataTemplate {
+	return map[string]metadataTemplate{
+		"traffic-control-latency": metadataTemplate{
+			ID:       "traffic-control-latency",
+			Label:    "Latency",
+			Truncate: 0,
+			Datatype: "",
+			Priority: 13.5,
+			From:     "latest",
+		},
+	}
 }
 
 func getTrafficNodeControls(timestamp time.Time, dead bool) map[string]controlEntry {
