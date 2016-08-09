@@ -19,11 +19,11 @@ var (
 
 	randomIP             = "3.4.5.6"
 	randomPort           = "56789"
-	randomEndpointNodeID = report.MakeEndpointNodeID(serverHostID, randomIP, randomPort)
+	randomEndpointNodeID = report.MakeEndpointNodeID(serverHostID, "", randomIP, randomPort)
 
 	serverIP             = "192.168.1.1"
 	serverPort           = "80"
-	serverEndpointNodeID = report.MakeEndpointNodeID(serverHostID, serverIP, serverPort)
+	serverEndpointNodeID = report.MakeEndpointNodeID(serverHostID, "", serverIP, serverPort)
 
 	container1ID     = "11b2c3d4e5"
 	container1IP     = "192.168.0.1"
@@ -31,11 +31,11 @@ var (
 	container1NodeID = report.MakeContainerNodeID(container1ID)
 
 	container1Port           = "16782"
-	container1EndpointNodeID = report.MakeEndpointNodeID(serverHostID, container1IP, container1Port)
+	container1EndpointNodeID = report.MakeEndpointNodeID(serverHostID, "", container1IP, container1Port)
 
 	duplicatedIP             = "192.168.0.2"
 	duplicatedPort           = "80"
-	duplicatedEndpointNodeID = report.MakeEndpointNodeID(serverHostID, duplicatedIP, duplicatedPort)
+	duplicatedEndpointNodeID = report.MakeEndpointNodeID(serverHostID, "", duplicatedIP, duplicatedPort)
 
 	container2ID     = "21b2c3d4e5"
 	container2IP     = duplicatedIP

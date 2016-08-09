@@ -52,9 +52,9 @@ func (n natMapper) applyNAT(rpt report.Report, scope string) {
 	n.flowWalker.walkFlows(func(f flow) {
 		var (
 			mapping          = toMapping(f)
-			realEndpointID   = report.MakeEndpointNodeID(scope, mapping.originalIP, strconv.Itoa(mapping.originalPort))
+			realEndpointID   = report.MakeEndpointNodeID(scope, "", mapping.originalIP, strconv.Itoa(mapping.originalPort))
 			copyEndpointPort = strconv.Itoa(mapping.rewrittenPort)
-			copyEndpointID   = report.MakeEndpointNodeID(scope, mapping.rewrittenIP, copyEndpointPort)
+			copyEndpointID   = report.MakeEndpointNodeID(scope, "", mapping.rewrittenIP, copyEndpointPort)
 			node, ok         = rpt.Endpoint.Nodes[realEndpointID]
 		)
 		if !ok {

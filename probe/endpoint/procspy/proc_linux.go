@@ -126,7 +126,7 @@ func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process
 }
 
 // walkNamespace does the work of walk for a single namespace
-func (w pidWalker) walkNamespace(buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process) error {
+func (w pidWalker) walkNamespace(namespaceID uint64, buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process) error {
 
 	if found, err := readProcessConnections(buf, namespaceProcs); err != nil || !found {
 		return err
@@ -181,8 +181,9 @@ func (w pidWalker) walkNamespace(buf *bytes.Buffer, sockets map[uint64]*Proc, na
 			// garbage
 			if proc == nil {
 				proc = &Proc{
-					PID:  uint(p.PID),
-					Name: p.Name,
+					PID:            uint(p.PID),
+					Name:           p.Name,
+					NetNamespaceID: namespaceID,
 				}
 			}
 
@@ -225,10 +226,10 @@ func (w pidWalker) walk(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 		namespaces[namespaceID] = append(namespaces[namespaceID], &p)
 	})
 
-	for _, procs := range namespaces {
+	for namespaceID, procs := range namespaces {
 		select {
 		case <-w.tickc:
-			w.walkNamespace(buf, sockets, procs)
+			w.walkNamespace(namespaceID, buf, sockets, procs)
 		case <-w.stopc:
 			break // abort
 		}

@@ -25,36 +25,45 @@ const (
 )
 
 // MakeEndpointNodeID produces an endpoint node ID from its composite parts.
-func MakeEndpointNodeID(hostID, address, port string) string {
-	return MakeAddressNodeID(hostID, address) + ScopeDelim + port
+func MakeEndpointNodeID(hostID, namespaceID, address, port string) string {
+	return makeAddressID(hostID, namespaceID, address) + ScopeDelim + port
 }
 
 // MakeAddressNodeID produces an address node ID from its composite parts.
 func MakeAddressNodeID(hostID, address string) string {
+	return makeAddressID(hostID, "", address)
+}
+
+func makeAddressID(hostID, namespaceID, address string) string {
 	var scope string
 
-	// Loopback addresses and addresses explicitly marked as
-	// local get scoped by hostID
+	// Loopback addresses and addresses explicitly marked as local get
+	// scoped by hostID
+	// Loopback addresses are also scoped by the networking
+	// namespace if available, since they can clash.
 	addressIP := net.ParseIP(address)
 	if addressIP != nil && LocalNetworks.Contains(addressIP) {
 		scope = hostID
 	} else if isLoopback(address) {
 		scope = hostID
+		if namespaceID != "" {
+			scope += "-" + namespaceID
+		}
 	}
 
 	return scope + ScopeDelim + address
 }
 
 // MakeScopedEndpointNodeID is like MakeEndpointNodeID, but it always
-// prefixes the ID witha scope.
-func MakeScopedEndpointNodeID(hostID, address, port string) string {
-	return hostID + ScopeDelim + address + ScopeDelim + port
+// prefixes the ID with a scope.
+func MakeScopedEndpointNodeID(scope, address, port string) string {
+	return scope + ScopeDelim + address + ScopeDelim + port
 }
 
 // MakeScopedAddressNodeID is like MakeAddressNodeID, but it always
 // prefixes the ID witha scope.
-func MakeScopedAddressNodeID(hostID, address string) string {
-	return hostID + ScopeDelim + address
+func MakeScopedAddressNodeID(scope, address string) string {
+	return scope + ScopeDelim + address
 }
 
 // MakeProcessNodeID produces a process node ID from its composite parts.
@@ -140,14 +149,14 @@ func ParseNodeID(nodeID string) (hostID string, remainder string, ok bool) {
 	return fields[0], fields[1], true
 }
 
-// ParseEndpointNodeID produces the host ID, address, and port and remainder
-// (typically an address) from an endpoint node ID. Note that hostID may be
-// blank.
-func ParseEndpointNodeID(endpointNodeID string) (hostID, address, port string, ok bool) {
+// ParseEndpointNodeID produces the scope, address, and port and remainder.
+// Note that hostID may be blank.
+func ParseEndpointNodeID(endpointNodeID string) (scope, address, port string, ok bool) {
 	fields := strings.SplitN(endpointNodeID, ScopeDelim, 3)
 	if len(fields) != 3 {
 		return "", "", "", false
 	}
+
 	return fields[0], fields[1], fields[2], true
 }
 

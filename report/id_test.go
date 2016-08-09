@@ -18,12 +18,12 @@ var (
 	unknownHostID    = ""              // by definition, we don't know it
 	unknownAddress   = "172.16.93.112" // will be a pseudonode, no corresponding host
 
-	client54001EndpointNodeID = report.MakeEndpointNodeID(clientHostID, clientAddress, "54001") // i.e. curl
-	client54002EndpointNodeID = report.MakeEndpointNodeID(clientHostID, clientAddress, "54002") // also curl
-	server80EndpointNodeID    = report.MakeEndpointNodeID(serverHostID, serverAddress, "80")    // i.e. apache
-	unknown1EndpointNodeID    = report.MakeEndpointNodeID(unknownHostID, unknownAddress, "10001")
-	unknown2EndpointNodeID    = report.MakeEndpointNodeID(unknownHostID, unknownAddress, "10002")
-	unknown3EndpointNodeID    = report.MakeEndpointNodeID(unknownHostID, unknownAddress, "10003")
+	client54001EndpointNodeID = report.MakeEndpointNodeID(clientHostID, "", clientAddress, "54001") // i.e. curl
+	client54002EndpointNodeID = report.MakeEndpointNodeID(clientHostID, "", clientAddress, "54002") // also curl
+	server80EndpointNodeID    = report.MakeEndpointNodeID(serverHostID, "", serverAddress, "80")    // i.e. apache
+	unknown1EndpointNodeID    = report.MakeEndpointNodeID(unknownHostID, "", unknownAddress, "10001")
+	unknown2EndpointNodeID    = report.MakeEndpointNodeID(unknownHostID, "", unknownAddress, "10002")
+	unknown3EndpointNodeID    = report.MakeEndpointNodeID(unknownHostID, "", unknownAddress, "10003")
 
 	clientAddressNodeID  = report.MakeAddressNodeID(clientHostID, clientAddress)
 	serverAddressNodeID  = report.MakeAddressNodeID(serverHostID, serverAddress)
@@ -50,7 +50,8 @@ func TestEndpointNodeID(t *testing.T) {
 	}
 
 	for input, want := range map[string]struct{ name, address, port string }{
-		report.MakeEndpointNodeID("host.com", "1.2.3.4", "c"): {"", "1.2.3.4", "c"},
+		report.MakeEndpointNodeID("host.com", "namespaceid", "127.0.0.1", "c"): {"host.com-namespaceid", "127.0.0.1", "c"},
+		report.MakeEndpointNodeID("host.com", "", "1.2.3.4", "c"):              {"", "1.2.3.4", "c"},
 		"a;b;c": {"a", "b", "c"},
 	} {
 		haveName, haveAddress, havePort, ok := report.ParseEndpointNodeID(input)

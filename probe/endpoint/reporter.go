@@ -132,7 +132,7 @@ func (r *Reporter) Report() (report.Report, error) {
 			}
 
 			seenTuples[tuple.key()] = tuple
-			r.addConnection(&rpt, tuple, extraNodeInfo, extraNodeInfo)
+			r.addConnection(&rpt, tuple, "", extraNodeInfo, extraNodeInfo)
 		})
 	}
 
@@ -143,7 +143,8 @@ func (r *Reporter) Report() (report.Report, error) {
 		}
 		for conn := conns.Next(); conn != nil; conn = conns.Next() {
 			var (
-				tuple = fourTuple{
+				namespaceID string
+				tuple       = fourTuple{
 					conn.LocalAddress.String(),
 					conn.RemoteAddress.String(),
 					conn.LocalPort,
@@ -157,6 +158,10 @@ func (r *Reporter) Report() (report.Report, error) {
 				fromNodeInfo[report.HostNodeID] = hostNodeID
 			}
 
+			if conn.Proc.NetNamespaceID > 0 {
+				namespaceID = strconv.FormatUint(conn.Proc.NetNamespaceID, 10)
+			}
+
 			// If we've already seen this connection, we should know the direction
 			// (or have already figured it out), so we normalize and use the
 			// canonical direction. Otherwise, we can use a port-heuristic to guess
@@ -166,7 +171,7 @@ func (r *Reporter) Report() (report.Report, error) {
 				tuple.reverse()
 				toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
 			}
-			r.addConnection(&rpt, tuple, fromNodeInfo, toNodeInfo)
+			r.addConnection(&rpt, tuple, namespaceID, fromNodeInfo, toNodeInfo)
 		}
 	}
 
@@ -174,10 +179,10 @@ func (r *Reporter) Report() (report.Report, error) {
 	return rpt, nil
 }
 
-func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, extraFromNode, extraToNode map[string]string) {
+func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, namespaceID string, extraFromNode, extraToNode map[string]string) {
 	var (
-		fromEndpointNodeID = report.MakeEndpointNodeID(r.hostID, t.fromAddr, strconv.Itoa(int(t.fromPort)))
-		toEndpointNodeID   = report.MakeEndpointNodeID(r.hostID, t.toAddr, strconv.Itoa(int(t.toPort)))
+		fromEndpointNodeID = report.MakeEndpointNodeID(r.hostID, namespaceID, t.fromAddr, strconv.Itoa(int(t.fromPort)))
+		toEndpointNodeID   = report.MakeEndpointNodeID(r.hostID, namespaceID, t.toAddr, strconv.Itoa(int(t.toPort)))
 
 		fromNode = report.MakeNodeWith(fromEndpointNodeID, map[string]string{
 			Addr: t.fromAddr,

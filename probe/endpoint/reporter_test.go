@@ -91,8 +91,8 @@ func TestSpyWithProcesses(t *testing.T) {
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
 
 	var (
-		scopedLocal  = report.MakeEndpointNodeID(nodeID, fixLocalAddress.String(), strconv.Itoa(int(fixLocalPort)))
-		scopedRemote = report.MakeEndpointNodeID(nodeID, fixRemoteAddress.String(), strconv.Itoa(int(fixRemotePort)))
+		scopedLocal  = report.MakeEndpointNodeID(nodeID, "", fixLocalAddress.String(), strconv.Itoa(int(fixLocalPort)))
+		scopedRemote = report.MakeEndpointNodeID(nodeID, "", fixRemoteAddress.String(), strconv.Itoa(int(fixRemotePort)))
 	)
 
 	if want, have := 1, len(r.Endpoint.Nodes[scopedRemote].Adjacency); want != have {
