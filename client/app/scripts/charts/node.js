@@ -83,18 +83,18 @@ class Node extends React.Component {
 
   render() {
     const { blurred, focused, highlighted, label, matches = makeMap(), networks,
-      pseudo, rank, subLabel, scaleFactor, transform, zoomScale, exportingGraph,
+      pseudo, rank, subLabel, scaleFactor, transform, exportingGraph,
       showingNetworks, stack } = this.props;
     const { hovered, matched } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
-    const labelTransform = focused ? `scale(${1 / zoomScale})` : '';
     const labelWidth = nodeScale(scaleFactor * 3);
     const labelOffsetX = -labelWidth / 2;
     const labelDy = (showingNetworks && networks) ? 0.75 : 0.60;
-    const labelOffsetY = focused ? nodeScale(labelDy) : nodeScale(labelDy * scaleFactor);
+    const labelOffsetY = nodeScale(labelDy * scaleFactor);
+    const networkOffset = nodeScale(scaleFactor * 0.67);
 
     const nodeClassName = classnames('node', {
       highlighted,
@@ -111,7 +111,6 @@ class Node extends React.Component {
     const useSvgLabels = exportingGraph;
     const size = nodeScale(scaleFactor);
     const fontSize = labelFontSize(size);
-    const networkOffset = focused ? nodeScale(scaleFactor * 0.67) : nodeScale(0.67);
     const mouseEvents = {
       onClick: this.handleMouseClick,
       onMouseEnter: this.handleMouseEnter,
@@ -126,9 +125,9 @@ class Node extends React.Component {
           svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
 
           <foreignObject style={{pointerEvents: 'none'}} x={labelOffsetX} y={labelOffsetY}
-            width={labelWidth} height="100em" transform={labelTransform}>
+            width={labelWidth} height="100em">
             <div className="node-label-wrapper"
-              style={{pointerEvents: 'all', fontSize, maxWidth: labelWidth}}
+              style={{pointerEvents: 'all', fontSize, lineHeight: '150%', maxWidth: labelWidth}}
               {...mouseEvents}>
               <div className={labelClassName}>
                 <MatchedText text={label} match={matches.get('label')} />

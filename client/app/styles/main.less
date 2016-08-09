@@ -546,7 +546,7 @@ h2 {
   text-align: center;
 
   &-match {
-    font-size: 0.8rem;
+    font-size: 0.8em;
 
     &-wrapper {
       display: inline-block;
@@ -563,7 +563,7 @@ h2 {
 
   &-more {
     text-transform: uppercase;
-    font-size: 0.7rem;
+    font-size: 0.7em;
     color: darken(@weave-blue, 10%);
     margin-top: -2px;
   }
@@ -1161,6 +1161,7 @@ h2 {
   }
 
   &-wrapper {
+    pointer-events: all;
     border-radius: @border-radius;
     border: 1px solid @background-darker-color;
     display: inline-block;
@@ -1274,6 +1275,7 @@ h2 {
   font-size: .7rem;
   border-radius: 8px;
   border: 1px solid transparent;
+  pointer-events: none;
 }
 
 .sidebar-gridmode {
