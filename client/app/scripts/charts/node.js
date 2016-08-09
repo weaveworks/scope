@@ -62,6 +62,7 @@ class Node extends React.Component {
     this.handleMouseClick = this.handleMouseClick.bind(this);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
+    this.saveShapeRef = this.saveShapeRef.bind(this);
     this.state = {
       hovered: false,
       matched: false
@@ -139,7 +140,7 @@ class Node extends React.Component {
             </div>
           </foreignObject>}
 
-        <g {...mouseEvents}>
+        <g {...mouseEvents} ref={this.saveShapeRef}>
           <NodeShapeType
             size={size}
             color={color}
@@ -152,10 +153,14 @@ class Node extends React.Component {
     );
   }
 
+  saveShapeRef(ref) {
+    this.shapeRef = ref;
+  }
+
   handleMouseClick(ev) {
     ev.stopPropagation();
     this.props.clickNode(this.props.id, this.props.label,
-      ReactDOM.findDOMNode(this).getBoundingClientRect());
+      ReactDOM.findDOMNode(this.shapeRef).getBoundingClientRect());
   }
 
   handleMouseEnter() {
