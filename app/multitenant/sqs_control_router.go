@@ -333,7 +333,7 @@ func (pw *probeWorker) loop() {
 			return err
 		})
 		if err != nil {
-			log.Errorf("Error recieving message: %v", err)
+			log.Errorf("Error receiving message: %v", err)
 			continue
 		}
 
