@@ -16,6 +16,12 @@ import NodeShapeHex from './node-shape-hex';
 import NodeShapeHeptagon from './node-shape-heptagon';
 import NodeShapeCloud from './node-shape-cloud';
 import NodeNetworksOverlay from './node-networks-overlay';
+import { MIN_NODE_LABEL_SIZE, BASE_NODE_LABEL_SIZE, BASE_NODE_SIZE } from '../constants/styles';
+
+
+function labelFontSize(nodeSize) {
+  return Math.max(MIN_NODE_LABEL_SIZE, (BASE_NODE_LABEL_SIZE / BASE_NODE_SIZE) * nodeSize);
+}
 
 function stackedShape(Shape) {
   const factory = React.createFactory(NodeShapeStack);
@@ -104,6 +110,7 @@ class Node extends React.Component {
     const NodeShapeType = getNodeShape(this.props);
     const useSvgLabels = exportingGraph;
     const size = nodeScale(scaleFactor);
+    const fontSize = labelFontSize(size);
     const networkOffset = focused ? nodeScale(scaleFactor * 0.67) : nodeScale(0.67);
     const mouseEvents = {
       onClick: this.handleMouseClick,
@@ -120,7 +127,9 @@ class Node extends React.Component {
 
           <foreignObject style={{pointerEvents: 'none'}} x={labelOffsetX} y={labelOffsetY}
             width={labelWidth} height="100em" transform={labelTransform}>
-            <div className="node-label-wrapper" style={{pointerEvents: 'all'}} {...mouseEvents}>
+            <div className="node-label-wrapper"
+              style={{pointerEvents: 'all', fontSize}}
+              {...mouseEvents}>
               <div className={labelClassName}>
                 <MatchedText text={label} match={matches.get('label')} />
               </div>
