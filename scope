@@ -39,18 +39,18 @@ check_docker_access() {
     # Extract socket path
     DOCKER_SOCK_FILE=""
     if [ -z "${DOCKER_HOST+x}" ]; then
-	DOCKER_SOCK_FILE="/var/run/docker.sock"
+        DOCKER_SOCK_FILE="/var/run/docker.sock"
     else
-	WITHOUT_PREFIX="${DOCKER_HOST#unix://}"
-	if [ "$WITHOUT_PREFIX" != "$DOCKER_HOST" ]; then
-	    DOCKER_SOCK_FILE="$WITHOUT_PREFIX"
-	fi
+        WITHOUT_PREFIX="${DOCKER_HOST#unix://}"
+        if [ "$WITHOUT_PREFIX" != "$DOCKER_HOST" ]; then
+            DOCKER_SOCK_FILE="$WITHOUT_PREFIX"
+        fi
     fi
 
     if [ \( -n "$DOCKER_SOCK_FILE" \) -a \( ! -w "$DOCKER_SOCK_FILE" \) ]; then
-	echo "ERROR: cannot write to docker socket: $DOCKER_SOCK_FILE" >&2
-	echo "change socket permissions or try using sudo" >&2
-	exit 1
+        echo "ERROR: cannot write to docker socket: $DOCKER_SOCK_FILE" >&2
+        echo "change socket permissions or try using sudo" >&2
+        exit 1
     fi
 }
 
