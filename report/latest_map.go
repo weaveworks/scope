@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/ugorji/go/codec"
@@ -193,6 +194,37 @@ const (
 	containerMapEnd   = 4
 )
 
+// TODO: use a cache with eviction instead of simply a map (keys are not always
+// fixed, e.g. they can contain docker env variables and labels, potentially
+// causing the cache to grow out of hand).  Let's postpone it for now since it
+// may get tricky to avoid allocations in the lookups.
+var (
+	// To reduce garbage collector pressure
+	keyCache    = map[string]string{}
+	keyCacheMtx sync.RWMutex
+)
+
+func getKeyString(key []byte) string {
+	keyCacheMtx.RLock()
+
+	// https://github.com/golang/go/issues/3512 should guarantee
+	// that the string cast for a lookup doesn't cause an allocation
+	if str, ok := keyCache[string(key)]; ok {
+		keyCacheMtx.RUnlock()
+		return str
+	}
+	keyCacheMtx.RUnlock()
+
+	result := string(key)
+
+	// save it in the cache
+	keyCacheMtx.Lock()
+	keyCache[result] = result
+	keyCacheMtx.Unlock()
+
+	return result
+}
+
 // CodecDecodeSelf implements codec.Selfer
 // This implementation does not use the intermediate form as that was a
 // performance issue; skipping it saved almost 10% CPU.  Note this means
@@ -207,18 +239,21 @@ func (m *LatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 
 	length := r.ReadMapStart()
 	out := ps.NewMap()
+	var (
+		key   string
+		value LatestEntry
+	)
 	for i := 0; length < 0 || i < length; i++ {
 		if length < 0 && r.CheckBreak() {
 			break
 		}
 
-		var key string
 		z.DecSendContainerState(containerMapKey)
 		if !r.TryDecodeAsNil() {
-			key = r.DecodeString()
+			b := r.DecodeBytes(nil, true, true)
+			key = getKeyString(b)
 		}
 
-		var value LatestEntry
 		z.DecSendContainerState(containerMapValue)
 		if !r.TryDecodeAsNil() {
 			decoder.Decode(&value)
