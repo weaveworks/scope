@@ -241,10 +241,15 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 	return base, true
 }
 
-func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func addKubernetesLabelAndRank(base NodeSummary, n report.Node) NodeSummary {
 	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
 	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
 	base.Rank = namespace + "/" + base.Label
+	return base
+}
+
+func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+	base = addKubernetesLabelAndRank(base, n)
 	if c, ok := n.Counters.Lookup(report.Container); ok {
 		if c == 1 {
 			base.LabelMinor = fmt.Sprintf("%d container", c)
@@ -257,9 +262,7 @@ func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 }
 
 func serviceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
-	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
-	base.Rank = namespace + "/" + base.Label
+	base = addKubernetesLabelAndRank(base, n)
 	base.Stack = true
 
 	// Services are always just a group of pods, so there's no counting multiple
@@ -276,9 +279,7 @@ func serviceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 }
 
 func deploymentNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
-	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
-	base.Rank = namespace + "/" + base.Label
+	base = addKubernetesLabelAndRank(base, n)
 	base.Stack = true
 
 	if p, ok := n.Counters.Lookup(report.Pod); ok {
@@ -293,9 +294,7 @@ func deploymentNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) 
 }
 
 func replicaSetNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
-	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
-	base.Rank = namespace + "/" + base.Label
+	base = addKubernetesLabelAndRank(base, n)
 	base.Stack = true
 
 	if p, ok := n.Counters.Lookup(report.Pod); ok {
