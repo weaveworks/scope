@@ -50,6 +50,14 @@ type Plugin struct {
 	clients []containerClient
 }
 
+type trafficControlStatus struct {
+	latency uint32
+	pakLoss float32
+	// timestmap?
+}
+
+var trafficControlStatusCache map[string]trafficControlStatus
+
 func main() {
 	const socket = "/var/run/scope/plugins/traffic-control.sock"
 
@@ -68,6 +76,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create a plugin: %v", err)
 	}
+	trafficControlStatusCache = make(map[string]trafficControlStatus)
 	if err := plugin.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
