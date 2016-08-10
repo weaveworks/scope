@@ -17,3 +17,11 @@ export const CANVAS_MARGINS = {
   right: 40,
   bottom: 100,
 };
+
+//
+// The base size the shapes were defined at matches nicely w/ a 14px font.
+//
+export const BASE_NODE_SIZE = 64;
+export const MAX_NODE_SIZE = 96;
+export const BASE_NODE_LABEL_SIZE = 14;
+export const MIN_NODE_LABEL_SIZE = BASE_NODE_LABEL_SIZE;

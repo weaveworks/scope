@@ -16,6 +16,12 @@ import NodeShapeHex from './node-shape-hex';
 import NodeShapeHeptagon from './node-shape-heptagon';
 import NodeShapeCloud from './node-shape-cloud';
 import NodeNetworksOverlay from './node-networks-overlay';
+import { MIN_NODE_LABEL_SIZE, BASE_NODE_LABEL_SIZE, BASE_NODE_SIZE } from '../constants/styles';
+
+
+function labelFontSize(nodeSize) {
+  return Math.max(MIN_NODE_LABEL_SIZE, (BASE_NODE_LABEL_SIZE / BASE_NODE_SIZE) * nodeSize);
+}
 
 function stackedShape(Shape) {
   const factory = React.createFactory(NodeShapeStack);
@@ -56,6 +62,7 @@ class Node extends React.Component {
     this.handleMouseClick = this.handleMouseClick.bind(this);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
+    this.saveShapeRef = this.saveShapeRef.bind(this);
     this.state = {
       hovered: false,
       matched: false
@@ -77,18 +84,18 @@ class Node extends React.Component {
 
   render() {
     const { blurred, focused, highlighted, label, matches = makeMap(), networks,
-      pseudo, rank, subLabel, scaleFactor, transform, zoomScale, exportingGraph,
+      pseudo, rank, subLabel, scaleFactor, transform, exportingGraph,
       showingNetworks, stack } = this.props;
     const { hovered, matched } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
-    const labelTransform = focused ? `scale(${1 / zoomScale})` : '';
     const labelWidth = nodeScale(scaleFactor * 3);
     const labelOffsetX = -labelWidth / 2;
     const labelDy = (showingNetworks && networks) ? 0.75 : 0.60;
-    const labelOffsetY = focused ? nodeScale(labelDy) : nodeScale(labelDy * scaleFactor);
+    const labelOffsetY = nodeScale(labelDy * scaleFactor);
+    const networkOffset = nodeScale(scaleFactor * 0.67);
 
     const nodeClassName = classnames('node', {
       highlighted,
@@ -104,7 +111,7 @@ class Node extends React.Component {
     const NodeShapeType = getNodeShape(this.props);
     const useSvgLabels = exportingGraph;
     const size = nodeScale(scaleFactor);
-    const networkOffset = focused ? nodeScale(scaleFactor * 0.67) : nodeScale(0.67);
+    const fontSize = labelFontSize(size);
     const mouseEvents = {
       onClick: this.handleMouseClick,
       onMouseEnter: this.handleMouseEnter,
@@ -119,8 +126,10 @@ class Node extends React.Component {
           svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
 
           <foreignObject style={{pointerEvents: 'none'}} x={labelOffsetX} y={labelOffsetY}
-            width={labelWidth} height="100em" transform={labelTransform}>
-            <div className="node-label-wrapper" style={{pointerEvents: 'all'}} {...mouseEvents}>
+            width={labelWidth} height="100em">
+            <div className="node-label-wrapper"
+              style={{pointerEvents: 'all', fontSize, maxWidth: labelWidth}}
+              {...mouseEvents}>
               <div className={labelClassName}>
                 <MatchedText text={label} match={matches.get('label')} />
               </div>
@@ -131,7 +140,7 @@ class Node extends React.Component {
             </div>
           </foreignObject>}
 
-        <g {...mouseEvents}>
+        <g {...mouseEvents} ref={this.saveShapeRef}>
           <NodeShapeType
             size={size}
             color={color}
@@ -144,10 +153,14 @@ class Node extends React.Component {
     );
   }
 
+  saveShapeRef(ref) {
+    this.shapeRef = ref;
+  }
+
   handleMouseClick(ev) {
     ev.stopPropagation();
     this.props.clickNode(this.props.id, this.props.label,
-      ReactDOM.findDOMNode(this).getBoundingClientRect());
+      ReactDOM.findDOMNode(this.shapeRef).getBoundingClientRect());
   }
 
   handleMouseEnter() {

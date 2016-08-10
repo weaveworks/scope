@@ -368,10 +368,15 @@ h2 {
 
     .node-label {
       color: @text-color;
-      font-size: 14px;
     }
 
     .node-label-wrapper {
+
+      //
+      // Base line height doesn't hop across foreignObject =/
+      //
+      line-height: 150%;
+
       //
       // inline-block so wrapper is only as wide as content.
       //
@@ -390,7 +395,7 @@ h2 {
 
     .node-sublabel {
       color: @text-secondary-color;
-      font-size: 12px;
+      font-size: 0.85em;
     }
 
     &.hovered {
@@ -547,7 +552,7 @@ h2 {
   text-align: center;
 
   &-match {
-    font-size: 0.7rem;
+    font-size: 0.8em;
 
     &-wrapper {
       display: inline-block;
@@ -564,7 +569,7 @@ h2 {
 
   &-more {
     text-transform: uppercase;
-    font-size: 0.6rem;
+    font-size: 0.7em;
     color: darken(@weave-blue, 10%);
     margin-top: -2px;
   }
@@ -1162,6 +1167,7 @@ h2 {
   }
 
   &-wrapper {
+    pointer-events: all;
     border-radius: @border-radius;
     border: 1px solid @background-darker-color;
     display: inline-block;
@@ -1275,6 +1281,7 @@ h2 {
   font-size: .7rem;
   border-radius: 8px;
   border: 1px solid transparent;
+  pointer-events: none;
 }
 
 .sidebar-gridmode {
