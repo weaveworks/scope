@@ -202,7 +202,7 @@ func getControls() []extControl {
 				Rank:  20,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, 2000)
+				return DoTrafficControl(pid, "2000ms")
 			},
 		},
 		{
@@ -213,7 +213,7 @@ func getControls() []extControl {
 				Rank:  21,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, 300)
+				return DoTrafficControl(pid, "300ms")
 			},
 		},
 		{
@@ -224,7 +224,7 @@ func getControls() []extControl {
 				Rank:  22,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, 1)
+				return DoTrafficControl(pid, "1ms")
 			},
 		},
 	}

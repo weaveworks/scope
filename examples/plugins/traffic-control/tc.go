@@ -10,7 +10,7 @@ import (
 	"github.com/containernetworking/cni/pkg/ns"
 )
 
-func DoTrafficControl(pid int, delay uint32) error {
+func DoTrafficControl(pid int, latency string) error {
 	cmds := [][]string{
 		split("tc qdisc replace dev eth0 root handle 1: netem"),
 
@@ -29,7 +29,7 @@ func DoTrafficControl(pid int, delay uint32) error {
 		// bandwidth. See the TODO at the beginning of the
 		// file.
 
-		split(fmt.Sprintf("tc qdisc change dev eth0 root handle 1: netem delay %dms", delay)),
+		split(fmt.Sprintf("tc qdisc change dev eth0 root handle 1: netem delay %s", latency)),
 	}
 	netNS := fmt.Sprintf("/proc/%d/ns/net", pid)
 	err := ns.WithNetNSPath(netNS, func(hostNS ns.NetNS) error {
@@ -50,87 +50,45 @@ func DoTrafficControl(pid int, delay uint32) error {
 		return fmt.Errorf("failed to get network namespace ID: %v", err)
 	} else {
 		trafficControlStatusCache[netNSID] = trafficControlStatus{
-			latency: delay,
-			pakLoss: 0,
+			latency: latency,
+			pktLoss: "0.0%",
 		}
 	}
 	return nil
 }
 
 func getLatency(pid int) (string, error) {
-	output := "-"
+	var status *trafficControlStatus
 	var err error
-	if output, err = getStatus(pid); err != nil {
+	if status, err = getStatus(pid); err != nil {
 		return "-", err
-	} else if output == "" {
-		return "-", fmt.Errorf("Error: output is empty")
+	} else if status == nil {
+		return "-", fmt.Errorf("status for PID %d does not exist", pid)
 	}
-	return parseLatency(output)
-}
-
-func parseLatency(statusString string) (string, error) {
-	statusStringSplited := split(statusString)
-	for i, s := range statusStringSplited {
-		if s == "delay" {
-			if i < len(statusStringSplited)-1 {
-				return statusStringSplited[i+1], nil
-			} else {
-				return "-", nil
-			}
-		}
-	}
-	return "N/A", fmt.Errorf("delay not found")
+	return status.latency, nil
 }
 
 func getPktLoss(pid int) (string, error) {
-	output := "-"
+	var status *trafficControlStatus
 	var err error
-	if output, err = getStatus(pid); err != nil {
+	if status, err = getStatus(pid); err != nil {
 		return "-", err
-	} else if output == "" {
-		return "-", fmt.Errorf("Error: output is empty")
+	} else if status == nil {
+		return "-", fmt.Errorf("status for PID %d does not exist", pid)
 	}
-	outputSplited := split(output)
-	for i, s := range outputSplited {
-		if s == "loss" {
-			if i < len(outputSplited)-1 {
-				output = outputSplited[i+1]
-			} else {
-				output = "-"
-			}
-			return output, nil
-		}
-	}
-	return output, fmt.Errorf("delay not found")
+	return status.pktLoss, nil
 }
 
-func parsePktLoss(statusString string) (string, error) {
-	statusStringSplited := split(statusString)
-	for i, s := range statusStringSplited {
-		if s == "loss" {
-			if i < len(statusStringSplited)-1 {
-				return statusStringSplited[i+1], nil
-			} else {
-				return "-", nil
-			}
-		}
-	}
-	return "N/A", fmt.Errorf("delay not found")
-}
-
-// TODO @alepuccetti: return the ful status structure
-func getStatus(pid int) (string, error) {
+func getStatus(pid int) (*trafficControlStatus, error) {
 	netNS := fmt.Sprintf("/proc/%d/ns/net", pid)
 	netNSID, err := getNSID(netNS)
 	if err != nil {
 		log.Error(netNSID)
-		return "-", fmt.Errorf("failed to get network namespace ID: %v", err)
+		return &emptyTrafficControlStatus, fmt.Errorf("failed to get network namespace ID: %v", err)
 	}
 	if status, ok := trafficControlStatusCache[netNSID]; ok {
-		log.Info("Happy caching")
-		return string(status.latency), nil
+		return &status, nil
 	}
-	log.Info("cache miss: execute tc")
 	cmd := split("tc qdisc show dev eth0")
 	var output string
 	err = ns.WithNetNSPath(netNS, func(hostNS ns.NetNS) error {
@@ -143,7 +101,40 @@ func getStatus(pid int) (string, error) {
 		}
 		return nil
 	})
-	return output, err
+	// cache parameters
+	if netNSID, err := getNSID(netNS); err != nil {
+		log.Error(netNSID)
+		return &emptyTrafficControlStatus, fmt.Errorf("failed to get network namespace ID: %v", err)
+	} else {
+		l, _ := parseLatency(output)
+		trafficControlStatusCache[netNSID] = trafficControlStatus{
+			latency: l,
+			pktLoss: "0.0%",
+		}
+	}
+	status, _ := trafficControlStatusCache[netNSID]
+	return &status, err
+}
+
+func parseLatency(statusString string) (string, error) {
+	return parseAttribute(statusString, "delay")
+}
+
+func parsePktLoss(statusString string) (string, error) {
+	return parseAttribute(statusString, "loss")
+}
+func parseAttribute(statusString string, attribute string) (string, error) {
+	statusStringSplited := split(statusString)
+	for i, s := range statusStringSplited {
+		if s == attribute {
+			if i < len(statusStringSplited)-1 {
+				return strings.Trim(statusStringSplited[i+1], "\n"), nil
+			} else {
+				return "-", nil
+			}
+		}
+	}
+	return "N/A", fmt.Errorf("%s not found", attribute)
 }
 
 func getNSID(nsPath string) (string, error) {
@@ -151,10 +142,22 @@ func getNSID(nsPath string) (string, error) {
 		log.Error(nsID)
 		return "", fmt.Errorf("failed to execute command: tc qdisc show dev eth0: %v", err)
 	} else {
-		return nsID, nil
+		return nsID[5:len(nsID)-1], nil
 	}
 }
 
 func split(cmd string) []string {
 	return strings.Split(cmd, " ")
+}
+
+func printTrafficControlStatusCache() {
+	log.Info(stringTrafficControlStatusCache())
+}
+
+func stringTrafficControlStatusCache() string {
+	output := ""
+	for key, val := range trafficControlStatusCache {
+		output = fmt.Sprintf("\n%s %s %s %s \n", output, key, val.latency, val.pktLoss)
+	}
+	return output
 }
