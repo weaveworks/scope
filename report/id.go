@@ -44,7 +44,7 @@ func makeAddressID(hostID, namespaceID, address string) string {
 	addressIP := net.ParseIP(address)
 	if addressIP != nil && LocalNetworks.Contains(addressIP) {
 		scope = hostID
-	} else if isLoopback(address) {
+	} else if IsLoopback(address) {
 		scope = hostID
 		if namespaceID != "" {
 			scope += "-" + namespaceID
@@ -176,7 +176,8 @@ func ExtractHostID(m Node) string {
 	return hostID
 }
 
-func isLoopback(address string) bool {
+// IsLoopback ascertains if an address comes from a loopback interface.
+func IsLoopback(address string) bool {
 	ip := net.ParseIP(address)
 	return ip != nil && ip.IsLoopback()
 }

@@ -264,6 +264,11 @@ func MapContainer2IP(m report.Node) []string {
 			if !ok {
 				continue
 			}
+			// loopback addresses are shared among all namespaces
+			// so we can't use them to attribute connections to a container
+			if report.IsLoopback(addr) {
+				continue
+			}
 			id := report.MakeScopedEndpointNodeID(scope, addr, "")
 			result = append(result, id)
 		}
