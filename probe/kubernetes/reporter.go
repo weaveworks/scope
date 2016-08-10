@@ -27,7 +27,6 @@ const (
 // Exposed for testing
 var (
 	PodMetadataTemplates = report.MetadataTemplates{
-		ID:               {ID: ID, Label: "ID", From: report.FromLatest, Priority: 1},
 		State:            {ID: State, Label: "State", From: report.FromLatest, Priority: 2},
 		IP:               {ID: IP, Label: "IP", From: report.FromLatest, Priority: 3},
 		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: "number", Priority: 4},
@@ -38,7 +37,6 @@ var (
 	PodMetricTemplates = docker.ContainerMetricTemplates
 
 	ServiceMetadataTemplates = report.MetadataTemplates{
-		ID:         {ID: ID, Label: "ID", From: report.FromLatest, Priority: 1},
 		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:    {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
 		PublicIP:   {ID: PublicIP, Label: "Public IP", From: report.FromLatest, Priority: 4},
@@ -49,7 +47,6 @@ var (
 	ServiceMetricTemplates = PodMetricTemplates
 
 	DeploymentMetadataTemplates = report.MetadataTemplates{
-		ID:                 {ID: ID, Label: "ID", From: report.FromLatest, Priority: 1},
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
 		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
@@ -61,7 +58,6 @@ var (
 	DeploymentMetricTemplates = ReplicaSetMetricTemplates
 
 	ReplicaSetMetadataTemplates = report.MetadataTemplates{
-		ID:                 {ID: ID, Label: "ID", From: report.FromLatest, Priority: 1},
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
 		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},

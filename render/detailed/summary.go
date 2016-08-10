@@ -243,8 +243,8 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 
 func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
-	base.Rank, _ = n.Latest.Lookup(kubernetes.ID)
-
+	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
+	base.Rank = namespace + "/" + base.Label
 	if c, ok := n.Counters.Lookup(report.Container); ok {
 		if c == 1 {
 			base.LabelMinor = fmt.Sprintf("%d container", c)
@@ -258,7 +258,8 @@ func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 
 func serviceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
-	base.Rank, _ = n.Latest.Lookup(kubernetes.ID)
+	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
+	base.Rank = namespace + "/" + base.Label
 	base.Stack = true
 
 	// Services are always just a group of pods, so there's no counting multiple
@@ -276,7 +277,8 @@ func serviceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 
 func deploymentNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
-	base.Rank, _ = n.Latest.Lookup(kubernetes.ID)
+	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
+	base.Rank = namespace + "/" + base.Label
 	base.Stack = true
 
 	if p, ok := n.Counters.Lookup(report.Pod); ok {
@@ -292,7 +294,8 @@ func deploymentNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) 
 
 func replicaSetNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
-	base.Rank, _ = n.Latest.Lookup(kubernetes.ID)
+	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
+	base.Rank = namespace + "/" + base.Label
 	base.Stack = true
 
 	if p, ok := n.Counters.Lookup(report.Pod); ok {

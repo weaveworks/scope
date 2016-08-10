@@ -10,7 +10,6 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	ID          = "kubernetes_id"
 	Name        = "kubernetes_name"
 	Namespace   = "kubernetes_namespace"
 	Created     = "kubernetes_created"
@@ -20,7 +19,6 @@ const (
 // Meta represents a metadata information about a Kubernetes object
 type Meta interface {
 	UID() string
-	ID() string
 	Name() string
 	Namespace() string
 	Created() string
@@ -34,10 +32,6 @@ type meta struct {
 
 func (m meta) UID() string {
 	return string(m.ObjectMeta.UID)
-}
-
-func (m meta) ID() string {
-	return m.ObjectMeta.Namespace + "/" + m.ObjectMeta.Name
 }
 
 func (m meta) Name() string {
@@ -59,7 +53,6 @@ func (m meta) Labels() map[string]string {
 // MetaNode gets the node metadata
 func (m meta) MetaNode(id string) report.Node {
 	return report.MakeNodeWith(id, map[string]string{
-		ID:        m.ID(),
 		Name:      m.Name(),
 		Namespace: m.Namespace(),
 		Created:   m.Created(),

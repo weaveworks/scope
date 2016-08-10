@@ -330,7 +330,6 @@ func TestMakeDetailedPodNode(t *testing.T) {
 			Linkable:   true,
 			Pseudo:     false,
 			Metadata: []report.MetadataRow{
-				{ID: "kubernetes_id", Label: "ID", Value: "ping/pong-b", Priority: 1},
 				{ID: "kubernetes_state", Label: "State", Value: "running", Priority: 2},
 				{ID: "container", Label: "# Containers", Value: "1", Priority: 4, Datatype: "number"},
 				{ID: "kubernetes_namespace", Label: "Namespace", Value: "ping", Priority: 5},
