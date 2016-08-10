@@ -24,8 +24,9 @@ type Connection struct {
 
 // Proc is a single process with PID and process name.
 type Proc struct {
-	PID  uint
-	Name string
+	PID            uint
+	Name           string
+	NetNamespaceID uint64
 }
 
 // ConnIter is returned by Connections().

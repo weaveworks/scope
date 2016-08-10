@@ -57,15 +57,15 @@ var (
 	ClientHostNodeID = report.MakeHostNodeID(ClientHostID)
 	ServerHostNodeID = report.MakeHostNodeID(ServerHostID)
 
-	Client54001NodeID    = report.MakeEndpointNodeID(ClientHostID, ClientIP, ClientPort54001)            // curl (1)
-	Client54002NodeID    = report.MakeEndpointNodeID(ClientHostID, ClientIP, ClientPort54002)            // curl (2)
-	Server80NodeID       = report.MakeEndpointNodeID(ServerHostID, ServerIP, ServerPort)                 // apache
-	UnknownClient1NodeID = report.MakeEndpointNodeID(ServerHostID, UnknownClient1IP, UnknownClient1Port) // we want to ensure two unknown clients, connnected
-	UnknownClient2NodeID = report.MakeEndpointNodeID(ServerHostID, UnknownClient2IP, UnknownClient2Port) // to the same server, are deduped.
-	UnknownClient3NodeID = report.MakeEndpointNodeID(ServerHostID, UnknownClient3IP, UnknownClient3Port) // Check this one isn't deduped
-	RandomClientNodeID   = report.MakeEndpointNodeID(ServerHostID, RandomClientIP, RandomClientPort)     // this should become an internet node
-	NonContainerNodeID   = report.MakeEndpointNodeID(ServerHostID, ServerIP, NonContainerClientPort)
-	GoogleEndpointNodeID = report.MakeEndpointNodeID(ServerHostID, GoogleIP, GooglePort)
+	Client54001NodeID    = report.MakeEndpointNodeID(ClientHostID, "", ClientIP, ClientPort54001)            // curl (1)
+	Client54002NodeID    = report.MakeEndpointNodeID(ClientHostID, "", ClientIP, ClientPort54002)            // curl (2)
+	Server80NodeID       = report.MakeEndpointNodeID(ServerHostID, "", ServerIP, ServerPort)                 // apache
+	UnknownClient1NodeID = report.MakeEndpointNodeID(ServerHostID, "", UnknownClient1IP, UnknownClient1Port) // we want to ensure two unknown clients, connnected
+	UnknownClient2NodeID = report.MakeEndpointNodeID(ServerHostID, "", UnknownClient2IP, UnknownClient2Port) // to the same server, are deduped.
+	UnknownClient3NodeID = report.MakeEndpointNodeID(ServerHostID, "", UnknownClient3IP, UnknownClient3Port) // Check this one isn't deduped
+	RandomClientNodeID   = report.MakeEndpointNodeID(ServerHostID, "", RandomClientIP, RandomClientPort)     // this should become an internet node
+	NonContainerNodeID   = report.MakeEndpointNodeID(ServerHostID, "", ServerIP, NonContainerClientPort)
+	GoogleEndpointNodeID = report.MakeEndpointNodeID(ServerHostID, "", GoogleIP, GooglePort)
 
 	ClientProcess1NodeID      = report.MakeProcessNodeID(ClientHostID, Client1PID)
 	ClientProcess2NodeID      = report.MakeProcessNodeID(ClientHostID, Client2PID)

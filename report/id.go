@@ -1,13 +1,8 @@
 package report
 
 import (
-	"hash"
-	"hash/fnv"
 	"net"
 	"strings"
-	"sync"
-
-	"github.com/bluele/gcache"
 )
 
 // TheInternet is used as a node ID to indicate a remote IP.
@@ -29,66 +24,46 @@ const (
 	DoesNotMakeConnections = "does_not_make_connections"
 )
 
-var (
-	idCache = gcache.New(1024).LRU().Build()
-	hashers = sync.Pool{
-		New: func() interface{} {
-			return fnv.New64a()
-		},
-	}
-)
-
-func lookupID(part1, part2, part3 string, f func() string) string {
-	h := hashers.Get().(hash.Hash64)
-	h.Write([]byte(part1))
-	h.Write([]byte(part2))
-	h.Write([]byte(part3))
-	sum := h.Sum64()
-	var result string
-	if id, err := idCache.Get(sum); id != nil && err != nil {
-		result = id.(string)
-	} else {
-		result = f()
-		idCache.Set(sum, result)
-	}
-	h.Reset()
-	hashers.Put(h)
-	return result
-}
-
 // MakeEndpointNodeID produces an endpoint node ID from its composite parts.
-func MakeEndpointNodeID(hostID, address, port string) string {
-	return lookupID(hostID, address, port, func() string {
-		return MakeAddressNodeID(hostID, address) + ScopeDelim + port
-	})
+func MakeEndpointNodeID(hostID, namespaceID, address, port string) string {
+	return makeAddressID(hostID, namespaceID, address) + ScopeDelim + port
 }
 
 // MakeAddressNodeID produces an address node ID from its composite parts.
 func MakeAddressNodeID(hostID, address string) string {
+	return makeAddressID(hostID, "", address)
+}
+
+func makeAddressID(hostID, namespaceID, address string) string {
 	var scope string
 
-	// Loopback addresses and addresses explicitly marked as
-	// local get scoped by hostID
+	// Loopback addresses and addresses explicitly marked as local get
+	// scoped by hostID
+	// Loopback addresses are also scoped by the networking
+	// namespace if available, since they can clash.
 	addressIP := net.ParseIP(address)
 	if addressIP != nil && LocalNetworks.Contains(addressIP) {
 		scope = hostID
-	} else if isLoopback(address) {
+	} else if IsLoopback(address) {
 		scope = hostID
+		if namespaceID != "" {
+			scope += "-" + namespaceID
+		}
 	}
 
 	return scope + ScopeDelim + address
 }
 
 // MakeScopedEndpointNodeID is like MakeEndpointNodeID, but it always
-// prefixes the ID witha scope.
-func MakeScopedEndpointNodeID(hostID, address, port string) string {
-	return hostID + ScopeDelim + address + ScopeDelim + port
+// prefixes the ID with a scope.
+func MakeScopedEndpointNodeID(scope, address, port string) string {
+	return scope + ScopeDelim + address + ScopeDelim + port
 }
 
 // MakeScopedAddressNodeID is like MakeAddressNodeID, but it always
 // prefixes the ID witha scope.
-func MakeScopedAddressNodeID(hostID, address string) string {
-	return hostID + ScopeDelim + address
+func MakeScopedAddressNodeID(scope, address string) string {
+	return scope + ScopeDelim + address
 }
 
 // MakeProcessNodeID produces a process node ID from its composite parts.
@@ -174,14 +149,14 @@ func ParseNodeID(nodeID string) (hostID string, remainder string, ok bool) {
 	return fields[0], fields[1], true
 }
 
-// ParseEndpointNodeID produces the host ID, address, and port and remainder
-// (typically an address) from an endpoint node ID. Note that hostID may be
-// blank.
-func ParseEndpointNodeID(endpointNodeID string) (hostID, address, port string, ok bool) {
+// ParseEndpointNodeID produces the scope, address, and port and remainder.
+// Note that hostID may be blank.
+func ParseEndpointNodeID(endpointNodeID string) (scope, address, port string, ok bool) {
 	fields := strings.SplitN(endpointNodeID, ScopeDelim, 3)
 	if len(fields) != 3 {
 		return "", "", "", false
 	}
+
 	return fields[0], fields[1], fields[2], true
 }
 
@@ -201,7 +176,8 @@ func ExtractHostID(m Node) string {
 	return hostID
 }
 
-func isLoopback(address string) bool {
+// IsLoopback ascertains if an address comes from a loopback interface.
+func IsLoopback(address string) bool {
 	ip := net.ParseIP(address)
 	return ip != nil && ip.IsLoopback()
 }
