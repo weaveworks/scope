@@ -128,7 +128,7 @@ class Node extends React.Component {
           <foreignObject style={{pointerEvents: 'none'}} x={labelOffsetX} y={labelOffsetY}
             width={labelWidth} height="100em">
             <div className="node-label-wrapper"
-              style={{pointerEvents: 'all', fontSize, lineHeight: '150%', maxWidth: labelWidth}}
+              style={{pointerEvents: 'all', fontSize, maxWidth: labelWidth}}
               {...mouseEvents}>
               <div className={labelClassName}>
                 <MatchedText text={label} match={matches.get('label')} />
