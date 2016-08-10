@@ -1,4 +1,5 @@
 import React from 'react';
+import { Map as makeMap } from 'immutable';
 
 import NodeDetailsRelativesLink from './node-details-relatives-link';
 
@@ -20,7 +21,9 @@ export default class NodeDetailsRelatives extends React.Component {
   }
 
   render() {
-    let relatives = this.props.relatives;
+    let { relatives } = this.props;
+    const { matches = makeMap() } = this.props;
+
     const limited = this.state.limit > 0 && relatives.length > this.state.limit;
     const showLimitAction = limited || (this.state.limit === 0
       && relatives.length > this.DEFAULT_LIMIT);
@@ -31,7 +34,11 @@ export default class NodeDetailsRelatives extends React.Component {
 
     return (
       <div className="node-details-relatives">
-        {relatives.map(relative => <NodeDetailsRelativesLink {...relative} key={relative.id} />)}
+        {relatives.map(relative => (
+          <NodeDetailsRelativesLink
+            key={relative.id}
+            match={matches.get(relative.id)}
+            {...relative} />))}
         {showLimitAction && <span className="node-details-relatives-more"
           onClick={this.handleLimitClick}>{limitActionText}</span>}
       </div>

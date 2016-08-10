@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 
 import { clickRelative } from '../../actions/app-actions';
+import MatchedText from '../matched-text';
 
 class NodeDetailsRelativesLink extends React.Component {
 
@@ -21,7 +22,7 @@ class NodeDetailsRelativesLink extends React.Component {
     const title = `View in ${this.props.topologyId}: ${this.props.label}`;
     return (
       <span className="node-details-relatives-link" title={title} onClick={this.handleClick}>
-        {this.props.label}
+        <MatchedText text={this.props.label} match={this.props.match} />
       </span>
     );
   }
