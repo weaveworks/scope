@@ -6,7 +6,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
-	"os"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -213,7 +212,7 @@ func appMain(flags appFlags) {
 	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
 	app.Version = version
 	log.Infof("app starting, version %s, ID %s", app.Version, app.UniqueID)
-	log.Infof("command line: %v", os.Args)
+	logCensoredArgs()
 
 	userIDer := multitenant.NoopUserIDer
 	if flags.userIDHeader != "" {
