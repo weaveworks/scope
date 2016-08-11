@@ -90,14 +90,11 @@ var (
 	ServerContainerImageName   = "image/server"
 
 	KubernetesNamespace = "ping"
-	ClientPodID         = "ping/pong-a"
-	ServerPodID         = "ping/pong-b"
 	ClientPodUID        = "5d4c3b2a1"
 	ServerPodUID        = "i9h8g7f6e"
 	ClientPodNodeID     = report.MakePodNodeID(ClientPodUID)
 	ServerPodNodeID     = report.MakePodNodeID(ServerPodUID)
 	ServiceName         = "pongservice"
-	ServiceID           = "ping/pongservice"
 	ServiceUID          = "service1234"
 	ServiceNodeID       = report.MakeServiceNodeID(ServiceUID)
 
@@ -366,7 +363,6 @@ var (
 			Nodes: report.Nodes{
 				ClientPodNodeID: report.MakeNodeWith(
 					ClientPodNodeID, map[string]string{
-						kubernetes.ID:        ClientPodID,
 						kubernetes.Name:      "pong-a",
 						kubernetes.Namespace: KubernetesNamespace,
 						report.HostNodeID:    ClientHostNodeID,
@@ -377,7 +373,6 @@ var (
 				),
 				ServerPodNodeID: report.MakeNodeWith(
 					ServerPodNodeID, map[string]string{
-						kubernetes.ID:        ServerPodID,
 						kubernetes.Name:      "pong-b",
 						kubernetes.Namespace: KubernetesNamespace,
 						kubernetes.State:     "running",
@@ -395,7 +390,6 @@ var (
 				ServiceNodeID: report.MakeNodeWith(
 
 					ServiceNodeID, map[string]string{
-						kubernetes.ID:        ServiceID,
 						kubernetes.Name:      "pongservice",
 						kubernetes.Namespace: "ping",
 					}).

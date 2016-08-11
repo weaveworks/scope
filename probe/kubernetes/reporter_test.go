@@ -193,13 +193,11 @@ func TestReporter(t *testing.T) {
 		latest        map[string]string
 	}{
 		{pod1ID, serviceID, map[string]string{
-			kubernetes.ID:        "ping/pong-a",
 			kubernetes.Name:      "pong-a",
 			kubernetes.Namespace: "ping",
 			kubernetes.Created:   pod1.Created(),
 		}},
 		{pod2ID, serviceID, map[string]string{
-			kubernetes.ID:        "ping/pong-b",
 			kubernetes.Name:      "pong-b",
 			kubernetes.Namespace: "ping",
 			kubernetes.Created:   pod1.Created(),
@@ -229,7 +227,6 @@ func TestReporter(t *testing.T) {
 		}
 
 		for k, want := range map[string]string{
-			kubernetes.ID:        "ping/pongservice",
 			kubernetes.Name:      "pongservice",
 			kubernetes.Namespace: "ping",
 			kubernetes.Created:   pod1.Created(),
