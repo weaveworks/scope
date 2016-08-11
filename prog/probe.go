@@ -74,7 +74,7 @@ func probeMain(flags probeFlags) {
 	sig := metrics.DefaultInmemSignal(inm)
 	defer sig.Stop()
 	metrics.NewGlobal(metrics.DefaultConfig("scope-probe"), inm)
-
+	logCensoredArgs()
 	defer log.Info("probe exiting")
 
 	if flags.spyProcs && os.Getegid() != 0 {

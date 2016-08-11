@@ -19,6 +19,8 @@ import (
 
 var version = "dev" // set at build time
 
+const tokenFlag = "service-token"
+
 type prefixFormatter struct {
 	prefix []byte
 	next   log.Formatter
@@ -119,6 +121,25 @@ type appFlags struct {
 	consulInf       string
 }
 
+func logCensoredArgs() {
+	var prettyPrintedArgs string
+	// we show the args followed by the flags which is likely to change the
+	// original ordering. However the flag parser doesn't keep positioning
+	// information to allow reconstructing it more accurately.
+	for _, arg := range flag.Args() {
+		prettyPrintedArgs += " " + arg
+	}
+	flag.Visit(func(f *flag.Flag) {
+		value := f.Value.String()
+		// omit sensitive information
+		if f.Name == tokenFlag {
+			value = "<elided>"
+		}
+		prettyPrintedArgs += fmt.Sprintf(" --%s=%s", f.Name, value)
+	})
+	log.Infof("command line args:%s", prettyPrintedArgs)
+}
+
 func main() {
 	var (
 		flags         = flags{}
@@ -145,7 +166,7 @@ func main() {
 	flag.Bool("no-probe", false, "Don't run the probe.")
 
 	// Probe flags
-	flag.StringVar(&flags.probe.token, "service-token", "", "Token to use to authenticate with cloud.weave.works")
+	flag.StringVar(&flags.probe.token, tokenFlag, "", "Token to use to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.token, "probe.token", "", "Token to use to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
 	flag.DurationVar(&flags.probe.publishInterval, "probe.publish.interval", 3*time.Second, "publish (output) interval")
