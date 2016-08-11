@@ -239,12 +239,12 @@ EOF
 
     stop)
         [ $# -eq 0 ] || usage
-        if ! docker stop $SCOPE_CONTAINER_NAME >/dev/null 2>&1 ; then
-            echo "Weave Scope is not running." >&2
+        if docker inspect $SCOPE_CONTAINER_NAME >/dev/null 2>&1 ; then
+           docker stop $SCOPE_CONTAINER_NAME >/dev/null
         fi
         if check_docker_for_mac ; then
-            if ! docker stop $SCOPE_APP_CONTAINER_NAME >/dev/null 2>&1 ; then
-                echo "Weave Scope app is not running." >&2
+            if docker inspect $SCOPE_APP_CONTAINER_NAME >/dev/null 2>&1 ; then
+		docker stop $SCOPE_CONTAINER_NAME >/dev/null
             fi
         fi
         ;;
