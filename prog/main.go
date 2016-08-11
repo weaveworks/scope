@@ -17,9 +17,14 @@ import (
 	"github.com/weaveworks/weave/common"
 )
 
-var version = "dev" // set at build time
-
-const tokenFlag = "service-token"
+var (
+	// set at build time
+	version = "dev"
+	// tokens to be elided when logging
+	serviceTokenFlag = "service-token"
+	probeTokenFlag   = "probe.token"
+	sensitiveFlags   = []string{serviceTokenFlag, probeTokenFlag}
+)
 
 type prefixFormatter struct {
 	prefix []byte
@@ -123,20 +128,23 @@ type appFlags struct {
 
 func logCensoredArgs() {
 	var prettyPrintedArgs string
-	// we show the args followed by the flags which is likely to change the
-	// original ordering. However the flag parser doesn't keep positioning
-	// information to allow reconstructing it more accurately.
-	for _, arg := range flag.Args() {
-		prettyPrintedArgs += " " + arg
-	}
+	// We show the flags followed by the args. This may change the original
+	// ordering. However the flag parser doesn't keep positioning
+	// information, not allowing for a more accurate reconstruction.
 	flag.Visit(func(f *flag.Flag) {
 		value := f.Value.String()
 		// omit sensitive information
-		if f.Name == tokenFlag {
-			value = "<elided>"
+		for _, sensitiveFlag := range sensitiveFlags {
+			if f.Name == sensitiveFlag {
+				value = "<elided>"
+				break
+			}
 		}
 		prettyPrintedArgs += fmt.Sprintf(" --%s=%s", f.Name, value)
 	})
+	for _, arg := range flag.Args() {
+		prettyPrintedArgs += " " + arg
+	}
 	log.Infof("command line args:%s", prettyPrintedArgs)
 }
 
@@ -166,8 +174,8 @@ func main() {
 	flag.Bool("no-probe", false, "Don't run the probe.")
 
 	// Probe flags
-	flag.StringVar(&flags.probe.token, tokenFlag, "", "Token to use to authenticate with cloud.weave.works")
-	flag.StringVar(&flags.probe.token, "probe.token", "", "Token to use to authenticate with cloud.weave.works")
+	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to use to authenticate with cloud.weave.works")
+	flag.StringVar(&flags.probe.token, probeTokenFlag, "", "Token to use to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
 	flag.DurationVar(&flags.probe.publishInterval, "probe.publish.interval", 3*time.Second, "publish (output) interval")
 	flag.DurationVar(&flags.probe.spyInterval, "probe.spy.interval", time.Second, "spy (scan) interval")
