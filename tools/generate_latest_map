@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+#
+# Generate concrete implementations of LatestMap.
+#
+# e.g.
+#     $ generate_latest_map ./report/out.go string NodeControlData ...
+#
+# Depends on:
+# - gofmt
+
+function generate_header {
+    local out_file="${1}"
+    local cmd="${2}"
+
+    cat << EOF >"${out_file}"
+    // Generated file, do not edit.
+    // To regenerate, run ${cmd}
+
+    package report
+
+    import (
+        "time"
+
+        "github.com/ugorji/go/codec"
+    )
+EOF
+}
+
+function generate_latest_map {
+    local out_file="$1"
+    local data_type="$2"
+    local uppercase_data_type="${data_type^}"
+    local lowercase_data_type="${data_type,}"
+    local wire_entry_type="wire${uppercase_data_type}LatestEntry"
+    local decoder_type="${lowercase_data_type}LatestEntryDecoder"
+    local iface_decoder_variable="${uppercase_data_type}LatestEntryDecoder"
+    local latest_map_type="${uppercase_data_type}LatestMap"
+    local empty_latest_map_variable="Empty${latest_map_type}"
+    local make_function="Make${latest_map_type}"
+
+    local json_timestamp='`json:"timestamp"`'
+    local json_value='`json:"value"`'
+
+    cat << EOF >>"${out_file}"
+    type ${wire_entry_type} struct {
+        Timestamp time.Time    ${json_timestamp}
+        Value     ${data_type} ${json_value}
+    }
+
+    type ${decoder_type} struct {}
+
+    func (d *${decoder_type}) Decode(decoder *codec.Decoder, entry *LatestEntry) {
+        wire := ${wire_entry_type}{}
+        decoder.Decode(&wire)
+        entry.Timestamp = wire.Timestamp
+        entry.Value = wire.Value
+    }
+
+    // ${iface_decoder_variable} is an implementation of LatestEntryDecoder
+    // that decodes the LatestEntry instances having a ${data_type} value.
+    var ${iface_decoder_variable} LatestEntryDecoder = &${decoder_type}{}
+
+    // ${latest_map_type} holds latest ${data_type} instances.
+    type ${latest_map_type} LatestMap
+
+    // ${empty_latest_map_variable} is an empty ${latest_map_type}. Start with this.
+    var ${empty_latest_map_variable} = (${latest_map_type})(MakeLatestMapWithDecoder(${iface_decoder_variable}))
+
+    // ${make_function} makes an empty ${latest_map_type}.
+    func ${make_function}() ${latest_map_type} {
+        return ${empty_latest_map_variable}
+    }
+
+    // Copy is a noop, as ${latest_map_type}s are immutable.
+    func (m ${latest_map_type}) Copy() ${latest_map_type} {
+        return (${latest_map_type})((LatestMap)(m).Copy())
+    }
+
+    // Size returns the number of elements.
+    func (m ${latest_map_type}) Size() int {
+        return (LatestMap)(m).Size()
+    }
+
+    // Merge produces a fresh ${latest_map_type} containing the keys from both inputs.
+    // When both inputs contain the same key, the newer value is used.
+    func (m ${latest_map_type}) Merge(other ${latest_map_type}) ${latest_map_type} {
+        return (${latest_map_type})((LatestMap)(m).Merge((LatestMap)(other)))
+    }
+
+    // Lookup the value for the given key.
+    func (m ${latest_map_type}) Lookup(key string) (${data_type}, bool) {
+        v, ok := (LatestMap)(m).Lookup(key)
+        if !ok {
+            var zero ${data_type}
+            return zero, false
+        }
+        return v.(${data_type}), true
+    }
+
+    // LookupEntry returns the raw entry for the given key.
+    func (m ${latest_map_type}) LookupEntry(key string) (${data_type}, time.Time, bool) {
+        v, timestamp, ok := (LatestMap)(m).LookupEntry(key)
+        if !ok {
+            var zero ${data_type}
+            return zero, timestamp, false
+        }
+        return v.(${data_type}), timestamp, true
+    }
+
+    // Set the value for the given key.
+    func (m ${latest_map_type}) Set(key string, timestamp time.Time, value ${data_type}) ${latest_map_type} {
+        return (${latest_map_type})((LatestMap)(m).Set(key, timestamp, value))
+    }
+
+    // Delete the value for the given key.
+    func (m ${latest_map_type}) Delete(key string) ${latest_map_type} {
+        return (${latest_map_type})((LatestMap)(m).Delete(key))
+    }
+
+    // ForEach executes fn on each key value pair in the map.
+    func (m ${latest_map_type}) ForEach(fn func(k string, timestamp time.Time, v ${data_type})) {
+        (LatestMap)(m).ForEach(func(key string, ts time.Time, value interface{}) {
+                fn(key, ts, value.(${data_type}))
+        })
+    }
+
+    // String returns the ${latest_map_type}'s string representation.
+    func (m ${latest_map_type}) String() string {
+        return (LatestMap)(m).String()
+    }
+
+    // DeepEqual tests equality with other ${latest_map_type}.
+    func (m ${latest_map_type}) DeepEqual(n ${latest_map_type}) bool {
+        return (LatestMap)(m).DeepEqual((LatestMap)(n))
+    }
+
+    // CodecEncodeSelf implements codec.Selfer.
+    func (m *${latest_map_type}) CodecEncodeSelf(encoder *codec.Encoder) {
+        (*LatestMap)(m).CodecEncodeSelf(encoder)
+    }
+
+    // CodecDecodeSelf implements codec.Selfer.
+    func (m *${latest_map_type}) CodecDecodeSelf(decoder *codec.Decoder) {
+        bm := (*LatestMap)(m)
+        bm.decoder = ${iface_decoder_variable}
+        bm.CodecDecodeSelf(decoder)
+    }
+
+    // MarshalJSON shouldn't be used, use CodecEncodeSelf instead.
+    func (${latest_map_type}) MarshalJSON() ([]byte, error) {
+        panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
+    }
+
+    // UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead.
+    func (*${latest_map_type}) UnmarshalJSON(b []byte) error {
+        panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
+    }
+EOF
+}
+
+if [ -z "${1}" ]; then
+    echo "No output file given"
+    exit 1
+fi
+
+out="${1}"
+outtmp="${out}.tmp"
+
+generate_header "${outtmp}" "${0} ${*}"
+shift
+for t in ${*}; do
+    generate_latest_map "${outtmp}" "${t}"
+done
+
+gofmt -s -w "${outtmp}"
+mv "${outtmp}" "${out}"

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/common/xfer"
 )
 
@@ -252,6 +253,57 @@ func (r Report) Validate() error {
 		return fmt.Errorf("%d error(s): %s", len(errs), strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+// Upgrade returns a new report based on a report received from the old probe.
+//
+// This for now creates node's LatestControls from Controls.
+func (r Report) Upgrade() Report {
+	cp := r.Copy()
+	ncd := NodeControlData{
+		Dead: false,
+	}
+	cp.WalkTopologies(func(topology *Topology) {
+		n := Nodes{}
+		for name, node := range topology.Nodes {
+			if node.LatestControls.Size() == 0 && len(node.Controls.Controls) > 0 {
+				for _, control := range node.Controls.Controls {
+					node.LatestControls = node.LatestControls.Set(control, node.Controls.Timestamp, ncd)
+				}
+			}
+			n[name] = node
+		}
+		topology.Nodes = n
+	})
+	return cp
+}
+
+// BackwardCompatible returns a new backward-compatible report.
+//
+// This for now creates node's Controls from LatestControls.
+func (r Report) BackwardCompatible() Report {
+	now := mtime.Now()
+	cp := r.Copy()
+	cp.WalkTopologies(func(topology *Topology) {
+		n := Nodes{}
+		for name, node := range topology.Nodes {
+			var controls []string
+			node.LatestControls.ForEach(func(k string, _ time.Time, v NodeControlData) {
+				if !v.Dead {
+					controls = append(controls, k)
+				}
+			})
+			if len(controls) > 0 {
+				node.Controls = NodeControls{
+					Timestamp: now,
+					Controls:  MakeStringSet(controls...),
+				}
+			}
+			n[name] = node
+		}
+		topology.Nodes = n
+	})
+	return cp
 }
 
 // Sampling describes how the packet data sources for this report were

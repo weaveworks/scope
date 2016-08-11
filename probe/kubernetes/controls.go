@@ -144,15 +144,21 @@ func (r *Reporter) ScaleDown(req xfer.Request, resource, namespace, id string) x
 }
 
 func (r *Reporter) registerControls() {
-	controls.Register(GetLogs, r.CapturePod(r.GetLogs))
-	controls.Register(DeletePod, r.CapturePod(r.deletePod))
-	controls.Register(ScaleUp, r.CaptureResource(r.ScaleUp))
-	controls.Register(ScaleDown, r.CaptureResource(r.ScaleDown))
+	controls := map[string]xfer.ControlHandlerFunc{
+		GetLogs:   r.CapturePod(r.GetLogs),
+		DeletePod: r.CapturePod(r.deletePod),
+		ScaleUp:   r.CaptureResource(r.ScaleUp),
+		ScaleDown: r.CaptureResource(r.ScaleDown),
+	}
+	r.handlerRegistry.Batch(nil, controls)
 }
 
 func (r *Reporter) deregisterControls() {
-	controls.Rm(GetLogs)
-	controls.Rm(DeletePod)
-	controls.Rm(ScaleUp)
-	controls.Rm(ScaleDown)
+	controls := []string{
+		GetLogs,
+		DeletePod,
+		ScaleUp,
+		ScaleDown,
+	}
+	r.handlerRegistry.Batch(controls, nil)
 }

@@ -14,7 +14,7 @@ import (
 
 func TestLatestMapAdd(t *testing.T) {
 	now := time.Now()
-	have := EmptyLatestMap.
+	have := EmptyStringLatestMap.
 		Set("foo", now.Add(-1), "Baz").
 		Set("foo", now, "Bar")
 	if v, ok := have.Lookup("foo"); !ok || v != "Bar" {
@@ -23,7 +23,7 @@ func TestLatestMapAdd(t *testing.T) {
 	if v, ok := have.Lookup("bar"); ok || v != "" {
 		t.Errorf("v != nil")
 	}
-	have.ForEach(func(k, v string) {
+	have.ForEach(func(k string, _ time.Time, v string) {
 		if k != "foo" || v != "Bar" {
 			t.Errorf("v != Bar")
 		}
@@ -33,7 +33,7 @@ func TestLatestMapAdd(t *testing.T) {
 func TestLatestMapLookupEntry(t *testing.T) {
 	now := time.Now()
 	entry := LatestEntry{Timestamp: now, Value: "Bar"}
-	have := EmptyLatestMap.Set("foo", entry.Timestamp, entry.Value)
+	have := EmptyStringLatestMap.Set("foo", entry.Timestamp, entry.Value.(string))
 	if got, timestamp, ok := have.LookupEntry("foo"); !ok || got != entry.Value || !timestamp.Equal(entry.Timestamp) {
 		t.Errorf("got: %#v %v != expected %#v", got, timestamp, entry)
 	}
@@ -44,7 +44,7 @@ func TestLatestMapLookupEntry(t *testing.T) {
 
 func TestLatestMapAddNil(t *testing.T) {
 	now := time.Now()
-	have := LatestMap{}.Set("foo", now, "Bar")
+	have := StringLatestMap{}.Set("foo", now, "Bar")
 	if v, ok := have.Lookup("foo"); !ok || v != "Bar" {
 		t.Errorf("v != Bar")
 	}
@@ -52,14 +52,14 @@ func TestLatestMapAddNil(t *testing.T) {
 
 func TestLatestMapDeepEquals(t *testing.T) {
 	now := time.Now()
-	want := EmptyLatestMap.
+	want := EmptyStringLatestMap.
 		Set("foo", now, "Bar")
-	have := EmptyLatestMap.
+	have := EmptyStringLatestMap.
 		Set("foo", now, "Bar")
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf(test.Diff(want, have))
 	}
-	notequal := EmptyLatestMap.
+	notequal := EmptyStringLatestMap.
 		Set("foo", now, "Baz")
 	if reflect.DeepEqual(want, notequal) {
 		t.Errorf(test.Diff(want, have))
@@ -68,8 +68,8 @@ func TestLatestMapDeepEquals(t *testing.T) {
 
 func TestLatestMapDelete(t *testing.T) {
 	now := time.Now()
-	want := EmptyLatestMap
-	have := EmptyLatestMap.
+	want := EmptyStringLatestMap
+	have := EmptyStringLatestMap.
 		Set("foo", now, "Baz").
 		Delete("foo")
 	if !reflect.DeepEqual(want, have) {
@@ -78,11 +78,17 @@ func TestLatestMapDelete(t *testing.T) {
 }
 
 func TestLatestMapDeleteNil(t *testing.T) {
-	want := LatestMap{}
-	have := LatestMap{}.Delete("foo")
+	want := StringLatestMap{}
+	have := StringLatestMap{}.Delete("foo")
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf(test.Diff(want, have))
 	}
+}
+
+func nilStringLatestMap() StringLatestMap {
+	m := EmptyStringLatestMap
+	m.Map = nil
+	return m
 }
 
 func TestLatestMapMerge(t *testing.T) {
@@ -90,42 +96,42 @@ func TestLatestMapMerge(t *testing.T) {
 	then := now.Add(-1)
 
 	for name, c := range map[string]struct {
-		a, b, want LatestMap
+		a, b, want StringLatestMap
 	}{
 		"nils": {
-			a:    LatestMap{},
-			b:    LatestMap{},
-			want: LatestMap{},
+			a:    nilStringLatestMap(),
+			b:    nilStringLatestMap(),
+			want: nilStringLatestMap(),
 		},
 		"Empty a": {
-			a: EmptyLatestMap,
-			b: EmptyLatestMap.
+			a: EmptyStringLatestMap,
+			b: EmptyStringLatestMap.
 				Set("foo", now, "bar"),
-			want: EmptyLatestMap.
+			want: EmptyStringLatestMap.
 				Set("foo", now, "bar"),
 		},
 		"Empty b": {
-			a: EmptyLatestMap.
+			a: EmptyStringLatestMap.
 				Set("foo", now, "bar"),
-			b: EmptyLatestMap,
-			want: EmptyLatestMap.
+			b: EmptyStringLatestMap,
+			want: EmptyStringLatestMap.
 				Set("foo", now, "bar"),
 		},
 		"Disjoint a & b": {
-			a: EmptyLatestMap.
+			a: EmptyStringLatestMap.
 				Set("foo", now, "bar"),
-			b: EmptyLatestMap.
+			b: EmptyStringLatestMap.
 				Set("baz", now, "bop"),
-			want: EmptyLatestMap.
+			want: EmptyStringLatestMap.
 				Set("foo", now, "bar").
 				Set("baz", now, "bop"),
 		},
 		"Common a & b": {
-			a: EmptyLatestMap.
+			a: EmptyStringLatestMap.
 				Set("foo", now, "bar"),
-			b: EmptyLatestMap.
+			b: EmptyStringLatestMap.
 				Set("foo", then, "baz"),
-			want: EmptyLatestMap.
+			want: EmptyStringLatestMap.
 				Set("foo", now, "bar"),
 		},
 	} {
@@ -137,8 +143,8 @@ func TestLatestMapMerge(t *testing.T) {
 
 func BenchmarkLatestMapMerge(b *testing.B) {
 	var (
-		left  = EmptyLatestMap
-		right = EmptyLatestMap
+		left  = EmptyStringLatestMap
+		right = EmptyStringLatestMap
 		now   = time.Now()
 	)
 
@@ -159,7 +165,7 @@ func BenchmarkLatestMapMerge(b *testing.B) {
 
 func TestLatestMapEncoding(t *testing.T) {
 	now := time.Now()
-	want := EmptyLatestMap.
+	want := EmptyStringLatestMap.
 		Set("foo", now, "bar").
 		Set("bar", now, "baz")
 
@@ -171,7 +177,7 @@ func TestLatestMapEncoding(t *testing.T) {
 		encoder := codec.NewEncoder(buf, h)
 		want.CodecEncodeSelf(encoder)
 		decoder := codec.NewDecoder(buf, h)
-		have := EmptyLatestMap
+		have := EmptyStringLatestMap
 		have.CodecDecodeSelf(decoder)
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
@@ -181,7 +187,7 @@ func TestLatestMapEncoding(t *testing.T) {
 }
 
 func TestLatestMapEncodingNil(t *testing.T) {
-	want := LatestMap{}
+	want := nilStringLatestMap()
 
 	for _, h := range []codec.Handle{
 		codec.Handle(&codec.MsgpackHandle{}),
@@ -191,11 +197,39 @@ func TestLatestMapEncodingNil(t *testing.T) {
 		encoder := codec.NewEncoder(buf, h)
 		want.CodecEncodeSelf(encoder)
 		decoder := codec.NewDecoder(buf, h)
-		have := EmptyLatestMap
+		have := EmptyStringLatestMap
 		have.CodecDecodeSelf(decoder)
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
 	}
 
+}
+
+func TestLatestMapMergeEqualDecoderTypes(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error("Merging two maps with the same decoders should not panic")
+		}
+	}()
+	m1 := MakeStringLatestMap().Set("a", time.Now(), "bar")
+	m2 := MakeStringLatestMap().Set("b", time.Now(), "foo")
+	m1.Merge(m2)
+}
+
+type TestLatestEntryDecoder struct{}
+
+func (d *TestLatestEntryDecoder) Decode(decoder *codec.Decoder, entry *LatestEntry) {
+	decoder.Decode(entry)
+}
+
+func TestLatestMapMergeDifferentDecoderTypes(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Merging two maps with different decoders should panic")
+		}
+	}()
+	m1 := MakeStringLatestMap().Set("a", time.Now(), "bar")
+	m2 := ((StringLatestMap)(MakeLatestMapWithDecoder(&TestLatestEntryDecoder{}))).Set("b", time.Now(), "foo")
+	m1.Merge(m2)
 }

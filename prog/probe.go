@@ -113,10 +113,11 @@ func probeMain(flags probeFlags) {
 		ProbeID:      probeID,
 		Insecure:     flags.insecure,
 	}
+	handlerRegistry := controls.NewDefaultHandlerRegistry()
 	clientFactory := func(hostname, endpoint string) (appclient.AppClient, error) {
 		return appclient.NewAppClient(
 			probeConfig, hostname, endpoint,
-			xfer.ControlHandlerFunc(controls.HandleControlRequest),
+			xfer.ControlHandlerFunc(handlerRegistry.HandleControlRequest),
 		)
 	}
 	clients := appclient.NewMultiAppClient(clientFactory, flags.noControls)
@@ -131,7 +132,7 @@ func probeMain(flags probeFlags) {
 
 	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
 
-	hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients)
+	hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients, handlerRegistry)
 	defer hostReporter.Stop()
 	p.AddReporter(hostReporter)
 	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
@@ -157,7 +158,7 @@ func probeMain(flags probeFlags) {
 				log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
 			}
 		}
-		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID); err == nil {
+		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID, handlerRegistry); err == nil {
 			defer registry.Stop()
 			if flags.procEnabled {
 				p.AddTagger(docker.NewTagger(registry, processCache))
@@ -171,7 +172,7 @@ func probeMain(flags probeFlags) {
 	if flags.kubernetesEnabled {
 		if client, err := kubernetes.NewClient(flags.kubernetesAPI, flags.kubernetesInterval); err == nil {
 			defer client.Stop()
-			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p)
+			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry)
 			defer reporter.Stop()
 			p.AddReporter(reporter)
 			p.AddTagger(reporter)
@@ -205,6 +206,8 @@ func probeMain(flags probeFlags) {
 			"probe_id":    probeID,
 			"api_version": pluginAPIVersion,
 		},
+		handlerRegistry,
+		p,
 	)
 	if err != nil {
 		log.Errorf("plugins: problem loading: %v", err)

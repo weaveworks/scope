@@ -52,24 +52,26 @@ var (
 
 // Reporter generates Reports containing the host topology.
 type Reporter struct {
-	hostID       string
-	hostName     string
-	probeID      string
-	version      string
-	pipes        controls.PipeClient
-	hostShellCmd []string
+	hostID          string
+	hostName        string
+	probeID         string
+	version         string
+	pipes           controls.PipeClient
+	hostShellCmd    []string
+	handlerRegistry *controls.HandlerRegistry
 }
 
 // NewReporter returns a Reporter which produces a report containing host
 // topology for this host.
-func NewReporter(hostID, hostName, probeID, version string, pipes controls.PipeClient) *Reporter {
+func NewReporter(hostID, hostName, probeID, version string, pipes controls.PipeClient, handlerRegistry *controls.HandlerRegistry) *Reporter {
 	r := &Reporter{
-		hostID:       hostID,
-		hostName:     hostName,
-		probeID:      probeID,
-		pipes:        pipes,
-		version:      version,
-		hostShellCmd: getHostShellCmd(),
+		hostID:          hostID,
+		hostName:        hostName,
+		probeID:         probeID,
+		pipes:           pipes,
+		version:         version,
+		hostShellCmd:    getHostShellCmd(),
+		handlerRegistry: handlerRegistry,
 	}
 	r.registerControls()
 	return r
@@ -143,7 +145,7 @@ func (r *Reporter) Report() (report.Report, error) {
 				Add(LocalNetworks, report.MakeStringSet(localCIDRs...)),
 			).
 			WithMetrics(metrics).
-			WithControls(ExecHost),
+			WithLatestActiveControls(ExecHost),
 	)
 
 	rep.Host.Controls.AddControl(report.Control{
