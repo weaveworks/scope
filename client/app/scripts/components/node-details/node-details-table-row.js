@@ -32,11 +32,11 @@ function getValuesForNode(node) {
 }
 
 
-function renderValues(node, columns = [], columnWidths = []) {
+function renderValues(node, columns = [], columnStyles = []) {
   const fields = getValuesForNode(node);
   return columns.map(({id}, i) => {
     const field = fields[id];
-    const style = { width: columnWidths[i] };
+    const style = columnStyles[i];
     if (field) {
       if (field.valueType === 'metadata') {
         return (
@@ -119,9 +119,9 @@ export default class NodeDetailsTableRow extends React.Component {
 
   render() {
     const { node, nodeIdKey, topologyId, columns, onClick, onMouseEnterRow, onMouseLeaveRow,
-      selected, widths } = this.props;
-    const [firstColumnWidth, ...columnWidths] = widths;
-    const values = renderValues(node, columns, columnWidths);
+      selected, colStyles } = this.props;
+    const [firstColumnStyle, ...columnStyles] = colStyles;
+    const values = renderValues(node, columns, columnStyles);
     const nodeId = node[nodeIdKey];
     const className = classNames('node-details-table-node', { selected });
 
@@ -133,7 +133,7 @@ export default class NodeDetailsTableRow extends React.Component {
         onMouseLeave={onMouseLeaveRow && this.onMouseLeave}
         className={className}>
         <td ref={this.storeLabelRef} className="node-details-table-node-label truncate"
-          style={{ width: firstColumnWidth }}>
+          style={firstColumnStyle}>
           {this.props.renderIdCell(Object.assign(node, {topologyId, nodeId}))}
         </td>
         {values}
