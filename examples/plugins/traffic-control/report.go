@@ -266,6 +266,17 @@ func getControls() []extControl {
 				return DoTrafficControl(pid, "1ms")
 			},
 		},
+		{
+			control: control{
+				ID:    "clear",
+				Human: "Clear traffic control settings",
+				Icon:  "fa-times-circle",
+				Rank:  23,
+			},
+			handler: func(pid int) error {
+				return DoTrafficControl(pid, "")
+			},
+		},
 	}
 }
 

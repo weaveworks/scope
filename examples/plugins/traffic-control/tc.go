@@ -29,9 +29,14 @@ func DoTrafficControl(pid int, latency string) error {
 		// bandwidth. See the TODO at the beginning of the
 		// file.
 
-		split(fmt.Sprintf("tc qdisc change dev eth0 root handle 1: netem delay %s", latency)),
 	}
-	netNS := fmt.Sprintf("/proc/%d/ns/net", pid)
+	if latency != "" {
+		cmds = append(cmds, split(fmt.Sprintf("tc qdisc change dev eth0 root handle 1: netem delay %s", latency)))
+	} else {
+		cmds = append(cmds, split("tc qdisc change dev eth0 root handle 1: netem"))
+	}
+
+		netNS := fmt.Sprintf("/proc/%d/ns/net", pid)
 	err := ns.WithNetNSPath(netNS, func(hostNS ns.NetNS) error {
 		for _, cmd := range cmds {
 			if output, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput(); err != nil {
@@ -50,7 +55,12 @@ func DoTrafficControl(pid int, latency string) error {
 		return fmt.Errorf("failed to get network namespace ID: %v", err)
 	} else {
 		trafficControlStatusCache[netNSID] = trafficControlStatus{
-			latency: latency,
+			latency: func(latency string) string {
+				if latency == "" {
+					return "-"
+				}
+				return latency
+			}(latency),
 			pktLoss: "-",
 		}
 	}
