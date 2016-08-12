@@ -16,6 +16,13 @@ type topology struct {
 	Nodes             map[string]node             `json:"nodes"`
 	Controls          map[string]control          `json:"controls"`
 	MetadataTemplates map[string]metadataTemplate `json:"metadata_templates,omitempty"`
+	TableTemplates    map[string]tableTemplate    `json:"table_templates,omitempty"`
+}
+
+type tableTemplate struct {
+	ID     string `json:"id"`
+	Label  string `json:"label"`
+	Prefix string `json:"prefix"`
 }
 
 type metadataTemplate struct {
@@ -77,6 +84,7 @@ func (r *Reporter) RawReport() ([]byte, error) {
 			Nodes:             r.getContainerNodes(),
 			Controls:          getTrafficControls(),
 			MetadataTemplates: getMetadataTemplate(),
+			TableTemplates:    getTableTemplate(),
 		},
 		Plugins: []pluginSpec{
 			{
@@ -145,6 +153,10 @@ func (r *Reporter) getContainerNodes() map[string]node {
 						Timestamp: timestamp,
 						Value:     latency,
 					},
+					"traffic-control-table-latency": {
+						Timestamp: timestamp,
+						Value:     latency,
+					},
 				},
 			}
 		}
@@ -161,6 +173,16 @@ func getMetadataTemplate() map[string]metadataTemplate {
 			Datatype: "",
 			Priority: 13.5,
 			From:     "latest",
+		},
+	}
+}
+
+func getTableTemplate() map[string]tableTemplate {
+	return map[string]tableTemplate{
+		"traffic-control-table": tableTemplate{
+			ID:     "traffic-control-table",
+			Label:  "Traffic Control",
+			Prefix: "traffic-control-table-",
 		},
 	}
 }
