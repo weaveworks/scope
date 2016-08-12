@@ -10,7 +10,7 @@ import (
 	"github.com/containernetworking/cni/pkg/ns"
 )
 
-func DoTrafficControl(pid int, latency string) error {
+func DoTrafficControl(pid int, latency string, pktLoss string) error {
 	cmds := [][]string{
 		split("tc qdisc replace dev eth0 root handle 1: netem"),
 
@@ -30,13 +30,18 @@ func DoTrafficControl(pid int, latency string) error {
 		// file.
 
 	}
+	cmd := split("tc qdisc change dev eth0 root handle 1: netem")
 	if latency != "" {
-		cmds = append(cmds, split(fmt.Sprintf("tc qdisc change dev eth0 root handle 1: netem delay %s", latency)))
-	} else {
-		cmds = append(cmds, split("tc qdisc change dev eth0 root handle 1: netem"))
+		cmd = append(cmd, "delay")
+		cmd = append(cmd, latency)
 	}
+	if pktLoss != "" {
+		cmd = append(cmd, "loss")
+		cmd = append(cmd, pktLoss)
+	}
+	cmds = append(cmds, cmd)
 
-		netNS := fmt.Sprintf("/proc/%d/ns/net", pid)
+	netNS := fmt.Sprintf("/proc/%d/ns/net", pid)
 	err := ns.WithNetNSPath(netNS, func(hostNS ns.NetNS) error {
 		for _, cmd := range cmds {
 			if output, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput(); err != nil {
@@ -61,7 +66,12 @@ func DoTrafficControl(pid int, latency string) error {
 				}
 				return latency
 			}(latency),
-			pktLoss: "-",
+			pktLoss: func(pktLoss string) string {
+				if pktLoss == "" {
+					return "-"
+				}
+				return pktLoss
+			}(pktLoss),
 		}
 	}
 	return nil

@@ -241,7 +241,7 @@ func getControls() []extControl {
 				Rank:  20,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, "2000ms")
+				return DoTrafficControl(pid, "2000ms", "")
 			},
 		},
 		{
@@ -252,7 +252,7 @@ func getControls() []extControl {
 				Rank:  21,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, "300ms")
+				return DoTrafficControl(pid, "300ms", "")
 			},
 		},
 		{
@@ -263,7 +263,18 @@ func getControls() []extControl {
 				Rank:  22,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, "1ms")
+				return DoTrafficControl(pid, "1ms", "")
+			},
+		},
+		{
+			control: control{
+				ID:    "pkt-drop-low",
+				Human: "Packet drop: low",
+				Icon:  "fa-cut",
+				Rank:  23,
+			},
+			handler: func(pid int) error {
+				return DoTrafficControl(pid, "", "10%")
 			},
 		},
 		{
@@ -271,10 +282,10 @@ func getControls() []extControl {
 				ID:    "clear",
 				Human: "Clear traffic control settings",
 				Icon:  "fa-times-circle",
-				Rank:  23,
+				Rank:  24,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, "")
+				return DoTrafficControl(pid, "", "")
 			},
 		},
 	}
