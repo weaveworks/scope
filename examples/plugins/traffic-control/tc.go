@@ -51,7 +51,7 @@ func DoTrafficControl(pid int, latency string) error {
 	} else {
 		trafficControlStatusCache[netNSID] = trafficControlStatus{
 			latency: latency,
-			pktLoss: "0.0%",
+			pktLoss: "-",
 		}
 	}
 	return nil
@@ -106,10 +106,11 @@ func getStatus(pid int) (*trafficControlStatus, error) {
 		log.Error(netNSID)
 		return &emptyTrafficControlStatus, fmt.Errorf("failed to get network namespace ID: %v", err)
 	} else {
-		l, _ := parseLatency(output)
+		lat, _ := parseLatency(output)
+		pktL, _ := parsePktLoss(output)
 		trafficControlStatusCache[netNSID] = trafficControlStatus{
-			latency: l,
-			pktLoss: "0.0%",
+			latency: lat,
+			pktLoss: pktL,
 		}
 	}
 	status, _ := trafficControlStatusCache[netNSID]
@@ -134,7 +135,7 @@ func parseAttribute(statusString string, attribute string) (string, error) {
 			}
 		}
 	}
-	return "N/A", fmt.Errorf("%s not found", attribute)
+	return "-", fmt.Errorf("%s not found", attribute)
 }
 
 func getNSID(nsPath string) (string, error) {

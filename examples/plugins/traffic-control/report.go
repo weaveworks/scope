@@ -146,6 +146,7 @@ func (r *Reporter) getContainerNodes() map[string]node {
 		case Running:
 			nodeID := containerIDToNodeID(containerID)
 			latency, _ := getLatency(container.PID)
+			pktLoss, _ := getPktLoss(container.PID)
 			nodes[nodeID] = node{
 				LatestControls: getTrafficNodeControls(timestamp, dead),
 				Latest: map[string]stringEntry{
@@ -153,9 +154,17 @@ func (r *Reporter) getContainerNodes() map[string]node {
 						Timestamp: timestamp,
 						Value:     latency,
 					},
+					"traffic-control-pktloss": {
+						Timestamp: timestamp,
+						Value:     pktLoss,
+					},
 					"traffic-control-table-latency": {
 						Timestamp: timestamp,
 						Value:     latency,
+					},
+					"traffic-control-table-pktloss": {
+						Timestamp: timestamp,
+						Value:     pktLoss,
 					},
 				},
 			}
@@ -172,6 +181,14 @@ func getMetadataTemplate() map[string]metadataTemplate {
 			Truncate: 0,
 			Datatype: "",
 			Priority: 13.5,
+			From:     "latest",
+		},
+		"traffic-control-pktloss": metadataTemplate{
+			ID:       "traffic-control-pktloss",
+			Label:    "Packet Loss",
+			Truncate: 0,
+			Datatype: "",
+			Priority: 13.6,
 			From:     "latest",
 		},
 	}
