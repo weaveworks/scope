@@ -30,7 +30,7 @@ WITH_GO_HOST_ENV=$(NO_CROSS_COMP); $(GO_ENV)
 GO_BUILD_INSTALL_DEPS=-i
 GO_BUILD_TAGS='netgo unsafe'
 GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION) -s -w" -tags $(GO_BUILD_TAGS)
-IMAGE_TAG=$(shell ./image-tag)
+IMAGE_TAG=$(shell ./tools/image-tag)
 
 all: $(SCOPE_EXPORT)
 
