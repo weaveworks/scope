@@ -94,19 +94,17 @@ func (n Node) WithLatest(k string, ts time.Time, v string) Node {
 
 // WithConsts returns a fresh copy of n, with Metadata m merged in.
 func (n Node) WithConsts(m map[string]string) Node {
-	result := n.Copy()
 	ts := mtime.Now()
 	for k, v := range m {
-		result.Const = result.Const.Set(k, ts, v)
+		n.Const = n.Const.Set(k, ts, v)
 	}
-	return result
+	return n
 }
 
 // WithConst produces a new Node with k mapped to v in the Const metadata.
 func (n Node) WithConst(k string, ts time.Time, v string) Node {
-	result := n.Copy()
-	result.Const = result.Const.Set(k, ts, v)
-	return result
+	n.Const = n.Const.Set(k, ts, v)
+	return n
 }
 
 // WithCounters returns a fresh copy of n, with Counters c merged in.
