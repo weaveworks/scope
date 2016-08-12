@@ -63,12 +63,11 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report, dct Decorato
 		if !ok {
 			continue
 		}
-		output := p.Copy()
-		output.Latest = output.Latest.Set(docker.ContainerID, timestamp, containerID)
+		p.Latest = p.Latest.Set(docker.ContainerID, timestamp, containerID)
 		if containerName, timestamp, ok := container.Latest.LookupEntry(docker.ContainerName); ok {
-			output.Latest = output.Latest.Set(docker.ContainerName, timestamp, containerName)
+			p.Latest = p.Latest.Set(docker.ContainerName, timestamp, containerName)
 		}
-		outputs[id] = output
+		outputs[id] = p
 	}
 	return outputs
 }

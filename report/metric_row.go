@@ -27,21 +27,13 @@ type MetricRow struct {
 
 // Summary returns a copy of the MetricRow, without the samples, just the value if there is one.
 func (m MetricRow) Summary() MetricRow {
-	row := m.Copy()
-	if m.Metric != nil {
-		row.Metric.Samples = nil
+	if m.Metric.Len() > 0 {
+		// shallow-copy
+		metricCopy := *m.Metric
+		metricCopy.Samples = nil
+		m.Metric = &metricCopy
 	}
-	return row
-}
-
-// Copy returns a value copy of the MetricRow
-func (m MetricRow) Copy() MetricRow {
-	row := m
-	if m.Metric != nil {
-		var metric = m.Metric.Copy()
-		row.Metric = &metric
-	}
-	return row
+	return m
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead

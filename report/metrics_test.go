@@ -122,20 +122,6 @@ func TestMetricMerge(t *testing.T) {
 	}
 }
 
-func TestMetricCopy(t *testing.T) {
-	want := report.MakeMetric(nil)
-	have := want.Copy()
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf("diff: %s", test.Diff(want, have))
-	}
-
-	want = report.MakeSingletonMetric(time.Now(), 1)
-	have = want.Copy()
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf("diff: %s", test.Diff(want, have))
-	}
-}
-
 func TestMetricDiv(t *testing.T) {
 	t1 := time.Now()
 	t2 := time.Now().Add(1 * time.Minute)

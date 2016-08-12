@@ -32,19 +32,6 @@ type NodeSummaryGroup struct {
 	Columns    []Column      `json:"columns"`
 }
 
-// Copy returns a value copy of the NodeSummaryGroup
-func (g NodeSummaryGroup) Copy() NodeSummaryGroup {
-	result := NodeSummaryGroup{
-		TopologyID: g.TopologyID,
-		Label:      g.Label,
-		Columns:    g.Columns,
-	}
-	for _, node := range g.Nodes {
-		result.Nodes = append(result.Nodes, node.Copy())
-	}
-	return result
-}
-
 // Column provides special json serialization for column ids, so they include
 // their label for the frontend.
 type Column struct {
@@ -95,35 +82,12 @@ func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
 // SummarizeMetrics returns a copy of the NodeSummary where the metrics are
 // replaced with their summaries
 func (n NodeSummary) SummarizeMetrics() NodeSummary {
-	cp := n.Copy()
-	for i, m := range cp.Metrics {
-		cp.Metrics[i] = m.Summary()
+	summarizedMetrics := make([]report.MetricRow, len(n.Metrics))
+	for i, m := range n.Metrics {
+		summarizedMetrics[i] = m.Summary()
 	}
-	return cp
-}
-
-// Copy returns a value copy of the NodeSummary
-func (n NodeSummary) Copy() NodeSummary {
-	result := NodeSummary{
-		ID:         n.ID,
-		Label:      n.Label,
-		LabelMinor: n.LabelMinor,
-		Rank:       n.Rank,
-		Shape:      n.Shape,
-		Stack:      n.Stack,
-		Linkable:   n.Linkable,
-		Adjacency:  n.Adjacency.Copy(),
-	}
-	for _, row := range n.Metadata {
-		result.Metadata = append(result.Metadata, row.Copy())
-	}
-	for _, table := range n.Tables {
-		result.Tables = append(result.Tables, table.Copy())
-	}
-	for _, row := range n.Metrics {
-		result.Metrics = append(result.Metrics, row.Copy())
-	}
-	return result
+	n.Metrics = summarizedMetrics
+	return n
 }
 
 func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
@@ -136,7 +100,7 @@ func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 		Metrics:   NodeMetrics(r, n),
 		Parents:   Parents(r, n),
 		Tables:    NodeTables(r, n),
-		Adjacency: n.Adjacency.Copy(),
+		Adjacency: n.Adjacency,
 	}
 }
 
@@ -372,15 +336,6 @@ func Summaries(r report.Report, rns report.Nodes) NodeSummaries {
 			}
 			result[id] = summary
 		}
-	}
-	return result
-}
-
-// Copy returns a deep value-copy of NodeSummaries
-func (n NodeSummaries) Copy() NodeSummaries {
-	result := NodeSummaries{}
-	for k, v := range n {
-		result[k] = v.Copy()
 	}
 	return result
 }

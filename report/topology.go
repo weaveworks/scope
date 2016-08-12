@@ -167,7 +167,7 @@ type Nodes map[string]Node
 func (n Nodes) Copy() Nodes {
 	cp := make(Nodes, len(n))
 	for k, v := range n {
-		cp[k] = v.Copy()
+		cp[k] = v
 	}
 	return cp
 }

@@ -224,7 +224,7 @@ func children(r report.Report, n report.Node) []NodeSummaryGroup {
 	for _, spec := range nodeSummaryGroupSpecs {
 		if len(summaries[spec.topologyID]) > 0 {
 			sort.Sort(nodeSummariesByID(summaries[spec.TopologyID]))
-			group := spec.NodeSummaryGroup.Copy()
+			group := spec.NodeSummaryGroup
 			group.Nodes = summaries[spec.topologyID]
 			nodeSummaryGroups = append(nodeSummaryGroups, group)
 		}

@@ -45,16 +45,14 @@ func MakeNodeWith(id string, m map[string]string) Node {
 
 // WithID returns a fresh copy of n, with ID changed.
 func (n Node) WithID(id string) Node {
-	result := n.Copy()
-	result.ID = id
-	return result
+	n.ID = id
+	return n
 }
 
 // WithTopology returns a fresh copy of n, with ID changed.
 func (n Node) WithTopology(topology string) Node {
-	result := n.Copy()
-	result.Topology = topology
-	return result
+	n.Topology = topology
+	return n
 }
 
 // Before is used for sorting nodes by topology and id
@@ -74,121 +72,92 @@ func (n Node) After(other Node) bool {
 
 // WithLatests returns a fresh copy of n, with Metadata m merged in.
 func (n Node) WithLatests(m map[string]string) Node {
-	result := n.Copy()
 	ts := mtime.Now()
 	for k, v := range m {
-		result.Latest = result.Latest.Set(k, ts, v)
+		n.Latest = n.Latest.Set(k, ts, v)
 	}
-	return result
+	return n
 }
 
 // WithLatest produces a new Node with k mapped to v in the Latest metadata.
 func (n Node) WithLatest(k string, ts time.Time, v string) Node {
-	result := n.Copy()
-	result.Latest = result.Latest.Set(k, ts, v)
-	return result
+	n.Latest = n.Latest.Set(k, ts, v)
+	return n
 }
 
 // WithCounters returns a fresh copy of n, with Counters c merged in.
 func (n Node) WithCounters(c map[string]int) Node {
-	result := n.Copy()
-	result.Counters = result.Counters.Merge(Counters{}.fromIntermediate(c))
-	return result
+	n.Counters = n.Counters.Merge(Counters{}.fromIntermediate(c))
+	return n
 }
 
 // WithSet returns a fresh copy of n, with set merged in at key.
 func (n Node) WithSet(key string, set StringSet) Node {
-	result := n.Copy()
-	result.Sets = result.Sets.Add(key, set)
-	return result
+	n.Sets = n.Sets.Add(key, set)
+	return n
 }
 
 // WithSets returns a fresh copy of n, with sets merged in.
 func (n Node) WithSets(sets Sets) Node {
-	result := n.Copy()
-	result.Sets = result.Sets.Merge(sets)
-	return result
+	n.Sets = n.Sets.Merge(sets)
+	return n
 }
 
 // WithMetric returns a fresh copy of n, with metric merged in at key.
 func (n Node) WithMetric(key string, metric Metric) Node {
-	result := n.Copy()
-	result.Metrics[key] = n.Metrics[key].Merge(metric)
-	return result
+	n.Metrics = n.Metrics.Copy()
+	n.Metrics[key] = n.Metrics[key].Merge(metric)
+	return n
 }
 
 // WithMetrics returns a fresh copy of n, with metrics merged in.
 func (n Node) WithMetrics(metrics Metrics) Node {
-	result := n.Copy()
-	result.Metrics = result.Metrics.Merge(metrics)
-	return result
+	n.Metrics = n.Metrics.Merge(metrics)
+	return n
 }
 
 // WithAdjacent returns a fresh copy of n, with 'a' added to Adjacency
 func (n Node) WithAdjacent(a ...string) Node {
-	result := n.Copy()
-	result.Adjacency = result.Adjacency.Add(a...)
-	return result
+	n.Adjacency = n.Adjacency.Add(a...)
+	return n
 }
 
 // WithEdge returns a fresh copy of n, with 'dst' added to Adjacency and md
 // added to EdgeMetadata.
 func (n Node) WithEdge(dst string, md EdgeMetadata) Node {
-	result := n.Copy()
-	result.Adjacency = result.Adjacency.Add(dst)
-	result.Edges = result.Edges.Add(dst, md)
-	return result
+	n.Adjacency = n.Adjacency.Add(dst)
+	n.Edges = n.Edges.Add(dst, md)
+	return n
 }
 
 // WithControls returns a fresh copy of n, with cs added to Controls.
 func (n Node) WithControls(cs ...string) Node {
-	result := n.Copy()
-	result.Controls = result.Controls.Add(cs...)
-	return result
+	n.Controls = n.Controls.Add(cs...)
+	return n
 }
 
 // WithParents returns a fresh copy of n, with sets merged in.
 func (n Node) WithParents(parents Sets) Node {
-	result := n.Copy()
-	result.Parents = result.Parents.Merge(parents)
-	return result
+	n.Parents = n.Parents.Merge(parents)
+	return n
 }
 
 // PruneParents returns a fresh copy of n, without any parents.
 func (n Node) PruneParents() Node {
-	result := n.Copy()
-	result.Parents = EmptySets
-	return result
+	n.Parents = EmptySets
+	return n
 }
 
 // WithChildren returns a fresh copy of n, with children merged in.
 func (n Node) WithChildren(children NodeSet) Node {
-	result := n.Copy()
-	result.Children = result.Children.Merge(children)
-	return result
+	n.Children = n.Children.Merge(children)
+	return n
 }
 
 // WithChild returns a fresh copy of n, with one child merged in.
 func (n Node) WithChild(child Node) Node {
-	result := n.Copy()
-	result.Children = result.Children.Merge(MakeNodeSet(child))
-	return result
-}
-
-// Copy returns a value copy of the Node.
-func (n Node) Copy() Node {
-	cp := MakeNode(n.ID)
-	cp.Topology = n.Topology
-	cp.Counters = n.Counters.Copy()
-	cp.Sets = n.Sets.Copy()
-	cp.Adjacency = n.Adjacency.Copy()
-	cp.Edges = n.Edges.Copy()
-	cp.Controls = n.Controls.Copy()
-	cp.Latest = n.Latest.Copy()
-	cp.Metrics = n.Metrics.Copy()
-	cp.Parents = n.Parents.Copy()
-	cp.Children = n.Children.Copy()
-	return cp
+	n.Children = n.Children.Merge(MakeNodeSet(child))
+	return n
 }
 
 // Merge mergses the individual components of a node and returns a

@@ -191,13 +191,12 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator)
 		imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
 		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutVersion)
 
-		output := c.Copy()
-		output = propagateLatest(docker.ImageName, image, output)
-		output = propagateLatest(docker.ImageLabelPrefix+"works.weave.role", image, output)
-		output.Parents = output.Parents.
+		c = propagateLatest(docker.ImageName, image, c)
+		c = propagateLatest(docker.ImageLabelPrefix+"works.weave.role", image, c)
+		c.Parents = c.Parents.
 			Delete(report.ContainerImage).
 			Add(report.ContainerImage, report.MakeStringSet(imageNodeID))
-		outputs[id] = output
+		outputs[id] = c
 	}
 	return outputs
 }
@@ -370,14 +369,13 @@ func MapContainerImage2Name(n report.Node, _ report.Networks) report.Nodes {
 	}
 
 	imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
-	output := n.Copy()
-	output.ID = report.MakeContainerImageNodeID(imageNameWithoutVersion)
+	n.ID = report.MakeContainerImageNodeID(imageNameWithoutVersion)
 
 	if imageID, ok := report.ParseContainerImageNodeID(n.ID); ok {
-		output.Sets = output.Sets.Add(docker.ImageID, report.EmptyStringSet.Add(imageID))
+		n.Sets = n.Sets.Add(docker.ImageID, report.EmptyStringSet.Add(imageID))
 	}
 
-	return report.Nodes{output.ID: output}
+	return report.Nodes{n.ID: n}
 }
 
 // MapContainer2Hostname maps container Nodes to 'hostname' renderabled nodes..
