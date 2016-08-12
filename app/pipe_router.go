@@ -101,7 +101,7 @@ func (pr *localPipeRouter) Get(_ context.Context, id string, e End) (xfer.Pipe, 
 	defer pr.Unlock()
 	p, ok := pr.pipes[id]
 	if !ok {
-		log.Infof("Creating pipe id %s", id)
+		log.Debugf("Creating pipe id %s", id)
 		p = &pipe{
 			ui:    end{lastUsedTime: mtime.Now()},
 			probe: end{lastUsedTime: mtime.Now()},

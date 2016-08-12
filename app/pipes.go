@@ -52,7 +52,8 @@ func handlePipeWs(pr PipeRouter, end End) CtxHandlerFunc {
 		id := mux.Vars(r)["pipeID"]
 		pipe, endIO, err := pr.Get(ctx, id, end)
 		if err != nil {
-			log.Errorf("Error getting pipe %s: %v", id, err)
+			// this usually means the pipe has been closed
+			log.Debugf("Error getting pipe %s: %v", id, err)
 			http.NotFound(w, r)
 			return
 		}
@@ -65,9 +66,8 @@ func handlePipeWs(pr PipeRouter, end End) CtxHandlerFunc {
 		}
 		defer conn.Close()
 
-		log.Infof("Success got pipe %s:%s", id, end)
 		if err := pipe.CopyToWebsocket(endIO, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
-			log.Printf("Error copying to pipe %s (%d) websocket: %v", id, end, err)
+			log.Errorf("Error copying to pipe %s (%d) websocket: %v", id, end, err)
 		}
 	}
 }
@@ -75,7 +75,7 @@ func handlePipeWs(pr PipeRouter, end End) CtxHandlerFunc {
 func deletePipe(pr PipeRouter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		pipeID := mux.Vars(r)["pipeID"]
-		log.Infof("Deleting pipe %s", pipeID)
+		log.Debugf("Deleting pipe %s", pipeID)
 		if err := pr.Delete(ctx, pipeID); err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 		}

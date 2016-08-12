@@ -167,10 +167,10 @@ func (p *pingingWebsocket) Close() error {
 // IsExpectedWSCloseError returns boolean indicating whether the error is a
 // clean disconnection.
 func IsExpectedWSCloseError(err error) bool {
-	return websocket.IsCloseError(
-		err,
+	return err == io.EOF || err == io.ErrClosedPipe || websocket.IsCloseError(err,
 		websocket.CloseNormalClosure,
 		websocket.CloseGoingAway,
 		websocket.CloseNoStatusReceived,
+		websocket.CloseAbnormalClosure,
 	)
 }
