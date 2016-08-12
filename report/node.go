@@ -18,6 +18,7 @@ type Node struct {
 	Edges     EdgeMetadatas `json:"edges,omitempty"`
 	Controls  NodeControls  `json:"controls,omitempty"`
 	Latest    LatestMap     `json:"latest,omitempty"`
+	Const     ConstMap      `json:"const,omitempty"`
 	Metrics   Metrics       `json:"metrics,omitempty"`
 	Parents   Sets          `json:"parents,omitempty"`
 	Children  NodeSet       `json:"children,omitempty"`
@@ -32,15 +33,21 @@ func MakeNode(id string) Node {
 		Adjacency: EmptyIDList,
 		Edges:     EmptyEdgeMetadatas,
 		Controls:  MakeNodeControls(),
+		Const:     EmptyConstMap,
 		Latest:    EmptyLatestMap,
 		Metrics:   Metrics{},
 		Parents:   EmptySets,
 	}
 }
 
-// MakeNodeWith creates a new Node with the supplied map.
+// MakeNodeWith creates a new Node with the supplied latest map.
 func MakeNodeWith(id string, m map[string]string) Node {
 	return MakeNode(id).WithLatests(m)
+}
+
+// MakeNodeWithConsts creates a new Node with the supplied const map.
+func MakeNodeWithConsts(id string, m map[string]string) Node {
+	return MakeNode(id).WithConsts(m)
 }
 
 // WithID returns a fresh copy of n, with ID changed.
@@ -82,6 +89,21 @@ func (n Node) WithLatests(m map[string]string) Node {
 // WithLatest produces a new Node with k mapped to v in the Latest metadata.
 func (n Node) WithLatest(k string, ts time.Time, v string) Node {
 	n.Latest = n.Latest.Set(k, ts, v)
+	return n
+}
+
+// WithConsts returns a fresh copy of n, with Metadata m merged in.
+func (n Node) WithConsts(m map[string]string) Node {
+	ts := mtime.Now()
+	for k, v := range m {
+		n.Const = n.Const.Set(k, ts, v)
+	}
+	return n
+}
+
+// WithConst produces a new Node with k mapped to v in the Const metadata.
+func (n Node) WithConst(k string, ts time.Time, v string) Node {
+	n.Const = n.Const.Set(k, ts, v)
 	return n
 }
 
@@ -182,6 +204,7 @@ func (n Node) Merge(other Node) Node {
 		Edges:     n.Edges.Merge(other.Edges),
 		Controls:  n.Controls.Merge(other.Controls),
 		Latest:    n.Latest.Merge(other.Latest),
+		Const:     n.Const.Merge(other.Const),
 		Metrics:   n.Metrics.Merge(other.Metrics),
 		Parents:   n.Parents.Merge(other.Parents),
 		Children:  n.Children.Merge(other.Children),

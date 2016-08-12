@@ -204,7 +204,7 @@ var IsStopped = Complement(IsRunning)
 func FilterNonProcspied(r Renderer) Renderer {
 	return MakeFilter(
 		func(node report.Node) bool {
-			_, ok := node.Latest.Lookup(endpoint.Procspied)
+			_, ok := node.Const.Lookup(endpoint.Procspied)
 			return ok
 		},
 		r,

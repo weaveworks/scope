@@ -23,12 +23,12 @@ func (node Node) AddTable(prefix string, labels map[string]string) Node {
 		if count >= MaxTableRows {
 			break
 		}
-		node = node.WithLatest(prefix+key, mtime.Now(), value)
+		node = node.WithConst(prefix+key, mtime.Now(), value)
 		count++
 	}
 	if len(labels) > MaxTableRows {
 		truncationCount := fmt.Sprintf("%d", len(labels)-MaxTableRows)
-		node = node.WithLatest(TruncationCountPrefix+prefix, mtime.Now(), truncationCount)
+		node = node.WithConst(TruncationCountPrefix+prefix, mtime.Now(), truncationCount)
 	}
 	return node
 }
@@ -37,13 +37,13 @@ func (node Node) AddTable(prefix string, labels map[string]string) Node {
 func (node Node) ExtractTable(prefix string) (rows map[string]string, truncationCount int) {
 	rows = map[string]string{}
 	truncationCount = 0
-	node.Latest.ForEach(func(key, value string) {
+	node.Const.ForEach(func(key, value string) {
 		if strings.HasPrefix(key, prefix) {
 			label := key[len(prefix):]
 			rows[label] = value
 		}
 	})
-	if str, ok := node.Latest.Lookup(TruncationCountPrefix + prefix); ok {
+	if str, ok := node.Const.Lookup(TruncationCountPrefix + prefix); ok {
 		if n, err := fmt.Sscanf(str, "%d", &truncationCount); n != 1 || err != nil {
 			log.Warn("Unexpected truncation count format %q", str)
 		}

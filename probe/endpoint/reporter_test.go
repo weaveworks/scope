@@ -106,7 +106,7 @@ func TestSpyWithProcesses(t *testing.T) {
 	for key, want := range map[string]string{
 		"pid": strconv.FormatUint(uint64(fixProcessPID), 10),
 	} {
-		have, _ := r.Endpoint.Nodes[scopedLocal].Latest.Lookup(key)
+		have, _ := r.Endpoint.Nodes[scopedLocal].Const.Lookup(key)
 		if want != have {
 			t.Errorf("Process.Nodes[%q][%q]: want %q, have %q", scopedLocal, key, want, have)
 		}

@@ -10,7 +10,7 @@ import (
 	"github.com/weaveworks/ps"
 )
 
-// LatestMap is a persitent map which support latest-win merges. We have to
+// LatestMap is a persistent map which supports latest-win merges. We have to
 // embed ps.Map as its an interface.  LatestMaps are immutable.
 type LatestMap struct {
 	ps.Map
@@ -188,6 +188,9 @@ func (m *LatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
 
 // constants from https://github.com/ugorji/go/blob/master/codec/helper.go#L207
 const (
+	// ----- content types ----
+	cUTF83326 = 1
+	// ----- containerStateValues ----
 	containerMapKey   = 2
 	containerMapValue = 3
 	containerMapEnd   = 4

@@ -58,7 +58,7 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 		for _, ip := range toIPs(n) {
 			result[ip] = NewDerivedNode(ip, n).
 				WithTopology(IP).
-				WithLatests(map[string]string{
+				WithConsts(map[string]string{
 					originalNodeID:       n.ID,
 					originalNodeTopology: n.Topology,
 				}).
@@ -82,11 +82,11 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 		// If this node is not of the original type, exclude it.
 		// This excludes all the nodes we've dragged in from endpoint
 		// that we failed to join to a node.
-		id, ok := n.Latest.Lookup(originalNodeID)
+		id, ok := n.Const.Lookup(originalNodeID)
 		if !ok {
 			return report.Nodes{}
 		}
-		topology, ok := n.Latest.Lookup(originalNodeTopology)
+		topology, ok := n.Const.Lookup(originalNodeTopology)
 		if !ok {
 			return report.Nodes{}
 		}
@@ -103,7 +103,7 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 	// don't want to double count edges.
 	endpoint2IP := func(m report.Node, local report.Networks) report.Nodes {
 		// Don't include procspied connections, to prevent double counting
-		_, ok := m.Latest.Lookup(endpoint.Procspied)
+		_, ok := m.Const.Lookup(endpoint.Procspied)
 		if ok {
 			return report.Nodes{}
 		}

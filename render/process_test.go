@@ -1,13 +1,12 @@
 package render_test
 
 import (
-	"testing"
-
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 	"github.com/weaveworks/scope/test/reflect"
+	"testing"
 )
 
 func TestEndpointRenderer(t *testing.T) {
