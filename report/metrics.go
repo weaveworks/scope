@@ -158,6 +158,8 @@ func (m Metric) Merge(other Metric) Metric {
 	}
 
 	// Merge two lists of Samples in O(n)
+	// We may be allocating too much space but append() allocates
+	// space exponentially anyways.
 	samplesOut := make([]Sample, 0, len(m.Samples)+len(other.Samples))
 	mI, otherI := 0, 0
 	for {
@@ -169,6 +171,8 @@ func (m Metric) Merge(other Metric) Metric {
 			break
 		}
 
+		// TODO: for better performance, instead of appending each
+		//       individual element, we could detect and copy full subsegments.
 		if m.Samples[mI].Timestamp.Equal(other.Samples[otherI].Timestamp) {
 			samplesOut = append(samplesOut, m.Samples[mI])
 			mI++
