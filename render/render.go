@@ -41,7 +41,7 @@ func MakeReduce(renderers ...Renderer) Renderer {
 func (r *Reduce) Render(rpt report.Report, dct Decorator) report.Nodes {
 	result := report.Nodes{}
 	for _, renderer := range *r {
-		result = result.Merge(renderer.Render(rpt, dct))
+		result = renderer.Render(rpt, dct).Merge(result)
 	}
 	return result
 }
