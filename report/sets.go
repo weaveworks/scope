@@ -92,7 +92,7 @@ func (s Sets) Merge(other Sets) Sets {
 	iter.ForEach(func(key string, value interface{}) {
 		set := value.(StringSet)
 		if existingSet, ok := result.Lookup(key); ok {
-			set = set.Merge(existingSet.(StringSet))
+			set = existingSet.(StringSet).Merge(set)
 		}
 		result = result.Set(key, set)
 	})

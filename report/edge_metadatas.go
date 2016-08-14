@@ -79,7 +79,7 @@ func (c EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
 	}
 	iter.ForEach(func(key string, otherVal interface{}) {
 		if val, ok := output.Lookup(key); ok {
-			output = output.Set(key, otherVal.(EdgeMetadata).Merge(val.(EdgeMetadata)))
+			output = output.Set(key, val.(EdgeMetadata).Merge(otherVal.(EdgeMetadata)))
 		} else {
 			output = output.Set(key, otherVal)
 		}
