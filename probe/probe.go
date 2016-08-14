@@ -194,7 +194,7 @@ ForLoop:
 	for {
 		select {
 		case r := <-rs:
-			rpt = rpt.Merge(r)
+			rpt = r.Merge(rpt)
 		default:
 			break ForLoop
 		}
