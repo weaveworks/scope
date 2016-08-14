@@ -52,8 +52,13 @@ func (m LatestMap) Size() int {
 	return m.Map.Size()
 }
 
-// Merge produces a fresh LatestMap, container the kers from both inputs. When
-// both inputs container the same key, the latter value is used.
+// Merge produces a fresh LatestMap, containing the keys from both
+// inputs. When both inputs contain the same key, the more recent
+// value is used.
+//
+// NB: This function operates more efficiently - performing less
+// memory allocation and copying - when the entries in the target are
+// younger than the entries in the argument.
 func (m LatestMap) Merge(other LatestMap) LatestMap {
 	var (
 		mSize     = m.Size()
@@ -66,7 +71,11 @@ func (m LatestMap) Merge(other LatestMap) LatestMap {
 		return other
 	case otherSize == 0:
 		return m
-	case mSize < otherSize:
+	case mSize*2 < otherSize:
+		// NB: We forgo the "merge older into younger" optimisation
+		// here in favour of "merge smaller into larger". The
+		// assumption behind the "*2" is that typically all the keys
+		// in the smaller map are in the larger map.
 		output, iter = iter, output
 	}
 
