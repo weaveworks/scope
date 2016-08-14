@@ -45,29 +45,6 @@ func TestMerger(t *testing.T) {
 	}
 }
 
-func TestSmartMerger(t *testing.T) {
-	// Use 3 reports _WITH SAME ID_
-	report1 := report.MakeReport()
-	report1.Endpoint.AddNode(report.MakeNode("foo"))
-	report1.ID = "foo"
-	report2 := report.MakeReport()
-	report2.Endpoint.AddNode(report.MakeNode("bar"))
-	report2.ID = "foo"
-	report3 := report.MakeReport()
-	report3.Endpoint.AddNode(report.MakeNode("baz"))
-	report3.ID = "foo"
-	reports := []report.Report{
-		report1, report2, report3,
-	}
-	want := report.MakeReport()
-	want.Endpoint.AddNode(report.MakeNode("foo"))
-
-	merger := app.NewSmartMerger()
-	if have := merger.Merge(reports); !reflect.DeepEqual(have, want) {
-		t.Errorf("Bad merge: %s", test.Diff(have, want))
-	}
-}
-
 func BenchmarkSmartMerger(b *testing.B) {
 	benchmarkMerger(b, app.NewSmartMerger())
 }

@@ -2,10 +2,7 @@ package app
 
 import (
 	"fmt"
-	"math"
-	"sort"
 
-	"github.com/bluele/gcache"
 	"github.com/spaolacci/murmur3"
 
 	"github.com/weaveworks/scope/report"
@@ -35,7 +32,6 @@ func (dumbMerger) Merge(reports []report.Report) report.Report {
 }
 
 type smartMerger struct {
-	cache gcache.Cache
 }
 
 // NewSmartMerger makes a Merger which merges together reports as
@@ -45,80 +41,21 @@ func NewSmartMerger() Merger {
 	return smartMerger{}
 }
 
-type node struct {
-	id  uint64
-	rpt report.Report
-}
-
-type byID []*node
-
-func (ns byID) Len() int           { return len(ns) }
-func (ns byID) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
-func (ns byID) Less(i, j int) bool { return ns[i].id < ns[j].id }
-
-func hash(ids ...string) uint64 {
-	id := murmur3.New64()
-	for _, i := range ids {
-		id.Write([]byte(i))
-	}
-	return id.Sum64()
-}
-
+// Merge merges the reports as a binary tree. Crucially, it
+// effectively merges reports in reverse order. Typically reports are
+// ordered oldest-to-youngest, so this strategy merges older reports
+// "into" younger reports. This order is more efficient for some Merge
+// operations, in particular LatestMap.Merge.
 func (s smartMerger) Merge(reports []report.Report) report.Report {
-	// Start with a sorted list of leaves.
-	// Note we must dedupe reports with the same ID to ensure the
-	// algorithm below doesn't go into an infinite loop.  This is
-	// fine as reports with the same ID are assumed to be the same.
-	nodes := []*node{}
-	seen := map[uint64]struct{}{}
-	for _, r := range reports {
-		id := hash(r.ID)
-		if _, ok := seen[id]; ok {
-			continue
-		}
-		seen[id] = struct{}{}
-		nodes = append(nodes, &node{
-			id:  id,
-			rpt: r,
-		})
+	l := len(reports)
+	switch l {
+	case 0:
+		return report.MakeReport()
+	case 1:
+		return reports[0]
+	case 2:
+		return reports[1].Merge(reports[0])
 	}
-	sort.Sort(byID(nodes))
-
-	// Define how to merge two nodes together.  The result of merging
-	// two reports is cached.
-	merge := func(left, right *node) *node {
-		return &node{
-			id:  hash(left.rpt.ID, right.rpt.ID),
-			rpt: report.MakeReport().Merge(left.rpt).Merge(right.rpt),
-		}
-	}
-
-	// Define how to reduce n nodes to 1.
-	// Min and max are both inclusive!
-	var reduce func(min, max uint64, nodes []*node) *node
-	reduce = func(min, max uint64, nodes []*node) *node {
-		switch len(nodes) {
-		case 0:
-			return &node{rpt: report.MakeReport()}
-		case 1:
-			return nodes[0]
-		case 2:
-			return merge(nodes[0], nodes[1])
-		}
-
-		partition := min + ((max - min) / 2)
-		index := sort.Search(len(nodes), func(i int) bool {
-			return nodes[i].id > partition
-		})
-		if index == len(nodes) {
-			return reduce(min, partition, nodes)
-		} else if index == 0 {
-			return reduce(partition+1, max, nodes)
-		}
-		left := reduce(min, partition, nodes[:index])
-		right := reduce(partition+1, max, nodes[index:])
-		return merge(left, right)
-	}
-
-	return reduce(0, math.MaxUint64, nodes).rpt
+	partition := l / 2
+	return s.Merge(reports[partition:]).Merge(s.Merge(reports[:partition]))
 }
