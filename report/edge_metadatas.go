@@ -39,16 +39,13 @@ func (c EdgeMetadatas) Add(key string, value EdgeMetadata) EdgeMetadatas {
 	if existingValue, ok := c.psMap.Lookup(key); ok {
 		value = value.Merge(existingValue.(EdgeMetadata))
 	}
-	return EdgeMetadatas{
-		c.psMap.Set(key, value),
-	}
+	return EdgeMetadatas{c.psMap.Set(key, value)}
 }
 
 // Lookup the counter 'key'
 func (c EdgeMetadatas) Lookup(key string) (EdgeMetadata, bool) {
 	if c.psMap != nil {
-		existingValue, ok := c.psMap.Lookup(key)
-		if ok {
+		if existingValue, ok := c.psMap.Lookup(key); ok {
 			return existingValue.(EdgeMetadata), true
 		}
 	}
