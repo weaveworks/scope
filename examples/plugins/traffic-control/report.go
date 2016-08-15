@@ -285,7 +285,7 @@ func getControls() []extControl {
 				Rank:  24,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, "", "")
+				return ClearTrafficControlSettings(pid)
 			},
 		},
 	}
