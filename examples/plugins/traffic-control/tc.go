@@ -11,6 +11,12 @@ import (
 )
 
 func DoTrafficControl(pid int, latency string, pktLoss string) error {
+	if latency == "" && pktLoss == "" {
+		// TODO @alepuccetti: return a warning message: "Nothing to do"
+		return nil
+	}
+
+	var err error
 	cmds := [][]string{
 		split("tc qdisc replace dev eth0 root handle 1: netem"),
 
@@ -31,18 +37,40 @@ func DoTrafficControl(pid int, latency string, pktLoss string) error {
 
 	}
 	cmd := split("tc qdisc change dev eth0 root handle 1: netem")
-	if latency != "" {
+	// TODO @alepuccetti: refactor this code
+	if latency == "" {
+		// pktLoss cannot be empty
+		cmd = append(cmd, "loss")
+		cmd = append(cmd, pktLoss)
+		// get latency from the cache
+		if latency, err = getLatency(pid); err != nil {
+			return err
+		} else if latency != "-" {
+			cmd = append(cmd, "delay")
+			cmd = append(cmd, latency)
+		}
+	} else if pktLoss == "" {
+		// latency cannot be empty
 		cmd = append(cmd, "delay")
 		cmd = append(cmd, latency)
-	}
-	if pktLoss != "" {
+		// get pktLoss from the cache
+		if pktLoss, err = getPktLoss(pid); err != nil {
+			return err
+		} else if pktLoss != "-" {
+			cmd = append(cmd, "loss")
+			cmd = append(cmd, pktLoss)
+		}
+	} else {
+		// latency and pckLoss are both new
+		cmd = append(cmd, "delay")
+		cmd = append(cmd, latency)
 		cmd = append(cmd, "loss")
 		cmd = append(cmd, pktLoss)
 	}
 	cmds = append(cmds, cmd)
 
 	netNS := fmt.Sprintf("/proc/%d/ns/net", pid)
-	err := ns.WithNetNSPath(netNS, func(hostNS ns.NetNS) error {
+	err = ns.WithNetNSPath(netNS, func(hostNS ns.NetNS) error {
 		for _, cmd := range cmds {
 			if output, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput(); err != nil {
 				log.Error(string(output))
