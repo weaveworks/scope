@@ -109,7 +109,7 @@ func (c *Client) RemoveEventListener(listener chan *APIEvents) error {
 	if err != nil {
 		return err
 	}
-	if len(c.eventMonitor.listeners) == 0 {
+	if c.eventMonitor.listernersCount() == 0 {
 		c.eventMonitor.disableEventMonitoring()
 	}
 	return nil
@@ -148,6 +148,12 @@ func (eventState *eventMonitoringState) closeListeners() {
 		eventState.Add(-1)
 	}
 	eventState.listeners = nil
+}
+
+func (eventState *eventMonitoringState) listernersCount() int {
+	eventState.RLock()
+	defer eventState.RUnlock()
+	return len(eventState.listeners)
 }
 
 func listenerExists(a chan<- *APIEvents, list *[]chan<- *APIEvents) bool {
