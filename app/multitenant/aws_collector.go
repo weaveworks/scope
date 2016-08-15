@@ -277,7 +277,8 @@ func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) 
 		if store == nil {
 			continue
 		}
-		found, missing, err := store.FetchReports(missing)
+		found, newMissing, err := store.FetchReports(missing)
+		missing = newMissing
 		if err != nil {
 			log.Warningf("Error fetching from cache: %v", err)
 		}
