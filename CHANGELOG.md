@@ -1,15 +1,15 @@
 ## Release 0.17.0
 
 Highlights:
-- New Grid view as an alternative to Scopes classic graph view.  It provides
-  higher information density, proving particularly useful when there's a high
-  node count in the graph view.
-- Considerable Performance enhancements: the CPU efficiency of the Scope App has
+- New Table Mode as an alternative to Scope's classic graph view. It provides
+  higher information density, proving particularly useful when there are many
+  nodes in the graph view.
+- Considerable performance enhancements: the CPU efficiency of the Scope App has
   increased in more than 50% and the Scope probes over 25%.
 
 
 New features and enhancements:
-- Grid view.
+- Table mode
 	[#1673](https://github.com/weaveworks/scope/pull/1673)
 	[#1747](https://github.com/weaveworks/scope/pull/1747)	
 	[#1753](https://github.com/weaveworks/scope/pull/1753)
