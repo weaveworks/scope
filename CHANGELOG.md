@@ -18,7 +18,7 @@ New features and enhancements:
 	[#1784](https://github.com/weaveworks/scope/pull/1784)
 - Loading indicator
 	[#1485](https://github.com/weaveworks/scope/pull/1485)
-- Dont show weavescope logo when running in a frame
+- Don't show weavescope logo when running in a frame
 	[#1734](https://github.com/weaveworks/scope/pull/1734)
 - Reduce horizontal gap between nodes in topology views
 	[#1693](https://github.com/weaveworks/scope/pull/1693)	
