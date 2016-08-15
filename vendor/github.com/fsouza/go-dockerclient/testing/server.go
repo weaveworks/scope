@@ -9,9 +9,12 @@ package testing
 import (
 	"archive/tar"
 	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	mathrand "math/rand"
 	"net"
@@ -66,6 +69,22 @@ type volumeCounter struct {
 	count  int
 }
 
+func buildDockerServer(listener net.Listener, containerChan chan<- *docker.Container, hook func(*http.Request)) *DockerServer {
+	server := DockerServer{
+		listener:       listener,
+		imgIDs:         make(map[string]string),
+		hook:           hook,
+		failures:       make(map[string]string),
+		execCallbacks:  make(map[string]func()),
+		statsCallbacks: make(map[string]func(string) docker.Stats),
+		customHandlers: make(map[string]http.Handler),
+		uploadedFiles:  make(map[string]string),
+		cChan:          containerChan,
+	}
+	server.buildMuxer()
+	return &server
+}
+
 // NewServer returns a new instance of the fake server, in standalone mode. Use
 // the method URL to get the URL of the server.
 //
@@ -82,20 +101,41 @@ func NewServer(bind string, containerChan chan<- *docker.Container, hook func(*h
 	if err != nil {
 		return nil, err
 	}
-	server := DockerServer{
-		listener:       listener,
-		imgIDs:         make(map[string]string),
-		hook:           hook,
-		failures:       make(map[string]string),
-		execCallbacks:  make(map[string]func()),
-		statsCallbacks: make(map[string]func(string) docker.Stats),
-		customHandlers: make(map[string]http.Handler),
-		uploadedFiles:  make(map[string]string),
-		cChan:          containerChan,
+	server := buildDockerServer(listener, containerChan, hook)
+	go http.Serve(listener, server)
+	return server, nil
+}
+
+type TLSConfig struct {
+	CertPath    string
+	CertKeyPath string
+	RootCAPath  string
+}
+
+func NewTLSServer(bind string, containerChan chan<- *docker.Container, hook func(*http.Request), tlsConfig TLSConfig) (*DockerServer, error) {
+	listener, err := net.Listen("tcp", bind)
+	if err != nil {
+		return nil, err
 	}
-	server.buildMuxer()
-	go http.Serve(listener, &server)
-	return &server, nil
+	defaultCertificate, err := tls.LoadX509KeyPair(tlsConfig.CertPath, tlsConfig.CertKeyPath)
+	if err != nil {
+		return nil, err
+	}
+	tlsServerConfig := new(tls.Config)
+	tlsServerConfig.Certificates = []tls.Certificate{defaultCertificate}
+	if tlsConfig.RootCAPath != "" {
+		rootCertPEM, err := ioutil.ReadFile(tlsConfig.RootCAPath)
+		if err != nil {
+			return nil, err
+		}
+		certsPool := x509.NewCertPool()
+		certsPool.AppendCertsFromPEM(rootCertPEM)
+		tlsServerConfig.RootCAs = certsPool
+	}
+	tlsListener := tls.NewListener(listener, tlsServerConfig)
+	server := buildDockerServer(tlsListener, containerChan, hook)
+	go http.Serve(tlsListener, server)
+	return server, nil
 }
 
 func (s *DockerServer) notify(container *docker.Container) {
@@ -145,6 +185,7 @@ func (s *DockerServer) buildMuxer() {
 	s.mux.Path("/volumes/{name:.*}").Methods("GET").HandlerFunc(s.handlerWrapper(s.inspectVolume))
 	s.mux.Path("/volumes/{name:.*}").Methods("DELETE").HandlerFunc(s.handlerWrapper(s.removeVolume))
 	s.mux.Path("/info").Methods("GET").HandlerFunc(s.handlerWrapper(s.infoDocker))
+	s.mux.Path("/version").Methods("GET").HandlerFunc(s.handlerWrapper(s.versionDocker))
 }
 
 // SetHook changes the hook function used by the server.
@@ -557,14 +598,22 @@ func (s *DockerServer) startContainer(w http.ResponseWriter, r *http.Request) {
 	s.cMut.Lock()
 	defer s.cMut.Unlock()
 	defer r.Body.Close()
-	var hostConfig docker.HostConfig
+	if container.State.Running {
+		http.Error(w, "", http.StatusNotModified)
+		return
+	}
+	var hostConfig *docker.HostConfig
 	err = json.NewDecoder(r.Body).Decode(&hostConfig)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	container.HostConfig = &hostConfig
-	if len(hostConfig.PortBindings) > 0 {
+	if hostConfig == nil {
+		hostConfig = container.HostConfig
+	} else {
+		container.HostConfig = hostConfig
+	}
+	if hostConfig != nil && len(hostConfig.PortBindings) > 0 {
 		ports := map[docker.Port][]docker.PortBinding{}
 		for key, items := range hostConfig.PortBindings {
 			bindings := make([]docker.PortBinding, len(items))
@@ -584,10 +633,6 @@ func (s *DockerServer) startContainer(w http.ResponseWriter, r *http.Request) {
 			ports[key] = bindings
 		}
 		container.NetworkSettings.Ports = ports
-	}
-	if container.State.Running {
-		http.Error(w, "", http.StatusNotModified)
-		return
 	}
 	container.State.Running = true
 	s.notify(container)
@@ -1328,6 +1373,22 @@ func (s *DockerServer) infoDocker(w http.ResponseWriter, r *http.Request) {
 		"ServerVersion":     "1.10.1",
 		"ClusterStore":      "",
 		"ClusterAdvertise":  "",
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(envs)
+}
+
+func (s *DockerServer) versionDocker(w http.ResponseWriter, r *http.Request) {
+	envs := map[string]interface{}{
+		"Version":       "1.10.1",
+		"Os":            "linux",
+		"KernelVersion": "3.13.0-77-generic",
+		"GoVersion":     "go1.4.2",
+		"GitCommit":     "9e83765",
+		"Arch":          "amd64",
+		"ApiVersion":    "1.22",
+		"BuildTime":     "2015-12-01T07:09:13.444803460+00:00",
+		"Experimental":  false,
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(envs)
