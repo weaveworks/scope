@@ -117,28 +117,34 @@ function getSortedNodes(nodes, columns, sortBy, sortedDesc) {
 }
 
 
-function getColumnsWidths(headers) {
-  return headers.map((h, i) => {
-    //
-    // Beauty hack: adjust first column width if there are only few columns;
-    // this assumes the other columns are narrow metric columns of 20% table width
-    //
-    if (i === 0) {
-      if (headers.length === 2) {
-        return '66%';
-      } else if (headers.length === 3) {
-        return '50%';
-      } else if (headers.length > 3 && headers.length <= 5) {
-        return '33%';
-      }
+function getColumnWidth(headers, h, i) {
+  //
+  // Beauty hack: adjust first column width if there are only few columns;
+  // this assumes the other columns are narrow metric columns of 20% table width
+  //
+  if (i === 0) {
+    if (headers.length === 2) {
+      return '66%';
+    } else if (headers.length === 3) {
+      return '50%';
+    } else if (headers.length > 3 && headers.length <= 5) {
+      return '33%';
     }
+  }
 
-    //
-    // More beauty hacking, ports and counts can only get so big, free up WS for other longer
-    // fields like IPs!
-    //
-    return COLUMN_WIDTHS[h.id];
-  });
+  //
+  // More beauty hacking, ports and counts can only get so big, free up WS for other longer
+  // fields like IPs!
+  //
+  return COLUMN_WIDTHS[h.id];
+}
+
+
+function getColumnsStyles(headers) {
+  return headers.map((h, i) => ({
+    width: getColumnWidth(headers, h, i),
+    textAlign: h.dataType === 'number' ? 'right' : 'left',
+  }));
 }
 
 
@@ -177,7 +183,7 @@ export default class NodeDetailsTable extends React.Component {
   renderHeaders() {
     if (this.props.nodes && this.props.nodes.length > 0) {
       const headers = this.getColumnHeaders();
-      const widths = getColumnsWidths(headers);
+      const colStyles = getColumnsStyles(headers);
       const defaultSortBy = getDefaultSortBy(this.props.columns, this.props.nodes);
 
       return (
@@ -196,14 +202,8 @@ export default class NodeDetailsTable extends React.Component {
               headerClasses.push('node-details-table-header-sorted');
             }
 
-            // set header width in percent
-            const style = {};
-            if (widths[i]) {
-              style.width = widths[i];
-            }
-
             return (
-              <td className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
+              <td className={headerClasses.join(' ')} style={colStyles[i]} onClick={onHeaderClick}
                 title={header.label} key={header.id}>
                 {isSortedAsc
                   && <span className="node-details-table-header-sorter fa fa-caret-up" />}
@@ -251,7 +251,7 @@ export default class NodeDetailsTable extends React.Component {
                   selected={this.props.selectedNodeId === node.id}
                   node={node}
                   nodeIdKey={nodeIdKey}
-                  widths={getColumnsWidths(this.getColumnHeaders())}
+                  colStyles={getColumnsStyles(this.getColumnHeaders())}
                   columns={columns}
                   onClick={onClickRow}
                   onMouseLeaveRow={onMouseLeaveRow}

@@ -18,7 +18,7 @@ function getColumns(nodes) {
     .toList()
     .flatMap(n => {
       const metrics = (n.get('metrics') || makeList())
-        .map(m => makeMap({ id: m.get('id'), label: m.get('label') }));
+        .map(m => makeMap({ id: m.get('id'), label: m.get('label'), dataType: 'number' }));
       return metrics;
     })
     .toSet()
@@ -29,7 +29,7 @@ function getColumns(nodes) {
     .toList()
     .flatMap(n => {
       const metadata = (n.get('metadata') || makeList())
-        .map(m => makeMap({ id: m.get('id'), label: m.get('label') }));
+        .map(m => makeMap({ id: m.get('id'), label: m.get('label'), dataType: m.get('dataType') }));
       return metadata;
     })
     .toSet()
