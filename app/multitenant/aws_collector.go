@@ -335,7 +335,7 @@ func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 		return report.MakeReport(), err
 	}
 
-	return c.merger.Merge(reports), nil
+	return c.merger.Merge(reports).Upgrade(), nil
 }
 
 // calculateDynamoKeys generates the row & column keys for Dynamo.
