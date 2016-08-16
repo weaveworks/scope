@@ -231,7 +231,7 @@ type extControl struct {
 	handler func(pid int) error
 }
 
-func getControls() []extControl {
+func getLatencyControls() []extControl {
 	return []extControl{
 		{
 			control: control{
@@ -266,6 +266,11 @@ func getControls() []extControl {
 				return DoTrafficControl(pid, "1ms", "")
 			},
 		},
+	}
+}
+
+func getPktLossControls() []extControl {
+	return []extControl{
 		{
 			control: control{
 				ID:    "pkt-drop-low",
@@ -277,6 +282,11 @@ func getControls() []extControl {
 				return DoTrafficControl(pid, "", "10%")
 			},
 		},
+	}
+}
+
+func getGeneralControls() []extControl {
+	return []extControl{
 		{
 			control: control{
 				ID:    "clear",
@@ -290,6 +300,18 @@ func getControls() []extControl {
 		},
 	}
 }
+
+func getControls() []extControl {
+	controls := getLatencyControls()
+	// TODO alepuccetti why append(controls, getPktLossControls()) does not work?
+	for _, ctrl := range getPktLossControls() {
+		controls = append(controls, ctrl)
+	}
+	for _, ctrl := range getGeneralControls() {
+		controls = append(controls, ctrl)
+	}
+	return controls
+	}
 
 const nodeSuffix = ";<container>"
 
