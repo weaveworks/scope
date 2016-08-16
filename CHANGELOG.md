@@ -30,6 +30,7 @@ New features and enhancements:
 	[#1768](https://github.com/weaveworks/scope/pull/1768)	
 - Eliminate stats log noise from stopped containers
 	[#1687](https://github.com/weaveworks/scope/pull/1687)
+	[#1798](https://github.com/weaveworks/scope/pull/1798)	
 - Hide uncontained/unmanaged by default
 	[#1694](https://github.com/weaveworks/scope/pull/1694)
 
