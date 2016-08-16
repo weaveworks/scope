@@ -89,21 +89,23 @@ var (
 
 // Reporter generate Reports containing Container and ContainerImage topologies
 type Reporter struct {
-	client  Client
-	pipes   controls.PipeClient
-	probeID string
-	probe   *probe.Probe
-	hostID  string
+	client          Client
+	pipes           controls.PipeClient
+	probeID         string
+	probe           *probe.Probe
+	hostID          string
+	handlerRegistry *controls.HandlerRegistry
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe) *Reporter {
+func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe, handlerRegistry *controls.HandlerRegistry) *Reporter {
 	reporter := &Reporter{
-		client:  client,
-		pipes:   pipes,
-		probeID: probeID,
-		probe:   probe,
-		hostID:  hostID,
+		client:          client,
+		pipes:           pipes,
+		probeID:         probeID,
+		probe:           probe,
+		hostID:          hostID,
+		handlerRegistry: handlerRegistry,
 	}
 	reporter.registerControls()
 	client.WatchPods(reporter.podEvent)

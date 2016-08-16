@@ -162,23 +162,29 @@ func captureContainerID(f func(string, xfer.Request) xfer.Response) func(xfer.Re
 }
 
 func (r *registry) registerControls() {
-	controls.Register(StopContainer, captureContainerID(r.stopContainer))
-	controls.Register(StartContainer, captureContainerID(r.startContainer))
-	controls.Register(RestartContainer, captureContainerID(r.restartContainer))
-	controls.Register(PauseContainer, captureContainerID(r.pauseContainer))
-	controls.Register(UnpauseContainer, captureContainerID(r.unpauseContainer))
-	controls.Register(RemoveContainer, captureContainerID(r.removeContainer))
-	controls.Register(AttachContainer, captureContainerID(r.attachContainer))
-	controls.Register(ExecContainer, captureContainerID(r.execContainer))
+	controls := map[string]xfer.ControlHandlerFunc{
+		StopContainer:    captureContainerID(r.stopContainer),
+		StartContainer:   captureContainerID(r.startContainer),
+		RestartContainer: captureContainerID(r.restartContainer),
+		PauseContainer:   captureContainerID(r.pauseContainer),
+		UnpauseContainer: captureContainerID(r.unpauseContainer),
+		RemoveContainer:  captureContainerID(r.removeContainer),
+		AttachContainer:  captureContainerID(r.attachContainer),
+		ExecContainer:    captureContainerID(r.execContainer),
+	}
+	r.handlerRegistry.Batch(nil, controls)
 }
 
 func (r *registry) deregisterControls() {
-	controls.Rm(StopContainer)
-	controls.Rm(StartContainer)
-	controls.Rm(RestartContainer)
-	controls.Rm(PauseContainer)
-	controls.Rm(UnpauseContainer)
-	controls.Rm(RemoveContainer)
-	controls.Rm(AttachContainer)
-	controls.Rm(ExecContainer)
+	controls := []string{
+		StopContainer,
+		StartContainer,
+		RestartContainer,
+		PauseContainer,
+		UnpauseContainer,
+		RemoveContainer,
+		AttachContainer,
+		ExecContainer,
+	}
+	r.handlerRegistry.Batch(controls, nil)
 }

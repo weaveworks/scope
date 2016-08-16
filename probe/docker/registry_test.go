@@ -12,11 +12,18 @@ import (
 	client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
 )
+
+func testRegistry() docker.Registry {
+	hr := controls.NewDefaultHandlerRegistry()
+	registry, _ := docker.NewRegistry(10*time.Second, nil, true, "", hr)
+	return registry
+}
 
 type mockContainer struct {
 	c *client.Container
@@ -319,7 +326,7 @@ func allNetworks(r docker.Registry) []client.Network {
 func TestRegistry(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil, true, "")
+		registry := testRegistry()
 		defer registry.Stop()
 		runtime.Gosched()
 
@@ -350,7 +357,7 @@ func TestRegistry(t *testing.T) {
 func TestLookupByPID(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil, true, "")
+		registry := testRegistry()
 		defer registry.Stop()
 
 		want := docker.Container(&mockContainer{container1})
@@ -367,7 +374,7 @@ func TestLookupByPID(t *testing.T) {
 func TestRegistryEvents(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil, true, "")
+		registry := testRegistry()
 		defer registry.Stop()
 		runtime.Gosched()
 
@@ -441,7 +448,7 @@ func TestRegistryDelete(t *testing.T) {
 
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
-		registry, _ := docker.NewRegistry(10*time.Second, nil, true, "")
+		registry := testRegistry()
 		defer registry.Stop()
 		runtime.Gosched()
 
