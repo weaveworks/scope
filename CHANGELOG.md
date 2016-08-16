@@ -1,3 +1,96 @@
+## Release 0.17.0
+
+Highlights:
+- New Table Mode as an alternative to Scope's classic graph view. It provides
+  higher information density, proving particularly useful when there are many
+  nodes in the graph view.
+- Considerable performance enhancements: the CPU efficiency of the Scope App has
+  increased in more than 50% and the Scope probes over 25%.
+
+
+New features and enhancements:
+- Table mode
+	[#1673](https://github.com/weaveworks/scope/pull/1673)
+	[#1747](https://github.com/weaveworks/scope/pull/1747)	
+	[#1753](https://github.com/weaveworks/scope/pull/1753)
+	[#1774](https://github.com/weaveworks/scope/pull/1774)
+	[#1775](https://github.com/weaveworks/scope/pull/1775)
+	[#1784](https://github.com/weaveworks/scope/pull/1784)
+- Loading indicator
+	[#1485](https://github.com/weaveworks/scope/pull/1485)
+- Don't show weavescope logo when running in a frame
+	[#1734](https://github.com/weaveworks/scope/pull/1734)
+- Reduce horizontal gap between nodes in topology views
+	[#1693](https://github.com/weaveworks/scope/pull/1693)	
+- Elide service-token when logging commandline arguments
+	[#1782](https://github.com/weaveworks/scope/pull/1782)
+- Don't complain when stopping Scope if it wasn't running
+	[#1783](https://github.com/weaveworks/scope/pull/1783)
+- Silence abnormal websocket close
+	[#1768](https://github.com/weaveworks/scope/pull/1768)	
+- Eliminate stats log noise from stopped containers
+	[#1687](https://github.com/weaveworks/scope/pull/1687)
+	[#1798](https://github.com/weaveworks/scope/pull/1798)	
+- Hide uncontained/unmanaged by default
+	[#1694](https://github.com/weaveworks/scope/pull/1694)
+
+Performance improvements:
+- Remove and optimize more Copy()s
+	[#1739](https://github.com/weaveworks/scope/pull/1739)
+- Use slices instead of linked lists for Metric
+	[#1732](https://github.com/weaveworks/scope/pull/1732)
+- Don't Copy() self on Merge()
+	[#1728](https://github.com/weaveworks/scope/pull/1728)
+- Improve performance of immutable maps
+	[#1720](https://github.com/weaveworks/scope/pull/1720)
+- Custom encoder for latest maps
+	[#1709](https://github.com/weaveworks/scope/pull/1709)
+
+Bug fixes:
+- Connections inside a container shown as going between containers
+	[#1733](https://github.com/weaveworks/scope/issues/1733)
+- Probes leak two goroutines when closing attach/exec window
+	[#1767](https://github.com/weaveworks/scope/issues/1767)
+- Scale node labels with the node's size.
+	[#1773](https://github.com/weaveworks/scope/pull/1773)
+- Kubernetes infra containers seem to resurface in latest on 1.3
+	[#1750](https://github.com/weaveworks/scope/issues/1750)
+- Search icon is above text
+	[#1715](https://github.com/weaveworks/scope/issues/1715)
+- Highlighting is unpredictable
+	[#1756](https://github.com/weaveworks/scope/pull/1520)
+- Details panel truncates port to four digits
+	[#1711](https://github.com/weaveworks/scope/issues/1711)
+- Stopped containers not shown with their names
+	[#1691](https://github.com/weaveworks/scope/issues/1691)
+- Terminals don't support quote characters from intl keyboard layouts
+	[#1403](https://github.com/weaveworks/scope/issues/1403)
+
+Internal improvements and cleanup:
+- Launcher script: Fix inconsistent whitespace
+	[#1776](https://github.com/weaveworks/scope/pull/1776)
+- Lint fixes
+	[#1751](https://github.com/weaveworks/scope/pull/1751)
+- Add browser console logging for websocket to render times
+	[#1742](https://github.com/weaveworks/scope/pull/1742)
+- circle.yml: deploy master with non-upstream hub accounts
+	[#1655](https://github.com/weaveworks/scope/pull/1655)
+	[#1710](https://github.com/weaveworks/scope/pull/1710)
+- Delete unused instrumentation code
+	[#1722](https://github.com/weaveworks/scope/pull/1722)
+- Update version of build tools
+	[#1685](https://github.com/weaveworks/scope/pull/1685)
+- Add flag for block profiling
+	[#1681](https://github.com/weaveworks/scope/pull/1681)
+
+Weave Cloud related changes:
+- Also serve UI under /ui
+	[#1752](https://github.com/weaveworks/scope/pull/1752)
+- Name our routes, so /metrics gives more sensible aggregations
+	[#1723](https://github.com/weaveworks/scope/pull/1723)
+- Add options for storing memcached reports with different compression levels
+	[#1684](https://github.com/weaveworks/scope/pull/1684)
+
 ## Release 0.16.2
 
 Bug fixes:

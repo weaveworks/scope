@@ -362,7 +362,7 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 	if r.collectStats {
 		if dockerContainer.State.Running {
 			if err := c.StartGatheringStats(); err != nil {
-				log.Errorf("Error gather stats for container: %s", containerID)
+				log.Errorf("Error gathering stats for container %s: %s", containerID, err)
 				return
 			}
 		} else {
