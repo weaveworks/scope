@@ -150,14 +150,6 @@ func (r *Reporter) getContainerNodes() map[string]node {
 			nodes[nodeID] = node{
 				LatestControls: getTrafficNodeControls(timestamp, dead),
 				Latest: map[string]stringEntry{
-					"traffic-control-latency": {
-						Timestamp: timestamp,
-						Value:     latency,
-					},
-					"traffic-control-pktloss": {
-						Timestamp: timestamp,
-						Value:     pktLoss,
-					},
 					"traffic-control-table-latency": {
 						Timestamp: timestamp,
 						Value:     latency,
