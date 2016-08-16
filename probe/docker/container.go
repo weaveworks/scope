@@ -181,7 +181,7 @@ func (c *container) StartGatheringStats() error {
 	defer c.Unlock()
 
 	if c.statsConn != nil {
-		return fmt.Errorf("already gather stats for container %s", c.container.ID)
+		return nil
 	}
 
 	go func() {
