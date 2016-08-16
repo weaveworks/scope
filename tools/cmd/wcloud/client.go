@@ -38,7 +38,7 @@ func (c Client) Deploy(deployment Deployment) error {
 	if err := json.NewEncoder(&buf).Encode(deployment); err != nil {
 		return err
 	}
-	req, err := c.newRequest("POST", "/api/deploy", &buf)
+	req, err := c.newRequest("POST", "/api/deploy/deploy", &buf)
 	if err != nil {
 		return err
 	}
@@ -53,8 +53,8 @@ func (c Client) Deploy(deployment Deployment) error {
 }
 
 // GetDeployments returns a list of deployments
-func (c Client) GetDeployments(page, pagesize int) ([]Deployment, error) {
-	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy?page=%d&pagesize=%d", page, pagesize), nil)
+func (c Client) GetDeployments(from, through int64) ([]Deployment, error) {
+	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy/deploy?from=%d&through=%d", from, through), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +74,22 @@ func (c Client) GetDeployments(page, pagesize int) ([]Deployment, error) {
 	return response.Deployments, nil
 }
 
+// GetEvents returns the raw events.
+func (c Client) GetEvents(from, through int64) ([]byte, error) {
+	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy/event?from=%d&through=%d", from, through), nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("Error making request: %s", res.Status)
+	}
+	return ioutil.ReadAll(res.Body)
+}
+
 // GetConfig returns the current Config
 func (c Client) GetConfig() (*Config, error) {
 	req, err := c.newRequest("GET", "/api/config/deploy", nil)
@@ -83,6 +99,9 @@ func (c Client) GetConfig() (*Config, error) {
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
+	}
+	if res.StatusCode == 404 {
+		return nil, fmt.Errorf("No configuration uploaded yet.")
 	}
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("Error making request: %s", res.Status)
@@ -116,7 +135,7 @@ func (c Client) SetConfig(config *Config) error {
 
 // GetLogs returns the logs for a given deployment.
 func (c Client) GetLogs(deployID string) ([]byte, error) {
-	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy/%s/log", deployID), nil)
+	req, err := c.newRequest("GET", fmt.Sprintf("/api/deploy/deploy/%s/log", deployID), nil)
 	if err != nil {
 		return nil, err
 	}
