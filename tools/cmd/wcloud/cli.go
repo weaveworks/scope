@@ -52,6 +52,8 @@ func main() {
 		config(c, os.Args[2:])
 	case "logs":
 		logs(c, os.Args[2:])
+	case "events":
+		events(c, os.Args[2:])
 	case "help":
 		usage()
 	default:
@@ -80,14 +82,17 @@ func deploy(c Client, args []string) {
 }
 
 func list(c Client, args []string) {
-	flags := flag.NewFlagSet("list", flag.ContinueOnError)
-	page := flags.Int("page", 0, "Zero based index of page to list.")
-	pagesize := flags.Int("page-size", 10, "Number of results per page")
+	var (
+		flags = flag.NewFlagSet("", flag.ContinueOnError)
+		since = flags.Duration("since", 7*24*time.Hour, "How far back to fetch results")
+	)
 	if err := flags.Parse(args); err != nil {
 		usage()
 		return
 	}
-	deployments, err := c.GetDeployments(*page, *pagesize)
+	through := time.Now()
+	from := through.Add(-*since)
+	deployments, err := c.GetDeployments(from.Unix(), through.Unix())
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
@@ -107,6 +112,26 @@ func list(c Client, args []string) {
 		})
 	}
 	table.Render()
+}
+
+func events(c Client, args []string) {
+	var (
+		flags = flag.NewFlagSet("", flag.ContinueOnError)
+		since = flags.Duration("since", 7*24*time.Hour, "How far back to fetch results")
+	)
+	if err := flags.Parse(args); err != nil {
+		usage()
+		return
+	}
+	through := time.Now()
+	from := through.Add(-*since)
+	events, err := c.GetEvents(from.Unix(), through.Unix())
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Println("events: ", string(events))
 }
 
 func loadConfig(filename string) (*Config, error) {
