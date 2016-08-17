@@ -12,6 +12,8 @@ type Deployment struct {
 	Version   string    `json:"version"`
 	Priority  int       `json:"priority"`
 	State     string    `json:"status"`
+
+	TriggeringUser string `json:"triggering_user"`
 }
 
 // Config for the deployment system for a user.
