@@ -398,15 +398,17 @@ h2 {
       font-size: 0.85em;
     }
 
-    &.hovered {
-      .node-label, .node-sublabel {
-        span:not(.match) {
-          background-color: fade(@background-average-color, 70%);
-        }
+    .node-label, .node-sublabel {
+      span {
+        padding: 0 0.25em;
+        border-radius: 2px;
       }
-      .matched-results {
+      span:not(.match) {
         background-color: fade(@background-average-color, 70%);
       }
+    }
+    .matched-results {
+      background-color: fade(@background-average-color, 70%);
     }
 
     &.pseudo {

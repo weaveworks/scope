@@ -8,7 +8,7 @@ import timely from 'timely';
 
 import { clickBackground } from '../actions/app-actions';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
-import { DETAILS_PANEL_WIDTH, MAX_NODE_SIZE } from '../constants/styles';
+import { MIN_NODE_SIZE, DETAILS_PANEL_WIDTH, MAX_NODE_SIZE } from '../constants/styles';
 import Logo from '../components/logo';
 import { doLayout } from './nodes-layout';
 import NodesChartElements from './nodes-chart-elements';
@@ -371,7 +371,8 @@ class NodesChart extends React.Component {
     const expanse = Math.min(height, width);
     const nodeSize = expanse / 3; // single node should fill a third of the screen
     const maxNodeSize = Math.min(MAX_NODE_SIZE, expanse / 10);
-    const normalizedNodeSize = Math.min(nodeSize / Math.sqrt(nodes.size), maxNodeSize);
+    const normalizedNodeSize = Math.max(MIN_NODE_SIZE,
+      Math.min(nodeSize / Math.sqrt(nodes.size), maxNodeSize));
     return this.state.nodeScale.copy().range([0, normalizedNodeSize]);
   }
 
