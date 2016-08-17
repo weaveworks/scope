@@ -169,7 +169,7 @@ func probeMain(flags probeFlags) {
 	}
 
 	if flags.kubernetesEnabled {
-		if client, err := kubernetes.NewClient(flags.kubernetesAPI, flags.kubernetesInterval); err == nil {
+		if client, err := kubernetes.NewClient(flags.kubernetesConfig); err == nil {
 			defer client.Stop()
 			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p)
 			defer reporter.Stop()
@@ -177,7 +177,7 @@ func probeMain(flags probeFlags) {
 			p.AddTagger(reporter)
 		} else {
 			log.Errorf("Kubernetes: failed to start client: %v", err)
-			log.Errorf("Kubernetes: make sure to run Scope inside a POD with a service account or provide a valid kubernetes.api url")
+			log.Errorf("Kubernetes: make sure to run Scope inside a POD with a service account or provide valid probe.kubernetes.* flags")
 		}
 	}
 
