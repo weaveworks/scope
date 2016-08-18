@@ -277,7 +277,7 @@ func main() {
 	case "help":
 		flag.PrintDefaults()
 	default:
-		fmt.Printf("command '%s' not recognices", mode)
+		fmt.Printf("command '%s' not recognized", mode)
 		os.Exit(1)
 	}
 }
