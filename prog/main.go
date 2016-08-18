@@ -208,7 +208,7 @@ func main() {
 	flag.StringVar(&flags.probe.kubernetesConfig.Cluster, "probe.kubernetes.cluster", "", "The name of the kubeconfig cluster to use")
 	flag.StringVar(&flags.probe.kubernetesConfig.Context, "probe.kubernetes.context", "", "The name of the kubeconfig context to use")
 	flag.BoolVar(&flags.probe.kubernetesConfig.Insecure, "probe.kubernetes.insecure-skip-tls-verify", false, "If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure")
-	flag.StringVar(&flags.probe.kubernetesConfig.Kubeconfig, "probe.kubernetes.kubecconfig", "", "Path to the kubeconfig file to use")
+	flag.StringVar(&flags.probe.kubernetesConfig.Kubeconfig, "probe.kubernetes.kubeconfig", "", "Path to the kubeconfig file to use")
 	flag.StringVar(&flags.probe.kubernetesConfig.Password, "probe.kubernetes.password", "", "Password for basic authentication to the API server")
 	flag.StringVar(&flags.probe.kubernetesConfig.Server, "probe.kubernetes.server", "", "The address and port of the Kubernetes API server")
 	flag.StringVar(&flags.probe.kubernetesConfig.Token, "probe.kubernetes.token", "", "Bearer token for authentication to the API server")
