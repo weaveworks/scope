@@ -122,6 +122,7 @@ func NewClient(config ClientConfig) (Client, error) {
 		}
 
 	}
+	log.Infof("kubernetes: targetting api server %s", restConfig.Host)
 
 	c, err := unversioned.New(restConfig)
 	if err != nil {
