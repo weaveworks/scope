@@ -74,7 +74,7 @@ deployment:
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag) &&
           (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" != "weaveworks" || (
-            wcloud deploy weaveworks/scope:$(./tools/image-tag)
+            wcloud deploy -u circle weaveworks/scope:$(./tools/image-tag)
           ))
         )
   hub-dev:
