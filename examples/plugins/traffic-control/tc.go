@@ -10,6 +10,7 @@ import (
 	"github.com/containernetworking/cni/pkg/ns"
 )
 
+// DoTrafficControl is the function that set the parameters of the qdisc with tc
 func DoTrafficControl(pid int, latency string, pktLoss string) error {
 	if latency == "" && pktLoss == "" {
 		// TODO @alepuccetti: return a warning message: "Nothing to do"
@@ -105,6 +106,7 @@ func DoTrafficControl(pid int, latency string, pktLoss string) error {
 	return nil
 }
 
+// ClearTrafficControlSettings clear all parameters of the qdisc with tc
 func ClearTrafficControlSettings(pid int) error {
 	cmds := [][]string{
 		split("tc qdisc replace dev eth0 root handle 1: netem"),
@@ -237,7 +239,7 @@ func getNSID(nsPath string) (string, error) {
 		log.Error(nsID)
 		return "", fmt.Errorf("failed to execute command: tc qdisc show dev eth0: %v", err)
 	} else {
-		return nsID[5:len(nsID)-1], nil
+		return nsID[5 : len(nsID)-1], nil
 	}
 }
 
