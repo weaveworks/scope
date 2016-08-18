@@ -14,6 +14,7 @@ import (
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/weave/common"
 )
 
@@ -21,9 +22,16 @@ var (
 	// set at build time
 	version = "dev"
 	// tokens to be elided when logging
-	serviceTokenFlag = "service-token"
-	probeTokenFlag   = "probe.token"
-	sensitiveFlags   = []string{serviceTokenFlag, probeTokenFlag}
+	serviceTokenFlag       = "service-token"
+	probeTokenFlag         = "probe.token"
+	kubernetesPasswordFlag = "probe.kubernetes.password"
+	kubernetesTokenFlag    = "probe.kubernetes.token"
+	sensitiveFlags         = []string{
+		serviceTokenFlag,
+		probeTokenFlag,
+		kubernetesPasswordFlag,
+		kubernetesTokenFlag,
+	}
 )
 
 type prefixFormatter struct {
@@ -86,9 +94,8 @@ type probeFlags struct {
 	dockerInterval time.Duration
 	dockerBridge   string
 
-	kubernetesEnabled  bool
-	kubernetesAPI      string
-	kubernetesInterval time.Duration
+	kubernetesEnabled bool
+	kubernetesConfig  kubernetes.ClientConfig
 
 	weaveEnabled  bool
 	weaveAddr     string
@@ -200,8 +207,20 @@ func main() {
 
 	// K8s
 	flag.BoolVar(&flags.probe.kubernetesEnabled, "probe.kubernetes", false, "collect kubernetes-related attributes for containers, should only be enabled on the master node")
-	flag.StringVar(&flags.probe.kubernetesAPI, "probe.kubernetes.api", "", "Address of kubernetes master api")
-	flag.DurationVar(&flags.probe.kubernetesInterval, "probe.kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
+	flag.DurationVar(&flags.probe.kubernetesConfig.Interval, "probe.kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
+	flag.StringVar(&flags.probe.kubernetesConfig.Server, "probe.kubernetes.api", "", "The address and port of the Kubernetes API server (deprecated in favor of equivalent probe.kubernetes.server)")
+	flag.StringVar(&flags.probe.kubernetesConfig.CertificateAuthority, "probe.kubernetes.certificate-authority", "", "Path to a cert. file for the certificate authority")
+	flag.StringVar(&flags.probe.kubernetesConfig.ClientCertificate, "probe.kubernetes.client-certificate", "", "Path to a client certificate file for TLS")
+	flag.StringVar(&flags.probe.kubernetesConfig.ClientKey, "probe.kubernetes.client-key", "", "Path to a client key file for TLS")
+	flag.StringVar(&flags.probe.kubernetesConfig.Cluster, "probe.kubernetes.cluster", "", "The name of the kubeconfig cluster to use")
+	flag.StringVar(&flags.probe.kubernetesConfig.Context, "probe.kubernetes.context", "", "The name of the kubeconfig context to use")
+	flag.BoolVar(&flags.probe.kubernetesConfig.Insecure, "probe.kubernetes.insecure-skip-tls-verify", false, "If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure")
+	flag.StringVar(&flags.probe.kubernetesConfig.Kubeconfig, "probe.kubernetes.kubeconfig", "", "Path to the kubeconfig file to use")
+	flag.StringVar(&flags.probe.kubernetesConfig.Password, kubernetesPasswordFlag, "", "Password for basic authentication to the API server")
+	flag.StringVar(&flags.probe.kubernetesConfig.Server, "probe.kubernetes.server", "", "The address and port of the Kubernetes API server")
+	flag.StringVar(&flags.probe.kubernetesConfig.Token, kubernetesTokenFlag, "", "Bearer token for authentication to the API server")
+	flag.StringVar(&flags.probe.kubernetesConfig.User, "probe.kubernetes.user", "", "The name of the kubeconfig user to use")
+	flag.StringVar(&flags.probe.kubernetesConfig.Username, "probe.kubernetes.username", "", "Username for basic authentication to the API server")
 
 	// Weave
 	flag.StringVar(&flags.probe.weaveAddr, "probe.weave.addr", "127.0.0.1:6784", "IP address & port of the Weave router")
