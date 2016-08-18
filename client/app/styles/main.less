@@ -361,7 +361,6 @@ h2 {
       // stroke-width: 4px;
     }
 
-    .node-label,
     .node-sublabel {
       line-height: 125%;
     }
@@ -371,7 +370,6 @@ h2 {
     }
 
     .node-label-wrapper {
-
       //
       // Base line height doesn't hop across foreignObject =/
       //
@@ -398,15 +396,17 @@ h2 {
       font-size: 0.85em;
     }
 
-    &.hovered {
-      .node-label, .node-sublabel {
-        span:not(.match) {
-          background-color: fade(@background-average-color, 70%);
-        }
+    .node-label, .node-sublabel {
+      span {
+        border-radius: 2px;
       }
-      .matched-results {
+      span:not(.match) {
+        padding: 0 0.25em;
         background-color: fade(@background-average-color, 70%);
       }
+    }
+    .matched-results {
+      background-color: fade(@background-average-color, 70%);
     }
 
     &.pseudo {
