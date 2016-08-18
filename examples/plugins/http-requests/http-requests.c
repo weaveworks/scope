@@ -47,7 +47,7 @@ int kprobe__skb_copy_datagram_iter(struct pt_regs *ctx, const struct sk_buff *sk
     default:
       return 0;
   }
-  /* The socket type and procotol are not directly addressable since they are
+  /* The socket type and protocol are not directly addressable since they are
      bitfields.  We access them by assuming sk_write_queue is immediately before
      them (admittedly pretty hacky).
   */

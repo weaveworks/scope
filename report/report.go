@@ -66,8 +66,8 @@ type Report struct {
 	// present.
 	Deployment Topology
 
-	// ReplicaSet nodes represent all Kubernetes replicasets running on hosts running probes.
-	// Metadata includes things like replicaset id, name etc. Edges are not
+	// ReplicaSet nodes represent all Kubernetes ReplicaSets running on hosts running probes.
+	// Metadata includes things like ReplicaSet id, name etc. Edges are not
 	// present.
 	ReplicaSet Topology
 
