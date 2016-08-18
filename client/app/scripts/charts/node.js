@@ -93,7 +93,7 @@ class Node extends React.Component {
     const truncate = !focused && !hovered;
     const labelWidth = nodeScale(scaleFactor * 3);
     const labelOffsetX = -labelWidth / 2;
-    const labelDy = (showingNetworks && networks) ? 0.75 : 0.60;
+    const labelDy = (showingNetworks && networks) ? 0.70 : 0.55;
     const labelOffsetY = nodeScale(labelDy * scaleFactor);
     const networkOffset = nodeScale(scaleFactor * 0.67);
 
