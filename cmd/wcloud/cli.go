@@ -63,6 +63,15 @@ func main() {
 }
 
 func deploy(c Client, args []string) {
+	var (
+		flags    = flag.NewFlagSet("", flag.ContinueOnError)
+		username = flags.String("u", "", "Username to report to deploy service (default with be current user)")
+	)
+	if err := flags.Parse(args); err != nil {
+		usage()
+		return
+	}
+	args = flags.Args()
 	if len(args) != 1 {
 		usage()
 		return
@@ -72,15 +81,18 @@ func deploy(c Client, args []string) {
 		usage()
 		return
 	}
-	user, err := user.Current()
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+	if *username == "" {
+		user, err := user.Current()
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		*username = user.Username
 	}
 	deployment := Deployment{
 		ImageName:      parts[0],
 		Version:        parts[1],
-		TriggeringUser: user.Username,
+		TriggeringUser: *username,
 	}
 	if err := c.Deploy(deployment); err != nil {
 		fmt.Println(err.Error())
