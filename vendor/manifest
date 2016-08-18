@@ -893,8 +893,8 @@
 			"importpath": "github.com/imdario/mergo",
 			"repository": "https://github.com/imdario/mergo",
 			"vcs": "git",
-			"revision": "50d4dbd4eb0e84778abe37cefef140271d96fade",
-			"branch": "master",
+			"revision": "6633656539c1639d9d78127b7d47c622b5d7b6dc",
+			"branch": "HEAD",
 			"notests": true
 		},
 		{
