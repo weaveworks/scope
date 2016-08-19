@@ -12,6 +12,8 @@ import (
 	"k8s.io/kubernetes/pkg/client/cache"
 	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
+	clientcmdapi "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api"
 	"k8s.io/kubernetes/pkg/fields"
 	"k8s.io/kubernetes/pkg/labels"
 	"k8s.io/kubernetes/pkg/util/wait"
@@ -62,35 +64,79 @@ func runReflectorUntil(r *cache.Reflector, resyncPeriod time.Duration, stopCh <-
 	go wait.Until(loggingListAndWatch, resyncPeriod, stopCh)
 }
 
+// ClientConfig establishes the configuration for the kubernetes client
+type ClientConfig struct {
+	Interval             time.Duration
+	CertificateAuthority string
+	ClientCertificate    string
+	ClientKey            string
+	Cluster              string
+	Context              string
+	Insecure             bool
+	Kubeconfig           string
+	Password             string
+	Server               string
+	Token                string
+	User                 string
+	Username             string
+}
+
 // NewClient returns a usable Client. Don't forget to Stop it.
-func NewClient(addr string, resyncPeriod time.Duration) (Client, error) {
-	var config *restclient.Config
-	if addr != "" {
-		config = &restclient.Config{Host: addr}
-	} else {
-		// If no API server address was provided, assume we are running
+func NewClient(config ClientConfig) (Client, error) {
+	var restConfig *restclient.Config
+	if config.Server == "" && config.Kubeconfig == "" {
+		// If no API server address or kubeconfig was provided, assume we are running
 		// inside a pod. Try to connect to the API server through its
 		// Service environment variables, using the default Service
 		// Account Token.
 		var err error
-		if config, err = restclient.InClusterConfig(); err != nil {
+		if restConfig, err = restclient.InClusterConfig(); err != nil {
 			return nil, err
 		}
-	}
+	} else {
+		var err error
+		restConfig, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			&clientcmd.ClientConfigLoadingRules{ExplicitPath: config.Kubeconfig},
+			&clientcmd.ConfigOverrides{
+				AuthInfo: clientcmdapi.AuthInfo{
+					ClientCertificate: config.ClientCertificate,
+					ClientKey:         config.ClientKey,
+					Token:             config.Token,
+					Username:          config.Username,
+					Password:          config.Password,
+				},
+				ClusterInfo: clientcmdapi.Cluster{
+					Server:                config.Server,
+					InsecureSkipTLSVerify: config.Insecure,
+					CertificateAuthority:  config.CertificateAuthority,
+				},
+				Context: clientcmdapi.Context{
+					Cluster:  config.Cluster,
+					AuthInfo: config.User,
+				},
+				CurrentContext: config.Context,
+			},
+		).ClientConfig()
+		if err != nil {
+			return nil, err
+		}
 
-	c, err := unversioned.New(config)
+	}
+	log.Infof("kubernetes: targeting api server %s", restConfig.Host)
+
+	c, err := unversioned.New(restConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	ec, err := unversioned.NewExtensions(config)
+	ec, err := unversioned.NewExtensions(restConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &client{
 		quit:             make(chan struct{}),
-		resyncPeriod:     resyncPeriod,
+		resyncPeriod:     config.Interval,
 		client:           c,
 		extensionsClient: ec,
 	}

@@ -1,3 +1,18 @@
+## Release 0.17.1
+
+This is a minor patch release.
+
+New features and enhancements:
+- Extend kubernetes client flags to match kubectl
+	[#1813](https://github.com/weaveworks/scope/pull/1813)
+
+Bug fixes:
+- Fix node label overlap
+	[#1812](https://github.com/weaveworks/scope/pull/1812)
+- Fix `scope stop` on Docker for Mac
+	[#1811](https://github.com/weaveworks/scope/pull/1811)
+
+
 ## Release 0.17.0
 
 Highlights:

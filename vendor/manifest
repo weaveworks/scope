@@ -890,6 +890,14 @@
 			"path": "/coordinate"
 		},
 		{
+			"importpath": "github.com/imdario/mergo",
+			"repository": "https://github.com/imdario/mergo",
+			"vcs": "git",
+			"revision": "6633656539c1639d9d78127b7d47c622b5d7b6dc",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/inconshreveable/mousetrap",
 			"repository": "https://github.com/inconshreveable/mousetrap",
 			"vcs": "",
@@ -1301,6 +1309,22 @@
 			"revision": "1cdaff4a02c554c9fb39dda0b56241c5f0949d91",
 			"branch": "master",
 			"path": "/go/types"
+		},
+		{
+			"importpath": "gopkg.in/check.v1",
+			"repository": "https://gopkg.in/check.v1",
+			"vcs": "git",
+			"revision": "4f90aeace3a26ad7021961c297b22c42160c7b25",
+			"branch": "v1",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/yaml.v1",
+			"repository": "https://gopkg.in/yaml.v1",
+			"vcs": "git",
+			"revision": "9f9df34309c04878acc86042b16630b0f696e1de",
+			"branch": "v1",
+			"notests": true
 		},
 		{
 			"importpath": "gopkg.in/yaml.v2",

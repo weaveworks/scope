@@ -244,7 +244,7 @@ EOF
         fi
         if check_docker_for_mac ; then
             if docker inspect $SCOPE_APP_CONTAINER_NAME >/dev/null 2>&1 ; then
-		docker stop $SCOPE_CONTAINER_NAME >/dev/null
+		docker stop $SCOPE_APP_CONTAINER_NAME >/dev/null
             fi
         fi
         ;;
