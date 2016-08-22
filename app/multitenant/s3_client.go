@@ -2,7 +2,6 @@ package multitenant
 
 import (
 	"bytes"
-	"compress/gzip"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -85,19 +84,15 @@ func (store *S3Store) fetchReport(key string) (*report.Report, error) {
 	return report.MakeFromBinary(resp.Body)
 }
 
-// StoreReport serializes and stores a report.
-//
-// Returns the size of the report. This only equals bytes written if err is nil.
-func (store *S3Store) StoreReport(key string, report *report.Report) (int, error) {
-	var buf bytes.Buffer
-	report.WriteBinary(&buf, gzip.BestCompression)
+// StoreReportBytes stores a report.
+func (store *S3Store) StoreReportBytes(key string, buf []byte) (int, error) {
 	err := instrument.TimeRequestHistogram("Put", s3RequestDuration, func() error {
 		_, err := store.s3.PutObject(&s3.PutObjectInput{
-			Body:   bytes.NewReader(buf.Bytes()),
+			Body:   bytes.NewReader(buf),
 			Bucket: aws.String(store.bucketName),
 			Key:    aws.String(key),
 		})
 		return err
 	})
-	return buf.Len(), err
+	return len(buf), err
 }

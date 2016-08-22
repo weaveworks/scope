@@ -1,7 +1,10 @@
 package app
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -112,16 +115,22 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	post.HandleFunc("/api/report", requestContextDecorator(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		var (
 			rpt    report.Report
-			reader = r.Body
+			buf    bytes.Buffer
+			reader = io.TeeReader(r.Body, &buf)
 		)
 
 		gzipped := strings.Contains(r.Header.Get("Content-Encoding"), "gzip")
+		if !gzipped {
+			reader = io.TeeReader(r.Body, gzip.NewWriter(&buf))
+		}
+
 		contentType := r.Header.Get("Content-Type")
+		isMsgpack := strings.HasPrefix(contentType, "application/msgpack")
 		var handle codec.Handle
 		switch {
 		case strings.HasPrefix(contentType, "application/json"):
 			handle = &codec.JsonHandle{}
-		case strings.HasPrefix(contentType, "application/msgpack"):
+		case isMsgpack:
 			handle = &codec.MsgpackHandle{}
 		default:
 			respondWith(w, http.StatusBadRequest, fmt.Errorf("Unsupported Content-Type: %v", contentType))
@@ -133,7 +142,13 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 			return
 		}
 
-		if err := a.Add(ctx, rpt); err != nil {
+		// a.Add(..., buf) assumes buf is gzip'd msgpack
+		if !isMsgpack {
+			buf = bytes.Buffer{}
+			rpt.WriteBinary(&buf, gzip.BestCompression)
+		}
+
+		if err := a.Add(ctx, rpt, buf.Bytes()); err != nil {
 			log.Errorf("Error Adding report: %v", err)
 			respondWith(w, http.StatusInternalServerError, err)
 			return

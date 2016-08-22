@@ -353,7 +353,7 @@ func calculateReportKey(rowKey, colKey string) (string, error) {
 	return fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey), nil
 }
 
-func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
+func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) error {
 	userid, err := c.userIDer(ctx)
 	if err != nil {
 		return err
@@ -366,7 +366,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 		return err
 	}
 
-	reportSize, err := c.s3.StoreReport(reportKey, &rep)
+	reportSize, err := c.s3.StoreReportBytes(reportKey, buf)
 	if err != nil {
 		return err
 	}
@@ -374,7 +374,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report) error {
 
 	// third, put it in memcache
 	if c.memcache != nil {
-		_, err = c.memcache.StoreReport(reportKey, &rep)
+		_, err = c.memcache.StoreReportBytes(reportKey, buf)
 		if err != nil {
 			// NOTE: We don't abort here because failing to store in memcache
 			// doesn't actually break anything else -- it's just an

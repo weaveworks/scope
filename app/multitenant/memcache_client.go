@@ -204,13 +204,11 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 	return reports, missing, nil
 }
 
-// StoreReport serializes and stores a report.
-func (c *MemcacheClient) StoreReport(key string, report *report.Report) (int, error) {
-	var buf bytes.Buffer
-	report.WriteBinary(&buf, c.compressionLevel)
+// StoreReportBytes stores a report.
+func (c *MemcacheClient) StoreReportBytes(key string, rpt []byte) (int, error) {
 	err := instrument.TimeRequestHistogramStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
-		item := memcache.Item{Key: key, Value: buf.Bytes(), Expiration: c.expiration}
+		item := memcache.Item{Key: key, Value: rpt, Expiration: c.expiration}
 		return c.client.Set(&item)
 	})
-	return buf.Len(), err
+	return len(rpt), err
 }
