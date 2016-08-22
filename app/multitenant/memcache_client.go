@@ -205,7 +205,7 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 	return reports, missing, nil
 }
 
-// StoreReport stores a report.
+// StoreReportBytes stores a report.
 func (c *MemcacheClient) StoreReportBytes(key string, rpt []byte) (int, error) {
 	err := instrument.TimeRequestHistogramStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
 		item := memcache.Item{Key: key, Value: rpt, Expiration: c.expiration}
