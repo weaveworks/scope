@@ -24,7 +24,11 @@ type Reporter interface {
 }
 
 // Adder is something that can accept reports. It's a convenient interface for
-// parts of the app, and several experimental components.
+// parts of the app, and several experimental components.  It takes the following
+// arguments:
+// - context.Context: the request context
+// - report.Report: the deserialised report
+// - []byte: the serialised report (as gzip'd msgpack)
 type Adder interface {
 	Add(context.Context, report.Report, []byte) error
 }
