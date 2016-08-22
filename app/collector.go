@@ -26,7 +26,7 @@ type Reporter interface {
 // Adder is something that can accept reports. It's a convenient interface for
 // parts of the app, and several experimental components.
 type Adder interface {
-	Add(context.Context, report.Report) error
+	Add(context.Context, report.Report, []byte) error
 }
 
 // A Collector is a Reporter and an Adder
@@ -88,7 +88,7 @@ func NewCollector(window time.Duration) Collector {
 }
 
 // Add adds a report to the collector's internal state. It implements Adder.
-func (c *collector) Add(_ context.Context, rpt report.Report) error {
+func (c *collector) Add(_ context.Context, rpt report.Report, _ []byte) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	c.reports = append(c.reports, rpt)
@@ -147,7 +147,7 @@ type StaticCollector report.Report
 func (c StaticCollector) Report(context.Context) (report.Report, error) { return report.Report(c), nil }
 
 // Add adds a report to the collector's internal state. It implements Adder.
-func (c StaticCollector) Add(context.Context, report.Report) error { return nil }
+func (c StaticCollector) Add(context.Context, report.Report, []byte) error { return nil }
 
 // WaitOn lets other components wait on a new report being received. It
 // implements Reporter.
