@@ -23,12 +23,12 @@ func getHostShellCmd() []string {
 			"/usr/bin/nsenter", "-t1", "-m", "-i", "-n", "-p", "--no-fork",
 			"--setuid", uid,
 			"--setgid", gid,
-			shell,
+			shell, "-l",
 		}
 	}
 
 	_, _, shell := getRootUserDetails([]string{"cat", "/etc/passwd"})
-	return []string{shell}
+	return []string{shell, "-l"}
 }
 
 func getRootUserDetails(readPasswdCmd []string) (uid, gid, shell string) {
