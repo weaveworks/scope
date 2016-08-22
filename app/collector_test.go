@@ -32,7 +32,7 @@ func TestCollector(t *testing.T) {
 		t.Error(test.Diff(want, have))
 	}
 
-	c.Add(ctx, r1)
+	c.Add(ctx, r1, nil)
 	have, err = c.Report(ctx)
 	if err != nil {
 		t.Error(err)
@@ -41,7 +41,7 @@ func TestCollector(t *testing.T) {
 		t.Error(test.Diff(want, have))
 	}
 
-	c.Add(ctx, r2)
+	c.Add(ctx, r2, nil)
 	merged := report.MakeReport()
 	merged = merged.Merge(r1)
 	merged = merged.Merge(r2)
@@ -75,7 +75,7 @@ func TestCollectorExpire(t *testing.T) {
 	// Now check an added report is returned
 	r1 := report.MakeReport()
 	r1.Endpoint.AddNode(report.MakeNode("foo"))
-	c.Add(ctx, r1)
+	c.Add(ctx, r1, nil)
 	have, err = c.Report(ctx)
 	if err != nil {
 		t.Error(err)
