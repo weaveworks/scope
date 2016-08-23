@@ -163,9 +163,11 @@ export default class NodeDetailsTable extends React.Component {
 
   handleHeaderClick(ev, headerId) {
     ev.preventDefault();
-    const sortedDesc = headerId === this.state.sortBy
-      ? !this.state.sortedDesc : this.state.sortedDesc;
-    const sortBy = headerId;
+    const header = this.getColumnHeaders().find(h => h.id === headerId);
+    const defaultSortDesc = header.dataType === 'number';
+    const sortedDesc = header.id === this.state.sortBy
+      ? !this.state.sortedDesc : defaultSortDesc;
+    const sortBy = header.id;
     this.setState({sortBy, sortedDesc});
     this.props.onSortChange(sortBy, sortedDesc);
   }
