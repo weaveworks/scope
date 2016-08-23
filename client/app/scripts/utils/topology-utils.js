@@ -1,5 +1,22 @@
 import _ from 'lodash';
-import { is as isDeepEqual, Map as makeMap, Set as makeSet } from 'immutable';
+import { is as isDeepEqual, Map as makeMap, Set as makeSet, List as makeList } from 'immutable';
+
+
+const TOPOLOGY_DISPLAY_PRIORITY = {
+  services: 1,
+  containers: 2,
+};
+
+
+export function getDefaultTopology(topologies) {
+  const flatTopologies = topologies
+    .flatMap(t => makeList([t]).concat(t.get('sub_topologies', makeList())));
+
+  return flatTopologies
+    .sortBy(t => TOPOLOGY_DISPLAY_PRIORITY[t.get('id')] || Infinity)
+    .getIn([0, 'id']);
+}
+
 
 /**
  * Returns a cache ID based on the topologyId and optionsQuery

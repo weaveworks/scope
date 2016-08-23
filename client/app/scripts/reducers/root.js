@@ -7,8 +7,8 @@ import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { applyPinnedSearches, updateNodeMatches } from '../utils/search-utils';
 import { getNetworkNodes, getAvailableNetworks } from '../utils/network-view-utils';
-import { findTopologyById, getAdjacentNodes, setTopologyUrlsById,
-  updateTopologyIds, filterHiddenTopologies, addTopologyFullname } from '../utils/topology-utils';
+import { findTopologyById, getAdjacentNodes, setTopologyUrlsById, updateTopologyIds,
+  filterHiddenTopologies, addTopologyFullname, getDefaultTopology } from '../utils/topology-utils';
 
 const log = debug('scope:app-store');
 const error = debug('scope:error');
@@ -25,7 +25,7 @@ export const initialState = makeMap({
   controlPipes: makeOrderedMap(), // pipeId -> controlPipe
   controlStatus: makeMap(),
   currentTopology: null,
-  currentTopologyId: 'containers',
+  currentTopologyId: null,
   errorUrl: null,
   forceRelayout: false,
   gridMode: false,
@@ -606,6 +606,10 @@ export function rootReducer(state = initialState, action) {
       state = state.set('errorUrl', null);
       state = state.update('topologyUrlsById', topologyUrlsById => topologyUrlsById.clear());
       state = processTopologies(state, action.topologies);
+      if (!state.get('currentTopologyId')) {
+        state = state.set('currentTopologyId', getDefaultTopology(state.get('topologies')));
+        log(`Set currentTopologyId to ${state.get('currentTopologyId')}`);
+      }
       state = setTopology(state, state.get('currentTopologyId'));
       // only set on first load, if options are not already set via route
       if (!state.get('topologiesLoaded') && state.get('topologyOptions').size === 0) {
