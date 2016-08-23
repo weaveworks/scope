@@ -2,10 +2,16 @@ import _ from 'lodash';
 import { is as isDeepEqual, Map as makeMap, Set as makeSet, List as makeList } from 'immutable';
 
 
-const TOPOLOGY_DISPLAY_PRIORITY = {
-  services: 1,
-  containers: 2,
-};
+//
+// top priority first
+//
+const TOPOLOGY_DISPLAY_PRIORITY = [
+  'services',
+  'deployments',
+  'replica-sets',
+  'pods',
+  'containers',
+];
 
 
 export function getDefaultTopology(topologies) {
@@ -13,7 +19,10 @@ export function getDefaultTopology(topologies) {
     .flatMap(t => makeList([t]).concat(t.get('sub_topologies', makeList())));
 
   return flatTopologies
-    .sortBy(t => TOPOLOGY_DISPLAY_PRIORITY[t.get('id')] || Infinity)
+    .sortBy(t => {
+      const index = TOPOLOGY_DISPLAY_PRIORITY.indexOf(t.get('id'));
+      return index === -1 ? Infinity : index;
+    })
     .getIn([0, 'id']);
 }
 
