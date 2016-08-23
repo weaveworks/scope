@@ -42,6 +42,9 @@ type Map interface {
 	// This operation is O(log N) in the number of keys.
 	Lookup(key string) (interface{}, bool)
 
+	// First returns the "first" value in the map, if any, or nil.
+	First() interface{}
+
 	// Size returns the number of key value pairs in the map.
 	// This takes O(1) time.
 	Size() int
@@ -346,6 +349,10 @@ func lookupLowLevel(self *tree, partialHash, hash uint64) (interface{}, bool) {
 
 	// we found it
 	return self.value, true
+}
+
+func (m *tree) First() interface{} {
+	return m.value
 }
 
 func (m *tree) Size() int {

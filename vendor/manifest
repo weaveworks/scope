@@ -1211,8 +1211,8 @@
 			"importpath": "github.com/weaveworks/ps",
 			"repository": "https://github.com/weaveworks/ps",
 			"vcs": "git",
-			"revision": "70d17b2d6f760345ef36a0748751eddf7290a92c",
-			"branch": "master",
+			"revision": "26c07ef9a67b5bd2f5707b9a1957e7492776d945",
+			"branch": "map-first",
 			"notests": true
 		},
 		{

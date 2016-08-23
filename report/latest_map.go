@@ -56,9 +56,9 @@ func (m LatestMap) Size() int {
 	return m.Map.Size()
 }
 
-// Merge produces a fresh StringLatestMap containing the keys from
-// both inputs. When both inputs contain the same key, the newer value
-// is used.
+// Merge produces a fresh LatestMap, containing the keys from both
+// inputs. When both inputs contain the same key, the newer value is
+// used.
 func (m LatestMap) Merge(other LatestMap) LatestMap {
 	var (
 		mSize     = m.Size()
@@ -71,7 +71,45 @@ func (m LatestMap) Merge(other LatestMap) LatestMap {
 		return other
 	case otherSize == 0:
 		return m
-	case mSize < otherSize:
+	case mSize*2 < otherSize:
+		// We are selecting between two merge strategies here: 1)
+		// "merge shorter map into longer map" (this branch and the
+		// next), and 2) "merge older map into younger map" (last
+		// branch).
+		//
+		// The "*2" results from the assumptions that a) all the keys
+		// in the smaller map are in the larger map, and b) all the
+		// entries in one map are younger than the entries in the
+		// other. This is typically the case in our usage.
+		// Furthermore, we assume that adding and setting an entry
+		// carries the same cost. This is the case for ps.Map.
+		//
+		// Let len(s) and len(l) be the lengths of the shorter and
+		// longer maps, respectively.
+		//
+		// It is then the case that the worst case complexity of the
+		// "merge shorter map into longer map" strategy is len(s),
+		// which happens when all the entries in the shorter map are
+		// in fact older than their corresponding entries in the
+		// longer map, which means we need to set all of them.
+		//
+		// By contrast, the worst case complexity of the "merge older
+		// map into younger map" strategy is len(l)-len(s), which
+		// happens when all the entries in the shorter map are younger
+		// than their corresponding entries in the longer map, which
+		// means we need to add all the entries from the longer map
+		// that aren't in the shorter map.
+		//
+		// Therefore the cut-over point between the two merge
+		// strategies is when len(s) = len(l)-len(s), i.e. len(s)*2 =
+		// len(l).
+		output, iter = iter, output
+	case otherSize*2 < mSize:
+		// As above, but in reverse.
+	case output.First().(LatestEntry).Timestamp.Before(iter.First().(LatestEntry).Timestamp):
+		// See the "all entries in one map are younger than entries in
+		// the other" assumptions above. We are sampling entries here
+		// to determine which map contains the younger entries.
 		output, iter = iter, output
 	}
 	if m.decoder != other.decoder {
