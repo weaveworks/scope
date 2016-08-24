@@ -20,6 +20,7 @@ type Deployment struct {
 type Config struct {
 	RepoURL        string `json:"repo_url" yaml:"repo_url"`
 	RepoPath       string `json:"repo_path" yaml:"repo_path"`
+	RepoBranch     string `json:"repo_branch" yaml:"repo_branch"`
 	RepoKey        string `json:"repo_key" yaml:"repo_key"`
 	KubeconfigPath string `json:"kubeconfig_path" yaml:"kubeconfig_path"`
 
