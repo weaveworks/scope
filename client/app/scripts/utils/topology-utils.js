@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { is as isDeepEqual, Map as makeMap, Set as makeSet, List as makeList } from 'immutable';
+import { Map as makeMap, Set as makeSet, List as makeList } from 'immutable';
 
 
 //
