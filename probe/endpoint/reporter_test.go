@@ -69,7 +69,7 @@ func TestSpyNoProcesses(t *testing.T) {
 	)
 
 	scanner := procspy.FixedScanner(fixConnections)
-	reporter := endpoint.NewReporter(nodeID, nodeName, false, false, false, scanner)
+	reporter := endpoint.NewReporter(nodeID, nodeName, false, false, false, "", scanner)
 	r, _ := reporter.Report()
 	//buf, _ := json.MarshalIndent(r, "", "    ")
 	//t.Logf("\n%s\n", buf)
@@ -86,7 +86,7 @@ func TestSpyWithProcesses(t *testing.T) {
 	)
 
 	scanner := procspy.FixedScanner(fixConnectionsWithProcesses)
-	reporter := endpoint.NewReporter(nodeID, nodeName, true, false, true, scanner)
+	reporter := endpoint.NewReporter(nodeID, nodeName, true, false, true, "", scanner)
 	r, _ := reporter.Report()
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
 

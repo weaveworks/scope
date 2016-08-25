@@ -73,11 +73,11 @@ func addIndependant(f *flow, id int64, state string) *meta {
 }
 
 func TestConntracker(t *testing.T) {
-	oldExecCmd, oldConntrackPresent := exec.Command, ConntrackModulePresent
-	defer func() { exec.Command, ConntrackModulePresent = oldExecCmd, oldConntrackPresent }()
+	oldExecCmd, oldIsConntrackSupported := exec.Command, IsConntrackSupported
+	defer func() { exec.Command, IsConntrackSupported = oldExecCmd, oldIsConntrackSupported }()
 
-	ConntrackModulePresent = func() bool {
-		return true
+	IsConntrackSupported = func(_ string) error {
+		return nil
 	}
 
 	first := true
@@ -91,7 +91,7 @@ func TestConntracker(t *testing.T) {
 		return testexec.NewMockCmd(reader)
 	}
 
-	flowWalker := newConntrackFlowWalker(true)
+	flowWalker := newConntrackFlowWalker(true, "")
 	defer flowWalker.stop()
 
 	// First write out some empty xml for the existing connections
