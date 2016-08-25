@@ -74,7 +74,7 @@ var GetUptime = func() (time.Duration, error) {
 	return (time.Duration(d) * 24 * time.Hour) + (time.Duration(h) * time.Hour) + (time.Duration(m) * time.Minute), nil
 }
 
-// GetCPUUsagePercent returns the percent cpu usage and max (ie #cpus * 100)
+// GetCPUUsagePercent returns the percent cpu usage and max (i.e. 100% or 0 if unavailable)
 var GetCPUUsagePercent = func() (float64, float64) {
 	return 0.0, 0.0
 }
