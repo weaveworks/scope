@@ -1,5 +1,5 @@
 package host
 
 func getHostShellCmd() []string {
-	return []string{"/bin/bash"}
+	return []string{"/bin/bash", "-l"}
 }

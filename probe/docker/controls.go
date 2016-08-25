@@ -111,7 +111,7 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 		AttachStdout: true,
 		AttachStderr: true,
 		Tty:          true,
-		Cmd:          []string{"/bin/sh", "-c", "TERM=xterm exec $( (type getent > /dev/null 2>&1  && getent passwd root | cut -d: -f7 2>/dev/null) || echo /bin/sh)"},
+		Cmd:          []string{"/bin/sh", "-l", "-c", "TERM=xterm exec $( (type getent > /dev/null 2>&1  && getent passwd root | cut -d: -f7 2>/dev/null) || echo /bin/sh)"},
 		Container:    containerID,
 	})
 	if err != nil {
