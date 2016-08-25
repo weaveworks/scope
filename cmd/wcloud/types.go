@@ -13,7 +13,8 @@ type Deployment struct {
 	Priority  int       `json:"priority"`
 	State     string    `json:"status"`
 
-	TriggeringUser string `json:"triggering_user"`
+	TriggeringUser   string   `json:"triggering_user"`
+	IntendedServices []string `json:"intended_services"`
 }
 
 // Config for the deployment system for a user.
