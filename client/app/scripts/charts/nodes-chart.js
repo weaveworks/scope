@@ -12,8 +12,7 @@ import { MIN_NODE_SIZE, DETAILS_PANEL_WIDTH, MAX_NODE_SIZE } from '../constants/
 import Logo from '../components/logo';
 import { doLayout } from './nodes-layout';
 import NodesChartElements from './nodes-chart-elements';
-import { getActiveTopologyOptions, getAdjacentNodes,
-  isSameTopology } from '../utils/topology-utils';
+import { getActiveTopologyOptions, getAdjacentNodes } from '../utils/topology-utils';
 
 const log = debug('scope:nodes-chart');
 
@@ -82,8 +81,7 @@ class NodesChart extends React.Component {
     state.height = nextProps.forceRelayout ? nextProps.height : (state.height || nextProps.height);
     state.width = nextProps.forceRelayout ? nextProps.width : (state.width || nextProps.width);
 
-    // _.assign(state, this.updateGraphState(nextProps, state));
-    if (nextProps.forceRelayout || !isSameTopology(nextProps.nodes, this.props.nodes)) {
+    if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
       _.assign(state, this.updateGraphState(nextProps, state));
     }
 
