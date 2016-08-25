@@ -108,7 +108,7 @@ func deploy(c Client, args []string) {
 		ImageName:        parts[0],
 		Version:          parts[1],
 		TriggeringUser:   *username,
-		IntendedServices: service,
+		IntendedServices: services,
 	}
 	if err := c.Deploy(deployment); err != nil {
 		fmt.Println(err.Error())
