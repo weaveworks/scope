@@ -20,5 +20,5 @@ test:
     - cd $SRCDIR/cover; make
     - cd $SRCDIR/socks; make
     - cd $SRCDIR/runner; make
-    - go build ./cmd/wcloud
+    - cd $SRCDIR/cmd/wcloud; make
 
