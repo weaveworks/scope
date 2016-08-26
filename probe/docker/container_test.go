@@ -19,7 +19,7 @@ type mockStatsGatherer struct {
 	ready chan bool
 }
 
-func NewMockStatsGatherer() *mockStatsGatherer {
+func newMockStatsGatherer() *mockStatsGatherer {
 	return &mockStatsGatherer{ready: make(chan bool)}
 }
 
@@ -41,7 +41,7 @@ func TestContainer(t *testing.T) {
 
 	const hostID = "scope"
 	c := docker.NewContainer(container1, hostID)
-	s := NewMockStatsGatherer()
+	s := newMockStatsGatherer()
 	err := c.StartGatheringStats(s)
 	if err != nil {
 		t.Errorf("%v", err)
