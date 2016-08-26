@@ -71,7 +71,7 @@ var GetUptime = func() (time.Duration, error) {
 
 var previousStat = linuxproc.CPUStat{}
 
-// GetCPUUsagePercent returns the percent cpu usage and max (ie #cpus * 100)
+// GetCPUUsagePercent returns the percent cpu usage and max (i.e. 100% or 0 if unavailable)
 var GetCPUUsagePercent = func() (float64, float64) {
 	stat, err := linuxproc.ReadStat(ProcStat)
 	if err != nil {
@@ -94,7 +94,7 @@ var GetCPUUsagePercent = func() (float64, float64) {
 		idled  = idle - prevIdle
 	)
 	previousStat = currentStat
-	return float64(totald-idled) * 100. / float64(totald), float64(len(stat.CPUStats)) * 100.
+	return float64(totald-idled) * 100. / float64(totald), 100.
 }
 
 // GetMemoryUsageBytes returns the bytes memory usage and max

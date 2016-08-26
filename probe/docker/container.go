@@ -378,7 +378,6 @@ func (c *container) cpuPercentMetric(stats []docker.Stats) report.Metric {
 	}
 
 	samples := make([]report.Sample, len(stats)-1)
-	var max float64
 	previous := stats[0]
 	for i, s := range stats[1:] {
 		// Copies from docker/api/client/stats.go#L205
@@ -386,17 +385,13 @@ func (c *container) cpuPercentMetric(stats []docker.Stats) report.Metric {
 		systemDelta := float64(s.CPUStats.SystemCPUUsage - previous.CPUStats.SystemCPUUsage)
 		cpuPercent := 0.0
 		if systemDelta > 0.0 && cpuDelta > 0.0 {
-			cpuPercent = (cpuDelta / systemDelta) * float64(len(s.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+			cpuPercent = (cpuDelta / systemDelta) * 100.0
 		}
 		samples[i].Timestamp = s.Read
 		samples[i].Value = cpuPercent
-		available := float64(len(s.CPUStats.CPUUsage.PercpuUsage)) * 100.0
-		if available >= max {
-			max = available
-		}
 		previous = s
 	}
-	return report.MakeMetric(samples).WithMax(max)
+	return report.MakeMetric(samples).WithMax(100.0)
 }
 
 func (c *container) metrics() report.Metrics {
