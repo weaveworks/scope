@@ -284,6 +284,7 @@ func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) 
 
 	for _, deployment := range deployments {
 		selectors = append(selectors, match(
+			deployment.Namespace(),
 			deployment.Selector(),
 			report.Deployment,
 			report.MakeDeploymentNodeID(deployment.UID()),
@@ -337,12 +338,13 @@ var GetNodeName = func(r *Reporter) (string, error) {
 type labelledChild interface {
 	Labels() map[string]string
 	AddParent(string, string)
+	Namespace() string
 }
 
 // Match parses the selectors and adds the target as a parent if the selector matches.
-func match(selector labels.Selector, topology, id string) func(labelledChild) {
+func match(namespace string, selector labels.Selector, topology, id string) func(labelledChild) {
 	return func(c labelledChild) {
-		if selector.Matches(labels.Set(c.Labels())) {
+		if namespace == c.Namespace() && selector.Matches(labels.Set(c.Labels())) {
 			c.AddParent(topology, id)
 		}
 	}
@@ -370,6 +372,7 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (re
 	})
 	for _, service := range services {
 		selectors = append(selectors, match(
+			service.Namespace(),
 			service.Selector(),
 			report.Service,
 			report.MakeServiceNodeID(service.UID()),
@@ -377,6 +380,7 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (re
 	}
 	for _, replicaSet := range replicaSets {
 		selectors = append(selectors, match(
+			replicaSet.Namespace(),
 			replicaSet.Selector(),
 			report.ReplicaSet,
 			report.MakeReplicaSetNodeID(replicaSet.UID()),
