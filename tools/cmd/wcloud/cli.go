@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"time"
@@ -14,6 +15,19 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"gopkg.in/yaml.v2"
 )
+
+// ArrayFlags allows you to collect repeated flags
+type ArrayFlags []string
+
+func (a *ArrayFlags) String() string {
+	return strings.Join(*a, ",")
+}
+
+// Set implements flags.Value
+func (a *ArrayFlags) Set(value string) error {
+	*a = append(*a, value)
+	return nil
+}
 
 func env(key, def string) string {
 	if val, ok := os.LookupEnv(key); ok {
@@ -62,6 +76,17 @@ func main() {
 }
 
 func deploy(c Client, args []string) {
+	var (
+		flags    = flag.NewFlagSet("", flag.ContinueOnError)
+		username = flags.String("u", "", "Username to report to deploy service (default with be current user)")
+		services ArrayFlags
+	)
+	flag.Var(&services, "service", "Service to update (can be repeated)")
+	if err := flags.Parse(args); err != nil {
+		usage()
+		return
+	}
+	args = flags.Args()
 	if len(args) != 1 {
 		usage()
 		return
@@ -71,9 +96,19 @@ func deploy(c Client, args []string) {
 		usage()
 		return
 	}
+	if *username == "" {
+		user, err := user.Current()
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		*username = user.Username
+	}
 	deployment := Deployment{
-		ImageName: parts[0],
-		Version:   parts[1],
+		ImageName:        parts[0],
+		Version:          parts[1],
+		TriggeringUser:   *username,
+		IntendedServices: services,
 	}
 	if err := c.Deploy(deployment); err != nil {
 		fmt.Println(err.Error())

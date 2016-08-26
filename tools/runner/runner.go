@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/pkg/mflag"
 	"github.com/mgutz/ansi"
+	"github.com/weaveworks/docker/pkg/mflag"
 )
 
 const (
