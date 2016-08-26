@@ -85,6 +85,7 @@ type Client interface {
 	AttachToContainerNonBlocking(docker_client.AttachToContainerOptions) (docker_client.CloseWaiter, error)
 	CreateExec(docker_client.CreateExecOptions) (*docker_client.Exec, error)
 	StartExecNonBlocking(string, docker_client.StartExecOptions) (docker_client.CloseWaiter, error)
+	Stats(docker_client.StatsOptions) error
 }
 
 func newDockerClient(endpoint string) (Client, error) {
@@ -361,7 +362,7 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 	// And finally, ensure we gather stats for it
 	if r.collectStats {
 		if dockerContainer.State.Running {
-			if err := c.StartGatheringStats(); err != nil {
+			if err := c.StartGatheringStats(r.client); err != nil {
 				log.Errorf("Error gathering stats for container %s: %s", containerID, err)
 				return
 			}

@@ -55,7 +55,7 @@ func (c *mockContainer) StateString() string {
 	return docker.StateRunning
 }
 
-func (c *mockContainer) StartGatheringStats() error {
+func (c *mockContainer) StartGatheringStats(docker.StatsGatherer) error {
 	return nil
 }
 
@@ -161,6 +161,10 @@ func (m *mockDockerClient) UnpauseContainer(_ string) error {
 
 func (m *mockDockerClient) RemoveContainer(_ client.RemoveContainerOptions) error {
 	return fmt.Errorf("remove")
+}
+
+func (m *mockDockerClient) Stats(_ client.StatsOptions) error {
+	return fmt.Errorf("stats")
 }
 
 type mockCloseWaiter struct{}

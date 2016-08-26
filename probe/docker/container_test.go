@@ -1,17 +1,11 @@
 package docker_test
 
 import (
-	"bufio"
-	"io"
-	"io/ioutil"
 	"net"
-	"net/http"
 	"testing"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	client "github.com/fsouza/go-dockerclient"
-	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
@@ -20,44 +14,35 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
-type mockConnection struct {
-	reader *io.PipeReader
+type mockStatsGatherer struct {
+	opts  client.StatsOptions
+	ready chan bool
 }
 
-func (c *mockConnection) Do(req *http.Request) (resp *http.Response, err error) {
-	return &http.Response{
-		Body: c.reader,
-	}, nil
+func NewMockStatsGatherer() *mockStatsGatherer {
+	return &mockStatsGatherer{ready: make(chan bool)}
 }
 
-func (c *mockConnection) Close() error {
-	return c.reader.Close()
+func (s *mockStatsGatherer) Stats(opts client.StatsOptions) error {
+	s.opts = opts
+	close(s.ready)
+	return nil
+}
+
+func (s *mockStatsGatherer) Send(stats *client.Stats) {
+	<-s.ready
+	s.opts.Stats <- stats
 }
 
 func TestContainer(t *testing.T) {
-	log.SetOutput(ioutil.Discard)
-
-	oldDialStub, oldNewClientConnStub := docker.DialStub, docker.NewClientConnStub
-	defer func() { docker.DialStub, docker.NewClientConnStub = oldDialStub, oldNewClientConnStub }()
-
-	docker.DialStub = func(network, address string) (net.Conn, error) {
-		return nil, nil
-	}
-
-	reader, writer := io.Pipe()
-	connection := &mockConnection{reader}
-
-	docker.NewClientConnStub = func(c net.Conn, r *bufio.Reader) docker.ClientConn {
-		return connection
-	}
-
 	now := time.Unix(12345, 67890).UTC()
 	mtime.NowForce(now)
 	defer mtime.NowReset()
 
 	const hostID = "scope"
 	c := docker.NewContainer(container1, hostID)
-	err := c.StartGatheringStats()
+	s := NewMockStatsGatherer()
+	err := c.StartGatheringStats(s)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
@@ -68,10 +53,7 @@ func TestContainer(t *testing.T) {
 	stats.Read = now
 	stats.MemoryStats.Usage = 12345
 	stats.MemoryStats.Limit = 45678
-	encoder := codec.NewEncoder(writer, &codec.JsonHandle{})
-	if err = encoder.Encode(&stats); err != nil {
-		t.Error(err)
-	}
+	s.Send(stats)
 
 	// Now see if we go them
 	{
