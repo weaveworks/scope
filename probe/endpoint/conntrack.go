@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	modules = "/proc/modules"
 	// From https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt
-	// Check a tcp-related file since that's what we need
+	// Check a tcp-related file for existence since we need tcp tracking
 	procFileToCheck  = "sys/net/netfilter/nf_conntrack_tcp_timeout_close"
 	xmlHeader        = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
 	conntrackOpenTag = "<conntrack>\n"
