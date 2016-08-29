@@ -55,24 +55,36 @@ function getDefaultSortBy(columns, nodes) {
 }
 
 
+function toLower(value) {
+  if (!value || !value.toLowerCase) {
+    return value;
+  }
+  return value.toLowerCase();
+}
+
+
 function getValueForSortBy(sortBy) {
   // return the node's value based on the sortBy field
   return (node) => {
     if (sortBy !== null) {
       let field = _.union(node.metrics, node.metadata).find(f => f.id === sortBy);
 
-      if (!field && node.parents) {
-        field = node.parents.find(f => f.topologyId === sortBy);
-        if (field) {
-          return field.label;
-        }
-      }
-
       if (field) {
         if (isNumberField(field)) {
           return parseFloat(field.value);
         }
-        return field.value;
+        return toLower(field.value);
+      }
+
+      if (node.parents) {
+        field = node.parents.find(f => f.topologyId === sortBy);
+        if (field) {
+          return toLower(field.label);
+        }
+      }
+
+      if (node[sortBy] !== undefined && node[sortBy] !== null) {
+        return toLower(node[sortBy]);
       }
     }
 
@@ -100,7 +112,6 @@ function sortNodes(nodes, getValue, sortedDesc) {
   const sortedNodes = _.sortBy(
     nodes,
     getValue,
-    'label',
     getMetaDataSorters(nodes)
   );
   if (sortedDesc) {
