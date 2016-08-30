@@ -145,7 +145,7 @@ func probeMain(flags probeFlags) {
 		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies))
 	}
 
-	endpointReporter := endpoint.NewReporter(hostID, hostName, flags.spyProcs, flags.useConntrack, flags.procEnabled, scanner)
+	endpointReporter := endpoint.NewReporter(hostID, hostName, flags.spyProcs, flags.useConntrack, flags.procEnabled, flags.procRoot, scanner)
 	defer endpointReporter.Stop()
 	p.AddReporter(endpointReporter)
 

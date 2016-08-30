@@ -5,7 +5,7 @@ import (
 	"encoding/xml"
 	"io"
 	"os"
-	"strings"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	modules          = "/proc/modules"
-	conntrackModule  = "nf_conntrack"
+	// From https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt
+	// Check a tcp-related file for existence since we need tcp tracking
+	procFileToCheck  = "sys/net/netfilter/nf_conntrack_tcp_timeout_close"
 	xmlHeader        = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
 	conntrackOpenTag = "<conntrack>\n"
 	timeWait         = "TIME_WAIT"
@@ -85,11 +86,11 @@ type conntrackWalker struct {
 }
 
 // newConntracker creates and starts a new conntracker.
-func newConntrackFlowWalker(useConntrack bool, args ...string) flowWalker {
-	if !ConntrackModulePresent() {
-		log.Info("Not using conntrack: module not present")
+func newConntrackFlowWalker(useConntrack bool, procRoot string, args ...string) flowWalker {
+	if !useConntrack {
 		return nilFlowWalker{}
-	} else if !useConntrack {
+	} else if err := IsConntrackSupported(procRoot); err != nil {
+		log.Warnf("Not using conntrack: not supported by the kernel: %s", err)
 		return nilFlowWalker{}
 	}
 	result := &conntrackWalker{
@@ -101,28 +102,11 @@ func newConntrackFlowWalker(useConntrack bool, args ...string) flowWalker {
 	return result
 }
 
-// ConntrackModulePresent returns true if the kernel has the conntrack module
-// present.  It is made public for mocking.
-var ConntrackModulePresent = func() bool {
-	f, err := os.Open(modules)
-	if err != nil {
-		return false
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, conntrackModule) {
-			return true
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		log.Errorf("conntrack error: %v", err)
-	}
-
-	log.Errorf("conntrack: failed to find module %s", conntrackModule)
-	return false
+// IsConntrackSupported returns true if conntrack is suppported by the kernel
+var IsConntrackSupported = func(procRoot string) error {
+	procFile := filepath.Join(procRoot, procFileToCheck)
+	_, err := os.Stat(procFile)
+	return err
 }
 
 func (c *conntrackWalker) loop() {
