@@ -55,7 +55,7 @@ function getDefaultSortBy(columns, nodes) {
 }
 
 
-function toLower(value) {
+function maybeToLower(value) {
   if (!value || !value.toLowerCase) {
     return value;
   }
@@ -63,33 +63,35 @@ function toLower(value) {
 }
 
 
-function getValueForSortBy(sortBy) {
-  // return the node's value based on the sortBy field
-  return (node) => {
-    if (sortBy !== null) {
-      let field = _.union(node.metrics, node.metadata).find(f => f.id === sortBy);
+function getNodeValue(node, fieldId) {
+  if (fieldId !== null) {
+    let field = _.union(node.metrics, node.metadata).find(f => f.id === fieldId);
 
+    if (field) {
+      if (isNumberField(field)) {
+        return parseFloat(field.value);
+      }
+      return field.value;
+    }
+
+    if (node.parents) {
+      field = node.parents.find(f => f.topologyId === fieldId);
       if (field) {
-        if (isNumberField(field)) {
-          return parseFloat(field.value);
-        }
-        return toLower(field.value);
-      }
-
-      if (node.parents) {
-        field = node.parents.find(f => f.topologyId === sortBy);
-        if (field) {
-          return toLower(field.label);
-        }
-      }
-
-      if (node[sortBy] !== undefined && node[sortBy] !== null) {
-        return toLower(node[sortBy]);
+        return field.label;
       }
     }
 
-    return null;
-  };
+    if (node[fieldId] !== undefined && node[fieldId] !== null) {
+      return node[fieldId];
+    }
+  }
+
+  return null;
+}
+
+
+function getValueForSortBy(sortBy) {
+  return (node) => maybeToLower(getNodeValue(node, sortBy));
 }
 
 
