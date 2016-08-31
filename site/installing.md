@@ -28,7 +28,7 @@ The following topics are discussed:
 
 ##<a name="docker"></a>Installing Scope on Docker
 
-To install Scope onto your PC with docker installed in standalone mode, run the following commands:
+To install Scope onto your machine with Docker installed in stand-alone mode, run the following commands:
 
     sudo curl -L git.io/scope -o /usr/local/bin/scope
     sudo chmod a+x /usr/local/bin/scope
