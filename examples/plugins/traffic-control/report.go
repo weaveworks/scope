@@ -72,16 +72,19 @@ type pluginSpec struct {
 	APIVersion  string   `json:"api_version,omitempty"`
 }
 
+// Reporter internal data structure
 type Reporter struct {
 	store *Store
 }
 
+// NewReporter instantiates a new Reporter
 func NewReporter(store *Store) *Reporter {
 	return &Reporter{
 		store: store,
 	}
 }
 
+// RawReport returns a report
 func (r *Reporter) RawReport() ([]byte, error) {
 	rpt := &report{
 		Container: topology{
@@ -107,14 +110,15 @@ func (r *Reporter) RawReport() ([]byte, error) {
 	return raw, nil
 }
 
+// GetHandler returns the function performing the action specified by controlID
 func (r *Reporter) GetHandler(nodeID, controlID string) (func() error, error) {
 	containerID, err := nodeIDToContainerID(nodeID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get container ID from node ID %q: %v", nodeID)
+		return nil, fmt.Errorf("failed to get container ID from node ID %q: %v", nodeID, err)
 	}
 	container, found := r.store.Container(containerID)
 	if !found {
-		return nil, fmt.Errorf("container %s not found")
+		return nil, fmt.Errorf("container %s not found", containerID)
 	}
 	var handler func(pid int) error
 	for _, c := range getControls() {
@@ -134,7 +138,6 @@ func (r *Reporter) GetHandler(nodeID, controlID string) (func() error, error) {
 // states:
 // created, destroyed - don't create any node
 // running, not running - create node with controls
-
 func (r *Reporter) getContainerNodes() map[string]node {
 	nodes := map[string]node{}
 	timestamp := time.Now()
@@ -171,7 +174,7 @@ func (r *Reporter) getContainerNodes() map[string]node {
 
 func getMetadataTemplate() map[string]metadataTemplate {
 	return map[string]metadataTemplate{
-		"traffic-control-latency": metadataTemplate{
+		"traffic-control-latency": {
 			ID:       "traffic-control-latency",
 			Label:    "Latency",
 			Truncate: 0,
@@ -179,7 +182,7 @@ func getMetadataTemplate() map[string]metadataTemplate {
 			Priority: 13.5,
 			From:     "latest",
 		},
-		"traffic-control-pktloss": metadataTemplate{
+		"traffic-control-pktloss": {
 			ID:       "traffic-control-pktloss",
 			Label:    "Packet Loss",
 			Truncate: 0,
@@ -192,7 +195,7 @@ func getMetadataTemplate() map[string]metadataTemplate {
 
 func getTableTemplate() map[string]tableTemplate {
 	return map[string]tableTemplate{
-		"traffic-control-table": tableTemplate{
+		"traffic-control-table": {
 			ID:     "traffic-control-table",
 			Label:  "Traffic Control",
 			Prefix: trafficControlTablePrefix,

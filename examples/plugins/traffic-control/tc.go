@@ -84,24 +84,24 @@ func DoTrafficControl(pid int, latency string, pktLoss string) error {
 		return fmt.Errorf("failed to perform traffic control: %v", err)
 	}
 	// cache parameters
-	if netNSID, err := getNSID(netNS); err != nil {
+	netNSID, err := getNSID(netNS)
+	if err != nil {
 		log.Error(netNSID)
 		return fmt.Errorf("failed to get network namespace ID: %v", err)
-	} else {
-		trafficControlStatusCache[netNSID] = trafficControlStatus{
-			latency: func(latency string) string {
-				if latency == "" {
-					return "-"
-				}
-				return latency
-			}(latency),
-			pktLoss: func(pktLoss string) string {
-				if pktLoss == "" {
-					return "-"
-				}
-				return pktLoss
-			}(pktLoss),
-		}
+	}
+	trafficControlStatusCache[netNSID] = trafficControlStatus{
+		latency: func(latency string) string {
+			if latency == "" {
+				return "-"
+			}
+			return latency
+		}(latency),
+		pktLoss: func(pktLoss string) string {
+			if pktLoss == "" {
+				return "-"
+			}
+			return pktLoss
+		}(pktLoss),
 	}
 	return nil
 }
@@ -141,15 +141,15 @@ func ClearTrafficControlSettings(pid int) error {
 		return fmt.Errorf("failed to perform traffic control: %v", err)
 	}
 	// clear cached parameters
-	if netNSID, err := getNSID(netNS); err != nil {
+	netNSID, err := getNSID(netNS)
+	if err != nil {
 		log.Error(netNSID)
 		return fmt.Errorf("failed to get network namespace ID: %v", err)
-	} else {
-		//trafficControlStatusCache[netNSID] = trafficControlStatus{
-		//	latency: "-",
-		//	pktLoss: "-",
-		delete(trafficControlStatusCache, netNSID)
 	}
+	//trafficControlStatusCache[netNSID] = trafficControlStatus{
+	//	latency: "-",
+	//	pktLoss: "-",
+	delete(trafficControlStatusCache, netNSID)
 	return nil
 }
 
@@ -188,26 +188,21 @@ func getStatus(pid int) (*trafficControlStatus, error) {
 	cmd := split("tc qdisc show dev eth0")
 	var output string
 	err = ns.WithNetNSPath(netNS, func(hostNS ns.NetNS) error {
-		if cmdOut, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput(); err != nil {
+		cmdOut, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput()
+		if err != nil {
 			log.Error(string(cmdOut))
 			output = "-"
 			return fmt.Errorf("failed to execute command: tc qdisc show dev eth0: %v", err)
-		} else {
-			output = string(cmdOut)
 		}
+		output = string(cmdOut)
 		return nil
 	})
 	// cache parameters
-	if netNSID, err := getNSID(netNS); err != nil {
-		log.Error(netNSID)
-		return &emptyTrafficControlStatus, fmt.Errorf("failed to get network namespace ID: %v", err)
-	} else {
-		lat, _ := parseLatency(output)
-		pktL, _ := parsePktLoss(output)
-		trafficControlStatusCache[netNSID] = trafficControlStatus{
-			latency: lat,
-			pktLoss: pktL,
-		}
+	lat, _ := parseLatency(output)
+	pktL, _ := parsePktLoss(output)
+	trafficControlStatusCache[netNSID] = trafficControlStatus{
+		latency: lat,
+		pktLoss: pktL,
 	}
 	status, _ := trafficControlStatusCache[netNSID]
 	return &status, err
@@ -226,21 +221,20 @@ func parseAttribute(statusString string, attribute string) (string, error) {
 		if s == attribute {
 			if i < len(statusStringSplited)-1 {
 				return strings.Trim(statusStringSplited[i+1], "\n"), nil
-			} else {
-				return "-", nil
 			}
+			return "-", nil
 		}
 	}
 	return "-", fmt.Errorf("%s not found", attribute)
 }
 
 func getNSID(nsPath string) (string, error) {
-	if nsID, err := os.Readlink(nsPath); err != nil {
+	nsID, err := os.Readlink(nsPath)
+	if err != nil {
 		log.Error(nsID)
 		return "", fmt.Errorf("failed to execute command: tc qdisc show dev eth0: %v", err)
-	} else {
-		return nsID[5 : len(nsID)-1], nil
 	}
+	return nsID[5 : len(nsID)-1], nil
 }
 
 func split(cmd string) []string {

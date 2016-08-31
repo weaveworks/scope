@@ -40,10 +40,13 @@ import (
 //
 // port to eBPF?
 
+// TODO alepuccetti: write meaningful comments
+
 type containerClient interface {
 	Start()
 }
 
+// Plugin is the internal data structure
 type Plugin struct {
 	reporter *Reporter
 
@@ -110,6 +113,7 @@ func setupSocket(socket string) (net.Listener, error) {
 	return listener, nil
 }
 
+// NewPlugin instantiates a new plugin
 func NewPlugin() (*Plugin, error) {
 	store := NewStore()
 	dockerClient, err := NewDockerClient(store)
@@ -129,6 +133,7 @@ func NewPlugin() (*Plugin, error) {
 	return plugin, nil
 }
 
+// Serve is a wrapper to http.ServeMux to serve the request supported by the plugin
 func (p *Plugin) Serve(listener net.Listener) error {
 	http.HandleFunc("/report", p.report)
 	http.HandleFunc("/control", p.control)

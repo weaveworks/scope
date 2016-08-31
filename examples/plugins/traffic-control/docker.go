@@ -8,11 +8,13 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
+// DockerClient internal data structure
 type DockerClient struct {
 	store  *Store
 	client *docker.Client
 }
 
+// NewDockerClient instantiates a new DockerClient
 func NewDockerClient(store *Store) (*DockerClient, error) {
 	dc, err := docker.NewClient("unix:///var/run/docker.sock")
 	if err != nil {
@@ -24,6 +26,7 @@ func NewDockerClient(store *Store) (*DockerClient, error) {
 	}, nil
 }
 
+// Start docker client
 func (c *DockerClient) Start() {
 	for {
 		c.loopIteration()
