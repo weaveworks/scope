@@ -4,7 +4,7 @@ menu_order: 20
 ---
 
 
-Weave Scope consists of three parts: the probe, the app and the user interface.  Scope can be deployed in either a standalone configuration, where you run everything yourself, or by using Weave Cloud.  
+Weave Scope consists of three parts: the probe, the app and the user interface.  Scope can be deployed in either a standalone configuration, where you run everything yourself, or by using Weave Cloud.
 
 Weave Cloud is the recommended option if:
 
@@ -16,6 +16,7 @@ The following topics are discussed:
 
  * [Installing Scope on Docker](#docker)
    * [Using Weave Cloud](#docker-weave-cloud)
+   * [On A Local Cluster](#local-cluster)
    * [Weave Net and Scope](#net-scope)
    * [Using Docker Compose](#docker-compose)
    * [Using Docker Compose in Weave Cloud](#docker-compose-cloud)
@@ -27,7 +28,7 @@ The following topics are discussed:
 
 ##<a name="docker"></a>Installing Scope on Docker
 
-To install Scope onto your local Docker machine in standalone mode, run the following commands:
+To install Scope onto your PC with docker installed in standalone mode, run the following commands:
 
     sudo curl -L git.io/scope -o /usr/local/bin/scope
     sudo chmod a+x /usr/local/bin/scope
@@ -43,7 +44,9 @@ Where,
 
  * `<VM name>` is the name you gave to your virtual machine with docker-machine.
 
-> **Note:** Scope allows anyone with access to the UI control over your containers: as such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally traffic between the app and the probe is currently insecure and should also not traverse the Internet.
+#### NB: Scope allows anyone with access to the UI control over your containers, and the hosts running them!
+
+Therefore, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally, traffic between the app and the probe is currently insecure and should also not traverse the Internet, meaning that you should either use the private / internal IP addresses of your nodes when setting it up, or route this traffic through weave net.  To put scope behind a very simple password, you can use [Caddy](https://github.com/mholt/caddy) to protect the endpoint by making the port 4040 available to localhost and using caddy to proxy it.... or, just use weave cloud.  
 
 ###<a name="docker-weave-cloud"></a>Using Weave Cloud
 
@@ -62,6 +65,40 @@ Where,
 This script downloads and runs a recent Scope docker image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
 
 After Scope has been launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login. Click 'View Instance' in the top right-hand corner to see the Scope user interface.
+
+###<a name="net-scope"></a> Local-Cluster without WeaveNet / WeaveDNS
+These are the directions for "Any Random Cluster," with no dependency on Weave Net.  Suppose I have a cluster like this:
+
+192.168.100.16
+192.168.100.17
+192.168.100.18
+192.168.100.19
+192.168.100.20
+
+We'll assume that no special hostnames or DNS settings have been fiddled with, so we're going to use IP addresses only to configure scope on this cluster:
+
+**On Each Node, first run:**
+```
+    sudo curl -L git.io/scope -o /usr/local/bin/scope
+    sudo chmod a+x /usr/local/bin/scope
+```
+**Then Run on the first node**
+```
+    scope launch 192.168.100.18 192.168.100.19 192.168.100.20
+```
+**Second node**
+```
+    scope launch 192.168.100.17 192.168.100.20 192.168.100.21
+```
+**Third Node**
+```
+    scope launch 192.168.100.17 192.168.100.18 192.168.100.21
+```
+**Fourth Node**
+```
+    scope launch 192.168.100.17 192.198.100.19 192.168.100.20
+```
+Key point here being that you need to make each node aware of the others.  You can also configure a single "target" nodee that you point all the others at, and once again, the key is that they know each other exist.  
 
 ###<a name="net-scope"></a> Weave Net and Scope
 
