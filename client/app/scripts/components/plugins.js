@@ -27,7 +27,7 @@ class Plugins extends React.Component {
           Plugins:
         </span>
         {hasPlugins && this.props.plugins.toIndexedSeq()
-          .map((plugin, index) => this.renderPlugin(plugin, index))}
+          .map(plugin => this.renderPlugin(plugin.toJS()))}
         {!hasPlugins && <span className="plugins-empty">n/a</span>}
       </div>
     );
