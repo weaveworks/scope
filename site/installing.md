@@ -71,7 +71,7 @@ This example assumes that you have a local cluster that is not using Weave Net, 
 
 Suppose you have the following cluster:
 
-192.168.100.16
+ 192.168.100.16
  192.168.100.17
  192.168.100.18
  192.168.100.19
