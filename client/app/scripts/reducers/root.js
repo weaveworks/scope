@@ -30,7 +30,7 @@ export const initialState = makeMap({
   forceRelayout: false,
   gridMode: false,
   gridSortBy: null,
-  gridSortedDesc: true,
+  gridSortedDesc: null,
   highlightedEdgeIds: makeSet(),
   highlightedNodeIds: makeSet(),
   hostname: '...',

@@ -18,6 +18,7 @@ const CW = {
   XXL: '170px',
 };
 
+
 const COLUMN_WIDTHS = {
   count: '70px',
   docker_container_created: CW.XL,
@@ -45,33 +46,52 @@ function getDefaultSortBy(columns, nodes) {
     return defaultSortColumn.id;
   }
   // otherwise choose first metric
-  return _.get(nodes, [0, 'metrics', 0, 'id']);
+  const firstNodeWithMetrics = _.find(nodes, n => _.get(n, ['metrics', 0]));
+  if (firstNodeWithMetrics) {
+    return _.get(firstNodeWithMetrics, ['metrics', 0, 'id']);
+  }
+
+  return 'label';
+}
+
+
+function maybeToLower(value) {
+  if (!value || !value.toLowerCase) {
+    return value;
+  }
+  return value.toLowerCase();
+}
+
+
+function getNodeValue(node, fieldId) {
+  if (fieldId !== null) {
+    let field = _.union(node.metrics, node.metadata).find(f => f.id === fieldId);
+
+    if (field) {
+      if (isNumberField(field)) {
+        return parseFloat(field.value);
+      }
+      return field.value;
+    }
+
+    if (node.parents) {
+      field = node.parents.find(f => f.topologyId === fieldId);
+      if (field) {
+        return field.label;
+      }
+    }
+
+    if (node[fieldId] !== undefined && node[fieldId] !== null) {
+      return node[fieldId];
+    }
+  }
+
+  return null;
 }
 
 
 function getValueForSortBy(sortBy) {
-  // return the node's value based on the sortBy field
-  return (node) => {
-    if (sortBy !== null) {
-      let field = _.union(node.metrics, node.metadata).find(f => f.id === sortBy);
-
-      if (!field && node.parents) {
-        field = node.parents.find(f => f.topologyId === sortBy);
-        if (field) {
-          return field.label;
-        }
-      }
-
-      if (field) {
-        if (isNumberField(field)) {
-          return parseFloat(field.value);
-        }
-        return field.value;
-      }
-    }
-
-    return null;
-  };
+  return (node) => maybeToLower(getNodeValue(node, sortBy));
 }
 
 
@@ -90,11 +110,10 @@ function getMetaDataSorters(nodes) {
 }
 
 
-function sortNodes(nodes, columns, sortBy, sortedDesc) {
+function sortNodes(nodes, getValue, sortedDesc) {
   const sortedNodes = _.sortBy(
     nodes,
-    getValueForSortBy(sortBy || getDefaultSortBy(columns, nodes)),
-    'label',
+    getValue,
     getMetaDataSorters(nodes)
   );
   if (sortedDesc) {
@@ -104,14 +123,14 @@ function sortNodes(nodes, columns, sortBy, sortedDesc) {
 }
 
 
-function getSortedNodes(nodes, columns, sortBy, sortedDesc) {
-  const getValue = getValueForSortBy(sortBy || getDefaultSortBy(columns, nodes));
+function getSortedNodes(nodes, sortBy, sortedDesc) {
+  const getValue = getValueForSortBy(sortBy);
   const withAndWithoutValues = _.groupBy(nodes, (n) => {
     const v = getValue(n);
     return v !== null && v !== undefined ? 'withValues' : 'withoutValues';
   });
-  const withValues = sortNodes(withAndWithoutValues.withValues, columns, sortBy, sortedDesc);
-  const withoutValues = sortNodes(withAndWithoutValues.withoutValues, columns, sortBy, sortedDesc);
+  const withValues = sortNodes(withAndWithoutValues.withValues, getValue, sortedDesc);
+  const withoutValues = sortNodes(withAndWithoutValues.withoutValues, getValue, sortedDesc);
 
   return _.concat(withValues, withoutValues);
 }
@@ -148,6 +167,11 @@ function getColumnsStyles(headers) {
 }
 
 
+function defaultSortDesc(header) {
+  return header.dataType === 'number';
+}
+
+
 export default class NodeDetailsTable extends React.Component {
 
   constructor(props, context) {
@@ -161,11 +185,12 @@ export default class NodeDetailsTable extends React.Component {
     this.handleLimitClick = this.handleLimitClick.bind(this);
   }
 
-  handleHeaderClick(ev, headerId) {
+  handleHeaderClick(ev, headerId, currentSortBy, currentSortedDesc) {
     ev.preventDefault();
-    const sortedDesc = headerId === this.state.sortBy
-      ? !this.state.sortedDesc : this.state.sortedDesc;
-    const sortBy = headerId;
+    const header = this.getColumnHeaders().find(h => h.id === headerId);
+    const sortBy = header.id;
+    const sortedDesc = header.id === currentSortBy
+      ? !currentSortedDesc : defaultSortDesc(header);
     this.setState({sortBy, sortedDesc});
     this.props.onSortChange(sortBy, sortedDesc);
   }
@@ -180,22 +205,21 @@ export default class NodeDetailsTable extends React.Component {
     return [{id: 'label', label: this.props.label}].concat(columns);
   }
 
-  renderHeaders() {
+  renderHeaders(sortBy, sortedDesc) {
     if (this.props.nodes && this.props.nodes.length > 0) {
       const headers = this.getColumnHeaders();
       const colStyles = getColumnsStyles(headers);
-      const defaultSortBy = getDefaultSortBy(this.props.columns, this.props.nodes);
 
       return (
         <tr>
           {headers.map((header, i) => {
             const headerClasses = ['node-details-table-header', 'truncate'];
             const onHeaderClick = ev => {
-              this.handleHeaderClick(ev, header.id);
+              this.handleHeaderClick(ev, header.id, sortBy, sortedDesc);
             };
             // sort by first metric by default
-            const isSorted = header.id === (this.state.sortBy || defaultSortBy);
-            const isSortedDesc = isSorted && this.state.sortedDesc;
+            const isSorted = header.id === sortBy;
+            const isSortedDesc = isSorted && sortedDesc;
             const isSortedAsc = isSorted && !isSortedDesc;
 
             if (isSorted) {
@@ -220,11 +244,16 @@ export default class NodeDetailsTable extends React.Component {
   }
 
   render() {
-    const headers = this.renderHeaders();
     const { nodeIdKey, columns, topologyId, onClickRow, onMouseEnter, onMouseLeave,
       onMouseEnterRow, onMouseLeaveRow } = this.props;
-    let nodes = getSortedNodes(this.props.nodes, this.props.columns, this.state.sortBy,
-                                    this.state.sortedDesc);
+
+    const sortBy = this.state.sortBy || getDefaultSortBy(columns, this.props.nodes);
+    const header = this.getColumnHeaders().find(h => h.id === sortBy);
+    const sortedDesc = this.state.sortedDesc !== null ?
+      this.state.sortedDesc :
+      defaultSortDesc(header);
+
+    let nodes = getSortedNodes(this.props.nodes, sortBy, sortedDesc);
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
     const expanded = this.state.limit === 0;
     const notShown = nodes.length - this.state.limit;
@@ -240,7 +269,7 @@ export default class NodeDetailsTable extends React.Component {
         <div className="node-details-table-wrapper">
           <table className="node-details-table">
             <thead>
-              {headers}
+              {this.renderHeaders(sortBy, sortedDesc)}
             </thead>
             <tbody style={this.props.tbodyStyle} onMouseEnter={onMouseEnter}
               onMouseLeave={onMouseLeave}>
@@ -262,7 +291,7 @@ export default class NodeDetailsTable extends React.Component {
           </table>
           <ShowMore
             handleClick={this.handleLimitClick}
-            collection={this.props.nodes}
+            collection={nodes}
             expanded={expanded}
             notShown={notShown} />
         </div>
@@ -275,5 +304,4 @@ export default class NodeDetailsTable extends React.Component {
 NodeDetailsTable.defaultProps = {
   nodeIdKey: 'id',  // key to identify a node in a row (used for topology links)
   onSortChange: () => {},
-  sortedDesc: true,
 };
