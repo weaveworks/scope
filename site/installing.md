@@ -10,13 +10,13 @@ Weave Cloud is the recommended option if:
 
  * You are deploying to larger clusters.
  * You require secure remote access.
- * You wish to share access with your coworkers.
+ * You want to share access with your coworkers.
 
 The following topics are discussed:
 
  * [Installing Scope on Docker](#docker)
    * [Using Weave Cloud](#docker-weave-cloud)
-   * [On A Local Cluster](#local-cluster)
+   * [Installing Scope on a Local Cluster Without Weave Net](#cluster-no-net)
    * [Weave Net and Scope](#net-scope)
    * [Using Docker Compose](#docker-compose)
    * [Using Docker Compose in Weave Cloud](#docker-compose-cloud)
@@ -44,9 +44,7 @@ Where,
 
  * `<VM name>` is the name you gave to your virtual machine with docker-machine.
 
-#### NB: Scope allows anyone with access to the UI control over your containers, and the hosts running them!
-
-Therefore, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally, traffic between the app and the probe is currently insecure and should also not traverse the Internet, meaning that you should either use the private / internal IP addresses of your nodes when setting it up, or route this traffic through weave net.  To put scope behind a very simple password, you can use [Caddy](https://github.com/mholt/caddy) to protect the endpoint by making the port 4040 available to localhost and using caddy to proxy it.... or, just use weave cloud.  
+>>**Note:** Scope allows anyone with access to the UI control over your containers: as such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally traffic between the app and the probe is currently insecure and should also not traverse the Internet. This means that you should either use the private / internal IP addresses of your nodes when setting it up, or route this traffic through Weave Net.  Put Scope behind a password, by using somthing like [Caddy](https://github.com/mholt/caddy) to protect the endpoint and making port 4040 available to localhost with Caddy proxying it. Or you can use Weave Cloud to manage your security for you.
 
 ###<a name="docker-weave-cloud"></a>Using Weave Cloud
 
@@ -66,39 +64,36 @@ This script downloads and runs a recent Scope docker image from the Docker Hub. 
 
 After Scope has been launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login. Click 'View Instance' in the top right-hand corner to see the Scope user interface.
 
-###<a name="net-scope"></a> Local-Cluster without WeaveNet / WeaveDNS
-These are the directions for "Any Random Cluster," with no dependency on Weave Net.  Suppose I have a cluster like this:
+
+###<a name="cluster-no-net"></a>Installing Scope on a Local Cluster Without Weave Net
+
+This example assumes that you have a local cluster that is not using Weave Net, and which also has no special hostnames or DNS settings. Only the IP addresses assigned to it will be used to configure Scope. You will launch Scope using the IP addresses of all the nodes in the cluster. 
+
+Suppose you have the following cluster:
 
 192.168.100.16
-192.168.100.17
-192.168.100.18
-192.168.100.19
-192.168.100.20
+ 192.168.100.17
+ 192.168.100.18
+ 192.168.100.19
+ 192.168.100.20
+ 
+ In the steps that follow, you will manually peer each node with all of the other nodes during Scope launch. 
+ 
+**1. To begin run the following on each node:**
 
-We'll assume that no special hostnames or DNS settings have been fiddled with, so we're going to use IP addresses only to configure scope on this cluster:
+     sudo curl -L git.io/scope -o /usr/local/bin/scope
+     sudo chmod a+x /usr/local/bin/scope
 
-**On Each Node, first run:**
-```
-    sudo curl -L git.io/scope -o /usr/local/bin/scope
-    sudo chmod a+x /usr/local/bin/scope
-```
-**Then Run on the first node**
-```
-    scope launch 192.168.100.18 192.168.100.19 192.168.100.20
-```
-**Second node**
-```
-    scope launch 192.168.100.17 192.168.100.20 192.168.100.21
-```
-**Third Node**
-```
-    scope launch 192.168.100.17 192.168.100.18 192.168.100.21
-```
-**Fourth Node**
-```
-    scope launch 192.168.100.17 192.198.100.19 192.168.100.20
-```
-Key point here being that you need to make each node aware of the others.  You can also configure a single "target" nodee that you point all the others at, and once again, the key is that they know each other exist.  
+ **2. Then on the first node:**
+
+     scope launch 192.168.100.18 192.168.100.19 192.168.100.20
+
+ **3. And on the second node:**
+
+     scope launch 192.168.100.17 192.168.100.20 192.168.100.21
+     scope launch 192.168.100.17 192.168.100.18 192.168.100.21
+     scope launch 192.168.100.17 192.198.100.19 192.168.100.20
+
 
 ###<a name="net-scope"></a> Weave Net and Scope
 
