@@ -255,9 +255,11 @@ class Terminal extends React.Component {
         <div className="terminal-header-tools">
           <span
             title="Open in new browser window"
-            className="terminal-header-tools-icon fa fa-external-link"
-            onClick={this.handlePopoutTerminal} />
-          <span title="Close" className="terminal-header-tools-icon fa fa-close"
+            className="terminal-header-tools-item"
+            onClick={this.handlePopoutTerminal}>
+          Pop out
+          </span>
+          <span title="Close" className="terminal-header-tools-item-icon fa fa-close"
             onClick={this.handleCloseClick} />
         </div>
         <span className="terminal-header-title">{this.getTitle()}</span>
