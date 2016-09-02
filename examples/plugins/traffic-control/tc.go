@@ -10,64 +10,13 @@ import (
 	"github.com/containernetworking/cni/pkg/ns"
 )
 
-// DoTrafficControl is the function that set the parameters of the qdisc with tc
-func DoTrafficControl(pid int, latency string, packetLoss string) error {
-	if latency == "" && packetLoss == "" {
-		// TODO @alepuccetti: return a warning message: "Nothing to do"
-		return nil
-	}
-
-	var err error
+// applyTrafficControlRules set the network policies
+func applyTrafficControlRules(pid int, rules []string) (netNSID string, err error) {
 	cmds := [][]string{
 		strings.Fields("tc qdisc replace dev eth0 root handle 1: netem"),
-
-		// These steps are not required, since we don't do
-		// ingress traffic control, only egress, see the TODO
-		// at the beginning of the file.
-
-		//strings.Fields("ip link add ifb0 type ifb"),
-		//strings.Fields("ip link set ifb0 up"),
-		//strings.Fields("tc qdisc add dev eth0 handle ffff: ingress"),
-		//strings.Fields("tc filter add dev eth0 parent ffff: protocol ip u32 match u32 0 0 action mirred egress redirect dev ifb0"),
-		//strings.Fields("tc qdisc replace dev ifb0 handle 1:0 root netem"),
-
-		// Add "loss %d%% rate %dkbit" when we add the
-		// possibility to control the packet loss and
-		// bandwidth. See the TODO at the beginning of the
-		// file.
-
 	}
 	cmd := strings.Fields("tc qdisc change dev eth0 root handle 1: netem")
-	// TODO @alepuccetti: refactor this code
-	if latency == "" {
-		// packetLoss cannot be empty
-		cmd = append(cmd, "loss")
-		cmd = append(cmd, packetLoss)
-		// get latency from the cache
-		if latency, err = getLatency(pid); err != nil {
-			return err
-		} else if latency != "-" {
-			cmd = append(cmd, "delay")
-			cmd = append(cmd, latency)
-		}
-	} else if packetLoss == "" {
-		// latency cannot be empty
-		cmd = append(cmd, "delay")
-		cmd = append(cmd, latency)
-		// get packetLoss from the cache
-		if packetLoss, err = getPacketLoss(pid); err != nil {
-			return err
-		} else if packetLoss != "-" {
-			cmd = append(cmd, "loss")
-			cmd = append(cmd, packetLoss)
-		}
-	} else {
-		// latency and pckLoss are both new
-		cmd = append(cmd, "delay")
-		cmd = append(cmd, latency)
-		cmd = append(cmd, "loss")
-		cmd = append(cmd, packetLoss)
-	}
+	cmd = append(cmd, rules...)
 	cmds = append(cmds, cmd)
 
 	netNS := fmt.Sprintf("/proc/%d/ns/net", pid)
@@ -81,28 +30,69 @@ func DoTrafficControl(pid int, latency string, packetLoss string) error {
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to perform traffic control: %v", err)
+		return "", fmt.Errorf("failed to perform traffic control: %v", err)
 	}
-	// cache parameters
-	netNSID, err := getNSID(netNS)
+	netNSID, err = getNSID(netNS)
+
 	if err != nil {
-		log.Error(netNSID)
-		return fmt.Errorf("failed to get network namespace ID: %v", err)
+		return "", err
 	}
-	trafficControlStatusCache[netNSID] = trafficControlStatus{
-		latency: func(latency string) string {
-			if latency == "" {
-				return "-"
-			}
-			return latency
-		}(latency),
-		packetLoss: func(packetLoss string) string {
-			if packetLoss == "" {
-				return "-"
-			}
-			return packetLoss
-		}(packetLoss),
+	return netNSID, nil
+}
+
+// ApplyLatency sets the latency
+func ApplyLatency(pid int, latency string) error {
+	if latency == "" {
+		return nil
 	}
+	rules := strings.Fields(fmt.Sprintf("delay %s", latency))
+
+	// Get cached packet loss
+	packetLoss, err := getPacketLoss(pid)
+	if err != nil {
+		return err
+	}
+	if packetLoss != "-" {
+		rules = append(rules, strings.Fields(fmt.Sprintf("loss %s", packetLoss))...)
+	}
+
+	netNSID, err := applyTrafficControlRules(pid, rules)
+
+	// Update cached values
+	if trafficControlStatusCache[netNSID] == nil {
+		trafficControlStatusCache[netNSID] = TrafficControlStatusInit()
+	}
+	trafficControlStatusCache[netNSID].SetLatency(latency)
+	trafficControlStatusCache[netNSID].SetPacketLoss(packetLoss)
+
+	return nil
+}
+
+// ApplyPacketLoss sets the packet loss
+func ApplyPacketLoss(pid int, packetLoss string) error {
+	if packetLoss == "" {
+		return nil
+	}
+	rules := strings.Fields(fmt.Sprintf("loss %s", packetLoss))
+
+	// Get cached latency
+	latency, err := getLatency(pid)
+	if err != nil {
+		return err
+	}
+	if latency != "-" {
+		rules = append(rules, strings.Fields(fmt.Sprintf("delay %s", latency))...)
+	}
+
+	netNSID, err := applyTrafficControlRules(pid, rules)
+
+	// Update cached values
+	if trafficControlStatusCache[netNSID] == nil {
+		trafficControlStatusCache[netNSID] = TrafficControlStatusInit()
+	}
+	trafficControlStatusCache[netNSID].SetLatency(latency)
+	trafficControlStatusCache[netNSID].SetPacketLoss(packetLoss)
+
 	return nil
 }
 
@@ -161,10 +151,10 @@ func getStatus(pid int) (*trafficControlStatus, error) {
 	netNSID, err := getNSID(netNS)
 	if err != nil {
 		log.Error(netNSID)
-		return &emptyTrafficControlStatus, fmt.Errorf("failed to get network namespace ID: %v", err)
+		return nil, fmt.Errorf("failed to get network namespace ID: %v", err)
 	}
 	if status, ok := trafficControlStatusCache[netNSID]; ok {
-		return &status, nil
+		return status, nil
 	}
 	cmd := strings.Fields("tc qdisc show dev eth0")
 	var output string
@@ -179,32 +169,32 @@ func getStatus(pid int) (*trafficControlStatus, error) {
 		return nil
 	})
 	// cache parameters
-	trafficControlStatusCache[netNSID] = trafficControlStatus{
+	trafficControlStatusCache[netNSID] = &trafficControlStatus{
 		latency:    parseLatency(output),
 		packetLoss: parsePacketLoss(output),
 	}
 	status, _ := trafficControlStatusCache[netNSID]
-	return &status, err
+	return status, err
 }
 
-func parseLatency(statusString string) (string, error) {
+func parseLatency(statusString string) string {
 	return parseAttribute(statusString, "delay")
 }
 
-func parsePacketLoss(statusString string) (string, error) {
+func parsePacketLoss(statusString string) string {
 	return parseAttribute(statusString, "loss")
 }
-func parseAttribute(statusString string, attribute string) (string, error) {
+func parseAttribute(statusString string, attribute string) string {
 	statusStringSplited := strings.Fields(statusString)
 	for i, s := range statusStringSplited {
 		if s == attribute {
 			if i < len(statusStringSplited)-1 {
-				return strings.Trim(statusStringSplited[i+1], "\n"), nil
+				return strings.Trim(statusStringSplited[i+1], "\n")
 			}
-			return "-", nil
+			return "-"
 		}
 	}
-	return "-", fmt.Errorf("%s not found", attribute)
+	return "-"
 }
 
 func getNSID(nsPath string) (string, error) {

@@ -240,7 +240,7 @@ func getLatencyControls() []extControl {
 				Rank:  20,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, "2000ms", "")
+				return ApplyLatency(pid, "2000ms")
 			},
 		},
 		{
@@ -251,7 +251,7 @@ func getLatencyControls() []extControl {
 				Rank:  21,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, "1000ms", "")
+				return ApplyLatency(pid, "1000ms")
 			},
 		},
 		{
@@ -262,7 +262,7 @@ func getLatencyControls() []extControl {
 				Rank:  22,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, "500ms", "")
+				return ApplyLatency(pid, "500ms")
 			},
 		},
 	}
@@ -278,7 +278,7 @@ func getPacketLossControls() []extControl {
 				Rank:  23,
 			},
 			handler: func(pid int) error {
-				return DoTrafficControl(pid, "", "10%")
+				return ApplyPacketLoss(pid, "10%")
 			},
 		},
 	}
