@@ -696,22 +696,7 @@ h2 {
     }
 
     .node-control-button {
-      .btn-opacity;
-      padding: 6px;
-      margin-left: 2px;
-      font-size: 110%;
       color: @white;
-      cursor: pointer;
-      border: 1px solid rgba(255, 255, 255, 0);
-      border-radius: 10%;
-      &:hover {
-        border-color: rgba(255, 255, 255, 0.6);
-      }
-      &-pending, &-pending:hover {
-        opacity: 0.2;
-        border-color: rgba(255, 255, 255, 0);
-        cursor: not-allowed;
-      }
     }
 
     &-spinner {
@@ -848,6 +833,10 @@ h2 {
   }
 
   &-labels {
+    &-controls {
+      margin-left: -4px;
+    }
+
     &-field {
       display: flex;
       align-items: baseline;
@@ -955,6 +944,25 @@ h2 {
       }
 
     }
+  }
+}
+
+.node-control-button {
+  .btn-opacity;
+  padding: 6px;
+  margin-left: 2px;
+  font-size: 110%;
+  color: @text-secondary-color;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0);
+  border-radius: 10%;
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+  &-pending, &-pending:hover {
+    opacity: 0.2;
+    border-color: rgba(255, 255, 255, 0);
+    cursor: not-allowed;
   }
 }
 

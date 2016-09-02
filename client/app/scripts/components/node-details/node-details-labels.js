@@ -1,7 +1,9 @@
 import React from 'react';
 import { Map as makeMap } from 'immutable';
+import sortBy from 'lodash/sortBy';
 
 import MatchedText from '../matched-text';
+import NodeDetailsControlButton from './node-details-control-button';
 import ShowMore from '../show-more';
 
 export default class NodeDetailsLabels extends React.Component {
@@ -13,6 +15,7 @@ export default class NodeDetailsLabels extends React.Component {
       limit: this.DEFAULT_LIMIT,
     };
     this.handleLimitClick = this.handleLimitClick.bind(this);
+    this.renderControls = this.renderControls.bind(this);
   }
 
   handleLimitClick() {
@@ -20,8 +23,17 @@ export default class NodeDetailsLabels extends React.Component {
     this.setState({limit});
   }
 
+  renderControls(controls) {
+    return (
+      <div className="node-details-labels-controls">
+        {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
+          nodeId={control.nodeId} control={control} key={control.id} />)}
+      </div>
+    );
+  }
+
   render() {
-    const { matches = makeMap() } = this.props;
+    const { controls, matches = makeMap() } = this.props;
     let rows = this.props.rows;
     let notShown = 0;
     const limited = rows && this.state.limit > 0 && rows.length > this.state.limit;
@@ -37,6 +49,7 @@ export default class NodeDetailsLabels extends React.Component {
 
     return (
       <div className="node-details-labels">
+        {controls && this.renderControls(controls)}
         {rows.map(field => (<div className="node-details-labels-field" key={field.id}>
             <div className="node-details-labels-field-label truncate" title={field.label}
               key={field.id}>

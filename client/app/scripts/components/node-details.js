@@ -206,7 +206,7 @@ export class NodeDetails extends React.Component {
                       <Warning text={getTruncationText(table.truncationCount)} />
                     </span>}
                   </div>
-                  <NodeDetailsLabels rows={table.rows}
+                  <NodeDetailsLabels rows={table.rows} controls={table.controls}
                     matches={nodeMatches.get('tables')} />
                 </div>
               );
