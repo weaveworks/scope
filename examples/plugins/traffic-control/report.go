@@ -153,7 +153,7 @@ func (r *Reporter) getContainerNodes() map[string]node {
 		case Running:
 			nodeID := containerIDToNodeID(containerID)
 			latency, _ := getLatency(container.PID)
-			pktLoss, _ := getPktLoss(container.PID)
+			packetLoss, _ := getPacketLoss(container.PID)
 			nodes[nodeID] = node{
 				LatestControls: getTrafficNodeControls(timestamp, dead),
 				Latest: map[string]stringEntry{
@@ -163,7 +163,7 @@ func (r *Reporter) getContainerNodes() map[string]node {
 					},
 					fmt.Sprintf("%s%s", trafficControlTablePrefix, "pktloss"): {
 						Timestamp: timestamp,
-						Value:     pktLoss,
+						Value:     packetLoss,
 					},
 				},
 			}
@@ -268,7 +268,7 @@ func getLatencyControls() []extControl {
 	}
 }
 
-func getPktLossControls() []extControl {
+func getPacketLossControls() []extControl {
 	return []extControl{
 		{
 			control: control{
@@ -302,8 +302,8 @@ func getGeneralControls() []extControl {
 
 func getControls() []extControl {
 	controls := getLatencyControls()
-	// TODO alepuccetti why append(controls, getPktLossControls()) does not work?
-	for _, ctrl := range getPktLossControls() {
+	// TODO alepuccetti why append(controls, getPacketLossControls()) does not work?
+	for _, ctrl := range getPacketLossControls() {
 		controls = append(controls, ctrl)
 	}
 	for _, ctrl := range getGeneralControls() {

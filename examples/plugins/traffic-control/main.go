@@ -40,8 +40,6 @@ import (
 //
 // port to eBPF?
 
-// TODO alepuccetti: write meaningful comments
-
 type containerClient interface {
 	Start()
 }
@@ -54,8 +52,14 @@ type Plugin struct {
 }
 
 type trafficControlStatus struct {
-	latency string
-	pktLoss string
+	latency    string
+	packetLoss string
+}
+
+// String is useful to easily create a string of the traffic control plugin internal status.
+// Useful for debugging
+func (tcs trafficControlStatus) String() string {
+	return fmt.Sprintf("%s %s", tcs.latency, tcs.packetLoss)
 }
 
 var trafficControlStatusCache map[string]trafficControlStatus
@@ -64,16 +68,13 @@ var emptyTrafficControlStatus trafficControlStatus
 func main() {
 	const socket = "/var/run/scope/plugins/traffic-control.sock"
 
+	// Handle the exit signal
 	setupSignals(socket)
 
 	listener, err := setupSocket(socket)
 	if err != nil {
 		log.Fatalf("Failed to setup socket: %v", err)
 	}
-	defer func() {
-		listener.Close()
-		os.Remove(socket)
-	}()
 
 	plugin, err := NewPlugin()
 	if err != nil {
@@ -81,8 +82,8 @@ func main() {
 	}
 	trafficControlStatusCache = make(map[string]trafficControlStatus)
 	emptyTrafficControlStatus = trafficControlStatus{
-		latency: "-",
-		pktLoss: "-",
+		latency:    "-",
+		packetLoss: "-",
 	}
 	if err := plugin.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
