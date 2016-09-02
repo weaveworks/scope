@@ -210,11 +210,7 @@ class Terminal extends React.Component {
 
   handleCloseClick(ev) {
     ev.preventDefault();
-    if (this.isEmbedded()) {
-      this.props.dispatch(clickCloseTerminal(this.getPipeId(), true));
-    } else {
-      window.close();
-    }
+    this.props.dispatch(clickCloseTerminal(this.getPipeId(), true));
   }
 
   handlePopoutTerminal(ev) {
@@ -256,13 +252,17 @@ class Terminal extends React.Component {
     };
     return (
       <div className="terminal-header" style={style}>
-          <div className="terminal-header-tools">
-            <span className="terminal-header-tools-icon fa fa-external-link"
-              onClick={this.handlePopoutTerminal} />
-            <span className="terminal-header-tools-icon fa fa-close"
-              onClick={this.handleCloseClick} />
-          </div>
-          <span className="terminal-header-title">{this.getTitle()}</span>
+        <div className="terminal-header-tools">
+          <span
+            title="Open in new browser window"
+            className="terminal-header-tools-item"
+            onClick={this.handlePopoutTerminal}>
+          Pop out
+          </span>
+          <span title="Close" className="terminal-header-tools-item-icon fa fa-close"
+            onClick={this.handleCloseClick} />
+        </div>
+        <span className="terminal-header-title">{this.getTitle()}</span>
       </div>
     );
   }
@@ -272,10 +272,10 @@ class Terminal extends React.Component {
       return (
         <div>
           <h3>Connection Closed</h3>
-          <p>
+          <div className="termina-status-bar-message">
             The connection to this container has been closed.
             <div className="link" onClick={this.handleCloseClick}>Close terminal</div>
-          </p>
+          </div>
         </div>
       );
     }

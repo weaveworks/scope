@@ -1010,7 +1010,7 @@ h2 {
       right: 8px;
       top: 6px;
 
-      &-icon {
+      &-item, &-item-icon {
         .palable;
         padding: 4px 5px;
         color: @white;
@@ -1018,10 +1018,20 @@ h2 {
         opacity: 0.7;
         border: 1px solid rgba(255, 255, 255, 0);
         border-radius: 10%;
+
+        font-size: 0.8em;
+        font-weight: bold;
+        text-transform: uppercase;
+        word-spacing: -4px;
+
         &:hover {
           opacity: 1;
           border-color: rgba(255, 255, 255, 0.6);
         }
+      }
+
+      &-item-icon {
+        font-size: 1em;
       }
     }
   }
@@ -1056,10 +1066,11 @@ h2 {
       margin: 4px 0;
     }
 
-    p {
+    &-message {
       margin: 4px 0;
       color: @white;
     }
+
     .link {
       text-transform: uppercase;
       font-weight: bold;

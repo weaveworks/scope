@@ -2,7 +2,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import Terminal from './terminal';
-import { receiveControlPipeFromParams } from '../actions/app-actions';
+import { receiveControlPipeFromParams, hitEsc } from '../actions/app-actions';
+
+const ESC_KEY_CODE = 27;
 
 class TerminalApp extends React.Component {
 
@@ -18,6 +20,28 @@ class TerminalApp extends React.Component {
       titleBarColor: params.titleBarColor,
       statusBarColor: params.statusBarColor
     };
+
+    this.onKeyUp = this.onKeyUp.bind(this);
+  }
+
+  componentDidMount() {
+    window.addEventListener('keyup', this.onKeyUp);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keyup', this.onKeyUp);
+  }
+
+  onKeyUp(ev) {
+    if (ev.keyCode === ESC_KEY_CODE) {
+      this.props.hitEsc();
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (!nextProps.controlPipe) {
+      window.close();
+    }
   }
 
   render() {
@@ -44,5 +68,5 @@ function mapStateToProps(state) {
 
 export default connect(
   mapStateToProps,
-  { receiveControlPipeFromParams }
+  { receiveControlPipeFromParams, hitEsc }
 )(TerminalApp);
