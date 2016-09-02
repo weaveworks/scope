@@ -145,7 +145,7 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 				if !ok {
 					continue
 				}
-				key := newConnection(n, node, port, remoteEndpointID, localAddr)
+				key := newConnection(n, node, port, localEndpoint.ID, localAddr)
 				counts[key] = counts[key] + 1
 			}
 		}

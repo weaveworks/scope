@@ -196,6 +196,9 @@ func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, namespaceID st
 
 	// In case we have a reverse resolution for the IP, we can use it for
 	// the name...
+	if fromNames, err := r.reverseResolver.get(t.fromAddr); err == nil {
+		fromNode = fromNode.WithSet(ReverseDNSNames, report.MakeStringSet(fromNames...))
+	}
 	if toNames, err := r.reverseResolver.get(t.toAddr); err == nil {
 		toNode = toNode.WithSet(ReverseDNSNames, report.MakeStringSet(toNames...))
 	}
