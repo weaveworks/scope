@@ -58,12 +58,37 @@ type trafficControlStatus struct {
 
 // String is useful to easily create a string of the traffic control plugin internal status.
 // Useful for debugging
-func (tcs trafficControlStatus) String() string {
+func (tcs *trafficControlStatus) String() string {
 	return fmt.Sprintf("%s %s", tcs.latency, tcs.packetLoss)
 }
 
-var trafficControlStatusCache map[string]trafficControlStatus
-var emptyTrafficControlStatus trafficControlStatus
+// SetLatency sets the latency value
+// the convention is that empty latency is represented by '-'
+func (tcs *trafficControlStatus) SetLatency(latency string) {
+	if latency == "" {
+		tcs.latency = "-"
+	}
+	tcs.latency = latency
+}
+
+// SetPacketLoss sets the packet loss value
+// the convention is that empty packet loss is represented by '-'
+func (tcs *trafficControlStatus) SetPacketLoss(packetLoss string) {
+	if packetLoss == "" {
+		tcs.packetLoss = "-"
+	}
+	tcs.packetLoss = packetLoss
+}
+
+// TrafficControlStatusInit initializes with the convention that empty values are '-'
+func TrafficControlStatusInit() *trafficControlStatus {
+	return &trafficControlStatus{
+		latency:    "-",
+		packetLoss: "-",
+	}
+}
+
+var trafficControlStatusCache map[string]*trafficControlStatus
 
 func main() {
 	const socket = "/var/run/scope/plugins/traffic-control.sock"
@@ -80,11 +105,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create a plugin: %v", err)
 	}
-	trafficControlStatusCache = make(map[string]trafficControlStatus)
-	emptyTrafficControlStatus = trafficControlStatus{
-		latency:    "-",
-		packetLoss: "-",
-	}
+	trafficControlStatusCache = make(map[string]*trafficControlStatus)
 	if err := plugin.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
