@@ -51,20 +51,21 @@ type Plugin struct {
 	clients []containerClient
 }
 
-type trafficControlStatus struct {
+// TrafficControlStatus keeps track of parameters status
+type TrafficControlStatus struct {
 	latency    string
 	packetLoss string
 }
 
 // String is useful to easily create a string of the traffic control plugin internal status.
 // Useful for debugging
-func (tcs *trafficControlStatus) String() string {
+func (tcs *TrafficControlStatus) String() string {
 	return fmt.Sprintf("%s %s", tcs.latency, tcs.packetLoss)
 }
 
 // SetLatency sets the latency value
 // the convention is that empty latency is represented by '-'
-func (tcs *trafficControlStatus) SetLatency(latency string) {
+func (tcs *TrafficControlStatus) SetLatency(latency string) {
 	if latency == "" {
 		tcs.latency = "-"
 	}
@@ -73,7 +74,7 @@ func (tcs *trafficControlStatus) SetLatency(latency string) {
 
 // SetPacketLoss sets the packet loss value
 // the convention is that empty packet loss is represented by '-'
-func (tcs *trafficControlStatus) SetPacketLoss(packetLoss string) {
+func (tcs *TrafficControlStatus) SetPacketLoss(packetLoss string) {
 	if packetLoss == "" {
 		tcs.packetLoss = "-"
 	}
@@ -81,14 +82,15 @@ func (tcs *trafficControlStatus) SetPacketLoss(packetLoss string) {
 }
 
 // TrafficControlStatusInit initializes with the convention that empty values are '-'
-func TrafficControlStatusInit() *trafficControlStatus {
-	return &trafficControlStatus{
+func TrafficControlStatusInit() *TrafficControlStatus {
+	return &TrafficControlStatus{
 		latency:    "-",
 		packetLoss: "-",
 	}
 }
 
-var trafficControlStatusCache map[string]*trafficControlStatus
+// TrafficControlStatusCache implements status caching
+var trafficControlStatusCache map[string]*TrafficControlStatus
 
 func main() {
 	const socket = "/var/run/scope/plugins/traffic-control.sock"
@@ -105,7 +107,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create a plugin: %v", err)
 	}
-	trafficControlStatusCache = make(map[string]*trafficControlStatus)
+	trafficControlStatusCache = make(map[string]*TrafficControlStatus)
 	if err := plugin.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

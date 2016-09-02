@@ -125,7 +125,7 @@ func ClearTrafficControlSettings(pid int) error {
 }
 
 func getLatency(pid int) (string, error) {
-	var status *trafficControlStatus
+	var status *TrafficControlStatus
 	var err error
 	if status, err = getStatus(pid); err != nil {
 		return "-", err
@@ -136,7 +136,7 @@ func getLatency(pid int) (string, error) {
 }
 
 func getPacketLoss(pid int) (string, error) {
-	var status *trafficControlStatus
+	var status *TrafficControlStatus
 	var err error
 	if status, err = getStatus(pid); err != nil {
 		return "-", err
@@ -146,7 +146,7 @@ func getPacketLoss(pid int) (string, error) {
 	return status.packetLoss, nil
 }
 
-func getStatus(pid int) (*trafficControlStatus, error) {
+func getStatus(pid int) (*TrafficControlStatus, error) {
 	netNS := fmt.Sprintf("/proc/%d/ns/net", pid)
 	netNSID, err := getNSID(netNS)
 	if err != nil {
@@ -169,7 +169,7 @@ func getStatus(pid int) (*trafficControlStatus, error) {
 		return nil
 	})
 	// cache parameters
-	trafficControlStatusCache[netNSID] = &trafficControlStatus{
+	trafficControlStatusCache[netNSID] = &TrafficControlStatus{
 		latency:    parseLatency(output),
 		packetLoss: parsePacketLoss(output),
 	}
