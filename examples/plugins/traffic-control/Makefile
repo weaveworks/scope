@@ -19,7 +19,7 @@ $(UPTODATE): $(EXE) Dockerfile
 	$(SUDO) docker build -t $(IMAGE) .
 	touch $@
 
-$(EXE): main.go
+$(EXE): $(shell find . -name *.go)
 	$(SUDO) docker run --rm \
 		-v "$$PWD":/go/src/hosting/org/$(EXE) \
 		-v $(shell pwd)/../../../vendor:/go/src/hosting/org/$(EXE)/vendor \
