@@ -162,7 +162,7 @@ func getStatus(pid int) (*TrafficControlStatus, error) {
 		cmdOut, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput()
 		if err != nil {
 			log.Error(string(cmdOut))
-			output = "-"
+			output = ""
 			return fmt.Errorf("failed to execute command: tc qdisc show dev eth0: %v", err)
 		}
 		output = string(cmdOut)
