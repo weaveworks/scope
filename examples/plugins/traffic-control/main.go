@@ -107,8 +107,22 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create a plugin: %v", err)
 	}
+
+	// Cache
 	trafficControlStatusCache = make(map[string]*TrafficControlStatus)
-	if err := plugin.Serve(listener); err != nil {
+
+	trafficControlServeMux := http.NewServeMux()
+
+	// Report request handler
+	reportHandler := http.HandlerFunc(plugin.report)
+	trafficControlServeMux.Handle("/report", reportHandler)
+
+	// Control request handler
+	controlHandler := http.HandlerFunc(plugin.control)
+	trafficControlServeMux.Handle("/control", controlHandler)
+
+	log.Println("Listening...")
+	if err = http.Serve(listener, trafficControlServeMux); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
@@ -155,13 +169,6 @@ func NewPlugin() (*Plugin, error) {
 		go client.Start()
 	}
 	return plugin, nil
-}
-
-// Serve is a wrapper to http.ServeMux to serve the request supported by the plugin
-func (p *Plugin) Serve(listener net.Listener) error {
-	http.HandleFunc("/report", p.report)
-	http.HandleFunc("/control", p.control)
-	return http.Serve(listener, nil)
 }
 
 func (p *Plugin) report(w http.ResponseWriter, r *http.Request) {
