@@ -200,8 +200,7 @@ func parseAttribute(statusString string, attribute string) string {
 func getNSID(nsPath string) (string, error) {
 	nsID, err := os.Readlink(nsPath)
 	if err != nil {
-		log.Error(nsID)
-		return "", fmt.Errorf("failed to execute command: tc qdisc show dev eth0: %v", err)
+		return "", fmt.Errorf("failed read \"%s\": %v", nsPath, err)
 	}
 	return nsID[5 : len(nsID)-1], nil
 }
