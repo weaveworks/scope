@@ -181,33 +181,27 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, namespaceID string, extraFromNode, extraToNode map[string]string) {
 	var (
-		fromEndpointNodeID = report.MakeEndpointNodeID(r.hostID, namespaceID, t.fromAddr, strconv.Itoa(int(t.fromPort)))
-		toEndpointNodeID   = report.MakeEndpointNodeID(r.hostID, namespaceID, t.toAddr, strconv.Itoa(int(t.toPort)))
-
-		fromNode = report.MakeNodeWith(fromEndpointNodeID, map[string]string{
-			Addr: t.fromAddr,
-			Port: strconv.Itoa(int(t.fromPort)),
-		}).WithEdge(toEndpointNodeID, report.EdgeMetadata{})
-		toNode = report.MakeNodeWith(toEndpointNodeID, map[string]string{
-			Addr: t.toAddr,
-			Port: strconv.Itoa(int(t.toPort)),
-		})
+		fromNode = r.makeEndpointNode(namespaceID, t.fromAddr, t.fromPort, extraFromNode)
+		toNode   = r.makeEndpointNode(namespaceID, t.toAddr, t.toPort, extraToNode)
 	)
+	rpt.Endpoint = rpt.Endpoint.AddNode(fromNode.WithEdge(toNode.ID, report.EdgeMetadata{}))
+	rpt.Endpoint = rpt.Endpoint.AddNode(toNode)
+}
 
+func (r *Reporter) makeEndpointNode(namespaceID string, addr string, port uint16, extra map[string]string) report.Node {
+	portStr := strconv.Itoa(int(port))
+	node := report.MakeNodeWith(
+		report.MakeEndpointNodeID(r.hostID, namespaceID, addr, portStr),
+		map[string]string{Addr: addr, Port: portStr})
 	// In case we have a reverse resolution for the IP, we can use it for
 	// the name...
-	if toNames, err := r.reverseResolver.get(t.toAddr); err == nil {
-		toNode = toNode.WithSet(ReverseDNSNames, report.MakeStringSet(toNames...))
+	if names, err := r.reverseResolver.get(addr); err == nil {
+		node = node.WithSet(ReverseDNSNames, report.MakeStringSet(names...))
 	}
-
-	if extraFromNode != nil {
-		fromNode = fromNode.WithLatests(extraFromNode)
+	if extra != nil {
+		node = node.WithLatests(extra)
 	}
-	if extraToNode != nil {
-		toNode = toNode.WithLatests(extraToNode)
-	}
-	rpt.Endpoint = rpt.Endpoint.AddNode(fromNode)
-	rpt.Endpoint = rpt.Endpoint.AddNode(toNode)
+	return node
 }
 
 func newu64(i uint64) *uint64 {
