@@ -51,7 +51,7 @@ func (i Instrument) Wrap(next http.Handler) http.Handler {
 // prometheus.
 func (i Instrument) getRouteName(r *http.Request) string {
 	var routeMatch mux.RouteMatch
-	if i.RouteMatcher.Match(r, &routeMatch) {
+	if i.RouteMatcher != nil && i.RouteMatcher.Match(r, &routeMatch) {
 		if name := routeMatch.Route.GetName(); name != "" {
 			return name
 		}
