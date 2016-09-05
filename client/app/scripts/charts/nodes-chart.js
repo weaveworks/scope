@@ -3,7 +3,7 @@ import d3 from 'd3';
 import debug from 'debug';
 import React from 'react';
 import { connect } from 'react-redux';
-import { Map as makeMap, fromJS, is as isDeepEqual } from 'immutable';
+import { Map as makeMap, fromJS, is } from 'immutable';
 import timely from 'timely';
 
 import { clickBackground } from '../actions/app-actions';
@@ -22,6 +22,125 @@ const ZOOM_CACHE_FIELDS = ['scale', 'panTranslateX', 'panTranslateY'];
 const radiusDensity = d3.scale.threshold()
   .domain([3, 6])
   .range([2.5, 3.5, 3]);
+
+
+function toNodes(nodes) {
+  return nodes.map((node, id) => makeMap({
+    id,
+    label: node.get('label'),
+    pseudo: node.get('pseudo'),
+    subLabel: node.get('label_minor'),
+    nodeCount: node.get('node_count'),
+    metrics: node.get('metrics'),
+    rank: node.get('rank'),
+    shape: node.get('shape'),
+    stack: node.get('stack'),
+    networks: node.get('networks'),
+  }));
+}
+
+
+function identityPresevingMerge(a, b) {
+  //
+  // merge two maps, if the values are equal return the old value to preserve (a === a')
+  //
+  // Note: mergeDeep keeps identity but we can't always use that. E.g. if nodes have been removed in
+  // b but still exist in a. they will still exist in the result.
+  //
+  return a.mergeWith((v1, v2) => is(v1, v2) ? v1 : v2, a, b);
+}
+
+
+function mergeDeepIfExists(mapA, mapB) {
+  //
+  // Does a deep merge on any key that exists in the first map
+  //
+  return mapA.map((v, k) => v.mergeDeep(mapB.get(k)));
+}
+
+
+function getLayoutNodes(nodes) {
+  return nodes.map(n => makeMap({
+    id: n.get('id'),
+    adjacency: n.get('adjacency'),
+  }));
+}
+
+
+function initEdges(nodes) {
+  let edges = makeMap();
+
+  nodes.forEach((node, nodeId) => {
+    const adjacency = node.get('adjacency');
+    if (adjacency) {
+      adjacency.forEach(adjacent => {
+        const edge = [nodeId, adjacent];
+        const edgeId = edge.join(EDGE_ID_SEPARATOR);
+
+        if (!edges.has(edgeId)) {
+          const source = edge[0];
+          const target = edge[1];
+          if (nodes.has(source) && nodes.has(target)) {
+            edges = edges.set(edgeId, makeMap({
+              id: edgeId,
+              value: 1,
+              source,
+              target
+            }));
+          }
+        }
+      });
+    }
+  });
+
+  return edges;
+}
+
+
+function getNodeScale(nodes, width, height) {
+  const expanse = Math.min(height, width);
+  const nodeSize = expanse / 3; // single node should fill a third of the screen
+  const maxNodeSize = Math.min(MAX_NODE_SIZE, expanse / 10);
+  const normalizedNodeSize = Math.max(MIN_NODE_SIZE,
+    Math.min(nodeSize / Math.sqrt(nodes.size), maxNodeSize));
+
+  return d3.scale.linear().range([0, normalizedNodeSize]);
+}
+
+
+function updateLayout({width, height, margins, topologyId, topologyOptions, forceRelayout,
+  nodes }) {
+  const nodeScale = getNodeScale(nodes, width, height);
+  const edges = initEdges(nodes);
+
+  const options = {
+    width,
+    height,
+    margins: margins.toJS(),
+    forceRelayout,
+    topologyId,
+    topologyOptions: topologyOptions.toJS(),
+    scale: nodeScale,
+  };
+
+  const timedLayouter = timely(doLayout);
+  const graph = timedLayouter(nodes, edges, options);
+
+  log(`graph layout took ${timedLayouter.time}ms`);
+
+  // extract coords and save for restore
+  const layoutNodes = graph.nodes.map(node => makeMap({
+    x: node.get('x'),
+    px: node.get('x'),
+    y: node.get('y'),
+    py: node.get('y')
+  }));
+
+  const layoutEdges = graph.edges
+    .map(edge => edge.set('ppoints', edge.get('points')));
+
+  return { layoutNodes, layoutEdges, graph, nodeScale };
+}
 
 class NodesChart extends React.Component {
 
@@ -42,7 +161,10 @@ class NodesChart extends React.Component {
       hasZoomed: false,
       height: props.height || 0,
       width: props.width || 0,
-      zoomCache: {}
+      zoomCache: {},
+
+      layoutInput: makeMap(),
+      layoutNodes: makeMap(),
     };
   }
 
@@ -81,9 +203,7 @@ class NodesChart extends React.Component {
     state.height = nextProps.forceRelayout ? nextProps.height : (state.height || nextProps.height);
     state.width = nextProps.forceRelayout ? nextProps.width : (state.width || nextProps.width);
 
-    if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
-      _.assign(state, this.updateGraphState(nextProps, state));
-    }
+    _.assign(state, this.updateGraphState(nextProps, state));
 
     if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
       _.assign(state, this.restoreLayout(state));
@@ -132,8 +252,12 @@ class NodesChart extends React.Component {
           <g transform="translate(24,24) scale(0.25)">
             <Logo />
           </g>
-          <NodesChartElements layoutNodes={nodes} layoutEdges={edges}
-            nodeScale={this.state.nodeScale} scale={scale} transform={transform}
+          <NodesChartElements
+            layoutNodes={nodes}
+            layoutEdges={edges}
+            nodeScale={this.state.nodeScale}
+            scale={scale}
+            transform={transform}
             selectedNodeScale={this.state.selectedNodeScale}
             layoutPrecision={this.props.layoutPrecision} />
         </svg>
@@ -147,64 +271,6 @@ class NodesChart extends React.Component {
     } else {
       this.isZooming = false;
     }
-  }
-
-  initNodes(topology, stateNodes) {
-    let nextStateNodes = stateNodes;
-
-    // remove nodes that have disappeared
-    stateNodes.forEach((node, id) => {
-      if (!topology.has(id)) {
-        nextStateNodes = nextStateNodes.delete(id);
-      }
-    });
-
-    // copy relevant fields to state nodes
-    topology.forEach((node, id) => {
-      nextStateNodes = nextStateNodes.mergeIn([id], makeMap({
-        id,
-        label: node.get('label'),
-        pseudo: node.get('pseudo'),
-        subLabel: node.get('label_minor'),
-        nodeCount: node.get('node_count'),
-        metrics: node.get('metrics'),
-        rank: node.get('rank'),
-        shape: node.get('shape'),
-        stack: node.get('stack'),
-        networks: node.get('networks'),
-      }));
-    });
-
-    return nextStateNodes;
-  }
-
-  initEdges(topology, stateNodes) {
-    let edges = makeMap();
-
-    topology.forEach((node, nodeId) => {
-      const adjacency = node.get('adjacency');
-      if (adjacency) {
-        adjacency.forEach(adjacent => {
-          const edge = [nodeId, adjacent];
-          const edgeId = edge.join(EDGE_ID_SEPARATOR);
-
-          if (!edges.has(edgeId)) {
-            const source = edge[0];
-            const target = edge[1];
-            if (stateNodes.has(source) && stateNodes.has(target)) {
-              edges = edges.set(edgeId, makeMap({
-                id: edgeId,
-                value: 1,
-                source,
-                target
-              }));
-            }
-          }
-        });
-      }
-    });
-
-    return edges;
   }
 
   centerSelectedNode(props, state) {
@@ -272,7 +338,7 @@ class NodesChart extends React.Component {
     });
 
     // auto-scale node size for selected nodes
-    const selectedNodeScale = this.getNodeScale(adjacentNodes, state.width, state.height);
+    const selectedNodeScale = getNodeScale(adjacentNodes, state.width, state.height);
 
     return {
       selectedNodeScale,
@@ -309,69 +375,50 @@ class NodesChart extends React.Component {
       };
     }
 
-    const stateNodes = this.initNodes(props.nodes, state.nodes);
-    const stateEdges = this.initEdges(props.nodes, stateNodes);
-    const nodeScale = this.getNodeScale(props.nodes, state.width, state.height);
-    const nextState = { nodeScale };
+    const nextState = { nodes: toNodes(props.nodes) };
 
-    const options = {
+    //
+    // pull this out into redux.
+    //
+    const layoutInput = identityPresevingMerge(state.layoutInput, {
       width: state.width,
       height: state.height,
-      scale: nodeScale,
-      margins: props.margins,
+      nodes: getLayoutNodes(props.nodes),
+      margins: fromJS(props.margins),
+      topologyId: props.topologyId,
+      topologyOptions: fromJS(props.topologyOptions),
       forceRelayout: props.forceRelayout,
-      topologyId: this.props.topologyId,
-      topologyOptions: this.props.topologyOptions
-    };
+    });
 
-    const timedLayouter = timely(doLayout);
-    const graph = timedLayouter(stateNodes, stateEdges, options);
+    // layout input hasn't changed.
+    // TODO: move this out into reselect
+    if (state.layoutInput !== layoutInput) {
+      nextState.layoutInput = layoutInput;
 
-    log(`graph layout took ${timedLayouter.time}ms`);
+      const { layoutNodes, layoutEdges, graph, nodeScale } = updateLayout(layoutInput.toObject());
+      //
+      // adjust layout based on viewport
+      const xFactor = (state.width - props.margins.left - props.margins.right) / graph.width;
+      const yFactor = state.height / graph.height;
+      const zoomFactor = Math.min(xFactor, yFactor);
+      let zoomScale = state.scale;
 
-    // extract coords and save for restore
-    const graphNodes = graph.nodes.map(node => makeMap({
-      x: node.get('x'),
-      px: node.get('x'),
-      y: node.get('y'),
-      py: node.get('y')
-    }));
+      if (this.zoom && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
+        zoomScale = zoomFactor;
+        // saving in d3's behavior cache
+        this.zoom.scale(zoomFactor);
+      }
 
-    const layoutNodes = stateNodes.mergeDeep(graphNodes);
-
-    const layoutEdges = graph.edges
-      .map(edge => edge.set('ppoints', edge.get('points')));
-
-    // adjust layout based on viewport
-    const xFactor = (state.width - props.margins.left - props.margins.right) / graph.width;
-    const yFactor = state.height / graph.height;
-    const zoomFactor = Math.min(xFactor, yFactor);
-    let zoomScale = this.state.scale;
-
-    if (this.zoom && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
-      zoomScale = zoomFactor;
-      // saving in d3's behavior cache
-      this.zoom.scale(zoomFactor);
-    }
-
-    nextState.scale = zoomScale;
-    if (!isDeepEqual(layoutNodes, state.nodes)) {
-      nextState.nodes = layoutNodes;
-    }
-    if (!isDeepEqual(layoutEdges, state.edges)) {
+      nextState.scale = zoomScale;
       nextState.edges = layoutEdges;
+      nextState.nodeScale = nodeScale;
+      nextState.layoutNodes = layoutNodes;
     }
+
+    nextState.nodes = mergeDeepIfExists(nextState.nodes,
+      (nextState.layoutNodes || state.layoutNodes));
 
     return nextState;
-  }
-
-  getNodeScale(nodes, width, height) {
-    const expanse = Math.min(height, width);
-    const nodeSize = expanse / 3; // single node should fill a third of the screen
-    const maxNodeSize = Math.min(MAX_NODE_SIZE, expanse / 10);
-    const normalizedNodeSize = Math.max(MIN_NODE_SIZE,
-      Math.min(nodeSize / Math.sqrt(nodes.size), maxNodeSize));
-    return this.state.nodeScale.copy().range([0, normalizedNodeSize]);
   }
 
   zoomed() {
