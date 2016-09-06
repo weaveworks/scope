@@ -142,6 +142,7 @@ class App extends React.Component {
   }
 }
 
+
 function mapStateToProps(state) {
   return {
     activeTopologyOptions: getActiveTopologyOptions(state),
@@ -157,6 +158,7 @@ function mapStateToProps(state) {
     urlState: getUrlState(state)
   };
 }
+
 
 export default connect(
   mapStateToProps

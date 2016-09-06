@@ -143,6 +143,7 @@ export function isTopologyEmpty(state) {
     && state.get('nodes').size === 0;
 }
 
+
 export function getAdjacentNodes(state, originNodeId) {
   let adjacentNodes = makeSet();
   const nodeId = originNodeId || state.get('selectedNodeId');

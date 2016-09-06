@@ -5,14 +5,16 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Map as makeMap, fromJS, is } from 'immutable';
 import timely from 'timely';
+import { diff } from 'deep-diff';
 
+import { nodeAdjacenciesSelector, adjacentNodesSelector } from '../selectors/chartSelectors';
 import { clickBackground } from '../actions/app-actions';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { MIN_NODE_SIZE, DETAILS_PANEL_WIDTH, MAX_NODE_SIZE } from '../constants/styles';
 import Logo from '../components/logo';
 import { doLayout } from './nodes-layout';
 import NodesChartElements from './nodes-chart-elements';
-import { getActiveTopologyOptions, getAdjacentNodes } from '../utils/topology-utils';
+import { getActiveTopologyOptions } from '../utils/topology-utils';
 
 const log = debug('scope:nodes-chart');
 
@@ -22,6 +24,24 @@ const ZOOM_CACHE_FIELDS = ['scale', 'panTranslateX', 'panTranslateY'];
 const radiusDensity = d3.scale.threshold()
   .domain([3, 6])
   .range([2.5, 3.5, 3]);
+
+/**
+ * dynamic coords precision based on topology size
+ */
+function getLayoutPrecision(nodesCount) {
+  let precision;
+  if (nodesCount >= 50) {
+    precision = 0;
+  } else if (nodesCount > 20) {
+    precision = 1;
+  } else if (nodesCount > 10) {
+    precision = 2;
+  } else {
+    precision = 3;
+  }
+
+  return precision;
+}
 
 
 function identityPresevingMerge(a, b) {
@@ -152,6 +172,7 @@ class NodesChart extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
+    console.log('componentWillReceiveProps', diff(nextProps, this.props), nextProps);
     // gather state, setState should be called only once here
     const state = _.assign({}, this.state);
 
@@ -224,6 +245,7 @@ class NodesChart extends React.Component {
     const svgClassNames = this.props.isEmpty ? 'hide' : '';
     console.log('nodes-chart.render');
 
+    const layoutPrecision = getLayoutPrecision(nodes.size);
     return (
       <div className="nodes-chart">
         <svg width="100%" height="100%" id="nodes-chart-canvas"
@@ -238,7 +260,7 @@ class NodesChart extends React.Component {
             scale={scale}
             transform={transform}
             selectedNodeScale={this.state.selectedNodeScale}
-            layoutPrecision={this.props.layoutPrecision} />
+            layoutPrecision={layoutPrecision} />
         </svg>
       </div>
     );
@@ -411,7 +433,8 @@ class NodesChart extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    adjacentNodes: getAdjacentNodes(state),
+    nodes: nodeAdjacenciesSelector(state),
+    adjacentNodes: adjacentNodesSelector(state),
     forceRelayout: state.get('forceRelayout'),
     selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('currentTopologyId'),

@@ -1,5 +1,15 @@
-import { createSelector } from 'reselect';
-import { Map as makeMap } from 'immutable';
+import { createSelector, createSelectorCreator, defaultMemoize } from 'reselect';
+import { Map as makeMap, is } from 'immutable';
+
+import { getAdjacentNodes } from '../utils/topology-utils';
+
+
+// imm createSelector
+//
+const imCreateSelector = createSelectorCreator(
+  defaultMemoize,
+  is
+);
 
 
 const allNodesSelector = state => state.get('nodes');
@@ -11,12 +21,30 @@ export const nodesSelector = createSelector(
 );
 
 
-export const nodeAdjacenciesSelector = createSelector(
+export const _nodeAdjacenciesSelector = createSelector(
   nodesSelector,
   (nodes) => nodes.map(n => makeMap({
     id: n.get('id'),
     adjacency: n.get('adjacency'),
   }))
+);
+
+
+export const nodeAdjacenciesSelector = imCreateSelector(
+  _nodeAdjacenciesSelector,
+  (nodes) => nodes
+);
+
+
+const _adjacentNodesSelector = createSelector(
+  getAdjacentNodes,
+  (ns) => ns
+);
+
+
+export const adjacentNodesSelector = imCreateSelector(
+  _adjacentNodesSelector,
+  (adjacentNodes) => adjacentNodes
 );
 
 
