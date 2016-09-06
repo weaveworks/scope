@@ -8,6 +8,7 @@ import { DelayedShow } from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
 import { CANVAS_MARGINS } from '../constants/styles';
+import { nodesSelector } from '../selectors/chartSelectors';
 
 const navbarHeight = 194;
 const marginTop = 0;
@@ -71,6 +72,8 @@ class Nodes extends React.Component {
       currentTopology } = this.props;
     const layoutPrecision = getLayoutPrecision(nodes.size);
 
+    console.log('nodes.render');
+
     return (
       <div className="nodes-wrapper">
         <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>
@@ -113,7 +116,7 @@ function mapStateToProps(state) {
   return {
     currentTopology: state.get('currentTopology'),
     gridMode: state.get('gridMode'),
-    nodes: state.get('nodes').filter(node => !node.get('filtered')),
+    nodes: nodesSelector(state),
     nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),

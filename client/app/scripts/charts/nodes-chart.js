@@ -24,22 +24,6 @@ const radiusDensity = d3.scale.threshold()
   .range([2.5, 3.5, 3]);
 
 
-function toNodes(nodes) {
-  return nodes.map((node, id) => makeMap({
-    id,
-    label: node.get('label'),
-    pseudo: node.get('pseudo'),
-    subLabel: node.get('label_minor'),
-    nodeCount: node.get('node_count'),
-    metrics: node.get('metrics'),
-    rank: node.get('rank'),
-    shape: node.get('shape'),
-    stack: node.get('stack'),
-    networks: node.get('networks'),
-  }));
-}
-
-
 function identityPresevingMerge(a, b) {
   //
   // merge two maps, if the values are equal return the old value to preserve (a === a')
@@ -48,14 +32,6 @@ function identityPresevingMerge(a, b) {
   // b but still exist in a. they will still exist in the result.
   //
   return a.mergeWith((v1, v2) => is(v1, v2) ? v1 : v2, a, b);
-}
-
-
-function mergeDeepIfExists(mapA, mapB) {
-  //
-  // Does a deep merge on any key that exists in the first map
-  //
-  return mapA.map((v, k) => v.mergeDeep(mapB.get(k)));
 }
 
 
@@ -97,12 +73,13 @@ function initEdges(nodes) {
 }
 
 
-function getNodeScale(nodes, width, height) {
+function getNodeScale(nodesCount, width, height) {
+  console.log(nodesCount, width, height);
   const expanse = Math.min(height, width);
   const nodeSize = expanse / 3; // single node should fill a third of the screen
   const maxNodeSize = Math.min(MAX_NODE_SIZE, expanse / 10);
   const normalizedNodeSize = Math.max(MIN_NODE_SIZE,
-    Math.min(nodeSize / Math.sqrt(nodes.size), maxNodeSize));
+    Math.min(nodeSize / Math.sqrt(nodesCount), maxNodeSize));
 
   return d3.scale.linear().range([0, normalizedNodeSize]);
 }
@@ -110,7 +87,7 @@ function getNodeScale(nodes, width, height) {
 
 function updateLayout({width, height, margins, topologyId, topologyOptions, forceRelayout,
   nodes }) {
-  const nodeScale = getNodeScale(nodes, width, height);
+  const nodeScale = getNodeScale(nodes.size, width, height);
   const edges = initEdges(nodes);
 
   const options = {
@@ -119,7 +96,7 @@ function updateLayout({width, height, margins, topologyId, topologyOptions, forc
     margins: margins.toJS(),
     forceRelayout,
     topologyId,
-    topologyOptions: topologyOptions.toJS(),
+    topologyOptions: (topologyOptions && topologyOptions.toJS()),
     scale: nodeScale,
   };
 
@@ -128,19 +105,20 @@ function updateLayout({width, height, margins, topologyId, topologyOptions, forc
 
   log(`graph layout took ${timedLayouter.time}ms`);
 
-  // extract coords and save for restore
   const layoutNodes = graph.nodes.map(node => makeMap({
     x: node.get('x'),
-    px: node.get('x'),
     y: node.get('y'),
+    // extract coords and save for restore
+    px: node.get('x'),
     py: node.get('y')
   }));
 
   const layoutEdges = graph.edges
     .map(edge => edge.set('ppoints', edge.get('points')));
 
-  return { layoutNodes, layoutEdges, graph, nodeScale };
+  return { layoutNodes, layoutEdges, width: graph.width, height: graph.height };
 }
+
 
 class NodesChart extends React.Component {
 
@@ -244,6 +222,7 @@ class NodesChart extends React.Component {
     const translate = [panTranslateX, panTranslateY];
     const transform = `translate(${translate}) scale(${scale})`;
     const svgClassNames = this.props.isEmpty ? 'hide' : '';
+    console.log('nodes-chart.render');
 
     return (
       <div className="nodes-chart">
@@ -338,7 +317,7 @@ class NodesChart extends React.Component {
     });
 
     // auto-scale node size for selected nodes
-    const selectedNodeScale = getNodeScale(adjacentNodes, state.width, state.height);
+    const selectedNodeScale = getNodeScale(adjacentNodes.size, state.width, state.height);
 
     return {
       selectedNodeScale,
@@ -375,11 +354,6 @@ class NodesChart extends React.Component {
       };
     }
 
-    const nextState = { nodes: toNodes(props.nodes) };
-
-    //
-    // pull this out into redux.
-    //
     const layoutInput = identityPresevingMerge(state.layoutInput, {
       width: state.width,
       height: state.height,
@@ -391,34 +365,32 @@ class NodesChart extends React.Component {
     });
 
     // layout input hasn't changed.
-    // TODO: move this out into reselect
-    if (state.layoutInput !== layoutInput) {
-      nextState.layoutInput = layoutInput;
-
-      const { layoutNodes, layoutEdges, graph, nodeScale } = updateLayout(layoutInput.toObject());
-      //
-      // adjust layout based on viewport
-      const xFactor = (state.width - props.margins.left - props.margins.right) / graph.width;
-      const yFactor = state.height / graph.height;
-      const zoomFactor = Math.min(xFactor, yFactor);
-      let zoomScale = state.scale;
-
-      if (this.zoom && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
-        zoomScale = zoomFactor;
-        // saving in d3's behavior cache
-        this.zoom.scale(zoomFactor);
-      }
-
-      nextState.scale = zoomScale;
-      nextState.edges = layoutEdges;
-      nextState.nodeScale = nodeScale;
-      nextState.layoutNodes = layoutNodes;
+    // TODO: move this out into reselect (relies on `state` a bit right now which makes it tricky)
+    if (state.layoutInput === layoutInput) {
+      return {};
     }
 
-    nextState.nodes = mergeDeepIfExists(nextState.nodes,
-      (nextState.layoutNodes || state.layoutNodes));
+    const { layoutNodes, layoutEdges, width, height } = updateLayout(layoutInput.toObject());
+    //
+    // adjust layout based on viewport
+    const xFactor = (state.width - props.margins.left - props.margins.right) / width;
+    const yFactor = state.height / height;
+    const zoomFactor = Math.min(xFactor, yFactor);
+    let zoomScale = state.scale;
 
-    return nextState;
+    if (this.zoom && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
+      zoomScale = zoomFactor;
+      // saving in d3's behavior cache
+      this.zoom.scale(zoomFactor);
+    }
+
+    return {
+      layoutInput,
+      scale: zoomScale,
+      nodes: layoutNodes,
+      edges: layoutEdges,
+      nodeScale: getNodeScale(props.nodes.size, state.width, state.height),
+    };
   }
 
   zoomed() {
@@ -436,6 +408,7 @@ class NodesChart extends React.Component {
   }
 }
 
+
 function mapStateToProps(state) {
   return {
     adjacentNodes: getAdjacentNodes(state),
@@ -445,6 +418,7 @@ function mapStateToProps(state) {
     topologyOptions: getActiveTopologyOptions(state)
   };
 }
+
 
 export default connect(
   mapStateToProps,
