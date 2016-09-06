@@ -13,8 +13,6 @@ class NodeContainer extends React.Component {
     const scaleFactor = focused ? (1 / zoomScale) : 1;
     const other = _.omit(this.props, 'dx', 'dy');
 
-    console.log('nodecontainer.render');
-
     return (
       <Motion style={{
         x: spring(dx, animConfig),

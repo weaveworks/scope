@@ -4,12 +4,16 @@ import { Map as makeMap, is } from 'immutable';
 import { getAdjacentNodes } from '../utils/topology-utils';
 
 
-// imm createSelector
 //
-const imCreateSelector = createSelectorCreator(
+// "immutable" createSelector
+//
+const createDeepEqualSelector = createSelectorCreator(
   defaultMemoize,
   is
 );
+
+
+const identity = v => v;
 
 
 const allNodesSelector = state => state.get('nodes');
@@ -21,34 +25,44 @@ export const nodesSelector = createSelector(
 );
 
 
-export const _nodeAdjacenciesSelector = createSelector(
-  nodesSelector,
-  (nodes) => nodes.map(n => makeMap({
-    id: n.get('id'),
-    adjacency: n.get('adjacency'),
-  }))
-);
-
-
-export const nodeAdjacenciesSelector = imCreateSelector(
-  _nodeAdjacenciesSelector,
-  (nodes) => nodes
-);
-
-
-const _adjacentNodesSelector = createSelector(
+//
+// This is like an === cache...
+//
+// - getAdjacentNodes is run on every state change and can generate a new immutable object each
+// time:
+//   - v1 = getAdjacentNodes(a)
+//   - v2 = getAdjacentNodes(a)
+//   - v1 !== v2
+//   - is(v1, v2) === true
+//
+// - createDeepEqualSelector will wrap those calls with a: is(v1, v2) ? v1 : v2
+//   - Thus you can compare consequtive calls to adjacentNodesSelector(state) with === (which is
+//     what redux is doing with connect()
+//
+// Note: this feels like the wrong way to be using reselect...
+//
+export const adjacentNodesSelector = createDeepEqualSelector(
   getAdjacentNodes,
-  (ns) => ns
+  identity
 );
 
 
-export const adjacentNodesSelector = imCreateSelector(
-  _adjacentNodesSelector,
-  (adjacentNodes) => adjacentNodes
+//
+// You what? What is going on here?
+//
+// We wrap the result of nodes.map in another equality test which discards the new value
+// if it was the same as the old one. Again preserving ===
+//
+export const nodeAdjacenciesSelector = createDeepEqualSelector(
+  createSelector(
+    nodesSelector,
+    (nodes) => nodes.map(n => makeMap({
+      id: n.get('id'),
+      adjacency: n.get('adjacency'),
+    }))
+  ),
+  identity
 );
-
-
-export const layoutNodesSelector = (_, props) => props.layoutNodes;
 
 
 export const dataNodesSelector = createSelector(
@@ -68,6 +82,10 @@ export const dataNodesSelector = createSelector(
 );
 
 
+// FIXME: this is a bit of a hack...
+export const layoutNodesSelector = (_, props) => props.layoutNodes || makeMap();
+
+
 function mergeDeepIfExists(mapA, mapB) {
   //
   // Does a deep merge on any key that exists in the first map
@@ -76,14 +94,21 @@ function mergeDeepIfExists(mapA, mapB) {
 }
 
 
-export const completeNodesSelector = createSelector(
+const _completeNodesSelector = createSelector(
   layoutNodesSelector,
   dataNodesSelector,
   (layoutNodes, dataNodes) => {
-    if (!layoutNodes || layoutNodes.size === 0) {
+    if (layoutNodes.size === 0 || dataNodes.size === 0) {
       return makeMap();
     }
 
+    // dataNodes might get updated before layoutNodes when a node is removed from the topo.
     return mergeDeepIfExists(dataNodes, layoutNodes);
   }
+);
+
+
+export const completeNodesSelector = createDeepEqualSelector(
+  _completeNodesSelector,
+  identity
 );

@@ -18,19 +18,40 @@ function clickIfVisible(list, index) {
   });
 }
 
+
+function selectNode(browser) {
+  debug('select node');
+  return browser.elementByCssSelector('.nodes-chart-nodes .node:nth-child(1) > g', function(err, el) {
+    return el.click();
+  });
+}
+
+
+function deselectNode(browser) {
+  debug('deselect node');
+  return browser.elementByCssSelector('.fa-close', function(err, el) {
+    return el.click();
+  });
+}
+
+
 module.exports = function(cfg) {
 
-  var startUrl = 'http://' + cfg.host + '/debug.html';
-  var selectedUrl = 'http://' + cfg.host + '/debug.html#!/state/{"nodeDetails":[{"id":"zing11","label":"zing11","topologyId":"containers"}],"selectedNodeId":"zing11","topologyId":"containers","topologyOptions":{"processes":{"unconnected":"hide"},"processes-by-name":{"unconnected":"hide"},"containers":{"system":"hide","stopped":"hide"},"containers-by-hostname":{"system":"hide","stopped":"hide"},"containers-by-image":{"system":"hide","stopped":"hide"}}}';
-
+  var startUrl = 'http://' + cfg.host + '/';
   // cfg - The configuration object. args, from the example above.
   return function(browser) {
     // browser is created using wd.promiseRemote()
     // More info about wd at https://github.com/admc/wd
-    return browser.get('http://' + cfg.host + '/debug.html')
+    return browser.get('http://' + cfg.host + '/')
       .then(function() {
         debug('starting run ' + cfg.run);
         return browser.sleep(2000);
+      })
+      .then(function() {
+        return browser.execute("localStorage.debugToolbar = 1;");
+      })
+      .then(function() {
+        return browser.sleep(5000);
       })
       .then(function() {
         return browser.elementByCssSelector('.debug-panel button:nth-child(5)');
@@ -38,65 +59,43 @@ module.exports = function(cfg) {
       })
       .then(function(el) {
         debug('debug-panel found');
-        return el.click(function() {
-          el.click(function() {
-            el.click();
-          });
-        });
+        return el.click();
       })
       .then(function() {
         return browser.sleep(2000);
       })
-
       .then(function() {
-        return browser.sleep(2000);
-      })
-      .then(function() {
-        debug('select node');
-        return browser.get(selectedUrl);
+        return selectNode(browser);
       })
       .then(function() {
         return browser.sleep(5000);
       })
       .then(function() {
-        debug('deselect node');
-        return browser.elementByCssSelector('.fa-close', function(err, el) {
-          return el.click();
-        });
+        return deselectNode(browser);
       })
-
       .then(function() {
         return browser.sleep(2000);
       })
       .then(function() {
-        debug('select node');
-        return browser.get(selectedUrl);
+        return selectNode(browser);
       })
       .then(function() {
         return browser.sleep(5000);
       })
       .then(function() {
-        debug('deselect node');
-        return browser.elementByCssSelector('.fa-close', function(err, el) {
-          return el.click();
-        });
+        return deselectNode(browser);
       })
-
       .then(function() {
         return browser.sleep(2000);
       })
       .then(function() {
-        debug('select node');
-        return browser.get(selectedUrl);
+        return selectNode(browser);
       })
       .then(function() {
         return browser.sleep(5000);
       })
       .then(function() {
-        debug('deselect node');
-        return browser.elementByCssSelector('.fa-close', function(err, el) {
-          return el.click();
-        });
+        return deselectNode(browser);
       })
 
       .then(function() {

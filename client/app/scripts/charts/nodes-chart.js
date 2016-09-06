@@ -3,9 +3,8 @@ import d3 from 'd3';
 import debug from 'debug';
 import React from 'react';
 import { connect } from 'react-redux';
-import { Map as makeMap, fromJS, is } from 'immutable';
+import { Map as makeMap, fromJS } from 'immutable';
 import timely from 'timely';
-import { diff } from 'deep-diff';
 
 import { nodeAdjacenciesSelector, adjacentNodesSelector } from '../selectors/chartSelectors';
 import { clickBackground } from '../actions/app-actions';
@@ -44,25 +43,6 @@ function getLayoutPrecision(nodesCount) {
 }
 
 
-function identityPresevingMerge(a, b) {
-  //
-  // merge two maps, if the values are equal return the old value to preserve (a === a')
-  //
-  // Note: mergeDeep keeps identity but we can't always use that. E.g. if nodes have been removed in
-  // b but still exist in a. they will still exist in the result.
-  //
-  return a.mergeWith((v1, v2) => is(v1, v2) ? v1 : v2, a, b);
-}
-
-
-function getLayoutNodes(nodes) {
-  return nodes.map(n => makeMap({
-    id: n.get('id'),
-    adjacency: n.get('adjacency'),
-  }));
-}
-
-
 function initEdges(nodes) {
   let edges = makeMap();
 
@@ -94,7 +74,6 @@ function initEdges(nodes) {
 
 
 function getNodeScale(nodesCount, width, height) {
-  console.log(nodesCount, width, height);
   const expanse = Math.min(height, width);
   const nodeSize = expanse / 3; // single node should fill a third of the screen
   const maxNodeSize = Math.min(MAX_NODE_SIZE, expanse / 10);
@@ -105,20 +84,13 @@ function getNodeScale(nodesCount, width, height) {
 }
 
 
-function updateLayout({width, height, margins, topologyId, topologyOptions, forceRelayout,
-  nodes }) {
+function updateLayout(width, height, nodes, baseOptions) {
   const nodeScale = getNodeScale(nodes.size, width, height);
   const edges = initEdges(nodes);
 
-  const options = {
-    width,
-    height,
-    margins: margins.toJS(),
-    forceRelayout,
-    topologyId,
-    topologyOptions: (topologyOptions && topologyOptions.toJS()),
+  const options = Object.assign({}, baseOptions, {
     scale: nodeScale,
-  };
+  });
 
   const timedLayouter = timely(doLayout);
   const graph = timedLayouter(nodes, edges, options);
@@ -136,7 +108,7 @@ function updateLayout({width, height, margins, topologyId, topologyOptions, forc
   const layoutEdges = graph.edges
     .map(edge => edge.set('ppoints', edge.get('points')));
 
-  return { layoutNodes, layoutEdges, width: graph.width, height: graph.height };
+  return { layoutNodes, layoutEdges, layoutWidth: graph.width, layoutHeight: graph.height };
 }
 
 
@@ -160,9 +132,6 @@ class NodesChart extends React.Component {
       height: props.height || 0,
       width: props.width || 0,
       zoomCache: {},
-
-      layoutInput: makeMap(),
-      layoutNodes: makeMap(),
     };
   }
 
@@ -172,7 +141,6 @@ class NodesChart extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log('componentWillReceiveProps', diff(nextProps, this.props), nextProps);
     // gather state, setState should be called only once here
     const state = _.assign({}, this.state);
 
@@ -202,7 +170,9 @@ class NodesChart extends React.Component {
     state.height = nextProps.forceRelayout ? nextProps.height : (state.height || nextProps.height);
     state.width = nextProps.forceRelayout ? nextProps.width : (state.width || nextProps.width);
 
-    _.assign(state, this.updateGraphState(nextProps, state));
+    if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
+      _.assign(state, this.updateGraphState(nextProps, state));
+    }
 
     if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
       _.assign(state, this.restoreLayout(state));
@@ -243,7 +213,6 @@ class NodesChart extends React.Component {
     const translate = [panTranslateX, panTranslateY];
     const transform = `translate(${translate}) scale(${scale})`;
     const svgClassNames = this.props.isEmpty ? 'hide' : '';
-    console.log('nodes-chart.render');
 
     const layoutPrecision = getLayoutPrecision(nodes.size);
     return (
@@ -277,9 +246,7 @@ class NodesChart extends React.Component {
   centerSelectedNode(props, state) {
     let stateNodes = state.nodes;
     let stateEdges = state.edges;
-    const selectedLayoutNode = stateNodes.get(props.selectedNodeId);
-
-    if (!selectedLayoutNode) {
+    if (!stateNodes.has(props.selectedNodeId)) {
       return {};
     }
 
@@ -310,8 +277,8 @@ class NodesChart extends React.Component {
     const radius = Math.min(state.width, state.height) / density / zoomScale;
     const offsetAngle = Math.PI / 4;
 
-    stateNodes = stateNodes.map((node) => {
-      const index = adjacentLayoutNodeIds.indexOf(node.get('id'));
+    stateNodes = stateNodes.map((node, nodeId) => {
+      const index = adjacentLayoutNodeIds.indexOf(nodeId);
       if (index > -1) {
         const angle = offsetAngle + Math.PI * 2 * index / adjacentCount;
         return node.merge({
@@ -324,8 +291,8 @@ class NodesChart extends React.Component {
 
     // fix all edges for circular nodes
     stateEdges = stateEdges.map(edge => {
-      if (edge.get('source') === selectedLayoutNode.get('id')
-        || edge.get('target') === selectedLayoutNode.get('id')
+      if (edge.get('source') === props.selectedNodeId
+        || edge.get('target') === props.selectedNodeId
         || _.includes(adjacentLayoutNodeIds, edge.get('source'))
         || _.includes(adjacentLayoutNodeIds, edge.get('target'))) {
         const source = stateNodes.get(edge.get('source'));
@@ -376,27 +343,21 @@ class NodesChart extends React.Component {
       };
     }
 
-    const layoutInput = identityPresevingMerge(state.layoutInput, {
+    const options = {
       width: state.width,
       height: state.height,
-      nodes: getLayoutNodes(props.nodes),
-      margins: fromJS(props.margins),
-      topologyId: props.topologyId,
-      topologyOptions: fromJS(props.topologyOptions),
+      margins: props.margins,
       forceRelayout: props.forceRelayout,
-    });
+      topologyId: props.topologyId,
+      topologyOptions: props.topologyOptions,
+    };
 
-    // layout input hasn't changed.
-    // TODO: move this out into reselect (relies on `state` a bit right now which makes it tricky)
-    if (state.layoutInput === layoutInput) {
-      return {};
-    }
-
-    const { layoutNodes, layoutEdges, width, height } = updateLayout(layoutInput.toObject());
+    const { layoutNodes, layoutEdges, layoutWidth, layoutHeight } = updateLayout(
+      state.width, state.height, props.nodes, options);
     //
     // adjust layout based on viewport
-    const xFactor = (state.width - props.margins.left - props.margins.right) / width;
-    const yFactor = state.height / height;
+    const xFactor = (state.width - props.margins.left - props.margins.right) / layoutWidth;
+    const yFactor = state.height / layoutHeight;
     const zoomFactor = Math.min(xFactor, yFactor);
     let zoomScale = state.scale;
 
@@ -407,7 +368,6 @@ class NodesChart extends React.Component {
     }
 
     return {
-      layoutInput,
       scale: zoomScale,
       nodes: layoutNodes,
       edges: layoutEdges,

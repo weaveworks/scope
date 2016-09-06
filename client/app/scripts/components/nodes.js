@@ -52,8 +52,6 @@ class Nodes extends React.Component {
     const { topologyEmpty, gridMode, topologiesLoaded, nodesLoaded, topologies,
       currentTopology } = this.props;
 
-    console.log('nodes.render');
-
     return (
       <div className="nodes-wrapper">
         <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>

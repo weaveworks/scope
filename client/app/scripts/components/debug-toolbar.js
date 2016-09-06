@@ -178,7 +178,7 @@ class DebugToolbar extends React.Component {
   }
 
   setLoading(loading) {
-    this.props.setAppState(state => state.set('topologiesLoaded', !loading));
+    this.props.dispatch(setAppState(state => state.set('topologiesLoaded', !loading)));
   }
 
   addNodes(n, prefix = 'zing') {
@@ -204,6 +204,14 @@ class DebugToolbar extends React.Component {
     log('added nodes', n);
   }
 
+  removeNode() {
+    const ns = this.props.nodes;
+    const nodeNames = ns.keySeq().toJS();
+    this.props.dispatch(receiveNodesDelta({
+      remove: [nodeNames[_.random(nodeNames.length - 1)]]
+    }));
+  }
+
   render() {
     const { availableCanvasMetrics } = this.props;
 
@@ -220,6 +228,7 @@ class DebugToolbar extends React.Component {
             Metric Variants
           </button>
           <button onClick={() => this.addNodes(1, LOREM)}>Long name</button>
+          <button onClick={() => this.removeNode()}>Remove node</button>
         </div>
 
         <div>
@@ -289,6 +298,5 @@ function mapStateToProps(state) {
 
 
 export default connect(
-  mapStateToProps,
-  {setAppState}
+  mapStateToProps
 )(DebugToolbar);
