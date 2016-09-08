@@ -36,7 +36,7 @@ export const nodesSelector = createSelector(
 //   - is(v1, v2) === true
 //
 // - createDeepEqualSelector will wrap those calls with a: is(v1, v2) ? v1 : v2
-//   - Thus you can compare consequtive calls to adjacentNodesSelector(state) with === (which is
+//   - Thus you can compare consecutive calls to adjacentNodesSelector(state) with === (which is
 //     what redux is doing with connect()
 //
 // Note: this feels like the wrong way to be using reselect...
