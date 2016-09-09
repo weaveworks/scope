@@ -57,19 +57,26 @@ type NodeSummary struct {
 	Adjacency  report.IDList        `json:"adjacency,omitempty"`
 }
 
+var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
+	render.Pseudo:         pseudoNodeSummary,
+	report.Process:        processNodeSummary,
+	report.Container:      containerNodeSummary,
+	report.ContainerImage: containerImageNodeSummary,
+	report.Pod:            podNodeSummary,
+	report.Service:        podGroupNodeSummary,
+	report.Deployment:     podGroupNodeSummary,
+	report.ReplicaSet:     podGroupNodeSummary,
+	report.Host:           hostNodeSummary,
+}
+
+var templates = map[string]struct{ Label, LabelMinor string }{
+	render.TheInternetID:      {render.InboundMajor, ""},
+	render.IncomingInternetID: {render.InboundMajor, render.InboundMinor},
+	render.OutgoingInternetID: {render.OutboundMajor, render.OutboundMinor},
+}
+
 // MakeNodeSummary summarizes a node, if possible.
 func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
-	renderers := map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
-		render.Pseudo:         pseudoNodeSummary,
-		report.Process:        processNodeSummary,
-		report.Container:      containerNodeSummary,
-		report.ContainerImage: containerImageNodeSummary,
-		report.Pod:            podNodeSummary,
-		report.Service:        podGroupNodeSummary,
-		report.Deployment:     podGroupNodeSummary,
-		report.ReplicaSet:     podGroupNodeSummary,
-		report.Host:           hostNodeSummary,
-	}
 	if renderer, ok := renderers[n.Topology]; ok {
 		return renderer(baseNodeSummary(r, n), n)
 	}
@@ -108,11 +115,7 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Pseudo = true
 	base.Rank = n.ID
 
-	if template, ok := map[string]struct{ Label, LabelMinor string }{
-		render.TheInternetID:      {render.InboundMajor, ""},
-		render.IncomingInternetID: {render.InboundMajor, render.InboundMinor},
-		render.OutgoingInternetID: {render.OutboundMajor, render.OutboundMinor},
-	}[n.ID]; ok {
+	if template, ok := templates[n.ID]; ok {
 		base.Label = template.Label
 		base.LabelMinor = template.LabelMinor
 		base.Shape = report.Cloud
