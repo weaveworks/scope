@@ -2,7 +2,8 @@
 
 SUDO=$(shell docker info >/dev/null 2>&1 || echo "sudo -E")
 EXE=traffic-control
-IMAGE=weavescope-$(EXE)-plugin
+IMAGE=weaveworks/scope-$(EXE)-plugin
+NAME=weaveworks-scope-${EXE}-plugin
 UPTODATE=.$(EXE).uptodate
 
 run: $(UPTODATE)
@@ -13,7 +14,7 @@ run: $(UPTODATE)
 		--pid=host \
 		--privileged \
 		-v /var/run:/var/run \
-		--name $(IMAGE) $(IMAGE)
+		--name $(NAME) $(IMAGE)
 
 $(UPTODATE): $(EXE) Dockerfile
 	$(SUDO) docker build -t $(IMAGE) .

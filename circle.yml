@@ -50,6 +50,8 @@ test:
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./run_all.sh):
         parallel: true
         timeout: 300
+    - cd $SRCDIR/examples/plugins/traffic-control && make .traffic-control.uptodate && docker tag weaveworks/scope-traffic-control-plugin weaveworks/scope-traffic-control-plugin:$(../../../tools/image-tag):
+        parallel: true
   post:
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy):
         parallel: true
@@ -69,10 +71,14 @@ deployment:
           docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
           (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" == "weaveworks" || (
             docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:latest &&
-            docker tag weaveworks/scope:$(./tools/image-tag) ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag)
+            docker tag weaveworks/scope:$(./tools/image-tag) ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag) &&
+            docker tag weaveworks/scope-traffic-control-plugin:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope-traffic-control-plugin:latest &&
+            docker tag weaveworks/scope-traffic-control-plugin:$(./tools/image-tag) ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope-traffic-control-plugin:$(./tools/image-tag)
           )) &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag) &&
+          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope-traffic-control-plugin &&
+          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope-traffic-control-plugin:$(./tools/image-tag) &&
           (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" != "weaveworks" || (
             wcloud deploy -u circle weaveworks/scope:$(./tools/image-tag)
           ))
