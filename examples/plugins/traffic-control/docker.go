@@ -29,33 +29,31 @@ func NewDockerClient(store *Store) (*DockerClient, error) {
 // Start docker client
 func (c *DockerClient) Start() {
 	for {
-		c.loopIteration()
+		func() {
+			events := make(chan *docker.APIEvents)
+			if err := c.client.AddEventListener(events); err != nil {
+				log.Error(err)
+				return
+			}
+			defer func() {
+				if err := c.client.RemoveEventListener(events); err != nil {
+					log.Error(err)
+				}
+			}()
+			if err := c.getContainers(); err != nil {
+				log.Error(err)
+				return
+			}
+			for {
+				event, ok := <-events
+				if !ok {
+					log.Error("event listener unexpectedly disconnected")
+					return
+				}
+				c.handleEvent(event)
+			}
+		}()
 		time.Sleep(time.Second)
-	}
-}
-
-func (c *DockerClient) loopIteration() {
-	events := make(chan *docker.APIEvents)
-	if err := c.client.AddEventListener(events); err != nil {
-		log.Error(err)
-		return
-	}
-	defer func() {
-		if err := c.client.RemoveEventListener(events); err != nil {
-			log.Error(err)
-		}
-	}()
-	if err := c.getContainers(); err != nil {
-		log.Error(err)
-		return
-	}
-	for {
-		event, ok := <-events
-		if !ok {
-			log.Error("event listener unexpectedly disconnected")
-			return
-		}
-		c.handleEvent(event)
 	}
 }
 
