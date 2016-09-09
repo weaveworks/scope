@@ -1203,12 +1203,28 @@
 			"path": "/assert"
 		},
 		{
+			"importpath": "github.com/tylerb/graceful",
+			"repository": "https://github.com/tylerb/graceful",
+			"vcs": "git",
+			"revision": "50a48b6e73fcc75b45e22c05b79629a67c79e938",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/ugorji/go/codec",
 			"repository": "https://github.com/ugorji/go",
 			"vcs": "",
 			"revision": "c062049c1793b01a3cc3fe786108edabbaf7756b",
 			"branch": "master",
 			"path": "/codec"
+		},
+		{
+			"importpath": "github.com/urfave/negroni",
+			"repository": "https://github.com/urfave/negroni",
+			"vcs": "git",
+			"revision": "5d815f907a182b6131cc88af3f17f898b93142a5",
+			"branch": "master",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/weaveworks/go-checkpoint",
@@ -1343,6 +1359,14 @@
 			"vcs": "git",
 			"revision": "4f90aeace3a26ad7021961c297b22c42160c7b25",
 			"branch": "v1",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/tylerb/graceful.v1",
+			"repository": "https://gopkg.in/tylerb/graceful.v1",
+			"vcs": "git",
+			"revision": "50a48b6e73fcc75b45e22c05b79629a67c79e938",
+			"branch": "master",
 			"notests": true
 		},
 		{

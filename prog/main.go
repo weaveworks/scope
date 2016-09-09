@@ -103,11 +103,12 @@ type probeFlags struct {
 }
 
 type appFlags struct {
-	window    time.Duration
-	listen    string
-	logLevel  string
-	logPrefix string
-	logHTTP   bool
+	window      time.Duration
+	listen      string
+	stopTimeout time.Duration
+	logLevel    string
+	logPrefix   string
+	logHTTP     bool
 
 	weaveEnabled   bool
 	weaveAddr      string
@@ -229,6 +230,7 @@ func main() {
 	// App flags
 	flag.DurationVar(&flags.app.window, "app.window", 15*time.Second, "window")
 	flag.StringVar(&flags.app.listen, "app.http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
+	flag.DurationVar(&flags.app.stopTimeout, "app.stopTimeout", 5*time.Second, "How long to wait for http requests to finish when shutting down")
 	flag.StringVar(&flags.app.logLevel, "app.log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
 	flag.StringVar(&flags.app.logPrefix, "app.log.prefix", "<app>", "prefix for each log line")
 	flag.BoolVar(&flags.app.logHTTP, "app.log.http", false, "Log individual HTTP requests")

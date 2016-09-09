@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tylerb/graceful"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
 
@@ -270,12 +271,27 @@ func appMain(flags appFlags) {
 	if flags.logHTTP {
 		handler = middleware.Logging.Wrap(handler)
 	}
+
+	server := &graceful.Server{
+		// we want to manage the stop condition ourselves below
+		NoSignalHandling: true,
+		Server: &http.Server{
+			Addr:    flags.listen,
+			Handler: handler,
+		},
+	}
 	go func() {
 		log.Infof("listening on %s", flags.listen)
-		log.Info(http.ListenAndServe(flags.listen, handler))
+		if err := server.ListenAndServe(); err != nil {
+			log.Error(err)
+		}
 	}()
 
+	// block until INT/TERM
 	common.SignalHandlerLoop()
+	// stop listening, wait for any active connections to finish
+	server.Stop(flags.stopTimeout)
+	<-server.StopChan()
 }
 
 func newWeavePublisher(dockerEndpoint, weaveAddr, weaveHostname, containerName string) (*app.WeavePublisher, error) {
