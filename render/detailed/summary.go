@@ -195,13 +195,8 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 		}
 	}
 
-	if c, ok := n.Counters.Lookup(report.Container); ok {
-		if c == 1 {
-			base.LabelMinor = fmt.Sprintf("%d container", c)
-		} else {
-			base.LabelMinor = fmt.Sprintf("%d containers", c)
-		}
-	}
+	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
+
 	return base, true
 }
 
@@ -214,13 +209,7 @@ func addKubernetesLabelAndRank(base NodeSummary, n report.Node) NodeSummary {
 
 func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base = addKubernetesLabelAndRank(base, n)
-	if c, ok := n.Counters.Lookup(report.Container); ok {
-		if c == 1 {
-			base.LabelMinor = fmt.Sprintf("%d container", c)
-		} else {
-			base.LabelMinor = fmt.Sprintf("%d containers", c)
-		}
-	}
+	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
 
 	return base, true
 }
@@ -229,14 +218,9 @@ func podGroupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base = addKubernetesLabelAndRank(base, n)
 	base.Stack = true
 
-	// NB: pods are the highest aggregation level for which we display counts.
-	if p, ok := n.Counters.Lookup(report.Pod); ok {
-		if p == 1 {
-			base.LabelMinor = fmt.Sprintf("%d pod", p)
-		} else {
-			base.LabelMinor = fmt.Sprintf("%d pods", p)
-		}
-	}
+	// NB: pods are the highest aggregation level for which we display
+	// counts.
+	base.LabelMinor = pluralize(n.Counters, report.Pod, "pod", "pods")
 
 	return base, true
 }
@@ -272,18 +256,22 @@ func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) (NodeSum
 
 	t, ok := r.Topology(parts[1])
 	if ok && t.Label != "" {
-		if count, ok := n.Counters.Lookup(parts[1]); ok {
-			if count == 1 {
-				base.LabelMinor = fmt.Sprintf("%d %s", count, t.Label)
-			} else {
-				base.LabelMinor = fmt.Sprintf("%d %s", count, t.LabelPlural)
-			}
-		}
+		base.LabelMinor = pluralize(n.Counters, parts[1], t.Label, t.LabelPlural)
 	}
 
 	base.Shape = t.GetShape()
 	base.Stack = true
 	return base, true
+}
+
+func pluralize(counters report.Counters, key, singular, plural string) string {
+	if c, ok := counters.Lookup(key); ok {
+		if c == 1 {
+			return fmt.Sprintf("%d %s", c, singular)
+		}
+		return fmt.Sprintf("%d %s", c, plural)
+	}
+	return ""
 }
 
 type nodeSummariesByID []NodeSummary
