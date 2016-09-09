@@ -99,6 +99,24 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/containernetworking/cni/pkg/ns",
+			"repository": "https://github.com/containernetworking/cni",
+			"vcs": "git",
+			"revision": "c1ff202179dc15839825bed39e59d40b1c08a469",
+			"branch": "master",
+			"path": "/pkg/ns",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/containernetworking/cni/vendor/golang.org/x/sys/unix",
+			"repository": "https://github.com/containernetworking/cni",
+			"vcs": "git",
+			"revision": "c1ff202179dc15839825bed39e59d40b1c08a469",
+			"branch": "master",
+			"path": "vendor/golang.org/x/sys/unix",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/coocood/freecache",
 			"repository": "https://github.com/coocood/freecache",
 			"vcs": "",
@@ -1269,6 +1287,15 @@
 			"revision": "2cba614e8ff920c60240d2677bc019af32ee04e5",
 			"branch": "master",
 			"path": "/context"
+		},
+		{
+			"importpath": "golang.org/x/sys/unix",
+			"repository": "https://go.googlesource.com/sys",
+			"vcs": "git",
+			"revision": "a646d33e2ee3172a661fc09bca23bb4889a41bc8",
+			"branch": "master",
+			"path": "/unix",
+			"notests": true
 		},
 		{
 			"importpath": "golang.org/x/tools/go/ast/astutil",
