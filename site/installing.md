@@ -88,7 +88,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 **Docker Compose Format Version 1:**
 
     probe:
-      image: weaveworks/scope:0.15
+      image: weaveworks/scope:0.17.1
       net: "host"
       pid: "host"
       privileged: true
@@ -105,7 +105,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
     version: '2'
     services:
       probe:
-        image: weaveworks/scope:0.15
+        image: weaveworks/scope:0.17.1
         network_mode: "host"
         pid: "host"
         privileged: true
@@ -138,7 +138,7 @@ After it’s been launched, open your web browser to [https://cloud.weave.works]
 **Docker Compose Format Version 1:**
 
     probe:
-      image: weaveworks/scope:0.15
+      image: weaveworks/scope:0.17.1
       net: "host"
       pid: "host"
       privileged: true
@@ -157,7 +157,7 @@ After it’s been launched, open your web browser to [https://cloud.weave.works]
     version: '2'
     services:
       probe:
-        image: weaveworks/scope:0.15
+        image: weaveworks/scope:0.17.1
         network_mode: "host"
         pid: "host"
         privileged: true
