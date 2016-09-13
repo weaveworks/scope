@@ -97,12 +97,6 @@ func newConnectionCounters() *connectionCounters {
 func (c *connectionCounters) add(sourceEndpoint report.Node, n report.Node, node report.Node, port string, endpointID string, localAddr string) {
 	// We identify connections by their source endpoint, pre-NAT, to
 	// ensure we only count them once.
-	//
-	// There is some arbitrariness here: We may see the same
-	// connection multiple times, with different destination
-	// endpoints, due to DNATing; the (destination) port under which
-	// we track that connection is determined by the first destination
-	// endpoint we encounter.
 	connectionID := sourceEndpoint.ID
 	if copySourceEndpointID, _, ok := sourceEndpoint.Latest.LookupEntry("copy_of"); ok {
 		connectionID = copySourceEndpointID
@@ -165,7 +159,7 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 }
 
 func incomingConnectionsSummary(topologyID string, r report.Report, n report.Node, ns report.Nodes) ConnectionsSummary {
-	localEndpointIDs := endpointChildIDsOf(n)
+	localEndpointIDs, localEndpointIDCopies := endpointChildIDsAndCopyMapOf(n)
 	counts := newConnectionCounters()
 
 	// For each node which has an edge TO me
@@ -177,6 +171,7 @@ func incomingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		// connections to that port.
 		for _, remoteEndpoint := range endpointChildrenOf(node) {
 			for _, localEndpointID := range remoteEndpoint.Adjacency.Intersection(localEndpointIDs) {
+				localEndpointID = canonicalEndpointID(localEndpointIDCopies, localEndpointID)
 				_, localAddr, port, ok := report.ParseEndpointNodeID(localEndpointID)
 				if !ok {
 					continue
@@ -210,7 +205,7 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 			continue
 		}
 
-		remoteEndpointIDs := endpointChildIDsOf(node)
+		remoteEndpointIDs, remoteEndpointIDCopies := endpointChildIDsAndCopyMapOf(node)
 
 		for _, localEndpoint := range localEndpoints {
 			_, localAddr, _, ok := report.ParseEndpointNodeID(localEndpoint.ID)
@@ -218,6 +213,7 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 				continue
 			}
 			for _, remoteEndpointID := range localEndpoint.Adjacency.Intersection(remoteEndpointIDs) {
+				remoteEndpointID = canonicalEndpointID(remoteEndpointIDCopies, remoteEndpointID)
 				_, _, port, ok := report.ParseEndpointNodeID(remoteEndpointID)
 				if !ok {
 					continue
@@ -250,14 +246,34 @@ func endpointChildrenOf(n report.Node) []report.Node {
 	return result
 }
 
-func endpointChildIDsOf(n report.Node) report.IDList {
-	result := report.MakeIDList()
+func endpointChildIDsAndCopyMapOf(n report.Node) (report.IDList, map[string]string) {
+	ids := report.MakeIDList()
+	copies := map[string]string{}
 	n.Children.ForEach(func(child report.Node) {
 		if child.Topology == report.Endpoint {
-			result = result.Add(child.ID)
+			ids = ids.Add(child.ID)
+			if copyID, _, ok := child.Latest.LookupEntry("copy_of"); ok {
+				copies[child.ID] = copyID
+			}
 		}
 	})
-	return result
+	return ids, copies
+}
+
+// canonicalEndpointID returns the original endpoint ID of which id is
+// a "copy_of" (due to NATing), or, if the id is not a copy, the id
+// itself.
+//
+// This is used for determining a unique destination endpoint ID for a
+// connection, removing any arbitrariness in the destination port we
+// are associating with the connection when it is encountered multiple
+// times in the topology (with different destination endpoints, due to
+// DNATing).
+func canonicalEndpointID(copies map[string]string, id string) string {
+	if original, ok := copies[id]; ok {
+		return original
+	}
+	return id
 }
 
 func isInternetNode(n report.Node) bool {
