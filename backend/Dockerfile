@@ -1,4 +1,4 @@
-FROM golang:1.6.2
+FROM golang:1.7.1
 RUN apt-get update && \
 	apt-get install -y libpcap-dev python-requests time file shellcheck && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
