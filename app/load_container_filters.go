@@ -37,6 +37,6 @@ func getContainerTopologyOptions() ([]APITopologyOption, error) {
         
         // Add option to view all
         all := APITopologyOption{Value:"all", Label:"All", filter:nil, filterPseudo:false, filterLabel:""}
-
+        toptions = append(toptions,all)
         return toptions, nil
 }
