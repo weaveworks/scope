@@ -96,8 +96,8 @@ func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
 
 	if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
 		// If the dstNodeAddr is not in a network local to this report, we emit an
-		// internet node
-		node = theInternetNode(n)
+		// external pseudoNode
+		node = toInternetNode(n)
 	} else {
 		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
 		// all non-internet pseudo nodes for now.
@@ -157,7 +157,16 @@ func MapProcess2Name(n report.Node, _ report.Networks) report.Nodes {
 	return report.Nodes{name: node}
 }
 
-func theInternetNode(m report.Node) report.Node {
+func toInternetNode(m report.Node) report.Node {
+	// First, check if it's a known service and emit a
+	// a specific node if it is
+	hostnames, _ := m.Sets.Lookup(endpoint.ReverseDNSNames)
+	for _, hostname := range hostnames {
+		if serviceID, ok := lookupKnownService(hostname); ok {
+			return NewDerivedPseudoNode(ServiceNodeIDPrefix+serviceID, m)
+		}
+	}
+
 	// emit one internet node for incoming, one for outgoing
 	if len(m.Adjacency) > 0 {
 		return NewDerivedPseudoNode(IncomingInternetID, m)

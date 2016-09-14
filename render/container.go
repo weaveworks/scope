@@ -74,8 +74,8 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 			return report.Nodes{}
 		}
 
-		// Propagate the internet pseudo node
-		if strings.HasSuffix(n.ID, TheInternetID) {
+		// Propagate the internet and service pseudo nodes
+		if strings.HasSuffix(n.ID, TheInternetID) || strings.HasPrefix(n.ID, ServiceNodeIDPrefix) {
 			return report.Nodes{n.ID: n}
 		}
 
@@ -112,7 +112,7 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 			return report.Nodes{}
 		}
 		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-			node := theInternetNode(m)
+			node := toInternetNode(m)
 			return report.Nodes{node.ID: node}
 		}
 
