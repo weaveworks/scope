@@ -245,6 +245,7 @@ type APITopologyOption struct {
 
 	filter       render.FilterFunc
 	filterPseudo bool
+	filterLabel string
 }
 
 type topologyStats struct {
