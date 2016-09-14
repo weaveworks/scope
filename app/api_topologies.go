@@ -32,14 +32,13 @@ var (
 )
 
 func init() {
+	containerOpts, _ := getContainerTopologyOptions()
+        fmt.Println(containerOpts)
 	containerFilters := []APITopologyOptionGroup{
 		{
 			ID:      "system",
 			Default: "application",
-			Options: []APITopologyOption{
-				{"system", "System containers", render.IsSystem, false},
-				{"application", "Application containers", render.IsApplication, false},
-				{"both", "Both", nil, false},
+			Options: containerOpts,
 			},
 		},
 		{
