@@ -1,7 +1,11 @@
+import debug from 'debug';
 import { createSelector, createSelectorCreator, defaultMemoize } from 'reselect';
-import { Map as makeMap, is } from 'immutable';
+import { Map as makeMap, is, Set } from 'immutable';
 
 import { getAdjacentNodes } from '../utils/topology-utils';
+
+
+const log = debug('scope:selectors');
 
 
 //
@@ -82,15 +86,18 @@ export const dataNodesSelector = createSelector(
 );
 
 
+//
 // FIXME: this is a bit of a hack...
+//
 export const layoutNodesSelector = (_, props) => props.layoutNodes || makeMap();
 
 
-function mergeDeepIfExists(mapA, mapB) {
+function mergeDeepKeyIntersection(mapA, mapB) {
   //
-  // Does a deep merge on any key that exists in the first map
+  // Does a deep merge on keys that exists in both maps
   //
-  return mapA.map((v, k) => v.mergeDeep(mapB.get(k)));
+  const commonKeys = Set.fromKeys(mapA).intersect(mapB.keySeq());
+  return makeMap(commonKeys.map(k => [k, mapA.get(k).mergeDeep(mapB.get(k))]));
 }
 
 
@@ -98,12 +105,15 @@ const _completeNodesSelector = createSelector(
   layoutNodesSelector,
   dataNodesSelector,
   (layoutNodes, dataNodes) => {
-    if (layoutNodes.size === 0 || dataNodes.size === 0) {
-      return makeMap();
+    //
+    // There are no guarantees whether this selector will be computed first (when
+    // node-chart-elements.mapStateToProps is called by store.subscribe before
+    // nodes-chart.mapStateToProps is called), and component render batching and yadada.
+    //
+    if (layoutNodes.size !== dataNodes.size) {
+      log('Obviously mismatched node data', layoutNodes.size, dataNodes.size);
     }
-
-    // dataNodes might get updated before layoutNodes when a node is removed from the topo.
-    return mergeDeepIfExists(dataNodes, layoutNodes);
+    return mergeDeepKeyIntersection(dataNodes, layoutNodes);
   }
 );
 

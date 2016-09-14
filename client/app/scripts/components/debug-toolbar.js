@@ -43,9 +43,6 @@ const LABEL_PREFIXES = _.range('A'.charCodeAt(), 'Z'.charCodeAt() + 1)
   .map(n => String.fromCharCode(n));
 
 
-// const randomLetter = () => _.sample(LABEL_PREFIXES);
-
-
 const deltaAdd = (
   name, adjacency = [], shape = 'circle', stack = false, nodeCount = 1,
     networks = NETWORKS
@@ -71,7 +68,7 @@ function addMetrics(availableMetrics, node, v) {
   ]);
 
   return Object.assign({}, node, {
-    metrics: metrics.map(m => Object.assign({}, m, {max: 100, value: v}))
+    metrics: metrics.map(m => Object.assign({}, m, {label: 'zing', max: 100, value: v})).toJS()
   });
 }
 
@@ -94,14 +91,16 @@ function addAllVariants(dispatch) {
 }
 
 
-function addAllMetricVariants(availableMetrics, dispatch) {
+function addAllMetricVariants(availableMetrics) {
   const newNodes = _.flattenDeep(METRIC_FILLS.map((v, i) => (
     SHAPES.map(s => [addMetrics(availableMetrics, deltaAdd(label(s) + i, [], s), v)])
   )));
 
-  dispatch(receiveNodesDelta({
-    add: newNodes
-  }));
+  return (dispatch) => {
+    dispatch(receiveNodesDelta({
+      add: newNodes
+    }));
+  };
 }
 
 
@@ -177,11 +176,28 @@ class DebugToolbar extends React.Component {
     });
   }
 
-  setLoading(loading) {
-    this.props.dispatch(setAppState(state => state.set('topologiesLoaded', !loading)));
+  asyncDispatch(v) {
+    setTimeout(() => this.props.dispatch(v), 0);
   }
 
-  addNodes(n, prefix = 'zing') {
+  setLoading(loading) {
+    this.asyncDispatch(setAppState(state => state.set('topologiesLoaded', !loading)));
+  }
+
+  updateAdjacencies() {
+    const ns = this.props.nodes;
+    const nodeNames = ns.keySeq().toJS();
+    this.asyncDispatch(receiveNodesDelta({
+      add: this._addNodes(7),
+      update: sample(nodeNames).map(n => ({
+        id: n,
+        adjacency: sample(nodeNames),
+      }), nodeNames.length),
+      remove: this._removeNode(),
+    }));
+  }
+
+  _addNodes(n, prefix = 'zing') {
     const ns = this.props.nodes;
     const nodeNames = ns.keySeq().toJS();
     const newNodeNames = _.range(ns.size, ns.size + n).map(i => (
@@ -189,26 +205,34 @@ class DebugToolbar extends React.Component {
       `${prefix}${i}`
     ));
     const allNodes = _(nodeNames).concat(newNodeNames).value();
+    return newNodeNames.map((name) => deltaAdd(
+      name,
+      sample(allNodes),
+      _.sample(SHAPES),
+      _.sample(STACK_VARIANTS),
+      _.sample(NODE_COUNTS),
+      sample(NETWORKS, 10)
+    ));
+  }
 
-    this.props.dispatch(receiveNodesDelta({
-      add: newNodeNames.map((name) => deltaAdd(
-        name,
-        sample(allNodes),
-        _.sample(SHAPES),
-        _.sample(STACK_VARIANTS),
-        _.sample(NODE_COUNTS),
-        sample(NETWORKS, 10)
-      ))
-    }));
+  addNodes(n, prefix = 'zing') {
+    setTimeout(() => {
+      this.asyncDispatch(receiveNodesDelta({
+        add: this._addNodes(n, prefix)
+      }));
+      log('added nodes', n);
+    }, 0);
+  }
 
-    log('added nodes', n);
+  _removeNode() {
+    const ns = this.props.nodes;
+    const nodeNames = ns.keySeq().toJS();
+    return [nodeNames[_.random(nodeNames.length - 1)]];
   }
 
   removeNode() {
-    const ns = this.props.nodes;
-    const nodeNames = ns.keySeq().toJS();
-    this.props.dispatch(receiveNodesDelta({
-      remove: [nodeNames[_.random(nodeNames.length - 1)]]
+    this.asyncDispatch(receiveNodesDelta({
+      remove: this._removeNode()
     }));
   }
 
@@ -223,12 +247,13 @@ class DebugToolbar extends React.Component {
           <button onClick={() => this.addNodes(10)}>+10</button>
           <input type="number" onChange={this.onChange} value={this.state.nodesToAdd} />
           <button onClick={() => this.addNodes(this.state.nodesToAdd)}>+</button>
-          <button onClick={() => addAllVariants(this.props.dispatch)}>Variants</button>
-          <button onClick={() => addAllMetricVariants(availableCanvasMetrics, this.props.dispatch)}>
+          <button onClick={() => this.asyncDispatch(addAllVariants)}>Variants</button>
+          <button onClick={() => this.asyncDispatch(addAllMetricVariants(availableCanvasMetrics))}>
             Metric Variants
           </button>
           <button onClick={() => this.addNodes(1, LOREM)}>Long name</button>
           <button onClick={() => this.removeNode()}>Remove node</button>
+          <button onClick={() => this.updateAdjacencies()}>Update adj.</button>
         </div>
 
         <div>
