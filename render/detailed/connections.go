@@ -106,7 +106,7 @@ func (c *connectionCounters) add(sourceEndpoint report.Node, n report.Node, node
 	}
 	c.counted[connectionID] = struct{}{}
 	key := newConnection(n, node, port, endpointID, localAddr)
-	c.counts[key] = c.counts[key] + 1
+	c.counts[key]++
 }
 
 func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal bool) []Connection {
