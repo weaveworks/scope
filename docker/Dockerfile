@@ -1,6 +1,7 @@
 FROM alpine:3.3
 MAINTAINER Weaveworks Inc <help@weave.works>
 LABEL works.weave.role=system
+ENV CONTAINER_FILTERS [{\"filterId\":\"system\",\"filterTitle\":\"System Containers\",\"acceptedLabels\":[\"works.weave.role=system\"]}]
 WORKDIR /home/weave
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >>/etc/apk/repositories && \
 	apk add --update bash runit conntrack-tools iproute2 util-linux curl && \
