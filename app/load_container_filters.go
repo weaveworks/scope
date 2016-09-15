@@ -6,7 +6,7 @@ import (
         "github.com/weaveworks/scope/render"
 )
 
-type Filter struct {
+type filter struct {
 	ID string `json:"id"`
 	Title string `json:"title"`
 	Label string `json:"label"`
@@ -18,7 +18,7 @@ func getContainerTopologyOptions() ([]APITopologyOption, error) {
         // get JSON string from environment variable
         s := os.Getenv("CONTAINER_FILTERS")
 
-	var filters []Filter
+	var filters []filter
 	json.Unmarshal([]byte(s), &filters)
 	
 	for _, f := range filters {
