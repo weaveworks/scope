@@ -38,8 +38,7 @@ func init() {
 		{
 			ID:      "system",
 			Default: "application",
-			Options: containerOpts
-			},
+			Options: containerOpts,
 		},
 		{
 			ID:      "stopped",
