@@ -62,27 +62,6 @@ type connection struct {
 	port         string // destination port
 }
 
-func newConnection(outgoing bool, localNode, remoteNode, localEndpoint, remoteEndpoint report.Node) connection {
-	c := connection{remoteNodeID: remoteNode.ID}
-	dstEndpointID := localEndpoint.ID
-	if outgoing {
-		dstEndpointID = remoteEndpoint.ID
-	}
-	_, _, c.port, _ = report.ParseEndpointNodeID(dstEndpointID)
-	// For internet nodes we break out individual addresses
-	if isInternetNode(localNode) {
-		_, c.addr, _, _ = report.ParseEndpointNodeID(localEndpoint.ID)
-		if set, ok := localEndpoint.Sets.Lookup(endpoint.ReverseDNSNames); ok && len(set) > 0 {
-			c.addr = fmt.Sprintf("%s (%s)", set[0], c.addr)
-		}
-	}
-	return c
-}
-
-func (row connection) ID() string {
-	return fmt.Sprintf("%s-%s-%s", row.remoteNodeID, row.addr, row.port)
-}
-
 type connectionCounters struct {
 	counted map[string]struct{}
 	counts  map[connection]int
@@ -95,20 +74,35 @@ func newConnectionCounters() *connectionCounters {
 func (c *connectionCounters) add(outgoing bool, localNode, remoteNode, localEndpoint, remoteEndpoint report.Node) {
 	// We identify connections by their source endpoint, pre-NAT, to
 	// ensure we only count them once.
-	sourceEndpoint := remoteEndpoint
+	srcEndpoint, dstEndpoint := remoteEndpoint, localEndpoint
 	if outgoing {
-		sourceEndpoint = localEndpoint
+		srcEndpoint, dstEndpoint = localEndpoint, remoteEndpoint
 	}
-	connectionID := sourceEndpoint.ID
-	if copySourceEndpointID, _, ok := sourceEndpoint.Latest.LookupEntry("copy_of"); ok {
-		connectionID = copySourceEndpointID
+	connectionID := srcEndpoint.ID
+	if copySrcEndpointID, _, ok := srcEndpoint.Latest.LookupEntry("copy_of"); ok {
+		connectionID = copySrcEndpointID
 	}
 	if _, ok := c.counted[connectionID]; ok {
 		return
 	}
+
+	conn := connection{remoteNodeID: remoteNode.ID}
+	var ok bool
+	if _, _, conn.port, ok = report.ParseEndpointNodeID(dstEndpoint.ID); !ok {
+		return
+	}
+	// For internet nodes we break out individual addresses
+	if isInternetNode(localNode) {
+		if _, conn.addr, _, ok = report.ParseEndpointNodeID(localEndpoint.ID); !ok {
+			return
+		}
+		if set, ok := localEndpoint.Sets.Lookup(endpoint.ReverseDNSNames); ok && len(set) > 0 {
+			conn.addr = fmt.Sprintf("%s (%s)", set[0], conn.addr)
+		}
+	}
+
 	c.counted[connectionID] = struct{}{}
-	key := newConnection(outgoing, localNode, remoteNode, localEndpoint, remoteEndpoint)
-	c.counts[key]++
+	c.counts[conn]++
 }
 
 func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal bool) []Connection {
@@ -119,7 +113,7 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 		// MakeNodeID(ns[row.remoteNodeID]). As we don't need the whole summary.
 		summary, _ := MakeNodeSummary(r, ns[row.remoteNodeID])
 		connection := Connection{
-			ID:       row.ID(),
+			ID:       fmt.Sprintf("%s-%s-%s", row.remoteNodeID, row.addr, row.port),
 			NodeID:   summary.ID,
 			Label:    summary.Label,
 			Linkable: true,
