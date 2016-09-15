@@ -1,35 +1,34 @@
 package app
 
 import (
-        "os"
-        "github.com/weaveworks/scope/render"
-        "encoding/json"
+	"encoding/json"
+	"github.com/weaveworks/scope/render"
+	"os"
 )
 
 type filter struct {
-	ID string `json:"id"`
+	ID    string `json:"id"`
 	Title string `json:"title"`
 	Label string `json:"label"`
 }
 
 func getContainerTopologyOptions() ([]APITopologyOption, error) {
-        var toptions []APITopologyOption
+	var toptions []APITopologyOption
 
-        // get JSON string from environment variable
-        s := os.Getenv("CONTAINER_FILTERS")
+	// get JSON string from environment variable
+	s := os.Getenv("CONTAINER_FILTERS")
 
 	var filters []filter
 	json.Unmarshal([]byte(s), &filters)
-	
+
 	for _, f := range filters {
 		v := APITopologyOption{f.ID, f.Title, render.IsDesired(f.Label), false}
-		toptions = append(toptions,v)
+		toptions = append(toptions, v)
 	}
-	
+
 	// Add option to view all
 	all := APITopologyOption{"all", "All", nil, false}
-	toptions = append(toptions,all)
+	toptions = append(toptions, all)
 
-        return toptions, nil
+	return toptions, nil
 }
-
