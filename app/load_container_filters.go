@@ -2,8 +2,8 @@ package app
 
 import (
         "os"
-        "fmt"
         "github.com/weaveworks/scope/render"
+        "encoding/json"
 )
 
 type filter struct {
