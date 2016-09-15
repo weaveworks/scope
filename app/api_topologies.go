@@ -26,7 +26,7 @@ var (
 		Default: "hide",
 		Options: []APITopologyOption{
 			{"show", "Show Unmanaged", nil, false},
-                        {"hide", "Hide Unmanaged", render.IsNotPseudo, true},
+			{"hide", "Hide Unmanaged", render.IsNotPseudo, true},
 		},
 	}
 )
@@ -38,15 +38,16 @@ func init() {
 		{
 			ID:      "system",
 			Default: "application",
-			Options: containerOpts,
+			Options: containerOpts
+			},
 		},
 		{
 			ID:      "stopped",
 			Default: "running",
 			Options: []APITopologyOption{
 				{"stopped", "Stopped containers", render.IsStopped, false},
-                                {"running", "Running containers", render.IsRunning, false},
-                                {"both", "Both", nil, false},
+				{"running", "Running containers", render.IsRunning, false},
+				{"both", "Both", nil, false},
 			},
 		},
 		{
@@ -54,7 +55,7 @@ func init() {
 			Default: "hide",
 			Options: []APITopologyOption{
 				{"show", "Show Uncontained", nil, false},
-                                {"hide", "Hide Uncontained", render.IsNotPseudo, true},
+				{"hide", "Hide Uncontained", render.IsNotPseudo, true},
 			},
 		},
 	}
@@ -157,10 +158,10 @@ func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
 			options.Default = namespace
 		}
 		options.Options = append(options.Options, APITopologyOption{
-			 namespace, namespace, render.IsNamespace(namespace), false,
+			namespace, namespace, render.IsNamespace(namespace), false,
 		})
 	}
-        options.Options = append(options.Options, APITopologyOption{"all", "All Namespaces", nil, false})
+	options.Options = append(options.Options, APITopologyOption{"all", "All Namespaces", nil, false})
 	return options
 }
 
