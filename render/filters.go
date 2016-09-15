@@ -1,8 +1,9 @@
 package render
 
 import (
+	"log"
 	"strings"
-	
+
 	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
@@ -246,14 +247,20 @@ var IsSystem = Complement(IsApplication)
 
 // IsDesired checks if the node has the desired label
 func IsDesired(label string) FilterFunc {
-        return func(n report.Node) bool {
-                desiredKeyValue := strings.Split(label, "=")
-                value, _ := n.Latest.Lookup(docker.LabelPrefix + desiredKeyValue[0])
-                if(len(desiredKeyValue) != 2) {
-                	return false
-                }
-                return value == desiredKeyValue[1]
-        }
+	return func(n report.Node) bool {
+		desiredKeyValue := strings.Split(label, "=")
+		value, _ := n.Latest.Lookup(docker.LabelPrefix + desiredKeyValue[0])
+
+		if len(desiredKeyValue) == 2 {
+			if value == desiredKeyValue[1] {
+				log.Println(value, "=", desiredKeyValue[1])
+				return true
+			}
+		} else {
+			log.Printf("label isn't in the correct key=value format")
+		}
+		return false
+	}
 }
 
 // IsNotPseudo returns true if the node is not a pseudo node
