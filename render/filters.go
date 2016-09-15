@@ -2,8 +2,7 @@ package render
 
 import (
 	"strings"
-	"log"
-
+	
 	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
@@ -250,16 +249,10 @@ func IsDesired(label string) FilterFunc {
         return func(n report.Node) bool {
                 desiredKeyValue := strings.Split(label, "=")
                 value, _ := n.Latest.Lookup(docker.LabelPrefix + desiredKeyValue[0])
-
-                if(len(desiredKeyValue) == 2) {
-                        if (value == desiredKeyValue[1]) {
-                                log.Println(value, "=", desiredKeyValue[1])
-                                return true
-                        }
-                } else {
-                        log.Printf("label isn't in the correct key=value format")
+                if(len(desiredKeyValue) != 2) {
+                	return false
                 }
-                return false
+                return value == desiredKeyValue[1]
         }
 }
 
