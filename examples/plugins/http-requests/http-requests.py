@@ -17,7 +17,8 @@ import sys
 
 EBPF_FILE = "http-requests.c"
 EBPF_TABLE_NAME = "received_http_requests"
-PLUGIN_UNIX_SOCK = "/var/run/scope/plugins/http_requests.sock"
+PLUGIN_ID="http-requests"
+PLUGIN_UNIX_SOCK = "/var/run/scope/plugins/" + PLUGIN_ID + ".sock"
 
 class KernelInspector(threading.Thread):
     def __init__(self):
@@ -123,7 +124,7 @@ class PluginRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             },
             'Plugins': [
               {
-                'id': 'http_requests',
+                'id': PLUGIN_ID,
                 'label': 'HTTP Requests',
                 'description': 'Adds http request metrics to processes',
                 'interfaces': ['reporter'],
