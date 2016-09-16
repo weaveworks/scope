@@ -162,8 +162,8 @@ func toInternetNode(m report.Node) report.Node {
 	// a specific node if it is
 	hostnames, _ := m.Sets.Lookup(endpoint.ReverseDNSNames)
 	for _, hostname := range hostnames {
-		if serviceID, ok := lookupKnownService(hostname); ok {
-			return NewDerivedPseudoNode(ServiceNodeIDPrefix+serviceID, m)
+		if isKnownService(hostname) {
+			return NewDerivedPseudoNode(ServiceNodeIDPrefix+hostname, m)
 		}
 	}
 

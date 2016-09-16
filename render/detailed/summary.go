@@ -125,10 +125,8 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 
 	// try rendering as a known service node
 	if strings.HasPrefix(n.ID, render.ServiceNodeIDPrefix) {
-		serviceID := n.ID[len(render.ServiceNodeIDPrefix):]
-		base.Label = render.KnownServicesForHumans[serviceID]
+		base.Label = n.ID[len(render.ServiceNodeIDPrefix):]
 		base.LabelMinor = ""
-		// TODO: use custom icons for known services?
 		base.Shape = report.Cloud
 		return base, true
 	}

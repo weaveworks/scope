@@ -207,9 +207,9 @@ func (s *DNSSnooper) processDNSMessage(dns *layers.DNS) {
 	newDomain := string(domainQueried)
 	for ip := range ips {
 		if existingDomains, err := s.reverseDNSCache.Get(ip); err != nil {
-			existingDomains.(map[string]struct{})[newDomain] = struct{}{}
-		} else {
 			s.reverseDNSCache.Set(ip, map[string]struct{}{newDomain: {}})
+		} else {
+			existingDomains.(map[string]struct{})[newDomain] = struct{}{}
 		}
 	}
 }
