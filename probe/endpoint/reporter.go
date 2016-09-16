@@ -197,7 +197,7 @@ func (r *Reporter) makeEndpointNode(namespaceID string, addr string, port uint16
 		map[string]string{Addr: addr, Port: portStr})
 	names := r.dnsSnooper.CachedNamesForIP(addr)
 	if resolvedNames, err := r.reverseResolver.get(addr); err == nil {
-		append(names, resolvedNames)
+		names = append(names, resolvedNames...)
 	}
 	if len(names) > 0 {
 		node = node.WithSet(ReverseDNSNames, report.MakeStringSet(names...))

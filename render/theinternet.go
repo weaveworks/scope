@@ -2,7 +2,7 @@ package render
 
 import (
 	"net"
-	"regexp"
+	"strings"
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -12,26 +12,22 @@ var (
 	// ServiceNodeIDPrefix is how the ID all service pseudo nodes begin
 	ServiceNodeIDPrefix = "service-"
 
-	// KnownServicesForHumans contains a human-readable format of the service Ids
-	KnownServicesForHumans = map[string]string{
-		"aws-dynamo": "AWS Dynamo",
-		"aws-s3":     "AWS S3",
-	}
-
 	// Correspondence between hostnames and the service id they are part of
-	knownServicesMatchers = map[*regexp.Regexp]string{
-		regexp.MustCompile(`dynamodb.[^.]+.amazonaws.com`): "aws-dynamo",
-		regexp.MustCompile(`s3-[^.]+.amazonaws.com`):       "aws-s3",
+	knownServicesSuffixes = []string{
+		// See http://docs.aws.amazon.com/general/latest/gr/rande.html for fainer grained
+		// details
+		"amazonaws.com",
+		"googleapis.com",
 	}
 )
 
-func lookupKnownService(hostname string) (string, bool) {
-	for re, id := range knownServicesMatchers {
-		if re.MatchString(hostname) {
-			return id, true
+func isKnownService(hostname string) bool {
+	for _, suffix := range knownServicesSuffixes {
+		if strings.HasSuffix(hostname, suffix) {
+			return true
 		}
 	}
-	return "", false
+	return false
 }
 
 // LocalNetworks returns a superset of the networks (think: CIDRs) that are
