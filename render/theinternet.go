@@ -2,7 +2,7 @@ package render
 
 import (
 	"net"
-	"strings"
+	"regexp"
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -12,22 +12,38 @@ var (
 	// ServiceNodeIDPrefix is how the ID all service pseudo nodes begin
 	ServiceNodeIDPrefix = "service-"
 
-	// Correspondence between hostnames and the service id they are part of
-	knownServicesSuffixes = []string{
+	knownServicesMatchers = []*regexp.Regexp{
 		// See http://docs.aws.amazon.com/general/latest/gr/rande.html for fainer grained
 		// details
-		"amazonaws.com",
-		"googleapis.com",
+		regexp.MustCompile(`^.+\.amazonaws\.com$`),
+		regexp.MustCompile(`^.+\.googleapis\.com$`),
+	}
+
+	knownServicesExcluder = []*regexp.Regexp{
+		// We exclude ec2 machines because they are too generic
+		// and having separate nodes for them makes visualizations worse
+		regexp.MustCompile(`^ec2.*\.amazonaws\.com$`),
 	}
 )
 
 func isKnownService(hostname string) bool {
-	for _, suffix := range knownServicesSuffixes {
-		if strings.HasSuffix(hostname, suffix) {
-			return true
+	foundMatch := false
+	for _, matcher := range knownServicesMatchers {
+		if matcher.MatchString(hostname) {
+			foundMatch = true
+			break
 		}
 	}
-	return false
+	if !foundMatch {
+		return false
+	}
+
+	for _, excluder := range knownServicesExcluder {
+		if excluder.MatchString(hostname) {
+			return false
+		}
+	}
+	return true
 }
 
 // LocalNetworks returns a superset of the networks (think: CIDRs) that are
