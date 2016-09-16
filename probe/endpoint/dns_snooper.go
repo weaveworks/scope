@@ -98,7 +98,9 @@ func newPcapHandle() (*pcap.Handle, error) {
 // obtained while snooping A-record queries
 func (s *DNSSnooper) CachedNamesForIP(ip string) []string {
 	result := []string{}
-
+	if s == nil {
+		return result
+	}
 	domains, err := s.reverseDNSCache.Get(ip)
 	if err != nil {
 		return result
@@ -201,14 +203,14 @@ func (s *DNSSnooper) processDNSMessage(dns *layers.DNS) {
 		}
 	}
 
-	log.Debugf("DNSSnooper: caught DNS lookup: %s -> %v", string(domainQueried), ips)
 	// Update cache
-	// TODO: Be smarter about the expiration of IPs with multiple reverse-domains
 	newDomain := string(domainQueried)
+	log.Debugf("DNSSnooper: caught DNS lookup: %s -> %v", newDomain, ips)
 	for ip := range ips {
 		if existingDomains, err := s.reverseDNSCache.Get(ip); err != nil {
 			s.reverseDNSCache.Set(ip, map[string]struct{}{newDomain: {}})
 		} else {
+			// TODO: Be smarter about the expiration of entries with pre-existing associated domains
 			existingDomains.(map[string]struct{})[newDomain] = struct{}{}
 		}
 	}
