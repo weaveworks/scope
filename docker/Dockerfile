@@ -3,7 +3,7 @@ MAINTAINER Weaveworks Inc <help@weave.works>
 LABEL works.weave.role=system
 WORKDIR /home/weave
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >>/etc/apk/repositories && \
-	apk add --update bash runit conntrack-tools iproute2 util-linux curl && \
+	apk add --update bash runit conntrack-tools iproute2 util-linux curl python && \
 	rm -rf /var/cache/apk/*
 ADD ./docker.tgz /
 ADD ./demo.json /
