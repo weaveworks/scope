@@ -16,7 +16,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	time.Sleep(100 * time.Second)
+	// create some http connection within these 10 seconds
+	time.Sleep(10 * time.Second)
+
+	tr.WalkEvents(func(e endpoint.ConnectionEvent) {
+		fmt.Println(e)
+	})
 
 	fmt.Println("done")
 }

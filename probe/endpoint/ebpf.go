@@ -2,7 +2,6 @@ package endpoint
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -32,7 +31,8 @@ type ConnectionEvent struct {
 }
 
 type EbpfTracker struct {
-	Cmd *exec.Cmd
+	Cmd    *exec.Cmd
+	Events []ConnectionEvent
 }
 
 func NewEbpfTracker(bccProgramPath string) *EbpfTracker {
@@ -135,6 +135,13 @@ func (t *EbpfTracker) run() {
 			DestPort:      dPort,
 		}
 
-		fmt.Println(e)
+		t.Events = append(t.Events, e)
+	}
+}
+
+// WalkEvents - walk through the connectionEvents
+func (t *EbpfTracker) WalkEvents(f func(ConnectionEvent)) {
+	for _, event := range t.Events {
+		f(event)
 	}
 }
