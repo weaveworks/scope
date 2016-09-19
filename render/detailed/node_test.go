@@ -25,6 +25,10 @@ func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
 	return s.SummarizeMetrics()
 }
 
+func connectionID(nodeID string) string {
+	return fmt.Sprintf("%s-%s-%d", nodeID, "", 80)
+}
+
 func TestMakeDetailedHostNode(t *testing.T) {
 	renderableNodes := render.HostRenderer.Render(fixture.Report, nil)
 	renderableNode := renderableNodes[fixture.ClientHostNodeID]
@@ -149,7 +153,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ServerHostNodeID, "", fixture.ClientHostNodeID, "", 80),
+						ID:       connectionID(fixture.ServerHostNodeID),
 						NodeID:   fixture.ServerHostNodeID,
 						Label:    "server",
 						Linkable: true,
@@ -257,7 +261,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ClientContainerNodeID, "", fixture.ServerContainerNodeID, "", 80),
+						ID:       connectionID(fixture.ClientContainerNodeID),
 						NodeID:   fixture.ClientContainerNodeID,
 						Label:    "client",
 						Linkable: true,
@@ -275,7 +279,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						},
 					},
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", render.IncomingInternetID, "", fixture.ServerContainerNodeID, "", 80),
+						ID:       connectionID(render.IncomingInternetID),
 						NodeID:   render.IncomingInternetID,
 						Label:    render.InboundMajor,
 						Linkable: true,
@@ -377,7 +381,7 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ClientPodNodeID, "", fixture.ServerPodNodeID, "", 80),
+						ID:       connectionID(fixture.ClientPodNodeID),
 						NodeID:   fixture.ClientPodNodeID,
 						Label:    "pong-a",
 						Linkable: true,
@@ -395,7 +399,7 @@ func TestMakeDetailedPodNode(t *testing.T) {
 						},
 					},
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", render.IncomingInternetID, "", fixture.ServerPodNodeID, "", 80),
+						ID:       connectionID(render.IncomingInternetID),
 						NodeID:   render.IncomingInternetID,
 						Label:    render.InboundMajor,
 						Linkable: true,
