@@ -142,7 +142,7 @@ func (t *EbpfTracker) run() {
 }
 
 // WalkEvents - walk through the connectionEvents
-func (t *EbpfTracker) WalkEvents(f func(ConnectionEvent)) {
+func (t EbpfTracker) WalkEvents(f func(ConnectionEvent)) {
 	for _, event := range t.Events {
 		f(event)
 	}
