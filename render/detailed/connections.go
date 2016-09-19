@@ -11,11 +11,13 @@ import (
 )
 
 const (
-	portKey    = "port"
-	portLabel  = "Port"
-	countKey   = "count"
-	countLabel = "Count"
-	number     = "number"
+	portKey     = "port"
+	portLabel   = "Port"
+	countKey    = "count"
+	countLabel  = "Count"
+	remoteKey   = "remote"
+	remoteLabel = "Remote"
+	number      = "number"
 )
 
 // Exported for testing
@@ -25,7 +27,7 @@ var (
 		{ID: countKey, Label: countLabel, DefaultSort: true},
 	}
 	InternetColumns = []Column{
-		{ID: "foo", Label: "Remote"},
+		{ID: remoteKey, Label: remoteLabel},
 		{ID: portKey, Label: portLabel},
 		{ID: countKey, Label: countLabel, DefaultSort: true},
 	}
@@ -140,7 +142,7 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 		if includeLocal {
 			connection.Metadata = append(connection.Metadata,
 				report.MetadataRow{
-					ID:       "foo",
+					ID:       remoteKey,
 					Value:    row.localAddr,
 					Datatype: number,
 				})
