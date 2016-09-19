@@ -26,8 +26,8 @@ type ConnectionEvent struct {
 	Command       string
 	SourceAddress net.IP
 	DestAddress   net.IP
-	SourcePort    int
-	DestPort      int
+	SourcePort    uint16
+	DestPort      uint16
 }
 
 type EbpfTracker struct {
@@ -92,29 +92,31 @@ func (t *EbpfTracker) run() {
 			continue
 		}
 
-		sAddr := net.ParseIP(line[2])
-		if sAddr == nil {
-			log.Errorf("error parsing sAddr %q: %v", line[3], err)
+		sourceAddr := net.ParseIP(line[2])
+		if sourceAddr == nil {
+			log.Errorf("error parsing sourceAddr %q: %v", line[3], err)
 			continue
 		}
 
-		dAddr := net.ParseIP(line[3])
-		if sAddr == nil {
-			log.Errorf("error parsing dAddr %q: %v", line[4], err)
+		destAddr := net.ParseIP(line[3])
+		if destAddr == nil {
+			log.Errorf("error parsing destAddr %q: %v", line[4], err)
 			continue
 		}
 
-		sPort, err := strconv.Atoi(line[4])
+		sPort, err := strconv.ParseUint(line[4], 10, 16)
 		if err != nil {
-			log.Errorf("error parsing sPort %q: %v", line[5], err)
+			log.Errorf("error parsing sourcePort %q: %v", line[5], err)
 			continue
 		}
+		sourcePort := uint16(sPort)
 
-		dPort, err := strconv.Atoi(line[5])
+		dPort, err := strconv.ParseUint(line[5], 10, 16)
 		if err != nil {
-			log.Errorf("error parsing dPort %q: %v", line[6], err)
+			log.Errorf("error parsing destPort %q: %v", line[6], err)
 			continue
 		}
+		destPort := uint16(dPort)
 
 		var evt event
 		switch line[0] {
@@ -129,10 +131,10 @@ func (t *EbpfTracker) run() {
 		e := ConnectionEvent{
 			Type:          evt,
 			Pid:           pid,
-			SourceAddress: sAddr,
-			DestAddress:   dAddr,
-			SourcePort:    sPort,
-			DestPort:      dPort,
+			SourceAddress: sourceAddr,
+			DestAddress:   destAddr,
+			SourcePort:    sourcePort,
+			DestPort:      destPort,
 		}
 
 		t.Events = append(t.Events, e)
