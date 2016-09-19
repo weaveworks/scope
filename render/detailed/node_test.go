@@ -25,8 +25,8 @@ func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
 	return s.SummarizeMetrics()
 }
 
-func connectionID(nodeID string) string {
-	return fmt.Sprintf("%s-%s-%d", nodeID, "", 80)
+func connectionID(nodeID string, addr string) string {
+	return fmt.Sprintf("%s-%s-%s-%d", nodeID, addr, "", 80)
 }
 
 func TestMakeDetailedHostNode(t *testing.T) {
@@ -153,7 +153,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       connectionID(fixture.ServerHostNodeID),
+						ID:       connectionID(fixture.ServerHostNodeID, ""),
 						NodeID:   fixture.ServerHostNodeID,
 						Label:    "server",
 						Linkable: true,
@@ -261,7 +261,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       connectionID(fixture.ClientContainerNodeID),
+						ID:       connectionID(fixture.ClientContainerNodeID, ""),
 						NodeID:   fixture.ClientContainerNodeID,
 						Label:    "client",
 						Linkable: true,
@@ -279,9 +279,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						},
 					},
 					{
-						ID:       connectionID(render.IncomingInternetID),
+						ID:       connectionID(render.IncomingInternetID, fixture.RandomClientIP),
 						NodeID:   render.IncomingInternetID,
-						Label:    render.InboundMajor,
+						Label:    fixture.RandomClientIP,
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
@@ -381,7 +381,7 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       connectionID(fixture.ClientPodNodeID),
+						ID:       connectionID(fixture.ClientPodNodeID, ""),
 						NodeID:   fixture.ClientPodNodeID,
 						Label:    "pong-a",
 						Linkable: true,
@@ -399,9 +399,9 @@ func TestMakeDetailedPodNode(t *testing.T) {
 						},
 					},
 					{
-						ID:       connectionID(render.IncomingInternetID),
+						ID:       connectionID(render.IncomingInternetID, fixture.RandomClientIP),
 						NodeID:   render.IncomingInternetID,
-						Label:    render.InboundMajor,
+						Label:    fixture.RandomClientIP,
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
