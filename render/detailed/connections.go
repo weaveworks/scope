@@ -112,6 +112,10 @@ func internetAddr(node report.Node, ep report.Node) (string, bool) {
 		return "", false
 	}
 	if set, ok := ep.Sets.Lookup(endpoint.ReverseDNSNames); ok && len(set) > 0 {
+		// TODO We show just one of the names, selected rather
+		// abitrarily. We don't have space to show all (except in the
+		// tooltip perhaps), but should think of better strategies for
+		// choosing the name to display.
 		addr = fmt.Sprintf("%s (%s)", set[0], addr)
 	}
 	return addr, true
