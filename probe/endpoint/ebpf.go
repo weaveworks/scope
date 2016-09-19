@@ -20,7 +20,8 @@ const (
 	Close
 )
 
-type connectionEvent struct {
+// A ConnectionEvent represents a network connection
+type ConnectionEvent struct {
 	Type          event
 	Pid           int
 	Command       string
@@ -125,7 +126,7 @@ func (t *EbpfTracker) run() {
 			evt = Close
 		}
 
-		e := connectionEvent{
+		e := ConnectionEvent{
 			Type:          evt,
 			Pid:           pid,
 			SourceAddress: sAddr,
