@@ -20,13 +20,14 @@ const CW = {
 
 
 const COLUMN_WIDTHS = {
-  count: '70px',
+  count: '60px',
   docker_container_created: CW.XL,
   docker_container_restart_count: CW.M,
   docker_container_state_human: CW.XXL,
   docker_container_uptime: '85px',
   docker_cpu_total_usage: CW.M,
   docker_memory_usage: CW.M,
+  remote: CW.L,
   open_files_count: CW.M,
   pid: CW.M,
   port: CW.S,
