@@ -8,7 +8,7 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >>/etc/apk/reposi
 ADD ./docker.tgz /
 ADD ./demo.json /
 ADD ./weave /usr/bin/
-COPY ./scope ./runsvinit ./entrypoint.sh /home/weave/
+COPY ./scope ./runsvinit ./entrypoint.sh ./tcpv4tracer.py /home/weave/
 COPY ./run-app /etc/service/app/run
 COPY ./run-probe /etc/service/probe/run
 EXPOSE 4040
