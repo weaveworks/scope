@@ -43,20 +43,11 @@ func NewDNSSnooper() (*DNSSnooper, error) {
 }
 
 func newPcapHandle() (*pcap.Handle, error) {
-	// TODO: use specific interfaces instead?
 	inactive, err := pcap.NewInactiveHandle("any")
 	if err != nil {
 		return nil, err
 	}
 	defer inactive.CleanUp()
-	if err = inactive.SetPromisc(true); err != nil {
-		return nil, err
-	}
-	// TODO: reduce the size of packets being copied? maybe an overoptimization
-	// if err = inactive.SetSnapLen(snaplen); err != nil {
-	//	return
-	// }
-
 	// pcap timeout blackmagic copied from Weave Net to reduce CPU consumption
 	// see https://github.com/weaveworks/weave/commit/025315363d5ea8b8265f1b3ea800f24df2be51a4
 	if err = inactive.SetTimeout(time.Duration(math.MaxInt64)); err != nil {
@@ -132,7 +123,7 @@ func (s *DNSSnooper) run() {
 		sll           layers.LinuxSLL
 	)
 
-	// assumes that the "any" interface in being used (see https://wiki.wireshark.org/SLL)
+	// assumes that the "any" interface is being used (see https://wiki.wireshark.org/SLL)
 	packetParser := gopacket.NewDecodingLayerParser(layers.LayerTypeLinuxSLL, &sll, &eth, &ip4, &ip6, &udp, &tcp, &dns)
 
 	for {

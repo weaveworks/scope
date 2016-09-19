@@ -112,7 +112,7 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 			return report.Nodes{}
 		}
 		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-			node := toInternetNode(m)
+			node := externalNode(m)
 			return report.Nodes{node.ID: node}
 		}
 

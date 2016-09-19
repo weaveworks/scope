@@ -145,10 +145,9 @@ func probeMain(flags probeFlags) {
 		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies))
 	}
 
-	// TODO: make the snooper optional
 	dnsSnooper, err := endpoint.NewDNSSnooper()
 	if err != nil {
-		log.Errorf("Fail to start DNS snooper: nodes for external services will be less accurate: %s", err)
+		log.Errorf("Failed to start DNS snooper: nodes for external services will be less accurate: %s", err)
 	} else {
 		defer dnsSnooper.Stop()
 	}

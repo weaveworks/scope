@@ -21,6 +21,7 @@ const (
 	Conntracked     = "conntracked"
 	Procspied       = "procspied"
 	ReverseDNSNames = "reverse_dns_names"
+	SnoopedDNSNames = "snooped_dns_names"
 )
 
 // Reporter generates Reports containing the Endpoint topology.
@@ -195,11 +196,10 @@ func (r *Reporter) makeEndpointNode(namespaceID string, addr string, port uint16
 	node := report.MakeNodeWith(
 		report.MakeEndpointNodeID(r.hostID, namespaceID, addr, portStr),
 		map[string]string{Addr: addr, Port: portStr})
-	names := r.dnsSnooper.CachedNamesForIP(addr)
-	if resolvedNames, err := r.reverseResolver.get(addr); err == nil {
-		names = append(names, resolvedNames...)
+	if names := r.dnsSnooper.CachedNamesForIP(addr); len(names) > 0 {
+		node = node.WithSet(SnoopedDNSNames, report.MakeStringSet(names...))
 	}
-	if len(names) > 0 {
+	if names, err := r.reverseResolver.get(addr); err == nil && len(names) > 0 {
 		node = node.WithSet(ReverseDNSNames, report.MakeStringSet(names...))
 	}
 	if extra != nil {
