@@ -57,9 +57,9 @@ func (s connectionsByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
 
 // Intermediate type used as a key to dedupe rows
 type connection struct {
-	remoteNodeID string
-	addr         string // for internet nodes only: the address
-	port         string // destination port
+	remoteNodeID          string
+	remoteAddr, localAddr string // for internet nodes only
+	port                  string // destination port
 }
 
 type connectionCounters struct {
@@ -92,17 +92,29 @@ func (c *connectionCounters) add(outgoing bool, localNode, remoteNode, localEndp
 		return
 	}
 	// For internet nodes we break out individual addresses
-	if isInternetNode(localNode) {
-		if _, conn.addr, _, ok = report.ParseEndpointNodeID(localEndpoint.ID); !ok {
-			return
-		}
-		if set, ok := localEndpoint.Sets.Lookup(endpoint.ReverseDNSNames); ok && len(set) > 0 {
-			conn.addr = fmt.Sprintf("%s (%s)", set[0], conn.addr)
-		}
+	if conn.remoteAddr, ok = internetAddr(remoteNode, remoteEndpoint); !ok {
+		return
+	}
+	if conn.localAddr, ok = internetAddr(localNode, localEndpoint); !ok {
+		return
 	}
 
 	c.counted[connectionID] = struct{}{}
 	c.counts[conn]++
+}
+
+func internetAddr(node report.Node, ep report.Node) (string, bool) {
+	if !isInternetNode(node) {
+		return "", true
+	}
+	_, addr, _, ok := report.ParseEndpointNodeID(ep.ID)
+	if !ok {
+		return "", false
+	}
+	if set, ok := ep.Sets.Lookup(endpoint.ReverseDNSNames); ok && len(set) > 0 {
+		addr = fmt.Sprintf("%s (%s)", set[0], addr)
+	}
+	return addr, true
 }
 
 func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal bool) []Connection {
@@ -113,16 +125,19 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 		// MakeNodeID(ns[row.remoteNodeID]). As we don't need the whole summary.
 		summary, _ := MakeNodeSummary(r, ns[row.remoteNodeID])
 		connection := Connection{
-			ID:       fmt.Sprintf("%s-%s-%s", row.remoteNodeID, row.addr, row.port),
+			ID:       fmt.Sprintf("%s-%s-%s-%s", row.remoteNodeID, row.remoteAddr, row.localAddr, row.port),
 			NodeID:   summary.ID,
 			Label:    summary.Label,
 			Linkable: true,
+		}
+		if row.remoteAddr != "" {
+			connection.Label = row.remoteAddr
 		}
 		if includeLocal {
 			connection.Metadata = append(connection.Metadata,
 				report.MetadataRow{
 					ID:       "foo",
-					Value:    row.addr,
+					Value:    row.localAddr,
 					Datatype: number,
 				})
 		}
