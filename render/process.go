@@ -2,6 +2,7 @@ package render
 
 import (
 	"net"
+	"sort"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
@@ -96,8 +97,8 @@ func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
 
 	if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
 		// If the dstNodeAddr is not in a network local to this report, we emit an
-		// internet node
-		node = theInternetNode(n)
+		// external pseudoNode
+		node = externalNode(n)
 	} else {
 		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
 		// all non-internet pseudo nodes for now.
@@ -157,7 +158,21 @@ func MapProcess2Name(n report.Node, _ report.Networks) report.Nodes {
 	return report.Nodes{name: node}
 }
 
-func theInternetNode(m report.Node) report.Node {
+func externalNode(m report.Node) report.Node {
+	// First, check if it's a known service and emit a
+	// a specific node if it is
+	snoopedHostnames, _ := m.Sets.Lookup(endpoint.SnoopedDNSNames)
+	reverseHostnames, _ := m.Sets.Lookup(endpoint.ReverseDNSNames)
+	// Sort the names to make the lookup more deterministic
+	sort.StringSlice(snoopedHostnames).Sort()
+	sort.StringSlice(reverseHostnames).Sort()
+	// Intentionally prioritize snooped hostnames
+	for _, hostname := range append(snoopedHostnames, reverseHostnames...) {
+		if isKnownService(hostname) {
+			return NewDerivedPseudoNode(ServiceNodeIDPrefix+hostname, m)
+		}
+	}
+
 	// emit one internet node for incoming, one for outgoing
 	if len(m.Adjacency) > 0 {
 		return NewDerivedPseudoNode(IncomingInternetID, m)

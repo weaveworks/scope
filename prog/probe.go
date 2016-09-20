@@ -145,7 +145,14 @@ func probeMain(flags probeFlags) {
 		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies))
 	}
 
-	endpointReporter := endpoint.NewReporter(hostID, hostName, flags.spyProcs, flags.useConntrack, flags.procEnabled, flags.procRoot, scanner)
+	dnsSnooper, err := endpoint.NewDNSSnooper()
+	if err != nil {
+		log.Errorf("Failed to start DNS snooper: nodes for external services will be less accurate: %s", err)
+	} else {
+		defer dnsSnooper.Stop()
+	}
+
+	endpointReporter := endpoint.NewReporter(hostID, hostName, flags.spyProcs, flags.useConntrack, flags.procEnabled, flags.procRoot, scanner, dnsSnooper)
 	defer endpointReporter.Stop()
 	p.AddReporter(endpointReporter)
 

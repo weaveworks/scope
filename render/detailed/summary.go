@@ -115,9 +115,18 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Pseudo = true
 	base.Rank = n.ID
 
+	// try rendering as an internet node
 	if template, ok := templates[n.ID]; ok {
 		base.Label = template.Label
 		base.LabelMinor = template.LabelMinor
+		base.Shape = report.Cloud
+		return base, true
+	}
+
+	// try rendering as a known service node
+	if strings.HasPrefix(n.ID, render.ServiceNodeIDPrefix) {
+		base.Label = n.ID[len(render.ServiceNodeIDPrefix):]
+		base.LabelMinor = ""
 		base.Shape = report.Cloud
 		return base, true
 	}

@@ -21,6 +21,7 @@ const (
 	Conntracked     = "conntracked"
 	Procspied       = "procspied"
 	ReverseDNSNames = "reverse_dns_names"
+	SnoopedDNSNames = "snooped_dns_names"
 )
 
 // Reporter generates Reports containing the Endpoint topology.
@@ -33,6 +34,7 @@ type Reporter struct {
 	scanner         procspy.ConnectionScanner
 	natMapper       natMapper
 	reverseResolver *reverseResolver
+	dnsSnooper      *DNSSnooper
 }
 
 // SpyDuration is an exported prometheus metric
@@ -52,7 +54,7 @@ var SpyDuration = prometheus.NewSummaryVec(
 // on the host machine, at the granularity of host and port. That information
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
-func NewReporter(hostID, hostName string, spyProcs, useConntrack, walkProc bool, procRoot string, scanner procspy.ConnectionScanner) *Reporter {
+func NewReporter(hostID, hostName string, spyProcs, useConntrack, walkProc bool, procRoot string, scanner procspy.ConnectionScanner, dnsSnooper *DNSSnooper) *Reporter {
 	return &Reporter{
 		hostID:          hostID,
 		hostName:        hostName,
@@ -62,6 +64,7 @@ func NewReporter(hostID, hostName string, spyProcs, useConntrack, walkProc bool,
 		natMapper:       makeNATMapper(newConntrackFlowWalker(useConntrack, procRoot, "--any-nat")),
 		reverseResolver: newReverseResolver(),
 		scanner:         scanner,
+		dnsSnooper:      dnsSnooper,
 	}
 }
 
@@ -193,9 +196,10 @@ func (r *Reporter) makeEndpointNode(namespaceID string, addr string, port uint16
 	node := report.MakeNodeWith(
 		report.MakeEndpointNodeID(r.hostID, namespaceID, addr, portStr),
 		map[string]string{Addr: addr, Port: portStr})
-	// In case we have a reverse resolution for the IP, we can use it for
-	// the name...
-	if names, err := r.reverseResolver.get(addr); err == nil {
+	if names := r.dnsSnooper.CachedNamesForIP(addr); len(names) > 0 {
+		node = node.WithSet(SnoopedDNSNames, report.MakeStringSet(names...))
+	}
+	if names, err := r.reverseResolver.get(addr); err == nil && len(names) > 0 {
 		node = node.WithSet(ReverseDNSNames, report.MakeStringSet(names...))
 	}
 	if extra != nil {
