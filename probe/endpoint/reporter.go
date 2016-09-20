@@ -19,6 +19,7 @@ const (
 	Addr            = "addr" // typically IPv4
 	Port            = "port"
 	Conntracked     = "conntracked"
+	EBPF            = "eBPF"
 	Procspied       = "procspied"
 	ReverseDNSNames = "reverse_dns_names"
 )
@@ -140,6 +141,9 @@ func (r *Reporter) Report() (report.Report, error) {
 
 	// eBPF
 	{
+		extraNodeInfo := map[string]string{
+			EBPF: "true",
+		}
 		r.ebpfTracker.WalkEvents(func(e ConnectionEvent) {
 			tuple := fourTuple{
 				e.SourceAddress.String(),
@@ -148,9 +152,6 @@ func (r *Reporter) Report() (report.Report, error) {
 				e.DestPort,
 			}
 
-			extraNodeInfo := map[string]string{
-				Conntracked: "true",
-			}
 			r.addConnection(&rpt, tuple, "", extraNodeInfo, extraNodeInfo)
 		})
 	}
