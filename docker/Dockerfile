@@ -1,10 +1,8 @@
-FROM alpine:3.3
+FROM zlim/bcc
 MAINTAINER Weaveworks Inc <help@weave.works>
 LABEL works.weave.role=system
 WORKDIR /home/weave
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >>/etc/apk/repositories && \
-	apk add --update bash runit conntrack-tools iproute2 util-linux curl python && \
-	rm -rf /var/cache/apk/*
+RUN apt-get update -y && apt-get install -y bash runit conntrack iproute2 util-linux curl python bcc-tools python-bcc libbcc
 ADD ./docker.tgz /
 ADD ./demo.json /
 ADD ./weave /usr/bin/
