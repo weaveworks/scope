@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	tr := endpoint.NewEbpfTracker("/usr/local/share/bcc/examples/tracing/tcpv4tracer.py")
+	tr := endpoint.NewEbpfTracker("/home/asymmetric/code/kinvolk/bcc/examples/tracing/tcpv4tracer.py")
 
 	if tr == nil {
 		fmt.Fprintf(os.Stderr, "error creating tracker\n")

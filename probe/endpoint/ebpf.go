@@ -28,7 +28,6 @@ type connectionEvent struct {
 	DestAddress   net.IP
 	SourcePort    int
 	DestPort      int
-	Netns         int
 }
 
 type EbpfTracker struct {
@@ -92,33 +91,27 @@ func (t *EbpfTracker) run() {
 			continue
 		}
 
-		sAddr := net.ParseIP(line[3])
+		sAddr := net.ParseIP(line[2])
 		if sAddr == nil {
 			log.Errorf("error parsing sAddr %q: %v", line[3], err)
 			continue
 		}
 
-		dAddr := net.ParseIP(line[4])
+		dAddr := net.ParseIP(line[3])
 		if sAddr == nil {
 			log.Errorf("error parsing dAddr %q: %v", line[4], err)
 			continue
 		}
 
-		sPort, err := strconv.Atoi(line[5])
+		sPort, err := strconv.Atoi(line[4])
 		if err != nil {
 			log.Errorf("error parsing sPort %q: %v", line[5], err)
 			continue
 		}
 
-		dPort, err := strconv.Atoi(line[6])
+		dPort, err := strconv.Atoi(line[5])
 		if err != nil {
 			log.Errorf("error parsing dPort %q: %v", line[6], err)
-			continue
-		}
-
-		netns, err := strconv.Atoi(line[6])
-		if err != nil {
-			log.Errorf("error parsing netns %q: %v", line[7], err)
 			continue
 		}
 
@@ -135,12 +128,10 @@ func (t *EbpfTracker) run() {
 		e := connectionEvent{
 			Type:          evt,
 			Pid:           pid,
-			Command:       line[2],
 			SourceAddress: sAddr,
 			DestAddress:   dAddr,
 			SourcePort:    sPort,
 			DestPort:      dPort,
-			Netns:         netns,
 		}
 
 		fmt.Println(e)
