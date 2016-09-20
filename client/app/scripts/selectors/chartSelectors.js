@@ -9,63 +9,72 @@ const log = debug('scope:selectors');
 
 
 //
-// "immutable" createSelector
+// `mergeDeepKeyIntersection` does a deep merge on keys that exists in both maps
 //
-const createDeepEqualSelector = createSelectorCreator(
-  defaultMemoize,
-  is
-);
+function mergeDeepKeyIntersection(mapA, mapB) {
+  const commonKeys = Set.fromKeys(mapA).intersect(mapB.keySeq());
+  return makeMap(commonKeys.map(k => [k, mapA.get(k).mergeDeep(mapB.get(k))]));
+}
 
 
-const identity = v => v;
+//
+// `returnPreviousRefIfEqual` is a helper function that checks the new computed of a selector
+// against the previously computed value. If they are deeply equal return the previous result. This
+// is important for things like connect() which tests whether componentWillReceiveProps should be
+// called by doing a '===' on the values you return from mapStateToProps.
+//
+// e.g.
+//
+// const filteredThings = createSelector(
+//   state => state.things,
+//   (things) => things.filter(t => t > 2)
+// );
+//
+// // This will trigger componentWillReceiveProps on every store change:
+// connect(s => { things: filteredThings(s) }, ThingComponent);
+//
+// // But if we wrap it, the result will be === if it `is()` equal and...
+// const filteredThingsWrapped = returnPreviousRefIfEqual(filteredThings);
+//
+// // ...We're safe!
+// connect(s => { things: filteredThingsWrapped(s) }, ThingComponent);
+//
+// Note: This is a slightly stange way to use reselect. Selectors memoize their *arguments* not
+// "their results", so use the result of the wrapped selector as the argument to another selector
+// here to memoize it and get what we want.
+//
+const _createDeepEqualSelector = createSelectorCreator(defaultMemoize, is);
+const _identity = v => v;
+const returnPreviousRefIfEqual = (selector) => _createDeepEqualSelector(selector, _identity);
+
+
+//
+// Selectors!
+//
 
 
 const allNodesSelector = state => state.get('nodes');
 
 
-export const nodesSelector = createSelector(
-  allNodesSelector,
-  (allNodes) => allNodes.filter(node => !node.get('filtered'))
+export const nodesSelector = returnPreviousRefIfEqual(
+  createSelector(
+    allNodesSelector,
+    (allNodes) => allNodes.filter(node => !node.get('filtered'))
+  )
 );
 
 
-//
-// This is like an === cache...
-//
-// - getAdjacentNodes is run on every state change and can generate a new immutable object each
-// time:
-//   - v1 = getAdjacentNodes(a)
-//   - v2 = getAdjacentNodes(a)
-//   - v1 !== v2
-//   - is(v1, v2) === true
-//
-// - createDeepEqualSelector will wrap those calls with a: is(v1, v2) ? v1 : v2
-//   - Thus you can compare consecutive calls to adjacentNodesSelector(state) with === (which is
-//     what redux is doing with connect()
-//
-// Note: this feels like the wrong way to be using reselect...
-//
-export const adjacentNodesSelector = createDeepEqualSelector(
-  getAdjacentNodes,
-  identity
-);
+export const adjacentNodesSelector = returnPreviousRefIfEqual(getAdjacentNodes);
 
 
-//
-// You what? What is going on here?
-//
-// We wrap the result of nodes.map in another equality test which discards the new value
-// if it was the same as the old one. Again preserving ===
-//
-export const nodeAdjacenciesSelector = createDeepEqualSelector(
+export const nodeAdjacenciesSelector = returnPreviousRefIfEqual(
   createSelector(
     nodesSelector,
     (nodes) => nodes.map(n => makeMap({
       id: n.get('id'),
       adjacency: n.get('adjacency'),
     }))
-  ),
-  identity
+  )
 );
 
 
@@ -92,16 +101,7 @@ export const dataNodesSelector = createSelector(
 export const layoutNodesSelector = (_, props) => props.layoutNodes || makeMap();
 
 
-function mergeDeepKeyIntersection(mapA, mapB) {
-  //
-  // Does a deep merge on keys that exists in both maps
-  //
-  const commonKeys = Set.fromKeys(mapA).intersect(mapB.keySeq());
-  return makeMap(commonKeys.map(k => [k, mapA.get(k).mergeDeep(mapB.get(k))]));
-}
-
-
-const _completeNodesSelector = createSelector(
+export const completeNodesSelector = createSelector(
   layoutNodesSelector,
   dataNodesSelector,
   (layoutNodes, dataNodes) => {
@@ -115,10 +115,4 @@ const _completeNodesSelector = createSelector(
     }
     return mergeDeepKeyIntersection(dataNodes, layoutNodes);
   }
-);
-
-
-export const completeNodesSelector = createDeepEqualSelector(
-  _completeNodesSelector,
-  identity
 );
