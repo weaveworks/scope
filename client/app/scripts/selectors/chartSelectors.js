@@ -39,7 +39,7 @@ function mergeDeepKeyIntersection(mapA, mapB) {
 // // ...We're safe!
 // connect(s => { things: filteredThingsWrapped(s) }, ThingComponent);
 //
-// Note: This is a slightly stange way to use reselect. Selectors memoize their *arguments* not
+// Note: This is a slightly strange way to use reselect. Selectors memoize their *arguments* not
 // "their results", so use the result of the wrapped selector as the argument to another selector
 // here to memoize it and get what we want.
 //
