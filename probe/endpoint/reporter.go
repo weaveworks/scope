@@ -144,9 +144,11 @@ func (r *Reporter) Report() (report.Report, error) {
 		fromNodeInfo := map[string]string{
 			// FIXME: remove this
 			Procspied: "true",
+			EBPF:      "true",
 		}
 		toNodeInfo := map[string]string{
 			Procspied: "true",
+			EBPF:      "true",
 		}
 		r.ebpfTracker.WalkEvents(func(e ConnectionEvent) {
 			tuple := fourTuple{
