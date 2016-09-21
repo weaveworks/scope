@@ -20,6 +20,11 @@ const CW = {
 };
 
 
+const XS_LABEL = {
+  count: '#'
+};
+
+
 const COLUMN_WIDTHS = {
   count: CW.XS,
   docker_container_created: CW.XL,
@@ -227,14 +232,19 @@ export default class NodeDetailsTable extends React.Component {
               headerClasses.push('node-details-table-header-sorted');
             }
 
+            const style = colStyles[i];
+            const label = (style.width === CW.XS && XS_LABEL[header.id]) ?
+              XS_LABEL[header.id] :
+              header.label;
+
             return (
-              <td className={headerClasses.join(' ')} style={colStyles[i]} onClick={onHeaderClick}
+              <td className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
                 title={header.label} key={header.id}>
                 {isSortedAsc
                   && <span className="node-details-table-header-sorter fa fa-caret-up" />}
                 {isSortedDesc
                   && <span className="node-details-table-header-sorter fa fa-caret-down" />}
-                {header.label}
+                {label}
               </td>
             );
           })}

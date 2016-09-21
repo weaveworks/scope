@@ -14,7 +14,7 @@ const (
 	portKey     = "port"
 	portLabel   = "Port"
 	countKey    = "count"
-	countLabel  = "#"
+	countLabel  = "Count"
 	remoteKey   = "remote"
 	remoteLabel = "Remote"
 	number      = "number"
