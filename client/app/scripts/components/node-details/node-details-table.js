@@ -11,6 +11,7 @@ function isNumberField(field) {
 }
 
 const CW = {
+  XS: '32px',
   S: '50px',
   M: '80px',
   L: '120px',
@@ -20,14 +21,13 @@ const CW = {
 
 
 const COLUMN_WIDTHS = {
-  count: '60px',
+  count: CW.XS,
   docker_container_created: CW.XL,
   docker_container_restart_count: CW.M,
   docker_container_state_human: CW.XXL,
   docker_container_uptime: '85px',
   docker_cpu_total_usage: CW.M,
   docker_memory_usage: CW.M,
-  remote: CW.L,
   open_files_count: CW.M,
   pid: CW.M,
   port: CW.S,
