@@ -163,21 +163,15 @@ func (r *Reporter) Report() (report.Report, error) {
 			fromNodeInfo[report.HostNodeID] = hostNodeID
 			switch e.Type {
 			case Connect:
-				if e.SourcePort == 9999 || e.DestPort == 9999 {
-					log.Infof("Connect! pid:(%v), src-addr: %v,src-port: %v, dst-addr: %v, dst-port: %v", e.Pid, e.SourceAddress, e.SourcePort, e.DestAddress, e.DestPort)
-				}
+				log.Infof("Connect! pid:(%v), src-addr: %v,src-port: %v, dst-addr: %v, dst-port: %v", e.Pid, e.SourceAddress, e.SourcePort, e.DestAddress, e.DestPort)
 				r.addConnection(&rpt, tuple, "", fromNodeInfo, toNodeInfo)
 			case Accept:
-				if e.SourcePort == 9999 || e.DestPort == 9999 {
-					log.Infof("Accept! pid:(%v), src-addr: %v,src-port: %v, dst-addr: %v, dst-port: %v", e.Pid, e.SourceAddress, e.SourcePort, e.DestAddress, e.DestPort)
-				}
+				log.Infof("Accept! pid:(%v), src-addr: %v,src-port: %v, dst-addr: %v, dst-port: %v", e.Pid, e.SourceAddress, e.SourcePort, e.DestAddress, e.DestPort)
 				r.addConnection(&rpt, tuple, "", fromNodeInfo, toNodeInfo)
 			case Close:
 				// ignore fake closes
 				if e.SourceAddress.String() != "0.0.0.0" && e.DestAddress.String() != "0.0.0.0" {
-					if e.SourcePort == 9999 || e.DestPort == 9999 {
-						log.Infof("Close! pid:(%v), src-addr: %v,src-port: %v, dst-addr: %v, dst-port: %v", e.Pid, e.SourceAddress, e.SourcePort, e.DestAddress, e.DestPort)
-					}
+					log.Infof("Close! pid:(%v), src-addr: %v,src-port: %v, dst-addr: %v, dst-port: %v", e.Pid, e.SourceAddress, e.SourcePort, e.DestAddress, e.DestPort)
 					r.removeConnection(&rpt, tuple, "", fromNodeInfo, toNodeInfo)
 				}
 			}
