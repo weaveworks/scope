@@ -315,4 +315,6 @@ export default class NodeDetailsTable extends React.Component {
 NodeDetailsTable.defaultProps = {
   nodeIdKey: 'id',  // key to identify a node in a row (used for topology links)
   onSortChange: () => {},
+  sortedDesc: null,
+  sortBy: null,
 };

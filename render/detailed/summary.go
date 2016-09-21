@@ -38,6 +38,7 @@ type Column struct {
 	ID          string `json:"id"`
 	Label       string `json:"label"`
 	DefaultSort bool   `json:"defaultSort"`
+	DataType    string `json:"dataType"`
 }
 
 // NodeSummary is summary information about a child for a Node.
