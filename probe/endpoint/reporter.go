@@ -161,7 +161,15 @@ func (r *Reporter) Report() (report.Report, error) {
 			fromNodeInfo[process.PID] = strconv.Itoa(e.Pid)
 			fromNodeInfo[report.HostNodeID] = hostNodeID
 			switch e.Type {
-			case Connect, Accept:
+			case Connect:
+				if e.SourcePort == 9999 || e.DestPort == 9999 {
+					log.Infof("Connect! pid:(%v), src-addr: %v,src-port: %v, dst-addr: %v, dst-port: %v", e.Pid, e.SourceAddress, e.SourcePort, e.DestAddress, e.DestPort)
+				}
+				r.addConnection(&rpt, tuple, "", fromNodeInfo, toNodeInfo)
+			case Accept:
+				if e.SourcePort == 9999 || e.DestPort == 9999 {
+					log.Infof("Accept! pid:(%v), src-addr: %v,src-port: %v, dst-addr: %v, dst-port: %v", e.Pid, e.SourceAddress, e.SourcePort, e.DestAddress, e.DestPort)
+				}
 				r.addConnection(&rpt, tuple, "", fromNodeInfo, toNodeInfo)
 			}
 
