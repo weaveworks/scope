@@ -171,8 +171,15 @@ func (r *Reporter) Report() (report.Report, error) {
 					log.Infof("Accept! pid:(%v), src-addr: %v,src-port: %v, dst-addr: %v, dst-port: %v", e.Pid, e.SourceAddress, e.SourcePort, e.DestAddress, e.DestPort)
 				}
 				r.addConnection(&rpt, tuple, "", fromNodeInfo, toNodeInfo)
+			case Close:
+				// ignore fake closes
+				if e.SourceAddress.String() != "0.0.0.0" && e.DestAddress.String() != "0.0.0.0" {
+					if e.SourcePort == 9999 || e.DestPort == 9999 {
+						log.Infof("Close! pid:(%v), src-addr: %v,src-port: %v, dst-addr: %v, dst-port: %v", e.Pid, e.SourceAddress, e.SourcePort, e.DestAddress, e.DestPort)
+					}
+					r.removeConnection(&rpt, tuple, "", fromNodeInfo, toNodeInfo)
+				}
 			}
-
 		})
 	}
 
@@ -226,6 +233,17 @@ func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, namespaceID st
 	)
 	rpt.Endpoint = rpt.Endpoint.AddNode(fromNode.WithEdge(toNode.ID, report.EdgeMetadata{}))
 	rpt.Endpoint = rpt.Endpoint.AddNode(toNode)
+}
+
+func (r *Reporter) removeConnection(rpt *report.Report, t fourTuple, namespaceID string, extraFromNode, extraToNode map[string]string) {
+	// create node from tuple
+	var (
+		fromNode = r.makeEndpointNode(namespaceID, t.fromAddr, t.fromPort, extraFromNode)
+		toNode   = r.makeEndpointNode(namespaceID, t.toAddr, t.toPort, extraToNode)
+	)
+	// check
+	rpt.Endpoint.RemoveNode(fromNode)
+	rpt.Endpoint.RemoveNode(toNode)
 }
 
 func (r *Reporter) makeEndpointNode(namespaceID string, addr string, port uint16, extra map[string]string) report.Node {
