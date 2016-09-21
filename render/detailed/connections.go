@@ -23,13 +23,13 @@ const (
 // Exported for testing
 var (
 	NormalColumns = []Column{
-		{ID: portKey, Label: portLabel},
-		{ID: countKey, Label: countLabel, DefaultSort: true},
+		{ID: portKey, Label: portLabel, DataType: "number"},
+		{ID: countKey, Label: countLabel, DataType: "number", DefaultSort: true},
 	}
 	InternetColumns = []Column{
 		{ID: remoteKey, Label: remoteLabel},
-		{ID: portKey, Label: portLabel},
-		{ID: countKey, Label: countLabel, DefaultSort: true},
+		{ID: portKey, Label: portLabel, DataType: "number"},
+		{ID: countKey, Label: countLabel, DataType: "number", DefaultSort: true},
 	}
 )
 
