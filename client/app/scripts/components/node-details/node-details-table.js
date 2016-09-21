@@ -11,6 +11,7 @@ function isNumberField(field) {
 }
 
 const CW = {
+  XS: '32px',
   S: '50px',
   M: '80px',
   L: '120px',
@@ -19,8 +20,13 @@ const CW = {
 };
 
 
+const XS_LABEL = {
+  count: '#'
+};
+
+
 const COLUMN_WIDTHS = {
-  count: '70px',
+  count: CW.XS,
   docker_container_created: CW.XL,
   docker_container_restart_count: CW.M,
   docker_container_state_human: CW.XXL,
@@ -226,14 +232,19 @@ export default class NodeDetailsTable extends React.Component {
               headerClasses.push('node-details-table-header-sorted');
             }
 
+            const style = colStyles[i];
+            const label = (style.width === CW.XS && XS_LABEL[header.id]) ?
+              XS_LABEL[header.id] :
+              header.label;
+
             return (
-              <td className={headerClasses.join(' ')} style={colStyles[i]} onClick={onHeaderClick}
+              <td className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
                 title={header.label} key={header.id}>
                 {isSortedAsc
                   && <span className="node-details-table-header-sorter fa fa-caret-up" />}
                 {isSortedDesc
                   && <span className="node-details-table-header-sorter fa fa-caret-down" />}
-                {header.label}
+                {label}
               </td>
             );
           })}
