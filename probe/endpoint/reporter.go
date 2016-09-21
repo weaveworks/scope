@@ -158,7 +158,9 @@ func (r *Reporter) Report() (report.Report, error) {
 				e.DestPort,
 			}
 
-			r.addConnection(&rpt, tuple, "", extraNodeInfo, extraNodeInfo)
+			fromNodeInfo[process.PID] = strconv.Itoa(e.Pid)
+			fromNodeInfo[report.HostNodeID] = hostNodeID
+
 		})
 	}
 
