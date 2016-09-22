@@ -23,13 +23,13 @@ const (
 // Exported for testing
 var (
 	NormalColumns = []Column{
-		{ID: portKey, Label: portLabel},
-		{ID: countKey, Label: countLabel, DefaultSort: true},
+		{ID: portKey, Label: portLabel, Datatype: "number"},
+		{ID: countKey, Label: countLabel, Datatype: "number", DefaultSort: true},
 	}
 	InternetColumns = []Column{
 		{ID: remoteKey, Label: remoteLabel},
-		{ID: portKey, Label: portLabel},
-		{ID: countKey, Label: countLabel, DefaultSort: true},
+		{ID: portKey, Label: portLabel, Datatype: "number"},
+		{ID: countKey, Label: countLabel, Datatype: "number", DefaultSort: true},
 	}
 )
 
@@ -142,21 +142,18 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 		if includeLocal {
 			connection.Metadata = append(connection.Metadata,
 				report.MetadataRow{
-					ID:       remoteKey,
-					Value:    row.localAddr,
-					Datatype: number,
+					ID:    remoteKey,
+					Value: row.localAddr,
 				})
 		}
 		connection.Metadata = append(connection.Metadata,
 			report.MetadataRow{
-				ID:       portKey,
-				Value:    row.port,
-				Datatype: number,
+				ID:    portKey,
+				Value: row.port,
 			},
 			report.MetadataRow{
-				ID:       countKey,
-				Value:    strconv.Itoa(count),
-				Datatype: number,
+				ID:    countKey,
+				Value: strconv.Itoa(count),
 			},
 		)
 		output = append(output, connection)

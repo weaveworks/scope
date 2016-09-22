@@ -6,8 +6,8 @@ import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
 
 
-function isNumberField(field) {
-  return field.dataType && field.dataType === 'number';
+function isNumber(data) {
+  return data.dataType && data.dataType === 'number';
 }
 
 const CW = {
@@ -69,12 +69,13 @@ function maybeToLower(value) {
 }
 
 
-function getNodeValue(node, fieldId) {
+function getNodeValue(node, header) {
+  const fieldId = header && header.id;
   if (fieldId !== null) {
     let field = _.union(node.metrics, node.metadata).find(f => f.id === fieldId);
 
     if (field) {
-      if (isNumberField(field)) {
+      if (isNumber(header)) {
         return parseFloat(field.value);
       }
       return field.value;
@@ -96,8 +97,8 @@ function getNodeValue(node, fieldId) {
 }
 
 
-function getValueForSortBy(sortBy) {
-  return (node) => maybeToLower(getNodeValue(node, sortBy));
+function getValueForSortBy(sortByHeader) {
+  return (node) => maybeToLower(getNodeValue(node, sortByHeader));
 }
 
 
@@ -106,7 +107,7 @@ function getMetaDataSorters(nodes) {
   return _.get(nodes, [0, 'metadata'], []).map((field, index) => node => {
     const nodeMetadataField = node.metadata && node.metadata[index];
     if (nodeMetadataField) {
-      if (isNumberField(nodeMetadataField)) {
+      if (isNumber(nodeMetadataField)) {
         return parseFloat(nodeMetadataField.value);
       }
       return nodeMetadataField.value;
@@ -129,8 +130,8 @@ function sortNodes(nodes, getValue, sortedDesc) {
 }
 
 
-function getSortedNodes(nodes, sortBy, sortedDesc) {
-  const getValue = getValueForSortBy(sortBy);
+function getSortedNodes(nodes, sortByHeader, sortedDesc) {
+  const getValue = getValueForSortBy(sortByHeader);
   const withAndWithoutValues = _.groupBy(nodes, (n) => {
     const v = getValue(n);
     return v !== null && v !== undefined ? 'withValues' : 'withoutValues';
@@ -174,7 +175,7 @@ function getColumnsStyles(headers) {
 
 
 function defaultSortDesc(header) {
-  return header.dataType === 'number';
+  return header && header.dataType === 'number';
 }
 
 
@@ -259,12 +260,12 @@ export default class NodeDetailsTable extends React.Component {
       onMouseEnterRow, onMouseLeaveRow } = this.props;
 
     const sortBy = this.state.sortBy || getDefaultSortBy(columns, this.props.nodes);
-    const header = this.getColumnHeaders().find(h => h.id === sortBy);
+    const sortByHeader = this.getColumnHeaders().find(h => h.id === sortBy);
     const sortedDesc = this.state.sortedDesc !== null ?
       this.state.sortedDesc :
-      defaultSortDesc(header);
+      defaultSortDesc(sortByHeader);
 
-    let nodes = getSortedNodes(this.props.nodes, sortBy, sortedDesc);
+    let nodes = getSortedNodes(this.props.nodes, sortByHeader, sortedDesc);
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
     const expanded = this.state.limit === 0;
     const notShown = nodes.length - this.state.limit;
@@ -315,4 +316,6 @@ export default class NodeDetailsTable extends React.Component {
 NodeDetailsTable.defaultProps = {
   nodeIdKey: 'id',  // key to identify a node in a row (used for topology links)
   onSortChange: () => {},
+  sortedDesc: null,
+  sortBy: null,
 };
