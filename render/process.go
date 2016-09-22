@@ -158,24 +158,31 @@ func MapProcess2Name(n report.Node, _ report.Networks) report.Nodes {
 	return report.Nodes{name: node}
 }
 
-func externalNode(m report.Node) report.Node {
+func externalNode(n report.Node) report.Node {
 	// First, check if it's a known service and emit a
 	// a specific node if it is
-	snoopedHostnames, _ := m.Sets.Lookup(endpoint.SnoopedDNSNames)
-	reverseHostnames, _ := m.Sets.Lookup(endpoint.ReverseDNSNames)
-	// Sort the names to make the lookup more deterministic
-	sort.StringSlice(snoopedHostnames).Sort()
-	sort.StringSlice(reverseHostnames).Sort()
-	// Intentionally prioritize snooped hostnames
-	for _, hostname := range append(snoopedHostnames, reverseHostnames...) {
+	for _, hostname := range DNSNames(n) {
 		if isKnownService(hostname) {
-			return NewDerivedPseudoNode(ServiceNodeIDPrefix+hostname, m)
+			return NewDerivedPseudoNode(ServiceNodeIDPrefix+hostname, n)
 		}
 	}
 
 	// emit one internet node for incoming, one for outgoing
-	if len(m.Adjacency) > 0 {
-		return NewDerivedPseudoNode(IncomingInternetID, m)
+	if len(n.Adjacency) > 0 {
+		return NewDerivedPseudoNode(IncomingInternetID, n)
 	}
-	return NewDerivedPseudoNode(OutgoingInternetID, m)
+	return NewDerivedPseudoNode(OutgoingInternetID, n)
+}
+
+// DNSNames returns a prioritized list of snooped and reverse-resolved
+// DNS names associated with node n.
+func DNSNames(n report.Node) []string {
+	snoopedNames, _ := n.Sets.Lookup(endpoint.SnoopedDNSNames)
+	reverseNames, _ := n.Sets.Lookup(endpoint.ReverseDNSNames)
+	// sort the names, to make selection for display more
+	// deterministic
+	sort.StringSlice(snoopedNames).Sort()
+	sort.StringSlice(reverseNames).Sort()
+	// prioritize snooped names
+	return append(snoopedNames, reverseNames...)
 }

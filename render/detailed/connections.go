@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
@@ -113,12 +112,10 @@ func internetAddr(node report.Node, ep report.Node) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	if set, ok := ep.Sets.Lookup(endpoint.ReverseDNSNames); ok && len(set) > 0 {
-		// TODO We show just one of the names, selected rather
-		// abitrarily. We don't have space to show all (except in the
-		// tooltip perhaps), but should think of better strategies for
-		// choosing the name to display.
-		addr = fmt.Sprintf("%s (%s)", set[0], addr)
+	if names := render.DNSNames(ep); len(names) > 0 {
+		// we show the "most important" name only, since we don't have
+		// space for more
+		addr = fmt.Sprintf("%s (%s)", names[0], addr)
 	}
 	return addr, true
 }
