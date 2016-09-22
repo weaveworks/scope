@@ -159,12 +159,12 @@ func TestMakeDetailedHostNode(t *testing.T) {
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
-								ID:       "port",
-								Value:    "80",
+								ID:    "port",
+								Value: "80",
 							},
 							{
-								ID:       "count",
-								Value:    "2",
+								ID:    "count",
+								Value: "2",
 							},
 						},
 					},
@@ -265,12 +265,12 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
-								ID:       "port",
-								Value:    "80",
+								ID:    "port",
+								Value: "80",
 							},
 							{
-								ID:       "count",
-								Value:    "2",
+								ID:    "count",
+								Value: "2",
 							},
 						},
 					},
@@ -281,12 +281,12 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
-								ID:       "port",
-								Value:    "80",
+								ID:    "port",
+								Value: "80",
 							},
 							{
-								ID:       "count",
-								Value:    "1",
+								ID:    "count",
+								Value: "1",
 							},
 						},
 					},
@@ -381,12 +381,12 @@ func TestMakeDetailedPodNode(t *testing.T) {
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
-								ID:       "port",
-								Value:    "80",
+								ID:    "port",
+								Value: "80",
 							},
 							{
-								ID:       "count",
-								Value:    "2",
+								ID:    "count",
+								Value: "2",
 							},
 						},
 					},
@@ -397,12 +397,12 @@ func TestMakeDetailedPodNode(t *testing.T) {
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
-								ID:       "port",
-								Value:    "80",
+								ID:    "port",
+								Value: "80",
 							},
 							{
-								ID:       "count",
-								Value:    "1",
+								ID:    "count",
+								Value: "1",
 							},
 						},
 					},
