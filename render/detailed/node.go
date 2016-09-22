@@ -136,8 +136,8 @@ var (
 				TopologyID: "hosts",
 				Label:      "Hosts",
 				Columns: []Column{
-					{ID: host.CPUUsage, Label: "CPU", DataType: "number"},
-					{ID: host.MemoryUsage, Label: "Memory", DataType: "number"},
+					{ID: host.CPUUsage, Label: "CPU", Datatype: "number"},
+					{ID: host.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 			},
 		},
@@ -147,7 +147,7 @@ var (
 				TopologyID: "services",
 				Label:      "Services",
 				Columns: []Column{
-					{ID: report.Pod, Label: "# Pods", DataType: "number"},
+					{ID: report.Pod, Label: "# Pods", Datatype: "number"},
 					{ID: kubernetes.IP, Label: "IP"},
 				},
 			},
@@ -158,8 +158,8 @@ var (
 				TopologyID: "replica-sets",
 				Label:      "Replica Sets",
 				Columns: []Column{
-					{ID: report.Pod, Label: "# Pods", DataType: "number"},
-					{ID: kubernetes.ObservedGeneration, Label: "Observed Gen.", DataType: "number"},
+					{ID: report.Pod, Label: "# Pods", Datatype: "number"},
+					{ID: kubernetes.ObservedGeneration, Label: "Observed Gen.", Datatype: "number"},
 				},
 			},
 		},
@@ -171,7 +171,7 @@ var (
 
 				Columns: []Column{
 					{ID: kubernetes.State, Label: "State"},
-					{ID: report.Container, Label: "# Containers", DataType: "number"},
+					{ID: report.Container, Label: "# Containers", Datatype: "number"},
 					{ID: kubernetes.IP, Label: "IP"},
 				},
 			},
@@ -181,8 +181,8 @@ var (
 			NodeSummaryGroup: NodeSummaryGroup{
 				TopologyID: "containers",
 				Label:      "Containers", Columns: []Column{
-					{ID: docker.CPUTotalUsage, Label: "CPU", DataType: "number"},
-					{ID: docker.MemoryUsage, Label: "Memory", DataType: "number"},
+					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
+					{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 			},
 		},
@@ -191,9 +191,9 @@ var (
 			NodeSummaryGroup: NodeSummaryGroup{
 				TopologyID: "processes",
 				Label:      "Processes", Columns: []Column{
-					{ID: process.PID, Label: "PID", DataType: "number"},
-					{ID: process.CPUUsage, Label: "CPU", DataType: "number"},
-					{ID: process.MemoryUsage, Label: "Memory", DataType: "number"},
+					{ID: process.PID, Label: "PID", Datatype: "number"},
+					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
+					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 			},
 		},
@@ -203,7 +203,7 @@ var (
 				TopologyID: "containers-by-image",
 				Label:      "Container Images",
 				Columns: []Column{
-					{ID: report.Container, Label: "# Containers", DefaultSort: true, DataType: "number"},
+					{ID: report.Container, Label: "# Containers", DefaultSort: true, Datatype: "number"},
 				},
 			},
 		},

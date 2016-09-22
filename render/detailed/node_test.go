@@ -105,7 +105,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				TopologyID: "pods",
 				Columns: []detailed.Column{
 					{ID: kubernetes.State, Label: "State"},
-					{ID: report.Container, Label: "# Containers", DataType: "number"},
+					{ID: report.Container, Label: "# Containers", Datatype: "number"},
 					{ID: kubernetes.IP, Label: "IP"},
 				},
 				Nodes: []detailed.NodeSummary{podNodeSummary},
@@ -114,8 +114,8 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Label:      "Containers",
 				TopologyID: "containers",
 				Columns: []detailed.Column{
-					{ID: docker.CPUTotalUsage, Label: "CPU", DataType: "number"},
-					{ID: docker.MemoryUsage, Label: "Memory", DataType: "number"},
+					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
+					{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{containerNodeSummary},
 			},
@@ -123,9 +123,9 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Label:      "Processes",
 				TopologyID: "processes",
 				Columns: []detailed.Column{
-					{ID: process.PID, Label: "PID", DataType: "number"},
-					{ID: process.CPUUsage, Label: "CPU", DataType: "number"},
-					{ID: process.MemoryUsage, Label: "Memory", DataType: "number"},
+					{ID: process.PID, Label: "PID", Datatype: "number"},
+					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
+					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{process1NodeSummary, process2NodeSummary},
 			},
@@ -133,7 +133,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Label:      "Container Images",
 				TopologyID: "containers-by-image",
 				Columns: []detailed.Column{
-					{ID: report.Container, Label: "# Containers", DefaultSort: true, DataType: "number"},
+					{ID: report.Container, Label: "# Containers", DefaultSort: true, Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{containerImageNodeSummary},
 			},
@@ -161,12 +161,10 @@ func TestMakeDetailedHostNode(t *testing.T) {
 							{
 								ID:       "port",
 								Value:    "80",
-								Datatype: "number",
 							},
 							{
 								ID:       "count",
 								Value:    "2",
-								Datatype: "number",
 							},
 						},
 					},
@@ -246,9 +244,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Label:      "Processes",
 				TopologyID: "processes",
 				Columns: []detailed.Column{
-					{ID: process.PID, Label: "PID", DataType: "number"},
-					{ID: process.CPUUsage, Label: "CPU", DataType: "number"},
-					{ID: process.MemoryUsage, Label: "Memory", DataType: "number"},
+					{ID: process.PID, Label: "PID", Datatype: "number"},
+					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
+					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{serverProcessNodeSummary},
 			},
@@ -269,12 +267,10 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 							{
 								ID:       "port",
 								Value:    "80",
-								Datatype: "number",
 							},
 							{
 								ID:       "count",
 								Value:    "2",
-								Datatype: "number",
 							},
 						},
 					},
@@ -287,12 +283,10 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 							{
 								ID:       "port",
 								Value:    "80",
-								Datatype: "number",
 							},
 							{
 								ID:       "count",
 								Value:    "1",
-								Datatype: "number",
 							},
 						},
 					},
@@ -357,8 +351,8 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Label:      "Containers",
 				TopologyID: "containers",
 				Columns: []detailed.Column{
-					{ID: docker.CPUTotalUsage, Label: "CPU", DataType: "number"},
-					{ID: docker.MemoryUsage, Label: "Memory", DataType: "number"},
+					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
+					{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{containerNodeSummary},
 			},
@@ -366,9 +360,9 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Label:      "Processes",
 				TopologyID: "processes",
 				Columns: []detailed.Column{
-					{ID: process.PID, Label: "PID", DataType: "number"},
-					{ID: process.CPUUsage, Label: "CPU", DataType: "number"},
-					{ID: process.MemoryUsage, Label: "Memory", DataType: "number"},
+					{ID: process.PID, Label: "PID", Datatype: "number"},
+					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
+					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{serverProcessNodeSummary},
 			},
@@ -389,12 +383,10 @@ func TestMakeDetailedPodNode(t *testing.T) {
 							{
 								ID:       "port",
 								Value:    "80",
-								Datatype: "number",
 							},
 							{
 								ID:       "count",
 								Value:    "2",
-								Datatype: "number",
 							},
 						},
 					},
@@ -407,12 +399,10 @@ func TestMakeDetailedPodNode(t *testing.T) {
 							{
 								ID:       "port",
 								Value:    "80",
-								Datatype: "number",
 							},
 							{
 								ID:       "count",
 								Value:    "1",
-								Datatype: "number",
 							},
 						},
 					},
