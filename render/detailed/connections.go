@@ -142,18 +142,18 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 		if includeLocal {
 			connection.Metadata = append(connection.Metadata,
 				report.MetadataRow{
-					ID:       remoteKey,
-					Value:    row.localAddr,
+					ID:    remoteKey,
+					Value: row.localAddr,
 				})
 		}
 		connection.Metadata = append(connection.Metadata,
 			report.MetadataRow{
-				ID:       portKey,
-				Value:    row.port,
+				ID:    portKey,
+				Value: row.port,
 			},
 			report.MetadataRow{
-				ID:       countKey,
-				Value:    strconv.Itoa(count),
+				ID:    countKey,
+				Value: strconv.Itoa(count),
 			},
 		)
 		output = append(output, connection)
