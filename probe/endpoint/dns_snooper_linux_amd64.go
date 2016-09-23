@@ -112,6 +112,7 @@ func (s *DNSSnooper) Stop() {
 }
 
 // Gopacket doesn't provide direct support for DNS over TCP, see https://github.com/google/gopacket/issues/236
+// TODO: deal with TCP fragmentation and out-of-order segments
 type tcpWithDNSSupport struct {
 	tcp layers.TCP
 }
@@ -126,7 +127,15 @@ func (m *tcpWithDNSSupport) NextLayerType() gopacket.LayerType {
 	}
 	return m.tcp.NextLayerType()
 }
-func (m *tcpWithDNSSupport) LayerPayload() []byte { return m.tcp.LayerPayload() }
+func (m *tcpWithDNSSupport) LayerPayload() []byte {
+	payload := m.tcp.LayerPayload()
+	// Omit the DNS length field, only included
+	// in TCP, in order to reuse the DNS UDP parser
+	if len(payload) > 1 && (m.tcp.SrcPort == 53 || m.tcp.DstPort == 53) {
+		payload = payload[2:]
+	}
+	return payload
+}
 
 func (s *DNSSnooper) run() {
 	var (
