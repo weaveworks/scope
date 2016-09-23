@@ -111,12 +111,29 @@ func (s *DNSSnooper) Stop() {
 	}
 }
 
+// Gopacket doesn't provide direct support for DNS over TCP, see https://github.com/google/gopacket/issues/236
+type tcpWithDNSSupport struct {
+	tcp layers.TCP
+}
+
+func (m *tcpWithDNSSupport) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
+	return m.tcp.DecodeFromBytes(data, df)
+}
+func (m *tcpWithDNSSupport) CanDecode() gopacket.LayerClass { return m.tcp.CanDecode() }
+func (m *tcpWithDNSSupport) NextLayerType() gopacket.LayerType {
+	if m.tcp.SrcPort == 53 || m.tcp.DstPort == 53 {
+		return layers.LayerTypeDNS
+	}
+	return m.tcp.NextLayerType()
+}
+func (m *tcpWithDNSSupport) LayerPayload() []byte { return m.tcp.LayerPayload() }
+
 func (s *DNSSnooper) run() {
 	var (
 		decodedLayers []gopacket.LayerType
 		dns           layers.DNS
 		udp           layers.UDP
-		tcp           layers.TCP
+		tcp           tcpWithDNSSupport
 		ip4           layers.IPv4
 		ip6           layers.IPv6
 		eth           layers.Ethernet
