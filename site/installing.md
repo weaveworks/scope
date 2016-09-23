@@ -201,9 +201,6 @@ Allowable parameters for the launcher URL:
 - `k8s-service-type` - Kubernetes service type (for running Scope in Standalone mode), can be either
 `LoadBalancer` or `NodePort`, by default this is unspecified (only internal access)
 
-> **Note:** The `--validate=false` flag is currently required due to a bug in Kubernetes (see
-[kubernetes/kubernetes#24089](https://github.com/kubernetes/kubernetes/issues/24089) for more details
-
 To download and read the Scope manifest run:
 
     curl --silent --remote-name https://cloud.weave.works/launch/k8s/weavescope.yaml
