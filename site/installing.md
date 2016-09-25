@@ -183,7 +183,7 @@ Weave Cloud runs the Scope UI for you, so you don't have to configure exposing a
 
 * Register for a [Weave Cloud account](https://cloud.weave.works/) to get a service token and then replace `<token>` with your token below, running this either on the master or on a machine where `kubectl` is configured to authenticate to your Kubernetes cluster:
 
-      $ kubectl apply -f 'https://cloud.weave.works/launch/k8s/weavescope.yaml?service-token=<token>'
+    $ kubectl apply -f 'https://cloud.weave.works/launch/k8s/weavescope.yaml?service-token=<token>'
 
   **SECURITY NOTE: This allows control of your Kubernetes cluster from Weave Cloud, which is a hosted service.**
 
