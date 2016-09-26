@@ -1,6 +1,7 @@
 import page from 'page';
 
 import { route } from '../actions/app-actions';
+import { storageGet, storageSet } from './storage-utils';
 
 //
 // page.js won't match the routes below if ":state" has a slash in it, so replace those before we
@@ -10,6 +11,7 @@ const SLASH = '/';
 const SLASH_REPLACEMENT = '<SLASH>';
 const PERCENT = '%';
 const PERCENT_REPLACEMENT = '<PERCENT>';
+const STORAGE_STATE_KEY = 'scopeViewState';
 
 function encodeURL(url) {
   return url
@@ -70,6 +72,9 @@ export function updateRoute(getState) {
     .replace('#!/', '') || '{}';
   const prevState = JSON.parse(decodeURL(urlStateString));
 
+  // back up state in storage as well
+  storageSet(STORAGE_STATE_KEY, stateUrl);
+
   if (shouldReplaceState(prevState, state)) {
     // Replace the top of the history rather than pushing on a new item.
     page.replace(`/state/${stateUrl}`, state, dispatch);
@@ -84,7 +89,17 @@ export function getRouter(dispatch, initialState) {
   page.base(window.location.pathname.replace(/\/$/, ''));
 
   page('/', () => {
-    dispatch(route(initialState));
+    // recover from storage state on empty URL
+    const storageState = storageGet(STORAGE_STATE_KEY);
+    if (storageState) {
+      // push storage state to URL
+      window.location.hash = `!/state/${storageState}`;
+      const parsedState = JSON.parse(decodeURL(storageState));
+      const mergedState = Object.assign(initialState, parsedState);
+      dispatch(route(mergedState));
+    } else {
+      dispatch(route(initialState));
+    }
   });
 
   page('/state/:state', (ctx) => {

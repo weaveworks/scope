@@ -264,9 +264,9 @@ func IsDesired(label string) FilterFunc {
 }
 
 // IsNotPseudo returns true if the node is not a pseudo node
-// or the internet nodes.
+// or internet/service nodes.
 func IsNotPseudo(n report.Node) bool {
-	return n.Topology != Pseudo || strings.HasSuffix(n.ID, TheInternetID)
+	return n.Topology != Pseudo || strings.HasSuffix(n.ID, TheInternetID) || strings.HasPrefix(n.ID, ServiceNodeIDPrefix)
 }
 
 // IsNamespace checks if the node is a pod/service in the specified namespace

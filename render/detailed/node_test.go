@@ -25,6 +25,10 @@ func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
 	return s.SummarizeMetrics()
 }
 
+func connectionID(nodeID string, addr string) string {
+	return fmt.Sprintf("%s-%s-%s-%d", nodeID, addr, "", 80)
+}
+
 func TestMakeDetailedHostNode(t *testing.T) {
 	renderableNodes := render.HostRenderer.Render(fixture.Report, nil)
 	renderableNode := renderableNodes[fixture.ClientHostNodeID]
@@ -101,7 +105,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				TopologyID: "pods",
 				Columns: []detailed.Column{
 					{ID: kubernetes.State, Label: "State"},
-					{ID: report.Container, Label: "Containers"},
+					{ID: report.Container, Label: "# Containers", Datatype: "number"},
 					{ID: kubernetes.IP, Label: "IP"},
 				},
 				Nodes: []detailed.NodeSummary{podNodeSummary},
@@ -110,8 +114,8 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Label:      "Containers",
 				TopologyID: "containers",
 				Columns: []detailed.Column{
-					{ID: docker.CPUTotalUsage, Label: "CPU"},
-					{ID: docker.MemoryUsage, Label: "Memory"},
+					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
+					{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{containerNodeSummary},
 			},
@@ -119,9 +123,9 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Label:      "Processes",
 				TopologyID: "processes",
 				Columns: []detailed.Column{
-					{ID: process.PID, Label: "PID"},
-					{ID: process.CPUUsage, Label: "CPU"},
-					{ID: process.MemoryUsage, Label: "Memory"},
+					{ID: process.PID, Label: "PID", Datatype: "number"},
+					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
+					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{process1NodeSummary, process2NodeSummary},
 			},
@@ -129,7 +133,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Label:      "Container Images",
 				TopologyID: "containers-by-image",
 				Columns: []detailed.Column{
-					{ID: report.Container, Label: "# Containers", DefaultSort: true},
+					{ID: report.Container, Label: "# Containers", DefaultSort: true, Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{containerImageNodeSummary},
 			},
@@ -149,20 +153,18 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ServerHostNodeID, "", fixture.ClientHostNodeID, "", 80),
+						ID:       connectionID(fixture.ServerHostNodeID, ""),
 						NodeID:   fixture.ServerHostNodeID,
 						Label:    "server",
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
-								ID:       "port",
-								Value:    "80",
-								Datatype: "number",
+								ID:    "port",
+								Value: "80",
 							},
 							{
-								ID:       "count",
-								Value:    "2",
-								Datatype: "number",
+								ID:    "count",
+								Value: "2",
 							},
 						},
 					},
@@ -242,9 +244,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Label:      "Processes",
 				TopologyID: "processes",
 				Columns: []detailed.Column{
-					{ID: process.PID, Label: "PID"},
-					{ID: process.CPUUsage, Label: "CPU"},
-					{ID: process.MemoryUsage, Label: "Memory"},
+					{ID: process.PID, Label: "PID", Datatype: "number"},
+					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
+					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{serverProcessNodeSummary},
 			},
@@ -257,38 +259,34 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ClientContainerNodeID, "", fixture.ServerContainerNodeID, "", 80),
+						ID:       connectionID(fixture.ClientContainerNodeID, ""),
 						NodeID:   fixture.ClientContainerNodeID,
 						Label:    "client",
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
-								ID:       "port",
-								Value:    "80",
-								Datatype: "number",
+								ID:    "port",
+								Value: "80",
 							},
 							{
-								ID:       "count",
-								Value:    "2",
-								Datatype: "number",
+								ID:    "count",
+								Value: "2",
 							},
 						},
 					},
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", render.IncomingInternetID, "", fixture.ServerContainerNodeID, "", 80),
+						ID:       connectionID(render.IncomingInternetID, fixture.RandomClientIP),
 						NodeID:   render.IncomingInternetID,
-						Label:    render.InboundMajor,
+						Label:    fixture.RandomClientIP,
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
-								ID:       "port",
-								Value:    "80",
-								Datatype: "number",
+								ID:    "port",
+								Value: "80",
 							},
 							{
-								ID:       "count",
-								Value:    "1",
-								Datatype: "number",
+								ID:    "count",
+								Value: "1",
 							},
 						},
 					},
@@ -353,8 +351,8 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Label:      "Containers",
 				TopologyID: "containers",
 				Columns: []detailed.Column{
-					{ID: docker.CPUTotalUsage, Label: "CPU"},
-					{ID: docker.MemoryUsage, Label: "Memory"},
+					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
+					{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{containerNodeSummary},
 			},
@@ -362,9 +360,9 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Label:      "Processes",
 				TopologyID: "processes",
 				Columns: []detailed.Column{
-					{ID: process.PID, Label: "PID"},
-					{ID: process.CPUUsage, Label: "CPU"},
-					{ID: process.MemoryUsage, Label: "Memory"},
+					{ID: process.PID, Label: "PID", Datatype: "number"},
+					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
+					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
 				Nodes: []detailed.NodeSummary{serverProcessNodeSummary},
 			},
@@ -377,38 +375,34 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", fixture.ClientPodNodeID, "", fixture.ServerPodNodeID, "", 80),
+						ID:       connectionID(fixture.ClientPodNodeID, ""),
 						NodeID:   fixture.ClientPodNodeID,
 						Label:    "pong-a",
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
-								ID:       "port",
-								Value:    "80",
-								Datatype: "number",
+								ID:    "port",
+								Value: "80",
 							},
 							{
-								ID:       "count",
-								Value:    "2",
-								Datatype: "number",
+								ID:    "count",
+								Value: "2",
 							},
 						},
 					},
 					{
-						ID:       fmt.Sprintf("%s:%s-%s:%s-%d", render.IncomingInternetID, "", fixture.ServerPodNodeID, "", 80),
+						ID:       connectionID(render.IncomingInternetID, fixture.RandomClientIP),
 						NodeID:   render.IncomingInternetID,
-						Label:    render.InboundMajor,
+						Label:    fixture.RandomClientIP,
 						Linkable: true,
 						Metadata: []report.MetadataRow{
 							{
-								ID:       "port",
-								Value:    "80",
-								Datatype: "number",
+								ID:    "port",
+								Value: "80",
 							},
 							{
-								ID:       "count",
-								Value:    "1",
-								Datatype: "number",
+								ID:    "count",
+								Value: "1",
 							},
 						},
 					},
