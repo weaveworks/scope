@@ -13,7 +13,7 @@ function isNumber(data) {
 const CW = {
   XS: '32px',
   S: '50px',
-  M: '64px',
+  M: '70px',
   L: '120px',
   XL: '140px',
   XXL: '170px',
