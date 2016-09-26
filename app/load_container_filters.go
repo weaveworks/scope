@@ -22,12 +22,16 @@ func getContainerTopologyOptions() ([]APITopologyOption, error) {
 	json.Unmarshal([]byte(s), &filters)
 
 	for _, f := range filters {
-		v := APITopologyOption{f.ID, f.Title, render.IsDesired(f.Label), false}
+		v := APITopologyOption{Value:f.ID, Label:f.Title, filter:render.IsDesired(f.Label), filterPseudo:false}
 		toptions = append(toptions, v)
 	}
 
+	// Add option to not view weave system containers
+	notSystem := APITopologyOption{Value:"notsystem", Label:"Application Containers", filter:render.IsApplication, filterPseudo:false}
+	toptions = append(toptions, notSystem)
+
 	// Add option to view all
-	all := APITopologyOption{"all", "All", nil, false}
+	all := APITopologyOption{Value:"all", Label:"All", filter:nil, filterPseudo:false}
 	toptions = append(toptions, all)
 
 	return toptions, nil
