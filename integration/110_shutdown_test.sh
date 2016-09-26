@@ -5,6 +5,7 @@
 start_suite "Check scope exits cleanly within 10 seconds"
 
 scope_on $HOST1 launch
+sleep 10
 scope_on $HOST1 stop
 
 sleep 10
