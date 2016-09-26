@@ -15,48 +15,61 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-const apiTopologyURL = "/api/topology/"
+const (
+	apiTopologyURL                     = "/api/topology/"
+	processesTopologyDescID            = "processes"
+	processesByNameTopologyDescID      = "processes-by-name"
+	containerLabelFiltersGroupID       = "container_label_filters_group"
+	containersTopologyDescID           = "containers"
+	containersByHostnameTopologyDescID = "containers-by-hostname"
+	containersByImageTopologyDescID    = "containers-by-image"
+	podsTopologyDescID                 = "pods"
+	replicaSetsTopologyDescID          = "replica-sets"
+	deploymentsTopologyDescID          = "deployments"
+	servicesTopologyDescID             = "services"
+	hostsTopologyDescID                = "hosts"
+)
 
 var (
-	topologyRegistry = &registry{
-		items: map[string]APITopologyDesc{},
-	}
-	k8sPseudoFilter = APITopologyOptionGroup{
+	topologyRegistry = MakeRegistry()
+	k8sPseudoFilter  = APITopologyOptionGroup{
 		ID:      "pseudo",
 		Default: "hide",
 		Options: []APITopologyOption{
-			{"show", "Show Unmanaged", nil, false},
-			{"hide", "Hide Unmanaged", render.IsNotPseudo, true},
+			{Value: "show", Label: "Show Unmanaged", filter: nil, filterPseudo: false},
+			{Value: "hide", Label: "Hide Unmanaged", filter: render.IsNotPseudo, filterPseudo: true},
 		},
 	}
 )
 
 func init() {
+	AddInitialTopologiesToRegistry(topologyRegistry)
+}
+
+// AddInitialTopologiesToRegistry does the initial setup for a Registry.
+// This is needed for testing.
+func AddInitialTopologiesToRegistry(registry *Registry) {
 	containerFilters := []APITopologyOptionGroup{
 		{
-			ID:      "system",
+			ID:      containerLabelFiltersGroupID,
 			Default: "application",
-			Options: []APITopologyOption{
-				{"system", "System containers", render.IsSystem, false},
-				{"application", "Application containers", render.IsApplication, false},
-				{"both", "Both", nil, false},
-			},
+			Options: []APITopologyOption{{Value: "all", Label: "All", filter: nil, filterPseudo: false}, {Value: "system", Label: "System Containers", filter: render.IsSystem, filterPseudo: false}, {Value: "notsystem", Label: "Application Containers", filter: render.IsApplication, filterPseudo: false}},
 		},
 		{
 			ID:      "stopped",
 			Default: "running",
 			Options: []APITopologyOption{
-				{"stopped", "Stopped containers", render.IsStopped, false},
-				{"running", "Running containers", render.IsRunning, false},
-				{"both", "Both", nil, false},
+				{Value: "stopped", Label: "Stopped containers", filter: render.IsStopped, filterPseudo: false},
+				{Value: "running", Label: "Running containers", filter: render.IsRunning, filterPseudo: false},
+				{Value: "both", Label: "Both", filter: nil, filterPseudo: false},
 			},
 		},
 		{
 			ID:      "pseudo",
 			Default: "hide",
 			Options: []APITopologyOption{
-				{"show", "Show Uncontained", nil, false},
-				{"hide", "Hide Uncontained", render.IsNotPseudo, true},
+				{Value: "show", Label: "Show Uncontained", filter: nil, filterPseudo: false},
+				{Value: "hide", Label: "Hide Uncontained", filter: render.IsNotPseudo, filterPseudo: true},
 			},
 		},
 	}
@@ -68,16 +81,16 @@ func init() {
 			Options: []APITopologyOption{
 				// Show the user why there are filtered nodes in this view.
 				// Don't give them the option to show those nodes.
-				{"hide", "Unconnected nodes hidden", nil, false},
+				{Value: "hide", Label: "Unconnected nodes hidden", filter: nil, filterPseudo: false},
 			},
 		},
 	}
 
 	// Topology option labels should tell the current state. The first item must
 	// be the verb to get to that state
-	topologyRegistry.add(
+	registry.Add(
 		APITopologyDesc{
-			id:          "processes",
+			id:          processesTopologyDescID,
 			renderer:    render.FilterUnconnected(render.ProcessWithContainerNameRenderer),
 			Name:        "Processes",
 			Rank:        1,
@@ -85,7 +98,7 @@ func init() {
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
-			id:          "processes-by-name",
+			id:          processesByNameTopologyDescID,
 			parent:      "processes",
 			renderer:    render.FilterUnconnected(render.ProcessNameRenderer),
 			Name:        "by name",
@@ -93,56 +106,56 @@ func init() {
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
-			id:       "containers",
+			id:       containersTopologyDescID,
 			renderer: render.ContainerWithImageNameRenderer,
 			Name:     "Containers",
 			Rank:     2,
 			Options:  containerFilters,
 		},
 		APITopologyDesc{
-			id:       "containers-by-hostname",
+			id:       containersByHostnameTopologyDescID,
 			parent:   "containers",
 			renderer: render.ContainerHostnameRenderer,
 			Name:     "by DNS name",
 			Options:  containerFilters,
 		},
 		APITopologyDesc{
-			id:       "containers-by-image",
+			id:       containersByImageTopologyDescID,
 			parent:   "containers",
 			renderer: render.ContainerImageRenderer,
 			Name:     "by image",
 			Options:  containerFilters,
 		},
 		APITopologyDesc{
-			id:          "pods",
+			id:          podsTopologyDescID,
 			renderer:    render.PodRenderer,
 			Name:        "Pods",
 			Rank:        3,
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
-			id:          "replica-sets",
+			id:          replicaSetsTopologyDescID,
 			parent:      "pods",
 			renderer:    render.ReplicaSetRenderer,
 			Name:        "replica sets",
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
-			id:          "deployments",
+			id:          deploymentsTopologyDescID,
 			parent:      "pods",
 			renderer:    render.DeploymentRenderer,
 			Name:        "deployments",
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
-			id:          "services",
+			id:          servicesTopologyDescID,
 			parent:      "pods",
 			renderer:    render.PodServiceRenderer,
 			Name:        "services",
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
-			id:       "hosts",
+			id:       hostsTopologyDescID,
 			renderer: render.HostRenderer,
 			Name:     "Hosts",
 			Rank:     4,
@@ -165,10 +178,10 @@ func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
 			options.Default = namespace
 		}
 		options.Options = append(options.Options, APITopologyOption{
-			namespace, namespace, render.IsNamespace(namespace), false,
+			Value: namespace, Label: namespace, filter: render.IsNamespace(namespace), filterPseudo: false,
 		})
 	}
-	options.Options = append(options.Options, APITopologyOption{"all", "All Namespaces", nil, false})
+	options.Options = append(options.Options, APITopologyOption{Value: "all", Label: "All Namespaces", filter: nil, filterPseudo: false})
 	return options
 }
 
@@ -192,7 +205,7 @@ func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopolog
 	}
 	sort.Strings(ns)
 	for i, t := range topologies {
-		if t.id == "pods" || t.id == "services" || t.id == "deployments" || t.id == "replica-sets" {
+		if t.id == podsTopologyDescID || t.id == servicesTopologyDescID || t.id == deploymentsTopologyDescID || t.id == replicaSetsTopologyDescID {
 			topologies[i] = updateTopologyFilters(t, []APITopologyOptionGroup{
 				kubernetesFilters(ns...), k8sPseudoFilter,
 			})
@@ -210,10 +223,23 @@ func updateTopologyFilters(t APITopologyDesc, options []APITopologyOptionGroup) 
 	return t
 }
 
-// registry is a threadsafe store of the available topologies
-type registry struct {
+// MakeAPITopologyOption provides an external interface to the package for creating an APITopologyOption.
+func MakeAPITopologyOption(value string, label string, filterFunc render.FilterFunc, pseudo bool) APITopologyOption {
+	return APITopologyOption{Value: value, Label: label, filter: filterFunc, filterPseudo: pseudo}
+}
+
+// Registry is a threadsafe store of the available topologies
+type Registry struct {
 	sync.RWMutex
 	items map[string]APITopologyDesc
+}
+
+// MakeRegistry returns a new Registry
+func MakeRegistry() *Registry {
+	newRegistry := &Registry{
+		items: map[string]APITopologyDesc{},
+	}
+	return newRegistry
 }
 
 // APITopologyDesc is returned in a list by the /api/topology handler.
@@ -261,7 +287,27 @@ type topologyStats struct {
 	FilteredNodes      int `json:"filtered_nodes"`
 }
 
-func (r *registry) add(ts ...APITopologyDesc) {
+// AddContainerFilters adds to the default Registry (topologyRegistry)'s containerFilters
+func AddContainerFilters(newFilters ...APITopologyOption) {
+	topologyRegistry.AddContainerFilters(newFilters...)
+}
+
+// AddContainerFilters adds container filters to this Registry
+func (r *Registry) AddContainerFilters(newFilters ...APITopologyOption) {
+	r.Lock()
+	defer r.Unlock()
+	for _, key := range []string{containersTopologyDescID, containersByHostnameTopologyDescID, containersByImageTopologyDescID} {
+		for i := range r.items[key].Options {
+			if r.items[key].Options[i].ID == containerLabelFiltersGroupID {
+				r.items[key].Options[i].Options = append(r.items[key].Options[i].Options, newFilters...)
+				break
+			}
+		}
+	}
+}
+
+// Add inserts a topologyDesc to the Registry's items map
+func (r *Registry) Add(ts ...APITopologyDesc) {
 	r.Lock()
 	defer r.Unlock()
 	for _, t := range ts {
@@ -277,14 +323,14 @@ func (r *registry) add(ts ...APITopologyDesc) {
 	}
 }
 
-func (r *registry) get(name string) (APITopologyDesc, bool) {
+func (r *Registry) get(name string) (APITopologyDesc, bool) {
 	r.RLock()
 	defer r.RUnlock()
 	t, ok := r.items[name]
 	return t, ok
 }
 
-func (r *registry) walk(f func(APITopologyDesc)) {
+func (r *Registry) walk(f func(APITopologyDesc)) {
 	r.RLock()
 	defer r.RUnlock()
 	descs := []APITopologyDesc{}
@@ -301,7 +347,7 @@ func (r *registry) walk(f func(APITopologyDesc)) {
 }
 
 // makeTopologyList returns a handler that yields an APITopologyList.
-func (r *registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
+func (r *Registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		report, err := rep.Report(ctx)
 		if err != nil {
@@ -312,14 +358,14 @@ func (r *registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 	}
 }
 
-func (r *registry) renderTopologies(rpt report.Report, req *http.Request) []APITopologyDesc {
+func (r *Registry) renderTopologies(rpt report.Report, req *http.Request) []APITopologyDesc {
 	topologies := []APITopologyDesc{}
 	req.ParseForm()
 	r.walk(func(desc APITopologyDesc) {
-		renderer, decorator, _ := r.rendererForTopology(desc.id, req.Form, rpt)
+		renderer, decorator, _ := r.RendererForTopology(desc.id, req.Form, rpt)
 		desc.Stats = decorateWithStats(rpt, renderer, decorator)
 		for i, sub := range desc.SubTopologies {
-			renderer, decorator, _ := r.rendererForTopology(sub.id, req.Form, rpt)
+			renderer, decorator, _ := r.RendererForTopology(sub.id, req.Form, rpt)
 			desc.SubTopologies[i].Stats = decorateWithStats(rpt, renderer, decorator)
 		}
 		topologies = append(topologies, desc)
@@ -349,7 +395,8 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer, decorator re
 	}
 }
 
-func (r *registry) rendererForTopology(topologyID string, values url.Values, rpt report.Report) (render.Renderer, render.Decorator, error) {
+// RendererForTopology ..
+func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt report.Report) (render.Renderer, render.Decorator, error) {
 	topology, ok := r.get(topologyID)
 	if !ok {
 		return nil, nil, fmt.Errorf("topology not found: %s", topologyID)
@@ -393,7 +440,7 @@ func captureReporter(rep Reporter, f reporterHandler) CtxHandlerFunc {
 
 type rendererHandler func(context.Context, render.Renderer, render.Decorator, report.Report, http.ResponseWriter, *http.Request)
 
-func (r *registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFunc {
+func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		topologyID := mux.Vars(req)["topology"]
 		if _, ok := r.get(topologyID); !ok {
@@ -406,7 +453,7 @@ func (r *registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFu
 			return
 		}
 		req.ParseForm()
-		renderer, decorator, err := r.rendererForTopology(topologyID, req.Form, rpt)
+		renderer, decorator, err := r.RendererForTopology(topologyID, req.Form, rpt)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return

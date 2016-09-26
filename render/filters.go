@@ -268,6 +268,22 @@ func IsApplication(n report.Node) bool {
 // IsSystem checks if the node is a "system" node
 var IsSystem = Complement(IsApplication)
 
+// HasLabel checks if the node has the desired docker label
+func HasLabel(labelKey string, labelValue string) FilterFunc {
+	return func(n report.Node) bool {
+		value, _ := n.Latest.Lookup(docker.LabelPrefix + labelKey)
+		if value == labelValue {
+			return true
+		}
+		return false
+	}
+}
+
+// DoesNotHaveLabel checks if the node does NOT have the specified docker label
+func DoesNotHaveLabel(labelKey string, labelValue string) FilterFunc {
+	return Complement(HasLabel(labelKey, labelValue))
+}
+
 // IsNotPseudo returns true if the node is not a pseudo node
 // or internet/service nodes.
 func IsNotPseudo(n report.Node) bool {
