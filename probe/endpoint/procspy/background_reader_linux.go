@@ -99,6 +99,10 @@ func (br *backgroundReader) loop(walker process.Walker) {
 			br.latestSockets = result.sockets
 			br.mtx.Unlock()
 
+			if len(result.sockets) != 0 {
+				log.Info("Received results from THE loop, exiting loop")
+				return
+			}
 			// Schedule next walk and adjust its rate limit
 			walkTime := time.Since(begin)
 			rateLimitPeriod, restInterval = scheduleNextWalk(rateLimitPeriod, walkTime)
