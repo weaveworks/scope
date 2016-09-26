@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
@@ -81,12 +82,13 @@ type conntrackWalker struct {
 	cmd           exec.Cmd
 	activeFlows   map[int64]flow // active flows in state != TIME_WAIT
 	bufferedFlows []flow         // flows coming out of activeFlows spend 1 walk cycle here
+	bufferSize    int
 	args          []string
 	quit          chan struct{}
 }
 
 // newConntracker creates and starts a new conntracker.
-func newConntrackFlowWalker(useConntrack bool, procRoot string, args ...string) flowWalker {
+func newConntrackFlowWalker(useConntrack bool, procRoot string, bufferSize int, args ...string) flowWalker {
 	if !useConntrack {
 		return nilFlowWalker{}
 	} else if err := IsConntrackSupported(procRoot); err != nil {
@@ -95,6 +97,7 @@ func newConntrackFlowWalker(useConntrack bool, procRoot string, args ...string) 
 	}
 	result := &conntrackWalker{
 		activeFlows: map[int64]flow{},
+		bufferSize:  bufferSize,
 		args:        args,
 		quit:        make(chan struct{}),
 	}
@@ -160,7 +163,10 @@ func (c *conntrackWalker) run() {
 		c.handleFlow(flow, true)
 	}
 
-	args := append([]string{"-E", "-o", "xml", "-p", "tcp"}, c.args...)
+	args := append([]string{
+		"--buffer-size", strconv.Itoa(c.bufferSize), "-E",
+		"-o", "xml", "-p", "tcp"}, c.args...,
+	)
 	cmd := exec.Command("conntrack", args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

@@ -13,6 +13,7 @@ import (
 )
 
 const conntrackCloseTag = "</conntrack>\n"
+const bufferSize = 1024 * 1024
 
 func makeFlow(ty string) flow {
 	return flow{
@@ -91,7 +92,7 @@ func TestConntracker(t *testing.T) {
 		return testexec.NewMockCmd(reader)
 	}
 
-	flowWalker := newConntrackFlowWalker(true, "")
+	flowWalker := newConntrackFlowWalker(true, "", bufferSize)
 	defer flowWalker.stop()
 
 	// First write out some empty xml for the existing connections

@@ -152,7 +152,7 @@ func probeMain(flags probeFlags) {
 		defer dnsSnooper.Stop()
 	}
 
-	endpointReporter := endpoint.NewReporter(hostID, hostName, flags.spyProcs, flags.useConntrack, flags.procEnabled, flags.procRoot, scanner, dnsSnooper)
+	endpointReporter := endpoint.NewReporter(hostID, hostName, flags.spyProcs, flags.useConntrack, flags.procEnabled, flags.procRoot, flags.conntrackBufferSize, scanner, dnsSnooper)
 	defer endpointReporter.Stop()
 	p.AddReporter(endpointReporter)
 

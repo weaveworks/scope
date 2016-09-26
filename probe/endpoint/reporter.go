@@ -54,14 +54,18 @@ var SpyDuration = prometheus.NewSummaryVec(
 // on the host machine, at the granularity of host and port. That information
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
-func NewReporter(hostID, hostName string, spyProcs, useConntrack, walkProc bool, procRoot string, scanner procspy.ConnectionScanner, dnsSnooper *DNSSnooper) *Reporter {
+func NewReporter(
+	hostID, hostName string,
+	spyProcs, useConntrack, walkProc bool,
+	procRoot string, bufferSize int,
+	scanner procspy.ConnectionScanner, dnsSnooper *DNSSnooper) *Reporter {
 	return &Reporter{
 		hostID:          hostID,
 		hostName:        hostName,
 		spyProcs:        spyProcs,
 		walkProc:        walkProc,
-		flowWalker:      newConntrackFlowWalker(useConntrack, procRoot),
-		natMapper:       makeNATMapper(newConntrackFlowWalker(useConntrack, procRoot, "--any-nat")),
+		flowWalker:      newConntrackFlowWalker(useConntrack, procRoot, bufferSize),
+		natMapper:       makeNATMapper(newConntrackFlowWalker(useConntrack, procRoot, bufferSize, "--any-nat")),
 		reverseResolver: newReverseResolver(),
 		scanner:         scanner,
 		dnsSnooper:      dnsSnooper,
