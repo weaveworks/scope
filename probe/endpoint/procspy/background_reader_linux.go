@@ -101,18 +101,18 @@ func (br *backgroundReader) loop(walker process.Walker) {
 
 			if len(result.sockets) != 0 {
 				log.Info("Received results from THE loop, exiting loop")
-				return
+				br.stopc <- struct{}{}
+			} else {
+				// Schedule next walk and adjust its rate limit
+				walkTime := time.Since(begin)
+				rateLimitPeriod, restInterval = scheduleNextWalk(rateLimitPeriod, walkTime)
+				ticker.Stop()
+				ticker = time.NewTicker(rateLimitPeriod)
+				pWalker.tickc = ticker.C
+
+				walkc = nil                      // turn off until the next loop
+				tickc = time.After(restInterval) // turn on
 			}
-			// Schedule next walk and adjust its rate limit
-			walkTime := time.Since(begin)
-			rateLimitPeriod, restInterval = scheduleNextWalk(rateLimitPeriod, walkTime)
-			ticker.Stop()
-			ticker = time.NewTicker(rateLimitPeriod)
-			pWalker.tickc = ticker.C
-
-			walkc = nil                      // turn off until the next loop
-			tickc = time.After(restInterval) // turn on
-
 		case <-br.stopc:
 			pWalker.stop()
 			ticker.Stop()
