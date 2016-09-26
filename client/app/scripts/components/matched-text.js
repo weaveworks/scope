@@ -82,15 +82,20 @@ function truncateChunks(chunks, text, maxLength) {
 class MatchedText extends React.Component {
 
   render() {
-    const { match, text, maxLength } = this.props;
+    const { match, text, truncate, maxLength } = this.props;
+
+    const showFullValue = !truncate || match && match.start + match.length > truncate;
+    const displayText = showFullValue ? text : text.slice(0, truncate);
 
     if (!match) {
-      return <span>{text}</span>;
+      return <span>{displayText}</span>;
     }
+
+    const chunks = chunkText(displayText, match);
 
     return (
       <span className="matched-text" title={text}>
-        {truncateChunks(chunkText(text, match), text, maxLength).map((chunk, index) => {
+        {truncateChunks(chunks, displayText, maxLength).map((chunk, index) => {
           if (chunk.match) {
             return (
               <span className="match" key={index}>

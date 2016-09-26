@@ -45,13 +45,11 @@ func (t MetadataTemplate) MetadataRows(n Node) []MetadataRow {
 		from = fromCounters
 	}
 	if val, ok := from(n, t.ID); ok {
-		if t.Truncate > 0 && len(val) > t.Truncate {
-			val = val[:t.Truncate]
-		}
 		return []MetadataRow{{
 			ID:       t.ID,
 			Label:    t.Label,
 			Value:    val,
+			Truncate: t.Truncate,
 			Datatype: t.Datatype,
 			Priority: t.Priority,
 		}}
@@ -89,6 +87,7 @@ type MetadataRow struct {
 	Value    string  `json:"value"`
 	Priority float64 `json:"priority,omitempty"`
 	Datatype string  `json:"dataType,omitempty"`
+	Truncate int     `json:"truncate,omitempty"`
 }
 
 // Copy returns a value copy of a metadata row.
