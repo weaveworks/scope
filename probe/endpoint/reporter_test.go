@@ -62,6 +62,8 @@ var (
 	}
 )
 
+const bufferSize = 1024 * 1024
+
 func TestSpyNoProcesses(t *testing.T) {
 	const (
 		nodeID   = "heinz-tomato-ketchup" // TODO rename to hostID
@@ -69,7 +71,12 @@ func TestSpyNoProcesses(t *testing.T) {
 	)
 
 	scanner := procspy.FixedScanner(fixConnections)
-	reporter := endpoint.NewReporter(nodeID, nodeName, false, false, false, "", scanner, nil)
+	reporter := endpoint.NewReporter(endpoint.ReporterConfig{
+		HostID:     nodeID,
+		HostName:   nodeName,
+		BufferSize: bufferSize,
+		Scanner:    scanner,
+	})
 	r, _ := reporter.Report()
 	//buf, _ := json.MarshalIndent(r, "", "    ")
 	//t.Logf("\n%s\n", buf)
@@ -86,7 +93,14 @@ func TestSpyWithProcesses(t *testing.T) {
 	)
 
 	scanner := procspy.FixedScanner(fixConnectionsWithProcesses)
-	reporter := endpoint.NewReporter(nodeID, nodeName, true, false, true, "", scanner, nil)
+	reporter := endpoint.NewReporter(endpoint.ReporterConfig{
+		HostID:     nodeID,
+		HostName:   nodeName,
+		SpyProcs:   true,
+		WalkProc:   true,
+		BufferSize: bufferSize,
+		Scanner:    scanner,
+	})
 	r, _ := reporter.Report()
 	// buf, _ := json.MarshalIndent(r, "", "    ") ; t.Logf("\n%s\n", buf)
 

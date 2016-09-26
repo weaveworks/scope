@@ -85,10 +85,12 @@ type probeFlags struct {
 	noApp           bool
 	noControls      bool
 
-	useConntrack bool // Use conntrack for endpoint topo
-	spyProcs     bool // Associate endpoints with processes (must be root)
-	procEnabled  bool // Produce process topology & process nodes in endpoint
-	procRoot     string
+	useConntrack        bool // Use conntrack for endpoint topo
+	conntrackBufferSize int  // Sie of kernel buffer for conntrack
+
+	spyProcs    bool // Associate endpoints with processes (must be root)
+	procEnabled bool // Produce process topology & process nodes in endpoint
+	procRoot    string
 
 	dockerEnabled  bool
 	dockerInterval time.Duration
@@ -197,6 +199,7 @@ func main() {
 
 	// Proc & endpoint
 	flag.BoolVar(&flags.probe.useConntrack, "probe.conntrack", true, "also use conntrack to track connections")
+	flag.IntVar(&flags.probe.conntrackBufferSize, "probe.conntrack.buffersize", 208*1024, "conntrack buffer size")
 	flag.BoolVar(&flags.probe.spyProcs, "probe.proc.spy", true, "associate endpoints with processes (needs root)")
 	flag.StringVar(&flags.probe.procRoot, "probe.proc.root", "/proc", "location of the proc filesystem")
 	flag.BoolVar(&flags.probe.procEnabled, "probe.processes", true, "produce process topology & include procspied connections")
