@@ -25,38 +25,36 @@ var (
 		ID:      "pseudo",
 		Default: "hide",
 		Options: []APITopologyOption{
-			{"show", "Show Unmanaged", nil, false},
-			{"hide", "Hide Unmanaged", render.IsNotPseudo, true},
+			{Value: "show", Label: "Show Unmanaged", filter: nil, filterPseudo: false},
+			{Value: "hide", Label: "Hide Unmanaged", filter: render.IsNotPseudo, filterPseudo: true},
 		},
 	}
 )
 
 func init() {
+	containerOpts, _ := getContainerTopologyOptions()
+	fmt.Println(containerOpts)
 	containerFilters := []APITopologyOptionGroup{
 		{
 			ID:      "system",
 			Default: "application",
-			Options: []APITopologyOption{
-				{"system", "System containers", render.IsSystem, false},
-				{"application", "Application containers", render.IsApplication, false},
-				{"both", "Both", nil, false},
-			},
+			Options: containerOpts,
 		},
 		{
 			ID:      "stopped",
 			Default: "running",
 			Options: []APITopologyOption{
-				{"stopped", "Stopped containers", render.IsStopped, false},
-				{"running", "Running containers", render.IsRunning, false},
-				{"both", "Both", nil, false},
+				{Value: "stopped", Label: "Stopped containers", filter: render.IsStopped, filterPseudo: false},
+				{Value: "running", Label: "Running containers", filter: render.IsRunning, filterPseudo: false},
+				{Value: "both", Label: "Both", filter: nil, filterPseudo: false},
 			},
 		},
 		{
 			ID:      "pseudo",
 			Default: "hide",
 			Options: []APITopologyOption{
-				{"show", "Show Uncontained", nil, false},
-				{"hide", "Hide Uncontained", render.IsNotPseudo, true},
+				{Value: "show", Label: "Show Uncontained", filter: nil, filterPseudo: false},
+				{Value: "hide", Label: "Hide Uncontained", filter: render.IsNotPseudo, filterPseudo: true},
 			},
 		},
 	}
@@ -68,7 +66,7 @@ func init() {
 			Options: []APITopologyOption{
 				// Show the user why there are filtered nodes in this view.
 				// Don't give them the option to show those nodes.
-				{"hide", "Unconnected nodes hidden", nil, false},
+				{Value: "hide", Label: "Unconnected nodes hidden", filter: nil, filterPseudo: false},
 			},
 		},
 	}
@@ -159,10 +157,10 @@ func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
 			options.Default = namespace
 		}
 		options.Options = append(options.Options, APITopologyOption{
-			namespace, namespace, render.IsNamespace(namespace), false,
+			Value: namespace, Label: namespace, filter: render.IsNamespace(namespace), filterPseudo: false,
 		})
 	}
-	options.Options = append(options.Options, APITopologyOption{"all", "All Namespaces", nil, false})
+	options.Options = append(options.Options, APITopologyOption{Value: "all", Label: "All Namespaces", filter: nil, filterPseudo: false})
 	return options
 }
 
