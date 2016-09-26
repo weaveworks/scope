@@ -24,17 +24,25 @@ const (
 	SnoopedDNSNames = "snooped_dns_names"
 )
 
+// ReporterConfig are the config options for the endpoint reporter.
+type ReporterConfig struct {
+	HostID       string
+	HostName     string
+	SpyProcs     bool
+	UseConntrack bool
+	WalkProc     bool
+	ProcRoot     string
+	BufferSize   int
+	Scanner      procspy.ConnectionScanner
+	DNSSnooper   *DNSSnooper
+}
+
 // Reporter generates Reports containing the Endpoint topology.
 type Reporter struct {
-	hostID          string
-	hostName        string
-	spyProcs        bool
-	walkProc        bool
+	conf            ReporterConfig
 	flowWalker      flowWalker // interface
-	scanner         procspy.ConnectionScanner
 	natMapper       natMapper
 	reverseResolver *reverseResolver
-	dnsSnooper      *DNSSnooper
 }
 
 // SpyDuration is an exported prometheus metric
@@ -54,21 +62,12 @@ var SpyDuration = prometheus.NewSummaryVec(
 // on the host machine, at the granularity of host and port. That information
 // is stored in the Endpoint topology. It optionally enriches that topology
 // with process (PID) information.
-func NewReporter(
-	hostID, hostName string,
-	spyProcs, useConntrack, walkProc bool,
-	procRoot string, bufferSize int,
-	scanner procspy.ConnectionScanner, dnsSnooper *DNSSnooper) *Reporter {
+func NewReporter(conf ReporterConfig) *Reporter {
 	return &Reporter{
-		hostID:          hostID,
-		hostName:        hostName,
-		spyProcs:        spyProcs,
-		walkProc:        walkProc,
-		flowWalker:      newConntrackFlowWalker(useConntrack, procRoot, bufferSize),
-		natMapper:       makeNATMapper(newConntrackFlowWalker(useConntrack, procRoot, bufferSize, "--any-nat")),
+		conf:            conf,
+		flowWalker:      newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize),
+		natMapper:       makeNATMapper(newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, "--any-nat")),
 		reverseResolver: newReverseResolver(),
-		scanner:         scanner,
-		dnsSnooper:      dnsSnooper,
 	}
 }
 
@@ -80,7 +79,7 @@ func (r *Reporter) Stop() {
 	r.flowWalker.stop()
 	r.natMapper.stop()
 	r.reverseResolver.stop()
-	r.scanner.Stop()
+	r.conf.Scanner.Stop()
 }
 
 type fourTuple struct {
@@ -110,7 +109,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		SpyDuration.WithLabelValues().Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	hostNodeID := report.MakeHostNodeID(r.hostID)
+	hostNodeID := report.MakeHostNodeID(r.conf.HostID)
 	rpt := report.MakeReport()
 	seenTuples := map[string]fourTuple{}
 
@@ -143,8 +142,8 @@ func (r *Reporter) Report() (report.Report, error) {
 		})
 	}
 
-	if r.walkProc {
-		conns, err := r.scanner.Connections(r.spyProcs)
+	if r.conf.WalkProc {
+		conns, err := r.conf.Scanner.Connections(r.conf.SpyProcs)
 		if err != nil {
 			return rpt, err
 		}
@@ -182,7 +181,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		}
 	}
 
-	r.natMapper.applyNAT(rpt, r.hostID)
+	r.natMapper.applyNAT(rpt, r.conf.HostID)
 	return rpt, nil
 }
 
@@ -198,9 +197,9 @@ func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, namespaceID st
 func (r *Reporter) makeEndpointNode(namespaceID string, addr string, port uint16, extra map[string]string) report.Node {
 	portStr := strconv.Itoa(int(port))
 	node := report.MakeNodeWith(
-		report.MakeEndpointNodeID(r.hostID, namespaceID, addr, portStr),
+		report.MakeEndpointNodeID(r.conf.HostID, namespaceID, addr, portStr),
 		map[string]string{Addr: addr, Port: portStr})
-	if names := r.dnsSnooper.CachedNamesForIP(addr); len(names) > 0 {
+	if names := r.conf.DNSSnooper.CachedNamesForIP(addr); len(names) > 0 {
 		node = node.WithSet(SnoopedDNSNames, report.MakeStringSet(names...))
 	}
 	if names, err := r.reverseResolver.get(addr); err == nil && len(names) > 0 {
