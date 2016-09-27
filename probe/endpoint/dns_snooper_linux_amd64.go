@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"math"
 	"time"
@@ -112,7 +113,6 @@ func (s *DNSSnooper) Stop() {
 }
 
 // Gopacket doesn't provide direct support for DNS over TCP, see https://github.com/google/gopacket/issues/236
-// TODO: deal with TCP fragmentation and out-of-order segments
 type tcpWithDNSSupport struct {
 	tcp layers.TCP
 }
@@ -120,18 +120,35 @@ type tcpWithDNSSupport struct {
 func (m *tcpWithDNSSupport) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 	return m.tcp.DecodeFromBytes(data, df)
 }
+
 func (m *tcpWithDNSSupport) CanDecode() gopacket.LayerClass { return m.tcp.CanDecode() }
+
+// Determine if a TCP segment contains a full DNS message (i.e. not fragmented)
+func (m *tcpWithDNSSupport) hasSelfContainedDNSPayload() bool {
+	payload := m.tcp.LayerPayload()
+	if len(payload) < 2 {
+		return false
+	}
+
+	// Assume it's a self-contained DNS message if the Length field
+	// matches the length of the TCP segment
+	dnsLengthField := binary.BigEndian.Uint16(payload)
+	return int(dnsLengthField) == len(payload)-2
+}
+
 func (m *tcpWithDNSSupport) NextLayerType() gopacket.LayerType {
-	if m.tcp.SrcPort == 53 || m.tcp.DstPort == 53 {
+	// TODO: deal with TCP fragmentation and out-of-order segments
+	if (m.tcp.SrcPort == 53 || m.tcp.DstPort == 53) && m.hasSelfContainedDNSPayload() {
 		return layers.LayerTypeDNS
 	}
 	return m.tcp.NextLayerType()
 }
+
 func (m *tcpWithDNSSupport) LayerPayload() []byte {
 	payload := m.tcp.LayerPayload()
-	// Omit the DNS length field, only included
-	// in TCP, in order to reuse the DNS UDP parser
 	if len(payload) > 1 && (m.tcp.SrcPort == 53 || m.tcp.DstPort == 53) {
+		// Omit the DNS length field, only included
+		// in TCP, in order to reuse the DNS UDP parser
 		payload = payload[2:]
 	}
 	return payload
@@ -163,7 +180,7 @@ func (s *DNSSnooper) run() {
 		packet, _, err := s.pcapHandle.ZeroCopyReadPacketData()
 		if err != nil {
 			// TimeoutExpired is acceptable due to the Timeout black magic
-			// on the handle
+			// on the handle.
 			if err != pcap.NextErrorTimeoutExpired {
 				log.Errorf("DNSSnooper: error reading packet data: %s", err)
 			}
@@ -171,7 +188,10 @@ func (s *DNSSnooper) run() {
 		}
 
 		if err := packetParser.DecodeLayers(packet, &decodedLayers); err != nil {
-			log.Errorf("DNSSnooper: error decoding packet: %s", err)
+			// LayerTypePayload indicates the TCP payload has non-DNS data, which we are not interested in
+			if layer, ok := err.(gopacket.UnsupportedLayerType); !ok || gopacket.LayerType(layer) != gopacket.LayerTypePayload {
+				log.Errorf("DNSSnooper: error decoding packet: %s", err)
+			}
 			continue
 		}
 
