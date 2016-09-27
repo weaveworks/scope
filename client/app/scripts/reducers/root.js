@@ -606,7 +606,8 @@ export function rootReducer(state = initialState, action) {
       state = state.set('errorUrl', null);
       state = state.update('topologyUrlsById', topologyUrlsById => topologyUrlsById.clear());
       state = processTopologies(state, action.topologies);
-      if (!state.get('currentTopologyId')) {
+      const currentTopologyId = state.get('currentTopologyId');
+      if (!currentTopologyId || !findTopologyById(state.get('topologies'), currentTopologyId)) {
         state = state.set('currentTopologyId', getDefaultTopology(state.get('topologies')));
         log(`Set currentTopologyId to ${state.get('currentTopologyId')}`);
       }
