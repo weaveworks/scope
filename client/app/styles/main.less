@@ -41,7 +41,7 @@
 @details-window-padding-left: 36px;
 @border-radius: 4px;
 
-@terminal-header-height: 34px;
+@terminal-header-height: 44px + 8px;
 
 @node-opacity-blurred: 0.25;
 @node-highlight-fill-opacity: 0.1;
@@ -979,7 +979,7 @@ h2 {
   }
 
   &-embedded {
-    z-index: 512;
+    z-index: 1024;
     position: fixed;
     top: 24px;
     bottom: 48px;
@@ -996,18 +996,17 @@ h2 {
     border: 0px solid #000000;
     border-radius: 4px;
     color: #f0f0f0;
-    font-family: @mono-font;
-    .shadow-2;
   }
 
   &-header {
     .truncate;
-    text-align: center;
     color: @white;
     height: @terminal-header-height;
     padding: 8px 24px;
     background-color: @text-color;
     position: relative;
+    font-size: 14px;
+    line-height: 28px;
 
     &-title {
       cursor: default;
@@ -1030,7 +1029,6 @@ h2 {
         font-size: 0.8em;
         font-weight: bold;
         text-transform: uppercase;
-        word-spacing: -4px;
 
         &:hover {
           opacity: 1;
@@ -1047,6 +1045,7 @@ h2 {
   &-embedded &-inner { top: @terminal-header-height; }
   &-app &-inner { top: 0; }
   &-inner {
+    font-family: @mono-font;
     position: absolute;
     bottom: 0;
     left: 0;

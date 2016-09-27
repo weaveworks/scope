@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { getNodeColor, getNodeColorDark } from '../utils/color-utils';
+import { brightenColor, getNodeColorDark } from '../utils/color-utils';
 import Terminal from './terminal';
 import { DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS,
   DETAILS_PANEL_OFFSET } from '../constants/styles';
@@ -12,13 +12,13 @@ class EmeddedTerminal extends React.Component {
     const nodeId = pipe.get('nodeId');
     const node = details.get(nodeId);
     const d = node && node.details;
-    const titleBarColor = d && getNodeColorDark(d.rank, d.label);
-    const statusBarColor = d && getNodeColor(d.rank, d.label);
+    const titleBarColor = d && getNodeColorDark(d.rank, d.label, d.pseudo);
+    const statusBarColor = d && brightenColor(titleBarColor);
     const title = d && d.label;
 
     const style = {
-      right: DETAILS_PANEL_MARGINS.right + DETAILS_PANEL_WIDTH + 10 +
-        (details.size * DETAILS_PANEL_OFFSET)
+      right: DETAILS_PANEL_MARGINS.right + DETAILS_PANEL_WIDTH +
+        ((details.size - 1) * DETAILS_PANEL_OFFSET)
     };
 
     // React unmount/remounts when key changes, this is important for cleaning up
