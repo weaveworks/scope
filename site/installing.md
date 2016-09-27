@@ -44,7 +44,7 @@ Where,
 
  * `<VM name>` is the name you gave to your virtual machine with docker-machine.
 
->>**Note:** Scope allows anyone with access to the UI control over your containers: as such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Additionally traffic between the app and the probe is currently insecure and should also not traverse the Internet. This means that you should either use the private / internal IP addresses of your nodes when setting it up, or route this traffic through Weave Net.  Put Scope behind a password, by using somthing like [Caddy](https://github.com/mholt/caddy) to protect the endpoint and making port 4040 available to localhost with Caddy proxying it. Or you can use Weave Cloud to manage your security for you.
+>>**Note:** Scope allows anyone with access to the user interface, control over your containers. As such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Also traffic between the app and the probe is insecure and should not traverse the Internet. This means that you should either use the private / internal IP addresses of your nodes when setting it up, or route this traffic through Weave Net.  Put Scope behind a password, by using somthing like [Caddy](https://github.com/mholt/caddy) to protect the endpoint and make port 4040 available to localhost with Caddy proxying it. Or you can skip these steps, and just use Weave Cloud to manage the security for you.
 
 ###<a name="docker-weave-cloud"></a>Using Weave Cloud
 
@@ -60,9 +60,9 @@ Where,
 
 * `--service-token=<token>` is the token you obtained after you signed up for Weave Cloud.
 
-This script downloads and runs a recent Scope docker image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it also doesn’t depend on Weave Net.
+This script downloads and runs a recent Scope Docker image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. Once launched, Scope doesn’t require any other configuration and it does not depend on Weave Net.
 
-After Scope has been launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login. Click 'View Instance' in the top right-hand corner to see the Scope user interface.
+After Scope is launched, open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login. Click 'View Instance' in the top right-hand corner to see the Scope user interface.
 
 
 ###<a name="cluster-no-net"></a>Installing Scope on a Local Cluster Without Weave Net
@@ -84,15 +84,16 @@ Suppose you have the following cluster:
      sudo curl -L git.io/scope -o /usr/local/bin/scope
      sudo chmod a+x /usr/local/bin/scope
 
- **2. Then on the first node:**
+ **2. Then on the first node run:**
 
      scope launch 192.168.100.18 192.168.100.19 192.168.100.20
 
- **3. And on the second node:**
+ **3. And do the same for all of the other nodes in your cluster:**
 
      scope launch 192.168.100.17 192.168.100.20 192.168.100.21
      scope launch 192.168.100.17 192.168.100.18 192.168.100.21
      scope launch 192.168.100.17 192.198.100.19 192.168.100.20
+
 
 
 ###<a name="net-scope"></a> Weave Net and Scope
