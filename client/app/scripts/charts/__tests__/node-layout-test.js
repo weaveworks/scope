@@ -35,6 +35,21 @@ describe('NodesLayout', () => {
         'n2-n4': {id: 'n2-n4', source: 'n2', target: 'n4'}
       })
     },
+    addNode15: {
+      nodes: fromJS({
+        n1: {id: 'n1'},
+        n2: {id: 'n2'},
+        n3: {id: 'n3'},
+        n4: {id: 'n4'},
+        n5: {id: 'n5'}
+      }),
+      edges: fromJS({
+        'n1-n3': {id: 'n1-n3', source: 'n1', target: 'n3'},
+        'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'},
+        'n1-n5': {id: 'n1-n5', source: 'n1', target: 'n5'},
+        'n2-n4': {id: 'n2-n4', source: 'n2', target: 'n4'}
+      })
+    },
     removeEdge24: {
       nodes: fromJS({
         n1: {id: 'n1'},
@@ -82,6 +97,19 @@ describe('NodesLayout', () => {
         n3: {id: 'n3'},
         n4: {id: 'n4'},
         n5: {id: 'n5'}
+      }),
+      edges: fromJS({
+        'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'}
+      })
+    },
+    singlePortrait6: {
+      nodes: fromJS({
+        n1: {id: 'n1'},
+        n2: {id: 'n2'},
+        n3: {id: 'n3'},
+        n4: {id: 'n4'},
+        n5: {id: 'n5'},
+        n6: {id: 'n6'}
       }),
       edges: fromJS({
         'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'}
@@ -281,5 +309,66 @@ describe('NodesLayout', () => {
     expect(nodes.n1.x).toBeLessThan(nodes.n3.x);
     expect(nodes.n1.x).toBeLessThan(nodes.n5.x);
     expect(nodes.n2.x).toEqual(nodes.n5.x);
+  });
+
+  it('renders an additional single node in single nodes group', () => {
+    let result = NodesLayout.doLayout(
+      nodeSets.singlePortrait.nodes,
+      nodeSets.singlePortrait.edges);
+
+    nodes = result.nodes.toJS();
+
+    // first square row on same level as top-most other node
+    expect(nodes.n1.y).toEqual(nodes.n2.y);
+    expect(nodes.n1.y).toEqual(nodes.n3.y);
+    expect(nodes.n4.y).toEqual(nodes.n5.y);
+
+    // all singles right to other nodes
+    expect(nodes.n1.x).toEqual(nodes.n4.x);
+    expect(nodes.n1.x).toBeLessThan(nodes.n2.x);
+    expect(nodes.n1.x).toBeLessThan(nodes.n3.x);
+    expect(nodes.n1.x).toBeLessThan(nodes.n5.x);
+    expect(nodes.n2.x).toEqual(nodes.n5.x);
+
+    options.cachedLayout = result;
+    options.nodeCache = options.nodeCache.merge(result.nodes);
+    options.edgeCache = options.edgeCache.merge(result.edge);
+
+    result = NodesLayout.doLayout(
+      nodeSets.singlePortrait6.nodes,
+      nodeSets.singlePortrait6.edges,
+      options
+    );
+
+    nodes = result.nodes.toJS();
+
+    expect(nodes.n1.x).toBeLessThan(nodes.n2.x);
+    expect(nodes.n1.x).toBeLessThan(nodes.n3.x);
+    expect(nodes.n1.x).toBeLessThan(nodes.n5.x);
+    expect(nodes.n1.x).toBeLessThan(nodes.n6.x);
+  });
+
+  it('adds a new node to existing layout in a line', () => {
+    let result = NodesLayout.doLayout(
+      nodeSets.initial4.nodes,
+      nodeSets.initial4.edges);
+
+    nodes = result.nodes.toJS();
+
+    coords = getNodeCoordinates(result.nodes);
+    options.cachedLayout = result;
+    options.nodeCache = options.nodeCache.merge(result.nodes);
+    options.edgeCache = options.edgeCache.merge(result.edge);
+
+    result = NodesLayout.doLayout(
+      nodeSets.addNode15.nodes,
+      nodeSets.addNode15.edges,
+      options
+    );
+
+    nodes = result.nodes.toJS();
+
+    expect(nodes.n1.x).toBeGreaterThan(nodes.n5.x);
+    expect(nodes.n1.y).toEqual(nodes.n5.y);
   });
 });

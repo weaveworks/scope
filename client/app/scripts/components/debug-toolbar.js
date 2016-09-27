@@ -4,7 +4,7 @@ import d3 from 'd3';
 import _ from 'lodash';
 import Perf from 'react-addons-perf';
 import { connect } from 'react-redux';
-import { fromJS } from 'immutable';
+import { fromJS, Set as makeSet } from 'immutable';
 
 import debug from 'debug';
 const log = debug('scope:debug-panel');
@@ -160,6 +160,10 @@ class DebugToolbar extends React.Component {
     this.onChange = this.onChange.bind(this);
     this.toggleColors = this.toggleColors.bind(this);
     this.addNodes = this.addNodes.bind(this);
+    this.intermittendTimer = null;
+    this.intermittendNodes = makeSet();
+    this.shortLivedTimer = null;
+    this.shortLivedNodes = makeSet();
     this.state = {
       nodesToAdd: 30,
       showColors: false
@@ -182,6 +186,66 @@ class DebugToolbar extends React.Component {
 
   setLoading(loading) {
     this.asyncDispatch(setAppState(state => state.set('topologiesLoaded', !loading)));
+  }
+
+  updateAdjacencies() {
+    const ns = this.props.nodes;
+    const nodeNames = ns.keySeq().toJS();
+    this.asyncDispatch(receiveNodesDelta({
+      add: this._addNodes(7),
+      update: sample(nodeNames).map(n => ({
+        id: n,
+        adjacency: sample(nodeNames),
+      }), nodeNames.length),
+      remove: this._removeNode(),
+    }));
+  }
+
+  setIntermittend() {
+    // simulate epheremal nodes
+    if (this.intermittendTimer) {
+      clearInterval(this.intermittendTimer);
+      this.intermittendTimer = null;
+    } else {
+      this.intermittendTimer = setInterval(() => {
+        // add new node
+        this.addNodes(1);
+
+        // remove random node
+        const ns = this.props.nodes;
+        const nodeNames = ns.keySeq().toJS();
+        const randomNode = _.sample(nodeNames);
+        this.asyncDispatch(receiveNodesDelta({
+          remove: [randomNode]
+        }));
+      }, 1000);
+    }
+  }
+
+  setShortLived() {
+    // simulate nodes with same ID popping in and out
+    if (this.shortLivedTimer) {
+      clearInterval(this.shortLivedTimer);
+      this.shortLivedTimer = null;
+    } else {
+      this.shortLivedTimer = setInterval(() => {
+        // filter random node
+        const ns = this.props.nodes;
+        const nodeNames = ns.keySeq().toJS();
+        const randomNode = _.sample(nodeNames);
+        if (randomNode) {
+          let nextNodes = ns.setIn([randomNode, 'filtered'], true);
+          this.shortLivedNodes = this.shortLivedNodes.add(randomNode);
+          // bring nodes back after a bit
+          if (this.shortLivedNodes.size > 5) {
+            const returningNode = this.shortLivedNodes.first();
+            this.shortLivedNodes = this.shortLivedNodes.rest();
+            nextNodes = nextNodes.setIn([returningNode, 'filtered'], false);
+          }
+          this.asyncDispatch(setAppState(state => state.set('nodes', nextNodes)));
+        }
+      }, 1000);
+    }
   }
 
   updateAdjacencies() {
@@ -301,6 +365,12 @@ class DebugToolbar extends React.Component {
           <label>state</label>
           <button onClick={() => this.setLoading(true)}>Set doing initial load</button>
           <button onClick={() => this.setLoading(false)}>Stop</button>
+        </div>
+
+        <div>
+          <label>Short-lived nodes</label>
+          <button onClick={() => this.setShortLived()}>Toggle short-lived nodes</button>
+          <button onClick={() => this.setIntermittend()}>Toggle intermittend nodes</button>
         </div>
 
         <div>

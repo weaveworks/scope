@@ -274,6 +274,13 @@ export function hasUnseenNodes(nodes, cache) {
   return hasUnseen;
 }
 
+function hasNewSingleNode(nodes, cache) {
+  return (ImmSet
+    .fromKeys(nodes)
+    .subtract(ImmSet.fromKeys(cache))
+    .every(key => nodes.getIn([key, 'degree']) === 0));
+}
+
 /**
  * Determine if edge has same endpoints in new nodes as well as in the nodeCache
  * @param  {Map}  edge      Edge with source and target
@@ -364,9 +371,14 @@ export function doLayout(immNodes, immEdges, opts) {
   } else {
     const graph = cache.graph;
     const nodesWithDegrees = updateNodeDegrees(immNodes, immEdges);
-    layout = runLayoutEngine(graph, nodesWithDegrees, immEdges, opts);
-    if (!layout) {
-      return layout;
+    if (hasNewSingleNode(nodesWithDegrees, nodeCache)) {
+      layout = cloneLayout(cachedLayout, immNodes, immEdges);
+      layout = copyLayoutProperties(layout, nodeCache, edgeCache);
+    } else {
+      layout = runLayoutEngine(graph, nodesWithDegrees, immEdges, opts);
+      if (!layout) {
+        return layout;
+      }
     }
     layout = layoutSingleNodes(layout, opts);
     layout = shiftLayoutToCenter(layout, opts);
