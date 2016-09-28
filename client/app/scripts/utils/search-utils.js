@@ -64,7 +64,7 @@ function matchPrefix(label, prefix) {
  * no match).
  * Returns a new instance of nodeMatches.
  */
-function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label) {
+function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label, truncate) {
   if (!prefix || matchPrefix(label, prefix)) {
     const queryRe = makeRegExp(query);
     const matches = text.match(queryRe);
@@ -72,7 +72,7 @@ function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label) {
       const firstMatch = matches[0];
       const index = text.search(queryRe);
       nodeMatches = nodeMatches.setIn(keyPath,
-        {text, label, start: index, length: firstMatch.length});
+        {text, label, start: index, length: firstMatch.length, truncate});
     }
   }
   return nodeMatches;
@@ -135,7 +135,7 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
         node.get('metadata').forEach(field => {
           const keyPath = [nodeId, 'metadata', field.get('id')];
           nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
-            query, prefix, field.get('label'));
+            query, prefix, field.get('label'), field.get('truncate'));
         });
       }
 

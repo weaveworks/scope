@@ -127,7 +127,7 @@ func TestMakeNodeSummary(t *testing.T) {
 				Shape:      "hexagon",
 				Linkable:   true,
 				Metadata: []report.MetadataRow{
-					{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 1},
+					{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 1, Truncate: 12},
 				},
 				Adjacency: report.MakeIDList(fixture.ServerContainerNodeID),
 			},
