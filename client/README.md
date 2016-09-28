@@ -39,3 +39,11 @@ The Scope UI uses [debug](https://www.npmjs.com/package/debug) for logging, e.g.
 const debug = require('debug')('scope:app-store');
 debug('Store log message');
 ```
+
+## Gotchas
+
+Got a blank screen when loading `http://localhost:4042`?
+
+Make sure you are accessing the right machine:
+If you're running `npm start` on a virtual machine with IP 10.0.0.8, you need to point your browser to `http://10.0.0.8:4042`.
+Also, you may need to manually configure the virtual machine to expose ports 4041 (webpack-dev-server) and 4042 (express proxy).
