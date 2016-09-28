@@ -41,7 +41,6 @@ var (
 	}
 
 	ContainerImageMetadataTemplates = report.MetadataTemplates{
-		ImageID:          {ID: ImageID, Label: "Image ID", From: report.FromSets, Truncate: 12, Priority: 1},
 		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: "number", Priority: 2},
 	}
 
