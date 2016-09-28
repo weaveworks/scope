@@ -13,7 +13,7 @@ function isNumber(data) {
 const CW = {
   XS: '32px',
   S: '50px',
-  M: '80px',
+  M: '70px',
   L: '120px',
   XL: '140px',
   XXL: '170px',
@@ -21,12 +21,15 @@ const CW = {
 
 
 const XS_LABEL = {
-  count: '#'
+  count: '#',
+  // TODO: consider changing the name of this field on the BE
+  container: '#',
 };
 
 
 const COLUMN_WIDTHS = {
   count: CW.XS,
+  container: CW.XS,
   docker_container_created: CW.XL,
   docker_container_restart_count: CW.M,
   docker_container_state_human: CW.XXL,
@@ -34,14 +37,16 @@ const COLUMN_WIDTHS = {
   docker_cpu_total_usage: CW.M,
   docker_memory_usage: CW.M,
   open_files_count: CW.M,
-  pid: CW.M,
+  pid: CW.S,
   port: CW.S,
-  ppid: CW.M,
+  ppid: CW.S,
   process_cpu_usage_percent: CW.M,
   process_memory_usage_bytes: CW.M,
   threads: CW.M,
+
   // e.g. details panel > pods
   kubernetes_ip: CW.L,
+  kubernetes_state: CW.M,
 };
 
 
@@ -143,21 +148,7 @@ function getSortedNodes(nodes, sortByHeader, sortedDesc) {
 }
 
 
-function getColumnWidth(headers, h, i) {
-  //
-  // Beauty hack: adjust first column width if there are only few columns;
-  // this assumes the other columns are narrow metric columns of 20% table width
-  //
-  if (i === 0) {
-    if (headers.length === 2) {
-      return '66%';
-    } else if (headers.length === 3) {
-      return '50%';
-    } else if (headers.length > 3 && headers.length <= 5) {
-      return '33%';
-    }
-  }
-
+function getColumnWidth(headers, h) {
   //
   // More beauty hacking, ports and counts can only get so big, free up WS for other longer
   // fields like IPs!
