@@ -179,7 +179,7 @@ After Scope has been launched, open your web browser to [https://cloud.weave.wor
 
 ### With Weave Cloud (recommended)
 
-Weave Cloud runs the Scope UI for you, so you don't have to configure exposing and securing it for your team.
+Weave Cloud runs the Scope UI for you, and provides secure access control for your team.
 
 Register for a [Weave Cloud account](https://cloud.weave.works/) to get a service token and then replace `<token>` with your token below, running this either on the master or on a machine where `kubectl` is configured to authenticate to your Kubernetes cluster:
 
