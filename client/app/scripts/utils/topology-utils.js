@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { is as isDeepEqual, Map as makeMap, Set as makeSet, List as makeList } from 'immutable';
+import { Set as makeSet, List as makeList } from 'immutable';
 
 
 //
@@ -143,6 +143,7 @@ export function isTopologyEmpty(state) {
     && state.get('nodes').size === 0;
 }
 
+
 export function getAdjacentNodes(state, originNodeId) {
   let adjacentNodes = makeSet();
   const nodeId = originNodeId || state.get('selectedNodeId');
@@ -169,13 +170,6 @@ export function hasSelectedNode(state) {
 
 export function getCurrentTopologyUrl(state) {
   return state.getIn(['currentTopology', 'url']);
-}
-
-export function isSameTopology(nodes, nextNodes) {
-  const mapper = node => makeMap({id: node.get('id'), adjacency: node.get('adjacency')});
-  const topology = nodes.map(mapper);
-  const nextTopology = nextNodes.map(mapper);
-  return isDeepEqual(topology, nextTopology);
 }
 
 export function isNodeMatchingQuery(node, query) {

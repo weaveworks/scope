@@ -13,24 +13,6 @@ const navbarHeight = 194;
 const marginTop = 0;
 
 
-/**
- * dynamic coords precision based on topology size
- */
-function getLayoutPrecision(nodesCount) {
-  let precision;
-  if (nodesCount >= 50) {
-    precision = 0;
-  } else if (nodesCount > 20) {
-    precision = 1;
-  } else if (nodesCount > 10) {
-    precision = 2;
-  } else {
-    precision = 3;
-  }
-
-  return precision;
-}
-
 class Nodes extends React.Component {
   constructor(props, context) {
     super(props, context);
@@ -67,9 +49,8 @@ class Nodes extends React.Component {
   }
 
   render() {
-    const { nodes, topologyEmpty, gridMode, topologiesLoaded, nodesLoaded, topologies,
+    const { topologyEmpty, gridMode, topologiesLoaded, nodesLoaded, topologies,
       currentTopology } = this.props;
-    const layoutPrecision = getLayoutPrecision(nodes.size);
 
     return (
       <div className="nodes-wrapper">
@@ -84,13 +65,10 @@ class Nodes extends React.Component {
         {gridMode ?
           <NodesGrid {...this.state}
             nodeSize="24"
-            nodes={nodes}
             margins={CANVAS_MARGINS}
           /> :
          <NodesChart {...this.state}
-           nodes={nodes}
            margins={CANVAS_MARGINS}
-           layoutPrecision={layoutPrecision}
            />}
       </div>
     );
@@ -113,7 +91,6 @@ function mapStateToProps(state) {
   return {
     currentTopology: state.get('currentTopology'),
     gridMode: state.get('gridMode'),
-    nodes: state.get('nodes').filter(node => !node.get('filtered')),
     nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),

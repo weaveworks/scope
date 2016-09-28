@@ -66,7 +66,7 @@ if (process.env.NODE_ENV !== 'production') {
     hot: true,
     noInfo: true,
     historyApiFallback: true,
-    stats: { colors: true }
+    stats: 'errors-only',
   }).listen(4041, '0.0.0.0', function (err, result) {
     if (err) {
       console.log(err);
