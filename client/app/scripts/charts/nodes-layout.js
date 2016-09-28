@@ -118,11 +118,20 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
 
   // return object with the width and height of layout
   return {
+    graphWidth: layout.width,
+    graphHeight: layout.height,
     width: layout.width,
     height: layout.height,
     nodes,
     edges
   };
+}
+
+export function doLayoutNewNodesOfExistingRank(layout, immNodes, immEdges, opts) {
+  console.log(opts);
+  // determine new nodes
+  // layout new nodes
+  // return layout
 }
 
 /**
@@ -142,7 +151,9 @@ function layoutSingleNodes(layout, opts) {
   const nodesep = scale(NODE_SEPARATION_FACTOR);
   const nodeWidth = scale(NODE_SIZE_FACTOR);
   const nodeHeight = scale(NODE_SIZE_FACTOR);
-  const aspectRatio = layout.height ? layout.width / layout.height : 1;
+  const graphHeight = layout.graphHeight || layout.height;
+  const graphWidth = layout.graphWidth || layout.width;
+  const aspectRatio = graphHeight ? graphWidth / graphHeight : 1;
 
   let nodes = layout.nodes;
 
@@ -274,11 +285,29 @@ export function hasUnseenNodes(nodes, cache) {
   return hasUnseen;
 }
 
+/**
+ * Determine if all new nodes are 0-degree nodes
+ * Requires cached nodes (implies a previous layout run).
+ * @param  {Map} nodes     new Map of nodes
+ * @param  {Map} cache     old Map of nodes
+ * @return {Boolean} True if all new nodes are 0-nodes
+ */
 function hasNewSingleNode(nodes, cache) {
-  return (ImmSet
-    .fromKeys(nodes)
-    .subtract(ImmSet.fromKeys(cache))
-    .every(key => nodes.getIn([key, 'degree']) === 0));
+  const oldNodes = ImmSet.fromKeys(cache);
+  const newNodes = ImmSet.fromKeys(nodes).subtract(oldNodes);
+  const hasNewSingleNodes = newNodes.every(key => nodes.getIn([key, 'degree']) === 0);
+  return oldNodes.size > 0 && hasNewSingleNodes;
+}
+
+/**
+ * Determine if all new nodes are of existing ranks
+ * Requires cached nodes (implies a previous layout run).
+ * @param  {Map} nodes     new Map of nodes
+ * @param  {Map} cache     old Map of nodes
+ * @return {Boolean} True if all new nodes have a rank that already exists
+ */
+function hasNewNodesOfExistingRank(nodes, cache) {
+  return false && nodes && cache;
 }
 
 /**
@@ -322,7 +351,8 @@ function cloneLayout(layout, nodes, edges) {
  */
 function copyLayoutProperties(layout, nodeCache, edgeCache) {
   const result = Object.assign({}, layout);
-  result.nodes = layout.nodes.map(node => node.merge(nodeCache.get(node.get('id'))));
+  result.nodes = layout.nodes.map(node => (nodeCache.has(node.get('id'))
+    ? node.merge(nodeCache.get(node.get('id'))) : node));
   result.edges = layout.edges.map(edge => {
     if (edgeCache.has(edge.get('id'))
       && hasSameEndpoints(edgeCache.get(edge.get('id')), result.nodes)) {
@@ -347,7 +377,7 @@ export function doLayout(immNodes, immEdges, opts) {
   const cacheId = buildTopologyCacheId(options.topologyId, options.topologyOptions);
 
   // one engine and node and edge caches per topology, to keep renderings similar
-  if (!topologyCaches[cacheId]) {
+  if (options.noCache || !topologyCaches[cacheId]) {
     topologyCaches[cacheId] = {
       nodeCache: makeMap(),
       edgeCache: makeMap(),
@@ -359,22 +389,32 @@ export function doLayout(immNodes, immEdges, opts) {
   const cachedLayout = options.cachedLayout || cache.cachedLayout;
   const nodeCache = options.nodeCache || cache.nodeCache;
   const edgeCache = options.edgeCache || cache.edgeCache;
+  const useCache = !options.forceRelayout && cachedLayout && nodeCache && edgeCache;
   let layout;
 
   ++layoutRuns;
-  if (!options.forceRelayout && cachedLayout && nodeCache && edgeCache
-    && !hasUnseenNodes(immNodes, nodeCache)) {
+  if (useCache && !hasUnseenNodes(immNodes, nodeCache)) {
     log('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
     layout = cloneLayout(cachedLayout, immNodes, immEdges);
     // copy old properties, works also if nodes get re-added
     layout = copyLayoutProperties(layout, nodeCache, edgeCache);
   } else {
-    const graph = cache.graph;
     const nodesWithDegrees = updateNodeDegrees(immNodes, immEdges);
-    if (hasNewSingleNode(nodesWithDegrees, nodeCache)) {
-      layout = cloneLayout(cachedLayout, immNodes, immEdges);
+    if (useCache && hasNewSingleNode(nodesWithDegrees, nodeCache)) {
+      // special case: new nodes are 0-degree nodes, no need for layout run,
+      // they will be layed out further below
+      log('skip layout, only 0-degree node(s) added');
+      layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
       layout = copyLayoutProperties(layout, nodeCache, edgeCache);
+    } else if (useCache && hasNewNodesOfExistingRank(nodesWithDegrees, nodeCache)) {
+      // special case: few new nodes were added, no need for layout run,
+      // they will inserted according to ranks
+      log('skip layout, used rank-based insertion');
+      layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
+      layout = copyLayoutProperties(layout, nodeCache, edgeCache);
+      layout = doLayoutNewNodesOfExistingRank(layout, nodesWithDegrees, immEdges);
     } else {
+      const graph = cache.graph;
       layout = runLayoutEngine(graph, nodesWithDegrees, immEdges, opts);
       if (!layout) {
         return layout;
