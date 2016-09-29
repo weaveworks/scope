@@ -1,39 +1,28 @@
 # Scope Probe Plugins
 
-Scope probe plugins let you insert your own custom metrics into Scope
-and get them displayed in the UI.
+Scope probe plugins let you insert your own custom data and controls into Scope and display them in the UI.
+The list of the current running plugins is displayed next to the label `PLUGINS` in the bottom right of the UI.
 
 <img src="../../imgs/plugin.png" width="800" alt="Scope Probe plugin screenshot" align="center">
 
-You can find some examples at the [the example
-plugins](https://github.com/weaveworks/scope/tree/master/examples/plugins)
-directory. We currently provide two examples:
 
-* A [Python
-  plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/http-requests)
-  using [bcc](http://iovisor.github.io/bcc/) to extract incoming HTTP
-  request rates per process, without any application-level
-  instrumentation requirements and negligible performance toll
-  (metrics are obtained in-kernel without any packet copying to
-  userspace).  **Note:** This plugin needs a [recent kernel version
-  with ebpf
-  support](https://github.com/iovisor/bcc/blob/master/INSTALL.md#kernel-configuration). It
-  will not compile on current [dlite](https://github.com/nlf/dlite)
-  and boot2docker hosts.
-* A [Go
-  plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/iowait),
-  using [iostat](https://en.wikipedia.org/wiki/Iostat) to provide
-  host-level CPU IO wait or idle metrics.
+## Official Plugins
 
-The example plugins can be run by calling `make` in their directory.
-This will build the plugin, and immediately run it in the foreground.
-To run the plugin in the background, see the `Makefile` for examples
-of the `docker run ...` command.
+You can find all the official plugins at [Weaveworks Plugins](https://github.com/weaveworks-plugins).
 
-If the running plugin was picked up by Scope, you will see it in the
-list of `PLUGINS` in the bottom right of the UI.
+* [IOWait](https://github.com/weaveworks-plugins/scope-iowait): a Go plugin using [iostat](https://en.wikipedia.org/wiki/Iostat) to provide host-level CPU IO wait or idle metrics.
 
-## Plugin ID
+* [HTTP Statistics](https://github.com/weaveworks-plugins/scope-http-statistics): A Python plugin using [bcc](http://iovisor.github.io/bcc/) to track multiple metrics about HTTP per process, without any application-level instrumentation requirements and negligible performance toll. This plugin is a work in progress, as of now it implements two metrics (for more information read the [plugin documentation](https://github.com/weaveworks-plugins/scope-http-statistics)):
+	* Number of HTTP requests per seconds.
+	* Number of HTTP responses code per second (per code).
+
+* [Traffic Control](https://github.com/weaveworks-plugins/scope-traffic-control): This plugin allows the user to modify latency and packet loss for a specific container via buttons in the UI's container detailed view.
+
+## Plugins Internals
+This section explains the fundamental parts of the plugins structure necessary to understand how a plugin communicates with Scope.
+You can find more practical examples in [Weaveworks Plugins](https://github.com/weaveworks-plugins) repositories.
+
+### Plugin ID
 
 Each plugin should have an unique ID. It is forbidden to change it
 during the plugin's lifetime. The scope probe will get the plugin's ID
@@ -42,7 +31,7 @@ from the plugin's socket filename. For example, the socket named
 `my-plugin`. IDs can only contain alphanumeric sequences, optionally
 separated with a dash.
 
-## Plugin registration
+### Plugin registration
 
 All plugins should listen for HTTP connections on a unix socket in the
 `/var/run/scope/plugins` directory. The scope probe will recursively
@@ -51,19 +40,18 @@ scan that directory every 5 seconds, to look for sockets being added
 sub-directory, in case you want to apply some permissions, or store
 other information with the socket.
 
-## Protocol
+### Protocol
 
 There are several interfaces a plugin may (or must) implement. Usually
 implementing an interface means handling specific requests. These
 requests are described below.
 
-### Reporter interface
+#### Reporter interface
 
-Plugins _must_ implement the reporter interface. Implementing this
-interface means listening for HTTP requests at `/report`.
+Plugins _must_ implement the reporter interface because Scope uses it to discover which other interfaces the plugin implements.
+Implementing this interface means listening for HTTP requests at `/report`.
 
-Add the "reporter" string to the `interfaces` field in the plugin
-specification.
+**Note**: Plugins must add the "reporter" string to the `interfaces` field in the plugin specification even though this interface is implicitly implemented.
 
 #### Report
 
@@ -80,12 +68,12 @@ For example:
 
 ```json
 {
-  "Processes": {},
+  ...,
   "Plugins": [
     {
-      "id":          "iowait",
-      "label":       "IOWait",
-      "description": "Adds a graph of CPU IO Wait to hosts",
+      "id":          "plugin-id",
+      "label":       "Human Friendly Name",
+      "description": "Plugin's brief description",
       "interfaces":  ["reporter"],
       "api_version": "1",
     }
@@ -106,14 +94,7 @@ description. The plugin description fields are:
 * `api_version` is used to ensure both the plugin and the scope probe
   can speak to each other. It is required, and must match the probe.
 
-You may notice a small chicken and egg problem - the plugin reports to
-the scope probe what interfaces it supports, but the scope probe can
-learn that only by doing a `GET /report` request which will be handled
-by the plugin if it implements the "reporter" interface. This is
-solved (or worked around) by requiring the plugin to always implements
-the "reporter" interface.
-
-### Controller interface
+#### Controller interface
 
 Plugins _may_ implement the controller interface. Implementing the
 controller interface means that the plugin can react to HTTP `POST`
