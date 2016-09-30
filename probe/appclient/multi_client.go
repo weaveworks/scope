@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"strings"
 	"sync"
 
@@ -18,7 +19,7 @@ import (
 const maxConcurrentGET = 10
 
 // ClientFactory is a thing thats makes AppClients
-type ClientFactory func(string, string) (AppClient, error)
+type ClientFactory func(string, url.URL) (AppClient, error)
 
 type multiClient struct {
 	clientFactory ClientFactory
@@ -46,7 +47,7 @@ type Publisher interface {
 // MultiAppClient maintains a set of upstream apps, and ensures we have an
 // AppClient for each one.
 type MultiAppClient interface {
-	Set(hostname string, endpoints []string)
+	Set(hostname string, urls []url.URL)
 	PipeConnection(appID, pipeID string, pipe xfer.Pipe) error
 	PipeClose(appID, pipeID string) error
 	Stop()
@@ -67,17 +68,17 @@ func NewMultiAppClient(clientFactory ClientFactory, noControls bool) MultiAppCli
 }
 
 // Set the list of endpoints for the given hostname.
-func (c *multiClient) Set(hostname string, endpoints []string) {
+func (c *multiClient) Set(hostname string, urls []url.URL) {
 	wg := sync.WaitGroup{}
-	wg.Add(len(endpoints))
-	clients := make(chan clientTuple, len(endpoints))
-	for _, endpoint := range endpoints {
-		go func(endpoint string) {
+	wg.Add(len(urls))
+	clients := make(chan clientTuple, len(urls))
+	for _, u := range urls {
+		go func(u url.URL) {
 			c.sema.acquire()
 			defer c.sema.release()
 			defer wg.Done()
 
-			client, err := c.clientFactory(hostname, endpoint)
+			client, err := c.clientFactory(hostname, u)
 			if err != nil {
 				log.Errorf("Error creating new app client: %v", err)
 				return
@@ -90,7 +91,7 @@ func (c *multiClient) Set(hostname string, endpoints []string) {
 			}
 
 			clients <- clientTuple{details, client}
-		}(endpoint)
+		}(u)
 	}
 
 	wg.Wait()

@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 
 	"github.com/certifi/gocertifi"
@@ -51,15 +50,10 @@ func (pc ProbeConfig) getHTTPTransport(hostname string) (*http.Transport, error)
 		}, nil
 	}
 
-	host, _, err := net.SplitHostPort(hostname)
-	if err != nil {
-		return nil, err
-	}
-
 	return &http.Transport{
 		TLSClientConfig: &tls.Config{
 			RootCAs:    certPool,
-			ServerName: host,
+			ServerName: hostname,
 		},
 	}, nil
 }

@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -83,7 +84,8 @@ func TestPipeClose(t *testing.T) {
 	probeConfig := appclient.ProbeConfig{
 		ProbeID: "foo",
 	}
-	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, nil)
+	url := url.URL{Scheme: "http", Host: ip + ":" + port}
+	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, url, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

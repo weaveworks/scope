@@ -14,6 +14,7 @@ import (
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/weave/common"
 )
@@ -278,12 +279,34 @@ func main() {
 	// Special case for #1191, check listen address is well formed
 	_, _, err := net.SplitHostPort(flags.app.listen)
 	if err != nil {
-		log.Errorf("Invalid value for -app.http.address: %v", err)
+		log.Fatalf("Invalid value for -app.http.address: %v", err)
 	}
 	if flags.probe.httpListen != "" {
 		_, _, err := net.SplitHostPort(flags.probe.httpListen)
 		if err != nil {
-			log.Errorf("Invalid value for -app.http.address: %v", err)
+			log.Fatalf("Invalid value for -app.http.address: %v", err)
+		}
+	}
+
+	// Special case probe push address parsing
+	targets := []appclient.Target{}
+	if mode == "probe" || dryRun {
+		args := []string{}
+		if flags.probe.token != "" {
+			// service mode
+			if len(flag.Args()) == 0 {
+				args = append(args, defaultServiceHost)
+			}
+		} else if !flags.probe.noApp {
+			args = append(args, fmt.Sprintf("localhost:%d", xfer.AppPort))
+		}
+		args = append(args, flag.Args()...)
+		if !dryRun {
+			log.Infof("publishing to: %s", strings.Join(args, ", "))
+		}
+		targets, err = appclient.ParseTargets(args)
+		if err != nil {
+			log.Fatalf("Invalid targets: %v", err)
 		}
 	}
 
@@ -295,7 +318,7 @@ func main() {
 	case "app":
 		appMain(flags.app)
 	case "probe":
-		probeMain(flags.probe)
+		probeMain(flags.probe, targets)
 	case "version":
 		fmt.Println("Weave Scope version", version)
 	case "help":

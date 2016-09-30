@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -43,7 +44,8 @@ func TestControl(t *testing.T) {
 			Value: "foo",
 		}
 	})
-	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, controlHandler)
+	url := url.URL{Scheme: "http", Host: ip + ":" + port}
+	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, url, controlHandler)
 	if err != nil {
 		t.Fatal(err)
 	}

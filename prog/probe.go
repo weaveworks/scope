@@ -1,15 +1,13 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"net/url"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -38,7 +36,7 @@ import (
 
 const (
 	versionCheckPeriod = 6 * time.Hour
-	defaultServiceHost = "cloud.weave.works:443"
+	defaultServiceHost = "https://cloud.weave.works:443"
 )
 
 var pluginAPIVersion = "1"
@@ -65,7 +63,7 @@ func check(flags map[string]string) {
 }
 
 // Main runs the probe
-func probeMain(flags probeFlags) {
+func probeMain(flags probeFlags, targets []appclient.Target) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 
@@ -94,28 +92,21 @@ func probeMain(flags probeFlags) {
 	}
 	go check(checkpointFlags)
 
-	var targets = []string{}
-	if flags.token != "" {
-		// service mode
-		if len(flag.Args()) == 0 {
-			targets = append(targets, defaultServiceHost)
-		}
-	} else if !flags.noApp {
-		targets = append(targets, fmt.Sprintf("localhost:%d", xfer.AppPort))
-	}
-	targets = append(targets, flag.Args()...)
-	log.Infof("publishing to: %s", strings.Join(targets, ", "))
-
-	probeConfig := appclient.ProbeConfig{
-		Token:        flags.token,
-		ProbeVersion: version,
-		ProbeID:      probeID,
-		Insecure:     flags.insecure,
-	}
 	handlerRegistry := controls.NewDefaultHandlerRegistry()
-	clientFactory := func(hostname, endpoint string) (appclient.AppClient, error) {
+	clientFactory := func(hostname string, url url.URL) (appclient.AppClient, error) {
+		token := flags.token
+		if url.User != nil {
+			token = url.User.Username()
+			url.User = nil // erase credentials, as we use a special header
+		}
+		probeConfig := appclient.ProbeConfig{
+			Token:        token,
+			ProbeVersion: version,
+			ProbeID:      probeID,
+			Insecure:     flags.insecure,
+		}
 		return appclient.NewAppClient(
-			probeConfig, hostname, endpoint,
+			probeConfig, hostname, url,
 			xfer.ControlHandlerFunc(handlerRegistry.HandleControlRequest),
 		)
 	}
@@ -126,7 +117,15 @@ func probeMain(flags probeFlags) {
 	if flags.resolver != "" {
 		dnsLookupFn = appclient.LookupUsing(flags.resolver)
 	}
-	resolver := appclient.NewResolver(targets, dnsLookupFn, clients.Set)
+	resolver, err := appclient.NewResolver(appclient.ResolverConfig{
+		Targets: targets,
+		Lookup:  dnsLookupFn,
+		Set:     clients.Set,
+	})
+	if err != nil {
+		log.Fatalf("Failed to create resolver: %v", err)
+		return
+	}
 	defer resolver.Stop()
 
 	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
@@ -210,8 +209,21 @@ func probeMain(flags probeFlags) {
 			log.Println("Error getting docker bridge ip:", err)
 		} else {
 			weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
-			weaveResolver := appclient.NewResolver([]string{flags.weaveHostname}, weaveDNSLookup, clients.Set)
-			defer weaveResolver.Stop()
+			weaveTargets, err := appclient.ParseTargets([]string{flags.weaveHostname})
+			if err != nil {
+				log.Errorf("Failed to parse weave targets: %v", err)
+			} else {
+				weaveResolver, err := appclient.NewResolver(appclient.ResolverConfig{
+					Targets: weaveTargets,
+					Lookup:  weaveDNSLookup,
+					Set:     clients.Set,
+				})
+				if err != nil {
+					log.Errorf("Failed to create weave resolver: %v", err)
+				} else {
+					defer weaveResolver.Stop()
+				}
+			}
 		}
 	}
 
@@ -235,7 +247,7 @@ func probeMain(flags probeFlags) {
 	if flags.httpListen != "" {
 		go func() {
 			log.Infof("Profiling data being exported to %s", flags.httpListen)
-			log.Infof("go tool pprof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
+			log.Infof("go tool proof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
 			log.Infof("Profiling endpoint %s terminated: %v", flags.httpListen, http.ListenAndServe(flags.httpListen, nil))
 		}()
 	}

@@ -109,7 +109,11 @@ func TestAppClientPublish(t *testing.T) {
 		Insecure:     false,
 	}
 
-	p, err := NewAppClient(pc, u.Host, s.URL, nil)
+	url, err := url.Parse(s.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := NewAppClient(pc, u.Host, *url, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +162,11 @@ func TestAppClientDetails(t *testing.T) {
 		ProbeID:  "",
 		Insecure: false,
 	}
-	p, err := NewAppClient(pc, u.Host, s.URL, nil)
+	url, err := url.Parse(s.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := NewAppClient(pc, u.Host, *url, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,7 +211,11 @@ func TestStop(t *testing.T) {
 		Insecure: false,
 	}
 
-	p, err := NewAppClient(pc, u.Host, s.URL, nil)
+	url, err := url.Parse(s.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := NewAppClient(pc, u.Host, *url, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"time"
 
 	"github.com/ugorji/go/codec"
@@ -45,11 +46,16 @@ func main() {
 		}
 	}
 
+	url, err := url.Parse(fmt.Sprintf("http://%s", *publish))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	client, err := appclient.NewAppClient(appclient.ProbeConfig{
 		Token:    *publishToken,
 		ProbeID:  *publishID,
 		Insecure: false,
-	}, *publish, *publish, nil)
+	}, *publish, *url, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
