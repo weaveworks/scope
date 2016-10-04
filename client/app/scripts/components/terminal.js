@@ -88,9 +88,11 @@ class Terminal extends React.Component {
       pixelPerCol: 0,
       pixelPerRow: 0
     };
+
     this.handleCloseClick = this.handleCloseClick.bind(this);
     this.handlePopoutTerminal = this.handlePopoutTerminal.bind(this);
     this.handleResize = this.handleResize.bind(this);
+    this.focusTerminal = this.focusTerminal.bind(this);
   }
 
   createWebsocket(term) {
@@ -106,7 +108,13 @@ class Terminal extends React.Component {
     };
 
     socket.onclose = () => {
-      log('socket closed');
+      //
+      // componentWillUnmount has called close and tidied up! don't try and do it again here
+      // (setState etc), its too late.
+      //
+      if (!this.socket) {
+        return;
+      }
       this.socket = null;
       const wereConnected = this.state.connected;
       this.setState({connected: false});
@@ -134,15 +142,13 @@ class Terminal extends React.Component {
   }
 
   componentDidMount() {
-    const component = this;
-
     this.term = new Term({
       cols: this.state.cols,
       rows: this.state.rows,
       convertEol: !this.props.raw
     });
 
-    const innerNode = ReactDOM.findDOMNode(component.inner);
+    const innerNode = ReactDOM.findDOMNode(this.inner);
     this.term.open(innerNode);
     this.term.on('data', (data) => {
       if (this.socket) {
@@ -180,18 +186,11 @@ class Terminal extends React.Component {
       this.term.destroy();
       this.term = null;
     }
+
     if (this.socket) {
       log('close socket');
       this.socket.close();
       this.socket = null;
-    }
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const containerMarginChanged = nextProps.containerMargin !== this.props.containerMargin;
-    log(nextProps.containerMargin);
-    if (containerMarginChanged) {
-      this.handleResize();
     }
   }
 
@@ -211,6 +210,12 @@ class Terminal extends React.Component {
   handleCloseClick(ev) {
     ev.preventDefault();
     this.props.dispatch(clickCloseTerminal(this.getPipeId(), true));
+  }
+
+  focusTerminal() {
+    if (this.term) {
+      this.term.focus();
+    }
   }
 
   handlePopoutTerminal(ev) {
@@ -252,7 +257,6 @@ class Terminal extends React.Component {
     const border = `4px solid ${dark}`;
     const style = {
       borderTop: border,
-      borderBottom: border,
       borderLeft: border,
       backgroundColor: light,
     };
@@ -324,8 +328,11 @@ class Terminal extends React.Component {
     return (
       <div className="terminal-wrapper">
         {this.isEmbedded() && this.getTerminalHeader()}
-        <div ref={(ref) => this.innerFlex = ref}
-          className={innerClassName} style={innerFlexStyle} >
+        <div
+          onClick={this.focusTerminal}
+          ref={(ref) => this.innerFlex = ref}
+          className={innerClassName}
+          style={innerFlexStyle} >
           <div style={innerStyle} ref={(ref) => this.inner = ref} />
         </div>
         {this.getTerminalStatusBar()}

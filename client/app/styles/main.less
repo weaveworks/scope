@@ -41,7 +41,7 @@
 @details-window-padding-left: 36px;
 @border-radius: 4px;
 
-@terminal-header-height: 44px + 8px;
+@terminal-header-height: 40px + 8px;
 
 @node-opacity-blurred: 0.25;
 @node-highlight-fill-opacity: 0.1;
@@ -578,17 +578,19 @@ h2 {
 .details {
   &-wrapper {
     position: fixed;
+    display: flex;
     z-index: 1024;
     right: @details-window-padding-left;
     top: 24px;
     bottom: 48px;
-    width: @details-window-width;
     transition: transform 0.33333s cubic-bezier(0,0,0.21,1);
+    .shadow-2;
   }
 }
 
 .node-details {
   height: 100%;
+  width: @details-window-width;
   background-color: rgba(255, 255, 255, 0.86);
   display: flex;
   flex-flow: column;
@@ -596,7 +598,6 @@ h2 {
   padding-bottom: 2px;
   border-radius: 2px;
   background-color: #fff;
-  .shadow-2;
 
   &:last-child {
     margin-bottom: 0;
@@ -979,20 +980,13 @@ h2 {
   }
 
   &-embedded {
-    z-index: 1024;
-    position: fixed;
-    top: 24px;
-    bottom: 48px;
-    left: 36px;
-    right: (@details-window-width + @details-window-padding-left + 10px);
+    position: relative;
+    flex: 1;
   }
 
   &-wrapper {
-    position: absolute;
-    bottom: 0;
-    top: 0;
-    left: 0;
-    right: 0;
+    width: 100%;
+    height: 100%;
     border: 0px solid #000000;
     border-radius: 4px;
     color: #f0f0f0;
@@ -1045,6 +1039,7 @@ h2 {
   &-embedded &-inner { top: @terminal-header-height; }
   &-app &-inner { top: 0; }
   &-inner {
+    cursor: text;
     font-family: @mono-font;
     position: absolute;
     bottom: 0;
