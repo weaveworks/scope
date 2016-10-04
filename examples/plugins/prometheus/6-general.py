@@ -9,23 +9,24 @@ import os
 import signal
 import socket
 import urllib2
+from collections import namedtuple
+from subprocess import check_output
 
-PLUGIN_ID="prometheus"
-PLUGIN_UNIX_SOCK = "/var/run/scope/plugins/" + PLUGIN_ID + ".sock"
-QUERIES=[
-    {
-        'id': "http_requests_per_second",
-        'label': "HTTP req/sec",
-        'query': "http_requests_per_second",
-        'container_id': "container_id",
-        'priority': 0.1,
-    },
-]
-PROMETHEUS_ADDR="prometheus.monitoring.svc.cluster.local"
+PLUGIN_ID="volume-count"
+PLUGIN_UNIX_SOCK="/var/run/scope/plugins/" + PLUGIN_ID + ".sock"
 
-def metrics(query):
-    r = urllib2.urlopen("http://%s/api/v1/query?query=%s" % (PROMETHEUS_ADDR, query))
-    return json.loads(r.content).get("data", default={}).get("result", default=[])
+def run(cmd):
+    return check_output(cmd).strip()
+
+def container_volume_counts():
+    # Find all containers which *should* be running "latest" of their image,
+    # but there is a newer image version available
+    containers = {}
+    for short_id in run(["docker", "ps", "--format", "{{.ID}}"]).splitlines():
+        long_id, volume_count = run(["docker", "inspect", "-f", "{{.ID}} {{.Config.Volumes | len}}", short_id]).split()
+        containers[long_id.strip()] = volume_count.strip()
+    return containers
+
 
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -33,43 +34,48 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         # one, so we fake it.
         self.client_address = "-"
 
-        # Fetch and convert data from prometheus
+        # Get current timestamp in RFC3339
+        timestamp = datetime.datetime.utcnow()
+        timestamp = timestamp.isoformat('T') + 'Z'
+
+        # Fetch and convert data to scope data model
         nodes = {}
-        for query in QUERIES:
-            for metric in metrics(query):
-                container_id = metric.get("metric", default={}).get(query['container_id'], default=None)
-                if container_id == None:
-                    continue
-                nodes["%s;<container>" % (container_id)] = {
-                    'metrics': {
-                        query['id']: {
-                            'samples': [{
-                                'date': datetime.datetime.utcfromtimestamp(metric["value"][0]).isoformat('T') + 'Z',
-                                'value': float(metric["value"][1]),
-                            }]
-                        }
+        for container_id, volume_count in container_volume_counts().iteritems():
+            nodes["%s;<container>" % (container_id)] = {
+                'latest': {
+                    'volume_count': {
+                        'timestamp': timestamp,
+                        'value': volume_count,
                     }
                 }
-
-        # Generate our templates
-        metric_templates = {}
-        for i, query in QUERIES:
-            metric_templates[query['id']] = query
+            }
 
         # Generate our json body
         body = json.dumps({
             'Plugins': [
                 {
                     'id': PLUGIN_ID,
-                    'label': 'Prometheus data translator',
-                    'description': 'Takes data from prometheus and puts it into scope',
+                    'label': 'Volume Counts',
+                    'description': 'Shows how many volumes each container has mounted',
                     'interfaces': ['reporter'],
                     'api_version': '1',
                 }
             ],
             'Container': {
                 'nodes': nodes,
-                'metric_templates': metric_templates,
+                # Templates tell the UI how to render this field.
+                'metadata_templates': {
+                    'volume_count': {
+                        # Key where this data can be found.
+                        'id': "volume_count",
+                        # Human-friendly field name
+                        'label': "# Volumes",
+                        # Look up the 'id' in the latest object.
+                        'from': "latest",
+                        # Priorities over 10 are hidden, lower is earlier in the list.
+                        'priority': 0.1,
+                    },
+                },
             },
         })
 
