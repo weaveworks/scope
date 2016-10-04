@@ -59,7 +59,7 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	app.RegisterPipeRoutes(router, pipeRouter)
 	app.RegisterTopologyRoutes(router, collector)
 
-	uiHandler := http.FileServer(FS(false))
+	uiHandler := http.FileServer(GetFS(false))
 	router.PathPrefix("/ui").Name("static").Handler(
 		middleware.PathRewrite(regexp.MustCompile("^/ui"), "").Wrap(
 			uiHandler))
