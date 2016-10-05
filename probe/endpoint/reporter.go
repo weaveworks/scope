@@ -167,7 +167,7 @@ func (r *Reporter) Report() (report.Report, error) {
 				r.addConnection(&rpt, tuple, "", fromNodeInfo, toNodeInfo)
 			case Close:
 				// ignore fake closes
-				if e.SourceAddress.String() != "0.0.0.0" && e.DestAddress.String() != "0.0.0.0" {
+				if e.SourcePort != 0 && e.DestPort != 0 {
 					r.removeConnection(&rpt, tuple, "", fromNodeInfo, toNodeInfo)
 				}
 			}
