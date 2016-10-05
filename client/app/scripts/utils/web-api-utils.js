@@ -163,15 +163,19 @@ export function getNodesDelta(topologyUrl, options, dispatch) {
   }
 }
 
-export function getNodeDetails(topologyUrlsById, topologyOptions, nodeMap, dispatch) {
+export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nodeMap, dispatch) {
   // get details for all opened nodes
   const obj = nodeMap.last();
   if (obj && topologyUrlsById.has(obj.topologyId)) {
-    const options = topologyOptions.get(obj.topologyId);
     const topologyUrl = topologyUrlsById.get(obj.topologyId);
-    const optionsQuery = buildOptionsQuery(options);
-    const url = [topologyUrl, '/', encodeURIComponent(obj.id), '?', optionsQuery]
-      .join('').substr(1);
+    let urlComponents = [topologyUrl, '/', encodeURIComponent(obj.id)];
+    if (currentTopologyId === obj.topologyId) {
+      // Only forward filters for nodes in the current topology
+      const optionsQuery = buildOptionsQuery(options);
+      urlComponents = urlComponents.concat(['?', optionsQuery]);
+    }
+    const url = urlComponents.join('').substr(1);
+
     reqwest({
       url,
       success: (res) => {

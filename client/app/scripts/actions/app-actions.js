@@ -170,7 +170,8 @@ export function changeTopologyOption(option, value, topologyId) {
     );
     getNodeDetails(
       state.get('topologyUrlsById'),
-      state.get('topologyOptions'),
+      state.get('currentTopologyId'),
+      getActiveTopologyOptions(state),
       state.get('nodeDetails'),
       dispatch
     );
@@ -261,7 +262,8 @@ export function clickNode(nodeId, label, origin) {
     const state = getState();
     getNodeDetails(
       state.get('topologyUrlsById'),
-      state.get('topologyOptions'),
+      state.get('currentTopologyId'),
+      getActiveTopologyOptions(state),
       state.get('nodeDetails'),
       dispatch
     );
@@ -287,7 +289,8 @@ export function clickRelative(nodeId, topologyId, label, origin) {
     const state = getState();
     getNodeDetails(
       state.get('topologyUrlsById'),
-      state.get('topologyOptions'),
+      state.get('currentTopologyId'),
+      getActiveTopologyOptions(state),
       state.get('nodeDetails'),
       dispatch
     );
@@ -546,7 +549,8 @@ export function receiveTopologies(topologies) {
     );
     getNodeDetails(
       state.get('topologyUrlsById'),
-      state.get('topologyOptions'),
+      state.get('currentTopologyId'),
+      getActiveTopologyOptions(state),
       state.get('nodeDetails'),
       dispatch
     );
@@ -649,7 +653,8 @@ export function route(urlState) {
     );
     getNodeDetails(
       state.get('topologyUrlsById'),
-      state.get('topologyOptions'),
+      state.get('currentTopologyId'),
+      getActiveTopologyOptions(state),
       state.get('nodeDetails'),
       dispatch
     );
