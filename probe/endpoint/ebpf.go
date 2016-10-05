@@ -94,26 +94,26 @@ func (t *EbpfTracker) run() {
 
 		sourceAddr := net.ParseIP(line[2])
 		if sourceAddr == nil {
-			log.Errorf("error parsing sourceAddr %q: %v", line[3], err)
+			log.Errorf("error parsing sourceAddr %q: %v", line[2], err)
 			continue
 		}
 
 		destAddr := net.ParseIP(line[3])
 		if destAddr == nil {
-			log.Errorf("error parsing destAddr %q: %v", line[4], err)
+			log.Errorf("error parsing destAddr %q: %v", line[3], err)
 			continue
 		}
 
 		sPort, err := strconv.ParseUint(line[4], 10, 16)
 		if err != nil {
-			log.Errorf("error parsing sourcePort %q: %v", line[5], err)
+			log.Errorf("error parsing sourcePort %q: %v", line[4], err)
 			continue
 		}
 		sourcePort := uint16(sPort)
 
 		dPort, err := strconv.ParseUint(line[5], 10, 16)
 		if err != nil {
-			log.Errorf("error parsing destPort %q: %v", line[6], err)
+			log.Errorf("error parsing destPort %q: %v", line[5], err)
 			continue
 		}
 		destPort := uint16(dPort)
