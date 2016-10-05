@@ -350,6 +350,11 @@ func (r *registry) rendererForTopology(topologyID string, values url.Values, rpt
 	}
 	topology = updateFilters(rpt, []APITopologyDesc{topology})[0]
 
+	if len(values) == 0 {
+		// Do not apply filtering if no options where provided
+		return topology.renderer, nil, nil
+	}
+
 	var decorators []render.Decorator
 	for _, group := range topology.Options {
 		value := values.Get(group.ID)
