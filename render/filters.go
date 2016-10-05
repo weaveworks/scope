@@ -10,6 +10,28 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
+// PreciousNodeRenderer ensures a node is never filtered out by decorators
+type PreciousNodeRenderer struct {
+	PreciousNodeID string
+	Renderer
+}
+
+func (p PreciousNodeRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+	undecoratedNodes := p.Renderer.Render(rpt, nil)
+	preciousNode, foundBeforeDecoration := undecoratedNodes[p.PreciousNodeID]
+	finalNodes := applyDecorator{ConstantRenderer(undecoratedNodes)}.Render(rpt, dct)
+	if _, ok := finalNodes[p.PreciousNodeID]; !ok && foundBeforeDecoration {
+		finalNodes[p.PreciousNodeID] = preciousNode
+	}
+	return finalNodes
+}
+
+func (p PreciousNodeRenderer) Stats(rpt report.Report, dct Decorator) Stats {
+	// default to the underlying renderer
+	// TODO: we don't take into account the precious node, so we may be off by one
+	return p.Renderer.Stats(rpt, dct)
+}
+
 // CustomRenderer allow for mapping functions that received the entire topology
 // in one call - useful for functions that need to consider the entire graph.
 // We should minimise the use of this renderer type, as it is very inflexible.
