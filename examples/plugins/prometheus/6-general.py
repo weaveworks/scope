@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from collections import namedtuple
+from docker import Client
 import BaseHTTPServer
 import SocketServer
 import datetime
@@ -8,23 +10,51 @@ import json
 import os
 import signal
 import socket
+import threading
+import time
 import urllib2
-from collections import namedtuple
-from subprocess import check_output
 
 PLUGIN_ID="volume-count"
 PLUGIN_UNIX_SOCK="/var/run/scope/plugins/" + PLUGIN_ID + ".sock"
+DOCKER_SOCK="unix://var/run/docker.sock"
 
-def run(cmd):
-    return check_output(cmd).strip()
+nodes = {}
 
+def update_loop():
+    global nodes
+    next_call = time.time()
+    while True:
+        # Get current timestamp in RFC3339
+        timestamp = datetime.datetime.utcnow()
+        timestamp = timestamp.isoformat('T') + 'Z'
+
+        # Fetch and convert data to scope data model
+        new = {}
+        for container_id, volume_count in container_volume_counts().iteritems():
+            new["%s;<container>" % (container_id)] = {
+                'latest': {
+                    'volume_count': {
+                        'timestamp': timestamp,
+                        'value': str(volume_count),
+                    }
+                }
+            }
+
+        nodes = new
+        next_call += 5
+        time.sleep(next_call - time.time())
+
+def start_update_loop():
+    updateThread = threading.Thread(target=update_loop)
+    updateThread.daemon = True
+    updateThread.start()
+
+# List all containers, with the count of their volumes
 def container_volume_counts():
-    # Find all containers which *should* be running "latest" of their image,
-    # but there is a newer image version available
     containers = {}
-    for short_id in run(["docker", "ps", "--format", "{{.ID}}"]).splitlines():
-        long_id, volume_count = run(["docker", "inspect", "-f", "{{.ID}} {{.Config.Volumes | len}}", short_id]).split()
-        containers[long_id.strip()] = volume_count.strip()
+    cli = Client(base_url=DOCKER_SOCK, version='auto')
+    for c in cli.containers(all=True):
+        containers[c['Id']] = len(c['Mounts'])
     return containers
 
 
@@ -33,22 +63,6 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         # The logger requires a client_address, but unix sockets don't have
         # one, so we fake it.
         self.client_address = "-"
-
-        # Get current timestamp in RFC3339
-        timestamp = datetime.datetime.utcnow()
-        timestamp = timestamp.isoformat('T') + 'Z'
-
-        # Fetch and convert data to scope data model
-        nodes = {}
-        for container_id, volume_count in container_volume_counts().iteritems():
-            nodes["%s;<container>" % (container_id)] = {
-                'latest': {
-                    'volume_count': {
-                        'timestamp': timestamp,
-                        'value': volume_count,
-                    }
-                }
-            }
 
         # Generate our json body
         body = json.dumps({
@@ -81,8 +95,8 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         # Send the headers
         self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.send_header('Content-length', len(body))
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', len(body))
         self.end_headers()
 
         # Send the body
@@ -108,6 +122,8 @@ def sig_handler(b, a):
 def main():
     signal.signal(signal.SIGTERM, sig_handler)
     signal.signal(signal.SIGINT, sig_handler)
+
+    start_update_loop()
 
     mkdir_p(os.path.dirname(PLUGIN_UNIX_SOCK))
     delete_socket_file()
