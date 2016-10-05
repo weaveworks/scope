@@ -48,8 +48,8 @@ class DetailsCard extends React.Component {
     }
     const style = {
       transform,
-      left: showingTerminal ? 36 : null,
-      width: showingTerminal ? null : 420
+      left: showingTerminal ? MARGINS.right : null,
+      width: showingTerminal ? null : WIDTH
     };
     return (
       <div className="details-wrapper" style={style}>

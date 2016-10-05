@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { brightenColor, getNodeColorDark } from '../utils/color-utils';
+import { DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS } from '../constants/styles';
 import Terminal from './terminal';
 
 class EmeddedTerminal extends React.Component {
@@ -23,11 +24,8 @@ class EmeddedTerminal extends React.Component {
   }
 
   getTransform() {
-    //
-    // lazy but close enough for a quick transition
-    //
-    const dx = this.state.mounted ? 0 : window.innerWidth - 420;
-    console.log('dx', dx);
+    const dx = this.state.mounted ? 0 :
+      window.innerWidth - DETAILS_PANEL_WIDTH - DETAILS_PANEL_MARGINS.right;
     return `translateX(${dx}px)`;
   }
 
