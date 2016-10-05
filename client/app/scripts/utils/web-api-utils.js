@@ -163,10 +163,11 @@ export function getNodesDelta(topologyUrl, options, dispatch) {
   }
 }
 
-export function getNodeDetails(topologyUrlsById, options, nodeMap, dispatch) {
+export function getNodeDetails(topologyUrlsById, topologyOptions, nodeMap, dispatch) {
   // get details for all opened nodes
   const obj = nodeMap.last();
   if (obj && topologyUrlsById.has(obj.topologyId)) {
+    const options = topologyOptions.get(obj.topologyId);
     const topologyUrl = topologyUrlsById.get(obj.topologyId);
     const optionsQuery = buildOptionsQuery(options);
     const url = [topologyUrl, '/', encodeURIComponent(obj.id), '?', optionsQuery]
