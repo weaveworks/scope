@@ -189,10 +189,12 @@ func (cr conditionalRenderer) Stats(rpt report.Report, dct Decorator) Stats {
 // ConstantRenderer renders a fixed set of nodes
 type ConstantRenderer report.Nodes
 
+// Render implements Renderer
 func (c ConstantRenderer) Render(_ report.Report, _ Decorator) report.Nodes {
 	return report.Nodes(c)
 }
 
+// Stats implements Renderer
 func (c ConstantRenderer) Stats(_ report.Report, _ Decorator) Stats {
 	return Stats{}
 }

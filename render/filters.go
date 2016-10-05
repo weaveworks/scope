@@ -16,6 +16,7 @@ type PreciousNodeRenderer struct {
 	Renderer
 }
 
+// Render implements Renderer
 func (p PreciousNodeRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
 	undecoratedNodes := p.Renderer.Render(rpt, nil)
 	preciousNode, foundBeforeDecoration := undecoratedNodes[p.PreciousNodeID]
@@ -26,6 +27,7 @@ func (p PreciousNodeRenderer) Render(rpt report.Report, dct Decorator) report.No
 	return finalNodes
 }
 
+// Stats implements Renderer
 func (p PreciousNodeRenderer) Stats(rpt report.Report, dct Decorator) Stats {
 	// default to the underlying renderer
 	// TODO: we don't take into account the precious node, so we may be off by one

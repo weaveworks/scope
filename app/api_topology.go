@@ -41,7 +41,7 @@ func handleNode(ctx context.Context, renderer render.Renderer, decorator render.
 		vars             = mux.Vars(r)
 		topologyID       = vars["topology"]
 		nodeID           = vars["id"]
-		preciousRenderer = render.PreciousNodeRenderer{nodeID, renderer}
+		preciousRenderer = render.PreciousNodeRenderer{PreciousNodeID: nodeID, Renderer: renderer}
 		rendered         = preciousRenderer.Render(report, decorator)
 		node, ok         = rendered[nodeID]
 	)
