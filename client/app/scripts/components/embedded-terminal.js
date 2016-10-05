@@ -5,6 +5,36 @@ import { brightenColor, getNodeColorDark } from '../utils/color-utils';
 import Terminal from './terminal';
 
 class EmeddedTerminal extends React.Component {
+
+  constructor(props, context) {
+    super(props, context);
+    this.state = {
+      mounted: null,
+      animated: null,
+    };
+
+    this.handleTransitionEnd = this.handleTransitionEnd.bind(this);
+  }
+
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState({mounted: true});
+    });
+  }
+
+  getTransform() {
+    //
+    // lazy but close enough for a quick transition
+    //
+    const dx = this.state.mounted ? 0 : window.innerWidth - 420;
+    console.log('dx', dx);
+    return `translateX(${dx}px)`;
+  }
+
+  handleTransitionEnd() {
+    this.setState({ animated: true });
+  }
+
   render() {
     const { pipe, details } = this.props;
     const nodeId = pipe.get('nodeId');
@@ -18,9 +48,18 @@ class EmeddedTerminal extends React.Component {
     // the term.js and creating a new one for the new pipe.
     return (
       <div className="terminal-embedded">
-        <Terminal key={pipe.get('id')} pipe={pipe} titleBarColor={titleBarColor}
-          statusBarColor={statusBarColor}
-          title={title} />
+        <div
+          onTransitionEnd={this.handleTransitionEnd}
+          className="terminal-animation-wrapper"
+          style={{transform: this.getTransform()}} >
+          <Terminal
+            key={pipe.get('id')}
+            pipe={pipe}
+            connect={this.state.animated}
+            titleBarColor={titleBarColor}
+            statusBarColor={statusBarColor}
+            title={title} />
+        </div>
       </div>
     );
   }

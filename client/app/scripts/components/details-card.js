@@ -46,7 +46,11 @@ class DetailsCard extends React.Component {
         transform = `translateX(${shiftX}px)`;
       }
     }
-    const style = {transform, left: showingTerminal ? 36 : null};
+    const style = {
+      transform,
+      left: showingTerminal ? 36 : null,
+      width: showingTerminal ? null : 420
+    };
     return (
       <div className="details-wrapper" style={style}>
         {showingTerminal && <EmbeddedTerminal />}

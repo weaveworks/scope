@@ -141,7 +141,19 @@ class Terminal extends React.Component {
     this.socket = socket;
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (this.props.connect !== nextProps.connect && nextProps.connect) {
+      this.mountTerminal();
+    }
+  }
+
   componentDidMount() {
+    if (this.props.connect) {
+      this.mountTerminal();
+    }
+  }
+
+  mountTerminal() {
     this.term = new Term({
       cols: this.state.cols,
       rows: this.state.rows,
@@ -340,5 +352,11 @@ class Terminal extends React.Component {
     );
   }
 }
+
+
+Terminal.defaultProps = {
+  connect: true
+};
+
 
 export default connect()(Terminal);
