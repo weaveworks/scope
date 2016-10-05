@@ -36,7 +36,7 @@ module.exports = {
     path: path.join(__dirname, 'build-external/'),
     filename: '[name]-[chunkhash].js',
 	// Change this line to point to resources on an external host.
-	publicPath: 'https://s3.amazonaws.com/static.weave.works/service-ui/'
+	publicPath: 'https://s3.amazonaws.com/static.weave.works/scope-ui/'
   },
 
   module: {

@@ -1,4 +1,4 @@
-.PHONY: all deps static clean client-lint client-test client-sync backend frontend shell lint
+.PHONY: all deps static clean client-lint client-test client-sync backend frontend shell lint ui-upload
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=$(shell docker info >/dev/null 2>&1 || echo "sudo -E")
@@ -126,7 +126,7 @@ client/build/index.html: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTOD
 client/build-external/index.html: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	mkdir -p client/build
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
-		-v $(shell pwd)/client/build:/home/weave/build \
+		-v $(shell pwd)/client/build-external:/home/weave/build-external \
 		$(SCOPE_UI_BUILD_IMAGE) npm run build-external
 
 client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
@@ -154,7 +154,7 @@ client/build-external/index.html:
 
 endif
 
-$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
+$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/webpack.external.config.js client/server.js client/.eslintrc
 	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) client
 	touch $@
 
@@ -162,13 +162,18 @@ $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	$(SUDO) docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) backend
 	touch $@
 
+ui-upload: client/build-external/index.html
+	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
+	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
+	aws s3 cp client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
+
 clean:
 	$(GO) clean ./...
 	# Don't actually rmi the build images - rm'ing the .uptodate files is enough to ensure
 	# we rebuild the images, and rmi'ing the images causes us to have to redownload a lot of stuff.
 	# $(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
-		$(SCOPE_EXE) $(RUNSVINIT) prog/static.go client/build/*.js docker/weave .pkg \
+		$(SCOPE_EXE) $(RUNSVINIT) prog/staticui/staticui.go prog/externalui/externalui.go client/build/*.js client/build-external/*.js docker/weave .pkg \
 		$(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin
 
 clean-codecgen:
