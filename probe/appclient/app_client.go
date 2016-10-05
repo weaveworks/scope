@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"net/url"
 	"sync"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/ugorji/go/codec"
 
-	"github.com/weaveworks/scope/common/sanitize"
 	"github.com/weaveworks/scope/common/xfer"
 )
 
@@ -41,10 +41,11 @@ type appClient struct {
 
 	quit     chan struct{}
 	mtx      sync.Mutex
-	target   string
 	client   http.Client
 	wsDialer websocket.Dialer
 	appID    string
+	hostname string
+	target   url.URL
 
 	// Track all the background goroutines, ensure they all stop
 	backgroundWait sync.WaitGroup
@@ -61,7 +62,7 @@ type appClient struct {
 }
 
 // NewAppClient makes a new appClient.
-func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlHandler) (AppClient, error) {
+func NewAppClient(pc ProbeConfig, hostname string, target url.URL, control xfer.ControlHandler) (AppClient, error) {
 	httpTransport, err := pc.getHTTPTransport(hostname)
 	if err != nil {
 		return nil, err
@@ -74,6 +75,7 @@ func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlH
 	return &appClient{
 		ProbeConfig: pc,
 		quit:        make(chan struct{}),
+		hostname:    hostname,
 		target:      target,
 		client: http.Client{
 			Transport: httpTransport,
@@ -86,6 +88,20 @@ func NewAppClient(pc ProbeConfig, hostname, target string, control xfer.ControlH
 		readers: make(chan io.Reader, 2),
 		control: control,
 	}, nil
+}
+
+func (c *appClient) url(path string) string {
+	return c.target.String() + path
+}
+
+func (c *appClient) wsURL(path string) string {
+	output := c.target //copy the url
+	if output.Scheme == "https" {
+		output.Scheme = "wss"
+	} else {
+		output.Scheme = "ws"
+	}
+	return output.String() + path
 }
 
 func (c *appClient) hasQuit() bool {
@@ -150,7 +166,7 @@ func (c *appClient) Stop() {
 // Details fetches the details (version, id) of the app.
 func (c *appClient) Details() (xfer.Details, error) {
 	result := xfer.Details{}
-	req, err := c.ProbeConfig.authorizedRequest("GET", sanitize.URL("", 0, "/api")(c.target), nil)
+	req, err := c.ProbeConfig.authorizedRequest("GET", c.url("/api"), nil)
 	if err != nil {
 		return result, err
 	}
@@ -184,7 +200,7 @@ func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
 			continue
 		}
 
-		log.Errorf("Error doing %s for %s, backing off %s: %v", msg, c.target, backoff, err)
+		log.Errorf("Error doing %s for %s, backing off %s: %v", msg, c.hostname, backoff, err)
 		select {
 		case <-time.After(backoff):
 		case <-c.quit:
@@ -200,7 +216,7 @@ func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
 func (c *appClient) controlConnection() (bool, error) {
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
-	url := sanitize.URL("ws://", 0, "/api/control/ws")(c.target)
+	url := c.wsURL("/api/control/ws")
 	conn, _, err := xfer.DialWS(&c.wsDialer, url, headers)
 	if err != nil {
 		return false, err
@@ -232,14 +248,14 @@ func (c *appClient) controlConnection() (bool, error) {
 
 func (c *appClient) ControlConnection() {
 	go func() {
-		log.Infof("Control connection to %s starting", c.target)
-		defer log.Infof("Control connection to %s exiting", c.target)
+		log.Infof("Control connection to %s starting", c.hostname)
+		defer log.Infof("Control connection to %s exiting", c.hostname)
 		c.doWithBackoff("controls", c.controlConnection)
 	}()
 }
 
 func (c *appClient) publish(r io.Reader) error {
-	url := sanitize.URL("", 0, "/api/report")(c.target)
+	url := c.url("/api/report")
 	req, err := c.ProbeConfig.authorizedRequest("POST", url, r)
 	if err != nil {
 		return err
@@ -266,8 +282,8 @@ func (c *appClient) publish(r io.Reader) error {
 
 func (c *appClient) startPublishing() {
 	go func() {
-		log.Infof("Publish loop for %s starting", c.target)
-		defer log.Infof("Publish loop for %s exiting", c.target)
+		log.Infof("Publish loop for %s starting", c.hostname)
+		defer log.Infof("Publish loop for %s exiting", c.hostname)
 		c.doWithBackoff("publish", func() (bool, error) {
 			r := <-c.readers
 			if r == nil {
@@ -285,7 +301,7 @@ func (c *appClient) Publish(r io.Reader) error {
 	select {
 	case c.readers <- r:
 	default:
-		log.Errorf("Dropping report to %s", c.target)
+		log.Errorf("Dropping report to %s", c.hostname)
 	}
 	return nil
 }
@@ -293,7 +309,7 @@ func (c *appClient) Publish(r io.Reader) error {
 func (c *appClient) pipeConnection(id string, pipe xfer.Pipe) (bool, error) {
 	headers := http.Header{}
 	c.ProbeConfig.authorizeHeaders(headers)
-	url := sanitize.URL("ws://", 0, fmt.Sprintf("/api/pipe/%s/probe", id))(c.target)
+	url := c.wsURL(fmt.Sprintf("/api/pipe/%s/probe", id))
 	conn, resp, err := xfer.DialWS(&c.wsDialer, url, headers)
 	if resp != nil && resp.StatusCode == http.StatusNotFound {
 		// Special handling - 404 means the app/user has closed the pipe
@@ -319,8 +335,8 @@ func (c *appClient) pipeConnection(id string, pipe xfer.Pipe) (bool, error) {
 
 func (c *appClient) PipeConnection(id string, pipe xfer.Pipe) {
 	go func() {
-		log.Infof("Pipe %s connection to %s starting", id, c.target)
-		defer log.Infof("Pipe %s connection to %s exiting", id, c.target)
+		log.Infof("Pipe %s connection to %s starting", id, c.hostname)
+		defer log.Infof("Pipe %s connection to %s exiting", id, c.hostname)
 		c.doWithBackoff(id, func() (bool, error) {
 			return c.pipeConnection(id, pipe)
 		})
@@ -329,7 +345,7 @@ func (c *appClient) PipeConnection(id string, pipe xfer.Pipe) {
 
 // PipeClose closes the given pipe id on the app.
 func (c *appClient) PipeClose(id string) error {
-	url := sanitize.URL("", 0, fmt.Sprintf("/api/pipe/%s", id))(c.target)
+	url := c.url(fmt.Sprintf("/api/pipe/%s", id))
 	req, err := c.ProbeConfig.authorizedRequest("DELETE", url, nil)
 	if err != nil {
 		return err
