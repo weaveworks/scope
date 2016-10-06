@@ -111,7 +111,7 @@ prog/staticui/staticui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 
 prog/externalui/externalui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	mkdir -p prog/externalui
-	esc -o $@ -pkg externalui -prefix client/build-external -include '.*\.htm' client/build-external
+	esc -o $@ -pkg externalui -prefix client/build-external -include '\.html$$' client/build-external
 
 endif
 
