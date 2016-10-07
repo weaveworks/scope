@@ -47,7 +47,7 @@ func init() {
 }
 
 // Router creates the mux for all the various app components.
-func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter) http.Handler {
+func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter, externalUI bool) http.Handler {
 	router := mux.NewRouter().SkipClean(true)
 
 	// We pull in the http.DefaultServeMux to get the pprof routes
@@ -59,7 +59,7 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	app.RegisterPipeRoutes(router, pipeRouter)
 	app.RegisterTopologyRoutes(router, collector)
 
-	uiHandler := http.FileServer(FS(false))
+	uiHandler := http.FileServer(GetFS(externalUI))
 	router.PathPrefix("/ui").Name("static").Handler(
 		middleware.PathRewrite(regexp.MustCompile("^/ui"), "").Wrap(
 			uiHandler))
@@ -267,7 +267,7 @@ func appMain(flags appFlags) {
 		}
 	}
 
-	handler := router(collector, controlRouter, pipeRouter)
+	handler := router(collector, controlRouter, pipeRouter, flags.externalUI)
 	if flags.logHTTP {
 		handler = middleware.Logging.Wrap(handler)
 	}

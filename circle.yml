@@ -30,6 +30,7 @@ dependencies:
     - "cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh && touch $SRCDIR/.scope_backend_build.uptodate"
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh make_template):
         parallel: false
+    - sudo apt-get update && sudo apt-get install python-pip && sudo pip install awscli
 
 test:
   override:
@@ -79,6 +80,9 @@ deployment:
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag) &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope-traffic-control-plugin &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope-traffic-control-plugin:$(./tools/image-tag) &&
+          (test -n "${UI_BUCKET_KEY_ID}" || (
+            make ui-upload
+          )) &&
           (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" != "weaveworks" || (
             wcloud deploy -u circle weaveworks/scope:$(./tools/image-tag)
           ))

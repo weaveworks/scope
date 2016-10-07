@@ -11,7 +11,9 @@ var GLOBALS = {
 };
 
 /**
- * This is the Webpack configuration file for production.
+ * This is the Webpack configuration file for hosting most of the static content
+ * (all but index.htm) on an external host (eg. a CDN).
+ * You should change output.publicPath to point to your external host.
  */
 module.exports = {
 
@@ -31,8 +33,10 @@ module.exports = {
   },
 
   output: {
-    path: path.join(__dirname, 'build/'),
+    path: path.join(__dirname, 'build-external/'),
     filename: '[name]-[chunkhash].js',
+	// Change this line to point to resources on an external host.
+	publicPath: 'https://s3.amazonaws.com/static.weave.works/scope-ui/'
   },
 
   module: {

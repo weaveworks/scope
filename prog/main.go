@@ -130,6 +130,7 @@ type appFlags struct {
 	memcachedExpiration       time.Duration
 	memcachedCompressionLevel int
 	userIDHeader              string
+	externalUI                bool
 
 	blockProfileRate int
 
@@ -255,6 +256,7 @@ func main() {
 	flag.StringVar(&flags.app.memcachedService, "app.memcached.service", "memcached", "SRV service used to discover memcache servers.")
 	flag.IntVar(&flags.app.memcachedCompressionLevel, "app.memcached.compression", gzip.DefaultCompression, "How much to compress reports stored in memcached.")
 	flag.StringVar(&flags.app.userIDHeader, "app.userid.header", "", "HTTP header to use as userid")
+	flag.BoolVar(&flags.app.externalUI, "app.externalUI", false, "Point to externally hosted static UI assets")
 
 	flag.IntVar(&flags.app.blockProfileRate, "app.block.profile.rate", 0, "If more than 0, enable block profiling. The profiler aims to sample an average of one blocking event per rate nanoseconds spent blocked.")
 
