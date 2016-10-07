@@ -28,9 +28,16 @@ func (l Log) Wrap(next http.Handler) http.Handler {
 	})
 }
 
-// Logging middleware logs each HTTP request method, path, response code and duration.
+// Logging middleware logs each HTTP request method, path, response code and
+// duration for all HTTP requests.
 var Logging = Log{
 	LogSuccess: true,
+}
+
+// LogFailed middleware logs each HTTP request method, path, response code and
+// duration for non-2xx HTTP requests.
+var LogFailed = Log{
+	LogSuccess: false,
 }
 
 // interceptor implements WriteHeader to intercept status codes. WriteHeader

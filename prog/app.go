@@ -269,7 +269,7 @@ func appMain(flags appFlags) {
 
 	handler := router(collector, controlRouter, pipeRouter)
 	if flags.logHTTP {
-		handler = middleware.Logging.Wrap(handler)
+		handler = middleware.LogFailed.Wrap(handler)
 	}
 
 	server := &graceful.Server{
