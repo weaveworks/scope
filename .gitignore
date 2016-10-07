@@ -50,6 +50,8 @@ extras/fixprobe/*.json
 *sublime-workspace
 *npm-debug.log
 app/static.go
-prog/static.go
 vendor/github.com/ugorji/go/codec/codecgen/bin/*
 *.codecgen.go
+client/build-external/*
+prog/staticui/*
+prog/externalui/*
