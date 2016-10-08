@@ -22,7 +22,7 @@ func (l Log) Wrap(next http.Handler) http.Handler {
 		uri := r.RequestURI // capture the URI before running next, as it may get rewritten
 		i := &interceptor{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(i, r)
-		if l.LogSuccess || !(200 <= i.statusCode && i.statusCode < 300) {
+		if l.LogSuccess || !(100 <= i.statusCode && i.statusCode < 400) {
 			log.Infof("%s %s (%d) %s", r.Method, uri, i.statusCode, time.Since(begin))
 		}
 	})
