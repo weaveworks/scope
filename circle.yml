@@ -80,7 +80,7 @@ deployment:
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag) &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope-traffic-control-plugin &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope-traffic-control-plugin:$(./tools/image-tag) &&
-          (test -n "${UI_BUCKET_KEY_ID}" || (
+          (test -z "${UI_BUCKET_KEY_ID}" || (
             make ui-upload
           )) &&
           (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" != "weaveworks" || (
