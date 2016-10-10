@@ -276,8 +276,11 @@ func appMain(flags appFlags) {
 		// we want to manage the stop condition ourselves below
 		NoSignalHandling: true,
 		Server: &http.Server{
-			Addr:    flags.listen,
-			Handler: handler,
+			Addr:           flags.listen,
+			Handler:        handler,
+			ReadTimeout:    10 * time.Second,
+			WriteTimeout:   10 * time.Second,
+			MaxHeaderBytes: 1 << 20,
 		},
 	}
 	go func() {
