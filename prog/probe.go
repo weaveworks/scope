@@ -12,6 +12,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
 
@@ -246,6 +247,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 
 	if flags.httpListen != "" {
 		go func() {
+			http.Handle("/metrics", prometheus.Handler())
 			log.Infof("Profiling data being exported to %s", flags.httpListen)
 			log.Infof("go tool proof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
 			log.Infof("Profiling endpoint %s terminated: %v", flags.httpListen, http.ListenAndServe(flags.httpListen, nil))
