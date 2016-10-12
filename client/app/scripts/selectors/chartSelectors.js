@@ -3,7 +3,6 @@ import { createSelector, createSelectorCreator, defaultMemoize } from 'reselect'
 import { Map as makeMap, is, Set } from 'immutable';
 
 import { getAdjacentNodes } from '../utils/topology-utils';
-import { getSearchableFields } from '../utils/search-utils';
 
 
 const log = debug('scope:selectors');
@@ -93,12 +92,6 @@ export const dataNodesSelector = createSelector(
     stack: node.get('stack'),
     networks: node.get('networks'),
   }))
-);
-
-
-export const searchableFieldsSelector = createSelector(
-  allNodesSelector,
-  getSearchableFields
 );
 
 

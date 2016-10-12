@@ -4,11 +4,10 @@ import { connect } from 'react-redux';
 import classnames from 'classnames';
 import _ from 'lodash';
 
-import { blurSearch, doSearch, focusSearch, showHelp } from '../actions/app-actions';
+import { blurSearch, doSearch, focusSearch } from '../actions/app-actions';
 import { slugify } from '../utils/string-utils';
 import { isTopologyEmpty } from '../utils/topology-utils';
 import SearchItem from './search-item';
-
 
 function shortenHintLabel(text) {
   return text
@@ -16,7 +15,6 @@ function shortenHintLabel(text) {
     .toLowerCase()
     .substr(0, 12);
 }
-
 
 // dynamic hint based on node names
 function getHint(nodes) {
@@ -39,7 +37,6 @@ function getHint(nodes) {
   return `Try "${label}", "${metadataLabel}:${metadataValue}", or "cpu > 2%".
    Hit enter to apply the search as a filter.`;
 }
-
 
 class Search extends React.Component {
 
@@ -98,7 +95,7 @@ class Search extends React.Component {
 
   render() {
     const { inputId = 'search', nodes, pinnedSearches, searchFocused,
-      searchNodeMatches, searchQuery, topologiesLoaded, onClickHelp } = this.props;
+      searchNodeMatches, searchQuery, topologiesLoaded } = this.props;
     const disabled = this.props.isTopologyEmpty;
     const matchCount = searchNodeMatches
       .reduce((count, topologyMatches) => count + topologyMatches.size, 0);
@@ -133,16 +130,13 @@ class Search extends React.Component {
             </label>
           </div>
           {!showPinnedSearches && <div className="search-hint">
-            {getHint(nodes)} <span className="search-help-link" onClick={onClickHelp}>
-              Help!
-            </span>
+            {getHint(nodes)}
           </div>}
         </div>
       </div>
     );
   }
 }
-
 
 export default connect(
   state => ({
@@ -154,5 +148,5 @@ export default connect(
     searchNodeMatches: state.get('searchNodeMatches'),
     topologiesLoaded: state.get('topologiesLoaded')
   }),
-  { blurSearch, doSearch, focusSearch, onClickHelp: showHelp }
+  { blurSearch, doSearch, focusSearch }
 )(Search);

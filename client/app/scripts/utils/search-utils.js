@@ -1,4 +1,4 @@
-import { Map as makeMap, Set as makeSet, List as makeList } from 'immutable';
+import { Map as makeMap } from 'immutable';
 import _ from 'lodash';
 
 import { slugify } from './string-utils';
@@ -246,40 +246,6 @@ export function updateNodeMatches(state) {
 
   return state;
 }
-
-
-export function getSearchableFields(nodes) {
-  const get = (node, key) => node.get(key) || makeList();
-
-  const baseLabels = makeSet(nodes.size > 0 ? SEARCH_FIELDS.valueSeq() : []);
-
-  const metadataLabels = nodes.reduce((labels, node) => (
-    labels.union(get(node, 'metadata').map(f => f.get('label')))
-  ), makeSet());
-
-  const parentLabels = nodes.reduce((labels, node) => (
-    labels.union(get(node, 'parents').map(p => p.get('topologyId')))
-  ), makeSet());
-
-  const tableRowLabels = nodes.reduce((labels, node) => (
-    labels.union(get(node, 'tables').flatMap(t => (t.get('rows') || makeList)
-      .map(f => f.get('label'))
-    ))
-  ), makeSet());
-
-  const metricLabels = nodes.reduce((labels, node) => (
-    labels.union(get(node, 'metrics').map(f => f.get('label')))
-  ), makeSet());
-
-  return makeMap({
-    fields: baseLabels.union(metadataLabels, parentLabels, tableRowLabels)
-      .map(slugify)
-      .toList()
-      .sort(),
-    metrics: metricLabels.toList().map(slugify).sort()
-  });
-}
-
 
 /**
  * Set `filtered:true` in state's nodes if a pinned search matches
