@@ -1339,6 +1339,16 @@ h2 {
     text-align: left;
   }
 
+  &-help-link {
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
   &-label {
     position: absolute;
     pointer-events: none;
@@ -1482,62 +1492,158 @@ h2 {
 // Help panel!
 //
 
-@help-panel-width: 400px;
-@help-panel-height: 420px;
 .help-panel {
-  position: absolute;
-  -webkit-transform: translate3d(0, 0, 0);
-  top: 50%;
-  left: 50%;
-  width: @help-panel-width;
-  height: @help-panel-height;
-  margin-left: @help-panel-width / -2;
-  margin-top: @help-panel-height / -2;
   z-index: 2048;
   background-color: white;
   .shadow-2;
+  display: flex;
+  position: relative;
+
+  &-wrapper {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
 
   &-header {
     background-color: @weave-blue;
-    padding: 36px;
+    padding: 12px 24px;
     color: white;
 
     h2 {
       margin: 0;
+      text-transform: uppercase;
+      font-size: 125%;
     }
   }
+
+  &-tools {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+
+    span {
+      .btn-opacity;
+      padding: 4px 5px;
+      margin-left: 2px;
+      font-size: 110%;
+      color: #8383ac;
+      cursor: pointer;
+      border: 1px solid rgba(131, 131, 172, 0);
+      border-radius: 10%;
+
+      &:hover {
+        border-color: rgba(131, 131, 172, 0.6);
+      }
+    }
+  }
+
 
   &-main {
-    padding: 12px 36px 36px;
+    padding: 12px 36px 36px 36px;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+
+    h2 {
+      text-transform: uppercase;
+      line-height: 150%;
+      font-size: 125%;
+      color: #8383ac;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(131, 131, 172, 0.1);
+    }
+
+    h3 {
+      text-transform: uppercase;
+      font-size: 90%;
+      color: #8383ac;
+      padding: 4px 0;
+    }
+
+    p {
+      margin: 0;
+    }
   }
 
-  h3 {
-    text-transform: uppercase;
-    font-size: 90%;
-    color: #8383ac;
-    padding: 4px 0;
+  &-shortcuts {
+    margin-right: 36px;
+
+    &-shortcut {
+      kbd {
+        display: inline-block;
+        padding: 3px 5px;
+        font-size: 11px;
+        line-height: 10px;
+        color: #555;
+        vertical-align: middle;
+        background-color: #fcfcfc;
+        border: solid 1px #ccc;
+        border-bottom-color: #bbb;
+        border-radius: 3px;
+        box-shadow: inset 0 -1px 0 #bbb;
+      }
+      div.key {
+        width: 80px;
+        display: inline-block;
+      }
+      div.label {
+        display: inline-block;
+      }
+    }
   }
 
-  &-shortcut {
-    kbd {
-      display: inline-block;
-      padding: 3px 5px;
-      font-size: 11px;
-      line-height: 10px;
-      color: #555;
-      vertical-align: middle;
-      background-color: #fcfcfc;
-      border: solid 1px #ccc;
-      border-bottom-color: #bbb;
-      border-radius: 3px;
-      box-shadow: inset 0 -1px 0 #bbb;
+  &-search {
+    margin-right: 36px;
+
+    &-row {
+      display: flex;
+      flex-direction: row;
+
+      &-term {
+        flex: 1;
+        color: #5b5b88;
+      }
+
+      &-term-label {
+        flex: 1;
+      }
     }
-    div.key {
-      width: 100px;
-      display: inline-block;
+  }
+
+  &-fields {
+    display: flex;
+    flex-direction: column;
+
+    &-current-topology {
+      text-transform: uppercase;
+      color: #8383ac;
     }
-    div.label {
-      display: inline-block;
+
+    &-fields {
+      display: flex;
+      align-items: stretch;
+
+      &-column {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        margin-right: 12px;
+
+        &-content {
+          overflow: auto;
+          // 160px for top and bottom margins and the rest of the help window
+          // is about 160px too.
+          // Notes: Firefox gets a bit messy if you try and bubble
+          // heights + overflow up (min-height issue + still doesn't work v.well),
+          // so this is a bit of a hack.
+          max-height: ~"calc(100vh - 160px - 160px - 160px)";
+        }
+      }
     }
   }
 }
