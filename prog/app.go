@@ -31,6 +31,7 @@ import (
 
 const (
 	memcacheUpdateInterval = 1 * time.Minute
+	httpTimeout            = 90 * time.Second
 )
 
 var (
@@ -278,8 +279,8 @@ func appMain(flags appFlags) {
 		Server: &http.Server{
 			Addr:           flags.listen,
 			Handler:        handler,
-			ReadTimeout:    10 * time.Second,
-			WriteTimeout:   10 * time.Second,
+			ReadTimeout:    httpTimeout,
+			WriteTimeout:   httpTimeout,
 			MaxHeaderBytes: 1 << 20,
 		},
 	}
