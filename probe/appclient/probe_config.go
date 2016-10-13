@@ -5,10 +5,18 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/certifi/gocertifi"
+	"github.com/hashicorp/go-cleanhttp"
+
 	"github.com/weaveworks/scope/common/xfer"
+)
+
+const (
+	dialTimeout = 5 * time.Second
 )
 
 var certPool *x509.CertPool
@@ -43,17 +51,19 @@ func (pc ProbeConfig) authorizedRequest(method string, urlStr string, body io.Re
 	return req, err
 }
 
-func (pc ProbeConfig) getHTTPTransport(hostname string) (*http.Transport, error) {
+func (pc ProbeConfig) getHTTPTransport(hostname string) *http.Transport {
+	transport := cleanhttp.DefaultTransport()
+	transport.DialContext = (&net.Dialer{
+		Timeout:   dialTimeout,
+		KeepAlive: 30 * time.Second,
+	}).DialContext
 	if pc.Insecure {
-		return &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}, nil
-	}
-
-	return &http.Transport{
-		TLSClientConfig: &tls.Config{
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	} else {
+		transport.TLSClientConfig = &tls.Config{
 			RootCAs:    certPool,
 			ServerName: hostname,
-		},
-	}, nil
+		}
+	}
+	return transport
 }
