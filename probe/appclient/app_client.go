@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/rpc"
 	"net/url"
@@ -13,6 +12,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/websocket"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/xfer"
@@ -22,7 +22,6 @@ const (
 	httpClientTimeout = 4 * time.Second
 	initialBackoff    = 1 * time.Second
 	maxBackoff        = 60 * time.Second
-	dialTimeout       = 5 * time.Second
 )
 
 // AppClient is a client to an app for dealing with controls.
@@ -41,7 +40,7 @@ type appClient struct {
 
 	quit     chan struct{}
 	mtx      sync.Mutex
-	client   http.Client
+	client   *http.Client
 	wsDialer websocket.Dialer
 	appID    string
 	hostname string
@@ -63,24 +62,17 @@ type appClient struct {
 
 // NewAppClient makes a new appClient.
 func NewAppClient(pc ProbeConfig, hostname string, target url.URL, control xfer.ControlHandler) (AppClient, error) {
-	httpTransport, err := pc.getHTTPTransport(hostname)
-	if err != nil {
-		return nil, err
-	}
-
-	httpTransport.Dial = func(network, addr string) (net.Conn, error) {
-		return net.DialTimeout(network, addr, dialTimeout)
-	}
+	httpTransport := pc.getHTTPTransport(hostname)
+	httpClient := cleanhttp.DefaultClient()
+	httpClient.Transport = httpTransport
+	httpClient.Timeout = httpClientTimeout
 
 	return &appClient{
 		ProbeConfig: pc,
 		quit:        make(chan struct{}),
 		hostname:    hostname,
 		target:      target,
-		client: http.Client{
-			Transport: httpTransport,
-			Timeout:   httpClientTimeout,
-		},
+		client:      httpClient,
 		wsDialer: websocket.Dialer{
 			TLSClientConfig:  httpTransport.TLSClientConfig,
 			HandshakeTimeout: httpClientTimeout,

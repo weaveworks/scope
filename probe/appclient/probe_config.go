@@ -5,10 +5,18 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/certifi/gocertifi"
+	"github.com/hashicorp/go-cleanhttp"
+
 	"github.com/weaveworks/scope/common/xfer"
+)
+
+const (
+	dialTimeout = 5 * time.Second
 )
 
 var certPool *x509.CertPool
@@ -43,25 +51,19 @@ func (pc ProbeConfig) authorizedRequest(method string, urlStr string, body io.Re
 	return req, err
 }
 
-func (pc ProbeConfig) getHTTPTransport(hostname string) (*http.Transport, error) {
-	var tlsConfig *tls.Config
+func (pc ProbeConfig) getHTTPTransport(hostname string) *http.Transport {
+	transport := cleanhttp.DefaultTransport()
+	transport.DialContext = (&net.Dialer{
+		Timeout:   dialTimeout,
+		KeepAlive: 30 * time.Second,
+	}).DialContext
 	if pc.Insecure {
-		tlsConfig = &tls.Config{InsecureSkipVerify: true}
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	} else {
-		tlsConfig = &tls.Config{
+		transport.TLSClientConfig = &tls.Config{
 			RootCAs:    certPool,
 			ServerName: hostname,
 		}
 	}
-	return &http.Transport{
-		TLSClientConfig: tlsConfig,
-
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		IdleConnTimeout:       http.DefaultTransport.IdleConnTimeout,
-		TLSHandshakeTimeout:   http.DefaultTransport.TLSHandshakeTimeout,
-		ExpectContinueTimeout: http.DefaultTransport.ExpectContinueTimeout,
-	}
+	return transport
 }
