@@ -19,17 +19,17 @@ func TestMetricsMerge(t *testing.T) {
 	t4 := time.Now().Add(3 * time.Minute)
 
 	metrics1 := report.Metrics{
-		"metric1": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
+		"metric1": report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 0.1}, {Timestamp: t2, Value: 0.2}}),
 		"metric2": report.MakeSingletonMetric(t3, 0.3),
 	}
 	metrics2 := report.Metrics{
 		"metric2": report.MakeSingletonMetric(t4, 0.4),
-		"metric3": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
+		"metric3": report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 0.1}, {Timestamp: t2, Value: 0.2}}),
 	}
 	want := report.Metrics{
-		"metric1": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
-		"metric2": report.MakeMetric([]report.Sample{{t3, 0.3}, {t4, 0.4}}),
-		"metric3": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
+		"metric1": report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 0.1}, {Timestamp: t2, Value: 0.2}}),
+		"metric2": report.MakeMetric([]report.Sample{{Timestamp: t3, Value: 0.3}, {Timestamp: t4, Value: 0.4}}),
+		"metric3": report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 0.1}, {Timestamp: t2, Value: 0.2}}),
 	}
 	have := metrics1.Merge(metrics2)
 	if !reflect.DeepEqual(want, have) {
@@ -71,14 +71,14 @@ func TestMetricFirstLastMinMax(t *testing.T) {
 	t1 := time.Now()
 	t2 := time.Now().Add(1 * time.Minute)
 
-	metric1 := report.MakeMetric([]report.Sample{{t1, -0.1}, {t2, 0.2}})
+	metric1 := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -0.1}, {Timestamp: t2, Value: 0.2}})
 
 	checkMetric(t, metric1, t1, t2, -0.1, 0.2)
 	checkMetric(t, metric1.Merge(metric1), t1, t2, -0.1, 0.2)
 
 	t3 := time.Now().Add(2 * time.Minute)
 	t4 := time.Now().Add(3 * time.Minute)
-	metric2 := report.MakeMetric([]report.Sample{{t3, 0.31}, {t4, 0.4}})
+	metric2 := report.MakeMetric([]report.Sample{{Timestamp: t3, Value: 0.31}, {Timestamp: t4, Value: 0.4}})
 
 	checkMetric(t, metric2, t3, t4, 0.31, 0.4)
 	checkMetric(t, metric1.Merge(metric2), t1, t4, -0.1, 0.4)
@@ -91,11 +91,11 @@ func TestMetricMerge(t *testing.T) {
 	t3 := time.Now().Add(2 * time.Minute)
 	t4 := time.Now().Add(3 * time.Minute)
 
-	metric1 := report.MakeMetric([]report.Sample{{t2, 0.2}, {t3, 0.31}})
+	metric1 := report.MakeMetric([]report.Sample{{Timestamp: t2, Value: 0.2}, {Timestamp: t3, Value: 0.31}})
 
-	metric2 := report.MakeMetric([]report.Sample{{t1, -0.1}, {t3, 0.3}, {t4, 0.4}})
+	metric2 := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -0.1}, {Timestamp: t3, Value: 0.3}, {Timestamp: t4, Value: 0.4}})
 
-	want := report.MakeMetric([]report.Sample{{t1, -0.1}, {t2, 0.2}, {t3, 0.31}, {t4, 0.4}})
+	want := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -0.1}, {Timestamp: t2, Value: 0.2}, {Timestamp: t3, Value: 0.31}, {Timestamp: t4, Value: 0.4}})
 
 	have := metric1.Merge(metric2)
 	if !reflect.DeepEqual(want, have) {
@@ -126,8 +126,8 @@ func TestMetricDiv(t *testing.T) {
 	t1 := time.Now()
 	t2 := time.Now().Add(1 * time.Minute)
 
-	want := report.MakeMetric([]report.Sample{{t1, -2}, {t2, 2}})
-	beforeDiv := report.MakeMetric([]report.Sample{{t1, -2048}, {t2, 2048}})
+	want := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -2}, {Timestamp: t2, Value: 2}})
+	beforeDiv := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -2048}, {Timestamp: t2, Value: 2048}})
 	have := beforeDiv.Div(1024)
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("diff: %s", test.Diff(want, have))
