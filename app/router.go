@@ -29,8 +29,13 @@ var (
 	UniqueID = "0"
 )
 
+// contextKey is a wrapper type for use in context.WithValue() to satisfy golint
+// https://github.com/golang/go/issues/17293
+// https://github.com/golang/lint/pull/245
+type contextKey string
+
 // RequestCtxKey is key used for request entry in context
-const RequestCtxKey = "request"
+const RequestCtxKey contextKey = contextKey("request")
 
 // CtxHandlerFunc is a http.HandlerFunc, with added contexts
 type CtxHandlerFunc func(context.Context, http.ResponseWriter, *http.Request)
