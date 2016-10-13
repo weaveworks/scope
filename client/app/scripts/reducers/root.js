@@ -69,6 +69,7 @@ export const initialState = makeMap({
   exportingGraph: false
 });
 
+
 // adds ID field to topology (based on last part of URL path) and save urls in
 // map for easy lookup
 function processTopologies(state, nextTopologies) {
@@ -87,11 +88,13 @@ function processTopologies(state, nextTopologies) {
   return state.mergeDeepIn(['topologies'], immNextTopologies);
 }
 
+
 function setTopology(state, topologyId) {
   state = state.set('currentTopology', findTopologyById(
     state.get('topologies'), topologyId));
   return state.set('currentTopologyId', topologyId);
 }
+
 
 function setDefaultTopologyOptions(state, topologyList) {
   topologyList.forEach(topology => {
@@ -113,6 +116,7 @@ function setDefaultTopologyOptions(state, topologyList) {
   return state;
 }
 
+
 function closeNodeDetails(state, nodeId) {
   const nodeDetails = state.get('nodeDetails');
   if (nodeDetails.size > 0) {
@@ -128,6 +132,7 @@ function closeNodeDetails(state, nodeId) {
   return state;
 }
 
+
 function closeAllNodeDetails(state) {
   while (state.get('nodeDetails').size) {
     state = closeNodeDetails(state);
@@ -135,9 +140,32 @@ function closeAllNodeDetails(state) {
   return state;
 }
 
+
 function resumeUpdate(state) {
   return state.set('updatePausedAt', null);
 }
+
+
+function setSelectedNode(state, {nodeId, label, origin, topologyId}) {
+  state = resumeUpdate(state);
+  if (state.hasIn(['nodeDetails', nodeId])) {
+    // bring to front
+    const details = state.getIn(['nodeDetails', nodeId]);
+    state = state.deleteIn(['nodeDetails', nodeId]);
+    state = state.setIn(['nodeDetails', nodeId], details);
+  } else {
+    state = state.setIn(['nodeDetails', nodeId], {id: nodeId, label, origin, topologyId});
+  }
+  state = state.set('selectedNodeId', nodeId);
+  if (topologyId !== state.get('currentTopologyId')) {
+    state = setTopology(state, topologyId);
+    state = state.update('nodes', nodes => nodes.clear());
+    state = state.set('availableCanvasMetrics', makeList());
+  }
+
+  return state;
+}
+
 
 export function rootReducer(state = initialState, action) {
   if (!action.type) {
@@ -193,7 +221,17 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_CLOSE_DETAILS: {
-      return closeNodeDetails(state, action.nodeId);
+      state = closeNodeDetails(state, action.nodeId);
+      const topCard = state.get('nodeDetails').last();
+      if (!topCard) {
+        return state;
+      }
+
+      return setSelectedNode(state, {
+        nodeId: topCard.id,
+        label: topCard.label,
+        topologyId: topCard.topologyId,
+      });
     }
 
     case ActionTypes.CLICK_CLOSE_TERMINAL: {
@@ -233,22 +271,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_RELATIVE: {
-      if (state.hasIn(['nodeDetails', action.nodeId])) {
-        // bring to front
-        const details = state.getIn(['nodeDetails', action.nodeId]);
-        state = state.deleteIn(['nodeDetails', action.nodeId]);
-        state = state.setIn(['nodeDetails', action.nodeId], details);
-      } else {
-        state = state.setIn(['nodeDetails', action.nodeId],
-          {
-            id: action.nodeId,
-            label: action.label,
-            origin: action.origin,
-            topologyId: action.topologyId
-          }
-        );
-      }
-      return state;
+      return setSelectedNode(state, action);
     }
 
     case ActionTypes.CLICK_RESUME_UPDATE: {

@@ -286,12 +286,18 @@ export function clickRelative(nodeId, topologyId, label, origin) {
       topologyId
     });
     updateRoute(getState);
+    resetUpdateBuffer();
     const state = getState();
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
       getActiveTopologyOptions(state),
       state.get('nodeDetails'),
+      dispatch
+    );
+    getNodesDelta(
+      getCurrentTopologyUrl(state),
+      getActiveTopologyOptions(state),
       dispatch
     );
   };
@@ -461,7 +467,7 @@ export function hitEsc() {
     } else if (state.get('showingHelp')) {
       dispatch(hideHelp());
     } else if (state.get('nodeDetails').last() && !controlPipe) {
-      dispatch({ type: ActionTypes.DESELECT_NODE });
+      dispatch({ type: ActionTypes.CLICK_CLOSE_DETAILS });
       updateRoute(getState);
     }
   };
