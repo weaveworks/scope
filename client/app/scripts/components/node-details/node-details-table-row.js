@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import NodeDetailsTableNodeLink from './node-details-table-node-link';
 import NodeDetailsTableNodeMetric from './node-details-table-node-metric';
-
+import { formatDataType } from '../../utils/string-utils';
 
 function getValuesForNode(node) {
   const values = {};
@@ -31,7 +31,6 @@ function getValuesForNode(node) {
   return values;
 }
 
-
 function renderValues(node, columns = [], columnStyles = []) {
   const fields = getValuesForNode(node);
   return columns.map(({id}, i) => {
@@ -39,11 +38,12 @@ function renderValues(node, columns = [], columnStyles = []) {
     const style = columnStyles[i];
     if (field) {
       if (field.valueType === 'metadata') {
+        const {value, title} = formatDataType(field);
         return (
-          <td className="node-details-table-node-value truncate" title={field.value}
+          <td className="node-details-table-node-value truncate" title={title}
             style={style}
             key={field.id}>
-            {field.value}
+            {value}
           </td>
         );
       }

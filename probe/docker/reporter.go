@@ -32,7 +32,7 @@ var (
 		ContainerNetworks:     {ID: ContainerNetworks, Label: "Networks", From: report.FromSets, Priority: 14},
 		ContainerIPs:          {ID: ContainerIPs, Label: "IPs", From: report.FromSets, Priority: 15},
 		ContainerPorts:        {ID: ContainerPorts, Label: "Ports", From: report.FromSets, Priority: 16},
-		ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Priority: 17},
+		ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 17},
 	}
 
 	ContainerMetricTemplates = report.MetricTemplates{

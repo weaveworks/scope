@@ -3,6 +3,7 @@ import { Map as makeMap } from 'immutable';
 
 import MatchedText from '../matched-text';
 import ShowMore from '../show-more';
+import { formatDataType } from '../../utils/string-utils';
 
 export default class NodeDetailsInfo extends React.Component {
 
@@ -37,18 +38,22 @@ export default class NodeDetailsInfo extends React.Component {
 
     return (
       <div className="node-details-info">
-        {rows.map(field => (<div className="node-details-info-field" key={field.id}>
-            <div className="node-details-info-field-label truncate" title={field.label}>
-              {field.label}
+        {rows.map(field => {
+          const { value, title } = formatDataType(field);
+          return (
+            <div className="node-details-info-field" key={field.id}>
+              <div className="node-details-info-field-label truncate" title={field.label}>
+                {field.label}
+              </div>
+              <div className="node-details-info-field-value truncate" title={title}>
+                <MatchedText
+                  text={value}
+                  truncate={field.truncate}
+                  match={matches.get(field.id)} />
+              </div>
             </div>
-            <div className="node-details-info-field-value truncate" title={field.value}>
-              <MatchedText
-                text={field.value}
-                truncate={field.truncate}
-                match={matches.get(field.id)} />
-            </div>
-          </div>
-        ))}
+          );
+        })}
         <ShowMore handleClick={this.handleClickMore} collection={this.props.rows}
           expanded={this.state.expanded} notShown={notShown} />
       </div>
