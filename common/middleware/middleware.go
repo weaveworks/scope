@@ -31,3 +31,16 @@ func Merge(middlesware ...Interface) Interface {
 		return next
 	})
 }
+
+// AddHeaders produces a middleware which merges the given header values into the response,
+// overwriting the existing value if any.
+func AddHeaders(headers map[string]string) Interface {
+	return Func(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			for key, value := range headers {
+				w.Header().Set(key, value)
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+}
