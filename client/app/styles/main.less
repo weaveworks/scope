@@ -482,76 +482,104 @@ h2 {
       }
     }
   }
-
-  .stack .shape .highlighted {
-    display: none;
-  }
-
-  .stack .onlyHighlight .shape  {
-    .border { display: none; }
-    .shadow { display: none; }
-    .node { display: none; }
-    .highlighted { display: inline; }
-  }
-
-  .stack .shape .metric-fill {
-    display: none;
-  }
-
-  .shape {
-    transform: scale(1);
-    cursor: pointer;
-
-    /* cloud paths have stroke-width set dynamically */
-    &:not(.shape-cloud) .border {
-      stroke-width: @node-border-stroke-width;
-      fill: @background-color;
-      transition: stroke-opacity 0.333s @base-ease, fill 0.333s @base-ease;
-      stroke-opacity: 1;
-    }
-
-    &.metrics .border {
-      fill: @background-lighter-color;
-      stroke-opacity: 0.3;
-    }
-
-    .metric-fill {
-      stroke: none;
-      fill: #A0BE7E;
-      fill-opacity: 0.7;
-    }
-
-    .shadow {
-      stroke: none;
-      fill: @background-lighter-color;
-    }
-
-    .node {
-      fill: @text-color;
-      stroke: @background-lighter-color;
-      stroke-width: 2px;
-    }
-
-    text {
-      font-size: 12px;
-      dominant-baseline: middle;
-      text-anchor: middle;
-    }
-
-    .highlighted {
-      fill: @weave-blue;
-      fill-opacity: @node-highlight-fill-opacity;
-      stroke: @weave-blue;
-      stroke-width: @node-highlight-stroke-width;
-      stroke-opacity: @node-highlight-stroke-opacity;
-    }
-  }
-
-  .stack .shape .border {
-    stroke-width: @node-border-stroke-width - 0.5;
-  }
-
 }
+
+//
+// stacks and shapes!!!
+//
+
+.stack .shape .highlighted {
+  display: none;
+}
+
+.stack .onlyHighlight .shape  {
+  .border { display: none; }
+  .shadow { display: none; }
+  .node { display: none; }
+  .highlighted { display: inline; }
+}
+
+.stack .shape .metric-fill {
+  display: none;
+}
+
+.shape {
+  transform: scale(1);
+
+  /* cloud paths have stroke-width set dynamically */
+  &:not(.shape-cloud) .border {
+    stroke-width: @node-border-stroke-width;
+    fill: @background-color;
+    transition: stroke-opacity 0.333s @base-ease, fill 0.333s @base-ease;
+    stroke-opacity: 1;
+  }
+
+  &.metrics .border {
+    fill: @background-lighter-color;
+    stroke-opacity: 0.3;
+  }
+
+  .metric-fill {
+    stroke: none;
+    fill: #A0BE7E;
+    fill-opacity: 0.7;
+  }
+
+  .shadow {
+    stroke: none;
+    fill: @background-lighter-color;
+  }
+
+  text {
+    font-size: 12px;
+    dominant-baseline: middle;
+    text-anchor: middle;
+  }
+
+  .highlighted {
+    fill: @weave-blue;
+    fill-opacity: @node-highlight-fill-opacity;
+    stroke: @weave-blue;
+    stroke-width: @node-highlight-stroke-width;
+    stroke-opacity: @node-highlight-stroke-opacity;
+  }
+}
+
+.shape.wireframe  {
+  .shadow, .border {
+    fill-opacity: 0;
+  }
+
+  .border {
+    stroke: white;
+  }
+
+  .node {
+    fill: white;
+    stroke: white;
+    // fill-opacity: 0.9;
+    // stroke-opacity: 0.9;
+  }
+}
+
+.noNode .wireframe .node {
+  display: none;
+}
+
+.stack .shape .border {
+  stroke-width: @node-border-stroke-width - 0.5;
+}
+
+.shape:not(.wireframe) .node {
+  fill: @text-color;
+  stroke: @background-lighter-color;
+  stroke-width: 2px;
+}
+
+
+// ----
+
+
 
 .matched-results {
   text-align: center;
@@ -643,15 +671,26 @@ h2 {
   &-header {
     .colorable;
 
+    &.show-switch-topology &-label {
+      .btn-opacity;
+      opacity: 0.8;
+      &:hover {
+        opacity: 1;
+      }
+    }
+
     &-wrapper {
-      padding: 36px 36px 8px 36px;
+      padding: 36px 36px 8px 24px;
     }
 
     &-label {
       color: white;
-      margin: 0;
-      width: 348px;
+      margin: 0 0 0 64px;
       padding-top: 0;
+    }
+
+    svg {
+      float: left;
     }
 
     .details-tools {
@@ -667,6 +706,7 @@ h2 {
   }
 
   &-relatives {
+    margin-left: 64px;
     margin-top: 4px;
     font-size: 120%;
     color: @white;

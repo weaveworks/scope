@@ -36,7 +36,7 @@ const nodeShapes = {
   cloud: NodeShapeCloud
 };
 
-function getNodeShape({ shape, stack }) {
+export function getNodeShape({ shape, stack }) {
   const nodeShape = nodeShapes[shape];
   if (!nodeShape) {
     throw new Error(`Unknown shape: ${shape}!`);
@@ -142,7 +142,7 @@ class Node extends React.Component {
             </div>
           </foreignObject>}
 
-        <g {...mouseEvents} ref={this.saveShapeRef}>
+        <g {...mouseEvents} ref={this.saveShapeRef} style={{cursor: 'pointer'}}>
           <NodeShapeType
             size={size}
             color={color}

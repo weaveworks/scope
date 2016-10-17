@@ -4,11 +4,11 @@ import {getMetricValue, getMetricColor, getClipPathDefinition} from '../utils/me
 import {CANVAS_METRIC_FONT_SIZE} from '../constants/styles.js';
 
 
-export default function NodeShapeCircle({id, highlighted, size, color, metric}) {
+export default function NodeShapeCircle({id, highlighted, size, color, metric, wireframe}) {
   const clipId = `mask-${id}`;
   const {height, hasMetric, formattedValue} = getMetricValue(metric, size);
   const metricStyle = { fill: getMetricColor(metric) };
-  const className = classNames('shape', { metrics: hasMetric });
+  const className = classNames('shape', { metrics: hasMetric, wireframe });
   const fontSize = size * CANVAS_METRIC_FONT_SIZE;
 
   return (
@@ -21,7 +21,7 @@ export default function NodeShapeCircle({id, highlighted, size, color, metric}) 
         clipPath={`url(#${clipId})`} />}
       {highlighted && hasMetric ?
         <text style={{fontSize}}>{formattedValue}</text> :
-        <circle className="node" r={Math.max(2, (size * 0.125))} />}
+        <circle className="node" stroke={color} fill={color} r={Math.max(2, (size * 0.125))} />}
     </g>
   );
 }
