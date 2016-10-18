@@ -36,13 +36,14 @@ func handleTopology(ctx context.Context, renderer render.Renderer, decorator ren
 }
 
 // Individual nodes.
-func handleNode(ctx context.Context, renderer render.Renderer, _ render.Decorator, report report.Report, w http.ResponseWriter, r *http.Request) {
+func handleNode(ctx context.Context, renderer render.Renderer, decorator render.Decorator, report report.Report, w http.ResponseWriter, r *http.Request) {
 	var (
-		vars       = mux.Vars(r)
-		topologyID = vars["topology"]
-		nodeID     = vars["id"]
-		rendered   = renderer.Render(report, nil)
-		node, ok   = rendered[nodeID]
+		vars             = mux.Vars(r)
+		topologyID       = vars["topology"]
+		nodeID           = vars["id"]
+		preciousRenderer = render.PreciousNodeRenderer{PreciousNodeID: nodeID, Renderer: renderer}
+		rendered         = preciousRenderer.Render(report, decorator)
+		node, ok         = rendered[nodeID]
 	)
 	if !ok {
 		http.NotFound(w, r)
