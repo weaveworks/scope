@@ -372,7 +372,7 @@ func (c *container) env() map[string]string {
 func (c *container) getBaseNode() report.Node {
 	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{
 		ContainerID:       c.ID(),
-		ContainerCreated:  c.container.Created.Format(time.RFC822),
+		ContainerCreated:  c.container.Created.Format(time.RFC3339Nano),
 		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
 		ImageID:           c.Image(),
 		ContainerHostname: c.Hostname(),
