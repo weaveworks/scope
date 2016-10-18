@@ -202,7 +202,7 @@ func TestReporter(t *testing.T) {
 		{pod2ID, serviceID, map[string]string{
 			kubernetes.Name:      "pong-b",
 			kubernetes.Namespace: "ping",
-			kubernetes.Created:   pod1.Created(),
+			kubernetes.Created:   pod2.Created(),
 		}},
 	} {
 		node, ok := rpt.Pod.Nodes[pod.id]
@@ -231,7 +231,7 @@ func TestReporter(t *testing.T) {
 		for k, want := range map[string]string{
 			kubernetes.Name:      "pongservice",
 			kubernetes.Namespace: "ping",
-			kubernetes.Created:   pod1.Created(),
+			kubernetes.Created:   service1.Created(),
 		} {
 			if have, ok := node.Latest.Lookup(k); !ok || have != want {
 				t.Errorf("Expected service %s latest %q: %q, got %q", serviceID, k, want, have)

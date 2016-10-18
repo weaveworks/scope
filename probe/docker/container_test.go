@@ -70,7 +70,7 @@ func TestContainer(t *testing.T) {
 		}
 		want := report.MakeNodeWith("ping;<container>", map[string]string{
 			"docker_container_command":     " ",
-			"docker_container_created":     "01 Jan 01 00:00 UTC",
+			"docker_container_created":     "0001-01-01T00:00:00Z",
 			"docker_container_id":          "ping",
 			"docker_container_name":        "pong",
 			"docker_image_id":              "baz",
