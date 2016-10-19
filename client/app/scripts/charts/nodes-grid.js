@@ -66,7 +66,7 @@ function renderIdCell(props) {
       <div style={iconStyle}><i className="fa fa-square" /></div>
       <div className="truncate">
         {props.label} {showSubLabel &&
-          <span className="nodes-grid-label-minor">{props.label_minor}</span>}
+          <span className="nodes-grid-label-minor">{props.labelMinor}</span>}
       </div>
     </div>
   );

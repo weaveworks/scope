@@ -54,7 +54,7 @@ const deltaAdd = (
   node_count: nodeCount,
   id: name,
   label: name,
-  label_minor: name,
+  labelMinor: name,
   latest: {},
   origins: [],
   rank: name,

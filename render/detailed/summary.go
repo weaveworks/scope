@@ -45,7 +45,7 @@ type Column struct {
 type NodeSummary struct {
 	ID         string               `json:"id"`
 	Label      string               `json:"label"`
-	LabelMinor string               `json:"label_minor"`
+	LabelMinor string               `json:"labelMinor"`
 	Rank       string               `json:"rank"`
 	Shape      string               `json:"shape,omitempty"`
 	Stack      bool                 `json:"stack,omitempty"`

@@ -46,7 +46,7 @@ type Connection struct {
 	ID         string               `json:"id"`     // ID of this element in the UI.  Must be unique for a given ConnectionsSummary.
 	NodeID     string               `json:"nodeId"` // ID of a node in the topology. Optional, must be set if linkable is true.
 	Label      string               `json:"label"`
-	LabelMinor string               `json:"label_minor,omitempty"`
+	LabelMinor string               `json:"labelMinor,omitempty"`
 	Linkable   bool                 `json:"linkable"`
 	Metadata   []report.MetadataRow `json:"metadata,omitempty"`
 }
