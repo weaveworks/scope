@@ -51,19 +51,31 @@ function renderShortcutPanel() {
 
 const BASIC_SEARCHES = [
   {term: 'foo', label: 'All fields for foo'},
-  {term: 'pid: 12345', label: 'Any field matching pid for the value 12345'},
+  {
+    term: 'pid: 12345',
+    label: <span>Any field matching <b>pid</b> for the value 12345</span>
+  },
 ];
 
 
 const REGEX_SEARCHES = [
-  {term: 'foo|bar', label: 'All fields for foo or bar'},
-  {term: 'command: foo(bar|baz)', label: 'Command field for foobar or foobaz'},
+  {
+    term: 'foo|bar',
+    label: 'All fields for foo or bar'
+  },
+  {
+    term: 'command: foo(bar|baz)',
+    label: <span><b>command</b> field for foobar or foobaz</span>
+  },
 ];
 
 
 const METRIC_SEARCHES = [
-  {term: 'cpu > 4%', label: 'CPU greater than 4%'},
-  {term: 'memory < 10mb', label: 'memory less than 4mb'},
+  {term: 'cpu > 4%', label: <span><b>CPU</b> greater than 4%</span>},
+  {
+    term: 'memory < 10mb',
+    label: <span><b>Memory</b> less than 10 megabytes</span>
+  },
 ];
 
 
