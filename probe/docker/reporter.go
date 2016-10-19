@@ -240,7 +240,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 		node := report.MakeNodeWith(nodeID, map[string]string{
 			ImageID: imageID,
 		})
-		node = node.AddTable(ImageLabelPrefix, image.Labels)
+		node = node.AddPrefixTable(ImageLabelPrefix, image.Labels)
 
 		if len(image.RepoTags) > 0 {
 			node = node.WithLatests(map[string]string{ImageName: image.RepoTags[0]})

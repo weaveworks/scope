@@ -17,8 +17,8 @@ const (
 	TruncationCountPrefix = "table_truncation_count_"
 )
 
-// AddTable appends arbirary key-value pairs to the Node, returning a new node.
-func (node Node) AddTable(prefix string, labels map[string]string) Node {
+// AddPrefixTable appends arbirary key-value pairs to the Node, returning a new node.
+func (node Node) AddPrefixTable(prefix string, labels map[string]string) Node {
 	count := 0
 	for key, value := range labels {
 		if count >= MaxTableRows {
@@ -34,17 +34,20 @@ func (node Node) AddTable(prefix string, labels map[string]string) Node {
 	return node
 }
 
-// ExtractTable returns the key-value pairs with the given prefix from this Node,
-func (node Node) ExtractTable(prefix string) (rows map[string]string, truncationCount int) {
+// extractTable returns the key-value pairs to build a table from this node
+func (node Node) extractTable(template TableTemplate) (rows map[string]string, truncationCount int) {
 	rows = map[string]string{}
 	truncationCount = 0
 	node.Latest.ForEach(func(key string, _ time.Time, value string) {
-		if strings.HasPrefix(key, prefix) {
-			label := key[len(prefix):]
+		if label, ok := template.FixedRows[key]; ok {
+			rows[label] = value
+		}
+		if strings.HasPrefix(key, template.Prefix) {
+			label := key[len(template.Prefix):]
 			rows[label] = value
 		}
 	})
-	if str, ok := node.Latest.Lookup(TruncationCountPrefix + prefix); ok {
+	if str, ok := node.Latest.Lookup(TruncationCountPrefix + template.Prefix); ok {
 		if n, err := fmt.Sscanf(str, "%d", &truncationCount); n != 1 || err != nil {
 			log.Warn("Unexpected truncation count format %q", str)
 		}
@@ -79,15 +82,31 @@ func (t Table) Copy() Table {
 	return result
 }
 
+// FixedRow describes a row which is part of a TableTemplate and whose value is extracted
+// from a predetermined key
+type FixedRow struct {
+	Key   string `json:"key"`
+	Label string `json:"label"`
+}
+
 // TableTemplate describes how to render a table for the UI.
 type TableTemplate struct {
 	ID     string `json:"id"`
 	Label  string `json:"label"`
 	Prefix string `json:"prefix"`
+	// FixedRows indicates what predetermined rows to render each entry is
+	// indexed by the key to extract the row value is mapped to the row
+	// label
+	FixedRows map[string]string `json:"fixedRows"`
 }
 
 // Copy returns a value-copy of the TableTemplate
 func (t TableTemplate) Copy() TableTemplate {
+	fixedRowsCopy := make(map[string]string, len(t.FixedRows))
+	for key, value := range t.FixedRows {
+		fixedRowsCopy[key] = value
+	}
+	t.FixedRows = fixedRowsCopy
 	return t
 }
 
@@ -102,10 +121,16 @@ func (t TableTemplate) Merge(other TableTemplate) TableTemplate {
 		return s2
 	}
 
+	fixedRows := t.FixedRows
+	if len(other.FixedRows) > len(fixedRows) {
+		fixedRows = other.FixedRows
+	}
+
 	return TableTemplate{
-		ID:     max(t.ID, other.ID),
-		Label:  max(t.Label, other.Label),
-		Prefix: max(t.Prefix, other.Prefix),
+		ID:        max(t.ID, other.ID),
+		Label:     max(t.Label, other.Label),
+		Prefix:    max(t.Prefix, other.Prefix),
+		FixedRows: fixedRows,
 	}
 }
 
@@ -116,7 +141,7 @@ type TableTemplates map[string]TableTemplate
 func (t TableTemplates) Tables(node Node) []Table {
 	var result []Table
 	for _, template := range t {
-		rows, truncationCount := node.ExtractTable(template.Prefix)
+		rows, truncationCount := node.extractTable(template)
 		table := Table{
 			ID:              template.ID,
 			Label:           template.Label,
