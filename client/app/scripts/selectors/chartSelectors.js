@@ -96,9 +96,11 @@ export const dataNodesSelector = createSelector(
 );
 
 
-export const searchableFieldsSelector = createSelector(
-  allNodesSelector,
-  getSearchableFields
+export const searchableFieldsSelector = returnPreviousRefIfEqual(
+  createSelector(
+    allNodesSelector,
+    getSearchableFields
+  )
 );
 
 
