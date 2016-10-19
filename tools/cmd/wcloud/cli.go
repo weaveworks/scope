@@ -81,7 +81,7 @@ func deploy(c Client, args []string) {
 		username = flags.String("u", "", "Username to report to deploy service (default with be current user)")
 		services ArrayFlags
 	)
-	flag.Var(&services, "service", "Service to update (can be repeated)")
+	flags.Var(&services, "service", "Service to update (can be repeated)")
 	if err := flags.Parse(args); err != nil {
 		usage()
 		return

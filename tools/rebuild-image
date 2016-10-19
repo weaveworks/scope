@@ -40,9 +40,22 @@ commit_timestamp() {
 	git show -s --format=%ct "$rev"
 }
 
+# Is the SHA1 actually present in the repo?
+# It could be it isn't, e.g. after a force push
+is_valid_commit() {
+	local rev=$1
+	git rev-parse --quiet --verify "$rev^{commit}" > /dev/null
+}
+
 cached_revision=$(cached_image_rev)
 if [ -z "$cached_revision" ]; then
 	echo ">>> No cached image found; rebuilding"
+	rebuild
+	exit 0
+fi
+
+if ! is_valid_commit "$cached_revision"; then
+	echo ">>> Git commit of cached image not found in repo; rebuilding"
 	rebuild
 	exit 0
 fi
