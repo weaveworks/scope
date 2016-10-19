@@ -84,7 +84,7 @@ export const dataNodesSelector = createSelector(
     id,
     label: node.get('label'),
     pseudo: node.get('pseudo'),
-    subLabel: node.get('label_minor'),
+    subLabel: node.get('labelMinor'),
     nodeCount: node.get('node_count'),
     metrics: node.get('metrics'),
     rank: node.get('rank'),

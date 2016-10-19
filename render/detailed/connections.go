@@ -43,11 +43,12 @@ type ConnectionsSummary struct {
 
 // Connection is a row in the connections table.
 type Connection struct {
-	ID       string               `json:"id"`     // ID of this element in the UI.  Must be unique for a given ConnectionsSummary.
-	NodeID   string               `json:"nodeId"` // ID of a node in the topology. Optional, must be set if linkable is true.
-	Label    string               `json:"label"`
-	Linkable bool                 `json:"linkable"`
-	Metadata []report.MetadataRow `json:"metadata,omitempty"`
+	ID         string               `json:"id"`     // ID of this element in the UI.  Must be unique for a given ConnectionsSummary.
+	NodeID     string               `json:"nodeId"` // ID of a node in the topology. Optional, must be set if linkable is true.
+	Label      string               `json:"label"`
+	LabelMinor string               `json:"labelMinor,omitempty"`
+	Linkable   bool                 `json:"linkable"`
+	Metadata   []report.MetadataRow `json:"metadata,omitempty"`
 }
 
 type connectionsByID []Connection
@@ -128,13 +129,15 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 		// MakeNodeID(ns[row.remoteNodeID]). As we don't need the whole summary.
 		summary, _ := MakeNodeSummary(r, ns[row.remoteNodeID])
 		connection := Connection{
-			ID:       fmt.Sprintf("%s-%s-%s-%s", row.remoteNodeID, row.remoteAddr, row.localAddr, row.port),
-			NodeID:   summary.ID,
-			Label:    summary.Label,
-			Linkable: true,
+			ID:         fmt.Sprintf("%s-%s-%s-%s", row.remoteNodeID, row.remoteAddr, row.localAddr, row.port),
+			NodeID:     summary.ID,
+			Label:      summary.Label,
+			LabelMinor: summary.LabelMinor,
+			Linkable:   true,
 		}
 		if row.remoteAddr != "" {
 			connection.Label = row.remoteAddr
+			connection.LabelMinor = ""
 		}
 		if includeLocal {
 			connection.Metadata = append(connection.Metadata,

@@ -153,10 +153,11 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       connectionID(fixture.ServerHostNodeID, ""),
-						NodeID:   fixture.ServerHostNodeID,
-						Label:    "server",
-						Linkable: true,
+						ID:         connectionID(fixture.ServerHostNodeID, ""),
+						NodeID:     fixture.ServerHostNodeID,
+						Label:      "server",
+						LabelMinor: "hostname.com",
+						Linkable:   true,
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
@@ -259,10 +260,11 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       connectionID(fixture.ClientContainerNodeID, ""),
-						NodeID:   fixture.ClientContainerNodeID,
-						Label:    "client",
-						Linkable: true,
+						ID:         connectionID(fixture.ClientContainerNodeID, ""),
+						NodeID:     fixture.ClientContainerNodeID,
+						Label:      "client",
+						LabelMinor: "client.hostname.com",
+						Linkable:   true,
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
@@ -375,10 +377,11 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       connectionID(fixture.ClientPodNodeID, ""),
-						NodeID:   fixture.ClientPodNodeID,
-						Label:    "pong-a",
-						Linkable: true,
+						ID:         connectionID(fixture.ClientPodNodeID, ""),
+						NodeID:     fixture.ClientPodNodeID,
+						Label:      "pong-a",
+						LabelMinor: "1 container",
+						Linkable:   true,
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
