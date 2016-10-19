@@ -184,7 +184,8 @@ class Terminal extends React.Component {
       cols: this.state.cols,
       rows: this.state.rows,
       convertEol: !this.props.raw,
-      cursorBlink: true
+      cursorBlink: true,
+      scrollback: 10000,
     });
 
     const innerNode = ReactDOM.findDOMNode(component.innerFlex);
