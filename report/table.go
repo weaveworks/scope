@@ -42,7 +42,7 @@ func (node Node) extractTable(template TableTemplate) (rows map[string]string, t
 		if label, ok := template.FixedRows[key]; ok {
 			rows[label] = value
 		}
-		if strings.HasPrefix(key, template.Prefix) {
+		if len(template.Prefix) > 0 && strings.HasPrefix(key, template.Prefix) {
 			label := key[len(template.Prefix):]
 			rows[label] = value
 		}
@@ -85,8 +85,8 @@ func (t Table) Copy() Table {
 // FixedRow describes a row which is part of a TableTemplate and whose value is extracted
 // from a predetermined key
 type FixedRow struct {
-	Key   string `json:"key"`
 	Label string `json:"label"`
+	Key   string `json:"key"`
 }
 
 // TableTemplate describes how to render a table for the UI.

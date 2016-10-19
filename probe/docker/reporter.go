@@ -4,6 +4,7 @@ import (
 	"net"
 	"strings"
 
+	humanize "github.com/dustin/go-humanize"
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe"
@@ -15,8 +16,11 @@ import (
 const (
 	ImageID          = "docker_image_id"
 	ImageName        = "docker_image_name"
+	ImageSize        = "docker_image_size"
+	ImageVirtualSize = "docker_image_virtual_size"
 	ImageLabelPrefix = "docker_image_label_"
 	IsInHostNetwork  = "docker_is_in_host_network"
+	ImageTableID     = "image_table"
 )
 
 // Exposed for testing
@@ -46,6 +50,14 @@ var (
 	ContainerTableTemplates = report.TableTemplates{
 		LabelPrefix: {ID: LabelPrefix, Label: "Docker Labels", Prefix: LabelPrefix},
 		EnvPrefix:   {ID: EnvPrefix, Label: "Environment Variables", Prefix: EnvPrefix},
+		ImageTableID: {ID: ImageTableID, Label: "Image",
+			FixedRows: map[string]string{
+				ImageID:          "ID",
+				ImageName:        "Name",
+				ImageSize:        "Size",
+				ImageVirtualSize: "Virtual Size",
+			},
+		},
 	}
 
 	ContainerImageTableTemplates = report.TableTemplates{
@@ -236,16 +248,17 @@ func (r *Reporter) containerImageTopology() report.Topology {
 
 	r.registry.WalkImages(func(image docker_client.APIImages) {
 		imageID := trimImageID(image.ID)
-		nodeID := report.MakeContainerImageNodeID(imageID)
-		node := report.MakeNodeWith(nodeID, map[string]string{
-			ImageID: imageID,
-		})
-		node = node.AddPrefixTable(ImageLabelPrefix, image.Labels)
-
-		if len(image.RepoTags) > 0 {
-			node = node.WithLatests(map[string]string{ImageName: image.RepoTags[0]})
+		latests := map[string]string{
+			ImageID:          imageID,
+			ImageSize:        humanize.Bytes(uint64(image.Size)),
+			ImageVirtualSize: humanize.Bytes(uint64(image.VirtualSize)),
 		}
-
+		if len(image.RepoTags) > 0 {
+			latests[ImageName] = image.RepoTags[0]
+		}
+		nodeID := report.MakeContainerImageNodeID(imageID)
+		node := report.MakeNodeWith(nodeID, latests)
+		node = node.AddPrefixTable(ImageLabelPrefix, image.Labels)
 		result.AddNode(node)
 	})
 
