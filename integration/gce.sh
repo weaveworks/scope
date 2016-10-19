@@ -39,6 +39,7 @@ function vm_names {
 
 # Delete all vms in this account
 function destroy {
+	local names
 	names="$(vm_names)"
 	if [ "$(gcloud compute instances list --zone "$ZONE" -q "$names" | wc -l)" -le 1 ] ; then
 		return 0

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"time"
@@ -14,6 +15,19 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"gopkg.in/yaml.v2"
 )
+
+// ArrayFlags allows you to collect repeated flags
+type ArrayFlags []string
+
+func (a *ArrayFlags) String() string {
+	return strings.Join(*a, ",")
+}
+
+// Set implements flags.Value
+func (a *ArrayFlags) Set(value string) error {
+	*a = append(*a, value)
+	return nil
+}
 
 func env(key, def string) string {
 	if val, ok := os.LookupEnv(key); ok {
@@ -52,6 +66,8 @@ func main() {
 		config(c, os.Args[2:])
 	case "logs":
 		logs(c, os.Args[2:])
+	case "events":
+		events(c, os.Args[2:])
 	case "help":
 		usage()
 	default:
@@ -60,6 +76,17 @@ func main() {
 }
 
 func deploy(c Client, args []string) {
+	var (
+		flags    = flag.NewFlagSet("", flag.ContinueOnError)
+		username = flags.String("u", "", "Username to report to deploy service (default with be current user)")
+		services ArrayFlags
+	)
+	flags.Var(&services, "service", "Service to update (can be repeated)")
+	if err := flags.Parse(args); err != nil {
+		usage()
+		return
+	}
+	args = flags.Args()
 	if len(args) != 1 {
 		usage()
 		return
@@ -69,9 +96,19 @@ func deploy(c Client, args []string) {
 		usage()
 		return
 	}
+	if *username == "" {
+		user, err := user.Current()
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		*username = user.Username
+	}
 	deployment := Deployment{
-		ImageName: parts[0],
-		Version:   parts[1],
+		ImageName:        parts[0],
+		Version:          parts[1],
+		TriggeringUser:   *username,
+		IntendedServices: services,
 	}
 	if err := c.Deploy(deployment); err != nil {
 		fmt.Println(err.Error())
@@ -80,14 +117,17 @@ func deploy(c Client, args []string) {
 }
 
 func list(c Client, args []string) {
-	flags := flag.NewFlagSet("list", flag.ContinueOnError)
-	page := flags.Int("page", 0, "Zero based index of page to list.")
-	pagesize := flags.Int("page-size", 10, "Number of results per page")
+	var (
+		flags = flag.NewFlagSet("", flag.ContinueOnError)
+		since = flags.Duration("since", 7*24*time.Hour, "How far back to fetch results")
+	)
 	if err := flags.Parse(args); err != nil {
 		usage()
 		return
 	}
-	deployments, err := c.GetDeployments(*page, *pagesize)
+	through := time.Now()
+	from := through.Add(-*since)
+	deployments, err := c.GetDeployments(from.Unix(), through.Unix())
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
@@ -107,6 +147,26 @@ func list(c Client, args []string) {
 		})
 	}
 	table.Render()
+}
+
+func events(c Client, args []string) {
+	var (
+		flags = flag.NewFlagSet("", flag.ContinueOnError)
+		since = flags.Duration("since", 7*24*time.Hour, "How far back to fetch results")
+	)
+	if err := flags.Parse(args); err != nil {
+		usage()
+		return
+	}
+	through := time.Now()
+	from := through.Add(-*since)
+	events, err := c.GetEvents(from.Unix(), through.Unix())
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Println("events: ", string(events))
 }
 
 func loadConfig(filename string) (*Config, error) {

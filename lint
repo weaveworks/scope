@@ -40,11 +40,11 @@ function spell_check {
 	filename="$1"
 	local lint_result=0
 
-	# we don't want to spell check tar balls or binaries
+	# we don't want to spell check tar balls, binaries, Makefile and json files
 	if file "$filename" | grep executable >/dev/null 2>&1; then
 		return $lint_result
 	fi
-	if [[ $filename == *".tar" || $filename == *".gz" ]]; then
+	if [[ $filename == *".tar" || $filename == *".gz" || $filename == *".json" || $(basename "$filename") == "Makefile" ]]; then
 		return $lint_result
 	fi
 
