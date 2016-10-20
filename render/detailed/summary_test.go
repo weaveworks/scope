@@ -47,7 +47,7 @@ func TestSummaries(t *testing.T) {
 	// It should summarize nodes' metrics
 	{
 		t1, t2 := mtime.Now().Add(-1*time.Minute), mtime.Now()
-		metric := report.MakeMetric([]report.Sample{{t1, 1}, {t2, 2}})
+		metric := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 1}, {Timestamp: t2, Value: 2}})
 		input := fixture.Report.Copy()
 
 		input.Process.Nodes[fixture.ClientProcess1NodeID].Metrics[process.CPUUsage] = metric
