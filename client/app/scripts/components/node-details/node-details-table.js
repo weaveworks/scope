@@ -30,7 +30,7 @@ const XS_LABEL = {
 const COLUMN_WIDTHS = {
   count: CW.XS,
   container: CW.XS,
-  docker_container_created: CW.XL,
+  docker_container_created: CW.XXL,
   docker_container_restart_count: CW.M,
   docker_container_state_human: CW.XXL,
   docker_container_uptime: '85px',
