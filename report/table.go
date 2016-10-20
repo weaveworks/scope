@@ -34,8 +34,8 @@ func (node Node) AddPrefixTable(prefix string, labels map[string]string) Node {
 	return node
 }
 
-// extractTable returns the key-value pairs to build a table from this node
-func (node Node) extractTable(template TableTemplate) (rows map[string]string, truncationCount int) {
+// ExtractTable returns the key-value pairs to build a table from this node
+func (node Node) ExtractTable(template TableTemplate) (rows map[string]string, truncationCount int) {
 	rows = map[string]string{}
 	truncationCount = 0
 	node.Latest.ForEach(func(key string, _ time.Time, value string) {
@@ -141,7 +141,7 @@ type TableTemplates map[string]TableTemplate
 func (t TableTemplates) Tables(node Node) []Table {
 	var result []Table
 	for _, template := range t {
-		rows, truncationCount := node.extractTable(template)
+		rows, truncationCount := node.ExtractTable(template)
 		table := Table{
 			ID:              template.ID,
 			Label:           template.Label,
