@@ -17,7 +17,7 @@ const (
 	TruncationCountPrefix = "table_truncation_count_"
 )
 
-// AddPrefixTable appends arbirary key-value pairs to the Node, returning a new node.
+// AddPrefixTable appends arbitrary key-value pairs to the Node, returning a new node.
 func (node Node) AddPrefixTable(prefix string, labels map[string]string) Node {
 	count := 0
 	for key, value := range labels {
