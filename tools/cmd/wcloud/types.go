@@ -20,10 +20,12 @@ type Deployment struct {
 // Config for the deployment system for a user.
 type Config struct {
 	RepoURL        string `json:"repo_url" yaml:"repo_url"`
+	RepoBranch     string `json:"repo_branch" yaml:"repo_branch"`
 	RepoPath       string `json:"repo_path" yaml:"repo_path"`
 	RepoBranch     string `json:"repo_branch" yaml:"repo_branch"`
 	RepoKey        string `json:"repo_key" yaml:"repo_key"`
 	KubeconfigPath string `json:"kubeconfig_path" yaml:"kubeconfig_path"`
+	AutoApply      bool   `json:"auto_apply" yaml:"auto_apply"`
 
 	Notifications []NotificationConfig `json:"notifications" yaml:"notifications"`
 
@@ -35,7 +37,8 @@ type Config struct {
 
 // NotificationConfig describes how to send notifications
 type NotificationConfig struct {
-	SlackWebhookURL string `json:"slack_webhook_url" yaml:"slack_webhook_url"`
-	SlackUsername   string `json:"slack_username" yaml:"slack_username"`
-	MessageTemplate string `json:"message_template" yaml:"message_template"`
+	SlackWebhookURL      string `json:"slack_webhook_url" yaml:"slack_webhook_url"`
+	SlackUsername        string `json:"slack_username" yaml:"slack_username"`
+	MessageTemplate      string `json:"message_template" yaml:"message_template"`
+	ApplyMessageTemplate string `json:"apply_message_template" yaml:"apply_message_template"`
 }
