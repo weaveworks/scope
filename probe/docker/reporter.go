@@ -48,8 +48,6 @@ var (
 	}
 
 	ContainerTableTemplates = report.TableTemplates{
-		LabelPrefix: {ID: LabelPrefix, Label: "Docker Labels", Prefix: LabelPrefix},
-		EnvPrefix:   {ID: EnvPrefix, Label: "Environment Variables", Prefix: EnvPrefix},
 		ImageTableID: {ID: ImageTableID, Label: "Image",
 			FixedRows: map[string]string{
 				ImageID:          "ID",
@@ -58,6 +56,8 @@ var (
 				ImageVirtualSize: "Virtual Size",
 			},
 		},
+		LabelPrefix: {ID: LabelPrefix, Label: "Docker Labels", Prefix: LabelPrefix},
+		EnvPrefix:   {ID: EnvPrefix, Label: "Environment Variables", Prefix: EnvPrefix},
 	}
 
 	ContainerImageTableTemplates = report.TableTemplates{
