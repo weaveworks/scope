@@ -139,6 +139,13 @@ func MapContainer2Pod(n report.Node, _ report.Networks) report.Nodes {
 // MapPod2IP maps pod nodes to their IP address.  This allows pods to
 // be joined directly with the endpoint topology.
 func MapPod2IP(m report.Node) []string {
+	// if this pod belongs to the host's networking namespace
+	// we cannot use its IP to attribute connections
+	// (they could come from any other process on the host or DNAT-ed IPs)
+	if _, ok := m.Latest.Lookup(kubernetes.IsInHostNetwork); ok {
+		return nil
+	}
+
 	ip, ok := m.Latest.Lookup(kubernetes.IP)
 	if !ok {
 		return nil
