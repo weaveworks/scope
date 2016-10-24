@@ -13,11 +13,10 @@ import (
 
 // Keys for use in Node
 const (
-	ImageID           = "docker_image_id"
-	ImageName         = "docker_image_name"
-	ImageLabelPrefix  = "docker_image_label_"
-	OverlayPeerPrefix = "docker_peer_"
-	IsInHostNetwork   = "docker_is_in_host_network"
+	ImageID          = "docker_image_id"
+	ImageName        = "docker_image_name"
+	ImageLabelPrefix = "docker_image_label_"
+	IsInHostNetwork  = "docker_is_in_host_network"
 )
 
 // Exposed for testing
@@ -261,10 +260,9 @@ func (r *Reporter) overlayTopology() report.Topology {
 		}
 
 	})
-	peerID := OverlayPeerPrefix + r.hostID
 	// Add both local and global networks to the LocalNetworks Set
 	// since we treat container IPs as local
-	node := report.MakeNode(report.MakeOverlayNodeID(peerID)).WithSets(
+	node := report.MakeNode(report.MakeOverlayNodeID(report.DockerOverlayPeerPrefix, r.hostID)).WithSets(
 		report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(subnets...)))
 	return report.MakeTopology().AddNode(node)
 }

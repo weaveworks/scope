@@ -164,24 +164,25 @@ func (w *Weave) Report() (report.Report, error) {
 		WeaveDNSHostname: {ID: WeaveDNSHostname, Label: "Weave DNS Name", From: report.FromLatest, Priority: 18},
 	})
 	for _, peer := range w.statusCache.Router.Peers {
-		node := report.MakeNodeWith(report.MakeOverlayNodeID(peer.Name), map[string]string{
-			WeavePeerName:     peer.Name,
-			WeavePeerNickName: peer.NickName,
-		})
+		node := report.MakeNodeWith(report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, peer.Name),
+			map[string]string{
+				WeavePeerName:     peer.Name,
+				WeavePeerNickName: peer.NickName,
+			})
 		if peer.Name == w.statusCache.Router.Name {
 			node = node.WithLatest(report.HostNodeID, mtime.Now(), w.hostID)
 			node = node.WithParents(report.EmptySets.Add(report.Host, report.MakeStringSet(w.hostID)))
 		}
 		for _, conn := range peer.Connections {
 			if conn.Outbound {
-				node = node.WithAdjacent(report.MakeOverlayNodeID(conn.Name))
+				node = node.WithAdjacent(report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, conn.Name))
 			}
 		}
 		r.Overlay.AddNode(node)
 	}
 	if w.statusCache.IPAM.DefaultSubnet != "" {
 		r.Overlay.AddNode(
-			report.MakeNode(report.MakeOverlayNodeID(w.statusCache.Router.Name)).WithSets(
+			report.MakeNode(report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, w.statusCache.Router.Name)).WithSets(
 				report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(w.statusCache.IPAM.DefaultSubnet)),
 			),
 		)

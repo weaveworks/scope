@@ -22,6 +22,12 @@ const (
 
 	// Key added to nodes to prevent them being joined with conntracked connections
 	DoesNotMakeConnections = "does_not_make_connections"
+
+	// WeaveOverlayPeerPrefix is the prefix for weave peers in the overlay network
+	WeaveOverlayPeerPrefix = ""
+
+	// DockerOverlayPeerPrefix is the prefix for docker peers in the overlay network
+	DockerOverlayPeerPrefix = "docker_peer_"
 )
 
 // MakeEndpointNodeID produces an endpoint node ID from its composite parts.
@@ -134,9 +140,26 @@ func parseSingleComponentID(tag string) func(string) (string, bool) {
 }
 
 // MakeOverlayNodeID produces an overlay topology node ID from a router peer's
-// name, which is assumed to be globally unique.
-func MakeOverlayNodeID(peerName string) string {
-	return "#" + peerName
+// prefix and name, which is assumed to be globally unique.
+func MakeOverlayNodeID(peerPrefix, peerName string) string {
+	return "#" + peerPrefix + peerName
+}
+
+// ParseOverlayNodeID produces the overlay type and peer name.
+func ParseOverlayNodeID(id string) (overlayPrefix string, peerName string) {
+
+	if !strings.HasPrefix(id, "#") {
+		// Best we can do
+		return "", ""
+	}
+
+	id = id[1:]
+
+	if strings.HasPrefix(id, DockerOverlayPeerPrefix) {
+		return DockerOverlayPeerPrefix, id[len(DockerOverlayPeerPrefix):]
+	}
+
+	return WeaveOverlayPeerPrefix, peerName
 }
 
 // ParseNodeID produces the host ID and remainder (typically an address) from

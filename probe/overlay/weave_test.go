@@ -35,7 +35,7 @@ func TestWeaveTaggerOverlayTopology(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		nodeID := report.MakeOverlayNodeID(weave.MockWeavePeerName)
+		nodeID := report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, weave.MockWeavePeerName)
 		node, ok := have.Overlay.Nodes[nodeID]
 		if !ok {
 			t.Errorf("Expected overlay node %q, but not found", nodeID)
