@@ -397,12 +397,16 @@ h2 {
     }
 
     .node-label, .node-sublabel {
+
       span {
         border-radius: 2px;
       }
       span:not(.match) {
         padding: 0 0.25em;
         background-color: fade(@background-average-color, 70%);
+      }
+      span:empty {
+        padding: 0;
       }
     }
     .matched-results {
