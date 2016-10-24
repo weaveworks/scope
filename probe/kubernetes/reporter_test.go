@@ -46,6 +46,9 @@ var (
 		},
 		Spec: api.PodSpec{
 			NodeName: nodeName,
+			SecurityContext: &api.PodSecurityContext{
+				HostNetwork: true,
+			},
 		},
 	}
 	apiPod2 = api.Pod{
@@ -65,7 +68,8 @@ var (
 			},
 		},
 		Spec: api.PodSpec{
-			NodeName: nodeName,
+			NodeName:        nodeName,
+			SecurityContext: &api.PodSecurityContext{},
 		},
 	}
 	apiService1 = api.Service{

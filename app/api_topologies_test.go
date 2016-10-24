@@ -83,6 +83,9 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 				{ContainerID: "container2"},
 			},
 		},
+		Spec: api.PodSpec{
+			SecurityContext: &api.PodSecurityContext{},
+		},
 	}).GetNode("")
 	buf := &bytes.Buffer{}
 	encoder := codec.NewEncoder(buf, &codec.MsgpackHandle{})

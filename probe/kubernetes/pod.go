@@ -64,7 +64,7 @@ func (p *pod) GetNode(probeID string) report.Node {
 		report.ControlProbeID: probeID,
 	}
 
-	if p.Pod.Spec.SecurityContext.HostNetwork {
+	if sc := p.Pod.Spec.SecurityContext; sc != nil && sc.HostNetwork {
 		latests[IsInHostNetwork] = "true"
 	}
 
