@@ -46,9 +46,9 @@
 @node-opacity-blurred: 0.25;
 @node-highlight-fill-opacity: 0.1;
 @node-highlight-stroke-opacity: 0.4;
-@node-highlight-stroke-width: 1px;
-@node-border-stroke-width: 2.5px;
-@node-pseudo-opacity: 0.8;
+@node-highlight-stroke-width: 2px;
+@node-border-stroke-width: 3px;
+@node-pseudo-opacity: 1;
 @edge-highlight-opacity: 0.1;
 @edge-opacity-blurred: 0.2;
 @edge-opacity: 0.5;
@@ -62,6 +62,10 @@
 
 @search-border-color: transparent;
 @search-border-width: 1px;
+
+/* specific elements */
+@body-background-color: linear-gradient(30deg, @background-color 0%, @background-lighter-color 100%);
+@label-background-color: fade(@background-average-color, 70%);
 
 /* add this class to truncate text with ellipsis, container needs width */
 .truncate {
@@ -130,7 +134,7 @@ body {
 
 /* Space out content a bit */
 body {
-  background: linear-gradient(30deg, @background-color 0%, @background-lighter-color 100%);
+  background: @body-background-color;
   color: @text-color;
   line-height: 150%;
   font-family: @base-font;
@@ -403,14 +407,14 @@ h2 {
       }
       span:not(.match) {
         padding: 0 0.25em;
-        background-color: fade(@background-average-color, 70%);
+        background-color: @label-background-color;
       }
       span:empty {
         padding: 0;
       }
     }
     .matched-results {
-      background-color: fade(@background-average-color, 70%);
+      background-color: @label-background-color;
     }
 
     &.pseudo {
@@ -430,7 +434,6 @@ h2 {
 
       .border {
         opacity: @node-pseudo-opacity;
-        stroke: @text-tertiary-color;
       }
     }
 
@@ -504,9 +507,12 @@ h2 {
     /* cloud paths have stroke-width set dynamically */
     &:not(.shape-cloud) .border {
       stroke-width: @node-border-stroke-width;
-      fill: @background-color;
       transition: stroke-opacity 0.333s @base-ease, fill 0.333s @base-ease;
       stroke-opacity: 1;
+    }
+
+    &:not(.shape-cloud) .outline {
+      stroke-width: 2px;
     }
 
     &.metrics .border {
@@ -522,13 +528,12 @@ h2 {
 
     .shadow {
       stroke: none;
-      fill: @background-lighter-color;
+
     }
 
     .node {
-      fill: @text-color;
-      stroke: @background-lighter-color;
-      stroke-width: 2px;
+
+
     }
 
     text {
@@ -544,10 +549,6 @@ h2 {
       stroke-width: @node-highlight-stroke-width;
       stroke-opacity: @node-highlight-stroke-opacity;
     }
-  }
-
-  .stack .shape .border {
-    stroke-width: @node-border-stroke-width - 0.5;
   }
 
 }

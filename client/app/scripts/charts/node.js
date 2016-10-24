@@ -5,7 +5,7 @@ import classnames from 'classnames';
 import { Map as makeMap, List as makeList } from 'immutable';
 
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
-import { getNodeColor } from '../utils/color-utils';
+import { getNodeColor, getNodeColorLight, getNodeColorDark } from '../utils/color-utils';
 import MatchedText from '../components/matched-text';
 import MatchedResults from '../components/matched-results';
 
@@ -90,6 +90,8 @@ class Node extends React.Component {
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
     const color = getNodeColor(rank, label, pseudo);
+    const lightColor = getNodeColorLight(rank, label, pseudo);
+    const darkColor = getNodeColorDark(rank, label, pseudo);
     const truncate = !focused && !hovered;
     const labelWidth = nodeScale(scaleFactor * 3);
     const labelOffsetX = -labelWidth / 2;
@@ -146,6 +148,8 @@ class Node extends React.Component {
           <NodeShapeType
             size={size}
             color={color}
+            lightColor={lightColor}
+            darkColor={darkColor}
             {...this.props} />
         </g>
 
