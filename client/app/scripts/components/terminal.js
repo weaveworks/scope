@@ -9,7 +9,7 @@ import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
 import { getPipeStatus, basePath } from '../utils/web-api-utils';
-import Term from '../vendor/term.js';
+import Term from 'xterm';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = `${wsProto}://${location.host}${basePath(location.pathname)}`;
@@ -23,6 +23,7 @@ const TIMES = '\u00D7';
 const MDASH = '\u2014';
 
 const reconnectTimerInterval = 2000;
+
 
 function ab2str(buf) {
   // http://stackoverflow.com/questions/17191945/conversion-between-utf-8-arraybuffer-and-string
@@ -54,6 +55,7 @@ function terminalCellSize(wrapperNode, rows, cols) {
   return {pixelPerCol, pixelPerRow};
 }
 
+
 function openNewWindow(url, bcr, minWidth = 200) {
   const screenLeft = window.screenX || window.screenLeft;
   const screenTop = window.screenY || window.screenTop;
@@ -73,6 +75,7 @@ function openNewWindow(url, bcr, minWidth = 200) {
 
   window.open(url, '', windowOptionsString);
 }
+
 
 class Terminal extends React.Component {
   constructor(props, context) {
@@ -117,7 +120,11 @@ class Terminal extends React.Component {
       }
       this.socket = null;
       const wereConnected = this.state.connected;
-      this.setState({connected: false});
+      if (this._isMounted) {
+        // Calling setState on an unmounted component will throw a warning.
+        // `connected` will get set to false by `componentWillUnmount`.
+        this.setState({connected: false});
+      }
       if (this.term && this.props.pipe.get('status') !== 'PIPE_DELETED') {
         if (wereConnected) {
           this.createWebsocket(term);
@@ -148,19 +155,22 @@ class Terminal extends React.Component {
   }
 
   componentDidMount() {
+    this._isMounted = true;
     if (this.props.connect) {
       this.mountTerminal();
     }
   }
 
   mountTerminal() {
+    const component = this;
     this.term = new Term({
       cols: this.state.cols,
       rows: this.state.rows,
-      convertEol: !this.props.raw
+      convertEol: !this.props.raw,
+      cursorBlink: true
     });
 
-    const innerNode = ReactDOM.findDOMNode(this.inner);
+    const innerNode = ReactDOM.findDOMNode(component.innerFlex);
     this.term.open(innerNode);
     this.term.on('data', (data) => {
       if (this.socket) {
@@ -171,7 +181,7 @@ class Terminal extends React.Component {
     this.createWebsocket(this.term);
 
     const {pixelPerCol, pixelPerRow} = terminalCellSize(
-      innerNode, this.state.rows, this.state.cols);
+      this.term.element, this.state.rows, this.state.cols);
 
     window.addEventListener('resize', this.handleResize);
 
@@ -185,6 +195,8 @@ class Terminal extends React.Component {
   }
 
   componentWillUnmount() {
+    this._isMounted = false;
+    this.setState({connected: false});
     log('cwu terminal');
 
     clearTimeout(this.reconnectTimeout);

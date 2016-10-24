@@ -72,14 +72,13 @@ class App extends React.Component {
   }
 
   onKeyPress(ev) {
-    const { dispatch, searchFocused } = this.props;
+    const { dispatch, searchFocused, showingTerminal } = this.props;
     //
     // keyup gives 'key'
     // keypress gives 'char'
     // Distinction is important for international keyboard layouts where there
     // is often a different {key: char} mapping.
-    //
-    if (!searchFocused) {
+    if (!searchFocused && !showingTerminal) {
       keyPressLog('onKeyPress', 'keyCode', ev.keyCode, ev);
       const char = String.fromCharCode(ev.charCode);
       if (char === '<') {
