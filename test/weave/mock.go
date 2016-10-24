@@ -26,8 +26,15 @@ func (MockClient) Status() (weave.Status, error) {
 		Router: weave.Router{
 			Name: MockWeavePeerName,
 			Peers: []struct {
-				Name     string
-				NickName string
+				Name        string
+				NickName    string
+				Connections []struct {
+					Name        string
+					NickName    string
+					Address     string
+					Outbound    bool
+					Established bool
+				}
 			}{
 				{
 					Name:     MockWeavePeerName,

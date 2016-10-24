@@ -67,6 +67,14 @@ func TestStatus(t *testing.T) {
 			Peers: []struct {
 				Name     string
 				NickName string
+				// TODO, extend
+				Connections []struct {
+					Name        string
+					NickName    string
+					Address     string
+					Outbound    bool
+					Established bool
+				}
 			}{
 				{
 					Name:     mockWeavePeerName,

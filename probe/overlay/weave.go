@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/weaveworks/scope/common/backoff"
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
@@ -163,11 +164,20 @@ func (w *Weave) Report() (report.Report, error) {
 		WeaveDNSHostname: {ID: WeaveDNSHostname, Label: "Weave DNS Name", From: report.FromLatest, Priority: 18},
 	})
 	for _, peer := range w.statusCache.Router.Peers {
-		r.Overlay.AddNode(report.MakeNodeWith(report.MakeOverlayNodeID(peer.Name), map[string]string{
+		node := report.MakeNodeWith(report.MakeOverlayNodeID(peer.Name), map[string]string{
 			WeavePeerName:     peer.Name,
 			WeavePeerNickName: peer.NickName,
-		}))
-
+		})
+		if peer.Name == w.statusCache.Router.Name {
+			node = node.WithLatest(report.HostNodeID, mtime.Now(), w.hostID)
+			node = node.WithParents(report.EmptySets.Add(report.Host, report.MakeStringSet(w.hostID)))
+		}
+		for _, conn := range peer.Connections {
+			if conn.Outbound {
+				node = node.WithAdjacent(report.MakeOverlayNodeID(conn.Name))
+			}
+		}
+		r.Overlay.AddNode(node)
 	}
 	if w.statusCache.IPAM.DefaultSubnet != "" {
 		r.Overlay.AddNode(
