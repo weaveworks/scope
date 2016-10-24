@@ -264,12 +264,8 @@ class Terminal extends React.Component {
   }
 
   getTerminalHeader() {
-    const dark = this.props.titleBarColor || getNeutralColor();
     const light = this.props.statusBarColor || getNeutralColor();
-    const border = `4px solid ${dark}`;
     const style = {
-      borderTop: border,
-      borderLeft: border,
       backgroundColor: light,
     };
     return (

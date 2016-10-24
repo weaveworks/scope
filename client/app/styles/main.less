@@ -41,7 +41,7 @@
 @details-window-padding-left: 36px;
 @border-radius: 4px;
 
-@terminal-header-height: 40px + 8px;
+@terminal-header-height: 44px;
 
 @node-opacity-blurred: 0.25;
 @node-highlight-fill-opacity: 0.1;
@@ -598,6 +598,8 @@ h2 {
   border-radius: 2px;
   background-color: #fff;
   .shadow-2;
+  // keep node-details above the terminal.
+  z-index: 2;
 
   &:last-child {
     margin-bottom: 0;
@@ -981,6 +983,9 @@ h2 {
 
   &-embedded {
     position: relative;
+    // shadow of animation-wrapper is 10px, let it fit in here without being
+    // overflow hiddened.
+    padding: 10px 0 10px 10px;
     flex: 1;
     overflow-x: hidden;
   }
@@ -989,13 +994,13 @@ h2 {
     width: 100%;
     height: 100%;
     transition: transform 0.5s cubic-bezier(0.230, 1.000, 0.320, 1.000);
+    .shadow-2;
   }
 
   &-wrapper {
     width: 100%;
     height: 100%;
     border: 0px solid #000000;
-    border-radius: 4px;
     color: #f0f0f0;
   }
 
@@ -1008,6 +1013,7 @@ h2 {
     position: relative;
     font-size: 14px;
     line-height: 28px;
+    border-radius: 4px 0 0 0;
 
     &-title {
       cursor: default;
@@ -1054,7 +1060,7 @@ h2 {
     right: 0;
     background-color: rgba(0, 0, 0, 0.93);
     padding: 8px;
-    border-radius: 0 0 2px 2px;
+    border-radius: 0 0 0 4px;
 
     .terminal {
       background-color: transparent !important;
