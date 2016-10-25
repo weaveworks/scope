@@ -13,7 +13,9 @@ for arg in $@; do
     esac
 done
 
-echo "$@" >/var/run/weave/scope-app.args
-echo "$@" >/var/run/weave/scope-probe.args
+ARGS=("$@")
+
+typeset -p ARGS >/var/run/weave/scope-app.args
+typeset -p ARGS >/var/run/weave/scope-probe.args
 
 exec /home/weave/runsvinit

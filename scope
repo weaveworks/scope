@@ -143,20 +143,20 @@ launch_command() {
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v /var/run/scope/plugins:/var/run/scope/plugins \
             -e CHECKPOINT_DISABLE \
-            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --probe.docker=true "$@"
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --probe.docker=true
 }
 
 launch_docker4mac_app_command() {
     echo docker run -d --name=$SCOPE_APP_CONTAINER_NAME \
             -e CHECKPOINT_DISABLE \
             -p 0.0.0.0:4040:4040 \
-            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --no-probe "$@"
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --no-probe
 }
 
 launch() {
     check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
     docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
-    CONTAINER=$($(launch_command "$@"))
+    CONTAINER=$($(launch_command) "$@")
     echo $CONTAINER
 }
 
@@ -172,7 +172,8 @@ check_docker_version
 
 case "$COMMAND" in
     command)
-        launch_command "$@"
+	# TODO: properly escape/quote the output of "$@"
+        echo $(launch_command) "$@"
         ;;
 
     version)
@@ -220,7 +221,7 @@ EOF
             check_not_running $SCOPE_APP_CONTAINER_NAME $SCOPE_IMAGE_NAME
             check_not_running $SCOPE_CONTAINER_NAME $SCOPE_IMAGE_NAME
             docker rm -f $SCOPE_APP_CONTAINER_NAME >/dev/null 2>&1 || true
-            CONTAINER=$($(launch_docker4mac_app_command "$@"))
+            CONTAINER=$($(launch_docker4mac_app_command) "$@")
             echo $CONTAINER
             app_ip=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' "${CONTAINER}")
             docker rm -f $SCOPE_CONTAINER_NAME >/dev/null 2>&1 || true
