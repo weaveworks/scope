@@ -1,11 +1,11 @@
 var perfjankie = require('perfjankie');
 
-var run = process.env.COMMIT || 'commit#Hash'; // A hash for the commit, displayed in the x-axis in the dashboard
+var run = process.env.COMMIT || 'commit#590f0078e79e9fb968c8b9f8e5e5ce0a96fa4825'; // A hash for the commit, displayed in the x-axis in the dashboard
 var time = process.env.DATE || new Date().getTime() // Used to sort the data when displaying graph. Can be the time when a commit was made
 var scenario = process.env.ACTIONS || '90-nodes-select';
 var host = process.env.HOST || 'localhost:4040';
 var actions = require('../actions/' + scenario)({host: host, run: run});
-
+debugger;
 perfjankie({
   /* The next set of values identify the test */
   suite: 'Scope',
@@ -16,7 +16,7 @@ perfjankie({
 
   /* Identifies where the data and the dashboard are saved */
   couch: {
-    server: 'http://local.docker:5984',
+    server: 'http://localhost:5984',
     database: 'performance'
     // updateSite: !process.env.CI, // If true, updates the couchApp that shows the dashboard. Set to false in when running Continuous integration, run this the first time using command line.
     // onlyUpdateSite: false // No data to upload, just update the site. Recommended to do from dev box as couchDB instance may require special access to create views.

@@ -1,0 +1,28 @@
+version : '2'
+services:
+  # nginx:
+  #   container_name: 'nginx'
+  #   image: 'nginx'
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #   links:
+  #     - couchdb
+  #   ports:
+  #     - '5984:5984'
+  selenium:
+    container_name: 'selenium'
+    image: 'elgalu/selenium'
+    ports:
+      - '4444:24444'
+      - '5900:25900'
+    environment:
+      - TZ="US/Pacific"
+    shm_size: 1g
+  couchdb:
+    container_name: 'couchdb'
+    image: 'couchdb:1.6'
+    ports:
+      - '5984:5984'
+    volumes:
+      - ./data:/usr/local/var/lib/couchdb
+      - ./local.ini:/usr/local/etc/couchdb/local.ini
