@@ -7,7 +7,8 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	State = "kubernetes_state"
+	State           = "kubernetes_state"
+	IsInHostNetwork = "kubernetes_is_in_host_network"
 
 	StateDeleted = "deleted"
 )
@@ -57,11 +58,17 @@ func (p *pod) NodeName() string {
 }
 
 func (p *pod) GetNode(probeID string) report.Node {
-	return p.MetaNode(report.MakePodNodeID(p.UID())).WithLatests(map[string]string{
+	latests := map[string]string{
 		State: p.State(),
 		IP:    p.Status.PodIP,
 		report.ControlProbeID: probeID,
-	}).
+	}
+
+	if sc := p.Pod.Spec.SecurityContext; sc != nil && sc.HostNetwork {
+		latests[IsInHostNetwork] = "true"
+	}
+
+	return p.MetaNode(report.MakePodNodeID(p.UID())).WithLatests(latests).
 		WithParents(p.parents).
 		WithLatestActiveControls(GetLogs, DeletePod)
 }
