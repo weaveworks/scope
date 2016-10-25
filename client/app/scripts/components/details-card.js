@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import NodeDetails from './node-details';
+import EmbeddedTerminal from './embedded-terminal';
 import { DETAILS_PANEL_WIDTH as WIDTH, DETAILS_PANEL_OFFSET as OFFSET,
   DETAILS_PANEL_MARGINS as MARGINS } from '../constants/styles';
 
@@ -22,7 +23,7 @@ class DetailsCard extends React.Component {
 
   render() {
     let transform;
-    const origin = this.props.origin;
+    const { origin, showingTerminal } = this.props;
     const panelHeight = window.innerHeight - MARGINS.bottom - MARGINS.top;
     if (origin && !this.state.mounted) {
       // render small panel near origin, will transition into normal panel after being mounted
@@ -45,12 +46,27 @@ class DetailsCard extends React.Component {
         transform = `translateX(${shiftX}px)`;
       }
     }
+    const style = {
+      transform,
+      left: showingTerminal ? MARGINS.right : null,
+      width: showingTerminal ? null : WIDTH
+    };
     return (
-      <div className="details-wrapper" style={{transform}}>
+      <div className="details-wrapper" style={style}>
+        {showingTerminal && <EmbeddedTerminal />}
         <NodeDetails nodeId={this.props.id} key={this.props.id} {...this.props} />
       </div>
     );
   }
 }
 
-export default connect()(DetailsCard);
+
+function mapStateToProps(state, props) {
+  const pipe = state.get('controlPipes').last();
+  return {
+    showingTerminal: pipe && pipe.get('nodeId') === props.id,
+  };
+}
+
+
+export default connect(mapStateToProps)(DetailsCard);

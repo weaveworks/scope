@@ -1,33 +1,63 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { getNodeColor, getNodeColorDark } from '../utils/color-utils';
+import { brightenColor, getNodeColorDark } from '../utils/color-utils';
+import { DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS } from '../constants/styles';
 import Terminal from './terminal';
-import { DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS,
-  DETAILS_PANEL_OFFSET } from '../constants/styles';
 
 class EmeddedTerminal extends React.Component {
+
+  constructor(props, context) {
+    super(props, context);
+    this.state = {
+      mounted: null,
+      animated: null,
+    };
+
+    this.handleTransitionEnd = this.handleTransitionEnd.bind(this);
+  }
+
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState({mounted: true});
+    });
+  }
+
+  getTransform() {
+    const dx = this.state.mounted ? 0 :
+      window.innerWidth - DETAILS_PANEL_WIDTH - DETAILS_PANEL_MARGINS.right;
+    return `translateX(${dx}px)`;
+  }
+
+  handleTransitionEnd() {
+    this.setState({ animated: true });
+  }
+
   render() {
     const { pipe, details } = this.props;
     const nodeId = pipe.get('nodeId');
     const node = details.get(nodeId);
     const d = node && node.details;
-    const titleBarColor = d && getNodeColorDark(d.rank, d.label);
-    const statusBarColor = d && getNodeColor(d.rank, d.label);
+    const titleBarColor = d && getNodeColorDark(d.rank, d.label, d.pseudo);
+    const statusBarColor = d && brightenColor(titleBarColor);
     const title = d && d.label;
-
-    const style = {
-      right: DETAILS_PANEL_MARGINS.right + DETAILS_PANEL_WIDTH + 10 +
-        (details.size * DETAILS_PANEL_OFFSET)
-    };
 
     // React unmount/remounts when key changes, this is important for cleaning up
     // the term.js and creating a new one for the new pipe.
     return (
-      <div className="terminal-embedded" style={style}>
-        <Terminal key={pipe.get('id')} pipe={pipe} titleBarColor={titleBarColor}
-          statusBarColor={statusBarColor} containerMargin={style.right}
-          title={title} />
+      <div className="terminal-embedded">
+        <div
+          onTransitionEnd={this.handleTransitionEnd}
+          className="terminal-animation-wrapper"
+          style={{transform: this.getTransform()}} >
+          <Terminal
+            key={pipe.get('id')}
+            pipe={pipe}
+            connect={this.state.animated}
+            titleBarColor={titleBarColor}
+            statusBarColor={statusBarColor}
+            title={title} />
+        </div>
       </div>
     );
   }

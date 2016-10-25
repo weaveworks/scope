@@ -41,7 +41,7 @@
 @details-window-padding-left: 36px;
 @border-radius: 4px;
 
-@terminal-header-height: 34px;
+@terminal-header-height: 44px;
 
 @node-opacity-blurred: 0.25;
 @node-highlight-fill-opacity: 0.1;
@@ -578,17 +578,18 @@ h2 {
 .details {
   &-wrapper {
     position: fixed;
+    display: flex;
     z-index: 1024;
     right: @details-window-padding-left;
     top: 24px;
     bottom: 48px;
-    width: @details-window-width;
     transition: transform 0.33333s cubic-bezier(0,0,0.21,1);
   }
 }
 
 .node-details {
   height: 100%;
+  width: @details-window-width;
   background-color: rgba(255, 255, 255, 0.86);
   display: flex;
   flex-flow: column;
@@ -597,6 +598,8 @@ h2 {
   border-radius: 2px;
   background-color: #fff;
   .shadow-2;
+  // keep node-details above the terminal.
+  z-index: 2;
 
   &:last-child {
     margin-bottom: 0;
@@ -979,35 +982,38 @@ h2 {
   }
 
   &-embedded {
-    z-index: 512;
-    position: fixed;
-    top: 24px;
-    bottom: 48px;
-    left: 36px;
-    right: (@details-window-width + @details-window-padding-left + 10px);
+    position: relative;
+    // shadow of animation-wrapper is 10px, let it fit in here without being
+    // overflow hiddened.
+    padding: 10px 0 10px 10px;
+    flex: 1;
+    overflow-x: hidden;
+  }
+
+  &-animation-wrapper {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(0.230, 1.000, 0.320, 1.000);
+    .shadow-2;
   }
 
   &-wrapper {
-    position: absolute;
-    bottom: 0;
-    top: 0;
-    left: 0;
-    right: 0;
+    width: 100%;
+    height: 100%;
     border: 0px solid #000000;
-    border-radius: 4px;
     color: #f0f0f0;
-    font-family: @mono-font;
-    .shadow-2;
   }
 
   &-header {
     .truncate;
-    text-align: center;
     color: @white;
     height: @terminal-header-height;
     padding: 8px 24px;
     background-color: @text-color;
     position: relative;
+    font-size: 14px;
+    line-height: 28px;
+    border-radius: 4px 0 0 0;
 
     &-title {
       cursor: default;
@@ -1030,7 +1036,6 @@ h2 {
         font-size: 0.8em;
         font-weight: bold;
         text-transform: uppercase;
-        word-spacing: -4px;
 
         &:hover {
           opacity: 1;
@@ -1047,13 +1052,15 @@ h2 {
   &-embedded &-inner { top: @terminal-header-height; }
   &-app &-inner { top: 0; }
   &-inner {
+    cursor: text;
+    font-family: @mono-font;
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     background-color: rgba(0, 0, 0, 0.93);
     padding: 8px;
-    border-radius: 0 0 2px 2px;
+    border-radius: 0 0 0 4px;
 
     .terminal {
       background-color: transparent !important;

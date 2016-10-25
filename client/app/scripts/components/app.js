@@ -18,7 +18,6 @@ import Nodes from './nodes';
 import GridModeSelector from './grid-mode-selector';
 import MetricSelector from './metric-selector';
 import NetworkSelector from './networks-selector';
-import EmbeddedTerminal from './embedded-terminal';
 import { getRouter } from '../utils/router-utils';
 import DebugToolbar, { showingDebugToolbar,
   toggleDebugToolbar } from './debug-toolbar.js';
@@ -103,7 +102,7 @@ class App extends React.Component {
 
   render() {
     const { gridMode, showingDetails, showingHelp, showingMetricsSelector,
-      showingNetworkSelector, showingTerminal } = this.props;
+      showingNetworkSelector } = this.props;
     const isIframe = window !== window.top;
 
     return (
@@ -113,8 +112,6 @@ class App extends React.Component {
         {showingHelp && <HelpPanel />}
 
         {showingDetails && <Details />}
-
-        {showingTerminal && <EmbeddedTerminal />}
 
         <div className="header">
           <div className="logo">
