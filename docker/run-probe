@@ -1,3 +1,5 @@
 #!/bin/bash
 
-exec -a scope-probe /home/weave/scope --mode probe $(cat /var/run/weave/scope-probe.args)
+source /var/run/weave/scope-probe.args
+
+exec -a scope-probe /home/weave/scope --mode probe "${ARGS[@]}"
