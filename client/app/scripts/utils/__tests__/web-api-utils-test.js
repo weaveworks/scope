@@ -1,4 +1,3 @@
-jest.dontMock('../web-api-utils');
 
 import {OrderedMap as makeOrderedMap} from 'immutable';
 

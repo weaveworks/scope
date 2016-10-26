@@ -1,4 +1,3 @@
-jest.dontMock('../string-utils');
 
 describe('StringUtils', () => {
   const StringUtils = require('../string-utils');

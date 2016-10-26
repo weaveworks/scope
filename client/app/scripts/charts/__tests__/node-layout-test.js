@@ -1,7 +1,3 @@
-jest.dontMock('../nodes-layout');
-jest.dontMock('../../utils/topology-utils');
-jest.dontMock('../../constants/naming'); // edge naming: 'source-target'
-
 import { fromJS, Map } from 'immutable';
 
 const makeMap = Map;
