@@ -8,6 +8,7 @@ import (
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
+	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -68,6 +69,7 @@ var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
 	report.Deployment:     podGroupNodeSummary,
 	report.ReplicaSet:     podGroupNodeSummary,
 	report.Host:           hostNodeSummary,
+	report.Overlay:        weaveNodeSummary,
 }
 
 var templates = map[string]struct{ Label, LabelMinor string }{
@@ -253,6 +255,18 @@ func hostNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	return base, true
 }
 
+func weaveNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+	var (
+		nickname, _ = n.Latest.Lookup(overlay.WeavePeerNickName)
+	)
+
+	_, peerName := report.ParseOverlayNodeID(n.ID)
+
+	base.Label, base.LabelMinor = nickname, peerName
+
+	return base, true
+}
+
 // groupNodeSummary renders the summary for a group node. n.Topology is
 // expected to be of the form: group:container:hostname
 func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) (NodeSummary, bool) {
@@ -298,6 +312,7 @@ type NodeSummaries map[string]NodeSummary
 
 // Summaries converts RenderableNodes into a set of NodeSummaries
 func Summaries(r report.Report, rns report.Nodes) NodeSummaries {
+
 	result := NodeSummaries{}
 	for id, node := range rns {
 		if summary, ok := MakeNodeSummary(r, node); ok {
