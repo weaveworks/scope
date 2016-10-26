@@ -87,7 +87,7 @@
     "noprobe": "../scope stop && ../scope launch --no-probe --app.window 8760h",
     "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d",
     "perf:setup" : "docker-compose -f test/perfjankie/docker-compose.yml up -d",
-    "perf:run" : ". test/run-jankie.sh",
+    "perf:run" : "make ../ && . test/run-jankie.sh",
     "perf:cleanup" : "docker-compose -f test/perfjankie/docker-compose.yml down",
     "perf" : "npm run perf:setup && npm run perf:run"
   },

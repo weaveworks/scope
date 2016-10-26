@@ -51,22 +51,5 @@ perfjankie({
   selenium: {
     hostname: 'localhost', // or localhost or hub.browserstack.com
     port: 4444,
-  },
-  // log: { // Expects the following methods,
-  //   fatal: log,
-  //   error: grunt.fail.warn.bind(grunt.fail),
-  //   warn: grunt.log.error.bind(grunt.log),
-  //   info: grunt.log.ok.bind(grunt.log),
-  //   debug: grunt.verbose.writeln.bind(grunt.verbose),
-  //   trace: grunt.log.debug.bind(grunt.log)
-  // }
-  log: [
-    'fatal',
-    'error',
-    'warn',
-    'info',
-    'debug',
-    'trace'
-  ].reduce(n => (r, i) => { r[i] = log }, {})
-
+  }
 });
