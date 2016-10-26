@@ -36,8 +36,15 @@ HOST3=$(echo "$HOSTS" | cut -f 3 -d ' ')
 . "$DIR/assert.sh"
 
 SSH_DIR=${SSH_DIR:-$DIR}
-SSH=${SSH:-ssh -l vagrant -i \"$SSH_DIR/insecure_private_key\" -o \"UserKnownHostsFile=$SSH_DIR/.ssh_known_hosts\" -o CheckHostIP=no -o StrictHostKeyChecking=no}
-
+sshcmd() {
+  # shellcheck disable=SC2029
+  ssh -l vagrant \
+    -i "$SSH_DIR/insecure_private_key" \
+    -o "UserKnownHostsFile=$SSH_DIR/.ssh_known_hosts" \
+    -o CheckHostIP=no \
+    -o StrictHostKeyChecking=no \
+    "$@"
+}
 SMALL_IMAGE="alpine"
 # shellcheck disable=SC2034
 TEST_IMAGES="$SMALL_IMAGE"
@@ -81,7 +88,7 @@ run_on() {
     host=$1
     shift 1
     [ -z "$DEBUG" ] || greyly echo "Running on $host:" "$@" >&2
-    remote "$host" "$SSH" "$host" "$@"
+    remote "$host" "ssh" "$host" "$@"
 }
 
 docker_on() {

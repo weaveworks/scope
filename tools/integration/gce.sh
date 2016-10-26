@@ -155,7 +155,10 @@ function hosts() {
         hosts=($hostname "${hosts[@]}")
         args=("--add-host=$hostname:$(internal_ip "$json" "$name")" "${args[@]}")
     done
-    echo export SSH=\"ssh -l vagrant\"
+    function sshcmd() {
+      # shellcheck disable=SC2029
+      ssh -l vagrant "$@"
+    }
     echo "export HOSTS=\"${hosts[*]}\""
     echo "export ADD_HOST_ARGS=\"${args[*]}\""
     rm "$json"
