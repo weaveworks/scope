@@ -1,24 +1,25 @@
 var perfjankie = require('perfjankie');
 
-var run = process.env.COMMIT || 'commit#590f0078e79e9fb968c8b9f8e5e5ce0a96fa4825'; // A hash for the commit, displayed in the x-axis in the dashboard
+var run = process.env.COMMIT || 'commit#Hash'; // A hash for the commit, displayed in the x-axis in the dashboard
 var time = process.env.DATE || new Date().getTime() // Used to sort the data when displaying graph. Can be the time when a commit was made
 var scenario = process.env.ACTIONS || '90-nodes-select';
-var host = process.env.HOST || 'localhost:4040';
+var host = process.env.HOST || 'probe:4040';
 var actions = require('../actions/' + scenario)({host: host, run: run});
-debugger;
+var log = (s) => { console.log(s); }
+
 perfjankie({
   /* The next set of values identify the test */
   suite: 'Scope',
   name: scenario, // A friendly name for the URL. This is shown as component name in the dashboard
   time: time,
   run: run,
-  repeat: 10, // Run the tests 10 times. Default is 1 time
+  repeat: 5, // Run the tests 10 times. Default is 1 time
 
   /* Identifies where the data and the dashboard are saved */
   couch: {
-    server: 'http://localhost:5984',
-    database: 'performance'
-    // updateSite: !process.env.CI, // If true, updates the couchApp that shows the dashboard. Set to false in when running Continuous integration, run this the first time using command line.
+    server: 'http://local.docker:5984',
+    database: 'performance',
+    updateSite: !process.env.CI, // If true, updates the couchApp that shows the dashboard. Set to false in when running Continuous integration, run this the first time using command line.
     // onlyUpdateSite: false // No data to upload, just update the site. Recommended to do from dev box as couchDB instance may require special access to create views.
   },
 
@@ -48,8 +49,24 @@ perfjankie({
   actions: actions,
 
   selenium: {
-    hostname: 'local.docker', // or localhost or hub.browserstack.com
+    hostname: 'localhost', // or localhost or hub.browserstack.com
     port: 4444,
-  }
+  },
+  // log: { // Expects the following methods,
+  //   fatal: log,
+  //   error: grunt.fail.warn.bind(grunt.fail),
+  //   warn: grunt.log.error.bind(grunt.log),
+  //   info: grunt.log.ok.bind(grunt.log),
+  //   debug: grunt.verbose.writeln.bind(grunt.verbose),
+  //   trace: grunt.log.debug.bind(grunt.log)
+  // }
+  log: [
+    'fatal',
+    'error',
+    'warn',
+    'info',
+    'debug',
+    'trace'
+  ].reduce(n => (r, i) => { r[i] = log }, {})
 
 });

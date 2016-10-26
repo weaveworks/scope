@@ -36,7 +36,6 @@ function deselectNode(browser) {
 
 
 module.exports = function(cfg) {
-
   var startUrl = 'http://' + cfg.host + '/';
   // cfg - The configuration object. args, from the example above.
   return function(browser) {
@@ -103,16 +102,12 @@ module.exports = function(cfg) {
           debug('scenario done');
         });
       })
-      .catch(e => {
-        console.error(e);
-      })
       .fail(function(err) {
         debug('exception. taking screenshot', err);
         browser.takeScreenshot(function(err, data) {
           if (err) {
             debug(err);
           } else {
-            debugger;
             var base64Data = data.replace(/^data:image\/png;base64,/,"");
             fs.writeFile('90-nodes-select-' + cfg.run + '.png', base64Data, 'base64', function(err) {
               if(err) debug(err);

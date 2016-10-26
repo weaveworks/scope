@@ -1,22 +1,27 @@
 version : '2'
 services:
-  # nginx:
-  #   container_name: 'nginx'
-  #   image: 'nginx'
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
-  #   links:
-  #     - couchdb
-  #   ports:
-  #     - '5984:5984'
+  probe:
+    container_name: 'scope-perf-probe'
+    image: weaveworks/scope
+    pid: "host"
+    privileged: true
+    labels:
+      - "works.weave.role=system"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:rw"
+    command:
+      - "--probe.docker"
+      - "true"
   selenium:
     container_name: 'selenium'
     image: 'elgalu/selenium'
+    links:
+      - probe
     ports:
       - '4444:24444'
       - '5900:25900'
     environment:
-      - TZ="US/Pacific"
+      - TZ='US/Pacific'
     shm_size: 1g
   couchdb:
     container_name: 'couchdb'
