@@ -23,6 +23,9 @@ func MapWeaveIdentity(m report.Node, _ report.Networks) report.Nodes {
 		nickname, _ = m.Latest.Lookup(overlay.WeavePeerNickName)
 	)
 
+	// Nodes without a host id indicate they are not monitored by Scope
+	// (their info doesn't come from a probe monitoring that peer directly)
+	// , display them as pseudo nodes.
 	if _, ok := node.Latest.Lookup(report.HostNodeID); !ok {
 		id := MakePseudoNodeID(UnmanagedID, nickname)
 		node = NewDerivedPseudoNode(id, m)

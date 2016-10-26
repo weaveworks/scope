@@ -25,9 +25,10 @@ type Client interface {
 
 // Status describes whats happen in the Weave Net router.
 type Status struct {
-	Router Router
-	DNS    DNS
-	IPAM   IPAM
+	Version string
+	Router  Router
+	DNS     DNS
+	IPAM    IPAM
 }
 
 // Router describes the status of the Weave Router
