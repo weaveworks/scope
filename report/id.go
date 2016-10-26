@@ -159,7 +159,7 @@ func ParseOverlayNodeID(id string) (overlayPrefix string, peerName string) {
 		return DockerOverlayPeerPrefix, id[len(DockerOverlayPeerPrefix):]
 	}
 
-	return WeaveOverlayPeerPrefix, peerName
+	return WeaveOverlayPeerPrefix, id
 }
 
 // ParseNodeID produces the host ID and remainder (typically an address) from
