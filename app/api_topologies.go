@@ -151,7 +151,7 @@ func init() {
 			id:       "weave",
 			parent:   "hosts",
 			renderer: render.WeaveRenderer,
-			Name:     "Weave",
+			Name:     "Weave Net",
 			Rank:     3,
 		},
 	)
