@@ -17,6 +17,7 @@ type ErrorHandler struct {
 	Handler http.Handler
 }
 
+// Wrap implements Middleware
 func (e ErrorHandler) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		i := newErrorInterceptor(w, e.Code)
@@ -47,10 +48,12 @@ func newErrorInterceptor(w http.ResponseWriter, code int) *errorInterceptor {
 	return &i
 }
 
+// Header implements http.ResponseWriter
 func (i errorInterceptor) Header() http.Header {
 	return i.headers
 }
 
+// WriteHeader implements http.ResponseWriter
 func (i errorInterceptor) WriteHeader(code int) {
 	if i.gotCode {
 		panic("errorInterceptor.WriteHeader() called twice")
@@ -65,6 +68,7 @@ func (i errorInterceptor) WriteHeader(code int) {
 	}
 }
 
+// Write implements http.ResponseWriter
 func (i errorInterceptor) Write(data []byte) (int, error) {
 	if !i.gotCode {
 		i.WriteHeader(http.StatusOK)
