@@ -27,7 +27,7 @@ let firstMessageOnWebsocketAt = 0;
 
 function buildOptionsQuery(options) {
   if (options) {
-    return options.reduce((query, value, param) => `${query}&${param}=${value}`, '');
+    return Object.keys(options.toJS()).map(key => `${key}=${options.get(key)}`).join('&');
   }
   return '';
 }
