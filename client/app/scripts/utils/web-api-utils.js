@@ -25,9 +25,9 @@ let controlErrorTimer = 0;
 let createWebsocketAt = 0;
 let firstMessageOnWebsocketAt = 0;
 
-function buildOptionsQuery(options) {
+export function buildOptionsQuery(options) {
   if (options) {
-    return options.reduce((query, value, param) => `${query}&${param}=${value}`, '');
+    return options.map((value, param) => `${param}=${value}`).join('&');
   }
   return '';
 }

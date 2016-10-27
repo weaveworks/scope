@@ -1,5 +1,7 @@
 jest.dontMock('../web-api-utils');
 
+import {OrderedMap as makeOrderedMap} from 'immutable';
+
 describe('WebApiUtils', () => {
   const WebApiUtils = require('../web-api-utils');
 
@@ -20,6 +22,21 @@ describe('WebApiUtils', () => {
 
     it('should handle /', () => {
       expect(basePath('/')).toBe('');
+    });
+  });
+
+  describe('buildOptionsQuery', () => {
+    const buildOptionsQuery = WebApiUtils.buildOptionsQuery;
+
+    it('should handle empty options', () => {
+      expect(buildOptionsQuery(makeOrderedMap({}))).toBe('');
+    });
+
+    it('should combine multiple options', () => {
+      expect(buildOptionsQuery(makeOrderedMap([
+        ['foo', 2],
+        ['bar', 4]
+      ]))).toBe('foo=2&bar=4');
     });
   });
 });
