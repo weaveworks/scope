@@ -87,6 +87,9 @@ module.exports = {
 
   // Transform source code using Babel and React Hot Loader
   module: {
+    // Webpack is opionated about how pkgs should be laid out:
+    // https://github.com/webpack/webpack/issues/1617
+    noParse: /xterm/,
     include: [
       path.resolve(__dirname, 'app/scripts')
     ],

@@ -261,6 +261,7 @@ class DebugToolbar extends React.Component {
           <button onClick={() => enableLog('*')}>scope:*</button>
           <button onClick={() => enableLog('dispatcher')}>scope:dispatcher</button>
           <button onClick={() => enableLog('app-key-press')}>scope:app-key-press</button>
+          <button onClick={() => enableLog('terminal')}>scope:terminal</button>
           <button onClick={() => disableLog()}>Disable log</button>
         </div>
 
