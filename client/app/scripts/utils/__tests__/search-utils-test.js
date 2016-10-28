@@ -1,7 +1,3 @@
-jest.dontMock('../search-utils');
-jest.dontMock('../string-utils');
-jest.dontMock('../../constants/naming'); // edge naming: 'source-target'
-
 import { fromJS } from 'immutable';
 
 const SearchUtils = require('../search-utils').testable;

@@ -1,6 +1,3 @@
-jest.dontMock('../topology-utils');
-jest.dontMock('../../constants/naming'); // edge naming: 'source-target'
-
 import { fromJS } from 'immutable';
 
 describe('TopologyUtils', () => {

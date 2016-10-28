@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "autoprefixer": "6.3.3",
-    "babel-core": "6.7.2",
+    "babel-core": "6.10.4",
     "babel-eslint": "5.0.0",
     "babel-jest": "9.0.3",
     "babel-loader": "6.2.4",
@@ -54,7 +54,7 @@
     "html-webpack-plugin": "^2.16.0",
     "http-proxy-rules": "^1.0.1",
     "immutable-devtools": "0.0.6",
-    "jest-cli": "~0.9.2",
+    "jest-cli": "16.0.2",
     "json-loader": "0.5.4",
     "less": "~2.6.1",
     "less-loader": "2.2.2",
@@ -90,22 +90,15 @@
   },
   "jest": {
     "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",
-    "testFileExtensions": [
-      "js"
-    ],
     "testPathDirs": [
       "<rootDir>/app/scripts"
     ],
     "moduleFileExtensions": [
       "js",
       "json"
-    ],
-    "unmockedModulePathPatterns": [
-      "/dispatcher/",
-      "/node_modules/"
     ]
   },
   "engines": {
-    "node": ">=4.2.2"
+    "node": "6.9.0"
   }
 }
