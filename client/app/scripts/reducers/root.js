@@ -186,6 +186,9 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_BACKGROUND: {
+      if (state.get('showingHelp')) {
+        state = state.set('showingHelp', false);
+      }
       return closeAllNodeDetails(state);
     }
 
