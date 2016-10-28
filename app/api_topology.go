@@ -84,7 +84,7 @@ func handleWebsocket(
 		for { // just discard everything the browser sends
 			if _, _, err := c.ReadMessage(); err != nil {
 				if !xfer.IsExpectedWSCloseError(err) {
-					log.Println("err:", err)
+					log.Error("err:", err)
 				}
 				close(quit)
 				break

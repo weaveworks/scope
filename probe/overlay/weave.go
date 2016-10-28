@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/weaveworks/scope/common/backoff"
+	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
@@ -26,6 +27,9 @@ const (
 	// WeaveMACAddress is the key for the mac address of the container on the
 	// weave network, to be found in container node metadata
 	WeaveMACAddress = "weave_mac_address"
+
+	// WeaveVersion is the key for the weave version running on the peer
+	WeaveVersion = "weave_version"
 )
 
 // Weave represents a single Weave router, presumably on the same host
@@ -162,16 +166,36 @@ func (w *Weave) Report() (report.Report, error) {
 		WeaveMACAddress:  {ID: WeaveMACAddress, Label: "Weave MAC", From: report.FromLatest, Priority: 17},
 		WeaveDNSHostname: {ID: WeaveDNSHostname, Label: "Weave DNS Name", From: report.FromLatest, Priority: 18},
 	})
-	for _, peer := range w.statusCache.Router.Peers {
-		r.Overlay.AddNode(report.MakeNodeWith(report.MakeOverlayNodeID(peer.Name), map[string]string{
-			WeavePeerName:     peer.Name,
-			WeavePeerNickName: peer.NickName,
-		}))
+	r.Overlay = r.Overlay.WithMetadataTemplates(report.MetadataTemplates{
+		WeavePeerName: {ID: WeavePeerName, Label: "Peer Name", From: report.FromLatest, Truncate: 17, Priority: 1},
+		WeaveVersion:  {ID: WeaveVersion, Label: "Version", From: report.FromLatest, Priority: 2},
+	})
 
+	// We report nodes for all peers (not just the current node) to highlight peers not monitored by Scope
+	// (i.e. without a running probe)
+	// Note: this will cause redundant information (n^2) if all peers have a running probe
+	for _, peer := range w.statusCache.Router.Peers {
+		node := report.MakeNodeWith(report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, peer.Name),
+			map[string]string{
+				WeavePeerName:     peer.Name,
+				WeavePeerNickName: peer.NickName,
+			})
+		// Peer corresponding to current host
+		if peer.Name == w.statusCache.Router.Name {
+			node = node.WithLatest(report.HostNodeID, mtime.Now(), w.hostID)
+			node = node.WithLatest(WeaveVersion, mtime.Now(), w.statusCache.Version)
+			node = node.WithParents(report.EmptySets.Add(report.Host, report.MakeStringSet(w.hostID)))
+		}
+		for _, conn := range peer.Connections {
+			if conn.Outbound {
+				node = node.WithAdjacent(report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, conn.Name))
+			}
+		}
+		r.Overlay.AddNode(node)
 	}
 	if w.statusCache.IPAM.DefaultSubnet != "" {
 		r.Overlay.AddNode(
-			report.MakeNode(report.MakeOverlayNodeID(w.statusCache.Router.Name)).WithSets(
+			report.MakeNode(report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, w.statusCache.Router.Name)).WithSets(
 				report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(w.statusCache.IPAM.DefaultSubnet)),
 			),
 		)

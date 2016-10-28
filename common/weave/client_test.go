@@ -65,8 +65,15 @@ func TestStatus(t *testing.T) {
 	want := weave.Status{
 		Router: weave.Router{
 			Peers: []struct {
-				Name     string
-				NickName string
+				Name        string
+				NickName    string
+				Connections []struct {
+					Name        string
+					NickName    string
+					Address     string
+					Outbound    bool
+					Established bool
+				}
 			}{
 				{
 					Name:     mockWeavePeerName,

@@ -147,6 +147,12 @@ func init() {
 			Name:     "Hosts",
 			Rank:     4,
 		},
+		APITopologyDesc{
+			id:       "weave",
+			parent:   "hosts",
+			renderer: render.WeaveRenderer,
+			Name:     "Weave Net",
+		},
 	)
 }
 

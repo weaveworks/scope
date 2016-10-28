@@ -134,8 +134,7 @@ func TestReporter(t *testing.T) {
 
 	// Reporter should add a container network
 	{
-		peerID := docker.OverlayPeerPrefix + hostID
-		overlayNodeID := report.MakeOverlayNodeID(peerID)
+		overlayNodeID := report.MakeOverlayNodeID(report.DockerOverlayPeerPrefix, hostID)
 		node, ok := rpt.Overlay.Nodes[overlayNodeID]
 		if !ok {
 			t.Fatalf("Expected report to have overlay node  %q, but not found", overlayNodeID)

@@ -31,4 +31,5 @@ var (
 	SelectService        = TopologySelector(report.Service)
 	SelectDeployment     = TopologySelector(report.Deployment)
 	SelectReplicaSet     = TopologySelector(report.ReplicaSet)
+	SelectOverlay        = TopologySelector(report.Overlay)
 )

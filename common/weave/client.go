@@ -25,17 +25,25 @@ type Client interface {
 
 // Status describes whats happen in the Weave Net router.
 type Status struct {
-	Router Router
-	DNS    DNS
-	IPAM   IPAM
+	Version string
+	Router  Router
+	DNS     DNS
+	IPAM    IPAM
 }
 
 // Router describes the status of the Weave Router
 type Router struct {
 	Name  string
 	Peers []struct {
-		Name     string
-		NickName string
+		Name        string
+		NickName    string
+		Connections []struct {
+			Name        string
+			NickName    string
+			Address     string
+			Outbound    bool
+			Established bool
+		}
 	}
 }
 
