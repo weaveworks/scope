@@ -38,6 +38,12 @@ func NewConnectionScanner(walker process.Walker) ConnectionScanner {
 	return &linuxScanner{br}
 }
 
+// NewSyncConnectionScanner creates a new synchronous Linux ConnectionScanner
+func NewSyncConnectionScanner(walker process.Walker) ConnectionScanner {
+	br := newForegroundReader(walker)
+	return &linuxScanner{br}
+}
+
 type linuxScanner struct {
 	br *backgroundReader
 }
