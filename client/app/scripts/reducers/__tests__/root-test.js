@@ -471,4 +471,9 @@ describe('RootReducer', () => {
     expect(nextState.get('nodeDetails').size).toEqual(1);
     expect(nextState.get('currentTopology').get('name')).toBe('Topo2');
   });
+  it('closes the help dialog if the canvas is clicked', () => {
+    let nextState = initialState.set('showingHelp', true);
+    nextState = reducer(nextState, { type: ActionTypes.CLICK_BACKGROUND });
+    expect(nextState.get('showingHelp')).toBe(false);
+  });
 });
