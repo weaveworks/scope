@@ -105,6 +105,15 @@ func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Re
 	}
 }
 
+type execTTY struct {
+	client Client
+	execID string
+}
+
+func (e execTTY) SetSize(height, width uint) error {
+	return e.client.ResizeExecTTY(e.execID, int(height), int(width))
+}
+
 func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Response {
 	exec, err := r.client.CreateExec(docker_client.CreateExecOptions{
 		AttachStdin:  true,
@@ -122,6 +131,8 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 	if err != nil {
 		return xfer.ResponseError(err)
 	}
+	pipe.SetTTY(execTTY{r.client, exec.ID})
+
 	local, _ := pipe.Ends()
 	cw, err := r.client.StartExecNonBlocking(exec.ID, docker_client.StartExecOptions{
 		Tty:          true,

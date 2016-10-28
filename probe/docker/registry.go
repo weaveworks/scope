@@ -86,6 +86,7 @@ type Client interface {
 	CreateExec(docker_client.CreateExecOptions) (*docker_client.Exec, error)
 	StartExecNonBlocking(string, docker_client.StartExecOptions) (docker_client.CloseWaiter, error)
 	Stats(docker_client.StatsOptions) error
+	ResizeExecTTY(id string, height, width int) error
 }
 
 func newDockerClient(endpoint string) (Client, error) {

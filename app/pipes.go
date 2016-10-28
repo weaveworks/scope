@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
@@ -15,7 +16,12 @@ func RegisterPipeRoutes(router *mux.Router, pr PipeRouter) {
 	router.Methods("GET").
 		Name("api_pipe_pipeid_check").
 		Path("/api/pipe/{pipeID}/check").
-		HandlerFunc(requestContextDecorator(checkPipe(pr, UIEnd)))
+		HandlerFunc(requestContextDecorator(checkPipe(pr)))
+
+	router.Methods("POST").
+		Name("api_pipe_pipeid_resize_tty").
+		Path("/api/pipe/{pipeID}/resize_tty/{height}/{width}").
+		HandlerFunc(requestContextDecorator(resizeTTY(pr)))
 
 	router.Methods("GET").
 		Name("api_pipe_pipeid").
@@ -33,7 +39,7 @@ func RegisterPipeRoutes(router *mux.Router, pr PipeRouter) {
 		HandlerFunc(requestContextDecorator(deletePipe(pr)))
 }
 
-func checkPipe(pr PipeRouter, end End) CtxHandlerFunc {
+func checkPipe(pr PipeRouter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["pipeID"]
 		exists, err := pr.Exists(ctx, id)
@@ -44,6 +50,47 @@ func checkPipe(pr PipeRouter, end End) CtxHandlerFunc {
 		} else {
 			http.NotFound(w, r)
 		}
+	}
+}
+
+func resizeTTY(pr PipeRouter) CtxHandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		var (
+			height, width uint64
+			err           error
+		)
+		id := mux.Vars(r)["pipeID"]
+		height, err = strconv.ParseUint(mux.Vars(r)["height"], 10, 32)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		width, err = strconv.ParseUint(mux.Vars(r)["width"], 10, 32)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		pipe, _, err := pr.Get(ctx, id, ProbeEnd)
+		if err != nil {
+			log.Debugf("Error getting pipe %s: %v", id, err)
+			http.NotFound(w, r)
+			return
+		}
+
+		tty := pipe.GetTTY()
+		if tty == nil {
+			// The pipe doesn't have a tty, nothing to do
+			log.Debugf("Error getting terminal for pipe %s", id)
+			http.NotFound(w, r)
+			return
+		}
+
+		if err = tty.SetSize(uint(height), uint(width)); err != nil {
+			log.Errorf("Error setting terminal size (%d, %d) of pipe %s: %v", height, width, id, err)
+			respondWith(w, http.StatusInternalServerError, err)
+		}
+
 	}
 }
 

@@ -167,6 +167,10 @@ func (m *mockDockerClient) Stats(_ client.StatsOptions) error {
 	return fmt.Errorf("stats")
 }
 
+func (m *mockDockerClient) ResizeExecTTY(id string, height, width int) error {
+	return fmt.Errorf("resizeExecTTY")
+}
+
 type mockCloseWaiter struct{}
 
 func (mockCloseWaiter) Close() error { return nil }
