@@ -18,6 +18,8 @@ You can find all the official plugins at [Weaveworks Plugins](https://github.com
 
 * [Traffic Control](https://github.com/weaveworks-plugins/scope-traffic-control): This plugin allows the user to modify latency and packet loss for a specific container via buttons in the UI's container detailed view.
 
+* [Volume Count](https://github.com/weaveworks-plugins/scope-volume-count): This plugin is a Python application that asks docker for the the number of mounted volumes for each container, providing container-level count.
+
 ## Plugins Internals
 This section explains the fundamental parts of the plugins structure necessary to understand how a plugin communicates with Scope.
 You can find more practical examples in [Weaveworks Plugins](https://github.com/weaveworks-plugins) repositories.
