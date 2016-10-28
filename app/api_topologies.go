@@ -152,7 +152,6 @@ func init() {
 			parent:   "hosts",
 			renderer: render.WeaveRenderer,
 			Name:     "Weave Net",
-			Rank:     3,
 		},
 	)
 }
