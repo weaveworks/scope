@@ -91,6 +91,7 @@ type probeFlags struct {
 
 	spyProcs    bool // Associate endpoints with processes (must be root)
 	procEnabled bool // Produce process topology & process nodes in endpoint
+	useEbpfConn bool // Enable connection tracking with eBPF
 	procRoot    string
 
 	dockerEnabled  bool
@@ -205,6 +206,7 @@ func main() {
 	flag.BoolVar(&flags.probe.spyProcs, "probe.proc.spy", true, "associate endpoints with processes (needs root)")
 	flag.StringVar(&flags.probe.procRoot, "probe.proc.root", "/proc", "location of the proc filesystem")
 	flag.BoolVar(&flags.probe.procEnabled, "probe.processes", true, "produce process topology & include procspied connections")
+	flag.BoolVar(&flags.probe.useEbpfConn, "probe.ebpf.connections", true, "enable connection tracking with eBPF")
 
 	// Docker
 	flag.BoolVar(&flags.probe.dockerEnabled, "probe.docker", false, "collect Docker-related attributes for processes")

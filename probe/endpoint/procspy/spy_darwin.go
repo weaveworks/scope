@@ -18,6 +18,11 @@ func NewConnectionScanner(_ process.Walker) ConnectionScanner {
 	return &darwinScanner{}
 }
 
+// NewSyncConnectionScanner creates a new syncrhonous Darwin ConnectionScanner
+func NewSyncConnectionScanner(_ process.Walker) ConnectionScanner {
+	return &darwinScanner{}
+}
+
 type darwinScanner struct{}
 
 // Connections returns all established (TCP) connections. No need to be root
