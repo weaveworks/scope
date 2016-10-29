@@ -11,9 +11,10 @@ var ErrInvalidMessage = fmt.Errorf("Invalid Message")
 
 // Request is the UI -> App -> Probe message type for control RPCs
 type Request struct {
-	AppID   string // filled in by the probe on receiving this request
-	NodeID  string
-	Control string
+	AppID       string // filled in by the probe on receiving this request
+	NodeID      string
+	Control     string
+	ControlArgs map[string]string
 }
 
 // Response is the Probe -> App -> UI message type for the control RPCs.

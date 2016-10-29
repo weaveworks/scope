@@ -57,7 +57,11 @@ func TestControl(t *testing.T) {
 	httpClient := http.Client{
 		Timeout: 1 * time.Second,
 	}
-	resp, err := httpClient.Post(server.URL+"/api/control/foo/nodeid/control", "", nil)
+	resp, err := httpClient.Post(
+		server.URL+"/api/control/foo/nodeid/control",
+		"application/json",
+		strings.NewReader("{}"),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
