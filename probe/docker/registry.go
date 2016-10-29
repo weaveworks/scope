@@ -10,6 +10,7 @@ import (
 	"github.com/armon/go-radix"
 	docker_client "github.com/fsouza/go-dockerclient"
 
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
 )
@@ -44,6 +45,7 @@ type Registry interface {
 	GetContainer(string) (Container, bool)
 	GetContainerByPrefix(string) (Container, bool)
 	GetContainerImage(string) (docker_client.APIImages, bool)
+	StartImage(string, string, string, xfer.Request) xfer.Response
 }
 
 // ContainerUpdateWatcher is the type of functions that get called when containers are updated.
@@ -76,6 +78,7 @@ type Client interface {
 	AddEventListener(chan<- *docker_client.APIEvents) error
 	RemoveEventListener(chan *docker_client.APIEvents) error
 
+	CreateContainer(docker_client.CreateContainerOptions) (*docker_client.Container, error)
 	StopContainer(string, uint) error
 	StartContainer(string, *docker_client.HostConfig) error
 	RestartContainer(string, uint) error

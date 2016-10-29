@@ -147,6 +147,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		p.AddTicker(processCache)
 		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies))
 	}
+	p.AddTagger(controls.NewTagger())
 
 	dnsSnooper, err := endpoint.NewDNSSnooper()
 	if err != nil {
@@ -169,6 +170,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	defer endpointReporter.Stop()
 	p.AddReporter(endpointReporter)
 
+	var dockerRegistry docker.Registry
 	if flags.dockerEnabled {
 		// Don't add the bridge in Kubernetes since container IPs are global and
 		// shouldn't be scoped
@@ -177,12 +179,12 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 				log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
 			}
 		}
-		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID, handlerRegistry, dockerEndpoint); err == nil {
-			defer registry.Stop()
+		if dockerRegistry, err = docker.NewRegistry(flags.dockerInterval, clients, true, hostID, handlerRegistry, dockerEndpoint); err == nil {
+			defer dockerRegistry.Stop()
 			if flags.procEnabled {
-				p.AddTagger(docker.NewTagger(registry, processCache))
+				p.AddTagger(docker.NewTagger(dockerRegistry, processCache))
 			}
-			p.AddReporter(docker.NewReporter(registry, hostID, probeID, p))
+			p.AddReporter(docker.NewReporter(dockerRegistry, hostID, probeID, p))
 		} else {
 			log.Errorf("Docker: failed to start registry: %v", err)
 		}
@@ -244,6 +246,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		},
 		handlerRegistry,
 		p,
+		dockerRegistry,
 	)
 	if err != nil {
 		log.Errorf("plugins: problem loading: %v", err)

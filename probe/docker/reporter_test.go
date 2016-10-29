@@ -5,6 +5,7 @@ import (
 
 	client "github.com/fsouza/go-dockerclient"
 
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -51,6 +52,10 @@ func (r *mockRegistry) GetContainerByPrefix(_ string) (docker.Container, bool) {
 func (r *mockRegistry) GetContainerImage(id string) (client.APIImages, bool) {
 	image, ok := r.images[id]
 	return image, ok
+}
+
+func (r *mockRegistry) StartImage(_, _, _ string, _ xfer.Request) xfer.Response {
+	return xfer.Response{}
 }
 
 var (

@@ -1,6 +1,9 @@
 package docker
 
 import (
+	"fmt"
+	"math/rand"
+
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	log "github.com/Sirupsen/logrus"
@@ -103,6 +106,84 @@ func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Re
 	return xfer.Response{
 		Pipe:   id,
 		RawTTY: hasTTY,
+	}
+}
+
+func (r *registry) StartImage(pluginID, controlID, image string, req xfer.Request) xfer.Response {
+	const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+	randomString := make([]byte, 8)
+	for i := 0; i < 8; i++ {
+		randomString[i] = chars[rand.Intn(len(chars))]
+	}
+
+	cDbg, err := r.client.CreateContainer(docker_client.CreateContainerOptions{
+		Name: "debugger_" + string(randomString),
+		Config: &docker_client.Config{
+			OpenStdin:    true,
+			AttachStdin:  true,
+			AttachStderr: true,
+			AttachStdout: true,
+			Image:        image,
+			Tty:          true,
+			Env: []string{
+				fmt.Sprintf("SCOPE_PLUGIN_ID=%s", pluginID),
+				fmt.Sprintf("SCOPE_CONTROL_ID=%s", controlID),
+				fmt.Sprintf("SCOPE_APP_ID=%s", req.AppID),
+				fmt.Sprintf("SCOPE_NODE_ID=%s", req.NodeID),
+				fmt.Sprintf("SCOPE_IMAGE=%s", image),
+			},
+		},
+	})
+	if err != nil {
+		return xfer.ResponseError(err)
+	}
+
+	err = r.client.StartContainer(cDbg.Name, &docker_client.HostConfig{
+		Privileged: true,
+		PidMode:    "host",
+	})
+	if err != nil {
+		return xfer.ResponseError(err)
+	}
+
+	id, pipe, err := controls.NewPipe(r.pipes, req.AppID)
+	if err != nil {
+		return xfer.ResponseError(err)
+	}
+	local, _ := pipe.Ends()
+	cw, err := r.client.AttachToContainerNonBlocking(docker_client.AttachToContainerOptions{
+		Container:    cDbg.Name,
+		RawTerminal:  true,
+		Stream:       true,
+		Stdin:        true,
+		Stdout:       true,
+		Stderr:       true,
+		InputStream:  local,
+		OutputStream: local,
+		ErrorStream:  local,
+	})
+	if err != nil {
+		return xfer.ResponseError(err)
+	}
+	pipe.OnClose(func() {
+		if err := cw.Close(); err != nil {
+			log.Errorf("Error closing attachment to container %s: %v", cDbg.Name, err)
+			return
+		}
+		if err := r.client.StopContainer(cDbg.Name, 1); err != nil {
+			log.Errorf("Error stopping container %s: %v", cDbg.Name, err)
+			return
+		}
+	})
+	go func() {
+		if err := cw.Wait(); err != nil {
+			log.Errorf("Error waiting on attachment to container %s: %v", cDbg.Name, err)
+		}
+		pipe.Close()
+	}()
+	return xfer.Response{
+		Pipe:   id,
+		RawTTY: true,
 	}
 }
 

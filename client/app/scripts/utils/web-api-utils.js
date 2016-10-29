@@ -223,7 +223,7 @@ export function getApiDetails(dispatch) {
 export function doControlRequest(nodeId, control, dispatch) {
   clearTimeout(controlErrorTimer);
   const url = `api/control/${encodeURIComponent(control.probeId)}/`
-    + `${encodeURIComponent(control.nodeId)}/${control.id}`;
+    + `${encodeURIComponent(control.nodeId)}/${encodeURIComponent(control.id)}`;
   reqwest({
     method: 'POST',
     url,
