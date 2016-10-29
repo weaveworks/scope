@@ -47,8 +47,6 @@ func (mockPipe) CopyToWebsocket(io.ReadWriter, xfer.Websocket) error { return ni
 func (mockPipe) Close() error                                        { return nil }
 func (mockPipe) Closed() bool                                        { return false }
 func (mockPipe) OnClose(func())                                      {}
-func (mockPipe) GetTTY() xfer.TTY                                    { return nil }
-func (mockPipe) SetTTY(xfer.TTY)                                     {}
 
 func TestPipes(t *testing.T) {
 	oldNewPipe := controls.NewPipe
