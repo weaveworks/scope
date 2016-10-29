@@ -1,6 +1,8 @@
 package docker
 
 import (
+	"strconv"
+
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	log "github.com/Sirupsen/logrus"
@@ -20,6 +22,7 @@ const (
 	RemoveContainer  = "docker_remove_container"
 	AttachContainer  = "docker_attach_container"
 	ExecContainer    = "docker_exec_container"
+	ResizeExecTTY    = "docker_resize_exec_tty"
 
 	waitTime = 10
 )
@@ -105,15 +108,6 @@ func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Re
 	}
 }
 
-type execTTY struct {
-	client Client
-	execID string
-}
-
-func (e execTTY) SetSize(height, width uint) error {
-	return e.client.ResizeExecTTY(e.execID, int(height), int(width))
-}
-
 func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Response {
 	exec, err := r.client.CreateExec(docker_client.CreateExecOptions{
 		AttachStdin:  true,
@@ -131,7 +125,6 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 	if err != nil {
 		return xfer.ResponseError(err)
 	}
-	pipe.SetTTY(execTTY{r.client, exec.ID})
 
 	local, _ := pipe.Ends()
 	cw, err := r.client.StartExecNonBlocking(exec.ID, docker_client.StartExecOptions{
@@ -144,11 +137,19 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 	if err != nil {
 		return xfer.ResponseError(err)
 	}
+
+	r.Lock()
+	r.pipeIDToexecID[id] = exec.ID
+	r.Unlock()
+
 	pipe.OnClose(func() {
 		if err := cw.Close(); err != nil {
 			log.Errorf("Error closing exec in container %s: %v", containerID, err)
 			return
 		}
+		r.Lock()
+		delete(r.pipeIDToexecID, id)
+		r.Unlock()
 	})
 	go func() {
 		if err := cw.Wait(); err != nil {
@@ -157,9 +158,55 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 		pipe.Close()
 	}()
 	return xfer.Response{
-		Pipe:   id,
-		RawTTY: true,
+		Pipe:             id,
+		RawTTY:           true,
+		ResizeTTYControl: ResizeExecTTY,
 	}
+}
+
+func (r *registry) resizeExecTTY(containerID string, req xfer.Request) xfer.Response {
+	var (
+		height, width int
+		err           error
+	)
+
+	pipeID, ok := req.ControlArgs["pipeID"]
+	if !ok {
+		return xfer.ResponseErrorf("Missing argument: pipeID")
+	}
+	heightS, ok := req.ControlArgs["height"]
+	if !ok {
+		return xfer.ResponseErrorf("Missing argument: height")
+	}
+	widthS, ok := req.ControlArgs["width"]
+	if !ok {
+		return xfer.ResponseErrorf("Missing argument: width")
+	}
+
+	height, err = strconv.Atoi(heightS)
+	if err != nil {
+		return xfer.ResponseErrorf("Bad parameter: height (%q): %v", heightS, err)
+	}
+	width, err = strconv.Atoi(widthS)
+	if err != nil {
+		return xfer.ResponseErrorf("Bad parameter: width (%q): %v", widthS, err)
+	}
+
+	r.Lock()
+	execID, ok := r.pipeIDToexecID[pipeID]
+	r.Unlock()
+
+	if !ok {
+		return xfer.ResponseErrorf("Unknown pipeID (%q)", pipeID)
+	}
+
+	if r.client.ResizeExecTTY(execID, int(height), int(width)); err != nil {
+		return xfer.ResponseErrorf(
+			"Error setting terminal size (%d, %d) of pipe %s: %v",
+			height, width, pipeID, err)
+	}
+
+	return xfer.Response{}
 }
 
 func captureContainerID(f func(string, xfer.Request) xfer.Response) func(xfer.Request) xfer.Response {
@@ -182,6 +229,7 @@ func (r *registry) registerControls() {
 		RemoveContainer:  captureContainerID(r.removeContainer),
 		AttachContainer:  captureContainerID(r.attachContainer),
 		ExecContainer:    captureContainerID(r.execContainer),
+		ResizeExecTTY:    captureContainerID(r.resizeExecTTY),
 	}
 	r.handlerRegistry.Batch(nil, controls)
 }
@@ -196,6 +244,7 @@ func (r *registry) deregisterControls() {
 		RemoveContainer,
 		AttachContainer,
 		ExecContainer,
+		ResizeExecTTY,
 	}
 	r.handlerRegistry.Batch(controls, nil)
 }

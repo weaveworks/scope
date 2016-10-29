@@ -7,19 +7,11 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// A TTY is a terminal with an associated height and width
-type TTY interface {
-	SetSize(height, width uint) error
-}
-
 // Pipe is a bi-directional channel from something in the probe
 // to the UI.
 type Pipe interface {
 	Ends() (io.ReadWriter, io.ReadWriter)
 	CopyToWebsocket(io.ReadWriter, Websocket) error
-
-	SetTTY(TTY)
-	GetTTY() TTY
 
 	Close() error
 	Closed() bool
@@ -34,7 +26,6 @@ type pipe struct {
 	quit            chan struct{}
 	closed          bool
 	onClose         func()
-	tty             TTY
 }
 
 // NewPipeFromEnds makes a new pipe specifying its ends
@@ -72,13 +63,6 @@ func NewPipe() Pipe {
 
 func (p *pipe) Ends() (io.ReadWriter, io.ReadWriter) {
 	return p.port, p.starboard
-}
-
-func (p *pipe) SetTTY(tty TTY) {
-	p.tty = tty
-}
-func (p *pipe) GetTTY() TTY {
-	return p.tty
 }
 
 func (p *pipe) Close() error {

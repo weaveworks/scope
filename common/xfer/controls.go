@@ -23,8 +23,9 @@ type Response struct {
 	Error string      `json:"error,omitempty"`
 
 	// Pipe specific fields
-	Pipe   string `json:"pipe,omitempty"`
-	RawTTY bool   `json:"raw_tty,omitempty"`
+	Pipe             string `json:"pipe,omitempty"`
+	RawTTY           bool   `json:"raw_tty,omitempty"`
+	ResizeTTYControl string `json:"resize_tty_control,omitempty"`
 
 	// Remove specific fields
 	RemovedNode string `json:"removedNode,omitempty"` // Set if node was removed
