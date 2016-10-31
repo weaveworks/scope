@@ -82,7 +82,7 @@ func NewReporter(hostID, hostName, probeID, version string, pipes controls.PipeC
 }
 
 // Name of this reporter, for metrics gathering
-func (Reporter) Name() string { return "Host" }
+func (*Reporter) Name() string { return "Host" }
 
 // GetLocalNetworks is exported for mocking
 var GetLocalNetworks = func() ([]*net.IPNet, error) {
