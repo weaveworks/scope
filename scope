@@ -205,7 +205,7 @@ EOF
         # Do a dry run of scope in the foreground, so it can parse args etc
         # avoiding the entrypoint script in the process.
         docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
-            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --dry-run $@
+            $WEAVESCOPE_DOCKER_ARGS $SCOPE_IMAGE --dry-run "$@"
 
         if check_docker_for_mac ; then
             create_plugins_dir
