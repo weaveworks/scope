@@ -261,7 +261,7 @@ class Terminal extends React.Component {
     const cols = Math.floor(width / this.state.characterWidth);
     const rows = Math.floor(height / this.state.characterHeight);
 
-    doResizePipe(this.getPipeId(), this.props.control, cols, rows)
+    doResizePipe(this.getPipeId(), this.props.pipe.get('resizeTtyControl'), cols, rows)
       .then(() => this.setState({cols, rows}));
   }
 

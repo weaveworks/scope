@@ -466,7 +466,8 @@ export function rootReducer(state = initialState, action) {
       return state.setIn(['controlPipes', action.pipeId], makeOrderedMap({
         id: action.pipeId,
         nodeId: action.nodeId,
-        raw: action.rawTty
+        raw: action.rawTty,
+        resizeTtyControl: action.resizeTtyControl,
       }));
     }
 

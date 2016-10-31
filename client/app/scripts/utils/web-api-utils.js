@@ -232,7 +232,11 @@ export function doControlRequest(nodeId, control, dispatch) {
       if (res) {
         if (res.pipe) {
           dispatch(blurSearch());
-          dispatch(receiveControlPipe(res.pipe, nodeId, res.raw_tty, true));
+          dispatch(receiveControlPipe(
+            res.pipe,
+            nodeId,
+            res.raw_tty,
+            {id: res.resize_tty_control, probeId: control.probeId, nodeId: control.nodeId}));
         }
         if (res.removedNode) {
           dispatch(receiveControlNodeRemoved(nodeId));
@@ -251,7 +255,7 @@ export function doControlRequest(nodeId, control, dispatch) {
 
 export function doResizePipe(pipeId, control, cols, rows) {
   const url = `api/control/${encodeURIComponent(control.probeId)}/`
-    + `${encodeURIComponent(control.nodeId)}/docker_resize_exec_tty`;
+    + `${encodeURIComponent(control.nodeId)}/${control.id}`;
 
   return reqwest({
     method: 'POST',

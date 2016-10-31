@@ -580,16 +580,17 @@ export function receiveControlNodeRemoved(nodeId) {
   };
 }
 
-export function receiveControlPipeFromParams(pipeId, rawTty) {
+export function receiveControlPipeFromParams(pipeId, rawTty, resizeTtyControl) {
   // TODO add nodeId
   return {
     type: ActionTypes.RECEIVE_CONTROL_PIPE,
     pipeId,
-    rawTty
+    rawTty,
+    resizeTtyControl
   };
 }
 
-export function receiveControlPipe(pipeId, nodeId, rawTty) {
+export function receiveControlPipe(pipeId, nodeId, rawTty, resizeTtyControl) {
   return (dispatch, getState) => {
     const state = getState();
     if (state.get('nodeDetails').last()
@@ -608,7 +609,8 @@ export function receiveControlPipe(pipeId, nodeId, rawTty) {
       type: ActionTypes.RECEIVE_CONTROL_PIPE,
       nodeId,
       pipeId,
-      rawTty
+      rawTty,
+      resizeTtyControl
     });
 
     updateRoute(getState);
