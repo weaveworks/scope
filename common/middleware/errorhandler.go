@@ -49,12 +49,12 @@ func newErrorInterceptor(w http.ResponseWriter, code int) *errorInterceptor {
 }
 
 // Header implements http.ResponseWriter
-func (i errorInterceptor) Header() http.Header {
+func (i *errorInterceptor) Header() http.Header {
 	return i.headers
 }
 
 // WriteHeader implements http.ResponseWriter
-func (i errorInterceptor) WriteHeader(code int) {
+func (i *errorInterceptor) WriteHeader(code int) {
 	if i.gotCode {
 		panic("errorInterceptor.WriteHeader() called twice")
 	}
@@ -69,7 +69,7 @@ func (i errorInterceptor) WriteHeader(code int) {
 }
 
 // Write implements http.ResponseWriter
-func (i errorInterceptor) Write(data []byte) (int, error) {
+func (i *errorInterceptor) Write(data []byte) (int, error) {
 	if !i.gotCode {
 		i.WriteHeader(http.StatusOK)
 	}
