@@ -38,6 +38,7 @@ class EmeddedTerminal extends React.Component {
     const nodeId = pipe.get('nodeId');
     const node = details.get(nodeId);
     const d = node && node.details;
+    const control = d && d.controls && d.controls[0];
     const titleBarColor = d && getNodeColorDark(d.rank, d.label, d.pseudo);
     const statusBarColor = d && brightenColor(titleBarColor);
     const title = d && d.label;
@@ -53,6 +54,7 @@ class EmeddedTerminal extends React.Component {
           <Terminal
             key={pipe.get('id')}
             pipe={pipe}
+            control={control}
             connect={this.state.animated}
             titleBarColor={titleBarColor}
             statusBarColor={statusBarColor}

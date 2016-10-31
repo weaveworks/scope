@@ -248,6 +248,22 @@ export function doControlRequest(nodeId, control, dispatch) {
   });
 }
 
+
+export function doResizePipe(pipeId, control, cols, rows) {
+  const url = `api/control/${encodeURIComponent(control.probeId)}/`
+    + `${encodeURIComponent(control.nodeId)}/docker_resize_exec_tty`;
+
+  return reqwest({
+    method: 'POST',
+    url,
+    data: JSON.stringify({pipeID: pipeId, width: cols.toString(), height: rows.toString()}),
+  })
+    .fail((err) => {
+      log(`Error resizing pipe: ${err}`);
+    });
+}
+
+
 export function deletePipe(pipeId, dispatch) {
   const url = `api/pipe/${encodeURIComponent(pipeId)}`;
   reqwest({
@@ -262,6 +278,7 @@ export function deletePipe(pipeId, dispatch) {
     }
   });
 }
+
 
 export function getPipeStatus(pipeId, dispatch) {
   const url = `api/pipe/${encodeURIComponent(pipeId)}/check`;

@@ -8,7 +8,7 @@ import classNames from 'classnames';
 import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
-import { getPipeStatus, basePath } from '../utils/web-api-utils';
+import { getPipeStatus, basePath, doResizePipe } from '../utils/web-api-utils';
 import Term from 'xterm';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -32,27 +32,29 @@ function ab2str(buf) {
   return decodedString;
 }
 
-function terminalCellSize(wrapperNode, rows, cols) {
-  const height = wrapperNode.clientHeight;
+function terminalCellSize(wrapperNode) {
+  // Badly guess the width/height of the row.
+  let characterWidth = 20;
+  let characterHeight = 20;
 
-  // Guess the width of the row.
-  let width = wrapperNode.clientWidth;
   // Now try and measure the first row we find.
-  const firstRow = wrapperNode.querySelector('.terminal div');
-  if (!firstRow) {
+  const subjectRow = wrapperNode.querySelector('.terminal .xterm-rows div');
+  if (!subjectRow) {
     log("ERROR: Couldn't find first row, resizing might not work very well.");
   } else {
-    const rowDisplay = firstRow.style.display;
-    firstRow.style.display = 'inline';
-    width = firstRow.offsetWidth;
-    firstRow.style.display = rowDisplay;
+    const rowDisplay = subjectRow.style.display;
+    const contentBuffer = subjectRow.innerHTML;
+
+    subjectRow.innerHTML = 'W';
+    subjectRow.style.display = 'inline';
+    characterWidth = subjectRow.getBoundingClientRect().width;
+    subjectRow.style.display = rowDisplay;
+    characterHeight = parseInt(subjectRow.offsetHeight, 10);
+    subjectRow.innerHTML = contentBuffer;
   }
 
-  const pixelPerCol = width / cols;
-  const pixelPerRow = height / rows;
-
-  log('Caculated (col, row) sizes in px: ', pixelPerCol, pixelPerRow);
-  return {pixelPerCol, pixelPerRow};
+  log('Caculated (charWidth, charHeight) sizes in px: ', characterWidth, characterHeight);
+  return {characterWidth, characterHeight};
 }
 
 
@@ -88,8 +90,8 @@ class Terminal extends React.Component {
       connected: false,
       rows: DEFAULT_ROWS,
       cols: DEFAULT_COLS,
-      pixelPerCol: 0,
-      pixelPerRow: 0
+      characterWidth: 0,
+      characterHeight: 0
     };
 
     this.handleCloseClick = this.handleCloseClick.bind(this);
@@ -180,15 +182,14 @@ class Terminal extends React.Component {
 
     this.createWebsocket(this.term);
 
-    const {pixelPerCol, pixelPerRow} = terminalCellSize(
-      this.term.element, this.state.rows, this.state.cols);
+    const {characterWidth, characterHeight} = terminalCellSize(this.term.element);
 
     window.addEventListener('resize', this.handleResize);
 
     this.resizeTimeout = setTimeout(() => {
       this.setState({
-        pixelPerCol,
-        pixelPerRow
+        characterWidth,
+        characterHeight
       });
       this.handleResize();
     }, 10);
@@ -248,17 +249,20 @@ class Terminal extends React.Component {
     this.props.dispatch(clickCloseTerminal(this.getPipeId()));
 
     const bcr = ReactDOM.findDOMNode(this).getBoundingClientRect();
-    const minWidth = this.state.pixelPerCol * 80 + (8 * 2);
+    const minWidth = this.state.characterWidth * 80 + (8 * 2);
     openNewWindow(`terminal.html#!/state/${paramString}`, bcr, minWidth);
   }
 
   handleResize() {
     const innerNode = ReactDOM.findDOMNode(this.innerFlex);
+    // scrollbar === 16px
+    const width = innerNode.clientWidth - (2 * 8) - 16;
     const height = innerNode.clientHeight - (2 * 8);
-    const cols = DEFAULT_COLS;
-    const rows = Math.floor(height / this.state.pixelPerRow);
+    const cols = Math.floor(width / this.state.characterWidth);
+    const rows = Math.floor(height / this.state.characterHeight);
 
-    this.setState({cols, rows});
+    doResizePipe(this.getPipeId(), this.props.control, cols, rows)
+      .then(() => this.setState({cols, rows}));
   }
 
   isEmbedded() {
@@ -339,7 +343,7 @@ class Terminal extends React.Component {
       overflow: 'hidden',
     };
     const innerStyle = {
-      width: (this.state.cols + 2) * this.state.pixelPerCol
+      width: (this.state.cols + 2) * this.state.characterWidth
     };
     const innerClassName = classNames('terminal-inner hideable', {
       'terminal-inactive': !this.state.connected

@@ -44,10 +44,9 @@ module.exports = {
       'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
       'webpack/hot/only-dev-server'
     ],
-    vendors: ['babel-polyfill', 'classnames', 'd3', 'dagre', 'filesize',
-      'immutable', 'lodash', 'moment', 'page', 'react',
-      'react-dom', 'react-motion', 'react-redux', 'redux', 'redux-thunk',
-      'reqwest']
+    vendors: ['babel-polyfill', 'classnames', 'd3', 'dagre', 'filesize', 'immutable', 'lodash',
+      'moment', 'page', 'react', 'react-dom', 'react-motion', 'react-redux', 'redux',
+      'redux-thunk', 'reqwest', 'xterm']
   },
 
   // This will not actually create a app.js file in ./build. It is used
