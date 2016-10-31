@@ -66,20 +66,33 @@ func TestPipes(t *testing.T) {
 			return ok
 		})
 
-		for _, tc := range []string{
-			docker.AttachContainer,
-			docker.ExecContainer,
+		for _, want := range []struct {
+			control  string
+			response xfer.Response
+		}{
+			{
+				control: docker.AttachContainer,
+				response: xfer.Response{
+					Pipe:   "pipeid",
+					RawTTY: true,
+				},
+			},
+
+			{
+				control: docker.ExecContainer,
+				response: xfer.Response{
+					Pipe:             "pipeid",
+					RawTTY:           true,
+					ResizeTTYControl: docker.ResizeExecTTY,
+				},
+			},
 		} {
 			result := hr.HandleControlRequest(xfer.Request{
-				Control: tc,
+				Control: want.control,
 				NodeID:  report.MakeContainerNodeID("ping"),
 			})
-			want := xfer.Response{
-				Pipe:   "pipeid",
-				RawTTY: true,
-			}
-			if !reflect.DeepEqual(result, want) {
-				t.Errorf("diff %s: %s", tc, test.Diff(want, result))
+			if !reflect.DeepEqual(result, want.response) {
+				t.Errorf("diff %s: %s", want.control, test.Diff(want, result))
 			}
 		}
 	})
