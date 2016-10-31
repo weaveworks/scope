@@ -204,46 +204,47 @@ export default class NodeDetailsTable extends React.Component {
   }
 
   renderHeaders(sortBy, sortedDesc) {
-    if (this.props.nodes && this.props.nodes.length > 0) {
-      const headers = this.getColumnHeaders();
-      const colStyles = getColumnsStyles(headers);
-
-      return (
-        <tr>
-          {headers.map((header, i) => {
-            const headerClasses = ['node-details-table-header', 'truncate'];
-            const onHeaderClick = ev => {
-              this.handleHeaderClick(ev, header.id, sortBy, sortedDesc);
-            };
-            // sort by first metric by default
-            const isSorted = header.id === sortBy;
-            const isSortedDesc = isSorted && sortedDesc;
-            const isSortedAsc = isSorted && !isSortedDesc;
-
-            if (isSorted) {
-              headerClasses.push('node-details-table-header-sorted');
-            }
-
-            const style = colStyles[i];
-            const label = (style.width === CW.XS && XS_LABEL[header.id]) ?
-              XS_LABEL[header.id] :
-              header.label;
-
-            return (
-              <td className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
-                title={header.label} key={header.id}>
-                {isSortedAsc
-                  && <span className="node-details-table-header-sorter fa fa-caret-up" />}
-                {isSortedDesc
-                  && <span className="node-details-table-header-sorter fa fa-caret-down" />}
-                {label}
-              </td>
-            );
-          })}
-        </tr>
-      );
+    if (!this.props.nodes || this.props.nodes.length === 0) {
+      return null;
     }
-    return '';
+
+    const headers = this.getColumnHeaders();
+    const colStyles = getColumnsStyles(headers);
+
+    return (
+      <tr>
+        {headers.map((header, i) => {
+          const headerClasses = ['node-details-table-header', 'truncate'];
+          const onHeaderClick = ev => {
+            this.handleHeaderClick(ev, header.id, sortBy, sortedDesc);
+          };
+          // sort by first metric by default
+          const isSorted = header.id === sortBy;
+          const isSortedDesc = isSorted && sortedDesc;
+          const isSortedAsc = isSorted && !isSortedDesc;
+
+          if (isSorted) {
+            headerClasses.push('node-details-table-header-sorted');
+          }
+
+          const style = colStyles[i];
+          const label = (style.width === CW.XS && XS_LABEL[header.id]) ?
+            XS_LABEL[header.id] :
+            header.label;
+
+          return (
+            <td className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
+              title={header.label} key={header.id}>
+              {isSortedAsc
+                && <span className="node-details-table-header-sorter fa fa-caret-up" />}
+              {isSortedDesc
+                && <span className="node-details-table-header-sorter fa fa-caret-down" />}
+              {label}
+            </td>
+          );
+        })}
+      </tr>
+    );
   }
 
   render() {
