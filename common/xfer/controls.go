@@ -3,6 +3,7 @@ package xfer
 import (
 	"fmt"
 	"net/rpc"
+	"strconv"
 	"sync"
 )
 
@@ -52,6 +53,41 @@ type ControlHandlerFunc func(Request) Response
 func (c ControlHandlerFunc) Handle(req Request, res *Response) error {
 	*res = c(req)
 	return nil
+}
+
+// ResizeTTYControlWrapper extracts the arguments needed by the resize tty control handler
+func ResizeTTYControlWrapper(next func(pipeID string, height, width uint) Response) ControlHandlerFunc {
+	return func(req Request) Response {
+		var (
+			height, width uint64
+			err           error
+		)
+
+		pipeID, ok := req.ControlArgs["pipeID"]
+		if !ok {
+			return ResponseErrorf("Missing argument: pipeID")
+		}
+		heightS, ok := req.ControlArgs["height"]
+		if !ok {
+			return ResponseErrorf("Missing argument: height")
+		}
+		widthS, ok := req.ControlArgs["width"]
+		if !ok {
+			return ResponseErrorf("Missing argument: width")
+		}
+
+		height, err = strconv.ParseUint(heightS, 10, 32)
+		if err != nil {
+			return ResponseErrorf("Bad parameter: height (%q): %v", heightS, err)
+		}
+		width, err = strconv.ParseUint(widthS, 10, 32)
+		if err != nil {
+			return ResponseErrorf("Bad parameter: width (%q): %v", widthS, err)
+		}
+
+		return next(pipeID, uint(height), uint(width))
+
+	}
 }
 
 // ResponseErrorf creates a new Response with the given formatted error string.

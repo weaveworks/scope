@@ -1,8 +1,6 @@
 package docker
 
 import (
-	"strconv"
-
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	log "github.com/Sirupsen/logrus"
@@ -164,34 +162,7 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 	}
 }
 
-func (r *registry) resizeExecTTY(containerID string, req xfer.Request) xfer.Response {
-	var (
-		height, width int
-		err           error
-	)
-
-	pipeID, ok := req.ControlArgs["pipeID"]
-	if !ok {
-		return xfer.ResponseErrorf("Missing argument: pipeID")
-	}
-	heightS, ok := req.ControlArgs["height"]
-	if !ok {
-		return xfer.ResponseErrorf("Missing argument: height")
-	}
-	widthS, ok := req.ControlArgs["width"]
-	if !ok {
-		return xfer.ResponseErrorf("Missing argument: width")
-	}
-
-	height, err = strconv.Atoi(heightS)
-	if err != nil {
-		return xfer.ResponseErrorf("Bad parameter: height (%q): %v", heightS, err)
-	}
-	width, err = strconv.Atoi(widthS)
-	if err != nil {
-		return xfer.ResponseErrorf("Bad parameter: width (%q): %v", widthS, err)
-	}
-
+func (r *registry) resizeExecTTY(pipeID string, height, width uint) xfer.Response {
 	r.Lock()
 	execID, ok := r.pipeIDToexecID[pipeID]
 	r.Unlock()
@@ -200,7 +171,7 @@ func (r *registry) resizeExecTTY(containerID string, req xfer.Request) xfer.Resp
 		return xfer.ResponseErrorf("Unknown pipeID (%q)", pipeID)
 	}
 
-	if r.client.ResizeExecTTY(execID, int(height), int(width)); err != nil {
+	if err := r.client.ResizeExecTTY(execID, int(height), int(width)); err != nil {
 		return xfer.ResponseErrorf(
 			"Error setting terminal size (%d, %d) of pipe %s: %v",
 			height, width, pipeID, err)
@@ -229,7 +200,7 @@ func (r *registry) registerControls() {
 		RemoveContainer:  captureContainerID(r.removeContainer),
 		AttachContainer:  captureContainerID(r.attachContainer),
 		ExecContainer:    captureContainerID(r.execContainer),
-		ResizeExecTTY:    captureContainerID(r.resizeExecTTY),
+		ResizeExecTTY:    xfer.ResizeTTYControlWrapper(r.resizeExecTTY),
 	}
 	r.handlerRegistry.Batch(nil, controls)
 }
