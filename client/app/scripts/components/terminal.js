@@ -168,6 +168,7 @@ class Terminal extends React.Component {
       return;
     }
     this.term.ydisp = y;
+    this.term.emit('scroll', y);
     this.term.refresh(0, this.term.rows - 1);
   }
 
