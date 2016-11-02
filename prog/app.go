@@ -31,6 +31,7 @@ import (
 
 const (
 	memcacheUpdateInterval = 1 * time.Minute
+	httpTimeout            = 90 * time.Second
 )
 
 var (
@@ -276,8 +277,11 @@ func appMain(flags appFlags) {
 		// we want to manage the stop condition ourselves below
 		NoSignalHandling: true,
 		Server: &http.Server{
-			Addr:    flags.listen,
-			Handler: handler,
+			Addr:           flags.listen,
+			Handler:        handler,
+			ReadTimeout:    httpTimeout,
+			WriteTimeout:   httpTimeout,
+			MaxHeaderBytes: 1 << 20,
 		},
 	}
 	go func() {
