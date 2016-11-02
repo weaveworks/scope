@@ -48,6 +48,11 @@ func TestNodeTables(t *testing.T) {
 						},
 					},
 				},
+				{
+					ID:    docker.ImageTableID,
+					Label: "Image",
+					Rows:  []report.MetadataRow{},
+				},
 			},
 		},
 		{

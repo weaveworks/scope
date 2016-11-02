@@ -199,9 +199,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 			Linkable:   true,
 			Pseudo:     false,
 			Metadata: []report.MetadataRow{
-				{ID: "docker_container_id", Label: "ID", Value: fixture.ServerContainerID, Priority: 1, Truncate: 12},
-				{ID: "docker_container_state_human", Label: "State", Value: "running", Priority: 2},
-				{ID: "docker_image_id", Label: "Image ID", Value: fixture.ServerContainerImageID, Priority: 11, Truncate: 12},
+				{ID: "docker_image_name", Label: "Image", Value: fixture.ServerContainerImageName, Priority: 1},
+				{ID: "docker_container_state_human", Label: "State", Value: "running", Priority: 3},
+				{ID: "docker_container_id", Label: "ID", Value: fixture.ServerContainerID, Priority: 10, Truncate: 12},
 			},
 			Metrics: []report.MetricRow{
 				{

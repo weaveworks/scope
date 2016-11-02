@@ -9,19 +9,42 @@ import (
 	"github.com/weaveworks/scope/test"
 )
 
-func TestTables(t *testing.T) {
+func TestPrefixTables(t *testing.T) {
 	want := map[string]string{
 		"foo1": "bar1",
 		"foo2": "bar2",
 	}
 	nmd := report.MakeNode("foo1")
 
-	nmd = nmd.AddTable("foo_", want)
-	have, truncationCount := nmd.ExtractTable("foo_")
+	nmd = nmd.AddPrefixTable("foo_", want)
+	have, truncationCount := nmd.ExtractTable(report.TableTemplate{Prefix: "foo_"})
 
 	if truncationCount != 0 {
 		t.Error("Table shouldn't had been truncated")
 	}
+
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
+func TestFixedTables(t *testing.T) {
+	want := map[string]string{
+		"foo1": "bar1",
+		"foo2": "bar2",
+	}
+	nmd := report.MakeNodeWith("foo1", map[string]string{
+		"foo1key": "bar1",
+		"foo2key": "bar2",
+	})
+
+	template := report.TableTemplate{FixedRows: map[string]string{
+		"foo1key": "foo1",
+		"foo2key": "foo2",
+	},
+	}
+
+	have, _ := nmd.ExtractTable(template)
 
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -39,8 +62,8 @@ func TestTruncation(t *testing.T) {
 
 	nmd := report.MakeNode("foo1")
 
-	nmd = nmd.AddTable("foo_", want)
-	_, truncationCount := nmd.ExtractTable("foo_")
+	nmd = nmd.AddPrefixTable("foo_", want)
+	_, truncationCount := nmd.ExtractTable(report.TableTemplate{Prefix: "foo_"})
 
 	if truncationCount != wantTruncationCount {
 		t.Error(
