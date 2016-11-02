@@ -200,7 +200,54 @@ A short note about the "icon" field of the topology control - the
 value for it can be taken from [Font Awesome
 Cheatsheet](http://fontawesome.io/cheatsheet/)
 
+#### Node naming
 
+Very often the controller plugin wants to add some controls to already
+existing nodes (like controls for network traffic management to nodes
+representing the running Docker container). To achieve that, it is
+important to make sure that the node ID in the plugin's report matches
+the ID of the node created by the probe. The ID is a
+semicolon-separated list of strings.
+
+For containers, images, hosts and others the ID is usually formatted
+as `${name};<${tag}>`. The `${name}` variable is usually a name of a
+thing the node represents, like an ID of the Docker container or the
+hostname. The `${tag}` denotes the type of the node. There is a fixed
+set of tags used by the probe:
+
+- host
+- container
+- container_image
+- pod
+- service
+- deployment
+- replica_set
+
+The examples of "tagged" node names:
+
+- The Docker container with full ID
+  2299a2ca59dfd821f367e689d5869c4e568272c2305701761888e1d79d7a6f51:
+  `2299a2ca59dfd821f367e689d5869c4e568272c2305701761888e1d79d7a6f51;<container>`
+- The Docker image with name `docker.io/alpine`:
+  `docker.io/alpine;<container_image>`
+- The host with name `example.com`: `example.com;<host>`
+
+The fixed set of tags listed above is not a complete set of names a
+node can have though. For example, nodes representing processes
+have ID formatted as `${host};${pid}`. Probably the easiest ways to
+discover how the nodes are named are:
+
+- Read the code in
+  [report/id.go](https://github.com/weaveworks/scope/blob/master/report/id.go).
+- Browse the Weave Scope GUI, select some node and search for an `id`
+  key in the `nodeDetails` array in the address bar.
+  - For example in the
+    `http://localhost:4040/#!/state/{"controlPipe":null,"nodeDetails":[{"id":"example.com;<host>","label":"example.com","topologyId":"hosts"}],…`
+    URL, you can find the `example.com;<host>` which is an ID of the node
+    representing the host.
+  - Mentally substitute the `<SLASH>` with `/`. This can appear in
+    Docker image names, so `docker.io/alpine` in the address bar will
+    be `docker.io<SLASH>alpine`.
 
  **See Also**
 
