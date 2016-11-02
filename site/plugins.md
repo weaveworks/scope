@@ -5,6 +5,7 @@ menu_order: 80
 
 The following topics are discussed:
 
+ * [Official Plugins](#official-plugins)
  * [Listening Protocol](#listening-protocol)
  * [Reporting](#reporting)
  * [Interfaces](#interfaces)
@@ -13,17 +14,21 @@ With a Scope probe plugin, you can insert custom metrics into Scope and have the
 
 ![Custom Metrics With Plugins](images/plugin-features.png)
 
-You can find some examples in [the example plugins](https://github.com/weaveworks/scope/tree/master/examples/plugins) directory.
+## <a id="official-plugins"></a>Official Plugins
 
-There are currently two different examples:
+You can find all the official plugins at [Weaveworks Plugins](https://github.com/weaveworks-plugins).
 
-* A [Python plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/http-requests) using [bcc](http://iovisor.github.io/bcc/) to extract incoming HTTP request rates per process, without any application-level instrumentation requirements and negligible performance toll (metrics are obtained in-kernel without any packet copying to userspace).
+* [IOWait](https://github.com/weaveworks-plugins/scope-iowait): a Go plugin using [iostat](https://en.wikipedia.org/wiki/Iostat) to provide host-level CPU IO wait or idle metrics.
 
->**Note:** This plugin needs a [recent kernel version with ebpf support](https://github.com/iovisor/bcc/blob/master/INSTALL.md#kernel-configuration). It will not compile on current [dlite](https://github.com/nlf/dlite) and boot2docker hosts.
+* [HTTP Statistics](https://github.com/weaveworks-plugins/scope-http-statistics): A Python plugin using [bcc](http://iovisor.github.io/bcc/) to track multiple metrics about HTTP per process, without any application-level instrumentation requirements and negligible performance toll. This plugin is a work in progress, as of now it implements two metrics (for more information read the [plugin documentation](https://github.com/weaveworks-plugins/scope-http-statistics)):
+	* Number of HTTP requests per seconds.
+	* Number of HTTP responses code per second (per code).
 
- * A [Go plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/iovisor), using [iostat](https://en.wikipedia.org/wiki/Iostat) to provide host-level CPU IO wait metrics.
+> **Note:** This plugin needs a [recent kernel version with ebpf support](https://github.com/iovisor/bcc/blob/master/INSTALL.md#kernel-configuration). It will not compile on current [dlite](https://github.com/nlf/dlite) and boot2docker hosts.
 
-The example plugins are run by calling `make` in their directory. This builds the plugin, and immediately runs it in the foreground. To run the plugin in the background, see the `Makefile` for examples of the `docker run ...` command.
+* [Traffic Control](https://github.com/weaveworks-plugins/scope-traffic-control): This plugin allows the user to modify latency and packet loss for a specific container via buttons in the UI's container detailed view.
+
+* [Volume Count](https://github.com/weaveworks-plugins/scope-volume-count): This plugin is a Python application that asks docker for the the number of mounted volumes for each container, providing container-level count.
 
 If the running plugin was picked up by Scope, you will see it in the list of `PLUGINS` in the bottom right of the UI.
 
