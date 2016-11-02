@@ -6,9 +6,11 @@ menu_order: 80
 The following topics are discussed:
 
  * [Official Plugins](#official-plugins)
- * [Listening Protocol](#listening-protocol)
- * [Reporting](#reporting)
- * [Interfaces](#interfaces)
+ * [Plugins Internals](#plugins-internals)
+  * [Plugin ID](#plugin-id)
+  * [Plugin Registration](#plugin-registration)
+  * [Reporting](#interfaces-interface)
+  * [Other Interfaces](#other-interfaces)
 
 With a Scope probe plugin, you can insert custom metrics into Scope and have them display in the user interface together with the Scope's standard set of metrics.
 
@@ -32,15 +34,30 @@ You can find all the official plugins at [Weaveworks Plugins](https://github.com
 
 If the running plugin was picked up by Scope, you will see it in the list of `PLUGINS` in the bottom right of the UI.
 
-## <a id="listening-protocol"></a>Listening Protocol
+## <a id="plugins-internals"></a>Plugins Internals
+
+This section explains the fundamental parts of the plugins structure necessary to understand how a plugin communicates with Scope.
+You can find more practical examples in [Weaveworks Plugins](https://github.com/weaveworks-plugins) repositories.
+
+### <a id="plugin-id"></a>Plugin ID
+
+Each plugin should have an unique ID. It is forbidden to change it
+during the plugin's lifetime. The scope probe will get the plugin's ID
+from the plugin's socket filename. For example, the socket named
+`my-plugin.sock`, the scope probe will deduce the ID as
+`my-plugin`. IDs can only contain alphanumeric sequences, optionally
+separated with a dash.
+
+### <a id="plugin-registration"></a>Plugin registration
 
 All plugins must listen for HTTP connections on a Unix socket in the `/var/run/scope/plugins` directory. The Scope probe recursively scans that directory every 5 seconds, to look for any sockets being added (or removed). It is also valid to put the plugin Unix socket into a sub-directory, in case you want to apply some permissions, or store any other information with the socket.
 
-When a new plugin is detected, the scope probe begins requesting reports from it via `GET /report`.
+When a new plugin is detected, the scope probe begins requesting reports from it via `GET /report`. So every plugins **must** implement the report interface.
+Implementing an interface means handling specific requests.
 
 All plugin endpoints are expected to respond within 500ms, and respond in the JSON format.
 
-### <a id="reporting"></a>Reporting
+### <a id="reporting"></a>Reporting Interface
 
 When the Scope probe discovers a new plugin Unix socket, it begins to periodically make a `GET` request to the `/report` endpoint. The report data structure returned from this will be merged into the probe's report and sent to the app. An example of the report structure can be viewed at the `/api/report` endpoint of any Scope app.
 
@@ -63,17 +80,15 @@ For example:
 }
 ```
 
-> **Note:** The `Plugins` section includes exactly one plugin description. The plugin description fields are: `interfaces` including `reporter`.
-
-The fields are:
+> **Note:** The `Plugins` section includes exactly one plugin description. The plugin description fields are:
 
 * `id` is used to check for duplicate plugins. It is required.
 * `label` is a human readable plugin label displayed in the UI. It is required.
-* `description` is displayed in the UI
-* `interfaces` is a list of interfaces which this plugin supports. It is required, and must equal `["reporter"]`.
-* `api_version` is used to ensure both the plugin and the scope probe can speak to each other. It is required, and must match the probe.
+* `description` is displayed in the UI. It is required.
+* `interfaces` is a list of interfaces which this plugin supports. It is required, and must contain at least `["reporter"]`.
+* `api_version` is used to ensure both the plugin and the scope probe can speak to each other. It is required, and must match the probe's value.
 
-### <a id="interfaces"></a>Interfaces
+### <a id="other-interfaces"></a>Other Interfaces
 
 Currently the only interface a plugin can fulfill is `reporter`.
 
