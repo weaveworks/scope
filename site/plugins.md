@@ -9,8 +9,8 @@ The following topics are discussed:
  * [Plugins Internals](#plugins-internals)
   * [Plugin ID](#plugin-id)
   * [Plugin Registration](#plugin-registration)
-  * [Reporting](#interfaces-interface)
-  * [Other Interfaces](#other-interfaces)
+  * [Reporter Interface](#reporter-interface)
+  * [Controller Interface](#controller-interface)
 
 With a Scope probe plugin, you can insert custom metrics into Scope and have them display in the user interface together with the Scope's standard set of metrics.
 
@@ -57,7 +57,7 @@ Implementing an interface means handling specific requests.
 
 All plugin endpoints are expected to respond within 500ms, and respond in the JSON format.
 
-### <a id="reporting"></a>Reporting Interface
+### <a id="reporter-interface"></a>Reporter Interface
 
 When the Scope probe discovers a new plugin Unix socket, it begins to periodically make a `GET` request to the `/report` endpoint. The report data structure returned from this will be merged into the probe's report and sent to the app. An example of the report structure can be viewed at the `/api/report` endpoint of any Scope app.
 
@@ -67,12 +67,12 @@ For example:
 
 ```json
 {
-  "Processes": {},
+  ...,
   "Plugins": [
     {
-      "id":          "iowait",
-      "label":       "IOWait",
-      "description": "Adds a graph of CPU IO Wait to hosts",
+      "id":          "plugin-id",
+      "label":       "Human Friendly Name",
+      "description": "Plugin's brief description",
       "interfaces":  ["reporter"],
       "api_version": "1",
     }
@@ -88,9 +88,119 @@ For example:
 * `interfaces` is a list of interfaces which this plugin supports. It is required, and must contain at least `["reporter"]`.
 * `api_version` is used to ensure both the plugin and the scope probe can speak to each other. It is required, and must match the probe's value.
 
-### <a id="other-interfaces"></a>Other Interfaces
+### <a id="controller-interface"></a>Controller Interface
 
-Currently the only interface a plugin can fulfill is `reporter`.
+Plugins _may_ implement the controller interface. Implementing the
+controller interface means that the plugin can react to HTTP `POST`
+control requests sent by the app. The plugin will receive them only
+for controls it exposed in its reports. The requests will come to the
+`/control` endpoint.
+
+Add the "controller" string to the interfaces field in the plugin specification.
+
+#### Control
+
+The `POST` requests will have a JSON-encoded body with the following contents:
+
+```json
+{
+  "AppID": "some ID of an app",
+  "NodeID": "an ID of the node that had the control activated",
+  "Control": "the name of the activated control"
+}
+```
+
+The body of the response should also be a JSON-encoded data. Usually
+the body would be an empty JSON object (so, "{}" after
+serialization). If some error happens during handling the control,
+then the plugin can send a response with an `error` field set, for
+example:
+
+```json
+{
+  "error": "An error message here"
+}
+```
+
+Sometimes the control activation can make the control obsolete, so the
+plugin may want to hide it (for example, control for stopping the
+container should be hidden after the container is stopped). For this
+to work, the plugin can send a shortcut report by filling the
+`ShortcutReport` field in the response, like for example:
+
+```json
+{
+  "ShortcutReport": { body of the report here }
+}
+```
+
+#### How to expose controls
+
+Each topology in the report (be it host, pod, endpoint and so on) has
+a set of available controls a node in the topology may want to
+show. The following (rather artificial) example shows a topology with
+two controls (`ctrl-one` and `ctrl-two`) and two nodes, each having a
+different control from the two:
+
+```json
+{
+  "Host": {
+    "controls": {
+      "ctrl-one": {
+        "id": "ctrl-one",
+        "human": "Ctrl One",
+        "icon": "fa-futbol-o",
+        "rank": 1
+      },
+      "ctrl-two": {
+        "id": "ctrl-two",
+        "human": "Ctrl Two",
+        "icon": "fa-beer",
+        "rank": 2
+      }
+    },
+    "nodes": {
+      "host1": {
+        "latestControls": {
+          "ctrl-one": {
+            "timestamp": "2016-07-20T15:51:05Z01:00",
+            "value": {
+              "dead": false
+            }
+          }
+        }
+      },
+      "host2": {
+        "latestControls": {
+          "ctrl-two": {
+            "timestamp": "2016-07-20T15:51:05Z01:00",
+            "value": {
+              "dead": false
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+When control "ctrl-one" is activated, the plugin will receive a
+request like:
+
+```json
+{
+  "AppID": "some ID of an app",
+  "NodeID": "host1",
+  "Control": "ctrl-one"
+}
+```
+
+A short note about the "icon" field of the topology control - the
+value for it can be taken from [Font Awesome
+Cheatsheet](http://fontawesome.io/cheatsheet/)
+
+
 
  **See Also**
 
