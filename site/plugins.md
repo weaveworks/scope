@@ -11,6 +11,7 @@ The following topics are discussed:
   * [Plugin Registration](#plugin-registration)
   * [Reporter Interface](#reporter-interface)
   * [Controller Interface](#controller-interface)
+ * [Plugins Developing Guide](#plugins-developing-guide)
 
 With a Scope probe plugin, you can insert custom metrics into Scope and have them display in the user interface together with the Scope's standard set of metrics.
 
@@ -249,7 +250,140 @@ discover how the nodes are named are:
     Docker image names, so `docker.io/alpine` in the address bar will
     be `docker.io<SLASH>alpine`.
 
- **See Also**
+
+## <a id="plugins-developing-guide"></a>Plugins Developing Guide
+
+This section shows how to develop a simple plugin in Go. The following code is a simplified version of the [Scope IOWait](https://github.com/weaveworks-plugins/scope-iowait) plugin.
+
+### Base Structure
+
+As stated in the previous section, a plugins need to put a socket in the `/var/run/scope/plugins` to be able to communicate with Scope.
+The best practice is to put the socket in a sub-directory with named with the plugin ID (e.g `/var/run/scope/plugins/plugins-id/plugins-id.sock`).
+This is useful because the plugin can set more restrictive permissions to avoid unauthorized access and store other information along with the socket if needed.
+Example of helper function for setting up the socket:
+
+```go
+func setupSocket(socketPath string) (net.Listener, error) {
+	os.RemoveAll(filepath.Dir(socketPath))
+	if err := os.MkdirAll(filepath.Dir(socketPath), 0700); err != nil {
+		return nil, fmt.Errorf("failed to create directory %q: %v", filepath.Dir(socketPath), err)
+	}
+	listener, err := net.Listen("unix", socketPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen on %q: %v", socketPath, err)
+	}
+
+	log.Printf("Listening on: unix://%s", socketPath)
+	return listener, nil
+}
+```
+
+Because Scope detects running plugins by looking into the `/var/run/scope/plugins` directory, plugins should remove their socket and the directory (if created) when they exit.
+The side effect of not doing that is that the Scope UI will show that a plugin is running but is not reachable.
+To do that you can use the following helper function:
+
+```go
+func setupSignals(socketPath string) {
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-interrupt
+		os.RemoveAll(filepath.Dir(socketPath))
+		os.Exit(0)
+	}()
+}
+```
+
+Also you should add in the main function the following:
+
+```golang
+defer func() {
+		os.RemoveAll(filepath.Dir(socketPath))
+	}()
+```
+
+This will ensure that when the plugin terminates because of an error or an interrupt command, the `/var/run/scope/plugins/plugins-id` directory will be removed.
+A bare minimum boilerplate can be the following:
+
+```go
+package main
+
+import (
+	syscall
+)
+
+func main() {
+	const socketPath = "/var/run/scope/plugins/my-plugin/my-plugin.sock"
+	setupSignals(socketPath)
+
+	listener, err := setupSocket(socketPath)
+
+	plugin := &Plugin{}
+	http.HandleFunc("/report", plugin.Report)
+
+	defer func() {
+		listener.Close()
+		os.RemoveAll(filepath.Dir(socketPath))
+	}()
+}
+
+```
+
+### Report
+
+As stated in the [Plugins Internals](#plugins-internals) section, the reporter interface is mandatory.
+Implementing the reporter interface means to handle `GET /report` requests so the following code is sufficient to implement it:
+
+```go
+// Plugin groups the methods a plugin needs
+type Plugin struct {
+	lock       sync.Mutex
+}
+
+type report struct {
+	Plugins []pluginSpec
+}
+
+func (p *Plugin) makeReport() (*report, error) {
+	rpt := &report{
+		Plugins: []pluginSpec{
+			{
+				ID:          "plugin-id",
+				Label:       "Plugin Name",
+				Description: "Plugin short description",
+				Interfaces:  []string{"reporter"},
+				APIVersion:  "1",
+			},
+		},
+	}
+	return rpt, nil
+}
+
+// Report is called by scope when a new report is needed. It is part of the
+// "reporter" interface, which all plugins must implement.
+func (p *Plugin) Report(w http.ResponseWriter, r *http.Request) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	log.Println(r.URL.String())
+	rpt, err := p.makeReport()
+	if err != nil {
+		log.Printf("error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	raw, err := json.Marshal(*rpt)
+	if err != nil {
+		log.Printf("error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(raw)
+}
+
+```
+
+**See Also**
 
   * [Building Scope](/site/building.md)
 
