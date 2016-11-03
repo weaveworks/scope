@@ -8,7 +8,7 @@ import classNames from 'classnames';
 import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
-import { getPipeStatus, basePath, doResizePipe } from '../utils/web-api-utils';
+import { getPipeStatus, basePath, doResizeTty } from '../utils/web-api-utils';
 import Term from 'xterm';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -97,7 +97,6 @@ class Terminal extends React.Component {
     this.handleCloseClick = this.handleCloseClick.bind(this);
     this.handlePopoutTerminal = this.handlePopoutTerminal.bind(this);
     this.handleResize = this.handleResize.bind(this);
-    this.focusTerminal = this.focusTerminal.bind(this);
   }
 
   createWebsocket(term) {
@@ -237,12 +236,6 @@ class Terminal extends React.Component {
     this.props.dispatch(clickCloseTerminal(this.getPipeId(), true));
   }
 
-  focusTerminal() {
-    if (this.term) {
-      this.term.focus();
-    }
-  }
-
   handlePopoutTerminal(ev) {
     ev.preventDefault();
     const paramString = JSON.stringify(this.props);
@@ -261,8 +254,11 @@ class Terminal extends React.Component {
     const cols = Math.floor(width / this.state.characterWidth);
     const rows = Math.floor(height / this.state.characterHeight);
 
-    doResizePipe(this.getPipeId(), this.props.pipe.get('resizeTtyControl'), cols, rows)
-      .then(() => this.setState({cols, rows}));
+    const resizeTtyControl = this.props.pipe.get('resizeTtyControl');
+    if (resizeTtyControl) {
+      doResizeTty(this.getPipeId(), resizeTtyControl, cols, rows)
+        .then(() => this.setState({cols, rows}));
+    }
   }
 
   isEmbedded() {
@@ -353,7 +349,6 @@ class Terminal extends React.Component {
       <div className="terminal-wrapper">
         {this.isEmbedded() && this.getTerminalHeader()}
         <div
-          onClick={this.focusTerminal}
           ref={(ref) => this.innerFlex = ref}
           className={innerClassName}
           style={innerFlexStyle} >

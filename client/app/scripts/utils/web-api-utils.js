@@ -253,7 +253,7 @@ export function doControlRequest(nodeId, control, dispatch) {
 }
 
 
-export function doResizePipe(pipeId, control, cols, rows) {
+export function doResizeTty(pipeId, control, cols, rows) {
   const url = `api/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
 
