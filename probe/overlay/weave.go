@@ -62,12 +62,12 @@ var (
 	weaveMetadata = report.MetadataTemplates{
 		WeaveVersion:         {ID: WeaveVersion, Label: "Version", From: report.FromLatest, Priority: 1},
 		WeaveProtocol:        {ID: WeaveProtocol, Label: "Protocol", From: report.FromLatest, Priority: 2},
-		WeavePeerName:        {ID: WeavePeerName, Label: "Peer Name", From: report.FromLatest, Priority: 3},
+		WeavePeerName:        {ID: WeavePeerName, Label: "Name", From: report.FromLatest, Priority: 3},
 		WeaveEncryption:      {ID: WeaveEncryption, Label: "Encryption", From: report.FromLatest, Priority: 4},
 		WeavePeerDiscovery:   {ID: WeavePeerDiscovery, Label: "Peer Discovery", From: report.FromLatest, Priority: 5},
-		WeaveTargetCount:     {ID: WeaveTargetCount, Label: "# Targets", From: report.FromLatest, Priority: 6},
-		WeaveConnectionCount: {ID: WeaveConnectionCount, Label: "# Connections", From: report.FromLatest, Priority: 8},
-		WeavePeerCount:       {ID: WeavePeerCount, Label: "# Peers", From: report.FromLatest, Priority: 7},
+		WeaveTargetCount:     {ID: WeaveTargetCount, Label: "Targets", From: report.FromLatest, Priority: 6},
+		WeaveConnectionCount: {ID: WeaveConnectionCount, Label: "Connections", From: report.FromLatest, Priority: 8},
+		WeavePeerCount:       {ID: WeavePeerCount, Label: "Peers", From: report.FromLatest, Priority: 7},
 		WeaveTrustedSubnets:  {ID: WeaveTrustedSubnets, Label: "Trusted Subnets", From: report.FromSets, Priority: 9},
 	}
 
@@ -76,7 +76,7 @@ var (
 			FixedRows: map[string]string{
 				WeaveIPAMStatus:        "Status",
 				WeaveIPAMRange:         "Range",
-				WeaveIPAMDefaultSubnet: "Def. Subnet",
+				WeaveIPAMDefaultSubnet: "Default Subnet",
 			},
 		},
 		WeaveDNSTableID: {ID: WeaveDNSTableID, Label: "DNS",
@@ -84,7 +84,7 @@ var (
 				WeaveDNSDomain:     "Domain",
 				WeaveDNSUpstream:   "Upstream",
 				WeaveDNSTTL:        "TTL",
-				WeaveDNSEntryCount: "# Entries",
+				WeaveDNSEntryCount: "Entries",
 			},
 		},
 		WeaveProxyTableID: {ID: WeaveProxyTableID, Label: "Proxy",
@@ -96,7 +96,7 @@ var (
 		WeavePluginTableID: {ID: WeavePluginTableID, Label: "Plugin",
 			FixedRows: map[string]string{
 				WeavePluginStatus: "Status",
-				WeavePluginDriver: "Driver",
+				WeavePluginDriver: "Driver Name",
 			},
 		},
 	}
