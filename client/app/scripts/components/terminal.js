@@ -4,6 +4,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
+import _ from 'lodash';
 
 import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
@@ -203,7 +204,7 @@ class Terminal extends React.Component {
 
     const {characterWidth, characterHeight} = terminalCellSize(this.term.element);
 
-    window.addEventListener('resize', this.handleResize);
+    window.addEventListener('resize', _.debounce(this.handleResize, 500));
 
     this.resizeTimeout = setTimeout(() => {
       this.setState({
