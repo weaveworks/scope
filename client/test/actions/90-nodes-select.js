@@ -43,6 +43,7 @@ module.exports = function(cfg) {
     // More info about wd at https://github.com/admc/wd
     return browser.get('http://' + cfg.host + '/')
       .then(function() {
+        debugger; cfg;
         debug('starting run ' + cfg.run);
         return browser.sleep(2000);
       })

@@ -1,5 +1,17 @@
 version : '2'
 services:
+  scope:
+    container_name: 'scope-perf'
+    build: '.'
+    ports:
+      - '4042:4042'
+    command: ['npm', 'run', 'start-production']
+    environment:
+      - BACKEND_HOST=probe
+    links:
+      - probe
+    volumes:
+      - ./build:/home/weave/build
   probe:
     container_name: 'scope-perf-probe'
     image: weaveworks/scope
@@ -15,6 +27,8 @@ services:
   selenium:
     container_name: 'selenium'
     image: 'selenium/standalone-chrome:3.0.0-dubnium'
+    links:
+      - scope
     ports:
       - '4444:4444'
     environment:
@@ -27,5 +41,5 @@ services:
     ports:
       - '5984:5984'
     volumes:
-      - ./data:/usr/local/var/lib/couchdb
-      - ./local.ini:/usr/local/etc/couchdb/local.ini
+      - ./test/perfjankie/data:/usr/local/var/lib/couchdb
+      - ./test/perfjankie/local.ini:/usr/local/etc/couchdb/local.ini

@@ -3,7 +3,7 @@ var perfjankie = require('perfjankie');
 var run = process.env.COMMIT || 'commit#Hash'; // A hash for the commit, displayed in the x-axis in the dashboard
 var time = process.env.DATE || new Date().getTime() // Used to sort the data when displaying graph. Can be the time when a commit was made
 var scenario = process.env.ACTIONS || '90-nodes-select';
-var host = process.env.HOST || 'probe:4040';
+var host = process.env.HOST || 'scope:4042';
 var actions = require('../actions/' + scenario)({host: host, run: run});
 var log = (s) => { console.log(s); }
 
