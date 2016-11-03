@@ -60,14 +60,15 @@ var (
 	}
 
 	weaveMetadata = report.MetadataTemplates{
-		WeaveVersion:        {ID: WeaveVersion, Label: "Version", From: report.FromLatest, Priority: 1},
-		WeaveProtocol:       {ID: WeaveProtocol, Label: "Protocol", From: report.FromLatest, Priority: 2},
-		WeavePeerName:       {ID: WeavePeerName, Label: "Peer Name", From: report.FromLatest, Truncate: 17, Priority: 3},
-		WeaveEncryption:     {ID: WeaveEncryption, Label: "Encryption", From: report.FromLatest, Priority: 4},
-		WeavePeerDiscovery:  {ID: WeavePeerDiscovery, Label: "Peer Discovery", From: report.FromLatest, Priority: 5},
-		WeaveTargetCount:    {ID: WeaveTargetCount, Label: "Targets", From: report.FromLatest, Priority: 6},
-		WeavePeerCount:      {ID: WeaveConnectionCount, Label: "Connections", From: report.FromLatest, Priority: 7},
-		WeaveTrustedSubnets: {ID: WeaveTrustedSubnets, Label: "Trusted Subnets", From: report.FromSets, Priority: 8},
+		WeaveVersion:         {ID: WeaveVersion, Label: "Version", From: report.FromLatest, Priority: 1},
+		WeaveProtocol:        {ID: WeaveProtocol, Label: "Protocol", From: report.FromLatest, Priority: 2},
+		WeavePeerName:        {ID: WeavePeerName, Label: "Peer Name", From: report.FromLatest, Priority: 3},
+		WeaveEncryption:      {ID: WeaveEncryption, Label: "Encryption", From: report.FromLatest, Priority: 4},
+		WeavePeerDiscovery:   {ID: WeavePeerDiscovery, Label: "Peer Discovery", From: report.FromLatest, Priority: 5},
+		WeaveTargetCount:     {ID: WeaveTargetCount, Label: "# Targets", From: report.FromLatest, Priority: 6},
+		WeaveConnectionCount: {ID: WeaveConnectionCount, Label: "# Connections", From: report.FromLatest, Priority: 8},
+		WeavePeerCount:       {ID: WeavePeerCount, Label: "# Peers", From: report.FromLatest, Priority: 7},
+		WeaveTrustedSubnets:  {ID: WeaveTrustedSubnets, Label: "Trusted Subnets", From: report.FromSets, Priority: 9},
 	}
 
 	weaveTableTemplates = report.TableTemplates{
@@ -83,7 +84,7 @@ var (
 				WeaveDNSDomain:     "Domain",
 				WeaveDNSUpstream:   "Upstream",
 				WeaveDNSTTL:        "TTL",
-				WeaveDNSEntryCount: "Entries",
+				WeaveDNSEntryCount: "# Entries",
 			},
 		},
 		WeaveProxyTableID: {ID: WeaveProxyTableID, Label: "Proxy",
@@ -214,7 +215,8 @@ func filterContainerNotFound(err error) error {
 
 	switch err.(type) {
 	case *docker_client.Error:
-		// This is really ugly, but there's no way around it :(
+		// This is really ugly, but this error comes from the client in some cases
+		// and there is no other way to distinguish it :(
 		dockerError := err.(*docker_client.Error)
 		if containerNotRunningRE.MatchString(dockerError.Message) {
 			return nil
@@ -355,61 +357,19 @@ func (w *Weave) Report() (report.Report, error) {
 	return r, nil
 }
 
+// getPeerNode obtains an Overlay topology node for representing a peer in the Weave network
 func (w *Weave) getPeerNode(peer weave.Peer) report.Node {
 	node := report.MakeNode(report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, peer.Name))
 	latests := map[string]string{
 		WeavePeerName:     peer.Name,
 		WeavePeerNickName: peer.NickName,
 	}
+
 	// Peer corresponding to current host
 	if peer.Name == w.statusCache.Router.Name {
-		latests[report.HostNodeID] = w.hostID
-		latests[WeaveVersion] = w.statusCache.Version
-		latests[WeaveEncryption] = "disabled"
-		if w.statusCache.Router.Encryption {
-			latests[WeaveEncryption] = "enabled"
-		}
-		latests[WeavePeerDiscovery] = "disabled"
-		if w.statusCache.Router.PeerDiscovery {
-			latests[WeavePeerDiscovery] = "enabled"
-		}
-		if w.statusCache.Router.ProtocolMinVersion == w.statusCache.Router.ProtocolMaxVersion {
-			latests[WeaveProtocol] = fmt.Sprintf("%d", w.statusCache.Router.ProtocolMinVersion)
-		} else {
-			latests[WeaveProtocol] = fmt.Sprintf("%d..%d", w.statusCache.Router.ProtocolMinVersion, w.statusCache.Router.ProtocolMaxVersion)
-		}
-		latests[WeaveTargetCount] = fmt.Sprintf("#%d", len(w.statusCache.Router.Targets))
-		latests[WeaveConnectionCount] = fmt.Sprintf("#%d", len(w.statusCache.Router.Connections))
-		node = node.WithSet(WeaveTrustedSubnets, report.MakeStringSet(w.statusCache.Router.TrustedSubnets...))
-		if w.statusCache.IPAM != nil {
-			latests[WeaveIPAMStatus] = getIPAMStatus(*w.statusCache.IPAM)
-			latests[WeaveIPAMRange] = w.statusCache.IPAM.Range
-			latests[WeaveIPAMDefaultSubnet] = w.statusCache.IPAM.DefaultSubnet
-		}
-		if w.statusCache.DNS != nil {
-			latests[WeaveDNSDomain] = w.statusCache.DNS.Domain
-			latests[WeaveDNSUpstream] = strings.Join(w.statusCache.DNS.Upstream, ", ")
-			latests[WeaveDNSTTL] = fmt.Sprintf("%d", w.statusCache.DNS.TTL)
-			dnsEntryCount := 0
-			for _, entry := range w.statusCache.DNS.Entries {
-				if entry.Tombstone == 0 {
-					dnsEntryCount++
-				}
-			}
-			latests[WeaveDNSEntryCount] = fmt.Sprintf("#%d", dnsEntryCount)
-		}
-		latests[WeaveProxyStatus] = "not running"
-		if w.proxyRunningCache {
-			latests[WeaveProxyStatus] = "running"
-			latests[WeaveProxyAddress] = w.proxyAddressCache
-		}
-		latests[WeavePluginStatus] = "not running"
-		if w.pluginRunningCache {
-			latests[WeavePluginStatus] = "running"
-			latests[WeavePluginDriver] = "weave"
-		}
-		node = node.WithParents(report.EmptySets.Add(report.Host, report.MakeStringSet(w.hostID)))
+		latests, node = w.addCurrentPeerInfo(latests, node)
 	}
+
 	for _, conn := range peer.Connections {
 		if conn.Outbound {
 			node = node.WithAdjacent(report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, conn.Name))
@@ -417,6 +377,60 @@ func (w *Weave) getPeerNode(peer weave.Peer) report.Node {
 	}
 
 	return node.WithLatests(latests)
+}
+
+// addCurrentPeerInfo adds information exclusive to the Overlay topology node representing current Weave Net peer
+// (i.e. in the same host as the reporting Scope probe)
+func (w *Weave) addCurrentPeerInfo(latests map[string]string, node report.Node) (map[string]string, report.Node) {
+	latests[report.HostNodeID] = w.hostID
+	latests[WeaveVersion] = w.statusCache.Version
+	latests[WeaveEncryption] = "disabled"
+	if w.statusCache.Router.Encryption {
+		latests[WeaveEncryption] = "enabled"
+	}
+	latests[WeavePeerDiscovery] = "disabled"
+	if w.statusCache.Router.PeerDiscovery {
+		latests[WeavePeerDiscovery] = "enabled"
+	}
+	if w.statusCache.Router.ProtocolMinVersion == w.statusCache.Router.ProtocolMaxVersion {
+		latests[WeaveProtocol] = fmt.Sprintf("%d", w.statusCache.Router.ProtocolMinVersion)
+	} else {
+		latests[WeaveProtocol] = fmt.Sprintf("%d..%d", w.statusCache.Router.ProtocolMinVersion, w.statusCache.Router.ProtocolMaxVersion)
+	}
+	latests[WeaveTargetCount] = fmt.Sprintf("%d", len(w.statusCache.Router.Targets))
+	latests[WeaveConnectionCount] = fmt.Sprintf("%d", len(w.statusCache.Router.Connections))
+	latests[WeavePeerCount] = fmt.Sprintf("%d", len(w.statusCache.Router.Peers))
+	node = node.WithSet(WeaveTrustedSubnets, report.MakeStringSet(w.statusCache.Router.TrustedSubnets...))
+	if w.statusCache.IPAM != nil {
+		latests[WeaveIPAMStatus] = getIPAMStatus(*w.statusCache.IPAM)
+		latests[WeaveIPAMRange] = w.statusCache.IPAM.Range
+		latests[WeaveIPAMDefaultSubnet] = w.statusCache.IPAM.DefaultSubnet
+	}
+	if w.statusCache.DNS != nil {
+		latests[WeaveDNSDomain] = w.statusCache.DNS.Domain
+		latests[WeaveDNSUpstream] = strings.Join(w.statusCache.DNS.Upstream, ", ")
+		latests[WeaveDNSTTL] = fmt.Sprintf("%d", w.statusCache.DNS.TTL)
+		dnsEntryCount := 0
+		for _, entry := range w.statusCache.DNS.Entries {
+			if entry.Tombstone == 0 {
+				dnsEntryCount++
+			}
+		}
+		latests[WeaveDNSEntryCount] = fmt.Sprintf("%d", dnsEntryCount)
+	}
+	latests[WeaveProxyStatus] = "not running"
+	if w.proxyRunningCache {
+		latests[WeaveProxyStatus] = "running"
+		latests[WeaveProxyAddress] = w.proxyAddressCache
+	}
+	latests[WeavePluginStatus] = "not running"
+	if w.pluginRunningCache {
+		latests[WeavePluginStatus] = "running"
+		latests[WeavePluginDriver] = "weave"
+	}
+	node = node.WithParents(report.EmptySets.Add(report.Host, report.MakeStringSet(w.hostID)))
+
+	return latests, node
 }
 
 func getIPAMStatus(ipam weave.IPAM) string {
