@@ -5,7 +5,7 @@ import {CANVAS_METRIC_FONT_SIZE} from '../constants/styles.js';
 
 
 export default function NodeShapeSquare({
-  id, highlighted, size, color, rx = 0, ry = 0, metric, wireframe
+  id, highlighted, size, color, rx = 0, ry = 0, metric
 }) {
   const rectProps = (scale, radiusScale) => ({
     width: scale * size * 2,
@@ -19,7 +19,7 @@ export default function NodeShapeSquare({
   const clipId = `mask-${id}`;
   const {height, hasMetric, formattedValue} = getMetricValue(metric, size);
   const metricStyle = { fill: getMetricColor(metric) };
-  const className = classNames('shape', { metrics: hasMetric, wireframe });
+  const className = classNames('shape', { metrics: hasMetric });
   const fontSize = size * CANVAS_METRIC_FONT_SIZE;
 
   return (
@@ -34,7 +34,7 @@ export default function NodeShapeSquare({
         <text style={{fontSize}}>
           {formattedValue}
         </text> :
-        <circle className="node" stroke={color} fill={color} r={Math.max(2, (size * 0.125))} />}
+        <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );
 }

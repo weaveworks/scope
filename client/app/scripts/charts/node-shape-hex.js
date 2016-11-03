@@ -30,7 +30,7 @@ function getPoints(h) {
 }
 
 
-export default function NodeShapeHex({id, highlighted, size, color, metric, wireframe}) {
+export default function NodeShapeHex({id, highlighted, size, color, metric}) {
   const pathProps = v => ({
     d: getPoints(size * v * 2),
     transform: `rotate(90) translate(-${size * getWidth(v)}, -${size * v})`
@@ -42,7 +42,7 @@ export default function NodeShapeHex({id, highlighted, size, color, metric, wire
   const clipId = `mask-${id}`;
   const {height, hasMetric, formattedValue} = getMetricValue(metric, size);
   const metricStyle = { fill: getMetricColor(metric) };
-  const className = classNames('shape', { metrics: hasMetric, wireframe });
+  const className = classNames('shape', { metrics: hasMetric });
   const fontSize = size * CANVAS_METRIC_FONT_SIZE;
 
   return (
@@ -58,7 +58,7 @@ export default function NodeShapeHex({id, highlighted, size, color, metric, wire
         <text style={{fontSize}}>
           {formattedValue}
         </text> :
-        <circle className="node" fill={color} stroke={color} r={Math.max(2, (size * 0.125))} />}
+        <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );
 }

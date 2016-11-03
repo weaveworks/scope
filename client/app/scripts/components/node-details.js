@@ -1,5 +1,4 @@
 import React from 'react';
-import classnames from 'classnames';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
 
@@ -15,7 +14,6 @@ import NodeDetailsLabels from './node-details/node-details-labels';
 import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import Warning from './warning';
-import { getNodeShape } from '../charts/node';
 
 function getTruncationText(count) {
   return 'This section was too long to be handled efficiently and has been truncated'
@@ -26,21 +24,8 @@ export class NodeDetails extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-    this.state = {
-      highlighted: false
-    };
     this.handleClickClose = this.handleClickClose.bind(this);
     this.handleShowTopologyForNode = this.handleShowTopologyForNode.bind(this);
-    this.handleNodeMouseEnter = this.handleNodeMouseEnter.bind(this);
-    this.handleNodeMouseLeave = this.handleNodeMouseLeave.bind(this);
-  }
-
-  handleNodeMouseEnter() {
-    this.setState({ highlighted: true });
-  }
-
-  handleNodeMouseLeave() {
-    this.setState({ highlighted: false });
   }
 
   handleClickClose(ev) {
@@ -50,7 +35,6 @@ export class NodeDetails extends React.Component {
 
   handleShowTopologyForNode(ev) {
     ev.preventDefault();
-    this.setState({ highlighted: false });
     this.props.clickShowTopologyForNode(this.props.topologyId, this.props.nodeId);
   }
 
@@ -63,9 +47,14 @@ export class NodeDetails extends React.Component {
   }
 
   renderTools() {
+    const showSwitchTopology = this.props.nodeId !== this.props.selectedNodeId;
+    const topologyTitle = `View ${this.props.label} in ${this.props.topologyId}`;
+
     return (
       <div className="node-details-tools-wrapper">
         <div className="node-details-tools">
+          {showSwitchTopology && <span title={topologyTitle}
+            className="fa fa-exchange" onClick={this.handleShowTopologyForNode} />}
           <span title="Close details" className="fa fa-close" onClick={this.handleClickClose} />
         </div>
       </div>
@@ -149,60 +138,30 @@ export class NodeDetails extends React.Component {
     const { details, nodeControlStatus, nodeMatches = makeMap() } = this.props;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
-    const controlsColor = brightenColor(nodeColor);
     const {error, pending} = nodeControlStatus ? nodeControlStatus.toJS() : {};
     const tools = this.renderTools();
     const styles = {
       controls: {
-        backgroundColor: controlsColor,
+        backgroundColor: brightenColor(nodeColor)
       },
       header: {
         backgroundColor: nodeColor
       }
     };
-    const NodeShapeType = getNodeShape(details);
-    const shapeMarginTop = details.stack ? -20 : -27;
-    const topologyTitle = `View ${this.props.label} in ${this.props.topologyId}`;
-    const showSwitchTopology = this.props.nodeId !== this.props.selectedNodeId;
-    const highlighted = this.state.highlighted;
-
-    const commonProps = {
-      onClick: this.handleShowTopologyForNode,
-      onMouseEnter: showSwitchTopology && this.handleNodeMouseEnter,
-      onMouseLeave: showSwitchTopology && this.handleNodeMouseLeave,
-      style: {
-        cursor: showSwitchTopology && 'pointer',
-      },
-    };
-    const headerClassName = classnames('node-details-header', {
-      'show-switch-topology': showSwitchTopology,
-    });
 
     return (
       <div className="node-details">
         {tools}
-        <div className={headerClassName} style={styles.header}>
+        <div className="node-details-header" style={styles.header}>
           <div className="node-details-header-wrapper">
-            <svg style={{width: 64, height: 84, marginTop: shapeMarginTop }} >
-              <g
-                className={classnames({highlighted})}
-                transform={`translate(32, 48) scale(${44 / 64})`}
-                {...commonProps}
-              >
-                {showSwitchTopology && <title>{topologyTitle}</title>}
-                <NodeShapeType id={this.props.nodeId} size={64} color={controlsColor}
-                  highlighted={highlighted} wireframe={!showSwitchTopology} />
-              </g>
-            </svg>
-            <h2
-              className="node-details-header-label truncate"
-              title={showSwitchTopology ? topologyTitle : details.label}
-              {...commonProps}>
+            <h2 className="node-details-header-label truncate" title={details.label}>
               <MatchedText text={details.label} match={nodeMatches.get('label')} />
             </h2>
-            {details.parents && <NodeDetailsRelatives
-              matches={nodeMatches.get('parents')}
-              relatives={details.parents} />}
+            <div className="node-details-header-relatives">
+              {details.parents && <NodeDetailsRelatives
+                matches={nodeMatches.get('parents')}
+                relatives={details.parents} />}
+            </div>
           </div>
         </div>
 

@@ -14,13 +14,15 @@ export default function NodeShapeStack(props) {
       <g transform={`scale(${hls})translate(${dx}, ${dy})`} className="onlyHighlight">
         <Shape {...props} />
       </g>
-      <g className="noNode" transform={`translate(${dx * 2}, ${dy * 2})`}>
+      <g transform={`translate(${dx * 2}, ${dy * 2})`}>
         <Shape {...props} />
       </g>
-      <g className="noNode" transform={`translate(${dx * 1}, ${dy * 1})`}>
+      <g transform={`translate(${dx * 1}, ${dy * 1})`}>
         <Shape {...props} />
       </g>
-      <Shape {...props} />
+      <g className="onlyMetrics">
+        <Shape {...props} />
+      </g>
     </g>
   );
 }
