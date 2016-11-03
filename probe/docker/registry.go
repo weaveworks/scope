@@ -65,6 +65,7 @@ type registry struct {
 	containersByPID map[int]Container
 	images          map[string]docker_client.APIImages
 	networks        []docker_client.Network
+	pipeIDToexecID  map[string]string
 }
 
 // Client interface for mocking.
@@ -86,6 +87,7 @@ type Client interface {
 	CreateExec(docker_client.CreateExecOptions) (*docker_client.Exec, error)
 	StartExecNonBlocking(string, docker_client.StartExecOptions) (docker_client.CloseWaiter, error)
 	Stats(docker_client.StatsOptions) error
+	ResizeExecTTY(id string, height, width int) error
 }
 
 func newDockerClient(endpoint string) (Client, error) {
@@ -103,6 +105,7 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats
 		containers:      radix.New(),
 		containersByPID: map[int]Container{},
 		images:          map[string]docker_client.APIImages{},
+		pipeIDToexecID:  map[string]string{},
 
 		client:          client,
 		pipes:           pipes,

@@ -9,6 +9,14 @@
 			"branch": "default"
 		},
 		{
+			"importpath": "github.com/Azure/go-ansiterm",
+			"repository": "https://github.com/Azure/go-ansiterm",
+			"vcs": "git",
+			"revision": "fa152c58bc15761d0200cb75fe958b89a9d4888e",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/DataDog/datadog-go/statsd",
 			"repository": "https://github.com/DataDog/datadog-go",
 			"vcs": "",
@@ -701,6 +709,15 @@
 			"revision": "b6a8a3da10698a43043b752552228eed71955994",
 			"branch": "master",
 			"path": "pkg/system",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/term",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "17aaa0890a7f53cbd9c8806a93de73898ea92813",
+			"branch": "master",
+			"path": "/pkg/term",
 			"notests": true
 		},
 		{
