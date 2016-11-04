@@ -185,7 +185,7 @@ class Terminal extends React.Component {
     this.term = new Term({
       cols: this.state.cols,
       rows: this.state.rows,
-      convertEol: !this.props.raw,
+      convertEol: !this.props.pipe.get('raw'),
       cursorBlink: true,
       scrollback: 10000,
     });
@@ -278,6 +278,8 @@ class Terminal extends React.Component {
     if (resizeTtyControl) {
       doResizeTty(this.getPipeId(), resizeTtyControl, cols, rows)
         .then(() => this.setState({cols, rows}));
+    } else if (!this.props.pipe.get('raw')) {
+      this.setState({cols, rows});
     }
   }
 

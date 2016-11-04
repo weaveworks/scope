@@ -232,11 +232,13 @@ export function doControlRequest(nodeId, control, dispatch) {
       if (res) {
         if (res.pipe) {
           dispatch(blurSearch());
+          const resizeTtyControl = res.resize_tty_control &&
+            {id: res.resize_tty_control, probeId: control.probeId, nodeId: control.nodeId};
           dispatch(receiveControlPipe(
             res.pipe,
             nodeId,
             res.raw_tty,
-            {id: res.resize_tty_control, probeId: control.probeId, nodeId: control.nodeId}));
+            resizeTtyControl));
         }
         if (res.removedNode) {
           dispatch(receiveControlNodeRemoved(nodeId));
