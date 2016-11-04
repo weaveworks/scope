@@ -25,7 +25,6 @@ const (
 	UnpauseEvent           = "unpause"
 	NetworkConnectEvent    = "network:connect"
 	NetworkDisconnectEvent = "network:disconnect"
-	endpoint               = "unix:///var/run/docker.sock"
 )
 
 // Vars exported for testing.
@@ -95,8 +94,8 @@ func newDockerClient(endpoint string) (Client, error) {
 }
 
 // NewRegistry returns a usable Registry. Don't forget to Stop it.
-func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool, hostID string, handlerRegistry *controls.HandlerRegistry) (Registry, error) {
-	client, err := NewDockerClientStub(endpoint)
+func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool, hostID string, handlerRegistry *controls.HandlerRegistry, dockerEndpoint string) (Registry, error) {
+	client, err := NewDockerClientStub(dockerEndpoint)
 	if err != nil {
 		return nil, err
 	}

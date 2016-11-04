@@ -27,29 +27,47 @@ type Client interface {
 type Status struct {
 	Version string
 	Router  Router
-	DNS     DNS
-	IPAM    IPAM
+	DNS     *DNS
+	IPAM    *IPAM
 }
 
 // Router describes the status of the Weave Router
 type Router struct {
-	Name  string
-	Peers []struct {
+	Name               string
+	Encryption         bool
+	ProtocolMinVersion int
+	ProtocolMaxVersion int
+	PeerDiscovery      bool
+	Peers              []Peer
+	Connections        []struct {
+		Address  string
+		Outbound bool
+		State    string
+		Info     string
+	}
+	Targets        []string
+	TrustedSubnets []string
+}
+
+// Peer describes a peer in the weave network
+type Peer struct {
+	Name        string
+	NickName    string
+	Connections []struct {
 		Name        string
 		NickName    string
-		Connections []struct {
-			Name        string
-			NickName    string
-			Address     string
-			Outbound    bool
-			Established bool
-		}
+		Address     string
+		Outbound    bool
+		Established bool
 	}
 }
 
 // DNS describes the status of Weave DNS
 type DNS struct {
-	Entries []struct {
+	Domain   string
+	Upstream []string
+	TTL      uint32
+	Entries  []struct {
 		Hostname    string
 		ContainerID string
 		Tombstone   int64
@@ -58,7 +76,18 @@ type DNS struct {
 
 // IPAM describes the status of Weave IPAM
 type IPAM struct {
+	Paxos *struct {
+		Elector    bool
+		KnownNodes int
+		Quorum     uint
+	}
+	Range         string
 	DefaultSubnet string
+	Entries       []struct {
+		Size        uint32
+		IsKnownPeer bool
+	}
+	PendingAllocates []string
 }
 
 var weavePsMatch = regexp.MustCompile(`^([0-9a-f]{12}) ((?:[0-9a-f][0-9a-f]\:){5}(?:[0-9a-f][0-9a-f]))(.*)$`)

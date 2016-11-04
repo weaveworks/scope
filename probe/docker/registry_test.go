@@ -21,7 +21,7 @@ import (
 
 func testRegistry() docker.Registry {
 	hr := controls.NewDefaultHandlerRegistry()
-	registry, _ := docker.NewRegistry(10*time.Second, nil, true, "", hr)
+	registry, _ := docker.NewRegistry(10*time.Second, nil, true, "", hr, "")
 	return registry
 }
 

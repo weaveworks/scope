@@ -40,7 +40,10 @@ const (
 	defaultServiceHost = "https://cloud.weave.works:443"
 )
 
-var pluginAPIVersion = "1"
+var (
+	pluginAPIVersion = "1"
+	dockerEndpoint   = "unix:///var/run/docker.sock"
+)
 
 func check(flags map[string]string) {
 	handleResponse := func(r *checkpoint.CheckResponse, err error) {
@@ -174,7 +177,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 				log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
 			}
 		}
-		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID, handlerRegistry); err == nil {
+		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID, handlerRegistry, dockerEndpoint); err == nil {
 			defer registry.Stop()
 			if flags.procEnabled {
 				p.AddTagger(docker.NewTagger(registry, processCache))
@@ -200,29 +203,33 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 
 	if flags.weaveEnabled {
 		client := weave.NewClient(sanitize.URL("http://", 6784, "")(flags.weaveAddr))
-		weave := overlay.NewWeave(hostID, client)
-		defer weave.Stop()
-		p.AddTagger(weave)
-		p.AddReporter(weave)
-
-		dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
+		weave, err := overlay.NewWeave(hostID, client, dockerEndpoint)
 		if err != nil {
-			log.Println("Error getting docker bridge ip:", err)
+			log.Errorf("Weave: failed to start client: %v", err)
 		} else {
-			weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
-			weaveTargets, err := appclient.ParseTargets([]string{flags.weaveHostname})
+			defer weave.Stop()
+			p.AddTagger(weave)
+			p.AddReporter(weave)
+
+			dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
 			if err != nil {
-				log.Errorf("Failed to parse weave targets: %v", err)
+				log.Errorf("Error getting docker bridge ip: %v", err)
 			} else {
-				weaveResolver, err := appclient.NewResolver(appclient.ResolverConfig{
-					Targets: weaveTargets,
-					Lookup:  weaveDNSLookup,
-					Set:     clients.Set,
-				})
+				weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
+				weaveTargets, err := appclient.ParseTargets([]string{flags.weaveHostname})
 				if err != nil {
-					log.Errorf("Failed to create weave resolver: %v", err)
+					log.Errorf("Failed to parse weave targets: %v", err)
 				} else {
-					defer weaveResolver.Stop()
+					weaveResolver, err := appclient.NewResolver(appclient.ResolverConfig{
+						Targets: weaveTargets,
+						Lookup:  weaveDNSLookup,
+						Set:     clients.Set,
+					})
+					if err != nil {
+						log.Errorf("Failed to create weave resolver: %v", err)
+					} else {
+						defer weaveResolver.Stop()
+					}
 				}
 			}
 		}
