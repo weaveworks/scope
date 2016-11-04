@@ -619,7 +619,7 @@ h2 {
     top: 6px;
     right: 8px;
 
-    span {
+    > span {
       .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
@@ -627,7 +627,19 @@ h2 {
       color: @white;
       cursor: pointer;
       border: 1px solid rgba(255, 255, 255, 0);
-      border-radius: 10%;
+      border-radius: 4px;
+
+      span {
+        font-family: @base-font;
+        font-size: 0.9em;
+        margin-left: 4px;
+
+        span {
+          font-size: 1em;
+          margin-left: 0;
+          text-transform: uppercase;
+        }
+      }
 
       &:hover {
         border-color: rgba(255, 255, 255, 0.6);
