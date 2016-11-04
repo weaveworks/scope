@@ -55,7 +55,7 @@ export class NodeDetails extends React.Component {
         <div className="node-details-tools">
           {showSwitchTopology && <span title={topologyTitle}
             className="fa fa-long-arrow-left" onClick={this.handleShowTopologyForNode}>
-            <span>View in {this.props.topologyId}</span>
+            <span>Show in <span>{this.props.topologyId.replace(/-/g, ' ')}</span></span>
           </span>}
           <span title="Close details" className="fa fa-close" onClick={this.handleClickClose} />
         </div>
