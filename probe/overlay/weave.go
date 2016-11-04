@@ -19,33 +19,34 @@ import (
 
 // Keys for use in Node
 const (
-	WeavePeerName          = "weave_peer_name"
-	WeavePeerNickName      = "weave_peer_nick_name"
-	WeaveDNSHostname       = "weave_dns_hostname"
-	WeaveMACAddress        = "weave_mac_address"
-	WeaveVersion           = "weave_version"
-	WeaveEncryption        = "weave_encryption"
-	WeaveProtocol          = "weave_protocol"
-	WeavePeerDiscovery     = "weave_peer_discovery"
-	WeaveTargetCount       = "weave_target_count"
-	WeaveConnectionCount   = "weave_connection_count"
-	WeavePeerCount         = "weave_peer_count"
-	WeaveTrustedSubnets    = "weave_trusted_subnet_count"
-	WeaveIPAMTableID       = "weave_ipam_table"
-	WeaveIPAMStatus        = "weave_ipam_status"
-	WeaveIPAMRange         = "weave_ipam_range"
-	WeaveIPAMDefaultSubnet = "weave_ipam_default_subnet"
-	WeaveDNSTableID        = "weave_dns_table"
-	WeaveDNSDomain         = "weave_dns_domain"
-	WeaveDNSUpstream       = "weave_dns_upstream"
-	WeaveDNSTTL            = "weave_dns_ttl"
-	WeaveDNSEntryCount     = "weave_dns_entry_count"
-	WeaveProxyTableID      = "weave_proxy_table"
-	WeaveProxyStatus       = "weave_proxy_status"
-	WeaveProxyAddress      = "weave_proxy_address"
-	WeavePluginTableID     = "weave_plugin_table"
-	WeavePluginStatus      = "weave_plugin_status"
-	WeavePluginDriver      = "weave_plugin_driver"
+	WeavePeerName               = "weave_peer_name"
+	WeavePeerNickName           = "weave_peer_nick_name"
+	WeaveDNSHostname            = "weave_dns_hostname"
+	WeaveMACAddress             = "weave_mac_address"
+	WeaveVersion                = "weave_version"
+	WeaveEncryption             = "weave_encryption"
+	WeaveProtocol               = "weave_protocol"
+	WeavePeerDiscovery          = "weave_peer_discovery"
+	WeaveTargetCount            = "weave_target_count"
+	WeaveConnectionCount        = "weave_connection_count"
+	WeavePeerCount              = "weave_peer_count"
+	WeaveTrustedSubnets         = "weave_trusted_subnet_count"
+	WeaveIPAMTableID            = "weave_ipam_table"
+	WeaveIPAMStatus             = "weave_ipam_status"
+	WeaveIPAMRange              = "weave_ipam_range"
+	WeaveIPAMDefaultSubnet      = "weave_ipam_default_subnet"
+	WeaveDNSTableID             = "weave_dns_table"
+	WeaveDNSDomain              = "weave_dns_domain"
+	WeaveDNSUpstream            = "weave_dns_upstream"
+	WeaveDNSTTL                 = "weave_dns_ttl"
+	WeaveDNSEntryCount          = "weave_dns_entry_count"
+	WeaveProxyTableID           = "weave_proxy_table"
+	WeaveProxyStatus            = "weave_proxy_status"
+	WeaveProxyAddress           = "weave_proxy_address"
+	WeavePluginTableID          = "weave_plugin_table"
+	WeavePluginStatus           = "weave_plugin_status"
+	WeavePluginDriver           = "weave_plugin_driver"
+	WeaveConnectionsTablePrefix = "weave_connections_table_"
 )
 
 var (
@@ -98,6 +99,11 @@ var (
 				WeavePluginStatus: "Status",
 				WeavePluginDriver: "Driver Name",
 			},
+		},
+		WeaveConnectionsTablePrefix: {
+			ID:     WeaveConnectionsTablePrefix,
+			Label:  "Connections",
+			Prefix: WeaveConnectionsTablePrefix,
 		},
 	}
 )
@@ -428,9 +434,30 @@ func (w *Weave) addCurrentPeerInfo(latests map[string]string, node report.Node) 
 		latests[WeavePluginStatus] = "running"
 		latests[WeavePluginDriver] = "weave"
 	}
+	node = node.AddPrefixTable(WeaveConnectionsTablePrefix, getConnectionsTable(w.statusCache.Router))
 	node = node.WithParents(report.EmptySets.Add(report.Host, report.MakeStringSet(w.hostID)))
 
 	return latests, node
+}
+
+func getConnectionsTable(router weave.Router) map[string]string {
+	const (
+		outboundArrow = "->"
+		inboundArrow  = "<-"
+	)
+	table := make(map[string]string, len(router.Connections))
+	for _, conn := range router.Connections {
+		arrow := inboundArrow
+		if conn.Outbound {
+			arrow = outboundArrow
+		}
+		// TODO: we should probably use a multicolumn table for this
+		//       but there is no mechanism to support it yet.
+		key := fmt.Sprintf("%s %s", arrow, conn.Address)
+		value := fmt.Sprintf("%s, %s", conn.State, conn.Info)
+		table[key] = value
+	}
+	return table
 }
 
 func getIPAMStatus(ipam weave.IPAM) string {
