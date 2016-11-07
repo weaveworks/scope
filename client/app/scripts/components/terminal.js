@@ -98,6 +98,7 @@ class Terminal extends React.Component {
     this.handleCloseClick = this.handleCloseClick.bind(this);
     this.handlePopoutTerminal = this.handlePopoutTerminal.bind(this);
     this.handleResize = this.handleResize.bind(this);
+    this.handleResizeDebounced = _.debounce(this.handleResize, 500);
   }
 
   createWebsocket(term) {
@@ -204,7 +205,7 @@ class Terminal extends React.Component {
 
     const {characterWidth, characterHeight} = terminalCellSize(this.term.element);
 
-    window.addEventListener('resize', _.debounce(this.handleResize, 500));
+    window.addEventListener('resize', this.handleResizeDebounced);
 
     this.resizeTimeout = setTimeout(() => {
       this.setState({
@@ -223,7 +224,7 @@ class Terminal extends React.Component {
     clearTimeout(this.reconnectTimeout);
     clearTimeout(this.resizeTimeout);
 
-    window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('resize', this.handleResizeDebounced);
 
     if (this.term) {
       log('destroy terminal');

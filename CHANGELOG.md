@@ -1,3 +1,166 @@
+## Release 1.0.0
+
+Highlights:
+- New Weave Net View which allows visualizing and troubleshooting your Weave Network.
+- New nodes for well-known services. The Internet node is now broken down in individual nodes for known cloud services.
+- Improved terminals, with proper resizing, scroll locking and better visuals.
+- Refined UI with particularly improved connection information.
+- Lots of squashed bugs.
+
+New features and enhancements:
+- New Weave Net view
+	[#1182](https://github.com/weaveworks/scope/pull/1182)
+	[#1973](https://github.com/weaveworks/scope/pull/1973)
+	[#1981](https://github.com/weaveworks/scope/pull/1981)
+- Show well-known services
+	[#1863](https://github.com/weaveworks/scope/pull/1863)
+	[#1881](https://github.com/weaveworks/scope/pull/1881)
+	[#1887](https://github.com/weaveworks/scope/pull/1887)
+	[#1897](https://github.com/weaveworks/scope/pull/1897)
+- Terminal improvements
+  - Resize TTYs
+		[#1966](https://github.com/weaveworks/scope/pull/1966)
+		[#1979](https://github.com/weaveworks/scope/pull/1979)
+		[#1976](https://github.com/weaveworks/scope/pull/1976)
+  - Enable scroll locking on the terminal
+		[#1932](https://github.com/weaveworks/scope/pull/1932)
+  - Adds tooltip to terminal-popout button
+		[#1790](https://github.com/weaveworks/scope/pull/1790)
+  - Clarify terminal is child window of details panel.
+		[#1903](https://github.com/weaveworks/scope/pull/1903)
+  - Use login shells in terminals
+		[#1821](https://github.com/weaveworks/scope/pull/1821)
+- Miscellaneous UI improvements
+  - show more details of a node's internet connections
+		[#1875](https://github.com/weaveworks/scope/pull/1875)
+  - Close help dialog when the canvas is clicked
+		[#1960](https://github.com/weaveworks/scope/pull/1960)
+  - Improve metadata table 'date' format
+		[#1927](https://github.com/weaveworks/scope/pull/1927)
+  - Add a new search section to the help popover
+		[#1919](https://github.com/weaveworks/scope/pull/1919)
+  - Add label_minor to tooltips in connections table
+		[#1912](https://github.com/weaveworks/scope/pull/1912)
+  - Add localstorage support for saving view state
+		[#1853](https://github.com/weaveworks/scope/pull/1853)
+  - Makes services the initial topology if available
+		[#1823](https://github.com/weaveworks/scope/pull/1823)
+  - Add image information table to container details panel
+		[#1942](https://github.com/weaveworks/scope/pull/1942)
+- Allow user to specify URLs on the command line, and use that to allow per-target tokens.
+	[#1901](https://github.com/weaveworks/scope/pull/1901)
+- Apply filters from current view to details panel
+	[#1904](https://github.com/weaveworks/scope/pull/1904)
+- Increase timestamp precision
+	[#1933](https://github.com/weaveworks/scope/pull/1933)
+- Add prometheus metrics endpoint to probes.
+	[#1915](https://github.com/weaveworks/scope/pull/1915)
+- Allow users to specify conntrack buffer size.
+	[#1896](https://github.com/weaveworks/scope/pull/1896)
+- Plugins: Add support for table based controls
+	[#1818](https://github.com/weaveworks/scope/pull/1818)
+
+Performance improvements:
+- make smartMerger.Merge merge reports in parallel
+	[#1827](https://github.com/weaveworks/scope/pull/1827)
+
+Bug fixes:
+- Goroutine leak in scope app
+	[#1916](https://github.com/weaveworks/scope/issues/1916)
+	[#1920](https://github.com/weaveworks/scope/pull/1920)
+- CPU Usage is not accurate on hosts
+	[#1664](https://github.com/weaveworks/scope/issues/664)
+- Certain query strings would contain a && instead of &
+	[#1953](https://github.com/weaveworks/scope/pull/1953)
+- Metrics on canvas get stuck
+	[#1829](https://github.com/weaveworks/scope/issues/1829)
+- conntrack not used even though it's working
+	[#1826](https://github.com/weaveworks/scope/issues/1826)
+- pod counts and details panel lists do not respect namespace
+	[#1824](https://github.com/weaveworks/scope/issues/1824)
+- Discard short-lived connections to/from Pods in the host net
+	[#1944](https://github.com/weaveworks/scope/pull/1944)
+- probe: Stats gathering can be started twice
+	[#1799](https://github.com/weaveworks/scope/issues/1799)
+- Visual bug where empty span shows up
+	[#1945](github.com/weaveworks/scope/issues/1945)
+- inbound internet connection counts are too fine-grained
+	[#1867](https://github.com/weaveworks/scope/issues/1867)
+- IP address truncated in Internet node details panel connection list
+	[#1862](https://github.com/weaveworks/scope/issues/1862)
+- Incorrect number of connections shown on internet nodes
+	[#1495](https://github.com/weaveworks/scope/issues/1495)
+- details panel connection counts are too high
+	[#1842](https://github.com/weaveworks/scope/issues/1842)
+- inbound internet connections reverse-resolved incorrectly
+	[#1847](https://github.com/weaveworks/scope/issues/1847)
+- Scope hangs after browser reload if current topology goes away
+	[#1880](https://github.com/weaveworks/scope/issues/1880)
+- node names in connection list truncated unnecessarily
+	[#1882](https://github.com/weaveworks/scope/issues/1882)
+- numeric values in details panel tables should be right aligned
+	[#1794](https://github.com/weaveworks/scope/issues/1794)
+- Plugin status line is broken
+	[#1825](https://github.com/weaveworks/scope/issues/1825)
+- Table-mode: non-metric columns are sorted alphabetically reverse
+	[#1802](https://github.com/weaveworks/scope/issues/1802)
+- Fix argument escaping in Scope
+	[#1950](https://github.com/weaveworks/scope/pull/1950)
+- Image details panel shows truncated image name instead of ID
+	[#1835](https://github.com/weaveworks/scope/issues/1835)
+- Truncated tooltips
+	[#1139](https://github.com/weaveworks/scope/issues/1139)
+- Incorrect height of terminal window in Safari
+	[#1986](https://github.com/weaveworks/scope/issues/1986)
+
+Documentation:
+- Simplify k8s instructions
+	[#1886](https://github.com/weaveworks/scope/pull/1886)
+- Improve installation documentation
+	[#1838](https://github.com/weaveworks/scope/pull/1838)
+- Update Scope version in documentation
+	[#1859](https://github.com/weaveworks/scope/pull/1859)
+
+Internal improvements and cleanup:
+- Gracefully shutdown app, letting active http requests finish with timeout
+	[#1839](https://github.com/weaveworks/scope/pull/1839)
+- middleware/errorhandler: Fix a bug which meant it never works
+	[#1958](https://github.com/weaveworks/scope/pull/1958)
+- middleware: Add an ErrorHandler middleware used to serve an alternate handler on a certain error code
+	[#1954](https://github.com/weaveworks/scope/pull/1954)
+- Update client deps to use Node v6.9.0
+	[#1959](https://github.com/weaveworks/scope/pull/1959)
+- Change term.js library to xterm.js
+	[#1948](https://github.com/weaveworks/scope/pull/1948)
+- Fix linter errors on unkeyed fields
+	[#1922](https://github.com/weaveworks/scope/pull/1922)
+- Fix linter error for string in context.WithValue
+	[#1921](https://github.com/weaveworks/scope/pull/1921)
+- Update tools subtree
+	[#1937](https://github.com/weaveworks/scope/pull/1937)
+- Fix circle.yml to actually deploy external ui changes
+	[#1910](https://github.com/weaveworks/scope/pull/1910)
+- Extend logging middleware to optionally only log failed HTTP requests
+	[#1909](https://github.com/weaveworks/scope/pull/1909)
+- Add option to scope to have static content served from S3 instead
+	[#1908](https://github.com/weaveworks/scope/pull/1908)
+- Upgrade to go1.7
+	[#1797](https://github.com/weaveworks/scope/pull/1797)
+- circleci: push traffic control plugin image to docker hub
+	[#1858](https://github.com/weaveworks/scope/pull/1858)
+- refactor: extract pluralization
+	[#1855](https://github.com/weaveworks/scope/pull/1855)
+- use go-dockerclient's Client.Stats
+	[#1833](https://github.com/weaveworks/scope/pull/1833)
+- Print logs to debug shutdown integration test
+	[#1888](https://github.com/weaveworks/scope/pull/1888)
+- Allow a nil RouteMatcher in instrumentation
+	[#1852](https://github.com/weaveworks/scope/pull/1852)
+
+Weave Cloud related changes:
+- Don't reencode reports in the collector
+	[#1819](https://github.com/weaveworks/scope/pull/1819)
+
 ## Release 0.17.1
 
 This is a minor patch release.
