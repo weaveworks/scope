@@ -83,7 +83,7 @@ func (i *errorInterceptor) Write(data []byte) (int, error) {
 }
 
 // errorInterceptor also implements net.Hijacker, to let the downstream Handler
-// hijack the connection. This is needed by the app-mapper's proxy.
+// hijack the connection. This is needed, for example, for working with websockets.
 func (i *errorInterceptor) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hj, ok := i.originalWriter.(http.Hijacker)
 	if !ok {

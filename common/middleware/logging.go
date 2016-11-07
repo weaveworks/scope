@@ -45,7 +45,7 @@ var LogFailed = Log{
 // want to report on success, i.e. http.StatusOK.
 //
 // interceptor also implements net.Hijacker, to let the downstream Handler
-// hijack the connection. This is needed by the app-mapper's proxy.
+// hijack the connection. This is needed, for example, for working with websockets.
 type interceptor struct {
 	http.ResponseWriter
 	statusCode int
