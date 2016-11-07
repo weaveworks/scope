@@ -35,19 +35,34 @@ describe('NodesLayout', () => {
         'n2-n4': {id: 'n2-n4', source: 'n2', target: 'n4'}
       })
     },
-    addNode15: {
+    rank4: {
       nodes: fromJS({
-        n1: {id: 'n1'},
-        n2: {id: 'n2'},
-        n3: {id: 'n3'},
-        n4: {id: 'n4'},
-        n5: {id: 'n5'}
+        n1: {id: 'n1', rank: 'A'},
+        n2: {id: 'n2', rank: 'A'},
+        n3: {id: 'n3', rank: 'B'},
+        n4: {id: 'n4', rank: 'B'}
+      }),
+      edges: fromJS({
+        'n1-n3': {id: 'n1-n3', source: 'n1', target: 'n3'},
+        'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'},
+        'n2-n4': {id: 'n2-n4', source: 'n2', target: 'n4'}
+      })
+    },
+    rank6: {
+      nodes: fromJS({
+        n1: {id: 'n1', rank: 'A'},
+        n2: {id: 'n2', rank: 'A'},
+        n3: {id: 'n3', rank: 'B'},
+        n4: {id: 'n4', rank: 'B'},
+        n5: {id: 'n5', rank: 'A'},
+        n6: {id: 'n6', rank: 'B'},
       }),
       edges: fromJS({
         'n1-n3': {id: 'n1-n3', source: 'n1', target: 'n3'},
         'n1-n4': {id: 'n1-n4', source: 'n1', target: 'n4'},
         'n1-n5': {id: 'n1-n5', source: 'n1', target: 'n5'},
-        'n2-n4': {id: 'n2-n4', source: 'n2', target: 'n4'}
+        'n2-n4': {id: 'n2-n4', source: 'n2', target: 'n4'},
+        'n2-n6': {id: 'n2-n6', source: 'n2', target: 'n6'},
       })
     },
     removeEdge24: {
@@ -147,6 +162,54 @@ describe('NodesLayout', () => {
     expect(hasUnseen).toBeFalsy();
     hasUnseen = NodesLayout.hasUnseenNodes(set12, set13);
     expect(hasUnseen).toBeTruthy();
+  });
+
+  it('shifts layouts to center', () => {
+    let xMin;
+    let xMax;
+    let yMin;
+    let yMax;
+    let xCenter;
+    let yCenter;
+
+    // make sure initial layout is centered
+    const original = NodesLayout.doLayout(
+      nodeSets.initial4.nodes,
+      nodeSets.initial4.edges
+    );
+    xMin = original.nodes.minBy(n => n.get('x'));
+    xMax = original.nodes.maxBy(n => n.get('x'));
+    yMin = original.nodes.minBy(n => n.get('y'));
+    yMax = original.nodes.maxBy(n => n.get('y'));
+    xCenter = (xMin.get('x') + xMax.get('x')) / 2;
+    yCenter = (yMin.get('y') + yMax.get('y')) / 2;
+    expect(xCenter).toEqual(NodesLayout.DEFAULT_WIDTH / 2);
+    expect(yCenter).toEqual(NodesLayout.DEFAULT_HEIGHT / 2);
+
+    // make sure re-running is idempotent
+    const rerun = NodesLayout.shiftLayoutToCenter(original);
+    xMin = rerun.nodes.minBy(n => n.get('x'));
+    xMax = rerun.nodes.maxBy(n => n.get('x'));
+    yMin = rerun.nodes.minBy(n => n.get('y'));
+    yMax = rerun.nodes.maxBy(n => n.get('y'));
+    xCenter = (xMin.get('x') + xMax.get('x')) / 2;
+    yCenter = (yMin.get('y') + yMax.get('y')) / 2;
+    expect(xCenter).toEqual(NodesLayout.DEFAULT_WIDTH / 2);
+    expect(yCenter).toEqual(NodesLayout.DEFAULT_HEIGHT / 2);
+
+    // shift after window was resized
+    const shifted = NodesLayout.shiftLayoutToCenter(original, {
+      width: 128,
+      height: 256
+    });
+    xMin = shifted.nodes.minBy(n => n.get('x'));
+    xMax = shifted.nodes.maxBy(n => n.get('x'));
+    yMin = shifted.nodes.minBy(n => n.get('y'));
+    yMax = shifted.nodes.maxBy(n => n.get('y'));
+    xCenter = (xMin.get('x') + xMax.get('x')) / 2;
+    yCenter = (yMin.get('y') + yMax.get('y')) / 2;
+    expect(xCenter).toEqual(128 / 2);
+    expect(yCenter).toEqual(256 / 2);
   });
 
   it('lays out initial nodeset in a rectangle', () => {
@@ -351,28 +414,37 @@ describe('NodesLayout', () => {
     expect(nodes.n1.x).toBeLessThan(nodes.n5.x);
     expect(nodes.n1.x).toBeLessThan(nodes.n6.x);
   });
-  //
-  // it('adds a new node to existing layout in a line', () => {
-  //   let result = NodesLayout.doLayout(
-  //     nodeSets.initial4.nodes,
-  //     nodeSets.initial4.edges);
-  //
-  //   nodes = result.nodes.toJS();
-  //
-  //   coords = getNodeCoordinates(result.nodes);
-  //   options.cachedLayout = result;
-  //   options.nodeCache = options.nodeCache.merge(result.nodes);
-  //   options.edgeCache = options.edgeCache.merge(result.edge);
-  //
-  //   result = NodesLayout.doLayout(
-  //     nodeSets.addNode15.nodes,
-  //     nodeSets.addNode15.edges,
-  //     options
-  //   );
-  //
-  //   nodes = result.nodes.toJS();
-  //
-  //   expect(nodes.n1.x).toBeGreaterThan(nodes.n5.x);
-  //   expect(nodes.n1.y).toEqual(nodes.n5.y);
-  // });
+
+  it('adds a new node to existing layout in a line', () => {
+    let result = NodesLayout.doLayout(
+      nodeSets.rank4.nodes,
+      nodeSets.rank4.edges,
+      { noCache: true }
+    );
+
+    nodes = result.nodes.toJS();
+
+    coords = getNodeCoordinates(result.nodes);
+    options.cachedLayout = result;
+    options.nodeCache = options.nodeCache.merge(result.nodes);
+    options.edgeCache = options.edgeCache.merge(result.edge);
+
+    expect(NodesLayout.hasNewNodesOfExistingRank(
+      nodeSets.rank6.nodes,
+      nodeSets.rank6.edges,
+      result.nodes)).toBeTruthy();
+
+    result = NodesLayout.doLayout(
+      nodeSets.rank6.nodes,
+      nodeSets.rank6.edges,
+      options
+    );
+
+    nodes = result.nodes.toJS();
+
+    expect(nodes.n5.x).toBeGreaterThan(nodes.n1.x);
+    expect(nodes.n5.y).toEqual(nodes.n1.y);
+    expect(nodes.n6.x).toBeGreaterThan(nodes.n3.x);
+    expect(nodes.n6.y).toEqual(nodes.n3.y);
+  });
 });

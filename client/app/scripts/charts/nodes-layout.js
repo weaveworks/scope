@@ -8,8 +8,9 @@ import { buildTopologyCacheId, updateNodeDegrees } from '../utils/topology-utils
 const log = debug('scope:nodes-layout');
 
 const topologyCaches = {};
-const DEFAULT_WIDTH = 800;
-const DEFAULT_MARGINS = {top: 0, left: 0};
+export const DEFAULT_WIDTH = 800;
+export const DEFAULT_HEIGHT = DEFAULT_WIDTH / 2;
+export const DEFAULT_MARGINS = {top: 0, left: 0};
 const DEFAULT_SCALE = val => val * 2;
 const NODE_SIZE_FACTOR = 1;
 const NODE_SEPARATION_FACTOR = 2.0;
@@ -127,11 +128,63 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   };
 }
 
-export function doLayoutNewNodesOfExistingRank(layout, immNodes, immEdges, opts) {
-  console.log(opts);
+/**
+ * Adds `points` array to edge based on location of source and target
+ * @param {Map} edge           new edge
+ * @param {Map} nodeCache      all nodes
+ * @returns {Map}              modified edge
+ */
+function setSimpleEdgePoints(edge, nodeCache) {
+  const source = nodeCache.get(edge.get('source'));
+  const target = nodeCache.get(edge.get('target'));
+  return edge.set('points', fromJS([
+    {x: source.get('x'), y: source.get('y')},
+    {x: target.get('x'), y: target.get('y')}
+  ]));
+}
+
+/**
+ * Layout nodes that have rank that already exists.
+ * Relies on only nodes being added that have a connection to an existing node
+ * while having a rank of an existing node. They will be laid out in the same
+ * line as the latter, with a direct connection between the existing and the new node.
+ * @param  {object} layout    Layout with nodes and edges
+ * @param  {Map} nodeCache    previous nodes
+ * @param  {object} opts      Options
+ * @return {object}           new layout object
+ */
+export function doLayoutNewNodesOfExistingRank(layout, nodeCache, opts) {
+  const result = Object.assign({}, layout);
+  const options = opts || {};
+  const scale = options.scale || DEFAULT_SCALE;
+  const nodesep = scale(NODE_SEPARATION_FACTOR);
+  const nodeWidth = scale(NODE_SIZE_FACTOR);
+
   // determine new nodes
-  // layout new nodes
-  // return layout
+  const oldNodes = ImmSet.fromKeys(nodeCache);
+  const newNodes = ImmSet.fromKeys(layout.nodes.filter(n => n.get('degree') > 0))
+    .subtract(oldNodes);
+  result.nodes = layout.nodes.map(n => {
+    if (newNodes.contains(n.get('id'))) {
+      const nodesSameRank = nodeCache.filter(nn => nn.get('rank') === n.get('rank'));
+      if (nodesSameRank.size > 0) {
+        const y = nodesSameRank.first().get('y');
+        const x = nodesSameRank.maxBy(nn => nn.get('x')).get('x') + nodesep + nodeWidth;
+        return n.merge({ x, y });
+      }
+      return n;
+    }
+    return n;
+  });
+
+  result.edges = layout.edges.map(edge => {
+    if (!edge.has('points')) {
+      return setSimpleEdgePoints(edge, layout.nodes);
+    }
+    return edge;
+  });
+
+  return result;
 }
 
 /**
@@ -223,51 +276,42 @@ function layoutSingleNodes(layout, opts) {
  * @param  {Object} opts   Options with width and margins
  * @return {Object}        modified layout
  */
-function shiftLayoutToCenter(layout, opts) {
+export function shiftLayoutToCenter(layout, opts) {
   const result = Object.assign({}, layout);
   const options = opts || {};
   const margins = options.margins || DEFAULT_MARGINS;
   const width = options.width || DEFAULT_WIDTH;
-  const height = options.height || width / 2;
+  const height = options.height || DEFAULT_HEIGHT;
 
   let offsetX = 0 + margins.left;
   let offsetY = 0 + margins.top;
 
   if (layout.width < width) {
-    offsetX = (width - layout.width) / 2 + margins.left;
+    const xMin = layout.nodes.minBy(n => n.get('x'));
+    const xMax = layout.nodes.maxBy(n => n.get('x'));
+    offsetX = (width - (xMin.get('x') + xMax.get('x'))) / 2 + margins.left;
   }
   if (layout.height < height) {
-    offsetY = (height - layout.height) / 2 + margins.top;
+    const yMin = layout.nodes.minBy(n => n.get('y'));
+    const yMax = layout.nodes.maxBy(n => n.get('y'));
+    offsetY = (height - (yMin.get('y') + yMax.get('y'))) / 2 + margins.top;
   }
 
-  result.nodes = layout.nodes.map(node => node.merge({
-    x: node.get('x') + offsetX,
-    y: node.get('y') + offsetY
-  }));
+  if (offsetX || offsetY) {
+    result.nodes = layout.nodes.map(node => node.merge({
+      x: node.get('x') + offsetX,
+      y: node.get('y') + offsetY
+    }));
 
-  result.edges = layout.edges.map(edge => edge.update('points',
-    points => points.map(point => point.merge({
-      x: point.get('x') + offsetX,
-      y: point.get('y') + offsetY
-    }))
-  ));
+    result.edges = layout.edges.map(edge => edge.update('points',
+      points => points.map(point => point.merge({
+        x: point.get('x') + offsetX,
+        y: point.get('y') + offsetY
+      }))
+    ));
+  }
 
   return result;
-}
-
-/**
- * Adds `points` array to edge based on location of source and target
- * @param {Map} edge           new edge
- * @param {Map} nodeCache      all nodes
- * @returns {Map}              modified edge
- */
-function setSimpleEdgePoints(edge, nodeCache) {
-  const source = nodeCache.get(edge.get('source'));
-  const target = nodeCache.get(edge.get('target'));
-  return edge.set('points', fromJS([
-    {x: source.get('x'), y: source.get('y')},
-    {x: target.get('x'), y: target.get('y')}
-  ]));
 }
 
 /**
@@ -303,11 +347,25 @@ function hasNewSingleNode(nodes, cache) {
  * Determine if all new nodes are of existing ranks
  * Requires cached nodes (implies a previous layout run).
  * @param  {Map} nodes     new Map of nodes
+ * @param  {Map} edges     new Map of edges
  * @param  {Map} cache     old Map of nodes
  * @return {Boolean} True if all new nodes have a rank that already exists
  */
-function hasNewNodesOfExistingRank(nodes, cache) {
-  return false && nodes && cache;
+export function hasNewNodesOfExistingRank(nodes, edges, cache) {
+  const oldNodes = ImmSet.fromKeys(cache);
+  const newNodes = ImmSet.fromKeys(nodes).subtract(oldNodes);
+
+  // if new there are edges that connect 2 new nodes, need a full layout
+  const bothNodesNew = edges.find(edge => newNodes.contains(edge.get('source'))
+    && newNodes.contains(edge.get('target')));
+  if (bothNodesNew) {
+    return false;
+  }
+
+  const oldRanks = cache.filter(n => n.get('rank')).map(n => n.get('rank')).toSet();
+  const hasNewNodesOfExistingRankOrSingle = newNodes.every(key => nodes.getIn([key, 'degree']) === 0
+    || oldRanks.contains(nodes.getIn([key, 'rank'])));
+  return oldNodes.size > 0 && hasNewNodesOfExistingRankOrSingle;
 }
 
 /**
@@ -357,8 +415,10 @@ function copyLayoutProperties(layout, nodeCache, edgeCache) {
     if (edgeCache.has(edge.get('id'))
       && hasSameEndpoints(edgeCache.get(edge.get('id')), result.nodes)) {
       return edge.merge(edgeCache.get(edge.get('id')));
+    } else if (nodeCache.get(edge.get('source')) && nodeCache.get(edge.get('target'))) {
+      return setSimpleEdgePoints(edge, nodeCache);
     }
-    return setSimpleEdgePoints(edge, nodeCache);
+    return edge;
   });
   return result;
 }
@@ -406,13 +466,13 @@ export function doLayout(immNodes, immEdges, opts) {
       log('skip layout, only 0-degree node(s) added');
       layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
       layout = copyLayoutProperties(layout, nodeCache, edgeCache);
-    } else if (useCache && hasNewNodesOfExistingRank(nodesWithDegrees, nodeCache)) {
+    } else if (useCache && hasNewNodesOfExistingRank(nodesWithDegrees, immEdges, nodeCache)) {
       // special case: few new nodes were added, no need for layout run,
       // they will inserted according to ranks
       log('skip layout, used rank-based insertion');
       layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
       layout = copyLayoutProperties(layout, nodeCache, edgeCache);
-      layout = doLayoutNewNodesOfExistingRank(layout, nodesWithDegrees, immEdges);
+      layout = doLayoutNewNodesOfExistingRank(layout, nodeCache, opts);
     } else {
       const graph = cache.graph;
       layout = runLayoutEngine(graph, nodesWithDegrees, immEdges, opts);
@@ -420,6 +480,7 @@ export function doLayout(immNodes, immEdges, opts) {
         return layout;
       }
     }
+
     layout = layoutSingleNodes(layout, opts);
     layout = shiftLayoutToCenter(layout, opts);
   }
