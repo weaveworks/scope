@@ -110,6 +110,8 @@ Bug fixes:
 	[#1835](https://github.com/weaveworks/scope/issues/1835)
 - Truncated tooltips
 	[#1139](https://github.com/weaveworks/scope/issues/1139)
+- Incorrect height of terminal window in Safari
+	[#1986](https://github.com/weaveworks/scope/issues/1986)
 
 Documentation:
 - Simplify k8s instructions
