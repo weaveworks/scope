@@ -1,5 +1,4 @@
-const is = require('immutable').is;
-
+import {is, fromJS} from 'immutable';
 // Root reducer test suite using Jasmine matchers
 
 describe('RootReducer', () => {
@@ -43,6 +42,34 @@ describe('RootReducer', () => {
       stack: undefined
     }
   };
+
+  const topologies = [{
+    hide_if_empty: true,
+    name: 'Processes',
+    rank: 1,
+    sub_topologies: [],
+    url: '/api/topology/processes',
+    fullName: 'Processes',
+    id: 'processes',
+    options: [
+      {
+        defaultValue: 'hide',
+        id: 'unconnected',
+        options: [
+          {
+            label: 'Unconnected nodes hidden',
+            value: 'hide'
+          }
+        ]
+      }
+    ],
+    stats: {
+      edge_count: 319,
+      filtered_nodes: 214,
+      node_count: 320,
+      nonpseudo_node_count: 320
+    }
+  }];
 
   // actions
 
@@ -467,5 +494,10 @@ describe('RootReducer', () => {
     let nextState = initialState.set('showingHelp', true);
     nextState = reducer(nextState, { type: ActionTypes.CLICK_BACKGROUND });
     expect(nextState.get('showingHelp')).toBe(false);
+  });
+  it('switches to grid mode when complexity is high', () => {
+    let nextState = initialState.set('currentTopology', fromJS(topologies[0]));
+    nextState = reducer(nextState, {type: ActionTypes.SET_RECEIVED_NODES_DELTA});
+    expect(nextState.get('gridMode')).toBe(true);
   });
 });
