@@ -81,6 +81,9 @@ func runTest(t *testing.T, f func(*overlay.Weave)) {
 		return len(have.Overlay.Nodes)
 	})
 
+	// Give some time for the Backoff collectors to finish
+	time.Sleep(time.Second)
+
 	f(w)
 }
 
