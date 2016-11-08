@@ -236,7 +236,7 @@ class NodesChart extends React.Component {
   }
 
   handleMouseClick() {
-    if (!this.isZooming) {
+    if (!this.isZooming || this.props.selectedNodeId) {
       this.props.clickBackground();
     } else {
       this.isZooming = false;
