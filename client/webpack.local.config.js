@@ -1,7 +1,7 @@
-var webpack = require('webpack');
-var autoprefixer = require('autoprefixer');
-var path = require('path');
-var HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
+const autoprefixer = require('autoprefixer');
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 /**
  * This is the Webpack configuration file for local development. It contains
@@ -15,33 +15,34 @@ var HtmlWebpackPlugin = require('html-webpack-plugin');
  */
 
  // Inject websocket url to dev backend
- var WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
+const WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
+const DEV_SERVER_URL = `webpack-dev-server/client?http://${WEBPACK_SERVER_HOST}:4041`;
 
 module.exports = {
 
   // Efficiently evaluate modules with source maps
-  devtool: 'cheap-module-source-map',
+  devtool: 'source-map',
 
   // Set entry point include necessary files for hot load
   entry: {
-    'app': [
+    app: [
       './app/scripts/main',
-      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
+      DEV_SERVER_URL,
       'webpack/hot/only-dev-server'
     ],
     'dev-app': [
       './app/scripts/main.dev',
-      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
+      DEV_SERVER_URL,
       'webpack/hot/only-dev-server'
     ],
     'contrast-app': [
       './app/scripts/contrast-main',
-      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
+      DEV_SERVER_URL,
       'webpack/hot/only-dev-server'
     ],
     'terminal-app': [
       './app/scripts/terminal-main',
-      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
+      DEV_SERVER_URL,
       'webpack/hot/only-dev-server'
     ],
     vendors: ['babel-polyfill', 'classnames', 'd3', 'dagre', 'filesize', 'immutable', 'lodash',
