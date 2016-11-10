@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	"bufio"
+	"fmt"
+	"net"
 	"net/http"
 )
 
@@ -77,4 +80,15 @@ func (i *errorInterceptor) Write(data []byte) (int, error) {
 		return i.originalWriter.Write(data)
 	}
 	return len(data), nil
+}
+
+// errorInterceptor also implements net.Hijacker, to let the downstream Handler
+// hijack the connection. This is needed, for example, for working with websockets.
+func (i *errorInterceptor) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hj, ok := i.originalWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("error interceptor: can't cast original ResponseWriter to Hijacker")
+	}
+	i.gotCode = true
+	return hj.Hijack()
 }
