@@ -77,7 +77,7 @@ func TestContainer(t *testing.T) {
 			"docker_label_foo1":            "bar1",
 			"docker_label_foo2":            "bar2",
 			"docker_container_state":       "running",
-			"docker_container_state_human": "Up 6 years",
+			"docker_container_state_human": c.Container().State.String(),
 			"docker_container_uptime":      uptime.String(),
 		}).WithLatestControls(
 			controls,
