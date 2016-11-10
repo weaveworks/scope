@@ -40,23 +40,18 @@ export function colors(text, secondText) {
   return color;
 }
 
-export function getNeutralColor() {
-  return PSEUDO_COLOR;
+export function brightenColor(color) {
+  let hsl = d3.rgb(color).hsl();
+  if (hsl.l > 0.5) {
+    hsl = hsl.brighter(0.5);
+  } else {
+    hsl = hsl.brighter(0.8);
+  }
+  return hsl.toString();
 }
 
-export function getNodeColor(text = '', secondText = '', isPseudo = false) {
-  if (isPseudo) {
-    return PSEUDO_COLOR;
-  }
-  return colors(text, secondText).toString();
-}
-
-export function getNodeColorDark(text = '', secondText = '', isPseudo = false) {
-  if (isPseudo) {
-    return PSEUDO_COLOR;
-  }
-  const color = d3.rgb(colors(text, secondText));
-  let hsl = color.hsl();
+export function darkenColor(color) {
+  let hsl = d3.rgb(color).hsl();
 
   // ensure darkness
   if (hsl.h > 20 && hsl.h < 120) {
@@ -70,16 +65,35 @@ export function getNodeColorDark(text = '', secondText = '', isPseudo = false) {
   return hsl.toString();
 }
 
-export function getNetworkColor(text) {
-  return networkColorScale(text);
+export function getNeutralColor() {
+  return PSEUDO_COLOR;
 }
 
-export function brightenColor(color) {
-  let hsl = d3.rgb(color).hsl();
-  if (hsl.l > 0.5) {
-    hsl = hsl.brighter(0.5);
-  } else {
-    hsl = hsl.brighter(0.8);
+export function getNodeColor(text = '', secondText = '', isPseudo = false) {
+  if (isPseudo) {
+    return PSEUDO_COLOR;
   }
-  return hsl.toString();
+  return colors(text, secondText).toString();
+}
+
+export function getNodeColorDark(text = '', secondText = '', isPseudo = false) {
+  if (isPseudo) {
+    return darkenColor(PSEUDO_COLOR);
+  }
+
+  const color = d3.rgb(colors(text, secondText));
+  return darkenColor(color);
+}
+
+export function getNodeColorLight(text = '', secondText = '', isPseudo = false) {
+  if (isPseudo) {
+    return brightenColor(PSEUDO_COLOR);
+  }
+
+  const color = d3.rgb(colors(text, secondText));
+  return brightenColor(color);
+}
+
+export function getNetworkColor(text) {
+  return networkColorScale(text);
 }

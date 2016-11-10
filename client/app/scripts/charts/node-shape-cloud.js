@@ -1,8 +1,6 @@
 import React from 'react';
 import d3 from 'd3';
 
-import { isContrastMode } from '../utils/contrast-utils';
-
 const CLOUD_PATH = 'M 1920,384 Q 1920,225 1807.5,112.5 1695,0 1536,0 H 448 '
   + 'Q 263,0 131.5,131.5 0,263 0,448 0,580 71,689.5 142,799 258,853 '
   + 'q -2,28 -2,43 0,212 150,362 150,150 362,150 158,0 286.5,-88 128.5,-88 '
@@ -18,7 +16,7 @@ function getExtents(svgPath) {
   return [d3.extent(points, p => p[0]), d3.extent(points, p => p[1])];
 }
 
-export default function NodeShapeCloud({highlighted, size, color}) {
+export default function NodeShapeCloud({highlighted, size, color, darkColor}) {
   const [[minx, maxx], [miny, maxy]] = getExtents(CLOUD_PATH);
   const width = (maxx - minx);
   const height = (maxy - miny);
@@ -26,11 +24,11 @@ export default function NodeShapeCloud({highlighted, size, color}) {
   const cy = height / 2;
   const pathSize = (width + height) / 2;
   const baseScale = (size * 2) / pathSize;
-  const strokeWidth = isContrastMode() ? 6 / baseScale : 4 / baseScale;
+  const strokeWidth = 5 / baseScale;
+  const shadowColor = '#FFF';
 
   const pathProps = v => ({
     d: CLOUD_PATH,
-    fill: 'none',
     transform: `scale(-${v * baseScale}) translate(-${cx},-${cy})`,
     strokeWidth
   });
@@ -39,9 +37,9 @@ export default function NodeShapeCloud({highlighted, size, color}) {
     <g className="shape shape-cloud">
       {highlighted &&
           <path className="highlighted" {...pathProps(0.7)} />}
-      <path className="border" stroke={color} {...pathProps(0.5)} />
-      <path className="shadow" {...pathProps(0.45)} />
-      <circle className="node" r={Math.max(2, (size * 0.125))} />
+      <path className="outline" stroke={darkColor} fill="none" {...pathProps(0.53)} />
+      <path className="border" stroke={color} {...pathProps(0.5)} fill={shadowColor} />
+      <circle className="node" r={Math.max(1.33333, (size * 0.08333))} fill={darkColor} />
     </g>
   );
 }

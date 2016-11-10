@@ -30,13 +30,15 @@ function getPoints(h) {
 }
 
 
-export default function NodeShapeHex({id, highlighted, size, color, metric}) {
+export default function NodeShapeHex({
+  id, highlighted, size, metric, color, lightColor, darkColor
+}) {
   const pathProps = v => ({
     d: getPoints(size * v * 2),
     transform: `rotate(90) translate(-${size * getWidth(v)}, -${size * v})`
   });
 
-  const shadowSize = 0.45;
+  const shadowSize = 0.47;
   const upperHexBitHeight = -0.25 * size * shadowSize;
 
   const clipId = `mask-${id}`;
@@ -50,15 +52,17 @@ export default function NodeShapeHex({id, highlighted, size, color, metric}) {
       {hasMetric && getClipPathDefinition(clipId, size, height, size - height +
                                           upperHexBitHeight, 0)}
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
-      <path className="border" stroke={color} {...pathProps(0.5)} />
-      <path className="shadow" {...pathProps(shadowSize)} />
+
+      <path className="outline" stroke={darkColor} fill="none" {...pathProps(0.55)} />
+      <path className="border" stroke={color} fill={lightColor} {...pathProps(0.5)} />
+
       {hasMetric && <path className="metric-fill" style={metricStyle}
         clipPath={`url(#${clipId})`} {...pathProps(shadowSize)} />}
       {highlighted && hasMetric ?
         <text style={{fontSize}}>
           {formattedValue}
         </text> :
-        <circle className="node" r={Math.max(2, (size * 0.125))} />}
+        <circle className="node" r={Math.max(1.33333, (size * 0.08333))} fill={darkColor} />}
     </g>
   );
 }

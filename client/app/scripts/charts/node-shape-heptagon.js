@@ -20,7 +20,9 @@ function polygon(r, sides) {
 }
 
 
-export default function NodeShapeHeptagon({id, highlighted, size, color, metric}) {
+export default function NodeShapeHeptagon({
+  id, highlighted, size, metric, color, lightColor, darkColor
+}) {
   const scaledSize = size * 1.0;
   const pathProps = v => ({
     d: line(polygon(scaledSize * v, 7)),
@@ -37,13 +39,13 @@ export default function NodeShapeHeptagon({id, highlighted, size, color, metric}
     <g className={className}>
       {hasMetric && getClipPathDefinition(clipId, size, height, size * 0.5 - height, -size * 0.5)}
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
-      <path className="border" stroke={color} {...pathProps(0.5)} />
-      <path className="shadow" {...pathProps(0.45)} />
+      <path className="outline" stroke={darkColor} fill="none" {...pathProps(0.535)} />
+      <path className="border" stroke={color} fill={lightColor} {...pathProps(0.5)} />
       {hasMetric && <path className="metric-fill" clipPath={`url(#${clipId})`}
         style={metricStyle} {...pathProps(0.45)} />}
       {highlighted && hasMetric ?
         <text style={{fontSize}}>{formattedValue}</text> :
-        <circle className="node" r={Math.max(2, (size * 0.125))} />}
+        <circle className="node" r={Math.max(1.33333, (size * 0.08333))} fill={darkColor} />}
     </g>
   );
 }
