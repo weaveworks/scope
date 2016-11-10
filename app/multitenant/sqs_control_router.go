@@ -315,6 +315,7 @@ func (pw *probeWorker) stop() {
 }
 
 func (pw *probeWorker) loop() {
+	defer pw.done.Done()
 	for {
 		// have we been stopped?
 		select {
