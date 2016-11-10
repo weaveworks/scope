@@ -8,7 +8,8 @@ import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { applyPinnedSearches, updateNodeMatches } from '../utils/search-utils';
 import { getNetworkNodes, getAvailableNetworks } from '../utils/network-view-utils';
 import { findTopologyById, getAdjacentNodes, setTopologyUrlsById, updateTopologyIds,
-  filterHiddenTopologies, addTopologyFullname, getDefaultTopology } from '../utils/topology-utils';
+  filterHiddenTopologies, addTopologyFullname, getDefaultTopology, graphExceedsComplexityThresh
+} from '../utils/topology-utils';
 
 const log = debug('scope:app-store');
 const error = debug('scope:error');
@@ -501,6 +502,13 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.SET_RECEIVED_NODES_DELTA: {
+      // Turn on the table view if the graph is too complex
+      if (!state.get('nodesLoaded')) {
+        const topoStats = state.get('currentTopology').get('stats');
+        state = graphExceedsComplexityThresh(topoStats)
+          ? state.set('gridMode', true)
+          : state;
+      }
       return state.set('nodesLoaded', true);
     }
 
