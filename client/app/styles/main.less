@@ -64,6 +64,10 @@
 @search-border-color: transparent;
 @search-border-width: 1px;
 
+/* specific elements */
+@body-background-color: linear-gradient(30deg, @background-color 0%, @background-lighter-color 100%);
+@label-background-color: fade(@background-average-color, 70%);
+
 /* add this class to truncate text with ellipsis, container needs width */
 .truncate {
   white-space: nowrap;
@@ -131,7 +135,7 @@ body {
 
 /* Space out content a bit */
 body {
-  background: linear-gradient(30deg, @background-color 0%, @background-lighter-color 100%);
+  background: @body-background-color;
   color: @text-color;
   line-height: 150%;
   font-family: @base-font;
@@ -404,14 +408,14 @@ h2 {
       }
       span:not(.match) {
         padding: 0 0.25em;
-        background-color: fade(@background-average-color, 70%);
+        background-color: @label-background-color;
       }
       span:empty {
         padding: 0;
       }
     }
     .matched-results {
-      background-color: fade(@background-average-color, 70%);
+      background-color: @label-background-color;
     }
 
     &.pseudo {
