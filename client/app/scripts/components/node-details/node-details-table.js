@@ -10,6 +10,7 @@ function isNumber(data) {
   return data.dataType && data.dataType === 'number';
 }
 
+
 const CW = {
   XS: '32px',
   S: '50px',
@@ -50,6 +51,16 @@ const COLUMN_WIDTHS = {
 };
 
 
+// TODO: Consider introducing the 'ip' dataType for
+// the fields instead of maintaining a list here.
+const IP_FIELDS = ['kubernetes_ip'];
+
+
+function isIP(header) {
+  return _.includes(IP_FIELDS, header.id);
+}
+
+
 function getDefaultSortBy(columns, nodes) {
   // default sorter specified by columns
   const defaultSortColumn = _.find(columns, {defaultSort: true});
@@ -74,13 +85,22 @@ function maybeToLower(value) {
 }
 
 
+function toArrayOfThreeDigitStrings(value) {
+  const padToThreeDigits = (n) => `000${n}`.slice(-3);
+  return value.match(/\d+/g).map(padToThreeDigits);
+}
+
+
 function getNodeValue(node, header) {
   const fieldId = header && header.id;
   if (fieldId !== null) {
     let field = _.union(node.metrics, node.metadata).find(f => f.id === fieldId);
 
     if (field) {
-      if (isNumber(header)) {
+      if (isIP(header)) {
+        // Treat IPs as quadruples of 3-digit strings for sorting purposes.
+        return toArrayOfThreeDigitStrings(field.value);
+      } else if (isNumber(header)) {
         return parseFloat(field.value);
       }
       return field.value;
