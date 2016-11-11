@@ -8,6 +8,7 @@ _obj
 _test
 .vagrant
 releases
+tmp
 
 # Architecture specific extensions/prefixes
 *.[568vq]
