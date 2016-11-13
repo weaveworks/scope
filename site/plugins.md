@@ -221,13 +221,13 @@ hostname. The `${tag}` denotes the type of the node.
 
 There is a fixed set of tags used by the probe:
 
-- host
-- container
-- container_image
-- pod
-- service
-- deployment
-- replica_set
+- `host`
+- `container`
+- `container_image`
+- `pod`
+- `service`
+- `deployment`
+- `replica_set`
 
 These are examples of "tagged" node names:
 
