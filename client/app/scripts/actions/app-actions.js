@@ -366,7 +366,8 @@ export function doControl(nodeId, control) {
   return (dispatch) => {
     dispatch({
       type: ActionTypes.DO_CONTROL,
-      nodeId
+      nodeId,
+      control
     });
     doControlRequest(nodeId, control, dispatch);
   };
@@ -590,7 +591,7 @@ export function receiveControlPipeFromParams(pipeId, rawTty, resizeTtyControl) {
   };
 }
 
-export function receiveControlPipe(pipeId, nodeId, rawTty, resizeTtyControl) {
+export function receiveControlPipe(pipeId, nodeId, rawTty, resizeTtyControl, control) {
   return (dispatch, getState) => {
     const state = getState();
     if (state.get('nodeDetails').last()
@@ -610,7 +611,8 @@ export function receiveControlPipe(pipeId, nodeId, rawTty, resizeTtyControl) {
       nodeId,
       pipeId,
       rawTty,
-      resizeTtyControl
+      resizeTtyControl,
+      control
     });
 
     updateRoute(getState);
