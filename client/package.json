@@ -90,6 +90,10 @@
   },
   "jest": {
     "transform": {".*": "<rootDir>/node_modules/babel-jest"},
+    "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",
+    "setupFiles": [
+      "<rootDir>/test/support/localStorage.js"
+    ],
     "testPathDirs": [
       "<rootDir>/app/scripts"
     ],
