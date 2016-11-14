@@ -1,75 +1,66 @@
 # Scope Probe Plugins
 
-Scope probe plugins let you insert your own custom metrics into Scope
-and get them displayed in the UI.
+Scope probe plugins let you insert your own custom data and controls into Scope and display them in the UI.
+The list of the current running plugins is displayed next to the label `PLUGINS` in the bottom right of the UI.
 
 <img src="../../imgs/plugin.png" width="800" alt="Scope Probe plugin screenshot" align="center">
 
-You can find some examples at the [the example
-plugins](https://github.com/weaveworks/scope/tree/master/examples/plugins)
-directory. We currently provide two examples:
 
-* A [Python
-  plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/http-requests)
-  using [bcc](http://iovisor.github.io/bcc/) to extract incoming HTTP
-  request rates per process, without any application-level
-  instrumentation requirements and negligible performance toll
-  (metrics are obtained in-kernel without any packet copying to
-  userspace).  **Note:** This plugin needs a [recent kernel version
-  with ebpf
-  support](https://github.com/iovisor/bcc/blob/master/INSTALL.md#kernel-configuration). It
-  will not compile on current [dlite](https://github.com/nlf/dlite)
-  and boot2docker hosts.
-* A [Go
-  plugin](https://github.com/weaveworks/scope/tree/master/examples/plugins/iowait),
-  using [iostat](https://en.wikipedia.org/wiki/Iostat) to provide
-  host-level CPU IO wait or idle metrics.
+## Official Plugins
 
-The example plugins can be run by calling `make` in their directory.
-This will build the plugin, and immediately run it in the foreground.
-To run the plugin in the background, see the `Makefile` for examples
-of the `docker run ...` command.
+Official Weave Scope plugins can be found at [Weaveworks Plugins](https://github.com/weaveworks-plugins).
 
-If the running plugin was picked up by Scope, you will see it in the
-list of `PLUGINS` in the bottom right of the UI.
+* [IOWait](https://github.com/weaveworks-plugins/scope-iowait): is a Go plugin that uses [iostat](https://en.wikipedia.org/wiki/Iostat) to provide host-level CPU IO wait or idle metrics.
 
-## Plugin ID
+* [HTTP Statistics](https://github.com/weaveworks-plugins/scope-http-statistics): is a Python plugin that uses [bcc](http://iovisor.github.io/bcc/) to track multiple metrics about HTTP per process. It does this without any application-level instrumentation requirements and with a negligible performance toll. This plugin is a work in progress, and implements the following (for more information read the [plugin documentation](https://github.com/weaveworks-plugins/scope-http-statistics)):
+	* Number of HTTP requests per seconds.
+	* Number of HTTP responses code per second (per code).
 
-Each plugin should have an unique ID. It is forbidden to change it
-during the plugin's lifetime. The scope probe will get the plugin's ID
-from the plugin's socket filename. For example, the socket named
-`my-plugin.sock`, the scope probe will deduce the ID as
-`my-plugin`. IDs can only contain alphanumeric sequences, optionally
-separated with a dash.
+* [Traffic Control](https://github.com/weaveworks-plugins/scope-traffic-control): This plugin allows you to modify latency and packet loss for a specific container via controls from the container's detailed view in the Scope user interface.
 
-## Plugin registration
+* [Volume Count](https://github.com/weaveworks-plugins/scope-volume-count): This plugin (written in Python) requests the number of mounted volumes for each container, and provides a container-level count.
 
-All plugins should listen for HTTP connections on a unix socket in the
-`/var/run/scope/plugins` directory. The scope probe will recursively
-scan that directory every 5 seconds, to look for sockets being added
-(or removed). It is also valid to put the plugin unix socket in a
-sub-directory, in case you want to apply some permissions, or store
-other information with the socket.
+## How Plugins Communicate with Scope
+This section explains the fundamental parts of the plugins structure necessary to understand how a plugin communicates with Scope.
+You can find more practical examples in [Weaveworks Plugins](https://github.com/weaveworks-plugins) repositories.
 
-## Protocol
+### Plugin IDs
+
+Each plugin must have a unique ID and this ID must not change
+during the plugin's lifetime. Scope probes retrieve the plugin's ID
+from the plugin's socket filename. For example, if a socket is named
+`my-plugin.sock`, the scope probe deduces the ID as
+`my-plugin`. IDs may contain only alphanumeric sequences that are optionally
+separated by a dash.
+
+### Registering Plugins
+
+All plugins listen for HTTP connections on a UNIX socket in the `/var/run/scope/plugins` directory. The Scope probe recursively scans that directory every 5 seconds and looks for any added or removed sockets.
+
+If you want to run permissions or store any other information with the socket, you can also put the plugin UNIX socket into a sub-directory.
+
+When a new plugin is detected, the Scope probe begins requesting reports from it via GET /report. It is therefore important that **every plugin implements the report interface**. Implementing the report interface also means handling specific requests.
+
+All plugin endpoints are expected to respond within 500ms, and must respond using the JSON format.
+
+### Protocol
 
 There are several interfaces a plugin may (or must) implement. Usually
 implementing an interface means handling specific requests. These
 requests are described below.
 
-### Reporter interface
+#### Reporter interface
 
-Plugins _must_ implement the reporter interface. Implementing this
-interface means listening for HTTP requests at `/report`.
+Plugins _must_ implement the reporter interface because Scope uses it to discover which other interfaces the plugin implements.
+Implementing this interface means listening for HTTP requests at `/report`.
 
-Add the "reporter" string to the `interfaces` field in the plugin
-specification.
+**Note**: Plugins must add the "reporter" string to the `interfaces` field in the plugin specification even though this interface is implicitly implemented.
 
 #### Report
 
-When the scope probe discovers a new plugin unix socket it will begin
+When a scope probe discovers a new plugin UNIX socket it will begin
 periodically making a `GET` request to the `/report` endpoint. The
-report data structure returned from this will be merged into the
+report data structure returned from this is merged into the
 probe's report and sent to the app. An example of the report structure
 can be viewed at the `/api/report` endpoint of any scope app.
 
@@ -80,12 +71,12 @@ For example:
 
 ```json
 {
-  "Processes": {},
+  ...,
   "Plugins": [
     {
-      "id":          "iowait",
-      "label":       "IOWait",
-      "description": "Adds a graph of CPU IO Wait to hosts",
+      "id":          "plugin-id",
+      "label":       "Human Friendly Name",
+      "description": "Plugin's brief description",
       "interfaces":  ["reporter"],
       "api_version": "1",
     }
@@ -96,29 +87,22 @@ For example:
 Note that the `Plugins` section includes exactly one plugin
 description. The plugin description fields are:
 
-* `id` is used to check for duplicate plugins. It is
+* `id` - checks for duplicate plugins. It is
   required. Described in [the Plugin ID section](#plugin-id).
-* `label` is a human readable plugin label displayed in the UI. It is
+* `label` - a human readable plugin label displayed in the UI. It is
   required.
-* `description` is displayed in the UI.
-* `interfaces` is a list of interfaces which this plugin supports.  It
+* `description` - displayed in the UI.
+* `interfaces` - a list of interfaces which this plugin supports.  It
   is required, and must contain at least `["reporter"]`.
-* `api_version` is used to ensure both the plugin and the scope probe
+* `api_version` - ensure both the plugin and the scope probe
   can speak to each other. It is required, and must match the probe.
 
-You may notice a small chicken and egg problem - the plugin reports to
-the scope probe what interfaces it supports, but the scope probe can
-learn that only by doing a `GET /report` request which will be handled
-by the plugin if it implements the "reporter" interface. This is
-solved (or worked around) by requiring the plugin to always implements
-the "reporter" interface.
+#### Controller interface
 
-### Controller interface
-
-Plugins _may_ implement the controller interface. Implementing the
+Plugins _may_ also implement the controller interface. Implementing the
 controller interface means that the plugin can react to HTTP `POST`
-control requests sent by the app. The plugin will receive them only
-for controls it exposed in its reports. The requests will come to the
+control requests sent by the app. The plugin receives them only
+for the controls it exposed in its reports. All such requests come to the
 `/control` endpoint.
 
 Add the "controller" string to the `interfaces` field in the plugin
@@ -126,7 +110,7 @@ specification.
 
 #### Control
 
-The `POST` requests will have a JSON-encoded body with the following contents:
+The `POST` requests contain a JSON-encoded body with the following contents:
 
 ```json
 {
@@ -136,10 +120,10 @@ The `POST` requests will have a JSON-encoded body with the following contents:
 }
 ```
 
-The body of the response should also be a JSON-encoded data. Usually
-the body would be an empty JSON object (so, "{}" after
-serialization). If some error happens during handling the control,
-then the plugin can send a response with an `error` field set, for
+The body of the response should also be a JSON-encoded data. In most cases,
+the body is an empty JSON object (so, "{}" after
+serialization). If an error happens when handling the control,
+then the plugin sends a response with an `error` field set, for
 example:
 
 ```json
@@ -148,11 +132,11 @@ example:
 }
 ```
 
-Sometimes the control activation can make the control obsolete, so the
+Sometimes the control activation can make the control obsolete, and so the
 plugin may want to hide it (for example, control for stopping the
 container should be hidden after the container is stopped). For this
-to work, the plugin can send a shortcut report by filling the
-`ShortcutReport` field in the response, like for example:
+to work, the plugin sends a shortcut report by filling the
+`ShortcutReport` field in the response, like so:
 
 ```json
 {
@@ -162,11 +146,10 @@ to work, the plugin can send a shortcut report by filling the
 
 ##### How to expose controls
 
-Each topology in the report (be it host, pod, endpoint and so on) has
-a set of available controls a node in the topology may want to
+Each topology in the report (be it host, pod, endpoint and so on) contains
+a set of available controls that a node in the topology may want to
 show. The following (rather artificial) example shows a topology with
-two controls (`ctrl-one` and `ctrl-two`) and two nodes, each having a
-different control from the two:
+two controls (`ctrl-one` and `ctrl-two`) and two nodes, each with a different control defined:
 
 ```json
 {
@@ -211,8 +194,8 @@ different control from the two:
 }
 ```
 
-When control "ctrl-one" is activated, the plugin will receive a
-request like:
+When control "ctrl-one" is activated, the plugin receives a
+request as follows:
 
 ```json
 {
@@ -226,30 +209,31 @@ A short note about the "icon" field of the topology control - the
 value for it can be taken from [Font Awesome
 Cheatsheet](http://fontawesome.io/cheatsheet/)
 
-##### Node naming
+##### Naming Nodes
 
-Very often the controller plugin wants to add some controls to already
-existing nodes (like controls for network traffic management to nodes
+Often the controller plugin may want to add some controls to already
+existing nodes (for example add controls for network traffic management to nodes
 representing the running Docker container). To achieve that, it is
 important to make sure that the node ID in the plugin's report matches
 the ID of the node created by the probe. The ID is a
 semicolon-separated list of strings.
 
-For containers, images, hosts and others the ID is usually formatted
+For containers, images, hosts and others, the ID is usually formatted
 as `${name};<${tag}>`. The `${name}` variable is usually a name of a
 thing the node represents, like an ID of the Docker container or the
-hostname. The `${tag}` denotes the type of the node. There is a fixed
-set of tags used by the probe:
+hostname. The `${tag}` denotes the type of the node.
 
-- host
-- container
-- container_image
-- pod
-- service
-- deployment
-- replica_set
+There is a fixed set of tags used by the probe:
 
-The examples of "tagged" node names:
+- `host`
+- `container`
+- `container_image`
+- `pod`
+- `service`
+- `deployment`
+- `replica_set`
+
+These are examples of "tagged" node names:
 
 - The Docker container with full ID
   2299a2ca59dfd821f367e689d5869c4e568272c2305701761888e1d79d7a6f51:
@@ -260,17 +244,19 @@ The examples of "tagged" node names:
 
 The fixed set of tags listed above is not a complete set of names a
 node can have though. For example, nodes representing processes are
-have ID formatted as `${host};${pid}`. Probably the easiest ways to
+have IDs formatted as `${host};${pid}`. The easiest way to
 discover how the nodes are named are:
 
-- Read the code in
+1. Read the code in
   [report/id.go](https://github.com/weaveworks/scope/blob/master/report/id.go).
-- Browse the Weave Scope GUI, select some node and search for an `id`
+2. Browse the Weave Scope GUI, select some node and search for an `id`
   key in the `nodeDetails` array in the address bar.
   - For example in the
     `http://localhost:4040/#!/state/{"controlPipe":null,"nodeDetails":[{"id":"example.com;<host>","label":"example.com","topologyId":"hosts"}],…`
     URL, you can find the `example.com;<host>` which is an ID of the node
     representing the host.
-  - Mentally substitute the `<SLASH>` with `/`. This can appear in
+3. Mentally substitute the `<SLASH>` with `/`. This can appear in
     Docker image names, so `docker.io/alpine` in the address bar will
     be `docker.io<SLASH>alpine`.
+
+For more detailed information visit [https://www.weave.works/documentation/scope-latest-plugins/](https://www.weave.works/documentation/scope-latest-plugins/)
