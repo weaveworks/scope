@@ -11,6 +11,11 @@ function isNumber(data) {
 }
 
 
+function isIP(data) {
+  return data.dataType && data.dataType === 'ip';
+}
+
+
 const CW = {
   XS: '32px',
   S: '50px',
@@ -49,16 +54,6 @@ const COLUMN_WIDTHS = {
   kubernetes_ip: CW.L,
   kubernetes_state: CW.M,
 };
-
-
-// TODO: Consider introducing the 'ip' dataType for
-// the fields instead of maintaining a list here.
-const IP_FIELDS = ['kubernetes_ip'];
-
-
-function isIP(header) {
-  return _.includes(IP_FIELDS, header.id);
-}
 
 
 function getDefaultSortBy(columns, nodes) {
