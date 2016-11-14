@@ -11,7 +11,7 @@ describe('NodeDetailsTable', () => {
 
   beforeEach(() => {
     columns = [
-      { id: 'kubernetes_ip', label: 'IP' },
+      { id: 'kubernetes_ip', label: 'IP', dataType: 'ip' },
       { id: 'kubernetes_namespace', label: 'Namespace' },
     ];
     nodes = [
@@ -44,9 +44,16 @@ describe('NodeDetailsTable', () => {
   });
 
   function matchColumnValues(columnLabel, expectedValues) {
+    // Get the index of the column whose values we want to match.
     const columnIndex = columns.findIndex(column => column.id === columnLabel);
+    // Get all the values rendered in the table.
     const values = TestUtils.scryRenderedDOMComponentsWithClass(component, 'node-details-table-node-value').map(d => d.title);
+    // Since we are interested only in the values that appear in the column `columnIndex`, we drop the rest.
+    // As `values` are ordered by appearance in the DOM structure (that is, first by row and then by column),
+    // the indexes we are interested in are of the form columnIndex + n * columns.length, where n >= 0.
+    // Therefore we take only the values at the index which divided by columns.length gives a reminder columnIndex.
     const filteredValues = values.filter((element, index) => index % columns.length === columnIndex);
+    // Array comparison
     expect(filteredValues).toEqual(expectedValues);
   }
 
