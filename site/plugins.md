@@ -13,7 +13,7 @@ The following topics are discussed:
   * [Controller Interface](#controller-interface)
      * [Control](#control)
      * [How to Expose Controls](#expose-controls)
-     * [Naming Nodes](#naming-nodes)     
+     * [Naming Nodes](#naming-nodes)
  * [A Guide to Developing Plugins](#plugins-developing-guide)
   * [Setting up the Structure](#structure)
   * [Defining the Reporter Interface](#reporter-interface)
@@ -55,7 +55,7 @@ separated by a dash.
 
 ### <a id="plugin-registration"></a>Registering Plugins
 
-All plugins listen for HTTP connections on a UNIX socket in the `/var/run/scope/plugins` directory. The Scope probe recursively scans that directory every 5 seconds and looks for any added or removed sockets. 
+All plugins listen for HTTP connections on a UNIX socket in the `/var/run/scope/plugins` directory. The Scope probe recursively scans that directory every 5 seconds and looks for any added or removed sockets.
 
 If you want to run permissions or store any other information with the socket, you can also put the plugin UNIX socket into a sub-directory.
 
@@ -217,7 +217,7 @@ semicolon-separated list of strings.
 For containers, images, hosts and others, the ID is usually formatted
 as `${name};<${tag}>`. The `${name}` variable is usually a name of a
 thing the node represents, like an ID of the Docker container or the
-hostname. The `${tag}` denotes the type of the node. 
+hostname. The `${tag}` denotes the type of the node.
 
 There is a fixed set of tags used by the probe:
 
@@ -337,7 +337,7 @@ func main() {
 ### <a id="reporter-interface"></a>Defining the Reporter Interface
 
 As stated in the [How Plugins Communicate with Scope](#plugins-internals) section, the reporter interface is mandatory.
-Implementing the reporter interface means handling `GET /report` requests.  
+Implementing the reporter interface means handling `GET /report` requests.
 
 The following code snippet is sufficient to implement it:
 
