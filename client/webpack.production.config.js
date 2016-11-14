@@ -1,12 +1,12 @@
-var webpack = require('webpack');
-var autoprefixer = require('autoprefixer');
-var path = require('path');
+const webpack = require('webpack');
+const autoprefixer = require('autoprefixer');
+const path = require('path');
 
-var CleanWebpackPlugin = require('clean-webpack-plugin');
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
-var HtmlWebpackPlugin = require('html-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-var GLOBALS = {
+const GLOBALS = {
   'process.env': {NODE_ENV: '"production"'}
 };
 
