@@ -1,7 +1,7 @@
 import { storageGet, storageSet } from './storage-utils';
 
 // prefix for all feature flags
-const STORAGE_KEY_PREFIX = 'scope-experimental-';
+const STORAGE_KEY_PREFIX = 'scope-experimental:';
 
 const getKey = key => `${STORAGE_KEY_PREFIX}${key}`;
 
@@ -9,7 +9,7 @@ const getKey = key => `${STORAGE_KEY_PREFIX}${key}`;
  * Returns true if `feature` is enabled
  *
  * Features can be enabled either via calling `setFeature()` or by setting
- * `localStorage.scope-experimental-featureName = true` in the console.
+ * `localStorage.scope-experimental:featureName = true` in the console.
  * @param  {String} feature Feature name, ideally one word or hyphenated
  * @return {Boolean}         True if feature is enabled
  */

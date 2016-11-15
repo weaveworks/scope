@@ -133,6 +133,9 @@ describe('NodesLayout', () => {
   };
 
   beforeEach(() => {
+    // clear feature flags
+    window.localStorage.clear();
+
     options = {
       nodeCache: makeMap(),
       edgeCache: makeMap()
@@ -416,6 +419,9 @@ describe('NodesLayout', () => {
   });
 
   it('adds a new node to existing layout in a line', () => {
+    // feature flag
+    window.localStorage.setItem('scope-experimental:layout-dance', true);
+
     let result = NodesLayout.doLayout(
       nodeSets.rank4.nodes,
       nodeSets.rank4.edges,
