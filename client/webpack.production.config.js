@@ -10,6 +10,15 @@ const GLOBALS = {
   'process.env': {NODE_ENV: '"production"'}
 };
 
+let OUTPUT_PATH = 'build/';
+let PUBLIC_PATH = '/';
+
+if (process.env.EXTERNAL) {
+  OUTPUT_PATH = 'build-external/';
+  // Change this line to point to resources on an external host.
+  PUBLIC_PATH = 'https://s3.amazonaws.com/static.weave.works/scope-ui/';
+}
+
 /**
  * This is the Webpack configuration file for production.
  */
@@ -31,11 +40,15 @@ module.exports = {
   },
 
   output: {
-    path: path.join(__dirname, 'build/'),
+    path: path.join(__dirname, OUTPUT_PATH),
     filename: '[name]-[chunkhash].js',
+    publicPath: PUBLIC_PATH
   },
 
   module: {
+    // Webpack is opionated about how pkgs should be laid out:
+    // https://github.com/webpack/webpack/issues/1617
+    noParse: /xterm/,
     include: [
       path.resolve(__dirname, 'app/scripts')
     ],
