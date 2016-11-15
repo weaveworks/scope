@@ -240,7 +240,7 @@ To download and read the Scope manifest run:
 
 **Open Scope in Your Browser**
 
-    kubectl port-forward $(kubectl get pod --selector=weavescope-component=weavescope-app -o jsonpath='{.items..metadata.name}') 4040
+    kubectl port-forward $(kubectl get pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}') 4040
 
 Open http://localhost:4040 in your browser. This allows you to access the Scope UI securely, without opening it to the Internet.
 
