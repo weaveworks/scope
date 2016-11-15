@@ -3,6 +3,7 @@ import debug from 'debug';
 import { fromJS, Map as makeMap, Set as ImmSet } from 'immutable';
 
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
+import { featureIsEnabledAny } from '../utils/feature-utils';
 import { buildTopologyCacheId, updateNodeDegrees } from '../utils/topology-utils';
 
 const log = debug('scope:nodes-layout');
@@ -460,13 +461,17 @@ export function doLayout(immNodes, immEdges, opts) {
     layout = copyLayoutProperties(layout, nodeCache, edgeCache);
   } else {
     const nodesWithDegrees = updateNodeDegrees(immNodes, immEdges);
-    if (useCache && hasNewSingleNode(nodesWithDegrees, nodeCache)) {
+    if (useCache
+      && featureIsEnabledAny('layout-dance', 'layout-dance-single')
+      && hasNewSingleNode(nodesWithDegrees, nodeCache)) {
       // special case: new nodes are 0-degree nodes, no need for layout run,
       // they will be layed out further below
       log('skip layout, only 0-degree node(s) added');
       layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
       layout = copyLayoutProperties(layout, nodeCache, edgeCache);
-    } else if (useCache && hasNewNodesOfExistingRank(nodesWithDegrees, immEdges, nodeCache)) {
+    } else if (useCache
+      && featureIsEnabledAny('layout-dance', 'layout-dance-rank')
+      && hasNewNodesOfExistingRank(nodesWithDegrees, immEdges, nodeCache)) {
       // special case: few new nodes were added, no need for layout run,
       // they will inserted according to ranks
       log('skip layout, used rank-based insertion');
