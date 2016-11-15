@@ -6,7 +6,8 @@ describe('FeatureUtils', () => {
   const FEATURE_Y_KEY = 'my feature 2';
 
   beforeEach(() => {
-    FU.clearFeatures();
+    FU.setFeature(FEATURE_X_KEY, false);
+    FU.setFeature(FEATURE_Y_KEY, false);
   });
 
   describe('Setting of features', () => {
@@ -25,6 +26,18 @@ describe('FeatureUtils', () => {
       success = FU.setFeature(FEATURE_X_KEY, false);
       expect(success).toBeTruthy();
       expect(FU.featureIsEnabled(FEATURE_X_KEY)).toBeFalsy();
+    });
+
+    it('should allow for either feature', () => {
+      let success;
+      expect(FU.featureIsEnabledAny(FEATURE_X_KEY, FEATURE_Y_KEY)).toBeFalsy();
+      success = FU.setFeature(FEATURE_X_KEY, true);
+      expect(success).toBeTruthy();
+      expect(FU.featureIsEnabledAny(FEATURE_X_KEY, FEATURE_Y_KEY)).toBeTruthy();
+      success = FU.setFeature(FEATURE_X_KEY, false);
+      success = FU.setFeature(FEATURE_Y_KEY, true);
+      expect(success).toBeTruthy();
+      expect(FU.featureIsEnabledAny(FEATURE_X_KEY, FEATURE_Y_KEY)).toBeTruthy();
     });
   });
 });
