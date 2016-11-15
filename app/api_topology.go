@@ -107,7 +107,7 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		renderer, decorator, err := topologyRegistry.rendererForTopology(topologyID, r.Form, report)
+		renderer, decorator, err := topologyRegistry.RendererForTopology(topologyID, r.Form, report)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return

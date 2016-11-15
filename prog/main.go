@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/probe/kubernetes"
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/weave/common"
 )
 
@@ -33,6 +35,8 @@ var (
 		kubernetesPasswordFlag,
 		kubernetesTokenFlag,
 	}
+	colonFinder         = regexp.MustCompile(`[^\\](:)`)
+	unescapeBackslashes = regexp.MustCompile(`\\(.)`)
 )
 
 type prefixFormatter struct {
@@ -138,6 +142,54 @@ type appFlags struct {
 	consulInf       string
 }
 
+type containerLabelFiltersFlag struct {
+	apiTopologyOptions []app.APITopologyOption
+	filterNumber       int
+	filterIDPrefix     string
+	exclude            bool
+}
+
+func (c *containerLabelFiltersFlag) String() string {
+	return fmt.Sprint(c.apiTopologyOptions)
+}
+
+func (c *containerLabelFiltersFlag) Set(flagValue string) error {
+	filterID := fmt.Sprintf(c.filterIDPrefix+"%d", c.filterNumber)
+	newAPITopologyOption, err := c.toAPITopologyOption(flagValue, filterID)
+	if err != nil {
+		return err
+	}
+	c.filterNumber++
+
+	c.apiTopologyOptions = append(c.apiTopologyOptions, newAPITopologyOption)
+	return nil
+}
+
+func (c *containerLabelFiltersFlag) toAPITopologyOption(flagValue string, filterID string) (app.APITopologyOption, error) {
+	indexRanges := colonFinder.FindAllStringIndex(flagValue, -1)
+	if len(indexRanges) != 1 {
+		if len(indexRanges) == 0 {
+			return app.APITopologyOption{}, fmt.Errorf("No unescaped colon found. This is needed to separate the title from the label")
+		}
+		return app.APITopologyOption{}, fmt.Errorf("Multiple unescaped colons. Escape colons that are part of the title and label")
+	}
+	splitIndices := indexRanges[0]
+	titleStringEscaped := flagValue[:splitIndices[0]+1]
+	labelStringEscaped := flagValue[splitIndices[1]:]
+	containerFilterTitle := unescapeBackslashes.ReplaceAllString(titleStringEscaped, `$1`)
+	containerFilterLabel := unescapeBackslashes.ReplaceAllString(labelStringEscaped, `$1`)
+	labelKeyValuePair := strings.Split(containerFilterLabel, "=")
+	if len(labelKeyValuePair) != 2 {
+		return app.APITopologyOption{}, fmt.Errorf("Docker label isn't in the correct key=value format")
+	}
+
+	filterFunction := render.HasLabel
+	if c.exclude {
+		filterFunction = render.DoesNotHaveLabel
+	}
+	return app.MakeAPITopologyOption(filterID, containerFilterTitle, filterFunction(labelKeyValuePair[0], labelKeyValuePair[1]), false), nil
+}
+
 func logCensoredArgs() {
 	var prettyPrintedArgs string
 	// We show the flags followed by the args. This may change the original
@@ -162,12 +214,14 @@ func logCensoredArgs() {
 
 func main() {
 	var (
-		flags         = flags{}
-		mode          string
-		debug         bool
-		weaveEnabled  bool
-		weaveHostname string
-		dryRun        bool
+		flags                            = flags{}
+		mode                             string
+		debug                            bool
+		weaveEnabled                     bool
+		weaveHostname                    string
+		dryRun                           bool
+		containerLabelFilterFlags        = containerLabelFiltersFlag{exclude: false, filterIDPrefix: "containerLabelFilterExclude"}
+		containerLabelFilterFlagsExclude = containerLabelFiltersFlag{exclude: true, filterIDPrefix: "containerLabelFilter"}
 	)
 
 	// Flags that apply to both probe and app
@@ -244,6 +298,8 @@ func main() {
 	flag.StringVar(&flags.app.weaveHostname, "app.weave.hostname", app.DefaultHostname, "Hostname to advertise in WeaveDNS")
 	flag.StringVar(&flags.app.containerName, "app.container.name", app.DefaultContainerName, "Name of this container (to lookup container ID)")
 	flag.StringVar(&flags.app.dockerEndpoint, "app.docker", app.DefaultDockerEndpoint, "Location of docker endpoint (to lookup container ID)")
+	flag.Var(&containerLabelFilterFlags, "app.container-label-filter", "Add container label-based view filter, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter='Database Containers:role=db'")
+	flag.Var(&containerLabelFilterFlagsExclude, "app.container-label-filter-exclude", "Add container label-based view filter that excludes containers with the given label, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter-exclude='Database Containers:role=db'")
 
 	flag.StringVar(&flags.app.collectorURL, "app.collector", "local", "Collector to use (local, dynamodb, or file)")
 	flag.StringVar(&flags.app.s3URL, "app.collector.s3", "local", "S3 URL to use (when collector is dynamodb)")
@@ -264,6 +320,8 @@ func main() {
 	flag.StringVar(&flags.app.consulInf, "app.consul.inf", "", "The interface who's address I should advertise myself under in consul")
 
 	flag.Parse()
+
+	app.AddContainerFilters(append(containerLabelFilterFlags.apiTopologyOptions, containerLabelFilterFlagsExclude.apiTopologyOptions...)...)
 
 	// Deal with common args
 	if debug {

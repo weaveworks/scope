@@ -79,6 +79,11 @@ var (
 	ClientContainerNodeID = report.MakeContainerNodeID(ClientContainerID)
 	ServerContainerNodeID = report.MakeContainerNodeID(ServerContainerID)
 
+	TestLabelKey1          = "myrole"
+	ApplicationLabelValue1 = "customapplication1"
+	TestLabelKey2          = "myrole2"
+	ApplicationLabelValue2 = "customapplication2"
+
 	ClientContainerHostname = ClientContainerName + ".hostname.com"
 	ServerContainerHostname = ServerContainerName + ".hostname.com"
 
@@ -262,6 +267,7 @@ var (
 						docker.ImageID:                               ClientContainerImageID,
 						report.HostNodeID:                            ClientHostNodeID,
 						docker.LabelPrefix + "io.kubernetes.pod.uid": ClientPodUID,
+						docker.LabelPrefix + TestLabelKey1:           ApplicationLabelValue1,
 						kubernetes.Namespace:                         KubernetesNamespace,
 						docker.ContainerState:                        docker.StateRunning,
 						docker.ContainerStateHuman:                   docker.StateRunning,
@@ -288,6 +294,7 @@ var (
 						docker.LabelPrefix + "foo1":                               "bar1",
 						docker.LabelPrefix + "foo2":                               "bar2",
 						docker.LabelPrefix + "io.kubernetes.pod.uid":              ServerPodUID,
+						docker.LabelPrefix + TestLabelKey2:                        ApplicationLabelValue2,
 						kubernetes.Namespace:                                      KubernetesNamespace,
 					}).
 					WithTopology(report.Container).WithParents(report.EmptySets.
