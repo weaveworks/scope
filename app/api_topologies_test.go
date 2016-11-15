@@ -67,7 +67,7 @@ func TestContainerLabelFilter(t *testing.T) {
 	// only the filtered container with fixture.TestLabelKey1 should be present
 	equals(t, 1, len(topologySummaries))
 	for key := range topologySummaries {
-		equals(t, fixture.ClientContainerID+";<container>", key)
+		equals(t, report.MakeContainerNodeID(fixture.ClientContainerID), key)
 	}
 }
 
@@ -79,8 +79,8 @@ func TestContainerLabelFilterExclude(t *testing.T) {
 
 	// all containers but the excluded container should be present
 	for key := range topologySummaries {
-		if fixture.ServerContainerNodeID+";<container>" == key {
-			t.Errorf("TestAPITopologyNegativeContainerLabelFilter Failed. Expected to not find " + fixture.ServerContainerNodeID + ";<container> in report")
+		if report.MakeContainerNodeID(fixture.ServerContainerNodeID) == key {
+			t.Errorf("TestAPITopologyNegativeContainerLabelFilter Failed. Expected to not find " + report.MakeContainerNodeID(fixture.ServerContainerNodeID) + " in report")
 		}
 	}
 }

@@ -180,7 +180,7 @@ func (c *containerLabelFiltersFlag) toAPITopologyOption(flagValue string, filter
 	containerFilterLabel := unescapeBackslashes.ReplaceAllString(labelStringEscaped, `$1`)
 	labelKeyValuePair := strings.Split(containerFilterLabel, "=")
 	if len(labelKeyValuePair) != 2 {
-		return app.APITopologyOption{}, fmt.Errorf("Docker label in the app.container-label-filter(-exclude) flag isn't in the correct key=value format")
+		return app.APITopologyOption{}, fmt.Errorf("Docker label isn't in the correct key=value format")
 	}
 
 	filterFunction := render.HasLabel
