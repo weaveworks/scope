@@ -4,6 +4,7 @@ import classNames from 'classnames';
 
 import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
+import { iPtoPaddedString } from '../../utils/string-utils';
 
 
 function isNumber(data) {
@@ -80,12 +81,6 @@ function maybeToLower(value) {
 }
 
 
-function toArrayOfThreeDigitStrings(value) {
-  const padToThreeDigits = (n) => `000${n}`.slice(-3);
-  return value.match(/\d+/g).map(padToThreeDigits);
-}
-
-
 function getNodeValue(node, header) {
   const fieldId = header && header.id;
   if (fieldId !== null) {
@@ -93,8 +88,8 @@ function getNodeValue(node, header) {
 
     if (field) {
       if (isIP(header)) {
-        // Treat IPs as quadruples of 3-digit strings for sorting purposes.
-        return toArrayOfThreeDigitStrings(field.value);
+        // Format the IPs so that they are sorted numerically.
+        return iPtoPaddedString(field.value);
       } else if (isNumber(header)) {
         return parseFloat(field.value);
       }
