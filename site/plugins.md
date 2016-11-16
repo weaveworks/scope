@@ -16,7 +16,8 @@ The following topics are discussed:
      * [Naming Nodes](#naming-nodes)
  * [A Guide to Developing Plugins](#plugins-developing-guide)
   * [Setting up the Structure](#structure)
-  * [Defining the Reporter Interface](#reporter-interface)
+  * [Defining the Reporter Interface](#defining-reporter-interface)
+  * [Report Data Structures](#report-data-structures)
 
 Any kind of metrics can be generated and inserted into Scope using custom plugins. Metrics generated through your plugin are displayed in the user interface alongside the standard set of metrics that are found in Weave Scope.
 
@@ -334,7 +335,7 @@ func main() {
 
 ```
 
-### <a id="reporter-interface"></a>Defining the Reporter Interface
+### <a id="defining-reporter-interface"></a>Defining the Reporter Interface
 
 As stated in the [How Plugins Communicate with Scope](#plugins-internals) section, the reporter interface is mandatory.
 Implementing the reporter interface means handling `GET /report` requests.
@@ -390,8 +391,245 @@ func (p *Plugin) Report(w http.ResponseWriter, r *http.Request) {
 
 ```
 
+### <a id="report-data-structures"></a>Report Data structures
+A report can contain many types of information.
+If you go back to the [Reporter Interface](#reporter-interface) section, you see the top-level `Plugins` attribute.
+Along with that, a report may contain multiple topologies.
+An example of a report containing few topologies is the following:
+
+```json
+{
+  "Host": {},
+  "Container": {},
+  "Process": {},
+  ...,
+  "Plugins": [...,]
+}
+```
+
+### Topologies
+Topologies can be of various types.
+Each topology consists of a list of nodes and other information about the topology.
+The available topologies are:
+
+- `Endpoint` nodes are (address, port) tuples on each host.
+- `Process` nodes are processes on each host.
+- `Container` nodes represent all Docker containers on hosts running probes.
+- `Pods` nodes represent all Kubernetes pods running on hosts running probes.
+- `Service` nodes represent all Kubernetes services running on hosts running probes.
+- `Deployment` nodes represent all Kubernetes deployments running on hosts running probes.
+- `ReplicaSet` nodes represent all Kubernetes ReplicaSets running on hosts running probes.
+- `ContainerImage` nodes represent all Docker container images on hosts running probes.
+- `Host` nodes are physical hosts that run probes.
+- `Overlay` nodes are active peers in any software-defined network that's overlaid on the infrastructure.
+
+The topology structure consists of the following attributes:
+
+- `nodes` - is the list of the nodes that compose the topology.
+- `controls` - contains the list of IDs of the active controls at a particular time.
+- `metadata_templates` - contains the templates used to render data into the Scope UI.
+- `table_templates` - contains the templates used to render tables into the Scope UI.
+- `metric_templates` - contains the templates used to render metrics into the Scope UI.
+
+**Note**: These attribute are not required. But a topology with no `nodes` does not have any information to render, `metadata_templates`, as well as `table_templates`, are needed to know how to render the information carried by `nodes` in the Scope UI.
+
+### Nodes
+A Node contains information about a specific element of a topology.
+For example the Host topology will contain nodes describing all the hosts in it.
+The same is for containers and Container topology, pods and Pod topology and so on.
+Nodes are represented as follows:
+
+```json
+{
+  "Host": {
+    "nodes" : {
+      "hostID;<host>": {...}
+    }
+  },
+  "Container": {
+    "nodes" : {
+      "containerID;<container>": {...}
+    }
+  },
+  ...
+}
+```
+
+Nodes are stored in dictionary. The ID of nodes representing hosts or containers have the format `ID;<type>`, with type equal to the literal string `host` or `container` accordingly. The `ID` is the alphanumeric identifier of the nodes.
+A node contains all the information about the represented object (e.g. host, container, pod, etc.).
+In particular a node may contain:
+
+- `latest` - an id-value map containing the latest values. These values are a single piece of information.
+- `latestControls` - the latest available controls.
+- `metrics` - the collection of metrics to display in the UI.
+
+### Controls
+Controls describe interfaces that expose actions that the user can perform on different objects (e.g. host, container, etc.).
+Controls are an element of nodes. In this way, each control in a node is attached to it and performs an action on the object described by the node itself. Below is an example of how controls are represented in the JSON report.
+In the report the attribute `latest_controls` contains all the controls exposed by scope and/or plugins, but only the alive ones will be listed in the attribute `controls`.
+
+```json
+"controls": {
+	"timestamp": "2016-11-17T08:53:04.567890059Z",
+	"controls": [
+		"switchToIOWait"
+	]
+},
+"latestControls": {
+	"switchToIOWait": {
+		"timestamp": "2016-11-17T08:53:03.171438309Z",
+		"value": {
+			"dead": false
+		}
+	},
+	"switchToIdle": {
+		"timestamp": "2016-11-17T08:53:03.171438309Z",
+		"value": {
+			"dead": true
+		}
+	}
+}
+```
+
+- `timestamp` is the timestamp of when the control was exposed.
+- `value` is an object containing the control value. At the moment, only the state is available.
+ - `dead` is a boolean to know the state (active, dead) of a control. It is useful to show controls only when they are in a usable state.
+
+### Metadata
+All metadata entries are placed within nodes in the section named `latest`.
+This section contains the latest values to display and consists of `timestamp` and `value`.
+Scope uses `metadata_templates` to know how to display such data.
+To pair metadata with its template, it is necessary to use the `metadata-template-id` as a key to identify that particular piece of data. Example:
+
+```json
+"metadata-templates": {
+      "metadata-templates-id": {
+        "id": "metadata-templates-id",
+        "label": "Human-readable description",
+        "priority": 1.6,
+        "from": "latest"
+      }
+}
+
+"latest": {
+	"metadata-templates-id": {
+		"timestamp": "2016-11-17T08:53:02.189193735Z",
+		"value": "-"
+	}
+}
+```
+
+### Metadata Templates
+Metadata Templates describe a particular metadata item.
+This description is used to extract metadata from a node and display it on Scope UI.
+
+```json
+"metadata_templates": {
+      "metadata-template-id": {
+        "id": "metadata-template-id",
+        "label": "Human-readable description",
+        "dataType": "number",
+        "priority": 13.5,
+        "from": "latest"
+      },
+      "another-metadata-template-id": {...}
+}
+```
+
+- `metadata-template-identifier` and `id` identify a particular metadata template.
+- `label` contains the label that will be used by Scope UI.
+- `dataType` specifies the type of data, this will determine how the value is displayed. Possible values for this attribute are: number, ip, and datetime.
+- `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If it is omitted the UI display the value as last.
+- `from` indicates where to look for the metadata. The possible values are:
+ - `latest`
+ - `sets`
+ - `counters`
+
+### Table Templates
+Table Templates describe a table and how to identify which metadata templates belong to the table.
+
+```json
+"table_templates": {
+      "table-template-id": {
+        "id": "table-template-id",
+        "label": "Human-readable description",
+        "prefix": "table-id-"
+      },
+      "another-table-template-id": {...}
+}
+```
+
+- `table-template-identifier` and `id` identify a particular table template.
+- `label` contains the label that will be used by Scope UI.
+- `prefix` is used to identify which metadata templates belong to the table.
+
+If you want to display data in a table, you have to define a table template and prepend the table prefix to all the metadata templates that identifies the data you want to put in such table.
+
+### Metrics
+Metrics are a particular kind of data that can be plotted on the UI as a graph.
+Scope uses the `metric_templates` to know how to display such data. To pair a metric with its template, it is necessary to use the `metric-template-id` as key to identify that particular metric.
+Metrics are suitable for information such as CPU and memory usage, HTTP requests rate, I/O operations, etc.
+The following is an example of a report with a metric and a its metric template:
+
+```json
+"metric_templates": {
+      "metric-template-id": {
+        "id": "metric-id",
+        "label": "Human-readable description",
+        "format": "percent",
+        "priority": 1.6
+      },
+}
+
+"metrics": {
+	"metadata-template-id": {
+		"samples": [
+			{
+				"date": "2016-11-17T08:53:03.171424664Z",
+				"value": 98.24
+			}
+		],
+		"min": 0,
+		"max": 100
+	}
+}
+```
+
+- `samples` is the list of the samples for this report.
+- `min` is the minimum value possible.
+- `max` is the maximum value possible.
+
+### Metric Templates
+Metric Templates describe a particular metric.
+The following is an example of metric template:
+
+```json
+"metric_templates": {
+      "metric-template-id": {
+        "id": "metric-id",
+        "label": "Human-readable description",
+        "format": "percent",
+        "priority": 1.6
+      },
+      "another-metric-template-id": {...}
+}
+```
+
+- `metric-template-id` and `id` identify a particular metric template.
+- `label` contains the label that will be used by Scope UI.
+- `format` describes how the metrics is formatted.
+ - `percent` the metric value is a percentage.
+ - `filesize` the metric value is a file size (e.g. memory usage), it is displayed with the suffix KB, MB, GB, etc.
+ - `integer` the metric value is an integer.
+- `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones).
+
+### Time Window
+A report may have an attribute called `Window`.
+This is the time window, expressed as duration, within which the data contained in the report are considered valid.
+The default window is 15 seconds.
+You may change the window value using the option `-app.window <SECONDS>` when launching scope.
+However, using values less than 15 seconds increases the change of information not be correctly displayed.
+
 **See Also**
 
   * [Building Scope](/site/building.md)
-
-
