@@ -81,7 +81,7 @@ export function longestCommonPrefix(strArr) {
 }
 
 // Converts IPs from '10.244.253.4' to '010.244.253.004' format.
-export function iPtoPaddedString(value) {
+export function ipToPaddedString(value) {
   return value.match(/\d+/g).map(padToThreeDigits).join('.');
 }
 

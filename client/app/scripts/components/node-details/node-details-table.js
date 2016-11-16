@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
-import { iPtoPaddedString } from '../../utils/string-utils';
+import { ipToPaddedString } from '../../utils/string-utils';
 
 
 function isNumber(data) {
@@ -89,7 +89,7 @@ function getNodeValue(node, header) {
     if (field) {
       if (isIP(header)) {
         // Format the IPs so that they are sorted numerically.
-        return iPtoPaddedString(field.value);
+        return ipToPaddedString(field.value);
       } else if (isNumber(header)) {
         return parseFloat(field.value);
       }
