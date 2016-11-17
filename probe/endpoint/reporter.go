@@ -96,7 +96,8 @@ func (r *Reporter) Report() (report.Report, error) {
 	seenTuples := map[string]fourTuple{}
 
 	// Consult the flowWalker for short-lived connections
-	{
+	// With eBPF, this is used only in the first round to build seenTuples for WalkProc
+	if r.conf.WalkProc || !r.conf.UseEbpfConn {
 		extraNodeInfo := map[string]string{
 			Conntracked: "true",
 		}
@@ -232,6 +233,8 @@ func (r *Reporter) procParsingSwitcher() {
 	if r.conf.WalkProc && r.conf.UseEbpfConn {
 		r.conf.WalkProc = false
 		r.ebpfTracker.initialize()
+
+		r.flowWalker.stop()
 	}
 }
 
