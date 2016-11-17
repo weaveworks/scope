@@ -19,25 +19,25 @@ describe('NodeDetailsTable', () => {
         id: 'node-1',
         metadata: [
           { id: 'kubernetes_ip', label: 'IP', value: '10.244.253.24' },
-          { id: 'kubernetes_namespace', label: 'Namespace', value: '10.244.253.24' },
+          { id: 'kubernetes_namespace', label: 'Namespace', value: '1111' },
         ]
       }, {
         id: 'node-2',
         metadata: [
           { id: 'kubernetes_ip', label: 'IP', value: '10.244.253.4' },
-          { id: 'kubernetes_namespace', label: 'Namespace', value: '10.244.253.4' },
+          { id: 'kubernetes_namespace', label: 'Namespace', value: '12' },
         ]
       }, {
         id: 'node-3',
         metadata: [
           { id: 'kubernetes_ip', label: 'IP', value: '10.44.253.255' },
-          { id: 'kubernetes_namespace', label: 'Namespace', value: '10.44.253.255' },
+          { id: 'kubernetes_namespace', label: 'Namespace', value: '5' },
         ]
       }, {
         id: 'node-4',
         metadata: [
           { id: 'kubernetes_ip', label: 'IP', value: '10.244.253.100' },
-          { id: 'kubernetes_namespace', label: 'Namespace', value: '10.244.253.100' },
+          { id: 'kubernetes_namespace', label: 'Namespace', value: '00000' },
         ]
       },
     ];
@@ -57,57 +57,50 @@ describe('NodeDetailsTable', () => {
     expect(filteredValues).toEqual(expectedValues);
   }
 
-  describe('Sorts by column', () => {
-    describe('kubernetes_ip', () => {
-      it('sorts ascendingly', () => {
-        component = TestUtils.renderIntoDocument(
-          <Provider store={configureStore()}>
-            <NodeDetailsTable
-              columns={columns}
-              sortBy="kubernetes_ip"
-              sortedDesc={false}
-              nodeIdKey="id"
-              nodes={nodes}
-            />
-          </Provider>
-        );
+  function clickColumn(title) {
+    const node = TestUtils.scryRenderedDOMComponentsWithTag(component, 'td').find(d => d.title === title);
+    TestUtils.Simulate.click(node);
+  }
 
-        matchColumnValues('kubernetes_ip', ['10.44.253.255', '10.244.253.4', '10.244.253.24', '10.244.253.100']);
-      });
+  describe('kubernetes_ip', () => {
+    it('sorts by column', () => {
+      component = TestUtils.renderIntoDocument(
+        <Provider store={configureStore()}>
+          <NodeDetailsTable
+            columns={columns}
+            sortBy="kubernetes_ip"
+            nodeIdKey="id"
+            nodes={nodes}
+          />
+        </Provider>
+      );
 
-      it('sorts descendingly', () => {
-        component = TestUtils.renderIntoDocument(
-          <Provider store={configureStore()}>
-            <NodeDetailsTable
-              columns={columns}
-              sortBy="kubernetes_ip"
-              sortedDesc={true}
-              nodeIdKey="id"
-              nodes={nodes}
-            />
-          </Provider>
-        );
-
-        matchColumnValues('kubernetes_ip', ['10.244.253.100', '10.244.253.24', '10.244.253.4', '10.44.253.255']);
-      });
+      matchColumnValues('kubernetes_ip', ['10.44.253.255', '10.244.253.4', '10.244.253.24', '10.244.253.100']);
+      clickColumn('IP');
+      matchColumnValues('kubernetes_ip', ['10.244.253.100', '10.244.253.24', '10.244.253.4', '10.44.253.255']);
+      clickColumn('IP');
+      matchColumnValues('kubernetes_ip', ['10.44.253.255', '10.244.253.4', '10.244.253.24', '10.244.253.100']);
     });
+  });
 
-    describe('kubernetes_namespace', () => {
-      it('sorts ascendingly', () => {
-        component = TestUtils.renderIntoDocument(
-          <Provider store={configureStore()}>
-            <NodeDetailsTable
-              columns={columns}
-              sortBy="kubernetes_namespace"
-              sortedDesc={false}
-              nodeIdKey="id"
-              nodes={nodes}
-            />
-          </Provider>
-        );
+  describe('kubernetes_namespace', () => {
+    it('sorts by column', () => {
+      component = TestUtils.renderIntoDocument(
+        <Provider store={configureStore()}>
+          <NodeDetailsTable
+            columns={columns}
+            sortBy="kubernetes_namespace"
+            nodeIdKey="id"
+            nodes={nodes}
+          />
+        </Provider>
+      );
 
-        matchColumnValues('kubernetes_namespace', ['10.244.253.100', '10.244.253.24', '10.244.253.4', '10.44.253.255']);
-      });
+      matchColumnValues('kubernetes_namespace', ['00000', '1111', '12', '5']);
+      clickColumn('Namespace');
+      matchColumnValues('kubernetes_namespace', ['5', '12', '1111', '00000']);
+      clickColumn('Namespace');
+      matchColumnValues('kubernetes_namespace', ['00000', '1111', '12', '5']);
     });
   });
 });
