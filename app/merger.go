@@ -48,14 +48,15 @@ func (smartMerger) Merge(reports []report.Report) report.Report {
 	case 1:
 		return reports[0]
 	}
-	c := make(chan report.Report, l)
+	c := make(chan *report.Report, l)
 	for _, r := range reports {
-		c <- r
+		c <- &r
 	}
 	for ; l > 1; l-- {
-		go func(left, right report.Report) {
-			c <- left.Merge(right)
+		go func(left, right *report.Report) {
+			r := left.Merge(*right)
+			c <- &r
 		}(<-c, <-c)
 	}
-	return <-c
+	return *<-c
 }
