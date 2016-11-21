@@ -465,7 +465,7 @@ export function doLayout(immNodes, immEdges, opts) {
       && featureIsEnabledAny('layout-dance', 'layout-dance-single')
       && hasNewSingleNode(nodesWithDegrees, nodeCache)) {
       // special case: new nodes are 0-degree nodes, no need for layout run,
-      // they will be layed out further below
+      // they will be laid out further below
       log('skip layout, only 0-degree node(s) added');
       layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
       layout = copyLayoutProperties(layout, nodeCache, edgeCache);
