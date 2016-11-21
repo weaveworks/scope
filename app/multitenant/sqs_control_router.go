@@ -215,7 +215,7 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 	// Get the queue url for the local (control app) queue, and for the probe.
 	responseQueueURL := cr.getResponseQueueURL()
 	if responseQueueURL == nil {
-		return xfer.Response{}, fmt.Errorf("No SQS queue yet!")
+		return xfer.Response{}, fmt.Errorf("no SQS queue yet")
 	}
 
 	var probeQueueURL *sqs.GetQueueUrlOutput
@@ -258,7 +258,7 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 	case response := <-waiter:
 		return response, nil
 	case <-time.After(rpcTimeout):
-		return xfer.Response{}, fmt.Errorf("Request timedout.")
+		return xfer.Response{}, fmt.Errorf("request timed out")
 	}
 }
 

@@ -114,7 +114,7 @@ func (p dir) ReadDirNames(path string) ([]string, error) {
 
 func (p dir) ReadFile(path string) ([]byte, error) {
 	if path == "/" {
-		return nil, fmt.Errorf("I'm a directory!")
+		return nil, fmt.Errorf("I'm a directory")
 	}
 
 	head, tail := split(path)
@@ -158,7 +158,7 @@ func (p dir) Stat(path string, stat *syscall.Stat_t) error {
 
 func (p dir) Open(path string) (io.ReadWriteCloser, error) {
 	if path == "/" {
-		return nil, fmt.Errorf("I'm a directory!")
+		return nil, fmt.Errorf("I'm a directory")
 	}
 
 	head, tail := split(path)
@@ -208,18 +208,18 @@ func (p File) IsDir() bool { return false }
 
 // ReadDir implements FS
 func (p File) ReadDir(path string) ([]os.FileInfo, error) {
-	return nil, fmt.Errorf("I'm a file!")
+	return nil, fmt.Errorf("I'm a file")
 }
 
 // ReadDirNames implements FS
 func (p File) ReadDirNames(path string) ([]string, error) {
-	return nil, fmt.Errorf("I'm a file!")
+	return nil, fmt.Errorf("I'm a file")
 }
 
 // ReadFile implements FS
 func (p File) ReadFile(path string) ([]byte, error) {
 	if path != "/" {
-		return nil, fmt.Errorf("I'm a file!")
+		return nil, fmt.Errorf("I'm a file")
 	}
 	if p.FReader != nil {
 		return ioutil.ReadAll(p.FReader)
@@ -230,7 +230,7 @@ func (p File) ReadFile(path string) ([]byte, error) {
 // Lstat implements FS
 func (p File) Lstat(path string, stat *syscall.Stat_t) error {
 	if path != "/" {
-		return fmt.Errorf("I'm a file!")
+		return fmt.Errorf("I'm a file")
 	}
 	*stat = p.FStat
 	return nil
@@ -239,7 +239,7 @@ func (p File) Lstat(path string, stat *syscall.Stat_t) error {
 // Stat implements FS
 func (p File) Stat(path string, stat *syscall.Stat_t) error {
 	if path != "/" {
-		return fmt.Errorf("I'm a file!")
+		return fmt.Errorf("I'm a file")
 	}
 	*stat = p.FStat
 	return nil
@@ -248,7 +248,7 @@ func (p File) Stat(path string, stat *syscall.Stat_t) error {
 // Open implements FS
 func (p File) Open(path string) (io.ReadWriteCloser, error) {
 	if path != "/" {
-		return nil, fmt.Errorf("I'm a file!")
+		return nil, fmt.Errorf("I'm a file")
 	}
 	buf := bytes.NewBuffer([]byte(p.FContents))
 	s := struct {
@@ -273,7 +273,7 @@ func (p File) Open(path string) (io.ReadWriteCloser, error) {
 // Add adds a new node to the fs
 func (p File) Add(path string, e Entry) error {
 	if path != "/" {
-		return fmt.Errorf("I'm a file!")
+		return fmt.Errorf("I'm a file")
 	}
 	return nil
 }
@@ -281,7 +281,7 @@ func (p File) Add(path string, e Entry) error {
 // Remove removes a node from the fs
 func (p File) Remove(path string) error {
 	if path != "/" {
-		return fmt.Errorf("I'm a file!")
+		return fmt.Errorf("I'm a file")
 	}
 	return nil
 }

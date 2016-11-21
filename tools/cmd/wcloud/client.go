@@ -47,7 +47,7 @@ func (c Client) Deploy(deployment Deployment) error {
 		return err
 	}
 	if res.StatusCode != 204 {
-		return fmt.Errorf("Error making request: %s", res.Status)
+		return fmt.Errorf("error making request: %s", res.Status)
 	}
 	return nil
 }
@@ -63,7 +63,7 @@ func (c Client) GetDeployments(from, through int64) ([]Deployment, error) {
 		return nil, err
 	}
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("Error making request: %s", res.Status)
+		return nil, fmt.Errorf("error making request: %s", res.Status)
 	}
 	var response struct {
 		Deployments []Deployment `json:"deployments"`
@@ -85,7 +85,7 @@ func (c Client) GetEvents(from, through int64) ([]byte, error) {
 		return nil, err
 	}
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("Error making request: %s", res.Status)
+		return nil, fmt.Errorf("error making request: %s", res.Status)
 	}
 	return ioutil.ReadAll(res.Body)
 }
@@ -101,10 +101,10 @@ func (c Client) GetConfig() (*Config, error) {
 		return nil, err
 	}
 	if res.StatusCode == 404 {
-		return nil, fmt.Errorf("No configuration uploaded yet.")
+		return nil, fmt.Errorf("no configuration uploaded yet")
 	}
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("Error making request: %s", res.Status)
+		return nil, fmt.Errorf("error making request: %s", res.Status)
 	}
 	var config Config
 	if err := json.NewDecoder(res.Body).Decode(&config); err != nil {
@@ -128,7 +128,7 @@ func (c Client) SetConfig(config *Config) error {
 		return err
 	}
 	if res.StatusCode != 204 {
-		return fmt.Errorf("Error making request: %s", res.Status)
+		return fmt.Errorf("error making request: %s", res.Status)
 	}
 	return nil
 }
@@ -144,7 +144,7 @@ func (c Client) GetLogs(deployID string) ([]byte, error) {
 		return nil, err
 	}
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("Error making request: %s", res.Status)
+		return nil, fmt.Errorf("error making request: %s", res.Status)
 	}
 	return ioutil.ReadAll(res.Body)
 }
