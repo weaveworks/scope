@@ -187,11 +187,12 @@ h2 {
 }
 
 .footer {
+  padding: 5px;
   position: absolute;
-  bottom: 16px;
-  right: 48px;
-  z-index: 20;
+  bottom: 11px;
+  right: 43px;
   color: @text-tertiary-color;
+  background-color: fade(@background-average-color, 90%);
   font-size: 0.7rem;
   display: flex;
 
@@ -242,6 +243,11 @@ h2 {
 
   &-icon &-label {
     margin-right: 0.5em;
+  }
+
+  .tooltip {
+    // above everything
+    z-index: 20000;
   }
 }
 
@@ -1159,6 +1165,10 @@ h2 {
   &-label {
     text-transform: uppercase;
     margin-right: 0.25em;
+  }
+
+  &-plugin {
+    cursor: default;
   }
 
   &-plugin + &-plugin:before {
