@@ -85,18 +85,23 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 
 			// new task node
 			node := report.MakeNodeWith(taskNodeID(taskArn), map[string]string{"family": info.family})
-
 			rpt.ECSTask = rpt.ECSTask.AddNode(node)
 
-			for _, containerID := range info.containerIDs {
-				// TODO set task node as parent of container
-				log.Debugf("task %v has container %v", taskArn, containerID)
+			// parents sets to merge into all matching container nodes
+			parentsSets := report.MakeSets()
+			parentsSets.Add(report.ECSTask, report.MakeStringSet(taskNodeID(taskArn)))
+			if serviceName, ok := taskServices[taskArn]; ok {
+				parentsSets.Add(report.ECSService, report.MakeStringSet(serviceNodeID(serviceName)))
 			}
 
-			if serviceName, ok := taskServices[taskArn]; ok {
-				// TODO set service node as parent of task node
-				log.Debugf("service %v has task %v", serviceName, taskArn)
+			for _, containerID := range info.containerIDs {
+				if containerNode, ok := rpt.Container.Nodes[containerID]; ok {
+					rpt.Container.Nodes[containerID] = containerNode.WithParents(parentsSets)
+				} else {
+					log.Warnf("Got task info for non-existent container %v, this shouldn't be able to happen", containerID)
+				}
 			}
+
 		}
 
 	}
