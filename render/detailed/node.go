@@ -148,7 +148,7 @@ var (
 				Label:      "Services",
 				Columns: []Column{
 					{ID: report.Pod, Label: "# Pods", Datatype: "number"},
-					{ID: kubernetes.IP, Label: "IP"},
+					{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
 				},
 			},
 		},
@@ -172,7 +172,7 @@ var (
 				Columns: []Column{
 					{ID: kubernetes.State, Label: "State"},
 					{ID: report.Container, Label: "# Containers", Datatype: "number"},
-					{ID: kubernetes.IP, Label: "IP"},
+					{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
 				},
 			},
 		},

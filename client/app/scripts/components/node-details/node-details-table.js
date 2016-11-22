@@ -4,11 +4,18 @@ import classNames from 'classnames';
 
 import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
+import { ipToPaddedString } from '../../utils/string-utils';
 
 
 function isNumber(data) {
   return data.dataType && data.dataType === 'number';
 }
+
+
+function isIP(data) {
+  return data.dataType && data.dataType === 'ip';
+}
+
 
 const CW = {
   XS: '32px',
@@ -80,7 +87,10 @@ function getNodeValue(node, header) {
     let field = _.union(node.metrics, node.metadata).find(f => f.id === fieldId);
 
     if (field) {
-      if (isNumber(header)) {
+      if (isIP(header)) {
+        // Format the IPs so that they are sorted numerically.
+        return ipToPaddedString(field.value);
+      } else if (isNumber(header)) {
         return parseFloat(field.value);
       }
       return field.value;

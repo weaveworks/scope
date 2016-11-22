@@ -22,6 +22,11 @@ function renderSvg(text, unit) {
 }
 
 
+function padToThreeDigits(n) {
+  return `000${n}`.slice(-3);
+}
+
+
 function makeFormatters(renderFn) {
   const formatters = {
     filesize(value) {
@@ -73,6 +78,11 @@ export function slugify(label) {
 
 export function longestCommonPrefix(strArr) {
   return (new LCP(strArr)).lcp();
+}
+
+// Converts IPs from '10.244.253.4' to '010.244.253.004' format.
+export function ipToPaddedString(value) {
+  return value.match(/\d+/g).map(padToThreeDigits).join('.');
 }
 
 // Formats metadata values. Add a key to the `formatters` obj
