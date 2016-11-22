@@ -23,6 +23,7 @@ import (
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/appclient"
+	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
@@ -199,6 +200,10 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			log.Errorf("Kubernetes: failed to start client: %v", err)
 			log.Errorf("Kubernetes: make sure to run Scope inside a POD with a service account or provide valid probe.kubernetes.* flags")
 		}
+	}
+
+	if flags.ecsEnabled {
+		p.AddTagger(awsecs.Reporter{})
 	}
 
 	if flags.weaveEnabled {

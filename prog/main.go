@@ -104,6 +104,8 @@ type probeFlags struct {
 	kubernetesEnabled bool
 	kubernetesConfig  kubernetes.ClientConfig
 
+	ecsEnabled bool
+
 	weaveEnabled  bool
 	weaveAddr     string
 	weaveHostname string
@@ -281,6 +283,9 @@ func main() {
 	flag.StringVar(&flags.probe.kubernetesConfig.Token, kubernetesTokenFlag, "", "Bearer token for authentication to the API server")
 	flag.StringVar(&flags.probe.kubernetesConfig.User, "probe.kubernetes.user", "", "The name of the kubeconfig user to use")
 	flag.StringVar(&flags.probe.kubernetesConfig.Username, "probe.kubernetes.username", "", "Username for basic authentication to the API server")
+
+	// AWS ECS
+	flag.BoolVar(&flags.probe.ecsEnabled, "probe.ecs", false, "collect ecs-related attributes for containers on this node")
 
 	// Weave
 	flag.StringVar(&flags.probe.weaveAddr, "probe.weave.addr", "127.0.0.1:6784", "IP address & port of the Weave router")
