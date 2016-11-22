@@ -5,15 +5,24 @@ import 'babel-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-
+import { AppContainer } from 'react-hot-loader';
 import configureStore from './stores/configureStore';
-import TerminalApp from './components/terminal-app.js';
 
 const store = configureStore();
 
-ReactDOM.render(
-  <Provider store={store}>
-    <TerminalApp />
-  </Provider>,
-  document.getElementById('app')
-);
+function renderApp() {
+  const TerminalApp = require('./components/terminal-app').default;
+  ReactDOM.render(
+    <Provider store={store}>
+      <AppContainer>
+        <TerminalApp />
+      </AppContainer>
+    </Provider>,
+    document.getElementById('app')
+  );
+}
+
+renderApp();
+if (module.hot) {
+  module.hot.accept('./components/terminal-app', renderApp);
+}

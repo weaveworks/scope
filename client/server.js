@@ -67,6 +67,9 @@ if (process.env.NODE_ENV !== 'production') {
     noInfo: true,
     historyApiFallback: true,
     stats: 'errors-only',
+    // We need the access from the express server for the hot-loader.
+    // See: https://github.com/gaearon/react-hot-loader/issues/56
+    headers: { "Access-Control-Allow-Origin": '*' },
   }).listen(4041, '0.0.0.0', function (err, result) {
     if (err) {
       console.log(err);

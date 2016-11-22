@@ -6,17 +6,23 @@ import 'babel-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-
+import { AppContainer } from 'react-hot-loader';
 import configureStore from './stores/configureStore';
-import App from './components/app';
 
 const store = configureStore();
 
-ReactDOM.render(
-  <Provider store={store}>
-    <div>
-      <App />
-    </div>
-  </Provider>,
-  document.getElementById('app')
-);
+function renderApp() {
+  const App = require('./components/app').default;
+  ReactDOM.render((
+    <Provider store={store}>
+      <AppContainer>
+         <App />
+      </AppContainer>
+    </Provider>
+  ), document.getElementById('app'));
+}
+
+renderApp();
+if (module.hot) {
+  module.hot.accept('./components/app', renderApp);
+}

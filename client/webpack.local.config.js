@@ -26,24 +26,28 @@ module.exports = {
   // Set entry point include necessary files for hot load
   entry: {
     app: [
-      './app/scripts/main',
+      'react-hot-loader/patch',
       DEV_SERVER_URL,
-      'webpack/hot/only-dev-server'
+      'webpack/hot/only-dev-server',
+      './app/scripts/main',
     ],
     'dev-app': [
-      './app/scripts/main.dev',
+      'react-hot-loader/patch',
       DEV_SERVER_URL,
-      'webpack/hot/only-dev-server'
+      'webpack/hot/only-dev-server',
+      './app/scripts/main.dev',
     ],
     'contrast-app': [
-      './app/scripts/contrast-main',
+      'react-hot-loader/patch',
       DEV_SERVER_URL,
-      'webpack/hot/only-dev-server'
+      'webpack/hot/only-dev-server',
+      './app/scripts/contrast-main',
     ],
     'terminal-app': [
-      './app/scripts/terminal-main',
+      'react-hot-loader/patch',
       DEV_SERVER_URL,
-      'webpack/hot/only-dev-server'
+      'webpack/hot/only-dev-server',
+      './app/scripts/terminal-main',
     ],
     vendors: ['babel-polyfill', 'classnames', 'd3', 'dagre', 'filesize', 'immutable', 'lodash',
       'moment', 'page', 'react', 'react-dom', 'react-motion', 'react-redux', 'redux',
@@ -121,7 +125,7 @@ module.exports = {
       {
         test: /\.jsx?$/,
         exclude: /node_modules|vendor/,
-        loaders: ['react-hot-loader/webpack', 'babel']
+        loaders: ['babel']
       }
     ]
   },

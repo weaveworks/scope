@@ -6,9 +6,8 @@ import 'babel-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-
+import { AppContainer } from 'react-hot-loader';
 import configureStore from './stores/configureStore.dev';
-import App from './components/app';
 
 import DevTools from './components/dev-tools';
 import Immutable from 'immutable';
@@ -17,12 +16,19 @@ installDevTools(Immutable);
 
 const store = configureStore();
 
-ReactDOM.render(
-  <Provider store={store}>
-    <div>
-      <App />
+function renderApp() {
+  const App = require('./components/app').default;
+  ReactDOM.render((
+    <Provider store={store}>
+      <AppContainer>
+         <App />
+      </AppContainer>
       <DevTools />
-    </div>
-  </Provider>,
-  document.getElementById('app')
-);
+    </Provider>
+  ), document.getElementById('app'));
+}
+
+renderApp();
+if (module.hot) {
+  module.hot.accept('./components/app', renderApp);
+}
