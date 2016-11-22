@@ -22,6 +22,8 @@ const (
 	ContainerImage = "container_image"
 	Host           = "host"
 	Overlay        = "overlay"
+	ECSService     = "ecs_service"
+	ECSTask        = "ecs_task"
 
 	// Shapes used for different nodes
 	Circle   = "circle"
@@ -80,6 +82,15 @@ type Report struct {
 	// like operating system, load, etc. The information is scraped by the
 	// probes with each published report. Edges are not present.
 	Host Topology
+
+	// ECS Task nodes are AWS ECS tasks, which represent a group of containers.
+	// Metadata is limited for now, more to come later. Edges are not present.
+	ECSTask Topology
+
+	// ECS Service nodes are AWS ECS services, which represent a specification for a
+	// desired count of tasks with a task definition template.
+	// Metadata is limited for now, more to come later. Edges are not present.
+	ECSService Topology
 
 	// Overlay nodes are active peers in any software-defined network that's
 	// overlaid on the infrastructure. The information is scraped by polling
@@ -149,6 +160,14 @@ func MakeReport() Report {
 
 		Overlay: MakeTopology(),
 
+		ECSTask: MakeTopology().
+			WithShape(Heptagon).
+			WithLabel("task", "tasks"),
+
+		ECSService: MakeTopology().
+			WithShape(Heptagon).
+			WithLabel("service", "services"),
+
 		Sampling: Sampling{},
 		Window:   0,
 		Plugins:  xfer.MakePluginSpecs(),
@@ -169,6 +188,8 @@ func (r Report) Copy() Report {
 		Deployment:     r.Deployment.Copy(),
 		ReplicaSet:     r.ReplicaSet.Copy(),
 		Overlay:        r.Overlay.Copy(),
+		ECSTask:        r.ECSTask.Copy(),
+		ECSService:     r.ECSService.Copy(),
 		Sampling:       r.Sampling,
 		Window:         r.Window,
 		Plugins:        r.Plugins.Copy(),
@@ -190,6 +211,8 @@ func (r Report) Merge(other Report) Report {
 		Deployment:     r.Deployment.Merge(other.Deployment),
 		ReplicaSet:     r.ReplicaSet.Merge(other.ReplicaSet),
 		Overlay:        r.Overlay.Merge(other.Overlay),
+		ECSTask:        r.ECSTask.Merge(other.ECSTask),
+		ECSService:     r.ECSService.Merge(other.ECSService),
 		Sampling:       r.Sampling.Merge(other.Sampling),
 		Window:         r.Window + other.Window,
 		Plugins:        r.Plugins.Merge(other.Plugins),
@@ -219,6 +242,8 @@ func (r *Report) WalkTopologies(f func(*Topology)) {
 	f(&r.ReplicaSet)
 	f(&r.Host)
 	f(&r.Overlay)
+	f(&r.ECSTask)
+	f(&r.ECSService)
 }
 
 // Topology gets a topology by name
@@ -234,6 +259,8 @@ func (r Report) Topology(name string) (Topology, bool) {
 		ReplicaSet:     r.ReplicaSet,
 		Host:           r.Host,
 		Overlay:        r.Overlay,
+		ECSTask:        r.ECSTask,
+		ECSService:     r.ECSService,
 	}[name]
 	return t, ok
 }
