@@ -10,7 +10,7 @@
     "classnames": "~2.2.5",
     "d3": "~3.5.5",
     "dagre": "0.7.4",
-    "debug": "~2.3.2",
+    "debug": "~2.3.3",
     "filesize": "^3.3.0",
     "font-awesome": "^4.7.0",
     "font-awesome-webpack": "0.0.4",
@@ -18,7 +18,7 @@
     "lcp": "^1.1.0",
     "lodash": "~4.17.2",
     "materialize-css": "0.97.8",
-    "moment": "^2.16.0",
+    "moment": "^2.17.0",
     "page": "^1.7.1",
     "react": "^15.4.0",
     "react-dom": "^15.4.0",
@@ -39,7 +39,7 @@
     "babel-core": "^6.18.2",
     "babel-eslint": "5.0.0",
     "babel-jest": "^17.0.2",
-    "babel-loader": "^6.2.7",
+    "babel-loader": "^6.2.8",
     "babel-preset-es2015": "6.18.0",
     "babel-preset-react": "6.16.0",
     "clean-webpack-plugin": "^0.1.14",
@@ -70,11 +70,11 @@
   },
   "optionalDependencies": {
     "browser-perf": "^1.4.5",
-    "express": "~4.13.3",
-    "http-proxy": "^1.12.0",
+    "express": "~4.14.0",
+    "http-proxy": "^1.15.2",
     "perfjankie": "^2.1.0",
     "react-hot-loader": "3.0.0-beta.6",
-    "webpack-dev-server": "~1.14.1"
+    "webpack-dev-server": "~1.16.2"
   },
   "scripts": {
     "build": "webpack --config webpack.production.config.js",
