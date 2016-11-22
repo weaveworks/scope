@@ -91,7 +91,7 @@ type AWSCollector interface {
 
 // ReportStore is a thing that we can get reports from.
 type ReportStore interface {
-	FetchReports([]string) (map[string]report.Report, []string, error)
+	FetchReports(context.Context, []string) (map[string]report.Report, []string, error)
 }
 
 // AWSCollectorConfig has everything we need to make an AWS collector.
@@ -215,10 +215,10 @@ func (c *awsCollector) CreateTables() error {
 }
 
 // getReportKeys gets the s3 keys for reports in this range
-func (c *awsCollector) getReportKeys(userid string, row int64, start, end time.Time) ([]string, error) {
+func (c *awsCollector) getReportKeys(ctx context.Context, userid string, row int64, start, end time.Time) ([]string, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
 	var resp *dynamodb.QueryOutput
-	err := instrument.TimeRequestHistogram("Query", dynamoRequestDuration, func() error {
+	err := instrument.TimeRequestHistogram(ctx, "DynamoDB.Query", dynamoRequestDuration, func(_ context.Context) error {
 		var err error
 		resp, err = c.db.Query(&dynamodb.QueryInput{
 			TableName: aws.String(c.tableName),
@@ -263,7 +263,7 @@ func (c *awsCollector) getReportKeys(userid string, row int64, start, end time.T
 	return result, nil
 }
 
-func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) {
+func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]report.Report, error) {
 	missing := reportKeys
 
 	stores := []ReportStore{c.inProcess}
@@ -277,7 +277,7 @@ func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) 
 		if store == nil {
 			continue
 		}
-		found, newMissing, err := store.FetchReports(missing)
+		found, newMissing, err := store.FetchReports(ctx, missing)
 		missing = newMissing
 		if err != nil {
 			log.Warningf("Error fetching from cache: %v", err)
@@ -311,12 +311,12 @@ func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 	// Queries will only every span 2 rows max.
 	var reportKeys []string
 	if rowStart != rowEnd {
-		reportKeys1, err := c.getReportKeys(userid, rowStart, start, now)
+		reportKeys1, err := c.getReportKeys(ctx, userid, rowStart, start, now)
 		if err != nil {
 			return report.MakeReport(), err
 		}
 
-		reportKeys2, err := c.getReportKeys(userid, rowEnd, start, now)
+		reportKeys2, err := c.getReportKeys(ctx, userid, rowEnd, start, now)
 		if err != nil {
 			return report.MakeReport(), err
 		}
@@ -324,13 +324,13 @@ func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 		reportKeys = append(reportKeys, reportKeys1...)
 		reportKeys = append(reportKeys, reportKeys2...)
 	} else {
-		if reportKeys, err = c.getReportKeys(userid, rowEnd, start, now); err != nil {
+		if reportKeys, err = c.getReportKeys(ctx, userid, rowEnd, start, now); err != nil {
 			return report.MakeReport(), err
 		}
 	}
 
 	log.Debugf("Fetching %d reports from %v to %v", len(reportKeys), start, now)
-	reports, err := c.getReports(reportKeys)
+	reports, err := c.getReports(ctx, reportKeys)
 	if err != nil {
 		return report.MakeReport(), err
 	}
@@ -367,7 +367,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return err
 	}
 
-	reportSize, err := c.s3.StoreReportBytes(reportKey, buf)
+	reportSize, err := c.s3.StoreReportBytes(ctx, reportKey, buf)
 	if err != nil {
 		return err
 	}
@@ -375,7 +375,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 
 	// third, put it in memcache
 	if c.memcache != nil {
-		_, err = c.memcache.StoreReportBytes(reportKey, buf)
+		_, err = c.memcache.StoreReportBytes(ctx, reportKey, buf)
 		if err != nil {
 			// NOTE: We don't abort here because failing to store in memcache
 			// doesn't actually break anything else -- it's just an
@@ -389,7 +389,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		Add(float64(len(reportKey)))
 
 	var resp *dynamodb.PutItemOutput
-	err = instrument.TimeRequestHistogram("PutItem", dynamoRequestDuration, func() error {
+	err = instrument.TimeRequestHistogram(ctx, "S3.PutItem", dynamoRequestDuration, func(_ context.Context) error {
 		var err error
 		resp, err = c.db.PutItem(&dynamodb.PutItemInput{
 			TableName: aws.String(c.tableName),
@@ -502,7 +502,7 @@ func newInProcessStore(size int, expiration time.Duration) inProcessStore {
 }
 
 // FetchReports retrieves the given reports from the store.
-func (c inProcessStore) FetchReports(keys []string) (map[string]report.Report, []string, error) {
+func (c inProcessStore) FetchReports(_ context.Context, keys []string) (map[string]report.Report, []string, error) {
 	found := map[string]report.Report{}
 	missing := []string{}
 	for _, key := range keys {

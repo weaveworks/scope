@@ -1117,6 +1117,14 @@
 			"path": "/libcontainer/utils"
 		},
 		{
+			"importpath": "github.com/opentracing/opentracing-go",
+			"repository": "https://github.com/opentracing/opentracing-go",
+			"vcs": "git",
+			"revision": "902ca977fd85455c364050f985eba376b44315f0",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/paypal/ionet",
 			"repository": "https://github.com/paypal/ionet",
 			"vcs": "",
