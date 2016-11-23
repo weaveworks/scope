@@ -1,5 +1,5 @@
 import React from 'react';
-import TestUtils from 'react/lib/ReactTestUtils';
+import TestUtils from 'react-dom/lib/ReactTestUtils';
 import { Provider } from 'react-redux';
 import configureStore from '../../../stores/configureStore';
 
