@@ -23,6 +23,8 @@ func (topologyTagger) Tag(r report.Report) (report.Report, error) {
 		report.ContainerImage: &(r.ContainerImage),
 		report.Pod:            &(r.Pod),
 		report.Service:        &(r.Service),
+		report.ECSTask:        &(r.ECSTask),
+		report.ECSService:     &(r.ECSService),
 		report.Host:           &(r.Host),
 		report.Overlay:        &(r.Overlay),
 	} {
