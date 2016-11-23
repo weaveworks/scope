@@ -158,7 +158,9 @@ func MakeReport() Report {
 			WithShape(Heptagon).
 			WithLabel("replica set", "replica sets"),
 
-		Overlay: MakeTopology(),
+		Overlay: MakeTopology().
+			WithShape(Circle).
+			WithLabel("peer", "peers"),
 
 		ECSTask: MakeTopology().
 			WithShape(Heptagon).

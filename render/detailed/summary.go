@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
@@ -68,6 +69,8 @@ var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
 	report.Service:        podGroupNodeSummary,
 	report.Deployment:     podGroupNodeSummary,
 	report.ReplicaSet:     podGroupNodeSummary,
+	report.ECSTask:        ecsTaskNodeSummary,
+	report.ECSService:     ecsServiceNodeSummary,
 	report.Host:           hostNodeSummary,
 	report.Overlay:        weaveNodeSummary,
 }
@@ -237,6 +240,17 @@ func podGroupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	// counts.
 	base.LabelMinor = pluralize(n.Counters, report.Pod, "pod", "pods")
 
+	return base, true
+}
+
+func ecsTaskNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+	base.Label, _ = n.Latest.Lookup(awsecs.TaskFamily)
+	return base, true
+}
+
+func ecsServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+	base.Label, _ = report.ParseECSServiceNodeID(n.ID)
+	base.Stack = true
 	return base, true
 }
 

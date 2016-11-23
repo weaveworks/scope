@@ -1,11 +1,13 @@
 package awsecs
 
 import (
-	"fmt"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
+)
+
+const (
+	TaskFamily = "ecs_task_family"
 )
 
 type taskInfo struct {
@@ -75,7 +77,8 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 		unique := make(map[string]bool)
 		for _, serviceName := range taskServices {
 			if !unique[serviceName] {
-				rpt.ECSService = rpt.ECSService.AddNode(report.MakeNode(serviceNodeID(serviceName)))
+				serviceID := report.MakeECSServiceNodeID(serviceName)
+				rpt.ECSService = rpt.ECSService.AddNode(report.MakeNode(serviceID))
 				unique[serviceName] = true
 			}
 		}
@@ -84,14 +87,16 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 		for taskArn, info := range taskMap {
 
 			// new task node
-			node := report.MakeNodeWith(taskNodeID(taskArn), map[string]string{"family": info.family})
+			taskID := report.MakeECSTaskNodeID(taskArn)
+			node := report.MakeNodeWith(taskID, map[string]string{TaskFamily: info.family})
 			rpt.ECSTask = rpt.ECSTask.AddNode(node)
 
 			// parents sets to merge into all matching container nodes
 			parentsSets := report.MakeSets()
-			parentsSets.Add(report.ECSTask, report.MakeStringSet(taskNodeID(taskArn)))
+			parentsSets.Add(report.ECSTask, report.MakeStringSet(taskID))
 			if serviceName, ok := taskServices[taskArn]; ok {
-				parentsSets.Add(report.ECSService, report.MakeStringSet(serviceNodeID(serviceName)))
+				serviceID := report.MakeECSServiceNodeID(serviceName)
+				parentsSets.Add(report.ECSService, report.MakeStringSet(serviceID))
 			}
 
 			for _, containerID := range info.containerIDs {
@@ -112,12 +117,4 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 // Name needed for Tagger
 func (r Reporter) Name() string {
 	return "awsecs"
-}
-
-func serviceNodeID(id string) string {
-	return fmt.Sprintf("%s;ECSService", id)
-}
-
-func taskNodeID(id string) string {
-	return fmt.Sprintf("%s;ECSTask", id)
 }
