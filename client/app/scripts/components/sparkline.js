@@ -1,18 +1,20 @@
 // Forked from: https://github.com/KyleAMathews/react-sparkline at commit a9d7c5203d8f240938b9f2288287aaf0478df013
 import React from 'react';
-import d3 from 'd3';
+import { min as d3Min, max as d3Max, mean as d3Mean } from 'd3-array';
+import { isoParse as parseDate } from 'd3-time-format';
+import { line, curveLinear } from 'd3-shape';
+import { scaleLinear } from 'd3-scale';
 
 import { formatMetricSvg } from '../utils/string-utils';
 
-const parseDate = d3.time.format.iso.parse;
 
 export default class Sparkline extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-    this.x = d3.scale.linear();
-    this.y = d3.scale.linear();
-    this.line = d3.svg.line()
+    this.x = scaleLinear();
+    this.y = scaleLinear();
+    this.line = line()
       .x(d => this.x(d.date))
       .y(d => this.y(d.value));
   }
@@ -29,7 +31,7 @@ export default class Sparkline extends React.Component {
     // adjust scales
     this.x.range([2, this.props.width - 2]);
     this.y.range([this.props.height - 2, 2]);
-    this.line.interpolate(this.props.interpolate);
+    this.line.curve(this.props.curve);
 
     // Convert dates into D3 dates
     data = data.map(d => ({
@@ -50,18 +52,18 @@ export default class Sparkline extends React.Component {
     this.x.domain([firstDate, lastDate]);
 
     // determine value range
-    const minValue = this.props.min !== undefined ? this.props.min : d3.min(data, d => d.value);
+    const minValue = this.props.min !== undefined ? this.props.min : d3Min(data, d => d.value);
     const maxValue = this.props.max !== undefined
-      ? Math.max(this.props.max, d3.max(data, d => d.value)) : d3.max(data, d => d.value);
+      ? Math.max(this.props.max, d3Max(data, d => d.value)) : d3Max(data, d => d.value);
     this.y.domain([minValue, maxValue]);
 
     const lastValue = data[data.length - 1].value;
     const lastX = this.x(lastDate);
     const lastY = this.y(lastValue);
-    const min = formatMetricSvg(d3.min(data, d => d.value), this.props);
-    const max = formatMetricSvg(d3.max(data, d => d.value), this.props);
-    const mean = formatMetricSvg(d3.mean(data, d => d.value), this.props);
-    const title = `Last ${d3.round((lastDate - firstDate) / 1000)} seconds, ` +
+    const min = formatMetricSvg(d3Min(data, d => d.value), this.props);
+    const max = formatMetricSvg(d3Max(data, d => d.value), this.props);
+    const mean = formatMetricSvg(d3Mean(data, d => d.value), this.props);
+    const title = `Last ${Math.round((lastDate - firstDate) / 1000)} seconds, ` +
       `${data.length} samples, min: ${min}, max: ${max}, mean: ${mean}`;
 
     return {title, lastX, lastY, data};
@@ -98,6 +100,6 @@ Sparkline.defaultProps = {
   height: 24,
   strokeColor: '#7d7da8',
   strokeWidth: '0.5px',
-  interpolate: 'none',
+  curve: curveLinear,
   circleDiameter: 1.75
 };

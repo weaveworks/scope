@@ -1,5 +1,6 @@
 import _ from 'lodash';
-import d3 from 'd3';
+import { scaleLinear } from 'd3-scale';
+import { extent } from 'd3-array';
 
 
 // Inspired by Lee Byron's test data generator.
@@ -20,7 +21,7 @@ function bumpLayer(n, maxValue) {
   for (i = 0; i < n; ++i) a[i] = 0;
   for (i = 0; i < 5; ++i) bump(a);
   const values = a.map(function(d) { return Math.max(0, d * maxValue); });
-  const s = d3.scale.linear().domain(d3.extent(values)).range([0, maxValue]);
+  const s = scaleLinear().domain(extent(values)).range([0, maxValue]);
   return values.map(s);
 }
 /*eslint-enable */

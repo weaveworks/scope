@@ -1,17 +1,17 @@
 import _ from 'lodash';
-import d3 from 'd3';
 import React from 'react';
 import { connect } from 'react-redux';
 import { Motion, spring } from 'react-motion';
 import { Map as makeMap } from 'immutable';
+import { line, curveBasis } from 'd3-shape';
 
 import Edge from './edge';
 
 const animConfig = [80, 20]; // stiffness, damping
 const pointCount = 30;
 
-const line = d3.svg.line()
-  .interpolate('basis')
+const spline = line()
+  .curve(curveBasis)
   .x(d => d.x)
   .y(d => d.y);
 
@@ -23,7 +23,7 @@ const buildPath = (points, layoutPrecision) => {
     if (!extracted[index]) {
       extracted[index] = {};
     }
-    extracted[index][axis] = d3.round(value, layoutPrecision);
+    extracted[index][axis] = Math.round(value, layoutPrecision);
   });
   return extracted;
 };
@@ -53,7 +53,7 @@ class EdgeContainer extends React.Component {
     const other = _.omit(this.props, 'points');
 
     if (layoutPrecision === 0) {
-      const path = line(points.toJS());
+      const path = spline(points.toJS());
       return <Edge {...other} path={path} />;
     }
 
@@ -62,7 +62,7 @@ class EdgeContainer extends React.Component {
         {(interpolated) => {
           // convert points to path string, because that lends itself to
           // JS-equality checks in the child component
-          const path = line(buildPath(interpolated, layoutPrecision));
+          const path = spline(buildPath(interpolated, layoutPrecision));
           return <Edge {...other} path={path} />;
         }}
       </Motion>

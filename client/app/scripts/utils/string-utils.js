@@ -1,10 +1,11 @@
 import React from 'react';
 import filesize from 'filesize';
-import d3 from 'd3';
+import { format as d3Format } from 'd3-format';
+import { isoFormat } from 'd3-time-format';
 import LCP from 'lcp';
 import moment from 'moment';
 
-const formatLargeValue = d3.format('s');
+const formatLargeValue = d3Format('s');
 
 
 function renderHtml(text, unit) {
@@ -69,7 +70,7 @@ function makeFormatMetric(renderFn) {
 
 export const formatMetric = makeFormatMetric(renderHtml);
 export const formatMetricSvg = makeFormatMetric(renderSvg);
-export const formatDate = d3.time.format.iso;
+export const formatDate = isoFormat; // d3.time.format.iso;
 
 const CLEAN_LABEL_REGEX = /[^A-Za-z0-9]/g;
 export function slugify(label) {

@@ -1,9 +1,8 @@
 import React from 'react';
-import d3 from 'd3';
+import { isoParse as parseDate } from 'd3-time-format';
 import { OrderedMap } from 'immutable';
 
 const makeOrderedMap = OrderedMap;
-const parseDate = d3.time.format.iso.parse;
 const sortDate = (v, d) => d;
 const DEFAULT_TICK_INTERVAL = 1000; // DEFAULT_TICK_INTERVAL + renderTime < 1000ms
 const WINDOW_LENGTH = 60;
