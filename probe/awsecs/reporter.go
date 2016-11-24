@@ -6,6 +6,7 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
+// TaskFamily is the key that stores the task family of an ECS Task
 const (
 	TaskFamily = "ecs_task_family"
 )
@@ -45,7 +46,7 @@ func getLabelInfo(rpt report.Report) map[string]map[string]*taskInfo {
 	return results
 }
 
-// implements Tagger
+// Reporter implements Tagger
 type Reporter struct {
 }
 

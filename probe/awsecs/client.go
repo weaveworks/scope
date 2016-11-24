@@ -51,7 +51,7 @@ func (c ecsClient) getDeploymentMap() map[string]string {
 					Services: page.ServiceArns,
 				})
 				if err != nil {
-					// rather than trying to propogate errors up, just log a warning here
+					// rather than trying to propagate errors up, just log a warning here
 					log.Warnf("Error describing some ECS services, ECS service report may be incomplete: %v", err)
 					return
 				}
