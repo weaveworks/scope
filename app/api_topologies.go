@@ -35,7 +35,7 @@ const (
 
 var (
 	topologyRegistry = MakeRegistry()
-	k8sPseudoFilter  = APITopologyOptionGroup{
+	unmanagedFilter  = APITopologyOptionGroup{
 		ID:      "pseudo",
 		Default: "hide",
 		Options: []APITopologyOption{
@@ -165,6 +165,7 @@ func AddInitialTopologiesToRegistry(registry *Registry) {
 			renderer:    render.ECSTaskRenderer,
 			Name:        "Tasks",
 			Rank:        3,
+			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
@@ -172,6 +173,7 @@ func AddInitialTopologiesToRegistry(registry *Registry) {
 			parent:      ecsTasksID,
 			renderer:    render.ECSServiceRenderer,
 			Name:        "services",
+			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
@@ -228,7 +230,7 @@ func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopolog
 	for i, t := range topologies {
 		if t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
 			topologies[i] = updateTopologyFilters(t, []APITopologyOptionGroup{
-				kubernetesFilters(ns...), k8sPseudoFilter,
+				kubernetesFilters(ns...), unmanagedFilter,
 			})
 		}
 	}
