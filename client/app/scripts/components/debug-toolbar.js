@@ -160,8 +160,8 @@ class DebugToolbar extends React.Component {
     this.onChange = this.onChange.bind(this);
     this.toggleColors = this.toggleColors.bind(this);
     this.addNodes = this.addNodes.bind(this);
-    this.intermittendTimer = null;
-    this.intermittendNodes = makeSet();
+    this.intermittentTimer = null;
+    this.intermittentNodes = makeSet();
     this.shortLivedTimer = null;
     this.shortLivedNodes = makeSet();
     this.state = {
@@ -188,26 +188,13 @@ class DebugToolbar extends React.Component {
     this.asyncDispatch(setAppState(state => state.set('topologiesLoaded', !loading)));
   }
 
-  updateAdjacencies() {
-    const ns = this.props.nodes;
-    const nodeNames = ns.keySeq().toJS();
-    this.asyncDispatch(receiveNodesDelta({
-      add: this._addNodes(7),
-      update: sample(nodeNames).map(n => ({
-        id: n,
-        adjacency: sample(nodeNames),
-      }), nodeNames.length),
-      remove: this._removeNode(),
-    }));
-  }
-
-  setIntermittend() {
+  setIntermittent() {
     // simulate epheremal nodes
-    if (this.intermittendTimer) {
-      clearInterval(this.intermittendTimer);
-      this.intermittendTimer = null;
+    if (this.intermittentTimer) {
+      clearInterval(this.intermittentTimer);
+      this.intermittentTimer = null;
     } else {
-      this.intermittendTimer = setInterval(() => {
+      this.intermittentTimer = setInterval(() => {
         // add new node
         this.addNodes(1);
 
@@ -370,7 +357,7 @@ class DebugToolbar extends React.Component {
         <div>
           <label>Short-lived nodes</label>
           <button onClick={() => this.setShortLived()}>Toggle short-lived nodes</button>
-          <button onClick={() => this.setIntermittend()}>Toggle intermittend nodes</button>
+          <button onClick={() => this.setIntermittent()}>Toggle intermittent nodes</button>
         </div>
 
         <div>
