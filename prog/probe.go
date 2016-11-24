@@ -95,6 +95,9 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	if flags.kubernetesEnabled {
 		checkpointFlags["kubernetes_enabled"] = "true"
 	}
+	if flags.ecsEnabled {
+		checkpointFlags["ecs_enabled"] = "true"
+	}
 	go check(checkpointFlags)
 
 	handlerRegistry := controls.NewDefaultHandlerRegistry()
