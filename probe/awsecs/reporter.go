@@ -93,10 +93,10 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 
 			// parents sets to merge into all matching container nodes
 			parentsSets := report.MakeSets()
-			parentsSets.Add(report.ECSTask, report.MakeStringSet(taskID))
+			parentsSets = parentsSets.Add(report.ECSTask, report.MakeStringSet(taskID))
 			if serviceName, ok := taskServices[taskArn]; ok {
 				serviceID := report.MakeECSServiceNodeID(serviceName)
-				parentsSets.Add(report.ECSService, report.MakeStringSet(serviceID))
+				parentsSets = parentsSets.Add(report.ECSService, report.MakeStringSet(serviceID))
 			}
 
 			for _, containerID := range info.containerIDs {
