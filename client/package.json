@@ -78,7 +78,7 @@
   },
   "scripts": {
     "build": "webpack --config webpack.production.config.js",
-    "build-external": "webpack --config webpack.external.config.js",
+    "build-external": "EXTERNAL=true webpack --config webpack.production.config.js",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest",

@@ -154,7 +154,7 @@ client/build-external/index.html:
 
 endif
 
-$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/webpack.external.config.js client/server.js client/.eslintrc
+$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
 	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) client
 	touch $@
 
