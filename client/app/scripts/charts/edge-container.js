@@ -5,6 +5,7 @@ import { Motion, spring } from 'react-motion';
 import { Map as makeMap } from 'immutable';
 import { line, curveBasis } from 'd3-shape';
 
+import { round } from '../utils/math-utils';
 import Edge from './edge';
 
 const animConfig = [80, 20]; // stiffness, damping
@@ -23,7 +24,7 @@ const buildPath = (points, layoutPrecision) => {
     if (!extracted[index]) {
       extracted[index] = {};
     }
-    extracted[index][axis] = Math.round(value, layoutPrecision);
+    extracted[index][axis] = round(value, layoutPrecision);
   });
   return extracted;
 };

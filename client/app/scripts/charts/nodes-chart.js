@@ -375,7 +375,6 @@ class NodesChart extends React.Component {
   }
 
   zoomed() {
-    // debug('zoomed', d3Event.transform);
     this.isZooming = true;
     // dont pan while node is selected
     if (!this.props.selectedNodeId) {
@@ -388,13 +387,10 @@ class NodesChart extends React.Component {
     }
   }
 
-  setZoom(zoom) {
-    this.svg.call(
-      this.zoom.transform,
-      zoomIdentity
-        .scale(zoom.scale)
-        .translate(zoom.panTranslateX, zoom.panTranslateY)
-    );
+  setZoom(newZoom) {
+    this.svg.call(this.zoom.transform, zoomIdentity
+      .translate(newZoom.panTranslateX, newZoom.panTranslateY)
+      .scale(newZoom.scale));
   }
 }
 

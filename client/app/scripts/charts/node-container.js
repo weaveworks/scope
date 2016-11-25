@@ -3,6 +3,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Motion, spring } from 'react-motion';
 
+import { round } from '../utils/math-utils';
 import Node from './node';
 
 class NodeContainer extends React.Component {
@@ -19,8 +20,8 @@ class NodeContainer extends React.Component {
         f: spring(scaleFactor, animConfig)
       }}>
         {interpolated => {
-          const transform = `translate(${Math.round(interpolated.x, -layoutPrecision)},`
-            + `${Math.round(interpolated.y, -layoutPrecision)})`;
+          const transform = `translate(${round(interpolated.x, layoutPrecision)},`
+            + `${round(interpolated.y, layoutPrecision)})`;
           return <Node {...other} transform={transform} scaleFactor={interpolated.f} />;
         }}
       </Motion>
