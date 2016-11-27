@@ -1,3 +1,63 @@
+## Release 1.1.0
+
+Highlights:
+- New ECS view which allows visualizing your tasks and services in Amazon's EC2 Container Service.
+- Custom label-based container filters can be defined through `--app.container-label-filter`
+
+New features and enhancements:
+- Add ECS views
+	[#2026](https://github.com/weaveworks/scope/pull/2026)
+- Add custom label-based filters in container view
+	[#1895](https://github.com/weaveworks/scope/pull/1895)
+- Improve plugin errors tooltip
+	[#2022](https://github.com/weaveworks/scope/pull/2022)
+- Add anti-dance heuristics (and feature flags)
+	[#1993](https://github.com/weaveworks/scope/pull/1993)
+- Table-mode: sort ips numerically
+	[#2007](https://github.com/weaveworks/scope/pull/2007)
+- increase black/white text contrast in contrast mode
+	[#2006](https://github.com/weaveworks/scope/pull/2006)
+- Improve view-node-in-topo button usability
+	[#1926](https://github.com/weaveworks/scope/pull/1926)
+
+Performance improvements:
+- Add graph complexity check on page load
+	[#1994](https://github.com/weaveworks/scope/pull/1994)
+
+Bug fixes:
+- plug goroutine leak in control
+	[#2003](https://github.com/weaveworks/scope/pull/2003)
+- Fix details panel not closing on canvas click
+	[#1998](https://github.com/weaveworks/scope/pull/1998)
+
+Documentation:
+- Use intuitive standalone service name in compose
+	[#2019](https://github.com/weaveworks/scope/pull/2019)
+- Fix kubectl port-forward command to access the scope app locally
+	[#2010](https://github.com/weaveworks/scope/pull/2010)
+- Update website plugins documentation
+	[#2008](https://github.com/weaveworks/scope/pull/2008)
+
+Internal improvements and cleanup:
+- Combined external and prod webpack config files
+	[#2014](https://github.com/weaveworks/scope/pull/2014)
+- Update package.json
+	[#2017](https://github.com/weaveworks/scope/pull/2017)
+- Move plugins to the new organization
+	[#1906](https://github.com/weaveworks/scope/pull/1906)
+- Change webpack local config to use source maps
+	[#2011](https://github.com/weaveworks/scope/pull/2011)
+- middleware/errorhandler: Implement Hijacker so it works with ws proxy
+	[#1971](https://github.com/weaveworks/scope/pull/1971)
+- Fix time-dependant test (stop testing docker client library)
+	[#2005](https://github.com/weaveworks/scope/pull/2005)
+- Give time to the overlay test backoff collectors to finish
+	[#1995](https://github.com/weaveworks/scope/pull/1995)
+
+Weave Cloud related changes:
+- Add OpenTracing support to TimeRequestHistogram
+	[#2023](https://github.com/weaveworks/scope/pull/2023)
+
 ## Release 1.0.0
 
 Highlights:
