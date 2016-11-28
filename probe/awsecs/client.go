@@ -16,6 +16,12 @@ type ecsClient struct {
 	cluster string
 }
 
+type ecsInfo struct {
+	tasks          map[string]*ecs.Task
+	services       map[string]*ecs.Service
+	taskServiceMap map[string]string
+}
+
 func newClient(cluster string) (*ecsClient, error) {
 	sess := session.New()
 
@@ -31,9 +37,19 @@ func newClient(cluster string) (*ecsClient, error) {
 }
 
 // returns a map from deployment ids to service names
-// cannot fail as it will attempt to deliver partial results, though that may end up being no results
-func (c ecsClient) getDeploymentMap() map[string]string {
+func (c ecsClient) getDeploymentMap(services map[string]*ecs.Service) map[string]string {
 	results := map[string]string{}
+	for serviceName, service := range services {
+		for _, deployment := range service.Deployments {
+			results[*deployment.Id] = serviceName
+		}
+	}
+	return results
+}
+
+// cannot fail as it will attempt to deliver partial results, though that may end up being no results
+func (c ecsClient) getServices() map[string]*ecs.Service {
+	results := map[string]*ecs.Service{}
 	lock := sync.Mutex{} // lock mediates access to results
 
 	group := sync.WaitGroup{}
@@ -62,9 +78,7 @@ func (c ecsClient) getDeploymentMap() map[string]string {
 
 				lock.Lock()
 				for _, service := range resp.Services {
-					for _, deployment := range service.Deployments {
-						results[*deployment.Id] = *service.ServiceName
-					}
+					results[*service.ServiceName] = service
 				}
 				lock.Unlock()
 			}()
@@ -79,8 +93,7 @@ func (c ecsClient) getDeploymentMap() map[string]string {
 	return results
 }
 
-// returns a map from task ARNs to deployment ids
-func (c ecsClient) getTaskDeployments(taskArns []string) (map[string]string, error) {
+func (c ecsClient) getTasks(taskArns []string) (map[string]*ecs.Task, error) {
 	taskPtrs := make([]*string, len(taskArns))
 	for i := range taskArns {
 		taskPtrs[i] = &taskArns[i]
@@ -100,36 +113,38 @@ func (c ecsClient) getTaskDeployments(taskArns []string) (map[string]string, err
 		log.Warnf("Failed to describe ECS task %s, ECS service report may be incomplete: %s", failure.Arn, failure.Reason)
 	}
 
-	results := make(map[string]string, len(resp.Tasks))
+	results := make(map[string]*ecs.Task, len(resp.Tasks))
 	for _, task := range resp.Tasks {
-		results[*task.TaskArn] = *task.StartedBy
+		results[*task.TaskArn] = task
 	}
 	return results, nil
 }
 
 // returns a map from task ARNs to service names
-func (c ecsClient) getTaskServices(taskArns []string) (map[string]string, error) {
-	deploymentMapChan := make(chan map[string]string)
+func (c ecsClient) getInfo(taskArns []string) (ecsInfo, error) {
+	servicesChan := make(chan map[string]*ecs.Service)
 	go func() {
-		deploymentMapChan <- c.getDeploymentMap()
+		servicesChan <- c.getServices()
 	}()
 
 	// do these two fetches in parallel
-	taskDeployments, err := c.getTaskDeployments(taskArns)
-	deploymentMap := <-deploymentMapChan
+	tasks, err := c.getTasks(taskArns)
+	services := <-servicesChan
 
 	if err != nil {
-		return nil, err
+		return ecsInfo{}, err
 	}
 
-	results := map[string]string{}
-	for taskArn, depID := range taskDeployments {
+	deploymentMap := c.getDeploymentMap(services)
+
+	taskServiceMap := map[string]string{}
+	for taskArn, task := range tasks {
 		// Note not all tasks map to a deployment, or we could otherwise mismatch due to races.
 		// It's safe to just ignore all these cases and consider them "non-service" tasks.
-		if service, ok := deploymentMap[depID]; ok {
-			results[taskArn] = service
+		if serviceName, ok := deploymentMap[*task.StartedBy]; ok {
+			taskServiceMap[taskArn] = serviceName
 		}
 	}
 
-	return results, nil
+	return ecsInfo{services: services, tasks: tasks, taskServiceMap: taskServiceMap}, nil
 }

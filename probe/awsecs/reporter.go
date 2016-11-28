@@ -1,6 +1,8 @@
 package awsecs
 
 import (
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
@@ -8,17 +10,35 @@ import (
 
 // TaskFamily is the key that stores the task family of an ECS Task
 const (
-	TaskFamily = "ecs_task_family"
+	Cluster             = "ecs_cluster"
+	CreatedAt           = "ecs_created_at"
+	TaskFamily          = "ecs_task_family"
+	ServiceDesiredCount = "ecs_service_desired_count"
+	ServiceRunningCount = "ecs_service_running_count"
 )
 
-type taskInfo struct {
+var (
+	taskMetadata = report.MetadataTemplates{
+		Cluster:    {ID: Cluster, Label: "Cluster", From: report.FromLatest, Priority: 0},
+		CreatedAt:  {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: "datetime"},
+		TaskFamily: {ID: TaskFamily, Label: "Family", From: report.FromLatest, Priority: 2},
+	}
+	serviceMetadata = report.MetadataTemplates{
+		Cluster:             {ID: Cluster, Label: "Cluster", From: report.FromLatest, Priority: 0},
+		CreatedAt:           {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: "datetime"},
+		ServiceDesiredCount: {ID: ServiceDesiredCount, Label: "Desired Task Count", From: report.FromLatest, Priority: 2, Datatype: "number"},
+		ServiceRunningCount: {ID: ServiceRunningCount, Label: "Running Task Count", From: report.FromLatest, Priority: 3, Datatype: "number"},
+	}
+)
+
+type taskLabelInfo struct {
 	containerIDs []string
 	family       string
 }
 
 // return map from cluster to map of task arns to task infos
-func getLabelInfo(rpt report.Report) map[string]map[string]*taskInfo {
-	results := map[string]map[string]*taskInfo{}
+func getLabelInfo(rpt report.Report) map[string]map[string]*taskLabelInfo {
+	results := map[string]map[string]*taskLabelInfo{}
 	log.Debug("scanning for ECS containers")
 	for nodeID, node := range rpt.Container.Nodes {
 
@@ -39,13 +59,13 @@ func getLabelInfo(rpt report.Report) map[string]map[string]*taskInfo {
 
 		taskMap, ok := results[cluster]
 		if !ok {
-			taskMap = map[string]*taskInfo{}
+			taskMap = map[string]*taskLabelInfo{}
 			results[cluster] = taskMap
 		}
 
 		task, ok := taskMap[taskArn]
 		if !ok {
-			task = &taskInfo{containerIDs: []string{}, family: family}
+			task = &taskLabelInfo{containerIDs: []string{}, family: family}
 			taskMap[taskArn] = task
 		}
 
@@ -78,33 +98,42 @@ func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 			taskArns = append(taskArns, taskArn)
 		}
 
-		taskServices, err := client.getTaskServices(taskArns)
+		ecsInfo, err := client.getInfo(taskArns)
 		if err != nil {
 			return rpt, err
 		}
 
 		// Create all the services first
-		unique := map[string]bool{}
-		for _, serviceName := range taskServices {
-			if !unique[serviceName] {
-				serviceID := report.MakeECSServiceNodeID(serviceName)
-				rpt.ECSService = rpt.ECSService.AddNode(report.MakeNode(serviceID))
-				unique[serviceName] = true
-			}
+		for serviceName, service := range ecsInfo.services {
+			serviceID := report.MakeECSServiceNodeID(serviceName)
+			rpt.ECSService = rpt.ECSService.AddNode(report.MakeNodeWith(serviceID, map[string]string{ // TODO add task metadata
+				Cluster:             cluster,
+				ServiceDesiredCount: string(*service.DesiredCount),
+				ServiceRunningCount: string(*service.RunningCount),
+			}))
 		}
-		log.Debugf("Created %v ECS service nodes", len(taskServices))
+		log.Debugf("Created %v ECS service nodes", len(ecsInfo.services))
 
 		for taskArn, info := range taskMap {
+			task, ok := ecsInfo.tasks[taskArn]
+			if !ok {
+				// can happen due to partial failures, just skip it
+				continue
+			}
 
 			// new task node
 			taskID := report.MakeECSTaskNodeID(taskArn)
-			node := report.MakeNodeWith(taskID, map[string]string{TaskFamily: info.family})
+			node := report.MakeNodeWith(taskID, map[string]string{
+				TaskFamily: info.family,
+				Cluster:    cluster,
+				CreatedAt:  task.CreatedAt.Format(time.RFC3339Nano),
+			})
 			rpt.ECSTask = rpt.ECSTask.AddNode(node)
 
 			// parents sets to merge into all matching container nodes
 			parentsSets := report.MakeSets()
 			parentsSets = parentsSets.Add(report.ECSTask, report.MakeStringSet(taskID))
-			if serviceName, ok := taskServices[taskArn]; ok {
+			if serviceName, ok := ecsInfo.taskServiceMap[taskArn]; ok {
 				serviceID := report.MakeECSServiceNodeID(serviceName)
 				parentsSets = parentsSets.Add(report.ECSService, report.MakeStringSet(serviceID))
 			}
