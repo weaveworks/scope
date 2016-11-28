@@ -161,10 +161,11 @@ func AddInitialTopologiesToRegistry(registry *Registry) {
 			Rank:     4,
 		},
 		APITopologyDesc{
-			id:       "weave",
-			parent:   "hosts",
-			renderer: render.WeaveRenderer,
-			Name:     "Weave Net",
+			id:          "weave",
+			parent:      "hosts",
+			renderer:    render.WeaveRenderer,
+			Name:        "weave net",
+			HideIfEmpty: true,
 		},
 	)
 }
