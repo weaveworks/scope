@@ -74,8 +74,8 @@
     "express": "~4.14.0",
     "http-proxy": "^1.15.2",
     "perfjankie": "^2.1.0",
-    "react-hot-loader": "3.0.0-beta.6",
-    "webpack-dev-server": "~1.16.2"
+    "webpack-dev-middleware": "^1.8.4",
+    "webpack-hot-middleware": "^2.13.2"
   },
   "scripts": {
     "build": "webpack --config webpack.production.config.js",

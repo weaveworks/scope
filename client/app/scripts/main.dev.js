@@ -6,7 +6,6 @@ import 'babel-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import { AppContainer } from 'react-hot-loader';
 import configureStore from './stores/configureStore.dev';
 
 import DevTools from './components/dev-tools';
@@ -20,9 +19,7 @@ function renderApp() {
   const App = require('./components/app').default;
   ReactDOM.render((
     <Provider store={store}>
-      <AppContainer>
-         <App />
-      </AppContainer>
+      <App />
       <DevTools />
     </Provider>
   ), document.getElementById('app'));
