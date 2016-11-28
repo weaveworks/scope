@@ -285,7 +285,7 @@ func main() {
 	flag.StringVar(&flags.probe.kubernetesConfig.Username, "probe.kubernetes.username", "", "Username for basic authentication to the API server")
 
 	// AWS ECS
-	flag.BoolVar(&flags.probe.ecsEnabled, "probe.ecs", false, "collect ecs-related attributes for containers on this node")
+	flag.BoolVar(&flags.probe.ecsEnabled, "probe.ecs", false, "Collect ecs-related attributes for containers on this node")
 
 	// Weave
 	flag.StringVar(&flags.probe.weaveAddr, "probe.weave.addr", "127.0.0.1:6784", "IP address & port of the Weave router")

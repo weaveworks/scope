@@ -18,29 +18,38 @@ type taskInfo struct {
 
 // return map from cluster to map of task arns to task infos
 func getLabelInfo(rpt report.Report) map[string]map[string]*taskInfo {
-	results := make(map[string]map[string]*taskInfo)
+	results := map[string]map[string]*taskInfo{}
 	log.Debug("scanning for ECS containers")
 	for nodeID, node := range rpt.Container.Nodes {
 
-		taskArn, taskArnOk := node.Latest.Lookup(docker.LabelPrefix + "com.amazonaws.ecs.task-arn")
-		cluster, clusterOk := node.Latest.Lookup(docker.LabelPrefix + "com.amazonaws.ecs.cluster")
-		family, familyOk := node.Latest.Lookup(docker.LabelPrefix + "com.amazonaws.ecs.task-definition-family")
-
-		if taskArnOk && clusterOk && familyOk {
-			taskMap, ok := results[cluster]
-			if !ok {
-				taskMap = make(map[string]*taskInfo)
-				results[cluster] = taskMap
-			}
-
-			task, ok := taskMap[taskArn]
-			if !ok {
-				task = &taskInfo{containerIDs: make([]string, 0), family: family}
-				taskMap[taskArn] = task
-			}
-
-			task.containerIDs = append(task.containerIDs, nodeID)
+		taskArn, ok := node.Latest.Lookup(docker.LabelPrefix + "com.amazonaws.ecs.task-arn")
+		if !ok {
+			continue
 		}
+
+		cluster, ok := node.Latest.Lookup(docker.LabelPrefix + "com.amazonaws.ecs.cluster")
+		if !ok {
+			continue
+		}
+
+		family, ok := node.Latest.Lookup(docker.LabelPrefix + "com.amazonaws.ecs.task-definition-family")
+		if !ok {
+			continue
+		}
+
+		taskMap, ok := results[cluster]
+		if !ok {
+			taskMap = map[string]*taskInfo{}
+			results[cluster] = taskMap
+		}
+
+		task, ok := taskMap[taskArn]
+		if !ok {
+			task = &taskInfo{containerIDs: []string{}, family: family}
+			taskMap[taskArn] = task
+		}
+
+		task.containerIDs = append(task.containerIDs, nodeID)
 	}
 	log.Debug("Got ECS container info: %v", results)
 	return results
@@ -51,7 +60,7 @@ type Reporter struct {
 }
 
 // Tag needed for Tagger
-func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
+func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 	rpt = rpt.Copy()
 
 	clusterMap := getLabelInfo(rpt)
@@ -75,7 +84,7 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 		}
 
 		// Create all the services first
-		unique := make(map[string]bool)
+		unique := map[string]bool{}
 		for _, serviceName := range taskServices {
 			if !unique[serviceName] {
 				serviceID := report.MakeECSServiceNodeID(serviceName)
@@ -99,7 +108,6 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 				serviceID := report.MakeECSServiceNodeID(serviceName)
 				parentsSets = parentsSets.Add(report.ECSService, report.MakeStringSet(serviceID))
 			}
-
 			for _, containerID := range info.containerIDs {
 				if containerNode, ok := rpt.Container.Nodes[containerID]; ok {
 					rpt.Container.Nodes[containerID] = containerNode.WithParents(parentsSets)
@@ -107,7 +115,6 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 					log.Warnf("Got task info for non-existent container %v, this shouldn't be able to happen", containerID)
 				}
 			}
-
 		}
 
 	}
