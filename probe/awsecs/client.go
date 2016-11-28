@@ -109,7 +109,7 @@ func (c ecsClient) getTaskDeployments(taskArns []string) (map[string]string, err
 
 // returns a map from task ARNs to service names
 func (c ecsClient) getTaskServices(taskArns []string) (map[string]string, error) {
-	deploymentMapChan := chan map[string]string{}
+	deploymentMapChan := make(chan map[string]string)
 	go func() {
 		deploymentMapChan <- c.getDeploymentMap()
 	}()
