@@ -206,7 +206,9 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	}
 
 	if flags.ecsEnabled {
-		p.AddTagger(awsecs.Reporter{})
+		reporter := awsecs.Reporter{}
+		p.AddReporter(reporter)
+		p.AddTagger(reporter)
 	}
 
 	if flags.weaveEnabled {

@@ -1,6 +1,7 @@
 package awsecs
 
 import (
+	"fmt"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -26,8 +27,8 @@ var (
 	serviceMetadata = report.MetadataTemplates{
 		Cluster:             {ID: Cluster, Label: "Cluster", From: report.FromLatest, Priority: 0},
 		CreatedAt:           {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: "datetime"},
-		ServiceDesiredCount: {ID: ServiceDesiredCount, Label: "Desired Task Count", From: report.FromLatest, Priority: 2, Datatype: "number"},
-		ServiceRunningCount: {ID: ServiceRunningCount, Label: "Running Task Count", From: report.FromLatest, Priority: 3, Datatype: "number"},
+		ServiceDesiredCount: {ID: ServiceDesiredCount, Label: "Desired Tasks", From: report.FromLatest, Priority: 2, Datatype: "number"},
+		ServiceRunningCount: {ID: ServiceRunningCount, Label: "Running Tasks", From: report.FromLatest, Priority: 3, Datatype: "number"},
 	}
 )
 
@@ -75,7 +76,7 @@ func getLabelInfo(rpt report.Report) map[string]map[string]*taskLabelInfo {
 	return results
 }
 
-// Reporter implements Tagger
+// Reporter implements Tagger, Reporter
 type Reporter struct {
 }
 
@@ -106,10 +107,10 @@ func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 		// Create all the services first
 		for serviceName, service := range ecsInfo.services {
 			serviceID := report.MakeECSServiceNodeID(serviceName)
-			rpt.ECSService = rpt.ECSService.AddNode(report.MakeNodeWith(serviceID, map[string]string{ // TODO add task metadata
+			rpt.ECSService = rpt.ECSService.AddNode(report.MakeNodeWith(serviceID, map[string]string{
 				Cluster:             cluster,
-				ServiceDesiredCount: string(*service.DesiredCount),
-				ServiceRunningCount: string(*service.RunningCount),
+				ServiceDesiredCount: fmt.Sprintf("%d", *service.DesiredCount),
+				ServiceRunningCount: fmt.Sprintf("%d", *service.RunningCount),
 			}))
 		}
 		log.Debugf("Created %v ECS service nodes", len(ecsInfo.services))
@@ -151,7 +152,17 @@ func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 	return rpt, nil
 }
 
-// Name needed for Tagger
+// Report needed for Reporter
+func (Reporter) Report() (report.Report, error) {
+	result := report.MakeReport()
+	taskTopology := report.MakeTopology().WithMetadataTemplates(taskMetadata)
+	result.ECSTask = result.ECSTask.Merge(taskTopology)
+	serviceTopology := report.MakeTopology().WithMetadataTemplates(serviceMetadata)
+	result.ECSService = result.ECSService.Merge(serviceTopology)
+	return result, nil
+}
+
+// Name needed for Tagger, Reporter
 func (r Reporter) Name() string {
 	return "awsecs"
 }
