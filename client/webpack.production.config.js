@@ -11,7 +11,7 @@ const GLOBALS = {
 };
 
 let OUTPUT_PATH = 'build/';
-let PUBLIC_PATH = '/';
+let PUBLIC_PATH = '';
 
 if (process.env.EXTERNAL) {
   OUTPUT_PATH = 'build-external/';
