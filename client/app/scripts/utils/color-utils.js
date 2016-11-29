@@ -1,11 +1,12 @@
-import d3 from 'd3';
+import { hsl } from 'd3-color';
+import { scaleLinear, scaleOrdinal, schemeCategory10 } from 'd3-scale';
 
 const PSEUDO_COLOR = '#b1b1cb';
 const hueRange = [20, 330]; // exclude red
-const hueScale = d3.scale.linear().range(hueRange);
-const networkColorScale = d3.scale.category10();
+const hueScale = scaleLinear().range(hueRange);
+const networkColorScale = scaleOrdinal(schemeCategory10);
 // map hues to lightness
-const lightnessScale = d3.scale.linear().domain(hueRange).range([0.5, 0.7]);
+const lightnessScale = scaleLinear().domain(hueRange).range([0.5, 0.7]);
 const startLetterRange = 'A'.charCodeAt();
 const endLetterRange = 'Z'.charCodeAt();
 const letterRange = endLetterRange - startLetterRange;
@@ -36,8 +37,7 @@ export function colors(text, secondText) {
     // reuse text2degree and feed degree to lightness scale
     lightness = lightnessScale(text2degree(secondText));
   }
-  const color = d3.hsl(hue, saturation, lightness);
-  return color;
+  return hsl(hue, saturation, lightness);
 }
 
 export function getNeutralColor() {
@@ -55,31 +55,30 @@ export function getNodeColorDark(text = '', secondText = '', isPseudo = false) {
   if (isPseudo) {
     return PSEUDO_COLOR;
   }
-  const color = d3.rgb(colors(text, secondText));
-  let hsl = color.hsl();
+  let color = hsl(colors(text, secondText));
 
   // ensure darkness
-  if (hsl.h > 20 && hsl.h < 120) {
-    hsl = hsl.darker(2);
+  if (color.h > 20 && color.h < 120) {
+    color = color.darker(2);
   } else if (hsl.l > 0.7) {
-    hsl = hsl.darker(1.5);
+    color = color.darker(1.5);
   } else {
-    hsl = hsl.darker(1);
+    color = color.darker(1);
   }
 
-  return hsl.toString();
+  return color.toString();
 }
 
 export function getNetworkColor(text) {
   return networkColorScale(text);
 }
 
-export function brightenColor(color) {
-  let hsl = d3.rgb(color).hsl();
+export function brightenColor(c) {
+  let color = hsl(c);
   if (hsl.l > 0.5) {
-    hsl = hsl.brighter(0.5);
+    color = color.brighter(0.5);
   } else {
-    hsl = hsl.brighter(0.8);
+    color = color.brighter(0.8);
   }
-  return hsl.toString();
+  return color.toString();
 }

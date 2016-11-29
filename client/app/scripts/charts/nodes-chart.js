@@ -1,10 +1,13 @@
 import _ from 'lodash';
-import d3 from 'd3';
 import debug from 'debug';
 import React from 'react';
 import { connect } from 'react-redux';
 import { Map as makeMap, fromJS } from 'immutable';
 import timely from 'timely';
+
+import { scaleThreshold, scaleLinear } from 'd3-scale';
+import { event as d3Event, select } from 'd3-selection';
+import { zoom, zoomIdentity } from 'd3-zoom';
 
 import { nodeAdjacenciesSelector, adjacentNodesSelector } from '../selectors/chartSelectors';
 import { clickBackground } from '../actions/app-actions';
@@ -20,7 +23,7 @@ const log = debug('scope:nodes-chart');
 const ZOOM_CACHE_FIELDS = ['scale', 'panTranslateX', 'panTranslateY'];
 
 // make sure circular layouts a bit denser with 3-6 nodes
-const radiusDensity = d3.scale.threshold()
+const radiusDensity = scaleThreshold()
   .domain([3, 6])
   .range([2.5, 3.5, 3]);
 
@@ -80,7 +83,7 @@ function getNodeScale(nodesCount, width, height) {
   const normalizedNodeSize = Math.max(MIN_NODE_SIZE,
     Math.min(nodeSize / Math.sqrt(nodesCount), maxNodeSize));
 
-  return d3.scale.linear().range([0, normalizedNodeSize]);
+  return scaleLinear().range([0, normalizedNodeSize]);
 }
 
 
@@ -123,11 +126,11 @@ class NodesChart extends React.Component {
     this.state = {
       edges: makeMap(),
       nodes: makeMap(),
-      nodeScale: d3.scale.linear(),
+      nodeScale: scaleLinear(),
       panTranslateX: 0,
       panTranslateY: 0,
       scale: 1,
-      selectedNodeScale: d3.scale.linear(),
+      selectedNodeScale: scaleLinear(),
       hasZoomed: false,
       height: props.height || 0,
       width: props.width || 0,
@@ -146,12 +149,11 @@ class NodesChart extends React.Component {
 
     // wipe node states when showing different topology
     if (nextProps.topologyId !== this.props.topologyId) {
-      // re-apply cached canvas zoom/pan to d3 behavior (or set defaul values)
+      // re-apply cached canvas zoom/pan to d3 behavior (or set the default values)
       const defaultZoom = { scale: 1, panTranslateX: 0, panTranslateY: 0, hasZoomed: false };
       const nextZoom = this.state.zoomCache[nextProps.topologyId] || defaultZoom;
       if (nextZoom) {
-        this.zoom.scale(nextZoom.scale);
-        this.zoom.translate([nextZoom.panTranslateX, nextZoom.panTranslateY]);
+        this.setZoom(nextZoom);
       }
 
       // saving previous zoom state
@@ -188,17 +190,17 @@ class NodesChart extends React.Component {
     // distinguish pan/zoom from click
     this.isZooming = false;
 
-    this.zoom = d3.behavior.zoom()
+    this.zoom = zoom()
       .scaleExtent([0.1, 2])
       .on('zoom', this.zoomed);
 
-    d3.select('.nodes-chart svg')
-      .call(this.zoom);
+    this.svg = select('.nodes-chart svg');
+    this.svg.call(this.zoom);
   }
 
   componentWillUnmount() {
     // undoing .call(zoom)
-    d3.select('.nodes-chart svg')
+    this.svg
       .on('mousedown.zoom', null)
       .on('onwheel', null)
       .on('onmousewheel', null)
@@ -317,8 +319,7 @@ class NodesChart extends React.Component {
 
   restoreLayout(state) {
     // undo any pan/zooming that might have happened
-    this.zoom.scale(state.scale);
-    this.zoom.translate([state.panTranslateX, state.panTranslateY]);
+    this.setZoom(state);
 
     const nodes = state.nodes.map(node => node.merge({
       x: node.get('px'),
@@ -361,10 +362,8 @@ class NodesChart extends React.Component {
     const zoomFactor = Math.min(xFactor, yFactor);
     let zoomScale = state.scale;
 
-    if (this.zoom && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
+    if (this.svg && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
       zoomScale = zoomFactor;
-      // saving in d3's behavior cache
-      this.zoom.scale(zoomFactor);
     }
 
     return {
@@ -376,17 +375,22 @@ class NodesChart extends React.Component {
   }
 
   zoomed() {
-    // debug('zoomed', d3.event.scale, d3.event.translate);
     this.isZooming = true;
     // dont pan while node is selected
     if (!this.props.selectedNodeId) {
       this.setState({
         hasZoomed: true,
-        panTranslateX: d3.event.translate[0],
-        panTranslateY: d3.event.translate[1],
-        scale: d3.event.scale
+        panTranslateX: d3Event.transform.x,
+        panTranslateY: d3Event.transform.y,
+        scale: d3Event.transform.k
       });
     }
+  }
+
+  setZoom(newZoom) {
+    this.svg.call(this.zoom.transform, zoomIdentity
+      .translate(newZoom.panTranslateX, newZoom.panTranslateY)
+      .scale(newZoom.scale));
   }
 }
 

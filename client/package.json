@@ -8,7 +8,7 @@
   "dependencies": {
     "babel-polyfill": "~6.16.0",
     "classnames": "~2.2.5",
-    "d3": "~3.5.5",
+    "d3": "~4.4.0",
     "dagre": "0.7.4",
     "debug": "~2.3.3",
     "filesize": "~3.3.0",

@@ -49,7 +49,7 @@ module.exports = {
       'webpack/hot/only-dev-server',
       './app/scripts/terminal-main',
     ],
-    vendors: ['babel-polyfill', 'classnames', 'd3', 'dagre', 'filesize', 'immutable', 'lodash',
+    vendors: ['babel-polyfill', 'classnames', 'dagre', 'filesize', 'immutable', 'lodash',
       'moment', 'page', 'react', 'react-dom', 'react-motion', 'react-redux', 'redux',
       'redux-thunk', 'reqwest', 'xterm']
   },

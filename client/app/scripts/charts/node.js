@@ -12,7 +12,7 @@ import MatchedResults from '../components/matched-results';
 import NodeShapeCircle from './node-shape-circle';
 import NodeShapeStack from './node-shape-stack';
 import NodeShapeRoundedSquare from './node-shape-rounded-square';
-import NodeShapeHex from './node-shape-hex';
+import NodeShapeHexagon from './node-shape-hexagon';
 import NodeShapeHeptagon from './node-shape-heptagon';
 import NodeShapeCloud from './node-shape-cloud';
 import NodeNetworksOverlay from './node-networks-overlay';
@@ -30,7 +30,7 @@ function stackedShape(Shape) {
 
 const nodeShapes = {
   circle: NodeShapeCircle,
-  hexagon: NodeShapeHex,
+  hexagon: NodeShapeHexagon,
   heptagon: NodeShapeHeptagon,
   square: NodeShapeRoundedSquare,
   cloud: NodeShapeCloud

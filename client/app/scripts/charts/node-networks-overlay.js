@@ -1,5 +1,5 @@
 import React from 'react';
-import d3 from 'd3';
+import { scaleOrdinal } from 'd3-scale';
 import { List as makeList } from 'immutable';
 import { getNetworkColor } from '../utils/color-utils';
 import { isContrastMode } from '../utils/contrast-utils';
@@ -10,7 +10,7 @@ const minBarHeight = 3;
 const padding = 0.05;
 const rx = 1;
 const ry = rx;
-const x = d3.scale.ordinal();
+const x = scaleOrdinal();
 
 function NodeNetworksOverlay({offset, size, stack, networks = makeList()}) {
   // Min size is about a quarter of the width, feels about right.

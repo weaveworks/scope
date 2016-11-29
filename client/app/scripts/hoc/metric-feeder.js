@@ -1,9 +1,10 @@
 import React from 'react';
-import d3 from 'd3';
+import { isoParse as parseDate } from 'd3-time-format';
 import { OrderedMap } from 'immutable';
 
+import { round } from '../utils/math-utils';
+
 const makeOrderedMap = OrderedMap;
-const parseDate = d3.time.format.iso.parse;
 const sortDate = (v, d) => d;
 const DEFAULT_TICK_INTERVAL = 1000; // DEFAULT_TICK_INTERVAL + renderTime < 1000ms
 const WINDOW_LENGTH = 60;
@@ -103,7 +104,7 @@ export default ComposedComponent => class extends React.Component {
         let lastIndex = bufferKeys.indexOf(movingLast);
 
         // speed up the window if it falls behind
-        const step = lastIndex > 0 ? Math.round(buffer.size / lastIndex) : 1;
+        const step = lastIndex > 0 ? round(buffer.size / lastIndex) : 1;
 
         // only move first if we have enough values in window
         const windowLength = lastIndex - firstIndex;

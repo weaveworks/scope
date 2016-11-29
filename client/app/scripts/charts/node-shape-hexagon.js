@@ -1,13 +1,12 @@
 import React from 'react';
-import d3 from 'd3';
 import classNames from 'classnames';
-import {getMetricValue, getMetricColor, getClipPathDefinition} from '../utils/metric-utils.js';
-import {CANVAS_METRIC_FONT_SIZE} from '../constants/styles.js';
+import { line, curveCardinalClosed } from 'd3-shape';
+import { getMetricValue, getMetricColor, getClipPathDefinition } from '../utils/metric-utils.js';
+import { CANVAS_METRIC_FONT_SIZE } from '../constants/styles.js';
 
 
-const line = d3.svg.line()
-  .interpolate('cardinal-closed')
-  .tension(0.25);
+const spline = line()
+  .curve(curveCardinalClosed.tension(0.65));
 
 
 function getWidth(h) {
@@ -26,14 +25,14 @@ function getPoints(h) {
     [0, 0.25 * h]
   ];
 
-  return line(points);
+  return spline(points);
 }
 
 
-export default function NodeShapeHex({id, highlighted, size, color, metric}) {
+export default function NodeShapeHexagon({id, highlighted, size, color, metric}) {
   const pathProps = v => ({
     d: getPoints(size * v * 2),
-    transform: `rotate(90) translate(-${size * getWidth(v)}, -${size * v})`
+    transform: `translate(-${size * getWidth(v)}, -${size * v})`
   });
 
   const shadowSize = 0.45;

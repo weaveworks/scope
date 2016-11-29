@@ -1,5 +1,5 @@
 import React from 'react';
-import d3 from 'd3';
+import { extent } from 'd3-array';
 
 import { isContrastMode } from '../utils/contrast-utils';
 
@@ -15,7 +15,7 @@ function toPoint(stringPair) {
 
 function getExtents(svgPath) {
   const points = svgPath.split(' ').filter(s => s.length > 1).map(toPoint);
-  return [d3.extent(points, p => p[0]), d3.extent(points, p => p[1])];
+  return [extent(points, p => p[0]), extent(points, p => p[1])];
 }
 
 export default function NodeShapeCloud({highlighted, size, color}) {

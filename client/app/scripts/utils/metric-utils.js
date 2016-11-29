@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import d3 from 'd3';
+import { scaleLog } from 'd3-scale';
 import { formatMetricSvg } from './string-utils';
 import { colors } from './color-utils';
 import React from 'react';
@@ -24,7 +24,7 @@ export function getClipPathDefinition(clipId, size, height,
 
 //
 // loadScale(1) == 0.5; E.g. a nicely balanced system :).
-const loadScale = d3.scale.log().domain([0.01, 100]).range([0, 1]);
+const loadScale = scaleLog().domain([0.01, 100]).range([0, 1]);
 
 
 export function getMetricValue(metric, size) {

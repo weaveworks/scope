@@ -1,10 +1,10 @@
 /* eslint react/jsx-no-bind: "off" */
 import React from 'react';
-import d3 from 'd3';
 import _ from 'lodash';
 import Perf from 'react-addons-perf';
 import { connect } from 'react-redux';
 import { fromJS, Set as makeSet } from 'immutable';
+import { hsl } from 'd3-color';
 
 import debug from 'debug';
 const log = debug('scope:debug-panel');
@@ -328,7 +328,7 @@ class DebugToolbar extends React.Component {
               <tr key={r}>
                 <td
                   title={`${r}`}
-                  style={{backgroundColor: d3.hsl(text2degree(r), 0.5, 0.5).toString()}} />
+                  style={{backgroundColor: hsl(text2degree(r), 0.5, 0.5).toString()}} />
               </tr>
             ))}
           </tbody>
