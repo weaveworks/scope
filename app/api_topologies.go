@@ -45,13 +45,76 @@ var (
 	}
 )
 
-func init() {
-	AddInitialTopologiesToRegistry(topologyRegistry)
+// kubernetesFilters generates the current kubernetes filters based on the
+// available k8s topologies.
+func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
+	options := APITopologyOptionGroup{ID: "namespace", Default: "all"}
+	for _, namespace := range namespaces {
+		if namespace == "default" {
+			options.Default = namespace
+		}
+		options.Options = append(options.Options, APITopologyOption{
+			Value: namespace, Label: namespace, filter: render.IsNamespace(namespace), filterPseudo: false,
+		})
+	}
+	options.Options = append(options.Options, APITopologyOption{Value: "all", Label: "All Namespaces", filter: nil, filterPseudo: false})
+	return options
 }
 
-// AddInitialTopologiesToRegistry does the initial setup for a Registry.
-// This is needed for testing.
-func AddInitialTopologiesToRegistry(registry *Registry) {
+// updateFilters updates the available filters based on the current report.
+// Currently only kubernetes changes.
+func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
+	namespaces := map[string]struct{}{}
+	for _, t := range []report.Topology{rpt.Pod, rpt.Service, rpt.Deployment, rpt.ReplicaSet} {
+		for _, n := range t.Nodes {
+			if state, ok := n.Latest.Lookup(kubernetes.State); ok && state == kubernetes.StateDeleted {
+				continue
+			}
+			if namespace, ok := n.Latest.Lookup(kubernetes.Namespace); ok {
+				namespaces[namespace] = struct{}{}
+			}
+		}
+	}
+	var ns []string
+	for namespace := range namespaces {
+		ns = append(ns, namespace)
+	}
+	sort.Strings(ns)
+	for i, t := range topologies {
+		if t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
+			topologies[i] = updateTopologyFilters(t, []APITopologyOptionGroup{
+				kubernetesFilters(ns...), unmanagedFilter,
+			})
+		}
+	}
+	return topologies
+}
+
+// updateTopologyFilters recursively sets the options on a topology description
+func updateTopologyFilters(t APITopologyDesc, options []APITopologyOptionGroup) APITopologyDesc {
+	t.Options = options
+	for i, sub := range t.SubTopologies {
+		t.SubTopologies[i] = updateTopologyFilters(sub, options)
+	}
+	return t
+}
+
+// MakeAPITopologyOption provides an external interface to the package for creating an APITopologyOption.
+func MakeAPITopologyOption(value string, label string, filterFunc render.FilterFunc, pseudo bool) APITopologyOption {
+	return APITopologyOption{Value: value, Label: label, filter: filterFunc, filterPseudo: pseudo}
+}
+
+// Registry is a threadsafe store of the available topologies
+type Registry struct {
+	sync.RWMutex
+	items map[string]APITopologyDesc
+}
+
+// MakeRegistry returns a new Registry
+func MakeRegistry() *Registry {
+	registry := &Registry{
+		items: map[string]APITopologyDesc{},
+	}
 	containerFilters := []APITopologyOptionGroup{
 		{
 			ID:      containerLabelFiltersGroupID,
@@ -189,79 +252,8 @@ func AddInitialTopologiesToRegistry(registry *Registry) {
 			Name:     "Weave Net",
 		},
 	)
-}
 
-// kubernetesFilters generates the current kubernetes filters based on the
-// available k8s topologies.
-func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
-	options := APITopologyOptionGroup{ID: "namespace", Default: "all"}
-	for _, namespace := range namespaces {
-		if namespace == "default" {
-			options.Default = namespace
-		}
-		options.Options = append(options.Options, APITopologyOption{
-			Value: namespace, Label: namespace, filter: render.IsNamespace(namespace), filterPseudo: false,
-		})
-	}
-	options.Options = append(options.Options, APITopologyOption{Value: "all", Label: "All Namespaces", filter: nil, filterPseudo: false})
-	return options
-}
-
-// updateFilters updates the available filters based on the current report.
-// Currently only kubernetes changes.
-func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
-	namespaces := map[string]struct{}{}
-	for _, t := range []report.Topology{rpt.Pod, rpt.Service, rpt.Deployment, rpt.ReplicaSet} {
-		for _, n := range t.Nodes {
-			if state, ok := n.Latest.Lookup(kubernetes.State); ok && state == kubernetes.StateDeleted {
-				continue
-			}
-			if namespace, ok := n.Latest.Lookup(kubernetes.Namespace); ok {
-				namespaces[namespace] = struct{}{}
-			}
-		}
-	}
-	var ns []string
-	for namespace := range namespaces {
-		ns = append(ns, namespace)
-	}
-	sort.Strings(ns)
-	for i, t := range topologies {
-		if t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
-			topologies[i] = updateTopologyFilters(t, []APITopologyOptionGroup{
-				kubernetesFilters(ns...), unmanagedFilter,
-			})
-		}
-	}
-	return topologies
-}
-
-// updateTopologyFilters recursively sets the options on a topology description
-func updateTopologyFilters(t APITopologyDesc, options []APITopologyOptionGroup) APITopologyDesc {
-	t.Options = options
-	for i, sub := range t.SubTopologies {
-		t.SubTopologies[i] = updateTopologyFilters(sub, options)
-	}
-	return t
-}
-
-// MakeAPITopologyOption provides an external interface to the package for creating an APITopologyOption.
-func MakeAPITopologyOption(value string, label string, filterFunc render.FilterFunc, pseudo bool) APITopologyOption {
-	return APITopologyOption{Value: value, Label: label, filter: filterFunc, filterPseudo: pseudo}
-}
-
-// Registry is a threadsafe store of the available topologies
-type Registry struct {
-	sync.RWMutex
-	items map[string]APITopologyDesc
-}
-
-// MakeRegistry returns a new Registry
-func MakeRegistry() *Registry {
-	newRegistry := &Registry{
-		items: map[string]APITopologyDesc{},
-	}
-	return newRegistry
+	return registry
 }
 
 // APITopologyDesc is returned in a list by the /api/topology handler.

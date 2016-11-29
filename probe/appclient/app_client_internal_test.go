@@ -83,6 +83,8 @@ func TestAppClientPublish(t *testing.T) {
 	rpt.ReplicaSet = report.MakeTopology()
 	rpt.Host = report.MakeTopology()
 	rpt.Overlay = report.MakeTopology()
+	rpt.ECSTask = report.MakeTopology()
+	rpt.ECSService = report.MakeTopology()
 	rpt.Endpoint.Controls = nil
 	rpt.Process.Controls = nil
 	rpt.Container.Controls = nil
@@ -93,6 +95,8 @@ func TestAppClientPublish(t *testing.T) {
 	rpt.ReplicaSet.Controls = nil
 	rpt.Host.Controls = nil
 	rpt.Overlay.Controls = nil
+	rpt.ECSTask.Controls = nil
+	rpt.ECSService.Controls = nil
 
 	s := dummyServer(t, token, id, version, rpt, done)
 	defer s.Close()
