@@ -119,6 +119,18 @@ var (
 
 	// ParseReplicaSetNodeID parses a replica set node ID
 	ParseReplicaSetNodeID = parseSingleComponentID("replica_set")
+
+	// MakeECSTaskNodeID produces a replica set node ID from its composite parts.
+	MakeECSTaskNodeID = makeSingleComponentID("ecs_task")
+
+	// ParseECSTaskNodeID parses a replica set node ID
+	ParseECSTaskNodeID = parseSingleComponentID("ecs_task")
+
+	// MakeECSServiceNodeID produces a replica set node ID from its composite parts.
+	MakeECSServiceNodeID = makeSingleComponentID("ecs_service")
+
+	// ParseECSServiceNodeID parses a replica set node ID
+	ParseECSServiceNodeID = parseSingleComponentID("ecs_service")
 )
 
 // makeSingleComponentID makes a single-component node id encoder

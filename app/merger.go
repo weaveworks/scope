@@ -53,9 +53,10 @@ func (smartMerger) Merge(reports []report.Report) report.Report {
 		c <- r
 	}
 	for ; l > 1; l-- {
-		go func(left, right report.Report) {
+		left, right := <-c, <-c
+		go func() {
 			c <- left.Merge(right)
-		}(<-c, <-c)
+		}()
 	}
 	return <-c
 }

@@ -91,6 +91,8 @@ func TestProbe(t *testing.T) {
 	want.ReplicaSet.Controls = nil
 	want.Host.Controls = nil
 	want.Overlay.Controls = nil
+	want.ECSTask.Controls = nil
+	want.ECSService.Controls = nil
 	want.Endpoint.AddNode(node)
 
 	pub := mockPublisher{make(chan report.Report, 10)}

@@ -16,23 +16,26 @@ import (
 )
 
 const (
-	apiTopologyURL                     = "/api/topology/"
-	processesTopologyDescID            = "processes"
-	processesByNameTopologyDescID      = "processes-by-name"
-	containerLabelFiltersGroupID       = "container_label_filters_group"
-	containersTopologyDescID           = "containers"
-	containersByHostnameTopologyDescID = "containers-by-hostname"
-	containersByImageTopologyDescID    = "containers-by-image"
-	podsTopologyDescID                 = "pods"
-	replicaSetsTopologyDescID          = "replica-sets"
-	deploymentsTopologyDescID          = "deployments"
-	servicesTopologyDescID             = "services"
-	hostsTopologyDescID                = "hosts"
+	apiTopologyURL               = "/api/topology/"
+	processesID                  = "processes"
+	processesByNameID            = "processes-by-name"
+	containerLabelFiltersGroupID = "container-label-filters-group"
+	containersID                 = "containers"
+	containersByHostnameID       = "containers-by-hostname"
+	containersByImageID          = "containers-by-image"
+	podsID                       = "pods"
+	replicaSetsID                = "replica-sets"
+	deploymentsID                = "deployments"
+	servicesID                   = "services"
+	hostsID                      = "hosts"
+	weaveID                      = "weave"
+	ecsTasksID                   = "ecs-tasks"
+	ecsServicesID                = "ecs-services"
 )
 
 var (
 	topologyRegistry = MakeRegistry()
-	k8sPseudoFilter  = APITopologyOptionGroup{
+	unmanagedFilter  = APITopologyOptionGroup{
 		ID:      "pseudo",
 		Default: "hide",
 		Options: []APITopologyOption{
@@ -41,134 +44,6 @@ var (
 		},
 	}
 )
-
-func init() {
-	AddInitialTopologiesToRegistry(topologyRegistry)
-}
-
-// AddInitialTopologiesToRegistry does the initial setup for a Registry.
-// This is needed for testing.
-func AddInitialTopologiesToRegistry(registry *Registry) {
-	containerFilters := []APITopologyOptionGroup{
-		{
-			ID:      containerLabelFiltersGroupID,
-			Default: "application",
-			Options: []APITopologyOption{{Value: "all", Label: "All", filter: nil, filterPseudo: false}, {Value: "system", Label: "System Containers", filter: render.IsSystem, filterPseudo: false}, {Value: "notsystem", Label: "Application Containers", filter: render.IsApplication, filterPseudo: false}},
-		},
-		{
-			ID:      "stopped",
-			Default: "running",
-			Options: []APITopologyOption{
-				{Value: "stopped", Label: "Stopped containers", filter: render.IsStopped, filterPseudo: false},
-				{Value: "running", Label: "Running containers", filter: render.IsRunning, filterPseudo: false},
-				{Value: "both", Label: "Both", filter: nil, filterPseudo: false},
-			},
-		},
-		{
-			ID:      "pseudo",
-			Default: "hide",
-			Options: []APITopologyOption{
-				{Value: "show", Label: "Show Uncontained", filter: nil, filterPseudo: false},
-				{Value: "hide", Label: "Hide Uncontained", filter: render.IsNotPseudo, filterPseudo: true},
-			},
-		},
-	}
-
-	unconnectedFilter := []APITopologyOptionGroup{
-		{
-			ID:      "unconnected",
-			Default: "hide",
-			Options: []APITopologyOption{
-				// Show the user why there are filtered nodes in this view.
-				// Don't give them the option to show those nodes.
-				{Value: "hide", Label: "Unconnected nodes hidden", filter: nil, filterPseudo: false},
-			},
-		},
-	}
-
-	// Topology option labels should tell the current state. The first item must
-	// be the verb to get to that state
-	registry.Add(
-		APITopologyDesc{
-			id:          processesTopologyDescID,
-			renderer:    render.FilterUnconnected(render.ProcessWithContainerNameRenderer),
-			Name:        "Processes",
-			Rank:        1,
-			Options:     unconnectedFilter,
-			HideIfEmpty: true,
-		},
-		APITopologyDesc{
-			id:          processesByNameTopologyDescID,
-			parent:      "processes",
-			renderer:    render.FilterUnconnected(render.ProcessNameRenderer),
-			Name:        "by name",
-			Options:     unconnectedFilter,
-			HideIfEmpty: true,
-		},
-		APITopologyDesc{
-			id:       containersTopologyDescID,
-			renderer: render.ContainerWithImageNameRenderer,
-			Name:     "Containers",
-			Rank:     2,
-			Options:  containerFilters,
-		},
-		APITopologyDesc{
-			id:       containersByHostnameTopologyDescID,
-			parent:   "containers",
-			renderer: render.ContainerHostnameRenderer,
-			Name:     "by DNS name",
-			Options:  containerFilters,
-		},
-		APITopologyDesc{
-			id:       containersByImageTopologyDescID,
-			parent:   "containers",
-			renderer: render.ContainerImageRenderer,
-			Name:     "by image",
-			Options:  containerFilters,
-		},
-		APITopologyDesc{
-			id:          podsTopologyDescID,
-			renderer:    render.PodRenderer,
-			Name:        "Pods",
-			Rank:        3,
-			HideIfEmpty: true,
-		},
-		APITopologyDesc{
-			id:          replicaSetsTopologyDescID,
-			parent:      "pods",
-			renderer:    render.ReplicaSetRenderer,
-			Name:        "replica sets",
-			HideIfEmpty: true,
-		},
-		APITopologyDesc{
-			id:          deploymentsTopologyDescID,
-			parent:      "pods",
-			renderer:    render.DeploymentRenderer,
-			Name:        "deployments",
-			HideIfEmpty: true,
-		},
-		APITopologyDesc{
-			id:          servicesTopologyDescID,
-			parent:      "pods",
-			renderer:    render.PodServiceRenderer,
-			Name:        "services",
-			HideIfEmpty: true,
-		},
-		APITopologyDesc{
-			id:       hostsTopologyDescID,
-			renderer: render.HostRenderer,
-			Name:     "Hosts",
-			Rank:     4,
-		},
-		APITopologyDesc{
-			id:          "weave",
-			parent:      "hosts",
-			renderer:    render.WeaveRenderer,
-			Name:        "weave net",
-			HideIfEmpty: true,
-		},
-	)
-}
 
 // kubernetesFilters generates the current kubernetes filters based on the
 // available k8s topologies.
@@ -206,9 +81,9 @@ func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopolog
 	}
 	sort.Strings(ns)
 	for i, t := range topologies {
-		if t.id == podsTopologyDescID || t.id == servicesTopologyDescID || t.id == deploymentsTopologyDescID || t.id == replicaSetsTopologyDescID {
+		if t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
 			topologies[i] = updateTopologyFilters(t, []APITopologyOptionGroup{
-				kubernetesFilters(ns...), k8sPseudoFilter,
+				kubernetesFilters(ns...), unmanagedFilter,
 			})
 		}
 	}
@@ -237,10 +112,148 @@ type Registry struct {
 
 // MakeRegistry returns a new Registry
 func MakeRegistry() *Registry {
-	newRegistry := &Registry{
+	registry := &Registry{
 		items: map[string]APITopologyDesc{},
 	}
-	return newRegistry
+	containerFilters := []APITopologyOptionGroup{
+		{
+			ID:      containerLabelFiltersGroupID,
+			Default: "application",
+			Options: []APITopologyOption{
+				{Value: "all", Label: "All", filter: nil, filterPseudo: false},
+				{Value: "system", Label: "System Containers", filter: render.IsSystem, filterPseudo: false},
+				{Value: "notsystem", Label: "Application Containers", filter: render.IsApplication, filterPseudo: false}},
+		},
+		{
+			ID:      "stopped",
+			Default: "running",
+			Options: []APITopologyOption{
+				{Value: "stopped", Label: "Stopped containers", filter: render.IsStopped, filterPseudo: false},
+				{Value: "running", Label: "Running containers", filter: render.IsRunning, filterPseudo: false},
+				{Value: "both", Label: "Both", filter: nil, filterPseudo: false},
+			},
+		},
+		{
+			ID:      "pseudo",
+			Default: "hide",
+			Options: []APITopologyOption{
+				{Value: "show", Label: "Show Uncontained", filter: nil, filterPseudo: false},
+				{Value: "hide", Label: "Hide Uncontained", filter: render.IsNotPseudo, filterPseudo: true},
+			},
+		},
+	}
+
+	unconnectedFilter := []APITopologyOptionGroup{
+		{
+			ID:      "unconnected",
+			Default: "hide",
+			Options: []APITopologyOption{
+				// Show the user why there are filtered nodes in this view.
+				// Don't give them the option to show those nodes.
+				{Value: "hide", Label: "Unconnected nodes hidden", filter: nil, filterPseudo: false},
+			},
+		},
+	}
+
+	// Topology option labels should tell the current state. The first item must
+	// be the verb to get to that state
+	registry.Add(
+		APITopologyDesc{
+			id:          processesID,
+			renderer:    render.FilterUnconnected(render.ProcessWithContainerNameRenderer),
+			Name:        "Processes",
+			Rank:        1,
+			Options:     unconnectedFilter,
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          processesByNameID,
+			parent:      processesID,
+			renderer:    render.FilterUnconnected(render.ProcessNameRenderer),
+			Name:        "by name",
+			Options:     unconnectedFilter,
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:       containersID,
+			renderer: render.ContainerWithImageNameRenderer,
+			Name:     "Containers",
+			Rank:     2,
+			Options:  containerFilters,
+		},
+		APITopologyDesc{
+			id:       containersByHostnameID,
+			parent:   containersID,
+			renderer: render.ContainerHostnameRenderer,
+			Name:     "by DNS name",
+			Options:  containerFilters,
+		},
+		APITopologyDesc{
+			id:       containersByImageID,
+			parent:   containersID,
+			renderer: render.ContainerImageRenderer,
+			Name:     "by image",
+			Options:  containerFilters,
+		},
+		APITopologyDesc{
+			id:          podsID,
+			renderer:    render.PodRenderer,
+			Name:        "Pods",
+			Rank:        3,
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          replicaSetsID,
+			parent:      podsID,
+			renderer:    render.ReplicaSetRenderer,
+			Name:        "replica sets",
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          deploymentsID,
+			parent:      podsID,
+			renderer:    render.DeploymentRenderer,
+			Name:        "deployments",
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          servicesID,
+			parent:      podsID,
+			renderer:    render.PodServiceRenderer,
+			Name:        "services",
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          ecsTasksID,
+			renderer:    render.ECSTaskRenderer,
+			Name:        "Tasks",
+			Rank:        3,
+			Options:     []APITopologyOptionGroup{unmanagedFilter},
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          ecsServicesID,
+			parent:      ecsTasksID,
+			renderer:    render.ECSServiceRenderer,
+			Name:        "services",
+			Options:     []APITopologyOptionGroup{unmanagedFilter},
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:       hostsID,
+			renderer: render.HostRenderer,
+			Name:     "Hosts",
+			Rank:     4,
+		},
+		APITopologyDesc{
+			id:       weaveID,
+			parent:   hostsID,
+			renderer: render.WeaveRenderer,
+			Name:     "Weave Net",
+		},
+	)
+
+	return registry
 }
 
 // APITopologyDesc is returned in a list by the /api/topology handler.
@@ -297,7 +310,7 @@ func AddContainerFilters(newFilters ...APITopologyOption) {
 func (r *Registry) AddContainerFilters(newFilters ...APITopologyOption) {
 	r.Lock()
 	defer r.Unlock()
-	for _, key := range []string{containersTopologyDescID, containersByHostnameTopologyDescID, containersByImageTopologyDescID} {
+	for _, key := range []string{containersID, containersByHostnameID, containersByImageID} {
 		for i := range r.items[key].Options {
 			if r.items[key].Options[i].ID == containerLabelFiltersGroupID {
 				r.items[key].Options[i].Options = append(r.items[key].Options[i].Options, newFilters...)

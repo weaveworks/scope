@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	containerLabelFiltersGroupID    = "container_label_filters_group"
+	containerLabelFiltersGroupID    = "container-label-filters-group"
 	customAPITopologyOptionFilterID = "containerLabelFilter0"
 )
 
@@ -35,13 +35,18 @@ func TestAPITopology(t *testing.T) {
 	if err := decoder.Decode(&topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
-	equals(t, 4, len(topologies))
+	equals(t, 5, len(topologies))
 
 	for _, topology := range topologies {
 		is200(t, ts, topology.URL)
 
 		for _, subTopology := range topology.SubTopologies {
 			is200(t, ts, subTopology.URL)
+		}
+
+		// TODO: add ECS nodes in report fixture
+		if topology.Name == "Tasks" {
+			continue
 		}
 
 		if have := topology.Stats.EdgeCount; have <= 0 {
@@ -79,8 +84,9 @@ func TestContainerLabelFilterExclude(t *testing.T) {
 
 	// all containers but the excluded container should be present
 	for key := range topologySummaries {
-		if report.MakeContainerNodeID(fixture.ServerContainerNodeID) == key {
-			t.Errorf("TestAPITopologyNegativeContainerLabelFilter Failed. Expected to not find " + report.MakeContainerNodeID(fixture.ServerContainerNodeID) + " in report")
+		id := report.MakeContainerNodeID(fixture.ServerContainerNodeID)
+		if id == key {
+			t.Errorf("Didn't expect to find %q in report", id)
 		}
 	}
 }
@@ -89,14 +95,17 @@ func getTestContainerLabelFilterTopologySummary(t *testing.T, exclude bool) (det
 	ts := topologyServer()
 	defer ts.Close()
 
-	topologyRegistry := app.MakeRegistry()
-	app.AddInitialTopologiesToRegistry(topologyRegistry)
-
+	var (
+		topologyRegistry = app.MakeRegistry()
+		filter           render.FilterFunc
+	)
 	if exclude == true {
-		topologyRegistry.AddContainerFilters(app.MakeAPITopologyOption(customAPITopologyOptionFilterID, "title", render.DoesNotHaveLabel(fixture.TestLabelKey2, fixture.ApplicationLabelValue2), false))
+		filter = render.DoesNotHaveLabel(fixture.TestLabelKey2, fixture.ApplicationLabelValue2)
 	} else {
-		topologyRegistry.AddContainerFilters(app.MakeAPITopologyOption(customAPITopologyOptionFilterID, "title", render.HasLabel(fixture.TestLabelKey1, fixture.ApplicationLabelValue1), false))
+		filter = render.HasLabel(fixture.TestLabelKey1, fixture.ApplicationLabelValue1)
 	}
+	option := app.MakeAPITopologyOption(customAPITopologyOptionFilterID, "title", filter, false)
+	topologyRegistry.AddContainerFilters(option)
 
 	urlvalues := url.Values{}
 	urlvalues.Set(containerLabelFiltersGroupID, customAPITopologyOptionFilterID)
@@ -123,7 +132,7 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 	if err := decoder.Decode(&topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
-	equals(t, 4, len(topologies))
+	equals(t, 5, len(topologies))
 
 	// Enable the kubernetes topologies
 	rpt := report.MakeReport()
@@ -157,7 +166,7 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 	if err := decoder.Decode(&topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
-	equals(t, 4, len(topologies))
+	equals(t, 5, len(topologies))
 
 	found := false
 	for _, topology := range topologies {
