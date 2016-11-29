@@ -19,6 +19,8 @@ New features and enhancements:
 	[#2006](https://github.com/weaveworks/scope/pull/2006)
 - Improve view-node-in-topo button usability
 	[#1926](https://github.com/weaveworks/scope/pull/1926)
+- Hide Weave topology if empty
+	[#2035](https://github.com/weaveworks/scope/pull/2035)
 
 Performance improvements:
 - Add graph complexity check on page load
@@ -53,6 +55,8 @@ Internal improvements and cleanup:
 	[#2005](https://github.com/weaveworks/scope/pull/2005)
 - Give time to the overlay test backoff collectors to finish
 	[#1995](https://github.com/weaveworks/scope/pull/1995)
+- Update D3 to version 4.4.0
+	[#2028](https://github.com/weaveworks/scope/pull/2028)
 
 Weave Cloud related changes:
 - Add OpenTracing support to TimeRequestHistogram
