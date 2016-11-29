@@ -31,6 +31,8 @@ Bug fixes:
 	[#2003](https://github.com/weaveworks/scope/pull/2003)
 - Fix details panel not closing on canvas click
 	[#1998](https://github.com/weaveworks/scope/pull/1998)
+- Empty publicpath needed for relative paths of scope
+	[#2043](https://github.com/weaveworks/scope/pull/2043)
 
 Documentation:
 - Use intuitive standalone service name in compose
