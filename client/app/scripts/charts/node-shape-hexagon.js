@@ -36,18 +36,20 @@ export default function NodeShapeHexagon({id, highlighted, size, color, metric})
   });
 
   const shadowSize = 0.45;
-  const upperHexBitHeight = -0.25 * size * shadowSize;
 
   const clipId = `mask-${id}`;
   const {height, hasMetric, formattedValue} = getMetricValue(metric, size);
   const metricStyle = { fill: getMetricColor(metric) };
   const className = classNames('shape', { metrics: hasMetric });
   const fontSize = size * CANVAS_METRIC_FONT_SIZE;
+  // how much the hex curve line interpolator curves outside the original shape definition in
+  // percent (very roughly)
+  const hexCurve = 0.05;
 
   return (
     <g className={className}>
-      {hasMetric && getClipPathDefinition(clipId, size, height, size - height +
-                                          upperHexBitHeight, 0)}
+      {hasMetric && getClipPathDefinition(clipId,
+        size * (1 + hexCurve * 2), height, -size * hexCurve, (size - height) * shadowSize * 2)}
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(shadowSize)} />
