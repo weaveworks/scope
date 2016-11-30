@@ -33,7 +33,7 @@ export default function NodeShapeHeptagon({id, highlighted, size, color, metric}
 
   return (
     <g className={className}>
-      {hasMetric && getClipPathDefinition(clipId, size, height, size * 0.5 - height, -size * 0.5)}
+      {hasMetric && getClipPathDefinition(clipId, size, height, -size * 0.5, size * 0.5 - height)}
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(0.45)} />
