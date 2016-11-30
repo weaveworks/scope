@@ -1,5 +1,5 @@
 import React from 'react';
-import { scaleOrdinal } from 'd3-scale';
+import { scaleBand } from 'd3-scale';
 import { List as makeList } from 'immutable';
 import { getNetworkColor } from '../utils/color-utils';
 import { isContrastMode } from '../utils/contrast-utils';
@@ -10,7 +10,7 @@ const minBarHeight = 3;
 const padding = 0.05;
 const rx = 1;
 const ry = rx;
-const x = scaleOrdinal();
+const x = scaleBand();
 
 function NodeNetworksOverlay({offset, size, stack, networks = makeList()}) {
   // Min size is about a quarter of the width, feels about right.
@@ -20,13 +20,14 @@ function NodeNetworksOverlay({offset, size, stack, networks = makeList()}) {
 
   // Update singleton scale.
   x.domain(networks.map((n, i) => i).toJS());
-  x.rangeBands([barWidth * -0.5, barWidth * 0.5], padding, 0);
+  x.range([barWidth * -0.5, barWidth * 0.5]);
+  x.paddingInner(padding);
 
   const bars = networks.map((n, i) => (
     <rect
       x={x(i)}
       y={offset - barHeight * 0.5}
-      width={x.rangeBand()}
+      width={x.bandwidth()}
       height={barHeight}
       rx={rx}
       ry={ry}
