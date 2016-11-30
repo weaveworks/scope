@@ -995,6 +995,15 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/kinvolk/gobpf-elf-loader/bpf",
+			"repository": "https://github.com/kinvolk/gobpf-elf-loader",
+			"vcs": "git",
+			"revision": "ab0a324d990709a732e56fe11af8daa9fb0ae1f8",
+			"branch": "master",
+			"path": "/bpf",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/kr/pty",
 			"repository": "https://github.com/kr/pty",
 			"vcs": "",
