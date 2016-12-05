@@ -6,7 +6,7 @@ import React from 'react';
 
 
 export function getClipPathDefinition(clipId, size, height,
-                                      x = -size * 0.5, y = size * 0.5 - height) {
+  x = -size * 0.5, y = size * 0.5 - height) {
   return (
     <defs>
       <clipPath id={clipId}>

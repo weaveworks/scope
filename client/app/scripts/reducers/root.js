@@ -230,7 +230,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_PAUSE_UPDATE: {
-      return state.set('updatePausedAt', new Date);
+      return state.set('updatePausedAt', new Date());
     }
 
     case ActionTypes.CLICK_RELATIVE: {

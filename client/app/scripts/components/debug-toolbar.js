@@ -5,9 +5,7 @@ import { connect } from 'react-redux';
 import { sampleSize, sample, random, range, flattenDeep } from 'lodash';
 import { fromJS, Set as makeSet } from 'immutable';
 import { hsl } from 'd3-color';
-
 import debug from 'debug';
-const log = debug('scope:debug-panel');
 
 import ActionTypes from '../constants/action-types';
 import { receiveNodesDelta } from '../actions/app-actions';
@@ -29,7 +27,7 @@ voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occa
 proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`;
 
 const sampleArray = (collection, n = 4) => sampleSize(collection, random(n));
-
+const log = debug('scope:debug-panel');
 
 const shapeTypes = {
   square: ['Process', 'Processes'],

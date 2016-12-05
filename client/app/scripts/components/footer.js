@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import moment from 'moment';
 
-import Plugins from './plugins.js';
+import Plugins from './plugins';
 import { getUpdateBufferSize } from '../utils/update-buffer-utils';
 import { contrastModeUrl, isContrastMode } from '../utils/contrast-utils';
 import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
@@ -106,6 +106,11 @@ function mapStateToProps(state) {
 
 export default connect(
   mapStateToProps,
-  { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
-    clickResumeUpdate, toggleHelp }
+  {
+    clickDownloadGraph,
+    clickForceRelayout,
+    clickPauseUpdate,
+    clickResumeUpdate,
+    toggleHelp
+  }
 )(Footer);

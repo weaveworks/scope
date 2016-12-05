@@ -1,8 +1,8 @@
 import React from 'react';
 import classNames from 'classnames';
 import { line, curveCardinalClosed } from 'd3-shape';
-import { getMetricValue, getMetricColor, getClipPathDefinition } from '../utils/metric-utils.js';
-import { CANVAS_METRIC_FONT_SIZE } from '../constants/styles.js';
+import { getMetricValue, getMetricColor, getClipPathDefinition } from '../utils/metric-utils';
+import { CANVAS_METRIC_FONT_SIZE } from '../constants/styles';
 
 
 const spline = line()

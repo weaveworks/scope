@@ -39,7 +39,8 @@ export function sortOrderChanged(sortedBy, sortedDesc) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.SORT_ORDER_CHANGED,
-      sortedBy, sortedDesc
+      sortedBy,
+      sortedDesc
     });
     updateRoute(getState);
   };

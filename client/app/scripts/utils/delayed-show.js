@@ -1,7 +1,7 @@
 import React from 'react';
 
 
-export class DelayedShow extends React.Component {
+export default class DelayedShow extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.state = {

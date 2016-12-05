@@ -11,8 +11,8 @@ import configureStore from './stores/configureStore.dev';
 import DevTools from './components/dev-tools';
 import Immutable from 'immutable';
 import installDevTools from 'immutable-devtools';
-installDevTools(Immutable);
 
+installDevTools(Immutable);
 const store = configureStore();
 
 function renderApp() {

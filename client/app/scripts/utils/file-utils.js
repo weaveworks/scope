@@ -74,11 +74,11 @@ function download(source, name) {
   if (name) {
     filename = name;
   } else if (window.document.title) {
-    filename = `${window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${(+new Date)}`;
+    filename = `${window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${(+new Date())}`;
   }
 
   const url = window.URL.createObjectURL(new Blob(source,
-    {type: 'text\/xml'}
+    { type: 'text/xml' }
   ));
 
   const a = document.createElement('a');

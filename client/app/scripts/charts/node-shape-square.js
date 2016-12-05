@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
-import {getMetricValue, getMetricColor, getClipPathDefinition} from '../utils/metric-utils.js';
-import {CANVAS_METRIC_FONT_SIZE} from '../constants/styles.js';
+import { getMetricValue, getMetricColor, getClipPathDefinition } from '../utils/metric-utils';
+import { CANVAS_METRIC_FONT_SIZE } from '../constants/styles';
 
 
 export default function NodeShapeSquare({
