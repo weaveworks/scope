@@ -38,7 +38,9 @@ module.exports = {
     ],
     vendors: ['babel-polyfill', 'classnames', 'dagre', 'filesize', 'immutable', 'lodash',
       'moment', 'page', 'react', 'react-dom', 'react-motion', 'react-redux', 'redux',
-      'redux-thunk', 'reqwest', 'xterm']
+      'redux-thunk', 'reqwest', 'xterm',
+      'webpack-hot-middleware/client'
+    ]
   },
 
   // Used by Webpack Dev Middleware
@@ -51,6 +53,7 @@ module.exports = {
   // Necessary plugins for hot load
   plugins: [
     new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
+    new webpack.optimize.OccurenceOrderPlugin(),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin(),
     new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),

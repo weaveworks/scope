@@ -56,10 +56,6 @@ if (process.env.NODE_ENV !== 'production') {
     publicPath: config.output.publicPath,
     // options
     noInfo: true,
-    watchOptions: {
-      aggregateTimeout: 500,
-      poll: true
-    },
     stats: 'errors-only',
   }));
 
