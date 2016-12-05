@@ -4,66 +4,56 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 /**
- * This is the Webpack configuration file for local development. It contains
- * local-specific configuration such as the React Hot Loader, as well as:
+ * This is the Webpack configuration file for local development.
+ * It contains local-specific configuration which includes:
  *
- * - The entry point of the application
- * - Where the output file should be
+ * - Hot reloading configuration
+ * - The entry points of the application
  * - Which loaders to use on what files to properly transpile the source
  *
  * For more information, see: http://webpack.github.io/docs/configuration.html
  */
 
- // Inject websocket url to dev backend
-const WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
-const DEV_SERVER_URL = `webpack-dev-server/client?http://${WEBPACK_SERVER_HOST}:4041`;
-
 module.exports = {
-
   // Efficiently evaluate modules with source maps
-  devtool: 'source-map',
+  devtool: 'eval-source-map',
 
-  // Set entry point include necessary files for hot load
+  // Set entry points with hot loading
   entry: {
     app: [
-      'react-hot-loader/patch',
-      DEV_SERVER_URL,
-      'webpack/hot/only-dev-server',
       './app/scripts/main',
+      'webpack-hot-middleware/client'
     ],
     'dev-app': [
-      'react-hot-loader/patch',
-      DEV_SERVER_URL,
-      'webpack/hot/only-dev-server',
       './app/scripts/main.dev',
+      'webpack-hot-middleware/client'
     ],
     'contrast-app': [
-      'react-hot-loader/patch',
-      DEV_SERVER_URL,
-      'webpack/hot/only-dev-server',
       './app/scripts/contrast-main',
+      'webpack-hot-middleware/client'
     ],
     'terminal-app': [
-      'react-hot-loader/patch',
-      DEV_SERVER_URL,
-      'webpack/hot/only-dev-server',
       './app/scripts/terminal-main',
+      'webpack-hot-middleware/client'
     ],
     vendors: ['babel-polyfill', 'classnames', 'dagre', 'filesize', 'immutable', 'lodash',
       'moment', 'page', 'react', 'react-dom', 'react-motion', 'react-redux', 'redux',
-      'redux-thunk', 'reqwest', 'xterm']
+      'redux-thunk', 'reqwest', 'xterm',
+      'webpack-hot-middleware/client'
+    ]
   },
 
-  // This will not actually create a app.js file in ./build. It is used
-  // by the dev server for dynamic hot loading.
+  // Used by Webpack Dev Middleware
   output: {
-    path: path.join(__dirname, 'build/'),
+    publicPath: '/',
+    path: '/',
     filename: '[name].js'
   },
 
   // Necessary plugins for hot load
   plugins: [
     new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
+    new webpack.optimize.OccurenceOrderPlugin(),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin(),
     new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),

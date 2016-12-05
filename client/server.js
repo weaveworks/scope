@@ -11,17 +11,10 @@ var WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
 
 /************************************************************
  *
- * Express routes for:
- *   - app.js
- *   - app-terminal.js
- *   - index.html
- *
- *   Proxy requests to:
- *     - /api -> :4040/api
+ * Proxy requests to:
+ *   - /api -> :4040/api
  *
  ************************************************************/
-
-// Proxy to backend
 
 var backendProxy = httpProxy.createProxy({
   ws: true,
@@ -32,49 +25,41 @@ backendProxy.on('error', function(err) {
 });
 app.all('/api*', backendProxy.web.bind(backendProxy));
 
-// Serve application file depending on environment
+/************************************************************
+ *
+ * Production env serves precompiled content from build/
+ *
+ ************************************************************/
 
 if (process.env.NODE_ENV === 'production') {
-  // serve all precompiled content from build/
   app.use(express.static('build'));
-} else {
-  // redirect the JS bundles
-  app.get(/.*js/, function(req, res) {
-    res.redirect('//' + WEBPACK_SERVER_HOST + ':4041' + req.originalUrl);
-  });
-  // proxy everything else
-  var staticProxy = httpProxy.createProxy({
-    target: 'http://' + WEBPACK_SERVER_HOST + ':4041'
-  });
-  app.all('*', staticProxy.web.bind(staticProxy));
 }
 
 /*************************************************************
  *
- * Webpack Dev Server
+ * Webpack Dev Middleware with Hot Reload
  *
- * See: http://webpack.github.io/docs/webpack-dev-server.html
+ * See: https://github.com/webpack/webpack-dev-middleware;
+ *      https://github.com/glenjamin/webpack-hot-middleware
  *
  *************************************************************/
 
 if (process.env.NODE_ENV !== 'production') {
   var webpack = require('webpack');
-  var WebpackDevServer = require('webpack-dev-server');
+  var webpackMiddleware = require('webpack-dev-middleware');
+  var webpackHotMiddleware = require('webpack-hot-middleware');
   var config = require('./webpack.local.config');
+  var compiler = webpack(config);
 
-  new WebpackDevServer(webpack(config), {
-    hot: true,
+  app.use(webpackMiddleware(compiler, {
+    // required
+    publicPath: config.output.publicPath,
+    // options
     noInfo: true,
-    historyApiFallback: true,
     stats: 'errors-only',
-    // We need the access from the express server for the hot-loader.
-    // See: https://github.com/gaearon/react-hot-loader/issues/56
-    headers: { "Access-Control-Allow-Origin": '*' },
-  }).listen(4041, '0.0.0.0', function (err, result) {
-    if (err) {
-      console.log(err);
-    }
-  });
+  }));
+
+  app.use(webpackHotMiddleware(compiler));
 }
 
 
@@ -97,7 +82,7 @@ server.on('upgrade', backendProxy.ws.bind(backendProxy));
 
 /*************************************************************
  *
- * path proxy server
+ * Path proxy server
  *
  *************************************************************/
 
