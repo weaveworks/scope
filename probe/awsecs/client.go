@@ -73,7 +73,7 @@ func (c ecsClient) getServices() map[string]*ecs.Service {
 				}
 
 				for _, failure := range resp.Failures {
-					log.Warnf("Failed to describe ECS service %s, ECS service report may be incomplete: %s", failure.Arn, failure.Reason)
+					log.Warnf("Failed to describe ECS service %s, ECS service report may be incomplete: %s", *failure.Arn, *failure.Reason)
 				}
 
 				lock.Lock()
@@ -110,7 +110,7 @@ func (c ecsClient) getTasks(taskArns []string) (map[string]*ecs.Task, error) {
 	}
 
 	for _, failure := range resp.Failures {
-		log.Warnf("Failed to describe ECS task %s, ECS service report may be incomplete: %s", failure.Arn, failure.Reason)
+		log.Warnf("Failed to describe ECS task %s, ECS service report may be incomplete: %s", *failure.Arn, *failure.Reason)
 	}
 
 	results := make(map[string]*ecs.Task, len(resp.Tasks))
