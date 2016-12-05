@@ -1,12 +1,17 @@
 package endpoint
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"net"
-	"sync"
-	"unsafe"
+	"os"
 	"strconv"
+	"strings"
+	"sync"
+	"syscall"
+	"unsafe"
 
 	log "github.com/Sirupsen/logrus"
 	bpflib "github.com/kinvolk/gobpf-elf-loader/bpf"
@@ -17,6 +22,18 @@ import "C"
 var byteOrder binary.ByteOrder
 
 type eventType uint32
+
+func init() {
+	var i int32 = 0x01020304
+	u := unsafe.Pointer(&i)
+	pb := (*byte)(u)
+	b := *pb
+	if b == 0x04 {
+		byteOrder = binary.LittleEndian
+	} else {
+		byteOrder = binary.BigEndian
+	}
+}
 
 // These constants should be in sync with the equivalent definitions in the ebpf program.
 const (
@@ -99,23 +116,56 @@ type EbpfTracker struct {
 	closedConnections []ebpfConnection
 }
 
-func newEbpfTracker(useEbpfConn bool) eventTracker {
-	var i int32 = 0x01020304
-	u := unsafe.Pointer(&i)
-	pb := (*byte)(u)
-	b := *pb
-	if b == 0x04 {
-		byteOrder = binary.LittleEndian
-	} else {
-		byteOrder = binary.BigEndian
+func findBpfObjectFile() (string, error) {
+	var buf syscall.Utsname
+	err := syscall.Uname(&buf)
+	if err != nil {
+		return "", err
 	}
 
+	// parse "ID=" in /etc/host-os-release (this is a bind mount of
+	// /etc/os-release on the host)
+	hostDistroFile, err := os.Open("/etc/host-os-release")
+	if err != nil {
+		return "", err
+	}
+	defer hostDistroFile.Close()
+
+	scanner := bufio.NewScanner(hostDistroFile)
+	var distro string
+	for scanner.Scan() {
+		if strings.HasPrefix(scanner.Text(), "ID=") {
+			distro = strings.TrimPrefix(scanner.Text(), "ID=")
+			break
+		}
+	}
+	if err = scanner.Err(); err != nil {
+		return "", err
+	}
+	if distro == "" {
+		return "", fmt.Errorf("distro ID not found")
+	}
+
+	arch := C.GoString((*C.char)(unsafe.Pointer(&buf.Machine[0])))
+	release := C.GoString((*C.char)(unsafe.Pointer(&buf.Release[0])))
+	fileName := fmt.Sprintf("/usr/libexec/scope/ebpf/%s/%s/%s/ebpf.o", distro, arch, release)
+
+	return fileName, nil
+}
+
+func newEbpfTracker(useEbpfConn bool) eventTracker {
 	if !useEbpfConn {
 		return &nilTracker{}
 	}
 
-	bpfPerfEvent := bpflib.NewBpfPerfEvent("/var/run/scope/ebpf/ebpf.o")
-	err := bpfPerfEvent.Load()
+	bpfObjectFile, err := findBpfObjectFile()
+	if err != nil {
+		log.Infof("cannot find BPF object file: %v", err)
+		return &nilTracker{}
+	}
+
+	bpfPerfEvent := bpflib.NewBpfPerfEvent(bpfObjectFile)
+	err = bpfPerfEvent.Load()
 	if err != nil {
 		log.Errorf("Error loading BPF program: %v", err)
 		return &nilTracker{}

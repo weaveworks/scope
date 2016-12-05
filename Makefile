@@ -31,6 +31,7 @@ GO_BUILD_INSTALL_DEPS=-i
 GO_BUILD_TAGS='netgo unsafe'
 GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION) -s -w" -tags $(GO_BUILD_TAGS)
 IMAGE_TAG=$(shell ./tools/image-tag)
+EBPF_IMAGE=kinvolk/tcptracer-bpf:semaphore-master-3f7c26b
 
 all: $(SCOPE_EXPORT)
 
@@ -41,7 +42,11 @@ docker/weave:
 	curl -L git.io/weave -o docker/weave
 	chmod u+x docker/weave
 
-$(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
+docker/ebpf.tgz: Makefile
+	$(SUDO) docker pull $(EBPF_IMAGE)
+	CONTAINER_ID=$(shell $(SUDO) docker run -d $(EBPF_IMAGE) /bin/false 2>/dev/null || true); $(SUDO) docker export -o docker/ebpf.tgz $${CONTAINER_ID}
+
+$(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh docker/ebpf.tgz
 	cp $(SCOPE_EXE) $(RUNSVINIT) docker/
 	cp $(DOCKER_DISTRIB) docker/docker.tgz
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
