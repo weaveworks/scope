@@ -16,7 +16,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   // Efficiently evaluate modules with source maps
-  devtool: 'source-map',
+  devtool: 'eval-source-map',
 
   // Set entry points with hot loading
   entry: {
