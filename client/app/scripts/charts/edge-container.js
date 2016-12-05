@@ -5,11 +5,17 @@ import { Motion, spring } from 'react-motion';
 import { Map as makeMap } from 'immutable';
 import { line, curveBasis } from 'd3-shape';
 
+import { uniformSelect } from '../utils/array-utils';
 import { round } from '../utils/math-utils';
 import Edge from './edge';
 
-const animConfig = [80, 20]; // stiffness, damping
-const pointCount = 30;
+// Spring stiffness & damping respectively
+const ANIMATION_CONFIG = [80, 20];
+// Tweak this value for the number of control
+// points along the edge curve, e.g. values:
+//   * 2 -> edges are simply straight lines
+//   * 4 -> minimal value for loops to look ok
+const WAYPOINTS_CAP = 8;
 
 const spline = line()
   .curve(curveBasis)
@@ -71,24 +77,29 @@ class EdgeContainer extends React.Component {
   }
 
   preparePoints(nextPoints) {
-    // Spring needs constant field count, hoping that dagre will insert never more than `pointCount`
-    let { pointsMap } = this.state;
+    nextPoints = nextPoints.toJS();
 
-    // filling up the map with copies of the first point
-    const filler = nextPoints.first();
-    const missing = pointCount - nextPoints.size;
-    let index = 0;
-    if (missing > 0) {
-      while (index < missing) {
-        pointsMap = pointsMap.set(`x${index}`, spring(filler.get('x'), animConfig));
-        pointsMap = pointsMap.set(`y${index}`, spring(filler.get('y'), animConfig));
-        index++;
-      }
+    // Motion requires a constant number of waypoints along the path of each edge
+    // for the animation to work correctly, but dagre might be changing their number
+    // depending on the dynamic topology reconfiguration. Here we are transforming
+    // the waypoints array given by dagre to the fixed size of `WAYPOINTS_CAP` that
+    // Motion could take over.
+    const pointsMissing = WAYPOINTS_CAP - nextPoints.length;
+    if (pointsMissing > 0) {
+      // Whenever there are some waypoints missing, we simply populate the beginning of the
+      // array with the first element, as this leaves the curve interpolation unchanged.
+      nextPoints = _.times(pointsMissing, _.constant(nextPoints[0])).concat(nextPoints);
+    } else if (pointsMissing < 0) {
+      // If there are 'too many' waypoints given by dagre, we select a sub-array of
+      // uniformly distributed indices. Note that it is very important to keep the first
+      // and the last endpoints in the array as they are the ones connecting the nodes.
+      nextPoints = uniformSelect(nextPoints, WAYPOINTS_CAP);
     }
 
-    nextPoints.forEach((point, i) => {
-      pointsMap = pointsMap.set(`x${index + i}`, spring(point.get('x'), animConfig));
-      pointsMap = pointsMap.set(`y${index + i}`, spring(point.get('y'), animConfig));
+    let { pointsMap } = this.state;
+    nextPoints.forEach((point, index) => {
+      pointsMap = pointsMap.set(`x${index}`, spring(point.x, ANIMATION_CONFIG));
+      pointsMap = pointsMap.set(`y${index}`, spring(point.y, ANIMATION_CONFIG));
     });
 
     this.setState({ pointsMap });

@@ -2,7 +2,7 @@
 describe('MathUtils', () => {
   const MathUtils = require('../math-utils');
 
-  describe('module', () => {
+  describe('modulo', () => {
     const f = MathUtils.modulo;
 
     it('it should calculate the modulo (also for negatives)', () => {
