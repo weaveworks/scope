@@ -4,7 +4,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
-import _ from 'lodash';
+import { debounce } from 'lodash';
 
 import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
@@ -98,7 +98,7 @@ class Terminal extends React.Component {
     this.handleCloseClick = this.handleCloseClick.bind(this);
     this.handlePopoutTerminal = this.handlePopoutTerminal.bind(this);
     this.handleResize = this.handleResize.bind(this);
-    this.handleResizeDebounced = _.debounce(this.handleResize, 500);
+    this.handleResizeDebounced = debounce(this.handleResize, 500);
   }
 
   createWebsocket(term) {

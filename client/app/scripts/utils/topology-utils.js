@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { endsWith } from 'lodash';
 import { Set as makeSet, List as makeList } from 'immutable';
 
 
@@ -54,7 +54,7 @@ export function findTopologyById(subTree, topologyId) {
   let foundTopology;
 
   subTree.forEach(topology => {
-    if (_.endsWith(topology.get('url'), topologyId)) {
+    if (endsWith(topology.get('url'), topologyId)) {
       foundTopology = topology;
     }
     if (!foundTopology && topology.has('sub_topologies')) {

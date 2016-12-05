@@ -1,5 +1,5 @@
-import _ from 'lodash';
 import React from 'react';
+import { omit } from 'lodash';
 import { connect } from 'react-redux';
 import { Motion, spring } from 'react-motion';
 
@@ -11,7 +11,7 @@ class NodeContainer extends React.Component {
     const { dx, dy, focused, layoutPrecision, zoomScale } = this.props;
     const animConfig = [80, 20]; // stiffness, damping
     const scaleFactor = focused ? (1 / zoomScale) : 1;
-    const other = _.omit(this.props, 'dx', 'dy');
+    const other = omit(this.props, 'dx', 'dy');
 
     return (
       <Motion style={{

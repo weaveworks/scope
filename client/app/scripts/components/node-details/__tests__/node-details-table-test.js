@@ -68,7 +68,7 @@ describe('NodeDetailsTable', () => {
         <Provider store={configureStore()}>
           <NodeDetailsTable
             columns={columns}
-            sortBy="kubernetes_ip"
+            sortedBy="kubernetes_ip"
             nodeIdKey="id"
             nodes={nodes}
           />
@@ -89,7 +89,7 @@ describe('NodeDetailsTable', () => {
         <Provider store={configureStore()}>
           <NodeDetailsTable
             columns={columns}
-            sortBy="kubernetes_namespace"
+            sortedBy="kubernetes_namespace"
             nodeIdKey="id"
             nodes={nodes}
           />

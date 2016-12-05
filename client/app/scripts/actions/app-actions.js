@@ -35,11 +35,11 @@ export function toggleHelp() {
 }
 
 
-export function sortOrderChanged(sortBy, sortedDesc) {
+export function sortOrderChanged(sortedBy, sortedDesc) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.SORT_ORDER_CHANGED,
-      sortBy, sortedDesc
+      sortedBy, sortedDesc
     });
     updateRoute(getState);
   };

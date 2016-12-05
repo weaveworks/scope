@@ -1,6 +1,6 @@
-import _ from 'lodash';
 import debug from 'debug';
 import Immutable from 'immutable';
+import { union, size, map, find, reject, each } from 'lodash';
 
 import { receiveNodesDelta } from '../actions/app-actions';
 
@@ -42,17 +42,17 @@ function consolidateBuffer() {
   const first = deltaBuffer.first();
   deltaBuffer = deltaBuffer.shift();
   const second = deltaBuffer.first();
-  let toAdd = _.union(first.add, second.add);
-  let toUpdate = _.union(first.update, second.update);
-  let toRemove = _.union(first.remove, second.remove);
-  log('Consolidating delta buffer', 'add', _.size(toAdd), 'update',
-    _.size(toUpdate), 'remove', _.size(toRemove));
+  let toAdd = union(first.add, second.add);
+  let toUpdate = union(first.update, second.update);
+  let toRemove = union(first.remove, second.remove);
+  log('Consolidating delta buffer', 'add', size(toAdd), 'update',
+    size(toUpdate), 'remove', size(toRemove));
 
   // check if an added node in first was updated in second -> add second update
-  toAdd = _.map(toAdd, node => {
-    const updateNode = _.find(second.update, {id: node.id});
+  toAdd = map(toAdd, node => {
+    const updateNode = find(second.update, {id: node.id});
     if (updateNode) {
-      toUpdate = _.reject(toUpdate, {id: node.id});
+      toUpdate = reject(toUpdate, {id: node.id});
       return updateNode;
     }
     return node;
@@ -62,19 +62,19 @@ function consolidateBuffer() {
   // no action needed, successive updates are fine
 
   // check if an added node in first was removed in second -> dont add, dont remove
-  _.each(first.add, node => {
-    const removedNode = _.find(second.remove, {id: node.id});
+  each(first.add, node => {
+    const removedNode = find(second.remove, {id: node.id});
     if (removedNode) {
-      toAdd = _.reject(toAdd, {id: node.id});
-      toRemove = _.reject(toRemove, {id: node.id});
+      toAdd = reject(toAdd, {id: node.id});
+      toRemove = reject(toRemove, {id: node.id});
     }
   });
 
   // check if an updated node in first was removed in second -> remove
-  _.each(first.update, node => {
-    const removedNode = _.find(second.remove, {id: node.id});
+  each(first.update, node => {
+    const removedNode = find(second.remove, {id: node.id});
     if (removedNode) {
-      toUpdate = _.reject(toUpdate, {id: node.id});
+      toUpdate = reject(toUpdate, {id: node.id});
     }
   });
 
@@ -82,8 +82,8 @@ function consolidateBuffer() {
   // remove -> add is fine for the store
 
   // update buffer
-  log('Consolidated delta buffer', 'add', _.size(toAdd), 'update',
-    _.size(toUpdate), 'remove', _.size(toRemove));
+  log('Consolidated delta buffer', 'add', size(toAdd), 'update',
+    size(toUpdate), 'remove', size(toRemove));
   deltaBuffer.set(0, {
     add: toAdd.length > 0 ? toAdd : null,
     update: toUpdate.length > 0 ? toUpdate : null,

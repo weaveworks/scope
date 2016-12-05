@@ -1,8 +1,8 @@
 /* eslint react/jsx-no-bind: "off" */
 import React from 'react';
-import _ from 'lodash';
 import Perf from 'react-addons-perf';
 import { connect } from 'react-redux';
+import { sampleSize, sample, random, range, flattenDeep } from 'lodash';
 import { fromJS, Set as makeSet } from 'immutable';
 import { hsl } from 'd3-color';
 
@@ -28,7 +28,7 @@ ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor i
 voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
 proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`;
 
-const sample = (collection, n = 4) => _.sampleSize(collection, _.random(n));
+const sampleArray = (collection, n = 4) => sampleSize(collection, random(n));
 
 
 const shapeTypes = {
@@ -39,7 +39,7 @@ const shapeTypes = {
 };
 
 
-const LABEL_PREFIXES = _.range('A'.charCodeAt(), 'Z'.charCodeAt() + 1)
+const LABEL_PREFIXES = range('A'.charCodeAt(), 'Z'.charCodeAt() + 1)
   .map(n => String.fromCharCode(n));
 
 
@@ -80,7 +80,7 @@ function label(shape, stacked) {
 
 
 function addAllVariants(dispatch) {
-  const newNodes = _.flattenDeep(STACK_VARIANTS.map(stack => (SHAPES.map(s => {
+  const newNodes = flattenDeep(STACK_VARIANTS.map(stack => (SHAPES.map(s => {
     if (!stack) return [deltaAdd(label(s, stack), [], s, stack, 1)];
     return NODE_COUNTS.map(n => deltaAdd(label(s, stack), [], s, stack, n));
   }))));
@@ -92,7 +92,7 @@ function addAllVariants(dispatch) {
 
 
 function addAllMetricVariants(availableMetrics) {
-  const newNodes = _.flattenDeep(METRIC_FILLS.map((v, i) => (
+  const newNodes = flattenDeep(METRIC_FILLS.map((v, i) => (
     SHAPES.map(s => [addMetrics(availableMetrics, deltaAdd(label(s) + i, [], s), v)])
   )));
 
@@ -201,7 +201,7 @@ class DebugToolbar extends React.Component {
         // remove random node
         const ns = this.props.nodes;
         const nodeNames = ns.keySeq().toJS();
-        const randomNode = _.sample(nodeNames);
+        const randomNode = sample(nodeNames);
         this.asyncDispatch(receiveNodesDelta({
           remove: [randomNode]
         }));
@@ -219,7 +219,7 @@ class DebugToolbar extends React.Component {
         // filter random node
         const ns = this.props.nodes;
         const nodeNames = ns.keySeq().toJS();
-        const randomNode = _.sample(nodeNames);
+        const randomNode = sample(nodeNames);
         if (randomNode) {
           let nextNodes = ns.setIn([randomNode, 'filtered'], true);
           this.shortLivedNodes = this.shortLivedNodes.add(randomNode);
@@ -240,9 +240,9 @@ class DebugToolbar extends React.Component {
     const nodeNames = ns.keySeq().toJS();
     this.asyncDispatch(receiveNodesDelta({
       add: this._addNodes(7),
-      update: sample(nodeNames).map(n => ({
+      update: sampleArray(nodeNames).map(n => ({
         id: n,
-        adjacency: sample(nodeNames),
+        adjacency: sampleArray(nodeNames),
       }), nodeNames.length),
       remove: this._removeNode(),
     }));
@@ -251,18 +251,18 @@ class DebugToolbar extends React.Component {
   _addNodes(n, prefix = 'zing') {
     const ns = this.props.nodes;
     const nodeNames = ns.keySeq().toJS();
-    const newNodeNames = _.range(ns.size, ns.size + n).map(i => (
+    const newNodeNames = range(ns.size, ns.size + n).map(i => (
       // `${randomLetter()}${randomLetter()}-zing`
       `${prefix}${i}`
     ));
-    const allNodes = _(nodeNames).concat(newNodeNames).value();
+    const allNodes = nodeNames.concat(newNodeNames);
     return newNodeNames.map((name) => deltaAdd(
       name,
-      sample(allNodes),
-      _.sample(SHAPES),
-      _.sample(STACK_VARIANTS),
-      _.sample(NODE_COUNTS),
-      sample(NETWORKS, 10)
+      sampleArray(allNodes),
+      sample(SHAPES),
+      sample(STACK_VARIANTS),
+      sample(NODE_COUNTS),
+      sampleArray(NETWORKS, 10)
     ));
   }
 
@@ -278,7 +278,7 @@ class DebugToolbar extends React.Component {
   _removeNode() {
     const ns = this.props.nodes;
     const nodeNames = ns.keySeq().toJS();
-    return [nodeNames[_.random(nodeNames.length - 1)]];
+    return [nodeNames[random(nodeNames.length - 1)]];
   }
 
   removeNode() {

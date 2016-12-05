@@ -1,9 +1,9 @@
-import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
 import { Motion, spring } from 'react-motion';
 import { Map as makeMap } from 'immutable';
 import { line, curveBasis } from 'd3-shape';
+import { each, omit, times, constant } from 'lodash';
 
 import { uniformSelect } from '../utils/array-utils';
 import { round } from '../utils/math-utils';
@@ -24,7 +24,7 @@ const spline = line()
 
 const buildPath = (points, layoutPrecision) => {
   const extracted = [];
-  _.each(points, (value, key) => {
+  each(points, (value, key) => {
     const axis = key[0];
     const index = key.slice(1);
     if (!extracted[index]) {
@@ -57,7 +57,7 @@ class EdgeContainer extends React.Component {
 
   render() {
     const { layoutPrecision, points } = this.props;
-    const other = _.omit(this.props, 'points');
+    const other = omit(this.props, 'points');
 
     if (layoutPrecision === 0) {
       const path = spline(points.toJS());
@@ -88,7 +88,7 @@ class EdgeContainer extends React.Component {
     if (pointsMissing > 0) {
       // Whenever there are some waypoints missing, we simply populate the beginning of the
       // array with the first element, as this leaves the curve interpolation unchanged.
-      nextPoints = _.times(pointsMissing, _.constant(nextPoints[0])).concat(nextPoints);
+      nextPoints = times(pointsMissing, constant(nextPoints[0])).concat(nextPoints);
     } else if (pointsMissing < 0) {
       // If there are 'too many' waypoints given by dagre, we select a sub-array of
       // uniformly distributed indices. Note that it is very important to keep the first

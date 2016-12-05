@@ -1,5 +1,5 @@
 // adapted from https://github.com/NYTimes/svg-crowbar
-import _ from 'lodash';
+import { each } from 'lodash';
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
 const prefix = {
@@ -18,7 +18,7 @@ function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
   function explicitlySetStyle(element, targetEl) {
     const cSSStyleDeclarationComputed = getComputedStyle(element);
     let computedStyleStr = '';
-    _.each(cSSStyleDeclarationComputed, key => {
+    each(cSSStyleDeclarationComputed, key => {
       const value = cSSStyleDeclarationComputed.getPropertyValue(key);
       if (value !== emptySvgDeclarationComputed.getPropertyValue(key) && !cssSkipValues[value]) {
         computedStyleStr += `${key}:${value};`;

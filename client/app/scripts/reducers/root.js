@@ -1,5 +1,5 @@
-import _ from 'lodash';
 import debug from 'debug';
+import { size, each, includes } from 'lodash';
 import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
   OrderedMap as makeOrderedMap, Set as makeSet } from 'immutable';
 
@@ -30,7 +30,7 @@ export const initialState = makeMap({
   errorUrl: null,
   forceRelayout: false,
   gridMode: false,
-  gridSortBy: null,
+  gridSortedBy: null,
   gridSortedDesc: null,
   highlightedEdgeIds: makeSet(),
   highlightedNodeIds: makeSet(),
@@ -173,7 +173,7 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.SORT_ORDER_CHANGED: {
       return state.merge({
-        gridSortBy: action.sortBy,
+        gridSortedBy: action.sortedBy,
         gridSortedDesc: action.sortedDesc,
       });
     }
@@ -518,34 +518,34 @@ export function rootReducer(state = initialState, action) {
 
       if (!emptyMessage) {
         log('RECEIVE_NODES_DELTA',
-          'remove', _.size(action.delta.remove),
-          'update', _.size(action.delta.update),
-          'add', _.size(action.delta.add));
+          'remove', size(action.delta.remove),
+          'update', size(action.delta.update),
+          'add', size(action.delta.add));
       }
 
       state = state.set('errorUrl', null);
 
       // nodes that no longer exist
-      _.each(action.delta.remove, (nodeId) => {
+      each(action.delta.remove, (nodeId) => {
         // in case node disappears before mouseleave event
         if (state.get('mouseOverNodeId') === nodeId) {
           state = state.set('mouseOverNodeId', null);
         }
-        if (state.hasIn(['nodes', nodeId]) && _.includes(state.get('mouseOverEdgeId'), nodeId)) {
+        if (state.hasIn(['nodes', nodeId]) && includes(state.get('mouseOverEdgeId'), nodeId)) {
           state = state.set('mouseOverEdgeId', null);
         }
         state = state.deleteIn(['nodes', nodeId]);
       });
 
       // update existing nodes
-      _.each(action.delta.update, (node) => {
+      each(action.delta.update, (node) => {
         if (state.hasIn(['nodes', node.id])) {
           state = state.updateIn(['nodes', node.id], n => n.merge(fromJS(node)));
         }
       });
 
       // add new nodes
-      _.each(action.delta.add, (node) => {
+      each(action.delta.add, (node) => {
         state = state.setIn(['nodes', node.id], fromJS(node));
       });
 
@@ -658,8 +658,8 @@ export function rootReducer(state = initialState, action) {
         pinnedMetricType: action.state.pinnedMetricType
       });
       state = state.set('gridMode', action.state.topologyViewMode === 'grid');
-      if (action.state.gridSortBy) {
-        state = state.set('gridSortBy', action.state.gridSortBy);
+      if (action.state.gridSortedBy) {
+        state = state.set('gridSortedBy', action.state.gridSortedBy);
       }
       if (action.state.gridSortedDesc !== undefined) {
         state = state.set('gridSortedDesc', action.state.gridSortedDesc);

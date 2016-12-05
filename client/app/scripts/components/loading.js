@@ -1,5 +1,5 @@
 import React from 'react';
-import _ from 'lodash';
+import { sample } from 'lodash';
 
 import { findTopologyById } from '../utils/topology-utils';
 import NodesError from '../charts/nodes-error';
@@ -41,7 +41,7 @@ export class Loading extends React.Component {
     super(props, context);
 
     this.state = {
-      template: _.sample(LOADING_TEMPLATES)
+      template: sample(LOADING_TEMPLATES)
     };
   }
 
