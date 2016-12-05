@@ -243,7 +243,8 @@ export default class NodeDetailsTable extends React.Component {
             header.label;
 
           return (
-            <td className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
+            <td
+              className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
               title={header.label} key={header.id}>
               {isSortedAsc
                 && <span className="node-details-table-header-sorter fa fa-caret-up" />}
@@ -278,14 +279,15 @@ export default class NodeDetailsTable extends React.Component {
     const className = classNames('node-details-table-wrapper-wrapper', this.props.className);
 
     return (
-      <div className={className}
-        style={this.props.style}>
+      <div className={className} style={this.props.style}>
         <div className="node-details-table-wrapper">
           <table className="node-details-table">
             <thead>
               {this.renderHeaders(sortedBy, sortedDesc)}
             </thead>
-            <tbody style={this.props.tbodyStyle} onMouseEnter={onMouseEnter}
+            <tbody
+              style={this.props.tbodyStyle}
+              onMouseEnter={onMouseEnter}
               onMouseLeave={onMouseLeave}>
               {nodes && nodes.map(node => (
                 <NodeDetailsTableRow

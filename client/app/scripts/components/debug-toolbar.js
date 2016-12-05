@@ -338,7 +338,7 @@ class DebugToolbar extends React.Component {
               {LABEL_PREFIXES.map(r => (
                 <tr key={r}>
                   {LABEL_PREFIXES.map(c => (
-                    <td key={c} title={`(${r}, ${c})`} style={{backgroundColor: fn(r, c)}}></td>
+                    <td key={c} title={`(${r}, ${c})`} style={{backgroundColor: fn(r, c)}} />
                   ))}
                 </tr>
               ))}

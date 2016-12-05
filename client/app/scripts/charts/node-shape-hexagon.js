@@ -53,8 +53,12 @@ export default function NodeShapeHexagon({id, highlighted, size, color, metric})
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(shadowSize)} />
-      {hasMetric && <path className="metric-fill" style={metricStyle}
-        clipPath={`url(#${clipId})`} {...pathProps(shadowSize)} />}
+      {hasMetric && <path
+        className="metric-fill"
+        style={metricStyle}
+        clipPath={`url(#${clipId})`}
+        {...pathProps(shadowSize)}
+      />}
       {highlighted && hasMetric ?
         <text style={{fontSize}}>
           {formattedValue}

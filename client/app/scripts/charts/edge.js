@@ -17,7 +17,8 @@ class Edge extends React.Component {
     const className = classNames('edge', {highlighted, blurred, focused});
 
     return (
-      <g className={className} onMouseEnter={this.handleMouseEnter}
+      <g
+        className={className} onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave} id={id}>
         <path d={path} className="shadow" />
         <path d={path} className="link" />

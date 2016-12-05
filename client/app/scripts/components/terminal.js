@@ -5,12 +5,12 @@ import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { debounce } from 'lodash';
+import Term from 'xterm';
 
 import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
 import { getPipeStatus, basePath, doResizeTty } from '../utils/web-api-utils';
-import Term from 'xterm';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = `${wsProto}://${location.host}${basePath(location.pathname)}`;
@@ -313,7 +313,8 @@ class Terminal extends React.Component {
             onClick={this.handlePopoutTerminal}>
           Pop out
           </span>
-          <span title="Close" className="terminal-header-tools-item-icon fa fa-close"
+          <span
+            title="Close" className="terminal-header-tools-item-icon fa fa-close"
             onClick={this.handleCloseClick} />
         </div>
         <span className="terminal-header-title">{this.getTitle()}</span>

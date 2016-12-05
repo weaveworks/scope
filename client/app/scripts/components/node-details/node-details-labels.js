@@ -50,9 +50,11 @@ export default class NodeDetailsLabels extends React.Component {
     return (
       <div className="node-details-labels">
         {controls && this.renderControls(controls)}
-        {rows.map(field => (<div className="node-details-labels-field" key={field.id}>
-            <div className="node-details-labels-field-label truncate" title={field.label}
-              key={field.id}>
+        {rows.map(field => (
+          <div className="node-details-labels-field" key={field.id}>
+            <div
+              className="node-details-labels-field-label truncate"
+              title={field.label} key={field.id}>
               {field.label}
             </div>
             <div className="node-details-labels-field-value truncate" title={field.value}>
@@ -60,7 +62,8 @@ export default class NodeDetailsLabels extends React.Component {
             </div>
           </div>
         ))}
-        <ShowMore handleClick={this.handleLimitClick} collection={this.props.rows}
+        <ShowMore
+          handleClick={this.handleLimitClick} collection={this.props.rows}
           expanded={expanded} notShown={notShown} />
       </div>
     );

@@ -48,7 +48,8 @@ class Footer extends React.Component {
       <div className="footer">
 
         <div className="footer-status">
-          {versionUpdate && <a className="footer-versionupdate"
+          {versionUpdate && <a
+            className="footer-versionupdate"
             title={versionUpdateTitle} href={versionUpdate.downloadUrl} target="_blank">
             Update available: {versionUpdate.version}
           </a>}
@@ -67,11 +68,14 @@ class Footer extends React.Component {
             {pauseLabel !== '' && <span className="footer-label">{pauseLabel}</span>}
             <span className="fa fa-pause" />
           </a>
-          <a className="footer-icon" onClick={this.props.clickForceRelayout}
+          <a
+            className="footer-icon"
+            onClick={this.props.clickForceRelayout}
             title={forceRelayoutTitle}>
             <span className="fa fa-refresh" />
           </a>
-          <a className="footer-icon" onClick={this.props.clickDownloadGraph}
+          <a
+            className="footer-icon" onClick={this.props.clickDownloadGraph}
             title="Save canvas as SVG (does not include search highlighting)">
             <span className="fa fa-download" />
           </a>
@@ -84,8 +88,7 @@ class Footer extends React.Component {
           <a className="footer-icon" href="https://gitreports.com/issue/weaveworks/scope" target="_blank" title="Report an issue">
             <span className="fa fa-bug" />
           </a>
-          <a className="footer-icon" onClick={this.props.toggleHelp}
-            title="Show help">
+          <a className="footer-icon" onClick={this.props.toggleHelp} title="Show help">
             <span className="fa fa-question" />
           </a>
         </div>

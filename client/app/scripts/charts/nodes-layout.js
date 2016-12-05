@@ -249,11 +249,11 @@ function layoutSingleNodes(layout, opts) {
       if (singleNodes.has(node.get('id'))) {
         if (col === columns) {
           col = 0;
-          row++;
+          row += 1;
         }
         singleX = col * (nodesep + nodeWidth) + offsetX;
         singleY = row * (ranksep + nodeHeight) + offsetY;
-        col++;
+        col += 1;
         return node.merge({
           x: singleX,
           y: singleY
@@ -453,9 +453,10 @@ export function doLayout(immNodes, immEdges, opts) {
   const useCache = !options.forceRelayout && cachedLayout && nodeCache && edgeCache;
   let layout;
 
-  ++layoutRuns;
+  layoutRuns += 1;
   if (useCache && !hasUnseenNodes(immNodes, nodeCache)) {
-    log('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
+    layoutRunsTrivial += 1;
+    log('skip layout, trivial adjustment', layoutRunsTrivial, layoutRuns);
     layout = cloneLayout(cachedLayout, immNodes, immEdges);
     // copy old properties, works also if nodes get re-added
     layout = copyLayoutProperties(layout, nodeCache, edgeCache);

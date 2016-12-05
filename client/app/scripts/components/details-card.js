@@ -3,8 +3,11 @@ import { connect } from 'react-redux';
 
 import NodeDetails from './node-details';
 import EmbeddedTerminal from './embedded-terminal';
-import { DETAILS_PANEL_WIDTH as WIDTH, DETAILS_PANEL_OFFSET as OFFSET,
-  DETAILS_PANEL_MARGINS as MARGINS } from '../constants/styles';
+import {
+  DETAILS_PANEL_WIDTH as WIDTH,
+  DETAILS_PANEL_OFFSET as OFFSET,
+  DETAILS_PANEL_MARGINS as MARGINS
+} from '../constants/styles';
 
 class DetailsCard extends React.Component {
 

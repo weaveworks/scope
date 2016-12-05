@@ -90,9 +90,9 @@ class Search extends React.Component {
 
   componentDidUpdate() {
     if (this.props.searchFocused) {
-      ReactDOM.findDOMNode(this.refs.queryInput).focus();
+      ReactDOM.findDOMNode(this.queryInput).focus();
     } else if (!this.state.value) {
-      ReactDOM.findDOMNode(this.refs.queryInput).blur();
+      ReactDOM.findDOMNode(this.queryInput).blur();
     }
   }
 
@@ -121,13 +121,14 @@ class Search extends React.Component {
           <div className="search-input">
             {showPinnedSearches && pinnedSearches.toIndexedSeq()
               .map(query => <SearchItem query={query} key={query} />)}
-            <input className="search-input-field" type="text" id={inputId}
+            <input
+              className="search-input-field" type="text" id={inputId}
               value={value} onChange={this.handleChange}
               onFocus={this.handleFocus} onBlur={this.handleBlur}
-              disabled={disabled} ref="queryInput" />
+              disabled={disabled} ref={(c) => { this.queryInput = c; }} />
           </div>
           <div className="search-label">
-            <i className="fa fa-search search-label-icon"></i>
+            <i className="fa fa-search search-label-icon" />
             <label className="search-label-hint" htmlFor={inputId}>
               Search
             </label>

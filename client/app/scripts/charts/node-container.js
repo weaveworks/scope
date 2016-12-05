@@ -14,11 +14,12 @@ class NodeContainer extends React.Component {
     const other = omit(this.props, 'dx', 'dy');
 
     return (
-      <Motion style={{
-        x: spring(dx, animConfig),
-        y: spring(dy, animConfig),
-        f: spring(scaleFactor, animConfig)
-      }}>
+      <Motion
+        style={{
+          x: spring(dx, animConfig),
+          y: spring(dy, animConfig),
+          f: spring(scaleFactor, animConfig)
+        }}>
         {interpolated => {
           const transform = `translate(${round(interpolated.x, layoutPrecision)},`
             + `${round(interpolated.y, layoutPrecision)})`;

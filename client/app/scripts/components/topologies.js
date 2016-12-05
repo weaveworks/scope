@@ -28,7 +28,8 @@ class Topologies extends React.Component {
     });
 
     return (
-      <div className={className} title={title} key={topologyId} rel={topologyId}
+      <div
+        className={className} title={title} key={topologyId} rel={topologyId}
         onClick={this.onTopologyClick}>
         <div className="topologies-sub-item-label">
           {subTopology.get('name')}

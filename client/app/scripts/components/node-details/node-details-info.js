@@ -54,7 +54,8 @@ export default class NodeDetailsInfo extends React.Component {
             </div>
           );
         })}
-        <ShowMore handleClick={this.handleClickMore} collection={this.props.rows}
+        <ShowMore
+          handleClick={this.handleClickMore} collection={this.props.rows}
           expanded={this.state.expanded} notShown={notShown} />
       </div>
     );

@@ -1,9 +1,9 @@
 import { includes } from 'lodash';
 import { scaleLog } from 'd3-scale';
-import { formatMetricSvg } from './string-utils';
-import { colors } from './color-utils';
 import React from 'react';
 
+import { formatMetricSvg } from './string-utils';
+import { colors } from './color-utils';
 
 export function getClipPathDefinition(clipId, size, height,
   x = -size * 0.5, y = size * 0.5 - height) {

@@ -55,8 +55,7 @@ function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
   // hardcode computed css styles inside svg
   const allElements = traverse(svg);
   const allTargetElements = traverse(target);
-  let i = allElements.length;
-  while (i--) {
+  for (let i = allElements.length - 1; i >= 0; i -= 1) {
     explicitlySetStyle(allElements[i], allTargetElements[i]);
   }
 

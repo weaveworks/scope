@@ -40,7 +40,9 @@ function renderValues(node, columns = [], columnStyles = []) {
       if (field.valueType === 'metadata') {
         const {value, title} = formatDataType(field);
         return (
-          <td className="node-details-table-node-value truncate" title={title}
+          <td
+            className="node-details-table-node-value truncate"
+            title={title}
             style={style}
             key={field.id}>
             {value}
@@ -49,7 +51,9 @@ function renderValues(node, columns = [], columnStyles = []) {
       }
       if (field.valueType === 'relatives') {
         return (
-          <td className="node-details-table-node-value truncate" title={field.value}
+          <td
+            className="node-details-table-node-value truncate"
+            title={field.value}
             style={style}
             key={field.id}>
             {<NodeDetailsTableNodeLink linkable nodeId={field.relative.id} {...field.relative} />}
@@ -132,8 +136,9 @@ export default class NodeDetailsTableRow extends React.Component {
         onMouseEnter={onMouseEnterRow && this.onMouseEnter}
         onMouseLeave={onMouseLeaveRow && this.onMouseLeave}
         className={className}>
-        <td ref={this.storeLabelRef} className="node-details-table-node-label truncate"
-          style={firstColumnStyle}>
+        <td
+          className="node-details-table-node-label truncate"
+          ref={this.storeLabelRef} style={firstColumnStyle}>
           {this.props.renderIdCell(Object.assign(node, {topologyId, nodeId}))}
         </td>
         {values}

@@ -18,7 +18,9 @@ class MatchedResults extends React.Component {
           <span className="matched-results-match-label">
             {match.label}:
           </span>
-          <MatchedText text={text} match={match} maxLength={MAX_MATCH_LENGTH}
+          <MatchedText
+            text={text} match={match}
+            maxLength={MAX_MATCH_LENGTH}
             truncate={match.truncate} />
         </div>
       </div>

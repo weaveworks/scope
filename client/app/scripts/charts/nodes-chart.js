@@ -219,7 +219,8 @@ class NodesChart extends React.Component {
     const layoutPrecision = getLayoutPrecision(nodes.size);
     return (
       <div className="nodes-chart">
-        <svg width="100%" height="100%" id="nodes-chart-canvas"
+        <svg
+          width="100%" height="100%" id="nodes-chart-canvas"
           className={svgClassNames} onClick={this.handleMouseClick}>
           <g transform="translate(24,24) scale(0.25)">
             <Logo />

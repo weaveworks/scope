@@ -12,7 +12,7 @@ const spline = line()
 function polygon(r, sides) {
   const a = (Math.PI * 2) / sides;
   const points = [];
-  for (let i = 0; i < sides; i++) {
+  for (let i = 0; i < sides; i += 1) {
     points.push([r * Math.sin(a * i), -r * Math.cos(a * i)]);
   }
   return points;
@@ -37,8 +37,12 @@ export default function NodeShapeHeptagon({id, highlighted, size, color, metric}
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(0.45)} />
-      {hasMetric && <path className="metric-fill" clipPath={`url(#${clipId})`}
-        style={metricStyle} {...pathProps(0.45)} />}
+      {hasMetric && <path
+        className="metric-fill"
+        clipPath={`url(#${clipId})`}
+        style={metricStyle}
+        {...pathProps(0.45)}
+      />}
       {highlighted && hasMetric ?
         <text style={{fontSize}}>{formattedValue}</text> :
         <circle className="node" r={Math.max(2, (size * 0.125))} />}

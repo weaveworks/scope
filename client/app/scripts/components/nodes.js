@@ -63,13 +63,8 @@ class Nodes extends React.Component {
         {this.renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
 
         {gridMode ?
-          <NodesGrid {...this.state}
-            nodeSize="24"
-            margins={CANVAS_MARGINS}
-          /> :
-         <NodesChart {...this.state}
-           margins={CANVAS_MARGINS}
-           />}
+          <NodesGrid {...this.state} nodeSize="24" margins={CANVAS_MARGINS} /> :
+          <NodesChart {...this.state} margins={CANVAS_MARGINS} />}
       </div>
     );
   }

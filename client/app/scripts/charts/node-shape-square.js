@@ -28,8 +28,11 @@ export default function NodeShapeSquare({
       {highlighted && <rect className="highlighted" {...rectProps(0.7)} />}
       <rect className="border" stroke={color} {...rectProps(0.5, 0.5)} />
       <rect className="shadow" {...rectProps(0.45, 0.39)} />
-      {hasMetric && <rect className="metric-fill" style={metricStyle}
-        clipPath={`url(#${clipId})`} {...rectProps(0.45, 0.39)} />}
+      {hasMetric && <rect
+        className="metric-fill" style={metricStyle}
+        clipPath={`url(#${clipId})`}
+        {...rectProps(0.45, 0.39)}
+      />}
       {highlighted && hasMetric ?
         <text style={{fontSize}}>
           {formattedValue}
