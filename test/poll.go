@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/test/reflect"
 )
 
@@ -23,6 +24,6 @@ func Poll(t *testing.T, d time.Duration, want interface{}, have func() interface
 	h := have()
 	if !reflect.DeepEqual(want, h) {
 		_, file, line, _ := runtime.Caller(1)
-		t.Fatalf("%s:%d: %s", file, line, Diff(want, h))
+		t.Fatalf("%s:%d: %s", file, line, test.Diff(want, h))
 	}
 }

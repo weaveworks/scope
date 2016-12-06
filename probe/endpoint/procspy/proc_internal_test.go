@@ -8,8 +8,8 @@ import (
 	"time"
 
 	fs_hook "github.com/weaveworks/common/fs"
+	"github.com/weaveworks/common/test/fs"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/test/fs"
 )
 
 var mockFS = fs.Dir("",

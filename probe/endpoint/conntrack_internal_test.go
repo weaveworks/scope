@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/weaveworks/common/exec"
+	testexec "github.com/weaveworks/common/test/exec"
 	"github.com/weaveworks/scope/test"
-	testexec "github.com/weaveworks/scope/test/exec"
 )
 
 const conntrackCloseTag = "</conntrack>\n"
