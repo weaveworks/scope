@@ -6,7 +6,7 @@ import (
 	"github.com/armon/go-metrics"
 	"github.com/coocood/freecache"
 
-	"github.com/weaveworks/scope/common/fs"
+	"github.com/weaveworks/common/fs"
 )
 
 const (

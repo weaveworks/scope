@@ -3,7 +3,7 @@ package render
 import (
 	"strings"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/kubernetes"

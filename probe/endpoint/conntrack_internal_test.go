@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/common/exec"
+	"github.com/weaveworks/common/exec"
 	"github.com/weaveworks/scope/test"
 	testexec "github.com/weaveworks/scope/test/exec"
 )

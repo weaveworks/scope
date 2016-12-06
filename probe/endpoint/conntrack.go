@@ -12,7 +12,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/weaveworks/scope/common/exec"
+	"github.com/weaveworks/common/exec"
 )
 
 const (

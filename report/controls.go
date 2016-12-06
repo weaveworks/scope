@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/ugorji/go/codec"
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 )
 
 // Controls describe the control tags within the Nodes

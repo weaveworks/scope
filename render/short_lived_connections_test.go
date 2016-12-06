@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"

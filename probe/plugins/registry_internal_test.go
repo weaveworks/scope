@@ -18,7 +18,7 @@ import (
 	"github.com/paypal/ionet"
 	"github.com/ugorji/go/codec"
 
-	fs_hook "github.com/weaveworks/scope/common/fs"
+	fs_hook "github.com/weaveworks/common/fs"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"

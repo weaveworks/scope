@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	fs_hook "github.com/weaveworks/scope/common/fs"
+	fs_hook "github.com/weaveworks/common/fs"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fs"

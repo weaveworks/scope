@@ -19,8 +19,8 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/weaveworks/scope/common/backoff"
-	"github.com/weaveworks/scope/common/fs"
+	"github.com/weaveworks/common/backoff"
+	"github.com/weaveworks/common/fs"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
