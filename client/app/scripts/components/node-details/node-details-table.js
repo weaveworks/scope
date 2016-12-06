@@ -113,13 +113,13 @@ function getNodeValue(node, header) {
 
 
 function getValueForSortedBy(sortedByHeader) {
-  return (node) => maybeToLower(getNodeValue(node, sortedByHeader));
+  return node => maybeToLower(getNodeValue(node, sortedByHeader));
 }
 
 
 function getMetaDataSorters(nodes) {
   // returns an array of sorters that will take a node
-  return get(nodes, [0, 'metadata'], []).map((field, index) => node => {
+  return get(nodes, [0, 'metadata'], []).map((field, index) => (node) => {
     const nodeMetadataField = node.metadata && node.metadata[index];
     if (nodeMetadataField) {
       if (isNumber(nodeMetadataField)) {
@@ -225,7 +225,7 @@ export default class NodeDetailsTable extends React.Component {
       <tr>
         {headers.map((header, i) => {
           const headerClasses = ['node-details-table-header', 'truncate'];
-          const onHeaderClick = ev => {
+          const onHeaderClick = (ev) => {
             this.handleHeaderClick(ev, header.id, sortedBy, sortedDesc);
           };
           // sort by first metric by default

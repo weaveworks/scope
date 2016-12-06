@@ -19,7 +19,7 @@ export function getDefaultTopology(topologies) {
     .flatMap(t => makeList([t]).concat(t.get('sub_topologies', makeList())));
 
   return flatTopologies
-    .sortBy(t => {
+    .sortBy((t) => {
       const index = TOPOLOGY_DISPLAY_PRIORITY.indexOf(t.get('id'));
       return index === -1 ? Infinity : index;
     })
@@ -53,7 +53,7 @@ export function buildTopologyCacheId(topologyId, topologyOptions) {
 export function findTopologyById(subTree, topologyId) {
   let foundTopology;
 
-  subTree.forEach(topology => {
+  subTree.forEach((topology) => {
     if (endsWith(topology.get('url'), topologyId)) {
       foundTopology = topology;
     }
@@ -66,7 +66,7 @@ export function findTopologyById(subTree, topologyId) {
 }
 
 export function updateNodeDegrees(nodes, edges) {
-  return nodes.map(node => {
+  return nodes.map((node) => {
     const nodeId = node.get('id');
     const degree = edges.count(edge => edge.get('source') === nodeId
       || edge.get('target') === nodeId);
@@ -76,7 +76,7 @@ export function updateNodeDegrees(nodes, edges) {
 
 /* set topology.id and parentId for sub-topologies in place */
 export function updateTopologyIds(topologies, parentId) {
-  return topologies.map(topology => {
+  return topologies.map((topology) => {
     const result = Object.assign({}, topology);
     result.id = topology.url.split('/').pop();
     if (parentId) {
@@ -90,7 +90,7 @@ export function updateTopologyIds(topologies, parentId) {
 }
 
 export function addTopologyFullname(topologies) {
-  return topologies.map(t => {
+  return topologies.map((t) => {
     if (!t.sub_topologies) {
       return Object.assign({}, t, {fullName: t.name});
     }
@@ -108,10 +108,10 @@ export function addTopologyFullname(topologies) {
 export function setTopologyUrlsById(topologyUrlsById, topologies) {
   let urlMap = topologyUrlsById;
   if (topologies) {
-    topologies.forEach(topology => {
+    topologies.forEach((topology) => {
       urlMap = urlMap.set(topology.id, topology.url);
       if (topology.sub_topologies) {
-        topology.sub_topologies.forEach(subTopology => {
+        topology.sub_topologies.forEach((subTopology) => {
           urlMap = urlMap.set(subTopology.id, subTopology.url);
         });
       }

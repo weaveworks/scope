@@ -52,7 +52,7 @@ function initEdges(nodes) {
   nodes.forEach((node, nodeId) => {
     const adjacency = node.get('adjacency');
     if (adjacency) {
-      adjacency.forEach(adjacent => {
+      adjacency.forEach((adjacent) => {
         const edge = [nodeId, adjacent];
         const edgeId = edge.join(EDGE_ID_SEPARATOR);
 
@@ -256,7 +256,7 @@ class NodesChart extends React.Component {
     const adjacentNodes = props.adjacentNodes;
     const adjacentLayoutNodeIds = [];
 
-    adjacentNodes.forEach(adjacentId => {
+    adjacentNodes.forEach((adjacentId) => {
       // filter loopback
       if (adjacentId !== props.selectedNodeId) {
         adjacentLayoutNodeIds.push(adjacentId);
@@ -293,7 +293,7 @@ class NodesChart extends React.Component {
     });
 
     // fix all edges for circular nodes
-    stateEdges = stateEdges.map(edge => {
+    stateEdges = stateEdges.map((edge) => {
       if (edge.get('source') === props.selectedNodeId
         || edge.get('target') === props.selectedNodeId
         || includes(adjacentLayoutNodeIds, edge.get('source'))
@@ -327,7 +327,7 @@ class NodesChart extends React.Component {
       y: node.get('py')
     }));
 
-    const edges = state.edges.map(edge => {
+    const edges = state.edges.map((edge) => {
       if (edge.has('ppoints')) {
         return edge.set('points', edge.get('ppoints'));
       }

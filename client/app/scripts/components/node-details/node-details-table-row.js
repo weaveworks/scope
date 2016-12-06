@@ -8,9 +8,9 @@ import { formatDataType } from '../../utils/string-utils';
 
 function getValuesForNode(node) {
   const values = {};
-  ['metrics', 'metadata'].forEach(collection => {
+  ['metrics', 'metadata'].forEach((collection) => {
     if (node[collection]) {
-      node[collection].forEach(field => {
+      node[collection].forEach((field) => {
         const result = Object.assign({}, field);
         result.valueType = collection;
         values[field.id] = result;
@@ -18,7 +18,7 @@ function getValuesForNode(node) {
     }
   });
 
-  (node.parents || []).forEach(p => {
+  (node.parents || []).forEach((p) => {
     values[p.topologyId] = {
       id: p.topologyId,
       label: p.topologyId,
@@ -149,5 +149,5 @@ export default class NodeDetailsTableRow extends React.Component {
 
 
 NodeDetailsTableRow.defaultProps = {
-  renderIdCell: (props) => <NodeDetailsTableNodeLink {...props} />
+  renderIdCell: props => <NodeDetailsTableNodeLink {...props} />
 };

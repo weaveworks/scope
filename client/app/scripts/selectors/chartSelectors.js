@@ -46,7 +46,7 @@ function mergeDeepKeyIntersection(mapA, mapB) {
 //
 const _createDeepEqualSelector = createSelectorCreator(defaultMemoize, is);
 const _identity = v => v;
-const returnPreviousRefIfEqual = (selector) => _createDeepEqualSelector(selector, _identity);
+const returnPreviousRefIfEqual = selector => _createDeepEqualSelector(selector, _identity);
 
 
 //
@@ -60,7 +60,7 @@ const allNodesSelector = state => state.get('nodes');
 export const nodesSelector = returnPreviousRefIfEqual(
   createSelector(
     allNodesSelector,
-    (allNodes) => allNodes.filter(node => !node.get('filtered'))
+    allNodes => allNodes.filter(node => !node.get('filtered'))
   )
 );
 
@@ -71,7 +71,7 @@ export const adjacentNodesSelector = returnPreviousRefIfEqual(getAdjacentNodes);
 export const nodeAdjacenciesSelector = returnPreviousRefIfEqual(
   createSelector(
     nodesSelector,
-    (nodes) => nodes.map(n => makeMap({
+    nodes => nodes.map(n => makeMap({
       id: n.get('id'),
       adjacency: n.get('adjacency'),
     }))
@@ -81,7 +81,7 @@ export const nodeAdjacenciesSelector = returnPreviousRefIfEqual(
 
 export const dataNodesSelector = createSelector(
   nodesSelector,
-  (nodes) => nodes.map((node, id) => makeMap({
+  nodes => nodes.map((node, id) => makeMap({
     id,
     label: node.get('label'),
     pseudo: node.get('pseudo'),

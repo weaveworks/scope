@@ -18,7 +18,11 @@ function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
   function explicitlySetStyle(element, targetEl) {
     const cSSStyleDeclarationComputed = getComputedStyle(element);
     let computedStyleStr = '';
+<<<<<<< f5ae864fa293b70db13c64d519ec9f261bad4ddd
     each(cSSStyleDeclarationComputed, key => {
+=======
+    _.each(cSSStyleDeclarationComputed, (key) => {
+>>>>>>> Applied arrow-parens linting rule
       const value = cSSStyleDeclarationComputed.getPropertyValue(key);
       if (value !== emptySvgDeclarationComputed.getPropertyValue(key) && !cssSkipValues[value]) {
         computedStyleStr += `${key}:${value};`;

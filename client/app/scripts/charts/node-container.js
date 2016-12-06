@@ -20,7 +20,7 @@ class NodeContainer extends React.Component {
           y: spring(dy, animConfig),
           f: spring(scaleFactor, animConfig)
         }}>
-        {interpolated => {
+        {(interpolated) => {
           const transform = `translate(${round(interpolated.x, layoutPrecision)},`
             + `${round(interpolated.y, layoutPrecision)})`;
           return <Node {...other} transform={transform} scaleFactor={interpolated.f} />;

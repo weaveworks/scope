@@ -38,7 +38,7 @@ export default class NodeDetailsInfo extends React.Component {
 
     return (
       <div className="node-details-info">
-        {rows.map(field => {
+        {rows.map((field) => {
           const { value, title } = formatDataType(field);
           return (
             <div className="node-details-info-field" key={field.id}>

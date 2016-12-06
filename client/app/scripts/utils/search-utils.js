@@ -132,7 +132,7 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
 
       // metadata
       if (node.get('metadata')) {
-        node.get('metadata').forEach(field => {
+        node.get('metadata').forEach((field) => {
           const keyPath = [nodeId, 'metadata', field.get('id')];
           nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
             query, prefix, field.get('label'), field.get('truncate'));
@@ -141,7 +141,7 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
 
       // parents and relatives
       if (node.get('parents')) {
-        node.get('parents').forEach(parent => {
+        node.get('parents').forEach((parent) => {
           const keyPath = [nodeId, 'parents', parent.get('id')];
           nodeMatches = findNodeMatch(nodeMatches, keyPath, parent.get('label'),
             query, prefix, parent.get('topologyId'));
@@ -153,7 +153,7 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
       if (tables) {
         tables.forEach((table) => {
           if (table.get('rows')) {
-            table.get('rows').forEach(field => {
+            table.get('rows').forEach((field) => {
               const keyPath = [nodeId, 'tables', field.get('id')];
               nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
                 query, prefix, field.get('label'));
@@ -164,7 +164,7 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
     } else if (metric) {
       const metrics = node.get('metrics');
       if (metrics) {
-        metrics.forEach(field => {
+        metrics.forEach((field) => {
           const keyPath = [nodeId, 'metrics', field.get('id')];
           nodeMatches = findNodeMatchMetric(nodeMatches, keyPath, field.get('value'),
             field.get('label'), metric, comp, value);
@@ -291,7 +291,7 @@ export function applyPinnedSearches(state) {
 
   const pinnedSearches = state.get('pinnedSearches');
   if (pinnedSearches.size > 0) {
-    state.get('pinnedSearches').forEach(query => {
+    state.get('pinnedSearches').forEach((query) => {
       const parsed = parseQuery(query);
       if (parsed) {
         const nodeMatches = searchTopology(state.get('nodes'), parsed);

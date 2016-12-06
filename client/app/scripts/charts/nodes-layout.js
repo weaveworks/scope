@@ -55,7 +55,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   });
 
   // add nodes to the graph if not already there
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     const gNodeId = graphNodeId(node.get('id'));
     if (!graph.hasNode(gNodeId)) {
       graph.setNode(gNodeId, {
@@ -66,7 +66,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   });
 
   // remove nodes that are no longer there or are 0-degree nodes
-  graph.nodes().forEach(gNodeId => {
+  graph.nodes().forEach((gNodeId) => {
     const nodeId = fromGraphNodeId(gNodeId);
     if (!nodes.has(nodeId) || nodes.get(nodeId).get('degree') === 0) {
       graph.removeNode(gNodeId);
@@ -74,7 +74,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   });
 
   // add edges to the graph if not already there
-  edges.forEach(edge => {
+  edges.forEach((edge) => {
     const s = graphNodeId(edge.get('source'));
     const t = graphNodeId(edge.get('target'));
     if (!graph.hasEdge(s, t)) {
@@ -84,7 +84,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   });
 
   // remove edges that are no longer there
-  graph.edges().forEach(edgeObj => {
+  graph.edges().forEach((edgeObj) => {
     const edge = [fromGraphNodeId(edgeObj.v), fromGraphNodeId(edgeObj.w)];
     const edgeId = edge.join(EDGE_ID_SEPARATOR);
     if (!edges.has(edgeId)) {
@@ -97,14 +97,14 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
 
   // apply coordinates to nodes and edges
 
-  graph.nodes().forEach(gNodeId => {
+  graph.nodes().forEach((gNodeId) => {
     const graphNode = graph.node(gNodeId);
     const nodeId = fromGraphNodeId(gNodeId);
     nodes = nodes.setIn([nodeId, 'x'], graphNode.x);
     nodes = nodes.setIn([nodeId, 'y'], graphNode.y);
   });
 
-  graph.edges().forEach(graphEdge => {
+  graph.edges().forEach((graphEdge) => {
     const graphEdgeMeta = graph.edge(graphEdge);
     const edge = edges.get(graphEdgeMeta.id);
     let points = fromJS(graphEdgeMeta.points);
@@ -165,7 +165,7 @@ export function doLayoutNewNodesOfExistingRank(layout, nodeCache, opts) {
   const oldNodes = ImmSet.fromKeys(nodeCache);
   const newNodes = ImmSet.fromKeys(layout.nodes.filter(n => n.get('degree') > 0))
     .subtract(oldNodes);
-  result.nodes = layout.nodes.map(n => {
+  result.nodes = layout.nodes.map((n) => {
     if (newNodes.contains(n.get('id'))) {
       const nodesSameRank = nodeCache.filter(nn => nn.get('rank') === n.get('rank'));
       if (nodesSameRank.size > 0) {
@@ -178,7 +178,7 @@ export function doLayoutNewNodesOfExistingRank(layout, nodeCache, opts) {
     return n;
   });
 
-  result.edges = layout.edges.map(edge => {
+  result.edges = layout.edges.map((edge) => {
     if (!edge.has('points')) {
       return setSimpleEdgePoints(edge, layout.nodes);
     }
@@ -245,7 +245,7 @@ function layoutSingleNodes(layout, opts) {
     let col = 0;
     let singleX;
     let singleY;
-    nodes = nodes.sortBy(node => node.get('rank')).map(node => {
+    nodes = nodes.sortBy(node => node.get('rank')).map((node) => {
       if (singleNodes.has(node.get('id'))) {
         if (col === columns) {
           col = 0;
@@ -412,7 +412,7 @@ function copyLayoutProperties(layout, nodeCache, edgeCache) {
   const result = Object.assign({}, layout);
   result.nodes = layout.nodes.map(node => (nodeCache.has(node.get('id'))
     ? node.merge(nodeCache.get(node.get('id'))) : node));
-  result.edges = layout.edges.map(edge => {
+  result.edges = layout.edges.map((edge) => {
     if (edgeCache.has(edge.get('id'))
       && hasSameEndpoints(edgeCache.get(edge.get('id')), result.nodes)) {
       return edge.merge(edgeCache.get(edge.get('id')));

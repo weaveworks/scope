@@ -95,7 +95,7 @@ function setTopology(state, topologyId) {
 }
 
 function setDefaultTopologyOptions(state, topologyList) {
-  topologyList.forEach(topology => {
+  topologyList.forEach((topology) => {
     let defaultOptions = makeOrderedMap();
     if (topology.has('options') && topology.get('options')) {
       topology.get('options').forEach((option) => {
@@ -371,13 +371,13 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.ENTER_EDGE: {
       // highlight adjacent nodes
-      state = state.update('highlightedNodeIds', highlightedNodeIds => {
+      state = state.update('highlightedNodeIds', (highlightedNodeIds) => {
         highlightedNodeIds = highlightedNodeIds.clear();
         return highlightedNodeIds.union(action.edgeId.split(EDGE_ID_SEPARATOR));
       });
 
       // highlight edge
-      state = state.update('highlightedEdgeIds', highlightedEdgeIds => {
+      state = state.update('highlightedEdgeIds', (highlightedEdgeIds) => {
         highlightedEdgeIds = highlightedEdgeIds.clear();
         return highlightedEdgeIds.add(action.edgeId);
       });
@@ -392,18 +392,18 @@ export function rootReducer(state = initialState, action) {
       state = state.set('mouseOverNodeId', nodeId);
 
       // highlight adjacent nodes
-      state = state.update('highlightedNodeIds', highlightedNodeIds => {
+      state = state.update('highlightedNodeIds', (highlightedNodeIds) => {
         highlightedNodeIds = highlightedNodeIds.clear();
         highlightedNodeIds = highlightedNodeIds.add(nodeId);
         return highlightedNodeIds.union(adjacentNodes);
       });
 
       // highlight edge
-      state = state.update('highlightedEdgeIds', highlightedEdgeIds => {
+      state = state.update('highlightedEdgeIds', (highlightedEdgeIds) => {
         highlightedEdgeIds = highlightedEdgeIds.clear();
         if (adjacentNodes.size > 0) {
           // all neighbour combinations because we dont know which direction exists
-          highlightedEdgeIds = highlightedEdgeIds.union(adjacentNodes.flatMap((adjacentId) => [
+          highlightedEdgeIds = highlightedEdgeIds.union(adjacentNodes.flatMap(adjacentId => [
             [adjacentId, nodeId].join(EDGE_ID_SEPARATOR),
             [nodeId, adjacentId].join(EDGE_ID_SEPARATOR)
           ]));
@@ -491,7 +491,7 @@ export function rootReducer(state = initialState, action) {
 
       // disregard if node is not selected anymore
       if (state.hasIn(['nodeDetails', action.details.id])) {
-        state = state.updateIn(['nodeDetails', action.details.id], obj => {
+        state = state.updateIn(['nodeDetails', action.details.id], (obj) => {
           const result = Object.assign({}, obj);
           result.notFound = false;
           result.details = action.details;
@@ -554,7 +554,7 @@ export function rootReducer(state = initialState, action) {
 
       // TODO move this setting of networks as toplevel node field to backend,
       // to not rely on field IDs here. should be determined by topology implementer
-      state = state.update('nodes', nodes => nodes.map(node => {
+      state = state.update('nodes', nodes => nodes.map((node) => {
         if (node.has('metadata')) {
           const networks = node.get('metadata')
             .find(field => field.get('id') === 'docker_container_networks');
@@ -605,7 +605,7 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.RECEIVE_NOT_FOUND: {
       if (state.hasIn(['nodeDetails', action.nodeId])) {
-        state = state.updateIn(['nodeDetails', action.nodeId], obj => {
+        state = state.updateIn(['nodeDetails', action.nodeId], (obj) => {
           const result = Object.assign({}, obj);
           result.notFound = true;
           return result;

@@ -203,7 +203,7 @@ class NodeDetails extends React.Component {
             </div>
           ))}
 
-          {details.tables && details.tables.length > 0 && details.tables.map(table => {
+          {details.tables && details.tables.length > 0 && details.tables.map((table) => {
             if (table.rows.length > 0) {
               return (
                 <div className="node-details-content-section" key={table.id}>

@@ -73,7 +73,7 @@ function openNewWindow(url, bcr, minWidth = 200) {
   };
 
   const windowOptionsString = Object.keys(windowOptions)
-    .map((k) => `${k}=${windowOptions[k]}`)
+    .map(k => `${k}=${windowOptions[k]}`)
     .join(',');
 
   window.open(url, '', windowOptionsString);
@@ -374,10 +374,10 @@ class Terminal extends React.Component {
       <div className="terminal-wrapper">
         {this.isEmbedded() && this.getTerminalHeader()}
         <div
-          ref={(ref) => this.innerFlex = ref}
+          ref={ref => this.innerFlex = ref}
           className={innerClassName}
           style={innerFlexStyle} >
-          <div style={innerStyle} ref={(ref) => this.inner = ref} />
+          <div style={innerStyle} ref={ref => this.inner = ref} />
         </div>
         {this.getTerminalStatusBar()}
       </div>

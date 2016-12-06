@@ -78,7 +78,7 @@ function label(shape, stacked) {
 
 
 function addAllVariants(dispatch) {
-  const newNodes = flattenDeep(STACK_VARIANTS.map(stack => (SHAPES.map(s => {
+  const newNodes = flattenDeep(STACK_VARIANTS.map(stack => (SHAPES.map((s) => {
     if (!stack) return [deltaAdd(label(s, stack), [], s, stack, 1)];
     return NODE_COUNTS.map(n => deltaAdd(label(s, stack), [], s, stack, n));
   }))));
@@ -253,8 +253,13 @@ class DebugToolbar extends React.Component {
       // `${randomLetter()}${randomLetter()}-zing`
       `${prefix}${i}`
     ));
+<<<<<<< f5ae864fa293b70db13c64d519ec9f261bad4ddd
     const allNodes = nodeNames.concat(newNodeNames);
     return newNodeNames.map((name) => deltaAdd(
+=======
+    const allNodes = _(nodeNames).concat(newNodeNames).value();
+    return newNodeNames.map(name => deltaAdd(
+>>>>>>> Applied arrow-parens linting rule
       name,
       sampleArray(allNodes),
       sample(SHAPES),
