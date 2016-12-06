@@ -34,7 +34,8 @@ describe('NodeDetails', () => {
     details = {label: 'Node 1'};
     const c = TestUtils.renderIntoDocument(
       <Provider store={configureStore()}>
-        <NodeDetails nodes={nodes}
+        <NodeDetails
+          nodes={nodes}
           topologyId="containers"
           nodeId={nodeId} details={details}
         />
