@@ -1,4 +1,5 @@
 import debug from 'debug';
+import { identity } from 'lodash';
 import { createSelector, createSelectorCreator, defaultMemoize } from 'reselect';
 import { Map as makeMap, is, Set } from 'immutable';
 
@@ -44,9 +45,8 @@ function mergeDeepKeyIntersection(mapA, mapB) {
 // "their results", so use the result of the wrapped selector as the argument to another selector
 // here to memoize it and get what we want.
 //
-const _createDeepEqualSelector = createSelectorCreator(defaultMemoize, is);
-const _identity = v => v;
-const returnPreviousRefIfEqual = selector => _createDeepEqualSelector(selector, _identity);
+const createDeepEqualSelector = createSelectorCreator(defaultMemoize, is);
+const returnPreviousRefIfEqual = selector => createDeepEqualSelector(selector, identity);
 
 
 //

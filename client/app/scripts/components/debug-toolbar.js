@@ -237,29 +237,24 @@ class DebugToolbar extends React.Component {
     const ns = this.props.nodes;
     const nodeNames = ns.keySeq().toJS();
     this.asyncDispatch(receiveNodesDelta({
-      add: this._addNodes(7),
+      add: this.createRandomNodes(7),
       update: sampleArray(nodeNames).map(n => ({
         id: n,
         adjacency: sampleArray(nodeNames),
       }), nodeNames.length),
-      remove: this._removeNode(),
+      remove: this.randomExistingNode(),
     }));
   }
 
-  _addNodes(n, prefix = 'zing') {
+  createRandomNodes(n, prefix = 'zing') {
     const ns = this.props.nodes;
     const nodeNames = ns.keySeq().toJS();
     const newNodeNames = range(ns.size, ns.size + n).map(i => (
       // `${randomLetter()}${randomLetter()}-zing`
       `${prefix}${i}`
     ));
-<<<<<<< f5ae864fa293b70db13c64d519ec9f261bad4ddd
     const allNodes = nodeNames.concat(newNodeNames);
-    return newNodeNames.map((name) => deltaAdd(
-=======
-    const allNodes = _(nodeNames).concat(newNodeNames).value();
     return newNodeNames.map(name => deltaAdd(
->>>>>>> Applied arrow-parens linting rule
       name,
       sampleArray(allNodes),
       sample(SHAPES),
@@ -272,13 +267,13 @@ class DebugToolbar extends React.Component {
   addNodes(n, prefix = 'zing') {
     setTimeout(() => {
       this.asyncDispatch(receiveNodesDelta({
-        add: this._addNodes(n, prefix)
+        add: this.createRandomNodes(n, prefix)
       }));
       log('added nodes', n);
     }, 0);
   }
 
-  _removeNode() {
+  randomExistingNode() {
     const ns = this.props.nodes;
     const nodeNames = ns.keySeq().toJS();
     return [nodeNames[random(nodeNames.length - 1)]];
@@ -286,7 +281,7 @@ class DebugToolbar extends React.Component {
 
   removeNode() {
     this.asyncDispatch(receiveNodesDelta({
-      remove: this._removeNode()
+      remove: this.randomExistingNode()
     }));
   }
 
