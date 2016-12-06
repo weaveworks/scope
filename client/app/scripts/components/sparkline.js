@@ -97,7 +97,7 @@ export default class Sparkline extends React.Component {
 }
 
 Sparkline.propTypes = {
-  data: React.PropTypes.array.isRequired
+  data: React.PropTypes.arrayOf(React.PropTypes.object).isRequired
 };
 
 Sparkline.defaultProps = {

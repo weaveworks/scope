@@ -291,7 +291,7 @@ class DebugToolbar extends React.Component {
     return (
       <div className="debug-panel">
         <div>
-          <label>Add nodes </label>
+          <strong>Add nodes </strong>
           <button onClick={() => this.addNodes(1)}>+1</button>
           <button onClick={() => this.addNodes(10)}>+10</button>
           <input type="number" onChange={this.onChange} value={this.state.nodesToAdd} />
@@ -306,7 +306,7 @@ class DebugToolbar extends React.Component {
         </div>
 
         <div>
-          <label>Logging</label>
+          <strong>Logging </strong>
           <button onClick={() => enableLog('*')}>scope:*</button>
           <button onClick={() => enableLog('dispatcher')}>scope:dispatcher</button>
           <button onClick={() => enableLog('app-key-press')}>scope:app-key-press</button>
@@ -315,7 +315,7 @@ class DebugToolbar extends React.Component {
         </div>
 
         <div>
-          <label>Colors</label>
+          <strong>Colors </strong>
           <button onClick={this.toggleColors}>toggle</button>
         </div>
 
@@ -347,19 +347,19 @@ class DebugToolbar extends React.Component {
         ))}
 
         <div>
-          <label>state</label>
+          <strong>State </strong>
           <button onClick={() => this.setLoading(true)}>Set doing initial load</button>
           <button onClick={() => this.setLoading(false)}>Stop</button>
         </div>
 
         <div>
-          <label>Short-lived nodes</label>
+          <strong>Short-lived nodes </strong>
           <button onClick={() => this.setShortLived()}>Toggle short-lived nodes</button>
           <button onClick={() => this.setIntermittent()}>Toggle intermittent nodes</button>
         </div>
 
         <div>
-          <label>Measure React perf for </label>
+          <strong>Measure React perf for </strong>
           <button onClick={() => startPerf(2)}>2s</button>
           <button onClick={() => startPerf(5)}>5s</button>
           <button onClick={() => startPerf(10)}>10s</button>
