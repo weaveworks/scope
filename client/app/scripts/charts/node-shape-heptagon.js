@@ -30,10 +30,11 @@ export default function NodeShapeHeptagon({id, highlighted, size, color, metric}
   const metricStyle = { fill: getMetricColor(metric) };
   const className = classNames('shape', { metrics: hasMetric });
   const fontSize = size * CANVAS_METRIC_FONT_SIZE;
+  const halfSize = size * 0.5;
 
   return (
     <g className={className}>
-      {hasMetric && getClipPathDefinition(clipId, size, height, -size * 0.5, size * 0.5 - height)}
+      {hasMetric && getClipPathDefinition(clipId, size, height, -halfSize, halfSize - height)}
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(0.45)} />

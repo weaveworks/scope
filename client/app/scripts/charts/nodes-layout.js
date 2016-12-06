@@ -237,8 +237,8 @@ function layoutSingleNodes(layout, opts) {
     }
 
     // default margins
-    offsetX = offsetX || margins.left + nodeWidth / 2;
-    offsetY = offsetY || margins.top + nodeHeight / 2;
+    offsetX = offsetX || (margins.left + nodeWidth) / 2;
+    offsetY = offsetY || (margins.top + nodeHeight) / 2;
 
     const columns = Math.ceil(Math.sqrt(singleNodes.size));
     let row = 0;
@@ -251,8 +251,8 @@ function layoutSingleNodes(layout, opts) {
           col = 0;
           row += 1;
         }
-        singleX = col * (nodesep + nodeWidth) + offsetX;
-        singleY = row * (ranksep + nodeHeight) + offsetY;
+        singleX = (col * (nodesep + nodeWidth)) + offsetX;
+        singleY = (row * (ranksep + nodeHeight)) + offsetY;
         col += 1;
         return node.merge({
           x: singleX,
@@ -263,8 +263,8 @@ function layoutSingleNodes(layout, opts) {
     });
 
     // adjust layout dimensions if graph is now bigger
-    result.width = Math.max(layout.width, singleX + nodeWidth / 2 + nodesep);
-    result.height = Math.max(layout.height, singleY + nodeHeight / 2 + ranksep);
+    result.width = Math.max(layout.width, singleX + (nodeWidth / 2) + nodesep);
+    result.height = Math.max(layout.height, singleY + (nodeHeight / 2) + ranksep);
     result.nodes = nodes;
   }
 
@@ -290,12 +290,12 @@ export function shiftLayoutToCenter(layout, opts) {
   if (layout.width < width) {
     const xMin = layout.nodes.minBy(n => n.get('x'));
     const xMax = layout.nodes.maxBy(n => n.get('x'));
-    offsetX = (width - (xMin.get('x') + xMax.get('x'))) / 2 + margins.left;
+    offsetX = ((width - (xMin.get('x') + xMax.get('x'))) / 2) + margins.left;
   }
   if (layout.height < height) {
     const yMin = layout.nodes.minBy(n => n.get('y'));
     const yMax = layout.nodes.maxBy(n => n.get('y'));
-    offsetY = (height - (yMin.get('y') + yMax.get('y'))) / 2 + margins.top;
+    offsetY = ((height - (yMin.get('y') + yMax.get('y'))) / 2) + margins.top;
   }
 
   if (offsetX || offsetY) {

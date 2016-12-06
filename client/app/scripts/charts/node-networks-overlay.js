@@ -26,7 +26,7 @@ function NodeNetworksOverlay({offset, size, stack, networks = makeList()}) {
   const bars = networks.map((n, i) => (
     <rect
       x={x(i)}
-      y={offset - barHeight * 0.5}
+      y={offset - (barHeight * 0.5)}
       width={x.bandwidth()}
       height={barHeight}
       rx={rx}

@@ -48,8 +48,13 @@ export default function NodeShapeHexagon({id, highlighted, size, color, metric})
 
   return (
     <g className={className}>
-      {hasMetric && getClipPathDefinition(clipId,
-        size * (1 + hexCurve * 2), height, -size * hexCurve, (size - height) * shadowSize * 2)}
+      {hasMetric && getClipPathDefinition(
+        clipId,
+        size * (1 + (hexCurve * 2)),
+        height,
+        -(size * hexCurve),
+        (size - height) * (shadowSize * 2)
+      )}
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
       <path className="border" stroke={color} {...pathProps(0.5)} />
       <path className="shadow" {...pathProps(shadowSize)} />

@@ -266,9 +266,10 @@ class NodesChart extends React.Component {
     // move origin node to center of viewport
     const zoomScale = state.scale;
     const translate = [state.panTranslateX, state.panTranslateY];
-    const centerX = (-translate[0] + (state.width + props.margins.left
-      - DETAILS_PANEL_WIDTH) / 2) / zoomScale;
-    const centerY = (-translate[1] + (state.height + props.margins.top) / 2) / zoomScale;
+    const viewportHalfWidth = ((state.width + props.margins.left) - DETAILS_PANEL_WIDTH) / 2;
+    const viewportHalfHeight = (state.height + props.margins.top) / 2;
+    const centerX = (-translate[0] + viewportHalfWidth) / zoomScale;
+    const centerY = (-translate[1] + viewportHalfHeight) / zoomScale;
     stateNodes = stateNodes.mergeIn([props.selectedNodeId], {
       x: centerX,
       y: centerY
@@ -283,10 +284,10 @@ class NodesChart extends React.Component {
     stateNodes = stateNodes.map((node, nodeId) => {
       const index = adjacentLayoutNodeIds.indexOf(nodeId);
       if (index > -1) {
-        const angle = offsetAngle + Math.PI * 2 * index / adjacentCount;
+        const angle = offsetAngle + ((Math.PI * 2 * index) / adjacentCount);
         return node.merge({
-          x: centerX + radius * Math.sin(angle),
-          y: centerY + radius * Math.cos(angle)
+          x: centerX + (radius * Math.sin(angle)),
+          y: centerY + (radius * Math.cos(angle))
         });
       }
       return node;

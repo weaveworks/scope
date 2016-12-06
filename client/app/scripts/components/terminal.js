@@ -264,7 +264,7 @@ class Terminal extends React.Component {
     this.props.dispatch(clickCloseTerminal(this.getPipeId()));
 
     const bcr = ReactDOM.findDOMNode(this).getBoundingClientRect();
-    const minWidth = this.state.characterWidth * 80 + (8 * 2);
+    const minWidth = (this.state.characterWidth * 80) + (8 * 2);
     openNewWindow(`terminal.html#!/state/${paramString}`, bcr, minWidth);
   }
 

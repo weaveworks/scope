@@ -33,15 +33,15 @@ class DetailsCard extends React.Component {
       const scaleY = origin.height / (window.innerHeight - MARGINS.bottom - MARGINS.top) / 2;
       const scaleX = origin.width / WIDTH / 2;
       const centerX = window.innerWidth - MARGINS.right - (WIDTH / 2);
-      const centerY = (panelHeight) / 2 + MARGINS.top;
-      const dx = (origin.left + origin.width / 2) - centerX;
-      const dy = (origin.top + origin.height / 2) - centerY;
+      const centerY = (panelHeight / 2) + MARGINS.top;
+      const dx = (origin.left + (origin.width / 2)) - centerX;
+      const dy = (origin.top + (origin.height / 2)) - centerY;
       transform = `translate(${dx}px, ${dy}px) scale(${scaleX},${scaleY})`;
     } else {
       // stack effect: shift top cards to the left, shrink lower cards vertically
       const shiftX = -1 * this.props.index * OFFSET;
       const position = this.props.cardCount - this.props.index - 1; // reverse index
-      const scaleY = position === 0 ? 1 : (panelHeight - 2 * OFFSET * position) / panelHeight;
+      const scaleY = (position === 0) ? 1 : (panelHeight - (2 * OFFSET * position)) / panelHeight;
       if (scaleY !== 1) {
         transform = `translateX(${shiftX}px) scaleY(${scaleY})`;
       } else {
