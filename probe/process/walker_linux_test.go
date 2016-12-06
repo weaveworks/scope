@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	fs_hook "github.com/weaveworks/common/fs"
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/common/test/fs"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/test"
 )
 
 var mockFS = fs.Dir("",

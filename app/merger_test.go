@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
 )
 

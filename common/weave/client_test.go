@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/weaveworks/common/exec"
+	"github.com/weaveworks/common/test"
 	testExec "github.com/weaveworks/common/test/exec"
 	"github.com/weaveworks/scope/common/weave"
-	"github.com/weaveworks/scope/test"
 )
 
 const (

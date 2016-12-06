@@ -13,8 +13,8 @@ import (
 	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 )
 

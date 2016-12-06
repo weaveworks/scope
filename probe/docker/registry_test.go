@@ -12,6 +12,7 @@ import (
 	client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/common/mtime"
+	commonTest "github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
@@ -496,7 +497,7 @@ func TestRegistryDelete(t *testing.T) {
 				}),
 			}
 			if !reflect.DeepEqual(want, nodes) {
-				t.Errorf("Didn't get right container updates: %v", test.Diff(want, nodes))
+				t.Errorf("Didn't get right container updates: %v", commonTest.Diff(want, nodes))
 			}
 			nodes = []report.Node{}
 			mtx.Unlock()

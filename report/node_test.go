@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/weaveworks/common/mtime"
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
 )
 

@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 )
 
 func TestPrefixTables(t *testing.T) {
