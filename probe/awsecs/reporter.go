@@ -99,18 +99,15 @@ func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 			taskArns = append(taskArns, taskArn)
 		}
 
-		ecsInfo, err := client.getInfo(taskArns)
-		if err != nil {
-			return rpt, err
-		}
+		ecsInfo := client.getInfo(taskArns)
 
 		// Create all the services first
 		for serviceName, service := range ecsInfo.services {
 			serviceID := report.MakeECSServiceNodeID(serviceName)
 			rpt.ECSService = rpt.ECSService.AddNode(report.MakeNodeWith(serviceID, map[string]string{
 				Cluster:             cluster,
-				ServiceDesiredCount: fmt.Sprintf("%d", *service.DesiredCount),
-				ServiceRunningCount: fmt.Sprintf("%d", *service.RunningCount),
+				ServiceDesiredCount: fmt.Sprintf("%d", service.desiredCount),
+				ServiceRunningCount: fmt.Sprintf("%d", service.runningCount),
 			}))
 		}
 		log.Debugf("Created %v ECS service nodes", len(ecsInfo.services))
@@ -127,7 +124,7 @@ func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 			node := report.MakeNodeWith(taskID, map[string]string{
 				TaskFamily: info.family,
 				Cluster:    cluster,
-				CreatedAt:  task.CreatedAt.Format(time.RFC3339Nano),
+				CreatedAt:  task.createdAt.Format(time.RFC3339Nano),
 			})
 			rpt.ECSTask = rpt.ECSTask.AddNode(node)
 
