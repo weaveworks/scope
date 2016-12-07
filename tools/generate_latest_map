@@ -38,7 +38,9 @@ function generate_latest_map {
     local empty_latest_map_variable="Empty${latest_map_type}"
     local make_function="Make${latest_map_type}"
 
+    # shellcheck disable=SC2016
     local json_timestamp='`json:"timestamp"`'
+    # shellcheck disable=SC2016
     local json_value='`json:"value"`'
 
     cat << EOF >>"${out_file}"
@@ -168,7 +170,7 @@ outtmp="${out}.tmp"
 
 generate_header "${outtmp}" "${0} ${*}"
 shift
-for t in ${*}; do
+for t in "${@}"; do
     generate_latest_map "${outtmp}" "${t}"
 done
 
