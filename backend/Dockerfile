@@ -2,7 +2,7 @@ FROM ubuntu:yakkety
 ENV GOPATH /go
 ENV PATH /go/bin:/usr/lib/go-1.7/bin:/usr/bin:/bin:/usr/sbin:/sbin
 RUN apt-get update && \
-	apt-get install -y libpcap-dev python-requests time file shellcheck golang-1.7 git && \
+	apt-get install -y libpcap-dev python-requests time file shellcheck golang-1.7 git gcc-arm-linux-gnueabihf && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN go clean -i net && \
 	go install -tags netgo std && \

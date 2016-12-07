@@ -23,13 +23,25 @@ RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
 GO_ENV=GOGC=off
-GO=env $(GO_ENV) go
-NO_CROSS_COMP=unset GOOS GOARCH
-GO_HOST=$(NO_CROSS_COMP); $(GO)
-WITH_GO_HOST_ENV=$(NO_CROSS_COMP); $(GO_ENV)
+GO_ENV_ARM=$(GO_ENV) CC=/usr/bin/arm-linux-gnueabihf-gcc CGO_ENABLED=1
 GO_BUILD_INSTALL_DEPS=-i
 GO_BUILD_TAGS='netgo unsafe'
 GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION) -s -w" -tags $(GO_BUILD_TAGS)
+
+ifeq ($(GOARCH),arm)
+GO=env $(GO_ENV_ARM) go
+# The version of go shipped on debian doesn't have some standard library
+# packages for arm and when it tries to install them it fails because it
+# doesn't have permission to write to /usr/lib
+# Use -pkgdir if we build for arm so packages are installed in $HOME
+GO_BUILD_FLAGS+=-pkgdir ~
+else
+GO=env $(GO_ENV) go
+endif
+
+NO_CROSS_COMP=unset GOOS GOARCH
+GO_HOST=$(NO_CROSS_COMP); env $(GO_ENV) go
+WITH_GO_HOST_ENV=$(NO_CROSS_COMP); $(GO_ENV)
 IMAGE_TAG=$(shell ./tools/image-tag)
 EBPF_IMAGE=kinvolk/tcptracer-bpf:semaphore-master-3f7c26b
 
