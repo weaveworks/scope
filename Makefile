@@ -22,8 +22,8 @@ CODECGEN_TARGETS=report/report.codecgen.go render/detailed/detailed.codecgen.go
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
-GO_ENV=GOGC=off
-GO_ENV_ARM=$(GO_ENV) CC=/usr/bin/arm-linux-gnueabihf-gcc CGO_ENABLED=1
+GO_ENV=GOGC=off CGO_ENABLED=1
+GO_ENV_ARM=$(GO_ENV) CC=/usr/bin/arm-linux-gnueabihf-gcc
 GO_BUILD_INSTALL_DEPS=-i
 GO_BUILD_TAGS='netgo unsafe'
 GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION) -s -w" -tags $(GO_BUILD_TAGS)
