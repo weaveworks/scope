@@ -78,12 +78,12 @@ func getLabelInfo(rpt report.Report) map[string]map[string]*taskLabelInfo {
 
 // Reporter implements Tagger, Reporter
 type Reporter struct {
-	clients map[string]ecsClient
+	clients map[string]*ecsClient
 }
 
 func New() Reporter {
 	return Reporter{
-		clients: map[string]ecsClient{},
+		clients: map[string]*ecsClient{},
 	}
 }
 
@@ -98,7 +98,8 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 
 		client, ok := r.clients[cluster]
 		if !ok {
-			client, err := newClient(cluster)
+			var err error // can't use := on the next line without shadowing outer client var
+			client, err = newClient(cluster)
 			if err != nil {
 				return rpt, err
 			}

@@ -1,6 +1,7 @@
 package awsecs
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -13,17 +14,17 @@ import (
 
 // a wrapper around an AWS client that makes all the needed calls and just exposes the final results
 type ecsClient struct {
-	client  *ecs.ECS
-	cluster string
-	taskCache map[string]ecsTask
+	client       *ecs.ECS
+	cluster      string
+	taskCache    map[string]ecsTask
 	serviceCache map[string]ecsService
 }
 
 // Since we're caching tasks heavily, we ensure no mistakes by casting into a structure
 // that only contains immutable attributes of the resource.
 type ecsTask struct {
-	taskARN string
-	createdAt time.Time
+	taskARN           string
+	createdAt         time.Time
 	taskDefinitionARN string
 
 	// These started fields are immutable once set, and guarenteed to be set once the task is running,
@@ -32,7 +33,7 @@ type ecsTask struct {
 	startedBy string // tag or deployment id
 
 	// Metadata about this cache copy
-	fetchedAt time.Time
+	fetchedAt  time.Time
 	lastUsedAt time.Time
 }
 
@@ -41,17 +42,16 @@ type ecsTask struct {
 // but we avoid re-listing services unless we can't find a service for a task.
 type ecsService struct {
 	serviceName string
-	createdAt time.Time
 
 	// The following values may be stale in a cached copy
-	deploymentIDs []string
-	desiredCount int64
-	pendingCount int64
-	runningCount int64
+	deploymentIDs     []string
+	desiredCount      int64
+	pendingCount      int64
+	runningCount      int64
 	taskDefinitionARN string
 
 	// Metadata about this cache copy
-	fetchedAt time.Time
+	fetchedAt  time.Time
 	lastUsedAt time.Time
 }
 
@@ -70,42 +70,41 @@ func newClient(cluster string) (*ecsClient, error) {
 	}
 
 	return &ecsClient{
-		client:  ecs.New(sess, &aws.Config{Region: aws.String(region)}),
-		cluster: cluster,
-		taskCache: map[string]ecsTask{},
+		client:       ecs.New(sess, &aws.Config{Region: aws.String(region)}),
+		cluster:      cluster,
+		taskCache:    map[string]ecsTask{},
 		serviceCache: map[string]ecsService{},
 	}, nil
 }
 
 func newECSTask(task *ecs.Task) ecsTask {
-	now = time.Now()
+	now := time.Now()
 	return ecsTask{
-		taskARN: *task.TaskARN,
-		createdAt: *task.CreatedAt,
+		taskARN:           *task.TaskArn,
+		createdAt:         *task.CreatedAt,
 		taskDefinitionARN: *task.TaskDefinitionArn,
-		startedAt: *task.StartedAt,
-		startedBy: *task.StartedBy,
-		fetchedAt: now,
-		lastUsedAt: now,
+		startedAt:         *task.StartedAt,
+		startedBy:         *task.StartedBy,
+		fetchedAt:         now,
+		lastUsedAt:        now,
 	}
 }
 
 func newECSService(service *ecs.Service) ecsService {
-	now = time.Now()
-	deploymentIDs = make([]string, 0, len(service.Deployments))
+	now := time.Now()
+	deploymentIDs := make([]string, 0, len(service.Deployments))
 	for _, deployment := range service.Deployments {
-		deploymentIDs = append(deploymentIDs, *deployment.ID)
+		deploymentIDs = append(deploymentIDs, *deployment.Id)
 	}
 	return ecsService{
-		serviceName: *service.ServiceName,
-		createdAt: *service.CreatedAt,
-		deploymentIDs: deploymentIDs,
-		desiredCount: *service.DesiredCount,
-		pendingCount: *service.PendingCount,
-		runningCount: *service.RunningCount,
-		taskDefinitionARN: *service.TaskDefinitionARN,
-		fetchedAt: now,
-		lastUsedAt: now,
+		serviceName:       *service.ServiceName,
+		deploymentIDs:     deploymentIDs,
+		desiredCount:      *service.DesiredCount,
+		pendingCount:      *service.PendingCount,
+		runningCount:      *service.RunningCount,
+		taskDefinitionARN: *service.TaskDefinition,
+		fetchedAt:         now,
+		lastUsedAt:        now,
 	}
 }
 
@@ -118,9 +117,10 @@ func (c ecsClient) listServices() <-chan string {
 			&ecs.ListServicesInput{Cluster: &c.cluster},
 			func(page *ecs.ListServicesOutput, lastPage bool) bool {
 				for _, arn := range page.ServiceArns {
-					results <- arn
+					results <- *arn
 				}
-			}
+				return true
+			},
 		)
 		if err != nil {
 			log.Warnf("Error listing ECS services, ECS service report may be incomplete: %v", err)
@@ -134,6 +134,7 @@ func (c ecsClient) listServices() <-chan string {
 // with full ecsService objects being put into the cache. Closes done when finished.
 func (c ecsClient) describeServices() (chan<- string, <-chan bool) {
 	input := make(chan string)
+	done := make(chan bool)
 
 	go func() {
 		const MAX_SERVICES = 10 // How many services we can put in one Describe command
@@ -149,9 +150,14 @@ func (c ecsClient) describeServices() (chan<- string, <-chan bool) {
 				go func(arns []string) {
 					defer group.Done()
 
+					arnPtrs := make([]*string, 0, len(arns))
+					for i := range arns {
+						arnPtrs = append(arnPtrs, &arns[i])
+					}
+
 					resp, err := c.client.DescribeServices(&ecs.DescribeServicesInput{
 						Cluster:  &c.cluster,
-						Services: arns,
+						Services: arnPtrs,
 					})
 					if err != nil {
 						log.Warnf("Error describing some ECS services, ECS service report may be incomplete: %v", err)
@@ -162,11 +168,11 @@ func (c ecsClient) describeServices() (chan<- string, <-chan bool) {
 						log.Warnf("Failed to describe ECS service %s, ECS service report may be incomplete: %s", *failure.Arn, failure.Reason)
 					}
 
-					mutex.Lock()
+					lock.Lock()
 					for _, service := range resp.Services {
 						c.serviceCache[*service.ServiceName] = newECSService(service)
 					}
-					mutex.Unlock()
+					lock.Unlock()
 				}(page)
 
 				page = make([]string, 0, MAX_SERVICES)
@@ -181,10 +187,10 @@ func (c ecsClient) describeServices() (chan<- string, <-chan bool) {
 }
 
 // get details on given tasks, updating cache with the results
-func (c ecsClient) getTasks(taskArns []string) {
-	taskPtrs := make([]*string, len(taskArns))
-	for i := range taskArns {
-		taskPtrs[i] = &taskArns[i]
+func (c ecsClient) getTasks(taskARNs []string) {
+	taskPtrs := make([]*string, len(taskARNs))
+	for i := range taskARNs {
+		taskPtrs[i] = &taskARNs[i]
 	}
 
 	// You'd think there's a limit on how many tasks can be described here,
@@ -210,16 +216,16 @@ func (c ecsClient) getTasks(taskArns []string) {
 // Evict entries from the caches which have not been used within the eviction interval.
 func (c ecsClient) evictOldCacheItems() {
 	const EVICT_TIME = time.Minute
-	now = time.Now()
+	now := time.Now()
 
 	for arn, task := range c.taskCache {
-		if now - task.lastUsedAt > EVICT_TIME {
+		if now.Sub(task.lastUsedAt) > EVICT_TIME {
 			delete(c.taskCache, arn)
 		}
 	}
 
 	for name, service := range c.serviceCache {
-		if now - service.lastUsedAt > EVICT_TIME {
+		if now.Sub(service.lastUsedAt) > EVICT_TIME {
 			delete(c.serviceCache, name)
 		}
 	}
@@ -233,7 +239,7 @@ func (c ecsClient) matchTasksServices(taskARNs []string) (map[string]string, []s
 
 	deploymentMap := map[string]string{}
 	for serviceName, service := range c.serviceCache {
-		for _, deployment := range service.DeploymentIDs {
+		for _, deployment := range service.deploymentIDs {
 			deploymentMap[deployment] = serviceName
 		}
 	}
@@ -242,16 +248,16 @@ func (c ecsClient) matchTasksServices(taskARNs []string) (map[string]string, []s
 	unmatched := []string{}
 	for _, taskARN := range taskARNs {
 		task, ok := c.taskCache[taskARN]
-		if ! ok {
+		if !ok {
 			// this can happen if we have a failure while describing tasks, just pretend the task doesn't exist
 			continue
 		}
-		if ! strings.HasPrefix(task.startedBy, SERVICE_PREFIX) {
+		if !strings.HasPrefix(task.startedBy, SERVICE_PREFIX) {
 			// task was not started by a service
 			continue
 		}
-		if service, ok := deploymentMap[task.startedBy]; ok {
-			results[taskARN] = service.serviceName
+		if serviceName, ok := deploymentMap[task.startedBy]; ok {
+			results[taskARN] = serviceName
 		} else {
 			unmatched = append(unmatched, taskARN)
 		}
@@ -267,7 +273,7 @@ func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
 	// First, we ensure we have all the tasks we need, and fetch the ones we don't.
 	// We also mark the tasks as being used here to prevent eviction.
 	tasksToFetch := []string{}
-	now = Time.Now()
+	now := time.Now()
 	for _, taskARN := range taskARNs {
 		if task, ok := c.taskCache[taskARN]; ok {
 			task.lastUsedAt = now
@@ -284,9 +290,9 @@ func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
 	taskServiceMap, unmatched := c.matchTasksServices(taskARNs)
 
 	// In order to ensure service details are fresh, we need to refresh any referenced services
-	toDescribe, done := describeServices()
+	toDescribe, done := c.describeServices()
 	servicesRefreshed := map[string]bool{}
-	for taskARN, serviceName := range taskServiceMap {
+	for _, serviceName := range taskServiceMap {
 		if servicesRefreshed[serviceName] {
 			continue
 		}
@@ -305,11 +311,11 @@ func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
 	// If we still have tasks unmatched, we'll have to try harder. Get a list of all services and,
 	// if not already refreshed, fetch them.
 	if len(unmatched) > 0 {
-		serviceNamesChan := listServices()
-		toDescribe, done := describeServices()
+		serviceNamesChan := c.listServices()
+		toDescribe, done := c.describeServices()
 		go func() {
 			for serviceName := range serviceNamesChan {
-				if ! servicesRefreshed[serviceName] {
+				if !servicesRefreshed[serviceName] {
 					toDescribe <- serviceName
 					servicesRefreshed[serviceName] = true
 				}
