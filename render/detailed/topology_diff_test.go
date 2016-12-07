@@ -5,9 +5,9 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 )
 
 // ByID is a sort interface for a NodeSummary slice.

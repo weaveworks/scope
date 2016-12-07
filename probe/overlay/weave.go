@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/weaveworks/scope/common/backoff"
+	"github.com/weaveworks/common/backoff"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"

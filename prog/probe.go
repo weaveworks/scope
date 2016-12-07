@@ -16,9 +16,9 @@ import (
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
 
+	"github.com/weaveworks/common/network"
+	"github.com/weaveworks/common/sanitize"
 	"github.com/weaveworks/scope/common/hostname"
-	"github.com/weaveworks/scope/common/network"
-	"github.com/weaveworks/scope/common/sanitize"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe"

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	commonTest "github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
@@ -92,7 +93,7 @@ func TestPipes(t *testing.T) {
 				NodeID:  report.MakeContainerNodeID("ping"),
 			})
 			if !reflect.DeepEqual(result, want.response) {
-				t.Errorf("diff %s: %s", want.control, test.Diff(want, result))
+				t.Errorf("diff %s: %s", want.control, commonTest.Diff(want, result))
 			}
 		}
 	})

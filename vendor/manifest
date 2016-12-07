@@ -54,6 +54,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/armon/go-socks5",
+			"repository": "https://github.com/armon/go-socks5",
+			"vcs": "git",
+			"revision": "e75332964ef517daa070d7c38a9466a0d687e0a5",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/aws/aws-sdk-go",
 			"repository": "https://github.com/aws/aws-sdk-go",
 			"vcs": "",
@@ -81,6 +89,14 @@
 			"vcs": "",
 			"revision": "fb6c0b0e1ff03057a054886141927cdce6239dec",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/bmizerany/assert",
+			"repository": "https://github.com/bmizerany/assert",
+			"vcs": "git",
+			"revision": "b7ed37b82869576c289d7d97fb2bbd8b64a0cb28",
+			"branch": "master",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/bradfitz/gomemcache/memcache",
@@ -793,6 +809,15 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/fluent/fluent-logger-golang/fluent",
+			"repository": "https://github.com/fluent/fluent-logger-golang",
+			"vcs": "git",
+			"revision": "28bdb662295c1b7aca09c1a4edbf9430010775a9",
+			"branch": "master",
+			"path": "/fluent",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/fsouza/go-dockerclient",
 			"repository": "https://github.com/fsouza/go-dockerclient",
 			"vcs": "git",
@@ -962,11 +987,27 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/kr/pretty",
+			"repository": "https://github.com/kr/pretty",
+			"vcs": "git",
+			"revision": "cfb55aafdaf3ec08f0db22699ab822c50091b1c4",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/kr/pty",
 			"repository": "https://github.com/kr/pty",
 			"vcs": "",
 			"revision": "f7ee69f31298ecbe5d2b349c711e2547a617d398",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/kr/text",
+			"repository": "https://github.com/kr/text",
+			"vcs": "git",
+			"revision": "7cafcd837844e784b526369c9bce262804aebc60",
+			"branch": "main",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/lsegal/gucumber",
@@ -976,12 +1017,44 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/mattn/go-colorable",
+			"repository": "https://github.com/mattn/go-colorable",
+			"vcs": "git",
+			"revision": "d228849504861217f796da67fae4f6e347643f15",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mattn/go-isatty",
+			"repository": "https://github.com/mattn/go-isatty",
+			"vcs": "git",
+			"revision": "30a891c33c7cde7b02a981314b4228ec99380cca",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mattn/go-runewidth",
+			"repository": "https://github.com/mattn/go-runewidth",
+			"vcs": "git",
+			"revision": "737072b4e32b7a5018b4a7125da8d12de90e8045",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/matttproud/golang_protobuf_extensions/pbutil",
 			"repository": "https://github.com/matttproud/golang_protobuf_extensions",
 			"vcs": "",
 			"revision": "d0c3fe89de86839aecf2e0579c40ba3bb336a453",
 			"branch": "master",
 			"path": "/pbutil"
+		},
+		{
+			"importpath": "github.com/mgutz/ansi",
+			"repository": "https://github.com/mgutz/ansi",
+			"vcs": "git",
+			"revision": "c286dcecd19ff979eeb73ea444e479b903f2cfcb",
+			"branch": "master",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/miekg/dns",
@@ -1077,6 +1150,14 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/olekukonko/tablewriter",
+			"repository": "https://github.com/olekukonko/tablewriter",
+			"vcs": "git",
+			"revision": "bdcc175572fd7abece6c831e643891b9331bc9e7",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/opencontainers/runc/libcontainer/cgroups",
 			"repository": "https://github.com/opencontainers/runc",
 			"vcs": "",
@@ -1137,6 +1218,14 @@
 			"vcs": "",
 			"revision": "cccd189d45f7ac3368a0d127efb7f4d08ae0b655",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/philhofer/fwd",
+			"repository": "https://github.com/philhofer/fwd",
+			"vcs": "git",
+			"revision": "98c11a7a6ec829d672b03833c3d69a7fae1ca972",
+			"branch": "master",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/pmezard/go-difflib/difflib",
@@ -1236,6 +1325,15 @@
 			"path": "/assert"
 		},
 		{
+			"importpath": "github.com/tinylib/msgp/msgp",
+			"repository": "https://github.com/tinylib/msgp",
+			"vcs": "git",
+			"revision": "ad0ff2e232ad2e37faf67087fb24bf8d04a8ce20",
+			"branch": "master",
+			"path": "/msgp",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/tylerb/graceful",
 			"repository": "https://github.com/tylerb/graceful",
 			"vcs": "git",
@@ -1257,6 +1355,23 @@
 			"vcs": "git",
 			"revision": "5d815f907a182b6131cc88af3f17f898b93142a5",
 			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/common",
+			"repository": "https://github.com/weaveworks/common",
+			"vcs": "git",
+			"revision": "5edbff9f695b090e16bbb90dd89b83b70178c49e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/docker/pkg/mflag",
+			"repository": "https://github.com/weaveworks/docker",
+			"vcs": "git",
+			"revision": "5761d8b342f0d6352f591968fbe20b4298c4de22",
+			"branch": "master",
+			"path": "/pkg/mflag",
 			"notests": true
 		},
 		{
@@ -1344,6 +1459,15 @@
 			"revision": "a646d33e2ee3172a661fc09bca23bb4889a41bc8",
 			"branch": "master",
 			"path": "/unix",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/tools/cover",
+			"repository": "https://go.googlesource.com/tools",
+			"vcs": "git",
+			"revision": "ae1141fc8b3e38d9e074b383af516745815897c3",
+			"branch": "master",
+			"path": "/cover",
 			"notests": true
 		},
 		{

@@ -3,7 +3,7 @@ package process
 import (
 	"strconv"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
 )
 

@@ -12,7 +12,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	docker "github.com/fsouza/go-dockerclient"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
 )
 

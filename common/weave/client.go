@@ -12,7 +12,7 @@ import (
 
 	"github.com/ugorji/go/codec"
 
-	"github.com/weaveworks/scope/common/exec"
+	"github.com/weaveworks/common/exec"
 )
 
 // Client for Weave Net API

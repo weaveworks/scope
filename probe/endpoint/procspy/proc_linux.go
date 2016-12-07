@@ -13,7 +13,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
 
-	"github.com/weaveworks/scope/common/fs"
+	"github.com/weaveworks/common/fs"
 	"github.com/weaveworks/scope/common/marshal"
 	"github.com/weaveworks/scope/probe/process"
 )

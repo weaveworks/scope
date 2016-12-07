@@ -21,10 +21,10 @@ import (
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
 
+	"github.com/weaveworks/common/middleware"
+	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/app/multitenant"
-	"github.com/weaveworks/scope/common/middleware"
-	"github.com/weaveworks/scope/common/network"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/probe/docker"
 )
