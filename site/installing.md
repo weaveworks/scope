@@ -236,7 +236,7 @@ Allowable parameters for the launcher URL:
 
 To download and read the Scope manifest run:
 
-    curl --silent --remote-name https://cloud.weave.works/launch/k8s/weavescope.yaml
+    curl --silent -L --remote-name https://cloud.weave.works/launch/k8s/weavescope.yaml
 
 **Open Scope in Your Browser**
 
