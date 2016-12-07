@@ -206,7 +206,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	}
 
 	if flags.ecsEnabled {
-		reporter := awsecs.Reporter{}
+		reporter := awsecs.New()
 		p.AddReporter(reporter)
 		p.AddTagger(reporter)
 	}

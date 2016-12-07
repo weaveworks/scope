@@ -78,10 +78,17 @@ func getLabelInfo(rpt report.Report) map[string]map[string]*taskLabelInfo {
 
 // Reporter implements Tagger, Reporter
 type Reporter struct {
+	clients map[string]ecsClient
+}
+
+func New() Reporter {
+	return Reporter{
+		clients: map[string]ecsClient{},
+	}
 }
 
 // Tag needed for Tagger
-func (Reporter) Tag(rpt report.Report) (report.Report, error) {
+func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 	rpt = rpt.Copy()
 
 	clusterMap := getLabelInfo(rpt)
@@ -89,9 +96,12 @@ func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 	for cluster, taskMap := range clusterMap {
 		log.Debugf("Fetching ECS info for cluster %v with %v tasks", cluster, len(taskMap))
 
-		client, err := newClient(cluster)
-		if err != nil {
-			return rpt, err
+		client, ok := r.clients[cluster]
+		if !ok {
+			client, err := newClient(cluster)
+			if err != nil {
+				return rpt, err
+			}
 		}
 
 		taskArns := make([]string, 0, len(taskMap))
