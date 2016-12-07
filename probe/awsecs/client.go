@@ -27,7 +27,7 @@ type ecsTask struct {
 	createdAt         time.Time
 	taskDefinitionARN string
 
-	// These started fields are immutable once set, and guarenteed to be set once the task is running,
+	// These started fields are immutable once set, and guaranteed to be set once the task is running,
 	// which we know it is because otherwise we wouldn't be looking at it.
 	startedAt time.Time
 	startedBy string // tag or deployment id
@@ -137,14 +137,14 @@ func (c ecsClient) describeServices() (chan<- string, <-chan bool) {
 	done := make(chan bool)
 
 	go func() {
-		const MAX_SERVICES = 10 // How many services we can put in one Describe command
+		const maxServices = 10 // How many services we can put in one Describe command
 		group := sync.WaitGroup{}
 		lock := sync.Mutex{} // mediates access to the service cache when writing results
 
-		page := make([]string, 0, MAX_SERVICES)
+		page := make([]string, 0, maxServices)
 		for arn := range input {
 			page = append(page, arn)
-			if len(page) == MAX_SERVICES {
+			if len(page) == maxServices {
 				group.Add(1)
 
 				go func(arns []string) {
@@ -175,7 +175,7 @@ func (c ecsClient) describeServices() (chan<- string, <-chan bool) {
 					lock.Unlock()
 				}(page)
 
-				page = make([]string, 0, MAX_SERVICES)
+				page = make([]string, 0, maxServices)
 			}
 		}
 
@@ -215,17 +215,17 @@ func (c ecsClient) getTasks(taskARNs []string) {
 
 // Evict entries from the caches which have not been used within the eviction interval.
 func (c ecsClient) evictOldCacheItems() {
-	const EVICT_TIME = time.Minute
+	const evictTime = time.Minute
 	now := time.Now()
 
 	for arn, task := range c.taskCache {
-		if now.Sub(task.lastUsedAt) > EVICT_TIME {
+		if now.Sub(task.lastUsedAt) > evictTime {
 			delete(c.taskCache, arn)
 		}
 	}
 
 	for name, service := range c.serviceCache {
-		if now.Sub(service.lastUsedAt) > EVICT_TIME {
+		if now.Sub(service.lastUsedAt) > evictTime {
 			delete(c.serviceCache, name)
 		}
 	}
@@ -235,7 +235,7 @@ func (c ecsClient) evictOldCacheItems() {
 // Returns (task to service map, unmatched tasks). Ignores tasks whose startedby values
 // don't appear to point to a service.
 func (c ecsClient) matchTasksServices(taskARNs []string) (map[string]string, []string) {
-	const SERVICE_PREFIX = "aws-svc" // TODO confirm this
+	const servicePrefix = "aws-svc" // TODO confirm this
 
 	deploymentMap := map[string]string{}
 	for serviceName, service := range c.serviceCache {
@@ -252,7 +252,7 @@ func (c ecsClient) matchTasksServices(taskARNs []string) (map[string]string, []s
 			// this can happen if we have a failure while describing tasks, just pretend the task doesn't exist
 			continue
 		}
-		if !strings.HasPrefix(task.startedBy, SERVICE_PREFIX) {
+		if !strings.HasPrefix(task.startedBy, servicePrefix) {
 			// task was not started by a service
 			continue
 		}

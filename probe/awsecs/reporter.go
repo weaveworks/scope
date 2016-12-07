@@ -81,6 +81,7 @@ type Reporter struct {
 	clients map[string]*ecsClient
 }
 
+// New creates a new Reporter
 func New() Reporter {
 	return Reporter{
 		clients: map[string]*ecsClient{},
