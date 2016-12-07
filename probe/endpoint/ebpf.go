@@ -230,6 +230,8 @@ func tcpEventCallback(event tcpEvent) {
 
 	tuple := fourTuple{sIP.String(), dIP.String(), uint16(sport), uint16(dport)}
 
+	log.Debugf("tcpEventCallback(%s, [%s:%d --> %s:%d], pid=%d, netNS=%d, cpu=%d, ts=%d)",
+		typ.String(), tuple.fromAddr, tuple.fromPort, tuple.toAddr, tuple.toPort, pid, event.NetNS, event.CPU, event.Timestamp)
 	ebpfTracker.handleConnection(typ.String(), tuple, int(pid), strconv.FormatUint(uint64(event.NetNS), 10))
 }
 
