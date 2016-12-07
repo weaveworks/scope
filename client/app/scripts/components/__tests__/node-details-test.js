@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import configureStore from '../../stores/configureStore';
 
 // need ES5 require to keep automocking off
-const NodeDetails = require('../node-details.js').NodeDetails;
+const NodeDetails = require('../node-details.js').default.WrappedComponent;
 
 describe('NodeDetails', () => {
   let nodes;
