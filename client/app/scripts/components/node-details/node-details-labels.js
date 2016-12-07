@@ -6,6 +6,16 @@ import MatchedText from '../matched-text';
 import NodeDetailsControlButton from './node-details-control-button';
 import ShowMore from '../show-more';
 
+
+function renderControls(controls) {
+  return (
+    <div className="node-details-labels-controls">
+      {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
+        nodeId={control.nodeId} control={control} key={control.id} />)}
+    </div>
+  );
+}
+
 export default class NodeDetailsLabels extends React.Component {
 
   constructor(props, context) {
@@ -15,21 +25,11 @@ export default class NodeDetailsLabels extends React.Component {
       limit: this.DEFAULT_LIMIT,
     };
     this.handleLimitClick = this.handleLimitClick.bind(this);
-    this.renderControls = this.renderControls.bind(this);
   }
 
   handleLimitClick() {
     const limit = this.state.limit ? 0 : this.DEFAULT_LIMIT;
     this.setState({limit});
-  }
-
-  renderControls(controls) {
-    return (
-      <div className="node-details-labels-controls">
-        {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
-          nodeId={control.nodeId} control={control} key={control.id} />)}
-      </div>
-    );
   }
 
   render() {
@@ -49,7 +49,7 @@ export default class NodeDetailsLabels extends React.Component {
 
     return (
       <div className="node-details-labels">
-        {controls && this.renderControls(controls)}
+        {controls && renderControls(controls)}
         {rows.map(field => (
           <div className="node-details-labels-field" key={field.id}>
             <div

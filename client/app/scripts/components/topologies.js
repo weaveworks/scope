@@ -4,6 +4,18 @@ import classnames from 'classnames';
 
 import { clickTopology } from '../actions/app-actions';
 
+
+function basicTopologyInfo(topology, searchMatchCount) {
+  const info = [
+    `Nodes: ${topology.getIn(['stats', 'node_count'])}`,
+    `Connections: ${topology.getIn(['stats', 'edge_count'])}`
+  ];
+  if (searchMatchCount) {
+    info.push(`Search Matches: ${searchMatchCount}`);
+  }
+  return info.join('\n');
+}
+
 class Topologies extends React.Component {
 
   constructor(props, context) {
@@ -21,7 +33,7 @@ class Topologies extends React.Component {
     const topologyId = subTopology.get('id');
     const searchMatches = this.props.searchNodeMatches.get(subTopology.get('id'));
     const searchMatchCount = searchMatches ? searchMatches.size : 0;
-    const title = this.renderTitle(subTopology, searchMatchCount);
+    const title = basicTopologyInfo(subTopology, searchMatchCount);
     const className = classnames('topologies-sub-item', {
       'topologies-sub-item-active': isActive,
       'topologies-sub-item-matched': searchMatchCount
@@ -38,15 +50,6 @@ class Topologies extends React.Component {
     );
   }
 
-  renderTitle(topology, searchMatchCount) {
-    let title = `Nodes: ${topology.getIn(['stats', 'node_count'])}\n`
-      + `Connections: ${topology.getIn(['stats', 'node_count'])}`;
-    if (searchMatchCount) {
-      title = `${title}\nSearch Matches: ${searchMatchCount}`;
-    }
-    return title;
-  }
-
   renderTopology(topology) {
     const isActive = topology === this.props.currentTopology;
     const searchMatches = this.props.searchNodeMatches.get(topology.get('id'));
@@ -56,7 +59,7 @@ class Topologies extends React.Component {
       'topologies-item-main-matched': searchMatchCount
     });
     const topologyId = topology.get('id');
-    const title = this.renderTitle(topology, searchMatchCount);
+    const title = basicTopologyInfo(topology, searchMatchCount);
 
     return (
       <div className="topologies-item" key={topologyId}>

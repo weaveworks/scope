@@ -123,7 +123,7 @@ class Terminal extends React.Component {
       }
       this.socket = null;
       const wereConnected = this.state.connected;
-      if (this.isMounted) {
+      if (this.isComponentMounted) {
         // Calling setState on an unmounted component will throw a warning.
         // `connected` will get set to false by `componentWillUnmount`.
         this.setState({connected: false});
@@ -176,7 +176,7 @@ class Terminal extends React.Component {
   }
 
   componentDidMount() {
-    this.isMounted = true;
+    this.isComponentMounted = true;
     if (this.props.connect) {
       this.mountTerminal();
     }
@@ -217,7 +217,7 @@ class Terminal extends React.Component {
   }
 
   componentWillUnmount() {
-    this.isMounted = false;
+    this.isComponentMounted = false;
     this.setState({connected: false});
     log('cwu terminal');
 
