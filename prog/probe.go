@@ -46,25 +46,46 @@ var (
 	dockerEndpoint   = "unix:///var/run/docker.sock"
 )
 
-func check(flags map[string]string) {
-	handleResponse := func(r *checkpoint.CheckResponse, err error) {
-		if err != nil {
-			log.Errorf("Error checking version: %v", err)
-		} else if r.Outdated {
-			log.Infof("Scope version %s is available; please update at %s",
-				r.CurrentVersion, r.CurrentDownloadURL)
-		}
+func checkNewScopeVersion(flags probeFlags) {
+	checkpointFlags := map[string]string{}
+	if flags.kubernetesEnabled {
+		checkpointFlags["kubernetes_enabled"] = "true"
+	}
+	if flags.ecsEnabled {
+		checkpointFlags["ecs_enabled"] = "true"
 	}
 
-	// Start background version checking
-	params := checkpoint.CheckParams{
-		Product: "scope-probe",
-		Version: version,
-		Flags:   flags,
+	go func() {
+		handleResponse := func(r *checkpoint.CheckResponse, err error) {
+			if err != nil {
+				log.Errorf("Error checking version: %v", err)
+			} else if r.Outdated {
+				log.Infof("Scope version %s is available; please update at %s",
+					r.CurrentVersion, r.CurrentDownloadURL)
+			}
+		}
+
+		// Start background version checking
+		params := checkpoint.CheckParams{
+			Product: "scope-probe",
+			Version: version,
+			Flags:   checkpointFlags,
+		}
+		resp, err := checkpoint.Check(&params)
+		handleResponse(resp, err)
+		checkpoint.CheckInterval(&params, versionCheckPeriod, handleResponse)
+	}()
+}
+
+func maybeExportProfileData(flags probeFlags) {
+	if flags.httpListen != "" {
+		go func() {
+			http.Handle("/metrics", prometheus.Handler())
+			log.Infof("Profiling data being exported to %s", flags.httpListen)
+			log.Infof("go tool proof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
+			log.Infof("Profiling endpoint %s terminated: %v", flags.httpListen, http.ListenAndServe(flags.httpListen, nil))
+		}()
 	}
-	resp, err := checkpoint.Check(&params)
-	handleResponse(resp, err)
-	checkpoint.CheckInterval(&params, versionCheckPeriod, handleResponse)
 }
 
 // Main runs the probe
@@ -91,15 +112,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		hostID   = hostName // TODO(pb): we should sanitize the hostname
 	)
 	log.Infof("probe starting, version %s, ID %s", version, probeID)
-
-	checkpointFlags := makeBaseCheckpointFlags()
-	if flags.kubernetesEnabled {
-		checkpointFlags["kubernetes_enabled"] = "true"
-	}
-	if flags.ecsEnabled {
-		checkpointFlags["ecs_enabled"] = "true"
-	}
-	go check(checkpointFlags)
+	checkNewScopeVersion(flags)
 
 	handlerRegistry := controls.NewDefaultHandlerRegistry()
 	clientFactory := func(hostname string, url url.URL) (appclient.AppClient, error) {
@@ -270,14 +283,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		p.AddReporter(pluginRegistry)
 	}
 
-	if flags.httpListen != "" {
-		go func() {
-			http.Handle("/metrics", prometheus.Handler())
-			log.Infof("Profiling data being exported to %s", flags.httpListen)
-			log.Infof("go tool proof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
-			log.Infof("Profiling endpoint %s terminated: %v", flags.httpListen, http.ListenAndServe(flags.httpListen, nil))
-		}()
-	}
+	maybeExportProfileData(flags)
 
 	p.Start()
 	defer p.Stop()
