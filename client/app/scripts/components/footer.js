@@ -50,7 +50,9 @@ class Footer extends React.Component {
         <div className="footer-status">
           {versionUpdate && <a
             className="footer-versionupdate"
-            title={versionUpdateTitle} href={versionUpdate.downloadUrl} target="_blank">
+            title={versionUpdateTitle}
+            href={versionUpdate.downloadUrl}
+            target="_blank" rel="noopener noreferrer">
             Update available: {versionUpdate.version}
           </a>}
           <span className="footer-label">Version</span>
@@ -85,7 +87,10 @@ class Footer extends React.Component {
           <a className="footer-icon" href={otherContrastModeUrl} title={otherContrastModeTitle}>
             <span className="fa fa-adjust" />
           </a>
-          <a className="footer-icon" href="https://gitreports.com/issue/weaveworks/scope" target="_blank" title="Report an issue">
+          <a
+            className="footer-icon" title="Report an issue"
+            href="https://gitreports.com/issue/weaveworks/scope"
+            target="_blank" rel="noopener noreferrer">
             <span className="fa fa-bug" />
           </a>
           <a className="footer-icon" onClick={this.props.toggleHelp} title="Show help">
