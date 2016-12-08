@@ -1262,10 +1262,19 @@ h2 {
 
   margin-top: 8px;
   margin-left: 8px;
+  min-width: 161px;
 
   &-wrapper {
     pointer-events: all;
     border-color: @background-darker-secondary-color;
+    overflow: hidden;
+  }
+
+  &:first-child,
+  &:last-child {
+    .grid-mode-selector-action {
+      border-radius: 0;
+    }
   }
 
   &-action {
