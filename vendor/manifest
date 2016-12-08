@@ -1361,7 +1361,7 @@
 			"importpath": "github.com/weaveworks/common",
 			"repository": "https://github.com/weaveworks/common",
 			"vcs": "git",
-			"revision": "5edbff9f695b090e16bbb90dd89b83b70178c49e",
+			"revision": "cc20acf03ebf74be0facaae4259dff6cde01ce77",
 			"branch": "master",
 			"notests": true
 		},
