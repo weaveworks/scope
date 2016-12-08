@@ -45,7 +45,7 @@ module.exports = {
 
   // Used by Webpack Dev Middleware
   output: {
-    publicPath: '/',
+    publicPath: '',
     path: '/',
     filename: '[name].js'
   },
