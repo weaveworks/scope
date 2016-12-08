@@ -7,16 +7,21 @@
   },
   "rules": {
     "comma-dangle": 0,
+    "global-require": 0,
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": true,
+        "optionalDependencies": true,
+        "peerDependencies": true
+      }
+    ],
+    "import/prefer-default-export": 0,
+    "jsx-a11y/no-static-element-interactions": 0,
     "no-param-reassign": 0,
+    "no-restricted-properties": 0,
     "object-curly-spacing": 0,
     "react/jsx-closing-bracket-location": 0,
-    "react/prefer-stateless-function": 0,
-    "react/sort-comp": 0,
-    "react/prop-types": 0,
-
-
-    "import/prefer-default-export": 0,
-    "global-require": 0,
     "react/jsx-filename-extension": [
       2,
       {
@@ -26,10 +31,8 @@
         ]
       }
     ],
-    "no-restricted-properties": 0,
-
-
-    "import/no-extraneous-dependencies": 0,
-    "jsx-a11y/no-static-element-interactions": 0,
+    "react/prefer-stateless-function": 0,
+    "react/sort-comp": 0,
+    "react/prop-types": 0,
   }
 }
