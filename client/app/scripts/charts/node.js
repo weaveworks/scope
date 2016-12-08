@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { Map as makeMap, List as makeList } from 'immutable';
@@ -167,8 +166,7 @@ class Node extends React.Component {
 
   handleMouseClick(ev) {
     ev.stopPropagation();
-    this.props.clickNode(this.props.id, this.props.label,
-      ReactDOM.findDOMNode(this.shapeRef).getBoundingClientRect());
+    this.props.clickNode(this.props.id, this.props.label, this.shapeRef.getBoundingClientRect());
   }
 
   handleMouseEnter() {

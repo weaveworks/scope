@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { debounce } from 'lodash';
@@ -48,6 +47,7 @@ class Search extends React.Component {
     this.handleBlur = this.handleBlur.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
+    this.saveQueryInputRef = this.saveQueryInputRef.bind(this);
     this.doSearch = debounce(this.doSearch.bind(this), 200);
     this.state = {
       value: ''
@@ -81,6 +81,10 @@ class Search extends React.Component {
     this.props.doSearch(value);
   }
 
+  saveQueryInputRef(ref) {
+    this.queryInput = ref;
+  }
+
   componentWillReceiveProps(nextProps) {
     // when cleared from the outside, reset internal state
     if (this.props.searchQuery !== nextProps.searchQuery && nextProps.searchQuery === '') {
@@ -90,9 +94,9 @@ class Search extends React.Component {
 
   componentDidUpdate() {
     if (this.props.searchFocused) {
-      ReactDOM.findDOMNode(this.queryInput).focus();
+      this.queryInput.focus();
     } else if (!this.state.value) {
-      ReactDOM.findDOMNode(this.queryInput).blur();
+      this.queryInput.blur();
     }
   }
 
@@ -125,7 +129,7 @@ class Search extends React.Component {
               className="search-input-field" type="text" id={inputId}
               value={value} onChange={this.handleChange}
               onFocus={this.handleFocus} onBlur={this.handleBlur}
-              disabled={disabled} ref={(c) => { this.queryInput = c; }} />
+              disabled={disabled} ref={this.saveQueryInputRef} />
           </div>
           <div className="search-label">
             <i className="fa fa-search search-label-icon" />

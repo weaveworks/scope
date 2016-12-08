@@ -1,7 +1,6 @@
 /* eslint no-return-assign: "off", react/jsx-no-bind: "off" */
 import debug from 'debug';
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { debounce } from 'lodash';
@@ -97,6 +96,8 @@ class Terminal extends React.Component {
 
     this.handleCloseClick = this.handleCloseClick.bind(this);
     this.handlePopoutTerminal = this.handlePopoutTerminal.bind(this);
+    this.saveInnerFlexRef = this.saveInnerFlexRef.bind(this);
+    this.saveNodeRef = this.saveNodeRef.bind(this);
     this.handleResize = this.handleResize.bind(this);
     this.handleResizeDebounced = debounce(this.handleResize, 500);
   }
@@ -183,7 +184,6 @@ class Terminal extends React.Component {
   }
 
   mountTerminal() {
-    const component = this;
     this.term = new Term({
       cols: this.state.cols,
       rows: this.state.rows,
@@ -192,8 +192,7 @@ class Terminal extends React.Component {
       scrollback: 10000,
     });
 
-    const innerNode = ReactDOM.findDOMNode(component.innerFlex);
-    this.term.open(innerNode);
+    this.term.open(this.innerFlex);
     this.term.on('data', (data) => {
       this.scrollToBottom();
       if (this.socket) {
@@ -263,16 +262,15 @@ class Terminal extends React.Component {
     const paramString = JSON.stringify(this.props);
     this.props.dispatch(clickCloseTerminal(this.getPipeId()));
 
-    const bcr = ReactDOM.findDOMNode(this).getBoundingClientRect();
+    const bcr = this.node.getBoundingClientRect();
     const minWidth = (this.state.characterWidth * 80) + (8 * 2);
     openNewWindow(`terminal.html#!/state/${paramString}`, bcr, minWidth);
   }
 
   handleResize() {
-    const innerNode = ReactDOM.findDOMNode(this.innerFlex);
     // scrollbar === 16px
-    const width = innerNode.clientWidth - (2 * 8) - 16;
-    const height = innerNode.clientHeight - (2 * 8);
+    const width = this.innerFlex.clientWidth - (2 * 8) - 16;
+    const height = this.innerFlex.clientHeight - (2 * 8);
     const cols = Math.floor(width / this.state.characterWidth);
     const rows = Math.floor(height / this.state.characterHeight);
 
@@ -358,6 +356,14 @@ class Terminal extends React.Component {
     );
   }
 
+  saveNodeRef(ref) {
+    this.node = ref;
+  }
+
+  saveInnerFlexRef(ref) {
+    this.innerFlex = ref;
+  }
+
   render() {
     const innerFlexStyle = {
       opacity: this.state.connected ? 1 : 0.8,
@@ -371,13 +377,10 @@ class Terminal extends React.Component {
     });
 
     return (
-      <div className="terminal-wrapper">
+      <div className="terminal-wrapper" ref={this.saveNodeRef}>
         {this.isEmbedded() && this.getTerminalHeader()}
-        <div
-          ref={ref => this.innerFlex = ref}
-          className={innerClassName}
-          style={innerFlexStyle} >
-          <div style={innerStyle} ref={ref => this.inner = ref} />
+        <div className={innerClassName} style={innerFlexStyle} ref={this.saveInnerFlexRef}>
+          <div style={innerStyle} />
         </div>
         {this.getTerminalStatusBar()}
       </div>
