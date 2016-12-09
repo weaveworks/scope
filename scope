@@ -23,13 +23,14 @@ usage() {
     name=$(basename "$0")
     cat >&2 <<-EOF
 		Usage:
-		$name launch {ARGS} - Launch Scope
-		$name stop          - Stop Scope
-		$name command       - Print the docker command used to start Scope
-		$name help          - Print usage info
-		$name version       - Print version info
+		$name launch {OPTIONS} {PEERS} - Launch Scope
+		$name stop                     - Stop Scope
+		$name command                  - Print the docker command used to start Scope
+		$name help                     - Print usage info
+		$name version                  - Print version info
 
-		Launch arguments:
+		PEERS are of the form HOST[:PORT], and HOST may be an ip or hostname.
+		Launch options:
 	EOF
     docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
         $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" -h >&2 ||
