@@ -29,7 +29,10 @@ usage() {
 		$name help                     - Print usage info
 		$name version                  - Print version info
 
-		PEERS are of the form HOST[:PORT], and HOST may be an ip or hostname.
+		PEERS are of the form HOST[:PORT]
+		HOST may be an ip or hostname.
+		PORT defaults to 4040.
+
 		Launch options:
 	EOF
     docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
