@@ -225,7 +225,7 @@ func (t *EbpfTracker) run() {
 		}
 	}()
 
-	t.reader.PollStart("tcp_event_v4", channel)
+	t.reader.PollStart("tcp_event_ipv4", channel)
 }
 
 func (t *EbpfTracker) hasDied() bool {
