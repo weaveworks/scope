@@ -2,10 +2,10 @@ import 'babel-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import configureStore from './stores/configureStore';
 
-require('../styles/main.less');
-require('../images/favicon.ico');
+import '../styles/main.less';
+import '../images/favicon.ico';
+import configureStore from './stores/configureStore';
 
 const store = configureStore();
 

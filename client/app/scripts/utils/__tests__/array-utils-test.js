@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { range } from 'lodash';
 
 describe('ArrayUtils', () => {
   const ArrayUtils = require('../array-utils');
@@ -38,7 +38,7 @@ describe('ArrayUtils', () => {
       }
 
       {
-        const arr = _.range(1, 10001);
+        const arr = range(1, 10001);
         expect(f(arr, 4)).toEqual([1, 3334, 6667, 10000]);
         expect(f(arr, 3)).toEqual([1, 5000, 10000]);
         expect(f(arr, 2)).toEqual([1, 10000]);

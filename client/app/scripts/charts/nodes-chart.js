@@ -166,8 +166,8 @@ function centerSelectedNode(props, state) {
   stateEdges = stateEdges.map((edge) => {
     if (edge.get('source') === props.selectedNodeId
       || edge.get('target') === props.selectedNodeId
-      || _.includes(adjacentLayoutNodeIds, edge.get('source'))
-      || _.includes(adjacentLayoutNodeIds, edge.get('target'))) {
+      || includes(adjacentLayoutNodeIds, edge.get('source'))
+      || includes(adjacentLayoutNodeIds, edge.get('target'))) {
       const source = stateNodes.get(edge.get('source'));
       const target = stateNodes.get(edge.get('target'));
       return edge.set('points', fromJS([
