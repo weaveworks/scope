@@ -172,8 +172,16 @@ check_docker_version
 
 case "$COMMAND" in
     command)
-	# TODO: properly escape/quote the output of "$@"
-        echo "$(launch_command)" "$@"
+        # Most systems should have printf, but the %q specifier isn't mandated by posix
+        # and can't be guaranteed. Since this is mainly a cosmetic output and the alternative
+        # is not making any attempt to do escaping at all, we might as well try.
+        quoted=$(printf '%q ' "$@" 2>/dev/null || true)
+        # printf %q behaves oddly with zero args (it acts as though it recieved one empty arg)
+        # so we ignore that case.
+        if [ -z "$quoted" ] || [ $# -eq 0 ]; then
+            quoted="$*"
+        fi
+        echo "$(launch_command) $quoted"
         ;;
 
     version)
@@ -245,7 +253,7 @@ EOF
         fi
         if check_docker_for_mac ; then
             if docker inspect "$SCOPE_APP_CONTAINER_NAME" >/dev/null 2>&1 ; then
-		docker stop "$SCOPE_APP_CONTAINER_NAME" >/dev/null
+        docker stop "$SCOPE_APP_CONTAINER_NAME" >/dev/null
             fi
         fi
         ;;
