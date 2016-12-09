@@ -1,7 +1,7 @@
-import _ from 'lodash';
 import debug from 'debug';
 import React from 'react';
 import { connect } from 'react-redux';
+import { assign, pick, includes } from 'lodash';
 import { Map as makeMap, fromJS } from 'immutable';
 import timely from 'timely';
 
@@ -145,7 +145,7 @@ class NodesChart extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     // gather state, setState should be called only once here
-    const state = _.assign({}, this.state);
+    const state = assign({}, this.state);
 
     // wipe node states when showing different topology
     if (nextProps.topologyId !== this.props.topologyId) {
@@ -157,12 +157,12 @@ class NodesChart extends React.Component {
       }
 
       // saving previous zoom state
-      const prevZoom = _.pick(this.state, ZOOM_CACHE_FIELDS);
-      const zoomCache = _.assign({}, this.state.zoomCache);
+      const prevZoom = pick(this.state, ZOOM_CACHE_FIELDS);
+      const zoomCache = assign({}, this.state.zoomCache);
       zoomCache[this.props.topologyId] = prevZoom;
 
       // clear canvas and apply zoom state
-      _.assign(state, nextZoom, { zoomCache }, {
+      assign(state, nextZoom, { zoomCache }, {
         nodes: makeMap(),
         edges: makeMap()
       });
@@ -173,14 +173,14 @@ class NodesChart extends React.Component {
     state.width = nextProps.forceRelayout ? nextProps.width : (state.width || nextProps.width);
 
     if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
-      _.assign(state, this.updateGraphState(nextProps, state));
+      assign(state, this.updateGraphState(nextProps, state));
     }
 
     if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
-      _.assign(state, this.restoreLayout(state));
+      assign(state, this.restoreLayout(state));
     }
     if (nextProps.selectedNodeId) {
-      _.assign(state, this.centerSelectedNode(nextProps, state));
+      assign(state, this.centerSelectedNode(nextProps, state));
     }
 
     this.setState(state);
@@ -295,8 +295,8 @@ class NodesChart extends React.Component {
     stateEdges = stateEdges.map(edge => {
       if (edge.get('source') === props.selectedNodeId
         || edge.get('target') === props.selectedNodeId
-        || _.includes(adjacentLayoutNodeIds, edge.get('source'))
-        || _.includes(adjacentLayoutNodeIds, edge.get('target'))) {
+        || includes(adjacentLayoutNodeIds, edge.get('source'))
+        || includes(adjacentLayoutNodeIds, edge.get('target'))) {
         const source = stateNodes.get(edge.get('source'));
         const target = stateNodes.get(edge.get('target'));
         return edge.set('points', fromJS([

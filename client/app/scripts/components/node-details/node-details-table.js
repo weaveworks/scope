@@ -1,6 +1,6 @@
-import _ from 'lodash';
 import React from 'react';
 import classNames from 'classnames';
+import { find, get, union, sortBy, groupBy, concat } from 'lodash';
 
 import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
@@ -57,16 +57,16 @@ const COLUMN_WIDTHS = {
 };
 
 
-function getDefaultSortBy(columns, nodes) {
+function getDefaultSortedBy(columns, nodes) {
   // default sorter specified by columns
-  const defaultSortColumn = _.find(columns, {defaultSort: true});
+  const defaultSortColumn = find(columns, {defaultSort: true});
   if (defaultSortColumn) {
     return defaultSortColumn.id;
   }
   // otherwise choose first metric
-  const firstNodeWithMetrics = _.find(nodes, n => _.get(n, ['metrics', 0]));
+  const firstNodeWithMetrics = find(nodes, n => get(n, ['metrics', 0]));
   if (firstNodeWithMetrics) {
-    return _.get(firstNodeWithMetrics, ['metrics', 0, 'id']);
+    return get(firstNodeWithMetrics, ['metrics', 0, 'id']);
   }
 
   return 'label';
@@ -84,7 +84,7 @@ function maybeToLower(value) {
 function getNodeValue(node, header) {
   const fieldId = header && header.id;
   if (fieldId !== null) {
-    let field = _.union(node.metrics, node.metadata).find(f => f.id === fieldId);
+    let field = union(node.metrics, node.metadata).find(f => f.id === fieldId);
 
     if (field) {
       if (isIP(header)) {
@@ -112,14 +112,14 @@ function getNodeValue(node, header) {
 }
 
 
-function getValueForSortBy(sortByHeader) {
-  return (node) => maybeToLower(getNodeValue(node, sortByHeader));
+function getValueForSortedBy(sortedByHeader) {
+  return (node) => maybeToLower(getNodeValue(node, sortedByHeader));
 }
 
 
 function getMetaDataSorters(nodes) {
   // returns an array of sorters that will take a node
-  return _.get(nodes, [0, 'metadata'], []).map((field, index) => node => {
+  return get(nodes, [0, 'metadata'], []).map((field, index) => node => {
     const nodeMetadataField = node.metadata && node.metadata[index];
     if (nodeMetadataField) {
       if (isNumber(nodeMetadataField)) {
@@ -133,7 +133,7 @@ function getMetaDataSorters(nodes) {
 
 
 function sortNodes(nodes, getValue, sortedDesc) {
-  const sortedNodes = _.sortBy(
+  const sortedNodes = sortBy(
     nodes,
     getValue,
     getMetaDataSorters(nodes)
@@ -145,16 +145,16 @@ function sortNodes(nodes, getValue, sortedDesc) {
 }
 
 
-function getSortedNodes(nodes, sortByHeader, sortedDesc) {
-  const getValue = getValueForSortBy(sortByHeader);
-  const withAndWithoutValues = _.groupBy(nodes, (n) => {
+function getSortedNodes(nodes, sortedByHeader, sortedDesc) {
+  const getValue = getValueForSortedBy(sortedByHeader);
+  const withAndWithoutValues = groupBy(nodes, (n) => {
     const v = getValue(n);
     return v !== null && v !== undefined ? 'withValues' : 'withoutValues';
   });
   const withValues = sortNodes(withAndWithoutValues.withValues, getValue, sortedDesc);
   const withoutValues = sortNodes(withAndWithoutValues.withoutValues, getValue, sortedDesc);
 
-  return _.concat(withValues, withoutValues);
+  return concat(withValues, withoutValues);
 }
 
 
@@ -188,19 +188,19 @@ export default class NodeDetailsTable extends React.Component {
     this.state = {
       limit: props.limit || this.DEFAULT_LIMIT,
       sortedDesc: this.props.sortedDesc,
-      sortBy: this.props.sortBy
+      sortedBy: this.props.sortedBy
     };
     this.handleLimitClick = this.handleLimitClick.bind(this);
   }
 
-  handleHeaderClick(ev, headerId, currentSortBy, currentSortedDesc) {
+  handleHeaderClick(ev, headerId, currentSortedBy, currentSortedDesc) {
     ev.preventDefault();
     const header = this.getColumnHeaders().find(h => h.id === headerId);
-    const sortBy = header.id;
-    const sortedDesc = header.id === currentSortBy
+    const sortedBy = header.id;
+    const sortedDesc = header.id === currentSortedBy
       ? !currentSortedDesc : defaultSortDesc(header);
-    this.setState({sortBy, sortedDesc});
-    this.props.onSortChange(sortBy, sortedDesc);
+    this.setState({sortedBy, sortedDesc});
+    this.props.onSortChange(sortedBy, sortedDesc);
   }
 
   handleLimitClick() {
@@ -213,7 +213,7 @@ export default class NodeDetailsTable extends React.Component {
     return [{id: 'label', label: this.props.label}].concat(columns);
   }
 
-  renderHeaders(sortBy, sortedDesc) {
+  renderHeaders(sortedBy, sortedDesc) {
     if (!this.props.nodes || this.props.nodes.length === 0) {
       return null;
     }
@@ -226,10 +226,10 @@ export default class NodeDetailsTable extends React.Component {
         {headers.map((header, i) => {
           const headerClasses = ['node-details-table-header', 'truncate'];
           const onHeaderClick = ev => {
-            this.handleHeaderClick(ev, header.id, sortBy, sortedDesc);
+            this.handleHeaderClick(ev, header.id, sortedBy, sortedDesc);
           };
           // sort by first metric by default
-          const isSorted = header.id === sortBy;
+          const isSorted = header.id === sortedBy;
           const isSortedDesc = isSorted && sortedDesc;
           const isSortedAsc = isSorted && !isSortedDesc;
 
@@ -261,13 +261,13 @@ export default class NodeDetailsTable extends React.Component {
     const { nodeIdKey, columns, topologyId, onClickRow, onMouseEnter, onMouseLeave,
       onMouseEnterRow, onMouseLeaveRow } = this.props;
 
-    const sortBy = this.state.sortBy || getDefaultSortBy(columns, this.props.nodes);
-    const sortByHeader = this.getColumnHeaders().find(h => h.id === sortBy);
+    const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
+    const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
     const sortedDesc = this.state.sortedDesc !== null ?
       this.state.sortedDesc :
-      defaultSortDesc(sortByHeader);
+      defaultSortDesc(sortedByHeader);
 
-    let nodes = getSortedNodes(this.props.nodes, sortByHeader, sortedDesc);
+    let nodes = getSortedNodes(this.props.nodes, sortedByHeader, sortedDesc);
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
     const expanded = this.state.limit === 0;
     const notShown = nodes.length - this.state.limit;
@@ -283,7 +283,7 @@ export default class NodeDetailsTable extends React.Component {
         <div className="node-details-table-wrapper">
           <table className="node-details-table">
             <thead>
-              {this.renderHeaders(sortBy, sortedDesc)}
+              {this.renderHeaders(sortedBy, sortedDesc)}
             </thead>
             <tbody style={this.props.tbodyStyle} onMouseEnter={onMouseEnter}
               onMouseLeave={onMouseLeave}>
@@ -319,5 +319,5 @@ NodeDetailsTable.defaultProps = {
   nodeIdKey: 'id',  // key to identify a node in a row (used for topology links)
   onSortChange: () => {},
   sortedDesc: null,
-  sortBy: null,
+  sortedBy: null,
 };

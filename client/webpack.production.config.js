@@ -35,8 +35,8 @@ module.exports = {
     'terminal-app': './app/scripts/terminal-main',
     // keep only some in here, to make vendors and app bundles roughly same size
     vendors: ['babel-polyfill', 'classnames', 'immutable',
-      'lodash', 'react', 'react-dom', 'react-redux',
-      'redux', 'redux-thunk']
+      'react', 'react-dom', 'react-redux', 'redux', 'redux-thunk'
+    ]
   },
 
   output: {

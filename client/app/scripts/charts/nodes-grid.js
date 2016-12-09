@@ -90,12 +90,12 @@ class NodesGrid extends React.Component {
     this.props.clickNode(node.id, node.label, el.getBoundingClientRect());
   }
 
-  onSortChange(sortBy, sortedDesc) {
-    this.props.sortOrderChanged(sortBy, sortedDesc);
+  onSortChange(sortedBy, sortedDesc) {
+    this.props.sortOrderChanged(sortedBy, sortedDesc);
   }
 
   render() {
-    const { margins, nodes, height, gridSortBy, gridSortedDesc,
+    const { margins, nodes, height, gridSortedBy, gridSortedDesc,
       searchNodeMatches = makeMap(), searchQuery } = this.props;
     const cmpStyle = {
       height,
@@ -129,7 +129,7 @@ class NodesGrid extends React.Component {
           topologyId={this.props.currentTopologyId}
           onSortChange={this.onSortChange}
           onClickRow={this.onClickRow}
-          sortBy={gridSortBy}
+          sortedBy={gridSortedBy}
           sortedDesc={gridSortedDesc}
           selectedNodeId={this.props.selectedNodeId}
           limit={1000}
@@ -144,7 +144,7 @@ class NodesGrid extends React.Component {
 function mapStateToProps(state) {
   return {
     nodes: nodesSelector(state),
-    gridSortBy: state.get('gridSortBy'),
+    gridSortedBy: state.get('gridSortedBy'),
     gridSortedDesc: state.get('gridSortedDesc'),
     currentTopology: state.get('currentTopology'),
     currentTopologyId: state.get('currentTopologyId'),

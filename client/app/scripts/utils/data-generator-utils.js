@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { zipObject } from 'lodash';
 import { scaleLinear } from 'd3-scale';
 import { extent } from 'd3-array';
 
@@ -122,7 +122,7 @@ function handleAdd(nodes) {
 
 
 function handleUpdated(updatedNodes, prevNodes) {
-  const modifiedNodesIndex = _.zipObject((updatedNodes || []).map(n => [n.id, n]));
+  const modifiedNodesIndex = zipObject((updatedNodes || []).map(n => [n.id, n]));
   return prevNodes.toIndexedSeq().toJS().map(n => (
     Object.assign({}, mergeMetrics(n), modifiedNodesIndex[n.id])
   ));

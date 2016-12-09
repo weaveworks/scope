@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
-import _ from 'lodash';
+import { debounce } from 'lodash';
 
 import { blurSearch, doSearch, focusSearch, showHelp } from '../actions/app-actions';
 import { slugify } from '../utils/string-utils';
@@ -48,7 +48,7 @@ class Search extends React.Component {
     this.handleBlur = this.handleBlur.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
-    this.doSearch = _.debounce(this.doSearch.bind(this), 200);
+    this.doSearch = debounce(this.doSearch.bind(this), 200);
     this.state = {
       value: ''
     };

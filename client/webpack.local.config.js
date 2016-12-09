@@ -36,10 +36,9 @@ module.exports = {
       './app/scripts/terminal-main',
       'webpack-hot-middleware/client'
     ],
-    vendors: ['babel-polyfill', 'classnames', 'dagre', 'filesize', 'immutable', 'lodash',
+    vendors: ['babel-polyfill', 'classnames', 'dagre', 'filesize', 'immutable',
       'moment', 'page', 'react', 'react-dom', 'react-motion', 'react-redux', 'redux',
-      'redux-thunk', 'reqwest', 'xterm',
-      'webpack-hot-middleware/client'
+      'redux-thunk', 'reqwest', 'xterm', 'webpack-hot-middleware/client'
     ]
   },
 

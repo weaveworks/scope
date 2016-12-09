@@ -1,5 +1,5 @@
 import { Map as makeMap, Set as makeSet, List as makeList } from 'immutable';
-import _ from 'lodash';
+import { escapeRegExp } from 'lodash';
 
 import { slugify } from './string-utils';
 
@@ -26,7 +26,7 @@ function makeRegExp(expression, options = 'i') {
   try {
     return new RegExp(expression, options);
   } catch (e) {
-    return new RegExp(_.escapeRegExp(expression), options);
+    return new RegExp(escapeRegExp(expression), options);
   }
 }
 

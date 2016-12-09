@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { zipObject } from 'lodash';
 
 const ACTION_TYPES = [
   'ADD_QUERY_FILTER',
@@ -59,4 +59,4 @@ const ACTION_TYPES = [
   'SET_GRID_MODE',
 ];
 
-export default _.zipObject(ACTION_TYPES, ACTION_TYPES);
+export default zipObject(ACTION_TYPES, ACTION_TYPES);

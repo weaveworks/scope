@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { includes } from 'lodash';
 import { scaleLog } from 'd3-scale';
 import { formatMetricSvg } from './string-utils';
 import { colors } from './color-utils';
@@ -36,7 +36,7 @@ export function getMetricValue(metric, size) {
 
   let valuePercentage = value === 0 ? 0 : value / m.max;
   let max = m.max;
-  if (_.includes(['load1', 'load5', 'load15'], m.id)) {
+  if (includes(['load1', 'load5', 'load15'], m.id)) {
     valuePercentage = loadScale(value);
     max = null;
   }
