@@ -624,10 +624,12 @@ h2 {
     position: relative;
   }
 
+
   &-tools {
     position: absolute;
     top: 6px;
     right: 8px;
+
 
     > span {
       .btn-opacity;
@@ -1585,6 +1587,26 @@ h2 {
       &:hover {
         border-color: rgba(131, 131, 172, 0.6);
       }
+    }
+
+  }
+
+  &-controls {
+    border: 1px solid #fff;
+    border-radius: 10%;
+    position: absolute;
+    left: 100px;
+    top: 95%;
+    font-size: 20px;
+    width: 30px;
+    height: 30px;
+    transition: all 0.2s ease-in-out;
+    line-height: 30px;
+    text-align: center;
+
+    &:hover {
+      cursor: pointer;
+      border: 1px solid #d0d0d0;
     }
   }
 

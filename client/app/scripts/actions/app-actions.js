@@ -11,6 +11,7 @@ import { doControlRequest, getAllNodes, getNodesDelta, getNodeDetails,
   getTopologies, deletePipe } from '../utils/web-api-utils';
 import { getActiveTopologyOptions,
   getCurrentTopologyUrl } from '../utils/topology-utils';
+import { storageSet } from '../utils/storage-utils';
 
 const log = debug('scope:app-actions');
 
@@ -663,5 +664,12 @@ export function route(urlState) {
       state.get('nodeDetails'),
       dispatch
     );
+  };
+}
+
+export function resetLocalViewState() {
+  return (dispatch) => {
+    dispatch({type: ActionTypes.RESET_LOCAL_VIEW_STATE});
+    storageSet('scopeViewState', '');
   };
 }
