@@ -36,8 +36,7 @@ usage() {
 		Launch options:
 	EOF
     docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
-        $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" -h >&2 ||
-        echo "Error listing launch arguments" >&2
+        $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" -h >&2
 }
 
 usage_and_die() {
