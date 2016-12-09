@@ -43,7 +43,7 @@ NO_CROSS_COMP=unset GOOS GOARCH
 GO_HOST=$(NO_CROSS_COMP); env $(GO_ENV) go
 WITH_GO_HOST_ENV=$(NO_CROSS_COMP); $(GO_ENV)
 IMAGE_TAG=$(shell ./tools/image-tag)
-EBPF_IMAGE=kinvolk/tcptracer-bpf:semaphore-master-3f7c26b
+EBPF_IMAGE=kinvolk/tcptracer-bpf:semaphore-master-475be63
 
 all: $(SCOPE_EXPORT)
 
