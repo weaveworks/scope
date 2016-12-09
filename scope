@@ -3,17 +3,6 @@
 set -eu
 
 ARGS="$*"
-
-usage() {
-    echo "Usage:"
-    echo "scope launch [<peer> ...]"
-    echo "scope stop"
-    echo "scope command"
-    echo
-    echo "scope <peer>    is of the form <ip_address_or_fqdn>[:<port>]"
-    exit 1
-}
-
 SCRIPT_VERSION="(unreleased version)"
 if [ "$SCRIPT_VERSION" = "(unreleased version)" ] ; then
     IMAGE_VERSION=latest
@@ -30,7 +19,29 @@ IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker
     xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
 WEAVESCOPE_DOCKER_ARGS=${WEAVESCOPE_DOCKER_ARGS:-}
 
-[ $# -gt 0 ] || usage
+usage() {
+    name=$(basename "$0")
+    cat >&2 <<-EOF
+		Usage:
+		$name launch {ARGS} - Launch Scope
+		$name stop          - Stop Scope
+		$name command       - Print the docker command used to start Scope
+		$name help          - Print usage info
+		$name version       - Print version info
+
+		Launch arguments:
+	EOF
+    docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
+        $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" -h >&2 ||
+        echo "Error listing launch arguments" >&2
+}
+
+usage_and_die() {
+    usage
+    exit 1
+}
+
+[ $# -gt 0 ] || usage_and_die
 COMMAND=$1
 shift 1
 
@@ -190,23 +201,7 @@ case "$COMMAND" in
         ;;
 
     help)
-        cat >&2 <<EOF
-Usage:
-
-scope help     - Print this
-
-scope launch   - Launch Scope
-EOF
-        docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
-            $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" -h
-
-        cat >&2 <<EOF
-
-scope stop     - Stop Scope
-
-scope command  - Print the docker command used to start Scope
-
-EOF
+        usage
         ;;
 
     launch)
@@ -247,7 +242,7 @@ EOF
         ;;
 
     stop)
-        [ $# -eq 0 ] || usage
+        [ $# -eq 0 ] || usage_and_die
         if docker inspect "$SCOPE_CONTAINER_NAME" >/dev/null 2>&1 ; then
            docker stop "$SCOPE_CONTAINER_NAME" >/dev/null
         fi
@@ -260,7 +255,7 @@ EOF
 
     *)
         echo "Unknown scope command '$COMMAND'" >&2
-        usage
+        usage_and_die
         ;;
 
 esac
