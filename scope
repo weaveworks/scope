@@ -200,7 +200,7 @@ case "$COMMAND" in
             $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" --mode=version
         ;;
 
-    help)
+    -h|help|-help|--help)
         usage
         ;;
 
