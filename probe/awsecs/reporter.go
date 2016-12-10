@@ -99,11 +99,13 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 
 		client, ok := r.clients[cluster]
 		if !ok {
+			log.Debugf("Creating new ECS client")
 			var err error // can't use := on the next line without shadowing outer client var
 			client, err = newClient(cluster)
 			if err != nil {
 				return rpt, err
 			}
+			r.clients[cluster] = client
 		}
 
 		taskArns := make([]string, 0, len(taskMap))
@@ -112,6 +114,7 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 		}
 
 		ecsInfo := client.getInfo(taskArns)
+		log.Debugf("Got info from ECS: %d tasks, %d services", len(ecsInfo.tasks), len(ecsInfo.services))
 
 		// Create all the services first
 		for serviceName, service := range ecsInfo.services {

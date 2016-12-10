@@ -111,12 +111,15 @@ func newECSService(service *ecs.Service) ecsService {
 // Returns a channel from which service ARNs can be read.
 // Cannot fail as it will attempt to deliver partial results, though that may end up being no results.
 func (c ecsClient) listServices() <-chan string {
+	log.Debugf("Listing ECS services")
 	results := make(chan string)
 	go func() {
+		count := 0
 		err := c.client.ListServicesPages(
 			&ecs.ListServicesInput{Cluster: &c.cluster},
 			func(page *ecs.ListServicesOutput, lastPage bool) bool {
 				for _, arn := range page.ServiceArns {
+					count++
 					results <- *arn
 				}
 				return true
@@ -125,6 +128,7 @@ func (c ecsClient) listServices() <-chan string {
 		if err != nil {
 			log.Warnf("Error listing ECS services, ECS service report may be incomplete: %v", err)
 		}
+		log.Debugf("Listed %d services", count)
 		close(results)
 	}()
 	return results
@@ -136,49 +140,62 @@ func (c ecsClient) describeServices() (chan<- string, <-chan bool) {
 	input := make(chan string)
 	done := make(chan bool)
 
+	log.Debugf("Describing ECS services")
+
 	go func() {
 		const maxServices = 10 // How many services we can put in one Describe command
 		group := sync.WaitGroup{}
 		lock := sync.Mutex{} // mediates access to the service cache when writing results
 
+		describePage := func(arns []string) {
+			defer group.Done()
+
+			arnPtrs := make([]*string, 0, len(arns))
+			for i := range arns {
+				arnPtrs = append(arnPtrs, &arns[i])
+			}
+
+			resp, err := c.client.DescribeServices(&ecs.DescribeServicesInput{
+				Cluster:  &c.cluster,
+				Services: arnPtrs,
+			})
+			if err != nil {
+				log.Warnf("Error describing some ECS services, ECS service report may be incomplete: %v", err)
+				return
+			}
+
+			for _, failure := range resp.Failures {
+				log.Warnf("Failed to describe ECS service %s, ECS service report may be incomplete: %s", *failure.Arn, failure.Reason)
+			}
+
+			lock.Lock()
+			for _, service := range resp.Services {
+				c.serviceCache[*service.ServiceName] = newECSService(service)
+			}
+			lock.Unlock()
+		}
+
+		count := 0 // this is just for logging
+		calls := 0 // this is just for logging
 		page := make([]string, 0, maxServices)
 		for arn := range input {
 			page = append(page, arn)
 			if len(page) == maxServices {
 				group.Add(1)
-
-				go func(arns []string) {
-					defer group.Done()
-
-					arnPtrs := make([]*string, 0, len(arns))
-					for i := range arns {
-						arnPtrs = append(arnPtrs, &arns[i])
-					}
-
-					resp, err := c.client.DescribeServices(&ecs.DescribeServicesInput{
-						Cluster:  &c.cluster,
-						Services: arnPtrs,
-					})
-					if err != nil {
-						log.Warnf("Error describing some ECS services, ECS service report may be incomplete: %v", err)
-						return
-					}
-
-					for _, failure := range resp.Failures {
-						log.Warnf("Failed to describe ECS service %s, ECS service report may be incomplete: %s", *failure.Arn, failure.Reason)
-					}
-
-					lock.Lock()
-					for _, service := range resp.Services {
-						c.serviceCache[*service.ServiceName] = newECSService(service)
-					}
-					lock.Unlock()
-				}(page)
-
+				go describePage(page)
+				count += len(page)
+				calls++
 				page = make([]string, 0, maxServices)
 			}
 		}
+		if len(page) > 0 {
+			group.Add(1)
+			go describePage(page)
+			count += len(page)
+			calls++
+		}
 
+		log.Debugf("Described %d services in %d calls", count, calls)
 		group.Wait()
 		close(done)
 	}()
@@ -188,6 +205,8 @@ func (c ecsClient) describeServices() (chan<- string, <-chan bool) {
 
 // get details on given tasks, updating cache with the results
 func (c ecsClient) getTasks(taskARNs []string) {
+	log.Debugf("Describing %d ECS tasks", len(taskARNs))
+
 	taskPtrs := make([]*string, len(taskARNs))
 	for i := range taskARNs {
 		taskPtrs[i] = &taskARNs[i]
@@ -218,24 +237,30 @@ func (c ecsClient) evictOldCacheItems() {
 	const evictTime = time.Minute
 	now := time.Now()
 
+	count := 0
 	for arn, task := range c.taskCache {
 		if now.Sub(task.lastUsedAt) > evictTime {
 			delete(c.taskCache, arn)
+			count++
 		}
 	}
+	log.Debugf("Evicted %d old tasks", count)
 
+	count = 0
 	for name, service := range c.serviceCache {
 		if now.Sub(service.lastUsedAt) > evictTime {
 			delete(c.serviceCache, name)
+			count++
 		}
 	}
+	log.Debugf("Evicted %d old services", count)
 }
 
 // Try to match a list of task ARNs to service names using cached info.
 // Returns (task to service map, unmatched tasks). Ignores tasks whose startedby values
 // don't appear to point to a service.
 func (c ecsClient) matchTasksServices(taskARNs []string) (map[string]string, []string) {
-	const servicePrefix = "aws-svc" // TODO confirm this
+	const servicePrefix = "ecs-svc"
 
 	deploymentMap := map[string]string{}
 	for serviceName, service := range c.serviceCache {
@@ -243,6 +268,7 @@ func (c ecsClient) matchTasksServices(taskARNs []string) (map[string]string, []s
 			deploymentMap[deployment] = serviceName
 		}
 	}
+	log.Debugf("Mapped %d deployments from %d services", len(deploymentMap), len(c.serviceCache))
 
 	results := map[string]string{}
 	unmatched := []string{}
@@ -263,11 +289,13 @@ func (c ecsClient) matchTasksServices(taskARNs []string) (map[string]string, []s
 		}
 	}
 
+	log.Debugf("Matched %d from %d tasks, %d unmatched", len(results), len(taskARNs), len(unmatched))
 	return results, unmatched
 }
 
 // Returns a ecsInfo struct containing data needed for a report.
 func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
+	log.Debugf("Getting ECS info on %d tasks", len(taskARNs))
 
 	// We do a weird order of operations here to minimize unneeded cache refreshes.
 	// First, we ensure we have all the tasks we need, and fetch the ones we don't.
@@ -281,8 +309,10 @@ func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
 			tasksToFetch = append(tasksToFetch, taskARN)
 		}
 	}
-	// This might not fully succeed, but we only try once and ignore any further missing tasks.
-	c.getTasks(tasksToFetch)
+	if len(tasksToFetch) > 0 {
+		// This might not fully succeed, but we only try once and ignore any further missing tasks.
+		c.getTasks(tasksToFetch)
+	}
 
 	// We're going to do this matching process potentially several times, but that's ok - it's quite cheap.
 	// First, we want to see how far we get with existing data, and identify the set of services
@@ -290,6 +320,7 @@ func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
 	taskServiceMap, unmatched := c.matchTasksServices(taskARNs)
 
 	// In order to ensure service details are fresh, we need to refresh any referenced services
+	log.Debugf("Refreshing ECS services")
 	toDescribe, done := c.describeServices()
 	servicesRefreshed := map[string]bool{}
 	for _, serviceName := range taskServiceMap {
@@ -310,6 +341,7 @@ func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
 
 	// If we still have tasks unmatched, we'll have to try harder. Get a list of all services and,
 	// if not already refreshed, fetch them.
+	log.Debugf("After refreshing services, %d tasks unmatched", len(unmatched))
 	if len(unmatched) > 0 {
 		serviceNamesChan := c.listServices()
 		toDescribe, done := c.describeServices()
@@ -319,8 +351,8 @@ func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
 					toDescribe <- serviceName
 					servicesRefreshed[serviceName] = true
 				}
-				close(toDescribe)
 			}
+			close(toDescribe)
 		}()
 		<-done
 
