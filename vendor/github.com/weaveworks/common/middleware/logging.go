@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -12,7 +13,8 @@ import (
 
 // Log middleware logs http requests
 type Log struct {
-	LogSuccess bool // LogSuccess true -> log successful queries; false -> only log failed queries
+	LogSuccess        bool // LogSuccess true -> log successful queries; false -> only log failed queries
+	LogRequestHeaders bool // LogRequestHeaders true -> dump http headers at debug log level
 }
 
 // Wrap implements Middleware
@@ -20,6 +22,15 @@ func (l Log) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		begin := time.Now()
 		uri := r.RequestURI // capture the URI before running next, as it may get rewritten
+		if l.LogRequestHeaders {
+			// Log headers before running 'next' in case other interceptors change the data.
+			headers, err := httputil.DumpRequest(r, false)
+			if err != nil {
+				log.Warnf("Could not dump request headers: %v", err)
+				return
+			}
+			log.Debugf(string(headers))
+		}
 		i := &interceptor{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(i, r)
 		if l.LogSuccess || !(100 <= i.statusCode && i.statusCode < 400) {
@@ -31,7 +42,8 @@ func (l Log) Wrap(next http.Handler) http.Handler {
 // Logging middleware logs each HTTP request method, path, response code and
 // duration for all HTTP requests.
 var Logging = Log{
-	LogSuccess: true,
+	LogSuccess:        true,
+	LogRequestHeaders: false,
 }
 
 // LogFailed middleware logs each HTTP request method, path, response code and
