@@ -270,11 +270,10 @@ func appMain(flags appFlags) {
 
 	handler := router(collector, controlRouter, pipeRouter, flags.externalUI)
 	if flags.logHTTP {
-		if flags.logHTTPHeaders {
-			handler = middleware.Log{LogRequestHeaders: true}.Wrap(handler)
-		} else {
-			handler = middleware.LogFailed.Wrap(handler)
-		}
+		handler = middleware.Log{
+			LogRequestHeaders: flags.logHTTPHeaders,
+			LogSuccess:        false,
+		}.Wrap(handler)
 	}
 
 	server := &graceful.Server{
