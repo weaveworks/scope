@@ -1,12 +1,12 @@
 import { includes } from 'lodash';
 import { scaleLog } from 'd3-scale';
-import React from 'react';
-
 import { formatMetricSvg } from './string-utils';
 import { colors } from './color-utils';
+import React from 'react';
+
 
 export function getClipPathDefinition(clipId, size, height,
-  x = -size * 0.5, y = (size * 0.5) - height) {
+                                      x = -size * 0.5, y = size * 0.5 - height) {
   return (
     <defs>
       <clipPath id={clipId}>
@@ -44,7 +44,7 @@ export function getMetricValue(metric, size) {
   let displayedValue = Number(value).toFixed(1);
   if (displayedValue > 0 && (!max || displayedValue < max)) {
     const baseline = 0.1;
-    displayedValue = (valuePercentage * (1 - (baseline * 2))) + baseline;
+    displayedValue = valuePercentage * (1 - baseline * 2) + baseline;
   } else if (displayedValue >= m.max && displayedValue > 0) {
     displayedValue = 1;
   }

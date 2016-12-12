@@ -154,7 +154,7 @@ describe('SearchUtils', () => {
     const fun = SearchUtils.makeRegExp;
 
     it('should make a regexp from any string', () => {
-      expect(fun().source).toEqual((new RegExp()).source);
+      expect(fun().source).toEqual((new RegExp).source);
       expect(fun('que').source).toEqual((new RegExp('que')).source);
       // invalid string
       expect(fun('que[').source).toEqual((new RegExp('que\\[')).source);

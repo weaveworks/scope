@@ -49,7 +49,7 @@ function consolidateBuffer() {
     size(toUpdate), 'remove', size(toRemove));
 
   // check if an added node in first was updated in second -> add second update
-  toAdd = map(toAdd, (node) => {
+  toAdd = map(toAdd, node => {
     const updateNode = find(second.update, {id: node.id});
     if (updateNode) {
       toUpdate = reject(toUpdate, {id: node.id});
@@ -62,7 +62,7 @@ function consolidateBuffer() {
   // no action needed, successive updates are fine
 
   // check if an added node in first was removed in second -> dont add, dont remove
-  each(first.add, (node) => {
+  each(first.add, node => {
     const removedNode = find(second.remove, {id: node.id});
     if (removedNode) {
       toAdd = reject(toAdd, {id: node.id});
@@ -71,7 +71,7 @@ function consolidateBuffer() {
   });
 
   // check if an updated node in first was removed in second -> remove
-  each(first.update, (node) => {
+  each(first.update, node => {
     const removedNode = find(second.remove, {id: node.id});
     if (removedNode) {
       toUpdate = reject(toUpdate, {id: node.id});

@@ -20,7 +20,7 @@ function getTruncationText(count) {
   + ` (${count} extra entries not included). We are working to remove this limitation.`;
 }
 
-class NodeDetails extends React.Component {
+export class NodeDetails extends React.Component {
 
   constructor(props, context) {
     super(props, context);
@@ -53,10 +53,8 @@ class NodeDetails extends React.Component {
     return (
       <div className="node-details-tools-wrapper">
         <div className="node-details-tools">
-          {showSwitchTopology && <span
-            title={topologyTitle}
-            className="fa fa-long-arrow-left"
-            onClick={this.handleShowTopologyForNode}>
+          {showSwitchTopology && <span title={topologyTitle}
+            className="fa fa-long-arrow-left" onClick={this.handleShowTopologyForNode}>
             <span>Show in <span>{this.props.topologyId.replace(/-/g, ' ')}</span></span>
           </span>}
           <span title="Close details" className="fa fa-close" onClick={this.handleClickClose} />
@@ -170,8 +168,7 @@ class NodeDetails extends React.Component {
         </div>
 
         {showControls && <div className="node-details-controls-wrapper" style={styles.controls}>
-          <NodeDetailsControls
-            nodeId={this.props.nodeId}
+          <NodeDetailsControls nodeId={this.props.nodeId}
             controls={details.controls}
             pending={pending}
             error={error} />
@@ -187,23 +184,20 @@ class NodeDetails extends React.Component {
             <NodeDetailsInfo rows={details.metadata} matches={nodeMatches.get('metadata')} />
           </div>}
 
-          {details.connections && details.connections.map(connections => (
-            <div className="node-details-content-section" key={connections.id}>
-              <NodeDetailsTable
-                {...connections}
-                nodes={connections.connections}
-                nodeIdKey="nodeId"
-              />
+          {details.connections && details.connections.map(connections => <div
+            className="node-details-content-section" key={connections.id}>
+              <NodeDetailsTable {...connections} nodes={connections.connections}
+                nodeIdKey="nodeId" />
             </div>
-          ))}
+          )}
 
-          {details.children && details.children.map(children => (
-            <div className="node-details-content-section" key={children.topologyId}>
+          {details.children && details.children.map(children => <div
+            className="node-details-content-section" key={children.topologyId}>
               <NodeDetailsTable {...children} />
             </div>
-          ))}
+          )}
 
-          {details.tables && details.tables.length > 0 && details.tables.map((table) => {
+          {details.tables && details.tables.length > 0 && details.tables.map(table => {
             if (table.rows.length > 0) {
               return (
                 <div className="node-details-content-section" key={table.id}>
@@ -214,8 +208,7 @@ class NodeDetails extends React.Component {
                       <Warning text={getTruncationText(table.truncationCount)} />
                     </span>}
                   </div>
-                  <NodeDetailsLabels
-                    rows={table.rows} controls={table.controls}
+                  <NodeDetailsLabels rows={table.rows} controls={table.controls}
                     matches={nodeMatches.get('tables')} />
                 </div>
               );

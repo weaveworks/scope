@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { Map as makeMap, List as makeList } from 'immutable';
@@ -126,12 +127,9 @@ class Node extends React.Component {
 
           svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
 
-          <foreignObject
-            style={{pointerEvents: 'none'}}
-            x={labelOffsetX} y={labelOffsetY}
+          <foreignObject style={{pointerEvents: 'none'}} x={labelOffsetX} y={labelOffsetY}
             width={labelWidth} height="100em">
-            <div
-              className="node-label-wrapper"
+            <div className="node-label-wrapper"
               style={{pointerEvents: 'all', fontSize, maxWidth: labelWidth}}
               {...mouseEvents}>
               <div className={labelClassName}>
@@ -151,11 +149,8 @@ class Node extends React.Component {
             {...this.props} />
         </g>
 
-        {showingNetworks && <NodeNetworksOverlay
-          offset={networkOffset}
-          size={size} networks={networks}
-          stack={stack}
-        />}
+        {showingNetworks && <NodeNetworksOverlay offset={networkOffset}
+          size={size} networks={networks} stack={stack} />}
       </g>
     );
   }
@@ -166,7 +161,8 @@ class Node extends React.Component {
 
   handleMouseClick(ev) {
     ev.stopPropagation();
-    this.props.clickNode(this.props.id, this.props.label, this.shapeRef.getBoundingClientRect());
+    this.props.clickNode(this.props.id, this.props.label,
+      ReactDOM.findDOMNode(this.shapeRef).getBoundingClientRect());
   }
 
   handleMouseEnter() {

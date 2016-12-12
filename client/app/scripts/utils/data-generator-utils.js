@@ -1,4 +1,4 @@
-import { zipObject } from 'lodash';
+import _ from 'lodash';
 import { scaleLinear } from 'd3-scale';
 import { extent } from 'd3-array';
 
@@ -104,9 +104,10 @@ function mergeMetrics(node) {
     return node;
   }
   return Object.assign({}, node, {
-    metrics: (metrics[node.shape] || [])
+    metrics: _(metrics[node.shape])
       .map((fn, name) => [name, fn(node)])
       .fromPairs()
+      .value()
   });
 }
 
@@ -120,7 +121,7 @@ function handleAdd(nodes) {
 
 
 function handleUpdated(updatedNodes, prevNodes) {
-  const modifiedNodesIndex = zipObject((updatedNodes || []).map(n => [n.id, n]));
+  const modifiedNodesIndex = _.zipObject((updatedNodes || []).map(n => [n.id, n]));
   return prevNodes.toIndexedSeq().toJS().map(n => (
     Object.assign({}, mergeMetrics(n), modifiedNodesIndex[n.id])
   ));

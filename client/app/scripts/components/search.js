@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { debounce } from 'lodash';
@@ -47,7 +48,6 @@ class Search extends React.Component {
     this.handleBlur = this.handleBlur.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
-    this.saveQueryInputRef = this.saveQueryInputRef.bind(this);
     this.doSearch = debounce(this.doSearch.bind(this), 200);
     this.state = {
       value: ''
@@ -81,10 +81,6 @@ class Search extends React.Component {
     this.props.doSearch(value);
   }
 
-  saveQueryInputRef(ref) {
-    this.queryInput = ref;
-  }
-
   componentWillReceiveProps(nextProps) {
     // when cleared from the outside, reset internal state
     if (this.props.searchQuery !== nextProps.searchQuery && nextProps.searchQuery === '') {
@@ -94,9 +90,9 @@ class Search extends React.Component {
 
   componentDidUpdate() {
     if (this.props.searchFocused) {
-      this.queryInput.focus();
+      ReactDOM.findDOMNode(this.refs.queryInput).focus();
     } else if (!this.state.value) {
-      this.queryInput.blur();
+      ReactDOM.findDOMNode(this.refs.queryInput).blur();
     }
   }
 
@@ -125,14 +121,13 @@ class Search extends React.Component {
           <div className="search-input">
             {showPinnedSearches && pinnedSearches.toIndexedSeq()
               .map(query => <SearchItem query={query} key={query} />)}
-            <input
-              className="search-input-field" type="text" id={inputId}
+            <input className="search-input-field" type="text" id={inputId}
               value={value} onChange={this.handleChange}
               onFocus={this.handleFocus} onBlur={this.handleBlur}
-              disabled={disabled} ref={this.saveQueryInputRef} />
+              disabled={disabled} ref="queryInput" />
           </div>
           <div className="search-label">
-            <i className="fa fa-search search-label-icon" />
+            <i className="fa fa-search search-label-icon"></i>
             <label className="search-label-hint" htmlFor={inputId}>
               Search
             </label>

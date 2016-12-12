@@ -5,8 +5,8 @@ export default function NodeShapeStack(props) {
   const contrastMode = isContrastMode();
   const Shape = props.shape;
   const [dx, dy] = contrastMode ? [0, 8] : [0, 5];
-  const dsx = (props.size + dx) / props.size;
-  const dsy = (props.size + dy) / props.size;
+  const dsx = (props.size * 2 + (dx * 2)) / (props.size * 2);
+  const dsy = (props.size * 2 + (dy * 2)) / (props.size * 2);
   const hls = [dsx, dsy];
 
   return (

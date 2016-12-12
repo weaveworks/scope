@@ -45,7 +45,7 @@ class MetricSelectorItem extends React.Component {
         onMouseOver={this.onMouseOver}
         onClick={this.onMouseClick}>
         {metric.get('label')}
-        {isPinned && <span className="fa fa-thumb-tack" />}
+        {isPinned && <span className="fa fa-thumb-tack"></span>}
       </div>
     );
   }

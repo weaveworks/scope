@@ -50,7 +50,7 @@ class NetworkSelectorItem extends React.Component {
         onClick={this.onMouseClick}
         style={style}>
         {network.get('label')}
-        {isPinned && <span className="fa fa-thumb-tack" />}
+        {isPinned && <span className="fa fa-thumb-tack"></span>}
       </div>
     );
   }

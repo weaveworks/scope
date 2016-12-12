@@ -17,7 +17,7 @@ const IGNORED_COLUMNS = ['docker_container_ports', 'docker_container_id', 'docke
 function getColumns(nodes) {
   const metricColumns = nodes
     .toList()
-    .flatMap((n) => {
+    .flatMap(n => {
       const metrics = (n.get('metrics') || makeList())
         .map(m => makeMap({ id: m.get('id'), label: m.get('label'), dataType: 'number' }));
       return metrics;
@@ -28,7 +28,7 @@ function getColumns(nodes) {
 
   const metadataColumns = nodes
     .toList()
-    .flatMap((n) => {
+    .flatMap(n => {
       const metadata = (n.get('metadata') || makeList())
         .map(m => makeMap({ id: m.get('id'), label: m.get('label'), dataType: m.get('dataType') }));
       return metadata;
@@ -40,7 +40,7 @@ function getColumns(nodes) {
 
   const relativesColumns = nodes
     .toList()
-    .flatMap((n) => {
+    .flatMap(n => {
       const metadata = (n.get('parents') || makeList())
         .map(m => makeMap({ id: m.get('topologyId'), label: m.get('topologyId') }));
       return metadata;

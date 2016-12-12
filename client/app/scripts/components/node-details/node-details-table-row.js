@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 
 import NodeDetailsTableNodeLink from './node-details-table-node-link';
@@ -7,9 +8,9 @@ import { formatDataType } from '../../utils/string-utils';
 
 function getValuesForNode(node) {
   const values = {};
-  ['metrics', 'metadata'].forEach((collection) => {
+  ['metrics', 'metadata'].forEach(collection => {
     if (node[collection]) {
-      node[collection].forEach((field) => {
+      node[collection].forEach(field => {
         const result = Object.assign({}, field);
         result.valueType = collection;
         values[field.id] = result;
@@ -17,7 +18,7 @@ function getValuesForNode(node) {
     }
   });
 
-  (node.parents || []).forEach((p) => {
+  (node.parents || []).forEach(p => {
     values[p.topologyId] = {
       id: p.topologyId,
       label: p.topologyId,
@@ -39,9 +40,7 @@ function renderValues(node, columns = [], columnStyles = []) {
       if (field.valueType === 'metadata') {
         const {value, title} = formatDataType(field);
         return (
-          <td
-            className="node-details-table-node-value truncate"
-            title={title}
+          <td className="node-details-table-node-value truncate" title={title}
             style={style}
             key={field.id}>
             {value}
@@ -50,9 +49,7 @@ function renderValues(node, columns = [], columnStyles = []) {
       }
       if (field.valueType === 'relatives') {
         return (
-          <td
-            className="node-details-table-node-value truncate"
-            title={field.value}
+          <td className="node-details-table-node-value truncate" title={field.value}
             style={style}
             key={field.id}>
             {<NodeDetailsTableNodeLink linkable nodeId={field.relative.id} {...field.relative} />}
@@ -78,15 +75,15 @@ export default class NodeDetailsTableRow extends React.Component {
     //
     this.mouseDragOrigin = [0, 0];
 
-    this.saveLabelElementRef = this.saveLabelElementRef.bind(this);
+    this.storeLabelRef = this.storeLabelRef.bind(this);
     this.onMouseDown = this.onMouseDown.bind(this);
     this.onMouseUp = this.onMouseUp.bind(this);
     this.onMouseEnter = this.onMouseEnter.bind(this);
     this.onMouseLeave = this.onMouseLeave.bind(this);
   }
 
-  saveLabelElementRef(ref) {
-    this.labelElement = ref;
+  storeLabelRef(ref) {
+    this.labelEl = ref;
   }
 
   onMouseEnter() {
@@ -117,7 +114,7 @@ export default class NodeDetailsTableRow extends React.Component {
     }
 
     const { node, onClick } = this.props;
-    onClick(ev, node, this.labelElement);
+    onClick(ev, node, ReactDOM.findDOMNode(this.labelEl));
   }
 
   render() {
@@ -135,9 +132,8 @@ export default class NodeDetailsTableRow extends React.Component {
         onMouseEnter={onMouseEnterRow && this.onMouseEnter}
         onMouseLeave={onMouseLeaveRow && this.onMouseLeave}
         className={className}>
-        <td
-          className="node-details-table-node-label truncate"
-          ref={this.saveLabelElementRef} style={firstColumnStyle}>
+        <td ref={this.storeLabelRef} className="node-details-table-node-label truncate"
+          style={firstColumnStyle}>
           {this.props.renderIdCell(Object.assign(node, {topologyId, nodeId}))}
         </td>
         {values}
@@ -148,5 +144,5 @@ export default class NodeDetailsTableRow extends React.Component {
 
 
 NodeDetailsTableRow.defaultProps = {
-  renderIdCell: props => <NodeDetailsTableNodeLink {...props} />
+  renderIdCell: (props) => <NodeDetailsTableNodeLink {...props} />
 };

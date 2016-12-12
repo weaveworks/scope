@@ -17,7 +17,7 @@ const letterRange = endLetterRange - startLetterRange;
 export function text2degree(text) {
   const input = text.substr(0, 2).toUpperCase();
   let num = 0;
-  for (let i = 0; i < input.length; i += 1) {
+  for (let i = 0; i < input.length; i++) {
     const charCode = Math.max(Math.min(input[i].charCodeAt(), endLetterRange), startLetterRange);
     num += Math.pow(letterRange, input.length - i - 1) * (charCode - startLetterRange);
   }
