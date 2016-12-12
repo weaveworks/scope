@@ -29,7 +29,7 @@ func (l Log) Wrap(next http.Handler) http.Handler {
 				log.Warnf("Could not dump request headers: %v", err)
 				return
 			}
-			log.Debugf(string(headers))
+			log.Debugf("Is websocket request: %v\n%s", IsWSHandshakeRequest(r), string(headers))
 		}
 		i := &interceptor{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(i, r)
