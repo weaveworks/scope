@@ -7,14 +7,12 @@ import NodeDetailsControlButton from './node-details-control-button';
 import ShowMore from '../show-more';
 
 
-function renderControls(controls) {
-  return (
-    <div className="node-details-labels-controls">
-      {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
-        nodeId={control.nodeId} control={control} key={control.id} />)}
-    </div>
-  );
-}
+const Controls = controls => (
+  <div className="node-details-labels-controls">
+    {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
+      nodeId={control.nodeId} control={control} key={control.id} />)}
+  </div>
+);
 
 export default class NodeDetailsLabels extends React.Component {
 
@@ -49,7 +47,7 @@ export default class NodeDetailsLabels extends React.Component {
 
     return (
       <div className="node-details-labels">
-        {controls && renderControls(controls)}
+        {controls && Controls(controls)}
         {rows.map(field => (
           <div className="node-details-labels-field" key={field.id}>
             <div

@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import ReactTooltip from 'react-tooltip';
 
 
-function renderPlugin({id, label, description, status}) {
+const Plugin = ({id, label, description, status}) => {
   const error = status !== 'ok';
   const className = classNames({ error });
   const title = `Plugin description: ${description}<br />Status: ${status}`;
@@ -19,7 +19,7 @@ function renderPlugin({id, label, description, status}) {
       <ReactTooltip class="tooltip" effect="solid" offset={{right: 7}} />
     </span>
   );
-}
+};
 
 class Plugins extends React.Component {
   render() {
@@ -29,8 +29,7 @@ class Plugins extends React.Component {
         <span className="plugins-label">
           Plugins:
         </span>
-        {hasPlugins && this.props.plugins.toIndexedSeq()
-          .map(plugin => renderPlugin(plugin.toJS()))}
+        {hasPlugins && this.props.plugins.toIndexedSeq().map(plugin => Plugin(plugin.toJS()))}
         {!hasPlugins && <span className="plugins-empty">n/a</span>}
       </div>
     );

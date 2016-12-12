@@ -57,7 +57,6 @@
     "eslint-config-airbnb": "13.0.0",
     "eslint-loader": "1.6.1",
     "eslint-plugin-import": "2.2.0",
-    "eslint-plugin-jasmine": "2.2.0",
     "eslint-plugin-jsx-a11y": "2.2.3",
     "eslint-plugin-react": "6.8.0",
     "extract-text-webpack-plugin": "1.0.1",

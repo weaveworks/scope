@@ -13,21 +13,19 @@ const navbarHeight = 194;
 const marginTop = 0;
 
 
-function renderEmptyTopologyError(show) {
-  return (
-    <NodesError faIconClass="fa-circle-thin" hidden={!show}>
-      <div className="heading">Nothing to show. This can have any of these reasons:</div>
-      <ul>
-        <li>We haven&apos;t received any reports from probes recently.
-         Are the probes properly configured?</li>
-        <li>There are nodes, but they&apos;re currently hidden. Check the view options
-         in the bottom-left if they allow for showing hidden nodes.</li>
-        <li>Containers view only: you&apos;re not running Docker,
-         or you don&apos;t have any containers.</li>
-      </ul>
-    </NodesError>
-  );
-}
+const EmptyTopologyError = show => (
+  <NodesError faIconClass="fa-circle-thin" hidden={!show}>
+    <div className="heading">Nothing to show. This can have any of these reasons:</div>
+    <ul>
+      <li>We haven&apos;t received any reports from probes recently.
+       Are the probes properly configured?</li>
+      <li>There are nodes, but they&apos;re currently hidden. Check the view options
+       in the bottom-left if they allow for showing hidden nodes.</li>
+      <li>Containers view only: you&apos;re not running Docker,
+       or you don&apos;t have any containers.</li>
+    </ul>
+  </NodesError>
+);
 
 class Nodes extends React.Component {
   constructor(props, context) {
@@ -60,7 +58,7 @@ class Nodes extends React.Component {
             itemType={getNodeType(currentTopology, topologies)}
             show={topologiesLoaded && !nodesLoaded} />
         </DelayedShow>
-        {renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
+        {EmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
 
         {gridMode ?
           <NodesGrid {...this.state} nodeSize="24" margins={CANVAS_MARGINS} /> :

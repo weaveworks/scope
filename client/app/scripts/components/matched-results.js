@@ -7,24 +7,21 @@ const SHOW_ROW_COUNT = 2;
 const MAX_MATCH_LENGTH = 24;
 
 
-function renderMatch(match) {
-  return (
-    <div className="matched-results-match" key={match.label}>
-      <div className="matched-results-match-wrapper">
-        <span className="matched-results-match-label">
-          {match.label}:
-        </span>
-        <MatchedText
-          text={match.text} match={match}
-          maxLength={MAX_MATCH_LENGTH}
-          truncate={match.truncate} />
-      </div>
+const Match = match => (
+  <div className="matched-results-match" key={match.label}>
+    <div className="matched-results-match-wrapper">
+      <span className="matched-results-match-label">
+        {match.label}:
+      </span>
+      <MatchedText
+        text={match.text} match={match}
+        maxLength={MAX_MATCH_LENGTH}
+        truncate={match.truncate} />
     </div>
-  );
-}
+  </div>
+);
 
 class MatchedResults extends React.Component {
-
   render() {
     const { matches, style } = this.props;
 
@@ -44,7 +41,7 @@ class MatchedResults extends React.Component {
 
     return (
       <div className="matched-results" style={style}>
-        {matches.keySeq().take(SHOW_ROW_COUNT).map(fieldId => renderMatch(matches.get(fieldId)))}
+        {matches.keySeq().take(SHOW_ROW_COUNT).map(fieldId => Match(matches.get(fieldId)))}
         {moreFieldMatches && <div className="matched-results-more" title={moreFieldMatchesTitle}>
           {`${moreFieldMatches.size} more matches`}
         </div>}
