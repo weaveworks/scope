@@ -3,13 +3,13 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import Logo from './logo';
-import Footer from './footer.js';
-import Sidebar from './sidebar.js';
+import Footer from './footer';
+import Sidebar from './sidebar';
 import HelpPanel from './help-panel';
 import Search from './search';
-import Status from './status.js';
-import Topologies from './topologies.js';
-import TopologyOptions from './topology-options.js';
+import Status from './status';
+import Topologies from './topologies';
+import TopologyOptions from './topology-options';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric,
   selectMetric, toggleHelp, toggleGridMode } from '../actions/app-actions';
@@ -18,10 +18,8 @@ import Nodes from './nodes';
 import GridModeSelector from './grid-mode-selector';
 import MetricSelector from './metric-selector';
 import NetworkSelector from './networks-selector';
-import { getRouter } from '../utils/router-utils';
-import DebugToolbar, { showingDebugToolbar,
-  toggleDebugToolbar } from './debug-toolbar.js';
-import { getUrlState } from '../utils/router-utils';
+import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
+import { getRouter, getUrlState } from '../utils/router-utils';
 import { getActiveTopologyOptions } from '../utils/topology-utils';
 
 const BACKSPACE_KEY_CODE = 8;

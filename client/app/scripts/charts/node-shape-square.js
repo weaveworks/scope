@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
-import {getMetricValue, getMetricColor, getClipPathDefinition} from '../utils/metric-utils.js';
-import {CANVAS_METRIC_FONT_SIZE} from '../constants/styles.js';
+import { getMetricValue, getMetricColor, getClipPathDefinition } from '../utils/metric-utils';
+import { CANVAS_METRIC_FONT_SIZE } from '../constants/styles';
 
 
 export default function NodeShapeSquare({
@@ -28,8 +28,11 @@ export default function NodeShapeSquare({
       {highlighted && <rect className="highlighted" {...rectProps(0.7)} />}
       <rect className="border" stroke={color} {...rectProps(0.5, 0.5)} />
       <rect className="shadow" {...rectProps(0.45, 0.39)} />
-      {hasMetric && <rect className="metric-fill" style={metricStyle}
-        clipPath={`url(#${clipId})`} {...rectProps(0.45, 0.39)} />}
+      {hasMetric && <rect
+        className="metric-fill" style={metricStyle}
+        clipPath={`url(#${clipId})`}
+        {...rectProps(0.45, 0.39)}
+      />}
       {highlighted && hasMetric ?
         <text style={{fontSize}}>
           {formattedValue}

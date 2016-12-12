@@ -1,11 +1,11 @@
-require('font-awesome-webpack');
-require('../styles/main.less');
-require('../images/favicon.ico');
-
 import 'babel-polyfill';
+import 'font-awesome-webpack';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
+
+import '../styles/main.less';
+import '../images/favicon.ico';
 import configureStore from './stores/configureStore';
 
 const store = configureStore();

@@ -1,3 +1,4 @@
+/* eslint react/jsx-first-prop-new-line: "off" */
 /* eslint max-len: "off" */
 import React from 'react';
 

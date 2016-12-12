@@ -18,7 +18,7 @@ function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
   function explicitlySetStyle(element, targetEl) {
     const cSSStyleDeclarationComputed = getComputedStyle(element);
     let computedStyleStr = '';
-    each(cSSStyleDeclarationComputed, key => {
+    each(cSSStyleDeclarationComputed, (key) => {
       const value = cSSStyleDeclarationComputed.getPropertyValue(key);
       if (value !== emptySvgDeclarationComputed.getPropertyValue(key) && !cssSkipValues[value]) {
         computedStyleStr += `${key}:${value};`;
@@ -55,8 +55,7 @@ function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
   // hardcode computed css styles inside svg
   const allElements = traverse(svg);
   const allTargetElements = traverse(target);
-  let i = allElements.length;
-  while (i--) {
+  for (let i = allElements.length - 1; i >= 0; i -= 1) {
     explicitlySetStyle(allElements[i], allTargetElements[i]);
   }
 
@@ -74,11 +73,11 @@ function download(source, name) {
   if (name) {
     filename = name;
   } else if (window.document.title) {
-    filename = `${window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${(+new Date)}`;
+    filename = `${window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${(+new Date())}`;
   }
 
   const url = window.URL.createObjectURL(new Blob(source,
-    {type: 'text\/xml'}
+    { type: 'text/xml' }
   ));
 
   const a = document.createElement('a');
