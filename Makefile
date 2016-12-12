@@ -103,7 +103,6 @@ tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
 
 lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	./tools/lint -ignorespelling "agre " -ignorespelling "AGRE " .
-	./tools/shell-lint tools
 
 prog/staticui/staticui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	mkdir -p prog/staticui

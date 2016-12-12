@@ -1,5 +1,5 @@
 #!/bin/bash
 
 source /var/run/weave/scope-app.args
- 
+
 exec -a scope-app /home/weave/scope --mode app "${ARGS[@]}"
