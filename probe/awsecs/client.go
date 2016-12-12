@@ -16,8 +16,8 @@ import (
 type ecsClient struct {
 	client       *ecs.ECS
 	cluster      string
-	taskCache    map[string]ecsTask
-	serviceCache map[string]ecsService
+	taskCache    map[string]ecsTask    // keys are task ARNs
+	serviceCache map[string]ecsService // keys are service names
 }
 
 // Since we're caching tasks heavily, we ensure no mistakes by casting into a structure
@@ -293,13 +293,7 @@ func (c ecsClient) matchTasksServices(taskARNs []string) (map[string]string, []s
 	return results, unmatched
 }
 
-// Returns a ecsInfo struct containing data needed for a report.
-func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
-	log.Debugf("Getting ECS info on %d tasks", len(taskARNs))
-
-	// We do a weird order of operations here to minimize unneeded cache refreshes.
-	// First, we ensure we have all the tasks we need, and fetch the ones we don't.
-	// We also mark the tasks as being used here to prevent eviction.
+func (c ecsClient) ensureTasks(taskARNs []string) {
 	tasksToFetch := []string{}
 	now := time.Now()
 	for _, taskARN := range taskARNs {
@@ -313,14 +307,9 @@ func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
 		// This might not fully succeed, but we only try once and ignore any further missing tasks.
 		c.getTasks(tasksToFetch)
 	}
+}
 
-	// We're going to do this matching process potentially several times, but that's ok - it's quite cheap.
-	// First, we want to see how far we get with existing data, and identify the set of services
-	// we'll need to refresh regardless.
-	taskServiceMap, unmatched := c.matchTasksServices(taskARNs)
-
-	// In order to ensure service details are fresh, we need to refresh any referenced services
-	log.Debugf("Refreshing ECS services")
+func (c ecsClient) refreshServices(taskServiceMap map[string]string) map[string]bool {
 	toDescribe, done := c.describeServices()
 	servicesRefreshed := map[string]bool{}
 	for _, serviceName := range taskServiceMap {
@@ -332,35 +321,25 @@ func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
 	}
 	close(toDescribe)
 	<-done
+	return servicesRefreshed
+}
 
-	// In refreshing, we may have picked up any new deployment ids.
-	// If we still have tasks unmatched, we try again.
-	if len(unmatched) > 0 {
-		taskServiceMap, unmatched = c.matchTasksServices(taskARNs)
-	}
-
-	// If we still have tasks unmatched, we'll have to try harder. Get a list of all services and,
-	// if not already refreshed, fetch them.
-	log.Debugf("After refreshing services, %d tasks unmatched", len(unmatched))
-	if len(unmatched) > 0 {
-		serviceNamesChan := c.listServices()
-		toDescribe, done := c.describeServices()
-		go func() {
-			for serviceName := range serviceNamesChan {
-				if !servicesRefreshed[serviceName] {
-					toDescribe <- serviceName
-					servicesRefreshed[serviceName] = true
-				}
+func (c ecsClient) describeAllServices(servicesRefreshed map[string]bool) {
+	serviceNamesChan := c.listServices()
+	toDescribe, done := c.describeServices()
+	go func() {
+		for serviceName := range serviceNamesChan {
+			if !servicesRefreshed[serviceName] {
+				toDescribe <- serviceName
+				servicesRefreshed[serviceName] = true
 			}
-			close(toDescribe)
-		}()
-		<-done
+		}
+		close(toDescribe)
+	}()
+	<-done
+}
 
-		taskServiceMap, unmatched = c.matchTasksServices(taskARNs)
-		// If we still have unmatched at this point, we don't care - this may be due to partial failures,
-		// race conditions, and other weirdness.
-	}
-
+func (c ecsClient) makeECSInfo(taskARNs []string, taskServiceMap map[string]string) ecsInfo {
 	// The maps to return are the referenced subsets of the full caches
 	tasks := map[string]ecsTask{}
 	for _, taskARN := range taskARNs {
@@ -385,7 +364,47 @@ func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
 		}
 	}
 
+	return ecsInfo{services: services, tasks: tasks, taskServiceMap: taskServiceMap}
+}
+
+// Returns a ecsInfo struct containing data needed for a report.
+func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
+	log.Debugf("Getting ECS info on %d tasks", len(taskARNs))
+
+	// We do a weird order of operations here to minimize unneeded cache refreshes.
+	// First, we ensure we have all the tasks we need, and fetch the ones we don't.
+	// We also mark the tasks as being used here to prevent eviction.
+	c.ensureTasks(taskARNs)
+
+	// We're going to do this matching process potentially several times, but that's ok - it's quite cheap.
+	// First, we want to see how far we get with existing data, and identify the set of services
+	// we'll need to refresh regardless.
+	taskServiceMap, unmatched := c.matchTasksServices(taskARNs)
+
+	// In order to ensure service details are fresh, we need to refresh any referenced services
+	log.Debugf("Refreshing ECS services")
+	servicesRefreshed := c.refreshServices(taskServiceMap)
+
+	// In refreshing, we may have picked up any new deployment ids.
+	// If we still have tasks unmatched, we try again.
+	if len(unmatched) > 0 {
+		taskServiceMap, unmatched = c.matchTasksServices(taskARNs)
+	}
+
+	// If we still have tasks unmatched, we'll have to try harder. Get a list of all services and,
+	// if not already refreshed, fetch them.
+	log.Debugf("After refreshing services, %d tasks unmatched", len(unmatched))
+	if len(unmatched) > 0 {
+		c.describeAllServices(servicesRefreshed)
+
+		taskServiceMap, unmatched = c.matchTasksServices(taskARNs)
+		// If we still have unmatched at this point, we don't care - this may be due to partial failures,
+		// race conditions, and other weirdness.
+	}
+
+	info := c.makeECSInfo(taskARNs, taskServiceMap)
+
 	c.evictOldCacheItems()
 
-	return ecsInfo{services: services, tasks: tasks, taskServiceMap: taskServiceMap}
+	return info
 }
