@@ -1,15 +1,16 @@
 /* eslint no-return-assign: "off", react/jsx-no-bind: "off" */
 import debug from 'debug';
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { debounce } from 'lodash';
-import Term from 'xterm';
 
 import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
 import { getPipeStatus, basePath, doResizeTty } from '../utils/web-api-utils';
+import Term from 'xterm';
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 const wsUrl = `${wsProto}://${location.host}${basePath(location.pathname)}`;
@@ -72,7 +73,7 @@ function openNewWindow(url, bcr, minWidth = 200) {
   };
 
   const windowOptionsString = Object.keys(windowOptions)
-    .map(k => `${k}=${windowOptions[k]}`)
+    .map((k) => `${k}=${windowOptions[k]}`)
     .join(',');
 
   window.open(url, '', windowOptionsString);
@@ -96,8 +97,6 @@ class Terminal extends React.Component {
 
     this.handleCloseClick = this.handleCloseClick.bind(this);
     this.handlePopoutTerminal = this.handlePopoutTerminal.bind(this);
-    this.saveInnerFlexRef = this.saveInnerFlexRef.bind(this);
-    this.saveNodeRef = this.saveNodeRef.bind(this);
     this.handleResize = this.handleResize.bind(this);
     this.handleResizeDebounced = debounce(this.handleResize, 500);
   }
@@ -124,7 +123,7 @@ class Terminal extends React.Component {
       }
       this.socket = null;
       const wereConnected = this.state.connected;
-      if (this.isComponentMounted) {
+      if (this._isMounted) {
         // Calling setState on an unmounted component will throw a warning.
         // `connected` will get set to false by `componentWillUnmount`.
         this.setState({connected: false});
@@ -177,13 +176,14 @@ class Terminal extends React.Component {
   }
 
   componentDidMount() {
-    this.isComponentMounted = true;
+    this._isMounted = true;
     if (this.props.connect) {
       this.mountTerminal();
     }
   }
 
   mountTerminal() {
+    const component = this;
     this.term = new Term({
       cols: this.state.cols,
       rows: this.state.rows,
@@ -192,7 +192,8 @@ class Terminal extends React.Component {
       scrollback: 10000,
     });
 
-    this.term.open(this.innerFlex);
+    const innerNode = ReactDOM.findDOMNode(component.innerFlex);
+    this.term.open(innerNode);
     this.term.on('data', (data) => {
       this.scrollToBottom();
       if (this.socket) {
@@ -216,7 +217,7 @@ class Terminal extends React.Component {
   }
 
   componentWillUnmount() {
-    this.isComponentMounted = false;
+    this._isMounted = false;
     this.setState({connected: false});
     log('cwu terminal');
 
@@ -262,15 +263,16 @@ class Terminal extends React.Component {
     const paramString = JSON.stringify(this.props);
     this.props.dispatch(clickCloseTerminal(this.getPipeId()));
 
-    const bcr = this.node.getBoundingClientRect();
-    const minWidth = (this.state.characterWidth * 80) + (8 * 2);
+    const bcr = ReactDOM.findDOMNode(this).getBoundingClientRect();
+    const minWidth = this.state.characterWidth * 80 + (8 * 2);
     openNewWindow(`terminal.html#!/state/${paramString}`, bcr, minWidth);
   }
 
   handleResize() {
+    const innerNode = ReactDOM.findDOMNode(this.innerFlex);
     // scrollbar === 16px
-    const width = this.innerFlex.clientWidth - (2 * 8) - 16;
-    const height = this.innerFlex.clientHeight - (2 * 8);
+    const width = innerNode.clientWidth - (2 * 8) - 16;
+    const height = innerNode.clientHeight - (2 * 8);
     const cols = Math.floor(width / this.state.characterWidth);
     const rows = Math.floor(height / this.state.characterHeight);
 
@@ -311,8 +313,7 @@ class Terminal extends React.Component {
             onClick={this.handlePopoutTerminal}>
           Pop out
           </span>
-          <span
-            title="Close" className="terminal-header-tools-item-icon fa fa-close"
+          <span title="Close" className="terminal-header-tools-item-icon fa fa-close"
             onClick={this.handleCloseClick} />
         </div>
         <span className="terminal-header-title">{this.getTitle()}</span>
@@ -356,14 +357,6 @@ class Terminal extends React.Component {
     );
   }
 
-  saveNodeRef(ref) {
-    this.node = ref;
-  }
-
-  saveInnerFlexRef(ref) {
-    this.innerFlex = ref;
-  }
-
   render() {
     const innerFlexStyle = {
       opacity: this.state.connected ? 1 : 0.8,
@@ -377,10 +370,13 @@ class Terminal extends React.Component {
     });
 
     return (
-      <div className="terminal-wrapper" ref={this.saveNodeRef}>
+      <div className="terminal-wrapper">
         {this.isEmbedded() && this.getTerminalHeader()}
-        <div className={innerClassName} style={innerFlexStyle} ref={this.saveInnerFlexRef}>
-          <div style={innerStyle} />
+        <div
+          ref={(ref) => this.innerFlex = ref}
+          className={innerClassName}
+          style={innerFlexStyle} >
+          <div style={innerStyle} ref={(ref) => this.inner = ref} />
         </div>
         {this.getTerminalStatusBar()}
       </div>

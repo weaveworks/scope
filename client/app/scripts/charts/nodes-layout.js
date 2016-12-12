@@ -55,7 +55,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   });
 
   // add nodes to the graph if not already there
-  nodes.forEach((node) => {
+  nodes.forEach(node => {
     const gNodeId = graphNodeId(node.get('id'));
     if (!graph.hasNode(gNodeId)) {
       graph.setNode(gNodeId, {
@@ -66,7 +66,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   });
 
   // remove nodes that are no longer there or are 0-degree nodes
-  graph.nodes().forEach((gNodeId) => {
+  graph.nodes().forEach(gNodeId => {
     const nodeId = fromGraphNodeId(gNodeId);
     if (!nodes.has(nodeId) || nodes.get(nodeId).get('degree') === 0) {
       graph.removeNode(gNodeId);
@@ -74,7 +74,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   });
 
   // add edges to the graph if not already there
-  edges.forEach((edge) => {
+  edges.forEach(edge => {
     const s = graphNodeId(edge.get('source'));
     const t = graphNodeId(edge.get('target'));
     if (!graph.hasEdge(s, t)) {
@@ -84,7 +84,7 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
   });
 
   // remove edges that are no longer there
-  graph.edges().forEach((edgeObj) => {
+  graph.edges().forEach(edgeObj => {
     const edge = [fromGraphNodeId(edgeObj.v), fromGraphNodeId(edgeObj.w)];
     const edgeId = edge.join(EDGE_ID_SEPARATOR);
     if (!edges.has(edgeId)) {
@@ -97,14 +97,14 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
 
   // apply coordinates to nodes and edges
 
-  graph.nodes().forEach((gNodeId) => {
+  graph.nodes().forEach(gNodeId => {
     const graphNode = graph.node(gNodeId);
     const nodeId = fromGraphNodeId(gNodeId);
     nodes = nodes.setIn([nodeId, 'x'], graphNode.x);
     nodes = nodes.setIn([nodeId, 'y'], graphNode.y);
   });
 
-  graph.edges().forEach((graphEdge) => {
+  graph.edges().forEach(graphEdge => {
     const graphEdgeMeta = graph.edge(graphEdge);
     const edge = edges.get(graphEdgeMeta.id);
     let points = fromJS(graphEdgeMeta.points);
@@ -165,7 +165,7 @@ export function doLayoutNewNodesOfExistingRank(layout, nodeCache, opts) {
   const oldNodes = ImmSet.fromKeys(nodeCache);
   const newNodes = ImmSet.fromKeys(layout.nodes.filter(n => n.get('degree') > 0))
     .subtract(oldNodes);
-  result.nodes = layout.nodes.map((n) => {
+  result.nodes = layout.nodes.map(n => {
     if (newNodes.contains(n.get('id'))) {
       const nodesSameRank = nodeCache.filter(nn => nn.get('rank') === n.get('rank'));
       if (nodesSameRank.size > 0) {
@@ -178,7 +178,7 @@ export function doLayoutNewNodesOfExistingRank(layout, nodeCache, opts) {
     return n;
   });
 
-  result.edges = layout.edges.map((edge) => {
+  result.edges = layout.edges.map(edge => {
     if (!edge.has('points')) {
       return setSimpleEdgePoints(edge, layout.nodes);
     }
@@ -237,23 +237,23 @@ function layoutSingleNodes(layout, opts) {
     }
 
     // default margins
-    offsetX = offsetX || (margins.left + nodeWidth) / 2;
-    offsetY = offsetY || (margins.top + nodeHeight) / 2;
+    offsetX = offsetX || margins.left + nodeWidth / 2;
+    offsetY = offsetY || margins.top + nodeHeight / 2;
 
     const columns = Math.ceil(Math.sqrt(singleNodes.size));
     let row = 0;
     let col = 0;
     let singleX;
     let singleY;
-    nodes = nodes.sortBy(node => node.get('rank')).map((node) => {
+    nodes = nodes.sortBy(node => node.get('rank')).map(node => {
       if (singleNodes.has(node.get('id'))) {
         if (col === columns) {
           col = 0;
-          row += 1;
+          row++;
         }
-        singleX = (col * (nodesep + nodeWidth)) + offsetX;
-        singleY = (row * (ranksep + nodeHeight)) + offsetY;
-        col += 1;
+        singleX = col * (nodesep + nodeWidth) + offsetX;
+        singleY = row * (ranksep + nodeHeight) + offsetY;
+        col++;
         return node.merge({
           x: singleX,
           y: singleY
@@ -263,8 +263,8 @@ function layoutSingleNodes(layout, opts) {
     });
 
     // adjust layout dimensions if graph is now bigger
-    result.width = Math.max(layout.width, singleX + (nodeWidth / 2) + nodesep);
-    result.height = Math.max(layout.height, singleY + (nodeHeight / 2) + ranksep);
+    result.width = Math.max(layout.width, singleX + nodeWidth / 2 + nodesep);
+    result.height = Math.max(layout.height, singleY + nodeHeight / 2 + ranksep);
     result.nodes = nodes;
   }
 
@@ -290,12 +290,12 @@ export function shiftLayoutToCenter(layout, opts) {
   if (layout.width < width) {
     const xMin = layout.nodes.minBy(n => n.get('x'));
     const xMax = layout.nodes.maxBy(n => n.get('x'));
-    offsetX = ((width - (xMin.get('x') + xMax.get('x'))) / 2) + margins.left;
+    offsetX = (width - (xMin.get('x') + xMax.get('x'))) / 2 + margins.left;
   }
   if (layout.height < height) {
     const yMin = layout.nodes.minBy(n => n.get('y'));
     const yMax = layout.nodes.maxBy(n => n.get('y'));
-    offsetY = ((height - (yMin.get('y') + yMax.get('y'))) / 2) + margins.top;
+    offsetY = (height - (yMin.get('y') + yMax.get('y'))) / 2 + margins.top;
   }
 
   if (offsetX || offsetY) {
@@ -412,7 +412,7 @@ function copyLayoutProperties(layout, nodeCache, edgeCache) {
   const result = Object.assign({}, layout);
   result.nodes = layout.nodes.map(node => (nodeCache.has(node.get('id'))
     ? node.merge(nodeCache.get(node.get('id'))) : node));
-  result.edges = layout.edges.map((edge) => {
+  result.edges = layout.edges.map(edge => {
     if (edgeCache.has(edge.get('id'))
       && hasSameEndpoints(edgeCache.get(edge.get('id')), result.nodes)) {
       return edge.merge(edgeCache.get(edge.get('id')));
@@ -453,10 +453,9 @@ export function doLayout(immNodes, immEdges, opts) {
   const useCache = !options.forceRelayout && cachedLayout && nodeCache && edgeCache;
   let layout;
 
-  layoutRuns += 1;
+  ++layoutRuns;
   if (useCache && !hasUnseenNodes(immNodes, nodeCache)) {
-    layoutRunsTrivial += 1;
-    log('skip layout, trivial adjustment', layoutRunsTrivial, layoutRuns);
+    log('skip layout, trivial adjustment', ++layoutRunsTrivial, layoutRuns);
     layout = cloneLayout(cachedLayout, immNodes, immEdges);
     // copy old properties, works also if nodes get re-added
     layout = copyLayoutProperties(layout, nodeCache, edgeCache);

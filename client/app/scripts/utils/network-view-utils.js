@@ -2,7 +2,7 @@ import { fromJS, List as makeList } from 'immutable';
 
 export function getNetworkNodes(nodes) {
   const networks = {};
-  nodes.forEach(node => (node.get('networks') || makeList()).forEach((n) => {
+  nodes.forEach(node => (node.get('networks') || makeList()).forEach(n => {
     const networkId = n.get('id');
     networks[networkId] = (networks[networkId] || []).concat([node.get('id')]);
   }));

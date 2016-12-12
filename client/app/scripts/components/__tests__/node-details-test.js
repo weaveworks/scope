@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import configureStore from '../../stores/configureStore';
 
 // need ES5 require to keep automocking off
-const NodeDetails = require('../node-details.js').default.WrappedComponent;
+const NodeDetails = require('../node-details.js').NodeDetails;
 
 describe('NodeDetails', () => {
   let nodes;
@@ -34,8 +34,7 @@ describe('NodeDetails', () => {
     details = {label: 'Node 1'};
     const c = TestUtils.renderIntoDocument(
       <Provider store={configureStore()}>
-        <NodeDetails
-          nodes={nodes}
+        <NodeDetails nodes={nodes}
           topologyId="containers"
           nodeId={nodeId} details={details}
         />

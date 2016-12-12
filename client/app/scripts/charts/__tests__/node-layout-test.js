@@ -9,7 +9,7 @@ describe('NodesLayout', () => {
     const coords = [];
     nodes
       .sortBy(node => node.get('id'))
-      .forEach((node) => {
+      .forEach(node => {
         coords.push(node.get('x'));
         coords.push(node.get('y'));
       });

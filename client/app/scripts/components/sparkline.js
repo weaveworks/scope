@@ -81,14 +81,10 @@ export default class Sparkline extends React.Component {
     return (
       <div title={title}>
         <svg width={this.props.width} height={this.props.height}>
-          <path
-            className="sparkline" fill="none" stroke={this.props.strokeColor}
-            strokeWidth={this.props.strokeWidth} d={this.line(data)}
-          />
-          <circle
-            className="sparkcircle" cx={lastX} cy={lastY} fill="#46466a"
-            fillOpacity="0.6" stroke="none" r={this.props.circleDiameter}
-          />
+          <path className="sparkline" fill="none" stroke={this.props.strokeColor}
+            strokeWidth={this.props.strokeWidth} ref="path" d={this.line(data)} />
+          <circle className="sparkcircle" cx={lastX} cy={lastY} fill="#46466a"
+            fillOpacity="0.6" stroke="none" r={this.props.circleDiameter} />
         </svg>
       </div>
     );
@@ -97,7 +93,7 @@ export default class Sparkline extends React.Component {
 }
 
 Sparkline.propTypes = {
-  data: React.PropTypes.arrayOf(React.PropTypes.object).isRequired
+  data: React.PropTypes.array.isRequired
 };
 
 Sparkline.defaultProps = {

@@ -21,12 +21,14 @@ class NodesChartNodes extends React.Component {
       && (selectedNodeId === node.get('id')
       || (adjacentNodes && adjacentNodes.includes(node.get('id')))));
     const setBlurred = node => node.set('blurred',
-      (selectedNodeId && !node.get('focused'))
-      || (searchQuery && !searchNodeMatches.has(node.get('id')) && !node.get('highlighted'))
-      || (selectedNetwork && !(node.get('networks') || makeList()).find(n => n.get('id') === selectedNetwork)));
+      selectedNodeId && !node.get('focused')
+      || searchQuery && !searchNodeMatches.has(node.get('id'))
+        && !node.get('highlighted')
+      || selectedNetwork
+        && !(node.get('networks') || makeList()).find(n => n.get('id') === selectedNetwork));
 
     // make sure blurred nodes are in the background
-    const sortNodes = (node) => {
+    const sortNodes = node => {
       if (node.get('id') === mouseOverNodeId) {
         return 3;
       }
@@ -40,7 +42,7 @@ class NodesChartNodes extends React.Component {
     };
 
     // TODO: think about pulling this up into the store.
-    const metric = (node) => {
+    const metric = node => {
       const isHighlighted = topCardNode && topCardNode.details && topCardNode.id === node.get('id');
       const sourceNode = isHighlighted ? fromJS(topCardNode.details) : node;
       return sourceNode.get('metrics') && sourceNode.get('metrics')
