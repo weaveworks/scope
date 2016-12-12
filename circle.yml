@@ -18,7 +18,6 @@ dependencies:
     - "~/docker"
   override:
     - |
-      go get -u github.com/weaveworks/build-tools/cmd/wcloud &&
       sudo apt-get update &&
       sudo apt-get install jq pv &&
       (curl https://sdk.cloud.google.com | bash) &&
@@ -76,12 +75,7 @@ deployment:
           )) &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag) &&
-          (test -z "${UI_BUCKET_KEY_ID}" || (
-            make ui-upload
-          )) &&
-          (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" != "weaveworks" || (
-            wcloud deploy -u circle weaveworks/scope:$(./tools/image-tag)
-          ))
+          (test -z "${UI_BUCKET_KEY_ID}" || make ui-upload)
         )
   hub-dev:
     branch: /^((?!master).)*$/  # not the master branch
