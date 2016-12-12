@@ -81,7 +81,7 @@ type Reporter struct {
 	clientsByCluster map[string]*ecsClient
 }
 
-// New creates a new Reporter
+// Make creates a new Reporter
 func Make() Reporter {
 	return Reporter{
 		clientsByCluster: map[string]*ecsClient{},
