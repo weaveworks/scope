@@ -72,7 +72,7 @@ export default class Sparkline extends React.Component {
 
   render() {
     // Do nothing if no data or data w/o date are passed in.
-    if (this.props.data.length === 0 || this.props.data[0].date === undefined) {
+    if (!this.props.data || this.props.data.length === 0 || this.props.data[0].date === undefined) {
       return <div />;
     }
 
@@ -93,7 +93,7 @@ export default class Sparkline extends React.Component {
 }
 
 Sparkline.propTypes = {
-  data: React.PropTypes.array.isRequired
+  data: React.PropTypes.array
 };
 
 Sparkline.defaultProps = {
