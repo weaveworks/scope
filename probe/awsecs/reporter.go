@@ -100,7 +100,7 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 		client, ok := r.clientsByCluster[cluster]
 		if !ok {
 			log.Debugf("Creating new ECS client")
-			var err error // can't use := on the next line without shadowing outer client var
+			var err error
 			client, err = newClient(cluster)
 			if err != nil {
 				return rpt, err
