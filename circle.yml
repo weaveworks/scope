@@ -20,6 +20,7 @@ dependencies:
     - |
       sudo apt-get update &&
       sudo apt-get install jq pv &&
+      (curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 0.17.10) &&
       (curl https://sdk.cloud.google.com | bash) &&
       (test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD") &&
       make deps &&
@@ -29,7 +30,6 @@ dependencies:
     - "cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh && touch $SRCDIR/.scope_backend_build.uptodate"
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh make_template):
         parallel: false
-    - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 0.17.10
     - sudo apt-get update && sudo apt-get install python-pip && sudo pip install awscli
 
 test:
