@@ -52,7 +52,7 @@ function initEdges(nodes) {
   nodes.forEach((node, nodeId) => {
     const adjacency = node.get('adjacency');
     if (adjacency) {
-      adjacency.forEach(adjacent => {
+      adjacency.forEach((adjacent) => {
         const edge = [nodeId, adjacent];
         const edgeId = edge.join(EDGE_ID_SEPARATOR);
 
@@ -112,6 +112,80 @@ function updateLayout(width, height, nodes, baseOptions) {
     .map(edge => edge.set('ppoints', edge.get('points')));
 
   return { layoutNodes, layoutEdges, layoutWidth: graph.width, layoutHeight: graph.height };
+}
+
+
+function centerSelectedNode(props, state) {
+  let stateNodes = state.nodes;
+  let stateEdges = state.edges;
+  if (!stateNodes.has(props.selectedNodeId)) {
+    return {};
+  }
+
+  const adjacentNodes = props.adjacentNodes;
+  const adjacentLayoutNodeIds = [];
+
+  adjacentNodes.forEach((adjacentId) => {
+    // filter loopback
+    if (adjacentId !== props.selectedNodeId) {
+      adjacentLayoutNodeIds.push(adjacentId);
+    }
+  });
+
+  // move origin node to center of viewport
+  const zoomScale = state.scale;
+  const translate = [state.panTranslateX, state.panTranslateY];
+  const viewportHalfWidth = ((state.width + props.margins.left) - DETAILS_PANEL_WIDTH) / 2;
+  const viewportHalfHeight = (state.height + props.margins.top) / 2;
+  const centerX = (-translate[0] + viewportHalfWidth) / zoomScale;
+  const centerY = (-translate[1] + viewportHalfHeight) / zoomScale;
+  stateNodes = stateNodes.mergeIn([props.selectedNodeId], {
+    x: centerX,
+    y: centerY
+  });
+
+  // circle layout for adjacent nodes
+  const adjacentCount = adjacentLayoutNodeIds.length;
+  const density = radiusDensity(adjacentCount);
+  const radius = Math.min(state.width, state.height) / density / zoomScale;
+  const offsetAngle = Math.PI / 4;
+
+  stateNodes = stateNodes.map((node, nodeId) => {
+    const index = adjacentLayoutNodeIds.indexOf(nodeId);
+    if (index > -1) {
+      const angle = offsetAngle + ((Math.PI * 2 * index) / adjacentCount);
+      return node.merge({
+        x: centerX + (radius * Math.sin(angle)),
+        y: centerY + (radius * Math.cos(angle))
+      });
+    }
+    return node;
+  });
+
+  // fix all edges for circular nodes
+  stateEdges = stateEdges.map((edge) => {
+    if (edge.get('source') === props.selectedNodeId
+      || edge.get('target') === props.selectedNodeId
+      || includes(adjacentLayoutNodeIds, edge.get('source'))
+      || includes(adjacentLayoutNodeIds, edge.get('target'))) {
+      const source = stateNodes.get(edge.get('source'));
+      const target = stateNodes.get(edge.get('target'));
+      return edge.set('points', fromJS([
+        {x: source.get('x'), y: source.get('y')},
+        {x: target.get('x'), y: target.get('y')}
+      ]));
+    }
+    return edge;
+  });
+
+  // auto-scale node size for selected nodes
+  const selectedNodeScale = getNodeScale(adjacentNodes.size, state.width, state.height);
+
+  return {
+    selectedNodeScale,
+    edges: stateEdges,
+    nodes: stateNodes
+  };
 }
 
 
@@ -180,7 +254,7 @@ class NodesChart extends React.Component {
       assign(state, this.restoreLayout(state));
     }
     if (nextProps.selectedNodeId) {
-      assign(state, this.centerSelectedNode(nextProps, state));
+      assign(state, centerSelectedNode(nextProps, state));
     }
 
     this.setState(state);
@@ -219,7 +293,8 @@ class NodesChart extends React.Component {
     const layoutPrecision = getLayoutPrecision(nodes.size);
     return (
       <div className="nodes-chart">
-        <svg width="100%" height="100%" id="nodes-chart-canvas"
+        <svg
+          width="100%" height="100%" id="nodes-chart-canvas"
           className={svgClassNames} onClick={this.handleMouseClick}>
           <g transform="translate(24,24) scale(0.25)">
             <Logo />
@@ -245,78 +320,6 @@ class NodesChart extends React.Component {
     }
   }
 
-  centerSelectedNode(props, state) {
-    let stateNodes = state.nodes;
-    let stateEdges = state.edges;
-    if (!stateNodes.has(props.selectedNodeId)) {
-      return {};
-    }
-
-    const adjacentNodes = props.adjacentNodes;
-    const adjacentLayoutNodeIds = [];
-
-    adjacentNodes.forEach(adjacentId => {
-      // filter loopback
-      if (adjacentId !== props.selectedNodeId) {
-        adjacentLayoutNodeIds.push(adjacentId);
-      }
-    });
-
-    // move origin node to center of viewport
-    const zoomScale = state.scale;
-    const translate = [state.panTranslateX, state.panTranslateY];
-    const centerX = (-translate[0] + (state.width + props.margins.left
-      - DETAILS_PANEL_WIDTH) / 2) / zoomScale;
-    const centerY = (-translate[1] + (state.height + props.margins.top) / 2) / zoomScale;
-    stateNodes = stateNodes.mergeIn([props.selectedNodeId], {
-      x: centerX,
-      y: centerY
-    });
-
-    // circle layout for adjacent nodes
-    const adjacentCount = adjacentLayoutNodeIds.length;
-    const density = radiusDensity(adjacentCount);
-    const radius = Math.min(state.width, state.height) / density / zoomScale;
-    const offsetAngle = Math.PI / 4;
-
-    stateNodes = stateNodes.map((node, nodeId) => {
-      const index = adjacentLayoutNodeIds.indexOf(nodeId);
-      if (index > -1) {
-        const angle = offsetAngle + Math.PI * 2 * index / adjacentCount;
-        return node.merge({
-          x: centerX + radius * Math.sin(angle),
-          y: centerY + radius * Math.cos(angle)
-        });
-      }
-      return node;
-    });
-
-    // fix all edges for circular nodes
-    stateEdges = stateEdges.map(edge => {
-      if (edge.get('source') === props.selectedNodeId
-        || edge.get('target') === props.selectedNodeId
-        || includes(adjacentLayoutNodeIds, edge.get('source'))
-        || includes(adjacentLayoutNodeIds, edge.get('target'))) {
-        const source = stateNodes.get(edge.get('source'));
-        const target = stateNodes.get(edge.get('target'));
-        return edge.set('points', fromJS([
-          {x: source.get('x'), y: source.get('y')},
-          {x: target.get('x'), y: target.get('y')}
-        ]));
-      }
-      return edge;
-    });
-
-    // auto-scale node size for selected nodes
-    const selectedNodeScale = getNodeScale(adjacentNodes.size, state.width, state.height);
-
-    return {
-      selectedNodeScale,
-      edges: stateEdges,
-      nodes: stateNodes
-    };
-  }
-
   restoreLayout(state) {
     // undo any pan/zooming that might have happened
     this.setZoom(state);
@@ -326,7 +329,7 @@ class NodesChart extends React.Component {
       y: node.get('py')
     }));
 
-    const edges = state.edges.map(edge => {
+    const edges = state.edges.map((edge) => {
       if (edge.has('ppoints')) {
         return edge.set('points', edge.get('ppoints'));
       }

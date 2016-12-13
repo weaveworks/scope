@@ -1,18 +1,17 @@
-require('font-awesome-webpack');
-require('../styles/main.less');
-require('../images/favicon.ico');
-
 import 'babel-polyfill';
+import 'font-awesome-webpack';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import configureStore from './stores/configureStore.dev';
-
-import DevTools from './components/dev-tools';
 import Immutable from 'immutable';
 import installDevTools from 'immutable-devtools';
-installDevTools(Immutable);
 
+import '../styles/main.less';
+import '../images/favicon.ico';
+import configureStore from './stores/configureStore.dev';
+import DevTools from './components/dev-tools';
+
+installDevTools(Immutable);
 const store = configureStore();
 
 function renderApp() {

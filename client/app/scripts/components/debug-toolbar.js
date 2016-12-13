@@ -5,9 +5,7 @@ import { connect } from 'react-redux';
 import { sampleSize, sample, random, range, flattenDeep } from 'lodash';
 import { fromJS, Set as makeSet } from 'immutable';
 import { hsl } from 'd3-color';
-
 import debug from 'debug';
-const log = debug('scope:debug-panel');
 
 import ActionTypes from '../constants/action-types';
 import { receiveNodesDelta } from '../actions/app-actions';
@@ -29,7 +27,7 @@ voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occa
 proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`;
 
 const sampleArray = (collection, n = 4) => sampleSize(collection, random(n));
-
+const log = debug('scope:debug-panel');
 
 const shapeTypes = {
   square: ['Process', 'Processes'],
@@ -80,7 +78,7 @@ function label(shape, stacked) {
 
 
 function addAllVariants(dispatch) {
-  const newNodes = flattenDeep(STACK_VARIANTS.map(stack => (SHAPES.map(s => {
+  const newNodes = flattenDeep(STACK_VARIANTS.map(stack => (SHAPES.map((s) => {
     if (!stack) return [deltaAdd(label(s, stack), [], s, stack, 1)];
     return NODE_COUNTS.map(n => deltaAdd(label(s, stack), [], s, stack, n));
   }))));
@@ -239,16 +237,16 @@ class DebugToolbar extends React.Component {
     const ns = this.props.nodes;
     const nodeNames = ns.keySeq().toJS();
     this.asyncDispatch(receiveNodesDelta({
-      add: this._addNodes(7),
+      add: this.createRandomNodes(7),
       update: sampleArray(nodeNames).map(n => ({
         id: n,
         adjacency: sampleArray(nodeNames),
       }), nodeNames.length),
-      remove: this._removeNode(),
+      remove: this.randomExistingNode(),
     }));
   }
 
-  _addNodes(n, prefix = 'zing') {
+  createRandomNodes(n, prefix = 'zing') {
     const ns = this.props.nodes;
     const nodeNames = ns.keySeq().toJS();
     const newNodeNames = range(ns.size, ns.size + n).map(i => (
@@ -256,7 +254,7 @@ class DebugToolbar extends React.Component {
       `${prefix}${i}`
     ));
     const allNodes = nodeNames.concat(newNodeNames);
-    return newNodeNames.map((name) => deltaAdd(
+    return newNodeNames.map(name => deltaAdd(
       name,
       sampleArray(allNodes),
       sample(SHAPES),
@@ -269,13 +267,13 @@ class DebugToolbar extends React.Component {
   addNodes(n, prefix = 'zing') {
     setTimeout(() => {
       this.asyncDispatch(receiveNodesDelta({
-        add: this._addNodes(n, prefix)
+        add: this.createRandomNodes(n, prefix)
       }));
       log('added nodes', n);
     }, 0);
   }
 
-  _removeNode() {
+  randomExistingNode() {
     const ns = this.props.nodes;
     const nodeNames = ns.keySeq().toJS();
     return [nodeNames[random(nodeNames.length - 1)]];
@@ -283,7 +281,7 @@ class DebugToolbar extends React.Component {
 
   removeNode() {
     this.asyncDispatch(receiveNodesDelta({
-      remove: this._removeNode()
+      remove: this.randomExistingNode()
     }));
   }
 
@@ -293,7 +291,7 @@ class DebugToolbar extends React.Component {
     return (
       <div className="debug-panel">
         <div>
-          <label>Add nodes </label>
+          <strong>Add nodes </strong>
           <button onClick={() => this.addNodes(1)}>+1</button>
           <button onClick={() => this.addNodes(10)}>+10</button>
           <input type="number" onChange={this.onChange} value={this.state.nodesToAdd} />
@@ -308,7 +306,7 @@ class DebugToolbar extends React.Component {
         </div>
 
         <div>
-          <label>Logging</label>
+          <strong>Logging </strong>
           <button onClick={() => enableLog('*')}>scope:*</button>
           <button onClick={() => enableLog('dispatcher')}>scope:dispatcher</button>
           <button onClick={() => enableLog('app-key-press')}>scope:app-key-press</button>
@@ -317,7 +315,7 @@ class DebugToolbar extends React.Component {
         </div>
 
         <div>
-          <label>Colors</label>
+          <strong>Colors </strong>
           <button onClick={this.toggleColors}>toggle</button>
         </div>
 
@@ -340,7 +338,7 @@ class DebugToolbar extends React.Component {
               {LABEL_PREFIXES.map(r => (
                 <tr key={r}>
                   {LABEL_PREFIXES.map(c => (
-                    <td key={c} title={`(${r}, ${c})`} style={{backgroundColor: fn(r, c)}}></td>
+                    <td key={c} title={`(${r}, ${c})`} style={{backgroundColor: fn(r, c)}} />
                   ))}
                 </tr>
               ))}
@@ -349,19 +347,19 @@ class DebugToolbar extends React.Component {
         ))}
 
         <div>
-          <label>state</label>
+          <strong>State </strong>
           <button onClick={() => this.setLoading(true)}>Set doing initial load</button>
           <button onClick={() => this.setLoading(false)}>Stop</button>
         </div>
 
         <div>
-          <label>Short-lived nodes</label>
+          <strong>Short-lived nodes </strong>
           <button onClick={() => this.setShortLived()}>Toggle short-lived nodes</button>
           <button onClick={() => this.setIntermittent()}>Toggle intermittent nodes</button>
         </div>
 
         <div>
-          <label>Measure React perf for </label>
+          <strong>Measure React perf for </strong>
           <button onClick={() => startPerf(2)}>2s</button>
           <button onClick={() => startPerf(5)}>5s</button>
           <button onClick={() => startPerf(10)}>10s</button>

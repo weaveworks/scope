@@ -6,6 +6,14 @@ import MatchedText from '../matched-text';
 import NodeDetailsControlButton from './node-details-control-button';
 import ShowMore from '../show-more';
 
+
+const Controls = controls => (
+  <div className="node-details-labels-controls">
+    {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
+      nodeId={control.nodeId} control={control} key={control.id} />)}
+  </div>
+);
+
 export default class NodeDetailsLabels extends React.Component {
 
   constructor(props, context) {
@@ -15,21 +23,11 @@ export default class NodeDetailsLabels extends React.Component {
       limit: this.DEFAULT_LIMIT,
     };
     this.handleLimitClick = this.handleLimitClick.bind(this);
-    this.renderControls = this.renderControls.bind(this);
   }
 
   handleLimitClick() {
     const limit = this.state.limit ? 0 : this.DEFAULT_LIMIT;
     this.setState({limit});
-  }
-
-  renderControls(controls) {
-    return (
-      <div className="node-details-labels-controls">
-        {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
-          nodeId={control.nodeId} control={control} key={control.id} />)}
-      </div>
-    );
   }
 
   render() {
@@ -49,10 +47,12 @@ export default class NodeDetailsLabels extends React.Component {
 
     return (
       <div className="node-details-labels">
-        {controls && this.renderControls(controls)}
-        {rows.map(field => (<div className="node-details-labels-field" key={field.id}>
-            <div className="node-details-labels-field-label truncate" title={field.label}
-              key={field.id}>
+        {controls && Controls(controls)}
+        {rows.map(field => (
+          <div className="node-details-labels-field" key={field.id}>
+            <div
+              className="node-details-labels-field-label truncate"
+              title={field.label} key={field.id}>
               {field.label}
             </div>
             <div className="node-details-labels-field-value truncate" title={field.value}>
@@ -60,7 +60,8 @@ export default class NodeDetailsLabels extends React.Component {
             </div>
           </div>
         ))}
-        <ShowMore handleClick={this.handleLimitClick} collection={this.props.rows}
+        <ShowMore
+          handleClick={this.handleLimitClick} collection={this.props.rows}
           expanded={expanded} notShown={notShown} />
       </div>
     );
