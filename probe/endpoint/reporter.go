@@ -6,6 +6,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -183,6 +184,7 @@ func (r *Reporter) Report() (report.Report, error) {
 				fromNodeInfo[process.PID] = strconv.Itoa(e.pid)
 				fromNodeInfo[report.HostNodeID] = hostNodeID
 			}
+			log.Debugf("Report: ebpfTracker %v (%v) (%v)", e.tuple, e.pid, e.incoming)
 
 			if e.incoming {
 				r.addConnection(&rpt, reverse(e.tuple), e.networkNamespace, toNodeInfo, fromNodeInfo)

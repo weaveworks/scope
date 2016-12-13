@@ -143,6 +143,8 @@ func newEbpfTracker(useEbpfConn bool) eventTracker {
 func (t *EbpfTracker) handleConnection(eventType string, tuple fourTuple, pid int, networkNamespace string) {
 	t.Lock()
 	defer t.Unlock()
+	log.Debugf("handleConnection(%v, [%v:%v --> %v:%v], pid=%v, netNS=%v)",
+		eventType, tuple.fromAddr, tuple.fromPort, tuple.toAddr, tuple.toPort, pid, networkNamespace)
 
 	switch eventType {
 	case "connect":
