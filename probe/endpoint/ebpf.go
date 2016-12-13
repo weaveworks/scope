@@ -134,7 +134,7 @@ func newEbpfTracker(useEbpfConn bool) eventTracker {
 		openConnections: map[string]ebpfConnection{},
 		reader:          bpfPerfEvent,
 	}
-	go tracker.run()
+	tracker.run()
 
 	ebpfTracker = tracker
 	return tracker
