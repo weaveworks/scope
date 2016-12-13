@@ -137,6 +137,8 @@ func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 			if serviceName, ok := ecsInfo.taskServiceMap[taskArn]; ok {
 				serviceID := report.MakeECSServiceNodeID(serviceName)
 				parentsSets = parentsSets.Add(report.ECSService, report.MakeStringSet(serviceID))
+				// in addition, make service parent of task
+				rpt.ECSTask.Nodes[taskID] = rpt.ECSTask.Nodes[taskID].WithParents(report.MakeSets().Add(report.ECSService, report.MakeStringSet(serviceID)))
 			}
 			for _, containerID := range info.containerIDs {
 				if containerNode, ok := rpt.Container.Nodes[containerID]; ok {
