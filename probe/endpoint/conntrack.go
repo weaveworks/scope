@@ -66,14 +66,14 @@ type conntrack struct {
 // flowWalker is something that maintains flows, and provides an accessor
 // method to walk them.
 type flowWalker interface {
-	walkFlows(f func(flow))
+	walkFlows(f func(flow, bool))
 	stop()
 }
 
 type nilFlowWalker struct{}
 
-func (n nilFlowWalker) stop()                  {}
-func (n nilFlowWalker) walkFlows(f func(flow)) {}
+func (n nilFlowWalker) stop()                        {}
+func (n nilFlowWalker) walkFlows(f func(flow, bool)) {}
 
 // conntrackWalker uses the conntrack command to track network connections and
 // implement flowWalker.
@@ -315,14 +315,14 @@ func (c *conntrackWalker) handleFlow(f flow, forceAdd bool) {
 
 // walkFlows calls f with all active flows and flows that have come and gone
 // since the last call to walkFlows
-func (c *conntrackWalker) walkFlows(f func(flow)) {
+func (c *conntrackWalker) walkFlows(f func(flow, bool)) {
 	c.Lock()
 	defer c.Unlock()
 	for _, flow := range c.activeFlows {
-		f(flow)
+		f(flow, true)
 	}
 	for _, flow := range c.bufferedFlows {
-		f(flow)
+		f(flow, false)
 	}
 	c.bufferedFlows = c.bufferedFlows[:0]
 }

@@ -124,7 +124,7 @@ func TestConntracker(t *testing.T) {
 
 	have := func() interface{} {
 		result := []flow{}
-		flowWalker.walkFlows(func(f flow) {
+		flowWalker.walkFlows(func(f flow, alive bool) {
 			f.Original = nil
 			f.Reply = nil
 			f.Independent = nil

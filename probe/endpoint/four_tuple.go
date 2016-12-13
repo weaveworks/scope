@@ -10,6 +10,7 @@ import (
 type fourTuple struct {
 	fromAddr, toAddr string
 	fromPort, toPort uint16
+	alive            bool
 }
 
 func (t fourTuple) String() string {
