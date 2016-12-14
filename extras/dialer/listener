@@ -1,0 +1,8 @@
+#!/bin/bash
+set -eu
+readonly port=${1:-8082}
+(
+sleep 5 # wait for dialerserver to start
+echo "IP addr + port: $(docker inspect -f '{{ .NetworkSettings.IPAddress }}' dialerserver):$port"
+) &
+docker run --rm --name dialerserver dialer /go/bin/dialer listen "$port"
