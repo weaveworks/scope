@@ -47,7 +47,8 @@ export class NodeDetails extends React.Component {
   }
 
   renderTools() {
-    const showSwitchTopology = this.props.nodeId !== this.props.selectedNodeId;
+    const showSwitchTopology = this.props.nodeId !== this.props.selectedNodeId
+      && this.props.topologyId;
     const topologyTitle = `View ${this.props.label} in ${this.props.topologyId}`;
 
     return (
