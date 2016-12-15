@@ -1,4 +1,5 @@
 import debug from 'debug';
+import { identity } from 'lodash';
 import { createSelector, createSelectorCreator, defaultMemoize } from 'reselect';
 import { Map as makeMap, is, Set } from 'immutable';
 
@@ -44,9 +45,8 @@ function mergeDeepKeyIntersection(mapA, mapB) {
 // "their results", so use the result of the wrapped selector as the argument to another selector
 // here to memoize it and get what we want.
 //
-const _createDeepEqualSelector = createSelectorCreator(defaultMemoize, is);
-const _identity = v => v;
-const returnPreviousRefIfEqual = (selector) => _createDeepEqualSelector(selector, _identity);
+const createDeepEqualSelector = createSelectorCreator(defaultMemoize, is);
+const returnPreviousRefIfEqual = selector => createDeepEqualSelector(selector, identity);
 
 
 //
@@ -60,7 +60,7 @@ const allNodesSelector = state => state.get('nodes');
 export const nodesSelector = returnPreviousRefIfEqual(
   createSelector(
     allNodesSelector,
-    (allNodes) => allNodes.filter(node => !node.get('filtered'))
+    allNodes => allNodes.filter(node => !node.get('filtered'))
   )
 );
 
@@ -71,7 +71,7 @@ export const adjacentNodesSelector = returnPreviousRefIfEqual(getAdjacentNodes);
 export const nodeAdjacenciesSelector = returnPreviousRefIfEqual(
   createSelector(
     nodesSelector,
-    (nodes) => nodes.map(n => makeMap({
+    nodes => nodes.map(n => makeMap({
       id: n.get('id'),
       adjacency: n.get('adjacency'),
     }))
@@ -81,7 +81,7 @@ export const nodeAdjacenciesSelector = returnPreviousRefIfEqual(
 
 export const dataNodesSelector = createSelector(
   nodesSelector,
-  (nodes) => nodes.map((node, id) => makeMap({
+  nodes => nodes.map((node, id) => makeMap({
     id,
     label: node.get('label'),
     pseudo: node.get('pseudo'),

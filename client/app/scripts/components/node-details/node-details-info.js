@@ -38,7 +38,7 @@ export default class NodeDetailsInfo extends React.Component {
 
     return (
       <div className="node-details-info">
-        {rows.map(field => {
+        {rows.map((field) => {
           const { value, title } = formatDataType(field);
           return (
             <div className="node-details-info-field" key={field.id}>
@@ -54,7 +54,8 @@ export default class NodeDetailsInfo extends React.Component {
             </div>
           );
         })}
-        <ShowMore handleClick={this.handleClickMore} collection={this.props.rows}
+        <ShowMore
+          handleClick={this.handleClickMore} collection={this.props.rows}
           expanded={this.state.expanded} notShown={notShown} />
       </div>
     );

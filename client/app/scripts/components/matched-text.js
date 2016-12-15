@@ -84,7 +84,7 @@ class MatchedText extends React.Component {
   render() {
     const { match, text, truncate, maxLength } = this.props;
 
-    const showFullValue = !truncate || match && match.start + match.length > truncate;
+    const showFullValue = !truncate || (match && (match.start + match.length) > truncate);
     const displayText = showFullValue ? text : text.slice(0, truncate);
 
     if (!match) {

@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import moment from 'moment';
 
-import Plugins from './plugins.js';
+import Plugins from './plugins';
 import { getUpdateBufferSize } from '../utils/update-buffer-utils';
 import { contrastModeUrl, isContrastMode } from '../utils/contrast-utils';
 import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
@@ -48,8 +48,11 @@ class Footer extends React.Component {
       <div className="footer">
 
         <div className="footer-status">
-          {versionUpdate && <a className="footer-versionupdate"
-            title={versionUpdateTitle} href={versionUpdate.downloadUrl} target="_blank">
+          {versionUpdate && <a
+            className="footer-versionupdate"
+            title={versionUpdateTitle}
+            href={versionUpdate.downloadUrl}
+            target="_blank" rel="noopener noreferrer">
             Update available: {versionUpdate.version}
           </a>}
           <span className="footer-label">Version</span>
@@ -67,11 +70,14 @@ class Footer extends React.Component {
             {pauseLabel !== '' && <span className="footer-label">{pauseLabel}</span>}
             <span className="fa fa-pause" />
           </a>
-          <a className="footer-icon" onClick={this.props.clickForceRelayout}
+          <a
+            className="footer-icon"
+            onClick={this.props.clickForceRelayout}
             title={forceRelayoutTitle}>
             <span className="fa fa-refresh" />
           </a>
-          <a className="footer-icon" onClick={this.props.clickDownloadGraph}
+          <a
+            className="footer-icon" onClick={this.props.clickDownloadGraph}
             title="Save canvas as SVG (does not include search highlighting)">
             <span className="fa fa-download" />
           </a>
@@ -81,11 +87,13 @@ class Footer extends React.Component {
           <a className="footer-icon" href={otherContrastModeUrl} title={otherContrastModeTitle}>
             <span className="fa fa-adjust" />
           </a>
-          <a className="footer-icon" href="https://gitreports.com/issue/weaveworks/scope" target="_blank" title="Report an issue">
+          <a
+            className="footer-icon" title="Report an issue"
+            href="https://gitreports.com/issue/weaveworks/scope"
+            target="_blank" rel="noopener noreferrer">
             <span className="fa fa-bug" />
           </a>
-          <a className="footer-icon" onClick={this.props.toggleHelp}
-            title="Show help">
+          <a className="footer-icon" onClick={this.props.toggleHelp} title="Show help">
             <span className="fa fa-question" />
           </a>
         </div>
@@ -106,6 +114,11 @@ function mapStateToProps(state) {
 
 export default connect(
   mapStateToProps,
-  { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
-    clickResumeUpdate, toggleHelp }
+  {
+    clickDownloadGraph,
+    clickForceRelayout,
+    clickPauseUpdate,
+    clickResumeUpdate,
+    toggleHelp
+  }
 )(Footer);

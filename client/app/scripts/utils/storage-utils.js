@@ -3,7 +3,7 @@ import debug from 'debug';
 const log = debug('scope:storage-utils');
 
 // localStorage detection
-const storage = typeof(Storage) !== 'undefined' ? window.localStorage : null;
+const storage = (typeof Storage) !== 'undefined' ? window.localStorage : null;
 
 export function storageGet(key, defaultValue) {
   if (storage && storage.getItem(key) !== undefined) {

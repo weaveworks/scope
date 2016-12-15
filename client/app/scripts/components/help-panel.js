@@ -85,7 +85,7 @@ function renderSearches(searches) {
       {searches.map(({term, label}) => (
         <div key={term} className="help-panel-search-row">
           <div className="help-panel-search-row-term">
-            <i className="fa fa-search search-label-icon"></i>
+            <i className="fa fa-search search-label-icon" />
             {term}
           </div>
           <div className="help-panel-search-row-term-label">{label}</div>

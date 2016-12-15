@@ -13,7 +13,7 @@ class NodesChartEdges extends React.Component {
 
     return (
       <g className="nodes-chart-edges">
-        {layoutEdges.toIndexedSeq().map(edge => {
+        {layoutEdges.toIndexedSeq().map((edge) => {
           const sourceSelected = selectedNodeId === edge.get('source');
           const targetSelected = selectedNodeId === edge.get('target');
           const highlighted = highlightedEdgeIds.has(edge.get('id'));
@@ -26,8 +26,8 @@ class NodesChartEdges extends React.Component {
             !(selectedNetworkNodes.contains(edge.get('source')) &&
               selectedNetworkNodes.contains(edge.get('target')));
           const blurred = !highlighted && (otherNodesSelected ||
-                                           !focused && noMatches ||
-                                             !focused && noSelectedNetworks);
+                                           (!focused && noMatches) ||
+                                             (!focused && noSelectedNetworks));
 
           return (
             <EdgeContainer
