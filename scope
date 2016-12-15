@@ -227,7 +227,7 @@ case "$COMMAND" in
             check_not_running "$SCOPE_APP_CONTAINER_NAME" "$SCOPE_IMAGE_NAME"
             check_not_running "$SCOPE_CONTAINER_NAME" "$SCOPE_IMAGE_NAME"
             docker rm -f "$SCOPE_APP_CONTAINER_NAME" >/dev/null 2>&1 || true
-            $(launch_docker4mac_app_command) "$@"
+            CONTAINER=$($(launch_docker4mac_app_command) "$@")
             echo "Scope probe started"
             app_ip=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' "${CONTAINER}")
             docker rm -f "$SCOPE_CONTAINER_NAME" >/dev/null 2>&1 || true
