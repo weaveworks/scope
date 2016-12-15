@@ -3,6 +3,7 @@ package endpoint
 import (
 	"bufio"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -165,7 +166,7 @@ func (c *conntrackWalker) run() {
 
 	args := append([]string{
 		"--buffer-size", strconv.Itoa(c.bufferSize), "-E",
-		"-o", "xml", "-p", "tcp"}, c.args...,
+		"-o", "id", "-p", "tcp"}, c.args...,
 	)
 	cmd := exec.Command("conntrack", args...)
 	stdout, err := cmd.StdoutPipe()
@@ -204,30 +205,13 @@ func (c *conntrackWalker) run() {
 	c.cmd = cmd
 	c.Unlock()
 
-	// Swallow the first two lines
 	reader := bufio.NewReader(stdout)
-	if line, err := reader.ReadString('\n'); err != nil {
-		log.Errorf("conntrack error: %v", err)
-		return
-	} else if line != xmlHeader {
-		log.Errorf("conntrack invalid output: '%s'", line)
-		return
-	}
-	if line, err := reader.ReadString('\n'); err != nil {
-		log.Errorf("conntrack error: %v", err)
-		return
-	} else if line != conntrackOpenTag {
-		log.Errorf("conntrack invalid output: '%s'", line)
-		return
-	}
+	defer log.Infof("conntrack exiting")
 
-	defer log.Infof("contrack exiting")
-
-	// Now loop on the output stream
-	decoder := xml.NewDecoder(reader)
+	// Lop on the output stream
 	for {
-		var f flow
-		if err := decoder.Decode(&f); err != nil {
+		f, err := decodeStreamedFlow(reader)
+		if err != nil {
 			log.Errorf("conntrack error: %v", err)
 			return
 		}
@@ -235,8 +219,52 @@ func (c *conntrackWalker) run() {
 	}
 }
 
+func makeEmptyFlow() flow {
+	var f flow
+	metas := make([]meta, 3)
+	f.Metas = metas
+	// TODO: do we really need the direction/protocol type when not using XML?
+	f.Original = &metas[0]
+	f.Reply = &metas[1]
+	f.Independent = &metas[2]
+	return f
+}
+
+func decodeStreamedFlow(reader *bufio.Reader) (flow, error) {
+	var (
+		// TODO: use ints where possible?
+		omit [10]string
+		f    = makeEmptyFlow()
+	)
+	l, _ := reader.ReadString('\n')
+	// "    [NEW] tcp      6 120 SYN_SENT src=127.0.0.1 dst=127.0.0.1 sport=58958 dport=6784 [UNREPLIED] src=127.0.0.1 dst=127.0.0.1 sport=6784 dport=58958 id=1595499776\n"
+	n, err := fmt.Sscanf(l, " %s tcp %s %s %s src=%s dst=%s sport=%d dport=%d src=%s dst=%s sport=%d dport=%d %s id=%x\n",
+		&omit[0],
+		&omit[1],
+		&omit[2],
+		&f.Independent.State,
+		&f.Original.Layer3.SrcIP,
+		&f.Original.Layer3.DstIP,
+		&f.Original.Layer4.SrcPort,
+		&f.Original.Layer4.DstPort,
+		&f.Reply.Layer3.SrcIP,
+		&f.Reply.Layer3.DstIP,
+		&f.Reply.Layer4.SrcPort,
+		&f.Reply.Layer4.DstPort,
+		&omit[3],
+		&f.Independent.ID,
+	)
+
+	if err != nil {
+		log.Infof("Streamed Error: %#v, n=%d, line = %#q", err, n, l)
+		return flow{}, err
+	}
+	log.Infof("Streamed flow: %v", f)
+	return f, nil
+}
+
 func (c *conntrackWalker) existingConnections() ([]flow, error) {
-	args := append([]string{"-L", "-o", "xml", "-p", "tcp"}, c.args...)
+	args := append([]string{"-L", "-o", "id", "-p", "tcp"}, c.args...)
 	cmd := exec.Command("conntrack", args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -250,13 +278,54 @@ func (c *conntrackWalker) existingConnections() ([]flow, error) {
 			log.Errorf("conntrack existingConnections exit error: %v", err)
 		}
 	}()
-	var result conntrack
-	if err := xml.NewDecoder(stdout).Decode(&result); err == io.EOF {
-		return []flow{}, nil
-	} else if err != nil {
-		return []flow{}, err
+
+	reader := bufio.NewReader(stdout)
+	var result []flow
+	for {
+		f, err := readDumpedFlow(reader)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			log.Errorf("conntrack error: %v", err)
+			return result, err
+		}
+		result = append(result, f)
 	}
-	return result.Flows, nil
+	return result, nil
+}
+
+func readDumpedFlow(reader *bufio.Reader) (flow, error) {
+	var (
+		// TODO: use byteslices where possible?
+		omit [10]string
+		f    = makeEmptyFlow()
+	)
+	n, err := fmt.Fscanf(reader, "%s %s %s %s src=%s dst=%s sport=%d dport=%d src=%s dst=%s sport=%d dport=%d %s %s %s id=%x\n",
+		&f.Original.Layer4.Proto,
+		&omit[0],
+		&omit[1],
+		&f.Independent.State,
+		&f.Original.Layer3.SrcIP,
+		&f.Original.Layer3.DstIP,
+		&f.Original.Layer4.SrcPort,
+		&f.Original.Layer4.DstPort,
+		&f.Reply.Layer3.SrcIP,
+		&f.Reply.Layer3.DstIP,
+		&f.Reply.Layer4.SrcPort,
+		&f.Reply.Layer4.DstPort,
+		&omit[2],
+		&omit[3],
+		&omit[4],
+		&f.Independent.ID,
+	)
+
+	if err != nil {
+		return flow{}, err
+	}
+
+	f.Reply.Layer4.Proto = f.Original.Layer4.Proto
+	return f, nil
 }
 
 func (c *conntrackWalker) stop() {
@@ -269,21 +338,8 @@ func (c *conntrackWalker) stop() {
 }
 
 func (c *conntrackWalker) handleFlow(f flow, forceAdd bool) {
-	// A flow consists of 3 'metas' - the 'original' 4 tuple (as seen by this
-	// host) and the 'reply' 4 tuple, which is what it has been rewritten to.
-	// This code finds those metas, which are identified by a Direction
-	// attribute.
-	for i := range f.Metas {
-		meta := &f.Metas[i]
-		switch meta.Direction {
-		case "original":
-			f.Original = meta
-		case "reply":
-			f.Reply = meta
-		case "independent":
-			f.Independent = meta
-		}
-	}
+	c.Lock()
+	defer c.Unlock()
 
 	// For not, I'm only interested in tcp connections - there is too much udp
 	// traffic going on (every container talking to weave dns, for example) to
@@ -291,9 +347,6 @@ func (c *conntrackWalker) handleFlow(f flow, forceAdd bool) {
 	if f.Original.Layer4.Proto != tcpProto {
 		return
 	}
-
-	c.Lock()
-	defer c.Unlock()
 
 	// Ignore flows for which we never saw an update; they are likely
 	// incomplete or wrong.  See #1462.
