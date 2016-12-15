@@ -112,12 +112,13 @@ type probeFlags struct {
 }
 
 type appFlags struct {
-	window      time.Duration
-	listen      string
-	stopTimeout time.Duration
-	logLevel    string
-	logPrefix   string
-	logHTTP     bool
+	window         time.Duration
+	listen         string
+	stopTimeout    time.Duration
+	logLevel       string
+	logPrefix      string
+	logHTTP        bool
+	logHTTPHeaders bool
 
 	weaveEnabled   bool
 	weaveAddr      string
@@ -298,6 +299,7 @@ func main() {
 	flag.StringVar(&flags.app.logLevel, "app.log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
 	flag.StringVar(&flags.app.logPrefix, "app.log.prefix", "<app>", "prefix for each log line")
 	flag.BoolVar(&flags.app.logHTTP, "app.log.http", false, "Log individual HTTP requests")
+	flag.BoolVar(&flags.app.logHTTPHeaders, "app.log.httpHeaders", false, "Log HTTP headers. Needs app.log.http to be enabled.")
 
 	flag.StringVar(&flags.app.weaveAddr, "app.weave.addr", app.DefaultWeaveURL, "Address on which to contact WeaveDNS")
 	flag.StringVar(&flags.app.weaveHostname, "app.weave.hostname", app.DefaultHostname, "Hostname to advertise in WeaveDNS")
