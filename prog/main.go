@@ -344,7 +344,7 @@ func main() {
 	flags.probe.noApp = *noApp || *probeOnly
 
 	// Special case for #1191, check listen address is well formed
-	_, _, err := net.SplitHostPort(flags.app.listen)
+	_, port, err := net.SplitHostPort(flags.app.listen)
 	if err != nil {
 		log.Fatalf("Invalid value for -app.http.address: %v", err)
 	}
@@ -365,7 +365,7 @@ func main() {
 				args = append(args, defaultServiceHost)
 			}
 		} else if !flags.probe.noApp {
-			args = append(args, fmt.Sprintf("localhost:%d", xfer.AppPort))
+			args = append(args, fmt.Sprintf("localhost:%s", port))
 		}
 		args = append(args, flag.Args()...)
 		if !dryRun {
