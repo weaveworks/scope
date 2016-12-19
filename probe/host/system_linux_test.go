@@ -22,10 +22,11 @@ func TestUname(t *testing.T) {
 		return nil
 	}
 
-	have, err := host.GetKernelVersion()
+	haveRelease, haveVersion, err := host.GetKernelReleaseAndVersion()
 	if err != nil {
 		t.Fatal(err)
 	}
+	have := fmt.Sprintf("%s %s", haveRelease, haveVersion)
 	if want := fmt.Sprintf("%s %s", release, version); want != have {
 		t.Errorf("want %q, have %q", want, have)
 	}

@@ -246,6 +246,7 @@ func appMain(flags appFlags) {
 	checkpoint.CheckInterval(&checkpoint.CheckParams{
 		Product: "scope-app",
 		Version: app.Version,
+		Flags:   makeBaseCheckpointFlags(),
 	}, versionCheckPeriod, func(r *checkpoint.CheckResponse, err error) {
 		if err != nil {
 			log.Errorf("Error checking version: %v", err)
