@@ -2,6 +2,7 @@ import React from 'react';
 import { extent } from 'd3-array';
 
 import { isContrastMode } from '../utils/contrast-utils';
+import { getBorderProps } from './node';
 
 const CLOUD_PATH = 'M 1920,384 Q 1920,225 1807.5,112.5 1695,0 1536,0 H 448 '
   + 'Q 263,0 131.5,131.5 0,263 0,448 0,580 71,689.5 142,799 258,853 '
@@ -38,7 +39,7 @@ export default function NodeShapeCloud({highlighted, size, color}) {
   return (
     <g className="shape shape-cloud">
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
-      <path className="border" stroke={color} {...pathProps(0.5)} />
+      <path className="border" stroke={color} {...pathProps(0.5)} {...getBorderProps()} />
       <path className="shadow" {...pathProps(0.45)} />
       <circle className="node" r={Math.max(2, (size * 0.125))} />
     </g>

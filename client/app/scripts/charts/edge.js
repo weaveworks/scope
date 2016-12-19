@@ -3,6 +3,14 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 
 import { enterEdge, leaveEdge } from '../actions/app-actions';
+import { featureIsEnabled } from '../utils/feature-utils';
+
+function getLinkProps() {
+  if (featureIsEnabled('non-scaling-stroke')) {
+    return { vectorEffect: 'non-scaling-stroke' };
+  }
+  return {};
+}
 
 class Edge extends React.Component {
 
@@ -21,7 +29,7 @@ class Edge extends React.Component {
         className={className} onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave} id={id}>
         <path d={path} className="shadow" />
-        <path d={path} className="link" />
+        <path d={path} className="link" {...getLinkProps()} />
       </g>
     );
   }

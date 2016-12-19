@@ -1,8 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
 import { line, curveCardinalClosed } from 'd3-shape';
+
 import { getMetricValue, getMetricColor, getClipPathDefinition } from '../utils/metric-utils';
 import { CANVAS_METRIC_FONT_SIZE } from '../constants/styles';
+import { getBorderProps } from './node';
 
 
 const spline = line()
@@ -56,7 +58,7 @@ export default function NodeShapeHexagon({id, highlighted, size, color, metric})
         (size - height) * (shadowSize * 2)
       )}
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
-      <path className="border" stroke={color} {...pathProps(0.5)} />
+      <path className="border" stroke={color} {...pathProps(0.5)} {...getBorderProps()} />
       <path className="shadow" {...pathProps(shadowSize)} />
       {hasMetric && <path
         className="metric-fill"

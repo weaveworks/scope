@@ -5,6 +5,7 @@ import { Map as makeMap, List as makeList } from 'immutable';
 
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
 import { getNodeColor } from '../utils/color-utils';
+import { featureIsEnabled } from '../utils/feature-utils';
 import MatchedText from '../components/matched-text';
 import MatchedResults from '../components/matched-results';
 
@@ -41,6 +42,13 @@ function getNodeShape({ shape, stack }) {
     throw new Error(`Unknown shape: ${shape}!`);
   }
   return stack ? stackedShape(nodeShape) : nodeShape;
+}
+
+export function getBorderProps() {
+  if (featureIsEnabled('non-scaling-stroke')) {
+    return { vectorEffect: 'non-scaling-stroke' };
+  }
+  return {};
 }
 
 function svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) {

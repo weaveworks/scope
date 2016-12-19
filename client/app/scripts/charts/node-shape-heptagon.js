@@ -1,8 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
 import { line, curveCardinalClosed } from 'd3-shape';
+
 import { getMetricValue, getMetricColor, getClipPathDefinition } from '../utils/metric-utils';
 import { CANVAS_METRIC_FONT_SIZE } from '../constants/styles';
+import { getBorderProps } from './node';
 
 
 const spline = line()
@@ -36,7 +38,7 @@ export default function NodeShapeHeptagon({id, highlighted, size, color, metric}
     <g className={className}>
       {hasMetric && getClipPathDefinition(clipId, size, height, -halfSize, halfSize - height)}
       {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
-      <path className="border" stroke={color} {...pathProps(0.5)} />
+      <path className="border" stroke={color} {...pathProps(0.5)} {...getBorderProps()} />
       <path className="shadow" {...pathProps(0.45)} />
       {hasMetric && <path
         className="metric-fill"

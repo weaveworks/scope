@@ -1,8 +1,9 @@
 import React from 'react';
 import classNames from 'classnames';
+
 import { getMetricValue, getMetricColor, getClipPathDefinition } from '../utils/metric-utils';
 import { CANVAS_METRIC_FONT_SIZE } from '../constants/styles';
-
+import { getBorderProps } from './node';
 
 export default function NodeShapeCircle({id, highlighted, size, color, metric}) {
   const clipId = `mask-${id}`;
@@ -15,7 +16,7 @@ export default function NodeShapeCircle({id, highlighted, size, color, metric}) 
     <g className={className}>
       {hasMetric && getClipPathDefinition(clipId, size, height)}
       {highlighted && <circle r={size * 0.7} className="highlighted" />}
-      <circle r={size * 0.5} className="border" stroke={color} />
+      <circle r={size * 0.5} className="border" stroke={color} {...getBorderProps()} />
       <circle r={size * 0.45} className="shadow" />
       {hasMetric && <circle
         r={size * 0.45}
