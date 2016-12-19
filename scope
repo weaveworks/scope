@@ -12,8 +12,11 @@ fi
 IMAGE_VERSION=${VERSION:-$IMAGE_VERSION}
 SCOPE_IMAGE_NAME=weaveworks/scope
 SCOPE_IMAGE="$SCOPE_IMAGE_NAME:$IMAGE_VERSION"
-SCOPE_CONTAINER_NAME=weavescope
-SCOPE_APP_CONTAINER_NAME=weavescope-app
+# Careful: it's easy to operate on (e.g. stop) the wrong scope instance
+# when SCOPE{_APP,}_CONTAINER_NAME values differ between runs. Handle
+# with care.
+SCOPE_CONTAINER_NAME="${SCOPE_CONTAINER_NAME:-weavescope}"
+SCOPE_APP_CONTAINER_NAME="${SCOPE_APP_CONTAINER_NAME:-weavescope-app}"
 IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
 IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
     xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
