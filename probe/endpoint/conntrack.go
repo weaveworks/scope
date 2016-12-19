@@ -54,10 +54,9 @@ type meta struct {
 
 type flow struct {
 	XMLName xml.Name `xml:"flow"`
-	Metas   []meta   `xml:"meta"`
 	Type    string   `xml:"type,attr"`
 
-	Original, Reply, Independent *meta `xml:"-"`
+	Original, Reply, Independent meta `xml:"-"`
 }
 
 type conntrack struct {
@@ -220,17 +219,6 @@ func (c *conntrackWalker) run() {
 	}
 }
 
-func makeEmptyFlow() flow {
-	var f flow
-	metas := make([]meta, 3)
-	f.Metas = metas
-	// TODO: do we really need the direction/protocol type when not using XML?
-	f.Original = &metas[0]
-	f.Reply = &metas[1]
-	f.Independent = &metas[2]
-	return f
-}
-
 func getUntaggedLine(reader *bufio.Reader) (string, error) {
 	// TODO: read bytes?
 	line, err := reader.ReadString('\n')
@@ -246,9 +234,9 @@ func getUntaggedLine(reader *bufio.Reader) (string, error) {
 
 func decodeStreamedFlow(reader *bufio.Reader) (flow, error) {
 	var (
-		// TODO: use ints where possible?
-		omit [10]string
-		f    = makeEmptyFlow()
+		// TODO: use []byte/int where possible?
+		omit [4]string
+		f    flow
 	)
 
 	// Examples:
@@ -329,7 +317,7 @@ func (c *conntrackWalker) existingConnections() ([]flow, error) {
 	reader := bufio.NewReader(stdout)
 	var result []flow
 	for {
-		f, err := readDumpedFlow(reader)
+		f, err := decodeDumpedFlow(reader)
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -342,11 +330,11 @@ func (c *conntrackWalker) existingConnections() ([]flow, error) {
 	return result, nil
 }
 
-func readDumpedFlow(reader *bufio.Reader) (flow, error) {
+func decodeDumpedFlow(reader *bufio.Reader) (flow, error) {
 	var (
-		// TODO: use byteslices where possible?
-		omit [10]string
-		f    = makeEmptyFlow()
+		// TODO: use int/[]byte where possible?
+		omit [4]string
+		f    flow
 	)
 
 	// Example:
