@@ -399,7 +399,7 @@ class Terminal extends React.Component {
 }
 
 function mapStateToProps(state, ownProps) {
-  const controlStatus = state.get('controlPipes').find((pipe) =>
+  const controlStatus = state.get('controlPipes').find(pipe =>
     pipe.get('nodeId') === ownProps.pipe.get('nodeId')
   );
   return { controlStatus };
