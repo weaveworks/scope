@@ -379,7 +379,7 @@ func main() {
 				args = append(args, defaultServiceHost)
 			}
 		} else if !flags.probe.noApp {
-			args = append(args, fmt.Sprintf("localhost:%s", port))
+			args = append(args, fmt.Sprintf("127.0.0.1:%s", port))
 		}
 		args = append(args, flag.Args()...)
 		if !dryRun {
