@@ -379,8 +379,8 @@ func (c *container) getBaseNode() report.Node {
 	}).WithParents(report.EmptySets.
 		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
 	)
-	result = result.AddPrefixTable(LabelPrefix, c.container.Config.Labels)
-	result = result.AddPrefixTable(EnvPrefix, c.env())
+	result = result.AddPrefixPropertyList(LabelPrefix, c.container.Config.Labels)
+	result = result.AddPrefixPropertyList(EnvPrefix, c.env())
 	return result
 }
 

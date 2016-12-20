@@ -10,14 +10,14 @@ import (
 // EdgeMetadatas and Nodes respectively. Edges are directional, and embedded
 // in the Node struct.
 type Topology struct {
-	Shape             string `json:"shape,omitempty"`
-	Label             string `json:"label,omitempty"`
-	LabelPlural       string `json:"label_plural,omitempty"`
-	Nodes             `json:"nodes"`
-	Controls          `json:"controls,omitempty"`
-	MetadataTemplates `json:"metadata_templates,omitempty"`
-	MetricTemplates   `json:"metric_templates,omitempty"`
-	TableTemplates    `json:"table_templates,omitempty"`
+	Shape                 string `json:"shape,omitempty"`
+	Label                 string `json:"label,omitempty"`
+	LabelPlural           string `json:"label_plural,omitempty"`
+	Nodes                 `json:"nodes"`
+	Controls              `json:"controls,omitempty"`
+	MetadataTemplates     `json:"metadata_templates,omitempty"`
+	MetricTemplates       `json:"metric_templates,omitempty"`
+	PropertyListTemplates `json:"property_list_templates,omitempty"`
 }
 
 // MakeTopology gives you a Topology.
@@ -32,14 +32,14 @@ func MakeTopology() Topology {
 // returning a new topology.
 func (t Topology) WithMetadataTemplates(other MetadataTemplates) Topology {
 	return Topology{
-		Shape:             t.Shape,
-		Label:             t.Label,
-		LabelPlural:       t.LabelPlural,
-		Nodes:             t.Nodes.Copy(),
-		Controls:          t.Controls.Copy(),
-		MetadataTemplates: t.MetadataTemplates.Merge(other),
-		MetricTemplates:   t.MetricTemplates.Copy(),
-		TableTemplates:    t.TableTemplates.Copy(),
+		Shape:                 t.Shape,
+		Label:                 t.Label,
+		LabelPlural:           t.LabelPlural,
+		Nodes:                 t.Nodes.Copy(),
+		Controls:              t.Controls.Copy(),
+		MetadataTemplates:     t.MetadataTemplates.Merge(other),
+		MetricTemplates:       t.MetricTemplates.Copy(),
+		PropertyListTemplates: t.PropertyListTemplates.Copy(),
 	}
 }
 
@@ -47,57 +47,57 @@ func (t Topology) WithMetadataTemplates(other MetadataTemplates) Topology {
 // returning a new topology.
 func (t Topology) WithMetricTemplates(other MetricTemplates) Topology {
 	return Topology{
-		Shape:             t.Shape,
-		Label:             t.Label,
-		LabelPlural:       t.LabelPlural,
-		Nodes:             t.Nodes.Copy(),
-		Controls:          t.Controls.Copy(),
-		MetadataTemplates: t.MetadataTemplates.Copy(),
-		MetricTemplates:   t.MetricTemplates.Merge(other),
-		TableTemplates:    t.TableTemplates.Copy(),
+		Shape:                 t.Shape,
+		Label:                 t.Label,
+		LabelPlural:           t.LabelPlural,
+		Nodes:                 t.Nodes.Copy(),
+		Controls:              t.Controls.Copy(),
+		MetadataTemplates:     t.MetadataTemplates.Copy(),
+		MetricTemplates:       t.MetricTemplates.Merge(other),
+		PropertyListTemplates: t.PropertyListTemplates.Copy(),
 	}
 }
 
-// WithTableTemplates merges some table templates into this topology,
+// WithPropertyListTemplates merges some table templates into this topology,
 // returning a new topology.
-func (t Topology) WithTableTemplates(other TableTemplates) Topology {
+func (t Topology) WithPropertyListTemplates(other PropertyListTemplates) Topology {
 	return Topology{
-		Shape:             t.Shape,
-		Label:             t.Label,
-		LabelPlural:       t.LabelPlural,
-		Nodes:             t.Nodes.Copy(),
-		Controls:          t.Controls.Copy(),
-		MetadataTemplates: t.MetadataTemplates.Copy(),
-		MetricTemplates:   t.MetricTemplates.Copy(),
-		TableTemplates:    t.TableTemplates.Merge(other),
+		Shape:                 t.Shape,
+		Label:                 t.Label,
+		LabelPlural:           t.LabelPlural,
+		Nodes:                 t.Nodes.Copy(),
+		Controls:              t.Controls.Copy(),
+		MetadataTemplates:     t.MetadataTemplates.Copy(),
+		MetricTemplates:       t.MetricTemplates.Copy(),
+		PropertyListTemplates: t.PropertyListTemplates.Merge(other),
 	}
 }
 
 // WithShape sets the shape of nodes from this topology, returning a new topology.
 func (t Topology) WithShape(shape string) Topology {
 	return Topology{
-		Shape:             shape,
-		Label:             t.Label,
-		LabelPlural:       t.LabelPlural,
-		Nodes:             t.Nodes.Copy(),
-		Controls:          t.Controls.Copy(),
-		MetadataTemplates: t.MetadataTemplates.Copy(),
-		MetricTemplates:   t.MetricTemplates.Copy(),
-		TableTemplates:    t.TableTemplates.Copy(),
+		Shape:                 shape,
+		Label:                 t.Label,
+		LabelPlural:           t.LabelPlural,
+		Nodes:                 t.Nodes.Copy(),
+		Controls:              t.Controls.Copy(),
+		MetadataTemplates:     t.MetadataTemplates.Copy(),
+		MetricTemplates:       t.MetricTemplates.Copy(),
+		PropertyListTemplates: t.PropertyListTemplates.Copy(),
 	}
 }
 
 // WithLabel sets the label terminology of this topology, returning a new topology.
 func (t Topology) WithLabel(label, labelPlural string) Topology {
 	return Topology{
-		Shape:             t.Shape,
-		Label:             label,
-		LabelPlural:       labelPlural,
-		Nodes:             t.Nodes.Copy(),
-		Controls:          t.Controls.Copy(),
-		MetadataTemplates: t.MetadataTemplates.Copy(),
-		MetricTemplates:   t.MetricTemplates.Copy(),
-		TableTemplates:    t.TableTemplates.Copy(),
+		Shape:                 t.Shape,
+		Label:                 label,
+		LabelPlural:           labelPlural,
+		Nodes:                 t.Nodes.Copy(),
+		Controls:              t.Controls.Copy(),
+		MetadataTemplates:     t.MetadataTemplates.Copy(),
+		MetricTemplates:       t.MetricTemplates.Copy(),
+		PropertyListTemplates: t.PropertyListTemplates.Copy(),
 	}
 }
 
@@ -125,14 +125,14 @@ func (t Topology) GetShape() string {
 // Copy returns a value copy of the Topology.
 func (t Topology) Copy() Topology {
 	return Topology{
-		Shape:             t.Shape,
-		Label:             t.Label,
-		LabelPlural:       t.LabelPlural,
-		Nodes:             t.Nodes.Copy(),
-		Controls:          t.Controls.Copy(),
-		MetadataTemplates: t.MetadataTemplates.Copy(),
-		MetricTemplates:   t.MetricTemplates.Copy(),
-		TableTemplates:    t.TableTemplates.Copy(),
+		Shape:                 t.Shape,
+		Label:                 t.Label,
+		LabelPlural:           t.LabelPlural,
+		Nodes:                 t.Nodes.Copy(),
+		Controls:              t.Controls.Copy(),
+		MetadataTemplates:     t.MetadataTemplates.Copy(),
+		MetricTemplates:       t.MetricTemplates.Copy(),
+		PropertyListTemplates: t.PropertyListTemplates.Copy(),
 	}
 }
 
@@ -148,14 +148,14 @@ func (t Topology) Merge(other Topology) Topology {
 		label, labelPlural = other.Label, other.LabelPlural
 	}
 	return Topology{
-		Shape:             shape,
-		Label:             label,
-		LabelPlural:       labelPlural,
-		Nodes:             t.Nodes.Merge(other.Nodes),
-		Controls:          t.Controls.Merge(other.Controls),
-		MetadataTemplates: t.MetadataTemplates.Merge(other.MetadataTemplates),
-		MetricTemplates:   t.MetricTemplates.Merge(other.MetricTemplates),
-		TableTemplates:    t.TableTemplates.Merge(other.TableTemplates),
+		Shape:                 shape,
+		Label:                 label,
+		LabelPlural:           labelPlural,
+		Nodes:                 t.Nodes.Merge(other.Nodes),
+		Controls:              t.Controls.Merge(other.Controls),
+		MetadataTemplates:     t.MetadataTemplates.Merge(other.MetadataTemplates),
+		MetricTemplates:       t.MetricTemplates.Merge(other.MetricTemplates),
+		PropertyListTemplates: t.PropertyListTemplates.Merge(other.PropertyListTemplates),
 	}
 }
 

@@ -67,7 +67,7 @@ var (
 
 	ReplicaSetMetricTemplates = PodMetricTemplates
 
-	TableTemplates = report.TableTemplates{
+	PropertyListTemplates = report.PropertyListTemplates{
 		LabelPrefix: {ID: LabelPrefix, Label: "Kubernetes Labels", Prefix: LabelPrefix},
 	}
 
@@ -223,7 +223,7 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 		result = report.MakeTopology().
 			WithMetadataTemplates(ServiceMetadataTemplates).
 			WithMetricTemplates(ServiceMetricTemplates).
-			WithTableTemplates(TableTemplates)
+			WithPropertyListTemplates(PropertyListTemplates)
 		services = []Service{}
 	)
 	err := r.client.WalkServices(func(s Service) error {
@@ -258,7 +258,7 @@ func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deploy
 		result = report.MakeTopology().
 			WithMetadataTemplates(DeploymentMetadataTemplates).
 			WithMetricTemplates(DeploymentMetricTemplates).
-			WithTableTemplates(TableTemplates)
+			WithPropertyListTemplates(PropertyListTemplates)
 		deployments = []Deployment{}
 	)
 	result.Controls.AddControls(ScalingControls)
@@ -276,7 +276,7 @@ func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) 
 		result = report.MakeTopology().
 			WithMetadataTemplates(ReplicaSetMetadataTemplates).
 			WithMetricTemplates(ReplicaSetMetricTemplates).
-			WithTableTemplates(TableTemplates)
+			WithPropertyListTemplates(PropertyListTemplates)
 		replicaSets = []ReplicaSet{}
 		selectors   = []func(labelledChild){}
 	)
@@ -355,7 +355,7 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (re
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
 			WithMetricTemplates(PodMetricTemplates).
-			WithTableTemplates(TableTemplates)
+			WithPropertyListTemplates(PropertyListTemplates)
 		selectors = []func(labelledChild){}
 	)
 	pods.Controls.AddControl(report.Control{

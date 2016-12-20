@@ -56,5 +56,5 @@ func (m meta) MetaNode(id string) report.Node {
 		Name:      m.Name(),
 		Namespace: m.Namespace(),
 		Created:   m.Created(),
-	}).AddPrefixTable(LabelPrefix, m.Labels())
+	}).AddPrefixPropertyList(LabelPrefix, m.Labels())
 }

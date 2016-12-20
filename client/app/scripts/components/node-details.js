@@ -203,20 +203,22 @@ class NodeDetails extends React.Component {
             </div>
           ))}
 
-          {details.tables && details.tables.length > 0 && details.tables.map((table) => {
-            if (table.rows.length > 0) {
+          {details.propertyLists && details.propertyLists.map((propertyList) => {
+            if (propertyList.rows.length > 0) {
               return (
-                <div className="node-details-content-section" key={table.id}>
+                <div className="node-details-content-section" key={propertyList.id}>
                   <div className="node-details-content-section-header">
-                    {table.label}
-                    {table.truncationCount > 0 && <span
+                    {propertyList.label}
+                    {propertyList.truncationCount > 0 && <span
                       className="node-details-content-section-header-warning">
-                      <Warning text={getTruncationText(table.truncationCount)} />
+                      <Warning text={getTruncationText(propertyList.truncationCount)} />
                     </span>}
                   </div>
                   <NodeDetailsLabels
-                    rows={table.rows} controls={table.controls}
-                    matches={nodeMatches.get('tables')} />
+                    rows={propertyList.rows}
+                    controls={propertyList.controls}
+                    matches={nodeMatches.get('propertyLists')}
+                  />
                 </div>
               );
             }

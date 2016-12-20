@@ -11,18 +11,18 @@ import (
 	"github.com/weaveworks/scope/test/fixture"
 )
 
-func TestNodeTables(t *testing.T) {
+func TestNodePropertyLists(t *testing.T) {
 	inputs := []struct {
 		name string
 		rpt  report.Report
 		node report.Node
-		want []report.Table
+		want []report.PropertyList
 	}{
 		{
 			name: "container",
 			rpt: report.Report{
 				Container: report.MakeTopology().
-					WithTableTemplates(docker.ContainerTableTemplates),
+					WithPropertyListTemplates(docker.ContainerPropertyListTemplates),
 			},
 			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
 				docker.ContainerID:            fixture.ClientContainerID,
@@ -31,7 +31,7 @@ func TestNodeTables(t *testing.T) {
 			}).WithTopology(report.Container).WithSets(report.EmptySets.
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
-			want: []report.Table{
+			want: []report.PropertyList{
 				{
 					ID:    docker.EnvPrefix,
 					Label: "Environment Variables",
@@ -65,7 +65,7 @@ func TestNodeTables(t *testing.T) {
 		},
 	}
 	for _, input := range inputs {
-		have := detailed.NodeTables(input.rpt, input.node)
+		have := detailed.NodePropertyLists(input.rpt, input.node)
 		if !reflect.DeepEqual(input.want, have) {
 			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
 		}

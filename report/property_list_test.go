@@ -16,8 +16,8 @@ func TestPrefixTables(t *testing.T) {
 	}
 	nmd := report.MakeNode("foo1")
 
-	nmd = nmd.AddPrefixTable("foo_", want)
-	have, truncationCount := nmd.ExtractTable(report.TableTemplate{Prefix: "foo_"})
+	nmd = nmd.AddPrefixPropertyList("foo_", want)
+	have, truncationCount := nmd.ExtractPropertyList(report.PropertyListTemplate{Prefix: "foo_"})
 
 	if truncationCount != 0 {
 		t.Error("Table shouldn't had been truncated")
@@ -38,13 +38,13 @@ func TestFixedTables(t *testing.T) {
 		"foo2key": "bar2",
 	})
 
-	template := report.TableTemplate{FixedRows: map[string]string{
+	template := report.PropertyListTemplate{FixedProperties: map[string]string{
 		"foo1key": "foo1",
 		"foo2key": "foo2",
 	},
 	}
 
-	have, _ := nmd.ExtractTable(template)
+	have, _ := nmd.ExtractPropertyList(template)
 
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -54,7 +54,7 @@ func TestFixedTables(t *testing.T) {
 func TestTruncation(t *testing.T) {
 	wantTruncationCount := 1
 	want := map[string]string{}
-	for i := 0; i < report.MaxTableRows+wantTruncationCount; i++ {
+	for i := 0; i < report.MaxPropertyListSize+wantTruncationCount; i++ {
 		key := fmt.Sprintf("key%d", i)
 		value := fmt.Sprintf("value%d", i)
 		want[key] = value
@@ -62,8 +62,8 @@ func TestTruncation(t *testing.T) {
 
 	nmd := report.MakeNode("foo1")
 
-	nmd = nmd.AddPrefixTable("foo_", want)
-	_, truncationCount := nmd.ExtractTable(report.TableTemplate{Prefix: "foo_"})
+	nmd = nmd.AddPrefixPropertyList("foo_", want)
+	_, truncationCount := nmd.ExtractPropertyList(report.PropertyListTemplate{Prefix: "foo_"})
 
 	if truncationCount != wantTruncationCount {
 		t.Error(
