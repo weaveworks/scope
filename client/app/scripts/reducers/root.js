@@ -469,6 +469,7 @@ export function rootReducer(state = initialState, action) {
         nodeId: action.nodeId,
         raw: action.rawTty,
         resizeTtyControl: action.resizeTtyControl,
+        control: action.control
       }));
     }
 

@@ -315,6 +315,7 @@ class Terminal extends React.Component {
             title="Close" className="terminal-header-tools-item-icon fa fa-close"
             onClick={this.handleCloseClick} />
         </div>
+        {this.getControlStatusIcon()}
         <span className="terminal-header-title">{this.getTitle()}</span>
       </div>
     );
@@ -386,12 +387,26 @@ class Terminal extends React.Component {
       </div>
     );
   }
+  getControlStatusIcon() {
+    const icon = this.props.controlStatus && this.props.controlStatus.get('control').icon;
+    return (
+      <span
+        style={{marginRight: '8px', width: '14px'}}
+        className={classNames('fa', {[icon]: icon})}
+      />
+    );
+  }
 }
 
+function mapStateToProps(state, ownProps) {
+  const controlStatus = state.get('controlPipes').find((pipe) =>
+    pipe.get('nodeId') === ownProps.pipe.get('nodeId')
+  );
+  return { controlStatus };
+}
 
 Terminal.defaultProps = {
   connect: true
 };
 
-
-export default connect()(Terminal);
+export default connect(mapStateToProps)(Terminal);

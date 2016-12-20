@@ -238,7 +238,9 @@ export function doControlRequest(nodeId, control, dispatch) {
             res.pipe,
             nodeId,
             res.raw_tty,
-            resizeTtyControl));
+            resizeTtyControl,
+            control
+          ));
         }
         if (res.removedNode) {
           dispatch(receiveControlNodeRemoved(nodeId));
