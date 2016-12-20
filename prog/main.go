@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/appclient"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/weave/common"
@@ -213,6 +215,18 @@ func logCensoredArgs() {
 		prettyPrintedArgs += " " + arg
 	}
 	log.Infof("command line args:%s", prettyPrintedArgs)
+}
+
+func makeBaseCheckpointFlags() map[string]string {
+	release, _, err := host.GetKernelReleaseAndVersion()
+	if err != nil {
+		release = "unknown"
+	}
+	return map[string]string{
+		// Inconsistent key (using a dash) to match Weave Net
+		"kernel-version": release,
+		"os":             runtime.GOOS,
+	}
 }
 
 func main() {

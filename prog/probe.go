@@ -91,7 +91,8 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		hostID   = hostName // TODO(pb): we should sanitize the hostname
 	)
 	log.Infof("probe starting, version %s, ID %s", version, probeID)
-	checkpointFlags := map[string]string{}
+
+	checkpointFlags := makeBaseCheckpointFlags()
 	if flags.kubernetesEnabled {
 		checkpointFlags["kubernetes_enabled"] = "true"
 	}

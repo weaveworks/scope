@@ -1,6 +1,7 @@
 package host
 
 import (
+	"fmt"
 	"net"
 	"runtime"
 	"sync"
@@ -120,10 +121,11 @@ func (r *Reporter) Report() (report.Report, error) {
 		return rep, err
 	}
 
-	kernel, err := GetKernelVersion()
+	kernelRelease, kernelVersion, err := GetKernelReleaseAndVersion()
 	if err != nil {
 		return rep, err
 	}
+	kernel := fmt.Sprintf("%s %s", kernelRelease, kernelVersion)
 
 	rep.Host = rep.Host.WithMetadataTemplates(MetadataTemplates)
 	rep.Host = rep.Host.WithMetricTemplates(MetricTemplates)

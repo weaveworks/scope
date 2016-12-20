@@ -34,22 +34,22 @@ func TestReporter(t *testing.T) {
 	defer mtime.NowReset()
 
 	var (
-		oldGetKernelVersion    = host.GetKernelVersion
-		oldGetLoad             = host.GetLoad
-		oldGetUptime           = host.GetUptime
-		oldGetCPUUsagePercent  = host.GetCPUUsagePercent
-		oldGetMemoryUsageBytes = host.GetMemoryUsageBytes
-		oldGetLocalNetworks    = host.GetLocalNetworks
+		oldGetKernelReleaseAndVersion = host.GetKernelReleaseAndVersion
+		oldGetLoad                    = host.GetLoad
+		oldGetUptime                  = host.GetUptime
+		oldGetCPUUsagePercent         = host.GetCPUUsagePercent
+		oldGetMemoryUsageBytes        = host.GetMemoryUsageBytes
+		oldGetLocalNetworks           = host.GetLocalNetworks
 	)
 	defer func() {
-		host.GetKernelVersion = oldGetKernelVersion
+		host.GetKernelReleaseAndVersion = oldGetKernelReleaseAndVersion
 		host.GetLoad = oldGetLoad
 		host.GetUptime = oldGetUptime
 		host.GetCPUUsagePercent = oldGetCPUUsagePercent
 		host.GetMemoryUsageBytes = oldGetMemoryUsageBytes
 		host.GetLocalNetworks = oldGetLocalNetworks
 	}()
-	host.GetKernelVersion = func() (string, error) { return release + " " + version, nil }
+	host.GetKernelReleaseAndVersion = func() (string, string, error) { return release, version, nil }
 	host.GetLoad = func(time.Time) report.Metrics { return metrics }
 	host.GetUptime = func() (time.Duration, error) { return time.ParseDuration(uptime) }
 	host.GetCPUUsagePercent = func() (float64, float64) { return 30.0, 100.0 }
