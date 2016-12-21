@@ -148,13 +148,27 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
         });
       }
 
-      // tables (envvars and labels)
+      // node tables
       const tables = node.get('tables');
       if (tables) {
         tables.forEach((table) => {
           if (table.get('rows')) {
             table.get('rows').forEach((field) => {
               const keyPath = [nodeId, 'tables', field.get('id')];
+              nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
+                query, prefix, field.get('label'));
+            });
+          }
+        });
+      }
+
+      // property lists (envvars and labels)
+      const propertyLists = node.get('propertyLists');
+      if (propertyLists) {
+        propertyLists.forEach((propertyList) => {
+          if (propertyList.get('rows')) {
+            propertyList.get('rows').forEach((field) => {
+              const keyPath = [nodeId, 'propertyLists', field.get('id')];
               nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
                 query, prefix, field.get('label'));
             });
@@ -267,12 +281,18 @@ export function getSearchableFields(nodes) {
     ))
   ), makeSet());
 
+  const propertyLabels = nodes.reduce((labels, node) => (
+    labels.union(get(node, 'propertyLists').flatMap(t => (t.get('rows') || makeList)
+      .map(f => f.get('label'))
+    ))
+  ), makeSet());
+
   const metricLabels = nodes.reduce((labels, node) => (
     labels.union(get(node, 'metrics').map(f => f.get('label')))
   ), makeSet());
 
   return makeMap({
-    fields: baseLabels.union(metadataLabels, parentLabels, tableRowLabels)
+    fields: baseLabels.union(metadataLabels, parentLabels, tableRowLabels, propertyLabels)
       .map(slugify)
       .toList()
       .sort(),

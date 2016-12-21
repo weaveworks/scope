@@ -17,7 +17,15 @@ describe('SearchUtils', () => {
           id: 'metric1',
           label: 'Metric 1',
           value: 1
-        }]
+        }],
+        propertyLists: [{
+          id: 'labels1',
+          rows: [{
+            id: 'label1',
+            label: 'Label 1',
+            value: 'Value 1'
+          }]
+        }],
       },
       n2: {
         id: 'n2',
@@ -28,7 +36,7 @@ describe('SearchUtils', () => {
           value: 'value 2'
         }],
         tables: [{
-          id: 'metric1',
+          id: 'table1',
           rows: [{
             id: 'row1',
             label: 'Row 1',
@@ -241,6 +249,14 @@ describe('SearchUtils', () => {
       const matches = fun(nodes, {query: 'Row Value 1'});
       expect(matches.size).toEqual(1);
       expect(matches.getIn(['n2', 'tables', 'row1']).text).toBe('Row Value 1');
+    });
+
+    it('should match on a property lists field', () => {
+      const nodes = nodeSets.someNodes;
+      const matches = fun(nodes, {query: 'Value 1'});
+      expect(matches.size).toEqual(2);
+      expect(matches.getIn(['n2', 'tables', 'row1']).text).toBe('Row Value 1');
+      expect(matches.getIn(['n1', 'propertyLists', 'label1']).text).toBe('Value 1');
     });
   });
 
