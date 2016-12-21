@@ -379,6 +379,8 @@ func main() {
 				args = append(args, defaultServiceHost)
 			}
 		} else if !flags.probe.noApp {
+			// We hardcode 127.0.0.1 instead of using localhost
+			// since it leads to problems in exotic DNS setups
 			args = append(args, fmt.Sprintf("127.0.0.1:%s", port))
 		}
 		args = append(args, flag.Args()...)
