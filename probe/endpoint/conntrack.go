@@ -204,7 +204,7 @@ func (c *conntrackWalker) run() {
 	scanner := bufio.NewScanner(bufio.NewReader(stdout))
 	defer log.Infof("conntrack exiting")
 
-	// Lop on the output stream
+	// Loop on the output stream
 	for {
 		f, err := decodeStreamedFlow(scanner)
 		if err != nil {
