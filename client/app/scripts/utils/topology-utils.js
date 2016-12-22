@@ -6,6 +6,8 @@ import { Set as makeSet, List as makeList } from 'immutable';
 // top priority first
 //
 const TOPOLOGY_DISPLAY_PRIORITY = [
+  'ecs-services',
+  'ecs-tasks',
   'services',
   'deployments',
   'replica-sets',
