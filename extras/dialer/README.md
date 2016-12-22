@@ -41,6 +41,6 @@ sudo ./tools/dialer/time-scope-probe 3 3
 ## Build dialer container
 
 ```
-go build -o bin/dialer
+go build -o bin/dialer src/dialer.go
 docker build -t dialer .
 ```
