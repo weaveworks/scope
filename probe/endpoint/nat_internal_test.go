@@ -29,15 +29,40 @@ func TestNat(t *testing.T) {
 	// correctly.
 	// the setup is this:
 	//
-	// container2 (10.0.47.2:222222), host2 (2.3.4.5:22223) ->
+	// container2 (10.0.47.2:22222), host2 (2.3.4.5:22223) ->
 	//     host1 (1.2.3.4:80), container1 (10.0.47.1:80)
 
 	// from the PoV of host1
 	{
-		f := makeFlow(updateType)
-		addIndependant(&f, 1, "")
-		f.Original = addMeta(&f, "original", "2.3.4.5", "1.2.3.4", 222222, 80)
-		f.Reply = addMeta(&f, "reply", "10.0.47.1", "2.3.4.5", 80, 222222)
+		f := flow{
+			Type: updateType,
+			Original: meta{
+				Layer3: layer3{
+					SrcIP: "2.3.4.5",
+					DstIP: "1.2.3.4",
+				},
+				Layer4: layer4{
+					SrcPort: 22222,
+					DstPort: 80,
+					Proto:   "tcp",
+				},
+			},
+			Reply: meta{
+				Layer3: layer3{
+					SrcIP: "10.0.47.1",
+					DstIP: "2.3.4.5",
+				},
+				Layer4: layer4{
+					SrcPort: 80,
+					DstPort: 22222,
+					Proto:   "tcp",
+				},
+			},
+			Independent: meta{
+				ID: 1,
+			},
+		}
+
 		ct := &mockFlowWalker{
 			flows: []flow{f},
 		}
@@ -69,10 +94,34 @@ func TestNat(t *testing.T) {
 
 	// form the PoV of host2
 	{
-		f := makeFlow(updateType)
-		addIndependant(&f, 2, "")
-		f.Original = addMeta(&f, "original", "10.0.47.2", "1.2.3.4", 22222, 80)
-		f.Reply = addMeta(&f, "reply", "1.2.3.4", "2.3.4.5", 80, 22223)
+		f := flow{
+			Type: updateType,
+			Original: meta{
+				Layer3: layer3{
+					SrcIP: "10.0.47.2",
+					DstIP: "1.2.3.4",
+				},
+				Layer4: layer4{
+					SrcPort: 22222,
+					DstPort: 80,
+					Proto:   "tcp",
+				},
+			},
+			Reply: meta{
+				Layer3: layer3{
+					SrcIP: "1.2.3.4",
+					DstIP: "2.3.4.5",
+				},
+				Layer4: layer4{
+					SrcPort: 80,
+					DstPort: 22223,
+					Proto:   "tcp",
+				},
+			},
+			Independent: meta{
+				ID: 2,
+			},
+		}
 		ct := &mockFlowWalker{
 			flows: []flow{f},
 		}
