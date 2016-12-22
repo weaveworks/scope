@@ -38,6 +38,28 @@ func newBackgroundReader(walker process.Walker) *backgroundReader {
 	return br
 }
 
+func newForegroundReader(walker process.Walker) *backgroundReader {
+	br := &backgroundReader{
+		stopc:         make(chan struct{}),
+		latestSockets: map[uint64]*Proc{},
+	}
+	var (
+		walkc   = make(chan walkResult)
+		ticker  = time.NewTicker(time.Millisecond) // fire every millisecond
+		pWalker = newPidWalker(walker, ticker.C, fdBlockSize)
+	)
+
+	go performWalk(pWalker, walkc)
+
+	result := <-walkc
+	br.mtx.Lock()
+	br.latestBuf = result.buf
+	br.latestSockets = result.sockets
+	br.mtx.Unlock()
+
+	return br
+}
+
 func (br *backgroundReader) stop() {
 	close(br.stopc)
 }
