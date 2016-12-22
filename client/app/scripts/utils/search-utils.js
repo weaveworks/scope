@@ -154,9 +154,10 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
         tables.forEach((table) => {
           if (table.get('rows')) {
             table.get('rows').forEach((field) => {
+              const entries = field.get('entries');
               const keyPath = [nodeId, 'tables', field.get('id')];
-              nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
-                query, prefix, field.get('label'));
+              nodeMatches = findNodeMatch(nodeMatches, keyPath, entries.get('value'),
+                query, prefix, entries.get('label'));
             });
           }
         });

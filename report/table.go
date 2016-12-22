@@ -15,10 +15,33 @@ import (
 const (
 	MaxTableRows          = 20
 	TruncationCountPrefix = "table_truncation_count_"
+	MulticolumnTableType  = "multicolumn-table"
+	PropertyListType      = "property-list"
 )
 
-// AddPrefixTable appends arbitrary key-value pairs to the Node, returning a new node.
-func (node Node) AddPrefixTable(prefix string, labels map[string]string) Node {
+// AddPrefixTable appends arbitrary rows to the Node, returning a new node.
+func (node Node) AddPrefixTable(prefix string, rows []Row) Node {
+	count := 0
+	for _, row := range rows {
+		if count >= MaxTableRows {
+			break
+		}
+		// TODO: Figure a more natural way of storing rows
+		for column, value := range row.Entries {
+			key := fmt.Sprintf("%s %s", row.ID, column)
+			node = node.WithLatest(prefix+key, mtime.Now(), value)
+		}
+		count++
+	}
+	if len(rows) > MaxTableRows {
+		truncationCount := fmt.Sprintf("%d", len(rows)-MaxTableRows)
+		node = node.WithLatest(TruncationCountPrefix+prefix, mtime.Now(), truncationCount)
+	}
+	return node
+}
+
+// AddPrefixLabels appends arbitrary key-value pairs to the Node, returning a new node.
+func (node Node) AddPrefixLabels(prefix string, labels map[string]string) Node {
 	count := 0
 	for key, value := range labels {
 		if count >= MaxTableRows {
@@ -34,33 +57,86 @@ func (node Node) AddPrefixTable(prefix string, labels map[string]string) Node {
 	return node
 }
 
-// ExtractTable returns the key-value pairs to build a table from this node
-func (node Node) ExtractTable(template TableTemplate) (rows map[string]string, truncationCount int) {
-	rows = map[string]string{}
+// ExtractTable returns the rows to build a table from this node
+func (node Node) ExtractTable(template TableTemplate) (rows []Row, truncationCount int) {
+	rows = []Row{}
+	switch template.Type {
+	case MulticolumnTableType:
+		keyRows := map[string]Row{}
+		node.Latest.ForEach(func(key string, _ time.Time, value string) {
+			if len(template.Prefix) > 0 && strings.HasPrefix(key, template.Prefix) {
+				rowID, column := "", ""
+				fmt.Sscanf(key[len(template.Prefix):], "%s %s", &rowID, &column)
+				if _, ok := keyRows[rowID]; !ok {
+					keyRows[rowID] = Row{
+						ID:      rowID,
+						Entries: map[string]string{},
+					}
+				}
+				keyRows[rowID].Entries[column] = value
+			}
+		})
+		for _, row := range keyRows {
+			rows = append(rows, row)
+		}
+	// By default assume it's a property list (for backward compatibility)
+	default:
+		keyValues := map[string]string{}
+		node.Latest.ForEach(func(key string, _ time.Time, value string) {
+			if label, ok := template.FixedRows[key]; ok {
+				keyValues[label] = value
+			}
+			if len(template.Prefix) > 0 && strings.HasPrefix(key, template.Prefix) {
+				label := key[len(template.Prefix):]
+				keyValues[label] = value
+			}
+		})
+		labels := make([]string, 0, len(rows))
+		for label := range keyValues {
+			labels = append(labels, label)
+		}
+		sort.Strings(labels)
+		for _, label := range labels {
+			rows = append(rows, Row{
+				ID: "label_" + label,
+				Entries: map[string]string{
+					"label": label,
+					"value": keyValues[label],
+				},
+			})
+		}
+	}
+
 	truncationCount = 0
-	node.Latest.ForEach(func(key string, _ time.Time, value string) {
-		if label, ok := template.FixedRows[key]; ok {
-			rows[label] = value
-		}
-		if len(template.Prefix) > 0 && strings.HasPrefix(key, template.Prefix) {
-			label := key[len(template.Prefix):]
-			rows[label] = value
-		}
-	})
 	if str, ok := node.Latest.Lookup(TruncationCountPrefix + template.Prefix); ok {
 		if n, err := fmt.Sscanf(str, "%d", &truncationCount); n != 1 || err != nil {
 			log.Warn("Unexpected truncation count format %q", str)
 		}
 	}
+
 	return rows, truncationCount
+}
+
+type Column struct {
+	ID        string `json:"id"`
+	Label     string `json:"label"`
+	DataType  string `json:"dataType"`
+	Alignment string `json:"alignment"`
+}
+
+type Row struct {
+	ID      string            `json:"id"`
+	Entries map[string]string `json:"entries"`
 }
 
 // Table is the type for a table in the UI.
 type Table struct {
-	ID              string        `json:"id"`
-	Label           string        `json:"label"`
-	Rows            []MetadataRow `json:"rows"`
-	TruncationCount int           `json:"truncationCount,omitempty"`
+	ID              string   `json:"id"`
+	Label           string   `json:"label"`
+	Type            string   `json:"type"`
+	Columns         []Column `json:"columns"`
+	Rows            []Row    `json:"rows"`
+	TruncationCount int      `json:"truncationCount,omitempty"`
 }
 
 type tablesByID []Table
@@ -72,9 +148,14 @@ func (t tablesByID) Less(i, j int) bool { return t[i].ID < t[j].ID }
 // Copy returns a copy of the Table.
 func (t Table) Copy() Table {
 	result := Table{
-		ID:    t.ID,
-		Label: t.Label,
-		Rows:  make([]MetadataRow, 0, len(t.Rows)),
+		ID:      t.ID,
+		Label:   t.Label,
+		Type:    t.Type,
+		Columns: make([]Column, 0, len(t.Columns)),
+		Rows:    make([]Row, 0, len(t.Rows)),
+	}
+	for _, column := range t.Columns {
+		result.Columns = append(result.Columns, column)
 	}
 	for _, row := range t.Rows {
 		result.Rows = append(result.Rows, row)
@@ -82,18 +163,13 @@ func (t Table) Copy() Table {
 	return result
 }
 
-// FixedRow describes a row which is part of a TableTemplate and whose value is extracted
-// from a predetermined key
-type FixedRow struct {
-	Label string `json:"label"`
-	Key   string `json:"key"`
-}
-
 // TableTemplate describes how to render a table for the UI.
 type TableTemplate struct {
-	ID     string `json:"id"`
-	Label  string `json:"label"`
-	Prefix string `json:"prefix"`
+	ID      string   `json:"id"`
+	Label   string   `json:"label"`
+	Prefix  string   `json:"prefix"`
+	Type    string   `json:"type"`
+	Columns []Column `json:"columns"`
 	// FixedRows indicates what predetermined rows to render each entry is
 	// indexed by the key to extract the row value is mapped to the row
 	// label
@@ -126,10 +202,13 @@ func (t TableTemplate) Merge(other TableTemplate) TableTemplate {
 		fixedRows = other.FixedRows
 	}
 
+	// TODO: Refactor the merging logic, as mixing
+	// the types now might result in invalid tables.
 	return TableTemplate{
 		ID:        max(t.ID, other.ID),
 		Label:     max(t.Label, other.Label),
 		Prefix:    max(t.Prefix, other.Prefix),
+		Type:      max(t.Type, other.Type),
 		FixedRows: fixedRows,
 	}
 }
@@ -142,25 +221,13 @@ func (t TableTemplates) Tables(node Node) []Table {
 	var result []Table
 	for _, template := range t {
 		rows, truncationCount := node.ExtractTable(template)
-		table := Table{
+		result = append(result, Table{
 			ID:              template.ID,
 			Label:           template.Label,
-			Rows:            []MetadataRow{},
+			Type:            template.Type,
+			Rows:            rows,
 			TruncationCount: truncationCount,
-		}
-		keys := make([]string, 0, len(rows))
-		for k := range rows {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, key := range keys {
-			table.Rows = append(table.Rows, MetadataRow{
-				ID:    "label_" + key,
-				Label: key,
-				Value: rows[key],
-			})
-		}
-		result = append(result, table)
+		})
 	}
 	sort.Sort(tablesByID(result))
 	return result

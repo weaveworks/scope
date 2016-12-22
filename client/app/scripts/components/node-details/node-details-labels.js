@@ -6,7 +6,6 @@ import MatchedText from '../matched-text';
 import NodeDetailsControlButton from './node-details-control-button';
 import ShowMore from '../show-more';
 
-
 const Controls = controls => (
   <div className="node-details-labels-controls">
     {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
@@ -52,11 +51,11 @@ export default class NodeDetailsLabels extends React.Component {
           <div className="node-details-labels-field" key={field.id}>
             <div
               className="node-details-labels-field-label truncate"
-              title={field.label} key={field.id}>
-              {field.label}
+              title={field.entries.label} key={field.id}>
+              {field.entries.label}
             </div>
-            <div className="node-details-labels-field-value truncate" title={field.value}>
-              <MatchedText text={field.value} match={matches.get(field.id)} />
+            <div className="node-details-labels-field-value truncate" title={field.entries.value}>
+              <MatchedText text={field.entries.value} match={matches.get(field.id)} />
             </div>
           </div>
         ))}

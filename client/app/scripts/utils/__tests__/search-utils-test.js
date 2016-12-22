@@ -30,9 +30,17 @@ describe('SearchUtils', () => {
         tables: [{
           id: 'metric1',
           rows: [{
-            id: 'row1',
-            label: 'Row 1',
-            value: 'Row Value 1'
+            entries: {
+              id: 'row1',
+              label: 'Row 1',
+              value: 'Row Value 1'
+            }
+          }, {
+            entries: {
+              id: 'row2',
+              label: 'Row 2',
+              value: 'Row Value 2'
+            }
           }]
         }],
       },

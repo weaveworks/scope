@@ -16,7 +16,7 @@ func TestPrefixTables(t *testing.T) {
 	}
 	nmd := report.MakeNode("foo1")
 
-	nmd = nmd.AddPrefixTable("foo_", want)
+	nmd = nmd.AddPrefixLabels("foo_", want)
 	have, truncationCount := nmd.ExtractTable(report.TableTemplate{Prefix: "foo_"})
 
 	if truncationCount != 0 {
@@ -62,7 +62,7 @@ func TestTruncation(t *testing.T) {
 
 	nmd := report.MakeNode("foo1")
 
-	nmd = nmd.AddPrefixTable("foo_", want)
+	nmd = nmd.AddPrefixLabels("foo_", want)
 	_, truncationCount := nmd.ExtractTable(report.TableTemplate{Prefix: "foo_"})
 
 	if truncationCount != wantTruncationCount {
