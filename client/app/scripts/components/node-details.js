@@ -1,3 +1,4 @@
+import debug from 'debug';
 import React from 'react';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
@@ -8,6 +9,7 @@ import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
 
 import MatchedText from './matched-text';
 import NodeDetailsControls from './node-details/node-details-controls';
+import NodeDetailsGenericTable from './node-details/node-details-generic-table';
 import NodeDetailsHealth from './node-details/node-details-health';
 import NodeDetailsInfo from './node-details/node-details-info';
 import NodeDetailsLabels from './node-details/node-details-labels';
@@ -15,13 +17,18 @@ import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import Warning from './warning';
 
+
+const logError = debug('scope:error');
+
 function getTruncationText(count) {
   return 'This section was too long to be handled efficiently and has been truncated'
   + ` (${count} extra entries not included). We are working to remove this limitation.`;
 }
 
-class NodeDetails extends React.Component {
+const TABLE_TYPE_PROPERTY_LIST = 'property-list';
+const TABLE_TYPE_GENERIC = 'multicolumn-table';
 
+class NodeDetails extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.handleClickClose = this.handleClickClose.bind(this);
@@ -214,9 +221,7 @@ class NodeDetails extends React.Component {
                       <Warning text={getTruncationText(table.truncationCount)} />
                     </span>}
                   </div>
-                  <NodeDetailsLabels
-                    rows={table.rows} controls={table.controls}
-                    matches={nodeMatches.get('tables')} />
+                  {this.renderTable(table)}
                 </div>
               );
             }
@@ -225,6 +230,29 @@ class NodeDetails extends React.Component {
         </div>
       </div>
     );
+  }
+
+  renderTable(table) {
+    const { nodeMatches = makeMap() } = this.props;
+    switch (table.type) {
+      case TABLE_TYPE_GENERIC:
+        return (
+          <NodeDetailsGenericTable
+            rows={table.rows} columns={table.columns}
+            matches={nodeMatches.get('tables')}
+          />
+        );
+      case TABLE_TYPE_PROPERTY_LIST:
+        return (
+          <NodeDetailsLabels
+            rows={table.rows} controls={table.controls}
+            matches={nodeMatches.get('tables')}
+          />
+        );
+      default:
+        logError(`Undefined type '${table.type}' for table ${table.id}`);
+        return null;
+    }
   }
 
   componentDidUpdate() {

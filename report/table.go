@@ -118,15 +118,24 @@ func (node Node) ExtractTable(template TableTemplate) (rows []Row, truncationCou
 }
 
 type Column struct {
-	ID        string `json:"id"`
-	Label     string `json:"label"`
-	DataType  string `json:"dataType"`
-	Alignment string `json:"alignment"`
+	ID       string `json:"id"`
+	Label    string `json:"label"`
+	DataType string `json:"dataType"`
 }
 
 type Row struct {
 	ID      string            `json:"id"`
 	Entries map[string]string `json:"entries"`
+}
+
+// Copy returns a copy of the Row.
+func (r Row) Copy() Row {
+	entriesCopy := make(map[string]string, len(r.Entries))
+	for key, value := range r.Entries {
+		entriesCopy[key] = value
+	}
+	r.Entries = entriesCopy
+	return r
 }
 
 // Table is the type for a table in the UI.
@@ -202,6 +211,11 @@ func (t TableTemplate) Merge(other TableTemplate) TableTemplate {
 		fixedRows = other.FixedRows
 	}
 
+	columns := t.Columns
+	if len(other.Columns) > len(columns) {
+		columns = other.Columns
+	}
+
 	// TODO: Refactor the merging logic, as mixing
 	// the types now might result in invalid tables.
 	return TableTemplate{
@@ -209,6 +223,7 @@ func (t TableTemplate) Merge(other TableTemplate) TableTemplate {
 		Label:     max(t.Label, other.Label),
 		Prefix:    max(t.Prefix, other.Prefix),
 		Type:      max(t.Type, other.Type),
+		Columns:   columns,
 		FixedRows: fixedRows,
 	}
 }
@@ -225,6 +240,7 @@ func (t TableTemplates) Tables(node Node) []Table {
 			ID:              template.ID,
 			Label:           template.Label,
 			Type:            template.Type,
+			Columns:         template.Columns,
 			Rows:            rows,
 			TruncationCount: truncationCount,
 		})

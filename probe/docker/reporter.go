@@ -48,7 +48,10 @@ var (
 	}
 
 	ContainerTableTemplates = report.TableTemplates{
-		ImageTableID: {ID: ImageTableID, Label: "Image",
+		ImageTableID: {
+			ID:    ImageTableID,
+			Label: "Image",
+			Type:  report.PropertyListType,
 			FixedRows: map[string]string{
 				ImageID:          "ID",
 				ImageName:        "Name",
@@ -56,12 +59,27 @@ var (
 				ImageVirtualSize: "Virtual Size",
 			},
 		},
-		LabelPrefix: {ID: LabelPrefix, Label: "Docker Labels", Prefix: LabelPrefix},
-		EnvPrefix:   {ID: EnvPrefix, Label: "Environment Variables", Prefix: EnvPrefix},
+		LabelPrefix: {
+			ID:     LabelPrefix,
+			Label:  "Docker Labels",
+			Type:   report.PropertyListType,
+			Prefix: LabelPrefix,
+		},
+		EnvPrefix: {
+			ID:     EnvPrefix,
+			Label:  "Environment Variables",
+			Type:   report.PropertyListType,
+			Prefix: EnvPrefix,
+		},
 	}
 
 	ContainerImageTableTemplates = report.TableTemplates{
-		ImageLabelPrefix: {ID: ImageLabelPrefix, Label: "Docker Labels", Prefix: ImageLabelPrefix},
+		ImageLabelPrefix: {
+			ID:     ImageLabelPrefix,
+			Label:  "Docker Labels",
+			Type:   report.PropertyListType,
+			Prefix: ImageLabelPrefix,
+		},
 	}
 
 	ContainerControls = []report.Control{
