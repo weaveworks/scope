@@ -115,7 +115,7 @@ func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process
 		return read+read6 > 0, nil
 	}
 
-	// It would be cool an "or" error combinator
+	// It would be cool to have an "or" error combinator
 	if errRead != nil {
 		return false, errRead
 	}
