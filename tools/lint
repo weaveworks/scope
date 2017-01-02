@@ -133,11 +133,13 @@ function lint {
 		return
 	fi
 
-	# Don't lint this script or static.go
+	# Don't lint this script, static.go or codecgen files
 	case "$(basename "${filename}")" in
 	lint) return;;
 	static.go) return;;
 	coverage.html) return;;
+	*.codecgen.go) return;;
+	*.generated.go) return;;
 	esac
 
 	case "$ext" in
