@@ -110,10 +110,12 @@ func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process
 			// try next process
 			continue
 		}
+		// Return after succeeding on any process
+		// (proc/PID/net/tcp and proc/PID/net/tcp6 are identical for all the processes in the same namespace)
 		return read+read6 > 0, nil
 	}
 
-	// would be cool to have an or operation between errors
+	// It would be cool an "or" error combinator
 	if errRead != nil {
 		return false, errRead
 	}
