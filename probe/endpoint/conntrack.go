@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
+	"io/ioutil"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -18,13 +18,13 @@ import (
 
 const (
 	// From https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt
-	// Check a tcp-related file for existence since we need tcp tracking
-	procFileToCheck = "sys/net/netfilter/nf_conntrack_tcp_timeout_close"
-	timeWait        = "TIME_WAIT"
-	tcpProto        = "tcp"
-	newType         = "[NEW]"
-	updateType      = "[UPDATE]"
-	destroyType     = "[DESTROY]"
+	eventsPath = "sys/net/netfilter/nf_conntrack_events"
+
+	timeWait    = "TIME_WAIT"
+	tcpProto    = "tcp"
+	newType     = "[NEW]"
+	updateType  = "[UPDATE]"
+	destroyType = "[DESTROY]"
 )
 
 var (
@@ -104,9 +104,16 @@ func newConntrackFlowWalker(useConntrack bool, procRoot string, bufferSize int, 
 
 // IsConntrackSupported returns true if conntrack is suppported by the kernel
 var IsConntrackSupported = func(procRoot string) error {
-	procFile := filepath.Join(procRoot, procFileToCheck)
-	_, err := os.Stat(procFile)
-	return err
+	// Make sure events are enabled, the conntrack CLI doesn't verify it
+	f := filepath.Join(procRoot, eventsPath)
+	contents, err := ioutil.ReadFile(f)
+	if err != nil {
+		return err
+	}
+	if string(contents) == "0" {
+		return fmt.Errorf("conntrack events (%s) are disabled", f)
+	}
+	return nil
 }
 
 func (c *conntrackWalker) loop() {
