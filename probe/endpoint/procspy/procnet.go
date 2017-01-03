@@ -16,9 +16,9 @@ type ProcNet struct {
 // NewProcNet gives a new ProcNet parser.
 func NewProcNet(b []byte) *ProcNet {
 	return &ProcNet{
-		b:           b,
-		c:           Connection{},
-		seen:        map[uint64]struct{}{},
+		b:    b,
+		c:    Connection{},
+		seen: map[uint64]struct{}{},
 	}
 }
 
