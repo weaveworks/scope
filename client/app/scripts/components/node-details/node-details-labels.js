@@ -2,8 +2,9 @@ import React from 'react';
 import { Map as makeMap } from 'immutable';
 import sortBy from 'lodash/sortBy';
 
-import MatchedText from '../matched-text';
+import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
 import NodeDetailsControlButton from './node-details-control-button';
+import MatchedText from '../matched-text';
 import ShowMore from '../show-more';
 
 const Controls = controls => (
@@ -17,15 +18,14 @@ export default class NodeDetailsLabels extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-    this.DEFAULT_LIMIT = 5;
     this.state = {
-      limit: this.DEFAULT_LIMIT,
+      limit: NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
     };
     this.handleLimitClick = this.handleLimitClick.bind(this);
   }
 
   handleLimitClick() {
-    const limit = this.state.limit ? 0 : this.DEFAULT_LIMIT;
+    const limit = this.state.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
     this.setState({limit});
   }
 
@@ -39,7 +39,7 @@ export default class NodeDetailsLabels extends React.Component {
       const hasNotShownMatch = rows.filter((row, index) => index >= this.state.limit
         && matches.has(row.id)).length > 0;
       if (!hasNotShownMatch) {
-        notShown = rows.length - this.DEFAULT_LIMIT;
+        notShown = rows.length - NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
         rows = rows.slice(0, this.state.limit);
       }
     }

@@ -5,6 +5,7 @@ import { Map as makeMap } from 'immutable';
 
 import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
+import { isGenericTable, isPropertyList } from '../utils/node-details-utils';
 import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
 
 import MatchedText from './matched-text';
@@ -24,9 +25,6 @@ function getTruncationText(count) {
   return 'This section was too long to be handled efficiently and has been truncated'
   + ` (${count} extra entries not included). We are working to remove this limitation.`;
 }
-
-const TABLE_TYPE_PROPERTY_LIST = 'property-list';
-const TABLE_TYPE_GENERIC = 'multicolumn-table';
 
 class NodeDetails extends React.Component {
   constructor(props, context) {
@@ -215,7 +213,7 @@ class NodeDetails extends React.Component {
               return (
                 <div className="node-details-content-section" key={table.id}>
                   <div className="node-details-content-section-header">
-                    {table.label}
+                    {table.label.length > 0 && table.label}
                     {table.truncationCount > 0 && <span
                       className="node-details-content-section-header-warning">
                       <Warning text={getTruncationText(table.truncationCount)} />
@@ -234,25 +232,25 @@ class NodeDetails extends React.Component {
 
   renderTable(table) {
     const { nodeMatches = makeMap() } = this.props;
-    switch (table.type) {
-      case TABLE_TYPE_GENERIC:
-        return (
-          <NodeDetailsGenericTable
-            rows={table.rows} columns={table.columns}
-            matches={nodeMatches.get('tables')}
-          />
-        );
-      case TABLE_TYPE_PROPERTY_LIST:
-        return (
-          <NodeDetailsLabels
-            rows={table.rows} controls={table.controls}
-            matches={nodeMatches.get('tables')}
-          />
-        );
-      default:
-        logError(`Undefined type '${table.type}' for table ${table.id}`);
-        return null;
+
+    if (isGenericTable(table)) {
+      return (
+        <NodeDetailsGenericTable
+          rows={table.rows} columns={table.columns}
+          matches={nodeMatches.get('tables')}
+        />
+      );
+    } else if (isPropertyList(table)) {
+      return (
+        <NodeDetailsLabels
+          rows={table.rows} controls={table.controls}
+          matches={nodeMatches.get('labels')}
+        />
+      );
     }
+
+    logError(`Undefined type '${table.type}' for table ${table.id}`);
+    return null;
   }
 
   componentDidUpdate() {

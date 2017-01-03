@@ -2,59 +2,15 @@ import React from 'react';
 import classNames from 'classnames';
 import { find, get, union, sortBy, groupBy, concat } from 'lodash';
 
+import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
+
 import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
+import NodeDetailsTableHeaders from './node-details-table-headers';
 import { ipToPaddedString } from '../../utils/string-utils';
-
-
-function isNumber(data) {
-  return data.dataType && data.dataType === 'number';
-}
-
-
-function isIP(data) {
-  return data.dataType && data.dataType === 'ip';
-}
-
-
-const CW = {
-  XS: '32px',
-  S: '50px',
-  M: '70px',
-  L: '120px',
-  XL: '140px',
-  XXL: '170px',
-};
-
-
-const XS_LABEL = {
-  count: '#',
-  // TODO: consider changing the name of this field on the BE
-  container: '#',
-};
-
-
-const COLUMN_WIDTHS = {
-  count: CW.XS,
-  container: CW.XS,
-  docker_container_created: CW.XXL,
-  docker_container_restart_count: CW.M,
-  docker_container_state_human: CW.XXL,
-  docker_container_uptime: '85px',
-  docker_cpu_total_usage: CW.M,
-  docker_memory_usage: CW.M,
-  open_files_count: CW.M,
-  pid: CW.S,
-  port: CW.S,
-  ppid: CW.S,
-  process_cpu_usage_percent: CW.M,
-  process_memory_usage_bytes: CW.M,
-  threads: CW.M,
-
-  // e.g. details panel > pods
-  kubernetes_ip: CW.L,
-  kubernetes_state: CW.M,
-};
+import {
+  isIP, isNumber, defaultSortDesc, getTableColumnsStyles
+} from '../../utils/node-details-utils';
 
 
 function getDefaultSortedBy(columns, nodes) {
@@ -158,104 +114,32 @@ function getSortedNodes(nodes, sortedByHeader, sortedDesc) {
 }
 
 
-function getColumnWidth(headers, h) {
-  //
-  // More beauty hacking, ports and counts can only get so big, free up WS for other longer
-  // fields like IPs!
-  //
-  return COLUMN_WIDTHS[h.id];
-}
-
-
-function getColumnsStyles(headers) {
-  return headers.map((h, i) => ({
-    width: getColumnWidth(headers, h, i),
-    textAlign: h.dataType === 'number' ? 'right' : 'left',
-  }));
-}
-
-
-function defaultSortDesc(header) {
-  return header && header.dataType === 'number';
-}
-
-
 export default class NodeDetailsTable extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-    this.DEFAULT_LIMIT = 5;
     this.state = {
-      limit: props.limit || this.DEFAULT_LIMIT,
+      limit: props.limit || NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
       sortedDesc: this.props.sortedDesc,
       sortedBy: this.props.sortedBy
     };
     this.handleLimitClick = this.handleLimitClick.bind(this);
+    this.updateSorted = this.updateSorted.bind(this);
   }
 
-  handleHeaderClick(ev, headerId, currentSortedBy, currentSortedDesc) {
-    ev.preventDefault();
-    const header = this.getColumnHeaders().find(h => h.id === headerId);
-    const sortedBy = header.id;
-    const sortedDesc = header.id === currentSortedBy
-      ? !currentSortedDesc : defaultSortDesc(header);
-    this.setState({sortedBy, sortedDesc});
+  updateSorted(sortedBy, sortedDesc) {
+    this.setState({ sortedBy, sortedDesc });
     this.props.onSortChange(sortedBy, sortedDesc);
   }
 
   handleLimitClick() {
-    const limit = this.state.limit ? 0 : this.DEFAULT_LIMIT;
-    this.setState({limit});
+    const limit = this.state.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
+    this.setState({ limit });
   }
 
   getColumnHeaders() {
     const columns = this.props.columns || [];
     return [{id: 'label', label: this.props.label}].concat(columns);
-  }
-
-  renderHeaders(sortedBy, sortedDesc) {
-    if (!this.props.nodes || this.props.nodes.length === 0) {
-      return null;
-    }
-
-    const headers = this.getColumnHeaders();
-    const colStyles = getColumnsStyles(headers);
-
-    return (
-      <tr>
-        {headers.map((header, i) => {
-          const headerClasses = ['node-details-table-header', 'truncate'];
-          const onHeaderClick = (ev) => {
-            this.handleHeaderClick(ev, header.id, sortedBy, sortedDesc);
-          };
-          // sort by first metric by default
-          const isSorted = header.id === sortedBy;
-          const isSortedDesc = isSorted && sortedDesc;
-          const isSortedAsc = isSorted && !isSortedDesc;
-
-          if (isSorted) {
-            headerClasses.push('node-details-table-header-sorted');
-          }
-
-          const style = colStyles[i];
-          const label = (style.width === CW.XS && XS_LABEL[header.id]) ?
-            XS_LABEL[header.id] :
-            header.label;
-
-          return (
-            <td
-              className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
-              title={header.label} key={header.id}>
-              {isSortedAsc
-                && <span className="node-details-table-header-sorter fa fa-caret-up" />}
-              {isSortedDesc
-                && <span className="node-details-table-header-sorter fa fa-caret-down" />}
-              {label}
-            </td>
-          );
-        })}
-      </tr>
-    );
   }
 
   render() {
@@ -264,9 +148,7 @@ export default class NodeDetailsTable extends React.Component {
 
     const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
     const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
-    const sortedDesc = this.state.sortedDesc !== null ?
-      this.state.sortedDesc :
-      defaultSortDesc(sortedByHeader);
+    const sortedDesc = this.state.sortedDesc || defaultSortDesc(sortedByHeader);
 
     let nodes = getSortedNodes(this.props.nodes, sortedByHeader, sortedDesc);
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
@@ -277,13 +159,20 @@ export default class NodeDetailsTable extends React.Component {
     }
 
     const className = classNames('node-details-table-wrapper-wrapper', this.props.className);
+    const headers = this.getColumnHeaders();
+    const styles = getTableColumnsStyles(headers);
 
     return (
       <div className={className} style={this.props.style}>
         <div className="node-details-table-wrapper">
           <table className="node-details-table">
             <thead>
-              {this.renderHeaders(sortedBy, sortedDesc)}
+              {this.props.nodes && this.props.nodes.length > 0 && <NodeDetailsTableHeaders
+                headers={headers}
+                sortedBy={sortedBy}
+                sortedDesc={sortedDesc}
+                onClick={this.updateSorted}
+              />}
             </thead>
             <tbody
               style={this.props.tbodyStyle}
@@ -296,7 +185,7 @@ export default class NodeDetailsTable extends React.Component {
                   selected={this.props.selectedNodeId === node.id}
                   node={node}
                   nodeIdKey={nodeIdKey}
-                  colStyles={getColumnsStyles(this.getColumnHeaders())}
+                  colStyles={styles}
                   columns={columns}
                   onClick={onClickRow}
                   onMouseLeaveRow={onMouseLeaveRow}

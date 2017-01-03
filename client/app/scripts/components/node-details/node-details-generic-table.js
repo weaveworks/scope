@@ -2,28 +2,25 @@ import React from 'react';
 import { Map as makeMap } from 'immutable';
 import { sortBy } from 'lodash';
 
+import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
+import {
+  isNumber, getTableColumnsStyles, genericTableEntryKey
+} from '../../utils/node-details-utils';
+import NodeDetailsTableHeaders from './node-details-table-headers';
 import MatchedText from '../matched-text';
 import ShowMore from '../show-more';
 
 
-function columnStyle(column) {
-  return {
-    textAlign: column.dataType === 'number' ? 'right' : 'left',
-    paddingRight: '10px',
-    maxWidth: '140px'
-  };
-}
-
-function sortedRows(rows, sortedByColumn, sortedDesc) {
-  const orderedRows = sortBy(rows, row => row.id);
-  const sorted = sortBy(orderedRows, (row) => {
-    let value = row.entries[sortedByColumn.id];
-    if (sortedByColumn.dataType === 'number') {
+function sortedRows(rows, columns, sortedBy, sortedDesc) {
+  const column = columns.find(c => c.id === sortedBy);
+  const sorted = sortBy(rows, (row) => {
+    let value = row.entries[sortedBy];
+    if (isNumber(column)) {
       value = parseFloat(value);
     }
     return value;
   });
-  if (!sortedDesc) {
+  if (sortedDesc) {
     sorted.reverse();
   }
   return sorted;
@@ -32,85 +29,68 @@ function sortedRows(rows, sortedByColumn, sortedDesc) {
 export default class NodeDetailsGenericTable extends React.Component {
   constructor(props, context) {
     super(props, context);
-    this.DEFAULT_LIMIT = 5;
     this.state = {
-      limit: this.DEFAULT_LIMIT,
-      sortedByColumn: props.columns[0],
+      limit: NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
+      sortedBy: props.columns[0].id,
       sortedDesc: true
     };
     this.handleLimitClick = this.handleLimitClick.bind(this);
+    this.updateSorted = this.updateSorted.bind(this);
   }
 
-  handleHeaderClick(ev, column) {
-    ev.preventDefault();
-    this.setState({
-      sortedByColumn: column,
-      sortedDesc: this.state.sortedByColumn.id === column.id
-        ? !this.state.sortedDesc : true
-    });
+  updateSorted(sortedBy, sortedDesc) {
+    this.setState({ sortedBy, sortedDesc });
   }
 
   handleLimitClick() {
-    const limit = this.state.limit ? 0 : this.DEFAULT_LIMIT;
-    this.setState({limit});
+    this.setState({
+      limit: this.state.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT
+    });
   }
 
   render() {
-    const { sortedByColumn, sortedDesc } = this.state;
+    const { sortedBy, sortedDesc } = this.state;
     const { columns, matches = makeMap() } = this.props;
-    let rows = this.props.rows;
-    let notShown = 0;
-    const limited = rows && this.state.limit > 0 && rows.length > this.state.limit;
     const expanded = this.state.limit === 0;
-    if (rows && limited) {
-      const hasNotShownMatch = rows.filter((row, index) => index >= this.state.limit
-        && matches.has(row.id)).length > 0;
-      if (!hasNotShownMatch) {
-        notShown = rows.length - this.DEFAULT_LIMIT;
+
+    // Stabilize the order of rows
+    let rows = sortBy(this.props.rows || [], row => row.id);
+    let notShown = 0;
+
+    // If there are rows that would be hidden behind 'show more', keep them
+    // expanded if any of them match the search query; otherwise hide them.
+    if (this.state.limit > 0 && rows.length > this.state.limit) {
+      const hasHiddenMatch = rows.slice(this.state.limit).some(row =>
+        columns.some(column => matches.has(genericTableEntryKey(row, column)))
+      );
+      if (!hasHiddenMatch) {
+        notShown = rows.length - NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
         rows = rows.slice(0, this.state.limit);
       }
     }
 
+    const styles = getTableColumnsStyles(columns);
     return (
       <div className="node-details-generic-table">
         <table>
           <thead>
-            <tr>
-              {columns.map((column) => {
-                const onHeaderClick = (ev) => {
-                  this.handleHeaderClick(ev, column);
-                };
-                const isSorted = column.id === this.state.sortedByColumn.id;
-                const isSortedDesc = isSorted && this.state.sortedDesc;
-                const isSortedAsc = isSorted && !isSortedDesc;
-                const style = Object.assign(columnStyle(column), {
-                  cursor: 'pointer',
-                  fontSize: '11px'
-                });
-                return (
-                  <th
-                    className="node-details-generic-table-header"
-                    key={column.id} style={style} onClick={onHeaderClick}>
-                    {isSortedAsc
-                      && <span className="node-details-table-header-sorter fa fa-caret-up" />}
-                    {isSortedDesc
-                      && <span className="node-details-table-header-sorter fa fa-caret-down" />}
-                    {column.label}
-                  </th>
-                );
-              })}
-            </tr>
+            <NodeDetailsTableHeaders
+              headers={columns}
+              sortedBy={sortedBy}
+              sortedDesc={sortedDesc}
+              onClick={this.updateSorted}
+            />
           </thead>
           <tbody>
-            {sortedRows(rows, sortedByColumn, sortedDesc).map(row => (
+            {sortedRows(rows, columns, sortedBy, sortedDesc).map(row => (
               <tr className="node-details-generic-table-row" key={row.id}>
-                {columns.map((column) => {
+                {columns.map((column, index) => {
+                  const match = matches.get(genericTableEntryKey(row, column));
                   const value = row.entries[column.id];
-                  const match = matches.get(column.id);
                   return (
                     <td
-                      className="node-details-generic-table-field-value truncate"
-                      title={value} key={column.id} style={columnStyle(column)}>
+                      className="node-details-generic-table-value truncate"
+                      title={value} key={column.id} style={styles[index]}>
                       <MatchedText text={value} match={match} />
                     </td>
                   );
