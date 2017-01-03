@@ -9,17 +9,15 @@ import (
 type ProcNet struct {
 	b                       []byte
 	c                       Connection
-	wantedState             uint
 	bytesLocal, bytesRemote [16]byte
 	seen                    map[uint64]struct{}
 }
 
 // NewProcNet gives a new ProcNet parser.
-func NewProcNet(b []byte, wantedState uint) *ProcNet {
+func NewProcNet(b []byte) *ProcNet {
 	return &ProcNet{
 		b:           b,
 		c:           Connection{},
-		wantedState: wantedState,
 		seen:        map[uint64]struct{}{},
 	}
 }
@@ -40,16 +38,12 @@ again:
 	}
 
 	var (
-		local, remote, state, inode []byte
+		local, remote, inode []byte
 	)
 	_, b = nextField(b) // 'sl' column
 	local, b = nextField(b)
 	remote, b = nextField(b)
-	state, b = nextField(b)
-	if parseHex(state) != p.wantedState {
-		p.b = nextLine(b)
-		goto again
-	}
+	_, b = nextField(b) // 'st' column
 	_, b = nextField(b) // 'tx_queue' column
 	_, b = nextField(b) // 'rx_queue' column
 	_, b = nextField(b) // 'tr' column

@@ -7,10 +7,6 @@ import (
 	"net"
 )
 
-const (
-	tcpEstablished = 1 // according to /include/net/tcp_states.h
-)
-
 // Connection is a (TCP) connection. The Proc struct might not be filled in.
 type Connection struct {
 	Transport     string

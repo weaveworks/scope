@@ -61,7 +61,7 @@ func (s *linuxScanner) Connections(processes bool) (ConnIter, error) {
 	}
 
 	return &pnConnIter{
-		pn:    NewProcNet(buf.Bytes(), tcpEstablished),
+		pn:    NewProcNet(buf.Bytes()),
 		buf:   buf,
 		procs: procs,
 	}, nil
