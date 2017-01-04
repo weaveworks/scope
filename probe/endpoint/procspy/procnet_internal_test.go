@@ -59,7 +59,7 @@ func TestProcNet(t *testing.T) {
 
 func TestTransport6(t *testing.T) {
 	// Abridged copy of my /proc/net/tcp6
-	testString := ` sl  local_address                         remote_address                        st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout Inode
+	testString := `  sl  local_address                         remote_address                        st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout Inode
    0: 00000000000000000000000000000000:19C8 00000000000000000000000000000000:0000 01 00000000:00000000 00:00000000 00000000     0        0 23661201 1 ffff880103fb4800 100 0 0 10 -1
    8: 4500032000BE692B8AE31EBD919D9D10:D61C 5014002A080805400000000015100000:01BB 01 00000000:00000000 02:00000045 00000000  1000        0 36856710 2 ffff88010b796080 22 4 30 8 7
 `

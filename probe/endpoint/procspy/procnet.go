@@ -5,6 +5,9 @@ import (
 	"net"
 )
 
+// Used to check whether we are parsing a header line
+var slHeader = []byte("sl")
+
 // ProcNet is an iterator to parse /proc/net/tcp{,6} files.
 type ProcNet struct {
 	b                       []byte
@@ -31,16 +34,16 @@ again:
 	}
 	b := p.b
 
-	if p.b[2] == 's' {
+	var (
+		sl, local, remote, inode []byte
+	)
+
+	sl, b = nextField(b) // 'sl' column
+	if bytes.Equal(sl, slHeader) {
 		// Skip header
 		p.b = nextLine(b)
 		goto again
 	}
-
-	var (
-		local, remote, inode []byte
-	)
-	_, b = nextField(b) // 'sl' column
 	local, b = nextField(b)
 	remote, b = nextField(b)
 	_, b = nextField(b) // 'st' column
