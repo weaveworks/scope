@@ -1,10 +1,13 @@
 import React from 'react';
+import sortBy from 'lodash/sortBy';
 import { Map as makeMap } from 'immutable';
-import { sortBy } from 'lodash';
 
 import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
+
 import {
-  isNumber, getTableColumnsStyles, genericTableEntryKey
+  isNumber,
+  getTableColumnsStyles,
+  genericTableEntryKey
 } from '../../utils/node-details-utils';
 import NodeDetailsTableHeaders from './node-details-table-headers';
 import MatchedText from '../matched-text';
@@ -31,7 +34,7 @@ export default class NodeDetailsGenericTable extends React.Component {
     super(props, context);
     this.state = {
       limit: NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
-      sortedBy: props.columns[0].id,
+      sortedBy: props.columns && props.columns[0].id,
       sortedDesc: true
     };
     this.handleLimitClick = this.handleLimitClick.bind(this);
@@ -53,8 +56,7 @@ export default class NodeDetailsGenericTable extends React.Component {
     const { columns, matches = makeMap() } = this.props;
     const expanded = this.state.limit === 0;
 
-    // Stabilize the order of rows
-    let rows = sortBy(this.props.rows || [], row => row.id);
+    let rows = this.props.rows || [];
     let notShown = 0;
 
     // If there are rows that would be hidden behind 'show more', keep them

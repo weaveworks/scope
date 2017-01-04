@@ -276,7 +276,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 		}
 		nodeID := report.MakeContainerImageNodeID(imageID)
 		node := report.MakeNodeWith(nodeID, latests)
-		node = node.AddPrefixLabels(ImageLabelPrefix, image.Labels)
+		node = node.AddPrefixPropertyList(ImageLabelPrefix, image.Labels)
 		result.AddNode(node)
 	})
 

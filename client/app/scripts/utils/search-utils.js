@@ -153,7 +153,7 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
       (node.get('tables') || []).filter(isPropertyList).forEach((propertyList) => {
         (propertyList.get('rows') || []).forEach((row) => {
           const entries = row.get('entries');
-          const keyPath = [nodeId, 'labels', row.get('id')];
+          const keyPath = [nodeId, 'property-lists', row.get('id')];
           nodeMatches = findNodeMatch(nodeMatches, keyPath, entries.get('value'),
             query, prefix, entries.get('label'));
         });

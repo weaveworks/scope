@@ -9,11 +9,11 @@ export function isPropertyList(table) {
 }
 
 export function isNumber(data) {
-  return data.dataType && data.dataType === 'number';
+  return data && data.dataType && data.dataType === 'number';
 }
 
 export function isIP(data) {
-  return data.dataType && data.dataType === 'ip';
+  return data && data.dataType && data.dataType === 'ip';
 }
 
 export function genericTableEntryKey(row, column) {

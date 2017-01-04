@@ -8,14 +8,13 @@ import MatchedText from '../matched-text';
 import ShowMore from '../show-more';
 
 const Controls = controls => (
-  <div className="node-details-labels-controls">
+  <div className="node-details-property-list-controls">
     {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
       nodeId={control.nodeId} control={control} key={control.id} />)}
   </div>
 );
 
-export default class NodeDetailsLabels extends React.Component {
-
+export default class NodeDetailsPropertyList extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -45,16 +44,18 @@ export default class NodeDetailsLabels extends React.Component {
     }
 
     return (
-      <div className="node-details-labels">
+      <div className="node-details-property-list">
         {controls && Controls(controls)}
         {rows.map(field => (
-          <div className="node-details-labels-field" key={field.id}>
+          <div className="node-details-property-list-field" key={field.id}>
             <div
-              className="node-details-labels-field-label truncate"
+              className="node-details-property-list-field-label truncate"
               title={field.entries.label} key={field.id}>
               {field.entries.label}
             </div>
-            <div className="node-details-labels-field-value truncate" title={field.entries.value}>
+            <div
+              className="node-details-property-list-field-value truncate"
+              title={field.entries.value}>
               <MatchedText text={field.entries.value} match={matches.get(field.id)} />
             </div>
           </div>

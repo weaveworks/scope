@@ -11,15 +11,15 @@ import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
 import MatchedText from './matched-text';
 import NodeDetailsControls from './node-details/node-details-controls';
 import NodeDetailsGenericTable from './node-details/node-details-generic-table';
+import NodeDetailsPropertyList from './node-details/node-details-property-list';
 import NodeDetailsHealth from './node-details/node-details-health';
 import NodeDetailsInfo from './node-details/node-details-info';
-import NodeDetailsLabels from './node-details/node-details-labels';
 import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import Warning from './warning';
 
 
-const logError = debug('scope:error');
+const log = debug('scope:node-details');
 
 function getTruncationText(count) {
   return 'This section was too long to be handled efficiently and has been truncated'
@@ -213,7 +213,7 @@ class NodeDetails extends React.Component {
               return (
                 <div className="node-details-content-section" key={table.id}>
                   <div className="node-details-content-section-header">
-                    {table.label.length > 0 && table.label}
+                    {table.label && table.label.length > 0 && table.label}
                     {table.truncationCount > 0 && <span
                       className="node-details-content-section-header-warning">
                       <Warning text={getTruncationText(table.truncationCount)} />
@@ -242,14 +242,14 @@ class NodeDetails extends React.Component {
       );
     } else if (isPropertyList(table)) {
       return (
-        <NodeDetailsLabels
+        <NodeDetailsPropertyList
           rows={table.rows} controls={table.controls}
-          matches={nodeMatches.get('labels')}
+          matches={nodeMatches.get('property-lists')}
         />
       );
     }
 
-    logError(`Undefined type '${table.type}' for table ${table.id}`);
+    log(`Undefined type '${table.type}' for table ${table.id}`);
     return null;
   }
 

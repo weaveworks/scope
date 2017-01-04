@@ -13,98 +13,135 @@ import (
 // MaxTableRows sets the limit on the table size to render
 // TODO: this won't be needed once we send reports incrementally
 const (
-	MaxTableRows          = 20
-	TruncationCountPrefix = "table_truncation_count_"
-	MulticolumnTableType  = "multicolumn-table"
-	PropertyListType      = "property-list"
+	MaxTableRows           = 20
+	TableEntryKeySeparator = "___"
+	TruncationCountPrefix  = "table_truncation_count_"
+	MulticolumnTableType   = "multicolumn-table"
+	PropertyListType       = "property-list"
 )
 
-// AddPrefixTable appends arbitrary rows to the Node, returning a new node.
-func (node Node) AddPrefixTable(prefix string, rows []Row) Node {
-	count := 0
+// WithTableTruncationInformation appends table truncation info to the node, returning the new node.
+func (node Node) WithTableTruncationInformation(prefix string, totalRowsCount int) Node {
+	if totalRowsCount > MaxTableRows {
+		truncationCount := fmt.Sprintf("%d", totalRowsCount-MaxTableRows)
+		node = node.WithLatest(TruncationCountPrefix+prefix, mtime.Now(), truncationCount)
+	}
+	return node
+}
+
+// AddPrefixMulticolumnTable appends arbitrary rows to the Node, returning a new node.
+func (node Node) AddPrefixMulticolumnTable(prefix string, rows []Row) Node {
+	addedRowsCount := 0
 	for _, row := range rows {
-		if count >= MaxTableRows {
+		if addedRowsCount >= MaxTableRows {
 			break
 		}
-		// TODO: Figure a more natural way of storing rows
-		for column, value := range row.Entries {
-			key := fmt.Sprintf("%s %s", row.ID, column)
+		// Add all the row values as separate entries
+		for columnID, value := range row.Entries {
+			key := strings.Join([]string{row.ID, columnID}, TableEntryKeySeparator)
 			node = node.WithLatest(prefix+key, mtime.Now(), value)
 		}
-		count++
+		addedRowsCount++
 	}
-	if len(rows) > MaxTableRows {
-		truncationCount := fmt.Sprintf("%d", len(rows)-MaxTableRows)
-		node = node.WithLatest(TruncationCountPrefix+prefix, mtime.Now(), truncationCount)
-	}
-	return node
+	return node.WithTableTruncationInformation(prefix, len(rows))
 }
 
-// AddPrefixLabels appends arbitrary key-value pairs to the Node, returning a new node.
-func (node Node) AddPrefixLabels(prefix string, labels map[string]string) Node {
-	count := 0
-	for key, value := range labels {
-		if count >= MaxTableRows {
+// AddPrefixPropertyList appends arbitrary key-value pairs to the Node, returning a new node.
+func (node Node) AddPrefixPropertyList(prefix string, propertyList map[string]string) Node {
+	addedPropertiesCount := 0
+	for label, value := range propertyList {
+		if addedPropertiesCount >= MaxTableRows {
 			break
 		}
-		node = node.WithLatest(prefix+key, mtime.Now(), value)
-		count++
+		node = node.WithLatest(prefix+label, mtime.Now(), value)
+		addedPropertiesCount++
 	}
-	if len(labels) > MaxTableRows {
-		truncationCount := fmt.Sprintf("%d", len(labels)-MaxTableRows)
-		node = node.WithLatest(TruncationCountPrefix+prefix, mtime.Now(), truncationCount)
-	}
-	return node
+	return node.WithTableTruncationInformation(prefix, len(propertyList))
 }
 
-// ExtractTable returns the rows to build a table from this node
+// WithoutPrefix returns the string with trimmed prefix and a
+// boolean information of whether that prefix was really there.
+// NOTE: Consider moving this function to utilities.
+func WithoutPrefix(s string, prefix string) (string, bool) {
+	return strings.TrimPrefix(s, prefix), len(prefix) > 0 && strings.HasPrefix(s, prefix)
+}
+
+// ExtractMulticolumnTable returns the rows to build a multicolumn table from this node
+func (node Node) ExtractMulticolumnTable(template TableTemplate) (rows []Row) {
+	rowsMapByID := map[string]Row{}
+
+	// Itearate through the whole of our map to extract all the values with the key
+	// with the given prefix. Since multicolumn tables don't support fixed rows (yet),
+	// all the table values will be stored under the table prefix.
+	// NOTE: It would be nice to optimize this part by only iterating through the keys
+	// with the given prefix. If it is possible to traverse the keys in the Latest map
+	// in a sorted order, then having LowerBoundEntry(key) and UpperBoundEntry(key)
+	// methods should be enough to implement ForEachWithPrefix(prefix) straightforwardly.
+	node.Latest.ForEach(func(key string, _ time.Time, value string) {
+		if keyWithoutPrefix, ok := WithoutPrefix(key, template.Prefix); ok {
+			ids := strings.Split(keyWithoutPrefix, TableEntryKeySeparator)
+			rowID, columnID := ids[0], ids[1]
+			// If the row with the given ID doesn't yet exist, we create an empty one.
+			if _, ok := rowsMapByID[rowID]; !ok {
+				rowsMapByID[rowID] = Row{
+					ID:      rowID,
+					Entries: map[string]string{},
+				}
+			}
+			// At this point, the row with that ID always exists, so we just update the value.
+			rowsMapByID[rowID].Entries[columnID] = value
+		}
+	})
+
+	// Gather a list of rows.
+	rows = make([]Row, 0, len(rowsMapByID))
+	for _, row := range rowsMapByID {
+		rows = append(rows, row)
+	}
+
+	// Return the rows sorted by ID.
+	sort.Sort(rowsByID(rows))
+	return rows
+}
+
+// ExtractPropertyList returns the rows to build a property list from this node
+func (node Node) ExtractPropertyList(template TableTemplate) (rows []Row) {
+	valuesMapByLabel := map[string]string{}
+
+	// Itearate through the whole of our map to extract all the values with the key
+	// with the given prefix as well as the keys corresponding to the fixed table rows.
+	node.Latest.ForEach(func(key string, _ time.Time, value string) {
+		if label, ok := template.FixedRows[key]; ok {
+			valuesMapByLabel[label] = value
+		} else if label, ok := WithoutPrefix(key, template.Prefix); ok {
+			valuesMapByLabel[label] = value
+		}
+	})
+
+	// Gather a label-value formatted list of rows.
+	rows = make([]Row, 0, len(valuesMapByLabel))
+	for label, value := range valuesMapByLabel {
+		rows = append(rows, Row{
+			ID: "label_" + label,
+			Entries: map[string]string{
+				"label": label,
+				"value": value,
+			},
+		})
+	}
+
+	// Return the rows sorted by ID.
+	sort.Sort(rowsByID(rows))
+	return rows
+}
+
+// ExtractTable returns the rows to build either a property list or a generic table from this node
 func (node Node) ExtractTable(template TableTemplate) (rows []Row, truncationCount int) {
-	rows = []Row{}
 	switch template.Type {
 	case MulticolumnTableType:
-		keyRows := map[string]Row{}
-		node.Latest.ForEach(func(key string, _ time.Time, value string) {
-			if len(template.Prefix) > 0 && strings.HasPrefix(key, template.Prefix) {
-				rowID, column := "", ""
-				fmt.Sscanf(key[len(template.Prefix):], "%s %s", &rowID, &column)
-				if _, ok := keyRows[rowID]; !ok {
-					keyRows[rowID] = Row{
-						ID:      rowID,
-						Entries: map[string]string{},
-					}
-				}
-				keyRows[rowID].Entries[column] = value
-			}
-		})
-		for _, row := range keyRows {
-			rows = append(rows, row)
-		}
-	// By default assume it's a property list (for backward compatibility)
-	default:
-		keyValues := map[string]string{}
-		node.Latest.ForEach(func(key string, _ time.Time, value string) {
-			if label, ok := template.FixedRows[key]; ok {
-				keyValues[label] = value
-			}
-			if len(template.Prefix) > 0 && strings.HasPrefix(key, template.Prefix) {
-				label := key[len(template.Prefix):]
-				keyValues[label] = value
-			}
-		})
-		labels := make([]string, 0, len(rows))
-		for label := range keyValues {
-			labels = append(labels, label)
-		}
-		sort.Strings(labels)
-		for _, label := range labels {
-			rows = append(rows, Row{
-				ID: "label_" + label,
-				Entries: map[string]string{
-					"label": label,
-					"value": keyValues[label],
-				},
-			})
-		}
+		rows = node.ExtractMulticolumnTable(template)
+	default: // By default assume it's a property list (for backward compatibility).
+		rows = node.ExtractPropertyList(template)
 	}
 
 	truncationCount = 0
@@ -117,16 +154,24 @@ func (node Node) ExtractTable(template TableTemplate) (rows []Row, truncationCou
 	return rows, truncationCount
 }
 
+// Column is the type for multi-column tables in the UI.
 type Column struct {
 	ID       string `json:"id"`
 	Label    string `json:"label"`
 	DataType string `json:"dataType"`
 }
 
+// Row is the type that holds the table data for the UI. Entries map from column ID to cell value.
 type Row struct {
 	ID      string            `json:"id"`
 	Entries map[string]string `json:"entries"`
 }
+
+type rowsByID []Row
+
+func (t rowsByID) Len() int           { return len(t) }
+func (t rowsByID) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t rowsByID) Less(i, j int) bool { return t[i].ID < t[j].ID }
 
 // Copy returns a copy of the Row.
 func (r Row) Copy() Row {
@@ -206,18 +251,18 @@ func (t TableTemplate) Merge(other TableTemplate) TableTemplate {
 		return s2
 	}
 
+	// NOTE: Consider actually merging the columns and fixed rows.
 	fixedRows := t.FixedRows
 	if len(other.FixedRows) > len(fixedRows) {
 		fixedRows = other.FixedRows
 	}
-
 	columns := t.Columns
 	if len(other.Columns) > len(columns) {
 		columns = other.Columns
 	}
 
-	// TODO: Refactor the merging logic, as mixing
-	// the types now might result in invalid tables.
+	// TODO: Refactor the merging logic, as mixing the types now might result in
+	// invalid tables. Maybe we should return an error if the types are different?
 	return TableTemplate{
 		ID:        max(t.ID, other.ID),
 		Label:     max(t.Label, other.Label),
@@ -236,11 +281,17 @@ func (t TableTemplates) Tables(node Node) []Table {
 	var result []Table
 	for _, template := range t {
 		rows, truncationCount := node.ExtractTable(template)
+		// Extract the type from the template; default to
+		// property list for backwards-compatibility.
+		tableType := template.Type
+		if tableType == "" {
+			tableType = PropertyListType
+		}
 		result = append(result, Table{
 			ID:              template.ID,
 			Label:           template.Label,
-			Type:            template.Type,
 			Columns:         template.Columns,
+			Type:            tableType,
 			Rows:            rows,
 			TruncationCount: truncationCount,
 		})

@@ -116,30 +116,31 @@ var (
 				WeavePluginDriver: "Driver Name",
 			},
 		},
-		WeaveConnectionsTablePrefix: {
-			ID:     WeaveConnectionsTablePrefix,
-			Label:  "Connections (old)",
-			Type:   report.PropertyListType,
-			Prefix: WeaveConnectionsTablePrefix,
-		},
 		WeaveConnectionsMulticolumnTablePrefix: {
 			ID:     WeaveConnectionsMulticolumnTablePrefix,
 			Type:   report.MulticolumnTableType,
 			Prefix: WeaveConnectionsMulticolumnTablePrefix,
 			Columns: []report.Column{
-				report.Column{
+				{
 					ID:    WeaveConnectionsConnection,
 					Label: "Connections",
 				},
-				report.Column{
+				{
 					ID:    WeaveConnectionsState,
 					Label: "State",
 				},
-				report.Column{
+				{
 					ID:    WeaveConnectionsInfo,
 					Label: "Info",
 				},
 			},
+		},
+		// Kept for backward-compatibility.
+		WeaveConnectionsTablePrefix: {
+			ID:     WeaveConnectionsTablePrefix,
+			Label:  "Connections",
+			Type:   report.PropertyListType,
+			Prefix: WeaveConnectionsTablePrefix,
 		},
 	}
 )
@@ -470,7 +471,7 @@ func (w *Weave) addCurrentPeerInfo(latests map[string]string, node report.Node) 
 		latests[WeavePluginStatus] = "running"
 		latests[WeavePluginDriver] = "weave"
 	}
-	node = node.AddPrefixTable(WeaveConnectionsMulticolumnTablePrefix, getConnectionsTable(w.statusCache.Router))
+	node = node.AddPrefixMulticolumnTable(WeaveConnectionsMulticolumnTablePrefix, getConnectionsTable(w.statusCache.Router))
 	node = node.WithParents(report.EmptySets.Add(report.Host, report.MakeStringSet(w.hostID)))
 
 	return latests, node
