@@ -6,6 +6,7 @@
     "node": true
   },
   "rules": {
+    "no-debugger" : 1,
     "comma-dangle": 0,
     "global-require": 0,
     "import/no-extraneous-dependencies": [

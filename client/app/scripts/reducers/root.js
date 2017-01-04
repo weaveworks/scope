@@ -58,6 +58,7 @@ export const initialState = makeMap({
   selectedNetwork: null,
   selectedNodeId: null,
   showingHelp: false,
+  showingTroubleshootingMenu: false,
   showingNetworks: false,
   topologies: makeList(),
   topologiesLoaded: false,
@@ -189,6 +190,10 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.CLICK_BACKGROUND: {
       if (state.get('showingHelp')) {
         state = state.set('showingHelp', false);
+      }
+
+      if (state.get('showingTroubleshootingMenu')) {
+        state = state.set('showingTroubleshootingMenu', false);
       }
       return closeAllNodeDetails(state);
     }
@@ -703,6 +708,10 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.DEBUG_TOOLBAR_INTERFERING: {
       return action.fn(state);
+    }
+
+    case ActionTypes.TOGGLE_TROUBLESHOOTING_MENU: {
+      return state.set('showingTroubleshootingMenu', !state.get('showingTroubleshootingMenu'));
     }
 
     default: {

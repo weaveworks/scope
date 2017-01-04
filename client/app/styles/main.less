@@ -1591,29 +1591,9 @@ h2 {
 
   }
 
-  &-controls {
-    border: 1px solid #fff;
-    border-radius: 10%;
-    position: absolute;
-    left: 100px;
-    top: 95%;
-    font-size: 20px;
-    width: 30px;
-    height: 30px;
-    transition: all 0.2s ease-in-out;
-    line-height: 30px;
-    text-align: center;
-
-    &:hover {
-      cursor: pointer;
-      border: 1px solid #d0d0d0;
-    }
-  }
-
-
   &-main {
-    padding: 12px 36px 36px 36px;
     display: flex;
+    padding: 12px 36px 36px 36px;
     flex-direction: row;
     align-items: stretch;
 
@@ -1854,5 +1834,41 @@ h2 {
       display: block;
       overflow-y: scroll;
     }
+  }
+}
+
+.troubleshooting-menu {
+  display: flex;
+  position: relative;
+
+  &-wrapper {
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    position: absolute;
+  }
+
+  &-content {
+    position: relative;
+    background-color: @white;
+    padding: 20px;
+    .shadow-2;
+    z-index: 2048;
+  }
+
+  &-item {
+    height: 40px;
+  }
+
+  .fa {
+    width: 20px;
+    text-align: center;
+    margin-right: 10px;
+  }
+
+  .fa-close {
+    width: 25px;
   }
 }

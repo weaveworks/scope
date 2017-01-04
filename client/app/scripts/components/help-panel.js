@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import { searchableFieldsSelector } from '../selectors/chartSelectors';
 import { CANVAS_MARGINS } from '../constants/styles';
-import { hideHelp, resetLocalViewState } from '../actions/app-actions';
+import { hideHelp } from '../actions/app-actions';
 
 
 const GENERAL_SHORTCUTS = [
@@ -149,7 +149,7 @@ function renderFieldsPanel(currentTopologyName, searchableFields) {
 }
 
 
-function HelpPanel({currentTopologyName, searchableFields, onClickClose, onClickReset}) {
+function HelpPanel({currentTopologyName, searchableFields, onClickClose}) {
   return (
     <div className="help-panel-wrapper">
       <div className="help-panel" style={{marginTop: CANVAS_MARGINS.top}}>
@@ -160,13 +160,6 @@ function HelpPanel({currentTopologyName, searchableFields, onClickClose, onClick
           {renderShortcutPanel()}
           {renderSearchPanel()}
           {renderFieldsPanel(currentTopologyName, searchableFields)}
-        </div>
-        <div className="help-panel-controls">
-          <span
-            title="Reset view state"
-            className="fa fa-trash-o"
-            onClick={onClickReset}
-          />
         </div>
         <div className="help-panel-tools">
           <span
@@ -190,6 +183,5 @@ function mapStateToProps(state) {
 
 
 export default connect(mapStateToProps, {
-  onClickClose: hideHelp,
-  onClickReset: resetLocalViewState
+  onClickClose: hideHelp
 })(HelpPanel);

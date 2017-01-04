@@ -671,5 +671,13 @@ export function resetLocalViewState() {
   return (dispatch) => {
     dispatch({type: ActionTypes.RESET_LOCAL_VIEW_STATE});
     storageSet('scopeViewState', '');
+    window.location.href = window.location.href.split('#')[0];
+  };
+}
+
+export function toggleTroubleshootingMenu(ev) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  return {
+    type: ActionTypes.TOGGLE_TROUBLESHOOTING_MENU
   };
 }
