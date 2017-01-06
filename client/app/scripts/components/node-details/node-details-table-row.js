@@ -81,22 +81,10 @@ export default class NodeDetailsTableRow extends React.Component {
     this.saveLabelElementRef = this.saveLabelElementRef.bind(this);
     this.onMouseDown = this.onMouseDown.bind(this);
     this.onMouseUp = this.onMouseUp.bind(this);
-    this.onMouseEnter = this.onMouseEnter.bind(this);
-    this.onMouseLeave = this.onMouseLeave.bind(this);
   }
 
   saveLabelElementRef(ref) {
     this.labelElement = ref;
-  }
-
-  onMouseEnter() {
-    const { node, onMouseEnterRow } = this.props;
-    onMouseEnterRow(node);
-  }
-
-  onMouseLeave() {
-    const { node, onMouseLeaveRow } = this.props;
-    onMouseLeaveRow(node);
   }
 
   onMouseDown(ev) {
@@ -121,8 +109,7 @@ export default class NodeDetailsTableRow extends React.Component {
   }
 
   render() {
-    const { node, nodeIdKey, topologyId, columns, onClick, onMouseEnterRow, onMouseLeaveRow,
-      selected, colStyles } = this.props;
+    const { node, nodeIdKey, topologyId, columns, onClick, selected, colStyles } = this.props;
     const [firstColumnStyle, ...columnStyles] = colStyles;
     const values = renderValues(node, columns, columnStyles);
     const nodeId = node[nodeIdKey];
@@ -132,8 +119,8 @@ export default class NodeDetailsTableRow extends React.Component {
       <tr
         onMouseDown={onClick && this.onMouseDown}
         onMouseUp={onClick && this.onMouseUp}
-        onMouseEnter={onMouseEnterRow && this.onMouseEnter}
-        onMouseLeave={onMouseLeaveRow && this.onMouseLeave}
+        onMouseEnter={this.props.onMouseEnter}
+        onMouseLeave={this.props.onMouseLeave}
         className={className}>
         <td
           className="node-details-table-node-label truncate"

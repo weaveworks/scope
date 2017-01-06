@@ -1,6 +1,7 @@
+import debug from 'debug';
 import React from 'react';
 import classNames from 'classnames';
-import { find, get, union, sortBy, groupBy, concat } from 'lodash';
+import { find, get, union, sortBy, groupBy, concat, debounce, findIndex } from 'lodash';
 
 import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
 
@@ -8,6 +9,8 @@ import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
 import NodeDetailsTableHeaders from './node-details-table-headers';
 import { ipToPaddedString } from '../../utils/string-utils';
+import { moveElement, insertElement } from '../../utils/array-utils';
+import { TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL } from '../../constants/timer';
 import {
   isIP, isNumber, defaultSortDesc, getTableColumnsStyles
 } from '../../utils/node-details-utils';
@@ -123,8 +126,14 @@ export default class NodeDetailsTable extends React.Component {
       sortedDesc: this.props.sortedDesc,
       sortedBy: this.props.sortedBy
     };
-    this.handleLimitClick = this.handleLimitClick.bind(this);
     this.updateSorted = this.updateSorted.bind(this);
+    this.handleLimitClick = this.handleLimitClick.bind(this);
+    this.onMouseLeaveRow = this.onMouseLeaveRow.bind(this);
+    this.onMouseEnterRow = this.onMouseEnterRow.bind(this);
+    // Use debouncing to prevent event flooding when e.g. crossing fast with mouse cursor
+    // over the whole table. That would be expensive as each focus causes table to rerender.
+    this.debouncedFocusRow = debounce(this.focusRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
+    this.debouncedUnfocusRow = debounce(this.unfocusRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
   }
 
   updateSorted(sortedBy, sortedDesc) {
@@ -137,20 +146,64 @@ export default class NodeDetailsTable extends React.Component {
     this.setState({ limit });
   }
 
+  focusRow(rowIndex, node) {
+    this.setState({
+      focusedRowIndex: rowIndex,
+      focusedNode: node
+    });
+    log(`Focused row ${rowIndex}`);
+  }
+
+  unfocusRow() {
+    if (this.state.focusedRowIndex) {
+      this.setState({
+        focusedRowIndex: null,
+        focusedNode: null
+      });
+      log('Unfocused row');
+    }
+  }
+
+  onMouseEnterRow(rowIndex, node) {
+    this.debouncedUnfocusRow.cancel();
+    this.debouncedFocusRow(rowIndex, node);
+  }
+
+  onMouseLeaveRow() {
+    this.debouncedFocusRow.cancel();
+    this.debouncedUnfocusRow();
+  }
+
   getColumnHeaders() {
     const columns = this.props.columns || [];
     return [{id: 'label', label: this.props.label}].concat(columns);
   }
 
   render() {
-    const { nodeIdKey, columns, topologyId, onClickRow, onMouseEnter, onMouseLeave,
-      onMouseEnterRow, onMouseLeaveRow } = this.props;
+    const { nodeIdKey, columns, topologyId, onClickRow, onMouseEnter, onMouseLeave } = this.props;
+    const { focusedRowIndex, focusedNode } = this.state;
 
     const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
     const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
     const sortedDesc = this.state.sortedDesc || defaultSortDesc(sortedByHeader);
 
     let nodes = getSortedNodes(this.props.nodes, sortedByHeader, sortedDesc);
+    if (focusedRowIndex && focusedRowIndex < nodes.length) {
+      const nodeRowIndex = findIndex(nodes, node => node.id === focusedNode.id);
+      if (nodeRowIndex >= 0) {
+        // If the focused node still exists in the table, we move it
+        // to the hovered row, keeping the rest of the table sorted.
+        moveElement(nodes, nodeRowIndex, focusedRowIndex);
+      } else {
+        // Otherwise we insert the dead focused node there, pretending
+        // it's still alive. That enables the users to read off all the
+        // info they want and perhaps even open the details panel. Also,
+        // only if we do this, we can guarantee that mouse hover will
+        // always freeze the table row until we focus out.
+        insertElement(nodes, focusedRowIndex, focusedNode);
+      }
+    }
+
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
     const expanded = this.state.limit === 0;
     const notShown = nodes.length - this.state.limit;
@@ -178,7 +231,7 @@ export default class NodeDetailsTable extends React.Component {
               style={this.props.tbodyStyle}
               onMouseEnter={onMouseEnter}
               onMouseLeave={onMouseLeave}>
-              {nodes && nodes.map(node => (
+              {nodes && nodes.map((node, index) => (
                 <NodeDetailsTableRow
                   key={node.id}
                   renderIdCell={this.props.renderIdCell}
@@ -188,8 +241,8 @@ export default class NodeDetailsTable extends React.Component {
                   colStyles={styles}
                   columns={columns}
                   onClick={onClickRow}
-                  onMouseLeaveRow={onMouseLeaveRow}
-                  onMouseEnterRow={onMouseEnterRow}
+                  onMouseEnter={() => { this.onMouseEnterRow(index, node); }}
+                  onMouseLeave={this.onMouseLeaveRow}
                   topologyId={topologyId} />
               ))}
             </tbody>

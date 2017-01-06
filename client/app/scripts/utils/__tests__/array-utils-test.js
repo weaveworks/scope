@@ -45,4 +45,40 @@ describe('ArrayUtils', () => {
       }
     });
   });
+
+  describe('insertElement', () => {
+    const f = (array, index, element) => {
+      ArrayUtils.insertElement(array, index, element);
+      return array;
+    };
+
+    it('it should insert an element into the array at the specified index', () => {
+      expect(f(['x', 'y', 'z'], 0, 'a')).toEqual(['a', 'x', 'y', 'z']);
+      expect(f(['x', 'y', 'z'], 1, 'a')).toEqual(['x', 'a', 'y', 'z']);
+      expect(f(['x', 'y', 'z'], 2, 'a')).toEqual(['x', 'y', 'a', 'z']);
+      expect(f(['x', 'y', 'z'], 3, 'a')).toEqual(['x', 'y', 'z', 'a']);
+    });
+  });
+
+  describe('moveElement', () => {
+    const f = (array, from, to) => {
+      ArrayUtils.moveElement(array, from, to);
+      return array;
+    };
+
+    it('it should move an array element, modifying the array', () => {
+      expect(f(['x', 'y', 'z'], 0, 1)).toEqual(['y', 'x', 'z']);
+      expect(f(['x', 'y', 'z'], 1, 0)).toEqual(['y', 'x', 'z']);
+      expect(f(['x', 'y', 'z'], 0, 2)).toEqual(['y', 'z', 'x']);
+      expect(f(['x', 'y', 'z'], 2, 0)).toEqual(['z', 'x', 'y']);
+      expect(f(['x', 'y', 'z'], 1, 2)).toEqual(['x', 'z', 'y']);
+      expect(f(['x', 'y', 'z'], 2, 1)).toEqual(['x', 'z', 'y']);
+      expect(f(['x', 'y', 'z'], 0, 0)).toEqual(['x', 'y', 'z']);
+      expect(f(['x', 'y', 'z'], 1, 1)).toEqual(['x', 'y', 'z']);
+      expect(f(['x', 'y', 'z'], 2, 2)).toEqual(['x', 'y', 'z']);
+      expect(f(['a', 'b', 'c', 'd', 'e'], 4, 1)).toEqual(['a', 'e', 'b', 'c', 'd']);
+      expect(f(['a', 'b', 'c', 'd', 'e'], 1, 4)).toEqual(['a', 'c', 'd', 'e', 'b']);
+      expect(f(['a', 'b', 'c', 'd', 'e'], 1, 3)).toEqual(['a', 'c', 'd', 'b', 'e']);
+    });
+  });
 });
