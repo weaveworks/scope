@@ -155,7 +155,11 @@ func TestStreamedFlowDecoding(t *testing.T) {
 }
 
 // Obtained through conntrack -L -p tcp -o id
-const dumpedFlowsSource = `tcp      6 431998 ESTABLISHED src=10.0.2.2 dst=10.0.2.15 sport=49911 dport=22 src=10.0.2.15 dst=10.0.2.2 sport=22 dport=49911 [ASSURED] mark=0 use=1 id=2993966208`
+// With SELinux, there is a "secctx="
+// After "sudo sysctl net.netfilter.nf_conntrack_acct=1", there is "packets=" and "bytes="
+const dumpedFlowsSource = `tcp      6 431998 ESTABLISHED src=10.0.2.2 dst=10.0.2.15 sport=49911 dport=22 src=10.0.2.15 dst=10.0.2.2 sport=22 dport=49911 [ASSURED] mark=0 use=1 id=2993966208
+tcp      6 108 ESTABLISHED src=172.17.0.5 dst=172.17.0.2 sport=47010 dport=80 src=172.17.0.2 dst=172.17.0.5 sport=80 dport=47010 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 use=1 id=4001098880
+tcp      6 431970 ESTABLISHED src=192.168.35.116 dst=216.58.213.227 sport=49862 dport=443 packets=11 bytes=1337 src=216.58.213.227 dst=192.168.35.116 sport=443 dport=49862 packets=8 bytes=716 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 use=1 id=943643840`
 
 var wantDumpedFlows = []flow{
 	{
@@ -183,6 +187,62 @@ var wantDumpedFlows = []flow{
 		},
 		Independent: meta{
 			ID:    2993966208,
+			State: "ESTABLISHED",
+		},
+	},
+	{
+		Original: meta{
+			Layer3: layer3{
+				SrcIP: "172.17.0.5",
+				DstIP: "172.17.0.2",
+			},
+			Layer4: layer4{
+				SrcPort: 47010,
+				DstPort: 80,
+				Proto:   "tcp",
+			},
+		},
+		Reply: meta{
+			Layer3: layer3{
+				SrcIP: "172.17.0.2",
+				DstIP: "172.17.0.5",
+			},
+			Layer4: layer4{
+				SrcPort: 80,
+				DstPort: 47010,
+				Proto:   "tcp",
+			},
+		},
+		Independent: meta{
+			ID:    4001098880,
+			State: "ESTABLISHED",
+		},
+	},
+	{
+		Original: meta{
+			Layer3: layer3{
+				SrcIP: "192.168.35.116",
+				DstIP: "216.58.213.227",
+			},
+			Layer4: layer4{
+				SrcPort: 49862,
+				DstPort: 443,
+				Proto:   "tcp",
+			},
+		},
+		Reply: meta{
+			Layer3: layer3{
+				SrcIP: "216.58.213.227",
+				DstIP: "192.168.35.116",
+			},
+			Layer4: layer4{
+				SrcPort: 443,
+				DstPort: 49862,
+				Proto:   "tcp",
+			},
+		},
+		Independent: meta{
+			ID:    943643840,
 			State: "ESTABLISHED",
 		},
 	},
