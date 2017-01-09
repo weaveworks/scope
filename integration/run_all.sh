@@ -14,17 +14,17 @@ fi
 whitely echo ...ok
 
 # shellcheck disable=SC2068
-TESTS=( ${@:-$(find . -name '*_test.sh')} )
-RUNNER_ARGS=( )
+TESTS=(${@:-$(find . -name '*_test.sh')})
+RUNNER_ARGS=()
 
 # If running on circle, use the scheduler to work out what tests to run
 if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ]; then
-    RUNNER_ARGS=( "${RUNNER_ARGS[@]}" -scheduler )
+    RUNNER_ARGS=("${RUNNER_ARGS[@]}" -scheduler)
 fi
 
 # If running on circle or PARALLEL is not empty, run tests in parallel
 if [ -n "$CIRCLECI" ] || [ -n "$PARALLEL" ]; then
-    RUNNER_ARGS=( "${RUNNER_ARGS[@]}" -parallel )
+    RUNNER_ARGS=("${RUNNER_ARGS[@]}" -parallel)
 fi
 
 make -C "${DIR}/../runner"
