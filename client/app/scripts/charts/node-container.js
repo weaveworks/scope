@@ -8,11 +8,12 @@ import Node from './node';
 
 class NodeContainer extends React.Component {
   render() {
-    const { dx, dy, focused, layoutPrecision, zoomScale } = this.props;
+    const { id, dx, dy, focused, layoutPrecision, zoomScale } = this.props;
     const animConfig = [80, 20]; // stiffness, damping
     const scaleFactor = focused ? (1 / zoomScale) : 1;
     const other = omit(this.props, 'dx', 'dy');
 
+    // return <Node {...other} transform={`translate(${dx}, ${dy})`} scaleFactor={scaleFactor} />;
     return (
       <Motion
         style={{
@@ -23,7 +24,7 @@ class NodeContainer extends React.Component {
         {(interpolated) => {
           const transform = `translate(${round(interpolated.x, layoutPrecision)},`
             + `${round(interpolated.y, layoutPrecision)})`;
-          return <Node {...other} transform={transform} scaleFactor={interpolated.f} />;
+          return <Node {...other} key={id} transform={transform} scaleFactor={interpolated.f} />;
         }}
       </Motion>
     );

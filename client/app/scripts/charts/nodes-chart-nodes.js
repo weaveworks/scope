@@ -57,26 +57,14 @@ class NodesChartNodes extends React.Component {
     return (
       <g className="nodes-chart-nodes">
         {nodesToRender.map(node => <NodeContainer
-          blurred={node.get('blurred')}
-          focused={node.get('focused')}
-          matched={searchNodeMatches.has(node.get('id'))}
-          matches={searchNodeMatches.get(node.get('id'))}
           highlighted={node.get('highlighted')}
           shape={node.get('shape')}
-          networks={node.get('networks')}
-          stack={node.get('stack')}
           key={node.get('id')}
           id={node.get('id')}
-          label={node.get('label')}
-          pseudo={node.get('pseudo')}
-          nodeCount={node.get('nodeCount')}
-          subLabel={node.get('subLabel')}
-          metric={metric(node)}
           rank={node.get('rank')}
-          layoutPrecision={layoutPrecision}
-          selectedNodeScale={selectedNodeScale}
+          layoutPrecision={1}
+          selectedNodeScale={nodeScale}
           nodeScale={nodeScale}
-          zoomScale={zoomScale}
           dx={node.get('x')}
           dy={node.get('y')} />)}
       </g>

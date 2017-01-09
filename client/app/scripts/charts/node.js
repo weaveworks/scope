@@ -94,7 +94,7 @@ class Node extends React.Component {
     const labelOffsetX = -labelWidth / 2;
     const labelDy = (showingNetworks && networks) ? 0.70 : 0.55;
     const labelOffsetY = nodeScale(labelDy * scaleFactor);
-    const networkOffset = nodeScale(scaleFactor * 0.67);
+    const networkOffset = nodeScale(0.67);
 
     const nodeClassName = classnames('node', {
       highlighted,
@@ -119,41 +119,41 @@ class Node extends React.Component {
     const matchedNodeDetails = matches.get('metadata', makeList())
       .concat(matches.get('parents', makeList()));
 
+    // {useSvgLabels ?
+    //
+    //   svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
+    //
+    //   <foreignObject
+    //     style={{pointerEvents: 'none'}}
+    //     x={labelOffsetX} y={labelOffsetY}
+    //     width={labelWidth} height="100em">
+    //     <div
+    //       className="node-label-wrapper"
+    //       style={{pointerEvents: 'all', fontSize, maxWidth: labelWidth}}
+    //       {...mouseEvents}>
+    //       <div className={labelClassName}>
+    //         <MatchedText text={label} match={matches.get('label')} />
+    //       </div>
+    //       <div className={subLabelClassName}>
+    //         <MatchedText text={subLabel} match={matches.get('sublabel')} />
+    //       </div>
+    //       {!blurred && <MatchedResults matches={matchedNodeDetails} />}
+    //     </div>
+    //   </foreignObject>}
+
+    console.log('Node rendered');
     return (
       <g className={nodeClassName} transform={transform}>
-
-        {useSvgLabels ?
-
-          svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
-
-          <foreignObject
-            style={{pointerEvents: 'none'}}
-            x={labelOffsetX} y={labelOffsetY}
-            width={labelWidth} height="100em">
-            <div
-              className="node-label-wrapper"
-              style={{pointerEvents: 'all', fontSize, maxWidth: labelWidth}}
-              {...mouseEvents}>
-              <div className={labelClassName}>
-                <MatchedText text={label} match={matches.get('label')} />
-              </div>
-              <div className={subLabelClassName}>
-                <MatchedText text={subLabel} match={matches.get('sublabel')} />
-              </div>
-              {!blurred && <MatchedResults matches={matchedNodeDetails} />}
-            </div>
-          </foreignObject>}
-
         <g {...mouseEvents} ref={this.saveShapeRef}>
           <NodeShapeType
-            size={size}
+            size={25}
             color={color}
             {...this.props} />
         </g>
 
         {showingNetworks && <NodeNetworksOverlay
           offset={networkOffset}
-          size={size} networks={networks}
+          size={25} networks={networks}
           stack={stack}
         />}
       </g>
