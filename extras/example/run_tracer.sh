@@ -4,11 +4,11 @@ set -ex
 
 readonly ARG="$1"
 
-if ! $(weave status 1>/dev/null 2>&1); then
+if ! weave status 1>/dev/null 2>&1; then
     WEAVE_NO_PLUGIN=y weave launch
 fi
 
-eval $(weave env)
+eval "$(weave env)"
 
 start_container() {
     local replicas=$1
@@ -30,14 +30,14 @@ start_container() {
             ;;
         esac
     done
-    local container_args="$@"
+    local container_args="$*"
 
-    for i in $(seq ${replicas}); do
-        if docker inspect ${basename}${i} >/dev/null 2>&1; then
-            docker rm -f ${basename}${i}
+    for i in $(seq "${replicas}"); do
+        if docker inspect "${basename}""${i}" >/dev/null 2>&1; then
+            docker rm -f "${basename}""${i}"
         fi
-        docker run -d -e CHECKPOINT_DISABLE --name=${basename}${i} --hostname=${hostname} \
-            ${docker_args} ${image} ${container_args}
+        docker run -d -e CHECKPOINT_DISABLE --name="${basename}""${i}" --hostname="${hostname}" \
+            "${docker_args}" "${image}" "${container_args}"
     done
 }
 

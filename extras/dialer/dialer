@@ -9,6 +9,7 @@ readonly addr=$1
 readonly max_dialer=${2:-50}
 
 dialer=()
+# shellcheck disable=SC2154
 trap 'echo -n "stopping ... "; for c in "${dialer[@]}"; do docker rm -f "$c" >/dev/null; done; echo "done"' EXIT
 
 while true; do

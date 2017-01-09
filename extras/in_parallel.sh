@@ -19,14 +19,14 @@ shift 1
 
 INPUTS="$*"
 SCHED_NAME=parallel-$CIRCLE_PROJECT_USERNAME-$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM
-INPUTS=$(echo $INPUTS | "../tools/sched" sched $SCHED_NAME $CIRCLE_NODE_TOTAL $CIRCLE_NODE_INDEX)
+INPUTS=$(echo "$INPUTS" | "../tools/sched" sched "$SCHED_NAME" "$CIRCLE_NODE_TOTAL" "$CIRCLE_NODE_INDEX")
 
-echo Doing $INPUTS
+echo Doing "$INPUTS"
 
 for INPUT in $INPUTS; do
     START=$(date +%s)
-    $COMMAND $INPUT
-    RUNTIME=$(( $(date +%s) - $START ))
+    "$COMMAND" "$INPUT"
+    RUNTIME=$(( $(date +%s) - START ))
 
-    "../tools/sched" time $INPUT $RUNTIME
+    "../tools/sched" time "$INPUT" "$RUNTIME"
 done

@@ -67,8 +67,9 @@ spell_check() {
 
 test_mismatch() {
     local filename="$1"
-    local package=$(grep '^package ' "$filename" | awk '{print $2}')
     local lint_result=0
+    local package
+    package=$(grep '^package ' "$filename" | awk '{print $2}')
 
     if [[ $package == "main" ]]; then
         return # in package main, all bets are off

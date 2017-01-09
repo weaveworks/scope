@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC1091
 source /var/run/weave/scope-app.args
  
 exec -a scope-app /home/weave/scope --mode app "${ARGS[@]}"
