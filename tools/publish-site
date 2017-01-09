@@ -10,15 +10,15 @@ fatal() {
     exit 1
 }
 
-if [ ! -d .git ] ; then
+if [ ! -d .git ]; then
     fatal "Current directory is not a git clone"
 fi
 
 if [ -z "${PRODUCT}" ]; then
-	fatal "Must specify PRODUCT"
+    fatal "Must specify PRODUCT"
 fi
 
-if ! BRANCH=$(git symbolic-ref --short HEAD) || [ -z "$BRANCH" ] ; then
+if ! BRANCH=$(git symbolic-ref --short HEAD) || [ -z "$BRANCH" ]; then
     fatal "Could not determine branch"
 fi
 
@@ -28,9 +28,9 @@ case "$BRANCH" in
         TAGS="$VERSION"
         ;;
     *)
-        if echo "$BRANCH" | grep -qE '^[0-9]+\.[0-9]+' ; then
+        if echo "$BRANCH" | grep -qE '^[0-9]+\.[0-9]+'; then
             DESCRIBE=$(git describe --match 'v*')
-            if ! VERSION=$(echo "$DESCRIBE" | grep -oP '(?<=^v)[0-9]+\.[0-9]+\.[0-9]+') ; then
+            if ! VERSION=$(echo "$DESCRIBE" | grep -oP '(?<=^v)[0-9]+\.[0-9]+\.[0-9]+'); then
                 fatal "Could not infer latest $BRANCH version from $DESCRIBE"
             fi
             TAGS="$VERSION latest"
@@ -41,7 +41,7 @@ case "$BRANCH" in
         ;;
 esac
 
-for TAG in $TAGS ; do
+for TAG in $TAGS; do
     echo ">>> Publishing $PRODUCT $VERSION to $1/docs/$PRODUCT/$TAG"
     wordepress \
         --url "$1" --user "$2" --password "$3" \
