@@ -13,21 +13,21 @@ class NodeContainer extends React.Component {
     const scaleFactor = focused ? (1 / zoomScale) : 1;
     const other = omit(this.props, 'dx', 'dy');
 
-    return <Node {...other} transform={`translate(${dx}, ${dy})`} scaleFactor={scaleFactor} />;
-    // return (
-    //   <Motion
-    //     style={{
-    //       x: spring(dx, animConfig),
-    //       y: spring(dy, animConfig),
-    //       f: spring(scaleFactor, animConfig)
-    //     }}>
-    //     {(interpolated) => {
-    //       const transform = `translate(${round(interpolated.x, layoutPrecision)},`
-    //         + `${round(interpolated.y, layoutPrecision)})`;
-    //       return <Node{...other} transform={transform} scaleFactor={interpolated.f} />;
-    //     }}
-    //   </Motion>
-    // );
+    // return <Node {...other} transform={`translate(${dx}, ${dy})`} scaleFactor={scaleFactor} />;
+    return (
+      <Motion
+        style={{
+          x: spring(dx, animConfig),
+          y: spring(dy, animConfig),
+          f: spring(scaleFactor, animConfig)
+        }}>
+        {(interpolated) => {
+          const transform = `translate(${round(interpolated.x, layoutPrecision)},`
+            + `${round(interpolated.y, layoutPrecision)})`;
+          return <Node {...other} transform={transform} scaleFactor={interpolated.f} />;
+        }}
+      </Motion>
+    );
   }
 }
 

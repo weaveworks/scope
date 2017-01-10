@@ -56,7 +56,7 @@ class NodesChartNodes extends React.Component {
     return (
       <g className="nodes-chart-nodes">
         <g className="nodes-chart-nodes-background" style={{ opacity: anyHighlighted ? 0.2 : 1 }}>
-          {nodesToRender.filter(node => !node.get('highlighted')).map(node => renderNodeContainer(node))}
+          {nodesToRender.map(node => renderNodeContainer(node))}
         </g>
         <g className="nodes-chart-nodes-foreground">
           {nodesToRender.filter(node => node.get('highlighted')).map(node => renderNodeContainer(node))}

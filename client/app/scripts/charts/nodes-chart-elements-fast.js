@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { completeNodesSelector } from '../selectors/chartSelectors';
-import NodesChartEdges from './nodes-chart-edges';
+import NodesChartEdges from './nodes-chart-edges-fast';
 import NodesChartNodes from './nodes-chart-nodes-fast';
 
 class NodesChartElements extends React.Component {
