@@ -6,7 +6,7 @@ import Plugins from './plugins';
 import { getUpdateBufferSize } from '../utils/update-buffer-utils';
 import { contrastModeUrl, isContrastMode } from '../utils/contrast-utils';
 import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
-  clickResumeUpdate, toggleHelp } from '../actions/app-actions';
+  clickResumeUpdate, toggleHelp, toggleTroubleshootingMenu } from '../actions/app-actions';
 import { basePathSlash } from '../utils/web-api-utils';
 
 class Footer extends React.Component {
@@ -76,21 +76,14 @@ class Footer extends React.Component {
             title={forceRelayoutTitle}>
             <span className="fa fa-refresh" />
           </a>
-          <a
-            className="footer-icon" onClick={this.props.clickDownloadGraph}
-            title="Save canvas as SVG (does not include search highlighting)">
-            <span className="fa fa-download" />
-          </a>
-          <a className="footer-icon" href="api/report" download title="Save raw data as JSON">
-            <span className="fa fa-code" />
-          </a>
           <a className="footer-icon" href={otherContrastModeUrl} title={otherContrastModeTitle}>
             <span className="fa fa-adjust" />
           </a>
           <a
-            className="footer-icon" title="Report an issue"
-            href="https://gitreports.com/issue/weaveworks/scope"
-            target="_blank" rel="noopener noreferrer">
+            onClick={this.props.toggleTroubleshootingMenu}
+            className="footer-icon" title="Open troubleshooting menu"
+            href=""
+          >
             <span className="fa fa-bug" />
           </a>
           <a className="footer-icon" onClick={this.props.toggleHelp} title="Show help">
@@ -119,6 +112,7 @@ export default connect(
     clickForceRelayout,
     clickPauseUpdate,
     clickResumeUpdate,
-    toggleHelp
+    toggleHelp,
+    toggleTroubleshootingMenu
   }
 )(Footer);

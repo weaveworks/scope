@@ -624,10 +624,12 @@ h2 {
     position: relative;
   }
 
+
   &-tools {
     position: absolute;
     top: 6px;
     right: 8px;
+
 
     > span {
       .btn-opacity;
@@ -1586,12 +1588,12 @@ h2 {
         border-color: rgba(131, 131, 172, 0.6);
       }
     }
+
   }
 
-
   &-main {
-    padding: 12px 36px 36px 36px;
     display: flex;
+    padding: 12px 36px 36px 36px;
     flex-direction: row;
     align-items: stretch;
 
@@ -1832,5 +1834,41 @@ h2 {
       display: block;
       overflow-y: scroll;
     }
+  }
+}
+
+.troubleshooting-menu {
+  display: flex;
+  position: relative;
+
+  &-wrapper {
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    position: absolute;
+  }
+
+  &-content {
+    position: relative;
+    background-color: @white;
+    padding: 20px;
+    .shadow-2;
+    z-index: 2048;
+  }
+
+  &-item {
+    height: 40px;
+  }
+
+  .fa {
+    width: 20px;
+    text-align: center;
+    margin-right: 10px;
+  }
+
+  .fa-close {
+    width: 25px;
   }
 }

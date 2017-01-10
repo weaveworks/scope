@@ -6,6 +6,7 @@ import Logo from './logo';
 import Footer from './footer';
 import Sidebar from './sidebar';
 import HelpPanel from './help-panel';
+import TroubleshootingMenu from './troubleshooting-menu';
 import Search from './search';
 import Status from './status';
 import Topologies from './topologies';
@@ -99,7 +100,7 @@ class App extends React.Component {
 
   render() {
     const { gridMode, showingDetails, showingHelp, showingMetricsSelector,
-      showingNetworkSelector } = this.props;
+      showingNetworkSelector, showingTroubleshootingMenu } = this.props;
     const isIframe = window !== window.top;
 
     return (
@@ -107,6 +108,8 @@ class App extends React.Component {
         {showingDebugToolbar() && <DebugToolbar />}
 
         {showingHelp && <HelpPanel />}
+
+        {showingTroubleshootingMenu && <TroubleshootingMenu />}
 
         {showingDetails && <Details />}
 
@@ -146,6 +149,7 @@ function mapStateToProps(state) {
     searchQuery: state.get('searchQuery'),
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
+    showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
     showingMetricsSelector: state.get('availableCanvasMetrics').count() > 0,
     showingNetworkSelector: state.get('availableNetworks').count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,

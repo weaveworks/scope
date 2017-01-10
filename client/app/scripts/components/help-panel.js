@@ -162,7 +162,11 @@ function HelpPanel({currentTopologyName, searchableFields, onClickClose}) {
           {renderFieldsPanel(currentTopologyName, searchableFields)}
         </div>
         <div className="help-panel-tools">
-          <span title="Close details" className="fa fa-close" onClick={onClickClose} />
+          <span
+            title="Close details"
+            className="fa fa-close"
+            onClick={onClickClose}
+          />
         </div>
       </div>
     </div>
@@ -178,4 +182,6 @@ function mapStateToProps(state) {
 }
 
 
-export default connect(mapStateToProps, { onClickClose: hideHelp })(HelpPanel);
+export default connect(mapStateToProps, {
+  onClickClose: hideHelp
+})(HelpPanel);
