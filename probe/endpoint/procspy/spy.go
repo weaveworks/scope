@@ -7,6 +7,14 @@ import (
 	"net"
 )
 
+const (
+	// according to /include/net/tcp_states.h
+	tcpEstablished = 1
+	tcpFinWait1    = 4
+	tcpFinWait2    = 5
+	tcpCloseWait   = 8
+)
+
 // Connection is a (TCP) connection. The Proc struct might not be filled in.
 type Connection struct {
 	Transport     string

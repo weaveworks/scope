@@ -35,7 +35,7 @@ again:
 	b := p.b
 
 	var (
-		sl, local, remote, inode []byte
+		sl, local, remote, state, inode []byte
 	)
 
 	sl, b = nextField(b) // 'sl' column
@@ -46,7 +46,14 @@ again:
 	}
 	local, b = nextField(b)
 	remote, b = nextField(b)
-	_, b = nextField(b) // 'st' column
+	state, b = nextField(b)
+	switch parseHex(state) {
+	// Only process established or half-closed connections
+	case tcpEstablished, tcpFinWait1, tcpFinWait2, tcpCloseWait:
+	default:
+		p.b = nextLine(b)
+		goto again
+	}
 	_, b = nextField(b) // 'tx_queue' column
 	_, b = nextField(b) // 'rx_queue' column
 	_, b = nextField(b) // 'tr' column
