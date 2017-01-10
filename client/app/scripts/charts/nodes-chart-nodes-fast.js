@@ -25,20 +25,6 @@ class NodesChartNodes extends React.Component {
       || (searchQuery && !searchNodeMatches.has(node.get('id')) && !node.get('highlighted'))
       || (selectedNetwork && !(node.get('networks') || makeList()).find(n => n.get('id') === selectedNetwork)));
 
-    // make sure blurred nodes are in the background
-    const sortNodes = (node) => {
-      if (node.get('id') === mouseOverNodeId) {
-        return 3;
-      }
-      if (node.get('blurred') && !node.get('focused')) {
-        return 0;
-      }
-      if (node.get('highlighted')) {
-        return 2;
-      }
-      return 1;
-    };
-
     // TODO: think about pulling this up into the store.
     const metric = (node) => {
       const isHighlighted = topCardNode && topCardNode.details && topCardNode.id === node.get('id');
@@ -51,34 +37,30 @@ class NodesChartNodes extends React.Component {
     const nodesToRender = layoutNodes.toIndexedSeq()
       .map(setHighlighted)
       .map(setFocused)
-      .map(setBlurred)
-      .sortBy(sortNodes);
+      .map(setBlurred);
 
+    const renderNodeContainer = node => <NodeContainer
+      highlighted={node.get('highlighted')}
+      shape={node.get('shape')}
+      key={node.get('id')}
+      id={node.get('id')}
+      rank={node.get('rank')}
+      layoutPrecision={1}
+      selectedNodeScale={nodeScale}
+      nodeScale={nodeScale}
+      dx={node.get('x')}
+      dy={node.get('y')}
+    />;
+
+    const anyHighlighted = nodesToRender.some(node => node.get('highlighted'));
     return (
       <g className="nodes-chart-nodes">
-        {nodesToRender.map(node => <NodeContainer
-          blurred={node.get('blurred')}
-          focused={node.get('focused')}
-          matched={searchNodeMatches.has(node.get('id'))}
-          matches={searchNodeMatches.get(node.get('id'))}
-          highlighted={node.get('highlighted')}
-          shape={node.get('shape')}
-          networks={node.get('networks')}
-          stack={node.get('stack')}
-          key={node.get('id')}
-          id={node.get('id')}
-          label={node.get('label')}
-          pseudo={node.get('pseudo')}
-          nodeCount={node.get('nodeCount')}
-          subLabel={node.get('subLabel')}
-          metric={metric(node)}
-          rank={node.get('rank')}
-          layoutPrecision={layoutPrecision}
-          selectedNodeScale={selectedNodeScale}
-          nodeScale={nodeScale}
-          zoomScale={zoomScale}
-          dx={node.get('x')}
-          dy={node.get('y')} />)}
+        <g className="nodes-chart-nodes-background" style={{ opacity: anyHighlighted ? 0.2 : 1 }}>
+          {nodesToRender.filter(node => !node.get('highlighted')).map(node => renderNodeContainer(node))}
+        </g>
+        <g className="nodes-chart-nodes-foreground">
+          {nodesToRender.filter(node => node.get('highlighted')).map(node => renderNodeContainer(node))}
+        </g>
       </g>
     );
   }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import NodesChart from '../charts/nodes-chart';
+import NodesChart from '../charts/nodes-chart-fast';
 import NodesGrid from '../charts/nodes-grid';
 import NodesError from '../charts/nodes-error';
 import DelayedShow from '../utils/delayed-show';

@@ -14,8 +14,8 @@ import { clickBackground } from '../actions/app-actions';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { MIN_NODE_SIZE, DETAILS_PANEL_WIDTH, MAX_NODE_SIZE } from '../constants/styles';
 import Logo from '../components/logo';
-import { doLayout } from './nodes-layout';
-import NodesChartElements from './nodes-chart-elements';
+import { doLayout } from './nodes-layout-fast';
+import NodesChartElements from './nodes-chart-elements-fast';
 import { getActiveTopologyOptions } from '../utils/topology-utils';
 
 const log = debug('scope:nodes-chart');
@@ -291,6 +291,8 @@ class NodesChart extends React.Component {
     const svgClassNames = this.props.isEmpty ? 'hide' : '';
 
     const layoutPrecision = getLayoutPrecision(nodes.size);
+
+    log('rendered');
     return (
       <div className="nodes-chart">
         <svg
