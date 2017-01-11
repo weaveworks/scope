@@ -1,5 +1,6 @@
 import debug from 'debug';
 import reqwest from 'reqwest';
+import trimStart from 'lodash/trimStart';
 
 import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
@@ -123,7 +124,9 @@ export function getAllNodes(getState, dispatch) {
   state.get('topologyUrlsById')
     .reduce((sequence, topologyUrl, topologyId) => sequence.then(() => {
       const optionsQuery = buildOptionsQuery(topologyOptions.get(topologyId));
-      return fetch(`${topologyUrl}?${optionsQuery}`);
+      // Trim the leading slash from the url before requesting.
+      // This ensures that scope will request from the correct route if embedded in an iframe.
+      return fetch(`${trimStart(topologyUrl, '/')}?${optionsQuery}`);
     })
     .then(response => response.json())
     .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
