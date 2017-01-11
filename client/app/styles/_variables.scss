@@ -33,13 +33,14 @@ $terminal-header-height: 44px;
 $node-opacity-blurred: 0.25;
 $node-highlight-fill-opacity: 0.1;
 $node-highlight-stroke-opacity: 0.4;
-$node-highlight-stroke-width: 1px;
-$node-border-stroke-width: 2.5px;
+$node-highlight-stroke-width: 0.02;
+$node-border-stroke-width: 0.06;
 $node-pseudo-opacity: 0.8;
+$node-text-scale: 0.02;
+$node-labels-max-width: 120px;
 $edge-highlight-opacity: 0.1;
 $edge-opacity-blurred: 0.2;
 $edge-opacity: 0.5;
-$edge-link-stroke-width: 1px;
 
 $btn-opacity-default: 0.7;
 $btn-opacity-hover: 1;

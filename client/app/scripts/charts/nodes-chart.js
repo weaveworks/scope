@@ -5,14 +5,14 @@ import { assign, pick, includes } from 'lodash';
 import { Map as makeMap, fromJS } from 'immutable';
 import timely from 'timely';
 
-import { scaleThreshold, scaleLinear } from 'd3-scale';
+import { scaleThreshold } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
 import { nodeAdjacenciesSelector, adjacentNodesSelector } from '../selectors/chartSelectors';
 import { clickBackground } from '../actions/app-actions';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
-import { MIN_NODE_SIZE, DETAILS_PANEL_WIDTH, MAX_NODE_SIZE } from '../constants/styles';
+import { DETAILS_PANEL_WIDTH, NODE_BASE_SIZE } from '../constants/styles';
 import Logo from '../components/logo';
 import { doLayout } from './nodes-layout';
 import NodesChartElements from './nodes-chart-elements';
@@ -20,32 +20,20 @@ import { getActiveTopologyOptions } from '../utils/topology-utils';
 
 const log = debug('scope:nodes-chart');
 
-const ZOOM_CACHE_FIELDS = ['scale', 'panTranslateX', 'panTranslateY'];
+const ZOOM_CACHE_FIELDS = ['scale', 'panTranslateX', 'panTranslateY', 'minScale', 'maxScale'];
 
 // make sure circular layouts a bit denser with 3-6 nodes
 const radiusDensity = scaleThreshold()
   .domain([3, 6])
   .range([2.5, 3.5, 3]);
 
-/**
- * dynamic coords precision based on topology size
- */
-function getLayoutPrecision(nodesCount) {
-  let precision;
-  if (nodesCount >= 50) {
-    precision = 0;
-  } else if (nodesCount > 20) {
-    precision = 1;
-  } else if (nodesCount > 10) {
-    precision = 2;
-  } else {
-    precision = 3;
-  }
-
-  return precision;
-}
+const emptyLayoutState = {
+  nodes: makeMap(),
+  edges: makeMap(),
+};
 
 
+// EDGES
 function initEdges(nodes) {
   let edges = makeMap();
 
@@ -76,24 +64,45 @@ function initEdges(nodes) {
 }
 
 
-function getNodeScale(nodesCount, width, height) {
-  const expanse = Math.min(height, width);
-  const nodeSize = expanse / 3; // single node should fill a third of the screen
-  const maxNodeSize = Math.min(MAX_NODE_SIZE, expanse / 10);
-  const normalizedNodeSize = Math.max(MIN_NODE_SIZE,
-    Math.min(nodeSize / Math.sqrt(nodesCount), maxNodeSize));
+// ZOOM STATE
+function getLayoutDefaultZoom(layoutNodes, width, height) {
+  const xMin = layoutNodes.minBy(n => n.get('x')).get('x');
+  const xMax = layoutNodes.maxBy(n => n.get('x')).get('x');
+  const yMin = layoutNodes.minBy(n => n.get('y')).get('y');
+  const yMax = layoutNodes.maxBy(n => n.get('y')).get('y');
 
-  return scaleLinear().range([0, normalizedNodeSize]);
+  const xFactor = width / (xMax - xMin);
+  const yFactor = height / (yMax - yMin);
+  const scale = Math.min(xFactor, yFactor);
+
+  return {
+    translateX: (width - ((xMax + xMin) * scale)) / 2,
+    translateY: (height - ((yMax + yMin) * scale)) / 2,
+    scale,
+  };
+}
+
+function defaultZoomState(props, state) {
+  // adjust layout based on viewport
+  const width = state.width - props.margins.left - props.margins.right;
+  const height = state.height - props.margins.top - props.margins.bottom;
+
+  const { translateX, translateY, scale } = getLayoutDefaultZoom(state.nodes, width, height);
+
+  return {
+    scale,
+    minScale: scale / 5,
+    maxScale: Math.min(width, height) / NODE_BASE_SIZE / 3,
+    panTranslateX: translateX + props.margins.left,
+    panTranslateY: translateY + props.margins.top,
+  };
 }
 
 
+// LAYOUT STATE
 function updateLayout(width, height, nodes, baseOptions) {
-  const nodeScale = getNodeScale(nodes.size, width, height);
   const edges = initEdges(nodes);
-
-  const options = Object.assign({}, baseOptions, {
-    scale: nodeScale,
-  });
+  const options = Object.assign({}, baseOptions);
 
   const timedLayouter = timely(doLayout);
   const graph = timedLayouter(nodes, edges, options);
@@ -108,13 +117,52 @@ function updateLayout(width, height, nodes, baseOptions) {
     py: node.get('y')
   }));
 
-  const layoutEdges = graph.edges
-    .map(edge => edge.set('ppoints', edge.get('points')));
+  const layoutEdges = graph.edges.map(edge => edge.set('ppoints', edge.get('points')));
 
-  return { layoutNodes, layoutEdges, layoutWidth: graph.width, layoutHeight: graph.height };
+  return { layoutNodes, layoutEdges };
+}
+
+function updatedGraphState(props, state) {
+  if (props.nodes.size === 0) {
+    return emptyLayoutState;
+  }
+
+  const options = {
+    width: state.width,
+    height: state.height,
+    margins: props.margins,
+    forceRelayout: props.forceRelayout,
+    topologyId: props.topologyId,
+    topologyOptions: props.topologyOptions,
+  };
+
+  const { layoutNodes, layoutEdges } =
+    updateLayout(state.width, state.height, props.nodes, options);
+
+  return {
+    nodes: layoutNodes,
+    edges: layoutEdges,
+  };
+}
+
+function restoredLayout(state) {
+  const restoredNodes = state.nodes.map(node => node.merge({
+    x: node.get('px'),
+    y: node.get('py')
+  }));
+
+  const restoredEdges = state.edges.map(edge => (
+    edge.has('ppoints') ? edge.set('points', edge.get('ppoints')) : edge
+  ));
+
+  return {
+    nodes: restoredNodes,
+    edges: restoredEdges,
+  };
 }
 
 
+// SELECTED NODE
 function centerSelectedNode(props, state) {
   let stateNodes = state.nodes;
   let stateEdges = state.edges;
@@ -179,10 +227,10 @@ function centerSelectedNode(props, state) {
   });
 
   // auto-scale node size for selected nodes
-  const selectedNodeScale = getNodeScale(adjacentNodes.size, state.width, state.height);
+  // const selectedNodeScale = getNodeScale(adjacentNodes.size, state.width, state.height);
 
   return {
-    selectedNodeScale,
+    selectedScale: 1,
     edges: stateEdges,
     nodes: stateNodes
   };
@@ -193,27 +241,26 @@ class NodesChart extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-
-    this.handleMouseClick = this.handleMouseClick.bind(this);
-    this.zoomed = this.zoomed.bind(this);
-
-    this.state = {
-      edges: makeMap(),
-      nodes: makeMap(),
-      nodeScale: scaleLinear(),
+    this.state = Object.assign({
+      scale: 1,
+      minScale: 1,
+      maxScale: 1,
       panTranslateX: 0,
       panTranslateY: 0,
-      scale: 1,
-      selectedNodeScale: scaleLinear(),
-      hasZoomed: false,
+      selectedScale: 1,
       height: props.height || 0,
       width: props.width || 0,
       zoomCache: {},
-    };
+    }, emptyLayoutState);
+
+    this.handleMouseClick = this.handleMouseClick.bind(this);
+    this.zoomed = this.zoomed.bind(this);
   }
 
   componentWillMount() {
-    const state = this.updateGraphState(this.props, this.state);
+    const state = updatedGraphState(this.props, this.state);
+    // debugger;
+    // assign(state, this.restoreZoomState(this.props, Object.assign(this.state, state)));
     this.setState(state);
   }
 
@@ -221,25 +268,11 @@ class NodesChart extends React.Component {
     // gather state, setState should be called only once here
     const state = assign({}, this.state);
 
+    const topologyChanged = nextProps.topologyId !== this.props.topologyId;
+
     // wipe node states when showing different topology
-    if (nextProps.topologyId !== this.props.topologyId) {
-      // re-apply cached canvas zoom/pan to d3 behavior (or set the default values)
-      const defaultZoom = { scale: 1, panTranslateX: 0, panTranslateY: 0, hasZoomed: false };
-      const nextZoom = this.state.zoomCache[nextProps.topologyId] || defaultZoom;
-      if (nextZoom) {
-        this.setZoom(nextZoom);
-      }
-
-      // saving previous zoom state
-      const prevZoom = pick(this.state, ZOOM_CACHE_FIELDS);
-      const zoomCache = assign({}, this.state.zoomCache);
-      zoomCache[this.props.topologyId] = prevZoom;
-
-      // clear canvas and apply zoom state
-      assign(state, nextZoom, { zoomCache }, {
-        nodes: makeMap(),
-        edges: makeMap()
-      });
+    if (topologyChanged) {
+      assign(state, emptyLayoutState);
     }
 
     // reset layout dimensions only when forced
@@ -247,29 +280,50 @@ class NodesChart extends React.Component {
     state.width = nextProps.forceRelayout ? nextProps.width : (state.width || nextProps.width);
 
     if (nextProps.forceRelayout || nextProps.nodes !== this.props.nodes) {
-      assign(state, this.updateGraphState(nextProps, state));
+      assign(state, updatedGraphState(nextProps, state));
     }
 
-    if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
-      assign(state, this.restoreLayout(state));
-    }
-    if (nextProps.selectedNodeId) {
-      assign(state, centerSelectedNode(nextProps, state));
+    console.log(`Prepare ${nextProps.nodes.size}`);
+    if (nextProps.nodes.size > 0) {
+      console.log(state.zoomCache);
+      assign(state, this.restoreZoomState(nextProps, state));
     }
 
+    // if (this.props.selectedNodeId !== nextProps.selectedNodeId) {
+    //   // undo any pan/zooming that might have happened
+    //   this.setZoom(state);
+    //   assign(state, restoredLayout(state));
+    // }
+    //
+    // if (nextProps.selectedNodeId) {
+    //   assign(state, centerSelectedNode(nextProps, state));
+    // }
+
+    if (topologyChanged) {
+      // saving previous zoom state
+      const prevZoom = pick(this.state, ZOOM_CACHE_FIELDS);
+      const zoomCache = assign({}, this.state.zoomCache);
+      zoomCache[this.props.topologyId] = prevZoom;
+      assign(state, { zoomCache });
+    }
+
+    // console.log(topologyChanged);
+    // console.log(state);
     this.setState(state);
   }
 
   componentDidMount() {
     // distinguish pan/zoom from click
     this.isZooming = false;
+    // debugger;
 
     this.zoom = zoom()
-      .scaleExtent([0.1, 2])
+      .scaleExtent([this.state.minScale, this.state.maxScale])
       .on('zoom', this.zoomed);
 
     this.svg = select('.nodes-chart svg');
     this.svg.call(this.zoom);
+    // this.setZoom(this.state);
   }
 
   componentWillUnmount() {
@@ -282,15 +336,19 @@ class NodesChart extends React.Component {
       .on('touchstart.zoom', null);
   }
 
+  isSmallTopology() {
+    return this.state.nodes.size < 100;
+  }
+
   render() {
     const { edges, nodes, panTranslateX, panTranslateY, scale } = this.state;
+    console.log(`Render ${nodes.size}`);
 
     // not passing translates into child components for perf reasons, use getTranslate instead
     const translate = [panTranslateX, panTranslateY];
     const transform = `translate(${translate}) scale(${scale})`;
     const svgClassNames = this.props.isEmpty ? 'hide' : '';
 
-    const layoutPrecision = getLayoutPrecision(nodes.size);
     return (
       <div className="nodes-chart">
         <svg
@@ -302,11 +360,10 @@ class NodesChart extends React.Component {
           <NodesChartElements
             layoutNodes={nodes}
             layoutEdges={edges}
-            nodeScale={this.state.nodeScale}
             scale={scale}
+            selectedScale={this.state.selectedScale}
             transform={transform}
-            selectedNodeScale={this.state.selectedNodeScale}
-            layoutPrecision={layoutPrecision} />
+            isAnimated={this.isSmallTopology()} />
         </svg>
       </div>
     );
@@ -320,74 +377,28 @@ class NodesChart extends React.Component {
     }
   }
 
-  restoreLayout(state) {
-    // undo any pan/zooming that might have happened
-    this.setZoom(state);
-
-    const nodes = state.nodes.map(node => node.merge({
-      x: node.get('px'),
-      y: node.get('py')
-    }));
-
-    const edges = state.edges.map((edge) => {
-      if (edge.has('ppoints')) {
-        return edge.set('points', edge.get('ppoints'));
-      }
-      return edge;
-    });
-
-    return { edges, nodes };
-  }
-
-  updateGraphState(props, state) {
-    if (props.nodes.size === 0) {
-      return {
-        nodes: makeMap(),
-        edges: makeMap()
-      };
+  restoreZoomState(props, state) {
+    // re-apply cached canvas zoom/pan to d3 behavior (or set the default values)
+    const nextZoom = state.zoomCache[props.topologyId] || defaultZoomState(props, state);
+    if (this.zoom) {
+      this.zoom = this.zoom.scaleExtent([nextZoom.minScale, nextZoom.maxScale]);
+      this.setZoom(nextZoom);
     }
 
-    const options = {
-      width: state.width,
-      height: state.height,
-      margins: props.margins,
-      forceRelayout: props.forceRelayout,
-      topologyId: props.topologyId,
-      topologyOptions: props.topologyOptions,
-    };
-
-    const { layoutNodes, layoutEdges, layoutWidth, layoutHeight } = updateLayout(
-      state.width, state.height, props.nodes, options);
-    //
-    // adjust layout based on viewport
-    const xFactor = (state.width - props.margins.left - props.margins.right) / layoutWidth;
-    const yFactor = state.height / layoutHeight;
-    const zoomFactor = Math.min(xFactor, yFactor);
-    let zoomScale = state.scale;
-
-    if (this.svg && !state.hasZoomed && zoomFactor > 0 && zoomFactor < 1) {
-      zoomScale = zoomFactor;
-    }
-
-    return {
-      scale: zoomScale,
-      nodes: layoutNodes,
-      edges: layoutEdges,
-      nodeScale: getNodeScale(props.nodes.size, state.width, state.height),
-    };
+    return nextZoom;
   }
 
   zoomed() {
     this.isZooming = true;
-    // dont pan while node is selected
+    // don't pan while node is selected
     if (!this.props.selectedNodeId) {
       this.setState({
-        hasZoomed: true,
         panTranslateX: d3Event.transform.x,
         panTranslateY: d3Event.transform.y,
         scale: d3Event.transform.k
       });
     }
+    // console.log(d3Event.transform);
   }
 
   setZoom(newZoom) {

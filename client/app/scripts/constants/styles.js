@@ -18,14 +18,13 @@ export const CANVAS_MARGINS = {
   bottom: 100,
 };
 
-//
-// The base size the shapes were defined at matches nicely w/ a 14px font.
-//
-export const BASE_NODE_SIZE = 64;
-export const MIN_NODE_SIZE = 24;
-export const MAX_NODE_SIZE = 96;
-export const BASE_NODE_LABEL_SIZE = 14;
-export const MIN_NODE_LABEL_SIZE = 12;
+// Node shapes
+export const NODE_SHAPE_HIGHLIGHT_RADIUS = 0.7;
+export const NODE_SHAPE_BORDER_RADIUS = 0.5;
+export const NODE_SHAPE_SHADOW_RADIUS = 0.45;
+export const NODE_SHAPE_DOT_RADIUS = 0.125;
+export const NODE_BLUR_OPACITY = 0.2;
+export const NODE_BASE_SIZE = 50;
 
 // Node details table constants
 export const NODE_DETAILS_TABLE_CW = {
