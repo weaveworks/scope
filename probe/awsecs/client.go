@@ -60,7 +60,7 @@ type ecsInfo struct {
 	taskServiceMap map[string]string
 }
 
-func newClient(cluster string, cacheSize int, cacheExpiry time.Duration) (*ecsClient, error) {
+func newClient(cluster string, cacheSize int, cacheExpiry time.Duration) (ecsClient, error) {
 	sess := session.New()
 
 	region, err := ec2metadata.New(sess).Region()
