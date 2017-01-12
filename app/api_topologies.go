@@ -122,7 +122,7 @@ func MakeRegistry() *Registry {
 			Options: []APITopologyOption{
 				{Value: "all", Label: "All", filter: nil, filterPseudo: false},
 				{Value: "system", Label: "System Containers", filter: render.IsSystem, filterPseudo: false},
-				{Value: "notsystem", Label: "Application Containers", filter: render.IsApplication, filterPseudo: false}},
+				{Value: "application", Label: "Application Containers", filter: render.IsApplication, filterPseudo: false}},
 		},
 		{
 			ID:      "stopped",
