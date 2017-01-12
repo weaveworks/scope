@@ -21,13 +21,13 @@ start_container() {
     while [ "$#" -gt 0 ]; do
         case "$1" in
             --)
-            shift
-            break
-            ;;
+                shift
+                break
+                ;;
             *)
-            docker_args="${docker_args} $1"
-            shift
-            ;;
+                docker_args="${docker_args} $1"
+                shift
+                ;;
         esac
     done
     local container_args="$*"
@@ -46,4 +46,3 @@ start_container 1 tomwilkie/echo echo
 start_container 1 tomwilkie/trace_app app
 start_container 1 tomwilkie/client client -- -target app.weave.local \
     -concurrency 1 -persist False
-

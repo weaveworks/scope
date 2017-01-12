@@ -1,8 +1,8 @@
 #!/bin/bash
 set -eu
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <ip:port> [<max_dialer>]" >&2
-  exit 1
+    echo "Usage: $0 <ip:port> [<max_dialer>]" >&2
+    exit 1
 fi
 
 readonly addr=$1
@@ -13,15 +13,15 @@ dialer=()
 trap 'echo -n "stopping ... "; for c in "${dialer[@]}"; do docker rm -f "$c" >/dev/null; done; echo "done"' EXIT
 
 while true; do
-  rand=$(( ( RANDOM % max_dialer )  + 1 ))
-  dialer+=("$(docker run -d dialer /go/bin/dialer connect "$addr" "$rand")")
+    rand=$(((RANDOM % max_dialer) + 1))
+    dialer+=("$(docker run -d dialer /go/bin/dialer connect "$addr" "$rand")")
 
-  if [ ${#dialer[@]} -gt "$max_dialer" ]; then
-    container=${dialer[$rand]}
-    docker rm -f "$container" >/dev/null &
-    unset dialer[$rand]
-    dialer=("${dialer[@]}")
-  fi
+    if [ ${#dialer[@]} -gt "$max_dialer" ]; then
+        container=${dialer[$rand]}
+        docker rm -f "$container" >/dev/null &
+        unset dialer[$rand]
+        dialer=("${dialer[@]}")
+    fi
 
-  sleep $(( rand % 3 ))
+    sleep $((rand % 3))
 done

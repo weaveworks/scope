@@ -14,11 +14,11 @@ docker_on "$HOST2" run -dit --name db2 peterbourgon/tns-db
 sleep 30 # need to allow the scopes to poll dns, resolve the other app ids, and send them reports.
 
 check() {
-	has_container "$1" weave 0
-	has_container "$1" weaveproxy 0
-	has_container "$1" weavescope 2
-	has_container "$1" db1
-	has_container "$1" db2
+    has_container "$1" weave 0
+    has_container "$1" weaveproxy 0
+    has_container "$1" weavescope 2
+    has_container "$1" db1
+    has_container "$1" db2
 }
 
 check "$HOST1"

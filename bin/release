@@ -11,9 +11,9 @@ RELEASE_DESCRIPTION=${RELEASE_DESCRIPTION:-"Container Visibility"}
 PWD=$(pwd)
 
 infer_release_type() {
-    if echo "$1" | grep -qE '^v[0-9]+\.[0-9]+\.0+$' ; then
+    if echo "$1" | grep -qE '^v[0-9]+\.[0-9]+\.0+$'; then
         echo MAINLINE
-    elif echo "$1" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$' ; then
+    elif echo "$1" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
         echo BRANCH
     else
         echo PRERELEASE
@@ -28,7 +28,7 @@ setup() {
     TAG_COUNT=$(echo "$(echo "$HEAD_TAGS" | wc -w)") # mac hack
     case $TAG_COUNT in
         1)
-            if [ "$HEAD_TAGS" != "latest_release" ] ; then
+            if [ "$HEAD_TAGS" != "latest_release" ]; then
                 LATEST_TAG=$HEAD_TAGS
             else
                 echo "Cannot determine version - latest_release points at HEAD" >&2
@@ -41,7 +41,7 @@ setup() {
             ;;
         *)
             echo "Cannot determine version - multiple tags point at HEAD:" >&2
-            for TAG in $HEAD_TAGS ; do
+            for TAG in $HEAD_TAGS; do
                 echo -e "\t$TAG" >&2
             done
             exit 1
@@ -55,7 +55,7 @@ setup() {
     LATEST_TAG_COMMIT_SHA=$(git rev-list -1 "$LATEST_TAG")
     LATEST_RELEASE_SHA=$(git rev-parse latest_release)
     LATEST_RELEASE_COMMIT_SHA=$(git rev-list -1 latest_release)
-    if [ "$RELEASE_TYPE" != 'PRERELEASE' ] ; then
+    if [ "$RELEASE_TYPE" != 'PRERELEASE' ]; then
         VERSION=${LATEST_TAG#v}
     else
         VERSION=${LATEST_TAG}
@@ -80,8 +80,8 @@ build() {
     cd "$RELEASE_DIR"
 
     ## Check that the top changelog entry is this version
-    if ! latest_changelog=$(perl -nle'print $& if m{(?<=^## Release ).*}' ./CHANGELOG.md | head -1) || \
-       ! [ "$latest_changelog" = "$VERSION" ]; then
+    if ! latest_changelog=$(perl -nle'print $& if m{(?<=^## Release ).*}' ./CHANGELOG.md | head -1) \
+        || ! [ "$latest_changelog" = "$VERSION" ]; then
         echo -e "\u2757 Latest changelog entry \"$latest_changelog\" does not match the release version $VERSION" >&2
         exit 1
     fi
@@ -141,7 +141,7 @@ draft() {
     echo '** Sanity checks OK for publishing tag' "$LATEST_TAG" as "$DOCKERHUB_USER/scope:$VERSION"
 
     RELEASE_ARGS="--draft"
-    if [ "$RELEASE_TYPE" = 'PRERELEASE' ] ; then
+    if [ "$RELEASE_TYPE" = 'PRERELEASE' ]; then
         RELEASE_ARGS="$RELEASE_ARGS --pre-release"
     fi
 
@@ -168,10 +168,10 @@ publish() {
     setup
     cd "$PWD"/"$RELEASE_DIR"
 
-    if [ "$RELEASE_TYPE" = 'PRERELEASE' ] ; then
+    if [ "$RELEASE_TYPE" = 'PRERELEASE' ]; then
         echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
         $SUDO docker tag -f "$DOCKERHUB_USER"/scope "$DOCKERHUB_USER/scope:$VERSION"
-        $SUDO docker push   "$DOCKERHUB_USER/scope:$VERSION"
+        $SUDO docker push "$DOCKERHUB_USER/scope:$VERSION"
         echo "** Docker images tagged and pushed"
 
         echo "== Publishing pre-release on GitHub"
@@ -185,7 +185,7 @@ publish() {
         echo -e "\thttps://github.com/$GITHUB_USER/scope/releases/$LATEST_TAG"
     else
         echo "== Sanity checks"
-        if ! [ "$LATEST_TAG_COMMIT_SHA" == "$LATEST_RELEASE_COMMIT_SHA" ] ; then
+        if ! [ "$LATEST_TAG_COMMIT_SHA" == "$LATEST_RELEASE_COMMIT_SHA" ]; then
             echo -e "\u2757 The tag latest_release does not point to the same commit as $LATEST_TAG" >&2
             echo "You may need to" >&2
             echo -e "\tgit tag -af latest_release $LATEST_TAG" >&2
@@ -204,7 +204,7 @@ publish() {
 
         echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
         $SUDO docker tag -f "$DOCKERHUB_USER"/scope "$DOCKERHUB_USER/scope:$VERSION"
-        $SUDO docker push   "$DOCKERHUB_USER"/scope:$"VERSION"
+        $SUDO docker push "$DOCKERHUB_USER"/scope:$"VERSION"
         echo "** Docker images tagged and pushed"
 
         echo "== Publishing release on GitHub"

@@ -26,7 +26,7 @@ echo Doing "$INPUTS"
 for INPUT in $INPUTS; do
     START=$(date +%s)
     "$COMMAND" "$INPUT"
-    RUNTIME=$(( $(date +%s) - START ))
+    RUNTIME=$(($(date +%s) - START))
 
     "../tools/sched" time "$INPUT" "$RUNTIME"
 done

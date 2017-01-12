@@ -35,4 +35,3 @@ start_container 1 tomwilkie/echo echo
 start_container 2 tomwilkie/app app
 start_container 2 tomwilkie/frontend frontend --add-host=dns.weave.local:"$(weave docker-bridge-ip)"
 start_container 1 tomwilkie/client client
-

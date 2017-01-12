@@ -8,11 +8,11 @@
 # Depends on:
 # - gofmt
 
-function generate_header {
+function generate_header() {
     local out_file="${1}"
     local cmd="${2}"
 
-    cat << EOF >"${out_file}"
+    cat <<EOF >"${out_file}"
     // Generated file, do not edit.
     // To regenerate, run ${cmd}
 
@@ -26,7 +26,7 @@ function generate_header {
 EOF
 }
 
-function generate_latest_map {
+function generate_latest_map() {
     local out_file="$1"
     local data_type="$2"
     local uppercase_data_type="${data_type^}"
@@ -43,7 +43,7 @@ function generate_latest_map {
     # shellcheck disable=SC2016
     local json_value='`json:"value"`'
 
-    cat << EOF >>"${out_file}"
+    cat <<EOF >>"${out_file}"
     type ${wire_entry_type} struct {
         Timestamp time.Time    ${json_timestamp}
         Value     ${data_type} ${json_value}
