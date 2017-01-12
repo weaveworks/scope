@@ -12,8 +12,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecs"
 )
 
-// a wrapper around an AWS client that makes all the needed calls and just exposes the final results
-type ecsClient struct {
+// A wrapper around an AWS client that makes all the needed calls and just exposes the final results.
+// We create an interface so we can mock for testing
+type ecsClient interface {
+	// Returns a ecsInfo struct containing data needed for a report.
+	getInfo([]string) ecsInfo
+}
+
+// actual implementation
+type ecsClientImpl struct {
 	client       *ecs.ECS
 	cluster      string
 	taskCache    map[string]ecsTask    // Keys are task ARNs.
@@ -72,7 +79,7 @@ func newClient(cluster string) (*ecsClient, error) {
 		return nil, err
 	}
 
-	return &ecsClient{
+	return &ecsClientImpl{
 		client:           ecs.New(sess, &aws.Config{Region: aws.String(region)}),
 		cluster:          cluster,
 		taskCache:        map[string]ecsTask{},
@@ -114,7 +121,7 @@ func newECSService(service *ecs.Service) ecsService {
 
 // Returns a channel from which service ARNs can be read.
 // Cannot fail as it will attempt to deliver partial results, though that may end up being no results.
-func (c ecsClient) listServices() <-chan string {
+func (c ecsClientImpl) listServices() <-chan string {
 	log.Debugf("Listing ECS services")
 	results := make(chan string)
 	go func() {
@@ -140,7 +147,7 @@ func (c ecsClient) listServices() <-chan string {
 
 // Returns (input, done) channels. Service ARNs given to input are batched and details are fetched,
 // with full ecsService objects being put into the cache. Closes done when finished.
-func (c ecsClient) describeServices() (chan<- string, <-chan struct{}) {
+func (c ecsClientImpl) describeServices() (chan<- string, <-chan struct{}) {
 	input := make(chan string)
 	done := make(chan struct{})
 
@@ -182,7 +189,7 @@ func (c ecsClient) describeServices() (chan<- string, <-chan struct{}) {
 	return input, done
 }
 
-func (c ecsClient) describeServicesBatch(arns []string) {
+func (c ecsClientImpl) describeServicesBatch(arns []string) {
 	arnPtrs := make([]*string, 0, len(arns))
 	for i := range arns {
 		arnPtrs = append(arnPtrs, &arns[i])
@@ -209,7 +216,7 @@ func (c ecsClient) describeServicesBatch(arns []string) {
 }
 
 // get details on given tasks, updating cache with the results
-func (c ecsClient) getTasks(taskARNs []string) {
+func (c ecsClientImpl) getTasks(taskARNs []string) {
 	log.Debugf("Describing %d ECS tasks", len(taskARNs))
 
 	taskPtrs := make([]*string, len(taskARNs))
@@ -238,7 +245,7 @@ func (c ecsClient) getTasks(taskARNs []string) {
 }
 
 // Evict entries from the caches which have not been used within the eviction interval.
-func (c ecsClient) evictOldCacheItems() {
+func (c ecsClientImpl) evictOldCacheItems() {
 	const evictTime = time.Minute
 	now := time.Now()
 
@@ -264,7 +271,7 @@ func (c ecsClient) evictOldCacheItems() {
 // Try to match a list of task ARNs to service names using cached info.
 // Returns (task to service map, unmatched tasks). Ignores tasks whose startedby values
 // don't appear to point to a service.
-func (c ecsClient) matchTasksServices(taskARNs []string) (map[string]string, []string) {
+func (c ecsClientImpl) matchTasksServices(taskARNs []string) (map[string]string, []string) {
 	const servicePrefix = "ecs-svc"
 
 	deploymentMap := map[string]string{}
@@ -298,7 +305,7 @@ func (c ecsClient) matchTasksServices(taskARNs []string) (map[string]string, []s
 	return results, unmatched
 }
 
-func (c ecsClient) ensureTasks(taskARNs []string) {
+func (c ecsClientImpl) ensureTasks(taskARNs []string) {
 	tasksToFetch := []string{}
 	now := time.Now()
 	for _, taskARN := range taskARNs {
@@ -314,7 +321,7 @@ func (c ecsClient) ensureTasks(taskARNs []string) {
 	}
 }
 
-func (c ecsClient) refreshServices(taskServiceMap map[string]string) map[string]bool {
+func (c ecsClientImpl) refreshServices(taskServiceMap map[string]string) map[string]bool {
 	toDescribe, done := c.describeServices()
 	servicesRefreshed := map[string]bool{}
 	for _, serviceName := range taskServiceMap {
@@ -329,7 +336,7 @@ func (c ecsClient) refreshServices(taskServiceMap map[string]string) map[string]
 	return servicesRefreshed
 }
 
-func (c ecsClient) describeAllServices(servicesRefreshed map[string]bool) {
+func (c ecsClientImpl) describeAllServices(servicesRefreshed map[string]bool) {
 	serviceNamesChan := c.listServices()
 	toDescribe, done := c.describeServices()
 	go func() {
@@ -344,7 +351,7 @@ func (c ecsClient) describeAllServices(servicesRefreshed map[string]bool) {
 	<-done
 }
 
-func (c ecsClient) makeECSInfo(taskARNs []string, taskServiceMap map[string]string) ecsInfo {
+func (c ecsClientImpl) makeECSInfo(taskARNs []string, taskServiceMap map[string]string) ecsInfo {
 	// The maps to return are the referenced subsets of the full caches
 	tasks := map[string]ecsTask{}
 	for _, taskARN := range taskARNs {
@@ -372,8 +379,8 @@ func (c ecsClient) makeECSInfo(taskARNs []string, taskServiceMap map[string]stri
 	return ecsInfo{services: services, tasks: tasks, taskServiceMap: taskServiceMap}
 }
 
-// Returns a ecsInfo struct containing data needed for a report.
-func (c ecsClient) getInfo(taskARNs []string) ecsInfo {
+// Implements ecsClient.getInfo
+func (c ecsClientImpl) getInfo(taskARNs []string) ecsInfo {
 	log.Debugf("Getting ECS info on %d tasks", len(taskARNs))
 
 	// We do a weird order of operations here to minimize unneeded cache refreshes.
