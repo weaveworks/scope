@@ -101,7 +101,7 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 		if !ok {
 			log.Debugf("Creating new ECS client")
 			var err error
-			client, err = newClient(cluster)
+			client, err = newClient(cluster, 1e6, time.Hour) // TODO remove these temporary magic values
 			if err != nil {
 				return rpt, err
 			}
