@@ -1,5 +1,7 @@
 import { range } from 'lodash';
 
+// NOTE: All the array operations defined here should be non-mutating.
+
 export function uniformSelect(array, size) {
   if (size > array.length) {
     return array;
@@ -11,12 +13,16 @@ export function uniformSelect(array, size) {
 }
 
 export function insertElement(array, index, element) {
-  array.splice(index, 0, element);
+  return array.slice(0, index).concat([element], array.slice(index));
+}
+
+export function removeElement(array, index) {
+  return array.slice(0, index).concat(array.slice(index + 1));
 }
 
 export function moveElement(array, from, to) {
-  if (from !== to) {
-    const removedElement = array.splice(from, 1)[0];
-    insertElement(array, to, removedElement);
+  if (from === to) {
+    return array;
   }
+  return insertElement(removeElement(array, from), to, array[from]);
 }

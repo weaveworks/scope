@@ -76,15 +76,32 @@ export default class NodeDetailsTableRow extends React.Component {
     // user is selecting some data in the row. In this case don't trigger the onClick event which
     // is most likely a details panel popping open.
     //
+    this.state = { focused: false };
     this.mouseDragOrigin = [0, 0];
 
     this.saveLabelElementRef = this.saveLabelElementRef.bind(this);
     this.onMouseDown = this.onMouseDown.bind(this);
     this.onMouseUp = this.onMouseUp.bind(this);
+    this.onMouseEnter = this.onMouseEnter.bind(this);
+    this.onMouseLeave = this.onMouseLeave.bind(this);
   }
 
   saveLabelElementRef(ref) {
     this.labelElement = ref;
+  }
+
+  onMouseEnter() {
+    this.setState({ focused: true });
+    if (this.props.onMouseEnter) {
+      this.props.onMouseEnter();
+    }
+  }
+
+  onMouseLeave() {
+    this.setState({ focused: false });
+    if (this.props.onMouseLeave) {
+      this.props.onMouseLeave();
+    }
   }
 
   onMouseDown(ev) {
@@ -109,18 +126,22 @@ export default class NodeDetailsTableRow extends React.Component {
   }
 
   render() {
-    const { node, nodeIdKey, topologyId, columns, onClick, selected, colStyles } = this.props;
+    const { node, nodeIdKey, topologyId, columns, onClick, colStyles } = this.props;
     const [firstColumnStyle, ...columnStyles] = colStyles;
     const values = renderValues(node, columns, columnStyles);
     const nodeId = node[nodeIdKey];
-    const className = classNames('node-details-table-node', { selected });
+
+    const className = classNames('node-details-table-node', {
+      selected: this.props.selected,
+      focused: this.state.focused,
+    });
 
     return (
       <tr
         onMouseDown={onClick && this.onMouseDown}
         onMouseUp={onClick && this.onMouseUp}
-        onMouseEnter={this.props.onMouseEnter}
-        onMouseLeave={this.props.onMouseLeave}
+        onMouseEnter={this.onMouseEnter}
+        onMouseLeave={this.onMouseLeave}
         className={className}>
         <td
           className="node-details-table-node-label truncate"

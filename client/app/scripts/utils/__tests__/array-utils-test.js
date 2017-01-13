@@ -1,5 +1,11 @@
 import { range } from 'lodash';
 
+function testNotMutatingArray(f, array, ...otherArgs) {
+  const original = array.slice();
+  f(array, ...otherArgs);
+  expect(array).toEqual(original);
+}
+
 describe('ArrayUtils', () => {
   const ArrayUtils = require('../array-utils');
 
@@ -7,12 +13,12 @@ describe('ArrayUtils', () => {
     const f = ArrayUtils.uniformSelect;
 
     it('it should select the array elements uniformly, including the endpoints', () => {
+      testNotMutatingArray(f, ['A', 'B', 'C', 'D', 'E'], 3);
       {
         const arr = ['x', 'y'];
         expect(f(arr, 3)).toEqual(['x', 'y']);
         expect(f(arr, 2)).toEqual(['x', 'y']);
       }
-
       {
         const arr = ['A', 'B', 'C', 'D', 'E'];
         expect(f(arr, 6)).toEqual(['A', 'B', 'C', 'D', 'E']);
@@ -21,7 +27,6 @@ describe('ArrayUtils', () => {
         expect(f(arr, 3)).toEqual(['A', 'C', 'E']);
         expect(f(arr, 2)).toEqual(['A', 'E']);
       }
-
       {
         const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
         expect(f(arr, 12)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
@@ -36,7 +41,6 @@ describe('ArrayUtils', () => {
         expect(f(arr, 3)).toEqual([1, 6, 11]);
         expect(f(arr, 2)).toEqual([1, 11]);
       }
-
       {
         const arr = range(1, 10001);
         expect(f(arr, 4)).toEqual([1, 3334, 6667, 10000]);
@@ -47,12 +51,10 @@ describe('ArrayUtils', () => {
   });
 
   describe('insertElement', () => {
-    const f = (array, index, element) => {
-      ArrayUtils.insertElement(array, index, element);
-      return array;
-    };
+    const f = ArrayUtils.insertElement;
 
     it('it should insert an element into the array at the specified index', () => {
+      testNotMutatingArray(f, ['x', 'y', 'z'], 0, 'a');
       expect(f(['x', 'y', 'z'], 0, 'a')).toEqual(['a', 'x', 'y', 'z']);
       expect(f(['x', 'y', 'z'], 1, 'a')).toEqual(['x', 'a', 'y', 'z']);
       expect(f(['x', 'y', 'z'], 2, 'a')).toEqual(['x', 'y', 'a', 'z']);
@@ -60,13 +62,22 @@ describe('ArrayUtils', () => {
     });
   });
 
+  describe('removeElement', () => {
+    const f = ArrayUtils.removeElement;
+
+    it('it should remove the element at the specified index from the array', () => {
+      testNotMutatingArray(f, ['x', 'y', 'z'], 0);
+      expect(f(['x', 'y', 'z'], 0)).toEqual(['y', 'z']);
+      expect(f(['x', 'y', 'z'], 1)).toEqual(['x', 'z']);
+      expect(f(['x', 'y', 'z'], 2)).toEqual(['x', 'y']);
+    });
+  });
+
   describe('moveElement', () => {
-    const f = (array, from, to) => {
-      ArrayUtils.moveElement(array, from, to);
-      return array;
-    };
+    const f = ArrayUtils.moveElement;
 
     it('it should move an array element, modifying the array', () => {
+      testNotMutatingArray(f, ['x', 'y', 'z'], 0, 1);
       expect(f(['x', 'y', 'z'], 0, 1)).toEqual(['y', 'x', 'z']);
       expect(f(['x', 'y', 'z'], 1, 0)).toEqual(['y', 'x', 'z']);
       expect(f(['x', 'y', 'z'], 0, 2)).toEqual(['y', 'z', 'x']);

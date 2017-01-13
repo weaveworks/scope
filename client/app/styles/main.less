@@ -940,13 +940,20 @@ h2 {
       }
     }
 
+    tbody {
+      position: relative;
+
+      .min-height-constraint {
+        position: absolute;
+        width: 0 !important;
+        opacity: 0;
+        top: 0;
+      }
+    }
+
     &-node {
       font-size: 105%;
       line-height: 1.5;
-
-      &:hover, &.selected {
-        background-color: lighten(@background-color, 5%);
-      }
 
       > * {
         padding: 0 4px;
@@ -986,6 +993,19 @@ h2 {
         }
       }
 
+    }
+  }
+}
+
+// This part sets the styles only for the 'real' node details table, not applying
+// them to the nodes grid, because there we control hovering from the JS.
+// NOTE: Maybe it would be nice to separate the class names between the two places
+// where node tables are used - i.e. it doesn't make sense that node-details-table
+// can also refer to the tables in the nodes grid.
+.details-wrapper .node-details-table {
+  &-node {
+    &:hover, &.selected {
+      background-color: lighten(@background-color, 5%);
     }
   }
 }
@@ -1785,8 +1805,9 @@ h2 {
       padding: 3px 4px;
     }
 
+    // Keeping the row height fixed is important for locking the rows on hover.
     .node-details-table-node, thead tr {
-      height: 24px;
+      height: 28px;
     }
 
     tr:nth-child(even) {
@@ -1799,7 +1820,10 @@ h2 {
       cursor: pointer;
     }
 
-    tbody tr.selected, tbody tr:hover {
+    // We fully control hovering of the grid rows from JS,
+    // because we want consistent behaviour between the
+    // visual and row locking logic that happens on hover.
+    tbody tr.selected, tbody tr.focused {
       background-color: #d7ecf5;
       border: 1px solid @weave-blue;
     }
