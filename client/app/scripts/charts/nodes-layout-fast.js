@@ -22,20 +22,17 @@ class Bucket {
   }
 
   updateLayoutPositions(nodes) {
-    const nodeY = (this.row * 50) + 300;
+    const distance = 60;
+    const nodeY = (this.row * distance) + 300;
     const shift = Math.ceil(this.size() * 0.5);
     Object.entries(this.nodes).forEach(([key, node], col) => {
-      const nodeX = (((col - shift) + ((this.row % 2) * 0.5)) * 50) + 300;
+      const nodeX = (((col - shift) + ((this.row % 2) * 0.5)) * distance) + 300;
       node = node.merge({ x: nodeX, y: nodeY });
       nodes = nodes.set(node.get('id'), node);
       this.nodes[node.get('id')] = node;
     });
     return nodes;
   }
-}
-
-function requiresLayoutReset(addedNodes) {
-  return addedNodes.size > 50;
 }
 
 class LayoutState {
@@ -86,15 +83,19 @@ class LayoutState {
     };
   }
 
-  updateNodes(nodes, forceRelayout) {
-    const { addedNodes, removedNodes } = this.getNodesDiff(nodes);
+  requiresReset() {
+    // TODO: Improve this condition.
+    return this.cachedNodes.size === 0;
+  }
 
-    if (forceRelayout || requiresLayoutReset(addedNodes)) {
+  updateNodes(nodes, forceRelayout) {
+    if (forceRelayout || this.requiresReset()) {
       this.createOptimalLayout(nodes);
       this.buckets.forEach((bucket) => {
         nodes = bucket.updateLayoutPositions(nodes);
       });
     } else {
+      const { addedNodes, removedNodes } = this.getNodesDiff(nodes);
       nodes = this.cachedNodes;
       addedNodes.forEach((node) => {
         const bucket = this.buckets[this.nodeBucketHeuristics()];
