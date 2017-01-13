@@ -1,10 +1,7 @@
 package endpoint
 
 import (
-	"fmt"
-	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,6 +16,7 @@ const (
 	Addr            = "addr" // typically IPv4
 	Port            = "port"
 	Conntracked     = "conntracked"
+	EBPF            = "eBPF"
 	Procspied       = "procspied"
 	ReverseDNSNames = "reverse_dns_names"
 	SnoopedDNSNames = "snooped_dns_names"
@@ -31,6 +29,7 @@ type ReporterConfig struct {
 	SpyProcs     bool
 	UseConntrack bool
 	WalkProc     bool
+	UseEbpfConn  bool
 	ProcRoot     string
 	BufferSize   int
 	Scanner      procspy.ConnectionScanner
@@ -41,6 +40,7 @@ type ReporterConfig struct {
 type Reporter struct {
 	conf            ReporterConfig
 	flowWalker      flowWalker // interface
+	ebpfTracker     eventTracker
 	natMapper       natMapper
 	reverseResolver *reverseResolver
 }
@@ -66,6 +66,7 @@ func NewReporter(conf ReporterConfig) *Reporter {
 	return &Reporter{
 		conf:            conf,
 		flowWalker:      newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize),
+		ebpfTracker:     newEbpfTracker(conf.UseEbpfConn),
 		natMapper:       makeNATMapper(newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, "--any-nat")),
 		reverseResolver: newReverseResolver(),
 	}
@@ -80,27 +81,7 @@ func (r *Reporter) Stop() {
 	r.natMapper.stop()
 	r.reverseResolver.stop()
 	r.conf.Scanner.Stop()
-}
-
-type fourTuple struct {
-	fromAddr, toAddr string
-	fromPort, toPort uint16
-}
-
-// key is a sortable direction-independent key for tuples, used to look up a
-// fourTuple, when you are unsure of it's direction.
-func (t fourTuple) key() string {
-	key := []string{
-		fmt.Sprintf("%s:%d", t.fromAddr, t.fromPort),
-		fmt.Sprintf("%s:%d", t.toAddr, t.toPort),
-	}
-	sort.Strings(key)
-	return strings.Join(key, " ")
-}
-
-// reverse flips the direction of the tuple
-func (t *fourTuple) reverse() {
-	t.fromAddr, t.fromPort, t.toAddr, t.toPort = t.toAddr, t.toPort, t.fromAddr, t.fromPort
+	// TODO add a Stop method for ebpfTracker
 }
 
 // Report implements Reporter.
@@ -111,10 +92,12 @@ func (r *Reporter) Report() (report.Report, error) {
 
 	hostNodeID := report.MakeHostNodeID(r.conf.HostID)
 	rpt := report.MakeReport()
+
 	seenTuples := map[string]fourTuple{}
 
 	// Consult the flowWalker for short-lived connections
-	{
+	// With eBPF, this is used only in the first round to build seenTuples for WalkProc
+	if r.conf.WalkProc || !r.conf.UseEbpfConn {
 		extraNodeInfo := map[string]string{
 			Conntracked: "true",
 		}
@@ -144,6 +127,7 @@ func (r *Reporter) Report() (report.Report, error) {
 
 	if r.conf.WalkProc {
 		conns, err := r.conf.Scanner.Connections(r.conf.SpyProcs)
+		defer r.procParsingSwitcher()
 		if err != nil {
 			return rpt, err
 		}
@@ -174,11 +158,39 @@ func (r *Reporter) Report() (report.Report, error) {
 			// the direction.
 			canonical, ok := seenTuples[tuple.key()]
 			if (ok && canonical != tuple) || (!ok && tuple.fromPort < tuple.toPort) {
-				tuple.reverse()
-				toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
+				r.feedToEbpf(tuple, true, int(conn.Proc.PID), namespaceID)
+				r.addConnection(&rpt, reverse(tuple), namespaceID, toNodeInfo, fromNodeInfo)
+			} else {
+				r.feedToEbpf(tuple, false, int(conn.Proc.PID), namespaceID)
+				r.addConnection(&rpt, tuple, namespaceID, fromNodeInfo, toNodeInfo)
 			}
-			r.addConnection(&rpt, tuple, namespaceID, fromNodeInfo, toNodeInfo)
+
 		}
+	}
+
+	// eBPF
+	if r.conf.UseEbpfConn && !r.ebpfTracker.hasDied() {
+		r.ebpfTracker.walkConnections(func(e ebpfConnection) {
+			fromNodeInfo := map[string]string{
+				Procspied: "true",
+				EBPF:      "true",
+			}
+			toNodeInfo := map[string]string{
+				Procspied: "true",
+				EBPF:      "true",
+			}
+			if e.pid > 0 {
+				fromNodeInfo[process.PID] = strconv.Itoa(e.pid)
+				fromNodeInfo[report.HostNodeID] = hostNodeID
+			}
+
+			if e.incoming {
+				r.addConnection(&rpt, reverse(e.tuple), e.networkNamespace, toNodeInfo, fromNodeInfo)
+			} else {
+				r.addConnection(&rpt, e.tuple, e.networkNamespace, fromNodeInfo, toNodeInfo)
+			}
+
+		})
 	}
 
 	r.natMapper.applyNAT(rpt, r.conf.HostID)
@@ -213,4 +225,30 @@ func (r *Reporter) makeEndpointNode(namespaceID string, addr string, port uint16
 
 func newu64(i uint64) *uint64 {
 	return &i
+}
+
+// procParsingSwitcher make sure that if eBPF tracking is enabled,
+// connections coming from /proc parsing are only walked once.
+func (r *Reporter) procParsingSwitcher() {
+	if r.conf.WalkProc && r.conf.UseEbpfConn {
+		r.conf.WalkProc = false
+		r.ebpfTracker.initialize()
+
+		r.flowWalker.stop()
+	}
+}
+
+// if the eBPF tracker is enabled, feed the existing connections into it
+// incoming connections correspond to "accept" events
+// outgoing connections correspond to "connect" events
+func (r Reporter) feedToEbpf(tuple fourTuple, incoming bool, pid int, namespaceID string) {
+	if r.conf.UseEbpfConn && !r.ebpfTracker.isInitialized() {
+		tcpEventType := "connect"
+
+		if incoming {
+			tcpEventType = "accept"
+		}
+
+		r.ebpfTracker.handleConnection(tcpEventType, tuple, pid, namespaceID)
+	}
 }

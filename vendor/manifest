@@ -973,6 +973,14 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/iovisor/gobpf",
+			"repository": "https://github.com/iovisor/gobpf",
+			"vcs": "git",
+			"revision": "e0dd5caf07ea778d61c91a3219726451459bf70c",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/jmespath/go-jmespath",
 			"repository": "https://github.com/jmespath/go-jmespath",
 			"vcs": "",
