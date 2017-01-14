@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/weaveworks/scope/probe/endpoint/conntrack"
 	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -53,18 +54,18 @@ func newConnectionTracker(conf connectionTrackerConfig) connectionTracker {
 	return ct
 }
 
-func flowToTuple(f flow) (ft fourTuple) {
+func flowToTuple(f conntrack.Flow) (ft fourTuple) {
 	ft = fourTuple{
-		f.Original.Layer3.SrcIP,
-		f.Original.Layer3.DstIP,
+		f.Original.Layer3.SrcIP.String(),
+		f.Original.Layer3.DstIP.String(),
 		uint16(f.Original.Layer4.SrcPort),
 		uint16(f.Original.Layer4.DstPort),
 	}
 	// Handle DNAT-ed connections in the initial state
-	if f.Original.Layer3.DstIP != f.Reply.Layer3.SrcIP {
+	if !f.Original.Layer3.DstIP.Equal(f.Reply.Layer3.SrcIP) {
 		ft = fourTuple{
-			f.Reply.Layer3.DstIP,
-			f.Reply.Layer3.SrcIP,
+			f.Reply.Layer3.DstIP.String(),
+			f.Reply.Layer3.SrcIP.String(),
 			uint16(f.Reply.Layer4.DstPort),
 			uint16(f.Reply.Layer4.SrcPort),
 		}
@@ -118,7 +119,7 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 
 	// consult the flowWalker for short-lived (conntracked) connections
 	seenTuples := map[string]fourTuple{}
-	t.flowWalker.walkFlows(func(f flow, alive bool) {
+	t.flowWalker.walkFlows(func(f conntrack.Flow, alive bool) {
 		tuple := flowToTuple(f)
 		seenTuples[tuple.key()] = tuple
 		t.addConnection(rpt, false, tuple, "", nil, nil)
@@ -135,7 +136,7 @@ func (t *connectionTracker) existingFlows() map[string]fourTuple {
 		// log.Warnf("Not using conntrack: disabled")
 	} else if err := IsConntrackSupported(t.conf.ProcRoot); err != nil {
 		log.Warnf("Not using conntrack: not supported by the kernel: %s", err)
-	} else if existingFlows, err := existingConnections([]string{"--any-nat"}); err != nil {
+	} else if existingFlows, err := conntrack.Established(t.conf.BufferSize); err != nil { // TODO: worry about --any-nat
 		log.Errorf("conntrack existingConnections error: %v", err)
 	} else {
 		for _, f := range existingFlows {
