@@ -68,6 +68,7 @@ function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label, truncat
   if (!prefix || matchPrefix(label, prefix)) {
     const queryRe = makeRegExp(query);
     const matches = text.match(queryRe);
+
     if (matches) {
       const firstMatch = matches[0];
       const index = text.search(queryRe);
@@ -172,6 +173,7 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
       }
     }
   });
+
   return nodeMatches;
 }
 

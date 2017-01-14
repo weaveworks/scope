@@ -1,10 +1,7 @@
 import page from 'page';
-import reduce from 'lodash/reduce';
-import trimStart from 'lodash/trimStart';
 
 import { route } from '../actions/app-actions';
 import { storageGet, storageSet } from './storage-utils';
-import { searchTopology } from './search-utils';
 
 //
 // page.js won't match the routes below if ":state" has a slash in it, so replace those before we
@@ -86,27 +83,9 @@ export function updateRoute(getState) {
   }
 }
 
-export function translateUrlParams(paramString, nodes) {
-  // ?key=value&otherkey=othervalue
-  let state;
-  const pairs = trimStart(paramString, '?').split('&');
-  const params = reduce(pairs, (result, pair) => {
-    const [k, v] = pair.split('=');
-    result[k] = v;
-    return result;
-  }, {});
-  if (params.node) {
-    state = searchTopology(nodes, { query: params.node });
-  }
-
-  return state;
-}
-
-
 export function getRouter(dispatch, initialState) {
   // strip any trailing '/'s.
   page.base(window.location.pathname.replace(/\/$/, ''));
-  console.log(translateUrlParams(window.location.search));
 
   page('/', () => {
     // recover from storage state on empty URL

@@ -13,7 +13,8 @@ import Topologies from './topologies';
 import TopologyOptions from './topology-options';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric,
-  selectMetric, toggleHelp, toggleGridMode } from '../actions/app-actions';
+  selectMetric, toggleHelp, toggleGridMode, translateUrlParamsToViewState
+} from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import GridModeSelector from './grid-mode-selector';
@@ -39,13 +40,13 @@ class App extends React.Component {
   componentDidMount() {
     window.addEventListener('keypress', this.onKeyPress);
     window.addEventListener('keyup', this.onKeyUp);
-
-    getRouter(this.props.dispatch, this.props.urlState).start({hashbang: true});
+    this.props.translateUrlParamsToViewState(window.location.search);
+    getRouter(this.context.store.dispatch, this.props.urlState).start({hashbang: true});
     if (!this.props.routeSet) {
       // dont request topologies when already done via router
-      getTopologies(this.props.activeTopologyOptions, this.props.dispatch);
+      getTopologies(this.props.activeTopologyOptions, this.context.store.dispatch);
     }
-    getApiDetails(this.props.dispatch);
+    getApiDetails(this.context.store.dispatch);
   }
 
   componentWillUnmount() {
@@ -59,11 +60,11 @@ class App extends React.Component {
 
     // don't get esc in onKeyPress
     if (ev.keyCode === ESC_KEY_CODE) {
-      this.props.dispatch(hitEsc());
+      this.context.store.dispatch(hitEsc());
     } else if (ev.keyCode === ENTER_KEY_CODE) {
-      this.props.dispatch(hitEnter());
+      this.context.store.dispatch(hitEnter());
     } else if (ev.keyCode === BACKSPACE_KEY_CODE) {
-      this.props.dispatch(hitBackspace());
+      this.context.store.dispatch(hitBackspace());
     } else if (ev.code === 'KeyD' && ev.ctrlKey && !showingTerminal) {
       toggleDebugToolbar();
       this.forceUpdate();
@@ -157,7 +158,11 @@ function mapStateToProps(state) {
   };
 }
 
+App.contextTypes = {
+  store: React.PropTypes.object.isRequired
+};
 
 export default connect(
-  mapStateToProps
+  mapStateToProps,
+  { translateUrlParamsToViewState }
 )(App);

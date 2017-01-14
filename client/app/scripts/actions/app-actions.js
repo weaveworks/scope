@@ -1,10 +1,15 @@
 import debug from 'debug';
+import trimStart from 'lodash/trimStart';
+import reduce from 'lodash/reduce';
+import map from 'lodash/map';
+import each from 'lodash/each';
+import { fromJS } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
-import { parseQuery } from '../utils/search-utils';
+import { parseQuery, searchTopology } from '../utils/search-utils';
 import { bufferDeltaUpdate, resumeUpdate,
   resetUpdateBuffer } from '../utils/update-buffer-utils';
 import { doControlRequest, getAllNodes, getNodesDelta, getNodeDetails,
@@ -679,5 +684,65 @@ export function toggleTroubleshootingMenu(ev) {
   if (ev) { ev.preventDefault(); ev.stopPropagation(); }
   return {
     type: ActionTypes.TOGGLE_TROUBLESHOOTING_MENU
+  };
+}
+
+function convertQueryString(paramString) {
+  const pairs = trimStart(paramString, '?').split('&');
+  return reduce(pairs, (result, pair) => {
+    const [k, v] = pair.split('=');
+    result[k] = v;
+    return result;
+  }, {});
+}
+
+function waterfall(series, target, cb) {
+  function next(result) {
+    const fn = series.shift();
+    if (fn) {
+      try {
+        fn(result, next);
+      } catch (e) {
+        cb(e);
+      }
+    } else {
+      cb(null, result);
+    }
+  }
+  next(target, next);
+}
+
+export function translateUrlParamsToViewState(queryString) {
+  return () => {
+    const params = convertQueryString(queryString);
+    if (params.node) {
+      // Get the list of topologies
+      fetch('api/topology').then(response => response.json())
+        .then((topologies) => {
+          // Queue up a list of functions to run, one after the other.
+          const series = map(topologies, topo => (result, cb) => {
+            // Fetch the node for each topology
+            // TODO: Get this buildOptions to work
+            // buildOptionsQuery(topo.options);
+            fetch(`${trimStart(topo.url, '/')}`)
+              .then(res => res.json())
+              .then((json) => {
+                // Append each node in the list to the result object.
+                each(json.nodes, (node, id) => {
+                  result[id] = node;
+                });
+                cb(result);
+              })
+              .catch((e) => { throw e; });
+          });
+          // Run the series
+          waterfall(series, {}, (err, nodes) => {
+            if (err) { throw err; }
+            // const collection = flatten(map(r, ({nodes}) => values(nodes)));
+            const result = searchTopology(fromJS(nodes), { query: params.node });
+            console.log(result.toJS());
+          });
+        });
+    }
   };
 }
