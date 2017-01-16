@@ -45,19 +45,19 @@ type Column struct {
 
 // NodeSummary is summary information about a child for a Node.
 type NodeSummary struct {
-	ID         string               `json:"id"`
-	Label      string               `json:"label"`
-	LabelMinor string               `json:"labelMinor"`
-	Rank       string               `json:"rank"`
-	Shape      string               `json:"shape,omitempty"`
-	Stack      bool                 `json:"stack,omitempty"`
-	Linkable   bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
-	Pseudo     bool                 `json:"pseudo,omitempty"`
-	Metadata   []report.MetadataRow `json:"metadata,omitempty"`
-	Parents    []Parent             `json:"parents,omitempty"`
-	Metrics    []report.MetricRow   `json:"metrics,omitempty"`
-	Tables     []report.Table       `json:"tables,omitempty"`
-	Adjacency  report.IDList        `json:"adjacency,omitempty"`
+	ID            string                `json:"id"`
+	Label         string                `json:"label"`
+	LabelMinor    string                `json:"labelMinor"`
+	Rank          string                `json:"rank"`
+	Shape         string                `json:"shape,omitempty"`
+	Stack         bool                  `json:"stack,omitempty"`
+	Linkable      bool                  `json:"linkable,omitempty"` // Whether this node can be linked-to
+	Pseudo        bool                  `json:"pseudo,omitempty"`
+	Metadata      []report.MetadataRow  `json:"metadata,omitempty"`
+	Parents       []Parent              `json:"parents,omitempty"`
+	Metrics       []report.MetricRow    `json:"metrics,omitempty"`
+	PropertyLists []report.PropertyList `json:"propertyLists,omitempty"`
+	Adjacency     report.IDList         `json:"adjacency,omitempty"`
 }
 
 var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
@@ -106,14 +106,14 @@ func (n NodeSummary) SummarizeMetrics() NodeSummary {
 func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 	t, _ := r.Topology(n.Topology)
 	return NodeSummary{
-		ID:        n.ID,
-		Shape:     t.GetShape(),
-		Linkable:  true,
-		Metadata:  NodeMetadata(r, n),
-		Metrics:   NodeMetrics(r, n),
-		Parents:   Parents(r, n),
-		Tables:    NodeTables(r, n),
-		Adjacency: n.Adjacency,
+		ID:            n.ID,
+		Shape:         t.GetShape(),
+		Linkable:      true,
+		Metadata:      NodeMetadata(r, n),
+		Metrics:       NodeMetrics(r, n),
+		Parents:       Parents(r, n),
+		PropertyLists: NodePropertyLists(r, n),
+		Adjacency:     n.Adjacency,
 	}
 }
 

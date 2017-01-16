@@ -19,34 +19,34 @@ import (
 
 // Keys for use in Node
 const (
-	WeavePeerName               = "weave_peer_name"
-	WeavePeerNickName           = "weave_peer_nick_name"
-	WeaveDNSHostname            = "weave_dns_hostname"
-	WeaveMACAddress             = "weave_mac_address"
-	WeaveVersion                = "weave_version"
-	WeaveEncryption             = "weave_encryption"
-	WeaveProtocol               = "weave_protocol"
-	WeavePeerDiscovery          = "weave_peer_discovery"
-	WeaveTargetCount            = "weave_target_count"
-	WeaveConnectionCount        = "weave_connection_count"
-	WeavePeerCount              = "weave_peer_count"
-	WeaveTrustedSubnets         = "weave_trusted_subnet_count"
-	WeaveIPAMTableID            = "weave_ipam_table"
-	WeaveIPAMStatus             = "weave_ipam_status"
-	WeaveIPAMRange              = "weave_ipam_range"
-	WeaveIPAMDefaultSubnet      = "weave_ipam_default_subnet"
-	WeaveDNSTableID             = "weave_dns_table"
-	WeaveDNSDomain              = "weave_dns_domain"
-	WeaveDNSUpstream            = "weave_dns_upstream"
-	WeaveDNSTTL                 = "weave_dns_ttl"
-	WeaveDNSEntryCount          = "weave_dns_entry_count"
-	WeaveProxyTableID           = "weave_proxy_table"
-	WeaveProxyStatus            = "weave_proxy_status"
-	WeaveProxyAddress           = "weave_proxy_address"
-	WeavePluginTableID          = "weave_plugin_table"
-	WeavePluginStatus           = "weave_plugin_status"
-	WeavePluginDriver           = "weave_plugin_driver"
-	WeaveConnectionsTablePrefix = "weave_connections_table_"
+	WeavePeerName              = "weave_peer_name"
+	WeavePeerNickName          = "weave_peer_nick_name"
+	WeaveDNSHostname           = "weave_dns_hostname"
+	WeaveMACAddress            = "weave_mac_address"
+	WeaveVersion               = "weave_version"
+	WeaveEncryption            = "weave_encryption"
+	WeaveProtocol              = "weave_protocol"
+	WeavePeerDiscovery         = "weave_peer_discovery"
+	WeaveTargetCount           = "weave_target_count"
+	WeaveConnectionCount       = "weave_connection_count"
+	WeavePeerCount             = "weave_peer_count"
+	WeaveTrustedSubnets        = "weave_trusted_subnet_count"
+	WeaveIPAMTableID           = "weave_ipam_table"
+	WeaveIPAMStatus            = "weave_ipam_status"
+	WeaveIPAMRange             = "weave_ipam_range"
+	WeaveIPAMDefaultSubnet     = "weave_ipam_default_subnet"
+	WeaveDNSTableID            = "weave_dns_table"
+	WeaveDNSDomain             = "weave_dns_domain"
+	WeaveDNSUpstream           = "weave_dns_upstream"
+	WeaveDNSTTL                = "weave_dns_ttl"
+	WeaveDNSEntryCount         = "weave_dns_entry_count"
+	WeaveProxyTableID          = "weave_proxy_table"
+	WeaveProxyStatus           = "weave_proxy_status"
+	WeaveProxyAddress          = "weave_proxy_address"
+	WeavePluginTableID         = "weave_plugin_table"
+	WeavePluginStatus          = "weave_plugin_status"
+	WeavePluginDriver          = "weave_plugin_driver"
+	WeaveConnectionsListPrefix = "weave_connections_list_"
 )
 
 var (
@@ -72,16 +72,16 @@ var (
 		WeaveTrustedSubnets:  {ID: WeaveTrustedSubnets, Label: "Trusted Subnets", From: report.FromSets, Priority: 9},
 	}
 
-	weaveTableTemplates = report.TableTemplates{
+	weavePropertyListTemplates = report.PropertyListTemplates{
 		WeaveIPAMTableID: {ID: WeaveIPAMTableID, Label: "IPAM",
-			FixedRows: map[string]string{
+			FixedProperties: map[string]string{
 				WeaveIPAMStatus:        "Status",
 				WeaveIPAMRange:         "Range",
 				WeaveIPAMDefaultSubnet: "Default Subnet",
 			},
 		},
 		WeaveDNSTableID: {ID: WeaveDNSTableID, Label: "DNS",
-			FixedRows: map[string]string{
+			FixedProperties: map[string]string{
 				WeaveDNSDomain:     "Domain",
 				WeaveDNSUpstream:   "Upstream",
 				WeaveDNSTTL:        "TTL",
@@ -89,21 +89,21 @@ var (
 			},
 		},
 		WeaveProxyTableID: {ID: WeaveProxyTableID, Label: "Proxy",
-			FixedRows: map[string]string{
+			FixedProperties: map[string]string{
 				WeaveProxyStatus:  "Status",
 				WeaveProxyAddress: "Address",
 			},
 		},
 		WeavePluginTableID: {ID: WeavePluginTableID, Label: "Plugin",
-			FixedRows: map[string]string{
+			FixedProperties: map[string]string{
 				WeavePluginStatus: "Status",
 				WeavePluginDriver: "Driver Name",
 			},
 		},
-		WeaveConnectionsTablePrefix: {
-			ID:     WeaveConnectionsTablePrefix,
+		WeaveConnectionsListPrefix: {
+			ID:     WeaveConnectionsListPrefix,
 			Label:  "Connections",
-			Prefix: WeaveConnectionsTablePrefix,
+			Prefix: WeaveConnectionsListPrefix,
 		},
 	}
 )
@@ -345,7 +345,7 @@ func (w *Weave) Report() (report.Report, error) {
 
 	r := report.MakeReport()
 	r.Container = r.Container.WithMetadataTemplates(containerMetadata)
-	r.Overlay = r.Overlay.WithMetadataTemplates(weaveMetadata).WithTableTemplates(weaveTableTemplates)
+	r.Overlay = r.Overlay.WithMetadataTemplates(weaveMetadata).WithPropertyListTemplates(weavePropertyListTemplates)
 
 	// We report nodes for all peers (not just the current node) to highlight peers not monitored by Scope
 	// (i.e. without a running probe)
@@ -434,13 +434,13 @@ func (w *Weave) addCurrentPeerInfo(latests map[string]string, node report.Node) 
 		latests[WeavePluginStatus] = "running"
 		latests[WeavePluginDriver] = "weave"
 	}
-	node = node.AddPrefixTable(WeaveConnectionsTablePrefix, getConnectionsTable(w.statusCache.Router))
+	node = node.AddPrefixPropertyList(WeaveConnectionsListPrefix, getConnectionsList(w.statusCache.Router))
 	node = node.WithParents(report.EmptySets.Add(report.Host, report.MakeStringSet(w.hostID)))
 
 	return latests, node
 }
 
-func getConnectionsTable(router weave.Router) map[string]string {
+func getConnectionsList(router weave.Router) map[string]string {
 	const (
 		outboundArrow = "->"
 		inboundArrow  = "<-"

@@ -47,9 +47,9 @@ var (
 		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: "number", Priority: 2},
 	}
 
-	ContainerTableTemplates = report.TableTemplates{
+	ContainerPropertyListTemplates = report.PropertyListTemplates{
 		ImageTableID: {ID: ImageTableID, Label: "Image",
-			FixedRows: map[string]string{
+			FixedProperties: map[string]string{
 				ImageID:          "ID",
 				ImageName:        "Name",
 				ImageSize:        "Size",
@@ -60,7 +60,7 @@ var (
 		EnvPrefix:   {ID: EnvPrefix, Label: "Environment Variables", Prefix: EnvPrefix},
 	}
 
-	ContainerImageTableTemplates = report.TableTemplates{
+	ContainerImagePropertyListTemplates = report.PropertyListTemplates{
 		ImageLabelPrefix: {ID: ImageLabelPrefix, Label: "Docker Labels", Prefix: ImageLabelPrefix},
 	}
 
@@ -181,7 +181,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	result := report.MakeTopology().
 		WithMetadataTemplates(ContainerMetadataTemplates).
 		WithMetricTemplates(ContainerMetricTemplates).
-		WithTableTemplates(ContainerTableTemplates)
+		WithPropertyListTemplates(ContainerPropertyListTemplates)
 	result.Controls.AddControls(ContainerControls)
 
 	metadata := map[string]string{report.ControlProbeID: r.probeID}
@@ -244,7 +244,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 func (r *Reporter) containerImageTopology() report.Topology {
 	result := report.MakeTopology().
 		WithMetadataTemplates(ContainerImageMetadataTemplates).
-		WithTableTemplates(ContainerImageTableTemplates)
+		WithPropertyListTemplates(ContainerImagePropertyListTemplates)
 
 	r.registry.WalkImages(func(image docker_client.APIImages) {
 		imageID := trimImageID(image.ID)
@@ -258,7 +258,7 @@ func (r *Reporter) containerImageTopology() report.Topology {
 		}
 		nodeID := report.MakeContainerImageNodeID(imageID)
 		node := report.MakeNodeWith(nodeID, latests)
-		node = node.AddPrefixTable(ImageLabelPrefix, image.Labels)
+		node = node.AddPrefixPropertyList(ImageLabelPrefix, image.Labels)
 		result.AddNode(node)
 	})
 
