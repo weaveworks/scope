@@ -16,10 +16,15 @@ const store = configureStore();
 
 function renderApp() {
   const App = require('./components/app').default;
-  ReactDOM.render((
-    <Provider store={store}>
+  const DevApp = () => (
+    <div>
       <App />
       <DevTools />
+    </div>
+  );
+  ReactDOM.render((
+    <Provider store={store}>
+      <DevApp />
     </Provider>
   ), document.getElementById('app'));
 }

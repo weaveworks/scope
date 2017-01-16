@@ -714,6 +714,19 @@ export function rootReducer(state = initialState, action) {
       return state.set('showingTroubleshootingMenu', !state.get('showingTroubleshootingMenu'));
     }
 
+    case ActionTypes.ROUTE_FROM_LINK: {
+      const { id, topology } = action.node;
+      const topologyId = state.get('topologies').find(t => t.get('name') === topology.name).get('id');
+
+      state = state.setIn(['nodeDetails', id], {
+        id,
+        label: action.node.label,
+        origin: null,
+        topologyId,
+      });
+      return state.set('currentTopologyId', topologyId).set('selectedNodeId', id);
+    }
+
     default: {
       return state;
     }

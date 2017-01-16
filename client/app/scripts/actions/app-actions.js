@@ -1,15 +1,14 @@
 import debug from 'debug';
 import trimStart from 'lodash/trimStart';
-import reduce from 'lodash/reduce';
 import map from 'lodash/map';
 import each from 'lodash/each';
-import { fromJS } from 'immutable';
+import find from 'lodash/find';
 
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { modulo } from '../utils/math-utils';
-import { updateRoute } from '../utils/router-utils';
-import { parseQuery, searchTopology } from '../utils/search-utils';
+import { updateRoute, parseUrlQuery } from '../utils/router-utils';
+import { parseQuery } from '../utils/search-utils';
 import { bufferDeltaUpdate, resumeUpdate,
   resetUpdateBuffer } from '../utils/update-buffer-utils';
 import { doControlRequest, getAllNodes, getNodesDelta, getNodeDetails,
@@ -17,6 +16,7 @@ import { doControlRequest, getAllNodes, getNodesDelta, getNodeDetails,
 import { getActiveTopologyOptions,
   getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
+import { waterfall } from '../utils/async-utils';
 
 const log = debug('scope:app-actions');
 
@@ -687,34 +687,9 @@ export function toggleTroubleshootingMenu(ev) {
   };
 }
 
-function convertQueryString(paramString) {
-  const pairs = trimStart(paramString, '?').split('&');
-  return reduce(pairs, (result, pair) => {
-    const [k, v] = pair.split('=');
-    result[k] = v;
-    return result;
-  }, {});
-}
-
-function waterfall(series, target, cb) {
-  function next(result) {
-    const fn = series.shift();
-    if (fn) {
-      try {
-        fn(result, next);
-      } catch (e) {
-        cb(e);
-      }
-    } else {
-      cb(null, result);
-    }
-  }
-  next(target, next);
-}
-
 export function translateUrlParamsToViewState(queryString) {
-  return () => {
-    const params = convertQueryString(queryString);
+  return (dispatch) => {
+    const params = parseUrlQuery(queryString);
     if (params.node) {
       // Get the list of topologies
       fetch('api/topology').then(response => response.json())
@@ -729,6 +704,7 @@ export function translateUrlParamsToViewState(queryString) {
               .then((json) => {
                 // Append each node in the list to the result object.
                 each(json.nodes, (node, id) => {
+                  node.topology = topo;
                   result[id] = node;
                 });
                 cb(result);
@@ -738,9 +714,14 @@ export function translateUrlParamsToViewState(queryString) {
           // Run the series
           waterfall(series, {}, (err, nodes) => {
             if (err) { throw err; }
-            // const collection = flatten(map(r, ({nodes}) => values(nodes)));
-            const result = searchTopology(fromJS(nodes), { query: params.node });
-            console.log(result.toJS());
+            const match = find(nodes, n => n.label === params.node);
+
+            if (match) {
+              dispatch({
+                type: ActionTypes.ROUTE_FROM_LINK,
+                node: match
+              });
+            }
           });
         });
     }

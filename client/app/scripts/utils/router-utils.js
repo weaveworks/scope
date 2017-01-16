@@ -1,4 +1,6 @@
 import page from 'page';
+import reduce from 'lodash/reduce';
+import trimStart from 'lodash/trimStart';
 
 import { route } from '../actions/app-actions';
 import { storageGet, storageSet } from './storage-utils';
@@ -71,7 +73,6 @@ export function updateRoute(getState) {
     .replace('#!/state/', '')
     .replace('#!/', '') || '{}';
   const prevState = JSON.parse(decodeURL(urlStateString));
-
   // back up state in storage as well
   storageSet(STORAGE_STATE_KEY, stateUrl);
 
@@ -86,7 +87,6 @@ export function updateRoute(getState) {
 export function getRouter(dispatch, initialState) {
   // strip any trailing '/'s.
   page.base(window.location.pathname.replace(/\/$/, ''));
-
   page('/', () => {
     // recover from storage state on empty URL
     const storageState = storageGet(STORAGE_STATE_KEY);
@@ -107,4 +107,13 @@ export function getRouter(dispatch, initialState) {
   });
 
   return page;
+}
+
+export function parseUrlQuery(queryString) {
+  const pairs = trimStart(queryString, '?').split('&');
+  return reduce(pairs, (result, pair) => {
+    const [k, v] = pair.split('=');
+    result[k] = v;
+    return result;
+  }, {});
 }

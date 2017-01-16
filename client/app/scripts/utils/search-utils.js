@@ -76,6 +76,7 @@ function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label, truncat
         {text, label, start: index, length: firstMatch.length, truncate});
     }
   }
+
   return nodeMatches;
 }
 
