@@ -26,6 +26,14 @@ If needed, install the tools used for managing dependencies, managing releases, 
 
     make deps
 
+Scope unit tests for `probe` and `app` components can be run via:
+
+    make tests
+
+Similarly the frontent client tests can be run via:
+
+    make client-test
+
 
 >**Note:** The tools from `make deps` depend on a local install of
 [Go](https://golang.org).
