@@ -180,10 +180,14 @@ func (c mockPipeClient) PipeClose(appID, id string) error {
 }
 
 func TestReporter(t *testing.T) {
-	oldGetNodeName := kubernetes.GetNodeName
-	defer func() { kubernetes.GetNodeName = oldGetNodeName }()
-	kubernetes.GetNodeName = func(*kubernetes.Reporter) (string, error) {
-		return nodeName, nil
+	oldGetNodeName := kubernetes.GetLocalPodUIDs
+	defer func() { kubernetes.GetLocalPodUIDs = oldGetNodeName }()
+	kubernetes.GetLocalPodUIDs = func() (map[string]struct{}, error) {
+		uids := map[string]struct{}{
+			pod1UID: {},
+			pod2UID: {},
+		}
+		return uids, nil
 	}
 
 	pod1ID := report.MakePodNodeID(pod1UID)
@@ -271,10 +275,10 @@ type callbackReadCloser struct {
 func (c *callbackReadCloser) Close() error { return c.close() }
 
 func TestReporterGetLogs(t *testing.T) {
-	oldGetNodeName := kubernetes.GetNodeName
-	defer func() { kubernetes.GetNodeName = oldGetNodeName }()
-	kubernetes.GetNodeName = func(*kubernetes.Reporter) (string, error) {
-		return nodeName, nil
+	oldGetNodeName := kubernetes.GetLocalPodUIDs
+	defer func() { kubernetes.GetLocalPodUIDs = oldGetNodeName }()
+	kubernetes.GetLocalPodUIDs = func() (map[string]struct{}, error) {
+		return map[string]struct{}{}, nil
 	}
 
 	client := newMockClient()

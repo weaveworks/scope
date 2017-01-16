@@ -1,13 +1,11 @@
 package kubernetes
 
 import (
-	"io/ioutil"
-	"os"
 	"strings"
 
-	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/labels"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
@@ -314,27 +312,6 @@ func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) 
 	return result, replicaSets, err
 }
 
-// GetNodeName return the k8s node name for the current machine.
-// It is exported for testing.
-var GetNodeName = func(r *Reporter) (string, error) {
-	uuidBytes, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")
-	if os.IsNotExist(err) {
-		uuidBytes, err = ioutil.ReadFile("/sys/hypervisor/uuid")
-	}
-	if err != nil {
-		return "", err
-	}
-	uuid := strings.Trim(string(uuidBytes), "\n")
-	nodeName := ""
-	err = r.client.WalkNodes(func(node *api.Node) error {
-		if node.Status.NodeInfo.SystemUUID == string(uuid) {
-			nodeName = node.ObjectMeta.Name
-		}
-		return nil
-	})
-	return nodeName, err
-}
-
 type labelledChild interface {
 	Labels() map[string]string
 	AddParent(string, string)
@@ -387,13 +364,24 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (re
 		))
 	}
 
-	thisNodeName, err := GetNodeName(r)
-	if err != nil {
-		return pods, err
+	// Obtain the local pods from kubelet since we only want to report those
+	// for performance reasons.
+	//
+	// In theory a simpler approach would be to obtain the current NodeName
+	// and filter local pods based on that. However that's hard since
+	// 1. reconstructing the NodeName requires cloud provider credentials
+	// 2. inferring the NodeName out of the hostname or system uuid is unreliable
+	//    (uuids and hostnames can be duplicated across the cluster).
+	localPodUIDs, errUIDs := GetLocalPodUIDs()
+	if errUIDs != nil {
+		log.Warnf("Cannot obtain local pods, reporting all (which may impact performance): %v", errUIDs)
 	}
-	err = r.client.WalkPods(func(p Pod) error {
-		if p.NodeName() != thisNodeName {
-			return nil
+	err := r.client.WalkPods(func(p Pod) error {
+		// filter out non-local pods
+		if errUIDs != nil {
+			if _, ok := localPodUIDs[p.UID()]; !ok {
+				return nil
+			}
 		}
 		for _, selector := range selectors {
 			selector(p)
