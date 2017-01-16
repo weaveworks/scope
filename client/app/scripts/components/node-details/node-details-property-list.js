@@ -2,31 +2,29 @@ import React from 'react';
 import { Map as makeMap } from 'immutable';
 import sortBy from 'lodash/sortBy';
 
-import MatchedText from '../matched-text';
+import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
 import NodeDetailsControlButton from './node-details-control-button';
+import MatchedText from '../matched-text';
 import ShowMore from '../show-more';
 
-
 const Controls = controls => (
-  <div className="node-details-labels-controls">
+  <div className="node-details-property-list-controls">
     {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
       nodeId={control.nodeId} control={control} key={control.id} />)}
   </div>
 );
 
-export default class NodeDetailsLabels extends React.Component {
-
+export default class NodeDetailsPropertyList extends React.Component {
   constructor(props, context) {
     super(props, context);
-    this.DEFAULT_LIMIT = 5;
     this.state = {
-      limit: this.DEFAULT_LIMIT,
+      limit: NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
     };
     this.handleLimitClick = this.handleLimitClick.bind(this);
   }
 
   handleLimitClick() {
-    const limit = this.state.limit ? 0 : this.DEFAULT_LIMIT;
+    const limit = this.state.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
     this.setState({limit});
   }
 
@@ -40,23 +38,25 @@ export default class NodeDetailsLabels extends React.Component {
       const hasNotShownMatch = rows.filter((row, index) => index >= this.state.limit
         && matches.has(row.id)).length > 0;
       if (!hasNotShownMatch) {
-        notShown = rows.length - this.DEFAULT_LIMIT;
+        notShown = rows.length - NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
         rows = rows.slice(0, this.state.limit);
       }
     }
 
     return (
-      <div className="node-details-labels">
+      <div className="node-details-property-list">
         {controls && Controls(controls)}
         {rows.map(field => (
-          <div className="node-details-labels-field" key={field.id}>
+          <div className="node-details-property-list-field" key={field.id}>
             <div
-              className="node-details-labels-field-label truncate"
-              title={field.label} key={field.id}>
-              {field.label}
+              className="node-details-property-list-field-label truncate"
+              title={field.entries.label} key={field.id}>
+              {field.entries.label}
             </div>
-            <div className="node-details-labels-field-value truncate" title={field.value}>
-              <MatchedText text={field.value} match={matches.get(field.id)} />
+            <div
+              className="node-details-property-list-field-value truncate"
+              title={field.entries.value}>
+              <MatchedText text={field.entries.value} match={matches.get(field.id)} />
             </div>
           </div>
         ))}

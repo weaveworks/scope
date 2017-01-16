@@ -1,6 +1,7 @@
 import { Map as makeMap, Set as makeSet, List as makeList } from 'immutable';
 import { escapeRegExp } from 'lodash';
 
+import { isGenericTable, isPropertyList, genericTableEntryKey } from './node-details-utils';
 import { slugify } from './string-utils';
 
 // topolevel search fields
@@ -148,19 +149,26 @@ export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
         });
       }
 
-      // tables (envvars and labels)
-      const tables = node.get('tables');
-      if (tables) {
-        tables.forEach((table) => {
-          if (table.get('rows')) {
-            table.get('rows').forEach((field) => {
-              const keyPath = [nodeId, 'tables', field.get('id')];
-              nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
-                query, prefix, field.get('label'));
-            });
-          }
+      // property lists
+      (node.get('tables') || []).filter(isPropertyList).forEach((propertyList) => {
+        (propertyList.get('rows') || []).forEach((row) => {
+          const entries = row.get('entries');
+          const keyPath = [nodeId, 'property-lists', row.get('id')];
+          nodeMatches = findNodeMatch(nodeMatches, keyPath, entries.get('value'),
+            query, prefix, entries.get('label'));
         });
-      }
+      });
+
+      // generic tables
+      (node.get('tables') || []).filter(isGenericTable).forEach((table) => {
+        (table.get('rows') || []).forEach((row) => {
+          table.get('columns').forEach((column) => {
+            const val = row.get('entries').get(column.get('id'));
+            const keyPath = [nodeId, 'tables', genericTableEntryKey(row, column)];
+            nodeMatches = findNodeMatch(nodeMatches, keyPath, val, query);
+          });
+        });
+      });
     } else if (metric) {
       const metrics = node.get('metrics');
       if (metrics) {

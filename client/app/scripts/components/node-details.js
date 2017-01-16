@@ -1,19 +1,25 @@
+import debug from 'debug';
 import React from 'react';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
 
 import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
+import { isGenericTable, isPropertyList } from '../utils/node-details-utils';
 import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
 
 import MatchedText from './matched-text';
 import NodeDetailsControls from './node-details/node-details-controls';
+import NodeDetailsGenericTable from './node-details/node-details-generic-table';
+import NodeDetailsPropertyList from './node-details/node-details-property-list';
 import NodeDetailsHealth from './node-details/node-details-health';
 import NodeDetailsInfo from './node-details/node-details-info';
-import NodeDetailsLabels from './node-details/node-details-labels';
 import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import Warning from './warning';
+
+
+const log = debug('scope:node-details');
 
 function getTruncationText(count) {
   return 'This section was too long to be handled efficiently and has been truncated'
@@ -21,7 +27,6 @@ function getTruncationText(count) {
 }
 
 class NodeDetails extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.handleClickClose = this.handleClickClose.bind(this);
@@ -208,15 +213,13 @@ class NodeDetails extends React.Component {
               return (
                 <div className="node-details-content-section" key={table.id}>
                   <div className="node-details-content-section-header">
-                    {table.label}
+                    {table.label && table.label.length > 0 && table.label}
                     {table.truncationCount > 0 && <span
                       className="node-details-content-section-header-warning">
                       <Warning text={getTruncationText(table.truncationCount)} />
                     </span>}
                   </div>
-                  <NodeDetailsLabels
-                    rows={table.rows} controls={table.controls}
-                    matches={nodeMatches.get('tables')} />
+                  {this.renderTable(table)}
                 </div>
               );
             }
@@ -225,6 +228,29 @@ class NodeDetails extends React.Component {
         </div>
       </div>
     );
+  }
+
+  renderTable(table) {
+    const { nodeMatches = makeMap() } = this.props;
+
+    if (isGenericTable(table)) {
+      return (
+        <NodeDetailsGenericTable
+          rows={table.rows} columns={table.columns}
+          matches={nodeMatches.get('tables')}
+        />
+      );
+    } else if (isPropertyList(table)) {
+      return (
+        <NodeDetailsPropertyList
+          rows={table.rows} controls={table.controls}
+          matches={nodeMatches.get('property-lists')}
+        />
+      );
+    }
+
+    log(`Undefined type '${table.type}' for table ${table.id}`);
+    return null;
   }
 
   componentDidUpdate() {

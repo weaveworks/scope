@@ -68,7 +68,12 @@ var (
 	ReplicaSetMetricTemplates = PodMetricTemplates
 
 	TableTemplates = report.TableTemplates{
-		LabelPrefix: {ID: LabelPrefix, Label: "Kubernetes Labels", Prefix: LabelPrefix},
+		LabelPrefix: {
+			ID:     LabelPrefix,
+			Label:  "Kubernetes Labels",
+			Type:   report.PropertyListType,
+			Prefix: LabelPrefix,
+		},
 	}
 
 	ScalingControls = []report.Control{

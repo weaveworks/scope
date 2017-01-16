@@ -34,24 +34,29 @@ func TestNodeTables(t *testing.T) {
 			want: []report.Table{
 				{
 					ID:    docker.EnvPrefix,
+					Type:  report.PropertyListType,
 					Label: "Environment Variables",
-					Rows:  []report.MetadataRow{},
+					Rows:  []report.Row{},
 				},
 				{
 					ID:    docker.LabelPrefix,
+					Type:  report.PropertyListType,
 					Label: "Docker Labels",
-					Rows: []report.MetadataRow{
+					Rows: []report.Row{
 						{
-							ID:    "label_label1",
-							Label: "label1",
-							Value: "label1value",
+							ID: "label_label1",
+							Entries: map[string]string{
+								"label": "label1",
+								"value": "label1value",
+							},
 						},
 					},
 				},
 				{
 					ID:    docker.ImageTableID,
+					Type:  report.PropertyListType,
 					Label: "Image",
-					Rows:  []report.MetadataRow{},
+					Rows:  []report.Row{},
 				},
 			},
 		},

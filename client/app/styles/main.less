@@ -864,7 +864,7 @@ h2 {
     }
   }
 
-  &-labels {
+  &-property-list {
     &-controls {
       margin-left: -4px;
     }
@@ -893,6 +893,17 @@ h2 {
         // Now required (from chrome 48) to get overflow + flexbox behaving:
         min-width: 0;
         color: @text-color;
+      }
+    }
+  }
+
+  &-generic-table {
+    width: 100%;
+
+    tr {
+      display: flex;
+      th, td {
+        padding: 0 5px;
       }
     }
   }
