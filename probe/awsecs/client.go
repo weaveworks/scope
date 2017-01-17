@@ -13,7 +13,7 @@ import (
 	"github.com/bluele/gcache"
 )
 
-// A wrapper around an AWS client that makes all the needed calls and just exposes the final results.
+// EcsClient is a wrapper around an AWS client that makes all the needed calls and just exposes the final results.
 // We create an interface so we can mock for testing.
 type EcsClient interface {
 	// Returns a EcsInfo struct containing data needed for a report.
@@ -28,6 +28,7 @@ type ecsClientImpl struct {
 	serviceCache gcache.Cache // Keys are service names.
 }
 
+// EcsTask describes the parts of ECS tasks we care about.
 // Since we're caching tasks heavily, we ensure no mistakes by casting into a structure
 // that only contains immutable attributes of the resource.
 // Exported for test.
@@ -42,6 +43,7 @@ type EcsTask struct {
 	StartedBy string // tag or deployment id
 }
 
+// EcsService describes the parts of ECS services we care about.
 // Services are highly mutable and so we can only cache them on a best-effort basis.
 // We have to refresh referenced (ie. has an associated task) services each report
 // but we avoid re-listing services unless we can't find a service for a task.
@@ -56,7 +58,7 @@ type EcsService struct {
 	TaskDefinitionARN string
 }
 
-// Exported for test
+// EcsInfo is exported for test
 type EcsInfo struct {
 	Tasks          map[string]EcsTask
 	Services       map[string]EcsService

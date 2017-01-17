@@ -32,13 +32,13 @@ var (
 	}
 )
 
-// Used in return value of GetLabelInfo. Exported for test.
+// TaskLabelInfo is used in return value of GetLabelInfo. Exported for test.
 type TaskLabelInfo struct {
 	ContainerIDs []string
 	Family       string
 }
 
-// Return map from cluster to map of task arns to task infos.
+// GetLabelInfo returns map from cluster to map of task arns to task infos.
 // Exported for test.
 func GetLabelInfo(rpt report.Report) map[string]map[string]*TaskLabelInfo {
 	results := map[string]map[string]*TaskLabelInfo{}
