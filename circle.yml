@@ -79,7 +79,7 @@ deployment:
         )
       - | 
         test -z "${QUAY_USER}" || (
-          docker docker login -e '.' -u "$QUAY_USER" -p "$QUAY_PASSWORD" quay.io &&
+          docker login -e '.' -u "$QUAY_USER" -p "$QUAY_PASSWORD" quay.io &&
           docker tag weaveworks/scope:$(./tools/image-tag) "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)" &&
           docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
         )
