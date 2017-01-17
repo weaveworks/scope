@@ -1,32 +1,30 @@
-package awsecs
+package awsecs_test
 
 import (
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
 
 var (
-	testCluster = "test-cluster"
-	testFamily = "test-family"
-	testTaskARN = "arn:aws:ecs:us-east-1:123456789012:task/12345678-9abc-def0-1234-56789abcdef0"
-	testTaskCreatedAt = time.Unix(1483228800, 0)
+	testCluster           = "test-cluster"
+	testFamily            = "test-family"
+	testTaskARN           = "arn:aws:ecs:us-east-1:123456789012:task/12345678-9abc-def0-1234-56789abcdef0"
+	testTaskCreatedAt     = time.Unix(1483228800, 0)
 	testTaskDefinitionARN = "arn:aws:ecs:us-east-1:123456789012:task-definition/deadbeef-dead-beef-dead-beefdeadbeef"
-	testTaskStartedAt = time.Unix(1483228805, 0)
-	testDeploymentID = "ecs-svc/1121123211234321"
-	testServiceName = "test-service"
-	testServiceCount = 1
-	testContainer = "test-container"
-	testContainerData = map[string]string{
-		docker.LabelPrefix + "com.amazonaws.ecs.task-arn":
-			testTaskARN,
-		docker.LabelPrefix + "com.amazonaws.ecs.cluster":
-			testCluster,
-		docker.LabelPrefix + "com.amazonaws.ecs.task-definition-family":
-			testFamily,
+	testTaskStartedAt     = time.Unix(1483228805, 0)
+	testDeploymentID      = "ecs-svc/1121123211234321"
+	testServiceName       = "test-service"
+	testServiceCount      = 1
+	testContainer         = "test-container"
+	testContainerData     = map[string]string{
+		docker.LabelPrefix + "com.amazonaws.ecs.task-arn":               testTaskARN,
+		docker.LabelPrefix + "com.amazonaws.ecs.cluster":                testCluster,
+		docker.LabelPrefix + "com.amazonaws.ecs.task-definition-family": testFamily,
 	}
 )
 
@@ -38,24 +36,24 @@ func getTestContainerNode() report.Node {
 }
 
 func TestGetLabelInfo(t *testing.T) {
-	r := Make(1e6, time.Hour)
+	r := awsecs.Make(1e6, time.Hour)
 	rpt, err := r.Report()
 	if err != nil {
-		t.Fatalf("Error making report", err)
+		t.Fatalf("Error making report: %v", err)
 	}
-	labelInfo := getLabelInfo(rpt)
-	expected := map[string]map[string]*taskLabelInfo{}
+	labelInfo := awsecs.GetLabelInfo(rpt)
+	expected := map[string]map[string]*awsecs.TaskLabelInfo{}
 	if !reflect.DeepEqual(labelInfo, expected) {
 		t.Errorf("Empty report did not produce empty label info: %v != %v", labelInfo, expected)
 	}
 
 	rpt.Container = rpt.Container.AddNode(getTestContainerNode())
-	labelInfo = getLabelInfo(rpt)
-	expected = map[string]map[string]*taskLabelInfo{
-		testCluster: map[string]*taskLabelInfo{
-			testTaskARN: &taskLabelInfo{
-				containerIDs: []string{report.MakeContainerNodeID(testContainer)},
-				family: testFamily,
+	labelInfo = awsecs.GetLabelInfo(rpt)
+	expected = map[string]map[string]*awsecs.TaskLabelInfo{
+		testCluster: {
+			testTaskARN: {
+				ContainerIDs: []string{report.MakeContainerNodeID(testContainer)},
+				Family:       testFamily,
 			},
 		},
 	}
@@ -64,14 +62,14 @@ func TestGetLabelInfo(t *testing.T) {
 	}
 }
 
-// Implements ecsClient
+// Implements EcsClient
 type mockEcsClient struct {
-	t *testing.T
+	t            *testing.T
 	expectedARNs []string
-	info ecsInfo
+	info         awsecs.EcsInfo
 }
 
-func newMockEcsClient(t *testing.T, expectedARNs []string, info ecsInfo) ecsClient {
+func newMockEcsClient(t *testing.T, expectedARNs []string, info awsecs.EcsInfo) awsecs.EcsClient {
 	return &mockEcsClient{
 		t,
 		expectedARNs,
@@ -79,40 +77,40 @@ func newMockEcsClient(t *testing.T, expectedARNs []string, info ecsInfo) ecsClie
 	}
 }
 
-func (c mockEcsClient) getInfo(taskARNs []string) ecsInfo {
+func (c mockEcsClient) GetInfo(taskARNs []string) awsecs.EcsInfo {
 	if !reflect.DeepEqual(taskARNs, c.expectedARNs) {
-		c.t.Fatalf("getInfo called with wrong ARNs: %v != %v", taskARNs, c.expectedARNs)
+		c.t.Fatalf("GetInfo called with wrong ARNs: %v != %v", taskARNs, c.expectedARNs)
 	}
 	return c.info
 }
 
 func TestTagReport(t *testing.T) {
-	r := Make(1e6, time.Hour)
+	r := awsecs.Make(1e6, time.Hour)
 
-	r.clientsByCluster[testCluster] = newMockEcsClient(
+	r.ClientsByCluster[testCluster] = newMockEcsClient(
 		t,
 		[]string{testTaskARN},
-		ecsInfo{
-			tasks: map[string]ecsTask{
-				testTaskARN: ecsTask{
-					taskARN: testTaskARN,
-					createdAt: testTaskCreatedAt,
-					taskDefinitionARN: testTaskDefinitionARN,
-					startedAt: testTaskStartedAt,
-					startedBy: testDeploymentID,
+		awsecs.EcsInfo{
+			Tasks: map[string]awsecs.EcsTask{
+				testTaskARN: {
+					TaskARN:           testTaskARN,
+					CreatedAt:         testTaskCreatedAt,
+					TaskDefinitionARN: testTaskDefinitionARN,
+					StartedAt:         testTaskStartedAt,
+					StartedBy:         testDeploymentID,
 				},
 			},
-			services: map[string]ecsService{
-				testServiceName: ecsService{
-					serviceName: testServiceName,
-					deploymentIDs: []string{testDeploymentID},
-					desiredCount: 1,
-					pendingCount: 0,
-					runningCount: 1,
-					taskDefinitionARN: testTaskDefinitionARN,
+			Services: map[string]awsecs.EcsService{
+				testServiceName: {
+					ServiceName:       testServiceName,
+					DeploymentIDs:     []string{testDeploymentID},
+					DesiredCount:      1,
+					PendingCount:      0,
+					RunningCount:      1,
+					TaskDefinitionARN: testTaskDefinitionARN,
 				},
 			},
-			taskServiceMap: map[string]string{
+			TaskServiceMap: map[string]string{
 				testTaskARN: testServiceName,
 			},
 		},
@@ -134,9 +132,9 @@ func TestTagReport(t *testing.T) {
 		t.Fatalf("Result report did not contain task %v: %v", testTaskARN, rpt.ECSTask.Nodes)
 	}
 	taskExpected := map[string]string{
-		TaskFamily: testFamily,
-		Cluster: testCluster,
-		CreatedAt: testTaskCreatedAt.Format(time.RFC3339Nano),
+		awsecs.TaskFamily: testFamily,
+		awsecs.Cluster:    testCluster,
+		awsecs.CreatedAt:  testTaskCreatedAt.Format(time.RFC3339Nano),
 	}
 	for key, expectedValue := range taskExpected {
 		value, ok := task.Latest.Lookup(key)
@@ -155,9 +153,9 @@ func TestTagReport(t *testing.T) {
 		t.Fatalf("Result report did not contain service %v: %v", testServiceName, rpt.ECSService.Nodes)
 	}
 	serviceExpected := map[string]string{
-		Cluster: testCluster,
-		ServiceDesiredCount: "1",
-		ServiceRunningCount: "1",
+		awsecs.Cluster:             testCluster,
+		awsecs.ServiceDesiredCount: "1",
+		awsecs.ServiceRunningCount: "1",
 	}
 	for key, expectedValue := range serviceExpected {
 		value, ok := service.Latest.Lookup(key)
@@ -176,7 +174,7 @@ func TestTagReport(t *testing.T) {
 		t.Fatalf("Result report did not contain container %v: %v", testContainer, rpt.Container.Nodes)
 	}
 	containerParentsExpected := map[string]string{
-		report.ECSTask: report.MakeECSTaskNodeID(testTaskARN),
+		report.ECSTask:    report.MakeECSTaskNodeID(testTaskARN),
 		report.ECSService: report.MakeECSServiceNodeID(testServiceName),
 	}
 	for key, expectedValue := range containerParentsExpected {

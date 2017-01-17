@@ -14,10 +14,10 @@ import (
 )
 
 // A wrapper around an AWS client that makes all the needed calls and just exposes the final results.
-// We create an interface so we can mock for testing
-type ecsClient interface {
-	// Returns a ecsInfo struct containing data needed for a report.
-	getInfo([]string) ecsInfo
+// We create an interface so we can mock for testing.
+type EcsClient interface {
+	// Returns a EcsInfo struct containing data needed for a report.
+	GetInfo([]string) EcsInfo
 }
 
 // actual implementation
@@ -30,37 +30,40 @@ type ecsClientImpl struct {
 
 // Since we're caching tasks heavily, we ensure no mistakes by casting into a structure
 // that only contains immutable attributes of the resource.
-type ecsTask struct {
-	taskARN           string
-	createdAt         time.Time
-	taskDefinitionARN string
+// Exported for test.
+type EcsTask struct {
+	TaskARN           string
+	CreatedAt         time.Time
+	TaskDefinitionARN string
 
 	// These started fields are immutable once set, and guaranteed to be set once the task is running,
 	// which we know it is because otherwise we wouldn't be looking at it.
-	startedAt time.Time
-	startedBy string // tag or deployment id
+	StartedAt time.Time
+	StartedBy string // tag or deployment id
 }
 
 // Services are highly mutable and so we can only cache them on a best-effort basis.
 // We have to refresh referenced (ie. has an associated task) services each report
 // but we avoid re-listing services unless we can't find a service for a task.
-type ecsService struct {
-	serviceName string
+// Exported for test.
+type EcsService struct {
+	ServiceName string
 	// The following values may be stale in a cached copy
-	deploymentIDs     []string
-	desiredCount      int64
-	pendingCount      int64
-	runningCount      int64
-	taskDefinitionARN string
+	DeploymentIDs     []string
+	DesiredCount      int64
+	PendingCount      int64
+	RunningCount      int64
+	TaskDefinitionARN string
 }
 
-type ecsInfo struct {
-	tasks          map[string]ecsTask
-	services       map[string]ecsService
-	taskServiceMap map[string]string
+// Exported for test
+type EcsInfo struct {
+	Tasks          map[string]EcsTask
+	Services       map[string]EcsService
+	TaskServiceMap map[string]string
 }
 
-func newClient(cluster string, cacheSize int, cacheExpiry time.Duration) (ecsClient, error) {
+func newClient(cluster string, cacheSize int, cacheExpiry time.Duration) (EcsClient, error) {
 	sess := session.New()
 
 	region, err := ec2metadata.New(sess).Region()
@@ -76,28 +79,28 @@ func newClient(cluster string, cacheSize int, cacheExpiry time.Duration) (ecsCli
 	}, nil
 }
 
-func newECSTask(task *ecs.Task) ecsTask {
-	return ecsTask{
-		taskARN:           *task.TaskArn,
-		createdAt:         *task.CreatedAt,
-		taskDefinitionARN: *task.TaskDefinitionArn,
-		startedAt:         *task.StartedAt,
-		startedBy:         *task.StartedBy,
+func newECSTask(task *ecs.Task) EcsTask {
+	return EcsTask{
+		TaskARN:           *task.TaskArn,
+		CreatedAt:         *task.CreatedAt,
+		TaskDefinitionARN: *task.TaskDefinitionArn,
+		StartedAt:         *task.StartedAt,
+		StartedBy:         *task.StartedBy,
 	}
 }
 
-func newECSService(service *ecs.Service) ecsService {
+func newECSService(service *ecs.Service) EcsService {
 	deploymentIDs := make([]string, len(service.Deployments))
 	for i, deployment := range service.Deployments {
 		deploymentIDs[i] = *deployment.Id
 	}
-	return ecsService{
-		serviceName:       *service.ServiceName,
-		deploymentIDs:     deploymentIDs,
-		desiredCount:      *service.DesiredCount,
-		pendingCount:      *service.PendingCount,
-		runningCount:      *service.RunningCount,
-		taskDefinitionARN: *service.TaskDefinition,
+	return EcsService{
+		ServiceName:       *service.ServiceName,
+		DeploymentIDs:     deploymentIDs,
+		DesiredCount:      *service.DesiredCount,
+		PendingCount:      *service.PendingCount,
+		RunningCount:      *service.RunningCount,
+		TaskDefinitionARN: *service.TaskDefinition,
 	}
 }
 
@@ -128,7 +131,7 @@ func (c ecsClientImpl) listServices() <-chan string {
 }
 
 // Returns (input, done) channels. Service ARNs given to input are batched and details are fetched,
-// with full ecsService objects being put into the cache. Closes done when finished.
+// with full EcsService objects being put into the cache. Closes done when finished.
 func (c ecsClientImpl) describeServices() (chan<- string, <-chan struct{}) {
 	input := make(chan string)
 	done := make(chan struct{})
@@ -238,8 +241,8 @@ func (c ecsClientImpl) matchTasksServices(taskARNs []string) (map[string]string,
 			continue
 		}
 		serviceName := serviceNameRaw.(string)
-		service := serviceRaw.(ecsService)
-		for _, deployment := range service.deploymentIDs {
+		service := serviceRaw.(EcsService)
+		for _, deployment := range service.DeploymentIDs {
 			deploymentMap[deployment] = serviceName
 		}
 	}
@@ -253,12 +256,12 @@ func (c ecsClientImpl) matchTasksServices(taskARNs []string) (map[string]string,
 			// this can happen if we have a failure while describing tasks, just pretend the task doesn't exist
 			continue
 		}
-		task := taskRaw.(ecsTask)
-		if !strings.HasPrefix(task.startedBy, servicePrefix) {
+		task := taskRaw.(EcsTask)
+		if !strings.HasPrefix(task.StartedBy, servicePrefix) {
 			// task was not started by a service
 			continue
 		}
-		if serviceName, ok := deploymentMap[task.startedBy]; ok {
+		if serviceName, ok := deploymentMap[task.StartedBy]; ok {
 			results[taskARN] = serviceName
 		} else {
 			unmatched = append(unmatched, taskARN)
@@ -312,26 +315,26 @@ func (c ecsClientImpl) describeAllServices(servicesRefreshed map[string]bool) {
 	<-done
 }
 
-func (c ecsClientImpl) makeECSInfo(taskARNs []string, taskServiceMap map[string]string) ecsInfo {
+func (c ecsClientImpl) makeECSInfo(taskARNs []string, taskServiceMap map[string]string) EcsInfo {
 	// The maps to return are the referenced subsets of the full caches
-	tasks := map[string]ecsTask{}
+	tasks := map[string]EcsTask{}
 	for _, taskARN := range taskARNs {
 		// It's possible that tasks could still be missing from the cache if describe tasks failed.
 		// We'll just pretend they don't exist.
 		if taskRaw, err := c.taskCache.Get(taskARN); err == nil {
-			task := taskRaw.(ecsTask)
+			task := taskRaw.(EcsTask)
 			tasks[taskARN] = task
 		}
 	}
 
-	services := map[string]ecsService{}
+	services := map[string]EcsService{}
 	for taskARN, serviceName := range taskServiceMap {
 		if _, ok := taskServiceMap[serviceName]; ok {
 			// Already present. This is expected since multiple tasks can map to the same service.
 			continue
 		}
 		if serviceRaw, err := c.serviceCache.Get(serviceName); err == nil {
-			service := serviceRaw.(ecsService)
+			service := serviceRaw.(EcsService)
 			services[serviceName] = service
 		} else {
 			log.Errorf("Service %s referenced by task %s in service map but not found in cache, this shouldn't be able to happen. Removing task and continuing.", serviceName, taskARN)
@@ -339,11 +342,11 @@ func (c ecsClientImpl) makeECSInfo(taskARNs []string, taskServiceMap map[string]
 		}
 	}
 
-	return ecsInfo{services: services, tasks: tasks, taskServiceMap: taskServiceMap}
+	return EcsInfo{Services: services, Tasks: tasks, TaskServiceMap: taskServiceMap}
 }
 
-// Implements ecsClient.getInfo
-func (c ecsClientImpl) getInfo(taskARNs []string) ecsInfo {
+// Implements EcsClient.GetInfo
+func (c ecsClientImpl) GetInfo(taskARNs []string) EcsInfo {
 	log.Debugf("Getting ECS info on %d tasks", len(taskARNs))
 
 	// We do a weird order of operations here to minimize unneeded cache refreshes.
