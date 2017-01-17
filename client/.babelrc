@@ -1,4 +1,4 @@
 {
-  "plugins": ["lodash"],
+  "plugins": ["lodash", "transform-export-extensions"],
   "presets": ["es2015", "react"]
 }
