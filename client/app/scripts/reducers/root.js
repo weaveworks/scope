@@ -724,6 +724,7 @@ export function rootReducer(state = initialState, action) {
         origin: null,
         topologyId,
       });
+
       return state.set('currentTopologyId', topologyId).set('selectedNodeId', id);
     }
 
