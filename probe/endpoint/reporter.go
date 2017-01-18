@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"fmt"
+	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/weaveworks/scope/probe/endpoint/conntrack"
 	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -83,7 +85,7 @@ func (r *Reporter) Stop() {
 }
 
 type fourTuple struct {
-	fromAddr, toAddr string
+	fromAddr, toAddr net.IP
 	fromPort, toPort uint16
 }
 
@@ -103,6 +105,11 @@ func (t *fourTuple) reverse() {
 	t.fromAddr, t.fromPort, t.toAddr, t.toPort = t.toAddr, t.toPort, t.fromAddr, t.fromPort
 }
 
+// compares 2 fourTuples for equality
+func (t *fourTuple) equal(x *fourTuple) bool {
+	return t.fromPort == x.fromPort && t.toPort == x.fromPort && t.fromAddr.Equal(x.fromAddr) && t.toAddr.Equal(x.toAddr)
+}
+
 // Report implements Reporter.
 func (r *Reporter) Report() (report.Report, error) {
 	defer func(begin time.Time) {
@@ -118,22 +125,22 @@ func (r *Reporter) Report() (report.Report, error) {
 		extraNodeInfo := map[string]string{
 			Conntracked: "true",
 		}
-		r.flowWalker.walkFlows(func(f flow) {
+		r.flowWalker.walkFlows(func(f conntrack.Flow) {
 			tuple := fourTuple{
 				f.Original.Layer3.SrcIP,
 				f.Original.Layer3.DstIP,
-				uint16(f.Original.Layer4.SrcPort),
-				uint16(f.Original.Layer4.DstPort),
+				f.Original.Layer4.SrcPort,
+				f.Original.Layer4.DstPort,
 			}
 			// Handle DNAT-ed short-lived connections.
 			// The NAT mapper won't help since it only runs periodically,
 			// missing the short-lived connections.
-			if f.Original.Layer3.DstIP != f.Reply.Layer3.SrcIP {
+			if !f.Original.Layer3.DstIP.Equal(f.Reply.Layer3.SrcIP) {
 				tuple = fourTuple{
 					f.Reply.Layer3.DstIP,
 					f.Reply.Layer3.SrcIP,
-					uint16(f.Reply.Layer4.DstPort),
-					uint16(f.Reply.Layer4.SrcPort),
+					f.Reply.Layer4.DstPort,
+					f.Reply.Layer4.SrcPort,
 				}
 			}
 
@@ -151,8 +158,8 @@ func (r *Reporter) Report() (report.Report, error) {
 			var (
 				namespaceID string
 				tuple       = fourTuple{
-					conn.LocalAddress.String(),
-					conn.RemoteAddress.String(),
+					conn.LocalAddress,
+					conn.RemoteAddress,
 					conn.LocalPort,
 					conn.RemotePort,
 				}
@@ -173,7 +180,7 @@ func (r *Reporter) Report() (report.Report, error) {
 			// canonical direction. Otherwise, we can use a port-heuristic to guess
 			// the direction.
 			canonical, ok := seenTuples[tuple.key()]
-			if (ok && canonical != tuple) || (!ok && tuple.fromPort < tuple.toPort) {
+			if (ok && !canonical.equal(&tuple)) || (!ok && tuple.fromPort < tuple.toPort) {
 				tuple.reverse()
 				toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
 			}
@@ -187,8 +194,8 @@ func (r *Reporter) Report() (report.Report, error) {
 
 func (r *Reporter) addConnection(rpt *report.Report, t fourTuple, namespaceID string, extraFromNode, extraToNode map[string]string) {
 	var (
-		fromNode = r.makeEndpointNode(namespaceID, t.fromAddr, t.fromPort, extraFromNode)
-		toNode   = r.makeEndpointNode(namespaceID, t.toAddr, t.toPort, extraToNode)
+		fromNode = r.makeEndpointNode(namespaceID, t.fromAddr.String(), t.fromPort, extraFromNode)
+		toNode   = r.makeEndpointNode(namespaceID, t.toAddr.String(), t.toPort, extraToNode)
 	)
 	rpt.Endpoint = rpt.Endpoint.AddNode(fromNode.WithEdge(toNode.ID, report.EdgeMetadata{}))
 	rpt.Endpoint = rpt.Endpoint.AddNode(toNode)
