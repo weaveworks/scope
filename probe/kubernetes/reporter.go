@@ -1,13 +1,15 @@
 package kubernetes
 
 import (
-	"io/ioutil"
 	"os"
 	"strings"
 
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/labels"
 
+	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
@@ -100,10 +102,15 @@ type Reporter struct {
 	probe           *probe.Probe
 	hostID          string
 	handlerRegistry *controls.HandlerRegistry
+	thisNodeName    string
 }
 
 // NewReporter makes a new Reporter
 func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe, handlerRegistry *controls.HandlerRegistry) *Reporter {
+	thisNodeName, err := GetNodeName(client)
+	if err != nil {
+		log.Warnf("cannot obtain k8s node name: all pods will be reported: %v", err)
+	}
 	reporter := &Reporter{
 		client:          client,
 		pipes:           pipes,
@@ -111,6 +118,7 @@ func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostI
 		probe:           probe,
 		hostID:          hostID,
 		handlerRegistry: handlerRegistry,
+		thisNodeName:    thisNodeName,
 	}
 	reporter.registerControls()
 	client.WatchPods(reporter.podEvent)
@@ -321,18 +329,17 @@ func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) 
 
 // GetNodeName return the k8s node name for the current machine.
 // It is exported for testing.
-var GetNodeName = func(r *Reporter) (string, error) {
-	uuidBytes, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")
-	if os.IsNotExist(err) {
-		uuidBytes, err = ioutil.ReadFile("/sys/hypervisor/uuid")
-	}
+var GetNodeName = func(client Client) (string, error) {
+	hostname, err := os.Hostname()
 	if err != nil {
 		return "", err
 	}
-	uuid := strings.Trim(string(uuidBytes), "\n")
 	nodeName := ""
-	err = r.client.WalkNodes(func(node *api.Node) error {
-		if node.Status.NodeInfo.SystemUUID == string(uuid) {
+	err = client.WalkNodes(func(node *api.Node) error {
+		if nodeHostname, ok := node.Labels[unversioned.LabelHostname]; !ok {
+			return fmt.Errorf("node %s is unexpectedly missing label %s",
+				node.ObjectMeta.Name, unversioned.LabelHostname)
+		} else if hostname == nodeHostname {
 			nodeName = node.ObjectMeta.Name
 		}
 		return nil
@@ -392,12 +399,9 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (re
 		))
 	}
 
-	thisNodeName, err := GetNodeName(r)
-	if err != nil {
-		return pods, err
-	}
-	err = r.client.WalkPods(func(p Pod) error {
-		if p.NodeName() != thisNodeName {
+	err := r.client.WalkPods(func(p Pod) error {
+		// Filter out pods not scheduled in this machine (if we know this node's name)
+		if r.thisNodeName != "" && p.NodeName() != r.thisNodeName {
 			return nil
 		}
 		for _, selector := range selectors {

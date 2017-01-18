@@ -182,7 +182,7 @@ func (c mockPipeClient) PipeClose(appID, id string) error {
 func TestReporter(t *testing.T) {
 	oldGetNodeName := kubernetes.GetNodeName
 	defer func() { kubernetes.GetNodeName = oldGetNodeName }()
-	kubernetes.GetNodeName = func(*kubernetes.Reporter) (string, error) {
+	kubernetes.GetNodeName = func(kubernetes.Client) (string, error) {
 		return nodeName, nil
 	}
 
@@ -273,7 +273,7 @@ func (c *callbackReadCloser) Close() error { return c.close() }
 func TestReporterGetLogs(t *testing.T) {
 	oldGetNodeName := kubernetes.GetNodeName
 	defer func() { kubernetes.GetNodeName = oldGetNodeName }()
-	kubernetes.GetNodeName = func(*kubernetes.Reporter) (string, error) {
+	kubernetes.GetNodeName = func(kubernetes.Client) (string, error) {
 		return nodeName, nil
 	}
 
