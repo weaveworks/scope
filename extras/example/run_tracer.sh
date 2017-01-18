@@ -4,11 +4,11 @@ set -ex
 
 readonly ARG="$1"
 
-if ! $(weave status 1>/dev/null 2>&1); then
+if ! weave status 1>/dev/null 2>&1; then
     WEAVE_NO_PLUGIN=y weave launch
 fi
 
-eval $(weave env)
+eval "$(weave env)"
 
 start_container() {
     local replicas=$1
@@ -21,23 +21,23 @@ start_container() {
     while [ "$#" -gt 0 ]; do
         case "$1" in
             --)
-            shift
-            break
-            ;;
+                shift
+                break
+                ;;
             *)
-            docker_args="${docker_args} $1"
-            shift
-            ;;
+                docker_args="${docker_args} $1"
+                shift
+                ;;
         esac
     done
-    local container_args="$@"
+    local container_args="$*"
 
-    for i in $(seq ${replicas}); do
-        if docker inspect ${basename}${i} >/dev/null 2>&1; then
-            docker rm -f ${basename}${i}
+    for i in $(seq "${replicas}"); do
+        if docker inspect "${basename}""${i}" >/dev/null 2>&1; then
+            docker rm -f "${basename}""${i}"
         fi
-        docker run -d -e CHECKPOINT_DISABLE --name=${basename}${i} --hostname=${hostname} \
-            ${docker_args} ${image} ${container_args}
+        docker run -d -e CHECKPOINT_DISABLE --name="${basename}""${i}" --hostname="${hostname}" \
+            "${docker_args}" "${image}" "${container_args}"
     done
 }
 
@@ -46,4 +46,3 @@ start_container 1 tomwilkie/echo echo
 start_container 1 tomwilkie/trace_app app
 start_container 1 tomwilkie/client client -- -target app.weave.local \
     -concurrency 1 -persist False
-

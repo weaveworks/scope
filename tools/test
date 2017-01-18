@@ -3,7 +3,7 @@
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-GO_TEST_ARGS=( -tags netgo -cpu 4 -timeout 8m )
+GO_TEST_ARGS=(-tags netgo -cpu 4 -timeout 8m)
 SLOW=
 NO_GO_GET=
 
@@ -33,10 +33,10 @@ if [ -n "$SLOW" ] || [ -n "$CIRCLECI" ]; then
 fi
 
 if [ -n "$SLOW" ]; then
-    GO_TEST_ARGS=( "${GO_TEST_ARGS[@]}" -race -covermode=atomic )
+    GO_TEST_ARGS=("${GO_TEST_ARGS[@]}" -race -covermode=atomic)
 
     # shellcheck disable=SC2153
-    if [ -n "$COVERDIR" ] ; then
+    if [ -n "$COVERDIR" ]; then
         coverdir="$COVERDIR"
     else
         coverdir=$(mktemp -d coverage.XXXXXXXXXX)
@@ -49,18 +49,18 @@ fail=0
 
 if [ -z "$TESTDIRS" ]; then
     # NB: Relies on paths being prefixed with './'.
-    TESTDIRS=( $(git ls-files -- '*_test.go' | grep -vE '^(vendor|prog|experimental)/' | xargs -n1 dirname  | sort -u | sed -e 's|^|./|') )
+    TESTDIRS=($(git ls-files -- '*_test.go' | grep -vE '^(vendor|prog|experimental)/' | xargs -n1 dirname | sort -u | sed -e 's|^|./|'))
 else
     # TESTDIRS on the right side is not really an array variable, it
     # is just a string with spaces, but it is written like that to
     # shut up the shellcheck tool.
-    TESTDIRS=( $(for d in ${TESTDIRS[*]}; do echo "$d"; done) )
+    TESTDIRS=($(for d in ${TESTDIRS[*]}; do echo "$d"; done))
 fi
 
 # If running on circle, use the scheduler to work out what tests to run on what shard
 if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ] && [ -x "$DIR/sched" ]; then
     PREFIX=$(go list -e ./ | sed -e 's/\//-/g')
-    TESTDIRS=( $(echo "${TESTDIRS[@]}" | "$DIR/sched" sched "$PREFIX-$CIRCLE_BUILD_NUM" "$CIRCLE_NODE_TOTAL" "$CIRCLE_NODE_INDEX") )
+    TESTDIRS=($(echo "${TESTDIRS[@]}" | "$DIR/sched" sched "$PREFIX-$CIRCLE_BUILD_NUM" "$CIRCLE_NODE_TOTAL" "$CIRCLE_NODE_INDEX"))
     echo "${TESTDIRS[@]}"
 fi
 
@@ -74,26 +74,29 @@ for dir in "${TESTDIRS[@]}"; do
         go get -t -tags netgo "$dir"
     fi
 
-    GO_TEST_ARGS_RUN=( "${GO_TEST_ARGS[@]}" )
+    GO_TEST_ARGS_RUN=("${GO_TEST_ARGS[@]}")
     if [ -n "$SLOW" ]; then
-        COVERPKGS=$( (go list "$dir"; go list -f '{{join .Deps "\n"}}' "$dir" | grep -v "vendor" | grep "^$PACKAGE_BASE/") | paste -s -d, -)
+        COVERPKGS=$( (
+            go list "$dir"
+            go list -f '{{join .Deps "\n"}}' "$dir" | grep -v "vendor" | grep "^$PACKAGE_BASE/"
+        ) | paste -s -d, -)
         output=$(mktemp "$coverdir/unit.XXXXXXXXXX")
-        GO_TEST_ARGS_RUN=( "${GO_TEST_ARGS[@]}" -coverprofile=$output -coverpkg=$COVERPKGS )
+        GO_TEST_ARGS_RUN=("${GO_TEST_ARGS[@]}" -coverprofile=$output -coverpkg=$COVERPKGS)
     fi
 
     START=$(date +%s)
     if ! go test "${GO_TEST_ARGS_RUN[@]}" "$dir"; then
         fail=1
     fi
-    RUNTIME=$(( $(date +%s) - START ))
+    RUNTIME=$(($(date +%s) - START))
 
     # Report test runtime when running on circle, to help scheduler
     if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ] && [ -x "$DIR/sched" ]; then
-        "$DIR/sched" time "$dir" $RUNTIME
+        "$DIR/sched" time "$dir" "$RUNTIME"
     fi
 done
 
-if [ -n "$SLOW" ] && [ -z "$COVERDIR" ] ; then
+if [ -n "$SLOW" ] && [ -z "$COVERDIR" ]; then
     go get github.com/weaveworks/tools/cover
     cover "$coverdir"/* >profile.cov
     rm -rf "$coverdir"

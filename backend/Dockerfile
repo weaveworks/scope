@@ -9,6 +9,7 @@ RUN go get -tags netgo \
 		github.com/fzipp/gocyclo \
 		github.com/golang/lint/golint \
 		github.com/kisielk/errcheck \
+		gopkg.in/mvdan/sh.v1/cmd/shfmt \
 		github.com/mjibson/esc \
 		github.com/client9/misspell/cmd/misspell && \
 	rm -rf /go/pkg/ /go/src/
