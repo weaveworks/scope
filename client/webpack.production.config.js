@@ -48,9 +48,9 @@ module.exports = {
   module: {
     // Webpack is opionated about how pkgs should be laid out:
     // https://github.com/webpack/webpack/issues/1617
-    noParse: /xterm/,
+    noParse: [/xterm\/lib/],
     include: [
-      path.resolve(__dirname, 'app/scripts')
+      path.resolve(__dirname, 'app/scripts', 'app/styles')
     ],
     preLoaders: [
       {
@@ -60,11 +60,6 @@ module.exports = {
       }
     ],
     loaders: [
-      {
-        test: /\.less$/,
-        loader: ExtractTextPlugin.extract('style-loader',
-          'css-loader?minimize!postcss-loader!less-loader')
-      },
       {
         test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
         loader: 'url-loader?limit=10000&minetype=application/font-woff'
@@ -77,7 +72,15 @@ module.exports = {
         test: /\.ico$/,
         loader: 'file-loader?name=[name].[ext]'
       },
-      { test: /\.jsx?$/, exclude: /node_modules|vendor/, loader: 'babel' }
+      {
+        test: /\.jsx?$/,
+        exclude: /node_modules|vendor/,
+        loader: 'babel'
+      },
+      {
+        test: /\.scss$/,
+        loader: ExtractTextPlugin.extract('style-loader', 'css-loader!sass-loader?minimize')
+      }
     ]
   },
 
@@ -126,5 +129,10 @@ module.exports = {
       template: 'app/html/index.html',
       filename: 'index.html'
     })
-  ]
+  ],
+  sassLoader: {
+    includePaths: [
+      path.resolve(__dirname, './node_modules/xterm')
+    ]
+  }
 };

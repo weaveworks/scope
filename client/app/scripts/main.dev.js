@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import Immutable from 'immutable';
 import installDevTools from 'immutable-devtools';
 
-import '../styles/main.less';
+import '../styles/main.scss';
 import '../images/favicon.ico';
 import configureStore from './stores/configureStore.dev';
 import DevTools from './components/dev-tools';

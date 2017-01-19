@@ -82,9 +82,9 @@ module.exports = {
   module: {
     // Webpack is opionated about how pkgs should be laid out:
     // https://github.com/webpack/webpack/issues/1617
-    noParse: /xterm/,
+    noParse: /xterm\/(.*).map$/,
     include: [
-      path.resolve(__dirname, 'app/scripts')
+      path.resolve(__dirname, 'app/scripts', 'app/styles')
     ],
 
     preLoaders: [
@@ -100,10 +100,6 @@ module.exports = {
         loader: 'json-loader'
       },
       {
-        test: /\.less$/,
-        loader: 'style-loader!css-loader!postcss-loader!less-loader'
-      },
-      {
         test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
         loader: 'url-loader?limit=10000&minetype=application/font-woff'
       },
@@ -115,6 +111,10 @@ module.exports = {
         test: /\.jsx?$/,
         exclude: /node_modules|vendor/,
         loaders: ['babel']
+      },
+      {
+        test: /\.(scss|css)$/,
+        loader: 'style-loader!css-loader!sass-loader'
       }
     ]
   },
@@ -128,5 +128,10 @@ module.exports = {
   // Automatically transform files with these extensions
   resolve: {
     extensions: ['', '.js', '.jsx']
+  },
+  sassLoader: {
+    includePaths: [
+      path.resolve(__dirname, './node_modules/xterm')
+    ]
   }
 };
