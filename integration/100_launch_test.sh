@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # shellcheck disable=SC1091
-./config.sh
+. ./config.sh
 
 start_suite "Launch scope and check it boots"
 
