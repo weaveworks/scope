@@ -71,8 +71,8 @@ has_connection_by_id() {
     for i in $(seq "$timeout"); do
         local nodes
         local edge
-        edge=$(echo "$nodes" | jq -r ".nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])" 2>/dev/null)
-        nodes="$(curl -s "http://$host:4040/api/topology/${view}?system=show")"
+        edge=$(echo "$nodes" | (jq -r ".nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])" || true) 2>/dev/null)
+        nodes=$(curl -s "http://$host:4040/api/topology/${view}?system=show" || true)
         if [ "$edge" = "true" ]; then
             echo "Found edge $from -> $to after $i secs"
             assert "curl -s http://$host:4040/api/topology/${view}?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
@@ -109,7 +109,7 @@ wait_for() {
     for i in $(seq "${timeout}"); do
         local nodes
         local found=0
-        nodes="$(curl -s "http://$host:4040/api/topology/${view}?system=show")"
+        nodes=$(curl -s "http://$host:4040/api/topology/${view}?system=show" || true)
         for name in "$@"; do
             local count
             count=$(echo "${nodes}" | jq -r "[.nodes[] | select(.label == \"${name}\")] | length")
