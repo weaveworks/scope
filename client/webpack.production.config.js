@@ -132,7 +132,8 @@ module.exports = {
   ],
   sassLoader: {
     includePaths: [
-      path.resolve(__dirname, './node_modules/xterm')
+      path.resolve(__dirname, './node_modules/xterm'),
+      path.resolve(__dirname, './node_modules/font-awesome')
     ]
   }
 };
