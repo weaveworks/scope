@@ -81,7 +81,8 @@ run_on() {
     host=$1
     shift 1
     [ -z "$DEBUG" ] || greyly echo "Running on $host:" "$@" >&2
-    remote "$host" "$SSH" "$host" "$@"
+    # shellcheck disable=SC2086
+    remote "$host" $SSH "$host" "$@"
 }
 
 docker_on() {
@@ -117,7 +118,8 @@ start_suite() {
         PLUGIN_ID=$(docker_on "$host" ps -aq --filter=name=weaveplugin)
         PLUGIN_FILTER="cat"
         [ -n "$PLUGIN_ID" ] && PLUGIN_FILTER="grep -v $PLUGIN_ID"
-        rm_containers "$host" "$(docker_on "$host" ps -aq 2>/dev/null | "$PLUGIN_FILTER")"
+        # shellcheck disable=SC2046
+        rm_containers "$host" $(docker_on "$host" ps -aq 2>/dev/null | $PLUGIN_FILTER)
         run_on "$host" "docker network ls | grep -q ' weave ' && docker network rm weave" || true
         weave_on "$host" reset 2>/dev/null
     done

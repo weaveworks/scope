@@ -2,6 +2,5 @@ cover/cover
 socks/proxy
 socks/image.tar
 runner/runner
-cmd/wcloud/wcloud
 *.pyc
 *~

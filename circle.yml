@@ -27,5 +27,4 @@ test:
     - cd $SRCDIR/cover; make
     - cd $SRCDIR/socks; make
     - cd $SRCDIR/runner; make
-    - cd $SRCDIR/cmd/wcloud; make
 

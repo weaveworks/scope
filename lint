@@ -18,7 +18,6 @@
 set -e
 
 IGNORE_LINT_COMMENT=
-IGNORE_TEST_PACKAGES=
 IGNORE_SPELLINGS=
 while true; do
     case "$1" in
@@ -27,7 +26,7 @@ while true; do
             shift 1
             ;;
         -notestpackage)
-            IGNORE_TEST_PACKAGES=1
+            # NOOP, still accepted for backwards compatibility
             shift 1
             ;;
         -ignorespelling)
@@ -60,30 +59,6 @@ spell_check() {
 
     if ! misspell -error -i "$IGNORE_SPELLINGS" "${filename}"; then
         lint_result=1
-    fi
-
-    return $lint_result
-}
-
-test_mismatch() {
-    local filename="$1"
-    local package=$(grep '^package ' "$filename" | awk '{print $2}')
-    local lint_result=0
-
-    if [[ $package == "main" ]]; then
-        return # in package main, all bets are off
-    fi
-
-    if [[ $filename == *"_internal_test.go" ]]; then
-        if [[ $package == *"_test" ]]; then
-            lint_result=1
-            echo "${filename}: should not be part of a _test package"
-        fi
-    else
-        if [[ ! $package == *"_test" ]]; then
-            lint_result=1
-            echo "${filename}: should be part of a _test package"
-        fi
     fi
 
     return $lint_result
@@ -182,12 +157,6 @@ lint() {
         sh) lint_sh "${filename}" || lint_result=1 ;;
         tf) lint_tf "${filename}" || lint_result=1 ;;
     esac
-
-    if [ -z "$IGNORE_TEST_PACKAGES" ]; then
-        if [[ "$filename" == *"_test.go" ]]; then
-            test_mismatch "${filename}" || lint_result=1
-        fi
-    fi
 
     spell_check "${filename}" || lint_result=1
 
