@@ -92,7 +92,7 @@
     "build": "webpack --config webpack.production.config.js",
     "build-external": "EXTERNAL=true webpack --config webpack.production.config.js",
     "build-pkg": "babel app/scripts --ignore __tests__ --out-dir dist",
-    "install": "npm run build-pkg",
+    "install": "./post-install.sh",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest",
