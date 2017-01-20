@@ -76,6 +76,7 @@ export default class NodeDetailsTableRow extends React.Component {
     // user is selecting some data in the row. In this case don't trigger the onClick event which
     // is most likely a details panel popping open.
     //
+    this.state = { focused: false };
     this.mouseDragOrigin = [0, 0];
 
     this.saveLabelElementRef = this.saveLabelElementRef.bind(this);
@@ -90,13 +91,17 @@ export default class NodeDetailsTableRow extends React.Component {
   }
 
   onMouseEnter() {
-    const { node, onMouseEnterRow } = this.props;
-    onMouseEnterRow(node);
+    this.setState({ focused: true });
+    if (this.props.onMouseEnter) {
+      this.props.onMouseEnter(this.props.index, this.props.node);
+    }
   }
 
   onMouseLeave() {
-    const { node, onMouseLeaveRow } = this.props;
-    onMouseLeaveRow(node);
+    this.setState({ focused: false });
+    if (this.props.onMouseLeave) {
+      this.props.onMouseLeave();
+    }
   }
 
   onMouseDown(ev) {
@@ -121,19 +126,22 @@ export default class NodeDetailsTableRow extends React.Component {
   }
 
   render() {
-    const { node, nodeIdKey, topologyId, columns, onClick, onMouseEnterRow, onMouseLeaveRow,
-      selected, colStyles } = this.props;
+    const { node, nodeIdKey, topologyId, columns, onClick, colStyles } = this.props;
     const [firstColumnStyle, ...columnStyles] = colStyles;
     const values = renderValues(node, columns, columnStyles);
     const nodeId = node[nodeIdKey];
-    const className = classNames('node-details-table-node', { selected });
+
+    const className = classNames('node-details-table-node', {
+      selected: this.props.selected,
+      focused: this.state.focused,
+    });
 
     return (
       <tr
         onMouseDown={onClick && this.onMouseDown}
         onMouseUp={onClick && this.onMouseUp}
-        onMouseEnter={onMouseEnterRow && this.onMouseEnter}
-        onMouseLeave={onMouseLeaveRow && this.onMouseLeave}
+        onMouseEnter={this.onMouseEnter}
+        onMouseLeave={this.onMouseLeave}
         className={className}>
         <td
           className="node-details-table-node-label truncate"

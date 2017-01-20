@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { find, get, union, sortBy, groupBy, concat } from 'lodash';
+import { find, get, union, sortBy, groupBy, concat, debounce } from 'lodash';
 
 import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
 
@@ -8,6 +8,8 @@ import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
 import NodeDetailsTableHeaders from './node-details-table-headers';
 import { ipToPaddedString } from '../../utils/string-utils';
+import { moveElement, insertElement } from '../../utils/array-utils';
+import { TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL } from '../../constants/timer';
 import {
   isIP, isNumber, defaultSortDesc, getTableColumnsStyles
 } from '../../utils/node-details-utils';
@@ -114,17 +116,36 @@ function getSortedNodes(nodes, sortedByHeader, sortedDesc) {
 }
 
 
+// By inserting this fake invisible row into the table, with the help of
+// some CSS trickery, we make the inner scrollable content of the table
+// have a minimal height. That prevents auto-scroll under a focus if the
+// number of table rows shrinks.
+function minHeightConstraint(height = 0) {
+  return <tr className="min-height-constraint" style={{height}} />;
+}
+
+
 export default class NodeDetailsTable extends React.Component {
 
   constructor(props, context) {
     super(props, context);
+
     this.state = {
       limit: props.limit || NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
       sortedDesc: this.props.sortedDesc,
       sortedBy: this.props.sortedBy
     };
-    this.handleLimitClick = this.handleLimitClick.bind(this);
+    this.focusState = {};
+
     this.updateSorted = this.updateSorted.bind(this);
+    this.handleLimitClick = this.handleLimitClick.bind(this);
+    this.onMouseLeaveRow = this.onMouseLeaveRow.bind(this);
+    this.onMouseEnterRow = this.onMouseEnterRow.bind(this);
+    this.saveTableContentRef = this.saveTableContentRef.bind(this);
+    // Use debouncing to prevent event flooding when e.g. crossing fast with mouse cursor
+    // over the whole table. That would be expensive as each focus causes table to rerender.
+    this.debouncedFocusRow = debounce(this.focusRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
+    this.debouncedBlurRow = debounce(this.blurRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
   }
 
   updateSorted(sortedBy, sortedDesc) {
@@ -137,20 +158,71 @@ export default class NodeDetailsTable extends React.Component {
     this.setState({ limit });
   }
 
+  focusRow(rowIndex, node) {
+    // Remember the focused row index, the node that was focused and
+    // the table content height so that we can keep the node row fixed
+    // without auto-scrolling happening.
+    // NOTE: It would be ideal to modify the real component state here,
+    // but that would cause whole table to rerender, which becomes to
+    // expensive with the current implementation if the table consists
+    // of 1000+ nodes.
+    this.focusState = {
+      focusedNode: node,
+      focusedRowIndex: rowIndex,
+      tableContentMinHeightConstraint: this.tableContent.scrollHeight,
+    };
+  }
+
+  blurRow() {
+    // Reset the focus state
+    this.focusState = {};
+  }
+
+  onMouseEnterRow(rowIndex, node) {
+    this.debouncedBlurRow.cancel();
+    this.debouncedFocusRow(rowIndex, node);
+  }
+
+  onMouseLeaveRow() {
+    this.debouncedFocusRow.cancel();
+    this.debouncedBlurRow();
+  }
+
+  saveTableContentRef(ref) {
+    this.tableContent = ref;
+  }
+
   getColumnHeaders() {
     const columns = this.props.columns || [];
     return [{id: 'label', label: this.props.label}].concat(columns);
   }
 
   render() {
-    const { nodeIdKey, columns, topologyId, onClickRow, onMouseEnter, onMouseLeave,
-      onMouseEnterRow, onMouseLeaveRow } = this.props;
+    const { nodeIdKey, columns, topologyId, onClickRow, onMouseEnter, onMouseLeave } = this.props;
 
     const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
     const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
     const sortedDesc = this.state.sortedDesc || defaultSortDesc(sortedByHeader);
 
     let nodes = getSortedNodes(this.props.nodes, sortedByHeader, sortedDesc);
+
+    const { focusedNode, focusedRowIndex, tableContentMinHeightConstraint } = this.focusState;
+    if (Number.isInteger(focusedRowIndex) && focusedRowIndex < nodes.length) {
+      const nodeRowIndex = nodes.findIndex(node => node.id === focusedNode.id);
+      if (nodeRowIndex >= 0) {
+        // If the focused node still exists in the table, we move it
+        // to the hovered row, keeping the rest of the table sorted.
+        nodes = moveElement(nodes, nodeRowIndex, focusedRowIndex);
+      } else {
+        // Otherwise we insert the dead focused node there, pretending
+        // it's still alive. That enables the users to read off all the
+        // info they want and perhaps even open the details panel. Also,
+        // only if we do this, we can guarantee that mouse hover will
+        // always freeze the table row until we focus out.
+        nodes = insertElement(nodes, focusedRowIndex, focusedNode);
+      }
+    }
+
     const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
     const expanded = this.state.limit === 0;
     const notShown = nodes.length - this.state.limit;
@@ -176,22 +248,25 @@ export default class NodeDetailsTable extends React.Component {
             </thead>
             <tbody
               style={this.props.tbodyStyle}
+              ref={this.saveTableContentRef}
               onMouseEnter={onMouseEnter}
               onMouseLeave={onMouseLeave}>
-              {nodes && nodes.map(node => (
+              {nodes && nodes.map((node, index) => (
                 <NodeDetailsTableRow
                   key={node.id}
                   renderIdCell={this.props.renderIdCell}
                   selected={this.props.selectedNodeId === node.id}
                   node={node}
+                  index={index}
                   nodeIdKey={nodeIdKey}
                   colStyles={styles}
                   columns={columns}
                   onClick={onClickRow}
-                  onMouseLeaveRow={onMouseLeaveRow}
-                  onMouseEnterRow={onMouseEnterRow}
+                  onMouseEnter={this.onMouseEnterRow}
+                  onMouseLeave={this.onMouseLeaveRow}
                   topologyId={topologyId} />
               ))}
+              {minHeightConstraint(tableContentMinHeightConstraint)}
             </tbody>
           </table>
           <ShowMore
