@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { find, get, union, sortBy, groupBy, concat, debounce, findIndex } from 'lodash';
+import { find, get, union, sortBy, groupBy, concat, debounce } from 'lodash';
 
 import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
 
@@ -145,7 +145,7 @@ export default class NodeDetailsTable extends React.Component {
     // Use debouncing to prevent event flooding when e.g. crossing fast with mouse cursor
     // over the whole table. That would be expensive as each focus causes table to rerender.
     this.debouncedFocusRow = debounce(this.focusRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
-    this.debouncedUnfocusRow = debounce(this.unfocusRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
+    this.debouncedBlurRow = debounce(this.blurRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
   }
 
   updateSorted(sortedBy, sortedDesc) {
@@ -173,19 +173,19 @@ export default class NodeDetailsTable extends React.Component {
     };
   }
 
-  unfocusRow() {
+  blurRow() {
     // Reset the focus state
     this.focusState = {};
   }
 
   onMouseEnterRow(rowIndex, node) {
-    this.debouncedUnfocusRow.cancel();
+    this.debouncedBlurRow.cancel();
     this.debouncedFocusRow(rowIndex, node);
   }
 
   onMouseLeaveRow() {
     this.debouncedFocusRow.cancel();
-    this.debouncedUnfocusRow();
+    this.debouncedBlurRow();
   }
 
   saveTableContentRef(ref) {
@@ -208,7 +208,7 @@ export default class NodeDetailsTable extends React.Component {
 
     const { focusedNode, focusedRowIndex, tableContentMinHeightConstraint } = this.focusState;
     if (Number.isInteger(focusedRowIndex) && focusedRowIndex < nodes.length) {
-      const nodeRowIndex = findIndex(nodes, node => node.id === focusedNode.id);
+      const nodeRowIndex = nodes.findIndex(node => node.id === focusedNode.id);
       if (nodeRowIndex >= 0) {
         // If the focused node still exists in the table, we move it
         // to the hovered row, keeping the rest of the table sorted.
@@ -257,11 +257,12 @@ export default class NodeDetailsTable extends React.Component {
                   renderIdCell={this.props.renderIdCell}
                   selected={this.props.selectedNodeId === node.id}
                   node={node}
+                  index={index}
                   nodeIdKey={nodeIdKey}
                   colStyles={styles}
                   columns={columns}
                   onClick={onClickRow}
-                  onMouseEnter={() => { this.onMouseEnterRow(index, node); }}
+                  onMouseEnter={this.onMouseEnterRow}
                   onMouseLeave={this.onMouseLeaveRow}
                   topologyId={topologyId} />
               ))}

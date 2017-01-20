@@ -93,7 +93,7 @@ export default class NodeDetailsTableRow extends React.Component {
   onMouseEnter() {
     this.setState({ focused: true });
     if (this.props.onMouseEnter) {
-      this.props.onMouseEnter();
+      this.props.onMouseEnter(this.props.index, this.props.node);
     }
   }
 
