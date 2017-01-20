@@ -3,7 +3,6 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { assign, pick, includes } from 'lodash';
 import { Map as makeMap, fromJS } from 'immutable';
-import timely from 'timely';
 
 import { scaleThreshold, scaleLinear } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
@@ -86,7 +85,6 @@ function getNodeScale(nodesCount, width, height) {
   return scaleLinear().range([0, normalizedNodeSize]);
 }
 
-
 function updateLayout(width, height, nodes, baseOptions) {
   const nodeScale = getNodeScale(nodes.size, width, height);
   const edges = initEdges(nodes);
@@ -95,10 +93,9 @@ function updateLayout(width, height, nodes, baseOptions) {
     scale: nodeScale,
   });
 
-  const timedLayouter = timely(doLayout);
-  const graph = timedLayouter(nodes, edges, options);
-
-  log(`graph layout took ${timedLayouter.time}ms`);
+  const timestampBefore = Date.now();
+  const graph = doLayout(nodes, edges, options);
+  log(`graph layout took ${Date.now() - timestampBefore}ms`);
 
   const layoutNodes = graph.nodes.map(node => makeMap({
     x: node.get('x'),
