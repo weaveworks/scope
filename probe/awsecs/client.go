@@ -13,6 +13,8 @@ import (
 	"github.com/bluele/gcache"
 )
 
+const servicePrefix = "ecs-svc" // Task StartedBy field begins with this if it was started by a service
+
 // EcsClient is a wrapper around an AWS client that makes all the needed calls and just exposes the final results.
 // We create an interface so we can mock for testing.
 type EcsClient interface {
@@ -104,6 +106,27 @@ func newECSService(service *ecs.Service) EcsService {
 		RunningCount:      *service.RunningCount,
 		TaskDefinitionARN: *service.TaskDefinition,
 	}
+}
+
+// IsServiceManaged returns true if the task was started by a service.
+func (t EcsTask) IsServiceManaged() bool {
+	return strings.HasPrefix(t.StartedBy, servicePrefix)
+}
+
+// Fetches a task from the cache, returning (task, ok) as per map[]
+func (c ecsClientImpl) getCachedTask(taskARN string) (EcsTask, bool) {
+	if taskRaw, err := c.taskCache.Get(taskARN); err == nil {
+		return taskRaw.(EcsTask), true
+	}
+	return EcsTask{}, false
+}
+
+// Fetches a service from the cache, returning (service, ok) as per map[]
+func (c ecsClientImpl) getCachedService(serviceName string) (EcsService, bool) {
+	if serviceRaw, err := c.serviceCache.Get(serviceName); err == nil {
+		return serviceRaw.(EcsService), true
+	}
+	return EcsService{}, false
 }
 
 // Returns a channel from which service ARNs can be read.
@@ -233,17 +256,14 @@ func (c ecsClientImpl) getTasks(taskARNs []string) {
 // Returns (task to service map, unmatched tasks). Ignores tasks whose startedby values
 // don't appear to point to a service.
 func (c ecsClientImpl) matchTasksServices(taskARNs []string) (map[string]string, []string) {
-	const servicePrefix = "ecs-svc"
-
 	deploymentMap := map[string]string{}
 	for _, serviceNameRaw := range c.serviceCache.Keys() {
-		serviceRaw, err := c.serviceCache.Get(serviceNameRaw)
-		if err != nil {
+		serviceName := serviceNameRaw.(string)
+		service, ok := c.getCachedService(serviceName)
+		if !ok {
 			// This is rare, but possible if service was evicted after the loop began
 			continue
 		}
-		serviceName := serviceNameRaw.(string)
-		service := serviceRaw.(EcsService)
 		for _, deployment := range service.DeploymentIDs {
 			deploymentMap[deployment] = serviceName
 		}
@@ -253,14 +273,12 @@ func (c ecsClientImpl) matchTasksServices(taskARNs []string) (map[string]string,
 	results := map[string]string{}
 	unmatched := []string{}
 	for _, taskARN := range taskARNs {
-		taskRaw, err := c.taskCache.Get(taskARN)
-		if err != nil {
+		task, ok := c.getCachedTask(taskARN)
+		if !ok {
 			// this can happen if we have a failure while describing tasks, just pretend the task doesn't exist
 			continue
 		}
-		task := taskRaw.(EcsTask)
-		if !strings.HasPrefix(task.StartedBy, servicePrefix) {
-			// task was not started by a service
+		if !task.IsServiceManaged() {
 			continue
 		}
 		if serviceName, ok := deploymentMap[task.StartedBy]; ok {
@@ -274,7 +292,7 @@ func (c ecsClientImpl) matchTasksServices(taskARNs []string) (map[string]string,
 	return results, unmatched
 }
 
-func (c ecsClientImpl) ensureTasks(taskARNs []string) {
+func (c ecsClientImpl) ensureTasksAreCached(taskARNs []string) {
 	tasksToFetch := []string{}
 	for _, taskARN := range taskARNs {
 		if _, err := c.taskCache.Get(taskARN); err != nil {
@@ -323,8 +341,7 @@ func (c ecsClientImpl) makeECSInfo(taskARNs []string, taskServiceMap map[string]
 	for _, taskARN := range taskARNs {
 		// It's possible that tasks could still be missing from the cache if describe tasks failed.
 		// We'll just pretend they don't exist.
-		if taskRaw, err := c.taskCache.Get(taskARN); err == nil {
-			task := taskRaw.(EcsTask)
+		if task, ok := c.getCachedTask(taskARN); ok {
 			tasks[taskARN] = task
 		}
 	}
@@ -335,8 +352,7 @@ func (c ecsClientImpl) makeECSInfo(taskARNs []string, taskServiceMap map[string]
 			// Already present. This is expected since multiple tasks can map to the same service.
 			continue
 		}
-		if serviceRaw, err := c.serviceCache.Get(serviceName); err == nil {
-			service := serviceRaw.(EcsService)
+		if service, ok := c.getCachedService(serviceName); ok {
 			services[serviceName] = service
 		} else {
 			log.Errorf("Service %s referenced by task %s in service map but not found in cache, this shouldn't be able to happen. Removing task and continuing.", serviceName, taskARN)
@@ -354,7 +370,7 @@ func (c ecsClientImpl) GetInfo(taskARNs []string) EcsInfo {
 	// We do a weird order of operations here to minimize unneeded cache refreshes.
 	// First, we ensure we have all the tasks we need, and fetch the ones we don't.
 	// We also mark the tasks as being used here to prevent eviction.
-	c.ensureTasks(taskARNs)
+	c.ensureTasksAreCached(taskARNs)
 
 	// We're going to do this matching process potentially several times, but that's ok - it's quite cheap.
 	// First, we want to see how far we get with existing data, and identify the set of services
