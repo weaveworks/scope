@@ -8,7 +8,5 @@ probe:
   volumes:
     - "/var/run/docker.sock:/var/run/docker.sock:rw"
   command:
-    - "--probe.docker"
-    - "true"
-    - "--service-token"
-    - "${SCOPE_SERVICE_TOKEN}"
+    - "--probe.docker=true"
+    - "--service-token=${SCOPE_SERVICE_TOKEN}"
