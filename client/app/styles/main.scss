@@ -70,7 +70,7 @@ $search-border-width: 1px;
 
 /* specific elements */
 $body-background-color: linear-gradient(30deg, $background-color 0%, $background-lighter-color 100%);
-$label-background-color: fade-out($background-average-color, .7);
+$label-background-color: fade-out($background-average-color, .3);
 
 
 /* add this class to truncate text with ellipsis, container needs width */
@@ -197,7 +197,7 @@ h2 {
   bottom: 11px;
   right: 43px;
   color: $text-tertiary-color;
-  background-color: fade-out($background-average-color, .9);
+  background-color: fade-out($background-average-color, .1);
   font-size: 0.7rem;
   display: flex;
 
@@ -1014,7 +1014,7 @@ h2 {
 .details-wrapper .node-details-table {
   &-node {
     &:hover, &.selected {
-      background-color: lighten(@background-color, 5%);
+      background-color: lighten($background-color, 5%);
     }
   }
 }
