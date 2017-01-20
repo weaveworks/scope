@@ -91,7 +91,7 @@
     "build": "webpack --config webpack.production.config.js",
     "build-external": "EXTERNAL=true webpack --config webpack.production.config.js",
     "build-pkg": "babel app/scripts --ignore __tests__ --out-dir dist && cp -R app/styles dist/styles",
-    "install": "./post-install.sh",
+    "install": "./post-install",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest",
@@ -99,7 +99,8 @@
     "lint": "eslint app",
     "clean": "rm build/app.js",
     "noprobe": "../scope stop && ../scope launch --no-probe --app.window 8760h",
-    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d"
+    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d",
+    "s3-publish" : "npm pack && aws s3 cp weave-scope-*.tgz s3://weaveworks-npm-modules/weave-scope/ --acl public-read"
   },
   "jest": {
     "transform": {
