@@ -82,7 +82,7 @@ module.exports = {
   module: {
     // Webpack is opionated about how pkgs should be laid out:
     // https://github.com/webpack/webpack/issues/1617
-    noParse: /xterm\/(.*).map$/,
+    noParse: [/xterm\/(.*).map$/, /xterm\/dist\/xterm\.js/],
     include: [
       path.resolve(__dirname, 'app/scripts', 'app/styles')
     ],
@@ -114,7 +114,7 @@ module.exports = {
       },
       {
         test: /\.(scss|css)$/,
-        loader: 'style-loader!css-loader!sass-loader'
+        loader: 'style-loader!css-loader!postcss-loader!sass-loader'
       }
     ]
   },

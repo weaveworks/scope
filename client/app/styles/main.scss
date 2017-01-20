@@ -70,7 +70,7 @@ $search-border-width: 1px;
 
 /* specific elements */
 $body-background-color: linear-gradient(30deg, $background-color 0%, $background-lighter-color 100%);
-$label-background-color: fade($background-average-color, 70%);
+$label-background-color: fade-out($background-average-color, .7);
 
 
 /* add this class to truncate text with ellipsis, container needs width */
@@ -197,7 +197,7 @@ h2 {
   bottom: 11px;
   right: 43px;
   color: $text-tertiary-color;
-  background-color: fade($background-average-color, 90%);
+  background-color: fade-out($background-average-color, .9);
   font-size: 0.7rem;
   display: flex;
 
@@ -578,7 +578,7 @@ h2 {
       display: inline-block;
       margin: 1px;
       padding: 2px 4px;
-      background-color: fade($weave-blue, 10%);
+      background-color: fade-out($weave-blue, .9);
     }
 
     &-label {
@@ -665,7 +665,7 @@ h2 {
   }
 
   .match {
-    background-color: fade($weave-blue, 30%);
+    background-color: fade-out($weave-blue, .7);
     border: 1px solid $weave-blue;
   }
 
@@ -1523,7 +1523,7 @@ h2 {
 }
 
 .search-item {
-  background-color: fade($weave-blue, 20%);
+  background-color: fade-out($weave-blue, .2);
   border-radius: $border-radius / 2;
   margin: 1px 0 1px 1.5em;
   display: inline-block;
