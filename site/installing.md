@@ -130,8 +130,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
       volumes:
         - "/var/run/docker.sock:/var/run/docker.sock:rw"
       command:
-        - "--probe.docker"
-        - "true"
+        - "--probe.docker=true"
 
 **Docker Compose Format Version 2:**
 
@@ -147,8 +146,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
         volumes:
           - "/var/run/docker.sock:/var/run/docker.sock:rw"
         command:
-          - "--probe.docker"
-          - "true"
+          - "--probe.docker=true"
 
 Version 2 of this YAML file supports networks and volumes as defined by any plugins you might be using. See [Compose File Reference](https://docs.docker.com/compose/compose-file/) for more information.
 
@@ -180,10 +178,8 @@ After it’s been launched, open your web browser to [https://cloud.weave.works]
       volumes:
         - "/var/run/docker.sock:/var/run/docker.sock:rw"
       command:
-        - "--probe.docker"
-        - "true"
-        - "--service-token"
-        - "${SCOPE_SERVICE_TOKEN}"
+        - "--probe.docker=true"
+        - "--service-token=${SCOPE_SERVICE_TOKEN}"
 
 **Docker Compose Format Version 2:**
 
@@ -199,10 +195,8 @@ After it’s been launched, open your web browser to [https://cloud.weave.works]
         volumes:
           - "/var/run/docker.sock:/var/run/docker.sock:rw"
         command:
-          - "--probe.docker"
-          - "true"
-          - "--service-token"
-          - "${SCOPE_SERVICE_TOKEN}"
+          - "--probe.docker=true"
+          - "--service-token=${SCOPE_SERVICE_TOKEN}"
 
 Version 2 of this YAML file supports networks and volumes as defined by any plugins you might be using. See [Compose File Reference](https://docs.docker.com/compose/compose-file/) for more information.
 
