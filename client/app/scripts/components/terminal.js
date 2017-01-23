@@ -9,10 +9,8 @@ import Term from 'xterm';
 import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
-import { getPipeStatus, basePath, doResizeTty } from '../utils/web-api-utils';
+import { getPipeStatus, doResizeTty, wsUrl } from '../utils/web-api-utils';
 
-const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = `${wsProto}://${location.host}${basePath(location.pathname)}`;
 const log = debug('scope:terminal');
 
 const DEFAULT_COLS = 80;

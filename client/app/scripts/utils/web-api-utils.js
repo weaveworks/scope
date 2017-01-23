@@ -63,7 +63,7 @@ const API_PATH = basePathSlash(window.location.pathname) === '/'
   : `/api${window.location.pathname}/api`;
 
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = basePathSlash(window.location.pathname) === '/'
+export const wsUrl = basePathSlash(window.location.pathname) === '/'
   ? `${wsProto}://${location.host}${basePath(window.location.pathname)}`
   : `${wsProto}://${location.host}/api${basePath(window.location.pathname)}`;
 
