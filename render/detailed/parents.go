@@ -3,6 +3,7 @@ package detailed
 import (
 	"sort"
 
+	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
@@ -38,6 +39,8 @@ func Parents(r report.Report, n report.Node) (result []Parent) {
 		report.ReplicaSet:     {node(r.ReplicaSet), replicaSetParent},
 		report.Deployment:     {node(r.Deployment), deploymentParent},
 		report.Service:        {node(r.Service), serviceParent},
+		report.ECSTask:        {node(r.ECSTask), ecsTaskParent},
+		report.ECSService:     {node(r.ECSService), ecsServiceParent},
 		report.ContainerImage: {fake, containerImageParent},
 		report.Host:           {node(r.Host), hostParent},
 	}
@@ -89,6 +92,24 @@ func kubernetesParent(topology string) func(report.Node) Parent {
 			Label:      name,
 			TopologyID: topology,
 		}
+	}
+}
+
+func ecsTaskParent(n report.Node) Parent {
+	family, _ := n.Latest.Lookup(awsecs.TaskFamily)
+	return Parent{
+		ID:         n.ID,
+		Label:      family,
+		TopologyID: "ecs-tasks",
+	}
+}
+
+func ecsServiceParent(n report.Node) Parent {
+	name, _ := report.ParseECSServiceNodeID(n.ID)
+	return Parent{
+		ID:         n.ID,
+		Label:      name,
+		TopologyID: "ecs-services",
 	}
 }
 
