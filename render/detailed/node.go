@@ -6,6 +6,7 @@ import (
 
 	"github.com/ugorji/go/codec"
 
+	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
@@ -173,6 +174,27 @@ var (
 					{ID: kubernetes.State, Label: "State"},
 					{ID: report.Container, Label: "# Containers", Datatype: "number"},
 					{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
+				},
+			},
+		},
+		{
+			topologyID: report.ECSService,
+			NodeSummaryGroup: NodeSummaryGroup{
+				TopologyID: "ecs-services",
+				Label:      "Services",
+				Columns: []Column{
+					{ID: awsecs.ServiceRunningCount, Label: "Running", Datatype: "number"},
+					{ID: awsecs.ServiceDesiredCount, Label: "Desired", Datatype: "number"},
+				},
+			},
+		},
+		{
+			topologyID: report.ECSTask,
+			NodeSummaryGroup: NodeSummaryGroup{
+				TopologyID: "ecs-tasks",
+				Label:      "Tasks",
+				Columns: []Column{
+					{ID: awsecs.CreatedAt, Label: "Created At", Datatype: "datetime"},
 				},
 			},
 		},
