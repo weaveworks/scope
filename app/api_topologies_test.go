@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	containerLabelFiltersGroupID    = "container-label-filters-group"
+	systemGroupID                   = "system"
 	customAPITopologyOptionFilterID = "containerLabelFilter0"
 )
 
@@ -108,7 +108,7 @@ func getTestContainerLabelFilterTopologySummary(t *testing.T, exclude bool) (det
 	topologyRegistry.AddContainerFilters(option)
 
 	urlvalues := url.Values{}
-	urlvalues.Set(containerLabelFiltersGroupID, customAPITopologyOptionFilterID)
+	urlvalues.Set(systemGroupID, customAPITopologyOptionFilterID)
 	renderer, decorator, err := topologyRegistry.RendererForTopology("containers", urlvalues, fixture.Report)
 	if err != nil {
 		return nil, err
