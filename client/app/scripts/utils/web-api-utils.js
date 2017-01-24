@@ -58,8 +58,14 @@ export function basePathSlash(urlPath) {
   return `${basePath(urlPath)}/`;
 }
 
+const API_PATH = basePathSlash(window.location.pathname) === '/'
+  ? 'api'
+  : `/api${window.location.pathname}/api`;
+
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = `${wsProto}://${location.host}${basePath(location.pathname)}`;
+export const wsUrl = basePathSlash(window.location.pathname) === '/'
+  ? `${wsProto}://${location.host}${basePath(window.location.pathname)}`
+  : `${wsProto}://${location.host}/api${basePath(window.location.pathname)}`;
 
 function createWebsocket(topologyUrl, optionsQuery, dispatch) {
   if (socket) {
@@ -136,7 +142,7 @@ export function getAllNodes(getState, dispatch) {
 export function getTopologies(options, dispatch) {
   clearTimeout(topologyTimer);
   const optionsQuery = buildOptionsQuery(options);
-  const url = `api/topology?${optionsQuery}`;
+  const url = `${API_PATH}/topology?${optionsQuery}`;
   reqwest({
     url,
     success: (res) => {
@@ -171,13 +177,13 @@ export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nod
   const obj = nodeMap.last();
   if (obj && topologyUrlsById.has(obj.topologyId)) {
     const topologyUrl = topologyUrlsById.get(obj.topologyId);
-    let urlComponents = [topologyUrl, '/', encodeURIComponent(obj.id)];
+    let urlComponents = [API_PATH, '/', trimStart(topologyUrl, '/api'), '/', encodeURIComponent(obj.id)];
     if (currentTopologyId === obj.topologyId) {
       // Only forward filters for nodes in the current topology
       const optionsQuery = buildOptionsQuery(options);
       urlComponents = urlComponents.concat(['?', optionsQuery]);
     }
-    const url = urlComponents.join('').substr(1);
+    const url = urlComponents.join('');
 
     reqwest({
       url,
@@ -204,7 +210,7 @@ export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nod
 
 export function getApiDetails(dispatch) {
   clearTimeout(apiDetailsTimer);
-  const url = 'api';
+  const url = API_PATH;
   reqwest({
     url,
     success: (res) => {
@@ -225,7 +231,7 @@ export function getApiDetails(dispatch) {
 
 export function doControlRequest(nodeId, control, dispatch) {
   clearTimeout(controlErrorTimer);
-  const url = `api/control/${encodeURIComponent(control.probeId)}/`
+  const url = `${API_PATH}/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
   reqwest({
     method: 'POST',
@@ -261,7 +267,7 @@ export function doControlRequest(nodeId, control, dispatch) {
 
 
 export function doResizeTty(pipeId, control, cols, rows) {
-  const url = `api/control/${encodeURIComponent(control.probeId)}/`
+  const url = `${API_PATH}/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
 
   return reqwest({
@@ -276,7 +282,7 @@ export function doResizeTty(pipeId, control, cols, rows) {
 
 
 export function deletePipe(pipeId, dispatch) {
-  const url = `api/pipe/${encodeURIComponent(pipeId)}`;
+  const url = `${API_PATH}/pipe/${encodeURIComponent(pipeId)}`;
   reqwest({
     method: 'DELETE',
     url,
@@ -292,7 +298,7 @@ export function deletePipe(pipeId, dispatch) {
 
 
 export function getPipeStatus(pipeId, dispatch) {
-  const url = `api/pipe/${encodeURIComponent(pipeId)}/check`;
+  const url = `${API_PATH}/pipe/${encodeURIComponent(pipeId)}/check`;
   reqwest({
     method: 'GET',
     url,

@@ -56,3 +56,4 @@ vendor/github.com/ugorji/go/codec/codecgen/bin/*
 client/build-external/*
 prog/staticui/*
 prog/externalui/*
+client/pkg
