@@ -167,6 +167,9 @@ ui-upload: client/build-external/index.html
 	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
 	aws s3 cp client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
 
+ui-build-pkg:
+	cd client && npm run build-pkg && npm run s3-publish
+
 clean:
 	$(GO) clean ./...
 	# Don't actually rmi the build images - rm'ing the .uptodate files is enough to ensure
