@@ -75,7 +75,8 @@ deployment:
           )) &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag) &&
-          (test -z "${UI_BUCKET_KEY_ID}" || make ui-upload)
+          (test -z "${UI_BUCKET_KEY_ID}" || make ui-upload) &&
+          make ui-build-pkg
         )
       - |
         test -z "${QUAY_USER}" || (
