@@ -58,14 +58,23 @@ export function basePathSlash(urlPath) {
   return `${basePath(urlPath)}/`;
 }
 
-const API_PATH = basePathSlash(window.location.pathname) === '/'
-  ? 'api'
-  : `/api${window.location.pathname}/api`;
-
+// JJP - `apiPath` is used to get API URLs right when running as a React component.
+// This needs to be refactored to just accept a URL prop on the scope component.
+let apiPath;
+let websocketUrl;
+const isIframe = window.location !== window.parent.location;
+const isStandalone = window.location.pathname === '/';
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-export const wsUrl = basePathSlash(window.location.pathname) === '/'
-  ? `${wsProto}://${location.host}${basePath(window.location.pathname)}`
-  : `${wsProto}://${location.host}/api${basePath(window.location.pathname)}`;
+
+if (isIframe || isStandalone) {
+  apiPath = 'api';
+  websocketUrl = `${wsProto}://${location.host}${basePath(location.pathname)}`;
+} else {
+  apiPath = `/api${basePath(window.location.pathname)}/api`;
+  websocketUrl = `${wsProto}://${location.host}/api${basePath(window.location.pathname)}`;
+}
+
+export const wsUrl = websocketUrl;
 
 function createWebsocket(topologyUrl, optionsQuery, dispatch) {
   if (socket) {
@@ -142,7 +151,7 @@ export function getAllNodes(getState, dispatch) {
 export function getTopologies(options, dispatch) {
   clearTimeout(topologyTimer);
   const optionsQuery = buildOptionsQuery(options);
-  const url = `${API_PATH}/topology?${optionsQuery}`;
+  const url = `${apiPath}/topology?${optionsQuery}`;
   reqwest({
     url,
     success: (res) => {
@@ -177,7 +186,7 @@ export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nod
   const obj = nodeMap.last();
   if (obj && topologyUrlsById.has(obj.topologyId)) {
     const topologyUrl = topologyUrlsById.get(obj.topologyId);
-    let urlComponents = [API_PATH, '/', trimStart(topologyUrl, '/api'), '/', encodeURIComponent(obj.id)];
+    let urlComponents = [apiPath, '/', trimStart(topologyUrl, '/api'), '/', encodeURIComponent(obj.id)];
     if (currentTopologyId === obj.topologyId) {
       // Only forward filters for nodes in the current topology
       const optionsQuery = buildOptionsQuery(options);
@@ -210,7 +219,7 @@ export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nod
 
 export function getApiDetails(dispatch) {
   clearTimeout(apiDetailsTimer);
-  const url = API_PATH;
+  const url = apiPath;
   reqwest({
     url,
     success: (res) => {
@@ -231,7 +240,7 @@ export function getApiDetails(dispatch) {
 
 export function doControlRequest(nodeId, control, dispatch) {
   clearTimeout(controlErrorTimer);
-  const url = `${API_PATH}/control/${encodeURIComponent(control.probeId)}/`
+  const url = `${apiPath}/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
   reqwest({
     method: 'POST',
@@ -267,7 +276,7 @@ export function doControlRequest(nodeId, control, dispatch) {
 
 
 export function doResizeTty(pipeId, control, cols, rows) {
-  const url = `${API_PATH}/control/${encodeURIComponent(control.probeId)}/`
+  const url = `${apiPath}/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
 
   return reqwest({
@@ -282,7 +291,7 @@ export function doResizeTty(pipeId, control, cols, rows) {
 
 
 export function deletePipe(pipeId, dispatch) {
-  const url = `${API_PATH}/pipe/${encodeURIComponent(pipeId)}`;
+  const url = `${apiPath}/pipe/${encodeURIComponent(pipeId)}`;
   reqwest({
     method: 'DELETE',
     url,
@@ -298,7 +307,7 @@ export function deletePipe(pipeId, dispatch) {
 
 
 export function getPipeStatus(pipeId, dispatch) {
-  const url = `${API_PATH}/pipe/${encodeURIComponent(pipeId)}/check`;
+  const url = `${apiPath}/pipe/${encodeURIComponent(pipeId)}/check`;
   reqwest({
     method: 'GET',
     url,
