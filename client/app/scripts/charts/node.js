@@ -1,3 +1,4 @@
+import debug from 'debug';
 import React from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
@@ -17,6 +18,8 @@ import NodeShapeCloud from './node-shape-cloud';
 import NodeNetworksOverlay from './node-networks-overlay';
 import { MIN_NODE_LABEL_SIZE, BASE_NODE_LABEL_SIZE, BASE_NODE_SIZE } from '../constants/styles';
 
+
+const log = debug('scope:node');
 
 function labelFontSize(nodeSize) {
   return Math.max(MIN_NODE_LABEL_SIZE, (BASE_NODE_LABEL_SIZE / BASE_NODE_SIZE) * nodeSize);
@@ -83,11 +86,12 @@ class Node extends React.Component {
 
   render() {
     const { blurred, focused, highlighted, label, matches = makeMap(), networks,
-      pseudo, rank, subLabel, scaleFactor, transform, exportingGraph,
+      pseudo, rank, subLabel, transform, exportingGraph,
       showingNetworks, stack } = this.props;
     const { hovered, matched } = this.state;
     const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
+    const scaleFactor = 1;
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
     const labelWidth = nodeScale(scaleFactor * 3);
@@ -119,10 +123,11 @@ class Node extends React.Component {
     const matchedNodeDetails = matches.get('metadata', makeList())
       .concat(matches.get('parents', makeList()));
 
+    log('Node rendered');
+
     return (
       <g className={nodeClassName} transform={transform}>
-
-        {useSvgLabels ?
+        {/*useSvgLabels ?
 
           svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
 
@@ -142,7 +147,7 @@ class Node extends React.Component {
               </div>
               {!blurred && <MatchedResults matches={matchedNodeDetails} />}
             </div>
-          </foreignObject>}
+          </foreignObject>)*/}
 
         <g {...mouseEvents} ref={this.saveShapeRef}>
           <NodeShapeType

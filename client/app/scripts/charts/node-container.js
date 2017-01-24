@@ -13,6 +13,7 @@ class NodeContainer extends React.Component {
     const scaleFactor = focused ? (1 / zoomScale) : 1;
     const other = omit(this.props, 'dx', 'dy');
 
+    // return <Node {...other} transform={`translate(${dx}, ${dy})`} scaleFactor={scaleFactor} />;
     return (
       <Motion
         style={{
