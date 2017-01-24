@@ -220,7 +220,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	}
 
 	if flags.ecsEnabled {
-		reporter := awsecs.Reporter{}
+		reporter := awsecs.Make(flags.ecsCacheSize, flags.ecsCacheExpiry)
 		p.AddReporter(reporter)
 		p.AddTagger(reporter)
 	}

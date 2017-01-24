@@ -32,14 +32,16 @@ var (
 	}
 )
 
-type taskLabelInfo struct {
-	containerIDs []string
-	family       string
+// TaskLabelInfo is used in return value of GetLabelInfo. Exported for test.
+type TaskLabelInfo struct {
+	ContainerIDs []string
+	Family       string
 }
 
-// return map from cluster to map of task arns to task infos
-func getLabelInfo(rpt report.Report) map[string]map[string]*taskLabelInfo {
-	results := map[string]map[string]*taskLabelInfo{}
+// GetLabelInfo returns map from cluster to map of task arns to task infos.
+// Exported for test.
+func GetLabelInfo(rpt report.Report) map[string]map[string]*TaskLabelInfo {
+	results := map[string]map[string]*TaskLabelInfo{}
 	log.Debug("scanning for ECS containers")
 	for nodeID, node := range rpt.Container.Nodes {
 
@@ -60,17 +62,17 @@ func getLabelInfo(rpt report.Report) map[string]map[string]*taskLabelInfo {
 
 		taskMap, ok := results[cluster]
 		if !ok {
-			taskMap = map[string]*taskLabelInfo{}
+			taskMap = map[string]*TaskLabelInfo{}
 			results[cluster] = taskMap
 		}
 
 		task, ok := taskMap[taskArn]
 		if !ok {
-			task = &taskLabelInfo{containerIDs: []string{}, family: family}
+			task = &TaskLabelInfo{ContainerIDs: []string{}, Family: family}
 			taskMap[taskArn] = task
 		}
 
-		task.containerIDs = append(task.containerIDs, nodeID)
+		task.ContainerIDs = append(task.ContainerIDs, nodeID)
 	}
 	log.Debug("Got ECS container info: %v", results)
 	return results
@@ -78,20 +80,38 @@ func getLabelInfo(rpt report.Report) map[string]map[string]*taskLabelInfo {
 
 // Reporter implements Tagger, Reporter
 type Reporter struct {
+	ClientsByCluster map[string]EcsClient // Exported for test
+	cacheSize        int
+	cacheExpiry      time.Duration
+}
+
+// Make creates a new Reporter
+func Make(cacheSize int, cacheExpiry time.Duration) Reporter {
+	return Reporter{
+		ClientsByCluster: map[string]EcsClient{},
+		cacheSize:        cacheSize,
+		cacheExpiry:      cacheExpiry,
+	}
 }
 
 // Tag needed for Tagger
-func (Reporter) Tag(rpt report.Report) (report.Report, error) {
+func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 	rpt = rpt.Copy()
 
-	clusterMap := getLabelInfo(rpt)
+	clusterMap := GetLabelInfo(rpt)
 
 	for cluster, taskMap := range clusterMap {
 		log.Debugf("Fetching ECS info for cluster %v with %v tasks", cluster, len(taskMap))
 
-		client, err := newClient(cluster)
-		if err != nil {
-			return rpt, err
+		client, ok := r.ClientsByCluster[cluster]
+		if !ok {
+			log.Debugf("Creating new ECS client")
+			var err error
+			client, err = newClient(cluster, r.cacheSize, r.cacheExpiry)
+			if err != nil {
+				return rpt, err
+			}
+			r.ClientsByCluster[cluster] = client
 		}
 
 		taskArns := make([]string, 0, len(taskMap))
@@ -99,24 +119,22 @@ func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 			taskArns = append(taskArns, taskArn)
 		}
 
-		ecsInfo, err := client.getInfo(taskArns)
-		if err != nil {
-			return rpt, err
-		}
+		ecsInfo := client.GetInfo(taskArns)
+		log.Debugf("Got info from ECS: %d tasks, %d services", len(ecsInfo.Tasks), len(ecsInfo.Services))
 
 		// Create all the services first
-		for serviceName, service := range ecsInfo.services {
+		for serviceName, service := range ecsInfo.Services {
 			serviceID := report.MakeECSServiceNodeID(serviceName)
 			rpt.ECSService = rpt.ECSService.AddNode(report.MakeNodeWith(serviceID, map[string]string{
 				Cluster:             cluster,
-				ServiceDesiredCount: fmt.Sprintf("%d", *service.DesiredCount),
-				ServiceRunningCount: fmt.Sprintf("%d", *service.RunningCount),
+				ServiceDesiredCount: fmt.Sprintf("%d", service.DesiredCount),
+				ServiceRunningCount: fmt.Sprintf("%d", service.RunningCount),
 			}))
 		}
-		log.Debugf("Created %v ECS service nodes", len(ecsInfo.services))
+		log.Debugf("Created %v ECS service nodes", len(ecsInfo.Services))
 
 		for taskArn, info := range taskMap {
-			task, ok := ecsInfo.tasks[taskArn]
+			task, ok := ecsInfo.Tasks[taskArn]
 			if !ok {
 				// can happen due to partial failures, just skip it
 				continue
@@ -125,7 +143,7 @@ func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 			// new task node
 			taskID := report.MakeECSTaskNodeID(taskArn)
 			node := report.MakeNodeWith(taskID, map[string]string{
-				TaskFamily: info.family,
+				TaskFamily: info.Family,
 				Cluster:    cluster,
 				CreatedAt:  task.CreatedAt.Format(time.RFC3339Nano),
 			})
@@ -134,11 +152,11 @@ func (Reporter) Tag(rpt report.Report) (report.Report, error) {
 			// parents sets to merge into all matching container nodes
 			parentsSets := report.MakeSets()
 			parentsSets = parentsSets.Add(report.ECSTask, report.MakeStringSet(taskID))
-			if serviceName, ok := ecsInfo.taskServiceMap[taskArn]; ok {
+			if serviceName, ok := ecsInfo.TaskServiceMap[taskArn]; ok {
 				serviceID := report.MakeECSServiceNodeID(serviceName)
 				parentsSets = parentsSets.Add(report.ECSService, report.MakeStringSet(serviceID))
 			}
-			for _, containerID := range info.containerIDs {
+			for _, containerID := range info.ContainerIDs {
 				if containerNode, ok := rpt.Container.Nodes[containerID]; ok {
 					rpt.Container.Nodes[containerID] = containerNode.WithParents(parentsSets)
 				} else {
