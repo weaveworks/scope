@@ -140,6 +140,10 @@ func (m *mockDockerClient) RemoveEventListener(events chan *client.APIEvents) er
 	return nil
 }
 
+func (m *mockDockerClient) CreateContainer(_ client.CreateContainerOptions) (*client.Container, error) {
+	return nil, fmt.Errorf("created")
+}
+
 func (m *mockDockerClient) StartContainer(_ string, _ *client.HostConfig) error {
 	return fmt.Errorf("started")
 }

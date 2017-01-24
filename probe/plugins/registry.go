@@ -23,6 +23,7 @@ import (
 	"github.com/weaveworks/common/fs"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -53,15 +54,16 @@ type Registry struct {
 	lock              sync.RWMutex
 	context           context.Context
 	cancel            context.CancelFunc
-	controlsByPlugin  map[string]report.StringSet
+	controlsByPlugin  map[string]report.StringSet // set of strings like "controlID~imageName"
 	pluginsByID       map[string]*Plugin
 	handlerRegistry   *controls.HandlerRegistry
 	publisher         ReportPublisher
+	dockerRegistry    docker.Registry
 }
 
 // NewRegistry creates a new registry which watches the given dir root for new
 // plugins, and adds them.
-func NewRegistry(rootPath, apiVersion string, handshakeMetadata map[string]string, handlerRegistry *controls.HandlerRegistry, publisher ReportPublisher) (*Registry, error) {
+func NewRegistry(rootPath, apiVersion string, handshakeMetadata map[string]string, handlerRegistry *controls.HandlerRegistry, publisher ReportPublisher, dockerRegistry docker.Registry) (*Registry, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	r := &Registry{
 		rootPath:          rootPath,
@@ -74,6 +76,7 @@ func NewRegistry(rootPath, apiVersion string, handshakeMetadata map[string]strin
 		pluginsByID:       map[string]*Plugin{},
 		handlerRegistry:   handlerRegistry,
 		publisher:         publisher,
+		dockerRegistry:    dockerRegistry,
 	}
 	if err := r.scan(); err != nil {
 		r.Close()
@@ -261,10 +264,13 @@ func (r *Registry) updateAndGetControlsInTopology(pluginID string, topology *rep
 	var pluginControls []string
 	newControls := report.Controls{}
 	for controlID, control := range topology.Controls {
-		fakeID := fakeControlID(pluginID, controlID)
+		fakeID := fakeControlID(pluginID, controlID, control.StartImage)
 		log.Debugf("plugins: replacing control %s with %s", controlID, fakeID)
 		control.ID = fakeID
 		newControls.AddControl(control)
+		if control.StartImage != "" {
+			controlID = controlID + "~" + url.QueryEscape(control.StartImage)
+		}
 		pluginControls = append(pluginControls, controlID)
 	}
 	newNodes := report.Nodes{}
@@ -275,11 +281,11 @@ func (r *Registry) updateAndGetControlsInTopology(pluginID string, topology *rep
 		node.LatestControls.ForEach(func(controlID string, ts time.Time, data report.NodeControlData) {
 			log.Debugf("plugins: got node control %s", controlID)
 			newControlID := ""
-			if _, found := topology.Controls[controlID]; !found {
+			if control, found := topology.Controls[controlID]; !found {
 				log.Debugf("plugins: node control %s does not exist in topology controls", controlID)
 				newControlID = controlID
 			} else {
-				newControlID = fakeControlID(pluginID, controlID)
+				newControlID = fakeControlID(pluginID, controlID, control.StartImage)
 				log.Debugf("plugins: will replace node control %s with %s", controlID, newControlID)
 			}
 			newLatestControls = newLatestControls.Set(newControlID, ts, data)
@@ -295,8 +301,9 @@ func (r *Registry) updateAndGetControlsInTopology(pluginID string, topology *rep
 func (r *Registry) updatePluginControls(pluginID string, newPluginControls report.StringSet) {
 	oldFakePluginControls := r.fakePluginControls(pluginID)
 	newFakePluginControls := map[string]xfer.ControlHandlerFunc{}
-	for _, controlID := range newPluginControls {
-		newFakePluginControls[fakeControlID(pluginID, controlID)] = r.pluginControlHandler
+	for _, controlAndImage := range newPluginControls {
+		controlID, image := parseControlIDAndImage(controlAndImage)
+		newFakePluginControls[fakeControlID(pluginID, controlID, image)] = r.pluginControlHandler
 	}
 	r.handlerRegistry.Batch(oldFakePluginControls, newFakePluginControls)
 	r.controlsByPlugin[pluginID] = newPluginControls
@@ -310,7 +317,15 @@ type PluginResponse struct {
 }
 
 func (r *Registry) pluginControlHandler(req xfer.Request) xfer.Response {
-	pluginID, controlID := realPluginAndControlID(req.Control)
+	pluginID, controlID, image := realPluginAndControlIDAndImage(req.Control)
+
+	if image != "" {
+		if r.dockerRegistry == nil {
+			return xfer.ResponseErrorf("plugin %s cannot get docker registry", pluginID)
+		}
+		return r.dockerRegistry.StartImage(pluginID, controlID, image, req)
+	}
+
 	req.Control = controlID
 	r.lock.RLock()
 	defer r.lock.RUnlock()
@@ -326,12 +341,24 @@ func (r *Registry) pluginControlHandler(req xfer.Request) xfer.Response {
 	return xfer.ResponseErrorf("plugin %s not found", pluginID)
 }
 
-func realPluginAndControlID(fakeID string) (string, string) {
-	parts := strings.SplitN(fakeID, "~", 2)
-	if len(parts) != 2 {
-		return "", fakeID
+func realPluginAndControlIDAndImage(fakeID string) (string, string, string) {
+	parts := strings.SplitN(fakeID, "~", 3)
+	if len(parts) == 3 {
+		image, _ := url.QueryUnescape(parts[2])
+		return parts[0], parts[1], image
+	} else if len(parts) == 2 {
+		return parts[0], parts[1], ""
 	}
-	return parts[0], parts[1]
+	return "", fakeID, ""
+}
+
+func parseControlIDAndImage(controlAndImage string) (string, string) {
+	parts := strings.SplitN(controlAndImage, "~", 2)
+	if len(parts) == 2 {
+		image, _ := url.QueryUnescape(parts[1])
+		return parts[0], image
+	}
+	return controlAndImage, ""
 }
 
 // Close shuts down the registry. It can still be used after this, but will be
@@ -356,14 +383,18 @@ func (r *Registry) closePlugins(plugins map[string]*Plugin) {
 func (r *Registry) fakePluginControls(pluginID string) []string {
 	oldPluginControls := r.controlsByPlugin[pluginID]
 	var oldFakePluginControls []string
-	for _, controlID := range oldPluginControls {
-		oldFakePluginControls = append(oldFakePluginControls, fakeControlID(pluginID, controlID))
+	for _, controlAndImage := range oldPluginControls {
+		controlID, image := parseControlIDAndImage(controlAndImage)
+		oldFakePluginControls = append(oldFakePluginControls, fakeControlID(pluginID, controlID, image))
 	}
 	return oldFakePluginControls
 }
 
-func fakeControlID(pluginID, controlID string) string {
-	return fmt.Sprintf("%s~%s", pluginID, controlID)
+func fakeControlID(pluginID, controlID, image string) string {
+	if image == "" {
+		return fmt.Sprintf("%s~%s", pluginID, controlID)
+	}
+	return fmt.Sprintf("%s~%s~%s", pluginID, controlID, url.QueryEscape(image))
 }
 
 // Plugin is the implementation of a plugin. It is responsible for doing the

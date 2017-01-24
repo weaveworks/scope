@@ -30,7 +30,7 @@ import (
 func testRegistry(t *testing.T, apiVersion string) *Registry {
 	handlerRegistry := controls.NewDefaultHandlerRegistry()
 	root := "/plugins"
-	r, err := NewRegistry(root, apiVersion, nil, handlerRegistry, nil)
+	r, err := NewRegistry(root, apiVersion, nil, handlerRegistry, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -747,8 +747,8 @@ func TestRegistryRewritesControlReports(t *testing.T) {
 		t.Fatal(err)
 	}
 	// in a Pod topology, ctrl1 should be faked, ctrl2 should be left intact
-	expectedPodControls := []string{fakeControlID("testPlugin", controlID(1))}
-	expectedPodNodeControls := []string{fakeControlID("testPlugin", controlID(1)), controlID(2)}
+	expectedPodControls := []string{fakeControlID("testPlugin", controlID(1), "")}
+	expectedPodNodeControls := []string{fakeControlID("testPlugin", controlID(1), ""), controlID(2)}
 	checkControls(t, rpt.Pod, expectedPodControls, expectedPodNodeControls, "node1")
 	// in a Host topology, controls should be kept untouched
 	expectedHostControls := []string{controlID(1)}
@@ -781,7 +781,7 @@ func TestRegistryRegistersHandlers(t *testing.T) {
 	testBackend := newTestHandlerRegistryBackend(t)
 	handlerRegistry := controls.NewHandlerRegistry(testBackend)
 	root := "/plugins"
-	r, err := NewRegistry(root, "1", nil, handlerRegistry, nil)
+	r, err := NewRegistry(root, "1", nil, handlerRegistry, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -793,9 +793,9 @@ func TestRegistryRegistersHandlers(t *testing.T) {
 		t.Fatalf("Expected %d registered handler, got %d", expectedLen, len(testBackend.handlers))
 	}
 	fakeIDs := []string{
-		fakeControlID("testPlugin", controlID(1)),
-		fakeControlID("testPlugin2", controlID(1)),
-		fakeControlID("testPlugin2", controlID(2)),
+		fakeControlID("testPlugin", controlID(1), ""),
+		fakeControlID("testPlugin2", controlID(1), ""),
+		fakeControlID("testPlugin2", controlID(2), ""),
 	}
 	for _, fakeID := range fakeIDs {
 		if _, found := testBackend.Handler(fakeID); !found {
@@ -831,14 +831,14 @@ func TestRegistryHandlersCallPlugins(t *testing.T) {
 
 	handlerRegistry := controls.NewDefaultHandlerRegistry()
 	root := "/plugins"
-	r, err := NewRegistry(root, "1", nil, handlerRegistry, nil)
+	r, err := NewRegistry(root, "1", nil, handlerRegistry, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer r.Close()
 
 	r.Report()
-	fakeID := fakeControlID("testPlugin", controlID(1))
+	fakeID := fakeControlID("testPlugin", controlID(1), "")
 	req := xfer.Request{NodeID: "node1", Control: fakeID}
 	res := handlerRegistry.HandleControlRequest(req)
 	if res.Value != fmt.Sprintf("node1,%s", controlID(1)) {

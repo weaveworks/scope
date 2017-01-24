@@ -16,6 +16,18 @@ type Control struct {
 	Human string `json:"human"`
 	Icon  string `json:"icon"` // from https://fortawesome.github.io/Font-Awesome/cheatsheet/ please
 	Rank  int    `json:"rank"`
+
+	// AlwaysPropagated will propagate the control to all nodes of its
+	// topology. It is especially useful for plugins, so they can define
+	// controls on containers without having to know the list of
+	// containers. The propagation is done by the control tagger.
+	AlwaysPropagated bool `json:"always_propagated,omitempty"`
+
+	// RunContainerImage is the container image that will be executed by
+	// this control, if non-empty. It provides a way to define what the
+	// control does without a callback. It is especially useful for plugins
+	// to define simple controls without implementing the callbacks.
+	StartImage string `json:"start_image,omitempty"`
 }
 
 // Merge merges other with cs, returning a fresh Controls.
