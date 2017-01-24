@@ -115,63 +115,52 @@ $label-background-color: fade-out($background-average-color, .3);
   }
 }
 
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-}
-*:before,
-*:after {
-  box-sizing: border-box;
-}
-
-html {
-  -webkit-font-smoothing: antialiased;
-}
-
-html,
-body {
-  height: 100%;
-  width: 100%;
-}
-
-/* Space out content a bit */
-body {
-  background: $body-background-color;
-  color: $text-color;
-  line-height: 150%;
-  font-family: $base-font;
-  font-size: 13px;
-  margin: 0;
-}
-
-p {
-  line-height: 20px;
-  padding-top: 6px;
-  margin-bottom: 14px;
-  letter-spacing: 0;
-  font-weight: 400;
-  color: $text-color;
-}
-
-h2 {
-  font-size: 34px;
-  line-height: 40px;
-  padding-top: 8px;
-  margin-bottom: 12px;
-  font-weight: 400;
-}
-
 .hide {
   opacity: 0;
 }
 
-.app {
-  position: fixed;
-  top: 0;
-  left: 0;
+.scope-app {
+  -webkit-font-smoothing: antialiased;
+  background: $body-background-color;
   bottom: 0;
-  right: 0;
+  color: $text-color;
+  font-family: $base-font;
+  font-size: 13px;
+  height: 100%;
+  left: 0;
+  line-height: 150%;
+  margin: 0;
   overflow: auto;
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 100%;
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  }
+  *:before,
+  *:after {
+    box-sizing: border-box;
+  }
+
+  p {
+    line-height: 20px;
+    padding-top: 6px;
+    margin-bottom: 14px;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: $text-color;
+  }
+
+  h2 {
+    font-size: 34px;
+    line-height: 40px;
+    padding-top: 8px;
+    margin-bottom: 12px;
+    font-weight: 400;
+  }
 }
 
 .header {

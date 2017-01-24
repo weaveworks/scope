@@ -104,7 +104,7 @@ class App extends React.Component {
     const isIframe = window !== window.top;
 
     return (
-      <div className="app">
+      <div className="scope-app">
         {showingDebugToolbar() && <DebugToolbar />}
 
         {showingHelp && <HelpPanel />}

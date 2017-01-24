@@ -1,5 +1,5 @@
 
-const PREFIX = 'Weave Scope';
+const PREFIX = document.title || 'Weave Scope';
 const SEPARATOR = ' - ';
 
 export function setDocumentTitle(title) {
