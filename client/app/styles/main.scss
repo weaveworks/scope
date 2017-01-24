@@ -1,4 +1,8 @@
-@import (inline) '../../node_modules/xterm/dist/xterm.css';
+// Settings
+$fa-font-path: "~font-awesome/fonts";
+@import '~xterm/dist/xterm.css';
+@import '~font-awesome/scss/font-awesome.scss';
+
 @font-face {
   font-family: "Roboto";
   src: url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.woff2"),
@@ -14,59 +18,60 @@
 }
 
 /* weave company colours */
-@weave-gray-blue: rgb(85,105,145);
-@weave-blue: rgb(0,210,255);
-@weave-orange: rgb(255,75,25);
-@weave-charcoal-blue: rgb(50,50,75); // #32324B
+$weave-gray-blue: rgb(85,105,145);
+$weave-blue: rgb(0,210,255);
+$weave-orange: rgb(255,75,25);
+$weave-charcoal-blue: rgb(50,50,75); // #32324B
 
-@base-font: "Roboto", sans-serif;
-@mono-font: "Menlo", "DejaVu Sans Mono", "Liberation Mono", monospace;
+$base-font: "Roboto", sans-serif;
+$mono-font: "Menlo", "DejaVu Sans Mono", "Liberation Mono", monospace;
 
-@base-ease: ease-in-out;
+$base-ease: ease-in-out;
 
-@primary-color: @weave-charcoal-blue;
-@background-color: lighten(@primary-color, 66%);
-@background-lighter-color: lighten(@background-color, 8%);
-@background-average-color: mix(@background-color, @background-lighter-color);
-@background-darker-color: darken(@background-color, 8%);
-@background-darker-secondary-color: darken(@background-color, 4%);
-@background-dark-color: @primary-color;
-@text-color: lighten(@primary-color, 5%);
-@text-secondary-color: lighten(@text-color, 15%);
-@text-tertiary-color: lighten(@text-color, 30%);
-@border-light-color: lighten(@text-color, 60%);
-@text-darker-color: @primary-color;
-@white: @background-lighter-color;
+$primary-color: $weave-charcoal-blue;
+$background-color: lighten($primary-color, 66%);
+$background-lighter-color: lighten($background-color, 8%);
+$background-average-color: mix($background-color, $background-lighter-color);
+$background-darker-color: darken($background-color, 8%);
+$background-darker-secondary-color: darken($background-color, 4%);
+$background-dark-color: $primary-color;
+$text-color: lighten($primary-color, 5%);
+$text-secondary-color: lighten($text-color, 15%);
+$text-tertiary-color: lighten($text-color, 30%);
+$border-light-color: lighten($text-color, 60%);
+$text-darker-color: $primary-color;
+$white: $background-lighter-color;
 
-@details-window-width: 420px;
-@details-window-padding-left: 36px;
-@border-radius: 4px;
+$details-window-width: 420px;
+$details-window-padding-left: 36px;
+$border-radius: 4px;
 
-@terminal-header-height: 44px;
+$terminal-header-height: 44px;
 
-@node-opacity-blurred: 0.25;
-@node-highlight-fill-opacity: 0.1;
-@node-highlight-stroke-opacity: 0.4;
-@node-highlight-stroke-width: 1px;
-@node-border-stroke-width: 2.5px;
-@node-pseudo-opacity: 0.8;
-@edge-highlight-opacity: 0.1;
-@edge-opacity-blurred: 0.2;
-@edge-opacity: 0.5;
-@edge-link-stroke-width: 1px;
+$node-opacity-blurred: 0.25;
+$node-highlight-fill-opacity: 0.1;
+$node-highlight-stroke-opacity: 0.4;
+$node-highlight-stroke-width: 1px;
+$node-border-stroke-width: 2.5px;
+$node-pseudo-opacity: 0.8;
+$edge-highlight-opacity: 0.1;
+$edge-opacity-blurred: 0.2;
+$edge-opacity: 0.5;
+$edge-link-stroke-width: 1px;
 
-@btn-opacity-default: 0.7;
-@btn-opacity-hover: 1;
-@btn-opacity-selected: 0.9;
+$btn-opacity-default: 0.7;
+$btn-opacity-hover: 1;
+$btn-opacity-selected: 0.9;
 
-@link-opacity-default: 0.8;
+$link-opacity-default: 0.8;
 
-@search-border-color: transparent;
-@search-border-width: 1px;
+$search-border-color: transparent;
+$search-border-width: 1px;
 
 /* specific elements */
-@body-background-color: linear-gradient(30deg, @background-color 0%, @background-lighter-color 100%);
-@label-background-color: fade(@background-average-color, 70%);
+$body-background-color: linear-gradient(30deg, $background-color 0%, $background-lighter-color 100%);
+$label-background-color: fade-out($background-average-color, .3);
+
 
 /* add this class to truncate text with ellipsis, container needs width */
 .truncate {
@@ -76,23 +81,19 @@
 }
 
 .colorable {
-  transition: background-color .3s @base-ease;
+  transition: background-color .3s $base-ease;
 }
 
 .palable {
-  transition: all .2s @base-ease;
+  transition: all .2s $base-ease;
 }
 
 .hideable {
-  transition: opacity .5s @base-ease;
+  transition: opacity .5s $base-ease;
 }
 
 .hang-around {
   transition-delay: .5s;
-}
-
-.hide {
-  opacity: 0;
 }
 
 .shadow-2 {
@@ -104,13 +105,13 @@
 }
 
 .btn-opacity {
-  .palable;
-  opacity: @btn-opacity-default;
+  @extend .palable;
+  opacity: $btn-opacity-default;
   &-selected {
-    opacity: @btn-opacity-selected;
+    opacity: $btn-opacity-selected;
   }
   &:hover {
-    opacity: @btn-opacity-hover;
+    opacity: $btn-opacity-hover;
   }
 }
 
@@ -135,10 +136,10 @@ body {
 
 /* Space out content a bit */
 body {
-  background: @body-background-color;
-  color: @text-color;
+  background: $body-background-color;
+  color: $text-color;
   line-height: 150%;
-  font-family: @base-font;
+  font-family: $base-font;
   font-size: 13px;
   margin: 0;
 }
@@ -149,7 +150,7 @@ p {
   margin-bottom: 14px;
   letter-spacing: 0;
   font-weight: 400;
-  color: @text-color;
+  color: $text-color;
 }
 
 h2 {
@@ -158,6 +159,10 @@ h2 {
   padding-top: 8px;
   margin-bottom: 12px;
   font-weight: 400;
+}
+
+.hide {
+  opacity: 0;
 }
 
 .app {
@@ -191,14 +196,14 @@ h2 {
   position: absolute;
   bottom: 11px;
   right: 43px;
-  color: @text-tertiary-color;
-  background-color: fade(@background-average-color, 90%);
+  color: $text-tertiary-color;
+  background-color: fade-out($background-average-color, .1);
   font-size: 0.7rem;
   display: flex;
 
   a {
-    color: @text-secondary-color;
-    .btn-opacity;
+    color: $text-secondary-color;
+    @extend .btn-opacity;
     cursor: pointer;
   }
 
@@ -219,14 +224,14 @@ h2 {
   &-icon {
     margin-left: 0.5em;
     padding: 4px 3px;
-    color: @text-color;
+    color: $text-color;
     position: relative;
     top: -1px;
     border: 1px solid transparent;
     border-radius: 4px;
 
     &:hover {
-      border: 1px solid @text-tertiary-color;
+      border: 1px solid $text-tertiary-color;
     }
 
     .fa {
@@ -236,8 +241,8 @@ h2 {
     }
 
     &-active {
-      border: 1px solid @text-tertiary-color;
-      animation: blinking 1.5s infinite @base-ease;
+      border: 1px solid $text-tertiary-color;
+      animation: blinking 1.5s infinite $base-ease;
     }
   }
 
@@ -276,21 +281,21 @@ h2 {
 
   .topologies-item-main,
   .topologies-sub-item {
-    // border: 1px solid @background-darker-secondary-color;
+    // border: 1px solid $background-darker-secondary-color;
     pointer-events: all;
 
-    color: @text-secondary-color;
-    .btn-opacity;
+    color: $text-secondary-color;
+    @extend .btn-opacity;
     cursor: pointer;
     padding: 4px 8px;
-    border-radius: @border-radius;
+    border-radius: $border-radius;
     opacity: 0.9;
     margin-bottom: 3px;
     border: 1px solid transparent;
 
     &-active, &:hover {
-      color: @text-color;
-      background-color: @background-darker-secondary-color;
+      color: $text-color;
+      background-color: $background-darker-secondary-color;
     }
 
     &-active {
@@ -298,7 +303,7 @@ h2 {
     }
 
     &-matched {
-      border-color: @weave-blue;
+      border-color: $weave-blue;
     }
 
   }
@@ -312,14 +317,14 @@ h2 {
 .nodes-chart {
 
   &-error, &-loading {
-    .hideable;
+    @extend .hideable;
     pointer-events: none;
     position: absolute;
     left: 50%;
     top: 50%;
     margin-left: -16.5%;
     margin-top: -275px;
-    color: @text-secondary-color;
+    color: $text-secondary-color;
     width: 33%;
     height: 550px;
 
@@ -335,7 +340,7 @@ h2 {
   }
 
   &-loading &-error-icon-container {
-    animation: blinking 2.0s infinite @base-ease;
+    animation: blinking 2.0s infinite $base-ease;
   }
 
   &-loading {
@@ -343,7 +348,7 @@ h2 {
   }
 
   svg {
-    .hideable;
+    @extend .hideable;
     position: absolute;
     top: 0px;
   }
@@ -359,16 +364,16 @@ h2 {
   }
 
   text {
-    font-family: @base-font;
-    fill: @text-secondary-color;
+    font-family: $base-font;
+    fill: $text-secondary-color;
   }
 
   .nodes-chart-nodes > .node {
-    transition: opacity .5s @base-ease;
+    transition: opacity .5s $base-ease;
     text-align: center;
 
     .node-network {
-      // stroke: @background-lighter-color;
+      // stroke: $background-lighter-color;
       // stroke-width: 4px;
     }
 
@@ -377,7 +382,7 @@ h2 {
     }
 
     .node-label {
-      color: @text-color;
+      color: $text-color;
     }
 
     .node-label-wrapper {
@@ -403,7 +408,7 @@ h2 {
     }
 
     .node-sublabel {
-      color: @text-secondary-color;
+      color: $text-secondary-color;
       font-size: 0.85em;
     }
 
@@ -414,43 +419,43 @@ h2 {
       }
       span:not(.match) {
         padding: 0 0.25em;
-        background-color: @label-background-color;
+        background-color: $label-background-color;
       }
       span:empty {
         padding: 0;
       }
     }
     .matched-results {
-      background-color: @label-background-color;
+      background-color: $label-background-color;
     }
 
     &.pseudo {
       cursor: default;
 
       .node-label {
-        fill: @text-secondary-color;
+        fill: $text-secondary-color;
       }
 
       .node-sublabel {
-        fill: @text-tertiary-color;
+        fill: $text-tertiary-color;
       }
 
       .node {
-        opacity: @node-pseudo-opacity;
+        opacity: $node-pseudo-opacity;
       }
 
       .border {
-        opacity: @node-pseudo-opacity;
-        stroke: @text-tertiary-color;
+        opacity: $node-pseudo-opacity;
+        stroke: $text-tertiary-color;
       }
     }
 
     &.blurred {
-      opacity: @node-opacity-blurred;
+      opacity: $node-opacity-blurred;
     }
 
     &.matched .shape {
-      animation: throb 0.5s @base-ease;
+      animation: throb 0.5s $base-ease;
     }
 
     .node-label, .node-sublabel {
@@ -459,15 +464,15 @@ h2 {
 
     .match {
       background-color: lighten(rgba(0, 210, 255, 0.5), 30%);
-      border: 1px solid @weave-blue;
+      border: 1px solid $weave-blue;
     }
   }
 
   .edge {
-    transition: opacity .5s @base-ease;
+    transition: opacity .5s $base-ease;
 
     &.blurred {
-      opacity: @edge-opacity-blurred;
+      opacity: $edge-opacity-blurred;
     }
 
     &.focused {
@@ -475,20 +480,20 @@ h2 {
     }
 
     .link {
-      stroke: @text-secondary-color;
-      stroke-width: @edge-link-stroke-width;
+      stroke: $text-secondary-color;
+      stroke-width: $edge-link-stroke-width;
       fill: none;
-      stroke-opacity: @edge-opacity;
+      stroke-opacity: $edge-opacity;
     }
     .shadow {
-      stroke: @weave-blue;
+      stroke: $weave-blue;
       stroke-width: 10px;
       fill: none;
       stroke-opacity: 0;
     }
     &.highlighted {
       .shadow {
-        stroke-opacity: @edge-highlight-opacity;
+        stroke-opacity: $edge-highlight-opacity;
       }
     }
   }
@@ -514,14 +519,14 @@ h2 {
 
     /* cloud paths have stroke-width set dynamically */
     &:not(.shape-cloud) .border {
-      stroke-width: @node-border-stroke-width;
-      fill: @background-color;
-      transition: stroke-opacity 0.333s @base-ease, fill 0.333s @base-ease;
+      stroke-width: $node-border-stroke-width;
+      fill: $background-color;
+      transition: stroke-opacity 0.333s $base-ease, fill 0.333s $base-ease;
       stroke-opacity: 1;
     }
 
     &.metrics .border {
-      fill: @background-lighter-color;
+      fill: $background-lighter-color;
       stroke-opacity: 0.3;
     }
 
@@ -533,12 +538,12 @@ h2 {
 
     .shadow {
       stroke: none;
-      fill: @background-lighter-color;
+      fill: $background-lighter-color;
     }
 
     .node {
-      fill: @text-color;
-      stroke: @background-lighter-color;
+      fill: $text-color;
+      stroke: $background-lighter-color;
       stroke-width: 2px;
     }
 
@@ -549,16 +554,16 @@ h2 {
     }
 
     .highlighted {
-      fill: @weave-blue;
-      fill-opacity: @node-highlight-fill-opacity;
-      stroke: @weave-blue;
-      stroke-width: @node-highlight-stroke-width;
-      stroke-opacity: @node-highlight-stroke-opacity;
+      fill: $weave-blue;
+      fill-opacity: $node-highlight-fill-opacity;
+      stroke: $weave-blue;
+      stroke-width: $node-highlight-stroke-width;
+      stroke-opacity: $node-highlight-stroke-opacity;
     }
   }
 
   .stack .shape .border {
-    stroke-width: @node-border-stroke-width - 0.5;
+    stroke-width: $node-border-stroke-width - 0.5;
   }
 
 }
@@ -573,11 +578,11 @@ h2 {
       display: inline-block;
       margin: 1px;
       padding: 2px 4px;
-      background-color: fade(@weave-blue, 10%);
+      background-color: fade-out($weave-blue, .9);
     }
 
     &-label {
-      color: @text-secondary-color;
+      color: $text-secondary-color;
       margin-right: 0.5em;
     }
   }
@@ -585,7 +590,7 @@ h2 {
   &-more {
     text-transform: uppercase;
     font-size: 0.7em;
-    color: darken(@weave-blue, 10%);
+    color: darken($weave-blue, 10%);
     margin-top: -2px;
   }
 }
@@ -595,7 +600,7 @@ h2 {
     position: fixed;
     display: flex;
     z-index: 1024;
-    right: @details-window-padding-left;
+    right: $details-window-padding-left;
     top: 24px;
     bottom: 48px;
     transition: transform 0.33333s cubic-bezier(0,0,0.21,1);
@@ -604,7 +609,7 @@ h2 {
 
 .node-details {
   height: 100%;
-  width: @details-window-width;
+  width: $details-window-width;
   background-color: rgba(255, 255, 255, 0.86);
   display: flex;
   flex-flow: column;
@@ -612,7 +617,7 @@ h2 {
   padding-bottom: 2px;
   border-radius: 2px;
   background-color: #fff;
-  .shadow-2;
+  @extend .shadow-2;
   // keep node-details above the terminal.
   z-index: 2;
 
@@ -632,17 +637,17 @@ h2 {
 
 
     > span {
-      .btn-opacity;
+      @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
       font-size: 110%;
-      color: @white;
+      color: $white;
       cursor: pointer;
       border: 1px solid rgba(255, 255, 255, 0);
       border-radius: 4px;
 
       span {
-        font-family: @base-font;
+        font-family: $base-font;
         font-size: 0.9em;
         margin-left: 4px;
 
@@ -660,12 +665,12 @@ h2 {
   }
 
   .match {
-    background-color: fade(@weave-blue, 30%);
-    border: 1px solid @weave-blue;
+    background-color: fade-out($weave-blue, .7);
+    border: 1px solid $weave-blue;
   }
 
   &-header {
-    .colorable;
+    @extend .colorable;
 
     &-wrapper {
       padding: 36px 36px 8px 36px;
@@ -685,7 +690,7 @@ h2 {
     }
 
     &-notavailable {
-      background-color: @background-dark-color;
+      background-color: $background-dark-color;
     }
 
   }
@@ -693,21 +698,21 @@ h2 {
   &-relatives {
     margin-top: 4px;
     font-size: 120%;
-    color: @white;
+    color: $white;
 
     &-link {
-      .truncate;
-      .btn-opacity;
+      @extend .truncate;
+      @extend .btn-opacity;
       display: inline-block;
       margin-right: 0.5em;
       cursor: pointer;
       text-decoration: underline;
-      opacity: @link-opacity-default;
+      opacity: $link-opacity-default;
       max-width: 12em;
     }
 
     &-more {
-      .btn-opacity;
+      @extend .btn-opacity;
       padding: 0 2px;
       text-transform: uppercase;
       cursor: pointer;
@@ -728,26 +733,26 @@ h2 {
     }
 
     .node-control-button {
-      color: @white;
+      color: $white;
     }
 
     &-spinner {
-      .hideable;
-      color: @white;
+      @extend .hideable;
+      color: $white;
       margin-left: 8px;
     }
 
     &-error {
-      .truncate;
+      @extend .truncate;
       float: right;
       width: 55%;
       padding-top: 6px;
       text-align: left;
-      color: @white;
+      color: $white;
 
       &-icon {
         margin-right: 0.5em;
-        animation: blinking 2.0s infinite @base-ease;
+        animation: blinking 2.0s infinite $base-ease;
       }
     }
   }
@@ -761,7 +766,7 @@ h2 {
       margin-top: 48px;
       text-align: center;
       font-size: 48px;
-      color: @text-tertiary-color;
+      color: $text-tertiary-color;
     }
 
     &-section {
@@ -770,7 +775,7 @@ h2 {
       &-header {
         text-transform: uppercase;
         font-size: 90%;
-        color: @text-tertiary-color;
+        color: $text-tertiary-color;
         padding: 4px 0;
       }
     }
@@ -787,7 +792,7 @@ h2 {
     }
 
     &-overflow {
-      .btn-opacity;
+      @extend .btn-opacity;
       flex-basis: 33%;
       display: flex;
       flex-direction: row;
@@ -804,12 +809,12 @@ h2 {
         flex-basis: 48%;
 
         &-value {
-          color: @text-secondary-color;
+          color: $text-secondary-color;
           font-size: 100%;
         }
 
         &-label {
-          color: @text-secondary-color;
+          color: $text-secondary-color;
           text-transform: uppercase;
           font-size: 60%;
         }
@@ -821,13 +826,13 @@ h2 {
       width: 33%;
 
       &-label {
-        color: @text-secondary-color;
+        color: $text-secondary-color;
         text-transform: uppercase;
         font-size: 80%;
       }
 
       &-value {
-        color: @text-secondary-color;
+        color: $text-secondary-color;
         font-size: 150%;
         padding-bottom: 0.5em;
       }
@@ -843,7 +848,7 @@ h2 {
       &-label {
         text-align: right;
         width: 30%;
-        color: @text-secondary-color;
+        color: $text-secondary-color;
         padding: 0 0.5em 0 0;
         white-space: nowrap;
         text-transform: uppercase;
@@ -859,7 +864,7 @@ h2 {
         flex: 1;
         // Now required (from chrome 48) to get overflow + flexbox behaving:
         min-width: 0;
-        color: @text-color;
+        color: $text-color;
       }
     }
   }
@@ -876,7 +881,7 @@ h2 {
       &-label {
         text-align: right;
         width: 50%;
-        color: @text-secondary-color;
+        color: $text-secondary-color;
         padding: 0 0.5em 0 0;
         white-space: nowrap;
         text-transform: uppercase;
@@ -892,7 +897,7 @@ h2 {
         flex: 1;
         // Now required (from chrome 48) to get overflow + flexbox behaving:
         min-width: 0;
-        color: @text-color;
+        color: $text-color;
       }
     }
   }
@@ -920,14 +925,14 @@ h2 {
 
     &-header {
       text-transform: uppercase;
-      color: @text-tertiary-color;
+      color: $text-tertiary-color;
       font-size: 90%;
       text-align: right;
       cursor: pointer;
       padding: 0 4px;
 
       &-sorted {
-        color: @text-secondary-color;
+        color: $text-secondary-color;
       }
 
       &-sorter {
@@ -955,15 +960,19 @@ h2 {
       font-size: 105%;
       line-height: 1.5;
 
+      &:hover, &.selected {
+        background-color: lighten($background-color, 5%);
+      }
+
       > * {
         padding: 0 4px;
       }
 
       &-link {
-        .btn-opacity;
+        @extend .btn-opacity;
         text-decoration: underline;
         cursor: pointer;
-        opacity: @link-opacity-default;
+        opacity: $link-opacity-default;
       }
 
       &-value, &-metric {
@@ -981,7 +990,7 @@ h2 {
       &-value-minor,
       &-value-unit {
         font-size: 95%;
-        color: @text-secondary-color;
+        color: $text-secondary-color;
       }
 
       &-value-sparkline {
@@ -1005,17 +1014,17 @@ h2 {
 .details-wrapper .node-details-table {
   &-node {
     &:hover, &.selected {
-      background-color: lighten(@background-color, 5%);
+      background-color: lighten($background-color, 5%);
     }
   }
 }
 
 .node-control-button {
-  .btn-opacity;
+  @extend .btn-opacity;
   padding: 6px;
   margin-left: 2px;
   font-size: 110%;
-  color: @text-secondary-color;
+  color: $text-secondary-color;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0);
   border-radius: 10%;
@@ -1057,7 +1066,7 @@ h2 {
     bottom: 10px;
     right: 0;
     transition: transform 0.5s cubic-bezier(0.230, 1.000, 0.320, 1.000);
-    .shadow-2;
+    @extend .shadow-2;
   }
 
   &-wrapper {
@@ -1068,11 +1077,11 @@ h2 {
   }
 
   &-header {
-    .truncate;
-    color: @white;
-    height: @terminal-header-height;
+    @extend .truncate;
+    color: $white;
+    height: $terminal-header-height;
     padding: 8px 24px;
-    background-color: @text-color;
+    background-color: $text-color;
     position: relative;
     font-size: 14px;
     line-height: 28px;
@@ -1088,9 +1097,9 @@ h2 {
       top: 6px;
 
       &-item, &-item-icon {
-        .palable;
+        @extend .palable;
         padding: 4px 5px;
-        color: @white;
+        color: $white;
         cursor: pointer;
         opacity: 0.7;
         border: 1px solid rgba(255, 255, 255, 0);
@@ -1112,11 +1121,11 @@ h2 {
     }
   }
 
-  &-embedded &-inner { top: @terminal-header-height; }
+  &-embedded &-inner { top: $terminal-header-height; }
   &-app &-inner { top: 0; }
   &-inner {
     cursor: text;
-    font-family: @mono-font;
+    font-family: $mono-font;
     position: absolute;
     bottom: 0;
     left: 0;
@@ -1131,7 +1140,7 @@ h2 {
   }
 
   &-status-bar {
-    font-family: @base-font;
+    font-family: $base-font;
     position: absolute;
     bottom: 16px;
     right: 16px;
@@ -1146,7 +1155,7 @@ h2 {
 
     &-message {
       margin: 4px 0;
-      color: @white;
+      color: $white;
     }
 
     .link {
@@ -1174,18 +1183,18 @@ h2 {
 }
 
 .show-more {
-  .btn-opacity;
-  border-top: 1px dotted @border-light-color;
+  @extend .btn-opacity;
+  border-top: 1px dotted $border-light-color;
   padding: 0px 0;
   margin-top: 4px;
   text-align: right;
   text-transform: uppercase;
   cursor: pointer;
-  color: @text-secondary-color;
+  color: $text-secondary-color;
   font-size: 90%;
 
   &-icon {
-    color: @text-tertiary-color;
+    color: $text-tertiary-color;
     font-size: 120%;
     position: relative;
     top: 1px;
@@ -1216,20 +1225,20 @@ h2 {
   }
 
   .error {
-    animation: blinking 2.0s 60 @base-ease; // blink for 2 minute;
-    color: @text-secondary-color;
+    animation: blinking 2.0s 60 $base-ease; // blink for 2 minute;
+    color: $text-secondary-color;
   }
 
   &-empty {
-    opacity: @text-secondary-color;
+    opacity: $text-secondary-color;
   }
 }
 
 .status {
   text-transform: uppercase;
   padding: 2px 12px;
-  border-radius: @border-radius;
-  color: @text-secondary-color;
+  border-radius: $border-radius;
+  color: $text-secondary-color;
   display: inline-block;
 
   &-icon {
@@ -1240,14 +1249,14 @@ h2 {
   }
 
   &.status-loading {
-    animation: blinking 2.0s 150 @base-ease; // keep blinking for 5 minutes
+    animation: blinking 2.0s 150 $base-ease; // keep blinking for 5 minutes
     text-transform: none;
-    color: @text-color;
+    color: $text-color;
   }
 }
 
 .topology-option, .metric-selector, .network-selector, .grid-mode-selector {
-  color: @text-secondary-color;
+  color: $text-secondary-color;
   margin: 6px 0;
 
   &:last-child {
@@ -1261,32 +1270,32 @@ h2 {
 
   &-wrapper {
     pointer-events: all;
-    border-radius: @border-radius;
-    border: 1px solid @background-darker-color;
+    border-radius: $border-radius;
+    border: 1px solid $background-darker-color;
     display: inline-block;
   }
 
   &-action {
-    .btn-opacity;
+    @extend .btn-opacity;
     padding: 3px 12px;
     cursor: pointer;
     display: inline-block;
-    background-color: @background-color;
+    background-color: $background-color;
 
     &-selected, &:hover {
-      color: @text-darker-color;
-      background-color: @background-darker-color;
+      color: $text-darker-color;
+      background-color: $background-darker-color;
     }
 
     &:first-child {
       border-left: none;
-      border-top-left-radius: @border-radius;
-      border-bottom-left-radius: @border-radius;
+      border-top-left-radius: $border-radius;
+      border-bottom-left-radius: $border-radius;
     }
 
     &:last-child {
-      border-top-right-radius: @border-radius;
-      border-bottom-right-radius: @border-radius;
+      border-top-right-radius: $border-radius;
+      border-bottom-right-radius: $border-radius;
     }
   }
 }
@@ -1299,7 +1308,7 @@ h2 {
 
   &-wrapper {
     pointer-events: all;
-    border-color: @background-darker-secondary-color;
+    border-color: $background-darker-secondary-color;
     overflow: hidden;
   }
 
@@ -1315,7 +1324,7 @@ h2 {
     text-transform: uppercase;
 
     &-selected, &:hover {
-      background-color: @background-darker-secondary-color;
+      background-color: $background-darker-secondary-color;
     }
   }
 }
@@ -1331,12 +1340,12 @@ h2 {
 .grid-mode-selector .fa {
   margin-right: 4px;
   margin-left: 0;
-  color: @text-secondary-color;
+  color: $text-secondary-color;
 }
 
 .network-selector-action {
   border-top: 3px solid transparent;
-  border-bottom: 3px solid @background-dark-color;
+  border-bottom: 3px solid $background-dark-color;
 }
 
 .warning {
@@ -1344,7 +1353,7 @@ h2 {
   cursor: pointer;
   border: 1px dashed transparent;
   text-transform: none;
-  border-radius: @border-radius;
+  border-radius: $border-radius;
   margin-left: 4px;
 
   &-wrapper {
@@ -1353,18 +1362,18 @@ h2 {
 
   &-text {
     display: inline-block;
-    color: @text-secondary-color;
+    color: $text-secondary-color;
     padding-left: 0.5em;
   }
 
   &-icon {
-    .btn-opacity;
+    @extend .btn-opacity;
   }
 
   &-expanded {
     margin-left: 0;
     padding: 2px 4px;
-    border-color: @text-tertiary-color;
+    border-color: $text-tertiary-color;
   }
 
   &-expanded &-icon {
@@ -1388,7 +1397,7 @@ h2 {
 
 .sidebar-gridmode {
   background-color: #e9e9f1;
-  border-color: @background-darker-color;
+  border-color: $background-darker-color;
   opacity: 0.9;
 }
 
@@ -1398,7 +1407,7 @@ h2 {
   display: inline-block;
   position: relative;
   width: 10em;
-  transition: width 0.3s 0s @base-ease;
+  transition: width 0.3s 0s $base-ease;
 
   &-wrapper {
     flex: 0 1 20%;
@@ -1415,15 +1424,15 @@ h2 {
     font-size: 0.7rem;
     position: absolute;
     padding: 0 1em;
-    color: @text-tertiary-color;
+    color: $text-tertiary-color;
     top: 0;
     opacity: 0;
-    transition: transform 0.3s 0s @base-ease, opacity 0.3s 0s @base-ease;
+    transition: transform 0.3s 0s $base-ease, opacity 0.3s 0s $base-ease;
     text-align: left;
   }
 
   &-help-link {
-    .btn-opacity;
+    @extend .btn-opacity;
     cursor: pointer;
     font-size: 150%;
   }
@@ -1436,7 +1445,7 @@ h2 {
     left: 4px;
     z-index: 1024;
     padding: 4px;
-    color: @text-secondary-color;
+    color: $text-secondary-color;
 
     &-icon {
       margin-right: 0.5em;
@@ -1445,7 +1454,7 @@ h2 {
     &-hint {
       font-size: 0.8rem;
       text-transform: uppercase;
-      transition: opacity 0.3s 0.5s @base-ease;
+      transition: opacity 0.3s 0.5s $base-ease;
       opacity: 1;
     }
   }
@@ -1456,9 +1465,9 @@ h2 {
     position: relative;
     z-index: 1;
     display: flex;
-    border-radius: @border-radius;
+    border-radius: $border-radius;
     width: 100%;
-    border: @search-border-width solid @search-border-color;
+    border: $search-border-width solid $search-border-color;
     padding: 2px 4px;
     text-align: left;
     flex-wrap: wrap;
@@ -1471,7 +1480,7 @@ h2 {
       border: none;
       border-radius: 0;
       background: transparent;
-      color: @text-color;
+      color: $text-color;
       width: 100px;
 
       &:focus {
@@ -1483,7 +1492,7 @@ h2 {
   &-focused &-label-hint,
   &-pinned &-label-hint,
   &-filled &-label-hint {
-    transition: opacity 0.1s 0s @base-ease;
+    transition: opacity 0.1s 0s $base-ease;
     opacity: 0;
   }
 
@@ -1492,7 +1501,7 @@ h2 {
   &-pinned &-hint {
     opacity: 1;
     transform: translate3d(0, 2.75em, 0);
-    transition: transform 0.3s 0.3s @base-ease, opacity 0.3s 0.3s @base-ease;
+    transition: transform 0.3s 0.3s $base-ease, opacity 0.3s 0.3s $base-ease;
   }
 
   &-focused &-input-field,
@@ -1508,14 +1517,14 @@ h2 {
   }
 
   &-matched &-input {
-    border-color: @weave-blue;
+    border-color: $weave-blue;
   }
 
 }
 
 .search-item {
-  background-color: fade(@weave-blue, 20%);
-  border-radius: @border-radius / 2;
+  background-color: fade-out($weave-blue, .2);
+  border-radius: $border-radius / 2;
   margin: 1px 0 1px 1.5em;
   display: inline-block;
 
@@ -1532,7 +1541,7 @@ h2 {
   }
 
   &-icon {
-    .btn-opacity;
+    @extend .btn-opacity;
     padding: 2px 4px 2px 2px;
     cursor: pointer;
     font-size: 80%;
@@ -1574,7 +1583,7 @@ h2 {
 .help-panel {
   z-index: 2048;
   background-color: white;
-  .shadow-2;
+  @extend .shadow-2;
   display: flex;
   position: relative;
 
@@ -1589,7 +1598,7 @@ h2 {
   }
 
   &-header {
-    background-color: @weave-blue;
+    background-color: $weave-blue;
     padding: 12px 24px;
     color: white;
 
@@ -1606,7 +1615,7 @@ h2 {
     right: 8px;
 
     span {
-      .btn-opacity;
+      @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
       font-size: 110%;
@@ -1723,7 +1732,7 @@ h2 {
           // Notes: Firefox gets a bit messy if you try and bubble
           // heights + overflow up (min-height issue + still doesn't work v.well),
           // so this is a bit of a hack.
-          max-height: ~"calc(100vh - 160px - 160px - 160px)";
+          max-height: "calc(100vh - 160px - 160px - 160px)";
         }
       }
     }
@@ -1735,7 +1744,7 @@ h2 {
 //
 
 .debug-panel {
-  .shadow-2;
+  @extend .shadow-2;
   background-color: #fff;
   top: 80px;
   position: absolute;
@@ -1811,7 +1820,7 @@ h2 {
     }
 
     tr:nth-child(even) {
-      background: @background-color;
+      background: $background-color;
     }
 
     tbody tr {
@@ -1825,7 +1834,7 @@ h2 {
     // visual and row locking logic that happens on hover.
     tbody tr.selected, tbody tr.focused {
       background-color: #d7ecf5;
-      border: 1px solid @weave-blue;
+      border: 1px solid $weave-blue;
     }
 
     tbody tr.selected {
@@ -1887,9 +1896,9 @@ h2 {
 
   &-content {
     position: relative;
-    background-color: @white;
+    background-color: $white;
     padding: 20px;
-    .shadow-2;
+    @extend .shadow-2;
     z-index: 2048;
   }
 

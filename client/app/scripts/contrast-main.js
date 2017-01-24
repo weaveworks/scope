@@ -1,10 +1,9 @@
 import 'babel-polyfill';
-import 'font-awesome-webpack';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 
-import '../styles/contrast.less';
+import '../styles/contrast.scss';
 import '../images/favicon.ico';
 import configureStore from './stores/configureStore';
 
