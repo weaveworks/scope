@@ -16,21 +16,21 @@ import (
 )
 
 const (
-	apiTopologyURL               = "/api/topology/"
-	processesID                  = "processes"
-	processesByNameID            = "processes-by-name"
-	containerLabelFiltersGroupID = "container-label-filters-group"
-	containersID                 = "containers"
-	containersByHostnameID       = "containers-by-hostname"
-	containersByImageID          = "containers-by-image"
-	podsID                       = "pods"
-	replicaSetsID                = "replica-sets"
-	deploymentsID                = "deployments"
-	servicesID                   = "services"
-	hostsID                      = "hosts"
-	weaveID                      = "weave"
-	ecsTasksID                   = "ecs-tasks"
-	ecsServicesID                = "ecs-services"
+	apiTopologyURL         = "/api/topology/"
+	processesID            = "processes"
+	processesByNameID      = "processes-by-name"
+	systemGroupID          = "system"
+	containersID           = "containers"
+	containersByHostnameID = "containers-by-hostname"
+	containersByImageID    = "containers-by-image"
+	podsID                 = "pods"
+	replicaSetsID          = "replica-sets"
+	deploymentsID          = "deployments"
+	servicesID             = "services"
+	hostsID                = "hosts"
+	weaveID                = "weave"
+	ecsTasksID             = "ecs-tasks"
+	ecsServicesID          = "ecs-services"
 )
 
 var (
@@ -117,12 +117,12 @@ func MakeRegistry() *Registry {
 	}
 	containerFilters := []APITopologyOptionGroup{
 		{
-			ID:      containerLabelFiltersGroupID,
+			ID:      systemGroupID,
 			Default: "application",
 			Options: []APITopologyOption{
 				{Value: "all", Label: "All", filter: nil, filterPseudo: false},
 				{Value: "system", Label: "System Containers", filter: render.IsSystem, filterPseudo: false},
-				{Value: "notsystem", Label: "Application Containers", filter: render.IsApplication, filterPseudo: false}},
+				{Value: "application", Label: "Application Containers", filter: render.IsApplication, filterPseudo: false}},
 		},
 		{
 			ID:      "stopped",
@@ -312,7 +312,7 @@ func (r *Registry) AddContainerFilters(newFilters ...APITopologyOption) {
 	defer r.Unlock()
 	for _, key := range []string{containersID, containersByHostnameID, containersByImageID} {
 		for i := range r.items[key].Options {
-			if r.items[key].Options[i].ID == containerLabelFiltersGroupID {
+			if r.items[key].Options[i].ID == systemGroupID {
 				r.items[key].Options[i].Options = append(r.items[key].Options[i].Options, newFilters...)
 				break
 			}
