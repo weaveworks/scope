@@ -170,7 +170,7 @@ ui-upload: client/build-external/index.html
 ui-build-pkg:
 	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
 	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
-	cd client && npm run build-pkg && aws s3 cp weave-scope.tgz s3://weaveworks-npm-modules/weave-scope/ --acl public-read
+	cd client && npm run build-pkg && npm run bundle && npm run s3-publish
 
 clean:
 	$(GO) clean ./...
