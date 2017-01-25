@@ -168,7 +168,9 @@ ui-upload: client/build-external/index.html
 	aws s3 cp client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
 
 ui-build-pkg:
-	cd client && npm run build-pkg && npm run s3-publish
+	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
+	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
+	cd client && npm run build-pkg && aws s3 cp weave-scope.tgz s3://weaveworks-npm-modules/weave-scope/ --acl public-read
 
 clean:
 	$(GO) clean ./...
