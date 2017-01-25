@@ -90,8 +90,8 @@
   "scripts": {
     "build": "webpack --config webpack.production.config.js",
     "build-external": "EXTERNAL=true webpack --config webpack.production.config.js",
-    "build-pkg": "babel app/scripts --ignore __tests__ --out-dir pkg && cp package.json pkg/ && cp -R app/styles pkg/",
-    "bundle": "npm pack pkg && mv weave-scope-$npm_package_version.tgz weave-scope.tgz",
+    "build-pkg": "babel app/scripts --ignore __tests__ --out-dir build-pkg && cp package.json build-pkg/ && cp -R app/styles build-pkg/",
+    "bundle": "npm pack build-pkg && mv weave-scope-$npm_package_version.tgz weave-scope.tgz",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest",
