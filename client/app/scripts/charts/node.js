@@ -102,7 +102,7 @@ class Node extends React.Component {
 
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
-    const labelOffsetY = (showingNetworks && networks) ? 40 : 30;
+    const labelOffsetY = (showingNetworks && networks) ? 40 : 28;
     const networkOffset = 0.67;
 
     const nodeClassName = classnames('node', {

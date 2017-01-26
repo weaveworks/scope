@@ -7,9 +7,9 @@ import EdgeContainer from './edge-container';
 
 class NodesChartEdges extends React.Component {
   render() {
-    const { hasSelectedNode, highlightedEdgeIds, layoutEdges,
-      searchNodeMatches = makeMap(), searchQuery, isAnimated,
-      selectedNodeId, selectedNetwork, selectedNetworkNodes } = this.props;
+    const { hasSelectedNode, highlightedEdgeIds, layoutEdges, searchQuery,
+      isAnimated, selectedScale, selectedNodeId, selectedNetwork, selectedNetworkNodes,
+      searchNodeMatches = makeMap() } = this.props;
 
     return (
       <g className="nodes-chart-edges">
@@ -36,6 +36,7 @@ class NodesChartEdges extends React.Component {
               source={edge.get('source')}
               target={edge.get('target')}
               waypoints={edge.get('points')}
+              scale={focused ? selectedScale : 1}
               isAnimated={isAnimated}
               blurred={blurred}
               focused={focused}

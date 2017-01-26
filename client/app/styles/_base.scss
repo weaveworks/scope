@@ -422,7 +422,7 @@
 
     .link {
       fill: none;
-      stroke-width: $edge-link-stroke-width;
+      stroke: $text-secondary-color;
       stroke-opacity: $edge-opacity;
     }
     .shadow {

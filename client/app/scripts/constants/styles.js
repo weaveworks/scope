@@ -24,7 +24,12 @@ export const NODE_SHAPE_BORDER_RADIUS = 0.5;
 export const NODE_SHAPE_SHADOW_RADIUS = 0.45;
 export const NODE_SHAPE_DOT_RADIUS = 0.125;
 export const NODE_BLUR_OPACITY = 0.2;
-export const NODE_BASE_SIZE = 50;
+// NOTE: Modifying this value shouldn't actually change much in the way
+// nodes are rendered, as long as its kept >> 1. The idea was to draw all
+// the nodes in a unit scale and control their size just through scaling
+// transform, but the problem is that dagre only works with integer coordinates,
+// so this constant basically serves as a precision factor for dagre.
+export const NODE_BASE_SIZE = 100;
 
 // Node details table constants
 export const NODE_DETAILS_TABLE_CW = {
