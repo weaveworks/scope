@@ -174,6 +174,9 @@ ui-build-pkg:
 
 clean:
 	$(GO) clean ./...
+	# build-external was accidentially created as owned by root in earlier versions. This is fixed now,
+	# but we need to fix up old checkouts, since git doesn't track ownership.
+	if [ "$$(stat -c %%U client/build-external)" == "root" ]; then sudo chown "$$USER:$$USER" client/build-external; fi
 	# Don't actually rmi the build images - rm'ing the .uptodate files is enough to ensure
 	# we rebuild the images, and rmi'ing the images causes us to have to redownload a lot of stuff.
 	# $(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
