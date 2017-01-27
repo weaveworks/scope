@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	bufSize                 = 8 * 1024 * 1024 // 8MB
-	maxReverseDNSrecords    = 10000
-	maxLogsPerDecodingError = 4
+	bufSize                     = 8 * 1024 * 1024 // 8MB
+	maxReverseDNSrecords        = 10000
+	maxLogsPerDecodingError     = 4
+	maxDecodingErrorCardinality = 1000
 )
 
 // DNSSnooper is a snopper of DNS queries
@@ -209,6 +210,11 @@ func (s *DNSSnooper) run() {
 
 // handleDecodeError logs errors up to the maximum allowed count
 func (s *DNSSnooper) handleDecodingError(err error) {
+	// prevent potential memory leak
+	if len(s.decodingErrorCounts) > maxDecodingErrorCardinality {
+		return
+	}
+
 	str := err.Error()
 	count := s.decodingErrorCounts[str]
 	count++
