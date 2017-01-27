@@ -15,15 +15,17 @@ import (
 )
 
 const (
-	bufSize              = 8 * 1024 * 1024 // 8MB
-	maxReverseDNSrecords = 10000
+	bufSize                 = 8 * 1024 * 1024 // 8MB
+	maxReverseDNSrecords    = 10000
+	maxLogsPerDecodingError = 4
 )
 
 // DNSSnooper is a snopper of DNS queries
 type DNSSnooper struct {
-	stop            chan struct{}
-	pcapHandle      *pcap.Handle
-	reverseDNSCache gcache.Cache
+	stop                chan struct{}
+	pcapHandle          *pcap.Handle
+	reverseDNSCache     gcache.Cache
+	decodingErrorCounts map[string]uint64 // for limiting
 }
 
 // NewDNSSnooper creates a new snooper of DNS queries
@@ -35,9 +37,10 @@ func NewDNSSnooper() (*DNSSnooper, error) {
 	reverseDNSCache := gcache.New(maxReverseDNSrecords).LRU().Build()
 
 	s := &DNSSnooper{
-		stop:            make(chan struct{}),
-		pcapHandle:      pcapHandle,
-		reverseDNSCache: reverseDNSCache,
+		stop:                make(chan struct{}),
+		pcapHandle:          pcapHandle,
+		reverseDNSCache:     reverseDNSCache,
+		decodingErrorCounts: map[string]uint64{},
 	}
 	go s.run()
 	return s, nil
@@ -163,11 +166,12 @@ func (s *DNSSnooper) run() {
 		ip4           layers.IPv4
 		ip6           layers.IPv6
 		eth           layers.Ethernet
+		dot1q         layers.Dot1Q
 		sll           layers.LinuxSLL
 	)
 
 	// assumes that the "any" interface is being used (see https://wiki.wireshark.org/SLL)
-	packetParser := gopacket.NewDecodingLayerParser(layers.LayerTypeLinuxSLL, &sll, &eth, &ip4, &ip6, &udp, &tcp, &dns)
+	packetParser := gopacket.NewDecodingLayerParser(layers.LayerTypeLinuxSLL, &sll, &dot1q, &eth, &ip4, &ip6, &udp, &tcp, &dns)
 
 	for {
 		select {
@@ -190,7 +194,7 @@ func (s *DNSSnooper) run() {
 		if err := packetParser.DecodeLayers(packet, &decodedLayers); err != nil {
 			// LayerTypePayload indicates the TCP payload has non-DNS data, which we are not interested in
 			if layer, ok := err.(gopacket.UnsupportedLayerType); !ok || gopacket.LayerType(layer) != gopacket.LayerTypePayload {
-				log.Errorf("DNSSnooper: error decoding packet: %s", err)
+				s.handleDecodingError(err)
 			}
 			continue
 		}
@@ -200,6 +204,20 @@ func (s *DNSSnooper) run() {
 				s.processDNSMessage(&dns)
 			}
 		}
+	}
+}
+
+// handleDecodeError logs errors up to the maximum allowed count
+func (s *DNSSnooper) handleDecodingError(err error) {
+	str := err.Error()
+	count := s.decodingErrorCounts[str]
+	count++
+	s.decodingErrorCounts[str] = count
+	switch {
+	case count == maxLogsPerDecodingError:
+		log.Errorf("DNSSnooper: error decoding packet: %s (reached %d occurrences, silencing)", str, maxLogsPerDecodingError)
+	case count < maxLogsPerDecodingError:
+		log.Errorf("DNSSnooper: error decoding packet: %s", str)
 	}
 }
 
