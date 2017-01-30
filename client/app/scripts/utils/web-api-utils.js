@@ -63,7 +63,10 @@ export function basePathSlash(urlPath) {
 let apiPath;
 let websocketUrl;
 const isIframe = window.location !== window.parent.location;
-const isStandalone = window.location.pathname === '/' || /\/(.+).html/.test(window.location.pathname);
+const isStandalone = window.location.pathname === '/'
+  || window.location.pathname === '/demo/'
+  || window.location.pathname === '/scoped/'
+  || /\/(.+).html/.test(window.location.pathname);
 const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
 
 if (isIframe || isStandalone) {
