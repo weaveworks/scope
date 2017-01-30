@@ -250,7 +250,8 @@ case "$COMMAND" in
         launch "$@"
         if ! check_probe_only; then
             IP_ADDRS=$(docker run --rm --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$IP_ADDR_CMD")
-            print_app_endpoints "$IP_ADDRS"
+            # shellcheck disable=SC2086
+            print_app_endpoints $IP_ADDRS
         fi
 
         ;;
