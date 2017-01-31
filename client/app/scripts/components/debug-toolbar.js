@@ -20,6 +20,7 @@ const NETWORKS = [
   'be', 'fe', 'zb', 'db', 're', 'gh', 'jk', 'lol', 'nw'
 ].map(n => ({id: n, label: n, colorKey: n}));
 
+const INTERNET = 'the-internet';
 const LOREM = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
 incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
 ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
@@ -264,6 +265,14 @@ class DebugToolbar extends React.Component {
     ));
   }
 
+  addInternetNode() {
+    setTimeout(() => {
+      this.asyncDispatch(receiveNodesDelta({
+        add: [{id: INTERNET, label: INTERNET, shape: 'cloud'}]
+      }));
+    }, 0);
+  }
+
   addNodes(n, prefix = 'zing') {
     setTimeout(() => {
       this.asyncDispatch(receiveNodesDelta({
@@ -301,6 +310,7 @@ class DebugToolbar extends React.Component {
             Metric Variants
           </button>
           <button onClick={() => this.addNodes(1, LOREM)}>Long name</button>
+          <button onClick={() => this.addInternetNode()}>Internet</button>
           <button onClick={() => this.removeNode()}>Remove node</button>
           <button onClick={() => this.updateAdjacencies()}>Update adj.</button>
         </div>
