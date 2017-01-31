@@ -22,6 +22,13 @@ IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker
     xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
 WEAVESCOPE_DOCKER_ARGS=${WEAVESCOPE_DOCKER_ARGS:-}
 
+# When docker daemon is running with User Namespace enabled, this tool will run into errors:
+#  "Privileged mode is incompatible with user namespaces" for `docker run --privileged`
+#  "Cannot share the host's network namespace when user namespaces are enabled" for `docker run --net=host`
+# To avoid above errors, use `--userns=host` option to let container use host User Namespace.
+# This option(saved in $USERNS_HOST) will be inserted ONLY IF docker support `--userns` option.
+docker run --help | grep -q -- --userns && USERNS_HOST="--userns=host"
+
 usage() {
     name=$(basename "$0")
     cat >&2 <<-EOF
@@ -160,7 +167,7 @@ create_plugins_dir() {
 
 launch_command() {
     # shellcheck disable=SC2086
-    echo docker run --privileged -d --name="$SCOPE_CONTAINER_NAME" --net=host --pid=host \
+    echo docker run --privileged $USERNS_HOST -d --name="$SCOPE_CONTAINER_NAME" --net=host --pid=host \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v /var/run/scope/plugins:/var/run/scope/plugins \
         -e CHECKPOINT_DISABLE \
@@ -249,7 +256,8 @@ case "$COMMAND" in
 
         launch "$@"
         if ! check_probe_only; then
-            IP_ADDRS=$(docker run --rm --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$IP_ADDR_CMD")
+            # shellcheck disable=SC2086
+            IP_ADDRS=$(docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$IP_ADDR_CMD")
             # shellcheck disable=SC2086
             print_app_endpoints $IP_ADDRS
         fi
