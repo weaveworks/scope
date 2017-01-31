@@ -1,7 +1,6 @@
 package render
 
 import (
-	"net"
 	"regexp"
 	"strings"
 
@@ -111,9 +110,9 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 		if !ok {
 			return report.Nodes{}
 		}
-		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-			node := externalNode(m)
-			return report.Nodes{node.ID: node}
+
+		if externalNode, ok := NewDerivedExternalNode(m, addr, local); ok {
+			return report.Nodes{externalNode.ID: externalNode}
 		}
 
 		// We also allow for joining on ip:port pairs.  This is useful

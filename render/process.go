@@ -1,9 +1,6 @@
 package render
 
 import (
-	"net"
-	"sort"
-
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
@@ -12,13 +9,10 @@ import (
 
 // Constants are used in the tests.
 const (
-	TheInternetID      = "theinternet"
-	IncomingInternetID = "in-" + TheInternetID
-	OutgoingInternetID = "out-" + TheInternetID
-	InboundMajor       = "The Internet"
-	OutboundMajor      = "The Internet"
-	InboundMinor       = "Inbound connections"
-	OutboundMinor      = "Outbound connections"
+	InboundMajor  = "The Internet"
+	OutboundMajor = "The Internet"
+	InboundMinor  = "Inbound connections"
+	OutboundMinor = "Outbound connections"
 
 	// Topology for pseudo-nodes and IPs so we can differentiate them at the end
 	Pseudo = "pseudo"
@@ -88,24 +82,18 @@ var ProcessNameRenderer = ConditionalRenderer(renderProcesses,
 
 // MapEndpoint2Pseudo makes internet of host pesudo nodes from a endpoint node.
 func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
-	var node report.Node
-
 	addr, ok := n.Latest.Lookup(endpoint.Addr)
 	if !ok {
 		return report.Nodes{}
 	}
 
-	if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-		// If the dstNodeAddr is not in a network local to this report, we emit an
-		// external pseudoNode
-		node = externalNode(n)
-	} else {
-		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
-		// all non-internet pseudo nodes for now.
-		// node = NewDerivedPseudoNode(MakePseudoNodeID(addr), n)
-		return report.Nodes{}
+	if externalNode, ok := NewDerivedExternalNode(n, addr, local); ok {
+		return report.Nodes{externalNode.ID: externalNode}
 	}
-	return report.Nodes{node.ID: node}
+
+	// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
+	// all non-external pseudo nodes for now.
+	return report.Nodes{}
 }
 
 // MapEndpoint2Process maps endpoint Nodes to process
@@ -156,33 +144,4 @@ func MapProcess2Name(n report.Node, _ report.Networks) report.Nodes {
 	node.Latest = node.Latest.Set(process.Name, timestamp, name)
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return report.Nodes{name: node}
-}
-
-func externalNode(n report.Node) report.Node {
-	// First, check if it's a known service and emit a
-	// a specific node if it is
-	for _, hostname := range DNSNames(n) {
-		if isKnownService(hostname) {
-			return NewDerivedPseudoNode(ServiceNodeIDPrefix+hostname, n)
-		}
-	}
-
-	// emit one internet node for incoming, one for outgoing
-	if len(n.Adjacency) > 0 {
-		return NewDerivedPseudoNode(IncomingInternetID, n)
-	}
-	return NewDerivedPseudoNode(OutgoingInternetID, n)
-}
-
-// DNSNames returns a prioritized list of snooped and reverse-resolved
-// DNS names associated with node n.
-func DNSNames(n report.Node) []string {
-	snoopedNames, _ := n.Sets.Lookup(endpoint.SnoopedDNSNames)
-	reverseNames, _ := n.Sets.Lookup(endpoint.ReverseDNSNames)
-	// sort the names, to make selection for display more
-	// deterministic
-	sort.StringSlice(snoopedNames).Sort()
-	sort.StringSlice(reverseNames).Sort()
-	// prioritize snooped names
-	return append(snoopedNames, reverseNames...)
 }
