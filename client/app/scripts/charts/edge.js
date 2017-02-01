@@ -17,7 +17,7 @@ class Edge extends React.Component {
   render() {
     const { id, path, highlighted, blurred, focused, scale } = this.props;
     const className = classNames('edge', { highlighted, blurred, focused });
-    const thickness = scale * (isContrastMode() ? 0.015 : 0.0075) * NODE_BASE_SIZE;
+    const thickness = scale * (isContrastMode() ? 0.02 : 0.01) * NODE_BASE_SIZE;
 
     // Draws the edge so that its thickness reflects the zoom scale.
     // Edge shadow is always made 10x thicker than the edge itself.

@@ -1,12 +1,13 @@
 import { createSelector } from 'reselect';
-import { NODE_BASE_SIZE } from '../constants/styles';
 
+import { NODE_BASE_SIZE } from '../constants/styles';
+import { zoomCacheKey } from '../utils/topology-utils';
 
 const layoutNodesSelector = state => state.layoutNodes;
 const stateWidthSelector = state => state.width;
 const stateHeightSelector = state => state.height;
 const propsMarginsSelector = (_, props) => props.margins;
-const cachedZoomStateSelector = (state, props) => state.zoomCache[props.topologyId];
+const cachedZoomStateSelector = (state, props) => state.zoomCache[zoomCacheKey(props)];
 
 const viewportWidthSelector = createSelector(
   [

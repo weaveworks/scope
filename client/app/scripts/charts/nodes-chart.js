@@ -10,7 +10,7 @@ import { nodeAdjacenciesSelector, adjacentNodesSelector } from '../selectors/cha
 import { clickBackground } from '../actions/app-actions';
 import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
-import { getActiveTopologyOptions } from '../utils/topology-utils';
+import { getActiveTopologyOptions, zoomCacheKey } from '../utils/topology-utils';
 
 import { topologyZoomState } from '../selectors/nodes-chart-zoom';
 import { layoutWithSelectedNode } from '../selectors/nodes-chart-focus';
@@ -141,7 +141,7 @@ class NodesChart extends React.Component {
   cacheZoomState(state) {
     const zoomState = pick(state, ZOOM_CACHE_FIELDS);
     const zoomCache = assign({}, state.zoomCache);
-    zoomCache[this.props.topologyId] = zoomState;
+    zoomCache[zoomCacheKey(this.props)] = zoomState;
     return { zoomCache };
   }
 
@@ -177,7 +177,7 @@ function mapStateToProps(state) {
     forceRelayout: state.get('forceRelayout'),
     selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('currentTopologyId'),
-    topologyOptions: getActiveTopologyOptions(state)
+    topologyOptions: getActiveTopologyOptions(state),
   };
 }
 
