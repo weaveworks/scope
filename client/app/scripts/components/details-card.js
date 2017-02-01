@@ -57,7 +57,12 @@ class DetailsCard extends React.Component {
     return (
       <div className="details-wrapper" style={style}>
         {showingTerminal && <EmbeddedTerminal />}
-        <NodeDetails nodeId={this.props.id} key={this.props.id} {...this.props} />
+        <NodeDetails
+          key={this.props.id}
+          nodeId={this.props.id}
+          mounted={this.state.mounted}
+          {...this.props}
+        />
       </div>
     );
   }
