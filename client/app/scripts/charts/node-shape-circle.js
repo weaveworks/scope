@@ -1,31 +1,39 @@
 import React from 'react';
 import classNames from 'classnames';
-import { getMetricValue, getMetricColor, getClipPathDefinition } from '../utils/metric-utils';
-import { CANVAS_METRIC_FONT_SIZE } from '../constants/styles';
+
+import {
+  getMetricValue,
+  getMetricColor,
+  getClipPathDefinition,
+  renderMetricValue,
+} from '../utils/metric-utils';
+import {
+  NODE_SHAPE_HIGHLIGHT_RADIUS,
+  NODE_SHAPE_BORDER_RADIUS,
+  NODE_SHAPE_SHADOW_RADIUS,
+} from '../constants/styles';
 
 
-export default function NodeShapeCircle({id, highlighted, size, color, metric}) {
-  const clipId = `mask-${id}`;
-  const {height, hasMetric, formattedValue} = getMetricValue(metric, size);
+export default function NodeShapeCircle({id, highlighted, color, metric}) {
+  const { height, hasMetric, formattedValue } = getMetricValue(metric);
   const metricStyle = { fill: getMetricColor(metric) };
-  const className = classNames('shape', { metrics: hasMetric });
-  const fontSize = size * CANVAS_METRIC_FONT_SIZE;
+
+  const className = classNames('shape', 'shape-circle', { metrics: hasMetric });
+  const clipId = `mask-${id}`;
 
   return (
     <g className={className}>
-      {hasMetric && getClipPathDefinition(clipId, size, height)}
-      {highlighted && <circle r={size * 0.7} className="highlighted" />}
-      <circle r={size * 0.5} className="border" stroke={color} />
-      <circle r={size * 0.45} className="shadow" />
+      {hasMetric && getClipPathDefinition(clipId, height)}
+      {highlighted && <circle className="highlighted" r={NODE_SHAPE_HIGHLIGHT_RADIUS} />}
+      <circle className="border" stroke={color} r={NODE_SHAPE_BORDER_RADIUS} />
+      <circle className="shadow" r={NODE_SHAPE_SHADOW_RADIUS} />
       {hasMetric && <circle
-        r={size * 0.45}
         className="metric-fill"
-        style={metricStyle}
         clipPath={`url(#${clipId})`}
+        style={metricStyle}
+        r={NODE_SHAPE_SHADOW_RADIUS}
       />}
-      {highlighted && hasMetric ?
-        <text style={{fontSize}}>{formattedValue}</text> :
-        <circle className="node" r={Math.max(2, (size * 0.125))} />}
+      {renderMetricValue(formattedValue, highlighted && hasMetric)}
     </g>
   );
 }

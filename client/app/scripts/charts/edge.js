@@ -3,6 +3,8 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 
 import { enterEdge, leaveEdge } from '../actions/app-actions';
+import { isContrastMode } from '../utils/contrast-utils';
+import { NODE_BASE_SIZE } from '../constants/styles';
 
 class Edge extends React.Component {
 
@@ -13,15 +15,19 @@ class Edge extends React.Component {
   }
 
   render() {
-    const { id, path, highlighted, blurred, focused } = this.props;
-    const className = classNames('edge', {highlighted, blurred, focused});
+    const { id, path, highlighted, blurred, focused, scale } = this.props;
+    const className = classNames('edge', { highlighted, blurred, focused });
+    const thickness = scale * (isContrastMode() ? 0.02 : 0.01) * NODE_BASE_SIZE;
 
+    // Draws the edge so that its thickness reflects the zoom scale.
+    // Edge shadow is always made 10x thicker than the edge itself.
     return (
       <g
-        className={className} onMouseEnter={this.handleMouseEnter}
-        onMouseLeave={this.handleMouseLeave} id={id}>
-        <path d={path} className="shadow" />
-        <path d={path} className="link" />
+        id={id} className={className}
+        onMouseEnter={this.handleMouseEnter}
+        onMouseLeave={this.handleMouseLeave}>
+        <path className="shadow" d={path} style={{ strokeWidth: 10 * thickness }} />
+        <path className="link" d={path} style={{ strokeWidth: thickness }} />
       </g>
     );
   }

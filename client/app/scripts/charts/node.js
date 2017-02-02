@@ -15,12 +15,7 @@ import NodeShapeHexagon from './node-shape-hexagon';
 import NodeShapeHeptagon from './node-shape-heptagon';
 import NodeShapeCloud from './node-shape-cloud';
 import NodeNetworksOverlay from './node-networks-overlay';
-import { MIN_NODE_LABEL_SIZE, BASE_NODE_LABEL_SIZE, BASE_NODE_SIZE } from '../constants/styles';
 
-
-function labelFontSize(nodeSize) {
-  return Math.max(MIN_NODE_LABEL_SIZE, (BASE_NODE_LABEL_SIZE / BASE_NODE_SIZE) * nodeSize);
-}
 
 function stackedShape(Shape) {
   const factory = React.createFactory(NodeShapeStack);
@@ -43,58 +38,72 @@ function getNodeShape({ shape, stack }) {
   return stack ? stackedShape(nodeShape) : nodeShape;
 }
 
-function svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) {
-  return (
-    <g className="node-label-svg">
-      <text className={labelClassName} y={labelOffsetY + 18} textAnchor="middle">{label}</text>
-      <text className={subLabelClassName} y={labelOffsetY + 35} textAnchor="middle">
-        {subLabel}
-      </text>
-    </g>
-  );
-}
 
 class Node extends React.Component {
-
   constructor(props, context) {
     super(props, context);
-    this.handleMouseClick = this.handleMouseClick.bind(this);
-    this.handleMouseEnter = this.handleMouseEnter.bind(this);
-    this.handleMouseLeave = this.handleMouseLeave.bind(this);
-    this.saveShapeRef = this.saveShapeRef.bind(this);
     this.state = {
       hovered: false,
       matched: false
     };
+
+    this.handleMouseClick = this.handleMouseClick.bind(this);
+    this.handleMouseEnter = this.handleMouseEnter.bind(this);
+    this.handleMouseLeave = this.handleMouseLeave.bind(this);
+    this.saveShapeRef = this.saveShapeRef.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
     // marks as matched only when search query changes
     if (nextProps.searchQuery !== this.props.searchQuery) {
-      this.setState({
-        matched: nextProps.matched
-      });
+      this.setState({ matched: nextProps.matched });
     } else {
-      this.setState({
-        matched: false
-      });
+      this.setState({ matched: false });
     }
   }
 
+  renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) {
+    const { label, subLabel } = this.props;
+    return (
+      <g className="node-labels-container" y={labelOffsetY}>
+        <text className={labelClassName} y={13} textAnchor="middle">{label}</text>
+        <text className={subLabelClassName} y={30} textAnchor="middle">
+          {subLabel}
+        </text>
+      </g>
+    );
+  }
+
+  renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents) {
+    const { label, subLabel, blurred, matches = makeMap() } = this.props;
+    const matchedMetadata = matches.get('metadata', makeList());
+    const matchedParents = matches.get('parents', makeList());
+    const matchedNodeDetails = matchedMetadata.concat(matchedParents);
+
+    return (
+      <foreignObject className="node-labels-container" y={labelOffsetY}>
+        <div className="node-label-wrapper" {...mouseEvents}>
+          <div className={labelClassName}>
+            <MatchedText text={label} match={matches.get('label')} />
+          </div>
+          <div className={subLabelClassName}>
+            <MatchedText text={subLabel} match={matches.get('sublabel')} />
+          </div>
+          {!blurred && <MatchedResults matches={matchedNodeDetails} />}
+        </div>
+      </foreignObject>
+    );
+  }
+
   render() {
-    const { blurred, focused, highlighted, label, matches = makeMap(), networks,
-      pseudo, rank, subLabel, scaleFactor, transform, exportingGraph,
-      showingNetworks, stack } = this.props;
+    const { blurred, focused, highlighted, networks, pseudo, rank, label,
+      transform, exportingGraph, showingNetworks, stack } = this.props;
     const { hovered, matched } = this.state;
-    const nodeScale = focused ? this.props.selectedNodeScale : this.props.nodeScale;
 
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
-    const labelWidth = nodeScale(scaleFactor * 3);
-    const labelOffsetX = -labelWidth / 2;
-    const labelDy = (showingNetworks && networks) ? 0.70 : 0.55;
-    const labelOffsetY = nodeScale(labelDy * scaleFactor);
-    const networkOffset = nodeScale(scaleFactor * 0.67);
+    const labelOffsetY = (showingNetworks && networks) ? 40 : 28;
+    const networkOffset = 0.67;
 
     const nodeClassName = classnames('node', {
       highlighted,
@@ -109,51 +118,25 @@ class Node extends React.Component {
 
     const NodeShapeType = getNodeShape(this.props);
     const useSvgLabels = exportingGraph;
-    const size = nodeScale(scaleFactor);
-    const fontSize = labelFontSize(size);
     const mouseEvents = {
       onClick: this.handleMouseClick,
       onMouseEnter: this.handleMouseEnter,
       onMouseLeave: this.handleMouseLeave,
     };
-    const matchedNodeDetails = matches.get('metadata', makeList())
-      .concat(matches.get('parents', makeList()));
 
     return (
       <g className={nodeClassName} transform={transform}>
-
-        {useSvgLabels ?
-
-          svgLabels(label, subLabel, labelClassName, subLabelClassName, labelOffsetY) :
-
-          <foreignObject
-            style={{pointerEvents: 'none'}}
-            x={labelOffsetX} y={labelOffsetY}
-            width={labelWidth} height="100em">
-            <div
-              className="node-label-wrapper"
-              style={{pointerEvents: 'all', fontSize, maxWidth: labelWidth}}
-              {...mouseEvents}>
-              <div className={labelClassName}>
-                <MatchedText text={label} match={matches.get('label')} />
-              </div>
-              <div className={subLabelClassName}>
-                <MatchedText text={subLabel} match={matches.get('sublabel')} />
-              </div>
-              {!blurred && <MatchedResults matches={matchedNodeDetails} />}
-            </div>
-          </foreignObject>}
+        {useSvgLabels || false ?
+          this.renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) :
+          this.renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents)}
 
         <g {...mouseEvents} ref={this.saveShapeRef}>
-          <NodeShapeType
-            size={size}
-            color={color}
-            {...this.props} />
+          <NodeShapeType color={color} {...this.props} />
         </g>
 
         {showingNetworks && <NodeNetworksOverlay
           offset={networkOffset}
-          size={size} networks={networks}
+          networks={networks}
           stack={stack}
         />}
       </g>

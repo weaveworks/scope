@@ -6,7 +6,6 @@ import { line, curveLinear } from 'd3-shape';
 import { scaleLinear } from 'd3-scale';
 
 import { formatMetricSvg } from '../utils/string-utils';
-import { round } from '../utils/math-utils';
 
 
 export default class Sparkline extends React.Component {
@@ -64,7 +63,7 @@ export default class Sparkline extends React.Component {
     const min = formatMetricSvg(d3Min(data, d => d.value), this.props);
     const max = formatMetricSvg(d3Max(data, d => d.value), this.props);
     const mean = formatMetricSvg(d3Mean(data, d => d.value), this.props);
-    const title = `Last ${round((lastDate - firstDate) / 1000)} seconds, ` +
+    const title = `Last ${Math.round((lastDate - firstDate) / 1000)} seconds, ` +
       `${data.length} samples, min: ${min}, max: ${max}, mean: ${mean}`;
 
     return {title, lastX, lastY, data};
