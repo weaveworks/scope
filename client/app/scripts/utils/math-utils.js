@@ -18,3 +18,10 @@
 export function modulo(i, n) {
   return ((i % n) + n) % n;
 }
+
+// Does the same that the deprecated d3.round was doing.
+// Possibly imprecise: This https://github.com/d3/d3/issues/210
+export function round(value, decimals = 0) {
+  const p = Math.pow(10, decimals);
+  return Math.round(value * p) / p;
+}

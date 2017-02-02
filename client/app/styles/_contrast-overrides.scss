@@ -14,12 +14,13 @@ $white: white;
 $node-opacity-blurred: 0.6;
 $node-highlight-fill-opacity: 0.3;
 $node-highlight-stroke-opacity: 0.5;
-$node-highlight-stroke-width: 0.06;
-$node-border-stroke-width: 0.1;
+$node-highlight-stroke-width: 3px;
+$node-border-stroke-width: 5px;
 $node-pseudo-opacity: 1;
 $edge-highlight-opacity: 0.3;
 $edge-opacity-blurred: 0;
 $edge-opacity: 0.5;
+$edge-link-stroke-width: 3px;
 
 $btn-opacity-default: 1;
 $btn-opacity-hover: 1;

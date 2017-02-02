@@ -4,40 +4,50 @@ import { List as makeList } from 'immutable';
 import { getNetworkColor } from '../utils/color-utils';
 import { isContrastMode } from '../utils/contrast-utils';
 
-// Min size is about a quarter of the width, feels about right.
-const minBarWidth = 0.25;
-const barHeight = 0.08;
-const innerPadding = 0.04;
-const borderRadius = 0.01;
+
+// Gap size between bar segments.
+const minBarHeight = 3;
+const padding = 0.05;
+const rx = 1;
+const ry = rx;
 const x = scaleBand();
 
-function NodeNetworksOverlay({offset, stack, networks = makeList()}) {
-  const barWidth = Math.max(1, minBarWidth * networks.size);
-  const yPosition = offset - (barHeight * 0.5);
+function NodeNetworksOverlay({offset, size, stack, networks = makeList()}) {
+  // Min size is about a quarter of the width, feels about right.
+  const minBarWidth = (size / 4);
+  const barWidth = Math.max(size, minBarWidth * networks.size);
+  const barHeight = Math.max(size * 0.085, minBarHeight);
 
   // Update singleton scale.
   x.domain(networks.map((n, i) => i).toJS());
   x.range([barWidth * -0.5, barWidth * 0.5]);
-  x.paddingInner(innerPadding);
+  x.paddingInner(padding);
 
-  const bandwidth = x.bandwidth();
   const bars = networks.map((n, i) => (
     <rect
-      className="node-network"
-      key={n.get('id')}
       x={x(i)}
-      y={yPosition}
-      width={bandwidth}
+      y={offset - (barHeight * 0.5)}
+      width={x.bandwidth()}
       height={barHeight}
-      rx={borderRadius}
-      ry={borderRadius}
-      style={{ fill: getNetworkColor(n.get('colorKey', n.get('id'))) }}
+      rx={rx}
+      ry={ry}
+      className="node-network"
+      style={{
+        fill: getNetworkColor(n.get('colorKey', n.get('id')))
+      }}
+      key={n.get('id')}
     />
   ));
 
-  const translateY = stack && isContrastMode() ? 0.15 : 0;
+  let transform = '';
+  if (stack) {
+    const contrastMode = isContrastMode();
+    const [dx, dy] = contrastMode ? [0, 8] : [0, 0];
+    transform = `translate(${dx}, ${dy * -1.5})`;
+  }
+
   return (
-    <g transform={`translate(0, ${translateY})`}>
+    <g transform={transform}>
       {bars.toJS()}
     </g>
   );

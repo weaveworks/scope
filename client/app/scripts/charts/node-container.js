@@ -3,40 +3,29 @@ import { omit } from 'lodash';
 import { connect } from 'react-redux';
 import { Motion, spring } from 'react-motion';
 
-import { NODES_SPRING_ANIMATION_CONFIG } from '../constants/animation';
-import { NODE_BASE_SIZE, NODE_BLUR_OPACITY } from '../constants/styles';
+import { round } from '../utils/math-utils';
 import Node from './node';
-
-const transformedNode = (otherProps, { x, y, k }) => (
-  <Node transform={`translate(${x},${y}) scale(${k})`} {...otherProps} />
-);
 
 class NodeContainer extends React.Component {
   render() {
-    const { dx, dy, isAnimated, magnified, blurred } = this.props;
-    const forwardedProps = omit(this.props, 'dx', 'dy', 'isAnimated', 'magnified', 'blurred');
-    const opacity = blurred ? NODE_BLUR_OPACITY : 1;
-    const scale = magnified * NODE_BASE_SIZE;
+    const { dx, dy, focused, layoutPrecision, zoomScale } = this.props;
+    const animConfig = [80, 20]; // stiffness, damping
+    const scaleFactor = focused ? (1 / zoomScale) : 1;
+    const other = omit(this.props, 'dx', 'dy');
 
-    // NOTE: Controlling blurring from here seems to re-render faster
-    // than adding a CSS class and controlling it from there.
     return (
-      <g className="node-container" style={{opacity}}>
-        {!isAnimated ?
-
-        // Show static node for optimized rendering
-        transformedNode(forwardedProps, { x: dx, y: dy, k: scale }) :
-
-        // Animate the node if the layout is sufficiently small
-        <Motion
-          style={{
-            x: spring(dx, NODES_SPRING_ANIMATION_CONFIG),
-            y: spring(dy, NODES_SPRING_ANIMATION_CONFIG),
-            k: spring(scale, NODES_SPRING_ANIMATION_CONFIG)
-          }}>
-          {interpolated => transformedNode(forwardedProps, interpolated)}
-        </Motion>}
-      </g>
+      <Motion
+        style={{
+          x: spring(dx, animConfig),
+          y: spring(dy, animConfig),
+          f: spring(scaleFactor, animConfig)
+        }}>
+        {(interpolated) => {
+          const transform = `translate(${round(interpolated.x, layoutPrecision)},`
+            + `${round(interpolated.y, layoutPrecision)})`;
+          return <Node {...other} transform={transform} scaleFactor={interpolated.f} />;
+        }}
+      </Motion>
     );
   }
 }

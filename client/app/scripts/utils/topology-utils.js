@@ -182,7 +182,3 @@ export function graphExceedsComplexityThresh(stats) {
   // Check to see if complexity is high. Used to trigger table view on page load.
   return (stats.get('node_count') + (2 * stats.get('edge_count'))) > 500;
 }
-
-export function zoomCacheKey(props) {
-  return `${props.topologyId}-${JSON.stringify(props.topologyOptions)}`;
-}

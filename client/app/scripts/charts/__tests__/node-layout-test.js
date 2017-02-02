@@ -167,6 +167,54 @@ describe('NodesLayout', () => {
     expect(hasUnseen).toBeTruthy();
   });
 
+  it('shifts layouts to center', () => {
+    let xMin;
+    let xMax;
+    let yMin;
+    let yMax;
+    let xCenter;
+    let yCenter;
+
+    // make sure initial layout is centered
+    const original = NodesLayout.doLayout(
+      nodeSets.initial4.nodes,
+      nodeSets.initial4.edges
+    );
+    xMin = original.nodes.minBy(n => n.get('x'));
+    xMax = original.nodes.maxBy(n => n.get('x'));
+    yMin = original.nodes.minBy(n => n.get('y'));
+    yMax = original.nodes.maxBy(n => n.get('y'));
+    xCenter = (xMin.get('x') + xMax.get('x')) / 2;
+    yCenter = (yMin.get('y') + yMax.get('y')) / 2;
+    expect(xCenter).toEqual(NodesLayout.DEFAULT_WIDTH / 2);
+    expect(yCenter).toEqual(NodesLayout.DEFAULT_HEIGHT / 2);
+
+    // make sure re-running is idempotent
+    const rerun = NodesLayout.shiftLayoutToCenter(original);
+    xMin = rerun.nodes.minBy(n => n.get('x'));
+    xMax = rerun.nodes.maxBy(n => n.get('x'));
+    yMin = rerun.nodes.minBy(n => n.get('y'));
+    yMax = rerun.nodes.maxBy(n => n.get('y'));
+    xCenter = (xMin.get('x') + xMax.get('x')) / 2;
+    yCenter = (yMin.get('y') + yMax.get('y')) / 2;
+    expect(xCenter).toEqual(NodesLayout.DEFAULT_WIDTH / 2);
+    expect(yCenter).toEqual(NodesLayout.DEFAULT_HEIGHT / 2);
+
+    // shift after window was resized
+    const shifted = NodesLayout.shiftLayoutToCenter(original, {
+      width: 128,
+      height: 256
+    });
+    xMin = shifted.nodes.minBy(n => n.get('x'));
+    xMax = shifted.nodes.maxBy(n => n.get('x'));
+    yMin = shifted.nodes.minBy(n => n.get('y'));
+    yMax = shifted.nodes.maxBy(n => n.get('y'));
+    xCenter = (xMin.get('x') + xMax.get('x')) / 2;
+    yCenter = (yMin.get('y') + yMax.get('y')) / 2;
+    expect(xCenter).toEqual(128 / 2);
+    expect(yCenter).toEqual(256 / 2);
+  });
+
   it('lays out initial nodeset in a rectangle', () => {
     const result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
