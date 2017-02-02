@@ -1,47 +1,43 @@
 import React from 'react';
 import classNames from 'classnames';
-
-import {
-  getMetricValue,
-  getMetricColor,
-  getClipPathDefinition,
-  renderMetricValue,
-} from '../utils/metric-utils';
-import {
-  NODE_SHAPE_HIGHLIGHT_RADIUS,
-  NODE_SHAPE_BORDER_RADIUS,
-  NODE_SHAPE_SHADOW_RADIUS,
-} from '../constants/styles';
+import { getMetricValue, getMetricColor, getClipPathDefinition } from '../utils/metric-utils';
+import { CANVAS_METRIC_FONT_SIZE } from '../constants/styles';
 
 
-export default function NodeShapeSquare({ id, highlighted, color, rx = 0, ry = 0, metric }) {
-  const { height, hasMetric, formattedValue } = getMetricValue(metric);
-  const metricStyle = { fill: getMetricColor(metric) };
-
-  const className = classNames('shape', 'shape-square', { metrics: hasMetric });
-  const rectProps = (scale, borderRadiusAdjustmentFactor = 1) => ({
-    width: scale * 2,
-    height: scale * 2,
-    rx: scale * rx * borderRadiusAdjustmentFactor,
-    ry: scale * ry * borderRadiusAdjustmentFactor,
-    x: -scale,
-    y: -scale
+export default function NodeShapeSquare({
+  id, highlighted, size, color, rx = 0, ry = 0, metric
+}) {
+  const rectProps = (scale, radiusScale) => ({
+    width: scale * size * 2,
+    height: scale * size * 2,
+    rx: (radiusScale || scale) * size * rx,
+    ry: (radiusScale || scale) * size * ry,
+    x: -size * scale,
+    y: -size * scale
   });
+
   const clipId = `mask-${id}`;
+  const {height, hasMetric, formattedValue} = getMetricValue(metric, size);
+  const metricStyle = { fill: getMetricColor(metric) };
+  const className = classNames('shape', { metrics: hasMetric });
+  const fontSize = size * CANVAS_METRIC_FONT_SIZE;
 
   return (
     <g className={className}>
-      {hasMetric && getClipPathDefinition(clipId, height)}
-      {highlighted && <rect className="highlighted" {...rectProps(NODE_SHAPE_HIGHLIGHT_RADIUS)} />}
-      <rect className="border" stroke={color} {...rectProps(NODE_SHAPE_BORDER_RADIUS)} />
-      <rect className="shadow" {...rectProps(NODE_SHAPE_SHADOW_RADIUS)} />
+      {hasMetric && getClipPathDefinition(clipId, size, height)}
+      {highlighted && <rect className="highlighted" {...rectProps(0.7)} />}
+      <rect className="border" stroke={color} {...rectProps(0.5, 0.5)} />
+      <rect className="shadow" {...rectProps(0.45, 0.39)} />
       {hasMetric && <rect
-        className="metric-fill"
+        className="metric-fill" style={metricStyle}
         clipPath={`url(#${clipId})`}
-        style={metricStyle}
-        {...rectProps(NODE_SHAPE_SHADOW_RADIUS, 0.85)}
+        {...rectProps(0.45, 0.39)}
       />}
-      {renderMetricValue(formattedValue, highlighted && hasMetric)}
+      {highlighted && hasMetric ?
+        <text style={{fontSize}}>
+          {formattedValue}
+        </text> :
+        <circle className="node" r={Math.max(2, (size * 0.125))} />}
     </g>
   );
 }

@@ -7,9 +7,12 @@ import NodeContainer from './node-container';
 
 class NodesChartNodes extends React.Component {
   render() {
-    const { adjacentNodes, highlightedNodeIds, layoutNodes, isAnimated, mouseOverNodeId,
-      selectedScale, searchQuery, selectedMetric, selectedNetwork, selectedNodeId,
-      topCardNode, searchNodeMatches = makeMap() } = this.props;
+    const { adjacentNodes, highlightedNodeIds, layoutNodes, layoutPrecision,
+      mouseOverNodeId, nodeScale, scale, searchNodeMatches = makeMap(),
+      searchQuery, selectedMetric, selectedNetwork, selectedNodeScale, selectedNodeId,
+      topCardNode } = this.props;
+
+    const zoomScale = scale;
 
     // highlighter functions
     const setHighlighted = node => node.set('highlighted',
@@ -70,11 +73,12 @@ class NodesChartNodes extends React.Component {
           subLabel={node.get('subLabel')}
           metric={metric(node)}
           rank={node.get('rank')}
-          isAnimated={isAnimated}
-          magnified={node.get('focused') ? selectedScale : 1}
+          layoutPrecision={layoutPrecision}
+          selectedNodeScale={selectedNodeScale}
+          nodeScale={nodeScale}
+          zoomScale={zoomScale}
           dx={node.get('x')}
-          dy={node.get('y')}
-        />)}
+          dy={node.get('y')} />)}
       </g>
     );
   }

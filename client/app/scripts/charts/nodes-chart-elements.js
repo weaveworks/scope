@@ -12,12 +12,13 @@ class NodesChartElements extends React.Component {
       <g className="nodes-chart-elements" transform={props.transform}>
         <NodesChartEdges
           layoutEdges={props.layoutEdges}
-          selectedScale={props.selectedScale}
-          isAnimated={props.isAnimated} />
+          layoutPrecision={props.layoutPrecision} />
         <NodesChartNodes
           layoutNodes={props.completeNodes}
-          selectedScale={props.selectedScale}
-          isAnimated={props.isAnimated} />
+          nodeScale={props.nodeScale}
+          scale={props.scale}
+          selectedNodeScale={props.selectedNodeScale}
+          layoutPrecision={props.layoutPrecision} />
       </g>
     );
   }

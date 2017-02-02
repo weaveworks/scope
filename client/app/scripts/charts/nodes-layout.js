@@ -2,7 +2,6 @@ import dagre from 'dagre';
 import debug from 'debug';
 import { fromJS, Map as makeMap, Set as ImmSet } from 'immutable';
 
-import { NODE_BASE_SIZE } from '../constants/styles';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { featureIsEnabledAny } from '../utils/feature-utils';
 import { buildTopologyCacheId, updateNodeDegrees } from '../utils/topology-utils';
@@ -13,9 +12,10 @@ const topologyCaches = {};
 export const DEFAULT_WIDTH = 800;
 export const DEFAULT_HEIGHT = DEFAULT_WIDTH / 2;
 export const DEFAULT_MARGINS = {top: 0, left: 0};
-const NODE_SIZE_FACTOR = NODE_BASE_SIZE;
-const NODE_SEPARATION_FACTOR = 2 * NODE_BASE_SIZE;
-const RANK_SEPARATION_FACTOR = 3 * NODE_BASE_SIZE;
+const DEFAULT_SCALE = val => val * 2;
+const NODE_SIZE_FACTOR = 1;
+const NODE_SEPARATION_FACTOR = 2.0;
+const RANK_SEPARATION_FACTOR = 3.0;
 let layoutRuns = 0;
 let layoutRunsTrivial = 0;
 
@@ -34,16 +34,19 @@ function fromGraphNodeId(encodedId) {
  * @param  {Object} graph dagre graph instance
  * @param  {Map} imNodes new node set
  * @param  {Map} imEdges new edge set
+ * @param  {Object} opts    dimensions, scales, etc.
  * @return {Object}         Layout with nodes, edges, dimensions
  */
-function runLayoutEngine(graph, imNodes, imEdges) {
+function runLayoutEngine(graph, imNodes, imEdges, opts) {
   let nodes = imNodes;
   let edges = imEdges;
 
-  const ranksep = RANK_SEPARATION_FACTOR;
-  const nodesep = NODE_SEPARATION_FACTOR;
-  const nodeWidth = NODE_SIZE_FACTOR;
-  const nodeHeight = NODE_SIZE_FACTOR;
+  const options = opts || {};
+  const scale = options.scale || DEFAULT_SCALE;
+  const ranksep = scale(RANK_SEPARATION_FACTOR);
+  const nodesep = scale(NODE_SEPARATION_FACTOR);
+  const nodeWidth = scale(NODE_SIZE_FACTOR);
+  const nodeHeight = scale(NODE_SIZE_FACTOR);
 
   // configure node margins
   graph.setGraph({
@@ -151,10 +154,12 @@ function setSimpleEdgePoints(edge, nodeCache) {
  * @param  {object} opts      Options
  * @return {object}           new layout object
  */
-export function doLayoutNewNodesOfExistingRank(layout, nodeCache) {
+export function doLayoutNewNodesOfExistingRank(layout, nodeCache, opts) {
   const result = Object.assign({}, layout);
-  const nodesep = NODE_SEPARATION_FACTOR;
-  const nodeWidth = NODE_SIZE_FACTOR;
+  const options = opts || {};
+  const scale = options.scale || DEFAULT_SCALE;
+  const nodesep = scale(NODE_SEPARATION_FACTOR);
+  const nodeWidth = scale(NODE_SIZE_FACTOR);
 
   // determine new nodes
   const oldNodes = ImmSet.fromKeys(nodeCache);
@@ -195,10 +200,11 @@ function layoutSingleNodes(layout, opts) {
   const result = Object.assign({}, layout);
   const options = opts || {};
   const margins = options.margins || DEFAULT_MARGINS;
-  const ranksep = RANK_SEPARATION_FACTOR / 2; // dagre splits it in half
-  const nodesep = NODE_SEPARATION_FACTOR;
-  const nodeWidth = NODE_SIZE_FACTOR;
-  const nodeHeight = NODE_SIZE_FACTOR;
+  const scale = options.scale || DEFAULT_SCALE;
+  const ranksep = scale(RANK_SEPARATION_FACTOR) / 2; // dagre splits it in half
+  const nodesep = scale(NODE_SEPARATION_FACTOR);
+  const nodeWidth = scale(NODE_SIZE_FACTOR);
+  const nodeHeight = scale(NODE_SIZE_FACTOR);
   const graphHeight = layout.graphHeight || layout.height;
   const graphWidth = layout.graphWidth || layout.width;
   const aspectRatio = graphHeight ? graphWidth / graphHeight : 1;
@@ -260,6 +266,50 @@ function layoutSingleNodes(layout, opts) {
     result.width = Math.max(layout.width, singleX + (nodeWidth / 2) + nodesep);
     result.height = Math.max(layout.height, singleY + (nodeHeight / 2) + ranksep);
     result.nodes = nodes;
+  }
+
+  return result;
+}
+
+/**
+ * Shifts all coordinates of node and edge points to make the layout more centered
+ * @param  {Object} layout Layout
+ * @param  {Object} opts   Options with width and margins
+ * @return {Object}        modified layout
+ */
+export function shiftLayoutToCenter(layout, opts) {
+  const result = Object.assign({}, layout);
+  const options = opts || {};
+  const margins = options.margins || DEFAULT_MARGINS;
+  const width = options.width || DEFAULT_WIDTH;
+  const height = options.height || DEFAULT_HEIGHT;
+
+  let offsetX = 0 + margins.left;
+  let offsetY = 0 + margins.top;
+
+  if (layout.width < width) {
+    const xMin = layout.nodes.minBy(n => n.get('x'));
+    const xMax = layout.nodes.maxBy(n => n.get('x'));
+    offsetX = ((width - (xMin.get('x') + xMax.get('x'))) / 2) + margins.left;
+  }
+  if (layout.height < height) {
+    const yMin = layout.nodes.minBy(n => n.get('y'));
+    const yMax = layout.nodes.maxBy(n => n.get('y'));
+    offsetY = ((height - (yMin.get('y') + yMax.get('y'))) / 2) + margins.top;
+  }
+
+  if (offsetX || offsetY) {
+    result.nodes = layout.nodes.map(node => node.merge({
+      x: node.get('x') + offsetX,
+      y: node.get('y') + offsetY
+    }));
+
+    result.edges = layout.edges.map(edge => edge.update('points',
+      points => points.map(point => point.merge({
+        x: point.get('x') + offsetX,
+        y: point.get('y') + offsetY
+      }))
+    ));
   }
 
   return result;
@@ -428,16 +478,17 @@ export function doLayout(immNodes, immEdges, opts) {
       log('skip layout, used rank-based insertion');
       layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
       layout = copyLayoutProperties(layout, nodeCache, edgeCache);
-      layout = doLayoutNewNodesOfExistingRank(layout, nodeCache);
+      layout = doLayoutNewNodesOfExistingRank(layout, nodeCache, opts);
     } else {
       const graph = cache.graph;
-      layout = runLayoutEngine(graph, nodesWithDegrees, immEdges);
+      layout = runLayoutEngine(graph, nodesWithDegrees, immEdges, opts);
       if (!layout) {
         return layout;
       }
     }
 
     layout = layoutSingleNodes(layout, opts);
+    layout = shiftLayoutToCenter(layout, opts);
   }
 
   // cache results

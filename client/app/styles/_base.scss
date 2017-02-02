@@ -299,7 +299,7 @@
     fill: $text-secondary-color;
   }
 
-  .nodes-chart-nodes .node {
+  .nodes-chart-nodes > .node {
     transition: opacity .5s $base-ease;
     text-align: center;
 
@@ -314,14 +314,6 @@
 
     .node-label {
       color: $text-color;
-    }
-
-    .node-labels-container {
-      transform: scale($node-text-scale);
-      pointer-events: none;
-      height: 5em;
-      x: -0.5 * $node-labels-max-width;
-      width: $node-labels-max-width;
     }
 
     .node-label-wrapper {
@@ -344,9 +336,6 @@
       vertical-align: top;
 
       cursor: pointer;
-      pointer-events: all;
-      font-size: 12px;
-      width: 100%;
     }
 
     .node-sublabel {
@@ -355,6 +344,7 @@
     }
 
     .node-label, .node-sublabel {
+
       span {
         border-radius: 2px;
       }
@@ -421,13 +411,15 @@
     }
 
     .link {
-      fill: none;
       stroke: $text-secondary-color;
+      stroke-width: $edge-link-stroke-width;
+      fill: none;
       stroke-opacity: $edge-opacity;
     }
     .shadow {
-      fill: none;
       stroke: $weave-blue;
+      stroke-width: 10px;
+      fill: none;
       stroke-opacity: 0;
     }
     &.highlighted {
@@ -441,7 +433,7 @@
     display: none;
   }
 
-  .stack .highlight .shape  {
+  .stack .onlyHighlight .shape  {
     .border { display: none; }
     .shadow { display: none; }
     .node { display: none; }
@@ -456,7 +448,8 @@
     transform: scale(1);
     cursor: pointer;
 
-    .border {
+    /* cloud paths have stroke-width set dynamically */
+    &:not(.shape-cloud) .border {
       stroke-width: $node-border-stroke-width;
       fill: $background-color;
       transition: stroke-opacity 0.333s $base-ease, fill 0.333s $base-ease;
@@ -482,12 +475,11 @@
     .node {
       fill: $text-color;
       stroke: $background-lighter-color;
-      stroke-width: 0.05;
+      stroke-width: 2px;
     }
 
     text {
-      transform: scale($node-text-scale);
-      font-size: 10px;
+      font-size: 12px;
       dominant-baseline: middle;
       text-anchor: middle;
     }
@@ -502,7 +494,7 @@
   }
 
   .stack .shape .border {
-    stroke-width: $node-border-stroke-width * 0.8;
+    stroke-width: $node-border-stroke-width - 0.5;
   }
 
 }

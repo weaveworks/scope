@@ -7,15 +7,8 @@ import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { applyPinnedSearches, updateNodeMatches } from '../utils/search-utils';
 import { getNetworkNodes, getAvailableNetworks } from '../utils/network-view-utils';
-import {
-  findTopologyById,
-  getAdjacentNodes,
-  setTopologyUrlsById,
-  updateTopologyIds,
-  filterHiddenTopologies,
-  addTopologyFullname,
-  getDefaultTopology,
-  graphExceedsComplexityThresh
+import { findTopologyById, getAdjacentNodes, setTopologyUrlsById, updateTopologyIds,
+  filterHiddenTopologies, addTopologyFullname, getDefaultTopology, graphExceedsComplexityThresh
 } from '../utils/topology-utils';
 
 const log = debug('scope:app-store');
