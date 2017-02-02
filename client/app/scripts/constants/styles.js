@@ -9,8 +9,6 @@ export const DETAILS_PANEL_MARGINS = {
 
 export const DETAILS_PANEL_OFFSET = 8;
 
-export const CANVAS_METRIC_FONT_SIZE = 0.19;
-
 export const CANVAS_MARGINS = {
   top: 160,
   left: 40,
@@ -19,16 +17,18 @@ export const CANVAS_MARGINS = {
 };
 
 // Node shapes
-export const NODE_SHAPE_HIGHLIGHT_RADIUS = 0.7;
-export const NODE_SHAPE_BORDER_RADIUS = 0.5;
-export const NODE_SHAPE_SHADOW_RADIUS = 0.45;
-export const NODE_SHAPE_DOT_RADIUS = 0.125;
+export const NODE_SHAPE_HIGHLIGHT_RADIUS = 70;
+export const NODE_SHAPE_BORDER_RADIUS = 50;
+export const NODE_SHAPE_SHADOW_RADIUS = 45;
+export const NODE_SHAPE_DOT_RADIUS = 10;
 export const NODE_BLUR_OPACITY = 0.2;
-// NOTE: Modifying this value shouldn't actually change much in the way
-// nodes are rendered, as long as its kept >> 1. The idea was to draw all
-// the nodes in a unit scale and control their size just through scaling
-// transform, but the problem is that dagre only works with integer coordinates,
-// so this constant basically serves as a precision factor for dagre.
+// NOTE: This value represents the node unit radius (in pixels). Since zooming is
+// controlled at the top level now, this renormalization would be obsolete (i.e.
+// value 1 could be used instead), if it wasn't for the following factors:
+//   1. `dagre` library only works with integer coordinates,
+//      so >> 1 value is used to increase layout precision.
+//   2. Fonts don't behave nicely (especially on Firefox) if they
+//      are given on a small unit scale as foreign objects in SVG.
 export const NODE_BASE_SIZE = 100;
 
 // Node details table constants

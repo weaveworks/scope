@@ -71,7 +71,7 @@ class NodesChartNodes extends React.Component {
           metric={metric(node)}
           rank={node.get('rank')}
           isAnimated={isAnimated}
-          magnified={node.get('focused') ? selectedScale : 1}
+          scale={node.get('focused') ? selectedScale : 1}
           dx={node.get('x')}
           dy={node.get('y')}
         />)}

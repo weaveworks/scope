@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { Motion, spring } from 'react-motion';
 
 import { NODES_SPRING_ANIMATION_CONFIG } from '../constants/animation';
-import { NODE_BASE_SIZE, NODE_BLUR_OPACITY } from '../constants/styles';
+import { NODE_BLUR_OPACITY } from '../constants/styles';
 import Node from './node';
 
 const transformedNode = (otherProps, { x, y, k }) => (
@@ -13,10 +13,9 @@ const transformedNode = (otherProps, { x, y, k }) => (
 
 class NodeContainer extends React.Component {
   render() {
-    const { dx, dy, isAnimated, magnified, blurred } = this.props;
-    const forwardedProps = omit(this.props, 'dx', 'dy', 'isAnimated', 'magnified', 'blurred');
+    const { dx, dy, isAnimated, scale, blurred } = this.props;
+    const forwardedProps = omit(this.props, 'dx', 'dy', 'isAnimated', 'scale', 'blurred');
     const opacity = blurred ? NODE_BLUR_OPACITY : 1;
-    const scale = magnified * NODE_BASE_SIZE;
 
     // NOTE: Controlling blurring from here seems to re-render faster
     // than adding a CSS class and controlling it from there.

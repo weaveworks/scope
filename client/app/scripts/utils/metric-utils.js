@@ -2,14 +2,14 @@ import { includes } from 'lodash';
 import { scaleLog } from 'd3-scale';
 import React from 'react';
 
-import { NODE_SHAPE_DOT_RADIUS } from '../constants/styles';
+import { NODE_BASE_SIZE, NODE_SHAPE_DOT_RADIUS } from '../constants/styles';
 import { formatMetricSvg } from './string-utils';
 import { colors } from './color-utils';
 
 export function getClipPathDefinition(clipId, height) {
   return (
     <defs>
-      <clipPath id={clipId}>
+      <clipPath id={clipId} transform={`scale(${NODE_BASE_SIZE})`}>
         <rect width={1} height={1} x={-0.5} y={0.5 - height} />
       </clipPath>
     </defs>

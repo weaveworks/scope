@@ -319,9 +319,6 @@
     .node-labels-container {
       transform: scale($node-text-scale);
       pointer-events: none;
-      height: 5em;
-      x: -0.5 * $node-labels-max-width;
-      width: $node-labels-max-width;
     }
 
     .node-label-wrapper {

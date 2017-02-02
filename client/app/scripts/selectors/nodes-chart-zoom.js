@@ -48,9 +48,9 @@ const defaultZoomSelector = createSelector(
     // Maximal allowed zoom will always be such that a node covers 1/5 of the viewport.
     const maxZoomScale = Math.min(width, height) / NODE_BASE_SIZE / 5;
 
-    // Initial zoom is such that the graph covers 90% of either
-    // the viewport, respecting the maximal zoom constraint.
-    const zoomScale = Math.min(xFactor, yFactor, maxZoomScale) * 0.9;
+    // Initial zoom is such that the graph covers 90% of either the viewport,
+    // or one half of maximal zoom constraint, whichever is smaller.
+    const zoomScale = Math.min(xFactor, yFactor, maxZoomScale / 2) * 0.9;
 
     // Finally, we always allow zooming out exactly 5x compared to the initial zoom.
     const minZoomScale = zoomScale / 5;

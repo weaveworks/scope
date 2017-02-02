@@ -7,6 +7,7 @@ import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
 import { getNodeColor } from '../utils/color-utils';
 import MatchedText from '../components/matched-text';
 import MatchedResults from '../components/matched-results';
+import { NODE_BASE_SIZE } from '../constants/styles';
 
 import NodeShapeCircle from './node-shape-circle';
 import NodeShapeStack from './node-shape-stack';
@@ -17,11 +18,7 @@ import NodeShapeCloud from './node-shape-cloud';
 import NodeNetworksOverlay from './node-networks-overlay';
 
 
-function stackedShape(Shape) {
-  const factory = React.createFactory(NodeShapeStack);
-  return props => factory(Object.assign({}, props, {shape: Shape}));
-}
-
+const labelWidth = 1.4 * NODE_BASE_SIZE;
 const nodeShapes = {
   circle: NodeShapeCircle,
   hexagon: NodeShapeHexagon,
@@ -29,6 +26,11 @@ const nodeShapes = {
   square: NodeShapeRoundedSquare,
   cloud: NodeShapeCloud
 };
+
+function stackedShape(Shape) {
+  const factory = React.createFactory(NodeShapeStack);
+  return props => factory(Object.assign({}, props, {shape: Shape}));
+}
 
 function getNodeShape({ shape, stack }) {
   const nodeShape = nodeShapes[shape];
@@ -65,9 +67,9 @@ class Node extends React.Component {
   renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) {
     const { label, subLabel } = this.props;
     return (
-      <g className="node-labels-container" y={labelOffsetY}>
-        <text className={labelClassName} y={13} textAnchor="middle">{label}</text>
-        <text className={subLabelClassName} y={30} textAnchor="middle">
+      <g className="node-labels-container">
+        <text className={labelClassName} y={13 + labelOffsetY} textAnchor="middle">{label}</text>
+        <text className={subLabelClassName} y={30 + labelOffsetY} textAnchor="middle">
           {subLabel}
         </text>
       </g>
@@ -81,7 +83,12 @@ class Node extends React.Component {
     const matchedNodeDetails = matchedMetadata.concat(matchedParents);
 
     return (
-      <foreignObject className="node-labels-container" y={labelOffsetY}>
+      <foreignObject
+        className="node-labels-container"
+        y={labelOffsetY}
+        x={-0.5 * labelWidth}
+        width={labelWidth}
+        height="5em">
         <div className="node-label-wrapper" {...mouseEvents}>
           <div className={labelClassName}>
             <MatchedText text={label} match={matches.get('label')} />
@@ -103,7 +110,6 @@ class Node extends React.Component {
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
     const labelOffsetY = (showingNetworks && networks) ? 40 : 28;
-    const networkOffset = 0.67;
 
     const nodeClassName = classnames('node', {
       highlighted,
@@ -126,7 +132,7 @@ class Node extends React.Component {
 
     return (
       <g className={nodeClassName} transform={transform}>
-        {useSvgLabels || false ?
+        {useSvgLabels ?
           this.renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) :
           this.renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents)}
 
@@ -134,11 +140,7 @@ class Node extends React.Component {
           <NodeShapeType color={color} {...this.props} />
         </g>
 
-        {showingNetworks && <NodeNetworksOverlay
-          offset={networkOffset}
-          networks={networks}
-          stack={stack}
-        />}
+        {showingNetworks && <NodeNetworksOverlay networks={networks} stack={stack} />}
       </g>
     );
   }
