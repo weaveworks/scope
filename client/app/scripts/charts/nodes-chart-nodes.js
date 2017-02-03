@@ -1,7 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { fromJS, Map as makeMap, List as makeList } from 'immutable';
+import { fromJS, List as makeList } from 'immutable';
 
+import { currentTopologySearchNodeMatchesSelector } from '../selectors/search';
 import { getAdjacentNodes } from '../utils/topology-utils';
 import NodeContainer from './node-container';
 
@@ -9,7 +10,7 @@ class NodesChartNodes extends React.Component {
   render() {
     const { adjacentNodes, highlightedNodeIds, layoutNodes, isAnimated, mouseOverNodeId,
       selectedScale, searchQuery, selectedMetric, selectedNetwork, selectedNodeId,
-      topCardNode, searchNodeMatches = makeMap() } = this.props;
+      topCardNode, searchNodeMatches } = this.props;
 
     // highlighter functions
     const setHighlighted = node => node.set('highlighted',
@@ -56,7 +57,6 @@ class NodesChartNodes extends React.Component {
         {nodesToRender.map(node => <NodeContainer
           blurred={node.get('blurred')}
           focused={node.get('focused')}
-          matched={searchNodeMatches.has(node.get('id'))}
           matches={searchNodeMatches.get(node.get('id'))}
           highlighted={node.get('highlighted')}
           shape={node.get('shape')}
@@ -66,7 +66,6 @@ class NodesChartNodes extends React.Component {
           id={node.get('id')}
           label={node.get('label')}
           pseudo={node.get('pseudo')}
-          nodeCount={node.get('nodeCount')}
           subLabel={node.get('subLabel')}
           metric={metric(node)}
           rank={node.get('rank')}
@@ -80,21 +79,16 @@ class NodesChartNodes extends React.Component {
   }
 }
 
-function mapStateToProps(state) {
-  const currentTopologyId = state.get('currentTopologyId');
-  return {
+export default connect(
+  state => ({
     adjacentNodes: getAdjacentNodes(state),
     highlightedNodeIds: state.get('highlightedNodeIds'),
     mouseOverNodeId: state.get('mouseOverNodeId'),
     selectedMetric: state.get('selectedMetric'),
     selectedNetwork: state.get('selectedNetwork'),
     selectedNodeId: state.get('selectedNodeId'),
-    searchNodeMatches: state.getIn(['searchNodeMatches', currentTopologyId]),
+    searchNodeMatches: currentTopologySearchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     topCardNode: state.get('nodeDetails').last()
-  };
-}
-
-export default connect(
-  mapStateToProps
+  })
 )(NodesChartNodes);

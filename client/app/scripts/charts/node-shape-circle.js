@@ -14,7 +14,7 @@ import {
 } from '../constants/styles';
 
 
-export default function NodeShapeCircle({id, highlighted, color, metric}) {
+export default function NodeShapeCircle({ id, highlighted, color, metric }) {
   const { height, hasMetric, formattedValue } = getMetricValue(metric);
   const metricStyle = { fill: getMetricColor(metric) };
 
