@@ -59,6 +59,7 @@ test:
         parallel: true
     - test "$CIRCLE_NODE_INDEX" != "0" || (cd $SRCDIR; cp coverage.* scope.tar $CIRCLE_ARTIFACTS):
         parallel: true
+    - sleep 50000
 
 deployment:
   hub:
