@@ -149,6 +149,7 @@ export function getTopologies(options, dispatch) {
   const url = `${getApiPath()}/api/topology?${optionsQuery}`;
   reqwest({
     url,
+    type: 'json',
     success: (res) => {
       dispatch(receiveTopologies(res));
       topologyTimer = setTimeout(() => {
@@ -191,6 +192,7 @@ export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nod
 
     reqwest({
       url,
+      type: 'json',
       success: (res) => {
         // make sure node is still selected
         if (nodeMap.has(res.node.id)) {
@@ -214,9 +216,10 @@ export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nod
 
 export function getApiDetails(dispatch) {
   clearTimeout(apiDetailsTimer);
-  const url = getApiPath();
+  const url = `${getApiPath()}/api`;
   reqwest({
     url,
+    type: 'json',
     success: (res) => {
       dispatch(receiveApiDetails(res));
       apiDetailsTimer = setTimeout(() => {
@@ -240,6 +243,7 @@ export function doControlRequest(nodeId, control, dispatch) {
   reqwest({
     method: 'POST',
     url,
+    type: 'json',
     success: (res) => {
       dispatch(receiveControlSuccess(nodeId));
       if (res) {
@@ -277,6 +281,7 @@ export function doResizeTty(pipeId, control, cols, rows) {
   return reqwest({
     method: 'POST',
     url,
+    type: 'json',
     data: JSON.stringify({pipeID: pipeId, width: cols.toString(), height: rows.toString()}),
   })
     .fail((err) => {
@@ -290,6 +295,7 @@ export function deletePipe(pipeId, dispatch) {
   reqwest({
     method: 'DELETE',
     url,
+    type: 'json',
     success: () => {
       log('Closed the pipe!');
     },
@@ -306,6 +312,7 @@ export function getPipeStatus(pipeId, dispatch) {
   reqwest({
     method: 'GET',
     url,
+    type: 'json',
     complete: (res) => {
       const status = {
         204: 'PIPE_ALIVE',
