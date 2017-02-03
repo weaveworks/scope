@@ -12,15 +12,15 @@ for HOST in $HOSTS; do
     pv -N "scope.tar" -s "$SIZE" ../scope.tar | $SSH -C "$HOST" sudo docker load
 done
 
-WEAVE=https://github.com/weaveworks/weave/releases/download/v1.8.2/weave
+WEAVE_URL=https://github.com/weaveworks/weave/releases/download/v1.8.2/weave
 setup_host() {
     local HOST=$1
     echo Installing weave on "$HOST"
     # Download the latest released weave script locally,
     # for use by weave_on
-    curl -sL "$WEAVE" -o ./weave
+    curl -sL "$WEAVE_URL" -o ./weave
     chmod a+x ./weave
-    run_on "$HOST" "sudo curl -sL $WEAVE -o /usr/local/bin/weave"
+    run_on "$HOST" "sudo curl -sL $WEAVE_URL -o /usr/local/bin/weave"
     run_on "$HOST" "sudo chmod a+x /usr/local/bin/weave"
     weave_on "$HOST" setup
 
