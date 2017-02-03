@@ -553,7 +553,7 @@ export function rootReducer(state = initialState, action) {
       // update existing nodes
       each(action.delta.update, (node) => {
         if (state.hasIn(['nodes', node.id])) {
-          state = state.updateIn(['nodes', node.id], n => n.merge(fromJS(node)));
+          state = state.setIn(['nodes', node.id], fromJS(node));
         }
       });
 

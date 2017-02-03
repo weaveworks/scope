@@ -500,4 +500,29 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, {type: ActionTypes.SET_RECEIVED_NODES_DELTA});
     expect(nextState.get('gridMode')).toBe(true);
   });
+  it('cleans up old adjacencies', () => {
+    // Add some nodes
+    const action1 = {
+      type: ActionTypes.RECEIVE_NODES_DELTA,
+      delta: { add: [{ id: 'n1' }, { id: 'n2' }] }
+    };
+    // Show nodes as connected
+    const action2 = {
+      type: ActionTypes.RECEIVE_NODES_DELTA,
+      delta: {
+        update: [{ id: 'n1', adjacency: ['n2'] }]
+      }
+    };
+    // Remove the connection
+    const action3 = {
+      type: ActionTypes.RECEIVE_NODES_DELTA,
+      delta: {
+        update: [{ id: 'n1' }]
+      }
+    };
+    let nextState = reducer(initialState, action1);
+    nextState = reducer(nextState, action2);
+    nextState = reducer(nextState, action3);
+    expect(nextState.getIn(['nodes', 'n1', 'adjacency'])).toBeFalsy();
+  });
 });
