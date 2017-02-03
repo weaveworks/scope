@@ -89,7 +89,7 @@ function runLayoutEngine(graph, imNodes, imEdges) {
     }
   });
 
-  dagre.layout(graph);
+  dagre.layout(graph, { debugTiming: false });
   const layout = graph.graph();
 
   // apply coordinates to nodes and edges

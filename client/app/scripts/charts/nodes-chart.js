@@ -6,7 +6,7 @@ import { Map as makeMap } from 'immutable';
 import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
-import { nodeAdjacenciesSelector, adjacentNodesSelector } from '../selectors/chartSelectors';
+import { nodeAdjacenciesSelector } from '../selectors/nodes-chart';
 import { clickBackground } from '../actions/app-actions';
 import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
@@ -173,7 +173,6 @@ class NodesChart extends React.Component {
 function mapStateToProps(state) {
   return {
     nodes: nodeAdjacenciesSelector(state),
-    adjacentNodes: adjacentNodesSelector(state),
     forceRelayout: state.get('forceRelayout'),
     selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('currentTopologyId'),

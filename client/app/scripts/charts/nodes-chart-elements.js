@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { completeNodesSelector } from '../selectors/chartSelectors';
+import { completeNodesSelector } from '../selectors/nodes-chart';
 import NodesChartEdges from './nodes-chart-edges';
 import NodesChartNodes from './nodes-chart-nodes';
 
@@ -10,12 +10,8 @@ class NodesChartElements extends React.Component {
     const props = this.props;
     return (
       <g className="nodes-chart-elements" transform={props.transform}>
-        <NodesChartEdges
-          layoutEdges={props.layoutEdges}
-          selectedScale={props.selectedScale}
-          isAnimated={props.isAnimated} />
         <NodesChartNodes
-          layoutNodes={props.completeNodes}
+          layoutNodes={props.layoutNodes}
           selectedScale={props.selectedScale}
           isAnimated={props.isAnimated} />
       </g>
@@ -25,7 +21,7 @@ class NodesChartElements extends React.Component {
 
 function mapStateToProps(state, props) {
   return {
-    completeNodes: completeNodesSelector(state, props)
+    // completeNodes: completeNodesSelector(state, props)
   };
 }
 

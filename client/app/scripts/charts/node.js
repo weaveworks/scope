@@ -104,7 +104,7 @@ class Node extends React.Component {
 
   render() {
     const { blurred, focused, highlighted, networks, pseudo, rank, label,
-      transform, exportingGraph, showingNetworks, stack } = this.props;
+      transform, exportingGraph, showingNetworks, stack, id, metric } = this.props;
     const { hovered, matched } = this.state;
 
     const color = getNodeColor(rank, label, pseudo);
@@ -137,7 +137,7 @@ class Node extends React.Component {
           this.renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents)}
 
         <g {...mouseEvents} ref={this.saveShapeRef}>
-          <NodeShapeType color={color} {...this.props} />
+          <NodeShapeType id={id} highlighted={highlighted} color={color} metric={metric} />
         </g>
 
         {showingNetworks && <NodeNetworksOverlay networks={networks} stack={stack} />}

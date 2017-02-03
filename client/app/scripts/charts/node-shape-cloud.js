@@ -14,7 +14,7 @@ const CLOUD_PATH = 'M-125 23.333Q-125 44.036-110.352 58.685-95.703 73.333-75 73.
   + '11.458-16.732 11.458-24.414 29.948-9.115-8.073-21.614-8.073-13.802 0-23.568 9.766-9.766 9.766-'
   + '9.766 23.568 0 9.766 5.339 17.968-16.797 3.906-27.735 17.513-10.938 13.607-10.937 31.185z';
 
-export default function NodeShapeCloud({highlighted, color}) {
+export default function NodeShapeCloud({ highlighted, color }) {
   const pathProps = r => ({ d: CLOUD_PATH, transform: `scale(${r / NODE_BASE_SIZE})` });
 
   return (
