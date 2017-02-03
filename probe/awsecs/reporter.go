@@ -5,6 +5,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/weaveworks/scope/common/xfer"
+	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
@@ -16,6 +18,8 @@ const (
 	TaskFamily          = "ecs_task_family"
 	ServiceDesiredCount = "ecs_service_desired_count"
 	ServiceRunningCount = "ecs_service_running_count"
+	ScaleUp             = "ecs_scale_up"
+	ScaleDown           = "ecs_scale_down"
 )
 
 var (
@@ -83,15 +87,40 @@ type Reporter struct {
 	ClientsByCluster map[string]EcsClient // Exported for test
 	cacheSize        int
 	cacheExpiry      time.Duration
+	handlerRegistry  *controls.HandlerRegistry
+	probeID          string
 }
 
 // Make creates a new Reporter
-func Make(cacheSize int, cacheExpiry time.Duration) Reporter {
-	return Reporter{
+func Make(cacheSize int, cacheExpiry time.Duration, handlerRegistry *controls.HandlerRegistry, probeID string) Reporter {
+	r := Reporter{
 		ClientsByCluster: map[string]EcsClient{},
 		cacheSize:        cacheSize,
 		cacheExpiry:      cacheExpiry,
+		handlerRegistry:  handlerRegistry,
+		probeID:          probeID,
 	}
+
+	handlerRegistry.Batch(nil, map[string]xfer.ControlHandlerFunc{
+		ScaleUp:   r.controlScaleUp,
+		ScaleDown: r.controlScaleDown,
+	})
+
+	return r
+}
+
+func (r Reporter) getClient(cluster string) (EcsClient, error) {
+	client, ok := r.ClientsByCluster[cluster]
+	if !ok {
+		log.Debugf("Creating new ECS client")
+		var err error
+		client, err = newClient(cluster, r.cacheSize, r.cacheExpiry)
+		if err != nil {
+			return nil, err
+		}
+		r.ClientsByCluster[cluster] = client
+	}
+	return client, nil
 }
 
 // Tag needed for Tagger
@@ -103,15 +132,9 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 	for cluster, taskMap := range clusterMap {
 		log.Debugf("Fetching ECS info for cluster %v with %v tasks", cluster, len(taskMap))
 
-		client, ok := r.ClientsByCluster[cluster]
-		if !ok {
-			log.Debugf("Creating new ECS client")
-			var err error
-			client, err = newClient(cluster, r.cacheSize, r.cacheExpiry)
-			if err != nil {
-				return rpt, err
-			}
-			r.ClientsByCluster[cluster] = client
+		client, err := r.getClient(cluster)
+		if err != nil {
+			return rpt, nil
 		}
 
 		taskArns := make([]string, 0, len(taskMap))
@@ -126,10 +149,11 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 		for serviceName, service := range ecsInfo.Services {
 			serviceID := report.MakeECSServiceNodeID(cluster, serviceName)
 			rpt.ECSService = rpt.ECSService.AddNode(report.MakeNodeWith(serviceID, map[string]string{
-				Cluster:             cluster,
-				ServiceDesiredCount: fmt.Sprintf("%d", service.DesiredCount),
-				ServiceRunningCount: fmt.Sprintf("%d", service.RunningCount),
-			}))
+				Cluster:               cluster,
+				ServiceDesiredCount:   fmt.Sprintf("%d", service.DesiredCount),
+				ServiceRunningCount:   fmt.Sprintf("%d", service.RunningCount),
+				report.ControlProbeID: r.probeID,
+			}).WithLatestActiveControls(ScaleUp, ScaleDown))
 		}
 		log.Debugf("Created %v ECS service nodes", len(ecsInfo.Services))
 
@@ -176,6 +200,20 @@ func (Reporter) Report() (report.Report, error) {
 	taskTopology := report.MakeTopology().WithMetadataTemplates(taskMetadata)
 	result.ECSTask = result.ECSTask.Merge(taskTopology)
 	serviceTopology := report.MakeTopology().WithMetadataTemplates(serviceMetadata)
+	serviceTopology.Controls.AddControls([]report.Control{
+		{
+			ID:    ScaleDown,
+			Human: "Scale Down",
+			Icon:  "fa-minus",
+			Rank:  0,
+		},
+		{
+			ID:    ScaleUp,
+			Human: "Scale Up",
+			Icon:  "fa-plus",
+			Rank:  1,
+		},
+	})
 	result.ECSService = result.ECSService.Merge(serviceTopology)
 	return result, nil
 }
@@ -183,4 +221,32 @@ func (Reporter) Report() (report.Report, error) {
 // Name needed for Tagger, Reporter
 func (r Reporter) Name() string {
 	return "awsecs"
+}
+
+// Stop unregisters controls.
+func (r *Reporter) Stop() {
+	r.handlerRegistry.Batch([]string{
+		ScaleUp,
+		ScaleDown,
+	}, nil)
+}
+
+func (r *Reporter) controlScaleUp(req xfer.Request) xfer.Response {
+	return xfer.ResponseError(r.controlScale(req, 1))
+}
+
+func (r *Reporter) controlScaleDown(req xfer.Request) xfer.Response {
+	return xfer.ResponseError(r.controlScale(req, -1))
+}
+
+func (r *Reporter) controlScale(req xfer.Request, amount int) error {
+	cluster, serviceName, ok := report.ParseECSServiceNodeID(req.NodeID)
+	if !ok {
+		return fmt.Errorf("Bad node ID")
+	}
+	client, err := r.getClient(cluster)
+	if err != nil {
+		return err
+	}
+	return client.ScaleService(serviceName, amount)
 }

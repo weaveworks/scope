@@ -1,6 +1,7 @@
 package awsecs
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +21,8 @@ const servicePrefix = "ecs-svc" // Task StartedBy field begins with this if it w
 type EcsClient interface {
 	// Returns a EcsInfo struct containing data needed for a report.
 	GetInfo([]string) EcsInfo
+	// Scales a service up or down by amount
+	ScaleService(string, int) error
 }
 
 // actual implementation
@@ -378,4 +381,10 @@ func (c ecsClientImpl) GetInfo(taskARNs []string) EcsInfo {
 	info := c.makeECSInfo(taskARNs, taskServiceMap)
 
 	return info
+}
+
+// Implements EcsClient.ScaleService
+func (c ecsClientImpl) ScaleService(serviceName string, amount int) error {
+	// TODO placeholder
+	return fmt.Errorf("ScaleService stub: %s, %d", serviceName, amount)
 }

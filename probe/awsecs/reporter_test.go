@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/weaveworks/scope/probe/awsecs"
+	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
@@ -36,7 +37,8 @@ func getTestContainerNode() report.Node {
 }
 
 func TestGetLabelInfo(t *testing.T) {
-	r := awsecs.Make(1e6, time.Hour)
+	hr := controls.NewDefaultHandlerRegistry()
+	r := awsecs.Make(1e6, time.Hour, hr, "test-probe-id")
 	rpt, err := r.Report()
 	if err != nil {
 		t.Fatalf("Error making report: %v", err)
@@ -84,8 +86,13 @@ func (c mockEcsClient) GetInfo(taskARNs []string) awsecs.EcsInfo {
 	return c.info
 }
 
+func (c mockEcsClient) ScaleService(serviceName string, amount int) error {
+	return nil
+}
+
 func TestTagReport(t *testing.T) {
-	r := awsecs.Make(1e6, time.Hour)
+	hr := controls.NewDefaultHandlerRegistry()
+	r := awsecs.Make(1e6, time.Hour, hr, "test-probe-id")
 
 	r.ClientsByCluster[testCluster] = newMockEcsClient(
 		t,
