@@ -1,46 +1,28 @@
 import React from 'react';
-import { extent } from 'd3-array';
+import {
+  NODE_SHAPE_HIGHLIGHT_RADIUS,
+  NODE_SHAPE_BORDER_RADIUS,
+  NODE_SHAPE_SHADOW_RADIUS,
+  NODE_SHAPE_DOT_RADIUS,
+  NODE_BASE_SIZE,
+} from '../constants/styles';
 
-import { isContrastMode } from '../utils/contrast-utils';
+// This path is already normalized so no dynamic rescaling is needed.
+const CLOUD_PATH = 'M-125 23.333Q-125 44.036-110.352 58.685-95.703 73.333-75 73.333H66.667Q90.755 '
+  + '73.333 107.878 56.211 125 39.089 125 15 125-2.188 115.755-16.445 106.51-30.703 91.406-37.734q'
+  + '0.26-3.646 0.261-5.599 0-27.604-19.532-47.136-19.531-19.531-47.135-19.531-20.573 0-37.305 '
+  + '11.458-16.732 11.458-24.414 29.948-9.115-8.073-21.614-8.073-13.802 0-23.568 9.766-9.766 9.766-'
+  + '9.766 23.568 0 9.766 5.339 17.968-16.797 3.906-27.735 17.513-10.938 13.607-10.937 31.185z';
 
-const CLOUD_PATH = 'M 1920,384 Q 1920,225 1807.5,112.5 1695,0 1536,0 H 448 '
-  + 'Q 263,0 131.5,131.5 0,263 0,448 0,580 71,689.5 142,799 258,853 '
-  + 'q -2,28 -2,43 0,212 150,362 150,150 362,150 158,0 286.5,-88 128.5,-88 '
-  + '187.5,-230 70,62 166,62 106,0 181,-75 75,-75 75,-181 0,-75 -41,-138 '
-  + '129,-30 213,-134.5 84,-104.5 84,-239.5 z';
-
-function toPoint(stringPair) {
-  return stringPair.split(',').map(p => parseFloat(p, 10));
-}
-
-function getExtents(svgPath) {
-  const points = svgPath.split(' ').filter(s => s.length > 1).map(toPoint);
-  return [extent(points, p => p[0]), extent(points, p => p[1])];
-}
-
-export default function NodeShapeCloud({highlighted, size, color}) {
-  const [[minx, maxx], [miny, maxy]] = getExtents(CLOUD_PATH);
-  const width = (maxx - minx);
-  const height = (maxy - miny);
-  const cx = width / 2;
-  const cy = height / 2;
-  const pathSize = (width + height) / 2;
-  const baseScale = (size * 2) / pathSize;
-  const strokeWidth = isContrastMode() ? 6 / baseScale : 4 / baseScale;
-
-  const pathProps = v => ({
-    d: CLOUD_PATH,
-    fill: 'none',
-    transform: `scale(-${v * baseScale}) translate(-${cx},-${cy})`,
-    strokeWidth
-  });
+export default function NodeShapeCloud({highlighted, color}) {
+  const pathProps = r => ({ d: CLOUD_PATH, transform: `scale(${r / NODE_BASE_SIZE})` });
 
   return (
     <g className="shape shape-cloud">
-      {highlighted && <path className="highlighted" {...pathProps(0.7)} />}
-      <path className="border" stroke={color} {...pathProps(0.5)} />
-      <path className="shadow" {...pathProps(0.45)} />
-      <circle className="node" r={Math.max(2, (size * 0.125))} />
+      {highlighted && <path className="highlighted" {...pathProps(NODE_SHAPE_HIGHLIGHT_RADIUS)} />}
+      <path className="border" stroke={color} {...pathProps(NODE_SHAPE_BORDER_RADIUS)} />
+      <path className="shadow" {...pathProps(NODE_SHAPE_SHADOW_RADIUS)} />
+      <circle className="node" r={NODE_SHAPE_DOT_RADIUS} />
     </g>
   );
 }

@@ -9,8 +9,6 @@ export const DETAILS_PANEL_MARGINS = {
 
 export const DETAILS_PANEL_OFFSET = 8;
 
-export const CANVAS_METRIC_FONT_SIZE = 0.19;
-
 export const CANVAS_MARGINS = {
   top: 160,
   left: 40,
@@ -18,14 +16,20 @@ export const CANVAS_MARGINS = {
   bottom: 100,
 };
 
-//
-// The base size the shapes were defined at matches nicely w/ a 14px font.
-//
-export const BASE_NODE_SIZE = 64;
-export const MIN_NODE_SIZE = 24;
-export const MAX_NODE_SIZE = 96;
-export const BASE_NODE_LABEL_SIZE = 14;
-export const MIN_NODE_LABEL_SIZE = 12;
+// Node shapes
+export const NODE_SHAPE_HIGHLIGHT_RADIUS = 70;
+export const NODE_SHAPE_BORDER_RADIUS = 50;
+export const NODE_SHAPE_SHADOW_RADIUS = 45;
+export const NODE_SHAPE_DOT_RADIUS = 10;
+export const NODE_BLUR_OPACITY = 0.2;
+// NOTE: This value represents the node unit radius (in pixels). Since zooming is
+// controlled at the top level now, this renormalization would be obsolete (i.e.
+// value 1 could be used instead), if it wasn't for the following factors:
+//   1. `dagre` library only works with integer coordinates,
+//      so >> 1 value is used to increase layout precision.
+//   2. Fonts don't behave nicely (especially on Firefox) if they
+//      are given on a small unit scale as foreign objects in SVG.
+export const NODE_BASE_SIZE = 100;
 
 // Node details table constants
 export const NODE_DETAILS_TABLE_CW = {
