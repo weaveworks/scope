@@ -1,6 +1,5 @@
 #! /bin/bash
 
-set -x
 
 # shellcheck disable=SC1091
 . ./config.sh
