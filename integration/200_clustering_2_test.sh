@@ -24,8 +24,8 @@ check() {
     has_container "$1" weavescope 2
     has_container "$1" db1
     has_container "$1" db2
-    echo "$1"
-    docker_on "$1" logs weavescope
+    #echo "$1"
+    #docker_on "$1" logs weavescope
 }
 
 check "$HOST1"
