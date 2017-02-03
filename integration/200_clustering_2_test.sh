@@ -1,5 +1,6 @@
 #! /bin/bash
 
+
 # shellcheck disable=SC1091
 . ./config.sh
 
@@ -14,7 +15,7 @@ scope_on "$HOST2" launch
 docker_on "$HOST1" run -dit --name db1 peterbourgon/tns-db
 docker_on "$HOST2" run -dit --name db2 peterbourgon/tns-db
 
-sleep 30 # need to allow the scopes to poll dns, resolve the other app ids, and send them reports
+sleep 60 # need to allow the scopes to poll dns, resolve the other app ids, and send them reports
 
 check() {
     has_container "$1" weave 2
@@ -22,9 +23,12 @@ check() {
     has_container "$1" weavescope 2
     has_container "$1" db1
     has_container "$1" db2
+    #echo "$1"
+    #docker_on "$1" logs weavescope
 }
 
 check "$HOST1"
 check "$HOST2"
+
 
 scope_end_suite

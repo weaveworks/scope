@@ -17,7 +17,7 @@ weave_on "$HOST2" run -d --name client alpine /bin/sh -c "while true; do \
 	sleep 1; \
 done"
 
-sleep 30 # need to allow the scopes to poll dns, resolve the other app ids, and send them reports
+sleep 60 # need to allow the scopes to poll dns, resolve the other app ids, and send them reports
 
 check() {
     has_container "$1" nginx
