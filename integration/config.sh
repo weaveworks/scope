@@ -41,6 +41,7 @@ has() {
     local host=$2
     local name=$3
     local count=${4:-1}
+    DEBUG="$(curl -s http://${host}:4040/api/topology/${view}?system=all)"
     assert "curl -s http://${host}:4040/api/topology/${view}?system=all | jq -r '[.nodes[] | select(.label == \"${name}\")] | length'" "$count"
 }
 
