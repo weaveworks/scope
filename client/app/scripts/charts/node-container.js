@@ -11,7 +11,7 @@ const transformedNode = (otherProps, { x, y, k }) => (
   <Node transform={`translate(${x},${y}) scale(${k})`} {...otherProps} />
 );
 
-class NodeContainer extends React.Component {
+export default class NodeContainer extends React.Component {
   render() {
     const { dx, dy, isAnimated, scale, blurred } = this.props;
     const forwardedProps = omit(this.props, 'dx', 'dy', 'isAnimated', 'scale', 'blurred');
@@ -40,4 +40,4 @@ class NodeContainer extends React.Component {
   }
 }
 
-export default connect()(NodeContainer);
+// export default connect()(NodeContainer);

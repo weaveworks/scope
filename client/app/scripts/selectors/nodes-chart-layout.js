@@ -87,6 +87,7 @@ export const graphLayout = createSelector(
     const layoutNodes = graph.nodes.map(node => makeMap({
       x: node.get('x'),
       y: node.get('y'),
+      id: node.get('id'),
       label: node.get('label'),
       pseudo: node.get('pseudo'),
       subLabel: node.get('labelMinor'),
@@ -95,7 +96,7 @@ export const graphLayout = createSelector(
       rank: node.get('rank'),
       shape: node.get('shape'),
       stack: node.get('stack'),
-      networks: node.get('networks'),
+      // networks: node.get('networks'),
     }));
 
     return { layoutNodes, layoutEdges };

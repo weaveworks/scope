@@ -41,7 +41,7 @@ function getNodeShape({ shape, stack }) {
 }
 
 
-class Node extends React.Component {
+export default class Node extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -56,12 +56,22 @@ class Node extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
+    Object.keys(nextProps).forEach((key) => {
+      if (nextProps[key] !== this.props[key]) {
+        console.log(key, nextProps[key], this.props[key]);
+      }
+    });
+    Object.keys(this.props).forEach((key) => {
+      if (nextProps[key] !== this.props[key]) {
+        console.log(key, nextProps[key], this.props[key]);
+      }
+    });
     // marks as matched only when search query changes
-    if (nextProps.searchQuery !== this.props.searchQuery) {
-      this.setState({ matched: nextProps.matched });
-    } else {
-      this.setState({ matched: false });
-    }
+    // if (nextProps.searchQuery !== this.props.searchQuery) {
+    //   this.setState({ matched: nextProps.matched });
+    // } else {
+    //   this.setState({ matched: false });
+    // }
   }
 
   renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) {
@@ -151,25 +161,25 @@ class Node extends React.Component {
 
   handleMouseClick(ev) {
     ev.stopPropagation();
-    this.props.clickNode(this.props.id, this.props.label, this.shapeRef.getBoundingClientRect());
+    // this.props.clickNode(this.props.id, this.props.label, this.shapeRef.getBoundingClientRect());
   }
 
   handleMouseEnter() {
-    this.props.enterNode(this.props.id);
+    // this.props.enterNode(this.props.id);
     this.setState({ hovered: true });
   }
 
   handleMouseLeave() {
-    this.props.leaveNode(this.props.id);
+    // this.props.leaveNode(this.props.id);
     this.setState({ hovered: false });
   }
 }
 
-export default connect(
-  state => ({
-    searchQuery: state.get('searchQuery'),
-    exportingGraph: state.get('exportingGraph'),
-    showingNetworks: state.get('showingNetworks'),
-  }),
-  { clickNode, enterNode, leaveNode }
-)(Node);
+// export default connect(
+//   state => ({
+//     searchQuery: state.get('searchQuery'),
+//     exportingGraph: state.get('exportingGraph'),
+//     showingNetworks: state.get('showingNetworks'),
+//   }),
+//   { clickNode, enterNode, leaveNode }
+// )(Node);

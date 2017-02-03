@@ -67,7 +67,7 @@ class NodesChartNodes extends React.Component {
           label={node.get('label')}
           pseudo={node.get('pseudo')}
           subLabel={node.get('subLabel')}
-          metric={metric(node)}
+          metric={undefined}
           rank={node.get('rank')}
           isAnimated={isAnimated}
           scale={node.get('focused') ? selectedScale : 1}
