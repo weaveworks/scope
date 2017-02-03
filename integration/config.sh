@@ -41,7 +41,7 @@ has() {
     local host=$2
     local name=$3
     local count=${4:-1}
-    assert "curl -s http://${host}:4040/api/topology/${view}?system=show | jq -r '[.nodes[] | select(.label == \"${name}\")] | length'" "$count"
+    assert "curl -s http://${host}:4040/api/topology/${view}?system=all | jq -r '[.nodes[] | select(.label == \"${name}\")] | length'" "$count"
 }
 
 # this checks we have a named container
@@ -53,7 +53,7 @@ node_id() {
     local view="$1"
     local host="$2"
     local name="$3"
-    curl -s "http://${host}:4040/api/topology/${view}?system=show" | jq -r ".nodes[] | select(.label == \"${name}\") | .id"
+    curl -s "http://${host}:4040/api/topology/${view}?system=all" | jq -r ".nodes[] | select(.label == \"${name}\") | .id"
 }
 
 container_id() {
@@ -72,17 +72,17 @@ has_connection_by_id() {
         local nodes
         local edge
         edge=$(echo "$nodes" | (jq -r ".nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])" || true) 2>/dev/null)
-        nodes=$(curl -s "http://$host:4040/api/topology/${view}?system=show" || true)
+        nodes=$(curl -s "http://$host:4040/api/topology/${view}?system=all" || true)
         if [ "$edge" = "true" ]; then
             echo "Found edge $from -> $to after $i secs"
-            assert "curl -s http://$host:4040/api/topology/${view}?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
+            assert "curl -s http://$host:4040/api/topology/${view}?system=all |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
             return
         fi
         sleep 1
     done
 
     echo "Failed to find edge $from -> $to after $timeout secs"
-    assert "curl -s http://$host:4040/api/topology/${view}?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
+    assert "curl -s http://$host:4040/api/topology/${view}?system=all |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
 }
 
 has_connection() {
@@ -109,7 +109,7 @@ wait_for() {
     for i in $(seq "${timeout}"); do
         local nodes
         local found=0
-        nodes=$(curl -s "http://$host:4040/api/topology/${view}?system=show" || true)
+        nodes=$(curl -s "http://$host:4040/api/topology/${view}?system=all" || true)
         for name in "$@"; do
             local count
             count=$(echo "${nodes}" | jq -r "[.nodes[] | select(.label == \"${name}\")] | length")
