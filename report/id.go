@@ -77,6 +77,11 @@ func MakeProcessNodeID(hostID, pid string) string {
 	return hostID + ScopeDelim + pid
 }
 
+// MakeECSServiceNodeID produces an ECS Service node ID from its composite parts.
+func MakeECSServiceNodeID(cluster, serviceName string) string {
+	return cluster + ScopeDelim + serviceName
+}
+
 var (
 	// MakeHostNodeID produces a host node ID from its composite parts.
 	MakeHostNodeID = makeSingleComponentID("host")
@@ -125,12 +130,6 @@ var (
 
 	// ParseECSTaskNodeID parses a replica set node ID
 	ParseECSTaskNodeID = parseSingleComponentID("ecs_task")
-
-	// MakeECSServiceNodeID produces a replica set node ID from its composite parts.
-	MakeECSServiceNodeID = makeSingleComponentID("ecs_service")
-
-	// ParseECSServiceNodeID parses a replica set node ID
-	ParseECSServiceNodeID = parseSingleComponentID("ecs_service")
 )
 
 // makeSingleComponentID makes a single-component node id encoder
@@ -200,6 +199,20 @@ func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) 
 	fields := strings.SplitN(addressNodeID, ScopeDelim, 2)
 	if len(fields) != 2 {
 		return "", "", false
+	}
+	return fields[0], fields[1], true
+}
+
+// ParseECSServiceNodeID produces the cluster, service name from an ECS Service node ID
+func ParseECSServiceNodeID(ecsServiceNodeID string) (cluster, serviceName string, ok bool) {
+	fields := strings.SplitN(ecsServiceNodeID, ScopeDelim, 2)
+	if len(fields) != 2 {
+		return "", "", false
+	}
+	// In previous versions, ECS Service node IDs were of form serviceName + "<ecs_service>".
+	// For backwards compatibility, we should still return a sensical serviceName for these cases.
+	if fields[1] == "<ecs_service>" {
+		return "unknown", fields[0], true
 	}
 	return fields[0], fields[1], true
 }

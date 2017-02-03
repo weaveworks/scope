@@ -105,7 +105,7 @@ func ecsTaskParent(n report.Node) Parent {
 }
 
 func ecsServiceParent(n report.Node) Parent {
-	name, _ := report.ParseECSServiceNodeID(n.ID)
+	_, name, _ := report.ParseECSServiceNodeID(n.ID)
 	return Parent{
 		ID:         n.ID,
 		Label:      name,

@@ -249,7 +249,7 @@ func ecsTaskNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 }
 
 func ecsServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label, _ = report.ParseECSServiceNodeID(n.ID)
+	_, base.Label, _ = report.ParseECSServiceNodeID(n.ID)
 	base.Stack = true
 	return base, true
 }

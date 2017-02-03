@@ -148,7 +148,7 @@ func TestTagReport(t *testing.T) {
 	}
 
 	// Check service node is present and contains expected values
-	service, ok := rpt.ECSService.Nodes[report.MakeECSServiceNodeID(testServiceName)]
+	service, ok := rpt.ECSService.Nodes[report.MakeECSServiceNodeID(testCluster, testServiceName)]
 	if !ok {
 		t.Fatalf("Result report did not contain service %v: %v", testServiceName, rpt.ECSService.Nodes)
 	}
@@ -175,7 +175,7 @@ func TestTagReport(t *testing.T) {
 	}
 	containerParentsExpected := map[string]string{
 		report.ECSTask:    report.MakeECSTaskNodeID(testTaskARN),
-		report.ECSService: report.MakeECSServiceNodeID(testServiceName),
+		report.ECSService: report.MakeECSServiceNodeID(testCluster, testServiceName),
 	}
 	for key, expectedValue := range containerParentsExpected {
 		values, ok := container.Parents.Lookup(key)
