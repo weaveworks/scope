@@ -385,6 +385,24 @@ func (c ecsClientImpl) GetInfo(taskARNs []string) EcsInfo {
 
 // Implements EcsClient.ScaleService
 func (c ecsClientImpl) ScaleService(serviceName string, amount int) error {
-	// TODO placeholder
-	return fmt.Errorf("ScaleService stub: %s, %d", serviceName, amount)
+	// Note this is inherently racey, due to needing to get, modify, then update the DesiredCount.
+
+	// refresh service in cache
+	c.describeServices([]string{serviceName})
+	// now check the cache to see if it worked
+	service, ok := c.getCachedService(serviceName)
+	if !ok {
+		return fmt.Errorf("Service %s not found", serviceName)
+	}
+
+	newCount := service.DesiredCount + int64(amount)
+	if newCount < 0 {
+		return fmt.Errorf("Cannot reduce count below zero")
+	}
+	_, err := c.client.UpdateService(&ecs.UpdateServiceInput{
+		Cluster:      &c.cluster,
+		Service:      &serviceName,
+		DesiredCount: &newCount,
+	})
+	return err
 }
