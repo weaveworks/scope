@@ -1,5 +1,6 @@
 import debug from 'debug';
 import React from 'react';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
 
@@ -73,6 +74,10 @@ class NodeDetails extends React.Component {
   renderLoading() {
     const node = this.props.nodes.get(this.props.nodeId);
     const label = node ? node.get('label') : this.props.label;
+    // NOTE: If we start the fa-spin animation before the node details panel has been
+    // mounted, the spinner is displayed blurred the whole time in Chrome (possibly
+    // caused by a bug having to do with animating the details panel).
+    const spinnerClassName = classNames('fa fa-circle-o-notch', { 'fa-spin': this.props.mounted });
     const nodeColor = (node ?
                        getNodeColorDark(node.get('rank'), label, node.get('pseudo')) :
                        getNeutralColor());
@@ -98,7 +103,7 @@ class NodeDetails extends React.Component {
         </div>
         <div className="node-details-content">
           <div className="node-details-content-loading">
-            <span className="fa fa-circle-o-notch fa-spin" />
+            <span className={spinnerClassName} />
           </div>
         </div>
       </div>
