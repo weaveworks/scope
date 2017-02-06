@@ -41,7 +41,7 @@ function getNodeShape({ shape, stack }) {
 }
 
 
-export default class Node extends React.PureComponent {
+class Node extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -53,26 +53,6 @@ export default class Node extends React.PureComponent {
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
     this.saveShapeRef = this.saveShapeRef.bind(this);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    console.log('Node received props');
-    Object.keys(nextProps).forEach((key) => {
-      if (nextProps[key] !== this.props[key]) {
-        console.log(key, nextProps[key], this.props[key]);
-      }
-    });
-    Object.keys(this.props).forEach((key) => {
-      if (nextProps[key] !== this.props[key]) {
-        console.log(key, nextProps[key], this.props[key]);
-      }
-    });
-    // marks as matched only when search query changes
-    // if (nextProps.searchQuery !== this.props.searchQuery) {
-    //   this.setState({ matched: nextProps.matched });
-    // } else {
-    //   this.setState({ matched: false });
-    // }
   }
 
   renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) {
@@ -134,7 +114,6 @@ export default class Node extends React.PureComponent {
     const subLabelClassName = classnames('node-sublabel', { truncate });
 
     const NodeShapeType = getNodeShape(this.props);
-    const useSvgLabels = exportingGraph;
     const mouseEvents = {
       onClick: this.handleMouseClick,
       onMouseEnter: this.handleMouseEnter,
@@ -143,7 +122,7 @@ export default class Node extends React.PureComponent {
 
     return (
       <g className={nodeClassName} transform={transform}>
-        {useSvgLabels ?
+        {exportingGraph ?
           this.renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) :
           this.renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents)}
 
@@ -162,25 +141,24 @@ export default class Node extends React.PureComponent {
 
   handleMouseClick(ev) {
     ev.stopPropagation();
-    // this.props.clickNode(this.props.id, this.props.label, this.shapeRef.getBoundingClientRect());
+    this.props.clickNode(this.props.id, this.props.label, this.shapeRef.getBoundingClientRect());
   }
 
   handleMouseEnter() {
-    // this.props.enterNode(this.props.id);
+    this.props.enterNode(this.props.id);
     this.setState({ hovered: true });
   }
 
   handleMouseLeave() {
-    // this.props.leaveNode(this.props.id);
+    this.props.leaveNode(this.props.id);
     this.setState({ hovered: false });
   }
 }
 
-// export default connect(
-//   state => ({
-//     searchQuery: state.get('searchQuery'),
-//     exportingGraph: state.get('exportingGraph'),
-//     showingNetworks: state.get('showingNetworks'),
-//   }),
-//   { clickNode, enterNode, leaveNode }
-// )(Node);
+export default connect(
+  state => ({
+    exportingGraph: state.get('exportingGraph'),
+    showingNetworks: state.get('showingNetworks'),
+  }),
+  { clickNode, enterNode, leaveNode }
+)(Node);
