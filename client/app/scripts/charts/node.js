@@ -41,7 +41,7 @@ function getNodeShape({ shape, stack }) {
 }
 
 
-export default class Node extends React.Component {
+export default class Node extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -56,6 +56,7 @@ export default class Node extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
+    console.log('Node received props');
     Object.keys(nextProps).forEach((key) => {
       if (nextProps[key] !== this.props[key]) {
         console.log(key, nextProps[key], this.props[key]);
