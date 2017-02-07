@@ -124,7 +124,7 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 
 		// Create all the services first
 		for serviceName, service := range ecsInfo.Services {
-			serviceID := report.MakeECSServiceNodeID(serviceName)
+			serviceID := report.MakeECSServiceNodeID(cluster, serviceName)
 			rpt.ECSService = rpt.ECSService.AddNode(report.MakeNodeWith(serviceID, map[string]string{
 				Cluster:             cluster,
 				ServiceDesiredCount: fmt.Sprintf("%d", service.DesiredCount),
@@ -153,7 +153,7 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 			parentsSets := report.MakeSets()
 			parentsSets = parentsSets.Add(report.ECSTask, report.MakeStringSet(taskID))
 			if serviceName, ok := ecsInfo.TaskServiceMap[taskArn]; ok {
-				serviceID := report.MakeECSServiceNodeID(serviceName)
+				serviceID := report.MakeECSServiceNodeID(cluster, serviceName)
 				parentsSets = parentsSets.Add(report.ECSService, report.MakeStringSet(serviceID))
 			}
 			for _, containerID := range info.ContainerIDs {
