@@ -13,7 +13,7 @@ import Edge from './edge';
 // points along the edge curve, e.g. values:
 //   * 2 -> edges are simply straight lines
 //   * 4 -> minimal value for loops to look ok
-const WAYPOINTS_COUNT = 8;
+const WAYPOINTS_COUNT = 2;
 
 const spline = line()
   .curve(curveBasis)
@@ -37,7 +37,7 @@ const waypointsMapToArray = (waypointsMap) => {
 };
 
 
-class EdgeContainer extends React.Component {
+export default class EdgeContainer extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
     this.state = { waypointsMap: makeMap() };
@@ -103,4 +103,4 @@ class EdgeContainer extends React.Component {
   }
 }
 
-export default connect()(EdgeContainer);
+// export default connect()(EdgeContainer);

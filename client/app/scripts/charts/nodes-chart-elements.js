@@ -10,6 +10,10 @@ class NodesChartElements extends React.Component {
     const props = this.props;
     return (
       <g className="nodes-chart-elements" transform={props.transform}>
+        <NodesChartEdges
+          layoutEdges={props.layoutEdges}
+          selectedScale={props.selectedScale}
+          isAnimated={props.isAnimated} />
         <NodesChartNodes
           layoutNodes={props.layoutNodes}
           selectedScale={props.selectedScale}
