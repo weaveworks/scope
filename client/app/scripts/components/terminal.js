@@ -9,7 +9,7 @@ import Term from 'xterm';
 import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
-import { getPipeStatus, doResizeTty, getWebsocketUrl } from '../utils/web-api-utils';
+import { getPipeStatus, doResizeTty, getWebsocketUrl, getApiPath } from '../utils/web-api-utils';
 
 const log = debug('scope:terminal');
 
@@ -243,7 +243,7 @@ class Terminal extends React.Component {
 
     const bcr = this.node.getBoundingClientRect();
     const minWidth = (this.state.characterWidth * 80) + (8 * 2);
-    openNewWindow(`terminal.html#!/state/${paramString}`, bcr, minWidth);
+    openNewWindow(`${getApiPath()}/terminal.html#!/state/${paramString}`, bcr, minWidth);
   }
 
   handleResize() {
