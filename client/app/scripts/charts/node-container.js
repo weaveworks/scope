@@ -15,7 +15,7 @@ const transformedNode = (otherProps, { x, y, k, opacity }) => (
   </g>
 );
 
-export default class NodeContainer extends React.PureComponent {
+class NodeContainer extends React.PureComponent {
   render() {
     const { dx, dy, isAnimated, scale, blurred } = this.props;
     const forwardedProps = omit(this.props, 'dx', 'dy', 'isAnimated', 'scale', 'blurred');
@@ -41,4 +41,4 @@ export default class NodeContainer extends React.PureComponent {
   }
 }
 
-// export default connect()(NodeContainer);
+export default connect()(NodeContainer);
