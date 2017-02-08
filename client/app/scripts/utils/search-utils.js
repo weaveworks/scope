@@ -235,26 +235,26 @@ export function parseQuery(query) {
 /**
  * Returns {topologyId: {nodeId: matches}}
  */
-export function updateNodeMatches(state) {
-  console.log('Update node matches');
-  const parsed = parseQuery(state.get('searchQuery'));
-  if (parsed) {
-    if (state.has('nodesByTopology')) {
-      state.get('nodesByTopology').forEach((nodes, topologyId) => {
-        const nodeMatches = searchTopology(nodes, parsed);
-        if (nodeMatches.size > 0) {
-          state = state.setIn(['searchNodeMatches', topologyId], nodeMatches);
-        } else {
-          state = state.deleteIn(['searchNodeMatches', topologyId]);
-        }
-      });
-    }
-  } else if (state.has('searchNodeMatches')) {
-    state = state.update('searchNodeMatches', snm => snm.clear());
-  }
-
-  return state;
-}
+// export function updateNodeMatches(state) {
+//   console.log('Update node matches');
+//   const parsed = parseQuery(state.get('searchQuery'));
+//   if (parsed) {
+//     if (state.has('nodesByTopology')) {
+//       state.get('nodesByTopology').forEach((nodes, topologyId) => {
+//         const nodeMatches = searchTopology(nodes, parsed);
+//         if (nodeMatches.size > 0) {
+//           state = state.setIn(['searchNodeMatches', topologyId], nodeMatches);
+//         } else {
+//           state = state.deleteIn(['searchNodeMatches', topologyId]);
+//         }
+//       });
+//     }
+//   } else if (state.has('searchNodeMatches')) {
+//     state = state.update('searchNodeMatches', snm => snm.clear());
+//   }
+//
+//   return state;
+// }
 
 
 export function getSearchableFields(nodes) {
@@ -326,5 +326,5 @@ export const testable = {
   parseQuery,
   parseValue,
   searchTopology,
-  updateNodeMatches
+  // updateNodeMatches
 };

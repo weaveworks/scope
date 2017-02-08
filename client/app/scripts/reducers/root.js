@@ -5,7 +5,8 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
 
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
-import { applyPinnedSearches, updateNodeMatches } from '../utils/search-utils';
+import { updatedNodeMatches } from '../selectors/search';
+import { applyPinnedSearches } from '../utils/search-utils';
 import { getNetworkNodes, getAvailableNetworks } from '../utils/network-view-utils';
 import {
   findTopologyById,
@@ -59,7 +60,7 @@ export const initialState = makeMap({
   pinnedSearches: makeList(), // list of node filters
   routeSet: false,
   searchFocused: false,
-  searchNodeMatches: makeMap(),
+  // searchNodeMatches: makeMap(),
   searchQuery: null,
   selectedMetric: null,
   selectedNetwork: null,
@@ -377,8 +378,8 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.DO_SEARCH: {
-      state = state.set('searchQuery', action.searchQuery);
-      return updateNodeMatches(state);
+      return state.set('searchQuery', action.searchQuery);
+      // return updateNodeMatches(state);
     }
 
     case ActionTypes.ENTER_EDGE: {
@@ -465,7 +466,7 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.PIN_SEARCH: {
       state = state.set('searchQuery', '');
-      state = updateNodeMatches(state);
+      // state = updateNodeMatches(state);
       const pinnedSearches = state.get('pinnedSearches');
       state = state.setIn(['pinnedSearches', pinnedSearches.size], action.query);
       return applyPinnedSearches(state);
@@ -604,7 +605,7 @@ export function rootReducer(state = initialState, action) {
 
       // update nodes cache and search results
       state = state.setIn(['nodesByTopology', state.get('currentTopologyId')], state.get('nodes'));
-      state = updateNodeMatches(state);
+      // state = updateNodeMatches(state);
 
       return state;
     }
@@ -612,7 +613,7 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY: {
       // not sure if mergeDeep() brings any benefit here
       state = state.setIn(['nodesByTopology', action.topologyId], fromJS(action.nodes));
-      state = updateNodeMatches(state);
+      // state = updateNodeMatches(state);
       return state;
     }
 

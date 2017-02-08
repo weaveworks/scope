@@ -156,7 +156,6 @@ export default connect(
   state => ({
     exportingGraph: state.get('exportingGraph'),
     showingNetworks: state.get('showingNetworks'),
-    // matches:
   }),
   { clickNode, enterNode, leaveNode }
 )(Node);

@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { fromJS, Map as makeMap, List as makeList } from 'immutable';
 
+import { currentTopologySearchNodeMatchesSelector } from '../selectors/search';
 import { getAdjacentNodes } from '../utils/topology-utils';
 import NodeContainer from './node-container';
 
@@ -9,7 +10,7 @@ class NodesChartNodes extends React.Component {
   render() {
     const { adjacentNodes, highlightedNodeIds, layoutNodes, isAnimated, mouseOverNodeId,
       selectedScale, searchQuery, selectedMetric, selectedNetwork, selectedNodeId,
-      topCardNode, searchNodeMatches = makeMap() } = this.props;
+      topCardNode, searchNodeMatches } = this.props;
 
     // highlighter functions
     const setHighlighted = node => node.set('highlighted',
@@ -51,6 +52,7 @@ class NodesChartNodes extends React.Component {
       .map(setBlurred)
       .sortBy(sortNodes);
 
+    console.log('Rerender chart nodes');
     return (
       <g className="nodes-chart-nodes">
         {nodesToRender.map(node => <NodeContainer
@@ -87,7 +89,8 @@ function mapStateToProps(state) {
     selectedMetric: state.get('selectedMetric'),
     selectedNetwork: state.get('selectedNetwork'),
     selectedNodeId: state.get('selectedNodeId'),
-    searchNodeMatches: state.getIn(['searchNodeMatches', currentTopologyId]),
+    searchNodeMatches: currentTopologySearchNodeMatchesSelector(state),
+    // searchNodeMatches: state.getIn(['searchNodeMatches', currentTopologyId]),
     searchQuery: state.get('searchQuery'),
     topCardNode: state.get('nodeDetails').last()
   };

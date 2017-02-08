@@ -4,6 +4,7 @@ import classnames from 'classnames';
 import { debounce } from 'lodash';
 
 import { blurSearch, doSearch, focusSearch, showHelp } from '../actions/app-actions';
+import { searchNodeMatchesSelector } from '../selectors/search';
 import { slugify } from '../utils/string-utils';
 import { isTopologyEmpty } from '../utils/topology-utils';
 import SearchItem from './search-item';
@@ -156,7 +157,8 @@ export default connect(
     pinnedSearches: state.get('pinnedSearches'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
-    searchNodeMatches: state.get('searchNodeMatches'),
+    // searchNodeMatches: state.get('searchNodeMatches'),
+    searchNodeMatches: searchNodeMatchesSelector(state),
     topologiesLoaded: state.get('topologiesLoaded')
   }),
   { blurSearch, doSearch, focusSearch, onClickHelp: showHelp }
