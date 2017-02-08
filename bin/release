@@ -206,7 +206,7 @@ publish() {
 
         echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
         $SUDO docker tag "$DOCKERHUB_USER"/scope "$DOCKERHUB_USER/scope:$VERSION"
-        $SUDO docker push "$DOCKERHUB_USER"/scope:$"VERSION"
+        $SUDO docker push "$DOCKERHUB_USER/scope:$VERSION"
         $SUDO docker tag "$DOCKERHUB_USER/scope:$VERSION" "$DOCKERHUB_USER/scope:latest_release"
         $SUDO docker push "$DOCKERHUB_USER/scope:latest_release"
         echo "** Docker images tagged and pushed"
