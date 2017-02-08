@@ -113,7 +113,6 @@ Internal improvements and cleanup:
 - Fix force-push to master
 	[#2094](https://github.com/weaveworks/scope/pull/2094)
 - Upgraded eslint & eslint-config-airbnb	
-- Reapplied all the eslint upgrade changes
 	[#2058](https://github.com/weaveworks/scope/pull/2058)
 	[#2084](https://github.com/weaveworks/scope/pull/2084)
 	[#2089](https://github.com/weaveworks/scope/pull/2089)
@@ -139,7 +138,9 @@ Internal improvements and cleanup:
 	[#2021](https://github.com/weaveworks/scope/pull/2021)
 - Using `webpack-dev-middleware` instead of `webpack-dev-server` directly
 	[#2034](https://github.com/weaveworks/scope/pull/2034)
-
+- Create `latest_release` Docker image tag during release process
+	[#2216](https://github.com/weaveworks/scope/issues/2216)
+	
 Weave Cloud related changes:
 - Deploy to quay when merging to master
 	[#2134](https://github.com/weaveworks/scope/pull/2134)
