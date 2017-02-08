@@ -30,6 +30,7 @@ Performance improvements:
 	[#2128](https://github.com/weaveworks/scope/pull/2128)
 	[#2179](https://github.com/weaveworks/scope/pull/2179)
 	[#2180](https://github.com/weaveworks/scope/pull/2180)
+	[#2210](https://github.com/weaveworks/scope/pull/2210)
 - Disable XML in conntrack parsing
 	[#2095](https://github.com/weaveworks/scope/pull/2095)
 	[#2118](https://github.com/weaveworks/scope/pull/2118)
@@ -67,6 +68,10 @@ Bug fixes:
 	[#1187](https://github.com/weaveworks/scope/issues/1187)
 - Fix two bugs caused by transition to D3 v4
 	[#2048](https://github.com/weaveworks/scope/pull/2048)
+- Popped out terminal styles don't quite align with in-scope terminal styles
+	[#2209](https://github.com/weaveworks/scope/issues/2209)
+- Radii of rounded-corner shape don't quite align
+	[#2212](https://github.com/weaveworks/scope/issues/2212)
 	
 Documentation:
 - Fix Scope arguments in Docker Compose installation docs
