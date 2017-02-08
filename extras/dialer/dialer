@@ -1,12 +1,16 @@
 #!/bin/bash
 set -eu
 if [ $# -lt 1 ]; then
-    echo "Usage: $0 <ip:port> [<max_dialer>]" >&2
+    echo "Usage: $0 <ip:port> [<max_dialer> [<random_seed>]]" >&2
     exit 1
 fi
 
 readonly addr=$1
 readonly max_dialer=${2:-50}
+
+if [[ $# -gt 2 ]]; then
+    RANDOM=$3
+fi
 
 dialer=()
 # shellcheck disable=SC2154
