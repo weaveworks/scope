@@ -236,6 +236,7 @@ export function parseQuery(query) {
  * Returns {topologyId: {nodeId: matches}}
  */
 export function updateNodeMatches(state) {
+  console.log('Update node matches');
   const parsed = parseQuery(state.get('searchQuery'));
   if (parsed) {
     if (state.has('nodesByTopology')) {

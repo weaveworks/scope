@@ -56,7 +56,6 @@ class NodesChartNodes extends React.Component {
         {nodesToRender.map(node => <NodeContainer
           blurred={node.get('blurred')}
           focused={node.get('focused')}
-          matched={searchNodeMatches.has(node.get('id'))}
           matches={searchNodeMatches.get(node.get('id'))}
           highlighted={node.get('highlighted')}
           shape={node.get('shape')}

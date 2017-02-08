@@ -46,7 +46,6 @@ class Node extends React.PureComponent {
     super(props, context);
     this.state = {
       hovered: false,
-      matched: false
     };
 
     this.handleMouseClick = this.handleMouseClick.bind(this);
@@ -68,7 +67,7 @@ class Node extends React.PureComponent {
   }
 
   renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents) {
-    const { label, subLabel, blurred, matches = makeMap() } = this.props;
+    const { label, subLabel, matches = makeMap() } = this.props;
     const matchedMetadata = matches.get('metadata', makeList());
     const matchedParents = matches.get('parents', makeList());
     const matchedNodeDetails = matchedMetadata.concat(matchedParents);
@@ -87,16 +86,16 @@ class Node extends React.PureComponent {
           <div className={subLabelClassName}>
             <MatchedText text={subLabel} match={matches.get('sublabel')} />
           </div>
-          {!blurred && <MatchedResults matches={matchedNodeDetails} />}
+          <MatchedResults matches={matchedNodeDetails} />
         </div>
       </foreignObject>
     );
   }
 
   render() {
-    const { blurred, focused, highlighted, networks, pseudo, rank, label,
+    const { focused, highlighted, networks, pseudo, rank, label,
       transform, exportingGraph, showingNetworks, stack, id, metric } = this.props;
-    const { hovered, matched } = this.state;
+    const { hovered } = this.state;
 
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
@@ -104,9 +103,7 @@ class Node extends React.PureComponent {
 
     const nodeClassName = classnames('node', {
       highlighted,
-      blurred: blurred && !focused,
       hovered,
-      matched,
       pseudo
     });
 
@@ -159,6 +156,7 @@ export default connect(
   state => ({
     exportingGraph: state.get('exportingGraph'),
     showingNetworks: state.get('showingNetworks'),
+    // matches:
   }),
   { clickNode, enterNode, leaveNode }
 )(Node);

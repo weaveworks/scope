@@ -79,7 +79,7 @@ function truncateChunks(chunks, text, maxLength) {
  * `match` is a text match object of shape `{start, length}`
  * that delimit text matches in `text`. `label` shows the origin of the text.
  */
-export default class MatchedText extends React.Component {
+class MatchedText extends React.Component {
 
   render() {
     const { match, text, truncate, maxLength } = this.props;
@@ -110,4 +110,4 @@ export default class MatchedText extends React.Component {
   }
 }
 
-// export default connect()(MatchedText);
+export default connect()(MatchedText);
