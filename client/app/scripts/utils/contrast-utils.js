@@ -1,7 +1,5 @@
-export const contrastModeUrl = 'contrast.html';
-
-const contrastMode = window.location.pathname.indexOf(contrastModeUrl) > -1;
+import { parseHashState } from './router-utils';
 
 export function isContrastMode() {
-  return contrastMode;
+  return parseHashState().contrastMode;
 }
