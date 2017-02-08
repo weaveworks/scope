@@ -34,7 +34,7 @@ export default function NodeShapeSquare({ id, highlighted, color, rx = 0, ry = 0
       {hasMetric && getClipPathDefinition(clipId, height)}
       {highlighted && <rect className="highlighted" {...rectProps(NODE_SHAPE_HIGHLIGHT_RADIUS)} />}
       <rect className="border" stroke={color} {...rectProps(NODE_SHAPE_BORDER_RADIUS)} />
-      <rect className="shadow" {...rectProps(NODE_SHAPE_SHADOW_RADIUS)} />
+      <rect className="shadow" {...rectProps(NODE_SHAPE_SHADOW_RADIUS, 0.85)} />
       {hasMetric && <rect
         className="metric-fill"
         clipPath={`url(#${clipId})`}
