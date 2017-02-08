@@ -1,9 +1,12 @@
 import React from 'react';
+
+import { NODE_BASE_SIZE } from '../constants/styles';
 import { isContrastMode } from '../utils/contrast-utils';
 
 export default function NodeShapeStack(props) {
-  const dy = isContrastMode() ? 0.15 : 0.1;
-  const highlightScale = [1, 1 + dy];
+  const shift = isContrastMode() ? 0.15 : 0.1;
+  const highlightScale = [1, 1 + shift];
+  const dy = NODE_BASE_SIZE * shift;
 
   const Shape = props.shape;
   return (
