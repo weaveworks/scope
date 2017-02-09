@@ -166,11 +166,12 @@ export function getTopologies(options, dispatch) {
   });
 }
 
-export function getNodesDelta(topologyUrl, options, dispatch) {
+export function getNodesDelta(topologyUrl, options, dispatch, forceReload) {
   const optionsQuery = buildOptionsQuery(options);
+  // only recreate websocket if url changed or if forced (weave cloud instance reload);
+  const isNewUrl = topologyUrl && (topologyUrl !== currentUrl || currentOptions !== optionsQuery);
 
-  // only recreate websocket if url changed
-  if (topologyUrl && (topologyUrl !== currentUrl || currentOptions !== optionsQuery)) {
+  if (forceReload || isNewUrl) {
     createWebsocket(topologyUrl, optionsQuery, dispatch);
     currentUrl = topologyUrl;
     currentOptions = optionsQuery;
