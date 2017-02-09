@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { List as makeList, Map as makeMap } from 'immutable';
 import NodeDetailsTable from '../components/node-details/node-details-table';
 import { clickNode, sortOrderChanged } from '../actions/app-actions';
-import { nodesSelector } from '../selectors/nodes-chart';
+import { shownNodesSelector } from '../selectors/nodes';
 
 import { currentTopologySearchNodeMatchesSelector } from '../selectors/search';
 import { getNodeColor } from '../utils/color-utils';
@@ -144,13 +144,12 @@ class NodesGrid extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    nodes: nodesSelector(state),
+    nodes: shownNodesSelector(state),
     gridSortedBy: state.get('gridSortedBy'),
     gridSortedDesc: state.get('gridSortedDesc'),
     currentTopology: state.get('currentTopology'),
     currentTopologyId: state.get('currentTopologyId'),
     searchNodeMatches: currentTopologySearchNodeMatchesSelector(state),
-    // searchNodeMatches: state.getIn(['searchNodeMatches', state.get('currentTopologyId')]),
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId')
   };

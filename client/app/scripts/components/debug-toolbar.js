@@ -67,7 +67,9 @@ function addMetrics(availableMetrics, node, v) {
   ]);
 
   return Object.assign({}, node, {
-    metrics: metrics.map(m => Object.assign({}, m, {label: 'zing', max: 100, value: v})).toJS()
+    metrics: metrics.map(m => Object.assign({}, m, {
+      id: 'zing', label: 'zing', max: 100, value: v
+    })).toJS()
   });
 }
 

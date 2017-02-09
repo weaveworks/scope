@@ -152,10 +152,14 @@ class Node extends React.PureComponent {
   }
 }
 
-export default connect(
-  state => ({
+function mapStateToProps(state) {
+  return {
     exportingGraph: state.get('exportingGraph'),
     showingNetworks: state.get('showingNetworks'),
-  }),
+  };
+}
+
+export default connect(
+  mapStateToProps,
   { clickNode, enterNode, leaveNode }
 )(Node);

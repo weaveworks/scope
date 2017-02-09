@@ -6,7 +6,7 @@ import { Map as makeMap } from 'immutable';
 import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
-import { nodeAdjacenciesSelector } from '../selectors/nodes-chart';
+import { nodeAdjacenciesSelector } from '../selectors/nodes';
 import { clickBackground } from '../actions/app-actions';
 import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';

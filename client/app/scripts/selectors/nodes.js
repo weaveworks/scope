@@ -2,19 +2,16 @@ import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
 
-const allNodesSelector = state => state.get('nodes');
-
-export const nodesSelector = createSelector(
+export const shownNodesSelector = createSelector(
   [
-    allNodesSelector,
+    state => state.get('nodes'),
   ],
-  allNodes => allNodes.filter(node => !node.get('filtered'))
+  nodes => nodes.filter(node => !node.get('filtered'))
 );
-
 
 export const nodeAdjacenciesSelector = createSelector(
   [
-    nodesSelector,
+    shownNodesSelector,
   ],
   nodes => nodes.map(node => makeMap({
     id: node.get('id'),

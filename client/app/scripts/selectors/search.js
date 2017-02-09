@@ -5,37 +5,35 @@ import { Map as makeMap } from 'immutable';
 import { parseQuery, searchTopology, getSearchableFields } from '../utils/search-utils';
 
 
-const allNodesSelector = state => state.get('nodes');
-const nodesByTopologySelector = state => state.get('nodesByTopology');
-const currentTopologyIdSelector = state => state.get('currentTopologyId');
-const searchQuerySelector = state => state.get('searchQuery');
-
 const parsedSearchQuerySelector = createSelector(
   [
-    searchQuerySelector
+    state => state.get('searchQuery')
   ],
   searchQuery => parseQuery(searchQuery)
 );
 
 export const searchNodeMatchesSelector = createMapSelector(
   [
-    nodesByTopologySelector,
+    state => state.get('nodesByTopology'),
     parsedSearchQuerySelector,
   ],
+  // TODO: Bring map selectors one level deeper here so that `searchTopology` is
+  // not executed against all the topology nodes every time a small change occurs.
   (nodes, parsed) => (parsed ? searchTopology(nodes, parsed) : makeMap())
 );
 
 export const currentTopologySearchNodeMatchesSelector = createSelector(
   [
+    state => state.get('currentTopologyId'),
     searchNodeMatchesSelector,
-    currentTopologyIdSelector,
   ],
-  (nodesByTopology, currentTopologyId) => nodesByTopology.get(currentTopologyId) || makeMap()
+  (currentTopologyId, nodesByTopology) => nodesByTopology.get(currentTopologyId) || makeMap()
 );
 
 export const searchableFieldsSelector = createSelector(
   [
-    allNodesSelector,
+    state => state.get('nodes'),
   ],
+  // TODO: Bring this function in the selectors.
   getSearchableFields
 );
