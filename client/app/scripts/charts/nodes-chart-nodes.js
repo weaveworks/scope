@@ -52,7 +52,7 @@ class NodesChartNodes extends React.Component {
       .map(setBlurred)
       .sortBy(sortNodes);
 
-    console.log('Rerender chart nodes');
+    // console.log('Rerender chart nodes');
     return (
       <g className="nodes-chart-nodes">
         {nodesToRender.map(node => <NodeContainer

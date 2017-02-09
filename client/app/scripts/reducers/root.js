@@ -604,6 +604,7 @@ export function rootReducer(state = initialState, action) {
       }
 
       // update nodes cache and search results
+      console.log('Receive nodes delta');
       state = state.setIn(['nodesByTopology', state.get('currentTopologyId')], state.get('nodes'));
       // state = updateNodeMatches(state);
 
@@ -612,6 +613,7 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY: {
       // not sure if mergeDeep() brings any benefit here
+      console.log('Receive nodes for topology', action.nodes);
       state = state.setIn(['nodesByTopology', action.topologyId], fromJS(action.nodes));
       // state = updateNodeMatches(state);
       return state;

@@ -6,7 +6,18 @@ import { parseQuery, searchTopology } from '../utils/search-utils';
 
 const nodesByTopologySelector = state => state.get('nodesByTopology');
 const currentTopologyIdSelector = state => state.get('currentTopologyId');
-const parsedSearchQuerySelector = state => parseQuery(state.get('searchQuery'));
+const searchQuerySelector = state => state.get('searchQuery');
+
+const parsedSearchQuerySelector = createSelector(
+  [
+    searchQuerySelector
+  ],
+  searchQuery => parseQuery(searchQuery)
+  // (searchQuery) => {
+  //   console.log('>>> Parse search query');
+  //   return parseQuery(searchQuery);
+  // }
+);
 
 export const searchNodeMatchesSelector = createMapSelector(
   [
@@ -14,6 +25,10 @@ export const searchNodeMatchesSelector = createMapSelector(
     parsedSearchQuerySelector,
   ],
   (nodes, parsed) => (parsed ? searchTopology(nodes, parsed) : makeMap())
+  // (nodes, parsed, topologyId) => {
+  //   console.log('>>> Update for topology', parsed, topologyId, nodes);
+  //   return parsed ? searchTopology(nodes, parsed) : makeMap();
+  // }
 );
 
 export const currentTopologySearchNodeMatchesSelector = createSelector(
@@ -21,8 +36,9 @@ export const currentTopologySearchNodeMatchesSelector = createSelector(
     searchNodeMatchesSelector,
     currentTopologyIdSelector,
   ],
-  (nodesByTopology, currentTopologyId) => {
-    console.log(`>>> Update current topology search nodes matches ${currentTopologyId}`);
-    return nodesByTopology.get(currentTopologyId) || makeMap();
-  }
+  (nodesByTopology, currentTopologyId) => nodesByTopology.get(currentTopologyId) || makeMap()
+  // (nodesByTopology, currentTopologyId) => {
+  //   console.log('>>> Update current topology search nodes matches');
+  //   return nodesByTopology.get(currentTopologyId) || makeMap();
+  // }
 );
