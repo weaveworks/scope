@@ -47,7 +47,7 @@ var (
 )
 
 func checkNewScopeVersion(flags probeFlags) {
-	checkpointFlags := map[string]string{}
+	checkpointFlags := makeBaseCheckpointFlags()
 	if flags.kubernetesEnabled {
 		checkpointFlags["kubernetes_enabled"] = "true"
 	}
