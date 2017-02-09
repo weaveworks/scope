@@ -50,20 +50,14 @@ class NodesChartEdges extends React.Component {
   }
 }
 
-function mapStateToProps(state) {
-  // const currentTopologyId = state.get('currentTopologyId');
-  return {
+export default connect(
+  state => ({
     hasSelectedNode: hasSelectedNodeFn(state),
     highlightedEdgeIds: state.get('highlightedEdgeIds'),
-    // searchNodeMatches: state.getIn(['searchNodeMatches', currentTopologyId]),
     searchNodeMatches: currentTopologySearchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNetwork: state.get('selectedNetwork'),
     selectedNetworkNodes: state.getIn(['networkNodes', state.get('selectedNetwork')], makeList()),
     selectedNodeId: state.get('selectedNodeId'),
-  };
-}
-
-export default connect(
-  mapStateToProps
+  })
 )(NodesChartEdges);

@@ -1,7 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { completeNodesSelector } from '../selectors/nodes-chart';
 import NodesChartEdges from './nodes-chart-edges';
 import NodesChartNodes from './nodes-chart-nodes';
 
@@ -23,10 +22,4 @@ class NodesChartElements extends React.Component {
   }
 }
 
-function mapStateToProps(state, props) {
-  return {
-    // completeNodes: completeNodesSelector(state, props)
-  };
-}
-
-export default connect(mapStateToProps)(NodesChartElements);
+export default connect()(NodesChartElements);

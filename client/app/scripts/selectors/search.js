@@ -2,8 +2,10 @@ import { createSelector } from 'reselect';
 import { createMapSelector } from 'reselect-map';
 import { Map as makeMap } from 'immutable';
 
-import { parseQuery, searchTopology } from '../utils/search-utils';
+import { parseQuery, searchTopology, getSearchableFields } from '../utils/search-utils';
 
+
+const allNodesSelector = state => state.get('nodes');
 const nodesByTopologySelector = state => state.get('nodesByTopology');
 const currentTopologyIdSelector = state => state.get('currentTopologyId');
 const searchQuerySelector = state => state.get('searchQuery');
@@ -41,4 +43,11 @@ export const currentTopologySearchNodeMatchesSelector = createSelector(
   //   console.log('>>> Update current topology search nodes matches');
   //   return nodesByTopology.get(currentTopologyId) || makeMap();
   // }
+);
+
+export const searchableFieldsSelector = createSelector(
+  [
+    allNodesSelector,
+  ],
+  getSearchableFields
 );

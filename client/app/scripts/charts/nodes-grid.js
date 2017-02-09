@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { List as makeList, Map as makeMap } from 'immutable';
 import NodeDetailsTable from '../components/node-details/node-details-table';
 import { clickNode, sortOrderChanged } from '../actions/app-actions';
-import { nodesSelector } from '../selectors/chartSelectors';
+import { nodesSelector } from '../selectors/nodes-chart';
 
 import { currentTopologySearchNodeMatchesSelector } from '../selectors/search';
 import { getNodeColor } from '../utils/color-utils';

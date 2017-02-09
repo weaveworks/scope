@@ -157,7 +157,6 @@ export default connect(
     pinnedSearches: state.get('pinnedSearches'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
-    // searchNodeMatches: state.get('searchNodeMatches'),
     searchNodeMatches: searchNodeMatchesSelector(state),
     topologiesLoaded: state.get('topologiesLoaded')
   }),
