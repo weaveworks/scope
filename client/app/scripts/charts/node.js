@@ -41,27 +41,17 @@ function getNodeShape({ shape, stack }) {
 }
 
 
-class Node extends React.Component {
+class Node extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
     this.state = {
       hovered: false,
-      matched: false
     };
 
     this.handleMouseClick = this.handleMouseClick.bind(this);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
     this.saveShapeRef = this.saveShapeRef.bind(this);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    // marks as matched only when search query changes
-    if (nextProps.searchQuery !== this.props.searchQuery) {
-      this.setState({ matched: nextProps.matched });
-    } else {
-      this.setState({ matched: false });
-    }
   }
 
   renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) {
@@ -77,7 +67,7 @@ class Node extends React.Component {
   }
 
   renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents) {
-    const { label, subLabel, blurred, matches = makeMap() } = this.props;
+    const { label, subLabel, matches = makeMap() } = this.props;
     const matchedMetadata = matches.get('metadata', makeList());
     const matchedParents = matches.get('parents', makeList());
     const matchedNodeDetails = matchedMetadata.concat(matchedParents);
@@ -96,16 +86,16 @@ class Node extends React.Component {
           <div className={subLabelClassName}>
             <MatchedText text={subLabel} match={matches.get('sublabel')} />
           </div>
-          {!blurred && <MatchedResults matches={matchedNodeDetails} />}
+          <MatchedResults matches={matchedNodeDetails} />
         </div>
       </foreignObject>
     );
   }
 
   render() {
-    const { blurred, focused, highlighted, networks, pseudo, rank, label,
-      transform, exportingGraph, showingNetworks, stack } = this.props;
-    const { hovered, matched } = this.state;
+    const { focused, highlighted, networks, pseudo, rank, label,
+      transform, exportingGraph, showingNetworks, stack, id, metric } = this.props;
+    const { hovered } = this.state;
 
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
@@ -113,9 +103,7 @@ class Node extends React.Component {
 
     const nodeClassName = classnames('node', {
       highlighted,
-      blurred: blurred && !focused,
       hovered,
-      matched,
       pseudo
     });
 
@@ -123,7 +111,6 @@ class Node extends React.Component {
     const subLabelClassName = classnames('node-sublabel', { truncate });
 
     const NodeShapeType = getNodeShape(this.props);
-    const useSvgLabels = exportingGraph;
     const mouseEvents = {
       onClick: this.handleMouseClick,
       onMouseEnter: this.handleMouseEnter,
@@ -132,12 +119,12 @@ class Node extends React.Component {
 
     return (
       <g className={nodeClassName} transform={transform}>
-        {useSvgLabels ?
+        {exportingGraph ?
           this.renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) :
           this.renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents)}
 
         <g {...mouseEvents} ref={this.saveShapeRef}>
-          <NodeShapeType color={color} {...this.props} />
+          <NodeShapeType id={id} highlighted={highlighted} color={color} metric={metric} />
         </g>
 
         {showingNetworks && <NodeNetworksOverlay networks={networks} stack={stack} />}
@@ -167,7 +154,6 @@ class Node extends React.Component {
 
 export default connect(
   state => ({
-    searchQuery: state.get('searchQuery'),
     exportingGraph: state.get('exportingGraph'),
     showingNetworks: state.get('showingNetworks'),
   }),

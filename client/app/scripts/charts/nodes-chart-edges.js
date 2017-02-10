@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Map as makeMap, List as makeList } from 'immutable';
 
+import { currentTopologySearchNodeMatchesSelector } from '../selectors/search';
 import { hasSelectedNode as hasSelectedNodeFn } from '../utils/topology-utils';
 import EdgeContainer from './edge-container';
 
@@ -9,7 +10,7 @@ class NodesChartEdges extends React.Component {
   render() {
     const { hasSelectedNode, highlightedEdgeIds, layoutEdges, searchQuery,
       isAnimated, selectedScale, selectedNodeId, selectedNetwork, selectedNetworkNodes,
-      searchNodeMatches = makeMap() } = this.props;
+      searchNodeMatches } = this.props;
 
     return (
       <g className="nodes-chart-edges">
@@ -49,19 +50,14 @@ class NodesChartEdges extends React.Component {
   }
 }
 
-function mapStateToProps(state) {
-  const currentTopologyId = state.get('currentTopologyId');
-  return {
+export default connect(
+  state => ({
     hasSelectedNode: hasSelectedNodeFn(state),
     highlightedEdgeIds: state.get('highlightedEdgeIds'),
-    searchNodeMatches: state.getIn(['searchNodeMatches', currentTopologyId]),
+    searchNodeMatches: currentTopologySearchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNetwork: state.get('selectedNetwork'),
     selectedNetworkNodes: state.getIn(['networkNodes', state.get('selectedNetwork')], makeList()),
     selectedNodeId: state.get('selectedNodeId'),
-  };
-}
-
-export default connect(
-  mapStateToProps
+  })
 )(NodesChartEdges);

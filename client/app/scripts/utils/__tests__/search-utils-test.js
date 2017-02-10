@@ -305,53 +305,53 @@ describe('SearchUtils', () => {
     });
   });
 
-  describe('updateNodeMatches', () => {
-    const fun = SearchUtils.updateNodeMatches;
-
-    it('should return no matches on an empty topology', () => {
-      let nextState = fromJS({
-        nodesByTopology: {},
-        searchNodeMatches: {},
-        searchQuery: ''
-      });
-      nextState = fun(nextState);
-      expect(nextState.get('searchNodeMatches').size).toEqual(0);
-    });
-
-    it('should return no matches when no query is present', () => {
-      let nextState = fromJS({
-        nodesByTopology: {topo1: nodeSets.someNodes},
-        searchNodeMatches: {},
-        searchQuery: ''
-      });
-      nextState = fun(nextState);
-      expect(nextState.get('searchNodeMatches').size).toEqual(0);
-    });
-
-    it('should return no matches when query matches nothing', () => {
-      let nextState = fromJS({
-        nodesByTopology: {topo1: nodeSets.someNodes},
-        searchNodeMatches: {},
-        searchQuery: 'cantmatch'
-      });
-      nextState = fun(nextState);
-      expect(nextState.get('searchNodeMatches').size).toEqual(0);
-    });
-
-    it('should return a matches when a query matches something', () => {
-      let nextState = fromJS({
-        nodesByTopology: {topo1: nodeSets.someNodes},
-        searchNodeMatches: {},
-        searchQuery: 'value 2'
-      });
-      nextState = fun(nextState);
-      expect(nextState.get('searchNodeMatches').size).toEqual(1);
-      expect(nextState.get('searchNodeMatches').get('topo1').size).toEqual(1);
-
-      // then clear up again
-      nextState = nextState.set('searchQuery', '');
-      nextState = fun(nextState);
-      expect(nextState.get('searchNodeMatches').size).toEqual(0);
-    });
-  });
+  // describe('updateNodeMatches', () => {
+  //   const fun = SearchUtils.updateNodeMatches;
+  //
+  //   it('should return no matches on an empty topology', () => {
+  //     let nextState = fromJS({
+  //       nodesByTopology: {},
+  //       searchNodeMatches: {},
+  //       searchQuery: ''
+  //     });
+  //     nextState = fun(nextState);
+  //     expect(nextState.get('searchNodeMatches').size).toEqual(0);
+  //   });
+  //
+  //   it('should return no matches when no query is present', () => {
+  //     let nextState = fromJS({
+  //       nodesByTopology: {topo1: nodeSets.someNodes},
+  //       searchNodeMatches: {},
+  //       searchQuery: ''
+  //     });
+  //     nextState = fun(nextState);
+  //     expect(nextState.get('searchNodeMatches').size).toEqual(0);
+  //   });
+  //
+  //   it('should return no matches when query matches nothing', () => {
+  //     let nextState = fromJS({
+  //       nodesByTopology: {topo1: nodeSets.someNodes},
+  //       searchNodeMatches: {},
+  //       searchQuery: 'cantmatch'
+  //     });
+  //     nextState = fun(nextState);
+  //     expect(nextState.get('searchNodeMatches').size).toEqual(0);
+  //   });
+  //
+  //   it('should return a matches when a query matches something', () => {
+  //     let nextState = fromJS({
+  //       nodesByTopology: {topo1: nodeSets.someNodes},
+  //       searchNodeMatches: {},
+  //       searchQuery: 'value 2'
+  //     });
+  //     nextState = fun(nextState);
+  //     expect(nextState.get('searchNodeMatches').size).toEqual(1);
+  //     expect(nextState.get('searchNodeMatches').get('topo1').size).toEqual(1);
+  //
+  //     // then clear up again
+  //     nextState = nextState.set('searchQuery', '');
+  //     nextState = fun(nextState);
+  //     expect(nextState.get('searchNodeMatches').size).toEqual(0);
+  //   });
+  // });
 });

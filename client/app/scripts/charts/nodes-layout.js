@@ -10,12 +10,10 @@ import { buildTopologyCacheId, updateNodeDegrees } from '../utils/topology-utils
 const log = debug('scope:nodes-layout');
 
 const topologyCaches = {};
-export const DEFAULT_WIDTH = 800;
-export const DEFAULT_HEIGHT = DEFAULT_WIDTH / 2;
 export const DEFAULT_MARGINS = {top: 0, left: 0};
 const NODE_SIZE_FACTOR = NODE_BASE_SIZE;
-const NODE_SEPARATION_FACTOR = 2 * NODE_BASE_SIZE;
-const RANK_SEPARATION_FACTOR = 3 * NODE_BASE_SIZE;
+const NODE_SEPARATION_FACTOR = 1 * NODE_BASE_SIZE;
+const RANK_SEPARATION_FACTOR = 2 * NODE_BASE_SIZE;
 let layoutRuns = 0;
 let layoutRunsTrivial = 0;
 
@@ -89,7 +87,7 @@ function runLayoutEngine(graph, imNodes, imEdges) {
     }
   });
 
-  dagre.layout(graph);
+  dagre.layout(graph, { debugTiming: false });
   const layout = graph.graph();
 
   // apply coordinates to nodes and edges

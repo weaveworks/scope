@@ -1,7 +1,7 @@
 import { includes, without } from 'lodash';
-import { fromJS } from 'immutable';
 import { createSelector } from 'reselect';
 import { scaleThreshold } from 'd3-scale';
+import { fromJS, Set as makeSet } from 'immutable';
 
 import { NODE_BASE_SIZE, DETAILS_PANEL_WIDTH } from '../constants/styles';
 
@@ -21,8 +21,9 @@ const stateHeightSelector = state => state.height;
 const stateScaleSelector = state => state.zoomScale;
 const stateTranslateXSelector = state => state.panTranslateX;
 const stateTranslateYSelector = state => state.panTranslateY;
+const inputNodesSelector = (_, props) => props.nodes;
 const propsSelectedNodeIdSelector = (_, props) => props.selectedNodeId;
-const propsAdjacentNodesSelector = (_, props) => props.adjacentNodes;
+// const propsAdjacentNodesSelector = (_, props) => props.adjacentNodes;
 const propsMarginsSelector = (_, props) => props.margins;
 
 // The narrower dimension of the viewport, used for scaling.
@@ -57,12 +58,36 @@ const viewportCenterSelector = createSelector(
 
 // List of all the adjacent nodes to the selected
 // one, excluding itself (in case of loops).
+// const selectedNodeNeighborsIdsSelector = createSelector(
+//   [
+//     propsSelectedNodeIdSelector,
+//     propsAdjacentNodesSelector,
+//   ],
+//   (selectedNodeId, adjacentNodes) => without(adjacentNodes.toArray(), selectedNodeId)
+// );
 const selectedNodeNeighborsIdsSelector = createSelector(
   [
     propsSelectedNodeIdSelector,
-    propsAdjacentNodesSelector,
+    inputNodesSelector,
   ],
-  (selectedNodeId, adjacentNodes) => without(adjacentNodes.toArray(), selectedNodeId)
+  (selectedNodeId, nodes) => {
+    let adjacentNodes = makeSet();
+    if (!selectedNodeId) {
+      return adjacentNodes;
+    }
+
+    if (nodes && nodes.has(selectedNodeId)) {
+      adjacentNodes = makeSet(nodes.getIn([selectedNodeId, 'adjacency']));
+      // fill up set with reverse edges
+      nodes.forEach((node, id) => {
+        if (node.get('adjacency') && node.get('adjacency').includes(selectedNodeId)) {
+          adjacentNodes = adjacentNodes.add(id);
+        }
+      });
+    }
+
+    return without(adjacentNodes.toArray(), selectedNodeId);
+  }
 );
 
 const selectedNodesLayoutSettingsSelector = createSelector(

@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 
+import { searchNodeMatchesSelector } from '../selectors/search';
 import { clickTopology } from '../actions/app-actions';
 
 
@@ -90,7 +91,8 @@ class Topologies extends React.Component {
 function mapStateToProps(state) {
   return {
     topologies: state.get('topologies'),
-    searchNodeMatches: state.get('searchNodeMatches'),
+    // searchNodeMatches: state.get('searchNodeMatches'),
+    searchNodeMatches: searchNodeMatchesSelector(state),
     currentTopology: state.get('currentTopology')
   };
 }

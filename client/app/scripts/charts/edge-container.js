@@ -37,7 +37,7 @@ const waypointsMapToArray = (waypointsMap) => {
 };
 
 
-class EdgeContainer extends React.Component {
+class EdgeContainer extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
     this.state = { waypointsMap: makeMap() };
