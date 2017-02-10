@@ -1,6 +1,6 @@
 {
   "name": "weave-scope",
-  "version": "1.3.0",
+  "version": "1.2.0",
   "description": "SPA JS app for Weave Scope visualising the application network.",
   "repository": "weaveworks/scope",
   "license": "Apache-2.0",
@@ -28,8 +28,8 @@
     "materialize-css": "0.97.8",
     "moment": "2.17.1",
     "page": "1.7.1",
-    "react": "15.4.2",
-    "react-dom": "15.4.2",
+    "react": "15.4.1",
+    "react-dom": "15.4.1",
     "react-motion": "0.4.5",
     "react-redux": "4.4.6",
     "react-tooltip": "3.2.2",
@@ -40,8 +40,9 @@
     "reqwest": "2.0.5",
     "reselect": "2.5.4",
     "reselect-map": "1.0.0",
+    "timely": "0.1.0",
     "whatwg-fetch": "2.0.1",
-    "react-addons-perf": "15.4.2",
+    "react-addons-perf": "15.4.1",
     "xterm": "2.2.3"
   },
   "devDependencies": {
@@ -51,7 +52,6 @@
     "babel-eslint": "7.1.1",
     "babel-jest": "17.0.2",
     "babel-loader": "6.2.8",
-    "babel-plugin-transform-object-rest-spread": "^6.23.0",
     "babel-preset-es2015": "6.18.0",
     "babel-preset-react": "6.16.0",
     "clean-webpack-plugin": "0.1.14",
@@ -72,7 +72,7 @@
     "json-loader": "0.5.4",
     "node-sass": "3.13.1",
     "postcss-loader": "1.2.0",
-    "react-addons-perf": "15.4.2",
+    "react-addons-perf": "15.4.1",
     "redux-devtools": "3.3.1",
     "redux-devtools-dock-monitor": "1.1.1",
     "redux-devtools-log-monitor": "1.1.1",
@@ -93,9 +93,8 @@
   "scripts": {
     "build": "webpack --config webpack.production.config.js",
     "build-external": "EXTERNAL=true webpack --config webpack.production.config.js",
-    "copy-pkg-files": "cp package.json build-pkg/ && cp -R app/styles build-pkg/",
-    "build-pkg": "mkdir -p build-pkg && node node_modules/.bin/babel app/scripts --ignore __tests__ --out-dir build-pkg && npm run copy-pkg-files",
-    "bundle": "npm run build-pkg && npm pack ./build-pkg && mv weave-scope-$npm_package_version.tgz ./tmp/weave-scope.tgz",
+    "build-pkg": "mkdir -p build-pkg && node node_modules/.bin/babel app/scripts --ignore __tests__ --out-dir build-pkg && cp package.json build-pkg/ && cp -R app/styles build-pkg/",
+    "bundle": "npm pack build-pkg --quiet && mv weave-scope-$npm_package_version.tgz weave-scope.tgz",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest",
@@ -103,7 +102,8 @@
     "lint": "eslint app",
     "clean": "rm build/app.js",
     "noprobe": "../scope stop && ../scope launch --no-probe --app.window 8760h",
-    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d"
+    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d",
+    "s3-publish": "aws s3 cp weave-scope.tgz s3://weaveworks-js-modules/weave-scope/ --acl public-read"
   },
   "jest": {
     "transform": {
