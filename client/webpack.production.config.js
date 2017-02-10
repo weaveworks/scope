@@ -103,7 +103,8 @@ module.exports = {
     new webpack.DefinePlugin(GLOBALS),
     new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors-[chunkhash].js'),
     new webpack.optimize.OccurenceOrderPlugin(true),
-    new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new webpack.IgnorePlugin(/.*\.map$/, /xterm\/lib\/addons/),
     new webpack.optimize.UglifyJsPlugin({
       sourceMap: false,
       compress: {

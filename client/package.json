@@ -42,7 +42,7 @@
     "timely": "0.1.0",
     "whatwg-fetch": "2.0.1",
     "react-addons-perf": "15.4.1",
-    "xterm": "2.1.0"
+    "xterm": "2.2.3"
   },
   "devDependencies": {
     "autoprefixer": "6.5.3",
