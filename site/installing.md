@@ -37,7 +37,7 @@ To install Scope in stand-alone mode, run the following commands:
 
 This script downloads and runs a recent Scope image from Dockerhub. Scope needs to be installed onto every machine that you want to monitor. 
 
-Open your browser to `http://localhost:4040` after its been installed.  
+After Scope is installed, open your browser to `http://localhost:4040`.  
 
 If you are using docker-machine, you can find the IP by running, `docker-machine ip <VM name>`.
 
