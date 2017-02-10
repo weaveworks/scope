@@ -281,6 +281,7 @@ export function rootReducer(state = initialState, action) {
         state = state.update('nodes', nodes => nodes.clear());
       }
       state = state.set('availableCanvasMetrics', makeList());
+      state = state.set('nodesLoaded', false);
       return state;
     }
 
@@ -293,6 +294,7 @@ export function rootReducer(state = initialState, action) {
         state = state.update('nodes', nodes => nodes.clear());
       }
       state = state.set('availableCanvasMetrics', makeList());
+      state = state.set('nodesLoaded', false);
       return state;
     }
 
