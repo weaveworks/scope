@@ -140,7 +140,7 @@ class Search extends React.Component {
           {!showPinnedSearches && <div className="search-hint">
             {getHint(nodes)} <span
               className="search-help-link fa fa-question-circle"
-              onClick={onClickHelp} />
+              onMouseDown={onClickHelp} />
           </div>}
         </div>
       </div>
