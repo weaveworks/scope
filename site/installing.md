@@ -11,7 +11,7 @@ Weave Cloud is the recommended option if:
  * You are deploying to larger clusters.
  * You require secure remote access.
  * You want to share access with your coworkers.
- * You want to save CPU and memory resources.
+ * You want to minimize Weave Scope memory and CPU usage.
 
 The following topics are discussed:
 
