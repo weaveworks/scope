@@ -7,7 +7,7 @@ import { slugify } from './string-utils';
 // topolevel search fields
 const SEARCH_FIELDS = makeMap({
   label: 'label',
-  sublabel: 'labelMinor'
+  labelMinor: 'labelMinor'
 });
 
 const COMPARISONS = makeMap({

@@ -83,22 +83,9 @@ export const graphLayout = createSelector(
     // computed property, but this is still useful.
     log(`graph layout calculation took ${timedLayouter.time}ms`);
 
-    const layoutEdges = graph.edges;
-    const layoutNodes = graph.nodes.map(node => makeMap({
-      x: node.get('x'),
-      y: node.get('y'),
-      id: node.get('id'),
-      label: node.get('label'),
-      pseudo: node.get('pseudo'),
-      subLabel: node.get('labelMinor'),
-      nodeCount: node.get('node_count'),
-      metrics: node.get('metrics'),
-      rank: node.get('rank'),
-      shape: node.get('shape'),
-      stack: node.get('stack'),
-      // networks: node.get('networks'),
-    }));
-
-    return { layoutNodes, layoutEdges };
+    return {
+      layoutNodes: graph.nodes,
+      layoutEdges: graph.edges,
+    };
   }
 );

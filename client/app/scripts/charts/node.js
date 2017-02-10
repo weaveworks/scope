@@ -18,7 +18,7 @@ import NodeShapeCloud from './node-shape-cloud';
 import NodeNetworksOverlay from './node-networks-overlay';
 
 
-const labelWidth = 1.4 * NODE_BASE_SIZE;
+const labelWidth = 1.2 * NODE_BASE_SIZE;
 const nodeShapes = {
   circle: NodeShapeCircle,
   hexagon: NodeShapeHexagon,
@@ -54,20 +54,20 @@ class Node extends React.PureComponent {
     this.saveShapeRef = this.saveShapeRef.bind(this);
   }
 
-  renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) {
-    const { label, subLabel } = this.props;
+  renderSvgLabels(labelClassName, labelMinorClassName, labelOffsetY) {
+    const { label, labelMinor } = this.props;
     return (
       <g className="node-labels-container">
         <text className={labelClassName} y={13 + labelOffsetY} textAnchor="middle">{label}</text>
-        <text className={subLabelClassName} y={30 + labelOffsetY} textAnchor="middle">
-          {subLabel}
+        <text className={labelMinorClassName} y={30 + labelOffsetY} textAnchor="middle">
+          {labelMinor}
         </text>
       </g>
     );
   }
 
-  renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents) {
-    const { label, subLabel, matches = makeMap() } = this.props;
+  renderStandardLabels(labelClassName, labelMinorClassName, labelOffsetY, mouseEvents) {
+    const { label, labelMinor, matches = makeMap() } = this.props;
     const matchedMetadata = matches.get('metadata', makeList());
     const matchedParents = matches.get('parents', makeList());
     const matchedNodeDetails = matchedMetadata.concat(matchedParents);
@@ -83,8 +83,8 @@ class Node extends React.PureComponent {
           <div className={labelClassName}>
             <MatchedText text={label} match={matches.get('label')} />
           </div>
-          <div className={subLabelClassName}>
-            <MatchedText text={subLabel} match={matches.get('sublabel')} />
+          <div className={labelMinorClassName}>
+            <MatchedText text={labelMinor} match={matches.get('labelMinor')} />
           </div>
           <MatchedResults matches={matchedNodeDetails} />
         </div>
@@ -108,7 +108,7 @@ class Node extends React.PureComponent {
     });
 
     const labelClassName = classnames('node-label', { truncate });
-    const subLabelClassName = classnames('node-sublabel', { truncate });
+    const labelMinorClassName = classnames('node-label-minor', { truncate });
 
     const NodeShapeType = getNodeShape(this.props);
     const mouseEvents = {
@@ -120,8 +120,8 @@ class Node extends React.PureComponent {
     return (
       <g className={nodeClassName} transform={transform}>
         {exportingGraph ?
-          this.renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) :
-          this.renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents)}
+          this.renderSvgLabels(labelClassName, labelMinorClassName, labelOffsetY) :
+          this.renderStandardLabels(labelClassName, labelMinorClassName, labelOffsetY, mouseEvents)}
 
         <g {...mouseEvents} ref={this.saveShapeRef}>
           <NodeShapeType id={id} highlighted={highlighted} color={color} metric={metric} />

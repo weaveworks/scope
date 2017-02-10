@@ -175,7 +175,8 @@ export function getCurrentTopologyUrl(state) {
 }
 
 export function isNodeMatchingQuery(node, query) {
-  return node.get('label').includes(query) || node.get('subLabel').includes(query);
+  return node.get('label').includes(query) ||
+    node.get('labelMinor').includes(query);
 }
 
 export function graphExceedsComplexityThresh(stats) {

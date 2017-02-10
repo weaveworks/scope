@@ -57,8 +57,8 @@ class NodesChartNodes extends React.Component {
           key={node.get('id')}
           id={node.get('id')}
           label={node.get('label')}
+          labelMinor={node.get('labelMinor')}
           pseudo={node.get('pseudo')}
-          subLabel={node.get('subLabel')}
           metric={nodeMetrics.get(node.get('id'))}
           rank={node.get('rank')}
           isAnimated={isAnimated}
