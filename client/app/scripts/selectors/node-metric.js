@@ -10,7 +10,7 @@ const topCardNodeSelector = createSelector(
   nodeDetails => nodeDetails.last()
 );
 
-export const nodeMetricsSelector = createMapSelector(
+export const nodeMetricSelector = createMapSelector(
   [
     state => state.get('nodes'),
     state => state.get('selectedMetric'),

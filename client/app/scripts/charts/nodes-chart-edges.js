@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { List as makeList } from 'immutable';
 
+import { selectedNetworkNodesIdsSelector } from '../selectors/node-networks';
 import { currentTopologySearchNodeMatchesSelector } from '../selectors/search';
 import { hasSelectedNode as hasSelectedNodeFn } from '../utils/topology-utils';
 import EdgeContainer from './edge-container';
@@ -9,7 +9,7 @@ import EdgeContainer from './edge-container';
 class NodesChartEdges extends React.Component {
   render() {
     const { hasSelectedNode, highlightedEdgeIds, layoutEdges, searchQuery,
-      isAnimated, selectedScale, selectedNodeId, selectedNetwork, selectedNetworkNodes,
+      isAnimated, selectedScale, selectedNodeId, selectedNetwork, selectedNetworkNodesIds,
       searchNodeMatches } = this.props;
 
     return (
@@ -24,8 +24,8 @@ class NodesChartEdges extends React.Component {
             !(searchNodeMatches.has(edge.get('source')) &&
               searchNodeMatches.has(edge.get('target')));
           const noSelectedNetworks = selectedNetwork &&
-            !(selectedNetworkNodes.contains(edge.get('source')) &&
-              selectedNetworkNodes.contains(edge.get('target')));
+            !(selectedNetworkNodesIds.contains(edge.get('source')) &&
+              selectedNetworkNodesIds.contains(edge.get('target')));
           const blurred = !highlighted && (otherNodesSelected ||
                                            (!focused && noMatches) ||
                                              (!focused && noSelectedNetworks));
@@ -57,7 +57,7 @@ export default connect(
     searchNodeMatches: currentTopologySearchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNetwork: state.get('selectedNetwork'),
-    selectedNetworkNodes: state.getIn(['networkNodes', state.get('selectedNetwork')], makeList()),
+    selectedNetworkNodesIds: selectedNetworkNodesIdsSelector(state),
     selectedNodeId: state.get('selectedNodeId'),
   })
 )(NodesChartEdges);

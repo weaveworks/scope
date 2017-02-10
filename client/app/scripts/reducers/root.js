@@ -6,7 +6,7 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { applyPinnedSearches } from '../utils/search-utils';
-import { getNetworkNodes, getAvailableNetworks } from '../utils/network-view-utils';
+import { getNetworkNodes } from '../utils/network-view-utils';
 import {
   findTopologyById,
   getAdjacentNodes,
@@ -29,7 +29,6 @@ const topologySorter = topology => topology.get('rank');
 
 export const initialState = makeMap({
   availableCanvasMetrics: makeList(),
-  availableNetworks: makeList(),
   controlPipes: makeOrderedMap(), // pipeId -> controlPipe
   controlStatus: makeMap(),
   currentTopology: null,
@@ -572,23 +571,7 @@ export function rootReducer(state = initialState, action) {
 
       // apply pinned searches, filters nodes that dont match
       state = applyPinnedSearches(state);
-
-      // TODO move this setting of networks as toplevel node field to backend,
-      // to not rely on field IDs here. should be determined by topology implementer
-      state = state.update('nodes', nodes => nodes.map((node) => {
-        if (node.has('metadata')) {
-          const networks = node.get('metadata')
-            .find(field => field.get('id') === 'docker_container_networks');
-          if (networks) {
-            return node.set('networks', fromJS(
-              networks.get('value').split(', ').map(n => ({id: n, label: n, colorKey: n}))));
-          }
-        }
-        return node;
-      }));
-
-      state = state.set('networkNodes', getNetworkNodes(state.get('nodes')));
-      state = state.set('availableNetworks', getAvailableNetworks(state.get('nodes')));
+      state = state.set('networkNodes', getNetworkNodes(state));
 
       state = state.set('availableCanvasMetrics', state.get('nodes')
         .valueSeq()

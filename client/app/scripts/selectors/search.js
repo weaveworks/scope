@@ -18,7 +18,7 @@ export const searchNodeMatchesSelector = createMapSelector(
     parsedSearchQuerySelector,
   ],
   // TODO: Bring map selectors one level deeper here so that `searchTopology` is
-  // not executed against all the topology nodes every time a small change occurs.
+  // not executed against all the topology nodes when the nodes delta is small.
   (nodes, parsed) => (parsed ? searchTopology(nodes, parsed) : makeMap())
 );
 

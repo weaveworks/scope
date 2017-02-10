@@ -1,20 +1,15 @@
-import { fromJS, List as makeList } from 'immutable';
+import { fromJS } from 'immutable';
 
-export function getNetworkNodes(nodes) {
-  const networks = {};
-  nodes.forEach(node => (node.get('networks') || makeList()).forEach((n) => {
-    const networkId = n.get('id');
-    networks[networkId] = (networks[networkId] || []).concat([node.get('id')]);
-  }));
-  return fromJS(networks);
-}
+import { nodeNetworksSelector } from '../selectors/node-networks';
 
-
-export function getAvailableNetworks(nodes) {
-  return nodes
-    .valueSeq()
-    .flatMap(node => node.get('networks') || makeList())
-    .toSet()
-    .toList()
-    .sortBy(m => m.get('label'));
+export function getNetworkNodes(state) {
+  const networksMap = {};
+  nodeNetworksSelector(state).forEach((networks, nodeId) => {
+    networks.forEach((network) => {
+      const networkId = network.get('id');
+      networksMap[networkId] = networksMap[networkId] || [];
+      networksMap[networkId].push(nodeId);
+    });
+  });
+  return fromJS(networksMap);
 }
