@@ -98,11 +98,11 @@ deployment:
     branch: /^((?!master).)*$/  # not the master branch
     commands:
       - >
+        make ui-build-pkg &&
         test -z "${DEPLOY_BRANCH}" || test -z "${DOCKER_USER}" || (
           docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
           docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-} &&
-          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-} &&
-          make ui-build-pkg
+          docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-}
         )
 #  release:
 #    branch: /release-[0-9]+\.[0-9]+/
