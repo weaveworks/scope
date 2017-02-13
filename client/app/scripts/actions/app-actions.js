@@ -681,3 +681,15 @@ export function toggleTroubleshootingMenu(ev) {
     type: ActionTypes.TOGGLE_TROUBLESHOOTING_MENU
   };
 }
+
+export function changeInstance() {
+  return (dispatch, getState) => {
+    const state = getState();
+    getNodesDelta(
+      getCurrentTopologyUrl(state),
+      getActiveTopologyOptions(state),
+      dispatch,
+      true // forces websocket teardown and reconnect to new instance
+    );
+  };
+}

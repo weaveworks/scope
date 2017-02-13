@@ -9,7 +9,7 @@ import Term from 'xterm';
 import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
-import { getPipeStatus, doResizeTty, wsUrl } from '../utils/web-api-utils';
+import { getPipeStatus, doResizeTty, getWebsocketUrl, getApiPath } from '../utils/web-api-utils';
 
 const log = debug('scope:terminal');
 
@@ -101,14 +101,14 @@ class Terminal extends React.Component {
   }
 
   createWebsocket(term) {
-    const socket = new WebSocket(`${wsUrl}/api/pipe/${this.getPipeId()}`);
+    const socket = new WebSocket(`${getWebsocketUrl()}/api/pipe/${this.getPipeId()}`);
     socket.binaryType = 'arraybuffer';
 
     getPipeStatus(this.getPipeId(), this.props.dispatch);
 
     socket.onopen = () => {
       clearTimeout(this.reconnectTimeout);
-      log('socket open to', wsUrl);
+      log('socket open to', getWebsocketUrl());
       this.setState({connected: true});
     };
 
@@ -243,7 +243,7 @@ class Terminal extends React.Component {
 
     const bcr = this.node.getBoundingClientRect();
     const minWidth = (this.state.characterWidth * 80) + (8 * 2);
-    openNewWindow(`terminal.html#!/state/${paramString}`, bcr, minWidth);
+    openNewWindow(`${getApiPath()}/terminal.html#!/state/${paramString}`, bcr, minWidth);
   }
 
   handleResize() {
