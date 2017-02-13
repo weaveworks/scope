@@ -271,7 +271,7 @@ export function getSearchableFields(nodes) {
 
   const tableRowLabels = nodes.reduce((labels, node) => (
     labels.union(get(node, 'tables').flatMap(t => (t.get('rows') || makeList)
-      .map(f => f.get('label'))
+      .map(f => f.getIn(['entries', 'label']))
     ))
   ), makeSet());
 
