@@ -39,12 +39,12 @@ dependencies:
 
 test:
   override:
-    - cd $SRCDIR; make RM= lint:
-        parallel: true
+    # - cd $SRCDIR; make RM= lint:
+    #     parallel: true
     # - cd $SRCDIR; COVERDIR=./coverage make RM= tests:
     #     parallel: true
-    # - cd $SRCDIR; make RM= client-test static:
-    #     parallel: true
+    - cd $SRCDIR; make RM= client-test static:
+        parallel: true
     # - cd $SRCDIR; make RM= client-lint static:
     #     parallel: true
     # - cd $SRCDIR; rm -f prog/scope; if [ "$CIRCLE_NODE_INDEX" = "0" ]; then GOARCH=arm make GO_BUILD_INSTALL_DEPS= RM= prog/scope; else GOOS=darwin make GO_BUILD_INSTALL_DEPS= RM= prog/scope; fi:
