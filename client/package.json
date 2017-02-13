@@ -94,7 +94,7 @@
     "build": "webpack --config webpack.production.config.js",
     "build-external": "EXTERNAL=true webpack --config webpack.production.config.js",
     "build-pkg": "mkdir -p build-pkg && node node_modules/.bin/babel app/scripts --ignore __tests__ --out-dir build-pkg && cp package.json build-pkg/ && cp -R app/styles build-pkg/",
-    "bundle": "npm pack ./build-pkg && mv weave-scope-$npm_package_version.tgz ./tmp/weave-scope.tgz",
+    "bundle": "npm run build-pkg && npm pack ./build-pkg && mv weave-scope-$npm_package_version.tgz ./tmp/weave-scope.tgz",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest",
@@ -102,8 +102,7 @@
     "lint": "eslint app",
     "clean": "rm build/app.js",
     "noprobe": "../scope stop && ../scope launch --no-probe --app.window 8760h",
-    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d",
-    "s3-publish": "aws s3 cp weave-scope.tgz s3://weaveworks-js-modules/weave-scope/ --acl public-read"
+    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d"
   },
   "jest": {
     "transform": {

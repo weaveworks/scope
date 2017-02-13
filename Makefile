@@ -168,9 +168,9 @@ ui-upload: client/build-external/index.html
 	aws s3 cp client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
 
 ui-build-pkg:
-	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
-	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
-	$(sudo) docker run --name scope-pkg \
+	export AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
+	export AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
+	$(sudo) docker run \
 	-v $(shell pwd)/client/:/home/weave \
 	-v $(shell pwd)/tmp:/home/weave/tmp \
 	$(SCOPE_UI_BUILD_IMAGE) \
