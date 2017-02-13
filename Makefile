@@ -168,8 +168,8 @@ ui-upload: client/build-external/index.html
 	aws s3 cp client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
 
 ui-build-pkg:
-	$(sudo) docker run \
-	-v $(shell pwd)/client/:/home/weave \
+	$(sudo) docker run $(RUN_FLAGS) \
+	-v $(shell pwd)/client/app:/home/weave/app \
 	-v $(shell pwd)/tmp:/home/weave/tmp \
 	$(SCOPE_UI_BUILD_IMAGE) \
 	npm run bundle && \
