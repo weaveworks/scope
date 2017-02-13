@@ -174,11 +174,6 @@ export function getCurrentTopologyUrl(state) {
   return state.getIn(['currentTopology', 'url']);
 }
 
-export function isNodeMatchingQuery(node, query) {
-  return node.get('label').includes(query) ||
-    node.get('labelMinor').includes(query);
-}
-
 export function graphExceedsComplexityThresh(stats) {
   // Check to see if complexity is high. Used to trigger table view on page load.
   return (stats.get('node_count') + (2 * stats.get('edge_count'))) > 1000;

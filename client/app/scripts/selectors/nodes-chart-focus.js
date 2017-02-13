@@ -13,23 +13,13 @@ const radiusDensity = scaleThreshold()
   .domain([3, 6])
   .range([2.5, 3.5, 3]);
 
-
-const layoutNodesSelector = state => state.layoutNodes;
-const layoutEdgesSelector = state => state.layoutEdges;
-const stateWidthSelector = state => state.width;
-const stateHeightSelector = state => state.height;
-const stateScaleSelector = state => state.zoomScale;
-const stateTranslateXSelector = state => state.panTranslateX;
-const stateTranslateYSelector = state => state.panTranslateY;
-const inputNodesSelector = (_, props) => props.nodes;
-const propsSelectedNodeIdSelector = (_, props) => props.selectedNodeId;
-const propsMarginsSelector = (_, props) => props.margins;
+// TODO: Make all the selectors below pure (so that they only depend on the global state).
 
 // The narrower dimension of the viewport, used for scaling.
 const viewportExpanseSelector = createSelector(
   [
-    stateWidthSelector,
-    stateHeightSelector,
+    state => state.width,
+    state => state.height,
   ],
   (width, height) => Math.min(width, height)
 );
@@ -38,12 +28,12 @@ const viewportExpanseSelector = createSelector(
 // panel is open), used for focusing the selected node.
 const viewportCenterSelector = createSelector(
   [
-    stateWidthSelector,
-    stateHeightSelector,
-    stateTranslateXSelector,
-    stateTranslateYSelector,
-    stateScaleSelector,
-    propsMarginsSelector,
+    state => state.width,
+    state => state.height,
+    state => state.panTranslateX,
+    state => state.panTranslateY,
+    state => state.zoomScale,
+    (_, props) => props.margins,
   ],
   (width, height, translateX, translateY, scale, margins) => {
     const viewportHalfWidth = ((width + margins.left) - DETAILS_PANEL_WIDTH) / 2;
@@ -57,10 +47,11 @@ const viewportCenterSelector = createSelector(
 
 // List of all the adjacent nodes to the selected
 // one, excluding itself (in case of loops).
+// TODO: Use createMapSelector here instead.
 const selectedNodeNeighborsIdsSelector = createSelector(
   [
-    propsSelectedNodeIdSelector,
-    inputNodesSelector,
+    (_, props) => props.selectedNodeId,
+    (_, props) => props.nodes,
   ],
   (selectedNodeId, nodes) => {
     let adjacentNodes = makeSet();
@@ -84,11 +75,11 @@ const selectedNodeNeighborsIdsSelector = createSelector(
 
 const selectedNodesLayoutSettingsSelector = createSelector(
   [
+    state => state.zoomScale,
     selectedNodeNeighborsIdsSelector,
     viewportExpanseSelector,
-    stateScaleSelector,
   ],
-  (circularNodesIds, viewportExpanse, scale) => {
+  (scale, circularNodesIds, viewportExpanse) => {
     const circularNodesCount = circularNodesIds.length;
 
     // Here we calculate the zoom factor of the nodes that get selected into focus.
@@ -114,14 +105,14 @@ const selectedNodesLayoutSettingsSelector = createSelector(
 
 export const layoutWithSelectedNode = createSelector(
   [
-    layoutNodesSelector,
-    layoutEdgesSelector,
+    state => state.layoutNodes,
+    state => state.layoutEdges,
+    (_, props) => props.selectedNodeId,
     viewportCenterSelector,
-    propsSelectedNodeIdSelector,
     selectedNodeNeighborsIdsSelector,
     selectedNodesLayoutSettingsSelector,
   ],
-  (layoutNodes, layoutEdges, viewportCenter, selectedNodeId, neighborsIds, layoutSettings) => {
+  (layoutNodes, layoutEdges, selectedNodeId, viewportCenter, neighborsIds, layoutSettings) => {
     // Do nothing if the layout doesn't contain the selected node anymore.
     if (!layoutNodes.has(selectedNodeId)) {
       return {};

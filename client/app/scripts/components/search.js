@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import { debounce } from 'lodash';
 
 import { blurSearch, doSearch, focusSearch, showHelp } from '../actions/app-actions';
-import { searchNodeMatchesSelector } from '../selectors/search';
+import { searchMatchCountByTopologySelector } from '../selectors/search';
 import { slugify } from '../utils/string-utils';
 import { isTopologyEmpty } from '../utils/topology-utils';
 import SearchItem from './search-item';
@@ -102,11 +102,11 @@ class Search extends React.Component {
   }
 
   render() {
-    const { inputId = 'search', nodes, pinnedSearches, searchFocused,
-      searchNodeMatches, searchQuery, topologiesLoaded, onClickHelp } = this.props;
+    const { nodes, pinnedSearches, searchFocused, searchMatchCountByTopology,
+      searchQuery, topologiesLoaded, onClickHelp, inputId = 'search' } = this.props;
     const disabled = this.props.isTopologyEmpty;
-    const matchCount = searchNodeMatches
-      .reduce((count, topologyMatches) => count + topologyMatches.size, 0);
+    const matchCount = searchMatchCountByTopology
+      .reduce((count, topologyMatchCount) => count + topologyMatchCount, 0);
     const showPinnedSearches = pinnedSearches.size > 0;
     // manual clear (null) has priority, then props, then state
     const value = this.state.value === null ? '' : this.state.value || searchQuery || '';
@@ -154,11 +154,11 @@ export default connect(
   state => ({
     nodes: state.get('nodes'),
     isTopologyEmpty: isTopologyEmpty(state),
+    topologiesLoaded: state.get('topologiesLoaded'),
     pinnedSearches: state.get('pinnedSearches'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
-    searchNodeMatches: searchNodeMatchesSelector(state),
-    topologiesLoaded: state.get('topologiesLoaded')
+    searchMatchCountByTopology: searchMatchCountByTopologySelector(state),
   }),
   { blurSearch, doSearch, focusSearch, onClickHelp: showHelp }
 )(Search);

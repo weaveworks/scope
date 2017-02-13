@@ -7,7 +7,7 @@ import NodeDetailsTable from '../components/node-details/node-details-table';
 import { clickNode, sortOrderChanged } from '../actions/app-actions';
 import { shownNodesSelector } from '../selectors/node-filters';
 
-import { currentTopologySearchNodeMatchesSelector } from '../selectors/search';
+import { searchNodeMatchesSelector } from '../selectors/search';
 import { getNodeColor } from '../utils/color-utils';
 
 
@@ -115,7 +115,7 @@ class NodesGrid extends React.Component {
       id: '',
       nodes: nodes
         .toList()
-        .filter(n => !searchQuery || searchNodeMatches.has(n.get('id')))
+        .filter(n => !(searchQuery && searchNodeMatches.get(n.get('id'), makeMap()).isEmpty()))
         .toJS(),
       columns: getColumns(nodes)
     };
@@ -149,7 +149,7 @@ function mapStateToProps(state) {
     gridSortedDesc: state.get('gridSortedDesc'),
     currentTopology: state.get('currentTopology'),
     currentTopologyId: state.get('currentTopologyId'),
-    searchNodeMatches: currentTopologySearchNodeMatchesSelector(state),
+    searchNodeMatches: searchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId')
   };

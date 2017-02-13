@@ -64,7 +64,7 @@ describe('RootReducer', () => {
       }
     ],
     stats: {
-      edge_count: 319,
+      edge_count: 379,
       filtered_nodes: 214,
       node_count: 320,
       nonpseudo_node_count: 320

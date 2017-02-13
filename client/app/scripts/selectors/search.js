@@ -2,7 +2,7 @@ import { createSelector } from 'reselect';
 import { createMapSelector } from 'reselect-map';
 import { Map as makeMap } from 'immutable';
 
-import { parseQuery, searchTopology, getSearchableFields } from '../utils/search-utils';
+import { parseQuery, searchNode, searchTopology, getSearchableFields } from '../utils/search-utils';
 
 
 const parsedSearchQuerySelector = createSelector(
@@ -14,26 +14,25 @@ const parsedSearchQuerySelector = createSelector(
 
 export const searchNodeMatchesSelector = createMapSelector(
   [
+    state => state.get('nodes'),
+    parsedSearchQuerySelector,
+  ],
+  (node, parsed) => (parsed ? searchNode(node, parsed) : makeMap())
+);
+
+export const searchMatchCountByTopologySelector = createMapSelector(
+  [
     state => state.get('nodesByTopology'),
     parsedSearchQuerySelector,
   ],
   // TODO: Bring map selectors one level deeper here so that `searchTopology` is
   // not executed against all the topology nodes when the nodes delta is small.
-  (nodes, parsed) => (parsed ? searchTopology(nodes, parsed) : makeMap())
-);
-
-export const currentTopologySearchNodeMatchesSelector = createSelector(
-  [
-    state => state.get('currentTopologyId'),
-    searchNodeMatchesSelector,
-  ],
-  (currentTopologyId, nodesByTopology) => nodesByTopology.get(currentTopologyId) || makeMap()
+  (nodes, parsed) => (parsed ? searchTopology(nodes, parsed).size : 0)
 );
 
 export const searchableFieldsSelector = createSelector(
   [
     state => state.get('nodes'),
   ],
-  // TODO: Bring this function in the selectors.
   getSearchableFields
 );

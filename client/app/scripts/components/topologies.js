@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 
-import { searchNodeMatchesSelector } from '../selectors/search';
+import { searchMatchCountByTopologySelector } from '../selectors/search';
 import { clickTopology } from '../actions/app-actions';
 
 
@@ -30,10 +30,9 @@ class Topologies extends React.Component {
   }
 
   renderSubTopology(subTopology) {
-    const isActive = subTopology === this.props.currentTopology;
     const topologyId = subTopology.get('id');
-    const searchMatches = this.props.searchNodeMatches.get(subTopology.get('id'));
-    const searchMatchCount = searchMatches ? searchMatches.size : 0;
+    const isActive = subTopology === this.props.currentTopology;
+    const searchMatchCount = this.props.searchMatchCountByTopology.get(topologyId) || 0;
     const title = basicTopologyInfo(subTopology, searchMatchCount);
     const className = classnames('topologies-sub-item', {
       'topologies-sub-item-active': isActive,
@@ -53,8 +52,7 @@ class Topologies extends React.Component {
 
   renderTopology(topology) {
     const isActive = topology === this.props.currentTopology;
-    const searchMatches = this.props.searchNodeMatches.get(topology.get('id'));
-    const searchMatchCount = searchMatches ? searchMatches.size : 0;
+    const searchMatchCount = this.props.searchMatchCountByTopology.get(topology.get('id')) || 0;
     const className = classnames('topologies-item-main', {
       'topologies-item-main-active': isActive,
       'topologies-item-main-matched': searchMatchCount
@@ -91,8 +89,8 @@ class Topologies extends React.Component {
 function mapStateToProps(state) {
   return {
     topologies: state.get('topologies'),
-    searchNodeMatches: searchNodeMatchesSelector(state),
-    currentTopology: state.get('currentTopology')
+    currentTopology: state.get('currentTopology'),
+    searchMatchCountByTopology: searchMatchCountByTopologySelector(state),
   };
 }
 

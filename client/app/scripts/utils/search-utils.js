@@ -117,70 +117,80 @@ function findNodeMatchMetric(nodeMatches, keyPath, fieldValue, fieldLabel, metri
   return nodeMatches;
 }
 
-
-export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
+export function searchNode(node, { prefix, query, metric, comp, value }) {
   let nodeMatches = makeMap();
+
+  if (query) {
+    // top level fields
+    SEARCH_FIELDS.forEach((field, label) => {
+      const keyPath = [label];
+      if (node.has(field)) {
+        nodeMatches = findNodeMatch(nodeMatches, keyPath, node.get(field),
+          query, prefix, label);
+      }
+    });
+
+    // metadata
+    if (node.get('metadata')) {
+      node.get('metadata').forEach((field) => {
+        const keyPath = ['metadata', field.get('id')];
+        nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
+          query, prefix, field.get('label'), field.get('truncate'));
+      });
+    }
+
+    // parents and relatives
+    if (node.get('parents')) {
+      node.get('parents').forEach((parent) => {
+        const keyPath = ['parents', parent.get('id')];
+        nodeMatches = findNodeMatch(nodeMatches, keyPath, parent.get('label'),
+          query, prefix, parent.get('topologyId'));
+      });
+    }
+
+    // property lists
+    (node.get('tables') || []).filter(isPropertyList).forEach((propertyList) => {
+      (propertyList.get('rows') || []).forEach((row) => {
+        const entries = row.get('entries');
+        const keyPath = ['property-lists', row.get('id')];
+        nodeMatches = findNodeMatch(nodeMatches, keyPath, entries.get('value'),
+          query, prefix, entries.get('label'));
+      });
+    });
+
+    // generic tables
+    (node.get('tables') || []).filter(isGenericTable).forEach((table) => {
+      (table.get('rows') || []).forEach((row) => {
+        table.get('columns').forEach((column) => {
+          const val = row.get('entries').get(column.get('id'));
+          const keyPath = ['tables', genericTableEntryKey(row, column)];
+          nodeMatches = findNodeMatch(nodeMatches, keyPath, val, query);
+        });
+      });
+    });
+  } else if (metric) {
+    const metrics = node.get('metrics');
+    if (metrics) {
+      metrics.forEach((field) => {
+        const keyPath = ['metrics', field.get('id')];
+        nodeMatches = findNodeMatchMetric(nodeMatches, keyPath, field.get('value'),
+          field.get('label'), metric, comp, value);
+      });
+    }
+  }
+
+  return nodeMatches;
+}
+
+export function searchTopology(nodes, parsedQuery) {
+  let nodesMatches = makeMap();
   nodes.forEach((node, nodeId) => {
-    if (query) {
-      // top level fields
-      SEARCH_FIELDS.forEach((field, label) => {
-        const keyPath = [nodeId, label];
-        if (node.has(field)) {
-          nodeMatches = findNodeMatch(nodeMatches, keyPath, node.get(field),
-            query, prefix, label);
-        }
-      });
-
-      // metadata
-      if (node.get('metadata')) {
-        node.get('metadata').forEach((field) => {
-          const keyPath = [nodeId, 'metadata', field.get('id')];
-          nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
-            query, prefix, field.get('label'), field.get('truncate'));
-        });
-      }
-
-      // parents and relatives
-      if (node.get('parents')) {
-        node.get('parents').forEach((parent) => {
-          const keyPath = [nodeId, 'parents', parent.get('id')];
-          nodeMatches = findNodeMatch(nodeMatches, keyPath, parent.get('label'),
-            query, prefix, parent.get('topologyId'));
-        });
-      }
-
-      // property lists
-      (node.get('tables') || []).filter(isPropertyList).forEach((propertyList) => {
-        (propertyList.get('rows') || []).forEach((row) => {
-          const entries = row.get('entries');
-          const keyPath = [nodeId, 'property-lists', row.get('id')];
-          nodeMatches = findNodeMatch(nodeMatches, keyPath, entries.get('value'),
-            query, prefix, entries.get('label'));
-        });
-      });
-
-      // generic tables
-      (node.get('tables') || []).filter(isGenericTable).forEach((table) => {
-        (table.get('rows') || []).forEach((row) => {
-          table.get('columns').forEach((column) => {
-            const val = row.get('entries').get(column.get('id'));
-            const keyPath = [nodeId, 'tables', genericTableEntryKey(row, column)];
-            nodeMatches = findNodeMatch(nodeMatches, keyPath, val, query);
-          });
-        });
-      });
-    } else if (metric) {
-      const metrics = node.get('metrics');
-      if (metrics) {
-        metrics.forEach((field) => {
-          const keyPath = [nodeId, 'metrics', field.get('id')];
-          nodeMatches = findNodeMatchMetric(nodeMatches, keyPath, field.get('value'),
-            field.get('label'), metric, comp, value);
-        });
-      }
+    const nodeMatches = searchNode(node, parsedQuery);
+    if (!nodeMatches.isEmpty()) {
+      nodesMatches = nodesMatches.set(nodeId, nodeMatches);
     }
   });
-  return nodeMatches;
+  return nodesMatches;
 }
 
 /**

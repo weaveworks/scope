@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect';
 import { createMapSelector } from 'reselect-map';
-import { fromJS, List as makeList } from 'immutable';
+import { fromJS, Map as makeMap, List as makeList } from 'immutable';
 
 
 const extractNodeNetworksValue = (node) => {
@@ -36,10 +36,12 @@ export const availableNetworksSelector = createSelector(
     .sortBy(m => m.get('label'))
 );
 
+// NOTE: Don't use this selector directly in mapStateToProps
+// as it would get called too many times.
 export const selectedNetworkNodesIdsSelector = createSelector(
   [
     state => state.get('networkNodes'),
     state => state.get('selectedNetwork'),
   ],
-  (networkNodes, selectedNetwork) => networkNodes.get(selectedNetwork)
+  (networkNodes, selectedNetwork) => networkNodes.get(selectedNetwork, makeMap())
 );
