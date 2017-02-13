@@ -16,25 +16,21 @@ machine:
     SCOPE_UI_BUILD: $HOME/docker/scope_ui_build.tar
 
 dependencies:
-  pre:
-      - pip install --upgrade requests
   cache_directories:
     - "~/docker"
   override:
     - |
-      sudo apt-get update &&
-      sudo apt-get install jq pv &&
-      sudo chmod a+wr --recursive /usr/local/go/pkg &&
-      sudo chown ubuntu:ubuntu "$HOME/.bashrc.backup"
-      (curl https://sdk.cloud.google.com | bash) &&
-      (test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD") &&
-      make deps &&
-      mkdir -p $(dirname $SRCDIR) &&
-      cp -r $(pwd)/ $SRCDIR
-    - "cd $SRCDIR/client; ../tools/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc .babelrc && touch $SRCDIR/.scope_ui_build.uptodate"
-    - "cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh && touch $SRCDIR/.scope_backend_build.uptodate"
-    - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh make_template):
-        parallel: false
+    #   sudo apt-get update &&
+    #   sudo apt-get install jq pv &&
+    #   (curl https://sdk.cloud.google.com | bash) &&
+    #   (test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD") &&
+    #   make deps &&
+    #   mkdir -p $(dirname $SRCDIR) &&
+    #   cp -r $(pwd)/ $SRCDIR
+    # - "cd $SRCDIR/client; ../tools/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc .babelrc && touch $SRCDIR/.scope_ui_build.uptodate"
+    # - "cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh && touch $SRCDIR/.scope_backend_build.uptodate"
+    # - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh make_template):
+    #     parallel: false
     - sudo apt-get update && sudo apt-get install python-pip && sudo pip install awscli
 
 test:
@@ -81,7 +77,7 @@ deployment:
           )) &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag) &&
-          (test -z "${UI_BUCKET_KEY_ID}" || (cd $SRCDIR && make ui-upload))
+          (test -z "${UI_BUCKET_KEY_ID}" || make ui-upload)
         )
       - |
         test -z "${QUAY_USER}" || (
