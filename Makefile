@@ -174,7 +174,7 @@ ui-build-pkg:
 	-v $(shell pwd)/client/:/home/weave \
 	-v $(shell pwd)/tmp:/home/weave/tmp \
 	$(SCOPE_UI_BUILD_IMAGE) \
-	npm run bundle && \
+	cd client && npm run bundle && \
 	aws s3 cp ./tmp/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/ --acl public-read
 
 clean:
