@@ -175,7 +175,7 @@ ui-build-pkg:
 	npm run bundle && \
 	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
 	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
-	echo $AWS_ACCESS_KEY_ID && echo $AWS_SECRET_ACCESS_KEY && aws s3 cp ./tmp/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/weave-scope.tgz --acl public-read
+	aws s3 cp ./tmp/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/weave-scope.tgz --acl public-read && printenv
 
 clean:
 	$(GO) clean ./...
