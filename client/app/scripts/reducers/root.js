@@ -731,9 +731,11 @@ export function rootReducer(state = initialState, action) {
       // Bust the webpack require cache to for a re-download of the stylesheets
       modules.forEach((i) => {
         const children = require.cache[i] ? require.cache[i].children : [];
-        children.forEach((c) => {
-          delete require.cache[c];
-        });
+        if (children) {
+          children.forEach((c) => {
+            delete require.cache[c];
+          });
+        }
         delete require.cache[i];
       });
 
