@@ -31,7 +31,6 @@ module.exports = {
 
   entry: {
     app: './app/scripts/main',
-    'contrast-app': './app/scripts/contrast-main',
     'terminal-app': './app/scripts/terminal-main',
     // keep only some in here, to make vendors and app bundles roughly same size
     vendors: ['babel-polyfill', 'classnames', 'immutable',
@@ -112,12 +111,6 @@ module.exports = {
       }
     }),
     new ExtractTextPlugin('style-[name]-[chunkhash].css'),
-    new HtmlWebpackPlugin({
-      hash: true,
-      chunks: ['vendors', 'contrast-app'],
-      template: 'app/html/index.html',
-      filename: 'contrast.html'
-    }),
     new HtmlWebpackPlugin({
       hash: true,
       chunks: ['vendors', 'terminal-app'],

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-webpack-loader-syntax, import/no-unresolved */
 import debug from 'debug';
 import { size, each, includes } from 'lodash';
 import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
@@ -30,6 +31,7 @@ const topologySorter = topology => topology.get('rank');
 export const initialState = makeMap({
   availableCanvasMetrics: makeList(),
   availableNetworks: makeList(),
+  contrastMode: false,
   controlPipes: makeOrderedMap(), // pipeId -> controlPipe
   controlStatus: makeMap(),
   currentTopology: null,
@@ -719,6 +721,33 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.TOGGLE_TROUBLESHOOTING_MENU: {
       return state.set('showingTroubleshootingMenu', !state.get('showingTroubleshootingMenu'));
+    }
+
+    case ActionTypes.TOGGLE_CONTRAST_MODE: {
+      const modules = [
+        require.resolve('../../styles/main.scss'),
+        require.resolve('../../styles/contrast.scss')
+      ];
+      // Bust the webpack require cache to for a re-download of the stylesheets
+      modules.forEach((i) => {
+        const children = require.cache[i] ? require.cache[i].children : [];
+        children.forEach((c) => {
+          delete require.cache[c];
+        });
+        delete require.cache[i];
+      });
+
+      if (action.enabled) {
+        require.ensure([], () => {
+          require('../../styles/contrast.scss');
+        });
+      } else {
+        require.ensure([], () => {
+          require('../../styles/main.scss');
+        });
+      }
+
+      return state.set('contrastMode', action.enabled);
     }
 
     default: {

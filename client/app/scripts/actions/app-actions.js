@@ -643,6 +643,17 @@ export function receiveNotFound(nodeId) {
   };
 }
 
+export function toggleContrastMode(enabled) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.TOGGLE_CONTRAST_MODE,
+      enabled,
+    });
+
+    updateRoute(getState);
+  };
+}
+
 export function route(urlState) {
   return (dispatch, getState) => {
     dispatch({
@@ -664,6 +675,10 @@ export function route(urlState) {
       state.get('nodeDetails'),
       dispatch
     );
+
+    if (urlState.contrastMode) {
+      dispatch(toggleContrastMode(true));
+    }
   };
 }
 
