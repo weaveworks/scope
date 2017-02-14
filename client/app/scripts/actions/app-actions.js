@@ -684,6 +684,8 @@ export function toggleTroubleshootingMenu(ev) {
 
 export function changeInstance() {
   return (dispatch, getState) => {
+    dispatch({ type: ActionTypes.CHANGE_INSTANCE });
+    updateRoute(getState);
     const state = getState();
     getNodesDelta(
       getCurrentTopologyUrl(state),
