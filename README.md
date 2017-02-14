@@ -43,8 +43,8 @@ For instructions on installing Scope on [Kubernetes](https://www.weave.works/doc
 
 ## <a name="help"></a>Getting help
 
-If you have any questions about, feedback for or problem with Scope we invite
-you to:
+If you have any questions about, feedback for or problems with Scope:
+
 - Read [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 - <a href="https://weaveworks.github.io/community-slack/">join our #weave-community slack channel</a>
 - <a href="https://www.meetup.com/Weave-User-Group/"> join the Weave User Group for online talks, free training sessions and meetups in your area </a>
