@@ -19,16 +19,9 @@ function encodeURL(url) {
     .replace(new RegExp(SLASH, 'g'), SLASH_REPLACEMENT);
 }
 
-export function decodeURL(url) {
+function decodeURL(url) {
   return decodeURIComponent(url.replace(new RegExp(SLASH_REPLACEMENT, 'g'), SLASH))
     .replace(new RegExp(PERCENT_REPLACEMENT, 'g'), PERCENT);
-}
-
-export function parseHashState(hash = window.location.hash) {
-  const urlStateString = hash
-    .replace('#!/state/', '')
-    .replace('#!/', '') || '{}';
-  return JSON.parse(decodeURL(urlStateString));
 }
 
 function shouldReplaceState(prevState, nextState) {
@@ -57,8 +50,7 @@ export function getUrlState(state) {
     gridSortedBy: state.get('gridSortedBy'),
     gridSortedDesc: state.get('gridSortedDesc'),
     topologyId: state.get('currentTopologyId'),
-    topologyOptions: state.get('topologyOptions').toJS(), // all options,
-    contrastMode: state.get('contrastMode')
+    topologyOptions: state.get('topologyOptions').toJS() // all options
   };
 
   if (state.get('showingNetworks')) {
@@ -75,7 +67,10 @@ export function updateRoute(getState) {
   const state = getUrlState(getState());
   const stateUrl = encodeURL(JSON.stringify(state));
   const dispatch = false;
-  const prevState = parseHashState();
+  const urlStateString = window.location.hash
+    .replace('#!/state/', '')
+    .replace('#!/', '') || '{}';
+  const prevState = JSON.parse(decodeURL(urlStateString));
 
   // back up state in storage as well
   storageSet(STORAGE_STATE_KEY, stateUrl);

@@ -4,22 +4,19 @@ import moment from 'moment';
 
 import Plugins from './plugins';
 import { getUpdateBufferSize } from '../utils/update-buffer-utils';
+import { contrastModeUrl, isContrastMode } from '../utils/contrast-utils';
 import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
-  clickResumeUpdate, toggleHelp, toggleTroubleshootingMenu, toggleContrastMode } from '../actions/app-actions';
+  clickResumeUpdate, toggleHelp, toggleTroubleshootingMenu } from '../actions/app-actions';
+import { basePathSlash } from '../utils/web-api-utils';
 
 class Footer extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-
-    this.handleContrastClick = this.handleContrastClick.bind(this);
-  }
-  handleContrastClick(e) {
-    e.preventDefault();
-    this.props.toggleContrastMode(!this.props.contrastMode);
-  }
   render() {
-    const { hostname, updatePausedAt, version, versionUpdate, contrastMode } = this.props;
+    const { hostname, updatePausedAt, version, versionUpdate } = this.props;
+    const contrastMode = isContrastMode();
 
+    // link url to switch contrast with current UI state
+    const otherContrastModeUrl = contrastMode
+      ? basePathSlash(window.location.pathname) : contrastModeUrl;
     const otherContrastModeTitle = contrastMode
       ? 'Switch to normal contrast' : 'Switch to high contrast';
     const forceRelayoutTitle = 'Force re-layout (might reduce edge crossings, '
@@ -79,7 +76,7 @@ class Footer extends React.Component {
             title={forceRelayoutTitle}>
             <span className="fa fa-refresh" />
           </a>
-          <a onClick={this.handleContrastClick} className="footer-icon" title={otherContrastModeTitle}>
+          <a className="footer-icon" href={otherContrastModeUrl} title={otherContrastModeTitle}>
             <span className="fa fa-adjust" />
           </a>
           <a
@@ -104,8 +101,7 @@ function mapStateToProps(state) {
     hostname: state.get('hostname'),
     updatePausedAt: state.get('updatePausedAt'),
     version: state.get('version'),
-    versionUpdate: state.get('versionUpdate'),
-    contrastMode: state.get('contrastMode')
+    versionUpdate: state.get('versionUpdate')
   };
 }
 
@@ -117,7 +113,6 @@ export default connect(
     clickPauseUpdate,
     clickResumeUpdate,
     toggleHelp,
-    toggleTroubleshootingMenu,
-    toggleContrastMode
+    toggleTroubleshootingMenu
   }
 )(Footer);

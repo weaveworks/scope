@@ -1,10 +1,10 @@
 import React from 'react';
-import { connect } from 'react-redux';
 
 import { NODE_BASE_SIZE } from '../constants/styles';
+import { isContrastMode } from '../utils/contrast-utils';
 
-function NodeShapeStack(props) {
-  const shift = props.contrastMode ? 0.15 : 0.1;
+export default function NodeShapeStack(props) {
+  const shift = isContrastMode() ? 0.15 : 0.1;
   const highlightScale = [1, 1 + shift];
   const dy = NODE_BASE_SIZE * shift;
 
@@ -26,11 +26,3 @@ function NodeShapeStack(props) {
     </g>
   );
 }
-
-function mapStateToProps(state) {
-  return {
-    contrastMode: state.get('contrastMode')
-  };
-}
-
-export default connect(mapStateToProps)(NodeShapeStack);

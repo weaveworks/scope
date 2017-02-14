@@ -2,6 +2,7 @@ const webpack = require('webpack');
 const autoprefixer = require('autoprefixer');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+
 /**
  * This is the Webpack configuration file for local development.
  * It contains local-specific configuration which includes:
@@ -27,6 +28,10 @@ module.exports = {
       './app/scripts/main.dev',
       'webpack-hot-middleware/client'
     ],
+    'contrast-app': [
+      './app/scripts/contrast-main',
+      'webpack-hot-middleware/client'
+    ],
     'terminal-app': [
       './app/scripts/terminal-main',
       'webpack-hot-middleware/client'
@@ -40,7 +45,7 @@ module.exports = {
   // Used by Webpack Dev Middleware
   output: {
     publicPath: '',
-    path: path.join(__dirname, 'build'),
+    path: '/',
     filename: '[name].js'
   },
 
@@ -51,6 +56,11 @@ module.exports = {
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin(),
     new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
+    new HtmlWebpackPlugin({
+      chunks: ['vendors', 'contrast-app'],
+      template: 'app/html/index.html',
+      filename: 'contrast.html'
+    }),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'terminal-app'],
       template: 'app/html/index.html',
