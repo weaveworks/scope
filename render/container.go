@@ -23,7 +23,7 @@ const (
 // NB We only want processes in container _or_ processes with network connections
 // but we need to be careful to ensure we only include each edge once, by only
 // including the ProcessRenderer once.
-var ContainerRenderer = MakeFilter(
+var ContainerRenderer = ApplyDecorators(MakeFilter(
 	func(n report.Node) bool {
 		// Drop deleted containers
 		state, ok := n.Latest.Lookup(docker.ContainerState)
@@ -43,7 +43,7 @@ var ContainerRenderer = MakeFilter(
 
 		SelectContainer,
 	),
-)
+))
 
 const originalNodeID = "original_node_id"
 const originalNodeTopology = "original_node_topology"
@@ -204,7 +204,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator)
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container
 // graph where the ranks are the image names, not their IDs
-var ContainerWithImageNameRenderer = ApplyDecorators(containerWithImageNameRenderer{ContainerRenderer})
+var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerRenderer}
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
