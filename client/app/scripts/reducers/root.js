@@ -75,7 +75,8 @@ export const initialState = makeMap({
   version: '...',
   versionUpdate: null,
   websocketClosed: false,
-  exportingGraph: false
+  exportingGraph: false,
+  initialNodesLoaded: false
 });
 
 // adds ID field to topology (based on last part of URL path) and save urls in
@@ -146,6 +147,12 @@ function closeAllNodeDetails(state) {
 
 function resumeUpdate(state) {
   return state.set('updatePausedAt', null);
+}
+
+function clearNodes(state) {
+  return state
+    .update('nodes', nodes => nodes.clear())
+    .set('nodesLoaded', false);
 }
 
 export function rootReducer(state = initialState, action) {
@@ -278,10 +285,10 @@ export function rootReducer(state = initialState, action) {
 
       if (action.topologyId !== state.get('currentTopologyId')) {
         state = setTopology(state, action.topologyId);
-        state = state.update('nodes', nodes => nodes.clear());
+        state = clearNodes(state);
       }
       state = state.set('availableCanvasMetrics', makeList());
-      state = state.set('nodesLoaded', false);
+
       return state;
     }
 
@@ -291,10 +298,10 @@ export function rootReducer(state = initialState, action) {
 
       if (action.topologyId !== state.get('currentTopologyId')) {
         state = setTopology(state, action.topologyId);
-        state = state.update('nodes', nodes => nodes.clear());
+        state = clearNodes(state);
       }
+
       state = state.set('availableCanvasMetrics', makeList());
-      state = state.set('nodesLoaded', false);
       return state;
     }
 
@@ -517,12 +524,14 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.SET_RECEIVED_NODES_DELTA: {
-      // Turn on the table view if the graph is too complex
-      if (!state.get('nodesLoaded')) {
+      // Turn on the table view if the graph is too complex, but skip this block if
+      // the user has already loaded topologies once.
+      if (!state.get('initialNodesLoaded') && !state.get('nodesLoaded')) {
         const topoStats = state.get('currentTopology').get('stats');
         state = graphExceedsComplexityThresh(topoStats)
           ? state.set('gridMode', true)
           : state;
+        state = state.set('initialNodesLoaded', true);
       }
       return state.set('nodesLoaded', true);
     }
