@@ -22,7 +22,7 @@ The following topics are discussed:
    * [Using Docker Compose](#docker-compose)
    * [Using Docker Compose in Weave Cloud](#docker-compose-cloud)
  * [Installing Scope on Kubernetes](#k8s)
-   * [Using Weave Cloud](#k8s-weave-cloud)
+   * [With Weave Cloud](#k8s-weave-cloud)
  * [Installing Scope on Amazon ECS](#ecs)
  * [Installing Scope on minimesos](#minimesos)
  * [Installing Scope on Mesosphere DC/OS](#dcos)
@@ -208,7 +208,7 @@ Note that you will need to launch Scope onto every node that you want to monitor
 
 ##<a name="k8s"></a>Installing Scope on Kubernetes
 
-### With Weave Cloud (recommended)
+###<a name="k8s-weave-cloud"></a>With Weave Cloud (recommended)
 
 Weave Cloud hosts the Scope UI for you, provides secure access control for your team and saves resources such as CPU or memory usage.
 
