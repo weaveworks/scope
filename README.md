@@ -1,4 +1,4 @@
-# Weave Scope - Troubleshooting & Monitoring for Docker & Kubernetes
+# Weave Scope - Monitoring, visualisation & management for Docker & Kubernetes
 
 [![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master)
 [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope)
@@ -35,7 +35,7 @@ sudo chmod a+x /usr/local/bin/scope
 scope launch
 ```
 
-This script downloads and runs a recent Scope image from Docker Hub.
+This script will download and run a recent Scope image from the Docker Hub.
 Now, open your web browser to **http://localhost:4040**. (If you're using
 boot2docker, replace localhost with the output of `boot2docker ip`.)
 
@@ -43,14 +43,12 @@ For instructions on installing Scope on [Kubernetes](https://www.weave.works/doc
 
 ## <a name="help"></a>Getting help
 
-If you have any questions about, feedback for or problems with Scope:
-
-- Read [the Weave Scope docs](https://www.weave.works/docs/scope/latest/introducing/).
-- Invite yourself to the <a href="https://weaveworks.github.io/community-slack/" target="_blank"> #weave-community </a> slack channel.
-- Ask a question on the <a href="https://weave-community.slack.com/messages/general/"> #weave-community</a> slack channel.
-- Join the <a href="https://www.meetup.com/pro/Weave/"> Weave User Group </a> and get invited to online talks, hands-on training and meetups in your area.
-- Send an email to <a href="mailto:weave-users@weave.works">weave-users@weave.works</a>
-- <a href="https://github.com/weaveworks/scope/issues/new">File an issue.</a>
+If you have any questions about, feedback for or problem with Scope we invite
+you to:
+- Read [the docs](https://www.weave.works/docs/scope/latest/introducing/).
+- <a href="https://slack.weave.works/">join our public slack channel</a>
+- send an email to <a href="mailto:weave-users@weave.works">weave-users@weave.works</a>
+- <a href="https://github.com/weaveworks/scope/issues/new">file an issue</a>
 
 Your feedback is always welcome!
 
