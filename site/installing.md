@@ -49,7 +49,7 @@ Where,
 
 ###<a name="docker-weave-cloud"></a>Using Weave Cloud
 
-First, obtain a Cloud service token by signing up at [https://cloud.weave.works](https://cloud.weave.works/).
+First, obtain a Weave Cloud token by signing up at [https://cloud.weave.works](https://cloud.weave.works/).
 
 !['Weave Cloud Token'](images/weave-cloud-token.png)
 
@@ -212,7 +212,7 @@ Note that you will need to launch Scope onto every node that you want to monitor
 
 Weave Cloud hosts the Scope UI for you, provides secure access control for your team and saves resources such as CPU or memory usage.
 
-Sign up for [Weave Cloud account](https://cloud.weave.works/) and obtain a token. Replace `<token>` with your token by running this on the master node or on whatever machine that has `kubectl` is configured to authenticate to your Kubernetes cluster:
+Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a token. Replace `<token>` with your token by running this on the master node or on whatever machine that has `kubectl` configured to authenticate to your Kubernetes cluster:
 
     $ kubectl apply -f 'https://cloud.weave.works/launch/k8s/weavescope.yaml?service-token=<token>'
 
