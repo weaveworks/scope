@@ -1,8 +1,6 @@
 import React from 'react';
-import { connect } from 'react-redux';
 
-class ShowMore extends React.Component {
-
+export default class ShowMore extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
     this.handleClick = this.handleClick.bind(this);
@@ -29,5 +27,3 @@ class ShowMore extends React.Component {
     );
   }
 }
-
-export default connect()(ShowMore);

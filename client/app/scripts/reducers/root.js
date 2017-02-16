@@ -38,6 +38,7 @@ export const initialState = makeMap({
   gridMode: false,
   gridSortedBy: null,
   gridSortedDesc: null,
+  // TODO: Calculate these sets from selectors instead.
   highlightedEdgeIds: makeSet(),
   highlightedNodeIds: makeSet(),
   hostname: '...',
@@ -560,6 +561,9 @@ export function rootReducer(state = initialState, action) {
       // update existing nodes
       each(action.delta.update, (node) => {
         if (state.hasIn(['nodes', node.id])) {
+          // TODO: Implement a manual deep update here, as it might bring a great benefit
+          // to our nodes selectors (e.g. layout engine would be completely bypassed if the
+          // adjacencies would stay the same but the metrics would get updated).
           state = state.setIn(['nodes', node.id], fromJS(node));
         }
       });

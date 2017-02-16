@@ -41,7 +41,7 @@ function getNodeShape({ shape, stack }) {
 }
 
 
-class Node extends React.PureComponent {
+class Node extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -93,8 +93,8 @@ class Node extends React.PureComponent {
   }
 
   render() {
-    const { focused, highlighted, networks, pseudo, rank, label,
-      transform, exportingGraph, showingNetworks, stack, id, metric } = this.props;
+    const { focused, highlighted, networks, pseudo, rank, label, transform,
+      exportingGraph, showingNetworks, stack, id, metric, matches = makeMap() } = this.props;
     const { hovered } = this.state;
 
     const color = getNodeColor(rank, label, pseudo);
@@ -102,6 +102,9 @@ class Node extends React.PureComponent {
     const labelOffsetY = (showingNetworks && networks) ? 40 : 28;
 
     const nodeClassName = classnames('node', {
+      // NOTE: Having a CSS animation here might not be the best idea.
+      // See https://github.com/weaveworks/scope/issues/2255
+      matched: !matches.isEmpty(),
       highlighted,
       hovered,
       pseudo

@@ -1,11 +1,13 @@
 import React from 'react';
 import { omit } from 'lodash';
-import { connect } from 'react-redux';
 import { Motion, spring } from 'react-motion';
 
 import { NODES_SPRING_ANIMATION_CONFIG } from '../constants/animation';
-import { NODE_BLUR_OPACITY } from '../constants/styles';
+import { isContrastMode } from '../utils/contrast-utils';
 import Node from './node';
+
+
+const nodeBlurOpacity = isContrastMode() ? 0.6 : 0.25;
 
 const transformedNode = (otherProps, { x, y, k, opacity }) => (
   // NOTE: Controlling blurring and transform from here seems to re-render
@@ -15,11 +17,11 @@ const transformedNode = (otherProps, { x, y, k, opacity }) => (
   </g>
 );
 
-class NodeContainer extends React.PureComponent {
+export default class NodeContainer extends React.PureComponent {
   render() {
     const { dx, dy, isAnimated, scale, blurred } = this.props;
     const forwardedProps = omit(this.props, 'dx', 'dy', 'isAnimated', 'scale', 'blurred');
-    const opacity = blurred ? NODE_BLUR_OPACITY : 1;
+    const opacity = blurred ? nodeBlurOpacity : 1;
 
     if (!isAnimated) {
       // Show static node for optimized rendering
@@ -40,5 +42,3 @@ class NodeContainer extends React.PureComponent {
     );
   }
 }
-
-export default connect()(NodeContainer);

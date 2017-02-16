@@ -1,10 +1,8 @@
 import React from 'react';
-import { connect } from 'react-redux';
 
 import { clickRelative } from '../../actions/app-actions';
 
-class NodeDetailsTableNodeLink extends React.Component {
-
+export default class NodeDetailsTableNodeLink extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
     this.handleClick = this.handleClick.bind(this);
@@ -45,5 +43,3 @@ class NodeDetailsTableNodeLink extends React.Component {
     );
   }
 }
-
-export default connect()(NodeDetailsTableNodeLink);

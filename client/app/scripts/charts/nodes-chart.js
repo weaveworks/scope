@@ -17,7 +17,7 @@ import { layoutWithSelectedNode } from '../selectors/nodes-chart-focus';
 import { graphLayout } from '../selectors/nodes-chart-layout';
 
 
-const GRAPH_COMPLEXITY_NODES_TRESHOLD = 150;
+const GRAPH_COMPLEXITY_NODES_TRESHOLD = 100;
 const ZOOM_CACHE_FIELDS = [
   'panTranslateX', 'panTranslateY',
   'zoomScale', 'minZoomScale', 'maxZoomScale'

@@ -51,6 +51,20 @@ const layoutOptionsSelector = createStructuredSelector({
 
 export const graphLayout = createSelector(
   [
+    // TODO: Instead of sending the nodes with all the information (metrics, metadata, etc...)
+    // to the layout engine, it would suffice to forward it just the nodes adjacencies map, which
+    // we could get with another selector like:
+    //
+    // const nodesAdjacenciesSelector = createMapSelector(
+    //   [ (_, props) => props.nodes ],
+    //   node => node.get('adjacency') || makeList()
+    // );
+    //
+    // That would enable us to use smarter caching, so that the layout doesn't get recalculated
+    // if adjacencies don't change but e.g. metrics gets updated. We also don't need to init
+    // edges here as the adjacencies data is enough to reconstruct them in the layout engine (this
+    // might enable us to simplify the caching system there since we really only need to cache
+    // the adjacencies map in that case and not nodes and edges).
     (_, props) => props.nodes,
     layoutOptionsSelector,
   ],

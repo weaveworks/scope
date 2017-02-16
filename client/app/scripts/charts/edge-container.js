@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { Motion, spring } from 'react-motion';
 import { Map as makeMap } from 'immutable';
 import { line, curveBasis } from 'd3-shape';
@@ -37,7 +36,7 @@ const waypointsMapToArray = (waypointsMap) => {
 };
 
 
-class EdgeContainer extends React.PureComponent {
+export default class EdgeContainer extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
     this.state = { waypointsMap: makeMap() };
@@ -102,5 +101,3 @@ class EdgeContainer extends React.PureComponent {
     this.setState({ waypointsMap });
   }
 }
-
-export default connect()(EdgeContainer);

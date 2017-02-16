@@ -388,10 +388,6 @@
       }
     }
 
-    &.blurred {
-      opacity: $node-opacity-blurred;
-    }
-
     &.matched .shape {
       animation: throb 0.5s $base-ease;
     }

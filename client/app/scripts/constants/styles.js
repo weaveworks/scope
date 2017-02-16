@@ -21,7 +21,6 @@ export const NODE_SHAPE_HIGHLIGHT_RADIUS = 70;
 export const NODE_SHAPE_BORDER_RADIUS = 50;
 export const NODE_SHAPE_SHADOW_RADIUS = 45;
 export const NODE_SHAPE_DOT_RADIUS = 10;
-export const NODE_BLUR_OPACITY = 0.2;
 // NOTE: This value represents the node unit radius (in pixels). Since zooming is
 // controlled at the top level now, this renormalization would be obsolete (i.e.
 // value 1 could be used instead), if it wasn't for the following factors:
