@@ -1,3 +1,28 @@
+## Release 1.2.1
+This is a minor patch release.
+
+Documentation
+- Uploaded new cloud token screenshot
+	[#2248](https://github.com/weaveworks/scope/pull/2248)
+- Updated cloud description
+	[#2249](https://github.com/weaveworks/scope/pull/2249)
+
+Bugfixes
+- Fix help menu not opening from 'search' hint
+	[#2230](https://github.com/weaveworks/scope/pull/2230)
+- Re-factor API URL generation code
+	[#2202](https://github.com/weaveworks/scope/pull/2202)
+
+Improvements
+- Reintroduce probe checkpoint flags for kernel version and OS
+	[#2224](https://github.com/weaveworks/scope/pull/2224)
+- Upgraded xterm.js to 2.2.3
+	[#2126](https://github.com/weaveworks/scope/pull/2126)
+- Allow random seed in dialer
+	[#2206](https://github.com/weaveworks/scope/pull/2206)
+- Rename ECS Service node ids to be cluster;serviceName
+	[#2186](https://github.com/weaveworks/scope/pull/2186)
+
 ## Release 1.2.0
 
 Highlights:
@@ -49,7 +74,7 @@ Bug fixes:
 	[#2155](https://github.com/weaveworks/scope/issues/2155)
 - Contrast mode not working
 	[#2165](https://github.com/weaveworks/scope/issues/2165)
-	[#2138](https://github.com/weaveworks/scope/issues/2138)	
+	[#2138](https://github.com/weaveworks/scope/issues/2138)
 - Scope does not create special nodes within the same VPC
 	[#2163](https://github.com/weaveworks/scope/issues/2163)
 - default view fails to select 'application containers only'
@@ -72,7 +97,7 @@ Bug fixes:
 	[#2209](https://github.com/weaveworks/scope/issues/2209)
 - Radii of rounded-corner shape don't quite align
 	[#2212](https://github.com/weaveworks/scope/issues/2212)
-	
+
 Documentation:
 - Fix Scope arguments in Docker Compose installation docs
 	[#2143](https://github.com/weaveworks/scope/pull/2143)
@@ -112,7 +137,7 @@ Internal improvements and cleanup:
 	[#2101](https://github.com/weaveworks/scope/pull/2101)
 - Fix force-push to master
 	[#2094](https://github.com/weaveworks/scope/pull/2094)
-- Upgraded eslint & eslint-config-airbnb	
+- Upgraded eslint & eslint-config-airbnb
 	[#2058](https://github.com/weaveworks/scope/pull/2058)
 	[#2084](https://github.com/weaveworks/scope/pull/2084)
 	[#2089](https://github.com/weaveworks/scope/pull/2089)
@@ -140,7 +165,7 @@ Internal improvements and cleanup:
 	[#2034](https://github.com/weaveworks/scope/pull/2034)
 - Create `latest_release` Docker image tag during release process
 	[#2216](https://github.com/weaveworks/scope/issues/2216)
-	
+
 Weave Cloud related changes:
 - Deploy to quay when merging to master
 	[#2134](https://github.com/weaveworks/scope/pull/2134)
@@ -407,7 +432,7 @@ Highlights:
 New features and enhancements:
 - Table mode
 	[#1673](https://github.com/weaveworks/scope/pull/1673)
-	[#1747](https://github.com/weaveworks/scope/pull/1747)	
+	[#1747](https://github.com/weaveworks/scope/pull/1747)
 	[#1753](https://github.com/weaveworks/scope/pull/1753)
 	[#1774](https://github.com/weaveworks/scope/pull/1774)
 	[#1775](https://github.com/weaveworks/scope/pull/1775)
@@ -417,16 +442,16 @@ New features and enhancements:
 - Don't show weavescope logo when running in a frame
 	[#1734](https://github.com/weaveworks/scope/pull/1734)
 - Reduce horizontal gap between nodes in topology views
-	[#1693](https://github.com/weaveworks/scope/pull/1693)	
+	[#1693](https://github.com/weaveworks/scope/pull/1693)
 - Elide service-token when logging commandline arguments
 	[#1782](https://github.com/weaveworks/scope/pull/1782)
 - Don't complain when stopping Scope if it wasn't running
 	[#1783](https://github.com/weaveworks/scope/pull/1783)
 - Silence abnormal websocket close
-	[#1768](https://github.com/weaveworks/scope/pull/1768)	
+	[#1768](https://github.com/weaveworks/scope/pull/1768)
 - Eliminate stats log noise from stopped containers
 	[#1687](https://github.com/weaveworks/scope/pull/1687)
-	[#1798](https://github.com/weaveworks/scope/pull/1798)	
+	[#1798](https://github.com/weaveworks/scope/pull/1798)
 - Hide uncontained/unmanaged by default
 	[#1694](https://github.com/weaveworks/scope/pull/1694)
 
@@ -520,7 +545,7 @@ Bug fixes:
 	[#1667](https://github.com/weaveworks/scope/pull/1667)
 - Scope fails to launch on latest Docker for Mac (beta18)
 	[#1650](https://github.com/weaveworks/scope/pull/1650)
-	[#1669](https://github.com/weaveworks/scope/pull/1669)	
+	[#1669](https://github.com/weaveworks/scope/pull/1669)
 - Fixes terminal wrapping by syncing docker/term.js terminal widths.
 	[#1648](https://github.com/weaveworks/scope/pull/1648)
 - Wrongly attributed local side in outbound internet connections

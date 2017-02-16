@@ -26,27 +26,23 @@ setup() {
     # shellcheck disable=SC2116
     # shellcheck disable=SC2005
     TAG_COUNT=$(echo "$(echo "$HEAD_TAGS" | wc -w)") # mac hack
-    case $TAG_COUNT in
-        1)
-            if [ "$HEAD_TAGS" != "latest_release" ]; then
-                LATEST_TAG=$HEAD_TAGS
-            else
-                echo "Cannot determine version - latest_release points at HEAD" >&2
-                exit 1
-            fi
-            ;;
-        0)
-            echo "Cannot determine version - no tags point at HEAD" >&2
+    if [ "$TAG_COUNT" -eq 1 ]; then
+        if [ "$HEAD_TAGS" != "latest_release" ]; then
+            LATEST_TAG=$HEAD_TAGS
+        else
+            echo "Cannot determine version - latest_release points at HEAD" >&2
             exit 1
-            ;;
-        *)
-            echo "Cannot determine version - multiple tags point at HEAD:" >&2
-            for TAG in $HEAD_TAGS; do
-                echo -e "\t$TAG" >&2
-            done
-            exit 1
-            ;;
-    esac
+        fi
+    elif [ "$TAG_COUNT" -eq 0 ]; then
+        echo "Cannot determine version - no tags point at HEAD" >&2
+        exit 1
+    else
+        echo "Cannot determine version - multiple tags point at HEAD:" >&2
+        for TAG in $HEAD_TAGS; do
+            echo -e "\t$TAG" >&2
+        done
+        exit 1
+    fi
 
     RELEASE_TYPE=$(infer_release_type "$LATEST_TAG")
     echo "== Inferred release type $RELEASE_TYPE from tag $LATEST_TAG"

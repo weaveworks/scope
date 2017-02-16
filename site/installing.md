@@ -35,13 +35,13 @@ To install Scope in stand-alone mode, run the following commands:
     sudo chmod a+x /usr/local/bin/scope
     scope launch
 
-This script downloads and runs a recent Scope image from Docker Hub. Scope needs to be installed onto every machine that you want to monitor. 
+This script downloads and runs a recent Scope image from Docker Hub. Scope needs to be installed onto every machine that you want to monitor.
 
 After Scope is installed, open your browser to `http://localhost:4040`.  
 
 If you are using docker-machine, you can find the IP by running, `docker-machine ip <VM name>`.
 
-Where, 
+Where,
 
  * `<VM name>` is the name you gave to your virtual machine with docker-machine.
 
@@ -63,14 +63,14 @@ Where,
 
 * `--service-token=<token>` is the token you obtained from Weave Cloud.
 
-This script downloads and runs a recent Scope Docker image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor. 
+This script downloads and runs a recent Scope Docker image from the Docker Hub. Scope needs to be installed onto every machine that you want to monitor.
 
 Open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login. Click 'View Instance' to see the Scope user interface.
 
 
 ###<a name="cluster-no-net"></a>Installing Scope on a Local Cluster Without Weave Net
 
-This example assumes a local cluster that is not networked with Weave Net, and also has no special hostnames or DNS settings. You will launch Scope with the IP addresses of all of the nodes in the cluster. 
+This example assumes a local cluster that is not networked with Weave Net, and also has no special hostnames or DNS settings. You will launch Scope with the IP addresses of all of the nodes in the cluster.
 
 Suppose you have the following nodes in a cluster:
 
@@ -79,10 +79,16 @@ Suppose you have the following nodes in a cluster:
  192.168.100.18
  192.168.100.19
  192.168.100.20
- 
- Using the IP addresses, you will manually peer each node with all of the other nodes during Scope launch. 
- 
+
+ Using the IP addresses, you will manually peer each node with all of the other nodes during Scope launch.
+
 **1. Run the following on each node:**
+=======
+
+ In the steps that follow, you will manually peer each node with all of the other nodes during Scope launch.
+
+**1. To begin run the following on each node:**
+>>>>>>> Docs update with new version
 
      sudo curl -L git.io/scope -o /usr/local/bin/scope
      sudo chmod a+x /usr/local/bin/scope
@@ -123,7 +129,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 **Docker Compose Format Version 1:**
 
     scope:
-      image: weaveworks/scope:1.2.0
+      image: weaveworks/scope:1.2.1
       net: "host"
       pid: "host"
       privileged: true
@@ -139,7 +145,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
     version: '2'
     services:
       scope:
-        image: weaveworks/scope:1.2.0
+        image: weaveworks/scope:1.2.1
         network_mode: "host"
         pid: "host"
         privileged: true
@@ -163,7 +169,7 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
 **Docker Compose Format Version 1:**
 
     probe:
-      image: weaveworks/scope:1.2.0
+      image: weaveworks/scope:1.2.1
       net: "host"
       pid: "host"
       privileged: true
@@ -180,7 +186,7 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
     version: '2'
     services:
       probe:
-        image: weaveworks/scope:1.2.0
+        image: weaveworks/scope:1.2.1
         network_mode: "host"
         pid: "host"
         privileged: true
@@ -202,7 +208,7 @@ Where,
 
 * `SCOPE_SERVICE_TOKEN=<token>` is the token you obtained after you signed up for Weave Cloud.
 
-Note that you will need to launch Scope onto every node that you want to monitor. 
+Note that you will need to launch Scope onto every node that you want to monitor.
 
 **4.** Go to [https://cloud.weave.works](https://cloud.weave.works) and click 'View Instance'.
 
@@ -240,7 +246,7 @@ To download and read the Scope manifest run:
 
     kubectl port-forward $(kubectl get pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}') 4040
 
-The URL is: http://localhost:4040. 
+The URL is: http://localhost:4040.
 
 ##<a name="ecs"></a>Installing Scope on Amazon ECS
 
