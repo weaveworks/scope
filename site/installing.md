@@ -23,6 +23,7 @@ The following topics are discussed:
    * [Using Docker Compose in Weave Cloud](#docker-compose-cloud)
  * [Installing Scope on Kubernetes](#k8s)
    * [With Weave Cloud](#k8s-weave-cloud)
+   * [Without Weave Cloud](#k8s-standalone)   
  * [Installing Scope on Amazon ECS](#ecs)
  * [Installing Scope on minimesos](#minimesos)
  * [Installing Scope on Mesosphere DC/OS](#dcos)
@@ -218,7 +219,7 @@ Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a tok
 
 **SECURITY NOTE: This allows control of your Kubernetes cluster from Weave Cloud, which is a hosted service.**
 
-### Without Weave Cloud (run Scope in standalone mode)
+###<a name="k8s-standalone"></a>Without Weave Cloud (run Scope in standalone mode)
 
 The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is by running the following:
 
