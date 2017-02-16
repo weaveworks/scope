@@ -396,8 +396,8 @@ func (c ecsClientImpl) ScaleService(serviceName string, amount int) error {
 	}
 
 	newCount := service.DesiredCount + int64(amount)
-	if newCount < 0 {
-		return fmt.Errorf("Cannot reduce count below zero")
+	if newCount < 1 {
+		return fmt.Errorf("Cannot reduce count below one")
 	}
 	_, err := c.client.UpdateService(&ecs.UpdateServiceInput{
 		Cluster:      &c.cluster,
