@@ -63,8 +63,9 @@ Choose an overview of your container infrastructure, or focus on a specific micr
 
 ##<a name="interact-with-and-manage-containers"></a>Troubleshoot and Manage Containers
 
-Troubleshoot your app by directly interacting with containers: pause, restart and stop containers without having to leave the Scope browser window.
-A convenient terminal window is provided that enables you to interact with your app and to troubleshoot and diagnose any issues all within the same context.Select `<_` to launch a terminal in any container from the details panel. 
+Click on a container, pod or host to view the controls that allow you to: pause, restart, stop and delete without having to leave the Scope browser window. Logs of selected containers or pods (if you are running in Kubernetes) can also be viewed by clicking the terminal icon.
+
+And if further troubleshooting is required, a convenient terminal window can also be launched from any container that enables you to interact with your app and run any UNIX command to diagnose issues.  Launch a terminal by clicking the `<_` icon from the details panel of a selected container. 
 
 !['Terminal for container interaction'](images/terminal-view.png)
 
