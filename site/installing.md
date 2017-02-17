@@ -215,7 +215,7 @@ Weave Cloud hosts the Scope UI for you, provides secure access control for your 
 
 Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a token. Replace `<token>` with your token by running this on the master node or on whatever machine that has `kubectl` configured to authenticate to your Kubernetes cluster:
 
-    $ kubectl apply -f 'https://cloud.weave.works/launch/k8s/weavescope.yaml?service-token=<token>'
+    $ kubectl apply --namespace kube-system -f 'https://cloud.weave.works/k8s/scope.yaml?service-token=<token>'
 
 **SECURITY NOTE: This allows control of your Kubernetes cluster from Weave Cloud, which is a hosted service.**
 
@@ -223,7 +223,7 @@ Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a tok
 
 The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is by running the following:
 
-    $ kubectl apply -f 'https://cloud.weave.works/launch/k8s/weavescope.yaml'
+    $ kubectl apply --namespace kube-system -f 'https://cloud.weave.works/k8s/scope.yaml'
 
 This runs a recent Scope image from Dockerhub and launches a probe onto every node as well as a single Scope app. Once launched, Scope doesn’t require any other configuration.
 
@@ -235,11 +235,11 @@ Allowable parameters for the launcher URL:
 
 To download and read the Scope manifest run:
 
-    curl --silent -L --remote-name https://cloud.weave.works/launch/k8s/weavescope.yaml
+    curl --silent --location --remote-name https://cloud.weave.works/k8s/scope.yaml
 
 **Open Scope in Your Browser**
 
-    kubectl port-forward $(kubectl get pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}') 4040
+    kubectl port-forward -n kube-system "$(kubectl get -n kube-system pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}')" 4040
 
 The URL is: http://localhost:4040.
 
