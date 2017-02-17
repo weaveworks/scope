@@ -12,6 +12,7 @@ Browse the current feature set for Scope with links to relevant indepth topics:
  * [Powerful Search](#powerful-search)
  * [Real-time App and Container Metrics](#real-time-app-and-container-metrics)
  * [Troubleshoot and Manage Containers](#interact-with-and-manage-containers)
+ * [Generate Custom Metrics using the Plugin API](#custom-plugins)
  
 
 ##<a name="topology-mapping"></a>Topology Mapping
@@ -67,7 +68,7 @@ A convenient terminal window is provided that enables you to interact with your 
 
 !['Terminal for container interaction'](images/terminal-view.png)
 
-##<a name="generate-custom-metrics-using-the-plugin-api"></a>Generate Custom Metrics using the Plugin API
+##<a name="custom-plugins"></a>Generate Custom Metrics using the Plugin API
 
 Scope includes a Plugin API, so that custom metrics may be generated and integrated with the Scope UI.
 
