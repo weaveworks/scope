@@ -12,6 +12,7 @@ import { doControlRequest, getAllNodes, getNodesDelta, getNodeDetails,
 import { getActiveTopologyOptions,
   getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
+import { loadTheme } from '../utils/contrast-utils';
 
 const log = debug('scope:app-actions');
 
@@ -647,6 +648,18 @@ export function receiveNotFound(nodeId) {
   };
 }
 
+export function setContrastMode(enabled) {
+  return (dispatch, getState) => {
+    loadTheme(enabled ? 'contrast' : 'normal');
+    dispatch({
+      type: ActionTypes.TOGGLE_CONTRAST_MODE,
+      enabled,
+    });
+
+    updateRoute(getState);
+  };
+}
+
 export function route(urlState) {
   return (dispatch, getState) => {
     dispatch({
@@ -668,6 +681,10 @@ export function route(urlState) {
       state.get('nodeDetails'),
       dispatch
     );
+
+    if (urlState.contrastMode) {
+      dispatch(setContrastMode(true));
+    }
   };
 }
 

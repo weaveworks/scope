@@ -127,7 +127,13 @@ class Node extends React.Component {
           this.renderStandardLabels(labelClassName, labelMinorClassName, labelOffsetY, mouseEvents)}
 
         <g {...mouseEvents} ref={this.saveShapeRef}>
-          <NodeShapeType id={id} highlighted={highlighted} color={color} metric={metric} />
+          <NodeShapeType
+            id={id}
+            highlighted={highlighted}
+            color={color}
+            metric={metric}
+            contrastMode={this.props.contrastMode}
+          />
         </g>
 
         {showingNetworks && <NodeNetworksOverlay networks={networks} stack={stack} />}
@@ -159,6 +165,7 @@ function mapStateToProps(state) {
   return {
     exportingGraph: state.get('exportingGraph'),
     showingNetworks: state.get('showingNetworks'),
+    contrastMode: state.get('contrastMode')
   };
 }
 
