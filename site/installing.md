@@ -85,18 +85,18 @@ Suppose you have the following nodes in a cluster:
 
 **1. To begin run the following on each node:**
 
-     sudo curl -L git.io/scope -o /usr/local/bin/scope
-     sudo chmod a+x /usr/local/bin/scope
+    sudo curl -L git.io/scope -o /usr/local/bin/scope
+    sudo chmod a+x /usr/local/bin/scope
 
  **2. Then on the first node launch scope with:**
 
-     scope launch 192.168.100.18 192.168.100.19 192.168.100.20
+    scope launch 192.168.100.18 192.168.100.19 192.168.100.20
 
  **3. And do the same for all of the other nodes in your cluster:**
 
-     scope launch 192.168.100.17 192.168.100.20 192.168.100.21
-     scope launch 192.168.100.17 192.168.100.18 192.168.100.21
-     scope launch 192.168.100.17 192.198.100.19 192.168.100.20
+    scope launch 192.168.100.17 192.168.100.20 192.168.100.21
+    scope launch 192.168.100.17 192.168.100.18 192.168.100.21
+    scope launch 192.168.100.17 192.198.100.19 192.168.100.20
 
 
 ###<a name="net-scope"></a> Weave Net and Scope
@@ -107,7 +107,7 @@ Each probe sends its reports to every app registered at this address. If you hav
 
 If you don’t want to use weaveDNS, then Scope can be instructed to cluster with other Scope instances on the command line. Hostnames and IP addresses are acceptable, both with and without ports, for example:
 
-    # scope launch scope1:4030 192.168.0.12 192.168.0.11:4030
+    scope launch scope1:4030 192.168.0.12 192.168.0.11:4030
 
 Hostnames will be regularly resolved as A records, and each answer used as a target.
 
@@ -215,7 +215,7 @@ Weave Cloud hosts the Scope UI for you, provides secure access control for your 
 
 Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a token. Replace `<token>` with your token by running this on the master node or on whatever machine that has `kubectl` configured to authenticate to your Kubernetes cluster:
 
-    $ kubectl apply --namespace kube-system -f 'https://cloud.weave.works/k8s/scope.yaml?service-token=<token>'
+    kubectl apply --namespace kube-system -f 'https://cloud.weave.works/k8s/scope.yaml?service-token=<token>'
 
 **SECURITY NOTE: This allows control of your Kubernetes cluster from Weave Cloud, which is a hosted service.**
 
@@ -223,7 +223,7 @@ Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a tok
 
 The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is by running the following:
 
-    $ kubectl apply --namespace kube-system -f 'https://cloud.weave.works/k8s/scope.yaml'
+    kubectl apply --namespace kube-system -f 'https://cloud.weave.works/k8s/scope.yaml'
 
 This runs a recent Scope image from Dockerhub and launches a probe onto every node as well as a single Scope app. Once launched, Scope doesn’t require any other configuration.
 
