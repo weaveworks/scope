@@ -9,11 +9,12 @@ import (
 	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/test/fixture"
 	"github.com/weaveworks/scope/test/reflect"
+	"github.com/weaveworks/scope/test/utils"
 )
 
 func TestPodRenderer(t *testing.T) {
-	have := Prune(render.PodRenderer.Render(fixture.Report, nil))
-	want := Prune(expected.RenderedPods)
+	have := utils.Prune(render.PodRenderer.Render(fixture.Report, nil))
+	want := utils.Prune(expected.RenderedPods)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -27,11 +28,14 @@ func TestPodFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
+	renderer := render.ApplyDecorator(render.PodRenderer)
+
 	input.Pod.Nodes[fixture.ClientPodNodeID] = input.Pod.Nodes[fixture.ClientPodNodeID].WithLatests(map[string]string{
 		kubernetes.Namespace: "kube-system",
 	})
-	have := Prune(render.PodRenderer.Render(input, filterNonKubeSystem))
-	want := Prune(expected.RenderedPods.Copy())
+
+	have := utils.Prune(renderer.Render(input, filterNonKubeSystem))
+	want := utils.Prune(expected.RenderedPods.Copy())
 	delete(want, fixture.ClientPodNodeID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -39,8 +43,8 @@ func TestPodFilterRenderer(t *testing.T) {
 }
 
 func TestPodServiceRenderer(t *testing.T) {
-	have := Prune(render.PodServiceRenderer.Render(fixture.Report, nil))
-	want := Prune(expected.RenderedPodServices)
+	have := utils.Prune(render.PodServiceRenderer.Render(fixture.Report, nil))
+	want := utils.Prune(expected.RenderedPodServices)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -50,11 +54,14 @@ func TestPodServiceFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
+	renderer := render.ApplyDecorator(render.PodServiceRenderer)
+
 	input.Service.Nodes[fixture.ServiceNodeID] = input.Service.Nodes[fixture.ServiceNodeID].WithLatests(map[string]string{
 		kubernetes.Namespace: "kube-system",
 	})
-	have := Prune(render.PodServiceRenderer.Render(input, filterNonKubeSystem))
-	want := Prune(expected.RenderedPodServices.Copy())
+
+	have := utils.Prune(renderer.Render(input, filterNonKubeSystem))
+	want := utils.Prune(expected.RenderedPodServices.Copy())
 	delete(want, fixture.ServiceNodeID)
 	delete(want, render.IncomingInternetID)
 	if !reflect.DeepEqual(want, have) {

@@ -439,7 +439,10 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 		}
 	}
 	if len(decorators) > 0 {
-		return topology.renderer, render.ComposeDecorators(decorators...), nil
+		// Here we tell the topology renderer to apply the filtering decorator
+		// that we construct as a composition of all the selected filters.
+		composedFilterDecorator := render.ComposeDecorators(decorators...)
+		return render.ApplyDecorator(topology.renderer), composedFilterDecorator, nil
 	}
 	return topology.renderer, nil, nil
 }

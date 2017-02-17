@@ -23,7 +23,7 @@ const (
 // NB We only want processes in container _or_ processes with network connections
 // but we need to be careful to ensure we only include each edge once, by only
 // including the ProcessRenderer once.
-var ContainerRenderer = ApplyDecorators(MakeFilter(
+var ContainerRenderer = MakeFilter(
 	func(n report.Node) bool {
 		// Drop deleted containers
 		state, ok := n.Latest.Lookup(docker.ContainerState)
@@ -43,7 +43,7 @@ var ContainerRenderer = ApplyDecorators(MakeFilter(
 
 		SelectContainer,
 	),
-))
+)
 
 const originalNodeID = "original_node_id"
 const originalNodeTopology = "original_node_topology"

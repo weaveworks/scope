@@ -146,9 +146,8 @@ func (ad applyDecorator) Stats(rpt report.Report, dct Decorator) Stats {
 	return Stats{}
 }
 
-// ApplyDecorators returns a renderer which will apply the given decorators
-// to the child render.
-func ApplyDecorators(renderer Renderer) Renderer {
+// ApplyDecorator returns a renderer which will apply the given decorator to the child render.
+func ApplyDecorator(renderer Renderer) Renderer {
 	return applyDecorator{renderer}
 }
 

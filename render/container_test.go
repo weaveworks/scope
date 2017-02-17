@@ -13,11 +13,17 @@ import (
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/fixture"
 	"github.com/weaveworks/scope/test/reflect"
+	"github.com/weaveworks/scope/test/utils"
 )
 
 // FilterApplication is a Renderer which filters out application nodes.
 func FilterApplication(r render.Renderer) render.Renderer {
 	return render.MakeFilter(render.IsApplication, r)
+}
+
+// FilterSystem is a Renderer which filters out system nodes.
+func FilterSystem(r render.Renderer) render.Renderer {
+	return render.MakeFilter(render.IsSystem, r)
 }
 
 // FilterNoop does nothing.
@@ -55,8 +61,8 @@ func testMap(t *testing.T, f render.MapFunc, input testcase) {
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := Prune(render.ContainerWithImageNameRenderer.Render(fixture.Report, FilterNoop))
-	want := Prune(expected.RenderedContainers)
+	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(fixture.Report, FilterNoop))
+	want := utils.Prune(expected.RenderedContainers)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
@@ -66,11 +72,14 @@ func TestContainerFilterRenderer(t *testing.T) {
 	// tag on of the containers in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
+	renderer := render.ApplyDecorator(render.ContainerWithImageNameRenderer)
+
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
-	have := Prune(render.ContainerWithImageNameRenderer.Render(input, FilterApplication))
-	want := Prune(expected.RenderedContainers.Copy())
+
+	have := utils.Prune(renderer.Render(input, FilterApplication))
+	want := utils.Prune(expected.RenderedContainers.Copy())
 	delete(want, fixture.ClientContainerNodeID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -78,70 +87,42 @@ func TestContainerFilterRenderer(t *testing.T) {
 }
 
 func TestContainerHostnameRenderer(t *testing.T) {
-	have := Prune(render.ContainerHostnameRenderer.Render(fixture.Report, FilterNoop))
-	want := Prune(expected.RenderedContainerHostnames)
+	renderer := render.ApplyDecorator(render.ContainerHostnameRenderer)
+	have := utils.Prune(renderer.Render(fixture.Report, FilterNoop))
+	want := utils.Prune(expected.RenderedContainerHostnames)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestContainerHostnameFilterRenderer(t *testing.T) {
-	// add a system container into the topology and ensure
-	// it is filtered out correctly.
-	input := fixture.Report.Copy()
-
-	clientContainer2ID := "f6g7h8i9j1"
-	clientContainer2NodeID := report.MakeContainerNodeID(clientContainer2ID)
-	input.Container.AddNode(report.MakeNodeWith(clientContainer2NodeID, map[string]string{
-		docker.LabelPrefix + "works.weave.role": "system",
-		docker.ContainerHostname:                fixture.ClientContainerHostname,
-		report.HostNodeID:                       fixture.ClientHostNodeID,
-	}).
-		WithParents(report.EmptySets.
-			Add("host", report.MakeStringSet(fixture.ClientHostNodeID)),
-		).WithTopology(report.Container))
-
-	have := Prune(render.ContainerHostnameRenderer.Render(input, FilterApplication))
-	want := Prune(expected.RenderedContainerHostnames)
-	// Test works by virtue of the RenderedContainerHostname only having a container
-	// counter == 1
-
+	renderer := render.ApplyDecorator(render.ContainerHostnameRenderer)
+	have := utils.Prune(renderer.Render(fixture.Report, FilterSystem))
+	want := utils.Prune(expected.RenderedContainerHostnames.Copy())
+	delete(want, fixture.ClientContainerHostname)
+	delete(want, fixture.ServerContainerHostname)
+	delete(want, render.IncomingInternetID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestContainerImageRenderer(t *testing.T) {
-	have := Prune(render.ContainerImageRenderer.Render(fixture.Report, FilterNoop))
-	want := Prune(expected.RenderedContainerImages)
+	renderer := render.ApplyDecorator(render.ContainerImageRenderer)
+	have := utils.Prune(renderer.Render(fixture.Report, FilterNoop))
+	want := utils.Prune(expected.RenderedContainerImages)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
 }
 
 func TestContainerImageFilterRenderer(t *testing.T) {
-	// add a system container into the topology and ensure
-	// it is filtered out correctly.
-	input := fixture.Report.Copy()
-
-	clientContainer2ID := "f6g7h8i9j1"
-	clientContainer2NodeID := report.MakeContainerNodeID(clientContainer2ID)
-	input.Container.AddNode(report.MakeNodeWith(clientContainer2NodeID, map[string]string{
-		docker.LabelPrefix + "works.weave.role": "system",
-
-		docker.ImageID:    fixture.ClientContainerImageID,
-		docker.ImageName:  fixture.ClientContainerImageName,
-		report.HostNodeID: fixture.ClientHostNodeID,
-	}).
-		WithParents(report.EmptySets.
-			Add("host", report.MakeStringSet(fixture.ClientHostNodeID)),
-		).WithTopology(report.ContainerImage))
-
-	have := Prune(render.ContainerImageRenderer.Render(input, FilterApplication))
-	want := Prune(expected.RenderedContainerImages.Copy())
-	// Test works by virtue of the RenderedContainerImage only having a container
-	// counter == 1
-
+	renderer := render.ApplyDecorator(render.ContainerImageRenderer)
+	have := utils.Prune(renderer.Render(fixture.Report, FilterSystem))
+	want := utils.Prune(expected.RenderedContainerHostnames.Copy())
+	delete(want, fixture.ClientContainerHostname)
+	delete(want, fixture.ServerContainerHostname)
+	delete(want, render.IncomingInternetID)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
 	}
