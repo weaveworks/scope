@@ -245,11 +245,11 @@ The URL is: http://localhost:4040.
 
 ##<a name="ose"></a>Installing Scope on OpenShift
 
-To install Weave Scope on OpenShift, you first need to login as `admin` user:
+To install Weave Scope on OpenShift, you first need to login as `admin` user with the following command:
 
     oc login -u admin
 
-Next, create a dedicated project for Weave Scope and apply policy permissions to allow Weave Scope to access Kubernetes API:
+Next, create a dedicated project for Weave Scope then apply policy permissions that allow Weave Scope to access Kubernetes API:
 
     oc new-project weave-scope
     oc adm policy add-scc-to-user privileged system:serviceaccount:weave-scope:default
@@ -258,12 +258,11 @@ Next, create a dedicated project for Weave Scope and apply policy permissions to
 The installation method for Scope on OpenShift is very similar to the one described above for Kubernetes, but instead of `kubectl apply -n kube-system ...` you need to use
 `oc apply ...` and install it into the namespace of the `weave-scope` project you have just created, and not the `kube-system` namesapce, i.e.:
 
-#### With Weave Cloud (recommended)
+If you are to use Weave Cloud run this command:
 
     oc apply -f 'https://cloud.weave.works/k8s/scope.yaml?service-token=<token>'
 
-
-#### Without Weave Cloud (run Scope in standalone mode)
+And if you are to deploy Scope in standalone mode run:
 
     oc apply -f 'https://cloud.weave.works/k8s/scope.yaml'
 
