@@ -29,7 +29,7 @@ Views in Scope can be thought of as high-level filters on your containerized mic
 
 If your app is deployed to the Amazon EC2 cluster service, then Scope displays Services and Tasks that make up an ECS cluster.
 
-!['ECS Views in Scope'](images/ecs-view-tasks.png)
+!['ECS Views in Scope'](images/ECS-view-tasks.png)
 
 For information on how to install Scope on Kubernetes see, "[Installing Scope on Kubernetes](installing.md#k8s)
 
