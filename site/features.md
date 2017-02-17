@@ -65,7 +65,7 @@ Choose an overview of your container infrastructure, or focus on a specific micr
 
 Click on a container, pod or host to view the controls that allow you to: pause, restart, stop and delete without having to leave the Scope browser window. Logs of selected containers or pods (if you are running in Kubernetes) can also be viewed by clicking the terminal icon.
 
-And if further troubleshooting is required, terminal windows can be launched from any container so that you can interact with your app and run any UNIX command to diagnose issues.  Launch a terminal by clicking the `<_` icon from the details panel of a selected container. 
+And if further troubleshooting is required, terminal windows can be launched from any container so that you can interact with your app and run any UNIX command to diagnose issues.  Launch a terminal by clicking the `>_` icon from the details panel of a selected container. 
 
 !['Terminal for container interaction'](images/terminal-view.png)
 
