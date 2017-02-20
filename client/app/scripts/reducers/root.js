@@ -710,6 +710,11 @@ export function rootReducer(state = initialState, action) {
       return state.set('showingTroubleshootingMenu', !state.get('showingTroubleshootingMenu'));
     }
 
+    case ActionTypes.CHANGE_INSTANCE: {
+      state = closeAllNodeDetails(state);
+      return state;
+    }
+
     default: {
       return state;
     }

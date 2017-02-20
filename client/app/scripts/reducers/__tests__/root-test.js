@@ -192,6 +192,10 @@ describe('RootReducer', () => {
     state: {}
   };
 
+  const ChangeInstanceAction = {
+    type: ActionTypes.CHANGE_INSTANCE
+  };
+
   // Basic tests
 
   it('returns initial state', () => {
@@ -525,5 +529,14 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, action2);
     nextState = reducer(nextState, action3);
     expect(nextState.getIn(['nodes', 'n1', 'adjacency'])).toBeFalsy();
+  });
+  it('removes non-transferrable state values when changing instances', () => {
+    let nextState = initialState;
+    nextState = reducer(nextState, ClickNodeAction);
+    expect(nextState.get('selectedNodeId')).toEqual('n1');
+    expect(nextState.getIn(['nodeDetails', 'n1'])).toBeTruthy();
+    nextState = reducer(nextState, ChangeInstanceAction);
+    expect(nextState.get('selectedNodeId')).toBeFalsy();
+    expect(nextState.getIn(['nodeDetails', 'n1'])).toBeFalsy();
   });
 });
