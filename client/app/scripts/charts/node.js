@@ -18,7 +18,7 @@ import NodeShapeCloud from './node-shape-cloud';
 import NodeNetworksOverlay from './node-networks-overlay';
 
 
-const labelWidth = 1.4 * NODE_BASE_SIZE;
+const labelWidth = 1.2 * NODE_BASE_SIZE;
 const nodeShapes = {
   circle: NodeShapeCircle,
   hexagon: NodeShapeHexagon,
@@ -46,7 +46,6 @@ class Node extends React.Component {
     super(props, context);
     this.state = {
       hovered: false,
-      matched: false
     };
 
     this.handleMouseClick = this.handleMouseClick.bind(this);
@@ -55,29 +54,20 @@ class Node extends React.Component {
     this.saveShapeRef = this.saveShapeRef.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
-    // marks as matched only when search query changes
-    if (nextProps.searchQuery !== this.props.searchQuery) {
-      this.setState({ matched: nextProps.matched });
-    } else {
-      this.setState({ matched: false });
-    }
-  }
-
-  renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) {
-    const { label, subLabel } = this.props;
+  renderSvgLabels(labelClassName, labelMinorClassName, labelOffsetY) {
+    const { label, labelMinor } = this.props;
     return (
       <g className="node-labels-container">
         <text className={labelClassName} y={13 + labelOffsetY} textAnchor="middle">{label}</text>
-        <text className={subLabelClassName} y={30 + labelOffsetY} textAnchor="middle">
-          {subLabel}
+        <text className={labelMinorClassName} y={30 + labelOffsetY} textAnchor="middle">
+          {labelMinor}
         </text>
       </g>
     );
   }
 
-  renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents) {
-    const { label, subLabel, blurred, matches = makeMap() } = this.props;
+  renderStandardLabels(labelClassName, labelMinorClassName, labelOffsetY, mouseEvents) {
+    const { label, labelMinor, matches = makeMap() } = this.props;
     const matchedMetadata = matches.get('metadata', makeList());
     const matchedParents = matches.get('parents', makeList());
     const matchedNodeDetails = matchedMetadata.concat(matchedParents);
@@ -93,37 +83,37 @@ class Node extends React.Component {
           <div className={labelClassName}>
             <MatchedText text={label} match={matches.get('label')} />
           </div>
-          <div className={subLabelClassName}>
-            <MatchedText text={subLabel} match={matches.get('sublabel')} />
+          <div className={labelMinorClassName}>
+            <MatchedText text={labelMinor} match={matches.get('labelMinor')} />
           </div>
-          {!blurred && <MatchedResults matches={matchedNodeDetails} />}
+          <MatchedResults matches={matchedNodeDetails} />
         </div>
       </foreignObject>
     );
   }
 
   render() {
-    const { blurred, focused, highlighted, networks, pseudo, rank, label,
-      transform, exportingGraph, showingNetworks, stack } = this.props;
-    const { hovered, matched } = this.state;
+    const { focused, highlighted, networks, pseudo, rank, label, transform,
+      exportingGraph, showingNetworks, stack, id, metric, matches = makeMap() } = this.props;
+    const { hovered } = this.state;
 
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
     const labelOffsetY = (showingNetworks && networks) ? 40 : 28;
 
     const nodeClassName = classnames('node', {
+      // NOTE: Having a CSS animation here might not be the best idea.
+      // See https://github.com/weaveworks/scope/issues/2255
+      matched: !matches.isEmpty(),
       highlighted,
-      blurred: blurred && !focused,
       hovered,
-      matched,
       pseudo
     });
 
     const labelClassName = classnames('node-label', { truncate });
-    const subLabelClassName = classnames('node-sublabel', { truncate });
+    const labelMinorClassName = classnames('node-label-minor', { truncate });
 
     const NodeShapeType = getNodeShape(this.props);
-    const useSvgLabels = exportingGraph;
     const mouseEvents = {
       onClick: this.handleMouseClick,
       onMouseEnter: this.handleMouseEnter,
@@ -132,12 +122,12 @@ class Node extends React.Component {
 
     return (
       <g className={nodeClassName} transform={transform}>
-        {useSvgLabels ?
-          this.renderSvgLabels(labelClassName, subLabelClassName, labelOffsetY) :
-          this.renderStandardLabels(labelClassName, subLabelClassName, labelOffsetY, mouseEvents)}
+        {exportingGraph ?
+          this.renderSvgLabels(labelClassName, labelMinorClassName, labelOffsetY) :
+          this.renderStandardLabels(labelClassName, labelMinorClassName, labelOffsetY, mouseEvents)}
 
         <g {...mouseEvents} ref={this.saveShapeRef}>
-          <NodeShapeType color={color} {...this.props} />
+          <NodeShapeType id={id} highlighted={highlighted} color={color} metric={metric} />
         </g>
 
         {showingNetworks && <NodeNetworksOverlay networks={networks} stack={stack} />}
@@ -165,11 +155,14 @@ class Node extends React.Component {
   }
 }
 
-export default connect(
-  state => ({
-    searchQuery: state.get('searchQuery'),
+function mapStateToProps(state) {
+  return {
     exportingGraph: state.get('exportingGraph'),
     showingNetworks: state.get('showingNetworks'),
-  }),
+  };
+}
+
+export default connect(
+  mapStateToProps,
   { clickNode, enterNode, leaveNode }
 )(Node);

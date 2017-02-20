@@ -2,7 +2,7 @@
 import React from 'react';
 import Perf from 'react-addons-perf';
 import { connect } from 'react-redux';
-import { sampleSize, sample, random, range, flattenDeep } from 'lodash';
+import { sampleSize, sample, random, range, flattenDeep, times } from 'lodash';
 import { fromJS, Set as makeSet } from 'immutable';
 import { hsl } from 'd3-color';
 import debug from 'debug';
@@ -13,7 +13,6 @@ import { getNodeColor, getNodeColorDark, text2degree } from '../utils/color-util
 
 
 const SHAPES = ['square', 'hexagon', 'heptagon', 'circle'];
-const NODE_COUNTS = [1, 2, 3];
 const STACK_VARIANTS = [false, true];
 const METRIC_FILLS = [0, 0.1, 50, 99.9, 100];
 const NETWORKS = [
@@ -42,15 +41,11 @@ const LABEL_PREFIXES = range('A'.charCodeAt(), 'Z'.charCodeAt() + 1)
   .map(n => String.fromCharCode(n));
 
 
-const deltaAdd = (
-  name, adjacency = [], shape = 'circle', stack = false, nodeCount = 1,
-    networks = NETWORKS
-) => ({
+const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, networks = NETWORKS) => ({
   adjacency,
   controls: {},
   shape,
   stack,
-  node_count: nodeCount,
   id: name,
   label: name,
   labelMinor: name,
@@ -67,7 +62,9 @@ function addMetrics(availableMetrics, node, v) {
   ]);
 
   return Object.assign({}, node, {
-    metrics: metrics.map(m => Object.assign({}, m, {label: 'zing', max: 100, value: v})).toJS()
+    metrics: metrics.map(m => Object.assign({}, m, {
+      id: 'zing', label: 'zing', max: 100, value: v
+    })).toJS()
   });
 }
 
@@ -80,8 +77,8 @@ function label(shape, stacked) {
 
 function addAllVariants(dispatch) {
   const newNodes = flattenDeep(STACK_VARIANTS.map(stack => (SHAPES.map((s) => {
-    if (!stack) return [deltaAdd(label(s, stack), [], s, stack, 1)];
-    return NODE_COUNTS.map(n => deltaAdd(label(s, stack), [], s, stack, n));
+    if (!stack) return [deltaAdd(label(s, stack), [], s, stack)];
+    return times(3).map(() => deltaAdd(label(s, stack), [], s, stack));
   }))));
 
   dispatch(receiveNodesDelta({
@@ -260,7 +257,6 @@ class DebugToolbar extends React.Component {
       sampleArray(allNodes),
       sample(SHAPES),
       sample(STACK_VARIANTS),
-      sample(NODE_COUNTS),
       sampleArray(NETWORKS, 10)
     ));
   }

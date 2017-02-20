@@ -5,8 +5,8 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
 
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
-import { applyPinnedSearches, updateNodeMatches } from '../utils/search-utils';
-import { getNetworkNodes, getAvailableNetworks } from '../utils/network-view-utils';
+import { applyPinnedSearches } from '../utils/search-utils';
+import { getNetworkNodes } from '../utils/network-view-utils';
 import {
   findTopologyById,
   getAdjacentNodes,
@@ -29,7 +29,6 @@ const topologySorter = topology => topology.get('rank');
 
 export const initialState = makeMap({
   availableCanvasMetrics: makeList(),
-  availableNetworks: makeList(),
   controlPipes: makeOrderedMap(), // pipeId -> controlPipe
   controlStatus: makeMap(),
   currentTopology: null,
@@ -39,6 +38,7 @@ export const initialState = makeMap({
   gridMode: false,
   gridSortedBy: null,
   gridSortedDesc: null,
+  // TODO: Calculate these sets from selectors instead.
   highlightedEdgeIds: makeSet(),
   highlightedNodeIds: makeSet(),
   hostname: '...',
@@ -59,7 +59,6 @@ export const initialState = makeMap({
   pinnedSearches: makeList(), // list of node filters
   routeSet: false,
   searchFocused: false,
-  searchNodeMatches: makeMap(),
   searchQuery: null,
   selectedMetric: null,
   selectedNetwork: null,
@@ -386,8 +385,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.DO_SEARCH: {
-      state = state.set('searchQuery', action.searchQuery);
-      return updateNodeMatches(state);
+      return state.set('searchQuery', action.searchQuery);
     }
 
     case ActionTypes.ENTER_EDGE: {
@@ -473,10 +471,9 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.PIN_SEARCH: {
-      state = state.set('searchQuery', '');
-      state = updateNodeMatches(state);
       const pinnedSearches = state.get('pinnedSearches');
       state = state.setIn(['pinnedSearches', pinnedSearches.size], action.query);
+      state = state.set('searchQuery', '');
       return applyPinnedSearches(state);
     }
 
@@ -564,6 +561,9 @@ export function rootReducer(state = initialState, action) {
       // update existing nodes
       each(action.delta.update, (node) => {
         if (state.hasIn(['nodes', node.id])) {
+          // TODO: Implement a manual deep update here, as it might bring a great benefit
+          // to our nodes selectors (e.g. layout engine would be completely bypassed if the
+          // adjacencies would stay the same but the metrics would get updated).
           state = state.setIn(['nodes', node.id], fromJS(node));
         }
       });
@@ -575,23 +575,7 @@ export function rootReducer(state = initialState, action) {
 
       // apply pinned searches, filters nodes that dont match
       state = applyPinnedSearches(state);
-
-      // TODO move this setting of networks as toplevel node field to backend,
-      // to not rely on field IDs here. should be determined by topology implementer
-      state = state.update('nodes', nodes => nodes.map((node) => {
-        if (node.has('metadata')) {
-          const networks = node.get('metadata')
-            .find(field => field.get('id') === 'docker_container_networks');
-          if (networks) {
-            return node.set('networks', fromJS(
-              networks.get('value').split(', ').map(n => ({id: n, label: n, colorKey: n}))));
-          }
-        }
-        return node;
-      }));
-
-      state = state.set('networkNodes', getNetworkNodes(state.get('nodes')));
-      state = state.set('availableNetworks', getAvailableNetworks(state.get('nodes')));
+      state = state.set('networkNodes', getNetworkNodes(state));
 
       state = state.set('availableCanvasMetrics', state.get('nodes')
         .valueSeq()
@@ -613,18 +597,12 @@ export function rootReducer(state = initialState, action) {
         state = state.set('selectedMetric', state.get('pinnedMetric'));
       }
 
-      // update nodes cache and search results
-      state = state.setIn(['nodesByTopology', state.get('currentTopologyId')], state.get('nodes'));
-      state = updateNodeMatches(state);
-
-      return state;
+      // update nodes cache
+      return state.setIn(['nodesByTopology', state.get('currentTopologyId')], state.get('nodes'));
     }
 
     case ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY: {
-      // not sure if mergeDeep() brings any benefit here
-      state = state.setIn(['nodesByTopology', action.topologyId], fromJS(action.nodes));
-      state = updateNodeMatches(state);
-      return state;
+      return state.setIn(['nodesByTopology', action.topologyId], fromJS(action.nodes));
     }
 
     case ActionTypes.RECEIVE_NOT_FOUND: {

@@ -3,23 +3,19 @@ import { createSelector } from 'reselect';
 import { NODE_BASE_SIZE } from '../constants/styles';
 import { zoomCacheKey } from '../utils/topology-utils';
 
-const layoutNodesSelector = state => state.layoutNodes;
-const stateWidthSelector = state => state.width;
-const stateHeightSelector = state => state.height;
-const propsMarginsSelector = (_, props) => props.margins;
-const cachedZoomStateSelector = (state, props) => state.zoomCache[zoomCacheKey(props)];
+// TODO: Make all the selectors below pure (so that they only depend on the global state).
 
 const viewportWidthSelector = createSelector(
   [
-    stateWidthSelector,
-    propsMarginsSelector,
+    state => state.width,
+    (_, props) => props.margins,
   ],
   (width, margins) => width - margins.left - margins.right
 );
 const viewportHeightSelector = createSelector(
   [
-    stateHeightSelector,
-    propsMarginsSelector,
+    state => state.height,
+    (_, props) => props.margins,
   ],
   (height, margins) => height - margins.top
 );
@@ -27,12 +23,12 @@ const viewportHeightSelector = createSelector(
 // Compute the default zoom settings for the given graph layout.
 const defaultZoomSelector = createSelector(
   [
-    layoutNodesSelector,
+    state => state.layoutNodes,
+    (_, props) => props.margins,
     viewportWidthSelector,
     viewportHeightSelector,
-    propsMarginsSelector,
   ],
-  (layoutNodes, width, height, margins) => {
+  (layoutNodes, margins, width, height) => {
     if (layoutNodes.size === 0) {
       return {};
     }
@@ -67,7 +63,7 @@ const defaultZoomSelector = createSelector(
 // otherwise use the default zoom options computed from the graph layout.
 export const topologyZoomState = createSelector(
   [
-    cachedZoomStateSelector,
+    (state, props) => state.zoomCache[zoomCacheKey(props)],
     defaultZoomSelector,
   ],
   (cachedZoomState, defaultZoomState) => cachedZoomState || defaultZoomState

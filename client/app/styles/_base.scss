@@ -308,12 +308,12 @@
       // stroke-width: 4px;
     }
 
-    .node-sublabel {
-      line-height: 125%;
-    }
-
     .node-label {
       color: $text-color;
+    }
+
+    .node-label-minor {
+      line-height: 125%;
     }
 
     .node-labels-container {
@@ -346,12 +346,12 @@
       width: 100%;
     }
 
-    .node-sublabel {
+    .node-label-minor {
       color: $text-secondary-color;
       font-size: 0.85em;
     }
 
-    .node-label, .node-sublabel {
+    .node-label, .node-label-minor {
       span {
         border-radius: 2px;
       }
@@ -374,7 +374,7 @@
         fill: $text-secondary-color;
       }
 
-      .node-sublabel {
+      .node-label-minor {
         fill: $text-tertiary-color;
       }
 
@@ -388,15 +388,11 @@
       }
     }
 
-    &.blurred {
-      opacity: $node-opacity-blurred;
-    }
-
     &.matched .shape {
       animation: throb 0.5s $base-ease;
     }
 
-    .node-label, .node-sublabel {
+    .node-label, .node-label-minor {
       text-align: center;
     }
 

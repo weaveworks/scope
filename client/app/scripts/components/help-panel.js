@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { searchableFieldsSelector } from '../selectors/chartSelectors';
+import { searchableFieldsSelector } from '../selectors/search';
 import { CANVAS_MARGINS } from '../constants/styles';
 import { hideHelp } from '../actions/app-actions';
 

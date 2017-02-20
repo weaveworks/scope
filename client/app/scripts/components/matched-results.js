@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 
 import MatchedText from './matched-text';
 
@@ -21,7 +20,7 @@ const Match = match => (
   </div>
 );
 
-class MatchedResults extends React.Component {
+export default class MatchedResults extends React.PureComponent {
   render() {
     const { matches, style } = this.props;
 
@@ -49,5 +48,3 @@ class MatchedResults extends React.Component {
     );
   }
 }
-
-export default connect()(MatchedResults);

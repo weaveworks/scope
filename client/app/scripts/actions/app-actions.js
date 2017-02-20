@@ -404,6 +404,10 @@ export function focusSearch() {
     dispatch({ type: ActionTypes.FOCUS_SEARCH });
     // update nodes cache to allow search across all topologies,
     // wait a second until animation is over
+    // NOTE: This will cause matching recalculation (and rerendering)
+    // of all the nodes in the topology, instead applying it only on
+    // the nodes delta. The solution would be to implement deeper
+    // search selectors with per-node caching instead of per-topology.
     setTimeout(() => {
       getAllNodes(getState, dispatch);
     }, 1200);

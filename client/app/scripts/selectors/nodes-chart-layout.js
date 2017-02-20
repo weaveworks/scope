@@ -1,5 +1,5 @@
 import debug from 'debug';
-import { createSelector } from 'reselect';
+import { createSelector, createStructuredSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 import timely from 'timely';
 
@@ -9,15 +9,6 @@ import { doLayout } from '../charts/nodes-layout';
 const log = debug('scope:nodes-chart');
 
 
-const stateWidthSelector = state => state.width;
-const stateHeightSelector = state => state.height;
-const inputNodesSelector = (_, props) => props.nodes;
-const propsMarginsSelector = (_, props) => props.margins;
-const forceRelayoutSelector = (_, props) => props.forceRelayout;
-const topologyIdSelector = (_, props) => props.topologyId;
-const topologyOptionsSelector = (_, props) => props.topologyOptions;
-
-
 function initEdgesFromNodes(nodes) {
   let edges = makeMap();
 
@@ -25,7 +16,7 @@ function initEdgesFromNodes(nodes) {
     const adjacency = node.get('adjacency');
     if (adjacency) {
       adjacency.forEach((adjacent) => {
-        const edge = [nodeId, adjacent];
+        const edge = nodeId < adjacent ? [nodeId, adjacent] : [adjacent, nodeId];
         const edgeId = edge.join(EDGE_ID_SEPARATOR);
 
         if (!edges.has(edgeId)) {
@@ -47,23 +38,34 @@ function initEdgesFromNodes(nodes) {
   return edges;
 }
 
-const layoutOptionsSelector = createSelector(
-  [
-    stateWidthSelector,
-    stateHeightSelector,
-    propsMarginsSelector,
-    forceRelayoutSelector,
-    topologyIdSelector,
-    topologyOptionsSelector,
-  ],
-  (width, height, margins, forceRelayout, topologyId, topologyOptions) => (
-    { width, height, margins, forceRelayout, topologyId, topologyOptions }
-  )
-);
+// TODO: Make all the selectors below pure (so that they only depend on the global state).
+
+const layoutOptionsSelector = createStructuredSelector({
+  width: state => state.width,
+  height: state => state.height,
+  margins: (_, props) => props.margins,
+  forceRelayout: (_, props) => props.forceRelayout,
+  topologyId: (_, props) => props.topologyId,
+  topologyOptions: (_, props) => props.topologyOptions,
+});
 
 export const graphLayout = createSelector(
   [
-    inputNodesSelector,
+    // TODO: Instead of sending the nodes with all the information (metrics, metadata, etc...)
+    // to the layout engine, it would suffice to forward it just the nodes adjacencies map, which
+    // we could get with another selector like:
+    //
+    // const nodesAdjacenciesSelector = createMapSelector(
+    //   [ (_, props) => props.nodes ],
+    //   node => node.get('adjacency') || makeList()
+    // );
+    //
+    // That would enable us to use smarter caching, so that the layout doesn't get recalculated
+    // if adjacencies don't change but e.g. metrics gets updated. We also don't need to init
+    // edges here as the adjacencies data is enough to reconstruct them in the layout engine (this
+    // might enable us to simplify the caching system there since we really only need to cache
+    // the adjacencies map in that case and not nodes and edges).
+    (_, props) => props.nodes,
     layoutOptionsSelector,
   ],
   (nodes, options) => {
@@ -83,12 +85,9 @@ export const graphLayout = createSelector(
     // computed property, but this is still useful.
     log(`graph layout calculation took ${timedLayouter.time}ms`);
 
-    const layoutEdges = graph.edges;
-    const layoutNodes = graph.nodes.map(node => makeMap({
-      x: node.get('x'),
-      y: node.get('y'),
-    }));
-
-    return { layoutNodes, layoutEdges };
+    return {
+      layoutNodes: graph.nodes,
+      layoutEdges: graph.edges,
+    };
   }
 );

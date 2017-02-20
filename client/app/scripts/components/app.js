@@ -22,6 +22,7 @@ import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
 import { getRouter, getUrlState } from '../utils/router-utils';
 import { getActiveTopologyOptions } from '../utils/topology-utils';
+import { availableNetworksSelector } from '../selectors/node-networks';
 
 const BACKSPACE_KEY_CODE = 8;
 const ENTER_KEY_CODE = 13;
@@ -151,7 +152,7 @@ function mapStateToProps(state) {
     showingHelp: state.get('showingHelp'),
     showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
     showingMetricsSelector: state.get('availableCanvasMetrics').count() > 0,
-    showingNetworkSelector: state.get('availableNetworks').count() > 0,
+    showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
     urlState: getUrlState(state)
   };

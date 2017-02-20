@@ -5,8 +5,9 @@ import { connect } from 'react-redux';
 import { List as makeList, Map as makeMap } from 'immutable';
 import NodeDetailsTable from '../components/node-details/node-details-table';
 import { clickNode, sortOrderChanged } from '../actions/app-actions';
-import { nodesSelector } from '../selectors/chartSelectors';
+import { shownNodesSelector } from '../selectors/node-filters';
 
+import { searchNodeMatchesSelector } from '../selectors/search';
 import { getNodeColor } from '../utils/color-utils';
 
 
@@ -96,7 +97,7 @@ class NodesGrid extends React.Component {
 
   render() {
     const { margins, nodes, height, gridSortedBy, gridSortedDesc,
-      searchNodeMatches = makeMap(), searchQuery } = this.props;
+      searchNodeMatches, searchQuery } = this.props;
     const cmpStyle = {
       height,
       marginTop: margins.top,
@@ -114,7 +115,7 @@ class NodesGrid extends React.Component {
       id: '',
       nodes: nodes
         .toList()
-        .filter(n => !searchQuery || searchNodeMatches.has(n.get('id')))
+        .filter(n => !(searchQuery && searchNodeMatches.get(n.get('id'), makeMap()).isEmpty()))
         .toJS(),
       columns: getColumns(nodes)
     };
@@ -143,12 +144,12 @@ class NodesGrid extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    nodes: nodesSelector(state),
+    nodes: shownNodesSelector(state),
     gridSortedBy: state.get('gridSortedBy'),
     gridSortedDesc: state.get('gridSortedDesc'),
     currentTopology: state.get('currentTopology'),
     currentTopologyId: state.get('currentTopologyId'),
-    searchNodeMatches: state.getIn(['searchNodeMatches', state.get('currentTopologyId')]),
+    searchNodeMatches: searchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId')
   };
