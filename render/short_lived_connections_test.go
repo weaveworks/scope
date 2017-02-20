@@ -11,6 +11,7 @@ import (
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test/utils"
 )
 
 var (
@@ -125,7 +126,7 @@ var (
 )
 
 func TestShortLivedInternetNodeConnections(t *testing.T) {
-	have := Prune(render.ContainerWithImageNameRenderer.Render(rpt, FilterNoop))
+	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(rpt, FilterNoop))
 
 	// Conntracked-only connections from the internet should be assigned to the internet pseudonode
 	internet, ok := have[render.IncomingInternetID]
@@ -139,7 +140,7 @@ func TestShortLivedInternetNodeConnections(t *testing.T) {
 }
 
 func TestPauseContainerDiscarded(t *testing.T) {
-	have := Prune(render.ContainerWithImageNameRenderer.Render(rpt, FilterNoop))
+	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(rpt, FilterNoop))
 	// There should only be a connection from container1 and the destination should be container2
 	container1, ok := have[container1NodeID]
 	if !ok {

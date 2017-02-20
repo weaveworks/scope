@@ -204,7 +204,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator)
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container
 // graph where the ranks are the image names, not their IDs
-var ContainerWithImageNameRenderer = ApplyDecorators(containerWithImageNameRenderer{ContainerRenderer})
+var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerRenderer}
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.

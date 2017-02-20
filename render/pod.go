@@ -21,7 +21,7 @@ func renderKubernetesTopologies(rpt report.Report) bool {
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
 var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	ApplyDecorators(MakeFilter(
+	MakeFilter(
 		func(n report.Node) bool {
 			state, ok := n.Latest.Lookup(kubernetes.State)
 			return (!ok || state != kubernetes.StateDeleted)
@@ -37,22 +37,20 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 				SelectPod,
 			),
 		),
-	)),
+	),
 )
 
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
 var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	ApplyDecorators(
-		MakeMap(
-			PropagateSingleMetrics(report.Pod),
-			MakeReduce(
-				MakeMap(
-					Map2Service,
-					PodRenderer,
-				),
-				SelectService,
+	MakeMap(
+		PropagateSingleMetrics(report.Pod),
+		MakeReduce(
+			MakeMap(
+				Map2Service,
+				PodRenderer,
 			),
+			SelectService,
 		),
 	),
 )
@@ -60,16 +58,14 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // DeploymentRenderer is a Renderer which produces a renderable kubernetes deployments
 // graph by merging the pods graph and the deployments topology.
 var DeploymentRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	ApplyDecorators(
-		MakeMap(
-			PropagateSingleMetrics(report.ReplicaSet),
-			MakeReduce(
-				MakeMap(
-					Map2Deployment,
-					ReplicaSetRenderer,
-				),
-				SelectDeployment,
+	MakeMap(
+		PropagateSingleMetrics(report.ReplicaSet),
+		MakeReduce(
+			MakeMap(
+				Map2Deployment,
+				ReplicaSetRenderer,
 			),
+			SelectDeployment,
 		),
 	),
 )
@@ -77,16 +73,14 @@ var DeploymentRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // ReplicaSetRenderer is a Renderer which produces a renderable kubernetes replica sets
 // graph by merging the pods graph and the replica sets topology.
 var ReplicaSetRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	ApplyDecorators(
-		MakeMap(
-			PropagateSingleMetrics(report.Pod),
-			MakeReduce(
-				MakeMap(
-					Map2ReplicaSet,
-					PodRenderer,
-				),
-				SelectReplicaSet,
+	MakeMap(
+		PropagateSingleMetrics(report.Pod),
+		MakeReduce(
+			MakeMap(
+				Map2ReplicaSet,
+				PodRenderer,
 			),
+			SelectReplicaSet,
 		),
 	),
 )

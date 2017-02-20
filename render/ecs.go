@@ -9,32 +9,28 @@ import (
 
 // ECSTaskRenderer is a Renderer for Amazon ECS tasks.
 var ECSTaskRenderer = ConditionalRenderer(renderECSTopologies,
-	ApplyDecorators(
-		MakeMap(
-			PropagateSingleMetrics(report.Container),
-			MakeReduce(
-				MakeMap(
-					MapContainer2ECSTask,
-					ContainerWithImageNameRenderer,
-				),
-				SelectECSTask,
+	MakeMap(
+		PropagateSingleMetrics(report.Container),
+		MakeReduce(
+			MakeMap(
+				MapContainer2ECSTask,
+				ContainerWithImageNameRenderer,
 			),
+			SelectECSTask,
 		),
 	),
 )
 
 // ECSServiceRenderer is a Renderer for Amazon ECS services.
 var ECSServiceRenderer = ConditionalRenderer(renderECSTopologies,
-	ApplyDecorators(
-		MakeMap(
-			PropagateSingleMetrics(report.ECSTask),
-			MakeReduce(
-				MakeMap(
-					Map2Parent(report.ECSService),
-					ECSTaskRenderer,
-				),
-				SelectECSService,
+	MakeMap(
+		PropagateSingleMetrics(report.ECSTask),
+		MakeReduce(
+			MakeMap(
+				Map2Parent(report.ECSService),
+				ECSTaskRenderer,
 			),
+			SelectECSService,
 		),
 	),
 )

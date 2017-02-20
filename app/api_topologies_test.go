@@ -11,12 +11,17 @@ import (
 	"github.com/ugorji/go/codec"
 	"k8s.io/kubernetes/pkg/api"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/app"
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
+	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/fixture"
+	"github.com/weaveworks/scope/test/reflect"
+	"github.com/weaveworks/scope/test/utils"
 )
 
 const (
@@ -88,6 +93,63 @@ func TestContainerLabelFilterExclude(t *testing.T) {
 		if id == key {
 			t.Errorf("Didn't expect to find %q in report", id)
 		}
+	}
+}
+
+func TestRendererForTopologyWithFiltering(t *testing.T) {
+	ts := topologyServer()
+	defer ts.Close()
+
+	topologyRegistry := app.MakeRegistry()
+	option := app.MakeAPITopologyOption(customAPITopologyOptionFilterID, "title", render.IsApplication, false)
+	topologyRegistry.AddContainerFilters(option)
+
+	urlvalues := url.Values{}
+	urlvalues.Set(systemGroupID, customAPITopologyOptionFilterID)
+	renderer, decorator, err := topologyRegistry.RendererForTopology("containers", urlvalues, fixture.Report)
+	if err != nil {
+		t.Fatalf("Topology Registry Report error: %s", err)
+	}
+
+	input := fixture.Report.Copy()
+	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
+		docker.LabelPrefix + "works.weave.role": "system",
+	})
+	have := utils.Prune(renderer.Render(input, decorator))
+	want := utils.Prune(expected.RenderedContainers.Copy())
+	delete(want, fixture.ClientContainerNodeID)
+	delete(want, render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID))
+	delete(want, render.OutgoingInternetID)
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
+func TestRendererForTopologyNoFiltering(t *testing.T) {
+	ts := topologyServer()
+	defer ts.Close()
+
+	topologyRegistry := app.MakeRegistry()
+	option := app.MakeAPITopologyOption(customAPITopologyOptionFilterID, "title", nil, false)
+	topologyRegistry.AddContainerFilters(option)
+
+	urlvalues := url.Values{}
+	urlvalues.Set(systemGroupID, customAPITopologyOptionFilterID)
+	renderer, decorator, err := topologyRegistry.RendererForTopology("containers", urlvalues, fixture.Report)
+	if err != nil {
+		t.Fatalf("Topology Registry Report error: %s", err)
+	}
+
+	input := fixture.Report.Copy()
+	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
+		docker.LabelPrefix + "works.weave.role": "system",
+	})
+	have := utils.Prune(renderer.Render(input, decorator))
+	want := utils.Prune(expected.RenderedContainers.Copy())
+	delete(want, render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID))
+	delete(want, render.OutgoingInternetID)
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
 	}
 }
 

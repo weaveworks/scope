@@ -6,7 +6,7 @@ import (
 
 // HostRenderer is a Renderer which produces a renderable host
 // graph from the host topology.
-var HostRenderer = ApplyDecorators(MakeReduce(
+var HostRenderer = MakeReduce(
 	MakeMap(
 		MapEndpoint2Host,
 		EndpointRenderer,
@@ -28,7 +28,7 @@ var HostRenderer = ApplyDecorators(MakeReduce(
 		PodRenderer,
 	),
 	SelectHost,
-))
+)
 
 // MapX2Host maps any Nodes to host Nodes.
 //
