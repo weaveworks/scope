@@ -25,7 +25,7 @@ Scope builds logical topologies of your application and infrastructure.  A topol
 
 Views in Scope can be thought of as high-level filters on your containerized microservices as they run in the cloud. They are categorized into: Processes, Containers, Orchestrators, and Hosts. The Orchestrator view is context-sensitive, and as a result, if an app is running in Kubernetes, then Scope displays Pods, Replica Sets, Deployments, and Services that allow you to drilldown on Kubernetes clusters. 
 
-!['ECS Views in Scope'](images/kubernetes-view.png)
+!['Kubernetes Views in Scope'](images/kubernetes-view.png)
 
 If your app is deployed to the Amazon EC2 cluster service, then Scope displays Services and Tasks that make up an ECS cluster.
 
@@ -35,7 +35,7 @@ For information on how to install Scope on Kubernetes see, "[Installing Scope on
 
 For information on how to install Scope on the AWS EC2 Container Service see, "[Installing Scope on Amazon ECS](installing.md#ecs)
 
-Under the hosts view, and if you are running Weave Net for container networking a specific Weave Net view appears. This view is useful for troubleshooting any networking problems you may be having. This view displays a number of Weave Net specific attributes such as whether quorum has been reached, the IP addresses used, whether fast datapath is enabled, or if encryption is running and many other useful attributes. See [Weave Net User Guide](https://www.weave.works/docs/net/latest/features/) for more information. 
+Under the hosts view, and if you are running Weave Net for container networking, a specific Weave Net view appears. This view is useful for troubleshooting any networking problems you may be having. This view displays a number of Weave Net specific attributes such as whether quorum has been reached, the IP addresses used, whether fast datapath is enabled, or if encryption is running and many other useful attributes. See [Weave Net User Guide](https://www.weave.works/docs/net/latest/features/) for more information. 
 
 ##<a name="mode"></a>Graphic or Table Mode
 
@@ -51,7 +51,7 @@ In the left-hand corner of the UI are other filtering and other options. Nodes c
 
 ##<a name="powerful-search"></a> Powerful Search
 
-Powerful search capability enables you to find node types, containers and processes by name, label or even path.  The search functionality supports simple operands so that you can for example, find processes consuming a certain Memory limit or nodes using too much CPU. Search terms may also be stacked to create custom, complex search criterion. See the online help for a full list of allowable operands.
+Use Search to quickly find node types, containers and processes by name, label or even path.  The search functionality supports simple operands so that you can for example, find processes consuming a certain amount memory or nodes using too much CPU. Search terms may also be stacked to create custom, complex search criterion. See the online help within the product for a full list of allowable operands.
 
 !['Powerful Search'](images/search.png)
 
@@ -63,9 +63,9 @@ Choose an overview of your container infrastructure, or focus on a specific micr
 
 ##<a name="interact-with-and-manage-containers"></a>Troubleshoot and Manage Containers
 
-Click on a container, pod or host to view the controls that allow you to: pause, restart, stop and delete without having to leave the Scope browser window. Logs of selected containers or pods (if you are running in Kubernetes) can also be viewed by clicking the terminal icon.
+Click on a container, pod or host to view the controls that allow you to: pause, restart, stop and delete without having to leave the Scope browser window. Logs of selected containers or pods (if you are running Kubernetes) can also be displayed by clicking the terminal icon.
 
-And if further troubleshooting is required, terminal windows can be launched from any container so that you can interact with your app and run any UNIX command to diagnose issues.  Launch a terminal by clicking the `>_` icon from the details panel of a selected container. 
+And if further troubleshooting is required, terminal windows can be launched from any container or host so that you can interact with your app and run any UNIX command to diagnose issues.  Launch a terminal by clicking the `>_` icon from the details panel of a selected container. 
 
 !['Terminal for container interaction'](images/terminal-view.png)
 
