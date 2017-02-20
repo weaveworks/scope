@@ -1,6 +1,7 @@
 import debug from 'debug';
 import reqwest from 'reqwest';
 import trimStart from 'lodash/trimStart';
+import defaults from 'lodash/defaults';
 
 import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
@@ -15,6 +16,18 @@ const log = debug('scope:web-api-utils');
 const reconnectTimerInterval = 5000;
 const updateFrequency = '5s';
 const FIRST_RENDER_TOO_LONG_THRESHOLD = 100; // ms
+const csrfToken = (() => {
+  // Check for token at window level or parent level (for iframe);
+  /* eslint-disable no-underscore-dangle */
+  const token = window.__WEAVEWORKS_CSRF_TOKEN || parent.__WEAVEWORKS_CSRF_TOKEN;
+  /* eslint-enable no-underscore-dangle */
+  if (!token || token === '$__CSRF_TOKEN_PLACEHOLDER__') {
+    // Authfe did not replace the token in the static html.
+    return null;
+  }
+
+  return token;
+})();
 
 let socket;
 let reconnectTimer = 0;
@@ -122,7 +135,18 @@ function createWebsocket(topologyUrl, optionsQuery, dispatch) {
   };
 }
 
-/* keep URLs relative */
+/**
+  * XHR wrapper. Applies a CSRF token (if it exists) and content-type to all requests.
+  * Any opts that get passed in will override the defaults.
+  */
+function doRequest(opts) {
+  const config = defaults(opts, { contentType: 'application/json' });
+  if (csrfToken) {
+    config.headers = Object.assign({}, config.headers, { 'X-CSRF-Token': csrfToken });
+  }
+
+  reqwest(config);
+}
 
 /**
  * Gets nodes for all topologies (for search)
@@ -147,9 +171,8 @@ export function getTopologies(options, dispatch) {
   clearTimeout(topologyTimer);
   const optionsQuery = buildOptionsQuery(options);
   const url = `${getApiPath()}/api/topology?${optionsQuery}`;
-  reqwest({
+  doRequest({
     url,
-    type: 'json',
     success: (res) => {
       dispatch(receiveTopologies(res));
       topologyTimer = setTimeout(() => {
@@ -191,9 +214,8 @@ export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nod
     }
     const url = urlComponents.join('');
 
-    reqwest({
+    doRequest({
       url,
-      type: 'json',
       success: (res) => {
         // make sure node is still selected
         if (nodeMap.has(res.node.id)) {
@@ -218,9 +240,8 @@ export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nod
 export function getApiDetails(dispatch) {
   clearTimeout(apiDetailsTimer);
   const url = `${getApiPath()}/api`;
-  reqwest({
+  doRequest({
     url,
-    type: 'json',
     success: (res) => {
       dispatch(receiveApiDetails(res));
       apiDetailsTimer = setTimeout(() => {
@@ -241,10 +262,9 @@ export function doControlRequest(nodeId, control, dispatch) {
   clearTimeout(controlErrorTimer);
   const url = `${getApiPath()}/api/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
-  reqwest({
+  doRequest({
     method: 'POST',
     url,
-    type: 'json',
     success: (res) => {
       dispatch(receiveControlSuccess(nodeId));
       if (res) {
@@ -279,10 +299,9 @@ export function doResizeTty(pipeId, control, cols, rows) {
   const url = `${getApiPath()}/api/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
 
-  return reqwest({
+  return doRequest({
     method: 'POST',
     url,
-    type: 'json',
     data: JSON.stringify({pipeID: pipeId, width: cols.toString(), height: rows.toString()}),
   })
     .fail((err) => {
@@ -293,10 +312,9 @@ export function doResizeTty(pipeId, control, cols, rows) {
 
 export function deletePipe(pipeId, dispatch) {
   const url = `${getApiPath()}/api/pipe/${encodeURIComponent(pipeId)}`;
-  reqwest({
+  doRequest({
     method: 'DELETE',
     url,
-    type: 'json',
     success: () => {
       log('Closed the pipe!');
     },
@@ -310,10 +328,9 @@ export function deletePipe(pipeId, dispatch) {
 
 export function getPipeStatus(pipeId, dispatch) {
   const url = `${getApiPath()}/api/pipe/${encodeURIComponent(pipeId)}/check`;
-  reqwest({
+  doRequest({
     method: 'GET',
     url,
-    type: 'json',
     complete: (res) => {
       const status = {
         204: 'PIPE_ALIVE',
