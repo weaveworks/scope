@@ -499,6 +499,7 @@ describe('RootReducer', () => {
     let nextState = initialState.set('currentTopology', fromJS(topologies[0]));
     nextState = reducer(nextState, {type: ActionTypes.SET_RECEIVED_NODES_DELTA});
     expect(nextState.get('gridMode')).toBe(true);
+    expect(nextState.get('initialNodesLoaded')).toBe(true);
   });
   it('cleans up old adjacencies', () => {
     // Add some nodes
