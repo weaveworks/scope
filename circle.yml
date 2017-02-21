@@ -16,6 +16,8 @@ machine:
     SCOPE_UI_BUILD: $HOME/docker/scope_ui_build.tar
 
 dependencies:
+  pre:
+      - pip install --upgrade requests
   cache_directories:
     - "~/docker"
   override:
