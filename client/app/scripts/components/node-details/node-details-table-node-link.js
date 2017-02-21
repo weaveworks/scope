@@ -1,8 +1,9 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
 import { clickRelative } from '../../actions/app-actions';
 
-export default class NodeDetailsTableNodeLink extends React.PureComponent {
+class NodeDetailsTableNodeLink extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.handleClick = this.handleClick.bind(this);
@@ -43,3 +44,6 @@ export default class NodeDetailsTableNodeLink extends React.PureComponent {
     );
   }
 }
+
+// Using this instead of PureComponent because of props.dispatch
+export default connect()(NodeDetailsTableNodeLink);

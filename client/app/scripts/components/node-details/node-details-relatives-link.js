@@ -1,9 +1,10 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
 import { clickRelative } from '../../actions/app-actions';
 import MatchedText from '../matched-text';
 
-export default class NodeDetailsRelativesLink extends React.PureComponent {
+class NodeDetailsRelativesLink extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.handleClick = this.handleClick.bind(this);
@@ -35,3 +36,6 @@ export default class NodeDetailsRelativesLink extends React.PureComponent {
     );
   }
 }
+
+// Using this instead of PureComponent because of props.dispatch
+export default connect()(NodeDetailsRelativesLink);
