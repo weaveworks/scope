@@ -47,6 +47,14 @@ is_valid_commit() {
     git rev-parse --quiet --verify "$rev^{commit}" >/dev/null
 }
 
+# is the SHA1 actually present in the repo?
+# it could be it isn't, e.g. after a force push
+commit_valid() {
+	local rev=$1
+	git rev-parse --quiet --verify "$rev^{commit}"
+	[ $? -eq 0 ]
+}
+
 cached_revision=$(cached_image_rev)
 if [ -z "$cached_revision" ]; then
     echo ">>> No cached image found; rebuilding"
@@ -58,6 +66,12 @@ if ! is_valid_commit "$cached_revision"; then
     echo ">>> Git commit of cached image not found in repo; rebuilding"
     rebuild
     exit 0
+fi
+
+if ! commit_valid "$cached_revision"; then
+  echo ">>> cached SHA1 not found in repo, rebuilding"
+  rebuild
+  exit 0
 fi
 
 echo ">>> Found cached image rev $cached_revision"
