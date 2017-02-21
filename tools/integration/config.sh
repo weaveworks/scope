@@ -130,4 +130,4 @@ end_suite() {
     whitely assert_end
 }
 
-WEAVE=$DIR/../weave
+WEAVE=$DIR/../../integration/weave

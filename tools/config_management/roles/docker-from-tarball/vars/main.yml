@@ -1,0 +1,5 @@
+---
+docker_dir: '/opt/docker'
+docker_url: '{{ "rc" in {{ docker_version }} | ternary( >
+  "https://test.docker.com/builds/Linux/x86_64/docker-{{ docker_version }}.tgz", >
+  "https://get.docker.com/builds/Linux/x86_64/docker-{{ docker_version }}.tgz") }}'

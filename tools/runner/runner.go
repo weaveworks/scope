@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/mgutz/ansi"
-	"github.com/weaveworks/docker/pkg/mflag"
+	"github.com/weaveworks/common/mflag"
 )
 
 const (
@@ -148,9 +148,10 @@ func updateScheduler(test string, duration float64) {
 
 func getSchedule(tests []string) ([]string, error) {
 	var (
+		userName    = os.Getenv("CIRCLE_PROJECT_USERNAME")
 		project     = os.Getenv("CIRCLE_PROJECT_REPONAME")
 		buildNum    = os.Getenv("CIRCLE_BUILD_NUM")
-		testRun     = project + "-integration-" + buildNum
+		testRun     = userName + "-" + project + "-integration-" + buildNum
 		shardCount  = os.Getenv("CIRCLE_NODE_TOTAL")
 		shardID     = os.Getenv("CIRCLE_NODE_INDEX")
 		requestBody = &bytes.Buffer{}

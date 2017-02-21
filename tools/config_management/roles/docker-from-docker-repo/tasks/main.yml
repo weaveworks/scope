@@ -1,0 +1,16 @@
+---
+# Set up Docker
+# See also: https://docs.docker.com/engine/installation/linux/ubuntulinux/#install
+
+- include_role:
+    name: docker-prerequisites
+
+# Distribution-specific tasks:
+- include: debian.yml
+  when: ansible_os_family == "Debian"
+
+- include: redhat.yml
+  when: ansible_os_family == "RedHat"
+
+- include_role:
+    name: docker-configuration
