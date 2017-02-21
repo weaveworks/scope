@@ -1,6 +1,7 @@
 package awsecs
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +21,8 @@ const servicePrefix = "ecs-svc" // Task StartedBy field begins with this if it w
 type EcsClient interface {
 	// Returns a EcsInfo struct containing data needed for a report.
 	GetInfo([]string) EcsInfo
+	// Scales a service up or down by amount
+	ScaleService(string, int) error
 }
 
 // actual implementation
@@ -378,4 +381,28 @@ func (c ecsClientImpl) GetInfo(taskARNs []string) EcsInfo {
 	info := c.makeECSInfo(taskARNs, taskServiceMap)
 
 	return info
+}
+
+// Implements EcsClient.ScaleService
+func (c ecsClientImpl) ScaleService(serviceName string, amount int) error {
+	// Note this is inherently racey, due to needing to get, modify, then update the DesiredCount.
+
+	// refresh service in cache
+	c.describeServices([]string{serviceName})
+	// now check the cache to see if it worked
+	service, ok := c.getCachedService(serviceName)
+	if !ok {
+		return fmt.Errorf("Service %s not found", serviceName)
+	}
+
+	newCount := service.DesiredCount + int64(amount)
+	if newCount < 1 {
+		return fmt.Errorf("Cannot reduce count below one")
+	}
+	_, err := c.client.UpdateService(&ecs.UpdateServiceInput{
+		Cluster:      &c.cluster,
+		Service:      &serviceName,
+		DesiredCount: &newCount,
+	})
+	return err
 }
