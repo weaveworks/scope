@@ -6,7 +6,7 @@
 #
 # For shell files, it runs shfmt. If you don't have that installed, you can get
 # it with:
-#   go get -u github.com/mvdan/sh/cmd/shfmt
+#   go get -u gopkg.in/mvdan/sh.v1/cmd/shfmt
 #
 # With no arguments, it lints the current files staged
 # for git commit.  Or you can pass it explicit filenames
@@ -17,8 +17,11 @@
 
 set -e
 
+LINT_IGNORE_FILE=${LINT_IGNORE_FILE:-".lintignore"}
+
 IGNORE_LINT_COMMENT=
 IGNORE_SPELLINGS=
+PARALLEL=
 while true; do
     case "$1" in
         -nocomment)
@@ -32,6 +35,10 @@ while true; do
         -ignorespelling)
             IGNORE_SPELLINGS="$2,$IGNORE_SPELLINGS"
             shift 2
+            ;;
+        -p)
+            PARALLEL=1
+            shift 1
             ;;
         *)
             break
@@ -142,10 +149,11 @@ lint() {
         return
     fi
 
-    # Don't lint static.go
+    # Don't lint specific files
     case "$(basename "${filename}")" in
         static.go) return ;;
         coverage.html) return ;;
+        *.pb.go) return ;;
     esac
 
     if [[ "$(file --mime-type "${filename}" | awk '{print $2}')" == "text/x-shellscript" ]]; then
@@ -171,12 +179,46 @@ lint_files() {
     exit $lint_result
 }
 
-list_files() {
-    if [ $# -gt 0 ]; then
-        git ls-files --exclude-standard | grep -vE '(^|/)vendor/'
+matches_any() {
+    local filename="$1"
+    local patterns="$2"
+    while read -r pattern; do
+        # shellcheck disable=SC2053
+        # Use the [[ operator without quotes on $pattern
+        # in order to "glob" the provided filename:
+        [[ "$filename" == $pattern ]] && return 0
+    done <<<"$patterns"
+    return 1
+}
+
+filter_out() {
+    local patterns_file="$1"
+    if [ -n "$patterns_file" ] && [ -r "$patterns_file" ]; then
+        local patterns
+        patterns=$(sed '/^#.*$/d ; /^\s*$/d' "$patterns_file") # Remove blank lines and comments before we start iterating.
+        [ -n "$DEBUG" ] && echo >&2 "> Filters:" && echo >&2 "$patterns"
+        local filtered_out=()
+        while read -r filename; do
+            matches_any "$filename" "$patterns" && filtered_out+=("$filename") || echo "$filename"
+        done
+        [ -n "$DEBUG" ] && echo >&2 "> Files filtered out (i.e. NOT linted):" && printf >&2 '%s\n' "${filtered_out[@]}"
     else
-        git diff --cached --name-only
+        cat # No patterns provided: simply propagate stdin to stdout.
     fi
 }
 
-list_files "$@" | lint_files
+list_files() {
+    if [ $# -gt 0 ]; then
+        find "$@" | grep -vE '(^|/)vendor/'
+    else
+        git ls-files --exclude-standard | grep -vE '(^|/)vendor/'
+    fi
+}
+
+if [ $# = 1 ] && [ -f "$1" ]; then
+    lint "$1"
+elif [ -n "$PARALLEL" ]; then
+    list_files "$@" | filter_out "$LINT_IGNORE_FILE" | xargs -n1 -P16 "$0"
+else
+    list_files "$@" | filter_out "$LINT_IGNORE_FILE" | lint_files
+fi

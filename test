@@ -3,12 +3,14 @@
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-GO_TEST_ARGS=(-tags netgo -cpu 4 -timeout 8m)
 SLOW=
-NO_GO_GET=
+NO_GO_GET=true
+TAGS=
+PARALLEL=
+TIMEOUT=1m
 
 usage() {
-    echo "$0 [-slow] [-in-container foo]"
+    echo "$0 [-slow] [-in-container foo] [-netgo] [-(no-)go-get] [-timeout 1m]"
 }
 
 while [ $# -gt 0 ]; do
@@ -21,12 +23,30 @@ while [ $# -gt 0 ]; do
             NO_GO_GET=true
             shift 1
             ;;
+        "-go-get")
+            NO_GO_GET=
+            shift 1
+            ;;
+        "-netgo")
+            TAGS="-tags netgo"
+            shift 1
+            ;;
+        "-p")
+            PARALLEL=true
+            shift 1
+            ;;
+        "-timeout")
+            TIMEOUT=$2
+            shift 2
+            ;;
         *)
             usage
             exit 2
             ;;
     esac
 done
+
+GO_TEST_ARGS=($TAGS -cpu 4 -timeout $TIMEOUT)
 
 if [ -n "$SLOW" ] || [ -n "$CIRCLECI" ]; then
     SLOW=true
@@ -60,7 +80,7 @@ fi
 # If running on circle, use the scheduler to work out what tests to run on what shard
 if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ] && [ -x "$DIR/sched" ]; then
     PREFIX=$(go list -e ./ | sed -e 's/\//-/g')
-    TESTDIRS=($(echo "${TESTDIRS[@]}" | "$DIR/sched" sched "$PREFIX-$CIRCLE_BUILD_NUM" "$CIRCLE_NODE_TOTAL" "$CIRCLE_NODE_INDEX"))
+    TESTDIRS=($(echo "${TESTDIRS[@]}" | "$DIR/sched" sched "$PREFIX-$CIRCLE_PROJECT_USERNAME-$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM" "$CIRCLE_NODE_TOTAL" "$CIRCLE_NODE_INDEX"))
     echo "${TESTDIRS[@]}"
 fi
 
@@ -69,32 +89,48 @@ PACKAGE_BASE=$(go list -e ./)
 # Speed up the tests by compiling and installing their dependencies first.
 go test -i "${GO_TEST_ARGS[@]}" "${TESTDIRS[@]}"
 
-for dir in "${TESTDIRS[@]}"; do
+run_test() {
+    local dir=$1
     if [ -z "$NO_GO_GET" ]; then
-        go get -t -tags netgo "$dir"
+        go get -t "$TAGS" "$dir"
     fi
 
-    GO_TEST_ARGS_RUN=("${GO_TEST_ARGS[@]}")
+    local GO_TEST_ARGS_RUN=("${GO_TEST_ARGS[@]}")
     if [ -n "$SLOW" ]; then
+        local COVERPKGS
         COVERPKGS=$( (
             go list "$dir"
             go list -f '{{join .Deps "\n"}}' "$dir" | grep -v "vendor" | grep "^$PACKAGE_BASE/"
         ) | paste -s -d, -)
+        local output
         output=$(mktemp "$coverdir/unit.XXXXXXXXXX")
-        GO_TEST_ARGS_RUN=("${GO_TEST_ARGS[@]}" -coverprofile=$output -coverpkg=$COVERPKGS)
+        local GO_TEST_ARGS_RUN=("${GO_TEST_ARGS[@]}" -coverprofile=$output -coverpkg=$COVERPKGS)
     fi
 
+    local START
     START=$(date +%s)
     if ! go test "${GO_TEST_ARGS_RUN[@]}" "$dir"; then
         fail=1
     fi
-    RUNTIME=$(($(date +%s) - START))
+    local RUNTIME=$(($(date +%s) - START))
 
     # Report test runtime when running on circle, to help scheduler
     if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ] && [ -x "$DIR/sched" ]; then
         "$DIR/sched" time "$dir" "$RUNTIME"
     fi
+}
+
+for dir in "${TESTDIRS[@]}"; do
+    if [ -n "$PARALLEL" ]; then
+        run_test "$dir" &
+    else
+        run_test "$dir"
+    fi
 done
+
+if [ -n "$PARALLEL" ]; then
+    wait
+fi
 
 if [ -n "$SLOW" ] && [ -z "$COVERDIR" ]; then
     go get github.com/weaveworks/tools/cover

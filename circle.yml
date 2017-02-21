@@ -19,6 +19,7 @@ dependencies:
         github.com/fzipp/gocyclo \
         github.com/golang/lint/golint \
         github.com/kisielk/errcheck \
+        github.com/fatih/hclfmt \
         gopkg.in/mvdan/sh.v1/cmd/shfmt
 
 test:

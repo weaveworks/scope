@@ -1,0 +1,53 @@
+---
+
+- name: install jq
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: 
+    - jq
+
+- name: install ethtool (used by the weave script)
+  package:
+    name: "{{ item }}"
+    install_recommends: no
+    state: present
+  with_items: 
+    - ethtool
+
+- name: install nsenter (used by the weave script)
+  command: docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
+
+- name: install pip (for docker-py)
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: 
+    - python-pip
+
+- name: install docker-py (for docker_image)
+  pip:
+    name: docker-py
+    state: present
+
+- name: docker pull images used by tests
+  docker_image:
+    name: '{{ item }}'
+    state: present
+  with_items: 
+    - alpine
+    - aanand/docker-dnsutils
+    - weaveworks/hello-world
+
+- name: docker pull images used by k8s tests
+  docker_image:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - gcr.io/google_containers/etcd-amd64:{{ etcd_container_version }}
+    - gcr.io/google_containers/kube-apiserver-amd64:v{{ kubernetes_version }}
+    - gcr.io/google_containers/kube-controller-manager-amd64:v{{ kubernetes_version }}
+    - gcr.io/google_containers/kube-proxy-amd64:v{{ kubernetes_version }}
+    - gcr.io/google_containers/kube-scheduler-amd64:v{{ kubernetes_version }}
+    - gcr.io/google_containers/kube-discovery-amd64:{{ kube_discovery_container_version }}
+    - gcr.io/google_containers/pause-amd64:{{ pause_container_version }}

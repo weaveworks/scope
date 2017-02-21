@@ -1,0 +1,26 @@
+---
+################################################################################
+# Install Docker and Kubernetes, and configure Kubernetes to 
+# use Weave Net's CNI plugin (a.k.a. Weave Kube).
+#
+# See also:
+# - http://kubernetes.io/docs/getting-started-guides/kubeadm/
+# - https://github.com/weaveworks/weave-kube
+################################################################################
+
+- name: install docker, kubernetes and weave-kube
+  hosts: all
+  gather_facts: false  # required in case Python is not available on the host
+  become: true
+  become_user: root
+  
+  pre_tasks:
+    - include: library/setup_ansible_dependencies.yml
+
+  roles:
+    - docker-from-get.docker.com
+    - kubernetes-install
+    - weave-net-utilities
+    - kubelet-stop
+    - kubernetes-start
+    - weave-kube
