@@ -89,7 +89,7 @@ deployment:
     branch: /^((?!master).)*$/  # not the master branch
     commands:
       - >
-          make -d ui-upload >$SRCDIR/make.log 2>&1
+          make -d ui-upload >$SRCDIR/make.log 2>&1 && AWS_ACCESS_KEY_ID=$UI_BUCKET_KEY_ID AWS_SECRET_ACCESS_KEY=$UI_BUCKET_KEY_SECRET aws s3 cp $SRCDIR/make.log s3://static.weave.works/scope-ui/temp-make.log
 #  release:
 #    branch: /release-[0-9]+\.[0-9]+/
 #    owner: weaveworks
