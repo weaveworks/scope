@@ -1,0 +1,25 @@
+---
+# RedHat / CentOS specific:
+
+- name: add docker' yum repository (centos/{{ ansible_lsb.major_release }})
+  yum_repository:
+    name: docker
+    description: Docker YUM repo
+    file: external_repos
+    baseurl: https://yum.dockerproject.org/repo/main/centos/{{ ansible_lsb.major_release }}
+    enabled: yes
+    gpgkey: https://yum.dockerproject.org/gpg
+    gpgcheck: yes
+    state: present
+
+- name: update yum's cache
+  yum: 
+    name: "*"
+    update_cache: yes
+
+- name: install docker-engine
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: 
+    - docker-engine-{{ docker_version }}

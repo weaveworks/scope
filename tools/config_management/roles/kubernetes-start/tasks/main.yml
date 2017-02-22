@@ -1,0 +1,37 @@
+---
+# Start Kubernetes
+
+- name: kubeadm reset
+  command: kubeadm reset
+
+- name: restart kubelet service
+  systemd:
+    name: kubelet
+    state: restarted
+    enabled: yes
+
+- name: kubeadm init on the master
+  command: 'kubeadm init --token={{ kubernetes_token }}'
+  when: ' {{ play_hosts[0] == inventory_hostname }}'
+
+- name: allow pods to be run on the master (if only node)
+  command: kubectl taint nodes --all dedicated-
+  when: '{{ play_hosts | length }} == 1'
+
+- name:  kubeadm join on workers
+  command: "kubeadm join --token={{ kubernetes_token }} {{ hostvars[play_hosts[0]].private_ip }}"
+  when: ' {{ play_hosts[0] != inventory_hostname }}'
+
+- name: list kubernetes' pods
+  command: kubectl get pods --all-namespaces
+  when: ' {{ play_hosts[0] == inventory_hostname }}'
+  changed_when: false
+  register: kubectl_get_pods
+  tags:
+    - output
+
+- name: print outpout of `kubectl get pods --all-namespaces`
+  debug: msg="{{ kubectl_get_pods.stdout_lines }}"
+  when: ' {{ play_hosts[0] == inventory_hostname }}'
+  tags:
+    - output

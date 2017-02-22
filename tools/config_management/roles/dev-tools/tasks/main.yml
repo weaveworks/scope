@@ -1,0 +1,40 @@
+---
+# Set up Development Environment.
+
+- name: install development tools
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: 
+    # weave net dependencies
+    - make
+    - vagrant
+    # ansible dependencies
+    - python-pip
+    - python-dev
+    - libffi-dev
+    - libssl-dev
+    # terraform dependencies
+    - unzip
+    # other potentially useful tools:
+    - aufs-tools
+    - ethtool
+    - iputils-arping
+    - libpcap-dev
+    - git
+    - mercurial
+    - bc
+    - jq
+
+- name: install ansible
+  pip:
+    name: ansible
+    state: present
+
+- name: install terraform
+  unarchive:
+    src: 'https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_{{ {"x86_64": "amd64", "i386": "386"}[ansible_architecture] }}.zip'
+    remote_src: yes
+    dest: /usr/bin
+    mode: 0555
+    creates: /usr/bin/terraform
