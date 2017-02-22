@@ -19,7 +19,7 @@ export function loadTheme(theme = 'normal') {
     const head = document.querySelector('head');
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = `${window.__WEAVE_SCOPE_THEMES.publicPath}${stylesheet}`;
+    link.href = stylesheet;
     link.onload = () => {
       // Remove the old stylesheet to prevent weird overlapping styling issues
       const oldTheme = theme === 'normal' ? 'contrast' : 'normal';
