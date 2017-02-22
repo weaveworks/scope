@@ -3,40 +3,11 @@ import { createSelector, createStructuredSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 import timely from 'timely';
 
-import { EDGE_ID_SEPARATOR } from '../constants/naming';
+import { initEdgesFromNodes, collapseMultiEdges } from '../utils/layouter-utils';
 import { doLayout } from '../charts/nodes-layout';
 
 const log = debug('scope:nodes-chart');
 
-
-function initEdgesFromNodes(nodes) {
-  let edges = makeMap();
-
-  nodes.forEach((node, nodeId) => {
-    const adjacency = node.get('adjacency');
-    if (adjacency) {
-      adjacency.forEach((adjacent) => {
-        const edge = nodeId < adjacent ? [nodeId, adjacent] : [adjacent, nodeId];
-        const edgeId = edge.join(EDGE_ID_SEPARATOR);
-
-        if (!edges.has(edgeId)) {
-          const source = edge[0];
-          const target = edge[1];
-          if (nodes.has(source) && nodes.has(target)) {
-            edges = edges.set(edgeId, makeMap({
-              id: edgeId,
-              value: 1,
-              source,
-              target
-            }));
-          }
-        }
-      });
-    }
-  });
-
-  return edges;
-}
 
 // TODO: Make all the selectors below pure (so that they only depend on the global state).
 
@@ -86,8 +57,9 @@ export const graphLayout = createSelector(
     log(`graph layout calculation took ${timedLayouter.time}ms`);
 
     return {
+      // NOTE: This might be a good place to add (some of) nodes/edges decorators.
       layoutNodes: graph.nodes,
-      layoutEdges: graph.edges,
+      layoutEdges: collapseMultiEdges(graph.edges),
     };
   }
 );
