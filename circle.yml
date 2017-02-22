@@ -89,7 +89,7 @@ deployment:
     branch: /^((?!master).)*$/  # not the master branch
     commands:
       - >
-          make -d ui-upload
+          make -d ui-upload >$SRCDIR/make.log 2>&1
 #  release:
 #    branch: /release-[0-9]+\.[0-9]+/
 #    owner: weaveworks
