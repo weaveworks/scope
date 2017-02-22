@@ -5,6 +5,7 @@ const path = require('path');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
 
 const GLOBALS = {
   'process.env': {NODE_ENV: '"production"'}
@@ -31,7 +32,7 @@ module.exports = {
 
   entry: {
     app: './app/scripts/main',
-    'contrast-app': './app/scripts/contrast-main',
+    'contrast-theme': ['./app/scripts/contrast-theme'],
     'terminal-app': './app/scripts/terminal-main',
     // keep only some in here, to make vendors and app bundles roughly same size
     vendors: ['babel-polyfill', 'classnames', 'immutable',
@@ -114,22 +115,17 @@ module.exports = {
     new ExtractTextPlugin('style-[name]-[chunkhash].css'),
     new HtmlWebpackPlugin({
       hash: true,
-      chunks: ['vendors', 'contrast-app'],
-      template: 'app/html/index.html',
-      filename: 'contrast.html'
-    }),
-    new HtmlWebpackPlugin({
-      hash: true,
       chunks: ['vendors', 'terminal-app'],
       template: 'app/html/index.html',
       filename: 'terminal.html'
     }),
     new HtmlWebpackPlugin({
       hash: true,
-      chunks: ['vendors', 'app'],
+      chunks: ['vendors', 'app', 'contrast-theme'],
       template: 'app/html/index.html',
       filename: 'index.html'
-    })
+    }),
+    new ContrastStyleCompiler()
   ],
   sassLoader: {
     includePaths: [

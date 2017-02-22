@@ -77,7 +77,7 @@ class NodesChartNodes extends React.Component {
   }
 
   render() {
-    const { layoutNodes, isAnimated } = this.props;
+    const { layoutNodes, isAnimated, contrastMode } = this.props;
 
     const nodesToRender = layoutNodes.toIndexedSeq()
       .map(this.nodeHighlightedDecorator)
@@ -111,6 +111,7 @@ class NodesChartNodes extends React.Component {
             dy={node.get('y')}
             scale={node.get('scale')}
             isAnimated={isAnimated}
+            contrastMode={contrastMode}
           />
         ))}
       </g>
@@ -130,6 +131,7 @@ function mapStateToProps(state) {
     selectedNetwork: state.get('selectedNetwork'),
     selectedNodeId: state.get('selectedNodeId'),
     searchQuery: state.get('searchQuery'),
+    contrastMode: state.get('contrastMode')
   };
 }
 

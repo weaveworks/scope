@@ -1,3 +1,4 @@
+/* eslint-disable import/no-webpack-loader-syntax, import/no-unresolved */
 import debug from 'debug';
 import { size, each, includes } from 'lodash';
 import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
@@ -29,6 +30,8 @@ const topologySorter = topology => topology.get('rank');
 
 export const initialState = makeMap({
   availableCanvasMetrics: makeList(),
+  availableNetworks: makeList(),
+  contrastMode: false,
   controlPipes: makeOrderedMap(), // pipeId -> controlPipe
   controlStatus: makeMap(),
   currentTopology: null,
@@ -713,6 +716,10 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.CHANGE_INSTANCE: {
       state = closeAllNodeDetails(state);
       return state;
+    }
+
+    case ActionTypes.TOGGLE_CONTRAST_MODE: {
+      return state.set('contrastMode', action.enabled);
     }
 
     default: {

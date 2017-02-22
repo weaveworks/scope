@@ -1,8 +1,9 @@
 import React from 'react';
 import { scaleBand } from 'd3-scale';
 import { List as makeList } from 'immutable';
+import { connect } from 'react-redux';
+
 import { getNetworkColor } from '../utils/color-utils';
-import { isContrastMode } from '../utils/contrast-utils';
 import { NODE_BASE_SIZE } from '../constants/styles';
 
 // Min size is about a quarter of the width, feels about right.
@@ -13,7 +14,7 @@ const borderRadius = 0.01;
 const offset = 0.67;
 const x = scaleBand();
 
-function NodeNetworksOverlay({ stack, networks = makeList() }) {
+function NodeNetworksOverlay({ stack, networks = makeList(), contrastMode }) {
   const barWidth = Math.max(1, minBarWidth * networks.size);
   const yPosition = offset - (barHeight * 0.5);
 
@@ -37,7 +38,7 @@ function NodeNetworksOverlay({ stack, networks = makeList() }) {
     />
   ));
 
-  const translateY = stack && isContrastMode() ? 0.15 : 0;
+  const translateY = stack && contrastMode ? 0.15 : 0;
   return (
     <g transform={`translate(0, ${translateY}) scale(${NODE_BASE_SIZE})`}>
       {bars.toJS()}
@@ -45,4 +46,10 @@ function NodeNetworksOverlay({ stack, networks = makeList() }) {
   );
 }
 
-export default NodeNetworksOverlay;
+function mapStateToProps(state) {
+  return {
+    contrastMode: state.get('contrastMode')
+  };
+}
+
+export default connect(mapStateToProps)(NodeNetworksOverlay);
