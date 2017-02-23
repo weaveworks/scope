@@ -81,7 +81,7 @@ check_docker_access() {
     fi
 }
 
-# - The image embeds the weave script & Docker 1.10.3 client
+# - The image embeds the weave script & Docker 1.13.1 client (mimicking a 1.10 client)
 # - Weave needs 1.10.0 now (image pulling changes)
 MIN_DOCKER_VERSION=1.10.0
 

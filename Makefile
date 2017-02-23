@@ -12,7 +12,7 @@ SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
 SCOPE_BACKEND_BUILD_UPTODATE=.scope_backend_build.uptodate
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
 WEAVENET_VERSION=1.9.0
-DOCKER_VERSION=1.10.3
+DOCKER_VERSION=1.13.1
 DOCKER_DISTRIB=.pkg/docker-$(DOCKER_VERSION).tgz
 DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
 RUNSVINIT=vendor/runsvinit/runsvinit
@@ -49,6 +49,7 @@ docker/weaveutil:
 $(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave docker/weaveutil $(RUNSVINIT) docker/Dockerfile docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 	cp $(SCOPE_EXE) $(RUNSVINIT) docker/
 	cp $(DOCKER_DISTRIB) docker/docker.tgz
+	cd docker && tar -xvzf docker.tgz
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
 	$(SUDO) docker tag $(SCOPE_IMAGE) $(SCOPE_IMAGE):$(IMAGE_TAG)
 	$(SUDO) docker save $(SCOPE_IMAGE):latest > $@
