@@ -174,7 +174,7 @@ export function rootReducer(state = initialState, action) {
       if (topology) {
         const topologyId = topology.get('parentId') || topology.get('id');
         if (state.getIn(['topologyOptions', topologyId, action.option]) !== action.value) {
-          state = state.update('nodes', nodes => nodes.clear());
+          state = clearNodes(state);
         }
         state = state.setIn(
           ['topologyOptions', topologyId, action.option],
@@ -654,7 +654,7 @@ export function rootReducer(state = initialState, action) {
       state = state.set('pinnedSearches', makeList(action.state.pinnedSearches));
       state = state.set('searchQuery', action.state.searchQuery || '');
       if (state.get('currentTopologyId') !== action.state.topologyId) {
-        state = state.update('nodes', nodes => nodes.clear());
+        state = clearNodes(state);
       }
       state = setTopology(state, action.state.topologyId);
       state = setDefaultTopologyOptions(state, state.get('topologies'));
