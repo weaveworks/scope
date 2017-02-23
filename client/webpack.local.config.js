@@ -73,7 +73,10 @@ module.exports = {
       template: 'app/html/index.html',
       filename: 'index.html'
     }),
-    new ContrastStyleCompiler()
+    new ContrastStyleCompiler(),
+    new webpack.DefinePlugin({
+      'process.env': {DEMO: process.env.DEMO ? 'true' : null }
+    }),
   ],
 
   // Transform source code using Babel and React Hot Loader
@@ -85,13 +88,13 @@ module.exports = {
       path.resolve(__dirname, 'app/scripts', 'app/styles')
     ],
 
-    preLoaders: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules|vendor/,
-        loader: 'eslint-loader'
-      }
-    ],
+    // preLoaders: [
+    //   {
+    //     test: /\.js$/,
+    //     exclude: /node_modules|vendor/,
+    //     loader: 'eslint-loader'
+    //   }
+    // ],
     loaders: [
       {
         test: /\.json$/,
