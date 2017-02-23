@@ -42,7 +42,13 @@ docker/weave:
 	curl -L https://github.com/weaveworks/weave/releases/download/v$(WEAVENET_VERSION)/weave -o docker/weave
 	chmod u+x docker/weave
 
-$(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave $(RUNSVINIT) docker/Dockerfile docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
+docker/weaveutil:
+	docker pull weaveworks/weaveexec:$(WEAVENET_VERSION)
+	docker create --name=throwaway weaveworks/weaveexec:$(WEAVENET_VERSION)
+	docker cp throwaway:/usr/bin/weaveutil docker/weaveutil
+	docker rm throwaway
+
+$(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave docker/weaveutil $(RUNSVINIT) docker/Dockerfile docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 	cp $(SCOPE_EXE) $(RUNSVINIT) docker/
 	cp $(DOCKER_DISTRIB) docker/docker.tgz
 	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/

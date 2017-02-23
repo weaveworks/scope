@@ -6,7 +6,7 @@ RUN apk add --update bash runit conntrack-tools iproute2 util-linux curl && \
 	rm -rf /var/cache/apk/*
 ADD ./docker.tgz /
 ADD ./demo.json /
-ADD ./weave /usr/bin/
+ADD ./weave ./weaveutil /usr/bin/
 COPY ./scope ./runsvinit ./entrypoint.sh /home/weave/
 COPY ./run-app /etc/service/app/run
 COPY ./run-probe /etc/service/probe/run
