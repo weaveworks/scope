@@ -81,7 +81,7 @@ deployment:
           )) &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope &&
           docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag) &&
-          (test -z "${UI_BUCKET_KEY_ID}" || (cd $SRCDIR && make ui-upload))
+          (test -z "${UI_BUCKET_KEY_ID}" || (cd $SRCDIR && make ui-upload && make ui-build-pkg))
         )
       - |
         test -z "${QUAY_USER}" || (
@@ -93,6 +93,7 @@ deployment:
     branch: /^((?!master).)*$/  # not the master branch
     commands:
       - >
+        make ui-build-pkg &&
         test -z "${DEPLOY_BRANCH}" || test -z "${DOCKER_USER}" || (
           docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
           docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-} &&
