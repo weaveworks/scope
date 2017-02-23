@@ -6,6 +6,7 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
 
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
+import { graphExceedsComplexityThreshSelector } from '../selectors/topology';
 import { applyPinnedSearches } from '../utils/search-utils';
 import { getNetworkNodes } from '../utils/network-view-utils';
 import {
@@ -16,7 +17,7 @@ import {
   filterHiddenTopologies,
   addTopologyFullname,
   getDefaultTopology,
-  graphExceedsComplexityThresh
+  activeTopologyZoomCacheKeyPath,
 } from '../utils/topology-utils';
 
 const log = debug('scope:app-store');
@@ -37,6 +38,7 @@ export const initialState = makeMap({
   currentTopology: null,
   currentTopologyId: null,
   errorUrl: null,
+  exportingGraph: false,
   forceRelayout: false,
   gridMode: false,
   gridSortedBy: null,
@@ -45,6 +47,7 @@ export const initialState = makeMap({
   highlightedEdgeIds: makeSet(),
   highlightedNodeIds: makeSet(),
   hostname: '...',
+  initialNodesLoaded: false,
   mouseOverEdgeId: null,
   mouseOverNodeId: null,
   networkNodes: makeMap(),
@@ -76,9 +79,9 @@ export const initialState = makeMap({
   updatePausedAt: null, // Date
   version: '...',
   versionUpdate: null,
+  viewport: makeMap(),
   websocketClosed: false,
-  exportingGraph: false,
-  initialNodesLoaded: false
+  zoomCache: makeMap(),
 });
 
 // adds ID field to topology (based on last part of URL path) and save urls in
@@ -184,6 +187,13 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
+    case ActionTypes.SET_VIEWPORT_DIMENSIONS: {
+      return state.mergeIn(['viewport'], {
+        width: action.width,
+        height: action.height,
+      });
+    }
+
     case ActionTypes.SET_EXPORTING_GRAPH: {
       return state.set('exportingGraph', action.exporting);
     }
@@ -197,6 +207,10 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.SET_GRID_MODE: {
       return state.setIn(['gridMode'], action.enabled);
+    }
+
+    case ActionTypes.CACHE_ZOOM_STATE: {
+      return state.setIn(activeTopologyZoomCacheKeyPath(state), action.zoomState);
     }
 
     case ActionTypes.CLEAR_CONTROL_ERROR: {
@@ -223,6 +237,10 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_FORCE_RELAYOUT: {
+      if (action.forceRelayout) {
+        // Reset the zoom cache when forcing relayout.
+        state = state.deleteIn(activeTopologyZoomCacheKeyPath(state));
+      }
       return state.set('forceRelayout', action.forceRelayout);
     }
 
@@ -524,11 +542,10 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.SET_RECEIVED_NODES_DELTA: {
-      // Turn on the table view if the graph is too complex, but skip this block if
-      // the user has already loaded topologies once.
+      // Turn on the table view if the graph is too complex, but skip
+      // this block if the user has already loaded topologies once.
       if (!state.get('initialNodesLoaded') && !state.get('nodesLoaded')) {
-        const topoStats = state.get('currentTopology').get('stats');
-        state = graphExceedsComplexityThresh(topoStats)
+        state = graphExceedsComplexityThreshSelector(state)
           ? state.set('gridMode', true)
           : state;
         state = state.set('initialNodesLoaded', true);

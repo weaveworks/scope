@@ -13,7 +13,7 @@ export const CANVAS_MARGINS = {
   top: 160,
   left: 40,
   right: 40,
-  bottom: 100,
+  bottom: 0,
 };
 
 // Node shapes

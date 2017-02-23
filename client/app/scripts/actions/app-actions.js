@@ -237,6 +237,12 @@ export function clickForceRelayout() {
   };
 }
 
+export function setViewportDimensions(width, height) {
+  return (dispatch) => {
+    dispatch({ type: ActionTypes.SET_VIEWPORT_DIMENSIONS, width, height });
+  };
+}
+
 export function toggleGridMode(enabledArgument) {
   return (dispatch, getState) => {
     const enabled = (enabledArgument === undefined) ?
@@ -247,9 +253,6 @@ export function toggleGridMode(enabledArgument) {
       enabled
     });
     updateRoute(getState);
-    if (!enabled) {
-      dispatch(clickForceRelayout());
-    }
   };
 }
 
@@ -343,6 +346,13 @@ export function clickTopology(topologyId) {
       getActiveTopologyOptions(state),
       dispatch
     );
+  };
+}
+
+export function cacheZoomState(zoomState) {
+  return {
+    type: ActionTypes.CACHE_ZOOM_STATE,
+    zoomState
   };
 }
 

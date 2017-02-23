@@ -174,11 +174,8 @@ export function getCurrentTopologyUrl(state) {
   return state.getIn(['currentTopology', 'url']);
 }
 
-export function graphExceedsComplexityThresh(stats) {
-  // Check to see if complexity is high. Used to trigger table view on page load.
-  return (stats.get('node_count') + (2 * stats.get('edge_count'))) > 1000;
-}
-
-export function zoomCacheKey(props) {
-  return `${props.topologyId}-${JSON.stringify(props.topologyOptions)}`;
+export function activeTopologyZoomCacheKeyPath(state) {
+  const topologyId = state.get('currentTopologyId');
+  const topologyOptions = JSON.stringify(getActiveTopologyOptions(state));
+  return ['zoomCache', topologyId, topologyOptions];
 }

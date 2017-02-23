@@ -1,11 +1,20 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
 import NodesChartEdges from './nodes-chart-edges';
 import NodesChartNodes from './nodes-chart-nodes';
+import { graphExceedsComplexityThreshSelector } from '../selectors/topology';
+import {
+  selectedScaleSelector,
+  layoutNodesSelector,
+  layoutEdgesSelector
+} from '../selectors/nodes-chart-layout';
 
-export default class NodesChartElements extends React.PureComponent {
+
+class NodesChartElements extends React.Component {
   render() {
-    const { transform, layoutEdges, layoutNodes, selectedScale, isAnimated } = this.props;
+    const { layoutNodes, layoutEdges, selectedScale, transform, isAnimated } = this.props;
+
     return (
       <g className="nodes-chart-elements" transform={transform}>
         <NodesChartEdges
@@ -20,3 +29,17 @@ export default class NodesChartElements extends React.PureComponent {
     );
   }
 }
+
+
+function mapStateToProps(state) {
+  return {
+    layoutNodes: layoutNodesSelector(state),
+    layoutEdges: layoutEdgesSelector(state),
+    selectedScale: selectedScaleSelector(state),
+    isAnimated: !graphExceedsComplexityThreshSelector(state),
+  };
+}
+
+export default connect(
+  mapStateToProps
+)(NodesChartElements);
