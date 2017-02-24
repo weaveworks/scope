@@ -44,6 +44,7 @@ prog/scope
 docker/scope
 docker/docker.tgz
 docker/weave
+docker/weaveutil
 docker/runsvinit
 extras/fixprobe/fixprobe
 extras/fixprobe/*.json
