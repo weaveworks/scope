@@ -9,8 +9,8 @@ import (
 	"text/template"
 
 	socks5 "github.com/armon/go-socks5"
-	"github.com/weaveworks/docker/pkg/mflag"
-	"github.com/weaveworks/weave/common/mflagext"
+	"github.com/weaveworks/common/mflag"
+	"github.com/weaveworks/common/mflagext"
 	"golang.org/x/net/context"
 )
 

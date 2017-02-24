@@ -11,12 +11,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// RouteMatcher matches routes
+type RouteMatcher interface {
+	Match(*http.Request, *mux.RouteMatch) bool
+}
+
 // Instrument is a Middleware which records timings for every HTTP request
 type Instrument struct {
-	RouteMatcher interface {
-		Match(*http.Request, *mux.RouteMatch) bool
-	}
-	Duration *prometheus.HistogramVec
+	RouteMatcher RouteMatcher
+	Duration     *prometheus.HistogramVec
 }
 
 // IsWSHandshakeRequest returns true if the given request is a websocket handshake request.

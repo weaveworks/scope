@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/mgutz/ansi"
-	"github.com/weaveworks/docker/pkg/mflag"
+	"github.com/weaveworks/common/mflag"
 )
 
 const (
