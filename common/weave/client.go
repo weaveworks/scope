@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 
@@ -14,6 +15,8 @@ import (
 
 	"github.com/weaveworks/common/exec"
 )
+
+const dockerAPIVersion = "1.22" // Support Docker Engine >= 1.10
 
 // Client for Weave Net API
 type Client interface {
@@ -160,7 +163,7 @@ func (c *client) AddDNSEntry(fqdn, containerID string, ip net.IP) error {
 }
 
 func (c *client) PS() (map[string]PSEntry, error) {
-	cmd := exec.Command("weave", "--local", "ps")
+	cmd := weaveCommand("--local", "ps")
 	out, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -199,7 +202,7 @@ func (c *client) PS() (map[string]PSEntry, error) {
 }
 
 func (c *client) Expose() error {
-	output, err := exec.Command("weave", "--local", "ps", "weave:expose").Output()
+	output, err := weaveCommand("--local", "ps", "weave:expose").Output()
 	if err != nil {
 		return err
 	}
@@ -208,8 +211,14 @@ func (c *client) Expose() error {
 		// Alread exposed!
 		return nil
 	}
-	if err := exec.Command("weave", "--local", "expose").Run(); err != nil {
+	if err := weaveCommand("--local", "expose").Run(); err != nil {
 		return fmt.Errorf("Error running weave expose: %v", err)
 	}
 	return nil
+}
+
+func weaveCommand(arg ...string) exec.Cmd {
+	cmd := exec.Command("weave", arg...)
+	cmd.SetEnv(append(os.Environ(), "DOCKER_API_VERSION="+dockerAPIVersion))
+	return cmd
 }

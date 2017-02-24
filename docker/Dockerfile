@@ -4,7 +4,7 @@ LABEL works.weave.role=system
 WORKDIR /home/weave
 RUN apk add --update bash runit conntrack-tools iproute2 util-linux curl && \
 	rm -rf /var/cache/apk/*
-ADD ./docker.tgz /
+ADD ./docker /usr/local/bin/
 ADD ./demo.json /
 ADD ./weave ./weaveutil /usr/bin/
 COPY ./scope ./runsvinit ./entrypoint.sh /home/weave/

@@ -43,6 +43,7 @@ scope.tar
 prog/scope
 docker/scope
 docker/docker.tgz
+docker/docker
 docker/weave
 docker/weaveutil
 docker/runsvinit

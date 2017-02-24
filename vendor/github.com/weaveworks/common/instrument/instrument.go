@@ -48,6 +48,8 @@ func TimeRequestHistogramStatus(ctx context.Context, method string, metric *prom
 		ext.Error.Set(sp, true)
 	}
 	sp.Finish()
-	metric.WithLabelValues(method, toStatusCode(err)).Observe(time.Now().Sub(startTime).Seconds())
+	if metric != nil {
+		metric.WithLabelValues(method, toStatusCode(err)).Observe(time.Now().Sub(startTime).Seconds())
+	}
 	return err
 }

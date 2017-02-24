@@ -14,6 +14,7 @@ type Cmd interface {
 	Kill() error
 	Output() ([]byte, error)
 	Run() error
+	SetEnv([]string)
 }
 
 // Command is a hook for mocking
@@ -27,4 +28,8 @@ type realCmd struct {
 
 func (c *realCmd) Kill() error {
 	return c.Cmd.Process.Kill()
+}
+
+func (c *realCmd) SetEnv(env []string) {
+	c.Cmd.Env = env
 }

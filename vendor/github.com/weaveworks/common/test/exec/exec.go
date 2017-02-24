@@ -68,6 +68,8 @@ func (c *mockCmd) Run() error {
 	return nil
 }
 
+func (c *mockCmd) SetEnv([]string) {}
+
 func (b *blockingReader) Read(p []byte) (n int, err error) {
 	<-b.quit
 	return 0, nil
