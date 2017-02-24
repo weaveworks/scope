@@ -43,10 +43,8 @@ docker/weave:
 	chmod u+x docker/weave
 
 docker/weaveutil:
-	docker pull weaveworks/weaveexec:$(WEAVENET_VERSION)
-	docker create --name=throwaway weaveworks/weaveexec:$(WEAVENET_VERSION)
-	docker cp throwaway:/usr/bin/weaveutil docker/weaveutil
-	docker rm throwaway
+	$(SUDO) docker run --rm  --entrypoint=cat weaveworks/weaveexec:$(WEAVENET_VERSION) /usr/bin/weaveutil > $@
+	chmod +x $@
 
 $(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave docker/weaveutil $(RUNSVINIT) docker/Dockerfile docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 	cp $(SCOPE_EXE) $(RUNSVINIT) docker/
