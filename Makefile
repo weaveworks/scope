@@ -150,6 +150,13 @@ client-start: $(SCOPE_UI_BUILD_UPTODATE)
 		-v $(shell pwd)/client/build:/home/weave/build -e WEBPACK_SERVER_HOST \
 		$(SCOPE_UI_BUILD_IMAGE) npm start
 
+tmp/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
+	$(sudo) docker run $(RUN_FLAGS) \
+	-v $(shell pwd)/client/app:/home/weave/app \
+	-v $(shell pwd)/tmp:/home/weave/tmp \
+	$(SCOPE_UI_BUILD_IMAGE) \
+	npm run bundle
+
 else
 
 client/build/index.html:
@@ -173,10 +180,10 @@ ui-upload: client/build-external/index.html
 	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
 	aws s3 cp client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
 
-ui-build-pkg:
+ui-pkg-upload: tmp/weave-scope.tgz
 	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
 	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
-	cd client && npm run build-pkg && npm run bundle && npm run s3-publish
+	aws s3 cp tmp/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/weave-scope.tgz
 
 clean:
 	$(GO) clean ./...
