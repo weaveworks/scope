@@ -312,7 +312,6 @@ export function setResourceView() {
 }
 
 export function clickNode(nodeId, label, origin) {
-  console.log(nodeId, label, origin);
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.CLICK_NODE,

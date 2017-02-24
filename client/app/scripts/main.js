@@ -25,5 +25,5 @@ if (module.hot) {
 }
 
 if (process.env.DEMO) {
-  runDemo(store.getState, store.dispatch);
+  runDemo(store.dispatch, store.getState);
 }

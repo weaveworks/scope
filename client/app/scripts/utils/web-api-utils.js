@@ -304,6 +304,7 @@ export function getApiDetails(dispatch) {
 }
 
 export function doControlRequest(nodeId, control, dispatch) {
+  console.log(nodeId, control);
   clearTimeout(controlErrorTimer);
   const url = `${getApiPath()}/api/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
