@@ -161,15 +161,18 @@ draft() {
 }
 
 publish() {
+    local IMAGES="scope cloud-agent"
     setup
     cd "$PWD"/"$RELEASE_DIR"
 
     if [ "$RELEASE_TYPE" = 'PRERELEASE' ]; then
         echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
-        $SUDO docker tag "$DOCKERHUB_USER"/scope "$DOCKERHUB_USER/scope:$VERSION"
-        $SUDO docker push "$DOCKERHUB_USER/scope:$VERSION"
-        $SUDO docker tag "$DOCKERHUB_USER/scope:$VERSION" "$DOCKERHUB_USER/scope:latest_release"
-        $SUDO docker push "$DOCKERHUB_USER/scope:latest_release"
+        for IMAGE in $IMAGES; do
+            $SUDO docker tag "$DOCKERHUB_USER/$IMAGE" "$DOCKERHUB_USER/$IMAGE:$VERSION"
+            $SUDO docker push "$DOCKERHUB_USER/$IMAGE:$VERSION"
+            $SUDO docker tag "$DOCKERHUB_USER/$IMAGE:$VERSION" "$DOCKERHUB_USER/$IMAGE:latest_release"
+            $SUDO docker push "$DOCKERHUB_USER/$IMAGE:latest_release"
+        done
         echo "** Docker images tagged and pushed"
 
         echo "== Publishing pre-release on GitHub"
@@ -201,10 +204,12 @@ publish() {
         echo '** Sanity checks OK for publishing tag' "$LATEST_TAG" as "$DOCKERHUB_USER/scope:$VERSION"
 
         echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
-        $SUDO docker tag "$DOCKERHUB_USER"/scope "$DOCKERHUB_USER/scope:$VERSION"
-        $SUDO docker push "$DOCKERHUB_USER/scope:$VERSION"
-        $SUDO docker tag "$DOCKERHUB_USER/scope:$VERSION" "$DOCKERHUB_USER/scope:latest_release"
-        $SUDO docker push "$DOCKERHUB_USER/scope:latest_release"
+        for IMAGE in $IMAGES; do
+            $SUDO docker tag "$DOCKERHUB_USER/$IMAGE" "$DOCKERHUB_USER/$IMAGE:$VERSION"
+            $SUDO docker push "$DOCKERHUB_USER/$IMAGE:$VERSION"
+            $SUDO docker tag "$DOCKERHUB_USER/$IMAGE:$VERSION" "$DOCKERHUB_USER/$IMAGE:latest_release"
+            $SUDO docker push "$DOCKERHUB_USER/$IMAGE:latest_release"
+        done
         echo "** Docker images tagged and pushed"
 
         echo "== Publishing release on GitHub"

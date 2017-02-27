@@ -4,8 +4,8 @@
 SUDO=$(shell docker info >/dev/null 2>&1 || echo "sudo -E")
 DOCKERHUB_USER=weaveworks
 SCOPE_EXE=prog/scope
-SCOPE_IMAGE=$(DOCKERHUB_USER)/scope
 SCOPE_EXPORT=scope.tar
+CLOUD_AGENT_EXPORT=cloud-agent.tar
 SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
 SCOPE_UI_BUILD_UPTODATE=.scope_ui_build.uptodate
 SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
@@ -46,13 +46,20 @@ docker/weaveutil:
 	$(SUDO) docker run --rm  --entrypoint=cat weaveworks/weaveexec:$(WEAVENET_VERSION) /usr/bin/weaveutil > $@
 	chmod +x $@
 
-$(SCOPE_EXPORT): $(SCOPE_EXE) $(DOCKER_DISTRIB) docker/weave docker/weaveutil $(RUNSVINIT) docker/Dockerfile docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
-	cp $(SCOPE_EXE) $(RUNSVINIT) docker/
-	cp $(DOCKER_DISTRIB) docker/docker.tgz
-	tar -xvzf docker/docker.tgz docker/docker
-	$(SUDO) docker build -t $(SCOPE_IMAGE) docker/
-	$(SUDO) docker tag $(SCOPE_IMAGE) $(SCOPE_IMAGE):$(IMAGE_TAG)
-	$(SUDO) docker save $(SCOPE_IMAGE):latest > $@
+docker/%: %
+	cp $* docker/
+
+docker/docker: $(DOCKER_DISTRIB)
+	tar -xvzf $(DOCKER_DISTRIB) docker/docker
+
+%.tar: docker/Dockerfile.%
+	$(SUDO) docker build -t $(DOCKERHUB_USER)/$* -f $< docker/
+	$(SUDO) docker tag $(DOCKERHUB_USER)/$* $(DOCKERHUB_USER)/$*:$(IMAGE_TAG)
+	$(SUDO) docker save $(DOCKERHUB_USER)/$*:latest > $@
+
+$(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent docker/$(SCOPE_EXE) docker/docker docker/weave docker/weaveutil
+
+$(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
