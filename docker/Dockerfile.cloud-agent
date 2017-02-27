@@ -7,4 +7,4 @@ RUN apk add --update bash conntrack-tools iproute2 util-linux curl && \
 ADD ./docker /usr/local/bin/
 ADD ./weave ./weaveutil /usr/bin/
 COPY ./scope /home/weave/
-ENTRYPOINT ["/home/weave/scope", "--mode=probe", "--probe-only"]
+ENTRYPOINT ["/home/weave/scope", "--mode=probe", "--probe-only", "--probe.docker=true"]
