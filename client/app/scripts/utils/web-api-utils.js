@@ -19,7 +19,9 @@ const FIRST_RENDER_TOO_LONG_THRESHOLD = 100; // ms
 const csrfToken = (() => {
   // Check for token at window level or parent level (for iframe);
   /* eslint-disable no-underscore-dangle */
-  const token = window.__WEAVEWORKS_CSRF_TOKEN || parent.__WEAVEWORKS_CSRF_TOKEN;
+  const token = typeof window !== 'undefined'
+    ? window.__WEAVEWORKS_CSRF_TOKEN || parent.__WEAVEWORKS_CSRF_TOKEN
+    : null;
   /* eslint-enable no-underscore-dangle */
   if (!token || token === '$__CSRF_TOKEN_PLACEHOLDER__') {
     // Authfe did not replace the token in the static html.
