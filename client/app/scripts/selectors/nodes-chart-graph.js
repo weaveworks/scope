@@ -3,7 +3,7 @@ import { createSelector, createStructuredSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 import timely from 'timely';
 
-import { initEdgesFromNodes, collapseMultiEdges } from '../utils/layouter-utils';
+import { initEdgesFromNodes } from '../utils/layouter-utils';
 import { viewportWidthSelector, viewportHeightSelector } from './canvas-viewport';
 import { activeTopologyOptionsSelector } from './topology';
 import { shownNodesSelector } from './node-filters';
@@ -72,5 +72,5 @@ export const graphEdgesSelector = createSelector(
   [
     graphLayoutSelector,
   ],
-  graph => collapseMultiEdges(graph.edges)
+  graph => graph.edges
 );

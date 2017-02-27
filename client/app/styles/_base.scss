@@ -411,8 +411,7 @@
 
     .link {
       fill: none;
-      stroke: $text-secondary-color;
-      stroke-opacity: $edge-opacity;
+      stroke: $edge-color;
     }
     .shadow {
       fill: none;
@@ -494,6 +493,10 @@
     stroke-width: $node-border-stroke-width * 0.8;
   }
 
+  .edge-marker {
+    color: $edge-color;
+    fill: $edge-color;
+  }
 }
 
 .matched-results {
