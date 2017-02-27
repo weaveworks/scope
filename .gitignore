@@ -39,6 +39,7 @@ tags
 .*.uptodate
 .uptodate
 scope.tar
+cloud-agent.tar
 .pkg
 prog/scope
 docker/scope
