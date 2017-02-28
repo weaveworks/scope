@@ -10,7 +10,7 @@ import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
 import { clickBackground, cacheZoomState } from '../actions/app-actions';
 import { activeLayoutZoomSelector } from '../selectors/nodes-chart-zoom';
-import { activeTopologyZoomCacheKeyPath } from '../utils/topology-utils';
+import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/topology';
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
@@ -146,7 +146,7 @@ class NodesChart extends React.Component {
 function mapStateToProps(state) {
   return {
     layoutZoom: activeLayoutZoomSelector(state),
-    layoutId: JSON.stringify(activeTopologyZoomCacheKeyPath(state)),
+    layoutId: JSON.stringify(activeTopologyZoomCacheKeyPathSelector(state)),
     selectedNodeId: state.get('selectedNodeId'),
     forceRelayout: state.get('forceRelayout'),
   };

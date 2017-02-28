@@ -11,3 +11,23 @@ export const graphExceedsComplexityThreshSelector = createSelector(
   ],
   (nodeCount, edgeCount) => (nodeCount + (2 * edgeCount)) > 1000
 );
+
+// Options for current topology, sub-topologies share options with parent
+export const activeTopologyOptionsSelector = createSelector(
+  [
+    state => state.getIn(['currentTopology', 'parentId']),
+    state => state.get('currentTopologyId'),
+    state => state.get('topologyOptions'),
+  ],
+  (parentTopologyId, currentTopologyId, topologyOptions) => (
+    topologyOptions.get(parentTopologyId || currentTopologyId)
+  )
+);
+
+export const activeTopologyZoomCacheKeyPathSelector = createSelector(
+  [
+    state => state.get('currentTopologyId'),
+    activeTopologyOptionsSelector,
+  ],
+  (topologyId, topologyOptions) => ['zoomCache', topologyId, JSON.stringify(topologyOptions)]
+);

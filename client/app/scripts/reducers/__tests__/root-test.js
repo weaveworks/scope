@@ -6,8 +6,9 @@ describe('RootReducer', () => {
   const reducer = require('../root').default;
   const initialState = require('../root').initialState;
   const topologyUtils = require('../../utils/topology-utils');
+  const topologySelectors = require('../../selectors/topology');
   // TODO maybe extract those to topology-utils tests?
-  const getActiveTopologyOptions = topologyUtils.getActiveTopologyOptions;
+  const activeTopologyOptionsSelector = topologySelectors.activeTopologyOptionsSelector;
   const getAdjacentNodes = topologyUtils.getAdjacentNodes;
   const isTopologyEmpty = topologyUtils.isTopologyEmpty;
   const getUrlState = require('../../utils/router-utils').getUrlState;
@@ -241,28 +242,28 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ClickTopologyAction);
 
     // default options
-    expect(getActiveTopologyOptions(nextState).has('option1')).toBeTruthy();
-    expect(getActiveTopologyOptions(nextState).get('option1')).toBe('off');
+    expect(activeTopologyOptionsSelector(nextState).has('option1')).toBeTruthy();
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('off');
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
 
     // turn on
     nextState = reducer(nextState, ChangeTopologyOptionAction);
-    expect(getActiveTopologyOptions(nextState).get('option1')).toBe('on');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('on');
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('on');
 
     // turn off
     nextState = reducer(nextState, ChangeTopologyOptionAction2);
-    expect(getActiveTopologyOptions(nextState).get('option1')).toBe('off');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('off');
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
 
     // sub-topology should retain main topo options
     nextState = reducer(nextState, ClickSubTopologyAction);
-    expect(getActiveTopologyOptions(nextState).get('option1')).toBe('off');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('off');
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
 
     // other topology w/o options dont return options, but keep in app state
     nextState = reducer(nextState, ClickTopology2Action);
-    expect(getActiveTopologyOptions(nextState)).toBeUndefined();
+    expect(activeTopologyOptionsSelector(nextState)).toBeUndefined();
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
   });
 
@@ -274,13 +275,13 @@ describe('RootReducer', () => {
 
     let nextState = initialState;
     nextState = reducer(nextState, RouteAction);
-    expect(getActiveTopologyOptions(nextState).get('option1')).toBe('on');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('on');
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('on');
 
     // stay same after topos have been received
     nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopologyAction);
-    expect(getActiveTopologyOptions(nextState).get('option1')).toBe('on');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('on');
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('on');
   });
 
@@ -293,7 +294,7 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, RouteAction);
     nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopologyAction);
-    expect(getActiveTopologyOptions(nextState).get('option1')).toBe('off');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('off');
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
   });
 

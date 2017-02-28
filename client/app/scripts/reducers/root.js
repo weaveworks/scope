@@ -6,7 +6,10 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
 
 import ActionTypes from '../constants/action-types';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
-import { graphExceedsComplexityThreshSelector } from '../selectors/topology';
+import {
+  graphExceedsComplexityThreshSelector,
+  activeTopologyZoomCacheKeyPathSelector,
+} from '../selectors/topology';
 import { applyPinnedSearches } from '../utils/search-utils';
 import { getNetworkNodes } from '../utils/network-view-utils';
 import {
@@ -17,7 +20,6 @@ import {
   filterHiddenTopologies,
   addTopologyFullname,
   getDefaultTopology,
-  activeTopologyZoomCacheKeyPath,
 } from '../utils/topology-utils';
 
 const log = debug('scope:app-store');
@@ -210,7 +212,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CACHE_ZOOM_STATE: {
-      return state.setIn(activeTopologyZoomCacheKeyPath(state), action.zoomState);
+      return state.setIn(activeTopologyZoomCacheKeyPathSelector(state), action.zoomState);
     }
 
     case ActionTypes.CLEAR_CONTROL_ERROR: {
@@ -239,7 +241,7 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.CLICK_FORCE_RELAYOUT: {
       if (action.forceRelayout) {
         // Reset the zoom cache when forcing relayout.
-        state = state.deleteIn(activeTopologyZoomCacheKeyPath(state));
+        state = state.deleteIn(activeTopologyZoomCacheKeyPathSelector(state));
       }
       return state.set('forceRelayout', action.forceRelayout);
     }

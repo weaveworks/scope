@@ -3,9 +3,9 @@ import { createSelector, createStructuredSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 import timely from 'timely';
 
-import { getActiveTopologyOptions } from '../utils/topology-utils';
 import { initEdgesFromNodes, collapseMultiEdges } from '../utils/layouter-utils';
 import { viewportWidthSelector, viewportHeightSelector } from './canvas-viewport';
+import { activeTopologyOptionsSelector } from './topology';
 import { shownNodesSelector } from './node-filters';
 import { doLayout } from '../charts/nodes-layout';
 
@@ -15,7 +15,7 @@ const log = debug('scope:nodes-chart');
 const layoutOptionsSelector = createStructuredSelector({
   forceRelayout: state => state.get('forceRelayout'),
   topologyId: state => state.get('currentTopologyId'),
-  topologyOptions: getActiveTopologyOptions,
+  topologyOptions: activeTopologyOptionsSelector,
   height: viewportHeightSelector,
   width: viewportWidthSelector,
 });

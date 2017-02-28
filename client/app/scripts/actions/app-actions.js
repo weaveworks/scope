@@ -5,14 +5,23 @@ import { saveGraph } from '../utils/file-utils';
 import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
 import { parseQuery } from '../utils/search-utils';
-import { bufferDeltaUpdate, resumeUpdate,
-  resetUpdateBuffer } from '../utils/update-buffer-utils';
-import { doControlRequest, getAllNodes, getNodesDelta, getNodeDetails,
-  getTopologies, deletePipe } from '../utils/web-api-utils';
-import { getActiveTopologyOptions,
-  getCurrentTopologyUrl } from '../utils/topology-utils';
+import {
+  bufferDeltaUpdate,
+  resumeUpdate,
+  resetUpdateBuffer,
+} from '../utils/update-buffer-utils';
+import {
+  doControlRequest,
+  getAllNodes,
+  getNodesDelta,
+  getNodeDetails,
+  getTopologies,
+  deletePipe,
+} from '../utils/web-api-utils';
+import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
+import { activeTopologyOptionsSelector } from '../selectors/topology';
 
 const log = debug('scope:app-actions');
 
@@ -165,16 +174,16 @@ export function changeTopologyOption(option, value, topologyId) {
     // update all request workers with new options
     resetUpdateBuffer();
     const state = getState();
-    getTopologies(getActiveTopologyOptions(state), dispatch);
+    getTopologies(activeTopologyOptionsSelector(state), dispatch);
     getNodesDelta(
       getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       dispatch
     );
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       state.get('nodeDetails'),
       dispatch
     );
@@ -269,7 +278,7 @@ export function clickNode(nodeId, label, origin) {
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       state.get('nodeDetails'),
       dispatch
     );
@@ -296,7 +305,7 @@ export function clickRelative(nodeId, topologyId, label, origin) {
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       state.get('nodeDetails'),
       dispatch
     );
@@ -325,7 +334,7 @@ export function clickShowTopologyForNode(topologyId, nodeId) {
     const state = getState();
     getNodesDelta(
       getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       dispatch
     );
   };
@@ -343,7 +352,7 @@ export function clickTopology(topologyId) {
     const state = getState();
     getNodesDelta(
       getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       dispatch
     );
   };
@@ -562,13 +571,13 @@ export function receiveTopologies(topologies) {
     const state = getState();
     getNodesDelta(
       getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       dispatch
     );
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       state.get('nodeDetails'),
       dispatch
     );
@@ -678,16 +687,16 @@ export function route(urlState) {
     });
     // update all request workers with new options
     const state = getState();
-    getTopologies(getActiveTopologyOptions(state), dispatch);
+    getTopologies(activeTopologyOptionsSelector(state), dispatch);
     getNodesDelta(
       getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       dispatch
     );
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       state.get('nodeDetails'),
       dispatch
     );
@@ -720,7 +729,7 @@ export function changeInstance() {
     const state = getState();
     getNodesDelta(
       getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
+      activeTopologyOptionsSelector(state),
       dispatch,
       true // forces websocket teardown and reconnect to new instance
     );

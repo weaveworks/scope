@@ -52,7 +52,7 @@ const focusedNodesIdsSelector = createSelector(
   ],
   (selectedNodeId, nodes) => {
     if (!selectedNodeId || nodes.isEmpty()) {
-      return makeList();
+      return [];
     }
 
     // The selected node always goes in focus.

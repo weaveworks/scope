@@ -2,7 +2,7 @@ import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
 import { CANVAS_MARGINS, NODE_BASE_SIZE } from '../constants/styles';
-import { activeTopologyZoomCacheKeyPath } from '../utils/topology-utils';
+import { activeTopologyZoomCacheKeyPathSelector } from './topology';
 import { viewportWidthSelector, viewportHeightSelector } from './canvas-viewport';
 import { graphNodesSelector } from './nodes-chart-graph';
 
@@ -48,7 +48,7 @@ const defaultZoomSelector = createSelector(
 const activeLayoutCachedZoomSelector = createSelector(
   [
     state => state.get('zoomCache'),
-    activeTopologyZoomCacheKeyPath,
+    activeTopologyZoomCacheKeyPathSelector,
   ],
   (zoomCache, keyPath) => zoomCache.getIn(keyPath.slice(1))
 );
