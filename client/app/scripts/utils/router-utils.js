@@ -90,21 +90,20 @@ export function updateRoute(getState) {
 
 
 export function getRouter(dispatch, initialState) {
+  let mergedState = initialState;
   // strip any trailing '/'s.
   page.base(window.location.pathname.replace(/\/$/, ''));
 
+  const storageState = storageGet(STORAGE_STATE_KEY);
+  if (storageState) {
+    window.location.hash = `!/state/${storageState}`;
+    const parsedState = JSON.parse(decodeURL(storageState));
+    mergedState = Object.assign(initialState, parsedState);
+  }
+
   page('/', () => {
     // recover from storage state on empty URL
-    const storageState = storageGet(STORAGE_STATE_KEY);
-    if (storageState) {
-      // push storage state to URL
-      window.location.hash = `!/state/${storageState}`;
-      const parsedState = JSON.parse(decodeURL(storageState));
-      const mergedState = Object.assign(initialState, parsedState);
-      dispatch(route(mergedState));
-    } else {
-      dispatch(route(initialState));
-    }
+    dispatch(route(mergedState));
   });
 
   page('/state/:state', (ctx) => {
