@@ -127,15 +127,6 @@ export function filterHiddenTopologies(topologies) {
                                t.stats.filtered_nodes > 0));
 }
 
-export function getActiveTopologyOptions(state) {
-  // options for current topology, sub-topologies share options with parent
-  const parentId = state.getIn(['currentTopology', 'parentId']);
-  if (parentId) {
-    return state.getIn(['topologyOptions', parentId]);
-  }
-  return state.getIn(['topologyOptions', state.get('currentTopologyId')]);
-}
-
 export function getCurrentTopologyOptions(state) {
   return state.getIn(['currentTopology', 'options']);
 }
@@ -172,13 +163,4 @@ export function hasSelectedNode(state) {
 
 export function getCurrentTopologyUrl(state) {
   return state.getIn(['currentTopology', 'url']);
-}
-
-export function graphExceedsComplexityThresh(stats) {
-  // Check to see if complexity is high. Used to trigger table view on page load.
-  return (stats.get('node_count') + (2 * stats.get('edge_count'))) > 1000;
-}
-
-export function zoomCacheKey(props) {
-  return `${props.topologyId}-${JSON.stringify(props.topologyOptions)}`;
 }

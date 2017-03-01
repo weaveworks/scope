@@ -21,7 +21,7 @@ import MetricSelector from './metric-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
 import { getRouter, getUrlState } from '../utils/router-utils';
-import { getActiveTopologyOptions } from '../utils/topology-utils';
+import { activeTopologyOptionsSelector } from '../selectors/topology';
 import { availableNetworksSelector } from '../selectors/node-networks';
 
 const BACKSPACE_KEY_CODE = 8;
@@ -143,7 +143,7 @@ class App extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    activeTopologyOptions: getActiveTopologyOptions(state),
+    activeTopologyOptions: activeTopologyOptionsSelector(state),
     gridMode: state.get('gridMode'),
     routeSet: state.get('routeSet'),
     searchFocused: state.get('searchFocused'),

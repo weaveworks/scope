@@ -1,7 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { getActiveTopologyOptions, getCurrentTopologyOptions } from '../utils/topology-utils';
+import { getCurrentTopologyOptions } from '../utils/topology-utils';
+import { activeTopologyOptionsSelector } from '../selectors/topology';
 import TopologyOptionAction from './topology-option-action';
 
 class TopologyOptions extends React.Component {
@@ -37,7 +38,7 @@ function mapStateToProps(state) {
   return {
     options: getCurrentTopologyOptions(state),
     topologyId: state.get('currentTopologyId'),
-    activeOptions: getActiveTopologyOptions(state)
+    activeOptions: activeTopologyOptionsSelector(state)
   };
 }
 
