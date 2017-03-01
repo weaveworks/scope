@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { clickNode, clickTopology, clickCloseDetails } from '../actions/app-actions';
 
-const INTERVAL = 5000;
+const INTERVAL = 2000;
 
 function getRandomNode(getState) {
   const { nodes } = getState().toJS();
