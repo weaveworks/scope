@@ -147,7 +147,7 @@ function doRequest(opts) {
     config.headers = Object.assign({}, config.headers, { 'X-CSRF-Token': csrfToken });
   }
 
-  reqwest(config);
+  return reqwest(config);
 }
 
 /**
