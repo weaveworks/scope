@@ -4,7 +4,7 @@ menu_order: 20
 ---
 
 
-Weave Scope consists of three parts: the probe, the app and the user interface.  Scope can be deployed in either a standalone configuration, where you run everything yourself, or by using Weave Cloud.
+Weave Scope consists of three parts: the probe, the app and the user interface.  Scope can be deployed in either a standalone configuration, where you run everything yourself, or you can use Weave Cloud.
 
 Weave Cloud is the recommended option if:
 
@@ -81,15 +81,9 @@ Suppose you have the following nodes in a cluster:
  192.168.100.19
  192.168.100.20
 
- Using the IP addresses, you will manually peer each node with all of the other nodes during Scope launch.
-
-**1. Run the following on each node:**
-=======
-
- In the steps that follow, you will manually peer each node with all of the other nodes during Scope launch.
+ Using the above IP addresses, you will manually peer each node with all of the other nodes during Scope launch:
 
 **1. To begin run the following on each node:**
->>>>>>> Docs update with new version
 
      sudo curl -L git.io/scope -o /usr/local/bin/scope
      sudo chmod a+x /usr/local/bin/scope
