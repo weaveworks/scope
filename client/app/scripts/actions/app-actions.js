@@ -668,14 +668,12 @@ export function receiveNotFound(nodeId) {
 }
 
 export function setContrastMode(enabled) {
-  return (dispatch, getState) => {
+  return (dispatch) => {
     loadTheme(enabled ? 'contrast' : 'normal');
     dispatch({
       type: ActionTypes.TOGGLE_CONTRAST_MODE,
       enabled,
     });
-
-    updateRoute(getState);
   };
 }
 
@@ -700,10 +698,6 @@ export function route(urlState) {
       state.get('nodeDetails'),
       dispatch
     );
-
-    if (urlState.contrastMode) {
-      dispatch(setContrastMode(true));
-    }
   };
 }
 
