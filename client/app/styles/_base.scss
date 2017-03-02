@@ -300,7 +300,7 @@
   }
 
   .nodes-chart-nodes .node {
-    transition: opacity .5s $base-ease;
+    transition: opacity .2s $base-ease;
     text-align: center;
 
     .node-network {
@@ -386,10 +386,6 @@
         opacity: $node-pseudo-opacity;
         stroke: $text-tertiary-color;
       }
-    }
-
-    &.matched .shape {
-      animation: throb 0.5s $base-ease;
     }
 
     .node-label, .node-label-minor {
@@ -1492,14 +1488,6 @@
     opacity: 1.0;
   } 25% {
     opacity: 0.5;
-  }
-}
-
-@keyframes throb {
-  0%, 50%, 100% {
-    transform: scale(1);
-  } 25%, 75% {
-    transform: scale(1.2);
   }
 }
 
