@@ -211,6 +211,10 @@ export function rootReducer(state = initialState, action) {
       return state.setIn(['gridMode'], action.enabled);
     }
 
+    case ActionTypes.SET_RESOURCE_VIEW: {
+      return state.set('resourceView', action.selected);
+    }
+
     case ActionTypes.CACHE_ZOOM_STATE: {
       return state.setIn(activeTopologyZoomCacheKeyPathSelector(state), action.zoomState);
     }

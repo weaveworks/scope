@@ -267,6 +267,16 @@ export function toggleGridMode(enabledArgument) {
   };
 }
 
+export function toggleResourceView() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.SET_RESOURCE_VIEW,
+      selected: !getState().get('resourceView')
+    });
+    updateRoute(getState);
+  };
+}
+
 export function clickNode(nodeId, label, origin) {
   return (dispatch, getState) => {
     dispatch({

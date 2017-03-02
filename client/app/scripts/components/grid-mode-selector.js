@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 
-import { toggleGridMode } from '../actions/app-actions';
+import { toggleGridMode, toggleResourceView } from '../actions/app-actions';
 
 
 const Item = (icons, label, isSelected, onClick) => {
@@ -37,13 +37,16 @@ class GridModeSelector extends React.Component {
   }
 
   render() {
-    const { gridMode } = this.props;
+    const { gridMode, resourceView } = this.props;
 
     return (
       <div className="grid-mode-selector">
         <div className="grid-mode-selector-wrapper">
           {Item('fa fa-share-alt', 'Graph', !gridMode, this.disableGridMode)}
           {Item('fa fa-table', 'Table', gridMode, this.enableGridMode)}
+        </div>
+        <div className="grid-mode-selector-wrapper">
+          {Item('fa fa-bar-chart', 'Resource view', resourceView, this.props.toggleResourceView)}
         </div>
       </div>
     );
@@ -53,10 +56,11 @@ class GridModeSelector extends React.Component {
 function mapStateToProps(state) {
   return {
     gridMode: state.get('gridMode'),
+    resourceView: state.get('resourceView'),
   };
 }
 
 export default connect(
   mapStateToProps,
-  { toggleGridMode }
+  { toggleGridMode, toggleResourceView }
 )(GridModeSelector);
