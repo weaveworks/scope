@@ -52,11 +52,12 @@ module.exports = {
 
   // Necessary plugins for hot load
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
-    new webpack.optimize.OccurenceOrderPlugin(),
+    new webpack.optimize.CommonsChunkPlugin({ name: 'vendors', filename: 'vendors.js' }),
+    // new webpack.optimize.OccurrenceOrderPlugin(), there by default
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoErrorsPlugin(),
-    new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
+    // new webpack.NoErrorsPlugin(),
+    new webpack.NoEmitOnErrorsPlugin(),
+    // new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
     new ExtractTextPlugin('style-[name]-[chunkhash].css'),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'terminal-app'],
@@ -81,25 +82,28 @@ module.exports = {
     // Webpack is opionated about how pkgs should be laid out:
     // https://github.com/webpack/webpack/issues/1617
     noParse: [/xterm\/(.*).map$/, /xterm\/dist\/xterm\.js/],
-    include: [
-      path.resolve(__dirname, 'app/scripts', 'app/styles')
-    ],
+    // include: [
+    //   path.resolve(__dirname, 'app/scripts', 'app/styles')
+    // ],
 
-    preLoaders: [
+    rules: [
       {
         test: /\.js$/,
         exclude: /node_modules|vendor/,
-        loader: 'eslint-loader'
-      }
-    ],
-    loaders: [
-      {
-        test: /\.json$/,
-        loader: 'json-loader'
+        loader: 'eslint-loader',
+        enforce: 'pre'
       },
+      // {
+      //   test: /\.json$/,
+      //   loader: 'json-loader'
+      // },
       {
         test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        loader: 'url-loader?limit=10000&minetype=application/font-woff'
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          minetype: 'application/font-woff',
+        }
       },
       {
         test: /\.(ttf|eot|svg|ico)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
@@ -108,29 +112,39 @@ module.exports = {
       {
         test: /\.jsx?$/,
         exclude: /node_modules|vendor/,
-        loaders: ['babel']
+        loader: 'babel-loader'
       },
       {
         test: /\.(scss|css)$/,
-        loader: ExtractTextPlugin.extract('style-loader', 'css-loader!postcss!sass-loader')
+        loader: ExtractTextPlugin.extract({
+          fallback: 'style-loader',
+          use: [{
+            loader: 'css-loader'
+          }, {
+            loader: 'postcss-loader',
+            options: {
+              plugins: [
+                autoprefixer({
+                  browsers: ['last 2 versions']
+                })
+              ]
+            }
+          }, {
+            loader: 'sass-loader',
+            options: {
+              includePaths: [
+                path.resolve(__dirname, './node_modules/xterm'),
+                path.resolve(__dirname, './node_modules/font-awesome'),
+              ]
+            }
+          }],
+        })
       }
     ]
   },
 
-  postcss: [
-    autoprefixer({
-      browsers: ['last 2 versions']
-    })
-  ],
-
   // Automatically transform files with these extensions
   resolve: {
-    extensions: ['', '.js', '.jsx']
+    extensions: ['.js', '.jsx']
   },
-  sassLoader: {
-    includePaths: [
-      path.resolve(__dirname, './node_modules/xterm'),
-      path.resolve(__dirname, './node_modules/font-awesome')
-    ]
-  }
 };

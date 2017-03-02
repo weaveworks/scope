@@ -7,7 +7,7 @@
   "private": true,
   "main": "index.js",
   "dependencies": {
-    "babel-plugin-lodash": "^3.2.10",
+    "babel-plugin-lodash": "3.2.10",
     "babel-polyfill": "6.16.0",
     "classnames": "2.2.5",
     "d3-array": "1.0.2",
@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "autoprefixer": "6.5.3",
-    "babel-cli": "^6.18.0",
+    "babel-cli": "6.18.0",
     "babel-core": "6.18.2",
     "babel-eslint": "7.1.1",
     "babel-jest": "17.0.2",
@@ -57,31 +57,34 @@
     "babel-preset-react": "6.16.0",
     "clean-webpack-plugin": "0.1.14",
     "css-loader": "0.26.1",
-    "eslint": "3.11.1",
-    "eslint-config-airbnb": "13.0.0",
-    "eslint-loader": "1.6.1",
+    "eslint": "3.16.1",
+    "eslint-config-airbnb": "14.1.0",
+    "eslint-loader": "1.6.3",
     "eslint-plugin-import": "2.2.0",
-    "eslint-plugin-jsx-a11y": "2.2.3",
-    "eslint-plugin-react": "6.8.0",
-    "expect": "^1.20.2",
-    "extract-text-webpack-plugin": "1.0.1",
+    "eslint-plugin-jsx-a11y": "4.0.0",
+    "eslint-plugin-react": "6.10.0",
+    "expect": "1.20.2",
+    "extract-text-webpack-plugin": "2.0.0",
     "file-loader": "0.9.0",
     "html-webpack-plugin": "2.24.1",
     "http-proxy-rules": "1.0.1",
     "immutable-devtools": "0.0.7",
-    "jest-cli": "17.0.3",
+    "jest-cli": "19.0.2",
     "json-loader": "0.5.4",
     "node-sass": "3.13.1",
     "postcss-loader": "1.2.0",
     "react-addons-perf": "15.4.2",
+    "node-sass": "4.5.0",
+    "postcss-loader": "1.3.3",
+    "react-addons-perf": "15.4.2",
     "redux-devtools": "3.3.1",
     "redux-devtools-dock-monitor": "1.1.1",
     "redux-devtools-log-monitor": "1.1.1",
-    "sass-loader": "4.1.1",
+    "sass-loader": "6.0.2",
     "style-loader": "0.13.1",
     "url": "0.11.0",
     "url-loader": "0.5.7",
-    "webpack": "1.13.3"
+    "webpack": "2.2.1"
   },
   "optionalDependencies": {
     "browser-perf": "1.4.5",
@@ -113,7 +116,7 @@
     "setupFiles": [
       "<rootDir>/test/support/localStorage.js"
     ],
-    "testPathDirs": [
+    "roots": [
       "<rootDir>/app/scripts"
     ],
     "moduleFileExtensions": [
