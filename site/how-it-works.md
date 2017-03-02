@@ -70,7 +70,7 @@ Scope can also be used to feed reports to Weave Cloud. With Weave Cloud, you can
 
 To register with Weave Cloud, go to [https://cloud.weave.works](https://cloud.weave.works), enter your email address and wait for the confirmation email.
 
-Once logged in the cloud token is accessible from the setting page on the instance after you've clicked 'Explore':
+The cloud token is accessible from the settings page after you've clicked 'Explore':
 
 ![Weave Cloud Token](images/weave-cloud-token.png)
 
