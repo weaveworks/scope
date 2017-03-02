@@ -55,7 +55,7 @@ Controlling Scope containers goes beyond simple lifecycle operations. Scope can 
 
 Weave Scope can visualize your app within:
 
- * Docker Datacenters
+ * Docker Datacenter
  * Kubernetes
  * Amazon ECS
 
