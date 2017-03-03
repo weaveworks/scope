@@ -98,7 +98,7 @@ export function getRouter(dispatch, initialState) {
   if (storageState) {
     window.location.hash = `!/state/${storageState}`;
     const parsedState = JSON.parse(decodeURL(storageState));
-    mergedState = Object.assign(initialState, parsedState);
+    mergedState = { ...initialState, ...parsedState };
   }
 
   page('/', () => {

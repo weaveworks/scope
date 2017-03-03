@@ -363,7 +363,10 @@ export function teardownWebsockets() {
   if (socket) {
     socket.onerror = null;
     socket.onclose = null;
+    socket.onmessage = null;
+    socket.onopen = null;
     socket.close();
+    socket = null;
     currentOptions = null;
   }
 }
