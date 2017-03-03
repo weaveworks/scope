@@ -274,6 +274,9 @@ export function toggleResourceView() {
       selected: !getState().get('resourceView')
     });
     updateRoute(getState);
+    setTimeout(() => {
+      getAllNodes(getState, dispatch);
+    }, 1200);
   };
 }
 
