@@ -11,7 +11,11 @@ import ResourceView from './resource-view';
 import NodesChartElements from './nodes-chart-elements';
 import { clickBackground, cacheZoomState } from '../actions/app-actions';
 import { activeLayoutZoomSelector } from '../selectors/nodes-chart-zoom';
-import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/topology';
+import {
+  activeTopologyZoomCacheKeyPathSelector,
+  isResourceViewModeSelector
+} from '../selectors/topology';
+
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
@@ -111,7 +115,7 @@ class NodesChart extends React.Component {
           <g transform="translate(24,24) scale(0.25)">
             <Logo />
           </g>
-          {this.props.resourceView ?
+          {this.props.isResourceViewMode ?
             <ResourceView transform={transform} /> :
             <NodesChartElements transform={transform} />
           }
@@ -168,9 +172,9 @@ function mapStateToProps(state) {
   return {
     layoutZoom: activeLayoutZoomSelector(state),
     layoutId: JSON.stringify(activeTopologyZoomCacheKeyPathSelector(state)),
+    isResourceViewMode: isResourceViewModeSelector(state),
     selectedNodeId: state.get('selectedNodeId'),
     forceRelayout: state.get('forceRelayout'),
-    resourceView: state.get('resourceView'),
   };
 }
 

@@ -9,6 +9,7 @@ import DelayedShow from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
 import { setViewportDimensions } from '../actions/app-actions';
+import { isTableViewModeSelector } from '../selectors/topology';
 import { VIEWPORT_RESIZE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
@@ -47,9 +48,10 @@ class Nodes extends React.Component {
   }
 
   render() {
-    const { topologyEmpty, gridMode, topologiesLoaded, nodesLoaded, topologies,
+    const { topologyEmpty, isTableViewMode, topologiesLoaded, nodesLoaded, topologies,
       currentTopology } = this.props;
 
+    // TODO: Get rid of 'grid'.
     return (
       <div className="nodes-wrapper">
         <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>
@@ -60,7 +62,7 @@ class Nodes extends React.Component {
         </DelayedShow>
         {EmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
 
-        {gridMode ? <NodesGrid /> : <NodesChart />}
+        {isTableViewMode ? <NodesGrid /> : <NodesChart />}
       </div>
     );
   }
@@ -75,8 +77,8 @@ class Nodes extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    isTableViewMode: isTableViewModeSelector(state),
     currentTopology: state.get('currentTopology'),
-    gridMode: state.get('gridMode'),
     nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),

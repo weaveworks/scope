@@ -24,6 +24,7 @@ import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
+import { RESOURCE_VIEW_MODE, GRAPH_VIEW_MODE, TABLE_VIEW_MODE } from '../constants/naming';
 
 const log = debug('scope:app-actions');
 
@@ -254,24 +255,31 @@ export function setViewportDimensions(width, height) {
   };
 }
 
-export function toggleGridMode(enabledArgument) {
+export function setGraphView() {
   return (dispatch, getState) => {
-    const enabled = (enabledArgument === undefined) ?
-      !getState().get('gridMode') :
-      enabledArgument;
     dispatch({
-      type: ActionTypes.SET_GRID_MODE,
-      enabled
+      type: ActionTypes.SET_VIEW_MODE,
+      viewMode: GRAPH_VIEW_MODE,
     });
     updateRoute(getState);
   };
 }
 
-export function toggleResourceView() {
+export function setTableView() {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.SET_RESOURCE_VIEW,
-      selected: !getState().get('resourceView')
+      type: ActionTypes.SET_VIEW_MODE,
+      viewMode: TABLE_VIEW_MODE,
+    });
+    updateRoute(getState);
+  };
+}
+
+export function setResourceView() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.SET_VIEW_MODE,
+      viewMode: RESOURCE_VIEW_MODE,
     });
     updateRoute(getState);
     setTimeout(() => {

@@ -1,4 +1,5 @@
-import {is, fromJS} from 'immutable';
+import { is, fromJS } from 'immutable';
+import { TABLE_VIEW_MODE } from '../../constants/naming';
 // Root reducer test suite using Jasmine matchers
 import { constructEdgeId } from '../../utils/layouter-utils';
 
@@ -501,10 +502,10 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, { type: ActionTypes.CLICK_BACKGROUND });
     expect(nextState.get('showingHelp')).toBe(false);
   });
-  it('switches to grid mode when complexity is high', () => {
+  it('switches to table view when complexity is high', () => {
     let nextState = initialState.set('currentTopology', fromJS(topologies[0]));
     nextState = reducer(nextState, {type: ActionTypes.SET_RECEIVED_NODES_DELTA});
-    expect(nextState.get('gridMode')).toBe(true);
+    expect(nextState.get('topologyViewMode')).toEqual(TABLE_VIEW_MODE);
     expect(nextState.get('initialNodesLoaded')).toBe(true);
   });
   it('cleans up old adjacencies', () => {

@@ -5,7 +5,7 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
   OrderedMap as makeOrderedMap, Set as makeSet } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
-import { EDGE_ID_SEPARATOR } from '../constants/naming';
+import { EDGE_ID_SEPARATOR, GRAPH_VIEW_MODE, TABLE_VIEW_MODE } from '../constants/naming';
 import {
   graphExceedsComplexityThreshSelector,
   activeTopologyZoomCacheKeyPathSelector,
@@ -42,7 +42,6 @@ export const initialState = makeMap({
   errorUrl: null,
   exportingGraph: false,
   forceRelayout: false,
-  gridMode: false,
   gridSortedBy: null,
   gridSortedDesc: null,
   // TODO: Calculate these sets from selectors instead.
@@ -78,6 +77,7 @@ export const initialState = makeMap({
   topologiesLoaded: false,
   topologyOptions: makeOrderedMap(), // topologyId -> options
   topologyUrlsById: makeOrderedMap(), // topologyId -> topologyUrl
+  topologyViewMode: GRAPH_VIEW_MODE,
   updatePausedAt: null, // Date
   version: '...',
   versionUpdate: null,
@@ -207,12 +207,8 @@ export function rootReducer(state = initialState, action) {
       });
     }
 
-    case ActionTypes.SET_GRID_MODE: {
-      return state.setIn(['gridMode'], action.enabled);
-    }
-
-    case ActionTypes.SET_RESOURCE_VIEW: {
-      return state.set('resourceView', action.selected);
+    case ActionTypes.SET_VIEW_MODE: {
+      return state.set('topologyViewMode', action.viewMode);
     }
 
     case ActionTypes.CACHE_ZOOM_STATE: {
@@ -554,9 +550,10 @@ export function rootReducer(state = initialState, action) {
       // Turn on the table view if the graph is too complex, but skip
       // this block if the user has already loaded topologies once.
       if (!state.get('initialNodesLoaded') && !state.get('nodesLoaded')) {
-        state = graphExceedsComplexityThreshSelector(state)
-          ? state.set('gridMode', true)
-          : state;
+        if (state.get('topologyViewMode') === GRAPH_VIEW_MODE) {
+          state = graphExceedsComplexityThreshSelector(state)
+            ? state.set('topologyViewMode', TABLE_VIEW_MODE) : state;
+        }
         state = state.set('initialNodesLoaded', true);
       }
       return state.set('nodesLoaded', true);
@@ -688,7 +685,7 @@ export function rootReducer(state = initialState, action) {
         selectedNodeId: action.state.selectedNodeId,
         pinnedMetricType: action.state.pinnedMetricType
       });
-      state = state.set('gridMode', action.state.topologyViewMode === 'grid');
+      state = state.set('topologyViewMode', action.state.topologyViewMode);
       if (action.state.gridSortedBy) {
         state = state.set('gridSortedBy', action.state.gridSortedBy);
       }

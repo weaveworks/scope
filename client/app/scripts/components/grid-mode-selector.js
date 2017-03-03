@@ -2,8 +2,12 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 
-import { toggleGridMode, toggleResourceView } from '../actions/app-actions';
-
+import { setGraphView, setTableView, setResourceView } from '../actions/app-actions';
+import {
+  isGraphViewModeSelector,
+  isTableViewModeSelector,
+  isResourceViewModeSelector,
+} from '../selectors/topology';
 
 const Item = (icons, label, isSelected, onClick) => {
   const className = classNames('grid-mode-selector-action', {
@@ -20,33 +24,17 @@ const Item = (icons, label, isSelected, onClick) => {
 };
 
 class GridModeSelector extends React.Component {
-
-  constructor(props, context) {
-    super(props, context);
-
-    this.enableGridMode = this.enableGridMode.bind(this);
-    this.disableGridMode = this.disableGridMode.bind(this);
-  }
-
-  enableGridMode() {
-    return this.props.toggleGridMode(true);
-  }
-
-  disableGridMode() {
-    return this.props.toggleGridMode(false);
-  }
-
   render() {
-    const { gridMode, resourceView } = this.props;
+    const { isGraphViewMode, isTableViewMode, isResourceViewMode } = this.props;
 
     return (
       <div className="grid-mode-selector">
         <div className="grid-mode-selector-wrapper">
-          {Item('fa fa-share-alt', 'Graph', !gridMode, this.disableGridMode)}
-          {Item('fa fa-table', 'Table', gridMode, this.enableGridMode)}
+          {Item('fa fa-share-alt', 'Graph', isGraphViewMode, this.props.setGraphView)}
+          {Item('fa fa-table', 'Table', isTableViewMode, this.props.setTableView)}
         </div>
         <div className="grid-mode-selector-wrapper">
-          {Item('fa fa-bar-chart', 'Resource view', resourceView, this.props.toggleResourceView)}
+          {Item('fa fa-bar-chart', 'Resource view', isResourceViewMode, this.props.setResourceView)}
         </div>
       </div>
     );
@@ -55,12 +43,13 @@ class GridModeSelector extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    gridMode: state.get('gridMode'),
-    resourceView: state.get('resourceView'),
+    isGraphViewMode: isGraphViewModeSelector(state),
+    isTableViewMode: isTableViewModeSelector(state),
+    isResourceViewMode: isResourceViewModeSelector(state),
   };
 }
 
 export default connect(
   mapStateToProps,
-  { toggleGridMode, toggleResourceView }
+  { setGraphView, setTableView, setResourceView }
 )(GridModeSelector);

@@ -1,4 +1,5 @@
 import { createSelector } from 'reselect';
+import { RESOURCE_VIEW_MODE, GRAPH_VIEW_MODE, TABLE_VIEW_MODE } from '../constants/naming';
 
 // TODO: Consider moving more stuff from 'topology-utils' here.
 
@@ -30,4 +31,26 @@ export const activeTopologyZoomCacheKeyPathSelector = createSelector(
     activeTopologyOptionsSelector,
   ],
   (topologyId, topologyOptions) => ['zoomCache', topologyId, JSON.stringify(topologyOptions)]
+);
+
+
+export const isGraphViewModeSelector = createSelector(
+  [
+    state => state.get('topologyViewMode'),
+  ],
+  viewMode => viewMode === GRAPH_VIEW_MODE
+);
+
+export const isTableViewModeSelector = createSelector(
+  [
+    state => state.get('topologyViewMode'),
+  ],
+  viewMode => viewMode === TABLE_VIEW_MODE
+);
+
+export const isResourceViewModeSelector = createSelector(
+  [
+    state => state.get('topologyViewMode'),
+  ],
+  viewMode => viewMode === RESOURCE_VIEW_MODE
 );

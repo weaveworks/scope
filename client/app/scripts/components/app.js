@@ -21,7 +21,7 @@ import MetricSelector from './metric-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
 import { getRouter, getUrlState } from '../utils/router-utils';
-import { activeTopologyOptionsSelector } from '../selectors/topology';
+import { activeTopologyOptionsSelector, isTableViewModeSelector } from '../selectors/topology';
 import { availableNetworksSelector } from '../selectors/node-networks';
 
 const BACKSPACE_KEY_CODE = 8;
@@ -102,10 +102,11 @@ class App extends React.Component {
   }
 
   render() {
-    const { gridMode, showingDetails, showingHelp, showingMetricsSelector,
+    const { isTableViewMode, showingDetails, showingHelp, showingMetricsSelector,
       showingNetworkSelector, showingTroubleshootingMenu } = this.props;
     const isIframe = window !== window.top;
 
+    // TODO: Remove 'grid', 'topo' constants.
     return (
       <div className="scope-app">
         {showingDebugToolbar() && <DebugToolbar />}
@@ -129,9 +130,9 @@ class App extends React.Component {
 
         <Nodes />
 
-        <Sidebar classNames={gridMode ? 'sidebar-gridmode' : ''}>
-          {showingMetricsSelector && !gridMode && <MetricSelector />}
-          {showingNetworkSelector && !gridMode && <NetworkSelector />}
+        <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
+          {showingMetricsSelector && !isTableViewMode && <MetricSelector />}
+          {showingNetworkSelector && isTableViewMode && <NetworkSelector />}
           <Status />
           <TopologyOptions />
         </Sidebar>
@@ -146,7 +147,7 @@ class App extends React.Component {
 function mapStateToProps(state) {
   return {
     activeTopologyOptions: activeTopologyOptionsSelector(state),
-    gridMode: state.get('gridMode'),
+    isTableViewMode: isTableViewModeSelector(state),
     routeSet: state.get('routeSet'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
