@@ -7,6 +7,7 @@ import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
 import Logo from '../components/logo';
+import ResourceView from './resource-view';
 import NodesChartElements from './nodes-chart-elements';
 import { clickBackground, cacheZoomState } from '../actions/app-actions';
 import { activeLayoutZoomSelector } from '../selectors/nodes-chart-zoom';
@@ -110,7 +111,10 @@ class NodesChart extends React.Component {
           <g transform="translate(24,24) scale(0.25)">
             <Logo />
           </g>
-          <NodesChartElements transform={transform} />
+          {this.props.resourceView ?
+            <ResourceView transform={transform} /> :
+            <NodesChartElements transform={transform} />
+          }
         </svg>
       </div>
     );
@@ -166,6 +170,7 @@ function mapStateToProps(state) {
     layoutId: JSON.stringify(activeTopologyZoomCacheKeyPathSelector(state)),
     selectedNodeId: state.get('selectedNodeId'),
     forceRelayout: state.get('forceRelayout'),
+    resourceView: state.get('resourceView'),
   };
 }
 
