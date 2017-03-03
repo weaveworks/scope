@@ -92,11 +92,10 @@ const processedNodes = (nodesByTopology) => {
 
 class ResourceView extends React.Component {
   render() {
-    const { nodesByTopology, transform } = this.props;
-    const nodesToRender = processedNodes(nodesByTopology);
+    const nodesToRender = processedNodes(this.props.nodesByTopology);
 
     return (
-      <g className="resource-view" transform={transform}>
+      <g className="resource-view">
         {nodesToRender.map(node => (
           <NodeResourceMetric
             key={node.get('id')}

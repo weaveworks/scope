@@ -27,10 +27,11 @@ export const activeTopologyOptionsSelector = createSelector(
 
 export const activeTopologyZoomCacheKeyPathSelector = createSelector(
   [
+    state => state.get('topologyViewMode'),
     state => state.get('currentTopologyId'),
-    activeTopologyOptionsSelector,
+    state => JSON.stringify(activeTopologyOptionsSelector(state)),
   ],
-  (topologyId, topologyOptions) => ['zoomCache', topologyId, JSON.stringify(topologyOptions)]
+  (viewMode, topologyId, topologyOptions) => ['zoomCache', viewMode, topologyId, topologyOptions]
 );
 
 
