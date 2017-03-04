@@ -31,7 +31,12 @@ weave_on() {
 scope_end_suite() {
     end_suite
     for host in $HOSTS; do
-        docker_on "$host" rm -f "$(docker_on "$host" ps -a -q)" 2>/dev/null 1>&2 || true
+        docker_on "$host" rm -f "$(docker_on "$host" ps -a -q)" || true
+        # Unfortunately, "docker rm" might not work: the CircleCI's Docker
+        # client is unable to delete containers on GCE's Docker server. As a
+        # workaround, restart the Docker daemon: at least the containers from
+        # previous tests will not be running.
+        run_on "$host" "sudo service docker restart"
     done
 }
 
