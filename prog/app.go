@@ -100,7 +100,7 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 
 	switch parsed.Scheme {
 	case "file":
-		return app.NewFileCollector(parsed.Path)
+		return app.NewFileCollector(parsed.Path, window)
 	case "dynamodb":
 		s3, err := url.Parse(s3URL)
 		if err != nil {
