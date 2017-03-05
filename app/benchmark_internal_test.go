@@ -22,7 +22,7 @@ func loadReport() (report.Report, error) {
 		return fixture.Report, nil
 	}
 
-	c, err := NewFileCollector(*benchReportFile)
+	c, err := NewFileCollector(*benchReportFile, 0)
 	if err != nil {
 		return fixture.Report, err
 	}
