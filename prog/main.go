@@ -254,9 +254,9 @@ func main() {
 	// They are also here so they are included in usage, and the probe uses them to decide if to
 	// publish to localhost.
 	noApp := flag.Bool("no-app", false, "Don't run the app.")
-	probeOnly := flag.Bool("app-only", false, "Only run the app")
-	flag.Bool("probe-only", false, "Only run the probe.")
+	probeOnly := flag.Bool("probe-only", false, "Only run the app.")
 	flag.Bool("no-probe", false, "Don't run the probe.")
+	flag.Bool("app-only", false, "Only run the probe.")
 
 	// Probe flags
 	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to use to authenticate with cloud.weave.works")
