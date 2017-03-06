@@ -51,13 +51,15 @@ type ContainerUpdateWatcher func(report.Node)
 
 type registry struct {
 	sync.RWMutex
-	quit            chan chan struct{}
-	interval        time.Duration
-	collectStats    bool
-	client          Client
-	pipes           controls.PipeClient
-	hostID          string
-	handlerRegistry *controls.HandlerRegistry
+	quit                   chan chan struct{}
+	interval               time.Duration
+	collectStats           bool
+	client                 Client
+	pipes                  controls.PipeClient
+	hostID                 string
+	handlerRegistry        *controls.HandlerRegistry
+	noCommandLineArguments bool
+	noEnvironmentVariables bool
 
 	watchers        []ContainerUpdateWatcher
 	containers      *radix.Tree
@@ -94,7 +96,7 @@ func newDockerClient(endpoint string) (Client, error) {
 }
 
 // NewRegistry returns a usable Registry. Don't forget to Stop it.
-func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool, hostID string, handlerRegistry *controls.HandlerRegistry, dockerEndpoint string) (Registry, error) {
+func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool, hostID string, handlerRegistry *controls.HandlerRegistry, dockerEndpoint string, noCommandLineArguments bool, noEnvironmentVariables bool) (Registry, error) {
 	client, err := NewDockerClientStub(dockerEndpoint)
 	if err != nil {
 		return nil, err
@@ -113,6 +115,8 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats
 		hostID:          hostID,
 		handlerRegistry: handlerRegistry,
 		quit:            make(chan chan struct{}),
+		noCommandLineArguments: noCommandLineArguments,
+		noEnvironmentVariables: noEnvironmentVariables,
 	}
 
 	r.registerControls()
@@ -339,7 +343,7 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 	o, ok := r.containers.Get(containerID)
 	var c Container
 	if !ok {
-		c = NewContainerStub(dockerContainer, r.hostID)
+		c = NewContainerStub(dockerContainer, r.hostID, r.noCommandLineArguments, r.noEnvironmentVariables)
 		r.containers.Insert(containerID, c)
 	} else {
 		c = o.(Container)

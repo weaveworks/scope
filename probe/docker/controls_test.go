@@ -18,7 +18,7 @@ func TestControls(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
 		hr := controls.NewDefaultHandlerRegistry()
-		registry, _ := docker.NewRegistry(10*time.Second, nil, false, "", hr, "")
+		registry, _ := docker.NewRegistry(10*time.Second, nil, false, "", hr, "", false, false)
 		defer registry.Stop()
 
 		for _, tc := range []struct{ command, result string }{
@@ -59,7 +59,7 @@ func TestPipes(t *testing.T) {
 	mdc := newMockClient()
 	setupStubs(mdc, func() {
 		hr := controls.NewDefaultHandlerRegistry()
-		registry, _ := docker.NewRegistry(10*time.Second, nil, false, "", hr, "")
+		registry, _ := docker.NewRegistry(10*time.Second, nil, false, "", hr, "", false, false)
 		defer registry.Stop()
 
 		test.Poll(t, 100*time.Millisecond, true, func() interface{} {
