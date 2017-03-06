@@ -16,6 +16,16 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
+// We merge all reports received within the specified interval, and
+// discard the orignals. Higher figures improve the performance of
+// Report(), but at the expense of lower time resolution, since time
+// is effectively advancing in quantiles.
+//
+// The current figure is identical to the default
+// probe.publishInterval, which results in performance improvements
+// as soon as there is more than one probe.
+const reportQuantisationInterval = 3 * time.Second
+
 // Reporter is something that can produce reports on demand. It's a convenient
 // interface for parts of the app, and several experimental components.
 type Reporter interface {
@@ -123,11 +133,14 @@ func (c *collector) Report(_ context.Context) (report.Report, error) {
 	}
 
 	c.clean()
+	c.quantise()
+
 	rpt := c.merger.Merge(c.reports).Upgrade()
 	c.cached = &rpt
 	return rpt, nil
 }
 
+// remove reports older than the app.window
 func (c *collector) clean() {
 	var (
 		cleanedReports    = make([]report.Report, 0, len(c.reports))
@@ -142,6 +155,36 @@ func (c *collector) clean() {
 	}
 	c.reports = cleanedReports
 	c.timestamps = cleanedTimestamps
+}
+
+// Merge reports received within the same reportQuantisationInterval.
+//
+// Quantisation is relative to the time of the first report in a given
+// interval, rather than absolute time. So, for example, with a
+// reportQuantisationInterval of 3s and reports with timestamps [0, 1,
+// 2, 5, 6, 7], the result contains merged reports with
+// timestamps/content of [0:{0,1,2}, 5:{5,6,7}].
+func (c *collector) quantise() {
+	if len(c.reports) == 0 {
+		return
+	}
+	var (
+		quantisedReports    = make([]report.Report, 0, len(c.reports))
+		quantisedTimestamps = make([]time.Time, 0, len(c.timestamps))
+	)
+	quantumStartIdx := 0
+	quantumStartTimestamp := c.timestamps[0]
+	for i, t := range c.timestamps {
+		if t.Sub(quantumStartTimestamp) < reportQuantisationInterval {
+			continue
+		}
+		quantisedReports = append(quantisedReports, c.merger.Merge(c.reports[quantumStartIdx:i]))
+		quantisedTimestamps = append(quantisedTimestamps, quantumStartTimestamp)
+		quantumStartIdx = i
+		quantumStartTimestamp = t
+	}
+	c.reports = append(quantisedReports, c.merger.Merge(c.reports[quantumStartIdx:]))
+	c.timestamps = append(quantisedTimestamps, c.timestamps[quantumStartIdx])
 }
 
 // StaticCollector always returns the given report.
