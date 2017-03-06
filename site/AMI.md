@@ -250,3 +250,9 @@ ONLY_REGION=us-east-1 AWS_ACCSS_KEY_ID=XXXX AWS_SECRET_ACCESS_KEY=YYYY  ./build-
 Read the
 [Service Discovery and Load Balancing with Weave on Amazon ECS](http://weave.works/guides/service-discovery-with-weave-aws-ecs.html)
 guide for more information about the AMIs.
+
+
+**See Also**
+
+ * [Installing Weave Scope](/site/installing.md)
+ * [Service Discovery and Load Balancing with Weave on Amazon ECS](http://weave.works/guides/service-discovery-with-weave-aws-ecs.html)

@@ -248,7 +248,7 @@ The URL is: http://localhost:4040.
 There are currently three options for launching Weave Scope in ECS:
 
 * A [CloudFormation template](https://www.weave.works/deploy-weave-aws-cloudformation-template/) to launch and easily evaluate Scope directly from your browser.
-* An [Amazon Machine Image (AMI)](AMI.md) for each ECS region.
+* An [Amazon Machine Image (AMI)](/site/AMI.md) for each ECS region.
 * [A simple way to tailor the AMIs to your needs](https://github.com/weaveworks/integrations/tree/master/aws/ecs#creating-your-own-customized-weave-ecs-ami).
 
 The AWS CloudFormation template is the easiest way to get started with Weave Net and Weave Scope. CloudFormation templates provide developers and systems administrators a simple way to create a collection or a stack of related AWS resources, and it provisions and updates them in an orderly and predictable fashion.
