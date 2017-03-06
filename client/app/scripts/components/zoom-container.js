@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { debounce, pick } from 'lodash';
+import { debounce } from 'lodash';
 import { fromJS } from 'immutable';
 
 import { event as d3Event, select } from 'd3-selection';
@@ -13,24 +13,17 @@ import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/topology';
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
-const ZOOM_CACHE_FIELDS = [
-  'zoomScale',
-  'minZoomScale',
-  'maxZoomScale',
-  'panTranslateX',
-  'panTranslateY',
-];
-
 class ZoomContainer extends React.Component {
   constructor(props, context) {
     super(props, context);
 
     this.state = {
-      zoomScale: 0,
-      minZoomScale: 0,
-      maxZoomScale: 0,
-      panTranslateX: 0,
-      panTranslateY: 0,
+      minScale: 1,
+      maxScale: 1,
+      scaleX: 1,
+      scaleY: 1,
+      translateX: 0,
+      translateY: 0,
     };
 
     this.debouncedCacheZoom = debounce(this.cacheZoom.bind(this), ZOOM_CACHE_DEBOUNCE_INTERVAL);
@@ -76,8 +69,8 @@ class ZoomContainer extends React.Component {
 
   render() {
     // Not passing transform into child components for perf reasons.
-    const { panTranslateX, panTranslateY, zoomScale } = this.state;
-    const transform = `translate(${panTranslateX}, ${panTranslateY}) scale(${zoomScale})`;
+    const { translateX, translateY, scaleX, scaleY } = this.state;
+    const transform = `translate(${translateX},${translateY}) scale(${scaleX},${scaleY})`;
 
     return (
       <g className="zoom-container" transform={transform}>
@@ -95,8 +88,7 @@ class ZoomContainer extends React.Component {
   }
 
   cacheZoom() {
-    const zoomState = pick(this.state, ZOOM_CACHE_FIELDS);
-    this.props.cacheZoomState(fromJS(zoomState));
+    this.props.cacheZoomState(fromJS(this.state));
   }
 
   restoreCachedZoom(props) {
@@ -104,10 +96,10 @@ class ZoomContainer extends React.Component {
       const zoomState = props.layoutZoom.toJS();
 
       // Restore the zooming settings
-      this.zoom = this.zoom.scaleExtent([zoomState.minZoomScale, zoomState.maxZoomScale]);
+      this.zoom = this.zoom.scaleExtent([zoomState.minScale, zoomState.maxScale]);
       this.svg.call(this.zoom.transform, zoomIdentity
-        .translate(zoomState.panTranslateX, zoomState.panTranslateY)
-        .scale(zoomState.zoomScale));
+        .translate(zoomState.translateX, zoomState.translateY)
+        .scale(zoomState.scaleX, zoomState.scaleY));
 
       // Update the state variables
       this.setState(zoomState);
@@ -117,11 +109,18 @@ class ZoomContainer extends React.Component {
 
   zoomed() {
     if (!this.props.disabled) {
-      this.setState({
-        panTranslateX: d3Event.transform.x,
-        panTranslateY: d3Event.transform.y,
-        zoomScale: d3Event.transform.k
-      });
+      if (this.props.horizontal) {
+        this.setState({
+          scaleX: d3Event.transform.k,
+          translateX: d3Event.transform.x,
+        });
+      }
+      if (this.props.vertical) {
+        this.setState({
+          scaleY: d3Event.transform.k,
+          translateY: d3Event.transform.y,
+        });
+      }
       this.debouncedCacheZoom();
     }
   }

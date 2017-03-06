@@ -2,7 +2,7 @@ import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
 import { CANVAS_MARGINS, NODE_BASE_SIZE } from '../../constants/styles';
-import { viewportWidthSelector, viewportHeightSelector } from './viewport';
+import { viewportWidthSelector, viewportHeightSelector } from '../viewport';
 import { graphNodesSelector } from './graph';
 
 
@@ -18,28 +18,28 @@ export const graphDefaultZoomSelector = createSelector(
       return makeMap();
     }
 
-    const xMin = graphNodes.minBy(n => n.get('x')).get('x');
-    const xMax = graphNodes.maxBy(n => n.get('x')).get('x');
-    const yMin = graphNodes.minBy(n => n.get('y')).get('y');
-    const yMax = graphNodes.maxBy(n => n.get('y')).get('y');
+    const xMin = graphNodes.map(n => n.get('x') - NODE_BASE_SIZE).min();
+    const yMin = graphNodes.map(n => n.get('y') - NODE_BASE_SIZE).min();
+    const xMax = graphNodes.map(n => n.get('x') + NODE_BASE_SIZE).max();
+    const yMax = graphNodes.map(n => n.get('y') + NODE_BASE_SIZE).max();
 
     const xFactor = width / (xMax - xMin);
     const yFactor = height / (yMax - yMin);
 
     // Maximal allowed zoom will always be such that a node covers 1/5 of the viewport.
-    const maxZoomScale = Math.min(width, height) / NODE_BASE_SIZE / 5;
+    const maxScale = Math.min(width, height) / NODE_BASE_SIZE / 5;
 
     // Initial zoom is such that the graph covers 90% of either the viewport,
     // or one half of maximal zoom constraint, whichever is smaller.
-    const zoomScale = Math.min(xFactor, yFactor, maxZoomScale / 2) * 0.9;
+    const scale = Math.min(xFactor, yFactor, maxScale / 2) * 0.9;
 
     // Finally, we always allow zooming out exactly 5x compared to the initial zoom.
-    const minZoomScale = zoomScale / 5;
+    const minScale = scale / 5;
 
     // This translation puts the graph in the center of the viewport, respecting the margins.
-    const panTranslateX = ((width - ((xMax + xMin) * zoomScale)) / 2) + CANVAS_MARGINS.left;
-    const panTranslateY = ((height - ((yMax + yMin) * zoomScale)) / 2) + CANVAS_MARGINS.top;
+    const translateX = ((width - ((xMax + xMin) * scale)) / 2) + CANVAS_MARGINS.left;
+    const translateY = ((height - ((yMax + yMin) * scale)) / 2) + CANVAS_MARGINS.top;
 
-    return makeMap({ zoomScale, minZoomScale, maxZoomScale, panTranslateX, panTranslateY });
+    return makeMap({ scaleX: scale, scaleY: scale, minScale, maxScale, translateX, translateY });
   }
 );

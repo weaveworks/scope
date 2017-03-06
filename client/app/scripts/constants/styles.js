@@ -73,3 +73,24 @@ export const NODE_DETAILS_TABLE_XS_LABEL = {
   // TODO: consider changing the name of this field on the BE
   container: '#',
 };
+
+// TODO: Make this variable
+export const resourcesLayers = [{
+  topologyId: 'hosts',
+  horizontalPadding: 15,
+  verticalPadding: 5,
+  frameHeight: 200,
+  withCapacity: true,
+}, {
+  topologyId: 'containers',
+  horizontalPadding: 0.5,
+  verticalPadding: 5,
+  frameHeight: 150,
+  withCapacity: false,
+}, {
+  topologyId: 'processes',
+  horizontalPadding: 0,
+  verticalPadding: 5,
+  frameHeight: 100,
+  withCapacity: false,
+}];

@@ -10,7 +10,7 @@ import {
   viewportCircularExpanseSelector,
   viewportFocusHorizontalCenterSelector,
   viewportFocusVerticalCenterSelector,
-} from './viewport';
+} from '../viewport';
 
 
 const circularOffsetAngle = Math.PI / 4;
@@ -28,10 +28,10 @@ const translationToViewportCenterSelector = createSelector(
     activeLayoutZoomSelector,
   ],
   (centerX, centerY, zoomState) => {
-    const { zoomScale, panTranslateX, panTranslateY } = zoomState.toJS();
+    const { scaleX, scaleY, translateX, translateY } = zoomState.toJS();
     return {
-      x: (-panTranslateX + centerX) / zoomScale,
-      y: (-panTranslateY + centerY) / zoomScale,
+      x: (-translateX + centerX) / scaleX,
+      y: (-translateY + centerY) / scaleY,
     };
   }
 );
@@ -75,7 +75,8 @@ const focusedNodesIdsSelector = createSelector(
 
 const circularLayoutScalarsSelector = createSelector(
   [
-    state => activeLayoutZoomSelector(state).get('zoomScale'),
+    // TODO: Fix this.
+    state => activeLayoutZoomSelector(state).get('scaleX'),
     state => focusedNodesIdsSelector(state).length - 1,
     viewportCircularExpanseSelector,
   ],

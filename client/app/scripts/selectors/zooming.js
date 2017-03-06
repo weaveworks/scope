@@ -2,7 +2,7 @@ import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
 import { graphDefaultZoomSelector } from './graph-view/default-zoom';
-// import { resourceDefaultZoomSelector } from './resource-view/default-zoom';
+import { resourcesDefaultZoomSelector } from './resource-view/default-zoom';
 import {
   activeTopologyZoomCacheKeyPathSelector,
   isResourceViewModeSelector,
@@ -25,11 +25,11 @@ export const activeLayoutZoomSelector = createSelector(
     isGraphViewModeSelector,
     isResourceViewModeSelector,
     graphDefaultZoomSelector,
+    resourcesDefaultZoomSelector,
   ],
-  (cachedZoomState, isGraphView, isResourceView, graphDefaultZoom) => {
+  (cachedZoomState, isGraphView, isResourceView, graphDefaultZoom, resourcesDefaultZoom) => {
     if (cachedZoomState) return makeMap(cachedZoomState);
-    // TODO: Modify this.
-    if (isResourceView) return graphDefaultZoom;
+    if (isResourceView) return resourcesDefaultZoom;
     if (isGraphView) return graphDefaultZoom;
     return makeMap();
   }

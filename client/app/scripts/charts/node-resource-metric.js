@@ -16,13 +16,30 @@ export default class NodeResourceMetric extends React.Component {
   render() {
     const { label, color, width, height, x, y, consumption } = this.props;
     const innerHeight = height * consumption;
-    const transform = 'scale(1,-1)';
+    const transform = `translate(${x},${y})`;
 
     return (
       <g className="node-resource-metric" transform={transform} onClick={this.handleMouseClick}>
         <title>{label}</title>
-        <rect fill={frameFill} stroke={frameStroke} x={x} y={y} width={width} height={height} />
-        <rect fill={color} x={x} y={y} width={width} height={innerHeight} />
+        <rect
+          className="wrapper"
+          fill={frameFill}
+          stroke={frameStroke}
+          strokeWidth="1"
+          vectorEffect="non-scaling-stroke"
+          height={height}
+          width={width}
+        />
+        <rect
+          className="bar"
+          fill={color}
+          stroke={frameStroke}
+          strokeWidth="1"
+          vectorEffect="non-scaling-stroke"
+          y={height - innerHeight}
+          height={innerHeight}
+          width={width}
+        />
       </g>
     );
   }
