@@ -22,7 +22,16 @@ import (
 
 func testRegistry() docker.Registry {
 	hr := controls.NewDefaultHandlerRegistry()
-	registry, _ := docker.NewRegistry(10*time.Second, nil, true, "", hr, "", false, false)
+	registry, _ := docker.NewRegistry(docker.RegistryOptions{
+		Interval:               10 * time.Second,
+		Pipes:                  nil,
+		CollectStats:           true,
+		HostID:                 "",
+		HandlerRegistry:        hr,
+		DockerEndpoint:         "",
+		NoCommandLineArguments: false,
+		NoEnvironmentVariables: false,
+	})
 	return registry
 }
 

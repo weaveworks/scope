@@ -195,7 +195,16 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 				log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
 			}
 		}
-		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID, handlerRegistry, dockerEndpoint, flags.noCommandLineArguments, flags.noEnvironmentVariables); err == nil {
+		if registry, err := docker.NewRegistry(docker.RegistryOptions{
+			Interval:               flags.dockerInterval,
+			Pipes:                  clients,
+			CollectStats:           true,
+			HostID:                 hostID,
+			HandlerRegistry:        handlerRegistry,
+			DockerEndpoint:         dockerEndpoint,
+			NoCommandLineArguments: flags.noCommandLineArguments,
+			NoEnvironmentVariables: flags.noEnvironmentVariables,
+		}); err == nil {
 			defer registry.Stop()
 			if flags.procEnabled {
 				p.AddTagger(docker.NewTagger(registry, processCache))

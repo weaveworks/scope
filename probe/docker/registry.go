@@ -95,9 +95,20 @@ func newDockerClient(endpoint string) (Client, error) {
 	return docker_client.NewClient(endpoint)
 }
 
+type RegistryOptions struct {
+	Interval               time.Duration
+	Pipes                  controls.PipeClient
+	CollectStats           bool
+	HostID                 string
+	HandlerRegistry        *controls.HandlerRegistry
+	DockerEndpoint         string
+	NoCommandLineArguments bool
+	NoEnvironmentVariables bool
+}
+
 // NewRegistry returns a usable Registry. Don't forget to Stop it.
-func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool, hostID string, handlerRegistry *controls.HandlerRegistry, dockerEndpoint string, noCommandLineArguments bool, noEnvironmentVariables bool) (Registry, error) {
-	client, err := NewDockerClientStub(dockerEndpoint)
+func NewRegistry(options RegistryOptions) (Registry, error) {
+	client, err := NewDockerClientStub(options.DockerEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -109,14 +120,14 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats
 		pipeIDToexecID:  map[string]string{},
 
 		client:          client,
-		pipes:           pipes,
-		interval:        interval,
-		collectStats:    collectStats,
-		hostID:          hostID,
-		handlerRegistry: handlerRegistry,
+		pipes:           options.Pipes,
+		interval:        options.Interval,
+		collectStats:    options.CollectStats,
+		hostID:          options.HostID,
+		handlerRegistry: options.HandlerRegistry,
 		quit:            make(chan chan struct{}),
-		noCommandLineArguments: noCommandLineArguments,
-		noEnvironmentVariables: noEnvironmentVariables,
+		noCommandLineArguments: options.NoCommandLineArguments,
+		noEnvironmentVariables: options.NoEnvironmentVariables,
 	}
 
 	r.registerControls()
