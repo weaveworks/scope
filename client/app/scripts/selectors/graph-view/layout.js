@@ -3,14 +3,14 @@ import { createSelector } from 'reselect';
 import { scaleThreshold } from 'd3-scale';
 import { fromJS, Set as makeSet, List as makeList } from 'immutable';
 
-import { NODE_BASE_SIZE } from '../constants/styles';
-import { graphNodesSelector, graphEdgesSelector } from './nodes-chart-graph';
-import { activeLayoutZoomSelector } from './nodes-chart-zoom';
+import { NODE_BASE_SIZE } from '../../constants/styles';
+import { graphNodesSelector, graphEdgesSelector } from './graph';
+import { activeLayoutZoomSelector } from '../zooming';
 import {
   viewportCircularExpanseSelector,
   viewportFocusHorizontalCenterSelector,
   viewportFocusVerticalCenterSelector,
-} from './canvas-viewport';
+} from './viewport';
 
 
 const circularOffsetAngle = Math.PI / 4;

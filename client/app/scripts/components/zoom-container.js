@@ -7,7 +7,7 @@ import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
 import { cacheZoomState } from '../actions/app-actions';
-import { activeLayoutZoomSelector } from '../selectors/nodes-chart-zoom';
+import { activeLayoutZoomSelector } from '../selectors/zooming';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/topology';
 
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';

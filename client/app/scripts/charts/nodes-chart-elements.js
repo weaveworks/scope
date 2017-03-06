@@ -8,7 +8,7 @@ import {
   selectedScaleSelector,
   layoutNodesSelector,
   layoutEdgesSelector
-} from '../selectors/nodes-chart-layout';
+} from '../selectors/graph-view/layout';
 
 
 class NodesChartElements extends React.Component {

@@ -1,6 +1,10 @@
 import { createSelector } from 'reselect';
 
-import { CANVAS_MARGINS, DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS } from '../constants/styles';
+import {
+  CANVAS_MARGINS,
+  DETAILS_PANEL_WIDTH,
+  DETAILS_PANEL_MARGINS
+} from '../../constants/styles';
 
 
 export const viewportWidthSelector = createSelector(

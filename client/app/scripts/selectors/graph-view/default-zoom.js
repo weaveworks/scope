@@ -1,14 +1,13 @@
 import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
-import { CANVAS_MARGINS, NODE_BASE_SIZE } from '../constants/styles';
-import { activeTopologyZoomCacheKeyPathSelector } from './topology';
-import { viewportWidthSelector, viewportHeightSelector } from './canvas-viewport';
-import { graphNodesSelector } from './nodes-chart-graph';
+import { CANVAS_MARGINS, NODE_BASE_SIZE } from '../../constants/styles';
+import { viewportWidthSelector, viewportHeightSelector } from './viewport';
+import { graphNodesSelector } from './graph';
 
 
-// Compute the default zoom settings for the given graph layout.
-const defaultZoomSelector = createSelector(
+// Compute the default zoom settings for the given graph.
+export const graphDefaultZoomSelector = createSelector(
   [
     graphNodesSelector,
     viewportWidthSelector,
@@ -16,7 +15,7 @@ const defaultZoomSelector = createSelector(
   ],
   (graphNodes, width, height) => {
     if (graphNodes.size === 0) {
-      return {};
+      return makeMap();
     }
 
     const xMin = graphNodes.minBy(n => n.get('x')).get('x');
@@ -41,24 +40,6 @@ const defaultZoomSelector = createSelector(
     const panTranslateX = ((width - ((xMax + xMin) * zoomScale)) / 2) + CANVAS_MARGINS.left;
     const panTranslateY = ((height - ((yMax + yMin) * zoomScale)) / 2) + CANVAS_MARGINS.top;
 
-    return { zoomScale, minZoomScale, maxZoomScale, panTranslateX, panTranslateY };
+    return makeMap({ zoomScale, minZoomScale, maxZoomScale, panTranslateX, panTranslateY });
   }
-);
-
-const activeLayoutCachedZoomSelector = createSelector(
-  [
-    state => state.get('zoomCache'),
-    activeTopologyZoomCacheKeyPathSelector,
-  ],
-  (zoomCache, keyPath) => zoomCache.getIn(keyPath.slice(1))
-);
-
-// Use the cache to get the last zoom state for the selected topology,
-// otherwise use the default zoom options computed from the graph layout.
-export const activeLayoutZoomSelector = createSelector(
-  [
-    activeLayoutCachedZoomSelector,
-    defaultZoomSelector,
-  ],
-  (cachedZoomState, defaultZoomState) => makeMap(cachedZoomState || defaultZoomState)
 );
