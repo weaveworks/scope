@@ -75,13 +75,13 @@ This example assumes a local cluster that is not networked with Weave Net, and a
 
 Suppose you have the following nodes in a cluster:
 
- 192.168.100.16
- 192.168.100.17
- 192.168.100.18
- 192.168.100.19
- 192.168.100.20
+    192.168.100.16
+    192.168.100.17
+    192.168.100.18
+    192.168.100.19
+    192.168.100.20
 
- Using the above IP addresses, you will manually peer each node with all of the other nodes during Scope launch:
+Using the above IP addresses, you will manually peer each node with all of the other nodes during Scope launch:
 
 **1. To begin run the following on each node:**
 
