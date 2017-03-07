@@ -11,7 +11,6 @@ import {
   activeTopologyZoomCacheKeyPathSelector,
 } from '../selectors/topology';
 import { applyPinnedSearches } from '../utils/search-utils';
-import { getNetworkNodes } from '../utils/network-view-utils';
 import {
   findTopologyById,
   getAdjacentNodes,
@@ -51,7 +50,6 @@ export const initialState = makeMap({
   initialNodesLoaded: false,
   mouseOverEdgeId: null,
   mouseOverNodeId: null,
-  networkNodes: makeMap(),
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
   nodesLoaded: false,
@@ -601,7 +599,6 @@ export function rootReducer(state = initialState, action) {
 
       // apply pinned searches, filters nodes that dont match
       state = applyPinnedSearches(state);
-      state = state.set('networkNodes', getNetworkNodes(state));
 
       state = state.set('availableCanvasMetrics', state.get('nodes')
         .valueSeq()

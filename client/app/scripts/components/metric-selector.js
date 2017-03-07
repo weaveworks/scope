@@ -5,9 +5,9 @@ import { selectMetric } from '../actions/app-actions';
 import MetricSelectorItem from './metric-selector-item';
 
 class MetricSelector extends React.Component {
-
   constructor(props, context) {
     super(props, context);
+
     this.onMouseOut = this.onMouseOut.bind(this);
   }
 
@@ -16,16 +16,12 @@ class MetricSelector extends React.Component {
   }
 
   render() {
-    const {availableCanvasMetrics} = this.props;
-
-    const items = availableCanvasMetrics.map(metric => (
-      <MetricSelectorItem key={metric.get('id')} metric={metric} />
-    ));
-
     return (
       <div className="metric-selector">
         <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
-          {items}
+          {this.props.availableCanvasMetrics.map(metric => (
+            <MetricSelectorItem key={metric.get('id')} metric={metric} />
+          ))}
         </div>
       </div>
     );

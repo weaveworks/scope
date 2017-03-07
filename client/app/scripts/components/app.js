@@ -21,8 +21,13 @@ import MetricSelector from './metric-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
 import { getRouter, getUrlState } from '../utils/router-utils';
-import { activeTopologyOptionsSelector, isTableViewModeSelector } from '../selectors/topology';
 import { availableNetworksSelector } from '../selectors/node-networks';
+import {
+  activeTopologyOptionsSelector,
+  isTableViewModeSelector,
+  isGraphViewModeSelector,
+} from '../selectors/topology';
+
 
 const BACKSPACE_KEY_CODE = 8;
 const ENTER_KEY_CODE = 13;
@@ -102,7 +107,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { isTableViewMode, showingDetails, showingHelp, showingMetricsSelector,
+    const { isTableViewMode, isGraphViewMode, showingDetails, showingHelp, showingMetricsSelector,
       showingNetworkSelector, showingTroubleshootingMenu } = this.props;
     const isIframe = window !== window.top;
 
@@ -132,7 +137,7 @@ class App extends React.Component {
 
         <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
           {showingMetricsSelector && !isTableViewMode && <MetricSelector />}
-          {showingNetworkSelector && isTableViewMode && <NetworkSelector />}
+          {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
           <Status />
           <TopologyOptions />
         </Sidebar>
@@ -148,6 +153,7 @@ function mapStateToProps(state) {
   return {
     activeTopologyOptions: activeTopologyOptionsSelector(state),
     isTableViewMode: isTableViewModeSelector(state),
+    isGraphViewMode: isGraphViewModeSelector(state),
     routeSet: state.get('routeSet'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
