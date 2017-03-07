@@ -35,7 +35,7 @@ func TestReporter(t *testing.T) {
 	mtime.NowForce(now)
 	defer mtime.NowReset()
 
-	rpt, err := process.NewReporter(walker, "", getDeltaTotalJiffies, false).Report()
+	rpt, err := process.NewReporter(walker, "", getDeltaTotalJiffies).Report()
 	if err != nil {
 		t.Error(err)
 	}
@@ -96,18 +96,5 @@ func TestReporter(t *testing.T) {
 	}
 	if cmdline, ok := node.Latest.Lookup(process.Cmdline); !ok || cmdline != fmt.Sprint(processes[4].Cmdline) {
 		t.Errorf("Expected %q got %q", processes[4].Cmdline, cmdline)
-	}
-
-	// It doesn't report Cmdline args when asked not to
-	rpt, err = process.NewReporter(walker, "", getDeltaTotalJiffies, true).Report()
-	if err != nil {
-		t.Error(err)
-	}
-	node, ok = rpt.Process.Nodes[report.MakeProcessNodeID("", "4")]
-	if !ok {
-		t.Errorf("Expected report to include the pid 4 ping")
-	}
-	if cmdline, ok := node.Latest.Lookup(process.Cmdline); !ok || cmdline != fmt.Sprint("ping") {
-		t.Errorf("Expected %q got %q", "ping", cmdline)
 	}
 }
