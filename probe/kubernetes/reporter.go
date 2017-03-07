@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"fmt"
 	"strings"
 
 	"k8s.io/kubernetes/pkg/labels"
@@ -98,10 +99,11 @@ type Reporter struct {
 	probe           *probe.Probe
 	hostID          string
 	handlerRegistry *controls.HandlerRegistry
+	kubeletPort     uint
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe, handlerRegistry *controls.HandlerRegistry) *Reporter {
+func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe, handlerRegistry *controls.HandlerRegistry, kubeletPort uint) *Reporter {
 	reporter := &Reporter{
 		client:          client,
 		pipes:           pipes,
@@ -109,6 +111,7 @@ func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostI
 		probe:           probe,
 		hostID:          hostID,
 		handlerRegistry: handlerRegistry,
+		kubeletPort:     kubeletPort,
 	}
 	reporter.registerControls()
 	client.WatchPods(reporter.podEvent)
@@ -377,13 +380,13 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (re
 	// 1. reconstructing the NodeName requires cloud provider credentials
 	// 2. inferring the NodeName out of the hostname or system uuid is unreliable
 	//    (uuids and hostnames can be duplicated across the cluster).
-	localPodUIDs, errUIDs := GetLocalPodUIDs()
+	localPodUIDs, errUIDs := GetLocalPodUIDs(fmt.Sprintf("localhost:%d", r.kubeletPort))
 	if errUIDs != nil {
 		log.Warnf("Cannot obtain local pods, reporting all (which may impact performance): %v", errUIDs)
 	}
 	err := r.client.WalkPods(func(p Pod) error {
 		// filter out non-local pods
-		if errUIDs != nil {
+		if errUIDs == nil {
 			if _, ok := localPodUIDs[p.UID()]; !ok {
 				return nil
 			}

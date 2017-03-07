@@ -207,9 +207,9 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	}
 
 	if flags.kubernetesEnabled {
-		if client, err := kubernetes.NewClient(flags.kubernetesConfig); err == nil {
+		if client, err := kubernetes.NewClient(flags.kubernetesClientConfig); err == nil {
 			defer client.Stop()
-			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry)
+			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry, flags.kubernetesKubeletPort)
 			defer reporter.Stop()
 			p.AddReporter(reporter)
 			p.AddTagger(reporter)

@@ -103,8 +103,9 @@ type probeFlags struct {
 	dockerInterval time.Duration
 	dockerBridge   string
 
-	kubernetesEnabled bool
-	kubernetesConfig  kubernetes.ClientConfig
+	kubernetesEnabled      bool
+	kubernetesClientConfig kubernetes.ClientConfig
+	kubernetesKubeletPort  uint
 
 	ecsEnabled     bool
 	ecsCacheSize   int
@@ -286,20 +287,21 @@ func main() {
 
 	// K8s
 	flag.BoolVar(&flags.probe.kubernetesEnabled, "probe.kubernetes", false, "collect kubernetes-related attributes for containers, should only be enabled on the master node")
-	flag.DurationVar(&flags.probe.kubernetesConfig.Interval, "probe.kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
-	flag.StringVar(&flags.probe.kubernetesConfig.Server, "probe.kubernetes.api", "", "The address and port of the Kubernetes API server (deprecated in favor of equivalent probe.kubernetes.server)")
-	flag.StringVar(&flags.probe.kubernetesConfig.CertificateAuthority, "probe.kubernetes.certificate-authority", "", "Path to a cert. file for the certificate authority")
-	flag.StringVar(&flags.probe.kubernetesConfig.ClientCertificate, "probe.kubernetes.client-certificate", "", "Path to a client certificate file for TLS")
-	flag.StringVar(&flags.probe.kubernetesConfig.ClientKey, "probe.kubernetes.client-key", "", "Path to a client key file for TLS")
-	flag.StringVar(&flags.probe.kubernetesConfig.Cluster, "probe.kubernetes.cluster", "", "The name of the kubeconfig cluster to use")
-	flag.StringVar(&flags.probe.kubernetesConfig.Context, "probe.kubernetes.context", "", "The name of the kubeconfig context to use")
-	flag.BoolVar(&flags.probe.kubernetesConfig.Insecure, "probe.kubernetes.insecure-skip-tls-verify", false, "If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure")
-	flag.StringVar(&flags.probe.kubernetesConfig.Kubeconfig, "probe.kubernetes.kubeconfig", "", "Path to the kubeconfig file to use")
-	flag.StringVar(&flags.probe.kubernetesConfig.Password, kubernetesPasswordFlag, "", "Password for basic authentication to the API server")
-	flag.StringVar(&flags.probe.kubernetesConfig.Server, "probe.kubernetes.server", "", "The address and port of the Kubernetes API server")
-	flag.StringVar(&flags.probe.kubernetesConfig.Token, kubernetesTokenFlag, "", "Bearer token for authentication to the API server")
-	flag.StringVar(&flags.probe.kubernetesConfig.User, "probe.kubernetes.user", "", "The name of the kubeconfig user to use")
-	flag.StringVar(&flags.probe.kubernetesConfig.Username, "probe.kubernetes.username", "", "Username for basic authentication to the API server")
+	flag.DurationVar(&flags.probe.kubernetesClientConfig.Interval, "probe.kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.Server, "probe.kubernetes.api", "", "The address and port of the Kubernetes API server (deprecated in favor of equivalent probe.kubernetes.server)")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.CertificateAuthority, "probe.kubernetes.certificate-authority", "", "Path to a cert. file for the certificate authority")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.ClientCertificate, "probe.kubernetes.client-certificate", "", "Path to a client certificate file for TLS")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.ClientKey, "probe.kubernetes.client-key", "", "Path to a client key file for TLS")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.Cluster, "probe.kubernetes.cluster", "", "The name of the kubeconfig cluster to use")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.Context, "probe.kubernetes.context", "", "The name of the kubeconfig context to use")
+	flag.BoolVar(&flags.probe.kubernetesClientConfig.Insecure, "probe.kubernetes.insecure-skip-tls-verify", false, "If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.Kubeconfig, "probe.kubernetes.kubeconfig", "", "Path to the kubeconfig file to use")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.Password, kubernetesPasswordFlag, "", "Password for basic authentication to the API server")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.Server, "probe.kubernetes.server", "", "The address and port of the Kubernetes API server")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.Token, kubernetesTokenFlag, "", "Bearer token for authentication to the API server")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.User, "probe.kubernetes.user", "", "The name of the kubeconfig user to use")
+	flag.StringVar(&flags.probe.kubernetesClientConfig.Username, "probe.kubernetes.username", "", "Username for basic authentication to the API server")
+	flag.UintVar(&flags.probe.kubernetesKubeletPort, "probe.kubernetes.kubelet-port", 10255, "Node-local TCP port for contacting kubelet")
 
 	// AWS ECS
 	flag.BoolVar(&flags.probe.ecsEnabled, "probe.ecs", false, "Collect ecs-related attributes for containers on this node")

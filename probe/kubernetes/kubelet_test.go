@@ -30,11 +30,8 @@ func TestGetLocalPodUIDs(t *testing.T) {
 		},
 	))
 	defer server.Close()
-	var savedKubeletURL string
-	savedKubeletURL, kubernetes.KubeletURL = kubernetes.KubeletURL, server.URL
-	defer func() { kubernetes.KubeletURL = savedKubeletURL }()
 
-	uids, err := kubernetes.GetLocalPodUIDs()
+	uids, err := kubernetes.GetLocalPodUIDs(server.URL.Host)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
