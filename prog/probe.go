@@ -163,7 +163,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot))
 		scanner = procspy.NewConnectionScanner(processCache)
 		p.AddTicker(processCache)
-		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies))
+		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies, flags.noCommandLineArguments))
 	}
 
 	dnsSnooper, err := endpoint.NewDNSSnooper()
@@ -195,7 +195,17 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 				log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
 			}
 		}
-		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID, handlerRegistry, dockerEndpoint); err == nil {
+		options := docker.RegistryOptions{
+			Interval:               flags.dockerInterval,
+			Pipes:                  clients,
+			CollectStats:           true,
+			HostID:                 hostID,
+			HandlerRegistry:        handlerRegistry,
+			DockerEndpoint:         dockerEndpoint,
+			NoCommandLineArguments: flags.noCommandLineArguments,
+			NoEnvironmentVariables: flags.noEnvironmentVariables,
+		}
+		if registry, err := docker.NewRegistry(options); err == nil {
 			defer registry.Stop()
 			if flags.procEnabled {
 				p.AddTagger(docker.NewTagger(registry, processCache))
