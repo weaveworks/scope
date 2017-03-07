@@ -19,14 +19,8 @@ func TestControls(t *testing.T) {
 	setupStubs(mdc, func() {
 		hr := controls.NewDefaultHandlerRegistry()
 		registry, _ := docker.NewRegistry(docker.RegistryOptions{
-			Interval:               10 * time.Second,
-			Pipes:                  nil,
-			CollectStats:           false,
-			HostID:                 "",
-			HandlerRegistry:        hr,
-			DockerEndpoint:         "",
-			NoCommandLineArguments: false,
-			NoEnvironmentVariables: false,
+			Interval:        10 * time.Second,
+			HandlerRegistry: hr,
 		})
 		defer registry.Stop()
 
@@ -69,14 +63,8 @@ func TestPipes(t *testing.T) {
 	setupStubs(mdc, func() {
 		hr := controls.NewDefaultHandlerRegistry()
 		registry, _ := docker.NewRegistry(docker.RegistryOptions{
-			Interval:               10 * time.Second,
-			Pipes:                  nil,
-			CollectStats:           false,
-			HostID:                 "",
-			HandlerRegistry:        hr,
-			DockerEndpoint:         "",
-			NoCommandLineArguments: false,
-			NoEnvironmentVariables: false,
+			Interval:        10 * time.Second,
+			HandlerRegistry: hr,
 		})
 		defer registry.Stop()
 
