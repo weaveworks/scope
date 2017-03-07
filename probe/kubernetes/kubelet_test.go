@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/kubernetes"
@@ -31,7 +32,8 @@ func TestGetLocalPodUIDs(t *testing.T) {
 	))
 	defer server.Close()
 
-	uids, err := kubernetes.GetLocalPodUIDs(server.URL.Host)
+	serverURL, _ := url.Parse(server.URL)
+	uids, err := kubernetes.GetLocalPodUIDs(serverURL.Host)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

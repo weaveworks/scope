@@ -182,7 +182,7 @@ func (c mockPipeClient) PipeClose(appID, id string) error {
 func TestReporter(t *testing.T) {
 	oldGetNodeName := kubernetes.GetLocalPodUIDs
 	defer func() { kubernetes.GetLocalPodUIDs = oldGetNodeName }()
-	kubernetes.GetLocalPodUIDs = func() (map[string]struct{}, error) {
+	kubernetes.GetLocalPodUIDs = func(string) (map[string]struct{}, error) {
 		uids := map[string]struct{}{
 			pod1UID: {},
 			pod2UID: {},
@@ -194,7 +194,7 @@ func TestReporter(t *testing.T) {
 	pod2ID := report.MakePodNodeID(pod2UID)
 	serviceID := report.MakeServiceNodeID(serviceUID)
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", "foo", nil, hr).Report()
+	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", "foo", nil, hr, 0).Report()
 
 	// Reporter should have added the following pods
 	for _, pod := range []struct {
@@ -255,7 +255,7 @@ func TestTagger(t *testing.T) {
 	}))
 
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil, hr).Tag(rpt)
+	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil, hr, 0).Tag(rpt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -277,14 +277,14 @@ func (c *callbackReadCloser) Close() error { return c.close() }
 func TestReporterGetLogs(t *testing.T) {
 	oldGetNodeName := kubernetes.GetLocalPodUIDs
 	defer func() { kubernetes.GetLocalPodUIDs = oldGetNodeName }()
-	kubernetes.GetLocalPodUIDs = func() (map[string]struct{}, error) {
+	kubernetes.GetLocalPodUIDs = func(string) (map[string]struct{}, error) {
 		return map[string]struct{}{}, nil
 	}
 
 	client := newMockClient()
 	pipes := mockPipeClient{}
 	hr := controls.NewDefaultHandlerRegistry()
-	reporter := kubernetes.NewReporter(client, pipes, "", "", nil, hr)
+	reporter := kubernetes.NewReporter(client, pipes, "", "", nil, hr, 0)
 
 	// Should error on invalid IDs
 	{
