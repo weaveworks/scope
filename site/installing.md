@@ -243,11 +243,12 @@ To download and read the Scope manifest run:
 
 The URL is: http://localhost:4040.
 
+<!-- uncomment once https://github.com/weaveworks/scope/issues/2258 is fixed
 ##<a name="ose"></a>Installing Scope on OpenShift
 
-To install Weave Scope on OpenShift, you first need to login as `admin` user with the following command:
+To install Weave Scope on OpenShift, you first need to login as `system:admin` user with the following command:
 
-    oc login -u admin
+    oc login -u system:admin
 
 Next, create a dedicated project for Weave Scope then apply policy permissions that allow Weave Scope to access Kubernetes API:
 
@@ -267,6 +268,7 @@ And if you are to deploy Scope in standalone mode run:
     oc apply -f 'https://cloud.weave.works/k8s/scope.yaml'
 
 To access standalone Scope app from the browser, please refer to Kubernetes instructions above.
+-->
 
 ##<a name="ecs"></a>Installing Scope on Amazon ECS
 
