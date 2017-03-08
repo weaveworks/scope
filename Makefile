@@ -24,13 +24,24 @@ RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
 GO_ENV=GOGC=off
-GO=env $(GO_ENV) go
-NO_CROSS_COMP=unset GOOS GOARCH
-GO_HOST=$(NO_CROSS_COMP); $(GO)
-WITH_GO_HOST_ENV=$(NO_CROSS_COMP); $(GO_ENV)
 GO_BUILD_INSTALL_DEPS=-i
 GO_BUILD_TAGS='netgo unsafe'
 GO_BUILD_FLAGS=$(GO_BUILD_INSTALL_DEPS) -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION) -s -w" -tags $(GO_BUILD_TAGS)
+GOOS=$(shell go tool dist env | grep GOOS | sed -e 's/GOOS="\(.*\)"/\1/')
+
+ifeq ($(GOOS),linux)
+GO_ENV+=CGO_ENABLED=1
+endif
+
+ifeq ($(GOARCH),arm)
+ARM_CC=CC=/usr/bin/arm-linux-gnueabihf-gcc
+endif
+
+GO=env $(GO_ENV) $(ARM_CC) go
+
+NO_CROSS_COMP=unset GOOS GOARCH
+GO_HOST=$(NO_CROSS_COMP); env $(GO_ENV) go
+WITH_GO_HOST_ENV=$(NO_CROSS_COMP); $(GO_ENV)
 IMAGE_TAG=$(shell ./tools/image-tag)
 
 all: $(SCOPE_EXPORT)

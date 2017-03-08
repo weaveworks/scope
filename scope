@@ -170,6 +170,7 @@ launch_command() {
     echo docker run --privileged $USERNS_HOST -d --name="$SCOPE_CONTAINER_NAME" --net=host --pid=host \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v /var/run/scope/plugins:/var/run/scope/plugins \
+        -v /sys/kernel/debug:/sys/kernel/debug \
         -e CHECKPOINT_DISABLE \
         $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" --probe.docker=true
 }

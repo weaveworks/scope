@@ -82,6 +82,18 @@ func ColorConnected(r Renderer) Renderer {
 // FilterFunc is the function type used by Filters
 type FilterFunc func(report.Node) bool
 
+// AnyFilterFunc checks if any of the filterfuncs matches.
+func AnyFilterFunc(fs ...FilterFunc) FilterFunc {
+	return func(n report.Node) bool {
+		for _, f := range fs {
+			if f(n) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
 // ComposeFilterFuncs composes filterfuncs into a single FilterFunc checking all.
 func ComposeFilterFuncs(fs ...FilterFunc) FilterFunc {
 	return func(n report.Node) bool {
@@ -224,15 +236,30 @@ func IsRunning(n report.Node) bool {
 // IsStopped checks if the node is *not* a running docker container
 var IsStopped = Complement(IsRunning)
 
+func nonProcspiedFilter(node report.Node) bool {
+	_, ok := node.Latest.Lookup(endpoint.Procspied)
+	return ok
+}
+
+func nonEBPFFilter(node report.Node) bool {
+	_, ok := node.Latest.Lookup(endpoint.EBPF)
+	return ok
+}
+
 // FilterNonProcspied removes endpoints which were not found in procspy.
 func FilterNonProcspied(r Renderer) Renderer {
-	return MakeFilter(
-		func(node report.Node) bool {
-			_, ok := node.Latest.Lookup(endpoint.Procspied)
-			return ok
-		},
-		r,
-	)
+	return MakeFilter(nonProcspiedFilter, r)
+}
+
+// FilterNonEBPF removes endpoints which were not found via eBPF.
+func FilterNonEBPF(r Renderer) Renderer {
+	return MakeFilter(nonEBPFFilter, r)
+}
+
+// FilterNonProcspiedNorEBPF removes endpoints which were not found in procspy
+// nor via eBPF.
+func FilterNonProcspiedNorEBPF(r Renderer) Renderer {
+	return MakeFilter(AnyFilterFunc(nonProcspiedFilter, nonEBPFFilter), r)
 }
 
 // IsApplication checks if the node is an "application" node
