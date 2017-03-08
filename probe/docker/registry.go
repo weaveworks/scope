@@ -51,13 +51,15 @@ type ContainerUpdateWatcher func(report.Node)
 
 type registry struct {
 	sync.RWMutex
-	quit            chan chan struct{}
-	interval        time.Duration
-	collectStats    bool
-	client          Client
-	pipes           controls.PipeClient
-	hostID          string
-	handlerRegistry *controls.HandlerRegistry
+	quit                   chan chan struct{}
+	interval               time.Duration
+	collectStats           bool
+	client                 Client
+	pipes                  controls.PipeClient
+	hostID                 string
+	handlerRegistry        *controls.HandlerRegistry
+	noCommandLineArguments bool
+	noEnvironmentVariables bool
 
 	watchers        []ContainerUpdateWatcher
 	containers      *radix.Tree
@@ -93,9 +95,20 @@ func newDockerClient(endpoint string) (Client, error) {
 	return docker_client.NewClient(endpoint)
 }
 
+type RegistryOptions struct {
+	Interval               time.Duration
+	Pipes                  controls.PipeClient
+	CollectStats           bool
+	HostID                 string
+	HandlerRegistry        *controls.HandlerRegistry
+	DockerEndpoint         string
+	NoCommandLineArguments bool
+	NoEnvironmentVariables bool
+}
+
 // NewRegistry returns a usable Registry. Don't forget to Stop it.
-func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool, hostID string, handlerRegistry *controls.HandlerRegistry, dockerEndpoint string) (Registry, error) {
-	client, err := NewDockerClientStub(dockerEndpoint)
+func NewRegistry(options RegistryOptions) (Registry, error) {
+	client, err := NewDockerClientStub(options.DockerEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -107,12 +120,14 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats
 		pipeIDToexecID:  map[string]string{},
 
 		client:          client,
-		pipes:           pipes,
-		interval:        interval,
-		collectStats:    collectStats,
-		hostID:          hostID,
-		handlerRegistry: handlerRegistry,
+		pipes:           options.Pipes,
+		interval:        options.Interval,
+		collectStats:    options.CollectStats,
+		hostID:          options.HostID,
+		handlerRegistry: options.HandlerRegistry,
 		quit:            make(chan chan struct{}),
+		noCommandLineArguments: options.NoCommandLineArguments,
+		noEnvironmentVariables: options.NoEnvironmentVariables,
 	}
 
 	r.registerControls()
@@ -339,7 +354,7 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 	o, ok := r.containers.Get(containerID)
 	var c Container
 	if !ok {
-		c = NewContainerStub(dockerContainer, r.hostID)
+		c = NewContainerStub(dockerContainer, r.hostID, r.noCommandLineArguments, r.noEnvironmentVariables)
 		r.containers.Insert(containerID, c)
 	} else {
 		c = o.(Container)

@@ -22,7 +22,11 @@ import (
 
 func testRegistry() docker.Registry {
 	hr := controls.NewDefaultHandlerRegistry()
-	registry, _ := docker.NewRegistry(10*time.Second, nil, true, "", hr, "")
+	registry, _ := docker.NewRegistry(docker.RegistryOptions{
+		Interval:        10 * time.Second,
+		CollectStats:    true,
+		HandlerRegistry: hr,
+	})
 	return registry
 }
 
@@ -203,6 +207,10 @@ var (
 		ID:    "ping",
 		Name:  "pong",
 		Image: "baz",
+		Path:  "ping",
+		Args: []string{
+			"foo.bar.local",
+		},
 		State: client.State{
 			Pid:       2,
 			Running:   true,
@@ -226,6 +234,9 @@ var (
 			},
 		},
 		Config: &client.Config{
+			Env: []string{
+				"FOO=secret-bar",
+			},
 			Labels: map[string]string{
 				"foo1": "bar1",
 				"foo2": "bar2",
@@ -294,7 +305,7 @@ func setupStubs(mdc *mockDockerClient, f func()) {
 		return mdc, nil
 	}
 
-	docker.NewContainerStub = func(c *client.Container, _ string) docker.Container {
+	docker.NewContainerStub = func(c *client.Container, _ string, _ bool, _ bool) docker.Container {
 		return &mockContainer{c}
 	}
 
