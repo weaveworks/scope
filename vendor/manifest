@@ -1017,6 +1017,15 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/iovisor/gobpf/elf",
+			"repository": "https://github.com/iovisor/gobpf",
+			"vcs": "git",
+			"revision": "21a9e281bf73650b9245d4ebcf111716338ae652",
+			"branch": "master",
+			"path": "/elf",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/jmespath/go-jmespath",
 			"repository": "https://github.com/jmespath/go-jmespath",
 			"vcs": "",
