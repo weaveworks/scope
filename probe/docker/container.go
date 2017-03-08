@@ -98,20 +98,24 @@ type Container interface {
 
 type container struct {
 	sync.RWMutex
-	container    *docker.Container
-	stopStats    chan<- bool
-	latestStats  docker.Stats
-	pendingStats [60]docker.Stats
-	numPending   int
-	hostID       string
-	baseNode     report.Node
+	container              *docker.Container
+	stopStats              chan<- bool
+	latestStats            docker.Stats
+	pendingStats           [60]docker.Stats
+	numPending             int
+	hostID                 string
+	baseNode               report.Node
+	noCommandLineArguments bool
+	noEnvironmentVariables bool
 }
 
 // NewContainer creates a new Container
-func NewContainer(c *docker.Container, hostID string) Container {
+func NewContainer(c *docker.Container, hostID string, noCommandLineArguments bool, noEnvironmentVariables bool) Container {
 	result := &container{
-		container: c,
-		hostID:    hostID,
+		container:              c,
+		hostID:                 hostID,
+		noCommandLineArguments: noCommandLineArguments,
+		noEnvironmentVariables: noEnvironmentVariables,
 	}
 	result.baseNode = result.getBaseNode()
 	return result
@@ -369,18 +373,28 @@ func (c *container) env() map[string]string {
 	return result
 }
 
+func (c *container) getSanitizedCommand() string {
+	result := c.container.Path
+	if !c.noCommandLineArguments {
+		result = result + " " + strings.Join(c.container.Args, " ")
+	}
+	return result
+}
+
 func (c *container) getBaseNode() report.Node {
 	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{
 		ContainerID:       c.ID(),
 		ContainerCreated:  c.container.Created.Format(time.RFC3339Nano),
-		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
+		ContainerCommand:  c.getSanitizedCommand(),
 		ImageID:           c.Image(),
 		ContainerHostname: c.Hostname(),
 	}).WithParents(report.EmptySets.
 		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
 	)
 	result = result.AddPrefixPropertyList(LabelPrefix, c.container.Config.Labels)
-	result = result.AddPrefixPropertyList(EnvPrefix, c.env())
+	if !c.noEnvironmentVariables {
+		result = result.AddPrefixPropertyList(EnvPrefix, c.env())
+	}
 	return result
 }
 
