@@ -19,7 +19,7 @@ export default class NodeResourceMetric extends React.Component {
     const transform = `translate(${x},${y})`;
 
     return (
-      <g className="node-resource-metric" transform={transform} onClick={this.handleMouseClick}>
+      <g className="node-resource-metric" onClick={this.handleMouseClick} transform={transform}>
         <title>{label}</title>
         <rect
           className="wrapper"

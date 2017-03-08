@@ -83,7 +83,7 @@ export const resourcesLayers = [{
   withCapacity: true,
 }, {
   topologyId: 'containers',
-  horizontalPadding: 0.5,
+  horizontalPadding: 0,
   verticalPadding: 5,
   frameHeight: 150,
   withCapacity: false,

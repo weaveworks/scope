@@ -2,9 +2,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import Logo from '../components/logo';
-import ZoomContainer from '../components/zoom-container';
 import ResourceView from './resource-view';
 import NodesChartElements from './nodes-chart-elements';
+import CachableZoomWrapper from '../components/cachable-zoom-wrapper';
 import { clickBackground } from '../actions/app-actions';
 import { isGraphViewModeSelector } from '../selectors/topology';
 
@@ -45,9 +45,9 @@ class NodesChart extends React.Component {
           <g transform="translate(24,24) scale(0.25)">
             <Logo />
           </g>
-          <ZoomContainer horizontal vertical={isGraphViewMode} disabled={selectedNodeId}>
+          <CachableZoomWrapper fixVertical={!isGraphViewMode} disabled={selectedNodeId}>
             {isGraphViewMode ? <NodesChartElements /> : <ResourceView />}
-          </ZoomContainer>
+          </CachableZoomWrapper>
         </svg>
       </div>
     );

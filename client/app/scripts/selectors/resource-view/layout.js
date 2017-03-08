@@ -51,9 +51,11 @@ export const layoutNodesSelector = createSelector(
         const nodeY = y;
         const nodeX = childrenXOffset[parentId];
         // NOTE: We don't handle uncontained yet.
-        if (parentId === basePseudoId && layerIndex > 0) {
-          return;
-        }
+        if (parentId === basePseudoId && layerIndex > 0) return;
+
+        // console.log(nodeX, parentId);
+        // TODO: Remove.
+        if (nodeX === undefined) return;
 
         childrenXOffset[parentId] += shiftX;
         childrenXOffset[nodeId] = nodeX;

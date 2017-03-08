@@ -721,6 +721,10 @@ export function route(urlState) {
       state.get('nodeDetails'),
       dispatch
     );
+    // TODO: Remove this
+    setTimeout(() => {
+      getAllNodes(getState, dispatch);
+    }, 1200);
   };
 }
 

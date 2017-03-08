@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { debounce } from 'lodash';
+import { debounce, pick } from 'lodash';
 import { fromJS } from 'immutable';
 
 import { event as d3Event, select } from 'd3-selection';
@@ -13,7 +13,7 @@ import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/topology';
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
-class ZoomContainer extends React.Component {
+class CachableZoomWrapper extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -87,8 +87,19 @@ class ZoomContainer extends React.Component {
     }
   }
 
+  cachableState(state = this.state) {
+    let cachableFields = ['minScale', 'maxScale'];
+    if (!this.props.fixHorizontal) {
+      cachableFields = cachableFields.concat(['scaleX', 'translateX']);
+    }
+    if (!this.props.fixVertical) {
+      cachableFields = cachableFields.concat(['scaleY', 'translateY']);
+    }
+    return pick(state, cachableFields);
+  }
+
   cacheZoom() {
-    this.props.cacheZoomState(fromJS(this.state));
+    this.props.cacheZoomState(fromJS(this.cachableState()));
   }
 
   restoreCachedZoom(props) {
@@ -109,18 +120,14 @@ class ZoomContainer extends React.Component {
 
   zoomed() {
     if (!this.props.disabled) {
-      if (this.props.horizontal) {
-        this.setState({
-          scaleX: d3Event.transform.k,
-          translateX: d3Event.transform.x,
-        });
-      }
-      if (this.props.vertical) {
-        this.setState({
-          scaleY: d3Event.transform.k,
-          translateY: d3Event.transform.y,
-        });
-      }
+      const updatedState = {
+        scaleX: d3Event.transform.k,
+        scaleY: d3Event.transform.k,
+        translateX: d3Event.transform.x,
+        translateY: d3Event.transform.y,
+      };
+
+      this.setState(this.cachableState(updatedState));
       this.debouncedCacheZoom();
     }
   }
@@ -139,4 +146,4 @@ function mapStateToProps(state) {
 export default connect(
   mapStateToProps,
   { cacheZoomState }
-)(ZoomContainer);
+)(CachableZoomWrapper);
