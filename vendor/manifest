@@ -1451,6 +1451,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/weaveworks/tcptracer-bpf",
+			"repository": "https://github.com/weaveworks/tcptracer-bpf",
+			"vcs": "git",
+			"revision": "9065e4672b606b5f8d2f2d664938641fa0ee0d0f",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/weaveworks/weave/common",
 			"repository": "https://github.com/weaveworks/weave",
 			"vcs": "",
