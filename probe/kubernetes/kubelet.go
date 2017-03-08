@@ -1,13 +1,11 @@
 package kubernetes
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ugorji/go/codec"
 )
-
-// KubeletURL is just exported for testing
-var KubeletURL = "http://localhost:10255"
 
 // Intentionally not using the full kubernetes library DS
 // to make parsing faster and more tolerant to schema changes
@@ -20,8 +18,9 @@ type podList struct {
 }
 
 // GetLocalPodUIDs obtains the UID of the pods run locally (it's just exported for testing)
-var GetLocalPodUIDs = func() (map[string]struct{}, error) {
-	resp, err := http.Get(KubeletURL + "/pods/")
+var GetLocalPodUIDs = func(kubeletHost string) (map[string]struct{}, error) {
+	url := fmt.Sprintf("http://%s/pods/", kubeletHost)
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
