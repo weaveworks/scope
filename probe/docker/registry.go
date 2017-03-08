@@ -95,6 +95,7 @@ func newDockerClient(endpoint string) (Client, error) {
 	return docker_client.NewClient(endpoint)
 }
 
+// RegistryOptions are used to initialize the Registry
 type RegistryOptions struct {
 	Interval               time.Duration
 	Pipes                  controls.PipeClient
