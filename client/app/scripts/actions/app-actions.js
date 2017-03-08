@@ -17,6 +17,8 @@ import {
   getNodeDetails,
   getTopologies,
   deletePipe,
+  stopTopologyPolling,
+  teardownWebsockets,
 } from '../utils/web-api-utils';
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
@@ -728,4 +730,9 @@ export function changeInstance() {
       true // forces websocket teardown and reconnect to new instance
     );
   };
+}
+
+export function shutdown() {
+  stopTopologyPolling();
+  teardownWebsockets();
 }

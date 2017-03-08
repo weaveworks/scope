@@ -142,7 +142,10 @@ function createWebsocket(topologyUrl, optionsQuery, dispatch) {
   * Any opts that get passed in will override the defaults.
   */
 function doRequest(opts) {
-  const config = defaults(opts, { contentType: 'application/json' });
+  const config = defaults(opts, {
+    contentType: 'application/json',
+    type: 'json'
+  });
   if (csrfToken) {
     config.headers = Object.assign({}, config.headers, { 'X-CSRF-Token': csrfToken });
   }
@@ -193,9 +196,10 @@ export function getTopologies(options, dispatch) {
 
 export function getNodesDelta(topologyUrl, options, dispatch, forceReload) {
   const optionsQuery = buildOptionsQuery(options);
-  // only recreate websocket if url changed or if forced (weave cloud instance reload);
-  const isNewUrl = topologyUrl && (topologyUrl !== currentUrl || currentOptions !== optionsQuery);
-
+  // Only recreate websocket if url changed or if forced (weave cloud instance reload);
+  // Check for truthy options and that options have changed.
+  const isNewOptions = currentOptions && currentOptions !== optionsQuery;
+  const isNewUrl = topologyUrl && (topologyUrl !== currentUrl || isNewOptions);
   if (forceReload || isNewUrl) {
     createWebsocket(topologyUrl, optionsQuery, dispatch);
     currentUrl = topologyUrl;
@@ -347,4 +351,22 @@ export function getPipeStatus(pipeId, dispatch) {
       dispatch(receiveControlPipeStatus(pipeId, status));
     }
   });
+}
+
+export function stopTopologyPolling() {
+  clearTimeout(topologyTimer);
+  topologyTimer = 0;
+}
+
+export function teardownWebsockets() {
+  clearTimeout(reconnectTimer);
+  if (socket) {
+    socket.onerror = null;
+    socket.onclose = null;
+    socket.onmessage = null;
+    socket.onopen = null;
+    socket.close();
+    socket = null;
+    currentOptions = null;
+  }
 }

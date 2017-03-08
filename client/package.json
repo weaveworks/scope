@@ -52,6 +52,7 @@
     "babel-eslint": "7.1.1",
     "babel-jest": "17.0.2",
     "babel-loader": "6.2.8",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
     "babel-preset-es2015": "6.18.0",
     "babel-preset-react": "6.16.0",
     "clean-webpack-plugin": "0.1.14",
@@ -93,7 +94,8 @@
   "scripts": {
     "build": "webpack --config webpack.production.config.js",
     "build-external": "EXTERNAL=true webpack --config webpack.production.config.js",
-    "build-pkg": "mkdir -p build-pkg && node node_modules/.bin/babel app/scripts --ignore __tests__ --out-dir build-pkg && cp package.json build-pkg/ && cp -R app/styles build-pkg/",
+    "copy-pkg-files": "cp package.json build-pkg/ && cp -R app/styles build-pkg/",
+    "build-pkg": "mkdir -p build-pkg && node node_modules/.bin/babel app/scripts --ignore __tests__ --out-dir build-pkg && npm run copy-pkg-files",
     "bundle": "npm run build-pkg && npm pack ./build-pkg && mv weave-scope-$npm_package_version.tgz ./tmp/weave-scope.tgz",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",

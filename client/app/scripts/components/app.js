@@ -13,7 +13,7 @@ import Topologies from './topologies';
 import TopologyOptions from './topology-options';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric,
-  selectMetric, toggleHelp, toggleGridMode } from '../actions/app-actions';
+  selectMetric, toggleHelp, toggleGridMode, shutdown } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import GridModeSelector from './grid-mode-selector';
@@ -52,6 +52,7 @@ class App extends React.Component {
   componentWillUnmount() {
     window.removeEventListener('keypress', this.onKeyPress);
     window.removeEventListener('keyup', this.onKeyUp);
+    shutdown();
   }
 
   onKeyUp(ev) {
