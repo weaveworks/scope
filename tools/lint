@@ -139,6 +139,20 @@ lint_tf() {
     return $lint_result
 }
 
+lint_md() {
+    local filename="$1"
+    local lint_result=0
+
+    for i in '=======' '>>>>>>>'; do
+        if grep -q "${i}" "${filename}"; then
+            lint_result=1
+            echo "${filename}: bad merge/rebase!"
+        fi
+    done
+
+    return $lint_result
+}
+
 lint() {
     filename="$1"
     ext="${filename##*\.}"
@@ -164,6 +178,7 @@ lint() {
         go) lint_go "${filename}" || lint_result=1 ;;
         sh) lint_sh "${filename}" || lint_result=1 ;;
         tf) lint_tf "${filename}" || lint_result=1 ;;
+        md) lint_md "${filename}" || lint_result=1 ;;
     esac
 
     spell_check "${filename}" || lint_result=1
