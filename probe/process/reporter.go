@@ -2,7 +2,6 @@ package process
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
@@ -38,22 +37,20 @@ var (
 
 // Reporter generates Reports containing the Process topology.
 type Reporter struct {
-	scope                  string
-	walker                 Walker
-	jiffies                Jiffies
-	noCommandLineArguments bool
+	scope   string
+	walker  Walker
+	jiffies Jiffies
 }
 
 // Jiffies is the type for the function used to fetch the elapsed jiffies.
 type Jiffies func() (uint64, float64, error)
 
 // NewReporter makes a new Reporter.
-func NewReporter(walker Walker, scope string, jiffies Jiffies, noCommandLineArguments bool) *Reporter {
+func NewReporter(walker Walker, scope string, jiffies Jiffies) *Reporter {
 	return &Reporter{
-		scope:                  scope,
-		walker:                 walker,
-		jiffies:                jiffies,
-		noCommandLineArguments: noCommandLineArguments,
+		scope:   scope,
+		walker:  walker,
+		jiffies: jiffies,
 	}
 }
 
@@ -88,18 +85,11 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 		for _, tuple := range []struct{ key, value string }{
 			{PID, pidstr},
 			{Name, p.Name},
+			{Cmdline, p.Cmdline},
 			{Threads, strconv.Itoa(p.Threads)},
 		} {
 			if tuple.value != "" {
 				node = node.WithLatests(map[string]string{tuple.key: tuple.value})
-			}
-		}
-
-		if p.Cmdline != "" {
-			if r.noCommandLineArguments {
-				node = node.WithLatests(map[string]string{Cmdline: strings.Split(p.Cmdline, " ")[0]})
-			} else {
-				node = node.WithLatests(map[string]string{Cmdline: p.Cmdline})
 			}
 		}
 

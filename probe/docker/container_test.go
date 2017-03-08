@@ -2,7 +2,6 @@ package docker_test
 
 import (
 	"net"
-	"strings"
 	"testing"
 	"time"
 
@@ -41,7 +40,7 @@ func TestContainer(t *testing.T) {
 	defer mtime.NowReset()
 
 	const hostID = "scope"
-	c := docker.NewContainer(container1, hostID, false, false)
+	c := docker.NewContainer(container1, hostID)
 	s := newMockStatsGatherer()
 	err := c.StartGatheringStats(s)
 	if err != nil {
@@ -70,7 +69,7 @@ func TestContainer(t *testing.T) {
 			docker.RemoveContainer:  {Dead: true},
 		}
 		want := report.MakeNodeWith("ping;<container>", map[string]string{
-			"docker_container_command":     "ping foo.bar.local",
+			"docker_container_command":     " ",
 			"docker_container_created":     "0001-01-01T00:00:00Z",
 			"docker_container_id":          "ping",
 			"docker_container_name":        "pong",
@@ -80,7 +79,6 @@ func TestContainer(t *testing.T) {
 			"docker_container_state":       "running",
 			"docker_container_state_human": c.Container().State.String(),
 			"docker_container_uptime":      uptime.String(),
-			"docker_env_FOO":               "secret-bar",
 		}).WithLatestControls(
 			controls,
 		).WithMetrics(report.Metrics{
@@ -126,40 +124,4 @@ func TestContainer(t *testing.T) {
 	if have := docker.ExtractContainerIPs(node); !reflect.DeepEqual(have, []string{"1.2.3.4", "5.6.7.8"}) {
 		t.Errorf("%v != %v", have, []string{"1.2.3.4", "5.6.7.8"})
 	}
-}
-
-func TestContainerHidingArgs(t *testing.T) {
-	const hostID = "scope"
-	c := docker.NewContainer(container1, hostID, true, false)
-	node := c.GetNode()
-	node.Latest.ForEach(func(k string, _ time.Time, v string) {
-		if strings.Contains(v, "foo.bar.local") {
-			t.Errorf("Found command line argument in node")
-		}
-	})
-}
-
-func TestContainerHidingEnv(t *testing.T) {
-	const hostID = "scope"
-	c := docker.NewContainer(container1, hostID, false, true)
-	node := c.GetNode()
-	node.Latest.ForEach(func(k string, _ time.Time, v string) {
-		if strings.Contains(v, "secret-bar") {
-			t.Errorf("Found environment variable in node")
-		}
-	})
-}
-
-func TestContainerHidingBoth(t *testing.T) {
-	const hostID = "scope"
-	c := docker.NewContainer(container1, hostID, true, true)
-	node := c.GetNode()
-	node.Latest.ForEach(func(k string, _ time.Time, v string) {
-		if strings.Contains(v, "foo.bar.local") {
-			t.Errorf("Found command line argument in node")
-		}
-		if strings.Contains(v, "secret-bar") {
-			t.Errorf("Found environment variable in node")
-		}
-	})
 }
