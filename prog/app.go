@@ -21,6 +21,7 @@ import (
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/weave/common"
 
+	billing "github.com/weaveworks/billing-client"
 	"github.com/weaveworks/common/middleware"
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/scope/app"
@@ -45,6 +46,7 @@ var (
 
 func init() {
 	prometheus.MustRegister(requestDuration)
+	billing.MustRegisterMetrics()
 }
 
 // Router creates the mux for all the various app components.
@@ -155,6 +157,19 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 	return nil, fmt.Errorf("Invalid collector '%s'", collectorURL)
 }
 
+func emitterFactory(collector app.Collector, clientCfg billing.Config, userIDer multitenant.UserIDer, emitterCfg multitenant.BillingEmitterConfig) (*multitenant.BillingEmitter, error) {
+	billingClient, err := billing.NewClient(clientCfg)
+	if err != nil {
+		return nil, err
+	}
+	emitterCfg.UserIDer = userIDer
+	return multitenant.NewBillingEmitter(
+		collector,
+		billingClient,
+		emitterCfg,
+	)
+}
+
 func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string) (app.ControlRouter, error) {
 	if controlRouterURL == "local" {
 		return app.NewLocalControlRouter(), nil
@@ -228,6 +243,16 @@ func appMain(flags appFlags) {
 	if err != nil {
 		log.Fatalf("Error creating collector: %v", err)
 		return
+	}
+
+	if flags.BillingEmitterConfig.Enabled {
+		billingEmitter, err := emitterFactory(collector, flags.BillingClientConfig, userIDer, flags.BillingEmitterConfig)
+		if err != nil {
+			log.Fatalf("Error creating emitter: %v", err)
+			return
+		}
+		defer billingEmitter.Close()
+		collector = billingEmitter
 	}
 
 	controlRouter, err := controlRouterFactory(userIDer, flags.controlRouterURL)
