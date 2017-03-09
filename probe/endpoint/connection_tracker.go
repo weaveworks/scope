@@ -42,7 +42,7 @@ func newConnectionTracker(conf connectionTrackerConfig) connectionTracker {
 		}
 	}
 	// When ebpf will be active by default, check if it starts correctly otherwise fallback to flowWalk
-	et, err := newEbpfTracker(conf.UseEbpfConn)
+	et, err := newEbpfTracker()
 	if err != nil {
 		// TODO: fallback to flowWalker, when ebpf is enabled by default
 		log.Errorf("Error setting up the ebpfTracker, connections will not be reported: %s", err)
