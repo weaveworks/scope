@@ -112,7 +112,7 @@ func (w *walker) Walk(f func(Process, Process)) error {
 			continue
 		}
 
-		cmdline, name := "", "(unknown)"
+		cmdline, name := "", ""
 		if cmdlineBuf, err := cachedReadFile(path.Join(w.procRoot, filename, "cmdline")); err == nil {
 			// like proc, treat name as the first element of command line
 			i := bytes.IndexByte(cmdlineBuf, '\000')
@@ -123,7 +123,13 @@ func (w *walker) Walk(f func(Process, Process)) error {
 			cmdlineBuf = bytes.Replace(cmdlineBuf, []byte{'\000'}, []byte{' '}, -1)
 			cmdline = string(cmdlineBuf)
 		}
-
+		if name == "" {
+			if commBuf, err := cachedReadFile(path.Join(w.procRoot, filename, "comm")); err == nil {
+				name = "[" + strings.TrimSpace(string(commBuf)) + "]"
+			} else {
+				name = "(unknown)"
+			}
+		}
 		f(Process{
 			PID:            pid,
 			PPID:           ppid,
