@@ -1017,6 +1017,15 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/iovisor/gobpf/elf",
+			"repository": "https://github.com/iovisor/gobpf",
+			"vcs": "git",
+			"revision": "21a9e281bf73650b9245d4ebcf111716338ae652",
+			"branch": "master",
+			"path": "/elf",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/jmespath/go-jmespath",
 			"repository": "https://github.com/jmespath/go-jmespath",
 			"vcs": "",
@@ -1438,6 +1447,14 @@
 			"repository": "https://github.com/weaveworks/ps",
 			"vcs": "git",
 			"revision": "70d17b2d6f760345ef36a0748751eddf7290a92c",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/tcptracer-bpf",
+			"repository": "https://github.com/weaveworks/tcptracer-bpf",
+			"vcs": "git",
+			"revision": "9065e4672b606b5f8d2f2d664938641fa0ee0d0f",
 			"branch": "master",
 			"notests": true
 		},

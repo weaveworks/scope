@@ -65,14 +65,14 @@ type conntrack struct {
 // flowWalker is something that maintains flows, and provides an accessor
 // method to walk them.
 type flowWalker interface {
-	walkFlows(f func(flow))
+	walkFlows(f func(f flow, active bool))
 	stop()
 }
 
 type nilFlowWalker struct{}
 
-func (n nilFlowWalker) stop()                  {}
-func (n nilFlowWalker) walkFlows(f func(flow)) {}
+func (n nilFlowWalker) stop()                        {}
+func (n nilFlowWalker) walkFlows(f func(flow, bool)) {}
 
 // conntrackWalker uses the conntrack command to track network connections and
 // implement flowWalker.
@@ -160,7 +160,7 @@ func logPipe(prefix string, reader io.Reader) {
 func (c *conntrackWalker) run() {
 	// Fork another conntrack, just to capture existing connections
 	// for which we don't get events
-	existingFlows, err := c.existingConnections()
+	existingFlows, err := existingConnections(c.args)
 	if err != nil {
 		log.Errorf("conntrack existingConnections error: %v", err)
 		return
@@ -354,8 +354,8 @@ func decodeStreamedFlow(scanner *bufio.Scanner) (flow, error) {
 	return f, nil
 }
 
-func (c *conntrackWalker) existingConnections() ([]flow, error) {
-	args := append([]string{"-L", "-o", "id", "-p", "tcp"}, c.args...)
+func existingConnections(conntrackWalkerArgs []string) ([]flow, error) {
+	args := append([]string{"-L", "-o", "id", "-p", "tcp"}, conntrackWalkerArgs...)
 	cmd := exec.Command("conntrack", args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -463,14 +463,14 @@ func (c *conntrackWalker) handleFlow(f flow, forceAdd bool) {
 
 // walkFlows calls f with all active flows and flows that have come and gone
 // since the last call to walkFlows
-func (c *conntrackWalker) walkFlows(f func(flow)) {
+func (c *conntrackWalker) walkFlows(f func(flow, bool)) {
 	c.Lock()
 	defer c.Unlock()
 	for _, flow := range c.activeFlows {
-		f(flow)
+		f(flow, true)
 	}
 	for _, flow := range c.bufferedFlows {
-		f(flow)
+		f(flow, false)
 	}
 	c.bufferedFlows = c.bufferedFlows[:0]
 }

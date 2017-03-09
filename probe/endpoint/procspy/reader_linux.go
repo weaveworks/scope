@@ -20,6 +20,11 @@ const (
 	targetWalkTime = 10 * time.Second // Aim at walking all files in 10 seconds
 )
 
+type reader interface {
+	getWalkedProcPid(buf *bytes.Buffer) (map[uint64]*Proc, error)
+	stop()
+}
+
 type backgroundReader struct {
 	stopc         chan struct{}
 	mtx           sync.Mutex
@@ -29,7 +34,7 @@ type backgroundReader struct {
 
 // starts a rate-limited background goroutine to read the expensive files from
 // proc.
-func newBackgroundReader(walker process.Walker) *backgroundReader {
+func newBackgroundReader(walker process.Walker) reader {
 	br := &backgroundReader{
 		stopc:         make(chan struct{}),
 		latestSockets: map[uint64]*Proc{},
@@ -52,28 +57,6 @@ func (br *backgroundReader) getWalkedProcPid(buf *bytes.Buffer) (map[uint64]*Pro
 	_, err := io.Copy(buf, bytes.NewReader(br.latestBuf.Bytes()))
 
 	return br.latestSockets, err
-}
-
-type walkResult struct {
-	buf     *bytes.Buffer
-	sockets map[uint64]*Proc
-}
-
-func performWalk(w pidWalker, c chan<- walkResult) {
-	var (
-		err    error
-		result = walkResult{
-			buf: bytes.NewBuffer(make([]byte, 0, 5000)),
-		}
-	)
-
-	result.sockets, err = w.walk(result.buf)
-	if err != nil {
-		log.Errorf("background /proc reader: error walking /proc: %s", err)
-		result.buf.Reset()
-		result.sockets = nil
-	}
-	c <- result
 }
 
 func (br *backgroundReader) loop(walker process.Walker) {
@@ -118,6 +101,71 @@ func (br *backgroundReader) loop(walker process.Walker) {
 			return // abort
 		}
 	}
+}
+
+type foregroundReader struct {
+	stopc         chan struct{}
+	latestBuf     *bytes.Buffer
+	latestSockets map[uint64]*Proc
+	ticker        *time.Ticker
+}
+
+// reads synchronously files from /proc
+func newForegroundReader(walker process.Walker) reader {
+	fr := &foregroundReader{
+		stopc:         make(chan struct{}),
+		latestSockets: map[uint64]*Proc{},
+	}
+	var (
+		walkc   = make(chan walkResult)
+		ticker  = time.NewTicker(time.Millisecond) // fire every millisecond
+		pWalker = newPidWalker(walker, ticker.C, fdBlockSize)
+	)
+
+	go performWalk(pWalker, walkc)
+
+	result := <-walkc
+	fr.latestBuf = result.buf
+	fr.latestSockets = result.sockets
+	fr.ticker = ticker
+
+	return fr
+}
+
+func (fr *foregroundReader) stop() {
+	fr.ticker.Stop()
+	close(fr.stopc)
+}
+
+func (fr *foregroundReader) getWalkedProcPid(buf *bytes.Buffer) (map[uint64]*Proc, error) {
+	// Don't access latestBuf directly but create a reader. In this way,
+	// the buffer will not be empty in the next call of getWalkedProcPid
+	// and it can be copied again.
+	_, err := io.Copy(buf, bytes.NewReader(fr.latestBuf.Bytes()))
+
+	return fr.latestSockets, err
+}
+
+type walkResult struct {
+	buf     *bytes.Buffer
+	sockets map[uint64]*Proc
+}
+
+func performWalk(w pidWalker, c chan<- walkResult) {
+	var (
+		err    error
+		result = walkResult{
+			buf: bytes.NewBuffer(make([]byte, 0, 5000)),
+		}
+	)
+
+	result.sockets, err = w.walk(result.buf)
+	if err != nil {
+		log.Errorf("background /proc reader: error walking /proc: %s", err)
+		result.buf.Reset()
+		result.sockets = nil
+	}
+	c <- result
 }
 
 // Adjust rate limit for next walk and calculate when it should be started
