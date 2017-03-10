@@ -937,8 +937,8 @@
   }
 }
 
-.node-resource-metric {
-  .node-label-wrapper {
+.node-resource {
+  &-label .label-wrapper {
     background-color: rgba(white, 0.6);
     border-radius: 2px;
     cursor: default;

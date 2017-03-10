@@ -2,21 +2,22 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import Logo from '../components/logo';
-import { layoutNodesSelector } from '../selectors/resource-view/layout';
+import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import CachableZoomWrapper from '../components/cachable-zoom-wrapper';
-import NodeResourceMetric from './node-resource-metric';
+import NodesResourcesLayer from './nodes-resources-layer';
 
-
-const applyTransform = (node, { scaleX, scaleY, translateX, translateY }) => (
-  node.merge({
-    x: (node.get('x') * scaleX) + translateX,
-    y: (node.get('y') * scaleY) + translateY,
-    width: node.get('width') * scaleX,
-    height: node.get('height') * scaleY,
-  })
-);
 
 class NodesResources extends React.Component {
+  renderLayers(transform) {
+    return this.props.layersTopologyIds.map(topologyId => (
+      <NodesResourcesLayer
+        key={topologyId}
+        topologyId={topologyId}
+        transform={transform}
+      />
+    ));
+  }
+
   render() {
     return (
       <div className="nodes-chart">
@@ -25,22 +26,7 @@ class NodesResources extends React.Component {
           id="nodes-chart-canvas">
           <Logo transform="translate(24,24) scale(0.25)" />
           <CachableZoomWrapper forwardTransform fixVertical>
-            {transform => (
-              this.props.layoutNodes.map(node => applyTransform(node, transform)).map(node => (
-                <NodeResourceMetric
-                  key={node.get('id')}
-                  label={node.get('label')}
-                  color={node.get('color')}
-                  width={node.get('width')}
-                  height={node.get('height')}
-                  consumption={node.get('consumption')}
-                  withCapacity={node.get('withCapacity')}
-                  x={node.get('x')}
-                  y={node.get('y')}
-                  info={node.get('info')}
-                  meta={node.get('meta')}
-                />
-            )))}
+            {transform => this.renderLayers(transform)}
           </CachableZoomWrapper>
         </svg>
       </div>
@@ -50,7 +36,7 @@ class NodesResources extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    layoutNodes: layoutNodesSelector(state),
+    layersTopologyIds: layersTopologyIdsSelector(state),
   };
 }
 

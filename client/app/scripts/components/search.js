@@ -5,6 +5,7 @@ import { debounce } from 'lodash';
 
 import { blurSearch, doSearch, focusSearch, showHelp } from '../actions/app-actions';
 import { searchMatchCountByTopologySelector } from '../selectors/search';
+import { isResourceViewModeSelector } from '../selectors/topology';
 import { slugify } from '../utils/string-utils';
 import { isTopologyEmpty } from '../utils/topology-utils';
 import SearchItem from './search-item';
@@ -102,7 +103,7 @@ class Search extends React.Component {
   }
 
   render() {
-    const { nodes, pinnedSearches, searchFocused, searchMatchCountByTopology,
+    const { nodes, pinnedSearches, searchFocused, searchMatchCountByTopology, isResourceViewMode,
       searchQuery, topologiesLoaded, onClickHelp, inputId = 'search' } = this.props;
     const disabled = this.props.isTopologyEmpty;
     const matchCount = searchMatchCountByTopology
@@ -111,7 +112,7 @@ class Search extends React.Component {
     // manual clear (null) has priority, then props, then state
     const value = this.state.value === null ? '' : this.state.value || searchQuery || '';
     const classNames = classnames('search', 'hideable', {
-      hide: !topologiesLoaded,
+      hide: !topologiesLoaded || isResourceViewMode,
       'search-pinned': showPinnedSearches,
       'search-matched': matchCount,
       'search-filled': value,
@@ -153,6 +154,7 @@ class Search extends React.Component {
 export default connect(
   state => ({
     nodes: state.get('nodes'),
+    isResourceViewMode: isResourceViewModeSelector(state),
     isTopologyEmpty: isTopologyEmpty(state),
     topologiesLoaded: state.get('topologiesLoaded'),
     pinnedSearches: state.get('pinnedSearches'),

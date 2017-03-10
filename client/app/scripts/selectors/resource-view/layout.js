@@ -12,7 +12,7 @@ export const layersTopologyIdsSelector = createSelector(
   topologyId => fromJS(resourceViewLayers[topologyId] || [])
 );
 
-const layoutNodesByTopologyMetaSelector = createSelector(
+export const layoutNodesByTopologyMetaSelector = createSelector(
   [
     layersTopologyIdsSelector,
   ],

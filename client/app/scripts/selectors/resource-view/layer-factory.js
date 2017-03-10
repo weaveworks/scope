@@ -1,7 +1,7 @@
 import { createSelector, createStructuredSelector } from 'reselect';
 import { fromJS, Map as makeMap } from 'immutable';
 
-import { layersDefs } from '../../constants/styles';
+import { layersDefs, RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
 import { getNodeColor } from '../../utils/color-utils';
 /* eslint no-unused-vars: 0 */
 /* eslint no-nested-ternary: 0 */
@@ -38,7 +38,6 @@ export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) 
         const nodeConsumption = layerDef.withCapacity ? relativeConsumption : 1;
 
         const nodeWidth = layerDef.withCapacity ? totalCapacity : absoluteConsumption;
-        const nodeHeight = layerDef.frameHeight;
 
         const parents = node.get('parents') || makeMap();
         const parent = parents.find(p => p.get('topologyId') === layerDef.parentTopologyId);
@@ -50,7 +49,7 @@ export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) 
         childrenXOffset[parentId] = childrenXOffset[parentId]
           || parentLayerNodes.getIn([parentId, 'x'], 0);
         const nodeX = childrenXOffset[parentId];
-        const nodeY = topologyId === 'hosts' ? 0 : (topologyId === 'containers' ? -160 : -265);
+        const nodeY = parentLayerNodes.getIn([parentId, 'y'], 0) - RESOURCES_LAYER_HEIGHT;
 
         // console.log(nodeX, parentId);
         // TODO: Remove.
@@ -63,7 +62,7 @@ export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) 
           x: nodeX,
           y: nodeY,
           width: nodeWidth,
-          height: nodeHeight,
+          height: RESOURCES_LAYER_HEIGHT,
           consumption: nodeConsumption,
           withCapacity: layerDef.withCapacity,
           info: `CPU usage: ${absoluteConsumption}%`,
