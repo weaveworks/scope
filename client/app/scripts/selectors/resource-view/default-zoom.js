@@ -23,10 +23,10 @@ export const resourcesDefaultZoomSelector = createSelector(
     const xMax = layoutNodes.map(n => n.get('x') + n.get('width')).max();
     const yMax = layoutNodes.map(n => n.get('y') + n.get('height')).max();
 
-    const scaleX = (width / (xMax - xMin)) * 0.9;
-    const scaleY = (height / (yMax - yMin)) * 0.9;
-    const minScale = scaleX * 1;
+    const scaleX = (width / (xMax - xMin));
+    const scaleY = (height / (yMax - yMin));
     const maxScale = scaleX * 2000;
+    const minScale = scaleX;
 
     // This translation puts the graph in the center of the viewport, respecting the margins.
     const translateX = ((width - ((xMax + xMin) * scaleX)) / 2) + CANVAS_MARGINS.left;

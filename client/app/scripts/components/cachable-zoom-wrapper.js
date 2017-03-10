@@ -118,6 +118,7 @@ class CachableZoomWrapper extends React.Component {
       // Restore the zooming settings
       this.zoom = this.zoom
         .scaleExtent([zoomState.minScale, zoomState.maxScale])
+        .extent([[50, 50], [200, 600]])
         .translateExtent([
           [zoomState.minTranslateX, zoomState.minTranslateY],
           [zoomState.maxTranslateX, zoomState.maxTranslateY],
