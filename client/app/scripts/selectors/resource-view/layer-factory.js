@@ -33,7 +33,7 @@ export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) 
         const nodeColor = getNodeColor(node.get('rank'), node.get('label'), node.get('pseudo'));
 
         const totalCapacity = metric.get('max');
-        const absoluteConsumption = metric.get('value');
+        const absoluteConsumption = metric.get('value') / (topologyId === 'processes' ? 4 : 1);
         const relativeConsumption = absoluteConsumption / totalCapacity;
         const nodeConsumption = layerDef.withCapacity ? relativeConsumption : 1;
 
@@ -66,6 +66,7 @@ export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) 
           height: nodeHeight,
           consumption: nodeConsumption,
           withCapacity: layerDef.withCapacity,
+          info: `CPU usage: ${absoluteConsumption}%`,
           meta: node,
         })));
       });

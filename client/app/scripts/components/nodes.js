@@ -4,12 +4,17 @@ import { debounce } from 'lodash';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesGrid from '../charts/nodes-grid';
+import NodesResources from '../charts/nodes-resources';
 import NodesError from '../charts/nodes-error';
 import DelayedShow from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
 import { setViewportDimensions } from '../actions/app-actions';
-import { isTableViewModeSelector } from '../selectors/topology';
+import {
+  isGraphViewModeSelector,
+  isTableViewModeSelector,
+  isResourceViewModeSelector,
+} from '../selectors/topology';
 import { VIEWPORT_RESIZE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
@@ -48,10 +53,10 @@ class Nodes extends React.Component {
   }
 
   render() {
-    const { topologyEmpty, isTableViewMode, topologiesLoaded, nodesLoaded, topologies,
-      currentTopology } = this.props;
+    const { topologyEmpty, topologiesLoaded, nodesLoaded, topologies, currentTopology,
+      isGraphViewMode, isTableViewMode, isResourceViewMode } = this.props;
 
-    // TODO: Get rid of 'grid'.
+    // TODO: Rename view mode components.
     return (
       <div className="nodes-wrapper">
         <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>
@@ -62,7 +67,9 @@ class Nodes extends React.Component {
         </DelayedShow>
         {EmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
 
-        {isTableViewMode ? <NodesGrid /> : <NodesChart />}
+        {isGraphViewMode && <NodesChart />}
+        {isTableViewMode && <NodesGrid />}
+        {isResourceViewMode && <NodesResources />}
       </div>
     );
   }
@@ -77,7 +84,9 @@ class Nodes extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    isGraphViewMode: isGraphViewModeSelector(state),
     isTableViewMode: isTableViewModeSelector(state),
+    isResourceViewMode: isResourceViewModeSelector(state),
     currentTopology: state.get('currentTopology'),
     nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),

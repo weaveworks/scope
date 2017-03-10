@@ -937,6 +937,17 @@
   }
 }
 
+.node-resource-metric {
+  .node-label-wrapper {
+    background-color: rgba(white, 0.6);
+    border-radius: 2px;
+    cursor: default;
+    display: block;
+    font-size: 15px;
+    padding: 5px;
+  }
+}
+
 // This part sets the styles only for the 'real' node details table, not applying
 // them to the nodes grid, because there we control hovering from the JS.
 // NOTE: Maybe it would be nice to separate the class names between the two places

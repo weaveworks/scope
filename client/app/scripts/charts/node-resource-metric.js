@@ -14,33 +14,62 @@ export default class NodeResourceMetric extends React.Component {
     console.log(this.props.meta.toJS());
   }
 
+  // renderLabel() {
+  //   return (
+  //     <foreignObject
+  //       className="node-labels-container"
+  //       y={0}
+  //       x={0}
+  //       vectorEffect="non-scaling-stroke"
+  //       width={labelWidth}
+  //       height="5em">
+  //       <div className="node-label-wrapper">
+  //         {this.props.label}
+  //       </div>
+  //     </foreignObject>
+  //   );
+  // }
+
   render() {
-    const { label, color, width, height, x, y, consumption } = this.props;
+    const { label, info, color, width, height, x, y, consumption } = this.props;
     const innerHeight = height * consumption;
-    const transform = `translate(${x},${y})`;
+    const labelX = Math.max(0, x) + 10;
+    const labelWidth = Math.max(0, (x + width) - (labelX + 10));
+    const labelShown = (labelWidth > 20);
 
     return (
-      <g className="node-resource-metric" onClick={this.handleMouseClick} transform={transform}>
-        <title>{label}</title>
+      <g className="node-resource-metric" onClick={this.handleMouseClick}>
+        <title>{info}</title>
         <rect
           className="wrapper"
           fill={frameFill}
           stroke={frameStroke}
           strokeWidth={frameStrokeWidth}
-          vectorEffect="non-scaling-stroke"
           height={height}
           width={width}
+          x={x}
+          y={y}
         />
         <rect
           className="bar"
           fill={color}
           stroke={frameStroke}
           strokeWidth={frameStrokeWidth}
-          vectorEffect="non-scaling-stroke"
-          y={height - innerHeight}
           height={innerHeight}
           width={width}
+          x={x}
+          y={y + (height * (1 - consumption))}
         />
+        {labelShown && <foreignObject
+          className="node-label-container truncate"
+          y={y + 10}
+          x={labelX}
+          width={labelWidth}
+          height="5em">
+          <div className="node-label-wrapper truncate">
+            {label}
+          </div>
+        </foreignObject>}
       </g>
     );
   }

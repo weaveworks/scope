@@ -68,13 +68,14 @@ class CachableZoomWrapper extends React.Component {
   }
 
   render() {
-    // Not passing transform into child components for perf reasons.
+    const { children, forwardTransform } = this.props;
     const { translateX, translateY, scaleX, scaleY } = this.state;
     const transform = `translate(${translateX},${translateY}) scale(${scaleX},${scaleY})`;
 
+    // Not passing transform into child components by default for perf reasons.
     return (
-      <g className="zoom-container" transform={transform}>
-        {this.props.children}
+      <g className="zoom-container" transform={!forwardTransform && transform}>
+        {forwardTransform ? children(this.state) : children}
       </g>
     );
   }
@@ -120,15 +121,19 @@ class CachableZoomWrapper extends React.Component {
 
   zoomed() {
     if (!this.props.disabled) {
-      const updatedState = {
+      const updatedState = this.cachableState({
         scaleX: d3Event.transform.k,
         scaleY: d3Event.transform.k,
         translateX: d3Event.transform.x,
         translateY: d3Event.transform.y,
-      };
+      });
 
-      this.setState(this.cachableState(updatedState));
+      this.setState(updatedState);
       this.debouncedCacheZoom();
+
+      if (this.props.zoomUpdated) {
+        this.props.zoomUpdated(this.state);
+      }
     }
   }
 }
