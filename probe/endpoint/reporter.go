@@ -5,6 +5,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/weaveworks/scope/probe/endpoint/procspy"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -29,6 +30,7 @@ type ReporterConfig struct {
 	UseEbpfConn  bool
 	ProcRoot     string
 	BufferSize   int
+	ProcessCache *process.CachingWalker
 	Scanner      procspy.ConnectionScanner
 	DNSSnooper   *DNSSnooper
 }
@@ -69,6 +71,7 @@ func NewReporter(conf ReporterConfig) *Reporter {
 			UseEbpfConn:  conf.UseEbpfConn,
 			ProcRoot:     conf.ProcRoot,
 			BufferSize:   conf.BufferSize,
+			ProcessCache: conf.ProcessCache,
 			Scanner:      conf.Scanner,
 			DNSSnooper:   conf.DNSSnooper,
 		}),

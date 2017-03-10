@@ -19,6 +19,7 @@ type connectionTrackerConfig struct {
 	UseEbpfConn  bool
 	ProcRoot     string
 	BufferSize   int
+	ProcessCache *process.CachingWalker
 	Scanner      procspy.ConnectionScanner
 	DNSSnooper   *DNSSnooper
 }
@@ -28,43 +29,36 @@ type connectionTracker struct {
 	flowWalker      flowWalker // Interface
 	ebpfTracker     eventTracker
 	reverseResolver *reverseResolver
-	processCache    *process.CachingWalker
+}
+
+func newProcfsConnectionTracker(conf connectionTrackerConfig) connectionTracker {
+	if conf.WalkProc && conf.Scanner == nil {
+		conf.Scanner = procspy.NewConnectionScanner(conf.ProcessCache)
+	}
+	return connectionTracker{
+		conf:            conf,
+		flowWalker:      newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, "--any-nat"),
+		ebpfTracker:     nil,
+		reverseResolver: newReverseResolver(),
+	}
 }
 
 func newConnectionTracker(conf connectionTrackerConfig) connectionTracker {
 	if !conf.UseEbpfConn {
-		// ebpf OFF, use flowWalker
-		return connectionTracker{
-			conf:            conf,
-			flowWalker:      newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, "--any-nat"),
-			ebpfTracker:     nil,
-			reverseResolver: newReverseResolver(),
-		}
+		// ebpf off, use proc scanning for connection tracking
+		return newProcfsConnectionTracker(conf)
 	}
-	// When ebpf will be active by default, check if it starts correctly otherwise fallback to flowWalk
 	et, err := newEbpfTracker()
 	if err != nil {
-		// TODO: fallback to flowWalker, when ebpf is enabled by default
-		log.Errorf("Error setting up the ebpfTracker, connections will not be reported: %s", err)
-		noopConnectionTracker := connectionTracker{
-			conf:            conf,
-			flowWalker:      nil,
-			ebpfTracker:     nil,
-			reverseResolver: nil,
-		}
-		return noopConnectionTracker
+		// ebpf failed, fallback to proc scanning for connection tracking
+		log.Warnf("Error setting up the eBPF tracker, falling back to proc scanning: %v", err)
+		return newProcfsConnectionTracker(conf)
 	}
-
-	var processCache *process.CachingWalker
-	processCache = process.NewCachingWalker(process.NewWalker(conf.ProcRoot))
-	processCache.Tick()
-
 	ct := connectionTracker{
 		conf:            conf,
 		flowWalker:      nil,
 		ebpfTracker:     et,
 		reverseResolver: newReverseResolver(),
-		processCache:    processCache,
 	}
 	go ct.getInitialState()
 	return ct
@@ -89,8 +83,7 @@ func flowToTuple(f flow) (ft fourTuple) {
 	return ft
 }
 
-// ReportConnections calls trackers accordingly to the configuration.
-// When ebpf is enabled, only performEbpfTrack() is called
+// ReportConnections calls trackers according to the configuration.
 func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 	hostNodeID := report.MakeHostNodeID(t.conf.HostID)
 
@@ -164,9 +157,14 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 	return nil
 }
 
+// getInitialState runs conntrack and proc parsing synchronously only
+// once to initialize ebpfTracker
 func (t *connectionTracker) getInitialState() {
-	scanner := procspy.NewSyncConnectionScanner(t.processCache)
-	// Run conntrack and proc parsing synchronously only once to initialize ebpfTracker
+	var processCache *process.CachingWalker
+	processCache = process.NewCachingWalker(process.NewWalker(t.conf.ProcRoot))
+	processCache.Tick()
+
+	scanner := procspy.NewSyncConnectionScanner(processCache)
 	seenTuples := map[string]fourTuple{}
 	// Consult the flowWalker to get the initial state
 	if err := IsConntrackSupported(t.conf.ProcRoot); t.conf.UseConntrack && err != nil {
