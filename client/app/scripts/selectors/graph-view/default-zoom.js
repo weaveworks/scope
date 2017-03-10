@@ -6,6 +6,8 @@ import { viewportWidthSelector, viewportHeightSelector } from '../viewport';
 import { graphNodesSelector } from './graph';
 
 
+const MARGIN_FACTOR = 10;
+
 // Compute the default zoom settings for the given graph.
 export const graphDefaultZoomSelector = createSelector(
   [
@@ -40,6 +42,20 @@ export const graphDefaultZoomSelector = createSelector(
     const translateX = ((width - ((xMax + xMin) * scale)) / 2) + CANVAS_MARGINS.left;
     const translateY = ((height - ((yMax + yMin) * scale)) / 2) + CANVAS_MARGINS.top;
 
-    return makeMap({ scaleX: scale, scaleY: scale, minScale, maxScale, translateX, translateY });
+    const xMargin = (xMax - xMin) * MARGIN_FACTOR;
+    const yMargin = (yMax - yMin) * MARGIN_FACTOR;
+
+    return makeMap({
+      minTranslateX: xMin - xMargin,
+      maxTranslateX: xMax + xMargin,
+      minTranslateY: yMin - yMargin,
+      maxTranslateY: yMax + yMargin,
+      translateX,
+      translateY,
+      minScale,
+      maxScale,
+      scaleX: scale,
+      scaleY: scale,
+    });
   }
 );

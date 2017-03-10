@@ -25,13 +25,24 @@ export const resourcesDefaultZoomSelector = createSelector(
 
     const scaleX = (width / (xMax - xMin)) * 0.9;
     const scaleY = (height / (yMax - yMin)) * 0.9;
-    const minScale = scaleX * 0.5;
+    const minScale = scaleX * 1;
     const maxScale = scaleX * 2000;
 
     // This translation puts the graph in the center of the viewport, respecting the margins.
     const translateX = ((width - ((xMax + xMin) * scaleX)) / 2) + CANVAS_MARGINS.left;
     const translateY = ((height - ((yMax + yMin) * scaleY)) / 2) + CANVAS_MARGINS.top;
 
-    return makeMap({ scaleX, scaleY, minScale, maxScale, translateX, translateY });
+    return makeMap({
+      minTranslateX: xMin,
+      maxTranslateX: xMax,
+      minTranslateY: yMin,
+      maxTranslateY: yMax,
+      translateX,
+      translateY,
+      minScale,
+      maxScale,
+      scaleX,
+      scaleY,
+    });
   }
 );

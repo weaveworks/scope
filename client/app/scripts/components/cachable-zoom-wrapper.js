@@ -18,12 +18,16 @@ class CachableZoomWrapper extends React.Component {
     super(props, context);
 
     this.state = {
+      minTranslateX: 0,
+      maxTranslateX: 0,
+      minTranslateY: 0,
+      maxTranslateY: 0,
+      translateX: 0,
+      translateY: 0,
       minScale: 1,
       maxScale: 1,
       scaleX: 1,
       scaleY: 1,
-      translateX: 0,
-      translateY: 0,
     };
 
     this.debouncedCacheZoom = debounce(this.cacheZoom.bind(this), ZOOM_CACHE_DEBOUNCE_INTERVAL);
@@ -74,7 +78,7 @@ class CachableZoomWrapper extends React.Component {
 
     // Not passing transform into child components by default for perf reasons.
     return (
-      <g className="zoom-container" transform={!forwardTransform && transform}>
+      <g className="zoom-container" transform={forwardTransform ? '' : transform}>
         {forwardTransform ? children(this.state) : children}
       </g>
     );
@@ -89,7 +93,11 @@ class CachableZoomWrapper extends React.Component {
   }
 
   cachableState(state = this.state) {
-    let cachableFields = ['minScale', 'maxScale'];
+    let cachableFields = [
+      'minTranslateX', 'maxTranslateX',
+      'minTranslateY', 'maxTranslateY',
+      'minScale', 'maxScale'
+    ];
     if (!this.props.fixHorizontal) {
       cachableFields = cachableFields.concat(['scaleX', 'translateX']);
     }
@@ -108,7 +116,12 @@ class CachableZoomWrapper extends React.Component {
       const zoomState = props.layoutZoom.toJS();
 
       // Restore the zooming settings
-      this.zoom = this.zoom.scaleExtent([zoomState.minScale, zoomState.maxScale]);
+      this.zoom = this.zoom
+        .scaleExtent([zoomState.minScale, zoomState.maxScale])
+        .translateExtent([
+          [zoomState.minTranslateX, zoomState.minTranslateY],
+          [zoomState.maxTranslateX, zoomState.maxTranslateY],
+        ]);
       this.svg.call(this.zoom.transform, zoomIdentity
         .translate(zoomState.translateX, zoomState.translateY)
         .scale(zoomState.scaleX, zoomState.scaleY));
@@ -130,10 +143,6 @@ class CachableZoomWrapper extends React.Component {
 
       this.setState(updatedState);
       this.debouncedCacheZoom();
-
-      if (this.props.zoomUpdated) {
-        this.props.zoomUpdated(this.state);
-      }
     }
   }
 }
