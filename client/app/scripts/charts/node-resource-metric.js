@@ -1,7 +1,8 @@
 import React from 'react';
 
 const frameFill = 'rgba(100, 100, 100, 0.2)';
-const frameStroke = 'rgba(100, 100, 100, 0.5)';
+const frameStroke = 'rgba(255, 255, 255, 1)';
+const frameStrokeWidth = 1.5;
 
 export default class NodeResourceMetric extends React.Component {
   constructor(props, context) {
@@ -25,7 +26,7 @@ export default class NodeResourceMetric extends React.Component {
           className="wrapper"
           fill={frameFill}
           stroke={frameStroke}
-          strokeWidth="1"
+          strokeWidth={frameStrokeWidth}
           vectorEffect="non-scaling-stroke"
           height={height}
           width={width}
@@ -34,7 +35,7 @@ export default class NodeResourceMetric extends React.Component {
           className="bar"
           fill={color}
           stroke={frameStroke}
-          strokeWidth="1"
+          strokeWidth={frameStrokeWidth}
           vectorEffect="non-scaling-stroke"
           y={height - innerHeight}
           height={innerHeight}

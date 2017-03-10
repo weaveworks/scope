@@ -77,14 +77,14 @@ export const NODE_DETAILS_TABLE_XS_LABEL = {
 // TODO: Make this variable
 export const resourcesLayers = [{
   topologyId: 'hosts',
-  horizontalPadding: 15,
-  verticalPadding: 5,
+  horizontalPadding: 0,
+  verticalPadding: 10,
   frameHeight: 200,
   withCapacity: true,
 }, {
   topologyId: 'containers',
   horizontalPadding: 0,
-  verticalPadding: 5,
+  verticalPadding: 7.5,
   frameHeight: 150,
   withCapacity: false,
 }, {
@@ -94,3 +94,24 @@ export const resourcesLayers = [{
   frameHeight: 100,
   withCapacity: false,
 }];
+
+export const layersDefs = {
+  hosts: {
+    parentTopologyId: null,
+    verticalPadding: 10,
+    frameHeight: 200,
+    withCapacity: true,
+  },
+  containers: {
+    parentTopologyId: 'hosts',
+    verticalPadding: 7.5,
+    frameHeight: 150,
+    withCapacity: false,
+  },
+  processes: {
+    parentTopologyId: 'containers',
+    verticalPadding: 5,
+    frameHeight: 100,
+    withCapacity: false,
+  },
+};
