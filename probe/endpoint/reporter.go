@@ -83,7 +83,9 @@ func (Reporter) Name() string { return "Endpoint" }
 func (r *Reporter) Stop() {
 	r.connectionTracker.Stop()
 	r.natMapper.stop()
-	r.conf.Scanner.Stop()
+	if r.conf.Scanner != nil {
+		r.conf.Scanner.Stop()
+	}
 }
 
 // Report implements Reporter.
