@@ -16,7 +16,9 @@ export const CANVAS_MARGINS = {
   bottom: 0,
 };
 
+export const RESOURCES_LAYER_TITLE_WIDTH = 200;
 export const RESOURCES_LAYER_HEIGHT = 150;
+export const RESOURCES_LAYER_PADDING = 10;
 
 // Node shapes
 export const NODE_SHAPE_HIGHLIGHT_RADIUS = 70;

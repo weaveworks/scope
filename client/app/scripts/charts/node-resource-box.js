@@ -1,6 +1,6 @@
 import React from 'react';
 
-const frameFill = 'rgba(100, 100, 100, 0.2)';
+const frameFill = 'rgba(100, 100, 100, 0.3)';
 const frameStroke = 'rgba(255, 255, 255, 1)';
 const frameStrokeWidth = 1.5;
 

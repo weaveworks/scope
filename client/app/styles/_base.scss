@@ -946,6 +946,17 @@
     font-size: 15px;
     padding: 5px;
   }
+
+  &-layer .layer-name {
+    background-color: #eee;
+    border: 1px solid #ccc;
+    color: #aaa;
+    font-size: 20px;
+    font-weight: bold;
+    padding-right: 20px;
+    text-align: right;
+    text-transform: uppercase;
+  }
 }
 
 // This part sets the styles only for the 'real' node details table, not applying

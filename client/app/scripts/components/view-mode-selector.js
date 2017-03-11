@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 
 import { setGraphView, setTableView, setResourceView } from '../actions/app-actions';
-import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
+import { layersTopologyIdsSelector } from '../selectors/resource-view/layers';
 import {
   isGraphViewModeSelector,
   isTableViewModeSelector,

@@ -1,16 +1,8 @@
 import { createSelector, createStructuredSelector } from 'reselect';
-import { fromJS } from 'immutable';
 
+import { layersTopologyIdsSelector } from './layers';
 import { layerNodesSelectorFactory } from './layer-factory';
-import { resourceViewLayers } from '../../constants/resources';
 
-
-export const layersTopologyIdsSelector = createSelector(
-  [
-    state => state.get('currentTopologyId'),
-  ],
-  topologyId => fromJS(resourceViewLayers[topologyId] || [])
-);
 
 export const layoutNodesByTopologyMetaSelector = createSelector(
   [

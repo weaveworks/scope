@@ -2,7 +2,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
 
+import { RESOURCES_LAYER_TITLE_WIDTH, RESOURCES_LAYER_HEIGHT } from '../constants/styles';
 import { layoutNodesByTopologyMetaSelector } from '../selectors/resource-view/layout';
+import { layersVerticalPositionSelector } from '../selectors/resource-view/layers';
 import NodeResourceBox from './node-resource-box';
 import NodeResourceLabel from './node-resource-label';
 
@@ -21,7 +23,7 @@ const getPositionedLabels = (nodes, transform) => {
     const nodeWidth = node.get('width') * scaleX;
 
     const labelY = nodeY + PADDING;
-    const labelX = Math.max(0, nodeX) + PADDING;
+    const labelX = Math.max(200, nodeX) + PADDING;
     const labelWidth = (nodeX + nodeWidth) - PADDING - labelX;
 
     if (labelWidth < 20) return makeMap();
@@ -38,9 +40,11 @@ const getPositionedLabels = (nodes, transform) => {
 
 class NodesResourcesLayer extends React.Component {
   render() {
-    const { transform, nodes, labels } = this.props;
+    const { yPosition, topologyId, transform, nodes, labels } = this.props;
+    const height = RESOURCES_LAYER_HEIGHT * transform.scaleY;
+
     return (
-      <g>
+      <g className="node-resource-layer">
         <g transform={stringifiedTransform(transform)}>
           {nodes.map(node => (
             <NodeResourceBox
@@ -68,16 +72,24 @@ class NodesResourcesLayer extends React.Component {
             />
           ))}
         </g>
+        <foreignObject
+          className="layer-name"
+          y={(yPosition * transform.scaleY) + transform.translateY}
+          height={height}
+          width={RESOURCES_LAYER_TITLE_WIDTH}>
+          <span style={{ height, lineHeight: `${height}px` }}>{topologyId}</span>
+        </foreignObject>
       </g>
     );
   }
 }
 
 function mapStateToProps(state, props) {
+  const yPosition = layersVerticalPositionSelector(state).get(props.topologyId);
   const nodes = layoutNodesByTopologyMetaSelector(state)(state)[props.topologyId];
   // TODO: Move to selectors?
   const labels = getPositionedLabels(nodes, props.transform);
-  return { nodes, labels };
+  return { yPosition, nodes, labels };
 }
 
 export default connect(

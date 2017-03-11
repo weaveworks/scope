@@ -1,27 +1,29 @@
 import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
-import { CANVAS_MARGINS } from '../../constants/styles';
+import { CANVAS_MARGINS, RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
 import { viewportWidthSelector, viewportHeightSelector } from '../viewport';
+import { layersVerticalPositionSelector } from './layers';
 import { layoutNodesSelector } from './layout';
 
 
 // Compute the default zoom settings for the given chart.
 export const resourcesDefaultZoomSelector = createSelector(
   [
+    layersVerticalPositionSelector,
     layoutNodesSelector,
     viewportWidthSelector,
     viewportHeightSelector,
   ],
-  (layoutNodes, width, height) => {
+  (layersVerticalPositions, layoutNodes, width, height) => {
     if (layoutNodes.size === 0) {
       return makeMap();
     }
 
     const xMin = layoutNodes.map(n => n.get('x')).min();
-    const yMin = layoutNodes.map(n => n.get('y')).min();
+    const yMin = layersVerticalPositions.toList().min();
     const xMax = layoutNodes.map(n => n.get('x') + n.get('width')).max();
-    const yMax = layoutNodes.map(n => n.get('y') + n.get('height')).max();
+    const yMax = layersVerticalPositions.toList().max() + RESOURCES_LAYER_HEIGHT;
 
     const scaleX = (width / (xMax - xMin));
     const scaleY = (height / (yMax - yMin));

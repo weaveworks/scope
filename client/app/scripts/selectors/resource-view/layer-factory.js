@@ -1,6 +1,7 @@
 import { createSelector, createStructuredSelector } from 'reselect';
 import { fromJS, Map as makeMap } from 'immutable';
 
+import { layersVerticalPositionSelector } from './layers';
 import { layersDefs, RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
 import { getNodeColor } from '../../utils/color-utils';
 /* eslint no-unused-vars: 0 */
@@ -16,9 +17,10 @@ export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) 
   createSelector(
     [
       state => state.getIn(['nodesByTopology', topologyId], makeMap()),
+      layersVerticalPositionSelector,
       parentLayerNodesSelector,
     ],
-    (nodes, parentLayerNodes) => {
+    (nodes, layersVerticalPosition, parentLayerNodes) => {
       const childrenXOffset = { [basePseudoId]: 0 };
       const layerDef = layersDefs[topologyId];
       let positionedNodes = makeMap();
@@ -49,7 +51,7 @@ export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) 
         childrenXOffset[parentId] = childrenXOffset[parentId]
           || parentLayerNodes.getIn([parentId, 'x'], 0);
         const nodeX = childrenXOffset[parentId];
-        const nodeY = parentLayerNodes.getIn([parentId, 'y'], 0) - RESOURCES_LAYER_HEIGHT;
+        const nodeY = layersVerticalPosition.get(topologyId);
 
         // console.log(nodeX, parentId);
         // TODO: Remove.

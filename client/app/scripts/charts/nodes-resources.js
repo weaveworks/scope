@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import Logo from '../components/logo';
-import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
+import { layersTopologyIdsSelector } from '../selectors/resource-view/layers';
 import CachableZoomWrapper from '../components/cachable-zoom-wrapper';
 import NodesResourcesLayer from './nodes-resources-layer';
 
