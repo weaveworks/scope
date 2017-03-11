@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 
+import MetricSelector from './metric-selector';
 import { setGraphView, setTableView, setResourceView } from '../actions/app-actions';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layers';
 import {
@@ -43,6 +44,7 @@ class ViewModeSelector extends React.Component {
           {hasResourceView &&
             Item('fa fa-bar-chart', 'Resources', isResourceViewMode, this.props.setResourceView)}
         </div>
+        {isResourceViewMode && <MetricSelector alwaysPinned />}
       </div>
     );
   }

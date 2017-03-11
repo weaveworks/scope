@@ -46,7 +46,7 @@ class NodesResourcesLayer extends React.Component {
     return (
       <g className="node-resource-layer">
         <g transform={stringifiedTransform(transform)}>
-          {nodes.map(node => (
+          {nodes.toIndexedSeq().map(node => (
             <NodeResourceBox
               key={node.get('id')}
               color={node.get('color')}
@@ -62,7 +62,7 @@ class NodesResourcesLayer extends React.Component {
           ))}
         </g>
         <g>
-          {labels.map(label => (
+          {labels.toIndexedSeq().map(label => (
             <NodeResourceLabel
               key={label.get('id')}
               label={label.get('label')}

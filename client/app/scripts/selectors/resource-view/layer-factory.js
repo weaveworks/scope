@@ -11,16 +11,19 @@ import { getNodeColor } from '../../utils/color-utils';
 const basePseudoId = 'base';
 
 // TODO: Make this variable
-const getCPUMetric = node => (node.get('metrics') || makeMap()).find(m => m.get('label') === 'CPU');
+const getMetric = (node, metricName) => (
+  node.get('metrics', makeMap()).find(m => m.get('label') === metricName)
+);
 
 export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) => (
   createSelector(
     [
       state => state.getIn(['nodesByTopology', topologyId], makeMap()),
+      state => state.get('pinnedMetricType', 'CPU'),
       layersVerticalPositionSelector,
       parentLayerNodesSelector,
     ],
-    (nodes, layersVerticalPosition, parentLayerNodes) => {
+    (nodes, pinnedMetricType, layersVerticalPosition, parentLayerNodes) => {
       const childrenXOffset = { [basePseudoId]: 0 };
       const layerDef = layersDefs[topologyId];
       let positionedNodes = makeMap();
@@ -28,14 +31,15 @@ export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) 
       parentLayerNodes = parentLayerNodes || makeMap({ basePseudoId: makeMap({ x: 0 }) });
 
       nodes.forEach((node) => {
-        const metric = getCPUMetric(node);
+        const metric = getMetric(node, pinnedMetricType);
         if (!metric) return;
 
         const nodeId = node.get('id');
         const nodeColor = getNodeColor(node.get('rank'), node.get('label'), node.get('pseudo'));
 
-        const totalCapacity = metric.get('max');
-        const absoluteConsumption = metric.get('value') / (topologyId === 'processes' ? 4 : 1);
+        const totalCapacity = metric.get('max') / 1e5;
+        const absoluteConsumption = metric.get('value') / 1e5
+          / (topologyId === 'processes' ? 4 : 1);
         const relativeConsumption = absoluteConsumption / totalCapacity;
         const nodeConsumption = layerDef.withCapacity ? relativeConsumption : 1;
 

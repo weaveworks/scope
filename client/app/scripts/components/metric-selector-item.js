@@ -22,10 +22,10 @@ class MetricSelectorItem extends React.Component {
     const k = this.props.metric.get('id');
     const pinnedMetric = this.props.pinnedMetric;
 
-    if (k === pinnedMetric) {
-      this.props.unpinMetric(k);
-    } else {
+    if (k !== pinnedMetric) {
       this.props.pinMetric(k);
+    } else if (!this.props.alwaysPinned) {
+      this.props.unpinMetric(k);
     }
   }
 

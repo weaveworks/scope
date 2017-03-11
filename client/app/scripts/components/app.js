@@ -24,6 +24,7 @@ import { getRouter, getUrlState } from '../utils/router-utils';
 import { availableNetworksSelector } from '../selectors/node-networks';
 import {
   activeTopologyOptionsSelector,
+  isResourceViewModeSelector,
   isTableViewModeSelector,
   isGraphViewModeSelector,
 } from '../selectors/topology';
@@ -107,8 +108,8 @@ class App extends React.Component {
   }
 
   render() {
-    const { isTableViewMode, isGraphViewMode, showingDetails, showingHelp, showingMetricsSelector,
-      showingNetworkSelector, showingTroubleshootingMenu } = this.props;
+    const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails, showingHelp,
+      showingMetricsSelector, showingNetworkSelector, showingTroubleshootingMenu } = this.props;
     const isIframe = window !== window.top;
 
     // TODO: Remove 'grid', 'topo' constants.
@@ -136,9 +137,9 @@ class App extends React.Component {
         <Nodes />
 
         <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
-          {showingMetricsSelector && !isTableViewMode && <MetricSelector />}
+          {showingMetricsSelector && isGraphViewMode && <MetricSelector />}
           {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
-          <Status />
+          {!isResourceViewMode && <Status />}
           <TopologyOptions />
         </Sidebar>
 
@@ -152,6 +153,7 @@ class App extends React.Component {
 function mapStateToProps(state) {
   return {
     activeTopologyOptions: activeTopologyOptionsSelector(state),
+    isResourceViewMode: isResourceViewModeSelector(state),
     isTableViewMode: isTableViewModeSelector(state),
     isGraphViewMode: isGraphViewModeSelector(state),
     routeSet: state.get('routeSet'),

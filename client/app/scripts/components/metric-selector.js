@@ -20,7 +20,11 @@ class MetricSelector extends React.Component {
       <div className="metric-selector">
         <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
           {this.props.availableCanvasMetrics.map(metric => (
-            <MetricSelectorItem key={metric.get('id')} metric={metric} />
+            <MetricSelectorItem
+              key={metric.get('id')}
+              alwaysPinned={this.props.alwaysPinned}
+              metric={metric}
+            />
           ))}
         </div>
       </div>
