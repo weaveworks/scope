@@ -7,8 +7,8 @@ import NodeDetailsTable from '../components/node-details/node-details-table';
 import { clickNode, sortOrderChanged } from '../actions/app-actions';
 import { shownNodesSelector } from '../selectors/node-filters';
 
+import { canvasMarginsSelector, canvasHeightSelector } from '../selectors/canvas';
 import { searchNodeMatchesSelector } from '../selectors/search';
-import { canvasMarginsSelector } from '../selectors/viewport';
 import { getNodeColor } from '../utils/color-utils';
 
 
@@ -147,6 +147,7 @@ function mapStateToProps(state) {
   return {
     nodes: shownNodesSelector(state),
     canvasMargins: canvasMarginsSelector(state),
+    height: canvasHeightSelector(state),
     gridSortedBy: state.get('gridSortedBy'),
     gridSortedDesc: state.get('gridSortedDesc'),
     currentTopology: state.get('currentTopology'),
@@ -154,8 +155,6 @@ function mapStateToProps(state) {
     searchNodeMatches: searchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId'),
-    // TODO: Change this.
-    height: state.getIn(['viewport', 'height']) - 190,
   };
 }
 

@@ -15,7 +15,8 @@ const getMetric = (node, metricName) => (
   node.get('metrics', makeMap()).find(m => m.get('label') === metricName)
 );
 
-export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) => (
+export const layerNodesSelectorFactory =
+  (topologyId, parentTopologyId, parentLayerNodesSelector) => (
   createSelector(
     [
       state => state.getIn(['nodesByTopology', topologyId], makeMap()),
@@ -46,7 +47,7 @@ export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) 
         const nodeWidth = layerDef.withCapacity ? totalCapacity : absoluteConsumption;
 
         const parents = node.get('parents') || makeMap();
-        const parent = parents.find(p => p.get('topologyId') === layerDef.parentTopologyId);
+        const parent = parents.find(p => p.get('topologyId') === parentTopologyId);
         const parentId = parent ? parent.get('id') : basePseudoId;
 
         // NOTE: We don't handle uncontained yet.
@@ -64,6 +65,7 @@ export const layerNodesSelectorFactory = (topologyId, parentLayerNodesSelector) 
         childrenXOffset[parentId] += nodeWidth;
 
         positionedNodes = positionedNodes.set(nodeId, node.merge(makeMap({
+          topologyId,
           color: nodeColor,
           x: nodeX,
           y: nodeY,

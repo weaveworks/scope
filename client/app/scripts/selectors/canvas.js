@@ -14,7 +14,7 @@ export const canvasMarginsSelector = createSelector(
   viewMode => CANVAS_MARGINS[viewMode] || { top: 0, left: 0, right: 0, bottom: 0 }
 );
 
-export const viewportWidthSelector = createSelector(
+export const canvasWidthSelector = createSelector(
   [
     state => state.getIn(['viewport', 'width']),
     canvasMarginsSelector,
@@ -22,7 +22,7 @@ export const viewportWidthSelector = createSelector(
   (width, margins) => width - margins.left - margins.right
 );
 
-export const viewportHeightSelector = createSelector(
+export const canvasHeightSelector = createSelector(
   [
     state => state.getIn(['viewport', 'height']),
     canvasMarginsSelector,
@@ -30,34 +30,34 @@ export const viewportHeightSelector = createSelector(
   (height, margins) => height - margins.top - margins.bottom
 );
 
-const viewportFocusWidthSelector = createSelector(
+const canvasWithDetailsWidthSelector = createSelector(
   [
-    viewportWidthSelector,
+    canvasWidthSelector,
   ],
   width => width - DETAILS_PANEL_WIDTH - DETAILS_PANEL_MARGINS.right
 );
 
-export const viewportFocusHorizontalCenterSelector = createSelector(
+export const canvasDetailsHorizontalCenterSelector = createSelector(
   [
-    viewportFocusWidthSelector,
+    canvasWithDetailsWidthSelector,
     canvasMarginsSelector,
   ],
   (width, margins) => (width / 2) + margins.left
 );
 
-export const viewportFocusVerticalCenterSelector = createSelector(
+export const canvasDetailsVerticalCenterSelector = createSelector(
   [
-    viewportHeightSelector,
+    canvasHeightSelector,
     canvasMarginsSelector,
   ],
   (height, margins) => (height / 2) + margins.top
 );
 
 // The narrower dimension of the viewport, used for the circular layout.
-export const viewportCircularExpanseSelector = createSelector(
+export const canvasCircularExpanseSelector = createSelector(
   [
-    viewportFocusWidthSelector,
-    viewportHeightSelector,
+    canvasWithDetailsWidthSelector,
+    canvasHeightSelector,
   ],
   (width, height) => Math.min(width, height)
 );

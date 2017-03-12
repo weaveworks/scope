@@ -7,10 +7,10 @@ import { NODE_BASE_SIZE } from '../../constants/styles';
 import { graphNodesSelector, graphEdgesSelector } from './graph';
 import { activeLayoutZoomSelector } from '../zooming';
 import {
-  viewportCircularExpanseSelector,
-  viewportFocusHorizontalCenterSelector,
-  viewportFocusVerticalCenterSelector,
-} from '../viewport';
+  canvasCircularExpanseSelector,
+  canvasDetailsHorizontalCenterSelector,
+  canvasDetailsVerticalCenterSelector,
+} from '../canvas';
 
 
 const circularOffsetAngle = Math.PI / 4;
@@ -23,8 +23,8 @@ const radiusDensity = scaleThreshold()
 
 const translationToViewportCenterSelector = createSelector(
   [
-    viewportFocusHorizontalCenterSelector,
-    viewportFocusVerticalCenterSelector,
+    canvasDetailsHorizontalCenterSelector,
+    canvasDetailsVerticalCenterSelector,
     activeLayoutZoomSelector,
   ],
   (centerX, centerY, zoomState) => {
@@ -78,7 +78,7 @@ const circularLayoutScalarsSelector = createSelector(
     // TODO: Fix this.
     state => activeLayoutZoomSelector(state).get('scaleX'),
     state => focusedNodesIdsSelector(state).length - 1,
-    viewportCircularExpanseSelector,
+    canvasCircularExpanseSelector,
   ],
   (scale, circularNodesCount, viewportExpanse) => {
     // Here we calculate the zoom factor of the nodes that get selected into focus.

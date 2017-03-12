@@ -25,7 +25,7 @@ class NodesResources extends React.Component {
           width="100%" height="100%"
           id="nodes-chart-canvas">
           <Logo transform="translate(24,24) scale(0.25)" />
-          <CachableZoomWrapper forwardTransform fixVertical>
+          <CachableZoomWrapper bounded forwardTransform fixVertical>
             {transform => this.renderLayers(transform)}
           </CachableZoomWrapper>
         </svg>

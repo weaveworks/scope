@@ -3,7 +3,7 @@ import { createSelector, createStructuredSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
 import { initEdgesFromNodes } from '../../utils/layouter-utils';
-import { viewportWidthSelector, viewportHeightSelector } from './viewport';
+import { canvasWidthSelector, canvasHeightSelector } from '../canvas';
 import { activeTopologyOptionsSelector } from '../topology';
 import { shownNodesSelector } from '../node-filters';
 import { doLayout } from '../../charts/nodes-layout';
@@ -16,8 +16,8 @@ const layoutOptionsSelector = createStructuredSelector({
   forceRelayout: state => state.get('forceRelayout'),
   topologyId: state => state.get('currentTopologyId'),
   topologyOptions: activeTopologyOptionsSelector,
-  height: viewportHeightSelector,
-  width: viewportWidthSelector,
+  height: canvasHeightSelector,
+  width: canvasWidthSelector,
 });
 
 const graphLayoutSelector = createSelector(

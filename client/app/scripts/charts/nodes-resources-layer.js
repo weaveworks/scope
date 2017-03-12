@@ -72,13 +72,13 @@ class NodesResourcesLayer extends React.Component {
             />
           ))}
         </g>
-        <foreignObject
+        {!nodes.isEmpty() && <foreignObject
           className="layer-name"
           y={(yPosition * transform.scaleY) + transform.translateY}
           height={height}
           width={RESOURCES_LAYER_TITLE_WIDTH}>
           <span style={{ height, lineHeight: `${height}px` }}>{topologyId}</span>
-        </foreignObject>
+        </foreignObject>}
       </g>
     );
   }

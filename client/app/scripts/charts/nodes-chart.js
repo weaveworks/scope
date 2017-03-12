@@ -16,7 +16,7 @@ class NodesChart extends React.Component {
 
   render() {
     // TODO: What to do with empty?
-    const { isGraphViewMode, isEmpty, selectedNodeId } = this.props;
+    const { isEmpty, selectedNodeId } = this.props;
     const markerOffset = selectedNodeId ? '35' : '40';
     const markerSize = selectedNodeId ? '10' : '30';
     const svgClassNames = isEmpty ? 'hide' : '';
@@ -40,8 +40,8 @@ class NodesChart extends React.Component {
             </marker>
           </defs>
           <Logo transform="translate(24,24) scale(0.25)" />
-          <CachableZoomWrapper fixVertical={!isGraphViewMode} disabled={selectedNodeId}>
-            {isGraphViewMode ? <NodesChartElements /> : <ResourceView />}
+          <CachableZoomWrapper disabled={selectedNodeId}>
+            <NodesChartElements />
           </CachableZoomWrapper>
         </svg>
       </div>

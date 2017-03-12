@@ -2,19 +2,17 @@ import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
 import { NODE_BASE_SIZE } from '../../constants/styles';
-import { canvasMarginsSelector, viewportWidthSelector, viewportHeightSelector } from '../viewport';
+import { canvasMarginsSelector, canvasWidthSelector, canvasHeightSelector } from '../canvas';
 import { graphNodesSelector } from './graph';
 
-
-const MARGIN_FACTOR = 10;
 
 // Compute the default zoom settings for the given graph.
 export const graphDefaultZoomSelector = createSelector(
   [
     graphNodesSelector,
     canvasMarginsSelector,
-    viewportWidthSelector,
-    viewportHeightSelector,
+    canvasWidthSelector,
+    canvasHeightSelector,
   ],
   (graphNodes, canvasMargins, width, height) => {
     if (graphNodes.size === 0) {
@@ -43,14 +41,7 @@ export const graphDefaultZoomSelector = createSelector(
     const translateX = ((width - ((xMax + xMin) * scale)) / 2) + canvasMargins.left;
     const translateY = ((height - ((yMax + yMin) * scale)) / 2) + canvasMargins.top;
 
-    const xMargin = (xMax - xMin) * MARGIN_FACTOR;
-    const yMargin = (yMax - yMin) * MARGIN_FACTOR;
-
     return makeMap({
-      minTranslateX: xMin - xMargin,
-      maxTranslateX: xMax + xMargin,
-      minTranslateY: yMin - yMargin,
-      maxTranslateY: yMax + yMargin,
       translateX,
       translateY,
       minScale,

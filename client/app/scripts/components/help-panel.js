@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { searchableFieldsSelector } from '../selectors/search';
-import { canvasMarginsSelector } from '../selectors/viewport';
+import { canvasMarginsSelector } from '../selectors/canvas';
 import { hideHelp } from '../actions/app-actions';
 
 

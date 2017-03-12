@@ -11,10 +11,12 @@ export const layoutNodesByTopologyMetaSelector = createSelector(
   (layersTopologyIds) => {
     const layerSelectorsMap = {};
     let prevSelector = () => null;
+    let prevTopId = null;
 
     layersTopologyIds.forEach((topId) => {
-      layerSelectorsMap[topId] = layerNodesSelectorFactory(topId, prevSelector);
+      layerSelectorsMap[topId] = layerNodesSelectorFactory(topId, prevTopId, prevSelector);
       prevSelector = layerSelectorsMap[topId];
+      prevTopId = topId;
     });
 
     return createStructuredSelector(layerSelectorsMap);

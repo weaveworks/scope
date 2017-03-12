@@ -9,6 +9,11 @@ import { zoom, zoomIdentity } from 'd3-zoom';
 import { cacheZoomState } from '../actions/app-actions';
 import { activeLayoutZoomSelector } from '../selectors/zooming';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/topology';
+import {
+  canvasMarginsSelector,
+  canvasWidthSelector,
+  canvasHeightSelector,
+} from '../selectors/canvas';
 
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
@@ -116,13 +121,20 @@ class CachableZoomWrapper extends React.Component {
       const zoomState = props.layoutZoom.toJS();
 
       // Restore the zooming settings
-      this.zoom = this.zoom
-        .scaleExtent([zoomState.minScale, zoomState.maxScale])
-        // .extent([[50, 50], [200, 600]])
-        .translateExtent([
-          [zoomState.minTranslateX, zoomState.minTranslateY],
-          [zoomState.maxTranslateX, zoomState.maxTranslateY],
-        ]);
+      this.zoom = this.zoom.scaleExtent([zoomState.minScale, zoomState.maxScale]);
+
+      if (props.bounded) {
+        this.zoom = this.zoom
+          .translateExtent([
+            [zoomState.minTranslateX, zoomState.minTranslateY],
+            [zoomState.maxTranslateX, zoomState.maxTranslateY],
+          ])
+          .extent([
+            [props.canvasMargins.left, props.canvasMargins.top],
+            [props.canvasMargins.left + props.width, props.canvasMargins.top + props.height]
+          ]);
+      }
+
       this.svg.call(this.zoom.transform, zoomIdentity
         .translate(zoomState.translateX, zoomState.translateY)
         .scale(zoomState.scaleX, zoomState.scaleY));
@@ -151,6 +163,9 @@ class CachableZoomWrapper extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    width: canvasWidthSelector(state),
+    height: canvasHeightSelector(state),
+    canvasMargins: canvasMarginsSelector(state),
     layoutZoom: activeLayoutZoomSelector(state),
     layoutId: JSON.stringify(activeTopologyZoomCacheKeyPathSelector(state)),
     forceRelayout: state.get('forceRelayout'),
