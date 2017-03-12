@@ -1,8 +1,8 @@
 import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
-import { CANVAS_MARGINS, NODE_BASE_SIZE } from '../../constants/styles';
-import { viewportWidthSelector, viewportHeightSelector } from '../viewport';
+import { NODE_BASE_SIZE } from '../../constants/styles';
+import { canvasMarginsSelector, viewportWidthSelector, viewportHeightSelector } from '../viewport';
 import { graphNodesSelector } from './graph';
 
 
@@ -12,10 +12,11 @@ const MARGIN_FACTOR = 10;
 export const graphDefaultZoomSelector = createSelector(
   [
     graphNodesSelector,
+    canvasMarginsSelector,
     viewportWidthSelector,
     viewportHeightSelector,
   ],
-  (graphNodes, width, height) => {
+  (graphNodes, canvasMargins, width, height) => {
     if (graphNodes.size === 0) {
       return makeMap();
     }
@@ -39,8 +40,8 @@ export const graphDefaultZoomSelector = createSelector(
     const minScale = scale / 5;
 
     // This translation puts the graph in the center of the viewport, respecting the margins.
-    const translateX = ((width - ((xMax + xMin) * scale)) / 2) + CANVAS_MARGINS.left;
-    const translateY = ((height - ((yMax + yMin) * scale)) / 2) + CANVAS_MARGINS.top;
+    const translateX = ((width - ((xMax + xMin) * scale)) / 2) + canvasMargins.left;
+    const translateY = ((height - ((yMax + yMin) * scale)) / 2) + canvasMargins.top;
 
     const xMargin = (xMax - xMin) * MARGIN_FACTOR;
     const yMargin = (yMax - yMin) * MARGIN_FACTOR;

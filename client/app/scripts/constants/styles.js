@@ -1,3 +1,5 @@
+import { GRAPH_VIEW_MODE, TABLE_VIEW_MODE, RESOURCE_VIEW_MODE } from './naming';
+
 
 export const DETAILS_PANEL_WIDTH = 420;
 
@@ -10,10 +12,9 @@ export const DETAILS_PANEL_MARGINS = {
 export const DETAILS_PANEL_OFFSET = 8;
 
 export const CANVAS_MARGINS = {
-  top: 160,
-  left: 40,
-  right: 40,
-  bottom: 0,
+  [GRAPH_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 150 },
+  [TABLE_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 150 },
+  [RESOURCE_VIEW_MODE]: { top: 200, left: 40, right: 40, bottom: 100 },
 };
 
 export const RESOURCES_LAYER_TITLE_WIDTH = 200;

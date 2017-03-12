@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { searchableFieldsSelector } from '../selectors/search';
-import { CANVAS_MARGINS } from '../constants/styles';
+import { canvasMarginsSelector } from '../selectors/viewport';
 import { hideHelp } from '../actions/app-actions';
 
 
@@ -152,7 +152,7 @@ function renderFieldsPanel(currentTopologyName, searchableFields) {
 function HelpPanel({currentTopologyName, searchableFields, onClickClose}) {
   return (
     <div className="help-panel-wrapper">
-      <div className="help-panel" style={{marginTop: CANVAS_MARGINS.top}}>
+      <div className="help-panel" style={{marginTop: this.props.canvasMargins.top}}>
         <div className="help-panel-header">
           <h2>Help</h2>
         </div>
@@ -176,6 +176,7 @@ function HelpPanel({currentTopologyName, searchableFields, onClickClose}) {
 
 function mapStateToProps(state) {
   return {
+    canvasMargins: canvasMarginsSelector(state),
     searchableFields: searchableFieldsSelector(state),
     currentTopologyName: state.getIn(['currentTopology', 'fullName'])
   };

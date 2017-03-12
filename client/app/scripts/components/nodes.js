@@ -15,11 +15,9 @@ import {
   isTableViewModeSelector,
   isResourceViewModeSelector,
 } from '../selectors/topology';
+
 import { VIEWPORT_RESIZE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
-
-const navbarHeight = 194;
-const marginTop = 0;
 
 const EmptyTopologyError = show => (
   <NodesError faIconClass="fa-circle-thin" hidden={!show}>
@@ -75,9 +73,7 @@ class Nodes extends React.Component {
   }
 
   setDimensions() {
-    const width = window.innerWidth;
-    const height = window.innerHeight - navbarHeight - marginTop;
-    this.props.setViewportDimensions(width, height);
+    this.props.setViewportDimensions(window.innerWidth, window.innerHeight);
   }
 }
 

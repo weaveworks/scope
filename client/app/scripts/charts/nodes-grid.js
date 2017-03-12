@@ -7,8 +7,8 @@ import NodeDetailsTable from '../components/node-details/node-details-table';
 import { clickNode, sortOrderChanged } from '../actions/app-actions';
 import { shownNodesSelector } from '../selectors/node-filters';
 
-import { CANVAS_MARGINS } from '../constants/styles';
 import { searchNodeMatchesSelector } from '../selectors/search';
+import { canvasMarginsSelector } from '../selectors/viewport';
 import { getNodeColor } from '../utils/color-utils';
 
 
@@ -97,13 +97,13 @@ class NodesGrid extends React.Component {
   }
 
   render() {
-    const { nodes, height, gridSortedBy, gridSortedDesc,
+    const { nodes, height, gridSortedBy, gridSortedDesc, canvasMargins,
       searchNodeMatches, searchQuery } = this.props;
     const cmpStyle = {
       height,
-      marginTop: CANVAS_MARGINS.top,
-      paddingLeft: CANVAS_MARGINS.left,
-      paddingRight: CANVAS_MARGINS.right,
+      marginTop: canvasMargins.top,
+      paddingLeft: canvasMargins.left,
+      paddingRight: canvasMargins.right,
     };
     const tbodyHeight = height - 24 - 18;
     const className = 'scroll-body';
@@ -146,6 +146,7 @@ class NodesGrid extends React.Component {
 function mapStateToProps(state) {
   return {
     nodes: shownNodesSelector(state),
+    canvasMargins: canvasMarginsSelector(state),
     gridSortedBy: state.get('gridSortedBy'),
     gridSortedDesc: state.get('gridSortedDesc'),
     currentTopology: state.get('currentTopology'),
@@ -153,7 +154,8 @@ function mapStateToProps(state) {
     searchNodeMatches: searchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId'),
-    height: state.getIn(['viewport', 'height']),
+    // TODO: Change this.
+    height: state.getIn(['viewport', 'height']) - 190,
   };
 }
 

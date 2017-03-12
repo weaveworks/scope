@@ -1,8 +1,8 @@
 import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
-import { CANVAS_MARGINS, RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
-import { viewportWidthSelector, viewportHeightSelector } from '../viewport';
+import { RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
+import { canvasMarginsSelector, viewportWidthSelector, viewportHeightSelector } from '../viewport';
 import { layersVerticalPositionSelector } from './layers';
 import { layoutNodesSelector } from './layout';
 
@@ -12,10 +12,11 @@ export const resourcesDefaultZoomSelector = createSelector(
   [
     layersVerticalPositionSelector,
     layoutNodesSelector,
+    canvasMarginsSelector,
     viewportWidthSelector,
     viewportHeightSelector,
   ],
-  (layersVerticalPositions, layoutNodes, width, height) => {
+  (layersVerticalPositions, layoutNodes, canvasMargins, width, height) => {
     if (layoutNodes.size === 0) {
       return makeMap();
     }
@@ -31,8 +32,8 @@ export const resourcesDefaultZoomSelector = createSelector(
     const minScale = scaleX;
 
     // This translation puts the graph in the center of the viewport, respecting the margins.
-    const translateX = ((width - ((xMax + xMin) * scaleX)) / 2) + CANVAS_MARGINS.left;
-    const translateY = ((height - ((yMax + yMin) * scaleY)) / 2) + CANVAS_MARGINS.top;
+    const translateX = ((width - ((xMax + xMin) * scaleX)) / 2) + canvasMargins.left;
+    const translateY = ((height - ((yMax + yMin) * scaleY)) / 2) + canvasMargins.top;
 
     return makeMap({
       minTranslateX: xMin,
