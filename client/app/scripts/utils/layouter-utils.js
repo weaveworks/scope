@@ -30,26 +30,3 @@ export function initEdgesFromNodes(nodes) {
 
   return edges;
 }
-
-// Replaces all pairs of edges (A->B, B->A) with a single A->B edge that is marked as
-// bidirectional. We do this to prevent double rendering of edges between the same nodes.
-export function collapseMultiEdges(directedEdges) {
-  let collapsedEdges = makeMap();
-
-  directedEdges.forEach((edge, edgeId) => {
-    const source = edge.get('source');
-    const target = edge.get('target');
-    const reversedEdgeId = constructEdgeId(target, source);
-
-    if (collapsedEdges.has(reversedEdgeId)) {
-      // If the edge between the same nodes with the opposite direction already exists,
-      // mark it as bidirectional and don't add any other edges (making graph simple).
-      collapsedEdges = collapsedEdges.setIn([reversedEdgeId, 'bidirectional'], true);
-    } else {
-      // Otherwise just copy the edge.
-      collapsedEdges = collapsedEdges.set(edgeId, edge);
-    }
-  });
-
-  return collapsedEdges;
-}
