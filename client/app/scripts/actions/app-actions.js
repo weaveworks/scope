@@ -723,6 +723,7 @@ export function changeInstance() {
     dispatch({ type: ActionTypes.CHANGE_INSTANCE });
     updateRoute(getState);
     const state = getState();
+    getTopologies(activeTopologyOptionsSelector(state), dispatch);
     getNodesDelta(
       getCurrentTopologyUrl(state),
       activeTopologyOptionsSelector(state),
