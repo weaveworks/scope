@@ -70,19 +70,6 @@ var (
 )
 
 var (
-	testVerbose        bool
-	testInitDebug      bool
-	testUseIoEncDec    bool
-	testStructToArray  bool
-	testCanonical      bool
-	testUseReset       bool
-	testWriteNoSymbols bool
-	testSkipIntf       bool
-	testInternStr      bool
-	testUseMust        bool
-	testCheckCircRef   bool
-	testJsonIndent     int
-
 	skipVerifyVal interface{} = &(struct{}{})
 
 	testMapStrIntfTyp = reflect.TypeOf(map[string]interface{}(nil))
@@ -117,8 +104,10 @@ func testInitFlags() {
 	flag.BoolVar(&testSkipIntf, "tf", false, "Skip Interfaces")
 	flag.BoolVar(&testUseReset, "tr", false, "Use Reset")
 	flag.IntVar(&testJsonIndent, "td", 0, "Use JSON Indent")
+	flag.IntVar(&testMaxInitLen, "tx", 0, "Max Init Len")
 	flag.BoolVar(&testUseMust, "tm", true, "Use Must(En|De)code")
 	flag.BoolVar(&testCheckCircRef, "tl", false, "Use Check Circular Ref")
+	flag.BoolVar(&testJsonHTMLCharsAsIs, "tas", false, "Set JSON HTMLCharsAsIs")
 }
 
 func testByteBuf(in []byte) *bytes.Buffer {
@@ -183,6 +172,11 @@ func (r *TestRpcInt) EchoStruct(arg TestRpcABC, res *string) error {
 func (r *TestRpcInt) Echo123(args []string, res *string) error {
 	*res = fmt.Sprintf("%#v", args)
 	return nil
+}
+
+type TestRawValue struct {
+	R Raw
+	I int
 }
 
 type testUnixNanoTimeExt struct {
@@ -354,6 +348,7 @@ func testInit() {
 		bh.Canonical = testCanonical
 		bh.CheckCircularRef = testCheckCircRef
 		bh.StructToArray = testStructToArray
+		bh.MaxInitLen = testMaxInitLen
 		// mostly doing this for binc
 		if testWriteNoSymbols {
 			bh.AsSymbols = AsSymbolNone
@@ -363,6 +358,7 @@ func testInit() {
 	}
 
 	testJsonH.Indent = int8(testJsonIndent)
+	testJsonH.HTMLCharsAsIs = testJsonHTMLCharsAsIs
 	testMsgpackH.RawToString = true
 
 	// testMsgpackH.AddExt(byteSliceTyp, 0, testMsgpackH.BinaryEncodeExt, testMsgpackH.BinaryDecodeExt)
@@ -397,7 +393,7 @@ func testInit() {
 		true,
 		"null",
 		nil,
-		"someday",
+		"some&day>some<day",
 		timeToCompare1,
 		"",
 		timeToCompare2,
@@ -1103,11 +1099,13 @@ func doTestJsonLargeInteger(t *testing.T, v interface{}, ias uint8) {
 	case 'L':
 		switch v2 := v.(type) {
 		case int:
-			if v2 > 1<<53 || (v2 < 0 && -v2 > 1<<53) {
+			v2n := int64(v2) // done to work with 32-bit OS
+			if v2n > 1<<53 || (v2n < 0 && -v2n > 1<<53) {
 				fnStrChk()
 			}
 		case uint:
-			if v2 > 1<<53 {
+			v2n := uint64(v2) // done to work with 32-bit OS
+			if v2n > 1<<53 {
 				fnStrChk()
 			}
 		}
@@ -1140,6 +1138,42 @@ func doTestJsonLargeInteger(t *testing.T, v interface{}, ias uint8) {
 			failT(t)
 		}
 		// fmt.Printf("%v: %s, decode: %d, bool: %v, equal_on_decode: %v\n", v, b, vu, vb, vu == v.(uint))
+	}
+}
+
+func doTestRawValue(t *testing.T, name string, h Handle) {
+	bh := h.getBasicHandle()
+	if !bh.Raw {
+		bh.Raw = true
+		defer func() { bh.Raw = false }()
+	}
+
+	var i, i2 int
+	var v, v2 TestRawValue
+	var bs, bs2 []byte
+
+	i = 1234 //1234567890
+	v = TestRawValue{I: i}
+	e := NewEncoderBytes(&bs, h)
+	e.MustEncode(v.I)
+	logT(t, ">>> raw: %v\n", bs)
+
+	v.R = Raw(bs)
+	e.ResetBytes(&bs2)
+	e.MustEncode(v)
+
+	logT(t, ">>> bs2: %v\n", bs2)
+	d := NewDecoderBytes(bs2, h)
+	d.MustDecode(&v2)
+	d.ResetBytes(v2.R)
+	logT(t, ">>> v2.R: %v\n", ([]byte)(v2.R))
+	d.MustDecode(&i2)
+
+	logT(t, ">>> Encoded %v, decoded %v\n", i, i2)
+	// logT(t, "Encoded %v, decoded %v", i, i2)
+	if i != i2 {
+		logT(t, "Error: encoded %v, decoded %v", i, i2)
+		t.FailNow()
 	}
 }
 
@@ -1382,6 +1416,23 @@ func TestJsonStdEncIntf(t *testing.T) {
 	doTestStdEncIntf(t, "json", testJsonH)
 }
 
+// ----- Raw ---------
+func TestJsonRaw(t *testing.T) {
+	doTestRawValue(t, "json", testJsonH)
+}
+func TestBincRaw(t *testing.T) {
+	doTestRawValue(t, "binc", testBincH)
+}
+func TestMsgpackRaw(t *testing.T) {
+	doTestRawValue(t, "msgpack", testMsgpackH)
+}
+func TestSimpleRaw(t *testing.T) {
+	doTestRawValue(t, "simple", testSimpleH)
+}
+func TestCborRaw(t *testing.T) {
+	doTestRawValue(t, "cbor", testCborH)
+}
+
 // ----- ALL (framework based) -----
 
 func TestAllEncCircularRef(t *testing.T) {
@@ -1425,12 +1476,12 @@ func TestBincUnderlyingType(t *testing.T) {
 func TestJsonLargeInteger(t *testing.T) {
 	for _, i := range []uint8{'L', 'A', 0} {
 		for _, j := range []interface{}{
-			1 << 60,
-			-(1 << 60),
+			int64(1 << 60),
+			-int64(1 << 60),
 			0,
 			1 << 20,
 			-(1 << 20),
-			uint(1 << 60),
+			uint64(1 << 60),
 			uint(0),
 			uint(1 << 20),
 		} {
