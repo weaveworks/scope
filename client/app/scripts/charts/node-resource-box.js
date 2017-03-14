@@ -16,8 +16,9 @@ export default class NodeResourceBox extends React.Component {
   }
 
   render() {
-    const { info, color, width, height, x, y, consumption } = this.props;
-    const innerHeight = height * consumption;
+    const { color, width, height, x, y, activeMetric } = this.props;
+    const { relativeConsumption, info } = activeMetric.toJS();
+    const innerHeight = height * relativeConsumption;
 
     return (
       <g className="node-resource-box" onClick={this.handleMouseClick}>
@@ -42,7 +43,7 @@ export default class NodeResourceBox extends React.Component {
           height={innerHeight}
           width={width}
           x={x}
-          y={y + (height * (1 - consumption))}
+          y={y + (height * (1 - relativeConsumption))}
         />
       </g>
     );

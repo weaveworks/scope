@@ -3,30 +3,30 @@ import { Map as makeMap } from 'immutable';
 
 import { RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
 import { canvasMarginsSelector, canvasWidthSelector, canvasHeightSelector } from '../canvas';
-import { layersVerticalPositionSelector } from './layers';
-import { layoutNodesSelector } from './layout';
+import { layersVerticalPositionSelector, positionedNodesByTopologySelector } from './layers';
 
 
 // Compute the default zoom settings for the given chart.
 export const resourcesDefaultZoomSelector = createSelector(
   [
     layersVerticalPositionSelector,
-    layoutNodesSelector,
+    positionedNodesByTopologySelector,
     canvasMarginsSelector,
     canvasWidthSelector,
     canvasHeightSelector,
   ],
-  (layersVerticalPositions, layoutNodes, canvasMargins, width, height) => {
-    if (layoutNodes.size === 0) {
+  (verticalPositions, nodes, canvasMargins, width, height) => {
+    if (nodes.size === 0) {
       return makeMap();
     }
 
-    const xMin = layoutNodes.map(n => n.get('x')).min();
-    const yMin = layersVerticalPositions.min();
-    const xMax = layoutNodes.map(n => n.get('x') + n.get('width')).max();
-    const yMax = layersVerticalPositions.max() + RESOURCES_LAYER_HEIGHT;
+    const flattenedNodes = nodes.flatten(true);
+    const xMin = flattenedNodes.map(n => n.get('x')).min();
+    const yMin = verticalPositions.toList().min();
+    const xMax = flattenedNodes.map(n => n.get('x') + n.get('width')).max();
+    const yMax = verticalPositions.toList().max() + RESOURCES_LAYER_HEIGHT;
 
-    const minNodeWidth = layoutNodes.map(n => n.get('width')).min();
+    const minNodeWidth = flattenedNodes.map(n => n.get('width')).min();
 
     const scaleX = (width / (xMax - xMin)) * 1.0;
     const scaleY = (height / (yMax - yMin)) * 0.7;

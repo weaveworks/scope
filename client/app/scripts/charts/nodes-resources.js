@@ -9,11 +9,12 @@ import NodesResourcesLayer from './nodes-resources-layer';
 
 class NodesResources extends React.Component {
   renderLayers(transform) {
-    return this.props.layersTopologyIds.map(topologyId => (
+    return this.props.layersTopologyIds.map((topologyId, index) => (
       <NodesResourcesLayer
         key={topologyId}
         topologyId={topologyId}
         transform={transform}
+        slot={index}
       />
     ));
   }

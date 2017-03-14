@@ -3,8 +3,10 @@ import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
 
 import { RESOURCES_LAYER_TITLE_WIDTH, RESOURCES_LAYER_HEIGHT } from '../constants/styles';
-import { layoutNodesByTopologyMetaSelector } from '../selectors/resource-view/layout';
-import { layersVerticalPositionSelector } from '../selectors/resource-view/layers';
+import {
+  layersVerticalPositionSelector,
+  positionedNodesByTopologySelector,
+} from '../selectors/resource-view/layers';
 import NodeResourceBox from './node-resource-box';
 import NodeResourceLabel from './node-resource-label';
 
@@ -52,11 +54,10 @@ class NodesResourcesLayer extends React.Component {
               color={node.get('color')}
               width={node.get('width')}
               height={node.get('height')}
-              consumption={node.get('consumption')}
               withCapacity={node.get('withCapacity')}
               x={node.get('x')}
               y={node.get('y')}
-              info={node.get('info')}
+              activeMetric={node.get('activeMetric')}
               meta={node.get('meta')}
             />
           ))}
@@ -86,7 +87,7 @@ class NodesResourcesLayer extends React.Component {
 
 function mapStateToProps(state, props) {
   const yPosition = layersVerticalPositionSelector(state).get(props.topologyId);
-  const nodes = layoutNodesByTopologyMetaSelector(state)(state)[props.topologyId];
+  const nodes = positionedNodesByTopologySelector(state).get(props.topologyId, makeMap());
   // TODO: Move to selectors?
   const labels = getPositionedLabels(nodes, props.transform);
   return { yPosition, nodes, labels };
