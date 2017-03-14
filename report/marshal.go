@@ -1,8 +1,10 @@
 package report
 
 import (
+	"bytes"
 	"compress/gzip"
 	"io"
+	"io/ioutil"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
@@ -71,6 +73,36 @@ func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handl
 func MakeFromBinary(r io.Reader) (*Report, error) {
 	rep := MakeReport()
 	if err := rep.ReadBinary(r, true, &codec.MsgpackHandle{}); err != nil {
+		return nil, err
+	}
+	return &rep, nil
+}
+
+// ReadBytes reads bytes into a Report, using a codecHandle.
+func (rep *Report) ReadBytes(buf []byte, codecHandle codec.Handle) error {
+	return codec.NewDecoderBytes(buf, codecHandle).Decode(&rep)
+}
+
+// MakeFromBytes constructs a Report from a gzipped msgpack.
+func MakeFromBytes(buf []byte) (*Report, error) {
+	compressedSize := len(buf)
+	r, err := gzip.NewReader(bytes.NewBuffer(buf))
+	if err != nil {
+		return nil, err
+	}
+	buf, err = ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	uncompressedSize := len(buf)
+	log.Debugf(
+		"Received report sizes: compressed %d bytes, uncompressed %d bytes (%.2f%%)",
+		compressedSize,
+		uncompressedSize,
+		float32(compressedSize)/float32(uncompressedSize)*100,
+	)
+	rep := MakeReport()
+	if err := rep.ReadBytes(buf, &codec.MsgpackHandle{}); err != nil {
 		return nil, err
 	}
 	return &rep, nil

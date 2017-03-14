@@ -1,7 +1,9 @@
 package app
 
 import (
+	"compress/gzip"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -290,7 +292,20 @@ func readReport(path string) (rpt report.Report, _ error) {
 		return rpt, fmt.Errorf("Unsupported file extension: %v", fileType)
 	}
 
-	err = rpt.ReadBinary(f, gzipped, handle)
+	var buf []byte
+	if gzipped {
+		r, err := gzip.NewReader(f)
+		if err != nil {
+			return rpt, err
+		}
+		buf, err = ioutil.ReadAll(r)
+	} else {
+		buf, err = ioutil.ReadAll(f)
+	}
+	if err != nil {
+		return rpt, err
+	}
+	err = rpt.ReadBytes(buf, handle)
 
 	return rpt, err
 }
