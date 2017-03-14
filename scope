@@ -165,14 +165,20 @@ create_plugins_dir() {
         "$SCOPE_IMAGE" -c "mkdir -p /var/run/scope/plugins"
 }
 
-launch_command() {
+docker_args() {
     # shellcheck disable=SC2086
-    echo docker run --privileged $USERNS_HOST -d --name="$SCOPE_CONTAINER_NAME" --net=host --pid=host \
+    echo --privileged $USERNS_HOST --net=host --pid=host \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v /var/run/scope/plugins:/var/run/scope/plugins \
         -v /sys/kernel/debug:/sys/kernel/debug \
         -e CHECKPOINT_DISABLE \
-        $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" --probe.docker=true
+        $WEAVESCOPE_DOCKER_ARGS
+}
+
+launch_command() {
+    # shellcheck disable=SC2046
+    echo docker run -d --name="$SCOPE_CONTAINER_NAME" $(docker_args) \
+        "$SCOPE_IMAGE" --probe.docker=true
 }
 
 launch_docker4mac_app_command() {
@@ -228,8 +234,8 @@ case "$COMMAND" in
     launch)
         # Do a dry run of scope in the foreground, so it can parse args etc
         # avoiding the entrypoint script in the process.
-        # shellcheck disable=SC2086
-        docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" --dry-run "$@"
+        # shellcheck disable=SC2046
+        docker run --rm --entrypoint=/home/weave/scope $(docker_args) "$SCOPE_IMAGE" --dry-run "$@"
 
         if check_docker_for_mac; then
             create_plugins_dir
