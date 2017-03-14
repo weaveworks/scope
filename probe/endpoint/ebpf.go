@@ -1,7 +1,6 @@
 package endpoint
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -77,11 +76,7 @@ func isKernelSupported() error {
 	return nil
 }
 
-func newEbpfTracker(useEbpfConn bool) (eventTracker, error) {
-	if !useEbpfConn {
-		return nil, errors.New("ebpf tracker not enabled")
-	}
-
+func newEbpfTracker() (eventTracker, error) {
 	if err := isKernelSupported(); err != nil {
 		return nil, fmt.Errorf("kernel not supported: %v", err)
 	}

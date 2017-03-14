@@ -27,7 +27,6 @@ import (
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
-	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
@@ -158,13 +157,8 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
 
 	var processCache *process.CachingWalker
-	var scanner procspy.ConnectionScanner
 	if flags.procEnabled {
 		processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot))
-		// The eBPF tracker finds connections itself and does not need the connection scanner
-		if !flags.useEbpfConn {
-			scanner = procspy.NewConnectionScanner(processCache)
-		}
 		p.AddTicker(processCache)
 		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies, flags.noCommandLineArguments))
 	}
@@ -185,7 +179,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		UseEbpfConn:  flags.useEbpfConn,
 		ProcRoot:     flags.procRoot,
 		BufferSize:   flags.conntrackBufferSize,
-		Scanner:      scanner,
+		ProcessCache: processCache,
 		DNSSnooper:   dnsSnooper,
 	})
 	defer endpointReporter.Stop()
