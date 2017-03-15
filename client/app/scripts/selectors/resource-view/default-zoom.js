@@ -21,9 +21,9 @@ export const resourcesDefaultZoomSelector = createSelector(
     }
 
     const flattenedNodes = nodes.flatten(true);
-    const xMin = flattenedNodes.map(n => n.get('x')).min();
+    const xMin = flattenedNodes.map(n => n.get('offset')).min();
     const yMin = verticalPositions.toList().min();
-    const xMax = flattenedNodes.map(n => n.get('x') + n.get('width')).max();
+    const xMax = flattenedNodes.map(n => n.get('offset') + n.get('width')).max();
     const yMax = verticalPositions.toList().max() + RESOURCES_LAYER_HEIGHT;
 
     const minNodeWidth = flattenedNodes.map(n => n.get('width')).min();

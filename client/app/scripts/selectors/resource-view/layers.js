@@ -68,7 +68,6 @@ const decoratedNodesByTopologySelector = createSelector(
         .map(nodeParentNodeDecorator)
         .map(nodeColorDecorator);
       const filteredTopologyNodes = decoratedTopologyNodes
-        .map(node => node.set('meta', node))
         .filter(node => node.get('parentNodeId') || index === 0)
         .filter(node => node.get('width'));
 
@@ -84,38 +83,37 @@ export const positionedNodesByTopologySelector = createSelector(
   [
     layersTopologyIdsSelector,
     decoratedNodesByTopologySelector,
-    layersVerticalPositionSelector,
   ],
-  (layersTopologyIds, decoratedNodesByTopology, layersVerticalPosition) => {
+  (layersTopologyIds, decoratedNodesByTopology) => {
     let result = makeMap();
 
     layersTopologyIds.forEach((layerTopologyId, index) => {
       const decoratedNodes = decoratedNodesByTopology.get(layerTopologyId, makeMap());
       const buckets = decoratedNodes.groupBy(node => node.get('parentNodeId'));
-      const y = layersVerticalPosition.get(layerTopologyId);
 
       buckets.forEach((bucket, parentNodeId) => {
         const parentTopologyId = layersTopologyIds.get(index - 1);
-        let x = result.getIn([parentTopologyId, parentNodeId, 'x'], 0);
+        let offset = result.getIn([parentTopologyId, parentNodeId, 'offset'], 0);
 
         bucket.sortBy(nodeWeight).forEach((node, nodeId) => {
-          const positionedNode = node.merge(makeMap({ x, y }));
+          const positionedNode = node.set('offset', offset);
           result = result.setIn([layerTopologyId, nodeId], positionedNode);
-          x += node.get('width');
+          offset += node.get('width');
         });
 
-        const offset = result.getIn([parentTopologyId, parentNodeId, 'x'], 0);
-        const overhead = (x - offset) / result.getIn([parentTopologyId, parentNodeId, 'width'], x);
-        if (overhead > 1) {
-          console.log(overhead);
-          bucket.forEach((_, nodeId) => {
-            const node = result.getIn([layerTopologyId, nodeId]);
-            result = result.mergeIn([layerTopologyId, nodeId], makeMap({
-              x: ((node.get('x') - offset) / overhead) + offset,
-              width: node.get('width') / overhead,
-            }));
-          });
-        }
+        // const offset = result.getIn([parentTopologyId, parentNodeId, 'x'], 0);
+        // const overhead =
+        //   (x - offset) / result.getIn([parentTopologyId, parentNodeId, 'width'], x);
+        // if (overhead > 1) {
+        //   console.log(overhead);
+        //   bucket.forEach((_, nodeId) => {
+        //     const node = result.getIn([layerTopologyId, nodeId]);
+        //     result = result.mergeIn([layerTopologyId, nodeId], makeMap({
+        //       x: ((node.get('x') - offset) / overhead) + offset,
+        //       width: node.get('width') / overhead,
+        //     }));
+        //   });
+        // }
       });
     });
 

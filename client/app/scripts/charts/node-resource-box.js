@@ -1,51 +1,42 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
-const frameFill = 'rgba(100, 100, 100, 0.3)';
-const frameStroke = 'rgba(255, 255, 255, 1)';
-const frameStrokeWidth = 1.5;
 
-export default class NodeResourceBox extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-
-    this.handleMouseClick = this.handleMouseClick.bind(this);
-  }
-
-  handleMouseClick() {
-    console.log(this.props.meta.toJS());
+class NodeResourceBox extends React.Component {
+  defaultRectProps(relativeHeight = 1) {
+    const stroke = this.props.contrastMode ? 'black' : 'white';
+    const translateY = this.props.height * (1 - relativeHeight);
+    return {
+      transform: `translate(0, ${translateY})`,
+      height: this.props.height * relativeHeight,
+      width: this.props.width,
+      x: this.props.x,
+      y: this.props.y,
+      vectorEffect: 'non-scaling-stroke',
+      strokeWidth: 1,
+      stroke,
+    };
   }
 
   render() {
-    const { color, width, height, x, y, activeMetric } = this.props;
+    const { color, withCapacity, activeMetric } = this.props;
     const { relativeConsumption, info } = activeMetric.toJS();
-    const innerHeight = height * relativeConsumption;
+    const frameFill = 'rgba(150, 150, 150, 0.4)';
 
     return (
-      <g className="node-resource-box" onClick={this.handleMouseClick}>
+      <g className="node-resource-box">
         <title>{info}</title>
-        <rect
-          className="wrapper"
-          fill={frameFill}
-          stroke={frameStroke}
-          strokeWidth={frameStrokeWidth}
-          vectorEffect="non-scaling-stroke"
-          height={height}
-          width={width}
-          x={x}
-          y={y}
-        />
-        <rect
-          className="bar"
-          fill={color}
-          stroke={frameStroke}
-          strokeWidth={frameStrokeWidth}
-          vectorEffect="non-scaling-stroke"
-          height={innerHeight}
-          width={width}
-          x={x}
-          y={y + (height * (1 - relativeConsumption))}
-        />
+        {withCapacity && <rect className="frame" fill={frameFill} {...this.defaultRectProps()} />}
+        <rect className="bar" fill={color} {...this.defaultRectProps(relativeConsumption)} />
       </g>
     );
   }
 }
+
+function mapStateToProps(state) {
+  return {
+    contrastMode: state.get('contrastMode')
+  };
+}
+
+export default connect(mapStateToProps)(NodeResourceBox);
