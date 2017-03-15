@@ -51,11 +51,13 @@ func (br *backgroundReader) getWalkedProcPid(buf *bytes.Buffer) (map[uint64]*Pro
 	br.mtx.Lock()
 	defer br.mtx.Unlock()
 
+	var err error
 	// Don't access latestBuf directly but create a reader. In this way,
 	// the buffer will not be empty in the next call of getWalkedProcPid
 	// and it can be copied again.
-	_, err := io.Copy(buf, bytes.NewReader(br.latestBuf.Bytes()))
-
+	if br.latestBuf != nil {
+		_, err = io.Copy(buf, bytes.NewReader(br.latestBuf.Bytes()))
+	}
 	return br.latestSockets, err
 }
 
