@@ -2,6 +2,7 @@ import debug from 'debug';
 import reqwest from 'reqwest';
 import trimStart from 'lodash/trimStart';
 import defaults from 'lodash/defaults';
+import { Map as makeMap } from 'immutable';
 
 import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
@@ -9,6 +10,7 @@ import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveEr
   receiveControlSuccess, receiveTopologies, receiveNotFound,
   receiveNodesForTopology } from '../actions/app-actions';
 
+import { layersTopologyIdsSelector } from '../selectors/resource-view/layers';
 import { API_INTERVAL, TOPOLOGY_INTERVAL } from '../constants/timer';
 
 const log = debug('scope:web-api-utils');
@@ -156,14 +158,10 @@ function doRequest(opts) {
   return reqwest(config);
 }
 
-/**
- * Gets nodes for all topologies (for search)
- */
-export function getAllNodes(getState, dispatch) {
-  const state = getState();
-  const topologyOptions = state.get('topologyOptions');
+function getNodesForTopologies(getState, dispatch, topologyIds, topologyOptions = makeMap()) {
   // fetch sequentially
-  state.get('topologyUrlsById')
+  getState().get('topologyUrlsById')
+    .filter((_, topologyId) => topologyIds.contains(topologyId))
     .reduce((sequence, topologyUrl, topologyId) => sequence.then(() => {
       const optionsQuery = buildOptionsQuery(topologyOptions.get(topologyId));
       // Trim the leading slash from the url before requesting.
@@ -173,6 +171,24 @@ export function getAllNodes(getState, dispatch) {
     .then(response => response.json())
     .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
     Promise.resolve());
+}
+
+/**
+ * Gets nodes for all topologies (for search)
+ */
+export function getAllNodes(getState, dispatch) {
+  const state = getState();
+  const topologyIds = state.get('topologies').map(topology => topology.get('id'));
+  const topologyOptions = state.get('topologyOptions');
+  getNodesForTopologies(getState, dispatch, topologyIds, topologyOptions);
+}
+
+// NOTE: At the moment we are only getting their one-time snapshot (instead of polling),
+// because we intentionally want to keep the resource view layout static. Later on, we
+// will probably want to change this.
+export function getResourceViewNodesSnapshot(getState, dispatch) {
+  const topologyIds = layersTopologyIdsSelector(getState());
+  getNodesForTopologies(getState, dispatch, topologyIds);
 }
 
 export function getTopologies(options, dispatch, initialPoll) {

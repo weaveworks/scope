@@ -5,7 +5,12 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
   OrderedMap as makeOrderedMap, Set as makeSet } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
-import { EDGE_ID_SEPARATOR, GRAPH_VIEW_MODE, TABLE_VIEW_MODE } from '../constants/naming';
+import {
+  EDGE_ID_SEPARATOR,
+  GRAPH_VIEW_MODE,
+  TABLE_VIEW_MODE,
+  RESOURCE_VIEW_MODE,
+} from '../constants/naming';
 import {
   graphExceedsComplexityThreshSelector,
   activeTopologyZoomCacheKeyPathSelector,
@@ -53,7 +58,7 @@ export const initialState = makeMap({
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
   nodesLoaded: false,
-  // nodes cache, infrequently updated, used for search
+  // nodes cache, infrequently updated, used for search & resource view
   nodesByTopology: makeMap(), // topologyId -> nodes
   pinnedMetric: null,
   // class of metric, e.g. 'cpu', rather than 'host_cpu' or 'process_cpu'.
@@ -621,7 +626,12 @@ export function rootReducer(state = initialState, action) {
       }
 
       // update nodes cache
-      return state.setIn(['nodesByTopology', state.get('currentTopologyId')], state.get('nodes'));
+      if (state.get('topologyViewMode') !== RESOURCE_VIEW_MODE) {
+        state = state.setIn(
+          ['nodesByTopology', state.get('currentTopologyId')], state.get('nodes'));
+      }
+
+      return state;
     }
 
     case ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY: {

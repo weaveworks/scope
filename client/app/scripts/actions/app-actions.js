@@ -13,6 +13,7 @@ import {
 import {
   doControlRequest,
   getAllNodes,
+  getResourceViewNodesSnapshot,
   getNodesDelta,
   getNodeDetails,
   getTopologies,
@@ -23,8 +24,15 @@ import {
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
-import { activeTopologyOptionsSelector } from '../selectors/topology';
-import { RESOURCE_VIEW_MODE, GRAPH_VIEW_MODE, TABLE_VIEW_MODE } from '../constants/naming';
+import {
+  activeTopologyOptionsSelector,
+  isResourceViewModeSelector,
+} from '../selectors/topology';
+import {
+  GRAPH_VIEW_MODE,
+  TABLE_VIEW_MODE,
+  RESOURCE_VIEW_MODE,
+ } from '../constants/naming';
 
 const log = debug('scope:app-actions');
 
@@ -282,9 +290,8 @@ export function setResourceView() {
       viewMode: RESOURCE_VIEW_MODE,
     });
     updateRoute(getState);
-    setTimeout(() => {
-      getAllNodes(getState, dispatch);
-    }, 1200);
+    // Update the nodes for all topologies that appear in the current resource view.
+    getResourceViewNodesSnapshot(getState, dispatch);
   };
 }
 
@@ -721,10 +728,13 @@ export function route(urlState) {
       state.get('nodeDetails'),
       dispatch
     );
-    // TODO: Remove this
-    setTimeout(() => {
-      getAllNodes(getState, dispatch);
-    }, 1200);
+    // If we are landing on the resource view page, we need to fetch not only all the
+    // nodes for the current topology, but also the nodes of all the topologies that make
+    // the layers in the resource view.
+    if (isResourceViewModeSelector(state)) {
+      // Get all the nodes for the current resource view layout in the next run-cycle.
+      setTimeout(() => { getResourceViewNodesSnapshot(getState, dispatch); }, 0);
+    }
   };
 }
 
