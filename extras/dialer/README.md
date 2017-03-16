@@ -22,19 +22,19 @@ can be used to compare performance under different scenarios/branches.
 
 ```
 # Start a listener
-./tools/dialer/listener
+./extras/dialer/listener
 Listening on :8082
 IP addr + port: 172.17.0.2:8082
 
 
 # Start the dialer script with a maximum of 10 dialer containers
 # (default 50)
-./tools/dialer/dialer 172.17.0.2:8082 10
+./extras/dialer/dialer 172.17.0.2:8082 10
 
 
 # Start time-scope-probe to measure the scheduled time of scope-probe
 # every 3 seconds (default 10 seconds) for 3 times (default 60 times)
-sudo ./tools/dialer/time-scope-probe 3 3
+sudo ./extras/dialer/time-scope-probe 3 3
 ...
 ```
 

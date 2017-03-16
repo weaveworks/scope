@@ -20,6 +20,11 @@ if [ "$(pidof scope-probe)" == "" ]; then
     exit 1
 fi
 
+TIME_U2=$(gawk '{print $14"*10"}' <"/proc/$(pidof scope-probe)/stat" | bc)
+TIME_K2=$(gawk '{print $15"*10"}' <"/proc/$(pidof scope-probe)/stat" | bc)
+TIME_T2=$((TIME_U2 + TIME_K2))
+
+echo "utime;stime;total_time"
 for ((i = 0; i < "$interval_num"; i++)); do
     sleep "$interval_sleep"
     TIME_U1=$TIME_U2
@@ -29,5 +34,5 @@ for ((i = 0; i < "$interval_num"; i++)); do
     TIME_U2=$(gawk '{print $14"*10"}' <"/proc/$(pidof scope-probe)/stat" | bc)
     TIME_K2=$(gawk '{print $15"*10"}' <"/proc/$(pidof scope-probe)/stat" | bc)
     TIME_T2=$((TIME_U2 + TIME_K2))
-    echo "utime $((TIME_U2 - TIME_U1)) + stime $((TIME_K2 - TIME_K1)) = $((TIME_T2 - TIME_T1))"
+    echo "$((TIME_U2 - TIME_U1));$((TIME_K2 - TIME_K1));$((TIME_T2 - TIME_T1))"
 done
