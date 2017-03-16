@@ -3,9 +3,9 @@ import { fromJS, Map as makeMap } from 'immutable';
 import { createSelector } from 'reselect';
 
 import { RESOURCES_LAYER_PADDING, RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
-import { resourceViewLayers } from '../../constants/resources';
+import { resourceViewLayers, topologiesWithCapacity } from '../../constants/resources';
 import {
-  nodeColorDecorator,
+  nodeResourceViewColorDecorator,
   nodeParentNodeDecorator,
   nodeResourceBoxDecorator,
   nodeActiveMetricDecorator,
@@ -58,15 +58,16 @@ const decoratedNodesByTopologySelector = createSelector(
 
     topologiesNodes.forEach((topologyNodes, index) => {
       const layerTopologyId = layersTopologyIds.get(index);
+      const withCapacity = topologiesWithCapacity.includes(layerTopologyId);
       const decoratedTopologyNodes = (topologyNodes || makeMap())
         .map(node => node.set('directParentTopologyId', lastLayerTopologyId))
         .map(node => node.set('topologyId', layerTopologyId))
         .map(node => node.set('activeMetricType', pinnedMetricType))
-        .map(node => node.set('withCapacity', layerTopologyId === 'hosts'))
+        .map(node => node.set('withCapacity', withCapacity))
+        .map(nodeResourceViewColorDecorator)
         .map(nodeActiveMetricDecorator)
         .map(nodeResourceBoxDecorator)
-        .map(nodeParentNodeDecorator)
-        .map(nodeColorDecorator);
+        .map(nodeParentNodeDecorator);
       const filteredTopologyNodes = decoratedTopologyNodes
         .filter(node => node.get('parentNodeId') || index === 0)
         .filter(node => node.get('width'));

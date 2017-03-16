@@ -8,6 +8,7 @@ class NodeResourceBox extends React.Component {
     const translateY = this.props.height * (1 - relativeHeight);
     return {
       transform: `translate(0, ${translateY})`,
+      opacity: this.props.contrastMode ? 1 : 0.85,
       height: this.props.height * relativeHeight,
       width: this.props.width,
       x: this.props.x,

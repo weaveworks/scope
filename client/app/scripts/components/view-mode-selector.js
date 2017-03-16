@@ -12,14 +12,15 @@ import {
 } from '../selectors/topology';
 
 
-const Item = (icons, label, isSelected, onClick) => {
+const Item = (icons, label, isSelected, onClick, isEnabled = true) => {
   const className = classNames('view-mode-selector-action', {
-    'view-mode-selector-action-selected': isSelected
+    'view-mode-selector-action-selected': isSelected,
   });
   return (
     <div
       className={className}
-      onClick={onClick} >
+      disabled={!isEnabled}
+      onClick={isEnabled && onClick}>
       <span className={icons} style={{fontSize: 12}} />
       <span>{label}</span>
     </div>
@@ -41,8 +42,8 @@ class ViewModeSelector extends React.Component {
         <div className="view-mode-selector-wrapper">
           {Item('fa fa-share-alt', 'Graph', isGraphViewMode, this.props.setGraphView)}
           {Item('fa fa-table', 'Table', isTableViewMode, this.props.setTableView)}
-          {hasResourceView &&
-            Item('fa fa-bar-chart', 'Resources', isResourceViewMode, this.props.setResourceView)}
+          {Item('fa fa-bar-chart', 'Resources', isResourceViewMode, this.props.setResourceView,
+            hasResourceView)}
         </div>
         {isResourceViewMode && <MetricSelector alwaysPinned />}
       </div>

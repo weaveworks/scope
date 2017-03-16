@@ -140,7 +140,7 @@ class App extends React.Component {
           {showingMetricsSelector && isGraphViewMode && <MetricSelector />}
           {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
           {!isResourceViewMode && <Status />}
-          <TopologyOptions />
+          {!isResourceViewMode && <TopologyOptions />}
         </Sidebar>
 
         <Footer />

@@ -1,7 +1,7 @@
 import React from 'react';
 import { fromJS } from 'immutable';
 
-import NodeResourceLabel from './node-resource-label';
+import NodeResourceInfo from './node-resource-info';
 import { applyTransformX, applyTransformY } from '../utils/transform-utils';
 import {
   RESOURCES_LAYER_TITLE_WIDTH,
@@ -24,11 +24,10 @@ export default class LayerLabelsOverlay extends React.Component {
 
       if (width >= RESOURCES_LABEL_MIN_SIZE) {
         labels.push({
-          id: node.get('id'),
-          label: node.get('label'),
           width: width - (2 * RESOURCES_LABEL_PADDING),
           x: xTrimmed + RESOURCES_LABEL_PADDING,
           y: y + RESOURCES_LABEL_PADDING,
+          node,
         });
       }
     });
@@ -40,9 +39,9 @@ export default class LayerLabelsOverlay extends React.Component {
     return (
       <g className="labels-overlay">
         {this.positionedLabels().map(label => (
-          <NodeResourceLabel
-            key={label.get('id')}
-            label={label.get('label')}
+          <NodeResourceInfo
+            key={label.getIn(['node', 'id'])}
+            node={label.get('node')}
             width={label.get('width')}
             x={label.get('x')}
             y={label.get('y')}
