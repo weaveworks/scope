@@ -114,6 +114,11 @@ func MapContainer2Pod(n report.Node, _ report.Networks) report.Nodes {
 		return report.Nodes{}
 	}
 
+	// Ignore pause containers
+	if image, ok := n.Latest.Lookup(docker.ImageName); ok && kubernetes.IsPauseImageName(image) {
+		return report.Nodes{}
+	}
+
 	// Otherwise, if some some reason the container doesn't have a pod uid (maybe
 	// slightly out of sync reports, or its not in a pod), make it part of unmanaged.
 	uid, ok := n.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.uid")
