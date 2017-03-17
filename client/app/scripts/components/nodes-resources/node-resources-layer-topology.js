@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { RESOURCES_LAYER_TITLE_WIDTH, RESOURCES_LAYER_HEIGHT } from '../constants/styles';
-import { applyTransformY } from '../utils/transform-utils';
+import { RESOURCES_LAYER_TITLE_WIDTH, RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
+import { applyTransformY } from '../../utils/transform-utils';
 
 export default class LayerTopologyName extends React.Component {
   render() {

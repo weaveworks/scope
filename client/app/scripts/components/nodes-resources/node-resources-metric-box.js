@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 
-class NodeResourceBox extends React.Component {
+class NodeResourcesMetricBox extends React.Component {
   defaultRectProps(relativeHeight = 1) {
     const { translateX, translateY, scaleX, scaleY } = this.props.transform;
     const innerTranslateY = this.props.height * scaleY * (1 - relativeHeight);
@@ -41,4 +41,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(mapStateToProps)(NodeResourceBox);
+export default connect(mapStateToProps)(NodeResourcesMetricBox);

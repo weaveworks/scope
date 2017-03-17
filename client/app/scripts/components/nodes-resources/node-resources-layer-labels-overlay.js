@@ -1,13 +1,13 @@
 import React from 'react';
 import { fromJS } from 'immutable';
 
-import NodeResourceInfo from './node-resource-info';
-import { applyTransformX, applyTransformY } from '../utils/transform-utils';
+import NodeResourcesMetricBoxInfo from './node-resources-metric-box-info';
+import { applyTransformX, applyTransformY } from '../../utils/transform-utils';
 import {
   RESOURCES_LAYER_TITLE_WIDTH,
   RESOURCES_LABEL_MIN_SIZE,
   RESOURCES_LABEL_PADDING,
-} from '../constants/styles';
+} from '../../constants/styles';
 
 
 export default class LayerLabelsOverlay extends React.Component {
@@ -39,7 +39,7 @@ export default class LayerLabelsOverlay extends React.Component {
     return (
       <g className="labels-overlay">
         {this.positionedLabels().map(label => (
-          <NodeResourceInfo
+          <NodeResourcesMetricBoxInfo
             key={label.getIn(['node', 'id'])}
             node={label.get('node')}
             width={label.get('width')}

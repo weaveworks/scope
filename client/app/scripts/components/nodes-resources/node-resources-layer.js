@@ -2,13 +2,13 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
 
-import NodeResourceBox from './node-resource-box';
-import LayerLabelsOverlay from './layer-labels-overlay';
-import LayerTopologyName from './layer-topology-name';
+import NodeResourcesMetricBox from './node-resources-metric-box';
+import NodeResourcesLayerLabelsOverlay from './node-resources-layer-labels-overlay';
+import NodeResourcesLayerTopology from './node-resources-layer-topology';
 import {
   layersVerticalPositionSelector,
   positionedNodesByTopologySelector,
-} from '../selectors/resource-view/layers';
+} from '../../selectors/resource-view/layers';
 
 
 // const stringifiedTransform = ({ scaleX = 1, scaleY = 1, translateX = 0, translateY = 0 }) => (
@@ -23,7 +23,7 @@ class NodesResourcesLayer extends React.Component {
       <g className="node-resource-layer">
         <g>
           {nodes.toIndexedSeq().map(node => (
-            <NodeResourceBox
+            <NodeResourcesMetricBox
               key={node.get('id')}
               color={node.get('color')}
               width={node.get('width')}
@@ -36,12 +36,12 @@ class NodesResourcesLayer extends React.Component {
             />
           ))}
         </g>
-        <LayerLabelsOverlay
+        <NodeResourcesLayerLabelsOverlay
           verticalOffset={layerVerticalPosition}
           transform={transform}
           nodes={nodes}
         />
-        {!nodes.isEmpty() && <LayerTopologyName
+        {!nodes.isEmpty() && <NodeResourcesLayerTopology
           verticalOffset={layerVerticalPosition}
           transform={transform}
           topologyId={topologyId}

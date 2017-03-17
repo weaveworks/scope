@@ -1,10 +1,10 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import Logo from '../components/logo';
+import Logo from './logo';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layers';
-import CachableZoomWrapper from '../components/cachable-zoom-wrapper';
-import NodesResourcesLayer from './nodes-resources-layer';
+import CachableZoomWrapper from './cachable-zoom-wrapper';
+import NodesResourcesLayer from './nodes-resources/node-resources-layer';
 
 
 class NodesResources extends React.Component {

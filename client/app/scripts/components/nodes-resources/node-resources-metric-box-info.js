@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { getHumanizedMetricInfo } from '../utils/metric-utils';
+import { getHumanizedMetricInfo } from '../../utils/metric-utils';
 
 
 const HEIGHT = '45px';
 
-export default class NodeResourceInfo extends React.Component {
+export default class NodeResourcesMetricBoxInfo extends React.Component {
   render() {
     const { node, width, x, y } = this.props;
     const humanizedMetricInfo = getHumanizedMetricInfo(node.get('activeMetric'));

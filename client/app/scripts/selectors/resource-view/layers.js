@@ -72,8 +72,6 @@ const decoratedNodesByTopologySelector = createSelector(
         .filter(node => node.get('parentNodeId') || index === 0)
         .filter(node => node.get('width'));
 
-      // console.log('Max width', filteredTopologyNodes.map(n => n.get('width')).max());
-      // console.log('Min width', filteredTopologyNodes.map(n => n.get('width')).min());
       nodesByTopology = nodesByTopology.set(layerTopologyId, filteredTopologyNodes);
       lastLayerTopologyId = layerTopologyId;
     });

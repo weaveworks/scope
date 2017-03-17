@@ -4,7 +4,7 @@ import { debounce } from 'lodash';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesGrid from '../charts/nodes-grid';
-import NodesResources from '../charts/nodes-resources';
+import NodesResources from '../components/nodes-resources';
 import NodesError from '../charts/nodes-error';
 import DelayedShow from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
