@@ -10,10 +10,6 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-const (
-	k8sNamespaceLabel = "io.kubernetes.pod.namespace"
-)
-
 // PreciousNodeRenderer ensures a node is never filtered out by decorators
 type PreciousNodeRenderer struct {
 	PreciousNodeID string
@@ -285,7 +281,7 @@ func IsApplication(n report.Node) bool {
 	if roleLabel == "system" {
 		return false
 	}
-	namespace, _ := n.Latest.Lookup(docker.LabelPrefix + k8sNamespaceLabel)
+	namespace, _ := n.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.namespace")
 	if namespace == "kube-system" {
 		return false
 	}
@@ -324,14 +320,7 @@ func IsNotPseudo(n report.Node) bool {
 // IsNamespace checks if the node is a pod/service in the specified namespace
 func IsNamespace(namespace string) FilterFunc {
 	return func(n report.Node) bool {
-		tryKeys := []string{kubernetes.Namespace, docker.LabelPrefix + k8sNamespaceLabel}
-		gotNamespace := ""
-		for _, key := range tryKeys {
-			if value, ok := n.Latest.Lookup(key); ok {
-				gotNamespace = value
-				break
-			}
-		}
+		gotNamespace, _ := n.Latest.Lookup(kubernetes.Namespace)
 		return namespace == gotNamespace
 	}
 }
