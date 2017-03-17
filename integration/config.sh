@@ -40,6 +40,19 @@ scope_end_suite() {
     done
 }
 
+list_containers() {
+    local host=$1
+    echo "Listing containers on ${host}:"
+    curl -s "http://${host}:4040/api/topology/containers?system=show" | jq -r '.nodes[] | select(has("metadata")) | .metadata[] | select(.id == "docker_image_name") | .value'
+}
+
+list_connections() {
+    local host=$1
+    echo "Listing connections on ${host}:"
+    curl -s "http://${host}:4040/api/topology/containers?system=show" | jq -r '.nodes[] | select(has("adjacency")) | { "from": .id, "to": .adjacency[]} | .from + " -> " + .to'
+
+}
+
 # this checks we have a named node in the given view
 has() {
     local view=$1
@@ -111,6 +124,8 @@ endpoints_have_ebpf() {
     done
 
     echo "Only ${have_ebpf} endpoints of ${number_of_endpoints} have ebpf enabled, should be equal"
+    echo "Example of one endpoint:"
+    echo "${report}" | jq -r '[.Endpoint.nodes[]][0]'
     assert "echo '$have_ebpf" "$number_of_endpoints"
 }
 

@@ -13,6 +13,10 @@ wait_for_containers "$HOST1" 60 nginx client
 
 has_container "$HOST1" nginx
 has_container "$HOST1" client
+
+list_containers "$HOST1"
+list_connections "$HOST1"
+
 has_connection containers "$HOST1" client nginx
 
 endpoints_have_ebpf "$HOST1"
