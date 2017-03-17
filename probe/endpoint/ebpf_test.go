@@ -179,6 +179,62 @@ func TestWalkConnections(t *testing.T) {
 		cnt++
 	})
 	if cnt != 2 {
-		t.Errorf("walkConnetions found %v instead of 2 connections", cnt)
+		t.Errorf("walkConnections found %v instead of 2 connections", cnt)
+	}
+}
+
+func TestInvalidTimeStampDead(t *testing.T) {
+	var (
+		cnt        int
+		ClientPid  uint32 = 43
+		ServerIP          = net.IP("127.0.0.1")
+		ClientIP          = net.IP("127.0.0.2")
+		ServerPort uint16 = 12345
+		ClientPort uint16 = 6789
+		NetNS      uint32 = 123456789
+		event             = tracer.TcpV4{
+			CPU:   0,
+			Type:  tracer.EventConnect,
+			Pid:   ClientPid,
+			Comm:  "cmd",
+			SAddr: ClientIP,
+			DAddr: ServerIP,
+			SPort: ClientPort,
+			DPort: ServerPort,
+			NetNS: NetNS,
+		}
+	)
+	mockEbpfTracker := &EbpfTracker{
+		readyToHandleConnections: true,
+		dead:            false,
+		openConnections: map[string]ebpfConnection{},
+	}
+	ebpfTracker = mockEbpfTracker
+	event.Timestamp = 0
+	tcpEventCbV4(event)
+	event2 := event
+	event2.SPort = 1
+	event2.Timestamp = 2
+	tcpEventCbV4(event2)
+	mockEbpfTracker.walkConnections(func(e ebpfConnection) {
+		cnt++
+	})
+	if cnt != 2 {
+		t.Errorf("walkConnections found %v instead of 2 connections", cnt)
+	}
+	if mockEbpfTracker.isDead() {
+		t.Errorf("expected ebpfTracker to be alive after events with valid order")
+	}
+	cnt = 0
+	event.Timestamp = 1
+	tcpEventCbV4(event)
+	mockEbpfTracker.walkConnections(func(e ebpfConnection) {
+		cnt++
+	})
+	if cnt != 2 {
+		t.Errorf("walkConnections found %v instead of 2 connections", cnt)
+	}
+	if !mockEbpfTracker.isDead() {
+		t.Errorf("expected ebpfTracker to be set to dead after events with wrong order")
 	}
 }
