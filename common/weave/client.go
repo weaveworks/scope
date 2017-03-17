@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	realexec "os/exec"
 	"regexp"
 	"strconv"
 
@@ -196,9 +197,9 @@ func (c *client) PS() (map[string]PSEntry, error) {
 		}
 	}
 	scannerErr := scanner.Err()
+	slurp, _ := ioutil.ReadAll(stdErr)
 	cmdErr := cmd.Wait()
 	if cmdErr != nil {
-		slurp, _ := ioutil.ReadAll(stdErr)
 		return nil, fmt.Errorf("%s: %q", cmdErr, slurp)
 	}
 	if scannerErr != nil {
@@ -209,14 +210,13 @@ func (c *client) PS() (map[string]PSEntry, error) {
 
 func (c *client) Expose() error {
 	cmd := weaveCommand("--local", "ps", "weave:expose")
-	stdErr, err := cmd.StderrPipe()
-	if err != nil {
-		return err
-	}
 	output, err := cmd.Output()
 	if err != nil {
-		slurp, _ := ioutil.ReadAll(stdErr)
-		return fmt.Errorf("Error running weave ps: %s: %q", err, slurp)
+		stdErr := []byte{}
+		if exitErr, ok := err.(*realexec.ExitError); ok {
+			stdErr = exitErr.Stderr
+		}
+		return fmt.Errorf("Error running weave ps: %s: %q", err, stdErr)
 	}
 	ips := ipMatch.FindAllSubmatch(output, -1)
 	if ips != nil {
@@ -224,13 +224,12 @@ func (c *client) Expose() error {
 		return nil
 	}
 	cmd = weaveCommand("--local", "expose")
-	stdErr, err = cmd.StderrPipe()
-	if err != nil {
-		return err
-	}
-	if err := cmd.Run(); err != nil {
-		slurp, _ := ioutil.ReadAll(stdErr)
-		return fmt.Errorf("Error running weave expose: %s: %q", err, slurp)
+	if _, err := cmd.Output(); err != nil {
+		stdErr := []byte{}
+		if exitErr, ok := err.(*realexec.ExitError); ok {
+			stdErr = exitErr.Stderr
+		}
+		return fmt.Errorf("Error running weave expose: %s: %q", err, stdErr)
 	}
 	return nil
 }
