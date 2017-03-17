@@ -147,6 +147,7 @@ class CachableZoomWrapper extends React.Component {
 
   zoomed() {
     if (!this.props.disabled) {
+      console.log('Current zoom', d3Event.transform.x, d3Event.transform.k);
       const updatedState = this.cachableState({
         scaleX: d3Event.transform.k,
         scaleY: d3Event.transform.k,

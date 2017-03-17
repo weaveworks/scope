@@ -31,7 +31,7 @@ export function nodeActiveMetricDecorator(node) {
 
 export function nodeResourceBoxDecorator(node) {
   const widthCriterion = node.get('withCapacity') ? 'totalCapacity' : 'absoluteConsumption';
-  const width = node.getIn(['activeMetric', widthCriterion]) * 1e-5;
+  const width = node.getIn(['activeMetric', widthCriterion]) * 1e-4;
   const height = RESOURCES_LAYER_HEIGHT;
 
   return node.merge(makeMap({ width, height }));

@@ -11,9 +11,9 @@ import {
 } from '../selectors/resource-view/layers';
 
 
-const stringifiedTransform = ({ scaleX = 1, scaleY = 1, translateX = 0, translateY = 0 }) => (
-  `translate(${translateX},${translateY}) scale(${scaleX},${scaleY})`
-);
+// const stringifiedTransform = ({ scaleX = 1, scaleY = 1, translateX = 0, translateY = 0 }) => (
+//   `translate(${translateX},${translateY}) scale(${scaleX},${scaleY})`
+// );
 
 class NodesResourcesLayer extends React.Component {
   render() {
@@ -21,7 +21,7 @@ class NodesResourcesLayer extends React.Component {
 
     return (
       <g className="node-resource-layer">
-        <g transform={stringifiedTransform(transform)}>
+        <g>
           {nodes.toIndexedSeq().map(node => (
             <NodeResourceBox
               key={node.get('id')}
@@ -32,6 +32,7 @@ class NodesResourcesLayer extends React.Component {
               activeMetric={node.get('activeMetric')}
               x={node.get('offset')}
               y={layerVerticalPosition}
+              transform={transform}
             />
           ))}
         </g>

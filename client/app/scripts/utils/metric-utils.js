@@ -56,10 +56,10 @@ export function getMetricValue(metric) {
 
 // Used in the resource view
 export function getHumanizedMetricInfo(metric) {
-  const showExtendedInfo = metric.withCapacity && metric.format !== 'percent';
-  const totalCapacity = formatMetricSvg(metric.totalCapacity, metric);
-  const absoluteConsumption = formatMetricSvg(metric.absoluteConsumption, metric);
-  const relativeConsumption = formatMetricSvg(100 * metric.relativeConsumption,
+  const showExtendedInfo = metric.get('withCapacity') && metric.get('format') !== 'percent';
+  const totalCapacity = formatMetricSvg(metric.get('totalCapacity'), metric.toJS());
+  const absoluteConsumption = formatMetricSvg(metric.get('absoluteConsumption'), metric.toJS());
+  const relativeConsumption = formatMetricSvg(100.0 * metric.get('relativeConsumption'),
     { format: 'percent' });
   return (
     <span>

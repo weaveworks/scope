@@ -72,6 +72,8 @@ const decoratedNodesByTopologySelector = createSelector(
         .filter(node => node.get('parentNodeId') || index === 0)
         .filter(node => node.get('width'));
 
+      // console.log('Max width', filteredTopologyNodes.map(n => n.get('width')).max());
+      // console.log('Min width', filteredTopologyNodes.map(n => n.get('width')).min());
       nodesByTopology = nodesByTopology.set(layerTopologyId, filteredTopologyNodes);
       lastLayerTopologyId = layerTopologyId;
     });
@@ -102,19 +104,20 @@ export const positionedNodesByTopologySelector = createSelector(
           offset += node.get('width');
         });
 
-        // const offset = result.getIn([parentTopologyId, parentNodeId, 'x'], 0);
-        // const overhead =
-        //   (x - offset) / result.getIn([parentTopologyId, parentNodeId, 'width'], x);
-        // if (overhead > 1) {
-        //   console.log(overhead);
-        //   bucket.forEach((_, nodeId) => {
-        //     const node = result.getIn([layerTopologyId, nodeId]);
-        //     result = result.mergeIn([layerTopologyId, nodeId], makeMap({
-        //       x: ((node.get('x') - offset) / overhead) + offset,
-        //       width: node.get('width') / overhead,
-        //     }));
-        //   });
-        // }
+        // TODO: Get rid of this disgusting code
+        const parentOffset = result.getIn([parentTopologyId, parentNodeId, 'offset'], 0);
+        const parentWidth = result.getIn([parentTopologyId, parentNodeId, 'width'], offset);
+        const overhead = (offset - parentOffset) / parentWidth;
+        if (overhead > 1) {
+          console.log(overhead);
+          bucket.forEach((_, nodeId) => {
+            const node = result.getIn([layerTopologyId, nodeId]);
+            result = result.mergeIn([layerTopologyId, nodeId], makeMap({
+              x: ((node.get('offset') - parentOffset) / overhead) + parentOffset,
+              width: node.get('width') / overhead,
+            }));
+          });
+        }
       });
     });
 

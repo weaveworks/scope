@@ -4,15 +4,16 @@ import { connect } from 'react-redux';
 
 class NodeResourceBox extends React.Component {
   defaultRectProps(relativeHeight = 1) {
+    const { translateX, translateY, scaleX, scaleY } = this.props.transform;
+    const innerTranslateY = this.props.height * scaleY * (1 - relativeHeight);
     const stroke = this.props.contrastMode ? 'black' : 'white';
-    const translateY = this.props.height * (1 - relativeHeight);
     return {
-      transform: `translate(0, ${translateY})`,
+      transform: `translate(0, ${innerTranslateY})`,
       opacity: this.props.contrastMode ? 1 : 0.85,
-      height: this.props.height * relativeHeight,
-      width: this.props.width,
-      x: this.props.x,
-      y: this.props.y,
+      height: this.props.height * scaleY * relativeHeight,
+      width: this.props.width * scaleX,
+      x: (this.props.x * scaleX) + translateX,
+      y: (this.props.y * scaleY) + translateY,
       vectorEffect: 'non-scaling-stroke',
       strokeWidth: 1,
       stroke,
