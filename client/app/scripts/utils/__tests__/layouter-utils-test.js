@@ -1,7 +1,7 @@
 import { fromJS } from 'immutable';
 
 import {
-  initEdgesFromNodes,
+  initEdgesFromNodes
 } from '../layouter-utils';
 
 
