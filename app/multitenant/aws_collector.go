@@ -389,7 +389,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		Add(float64(len(reportKey)))
 
 	var resp *dynamodb.PutItemOutput
-	err = instrument.TimeRequestHistogram(ctx, "S3.PutItem", dynamoRequestDuration, func(_ context.Context) error {
+	err = instrument.TimeRequestHistogram(ctx, "DynamoDB.PutItem", dynamoRequestDuration, func(_ context.Context) error {
 		var err error
 		resp, err = c.db.PutItem(&dynamodb.PutItemInput{
 			TableName: aws.String(c.tableName),
