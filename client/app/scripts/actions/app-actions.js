@@ -351,6 +351,25 @@ export function clickResumeUpdate() {
   };
 }
 
+function updateTopology(dispatch, getState) {
+  const state = getState();
+  updateRoute(getState);
+  // update all request workers with new options
+  resetUpdateBuffer();
+  // NOTE: This is currently not needed for our static resource
+  // view,but we'll need it here later and it's simpler to just
+  // keep it than to redo the nodes delta updating logic.
+  getNodesDelta(
+    getCurrentTopologyUrl(state),
+    activeTopologyOptionsSelector(state),
+    dispatch
+  );
+  // Update the nodes for all topologies that appear in the current resource view.
+  if (isResourceViewModeSelector(state)) {
+    getResourceViewNodesSnapshot(getState, dispatch);
+  }
+}
+
 export function clickShowTopologyForNode(topologyId, nodeId) {
   return (dispatch, getState) => {
     dispatch({
@@ -358,15 +377,7 @@ export function clickShowTopologyForNode(topologyId, nodeId) {
       topologyId,
       nodeId
     });
-    updateRoute(getState);
-    // update all request workers with new options
-    resetUpdateBuffer();
-    const state = getState();
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      dispatch
-    );
+    updateTopology(dispatch, getState);
   };
 }
 
@@ -376,15 +387,7 @@ export function clickTopology(topologyId) {
       type: ActionTypes.CLICK_TOPOLOGY,
       topologyId
     });
-    updateRoute(getState);
-    // update all request workers with new options
-    resetUpdateBuffer();
-    const state = getState();
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      dispatch
-    );
+    updateTopology(dispatch, getState);
   };
 }
 
@@ -732,8 +735,7 @@ export function route(urlState) {
     // nodes for the current topology, but also the nodes of all the topologies that make
     // the layers in the resource view.
     if (isResourceViewModeSelector(state)) {
-      // Get all the nodes for the current resource view layout in the next run-cycle.
-      setTimeout(() => { getResourceViewNodesSnapshot(getState, dispatch); }, 0);
+      getResourceViewNodesSnapshot(getState, dispatch);
     }
   };
 }

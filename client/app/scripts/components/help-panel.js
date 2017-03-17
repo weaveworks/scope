@@ -149,10 +149,10 @@ function renderFieldsPanel(currentTopologyName, searchableFields) {
 }
 
 
-function HelpPanel({currentTopologyName, searchableFields, onClickClose}) {
+function HelpPanel({ currentTopologyName, searchableFields, onClickClose, canvasMargins }) {
   return (
     <div className="help-panel-wrapper">
-      <div className="help-panel" style={{marginTop: this.props.canvasMargins.top}}>
+      <div className="help-panel" style={{marginTop: canvasMargins.top}}>
         <div className="help-panel-header">
           <h2>Help</h2>
         </div>

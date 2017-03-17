@@ -97,7 +97,6 @@ class Node extends React.Component {
       exportingGraph, showingNetworks, stack, id, metric } = this.props;
     const { hovered } = this.state;
 
-    // console.log(metric && metric.toJS());
     const color = getNodeColor(rank, label, pseudo);
     const truncate = !focused && !hovered;
     const labelOffsetY = (showingNetworks && networks) ? 40 : 28;

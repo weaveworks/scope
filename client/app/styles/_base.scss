@@ -249,7 +249,7 @@
 
 }
 
-.nodes-chart {
+.nodes-chart, .nodes-resources {
 
   &-error, &-loading {
     @extend .hideable;
@@ -306,11 +306,6 @@
   .nodes-chart-nodes .node {
     transition: opacity .2s $base-ease;
     text-align: center;
-
-    .node-network {
-      // stroke: $background-lighter-color;
-      // stroke-width: 4px;
-    }
 
     .node-label {
       color: $text-color;
@@ -941,22 +936,26 @@
   }
 }
 
-.node-resource {
-  &-info {
-    background-color: rgba(white, 0.6);
-    border-radius: 2px;
-    cursor: default;
-    padding: 5px;
+.node-resources {
+  &-metric-box {
+    fill: rgba(150, 150, 150, 0.4);
 
-    .wrapper {
-      display: block;
+    &-info {
+      background-color: rgba(white, 0.6);
+      border-radius: 2px;
+      cursor: default;
+      padding: 5px;
 
-      &.label { font-size: 15px; }
-      &.consumption { font-size: 12px; }
+      .wrapper {
+        display: block;
+
+        &.label { font-size: 15px; }
+        &.consumption { font-size: 12px; }
+      }
     }
   }
 
-  &-layer .layer-topology-name {
+  &-layer-topology {
     background-color: rgba(#eee, 0.95);
     border: 1px solid #ccc;
     color: $text-tertiary-color;
@@ -1685,7 +1684,7 @@
           // Notes: Firefox gets a bit messy if you try and bubble
           // heights + overflow up (min-height issue + still doesn't work v.well),
           // so this is a bit of a hack.
-          max-height: calc(100vh - 160px - 160px - 160px);
+          max-height: "calc(100vh - 160px - 160px - 160px)";
         }
       }
     }

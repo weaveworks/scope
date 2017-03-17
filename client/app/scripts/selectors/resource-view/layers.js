@@ -69,7 +69,8 @@ const decoratedNodesByTopologySelector = createSelector(
         .map(nodeResourceBoxDecorator)
         .map(nodeParentNodeDecorator);
       const filteredTopologyNodes = decoratedTopologyNodes
-        .filter(node => node.get('parentNodeId') || index === 0)
+        .filter(node => nodesByTopology.hasIn([lastLayerTopologyId, node.get('parentNodeId')])
+          || index === 0)
         .filter(node => node.get('width'));
 
       nodesByTopology = nodesByTopology.set(layerTopologyId, filteredTopologyNodes);
@@ -107,7 +108,7 @@ export const positionedNodesByTopologySelector = createSelector(
         const parentWidth = result.getIn([parentTopologyId, parentNodeId, 'width'], offset);
         const overhead = (offset - parentOffset) / parentWidth;
         if (overhead > 1) {
-          console.log(overhead);
+          // console.log(overhead);
           bucket.forEach((_, nodeId) => {
             const node = result.getIn([layerTopologyId, nodeId]);
             result = result.mergeIn([layerTopologyId, nodeId], makeMap({

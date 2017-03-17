@@ -188,7 +188,11 @@ export function getAllNodes(getState, dispatch) {
 // will probably want to change this.
 export function getResourceViewNodesSnapshot(getState, dispatch) {
   const topologyIds = layersTopologyIdsSelector(getState());
-  getNodesForTopologies(getState, dispatch, topologyIds);
+  // TODO: Try to get rid of the timeout (I noticed it was necessary in
+  // some circumstances, but would have to investigate when exactly).
+  setTimeout(() => {
+    getNodesForTopologies(getState, dispatch, topologyIds);
+  }, 100);
 }
 
 export function getTopologies(options, dispatch, initialPoll) {
@@ -220,6 +224,8 @@ export function getTopologies(options, dispatch, initialPoll) {
   });
 }
 
+// TODO: topologyUrl and options are always used for the current topology so they as arguments
+// can be replaced by the `state` and then retrieved here internally from selectors.
 export function getNodesDelta(topologyUrl, options, dispatch) {
   const optionsQuery = buildOptionsQuery(options);
   // Only recreate websocket if url changed or if forced (weave cloud instance reload);

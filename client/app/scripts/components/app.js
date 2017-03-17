@@ -112,7 +112,6 @@ class App extends React.Component {
       showingMetricsSelector, showingNetworkSelector, showingTroubleshootingMenu } = this.props;
     const isIframe = window !== window.top;
 
-    // TODO: Remove 'grid', 'topo' constants.
     return (
       <div className="scope-app">
         {showingDebugToolbar() && <DebugToolbar />}

@@ -1,19 +1,37 @@
 import React from 'react';
 
-import { getHumanizedMetricInfo } from '../../utils/metric-utils';
+import { formatMetricSvg } from '../../utils/string-utils';
 
-
-const HEIGHT = '45px';
 
 export default class NodeResourcesMetricBoxInfo extends React.Component {
-  render() {
-    const { node, width, x, y } = this.props;
-    const humanizedMetricInfo = getHumanizedMetricInfo(node.get('activeMetric'));
+  humanizedMetricInfo() {
+    const metric = this.props.activeMetric.toJS();
+    const showExtendedInfo = metric.withCapacity && metric.format !== 'percent';
+    const totalCapacity = formatMetricSvg(metric.totalCapacity, metric);
+    const absoluteConsumption = formatMetricSvg(metric.absoluteConsumption, metric);
+    const relativeConsumption = formatMetricSvg(100.0 * metric.relativeConsumption,
+      { format: 'percent' });
 
     return (
-      <foreignObject className="node-resource-info" x={x} y={y} width={width} height={HEIGHT}>
-        <span className="wrapper label truncate">{node.get('label')}</span>
-        <span className="wrapper consumption truncate">{humanizedMetricInfo}</span>
+      <span>
+        <strong>
+          {showExtendedInfo ? relativeConsumption : absoluteConsumption}
+        </strong> consumed
+        {showExtendedInfo && <i>{' - '}
+          ({absoluteConsumption} / <strong>{totalCapacity}</strong>)
+        </i>}
+      </span>
+    );
+  }
+
+  render() {
+    const { width, x, y } = this.props;
+    return (
+      <foreignObject x={x} y={y} width={width} height="45px">
+        <div className="node-resources-metric-box-info">
+          <span className="wrapper label truncate">{this.props.label}</span>
+          <span className="wrapper consumption truncate">{this.humanizedMetricInfo()}</span>
+        </div>
       </foreignObject>
     );
   }

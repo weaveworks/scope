@@ -24,7 +24,7 @@ export function renderMetricValue(value, condition) {
 // loadScale(1) == 0.5; E.g. a nicely balanced system :).
 const loadScale = scaleLog().domain([0.01, 100]).range([0, 1]);
 
-// Used in the graph view
+
 export function getMetricValue(metric) {
   if (!metric) {
     return {height: 0, value: null, formattedValue: 'n/a'};
@@ -52,25 +52,6 @@ export function getMetricValue(metric) {
     hasMetric: value !== null,
     formattedValue: formatMetricSvg(value, m)
   };
-}
-
-// Used in the resource view
-export function getHumanizedMetricInfo(metric) {
-  const showExtendedInfo = metric.get('withCapacity') && metric.get('format') !== 'percent';
-  const totalCapacity = formatMetricSvg(metric.get('totalCapacity'), metric.toJS());
-  const absoluteConsumption = formatMetricSvg(metric.get('absoluteConsumption'), metric.toJS());
-  const relativeConsumption = formatMetricSvg(100.0 * metric.get('relativeConsumption'),
-    { format: 'percent' });
-  return (
-    <span>
-      <strong>
-        {showExtendedInfo ? relativeConsumption : absoluteConsumption}
-      </strong> consumed
-      {showExtendedInfo && <i>{' - '}
-        ({absoluteConsumption} / <strong>{totalCapacity}</strong>)
-      </i>}
-    </span>
-  );
 }
 
 export function getMetricColor(metric) {

@@ -1,21 +1,30 @@
 import React from 'react';
+import pick from 'lodash/pick';
 
-import { RESOURCES_LAYER_TITLE_WIDTH, RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
-import { applyTransformY } from '../../utils/transform-utils';
+import { applyTransform } from '../../utils/transform-utils';
+import {
+  RESOURCES_LAYER_TITLE_WIDTH,
+  RESOURCES_LAYER_HEIGHT,
+} from '../../constants/styles';
 
-export default class LayerTopologyName extends React.Component {
+
+export default class NodeResourcesLayerTopology extends React.Component {
   render() {
-    const { verticalOffset, topologyId, transform } = this.props;
-    const height = RESOURCES_LAYER_HEIGHT * transform.scaleY;
-    const y = applyTransformY(transform, verticalOffset);
+    // This component always has a fixed horizontal position and width,
+    // so we only apply the vertical zooming transformation to match the
+    // vertical position and height of the resource boxes.
+    const verticalTransform = pick(this.props.transform, ['translateY', 'scaleY']);
+    const { width, height, y } = applyTransform(verticalTransform, {
+      width: RESOURCES_LAYER_TITLE_WIDTH,
+      height: RESOURCES_LAYER_HEIGHT,
+      y: this.props.verticalPosition,
+    });
 
     return (
-      <foreignObject
-        className="layer-topology-name"
-        width={RESOURCES_LAYER_TITLE_WIDTH}
-        height={height}
-        y={y}>
-        <span style={{ height, lineHeight: `${height}px` }}>{topologyId}</span>
+      <foreignObject width={width} height={height} y={y}>
+        <div className="node-resources-layer-topology" style={{ lineHeight: `${height}px` }}>
+          {this.props.topologyId}
+        </div>
       </foreignObject>
     );
   }

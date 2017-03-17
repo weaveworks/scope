@@ -21,12 +21,10 @@ class NodesResources extends React.Component {
 
   render() {
     return (
-      <div className="nodes-chart">
-        <svg
-          width="100%" height="100%"
-          id="nodes-chart-canvas">
+      <div className="nodes-resources">
+        <svg id="canvas" width="100%" height="100%">
           <Logo transform="translate(24,24) scale(0.25)" />
-          <CachableZoomWrapper bounded forwardTransform fixVertical>
+          <CachableZoomWrapper svg="canvas" bounded forwardTransform fixVertical>
             {transform => this.renderLayers(transform)}
           </CachableZoomWrapper>
         </svg>

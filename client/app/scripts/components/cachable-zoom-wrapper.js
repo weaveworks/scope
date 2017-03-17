@@ -7,6 +7,7 @@ import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
 import { cacheZoomState } from '../actions/app-actions';
+import { transformToString } from '../utils/transform-utils';
 import { activeLayoutZoomSelector } from '../selectors/zooming';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/topology';
 import {
@@ -42,8 +43,7 @@ class CachableZoomWrapper extends React.Component {
   componentDidMount() {
     this.zoomRestored = false;
     this.zoom = zoom().on('zoom', this.zoomed);
-    // TODO: Make this correct
-    this.svg = select('.nodes-chart svg');
+    this.svg = select(`svg#${this.props.svg}`);
 
     this.setZoomTriggers(!this.props.disabled);
     this.restoreCachedZoom(this.props);
@@ -77,13 +77,15 @@ class CachableZoomWrapper extends React.Component {
   }
 
   render() {
+    // `forwardTransform` says whether the zoom transform is forwarded to the child
+    // component. The advantage of that is more control rendering control in the
+    // children, while the disadvantage is that it's slower, as all the children
+    // get updated on every zoom/pan action.
     const { children, forwardTransform } = this.props;
-    const { translateX, translateY, scaleX, scaleY } = this.state;
-    const transform = `translate(${translateX},${translateY}) scale(${scaleX},${scaleY})`;
+    const transform = forwardTransform ? '' : transformToString(this.state);
 
-    // Not passing transform into child components by default for perf reasons.
     return (
-      <g className="zoom-container" transform={forwardTransform ? '' : transform}>
+      <g className="cachable-zoom-wrapper" transform={transform}>
         {forwardTransform ? children(this.state) : children}
       </g>
     );
@@ -97,7 +99,12 @@ class CachableZoomWrapper extends React.Component {
     }
   }
 
+  // Decides which part of the zoom state is cachable depending
+  // on the horizontal/vertical degrees of freedom.
   cachableState(state = this.state) {
+    // TODO: Probably shouldn't cache the limits if the layout can
+    // change a lot. However, before removing them from here, we have
+    // to make sure we can always get them from the default zooms.
     let cachableFields = [
       'minTranslateX', 'maxTranslateX',
       'minTranslateY', 'maxTranslateY',
@@ -116,30 +123,38 @@ class CachableZoomWrapper extends React.Component {
     this.props.cacheZoomState(fromJS(this.cachableState()));
   }
 
+  // Restore the zooming settings
   restoreCachedZoom(props) {
     if (!props.layoutZoom.isEmpty()) {
       const zoomState = props.layoutZoom.toJS();
 
-      // Restore the zooming settings
+      // Scaling limits are always set.
       this.zoom = this.zoom.scaleExtent([zoomState.minScale, zoomState.maxScale]);
 
+      // Translation limits are optional.
       if (props.bounded) {
         this.zoom = this.zoom
+          // Translation limits are only set if explicitly demanded (currently we are using them
+          // in the resource view, but not in the graph view, although I think the idea would be
+          // to use them everywhere).
           .translateExtent([
             [zoomState.minTranslateX, zoomState.minTranslateY],
             [zoomState.maxTranslateX, zoomState.maxTranslateY],
           ])
+          // This is to ensure that the translation limits are properly
+          // centered, so that the canvas margins are respected.
           .extent([
             [props.canvasMargins.left, props.canvasMargins.top],
             [props.canvasMargins.left + props.width, props.canvasMargins.top + props.height]
           ]);
       }
 
+      // After the limits have been set, update the zoom.
       this.svg.call(this.zoom.transform, zoomIdentity
         .translate(zoomState.translateX, zoomState.translateY)
         .scale(zoomState.scaleX, zoomState.scaleY));
 
-      // Update the state variables
+      // Update the state variables.
       this.setState(zoomState);
       this.zoomRestored = true;
     }

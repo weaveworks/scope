@@ -105,6 +105,7 @@ class NodesGrid extends React.Component {
       paddingLeft: canvasMargins.left,
       paddingRight: canvasMargins.right,
     };
+    // TODO: What are 24 and 18? Use a comment or extract into constants.
     const tbodyHeight = height - 24 - 18;
     const className = 'scroll-body';
     const tbodyStyle = {
