@@ -1,9 +1,7 @@
 package report
 
 import (
-	"bytes"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/ugorji/go/codec"
@@ -60,34 +58,12 @@ func (m LatestMap) Size() int {
 // both inputs. When both inputs contain the same key, the newer value
 // is used.
 func (m LatestMap) Merge(other LatestMap) LatestMap {
-	var (
-		mSize     = m.Size()
-		otherSize = other.Size()
-		output    = m.Map
-		iter      = other.Map
-	)
-	switch {
-	case mSize == 0:
-		return other
-	case otherSize == 0:
-		return m
-	case mSize < otherSize:
-		output, iter = iter, output
-	}
 	if m.decoder != other.decoder {
 		panic(fmt.Sprintf("Cannot merge maps with different entry value types, this has %#v, other has %#v", m.decoder, other.decoder))
 	}
-
-	iter.ForEach(func(key string, iterVal interface{}) {
-		if existingVal, ok := output.Lookup(key); ok {
-			if existingVal.(LatestEntry).Timestamp.Before(iterVal.(LatestEntry).Timestamp) {
-				output = output.Set(key, iterVal)
-			}
-		} else {
-			output = output.Set(key, iterVal)
-		}
+	output := mergeMaps(m.Map, other.Map, func(a, b interface{}) bool {
+		return a.(LatestEntry).Timestamp.Before(b.(LatestEntry).Timestamp)
 	})
-
 	return LatestMap{output, m.decoder}
 }
 
@@ -138,44 +114,17 @@ func (m LatestMap) ForEach(fn func(k string, ts time.Time, v interface{})) {
 
 // String returns the LatestMap's string representation.
 func (m LatestMap) String() string {
-	keys := []string{}
-	if m.Map == nil {
-		m = MakeLatestMapWithDecoder(m.decoder)
-	}
-	for _, k := range m.Map.Keys() {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	buf := bytes.NewBufferString("{")
-	for _, key := range keys {
-		val, _ := m.Map.Lookup(key)
-		fmt.Fprintf(buf, "%s: %s,\n", key, val)
-	}
-	fmt.Fprintf(buf, "}")
-	return buf.String()
+	return mapToString(m.Map)
 }
 
 // DeepEqual tests equality with other LatestMap.
 func (m LatestMap) DeepEqual(n LatestMap) bool {
-	if m.Size() != n.Size() {
-		return false
-	}
-	if m.Size() == 0 {
-		return true
-	}
 	if m.decoder != n.decoder {
 		panic(fmt.Sprintf("Cannot check equality of maps with different entry value types, this has %#v, other has %#v", m.decoder, n.decoder))
 	}
-	equal := true
-	m.Map.ForEach(func(k string, val interface{}) {
-		if otherValue, ok := n.Map.Lookup(k); !ok {
-			equal = false
-		} else {
-			equal = equal && val.(LatestEntry).Equal(otherValue.(LatestEntry))
-		}
+	return mapEqual(m.Map, n.Map, func(val, otherValue interface{}) bool {
+		return val.(LatestEntry).Equal(otherValue.(LatestEntry))
 	})
-	return equal
 }
 
 func (m LatestMap) toIntermediate() map[string]LatestEntry {
@@ -197,47 +146,15 @@ func (m *LatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
 	}
 }
 
-// constants from https://github.com/ugorji/go/blob/master/codec/helper.go#L207
-const (
-	containerMapKey   = 2
-	containerMapValue = 3
-	containerMapEnd   = 4
-)
-
 // CodecDecodeSelf implements codec.Selfer.
-// This implementation does not use the intermediate form as that was a
-// performance issue; skipping it saved almost 10% CPU.  Note this means
-// we are using undocumented, internal APIs, which could break in the future.
-// See https://github.com/weaveworks/scope/pull/1709 for more information.
 func (m *LatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
-	z, r := codec.GenHelperDecoder(decoder)
-	if r.TryDecodeAsNil() {
-		*m = MakeLatestMapWithDecoder(m.decoder)
-		return
-	}
-
-	length := r.ReadMapStart()
-	out := ps.NewMap()
-	for i := 0; length < 0 || i < length; i++ {
-		if length < 0 && r.CheckBreak() {
-			break
-		}
-
-		var key string
-		z.DecSendContainerState(containerMapKey)
-		if !r.TryDecodeAsNil() {
-			key = r.DecodeString()
-		}
-
-		var value LatestEntry
-		z.DecSendContainerState(containerMapValue)
-		if !r.TryDecodeAsNil() {
+	out := mapRead(decoder, func(isNil bool) interface{} {
+		value := LatestEntry{}
+		if !isNil {
 			m.decoder.Decode(decoder, &value)
 		}
-
-		out = out.UnsafeMutableSet(key, value)
-	}
-	z.DecSendContainerState(containerMapEnd)
+		return value
+	})
 	*m = LatestMap{out, m.decoder}
 }
 
