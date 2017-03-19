@@ -32,6 +32,10 @@ func TestLatestMapAdd(t *testing.T) {
 
 func TestLatestMapLookupEntry(t *testing.T) {
 	now := time.Now()
+	type LatestEntry struct {
+		Timestamp time.Time
+		Value     interface{}
+	}
 	entry := LatestEntry{Timestamp: now, Value: "Bar"}
 	have := EmptyStringLatestMap.Set("foo", entry.Timestamp, entry.Value.(string))
 	if got, timestamp, ok := have.LookupEntry("foo"); !ok || got != entry.Value || !timestamp.Equal(entry.Timestamp) {
@@ -214,22 +218,5 @@ func TestLatestMapMergeEqualDecoderTypes(t *testing.T) {
 	}()
 	m1 := MakeStringLatestMap().Set("a", time.Now(), "bar")
 	m2 := MakeStringLatestMap().Set("b", time.Now(), "foo")
-	m1.Merge(m2)
-}
-
-type TestLatestEntryDecoder struct{}
-
-func (d *TestLatestEntryDecoder) Decode(decoder *codec.Decoder, entry *LatestEntry) {
-	decoder.Decode(entry)
-}
-
-func TestLatestMapMergeDifferentDecoderTypes(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Merging two maps with different decoders should panic")
-		}
-	}()
-	m1 := MakeStringLatestMap().Set("a", time.Now(), "bar")
-	m2 := ((StringLatestMap)(MakeLatestMapWithDecoder(&TestLatestEntryDecoder{}))).Set("b", time.Now(), "foo")
 	m1.Merge(m2)
 }
