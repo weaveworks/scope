@@ -1,5 +1,6 @@
 import {is, fromJS} from 'immutable';
 // Root reducer test suite using Jasmine matchers
+import { constructEdgeId } from '../../utils/layouter-utils';
 
 describe('RootReducer', () => {
   const ActionTypes = require('../../constants/action-types').default;
@@ -539,5 +540,16 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ChangeInstanceAction);
     expect(nextState.get('selectedNodeId')).toBeFalsy();
     expect(nextState.getIn(['nodeDetails', 'n1'])).toBeFalsy();
+  });
+  it('highlights bidirectional edges', () => {
+    const action = {
+      type: ActionTypes.ENTER_EDGE,
+      edgeId: constructEdgeId('abc123', 'def456')
+    };
+    const nextState = reducer(initialState, action);
+    expect(nextState.get('highlightedEdgeIds').toJS()).toEqual([
+      constructEdgeId('abc123', 'def456'),
+      constructEdgeId('def456', 'abc123')
+    ]);
   });
 });

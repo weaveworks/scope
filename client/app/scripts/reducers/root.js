@@ -421,7 +421,10 @@ export function rootReducer(state = initialState, action) {
       // highlight edge
       state = state.update('highlightedEdgeIds', (highlightedEdgeIds) => {
         highlightedEdgeIds = highlightedEdgeIds.clear();
-        return highlightedEdgeIds.add(action.edgeId);
+        highlightedEdgeIds = highlightedEdgeIds.add(action.edgeId);
+        const opposite = action.edgeId.split(EDGE_ID_SEPARATOR).reverse().join(EDGE_ID_SEPARATOR);
+        highlightedEdgeIds = highlightedEdgeIds.add(opposite);
+        return highlightedEdgeIds;
       });
 
       return state;
