@@ -1,7 +1,8 @@
 import { fromJS } from 'immutable';
 
 import {
-  initEdgesFromNodes
+  initEdgesFromNodes,
+  constructEdgeId as edge
 } from '../layouter-utils';
 
 
@@ -14,10 +15,10 @@ describe('LayouterUtils', () => {
         c: {}
       });
       expect(initEdgesFromNodes(input).toJS()).toEqual({
-        'a-b': { id: 'a-b', source: 'a', target: 'b', value: 1 },
-        'a-c': { id: 'a-c', source: 'a', target: 'c', value: 1 },
-        'b-a': { id: 'b-a', source: 'b', target: 'a', value: 1 },
-        'b-b': { id: 'b-b', source: 'b', target: 'b', value: 1 },
+        [edge('a', 'b')]: { id: edge('a', 'b'), source: 'a', target: 'b', value: 1 },
+        [edge('a', 'c')]: { id: edge('a', 'c'), source: 'a', target: 'c', value: 1 },
+        [edge('b', 'a')]: { id: edge('b', 'a'), source: 'b', target: 'a', value: 1 },
+        [edge('b', 'b')]: { id: edge('b', 'b'), source: 'b', target: 'b', value: 1 },
       });
     });
   });

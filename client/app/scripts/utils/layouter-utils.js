@@ -3,7 +3,7 @@ import { Map as makeMap } from 'immutable';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 
 
-function constructEdgeId(source, target) {
+export function constructEdgeId(source, target) {
   return [source, target].join(EDGE_ID_SEPARATOR);
 }
 
