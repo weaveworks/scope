@@ -81,6 +81,7 @@ func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopolog
 	}
 	sort.Strings(ns)
 	if len(ns) > 0 { // We only want to apply k8s filters when we have k8s-related nodes
+		topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
 		for i, t := range topologies {
 			if t.id == containersID || t.id == containersByImageID || t.id == containersByHostnameID || t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
 				topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
@@ -94,10 +95,12 @@ func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopolog
 
 // mergeTopologyFilters recursively merges in new options on a topology description
 func mergeTopologyFilters(t APITopologyDesc, options []APITopologyOptionGroup) APITopologyDesc {
-	t.Options = append(t.Options, options...)
+	t.Options = append(append([]APITopologyOptionGroup{}, t.Options...), options...)
+	newSubTopologies := make([]APITopologyDesc, len(t.SubTopologies))
 	for i, sub := range t.SubTopologies {
-		t.SubTopologies[i] = mergeTopologyFilters(sub, options)
+		newSubTopologies[i] = mergeTopologyFilters(sub, options)
 	}
+	t.SubTopologies = newSubTopologies
 	return t
 }
 
