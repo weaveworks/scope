@@ -744,6 +744,11 @@ export function rootReducer(state = initialState, action) {
       return state.set('contrastMode', action.enabled);
     }
 
+    case ActionTypes.SHUTDOWN: {
+      state = clearNodes(state);
+      return state.set('nodesLoaded', false);
+    }
+
     default: {
       return state;
     }
