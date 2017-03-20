@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 
 import { selectMetric, pinMetric, unpinMetric } from '../actions/app-actions';
+import { pinnedMetricSelector } from '../selectors/node-metric';
 
 class MetricSelectorItem extends React.Component {
 
@@ -30,7 +31,7 @@ class MetricSelectorItem extends React.Component {
   }
 
   render() {
-    const {metric, selectedMetric, pinnedMetric} = this.props;
+    const { metric, selectedMetric, pinnedMetric } = this.props;
     const id = metric.get('id');
     const isPinned = (id === pinnedMetric);
     const isSelected = (id === selectedMetric);
@@ -54,7 +55,7 @@ class MetricSelectorItem extends React.Component {
 function mapStateToProps(state) {
   return {
     selectedMetric: state.get('selectedMetric'),
-    pinnedMetric: state.get('pinnedMetric')
+    pinnedMetric: pinnedMetricSelector(state),
   };
 }
 

@@ -112,7 +112,7 @@ export const positionedNodesByTopologySelector = createSelector(
           bucket.forEach((_, nodeId) => {
             const node = result.getIn([layerTopologyId, nodeId]);
             result = result.mergeIn([layerTopologyId, nodeId], makeMap({
-              x: ((node.get('offset') - parentOffset) / overhead) + parentOffset,
+              offset: ((node.get('offset') - parentOffset) / overhead) + parentOffset,
               width: node.get('width') / overhead,
             }));
           });

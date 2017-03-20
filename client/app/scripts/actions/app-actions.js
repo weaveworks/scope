@@ -24,7 +24,7 @@ import {
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
-import { pinnedMetricSelector } from '../selectors/node-metric';
+import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/node-metric';
 import {
   activeTopologyOptionsSelector,
   isResourceViewModeSelector,
@@ -151,7 +151,7 @@ export function unpinMetric() {
 export function pinNextMetric(delta) {
   return (dispatch, getState) => {
     const state = getState();
-    const metrics = state.get('availableCanvasMetrics').map(m => m.get('id'));
+    const metrics = availableMetricsSelector(state).map(m => m.get('id'));
     const currentIndex = metrics.indexOf(state.get('selectedMetric'));
     const nextIndex = modulo(currentIndex + delta, metrics.count());
     const nextMetric = metrics.get(nextIndex);
@@ -274,25 +274,6 @@ export function setViewportDimensions(width, height) {
   };
 }
 
-function updateResourceViewState(getState, dispatch) {
-  // Clear the query as searching is not yet supported in the resource view.
-  dispatch({ type: ActionTypes.DO_SEARCH, searchQuery: '' });
-
-  // Resource view requires a pinned metric, so pin the first one if none was pinned.
-  console.log(pinnedMetricSelector(getState()), getState().get('availableCanvasMetrics'));
-  if (!pinnedMetricSelector(getState())) {
-    dispatch({ type: ActionTypes.PIN_METRIC });
-  }
-
-  // Update the nodes for all topologies that appear in the current resource view. The timeout
-  // seems to be necessary in some situations, but could possibly be skipped in some scenarios.
-  // TODO: Find a more elegant way of fetching the topologies information,
-  // and also make it periodically update.
-  setTimeout(() => {
-    getResourceViewNodesSnapshot(getState, dispatch);
-  }, 100);
-}
-
 export function setGraphView() {
   return (dispatch, getState) => {
     dispatch({
@@ -319,7 +300,11 @@ export function setResourceView() {
       type: ActionTypes.SET_VIEW_MODE,
       viewMode: RESOURCE_VIEW_MODE,
     });
-    updateResourceViewState(getState, dispatch);
+    // Pin the first metric if none of the visible ones is pinned.
+    if (!pinnedMetricSelector(getState())) {
+      dispatch({ type: ActionTypes.PIN_METRIC });
+    }
+    getResourceViewNodesSnapshot(getState, dispatch);
     updateRoute(getState);
   };
 }
@@ -382,15 +367,16 @@ export function clickResumeUpdate() {
 
 function updateTopology(dispatch, getState) {
   const state = getState();
-  // Update the resource view state.
+  // If we're in the resource view, get the snapshot of all the relevant node topologies.
+  // TODO: Consider updating the state to always have a pinned metric.
   if (isResourceViewModeSelector(state)) {
-    updateResourceViewState(getState, dispatch);
+    getResourceViewNodesSnapshot(getState, dispatch);
   }
   updateRoute(getState);
   // update all request workers with new options
   resetUpdateBuffer();
   // NOTE: This is currently not needed for our static resource
-  // view,but we'll need it here later and it's simpler to just
+  // view, but we'll need it here later and it's simpler to just
   // keep it than to redo the nodes delta updating logic.
   getNodesDelta(
     getCurrentTopologyUrl(state),
@@ -754,7 +740,7 @@ export function route(urlState) {
     // nodes for the current topology, but also the nodes of all the topologies that make
     // the layers in the resource view.
     if (isResourceViewModeSelector(state)) {
-      updateResourceViewState(getState, dispatch);
+      getResourceViewNodesSnapshot(getState, dispatch);
     }
   };
 }

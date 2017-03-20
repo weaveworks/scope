@@ -1,5 +1,12 @@
 import { createSelector } from 'reselect';
-import { RESOURCE_VIEW_MODE, GRAPH_VIEW_MODE, TABLE_VIEW_MODE } from '../constants/naming';
+import { Map as makeMap } from 'immutable';
+
+import {
+  RESOURCE_VIEW_MODE,
+  GRAPH_VIEW_MODE,
+  TABLE_VIEW_MODE,
+} from '../constants/naming';
+
 
 // TODO: Consider moving more stuff from 'topology-utils' here.
 
@@ -22,6 +29,14 @@ export const isResourceViewModeSelector = createSelector(
     state => state.get('topologyViewMode'),
   ],
   viewMode => viewMode === RESOURCE_VIEW_MODE
+);
+
+export const cachedCurrentTopologyNodesSelector = createSelector(
+  [
+    state => state.get('nodesByTopology'),
+    state => state.get('currentTopologyId'),
+  ],
+  (nodesByTopology, currentTopologyId) => nodesByTopology.get(currentTopologyId, makeMap())
 );
 
 // Checks if graph complexity is high. Used to trigger

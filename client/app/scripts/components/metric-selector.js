@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { selectMetric } from '../actions/app-actions';
+import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/node-metric';
 import MetricSelectorItem from './metric-selector-item';
 
 class MetricSelector extends React.Component {
@@ -16,17 +17,23 @@ class MetricSelector extends React.Component {
   }
 
   render() {
+    const { pinnedMetric, alwaysPinned, availableMetrics } = this.props;
+    const shouldPinMetric = alwaysPinned && !pinnedMetric && !availableMetrics.isEmpty();
+
     return (
       <div className="metric-selector">
         <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
-          {this.props.availableCanvasMetrics.map(metric => (
+          {availableMetrics.map(metric => (
             <MetricSelectorItem
               key={metric.get('id')}
-              alwaysPinned={this.props.alwaysPinned}
+              alwaysPinned={alwaysPinned}
               metric={metric}
             />
           ))}
         </div>
+        {shouldPinMetric && <span className="metric-selector-message">
+          &laquo; Select a metric
+        </span>}
       </div>
     );
   }
@@ -34,8 +41,8 @@ class MetricSelector extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    availableCanvasMetrics: state.get('availableCanvasMetrics'),
-    pinnedMetric: state.get('pinnedMetric')
+    availableMetrics: availableMetricsSelector(state),
+    pinnedMetric: pinnedMetricSelector(state),
   };
 }
 

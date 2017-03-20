@@ -21,6 +21,7 @@ import MetricSelector from './metric-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
 import { getRouter, getUrlState } from '../utils/router-utils';
+import { availableMetricsSelector } from '../selectors/node-metric';
 import { availableNetworksSelector } from '../selectors/node-networks';
 import {
   activeTopologyOptionsSelector,
@@ -161,7 +162,7 @@ function mapStateToProps(state) {
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
     showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
-    showingMetricsSelector: state.get('availableCanvasMetrics').count() > 0,
+    showingMetricsSelector: availableMetricsSelector(state).count() > 0,
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
     urlState: getUrlState(state)

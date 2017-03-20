@@ -1181,7 +1181,7 @@
   }
 
   .error {
-    animation: blinking 2.0s 60 $base-ease; // blink for 2 minute;
+    animation: blinking 2.0s 60 $base-ease; // blink for 2 minutes
     color: $text-secondary-color;
   }
 
@@ -1254,6 +1254,14 @@
       border-bottom-right-radius: $border-radius;
     }
   }
+}
+
+.metric-selector-message {
+  animation: blinking 1.0s infinite $base-ease;
+  color: $text-tertiary-color;
+  display: inline-block;
+  margin: 0;
+  padding: 0 10px;
 }
 
 .view-mode-selector {

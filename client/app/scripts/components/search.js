@@ -90,7 +90,7 @@ class Search extends React.Component {
   componentWillReceiveProps(nextProps) {
     // when cleared from the outside, reset internal state
     if (this.props.searchQuery !== nextProps.searchQuery && nextProps.searchQuery === '') {
-      this.setState({value: ''});
+      this.setState({ value: '' });
     }
   }
 
@@ -105,14 +105,15 @@ class Search extends React.Component {
   render() {
     const { nodes, pinnedSearches, searchFocused, searchMatchCountByTopology, isResourceViewMode,
       searchQuery, topologiesLoaded, onClickHelp, inputId = 'search' } = this.props;
-    const disabled = this.props.isTopologyEmpty;
+    const hidden = !topologiesLoaded || isResourceViewMode;
+    const disabled = this.props.isTopologyEmpty && !hidden;
     const matchCount = searchMatchCountByTopology
       .reduce((count, topologyMatchCount) => count + topologyMatchCount, 0);
     const showPinnedSearches = pinnedSearches.size > 0;
     // manual clear (null) has priority, then props, then state
     const value = this.state.value === null ? '' : this.state.value || searchQuery || '';
     const classNames = classnames('search', 'hideable', {
-      hide: !topologiesLoaded || isResourceViewMode,
+      hide: hidden,
       'search-pinned': showPinnedSearches,
       'search-matched': matchCount,
       'search-filled': value,

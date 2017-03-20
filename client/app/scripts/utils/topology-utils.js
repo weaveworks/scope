@@ -1,6 +1,8 @@
 import { endsWith } from 'lodash';
 import { Set as makeSet, List as makeList } from 'immutable';
 
+import { isResourceViewModeSelector } from '../selectors/topology';
+import { pinnedMetricSelector } from '../selectors/node-metric';
 
 //
 // top priority first
@@ -132,8 +134,10 @@ export function getCurrentTopologyOptions(state) {
 }
 
 export function isTopologyEmpty(state) {
-  return state.getIn(['currentTopology', 'stats', 'node_count'], 0) === 0
-    && state.get('nodes').size === 0;
+  const resourceViewEmpty = isResourceViewModeSelector(state) && !pinnedMetricSelector(state);
+  const nodeCount = state.getIn(['currentTopology', 'stats', 'node_count'], 0);
+  const nodesEmpty = nodeCount === 0 && state.get('nodes').size === 0;
+  return resourceViewEmpty || nodesEmpty;
 }
 
 
