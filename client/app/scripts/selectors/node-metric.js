@@ -3,6 +3,16 @@ import { createMapSelector } from 'reselect-map';
 import { fromJS } from 'immutable';
 
 
+export const pinnedMetricSelector = createSelector(
+  [
+    state => state.get('availableCanvasMetrics'),
+    state => state.get('pinnedMetricType'),
+  ],
+  (availableMetrics, pinnedMetricType) => (
+    availableMetrics.find(metric => metric.get('label') === pinnedMetricType)
+  )
+);
+
 const topCardNodeSelector = createSelector(
   [
     state => state.get('nodeDetails')

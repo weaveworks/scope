@@ -375,12 +375,14 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.PIN_METRIC: {
-      const metricTypes = makeMap(
-        state.get('availableCanvasMetrics').map(m => [m.get('id'), m.get('label')]));
+      const canvasMetrics = state.get('availableCanvasMetrics');
+      const metricTypes = makeMap(canvasMetrics.map(m => [m.get('id'), m.get('label')]));
+      // Pin the first metric if no metric ID was explicitly given.
+      const metricId = action.metricId || (canvasMetrics.first() || makeMap()).get('id');
       return state.merge({
-        pinnedMetric: action.metricId,
-        pinnedMetricType: metricTypes.get(action.metricId),
-        selectedMetric: action.metricId
+        pinnedMetric: metricId,
+        pinnedMetricType: metricTypes.get(metricId),
+        selectedMetric: metricId,
       });
     }
 

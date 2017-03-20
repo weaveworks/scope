@@ -24,6 +24,7 @@ import {
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
+import { pinnedMetricSelector } from '../selectors/node-metric';
 import {
   activeTopologyOptionsSelector,
   isResourceViewModeSelector,
@@ -257,10 +258,39 @@ export function clickForceRelayout() {
   };
 }
 
+export function doSearch(searchQuery) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.DO_SEARCH,
+      searchQuery
+    });
+    updateRoute(getState);
+  };
+}
+
 export function setViewportDimensions(width, height) {
   return (dispatch) => {
     dispatch({ type: ActionTypes.SET_VIEWPORT_DIMENSIONS, width, height });
   };
+}
+
+function updateResourceViewState(getState, dispatch) {
+  // Clear the query as searching is not yet supported in the resource view.
+  dispatch({ type: ActionTypes.DO_SEARCH, searchQuery: '' });
+
+  // Resource view requires a pinned metric, so pin the first one if none was pinned.
+  console.log(pinnedMetricSelector(getState()), getState().get('availableCanvasMetrics'));
+  if (!pinnedMetricSelector(getState())) {
+    dispatch({ type: ActionTypes.PIN_METRIC });
+  }
+
+  // Update the nodes for all topologies that appear in the current resource view. The timeout
+  // seems to be necessary in some situations, but could possibly be skipped in some scenarios.
+  // TODO: Find a more elegant way of fetching the topologies information,
+  // and also make it periodically update.
+  setTimeout(() => {
+    getResourceViewNodesSnapshot(getState, dispatch);
+  }, 100);
 }
 
 export function setGraphView() {
@@ -289,9 +319,8 @@ export function setResourceView() {
       type: ActionTypes.SET_VIEW_MODE,
       viewMode: RESOURCE_VIEW_MODE,
     });
+    updateResourceViewState(getState, dispatch);
     updateRoute(getState);
-    // Update the nodes for all topologies that appear in the current resource view.
-    getResourceViewNodesSnapshot(getState, dispatch);
   };
 }
 
@@ -353,6 +382,10 @@ export function clickResumeUpdate() {
 
 function updateTopology(dispatch, getState) {
   const state = getState();
+  // Update the resource view state.
+  if (isResourceViewModeSelector(state)) {
+    updateResourceViewState(getState, dispatch);
+  }
   updateRoute(getState);
   // update all request workers with new options
   resetUpdateBuffer();
@@ -364,10 +397,6 @@ function updateTopology(dispatch, getState) {
     activeTopologyOptionsSelector(state),
     dispatch
   );
-  // Update the nodes for all topologies that appear in the current resource view.
-  if (isResourceViewModeSelector(state)) {
-    getResourceViewNodesSnapshot(getState, dispatch);
-  }
 }
 
 export function clickShowTopologyForNode(topologyId, nodeId) {
@@ -425,16 +454,6 @@ export function doControl(nodeId, control) {
       control
     });
     doControlRequest(nodeId, control, dispatch);
-  };
-}
-
-export function doSearch(searchQuery) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.DO_SEARCH,
-      searchQuery
-    });
-    updateRoute(getState);
   };
 }
 
@@ -735,7 +754,7 @@ export function route(urlState) {
     // nodes for the current topology, but also the nodes of all the topologies that make
     // the layers in the resource view.
     if (isResourceViewModeSelector(state)) {
-      getResourceViewNodesSnapshot(getState, dispatch);
+      updateResourceViewState(getState, dispatch);
     }
   };
 }

@@ -178,8 +178,8 @@ function getNodesForTopologies(getState, dispatch, topologyIds, topologyOptions 
  */
 export function getAllNodes(getState, dispatch) {
   const state = getState();
-  const topologyIds = state.get('topologies').map(topology => topology.get('id'));
   const topologyOptions = state.get('topologyOptions');
+  const topologyIds = state.get('topologyUrlsById').keySeq();
   getNodesForTopologies(getState, dispatch, topologyIds, topologyOptions);
 }
 
@@ -188,11 +188,7 @@ export function getAllNodes(getState, dispatch) {
 // will probably want to change this.
 export function getResourceViewNodesSnapshot(getState, dispatch) {
   const topologyIds = layersTopologyIdsSelector(getState());
-  // TODO: Try to get rid of the timeout (I noticed it was necessary in
-  // some circumstances, but would have to investigate when exactly).
-  setTimeout(() => {
-    getNodesForTopologies(getState, dispatch, topologyIds);
-  }, 100);
+  getNodesForTopologies(getState, dispatch, topologyIds);
 }
 
 export function getTopologies(options, dispatch, initialPoll) {
