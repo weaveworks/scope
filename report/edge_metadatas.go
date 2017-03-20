@@ -177,11 +177,14 @@ func (c *EdgeMetadatas) CodecEncodeSelf(encoder *codec.Encoder) {
 
 // CodecDecodeSelf implements codec.Selfer
 func (c *EdgeMetadatas) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := map[string]EdgeMetadata{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
-	*c = EdgeMetadatas{}.fromIntermediate(in)
+	out := mapRead(decoder, func(isNil bool) interface{} {
+		var value EdgeMetadata
+		if !isNil {
+			decoder.Decode(&value)
+		}
+		return value
+	})
+	*c = EdgeMetadatas{out}
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead

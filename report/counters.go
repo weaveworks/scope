@@ -160,11 +160,14 @@ func (c *Counters) CodecEncodeSelf(encoder *codec.Encoder) {
 
 // CodecDecodeSelf implements codec.Selfer
 func (c *Counters) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := map[string]int{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
-	*c = Counters{}.fromIntermediate(in)
+	out := mapRead(decoder, func(isNil bool) interface{} {
+		var value int
+		if !isNil {
+			decoder.Decode(&value)
+		}
+		return value
+	})
+	*c = Counters{out}
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
