@@ -91,6 +91,7 @@ func (nc NodeControls) Add(ids ...string) NodeControls {
 type wireNodeControls struct {
 	Timestamp string    `json:"timestamp,omitempty"`
 	Controls  StringSet `json:"controls,omitempty"`
+	dummySelfer
 }
 
 // CodecEncodeSelf implements codec.Selfer
@@ -104,9 +105,7 @@ func (nc *NodeControls) CodecEncodeSelf(encoder *codec.Encoder) {
 // CodecDecodeSelf implements codec.Selfer
 func (nc *NodeControls) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := wireNodeControls{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
+	in.CodecDecodeSelf(decoder)
 	*nc = NodeControls{
 		Timestamp: parseTime(in.Timestamp),
 		Controls:  in.Controls,

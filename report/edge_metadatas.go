@@ -180,7 +180,7 @@ func (c *EdgeMetadatas) CodecDecodeSelf(decoder *codec.Decoder) {
 	out := mapRead(decoder, func(isNil bool) interface{} {
 		var value EdgeMetadata
 		if !isNil {
-			decoder.Decode(&value)
+			value.CodecDecodeSelf(decoder)
 		}
 		return value
 	})
@@ -221,6 +221,7 @@ type EdgeMetadata struct {
 	IngressPacketCount *uint64 `json:"ingress_packet_count,omitempty"`
 	EgressByteCount    *uint64 `json:"egress_byte_count,omitempty"`  // Transport layer
 	IngressByteCount   *uint64 `json:"ingress_byte_count,omitempty"` // Transport layer
+	dummySelfer
 }
 
 // String returns a string representation of this EdgeMetadata
