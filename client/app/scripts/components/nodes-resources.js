@@ -2,9 +2,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import Logo from './logo';
-import { layersTopologyIdsSelector } from '../selectors/resource-view/layers';
 import ZoomWrapper from './zoom-wrapper';
 import NodesResourcesLayer from './nodes-resources/node-resources-layer';
+import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 
 
 class NodesResources extends React.Component {

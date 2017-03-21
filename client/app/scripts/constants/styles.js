@@ -80,16 +80,3 @@ export const NODE_DETAILS_TABLE_XS_LABEL = {
   // TODO: consider changing the name of this field on the BE
   container: '#',
 };
-
-
-export const layersDefs = {
-  hosts: {
-    withCapacity: true,
-  },
-  containers: {
-    withCapacity: false,
-  },
-  processes: {
-    withCapacity: false,
-  },
-};

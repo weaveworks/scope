@@ -1,7 +1,6 @@
 import { Map as makeMap } from 'immutable';
 
 import { getNodeColor } from '../utils/color-utils';
-import { getMetricValue } from '../utils/metric-utils';
 import { RESOURCES_LAYER_HEIGHT } from '../constants/styles';
 
 
@@ -11,37 +10,45 @@ export function nodeResourceViewColorDecorator(node) {
   return node.set('color', getNodeColor(node.get('rank'), '', node.get('pseudo')));
 }
 
-export function nodeActiveMetricDecorator(node) {
-  const metricType = node.get('activeMetricType');
-  const metric = node.get('metrics', makeMap()).find(m => m.get('label') === metricType);
-  if (!metric) return node;
-
-  const { formattedValue } = getMetricValue(metric);
-  const info = `${metricType} - ${formattedValue}`;
-  const absoluteConsumption = metric.get('value');
-  const withCapacity = node.get('withCapacity');
-  const totalCapacity = withCapacity ? metric.get('max') : absoluteConsumption;
-  const relativeConsumption = absoluteConsumption / totalCapacity;
-  const format = metric.get('format');
-
-  return node.set('activeMetric', makeMap({
-    totalCapacity, absoluteConsumption, relativeConsumption, withCapacity, info, format
-  }));
-}
-
+// Decorates the resource node with dimensions taken from its metric summary.
 export function nodeResourceBoxDecorator(node) {
-  const widthCriterion = node.get('withCapacity') ? 'totalCapacity' : 'absoluteConsumption';
-  const width = node.getIn(['activeMetric', widthCriterion]);
+  const metricSummary = node.get('metricSummary', makeMap());
+  const width = metricSummary.get('showCapacity') ?
+    metricSummary.get('totalCapacity') :
+    metricSummary.get('absoluteConsumption');
   const height = RESOURCES_LAYER_HEIGHT;
 
   return node.merge(makeMap({ width, height }));
 }
 
-export function nodeParentNodeDecorator(node) {
-  const parentTopologyId = node.get('directParentTopologyId');
-  const parents = node.get('parents', makeMap());
-  const parent = parents.find(p => p.get('topologyId') === parentTopologyId);
-  if (!parent) return node;
+// Decorates the node with the summary info of its metric of a fixed type.
+export function nodeMetricSummaryDecoratorByType(metricType, showCapacity) {
+  return (node) => {
+    const metric = node
+      .get('metrics', makeMap())
+      .find(m => m.get('label') === metricType);
 
-  return node.set('parentNodeId', parent.get('id'));
+    // Do nothing if there is no metric info.
+    if (!metric) return node;
+
+    const absoluteConsumption = metric.get('value');
+    const totalCapacity = showCapacity ? metric.get('max') : absoluteConsumption;
+    const relativeConsumption = absoluteConsumption / totalCapacity;
+    const format = metric.get('format');
+
+    return node.set('metricSummary', makeMap({
+      showCapacity, totalCapacity, absoluteConsumption, relativeConsumption, format
+    }));
+  };
+}
+
+// Decorates the node with the ID of the parent node belonging to a fixed topology.
+export function nodeParentDecoratorByTopologyId(topologyId) {
+  return (node) => {
+    const parent = node
+      .get('parents', makeMap())
+      .find(p => p.get('topologyId') === topologyId);
+
+    return parent ? node.set('parentNodeId', parent.get('id')) : node;
+  };
 }

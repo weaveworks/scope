@@ -43,6 +43,7 @@ export const activeLayoutZoomStateSelector = createSelector(
   ],
   (isGraphView, graphDefaultZoom, resourcesDefaultZoom, cachedZoomState) => {
     const defaultZoom = isGraphView ? graphDefaultZoom : resourcesDefaultZoom;
+    // All the cached fields override the calculated default ones.
     return defaultZoom.merge(cachedZoomState);
   }
 );

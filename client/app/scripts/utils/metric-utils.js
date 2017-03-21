@@ -54,6 +54,7 @@ export function getMetricValue(metric) {
   };
 }
 
+
 export function getMetricColor(metric) {
   const selectedMetric = metric && metric.get('id');
   if (/mem/.test(selectedMetric)) {

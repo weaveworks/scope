@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import MetricSelector from './metric-selector';
 import { setGraphView, setTableView, setResourceView } from '../actions/app-actions';
-import { layersTopologyIdsSelector } from '../selectors/resource-view/layers';
+import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import {
   isGraphViewModeSelector,
   isTableViewModeSelector,

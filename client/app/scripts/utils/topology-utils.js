@@ -134,7 +134,9 @@ export function getCurrentTopologyOptions(state) {
 }
 
 export function isTopologyEmpty(state) {
+  // Consider a topology in the resource view empty if it has no pinned metric.
   const resourceViewEmpty = isResourceViewModeSelector(state) && !pinnedMetricSelector(state);
+  // Otherwise (in graph and table view), we only look at the node count.
   const nodeCount = state.getIn(['currentTopology', 'stats', 'node_count'], 0);
   const nodesEmpty = nodeCount === 0 && state.get('nodes').size === 0;
   return resourceViewEmpty || nodesEmpty;

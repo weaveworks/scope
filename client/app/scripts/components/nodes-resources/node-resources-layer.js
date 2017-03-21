@@ -5,25 +5,24 @@ import { Map as makeMap } from 'immutable';
 import NodeResourcesMetricBox from './node-resources-metric-box';
 import NodeResourcesLayerTopology from './node-resources-layer-topology';
 import {
-  layersVerticalPositionSelector,
-  positionedNodesByTopologySelector,
-} from '../../selectors/resource-view/layers';
+  layerVerticalPositionByTopologyIdSelector,
+  layoutNodesByTopologyIdSelector,
+} from '../../selectors/resource-view/layout';
 
 
 class NodesResourcesLayer extends React.Component {
   render() {
-    const { layerVerticalPosition, topologyId, transform, nodes } = this.props;
+    const { layerVerticalPosition, topologyId, transform, layoutNodes } = this.props;
 
     return (
       <g className="node-resources-layer">
         <g className="node-resources-metric-boxes">
-          {nodes.toIndexedSeq().map(node => (
+          {layoutNodes.toIndexedSeq().map(node => (
             <NodeResourcesMetricBox
               key={node.get('id')}
               color={node.get('color')}
               label={node.get('label')}
-              withCapacity={node.get('withCapacity')}
-              activeMetric={node.get('activeMetric')}
+              metricSummary={node.get('metricSummary')}
               width={node.get('width')}
               height={node.get('height')}
               x={node.get('offset')}
@@ -32,7 +31,7 @@ class NodesResourcesLayer extends React.Component {
             />
           ))}
         </g>
-        {!nodes.isEmpty() && <NodeResourcesLayerTopology
+        {!layoutNodes.isEmpty() && <NodeResourcesLayerTopology
           verticalPosition={layerVerticalPosition}
           transform={transform}
           topologyId={topologyId}
@@ -44,8 +43,8 @@ class NodesResourcesLayer extends React.Component {
 
 function mapStateToProps(state, props) {
   return {
-    layerVerticalPosition: layersVerticalPositionSelector(state).get(props.topologyId),
-    nodes: positionedNodesByTopologySelector(state).get(props.topologyId, makeMap()),
+    layerVerticalPosition: layerVerticalPositionByTopologyIdSelector(state).get(props.topologyId),
+    layoutNodes: layoutNodesByTopologyIdSelector(state).get(props.topologyId, makeMap()),
   };
 }
 

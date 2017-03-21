@@ -70,7 +70,7 @@ export const graphZoomLimitsSelector = createSelector(
     maxScaleSelector,
   ],
   (defaultZoom, maxScale) => {
-    if (defaultZoom.isEmpty()) return makeMap({ minScale: 1, maxScale: 1 });
+    if (defaultZoom.isEmpty()) return makeMap();
 
     // We always allow zooming out exactly 5x compared to the initial zoom.
     const minScale = defaultZoom.get('scaleX') / 5;

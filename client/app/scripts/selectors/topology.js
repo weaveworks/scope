@@ -31,6 +31,9 @@ export const isResourceViewModeSelector = createSelector(
   viewMode => viewMode === RESOURCE_VIEW_MODE
 );
 
+// This is used by the resource view where we're always taking the nodes from the cache,
+// so that polling doesn't affect the layout. Once we implement a more robust polling
+// mechanism that could poll multiple topologies at once, we'll be able to get rid of this.
 export const cachedCurrentTopologyNodesSelector = createSelector(
   [
     state => state.get('nodesByTopology'),
@@ -71,7 +74,10 @@ export const activeTopologyZoomCacheKeyPathSelector = createSelector(
   ],
   (isGraphViewMode, viewMode, topologyId, pinnedMetricType, topologyOptions) => (
     isGraphViewMode ?
+      // In graph view, selecting different options/filters produces a different layout.
       ['zoomCache', viewMode, topologyId, topologyOptions] :
+      // Otherwise we're in the resource view where the options are hidden (for now),
+      // but pinning different metrics can result in very different layouts.
       ['zoomCache', viewMode, topologyId, pinnedMetricType]
   )
 );

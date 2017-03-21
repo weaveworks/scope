@@ -3,18 +3,29 @@ import { Map as makeMap } from 'immutable';
 
 import { RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
 import { canvasMarginsSelector, canvasWidthSelector, canvasHeightSelector } from '../canvas';
-import { layersVerticalPositionSelector, positionedNodesByTopologySelector } from './layers';
+import {
+  layerVerticalPositionByTopologyIdSelector,
+  layoutNodesByTopologyIdSelector,
+} from './layout';
 
 
-const resourcesBoundingRectangleSelector = createSelector(
+// This is used to determine the maximal zoom factor.
+const minNodeWidthSelector = createSelector(
   [
-    layersVerticalPositionSelector,
-    positionedNodesByTopologySelector,
+    layoutNodesByTopologyIdSelector,
   ],
-  (verticalPositions, nodes) => {
-    if (nodes.size === 0) return null;
+  layoutNodes => layoutNodes.flatten(true).map(n => n.get('width')).min()
+);
 
-    const flattenedNodes = nodes.flatten(true);
+const resourceNodesBoundingRectangleSelector = createSelector(
+  [
+    layerVerticalPositionByTopologyIdSelector,
+    layoutNodesByTopologyIdSelector,
+  ],
+  (verticalPositions, layoutNodes) => {
+    if (layoutNodes.size === 0) return null;
+
+    const flattenedNodes = layoutNodes.flatten(true);
     const xMin = flattenedNodes.map(n => n.get('offset')).min();
     const yMin = verticalPositions.toList().min();
     const xMax = flattenedNodes.map(n => n.get('offset') + n.get('width')).max();
@@ -24,10 +35,10 @@ const resourcesBoundingRectangleSelector = createSelector(
   }
 );
 
-// Compute the default zoom settings for the given chart.
+// Compute the default zoom settings for given resources.
 export const resourcesDefaultZoomSelector = createSelector(
   [
-    resourcesBoundingRectangleSelector,
+    resourceNodesBoundingRectangleSelector,
     canvasMarginsSelector,
     canvasWidthSelector,
     canvasHeightSelector,
@@ -37,6 +48,7 @@ export const resourcesDefaultZoomSelector = createSelector(
 
     const { xMin, xMax, yMin, yMax } = boundingRectangle.toJS();
 
+    // The default scale takes all the available horizontal space and 70% of the vertical space.
     const scaleX = (width / (xMax - xMin)) * 1.0;
     const scaleY = (height / (yMax - yMin)) * 0.7;
 
@@ -53,17 +65,10 @@ export const resourcesDefaultZoomSelector = createSelector(
   }
 );
 
-const minNodeWidthSelector = createSelector(
-  [
-    positionedNodesByTopologySelector,
-  ],
-  nodes => nodes.flatten(true).map(n => n.get('width')).min()
-);
-
 export const resourcesZoomLimitsSelector = createSelector(
   [
     resourcesDefaultZoomSelector,
-    resourcesBoundingRectangleSelector,
+    resourceNodesBoundingRectangleSelector,
     minNodeWidthSelector,
     canvasWidthSelector,
   ],
@@ -73,7 +78,9 @@ export const resourcesZoomLimitsSelector = createSelector(
     const { xMin, xMax, yMin, yMax } = boundingRectangle.toJS();
 
     return makeMap({
+      // Maximal zoom is such that the smallest box takes the whole canvas.
       maxScale: width / minNodeWidth,
+      // Minimal zoom is equivalent to the initial one, where the whole layout matches the canvas.
       minScale: defaultZoom.get('scaleX'),
       minTranslateX: xMin,
       maxTranslateX: xMax,

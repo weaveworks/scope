@@ -5,11 +5,11 @@ import { formatMetricSvg } from '../../utils/string-utils';
 
 export default class NodeResourcesMetricBoxInfo extends React.Component {
   humanizedMetricInfo() {
-    const metric = this.props.activeMetric.toJS();
-    const showExtendedInfo = metric.withCapacity && metric.format !== 'percent';
-    const totalCapacity = formatMetricSvg(metric.totalCapacity, metric);
-    const absoluteConsumption = formatMetricSvg(metric.absoluteConsumption, metric);
-    const relativeConsumption = formatMetricSvg(100.0 * metric.relativeConsumption,
+    const metricSummary = this.props.metricSummary.toJS();
+    const showExtendedInfo = metricSummary.showCapacity && metricSummary.format !== 'percent';
+    const totalCapacity = formatMetricSvg(metricSummary.totalCapacity, metricSummary);
+    const absoluteConsumption = formatMetricSvg(metricSummary.absoluteConsumption, metricSummary);
+    const relativeConsumption = formatMetricSvg(100.0 * metricSummary.relativeConsumption,
       { format: 'percent' });
 
     return (

@@ -10,7 +10,7 @@ import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveEr
   receiveControlSuccess, receiveTopologies, receiveNotFound,
   receiveNodesForTopology } from '../actions/app-actions';
 
-import { layersTopologyIdsSelector } from '../selectors/resource-view/layers';
+import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import { API_INTERVAL, TOPOLOGY_INTERVAL } from '../constants/timer';
 
 const log = debug('scope:web-api-utils');
@@ -158,6 +158,9 @@ function doRequest(opts) {
   return reqwest(config);
 }
 
+/**
+ * Does a one-time fetch of all the nodes for a custom list of topologies.
+ */
 function getNodesForTopologies(getState, dispatch, topologyIds, topologyOptions = makeMap()) {
   // fetch sequentially
   getState().get('topologyUrlsById')
@@ -174,7 +177,7 @@ function getNodesForTopologies(getState, dispatch, topologyIds, topologyOptions 
 }
 
 /**
- * Gets nodes for all topologies (for search)
+ * Gets nodes for all topologies (for search).
  */
 export function getAllNodes(getState, dispatch) {
   const state = getState();
@@ -183,13 +186,13 @@ export function getAllNodes(getState, dispatch) {
   getNodesForTopologies(getState, dispatch, topologyIds, topologyOptions);
 }
 
-// Update the nodes for all topologies that appear in the current resource view.
-// NOTE: At the moment we are only getting their one-time snapshot (instead of polling),
-// because we intentionally want to keep the resource view layout static. Later on, we
-// will probably want to change this.
+/**
+ * One-time update of all the nodes of topologies that appear in the current resource view.
+ */
 export function getResourceViewNodesSnapshot(getState, dispatch) {
   const topologyIds = layersTopologyIdsSelector(getState());
-  // TODO: Find a more elegant way of fetching the topologies information.
+  // TODO: Replace this with polling once we figure how to make resource view dynamic
+  // (from the UI point of view, the challenge is to make it stable).
   setTimeout(() => {
     getNodesForTopologies(getState, dispatch, topologyIds);
   }, 100);

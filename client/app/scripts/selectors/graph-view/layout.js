@@ -75,7 +75,6 @@ const focusedNodesIdsSelector = createSelector(
 
 const circularLayoutScalarsSelector = createSelector(
   [
-    // TODO: Fix this.
     state => activeLayoutZoomStateSelector(state).get('scaleX'),
     state => focusedNodesIdsSelector(state).length - 1,
     canvasCircularExpanseSelector,
