@@ -88,8 +88,18 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 	hostNodeID := report.MakeHostNodeID(t.conf.HostID)
 
 	if t.ebpfTracker != nil {
-		t.performEbpfTrack(rpt, hostNodeID)
-		return
+		if !t.ebpfTracker.isDead() {
+			t.performEbpfTrack(rpt, hostNodeID)
+			return
+		}
+		log.Warnf("ebpf tracker died, gently falling back to proc scanning")
+		if t.conf.WalkProc && t.conf.Scanner == nil {
+			t.conf.Scanner = procspy.NewConnectionScanner(t.conf.ProcessCache)
+		}
+		if t.flowWalker == nil {
+			t.flowWalker = newConntrackFlowWalker(t.conf.UseConntrack, t.conf.ProcRoot, t.conf.BufferSize, "--any-nat")
+		}
+		t.ebpfTracker = nil
 	}
 
 	// seenTuples contains information about connections seen by conntrack and it will be passed to the /proc parser
