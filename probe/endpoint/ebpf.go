@@ -209,15 +209,8 @@ func (t *EbpfTracker) isDead() bool {
 }
 
 func (t *EbpfTracker) stop() {
-	// TODO: implement proper stopping logic
-	//
-	// Even if we stop the go routine, it's not enough since we disabled the
-	// async proc parser. We leave this uninmplemented for now because:
-	//
-	// * Ebpf parsing is optional (need to be enabled explicitly with
-	// --probe.ebpf.connections=true), if a user enables it we assume they
-	// check on the logs whether it works or not
-	//
-	// * It's unlikely that the ebpf tracker stops working if it started
-	// successfully and if it does, we probaby want it to fail hard
+	if t.tracer != nil {
+		t.tracer.Stop()
+	}
+	t.dead = true
 }
