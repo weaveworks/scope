@@ -67,7 +67,7 @@ func (i Instrument) getRouteName(r *http.Request) string {
 		if name := routeMatch.Route.GetName(); name != "" {
 			return name
 		}
-		if tmpl, err := routeMatch.Route.GetPathTemplate(); err != nil {
+		if tmpl, err := routeMatch.Route.GetPathTemplate(); err == nil {
 			return MakeLabelValue(tmpl)
 		}
 	}

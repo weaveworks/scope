@@ -13,7 +13,6 @@ import (
 
 // Log middleware logs http requests
 type Log struct {
-	LogSuccess        bool // LogSuccess true -> log successful queries; false -> only log failed queries
 	LogRequestHeaders bool // LogRequestHeaders true -> dump http headers at debug log level
 }
 
@@ -33,24 +32,17 @@ func (l Log) Wrap(next http.Handler) http.Handler {
 		}
 		i := &interceptor{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(i, r)
-		if l.LogSuccess || !(100 <= i.statusCode && i.statusCode < 400) {
-			log.Infof("%s %s (%d) %s", r.Method, uri, i.statusCode, time.Since(begin))
+		if 100 <= i.statusCode && i.statusCode < 400 {
+			log.Debugf("%s %s (%d) %s", r.Method, uri, i.statusCode, time.Since(begin))
+		} else {
+			log.Warnf("%s %s (%d) %s", r.Method, uri, i.statusCode, time.Since(begin))
 		}
 	})
 }
 
 // Logging middleware logs each HTTP request method, path, response code and
 // duration for all HTTP requests.
-var Logging = Log{
-	LogSuccess:        true,
-	LogRequestHeaders: false,
-}
-
-// LogFailed middleware logs each HTTP request method, path, response code and
-// duration for non-2xx HTTP requests.
-var LogFailed = Log{
-	LogSuccess: false,
-}
+var Logging = Log{}
 
 // interceptor implements WriteHeader to intercept status codes. WriteHeader
 // may not be called on success, so initialize statusCode with the status you
