@@ -11,14 +11,21 @@ class TopologyOptions extends React.Component {
     const { activeOptions, topologyId } = this.props;
     const optionId = option.get('id');
     const activeValue = activeOptions && activeOptions.has(optionId)
-      ? activeOptions.get(optionId) : option.get('defaultValue');
+      ? activeOptions.get(optionId)
+      : option.get('defaultValue');
 
     return (
       <div className="topology-option" key={optionId}>
         <div className="topology-option-wrapper">
-          {option.get('options').map(item => <TopologyOptionAction
-            optionId={optionId} topologyId={topologyId} key={item.get('value')}
-            activeValue={activeValue} item={item} />)}
+          {option.get('options').map(item => (
+            <TopologyOptionAction
+              optionId={optionId}
+              topologyId={topologyId}
+              key={item.get('value')}
+              activeValue={activeValue}
+              item={item}
+            />
+          ))}
         </div>
       </div>
     );

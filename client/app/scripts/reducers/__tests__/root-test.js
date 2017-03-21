@@ -46,33 +46,118 @@ describe('RootReducer', () => {
     }
   };
 
-  const topologies = [{
-    hide_if_empty: true,
-    name: 'Processes',
-    rank: 1,
-    sub_topologies: [],
-    url: '/api/topology/processes',
-    fullName: 'Processes',
-    id: 'processes',
-    options: [
-      {
-        defaultValue: 'hide',
-        id: 'unconnected',
-        options: [
-          {
-            label: 'Unconnected nodes hidden',
-            value: 'hide'
-          }
-        ]
+  const topologies = [
+    {
+      hide_if_empty: true,
+      name: 'Processes',
+      rank: 1,
+      sub_topologies: [],
+      url: '/api/topology/processes',
+      fullName: 'Processes',
+      id: 'processes',
+      options: [
+        {
+          defaultValue: 'hide',
+          id: 'unconnected',
+          selectType: 'one',
+          options: [
+            {
+              label: 'Unconnected nodes hidden',
+              value: 'hide'
+            }
+          ]
+        }
+      ],
+      stats: {
+        edge_count: 379,
+        filtered_nodes: 214,
+        node_count: 320,
+        nonpseudo_node_count: 320
       }
-    ],
-    stats: {
-      edge_count: 379,
-      filtered_nodes: 214,
-      node_count: 320,
-      nonpseudo_node_count: 320
+    },
+    {
+      hide_if_empty: true,
+      name: 'Pods',
+      options: [
+        {
+          defaultValue: 'default',
+          id: 'namespace',
+          selectType: 'many',
+          options: [
+            {
+              label: 'monitoring',
+              value: 'monitoring'
+            },
+            {
+              label: 'scope',
+              value: 'scope'
+            },
+            {
+              label: 'All Namespaces',
+              value: 'all'
+            }
+          ]
+        },
+        {
+          defaultValue: 'hide',
+          id: 'pseudo',
+          options: [
+            {
+              label: 'Show Unmanaged',
+              value: 'show'
+            },
+            {
+              label: 'Hide Unmanaged',
+              value: 'hide'
+            }
+          ]
+        }
+      ],
+      rank: 3,
+      stats: {
+        edge_count: 15,
+        filtered_nodes: 16,
+        node_count: 32,
+        nonpseudo_node_count: 27
+      },
+      sub_topologies: [
+        {
+          hide_if_empty: true,
+          name: 'services',
+          options: [
+            {
+              defaultValue: 'default',
+              id: 'namespace',
+              selectType: 'many',
+              options: [
+                {
+                  label: 'monitoring',
+                  value: 'monitoring'
+                },
+                {
+                  label: 'scope',
+                  value: 'scope'
+                },
+                {
+                  label: 'All Namespaces',
+                  value: 'all'
+                }
+              ]
+            }
+          ],
+          rank: 0,
+          stats: {
+            edge_count: 14,
+            filtered_nodes: 16,
+            node_count: 159,
+            nonpseudo_node_count: 154
+          },
+          url: '/api/topology/services'
+        }
+      ],
+      url: '/api/topology/pods'
     }
-  }];
+  ];
 
   // actions
 
@@ -267,6 +352,29 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ClickTopology2Action);
     expect(activeTopologyOptionsSelector(nextState)).toBeUndefined();
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
+  });
+  it('changes topologyOptions for selectType "many"', () => {
+    const action = {
+      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+      topologyId: 'services',
+      option: 'namespace',
+      value: ['scope', 'monitoring']
+    };
+    let nextState = initialState;
+    nextState = reducer(nextState, {
+      type: ActionTypes.RECEIVE_TOPOLOGIES,
+      topologies
+    });
+    nextState = reducer(nextState, {
+      type: ActionTypes.CLICK_TOPOLOGY,
+      topologyId: 'services'
+    });
+
+    nextState = reducer(nextState, action);
+    expect(activeTopologyOptionsSelector(nextState).toJS()).toEqual({
+      namespace: ['scope', 'monitoring'],
+      pseudo: 'hide'
+    });
   });
 
   it('sets topology options from route', () => {
